@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,29 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PWire.cc,v 1.13 2007/04/26 03:06:21 steve Exp $"
+#ident "$Id: PWire.cc,v 1.14 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include "config.h"
 # include  "PWire.h"
 # include  <assert.h>
 
-PWire::PWire(const hname_t&n,
-	     NetNet::Type t,
-	     NetNet::PortType pt,
-	     ivl_variable_type_t dt)
-: hname_(n), type_(t), port_type_(pt), data_type_(dt),
-  signed_(false), isint_(false),
-lidx_(0), ridx_(0)
-{
-      if (t == NetNet::INTEGER) {
-	    type_ = NetNet::REG;
-	    signed_ = true;
-	    isint_ = true;
-      }
-}
-
-PWire::PWire(perm_string n,
+PWire::PWire(const pform_name_t&n,
 	     NetNet::Type t,
 	     NetNet::PortType pt,
 	     ivl_variable_type_t dt)
@@ -59,7 +44,7 @@ NetNet::Type PWire::get_wire_type() const
       return type_;
 }
 
-const hname_t& PWire::path() const
+const pform_name_t& PWire::path() const
 {
       return hname_;
 }
@@ -160,6 +145,10 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 
 /*
  * $Log: PWire.cc,v $
+ * Revision 1.14  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.13  2007/04/26 03:06:21  steve
  *  Rework hname_t to use perm_strings.
  *

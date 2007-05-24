@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.97 2007/03/07 00:38:15 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.98 2007/05/24 04:07:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -69,6 +69,58 @@ ostream& operator<< (ostream&o, PGate::strength_t str)
 	  default:
 	    assert(0);
       }
+      return o;
+}
+
+ostream& operator<< (ostream&out, perm_string that)
+{
+      out << that.str();
+}
+
+ostream& operator<< (ostream&out, const name_component_t&that)
+{
+      out << that.name.str();
+
+      typedef std::list<index_component_t>::const_iterator index_it_t;
+      for (index_it_t idx = that.index.begin()
+		 ; idx != that.index.end() ;  idx++) {
+
+	    out << "[";
+	    switch ((*idx).sel) {
+		case index_component_t::SEL_BIT:
+		  out << *(*idx).msb;
+		  break;
+		case index_component_t::SEL_PART:
+		  out << *(*idx).msb << ":" << *(*idx).lsb;
+		  break;
+		case index_component_t::SEL_IDX_UP:
+		  out << *(*idx).msb << "+:" << *(*idx).lsb;
+		  break;
+		case index_component_t::SEL_IDX_DO:
+		  out << *(*idx).msb << "-:" << *(*idx).lsb;
+		  break;
+		default:
+		  out << "???";
+		  break;
+	    }
+	    out << "]";
+      }
+      return out;
+}
+
+ostream& operator<< (ostream&o, const pform_name_t&that)
+{
+      pform_name_t::const_iterator cur;
+
+      cur = that.begin();
+      o << *cur;
+
+      cur++;
+      while (cur != that.end()) {
+	    o << "." << *cur;
+	    cur++;
+      }
+
       return o;
 }
 
@@ -145,29 +197,6 @@ void PENumber::dump(ostream&out) const
 void PEIdent::dump(ostream&out) const
 {
       out << path_;
-      if (msb_) {
-	    out << "[" << *msb_;
-	    if (lsb_) switch (sel_) {
-		case SEL_IDX_UP:
-		  out << "+:" << *lsb_;
-		  break;
-		case SEL_IDX_DO:
-		  out << "-:" << *lsb_;
-		  break;
-		case SEL_PART:
-		  out << ":" << *lsb_;
-		  break;
-		default:
-		  out << ":?:" << *lsb_;
-		  break;
-	    }
-	    out << "]";
-      }
-
-      typedef std::vector<PExpr*>::const_iterator vector_it_t;
-      for (vector_it_t cur = idx_.begin() ; cur != idx_.end() ;  cur++) {
-	    out << "[" << *(*cur) << "]";
-      }
 }
 
 void PEString::dump(ostream&out) const
@@ -811,7 +840,7 @@ void PGenerate::dump(ostream&out) const
 
       out << endl;
 
-      for (map<hname_t,PWire*>::const_iterator idx = wires.begin()
+      for (map<pform_name_t,PWire*>::const_iterator idx = wires.begin()
 		 ; idx != wires.end() ;  idx++) {
 
 	    (*idx).second->dump(out, 6);
@@ -866,7 +895,7 @@ void Module::dump(ostream&out) const
       }
 
       typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
-      typedef map<hname_t,PExpr*>::const_iterator parm_hiter_t;
+      typedef map<pform_name_t,PExpr*>::const_iterator parm_hiter_t;
       for (parm_iter_t cur = parameters.begin()
 		 ; cur != parameters.end() ; cur ++) {
 	    out << "    parameter ";
@@ -931,7 +960,7 @@ void Module::dump(ostream&out) const
       }
 
 	// Iterate through and display all the wires.
-      for (map<hname_t,PWire*>::const_iterator wire = wires_.begin()
+      for (map<pform_name_t,PWire*>::const_iterator wire = wires_.begin()
 		 ; wire != wires_.end()
 		 ; wire ++ ) {
 
@@ -1032,6 +1061,10 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.98  2007/05/24 04:07:12  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.97  2007/03/07 00:38:15  steve
  *  Lint fixes.
  *

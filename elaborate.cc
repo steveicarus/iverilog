@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.370 2007/04/16 01:10:07 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.371 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -770,8 +770,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			if (mport.count() == 0)
 			      continue;
 
-			NetNet*tmp = des->find_signal(instance[0],
-						      mport[0]->path());
+			perm_string pname = peek_tail_name(mport[0]->path());
+
+			NetNet*tmp = instance[0]->find_signal(pname);
 			assert(tmp);
 
 			if (tmp->port_type() == NetNet::PINPUT) {
@@ -1833,7 +1834,7 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 
 NetProc* PCallTask::elaborate(Design*des, NetScope*scope) const
 {
-      if (path_.peek_name(0)[0] == '$')
+      if (peek_tail_name(path_)[0] == '$')
 	    return elaborate_sys(des, scope);
       else
 	    return elaborate_usr(des, scope);
@@ -1877,7 +1878,7 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 	    }
       }
 
-      NetSTask*cur = new NetSTask(path_.peek_name(0), eparms);
+      NetSTask*cur = new NetSTask(peek_tail_name(path_), eparms);
       return cur;
 }
 
@@ -3416,6 +3417,10 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.371  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.370  2007/04/16 01:10:07  steve
  *  Properly ignore unsupported ifnone.
  *

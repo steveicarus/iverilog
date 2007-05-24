@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.203 2007/04/18 01:40:49 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.204 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1230,7 +1230,7 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
       unsigned errors = 0;
       unsigned func_pins = 0;
 
-      if (path_.peek_name(0)[0] == '$')
+      if (path_.front().name[0] == '$')
 	    return elaborate_net_sfunc_(des, scope,
 					width, rise, fall, decay,
 					drive0, drive1);
@@ -1320,11 +1320,13 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
 					     Link::strength_t drive0,
 					     Link::strength_t drive1) const
 {
+      perm_string name = peek_tail_name(path_);
+
 	/* Handle the special case that the function call is to
 	   $signed. This takes a single expression argument, and
 	   forces it to be a signed result. Otherwise, it is as if the
 	   $signed did not exist. */
-      if (strcmp(path_.peek_name(0), "$signed") == 0) {
+      if (strcmp(name, "$signed") == 0) {
 	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
 		  cerr << get_line() << ": error: The $signed() function "
 		       << "takes exactly one(1) argument." << endl;
@@ -1340,7 +1342,7 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
       }
 
       /* handle $unsigned like $signed */
-      if (strcmp(path_.peek_name(0), "$unsigned") == 0) {
+      if (strcmp(name, "$unsigned") == 0) {
 	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
 		  cerr << get_line() << ": error: The $unsigned() function "
 		       << "takes exactly one(1) argument." << endl;
@@ -1355,11 +1357,11 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
 	    return sub;
       }
 
-      const struct sfunc_return_type*def = lookup_sys_func(path_.peek_name(0));
+      const struct sfunc_return_type*def = lookup_sys_func(name);
 
       if (def == 0) {
 	    cerr << get_line() << ": error: System function "
-		 << path_.peek_name(0) << " not defined." << endl;
+		 << peek_tail_name(path_) << " not defined." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -1545,15 +1547,19 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 				       Link::strength_t drive0,
 				       Link::strength_t drive1) const
 {
-      assert(msb_ == 0);
-      assert(lsb_ == 0);
-      assert(idx_.size() == 1);
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
+
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.sel == index_component_t::SEL_BIT);
+      ivl_assert(*this, index_tail.msb != 0);
+      ivl_assert(*this, index_tail.lsb == 0);
 
 	/* Elaborate the selector. */
       NetNet*sel;
 
       if (sig->msb() < sig->lsb()) {
-	    NetExpr*sel_expr = idx_[0]->elaborate_expr(des, scope, -1, false);
+	    NetExpr*sel_expr = index_tail.msb->elaborate_expr(des, scope, -1, false);
 	    sel_expr = make_sub_expr(sig->lsb(), sel_expr);
 	    if (NetExpr*tmp = sel_expr->eval_tree()) {
 		  delete sel_expr;
@@ -1563,7 +1569,7 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 	    sel = sel_expr->synthesize(des);
 
       } else if (sig->lsb() != 0) {
-	    NetExpr*sel_expr = idx_[0]->elaborate_expr(des, scope, -1,false);
+	    NetExpr*sel_expr = index_tail.msb->elaborate_expr(des, scope, -1,false);
 	    sel_expr = make_add_expr(sel_expr, - sig->lsb());
 	    if (NetExpr*tmp = sel_expr->eval_tree()) {
 		  delete sel_expr;
@@ -1573,7 +1579,7 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 	    sel = sel_expr->synthesize(des);
 
       } else {
-	    sel = idx_[0]->elaborate_net(des, scope, 0, 0, 0, 0);
+	    sel = index_tail.msb->elaborate_net(des, scope, 0, 0, 0, 0);
       }
 
       if (debug_elaborate) {
@@ -1604,10 +1610,12 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 			       Link::strength_t drive0,
 			       Link::strength_t drive1) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
+
+      const name_component_t&name_tail = path_.back();
 
       NetNet*       sig = 0;
-     const NetExpr*par = 0;
+      const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
       symbol_search(des, scope, path_, sig, par, eve);
@@ -1646,13 +1654,13 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	/* Check for the error case that the name is not found, and it
 	   is hierarchical. We can't just create a name in another
 	   scope, it's just not allowed. */
-      if (sig == 0 && path_.component_count() != 1) {
+      if (sig == 0 && path_.size() != 1) {
 	    cerr << get_line() << ": error: The hierarchical name "
 		 << path_ << " is undefined in "
 		 << scope->name() << "." << endl;
 
-	    hname_t tmp_path = path_;
-	    delete[] tmp_path.remove_tail_name();
+	    pform_name_t tmp_path = path_;
+	    tmp_path.pop_back();
 
 	    NetScope*tmp_scope = des->find_scope(scope, tmp_path);
 	    if (tmp_scope == 0) {
@@ -1667,28 +1675,28 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	/* Fallback, this may be an implicitly declared net. */
       if (sig == 0) {
 	    NetNet::Type nettype = scope->default_nettype();
-	    sig = new NetNet(scope, lex_strings.make(path_.peek_name(0)),
+	    sig = new NetNet(scope, name_tail.name,
 			     nettype, 1);
 	    sig->data_type(IVL_VT_LOGIC);
 
 	    if (error_implicit || (nettype == NetNet::NONE)) {
 		  cerr << get_line() << ": error: "
-		       << scope->name() << "." << path_.peek_name(0)
+		       << scope->name() << "." << name_tail.name
 		       << " not defined in this scope." << endl;
 		  des->errors += 1;
 
 	    } else if (warn_implicit) {
 		  cerr << get_line() << ": warning: implicit "
 			"definition of wire " << scope->name()
-		       << "." << path_.peek_name(0) << "." << endl;
+		       << "." << name_tail.name << "." << endl;
 	    }
       }
 
-      assert(sig);
+      ivl_assert(*this, sig);
 
 	/* Handle the case that this is an array elsewhere. */
       if (sig->array_dimensions() > 0) {
-	    if (idx_.size() == 0) {
+	    if (name_tail.index.size() == 0) {
 		  cerr << get_line() << ": error: Array " << sig->name()
 		       << " cannot be used here without an index." << endl;
 		  des->errors += 1;
@@ -1700,14 +1708,16 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 					drive0, drive1);
       }
 
+      index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
+      if (!name_tail.index.empty())
+	    use_sel = name_tail.index.back().sel;
+
 	/* Catch the case of a non-constant bit select. That should be
 	   handled elsewhere. */
-      if (! idx_.empty()) {
-	    assert(msb_ == 0);
-	    assert(lsb_ == 0);
-	    assert(idx_.size() == 1);
+      if (use_sel == index_component_t::SEL_BIT) {
+	    const index_component_t&index_tail = name_tail.index.back();
 
-	    verinum*mval = idx_[0]->eval_const(des, scope);
+	    verinum*mval = index_tail.msb->eval_const(des, scope);
 	    if (mval == 0) {
 		  return elaborate_net_bitmux_(des, scope, sig, rise,
 					       fall, decay, drive0, drive1);
@@ -1755,9 +1765,14 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
 				      Link::strength_t drive0,
 				      Link::strength_t drive1) const
 {
-      ivl_assert(*this, idx_.size() >= 1);
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, name_tail.index.size() >= 1);
+      const index_component_t&index_head = name_tail.index.front();
+      ivl_assert(*this, index_head.sel == index_component_t::SEL_BIT);
+      ivl_assert(*this, index_head.msb != 0);
+      ivl_assert(*this, index_head.lsb == 0);
 
-      NetExpr*index_ex = elab_and_eval(des, scope, idx_[0], -1);
+      NetExpr*index_ex = elab_and_eval(des, scope, index_head.msb, -1);
       if (index_ex == 0)
 	    return 0;
 
@@ -1821,6 +1836,10 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
       tmp->data_type(sig->data_type());
       connect(tmp->pin(0), mux->pin_Result());
 
+	// If there are more index items then there are array
+	// dimensions, then treat them as word part selects. For
+	// example, if this is a memory array, then array dimensions
+	// is 1 and
       unsigned midx, lidx;
       if (eval_part_select_(des, scope, sig, midx, lidx)) do {
 
@@ -2006,7 +2025,7 @@ NetNet* PEIdent::make_implicit_net_(Design*des, NetScope*scope) const
       NetNet*sig = 0;
 
       if (!error_implicit && nettype!=NetNet::NONE) {
-	    sig = new NetNet(scope, lex_strings.make(path_.peek_name(0)),
+	    sig = new NetNet(scope, peek_tail_name(path_),
 			     NetNet::IMPLICIT, 1);
 	      /* Implicit nets are always scalar logic. */
 	    sig->data_type(IVL_VT_LOGIC);
@@ -2014,7 +2033,7 @@ NetNet* PEIdent::make_implicit_net_(Design*des, NetScope*scope) const
 	    if (warn_implicit) {
 		  cerr << get_line() << ": warning: implicit "
 			"definition of wire logic " << scope->name()
-		       << "." << path_.peek_name(0) << "." << endl;
+		       << "." << peek_tail_name(path_) << "." << endl;
 	    }
 
       } else {
@@ -2037,20 +2056,30 @@ NetNet* PEIdent::make_implicit_net_(Design*des, NetScope*scope) const
 bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 				unsigned&midx, unsigned&lidx) const
 {
-      switch (sel_) {
+      const name_component_t&name_tail = path_.back();
+	// Only treat as part/bit selects any index that is beyond the
+	// word selects for an array. This is not an array, then
+	// dimensions==0 and any index is treated as a select.
+      if (name_tail.index.size() <= sig->array_dimensions()) {
+	    midx = sig->vector_width()-1;
+	    lidx = 0;
+	    return true;
+      }
+
+      ivl_assert(*this, !name_tail.index.empty());
+
+      const index_component_t&index_tail = name_tail.index.back();
+
+      switch (index_tail.sel) {
 	  default:
 	    cerr << get_line() << ": internal error: "
-		 << "Unexpected sel_ value = " << sel_ << endl;
-	    assert(0);
+		 << "Unexpected sel_ value = " << index_tail.sel << endl;
+	    ivl_assert(*this, 0);
 	    break;
 
-	  case PEIdent::SEL_IDX_DO:
-	  case PEIdent::SEL_IDX_UP: {
-		assert(msb_);
-		assert(lsb_);
-		assert(idx_.size() == sig->array_dimensions());
-
-		NetExpr*tmp_ex = elab_and_eval(des, scope, msb_, -1);
+	  case index_component_t::SEL_IDX_DO:
+	  case index_component_t::SEL_IDX_UP: {
+		NetExpr*tmp_ex = elab_and_eval(des, scope, index_tail.msb, -1);
 		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
 		assert(tmp);
 
@@ -2058,14 +2087,14 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		midx = sig->sb_to_idx(midx_val);
 		delete tmp_ex;
 
-		tmp_ex = elab_and_eval(des, scope, lsb_, -1);
+		tmp_ex = elab_and_eval(des, scope, index_tail.lsb, -1);
 		tmp = dynamic_cast<NetEConst*>(tmp_ex);
 		assert(tmp);
 
 		long wid = tmp->value().as_long();
 		delete tmp_ex;
 
-		if (sel_ == PEIdent::SEL_IDX_UP)
+		if (index_tail.sel == index_component_t::SEL_IDX_UP)
 		      lidx = sig->sb_to_idx(midx_val+wid-1);
 		else
 		      lidx = sig->sb_to_idx(midx_val-wid+1);
@@ -2079,12 +2108,9 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		break;
 	  }
 
-	  case PEIdent::SEL_PART: {
-		assert(msb_);
-		assert(lsb_);
-		assert(idx_.size() == sig->array_dimensions());
+	  case index_component_t::SEL_PART: {
 
-		NetExpr*tmp_ex = elab_and_eval(des, scope, msb_, -1);
+		NetExpr*tmp_ex = elab_and_eval(des, scope, index_tail.msb, -1);
 		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
 		assert(tmp);
 
@@ -2092,12 +2118,12 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		midx = sig->sb_to_idx(midx_val);
 		delete tmp_ex;
 
-		tmp_ex = elab_and_eval(des, scope, lsb_, -1);
+		tmp_ex = elab_and_eval(des, scope, index_tail.lsb, -1);
 		tmp = dynamic_cast<NetEConst*>(tmp_ex);
 		if (tmp == 0) {
 		      cerr << get_line() << ": internal error: "
 			   << "lsb expression is not constant?: "
-			   << *tmp_ex << ", " << *lsb_ << endl;
+			   << *tmp_ex << ", " << *index_tail.lsb << endl;
 		}
 		assert(tmp);
 
@@ -2131,19 +2157,16 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		break;
 	  }
 
-	  case PEIdent::SEL_NONE:
-	    if (idx_.size() > sig->array_dimensions()) {
-		  unsigned a_dims = sig->array_dimensions();
-		  assert(msb_ == 0);
-		  assert(lsb_ == 0);
-		  assert(idx_.size() == a_dims+1);
-		  verinum*mval = idx_[a_dims]->eval_const(des, scope);
+	  case index_component_t::SEL_BIT:
+	    if (name_tail.index.size() > sig->array_dimensions()) {
+		  const index_component_t&index_head = name_tail.index.front();
+		  verinum*mval = index_head.msb->eval_const(des, scope);
 		  if (mval == 0) {
 			cerr << get_line() << ": error: Index of " << path_ <<
 			      " needs to be constant in this context." <<
 			      endl;
 			cerr << get_line() << ":      : Index expression is: "
-			     << *(idx_[0]) << endl;
+			     << *index_head.msb << endl;
 			des->errors += 1;
 			return false;
 		  }
@@ -2160,17 +2183,9 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		  lidx = midx;
 
 	    } else {
-		  if (msb_ || lsb_) {
-			cerr << get_line() << ": internal error: "
-			     << "Unexpected msb_/lsb_ values?" << endl;
-			if (msb_)
-			      cerr << get_line() << "               : "
-				   << *msb_ << endl;
-			if (lsb_)
-			      cerr << get_line() << "               : "
-				   << *lsb_ << endl;
-		  }
-		  assert(msb_ == 0 && lsb_ == 0);
+		  cerr << get_line() << ": internal error: "
+		       << "Bit select " << path_ << endl;
+		  ivl_assert(*this, 0);
 		  midx = sig->vector_width() - 1;
 		  lidx = 0;
 	    }
@@ -2245,10 +2260,16 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	// The default word select is the first.
       unsigned widx = 0;
 
-      if (sig->array_dimensions() > 0) {
-	    assert(!idx_.empty());
+      const name_component_t&name_tail = path_.back();
 
-	    NetExpr*tmp_ex = elab_and_eval(des, scope, idx_[0], -1);
+      if (sig->array_dimensions() > 0) {
+
+	    ivl_assert(*this, !name_tail.index.empty());
+
+	    const index_component_t&index_head = name_tail.index.front();
+	    ivl_assert(*this, index_head.sel == index_component_t::SEL_BIT);
+
+	    NetExpr*tmp_ex = elab_and_eval(des, scope, index_head.msb, -1);
 	    NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
 	    assert(tmp);
 
@@ -2260,7 +2281,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  cerr << get_line() << ": debug: Use [" << widx << "]"
 		       << " to index l-value array." << endl;
 
-      } else {
+      } else if (!name_tail.index.empty()) {
 	    if (! eval_part_select_(des, scope, sig, midx, lidx))
 		  return 0;
       }
@@ -2941,6 +2962,10 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.204  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.203  2007/04/18 01:40:49  steve
  *  Fix elaboration of multiply of two constants.
  *

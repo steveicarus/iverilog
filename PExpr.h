@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.87 2007/01/16 05:44:14 steve Exp $"
+#ident "$Id: PExpr.h,v 1.88 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include  <string>
@@ -27,6 +27,7 @@
 # include  "netlist.h"
 # include  "verinum.h"
 # include  "LineInfo.h"
+# include  "pform_types.h"
 
 class Design;
 class Module;
@@ -247,8 +248,13 @@ class PEFNumber : public PExpr {
 class PEIdent : public PExpr {
 
     public:
-      explicit PEIdent(const hname_t&s);
+      explicit PEIdent(perm_string);
+      explicit PEIdent(const pform_name_t&);
       ~PEIdent();
+
+	// Add another name to the string of heirarchy that is the
+	// current identifier.
+      void append_name(perm_string);
 
       virtual void dump(ostream&) const;
       virtual unsigned test_width(Design*des, NetScope*scope,
@@ -286,7 +292,10 @@ class PEIdent : public PExpr {
       virtual bool is_constant(Module*) const;
       verinum* eval_const(const Design*des, NetScope*sc) const;
 
-      const hname_t& path() const;
+      const pform_name_t& path() const { return path_; }
+
+    private:
+      pform_name_t path_;
 
     private:
 	// Common functions to calculate parts of part/bit selects.
@@ -332,9 +341,9 @@ class PEIdent : public PExpr {
 				   NetScope*scope,
 				   NetESignal*net,
 				   NetScope*found) const;
-      hname_t path_;
 
     public:
+#if 0
 	// Use these to support part-select operators.
       PExpr*msb_;
       PExpr*lsb_;
@@ -345,6 +354,8 @@ class PEIdent : public PExpr {
 	// expression. If this is a reference to a vector, this is a
 	// bit select.
       std::vector<PExpr*> idx_;
+#endif
+
       NetNet* elaborate_net_array_(Design*des, NetScope*scope,
 				   NetNet*sig, unsigned lwidth,
 				   const NetExpr* rise,
@@ -621,8 +632,10 @@ class PETernary : public PExpr {
  */
 class PECallFunction : public PExpr {
     public:
-      explicit PECallFunction(const hname_t&n, const svector<PExpr *> &parms);
-      explicit PECallFunction(const hname_t&n);
+      explicit PECallFunction(const pform_name_t&n, const svector<PExpr *> &parms);
+	// Call of system function (name is not heirarchical)
+      explicit PECallFunction(perm_string n, const svector<PExpr *> &parms);
+      explicit PECallFunction(perm_string n);
       ~PECallFunction();
 
       virtual void dump(ostream &) const;
@@ -638,7 +651,7 @@ class PECallFunction : public PExpr {
 				     int expr_wid, bool sys_task_arg) const;
 
     private:
-      hname_t path_;
+      pform_name_t path_;
       svector<PExpr *> parms_;
 
       bool check_call_matches_definition_(Design*des, NetScope*dscope) const;
@@ -655,6 +668,10 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.88  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.87  2007/01/16 05:44:14  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

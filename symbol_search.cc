@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: symbol_search.cc,v 1.5 2007/04/26 03:06:22 steve Exp $"
+#ident "$Id: symbol_search.cc,v 1.6 2007/05/24 04:07:12 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -27,7 +27,7 @@
 /*
  * Search for the hierarchical name.
  */
-NetScope*symbol_search(const Design*des, NetScope*scope, hname_t path,
+NetScope*symbol_search(const Design*des, NetScope*scope, pform_name_t path,
 		       NetNet*&net,
 		       const NetExpr*&par,
 		       NetEvent*&eve,
@@ -36,7 +36,8 @@ NetScope*symbol_search(const Design*des, NetScope*scope, hname_t path,
       assert(scope);
 
 	/* Get the tail name of the object we are looking for. */
-      perm_string key = path.remove_tail_name();
+      perm_string key = peek_tail_name(path);
+      path.pop_back();
 
 	/* Initialize output argument to cleared. */
       net = 0;
@@ -45,7 +46,7 @@ NetScope*symbol_search(const Design*des, NetScope*scope, hname_t path,
 
 	/* If the path has a scope part, then search for the specified
 	   scope that we are supposed to search. */
-      if (path.peek_name(0))
+      if (! path.empty())
 	    scope = des->find_scope(scope, path);
 
       while (scope) {
@@ -69,6 +70,10 @@ NetScope*symbol_search(const Design*des, NetScope*scope, hname_t path,
 
 /*
  * $Log: symbol_search.cc,v $
+ * Revision 1.6  2007/05/24 04:07:12  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.5  2007/04/26 03:06:22  steve
  *  Rework hname_t to use perm_strings.
  *

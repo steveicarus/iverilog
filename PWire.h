@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PWire.h,v 1.20 2007/04/26 03:06:22 steve Exp $"
+#ident "$Id: PWire.h,v 1.21 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -43,24 +43,21 @@ class Design;
  * identifies a port by keeping it in its port list.
  *
  * The hname parameter to the constructor is a hierarchical name. It
- * is an array of strings starting with the root, running towards
- * the base name, and terminated by a null pointer. The environment
- * allocates the memory for me.
+ * is the name of the wire within a module, so does not include the
+ * current scope or any instances. Modules contain all the wires, so
+ * from that perspective, sub-scopes within the module are a part of
+ * the wire name.
  */
 class PWire : public LineInfo {
 
     public:
-      PWire(const hname_t&hname,
-	    NetNet::Type t,
-	    NetNet::PortType pt,
-	    ivl_variable_type_t dt);
-      PWire(perm_string name,
+      PWire(const pform_name_t&hname,
 	    NetNet::Type t,
 	    NetNet::PortType pt,
 	    ivl_variable_type_t dt);
 
 	// Return a hierarchical name.
-      const hname_t&path() const;
+      const pform_name_t&path() const;
 
       NetNet::Type get_wire_type() const;
       bool set_wire_type(NetNet::Type);
@@ -84,10 +81,10 @@ class PWire : public LineInfo {
 	// Write myself to the specified stream.
       void dump(ostream&out, unsigned ind=4) const;
 
-      void elaborate_sig(Design*, NetScope*scope) const;
+      NetNet* elaborate_sig(Design*, NetScope*scope) const;
 
     private:
-      hname_t hname_;
+      pform_name_t hname_;
       NetNet::Type type_;
       NetNet::PortType port_type_;
       ivl_variable_type_t data_type_;
@@ -111,6 +108,10 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.21  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.20  2007/04/26 03:06:22  steve
  *  Rework hname_t to use perm_strings.
  *

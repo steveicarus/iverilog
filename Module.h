@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.42 2007/04/19 02:52:53 steve Exp $"
+#ident "$Id: Module.h,v 1.43 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include  <list>
@@ -30,6 +30,7 @@
 # include  "named.h"
 # include  "LineInfo.h"
 # include  "netlist.h"
+# include  "pform_types.h"
 class PEvent;
 class PExpr;
 class PEIdent;
@@ -98,7 +99,7 @@ class Module : public LineInfo {
 	   new parameters within the module, but may be used to set
 	   values within this module (when instantiated) or in other
 	   instantiated modules. */
-      map<hname_t,PExpr*>defparms;
+      map<pform_name_t,PExpr*>defparms;
 
         /* Parameters may be overridden at instantiation time;
            the overrides do not contain explicit parameter names,
@@ -150,10 +151,9 @@ class Module : public LineInfo {
 
 	// Find a wire by name. This is used for connecting gates to
 	// existing wires, etc.
-      PWire* get_wire(const hname_t&name) const;
+      PWire* get_wire(const pform_name_t&name) const;
       PGate* get_gate(perm_string name);
 
-      const map<hname_t,PWire*>& get_wires() const;
       const list<PGate*>& get_gates() const;
       const list<PProcess*>& get_behaviors() const;
 
@@ -168,7 +168,7 @@ class Module : public LineInfo {
     private:
       perm_string name_;
 
-      map<hname_t,PWire*> wires_;
+      map<pform_name_t,PWire*> wires_;
       list<PGate*> gates_;
       list<PProcess*> behaviors_;
       map<perm_string,PTask*> tasks_;
@@ -182,6 +182,10 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.43  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.42  2007/04/19 02:52:53  steve
  *  Add support for -v flag in command file.
  *

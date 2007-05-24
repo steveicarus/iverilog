@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,46 +17,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGenerate.cc,v 1.3 2007/05/24 04:07:11 steve Exp $"
+#ident "$Id: pform_types.cc,v 1.1 2007/05/24 04:07:12 steve Exp $"
 #endif
 
-# include  "PGenerate.h"
-# include  "PWire.h"
 
-PGenerate::PGenerate(unsigned id)
-: id_number(id)
+# include  "pform_types.h"
+
+bool operator < (const name_component_t&lef, const name_component_t&rig)
 {
-}
+      if (lef.name < rig.name)
+	    return true;
 
-PGenerate::~PGenerate()
-{
-}
-
-PWire* PGenerate::add_wire(PWire*wire)
-{
-      PWire*&ep = wires[wire->path()];
-      if (ep) return ep;
-
-      assert(ep == 0);
-      ep = wire;
-      return wire;
-}
-
-PWire* PGenerate::get_wire(const pform_name_t&name) const
-{
-      map<pform_name_t,PWire*>::const_iterator obj = wires.find(name);
-      if (obj == wires.end())
-	    return 0;
-      else
-	    return (*obj).second;
-}
-
-void PGenerate::add_gate(PGate*gate)
-{
-      gates.push_back(gate);
-}
-
-void PGenerate::add_behavior(PProcess*proc)
-{
-      behaviors.push_back(proc);
+      return false;
 }

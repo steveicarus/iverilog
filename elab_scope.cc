@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.44 2007/03/22 16:08:15 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.45 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -66,7 +66,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// place of the elaborated expression.
 
       typedef map<perm_string,param_expr_t>::const_iterator mparm_it_t;
-      typedef map<hname_t,PExpr*>::const_iterator hparm_it_t;
+      typedef map<pform_name_t,PExpr*>::const_iterator pform_parm_it_t;
 
 
 	// This loop scans the parameters in the module, and creates
@@ -200,7 +200,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// here because the parameter receiving the assignment may be
 	// in a scope not discovered by this pass.
 
-      for (hparm_it_t cur = defparms.begin()
+      for (pform_parm_it_t cur = defparms.begin()
 		 ; cur != defparms.end() ;  cur ++ ) {
 
 	    PExpr*ex = (*cur).second;
@@ -761,6 +761,10 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.45  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.44  2007/03/22 16:08:15  steve
  *  Spelling fixes from Larry
  *

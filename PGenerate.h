@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGenerate.h,v 1.2 2007/03/05 05:59:10 steve Exp $"
+#ident "$Id: PGenerate.h,v 1.3 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -27,6 +27,7 @@
 # include  "HName.h"
 # include  <list>
 # include  <map>
+# include  "pform_types.h"
 
 class Design;
 class NetScope;
@@ -59,9 +60,9 @@ class PGenerate : public LineInfo {
       PExpr*loop_test;
       PExpr*loop_step;
 
-      map<hname_t,PWire*>wires;
+      map<pform_name_t,PWire*>wires;
       PWire* add_wire(PWire*);
-      PWire* get_wire(const hname_t&name) const;
+      PWire* get_wire(const pform_name_t&name) const;
 
       list<PGate*> gates;
       void add_gate(PGate*);

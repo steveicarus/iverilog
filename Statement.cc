@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Statement.cc,v 1.29 2004/02/18 17:11:54 steve Exp $"
+#ident "$Id: Statement.cc,v 1.30 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -107,16 +107,22 @@ PBlock::~PBlock()
 	    delete list_[idx];
 }
 
-PCallTask::PCallTask(const hname_t&n, const svector<PExpr*>&p)
+PCallTask::PCallTask(const pform_name_t&n, const svector<PExpr*>&p)
 : path_(n), parms_(p)
 {
+}
+
+PCallTask::PCallTask(perm_string n, const svector<PExpr*>&p)
+: parms_(p)
+{
+      path_.push_back(name_component_t(n));
 }
 
 PCallTask::~PCallTask()
 {
 }
 
-const hname_t& PCallTask::path() const
+const pform_name_t& PCallTask::path() const
 {
       return path_;
 }
@@ -178,7 +184,7 @@ PDelayStatement::~PDelayStatement()
 {
 }
 
-PDisable::PDisable(const hname_t&sc)
+PDisable::PDisable(const pform_name_t&sc)
 : scope_(sc)
 {
 }
@@ -273,7 +279,7 @@ PRepeat::~PRepeat()
       delete statement_;
 }
 
-PTrigger::PTrigger(const hname_t&e)
+PTrigger::PTrigger(const pform_name_t&e)
 : event_(e)
 {
 }
@@ -295,6 +301,10 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.30  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.29  2004/02/18 17:11:54  steve
  *  Use perm_strings for named langiage items.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.51 2007/04/26 03:06:22 steve Exp $"
+#ident "$Id: net_design.cc,v 1.52 2007/05/24 04:07:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -114,26 +114,28 @@ const list<NetScope*> Design::find_root_scopes() const
  * more step down the tree until the name runs out or the search
  * fails.
  */
-NetScope* Design::find_scope(const hname_t&path) const
+NetScope* Design::find_scope(const pform_name_t&path) const
 {
-      if (path.peek_name(0) == 0)
+      if (path.empty())
 	    return 0;
 
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin()
 		 ; scope != root_scopes_.end(); scope++) {
 
 	    NetScope*cur = *scope;
-	    if (strcmp(path.peek_name(0), cur->basename()) != 0)
+	    if (strcmp(peek_head_name(path), cur->basename()) != 0)
 		  continue;
 
-	    unsigned hidx = 1;
-	    while (cur) {
-		  const char*name = path.peek_name(hidx);
-		  if (name == 0)
-			return cur;
+	    pform_name_t tmp = path;
+	    tmp.pop_front();
 
+	    while (cur) {
+		  if (tmp.empty()) return cur;
+
+		  perm_string name = peek_head_name(tmp);
 		  cur = cur->child(name);
-		  hidx += 1;
+
+		  tmp.pop_front();
 	    }
 
       }
@@ -143,27 +145,30 @@ NetScope* Design::find_scope(const hname_t&path) const
 
 /*
  * This is a relative lookup of a scope by name. The starting point is
- * the scope parameter is the place within which I start looking for
- * the scope. If I do not find the scope within the passed scope,
- * start looking in parent scopes until I find it, or I run out of
- * parent scopes.
+ * the scope parameter within which I start looking for the scope. If
+ * I do not find the scope within the passed scope, start looking in
+ * parent scopes until I find it, or I run out of parent scopes.
  */
-NetScope* Design::find_scope(NetScope*scope, const hname_t&path) const
+NetScope* Design::find_scope(NetScope*scope, const pform_name_t&path) const
 {
       assert(scope);
-      if (path.peek_name(0) == 0)
+      if (path.empty())
 	    return scope;
 
       for ( ; scope ;  scope = scope->parent()) {
-	    unsigned hidx = 0;
-	    const char*key = path.peek_name(hidx);
+
+	    pform_name_t tmp = path;
+	    name_component_t name_front = tmp.front();
+	    perm_string key = name_front.name;
 
 	    NetScope*cur = scope;
 	    do {
 		  cur = cur->child(key);
 		  if (cur == 0) break;
-		  hidx += 1;
-		  key = path.peek_name(hidx);
+		  tmp.pop_front();
+		  if (tmp.empty()) break;
+		  name_front = tmp.front();
+		  key = name_front.name;
 	    } while (key);
 
 	    if (cur) return cur;
@@ -196,12 +201,13 @@ void NetScope::run_defparams(Design*des)
 	}
       }
 
-      map<hname_t,NetExpr*>::const_iterator pp;
+      map<pform_name_t,NetExpr*>::const_iterator pp;
       for (pp = defparams.begin() ;  pp != defparams.end() ;  pp ++ ) {
 	    NetExpr*val = (*pp).second;
-	    hname_t path = (*pp).first;
+	    pform_name_t path = (*pp).first;
 
-	    perm_string perm_name = path.remove_tail_name();
+	    perm_string perm_name = peek_tail_name(path);
+	    path.pop_back();
 
 	      /* If there is no path on the name, then the targ_scope
 		 is the current scope. */
@@ -423,12 +429,13 @@ const char* Design::get_flag(const string&key) const
  * It is the job of this function to properly implement Verilog scope
  * rules as signals are concerned.
  */
-NetNet* Design::find_signal(NetScope*scope, hname_t path)
+NetNet* Design::find_signal(NetScope*scope, pform_name_t path)
 {
       assert(scope);
 
-      perm_string key = path.remove_tail_name();
-      if (path.peek_name(0))
+      perm_string key = peek_tail_name(path);
+      path.pop_back();
+      if (! path.empty())
 	    scope = find_scope(scope, path);
 
       while (scope) {
@@ -444,7 +451,7 @@ NetNet* Design::find_signal(NetScope*scope, hname_t path)
       return 0;
 }
 
-NetFuncDef* Design::find_function(NetScope*scope, const hname_t&name)
+NetFuncDef* Design::find_function(NetScope*scope, const pform_name_t&name)
 {
       assert(scope);
       NetScope*func = find_scope(scope, name);
@@ -454,7 +461,7 @@ NetFuncDef* Design::find_function(NetScope*scope, const hname_t&name)
       return 0;
 }
 
-NetFuncDef* Design::find_function(const hname_t&key)
+NetFuncDef* Design::find_function(const pform_name_t&key)
 {
       NetScope*func = find_scope(key);
       if (func && (func->type() == NetScope::FUNC))
@@ -463,7 +470,7 @@ NetFuncDef* Design::find_function(const hname_t&key)
       return 0;
 }
 
-NetScope* Design::find_task(NetScope*scope, const hname_t&name)
+NetScope* Design::find_task(NetScope*scope, const pform_name_t&name)
 {
       NetScope*task = find_scope(scope, name);
       if (task && (task->type() == NetScope::TASK))
@@ -472,7 +479,7 @@ NetScope* Design::find_task(NetScope*scope, const hname_t&name)
       return 0;
 }
 
-NetScope* Design::find_task(const hname_t&key)
+NetScope* Design::find_task(const pform_name_t&key)
 {
       NetScope*task = find_scope(key);
       if (task && (task->type() == NetScope::TASK))
@@ -558,6 +565,10 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.52  2007/05/24 04:07:12  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.51  2007/04/26 03:06:22  steve
  *  Rework hname_t to use perm_strings.
  *

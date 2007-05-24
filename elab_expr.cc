@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.124 2007/04/01 05:28:26 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.125 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -322,7 +322,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	   not lead to executable code but takes the single parameter
 	   and makes it into a signed expression. No bits are changed,
 	   it just changes the interpretation. */
-      if (strcmp(path_.peek_name(0), "$signed") == 0) {
+      if (strcmp(peek_tail_name(path_), "$signed") == 0) {
 	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
 		  cerr << get_line() << ": error: The $signed() function "
 		       << "takes exactly one(1) argument." << endl;
@@ -336,7 +336,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	    return sub;
       }
       /* add $unsigned to match $signed */
-      if (strcmp(path_.peek_name(0), "$unsigned") == 0) {
+      if (strcmp(peek_tail_name(path_), "$unsigned") == 0) {
 	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
 		  cerr << get_line() << ": error: The $unsigned() function "
 		       << "takes exactly one(1) argument." << endl;
@@ -354,8 +354,8 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	   the bit width of the sub-expression. The value of the
 	   sub-expression is not used, so the expression itself can be
 	   deleted. */
-      if ((strcmp(path_.peek_name(0), "$sizeof") == 0)
-	  || (strcmp(path_.peek_name(0), "$bits") == 0)) {
+      if ((strcmp(peek_tail_name(path_), "$sizeof") == 0)
+	  || (strcmp(peek_tail_name(path_), "$bits") == 0)) {
 	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
 		  cerr << get_line() << ": error: The $bits() function "
 		       << "takes exactly one(1) argument." << endl;
@@ -363,7 +363,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 		  return 0;
 	    }
 
-	    if (strcmp(path_.peek_name(0), "$sizeof") == 0)
+	    if (strcmp(peek_tail_name(path_), "$sizeof") == 0)
 		  cerr << get_line() << ": warning: $sizeof is deprecated."
 		       << " Use $bits() instead." << endl;
 
@@ -382,7 +382,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	   a single bit flag -- 1 if the expression is signed, 0
 	   otherwise. The subexpression is elaborated but not
 	   evaluated. */
-      if (strcmp(path_.peek_name(0), "$is_signed") == 0) {
+      if (strcmp(peek_tail_name(path_), "$is_signed") == 0) {
 	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
 		  cerr << get_line() << ": error: The $is_signed() function "
 		       << "takes exactly one(1) argument." << endl;
@@ -405,7 +405,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	/* Get the return type of the system function by looking it up
 	   in the sfunc_table. */
       const struct sfunc_return_type*sfunc_info
-	    = lookup_sys_func(path_.peek_name(0));
+	    = lookup_sys_func(peek_tail_name(path_));
 
       ivl_variable_type_t sfunc_type = sfunc_info->type;
       unsigned wid = sfunc_info->wid;
@@ -423,7 +423,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
       if ((nparms == 1) && (parms_[0] == 0))
 	    nparms = 0;
 
-      NetESFunc*fun = new NetESFunc(path_.peek_name(0), sfunc_type,
+      NetESFunc*fun = new NetESFunc(peek_tail_name(path_), sfunc_type,
 				    wid, nparms);
       if (sfunc_info->signed_flag)
 	    fun->cast_signed(true);
@@ -455,7 +455,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 
       if (missing_parms > 0) {
 	    cerr << get_line() << ": error: The function "
-		 << path_.peek_name(0)
+		 << peek_tail_name(path_)
 		 << " has been called with empty parameters." << endl;
 	    cerr << get_line() << ":      : Verilog doesn't allow "
 		 << "passing empty parameters to functions." << endl;
@@ -468,7 +468,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					int expr_wid, bool) const
 {
-      if (path_.peek_name(0)[0] == '$')
+      if (peek_tail_name(path_)[0] == '$')
 	    return elaborate_sfunc_(des, scope);
 
       NetFuncDef*def = des->find_function(scope, path_);
@@ -620,33 +620,38 @@ NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope, int, bool) const
 bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
 			       long&msb, long&lsb) const
 {
-      assert(lsb_ != 0);
-      assert(msb_ != 0);
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
+
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.sel == index_component_t::SEL_PART);
+      ivl_assert(*this, index_tail.msb && index_tail.lsb);
 
 	/* This handles part selects. In this case, there are
 	   two bit select expressions, and both must be
 	   constant. Evaluate them and pass the results back to
 	   the caller. */
-      NetExpr*lsb_ex = elab_and_eval(des, scope, lsb_, -1);
+      NetExpr*lsb_ex = elab_and_eval(des, scope, index_tail.lsb, -1);
       NetEConst*lsb_c = dynamic_cast<NetEConst*>(lsb_ex);
       if (lsb_c == 0) {
-	    cerr << lsb_->get_line() << ": error: "
+	    cerr << index_tail.lsb->get_line() << ": error: "
 		  "Part select expressions must be constant."
 		 << endl;
-	    cerr << lsb_->get_line() << ":      : This lsb expression "
-		  "violates the rule: " << *lsb_ << endl;
+	    cerr << index_tail.lsb->get_line() << ":      : "
+		  "This lsb expression violates the rule: "
+		 << *index_tail.lsb << endl;
 	    des->errors += 1;
 	    return false;
       }
 
-      NetExpr*msb_ex = elab_and_eval(des, scope, msb_, -1);
+      NetExpr*msb_ex = elab_and_eval(des, scope, index_tail.msb, -1);
       NetEConst*msb_c = dynamic_cast<NetEConst*>(msb_ex);
       if (msb_c == 0) {
-	    cerr << msb_->get_line() << ": error: "
+	    cerr << index_tail.msb->get_line() << ": error: "
 		  "Part select expressions must be constant."
 		 << endl;
-	    cerr << msb_->get_line() << ":      : This msb expression "
-		  "violates the rule: " << *msb_ << endl;
+	    cerr << index_tail.msb->get_line() << ":      : This msb expression "
+		  "violates the rule: " << *index_tail.msb << endl;
 	    des->errors += 1;
 	    return false;
       }
@@ -662,13 +667,18 @@ bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
 bool PEIdent::calculate_up_do_width_(Design*des, NetScope*scope,
 				     unsigned long&wid) const
 {
-      assert(lsb_);
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
+
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.lsb && index_tail.msb);
+
       bool flag = true;
 
 	/* Calculate the width expression (in the lsb_ position)
 	   first. If the expression is not constant, error but guess 1
 	   so we can keep going and find more errors. */
-      NetExpr*wid_ex = elab_and_eval(des, scope, lsb_, -1);
+      NetExpr*wid_ex = elab_and_eval(des, scope, index_tail.lsb, -1);
       NetEConst*wid_c = dynamic_cast<NetEConst*>(wid_ex);
 
       if (wid_c == 0) {
@@ -695,30 +705,36 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 
       const NetExpr*ex1, *ex2;
 
-      symbol_search(des, scope, path_,
-					net, par, eve,
-					ex1, ex2);
+      symbol_search(des, scope, path_, net, par, eve, ex1, ex2);
 
       if (net != 0) {
+	    const name_component_t&name_tail = path_.back();
+	    index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
+	    if (!name_tail.index.empty())
+		  use_sel = name_tail.index.back().sel;
+
 	    unsigned use_width = net->vector_width();
-	    switch (sel_) {
-		case SEL_NONE:
+	    switch (use_sel) {
+		case index_component_t::SEL_NONE:
 		  break;
-		case SEL_PART:
+		case index_component_t::SEL_PART:
 		    { long msb, lsb;
 		      calculate_parts_(des, scope, msb, lsb);
 		      use_width = 1 + ((msb>lsb)? (msb-lsb) : (lsb-msb));
 		      break;
 		    }
-		case SEL_IDX_UP:
-		case SEL_IDX_DO:
+		case index_component_t::SEL_IDX_UP:
+		case index_component_t::SEL_IDX_DO:
 		    { unsigned long tmp = 0;
 		      calculate_up_do_width_(des, scope, tmp);
 		      use_width = tmp;
 		      break;
 		    }
+		case index_component_t::SEL_BIT:
+		  use_width = 1;
+		  break;
 		default:
-		  assert(0);
+		  ivl_assert(*this, 0);
 	    }
 	    return use_width;
       }
@@ -774,9 +790,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	// Hmm... maybe this is a genvar? This is only possible while
 	// processing generate blocks, but then the genvar_tmp will be
 	// set in the scope.
-      if (path_.component_count() == 1
+      if (path_.size() == 1
 	  && scope->genvar_tmp.str()
-	  && strcmp(path_.peek_name(0), scope->genvar_tmp) == 0) {
+	  && strcmp(peek_tail_name(path_), scope->genvar_tmp) == 0) {
 	    verinum val (scope->genvar_tmp_val);
 	    NetEConst*tmp = new NetEConst(val);
 	    tmp->set_line(*this);
@@ -790,8 +806,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       if (gn_specify_blocks_flag) {
 	    map<perm_string,NetScope::spec_val_t>::const_iterator specp;
-	    perm_string key = perm_string::literal(path_.peek_name(0));
-	    if (path_.component_count() == 1
+	    perm_string key = peek_tail_name(path_);
+	    if (path_.size() == 1
 		&& ((specp = scope->specparams.find(key)) != scope->specparams.end())) {
 		  NetScope::spec_val_t value = (*specp).second;
 		  NetExpr*tmp = 0;
@@ -814,8 +830,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	// Finally, if this is a scope name, then return that. Look
 	// first to see if this is a name of a local scope. Failing
 	// that, search globally for a hierarchical name.
-      if ((path_.peek_name(1) == 0))
-	    if (NetScope*nsc = scope->child(path_.peek_name(0))) {
+      if ((path_.size() == 1))
+	    if (NetScope*nsc = scope->child(peek_tail_name(path_))) {
 		  NetEScope*tmp = new NetEScope(nsc);
 		  tmp->set_line(*this);
 		  return tmp;
@@ -854,13 +870,18 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 				       const NetExpr*par_msb,
 				       const NetExpr*par_lsb) const
 {
-      NetExpr*tmp;
+      NetExpr*tmp = par->dup_expr();
 
-      tmp = par->dup_expr();
+      const name_component_t&name_tail = path_.back();
+      index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
+      if (!name_tail.index.empty())
+	    use_sel = name_tail.index.back().sel;
 
-      if (sel_ == SEL_PART) {
-	    assert(msb_ && lsb_);
-	    assert(idx_.empty());
+      if (use_sel == index_component_t::SEL_PART) {
+	    ivl_assert(*this, !name_tail.index.empty());
+	    const index_component_t&index_tail = name_tail.index.back();
+	    ivl_assert(*this, index_tail.msb);
+	    ivl_assert(*this, index_tail.lsb);
 
 	      /* If the identifier has a part select, we support
 		 it by pulling the right bits out and making a
@@ -868,8 +889,8 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 		 lsb of a parameter is 0 and the msb is the
 		 width of the parameter. */
 
-	    verinum*lsn = lsb_->eval_const(des, scope);
-	    verinum*msn = msb_->eval_const(des, scope);
+	    verinum*lsn = index_tail.lsb->eval_const(des, scope);
+	    verinum*msn = index_tail.msb->eval_const(des, scope);
 	    if ((lsn == 0) || (msn == 0)) {
 		  cerr << get_line() << ": error: "
 			"Part select expressions must be "
@@ -926,17 +947,19 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 	    delete tmp;
 	    tmp = new NetEConst(result);
 
-      } else if (sel_ == SEL_IDX_UP || sel_ == SEL_IDX_DO) {
-	    assert(msb_);
-	    assert(lsb_);
-	    assert(idx_.empty());
+      } else if (use_sel == index_component_t::SEL_IDX_UP || use_sel == index_component_t::SEL_IDX_DO) {
+
+	    ivl_assert(*this, !name_tail.index.empty());
+	    const index_component_t&index_tail = name_tail.index.back();
+	    ivl_assert(*this, index_tail.msb);
+	    ivl_assert(*this, index_tail.lsb);
 
 	      /* Get and evaluate the width of the index
 		 select. This must be constant. */
-	    NetExpr*wid_ex = elab_and_eval(des, scope, lsb_, -1);
+	    NetExpr*wid_ex = elab_and_eval(des, scope, index_tail.lsb, -1);
 	    NetEConst*wid_ec = dynamic_cast<NetEConst*> (wid_ex);
 	    if (wid_ec == 0) {
-		  cerr << lsb_->get_line() << ": error: "
+		  cerr << index_tail.lsb->get_line() << ": error: "
 		       << "Second expression of indexed part select "
 		       << "most be constant." << endl;
 		  des->errors += 1;
@@ -945,12 +968,12 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 
 	    unsigned wid = wid_ec->value().as_ulong();
 
-	    NetExpr*idx_ex = elab_and_eval(des, scope, msb_, -1);
+	    NetExpr*idx_ex = elab_and_eval(des, scope, index_tail.msb, -1);
 	    if (idx_ex == 0) {
 		  return 0;
 	    }
 
-	    if (sel_ == SEL_IDX_DO && wid > 1) {
+	    if (use_sel == index_component_t::SEL_IDX_DO && wid > 1) {
 		  idx_ex = make_add_expr(idx_ex, 1-(long)wid);
 	    }
 
@@ -959,16 +982,16 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 	    tmp = new NetESelect(tmp, idx_ex, wid);
 
 
-      } else if (!idx_.empty()) {
-	    assert(!msb_);
-	    assert(!lsb_);
-	    assert(idx_.size() == 1);
-	    assert(sel_ == SEL_NONE);
+      } else if (use_sel == index_component_t::SEL_BIT) {
+	    ivl_assert(*this, !name_tail.index.empty());
+	    const index_component_t&index_tail = name_tail.index.back();
+	    ivl_assert(*this, index_tail.msb);
+	    ivl_assert(*this, !index_tail.lsb);
 
 	      /* Handle the case where a parameter has a bit
 		 select attached to it. Generate a NetESelect
 		 object to select the bit as desired. */
-	    NetExpr*mtmp = idx_[0]->elaborate_expr(des, scope, -1,false);
+	    NetExpr*mtmp = index_tail.msb->elaborate_expr(des, scope, -1,false);
 	    if (! dynamic_cast<NetEConst*>(mtmp)) {
 		  NetExpr*re = mtmp->eval_tree();
 		  if (re) {
@@ -1045,8 +1068,7 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 		 NetEConstParam if possible. */
 	    NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp);
 	    if (ctmp != 0) {
-		  perm_string name
-			= lex_strings.make(path_.peek_tail_name());
+		  perm_string name = peek_tail_name(path_);
 		  NetEConstParam*ptmp
 			= new NetEConstParam(found_in, name, ctmp->value());
 		  delete tmp;
@@ -1065,17 +1087,32 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 					   NetNet*net, NetScope*found_in,
 					   bool sys_task_arg) const
 {
-      if (idx_.empty() && !sys_task_arg) {
+      const name_component_t&name_tail = path_.back();
+
+      if (name_tail.index.empty() && !sys_task_arg) {
 	    cerr << get_line() << ": error: Array " << path()
 		 << " Needs an array index here." << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
-      ivl_assert(*this, sys_task_arg || !idx_.empty());
-      NetExpr*word_index = idx_.empty()
+      index_component_t index_front;
+      if (! name_tail.index.empty()) {
+	    index_front = name_tail.index.front();
+	    ivl_assert(*this, index_front.sel != index_component_t::SEL_NONE);
+	    if (index_front.sel != index_component_t::SEL_BIT) {
+		  cerr << get_line() << ": error: Array " << path_
+		       << " cannot be indexed by a range." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    ivl_assert(*this, index_front.msb);
+	    ivl_assert(*this, !index_front.lsb);
+      }
+
+      NetExpr*word_index = index_front.sel == index_component_t::SEL_NONE
 	    ? 0
-	    : elab_and_eval(des, scope, idx_[0], -1);
+	    : elab_and_eval(des, scope, index_front.msb, -1);
       if (word_index == 0 && !sys_task_arg)
 	    return 0;
 
@@ -1106,15 +1143,22 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
       NetESignal*res = new NetESignal(net, word_index);
       res->set_line(*this);
 
-      if (sel_ == SEL_PART)
+	// Detect that the word has a part select as well.
+
+      index_component_t::ctype_t word_sel = index_component_t::SEL_NONE;
+      if (name_tail.index.size() > 1)
+	    word_sel = name_tail.index.back().sel;
+
+      if (word_sel == index_component_t::SEL_PART)
 	    return elaborate_expr_net_part_(des, scope, res, found_in);
 
-      if (sel_ == SEL_IDX_UP)
+      if (word_sel == index_component_t::SEL_IDX_UP)
 	    return elaborate_expr_net_idx_up_(des, scope, res, found_in);
 
-      if (sel_ == SEL_IDX_DO)
+      if (word_sel == index_component_t::SEL_IDX_DO)
 	    return elaborate_expr_net_idx_do_(des, scope, res, found_in);
 
+      ivl_assert(*this, word_sel == index_component_t::SEL_NONE);
       return res;
 }
 
@@ -1125,7 +1169,6 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 				      NetESignal*net, NetScope*found_in) const
 {
       long msv, lsv;
-      ivl_assert(*this, (idx_.empty()&& !net->word_index()) || (!idx_.empty()&& net->word_index()));
       bool flag = calculate_parts_(des, scope, msv, lsv);
       if (!flag)
 	    return 0;
@@ -1183,12 +1226,14 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 				      NetESignal*net, NetScope*found_in) const
 {
-      assert(lsb_ != 0);
-      assert(msb_ != 0);
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
 
-      ivl_assert(*this, (idx_.empty()&& !net->word_index()) || (!idx_.empty()&& net->word_index()));
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.lsb != 0);
+      ivl_assert(*this, index_tail.msb != 0);
 
-      NetExpr*base = elab_and_eval(des, scope, msb_, -1);
+      NetExpr*base = elab_and_eval(des, scope, index_tail.msb, -1);
 
       unsigned long wid = 0;
       calculate_up_do_width_(des, scope, wid);
@@ -1235,12 +1280,14 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 					   NetESignal*net, NetScope*found_in)const
 {
-      assert(lsb_ != 0);
-      assert(msb_ != 0);
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, ! name_tail.index.empty());
 
-      ivl_assert(*this, (idx_.empty()&& !net->word_index()) || (!idx_.empty()&& net->word_index()));
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.lsb != 0);
+      ivl_assert(*this, index_tail.msb != 0);
 
-      NetExpr*base = elab_and_eval(des, scope, msb_, -1);
+      NetExpr*base = elab_and_eval(des, scope, index_tail.msb, -1);
 
       unsigned long wid = 0;
       calculate_up_do_width_(des, scope, wid);
@@ -1284,11 +1331,14 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 				      NetESignal*net, NetScope*found_in) const
 {
-      assert(msb_ == 0);
-      assert(lsb_ == 0);
-      assert(idx_.size() == 1);
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
 
-      NetExpr*ex = elab_and_eval(des, scope, idx_[0], -1);
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.msb != 0);
+      ivl_assert(*this, index_tail.lsb == 0);
+
+      NetExpr*ex = elab_and_eval(des, scope, index_tail.msb, -1);
 
 	// If the bit select is constant, then treat it similar
 	// to the part select, so that I save the effort of
@@ -1358,29 +1408,30 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       NetESignal*node = new NetESignal(net);
       node->set_line(*this);
 
+      index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
+      if (! path_.back().index.empty())
+	    use_sel = path_.back().index.back().sel;
+
 	// If this is a part select of a signal, then make a new
 	// temporary signal that is connected to just the
 	// selected bits. The lsb_ and msb_ expressions are from
 	// the foo[msb:lsb] expression in the original.
-      if (sel_ == SEL_PART)
+      if (use_sel == index_component_t::SEL_PART)
 	    return elaborate_expr_net_part_(des, scope, node, found_in);
 
-      if (sel_ == SEL_IDX_UP)
+      if (use_sel == index_component_t::SEL_IDX_UP)
 	    return elaborate_expr_net_idx_up_(des, scope, node, found_in);
 
-      if (sel_ == SEL_IDX_DO)
+      if (use_sel == index_component_t::SEL_IDX_DO)
 	    return elaborate_expr_net_idx_do_(des, scope, node, found_in);
 
-      if (!idx_.empty())
+      if (use_sel == index_component_t::SEL_BIT)
 	    return elaborate_expr_net_bit_(des, scope, node, found_in);
 
 	// It's not anything else, so this must be a simple identifier
 	// expression with no part or bit select. Return the signal
 	// itself as the expression.
-      assert(sel_ == SEL_NONE);
-      assert(msb_ == 0);
-      assert(lsb_ == 0);
-      assert(idx_.empty());
+      assert(use_sel == index_component_t::SEL_NONE);
 
       return node;
 }
@@ -1633,6 +1684,10 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.125  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.124  2007/04/01 05:28:26  steve
  *  Get offsets into indexed part selects correct.
  *

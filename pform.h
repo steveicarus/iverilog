@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.90 2007/04/19 02:52:53 steve Exp $"
+#ident "$Id: pform.h,v 1.91 2007/05/24 04:07:12 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -261,7 +261,7 @@ extern void pform_set_localparam(perm_string name,
 				bool signed_flag,
 				svector<PExpr*>*range,
 				 PExpr*expr);
-extern void pform_set_defparam(const hname_t&name, PExpr*expr);
+extern void pform_set_defparam(const pform_name_t&name, PExpr*expr);
 
 /*
  * Functions related to specify blocks.
@@ -340,6 +340,10 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.91  2007/05/24 04:07:12  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.90  2007/04/19 02:52:53  steve
  *  Add support for -v flag in command file.
  *

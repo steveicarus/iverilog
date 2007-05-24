@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Statement.h,v 1.43 2007/03/05 05:59:10 steve Exp $"
+#ident "$Id: Statement.h,v 1.44 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include  <string>
@@ -173,10 +173,11 @@ class PBlock  : public Statement {
 class PCallTask  : public Statement {
 
     public:
-      explicit PCallTask(const hname_t&n, const svector<PExpr*>&parms);
+      explicit PCallTask(const pform_name_t&n, const svector<PExpr*>&parms);
+      explicit PCallTask(perm_string n, const svector<PExpr*>&parms);
       ~PCallTask();
 
-      const hname_t& path() const;
+      const pform_name_t& path() const;
 
       unsigned nparms() const { return parms_.count(); }
 
@@ -197,7 +198,7 @@ class PCallTask  : public Statement {
       NetProc* elaborate_sys(Design*des, NetScope*scope) const;
       NetProc* elaborate_usr(Design*des, NetScope*scope) const;
 
-      hname_t path_;
+      pform_name_t path_;
       svector<PExpr*> parms_;
 };
 
@@ -296,14 +297,14 @@ class PDelayStatement  : public Statement {
 class PDisable  : public Statement {
 
     public:
-      explicit PDisable(const hname_t&sc);
+      explicit PDisable(const pform_name_t&sc);
       ~PDisable();
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
 
     private:
-      hname_t scope_;
+      pform_name_t scope_;
 };
 
 /*
@@ -433,14 +434,14 @@ class PRelease  : public Statement {
 class PTrigger  : public Statement {
 
     public:
-      explicit PTrigger(const hname_t&ev);
+      explicit PTrigger(const pform_name_t&ev);
       ~PTrigger();
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
-      hname_t event_;
+      pform_name_t event_;
 };
 
 class PWhile  : public Statement {
@@ -460,6 +461,10 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.44  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.43  2007/03/05 05:59:10  steve
  *  Handle processes within generate loops.
  *

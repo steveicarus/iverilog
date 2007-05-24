@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.29 2007/03/08 05:30:03 steve Exp $"
+#ident "$Id: netmisc.h,v 1.30 2007/05/24 04:07:12 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -40,20 +40,20 @@
  * these values are set to 0.
  */
 extern NetScope* symbol_search(const Design*des,
-			       NetScope*start, hname_t path,
+			       NetScope*start, pform_name_t path,
 			       NetNet*&net,       /* net/reg */
 			       const NetExpr*&par,/* parameter */
 			       NetEvent*&eve,     /* named event */
 			       const NetExpr*&ex1, const NetExpr*&ex2);
 
 inline NetScope* symbol_search(const Design*des,
-			       NetScope*start, const hname_t&path,
+			       NetScope*start, const pform_name_t&path,
 			       NetNet*&net,       /* net/reg */
 			       const NetExpr*&par,/* parameter */
 			       NetEvent*&eve      /* named event */)
 {
       const NetExpr*ex1, *ex2;
-      return symbol_search(des, start, path, net, /*mem,*/ par, eve, ex1, ex2);
+      return symbol_search(des, start, path, net, par, eve, ex1, ex2);
 }
 
 /*
@@ -125,6 +125,10 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.30  2007/05/24 04:07:12  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.29  2007/03/08 05:30:03  steve
  *  Limit the calculated widths of constants.
  *

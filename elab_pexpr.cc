@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_pexpr.cc,v 1.26 2007/04/26 03:06:22 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.27 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -130,44 +130,51 @@ NetExpr*PEFNumber::elaborate_pexpr(Design*des, NetScope*scope) const
  */
 NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
 {
-      hname_t path = path_;
-      perm_string name = path.remove_tail_name();
+      pform_name_t path = path_;
+      name_component_t name_tail = path_.back();
+      path.pop_back();
 
       NetScope*pscope = scope;
-      if (path.peek_name(0))
+      if (path_.size() > 0)
 	    pscope = des->find_scope(scope, path);
 
       const NetExpr*ex_msb;
       const NetExpr*ex_lsb;
-      const NetExpr*ex = pscope->get_parameter(name, ex_msb, ex_lsb);
+      const NetExpr*ex = pscope->get_parameter(name_tail.name, ex_msb, ex_lsb);
       if (ex == 0) {
-	    cerr << get_line() << ": error: identifier ``" << path_ <<
+	    cerr << get_line() << ": error: identifier ``" << name_tail.name <<
 		  "'' is not a parameter in " << scope->name() << "." << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
-      NetExpr*res = new NetEParam(des, pscope, name);
+      NetExpr*res = new NetEParam(des, pscope, name_tail.name);
       res->set_line(*this);
       assert(res);
 
-      if (msb_ && lsb_) {
-	    assert(idx_.empty());
+      index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
+      if (!name_tail.index.empty())
+	    use_sel = name_tail.index.back().sel;
+
+      switch (use_sel) {
+	  case index_component_t::SEL_NONE:
+	    break;
+	  default:
+	  case index_component_t::SEL_PART:
 	    cerr << get_line() << ": sorry: Cannot part select "
 		  "bits of parameters." << endl;
 	    des->errors += 1;
+	    break;
 
-      } else if (!idx_.empty()) {
-	    assert(msb_==0);
-	    assert(lsb_==0);
-	    assert(idx_.size() == 1);
+	  case index_component_t::SEL_BIT:
 
 	      /* We have here a bit select. Insert a NetESelect node
 		 to handle it. */
-	    NetExpr*tmp = idx_[0]->elaborate_pexpr(des, scope);
+	    NetExpr*tmp = name_tail.index.back().msb->elaborate_pexpr(des, scope);
 	    if (tmp != 0) {
 		  res = new NetESelect(res, tmp, 1);
 	    }
+	    break;
       }
 
       return res;
@@ -233,6 +240,10 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.27  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.26  2007/04/26 03:06:22  steve
  *  Rework hname_t to use perm_strings.
  *

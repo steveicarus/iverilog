@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.42 2007/03/14 05:06:49 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.43 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -163,11 +163,17 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    return 0;
       }
 
-      assert(reg);
+      ivl_assert(*this, reg);
+
+      const name_component_t&name_tail = path_.back();
+
+      index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
+      if (!name_tail.index.empty())
+	    use_sel = name_tail.index.back().sel;
 
 	// This is the special case that the l-value is an entire
 	// memory. This is, in fact, an error.
-      if (reg->array_dimensions() > 0 && idx_.size() == 0) {
+      if (reg->array_dimensions() > 0 && name_tail.index.empty()) {
 	    cerr << get_line() << ": error: Cannot assign to array "
 		 << path_ << ". Did you forget a word index?" << endl;
 	    des->errors += 1;
@@ -177,19 +183,19 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       if (reg->array_dimensions() > 0)
 	    return elaborate_lval_net_word_(des, scope, reg);
 
-      if (sel_ == SEL_PART) {
+      if (use_sel == index_component_t::SEL_PART) {
 	    NetAssign_*lv = new NetAssign_(reg);
 	    elaborate_lval_net_part_(des, scope, lv);
 	    return lv;
       }
 
-      if (sel_ == SEL_IDX_UP) {
+      if (use_sel == index_component_t::SEL_IDX_UP) {
 	    NetAssign_*lv = new NetAssign_(reg);
 	    elaborate_lval_net_idx_up_(des, scope, lv);
 	    return lv;
       }
 
-      if (sel_ == SEL_IDX_DO) {
+      if (use_sel == index_component_t::SEL_IDX_DO) {
 	    NetAssign_*lv = new NetAssign_(reg);
 	    elaborate_lval_net_idx_do_(des, scope, lv);
 	    return lv;
@@ -208,12 +214,14 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    return 0;
       }
 
-      ivl_assert(*this, msb_ == 0);
-      ivl_assert(*this, lsb_ == 0);
       long msb, lsb;
       NetExpr*mux;
 
-      if (! idx_.empty()) {
+      if (use_sel == index_component_t::SEL_BIT) {
+
+	    const index_component_t&index_tail = name_tail.index.back();
+	    ivl_assert(*this, index_tail.msb != 0);
+	    ivl_assert(*this, index_tail.lsb == 0);
 
 	      /* If there is only a single select expression, it is a
 		 bit select. Evaluate the constant value and treat it
@@ -221,9 +229,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 		 expression it not constant, then return the
 		 expression as a mux. */
 
-	    ivl_assert(*this, idx_.size() == 1);
-
-	    NetExpr*index_expr = elab_and_eval(des, scope, idx_[0], -1);
+	    NetExpr*index_expr = elab_and_eval(des, scope, index_tail.msb, -1);
 
 	    if (NetEConst*index_con = dynamic_cast<NetEConst*> (index_expr)) {
 		  msb = index_con->value().as_long();
@@ -311,9 +317,15 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 					      NetScope*scope,
 					      NetNet*reg) const
 {
-      assert(idx_.size() == 1);
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
 
-      NetExpr*word = elab_and_eval(des, scope, idx_[0], -1);
+      const index_component_t&index_head = name_tail.index.front();
+      ivl_assert(*this, index_head.sel == index_component_t::SEL_BIT);
+      ivl_assert(*this, index_head.msb != 0);
+      ivl_assert(*this, index_head.lsb == 0);
+
+      NetExpr*word = elab_and_eval(des, scope, index_head.msb, -1);
 
 	// If there is a non-zero base to the memory, then build an
 	// expression to calculate the canonical address.
@@ -348,13 +360,17 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 
 	/* An array word may also have part selects applied to them. */
 
-      if (sel_ == SEL_PART)
+      index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
+      if (name_tail.index.size() > 1)
+	    use_sel = name_tail.index.back().sel;
+
+      if (use_sel == index_component_t::SEL_PART)
 	    elaborate_lval_net_part_(des, scope, lv);
 
-      if (sel_ == SEL_IDX_UP)
+      if (use_sel == index_component_t::SEL_IDX_UP)
 	    elaborate_lval_net_idx_up_(des, scope, lv);
 
-      if (sel_ == SEL_IDX_DO)
+      if (use_sel == index_component_t::SEL_IDX_DO)
 	    elaborate_lval_net_idx_do_(des, scope, lv);
 
       return lv;
@@ -417,8 +433,12 @@ bool PEIdent::elaborate_lval_net_idx_up_(Design*des,
 					 NetScope*scope,
 					 NetAssign_*lv) const
 {
-      assert(lsb_);
-      assert(msb_);
+      const name_component_t&name_tail = path_.back();;
+      ivl_assert(*this, !name_tail.index.empty());
+
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.msb != 0);
+      ivl_assert(*this, index_tail.lsb != 0);
 
       NetNet*reg = lv->sig();
       assert(reg);
@@ -436,7 +456,7 @@ bool PEIdent::elaborate_lval_net_idx_up_(Design*des,
       unsigned long wid;
       calculate_up_do_width_(des, scope, wid);
 
-      NetExpr*base = elab_and_eval(des, scope, msb_, -1);
+      NetExpr*base = elab_and_eval(des, scope, index_tail.msb, -1);
 
 	/* Correct the mux for the range of the vector. */
       if (reg->msb() < reg->lsb())
@@ -457,8 +477,13 @@ bool PEIdent::elaborate_lval_net_idx_do_(Design*des,
 					 NetScope*scope,
 					 NetAssign_*lv) const
 {
-      assert(lsb_);
-      assert(msb_);
+      const name_component_t&name_tail = path_.back();;
+      ivl_assert(*this, !name_tail.index.empty());
+
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.msb != 0);
+      ivl_assert(*this, index_tail.lsb != 0);
+
       cerr << get_line() << ": internal error: don't know how to "
 	    "deal with SEL_IDX_DO in lval?" << endl;
       des->errors += 1;
@@ -475,6 +500,10 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.43  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.42  2007/03/14 05:06:49  steve
  *  Replace some asserts with ivl_asserts.
  *

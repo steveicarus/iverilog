@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.cc,v 1.38 2006/10/30 05:44:49 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.39 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -93,13 +93,26 @@ PEBShift::~PEBShift()
 {
 }
 
-PECallFunction::PECallFunction(const hname_t&n, const svector<PExpr *> &parms)
+PECallFunction::PECallFunction(const pform_name_t&n, const svector<PExpr *> &parms)
 : path_(n), parms_(parms)
 {
 }
 
-PECallFunction::PECallFunction(const hname_t&n)
-: path_(n)
+static pform_name_t pn_from_ps(perm_string n)
+{
+      name_component_t tmp_name (n);
+      pform_name_t tmp;
+      tmp.push_back(tmp_name);
+      return tmp;
+}
+
+PECallFunction::PECallFunction(perm_string n, const svector<PExpr*>&parms)
+: path_(pn_from_ps(n)), parms_(parms)
+{
+}
+
+PECallFunction::PECallFunction(perm_string n)
+: path_(pn_from_ps(n))
 {
 }
 
@@ -165,33 +178,32 @@ bool PEFNumber::is_constant(Module*) const
       return true;
 }
 
-PEIdent::PEIdent(const hname_t&s)
-: path_(s), msb_(0), lsb_(0), sel_(SEL_NONE), idx_(0)
+PEIdent::PEIdent(const pform_name_t&that)
+: path_(that)
 {
+}
+
+PEIdent::PEIdent(perm_string s)
+{
+      path_.push_back(name_component_t(s));
 }
 
 PEIdent::~PEIdent()
 {
 }
 
-const hname_t& PEIdent::path() const
-{
-      return path_;
-}
-
 /*
  * An identifier can be in a constant expression if (and only if) it is
  * a parameter.
+ *
+ * NOTE: This test does not work if the name is hierarchical!
  */
 bool PEIdent::is_constant(Module*mod) const
 {
       if (mod == 0) return false;
 
-	/* This is a work-around for map not matching < even when
-	   there is a perm_string operator that can do the comprare.
-
-	   The real fix is to make the path_ carry perm_strings. */
-      perm_string tmp = perm_string::literal(path_.peek_name(0));
+	/*  */
+      perm_string tmp = path_.back().name;
 
       { map<perm_string,Module::param_expr_t>::const_iterator cur;
         cur = mod->parameters.find(tmp);
@@ -288,6 +300,10 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.39  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.38  2006/10/30 05:44:49  steve
  *  Expression widths with unsized literals are pseudo-infinite width.
  *

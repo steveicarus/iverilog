@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.378 2007/04/26 03:06:22 steve Exp $"
+#ident "$Id: netlist.h,v 1.379 2007/05/24 04:07:12 steve Exp $"
 #endif
 
 /*
@@ -33,6 +33,7 @@
 # include  <list>
 # include  <vector>
 # include  "ivl_target.h"
+# include  "pform_types.h"
 # include  "config.h"
 # include  "verinum.h"
 # include  "verireal.h"
@@ -3291,7 +3292,7 @@ class NetScope : public Attrib {
 	   assignments from the scope pass to the parameter evaluation
 	   step. After that, it is not used. */
 
-      map<hname_t,NetExpr*>defparams;
+      map<pform_name_t,NetExpr*>defparams;
 
     public:
 	/* After everything is all set up, the code generators like
@@ -3391,8 +3392,8 @@ class Design {
 	   path is taken as an absolute scope name. Otherwise, the
 	   scope is located starting at the passed scope and working
 	   up if needed. */
-      NetScope* find_scope(const hname_t&path) const;
-      NetScope* find_scope(NetScope*, const hname_t&path) const;
+      NetScope* find_scope(const pform_name_t&path) const;
+      NetScope* find_scope(NetScope*, const pform_name_t&path) const;
 
 	// PARAMETERS
 
@@ -3404,15 +3405,15 @@ class Design {
 	   this method, unlike the NetScope::find_signal method,
 	   handles global name binding. */
 
-      NetNet*find_signal(NetScope*scope, hname_t path);
+      NetNet*find_signal(NetScope*scope, pform_name_t path);
 
 	// Functions
-      NetFuncDef* find_function(NetScope*scope, const hname_t&key);
-      NetFuncDef* find_function(const hname_t&path);
+      NetFuncDef* find_function(NetScope*scope, const pform_name_t&key);
+      NetFuncDef* find_function(const pform_name_t&path);
 
 	// Tasks
-      NetScope* find_task(NetScope*scope, const hname_t&name);
-      NetScope* find_task(const hname_t&key);
+      NetScope* find_task(NetScope*scope, const pform_name_t&name);
+      NetScope* find_task(const pform_name_t&key);
 
 	// NODES
       void add_node(NetNode*);
@@ -3500,6 +3501,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.379  2007/05/24 04:07:12  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.378  2007/04/26 03:06:22  steve
  *  Rework hname_t to use perm_strings.
  *

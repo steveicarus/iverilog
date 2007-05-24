@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.236 2007/04/26 03:06:22 steve Exp $"
+#ident "$Id: parse.y,v 1.237 2007/05/24 04:07:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -98,6 +98,7 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 	   strdup. They can be put into lists with the texts type. */
       char*text;
       list<perm_string>*perm_strings;
+      pform_name_t*pform_name;
 
       hname_t*hier;
 
@@ -122,8 +123,6 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
       svector<PExpr*>*exprs;
 
       svector<PEEvent*>*event_expr;
-
-      PEIdent*indexed_identifier;
 
       NetNet::Type nettype;
       PGBuiltin::Type gatetype;
@@ -191,7 +190,6 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %type <statement> udp_initial udp_init_opt
 %type <expr>    udp_initial_expr_opt
 
-%type <hier> identifier
 %type <text> register_variable net_variable
 %type <perm_strings> register_variable_list net_variable_list list_of_identifiers
 
@@ -217,13 +215,13 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %type <gate>  gate_instance
 %type <gates> gate_instance_list
 
+%type <pform_name> heirarchy_identifier
 %type <expr>  expression expr_primary
 %type <expr>  lpvalue
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
 %type <exprs> expression_list_with_nuls expression_list_proper
 %type <exprs> cont_assign cont_assign_list
-%type <indexed_identifier> indexed_identifier
 
 %type <exprs> range range_opt
 %type <nettype>  net_type var_type net_type_opt
@@ -492,7 +490,7 @@ charge_strength_opt
 	;
 
 defparam_assign
-	: identifier '=' expression
+	: heirarchy_identifier '=' expression
 		{ PExpr*tmp = $3;
 		  if (!pform_expression_is_constant(tmp)) {
 			yyerror(@3, "error: parameter value "
@@ -605,7 +603,7 @@ delay_value_simple
 		  }
 		}
 	| IDENTIFIER
-                { PEIdent*tmp = new PEIdent(hname_t(lex_strings.make($1)));
+                { PEIdent*tmp = new PEIdent(lex_strings.make($1));
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
@@ -671,16 +669,14 @@ dr_strength1
 	;
 
 event_control
-	: '@' identifier
+	: '@' heirarchy_identifier
 		{ PEIdent*tmpi = new PEIdent(*$2);
-		  tmpi->set_file(@2.text);
-		  tmpi->set_lineno(@2.first_line);
-		  delete $2;
 		  PEEvent*tmpe = new PEEvent(PEEvent::ANYEDGE, tmpi);
 		  PEventStatement*tmps = new PEventStatement(tmpe);
 		  tmps->set_file(@1.text);
 		  tmps->set_lineno(@1.first_line);
 		  $$ = tmps;
+		  delete $2;
 		}
 	| '@' '(' event_expression_list ')'
 		{ PEventStatement*tmp = new PEventStatement(*$3);
@@ -1034,53 +1030,29 @@ expr_primary
 		}
 	| SYSTEM_IDENTIFIER
                 { perm_string tn = lex_strings.make($1);
-		  PECallFunction*tmp = new PECallFunction(hname_t(tn));
+		  PECallFunction*tmp = new PECallFunction(tn);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		  delete $1;
 		}
 
-  /* The indexed_identifier rule matches simple identifiers as well as
-     indexed arrays. Part selects are handled below. */
+  /* The heirarchy_identifier rule matches simple identifiers as well as
+     indexed arrays and part selects */
 
-	| indexed_identifier
-		{ PEIdent*tmp = $1;
-		  $$ = tmp;
-		}
-
-  /* There are 3 kinds of part selects. The basic part select has the
-     usual [M:L] syntax. The indexed part selects use +: or -: in
-     place of the : in the basic part select, and the first expression
-     is not limited to constant values. */
-
-	| indexed_identifier '[' expression ':' expression ']'
-		{ PEIdent*tmp = $1;
-		  tmp->msb_ = $3;
-		  tmp->lsb_ = $5;
-		  tmp->sel_ = PEIdent::SEL_PART;
-		  $$ = tmp;
-		}
-	| indexed_identifier '[' expression K_PO_POS expression ']'
-		{ PEIdent*tmp = $1;
-		  tmp->msb_ = $3;
-		  tmp->lsb_ = $5;
-		  tmp->sel_ = PEIdent::SEL_IDX_UP;
-		  $$ = tmp;
-		}
-	| indexed_identifier '[' expression K_PO_NEG expression ']'
-		{ PEIdent*tmp = $1;
-		  tmp->msb_ = $3;
-		  tmp->lsb_ = $5;
-		  tmp->sel_ = PEIdent::SEL_IDX_DO;
-		  $$ = tmp;
-		}
+    | heirarchy_identifier
+        { PEIdent*tmp = new PEIdent(*$1);
+	  tmp->set_file(@1.text);
+	  tmp->set_lineno(@1.first_line);
+	  $$ = tmp;
+	  delete $1;
+	}
 
   /* An identifer followed by an expression list in parentheses is a
      function call. If a system identifier, then a system function
      call. */
 
-	| identifier '(' expression_list_proper ')'
+	| heirarchy_identifier '(' expression_list_proper ')'
                 { PECallFunction*tmp = new PECallFunction(*$1, *$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -1089,7 +1061,7 @@ expr_primary
 		}
 	| SYSTEM_IDENTIFIER '(' expression_list_proper ')'
                 { perm_string tn = lex_strings.make($1);
-		  PECallFunction*tmp = new PECallFunction(hname_t(tn), *$3);
+		  PECallFunction*tmp = new PECallFunction(tn, *$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
@@ -1345,39 +1317,61 @@ gatetype
 
   /* A general identifier is a hierarchical name, with the right most
      name the base of the identifier. This rule builds up a
-     hierarchical name from left to right, forming a list of names. */
-identifier
-	: IDENTIFIER
-                { $$ = new hname_t(lex_strings.make($1));
-		  delete $1;
-		}
-	| identifier '.' IDENTIFIER
-		{ hname_t * tmp = $1;
-		  tmp->append(lex_strings.make($3));
-		  delete $3;
-		  $$ = tmp;
-		}
-	;
+     hierarchical name from the left to the right, forming a list of
+     names. */
 
-  /* An indexed_identifier is an identifier with a bit-select
-     expression. This bit select may be an array index or bit index,
-     to be sorted out later. */
-indexed_identifier
-	: identifier
-		{ PEIdent*tmp = new PEIdent(*$1);
-		  tmp->sel_ = PEIdent::SEL_NONE;
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  delete $1;
-		  $$ = tmp;
-		}
-	| indexed_identifier '[' expression ']'
-		{ PEIdent*tmp = $1;
-		  tmp->sel_ = PEIdent::SEL_NONE;
-		  tmp->idx_.push_back($3);
-		  $$ = tmp;
-		}
-        ;
+heirarchy_identifier
+    : IDENTIFIER
+        { $$ = new pform_name_t;
+	  $$->push_back(name_component_t(lex_strings.make($1)));
+	  delete $1;
+	}
+    | heirarchy_identifier '.' IDENTIFIER
+        { pform_name_t * tmp = $1;
+	  tmp->push_back(name_component_t(lex_strings.make($3)));
+	  delete $3;
+	  $$ = tmp;
+	}
+    | heirarchy_identifier '[' expression ']'
+        { pform_name_t * tmp = $1;
+	  name_component_t&tail = tmp->back();
+	  index_component_t itmp;
+	  itmp.sel = index_component_t::SEL_BIT;
+	  itmp.msb = $3;
+	  tail.index.push_back(itmp);
+	  $$ = tmp;
+	}
+    | heirarchy_identifier '[' expression ':' expression ']'
+        { pform_name_t * tmp = $1;
+	  name_component_t&tail = tmp->back();
+	  index_component_t itmp;
+	  itmp.sel = index_component_t::SEL_PART;
+	  itmp.msb = $3;
+	  itmp.lsb = $5;
+	  tail.index.push_back(itmp);
+	  $$ = tmp;
+	}
+    | heirarchy_identifier '[' expression K_PO_POS expression ']'
+        { pform_name_t * tmp = $1;
+	  name_component_t&tail = tmp->back();
+	  index_component_t itmp;
+	  itmp.sel = index_component_t::SEL_IDX_UP;
+	  itmp.msb = $3;
+	  itmp.lsb = $5;
+	  tail.index.push_back(itmp);
+	  $$ = tmp;
+	}
+    | heirarchy_identifier '[' expression K_PO_NEG expression ']'
+        { pform_name_t * tmp = $1;
+	  name_component_t&tail = tmp->back();
+	  index_component_t itmp;
+	  itmp.sel = index_component_t::SEL_IDX_DO;
+	  itmp.msb = $3;
+	  itmp.lsb = $5;
+	  tail.index.push_back(itmp);
+	  $$ = tmp;
+	}
+    ;
 
   /* This is a list of identifiers. The result is a list of strings,
      each one of the identifiers in the list. These are simple,
@@ -1552,39 +1546,21 @@ signed_opt : K_signed { $$ = true; } | {$$ = false; } ;
      assignments. It is more limited then the general expr_primary
      rule to reflect the rules for assignment l-values. */
 lpvalue
-	: indexed_identifier
-		{ PEIdent*tmp = $1;
-		  $$ = tmp;
-		}
-	| indexed_identifier '[' expression ':' expression ']'
-		{ PEIdent*tmp = $1;
-		  tmp->msb_ = $3;
-		  tmp->lsb_ = $5;
-		  tmp->sel_ = PEIdent::SEL_PART;
-		  $$ = tmp;
-		}
-	| indexed_identifier '[' expression K_PO_POS expression ']'
-		{ PEIdent*tmp = $1;
-		  tmp->msb_ = $3;
-		  tmp->lsb_ = $5;
-		  tmp->sel_ = PEIdent::SEL_IDX_UP;
-		  $$ = tmp;
-		}
-	| indexed_identifier '[' expression K_PO_NEG expression ']'
-		{ PEIdent*tmp = $1;
-		  tmp->msb_ = $3;
-		  tmp->lsb_ = $5;
-		  tmp->sel_ = PEIdent::SEL_IDX_DO;
-		  $$ = tmp;
-		}
-	| '{' expression_list_proper '}'
-		{ PEConcat*tmp = new PEConcat(*$2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  delete $2;
-		  $$ = tmp;
-		}
-	;
+    : heirarchy_identifier
+        { PEIdent*tmp = new PEIdent(*$1);
+	  tmp->set_file(@1.text);
+	  tmp->set_lineno(@1.first_line);
+	  $$ = tmp;
+	  delete $1;
+	}
+    | '{' expression_list_proper '}'
+	{ PEConcat*tmp = new PEConcat(*$2);
+	  tmp->set_file(@1.text);
+	  tmp->set_lineno(@1.first_line);
+	  delete $2;
+	  $$ = tmp;
+	}
+    ;
 
 
   /* Continuous assignments have a list of individual assignments. */
@@ -2306,67 +2282,87 @@ port_opt
 
 port_reference
 
-	: IDENTIFIER
-		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($1, @1.text,
-						     @1.first_line);
-		  delete $1;
-		  $$ = ptmp;
-		}
+    : IDENTIFIER
+        { Module::port_t*ptmp;
+	  ptmp = pform_module_port_reference($1, @1.text, @1.first_line);
+	  delete $1;
+	  $$ = ptmp;
+	}
 
-	| IDENTIFIER '[' expression ':' expression ']'
-                { PEIdent*wtmp = new PEIdent(hname_t(lex_strings.make($1)));
-		  wtmp->set_file(@1.text);
-		  wtmp->set_lineno(@1.first_line);
-		  if (!pform_expression_is_constant($3)) {
-			yyerror(@3, "error: msb expression of "
-				"port part select must be constant.");
-		  }
-		  if (!pform_expression_is_constant($5)) {
-			yyerror(@5, "error: lsb expression of "
-				"port part select must be constant.");
-		  }
-		  wtmp->msb_ = $3;
-		  wtmp->lsb_ = $5;
-		  wtmp->sel_ = PEIdent::SEL_PART;
-		  Module::port_t*ptmp = new Module::port_t;
-		  ptmp->name = perm_string();
-		  ptmp->expr = svector<PEIdent*>(1);
-		  ptmp->expr[0] = wtmp;
-		  delete $1;
-		  $$ = ptmp;
-		}
+    | IDENTIFIER '[' expression ':' expression ']'
+        { if (!pform_expression_is_constant($3)) {
+		yyerror(@3, "error: msb expression of "
+			"port part select must be constant.");
+	  }
+	  if (!pform_expression_is_constant($5)) {
+		yyerror(@5, "error: lsb expression of "
+			"port part select must be constant.");
+	  }
+	  index_component_t itmp;
+	  itmp.sel = index_component_t::SEL_PART;
+	  itmp.msb = $3;
+	  itmp.lsb = $5;
 
-	| IDENTIFIER '[' expression ']'
-                { PEIdent*tmp = new PEIdent(hname_t(lex_strings.make($1)));
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  if (!pform_expression_is_constant($3)) {
-			yyerror(@3, "error: port bit select "
-				"must be constant.");
-		  }
-		  tmp->msb_ = $3;
-		  Module::port_t*ptmp = new Module::port_t;
-		  ptmp->name = perm_string();
-		  ptmp->expr = svector<PEIdent*>(1);
-		  ptmp->expr[0] = tmp;
-		  delete $1;
-		  $$ = ptmp;
-		}
+	  name_component_t ntmp (lex_strings.make($1));
+	  ntmp.index.push_back(itmp);
 
-	| IDENTIFIER '[' error ']'
-		{ yyerror(@1, "error: invalid port bit select");
-		  Module::port_t*ptmp = new Module::port_t;
-		  PEIdent*wtmp = new PEIdent(hname_t(lex_strings.make($1)));
-		  wtmp->set_file(@1.text);
-		  wtmp->set_lineno(@1.first_line);
-		  ptmp->name = lex_strings.make($1);
-		  ptmp->expr = svector<PEIdent*>(1);
-		  ptmp->expr[0] = wtmp;
-		  delete $1;
-		  $$ = ptmp;
-		}
-	;
+	  pform_name_t pname;
+	  pname.push_back(ntmp);
+
+	  PEIdent*wtmp = new PEIdent(pname);
+	  wtmp->set_file(@1.text);
+	  wtmp->set_lineno(@1.first_line);
+
+	  Module::port_t*ptmp = new Module::port_t;
+	  ptmp->name = perm_string();
+	  ptmp->expr = svector<PEIdent*>(1);
+	  ptmp->expr[0] = wtmp;
+
+	  delete $1;
+	  $$ = ptmp;
+	}
+
+    | IDENTIFIER '[' expression ']'
+        { if (!pform_expression_is_constant($3)) {
+		    yyerror(@3, "error: port bit select "
+			    "must be constant.");
+	  }
+	  index_component_t itmp;
+	  itmp.sel = index_component_t::SEL_BIT;
+	  itmp.msb = $3;
+	  itmp.lsb = 0;
+
+	  name_component_t ntmp (lex_strings.make($1));
+	  ntmp.index.push_back(itmp);
+
+	  pform_name_t pname;
+	  pname.push_back(ntmp);
+
+	  PEIdent*tmp = new PEIdent(pname);
+	  tmp->set_file(@1.text);
+	  tmp->set_lineno(@1.first_line);
+
+	  Module::port_t*ptmp = new Module::port_t;
+	  ptmp->name = perm_string();
+	  ptmp->expr = svector<PEIdent*>(1);
+	  ptmp->expr[0] = tmp;
+	  delete $1;
+	  $$ = ptmp;
+	}
+
+    | IDENTIFIER '[' error ']'
+        { yyerror(@1, "error: invalid port bit select");
+	  Module::port_t*ptmp = new Module::port_t;
+	  PEIdent*wtmp = new PEIdent(lex_strings.make($1));
+	  wtmp->set_file(@1.text);
+	  wtmp->set_lineno(@1.first_line);
+	  ptmp->name = lex_strings.make($1);
+	  ptmp->expr = svector<PEIdent*>(1);
+	  ptmp->expr[0] = wtmp;
+	  delete $1;
+	  $$ = ptmp;
+	}
+    ;
 
 
 port_reference_list
@@ -2791,16 +2787,12 @@ spec_notifier_opt
 spec_notifier
 	: ','
 		{  }
-	| ','  identifier
+	| ','  heirarchy_identifier
 		{ delete $2; }
 	| spec_notifier ','
 		{  }
-	| spec_notifier ',' identifier
+	| spec_notifier ',' heirarchy_identifier
                 { delete $3; }
-	| spec_notifier ',' identifier '[' expr_primary ']'
-                { delete $3;
-		  delete $5;
-		}
 	| IDENTIFIER
 		{ delete $1; }
 	;
@@ -2917,14 +2909,14 @@ statement
 		  $$ = tmp;
 		}
 
-	| K_disable identifier ';'
+	| K_disable heirarchy_identifier ';'
 		{ PDisable*tmp = new PDisable(*$2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $2;
 		  $$ = tmp;
 		}
-	| K_TRIGGER identifier ';'
+	| K_TRIGGER heirarchy_identifier ';'
 		{ PTrigger*tmp = new PTrigger(*$2);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
@@ -3132,7 +3124,7 @@ statement
 		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER '(' expression_list_with_nuls ')' ';'
-                { PCallTask*tmp = new PCallTask(hname_t(lex_strings.make($1)), *$3);
+                { PCallTask*tmp = new PCallTask(lex_strings.make($1), *$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
@@ -3141,13 +3133,13 @@ statement
 		}
 	| SYSTEM_IDENTIFIER ';'
 		{ svector<PExpr*>pt (0);
-		  PCallTask*tmp = new PCallTask(hname_t(lex_strings.make($1)), pt);
+		  PCallTask*tmp = new PCallTask(lex_strings.make($1), pt);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;
 		  $$ = tmp;
 		}
-	| identifier '(' expression_list_proper ')' ';'
+	| heirarchy_identifier '(' expression_list_proper ')' ';'
 		{ PCallTask*tmp = new PCallTask(*$1, *$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -3160,7 +3152,7 @@ statement
      between parentheses, but it seems natural, and people commonly
      want it. So accept it explicitly. */
 
-	| identifier '(' ')' ';'
+	| heirarchy_identifier '(' ')' ';'
 		{ svector<PExpr*>pt (0);
 		  PCallTask*tmp = new PCallTask(*$1, pt);
 		  tmp->set_file(@1.text);
@@ -3168,7 +3160,7 @@ statement
 		  delete $1;
 		  $$ = tmp;
 		}
-	| identifier ';'
+	| heirarchy_identifier ';'
 		{ svector<PExpr*>pt (0);
 		  PCallTask*tmp = new PCallTask(*$1, pt);
 		  tmp->set_file(@1.text);
@@ -3523,7 +3515,7 @@ udp_sequ_entry
 udp_initial
 	: K_initial IDENTIFIER '=' number ';'
 		{ PExpr*etmp = new PENumber($4);
-		  PEIdent*itmp = new PEIdent(hname_t(lex_strings.make($2)));
+		  PEIdent*itmp = new PEIdent(lex_strings.make($2));
 		  PAssign*atmp = new PAssign(itmp, etmp);
 		  atmp->set_file(@2.text);
 		  atmp->set_lineno(@2.first_line);
@@ -3588,40 +3580,40 @@ udp_output_sym
 	| '-' { $$ = '-'; }
 	;
 
+  /* Port declarations create wires for the inputs and the output. The
+     makes for these ports are scoped within the UDP, so there is no
+     heirarchy involved. */
 udp_port_decl
-	: K_input list_of_identifiers ';'
-		{ $$ = pform_make_udp_input_ports($2); }
-	| K_output IDENTIFIER ';'
-                { PWire*pp = new PWire(lex_strings.make($2),
-				       NetNet::IMPLICIT,
-				       NetNet::POUTPUT,
-				       IVL_VT_LOGIC);
-		  svector<PWire*>*tmp = new svector<PWire*>(1);
-		  (*tmp)[0] = pp;
-		  $$ = tmp;
-		  delete $2;
-		}
-	| K_reg IDENTIFIER ';'
-                { PWire*pp = new PWire(lex_strings.make($2),
-				       NetNet::REG,
-				       NetNet::PIMPLICIT,
-				       IVL_VT_LOGIC);
-		  svector<PWire*>*tmp = new svector<PWire*>(1);
-		  (*tmp)[0] = pp;
-		  $$ = tmp;
-		  delete $2;
-		}
-	| K_reg K_output IDENTIFIER ';'
-                { PWire*pp = new PWire(lex_strings.make($3),
-				       NetNet::REG,
-				       NetNet::POUTPUT,
-				       IVL_VT_LOGIC);
-		  svector<PWire*>*tmp = new svector<PWire*>(1);
-		  (*tmp)[0] = pp;
-		  $$ = tmp;
-		  delete $3;
-		}
-	;
+    : K_input list_of_identifiers ';'
+        { $$ = pform_make_udp_input_ports($2); }
+    | K_output IDENTIFIER ';'
+        { pform_name_t pname;
+	  pname.push_back(lex_strings.make($2));
+	  PWire*pp = new PWire(pname, NetNet::IMPLICIT, NetNet::POUTPUT, IVL_VT_LOGIC);
+	  svector<PWire*>*tmp = new svector<PWire*>(1);
+	  (*tmp)[0] = pp;
+	  $$ = tmp;
+	  delete $2;
+	}
+    | K_reg IDENTIFIER ';'
+        { pform_name_t pname;
+	  pname.push_back(lex_strings.make($2));
+	  PWire*pp = new PWire(pname, NetNet::REG, NetNet::PIMPLICIT, IVL_VT_LOGIC);
+	  svector<PWire*>*tmp = new svector<PWire*>(1);
+	  (*tmp)[0] = pp;
+	  $$ = tmp;
+	  delete $2;
+	}
+    | K_reg K_output IDENTIFIER ';'
+        { pform_name_t pname;
+	  pname.push_back(lex_strings.make($3));
+	  PWire*pp = new PWire(pname, NetNet::REG, NetNet::POUTPUT, IVL_VT_LOGIC);
+	  svector<PWire*>*tmp = new svector<PWire*>(1);
+	  (*tmp)[0] = pp;
+	  $$ = tmp;
+	  delete $3;
+	}
+    ;
 
 udp_port_decls
 	: udp_port_decl

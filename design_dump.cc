@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.174 2007/03/02 06:13:22 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.175 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -871,7 +871,7 @@ void NetScope::dump(ostream&o) const
 
 	/* Dump the saved defparam assignments here. */
       {
-	    map<hname_t,NetExpr*>::const_iterator pp;
+	    map<pform_name_t,NetExpr*>::const_iterator pp;
 	    for (pp = defparams.begin()
 		       ; pp != defparams.end() ;  pp ++ ) {
 		  o << "    defparam " << (*pp).first << " = " <<
@@ -1205,6 +1205,10 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.175  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.174  2007/03/02 06:13:22  steve
  *  Add support for edge sensitive spec paths.
  *

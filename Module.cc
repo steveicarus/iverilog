@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.cc,v 1.26 2007/04/19 02:52:53 steve Exp $"
+#ident "$Id: Module.cc,v 1.27 2007/05/24 04:07:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -111,9 +111,9 @@ unsigned Module::find_port(const char*name) const
 }
 
 
-PWire* Module::get_wire(const hname_t&name) const
+PWire* Module::get_wire(const pform_name_t&name) const
 {
-      map<hname_t,PWire*>::const_iterator obj = wires_.find(name);
+      map<pform_name_t,PWire*>::const_iterator obj = wires_.find(name);
       if (obj == wires_.end())
 	    return 0;
       else
@@ -133,11 +133,6 @@ PGate* Module::get_gate(perm_string name)
       return 0;
 }
 
-const map<hname_t,PWire*>& Module::get_wires() const
-{
-      return wires_;
-}
-
 const list<PGate*>& Module::get_gates() const
 {
       return gates_;
@@ -151,6 +146,10 @@ const list<PProcess*>& Module::get_behaviors() const
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.27  2007/05/24 04:07:11  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.26  2007/04/19 02:52:53  steve
  *  Add support for -v flag in command file.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.45 2007/03/07 00:38:15 steve Exp $"
+#ident "$Id: eval.cc,v 1.46 2007/05/24 04:07:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -177,16 +177,17 @@ verinum* PEIdent::eval_const(const Design*des, NetScope*scope) const
       NetEvent*eve;
       const NetExpr*expr;
 
+      const name_component_t&name_tail = path_.back();
+
 	// Handle the special case that this ident is a genvar
 	// variable name. In that case, the genvar meaning preempts
 	// everything and we just return that value immediately.
       if (scope->genvar_tmp
-	  && strcmp(path_.peek_tail_name(),scope->genvar_tmp) == 0) {
+	  && strcmp(name_tail.name,scope->genvar_tmp) == 0) {
 	    return new verinum(scope->genvar_tmp_val);
       }
 
-      symbol_search(des, scope, path_,
-					net, expr, eve);
+      symbol_search(des, scope, path_, net, expr, eve);
 
       if (expr == 0)
 	    return 0;
@@ -201,7 +202,7 @@ verinum* PEIdent::eval_const(const Design*des, NetScope*scope) const
 
       assert(eval);
 
-      if (msb_ || lsb_)
+      if (!name_tail.index.empty())
 	    return 0;
 
 
@@ -275,6 +276,10 @@ verinum* PEUnary::eval_const(const Design*des, NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.46  2007/05/24 04:07:12  steve
+ *  Rework the heirarchical identifier parse syntax and pform
+ *  to handle more general combinations of heirarch and bit selects.
+ *
  * Revision 1.45  2007/03/07 00:38:15  steve
  *  Lint fixes.
  *
