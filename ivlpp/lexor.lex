@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.46 2004/09/10 00:15:45 steve Exp $"
+#ident "$Id: lexor.lex,v 1.47 2007/05/25 18:21:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -70,7 +70,14 @@ struct include_stack_t {
 
 static void emit_pathline(struct include_stack_t *isp);
 
+/*
+ * The file_queue is a singly-linked list of the files that were
+ * listed on the command line/file list.
+ */
 static struct include_stack_t*file_queue = 0;
+/*
+ * The istack is the inclusion stack.
+ */
 static struct include_stack_t*istack  = 0;
 static struct include_stack_t*standby = 0;
 
@@ -777,11 +784,14 @@ static int yywrap()
       int line_mask_flag = 0;
       struct include_stack_t*isp = istack;
       istack = isp->next;
+      FILE *delayed_close = (FILE *) 0;
 
 	/* Delete the current input buffers, and free the cell. */
       yy_delete_buffer(YY_CURRENT_BUFFER);
       if (isp->file) {
-	    fclose(isp->file);
+	      /* Delay the close of this file, because the yyrestart
+		 below seems to have some memory of this file. */
+	    delayed_close = isp->file;
 	    free(isp->path);
       } else {
 	      /* If I am printing line directives and I just finished
@@ -825,6 +835,7 @@ static int yywrap()
 	    }
 
 	    yyrestart(istack->file);
+	    if (delayed_close) fclose(delayed_close);
 	    return 0;
       }
 
@@ -833,6 +844,7 @@ static int yywrap()
 	   top. If I need to print a line directive, do so. */
 
       yy_switch_to_buffer(istack->yybs);
+      if (delayed_close) fclose(delayed_close);
 
       if (line_direct_flag && istack->path && !line_mask_flag)
 	    fprintf(yyout, "\n`line %u \"%s\" 2\n",
@@ -854,6 +866,7 @@ void reset_lexor(FILE*out, char*paths[])
       isp->path = strdup(paths[0]);
       isp->file = fopen(paths[0], "r");
       isp->str  = 0;
+      isp->lineno = 0;
       if (isp->file == 0) {
 	    perror(paths[0]);
 	    exit(1);
@@ -876,8 +889,10 @@ void reset_lexor(FILE*out, char*paths[])
       for (idx = 1 ;  paths[idx] ;  idx += 1) {
 	    isp = malloc(sizeof(struct include_stack_t));
 	    isp->path = strdup(paths[idx]);
+	    isp->file = 0;
 	    isp->str = 0;
 	    isp->next = 0;
+	    isp->lineno = 0;
 	    if (tail)
 		  tail->next = isp;
 	    else
