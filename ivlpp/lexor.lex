@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.46 2004/09/10 00:15:45 steve Exp $"
+#ident "$Id: lexor.lex,v 1.46.2.1 2007/05/25 18:35:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -854,6 +854,7 @@ void reset_lexor(FILE*out, char*paths[])
       isp->path = strdup(paths[0]);
       isp->file = fopen(paths[0], "r");
       isp->str  = 0;
+      isp->lineno = 0;
       if (isp->file == 0) {
 	    perror(paths[0]);
 	    exit(1);
@@ -876,8 +877,10 @@ void reset_lexor(FILE*out, char*paths[])
       for (idx = 1 ;  paths[idx] ;  idx += 1) {
 	    isp = malloc(sizeof(struct include_stack_t));
 	    isp->path = strdup(paths[idx]);
+	    isp->file = 0;
 	    isp->str = 0;
 	    isp->next = 0;
+	    isp->lineno = 0;
 	    if (tail)
 		  tail->next = isp;
 	    else
