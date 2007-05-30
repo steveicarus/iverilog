@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: async.cc,v 1.7.2.1 2006/05/21 21:58:46 steve Exp $"
+#ident "$Id: async.cc,v 1.7.2.2 2007/05/30 17:48:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -89,7 +89,7 @@ bool NetProc::is_asynchronous()
       return false;
 }
 
-bool NetProcTop::is_asynchronous()
+bool NetProcTop::is_asynchronous() const
 {
       if (type_ == NetProcTop::KINITIAL)
 	    return false;
@@ -99,6 +99,9 @@ bool NetProcTop::is_asynchronous()
 
 /*
  * $Log: async.cc,v $
+ * Revision 1.7.2.2  2007/05/30 17:48:53  steve
+ *  Support Latch synthesis (Alan Feldstein)
+ *
  * Revision 1.7.2.1  2006/05/21 21:58:46  steve
  *  NetESignal input is only selected bits.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sync.cc,v 1.3 2002/09/24 00:58:35 steve Exp $"
+#ident "$Id: sync.cc,v 1.3.2.1 2007/05/30 17:48:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -57,7 +57,7 @@ bool NetEvWait::is_synchronous()
       return true; //statement_->is_asynchronous();
 }
 
-bool NetProcTop::is_synchronous()
+bool NetProcTop::is_synchronous() const
 {
       if (type_ == NetProcTop::KINITIAL)
 	    return false;
@@ -67,6 +67,9 @@ bool NetProcTop::is_synchronous()
 
 /*
  * $Log: sync.cc,v $
+ * Revision 1.3.2.1  2007/05/30 17:48:54  steve
+ *  Support Latch synthesis (Alan Feldstein)
+ *
  * Revision 1.3  2002/09/24 00:58:35  steve
  *  More detailed check of process edge events.
  *

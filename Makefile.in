@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.169.2.6 2007/03/23 23:26:51 steve Exp $"
+#ident "$Id: Makefile.in,v 1.169.2.7 2007/05/30 17:48:53 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -114,7 +114,7 @@ O = main.o async.o design_dump.o dup_expr.o elaborate.o elab_expr.o \
 elab_lval.o elab_net.o elab_anet.o elab_pexpr.o elab_scope.o \
 elab_sig.o emit.o eval.o eval_attrib.o \
 eval_tree.o expr_synth.o functor.o lexor.o lexor_keyword.o link_const.o \
-load_module.o netlist.o netmisc.o net_assign.o \
+load_module.o netlist.o NetLatch.o netmisc.o net_assign.o \
 net_design.o net_event.o net_expr.o net_force.o net_func.o \
 net_link.o net_modulo.o net_nex_input.o net_nex_output.o \
 net_proc.o net_scope.o net_udp.o net_variable.o pad_to_width.o \
@@ -164,7 +164,7 @@ dep:
 	mkdir dep
 
 %.o: %.cc
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o $(DEBUGFLAGS)
 	mv $*.d dep/$*.d
 
 
@@ -231,7 +231,6 @@ $(bindir)/iverilog-vpi: ./iverilog-vpi
 
 $(libdir)/ivl/ivl@EXEEXT@: ./ivl@EXEEXT@
 	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ $(libdir)/ivl/ivl@EXEEXT@
-	$(STRIP) $(strip_dynamic) $(libdir)/ivl/ivl@EXEEXT@
 
 $(libdir)/ivl/xnf-s.conf: $(srcdir)/xnf-s.conf
 	$(INSTALL_DATA) $(srcdir)/xnf-s.conf $(libdir)/ivl/xnf-s.conf
