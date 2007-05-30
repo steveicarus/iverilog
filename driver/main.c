@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.65.2.5 2006/07/07 21:31:50 steve Exp $"
+#ident "$Id: main.c,v 1.65.2.6 2007/05/30 17:48:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -266,12 +266,66 @@ static int t_default(char*cmd, unsigned ncmd)
       }
 #endif
 
+#ifdef DEBUG
+      char *original_cmd = malloc( strlen( cmd ) + (size_t)1 );
+      strcpy( original_cmd, cmd );
+
+      cmd = realloc( cmd, strlen( original_cmd ) + (size_t)19 ); /* more than enough memory for the ivlpp command and ">/tmp/ivlpp_stdout" */
+      if( cmd == NULL ){
+	exit( EXIT_FAILURE );
+      }
+
+      char *debug_ivl = malloc( strlen( original_cmd ) + (size_t)5 ); /* more than enough memory for "gdb " and ivl program_name */
+      strcpy( debug_ivl, "gdb " );
+
+      static char whitespace[] = " \t\f\r\v\n";
+      char *token;
+      int found_pipe = 0;
+      unsigned long token_counter = 0UL;
+
+      strcpy( cmd, "" );
+      for( token = strtok( original_cmd, whitespace ); token != NULL; token = strtok( NULL, whitespace ) ){
+
+	if( strcmp( token, "|" ) == 0 ){
+	  found_pipe = 1;
+	}
+
+	if( found_pipe ){
+	  token_counter++;
+	}
+
+	if( token_counter == 0UL ){
+	  strcat( cmd, token );
+	  strcat( cmd, " " ); /* harmless space after last token, and it was already there anyway */
+	}
+
+	if( token_counter == 2UL ){
+	  strcat( debug_ivl, token );
+	}
+
+	if( token_counter > 2UL ){
+	  printf( "%s\n", token );
+	}
+
+      }
+
+      free( original_cmd );
+      strcat( cmd, ">/tmp/ivlpp_stdout" );
+#endif
 
       if (verbose_flag)
 	    printf("translate: %s\n", cmd);
 
 
       rc = system(cmd);
+#ifdef DEBUG
+      if( verbose_flag ){
+	printf( "%s\n", debug_ivl );
+      }
+
+      system( debug_ivl ); /* For simplicity, ignore any return value, which is implementation dependent anyway. */
+      free( debug_ivl );
+#endif
       remove(source_path);
       if ( ! getenv("IVERILOG_ICONFIG"))
 	    remove(iconfig_path);
@@ -787,6 +841,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.65.2.6  2007/05/30 17:48:26  steve
+ *  DEBUG aids. (Alan Feldstein)
+ *
  * Revision 1.65.2.5  2006/07/07 21:31:50  steve
  *  Root dir variable does not include lib/ivl components.
  *
