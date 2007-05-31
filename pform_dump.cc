@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.98 2007/05/24 04:07:12 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.99 2007/05/31 18:35:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -75,6 +75,7 @@ ostream& operator<< (ostream&o, PGate::strength_t str)
 ostream& operator<< (ostream&out, perm_string that)
 {
       out << that.str();
+      return out;
 }
 
 ostream& operator<< (ostream&out, const name_component_t&that)
@@ -1061,6 +1062,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.99  2007/05/31 18:35:50  steve
+ *  Missing return value to perm_string dump
+ *
  * Revision 1.98  2007/05/24 04:07:12  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.
