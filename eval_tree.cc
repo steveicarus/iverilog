@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.75 2007/04/07 04:46:18 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.76 2007/05/31 18:36:06 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1056,7 +1056,7 @@ NetEConst* NetEBShift::eval_tree(int prune_to_width)
 			wid = lv.len() + shift;
 	    }
 
-	    if (prune_to_width > 0 && wid > prune_to_width)
+	    if (prune_to_width > 0 && wid > (unsigned)prune_to_width)
 		  wid = prune_to_width;
 
 	    assert(wid);
@@ -1655,6 +1655,9 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.76  2007/05/31 18:36:06  steve
+ *  Fix warning (ldolittle)
+ *
  * Revision 1.75  2007/04/07 04:46:18  steve
  *  Handle evaluate of addition of real valued constants.
  *
