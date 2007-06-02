@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.175 2007/05/24 04:07:11 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.176 2007/06/02 03:42:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -91,6 +91,25 @@ ostream& operator << (ostream&o, ivl_variable_type_t val)
       return o;
 }
 
+static inline void dump_scope_path(ostream&o, const NetScope*scope)
+{
+      if (const NetScope*parent = scope->parent()) {
+	    dump_scope_path(o, parent);
+	    o << ".";
+      }
+      const hname_t name = scope->fullname();
+      o << name.peek_name();
+      if (name.has_number())
+	    o << "[" << name.peek_number() << "]";
+}
+
+ostream& operator <<(ostream&o, struct __ScopePathManip marg)
+{
+      if (marg.scope != 0)
+	    dump_scope_path(o, marg.scope);
+      return o;
+}
+
 void NetDelaySrc::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "specify delay";
@@ -141,7 +160,7 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
       }
       o << " (eref=" << peek_eref() << ", lref=" << peek_lref() << ")";
       if (scope())
-	    o << " scope=" << scope()->name();
+	    o << " scope=" << scope_path(scope());
       o << " #(" << rise_time() << "," << fall_time() << ","
 	<<  decay_time() << ") vector_width=" << vector_width()
 	<< " pin_count=" << pin_count()
@@ -264,7 +283,7 @@ void NetConcat::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "NetConcat: "
 	<< name()
-	<< " scope=" << (scope()? scope()->name() : "")
+	<< " scope=" << scope_path(scope())
 	<< " width=" << width_ << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
@@ -288,7 +307,7 @@ void NetMux::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Multiplexer (NetMux): " << name()
 	<< " width=" << width_ << " swidth=" << swidth_ << " size=" << size_
-	<< " scope=" << scope()->name() << endl;
+	<< " scope=" << scope_path(scope()) << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -296,7 +315,7 @@ void NetMux::dump_node(ostream&o, unsigned ind) const
 void NetBUFZ::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "NetBUFZ: " << name()
-	<< " scope=" << (scope()? scope()->name() : "")
+	<< " scope=" << scope_path(scope())
 	<< " delay=(" << rise_time() << "," << fall_time() << "," <<
 	    decay_time() << ") width=" << width() << endl;
       dump_node_pins(o, ind+4);
@@ -324,7 +343,7 @@ void NetConst::dump_node(ostream&o, unsigned ind) const
 void NetFF::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_FF: " << name()
-	<< " scope=" << (scope()? scope()->name() : "")
+	<< " scope=" << scope_path(scope())
 	<< " aset_value=" << aset_value_ << endl;
 
       dump_node_pins(o, ind+4);
@@ -399,7 +418,7 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
       }
       o << " #(" << rise_time()
 	<< "," << fall_time() << "," << decay_time() << ") " << name()
-	<< " scope=" << (scope()? scope()->name() : "")
+	<< " scope=" << scope_path(scope())
 	<< endl;
 
       dump_node_pins(o, ind+4);
@@ -478,7 +497,7 @@ void NetUReduce::dump_node(ostream&o, unsigned ind) const
       }
       o << " #(" << rise_time()
 	<< "," << fall_time() << "," << decay_time() << ") " << name()
-	<< " scope=" << (scope()? scope()->name() : "")
+	<< " scope=" << scope_path(scope())
 	<< endl;
 
       dump_node_pins(o, ind+4);
@@ -494,7 +513,7 @@ void NetSysFunc::dump_node(ostream&o, unsigned ind) const
 
 void NetUserFunc::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << def_->name() << "(";
+      o << setw(ind) << "" << scope_path(def_) << "(";
       o << ")" << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
@@ -502,7 +521,7 @@ void NetUserFunc::dump_node(ostream&o, unsigned ind) const
 
 void NetTaskDef::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "task " << name_ << ";" << endl;
+      o << setw(ind) << "" << "task " << scope_path(scope_) << ";" << endl;
 
       for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1) {
 	    o << setw(ind+4) << "";
@@ -544,11 +563,11 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
       switch (type_) {
 	  case NetProcTop::KINITIAL:
 	    o << "initial  /* " << get_line() << " in "
-	      << scope_->name() << " */" << endl;
+	      << scope_path(scope_) << " */" << endl;
 	    break;
 	  case NetProcTop::KALWAYS:
 	    o << "always  /* " << get_line() << " in "
-	      << scope_->name() << " */" << endl;
+	      << scope_path(scope_) << " */" << endl;
 	    break;
       }
 
@@ -630,7 +649,7 @@ void NetBlock::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << type_;
       if (subscope_)
-	    o << " : " << subscope_->name();
+	    o << " : " << scope_path(subscope_);
       o << endl;
 
       if (last_) {
@@ -707,7 +726,7 @@ void NetDeassign::dump(ostream&o, unsigned ind) const
 
 void NetDisable::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "disable " << target_->name() << "; "
+      o << setw(ind) << "" << "disable " << scope_path(target_) << "; "
 	<< "/* " << get_line() << " */" << endl;
 }
 
@@ -726,7 +745,7 @@ void NetEvProbe::dump_node(ostream&o, unsigned ind) const
 	    o << "negedge ";
 	    break;
       }
-      o << setw(ind) << "" << "-> " << event_->full_name() << "; " << endl;
+      o << setw(ind) << "" << "-> " << event_->name() << "; " << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -742,10 +761,10 @@ void NetEvWait::dump(ostream&o, unsigned ind) const
       o << setw(ind) <<"" << "@(";
 
       if (nevents() > 0)
-	    o << event(0)->full_name();
+	    o << event(0)->name();
 
       for (unsigned idx = 1 ;  idx < nevents() ;  idx += 1)
-	    o << " or " << event(idx)->full_name();
+	    o << " or " << event(idx)->name();
 
       o << ")  // " << get_line() << endl;
 
@@ -770,7 +789,7 @@ void NetForever::dump(ostream&o, unsigned ind) const
 
 void NetFuncDef::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "function " << scope_->name() << endl;
+      o << setw(ind) << "" << "function " << scope_path(scope_) << endl;
       if (result_sig_)
 	    o << setw(ind+2) << "" << "Return signal: "
 	      << result_sig_->name() << endl;
@@ -813,7 +832,7 @@ void NetRepeat::dump(ostream&o, unsigned ind) const
 void NetScope::dump(ostream&o) const
 {
 	/* This is a constructed hierarchical name. */
-      o << name();
+      o << scope_path(this);
 
       switch (type_) {
 	  case BEGIN_END:
@@ -882,7 +901,8 @@ void NetScope::dump(ostream&o) const
 	/* Dump the events in this scope. */
       for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_) {
 	    o << "    event " << cur->name() << "; nprobe="
-	      << cur->nprobe() << " // " << cur->get_line() << endl;
+	      << cur->nprobe() << " scope=" << scope_path(cur->scope())
+	      << " // " << cur->get_line() << endl;
       }
 
 	// Dump the signals,
@@ -956,7 +976,7 @@ void NetSTask::dump(ostream&o, unsigned ind) const
 
 void NetUTask::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << task_->name() << ";" << endl;
+      o << setw(ind) << "" << scope_path(task_) << ";" << endl;
 }
 
 void NetWhile::dump(ostream&o, unsigned ind) const
@@ -1091,7 +1111,7 @@ void NetEEvent::dump(ostream&o) const
 
 void NetEScope::dump(ostream&o) const
 {
-      o << "<scope=" << scope_->name() << ">";
+      o << "<scope=" << scope_path(scope_) << ">";
 }
 
 void NetESelect::dump(ostream&o) const
@@ -1135,7 +1155,7 @@ void NetESignal::dump(ostream&o) const
 void NetEParam::dump(ostream&o) const
 {
       if (scope_ != 0)
-	    o << "<" << scope_->name() << "." << name_ << ">";
+	    o << "<" << scope_path(scope_) << "." << name_ << ">";
       else if (name_)
 	    o << "<" << name_ << ">";
       else
@@ -1150,7 +1170,7 @@ void NetETernary::dump(ostream&o) const
 
 void NetEUFunc::dump(ostream&o) const
 {
-      o << name() << "(";
+      o << func_->basename() << "(";
       if (parms_.count() > 0) {
 	    parms_[0]->dump(o);
 	    for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
@@ -1205,6 +1225,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.176  2007/06/02 03:42:12  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.175  2007/05/24 04:07:11  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

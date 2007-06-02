@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGenerate.h,v 1.3 2007/05/24 04:07:11 steve Exp $"
+#ident "$Id: PGenerate.h,v 1.4 2007/06/02 03:42:12 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -70,6 +70,9 @@ class PGenerate : public LineInfo {
       list<PProcess*> behaviors;
       void add_behavior(PProcess*behave);
 
+      list<PGenerate*> generates;
+      PGenerate*parent;
+
 	// This method is called by the elaboration of a module to
 	// generate scopes. the container is the scope that is to
 	// contain the generated scope.
@@ -78,7 +81,7 @@ class PGenerate : public LineInfo {
       bool elaborate_sig(Design*des) const;
       bool elaborate(Design*des) const;
 
-      void dump(ostream&out) const;
+      void dump(ostream&out, unsigned indent) const;
 
     private:
       bool generate_scope_loop_(Design*des, NetScope*container);

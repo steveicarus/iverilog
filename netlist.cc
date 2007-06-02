@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.257 2007/04/02 01:12:34 steve Exp $"
+#ident "$Id: netlist.cc,v 1.258 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1770,10 +1770,15 @@ NetFuncDef::NetFuncDef(NetScope*s, NetNet*result, const svector<NetNet*>&po)
 NetFuncDef::~NetFuncDef()
 {
 }
-
+#if 0
 const string NetFuncDef::name() const
 {
       return scope_->name();
+}
+#endif
+const NetScope* NetFuncDef::scope() const
+{
+      return scope_;
 }
 
 void NetFuncDef::set_proc(NetProc*st)
@@ -1850,12 +1855,12 @@ NetEUFunc::~NetEUFunc()
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
 	    delete parms_[idx];
 }
-
+#if 0
 const string NetEUFunc::name() const
 {
       return func_->name();
 }
-
+#endif
 const NetESignal*NetEUFunc::result_sig() const
 {
       return result_sig_;
@@ -1893,12 +1898,12 @@ NetUTask::NetUTask(NetScope*def)
 NetUTask::~NetUTask()
 {
 }
-
+#if 0
 const string NetUTask::name() const
 {
       return task_->name();
 }
-
+#endif
 const NetScope* NetUTask::task() const
 {
       return task_;
@@ -2286,8 +2291,8 @@ unsigned NetUReduce::width() const
       return width_;
 }
 
-NetTaskDef::NetTaskDef(const string&n, const svector<NetNet*>&po)
-: name_(n), proc_(0), ports_(po)
+NetTaskDef::NetTaskDef(NetScope*n, const svector<NetNet*>&po)
+: scope_(n), proc_(0), ports_(po)
 {
 }
 
@@ -2312,10 +2317,15 @@ NetNet* NetTaskDef::port(unsigned idx)
       assert(idx < ports_.count());
       return ports_[idx];
 }
-
+#if 0
 const string& NetTaskDef::name() const
 {
       return name_;
+}
+#endif
+const NetScope* NetTaskDef::scope() const
+{
+      return scope_;
 }
 
 const NetProc*NetTaskDef::proc() const
@@ -2325,6 +2335,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.258  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.257  2007/04/02 01:12:34  steve
  *  Seperate arrayness from word count
  *

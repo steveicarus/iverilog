@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.99 2007/05/31 18:35:50 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.100 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -817,9 +817,9 @@ void PSpecPath::dump(std::ostream&out, unsigned ind) const
       out << ");" << endl;
 }
 
-void PGenerate::dump(ostream&out) const
+void PGenerate::dump(ostream&out, unsigned indent) const
 {
-      out << "    generate(" << id_number << ")";
+      out << setw(indent) << "" << "generate(" << id_number << ")";
 
       switch (scheme_type) {
 	  case GS_NONE:
@@ -844,17 +844,22 @@ void PGenerate::dump(ostream&out) const
       for (map<pform_name_t,PWire*>::const_iterator idx = wires.begin()
 		 ; idx != wires.end() ;  idx++) {
 
-	    (*idx).second->dump(out, 6);
+	    (*idx).second->dump(out, indent+2);
       }
 
       for (list<PGate*>::const_iterator idx = gates.begin()
 		 ; idx != gates.end() ;  idx++) {
-	    (*idx)->dump(out, 6);
+	    (*idx)->dump(out, indent+2);
       }
 
       for (list<PProcess*>::const_iterator idx = behaviors.begin()
 		 ; idx != behaviors.end() ;  idx++) {
-	    (*idx)->dump(out, 6);
+	    (*idx)->dump(out, indent+2);
+      }
+
+      for (list<PGenerate*>::const_iterator idx = generates.begin()
+		 ; idx != generates.end() ;  idx++) {
+	    (*idx)->dump(out, indent+2);
       }
 
       out << "    endgenerate" << endl;
@@ -934,7 +939,7 @@ void Module::dump(ostream&out) const
       typedef list<PGenerate*>::const_iterator genscheme_iter_t;
       for (genscheme_iter_t cur = generate_schemes.begin()
 		 ; cur != generate_schemes.end() ; cur++) {
-	    (*cur)->dump(out);
+	    (*cur)->dump(out, 4);
       }
 
       typedef map<perm_string,PExpr*>::const_iterator specparm_iter_t;
@@ -1062,6 +1067,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.100  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.99  2007/05/31 18:35:50  steve
  *  Missing return value to perm_string dump
  *

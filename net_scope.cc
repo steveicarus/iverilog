@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.37 2007/04/26 03:06:22 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.38 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -35,7 +35,7 @@
  * in question.
  */
 
-NetScope::NetScope(NetScope*up, perm_string n, NetScope::TYPE t)
+NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
 : type_(t), up_(up), sib_(0), sub_(0)
 {
       signals_ = 0;
@@ -241,15 +241,7 @@ NetNet::Type NetScope::default_nettype() const
 
 perm_string NetScope::basename() const
 {
-      return name_;
-}
-
-string NetScope::name() const
-{
-      if (up_)
-	    return up_->name() + "." + string(name_);
-      else
-	    return string(name_);
+      return name_.peek_name();
 }
 
 void NetScope::add_event(NetEvent*ev)
@@ -340,12 +332,12 @@ NetNet* NetScope::find_signal(const char*key)
  * This method locates a child scope by name. The name is the simple
  * name of the child, no hierarchy is searched.
  */
-NetScope* NetScope::child(const char*name)
+NetScope* NetScope::child(const hname_t&name)
 {
       if (sub_ == 0) return 0;
 
       NetScope*cur = sub_;
-      while (strcmp(cur->name_, name) != 0) {
+      while (cur->name_ != name) {
 	    if (cur->sib_ == 0) return 0;
 	    cur = cur->sib_;
       }
@@ -353,12 +345,12 @@ NetScope* NetScope::child(const char*name)
       return cur;
 }
 
-const NetScope* NetScope::child(const char*name) const
+const NetScope* NetScope::child(const hname_t&name) const
 {
       if (sub_ == 0) return 0;
 
       NetScope*cur = sub_;
-      while (strcmp(cur->name_, name) != 0) {
+      while (cur->name_ != name) {
 	    if (cur->sib_ == 0) return 0;
 	    cur = cur->sib_;
       }
@@ -382,15 +374,18 @@ perm_string NetScope::local_symbol()
       res << "_s" << (lcounter_++);
       return lex_strings.make(res.str());
 }
-
+#if 0
 string NetScope::local_hsymbol()
 {
       return string(name()) + "." + string(local_symbol());
 }
-
+#endif
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.38  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.37  2007/04/26 03:06:22  steve
  *  Rework hname_t to use perm_strings.
  *

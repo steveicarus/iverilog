@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.30 2007/05/24 04:07:12 steve Exp $"
+#ident "$Id: netmisc.h,v 1.31 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -39,14 +39,14 @@
  * ex2 is the lsb expression for the range. If there is no range, then
  * these values are set to 0.
  */
-extern NetScope* symbol_search(const Design*des,
+extern NetScope* symbol_search(Design*des,
 			       NetScope*start, pform_name_t path,
 			       NetNet*&net,       /* net/reg */
 			       const NetExpr*&par,/* parameter */
 			       NetEvent*&eve,     /* named event */
 			       const NetExpr*&ex1, const NetExpr*&ex2);
 
-inline NetScope* symbol_search(const Design*des,
+inline NetScope* symbol_search(Design*des,
 			       NetScope*start, const pform_name_t&path,
 			       NetNet*&net,       /* net/reg */
 			       const NetExpr*&par,/* parameter */
@@ -123,8 +123,14 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 			      const PExpr*pe, int expr_wid,
 			      int prune_width =-1);
 
+extern std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
+					  const pform_name_t&path);
+
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.31  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.30  2007/05/24 04:07:12  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

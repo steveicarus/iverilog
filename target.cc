@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.80 2007/01/16 05:44:16 steve Exp $"
+#ident "$Id: target.cc,v 1.81 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,7 +38,7 @@ void target_t::scope(const NetScope*)
 void target_t::event(const NetEvent*ev)
 {
       cerr << ev->get_line() << ": error: target (" << typeid(*this).name()
-	   <<  "): Unhandled event <" << ev->full_name() << ">." << endl;
+	   <<  "): Unhandled event <" << ev->name() << ">." << endl;
 }
 
 bool target_t::signal_paths(const NetNet*)
@@ -429,6 +429,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.81  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.80  2007/01/16 05:44:16  steve
  *  Major rework of array handling. Memories are replaced with the
  *  more general concept of arrays. The NetMemory and NetEMemory

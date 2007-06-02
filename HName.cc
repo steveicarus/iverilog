@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: HName.cc,v 1.7 2007/05/16 19:12:33 steve Exp $"
+#ident "$Id: HName.cc,v 1.8 2007/06/02 03:42:12 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -29,244 +29,101 @@
 # include  <malloc.h>
 #endif
 
-inline perm_string& hname_t::item_ref1_()
-{
-      return *reinterpret_cast<perm_string*>(item_);
-}
-
-inline const perm_string& hname_t::item_ref1_() const
-{
-      return *reinterpret_cast<const perm_string*>(item_);
-}
-
 
 hname_t::hname_t()
 {
-      count_ = 0;
+      number_ = INT_MIN;
 }
 
 hname_t::hname_t(perm_string text)
 {
-      new (item_) perm_string(text);
-      count_ = 1;
+      name_ = text;
+      number_ = INT_MIN;
+}
+
+hname_t::hname_t(perm_string text, int num)
+{
+      name_ = text;
+      number_ = num;
 }
 
 hname_t::hname_t(const hname_t&that)
 {
-      count_ = that.count_;
-      switch (count_) {
-	  case 0:
-	    break;
-	  case 1:
-	    new(item_) perm_string (that.item_ref1_());
-	    break;
-	  default:
-	    array_ = new perm_string[count_];
-	    for (unsigned idx = 0 ;  idx < count_ ;  idx += 1)
-		  array_[idx] = that.array_[idx];
-	    break;
-      }
+      name_ = that.name_;
+      number_ = that.number_;
+}
+
+hname_t& hname_t::operator = (const hname_t&that)
+{
+      name_ = that.name_;
+      number_ = that.number_;
+      return *this;
 }
 
 hname_t::~hname_t()
 {
-      switch (count_) {
-	  case 0:
-	    break;
-	  case 1:
-	    item_ref1_().~perm_string();
-	    break;
-	  default:
-	    delete[]array_;
-	    break;
-      }
 }
 
-unsigned hname_t::component_count() const
+perm_string hname_t::peek_name(void) const
 {
-      return count_;
+      return name_;
 }
 
-void hname_t::append(perm_string text)
+bool hname_t::has_number() const
 {
-      perm_string*tmp;
-
-      switch (count_) {
-	  case 0:
-	    count_ = 1;
-	    new (item_) perm_string(text);
-	    break;
-	  case 1:
-	    count_ = 2;
-	    tmp = new perm_string[2];
-	    tmp[0] = item_ref1_();
-	    tmp[1] = text;
-	    item_ref1_().~perm_string();
-	    array_ = tmp;
-	    break;
-	  default:
-	    tmp = new perm_string[count_+1];
-	    for (unsigned idx = 0 ;  idx < count_ ;  idx += 1)
-		  tmp[idx] = array_[idx];
-	    delete[]array_;
-	    array_ = tmp;
-	    array_[count_] = text;
-	    count_ += 1;
-      }
+      return number_ != INT_MIN;
 }
 
-void hname_t::prepend(perm_string text)
+int hname_t::peek_number() const
 {
-      perm_string*tmp;
-
-      switch (count_) {
-	  case 0:
-	    count_ = 1;
-	    new (item_) perm_string(text);
-	    break;
-	  case 1:
-	    count_ = 2;
-	    tmp = new perm_string[2];
-	    tmp[0] = text;
-	    tmp[1] = item_ref1_();
-	    item_ref1_().~perm_string();
-	    array_ = tmp;
-	    break;
-	  default:
-	    tmp = new perm_string[count_+1];
-	    tmp[0] = text;
-	    for (unsigned idx = 0 ;  idx < count_ ;  idx += 1)
-		  tmp[idx+1] = array_[idx];
-	    delete[]array_;
-	    array_ = tmp;
-	    count_ += 1;
-      }
-}
-
-perm_string hname_t::remove_tail_name()
-{
-      if (count_ == 0)
-	    return perm_string();
-
-      if (count_ == 1) {
-	    perm_string tmp = item_ref1_();
-	    count_ = 0;
-	    item_ref1_().~perm_string();
-	    return tmp;
-      }
-
-      if (count_ == 2) {
-	    perm_string tmp1 = array_[0];
-	    perm_string tmp2 = array_[1];
-	    delete[]array_;
-	    count_ = 1;
-	    new (item_) perm_string(tmp1);
-	    return tmp2;
-      }
-
-      perm_string tmpo = array_[count_-1];
-      perm_string*tmpa = new perm_string[count_-1];
-      for (unsigned idx = 0 ;  idx < count_-1 ;  idx += 1)
-	    tmpa[idx] = array_[idx];
-
-      delete[]array_;
-      array_ = tmpa;
-      count_ -= 1;
-      return tmpo;
-}
-
-perm_string hname_t::peek_name(unsigned idx) const
-{
-      if (idx >= count_)
-	    return perm_string();
-
-      if (count_ == 1)
-	    return item_ref1_();
-
-      return array_[idx];
-}
-
-perm_string hname_t::peek_tail_name() const
-{
-      switch (count_) {
-	  case 0:
-	    return perm_string();
-	  case 1:
-	    return item_ref1_();
-	  default:
-	    return array_[count_-1];
-      }
+      return number_;
 }
 
 bool operator < (const hname_t&l, const hname_t&r)
 {
-      unsigned idx = 0;
-      const char*lc = l.peek_name(idx);
-      const char*rc = r.peek_name(idx);
-
-      while (lc && rc) {
-	    int cmp = strcmp(lc, rc);
-	    if (cmp < 0)
-		  return true;
-	    if (cmp > 0)
-		  return false;
-	    idx += 1;
-	    lc = l.peek_name(idx);
-	    rc = r.peek_name(idx);
-      }
-
-      if (lc && !rc)
+      int cmp = strcmp(l.peek_name(), r.peek_name());
+      if (cmp < 0) return true;
+      if (cmp > 0) return false;
+      if (l.has_number() && r.has_number())
+	    return l.peek_number() < r.peek_number();
+      else
 	    return false;
-      if (rc && !lc)
-	    return true;
-
-	// Must be ==
-      return false;
 }
 
 bool operator == (const hname_t&l, const hname_t&r)
 {
-      unsigned idx = 0;
-      const char*lc = l.peek_name(idx);
-      const char*rc = r.peek_name(idx);
-
-      while (lc && rc) {
-	    int cmp = strcmp(lc, rc);
-	    if (cmp != 0)
-		  return false;
-	    idx += 1;
-	    lc = l.peek_name(idx);
-	    rc = r.peek_name(idx);
+      if (l.peek_name() == r.peek_name()) {
+	    if (l.has_number() && r.has_number())
+		  return l.peek_number() == r.peek_number();
+	    else
+		  return true;
       }
 
-      if (lc || rc)
-	    return false;
-
-	// Must be ==
-      return true;
+      return false;
 }
+
+bool operator != (const hname_t&l, const hname_t&r)
+{ return ! (l==r); }
 
 ostream& operator<< (ostream&out, const hname_t&that)
 {
-      switch (that.count_) {
-	  case 0:
+      if (that.peek_name() == 0) {
 	    out << "";
 	    return out;
-	  case 1:
-	    out << that.item_;
-	    return out;
-
-	  default:
-	    out << that.array_[0];
-	    for (unsigned idx = 1 ;  idx < that.count_ ;  idx += 1)
-		  out << "." << that.array_[idx];
-
-	    return out;
       }
+
+      out << that.peek_name();
+      if (that.has_number())
+	    out << "[" << that.peek_number() << "]";
+
+      return out;
 }
 
 /*
  * $Log: HName.cc,v $
+ * Revision 1.8  2007/06/02 03:42:12  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.7  2007/05/16 19:12:33  steve
  *  Fix hname_t use of space for 1 perm_string.
  *

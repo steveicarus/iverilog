@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.125 2007/05/24 04:07:11 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.126 2007/06/02 03:42:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -474,7 +474,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       NetFuncDef*def = des->find_function(scope, path_);
       if (def == 0) {
 	    cerr << get_line() << ": error: No function " << path_ <<
-		  " in this context (" << scope->name() << ")." << endl;
+		  " in this context (" << scope_path(scope) << ")." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -538,7 +538,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 
       cerr << get_line() << ": internal error: Unable to locate "
 	    "function return value for " << path_
-	   << " in " << def->name() << "." << endl;
+	   << " in " << dscope->basename() << "." << endl;
       des->errors += 1;
       return 0;
 }
@@ -830,22 +830,26 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	// Finally, if this is a scope name, then return that. Look
 	// first to see if this is a name of a local scope. Failing
 	// that, search globally for a hierarchical name.
-      if ((path_.size() == 1))
-	    if (NetScope*nsc = scope->child(peek_tail_name(path_))) {
+      if ((path_.size() == 1)) {
+	    hname_t use_name ( peek_tail_name(path_) );
+	    if (NetScope*nsc = scope->child(use_name)) {
 		  NetEScope*tmp = new NetEScope(nsc);
 		  tmp->set_line(*this);
 		  return tmp;
 	    }
+      }
+
+      list<hname_t> spath = eval_scope_path(des, scope, path_);
 
 	// Try full hierarchical scope name.
-      if (NetScope*nsc = des->find_scope(path_)) {
+      if (NetScope*nsc = des->find_scope(spath)) {
 	    NetEScope*tmp = new NetEScope(nsc);
 	    tmp->set_line(*this);
 	    return tmp;
       }
 
 	// Try relative scope name.
-      if (NetScope*nsc = des->find_scope(scope, path_)) {
+      if (NetScope*nsc = des->find_scope(scope, spath)) {
 	    NetEScope*tmp = new NetEScope(nsc);
 	    tmp->set_line(*this);
 	    return tmp;
@@ -853,7 +857,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	// I cannot interpret this identifier. Error message.
       cerr << get_line() << ": error: Unable to bind wire/reg/memory "
-	    "`" << path_ << "' in `" << scope->name() << "'" << endl;
+	    "`" << path_ << "' in `" << scope_path(scope) << "'" << endl;
       des->errors += 1;
       return 0;
 }
@@ -1684,6 +1688,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.126  2007/06/02 03:42:12  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.125  2007/05/24 04:07:11  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

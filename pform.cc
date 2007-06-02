@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.146 2007/05/24 04:07:12 steve Exp $"
+#ident "$Id: pform.cc,v 1.147 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -348,7 +348,7 @@ void pform_start_generate_for(const struct vlltype&li,
       gen->set_lineno(li.first_line);
 
 	// For now, assume that generates do not nest.
-      assert(pform_cur_generate == 0);
+      gen->parent = pform_cur_generate;
       pform_cur_generate = gen;
 
       pform_cur_generate->scheme_type = PGenerate::GS_LOOP;
@@ -375,8 +375,13 @@ void pform_endgenerate()
       assert(pform_cur_generate != 0);
       assert(pform_cur_module);
 
-      pform_cur_module->generate_schemes.push_back(pform_cur_generate);
-      pform_cur_generate = 0;
+      PGenerate*cur = pform_cur_generate;
+      pform_cur_generate = cur->parent;
+
+      if (pform_cur_generate != 0)
+	    pform_cur_generate->generates.push_back(cur);
+      else
+	    pform_cur_module->generate_schemes.push_back(cur);
 }
 
 bool pform_expression_is_constant(const PExpr*ex)
@@ -1773,6 +1778,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.147  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.146  2007/05/24 04:07:12  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

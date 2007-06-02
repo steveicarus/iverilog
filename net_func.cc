@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_func.cc,v 1.9 2007/04/17 04:17:47 steve Exp $"
+#ident "$Id: net_func.cc,v 1.10 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -95,13 +95,13 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 
       if (dscope->type() != NetScope::FUNC) {
 	    cerr << get_line() << ": error: Attempt to call scope "
-		 << dscope->name() << " as a function." << endl;
+		 << scope_path(dscope) << " as a function." << endl;
 	    des->errors += 1;
 	    return false;
       }
 
       if (parms_count != dscope->func_def()->port_count()) {
-	    cerr << get_line() << ": error: Function " << dscope->name()
+	    cerr << get_line() << ": error: Function " << scope_path(dscope)
 		 << " expects " << (dscope->func_def()->port_count())
 		 << " arguments, you passed " << parms_count << "."
 		 << endl;
@@ -149,6 +149,9 @@ unsigned NetSysFunc::vector_width() const
 
 /*
  * $Log: net_func.cc,v $
+ * Revision 1.10  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.9  2007/04/17 04:17:47  steve
  *  Fix argument count in function error message.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.43 2007/05/24 04:07:11 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.44 2007/06/02 03:42:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -156,7 +156,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       symbol_search(des, scope, path_, reg, par, eve);
       if (reg == 0) {
 	    cerr << get_line() << ": error: Could not find variable ``"
-		 << path_ << "'' in ``" << scope->name() <<
+		 << path_ << "'' in ``" << scope_path(scope) <<
 		  "''" << endl;
 
 	    des->errors += 1;
@@ -206,7 +206,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	   unless this is the l-value of a force. */
       if ((reg->type() != NetNet::REG) && !is_force) {
 	    cerr << get_line() << ": error: " << path_ <<
-		  " is not a valid l-value in " << scope->name() <<
+		  " is not a valid l-value in " << scope_path(scope) <<
 		  "." << endl;
 	    cerr << reg->get_line() << ":      : " << path_ <<
 		  " is declared here as " << reg->type() << "." << endl;
@@ -445,7 +445,7 @@ bool PEIdent::elaborate_lval_net_idx_up_(Design*des,
 
       if (reg->type() != NetNet::REG) {
 	    cerr << get_line() << ": error: " << path_ <<
-		  " is not a reg/integer/time in " << scope->name() <<
+		  " is not a reg/integer/time in " << scope_path(scope) <<
 		  "." << endl;
 	    cerr << reg->get_line() << ":      : " << path_ <<
 		  " is declared here as " << reg->type() << "." << endl;
@@ -500,6 +500,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.44  2007/06/02 03:42:12  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.43  2007/05/24 04:07:11  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

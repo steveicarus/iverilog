@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.371 2007/05/24 04:07:11 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.372 2007/06/02 03:42:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -651,7 +651,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
       if (debug_elaborate) {
 	    cerr << get_line() << ": debug: Instantiate module "
 		 << rmod->mod_name() << " with instance name "
-		 << get_name() << " in scope " << scope->name() << endl;
+		 << get_name() << " in scope " << scope_path(scope) << endl;
       }
 
 	// This is the array of pin expressions, shuffled to match the
@@ -1495,7 +1495,6 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    NetESignal*sig = new NetESignal(tmp);
 
 	      /* Generate an assignment of the l-value to the temporary... */
-	    string n = scope->local_hsymbol();
 	    NetAssign_*lvt = new NetAssign_(tmp);
 
 	    NetAssign*a1 = new NetAssign(lvt, rv);
@@ -1618,10 +1617,10 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 
       NetScope*nscope = 0;
       if (name_.str() != 0) {
-	    nscope = scope->child(name_);
+	    nscope = scope->child(hname_t(name_));
 	    if (nscope == 0) {
 		  cerr << get_line() << ": internal error: "
-			"unable to find block scope " << scope->name()
+			"unable to find block scope " << scope_path(scope)
 		       << "<" << name_ << ">" << endl;
 		  des->errors += 1;
 		  return 0;
@@ -1927,7 +1926,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       NetTaskDef*def = task->task_def();
       if (def == 0) {
 	    cerr << get_line() << ": internal error: task " << path_
-		 << " doesn't have a definition in " << scope->name()
+		 << " doesn't have a definition in " << scope_path(scope)
 		 << "." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2138,10 +2137,12 @@ NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetScope*target = des->find_scope(scope, scope_);
+      list<hname_t> spath = eval_scope_path(des, scope, scope_);
+
+      NetScope*target = des->find_scope(scope, spath);
       if (target == 0) {
 	    cerr << get_line() << ": error: Cannot find scope "
-		 << scope_ << " in " << scope->name() << endl;
+		 << scope_ << " in " << scope_path(scope) << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -2758,7 +2759,7 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
       if (def == 0) {
 	    cerr << get_line() << ": internal error: "
 		 << "No function definition for function "
-		 << scope->name() << endl;
+		 << scope_path(scope) << endl;
 	    return;
       }
 
@@ -2767,7 +2768,7 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
       NetProc*st = statement_->elaborate(des, scope);
       if (st == 0) {
 	    cerr << statement_->get_line() << ": error: Unable to elaborate "
-		  "statement in function " << def->name() << "." << endl;
+		  "statement in function " << scope->basename() << "." << endl;
 	    des->errors += 1;
 	    return;
       }
@@ -2868,7 +2869,7 @@ void PTask::elaborate(Design*des, NetScope*task) const
 	    st = statement_->elaborate(des, task);
 	    if (st == 0) {
 		  cerr << statement_->get_line() << ": Unable to elaborate "
-			"statement in task " << task->name()
+			"statement in task " << scope_path(task)
 		       << " at " << get_line() << "." << endl;
 		  return;
 	    }
@@ -3226,7 +3227,8 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       for (mfunc_it_t cur = funcs_.begin()
 		 ; cur != funcs_.end() ;  cur ++) {
 
-	    NetScope*fscope = scope->child((*cur).first);
+	    hname_t use_name ( (*cur).first );
+	    NetScope*fscope = scope->child(use_name);
 	    assert(fscope);
 	    (*cur).second->elaborate(des, fscope);
       }
@@ -3238,7 +3240,8 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       for (mtask_it_t cur = tasks_.begin()
 		 ; cur != tasks_.end() ;  cur ++) {
 
-	    NetScope*tscope = scope->child((*cur).first);
+	    hname_t use_name ( (*cur).first );
+	    NetScope*tscope = scope->child(use_name);
 	    assert(tscope);
 	    (*cur).second->elaborate(des, tscope);
       }
@@ -3287,7 +3290,7 @@ bool PGenerate::elaborate(Design*des) const
 
 	    if (debug_elaborate)
 		  cerr << get_line() << ": debug: Elaborate in "
-		       << "scope " << (*cur)->name() << endl;
+		       << "scope " << scope_path(*cur) << endl;
 
 	    flag = elaborate_(des, *cur) & flag;
       }
@@ -3417,6 +3420,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.372  2007/06/02 03:42:12  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.371  2007/05/24 04:07:11  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

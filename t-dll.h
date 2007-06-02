@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.142 2007/04/02 01:12:34 steve Exp $"
+#ident "$Id: t-dll.h,v 1.143 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -165,6 +165,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       void make_logic_delays_(struct ivl_net_logic_s*obj, const NetObj*net);
       void make_scope_parameters(ivl_scope_t scope, const NetScope*net);
+      void make_scope_param_expr(ivl_parameter_t cur_par, NetExpr*etmp);
 
       static ivl_expr_t expr_from_value_(const verinum&that);
 };
@@ -679,6 +680,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.143  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.142  2007/04/02 01:12:34  steve
  *  Seperate arrayness from word count
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_event.cc,v 1.26 2004/10/04 01:10:54 steve Exp $"
+#ident "$Id: net_event.cc,v 1.27 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -56,10 +56,10 @@ perm_string NetEvent::name() const
       return name_;
 }
 
-string NetEvent::full_name() const
+NetScope* NetEvent::scope()
 {
       assert(scope_);
-      return scope_->name() + "." + string(name_);
+      return scope_;
 }
 
 const NetScope* NetEvent::scope() const
@@ -449,6 +449,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.27  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.26  2004/10/04 01:10:54  steve
  *  Clean up spurious trailing white space.
  *

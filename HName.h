@@ -1,7 +1,7 @@
 #ifndef __HName_H
 #define __HName_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: HName.h,v 1.6 2007/05/16 19:12:33 steve Exp $"
+#ident "$Id: HName.h,v 1.7 2007/06/02 03:42:12 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -31,8 +31,11 @@ using namespace std;
 #endif
 
 /*
- * This class represents a Verilog hierarchical name. A hierarchical
- * name is an ordered list of simple names.
+ * This class represents a component of a Verilog hierarchical name. A
+ * hierarchical component contains a name string (prepresented here
+ * with a perm_string) and an optional signed number. This signed
+ * number is used if the scope is part of an array, for example an
+ * array of module instances or a loop generated scope.
  */
 
 class hname_t {
@@ -40,53 +43,38 @@ class hname_t {
     public:
       hname_t ();
       explicit hname_t (perm_string text);
+      explicit hname_t (perm_string text, int num);
       hname_t (const hname_t&that);
       ~hname_t();
 
-	// This method adds a name to the end of the hierarchical
-	// path. This becomes a new base name.
-      void append(perm_string text);
+      hname_t& operator= (const hname_t&);
 
-	// This method adds a name to the *front* of the hierarchical
-	// path. The base name remains the same, unless this is the
-	// only component.
-      void prepend(perm_string text);
+	// Return the string part of the hname_t.
+      perm_string peek_name(void) const;
 
-	// This method removes the tail name from the hierarchy, and
-	// returns a pointer to that tail name. That tail name now
-	// must be removed by the caller.
-      perm_string remove_tail_name();
-
-	// Return the given component in the hierarchical name. If the
-	// idx is too large, return 0.
-      perm_string peek_name(unsigned idx) const;
-      perm_string peek_tail_name() const;
-
-	// Return the number of components in the hierarchical
-	// name. If this is a simple name, this will return 1.
-      unsigned component_count() const;
-
-      friend ostream& operator<< (ostream&, const hname_t&);
+      bool has_number() const;
+      int peek_number() const;
 
     private:
-      union {
-	    perm_string*array_;
-	    char item_[sizeof(perm_string)];
-      };
-      unsigned count_;
-
-      perm_string& item_ref1_();
-      const perm_string& item_ref1_() const;
+      perm_string name_;
+	// If the number is anything other then INT_MIN, then this is
+	// the numeric part of the name. Otherwise, it is not part of
+	// the name at all.
+      int number_;
 
     private: // not implemented
-      hname_t& operator= (const hname_t&);
 };
 
 extern bool operator <  (const hname_t&, const hname_t&);
 extern bool operator == (const hname_t&, const hname_t&);
+extern bool operator != (const hname_t&, const hname_t&);
+extern ostream& operator<< (ostream&, const hname_t&);
 
 /*
  * $Log: HName.h,v $
+ * Revision 1.7  2007/06/02 03:42:12  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.6  2007/05/16 19:12:33  steve
  *  Fix hname_t use of space for 1 perm_string.
  *

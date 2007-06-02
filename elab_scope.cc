@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.45 2007/05/24 04:07:11 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.46 2007/06/02 03:42:12 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -51,7 +51,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 {
       if (debug_scopes) {
 	    cerr << get_line() << ": debug: Elaborate scope "
-		 << scope->name() << "." << endl;
+		 << scope_path(scope) << "." << endl;
       }
 
 	// Generate all the parameters that this instance of this
@@ -156,7 +156,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	    if (! flag) {
 		  cerr << val->get_line() << ": warning: parameter "
 		       << (*cur).first << " not found in "
-		       << scope->name() << "." << endl;
+		       << scope_path(scope) << "." << endl;
 	    }
       }
 
@@ -243,7 +243,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       for (tasks_it_t cur = tasks_.begin()
 		 ; cur != tasks_.end() ;  cur ++ ) {
 
-	    NetScope*task_scope = new NetScope(scope, (*cur).first,
+	    hname_t use_name( (*cur).first );
+	    NetScope*task_scope = new NetScope(scope, use_name,
 					       NetScope::TASK);
 	    (*cur).second->elaborate_scope(des, task_scope);
       }
@@ -258,7 +259,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       for (funcs_it_t cur = funcs_.begin()
 		 ; cur != funcs_.end() ;  cur ++ ) {
 
-	    NetScope*func_scope = new NetScope(scope, (*cur).first,
+	    hname_t use_name( (*cur).first );
+	    NetScope*func_scope = new NetScope(scope, use_name,
 					       NetScope::FUNC);
 	    (*cur).second->elaborate_scope(des, func_scope);
       }
@@ -351,11 +353,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	      // that each instance has a unique name in the
 	      // container. The format of using [] is part of the
 	      // Verilog standard.
-	    char name_buf[128];
-	    snprintf(name_buf, sizeof name_buf,
-		     "%s[%d]", scope_name.str(), genvar);
-	    perm_string use_name = lex_strings.make(name_buf);
-
+	    hname_t use_name (scope_name, genvar);
 	    if (debug_elaborate)
 		  cerr << get_line() << ": debug: "
 		       << "Create generated scope " << use_name << endl;
@@ -431,7 +429,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	// about to create, and if I find it then somebody beat me to
 	// it.
 
-      if (sc->child(get_name())) {
+      if (sc->child(hname_t(get_name()))) {
 	    cerr << get_line() << ": error: Instance/Scope name " <<
 		  get_name() << " already used in this context." <<
 		  endl;
@@ -454,8 +452,8 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 		 << "module " << mod->mod_name() << " within itself." << endl;
 
 	    cerr << get_line() << ":      : The offending instance is "
-		 << sc->name() << "." << get_name() << " within "
-		 << scn->name() << "." << endl;
+		 << scope_path(sc) << "." << get_name() << " within "
+		 << scope_path(scn) << "." << endl;
 
 	    des->errors += 1;
 	    return;
@@ -498,24 +496,21 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	// instantiation line.
       for (int idx = 0 ;  idx < instance_count ;  idx += 1) {
 
-	    perm_string use_name = get_name();
+	    hname_t use_name (get_name());
 
 	    if (instance_array) {
-		  char name_buf[128];
 		  int instance_idx = idx;
 		  if (instance_low < instance_high)
 			instance_idx = instance_low + idx;
 		  else
 			instance_idx = instance_low - idx;
 
-		  snprintf(name_buf, sizeof name_buf,
-			   "%s[%d]", get_name().str(), instance_idx);
-		  use_name = lex_strings.make(name_buf);
+		  use_name = hname_t(get_name(), instance_idx);
 	    }
 
 	    if (debug_scopes) {
 		  cerr << get_line() << ": debug: Module instance " << use_name
-		       << " becomes child of " << sc->name()
+		       << " becomes child of " << scope_path(sc)
 		       << "." << endl;
 	    }
 
@@ -652,7 +647,7 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
       NetScope*my_scope = scope;
 
       if (name_ != 0) {
-	    my_scope = new NetScope(scope, name_, bl_type_==BL_PAR
+	    my_scope = new NetScope(scope, hname_t(name_), bl_type_==BL_PAR
 				    ? NetScope::FORK_JOIN
 				    : NetScope::BEGIN_END);
       }
@@ -761,6 +756,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.46  2007/06/02 03:42:12  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.45  2007/05/24 04:07:11  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

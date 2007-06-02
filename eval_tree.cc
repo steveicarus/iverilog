@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.76 2007/05/31 18:36:06 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.77 2007/06/02 03:42:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1212,7 +1212,7 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
       if (expr == 0) {
 	    cerr << get_line() << ": internal error: Unable to match "
 		 << "parameter " << name_ << " in scope "
-		 << scope_->name() << endl;
+		 << scope_path(scope_) << endl;
 	    return 0;
       }
 
@@ -1655,6 +1655,9 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.77  2007/06/02 03:42:12  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.76  2007/05/31 18:36:06  steve
  *  Fix warning (ldolittle)
  *

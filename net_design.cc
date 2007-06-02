@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.52 2007/05/24 04:07:12 steve Exp $"
+#ident "$Id: net_design.cc,v 1.53 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -32,6 +32,7 @@
 # include  "netlist.h"
 # include  "util.h"
 # include  "compiler.h"
+# include  "netmisc.h"
 # include  <sstream>
 
 Design:: Design()
@@ -84,7 +85,7 @@ uint64_t Design::scale_to_precision(uint64_t val,
 NetScope* Design::make_root_scope(perm_string root)
 {
       NetScope *root_scope_;
-      root_scope_ = new NetScope(0, root, NetScope::MODULE);
+      root_scope_ = new NetScope(0, hname_t(root), NetScope::MODULE);
 	/* This relies on the fact that the basename return value is
 	   permallocated. */
       root_scope_->set_module_name(root_scope_->basename());
@@ -114,7 +115,7 @@ const list<NetScope*> Design::find_root_scopes() const
  * more step down the tree until the name runs out or the search
  * fails.
  */
-NetScope* Design::find_scope(const pform_name_t&path) const
+NetScope* Design::find_scope(const std::list<hname_t>&path) const
 {
       if (path.empty())
 	    return 0;
@@ -123,17 +124,16 @@ NetScope* Design::find_scope(const pform_name_t&path) const
 		 ; scope != root_scopes_.end(); scope++) {
 
 	    NetScope*cur = *scope;
-	    if (strcmp(peek_head_name(path), cur->basename()) != 0)
+	    if (path.front() != cur->fullname())
 		  continue;
 
-	    pform_name_t tmp = path;
+	    std::list<hname_t> tmp = path;
 	    tmp.pop_front();
 
 	    while (cur) {
 		  if (tmp.empty()) return cur;
 
-		  perm_string name = peek_head_name(tmp);
-		  cur = cur->child(name);
+		  cur = cur->child( tmp.front() );
 
 		  tmp.pop_front();
 	    }
@@ -149,7 +149,7 @@ NetScope* Design::find_scope(const pform_name_t&path) const
  * I do not find the scope within the passed scope, start looking in
  * parent scopes until I find it, or I run out of parent scopes.
  */
-NetScope* Design::find_scope(NetScope*scope, const pform_name_t&path) const
+NetScope* Design::find_scope(NetScope*scope, const std::list<hname_t>&path) const
 {
       assert(scope);
       if (path.empty())
@@ -157,19 +157,15 @@ NetScope* Design::find_scope(NetScope*scope, const pform_name_t&path) const
 
       for ( ; scope ;  scope = scope->parent()) {
 
-	    pform_name_t tmp = path;
-	    name_component_t name_front = tmp.front();
-	    perm_string key = name_front.name;
+	    std::list<hname_t> tmp = path;
 
 	    NetScope*cur = scope;
 	    do {
-		  cur = cur->child(key);
+		  hname_t key = tmp.front();
+		  cur = cur->child( key );
 		  if (cur == 0) break;
 		  tmp.pop_front();
-		  if (tmp.empty()) break;
-		  name_front = tmp.front();
-		  key = name_front.name;
-	    } while (key);
+	    } while (!tmp.empty());
 
 	    if (cur) return cur;
       }
@@ -209,9 +205,11 @@ void NetScope::run_defparams(Design*des)
 	    perm_string perm_name = peek_tail_name(path);
 	    path.pop_back();
 
+	    list<hname_t> eval_path = eval_scope_path(des, this, path);
+
 	      /* If there is no path on the name, then the targ_scope
 		 is the current scope. */
-	    NetScope*targ_scope = des->find_scope(this, path);
+	    NetScope*targ_scope = des->find_scope(this, eval_path);
 	    if (targ_scope == 0) {
 		  cerr << val->get_line() << ": warning: scope of " <<
 			path << "." << perm_name << " not found." << endl;
@@ -222,7 +220,7 @@ void NetScope::run_defparams(Design*des)
 	    if (! flag) {
 		  cerr << val->get_line() << ": warning: parameter "
 		       << perm_name << " not found in "
-		       << targ_scope->name() << "." << endl;
+		       << scope_path(targ_scope) << "." << endl;
 	    }
 
       }
@@ -435,8 +433,10 @@ NetNet* Design::find_signal(NetScope*scope, pform_name_t path)
 
       perm_string key = peek_tail_name(path);
       path.pop_back();
-      if (! path.empty())
-	    scope = find_scope(scope, path);
+      if (! path.empty()) {
+	    list<hname_t> eval_path = eval_scope_path(this, scope, path);
+	    scope = find_scope(scope, eval_path);
+      }
 
       while (scope) {
 	    if (NetNet*net = scope->find_signal(key))
@@ -454,16 +454,9 @@ NetNet* Design::find_signal(NetScope*scope, pform_name_t path)
 NetFuncDef* Design::find_function(NetScope*scope, const pform_name_t&name)
 {
       assert(scope);
-      NetScope*func = find_scope(scope, name);
-      if (func && (func->type() == NetScope::FUNC))
-	    return func->func_def();
 
-      return 0;
-}
-
-NetFuncDef* Design::find_function(const pform_name_t&key)
-{
-      NetScope*func = find_scope(key);
+      std::list<hname_t> eval_path = eval_scope_path(this, scope, name);
+      NetScope*func = find_scope(scope, eval_path);
       if (func && (func->type() == NetScope::FUNC))
 	    return func->func_def();
 
@@ -472,23 +465,13 @@ NetFuncDef* Design::find_function(const pform_name_t&key)
 
 NetScope* Design::find_task(NetScope*scope, const pform_name_t&name)
 {
-      NetScope*task = find_scope(scope, name);
+      std::list<hname_t> eval_path = eval_scope_path(this, scope, name);
+      NetScope*task = find_scope(scope, eval_path);
       if (task && (task->type() == NetScope::TASK))
 	    return task;
 
       return 0;
 }
-
-NetScope* Design::find_task(const pform_name_t&key)
-{
-      NetScope*task = find_scope(key);
-      if (task && (task->type() == NetScope::TASK))
-	    return task;
-
-      return 0;
-}
-
-
 
 void Design::add_node(NetNode*net)
 {
@@ -565,6 +548,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.53  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.52  2007/05/24 04:07:12  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

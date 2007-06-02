@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.70 2007/04/04 01:50:38 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.71 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -131,7 +131,7 @@ bool dll_target::func_def(const NetScope*net)
       }
 
       cerr << "?:0" << ": internal error: "
-	   << "Function " << net->name() << " has a return type"
+	   << "Function " << net->basename() << " has a return type"
 	   << " that I do not understand." << endl;
 
       return false;
@@ -641,6 +641,8 @@ bool dll_target::proc_wait(const NetEvWait*net)
 	    ivl_scope_t ev_scope = lookup_scope_(ev->scope());
 	    ivl_event_t ev_tmp=0;
 
+	    assert(ev_scope);
+	    assert(ev_scope->nevent_ > 0);
 	    for (unsigned idx = 0 ;  idx < ev_scope->nevent_ ;  idx += 1) {
 		  const char*ename = ivl_event_basename(ev_scope->event_[idx]);
 		  if (strcmp(ev->name(), ename) == 0) {
@@ -735,6 +737,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.71  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.70  2007/04/04 01:50:38  steve
  *  t-dll should not canonicalize word addresses, elaboration already does it.
  *

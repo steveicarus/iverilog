@@ -17,17 +17,18 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: symbol_search.cc,v 1.6 2007/05/24 04:07:12 steve Exp $"
+#ident "$Id: symbol_search.cc,v 1.7 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 # include  "netlist.h"
+# include  "netmisc.h"
 # include  <assert.h>
 
 
 /*
  * Search for the hierarchical name.
  */
-NetScope*symbol_search(const Design*des, NetScope*scope, pform_name_t path,
+NetScope*symbol_search(Design*des, NetScope*scope, pform_name_t path,
 		       NetNet*&net,
 		       const NetExpr*&par,
 		       NetEvent*&eve,
@@ -46,8 +47,11 @@ NetScope*symbol_search(const Design*des, NetScope*scope, pform_name_t path,
 
 	/* If the path has a scope part, then search for the specified
 	   scope that we are supposed to search. */
-      if (! path.empty())
-	    scope = des->find_scope(scope, path);
+      if (! path.empty()) {
+	    list<hname_t> path_list = eval_scope_path(des, scope, path);
+	    assert(path_list.size() == path.size());
+	    scope = des->find_scope(scope, path_list);
+      }
 
       while (scope) {
 	    if ( (net = scope->find_signal(key)) )
@@ -68,8 +72,12 @@ NetScope*symbol_search(const Design*des, NetScope*scope, pform_name_t path,
       return 0;
 }
 
+
 /*
  * $Log: symbol_search.cc,v $
+ * Revision 1.7  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.6  2007/05/24 04:07:12  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.86 2007/04/15 01:37:29 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.87 2007/06/02 03:42:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -92,7 +92,6 @@ NetNet* NetEBBits::synthesize(Design*des)
 
       NetScope*scope = lsig->scope();
       assert(scope);
-      string path = des->local_symbol(scope->name());
 
       if (lsig->vector_width() != rsig->vector_width()) {
 	    cerr << get_line() << ": internal error: bitwise (" << op_
@@ -871,6 +870,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.87  2007/06/02 03:42:12  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.86  2007/04/15 01:37:29  steve
  *  Allow bit/part select of vectors in continuous assignments.
  *

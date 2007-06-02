@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGenerate.cc,v 1.3 2007/05/24 04:07:11 steve Exp $"
+#ident "$Id: PGenerate.cc,v 1.4 2007/06/02 03:42:12 steve Exp $"
 #endif
 
 # include  "PGenerate.h"
@@ -26,6 +26,7 @@
 PGenerate::PGenerate(unsigned id)
 : id_number(id)
 {
+      parent = 0;
 }
 
 PGenerate::~PGenerate()

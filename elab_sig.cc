@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.51 2007/05/24 04:07:11 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.52 2007/06/02 03:42:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -208,11 +208,13 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 
       for (mfunc_it_t cur = funcs_.begin()
 		 ; cur != funcs_.end() ;  cur ++) {
-	    NetScope*fscope = scope->child((*cur).first);
+
+	    hname_t use_name ( (*cur).first );
+	    NetScope*fscope = scope->child(use_name);
 	    if (scope == 0) {
 		  cerr << (*cur).second->get_line() << ": internal error: "
 		       << "Child scope for function " << (*cur).first
-		       << " missing in " << scope->name() << "." << endl;
+		       << " missing in " << scope_path(scope) << "." << endl;
 		  des->errors += 1;
 		  continue;
 	    }
@@ -229,7 +231,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 
       for (mtask_it_t cur = tasks_.begin()
 		 ; cur != tasks_.end() ;  cur ++) {
-	    NetScope*tscope = scope->child((*cur).first);
+	    NetScope*tscope = scope->child( hname_t((*cur).first) );
 	    assert(tscope);
 	    (*cur).second->elaborate_sig(des, tscope);
       }
@@ -252,9 +254,9 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 
 	    if (my_scope->parent() != scope) {
 		  cerr << get_line() << ": internal error: "
-		       << "Instance " << my_scope->name()
-		       << " is in parent " << my_scope->parent()->name()
-		       << " instead of " << scope->name()
+		       << "Instance " << scope_path(my_scope)
+		       << " is in parent " << scope_path(my_scope->parent())
+		       << " instead of " << scope_path(scope)
 		       << endl;
 	    }
 	    assert(my_scope->parent() == scope);
@@ -277,7 +279,7 @@ bool PGenerate::elaborate_sig(Design*des) const
 
 	    if (debug_elaborate)
 		  cerr << get_line() << ": debug: Elaborate nets in "
-		       << "scope " << (*cur)->name() << endl;
+		       << "scope " << scope_path(*cur) << endl;
 	    flag = elaborate_sig_(des, *cur) & flag;
       }
 
@@ -296,7 +298,7 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
 
 	    if (debug_elaborate)
 		  cerr << get_line() << ": debug: Elaborate PWire "
-		       << cur->path() << " in scope " << scope->name() << endl;
+		       << cur->path() << " in scope " << scope_path(scope) << endl;
 
 	    cur->elaborate_sig(des, scope);
       }
@@ -432,14 +434,14 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 			cerr << get_line() << ": internal error: function "
 			     << "port " << (*ports_)[idx]->path()
 			     << " has wrong name for function "
-			     << scope->name() << "." << endl;
+			     << scope_path(scope) << "." << endl;
 			des->errors += 1;
 		  }
 
 		  NetNet*tmp = scope->find_signal(pname);
 		  if (tmp == 0) {
 			cerr << get_line() << ": internal error: function "
-			     << scope->name() << " is missing port "
+			     << scope_path(scope) << " is missing port "
 			     << pname << "." << endl;
 			scope->dump(cerr);
 			cerr << get_line() << ": Continuing..." << endl;
@@ -497,14 +499,14 @@ void PTask::elaborate_sig(Design*des, NetScope*scope) const
 	    if (tmp == 0) {
 		  cerr << get_line() << ": internal error: "
 		       << "Could not find port " << port_name
-		       << " in scope " << scope->name() << endl;
+		       << " in scope " << scope_path(scope) << endl;
 		  scope->dump(cerr);
 	    }
 
 	    ports[idx] = tmp;
       }
 
-      NetTaskDef*def = new NetTaskDef(scope->name(), ports);
+      NetTaskDef*def = new NetTaskDef(scope, ports);
       scope->set_task_def(def);
 }
 
@@ -532,7 +534,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      name_component_t cur = tmp_path.front();
 	      tmp_path.pop_front();
 
-	      scope = scope->child(cur.name);
+	      scope = scope->child( hname_t(cur.name) );
 
 	      if (scope == 0) {
 		    cerr << get_line() << ": internal error: "
@@ -727,7 +729,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       if (debug_elaborate) {
 	    cerr << get_line() << ": debug: Create signal "
 		 << wtype << " ["<<msb<<":"<<lsb<<"] " << name
-		 << " in scope " << scope->name() << endl;
+		 << " in scope " << scope_path(scope) << endl;
       }
 
 
@@ -741,7 +743,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    if (debug_elaborate) {
 		  cerr << get_line() << ": debug: "
 		       << "Signal " << name
-		       << " in scope " << scope->name()
+		       << " in scope " << scope_path(scope)
 		       << " defaults to data type " << use_data_type << endl;
 	    }
       }
@@ -763,6 +765,9 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.52  2007/06/02 03:42:12  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.51  2007/05/24 04:07:11  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

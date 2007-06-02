@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.379 2007/05/24 04:07:12 steve Exp $"
+#ident "$Id: netlist.h,v 1.380 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 /*
@@ -2060,7 +2060,6 @@ class NetEvent : public LineInfo {
       ~NetEvent();
 
       perm_string name() const;
-      string full_name() const;
 
 	// Get information about probes connected to me.
       unsigned nprobe() const;
@@ -2267,8 +2266,9 @@ class NetFuncDef {
 
       void set_proc(NetProc*st);
 
-      const string name() const;
+	//const string name() const;
       const NetProc*proc() const;
+      const NetScope*scope() const;
       NetScope*scope();
 
       unsigned port_count() const;
@@ -2406,12 +2406,13 @@ class NetSTask  : public NetProc {
 class NetTaskDef {
 
     public:
-      NetTaskDef(const string&n, const svector<NetNet*>&po);
+      NetTaskDef(NetScope*n, const svector<NetNet*>&po);
       ~NetTaskDef();
 
       void set_proc(NetProc*p);
 
-      const string& name() const;
+	//const string& name() const;
+      const NetScope* scope() const;
       const NetProc*proc() const;
 
       unsigned port_count() const;
@@ -2420,7 +2421,7 @@ class NetTaskDef {
       void dump(ostream&, unsigned) const;
 
     private:
-      string name_;
+      NetScope*scope_;
       NetProc*proc_;
       svector<NetNet*>ports_;
 
@@ -2437,10 +2438,8 @@ class NetTaskDef {
 class NetEUFunc  : public NetExpr {
 
     public:
-      NetEUFunc(NetScope*, NetESignal*,   svector<NetExpr*>&);
+      NetEUFunc(NetScope*, NetESignal*, svector<NetExpr*>&);
       ~NetEUFunc();
-
-      const string name() const;
 
       const NetESignal*result_sig() const;
 
@@ -3183,7 +3182,7 @@ class NetScope : public Attrib {
 
 	/* Create a new scope, and attach it to the given parent. The
 	   name is expected to have been permallocated. */
-      NetScope(NetScope*up, perm_string name, TYPE t);
+      NetScope(NetScope*up, const hname_t&name, TYPE t);
       ~NetScope();
 
 	/* Parameters exist within a scope, and these methods allow
@@ -3226,9 +3225,9 @@ class NetScope : public Attrib {
 	/* The parent and child() methods allow users of NetScope
 	   objects to locate nearby scopes. */
       NetScope* parent();
-      NetScope* child(const char*name);
+      NetScope* child(const hname_t&name);
       const NetScope* parent() const;
-      const NetScope* child(const char*name) const;
+      const NetScope* child(const hname_t&name) const;
 
       TYPE type() const;
 
@@ -3267,7 +3266,7 @@ class NetScope : public Attrib {
 	   name, whereas the basename is just my name within my parent
 	   scope. */
       perm_string basename() const;
-      string name() const;
+      const hname_t& fullname() const { return name_; }
 
       void run_defparams(class Design*);
       void evaluate_parameters(class Design*);
@@ -3275,9 +3274,6 @@ class NetScope : public Attrib {
 	/* This method generates a non-hierarchical name that is
 	   guaranteed to be unique within this scope. */
       perm_string local_symbol();
-	/* This method generates a hierarchical name that is
-	   guaranteed to be unique globally. */
-      string local_hsymbol();
 
       void dump(ostream&) const;
       void emit_scope(struct target_t*tgt) const;
@@ -3328,7 +3324,7 @@ class NetScope : public Attrib {
 
     private:
       TYPE type_;
-      perm_string name_;
+      hname_t name_;
 
       signed char time_unit_, time_prec_;
       NetNet::Type default_nettype_;
@@ -3392,8 +3388,8 @@ class Design {
 	   path is taken as an absolute scope name. Otherwise, the
 	   scope is located starting at the passed scope and working
 	   up if needed. */
-      NetScope* find_scope(const pform_name_t&path) const;
-      NetScope* find_scope(NetScope*, const pform_name_t&path) const;
+      NetScope* find_scope(const std::list<hname_t>&path) const;
+      NetScope* find_scope(NetScope*, const std::list<hname_t>&path) const;
 
 	// PARAMETERS
 
@@ -3409,11 +3405,9 @@ class Design {
 
 	// Functions
       NetFuncDef* find_function(NetScope*scope, const pform_name_t&key);
-      NetFuncDef* find_function(const pform_name_t&path);
 
 	// Tasks
       NetScope* find_task(NetScope*scope, const pform_name_t&name);
-      NetScope* find_task(const pform_name_t&key);
 
 	// NODES
       void add_node(NetNode*);
@@ -3500,7 +3494,23 @@ inline ostream& operator << (ostream&o, const NetExpr&exp)
 extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
+ * Manipulator to dump a scope complete path to the output. The
+ * manipulator is "scope_path" and works like this:
+ *
+ *   out << .... << scope_path(sc) << ... ;
+ */
+struct __ScopePathManip { const NetScope*scope; };
+inline __ScopePathManip scope_path(const NetScope*scope)
+{ __ScopePathManip tmp; tmp.scope = scope; return tmp; }
+
+extern ostream& operator << (ostream&o, __ScopePathManip);
+
+
+/*
  * $Log: netlist.h,v $
+ * Revision 1.380  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.379  2007/05/24 04:07:12  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

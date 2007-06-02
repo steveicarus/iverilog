@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_pexpr.cc,v 1.27 2007/05/24 04:07:11 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.28 2007/06/02 03:42:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -25,6 +25,7 @@
 # include  "PExpr.h"
 # include  "compiler.h"
 # include  "util.h"
+# include  "netmisc.h"
 
 # include  <iostream>
 
@@ -135,15 +136,17 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
       path.pop_back();
 
       NetScope*pscope = scope;
-      if (path_.size() > 0)
-	    pscope = des->find_scope(scope, path);
+      if (path_.size() > 0) {
+	    list<hname_t> tmp = eval_scope_path(des, scope, path);
+	    pscope = des->find_scope(scope, tmp);
+      }
 
       const NetExpr*ex_msb;
       const NetExpr*ex_lsb;
       const NetExpr*ex = pscope->get_parameter(name_tail.name, ex_msb, ex_lsb);
       if (ex == 0) {
 	    cerr << get_line() << ": error: identifier ``" << name_tail.name <<
-		  "'' is not a parameter in " << scope->name() << "." << endl;
+		  "'' is not a parameter in "<< scope_path(scope)<< "." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -240,6 +243,9 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.28  2007/06/02 03:42:12  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.27  2007/05/24 04:07:11  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

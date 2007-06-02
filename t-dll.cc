@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.170 2007/04/02 01:12:34 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.171 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -134,6 +134,17 @@ inline static const char *basename(ivl_scope_t scope, const char *inst)
       return inst+1;
 }
 
+static perm_string make_scope_name(const hname_t&name)
+{
+      if (! name.has_number())
+	    return name.peek_name();
+
+      char buf[1024];
+      snprintf(buf, sizeof buf, "%s[%d]",
+	       name.peek_name().str(), name.peek_number());
+      return lex_strings.make(buf);
+}
+
 static struct dll_target dll_target_obj;
 
 static void drive_from_link(const Link&lnk, ivl_drive_t&drv0, ivl_drive_t&drv1)
@@ -212,6 +223,7 @@ ivl_attribute_s* dll_target::fill_in_attributes(const Attrib*net)
 static ivl_scope_t find_scope_from_root(ivl_scope_t root, const NetScope*cur)
 {
       ivl_scope_t parent, tmp;
+      perm_string cur_name = make_scope_name(cur->fullname());
 
       if (const NetScope*par = cur->parent()) {
 	    parent = find_scope_from_root(root, par);
@@ -219,11 +231,11 @@ static ivl_scope_t find_scope_from_root(ivl_scope_t root, const NetScope*cur)
 		  return 0;
 
 	    for (tmp = parent->child_ ;  tmp ;  tmp = tmp->sibling_)
-		  if (strcmp(tmp->name_, cur->basename()) == 0)
+		  if (strcmp(tmp->name_, cur_name) == 0)
 			return tmp;
 
       } else {
-	    if (strcmp(root->name_, cur->basename()) == 0)
+	    if (strcmp(root->name_, cur_name) == 0)
 		  return root;
       }
 
@@ -442,7 +454,7 @@ ivl_parameter_t dll_target::scope_find_param(ivl_scope_t scope,
  */
 void dll_target::make_scope_parameters(ivl_scope_t scope, const NetScope*net)
 {
-      scope->nparam_ = net->parameters.size();
+      scope->nparam_ = net->parameters.size() + net->localparams.size();
       if (scope->nparam_ == 0) {
 	    scope->param_ = 0;
 	    return;
@@ -462,37 +474,52 @@ void dll_target::make_scope_parameters(ivl_scope_t scope, const NetScope*net)
 	    cur_par->scope = scope;
 
 	    NetExpr*etmp = (*cur_pit).second.expr;
-
-	    if (const NetEConst*e = dynamic_cast<const NetEConst*>(etmp)) {
-
-		  expr_const(e);
-		  assert(expr_);
-
-		  switch (expr_->type_) {
-		      case IVL_EX_STRING:
-			expr_->u_.string_.parameter = cur_par;
-			break;
-		      case IVL_EX_NUMBER:
-			expr_->u_.number_.parameter = cur_par;
-			break;
-		      default:
-			assert(0);
-		  }
-
-	    } else if (const NetECReal*e = dynamic_cast<const NetECReal*>(etmp)) {
-
-		  expr_creal(e);
-		  assert(expr_);
-		  assert(expr_->type_ == IVL_EX_REALNUM);
-		  expr_->u_.real_.parameter = cur_par;
-
-	    }
-
-	    cur_par->value = expr_;
-	    expr_ = 0;
-
+	    make_scope_param_expr(cur_par, etmp);
 	    idx += 1;
       }
+      for (pit_t cur_pit = net->localparams.begin()
+		 ; cur_pit != net->localparams.end() ;  cur_pit ++) {
+
+	    assert(idx < scope->nparam_);
+	    ivl_parameter_t cur_par = scope->param_ + idx;
+	    cur_par->basename = (*cur_pit).first;
+	    cur_par->scope = scope;
+
+	    NetExpr*etmp = (*cur_pit).second.expr;
+	    make_scope_param_expr(cur_par, etmp);
+	    idx += 1;
+      }
+}
+
+void dll_target::make_scope_param_expr(ivl_parameter_t cur_par, NetExpr*etmp)
+{
+      if (const NetEConst*e = dynamic_cast<const NetEConst*>(etmp)) {
+
+	    expr_const(e);
+	    assert(expr_);
+
+	    switch (expr_->type_) {
+		case IVL_EX_STRING:
+		  expr_->u_.string_.parameter = cur_par;
+		  break;
+		case IVL_EX_NUMBER:
+		  expr_->u_.number_.parameter = cur_par;
+		  break;
+		default:
+		  assert(0);
+	    }
+
+      } else if (const NetECReal*e = dynamic_cast<const NetECReal*>(etmp)) {
+
+	    expr_creal(e);
+	    assert(expr_);
+	    assert(expr_->type_ == IVL_EX_REALNUM);
+	    expr_->u_.real_.parameter = cur_par;
+
+      }
+
+      cur_par->value = expr_;
+      expr_ = 0;
 }
 
 void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
@@ -1951,8 +1978,9 @@ void dll_target::scope(const NetScope*net)
 	    assert(scope);
 
       } else {
+	    perm_string sname = make_scope_name(net->fullname());
 	    scope = new struct ivl_scope_s;
-	    scope->name_ = net->basename();
+	    scope->name_ = sname;
 	    scope->child_ = 0;
 	    scope->sibling_ = 0;
 	    scope->parent = find_scope(des_, net->parent());
@@ -1985,12 +2013,12 @@ void dll_target::scope(const NetScope*net)
 		      }
 		      assert(def);
 		      scope->type_ = IVL_SCT_TASK;
-		      scope->tname_ = strings_.make(def->name().c_str());
+		      scope->tname_ = def->scope()->basename();
 		      break;
 		}
 		case NetScope::FUNC:
 		  scope->type_ = IVL_SCT_FUNCTION;
-		  scope->tname_ = strings_.make(net->func_def()->name().c_str());
+		  scope->tname_ = net->func_def()->scope()->basename();
 		  break;
 		case NetScope::BEGIN_END:
 		  scope->type_ = IVL_SCT_BEGIN;
@@ -2227,6 +2255,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.171  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.170  2007/04/02 01:12:34  steve
  *  Seperate arrayness from word count
  *

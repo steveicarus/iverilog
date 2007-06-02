@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.204 2007/05/24 04:07:11 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.205 2007/06/02 03:42:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1240,7 +1240,7 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
       NetFuncDef*def = des->find_function(scope, path_);
       if (def == 0) {
 	    cerr << get_line() << ": error: No function " << path_ <<
-		  " in this context (" << scope->name() << ")." << endl;
+		  " in this context (" << scope_path(scope) << ")." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -1657,12 +1657,13 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
       if (sig == 0 && path_.size() != 1) {
 	    cerr << get_line() << ": error: The hierarchical name "
 		 << path_ << " is undefined in "
-		 << scope->name() << "." << endl;
+		 << scope_path(scope) << "." << endl;
 
 	    pform_name_t tmp_path = path_;
 	    tmp_path.pop_back();
 
-	    NetScope*tmp_scope = des->find_scope(scope, tmp_path);
+	    list<hname_t> stmp_path = eval_scope_path(des, scope, tmp_path);
+	    NetScope*tmp_scope = des->find_scope(scope, stmp_path);
 	    if (tmp_scope == 0) {
 		  cerr << get_line() << ":      : I can't even find "
 		       << "the scope " << tmp_path << "." << endl;
@@ -1681,13 +1682,13 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 
 	    if (error_implicit || (nettype == NetNet::NONE)) {
 		  cerr << get_line() << ": error: "
-		       << scope->name() << "." << name_tail.name
+		       << scope_path(scope) << "." << name_tail.name
 		       << " not defined in this scope." << endl;
 		  des->errors += 1;
 
 	    } else if (warn_implicit) {
 		  cerr << get_line() << ": warning: implicit "
-			"definition of wire " << scope->name()
+			"definition of wire " << scope_path(scope)
 		       << "." << name_tail.name << "." << endl;
 	    }
       }
@@ -2032,7 +2033,7 @@ NetNet* PEIdent::make_implicit_net_(Design*des, NetScope*scope) const
 
 	    if (warn_implicit) {
 		  cerr << get_line() << ": warning: implicit "
-			"definition of wire logic " << scope->name()
+			"definition of wire logic " << scope_path(scope)
 		       << "." << peek_tail_name(path_) << "." << endl;
 	    }
 
@@ -2369,7 +2370,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
       NetNet*sig = des->find_signal(scope, path_);
       if (sig == 0) {
 	    cerr << get_line() << ": error: no wire/reg " << path_
-		 << " in module " << scope->name() << "." << endl;
+		 << " in module " << scope_path(scope) << "." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -2388,7 +2389,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 
 	  case NetNet::NOT_A_PORT:
 	    cerr << get_line() << ": error: signal " << path_ << " in"
-		 << " module " << scope->name() << " is not a port." << endl;
+		 << " module " << scope_path(scope) << " is not a port." << endl;
 	    cerr << get_line() << ":      : Are you missing an input/"
 		 << "output/inout declaration?" << endl;
 	    des->errors += 1;
@@ -2400,7 +2401,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 
 	  case NetNet::PIMPLICIT:
 	    cerr << get_line() << ": internal error: signal " << path_
-		 << " in module " << scope->name() << " is left as "
+		 << " in module " << scope_path(scope) << " is left as "
 		 << "port type PIMPLICIT." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2962,6 +2963,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.205  2007/06/02 03:42:12  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.204  2007/05/24 04:07:11  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.cc,v 1.13 2007/03/08 05:30:03 steve Exp $"
+#ident "$Id: netmisc.cc,v 1.14 2007/06/02 03:42:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -25,6 +25,8 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "PExpr.h"
+# include  "pform_types.h"
+# include  "ivl_assert.h"
 
 NetNet* add_to_net(Design*des, NetNet*sig, long val)
 {
@@ -138,9 +140,44 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope,
       return tmp;
 }
 
+std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
+				   const pform_name_t&path)
+{
+      list<hname_t> res;
+
+      typedef pform_name_t::const_iterator pform_path_it;
+
+      for (pform_path_it cur = path.begin() ; cur != path.end(); cur++) {
+	    const name_component_t&comp = *cur;
+	    if (comp.index.empty()) {
+		  res.push_back(hname_t(comp.name));
+		  continue;
+	    }
+
+	    assert(comp.index.size() == 1);
+	    const index_component_t&index = comp.index.front();
+	    assert(index.sel == index_component_t::SEL_BIT);
+
+	    NetExpr*tmp = elab_and_eval(des, scope, index.msb, -1);
+	    ivl_assert(*index.msb, tmp);
+
+	    if (NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp)) {
+		  res.push_back(hname_t(comp.name, ctmp->value().as_long()));
+		  delete ctmp;
+		  continue;
+	    }
+
+	    return res;
+      }
+
+      return res;
+}
 
 /*
  * $Log: netmisc.cc,v $
+ * Revision 1.14  2007/06/02 03:42:13  steve
+ *  Properly evaluate scope path expressions.
+ *
  * Revision 1.13  2007/03/08 05:30:03  steve
  *  Limit the calculated widths of constants.
  *
@@ -156,36 +193,5 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope,
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT
  *  ivl_target expression type.
- *
- * Revision 1.9  2004/12/11 02:31:27  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.8  2004/02/20 18:53:35  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.7  2004/02/18 17:11:57  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.6  2003/03/06 00:28:42  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.5  2003/02/26 01:29:24  steve
- *  LPM objects store only their base names.
- *
- * Revision 1.4  2002/08/31 03:48:50  steve
- *  Fix reverse bit ordered bit select in continuous assignment.
- *
- * Revision 1.3  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.2  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.1  2001/02/11 02:15:52  steve
- *  Add the netmisc.cc source file.
- *
  */
 
