@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.100 2007/06/02 03:42:13 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.101 2007/06/04 02:19:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -78,6 +78,30 @@ ostream& operator<< (ostream&out, perm_string that)
       return out;
 }
 
+ostream& operator<< (ostream&out, const index_component_t&that)
+{
+      out << "[";
+      switch (that.sel) {
+	  case index_component_t::SEL_BIT:
+	    out << *that.msb;
+	    break;
+	  case index_component_t::SEL_PART:
+	    out << *that.msb << ":" << *that.lsb;
+	    break;
+	  case index_component_t::SEL_IDX_UP:
+	    out << *that.msb << "+:" << *that.lsb;
+	    break;
+	  case index_component_t::SEL_IDX_DO:
+	    out << *that.msb << "-:" << *that.lsb;
+	    break;
+	  default:
+	    out << "???";
+	    break;
+      }
+      out << "]";
+      return out;
+ }
+
 ostream& operator<< (ostream&out, const name_component_t&that)
 {
       out << that.name.str();
@@ -86,25 +110,7 @@ ostream& operator<< (ostream&out, const name_component_t&that)
       for (index_it_t idx = that.index.begin()
 		 ; idx != that.index.end() ;  idx++) {
 
-	    out << "[";
-	    switch ((*idx).sel) {
-		case index_component_t::SEL_BIT:
-		  out << *(*idx).msb;
-		  break;
-		case index_component_t::SEL_PART:
-		  out << *(*idx).msb << ":" << *(*idx).lsb;
-		  break;
-		case index_component_t::SEL_IDX_UP:
-		  out << *(*idx).msb << "+:" << *(*idx).lsb;
-		  break;
-		case index_component_t::SEL_IDX_DO:
-		  out << *(*idx).msb << "-:" << *(*idx).lsb;
-		  break;
-		default:
-		  out << "???";
-		  break;
-	    }
-	    out << "]";
+	    out << *idx;
       }
       return out;
 }
@@ -1067,6 +1073,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.101  2007/06/04 02:19:07  steve
+ *  Handle bit/part select of array words in nets.
+ *
  * Revision 1.100  2007/06/02 03:42:13  steve
  *  Properly evaluate scope path expressions.
  *

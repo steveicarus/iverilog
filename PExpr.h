@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.88 2007/05/24 04:07:11 steve Exp $"
+#ident "$Id: PExpr.h,v 1.89 2007/06/04 02:19:07 steve Exp $"
 #endif
 
 # include  <string>
@@ -343,18 +343,6 @@ class PEIdent : public PExpr {
 				   NetScope*found) const;
 
     public:
-#if 0
-	// Use these to support part-select operators.
-      PExpr*msb_;
-      PExpr*lsb_;
-
-      enum { SEL_NONE, SEL_PART, SEL_IDX_UP, SEL_IDX_DO } sel_;
-
-	// If this is a reference to a memory/array, this is the index
-	// expression. If this is a reference to a vector, this is a
-	// bit select.
-      std::vector<PExpr*> idx_;
-#endif
 
       NetNet* elaborate_net_array_(Design*des, NetScope*scope,
 				   NetNet*sig, unsigned lwidth,
@@ -381,6 +369,7 @@ class PEIdent : public PExpr {
 
       bool eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 			     unsigned&midx, unsigned&lidx) const;
+      NetNet*process_select_(Design*des, NetScope*scope, NetNet*sig) const;
 
 };
 
@@ -668,6 +657,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.89  2007/06/04 02:19:07  steve
+ *  Handle bit/part select of array words in nets.
+ *
  * Revision 1.88  2007/05/24 04:07:11  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

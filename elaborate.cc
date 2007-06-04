@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.372 2007/06/02 03:42:12 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.373 2007/06/04 02:19:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -123,8 +123,14 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		  return;
 	    }
 
-	    assert(rid);
-	    assert(rid->pin_count() == 1);
+	    ivl_assert(*this, rid);
+	    if (rid->pin_count() != 1) {
+		  cerr << get_line() << ": internal error: "
+		       << "Invalid elaborate_net results here:" << endl;
+		  rid->dump_net(cerr, 4);
+		  des->errors += 1;
+	    }
+	    ivl_assert(*this, rid->pin_count() == 1);
 
 	      /* If the right hand net is the same type as the left
 		 side net (i.e., WIRE/WIRE) then it is enough to just
@@ -3420,6 +3426,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.373  2007/06/04 02:19:07  steve
+ *  Handle bit/part select of array words in nets.
+ *
  * Revision 1.372  2007/06/02 03:42:12  steve
  *  Properly evaluate scope path expressions.
  *

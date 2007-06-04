@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.237 2007/05/24 04:07:12 steve Exp $"
+#ident "$Id: parse.y,v 1.238 2007/06/04 02:19:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -3588,7 +3588,7 @@ udp_port_decl
         { $$ = pform_make_udp_input_ports($2); }
     | K_output IDENTIFIER ';'
         { pform_name_t pname;
-	  pname.push_back(lex_strings.make($2));
+	  pname.push_back(name_component_t(lex_strings.make($2)));
 	  PWire*pp = new PWire(pname, NetNet::IMPLICIT, NetNet::POUTPUT, IVL_VT_LOGIC);
 	  svector<PWire*>*tmp = new svector<PWire*>(1);
 	  (*tmp)[0] = pp;
@@ -3597,7 +3597,7 @@ udp_port_decl
 	}
     | K_reg IDENTIFIER ';'
         { pform_name_t pname;
-	  pname.push_back(lex_strings.make($2));
+	  pname.push_back(name_component_t(lex_strings.make($2)));
 	  PWire*pp = new PWire(pname, NetNet::REG, NetNet::PIMPLICIT, IVL_VT_LOGIC);
 	  svector<PWire*>*tmp = new svector<PWire*>(1);
 	  (*tmp)[0] = pp;
@@ -3606,7 +3606,7 @@ udp_port_decl
 	}
     | K_reg K_output IDENTIFIER ';'
         { pform_name_t pname;
-	  pname.push_back(lex_strings.make($3));
+	  pname.push_back(name_component_t(lex_strings.make($3)));
 	  PWire*pp = new PWire(pname, NetNet::REG, NetNet::POUTPUT, IVL_VT_LOGIC);
 	  svector<PWire*>*tmp = new svector<PWire*>(1);
 	  (*tmp)[0] = pp;

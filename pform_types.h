@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_types.h,v 1.1 2007/05/24 04:07:12 steve Exp $"
+#ident "$Id: pform_types.h,v 1.2 2007/06/04 02:19:07 steve Exp $"
 #endif
 
 // This for the perm_string type.
@@ -43,7 +43,7 @@ struct index_component_t {
 };
 
 struct name_component_t {
-      name_component_t(perm_string n) : name(n) { }
+      explicit name_component_t(perm_string n) : name(n) { }
       ~name_component_t() { }
 
       perm_string name;
@@ -67,6 +67,8 @@ inline perm_string peek_tail_name(const pform_name_t&that)
       return that.back().name;
 }
 
-extern std::ostream& operator<< (std::ostream&o, const pform_name_t&);
+extern std::ostream& operator<< (std::ostream&out, const pform_name_t&);
+extern std::ostream& operator<< (std::ostream&out, const name_component_t&that);
+extern std::ostream& operator<< (std::ostream&out, const index_component_t&that);
 
 #endif

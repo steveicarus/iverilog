@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.205 2007/06/02 03:42:12 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.206 2007/06/04 02:19:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1758,6 +1758,45 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
       return sig;
 }
 
+NetNet* PEIdent::process_select_(Design*des, NetScope*scope,
+				 NetNet*sig) const
+{
+
+	// If there are more index items then there are array
+	// dimensions, then treat them as word part selects. For
+	// example, if this is a memory array, then array dimensions
+	// is 1 and
+      unsigned midx, lidx;
+      if (! eval_part_select_(des, scope, sig, midx, lidx))
+	    return sig;
+
+      unsigned part_count = midx-lidx+1;
+
+	// Maybe this is a full-width constant part select? If
+	// so, do nothing.
+      if (part_count == sig->vector_width())
+	    return sig;
+
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: Elaborate part select"
+		 << " of word from " << sig->name() << "[base="<<lidx
+		 << " wid=" << part_count << "]" << endl;
+      }
+
+      NetPartSelect*ps = new NetPartSelect(sig, lidx, part_count,
+					   NetPartSelect::VP);
+      ps->set_line(*sig);
+      des->add_node(ps);
+
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+			      NetNet::WIRE, part_count-1, 0);
+      tmp->data_type( sig->data_type() );
+      tmp->local_flag(true);
+      connect(tmp->pin(0), ps->pin(0));
+
+      return tmp;
+}
+
 NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
 				      NetNet*sig, unsigned lwidth,
 				      const NetExpr* rise,
@@ -1772,6 +1811,10 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
       ivl_assert(*this, index_head.sel == index_component_t::SEL_BIT);
       ivl_assert(*this, index_head.msb != 0);
       ivl_assert(*this, index_head.lsb == 0);
+
+      if (debug_elaborate)
+	    cerr << get_line() << ": debug: elaborate array "
+		 << name_tail.name << " with index " << index_head << endl;
 
       NetExpr*index_ex = elab_and_eval(des, scope, index_head.msb, -1);
       if (index_ex == 0)
@@ -1812,6 +1855,12 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
 	    tmp->local_flag(true);
 	    tmp->data_type(sig->data_type());
 	    connect(tmp->pin(0), sig->pin(index));
+
+	      // If there are more indices then needed to get to the
+	      // word, then there is a part/bit select for the word.
+	    if (name_tail.index.size() > sig->array_dimensions())
+		  tmp = process_select_(des, scope, tmp);
+
 	    return tmp;
       }
 
@@ -1836,6 +1885,7 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
       tmp->local_flag(true);
       tmp->data_type(sig->data_type());
       connect(tmp->pin(0), mux->pin_Result());
+#if 0
 
 	// If there are more index items then there are array
 	// dimensions, then treat them as word part selects. For
@@ -1870,7 +1920,11 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
 
 	    tmp = tmp2;
       } while (0);
+#else
+      if (name_tail.index.size() > sig->array_dimensions())
+	    tmp = process_select_(des, scope, sig);
 
+#endif
       return tmp;
 }
 
@@ -2160,14 +2214,13 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 
 	  case index_component_t::SEL_BIT:
 	    if (name_tail.index.size() > sig->array_dimensions()) {
-		  const index_component_t&index_head = name_tail.index.front();
-		  verinum*mval = index_head.msb->eval_const(des, scope);
+		  verinum*mval = index_tail.msb->eval_const(des, scope);
 		  if (mval == 0) {
 			cerr << get_line() << ": error: Index of " << path_ <<
 			      " needs to be constant in this context." <<
 			      endl;
 			cerr << get_line() << ":      : Index expression is: "
-			     << *index_head.msb << endl;
+			     << *index_tail.msb << endl;
 			des->errors += 1;
 			return false;
 		  }
@@ -2963,6 +3016,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.206  2007/06/04 02:19:07  steve
+ *  Handle bit/part select of array words in nets.
+ *
  * Revision 1.205  2007/06/02 03:42:12  steve
  *  Properly evaluate scope path expressions.
  *
