@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: util.h,v 1.8 2005/11/27 17:01:57 steve Exp $"
+#ident "$Id: util.h,v 1.9 2007/06/04 19:14:06 steve Exp $"
 #endif
 
 # include  <map>
@@ -46,11 +46,13 @@ struct attrib_list_t {
 
 extern attrib_list_t* evaluate_attributes(const map<perm_string,PExpr*>&att,
 					  unsigned&natt,
-					  const Design*des,
-					  NetScope*scope);
+					  Design*des, NetScope*scope);
 
 /*
  * $Log: util.h,v $
+ * Revision 1.9  2007/06/04 19:14:06  steve
+ *  Build errors in picky GCC compilers.
+ *
  * Revision 1.8  2005/11/27 17:01:57  steve
  *  Fix for stubborn compiler.
  *

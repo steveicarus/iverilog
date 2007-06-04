@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.46 2007/05/24 04:07:12 steve Exp $"
+#ident "$Id: eval.cc,v 1.47 2007/06/04 19:14:06 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,12 +29,12 @@
 # include  "netmisc.h"
 # include  "compiler.h"
 
-verinum* PExpr::eval_const(const Design*, NetScope*) const
+verinum* PExpr::eval_const(Design*, NetScope*) const
 {
       return 0;
 }
 
-verinum* PEBinary::eval_const(const Design*des, NetScope*scope) const
+verinum* PEBinary::eval_const(Design*des, NetScope*scope) const
 {
       verinum*l = left_->eval_const(des, scope);
       if (l == 0) return 0;
@@ -143,7 +143,7 @@ verinum* PEBinary::eval_const(const Design*des, NetScope*scope) const
       delete r;
       return res;
 }
-verinum* PEConcat::eval_const(const Design*des, NetScope*scope) const
+verinum* PEConcat::eval_const(Design*des, NetScope*scope) const
 {
       verinum*accum = parms_[0]->eval_const(des, scope);
       if (accum == 0)
@@ -170,7 +170,7 @@ verinum* PEConcat::eval_const(const Design*des, NetScope*scope) const
  * Evaluate an identifier as a constant expression. This is only
  * possible if the identifier is that of a parameter.
  */
-verinum* PEIdent::eval_const(const Design*des, NetScope*scope) const
+verinum* PEIdent::eval_const(Design*des, NetScope*scope) const
 {
       assert(scope);
       NetNet*net;
@@ -209,23 +209,23 @@ verinum* PEIdent::eval_const(const Design*des, NetScope*scope) const
       return new verinum(eval->value());
 }
 
-verinum* PEFNumber::eval_const(const Design*, NetScope*) const
+verinum* PEFNumber::eval_const(Design*, NetScope*) const
 {
       long val = value_->as_long();
       return new verinum(val);
 }
 
-verinum* PENumber::eval_const(const Design*, NetScope*) const
+verinum* PENumber::eval_const(Design*, NetScope*) const
 {
       return new verinum(value());
 }
 
-verinum* PEString::eval_const(const Design*, NetScope*) const
+verinum* PEString::eval_const(Design*, NetScope*) const
 {
       return new verinum(string(text_));
 }
 
-verinum* PETernary::eval_const(const Design*des, NetScope*scope) const
+verinum* PETernary::eval_const(Design*des, NetScope*scope) const
 {
       verinum*test = expr_->eval_const(des, scope);
       if (test == 0)
@@ -245,7 +245,7 @@ verinum* PETernary::eval_const(const Design*des, NetScope*scope) const
       }
 }
 
-verinum* PEUnary::eval_const(const Design*des, NetScope*scope) const
+verinum* PEUnary::eval_const(Design*des, NetScope*scope) const
 {
       verinum*val = expr_->eval_const(des, scope);
       if (val == 0)
@@ -276,6 +276,9 @@ verinum* PEUnary::eval_const(const Design*des, NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.47  2007/06/04 19:14:06  steve
+ *  Build errors in picky GCC compilers.
+ *
  * Revision 1.46  2007/05/24 04:07:12  steve
  *  Rework the heirarchical identifier parse syntax and pform
  *  to handle more general combinations of heirarch and bit selects.

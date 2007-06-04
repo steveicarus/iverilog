@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.89 2007/06/04 02:19:07 steve Exp $"
+#ident "$Id: PExpr.h,v 1.90 2007/06/04 19:14:06 steve Exp $"
 #endif
 
 # include  <string>
@@ -125,7 +125,7 @@ class PExpr : public LineInfo {
 	// This attempts to evaluate a constant expression, and return
 	// a verinum as a result. If the expression cannot be
 	// evaluated, return 0.
-      virtual verinum* eval_const(const Design*des, NetScope*sc) const;
+      virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
 	// This method returns true if that expression is the same as
 	// this expression. This method is used for comparing
@@ -151,7 +151,7 @@ class PEConcat : public PExpr {
       PEConcat(const svector<PExpr*>&p, PExpr*r =0);
       ~PEConcat();
 
-      virtual verinum* eval_const(const Design*des, NetScope*sc) const;
+      virtual verinum* eval_const(Design*des, NetScope*sc) const;
       virtual void dump(ostream&) const;
 
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope,
@@ -222,7 +222,7 @@ class PEFNumber : public PExpr {
 	/* The eval_const method as applied to a floating point number
 	   gets the *integer* value of the number. This accounts for
 	   any rounding that is needed to get the value. */
-      virtual verinum* eval_const(const Design*des, NetScope*sc) const;
+      virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
 	/* A PEFNumber is a constant, so this returns true. */
       virtual bool is_constant(Module*) const;
@@ -290,7 +290,7 @@ class PEIdent : public PExpr {
       NetNet* elaborate_port(Design*des, NetScope*sc) const;
 
       virtual bool is_constant(Module*) const;
-      verinum* eval_const(const Design*des, NetScope*sc) const;
+      verinum* eval_const(Design*des, NetScope*sc) const;
 
       const pform_name_t& path() const { return path_; }
 
@@ -400,7 +400,7 @@ class PENumber : public PExpr {
 					 NetScope*scope,
 					 bool is_force) const;
 
-      virtual verinum* eval_const(const Design*des, NetScope*sc) const;
+      virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
       virtual bool is_the_same(const PExpr*that) const;
       virtual bool is_constant(Module*) const;
@@ -439,7 +439,7 @@ class PEString : public PExpr {
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				       int expr_width, bool) const;
       virtual NetEConst*elaborate_pexpr(Design*des, NetScope*sc) const;
-      verinum* eval_const(const Design*, NetScope*) const;
+      verinum* eval_const(Design*, NetScope*) const;
 
       virtual bool is_constant(Module*) const;
 
@@ -465,7 +465,7 @@ class PEUnary : public PExpr {
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     int expr_width, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
-      virtual verinum* eval_const(const Design*des, NetScope*sc) const;
+      virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
       virtual bool is_constant(Module*) const;
 
@@ -498,7 +498,7 @@ class PEBinary : public PExpr {
       virtual NetEBinary*elaborate_expr(Design*des, NetScope*,
 					int expr_width, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
-      virtual verinum* eval_const(const Design*des, NetScope*sc) const;
+      virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     protected:
       char op_;
@@ -606,7 +606,7 @@ class PETernary : public PExpr {
       virtual NetETernary*elaborate_expr(Design*des, NetScope*,
 					 int expr_width, bool sys_task_arg) const;
       virtual NetETernary*elaborate_pexpr(Design*des, NetScope*sc) const;
-      virtual verinum* eval_const(const Design*des, NetScope*sc) const;
+      virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     private:
       PExpr*expr_;
@@ -657,6 +657,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.90  2007/06/04 19:14:06  steve
+ *  Build errors in picky GCC compilers.
+ *
  * Revision 1.89  2007/06/04 02:19:07  steve
  *  Handle bit/part select of array words in nets.
  *
