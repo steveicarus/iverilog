@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.53 2007/06/02 03:42:13 steve Exp $"
+#ident "$Id: net_design.cc,v 1.54 2007/06/05 04:18:09 steve Exp $"
 #endif
 
 # include "config.h"
@@ -162,8 +162,15 @@ NetScope* Design::find_scope(NetScope*scope, const std::list<hname_t>&path) cons
 	    NetScope*cur = scope;
 	    do {
 		  hname_t key = tmp.front();
-		  cur = cur->child( key );
-		  if (cur == 0) break;
+		  if (cur->type() == NetScope::MODULE
+		      && cur->module_name()==key.peek_name()) {
+
+			  /* Up references may match module name */
+
+		  } else {
+			cur = cur->child( key );
+			if (cur == 0) break;
+		  }
 		  tmp.pop_front();
 	    } while (!tmp.empty());
 
@@ -548,6 +555,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.54  2007/06/05 04:18:09  steve
+ *  Upward names may reference modules by module_name.
+ *
  * Revision 1.53  2007/06/02 03:42:13  steve
  *  Properly evaluate scope path expressions.
  *
