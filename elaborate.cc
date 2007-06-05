@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.373 2007/06/04 02:19:07 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.374 2007/06/05 21:35:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -951,7 +951,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	    if (debug_elaborate) {
 		  cerr << get_line() << ": debug: " << get_name()
-		       << ": Port " << idx << " has vector width of "
+		       << ": Port " << (idx+1) << " has vector width of "
 		       << prts_vector_width << "." << endl;
 	    }
 
@@ -960,8 +960,10 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // based, but users count parameter positions from 1.
 	    if ((instance.count() == 1)
 		&& (prts_vector_width != sig->vector_width())) {
+		  const char *tmp3 = rmod->ports[idx]->name.str();
+		  if (tmp3 == 0) tmp3 = "???";
 		  cerr << get_line() << ": warning: Port " << (idx+1)
-		       << " (" << rmod->ports[idx]->name << ") of "
+		       << " (" << tmp3 << ") of "
 		       << type_ << " expects " << prts_vector_width <<
 			" bits, got " << sig->vector_width() << "." << endl;
 
@@ -3426,6 +3428,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.374  2007/06/05 21:35:51  steve
+ *  Error resiliency (ldoolitt)
+ *
  * Revision 1.373  2007/06/04 02:19:07  steve
  *  Handle bit/part select of array words in nets.
  *
