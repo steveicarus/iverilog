@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2007/03/22 16:08:18 $" Version "$Date: 2007/03/22 16:08:18 $"
+.TH iverilog 1 "$Date: 2007/06/05 01:56:12 $" Version "$Date: 2007/06/05 01:56:12 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -89,6 +89,8 @@ leading or trailing space.
 Add this module to the list of VPI modules to be loaded by the
 simulation. Many modules can be specified, and all will be loaded, in
 the order specified. The system module is implicit and always included.
+If a System Function Table file (<module>.sft) exists for the module it
+will be loaded automatically.
 .TP 8
 .B -N\fIpath\fP
 This is used for debugging the compiler proper. Dump the final netlist

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.75 2007/04/19 02:52:53 steve Exp $"
+#ident "$Id: main.c,v 1.76 2007/06/05 01:56:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -455,6 +455,20 @@ int process_generation(const char*name)
       return 0;
 }
 
+/*
+ * If it exists add the SFT file for the given module.
+ */
+void add_sft_file(const char *module)
+{
+      char *file;
+   
+      file = (char *) malloc(strlen(base)+1+strlen(module)+4+1);
+      sprintf(file, "%s%c%s.sft", base, sep, module);
+      if (access(file, R_OK) == 0)
+            fprintf(iconfig_file, "sys_func:%s\n", file);
+      free(file);
+}
+
 int main(int argc, char **argv)
 {
       char*cmd;
@@ -598,6 +612,7 @@ int main(int argc, char **argv)
 
 		case 'm':
 		  fprintf(iconfig_file, "module:%s\n", optarg);
+		  add_sft_file(optarg);
 		  break;
 
 		case 'N':
@@ -787,6 +802,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.76  2007/06/05 01:56:12  steve
+ *  Bring in .SFT file automatically if -m used.
+ *
  * Revision 1.75  2007/04/19 02:52:53  steve
  *  Add support for -v flag in command file.
  *
