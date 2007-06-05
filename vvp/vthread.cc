@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.162 2007/04/14 04:43:02 steve Exp $"
+#ident "$Id: vthread.cc,v 1.163 2007/06/05 21:52:22 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1334,8 +1334,8 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
 		  if (bit4_is_xz(lb) || bit4_is_xz(rb))
 			goto x_out;
 
-		  lv |= lb << idx;
-		  rv |= rb << idx;
+		  lv |= (unsigned long) lb << idx;
+		  rv |= (unsigned long) rb << idx;
 
 		  idx1 += 1;
 		  if (idx2 >= 4)
@@ -1815,7 +1815,7 @@ bool of_IX_GET(vthread_t thr, vvp_code_t cp)
 		  break;
 	    }
 
-	    v |= vv << i;
+	    v |= (unsigned long) vv << i;
 
 	    if (base >= 4)
 		  base += 1;
@@ -2304,8 +2304,8 @@ bool of_MOD(vthread_t thr, vvp_code_t cp)
 		  if ((lb | rb) & 2)
 			goto x_out;
 
-		  lv |= lb << idx;
-		  rv |= rb << idx;
+		  lv |= (unsigned long long) lb << idx;
+		  rv |= (unsigned long long) rb << idx;
 
 		  idx1 += 1;
 		  if (idx2 >= 4)
@@ -2354,8 +2354,8 @@ bool of_MOD_S(vthread_t thr, vvp_code_t cp)
 		  if ((lb | rb) & 2)
 			goto x_out;
 
-		  lv |= lb << idx;
-		  rv |= rb << idx;
+		  lv |= (long long) lb << idx;
+		  rv |= (long long) rb << idx;
 
 		  idx1 += 1;
 		  if (idx2 >= 4)
@@ -2487,8 +2487,8 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
 	    if (bit4_is_xz(lb) || bit4_is_xz(rb))
 		  goto x_out;
 
-	    lv |= ((unsigned long)lb) << idx;
-	    rv |= ((unsigned long)rb) << idx;
+	    lv |= (unsigned long) lb << idx;
+	    rv |= (unsigned long) rb << idx;
 
 	    idx1 += 1;
 	    if (idx2 >= 4)
@@ -2598,7 +2598,7 @@ bool of_MULI(vthread_t thr, vvp_code_t cp)
 		  if (bit4_is_xz(lb))
 			goto x_out;
 
-		  lv |= lb << idx;
+		  lv |= (unsigned long) lb << idx;
 
 		  idx1 += 1;
 	    }
@@ -3433,6 +3433,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.163  2007/06/05 21:52:22  steve
+ *  int vs long expressions on 64bit arch (ldoolitt)
+ *
  * Revision 1.162  2007/04/14 04:43:02  steve
  *  Finish up part select of array words.
  *
