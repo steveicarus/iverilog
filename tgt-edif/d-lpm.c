@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-lpm.c,v 1.1.2.2 2005/08/21 14:39:33 steve Exp $"
+#ident "$Id: d-lpm.c,v 1.1.2.3 2007/06/06 15:46:22 steve Exp $"
 #endif
 
 /*
@@ -230,6 +230,35 @@ static edif_cell_t lpm_cell_nor(unsigned siz)
       return cell;
 }
 
+static edif_cell_t lpm_cell_nand(unsigned siz)
+{
+      unsigned idx;
+      edif_cell_t cell;
+      char name[32];
+
+      sprintf(name, "nand%u", siz);
+
+      cell = edif_xlibrary_findcell(xlib, name);
+      if (cell != 0)
+	    return cell;
+
+      cell = edif_xcell_create(xlib, strdup(name), siz+1);
+
+      edif_cell_portconfig(cell, 0, "Result0", IVL_SIP_OUTPUT);
+      edif_cell_port_pstring(cell, 0, "LPM_Polarity", "INVERT");
+
+      for (idx = 0 ;  idx < siz ;  idx += 1) {
+	    sprintf(name, "Data%ux0", idx);
+	    edif_cell_portconfig(cell, idx+1, strdup(name), IVL_SIP_INPUT);
+      }
+
+      edif_cell_pstring(cell,  "LPM_TYPE",  "LPM_AND");
+      edif_cell_pinteger(cell, "LPM_Width", 1);
+      edif_cell_pinteger(cell, "LPM_Size",  siz);
+
+      return cell;
+}
+
 static void lpm_show_header(ivl_design_t des)
 {
       unsigned idx;
@@ -398,6 +427,11 @@ static void lpm_logic(ivl_net_logic_t net)
 
 	  case IVL_LO_AND:
 	    cell = lpm_cell_and(ivl_logic_pins(net)-1);
+	    hookup_logic_gate( net, cell);
+	    break;
+
+	  case IVL_LO_NAND:
+	    cell = lpm_cell_nand(ivl_logic_pins(net)-1);
 	    hookup_logic_gate( net, cell);
 	    break;
 
@@ -969,6 +1003,9 @@ const struct device_s d_lpm_edif = {
 
 /*
  * $Log: d-lpm.c,v $
+ * Revision 1.1.2.3  2007/06/06 15:46:22  steve
+ *  Add support for NAND gates. (Chris H)
+ *
  * Revision 1.1.2.2  2005/08/21 14:39:33  steve
  *  Generate LPM for the CMP_EQ device.
  *
