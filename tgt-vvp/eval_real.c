@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.20 2007/02/26 19:49:50 steve Exp $"
+#ident "$Id: eval_real.c,v 1.21 2007/06/07 03:20:15 steve Exp $"
 #endif
 
 /*
@@ -188,6 +188,7 @@ static int draw_sfunc_real(ivl_expr_t exp)
 {
       struct vector_info sv;
       int res;
+      const char*sign_flag = "";
 
       switch (ivl_expr_value(exp)) {
 
@@ -209,9 +210,12 @@ static int draw_sfunc_real(ivl_expr_t exp)
 	    sv = draw_eval_expr(exp, 0);
 	    clr_vector(sv);
 
+	    if (ivl_expr_signed(exp))
+		  sign_flag = "/s";
+
 	    res = allocate_word();
-	    fprintf(vvp_out, "    %%ix/get %d, %u, %u;\n",
-		    res, sv.base, sv.wid);
+	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
+		    sign_flag, res, sv.base, sv.wid);
 
 	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
 	    break;
@@ -232,8 +236,10 @@ static int draw_signal_real_logic(ivl_expr_t exp)
 {
       int res = allocate_word();
       struct vector_info sv = draw_eval_expr(exp, 0);
+      const char*sign_flag = ivl_expr_signed(exp)? "/s" : "";
 
-      fprintf(vvp_out, "    %%ix/get %d, %u, %u;\n", res, sv.base, sv.wid);
+      fprintf(vvp_out, "    %%ix/get%s %d, %u, %u; logic signal as real\n",
+	      sign_flag, res, sv.base, sv.wid);
       clr_vector(sv);
 
       fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
@@ -394,14 +400,15 @@ int draw_eval_real(ivl_expr_t exp)
 	  default:
 	    if (ivl_expr_value(exp) == IVL_VT_VECTOR) {
 		  struct vector_info sv = draw_eval_expr(exp, 0);
+		  const char*sign_flag = ivl_expr_signed(exp)? "/s" : "";
 
 		  clr_vector(sv);
 		  res = allocate_word();
 
-		  fprintf(vvp_out, "    %%ix/get %d, %u, %u;\n", res,
-			  sv.base, sv.wid);
+		  fprintf(vvp_out, "  %%ix/get%s %d, %u, %u;\n",
+			  sign_flag, res, sv.base, sv.wid);
 
-		  fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
+		  fprintf(vvp_out, "  %%cvt/ri %d, %d;\n", res, res);
 
 	    } else {
 		  fprintf(stderr, "XXXX Evaluate real expression (%d)\n",
@@ -419,6 +426,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.21  2007/06/07 03:20:15  steve
+ *  Properly handle signed conversion to real
+ *
  * Revision 1.20  2007/02/26 19:49:50  steve
  *  Spelling fixes (larry doolittle)
  *

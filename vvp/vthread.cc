@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.163 2007/06/05 21:52:22 steve Exp $"
+#ident "$Id: vthread.cc,v 1.164 2007/06/07 03:20:16 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1828,6 +1828,46 @@ bool of_IX_GET(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_IX_GET_S(vthread_t thr, vvp_code_t cp)
+{
+      unsigned index = cp->bit_idx[0];
+      unsigned base  = cp->bit_idx[1];
+      unsigned width = cp->number;
+
+      unsigned long v = 0;
+      bool unknown_flag = false;
+
+      vvp_bit4_t vv = BIT4_0;
+      for (unsigned i = 0 ;  i<width ;  i += 1) {
+	    vv = thr_get_bit(thr, base);
+	    if (bit4_is_xz(vv)) {
+		  v = 0UL;
+		  unknown_flag = true;
+		  break;
+	    }
+
+	    v |= (unsigned long) vv << i;
+
+	    if (base >= 4)
+		  base += 1;
+      }
+
+	/* Sign-extend to fill the integer value. */
+      if (!unknown_flag) {
+	    unsigned long pad = vv;
+	    for (unsigned i = width ; i < 8*sizeof(v) ;  i += 1) {
+		  v |= pad << i;
+	    }
+      }
+
+      thr->words[index].w_int = v;
+
+	/* Set bit 4 as a flag if the input is unknown. */
+      thr_put_bit(thr, 4, unknown_flag? BIT4_1 : BIT4_0);
+
+      return true;
+}
+
 
 /*
  * The various JMP instruction work simply by pulling the new program
@@ -3433,6 +3473,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.164  2007/06/07 03:20:16  steve
+ *  Properly handle signed conversion to real
+ *
  * Revision 1.163  2007/06/05 21:52:22  steve
  *  int vs long expressions on 64bit arch (ldoolitt)
  *

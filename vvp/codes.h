@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.83 2007/04/14 04:43:02 steve Exp $"
+#ident "$Id: codes.h,v 1.84 2007/06/07 03:20:15 steve Exp $"
 #endif
 
 
@@ -80,6 +80,7 @@ extern bool of_FORK(vthread_t thr, vvp_code_t code);
 extern bool of_INV(vthread_t thr, vvp_code_t code);
 extern bool of_IX_ADD(vthread_t thr, vvp_code_t code);
 extern bool of_IX_GET(vthread_t thr, vvp_code_t code);
+extern bool of_IX_GET_S(vthread_t thr, vvp_code_t code);
 extern bool of_IX_LOAD(vthread_t thr, vvp_code_t code);
 extern bool of_IX_MUL(vthread_t thr, vvp_code_t code);
 extern bool of_IX_SUB(vthread_t thr, vvp_code_t code);
@@ -186,6 +187,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.84  2007/06/07 03:20:15  steve
+ *  Properly handle signed conversion to real
+ *
  * Revision 1.83  2007/04/14 04:43:02  steve
  *  Finish up part select of array words.
  *

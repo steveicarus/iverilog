@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.231 2007/04/14 04:43:02 steve Exp $"
+#ident "$Id: compile.cc,v 1.232 2007/06/07 03:20:16 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -125,6 +125,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%ix/add", of_IX_ADD, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/get", of_IX_GET, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%ix/get/s",of_IX_GET_S,3,{OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%ix/load",of_IX_LOAD,2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/mul", of_IX_MUL, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/sub", of_IX_SUB, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
@@ -1624,6 +1625,9 @@ void compile_param_string(char*label, char*name, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.232  2007/06/07 03:20:16  steve
+ *  Properly handle signed conversion to real
+ *
  * Revision 1.231  2007/04/14 04:43:02  steve
  *  Finish up part select of array words.
  *
