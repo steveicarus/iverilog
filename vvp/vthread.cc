@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.164 2007/06/07 03:20:16 steve Exp $"
+#ident "$Id: vthread.cc,v 1.165 2007/06/12 02:36:58 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -2194,6 +2194,22 @@ bool of_LOADI_WR(vthread_t thr, vvp_code_t cp)
       unsigned idx = cp->bit_idx[0];
       double mant = cp->number;
       int exp = cp->bit_idx[1];
+
+	// Detect +infinity
+      if (exp==0x3fff && cp->number==0) {
+	    thr->words[idx].w_real = INFINITY;
+	    return true;
+      }
+	// Detect -infinity
+      if (exp==0x7fff && cp->number==0) {
+	    thr->words[idx].w_real = -INFINITY;
+	    return true;
+      }
+	// Detect NaN
+      if ( (exp&0x3fff) == 0x3fff ) {
+	    thr->words[idx].w_real = NAN;
+      }
+
       double sign = (exp & 0x4000)? -1.0 : 1.0;
 
       exp &= 0x1fff;
@@ -3473,6 +3489,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.165  2007/06/12 02:36:58  steve
+ *  handle constant inf values.
+ *
  * Revision 1.164  2007/06/07 03:20:16  steve
  *  Properly handle signed conversion to real
  *

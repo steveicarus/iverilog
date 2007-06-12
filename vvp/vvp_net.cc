@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.63 2007/04/15 02:07:24 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.64 2007/06/12 02:36:58 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
@@ -630,6 +630,8 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
 	    return true;
       }
 
+      bool flag = true;
+
       if (vec.value(vec.size()-1) != BIT4_1) {
 	    signed_flag = false;
       }
@@ -647,7 +649,7 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
 			res += pow(2.0, (int)idx);
 			break;
 		      default:
-			return false;
+			flag = false;
 		  }
 	    }
 	    res *= -1.0;
@@ -660,12 +662,12 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
 			res += pow(2.0, (int)idx);
 			break;
 		      default:
-			return false;
+			flag = false;
 		  }
 	    }
       }
       val = res;
-      return true;
+      return flag;
 }
 
 template <class T> T coerce_to_width(const T&that, unsigned width)
@@ -2293,6 +2295,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.64  2007/06/12 02:36:58  steve
+ *  handle constant inf values.
+ *
  * Revision 1.63  2007/04/15 02:07:24  steve
  *  Fix div/mod calculation that caused a hang for some divisions.
  *

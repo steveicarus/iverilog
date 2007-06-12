@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.77 2007/06/07 03:20:16 steve Exp $
+ *  $Id: opcodes.txt,v 1.78 2007/06/12 02:36:58 steve Exp $
  */
 
 
@@ -433,9 +433,12 @@ auto-increment feature.
 This opcode loads an immediate value, floating point, into the word
 register selected by <bit>. The mantissa is an unsigned integer value,
 up to 32 bits, that multiplied by 2**(<exp>-0x1000) to make a real
-value. The sign bit is OR-ed into the <exp> value at bit 0x2000, and
+value. The sign bit is OR-ed into the <exp> value at bit 0x4000, and
 is removed from the <exp> before calculating the real value.
 
+If <exp>==0x3fff and <mant> == 0, the value is +inf.
+If <exp>==0x7fff and <mant> == 0, the value is -inf.
+If <exp>--0x3fff and <mant> != 0, the value is NaN.
 
 * %mod   <bit-l>, <bit-r>, <wid>
 * %mod/s <bit-l>, <bit-r>, <wid>

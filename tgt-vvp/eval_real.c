@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.21 2007/06/07 03:20:15 steve Exp $"
+#ident "$Id: eval_real.c,v 1.22 2007/06/12 02:36:58 steve Exp $"
 #endif
 
 /*
@@ -141,6 +141,17 @@ static int draw_realnum_real(ivl_expr_t exp)
       int expo, vexp;
       unsigned long mant;
       int sign = 0;
+
+	/* Handle the special case that the value is +-inf. */
+      if (isinf(value)) {
+	    if (value > 0)
+		  fprintf(vvp_out, "  %%loadi/wr %d, 0, %d; load=+inf\n",
+			  res, 0x3fff);
+	    else
+		  fprintf(vvp_out, "  %%loadi/wr %d, 0, %d; load=-inf\n",
+			  res, 0x7fff);
+	    return res;
+      }
 
       if (value < 0) {
 	    sign = 0x4000;
@@ -426,6 +437,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.22  2007/06/12 02:36:58  steve
+ *  handle constant inf values.
+ *
  * Revision 1.21  2007/06/07 03:20:15  steve
  *  Properly handle signed conversion to real
  *

@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.57 2007/03/22 16:08:19 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.58 2007/06/12 02:36:58 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -254,8 +254,10 @@ template <class T> extern T coerce_to_width(const T&that, unsigned width);
 /*
  * These functions extract the value of the vector as a native type,
  * if possible, and return true to indicate success. If the vector has
- * any X or Z bits, the resulting value will be unchanged and the
- * return value becomes false to indicate an error.
+ * any X or Z bits, the resulting value will have 0 bits in their
+ * place (this follows the rules of Verilog conversions from vector4
+ * to real and integers) and the return value becomes false to
+ * indicate an error.
  */
 extern bool vector4_to_value(const vvp_vector4_t&a, unsigned long&val);
 extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
@@ -1040,6 +1042,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.58  2007/06/12 02:36:58  steve
+ *  handle constant inf values.
+ *
  * Revision 1.57  2007/03/22 16:08:19  steve
  *  Spelling fixes from Larry
  *
