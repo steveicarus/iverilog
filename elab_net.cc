@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.206 2007/06/04 02:19:07 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.207 2007/06/12 04:05:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2221,6 +2221,8 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 			      endl;
 			cerr << get_line() << ":      : Index expression is: "
 			     << *index_tail.msb << endl;
+			cerr << get_line() << ":      : Context scope is: "
+			     << scope_path(scope) << endl;
 			des->errors += 1;
 			return false;
 		  }
@@ -3016,6 +3018,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.207  2007/06/12 04:05:45  steve
+ *  Put instantiated modules in the proper generated scope.
+ *
  * Revision 1.206  2007/06/04 02:19:07  steve
  *  Handle bit/part select of array words in nets.
  *

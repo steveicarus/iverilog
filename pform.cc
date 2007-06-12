@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.147 2007/06/02 03:42:13 steve Exp $"
+#ident "$Id: pform.cc,v 1.148 2007/06/12 04:05:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -920,6 +920,14 @@ void pform_makegates(PGBuiltin::Type type,
  * constraints, and sometimes different syntax. The X_modgate
  * functions handle the instantiations of modules (and UDP objects) by
  * making PGModule objects.
+ *
+ * The first pform_make_modgate handles the case of a module
+ * instantiated with ports passed by position. The "wires" is an
+ * ordered array of port expressions.
+ *
+ * The second pform_make_modgate handles the case of a module
+ * instantiated with ports passed by name. The "bind" argument is the
+ * ports matched with names.
  */
 static void pform_make_modgate(perm_string type,
 			       perm_string name,
@@ -992,7 +1000,11 @@ static void pform_make_modgate(perm_string type,
 	    cur->set_parameters(overrides->by_order);
       }
 
-      pform_cur_module->add_gate(cur);
+
+      if (pform_cur_generate)
+	    pform_cur_generate->add_gate(cur);
+      else
+	    pform_cur_module->add_gate(cur);
 }
 
 void pform_make_modgates(perm_string type,
@@ -1778,6 +1790,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.148  2007/06/12 04:05:45  steve
+ *  Put instantiated modules in the proper generated scope.
+ *
  * Revision 1.147  2007/06/02 03:42:13  steve
  *  Properly evaluate scope path expressions.
  *
