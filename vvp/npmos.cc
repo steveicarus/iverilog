@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: npmos.cc,v 1.13 2005/06/22 00:04:49 steve Exp $"
+#ident "$Id: npmos.cc,v 1.14 2007/06/12 02:25:00 steve Exp $"
 #endif
 
 # include  "npmos.h"
@@ -76,7 +76,8 @@ void vvp_fun_pmos_::generate_output_(vvp_net_ptr_t ptr)
 	    }
       }
 
-      vvp_send_vec8(ptr.ptr()->out, out);
+      if (out.size() > 0)
+	    vvp_send_vec8(ptr.ptr()->out, out);
 }
 
 
@@ -120,6 +121,9 @@ void vvp_fun_rpmos::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
 
 /*
  * $Log: npmos.cc,v $
+ * Revision 1.14  2007/06/12 02:25:00  steve
+ *  Do not propogate until initialized.
+ *
  * Revision 1.13  2005/06/22 00:04:49  steve
  *  Reduce vvp_vector4 copies by using const references.
  *
