@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.147 2007/03/02 06:13:22 steve Exp $"
+#ident "$Id: stub.c,v 1.148 2007/06/12 02:23:40 steve Exp $"
 #endif
 
 /*
@@ -1231,6 +1231,9 @@ static void show_logic(ivl_net_logic_t net)
 	  case IVL_LO_OR:
 	    fprintf(out, "  or %s", name);
 	    break;
+	  case IVL_LO_PMOS:
+	    fprintf(out, "  pmos %s", name);
+	    break;
 	  case IVL_LO_PULLDOWN:
 	    fprintf(out, "  pulldown %s", name);
 	    break;
@@ -1247,7 +1250,7 @@ static void show_logic(ivl_net_logic_t net)
 	    break;
 
 	  default:
-	    fprintf(out, "  unsupported gate %s", name);
+	    fprintf(out, "  unsupported gate<type=%d> %s", ivl_logic_type(net), name);
 	    break;
       }
 
@@ -1491,6 +1494,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.148  2007/06/12 02:23:40  steve
+ *  displan pmos gates.
+ *
  * Revision 1.147  2007/03/02 06:13:22  steve
  *  Add support for edge sensitive spec paths.
  *
