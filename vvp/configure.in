@@ -75,7 +75,7 @@ esac
 
 # Check that these functions exist. They are mostly C99
 # functions that older compilers may not yet support.
-AC_CHECK_FUNCS(lround)
+AC_CHECK_FUNCS(lround nan)
 
 # see how we can give some resource usage stats with -v
 # Linux does not provide mem stats in rusage, use /proc/self/statm.

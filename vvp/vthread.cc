@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.165 2007/06/12 02:36:58 steve Exp $"
+#ident "$Id: vthread.cc,v 1.166 2007/06/13 01:03:57 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -2207,7 +2207,7 @@ bool of_LOADI_WR(vthread_t thr, vvp_code_t cp)
       }
 	// Detect NaN
       if ( (exp&0x3fff) == 0x3fff ) {
-	    thr->words[idx].w_real = NAN;
+	    thr->words[idx].w_real = nan("");
       }
 
       double sign = (exp & 0x4000)? -1.0 : 1.0;
@@ -3489,6 +3489,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.166  2007/06/13 01:03:57  steve
+ *  Detect and use the nan function.
+ *
  * Revision 1.165  2007/06/12 02:36:58  steve
  *  handle constant inf values.
  *
