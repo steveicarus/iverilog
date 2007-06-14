@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.95 2007/04/19 02:52:53 steve Exp $"
+#ident "$Id: lexor.lex,v 1.96 2007/06/14 03:50:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -109,6 +109,7 @@ static int comment_enter;
 %s UDPTABLE
 %x PPTIMESCALE
 %x PPDEFAULT_NETTYPE
+%s EDGES
 
 W [ \t\b\f\r]+
 
@@ -167,7 +168,7 @@ W [ \t\b\f\r]+
      with "*" and return that. */
 "("{W}*"*"{W}*")" { return '*'; }
 
-
+<EDGES>"]" { BEGIN(0); return yytext[0]; }
 [}{;:\[\],()#=.@&!?<>%|^~+*/-] { return yytext[0]; }
 
 \"            { BEGIN(CSTRING); }
@@ -210,6 +211,17 @@ W [ \t\b\f\r]+
 <UDPTABLE>[pP]     { return 'p'; }
 <UDPTABLE>[01\?\*\-] { return yytext[0]; }
 
+<EDGES>"01" { return K_edge_descriptor; }
+<EDGES>"0x" { return K_edge_descriptor; }
+<EDGES>"0z" { return K_edge_descriptor; }
+<EDGES>"10" { return K_edge_descriptor; }
+<EDGES>"1x" { return K_edge_descriptor; }
+<EDGES>"1z" { return K_edge_descriptor; }
+<EDGES>"x0" { return K_edge_descriptor; }
+<EDGES>"x1" { return K_edge_descriptor; }
+<EDGES>"z0" { return K_edge_descriptor; }
+<EDGES>"z1" { return K_edge_descriptor; }
+
 [a-zA-Z_][a-zA-Z0-9$_]* {
       int rc = lexor_keyword_code(yytext, yyleng);
       switch (rc) {
@@ -228,6 +240,10 @@ W [ \t\b\f\r]+
 	    } else {
 		  yylval.text = 0;
 	    }
+	    break;
+
+	  case K_edge:
+	    BEGIN(EDGES);
 	    break;
 
 	  default:

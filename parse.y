@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.238 2007/06/04 02:19:07 steve Exp $"
+#ident "$Id: parse.y,v 1.239 2007/06/14 03:50:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -157,7 +157,8 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
 %token K_always K_and K_assign K_begin K_bool K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
-%token K_edge K_else K_end K_endcase K_endfunction K_endgenerate K_endmodule
+%token K_edge K_edge_descriptor
+%token K_else K_end K_endcase K_endfunction K_endgenerate K_endmodule
 %token K_endprimitive K_endspecify K_endtable K_endtask K_event K_for
 %token K_force K_forever K_fork K_function K_generate K_genvar
 %token K_highz0 K_highz1 K_if K_ifnone
@@ -2758,25 +2759,38 @@ spec_polarity
 	;
 
 spec_reference_event
-	: K_posedge expression
-		{ delete $2; }
-	| K_negedge expression
-		{ delete $2; }
-	| K_posedge expr_primary K_TAND expression
-		{ delete $2;
-		  delete $4;
-		}
-	| K_negedge expr_primary K_TAND expression
-		{ delete $2;
-		  delete $4;
-		}
-	| expr_primary K_TAND expression
-		{ delete $1;
-		  delete $3;
-		}
-        | expr_primary
-		{ delete $1; }
-	;
+  : K_posedge expression
+    { delete $2; }
+  | K_negedge expression
+    { delete $2; }
+  | K_posedge expr_primary K_TAND expression
+    { delete $2;
+      delete $4;
+    }
+  | K_negedge expr_primary K_TAND expression
+    { delete $2;
+      delete $4;
+    }
+  | K_edge '[' edge_descriptor_list ']' expr_primary K_TAND expression
+    { delete $5;
+      delete $7;
+    }
+  | expr_primary K_TAND expression
+    { delete $1;
+      delete $3;
+    }
+  | expr_primary
+    { delete $1; }
+  ;
+
+  /* The edge_descriptor is detected by the lexor as the various
+     2-letter edge sequences that are supported here. For now, we
+     don't care what they are, because we do not yet support specify
+     edge events. */
+edge_descriptor_list
+  : edge_descriptor_list ',' K_edge_descriptor
+  | K_edge_descriptor
+  ;
 
 spec_notifier_opt
 	: /* empty */
