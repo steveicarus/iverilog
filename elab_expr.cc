@@ -1264,8 +1264,14 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 	    return ss;
       }
 
-      if (long offset = net->lsi())
-	    base = make_add_expr(base, 0-offset);
+      if (net->msi() > net->lsi()) {
+	    if (long offset = net->lsi())
+		  base = make_add_expr(base, 0-offset);
+      } else {
+	    long vwid = net->lsi() - net->msi() + 1;
+	    long offset = net->msi();
+	    base = make_sub_expr(vwid-offset-wid, base);
+      }
 
       NetESelect*ss = new NetESelect(net, base, wid);
       ss->set_line(*this);
