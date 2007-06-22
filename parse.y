@@ -1894,22 +1894,28 @@ module_item
      is supposed to be limited to certain kinds of module items, but
      the semantic tests will check that for us. */
 
-        | K_generate module_item_list_opt K_endgenerate
+  | K_generate module_item_list_opt K_endgenerate
 
-	| K_genvar list_of_identifiers ';'
-                { pform_genvars($2); }
+  | K_genvar list_of_identifiers ';'
+      { pform_genvars($2); }
 
-        | K_for '(' IDENTIFIER '=' expression ';'
-	            expression ';'
-	            IDENTIFIER '=' expression ')'
-                { pform_start_generate_for(@1, $3, $5, $7, $9, $11); }
-	  generate_block
-                { pform_endgenerate(); }
+  | K_for '(' IDENTIFIER '=' expression ';'
+              expression ';'
+              IDENTIFIER '=' expression ')'
+      { pform_start_generate_for(@1, $3, $5, $7, $9, $11); }
+    generate_block
+      { pform_endgenerate(); }
 
-        | K_if '(' expression ')' generate_block_opt K_else generate_block
-                { yyerror(@1, "sorry: Condition generate not supported yet.");
-		}
+  | generate_if
+    generate_block_opt
+    K_else
+      { pform_start_generate_else(@1); }
+    generate_block
+      { pform_endgenerate(); }
 
+  | generate_if
+    generate_block_opt %prec less_than_K_else
+      { pform_endgenerate(); }
 
   /* specify blocks are parsed but ignored. */
 
@@ -1966,6 +1972,7 @@ module_item
 		{ yyerror(@1, "error: Malformed $attribute parameter list."); }
 	;
 
+generate_if : K_if '(' expression ')' { pform_start_generate_if(@1, $3); }
 
 module_item_list
 	: module_item_list module_item
@@ -1990,7 +1997,7 @@ generate_block
              { pform_generate_block_name($3); }
         ;
 
-generate_block_opt : generate_block | ;
+generate_block_opt : generate_block | ';' ;
 
 
   /* A net declaration assignment allows the programmer to combine the

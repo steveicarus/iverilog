@@ -50,7 +50,7 @@ class PGenerate : public LineInfo {
       const unsigned id_number;
       perm_string scope_name;
 
-      enum scheme_t {GS_NONE, GS_LOOP, GS_CONDIT};
+      enum scheme_t {GS_NONE, GS_LOOP, GS_CONDIT, GS_ELSE};
       scheme_t scheme_type;
 
 	// generate loops have an index variable and three
@@ -78,13 +78,19 @@ class PGenerate : public LineInfo {
 	// contain the generated scope.
       bool generate_scope(Design*des, NetScope*container);
 
-      bool elaborate_sig(Design*des) const;
-      bool elaborate(Design*des) const;
+	// Elaborate signals within any of the generated scopes that
+	// were made by this generate block within the given container scope.
+      bool elaborate_sig(Design*des, NetScope*container) const;
+      bool elaborate(Design*des, NetScope*container) const;
 
       void dump(ostream&out, unsigned indent) const;
 
     private:
       bool generate_scope_loop_(Design*des, NetScope*container);
+      bool generate_scope_condit_(Design*des, NetScope*container, bool else_flag);
+
+	// Elaborate_scope within a generated scope.
+      void elaborate_subscope_(Design*des, NetScope*scope);
 
 	// These are the scopes created by generate_scope.
       list<NetScope*>scope_list_;

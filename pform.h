@@ -186,6 +186,8 @@ extern void pform_start_generate_for(const struct vlltype&li,
 				     PExpr*test,
 				     char*ident2,
 				     PExpr*next);
+extern void pform_start_generate_if(const struct vlltype&li, PExpr*test);
+extern void pform_start_generate_else(const struct vlltype&li);
 extern void pform_generate_block_name(char*name);
 extern void pform_endgenerate();
 

@@ -186,7 +186,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()
 		 ; cur != generate_schemes.end() ; cur ++ ) {
-	    (*cur) -> elaborate_sig(des);
+	    (*cur) -> elaborate_sig(des, scope);
       }
 
 	// Get all the gates of the module and elaborate them by
@@ -269,7 +269,7 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
       return flag;
 }
 
-bool PGenerate::elaborate_sig(Design*des) const
+bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 {
       bool flag = true;
 
@@ -277,9 +277,15 @@ bool PGenerate::elaborate_sig(Design*des) const
       for (scope_list_it_t cur = scope_list_.begin()
 		 ; cur != scope_list_.end() ; cur ++ ) {
 
+	    NetScope*scope = *cur;
+
+	    if (scope->parent() != container)
+		  continue;
+
 	    if (debug_elaborate)
 		  cerr << get_line() << ": debug: Elaborate nets in "
-		       << "scope " << scope_path(*cur) << endl;
+		       << "scope " << scope_path(*cur)
+		       << " in generate " << id_number << endl;
 	    flag = elaborate_sig_(des, *cur) & flag;
       }
 

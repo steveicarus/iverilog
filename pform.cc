@@ -362,6 +362,48 @@ void pform_start_generate_for(const struct vlltype&li,
       delete[]ident2;
 }
 
+void pform_start_generate_if(const struct vlltype&li, PExpr*test)
+{
+      PGenerate*gen = new PGenerate(scope_generate_counter++);
+
+      gen->set_file(li.text);
+      gen->set_lineno(li.first_line);
+
+	// For now, assume that generates do not nest.
+      gen->parent = pform_cur_generate;
+      pform_cur_generate = gen;
+
+      pform_cur_generate->scheme_type = PGenerate::GS_CONDIT;
+
+      pform_cur_generate->loop_init = 0;
+      pform_cur_generate->loop_test = test;
+      pform_cur_generate->loop_step = 0;
+}
+
+void pform_start_generate_else(const struct vlltype&li)
+{
+      assert(pform_cur_generate);
+      assert(pform_cur_generate->scheme_type == PGenerate::GS_CONDIT);
+
+      PGenerate*cur = pform_cur_generate;
+      pform_endgenerate();
+
+      PGenerate*gen = new PGenerate(scope_generate_counter++);
+
+      gen->set_file(li.text);
+      gen->set_lineno(li.first_line);
+
+	// For now, assume that generates do not nest.
+      gen->parent = pform_cur_generate;
+      pform_cur_generate = gen;
+
+      pform_cur_generate->scheme_type = PGenerate::GS_ELSE;
+
+      pform_cur_generate->loop_init = 0;
+      pform_cur_generate->loop_test = cur->loop_test;
+      pform_cur_generate->loop_step = 0;
+}
+
 void pform_generate_block_name(char*name)
 {
       assert(pform_cur_generate != 0);
@@ -374,6 +416,14 @@ void pform_endgenerate()
 {
       assert(pform_cur_generate != 0);
       assert(pform_cur_module);
+
+	// If there is no explicit block name, then use a default
+	// internal name.
+      if (pform_cur_generate->scope_name == 0) {
+	    char tmp[16];
+	    snprintf(tmp, sizeof tmp, "$gen%d", pform_cur_generate->id_number);
+	    pform_cur_generate->scope_name = lex_strings.make(tmp);
+      }
 
       PGenerate*cur = pform_cur_generate;
       pform_cur_generate = cur->parent;

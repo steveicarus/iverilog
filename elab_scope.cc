@@ -146,6 +146,12 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 		 ; cur != replacements.end() ;  cur ++) {
 
 	    NetExpr*val = (*cur).second;
+	    if (val == 0) {
+		  cerr << get_line() << ": internal error: "
+		       << "Missing expression in parameter replacement for "
+		       << (*cur).first;
+	    }
+	    assert(val);
 	    if (debug_scopes) {
 		  cerr << get_line() << ": debug: "
 		       << "Replace " << (*cur).first
@@ -309,6 +315,12 @@ bool PGenerate::generate_scope(Design*des, NetScope*container)
 	  case GS_LOOP:
 	    return generate_scope_loop_(des, container);
 
+	  case GS_CONDIT:
+	    return generate_scope_condit_(des, container, false);
+
+	  case GS_ELSE:
+	    return generate_scope_condit_(des, container, true);
+
 	  default:
 	    cerr << get_line() << ": sorry: Generate of this sort"
 		 << " is not supported yet!" << endl;
@@ -379,15 +391,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 			     << loop_index << " = " << genvar_verinum << endl;
 	    }
 
-	      // Scan the generated scope for gates that may create
-	      // their own scopes.
-	    typedef list<PGate*>::const_iterator pgate_list_it_t;
-	    for (pgate_list_it_t cur = gates.begin()
-		       ; cur != gates.end() ;  cur ++) {
-		  (*cur) ->elaborate_scope(des, scope);
-	    }
-
-	    scope_list_.push_back(scope);
+	    elaborate_subscope_(des, scope);
 
 	      // Calculate the step for the loop variable.
 	    NetExpr*step_ex = elab_and_eval(des, container, loop_step, -1);
@@ -411,6 +415,54 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
       container->genvar_tmp = perm_string();
 
       return true;
+}
+
+bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else_flag)
+{
+      NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1);
+      NetEConst*test = dynamic_cast<NetEConst*> (test_ex);
+      assert(test);
+
+	// If the condition evaluates as false, then do not create the
+	// scope.
+      if (test->value().as_long() == 0 && !else_flag
+	  || test->value().as_long() != 0 && else_flag) {
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: Generate condition "
+		       << (else_flag? "(else)" : "(if)")
+		       << " value=" << test->value() << ": skip generation"
+		       << endl;
+	    delete test_ex;
+	    return true;
+      }
+
+      hname_t use_name (scope_name);
+      if (debug_elaborate)
+	    cerr << get_line() << ": debug: Generate condition "
+		 << (else_flag? "(else)" : "(if)")
+		 << " value=" << test->value() << ": Generate scope="
+		 << use_name << endl;
+
+      NetScope*scope = new NetScope(container, use_name,
+				    NetScope::GENBLOCK);
+
+      elaborate_subscope_(des, scope);
+
+      return true;
+}
+
+void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
+{
+	// Scan the generated scope for gates that may create
+	// their own scopes.
+      typedef list<PGate*>::const_iterator pgate_list_it_t;
+      for (pgate_list_it_t cur = gates.begin()
+		 ; cur != gates.end() ;  cur ++) {
+	    (*cur) ->elaborate_scope(des, scope);
+      }
+
+	// Save the scope that we created, for future use.
+      scope_list_.push_back(scope);
 }
 
 void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const

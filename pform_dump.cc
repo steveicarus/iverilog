@@ -839,6 +839,10 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 		<< "=" << *loop_step << ")";
 	    break;
 	  case GS_CONDIT:
+	    out << " if (" << *loop_test << ")";
+	    break;
+	  case GS_ELSE:
+	    out << " else !(" << *loop_test << ")";
 	    break;
       }
 

@@ -3227,7 +3227,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()
 		 ; cur != generate_schemes.end() ; cur ++ ) {
-	    (*cur)->elaborate(des);
+	    (*cur)->elaborate(des, scope);
       }
 
 	// Elaborate functions.
@@ -3288,7 +3288,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       return result_flag;
 }
 
-bool PGenerate::elaborate(Design*des) const
+bool PGenerate::elaborate(Design*des, NetScope*container) const
 {
       bool flag = true;
 
@@ -3296,11 +3296,17 @@ bool PGenerate::elaborate(Design*des) const
       for (scope_list_it_t cur = scope_list_.begin()
 		 ; cur != scope_list_.end() ; cur ++ ) {
 
+	    NetScope*scope = *cur;
+	      // Check that this scope is one that is contained in the
+	      // container that the caller passed in.
+	    if (scope->parent() != container)
+		  continue;
+
 	    if (debug_elaborate)
 		  cerr << get_line() << ": debug: Elaborate in "
-		       << "scope " << scope_path(*cur) << endl;
+		       << "scope " << scope_path(scope) << endl;
 
-	    flag = elaborate_(des, *cur) & flag;
+	    flag = elaborate_(des, scope) & flag;
       }
 
       return flag;
