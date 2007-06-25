@@ -251,6 +251,7 @@ extern void compile_real_array(char*label, char*name,
 			       int msb, int lsb);
 extern void compile_net_array(char*label, char*name,
 			      int last, int first);
+extern void compile_array_alias(char*label, char*name, char*src);
 
 extern void compile_array_port(char*label, char*name, char*addr);
 

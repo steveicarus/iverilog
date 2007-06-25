@@ -380,6 +380,12 @@ declared seperately, this statement collects them together:
 the .var or .net statements after this array statement, that have the
 same "name" are collected, in order, as words.
 
+The syntax below is different, in that it creates an alias for an
+existing array. The dimensions and storage are taken from the .array
+at <src>.
+
+        <label> .array "name", <src> ;
+
 MEMORY STATEMENTS:
 
 Memories are arrays of words, each word a vvp_vector4_t vector of the

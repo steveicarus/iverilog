@@ -465,6 +465,42 @@ void compile_array_port(char*label, char*array, char*addr)
 	// The input_connect arranges for the array string to be free'ed.
 }
 
+void compile_array_alias(char*label, char*name, char*src)
+{
+      vvp_array_t mem = array_find(src);
+      assert(mem);
+
+      struct __vpiArray*obj = (struct __vpiArray*)
+	    malloc(sizeof (struct __vpiArray));
+
+      obj->base.vpi_type = &vpip_arraymem_rt;
+      obj->scope = vpip_peek_current_scope();
+      obj->name  = vpip_name_string(name);
+      obj->array_count = mem->array_count;
+
+	// XXXX Need to set an accurate range of addreses.
+      vpip_make_dec_const(&obj->first_addr, mem->first_addr.value);
+      vpip_make_dec_const(&obj->last_addr, mem->last_addr.value);
+
+	// Share the words with the source array.
+      obj->words = mem->words;
+
+      obj->ports_ = 0;
+
+      assert(array_table);
+      assert(!array_find(label));
+      symbol_value_t v;
+      v.ptr = obj;
+      sym_set_value(array_table, label, v);
+
+      compile_vpi_symbol(label, &obj->base);
+      vpip_attach_to_current_scope(&obj->base);
+
+      free(label);
+      free(name);
+      free(src);
+}
+
 /*
  * $Log: array.cc,v $
  * Revision 1.2  2007/04/10 01:26:16  steve

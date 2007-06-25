@@ -1070,6 +1070,7 @@ static void draw_net_in_scope(ivl_signal_t sig)
 		  } else {
 			/* If this is an isolated word, it uses its
 			   own name. */
+			assert(word_count == 1);
 			fprintf(vvp_out, "v%p_%u .net%s%s \"%s\", %d %d, %s;"
 				" %u drivers%s\n",
 				sig, iword, vec8, datatype_flag,
@@ -1081,15 +1082,37 @@ static void draw_net_in_scope(ivl_signal_t sig)
 		  nex_data->net = sig;
 		  nex_data->net_word = iword;
 
+	    } else if (dimensions > 0) {
+
+		    /* In this case, we have an alias to an existing
+		       signal array. this typically is an instance of
+		       port collapsing that the elaborator combined to
+		       discover that the entire array can be collapsed,
+		       so the word count for the signal and the alias
+		       *must* match. */
+		  assert(word_count == ivl_signal_array_count(nex_data->net));
+
+		  if (iword == 0) {
+			fprintf(vvp_out, "v%p .array \"%s\", v%p; Alias to %s\n",
+				sig, vvp_mangle_name(ivl_signal_basename(sig)),
+				nex_data->net, ivl_signal_basename(nex_data->net));
+		  }
+		    /* An alias for the individual words? */
+#if 0
+		  fprintf(vvp_out, "v%p_%u .alias%s v%p, %d %d, v%p_%u;\n",
+			  sig, iword, datatype_flag, sig,
+			  msb, lsb, nex_data->net, nex_data->net_word);
+#endif
 	    } else {
+		    /* Finally, we may have an alias that is a word
+		       connected to another word. Again, this is a
+		       case of port collapsing. */
 
-		  assert(word_count == 1);
-
-		    /* Detect that this is an alias of nex_data->net. Create
-		    a different kind of node that refers to the alias
-		    source data instead of holding our own data. */
-		  fprintf(vvp_out, "v%p_0 .alias%s \"%s\", %d %d, v%p_%u;\n",
-			  sig, datatype_flag,
+		    /* For the alias, create a different kind of node
+		       that refers to the alias source data instead of
+		       holding our own data. */
+		  fprintf(vvp_out, "v%p_%u .alias%s \"%s\", %d %d, v%p_%u;\n",
+			  sig, iword, datatype_flag,
 			  vvp_mangle_name(ivl_signal_basename(sig)),
 			  msb, lsb, nex_data->net, nex_data->net_word);
 	    }
