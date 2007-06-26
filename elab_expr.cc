@@ -793,6 +793,10 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       if (path_.size() == 1
 	  && scope->genvar_tmp.str()
 	  && strcmp(peek_tail_name(path_), scope->genvar_tmp) == 0) {
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: " << path_
+		       << " is genvar with value " << scope->genvar_tmp_val
+		       << "." << endl;
 	    verinum val (scope->genvar_tmp_val);
 	    NetEConst*tmp = new NetEConst(val);
 	    tmp->set_line(*this);
@@ -823,8 +827,24 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  }
 		  assert(tmp);
 		  tmp->set_line(*this);
+
+		  if (debug_elaborate)
+			cerr << get_line() << ": debug: " << path_
+			     << " is a specparam" << endl;
 		  return tmp;
 	    }
+      }
+
+	// At this point we've exhausted all the possibilities that
+	// are not scopes. If this is not a system task argument, then
+	// it cannot be a scope name, so give up.
+
+      if (! sys_task_arg) {
+	      // I cannot interpret this identifier. Error message.
+	    cerr << get_line() << ": error: Unable to bind wire/reg/memory "
+		  "`" << path_ << "' in `" << scope_path(scope) << "'" << endl;
+	    des->errors += 1;
+	    return 0;
       }
 
 	// Finally, if this is a scope name, then return that. Look
@@ -835,16 +855,36 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    if (NetScope*nsc = scope->child(use_name)) {
 		  NetEScope*tmp = new NetEScope(nsc);
 		  tmp->set_line(*this);
+
+		  if (debug_elaborate)
+			cerr << get_line() << ": debug: Found scope "
+			     << use_name << " in scope " << scope->basename()
+			     << endl;
+
 		  return tmp;
 	    }
       }
 
       list<hname_t> spath = eval_scope_path(des, scope, path_);
 
+      ivl_assert(*this, spath.size() == path_.size());
+
 	// Try full hierarchical scope name.
       if (NetScope*nsc = des->find_scope(spath)) {
 	    NetEScope*tmp = new NetEScope(nsc);
 	    tmp->set_line(*this);
+
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: Found scope "
+		       << nsc->basename()
+		       << " path=" << path_ << endl;
+
+	    if (! sys_task_arg) {
+		  cerr << get_line() << ": error: Scope name "
+		       << nsc->basename() << " not allowed here." << endl;
+		  des->errors += 1;
+	    }
+
 	    return tmp;
       }
 
@@ -852,6 +892,11 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       if (NetScope*nsc = des->find_scope(scope, spath)) {
 	    NetEScope*tmp = new NetEScope(nsc);
 	    tmp->set_line(*this);
+
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: Found scope "
+		       << nsc->basename() << " in " << scope_path(scope) << endl;
+
 	    return tmp;
       }
 
