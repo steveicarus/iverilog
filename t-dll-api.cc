@@ -1084,6 +1084,8 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_FF:
 	  case IVL_LPM_RAM:
 	    return net->u_.ff.width;
+          case IVL_LPM_LATCH:
+	    return net->u_.latch.width;
 	  case IVL_LPM_DECODE:
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.width;

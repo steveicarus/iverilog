@@ -23,6 +23,7 @@
 #endif
 
 # include  "netlist.h"
+#include "NetLatch.h"
 
 /*
  * This header file describes the types and constants used to describe
@@ -84,6 +85,7 @@ struct target_t {
       virtual void lpm_divide(const NetDivide*);
       virtual void lpm_modulo(const NetModulo*);
       virtual void lpm_ff(const NetFF*);
+      virtual void lpm_latch( const NetLatch * );
       virtual void lpm_mult(const NetMult*);
       virtual void lpm_mux(const NetMux*);
       virtual void lpm_ram_dq(const NetRamDq*);

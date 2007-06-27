@@ -230,6 +230,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_DEMUX  = 16,
       IVL_LPM_DIVIDE = 12,
       IVL_LPM_FF     =  3,
+      IVL_LPM_LATCH  = 17,
       IVL_LPM_MOD    = 13,
       IVL_LPM_MULT   =  4,
       IVL_LPM_MUX    =  5,
