@@ -2636,7 +2636,7 @@ class NetEBinary  : public NetExpr {
 class NetEBAdd : public NetEBinary {
 
     public:
-      NetEBAdd(char op, NetExpr*l, NetExpr*r);
+      NetEBAdd(char op, NetExpr*l, NetExpr*r, bool lossless_flag =false);
       ~NetEBAdd();
 
       virtual ivl_variable_type_t expr_type() const;

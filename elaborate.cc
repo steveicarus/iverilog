@@ -1754,6 +1754,10 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
+      if (debug_elaborate)
+	    cerr << get_line() << ": debug: Elaborate condition statement"
+		 << " with conditional: " << *expr_ << endl;
+
 	// Elaborate and try to evaluate the conditional expression.
       NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {

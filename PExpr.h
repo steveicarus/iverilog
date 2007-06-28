@@ -79,9 +79,15 @@ class PExpr : public LineInfo {
 
 	// Procedural elaboration of the expression. The expr_width is
 	// the width of the context of the expression (i.e. the
-	// l-value width of an assignment) or -1 if the expression is
-	// self-determinted. The sys_task_arg flag is true if
-	// expressions are allowed to be incomplete.
+	// l-value width of an assignment),
+	//
+	// ... or -1 if the expression is self-determined. or
+	// ... or -2 if the expression is losslessly
+	// self-determined. This can happen in situations where the
+	// result is going to a pseudo-infinitely wide context.
+	//
+	// The sys_task_arg flag is true if expressions are allowed to
+	// be incomplete.
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     int expr_width, bool sys_task_arg) const;
 

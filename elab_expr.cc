@@ -208,7 +208,7 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 
 	  case '+':
 	  case '-':
-	    tmp = new NetEBAdd(op_, lp, rp);
+	    tmp = new NetEBAdd(op_, lp, rp, expr_wid==-2? true : false);
 	    if (expr_wid > 0 && (tmp->expr_type() == IVL_VT_BOOL
 				 || tmp->expr_type() == IVL_VT_LOGIC))
 		  tmp->set_width(expr_wid);
