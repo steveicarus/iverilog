@@ -37,7 +37,7 @@ ivl_variable_type_t NetExpr::expr_type() const
  * Create an add/sub node from the two operands. Make a best guess of
  * the
  */
-NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
+NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r, bool lossless_flag)
 : NetEBinary(op, l, r)
 {
       NetEConst* tmp;
@@ -75,14 +75,16 @@ NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
 
       }
 
+      unsigned pad_width = lossless_flag? 1 : 0;
+
 	/* Now that we have the operand sizes the way we like, or as
 	   good as we are going to get them, set the size of myself. */
       if (r->expr_width() > l->expr_width()) {
 
-	    expr_width(r->expr_width());
+	    expr_width(r->expr_width() + pad_width);
 
       } else {
-	    expr_width(l->expr_width());
+	    expr_width(l->expr_width() + pad_width);
       }
 
       cast_signed(l->has_sign() && r->has_sign());

@@ -738,13 +738,14 @@ verinum operator + (const verinum&left, const verinum&right)
 		  val_bits[idx] = add_with_carry(lpad, right[idx], carry);
       }
 
+      val_bits[max] = add_with_carry(lpad, rpad, carry);
+#if 0
       if (signed_flag) {
-	    val_bits[max] = add_with_carry(lpad, rpad, carry);
 	    if (val_bits[max] != val_bits[max-1])
 		  max += 1;
       }
-
-      verinum val (val_bits, max, false);
+#endif
+      verinum val (val_bits, max+1, false);
       val.has_sign(signed_flag);
 
       delete[]val_bits;
