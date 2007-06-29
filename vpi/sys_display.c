@@ -724,8 +724,9 @@ static int format_str(vpiHandle scope, unsigned int mcd,
       idx = 0;
 
       while (*cp) {
-	    size_t cnt = strcspn(cp, "%\\");
+	    size_t cnt = strcspn(cp, "%");
 	    if (cnt > 0) {
+		    /* String of not-escape characters... */
 		  if (cnt >= sizeof buf)
 			cnt = sizeof buf - 1;
 		  strncpy(buf, cp, cnt);
@@ -733,9 +734,10 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 		  my_mcd_printf(mcd, "%s", buf);
 		  cp += cnt;
 
-	    } else if (*cp == '%') {
+	    } else {
 		  int leading_zero = -1, ljust = 1, fsize = -1, ffsize = -1;
 
+		  assert(*cp == '%');
 		  cp += 1;
 		  if (*cp == '-') {
 		      ljust=-1;
@@ -755,56 +757,6 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 					 argc, argv, idx);
 		  cp += 1;
 
-	    } else {
-
-		  cp += 1;
-		  switch (*cp) {
-		      case 0:
-			break;
-		      case 'n':
-			my_mcd_printf(mcd, "\n");
-			cp += 1;
-			break;
-		      case 't':
-			my_mcd_printf(mcd, "\t");
-			cp += 1;
-			break;
-		      case '\\':
-			my_mcd_printf(mcd, "\\");
-			cp += 1;
-			break;
-		      case '"':
-			my_mcd_printf(mcd, "\"");
-			cp += 1;
-			break;
-
-		      case '0':
-		      case '1':
-		      case '2':
-		      case '3':
-		      case '4':
-		      case '5':
-		      case '6':
-		      case '7':
-			if (isdigit(cp[0])
-			    && isdigit(cp[1])
-			    && isdigit(cp[2])) {
-			        /* handle octal escapes (e.g. "\015" is CR)*/
-			      my_mcd_printf(mcd, "%c",
-					     (cp[2] - '0') +
-					     8 * ((cp[1] - '0') +
-						  8 * (cp[0] - '0')));
-			      cp += 3;
-			} else {
-			      my_mcd_printf(mcd, "%c", *cp);
-			      cp += 1;
-			}
-			break;
-
-		      default:
-			my_mcd_printf(mcd, "%c", *cp);
-			cp += 1;
-		  }
 	    }
       }
 

@@ -168,6 +168,12 @@ static const struct __vpirt vpip_string_temp_rt = {
       free_temp_string
 };
 
+/*
+ * Strings are described at the level of the vvp source as a string
+ * with literal characters or octal escapes. No other escapes are
+ * included, they are processed already by the compiler that generated
+ * the vvp source.
+ */
 static void vpip_process_string(struct __vpiStringConst*obj)
 {
       char*chr = obj->value;
