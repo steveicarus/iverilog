@@ -2188,6 +2188,11 @@ ivl_variable_type_t NetETernary::expr_type() const
       if (tru == IVL_VT_BOOL && fal == IVL_VT_LOGIC)
 	    return IVL_VT_LOGIC;
 
+      if (tru != fal) {
+	    cerr << get_line() << ": internal error:"
+		 << " Unexpected ?: type clash:"
+		 << " tru=" << tru << ", fal=" << fal << endl;
+      }
       ivl_assert(*this, tru == fal);
       return tru;
 }

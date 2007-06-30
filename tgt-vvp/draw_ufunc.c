@@ -50,6 +50,7 @@ static void function_argument_real(ivl_signal_t port, ivl_expr_t exp)
       assert(ivl_signal_array_count(port) == 1);
 
       fprintf(vvp_out, "   %%set/wr v%p_0, %d;\n", port, res);
+      clr_word(res);
 }
 
 static void draw_function_argument(ivl_signal_t port, ivl_expr_t exp)

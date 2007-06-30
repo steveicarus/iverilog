@@ -1608,9 +1608,21 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res)
 	    word = get_number_immediate(ix);
       }
 
-	/* If this is a REG (a variable) then I can do a vector read. */
-      fprintf(vvp_out, "    %%load/v %u, v%p_%u, %u;\n",
-	      res.base, sig, word, swid);
+
+      if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
+
+	    int tmp = allocate_word();
+	    fprintf(vvp_out, " %%load/wr %d, v%p_%u;\n", tmp, sig, word);
+	    fprintf(vvp_out, " %%cvt/vr %u, %d, %u;\n", res.base, tmp, res.wid);
+	    clr_word(tmp);
+
+      } else {
+
+	      /* If this is a REG (a variable) then I can do a vector read. */
+	    fprintf(vvp_out, "    %%load/v %u, v%p_%u, %u;\n",
+		    res.base, sig, word, swid);
+
+      }
 
       pad_expr_in_place(exp, res, swid);
 }
@@ -2231,169 +2243,5 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
- * Revision 1.137  2007/04/14 04:43:01  steve
- *  Finish up part select of array words.
- *
- * Revision 1.136  2007/03/22 16:08:18  steve
- *  Spelling fixes from Larry
- *
- * Revision 1.135  2007/02/26 19:49:50  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.134  2007/02/12 04:37:58  steve
- *  Get padding right when loading array word into big vector.
- *
- * Revision 1.133  2007/01/19 05:24:53  steve
- *  Handle real constants in vector expressions.
- *
- * Revision 1.132  2007/01/17 04:39:18  steve
- *  Remove dead code related to memories.
- *
- * Revision 1.131  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.130  2006/02/02 02:43:59  steve
- *  Allow part selects of memory words in l-values.
- *
- * Revision 1.129  2006/01/02 05:33:20  steve
- *  Node delays can be more general expressions in structural contexts.
- *
- * Revision 1.128  2005/12/22 15:42:22  steve
- *  Pad part selects
- *
- * Revision 1.127  2005/10/11 18:54:10  steve
- *  Remove the $ from signal labels. They do not help.
- *
- * Revision 1.126  2005/10/11 18:30:50  steve
- *  Remove obsolete vvp_memory_label function.
- *
- * Revision 1.125  2005/09/19 21:45:36  steve
- *  Spelling patches from Larry.
- *
- * Revision 1.124  2005/09/19 20:18:20  steve
- *  Fix warnings about uninitialized variables.
- *
- * Revision 1.123  2005/09/17 04:01:32  steve
- *  Improve loading of part selects when easy.
- *
- * Revision 1.122  2005/09/17 01:01:00  steve
- *  More robust use of precalculated expressions, and
- *  Separate lookaside for written variables that can
- *  also be reused.
- *
- * Revision 1.121  2005/09/15 02:49:47  steve
- *  Better reuse of IVL_EX_SELECT expressions.
- *
- * Revision 1.120  2005/09/14 02:53:15  steve
- *  Support bool expressions and compares handle them optimally.
- *
- * Revision 1.119  2005/07/13 04:52:31  steve
- *  Handle functions with real values.
- *
- * Revision 1.118  2005/07/11 16:56:51  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.117  2005/03/12 23:45:33  steve
- *  Handle function/task port vectors.
- *
- * Revision 1.116  2005/03/03 04:34:42  steve
- *  Rearrange how memories are supported as vvp_vector4 arrays.
- *
- * Revision 1.115  2005/02/15 07:12:55  steve
- *  Support constant part select writes to l-values, and large part select reads from signals.
- *
- * Revision 1.114  2005/01/28 05:37:48  steve
- *  Special handling of constant shift 0.
- *
- * Revision 1.113  2005/01/24 05:28:31  steve
- *  Remove the NetEBitSel and combine all bit/part select
- *  behavior into the NetESelect node and IVL_EX_SELECT
- *  ivl_target expression type.
- *
- * Revision 1.112  2005/01/24 05:08:02  steve
- *  Part selects are done in the compiler, not here.
- *
- * Revision 1.111  2004/12/11 02:31:28  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.110  2004/10/04 01:10:57  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.109  2004/09/10 00:14:31  steve
- *  Relaxed width constraint on pad_expression output.
- *
- * Revision 1.108  2004/06/30 03:07:32  steve
- *  Watch out for real compared to constant. Handle as real.
- *
- * Revision 1.107  2004/06/19 16:17:37  steve
- *  Generate signed modulus if appropriate.
- *
- * Revision 1.106  2003/10/01 17:44:20  steve
- *  Slightly more efficient unary minus.
- *
- * Revision 1.105  2003/09/24 20:46:20  steve
- *  Clear expression lookaside after true cause of ternary.
- *
- * Revision 1.104  2003/08/03 03:53:38  steve
- *  Subtract from constant values.
- *
- * Revision 1.103  2003/07/26 03:34:43  steve
- *  Start handling pad of expressions in code generators.
- *
- * Revision 1.102  2003/06/18 03:55:19  steve
- *  Add arithmetic shift operators.
- *
- * Revision 1.101  2003/06/17 19:17:42  steve
- *  Remove short int restrictions from vvp opcodes.
- *
- * Revision 1.100  2003/06/16 22:14:15  steve
- *  Fix fprintf warning.
- *
- * Revision 1.99  2003/06/15 22:49:32  steve
- *  More efficient code for ternary expressions.
- *
- * Revision 1.98  2003/06/14 22:18:54  steve
- *  Sign extend signed vectors.
- *
- * Revision 1.97  2003/06/13 19:10:20  steve
- *  Handle assign of real to vector.
- *
- * Revision 1.96  2003/06/11 02:23:45  steve
- *  Proper pad of signed constants.
- *
- * Revision 1.95  2003/05/10 02:38:49  steve
- *  Proper width handling of || expressions.
- *
- * Revision 1.94  2003/03/25 02:15:48  steve
- *  Use hash code for scope labels.
- *
- * Revision 1.93  2003/03/15 04:45:18  steve
- *  Allow real-valued vpi functions to have arguments.
- *
- * Revision 1.92  2003/02/28 20:21:13  steve
- *  Merge vpi_call and vpi_func draw functions.
- *
- * Revision 1.91  2003/02/07 02:46:16  steve
- *  Handle real value subtract and comparisons.
- *
- * Revision 1.90  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.89  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.88  2002/12/20 01:11:14  steve
- *  Evaluate shift index after shift operand because
- *  the chift operand may use the index register itself.
- *
- * Revision 1.87  2002/12/19 23:11:29  steve
- *  Keep bit select subexpression width if it is constant.
  */
 

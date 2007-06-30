@@ -609,6 +609,7 @@ NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope, int, bool) const
 {
       NetECReal*tmp = new NetECReal(*value_);
       tmp->set_line(*this);
+      tmp->set_width(1U, false);
       return tmp;
 }
 
