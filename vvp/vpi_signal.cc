@@ -696,6 +696,9 @@ static struct __vpiSignal* allocate_vpiSignal(void)
 /*
  * Construct a vpiNet object. Give the object specified dimensions,
  * and point to the specified functor for the lsb.
+ *
+ * The name is the PLI name for the object. If it is nil, then this is
+ * actually the word of an array and has no name of its own.
  */
 vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 			bool signed_flag, vvp_net_t*node)
@@ -719,115 +722,4 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
- * Revision 1.76  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.75  2006/12/09 19:06:53  steve
- *  Handle vpiRealVal reads of signals, and real anyedge events.
- *
- * Revision 1.74  2006/02/21 05:31:54  steve
- *  Put strings for reg objects.
- *
- * Revision 1.73  2006/02/21 02:39:27  steve
- *  Support string values for memory words.
- *
- * Revision 1.72  2005/11/30 00:42:14  steve
- *  vpi_signal supports vvp_fun_signal_vec types.
- *
- * Revision 1.71  2005/11/25 17:55:26  steve
- *  Put vec8 and vec4 nets into seperate net classes.
- *
- * Revision 1.70  2005/09/21 01:04:59  steve
- *  Support put_value of string values.
- *
- * Revision 1.69  2005/07/14 23:34:19  steve
- *  gcc4 compile errors.
- *
- * Revision 1.68  2005/06/13 00:54:04  steve
- *  More unified vec4 to hex string functions.
- *
- * Revision 1.67  2005/06/12 01:10:26  steve
- *  Remove useless references to functor.h
- *
- * Revision 1.66  2005/04/13 06:34:20  steve
- *  Add vvp driver functor for logic outputs,
- *  Add ostream output operators for debugging.
- *
- * Revision 1.65  2005/03/12 04:27:43  steve
- *  Implement VPI access to signal strengths,
- *  Fix resolution of ambiguous drive pairs,
- *  Fix spelling of scalar.
- *
- * Revision 1.64  2005/03/03 04:33:10  steve
- *  Rearrange how memories are supported as vvp_vector4 arrays.
- *
- * Revision 1.63  2004/12/11 02:31:30  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.62  2004/05/19 03:26:25  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.61  2004/03/09 03:11:02  steve
- *  Get vpiModule of signals.
- *
- * Revision 1.60  2004/02/20 01:52:25  steve
- *  vpiStringVal does not include leading nulls.
- *
- * Revision 1.59  2004/02/19 21:31:59  steve
- *  vpiStringVal writes need to set all the bits of a reg.
- *
- * Revision 1.58  2003/08/15 18:23:56  steve
- *  vpiIntVal treats x and z bits as 0.
- *
- * Revision 1.57  2003/06/04 01:56:20  steve
- * 1) Adds configure logic to clean up compiler warnings
- * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
- *    tf_isetrealdelay, acc_handle_scope
- * 3) makes acc_next reentrant
- * 4) adds basic vpiWire type support
- * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
- * 6) add vpiLeftRange/RigthRange to signals
- *
- * Revision 1.56  2003/05/02 04:29:57  steve
- *  Add put_value with transport delay.
- *
- * Revision 1.55  2003/04/12 18:56:57  steve
- *  Add vpoiScalarVal support for signals.
- *
- * Revision 1.54  2003/03/06 04:32:00  steve
- *  Use hashed name strings for identifiers.
- *
- * Revision 1.53  2003/02/16 23:40:05  steve
- *  Permanent allocate vpiSignals more efficiently.
- *
- * Revision 1.52  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.51  2003/01/07 18:07:50  steve
- *  Allocate res-buf in bigger chunks
- *
- * Revision 1.50  2002/11/25 23:33:45  steve
- *  Support put of vpiStringVal to signals.
- *
- * Revision 1.49  2002/09/11 16:06:57  steve
- *  Fix wrecked rbuf in vpi_get_str of signals and memories.
- *
- * Revision 1.48  2002/09/10 02:27:11  steve
- *  Actually set strength pointer when getting strength val.
- *
- * Revision 1.47  2002/09/06 04:56:29  steve
- *  Add support for %v is the display system task.
- *  Change the encoding of H and L outputs from
- *  the bufif devices so that they are logic x.
- *
- * Revision 1.46  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.45  2002/07/23 15:11:41  steve
- *  integral type/ptrdiff_t warning.
  */

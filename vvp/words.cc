@@ -165,10 +165,14 @@ static void __compile_net(char*label, char*name,
 
 	/* Make the vpiHandle for the reg. */
       vpiHandle obj = vpip_make_net(name, msb, lsb, signed_flag, node);
+	/* This attaches the label to the vpiHandle */
       compile_vpi_symbol(label, obj);
-      vpip_attach_to_current_scope(obj);
+        /* If this is an array word, then attach it to the
+	   array. Otherwise, attach it to the current scope. */
       if (array)
 	    array_attach_word(array, array_addr, obj);
+      else
+	    vpip_attach_to_current_scope(obj);
 
       free(label);
       if (name) free(name);
@@ -268,36 +272,5 @@ void compile_alias_real(char*label, char*name, int msb, int lsb,
 
 /*
  * $Log: words.cc,v $
- * Revision 1.9  2007/04/10 01:26:16  steve
- *  variable arrays generated without writing a record for each word.
- *
- * Revision 1.8  2007/01/16 05:44:17  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.7  2005/11/27 16:47:14  steve
- *  Fix type safety warning from gcc.
- *
- * Revision 1.6  2005/11/25 17:55:26  steve
- *  Put vec8 and vec4 nets into seperate net classes.
- *
- * Revision 1.5  2005/10/12 17:28:07  steve
- *  Fix compile of net/real aliases.
- *
- * Revision 1.4  2005/10/12 17:23:16  steve
- *  Add alias nodes.
- *
- * Revision 1.3  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.2  2003/02/11 05:20:45  steve
- *  Include vpiRealVar objects in vpiVariables scan.
- *
- * Revision 1.1  2003/01/25 23:48:06  steve
- *  Add thread word array, and add the instructions,
- *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
- *
  */
 
