@@ -400,12 +400,13 @@ static ivl_signal_t find_modpath(ivl_nexus_t nex)
       return 0;
 }
 
-static void draw_C4_to_string(char*result, size_t nresult,
-			      ivl_net_const_t cptr)
+static char* draw_C4_to_string(ivl_net_const_t cptr)
 {
       const char*bits = ivl_const_bits(cptr);
       unsigned idx;
 
+      size_t result_len = 5 + ivl_const_width(cptr);
+      char*result = malloc(result_len);
       char*dp = result;
       strcpy(dp, "C4<");
       dp += strlen(dp);
@@ -422,16 +423,18 @@ static void draw_C4_to_string(char*result, size_t nresult,
 		  *dp++ = bits[idx];
 		  break;
 	    }
-	    assert(dp - result < nresult);
+	    assert((dp - result) < result_len);
       }
 
       strcpy(dp, ">");
+      return result;
 }
 
-static void draw_C8_to_string(char*result, size_t nresult,
-			      ivl_net_const_t cptr,
-			      ivl_drive_t dr0, ivl_drive_t dr1)
+static char* draw_C8_to_string(ivl_net_const_t cptr,
+			       ivl_drive_t dr0, ivl_drive_t dr1)
 {
+      size_t nresult = 5 + 3*ivl_const_width(cptr);
+      char*result = malloc(nresult);
       const char*bits = ivl_const_bits(cptr);
       unsigned idx;
 
@@ -474,6 +477,7 @@ static void draw_C8_to_string(char*result, size_t nresult,
       }
 
       strcpy(dp, ">");
+      return result;
 }
 
 /*
@@ -483,9 +487,8 @@ static void draw_C8_to_string(char*result, size_t nresult,
  * to this nexus.
  */
 
-static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
+static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 {
-      static char result[2048];
       unsigned nptr_pin = ivl_nexus_ptr_pin(nptr);
       ivl_net_const_t cptr;
       ivl_net_logic_t lptr;
@@ -498,7 +501,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  if (! can_elide_bufz(lptr, nptr))
 			break;
 
-		  return draw_net_input(ivl_logic_pin(lptr, 1));
+		  return strdup(draw_net_input(ivl_logic_pin(lptr, 1)));
 	    } while(0);
 
 	/* If this is a pulldown device, then there is a single pin
@@ -508,6 +511,8 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	   then we can draw a C4<> constant instead. */
       if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLDOWN)) {
 	    if (ivl_nexus_ptr_drive0(nptr) == IVL_DR_STRONG) {
+		  size_t result_len = ivl_logic_width(lptr) + 5;
+		  char*result = malloc(result_len);
 		  char*dp = result;
 		  strcpy(dp, "C4<");
 		  dp += strlen(dp);
@@ -515,10 +520,12 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  dp += ivl_logic_width(lptr);
 		  *dp++ = '>';
 		  *dp = 0;
-		  assert((dp-result) <= sizeof result);
+		  assert((dp-result) <= result_len);
 		  return result;
 	    } else {
 		  char val[4];
+		  size_t result_len = 3*ivl_logic_width(lptr) + 5;
+		  char*result = malloc(result_len);
 		  char*dp = result;
 
 		  val[0] = "01234567"[ivl_nexus_ptr_drive0(nptr)];
@@ -532,13 +539,15 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  dp += 3*ivl_logic_width(lptr);
 		  *dp++ = '>';
 		  *dp = 0;
-		  assert((dp-result) <= sizeof result);
+		  assert((dp-result) <= result_len);
 		  return result;
 	    }
       }
 
       if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLUP)) {
 	    if (ivl_nexus_ptr_drive1(nptr) == IVL_DR_STRONG) {
+		  size_t result_len = 5 + ivl_logic_width(lptr);
+		  char*result = malloc(result_len);
 		  char*dp = result;
 		  strcpy(dp, "C4<");
 		  dp += strlen(dp);
@@ -546,10 +555,12 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  dp += ivl_logic_width(lptr);
 		  *dp++ = '>';
 		  *dp = 0;
-		  assert((dp-result) <= sizeof result);
+		  assert((dp-result) <= result_len);
 		  return result;
 	    } else {
 		  char val[4];
+		  size_t result_len = 5 + 3*ivl_logic_width(lptr);
+		  char*result = malloc(result_len);
 		  char*dp = result;
 
 		  val[0] = "01234567"[ivl_nexus_ptr_drive0(nptr)];
@@ -563,28 +574,31 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  dp += 3*ivl_logic_width(lptr);
 		  *dp++ = '>';
 		  *dp = 0;
-		  assert((dp-result) <= sizeof result);
+		  assert((dp-result) <= result_len);
 		  return result;
 	    }
       }
 
       if (lptr && (nptr_pin == 0)) {
-	    sprintf(result, "L_%p", lptr);
-	    return result;
+	    char tmp[128];
+	    snprintf(tmp, sizeof tmp, "L_%p", lptr);
+	    return strdup(tmp);
       }
 
       sptr = ivl_nexus_ptr_sig(nptr);
       if (sptr && (ivl_signal_type(sptr) == IVL_SIT_REG)) {
+	    char tmp[128];
 	      /* Input is a .var. This device may be a non-zero pin
 	         because it may be an array of reg vectors. */
-	    snprintf(result, sizeof result, "v%p_%u", sptr, nptr_pin);
-	    return result;
+	    snprintf(tmp, sizeof tmp, "v%p_%u", sptr, nptr_pin);
+	    return strdup(tmp);
       }
 
       cptr = ivl_nexus_ptr_con(nptr);
       if (cptr) {
 	      /* Constants should have exactly 1 pin, with a literal value. */
 	    assert(nptr_pin == 0);
+	    char *result = 0;
 
 	    switch (ivl_const_type(cptr)) {
 		case IVL_VT_LOGIC:
@@ -592,18 +606,21 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  if ((ivl_nexus_ptr_drive0(nptr) == IVL_DR_STRONG)
 		      && (ivl_nexus_ptr_drive1(nptr) == IVL_DR_STRONG)) {
 
-			draw_C4_to_string(result, sizeof(result), cptr);
+			result = draw_C4_to_string(cptr);
 
 		  } else {
-			draw_C8_to_string(result, sizeof(result), cptr,
-					  ivl_nexus_ptr_drive0(nptr),
-					  ivl_nexus_ptr_drive1(nptr));
+			result = draw_C8_to_string(cptr,
+						   ivl_nexus_ptr_drive0(nptr),
+						   ivl_nexus_ptr_drive1(nptr));
 		  }
 		  break;
 
 		case IVL_VT_REAL:
-		  snprintf(result, sizeof(result),
-			   "Cr<%lg>", ivl_const_real(cptr));
+		    { char tmp[256];
+		      snprintf(tmp, sizeof(tmp),
+			       "Cr<%lg>", ivl_const_real(cptr));
+		      result = strdup(tmp);
+		    }
 		  break;
 
 		default:
@@ -647,18 +664,21 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_PART_PV: /* NOTE: This is only a partial driver. */
 	  case IVL_LPM_REPEAT:
 	    if (ivl_lpm_q(lpm, 0) == nex) {
-		  sprintf(result, "L_%p", lpm);
-		  return result;
+		  char tmp[128];
+		  snprintf(tmp, sizeof tmp, "L_%p", lpm);
+		  return strdup(tmp);
 	    }
 	    break;
 
 	  case IVL_LPM_PART_BI:
 	    if (ivl_lpm_q(lpm, 0) == nex) {
-		  sprintf(result, "L_%p/P", lpm);
-		  return result;
+		  char tmp[128];
+		  snprintf(tmp, sizeof tmp, "L_%p/P", lpm);
+		  return strdup(tmp);
 	    } else if (ivl_lpm_data(lpm,0) == nex) {
-		  sprintf(result, "L_%p/V", lpm);
-		  return result;
+		  char tmp[128];
+		  snprintf(tmp, sizeof tmp, "L_%p/V", lpm);
+		  return strdup(tmp);
 	    }
 	    break;
       }
@@ -666,7 +686,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       fprintf(stderr, "internal error: no input to nexus %s\n",
 	      ivl_nexus_name(nex));
       assert(0);
-      return "C<z>";
+      return strdup("C<z>");
 }
 
 static void draw_modpath(const char*label, const char*driver,
@@ -870,7 +890,7 @@ static char* draw_net_input_x(ivl_nexus_t nex,
       if (ndrivers == 1 && res == IVL_SIT_TRI) {
 	    ivl_signal_t path_sig = find_modpath(nex);
 	    if (path_sig) {
-		  char*nex_str = strdup(draw_net_input_drive(nex, drivers[0]));
+		  char*nex_str = draw_net_input_drive(nex, drivers[0]);
 		  char modpath_label[64];
 		  snprintf(modpath_label, sizeof modpath_label,
 			   "V_%p/m", path_sig);
@@ -878,7 +898,7 @@ static char* draw_net_input_x(ivl_nexus_t nex,
 		  nex_private = strdup(modpath_label);
 		  free(nex_str);
 	    } else {
-		  nex_private = strdup(draw_net_input_drive(nex, drivers[0]));
+		  nex_private = draw_net_input_drive(nex, drivers[0]);
 	    }
 	    return nex_private;
       }
@@ -899,8 +919,9 @@ static char* draw_net_input_x(ivl_nexus_t nex,
 			      fprintf(vvp_out, ", RS_%p/%d/%d",
 				      nex, level - 1, idx*4);
 			} else {
-			      fprintf(vvp_out, ", %s",
-				      draw_net_input_drive(nex, drivers[idx]));
+			      char*drive = draw_net_input_drive(nex, drivers[idx]);
+			      fprintf(vvp_out, ", %s", drive);
+			      free(drive);
 			}
 		  }
 		  for ( ;  idx < inst+4 ;  idx += 1) {
@@ -2389,186 +2410,5 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
- * Revision 1.160  2007/04/12 04:40:37  steve
- *  nexus vectors of VT_BOOL objects. (ravi@bluespec)
- *
- * Revision 1.159  2007/04/10 03:40:04  steve
- *  Allow nexus aliases to array words.
- *
- * Revision 1.158  2007/04/10 01:26:15  steve
- *  variable arrays generated without writing a record for each word.
- *
- * Revision 1.157  2007/04/02 01:12:34  steve
- *  Seperate arrayness from word count
- *
- * Revision 1.156  2007/03/22 16:08:18  steve
- *  Spelling fixes from Larry
- *
- * Revision 1.155  2007/03/02 06:13:22  steve
- *  Add support for edge sensitive spec paths.
- *
- * Revision 1.154  2007/03/01 06:19:39  steve
- *  Add support for conditional specify delay paths.
- *
- * Revision 1.153  2007/02/26 19:49:50  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.152  2007/01/17 04:39:18  steve
- *  Remove dead code related to memories.
- *
- * Revision 1.151  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.150  2006/11/23 22:42:48  steve
- *  Do not intertangle modpaths due to references to input nets.
- *
- * Revision 1.149  2006/11/22 06:09:08  steve
- *  Get the .event input from the signal instead of the signal input.
- *
- * Revision 1.148  2006/10/01 23:51:15  steve
- *  Modpath is input to net, draw .modpath to account.
- *
- * Revision 1.147  2006/09/23 04:57:19  steve
- *  Basic support for specify timing.
- *
- * Revision 1.146  2006/07/30 02:51:36  steve
- *  Fix/implement signed right shift.
- *
- * Revision 1.145  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.144  2006/04/22 04:27:36  steve
- *  Get tail counts right in nested concatenations.
- *
- * Revision 1.143  2006/04/10 00:37:42  steve
- *  Add support for generate loops w/ wires and gates.
- *
- * Revision 1.142  2006/03/18 22:53:38  steve
- *  Support more parameter syntax.
- *
- * Revision 1.141  2006/03/15 05:52:20  steve
- *  Handle multiple part/bi devices connected together.
- *
- * Revision 1.140  2006/03/08 05:29:42  steve
- *  Add support for logic parameters.
- *
- * Revision 1.139  2006/01/02 05:33:20  steve
- *  Node delays can be more general expressions in structural contexts.
- *
- * Revision 1.138  2005/11/25 17:55:26  steve
- *  Put vec8 and vec4 nets into seperate net classes.
- *
- * Revision 1.137  2005/10/12 17:26:17  steve
- *  MUX nodes get inputs from nets, not from net inputs,
- *  Detect and draw alias nodes to reduce net size and
- *  handle force confusion.
- *
- * Revision 1.136  2005/10/11 18:54:10  steve
- *  Remove the $ from signal labels. They do not help.
- *
- * Revision 1.135  2005/10/11 18:30:50  steve
- *  Remove obsolete vvp_memory_label function.
- *
- * Revision 1.134  2005/10/10 04:16:13  steve
- *  Remove dead dram_input_from_net and lpm_inputs_a_b
- *
- * Revision 1.133  2005/09/20 18:34:01  steve
- *  Clean up compiler warnings.
- *
- * Revision 1.132  2005/08/06 17:58:16  steve
- *  Implement bi-directional part selects.
- *
- * Revision 1.131  2005/07/11 16:56:51  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.130  2005/07/07 16:22:50  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.129  2005/06/17 03:46:52  steve
- *  Make functors know their own width.
- *
- * Revision 1.128  2005/05/24 01:44:28  steve
- *  Do sign extension of structuran nets.
- *
- * Revision 1.127  2005/05/08 23:44:08  steve
- *  Add support for variable part select.
- *
- * Revision 1.126  2005/04/24 23:44:02  steve
- *  Update DFF support to new data flow.
- *
- * Revision 1.125  2005/04/06 05:29:09  steve
- *  Rework NetRamDq and IVL_LPM_RAM nodes.
- *
- * Revision 1.124  2005/04/04 05:29:53  steve
- *  Generate the right coes for unconnected UDP port.
- *
- * Revision 1.123  2005/03/19 06:23:49  steve
- *  Handle LPM shifts.
- *
- * Revision 1.122  2005/03/18 02:56:04  steve
- *  Add support for LPM_UFUNC user defined functions.
- *
- * Revision 1.121  2005/03/09 05:52:04  steve
- *  Handle case inequality in netlists.
- *
- * Revision 1.120  2005/03/09 04:53:40  steve
- *  Generate code for new form of memory ports.
- *
- * Revision 1.119  2005/02/13 01:15:07  steve
- *  Replace supply nets with wires connected to pullup/down supply devices.
- *
- * Revision 1.118  2005/02/12 22:54:29  steve
- *  Implement a-b muxes as vector devices
- *
- * Revision 1.117  2005/02/12 06:25:15  steve
- *  Draw C4 and C8 constants to account for strength.
- *
- * Revision 1.116  2005/02/10 04:55:45  steve
- *  Get the C4 width right for undriven nexa.
- *
- * Revision 1.115  2005/02/08 00:12:36  steve
- *  Add the NetRepeat node, and code generator support.
- *
- * Revision 1.114  2005/02/04 05:13:57  steve
- *  Support .concat with arbitrary input counts.
- *
- * Revision 1.113  2005/02/03 04:56:21  steve
- *  laborate reduction gates into LPM_RED_ nodes.
- *
- * Revision 1.112  2005/01/22 16:22:13  steve
- *  LPM_CMP_NE/EQ are vectored devices.
- *
- * Revision 1.111  2005/01/22 01:06:55  steve
- *  Change case compare from logic to an LPM node.
- *
- * Revision 1.110  2005/01/16 04:20:32  steve
- *  Implement LPM_COMPARE nodes as two-input vector functors.
- *
- * Revision 1.109  2005/01/12 05:31:50  steve
- *  More robust input code generation for LPM_ADD.
- *
- * Revision 1.108  2005/01/12 03:16:35  steve
- *  More complete drawing of concat inputs.
- *
- * Revision 1.107  2005/01/10 01:42:59  steve
- *  Handle concatenations with up to 16 inputs.
- *
- * Revision 1.106  2005/01/09 20:16:01  steve
- *  Use PartSelect/PV and VP to handle part selects through ports.
- *
- * Revision 1.105  2004/12/29 23:52:09  steve
- *  Generate code for the .concat functors, from NetConcat objects.
- *  Generate C<> constants of correct widths for functor arguments.
- *
- * Revision 1.104  2004/12/11 02:31:29  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.103  2004/10/04 01:10:57  steve
- *  Clean up spurious trailing white space.
  */
 
