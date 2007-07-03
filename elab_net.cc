@@ -1709,9 +1709,73 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 					drive0, drive1);
       }
 
+      return elaborate_net_net_(des, scope, sig, lwidth,
+				rise, fall, decay, drive0, drive1);
+
+}
+
+NetNet* PEIdent::process_select_(Design*des, NetScope*scope,
+				 NetNet*sig) const
+{
+
+	// If there are more index items then there are array
+	// dimensions, then treat them as word part selects. For
+	// example, if this is a memory array, then array dimensions
+	// is 1 and
+      unsigned midx, lidx;
+      if (! eval_part_select_(des, scope, sig, midx, lidx))
+	    return sig;
+
+      unsigned part_count = midx-lidx+1;
+
+	// Maybe this is a full-width constant part select? If
+	// so, do nothing.
+      if (part_count == sig->vector_width())
+	    return sig;
+
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: Elaborate part select"
+		 << " of word from " << sig->name() << "[base="<<lidx
+		 << " wid=" << part_count << "]" << endl;
+      }
+
+      NetPartSelect*ps = new NetPartSelect(sig, lidx, part_count,
+					   NetPartSelect::VP);
+      ps->set_line(*sig);
+      des->add_node(ps);
+
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+			      NetNet::WIRE, part_count-1, 0);
+      tmp->data_type( sig->data_type() );
+      tmp->local_flag(true);
+      connect(tmp->pin(0), ps->pin(0));
+
+      return tmp;
+}
+
+NetNet* PEIdent::elaborate_net_net_(Design*des, NetScope*scope,
+				      NetNet*sig, unsigned lwidth,
+				      const NetExpr* rise,
+				      const NetExpr* fall,
+				      const NetExpr* decay,
+				      Link::strength_t drive0,
+				      Link::strength_t drive1) const
+{
+      const name_component_t&name_tail = path_.back();
+
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
       if (!name_tail.index.empty())
 	    use_sel = name_tail.index.back().sel;
+
+      switch (use_sel) {
+	  case index_component_t::SEL_IDX_UP:
+	  case index_component_t::SEL_IDX_DO:
+	    return elaborate_net_net_idx_up_(des, scope, sig, lwidth,
+					     rise, fall, decay, drive0, drive1);
+
+	  default:
+	    break;
+      }
 
 	/* Catch the case of a non-constant bit select. That should be
 	   handled elsewhere. */
@@ -1755,45 +1819,87 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
       }
 
 
+
       return sig;
 }
 
-NetNet* PEIdent::process_select_(Design*des, NetScope*scope,
-				 NetNet*sig) const
+NetNet* PEIdent::elaborate_net_net_idx_up_(Design*des, NetScope*scope,
+					   NetNet*sig, unsigned lwidth,
+					   const NetExpr* rise,
+					   const NetExpr* fall,
+					   const NetExpr* decay,
+					   Link::strength_t drive0,
+					   Link::strength_t drive1) const
 {
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
 
-	// If there are more index items then there are array
-	// dimensions, then treat them as word part selects. For
-	// example, if this is a memory array, then array dimensions
-	// is 1 and
-      unsigned midx, lidx;
-      if (! eval_part_select_(des, scope, sig, midx, lidx))
-	    return sig;
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.lsb != 0);
+      ivl_assert(*this, index_tail.msb != 0);
 
-      unsigned part_count = midx-lidx+1;
+      NetExpr*base = elab_and_eval(des, scope, index_tail.msb, -1);
 
-	// Maybe this is a full-width constant part select? If
-	// so, do nothing.
-      if (part_count == sig->vector_width())
-	    return sig;
+      unsigned long wid = 0;
+      calculate_up_do_width_(des, scope, wid);
 
-      if (debug_elaborate) {
-	    cerr << get_line() << ": debug: Elaborate part select"
-		 << " of word from " << sig->name() << "[base="<<lidx
-		 << " wid=" << part_count << "]" << endl;
+      bool down_flag = name_tail.index.back().sel==index_component_t::SEL_IDX_DO;
+
+	// Handle the special case that the base is constant as
+	// well. In this case it can be converted to a conventional
+	// part select.
+      if (NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
+	    long lsv = base_c->value().as_long();
+
+	      // convert from -: to +: form.
+	    if (down_flag) lsv -= (wid-1);
+
+	      // If the part select convers exactly the entire
+	      // vector, then do not bother with it. Return the
+	      // signal itself.
+	    if (sig->sb_to_idx(lsv) == 0 && wid == sig->vector_width())
+		  return sig;
+
+	    NetPartSelect*sel = new NetPartSelect(sig, sig->sb_to_idx(lsv),
+						  wid, NetPartSelect::VP);
+	    sel->set_line(*this);
+	    des->add_node(sel);
+
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, wid);
+	    tmp->set_line(*this);
+	    tmp->data_type(sig->data_type());
+	    connect(tmp->pin(0), sel->pin(0));
+
+	    delete base;
+	    return tmp;
       }
 
-      NetPartSelect*ps = new NetPartSelect(sig, lidx, part_count,
-					   NetPartSelect::VP);
-      ps->set_line(*sig);
-      des->add_node(ps);
+      if (sig->msb() > sig->lsb()) {
+	    long offset = sig->lsb();
+	    if (down_flag)
+		  offset += (wid-1);
+	    if (offset != 0)
+		  base = make_add_expr(base, 0-offset);
+      } else {
+	    long vwid = sig->lsb() - sig->msb() + 1;
+	    long offset = sig->msb();
+	    if (down_flag)
+		  offset += (wid-1);
+	    base = make_sub_expr(vwid-offset-wid, base);
+      }
+
+      NetPartSelect*sel = new NetPartSelect(sig, base->synthesize(des), wid);
+      sel->set_line(*this);
+      des->add_node(sel);
 
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-			      NetNet::WIRE, part_count-1, 0);
-      tmp->data_type( sig->data_type() );
-      tmp->local_flag(true);
-      connect(tmp->pin(0), ps->pin(0));
+			      NetNet::WIRE, wid);
+      tmp->set_line(*this);
+      tmp->data_type(sig->data_type());
+      connect(tmp->pin(0), sel->pin(0));
 
+      delete base;
       return tmp;
 }
 
@@ -2136,18 +2242,17 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 	  case index_component_t::SEL_IDX_UP: {
 		NetExpr*tmp_ex = elab_and_eval(des, scope, index_tail.msb, -1);
 		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
-		assert(tmp);
+		ivl_assert(*this, tmp);
 
 		long midx_val = tmp->value().as_long();
 		midx = sig->sb_to_idx(midx_val);
 		delete tmp_ex;
 
-		tmp_ex = elab_and_eval(des, scope, index_tail.lsb, -1);
-		tmp = dynamic_cast<NetEConst*>(tmp_ex);
-		assert(tmp);
-
-		long wid = tmp->value().as_long();
-		delete tmp_ex;
+		  /* The width (a constant) is calculated here. */
+		unsigned long wid = 0;
+		bool flag = calculate_up_do_width_(des, scope, wid);
+		if (! flag)
+		      return false;
 
 		if (index_tail.sel == index_component_t::SEL_IDX_UP)
 		      lidx = sig->sb_to_idx(midx_val+wid-1);
@@ -2165,6 +2270,9 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 
 	  case index_component_t::SEL_PART: {
 
+		long msb, lsb;
+		bool flag = calculate_parts_(des, scope, msb, lsb);
+#if 0
 		NetExpr*tmp_ex = elab_and_eval(des, scope, index_tail.msb, -1);
 		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
 		assert(tmp);
@@ -2185,15 +2293,17 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		long lidx_val = tmp->value().as_long();
 		lidx = sig->sb_to_idx(lidx_val);
 		delete tmp_ex;
-
+#endif
+		lidx = sig->sb_to_idx(lsb);
+		midx = sig->sb_to_idx(msb);
 		  /* Detect reversed indices of a part select. */
 		if (lidx > midx) {
 		      cerr << get_line() << ": error: Part select "
-			   << sig->name() << "[" << midx_val << ":"
-			   << lidx_val << "] indices reversed." << endl;
+			   << sig->name() << "[" << msb << ":"
+			   << lsb << "] indices reversed." << endl;
 		      cerr << get_line() << ":      : Did you mean "
-			   << sig->name() << "[" << lidx_val << ":"
-			   << midx_val << "]?" << endl;
+			   << sig->name() << "[" << lsb << ":"
+			   << msb << "]?" << endl;
 		      unsigned tmp = midx;
 		      midx = lidx;
 		      lidx = tmp;
@@ -2203,8 +2313,8 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		  /* Detect a part select out of range. */
 		if (midx >= sig->vector_width()) {
 		      cerr << get_line() << ": error: Part select "
-			   << sig->name() << "[" << midx_val << ":"
-			   << midx_val << "] out of range." << endl;
+			   << sig->name() << "[" << msb << ":"
+			   << lsb << "] out of range." << endl;
 		      midx = sig->vector_width() - 1;
 		      lidx = 0;
 		      des->errors += 1;

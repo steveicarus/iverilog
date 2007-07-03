@@ -358,6 +358,20 @@ class PEIdent : public PExpr {
 				   Link::strength_t drive0,
 				   Link::strength_t drive1) const;
 
+      NetNet* elaborate_net_net_(Design*des, NetScope*scope,
+				 NetNet*sig, unsigned lwidth,
+				 const NetExpr* rise,
+				 const NetExpr* fall,
+				 const NetExpr* decay,
+				 Link::strength_t drive0,
+				 Link::strength_t drive1) const;
+      NetNet* elaborate_net_net_idx_up_(Design*des, NetScope*scope,
+					NetNet*sig, unsigned lwidth,
+					const NetExpr* rise,
+					const NetExpr* fall,
+					const NetExpr* decay,
+					Link::strength_t drive0,
+					Link::strength_t drive1) const;
       NetNet* elaborate_net_bitmux_(Design*des, NetScope*scope,
 				    NetNet*sig,
 				    const NetExpr* rise,
