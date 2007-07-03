@@ -675,9 +675,9 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
 	    sig1 = thr_get_bit(thr, end1);
 	    sig2 = thr_get_bit(thr, end2);
 
-	      /* If both numbers are negative, then switch the
-		 direction of the lt. */
-	    if ((sig1 == 1) && (sig2 == 1) && (eq != 0))
+	      /* If both numbers are negative (and not equal) then
+		 switch the direction of the lt. */
+	    if ((sig1 == 1) && (sig2 == 1) && (eq != 1))
 		  lt ^= 1;
 
 	      /* If the first is negative and the last positive, then
