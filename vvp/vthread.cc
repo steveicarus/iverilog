@@ -868,9 +868,9 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
 	/* Correct the lt bit to account for the sign of the parameters. */
       if (lt != BIT4_X) {
 
-	      /* If both numbers are negative, then switch the
-		 direction of the lt. */
-	    if ((sig1 == BIT4_1) && (sig2 == BIT4_1) && (eq != BIT4_0))
+	      /* If both numbers are negative (and not equal) then
+		 switch the direction of the lt. */
+	    if ((sig1 == BIT4_1) && (sig2 == BIT4_1) && (eq != BIT4_1))
 		  lt = ~lt;
 
 	      /* If the first is negative and the last positive, then
