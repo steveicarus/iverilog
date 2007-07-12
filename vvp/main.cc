@@ -47,6 +47,8 @@
 # include  <windows.h>
 #endif
 
+ofstream debug_file;
+
 #if defined(__MINGW32__) && !defined(HAVE_GETOPT_H)
 extern "C" int getopt(int argc, char*argv[], const char*fmt);
 extern "C" int optind;
@@ -203,6 +205,13 @@ int main(int argc, char*argv[])
       if (optind == argc) {
 	    fprintf(stderr, "%s: no input file.\n", argv[0]);
 	    return -1;
+      }
+
+	/* If the VVP_DEBUG variable is set, then it contains the path
+	   to the vvp debug file. Open it for output. */
+
+      if (char*path = getenv("VVP_DEBUG")) {
+	    debug_file.open(path, ios_base::out);
       }
 
       design_path = argv[optind];

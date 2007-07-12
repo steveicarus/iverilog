@@ -1197,6 +1197,9 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
       if (strcmp(type,"tri") == 0) {
 	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0));
 
+      } else if (strncmp(type,"tri$",4) == 0) {
+	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0), strdup(type+4));
+
       } else if (strcmp(type,"tri0") == 0) {
 	    obj = new resolv_functor(vvp_scalar_t(BIT4_0, 5));
 

@@ -40,7 +40,7 @@
 class resolv_functor : public vvp_net_fun_t {
 
     public:
-      explicit resolv_functor(vvp_scalar_t hiz_value);
+      explicit resolv_functor(vvp_scalar_t hiz_value, const char* debug =0);
       ~resolv_functor();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
@@ -51,7 +51,10 @@ class resolv_functor : public vvp_net_fun_t {
 
     private:
       vvp_vector8_t val_[4];
+	// Bit value to emit for HiZ bits.
       vvp_scalar_t hiz_;
+	// True if debugging is enabled
+      const char* debug_label_;
 };
 
 /*

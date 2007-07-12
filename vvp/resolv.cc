@@ -22,13 +22,14 @@
 
 # include  "resolv.h"
 # include  "schedule.h"
+# include  "compile.h"
 # include  "statistics.h"
 # include  <iostream>
 # include  <assert.h>
 
 
-resolv_functor::resolv_functor(vvp_scalar_t hiz_value)
-: hiz_(hiz_value)
+resolv_functor::resolv_functor(vvp_scalar_t hiz_value, const char*debug_l)
+: hiz_(hiz_value), debug_label_(debug_l)
 {
 }
 
@@ -72,11 +73,10 @@ void resolv_functor::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
       vvp_vector8_t out (bit);
 
       for (unsigned idx = 0 ;  idx < 4 ;  idx += 1) {
-	    if (val_[idx].size() == 0)
-		  continue;
 	    if (idx == pdx)
 		  continue;
-
+	    if (val_[idx].size() == 0)
+		  continue;
 	    out = resolve(out, val_[idx]);
       }
 
@@ -87,43 +87,17 @@ void resolv_functor::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
 	    }
       }
 
+      if (debug_label_ && debug_file.is_open())
+	    debug_file << "[" << schedule_simtime() << "] "
+		       << debug_label_ << ": Resolv out=" << out
+		       << " in=" << val_[0] << ", " << val_[1]
+		       << ", " << val_[2] << ", " << val_[3] << endl;
+
       vvp_send_vec8(ptr->out, out);
 }
 
 
 /*
  * $Log: resolv.cc,v $
- * Revision 1.26  2005/06/22 18:30:12  steve
- *  Inline more simple stuff, and more vector4_t by const reference for performance.
- *
- * Revision 1.25  2005/06/22 00:04:49  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.24  2005/06/15 00:47:15  steve
- *  Resolv do not propogate inputs that do not change.
- *
- * Revision 1.23  2005/04/13 06:34:20  steve
- *  Add vvp driver functor for logic outputs,
- *  Add ostream output operators for debugging.
- *
- * Revision 1.22  2005/03/12 04:27:43  steve
- *  Implement VPI access to signal strengths,
- *  Fix resolution of ambiguous drive pairs,
- *  Fix spelling of scalar.
- *
- * Revision 1.21  2005/02/13 05:26:30  steve
- *  tri0 and tri1 resolvers must replace HiZ with 0/1 after resolution.
- *
- * Revision 1.20  2005/01/09 20:11:16  steve
- *  Add the .part/pv node and related functionality.
- *
- * Revision 1.19  2004/12/31 06:00:06  steve
- *  Implement .resolv functors, and stub signals recv_vec8 method.
- *
- * Revision 1.18  2004/12/11 02:31:30  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
  */
 

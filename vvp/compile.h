@@ -23,6 +23,7 @@
 #endif
 
 # include  <stdio.h>
+# include  <fstream>
 # include  "parse_misc.h"
 # include  "vpi_user.h"
 # include  "vvp_net.h"
@@ -43,6 +44,12 @@ extern void compile_init(void);
 extern void compile_cleanup(void);
 
 extern bool verbose_flag;
+
+/*
+ * If this file opened, then write debug information to this
+ * file. This is used for debugging the VVP runtime itself.
+ */
+extern ofstream debug_file;
 
 /*
  *  Connect a list of symbols to a contiguous set of ipoints.
