@@ -1721,7 +1721,7 @@ NetNet* PEIdent::process_select_(Design*des, NetScope*scope,
 	// If there are more index items then there are array
 	// dimensions, then treat them as word part selects. For
 	// example, if this is a memory array, then array dimensions
-	// is 1 and
+	// is the first and part select the remainder.
       unsigned midx, lidx;
       if (! eval_part_select_(des, scope, sig, midx, lidx))
 	    return sig;

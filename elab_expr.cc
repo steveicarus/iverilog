@@ -1193,7 +1193,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
       NetESignal*res = new NetESignal(net, word_index);
       res->set_line(*this);
 
-	// Detect that the word has a bin/part select as well.
+	// Detect that the word has a bit/part select as well.
 
       index_component_t::ctype_t word_sel = index_component_t::SEL_NONE;
       if (name_tail.index.size() > 1)
@@ -1334,7 +1334,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 }
 
 /*
- * Part select up, i.e. net[<m> +: <l>]
+ * Part select indexed down, i.e. net[<m> -: <l>]
  */
 NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 					   NetESignal*net, NetScope*found_in)const
