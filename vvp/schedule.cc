@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -218,6 +218,14 @@ inline void event_time_s::operator delete(void*obj, size_t size)
  * future.
  */
 static struct event_time_s* sched_list = 0;
+
+/*
+ * This is a list of initialization events. The setup puts
+ * initializations in this list so that they happen before the
+ * simulation as a whole starts. This prevents time-0 triggers of
+ * certain events.
+ */
+static struct event_s* schedule_init_list = 0;
 
 /*
  * This flag is true until a VPI task or function finishes the
@@ -521,6 +529,26 @@ void schedule_set_vector(vvp_net_ptr_t ptr, double bit)
       schedule_event_(cur, 0, SEQ_ACTIVE);
 }
 
+void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+{
+      struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
+      cur->ptr = ptr;
+      cur->val = bit;
+      cur->base = 0;
+      cur->vwid = 0;
+      cur->next = schedule_init_list;
+      schedule_init_list = cur;
+}
+
+void schedule_init_vector(vvp_net_ptr_t ptr, double bit)
+{
+      struct assign_real_event_s*cur = new struct assign_real_event_s;
+      cur->ptr = ptr;
+      cur->val = bit;
+      cur->next = schedule_init_list;
+      schedule_init_list = cur;
+}
+
 void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay,
 		      bool sync_flag, bool ro_flag)
 {
@@ -574,6 +602,15 @@ void schedule_simulate(void)
 
       // Execute pre-simulation callbacks
       vpiPresim();
+
+	// Execute initialization events.
+      while (schedule_init_list) {
+	    struct event_s*cur = schedule_init_list;
+	    schedule_init_list = cur->next;
+
+	    cur->run_run();
+	    delete cur;
+      }
 
       signals_capture();
 
@@ -645,57 +682,5 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
- * Revision 1.45  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.44  2006/09/29 16:55:04  steve
- *  Allow rosync events to create new rosync events.
- *
- * Revision 1.43  2006/09/29 01:24:34  steve
- *  rwsync callback fixes from Ben Staveley (with modifications.)
- *
- * Revision 1.42  2006/08/06 18:17:00  steve
- *  Fix typo in initialize of new event_time cell.
- *
- * Revision 1.41  2006/02/02 02:44:00  steve
- *  Allow part selects of memory words in l-values.
- *
- * Revision 1.40  2005/09/20 18:34:02  steve
- *  Clean up compiler warnings.
- *
- * Revision 1.39  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.38  2005/06/22 18:30:12  steve
- *  Inline more simple stuff, and more vector4_t by const reference for performance.
- *
- * Revision 1.37  2005/06/12 01:10:26  steve
- *  Remove useless references to functor.h
- *
- * Revision 1.36  2005/06/09 05:04:45  steve
- *  Support UDP initial values.
- *
- * Revision 1.35  2005/06/02 16:02:11  steve
- *  Add support for notif0/1 gates.
- *  Make delay nodes support inertial delay.
- *  Add the %force/link instruction.
- *
- * Revision 1.34  2005/05/07 03:15:42  steve
- *  Implement non-blocking part assign.
- *
- * Revision 1.33  2005/03/06 17:25:03  steve
- *  Remove dead code from scheduler.
- *
- * Revision 1.32  2005/03/06 17:07:48  steve
- *  Non blocking assign to memory words.
- *
- * Revision 1.31  2005/02/12 03:26:14  steve
- *  Support scheduling vvp_vector8_t objects.
- *
- * Revision 1.30  2005/01/29 17:53:25  steve
- *  Use scheduler to initialize constant functor inputs.
  */
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,6 +23,7 @@
 # include  "compile.h"
 # include  "vpi_priv.h"
 # include  "array.h"
+# include  "schedule.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
@@ -48,6 +49,7 @@ static void __compile_var_real(char*label, char*name,
       if (name) {
 	    assert(!array);
 	    vpip_attach_to_current_scope(obj);
+	    schedule_init_vector(vvp_net_ptr_t(net,0), fun->real_value());
       }
       if (array) {
 	    assert(!name);
@@ -95,6 +97,7 @@ static void __compile_var(char*label, char*name,
       if (name) {
 	    assert(!array);
 	    vpip_attach_to_current_scope(obj);
+	    schedule_init_vector(vvp_net_ptr_t(node,0), vsig->vec4_value());
       }
 	// If this is an array word, then it does not have a name, and
 	// it is attached to the addressed array.
@@ -269,8 +272,3 @@ void compile_alias_real(char*label, char*name, int msb, int lsb,
       free(argv[0].text);
       free(argv);
 }
-
-/*
- * $Log: words.cc,v $
- */
-

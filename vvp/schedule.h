@@ -1,7 +1,7 @@
 #ifndef __schedule_H
 #define __schedule_H
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -67,14 +67,26 @@ extern void schedule_assign_memory_word(vvp_memory_t mem,
 					vvp_time64_t delay);
 /*
  * This is very similar to schedule_assign_vector, but generates an
- * event in the active queue. It is used at link time to set an initial
- * value (a compile time constant) to the input of a functor. This
+ * event in the active queue. It is used at link time to assign a
+ * constant value (i.e. C4<...>) to the input of a functor. This
  * creates an event in the active queue.
  */
 extern void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector4_t val);
 extern void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector8_t val);
 extern void schedule_set_vector(vvp_net_ptr_t ptr, double val);
 
+/*
+ * The schedule_init_vector function assigns an initial value to a
+ * functor. The assignment is put into a pre-simulation queue that is
+ * run before the rest of the simulation runs. This is used to assign
+ * initial values to variables and have them propagate through the
+ * net. Doing the init before the rest of the scheduler starts
+ * prevents threads being triggered by the initialization of the
+ * variable, but still allows the initial value to be driven
+ * (propagated as events) through the rest of the net.
+ */
+extern void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector4_t val);
+extern void schedule_init_vector(vvp_net_ptr_t ptr, double val);
 
 /*
  * Create a generic event. This supports scheduled events that are not
@@ -146,58 +158,4 @@ extern unsigned long count_prop_events;
 extern unsigned long count_thread_events;
 extern unsigned long count_event_pool;
 
-/*
- * $Log: schedule.h,v $
- * Revision 1.29  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.28  2006/09/29 01:24:34  steve
- *  rwsync callback fixes from Ben Staveley (with modifications.)
- *
- * Revision 1.27  2006/02/02 02:44:00  steve
- *  Allow part selects of memory words in l-values.
- *
- * Revision 1.26  2005/09/20 18:34:02  steve
- *  Clean up compiler warnings.
- *
- * Revision 1.25  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.24  2005/06/22 18:30:12  steve
- *  Inline more simple stuff, and more vector4_t by const reference for performance.
- *
- * Revision 1.23  2005/06/09 05:04:45  steve
- *  Support UDP initial values.
- *
- * Revision 1.22  2005/06/02 16:02:11  steve
- *  Add support for notif0/1 gates.
- *  Make delay nodes support inertial delay.
- *  Add the %force/link instruction.
- *
- * Revision 1.21  2005/05/07 03:15:42  steve
- *  Implement non-blocking part assign.
- *
- * Revision 1.20  2005/03/06 17:07:48  steve
- *  Non blocking assign to memory words.
- *
- * Revision 1.19  2005/02/12 03:26:14  steve
- *  Support scheduling vvp_vector8_t objects.
- *
- * Revision 1.18  2005/01/29 17:53:25  steve
- *  Use scheduler to initialize constant functor inputs.
- *
- * Revision 1.17  2004/12/11 02:31:30  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.16  2003/09/09 00:56:45  steve
- *  Reimpelement scheduler to divide nonblocking assign queue out.
- *
- * Revision 1.15  2003/02/22 02:52:06  steve
- *  Check for stopped flag in certain strategic points.
- */
 #endif
