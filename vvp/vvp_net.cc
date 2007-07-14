@@ -1760,12 +1760,22 @@ double vvp_fun_signal_real::real_value() const
 	    return bits_;
 }
 
+/*
+ * Testing for equality, we want a bitwise test instead of an
+ * arithmetic test because we want to treat for example -0 different
+ * from +0.
+ */
+bool bits_equal(double a, double b)
+{
+      return memcmp(&a, &b, sizeof a) == 0;
+}
+
 void vvp_fun_signal_real::recv_real(vvp_net_ptr_t ptr, double bit)
 {
       switch (ptr.port()) {
 	  case 0:
 	    if (!continuous_assign_active_) {
-		  if (needs_init_ || (bits_ != bit)) {
+		  if (needs_init_ || !bits_equal(bits_,bit)) {
 			bits_ = bit;
 			needs_init_ = false;
 			vvp_send_real(ptr.ptr()->out, bit);
