@@ -417,10 +417,14 @@ void PGModule::dump(ostream&out, unsigned ind) const
       out << setw(ind) << "" << type_ << " ";
 
 	// If parameters are overridden by order, dump them.
-      if (overrides_) {
+      if (overrides_ && overrides_->count() > 0) {
 	    assert(parms_ == 0);
             out << "#(";
-	    out << *((*overrides_)[0]);
+
+	    if ((*overrides_)[0] == 0)
+		  out << "<nil>";
+	    else
+		  out << *((*overrides_)[0]);
 	    for (unsigned idx = 1 ;  idx < overrides_->count() ;  idx += 1) {
 	          out << "," << *((*overrides_)[idx]);
 	    }
@@ -1073,128 +1077,3 @@ void PUdp::dump(ostream&out) const
 
       out << "endprimitive" << endl;
 }
-
-
-/*
- * $Log: pform_dump.cc,v $
- * Revision 1.101  2007/06/04 02:19:07  steve
- *  Handle bit/part select of array words in nets.
- *
- * Revision 1.100  2007/06/02 03:42:13  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.99  2007/05/31 18:35:50  steve
- *  Missing return value to perm_string dump
- *
- * Revision 1.98  2007/05/24 04:07:12  steve
- *  Rework the heirarchical identifier parse syntax and pform
- *  to handle more general combinations of heirarch and bit selects.
- *
- * Revision 1.97  2007/03/07 00:38:15  steve
- *  Lint fixes.
- *
- * Revision 1.96  2007/03/05 05:59:10  steve
- *  Handle processes within generate loops.
- *
- * Revision 1.95  2007/02/12 01:52:21  steve
- *  Parse all specify paths to pform.
- *
- * Revision 1.94  2006/09/23 04:57:19  steve
- *  Basic support for specify timing.
- *
- * Revision 1.93  2006/04/28 04:19:31  steve
- *  Dump indexes of ident expressions
- *
- * Revision 1.92  2006/04/10 00:37:42  steve
- *  Add support for generate loops w/ wires and gates.
- *
- * Revision 1.91  2005/10/04 04:09:26  steve
- *  Add support for indexed select attached to parameters.
- *
- * Revision 1.90  2005/07/11 16:56:51  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.89  2005/07/07 16:22:49  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.88  2004/10/04 01:10:55  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.87  2004/05/31 23:34:39  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.86  2004/05/25 19:21:07  steve
- *  More identifier lists use perm_strings.
- *
- * Revision 1.85  2004/02/20 18:53:35  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.84  2004/02/20 06:22:58  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.83  2004/02/18 17:11:57  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.82  2003/07/05 20:42:08  steve
- *  Fix some enumeration warnings.
- *
- * Revision 1.81  2003/06/20 00:53:19  steve
- *  Module attributes from the parser
- *  through to elaborated form.
- *
- * Revision 1.80  2003/06/13 19:10:46  steve
- *  Properly manage real variables in subscopes.
- *
- * Revision 1.79  2003/02/27 06:45:11  steve
- *  specparams as far as pform.
- *
- * Revision 1.78  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.77  2002/10/19 22:59:49  steve
- *  Redo the parameter vector support to allow
- *  parameter names in range expressions.
- *
- * Revision 1.76  2002/08/19 02:39:17  steve
- *  Support parameters with defined ranges.
- *
- * Revision 1.75  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.74  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- *
- * Revision 1.73  2002/05/24 04:36:23  steve
- *  Verilog 2001 attriubtes on nets/wires.
- *
- * Revision 1.72  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.71  2002/05/19 23:37:28  steve
- *  Parse port_declaration_lists from the 2001 Standard.
- *
- * Revision 1.70  2002/04/21 04:59:08  steve
- *  Add support for conbinational events by finding
- *  the inputs to expressions and some statements.
- *  Get case and assignment statements working.
- *
- * Revision 1.69  2002/01/26 05:28:28  steve
- *  Detect scalar/vector declarion mismatch.
- *
- * Revision 1.68  2001/12/03 04:47:15  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- */
-
