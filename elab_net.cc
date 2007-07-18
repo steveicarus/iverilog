@@ -1216,6 +1216,13 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 	    return sub;
       }
 
+      if (path_.peek_name(0)[0] == '$') {
+	    cerr << get_line() << ": sorry: System functions " << path_ <<
+		  " not supported in continuous assignments." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
 	/* Look up the function definition. */
       NetFuncDef*def = des->find_function(scope, path_);
       if (def == 0) {
