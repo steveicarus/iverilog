@@ -368,11 +368,20 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 		       << " Use $bits() instead." << endl;
 
 	    PExpr*expr = parms_[0];
-	    NetExpr*sub = expr->elaborate_expr(des, scope, -1, true);
-	    verinum val (sub->expr_width(), 8*sizeof(unsigned));
-	    delete sub;
+	    ivl_assert(*this, expr);
 
-	    sub = new NetEConst(val);
+	      /* Elaborate the sub-expression to get its
+		 self-determined width, and save that width. Then
+		 delete the expression because we don't really want
+		 the expression itself. */ 
+	    long sub_expr_width = 0;
+	    if (NetExpr*tmp = expr->elaborate_expr(des, scope, -1, true)) {
+		  sub_expr_width = tmp->expr_width();
+		  delete tmp;
+	    }
+
+	    verinum val (sub_expr_width, 8*sizeof(unsigned));
+	    NetEConst*sub = new NetEConst(val);
 	    sub->set_line(*this);
 
 	    return sub;
