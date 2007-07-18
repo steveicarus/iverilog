@@ -140,6 +140,21 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope,
       return tmp;
 }
 
+bool eval_as_long(long&value, NetExpr*expr)
+{
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr) ) {
+	    value = tmp->value().as_long();
+	    return true;
+      }
+
+      if (NetECReal*rtmp = dynamic_cast<NetECReal*>(expr)) {
+	    value = rtmp->value().as_long();
+	    return true;
+      }
+
+      return false;
+}
+
 std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 				   const pform_name_t&path)
 {
@@ -172,26 +187,4 @@ std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 
       return res;
 }
-
-/*
- * $Log: netmisc.cc,v $
- * Revision 1.14  2007/06/02 03:42:13  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.13  2007/03/08 05:30:03  steve
- *  Limit the calculated widths of constants.
- *
- * Revision 1.12  2006/06/02 04:48:50  steve
- *  Make elaborate_expr methods aware of the width that the context
- *  requires of it. In the process, fix sizing of the width of unary
- *  minus is context determined sizes.
- *
- * Revision 1.11  2005/04/08 04:50:31  steve
- *  Don not give to make_add express an unwanted width.
- *
- * Revision 1.10  2005/01/24 05:28:31  steve
- *  Remove the NetEBitSel and combine all bit/part select
- *  behavior into the NetESelect node and IVL_EX_SELECT
- *  ivl_target expression type.
- */
 

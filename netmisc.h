@@ -123,95 +123,14 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 			      const PExpr*pe, int expr_wid,
 			      int prune_width =-1);
 
+/*
+ * Get the long integer value for the passed in expression, if
+ * possible. If it is not possible (the expression is not evaluated
+ * down to a constant) then return false and leave value unchanged.
+ */
+bool eval_as_long(long&value, NetExpr*expr);
+
 extern std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 					  const pform_name_t&path);
 
-/*
- * $Log: netmisc.h,v $
- * Revision 1.31  2007/06/02 03:42:13  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.30  2007/05/24 04:07:12  steve
- *  Rework the heirarchical identifier parse syntax and pform
- *  to handle more general combinations of heirarch and bit selects.
- *
- * Revision 1.29  2007/03/08 05:30:03  steve
- *  Limit the calculated widths of constants.
- *
- * Revision 1.28  2007/02/26 19:49:49  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.27  2007/01/16 05:44:15  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.26  2006/09/28 00:29:49  steve
- *  Allow specparams as constants in expressions.
- *
- * Revision 1.25  2006/06/02 04:48:50  steve
- *  Make elaborate_expr methods aware of the width that the context
- *  requires of it. In the process, fix sizing of the width of unary
- *  minus is context determined sizes.
- *
- * Revision 1.24  2005/11/27 05:56:20  steve
- *  Handle bit select of parameter with ranges.
- *
- * Revision 1.23  2005/07/11 16:56:51  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.22  2005/05/24 01:44:28  steve
- *  Do sign extension of structuran nets.
- *
- * Revision 1.21  2005/04/24 23:44:02  steve
- *  Update DFF support to new data flow.
- *
- * Revision 1.20  2005/01/24 05:28:31  steve
- *  Remove the NetEBitSel and combine all bit/part select
- *  behavior into the NetESelect node and IVL_EX_SELECT
- *  ivl_target expression type.
- *
- * Revision 1.19  2004/03/07 20:04:11  steve
- *  MOre thorough use of elab_and_eval function.
- *
- * Revision 1.18  2003/09/19 03:30:05  steve
- *  Fix name search in elab_lval.
- *
- * Revision 1.17  2003/01/30 16:23:08  steve
- *  Spelling fixes.
- *
- * Revision 1.16  2002/08/31 03:48:50  steve
- *  Fix reverse bit ordered bit select in continuous assignment.
- *
- * Revision 1.15  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.14  2002/06/25 01:33:22  steve
- *  Cache calculated driven value.
- *
- * Revision 1.13  2002/06/24 01:49:39  steve
- *  Make link_drive_constant cache its results in
- *  the Nexus, to improve cprop performance.
- *
- * Revision 1.12  2001/02/15 06:59:36  steve
- *  FreeBSD port has a maintainer now.
- *
- * Revision 1.11  2001/02/10 20:29:39  steve
- *  In the context of range declarations, use elab_and_eval instead
- *  of the less robust eval_const methods.
- *
- * Revision 1.10  2000/11/20 00:58:40  steve
- *  Add support for supply nets (PR#17)
- *
- * Revision 1.9  2000/09/20 02:53:15  steve
- *  Correctly measure comples l-values of assignments.
- *
- * Revision 1.8  2000/06/25 19:59:42  steve
- *  Redesign Links to include the Nexus class that
- *  carries properties of the connected set of links.
- *
- * Revision 1.7  2000/05/14 17:55:04  steve
- *  Support initialization of FF Q value.
- */
 #endif

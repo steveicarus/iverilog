@@ -584,11 +584,9 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			continue;
 		  }
 
-		  NetEConst*tmp;
 		  NetExpr*texpr = elab_and_eval(des, scope, msb_[idx], -1);
 
-		  tmp = dynamic_cast<NetEConst*>(texpr);
-		  if (tmp == 0) {
+		  if (! eval_as_long(mnum[idx], texpr)) {
 			cerr << msb_[idx]->get_line() << ": error: "
 			      "Unable to evaluate constant expression ``" <<
 			      *msb_[idx] << "''." << endl;
@@ -596,12 +594,11 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			return 0;
 		  }
 
-		  mnum[idx] = tmp->value().as_long();
 		  delete texpr;
 
 		  texpr = elab_and_eval(des, scope, lsb_[idx], -1);
-		  tmp = dynamic_cast<NetEConst*>(texpr);
-		  if (tmp == 0) {
+
+		  if (! eval_as_long(lnum[idx], texpr) ) {
 			cerr << msb_[idx]->get_line() << ": error: "
 			      "Unable to evaluate constant expression ``" <<
 			      *lsb_[idx] << "''." << endl;
@@ -609,9 +606,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 			return 0;
 		  }
 
-		  lnum[idx] = tmp->value().as_long();
 		  delete texpr;
-
 	    }
 
 	      /* Check that the declarations were all scalar or all
@@ -768,151 +763,4 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       return sig;
 }
-
-/*
- * $Log: elab_sig.cc,v $
- * Revision 1.52  2007/06/02 03:42:12  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.51  2007/05/24 04:07:11  steve
- *  Rework the heirarchical identifier parse syntax and pform
- *  to handle more general combinations of heirarch and bit selects.
- *
- * Revision 1.50  2007/04/26 03:06:22  steve
- *  Rework hname_t to use perm_strings.
- *
- * Revision 1.49  2007/04/02 01:12:34  steve
- *  Seperate arrayness from word count
- *
- * Revision 1.48  2007/03/08 06:11:35  steve
- *  Elaborate scopes of modules instantated in generate loops.
- *
- * Revision 1.47  2007/03/07 04:24:59  steve
- *  Make integer width controllable.
- *
- * Revision 1.46  2007/03/06 05:22:49  steve
- *  Support signed function return values.
- *
- * Revision 1.45  2007/02/01 05:24:08  steve
- *  Include type in signal create message.
- *
- * Revision 1.44  2007/01/29 02:07:34  steve
- *  Types of task/function arguments set in multiple steps.
- *
- * Revision 1.43  2007/01/16 05:44:15  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.42  2006/06/02 04:48:50  steve
- *  Make elaborate_expr methods aware of the width that the context
- *  requires of it. In the process, fix sizing of the width of unary
- *  minus is context determined sizes.
- *
- * Revision 1.41  2006/04/10 00:37:42  steve
- *  Add support for generate loops w/ wires and gates.
- *
- * Revision 1.40  2005/07/11 16:56:50  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.39  2005/07/07 16:22:49  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.38  2005/02/13 01:15:07  steve
- *  Replace supply nets with wires connected to pullup/down supply devices.
- *
- * Revision 1.37  2004/12/11 02:31:25  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.36  2004/09/27 22:34:10  steve
- *  Cleanup and factoring of autoconf.
- *
- * Revision 1.35  2004/09/05 17:44:41  steve
- *  Add support for module instance arrays.
- *
- * Revision 1.34  2004/05/31 23:34:37  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.33  2004/02/18 17:11:55  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.32  2003/09/20 05:24:00  steve
- *  Evaluate memory index constants using elab_and_eval.
- *
- * Revision 1.31  2003/07/15 03:49:22  steve
- *  Spelling fixes.
- *
- * Revision 1.30  2003/06/24 01:38:02  steve
- *  Various warnings fixed.
- *
- * Revision 1.29  2003/06/21 01:21:43  steve
- *  Harmless fixup of warnings.
- *
- * Revision 1.28  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.27  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.26  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.25  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.24  2002/08/05 04:18:45  steve
- *  Store only the base name of memories.
- *
- * Revision 1.23  2002/06/21 04:59:35  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.22  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.21  2002/05/19 23:37:28  steve
- *  Parse port_declaration_lists from the 2001 Standard.
- *
- * Revision 1.20  2002/01/26 05:28:28  steve
- *  Detect scalar/vector declarion mismatch.
- *
- * Revision 1.19  2002/01/23 03:35:17  steve
- *  Detect incorrect function ports.
- *
- * Revision 1.18  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.17  2001/11/07 04:01:59  steve
- *  eval_const uses scope instead of a string path.
- *
- * Revision 1.16  2001/11/01 05:21:26  steve
- *  Catch ports that have no direction.
- *
- * Revision 1.15  2001/10/31 03:11:15  steve
- *  detect module ports not declared within the module.
- *
- * Revision 1.14  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.13  2001/05/25 02:21:34  steve
- *  Detect input and input ports declared as reg.
- *
- * Revision 1.12  2001/02/17 05:15:33  steve
- *  Allow task ports to be given real types.
- *
- * Revision 1.11  2001/02/10 20:29:39  steve
- *  In the context of range declarations, use elab_and_eval instead
- *  of the less robust eval_const methods.
- */
 
