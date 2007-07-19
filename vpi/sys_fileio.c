@@ -41,14 +41,14 @@ static PLI_INT32 sys_fopen_compiletf(PLI_BYTE8*name)
 
       if (argv == 0) {
 	    vpi_printf("%s: file name argument missing.\n", name);
-	    vpi_control(vpiFinish, -1);
+	    vpi_control(vpiFinish, 1);
 	    return -1;
       }
 
       item = vpi_scan(argv);
       if (item == 0) {
 	    vpi_printf("%s: file name argument missing.\n", name);
-	    vpi_control(vpiFinish, -1);
+	    vpi_control(vpiFinish, 1);
 	    return -1;
       }
 
@@ -62,12 +62,12 @@ static PLI_INT32 sys_fopen_compiletf(PLI_BYTE8*name)
 
       if (! is_constant(item)) {
 	    vpi_printf("ERROR: %s mode argument must be a constant\n", name);
-	    vpi_control(vpiFinish, -1);
+	    vpi_control(vpiFinish, 1);
       }
 
       if (vpi_get(vpiConstType, item) != vpiStringConst) {
 	    vpi_printf("ERROR: %s mode argument must be a string.\n", name);
-	    vpi_control(vpiFinish, -1);
+	    vpi_control(vpiFinish, 1);
       }
  
       item = vpi_scan(argv);

@@ -1235,12 +1235,12 @@ static PLI_INT32 sys_timeformat_compiletf(PLI_BYTE8*xx)
                         if (vpi_get(vpiType, tmp) != vpiConstant) {
                               vpi_printf("$timeformat's arguments must be");
                               vpi_printf(" constant.\n");
-                              vpi_control(vpiFinish, -1);
+                              vpi_control(vpiFinish, 1);
                         }
                   } else {
                         vpi_printf("$timeformat requires zero or four");
                         vpi_printf(" arguments!\n");
-                        vpi_control(vpiFinish, -1);
+                        vpi_control(vpiFinish, 1);
                         return 0;
                   }
             }
