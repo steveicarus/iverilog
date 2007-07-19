@@ -29,13 +29,13 @@
  */
 int tf_dofinish(void)
 {
-      vpi_sim_control(vpiFinish, 0);
+      vpi_control(vpiFinish, 0);
       return 0;
 }
 
 int tf_dostop(void)
 {
-      vpi_sim_control(vpiStop, 0);
+      vpi_control(vpiStop, 0);
       return 0;
 }
 

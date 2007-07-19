@@ -305,8 +305,8 @@ extern PLI_INT32 vpi_remove_cb(vpiHandle ref);
  * This function allows a vpi application to control the simulation
  * engine. The operation parameter specifies the function to
  * perform. The remaining parameters (if any) are interpreted by the
- * operation. The vpi_sim_control definition was added to P1364-2000
- * 14 July 1999. See PLI Task Force ID: PTF-161
+ * operation. The vpi_sim_control definition (now named vpi_control)
+ * was added to P1364-2000 14 July 1999. See PLI Task Force ID: PTF-161
  *
  * vpiFinish - perform the $finish operation, as soon as the user
  *             function returns. This operation takes a single

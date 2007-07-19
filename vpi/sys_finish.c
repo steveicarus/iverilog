@@ -28,11 +28,11 @@
 static PLI_INT32 sys_finish_calltf(PLI_BYTE8*name)
 {
       if (strcmp((char*)name,"$stop") == 0) {
-	    vpi_sim_control(vpiStop, 0);
+	    vpi_control(vpiStop, 0);
 	    return 0;
       }
 
-      vpi_sim_control(vpiFinish, 0);
+      vpi_control(vpiFinish, 0);
       return 0;
 }
 

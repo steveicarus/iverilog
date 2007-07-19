@@ -42,7 +42,7 @@ static PLI_INT32 sys_test_plusargs_compiletf(PLI_BYTE8*xx)
 
       if (argv == 0) {
 	    vpi_printf("ERROR: $test$plusargs requires one argument\n");
-	    vpi_sim_control(vpiFinish, 1);
+	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
@@ -54,7 +54,7 @@ static PLI_INT32 sys_test_plusargs_compiletf(PLI_BYTE8*xx)
 	    if (vpi_get(vpiConstType, arg) != vpiStringConst) {
 		  vpi_printf("ERROR: Argument of $test$plusargs "
 			     " must be a constant string.\n");
-		  vpi_sim_control(vpiFinish, 1);
+		  vpi_control(vpiFinish, 1);
 		  return 0;
 	    }
 	    break;
@@ -62,7 +62,7 @@ static PLI_INT32 sys_test_plusargs_compiletf(PLI_BYTE8*xx)
 	  default:
 	    vpi_printf("ERROR: Argument of $test$plusargs "
 		       " must be a constant string.\n");
-	    vpi_sim_control(vpiFinish, 1);
+	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
@@ -70,7 +70,7 @@ static PLI_INT32 sys_test_plusargs_compiletf(PLI_BYTE8*xx)
       arg = vpi_scan(argv);
       if (arg != 0) {
 	    vpi_printf("ERROR: too many arguments to $test$plusargs\n");
-	    vpi_sim_control(vpiFinish, 1);
+	    vpi_control(vpiFinish, 1);
       }
 
       return 0;
@@ -134,7 +134,7 @@ static PLI_INT32 sys_value_plusargs_compiletf(PLI_BYTE8*xx)
 
       if (argv == 0) {
 	    vpi_printf("ERROR: $value$plusargs requires two arguments\n");
-	    vpi_sim_control(vpiFinish, 1);
+	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
@@ -146,7 +146,7 @@ static PLI_INT32 sys_value_plusargs_compiletf(PLI_BYTE8*xx)
 	    if (vpi_get(vpiConstType, arg) != vpiStringConst) {
 		  vpi_printf("ERROR: First argument of $value$plusargs "
 			     " must be a constant string.\n");
-		  vpi_sim_control(vpiFinish, 1);
+		  vpi_control(vpiFinish, 1);
 		  return 0;
 	    }
 	    break;
@@ -154,7 +154,7 @@ static PLI_INT32 sys_value_plusargs_compiletf(PLI_BYTE8*xx)
 	  default:
 	    vpi_printf("ERROR: First argument of $value$plusargs "
 		       " must be a constant string.\n");
-	    vpi_sim_control(vpiFinish, 1);
+	    vpi_control(vpiFinish, 1);
 	    return 0;
 	    break;
       }
@@ -168,7 +168,7 @@ static PLI_INT32 sys_value_plusargs_compiletf(PLI_BYTE8*xx)
 	if (cp == 0) {
 	      vpi_printf("ERROR: Invalid argument format string"
 			 ": %s\n", fmt);
-	      vpi_sim_control(vpiFinish, 1);
+	      vpi_control(vpiFinish, 1);
 	      return 0;
 	}
 
@@ -187,14 +187,14 @@ static PLI_INT32 sys_value_plusargs_compiletf(PLI_BYTE8*xx)
 	    default:
 	      vpi_printf("ERROR: Invalid argument format string"
 			 ": %s\n", fmt);
-	      vpi_sim_control(vpiFinish, 1);
+	      vpi_control(vpiFinish, 1);
 	      return 0;
 	}
 
 	if (*cp != 0) {
 	      vpi_printf("ERROR: Trailing junk after value format"
 			 ": %s\n", fmt);
-	      vpi_sim_control(vpiFinish, 1);
+	      vpi_control(vpiFinish, 1);
 	      return 0;
 	}
       }
@@ -202,7 +202,7 @@ static PLI_INT32 sys_value_plusargs_compiletf(PLI_BYTE8*xx)
       arg = vpi_scan(argv);
       if (argv == 0) {
 	    vpi_printf("ERROR: $value$plusargs requires two arguments\n");
-	    vpi_sim_control(vpiFinish, 1);
+	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
@@ -215,14 +215,14 @@ static PLI_INT32 sys_value_plusargs_compiletf(PLI_BYTE8*xx)
 	  default:
 	    vpi_printf("ERROR: value field doesn\'t match format: %s\n",
 		       value.value.str);
-	    vpi_sim_control(vpiFinish, 1);
+	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
       arg = vpi_scan(argv);
       if (arg != 0) {
 	    vpi_printf("ERROR: too many arguments to $value$plusargs\n");
-	    vpi_sim_control(vpiFinish, 1);
+	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
