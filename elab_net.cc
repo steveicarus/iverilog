@@ -2426,6 +2426,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    reduction=true; gtype = NetLogic::XNOR; break;
 
 	  case '-': // Unary 2's complement.
+	    if (owidth == 0)
+		  owidth = sub_sig->pin_count();
+
 	    sig = new NetNet(scope, scope->local_symbol(),
 			     NetNet::WIRE, owidth);
 	    sig->local_flag(true);
@@ -2472,15 +2475,15 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 		default:
 		  NetAddSub*sub = new NetAddSub(scope, scope->local_symbol(),
-						sig->pin_count());
+						owidth);
 		  sub->attribute(perm_string::literal("LPM_Direction"), verinum("SUB"));
 
 		  des->add_node(sub);
 
-		  for (unsigned idx = 0 ;  idx < sig->pin_count();  idx += 1)
+		  for (unsigned idx = 0 ;  idx < owidth ;  idx += 1)
 			connect(sig->pin(idx), sub->pin_Result(idx));
 
-		  for (unsigned idx = 0; idx < sub_sig->pin_count(); idx += 1)
+		  for (unsigned idx = 0; idx < owidth; idx += 1)
 			connect(sub_sig->pin(idx), sub->pin_DataB(idx));
 
 		  verinum tmp_num (verinum::V0, sub->width(), true);
@@ -2490,8 +2493,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 		  des->add_node(tmp_con);
 
 		  NetNet*tmp_sig = new NetNet(scope, scope->local_symbol(),
-					      NetNet::WIRE,
-					      sub_sig->pin_count());
+					      NetNet::WIRE, owidth);
 		  tmp_sig->local_flag(true);
 
 		  for (unsigned idx = 0; idx < sig->pin_count(); idx += 1) {
