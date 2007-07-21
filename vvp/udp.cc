@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2007 Stephen Williams (steve@icarus.com)
  *
  * (This is a rewrite of code that was ...
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
@@ -223,7 +223,11 @@ void vvp_udp_comb_s::compile_table(char**tab)
 	    cur.mask0 = 0;
 	    cur.mask1 = 0;
 	    cur.maskx = 0;
-	    assert(port_count() <= sizeof(cur.mask0));
+	    if (port_count() > 8*sizeof(cur.mask0)) {
+		  fprintf(stderr, "internal error: primitive port count=%u "
+			  " > %d\n", port_count(), sizeof(cur.mask0));
+		  assert(port_count() <= 8*sizeof(cur.mask0));
+	    }
 	    for (unsigned pp = 0 ;  pp < port_count() ;  pp += 1) {
 		  unsigned long mask_bit = 1UL << pp;
 		  or_based_on_char(cur, tab[idx][pp], mask_bit);
@@ -939,34 +943,3 @@ void compile_udp_functor(char*label, char*type,
       wide_inputs_connect(core, argc, argv);
       free(argv);
 }
-
-/*
- * $Log: udp.cc,v $
- * Revision 1.35  2007/03/04 06:26:33  steve
- *  UDP schedules its output instead of pushing it.
- *
- * Revision 1.34  2006/05/18 05:13:45  steve
- *  Synchronous primitives only follow edges.
- *
- * Revision 1.33  2005/06/11 16:21:08  steve
- *  UD delays use delay node.
- *
- * Revision 1.32  2005/06/11 02:04:48  steve
- *  Handle all edge types of a synchronous UDP.
- *
- * Revision 1.31  2005/06/09 05:04:45  steve
- *  Support UDP initial values.
- *
- * Revision 1.30  2005/06/09 04:12:30  steve
- *  Support sequential UDP devices.
- *
- * Revision 1.29  2005/04/04 05:13:59  steve
- *  Support row level wildcards.
- *
- * Revision 1.28  2005/04/03 05:45:51  steve
- *  Rework the vvp_delay_t class.
- *
- * Revision 1.27  2005/04/01 06:02:45  steve
- *  Reimplement combinational UDPs.
- *
- */
