@@ -3,5 +3,11 @@
 # builtin (system) functions.
 #
 
-$random        vpiSysFuncInt
-$dist_uniform  vpiSysFuncInt
+$random            vpiSysFuncInt
+$dist_uniform      vpiSysFuncInt
+$dist_normal       vpiSysFuncInt
+$dist_exponential  vpiSysFuncInt
+$dist_poisson      vpiSysFuncInt
+$dist_chi_square   vpiSysFuncInt
+$dist_t            vpiSysFuncInt
+$dist_erlang       vpiSysFuncInt

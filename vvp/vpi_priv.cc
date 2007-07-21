@@ -833,13 +833,17 @@ extern "C" PLI_INT32 vpi_flush(void)
 
 extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 {
+      long diag_msg;
+
       switch (operation) {
 	  case vpiFinish:
-	    schedule_finish(0);
+            diag_msg = va_arg(ap, long);
+	    schedule_finish(diag_msg);
 	    break;
 
 	  case vpiStop:
-	    schedule_stop(0);
+            diag_msg = va_arg(ap, long);
+	    schedule_stop(diag_msg);
 	    break;
 
 	  default:

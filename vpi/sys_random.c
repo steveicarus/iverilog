@@ -37,231 +37,499 @@
 #endif
 
 static double uniform(long *seed, long start, long end);
+static double normal(long *seed, long mean, long deviation);
+static double exponential(long *seed, long mean);
 static long poisson(long *seed, long mean);
+static double chi_square(long *seed, long deg_of_free);
+static double t(long *seed, long deg_of_free);
+static double erlangian(long *seed, long k, long mean);
 
-long rtl_dist_poisson(long*seed, long mean)
+long rtl_dist_chi_square(long *seed, long df)
+{
+      double r;
+      long i;
+
+      if (df > 0) {
+            r = chi_square(seed, df);
+            if (r >= 0) {
+                  i = (long) (r + 0.5);
+            } else {
+                  r = -r;
+                  i = (long) (r + 0.5);
+                  i = -i;
+            }
+      } else {
+            vpi_printf("WARNING: Chi_square distribution must have "
+                       "a positive degree of freedom\n");
+            i = 0;
+      }
+
+      return i;
+}
+
+long rtl_dist_erlang(long *seed, long k, long mean)
+{
+      double r;
+      long i;
+
+      if (k > 0) {
+            r = erlangian(seed, k, mean);
+            if (r >= 0) {
+                  i = (long) (r + 0.5);
+            } else {
+                  r = -r;
+                  i = (long) (r + 0.5);
+                  i = -i;
+            }
+      } else {
+            vpi_printf("WARNING: K-stage erlangian distribution must have "
+                       "a positive k\n");
+            i = 0;
+      }
+
+      return i;
+}
+
+long rtl_dist_exponential(long *seed, long mean)
+{
+      double r;
+      long i;
+
+      if (mean > 0) {
+            r = exponential(seed, mean);
+            if (r >= 0) {
+                  i = (long) (r + 0.5);
+            } else {
+                  r = -r;
+                  i = (long) (r + 0.5);
+                  i = -i;
+            }
+      } else {
+            vpi_printf("WARNING: Exponential distribution must have "
+                       "a positive mean\n");
+            i = 0;
+      }
+
+      return i;
+}
+
+long rtl_dist_normal(long *seed, long mean, long sd)
+{
+      double r;
+      long i;
+
+      r = normal(seed, mean, sd);
+      if (r >= 0) {
+            i = (long) (r + 0.5);
+      } else {
+            r = -r;
+            i = (long) (r + 0.5);
+            i = -i;
+      }
+
+      return i;
+}
+
+long rtl_dist_poisson(long *seed, long mean)
 {
       long i;
 
       if (mean > 0) {
-	    i = poisson(seed,mean);
-
+            i = poisson(seed, mean);
       } else {
-	    vpi_printf("WARNING: Poisson distribution must have "
-		       "a positive mean\n");
-	    i = 0;
+            vpi_printf("WARNING: Poisson distribution must have "
+                       "a positive mean\n");
+            i = 0;
       }
 
-      return 0;
+      return i;
+}
+
+long rtl_dist_t(long *seed, long df)
+{
+      double r;
+      long i;
+
+      if (df > 0) {
+            r = t(seed, df);
+            if (r >= 0) {
+                  i = (long) (r + 0.5);
+            } else {
+                  r = -r;
+                  i = (long) (r + 0.5);
+                  i = -i;
+            }
+      } else {
+            vpi_printf("WARNING: t distribution must have "
+                       "a positive degree of freedom\n");
+            i = 0;
+      }
+
+      return i;
 }
 
 /* copied from IEEE1364-2001, with slight midifications for 64bit machines. */
-long rtl_dist_uniform(long*seed, long start, long end)
+long rtl_dist_uniform(long *seed, long start, long end)
 {
-	double r;
-	long i;
+      double r;
+      long i;
 
-	if (start >= end) return(start);
+      if (start >= end) return(start);
 
-	  /* NOTE: The cast of r to i can overflow and generate
-	     strange values, so cast to unsigned long
-	     first. This eliminates the underflow and gets the
-	     twos complement value. That in turn can be cast
-	     to the long value that is expected. */
+      /* NOTE: The cast of r to i can overflow and generate strange
+         values, so cast to unsigned long first. This eliminates
+         the underflow and gets the twos complement value. That in
+         turn can be cast to the long value that is expected. */
 
-	if (end != UNIFORM_MAX)
-	{
-		end++;
-		r = uniform( seed, start, end );
-		if (r >= 0)
-		{
-			i = (unsigned long) r;
-		}
-		else
-		{
-			i = (unsigned long) (r-1);
-		}
-		if (i<start) i = start;
-		if (i>=end) i = end-1;
-	}
-	else if (start!=UNIFORM_MIN)
-	{
-		start--;
-		r = uniform( seed, start, end) + 1.0;
-		if (r>=0)
-		{
-			i = (unsigned long) r;
-		}
-		else
-		{
-			i = (unsigned long) (r-1);
-		}
-		if (i<=start) i = start+1;
-		if (i>end) i = end;
-	}
-	else
-	{
-		r = (uniform(seed,start,end)+2147483648.0)/4294967295.0;
-		r = r*4294967296.0-2147483648.0;
+      if (end != UNIFORM_MAX) {
+            end++;
+            r = uniform(seed, start, end);
+            if (r >= 0) {
+                  i = (unsigned long) r;
+            } else {
+                  i = (unsigned long) (r - 1);
+            }
+            if (i < start) i = start;
+            if (i >= end) i = end - 1;
+      } else if (start != UNIFORM_MIN) {
+            start--;
+            r = uniform( seed, start, end) + 1.0;
+            if (r >= 0) {
+                  i = (unsigned long) r;
+            } else {
+                  i = (unsigned long) (r - 1);
+            }
+            if (i <= start) i = start + 1;
+            if (i > end) i = end;
+      } else {
+            r = (uniform(seed, start, end) + 2147483648.0) / 4294967295.0;
+            r = r * 4294967296.0 - 2147483648.0;
 
-		if (r>=0)
-		{
-			i = (unsigned long) r;
-		}
-		else
-		{
-			i = (unsigned long) (r-1);
-		}
-	}
+            if (r >= 0) {
+                  i = (unsigned long) r;
+            } else {
+                  i = (unsigned long) (r - 1);
+            }
+      }
 
-	return (i);
+      return i;
 }
 
 static double uniform(long *seed, long start, long end )
 {
-	double d = 0.00000011920928955078125;
-	double a, b, c;
-	unsigned long oldseed, newseed;
+      double d = 0.00000011920928955078125;
+      double a, b, c;
+      unsigned long oldseed, newseed;
 
-	oldseed = *seed;
-	if (oldseed == 0)
-	      oldseed = 259341593;
+      oldseed = *seed;
+      if (oldseed == 0)
+            oldseed = 259341593;
 
-	if (start >= end) {
-	      a = 0.0;
-	      b = 2147483647.0;
-	} else {
-	      a = (double)start;
-	      b = (double)end;
-	}
+      if (start >= end) {
+            a = 0.0;
+            b = 2147483647.0;
+      } else {
+            a = (double)start;
+            b = (double)end;
+      }
 
-	/* Original routine used signed arithmetic, and the (frequent)
-	 * overflows trigger "Undefined Behavior" according to the
-	 * C standard (both c89 and c99).  Using unsigned arithmetic
-	 * forces a conforming C implementation to get the result
-	 * that the IEEE-1364-2001 committee wants.
-	 */
-	newseed = 69069 * oldseed + 1;
+      /* Original routine used signed arithmetic, and the (frequent)
+       * overflows trigger "Undefined Behavior" according to the
+       * C standard (both c89 and c99).  Using unsigned arithmetic
+       * forces a conforming C implementation to get the result
+       * that the IEEE-1364-2001 committee wants.
+       */
+      newseed = 69069 * oldseed + 1;
 
-	/* Emulate a 32-bit unsigned long, even if the native machine
-	 * uses wider words.
-	 */
+      /* Emulate a 32-bit unsigned long, even if the native machine
+       * uses wider words.
+       */
 #if ULONG_MAX > 4294967295UL
-	newseed = newseed & 4294967295UL;
+      newseed = newseed & 4294967295UL;
 #endif
-	*seed = newseed;
+      *seed = newseed;
 
 
 #if 0
-	/* Cadence-donated conversion from unsigned int to double */
-	{
-		union { float s; unsigned stemp; } u;
-		u.stemp = (newseed >> 9) | 0x3f800000;
-		c = (double) u.s;
-	}
+      /* Cadence-donated conversion from unsigned int to double */
+      {
+            union { float s; unsigned stemp; } u;
+            u.stemp = (newseed >> 9) | 0x3f800000;
+            c = (double) u.s;
+      }
 #else
-	/* Equivalent conversion without assuming IEEE 32-bit float */
-	/* constant is 2^(-23) */
-	c = 1.0 + (newseed >> 9) * 0.00000011920928955078125;
+      /* Equivalent conversion without assuming IEEE 32-bit float */
+      /* constant is 2^(-23) */
+      c = 1.0 + (newseed >> 9) * 0.00000011920928955078125;
 #endif
 
 
-	c = c + (c*d);
-	c = ((b - a) * (c - 1.0)) + a;
+      c = c + (c*d);
+      c = ((b - a) * (c - 1.0)) + a;
 
-	return c;
+      return c;
 }
 
-/* copied from IEEE1364-2001, with slight midifications for 64bit machines. */
-static long poisson(long*seed, long mean)
+static double normal(long *seed, long mean, long deviation)
 {
-      long n;
-      double p, q;
+      double v1, v2, s;
 
-      n = 0;
-      q = -(double)mean;
-      p = exp(q);
-      q = uniform(seed, 0, 1);
-      while (p < q) {
-	    n++;
-	    q = uniform(seed,0,1) * q;
+      s = 1.0;
+      while ((s >= 1.0) || (s == 0.0)) {
+            v1 = uniform(seed, -1, 1);
+            v2 = uniform(seed, -1, 1);
+            s = v1 * v1 + v2 * v2;
+      }
+      s = v1 * sqrt(-2.0 * log(s) / s);
+      v1 = (double) deviation;
+      v2 = (double) mean;
+
+      return s * v1 + v2;
+}
+
+static double exponential(long *seed, long mean)
+{
+      double n;
+
+      n = uniform(seed, 0, 1);
+      if (n != 0.0) {
+            n = -log(n) * mean;
       }
 
       return n;
 }
 
-static PLI_INT32 sys_dist_poisson_calltf(PLI_BYTE8*name)
+static long poisson(long *seed, long mean)
 {
+      long n;
+      double p, q;
+
+      n = 0;
+      q = -(double) mean;
+      p = exp(q);
+      q = uniform(seed, 0, 1);
+      while (p < q) {
+            n++;
+            q = uniform(seed, 0, 1) * q;
+      }
+
+      return n;
+}
+
+static double chi_square(long *seed, long deg_of_free)
+{
+      double x;
+      long k;
+
+      if (deg_of_free % 2) {
+            x = normal(seed, 0, 1);
+            x = x * x;
+      } else {
+            x = 0.0;
+      }
+      for (k = 2; k <= deg_of_free; k = k + 2) {
+            x = x + 2 * exponential(seed, 1);
+      }
+
+      return x;
+}
+
+static double t( long *seed, long deg_of_free)
+{
+      double x, chi2, div, root;
+
+      chi2 = chi_square(seed, deg_of_free);
+      div = chi2 / (double) deg_of_free;
+      root = sqrt(div);
+      x = normal(seed, 0, 1) / root;
+
+      return x;
+}
+
+static double erlangian(long *seed, long k, long mean)
+{
+      double x, a, b;
+      long i;
+
+      x = 1.0;
+      for (i = 1; i <= k; i++) {
+            x = x * uniform(seed, 0, 1);
+      }
+      a = (double) mean;
+      b = (double) k;
+      x = -a * log(x) / b;
+
+      return x;
+}
+
+static PLI_INT32 sys_rand_two_args_compiletf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle arg1, arg2;
+
+      /* Check that there are arguments. */
+      if (argv == 0) {
+            vpi_printf("ERROR: %s requires two arguments.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      /* Check that there are at least two arguments. */
+      arg1 = vpi_scan(argv);  /* This should never be zero. */
+      arg2 = vpi_scan(argv);
+      if (arg2 == 0) {
+            vpi_printf("ERROR: %s requires two arguments.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      /* These functions can't do anything with strings. */
+      if (vpi_get(vpiType, arg1) == vpiConstant &&
+          vpi_get(vpiConstType, arg1) == vpiStringConst ||
+          vpi_get(vpiType, arg2) == vpiConstant &&
+          vpi_get(vpiConstType, arg2) == vpiStringConst) {
+            vpi_printf("ERROR: %s does not take a string argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      /* These functions takes at most two argument. */
+      arg1 = vpi_scan(argv);
+      if (arg1 != 0) {
+            vpi_printf("ERROR: %s takes at most two argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      /* vpi_scan returning 0 (NULL) has already freed argv. */
+      return 0;
+}
+
+static PLI_INT32 sys_rand_three_args_compiletf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle arg1, arg2, arg3;
+
+      /* Check that there are arguments. */
+      if (argv == 0) {
+            vpi_printf("ERROR: %s requires three arguments.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      /* Check that there are at least three arguments. */
+      arg1 = vpi_scan(argv);  /* This should never be zero. */
+      arg2 = vpi_scan(argv);
+      if (arg2) {
+            arg3 = vpi_scan(argv);
+      } else {
+            arg3 = 0;
+      }
+      if (arg2 == 0 || arg3 == 0) {
+            vpi_printf("ERROR: %s requires three arguments.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      /* These functions can't do anything with strings. */
+      if (vpi_get(vpiType, arg1) == vpiConstant &&
+          vpi_get(vpiConstType, arg1) == vpiStringConst ||
+          vpi_get(vpiType, arg2) == vpiConstant &&
+          vpi_get(vpiConstType, arg2) == vpiStringConst ||
+          vpi_get(vpiType, arg3) == vpiConstant &&
+          vpi_get(vpiConstType, arg3) == vpiStringConst) {
+            vpi_printf("ERROR: %s does not take a string argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      /* These functions takes at most two argument. */
+      arg1 = vpi_scan(argv);
+      if (arg1 != 0) {
+            vpi_printf("ERROR: %s takes at most three argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      /* vpi_scan returning 0 (NULL) has already freed argv. */
+      return 0;
+}
+
+static PLI_INT32 sys_random_compiletf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle arg;
+
+      /* The seed is optional. */
+      if (argv == 0) return 0;
+      arg = vpi_scan(argv);
+
+      /* random can't do anything with strings. */
+      if (vpi_get(vpiType, arg) == vpiConstant &&
+          vpi_get(vpiConstType, arg) == vpiStringConst) {
+            vpi_printf("ERROR: %s does not take a string argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      /* random takes at most one argument (the seed). */
+      arg = vpi_scan(argv);
+      if (arg != 0) {
+            vpi_printf("ERROR: %s takes at most one argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      /* vpi_scan returning 0 (NULL) has already freed argv. */
+      return 0;
+}
+
+static PLI_INT32 sys_random_calltf(PLI_BYTE8 *name)
+{
+      vpiHandle callh, argv, seed = 0;
       s_vpi_value val;
-      vpiHandle call_handle;
-      vpiHandle argv;
-      vpiHandle seed, mean;
+      static long i_seed = 0;
 
-      long i_seed, i_mean;
-
-      call_handle = vpi_handle(vpiSysTfCall, 0);
-      assert(call_handle);
-
-	/* The presence of correct parameters should be checked at
-	   compile time by the compiletf function. */
-      argv = vpi_iterate(vpiArgument, call_handle);
-      assert(argv);
-      seed = vpi_scan(argv);
-      assert(seed);
-      mean = vpi_scan(argv);
-      assert(mean);
-      vpi_free_object(argv);
-
+      /* Get the argument list and look for a seed. If it is there,
+         get the value and reseed the random number generator. */
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
       val.format = vpiIntVal;
-      vpi_get_value(seed, &val);
-      i_seed = val.value.integer;
+      if (argv) {
+            seed = vpi_scan(argv);
+            vpi_free_object(argv);
+            vpi_get_value(seed, &val);
+            i_seed = val.value.integer;
+      }
 
-      vpi_get_value(mean, &val);
-      i_mean = val.value.integer;
+      /* Calculate and return the result. */
+      val.value.integer = rtl_dist_uniform(&i_seed, INT_MIN, INT_MAX);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
 
-      val.format = vpiIntVal;
-      val.value.integer = rtl_dist_poisson(&i_seed, i_mean);
-      vpi_put_value(call_handle, &val, 0, vpiNoDelay);
-
-      val.format = vpiIntVal;
-      val.value.integer = i_seed;
-      vpi_put_value(seed, &val, 0, vpiNoDelay);
+      /* If it exists send the updated seed back to seed parameter. */
+      if (seed) {
+            val.value.integer = i_seed;
+            vpi_put_value(seed, &val, 0, vpiNoDelay);
+      }
 
       return 0;
 }
 
-static PLI_INT32 sys_dist_poisson_sizetf(PLI_BYTE8*x)
+static PLI_INT32 sys_dist_uniform_calltf(PLI_BYTE8 *name)
 {
-      return 32;
-}
-
-static PLI_INT32 sys_dist_uniform_calltf(PLI_BYTE8*name)
-{
+      vpiHandle callh, argv, seed, start, end;
       s_vpi_value val;
-      vpiHandle call_handle;
-      vpiHandle argv;
-      vpiHandle seed = 0, start, end;
-
       long i_seed, i_start, i_end;
 
-      call_handle = vpi_handle(vpiSysTfCall, 0);
-      assert(call_handle);
-
-      argv = vpi_iterate(vpiArgument, call_handle);
-      if (argv == 0) {
-	    vpi_printf("ERROR: %s requires parameters "
-		       "(seed, start, end)\n", name);
-	    return 0;
-      }
-
+      /* Get the argument handles and convert them. */
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
       seed = vpi_scan(argv);
-      assert(seed);
       start = vpi_scan(argv);
-      assert(start);
       end = vpi_scan(argv);
-      assert(end);
-
-      vpi_free_object(argv);
 
       val.format = vpiIntVal;
       vpi_get_value(seed, &val);
@@ -273,61 +541,213 @@ static PLI_INT32 sys_dist_uniform_calltf(PLI_BYTE8*name)
       vpi_get_value(end, &val);
       i_end = val.value.integer;
 
-      val.format = vpiIntVal;
+      /* Calculate and return the result. */
       val.value.integer = rtl_dist_uniform(&i_seed, i_start, i_end);
-      vpi_put_value(call_handle, &val, 0, vpiNoDelay);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
 
-      val.format = vpiIntVal;
+      /* Return the seed. */
       val.value.integer = i_seed;
       vpi_put_value(seed, &val, 0, vpiNoDelay);
 
+      vpi_free_object(argv);
       return 0;
 }
 
-static PLI_INT32 sys_dist_uniform_sizetf(PLI_BYTE8*x)
+static PLI_INT32 sys_dist_normal_calltf(PLI_BYTE8 *name)
 {
-      return 32;
-}
-
-static PLI_INT32 sys_random_calltf(PLI_BYTE8*name)
-{
+      vpiHandle callh, argv, seed, mean, sd;
       s_vpi_value val;
-      vpiHandle call_handle;
-      vpiHandle argv;
-      vpiHandle seed = 0;
-      static long i_seed = 0;
+      long i_seed, i_mean, i_sd;
 
-      call_handle = vpi_handle(vpiSysTfCall, 0);
-      assert(call_handle);
-
-	/* Get the argument list and look for a seed. If it is there,
-	   get the value and reseed the random number generator. */
-      argv = vpi_iterate(vpiArgument, call_handle);
-      if (argv) {
-	    seed = vpi_scan(argv);
-	    vpi_free_object(argv);
-
-	    val.format = vpiIntVal;
-	    vpi_get_value(seed, &val);
-	    i_seed = val.value.integer;
-      }
+      /* Get the argument handles and convert them. */
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
+      seed = vpi_scan(argv);
+      mean = vpi_scan(argv);
+      sd = vpi_scan(argv);
 
       val.format = vpiIntVal;
-      val.value.integer = rtl_dist_uniform(&i_seed, INT_MIN, INT_MAX);
+      vpi_get_value(seed, &val);
+      i_seed = val.value.integer;
 
-      vpi_put_value(call_handle, &val, 0, vpiNoDelay);
+      vpi_get_value(mean, &val);
+      i_mean = val.value.integer;
 
-        /* Send updated seed back to seed parameter. */
-      if (seed) {
-	    val.format = vpiIntVal;
-	    val.value.integer = i_seed;
-	    vpi_put_value(seed, &val, 0, vpiNoDelay);
-      }
+      vpi_get_value(sd, &val);
+      i_sd = val.value.integer;
 
+      /* Calculate and return the result. */
+      val.value.integer = rtl_dist_normal(&i_seed, i_mean, i_sd);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
+
+      /* Return the seed. */
+      val.value.integer = i_seed;
+      vpi_put_value(seed, &val, 0, vpiNoDelay);
+
+      vpi_free_object(argv);
       return 0;
 }
 
-static PLI_INT32 sys_random_sizetf(PLI_BYTE8*x)
+static PLI_INT32 sys_dist_exponential_calltf(PLI_BYTE8 *name)
+{
+      vpiHandle callh, argv, seed, mean;
+      s_vpi_value val;
+      long i_seed, i_mean;
+
+      /* Get the argument handles and convert them. */
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
+      seed = vpi_scan(argv);
+      mean = vpi_scan(argv);
+
+      val.format = vpiIntVal;
+      vpi_get_value(seed, &val);
+      i_seed = val.value.integer;
+
+      vpi_get_value(mean, &val);
+      i_mean = val.value.integer;
+
+      /* Calculate and return the result. */
+      val.value.integer = rtl_dist_exponential(&i_seed, i_mean);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
+
+      /* Return the seed. */
+      val.value.integer = i_seed;
+      vpi_put_value(seed, &val, 0, vpiNoDelay);
+
+      vpi_free_object(argv);
+      return 0;
+}
+
+static PLI_INT32 sys_dist_poisson_calltf(PLI_BYTE8 *name)
+{
+      vpiHandle callh, argv, seed, mean;
+      s_vpi_value val;
+      long i_seed, i_mean;
+
+      /* Get the argument handles and convert them. */
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
+      seed = vpi_scan(argv);
+      mean = vpi_scan(argv);
+
+      val.format = vpiIntVal;
+      vpi_get_value(seed, &val);
+      i_seed = val.value.integer;
+
+      vpi_get_value(mean, &val);
+      i_mean = val.value.integer;
+
+      /* Calculate and return the result. */
+      val.value.integer = rtl_dist_poisson(&i_seed, i_mean);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
+
+      /* Return the seed. */
+      val.value.integer = i_seed;
+      vpi_put_value(seed, &val, 0, vpiNoDelay);
+
+      vpi_free_object(argv);
+      return 0;
+}
+
+static PLI_INT32 sys_dist_chi_square_calltf(PLI_BYTE8 *name)
+{
+      vpiHandle callh, argv, seed, df;
+      s_vpi_value val;
+      long i_seed, i_df;
+
+      /* Get the argument handles and convert them. */
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
+      seed = vpi_scan(argv);
+      df = vpi_scan(argv);
+
+      val.format = vpiIntVal;
+      vpi_get_value(seed, &val);
+      i_seed = val.value.integer;
+
+      vpi_get_value(df, &val);
+      i_df = val.value.integer;
+
+      /* Calculate and return the result. */
+      val.value.integer = rtl_dist_chi_square(&i_seed, i_df);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
+
+      /* Return the seed. */
+      val.value.integer = i_seed;
+      vpi_put_value(seed, &val, 0, vpiNoDelay);
+
+      vpi_free_object(argv);
+      return 0;
+}
+
+static PLI_INT32 sys_dist_t_calltf(PLI_BYTE8 *name)
+{
+      vpiHandle callh, argv, seed, df;
+      s_vpi_value val;
+      long i_seed, i_df;
+
+      /* Get the argument handles and convert them. */
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
+      seed = vpi_scan(argv);
+      df = vpi_scan(argv);
+
+      val.format = vpiIntVal;
+      vpi_get_value(seed, &val);
+      i_seed = val.value.integer;
+
+      vpi_get_value(df, &val);
+      i_df = val.value.integer;
+
+      /* Calculate and return the result. */
+      val.value.integer = rtl_dist_t(&i_seed, i_df);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
+
+      /* Return the seed. */
+      val.value.integer = i_seed;
+      vpi_put_value(seed, &val, 0, vpiNoDelay);
+
+      vpi_free_object(argv);
+      return 0;
+}
+
+static PLI_INT32 sys_dist_erlang_calltf(PLI_BYTE8 *name)
+{
+      vpiHandle callh, argv, seed, k, mean;
+      s_vpi_value val;
+      long i_seed, i_k, i_mean;
+
+      /* Get the argument handles and convert them. */
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
+      seed = vpi_scan(argv);
+      k = vpi_scan(argv);
+      mean = vpi_scan(argv);
+
+      val.format = vpiIntVal;
+      vpi_get_value(seed, &val);
+      i_seed = val.value.integer;
+
+      vpi_get_value(k, &val);
+      i_k = val.value.integer;
+
+      vpi_get_value(mean, &val);
+      i_mean = val.value.integer;
+
+      /* Calculate and return the result. */
+      val.value.integer = rtl_dist_normal(&i_seed, i_k, i_mean);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
+
+      /* Return the seed. */
+      val.value.integer = i_seed;
+      vpi_put_value(seed, &val, 0, vpiNoDelay);
+
+      vpi_free_object(argv);
+      return 0;
+}
+
+static PLI_INT32 sys_rand_func_sizetf(PLI_BYTE8 *x)
 {
       return 32;
 }
@@ -336,27 +756,77 @@ void sys_random_register()
 {
       s_vpi_systf_data tf_data;
 
-      tf_data.type   = vpiSysFunc;
+      tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
       tf_data.tfname = "$random";
       tf_data.calltf = sys_random_calltf;
       tf_data.compiletf = 0;
-      tf_data.sizetf = sys_random_sizetf;
+      tf_data.compiletf = sys_random_compiletf;
+      tf_data.sizetf = sys_rand_func_sizetf;
       tf_data.user_data = "$random";
       vpi_register_systf(&tf_data);
 
-      tf_data.type   = vpiSysFunc;
-      tf_data.tfname = "$dist_poisson";
-      tf_data.calltf = sys_dist_poisson_calltf;
-      tf_data.compiletf = 0;
-      tf_data.sizetf = sys_dist_poisson_sizetf;
-      tf_data.user_data = "$dist_poisson";
-
-      tf_data.type   = vpiSysFunc;
+      tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
       tf_data.tfname = "$dist_uniform";
       tf_data.calltf = sys_dist_uniform_calltf;
-      tf_data.compiletf = 0;
-      tf_data.sizetf = sys_dist_uniform_sizetf;
+      tf_data.compiletf = sys_rand_three_args_compiletf;
+      tf_data.sizetf = sys_rand_func_sizetf;
       tf_data.user_data = "$dist_uniform";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.tfname = "$dist_normal";
+      tf_data.calltf = sys_dist_normal_calltf;
+      tf_data.compiletf = sys_rand_three_args_compiletf;
+      tf_data.sizetf = sys_rand_func_sizetf;
+      tf_data.user_data = "$dist_normal";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.tfname = "$dist_exponential";
+      tf_data.calltf = sys_dist_exponential_calltf;
+      tf_data.compiletf = sys_rand_two_args_compiletf;
+      tf_data.sizetf = sys_rand_func_sizetf;
+      tf_data.user_data = "$dist_exponential";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.tfname = "$dist_poisson";
+      tf_data.calltf = sys_dist_poisson_calltf;
+      tf_data.compiletf = sys_rand_two_args_compiletf;
+      tf_data.sizetf = sys_rand_func_sizetf;
+      tf_data.user_data = "$dist_poisson";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.tfname = "$dist_chi_square";
+      tf_data.calltf = sys_dist_chi_square_calltf;
+      tf_data.compiletf = sys_rand_two_args_compiletf;
+      tf_data.sizetf = sys_rand_func_sizetf;
+      tf_data.user_data = "$dist_chi_square";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.tfname = "$dist_t";
+      tf_data.calltf = sys_dist_t_calltf;
+      tf_data.compiletf = sys_rand_two_args_compiletf;
+      tf_data.sizetf = sys_rand_func_sizetf;
+      tf_data.user_data = "$dist_t";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.tfname = "$dist_erlang";
+      tf_data.calltf = sys_dist_erlang_calltf;
+      tf_data.compiletf = sys_rand_three_args_compiletf;
+      tf_data.sizetf = sys_rand_func_sizetf;
+      tf_data.user_data = "$dist_erlang";
       vpi_register_systf(&tf_data);
 }
 
