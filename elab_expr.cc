@@ -1197,6 +1197,17 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 		  delete word_index;
 		  word_index = tmp;
 	    }
+
+      } else if (word_index) {
+              // If there is a non-zero base to the memory, then build an
+              // expression to calculate the canonical address.
+            if (long base = net->array_first()) {
+
+                  word_index = make_add_expr(word_index, 0-base);
+                  if (NetExpr*tmp = word_index->eval_tree()) {
+                        word_index = tmp;
+                  }
+            }
       }
 
       NetESignal*res = new NetESignal(net, word_index);
