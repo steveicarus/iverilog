@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,12 +30,65 @@
 # include  <malloc.h>
 #endif
 
-class vvp_reduce_and  : public vvp_net_fun_t {
+/*
+ * All the reduction operations take a single vector input and produce
+ * a scalar result. The vvp_reduce_base class codifies these general
+ * charactoristics, leaving only the calculation of the result for the
+ * base class.
+ */
+class vvp_reduce_base : public vvp_net_fun_t {
+
+    public:
+      vvp_reduce_base();
+      virtual ~vvp_reduce_base();
+
+      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit);
+      void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid);
+
+      virtual vvp_bit4_t calculate_result() const =0;
+
+    protected:
+      vvp_vector4_t bits_;
+};
+
+vvp_reduce_base::vvp_reduce_base()
+{
+}
+
+vvp_reduce_base::~vvp_reduce_base()
+{
+}
+
+void vvp_reduce_base::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
+{
+      bits_ = bit;
+      vvp_bit4_t res =  calculate_result();
+      vvp_vector4_t rv (1, res);
+      vvp_send_vec4(prt.ptr()->out, rv);
+}
+
+void vvp_reduce_base::recv_vec4_pv(vvp_net_ptr_t prt, const vvp_vector4_t&bit,
+				   unsigned base, unsigned wid, unsigned vwid)
+{
+      if (bits_.size() == 0) {
+	    bits_ = vvp_vector4_t(vwid);
+      }
+      assert(bits_.size() == vwid);
+
+      assert(bit.size() == wid);
+      bits_.set_vec(base, bit);
+      vvp_bit4_t res = calculate_result();
+      vvp_vector4_t rv (1, res);
+      vvp_send_vec4(prt.ptr()->out, rv);
+}
+
+class vvp_reduce_and  : public vvp_reduce_base {
 
     public:
       vvp_reduce_and();
       ~vvp_reduce_and();
-      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit);
+      vvp_bit4_t calculate_result() const;
 };
 
 vvp_reduce_and::vvp_reduce_and()
@@ -46,23 +99,22 @@ vvp_reduce_and::~vvp_reduce_and()
 {
 }
 
-void vvp_reduce_and::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
+vvp_bit4_t vvp_reduce_and::calculate_result() const
 {
       vvp_bit4_t res =  BIT4_1;
 
-      for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1)
-	    res = res & bit.value(idx);
+      for (unsigned idx = 0 ;  idx < bits_.size() ;  idx += 1)
+	    res = res & bits_.value(idx);
 
-      vvp_vector4_t rv (1, res);
-      vvp_send_vec4(prt.ptr()->out, rv);
+      return res;
 }
 
-class vvp_reduce_or  : public vvp_net_fun_t {
+class vvp_reduce_or  : public vvp_reduce_base {
 
     public:
       vvp_reduce_or();
       ~vvp_reduce_or();
-      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit);
+      vvp_bit4_t calculate_result() const;
 };
 
 vvp_reduce_or::vvp_reduce_or()
@@ -73,23 +125,22 @@ vvp_reduce_or::~vvp_reduce_or()
 {
 }
 
-void vvp_reduce_or::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
+vvp_bit4_t vvp_reduce_or::calculate_result() const
 {
       vvp_bit4_t res =  BIT4_0;
 
-      for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1)
-	    res = res | bit.value(idx);
+      for (unsigned idx = 0 ;  idx < bits_.size() ;  idx += 1)
+	    res = res | bits_.value(idx);
 
-      vvp_vector4_t rv (1, res);
-      vvp_send_vec4(prt.ptr()->out, rv);
+      return res;
 }
 
-class vvp_reduce_xor  : public vvp_net_fun_t {
+class vvp_reduce_xor  : public vvp_reduce_base {
 
     public:
       vvp_reduce_xor();
       ~vvp_reduce_xor();
-      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit);
+      vvp_bit4_t calculate_result() const;
 };
 
 vvp_reduce_xor::vvp_reduce_xor()
@@ -100,23 +151,22 @@ vvp_reduce_xor::~vvp_reduce_xor()
 {
 }
 
-void vvp_reduce_xor::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
+vvp_bit4_t vvp_reduce_xor::calculate_result() const
 {
       vvp_bit4_t res =  BIT4_0;
 
-      for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1)
-	    res = res ^ bit.value(idx);
+      for (unsigned idx = 0 ;  idx < bits_.size() ;  idx += 1)
+	    res = res ^ bits_.value(idx);
 
-      vvp_vector4_t rv (1, res);
-      vvp_send_vec4(prt.ptr()->out, rv);
+      return res;
 }
 
-class vvp_reduce_nand  : public vvp_net_fun_t {
+class vvp_reduce_nand  : public vvp_reduce_base {
 
     public:
       vvp_reduce_nand();
       ~vvp_reduce_nand();
-      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit);
+      vvp_bit4_t calculate_result() const;
 };
 
 vvp_reduce_nand::vvp_reduce_nand()
@@ -127,23 +177,22 @@ vvp_reduce_nand::~vvp_reduce_nand()
 {
 }
 
-void vvp_reduce_nand::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
+vvp_bit4_t vvp_reduce_nand::calculate_result() const
 {
       vvp_bit4_t res =  BIT4_1;
 
-      for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1)
-	    res = res & bit.value(idx);
+      for (unsigned idx = 0 ;  idx < bits_.size() ;  idx += 1)
+	    res = res & bits_.value(idx);
 
-      vvp_vector4_t rv (1, ~res);
-      vvp_send_vec4(prt.ptr()->out, rv);
+      return ~res;
 }
 
-class vvp_reduce_nor  : public vvp_net_fun_t {
+class vvp_reduce_nor  : public vvp_reduce_base {
 
     public:
       vvp_reduce_nor();
       ~vvp_reduce_nor();
-      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit);
+      vvp_bit4_t calculate_result() const;
 };
 
 vvp_reduce_nor::vvp_reduce_nor()
@@ -154,23 +203,22 @@ vvp_reduce_nor::~vvp_reduce_nor()
 {
 }
 
-void vvp_reduce_nor::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
+vvp_bit4_t vvp_reduce_nor::calculate_result() const
 {
       vvp_bit4_t res =  BIT4_0;
 
-      for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1)
-	    res = res | bit.value(idx);
+      for (unsigned idx = 0 ;  idx < bits_.size() ;  idx += 1)
+	    res = res | bits_.value(idx);
 
-      vvp_vector4_t rv (1, ~res);
-      vvp_send_vec4(prt.ptr()->out, rv);
+      return ~res;
 }
 
-class vvp_reduce_xnor  : public vvp_net_fun_t {
+class vvp_reduce_xnor  : public vvp_reduce_base {
 
     public:
       vvp_reduce_xnor();
       ~vvp_reduce_xnor();
-      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit);
+      vvp_bit4_t calculate_result() const;
 };
 
 vvp_reduce_xnor::vvp_reduce_xnor()
@@ -181,15 +229,14 @@ vvp_reduce_xnor::~vvp_reduce_xnor()
 {
 }
 
-void vvp_reduce_xnor::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
+vvp_bit4_t vvp_reduce_xnor::calculate_result() const
 {
       vvp_bit4_t res =  BIT4_0;
 
-      for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1)
-	    res = res ^ bit.value(idx);
+      for (unsigned idx = 0 ;  idx < bits_.size() ;  idx += 1)
+	    res = res ^ bits_.value(idx);
 
-      vvp_vector4_t rv (1, ~res);
-      vvp_send_vec4(prt.ptr()->out, rv);
+      return ~res;
 }
 
 static void make_reduce(char*label, vvp_net_fun_t*red, struct symb_s arg)
@@ -238,19 +285,3 @@ void compile_reduce_xnor(char*label, struct symb_s arg)
       vvp_reduce_xnor* reduce = new vvp_reduce_xnor;
       make_reduce(label, reduce, arg);
 }
-
-/*
- * $Log: reduce.cc,v $
- * Revision 1.4  2006/05/01 20:47:03  steve
- *  Forgot to invert nand output.
- *
- * Revision 1.3  2006/05/01 18:44:08  steve
- *  Reduce steps to make logic output.
- *
- * Revision 1.2  2005/06/22 00:04:49  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.1  2005/02/03 04:55:13  steve
- *  Add support for reduction logic gates.
- *
- */

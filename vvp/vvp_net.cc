@@ -1368,11 +1368,12 @@ void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&)
       assert(0);
 }
 
-void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&,
-				 unsigned, unsigned, unsigned)
+void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bits,
+				 unsigned base, unsigned wid, unsigned vwid)
 {
-      fprintf(stderr, "internal error: %s: recv_vec4_pv not implemented\n",
-	      typeid(*this).name());
+      cerr << "internal error: " << typeid(*this).name() << ": "
+	   << "recv_vect_pv(" << bits << ", " << base
+	   << ", " << wid << ", " << vwid << ") not implemented" << endl;
       assert(0);
 }
 
