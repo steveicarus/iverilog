@@ -180,6 +180,11 @@ std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 		  res.push_back(hname_t(comp.name, ctmp->value().as_long()));
 		  delete ctmp;
 		  continue;
+	    } else {
+		  cerr << index.msb->get_line() << ": error: "
+		       << "Scope index expression is not constant: "
+		       << *index.msb << endl;
+		  des->errors += 1;
 	    }
 
 	    return res;

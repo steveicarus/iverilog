@@ -49,7 +49,13 @@ NetScope*symbol_search(Design*des, NetScope*scope, pform_name_t path,
 	   scope that we are supposed to search. */
       if (! path.empty()) {
 	    list<hname_t> path_list = eval_scope_path(des, scope, path);
-	    assert(path_list.size() == path.size());
+	    assert(path_list.size() <= path.size());
+
+	      // If eval_scope_path returns a short list, then some
+	      // part of the scope was not found. Abort.
+	    if (path_list.size() < path.size())
+		  return 0;
+
 	    scope = des->find_scope(scope, path_list);
       }
 
@@ -71,34 +77,3 @@ NetScope*symbol_search(Design*des, NetScope*scope, pform_name_t path,
 
       return 0;
 }
-
-
-/*
- * $Log: symbol_search.cc,v $
- * Revision 1.7  2007/06/02 03:42:13  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.6  2007/05/24 04:07:12  steve
- *  Rework the heirarchical identifier parse syntax and pform
- *  to handle more general combinations of heirarch and bit selects.
- *
- * Revision 1.5  2007/04/26 03:06:22  steve
- *  Rework hname_t to use perm_strings.
- *
- * Revision 1.4  2007/01/16 05:44:15  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.3  2005/11/27 05:56:20  steve
- *  Handle bit select of parameter with ranges.
- *
- * Revision 1.2  2005/07/11 16:56:51  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.1  2003/09/19 03:30:05  steve
- *  Fix name search in elab_lval.
- *
- */
-
