@@ -262,9 +262,12 @@ static unsigned signal_width(const struct __vpiSignal*rfp)
 static void signal_get_IntVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 {
       unsigned wid = signal_width(rfp);
+      unsigned iwid = 8 * sizeof vp->value.integer;
       vvp_fun_signal_vec*vsig = dynamic_cast<vvp_fun_signal_vec*>(rfp->node->fun);
 
-      assert(wid <= 8 * sizeof vp->value.integer);
+      if (wid > iwid) {
+            wid = iwid;
+      }
       vp->value.integer = 0;
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {

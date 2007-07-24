@@ -366,7 +366,7 @@ static PLI_INT32 sys_rand_two_args_compiletf(PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle arg1, arg2;
+      vpiHandle seed, arg2;
 
       /* Check that there are arguments. */
       if (argv == 0) {
@@ -376,7 +376,7 @@ static PLI_INT32 sys_rand_two_args_compiletf(PLI_BYTE8 *name)
       }
 
       /* Check that there are at least two arguments. */
-      arg1 = vpi_scan(argv);  /* This should never be zero. */
+      seed = vpi_scan(argv);  /* This should never be zero. */
       arg2 = vpi_scan(argv);
       if (arg2 == 0) {
             vpi_printf("ERROR: %s requires two arguments.\n", name);
@@ -384,19 +384,22 @@ static PLI_INT32 sys_rand_two_args_compiletf(PLI_BYTE8 *name)
             return 0;
       }
 
-      /* These functions can't do anything with strings. */
-      if (vpi_get(vpiType, arg1) == vpiConstant &&
-          vpi_get(vpiConstType, arg1) == vpiStringConst ||
-          vpi_get(vpiType, arg2) == vpiConstant &&
-          vpi_get(vpiConstType, arg2) == vpiStringConst) {
-            vpi_printf("ERROR: %s does not take a string argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
+      /* The seed must be a time/integer variable or a register. */
+      switch (vpi_get(vpiType, seed)) {
+            case vpiTimeVar:
+            case vpiIntegerVar:
+            case vpiReg:
+                  break;
+            default:
+                  vpi_printf("ERROR: %s's seed must be an integer/time"
+                             " varible or a register.\n", name);
+                  vpi_control(vpiFinish, 1);
+                  return 0;
       }
 
       /* These functions takes at most two argument. */
-      arg1 = vpi_scan(argv);
-      if (arg1 != 0) {
+      seed = vpi_scan(argv);
+      if (seed != 0) {
             vpi_printf("ERROR: %s takes at most two argument.\n", name);
             vpi_control(vpiFinish, 1);
             return 0;
@@ -410,7 +413,7 @@ static PLI_INT32 sys_rand_three_args_compiletf(PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle arg1, arg2, arg3;
+      vpiHandle seed, arg2, arg3;
 
       /* Check that there are arguments. */
       if (argv == 0) {
@@ -420,7 +423,7 @@ static PLI_INT32 sys_rand_three_args_compiletf(PLI_BYTE8 *name)
       }
 
       /* Check that there are at least three arguments. */
-      arg1 = vpi_scan(argv);  /* This should never be zero. */
+      seed = vpi_scan(argv);  /* This should never be zero. */
       arg2 = vpi_scan(argv);
       if (arg2) {
             arg3 = vpi_scan(argv);
@@ -433,21 +436,22 @@ static PLI_INT32 sys_rand_three_args_compiletf(PLI_BYTE8 *name)
             return 0;
       }
 
-      /* These functions can't do anything with strings. */
-      if (vpi_get(vpiType, arg1) == vpiConstant &&
-          vpi_get(vpiConstType, arg1) == vpiStringConst ||
-          vpi_get(vpiType, arg2) == vpiConstant &&
-          vpi_get(vpiConstType, arg2) == vpiStringConst ||
-          vpi_get(vpiType, arg3) == vpiConstant &&
-          vpi_get(vpiConstType, arg3) == vpiStringConst) {
-            vpi_printf("ERROR: %s does not take a string argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
+      /* The seed must be a time/integer variable or a register. */
+      switch (vpi_get(vpiType, seed)) {
+            case vpiTimeVar:
+            case vpiIntegerVar:
+            case vpiReg:
+                  break;
+            default:
+                  vpi_printf("ERROR: %s's seed must be an integer/time"
+                             " varible or a register.\n", name);
+                  vpi_control(vpiFinish, 1);
+                  return 0;
       }
 
-      /* These functions takes at most two argument. */
-      arg1 = vpi_scan(argv);
-      if (arg1 != 0) {
+      /* These functions takes at most three argument. */
+      seed = vpi_scan(argv);
+      if (seed != 0) {
             vpi_printf("ERROR: %s takes at most three argument.\n", name);
             vpi_control(vpiFinish, 1);
             return 0;
@@ -461,23 +465,28 @@ static PLI_INT32 sys_random_compiletf(PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle arg;
+      vpiHandle seed;
 
       /* The seed is optional. */
       if (argv == 0) return 0;
-      arg = vpi_scan(argv);
+      seed = vpi_scan(argv);
 
-      /* random can't do anything with strings. */
-      if (vpi_get(vpiType, arg) == vpiConstant &&
-          vpi_get(vpiConstType, arg) == vpiStringConst) {
-            vpi_printf("ERROR: %s does not take a string argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
+      /* The seed must be a time/integer variable or a register. */
+      switch (vpi_get(vpiType, seed)) {
+            case vpiTimeVar:
+            case vpiIntegerVar:
+            case vpiReg:
+                  break;
+            default:
+                  vpi_printf("ERROR: %s's seed must be an integer/time"
+                             " varible or a register.\n", name);
+                  vpi_control(vpiFinish, 1);
+                  return 0;
       }
 
       /* random takes at most one argument (the seed). */
-      arg = vpi_scan(argv);
-      if (arg != 0) {
+      seed = vpi_scan(argv);
+      if (seed != 0) {
             vpi_printf("ERROR: %s takes at most one argument.\n", name);
             vpi_control(vpiFinish, 1);
             return 0;
