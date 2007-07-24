@@ -125,6 +125,16 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
 	      assert(0);
 	      break;
 
+          case vpiIntVal:
+	      vp->value.integer = 0;
+	      for(int i=0; i<size;i ++){
+		  for(int bit=7;bit>=0; bit--){
+		      vp->value.integer <<= 1;
+		      vp->value.integer += (rfp->value[i]>>bit)&1;
+		  }
+	      }
+	      break;
+
 	  default:
 	    fprintf(stderr, "ERROR (vpi_const.cc): vp->format: %d\n", vp->format);
 	    assert(0);
