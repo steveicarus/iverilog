@@ -27,6 +27,7 @@
  */
 # include  "vpi_priv.h"
 # include  "vthread.h"
+# include  "compile.h"
 # include  <stdio.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -544,16 +545,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
       obj->fnet  = fnet;
       obj->userdata = 0;
 
-	/* If there is a compiletf function, call it here. */
-      if (obj->defn->info.compiletf) {
-
-	    assert(vpi_mode_flag == VPI_MODE_NONE);
-	    vpi_mode_flag = VPI_MODE_COMPILETF;
-	    vpip_cur_task = obj;
-	    obj->defn->info.compiletf (obj->defn->info.user_data);
-	    vpip_cur_task = 0;
-	    vpi_mode_flag = VPI_MODE_NONE;
-      }
+      compile_compiletf(obj);
 
       return &obj->base;
 }
@@ -629,126 +621,4 @@ void* vpi_get_userdata(vpiHandle ref)
 
       return rfp->userdata;
 }
-
-
-/*
- * $Log: vpi_tasks.cc,v $
- * Revision 1.35  2007/04/12 04:45:53  steve
- *  Support for vpi_get_value of scaler values. (ravi@bluespec)
- *
- * Revision 1.34  2007/04/12 04:33:39  steve
- *  Add support for vpiSize on system task handle. (ravi@bluespec.com)
- *
- * Revision 1.33  2006/09/22 22:33:00  steve
- *  Correct return code for vpi_put_userdata.
- *
- * Revision 1.32  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.31  2005/09/20 18:34:02  steve
- *  Clean up compiler warnings.
- *
- * Revision 1.30  2005/08/29 02:38:50  steve
- *  Eliminate int to vvp_bit4_t casts.
- *
- * Revision 1.29  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.28  2004/06/30 03:00:36  steve
- *  Some explination of vpi_func arguments.
- *
- * Revision 1.27  2004/05/19 03:30:46  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.26  2004/02/18 02:51:59  steve
- *  Fix type mismatches of various VPI functions.
- *
- * Revision 1.25  2003/12/07 20:05:56  steve
- *  Ducument lxt2 access.
- *
- * Revision 1.24  2003/06/18 00:54:28  steve
- *  Account for all 64 bits in results of $time.
- *
- * Revision 1.23  2003/03/14 05:00:44  steve
- *  Support vpi_get of vpiTimeUnit.
- *
- * Revision 1.22  2003/03/13 05:07:10  steve
- *  signed/unsigned warnings.
- *
- * Revision 1.21  2003/03/07 02:44:14  steve
- *  Support vector put of function return values.
- *
- * Revision 1.20  2003/03/03 03:27:35  steve
- *  Support vpiName for system task/function calls.
- *
- * Revision 1.19  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.18  2003/01/09 04:09:44  steve
- *  Add vpi_put_userdata
- *
- * Revision 1.17  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.16  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.15  2002/06/02 19:05:50  steve
- *  Check for null pointers from users.
- *
- * Revision 1.14  2002/05/18 02:34:11  steve
- *  Add vpi support for named events.
- *
- *  Add vpi_mode_flag to track the mode of the
- *  vpi engine. This is for error checking.
- *
- * Revision 1.13  2002/05/09 03:34:31  steve
- *  Handle null time and calltf pointers.
- *
- * Revision 1.12  2002/05/03 15:44:11  steve
- *  Add vpiModule iterator to vpiScope objects.
- *
- * Revision 1.11  2002/04/07 02:34:10  steve
- *  Set vpip_cur_task while calling compileft
- *
- * Revision 1.10  2001/09/15 18:27:05  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.9  2001/08/03 06:50:44  steve
- *  Detect system function used as a task.
- *
- * Revision 1.8  2001/06/25 03:12:06  steve
- *  Give task/function definitions a vpi type object.
- *
- * Revision 1.7  2001/05/20 00:46:12  steve
- *  Add support for system function calls.
- *
- * Revision 1.6  2001/05/10 00:26:53  steve
- *  VVP support for memories in expressions,
- *  including general support for thread bit
- *  vectors as system task parameters.
- *  (Stephan Boettcher)
- *
- * Revision 1.5  2001/04/18 04:21:23  steve
- *  Put threads into scopes.
- *
- * Revision 1.4  2001/03/22 22:38:14  steve
- *  Detect undefined system tasks at compile time.
- *
- * Revision 1.3  2001/03/18 04:35:18  steve
- *  Add support for string constants to VPI.
- *
- * Revision 1.2  2001/03/18 00:37:55  steve
- *  Add support for vpi scopes.
- *
- * Revision 1.1  2001/03/16 01:44:34  steve
- *  Add structures for VPI support, and all the %vpi_call
- *  instruction. Get linking of VPI modules to work.
- *
- */
 

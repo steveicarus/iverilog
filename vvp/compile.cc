@@ -36,6 +36,7 @@
 # include  <malloc.h>
 #endif
 # include  <iostream>
+# include  <list>
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
@@ -608,6 +609,16 @@ static void compile_array_lookup(struct vvp_code_s*code, char*label)
       resolv_submit(res);
 }
 
+static list<struct __vpiSysTaskCall*> scheduled_compiletf;
+
+void compile_compiletf(struct __vpiSysTaskCall*obj)
+{
+      if (obj->defn->info.compiletf == 0)
+	    return;
+
+      scheduled_compiletf.push_back(obj);
+}
+
 /*
  * When parsing is otherwise complete, this function is called to do
  * the final stuff. Clean up deferred linking here.
@@ -667,6 +678,24 @@ void compile_cleanup(void)
 
       delete_symbol_table(sym_functors);
       sym_functors = 0;
+
+      if (verbose_flag) {
+	    fprintf(stderr, " ... Compiletf functions\n");
+	    fflush(stderr);
+      }
+
+      assert(vpi_mode_flag == VPI_MODE_NONE);
+      vpi_mode_flag = VPI_MODE_COMPILETF;
+
+      while (! scheduled_compiletf.empty()) {
+	    struct __vpiSysTaskCall*obj = scheduled_compiletf.front();
+	    scheduled_compiletf.pop_front();
+	    vpip_cur_task = obj;
+	    obj->defn->info.compiletf (obj->defn->info.user_data);
+	    vpip_cur_task = 0;
+      }
+
+      vpi_mode_flag = VPI_MODE_NONE;
 }
 
 void compile_vpi_symbol(const char*label, vpiHandle obj)

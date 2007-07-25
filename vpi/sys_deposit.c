@@ -48,6 +48,8 @@ static PLI_INT32 sys_deposit_compiletf(PLI_BYTE8 *name)
             return 0;
       }
 
+      assert(target);
+
       /* Check the targets type. It must be a net or a register. */
       switch (vpi_get(vpiType, target)) {
             case vpiNet:
@@ -66,6 +68,8 @@ static PLI_INT32 sys_deposit_compiletf(PLI_BYTE8 *name)
             vpi_control(vpiFinish, 1);
             return 0;
       }
+
+      return 0;
 }
 
 static PLI_INT32 sys_deposit_calltf(PLI_BYTE8 *name)
@@ -76,7 +80,9 @@ static PLI_INT32 sys_deposit_calltf(PLI_BYTE8 *name)
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
       target = vpi_scan(argv);
+      assert(target);
       value = vpi_scan(argv);
+      assert(value);
 
       val.format = vpiIntVal;
       vpi_get_value(value, &val);
