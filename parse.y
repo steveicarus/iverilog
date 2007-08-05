@@ -191,8 +191,8 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %type <statement> udp_initial udp_init_opt
 %type <expr>    udp_initial_expr_opt
 
-%type <text> register_variable net_variable
-%type <perm_strings> register_variable_list net_variable_list list_of_identifiers
+%type <text> register_variable net_variable real_variable
+%type <perm_strings> register_variable_list net_variable_list real_variable_list list_of_identifiers
 
 %type <net_decl_assign> net_decl_assign net_decl_assigns
 
@@ -369,8 +369,8 @@ block_item_decl
 		  if ($1) delete $1;
 		}
 
-	| K_time register_variable_list ';'
-		{ pform_set_reg_time($2);
+	| attribute_list_opt K_time register_variable_list ';'
+		{ pform_set_reg_time($3);
 		}
 
   /* real declarations are fairly simple as there is no range of
@@ -378,20 +378,10 @@ block_item_decl
      with real value. Note that real and realtime are interchangable
      in this context. */
 
-	| K_real list_of_identifiers ';'
-                { pform_makewire(@1, 0, true, $2,
-				 NetNet::REG,
-				 NetNet::NOT_A_PORT,
-				 IVL_VT_REAL,
-				 0);
-		}
-	| K_realtime list_of_identifiers ';'
-                { pform_makewire(@1, 0, true, $2,
-				 NetNet::REG,
-				 NetNet::NOT_A_PORT,
-				 IVL_VT_REAL,
-				 0);
-		}
+  | attribute_list_opt K_real real_variable_list ';'
+      { delete $3; }
+  | attribute_list_opt K_realtime real_variable_list ';'
+      { delete $3; }
 
 	| K_parameter parameter_assign_decl ';'
 	| K_localparam localparam_assign_decl ';'
@@ -409,15 +399,15 @@ block_item_decl
 		  yyerrok;
 		  if ($1) delete $1;
 		}
-	| K_time error ';'
-		{ yyerror(@1, "error: syntax error in time variable list.");
+	| attribute_list_opt K_time error ';'
+		{ yyerror(@2, "error: syntax error in time variable list.");
 		  yyerrok;
 		}
-	| K_real error ';'
-		{ yyerror(@1, "error: syntax error in real variable list.");
+	| attribute_list_opt K_real error ';'
+		{ yyerror(@2, "error: syntax error in real variable list.");
 		  yyerrok;
 		}
-	| K_realtime error ';'
+	| attribute_list_opt K_realtime error ';'
 		{ yyerror(@1, "error: syntax error in realtime variable list.");
 		  yyerrok;
 		}
@@ -2515,6 +2505,33 @@ register_variable_list
 		  delete[]$3;
 		}
 	;
+
+real_variable
+  : IDENTIFIER
+      { pform_makewire(@1, $1, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_REAL, 0);
+	$$ = $1;
+      }
+  | IDENTIFIER '=' expression
+      { pform_makewire(@1, $1, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_REAL, 0);
+	pform_make_reginit(@1, $1, $3);
+	$$ = $1;
+      }
+  ;
+
+real_variable_list
+  : real_variable
+      { list<perm_string>*tmp = new list<perm_string>;
+	tmp->push_back(lex_strings.make($1));
+	$$ = tmp;
+	delete[]$1;
+      }
+  | real_variable_list ',' real_variable
+      { list<perm_string>*tmp = $1;
+	tmp->push_back(lex_strings.make($3));
+	$$ = tmp;
+	delete[]$3;
+      }
+  ;
 
 net_variable
 	: IDENTIFIER

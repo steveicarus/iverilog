@@ -1283,15 +1283,25 @@ void pform_makewire(const vlltype&li, const char*nm,
 	    }
 
       }
-      if (cur) {
-	    cur->set_file(li.text);
-	    cur->set_lineno(li.first_line);
-	    return;
+
+      bool new_wire_flag = false;
+      if (! cur) {
+	    new_wire_flag = true;
+	    cur = new PWire(name, type, pt, dt);
       }
 
-      cur = new PWire(name, type, pt, dt);
       cur->set_file(li.text);
       cur->set_lineno(li.first_line);
+
+      switch (dt) {
+	  case IVL_VT_REAL:
+	    cur->set_data_type(dt);
+	    cur->set_range(0, 0);
+	    cur->set_signed(true);
+	    break;
+	  default:
+	    break;
+      }
 
       if (attr) {
 	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
@@ -1300,10 +1310,12 @@ void pform_makewire(const vlltype&li, const char*nm,
 	    }
       }
 
-      if (pform_cur_generate)
-	    pform_cur_generate->add_wire(cur);
-      else
-	    pform_cur_module->add_wire(cur);
+      if (new_wire_flag) {
+	    if (pform_cur_generate)
+		  pform_cur_generate->add_wire(cur);
+	    else
+		  pform_cur_module->add_wire(cur);
+      }
 }
 
 /*
@@ -1836,283 +1848,3 @@ int pform_parse(const char*path, FILE*file)
 
       return error_count;
 }
-
-
-/*
- * $Log: pform.cc,v $
- * Revision 1.148  2007/06/12 04:05:45  steve
- *  Put instantiated modules in the proper generated scope.
- *
- * Revision 1.147  2007/06/02 03:42:13  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.146  2007/05/24 04:07:12  steve
- *  Rework the heirarchical identifier parse syntax and pform
- *  to handle more general combinations of heirarch and bit selects.
- *
- * Revision 1.145  2007/04/26 03:06:22  steve
- *  Rework hname_t to use perm_strings.
- *
- * Revision 1.144  2007/04/19 02:52:53  steve
- *  Add support for -v flag in command file.
- *
- * Revision 1.143  2007/04/13 02:34:35  steve
- *  Parse edge sensitive paths without edge specifier.
- *
- * Revision 1.142  2007/03/07 04:24:59  steve
- *  Make integer width controllable.
- *
- * Revision 1.141  2007/03/05 05:59:10  steve
- *  Handle processes within generate loops.
- *
- * Revision 1.140  2007/02/12 01:52:21  steve
- *  Parse all specify paths to pform.
- *
- * Revision 1.139  2007/01/27 05:36:11  steve
- *  Fix padding of x when literal is sized and unsigned.
- *
- * Revision 1.138  2007/01/16 05:44:15  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.137  2006/09/23 04:57:19  steve
- *  Basic support for specify timing.
- *
- * Revision 1.136  2006/08/08 05:11:37  steve
- *  Handle 64bit delay constants.
- *
- * Revision 1.135  2006/04/10 00:37:42  steve
- *  Add support for generate loops w/ wires and gates.
- *
- * Revision 1.134  2006/03/30 05:22:34  steve
- *  task/function ports can have types.
- *
- * Revision 1.133  2005/07/11 16:56:51  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.132  2005/07/07 16:22:49  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.131  2005/05/06 00:25:13  steve
- *  Handle synthesis of concatenation expressions.
- *
- * Revision 1.130  2004/12/11 02:31:27  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.129  2004/10/04 01:10:55  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.128  2004/08/26 04:02:04  steve
- *  Add support for localparam ranges.
- *
- * Revision 1.127  2004/06/13 04:56:55  steve
- *  Add support for the default_nettype directive.
- *
- * Revision 1.126  2004/05/31 23:34:39  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.125  2004/05/25 19:21:07  steve
- *  More identifier lists use perm_strings.
- *
- * Revision 1.124  2004/03/08 00:10:30  steve
- *  Verilog2001 new style port declartions for primitives.
- *
- * Revision 1.123  2004/02/20 18:53:35  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.122  2004/02/20 06:22:58  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.121  2004/02/19 06:57:10  steve
- *  Memory and Event names use perm_string.
- *
- * Revision 1.120  2004/02/18 17:11:57  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.119  2004/02/15 17:48:28  steve
- *  Better error checking of primitive tables.
- *
- * Revision 1.118  2003/07/04 03:57:19  steve
- *  Allow attributes on Verilog 2001 port declarations.
- *
- * Revision 1.117  2003/06/24 01:38:03  steve
- *  Various warnings fixed.
- *
- * Revision 1.116  2003/06/20 00:53:19  steve
- *  Module attributes from the parser
- *  through to elaborated form.
- *
- * Revision 1.115  2003/06/13 19:10:46  steve
- *  Properly manage real variables in subscopes.
- *
- * Revision 1.114  2003/06/13 00:27:09  steve
- *  Task/functions can have signed ports.
- *
- * Revision 1.113  2003/04/28 17:50:57  steve
- *  More 2001 port declaration support.
- *
- * Revision 1.112  2003/04/14 03:39:15  steve
- *  Break sized constants into a size token
- *  and a based numeric constant.
- *
- * Revision 1.111  2003/03/06 04:37:12  steve
- *  lex_strings.add module names earlier.
- *
- * Revision 1.110  2003/03/01 06:25:30  steve
- *  Add the lex_strings string handler, and put
- *  scope names and system task/function names
- *  into this table. Also, permallocate event
- *  names from the beginning.
- *
- * Revision 1.109  2003/02/27 06:45:11  steve
- *  specparams as far as pform.
- *
- * Revision 1.108  2003/02/02 19:02:39  steve
- *  Add support for signed ports and nets.
- *
- * Revision 1.107  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.106  2003/01/17 05:47:30  steve
- *  Missed a case of setting line on an PEident.
- *
- * Revision 1.105  2003/01/16 21:44:19  steve
- *  Detect duplicate module declarations.
- *
- * Revision 1.104  2003/01/14 21:16:18  steve
- *  Move strstream to ostringstream for compatibility.
- *
- * Revision 1.103  2003/01/10 03:08:13  steve
- *  Spelling fixes.
- *
- * Revision 1.102  2002/09/01 03:01:48  steve
- *  Properly cast signedness of parameters with ranges.
- *
- * Revision 1.101  2002/08/19 02:39:17  steve
- *  Support parameters with defined ranges.
- *
- * Revision 1.100  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.99  2002/06/21 04:59:35  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.98  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- *
- * Revision 1.97  2002/05/24 04:36:23  steve
- *  Verilog 2001 attriubtes on nets/wires.
- *
- * Revision 1.96  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.95  2002/05/20 02:06:01  steve
- *  Add ranges and signed to port list declarations.
- *
- * Revision 1.94  2002/05/19 23:37:28  steve
- *  Parse port_declaration_lists from the 2001 Standard.
- *
- * Revision 1.93  2002/04/18 18:38:37  steve
- *  Fix first_file test for timescale warning.
- *
- * Revision 1.92  2002/04/15 00:04:23  steve
- *  Timescale warnings.
- *
- * Revision 1.91  2002/04/12 02:57:08  steve
- *  Detect mismatches in reg as module items and ports.
- *
- * Revision 1.90  2002/01/31 04:10:15  steve
- *  Detect duplicate port declarations.
- *
- * Revision 1.89  2002/01/26 05:28:28  steve
- *  Detect scalar/vector declarion mismatch.
- *
- * Revision 1.88  2002/01/12 04:03:39  steve
- *  Drive strengths for continuous assignments.
- *
- * Revision 1.87  2001/12/07 05:03:13  steve
- *  Support integer for function return value.
- *
- * Revision 1.86  2001/12/03 04:47:15  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.85  2001/11/29 17:37:51  steve
- *  Properly parse net_decl assignments with delays.
- *
- * Revision 1.84  2001/11/10 02:08:49  steve
- *  Coerse input to inout when assigned to.
- *
- * Revision 1.83  2001/10/31 03:11:15  steve
- *  detect module ports not declared within the module.
- *
- * Revision 1.82  2001/10/21 01:55:24  steve
- *  Error messages for missing UDP port declarations.
- *
- * Revision 1.81  2001/10/21 00:42:48  steve
- *  Module types in pform are char* instead of string.
- *
- * Revision 1.80  2001/10/20 23:02:40  steve
- *  Add automatic module libraries.
- *
- * Revision 1.79  2001/10/20 05:21:51  steve
- *  Scope/module names are char* instead of string.
- *
- * Revision 1.78  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.77  2001/05/25 02:21:34  steve
- *  Detect input and input ports declared as reg.
- *
- * Revision 1.76  2001/05/20 15:03:25  steve
- *  Deleted wrong time when -Tmax is selected.
- *
- * Revision 1.75  2001/04/28 23:18:08  steve
- *  UDP instances need not have user supplied names.
- *
- * Revision 1.74  2001/02/17 05:15:33  steve
- *  Allow task ports to be given real types.
- *
- * Revision 1.73  2001/01/15 00:47:01  steve
- *  Pass scope type information to the target module.
- *
- * Revision 1.72  2001/01/14 23:04:56  steve
- *  Generalize the evaluation of floating point delays, and
- *  get it working with delay assignment statements.
- *
- *  Allow parameters to be referenced by hierarchical name.
- *
- * Revision 1.71  2001/01/10 05:32:44  steve
- *  Match memories within task scopes. (PR#101)
- *
- * Revision 1.70  2001/01/06 06:31:59  steve
- *  declaration initialization for time variables.
- *
- * Revision 1.69  2001/01/06 02:29:36  steve
- *  Support arrays of integers.
- *
- * Revision 1.68  2000/12/11 00:31:43  steve
- *  Add support for signed reg variables,
- *  simulate in t-vvm signed comparisons.
- *
- * Revision 1.67  2000/11/30 17:31:42  steve
- *  Change LineInfo to store const C strings.
- */
-
