@@ -300,6 +300,7 @@ static void format_time(unsigned mcd, int fsize,
 static void format_time_real(unsigned mcd, int fsize,
 			     double value, int time_units)
 {
+      int width;
 
 	/* The time_units is the units of the current scope, and also
 	   of the value. If the scope units are different from the
@@ -307,11 +308,15 @@ static void format_time_real(unsigned mcd, int fsize,
       if (time_units != timeformat_info.units)
 	    value *= pow(10.0, time_units - timeformat_info.units);
 
+      if (fsize == -1) {
+            width = timeformat_info.width - strlen(timeformat_info.suff);
+      } else {
+            width = fsize;
+      }
 	/* The timeformat_info.prec is the number of digits after the
 	   decimal point, no matter what the units. */
-      my_mcd_printf(mcd, "%*.*f%s", timeformat_info.width -
-                    strlen(timeformat_info.suff), timeformat_info.prec,
-                    value, timeformat_info.suff);
+      my_mcd_printf(mcd, "%*.*f%s", width, timeformat_info.prec, value,
+                    timeformat_info.suff);
 }
 
 
