@@ -309,8 +309,9 @@ static void format_time_real(unsigned mcd, int fsize,
 
 	/* The timeformat_info.prec is the number of digits after the
 	   decimal point, no matter what the units. */
-      my_mcd_printf(mcd, "%0.*f%s", timeformat_info.prec, value,
-		     timeformat_info.suff);
+      my_mcd_printf(mcd, "%*.*f%s", timeformat_info.width -
+                    strlen(timeformat_info.suff), timeformat_info.prec,
+                    value, timeformat_info.suff);
 }
 
 
