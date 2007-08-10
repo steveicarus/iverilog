@@ -128,6 +128,21 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 		  return 0;
 	    }
 
+	    /* Result might have known width. */
+	    if (has_width()) {
+		  if (debug_eval_tree) {
+			cerr << get_line() << ": debug: Evaluate expr=" << *this
+			     << " --- prune=" << prune_to_width << endl;
+		  }
+		  unsigned lwid = lc->expr_width();
+		  unsigned rwid = rc->expr_width();
+		  unsigned  wid = (rwid > lwid) ? rwid : lwid;
+		  if (prune_to_width < 0)
+			wid += 1;
+		  verinum val2=verinum(val,wid);
+		  val=val2;
+	    }
+
 	    return new NetEConst(val);
       }
 
@@ -1104,6 +1119,11 @@ NetEConst* NetEConcat::eval_tree(int prune_to_width)
       unsigned repeat_val = repeat();
       unsigned local_errors = 0;
 
+      if (debug_eval_tree) {
+	    cerr << get_line() << ": debug: Evaluate expr=" << *this
+		 << ", prune_to_width=" << prune_to_width << endl;
+      }
+
       unsigned gap = 0;
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 
@@ -1124,7 +1144,7 @@ NetEConst* NetEConcat::eval_tree(int prune_to_width)
 	      // that is here. If I succeed, reset the parameter to
 	      // the evaluated value.
 	    assert(parms_[idx]);
-	    NetExpr*expr = parms_[idx]->eval_tree();
+	    NetExpr*expr = parms_[idx]->eval_tree(0);
 	    if (expr) {
 		  delete parms_[idx];
 		  parms_[idx] = expr;
@@ -1651,102 +1671,4 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
 
       return new NetEConst(verinum(res, 1));
 }
-
-
-/*
- * $Log: eval_tree.cc,v $
- * Revision 1.77  2007/06/02 03:42:12  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.76  2007/05/31 18:36:06  steve
- *  Fix warning (ldolittle)
- *
- * Revision 1.75  2007/04/07 04:46:18  steve
- *  Handle evaluate of addition of real valued constants.
- *
- * Revision 1.74  2007/03/08 05:30:02  steve
- *  Limit the calculated widths of constants.
- *
- * Revision 1.73  2007/01/16 05:44:15  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.72  2006/11/04 06:16:27  steve
- *  Fix padding of constant eval of NetESelect.
- *
- * Revision 1.71  2006/10/30 05:44:49  steve
- *  Expression widths with unsized literals are pseudo-infinite width.
- *
- * Revision 1.70  2006/09/19 23:00:15  steve
- *  Use elab_and_eval for bit select expressions.
- *
- * Revision 1.69  2006/07/31 03:50:17  steve
- *  Add support for power in constant expressions.
- *
- * Revision 1.68  2006/03/18 22:52:27  steve
- *  Properly handle signedness in compare.
- *
- * Revision 1.67  2005/11/27 05:56:20  steve
- *  Handle bit select of parameter with ranges.
- *
- * Revision 1.66  2005/11/10 13:28:12  steve
- *  Reorganize signal part select handling, and add support for
- *  indexed part selects.
- *
- *  Expand expression constant propagation to eliminate extra
- *  sums in certain cases.
- *
- * Revision 1.65  2005/09/14 02:53:14  steve
- *  Support bool expressions and compares handle them optimally.
- *
- * Revision 1.64  2005/07/11 16:56:50  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.63  2005/06/17 05:05:53  steve
- *  Watch out for signed constants in magnitude compare.
- *
- * Revision 1.62  2004/10/04 01:10:53  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.61  2004/09/10 23:51:42  steve
- *  Fix the evaluation of constant ternary expressions.
- *
- * Revision 1.60  2004/02/20 06:22:56  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.59  2003/10/31 02:47:11  steve
- *  NetEUReduce has its own dup_expr method.
- *
- * Revision 1.58  2003/10/26 04:54:56  steve
- *  Support constant evaluation of binary ^ operator.
- *
- * Revision 1.57  2003/09/04 01:52:50  steve
- *  Evaluate real parameter expressions that contain real parameters.
- *
- * Revision 1.56  2003/08/01 02:12:30  steve
- *  Fix || with true case on the right.
- *
- * Revision 1.55  2003/06/24 01:38:02  steve
- *  Various warnings fixed.
- *
- * Revision 1.54  2003/06/05 04:28:24  steve
- *  Evaluate <= with real operands.
- *
- * Revision 1.53  2003/06/04 01:26:17  steve
- *  internal error for <= expression errors.
- *
- * Revision 1.52  2003/05/30 02:55:32  steve
- *  Support parameters in real expressions and
- *  as real expressions, and fix multiply and
- *  divide with real results.
- *
- * Revision 1.51  2003/04/15 05:06:56  steve
- *  Handle real constants evaluation > and >=.
- *
- * Revision 1.50  2003/04/14 03:40:21  steve
- *  Make some effort to preserve bits while
- *  operating on constant values.
- */
 

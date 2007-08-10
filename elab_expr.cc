@@ -558,6 +558,11 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 {
       NetExpr* repeat = 0;
 
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: Elaborate expr=" << *this
+		 << ", expr_wid=" << expr_wid << endl;
+      }
+
 	/* If there is a repeat expression, then evaluate the constant
 	   value and set the repeat count. */
       if (repeat_) {
@@ -593,7 +598,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	    }
 
 	    assert(parms_[idx]);
-	    NetExpr*ex = elab_and_eval(des, scope, parms_[idx], -1);
+	    NetExpr*ex = elab_and_eval(des, scope, parms_[idx], 0, 0);
 	    if (ex == 0) continue;
 
 	    ex->set_line(*parms_[idx]);
@@ -1760,8 +1765,3 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
       return tmp;
 }
-
-/*
- * $Log: elab_expr.cc,v $
- */
-
