@@ -3509,3 +3509,4 @@ inline __ScopePathManip scope_path(const NetScope*scope)
 
 extern ostream& operator << (ostream&o, __ScopePathManip);
 
+#endif
