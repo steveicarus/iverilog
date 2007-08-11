@@ -347,6 +347,7 @@ static void signal_get_StrengthVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 	   }
      }
 
+     vp->value.strength = op;
 }
 
 /*
@@ -721,8 +722,3 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
       return &obj->base;
 }
-
-
-/*
- * $Log: vpi_signal.cc,v $
- */
