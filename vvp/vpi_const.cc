@@ -60,6 +60,7 @@ static int string_get(int code, vpiHandle ref)
 static void string_value(vpiHandle ref, p_vpi_value vp)
 {
       unsigned uint_value;
+      p_vpi_vecval vecp;
       struct __vpiStringConst*rfp = (struct __vpiStringConst*)ref;
       int size = strlen(rfp->value);
       char*rbuf = 0;
@@ -134,6 +135,22 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
 		  }
 	      }
 	      break;
+
+          case vpiVectorVal:
+	      vp->value.vector = (p_vpi_vecval) calloc((size+3)/4,
+	                                               sizeof(s_vpi_vecval));
+              uint_value = 0;
+              vecp = vp->value.vector;
+	      for(int i=0; i<size;i ++){
+		  vecp->aval |= rfp->value[i] << uint_value*8;
+		  uint_value += 1;
+		  if (uint_value > 3) {
+		      uint_value = 0;
+		      vecp += 1;
+		  }
+	      }
+	      break;
+
 
 	  default:
 	    fprintf(stderr, "ERROR (vpi_const.cc): vp->format: %d\n", vp->format);
@@ -631,34 +648,4 @@ vpiHandle vpip_make_real_const(double value)
       obj =(struct __vpiRealConst*) malloc(sizeof (struct __vpiRealConst));
       return vpip_make_real_const(obj, value);
 }
-
-/*
- * $Log: vpi_const.cc,v $
- * Revision 1.39  2007/04/12 04:45:52  steve
- *  Support for vpi_get_value of scaler values. (ravi@bluespec)
- *
- * Revision 1.38  2007/04/12 04:25:58  steve
- *  vpip_make_binary_const cannot free the string passed in to it.
- *
- * Revision 1.37  2007/02/25 23:08:24  steve
- *  Process Verilog escape sequences much earlier.
- *
- * Revision 1.36  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.35  2006/03/18 22:51:10  steve
- *  Syntax for carrying sign with parameter.
- *
- * Revision 1.34  2006/03/08 05:29:42  steve
- *  Add support for logic parameters.
- *
- * Revision 1.33  2006/03/06 05:43:15  steve
- *  Cleanup vpi_const to use vec4 values.
- *
- * Revision 1.32  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.31  2004/05/18 18:43:38  steve
- *  Allow vpiParamter as a string type.
- */
 

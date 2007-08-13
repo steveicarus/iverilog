@@ -88,6 +88,18 @@ static char* timevar_time_get_str(int code, vpiHandle ref)
       }
 }
 
+static char* timevar_simtime_get_str(int code, vpiHandle ref)
+{
+      switch (code) {
+	  case vpiName:
+	    return "$simtime";
+	  default:
+	    fprintf(stderr, "Code: %d\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
 static char* timevar_realtime_get_str(int code, vpiHandle ref)
 {
       switch (code) {
@@ -226,6 +238,16 @@ static const struct __vpirt vpip_system_time_rt = {
       0
 };
 
+static const struct __vpirt vpip_system_simtime_rt = {
+      vpiSysFuncCall,
+      timevar_time_get,
+      timevar_simtime_get_str,
+      timevar_get_value,
+      0,
+      timevar_handle,
+      0
+};
+
 static const struct __vpirt vpip_system_realtime_rt = {
       vpiSysFuncCall,
       timevar_realtime_get,
@@ -248,7 +270,7 @@ vpiHandle vpip_sim_time(struct __vpiScope*scope)
 	    scope->scoped_time.scope = scope;
 	    return &scope->scoped_time.base;
       } else {
-	    global_simtime.base.vpi_type = &vpip_system_time_rt;
+	    global_simtime.base.vpi_type = &vpip_system_simtime_rt;
 	    global_simtime.scope = 0;
 	    return &global_simtime.base;
       }
@@ -270,68 +292,4 @@ void vpip_set_time_precision(int pre)
 {
       vpi_time_precision = pre;
 }
-
-
-/*
- * $Log: vpi_time.cc,v $
- * Revision 1.17  2005/12/05 21:19:55  steve
- *  Be more careful with double types.
- *
- * Revision 1.16  2004/10/04 01:11:00  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.15  2003/03/14 18:01:00  steve
- *  Refix vpiRealVal scaling of time.
- *
- * Revision 1.14  2003/03/13 20:31:41  steve
- *  Warnings about long long time.
- *
- * Revision 1.13  2003/03/13 04:59:21  steve
- *  Use rbufs instead of static buffers.
- *
- * Revision 1.12  2003/02/03 01:09:20  steve
- *  Allow $display of $simtime.
- *
- * Revision 1.11  2003/02/02 02:14:14  steve
- *  Proper rounding of scaled integer time.
- *
- * Revision 1.10  2003/02/01 05:50:04  steve
- *  Make $time and $realtime available to $display uniquely.
- *
- * Revision 1.9  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.8  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.7  2002/04/20 04:33:23  steve
- *  Support specified times in cbReadOnlySync, and
- *  add support for cbReadWriteSync.
- *  Keep simulation time in a 64bit number.
- *
- * Revision 1.6  2002/01/15 03:06:29  steve
- *  Support vpiSize and vpiSigned for time objects.
- *
- * Revision 1.5  2001/10/15 02:55:03  steve
- *  sign warning.
- *
- * Revision 1.4  2001/08/16 03:29:31  steve
- *  Support various other string formats for time.
- *
- * Revision 1.3  2001/06/30 23:03:17  steve
- *  support fast programming by only writing the bits
- *  that are listed in the input file.
- *
- * Revision 1.2  2001/04/03 03:46:14  steve
- *  VPI access time as a decimal string, and
- *  stub vpi access to the scopes.
- *
- * Revision 1.1  2001/03/31 19:00:44  steve
- *  Add VPI support for the simulation time.
- *
- */
 

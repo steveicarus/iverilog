@@ -837,7 +837,8 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		      char*tmp = vpi_get_str(vpiName, item);
 		      vpiHandle scope = vpi_handle(vpiScope, item);
 
-		      if (strcmp(tmp,"$time") == 0) {
+		      if (strcmp(tmp,"$time") == 0 ||
+		          strcmp(tmp,"$simtime") == 0) {
 			    value.format = vpiTimeVal;
 			    vpi_get_value(item, &value);
 			    my_mcd_printf(mcd, "%20u", value.value.time->low);
@@ -870,9 +871,10 @@ static int get_default_format(char *name)
     int default_format;
 
     switch(name[ strlen(name)-1 ]){
-	//  writE/strobE or monitoR or  displaY/fdisplaY
+	//  writE/strobE or monitoR or displaY/fdisplaY or sformaT
     case 'e':
     case 'r':
+    case 't':
     case 'y': default_format = vpiDecStrVal; break;
     case 'h': default_format = vpiHexStrVal; break;
     case 'o': default_format = vpiOctStrVal; break;
@@ -1208,6 +1210,834 @@ static PLI_INT32 sys_fdisplay_calltf(PLI_BYTE8*name)
 	    my_mcd_printf(mcd, "\n");
 
       return 0;
+}
+
+/* Build the format using the variables that control how the item will
+ * be printed. This is used in error messages and directly by the e/f/g
+ * format codes (minus the enclosing <>). The user needs to free the
+ * returned string. */
+static char * format_as_string(int ljust, int plus, int ld_zero, int width,
+                               int prec, char fmt)
+{
+  char buf[256];
+  unsigned int size = 0;
+
+  buf[size++] = '<';
+  buf[size++] = '%';
+  if (ljust == 1) buf[size++] = '-';
+  if (plus == 1) buf[size++] = '+';
+  if (ld_zero == 1) buf[size++] = '0';
+  if (width != -1)
+    size += sprintf(&buf[size], "%d", width);
+  if (prec != -1)
+    size += sprintf(&buf[size], ".%d", prec);
+  buf[size++] = fmt;
+  /* Do not change this without also changing the e/f/g format code below! */
+  buf[size++] = '>';
+  buf[size] = '\0';
+  return strdup(buf);
+}
+
+static void get_time(char *rtn, const char *value, int prec,
+                     PLI_INT32 time_units)
+{
+  int head, tail;
+  int shift = time_units - timeformat_info.units;
+
+  /* Strip any leading zeros, but leave a single zero. */
+  while (value[0] == '0' && value[1] != '\0') value += 1;
+  /* We need to scale the number up. */
+  if (shift >= 0) {
+    strcpy(rtn, value);
+    /* Shift only non-zero values. */
+    while (shift > 0 && value[0] != '0') {
+      strcat(rtn, "0");
+      shift -= 1;
+    }
+    if (prec > 0) strcat(rtn, ".");
+    while(prec > 0) {
+      strcat(rtn, "0");
+      prec -= 1;
+    }
+
+  /* We need to scale the number down. */
+  } else {
+    head = strlen(value) + shift;
+    /* We have digits to the left of the decimal point. */
+    if (head > 0) {
+      strncpy(rtn, value, head);
+      strcat(rtn, ".");
+      strncat(rtn, &value[head], prec);
+      tail = prec + shift;
+      while (tail > 0) {
+        strcat(rtn, "0");
+        tail -= 1;
+      }
+    /* All digits are to the right of the decimal point. */
+    } else {
+      strcpy(rtn, "0.");
+      /* Add leading zeros as needed. */
+      head = -shift - 1;
+      if (head > prec) head = prec;
+      while (head > 0) {
+        strcat(rtn, "0");
+        head -= 1;
+      }
+      /* Add digits from the value if they fit. */
+      tail = prec + shift + 1;
+      strncat(rtn, value, tail);
+      /* Add trailing zeros to fill out the precision. */
+      tail = prec + shift + 1 - strlen(value);
+      while (tail > 0) {
+        strcat(rtn, "0");
+        tail -= 1;
+      }
+    }
+  }
+
+  strcat(rtn, timeformat_info.suff);
+}
+
+static void get_time_real(char *rtn, double value, int prec,
+                          PLI_INT32 time_units)
+{
+  /* Scale the value if it's time units differ from the format units. */
+  if (time_units != timeformat_info.units) {
+    value *= pow(10.0, time_units - timeformat_info.units);
+  }
+  sprintf(rtn, "%0.*f%s", prec, value, timeformat_info.suff);
+}
+
+static unsigned int get_format_char(char **rtn, int ljust, int plus,
+                                    int ld_zero, int width, int prec,
+                                    char fmt, struct strobe_cb_info *info,
+                                    unsigned int *idx)
+{
+  s_vpi_value value;
+  char *result, *fmtb;
+  unsigned int size;
+  unsigned int max_size = 256;  /* The initial size of the buffer. */
+
+  /* The default return value is the full format. */
+  result = malloc(max_size*sizeof(char));
+  fmtb = format_as_string(ljust, plus, ld_zero, width, prec, fmt);
+  strcpy(result, fmtb);
+  switch (fmt) {
+
+    case '%':
+      if (ljust != 0  || plus != 0 || ld_zero != 0 || width != -1 ||
+          prec != -1) {
+        vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
+      }
+      strcpy(result, "%");
+      size = strlen(result) + 1;
+      break;
+
+    case 'b':
+    case 'B':
+    case 'o':
+    case 'O':
+    case 'h':
+    case 'H':
+    case 'x':
+    case 'X':
+      *idx += 1;
+      if (plus != 0 || prec != -1) {
+        vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
+      }
+      if (*idx >= info->nitems) {
+        vpi_printf("WARNING: missing argument for %s%s.\n", info->name, fmtb);
+      } else {
+        switch (fmt) {
+          case 'b':
+          case 'B':
+            value.format = vpiBinStrVal;
+            break;
+          case 'o':
+          case 'O':
+            value.format = vpiOctStrVal;
+            break;
+          case 'h':
+          case 'H':
+          case 'x':
+          case 'X':
+            value.format = vpiHexStrVal;
+            break;
+        }
+        vpi_get_value(info->items[*idx], &value);
+        if (value.format == vpiSuppressVal) {
+          vpi_printf("WARNING: incompatible value for %s%s.\n", info->name,
+                     fmtb);
+        } else {
+          char *cp;
+
+          /* If a width was not given use a width of zero. */
+          if (width == -1) width = 0;
+          /* Strip the leading zeros. */
+          cp = value.value.str;
+          if (ld_zero == 1) {
+            while (*cp == '0') cp++;
+          }
+          /* If the (default buffer is too small make it big enough. */
+          size = strlen(cp) + 1;
+          if (size > max_size) result = realloc(result, size*sizeof(char));
+
+          if (ljust == 0) sprintf(result, "%*s", width, cp);
+          else sprintf(result, "%-*s", width, cp);
+        }
+      }
+      size = strlen(result) + 1;
+      break;
+
+    case 'c':
+    case 'C':
+      *idx += 1;
+      if (plus != 0 || prec != -1) {
+        vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
+      }
+      if (*idx >= info->nitems) {
+        vpi_printf("WARNING: missing argument for %s%s.\n", info->name, fmtb);
+      } else {
+        value.format = vpiStringVal;
+        vpi_get_value(info->items[*idx], &value);
+        if (value.format == vpiSuppressVal) {
+          vpi_printf("WARNING: incompatible value for %s%s.\n", info->name,
+                     fmtb);
+        } else {
+          /* If a width was not given use a width of zero. */
+          if (width == -1) width = 0;
+          if (ljust == 0) sprintf(result, "%*c", width,
+                                  value.value.str[strlen(value.value.str)-1]);
+          else sprintf(result, "%-*c", width,
+                       value.value.str[strlen(value.value.str)-1]);
+        }
+      }
+      size = strlen(result) + 1;
+      break;
+
+    case 'd':
+    case 'D':
+      *idx += 1;
+      if (prec != -1) {
+        vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
+      }
+      if (*idx >= info->nitems) {
+        vpi_printf("WARNING: missing argument for %s%s.\n", info->name, fmtb);
+      } else {
+        value.format = vpiDecStrVal;
+        vpi_get_value(info->items[*idx], &value);
+        if (value.format == vpiSuppressVal) {
+          vpi_printf("WARNING: incompatible value for %s%s.\n", info->name,
+                     fmtb);
+        } else {
+          char *tbuf;
+
+          /* If a width was not given use the default unless we have a
+           * leading zero (width of zero). */
+          if (width == -1) {
+            width = (ld_zero == 1) ? 0: vpi_get_dec_size(info->items[*idx]);
+          }
+          size = strlen(value.value.str) + 1 + plus;
+          /* Insert a plus sign if needed. */
+          tbuf = malloc(size*sizeof(char));
+          if (plus == 1 && value.value.str[0] != '-') {
+            tbuf[0] = '+';
+            strcpy(&tbuf[1], value.value.str);
+          } else strcpy(&tbuf[0], value.value.str);
+          /* If the (default buffer is too small make it big enough. */
+          if (size > max_size) result = realloc(result, size*sizeof(char));
+          if (ljust == 0) sprintf(result, "%*s", width, tbuf);
+          else sprintf(result, "%-*s", width, tbuf);
+          free(tbuf);
+        }
+      }
+      size = strlen(result) + 1;
+      break;
+
+    case 'e':
+    case 'E':
+    case 'f':
+    case 'F':
+    case 'g':
+    case 'G':
+      *idx += 1;
+      if (*idx >= info->nitems) {
+        vpi_printf("WARNING: missing argument for %s%s.\n", info->name, fmtb);
+      } else {
+        value.format = vpiRealVal;
+        vpi_get_value(info->items[*idx], &value);
+        if (value.format == vpiSuppressVal) {
+          vpi_printf("WARNING: incompatible value for %s%s.\n", info->name,
+                     fmtb);
+        } else {
+          char *cp = fmtb;
+
+          if (fmt == 'F') {
+            while (*cp != 'F') cp++;
+            *cp = 'f';
+          }
+          while (*cp != '>') cp++;
+          *cp = '\0';
+          sprintf(result, fmtb+1, value.value.real);
+        }
+      }
+      size = strlen(result) + 1;
+      break;
+
+    /* This Verilog format specifier is not currently supported!
+     * vpiCell and vpiLibrary need to be implemented first. */
+    case 'l':
+    case 'L':
+      vpi_printf("WARNING: %%%c currently unsupported %s%s.\n", fmt,
+                 info->name, fmtb);
+      size = strlen(result) + 1;
+      break;
+
+    case 'm':
+    case 'M':
+      if (plus != 0 || prec != -1) {
+        vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
+      }
+      /* If a width was not given use a width of zero. */
+      if (width == -1) width = 0;
+      if (ljust == 0) sprintf(result, "%*s", width,
+                              vpi_get_str(vpiFullName, info->scope));
+      else sprintf(result, "%-*s", width,
+                   vpi_get_str(vpiFullName, info->scope));
+      size = strlen(result) + 1;
+      break;
+
+    case 's':
+    case 'S':
+      *idx += 1;
+      if (plus != 0 || prec != -1) {
+        vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
+      }
+      if (*idx >= info->nitems) {
+        vpi_printf("WARNING: missing argument for %s%s.\n", info->name, fmtb);
+      } else {
+        value.format = vpiStringVal;
+        vpi_get_value(info->items[*idx], &value);
+        if (value.format == vpiSuppressVal) {
+          vpi_printf("WARNING: incompatible value for %s%s.\n", info->name,
+                     fmtb);
+        } else {
+          /* If a width was not given use a width of zero. */
+          if (width == -1) width = 0;
+          /* If the (default buffer is too small make it big enough. */
+          size = strlen(value.value.str) + 1;
+          if (size > max_size) result = realloc(result, size*sizeof(char));
+          if (ljust == 0) sprintf(result, "%*s", width, value.value.str);
+          else sprintf(result, "%-*s", width, value.value.str);
+        }
+      }
+      size = strlen(result) + 1;
+      break;
+
+    case 't':
+    case 'T':
+      *idx += 1;
+      if (plus != 0) {
+        vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
+      }
+      if (*idx >= info->nitems) {
+        vpi_printf("WARNING: missing argument for %s%s.\n", info->name, fmtb);
+      } else {
+        char tbuf[256];
+        PLI_INT32 type;
+        PLI_INT32 time_units = vpi_get(vpiTimeUnit, info->scope);
+
+        type = vpi_get(vpiType, info->items[*idx]);
+        if (width == -1) width = timeformat_info.width;
+        if (ld_zero == 1) width = 0;
+        if (prec == -1) prec = timeformat_info.prec;
+        /* Is it some type of real value? */
+        if (((type == vpiConstant || type == vpiParameter) &&
+             vpi_get(vpiConstType, info->items[*idx]) == vpiRealConst) ||
+            type == vpiRealVar ) {
+          value.format = vpiRealVal;
+          vpi_get_value(info->items[*idx], &value);
+          if (value.format == vpiSuppressVal) {
+            vpi_printf("WARNING: incompatible value for %s%s.\n",
+                       info->name, fmtb);
+          } else {
+            get_time_real(tbuf, value.value.real, prec, time_units);
+            if (ljust == 0) sprintf(result, "%*s", width, tbuf);
+            else sprintf(result, "%-*s", width, tbuf);
+          }
+        } else {
+          value.format = vpiDecStrVal;
+          vpi_get_value(info->items[*idx], &value);
+          if (value.format == vpiSuppressVal) {
+            vpi_printf("WARNING: incompatible value for %s%s.\n",
+                       info->name, fmtb);
+          } else {
+            get_time(tbuf, value.value.str, prec, time_units);
+            if (ljust == 0) sprintf(result, "%*s", width, tbuf);
+            else sprintf(result, "%-*s", width, tbuf);
+          }
+        }
+      }
+      size = strlen(result) + 1;
+      break;
+
+    case 'u':
+    case 'U':
+      *idx += 1;
+      if (ljust != 0  || plus != 0 || ld_zero != 0 || width != -1 ||
+          prec != -1) {
+        vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
+      }
+      if (*idx >= info->nitems) {
+        vpi_printf("WARNING: missing argument for %s%s.\n", info->name, fmtb);
+      } else {
+        value.format = vpiVectorVal;
+        vpi_get_value(info->items[*idx], &value);
+        if (value.format == vpiSuppressVal) {
+          vpi_printf("WARNING: incompatible value for %s%s.\n", info->name,
+                     fmtb);
+        } else {
+          PLI_INT32 veclen, word, byte, bits;
+          char *cp;
+
+          veclen = (vpi_get(vpiSize, info->items[*idx])+31)/32;
+          size = veclen * 4 + 1;
+          /* If the (default buffer is too small make it big enough. */
+          if (size > max_size) result = realloc(result, size*sizeof(char));
+          cp = result;
+          for (word = 0; word < veclen; word += 1) {
+            bits = value.value.vector[word].aval &
+                   ~value.value.vector[word].bval;
+#ifdef WORDS_BIGENDIAN
+            for (byte = 3; byte >= 0; byte -= 1) {
+#else
+            for (byte = 0; byte <= 3; byte += 1) {
+#endif
+              *cp = (bits >> byte*8) & 0xff;
+              cp += 1;
+            }
+          }
+          *cp = '\0';
+        }
+      }
+      /* size is defined above! We can't use strlen here since this can
+       * be a binary string (can contain NULLs). */
+      break;
+
+    case 'v':
+    case 'V':
+      *idx += 1;
+      if (plus != 0 || prec != -1) {
+        vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
+      }
+      if (*idx >= info->nitems) {
+        vpi_printf("WARNING: missing argument for %s%s.\n", info->name,
+                   fmtb);
+      } else {
+        value.format = vpiStrengthVal;
+        vpi_get_value(info->items[*idx], &value);
+        if (value.format == vpiSuppressVal) {
+          vpi_printf("WARNING: incompatible value for %s%s.\n", info->name,
+                     fmtb);
+        } else {
+          char tbuf[4];
+
+          /* If a width was not given use a width of zero. */
+          if (width == -1) width = 0;
+          vpip_format_strength(tbuf, &value);
+          if (ljust == 0) sprintf(result, "%*s", width, tbuf);
+          else sprintf(result, "%-*s", width, tbuf);
+        }
+      }
+      size = strlen(result) + 1;
+      break;
+
+    case 'z':
+    case 'Z':
+      *idx += 1;
+      if (ljust != 0  || plus != 0 || ld_zero != 0 || width != -1 ||
+          prec != -1) {
+        vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
+      }
+      if (*idx >= info->nitems) {
+        vpi_printf("WARNING: missing argument for %s%s.\n", info->name, fmtb);
+      } else {
+        value.format = vpiVectorVal;
+        vpi_get_value(info->items[*idx], &value);
+        if (value.format == vpiSuppressVal) {
+          vpi_printf("WARNING: incompatible value for %s%s.\n", info->name,
+                     fmtb);
+        } else {
+          PLI_INT32 veclen, word, elem, bits, byte;
+          char *cp;
+
+          veclen = (vpi_get(vpiSize, info->items[*idx])+31)/32;
+          size = 2 * veclen * 4 + 1;
+          /* If the (default buffer is too small make it big enough. */
+          if (size > max_size) result = realloc(result, size*sizeof(char));
+          cp = result;
+          for (word = 0; word < veclen; word += 1) {
+            /* Write the aval followed by the bval in endian order. */
+            for (elem = 0; elem < 2; elem += 1) {
+              bits = *(&value.value.vector[word].aval+elem);
+#ifdef WORDS_BIGENDIAN
+              for (byte = 3; byte >= 0; byte -= 1) {
+#else
+              for (byte = 0; byte <= 3; byte += 1) {
+#endif
+                *cp = (bits >> byte*8) & 0xff;
+                cp += 1;
+              }
+            }
+          }
+          *cp = '\0';
+        }
+      }
+      /* size is defined above! We can't use strlen here since this can
+       * be a binary string (can contain NULLs). */
+      break;
+
+    default:
+      vpi_printf("WARNING: unknown format %s%s.\n", info->name, fmtb);
+      size = strlen(result) + 1;
+      break;
+  }
+  free(fmtb);
+  /* We can't use strdup her since %u and %z can insert NULL
+   * characters into the stream. */
+  *rtn = malloc(size*sizeof(char));
+  memcpy(*rtn, result, size);
+  return size - 1;
+}
+
+/* We can't use the normal str functions on the return value since
+ * %u and %z can insert NULL characters into the stream. */
+static unsigned int get_format(char **rtn, char *fmt,
+                               struct strobe_cb_info *info, unsigned int *idx)
+{
+  char *cp = fmt;
+  unsigned int size;
+
+  *rtn = strdup("");
+  size = 1;
+  while (*cp) {
+    size_t cnt = strcspn(cp, "%");
+
+    if (cnt > 0) {
+      *rtn = realloc(*rtn, (size+cnt)*sizeof(char));
+      memcpy(*rtn+size-1, cp, cnt);
+      size += cnt;
+      cp += cnt;
+    } else {
+      int cnt, ljust = 0, plus = 0, ld_zero = 0, width = -1, prec = -1;
+      char *result;
+
+      cp += 1;
+      while ((*cp == '-') || (*cp == '+')) {
+        if (*cp == '-') ljust = 1;
+        else plus = 1;
+        cp += 1;
+      }
+      if (*cp == '0') ld_zero = 1;
+      if (isdigit((int)*cp)) width = strtoul(cp, &cp, 10);
+      if (*cp == '.') {
+        cp += 1;
+        prec = strtoul(cp, &cp, 10);
+      }
+      cnt = get_format_char(&result, ljust, plus, ld_zero, width, prec, *cp,
+                            info, idx);
+      *rtn = realloc(*rtn, (size+cnt)*sizeof(char));
+      memcpy(*rtn+size-1, result, cnt);
+      free(result);
+      size += cnt;
+      cp += 1;
+    }
+  }
+  *(*rtn+size-1) = '\0';
+  return size - 1;
+}
+
+static unsigned int get_numeric(char **rtn, struct strobe_cb_info *info,
+                                vpiHandle item)
+{
+  s_vpi_value value;
+
+  value.format = info->default_format;
+  vpi_get_value(item, &value);
+  *rtn = strdup(value.value.str);
+
+  return strlen(*rtn);
+}
+
+/* In many places we can't use the normal str functions since %u and %z
+ * can insert NULL characters into the stream. */
+static char *get_display(unsigned int *rtnsz, struct strobe_cb_info *info)
+{
+  char *result, *fmt, *rtn, *func_name;
+  s_vpi_value value;
+  unsigned int idx, size, width;
+  char buf[256];
+
+  rtn = strdup("");
+  size = 1;
+  for  (idx = 0; idx < info->nitems; idx += 1) {
+    vpiHandle item = info->items[idx];
+
+    switch (vpi_get(vpiType, item)) {
+
+      case vpiConstant:
+      case vpiParameter:
+        if (vpi_get(vpiConstType, item) == vpiStringConst) {
+          value.format = vpiStringVal;
+          vpi_get_value(item, &value);
+          fmt = strdup(value.value.str);
+          width = get_format(&result, fmt, info, &idx);
+          free(fmt);
+        } else {
+          width = get_numeric(&result, info, item);
+        }
+        rtn = realloc(rtn, (size+width)*sizeof(char));
+        memcpy(rtn+size-1, result, width);
+        free(result);
+        break;
+
+      case vpiNet:
+      case vpiReg:
+      case vpiIntegerVar:
+      case vpiMemoryWord:
+        width = get_numeric(&result, info, item);
+        rtn = realloc(rtn, (size+width)*sizeof(char));
+        memcpy(rtn+size-1, result, width);
+        free(result);
+        break;
+
+      /* It appears that this is not currently used! A time variable is
+         passed as an integer and processed above. Hence this code has
+         only been visually checked. */
+      case vpiTimeVar:
+        value.format = vpiDecStrVal;
+        vpi_get_value(item, &value);
+        get_time(buf, value.value.str, timeformat_info.prec,
+                 vpi_get(vpiTimeUnit, info->scope));
+        width = strlen(buf);
+        if (width  < timeformat_info.width) width = timeformat_info.width;
+        rtn = realloc(rtn, (size+width)*sizeof(char));
+        sprintf(rtn+size-1, "%*s", width, buf);
+        break;
+
+      /* Realtime variables are also processed here. */
+      case vpiRealVar:
+        value.format = vpiRealVal;
+        vpi_get_value(item, &value);
+        sprintf(buf, "%g", value.value.real);
+        width = strlen(buf);
+        rtn = realloc(rtn, (size+width)*sizeof(char));
+        memcpy(rtn+size-1, buf, width);
+        break;
+
+      case vpiSysFuncCall:
+        func_name = vpi_get_str(vpiName, item);
+        /* This also gets the $stime function! */
+        if (strcmp(func_name, "$time") == 0) {
+          value.format = vpiDecStrVal;
+          vpi_get_value(item, &value);
+          get_time(buf, value.value.str, timeformat_info.prec,
+                   vpi_get(vpiTimeUnit, info->scope));
+          width = strlen(buf);
+          if (width  < timeformat_info.width) width = timeformat_info.width;
+          rtn = realloc(rtn, (size+width)*sizeof(char));
+          sprintf(rtn+size-1, "%*s", width, buf);
+
+        } else if (strcmp(func_name, "$simtime") == 0) {
+          value.format = vpiDecStrVal;
+          vpi_get_value(item, &value);
+          /* $simtime does not need to be scaled. */
+          get_time(buf, value.value.str, timeformat_info.prec,
+                   timeformat_info.units);
+          width = strlen(buf);
+          if (width  < timeformat_info.width) width = timeformat_info.width;
+          rtn = realloc(rtn, (size+width)*sizeof(char));
+          sprintf(rtn+size-1, "%*s", width, buf);
+
+        } else if (strcmp(func_name, "$realtime") == 0) {
+          value.format = vpiRealVal;
+          vpi_get_value(item, &value);
+          get_time_real(buf, value.value.real, timeformat_info.prec,
+                        vpi_get(vpiTimeUnit, info->scope));
+          width = strlen(buf);
+          if (width  < timeformat_info.width) width = timeformat_info.width;
+          rtn = realloc(rtn, (size+width)*sizeof(char));
+          sprintf(rtn+size-1, "%*s", width, buf);
+
+        } else {
+          vpi_printf("WARNING: %s does not support %s as an argument!\n",
+                     info->name, func_name);
+          strcpy(buf, "<?>");
+          width = strlen(buf);
+          rtn = realloc(rtn, (size+width)*sizeof(char));
+          memcpy(rtn+size-1, buf, width);
+        }
+        break;
+
+      default:
+        vpi_printf("WARNING: unknown argument type (%d) given to %s!\n",
+                   vpi_get(vpiType, item), info->name);
+        result = "<?>";
+        width = strlen(result);
+        rtn = realloc(rtn, (size+width)*sizeof(char));
+        memcpy(rtn+size-1, result, width);
+        break;
+    }
+    size += width;
+  }
+  rtn[size-1] = '\0';
+  *rtnsz = size - 1;
+  return rtn;
+}
+
+static PLI_INT32 sys_swrite_compiletf(PLI_BYTE8 *name)
+{
+  vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+  vpiHandle argv = vpi_iterate(vpiArgument, callh);
+  vpiHandle reg;
+
+  /* Check that there are arguments. */
+  if (argv == 0) {
+    vpi_printf("ERROR: %s requires at least one argument.\n", name);
+    vpi_control(vpiFinish, 1);
+    return 0;
+  }
+
+  /* The first argument must be a register. */
+  reg = vpi_scan(argv);  //* This should never be zero. */
+  if (vpi_get(vpiType, reg) != vpiReg) {
+    vpi_printf("ERROR: %s's first argument must be a register.\n", name);
+    vpi_control(vpiFinish, 1);
+    return 0;
+  }
+
+  vpi_free_object(argv);
+  return 0;
+}
+
+static PLI_INT32 sys_swrite_calltf(PLI_BYTE8 *name)
+{
+  vpiHandle callh, argv, reg, scope;
+  struct strobe_cb_info info;
+  s_vpi_value val;
+  unsigned int size;
+
+  callh = vpi_handle(vpiSysTfCall, 0);
+  argv = vpi_iterate(vpiArgument, callh);
+  reg = vpi_scan(argv);
+
+  scope = vpi_handle(vpiScope, callh);
+  assert(scope);
+  /* We could use vpi_get_str(vpiName, callh) to get the task name, but
+   * name is already defined. */
+  info.name = name;
+  info.default_format = get_default_format(name);
+  info.scope = scope;
+  array_from_iterator(&info, argv);
+
+  /* Because %u and %z may put embedded NULL characters into the returned
+   * string strlen() may not match the real size! */
+  val.value.str = get_display(&size, &info);
+  val.format = vpiStringVal;
+  vpi_put_value(reg, &val, 0, vpiNoDelay);
+  if (size != strlen(val.value.str)) {
+    vpi_printf("WARNING: %s returned a value with an embedded NULL "
+               "(see %%u/%%z).\n", name);
+  }
+
+  free(info.items);
+  return 0;
+}
+
+static PLI_INT32 sys_sformat_compiletf(PLI_BYTE8 *name)
+{
+  vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+  vpiHandle argv = vpi_iterate(vpiArgument, callh);
+  vpiHandle arg;
+  PLI_INT32 type;
+
+  /* Check that there are arguments. */
+  if (argv == 0) {
+    vpi_printf("ERROR: %s requires at least two argument.\n", name);
+    vpi_control(vpiFinish, 1);
+    return 0;
+  }
+
+  /* The first argument must be a register. */
+  arg = vpi_scan(argv);  //* This should never be zero. */
+  if (vpi_get(vpiType, arg) != vpiReg) {
+    vpi_printf("ERROR: %s's first argument must be a register.\n", name);
+    vpi_control(vpiFinish, 1);
+    return 0;
+  }
+
+  /* The second argument must be a string or a register. */
+  arg = vpi_scan(argv);
+  if (arg == 0) {
+    vpi_printf("ERROR: %s requires at least two argument.\n", name);
+    vpi_control(vpiFinish, 1);
+    return 0;
+  }
+  type = vpi_get(vpiType, arg);
+  if (((type != vpiConstant && type != vpiParameter) ||
+      vpi_get(vpiConstType, arg) != vpiStringConst) && type != vpiReg) {
+    vpi_printf("ERROR: %s's second argument must be a string or a register.\n",
+               name);
+    vpi_control(vpiFinish, 1);
+    return 0;
+  }
+
+  vpi_free_object(argv);
+  return 0;
+}
+
+static PLI_INT32 sys_sformat_calltf(PLI_BYTE8 *name)
+{
+  vpiHandle callh, argv, reg, scope;
+  struct strobe_cb_info info;
+  s_vpi_value val;
+  char *result, *fmt;
+  unsigned int idx, size;
+
+  callh = vpi_handle(vpiSysTfCall, 0);
+  argv = vpi_iterate(vpiArgument, callh);
+  reg = vpi_scan(argv);
+  val.format = vpiStringVal;
+  vpi_get_value(vpi_scan(argv), &val);
+  fmt = strdup(val.value.str);
+
+  scope = vpi_handle(vpiScope, callh);
+  assert(scope);
+  /* We could use vpi_get_str(vpiName, callh) to get the task name, but
+   * name is already defined. */
+  info.name = name;
+  info.default_format = get_default_format(name);
+  info.scope = scope;
+  array_from_iterator(&info, argv);
+  idx = -1;
+  size = get_format(&result, fmt, &info, &idx);
+  free(fmt);
+
+  if (idx+1< info.nitems) {
+    vpi_printf("WARNING: %s has %d extra argument(s).\n", name,
+               info.nitems-idx-1);
+  }
+
+  val.value.str = result;
+  val.format = vpiStringVal;
+  vpi_put_value(reg, &val, 0, vpiNoDelay);
+  if (size != strlen(val.value.str)) {
+    vpi_printf("WARNING: %s returned a value with an embedded NULL "
+               "(see %%u/%%z).\n", name);
+  }
+
+  free(info.items);
+  return 0;
 }
 
 static PLI_INT32 sys_end_of_compile(p_cb_data cb_data)
@@ -1593,7 +2423,48 @@ void sys_display_register()
       tf_data.user_data = "$fwriteb";
       vpi_register_systf(&tf_data);
 
-	//============================ timeformat
+      //============================== swrite
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$swrite";
+      tf_data.calltf    = sys_swrite_calltf;
+      tf_data.compiletf = sys_swrite_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$swrite";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$swriteh";
+      tf_data.calltf    = sys_swrite_calltf;
+      tf_data.compiletf = sys_swrite_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$swriteh";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$swriteo";
+      tf_data.calltf    = sys_swrite_calltf;
+      tf_data.compiletf = sys_swrite_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$swriteo";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$swriteb";
+      tf_data.calltf    = sys_swrite_calltf;
+      tf_data.compiletf = sys_swrite_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$swriteb";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$sformat";
+      tf_data.calltf    = sys_sformat_calltf;
+      tf_data.compiletf = sys_sformat_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$sformat";
+      vpi_register_systf(&tf_data);
+
+      //============================ timeformat
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$timeformat";
       tf_data.calltf    = sys_timeformat_calltf;
@@ -1613,173 +2484,3 @@ void sys_display_register()
       cb_data.user_data = "system";
       vpi_register_cb(&cb_data);
 }
-
-
-/*
- * $Log: sys_display.c,v $
- * Revision 1.79  2007/04/18 02:40:20  steve
- *  Add support for Gg and Ee formats.
- *
- * Revision 1.78  2007/04/16 00:47:12  steve
- *  Fix missing zero if time value is exactly 0.
- *
- * Revision 1.77  2007/04/15 20:45:40  steve
- *  Attach line number information to task calls.
- *
- * Revision 1.76  2007/04/12 02:50:51  steve
- *  Add printtimescale (caryr)
- *
- * Revision 1.75  2007/04/10 04:56:26  steve
- *  Cleanup timeformat argument checking.
- *
- * Revision 1.74  2007/03/14 04:05:51  steve
- *  VPI tasks take PLI_BYTE* by the standard.
- *
- * Revision 1.73  2006/10/30 22:45:37  steve
- *  Updates for Cygwin portability (pr1585922)
- *
- * Revision 1.72  2006/08/12 03:38:12  steve
- *  scanf support for real values.
- *
- * Revision 1.71  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.70  2004/02/20 01:53:02  steve
- *  Do not strip leading spaces, or expect them either.
- *
- * Revision 1.69  2004/01/23 23:40:44  steve
- *  Honor default format of numbers.
- *
- * Revision 1.68  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.67  2003/12/19 01:27:10  steve
- *  Fix various unsigned compare warnings.
- *
- * Revision 1.66  2003/10/30 03:43:19  steve
- *  Rearrange fileio functions, and add ungetc.
- *
- * Revision 1.65  2003/08/26 03:51:05  steve
- *  Add support for fstrobe system tasks.
- *
- * Revision 1.64  2003/08/03 03:54:02  steve
- *  mcd value can come from a vpiNet.
- *
- * Revision 1.63  2003/07/21 01:19:58  steve
- *  Careful to save format string to prevent overwrite.
- *
- * Revision 1.62  2003/06/17 16:55:08  steve
- *  1) setlinebuf() for vpi_trace
- *  2) Addes error checks for trace file opens
- *  3) removes now extraneous flushes
- *  4) fixes acc_next() bug
- *
- * Revision 1.61  2003/05/23 04:04:02  steve
- *  Add vpi_fopen and vpi_get_file.
- *
- * Revision 1.60  2003/05/15 16:51:08  steve
- *  Arrange for mcd id=00_00_00_01 to go to stdout
- *  as well as a user specified log file, set log
- *  file to buffer lines.
- *
- *  Add vpi_flush function, and clear up some cunfused
- *  return codes from other vpi functions.
- *
- *  Adjust $display and vcd/lxt messages to use the
- *  standard output/log file.
- *
- * Revision 1.59  2003/05/02 15:45:43  steve
- *  Certain constants are allowed as mcd parameters.
- *
- * Revision 1.58  2003/05/02 04:44:41  steve
- *  $fdisplay can have a RealVar, not RealVal argument.
- *
- * Revision 1.57  2003/04/20 02:49:07  steve
- *  acc_fetch_value support for %v format.
- *
- * Revision 1.56  2003/03/12 03:11:00  steve
- *  Donot rely on persistence of format string.
- *
- * Revision 1.55  2003/03/10 20:52:42  steve
- *  Account for constants being vpiParameters.
- *
- * Revision 1.54  2003/03/05 02:58:04  steve
- *  Add support for sizes in %f format.
- *
- * Revision 1.53  2003/02/10 05:20:48  steve
- *  Support monitor of real variables.
- *
- * Revision 1.52  2003/02/06 17:40:02  steve
- *  Format real values as time.
- *
- * Revision 1.51  2003/02/04 04:06:36  steve
- *  Rearrange format-string formatting code.
- *
- * Revision 1.50  2003/02/01 05:49:13  steve
- *  Display $time and $realtime specially.
- *
- * Revision 1.49  2003/01/26 18:18:36  steve
- *  Support display of real values and constants.
- *
- * Revision 1.48  2003/01/09 04:10:58  steve
- *  use userdata to save $display argument handles.
- *
- * Revision 1.47  2002/12/21 19:41:49  steve
- *  Rewrite time formatting to account for local scope.
- *
- * Revision 1.46  2002/11/09 06:01:11  steve
- *  display octal escapes properly.
- *
- * Revision 1.45  2002/09/06 04:56:28  steve
- *  Add support for %v is the display system task.
- *  Change the encoding of H and L outputs from
- *  the bufif devices so that they are logic x.
- *
- * Revision 1.44  2002/08/24 02:02:44  steve
- *  Rewire time formatting to handle all cases.
- *
- * Revision 1.43  2002/08/22 23:34:52  steve
- *  Watch signed comparisons, that lead to infinite loops.
- *
- * Revision 1.42  2002/08/12 01:35:04  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.41  2002/07/25 03:35:51  steve
- *  Add monitoron and monitoroff system tasks.
- *
- * Revision 1.40  2002/07/23 02:41:15  steve
- *  Fix display of no arguments.
- *
- * Revision 1.39  2002/06/21 04:59:36  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.38  2002/05/31 04:26:54  steve
- *  Add support for $timeformat.
- *
- * Revision 1.37  2002/05/24 19:05:30  steve
- *  support GCC __attributes__ for printf formats.
- *
- * Revision 1.36  2002/04/06 20:25:45  steve
- *  cbValueChange automatically replays.
- *
- * Revision 1.35  2002/02/06 04:50:04  steve
- *  Detect and skip suppressed values in display
- *
- * Revision 1.34  2002/01/22 00:18:10  steve
- *  Better calcuation of dec string width (Larry Doolittle)
- *
- * Revision 1.33  2002/01/15 03:23:34  steve
- *  Default widths pad out as per the standard,
- *  add $displayb/o/h et al., and some better
- *  error messages for incorrect formats.
- *
- * Revision 1.32  2002/01/11 04:48:01  steve
- *  Add the %c format, and some warning messages.
- *
- * Revision 1.31  2001/11/02 05:56:47  steve
- *  initialize scope for %m in $fdisplay.
- *
- * Revision 1.30  2001/10/25 04:19:53  steve
- *  VPI support for callback to return values.
- */
-
