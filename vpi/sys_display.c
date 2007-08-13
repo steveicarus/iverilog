@@ -1244,7 +1244,13 @@ static PLI_INT32 sys_timeformat_compiletf(PLI_BYTE8*xx)
                         return 0;
                   }
             }
-	    vpi_free_object(argv);
+            tmp = vpi_scan(argv);
+            if (tmp != 0) {
+                  vpi_printf("ERROR: $timeformat takes at most four"
+                             " arguments.\n");
+                  vpi_control(vpiFinish, 1);
+                  return 0;
+            }
       }
 
       return 0;
