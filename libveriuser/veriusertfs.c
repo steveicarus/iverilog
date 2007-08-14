@@ -109,7 +109,7 @@ void veriusertfs_register_table(p_tfcell vtable)
 	    tf_data.tfname = tf->tfname;
 	    tf_data.compiletf = compiletf;
 	    tf_data.calltf = calltf;
-	    tf_data.sizetf = tf->sizetf;
+	    tf_data.sizetf = (PLI_INT32 (*)(PLI_BYTE8 *))tf->sizetf;
 	    tf_data.user_data = (char *)data;
 
 	    if (pli_trace) {
