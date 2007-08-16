@@ -113,7 +113,7 @@ declare a scope with the same name more than once in a parent scope.
 The name string given when creating the scope is the basename for the
 scope. The vvp automatically constructs full names from the scope
 hierarchy, and runtime VPI code can access that full name with the
-vpiFullname reference.
+vpiFullName reference.
 
 The .timescale directive changes the scope units from the simulation
 precision to the specified precision. The .timescale directive affects

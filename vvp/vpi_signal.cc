@@ -656,7 +656,7 @@ static const struct __vpirt vpip_net_rt = {
 };
 
 /*
- * Construct a vpiIntegetVar object. Indicate the type using a flag
+ * Construct a vpiIntegerVar object. Indicate the type using a flag
  * to minimize the code modifications. Icarus implements integers
  * as 'reg signed [31:0]'.
  */

@@ -185,12 +185,22 @@ static const char* vpi_type_values(PLI_INT32 code)
       switch (code) {
 	  case vpiConstant:
 	    return "vpiConstant";
+	  case vpiIntegerVar:
+	    return "vpiIntegerVar";
+	  case vpiFunction:
+	    return "vpiFunction";
 	  case vpiModule:
 	    return "vpiModule";
 	  case vpiNet:
 	    return "vpiNet";
+	  case vpiParameter:
+	    return "vpiParameter";
+	  case vpiRealVar:
+	    return "vpiRealVar";
 	  case vpiReg:
 	    return "vpiReg";
+	  case vpiTask:
+	    return "vpiTask";
 	  default:
 	    sprintf(buf, "%d", code);
       }
@@ -242,7 +252,21 @@ char* vpi_get_str(PLI_INT32 property, vpiHandle ref)
 	    return 0;
       }
 
-      assert(ref);
+      if (property == vpiType) {
+	    if (vpi_trace) {
+		  fprintf(vpi_trace, "vpi_get(vpiType, %p) --> %s\n",
+			  ref, vpi_type_values(ref->vpi_type->type_code));
+	    }
+
+	    struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+            PLI_INT32 type;
+	    if (ref->vpi_type->type_code == vpiReg && rfp->isint_)
+		  type = vpiIntegerVar;
+	    else
+		  type = ref->vpi_type->type_code;
+	    return (char *)vpi_type_values(type);
+      }
+
       if (ref->vpi_type->vpi_get_str_ == 0) {
 	    if (vpi_trace) {
 		  fprintf(vpi_trace, "vpi_get_str(%s, %p) --X\n",

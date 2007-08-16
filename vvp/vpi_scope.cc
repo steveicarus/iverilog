@@ -83,6 +83,25 @@ static void construct_scope_fullname(struct __vpiScope*ref, char*buf)
       strcat(buf, ref->name);
 }
 
+static const char* scope_get_type(int code)
+{
+      switch (code) {
+          case vpiModule:
+            return "vpiModule";
+          case vpiFunction:
+            return "vpiFunction";
+          case vpiTask:
+            return "vpiTask";
+          case vpiNamedBegin:
+            return "vpiNamedBegin";
+          case vpiNamedFork:
+            return "vpiNamedFork";
+          default:
+            fprintf(stderr, "ERROR: invalid code %d.", code);
+            assert(0);
+      }
+}
+
 static char* scope_get_str(int code, vpiHandle obj)
 {
       struct __vpiScope*ref = (struct __vpiScope*)obj;
@@ -110,7 +129,13 @@ static char* scope_get_str(int code, vpiHandle obj)
 	    strcpy(rbuf, ref->tname);
 	    return rbuf;
 
+	  case vpiType:
+	    rbuf = need_result_buf(strlen(scope_get_type(code)) + 1, RBUF_STR);
+	    strcpy(rbuf, scope_get_type(code));
+	    return rbuf;
+
 	  default:
+	    fprintf(stderr, "ERROR: invalid code %d.", code);
 	    assert(0);
 	    return 0;
       }
@@ -383,84 +408,4 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 {
       attach_to_scope_(current_scope, obj);
 }
-
-
-/*
- * $Log: vpi_scope.cc,v $
- * Revision 1.36  2006/04/10 00:37:43  steve
- *  Add support for generate loops w/ wires and gates.
- *
- * Revision 1.35  2006/03/06 05:43:15  steve
- *  Cleanup vpi_const to use vec4 values.
- *
- * Revision 1.34  2005/06/12 01:10:26  steve
- *  Remove useless references to functor.h
- *
- * Revision 1.33  2005/04/28 04:59:53  steve
- *  Remove dead functor code.
- *
- * Revision 1.32  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.31  2003/05/29 02:21:45  steve
- *  Implement acc_fetch_defname and its infrastructure in vvp.
- *
- * Revision 1.30  2003/05/27 16:22:10  steve
- *  PLI get time units/precision.
- *
- * Revision 1.29  2003/03/14 05:01:22  steve
- *  vpiModule handle of scope is parent scope.
- *
- * Revision 1.28  2003/03/06 04:32:00  steve
- *  Use hashed name strings for identifiers.
- *
- * Revision 1.27  2003/03/03 01:47:50  steve
- *  .scope directives store only the base names.
- *
- * Revision 1.26  2003/02/27 21:54:44  steve
- *  Add scope type have a vpi_get function.
- *
- * Revision 1.25  2003/02/23 06:41:54  steve
- *  Add to interactive stop mode support for
- *  current scope, the ability to scan/traverse
- *  scopes, and the ability to call system tasks.
- *
- * Revision 1.24  2003/02/11 05:20:45  steve
- *  Include vpiRealVar objects in vpiVariables scan.
- *
- * Revision 1.23  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.22  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.21  2002/11/15 22:14:12  steve
- *  Add vpiScope iterate on vpiScope objects.
- *
- * Revision 1.20  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.19  2002/07/17 05:13:43  steve
- *  Implementation of vpi_handle_by_name, and
- *  add the vpiVariables iterator.
- *
- * Revision 1.18  2002/07/14 02:52:05  steve
- *  Fix vpiScope iterator.
- *
- * Revision 1.17  2002/07/12 18:23:30  steve
- *  Use result buf for event and scope names.
- *
- * Revision 1.16  2002/07/05 17:14:15  steve
- *  Names of vpi objects allocated as vpip_strings.
- *
- * Revision 1.15  2002/05/18 02:34:11  steve
- *  Add vpi support for named events.
- *
- *  Add vpi_mode_flag to track the mode of the
- *  vpi engine. This is for error checking.
- */
 
