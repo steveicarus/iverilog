@@ -234,6 +234,7 @@ extern void vpip_run_memory_value_change(vpiHandle ref, unsigned adr);
  */
 struct __vpiRealVar {
       struct __vpiHandle base;
+      struct __vpiScope* scope;
       const char*name;
       vvp_net_t*net;
 };

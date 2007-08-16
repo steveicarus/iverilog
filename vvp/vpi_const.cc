@@ -259,15 +259,17 @@ static char* string_param_get_str(int code, vpiHandle obj)
 
       switch (code) {
           case vpiFullName:
-            sprintf(rbuf, "%s.%s", bn, rfp->basename);
-            free(bn);
+	    sprintf(rbuf, "%s.%s", bn, rfp->basename);
+	    free(bn);
 	    return rbuf;
+
 	  case vpiName:
 	    strcpy(rbuf, rfp->basename);
-            free(bn);
+	    free(bn);
 	    return rbuf;
 
 	  default:
+	    free(bn);
 	    return 0;
       }
 }
@@ -448,14 +450,15 @@ static char* binary_param_get_str(int code, vpiHandle obj)
       switch (code) {
 	  case vpiFullName:
 	    sprintf(rbuf, "%s.%s", bn, rfp->basename);
-            free(bn);
+	    free(bn);
 	    return rbuf;
 	  case vpiName:
 	    strcpy(rbuf, rfp->basename);
-            free(bn);
+	    free(bn);
 	    return rbuf;
 
 	  default:
+	    free(bn);
 	    return 0;
       }
 }

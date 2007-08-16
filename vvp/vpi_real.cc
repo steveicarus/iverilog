@@ -36,15 +36,24 @@ static char* real_var_get_str(int code, vpiHandle ref)
       assert(ref->vpi_type->type_code == vpiRealVar);
 
       struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
-      char *rbuf = need_result_buf(strlen(rfp->name) + 1, RBUF_STR);
+      char *bn = strdup(vpi_get_str(vpiFullName, &rfp->scope->base));
+      char *rbuf = need_result_buf(strlen(bn)+strlen(rfp->name) + 2,
+                                   RBUF_STR);
 
       switch (code) {
 
+	  case vpiFullName:
+	    sprintf(rbuf, "%s.%s", bn, rfp->name);
+	    free(bn);
+	    return rbuf;
+
 	  case vpiName:
 	    strcpy(rbuf, rfp->name);
+	    free(bn);
 	    return rbuf;
 
 	  default:
+	    free(bn);
 	    return 0;
       }
 
@@ -113,45 +122,8 @@ vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
       obj->name = vpip_name_string(name);
       obj->net = net;
 
+      obj->scope = vpip_peek_current_scope();
+
       return &obj->base;
 }
-
-/*
- * $Log: vpi_real.cc,v $
- * Revision 1.11  2005/09/20 18:34:02  steve
- *  Clean up compiler warnings.
- *
- * Revision 1.10  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.9  2004/05/19 03:26:25  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.8  2003/03/13 04:59:21  steve
- *  Use rbufs instead of static buffers.
- *
- * Revision 1.7  2003/03/06 04:32:00  steve
- *  Use hashed name strings for identifiers.
- *
- * Revision 1.6  2003/02/28 21:20:34  steve
- *  Allow read of realvar as int.
- *
- * Revision 1.5  2003/02/10 05:20:10  steve
- *  Add value change callbacks to real variables.
- *
- * Revision 1.4  2003/02/04 04:03:40  steve
- *  Add hex and binary formatting of real values.
- *
- * Revision 1.3  2003/02/02 01:40:24  steve
- *  Five vpi_free_object a default behavior.
- *
- * Revision 1.2  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.1  2003/01/25 23:48:06  steve
- *  Add thread word array, and add the instructions,
- *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
- *
- */
 
