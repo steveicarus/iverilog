@@ -1925,6 +1925,13 @@ module_item
      module items. These rules try to catch them at a point where a
      reasonable error message can be produced. */
 
+	| K_module error ';'
+		{ yyerror(@2, "error: missing endmodule or attempt to "
+		              "nest modules.");
+		  pform_error_nested_modules();
+		  yyerrok;
+		}
+
 	| error ';'
 		{ yyerror(@2, "error: invalid module item.");
 		  yyerrok;

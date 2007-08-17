@@ -1847,3 +1847,11 @@ int pform_parse(const char*path, FILE*file)
 
       return error_count;
 }
+
+void pform_error_nested_modules()
+{
+      assert( pform_cur_module != 0 );
+      cerr << pform_cur_module->get_line() << ": error: original module "
+              "(" << pform_cur_module->mod_name() << ") defined here." << endl;
+}
+
