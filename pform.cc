@@ -1694,8 +1694,7 @@ void pform_set_port_type(const struct vlltype&li,
 		 ; cur ++ ) {
 	    perm_string txt = *cur;
 	    pform_set_port_type(txt, pt, li.text, li.first_line);
-	    if (range)
-		  pform_set_net_range(txt, range, signed_flag, IVL_VT_NO_TYPE);
+	    pform_set_net_range(txt, range, signed_flag, IVL_VT_NO_TYPE);
       }
 
       delete names;
