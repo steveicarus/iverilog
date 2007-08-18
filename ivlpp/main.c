@@ -220,9 +220,10 @@ int main(int argc, char*argv[])
       define_macro("unconnected_drive",   "`unconnected_drive", 1);
       define_macro("uselib",              "`uselib", 1);
 
-      include_dir = malloc(sizeof(char*));
-      include_dir[0] = strdup(".");
-      include_cnt = 1;
+      include_cnt = 2;
+      include_dir = malloc(include_cnt*sizeof(char*));
+      include_dir[0] = 0;  /* 0 is reserved for the current files path. */
+      include_dir[1] = strdup(".");
 
       while ((opt=getopt(argc, argv, "F:f:K:Lo:v")) != EOF) switch (opt) {
 
@@ -332,53 +333,4 @@ int main(int argc, char*argv[])
 
       return error_count;
 }
-
-/*
- * $Log: main.c,v $
- * Revision 1.23  2006/10/02 18:16:18  steve
- *  Save dep_path because arg space is overrun.
- *
- * Revision 1.22  2006/07/26 00:11:40  steve
- *  Pass depfiles through temp defines file.
- *
- * Revision 1.21  2006/07/26 00:02:48  steve
- *  Pass defines and includes through temp file.
- *
- * Revision 1.20  2004/09/10 00:15:45  steve
- *  Remove bad casts.
- *
- * Revision 1.19  2004/09/05 21:29:08  steve
- *  Better type safety.
- *
- * Revision 1.18  2004/02/15 18:03:30  steve
- *  Cleanup of warnings.
- *
- * Revision 1.17  2003/09/26 02:08:31  steve
- *  Detect missing endif markers.
- *
- * Revision 1.16  2002/08/12 01:35:02  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.15  2002/04/04 05:26:13  steve
- *  Add dependency generation.
- *
- * Revision 1.14  2001/11/21 02:59:27  steve
- *  Remove diag print.
- *
- * Revision 1.13  2001/11/21 02:20:35  steve
- *  Pass list of file to ivlpp via temporary file.
- *
- * Revision 1.12  2001/09/15 18:27:04  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.11  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.10  2001/06/23 18:41:02  steve
- *  Include stdlib.h
- *
- * Revision 1.9  2001/05/20 18:08:07  steve
- *  local declares if the header is missing.
- */
 

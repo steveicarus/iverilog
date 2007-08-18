@@ -763,10 +763,22 @@ static void do_include()
 		    fprintf(depend_file, "%s\n", istack->path);
 	    }
       } else {
-	    unsigned idx = 0;
+	    unsigned idx, start = 0;
+	    char path[4096];
+	    char *cp;
+
+	    /* Add the current path to the start of the include_dir list. */
+	    strcpy(path, istack->path);
+	    cp = strrchr(path, '/');
+	    if (cp == 0) start = 1;  /* A base file so already in [1] */
+	    else *cp = '\0';
+	    /* We do not need a strdup here since the path is read before
+	     * it is overridden. If the search order is changed add a
+	     * strdup here and a free before the include_dir[0] = 0 below.
+	     */
+	    include_dir[0] = path;
 	    standby->file = 0;
-	    for (idx = 0 ;  idx < include_cnt ;  idx += 1) {
-		  char path[4096];
+	    for (idx = start ;  idx < include_cnt ;  idx += 1) {
 		  sprintf(path, "%s/%s", include_dir[idx], standby->path);
 		  standby->file = fopen(path, "r");
 		  if (standby->file) {
@@ -776,6 +788,7 @@ static void do_include()
 			break;
 		  }
 	    }
+            include_dir[0] = 0;
       }
 
       if (standby->file == 0) {
