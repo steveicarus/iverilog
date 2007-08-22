@@ -592,7 +592,9 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  nmsb = pmsb;
 		  nlsb = plsb;
 	    }
+            if (!port_set_) assert(port_msb_ == 0 && port_lsb_ == 0);
             if (port_msb_ == 0) assert(port_lsb_ == 0);
+            if (port_lsb_ == 0) assert(port_msb_ == 0);
 
 	    /* If they exist get the net/etc. definition MSB and LSB */
 	    if (net_set_ && net_msb_ != 0) {
@@ -620,7 +622,9 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 		  delete texpr;
 	    }
+            if (!net_set_) assert(net_msb_ == 0 && net_lsb_ == 0);
             if (net_msb_ == 0) assert(net_lsb_ == 0);
+            if (net_lsb_ == 0) assert(net_msb_ == 0);
 
 	    /* We have a port size error */
             if (port_set_ && net_set_ && (pmsb != nmsb || plsb != nlsb)) {
