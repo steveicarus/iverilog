@@ -89,6 +89,7 @@ const char*target = "null";
 generation_t generation_flag = GN_DEFAULT;
 bool gn_cadence_types_flag = true;
 bool gn_specify_blocks_flag = true;
+bool gn_io_range_error_flag = true;
 
 map<string,const char*> flags;
 char*vpi_module_list = 0;
@@ -211,6 +212,12 @@ static void process_generation_flag(const char*gen)
       } else if (strcmp(gen,"no-specify") == 0) {
 	    gn_specify_blocks_flag = false;
  
+      } else if (strcmp(gen,"io-range-error") == 0) {
+	    gn_io_range_error_flag = true;
+
+      } else if (strcmp(gen,"no-io-range-error") == 0) {
+	    gn_io_range_error_flag = false;
+
       } else {
       }
 }

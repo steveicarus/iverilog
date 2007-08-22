@@ -112,6 +112,10 @@ inline bool gn_cadence_types_enabled()
    is false, then skip elaboration of specify behavior. */
 extern bool gn_specify_blocks_flag;
 
+/* If this flag is false a warning is printed when the port declaration
+   is scalar and the net/register definition is vectored. */
+extern bool gn_io_range_error_flag;
+
   /* This is the string to use to invoke the preprocessor. */
 extern char*ivlpp_string;
 

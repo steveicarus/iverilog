@@ -1411,12 +1411,14 @@ list_of_port_declarations
 		{ svector<Module::port_t*>*tmp
 			  = new svector<Module::port_t*>(1);
 		  (*tmp)[0] = $1;
+		  pform_set_net_range($1[0].name);
 		  $$ = tmp;
 		}
 	| list_of_port_declarations ',' port_declaration
 		{ svector<Module::port_t*>*tmp
 			= new svector<Module::port_t*>(*$1, $3);
 		  delete $1;
+		  pform_set_net_range($3[0].name);
 		  $$ = tmp;
 		}
 	| list_of_port_declarations ',' IDENTIFIER
@@ -1435,6 +1437,7 @@ list_of_port_declarations
 					port_declaration_context.sign_flag,
 					port_declaration_context.range, 0);
 		  delete $1;
+		  pform_set_net_range($3);
 		  $$ = tmp;
 		}
         ;
@@ -1694,13 +1697,13 @@ module_item
      This creates the wire and sets the port type all at once. */
 
 	| port_type net_type signed_opt range_opt list_of_identifiers ';'
-		{ pform_makewire(@1, $4, $3, $5, $2, $1, IVL_VT_NO_TYPE, 0);
+		{ pform_makewire(@1, $4, $3, $5, $2, $1, IVL_VT_NO_TYPE, 0,
+		                 SR_BOTH);
 		}
 
 	| K_output var_type signed_opt range_opt list_of_identifiers ';'
-		{ pform_makewire(@1, $4, $3, $5, $2,
-				 NetNet::POUTPUT,
-				 IVL_VT_NO_TYPE, 0);
+		{ pform_makewire(@1, $4, $3, $5, $2, NetNet::POUTPUT,
+				 IVL_VT_NO_TYPE, 0, SR_BOTH);
 		}
 
   /* var_type declaration (reg variables) cannot be input or output,

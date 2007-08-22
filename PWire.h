@@ -38,6 +38,11 @@ class PExpr;
 class Design;
 
 /*
+ * The different type of PWire::set_range() calls.
+ */
+enum PWSRType {SR_PORT, SR_NET, SR_BOTH};
+
+/*
  * Wires include nets, registers and ports. A net or register becomes
  * a port by declaration, so ports are not separate. The module
  * identifies a port by keeping it in its port list.
@@ -72,7 +77,8 @@ class PWire : public LineInfo {
       bool set_data_type(ivl_variable_type_t dt);
       ivl_variable_type_t get_data_type() const;
 
-      void set_range(PExpr*msb, PExpr*lsb);
+      void set_range(PExpr*msb, PExpr*lsb, PWSRType type);
+      void set_net_range();
 
       void set_memory_idx(PExpr*ldx, PExpr*rdx);
 
@@ -93,8 +99,13 @@ class PWire : public LineInfo {
 
 	// These members hold expressions for the bit width of the
 	// wire. If they do not exist, the wire is 1 bit wide.
-      svector<PExpr*>msb_;
-      svector<PExpr*>lsb_;
+      PExpr*port_msb_;
+      PExpr*port_lsb_;
+      bool port_set_;
+      PExpr*net_msb_;
+      PExpr*net_lsb_;
+      bool net_set_;
+      unsigned error_cnt_;
 
 	// If this wire is actually a memory, these indices will give
 	// me the size and address range of the memory.
@@ -106,50 +117,4 @@ class PWire : public LineInfo {
       PWire& operator= (const PWire&);
 };
 
-/*
- * $Log: PWire.h,v $
- * Revision 1.21  2007/05/24 04:07:11  steve
- *  Rework the heirarchical identifier parse syntax and pform
- *  to handle more general combinations of heirarch and bit selects.
- *
- * Revision 1.20  2007/04/26 03:06:22  steve
- *  Rework hname_t to use perm_strings.
- *
- * Revision 1.19  2006/04/10 00:37:42  steve
- *  Add support for generate loops w/ wires and gates.
- *
- * Revision 1.18  2005/07/07 16:22:49  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.17  2004/02/20 18:53:33  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.16  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.15  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.14  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.13  2002/06/21 04:59:35  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.12  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.11  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.10  2001/01/16 02:44:18  steve
- *  Use the iosfwd header if available.
- */
 #endif

@@ -110,6 +110,7 @@ const char*depfile = 0;
 const char*generation = "2x";
 const char*gen_specify = "specify";
 const char*gen_xtypes = "xtypes";
+const char*gen_io_range_error = "io-range-error";
 
 char warning_flags[16] = "";
 
@@ -439,6 +440,12 @@ int process_generation(const char*name)
        else if (strcmp(name,"no-specify") == 0)
 	    gen_specify = "no-specify";
 
+       else if (strcmp(name,"io-range-error") == 0)
+	    gen_io_range_error = "io-range-error";
+
+       else if (strcmp(name,"no-io-range-error") == 0)
+	    gen_io_range_error = "no-io-range-error";
+
       else {
 	    fprintf(stderr, "Unknown/Unsupported Language generation "
 		    "%s\n", name);
@@ -448,7 +455,8 @@ int process_generation(const char*name)
 		            "    2x  -- Verilog with extensions\n"
 		            "Other generation flags:\n"
 		            "    specify | no-specify\n"
-		            "    xtypes | no-xtypes\n");
+		            "    xtypes | no-xtypes\n"
+		            "    io-range-error | no-io-range-error\n");
 	    return 1;
       }
 
@@ -694,6 +702,7 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "generation:%s\n", generation);
       fprintf(iconfig_file, "generation:%s\n", gen_specify);
       fprintf(iconfig_file, "generation:%s\n", gen_xtypes);
+      fprintf(iconfig_file, "generation:%s\n", gen_io_range_error);
       fprintf(iconfig_file, "warnings:%s\n", warning_flags);
       fprintf(iconfig_file, "out:%s\n", opath);
       if (depfile) fprintf(iconfig_file, "depfile:%s\n", depfile);

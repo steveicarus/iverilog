@@ -560,86 +560,118 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       unsigned wid = 1;
       long lsb = 0, msb = 0;
 
-      assert(msb_.count() == lsb_.count());
-      if (msb_.count()) {
-	    svector<long>mnum (msb_.count());
-	    svector<long>lnum (msb_.count());
-	      /* There may be places where the signal is declared as a
-		 scalar. Count those here, for consistency check
-		 later. */
-	    unsigned count_scalars = 0;
+      des->errors += error_cnt_;
 
-	      /* There may be multiple declarations of ranges, because
-		 the symbol may have its range declared in e.g., input
-		 and reg declarations. Calculate *all* the numbers
-		 here. I will resolve the values later. */
+      if (port_set_ || net_set_) {
+	    long pmsb = 0, plsb = 0, nmsb = 0, nlsb = 0;
+	    /* If they exist get the port definition MSB and LSB */
+	    if (port_set_ && port_msb_ != 0) {
+		  NetExpr*texpr = elab_and_eval(des, scope, port_msb_, -1);
 
-	    for (unsigned idx = 0 ;  idx < msb_.count() ;  idx += 1) {
-
-		  if (msb_[idx] == 0) {
-			count_scalars += 1;
-			assert(lsb_[idx] == 0);
-			mnum[idx] = 0;
-			lnum[idx] = 0;
-			continue;
-		  }
-
-		  NetExpr*texpr = elab_and_eval(des, scope, msb_[idx], -1);
-
-		  if (! eval_as_long(mnum[idx], texpr)) {
-			cerr << msb_[idx]->get_line() << ": error: "
-			      "Unable to evaluate constant expression ``" <<
-			      *msb_[idx] << "''." << endl;
+		  if (! eval_as_long(pmsb, texpr)) {
+			cerr << port_msb_->get_line() << ": error: "
+			      "Unable to evaluate MSB constant expression ``"
+			     << *port_msb_ << "''." << endl;
 			des->errors += 1;
 			return 0;
 		  }
 
 		  delete texpr;
 
-		  texpr = elab_and_eval(des, scope, lsb_[idx], -1);
+		  texpr = elab_and_eval(des, scope, port_lsb_, -1);
 
-		  if (! eval_as_long(lnum[idx], texpr) ) {
-			cerr << msb_[idx]->get_line() << ": error: "
-			      "Unable to evaluate constant expression ``" <<
-			      *lsb_[idx] << "''." << endl;
+		  if (! eval_as_long(plsb, texpr)) {
+			cerr << port_lsb_->get_line() << ": error: "
+			      "Unable to evaluate LSB constant expression ``"
+			     << *port_lsb_ << "''." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+
+		  delete texpr;
+		  nmsb = pmsb;
+		  nlsb = plsb;
+	    }
+            if (port_msb_ == 0) assert(port_lsb_ == 0);
+
+	    /* If they exist get the net/etc. definition MSB and LSB */
+	    if (net_set_ && net_msb_ != 0) {
+		  NetExpr*texpr = elab_and_eval(des, scope, net_msb_, -1);
+
+		  if (! eval_as_long(nmsb, texpr)) {
+			cerr << net_msb_->get_line() << ": error: "
+			      "Unable to evaluate MSB constant expression ``"
+			     << *net_msb_ << "''." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+
+		  delete texpr;
+
+		  texpr = elab_and_eval(des, scope, net_lsb_, -1);
+
+		  if (! eval_as_long(nlsb, texpr)) {
+			cerr << net_lsb_->get_line() << ": error: "
+			      "Unable to evaluate LSB constant expression ``"
+			     << *net_lsb_ << "''." << endl;
 			des->errors += 1;
 			return 0;
 		  }
 
 		  delete texpr;
 	    }
+            if (net_msb_ == 0) assert(net_lsb_ == 0);
 
-	      /* Check that the declarations were all scalar or all
-		 vector. It is an error to mix them. Use the
-		 count_scalars to know. */
-	    if ((count_scalars > 0) && (count_scalars != msb_.count())) {
-		  cerr << get_line() << ": error: Signal ``" << hname_
-		       << "'' declared both as a vector and a scalar."
-		       << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
+	    /* We have a port size error */
+            if (port_set_ && net_set_ && (pmsb != nmsb || plsb != nlsb)) {
 
+		  /* Scalar port with a vector net/etc. definition */
+		  if (port_msb_ == 0) {
+			if (!gn_io_range_error_flag) {
+			      cerr << get_line()
+			           << ": warning: Scalar port ``" << hname_
+			           << "'' has a vectored net declaration ["
+			           << nmsb << ":" << nlsb << "]." << endl;
+			} else {
+			      cerr << get_line()
+			           << ": error: Scalar port ``" << hname_
+			           << "'' has a vectored net declaration ["
+			           << nmsb << ":" << nlsb << "]." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+		  }
 
-	      /* Make sure all the values for msb and lsb match by
-		 value. If not, report an error. */
-	    for (unsigned idx = 1 ;  idx < msb_.count() ;  idx += 1) {
-		  if ((mnum[idx] != mnum[0]) || (lnum[idx] != lnum[0])) {
-			cerr << get_line() << ": error: Inconsistent width, "
-			      "[" << mnum[idx] << ":" << lnum[idx] << "]"
-			      " vs. [" << mnum[0] << ":" << lnum[0] << "]"
-			      " for signal ``" << hname_ << "''" << endl;
+		  /* Vectored port with a scalar net/etc. definition */
+		  if (net_msb_ == 0) {
+			cerr << port_msb_->get_line()
+			     << ": error: Vectored port ``"
+			     << hname_ << "'' [" << pmsb << ":" << plsb
+			     << "] has a scalar net declaration at "
+			     << get_line() << "." << endl;
 			des->errors += 1;
 			return 0;
 		  }
-	    }
 
-	    lsb = lnum[0];
-	    msb = mnum[0];
-	    if (mnum[0] > lnum[0])
-		  wid = mnum[0] - lnum[0] + 1;
+		  /* Both vectored, but they have different ranges. */
+		  if (port_msb_ != 0 && net_msb_ != 0) {
+			cerr << port_msb_->get_line()
+			     << ": error: Vectored port ``"
+			     << hname_ << "'' [" << pmsb << ":" << plsb
+			     << "] has a net declaration [" << nmsb << ":"
+			     << nlsb << "] at " << net_msb_->get_line()
+			     << " that does not match." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+            }
+
+	    lsb = nlsb;
+	    msb = nmsb;
+	    if (nmsb > nlsb)
+		  wid = nmsb - nlsb + 1;
 	    else
-		  wid = lnum[0] - mnum[0] + 1;
+		  wid = nlsb - nmsb + 1;
 
 
       }

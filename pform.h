@@ -210,7 +210,8 @@ extern void pform_makewire(const struct vlltype&li,
 			   NetNet::Type type,
 			   NetNet::PortType,
 			   ivl_variable_type_t,
-			   svector<named_pexpr_t*>*attr);
+			   svector<named_pexpr_t*>*attr,
+			   PWSRType rt = SR_NET);
 
 /* This form handles assignment declarations. */
 extern void pform_makewire(const struct vlltype&li,
@@ -236,10 +237,12 @@ extern void pform_set_port_type(const struct vlltype&li,
 extern void pform_set_port_type(perm_string nm, NetNet::PortType pt,
 				const char*file, unsigned lineno);
 
+extern void pform_set_net_range(const char* name);
 extern void pform_set_net_range(list<perm_string>*names,
 				svector<PExpr*>*,
 				bool signed_flag,
-				ivl_variable_type_t);
+				ivl_variable_type_t,
+				PWSRType rt = SR_NET);
 extern void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<perm_string>*names);
 extern void pform_set_reg_time(list<perm_string>*names);

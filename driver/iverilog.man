@@ -4,7 +4,8 @@ iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[-ESVv] [-Bpath] [-ccmdfile] [-g1|-g2|-g2x|-gspecify-gxtypes] [-Dmacro[=defn]] [-pflag=value]
+[-ESVv] [-Bpath] [-ccmdfile] [-Dmacro[=defn]] [-pflag=value]
+[-g1|-g2|-g2x|-gspecify|-gxtypes|-gio-range-error]
 [-Iincludedir] [-mmodule] [-Mfile] [-Nfile] [-ooutputfilename]
 [-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] [-ypath] sourcefile
 
@@ -71,6 +72,15 @@ extended types allows for new types that are supported by Icarus
 Verilog as extensions beyond the baseline Verilog. It may be necessary
 to disable extended types if compiling code that clashes with the few
 new keywords used to implement the type system.
+.TP 8
+.B -gio-range-error\fI|\fP-gno-io-range-error
+The standards requires that a vectored port have matching ranges for its
+port declaration as well as any net/register declaration. It was common
+practice in the past to only specify the range for the net/register
+declaration and some tools still allow this. By default any mismatch is
+reported as a error. Using \fI-gno-io-range-error\fP will produce a
+warning instead of a fatal error for the case of a vectored net/register
+and a scalar port declaration.
 .TP 8
 .B -I\fIincludedir\fP
 Append directory \fIincludedir\fP to list of directories searched

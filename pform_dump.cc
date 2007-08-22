@@ -281,18 +281,18 @@ void PWire::dump(ostream&out, unsigned ind) const
 	    out << " signed";
       }
 
-      assert(msb_.count() == lsb_.count());
-      for (unsigned idx = 0 ;  idx < msb_.count() ;  idx += 1) {
-
-	    if (msb_[idx] == 0) {
-		  assert(lsb_[idx] == 0);
-		  out << " <scalar>";
-
+      if (port_set_) {
+	    if (port_msb_ == 0) {
+		  out << " port<scalar>";
 	    } else {
-		  if (lsb_[idx])
-			out << " [" << *msb_[idx] << ":" << *lsb_[idx] << "]";
-		  else
-			out << " [" << *msb_[idx] << "]";
+		  out << " port[" << *port_msb_ << ":" << *port_lsb_ << "]";
+	    }
+      }
+      if (net_set_) {
+	    if (net_msb_ == 0) {
+		  out << " net<scalar>";
+	    } else {
+		  out << " net[" << *net_msb_ << ":" << *net_lsb_ << "]";
 	    }
       }
 

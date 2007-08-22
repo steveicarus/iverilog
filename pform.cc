@@ -829,6 +829,21 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
 }
 
 /*
+ * This function is used to set the net range for a port that uses
+ * the new (1364-2001) list_of_port_declarations, but omitted a
+ * register/wire/etc. that would have triggered it to be set elsewhere.
+ */
+void pform_set_net_range(const char* name)
+{
+      PWire*cur = get_wire_in_module(hier_name(name));
+      if (cur == 0) {
+	    VLerror("error: name is not a valid net.");
+	    return;
+      }
+      cur->set_net_range();
+}
+
+/*
  * This function attaches a range to a given name. The function is
  * only called by the parser within the scope of the net declaration,
  * and the name that I receive only has the tail component.
@@ -836,7 +851,8 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
 static void pform_set_net_range(const char* name,
 				const svector<PExpr*>*range,
 				bool signed_flag,
-				ivl_variable_type_t dt)
+				ivl_variable_type_t dt,
+				PWSRType rt)
 {
       PWire*cur = get_wire_in_module(hier_name(name));
       if (cur == 0) {
@@ -847,13 +863,13 @@ static void pform_set_net_range(const char* name,
       if (range == 0) {
 	      /* This is the special case that we really mean a
 		 scalar. Set a fake range. */
-	    cur->set_range(0, 0);
+	    cur->set_range(0, 0, rt);
 
       } else {
 	    assert(range->count() == 2);
 	    assert((*range)[0]);
 	    assert((*range)[1]);
-	    cur->set_range((*range)[0], (*range)[1]);
+	    cur->set_range((*range)[0], (*range)[1], rt);
       }
       cur->set_signed(signed_flag);
 
@@ -864,7 +880,8 @@ static void pform_set_net_range(const char* name,
 void pform_set_net_range(list<perm_string>*names,
 			 svector<PExpr*>*range,
 			 bool signed_flag,
-			 ivl_variable_type_t dt)
+			 ivl_variable_type_t dt,
+			 PWSRType rt)
 {
       assert((range == 0) || (range->count() == 2));
 
@@ -872,7 +889,7 @@ void pform_set_net_range(list<perm_string>*names,
 		 ; cur != names->end()
 		 ; cur ++ ) {
 	    perm_string txt = *cur;
-	    pform_set_net_range(txt, range, signed_flag, dt);
+	    pform_set_net_range(txt, range, signed_flag, dt, rt);
       }
 
       delete names;
@@ -1217,13 +1234,15 @@ void pform_module_define_port(const struct vlltype&li,
       cur->set_signed(signed_flag);
 
       if (range == 0) {
-	    cur->set_range(0, 0);
+	    cur->set_range(0, 0, (type == NetNet::IMPLICIT) ? SR_PORT :
+	                                                      SR_BOTH);
 
       } else {
 	    assert(range->count() == 2);
 	    assert((*range)[0]);
 	    assert((*range)[1]);
-	    cur->set_range((*range)[0], (*range)[1]);
+	    cur->set_range((*range)[0], (*range)[1],
+	                   (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
       }
 
       if (attr) {
@@ -1296,7 +1315,7 @@ void pform_makewire(const vlltype&li, const char*nm,
       switch (dt) {
 	  case IVL_VT_REAL:
 	    cur->set_data_type(dt);
-	    cur->set_range(0, 0);
+	    cur->set_range(0, 0, SR_NET);
 	    cur->set_signed(true);
 	    break;
 	  default:
@@ -1320,7 +1339,7 @@ void pform_makewire(const vlltype&li, const char*nm,
 
 /*
  * This form takes a list of names and some type information, and
- * generates a bunch of variables/nets. We hse the basic
+ * generates a bunch of variables/nets. We use the basic
  * pform_makewire above.
  */
 void pform_makewire(const vlltype&li,
@@ -1330,14 +1349,18 @@ void pform_makewire(const vlltype&li,
 		    NetNet::Type type,
 		    NetNet::PortType pt,
 		    ivl_variable_type_t dt,
-		    svector<named_pexpr_t*>*attr)
+		    svector<named_pexpr_t*>*attr,
+		    PWSRType rt)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
 	    perm_string txt = *cur;
 	    pform_makewire(li, txt, type, pt, dt, attr);
-	    pform_set_net_range(txt, range, signed_flag, dt);
+	    /* This has already been done for real variables. */
+	    if (dt != IVL_VT_REAL) {
+		  pform_set_net_range(txt, range, signed_flag, dt, rt);
+	    }
       }
 
       delete names;
@@ -1364,7 +1387,11 @@ void pform_makewire(const vlltype&li,
 	    net_decl_assign_t*next = first->next;
 
 	    pform_makewire(li, first->name, type, NetNet::NOT_A_PORT, dt, 0);
-	    pform_set_net_range(first->name, range, signed_flag, dt);
+	    /* This has already been done for real variables. */
+	    if (dt != IVL_VT_REAL) {
+		  pform_set_net_range(first->name, range, signed_flag, dt,
+		                      SR_NET);
+	    }
 
 	    perm_string first_name = lex_strings.make(first->name);
 	    pform_name_t name = hier_name(first_name);
@@ -1491,7 +1518,7 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 
 	      /* If there is a range involved, it needs to be set. */
 	    if (range)
-		  curw->set_range((*range)[0], (*range)[1]);
+		  curw->set_range((*range)[0], (*range)[1], SR_PORT);
 
 	    svector<PWire*>*tmp = new svector<PWire*>(*res, curw);
 
@@ -1694,7 +1721,8 @@ void pform_set_port_type(const struct vlltype&li,
 		 ; cur ++ ) {
 	    perm_string txt = *cur;
 	    pform_set_port_type(txt, pt, li.text, li.first_line);
-	    pform_set_net_range(txt, range, signed_flag, IVL_VT_NO_TYPE);
+	    pform_set_net_range(txt, range, signed_flag, IVL_VT_NO_TYPE,
+	                        SR_PORT);
       }
 
       delete names;
@@ -1721,7 +1749,8 @@ static void pform_set_reg_integer(const char*nm)
       assert(cur);
 
       cur->set_range(new PENumber(new verinum(integer_width-1, integer_width)),
-		     new PENumber(new verinum((uint64_t)0, integer_width)));
+		     new PENumber(new verinum((uint64_t)0, integer_width)),
+		     SR_NET);
       cur->set_signed(true);
 }
 
@@ -1752,7 +1781,8 @@ static void pform_set_reg_time(const char*nm)
       assert(cur);
 
       cur->set_range(new PENumber(new verinum(TIME_WIDTH-1, integer_width)),
-		     new PENumber(new verinum((uint64_t)0, integer_width)));
+		     new PENumber(new verinum((uint64_t)0, integer_width)),
+		     SR_NET);
 }
 
 void pform_set_reg_time(list<perm_string>*names)
