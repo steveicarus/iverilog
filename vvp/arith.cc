@@ -51,6 +51,7 @@ void vvp_arith_::dispatch_operand_(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 	    op_b_ = bit;
 	    break;
 	  default:
+	    fprintf(stderr, "Unsupported port type %d.\n", port);
 	    assert(0);
       }
 }
@@ -749,6 +750,7 @@ void vvp_arith_real_::dispatch_operand_(vvp_net_ptr_t ptr, double bit)
 	    op_b_ = bit;
 	    break;
 	  default:
+	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
 	    assert(0);
       }
 }
@@ -785,70 +787,4 @@ void vvp_arith_sub_real::recv_real(vvp_net_ptr_t ptr, double bit)
       double val = op_a_ - op_b_;
       vvp_send_real(ptr.ptr()->out, val);
 }
-
-/*
- * $Log: arith.cc,v $
- * Revision 1.50  2007/01/20 02:09:54  steve
- *  Better size error details.
- *
- * Revision 1.49  2006/07/30 02:51:36  steve
- *  Fix/implement signed right shift.
- *
- * Revision 1.48  2006/01/03 06:19:31  steve
- *  Support wide divide nodes.
- *
- * Revision 1.47  2005/11/10 13:27:16  steve
- *  Handle very wide % and / operations using expanded vector2 support.
- *
- * Revision 1.46  2005/09/15 22:54:04  steve
- *  Use iostream instead of stdio.
- *
- * Revision 1.45  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.44  2005/06/22 00:04:48  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.43  2005/03/19 06:23:49  steve
- *  Handle LPM shifts.
- *
- * Revision 1.42  2005/03/12 06:42:28  steve
- *  Implement .arith/mod.
- *
- * Revision 1.41  2005/03/09 05:52:04  steve
- *  Handle case inequality in netlists.
- *
- * Revision 1.40  2005/02/19 02:41:23  steve
- *  Handle signed divide.
- *
- * Revision 1.39  2005/02/19 01:32:52  steve
- *  Implement .arith/div.
- *
- * Revision 1.38  2005/02/04 05:13:02  steve
- *  Add wide .arith/mult, and vvp_vector2_t vectors.
- *
- * Revision 1.37  2005/01/30 05:06:49  steve
- *  Get .arith/sub working.
- *
- * Revision 1.36  2005/01/28 05:34:25  steve
- *  Add vector4 implementation of .arith/mult.
- *
- * Revision 1.35  2005/01/22 17:36:15  steve
- *  .cmp/x supports signed magnitude compare.
- *
- * Revision 1.34  2005/01/22 16:21:11  steve
- *  Implement vectored CMP_EQ and NE
- *
- * Revision 1.33  2005/01/22 01:06:20  steve
- *  Implement the .cmp/eeq LPM node.
- *
- * Revision 1.32  2005/01/16 04:19:08  steve
- *  Reimplement comparators as vvp_vector4_t nodes.
- *
- * Revision 1.31  2004/12/11 02:31:29  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- */
 

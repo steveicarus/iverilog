@@ -81,9 +81,23 @@ static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp)
 
       vvp_net_ptr_t destination (rfp->net, 0);
 
-      assert(vp->format == vpiRealVal);
-      vvp_send_real(destination, vp->value.real);
+      switch (vp->format) {
 
+	  case vpiRealVal:
+	    vvp_send_real(destination, vp->value.real);
+	    break;
+
+	  case vpiIntVal:
+	    vvp_send_real(destination, (double)vp->value.integer);
+	    break;
+
+	  default:
+	    fprintf(stderr, "Cannot convert type %d to a real value.",
+	            vp->format);
+	    assert(0);
+	    break;
+
+      }
       return 0;
 }
 

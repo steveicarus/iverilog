@@ -119,7 +119,7 @@ static int signal_get(int code, vpiHandle ref)
 		  return 0;
 
 	  default:
-	    vpi_printf("signal_get: property %d is unknown\n", code);
+	    fprintf(stderr, "signal_get: property %d is unknown\n", code);
 	    return 0;
       }
 }

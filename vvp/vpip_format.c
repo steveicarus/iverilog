@@ -102,14 +102,9 @@ void vpip_format_strength(char*str, s_vpi_value*value)
 	    str[2] = 'Z';
 	    break;
 	  default:
+	    fprintf(stderr, "Unsupported type %d.\n",
+	            value->value.strength[0].logic);
 	    assert(0);
       }
 }
-
-/*
- * $Log: vpip_format.c,v $
- * Revision 1.1  2003/04/20 02:49:07  steve
- *  acc_fetch_value support for %v format.
- *
- */
 

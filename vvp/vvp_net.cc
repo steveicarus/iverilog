@@ -53,6 +53,7 @@ vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c)
 	    c = BIT4_1;
 	    return BIT4_1;
 	  default:
+	    fprintf(stderr, "Incorrect result %d.\n", sum);
 	    assert(0);
       }
 }
@@ -1230,6 +1231,8 @@ vvp_vector4_t c4string_to_vector4(const char*str)
 		  bit = BIT4_Z;
 		  break;
 		default:
+		  fprintf(stderr, "Unsupported bit value %c(%d).\n", str[idx],
+		          str[idx]);
 		  assert(0);
 		  bit = BIT4_0;
 		  break;
@@ -1452,12 +1455,14 @@ void vvp_fun_signal_base::recv_long(vvp_net_ptr_t ptr, long bit)
 		  release(ptr, false);
 		  break;
 		default:
+		  fprintf(stderr, "Unsupported command %d.\n", bit);
 		  assert(0);
 		  break;
 	    }
 	    break;
 
-	  default: // Other ports ar errors.
+	  default: // Other ports are errors.
+	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
 	    assert(0);
 	    break;
       }
@@ -1517,6 +1522,7 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    break;
 
 	  default:
+	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
 	    assert(0);
 	    break;
       }
@@ -1557,6 +1563,7 @@ void vvp_fun_signal::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 	    break;
 
 	  default:
+	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
 	    assert(0);
 	    break;
       }
@@ -1682,6 +1689,7 @@ void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
 	    break;
 
 	  default:
+	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
 	    assert(0);
 	    break;
       }
@@ -1800,6 +1808,7 @@ void vvp_fun_signal_real::recv_real(vvp_net_ptr_t ptr, double bit)
 	    break;
 
 	  default:
+	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
 	    assert(0);
 	    break;
       }
@@ -2303,209 +2312,4 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
       else
 	    return BIT4_0;
 }
-
-/*
- * $Log: vvp_net.cc,v $
- * Revision 1.64  2007/06/12 02:36:58  steve
- *  handle constant inf values.
- *
- * Revision 1.63  2007/04/15 02:07:24  steve
- *  Fix div/mod calculation that caused a hang for some divisions.
- *
- * Revision 1.62  2007/03/22 16:08:19  steve
- *  Spelling fixes from Larry
- *
- * Revision 1.61  2007/03/07 03:55:42  steve
- *  Cast to remove ambiguities calling pow function.
- *
- * Revision 1.60  2007/03/07 00:38:16  steve
- *  Lint fixes.
- *
- * Revision 1.59  2007/03/02 06:13:22  steve
- *  Add support for edge sensitive spec paths.
- *
- * Revision 1.58  2007/02/05 01:08:10  steve
- *  Handle relink of continuous assignment.
- *
- * Revision 1.57  2006/12/10 17:15:48  steve
- *  Fix build error overloading pow function.
- *
- * Revision 1.56  2006/12/09 19:06:53  steve
- *  Handle vpiRealVal reads of signals, and real anyedge events.
- *
- * Revision 1.55  2006/11/22 06:10:05  steve
- *  Fix spurious event from net8 that is forced.
- *
- * Revision 1.54  2006/07/08 21:48:00  steve
- *  Delay object supports real valued delays.
- *
- * Revision 1.53  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.52  2006/03/15 19:15:34  steve
- *  const/non-const clash.
- *
- * Revision 1.51  2006/03/08 05:29:42  steve
- *  Add support for logic parameters.
- *
- * Revision 1.50  2006/01/03 06:19:31  steve
- *  Support wide divide nodes.
- *
- * Revision 1.49  2005/11/26 17:16:05  steve
- *  Force instruction that can be indexed.
- *
- * Revision 1.48  2005/11/25 17:55:26  steve
- *  Put vec8 and vec4 nets into seperate net classes.
- *
- * Revision 1.47  2005/11/10 13:27:16  steve
- *  Handle very wide % and / operations using expanded vector2 support.
- *
- * Revision 1.46  2005/10/04 04:41:07  steve
- *  Make sure the new size sticks in resize method.
- *
- * Revision 1.45  2005/08/30 00:49:42  steve
- *  Clean up a few overflowed shifts.
- *
- * Revision 1.44  2005/08/29 04:46:52  steve
- *  Safe handling of C left shift.
- *
- * Revision 1.43  2005/08/27 03:28:16  steve
- *  Be more cautios about accessing out-of-range bits.
- *
- * Revision 1.42  2005/08/27 02:34:43  steve
- *  Bring threads into the vvp_vector4_t structure.
- *
- * Revision 1.41  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.40  2005/06/27 21:13:14  steve
- *  Make vector2 multiply more portable.
- *
- * Revision 1.39  2005/06/26 01:57:22  steve
- *  Make bit masks of vector4_t 64bit aware.
- *
- * Revision 1.38  2005/06/24 02:16:42  steve
- *  inline the vvp_send_vec4_pv function.
- *
- * Revision 1.37  2005/06/22 18:30:12  steve
- *  Inline more simple stuff, and more vector4_t by const reference for performance.
- *
- * Revision 1.36  2005/06/22 00:04:49  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.35  2005/06/21 22:48:23  steve
- *  Optimize vvp_scalar_t handling, and fun_buf Z handling.
- *
- * Revision 1.34  2005/06/20 01:28:14  steve
- *  Inline some commonly called vvp_vector4_t methods.
- *
- * Revision 1.33  2005/06/19 18:42:00  steve
- *  Optimize the LOAD_VEC implementation.
- *
- * Revision 1.32  2005/06/15 00:47:15  steve
- *  Resolv do not propogate inputs that do not change.
- *
- * Revision 1.31  2005/06/13 00:54:04  steve
- *  More unified vec4 to hex string functions.
- *
- * Revision 1.30  2005/06/12 15:13:37  steve
- *  Support resistive mos devices.
- *
- * Revision 1.29  2005/06/02 16:02:11  steve
- *  Add support for notif0/1 gates.
- *  Make delay nodes support inertial delay.
- *  Add the %force/link instruction.
- *
- * Revision 1.28  2005/05/17 20:54:56  steve
- *  Clean up definition of vvp_vector4_t insertion into ostream.
- *
- * Revision 1.27  2005/05/07 03:14:50  steve
- *  ostream insert for vvp_vector4_t objects.
- *
- * Revision 1.26  2005/04/28 04:59:53  steve
- *  Remove dead functor code.
- *
- * Revision 1.25  2005/04/25 04:42:17  steve
- *  vvp_fun_signal eliminates duplicate propagations.
- *
- * Revision 1.24  2005/04/13 06:34:20  steve
- *  Add vvp driver functor for logic outputs,
- *  Add ostream output operators for debugging.
- *
- * Revision 1.23  2005/04/09 06:00:58  steve
- *  scalars with 0-drivers are hiZ by definition.
- *
- * Revision 1.22  2005/04/09 05:30:38  steve
- *  Default behavior for recv_vec8 methods.
- *
- * Revision 1.21  2005/04/03 05:45:51  steve
- *  Rework the vvp_delay_t class.
- *
- * Revision 1.20  2005/04/01 06:02:45  steve
- *  Reimplement combinational UDPs.
- *
- * Revision 1.19  2005/03/18 02:56:04  steve
- *  Add support for LPM_UFUNC user defined functions.
- *
- * Revision 1.18  2005/03/12 04:27:43  steve
- *  Implement VPI access to signal strengths,
- *  Fix resolution of ambiguous drive pairs,
- *  Fix spelling of scalar.
- *
- * Revision 1.17  2005/02/14 01:50:23  steve
- *  Signals may receive part vectors from %set/x0
- *  instructions. Re-implement the %set/x0 to do
- *  just that. Remove the useless %set/x0/x instruction.
- *
- * Revision 1.16  2005/02/12 06:13:22  steve
- *  Add debug dumps for vectors, and fix vvp_scaler_t make from BIT4_X values.
- *
- * Revision 1.15  2005/02/10 04:54:41  steve
- *  Simplify vvp_scaler strength representation.
- *
- * Revision 1.14  2005/02/07 22:42:42  steve
- *  Add .repeat functor and BIFIF functors.
- *
- * Revision 1.13  2005/02/04 05:13:02  steve
- *  Add wide .arith/mult, and vvp_vector2_t vectors.
- *
- * Revision 1.12  2005/02/03 04:55:13  steve
- *  Add support for reduction logic gates.
- *
- * Revision 1.11  2005/01/30 05:06:49  steve
- *  Get .arith/sub working.
- *
- * Revision 1.10  2005/01/29 17:52:06  steve
- *  move AND to buitin instead of table.
- *
- * Revision 1.9  2005/01/28 05:34:25  steve
- *  Add vector4 implementation of .arith/mult.
- *
- * Revision 1.8  2005/01/22 17:36:15  steve
- *  .cmp/x supports signed magnitude compare.
- *
- * Revision 1.7  2005/01/22 00:58:22  steve
- *  Implement the %load/x instruction.
- *
- * Revision 1.6  2005/01/16 04:19:08  steve
- *  Reimplement comparators as vvp_vector4_t nodes.
- *
- * Revision 1.5  2005/01/09 20:11:16  steve
- *  Add the .part/pv node and related functionality.
- *
- * Revision 1.4  2005/01/01 02:12:34  steve
- *  vvp_fun_signal propagates vvp_vector8_t vectors when appropriate
- *
- * Revision 1.3  2004/12/31 06:00:06  steve
- *  Implement .resolv functors, and stub signals recv_vec8 method.
- *
- * Revision 1.2  2004/12/15 17:16:08  steve
- *  Add basic force/release capabilities.
- *
- * Revision 1.1  2004/12/11 02:31:30  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- */
 

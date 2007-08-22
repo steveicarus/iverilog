@@ -238,6 +238,7 @@ static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
 	      }
 
 	  default:
+	    fprintf(stderr, "Unsupported time type %d.\n", obj->cb_time.type);
 	    assert(0);
 	    break;
       }
@@ -267,6 +268,7 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data)
 	  }
 
 	  default:
+	    fprintf(stderr, "Unsupported time type %d.\n", obj->cb_time.type);
 	    assert(0);
 	    break;
       }
@@ -595,57 +597,4 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 		    vp->format);
       }
 }
-
-
-/*
- * $Log: vpi_callback.cc,v $
- * Revision 1.46  2007/04/10 04:32:05  steve
- *  vpi_free_object doesnot free callback out from under runtime.
- *
- * Revision 1.45  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.44  2006/09/29 01:24:34  steve
- *  rwsync callback fixes from Ben Staveley (with modifications.)
- *
- * Revision 1.43  2006/03/05 05:45:58  steve
- *  Add support for memory value change callbacks.
- *
- * Revision 1.42  2006/02/22 03:08:53  steve
- *  Some trivial log message improvements.
- *
- * Revision 1.41  2005/12/05 21:21:18  steve
- *  Fixes for stubborn compilers.
- *
- * Revision 1.40  2005/11/25 17:55:26  steve
- *  Put vec8 and vec4 nets into seperate net classes.
- *
- * Revision 1.39  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.38  2005/06/12 01:10:26  steve
- *  Remove useless references to functor.h
- *
- * Revision 1.37  2005/06/09 05:04:45  steve
- *  Support UDP initial values.
- *
- * Revision 1.36  2005/06/02 16:02:11  steve
- *  Add support for notif0/1 gates.
- *  Make delay nodes support inertial delay.
- *  Add the %force/link instruction.
- *
- * Revision 1.35  2004/12/11 02:31:30  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.34  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.33  2004/02/18 02:51:59  steve
- *  Fix type mismatches of various VPI functions.
- */
 

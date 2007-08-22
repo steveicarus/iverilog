@@ -325,6 +325,7 @@ void vvp_fun_muxr::recv_real(vvp_net_ptr_t ptr, double bit)
 	    break;
 
 	  default:
+	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
 	    assert(0);
       }
 }

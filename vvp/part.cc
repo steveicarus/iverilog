@@ -133,6 +133,7 @@ void vvp_fun_part_var::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	    base_ = tmp;
 	    break;
 	  default:
+	    fprintf(stderr, "Unsupported port type %d.\n", port.port());
 	    assert(0);
 	    break;
       }
@@ -197,46 +198,4 @@ void compile_part_select_var(char*label, char*source, char*var,
       input_connect(net, 0, source);
       input_connect(net, 1, var);
 }
-
-/*
- * $Log: part.cc,v $
- * Revision 1.12  2006/11/16 01:11:26  steve
- *  Support part writes into  part select nodes.
- *
- * Revision 1.11  2006/05/01 18:44:08  steve
- *  Reduce steps to make logic output.
- *
- * Revision 1.10  2006/04/26 04:39:23  steve
- *  Include  bit value in assertion message.
- *
- * Revision 1.9  2005/09/20 00:51:53  steve
- *  Lazy processing of vvp_fun_part functor.
- *
- * Revision 1.8  2005/07/14 23:34:19  steve
- *  gcc4 compile errors.
- *
- * Revision 1.7  2005/06/26 21:08:11  steve
- *  More verbose debugging of part select width errors.
- *
- * Revision 1.6  2005/06/22 00:04:49  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.5  2005/05/09 00:36:58  steve
- *  Force part base out of bounds if index is invalid.
- *
- * Revision 1.4  2005/05/08 23:40:14  steve
- *  Add support for variable part select.
- *
- * Revision 1.3  2005/01/09 20:11:16  steve
- *  Add the .part/pv node and related functionality.
- *
- * Revision 1.2  2004/12/29 23:44:39  steve
- *  Fix missing output propagation of part node.
- *
- * Revision 1.1  2004/12/11 02:31:30  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- */
 

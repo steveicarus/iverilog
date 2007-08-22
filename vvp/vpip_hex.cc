@@ -101,6 +101,7 @@ void vpip_hex_str_to_vec4(vvp_vector4_t&val, const char*str)
 		  val.set_bit(idx, BIT4_Z);
 		  break;
 		default:
+		  fprintf(stderr, "Unsupported digit %c(%d).\n", ch, ch);
 		  assert(0);
 		  break;
 	    }
@@ -156,21 +157,4 @@ void vpip_vec4_to_hex_str(const vvp_vector4_t&bits, char*buf,
 	    }
       }
 }
-
-
-/*
- * $Log: vpip_hex.cc,v $
- * Revision 1.4  2006/02/21 02:39:27  steve
- *  Support string values for memory words.
- *
- * Revision 1.3  2005/06/13 00:54:04  steve
- *  More unified vec4 to hex string functions.
- *
- * Revision 1.2  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.1  2002/05/11 04:39:35  steve
- *  Set and get memory words by string value.
- *
- */
 

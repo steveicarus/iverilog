@@ -269,6 +269,8 @@ vvp_net_t* vvp_net_lookup(const char*label)
 		}
 
 		default:
+		  fprintf(stderr, "Unsupported type %d.\n",
+		          vpi->vpi_type->type_code);
 		  assert(0);
 	    }
       }
@@ -1150,10 +1152,6 @@ static vvp_net_t*make_modpath_src(vvp_fun_modpath*dst, char edge,
       } else {
 	    bool posedge, negedge;
 	    switch (edge) {
-		case 0:
-		  posedge = false;
-		  negedge = false;
-		  break;
 		case '+':
 		  posedge = true;
 		  negedge = false;
@@ -1167,6 +1165,8 @@ static vvp_net_t*make_modpath_src(vvp_fun_modpath*dst, char edge,
 		  negedge = false;
 		  break;
 		default:
+		  fprintf(stderr, "Unknown edge identifier %c(%d).\n", edge,
+		          edge);
 		  assert(0);
 	    }
 	    obj = new vvp_fun_modpath_edge(use_delay, posedge, negedge);
@@ -1654,105 +1654,4 @@ void compile_param_string(char*label, char*name, char*value)
 
       free(label);
 }
-
-/*
- * $Log: compile.cc,v $
- * Revision 1.232  2007/06/07 03:20:16  steve
- *  Properly handle signed conversion to real
- *
- * Revision 1.231  2007/04/14 04:43:02  steve
- *  Finish up part select of array words.
- *
- * Revision 1.230  2007/03/02 06:13:22  steve
- *  Add support for edge sensitive spec paths.
- *
- * Revision 1.229  2007/03/01 06:19:39  steve
- *  Add support for conditional specify delay paths.
- *
- * Revision 1.228  2007/02/14 05:58:14  steve
- *  Add the mov/wr opcode.
- *
- * Revision 1.227  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.226  2006/10/05 01:23:53  steve
- *  Handle non-constant delays on indexed non-blocking assignments.
- *
- * Revision 1.225  2006/09/29 03:57:01  steve
- *  Modpath delay chooses correct delay for edge.
- *
- * Revision 1.224  2006/09/23 04:57:19  steve
- *  Basic support for specify timing.
- *
- * Revision 1.223  2006/08/09 05:19:08  steve
- *  Add support for real valued modulus.
- *
- * Revision 1.222  2006/08/08 05:11:37  steve
- *  Handle 64bit delay constants.
- *
- * Revision 1.221  2006/07/30 02:51:36  steve
- *  Fix/implement signed right shift.
- *
- * Revision 1.220  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.219  2006/03/18 22:51:10  steve
- *  Syntax for carrying sign with parameter.
- *
- * Revision 1.218  2006/03/08 05:29:42  steve
- *  Add support for logic parameters.
- *
- * Revision 1.217  2006/02/02 02:44:00  steve
- *  Allow part selects of memory words in l-values.
- *
- * Revision 1.216  2006/01/02 05:32:06  steve
- *  Require explicit delay node from source.
- *
- * Revision 1.215  2005/11/26 17:16:05  steve
- *  Force instruction that can be indexed.
- *
- * Revision 1.214  2005/10/12 17:23:15  steve
- *  Add alias nodes.
- *
- * Revision 1.213  2005/09/20 18:34:01  steve
- *  Clean up compiler warnings.
- *
- * Revision 1.212  2005/09/17 04:01:01  steve
- *  Add the load/v.p instruction.
- *
- * Revision 1.211  2005/09/14 02:50:07  steve
- *  Add word integer compares.
- *
- * Revision 1.210  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.209  2005/06/14 01:44:09  steve
- *  Add the assign_v0_d instruction.
- *
- * Revision 1.208  2005/06/14 00:42:06  steve
- *  Accomodate fussy compilers.
- *
- * Revision 1.207  2005/06/12 01:10:26  steve
- *  Remove useless references to functor.h
- *
- * Revision 1.206  2005/06/09 05:04:45  steve
- *  Support UDP initial values.
- *
- * Revision 1.205  2005/06/09 04:12:30  steve
- *  Support sequential UDP devices.
- *
- * Revision 1.204  2005/06/02 16:02:11  steve
- *  Add support for notif0/1 gates.
- *  Make delay nodes support inertial delay.
- *  Add the %force/link instruction.
- *
- * Revision 1.203  2005/05/25 05:44:51  steve
- *  Handle event/or with specific, efficient nodes.
- *
- * Revision 1.202  2005/05/24 01:43:27  steve
- *  Add a sign-extension node.
- */
 

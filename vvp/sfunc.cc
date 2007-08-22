@@ -95,6 +95,7 @@ static int make_vpi_argv(unsigned argc, vpiHandle*vpi_argv,
 	    break;
 
 	  default:
+	    fprintf(stderr, "Unsupported type %c(%d).\n", *cp);
 	    assert(0);
 	    break;
       }
@@ -117,6 +118,7 @@ static int make_vpi_argv(unsigned argc, vpiHandle*vpi_argv,
 		}
 
 		default:
+		  fprintf(stderr, "Unsupported type %c(%d).\n", *cp);
 		  assert(0);
 	    }
 	    idx += 1;
@@ -151,10 +153,3 @@ void compile_sfunc(char*label, char*name,  char*format_string,
       free(argv);
 }
 
-
-/*
- * $Log: sfunc.cc,v $
- * Revision 1.1  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- */

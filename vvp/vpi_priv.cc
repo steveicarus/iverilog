@@ -877,6 +877,7 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 	    break;
 
 	  default:
+	    fprintf(stderr, "Unsupported operation %d.\n", operation);
 	    assert(0);
       }
 }

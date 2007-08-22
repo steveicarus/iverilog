@@ -208,6 +208,7 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp)
 		  vthread_put_bit(vpip_current_vthread, rfp->vbit, BIT4_Z);
 		  break;
 		default:
+		  fprintf(stderr, "Unsupported value %d.\n", vp->value.scalar);
 		  assert(0);
 	    }
 	    break;
@@ -239,6 +240,8 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp)
 			      bit4 = BIT4_X;
 			      break;
 			    default:
+			      fprintf(stderr, "Unsupported bit value %d.\n",
+			              bit);
 			      assert(0);
 			}
 			vthread_put_bit(vpip_current_vthread,
@@ -251,6 +254,7 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp)
 	    break;
 
 	  default:
+	    fprintf(stderr, "Unsupported format %d.\n", vp->format);
 	    assert(0);
       }
 
@@ -275,6 +279,7 @@ static vpiHandle sysfunc_put_real_value(vpiHandle ref, p_vpi_value vp)
 	    break;
 
 	  default:
+	    fprintf(stderr, "Unsupported format %d.\n", vp->format);
 	    assert(0);
       }
 
@@ -308,6 +313,8 @@ static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp)
                         val.set_bit(0, BIT4_Z);
                         break;
 		      default:
+                        fprintf(stderr, "Unsupported bit value %d.\n",
+                                vp->value.scalar);
                         assert(0);
                 }
           }
@@ -346,6 +353,8 @@ static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp)
 			      bit4 = BIT4_X;
 			      break;
 			    default:
+			      fprintf(stderr, "Unsupported bit value %d.\n",
+			              bit);
 			      assert(0);
 			}
 			val.set_bit(wdx+idx, bit4);
@@ -379,6 +388,7 @@ static vpiHandle sysfunc_put_rnet_value(vpiHandle ref, p_vpi_value vp)
 	    break;
 
 	  default:
+	    fprintf(stderr, "Unsupported format %d.\n", vp->format);
 	    assert(0);
       }
 
@@ -507,6 +517,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 	    break;
 
 	  default:
+	    fprintf(stderr, "Unsupported type %d.\n", defn->info.type);
 	    assert(0);
       }
 
@@ -594,6 +605,7 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 	    cur->base.vpi_type = &vpip_sysfunc_def_rt;
 	    break;
 	  default:
+	    fprintf(stderr, "Unsupported type %d.\n", ss->type);
 	    assert(0);
       }
 

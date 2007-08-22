@@ -184,6 +184,7 @@ static void or_based_on_char(udp_levels_table&cur, char flag,
 	    cur.mask1 |= mask_bit;
 	    break;
 	  default:
+	    fprintf(stderr, "Unsupported flag %c(%d).\n", flag, flag);
 	    assert(0);
       }
 }
@@ -206,6 +207,8 @@ void vvp_udp_comb_s::compile_table(char**tab)
 		case 'x':
 		  break;
 		default:
+		  fprintf(stderr, "Unsupported entry %c(%d).\n",
+		          tab[idx][port_count()], tab[idx][port_count()]);
 		  assert(0);
 	    }
       }
@@ -438,6 +441,8 @@ void vvp_udp_seq_s::compile_table(char**tab)
 			nlevelsL_ += 1;
 			break;
 		      default:
+			fprintf(stderr, "Unsupported entry %c(%d).\n",
+			        row[port_count()+1], row[port_count()+1]);
 			assert(0);
 			break;
 		  }
@@ -466,6 +471,8 @@ void vvp_udp_seq_s::compile_table(char**tab)
 			nedgesL_ += 1 + extra;
 			break;
 		      default:
+			fprintf(stderr, "Unsupported entry %c(%d).\n",
+			        row[port_count()+1], row[port_count()+1]);
 			assert(0);
 			break;
 		  }
@@ -517,6 +524,8 @@ void vvp_udp_seq_s::compile_table(char**tab)
 			levelsL_[idx_levL++] = cur;
 			break;
 		      default:
+			fprintf(stderr, "Unsupported entry %c(%d).\n",
+			        row[port_count()+1], row[port_count()+1]);
 			assert(0);
 			break;
 		  }
@@ -606,6 +615,8 @@ void vvp_udp_seq_s::compile_table(char**tab)
 			      edgesL_[idx_edgL++] = ext1;
 			break;
 		      default:
+			fprintf(stderr, "Unsupported entry %c(%d).\n",
+			        row[port_count()+1], row[port_count()+1]);
 			assert(0);
 			break;
 		  }
@@ -943,3 +954,4 @@ void compile_udp_functor(char*label, char*type,
       wide_inputs_connect(core, argc, argv);
       free(argv);
 }
+

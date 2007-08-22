@@ -298,6 +298,8 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val)
 			    put_val.set_bit(idx, BIT4_Z);
 			    break;
 			  default:
+			    fprintf(stderr, "Unsupported value %c(%d).\n",
+			            str[width-idx-1], str[width-idx-1]);
 			    assert(0);
 		      }
 		}
@@ -476,76 +478,3 @@ vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name)
       return &(obj->base);
 }
 
-/*
- * $Log: vpi_memory.cc,v $
- * Revision 1.33  2006/03/06 05:43:15  steve
- *  Cleanup vpi_const to use vec4 values.
- *
- * Revision 1.32  2006/03/05 05:45:58  steve
- *  Add support for memory value change callbacks.
- *
- * Revision 1.31  2006/02/21 03:19:03  steve
- *  Remove dead code.
- *
- * Revision 1.30  2006/02/21 02:56:49  steve
- *  Get vpiVectorVal from memory words.
- *
- * Revision 1.29  2006/02/21 02:39:27  steve
- *  Support string values for memory words.
- *
- * Revision 1.28  2006/02/02 02:44:00  steve
- *  Allow part selects of memory words in l-values.
- *
- * Revision 1.27  2005/06/17 05:13:07  steve
- *  Support set of IntVal to memory words.
- *
- * Revision 1.26  2005/06/13 00:54:04  steve
- *  More unified vec4 to hex string functions.
- *
- * Revision 1.25  2005/03/05 05:43:03  steve
- *  Get base address from word ranges that VPI user passed.
- *
- * Revision 1.24  2005/03/03 04:33:10  steve
- *  Rearrange how memories are supported as vvp_vector4 arrays.
- *
- * Revision 1.23  2004/05/19 03:30:46  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.22  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.21  2003/02/02 01:40:24  steve
- *  Five vpi_free_object a default behavior.
- *
- * Revision 1.20  2002/09/12 15:13:07  steve
- *  Account for buffer overrun in memory word names.
- *
- * Revision 1.19  2002/09/11 16:06:57  steve
- *  Fix wrecked rbuf in vpi_get_str of signals and memories.
- *
- * Revision 1.18  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.17  2002/07/09 03:24:37  steve
- *  Dynamic resizevpi result buf in more places.
- *
- * Revision 1.16  2002/07/05 17:14:15  steve
- *  Names of vpi objects allocated as vpip_strings.
- *
- * Revision 1.15  2002/07/04 16:37:07  steve
- *  Fix s_vpi_vecval array byte size.
- *
- * Revision 1.14  2002/07/03 23:39:57  steve
- *  Dynamic size result buffer for _str and _get_value functions.
- *
- * Revision 1.13  2002/07/03 23:16:27  steve
- *  don't pollute name space
- *  fix vecval for Z/X cases
- *
- * Revision 1.12  2002/07/03 02:09:38  steve
- *  vpiName, vpiFullName support in memory types,
- *  length checks for *_get_str() buffers,
- *  temporary buffers for *_get_str() data,
- *  dynamic storage for vpi_get_data() in memory types
- *  shared with signal white space
- */

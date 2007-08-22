@@ -638,6 +638,7 @@ static void real_value(vpiHandle ref, p_vpi_value vp)
 	    vp->value.real = rfp->value;
 	    break;
 	  default:
+	    fprintf(stderr, "vvp error: unsupported format %d.\n", vp->format);
 	    assert(0);
       }
 }

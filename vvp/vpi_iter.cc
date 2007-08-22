@@ -74,15 +74,15 @@ vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
 vpiHandle vpi_scan(vpiHandle ref)
 {
       if (ref == 0) {
-	    vpi_printf("ERROR: NULL handle passed to vpi_scan.\n");
+	    fprintf(stderr, "ERROR: NULL handle passed to vpi_scan.\n");
 	    assert(0);
 	    return 0;
       }
 
       if (ref->vpi_type->type_code != vpiIterator) {
-	    vpi_printf("ERROR: vpi_scan argument is "
-		       "inappropriate vpiType code %d\n",
-		       ref->vpi_type->type_code);
+	    fprintf(stderr, "ERROR: vpi_scan argument is "
+		    "inappropriate vpiType code %d\n",
+		    ref->vpi_type->type_code);
 	    assert(0);
 	    return 0;
       }
@@ -101,31 +101,4 @@ vpiHandle vpi_scan(vpiHandle ref)
 
       return hp->args[hp->next++];
 }
-
-/*
- * $Log: vpi_iter.cc,v $
- * Revision 1.7  2003/02/25 01:17:28  steve
- *  Some error messages around asserts.
- *
- * Revision 1.6  2003/02/17 00:58:38  steve
- *  Strict correctness of vpi_free_object results.
- *
- * Revision 1.5  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2002/06/02 19:05:50  steve
- *  Check for null pointers from users.
- *
- * Revision 1.3  2002/05/03 15:44:11  steve
- *  Add vpiModule iterator to vpiScope objects.
- *
- * Revision 1.2  2001/05/08 23:59:33  steve
- *  Add ivl and vvp.tgt support for memories in
- *  expressions and l-values. (Stephan Boettcher)
- *
- * Revision 1.1  2001/03/16 01:44:34  steve
- *  Add structures for VPI support, and all the %vpi_call
- *  instruction. Get linking of VPI modules to work.
- *
- */
 
