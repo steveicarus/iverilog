@@ -614,7 +614,7 @@ void schedule_simulate(void)
 
       signals_capture();
 
-      while (schedule_runnable && sched_list) {
+      while (sched_list) {
 
 	    if (schedule_stopped_flag) {
 		  schedule_stopped_flag = false;
@@ -629,6 +629,7 @@ void schedule_simulate(void)
 		 postponed sync events. Run them all. */
 	    if (ctim->delay > 0) {
 
+		  if (!schedule_runnable) break;
 		  schedule_time += ctim->delay;
 		  ctim->delay = 0;
 
@@ -679,8 +680,4 @@ void schedule_simulate(void)
       // Execute post-simulation callbacks
       vpiPostsim();
 }
-
-/*
- * $Log: schedule.cc,v $
- */
 
