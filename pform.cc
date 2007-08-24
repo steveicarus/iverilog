@@ -833,6 +833,11 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
  * the new (1364-2001) list_of_port_declarations, but omitted a
  * register/wire/etc. that would have triggered it to be set elsewhere.
  */
+/*
+ * Since implicitly defined list of port declarations are no longer
+ * considered fully defined we no longer need this routine to force
+ * them to be fully defined.
+ *
 void pform_set_net_range(const char* name)
 {
       PWire*cur = get_wire_in_module(hier_name(name));
@@ -842,6 +847,7 @@ void pform_set_net_range(const char* name)
       }
       cur->set_net_range();
 }
+*/
 
 /*
  * This function attaches a range to a given name. The function is

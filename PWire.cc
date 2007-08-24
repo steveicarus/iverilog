@@ -131,12 +131,18 @@ bool PWire::get_isint() const
       return isint_;
 }
 
+/*
+ * Since implicitly defined list of port declarations are no longer
+ * considered fully defined we no longer need this routine to force
+ * them to be fully defined.
+ *
 void PWire::set_net_range()
 {
       net_msb_ = port_msb_;
       net_lsb_ = port_lsb_;
       net_set_ = true;
 }
+*/
 
 void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
 {
