@@ -565,7 +565,8 @@ static vvp_time64_t schedule_time;
 vvp_time64_t schedule_simtime(void)
 { return schedule_time; }
 
-extern void vpiPresim();
+extern void vpiEndOfCompile();
+extern void vpiStartOfSim();
 extern void vpiPostsim();
 extern void vpiNextSimTime(void);
 
@@ -600,8 +601,8 @@ void schedule_simulate(void)
 {
       schedule_time = 0;
 
-      // Execute pre-simulation callbacks
-      vpiPresim();
+      // Execute end of compile callbacks
+      vpiEndOfCompile();
 
 	// Execute initialization events.
       while (schedule_init_list) {
@@ -611,6 +612,9 @@ void schedule_simulate(void)
 	    cur->run_run();
 	    delete cur;
       }
+
+      // Execute start of simulation callbacks
+      vpiStartOfSim();
 
       signals_capture();
 

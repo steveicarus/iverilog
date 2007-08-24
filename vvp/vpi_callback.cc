@@ -286,7 +286,7 @@ static struct __vpiCallback*EndOfCompile = NULL;
 static struct __vpiCallback*StartOfSimulation = NULL;
 static struct __vpiCallback*EndOfSimulation = NULL;
 
-void vpiPresim(void) {
+void vpiEndOfCompile(void) {
       struct __vpiCallback* cur;
 
       /*
@@ -302,6 +302,19 @@ void vpiPresim(void) {
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    delete_vpi_callback(cur);
       }
+
+      vpi_mode_flag = VPI_MODE_NONE;
+}
+
+void vpiStartOfSim(void) {
+      struct __vpiCallback* cur;
+
+      /*
+       * Walk the list of register callbacks, executing them and
+       * freeing them when done.
+       */
+      assert(vpi_mode_flag == VPI_MODE_NONE);
+      vpi_mode_flag = VPI_MODE_RWSYNC;
 
       while (StartOfSimulation) {
 	    cur = StartOfSimulation;
