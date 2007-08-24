@@ -149,6 +149,7 @@ static int comment_enter = 0;
 %x PPINCLUDE
 %x PPDEFINE
 %x CCOMMENT
+%x IFCCOMMENT
 %x PCOMENT
 %x CSTRING
 %x ERROR_LINE
@@ -338,6 +339,15 @@ W [ \t\b\f]+
 <IFDEF_SUPR>`else  {  }
 
 <IFDEF_FALSE,IFDEF_SUPR>"//"[^\r\n]* {  }
+
+<IFDEF_FALSE,IFDEF_SUPR>"/*" { comment_enter = YY_START; BEGIN(IFCCOMMENT); }
+<IFCCOMMENT>[^\r\n]    {  }
+<IFCCOMMENT>\n\r { istack->lineno += 1; }
+<IFCCOMMENT>\r\n { istack->lineno += 1; }
+<IFCCOMMENT>\n   { istack->lineno += 1; }
+<IFCCOMMENT>\r   { istack->lineno += 1; }
+<IFCCOMMENT>"*/" { BEGIN(comment_enter); }
+
 <IFDEF_FALSE,IFDEF_SUPR>[^\r\n]  {  }
 <IFDEF_FALSE,IFDEF_SUPR>\n\r { istack->lineno += 1; fputc('\n', yyout); }
 <IFDEF_FALSE,IFDEF_SUPR>\r\n { istack->lineno += 1; fputc('\n', yyout); }
