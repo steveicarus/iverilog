@@ -1411,14 +1411,23 @@ list_of_port_declarations
 		{ svector<Module::port_t*>*tmp
 			  = new svector<Module::port_t*>(1);
 		  (*tmp)[0] = $1;
-		  pform_set_net_range($1[0].name);
+		  /*
+		   * Uncommenting this makes lopd always fully specified.
+		   * Some wanted an implicit net to not be fully defined.
+		   *
+		   * pform_set_net_range($1[0].name);
+		   */
 		  $$ = tmp;
 		}
 	| list_of_port_declarations ',' port_declaration
 		{ svector<Module::port_t*>*tmp
 			= new svector<Module::port_t*>(*$1, $3);
 		  delete $1;
-		  pform_set_net_range($3[0].name);
+		  /*
+		   * Same as above.
+		   *
+		   * pform_set_net_range($3[0].name);
+		   */
 		  $$ = tmp;
 		}
 	| list_of_port_declarations ',' IDENTIFIER
@@ -1437,7 +1446,11 @@ list_of_port_declarations
 					port_declaration_context.sign_flag,
 					port_declaration_context.range, 0);
 		  delete $1;
-		  pform_set_net_range($3);
+		  /*
+		   * Same as above.
+		   *
+		   * pform_set_net_range($3);
+		   */
 		  $$ = tmp;
 		}
         ;
