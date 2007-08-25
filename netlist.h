@@ -3242,6 +3242,8 @@ class NetScope : public Attrib {
       NetTaskDef* task_def();
       NetFuncDef* func_def();
 
+      bool in_func();
+
       const NetTaskDef* task_def() const;
       const NetFuncDef* func_def() const;
 

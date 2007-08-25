@@ -1572,6 +1572,13 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
+      if (scope->in_func()) {
+	    cerr << get_line() << ": error: functions cannot have non "
+	            "blocking assignment statements." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
 	/* Elaborate the l-value. */
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
@@ -1925,6 +1932,13 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 {
       assert(scope);
 
+      if (scope->in_func()) {
+	    cerr << get_line() << ": error: functions cannot enable/call "
+	            "tasks." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       NetScope*task = des->find_task(scope, path_);
       if (task == 0) {
 	    cerr << get_line() << ": error: Enable of unknown task "
@@ -2119,6 +2133,13 @@ NetProc* PDelayStatement::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
+      if (scope->in_func()) {
+	    cerr << get_line() << ": error: functions cannot have "
+	            "delay statements." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
 	/* This call evaluates the delay expression to a NetEConst, if
 	   possible. This includes transforming NetECReal values to
 	   integers, and applying the proper scaling. */
@@ -2263,6 +2284,13 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 				       NetProc*enet) const
 {
       assert(scope);
+
+      if (scope->in_func()) {
+	    cerr << get_line() << ": error: functions cannot have "
+	            "event statements." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
 	/* Create a single NetEvent and NetEvWait. Then, create a
 	   NetEvProbe for each conjunctive event in the event
@@ -2417,6 +2445,13 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 {
       assert(scope);
       assert(expr_.count() == 1);
+
+      if (scope->in_func()) {
+	    cerr << get_line() << ": error: functions cannot have "
+	            "wait statements." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       const PExpr *pe = expr_[0]->expr();
 
@@ -3434,226 +3469,4 @@ Design* elaborate(list<perm_string>roots)
 
       return des;
 }
-
-
-/*
- * $Log: elaborate.cc,v $
- * Revision 1.374  2007/06/05 21:35:51  steve
- *  Error resiliency (ldoolitt)
- *
- * Revision 1.373  2007/06/04 02:19:07  steve
- *  Handle bit/part select of array words in nets.
- *
- * Revision 1.372  2007/06/02 03:42:12  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.371  2007/05/24 04:07:11  steve
- *  Rework the heirarchical identifier parse syntax and pform
- *  to handle more general combinations of heirarch and bit selects.
- *
- * Revision 1.370  2007/04/16 01:10:07  steve
- *  Properly ignore unsupported ifnone.
- *
- * Revision 1.369  2007/04/15 20:45:40  steve
- *  Attach line number information to task calls.
- *
- * Revision 1.368  2007/04/13 02:34:35  steve
- *  Parse edge sensitive paths without edge specifier.
- *
- * Revision 1.367  2007/04/05 03:09:50  steve
- *  Allow implicit wires in assign l-value.
- *
- * Revision 1.366  2007/04/01 23:01:10  steve
- *  Improve port mismatch error message.
- *
- * Revision 1.365  2007/03/22 16:08:15  steve
- *  Spelling fixes from Larry
- *
- * Revision 1.364  2007/03/08 05:30:02  steve
- *  Limit the calculated widths of constants.
- *
- * Revision 1.363  2007/03/05 05:59:10  steve
- *  Handle processes within generate loops.
- *
- * Revision 1.362  2007/03/03 05:56:55  steve
- *  Check that path source/destination are ports.
- *
- * Revision 1.361  2007/03/02 06:13:22  steve
- *  Add support for edge sensitive spec paths.
- *
- * Revision 1.360  2007/03/01 06:19:38  steve
- *  Add support for conditional specify delay paths.
- *
- * Revision 1.359  2007/02/12 01:52:21  steve
- *  Parse all specify paths to pform.
- *
- * Revision 1.358  2007/02/01 05:52:24  steve
- *  More generous handling of errors in blocks.
- *
- * Revision 1.357  2007/01/21 04:26:36  steve
- *  Clean up elaboration of for-loop increment expression.
- *
- * Revision 1.356  2007/01/19 05:42:40  steve
- *  Precalculate constant power expressions, and constant function arguments.
- *
- * Revision 1.355  2007/01/16 05:44:15  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.354  2006/12/09 01:59:35  steve
- *  Fix an uninitialized variable warning.
- *
- * Revision 1.353  2006/12/08 04:09:41  steve
- *  @* without inputs is an error.
- *
- * Revision 1.352  2006/11/27 02:01:07  steve
- *  Fix crash handling constant true conditional.
- *
- * Revision 1.351  2006/11/26 07:10:30  steve
- *  Fix compile time eval of condition expresion to do reduction OR of vectors.
- *
- * Revision 1.350  2006/11/26 06:29:16  steve
- *  Fix nexus widths for direct link assign and ternary nets.
- *
- * Revision 1.349  2006/11/04 06:19:25  steve
- *  Remove last bits of relax_width methods, and use test_width
- *  to calculate the width of an r-value expression that may
- *  contain unsized numbers.
- *
- * Revision 1.348  2006/10/30 05:44:49  steve
- *  Expression widths with unsized literals are pseudo-infinite width.
- *
- * Revision 1.347  2006/10/03 15:33:49  steve
- *  no-specify turns of specparam elaboration.
- *
- * Revision 1.346  2006/10/03 05:06:00  steve
- *  Support real valued specify delays, properly scaled.
- *
- * Revision 1.345  2006/09/28 04:35:18  steve
- *  Support selective control of specify and xtypes features.
- *
- * Revision 1.344  2006/09/26 19:48:40  steve
- *  Missing PSpec.cc file.
- *
- * Revision 1.343  2006/09/23 04:57:19  steve
- *  Basic support for specify timing.
- *
- * Revision 1.342  2006/09/22 22:14:27  steve
- *  Proper error message when logic array pi count is bad.
- *
- * Revision 1.341  2006/08/08 05:11:37  steve
- *  Handle 64bit delay constants.
- *
- * Revision 1.340  2006/06/02 04:48:50  steve
- *  Make elaborate_expr methods aware of the width that the context
- *  requires of it. In the process, fix sizing of the width of unary
- *  minus is context determined sizes.
- *
- * Revision 1.339  2006/05/01 20:47:59  steve
- *  More explicit datatype setup.
- *
- * Revision 1.338  2006/04/30 05:17:48  steve
- *  Get the data type of part select results right.
- *
- * Revision 1.337  2006/04/26 04:43:50  steve
- *  Chop down assign r-values that elaborate too wide.
- *
- * Revision 1.336  2006/04/10 00:37:42  steve
- *  Add support for generate loops w/ wires and gates.
- *
- * Revision 1.335  2006/03/30 01:49:07  steve
- *  Fix instance arrays indexed by overridden parameters.
- *
- * Revision 1.334  2006/01/03 05:22:14  steve
- *  Handle complex net node delays.
- *
- * Revision 1.333  2006/01/02 05:33:19  steve
- *  Node delays can be more general expressions in structural contexts.
- *
- * Revision 1.332  2005/11/26 00:35:42  steve
- *  More precise about r-value width of constants.
- *
- * Revision 1.331  2005/11/10 13:28:11  steve
- *  Reorganize signal part select handling, and add support for
- *  indexed part selects.
- *
- *  Expand expression constant propagation to eliminate extra
- *  sums in certain cases.
- *
- * Revision 1.330  2005/09/27 04:51:37  steve
- *  Error message for invalid for-loop index variable.
- *
- * Revision 1.329  2005/09/14 02:53:13  steve
- *  Support bool expressions and compares handle them optimally.
- *
- * Revision 1.328  2005/08/06 17:58:16  steve
- *  Implement bi-directional part selects.
- *
- * Revision 1.327  2005/07/15 00:41:09  steve
- *  More debug information.
- *
- * Revision 1.326  2005/07/11 16:56:50  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.325  2005/06/17 05:06:47  steve
- *  Debug messages.
- *
- * Revision 1.324  2005/05/24 01:44:27  steve
- *  Do sign extension of structuran nets.
- *
- * Revision 1.323  2005/05/17 20:56:55  steve
- *  Parameters cannot have their width changed.
- *
- * Revision 1.322  2005/05/13 05:12:39  steve
- *  Some debug messages.
- *
- * Revision 1.321  2005/04/24 23:44:01  steve
- *  Update DFF support to new data flow.
- *
- * Revision 1.320  2005/03/05 05:38:33  steve
- *  Get rval width right for arguments into task calls.
- *
- * Revision 1.319  2005/02/19 02:43:38  steve
- *  Support shifts and divide.
- *
- * Revision 1.318  2005/02/10 04:56:58  steve
- *  distinguish between single port namy instances, and single instances many sub-ports.
- *
- * Revision 1.317  2005/02/08 00:12:36  steve
- *  Add the NetRepeat node, and code generator support.
- *
- * Revision 1.316  2005/01/30 01:42:05  steve
- *  Debug messages for PGAssign elaboration.
- *
- * Revision 1.315  2005/01/22 18:16:00  steve
- *  Remove obsolete NetSubnet class.
- *
- * Revision 1.314  2005/01/12 03:17:36  steve
- *  Properly pad vector widths in pgassign.
- *
- * Revision 1.313  2005/01/09 20:16:01  steve
- *  Use PartSelect/PV and VP to handle part selects through ports.
- *
- * Revision 1.312  2004/12/29 23:55:43  steve
- *  Unify elaboration of l-values for all proceedural assignments,
- *  including assing, cassign and force.
- *
- *  Generate NetConcat devices for gate outputs that feed into a
- *  vector results. Use this to hande gate arrays. Also let gate
- *  arrays handle vectors of gates when the outputs allow for it.
- *
- * Revision 1.311  2004/12/15 17:09:11  steve
- *  Force r-value padded to width.
- *
- * Revision 1.310  2004/12/12 18:13:39  steve
- *  Fix r-value width of continuous assign.
- *
- * Revision 1.309  2004/12/11 02:31:25  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- */
 
