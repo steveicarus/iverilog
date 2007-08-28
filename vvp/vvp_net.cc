@@ -1463,8 +1463,8 @@ void vvp_fun_signal_base::recv_long(vvp_net_ptr_t ptr, long bit)
       }
 }
 
-vvp_fun_signal::vvp_fun_signal(unsigned wid)
-: bits4_(wid)
+vvp_fun_signal::vvp_fun_signal(unsigned wid, vvp_bit4_t init)
+: bits4_(wid, init)
 {
 }
 

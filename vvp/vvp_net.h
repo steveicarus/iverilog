@@ -836,7 +836,7 @@ class vvp_fun_signal_vec : public vvp_fun_signal_base {
 class vvp_fun_signal  : public vvp_fun_signal_vec {
 
     public:
-      explicit vvp_fun_signal(unsigned wid);
+      explicit vvp_fun_signal(unsigned wid, vvp_bit4_t init=BIT4_X);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
       void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
