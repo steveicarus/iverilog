@@ -1,7 +1,7 @@
 #ifndef __logic_H
 #define __logic_H
 /*
- * Copyright (c) 2000-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -54,7 +54,10 @@ class vvp_fun_boolean_ : public vvp_net_fun_t, protected vvp_gen_event_s {
     public:
       explicit vvp_fun_boolean_(unsigned wid);
       ~vvp_fun_boolean_();
+
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
+      void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid);
 
     protected:
       vvp_vector4_t input_[4];
@@ -206,68 +209,4 @@ extern const unsigned char ft_EEQ[];
 extern const unsigned char ft_TRIAND[];
 extern const unsigned char ft_TRIOR[];
 
-/*
- * $Log: logic.h,v $
- * Revision 1.25  2006/11/28 05:57:20  steve
- *  Use new vvp_fun_XXX in place of old functor table for NAND/NOR/XNOR/EEQ.
- *
- * Revision 1.24  2005/09/19 21:45:09  steve
- *  Use lazy eval of BUF/NOT/OR/XOR gates.
- *
- * Revision 1.23  2005/09/01 04:08:47  steve
- *  Support MUXR functors.
- *
- * Revision 1.22  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.21  2005/06/26 21:08:38  steve
- *  AND functor explicitly knows its width.
- *
- * Revision 1.20  2005/06/26 18:06:30  steve
- *  AND gates propogate through scheduler, not directly.
- *
- * Revision 1.19  2005/06/22 00:04:49  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.18  2005/06/17 03:46:53  steve
- *  Make functors know their own width.
- *
- * Revision 1.17  2005/06/12 21:56:16  steve
- *  Remove unused ft_MOS truth tables.
- *
- * Revision 1.16  2005/05/14 19:43:23  steve
- *  Move functor delays to vvp_delay_fun object.
- *
- * Revision 1.15  2005/05/13 05:13:12  steve
- *  Give buffers support for simple delays.
- *
- * Revision 1.14  2005/04/13 06:34:20  steve
- *  Add vvp driver functor for logic outputs,
- *  Add ostream output operators for debugging.
- *
- * Revision 1.13  2005/02/12 23:05:25  steve
- *  Cleanup unused truth tables.
- *
- * Revision 1.11  2005/01/29 17:52:06  steve
- *  move AND to buitin instead of table.
- *
- * Revision 1.10  2004/12/31 05:56:36  steve
- *  Add specific BUFZ functor.
- *
- * Revision 1.9  2004/12/29 23:45:13  steve
- *  Add the part concatenation node (.concat).
- *
- *  Add a vvp_event_anyedge class to handle the special
- *  case of .event statements of edge type. This also
- *  frees the posedge/negedge types to handle all 4 inputs.
- *
- *  Implement table functor recv_vec4 method to receive
- *  and process vectors.
- *
- * Revision 1.8  2004/12/11 02:31:29  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- */
 #endif // __logic_H
