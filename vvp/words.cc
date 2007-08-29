@@ -155,7 +155,7 @@ static void __compile_net(char*label, char*name,
 
       vvp_fun_signal_base*vsig = net8_flag
 	    ? dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal8(wid))
-	    : dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal(wid));
+	    : dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal(wid,BIT4_Z));
       node->fun = vsig;
 
 	/* Add the label into the functor symbol table. */
