@@ -32,6 +32,11 @@
 #include <zlib.h>
 #include <bzlib.h>
 
+#if defined _MSC_VER || defined __MINGW32__
+#define fseeko fseek
+#define ftello ftell
+#endif
+
 
 typedef struct dslxt_tree_node dslxt_Tree;
 struct dslxt_tree_node {
