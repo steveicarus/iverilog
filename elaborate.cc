@@ -379,6 +379,12 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	   only. We do it early so that we can see if we can make a
 	   wide gate instead of an array of gates. */
 
+      if (pin(0) == 0) {
+	    cerr << get_line() << ": error: Logic gate port "
+	            "expressions are not optional." << endl;
+	    des->errors += 1;
+	    return;
+      }
       NetNet*lval_sig = pin(0)->elaborate_lnet(des, scope, true);
       assert(lval_sig);
 
@@ -536,6 +542,12 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    const PExpr*ex = pin(idx);
+	    if (ex == 0) {
+		  cerr << get_line() << ": error: Logic gate port "
+		          "expressions are not optional." << endl;
+		  des->errors += 1;
+		  return;
+	    }
 	    NetNet*sig = (idx == 0)
 		  ? lval_sig
 		  : ex->elaborate_net(des, scope, 0, 0, 0, 0);
