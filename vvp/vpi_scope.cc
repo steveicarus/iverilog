@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -328,9 +328,7 @@ compile_scope_decl(char*label, char*type, char*name, char*tname, char*parent)
       else if (strcmp(type,"begin") == 0)
 	    scope->base.vpi_type = &vpip_scope_begin_rt;
       else if (strcmp(type,"generate") == 0)
-	      // Generate blocks are not really modules, but this is a
-	      // hack that will work for now.
-	    scope->base.vpi_type = &vpip_scope_module_rt;
+	    scope->base.vpi_type = &vpip_scope_begin_rt;
       else {
 	    scope->base.vpi_type = &vpip_scope_module_rt;
 	    assert(0);
