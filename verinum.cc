@@ -947,7 +947,7 @@ verinum operator / (const verinum&left, const verinum&right)
 	   result is signed or not. */
       if (result.has_sign()) {
 
-	    if (use_len <= 8*sizeof(long)) {
+	    if (use_len <= (8*sizeof(long) - 1)) {
 		  long l = left.as_long();
 		  long r = right.as_long();
 		  long v = l / r;
