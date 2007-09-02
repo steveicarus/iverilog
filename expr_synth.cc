@@ -561,13 +561,18 @@ NetNet* NetEConcat::synthesize(Design*des)
       osig->data_type(tmp[0]->data_type());
 
       NetConcat*concat = new NetConcat(scope, scope->local_symbol(),
-				       osig->vector_width(), parms_.count());
+				       osig->vector_width(),
+				       parms_.count() * repeat());
       concat->set_line(*this);
       des->add_node(concat);
       connect(concat->pin(0), osig->pin(0));
 
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
-	    connect(concat->pin(idx+1), tmp[parms_.count()-idx-1]->pin(0));
+      unsigned cur_pin = 1;
+      for (unsigned rpt = 0; rpt < repeat(); rpt += 1) {
+	    for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+		  connect(concat->pin(cur_pin), tmp[parms_.count()-idx-1]->pin(0));
+		  cur_pin += 1;
+	    }
       }
 
       delete[]tmp;
@@ -867,184 +872,4 @@ NetNet* NetESignal::synthesize(Design*des)
 {
       return net_;
 }
-
-/*
- * $Log: expr_synth.cc,v $
- * Revision 1.87  2007/06/02 03:42:12  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.86  2007/04/15 01:37:29  steve
- *  Allow bit/part select of vectors in continuous assignments.
- *
- * Revision 1.85  2007/04/12 05:21:54  steve
- *  fix handling of unary reduction logic in certain nets.
- *
- * Revision 1.84  2007/04/04 02:31:57  steve
- *  Remove useless assert
- *
- * Revision 1.83  2007/02/05 01:42:31  steve
- *  Set some missing local flags.
- *
- * Revision 1.82  2007/01/20 02:10:45  steve
- *  Get argument widths right for shift results.
- *
- * Revision 1.81  2007/01/16 05:44:15  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.80  2006/08/08 05:11:37  steve
- *  Handle 64bit delay constants.
- *
- * Revision 1.79  2006/07/31 03:50:17  steve
- *  Add support for power in constant expressions.
- *
- * Revision 1.78  2006/07/08 21:48:46  steve
- *  Handle real valued literals in net contexts.
- *
- * Revision 1.77  2006/05/01 20:47:59  steve
- *  More explicit datatype setup.
- *
- * Revision 1.76  2006/05/01 05:40:21  steve
- *  fix net type of multiply output.
- *
- * Revision 1.75  2006/04/30 05:17:48  steve
- *  Get the data type of part select results right.
- *
- * Revision 1.74  2006/01/03 05:15:33  steve
- *  Fix the return type of a synthesized divide.
- *
- * Revision 1.73  2005/09/15 23:04:09  steve
- *  Make sure div, mod and mult nodes have line number info.
- *
- * Revision 1.72  2005/08/31 05:07:31  steve
- *  Handle memory references is continuous assignments.
- *
- * Revision 1.71  2005/06/13 23:22:14  steve
- *  use NetPartSelect to shrink part from high bits.
- *
- * Revision 1.70  2005/06/13 22:26:03  steve
- *  Make synthesized padding vector-aware.
- *
- * Revision 1.69  2005/05/15 04:47:00  steve
- *  synthesis of Logic and shifts using vector gates.
- *
- * Revision 1.68  2005/05/06 00:25:13  steve
- *  Handle synthesis of concatenation expressions.
- *
- * Revision 1.67  2005/04/25 01:30:31  steve
- *  synthesis of add and unary get vector widths right.
- *
- * Revision 1.66  2005/04/24 23:44:02  steve
- *  Update DFF support to new data flow.
- *
- * Revision 1.65  2005/03/12 06:43:35  steve
- *  Update support for LPM_MOD.
- *
- * Revision 1.64  2005/02/19 02:43:38  steve
- *  Support shifts and divide.
- *
- * Revision 1.63  2005/02/12 06:25:40  steve
- *  Restructure NetMux devices to pass vectors.
- *  Generate NetMux devices from ternary expressions,
- *  Reduce NetMux devices to bufif when appropriate.
- *
- * Revision 1.62  2005/01/28 05:39:33  steve
- *  Simplified NetMult and IVL_LPM_MULT.
- *
- * Revision 1.61  2005/01/16 04:20:32  steve
- *  Implement LPM_COMPARE nodes as two-input vector functors.
- *
- * Revision 1.60  2004/12/11 02:31:26  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.59  2004/06/30 02:16:26  steve
- *  Implement signed divide and signed right shift in nets.
- *
- * Revision 1.58  2004/06/16 16:21:34  steve
- *  Connect rsif of multiply to DataB.
- *
- * Revision 1.57  2004/06/12 15:00:02  steve
- *  Support / and % in synthesized contexts.
- *
- * Revision 1.56  2004/06/01 01:04:57  steve
- *  Fix synthesis method for logical and/or
- *
- * Revision 1.55  2004/02/20 18:53:35  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.54  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.53  2004/02/15 04:23:48  steve
- *  Fix evaluation of compare to constant expression.
- *
- * Revision 1.52  2003/11/10 19:39:20  steve
- *  Remove redundant scope tokens.
- *
- * Revision 1.51  2003/10/27 06:04:21  steve
- *  More flexible width handling for synthesized add.
- *
- * Revision 1.50  2003/09/26 02:44:27  steve
- *  Assure ternary arguments are wide enough.
- *
- * Revision 1.49  2003/09/03 23:31:36  steve
- *  Support synthesis of constant downshifts.
- *
- * Revision 1.48  2003/08/28 04:11:18  steve
- *  Spelling patch.
- *
- * Revision 1.47  2003/08/09 03:23:40  steve
- *  Add support for IVL_LPM_MULT device.
- *
- * Revision 1.46  2003/07/26 03:34:42  steve
- *  Start handling pad of expressions in code generators.
- *
- * Revision 1.45  2003/06/24 01:38:02  steve
- *  Various warnings fixed.
- *
- * Revision 1.44  2003/04/19 04:52:56  steve
- *  Less picky about expression widths while synthesizing ternary.
- *
- * Revision 1.43  2003/04/08 05:07:15  steve
- *  Detect constant shift distances in synthesis.
- *
- * Revision 1.42  2003/04/08 04:33:55  steve
- *  Synthesize shift expressions.
- *
- * Revision 1.41  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.40  2003/02/26 01:29:24  steve
- *  LPM objects store only their base names.
- *
- * Revision 1.39  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.38  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.37  2002/11/17 23:37:55  steve
- *  Magnitude compare to 0.
- *
- * Revision 1.36  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.35  2002/07/07 22:31:39  steve
- *  Smart synthesis of binary AND expressions.
- *
- * Revision 1.34  2002/07/05 21:26:17  steve
- *  Avoid emitting to vvp local net symbols.
- *
- * Revision 1.33  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- */
 
