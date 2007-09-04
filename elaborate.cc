@@ -442,84 +442,205 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
 	    switch (type()) {
 		case AND:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::AND, instance_width);
+		  if (pin_count() < 2) {
+		      cerr << get_line() << ": error: the AND "
+		              "primitive must have an input." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::AND, instance_width);
 		  break;
 		case BUF:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::BUF, instance_width);
+		  if (pin_count() > 2) {
+		      cerr << get_line() << ": sorry: multiple output BUF "
+		              "primitives are not supported." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::BUF, instance_width);
 		  break;
 		case BUFIF0:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::BUFIF0, instance_width);
+		  if (pin_count() != 3) {
+		      cerr << get_line() << ": error: the BUFIF0 "
+		              "primitive must have three arguments." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::BUFIF0, instance_width);
 		  break;
 		case BUFIF1:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::BUFIF1, instance_width);
+		  if (pin_count() != 3) {
+		      cerr << get_line() << ": error: the BUFIF1 "
+		              "primitive must have three arguments." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::BUFIF1, instance_width);
 		  break;
 		case CMOS:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::CMOS, instance_width);
+		  if (pin_count() != 4) {
+		      cerr << get_line() << ": error: the CMOS "
+		              "primitive must have four arguments." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::CMOS, instance_width);
 		  break;
 		case NAND:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NAND, instance_width);
+		  if (pin_count() < 2) {
+		      cerr << get_line() << ": error: the NAND "
+		              "primitive must have an input." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::NAND, instance_width);
 		  break;
 		case NMOS:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NMOS, instance_width);
+		  if (pin_count() != 3) {
+		      cerr << get_line() << ": error: the NMOS "
+		              "primitive must have three arguments." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::NMOS, instance_width);
 		  break;
 		case NOR:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NOR, instance_width);
+		  if (pin_count() < 2) {
+		      cerr << get_line() << ": error: the NOR "
+		              "primitive must have an input." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::NOR, instance_width);
 		  break;
 		case NOT:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NOT, instance_width);
+		  if (pin_count() > 2) {
+		      cerr << get_line() << ": sorry: multiple output NOT "
+		              "primitives are not supported." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::NOT, instance_width);
 		  break;
 		case NOTIF0:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NOTIF0, instance_width);
+		  if (pin_count() != 3) {
+		      cerr << get_line() << ": error: the NOTIF0 "
+		              "primitive must have three arguments." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::NOTIF0, instance_width);
 		  break;
 		case NOTIF1:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NOTIF1, instance_width);
+		  if (pin_count() != 3) {
+		      cerr << get_line() << ": error: the NOTIF1 "
+		              "primitive must have three arguments." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::NOTIF1, instance_width);
 		  break;
 		case OR:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::OR, instance_width);
+		  if (pin_count() < 2) {
+		      cerr << get_line() << ": error: the OR "
+		              "primitive must have an input." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::OR, instance_width);
 		  break;
 		case RCMOS:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::RCMOS, instance_width);
+		  if (pin_count() != 4) {
+		      cerr << get_line() << ": error: the RCMOS "
+		              "primitive must have four arguments." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::RCMOS, instance_width);
 		  break;
 		case RNMOS:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::RNMOS, instance_width);
+		  if (pin_count() != 3) {
+		      cerr << get_line() << ": error: the RNMOS "
+		              "primitive must have three arguments." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::RNMOS, instance_width);
 		  break;
 		case RPMOS:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::RPMOS, instance_width);
+		  if (pin_count() != 3) {
+		      cerr << get_line() << ": error: the RPMOS "
+		              "primitive must have three arguments." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::RPMOS, instance_width);
 		  break;
 		case PMOS:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::PMOS, instance_width);
+		  if (pin_count() != 3) {
+		      cerr << get_line() << ": error: the PMOS "
+		              "primitive must have three arguments." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::PMOS, instance_width);
 		  break;
 		case PULLDOWN:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::PULLDOWN, instance_width);
+		  if (pin_count() > 1) {
+		      cerr << get_line() << ": sorry: multiple output PULLDOWN "
+		              "primitives are not supported." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::PULLDOWN,
+					      instance_width);
 		  break;
 		case PULLUP:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::PULLUP, instance_width);
+		  if (pin_count() > 1) {
+		      cerr << get_line() << ": sorry: multiple output PULLUP "
+		              "primitives are not supported." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::PULLUP, instance_width);
 		  break;
 		case XNOR:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::XNOR, instance_width);
+		  if (pin_count() < 2) {
+		      cerr << get_line() << ": error: the XNOR "
+		              "primitive must have an input." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::XNOR, instance_width);
 		  break;
 		case XOR:
-		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::XOR, instance_width);
+		  if (pin_count() < 2) {
+		      cerr << get_line() << ": error: the XOR "
+		              "primitive must have an input." << endl;
+		      des->errors += 1;
+		      return;
+		  } else
+		      cur[idx] = new NetLogic(scope, inm, pin_count(),
+					      NetLogic::XOR, instance_width);
 		  break;
 		default:
 		  cerr << get_line() << ": internal error: unhandled "
