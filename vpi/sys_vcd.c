@@ -549,7 +549,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       */
 	    if (vpi_get(vpiSize, item) > 1
 		|| vpi_get(vpiLeftRange, item) != 0) {
-		  fprintf(dump_file, "[%i:%i]", vpi_get(vpiLeftRange, item),
+		  fprintf(dump_file, " [%i:%i]", vpi_get(vpiLeftRange, item),
 			  vpi_get(vpiRightRange, item));
 	    }
 	    fprintf(dump_file, " $end\n");
@@ -832,49 +832,4 @@ void sys_vcd_register()
       tf_data.user_data = "$dumpvars";
       vpi_register_systf(&tf_data);
 }
-
-/*
- * $Log: sys_vcd.c,v $
- * Revision 1.58  2007/03/14 04:05:51  steve
- *  VPI tasks take PLI_BYTE* by the standard.
- *
- * Revision 1.57  2006/10/30 22:45:38  steve
- *  Updates for Cygwin portability (pr1585922)
- *
- * Revision 1.56  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.55  2004/02/15 20:46:01  steve
- *  Add the $dumpflush function
- *
- * Revision 1.54  2004/02/15 03:17:15  steve
- *  dumpfile selects file at compiletf time.
- *
- * Revision 1.53  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.52  2003/12/19 01:27:10  steve
- *  Fix various unsigned compare warnings.
- *
- * Revision 1.51  2003/10/29 03:28:27  steve
- *  Add the PLU_UINT64_FMT string for formatting output.
- *
- * Revision 1.50  2003/10/29 03:23:12  steve
- *  Portably handle time format of VCD prints.
- *
- * Revision 1.49  2003/10/08 23:14:29  steve
- *  TIME_FMT does not include the % character.
- *
- * Revision 1.48  2003/10/02 21:30:06  steve
- *  Use configured TIME_FMT in vcd dump printf.
- *
- * Revision 1.47  2003/09/30 01:33:39  steve
- *  dumpers must be aware of 64bit time.
- *
- * Revision 1.46  2003/08/22 23:14:27  steve
- *  Preserve variable ranges all the way to the vpi.
- *
- * Revision 1.45  2003/08/06 18:24:55  steve
- *  Fix error truncating bitvec in output.
- */
 
