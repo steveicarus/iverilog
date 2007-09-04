@@ -469,6 +469,12 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    const PExpr*ex = pin(idx);
+	    if (ex == 0) {
+		  cerr << get_line() << ": error: Logic gate port "
+			"expressions are not optional." << endl;
+		  des->errors += 1;
+		  return;
+	    }
 	    NetNet*sig = (idx == 0)
 		  ? ex->elaborate_lnet(des, scope, true)
 		  : ex->elaborate_net(des, scope, 0, 0, 0, 0);
