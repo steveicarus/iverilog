@@ -1349,12 +1349,20 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    ltype = "XOR";
 	    break;
 
+	  case IVL_LO_CMOS:
+	    ltype = "CMOS";
+	    break;
+
 	  case IVL_LO_PMOS:
 	    ltype = "PMOS";
 	    break;
 
 	  case IVL_LO_NMOS:
 	    ltype = "NMOS";
+	    break;
+
+	  case IVL_LO_RCMOS:
+	    ltype = "RCMOS";
 	    break;
 
 	  case IVL_LO_RPMOS:
@@ -2407,8 +2415,4 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       ivl_scope_children(net, (ivl_scope_f*) draw_scope, net);
       return 0;
 }
-
-/*
- * $Log: vvp_scope.c,v $
- */
 

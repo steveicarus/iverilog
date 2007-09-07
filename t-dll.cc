@@ -807,6 +807,9 @@ void dll_target::logic(const NetLogic*net)
 	  case NetLogic::BUFIF1:
 	    obj->type_ = IVL_LO_BUFIF1;
 	    break;
+	  case NetLogic::CMOS:
+	    obj->type_ = IVL_LO_CMOS;
+	    break;
 	  case NetLogic::NAND:
 	    obj->type_ = IVL_LO_NAND;
 	    break;
@@ -833,6 +836,9 @@ void dll_target::logic(const NetLogic*net)
 	    break;
 	  case NetLogic::PULLUP:
 	    obj->type_ = IVL_LO_PULLUP;
+	    break;
+	  case NetLogic::RCMOS:
+	    obj->type_ = IVL_LO_RCMOS;
 	    break;
 	  case NetLogic::RNMOS:
 	    obj->type_ = IVL_LO_RNMOS;
@@ -2251,179 +2257,4 @@ bool dll_target::signal_paths(const NetNet*net)
 }
 
 extern const struct target tgt_dll = { "dll", &dll_target_obj };
-
-
-/*
- * $Log: t-dll.cc,v $
- * Revision 1.171  2007/06/02 03:42:13  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.170  2007/04/02 01:12:34  steve
- *  Seperate arrayness from word count
- *
- * Revision 1.169  2007/03/26 20:32:47  steve
- *  More efficient allocate of ivl_nexus_t objects.
- *
- * Revision 1.168  2007/03/26 18:17:51  steve
- *  Remove pretense of general use for t_cookie.
- *
- * Revision 1.167  2007/03/26 16:51:49  steve
- *  do not calculate nexus name unless needed.
- *
- * Revision 1.166  2007/03/02 06:13:22  steve
- *  Add support for edge sensitive spec paths.
- *
- * Revision 1.165  2007/03/01 06:19:39  steve
- *  Add support for conditional specify delay paths.
- *
- * Revision 1.164  2007/01/29 01:52:51  steve
- *  Clarify the use of ivl_scope_def for not-functions.
- *
- * Revision 1.163  2007/01/17 05:00:12  steve
- *  Dead code for memories in scopes.
- *
- * Revision 1.162  2007/01/16 05:44:15  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.161  2006/11/10 05:44:45  steve
- *  Process delay paths in second path over signals.
- *
- * Revision 1.160  2006/10/15 03:25:58  steve
- *  More detailed internal error message.
- *
- * Revision 1.159  2006/09/28 00:29:49  steve
- *  Allow specparams as constants in expressions.
- *
- * Revision 1.158  2006/09/23 04:57:19  steve
- *  Basic support for specify timing.
- *
- * Revision 1.157  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.156  2006/04/10 00:37:42  steve
- *  Add support for generate loops w/ wires and gates.
- *
- * Revision 1.155  2006/01/02 05:33:19  steve
- *  Node delays can be more general expressions in structural contexts.
- *
- * Revision 1.154  2005/08/06 17:58:16  steve
- *  Implement bi-directional part selects.
- *
- * Revision 1.153  2005/07/11 16:56:51  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.152  2005/07/07 16:22:49  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.151  2005/06/26 18:08:46  steve
- *  Fix uninitialzied attr pointers for UDP devices.
- *
- * Revision 1.150  2005/05/24 01:44:28  steve
- *  Do sign extension of structuran nets.
- *
- * Revision 1.149  2005/05/08 23:44:08  steve
- *  Add support for variable part select.
- *
- * Revision 1.148  2005/04/24 23:44:02  steve
- *  Update DFF support to new data flow.
- *
- * Revision 1.147  2005/04/06 05:29:08  steve
- *  Rework NetRamDq and IVL_LPM_RAM nodes.
- *
- * Revision 1.146  2005/04/01 06:04:30  steve
- *  Clean up handle of UDPs.
- *
- * Revision 1.145  2005/03/18 02:56:04  steve
- *  Add support for LPM_UFUNC user defined functions.
- *
- * Revision 1.144  2005/03/12 06:43:36  steve
- *  Update support for LPM_MOD.
- *
- * Revision 1.143  2005/03/09 05:52:04  steve
- *  Handle case inequality in netlists.
- *
- * Revision 1.142  2005/02/19 02:43:38  steve
- *  Support shifts and divide.
- *
- * Revision 1.141  2005/02/13 01:15:07  steve
- *  Replace supply nets with wires connected to pullup/down supply devices.
- *
- * Revision 1.140  2005/02/12 06:25:40  steve
- *  Restructure NetMux devices to pass vectors.
- *  Generate NetMux devices from ternary expressions,
- *  Reduce NetMux devices to bufif when appropriate.
- *
- * Revision 1.139  2005/02/08 00:12:36  steve
- *  Add the NetRepeat node, and code generator support.
- *
- * Revision 1.138  2005/02/03 04:56:20  steve
- *  laborate reduction gates into LPM_RED_ nodes.
- *
- * Revision 1.137  2005/01/28 05:39:33  steve
- *  Simplified NetMult and IVL_LPM_MULT.
- *
- * Revision 1.136  2005/01/22 01:06:55  steve
- *  Change case compare from logic to an LPM node.
- *
- * Revision 1.135  2005/01/16 04:20:32  steve
- *  Implement LPM_COMPARE nodes as two-input vector functors.
- *
- * Revision 1.134  2005/01/09 20:16:01  steve
- *  Use PartSelect/PV and VP to handle part selects through ports.
- *
- * Revision 1.133  2004/12/29 23:55:43  steve
- *  Unify elaboration of l-values for all proceedural assignments,
- *  including assing, cassign and force.
- *
- *  Generate NetConcat devices for gate outputs that feed into a
- *  vector results. Use this to hande gate arrays. Also let gate
- *  arrays handle vectors of gates when the outputs allow for it.
- *
- * Revision 1.132  2004/12/11 02:31:28  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.131  2004/10/04 01:10:55  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.130  2004/06/30 02:16:27  steve
- *  Implement signed divide and signed right shift in nets.
- *
- * Revision 1.129  2004/02/20 18:53:35  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.128  2004/02/20 06:22:58  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.127  2004/02/19 06:57:10  steve
- *  Memory and Event names use perm_string.
- *
- * Revision 1.126  2004/02/18 17:11:58  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.125  2003/12/12 05:43:08  steve
- *  Some systems dlsym requires leading _ or not on whim.
- *
- * Revision 1.124  2003/11/26 01:37:38  steve
- *  Warning about sprintf.
- *
- * Revision 1.123  2003/11/13 05:55:33  steve
- *  Move the DLL= flag to target config files.
- *
- * Revision 1.122  2003/11/10 20:59:04  steve
- *  Design::get_flag returns const char* instead of string.
- *
- * Revision 1.121  2003/09/03 23:33:29  steve
- *  Pass FF synchronous set values to code generator.
- *
- * Revision 1.120  2003/08/22 04:14:33  steve
- *  Fix uninitialized sset member.
- *
- * Revision 1.119  2003/08/15 02:23:53  steve
- *  Add synthesis support for synchronous reset.
- */
 

@@ -1446,8 +1446,8 @@ class NetLiteral  : public NetNode {
 class NetLogic  : public NetNode {
 
     public:
-      enum TYPE { AND, BUF, BUFIF0, BUFIF1, NAND, NMOS, NOR, NOT,
-		  NOTIF0, NOTIF1, OR, PULLDOWN, PULLUP, RNMOS, RPMOS,
+      enum TYPE { AND, BUF, BUFIF0, BUFIF1, CMOS, NAND, NMOS, NOR, NOT,
+		  NOTIF0, NOTIF1, OR, PULLDOWN, PULLUP, RCMOS, RNMOS, RPMOS,
 		  PMOS, XNOR, XOR };
 
       explicit NetLogic(NetScope*s, perm_string n, unsigned pins,

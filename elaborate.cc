@@ -457,6 +457,10 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
 					  NetLogic::BUFIF1, instance_width);
 		  break;
+		case CMOS:
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::CMOS, instance_width);
+		  break;
 		case NAND:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
 					  NetLogic::NAND, instance_width);
@@ -484,6 +488,10 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		case OR:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
 					  NetLogic::OR, instance_width);
+		  break;
+		case RCMOS:
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::RCMOS, instance_width);
 		  break;
 		case RNMOS:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),

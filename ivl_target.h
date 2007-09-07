@@ -209,6 +209,7 @@ typedef enum ivl_logic_e {
       IVL_LO_BUFIF0 =  3,
       IVL_LO_BUFIF1 =  4,
       IVL_LO_BUFZ   =  5,
+      IVL_LO_CMOS   = 22,
       IVL_LO_NAND   =  6,
       IVL_LO_NMOS   =  7,
       IVL_LO_NOR    =  8,
@@ -218,6 +219,7 @@ typedef enum ivl_logic_e {
       IVL_LO_OR     = 12,
       IVL_LO_PULLDOWN  = 13,
       IVL_LO_PULLUP = 14,
+      IVL_LO_RCMOS  = 23,
       IVL_LO_RNMOS  = 15,
       IVL_LO_RPMOS  = 16,
       IVL_LO_PMOS   = 17,
@@ -1782,72 +1784,4 @@ typedef int  (*target_design_f)(ivl_design_t des);
 
 _END_DECL
 
-/*
- * $Log: ivl_target.h,v $
- * Revision 1.182  2007/04/02 01:12:34  steve
- *  Seperate arrayness from word count
- *
- * Revision 1.181  2007/03/22 16:08:16  steve
- *  Spelling fixes from Larry
- *
- * Revision 1.180  2007/03/02 06:13:22  steve
- *  Add support for edge sensitive spec paths.
- *
- * Revision 1.179  2007/03/01 06:19:38  steve
- *  Add support for conditional specify delay paths.
- *
- * Revision 1.178  2007/02/26 19:49:49  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.177  2007/02/25 23:08:24  steve
- *  Process Verilog escape sequences much earlier.
- *
- * Revision 1.176  2007/02/02 04:33:00  steve
- *  Use inttypes.h instead of stdint.h for portability.
- *
- * Revision 1.175  2007/01/29 01:52:51  steve
- *  Clarify the use of ivl_scope_def for not-functions.
- *
- * Revision 1.174  2007/01/17 05:00:12  steve
- *  Dead code for memories in scopes.
- *
- * Revision 1.173  2007/01/17 04:39:18  steve
- *  Remove dead code related to memories.
- *
- * Revision 1.172  2007/01/16 05:44:15  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.171  2006/09/23 04:57:19  steve
- *  Basic support for specify timing.
- *
- * Revision 1.170  2006/08/08 05:11:37  steve
- *  Handle 64bit delay constants.
- *
- * Revision 1.169  2006/07/30 02:51:35  steve
- *  Fix/implement signed right shift.
- *
- * Revision 1.168  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.167  2006/04/16 00:15:43  steve
- *  Fix part selects in l-values.
- *
- * Revision 1.166  2006/04/10 00:37:42  steve
- *  Add support for generate loops w/ wires and gates.
- *
- * Revision 1.165  2006/02/02 02:43:58  steve
- *  Allow part selects of memory words in l-values.
- *
- * Revision 1.164  2006/01/02 05:33:19  steve
- *  Node delays can be more general expressions in structural contexts.
- *
- * Revision 1.163  2005/12/22 15:44:29  steve
- *  Document binary expression use.
- *
- * Revision 1.162  2005/11/20 15:58:25  steve
- *  Document the IVL_ST_DELAY statements.
- */
 #endif

@@ -83,15 +83,52 @@ class vvp_fun_rpmos  : public vvp_fun_pmos_ {
 };
 
 /*
- * $Log: npmos.h,v $
- * Revision 1.8  2005/06/22 00:04:49  steve
- *  Reduce vvp_vector4 copies by using const references.
+ * The truth table for the CMOS device is:
  *
- * Revision 1.7  2005/06/12 15:13:37  steve
- *  Support resistive mos devices.
- *
- * Revision 1.6  2005/06/12 00:44:49  steve
- *  Implement nmos and pmos devices.
- *
+ *    Q = D N P  (D is port0, N is port1, P is port2)
+ *    ---------
+ *    0 | 0 0 0
+ *    Z | 0 0 1
+ *    0 | 0 1 0
+ *    0 | 0 1 1
+ *    L | 0 0 x
+ *    L | 0 x 1
+ *    L | 0 x x
+ *    1 | 1 0 0
+ *    Z | 1 0 1
+ *    1 | 1 1 0
+ *    1 | 1 1 1
+ *    H | 1 0 x
+ *    H | 1 x 1
+ *    H | 1 x x
  */
+
+class vvp_fun_cmos_ : public vvp_net_fun_t {
+    public:
+      explicit vvp_fun_cmos_();
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t &bit);
+
+    protected:
+      void generate_output_(vvp_net_ptr_t port);
+
+      vvp_vector8_t bit_;
+      vvp_vector4_t n_en_;
+      vvp_vector4_t p_en_;
+};
+
+class vvp_fun_cmos : public vvp_fun_cmos_ {
+    public:
+      explicit vvp_fun_cmos();
+
+      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+};
+
+class vvp_fun_rcmos : public vvp_fun_cmos_ {
+    public:
+      explicit vvp_fun_rcmos();
+
+      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+};
+
 #endif

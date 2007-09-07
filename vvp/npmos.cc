@@ -119,19 +119,104 @@ void vvp_fun_rpmos::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
       generate_output_(ptr);
 }
 
+
 /*
- * $Log: npmos.cc,v $
- * Revision 1.14  2007/06/12 02:25:00  steve
- *  Do not propogate until initialized.
- *
- * Revision 1.13  2005/06/22 00:04:49  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.12  2005/06/12 15:13:37  steve
- *  Support resistive mos devices.
- *
- * Revision 1.11  2005/06/12 00:44:49  steve
- *  Implement nmos and pmos devices.
- *
+ * CMOS primitive.
  */
+
+vvp_fun_cmos_::vvp_fun_cmos_()
+{
+}
+
+void vvp_fun_cmos_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t &bit)
+{
+	/* Data input is processed through the recv_vec8 method,
+	   because the strength must be preserved. */
+      if (ptr.port() == 0) {
+	    vvp_vector8_t tmp = bit;
+	    recv_vec8(ptr, tmp);
+	    return;
+      }
+
+      if (ptr.port() != 1 && ptr.port() != 2)
+	    return;
+
+      if (ptr.port() == 1)
+	    n_en_ = bit;
+      else
+	    p_en_ = bit;
+      generate_output_(ptr);
+}
+
+#include <iostream>
+
+void vvp_fun_cmos_::generate_output_(vvp_net_ptr_t ptr)
+{
+      vvp_vector8_t out (bit_.size());
+
+      for (unsigned idx = 0 ;  idx < out.size() ;  idx += 1) {
+	    vvp_bit4_t   b_n_en  = n_en_.value(idx);
+	    vvp_bit4_t   b_p_en  = p_en_.value(idx);
+	    vvp_scalar_t b_bit = bit_.value(idx);
+
+	    if (b_n_en == BIT4_1 || b_p_en == BIT4_0) {
+		  out.set_bit(idx, b_bit);
+	    } else if (b_n_en == BIT4_0 && b_p_en == BIT4_1) {
+		  out.set_bit(idx, vvp_scalar_t(BIT4_Z,0,0));
+	    } else {
+		  switch (b_bit.value()) {
+		      case BIT4_0:
+			b_bit = vvp_scalar_t(BIT4_X,b_bit.strength0(),0);
+			break;
+		      case BIT4_1:
+			b_bit = vvp_scalar_t(BIT4_X,0,b_bit.strength1());
+			break;
+		      default:
+			break;
+		  }
+		  out.set_bit(idx, b_bit);
+	    }
+      }
+
+      if (out.size() > 0)
+	    vvp_send_vec8(ptr.ptr()->out, out);
+}
+
+vvp_fun_cmos::vvp_fun_cmos()
+: vvp_fun_cmos_()
+{
+}
+
+void vvp_fun_cmos::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+{
+      if (ptr.port() == 1 || ptr.port() == 2) {
+	    recv_vec4(ptr, reduce4(bit));
+	    return;
+      }
+
+      if (ptr.port() != 0)
+	    return;
+
+      bit_ = bit;
+      generate_output_(ptr);
+}
+
+vvp_fun_rcmos::vvp_fun_rcmos()
+: vvp_fun_cmos_()
+{
+}
+
+void vvp_fun_rcmos::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+{
+      if (ptr.port() == 1) {
+	    recv_vec4(ptr, reduce4(bit));
+	    return;
+      }
+
+      if (ptr.port() != 0)
+	    return;
+
+      bit_ = resistive_reduction(bit);
+      generate_output_(ptr);
+}
 

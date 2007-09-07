@@ -575,11 +575,17 @@ void compile_functor(char*label, char*type, unsigned width,
       } else if (strcmp(type, "MUXZ") == 0) {
 	    obj = new vvp_fun_muxz(width);
 
+      } else if (strcmp(type, "CMOS") == 0) {
+	    obj = new vvp_fun_cmos();
+
       } else if (strcmp(type, "NMOS") == 0) {
 	    obj = new vvp_fun_pmos(true);
 
       } else if (strcmp(type, "PMOS") == 0) {
 	    obj = new vvp_fun_pmos(false);
+
+      } else if (strcmp(type, "RCMOS") == 0) {
+	    obj = new vvp_fun_rcmos();
 
       } else if (strcmp(type, "RNMOS") == 0) {
 	    obj = new vvp_fun_rpmos(true);
@@ -635,3 +641,4 @@ void compile_functor(char*label, char*type, unsigned width,
       define_functor_symbol(label, net_drv);
       free(label);
 }
+

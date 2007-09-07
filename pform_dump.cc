@@ -395,6 +395,12 @@ void PGBuiltin::dump(ostream&out, unsigned ind) const
 	  case PGBuiltin::PMOS:
 	    out << "pmos ";
 	    break;
+	  case PGBuiltin::RCMOS:
+	    out << "rcmos ";
+	    break;
+	  case PGBuiltin::CMOS:
+	    out << "cmos ";
+	    break;
 	  default:
 	    out << "builtin gate ";
       }
@@ -1077,3 +1083,4 @@ void PUdp::dump(ostream&out) const
 
       out << "endprimitive" << endl;
 }
+
