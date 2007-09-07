@@ -1219,14 +1219,26 @@ static void show_logic(ivl_net_logic_t net)
 	  case IVL_LO_BUFZ:
 	    fprintf(out, "  bufz %s", name);
 	    break;
+	  case IVL_LO_CMOS:
+	    fprintf(out, "  cmos %s", name);
+	    break;
 	  case IVL_LO_NAND:
 	    fprintf(out, "  nand %s", name);
+	    break;
+	  case IVL_LO_NMOS:
+	    fprintf(out, "  nmos %s", name);
 	    break;
 	  case IVL_LO_NOR:
 	    fprintf(out, "  nor %s", name);
 	    break;
 	  case IVL_LO_NOT:
 	    fprintf(out, "  not %s", name);
+	    break;
+	  case IVL_LO_NOTIF0:
+	    fprintf(out, "  notif0 %s", name);
+	    break;
+	  case IVL_LO_NOTIF1:
+	    fprintf(out, "  notif1 %s", name);
 	    break;
 	  case IVL_LO_OR:
 	    fprintf(out, "  or %s", name);
@@ -1239,6 +1251,18 @@ static void show_logic(ivl_net_logic_t net)
 	    break;
 	  case IVL_LO_PULLUP:
 	    fprintf(out, "  pullup %s", name);
+	    break;
+	  case IVL_LO_RCMOS:
+	    fprintf(out, "  rcmos %s", name);
+	    break;
+	  case IVL_LO_RNMOS:
+	    fprintf(out, "  rnmos %s", name);
+	    break;
+	  case IVL_LO_RPMOS:
+	    fprintf(out, "  rpmos %s", name);
+	    break;
+	  case IVL_LO_XNOR:
+	    fprintf(out, "  xnor %s", name);
 	    break;
 	  case IVL_LO_XOR:
 	    fprintf(out, "  xor %s", name);
@@ -1362,7 +1386,7 @@ static int show_scope(ivl_scope_t net, void*x)
 	    break;
       }
 
-      fprintf(out, " time units = 10e%d\n", ivl_scope_time_units(net));
+      fprintf(out, " time units = 1e%d\n", ivl_scope_time_units(net));
 
       for (idx = 0 ;  idx < ivl_scope_attr_cnt(net) ;  idx += 1) {
 	    ivl_attribute_t attr = ivl_scope_attr_val(net, idx);
@@ -1491,258 +1515,3 @@ int target_design(ivl_design_t des)
       return stub_errors;
 }
 
-
-/*
- * $Log: stub.c,v $
- * Revision 1.148  2007/06/12 02:23:40  steve
- *  displan pmos gates.
- *
- * Revision 1.147  2007/03/02 06:13:22  steve
- *  Add support for edge sensitive spec paths.
- *
- * Revision 1.146  2007/03/01 06:19:39  steve
- *  Add support for conditional specify delay paths.
- *
- * Revision 1.145  2007/01/29 01:52:51  steve
- *  Clarify the use of ivl_scope_def for not-functions.
- *
- * Revision 1.144  2007/01/17 05:00:12  steve
- *  Dead code for memories in scopes.
- *
- * Revision 1.143  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.142  2006/11/28 05:56:41  steve
- *  Dump nand logic.
- *
- * Revision 1.141  2006/09/23 04:57:19  steve
- *  Basic support for specify timing.
- *
- * Revision 1.140  2006/07/30 02:51:36  steve
- *  Fix/implement signed right shift.
- *
- * Revision 1.139  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.138  2006/04/30 05:16:53  steve
- *  Dump *all* the reduction operator gates.
- *
- * Revision 1.137  2006/04/27 04:26:38  steve
- *  Dump function type as string.
- *
- * Revision 1.136  2006/01/02 05:33:20  steve
- *  Node delays can be more general expressions in structural contexts.
- *
- * Revision 1.135  2005/12/22 15:38:33  steve
- *  More detailed check of binary expressions.
- *
- * Revision 1.134  2005/09/20 18:34:01  steve
- *  Clean up compiler warnings.
- *
- * Revision 1.133  2005/09/14 02:53:15  steve
- *  Support bool expressions and compares handle them optimally.
- *
- * Revision 1.132  2005/08/06 17:58:16  steve
- *  Implement bi-directional part selects.
- *
- * Revision 1.131  2005/07/14 16:15:13  steve
- *  Dump function call expression node.
- *
- * Revision 1.130  2005/07/11 16:56:51  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.129  2005/07/07 16:22:49  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.128  2005/06/26 18:09:24  steve
- *  Check width of part select based on direction.
- *
- * Revision 1.127  2005/06/13 22:20:38  steve
- *  Dump delays for logic devices.
- *
- * Revision 1.126  2005/05/24 01:44:28  steve
- *  Do sign extension of structuran nets.
- *
- * Revision 1.125  2005/05/18 03:46:01  steve
- *  Fixup structural GT comparators.
- *
- * Revision 1.124  2005/05/08 23:44:08  steve
- *  Add support for variable part select.
- *
- * Revision 1.123  2005/04/24 23:44:02  steve
- *  Update DFF support to new data flow.
- *
- * Revision 1.122  2005/04/13 06:35:11  steve
- *  Make logic aware of strength.
- *
- * Revision 1.121  2005/04/06 05:29:09  steve
- *  Rework NetRamDq and IVL_LPM_RAM nodes.
- *
- * Revision 1.120  2005/04/01 06:04:30  steve
- *  Clean up handle of UDPs.
- *
- * Revision 1.119  2005/03/19 06:59:53  steve
- *  Handle wide operands to logical AND.
- *
- * Revision 1.118  2005/03/19 06:23:49  steve
- *  Handle LPM shifts.
- *
- * Revision 1.117  2005/03/18 02:56:04  steve
- *  Add support for LPM_UFUNC user defined functions.
- *
- * Revision 1.116  2005/03/12 06:43:36  steve
- *  Update support for LPM_MOD.
- *
- * Revision 1.115  2005/03/09 05:52:04  steve
- *  Handle case inequality in netlists.
- *
- * Revision 1.114  2005/03/09 04:53:40  steve
- *  Generate code for new form of memory ports.
- *
- * Revision 1.113  2005/03/05 05:47:42  steve
- *  Handle memory words in l-value concatenations.
- *
- * Revision 1.112  2005/03/03 04:34:42  steve
- *  Rearrange how memories are supported as vvp_vector4 arrays.
- *
- * Revision 1.111  2005/02/19 02:43:39  steve
- *  Support shifts and divide.
- *
- * Revision 1.110  2005/02/13 01:15:07  steve
- *  Replace supply nets with wires connected to pullup/down supply devices.
- *
- * Revision 1.109  2005/02/12 22:53:41  steve
- *  Check IVL_LPM_MUX configuration.
- *
- * Revision 1.108  2005/02/12 06:17:43  steve
- *  Check nexus widths of IVL_LO_ nodes.
- *
- * Revision 1.107  2005/02/08 00:12:36  steve
- *  Add the NetRepeat node, and code generator support.
- *
- * Revision 1.106  2005/02/03 04:56:21  steve
- *  laborate reduction gates into LPM_RED_ nodes.
- *
- * Revision 1.105  2005/01/30 05:09:04  steve
- *  Support LPM_SUB
- *
- * Revision 1.104  2005/01/29 18:46:18  steve
- *  Netlist boolean expressions generate gate vectors.
- *
- * Revision 1.103  2005/01/29 16:47:52  steve
- *  Check width of constant attached to nexus.
- *
- * Revision 1.102  2005/01/28 05:36:18  steve
- *  Show the lpm_mult device.
- *
- * Revision 1.101  2005/01/24 05:28:31  steve
- *  Remove the NetEBitSel and combine all bit/part select
- *  behavior into the NetESelect node and IVL_EX_SELECT
- *  ivl_target expression type.
- *
- * Revision 1.100  2005/01/24 05:05:25  steve
- *  Check widths of ternary expressions.
- *
- * Revision 1.99  2005/01/22 17:36:59  steve
- *  stub dump signed flags of magnitude compare.
- *
- * Revision 1.98  2005/01/22 16:23:06  steve
- *  LPM_CMP_NE/EQ are vectored devices.
- *
- * Revision 1.97  2005/01/22 01:06:55  steve
- *  Change case compare from logic to an LPM node.
- *
- * Revision 1.96  2005/01/16 04:20:32  steve
- *  Implement LPM_COMPARE nodes as two-input vector functors.
- *
- * Revision 1.95  2005/01/09 20:16:01  steve
- *  Use PartSelect/PV and VP to handle part selects through ports.
- *
- * Revision 1.94  2004/12/29 23:55:43  steve
- *  Unify elaboration of l-values for all proceedural assignments,
- *  including assing, cassign and force.
- *
- *  Generate NetConcat devices for gate outputs that feed into a
- *  vector results. Use this to hande gate arrays. Also let gate
- *  arrays handle vectors of gates when the outputs allow for it.
- *
- * Revision 1.93  2004/12/18 18:55:08  steve
- *  Better detail on event trigger and wait statements.
- *
- * Revision 1.92  2004/12/12 18:15:06  steve
- *  Arrange statement dumping in new source files.
- *
- * Revision 1.91  2004/12/11 02:31:28  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.90  2004/10/04 01:10:57  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.89  2004/09/25 01:57:33  steve
- *  Dump tri0 and tri1 nets.
- *
- * Revision 1.88  2004/06/30 03:05:04  steve
- *  Dump variable type of system function.
- *
- * Revision 1.87  2004/06/30 02:16:27  steve
- *  Implement signed divide and signed right shift in nets.
- *
- * Revision 1.86  2004/06/17 16:06:19  steve
- *  Help system function signedness survive elaboration.
- *
- * Revision 1.85  2004/06/16 16:22:04  steve
- *  Dump NE LPM device.
- *
- * Revision 1.84  2003/12/03 04:27:10  steve
- *  Pre-gcc3 compile error.
- *
- * Revision 1.83  2003/12/03 02:46:24  steve
- *  Add support for wait on list of named events.
- *
- * Revision 1.82  2003/12/03 01:54:07  steve
- *  Handle erroneous event lists.
- *
- * Revision 1.81  2003/07/26 03:34:43  steve
- *  Start handling pad of expressions in code generators.
- *
- * Revision 1.80  2003/06/23 01:25:44  steve
- *  Module attributes make it al the way to ivl_target.
- *
- * Revision 1.79  2003/05/14 05:26:41  steve
- *  Support real expressions in case statements.
- *
- * Revision 1.78  2003/05/13 01:56:15  steve
- *  Allow primitives to hvae unconnected input ports.
- *
- * Revision 1.77  2003/04/11 05:18:08  steve
- *  Handle signed magnitude compare all the
- *  way through to the vvp code generator.
- *
- * Revision 1.76  2003/03/29 05:51:26  steve
- *  Sign extend NetMult inputs if result is signed.
- *
- * Revision 1.75  2003/03/10 23:40:54  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.74  2003/03/07 06:04:58  steve
- *  Raw dump of double values for testing purposes.
- *
- * Revision 1.73  2003/02/25 03:39:53  steve
- *  Eliminate use of ivl_lpm_name.
- *
- * Revision 1.72  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.71  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- */
