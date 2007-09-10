@@ -783,6 +783,64 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
       }
 }
 
+NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
+				     NetNet*sig, unsigned port_wid,
+				     NetNet::PortType dir) const
+{
+      ivl_assert(*this, dir != NetNet::NOT_A_PORT);
+      ivl_assert(*this, dir != NetNet::PIMPLICIT);
+
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+			      NetNet::WIRE, port_wid);
+      tmp->local_flag(true);
+      tmp->set_line(*sig);
+
+      NetPartSelect*node = 0;
+
+      switch (dir) {
+	  case NetNet::POUTPUT:
+	    if (tmp->vector_width() > sig->vector_width()) {
+		  node = new NetPartSelect(tmp, 0, sig->vector_width(),
+					   NetPartSelect::VP);
+	    } else {
+		  node = new NetPartSelect(tmp, 0, sig->vector_width(),
+					  NetPartSelect::PV);
+	    }
+	    connect(node->pin(0), sig->pin(0));
+	    break;
+
+	  case NetNet::PINPUT:
+	    if (tmp->vector_width() > sig->vector_width()) {
+		  node = new NetPartSelect(sig, 0, tmp->vector_width(),
+					   NetPartSelect::PV);
+	    } else {
+		  node = new NetPartSelect(sig, 0, tmp->vector_width(),
+					   NetPartSelect::VP);
+	    }
+	    connect(node->pin(0), tmp->pin(0));
+	    break;
+
+	  case NetNet::PINOUT:
+	    if (sig->vector_width() > tmp->vector_width()) {
+		  node = new NetPartSelect(sig, 0, tmp->vector_width(),
+					   NetPartSelect::BI);
+		  connect(node->pin(0), tmp->pin(0));
+	    } else {
+		  node = new NetPartSelect(tmp, 0, sig->vector_width(),
+					   NetPartSelect::BI);
+		  connect(node->pin(0), sig->pin(0));
+	    }
+	    break;
+
+	  default:
+	    ivl_assert(*this, 0);
+      }
+
+      des->add_node(node);
+
+      return tmp;
+}
+
 /*
  * Instantiate a module by recursively elaborating it. Set the path of
  * the recursive elaboration so that signal names get properly
@@ -1113,12 +1171,17 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << (prts_vector_width-sig->vector_width())
 			     << " high bits of the port unconnected."
 			     << endl;
+
+
 		  } else {
 			cerr << get_line() << ":        : Leaving "
 			     << (sig->vector_width()-prts_vector_width)
 			     << " high bits of the expression dangling."
 			     << endl;
 		  }
+
+		  sig = resize_net_to_port_(des, scope, sig, prts_vector_width,
+					    prts[0]->port_type());
 	    }
 
 	      // Connect the sig expression that is the context of the
