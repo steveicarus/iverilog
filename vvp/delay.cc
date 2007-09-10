@@ -427,7 +427,17 @@ void vvp_fun_modpath::run_run()
 vvp_fun_modpath_src::vvp_fun_modpath_src(vvp_time64_t del[12])
 {
       for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
-	    delay_[idx] = del[idx];
+	    {
+	      delay_[idx] = del[idx];
+	      /*
+		Added By Yang.
+		
+		Make the delay[12] value to be Public
+		make the get_delays(), put_delays() to
+		be possible
+	       */
+	      delay [idx] = del[idx];
+	    }
 
       next_ = 0;
       wake_time_ = 0;

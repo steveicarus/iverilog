@@ -185,8 +185,16 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
 
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-
       virtual bool test_vec4(const vvp_vector4_t&bit);
+      
+       /*
+	 Added By Yang.
+	 
+	 Make the Delay Value be Public too
+	 make the get_delays(), put_delays() be possible
+       */
+      vvp_time64_t delay[12];
+      
 
     private:
 	// FIXME: Needs to be a 12-value array

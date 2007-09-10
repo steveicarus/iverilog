@@ -27,6 +27,14 @@
 # include  "vvp_net.h"
 # include  "memory.h"
 
+
+/*
+ * Added to use some "vvp_fun_modpath_src"
+ * and "vvp_fun_modpath" classes definitions
+ */
+#include  "delay.h"
+
+
 /*
  * This header file contains the internal definitions that the vvp
  * program uses to implement the public interface in the vpi_user.h
@@ -84,6 +92,13 @@ struct __vpirt {
 
 	/* This implements the vpi_free_object method. */
       int (*vpi_free_object_)(vpiHandle);
+
+       /*
+	 This tow method are used to read/write delay
+	 value from/into modpath record
+       */
+       void  (*vpi_get_delays_)(vpiHandle, p_vpi_delay);
+       void  (*vpi_put_delays_)(vpiHandle, p_vpi_delay);
 };
 
 /*
@@ -192,6 +207,109 @@ extern vpiHandle vpip_make_net(const char*name, int msb, int lsb,
  * __vpiSignal. Return a nil if the type is not appropriate.
  */
 extern __vpiSignal* vpip_signal_from_handle(vpiHandle obj);
+
+
+struct __vpiModPathSrc {
+      struct __vpiHandle   base  ;
+      struct __vpiScope   *scope ;
+      int   type   ;
+      char *label  ; /* 
+			Must Be removed in Future
+			because the ModPathSrc have 
+			no label
+		     */
+      char *name   ;
+      struct __vpiModPathSrc *next ;
+  
+      /* Just Temporary */
+      vvp_time64_t use_delay [12] ;
+      /* 
+	 Conform the IEEE1364, we use the
+	 standard delay value structure
+	 (p_vpi_time) to represent delay values 
+	 of each modpath_src delay
+     
+	 the "p_vpi_time" is defined in the
+	 "vpi_user.h"
+      */
+      p_vpi_delay    delays  ;
+  
+      /*
+	The Posedge, Negedge are already defined 
+	in the "delays->p_vpi_time(da)->high/low"
+    
+	bool posedge, negedge ;
+      */
+      vvp_net_t *node;
+} ;
+
+
+/*
+ *
+ * The vpiMoaPath vpiHandle will define 
+ * a vpiModPath of record .modpath as defined
+ * in the IEEE 1364
+ *
+ */
+
+struct __vpiModPath {
+      struct __vpiHandle   base  ;
+      struct __vpiScope   *scope ;
+  
+      /* 
+       * The name, input must be removed 
+       * in future um ModPathSrc have no 
+       * name.
+       */
+      char *name  ; 
+      char *input ;
+      vvp_net_t *input_net  ;
+      struct __vpiModPathSrc *src_list  ;
+      /* 
+       * Keep an array of internal modpath_src 
+       * vpiHandle 
+       */
+      struct __vpiHandle  **src ;
+      /*
+       * Registering the number of modpath_src 
+       *   number 
+       */
+      unsigned int         src_no ;
+};
+
+
+
+/*
+ * The Function is used to create the vpiHandle 
+ * for vpiModPath && vpiModPathIn objects
+ */
+
+extern vpiHandle vpip_make_modpath_src  ( char *name, 
+					  vvp_time64_t use_delay[12] , 
+					  vvp_net_t *net ) ;
+
+extern vpiHandle vpip_make_modpath ( char *name, 
+				     char *input, 
+				     vvp_net_t *net ) ;
+
+extern void vpip_add_mopdath_delay ( vpiHandle vpiobj,
+				     char *label, 
+				     vvp_time64_t use_delay[12] ) ;
+
+extern void vpip_add_mopdath_edge  ( vpiHandle  vpiobj, 
+				     char *label, 
+				     vvp_time64_t use_delay[12], 
+				     bool posedge , 
+				     bool negedge ) ;
+
+extern void vpip_add_modpath_src   ( vpiHandle  modpath,
+ 				     vpiHandle src ) ;
+
+extern __vpiModPath* vpip_modpath_from_handle ( vpiHandle obj);
+
+extern __vpiModPathSrc* vpip_modpath_src_from_handle( vpiHandle obj);
+
+
 
 
 /*

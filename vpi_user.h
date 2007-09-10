@@ -79,6 +79,15 @@ typedef struct t_vpi_vlog_info
 
 
 typedef struct t_vpi_time {
+  
+      /*
+	Type can be :
+
+	vpiScaledRealTime == 1
+	vpiSimTime        == 2
+	vpiSuppressTime   == 3
+      */
+
       PLI_INT32 type;
       PLI_UINT32 high;
       PLI_UINT32 low;
@@ -115,6 +124,114 @@ typedef struct t_vpi_value {
 	    char      *misc;
       } value;
 } s_vpi_value, *p_vpi_value;
+
+
+/*
+  
+  Conform the IEEE 1364, We add the 
+  Standard vpi_delay structure to 
+  enable the modpath delay values
+
+  
+  Conform IEEE 1364, Pg 670 :
+  
+  The "da" field of the s_vpi_delay
+  structure shall be a user allocated
+  array of "s_vpi_time" struture
+  
+  The arrary shall store delay values returned
+  by vpi_get_delay(). The number of elements in
+  the array shall be determined by
+  
+  (1) The number of delays to be retrived 
+      ( normally this is used in vpi_get_delays (..) )
+  { 
+    (1.1) Setted by "no_of_delays" field
+   
+    (1.2) For the primitive_object, the no_of_delays
+        shall be 2 or 3
+   
+    (1.3) For path_delay object the no_of_delays shall
+        be 1,2,3,6, 12
+    
+    (1.4) For timing_check_object, the no_of_delays shall
+        be match the number of limits existing in the 
+	Time Check
+    
+    (1.5) For intermodule_path object, the no_of_delays shall
+        be 2 or 3
+  }
+
+  
+  
+  
+  (2) The "mtm_flag" && "pulsere_flag"
+
+  
+  Normally, if you set mtm = X, pulsere = Y
+  then, you will need allocate (num * no_of_delay)
+  s_vpi_time elements for 'da' array before calling
+  the vpi_get/put_delays (..)
+  
+  ---------------------------------------------------------------------------
+  |                |                         |                              |
+  | mtm_flag       | No of s_vpi_time array  |   order in which delay       |
+  | pulsere_flag   | element required by the |   elements shall be filed    |
+  |                | s_vpi_delay->da         |                              |
+  |                |                         |                              |
+  |----------------|-------------------------|------------------------------|
+  |                |                         | 1o delay  da[0]--> 1o delay  |
+  | mtm = false    | no_of_delay             | 2o delay  da[1]--> 2o delay  |
+  | pulere = false |                         |                              |
+  |                |                         |                              |
+  |----------------|-------------------------|------------------------------|
+  |                |                         | 1o delay  da[0]--> min delay |
+  | mtm = true     |                         |           da[1]--> typ delay |
+  | pulere = false | 3*no_of_delay           |           da[2]--> max delay |
+  |                |                         | 2o delay  da[3]--> min delay |
+  |                |                         |           da[4]--> typ delay |
+  |                |                         |           ....               |
+  |----------------|-------------------------|------------------------------|
+  |                |                         | 1o delay  da[0]--> delay     |
+  | mtm = false    |                         |           da[1]--> rej limit |
+  | pulere = true  | 3*no_of_delay           |           da[2]--> err limit |
+  |                |                         | 2o delay  da[3]--> delay     |
+  |                |                         |           da[4]--> rej limit |
+  |                |                         |           ....               |
+  |----------------|-------------------------|------------------------------|
+  |                |                         | 1o delay da[0]--> min delay  |
+  | mtm = true     |                         |          da[1]--> typ delay  | 
+  | pulere = true  | 9*no_of_delay           |          da[2]--> max delay  |
+  |                |                         |          da[3]--> min delay  |
+  |                |                         |          da[4]--> typ delay  |
+  |                |                         |          da[5]--> max delay  |
+  |                |                         |          da[6]--> min delay  |
+  |                |                         |          da[7]--> typ delay  |
+  |                |                         |          da[8]--> max delay  |
+  |                |                         | 2o delay da[9]--> min delay  |
+  |                |                         |          ....                | 
+   -------------------------------------------------------------------------
+   
+   IMPORTANT :
+   
+   The delay Structure has to be allocated before passing a pointer to 
+   "vpi_get_delays ( )". 
+   
+*/
+
+
+typedef struct t_vpi_delay  {
+     struct t_vpi_time  *da; /* Array of delay datas */
+     PLI_INT32  no_of_delays ;
+     PLI_INT32  time_type; /* vpiScaledRealTime, vpiSimTime */
+     PLI_INT32  mtm_flag;
+     PLI_INT32  append_flag;
+     PLI_INT32  plusere_flag;
+} s_vpi_delay, *p_vpi_delay;
+
+
+
+
 
 /* These are valid codes for the format of the t_vpi_value structure. */
 #define vpiBinStrVal    1
@@ -158,6 +275,7 @@ typedef struct t_vpi_value {
 #define vpiIterator    27
 #define vpiMemory      29
 #define vpiMemoryWord  30
+#define vpiModPath     31
 #define vpiModule      32
 #define vpiNamedBegin  33
 #define vpiNamedEvent  34
@@ -177,6 +295,8 @@ typedef struct t_vpi_value {
 #define vpiSysTfCall   85
 #define vpiArgument    89
 #define vpiInternalScope 92
+#define vpiModPathIn     95
+#define vpiModPathOut    96 
 #define vpiVariables   100
 
 #define vpiCallback  1000
@@ -360,6 +480,18 @@ extern vpiHandle vpi_put_value(vpiHandle obj, p_vpi_value value,
 
 extern PLI_INT32 vpi_free_object(vpiHandle ref);
 extern PLI_INT32 vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p);
+
+/*  
+  These Routines will enable the modpath vpiHandle
+  to read/write delay values
+*/
+extern void vpi_get_delays(vpiHandle expr, p_vpi_delay delays);
+
+extern void vpi_put_delays(vpiHandle expr, p_vpi_delay delays);
+
+
+
+
 
 /*
  * These functions support attaching user data to an instance of a

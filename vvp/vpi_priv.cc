@@ -841,6 +841,70 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
       return 0;
 }
 
+
+/*
+  We Increment the tow vpi methods  to enable the 
+  read/write SDF delay values from/into
+  the modpath vpiHandle
+  
+
+  baiscally, they will redirect the generic vpi_interface
+  
+  vpi_get_delay ( .. )  
+  vpi_put_delay ( .. )
+  
+  
+  to the
+  
+  modpath_get_delay ( .. ) ; 
+  modpath_put_delay ( .. ) ;
+  
+*/
+
+
+
+void vpi_get_delays(vpiHandle expr, p_vpi_delay delays)
+{
+      assert(expr);
+      assert(delays);
+      
+      if (expr->vpi_type->vpi_get_delays_) 
+	{
+	  (expr->vpi_type->vpi_get_delays_)(expr, delays);
+	  
+	  if (vpi_trace) 
+	    {
+	      fprintf(vpi_trace, 
+		      "vpi_get_delays(%s, %p) -->\n", expr, delays);
+	    }
+	} 
+}
+
+
+void vpi_put_delays(vpiHandle expr, p_vpi_delay delays)
+{
+      assert(expr  );
+      assert(delays );
+      
+      if (expr->vpi_type->vpi_put_delays_) 
+	{
+	  (expr->vpi_type->vpi_put_delays_)(expr, delays);
+	  
+	  if (vpi_trace) 
+	    {
+	      fprintf(vpi_trace, 
+		      "vpi_put_delays(%s, %p) -->\n", expr, delays);
+	    }
+	} 
+}
+
+
+
+
+
+
+
+
 extern "C" PLI_INT32 vpi_vprintf(const char*fmt, va_list ap)
 {
       return vpi_mcd_vprintf(1, fmt, ap);
