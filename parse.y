@@ -217,7 +217,7 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %type <gates> gate_instance_list
 
 %type <pform_name> heirarchy_identifier
-%type <expr>  expression expr_primary
+%type <expr>  expression expr_primary expr_mintypmax
 %type <expr>  lpvalue
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
@@ -953,6 +953,30 @@ expression
 		}
 	;
 
+expr_mintypmax
+	: expression
+		{ $$ = $1; }
+	| expression ':' expression ':' expression
+		{ switch (min_typ_max_flag) {
+		      case MIN:
+			$$ = $1;
+			delete $3;
+			delete $5;
+			break;
+		      case TYP:
+			delete $1;
+			$$ = $3;
+			delete $5;
+			break;
+		      case MAX:
+			delete $1;
+			delete $3;
+			$$ = $5;
+			break;
+		  }
+		}
+	;
+
 
   /* Many contexts take a comma separated list of expressions. Null
      expressions can happen anywhere in the list, so there are two
@@ -1060,7 +1084,7 @@ expr_primary
 
   /* Parenthesized expressions are primaries. */
 
-	| '(' expression ')'
+	| '(' expr_mintypmax ')'
 		{ $$ = $2; }
 
   /* Various kinds of concatenation expressions. */
