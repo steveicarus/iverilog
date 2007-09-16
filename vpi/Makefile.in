@@ -66,7 +66,10 @@ sys_readmem.o sys_readmem_lex.o sys_scanf.o \
 sys_time.o sys_vcd.o sys_vcdoff.o vcd_priv.o mt19937int.o priv.o stringheap.o
 
 ifeq (@HAVE_LIBZ@,yes)
-O += sys_lxt.o lxt_write.o sys_lxt2.o lxt2_write.o
+ifeq (@HAVE_LIBBZ2@,yes)
+O += sys_lxt.o lxt_write.o
+endif
+O += sys_lxt2.o lxt2_write.o
 endif
 
 LIBS = @LIBS@
