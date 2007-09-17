@@ -91,6 +91,7 @@ static void line_directive();
 static void line_directive2();
 
 static verinum*make_unsized_binary(const char*txt);
+static verinum*make_undef_highz_dec(const char*txt);
 static verinum*make_unsized_dec(const char*txt);
 static verinum*make_unsized_octal(const char*txt);
 static verinum*make_unsized_hex(const char*txt);
@@ -282,6 +283,8 @@ W [ \t\b\f\r]+
 
 \'[sS]?[dD][ \t]*[0-9][0-9_]*  { yylval.number = make_unsized_dec(yytext);
                             return BASED_NUMBER; }
+\'[sS]?[dD][ \t]*[xzXZ?]_* { yylval.number = make_undef_highz_dec(yytext);
+                             return BASED_NUMBER; }
 \'[sS]?[bB][ \t]*[0-1xzXZ_\?]+ { yylval.number = make_unsized_binary(yytext);
                         return BASED_NUMBER; }
 \'[sS]?[oO][ \t]*[0-7xzXZ_\?]+ { yylval.number = make_unsized_octal(yytext);
@@ -669,6 +672,53 @@ static int dec_buf_div2(char *buf)
     *dst_ptr = 0;
 
     return partial;
+}
+
+/* Support a single x, z or ? as a decimal constant (from 1364-2005). */
+static verinum* make_undef_highz_dec(const char* ptr)
+{
+      bool signed_flag = false;
+
+      assert(*ptr == '\'');
+      /* The number may have decorations of the form 'sd<code>,
+         possibly with space between the d and the <code>.
+         Also, the 's' is optional, and marks the number as signed. */
+      ptr += 1;
+
+      if (tolower(*ptr) == 's') {
+	  signed_flag = true;
+	  ptr += 1;
+      }
+
+      assert(tolower(*ptr) == 'd');
+      ptr += 1;
+
+      while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
+	  ptr += 1;
+
+	/* Process the code. */
+      verinum::V* bits = new verinum::V[1];
+      switch (*ptr) {
+	  case 'x':
+	  case 'X':
+	    bits[0] = verinum::Vx;
+	    break;
+	  case 'z':
+	  case 'Z':
+	  case '?':
+	    bits[0] = verinum::Vz;
+	    break;
+	  default:
+	    assert(0);
+      }
+      ptr += 1;
+      while (*ptr == '_') ptr += 1;
+      assert(*ptr == 0);
+
+      verinum*out = new verinum(bits, 1, false);
+      out->has_sign(signed_flag);
+      delete[]bits;
+      return out;
 }
 
 /*
