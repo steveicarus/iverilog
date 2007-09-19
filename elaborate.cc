@@ -2513,7 +2513,9 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
       if (expr_.count() == 0) {
 	    assert(enet);
-	    NexusSet*nset = enet->nex_input();
+	     /* In this context we do not want all the inputs, so
+	        do not remove outputs that are also inputs. */
+	    NexusSet*nset = enet->nex_input(false);
 	    if (nset == 0) {
 		  cerr << get_line() << ": internal error: No NexusSet"
 		       << " from statement." << endl;
