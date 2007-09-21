@@ -92,7 +92,7 @@ const svector<PEIdent*>& Module::get_port(unsigned idx) const
 
 unsigned Module::find_port(const char*name) const
 {
-      assert(name != "");
+      assert(name != 0);
       for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
 	    if (ports[idx] == 0) {
 		    /* It is possible to have undeclared ports. These

@@ -95,7 +95,7 @@ static int make_vpi_argv(unsigned argc, vpiHandle*vpi_argv,
 	    break;
 
 	  default:
-	    fprintf(stderr, "Unsupported type %c(%d).\n", *cp);
+	    fprintf(stderr, "Unsupported type %c(%d).\n", *cp, *cp);
 	    assert(0);
 	    break;
       }
@@ -118,7 +118,7 @@ static int make_vpi_argv(unsigned argc, vpiHandle*vpi_argv,
 		}
 
 		default:
-		  fprintf(stderr, "Unsupported type %c(%d).\n", *cp);
+		  fprintf(stderr, "Unsupported type %c(%d).\n", *cp, *cp);
 		  assert(0);
 	    }
 	    idx += 1;

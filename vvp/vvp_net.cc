@@ -1455,7 +1455,7 @@ void vvp_fun_signal_base::recv_long(vvp_net_ptr_t ptr, long bit)
 		  release(ptr, false);
 		  break;
 		default:
-		  fprintf(stderr, "Unsupported command %d.\n", bit);
+		  fprintf(stderr, "Unsupported command %ld.\n", bit);
 		  assert(0);
 		  break;
 	    }
