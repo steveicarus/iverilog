@@ -749,6 +749,31 @@ static void draw_modpath(const char*label, const char*driver,
       free(con_drivers);
 }
 
+static int nexus_drive_is_strength_aware(ivl_nexus_ptr_t nptr)
+{
+      if (ivl_nexus_ptr_drive0(nptr) != IVL_DR_STRONG)
+	    return 1;
+      if (ivl_nexus_ptr_drive1(nptr) != IVL_DR_STRONG)
+	    return 1;
+
+      ivl_net_logic_t log = ivl_nexus_ptr_log(nptr);
+      if (log != 0) {
+	      /* These logic gates are able to generate unusual
+	         strength values and so their outputs are considered
+	         strength aware. */
+	    if (ivl_logic_type(log) == IVL_LO_BUFIF0)
+		  return 1;
+	    if (ivl_logic_type(log) == IVL_LO_BUFIF1)
+		  return 1;
+	    if (ivl_logic_type(log) == IVL_LO_PMOS)
+		  return 1;
+	    if (ivl_logic_type(log) == IVL_LO_NMOS)
+		  return 1;
+      }
+
+      return 0;
+}
+
 /*
  * This function draws the input to a net into a string. What that
  * means is that it returns a static string that can be used to
@@ -832,9 +857,7 @@ static char* draw_net_input_x(ivl_nexus_t nex,
 	      /* Mark the strength-aware flag if the driver can
 		 generate values other than the standard "6"
 		 strength. */
-	    if (ivl_nexus_ptr_drive0(nptr) != IVL_DR_STRONG)
-		  nex_flags |= VVP_NEXUS_DATA_STR;
-	    if (ivl_nexus_ptr_drive1(nptr) != IVL_DR_STRONG)
+	    if (nexus_drive_is_strength_aware(nptr))
 		  nex_flags |= VVP_NEXUS_DATA_STR;
 
 	      /* Save this driver. */
