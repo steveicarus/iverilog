@@ -2134,6 +2134,9 @@ vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b)
 		  tmp |= 0x80;
 		  tmp |= sv1 << 4;
 	    } else {
+		    /* Set the MSB when both arguments MSBs are set. This
+		       can only happen if both one strengths are zero. */
+		  tmp |= (a.value_&b.value_)&0x80;
 		  tmp |= (-sv1) << 4;
 	    }
 
