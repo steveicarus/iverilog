@@ -2363,7 +2363,8 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    fprintf(vvp_out, ";\n");
       }
 
-      fprintf(vvp_out, " .timescale %d;\n", ivl_scope_time_units(net));
+      fprintf(vvp_out, " .timescale %d %d;\n", ivl_scope_time_units(net),
+                                               ivl_scope_time_precision(net));
 
       for (idx = 0 ;  idx < ivl_scope_params(net) ;  idx += 1) {
 	    ivl_parameter_t par = ivl_scope_param(net, idx);

@@ -67,7 +67,7 @@ static int scope_get(int code, vpiHandle obj)
 	  case vpiTimeUnit:
 	    return ref->time_units;
 	  case vpiTimePrecision:
-	    return vpip_get_time_precision();
+	    return ref->time_precision;
       }
 
       return 0;
@@ -358,8 +358,9 @@ compile_scope_decl(char*label, char*type, char*name, char*tname, char*parent)
 	    attach_to_scope_(sp, &scope->base);
 	    scope->scope = (struct __vpiScope*)obj;
 
-	      /* Inherit time units from the parent scope. */
+	      /* Inherit time units and precision from the parent scope. */
 	    scope->time_units = sp->time_units;
+	    scope->time_precision = sp->time_precision;
 
       } else {
 	    scope->scope = 0x0;
@@ -370,8 +371,10 @@ compile_scope_decl(char*label, char*type, char*name, char*tname, char*parent)
 	    vpip_root_table_ptr[vpip_root_table_cnt] = &scope->base;
 	    vpip_root_table_cnt = cnt;
 
-	      /* Root scopes inherit time_units from system precision. */
+	      /* Root scopes inherit time_units and precision from the
+	         system precision. */
 	    scope->time_units = vpip_get_time_precision();
+	    scope->time_precision = vpip_get_time_precision();
       }
 #if 0
       functor_set_scope(&current_scope->base);
@@ -391,10 +394,11 @@ void compile_scope_recall(char*symbol)
  * This function handles the ".timescale" directive in the vvp
  * source. It sets in the current scope the specified units value.
  */
-void compile_timescale(long units)
+void compile_timescale(long units, long precision)
 {
       assert(current_scope);
       current_scope->time_units = units;
+      current_scope->time_precision = precision;
 }
 
 struct __vpiScope* vpip_peek_current_scope(void)

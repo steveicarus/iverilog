@@ -169,6 +169,7 @@ struct __vpiScope {
 	/* Keep a list of threads in the scope. */
       vthread_t threads;
       signed int time_units :8;
+      signed int time_precision :8;
 };
 
 extern struct __vpiScope* vpip_peek_current_scope(void);
@@ -508,6 +509,7 @@ extern int vpip_get_time_precision(void);
 extern void vpip_set_time_precision(int pres);
 
 extern int vpip_time_units_from_handle(vpiHandle obj);
+extern int vpip_time_precision_from_handle(vpiHandle obj);
 
 extern void vpip_time_to_timestruct(struct t_vpi_time*ts, vvp_time64_t ti);
 extern vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts);
@@ -568,97 +570,4 @@ enum vpi_rbuf_t {
 };
 extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
-/*
- * $Log: vpi_priv.h,v $
- * Revision 1.74  2007/04/12 04:25:59  steve
- *  vpip_make_binary_const cannot free the string passed in to it.
- *
- * Revision 1.73  2007/02/25 23:08:24  steve
- *  Process Verilog escape sequences much earlier.
- *
- * Revision 1.72  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.71  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.70  2006/03/18 22:51:10  steve
- *  Syntax for carrying sign with parameter.
- *
- * Revision 1.69  2006/03/08 05:29:42  steve
- *  Add support for logic parameters.
- *
- * Revision 1.68  2006/03/06 05:43:15  steve
- *  Cleanup vpi_const to use vec4 values.
- *
- * Revision 1.67  2006/03/05 05:45:58  steve
- *  Add support for memory value change callbacks.
- *
- * Revision 1.66  2006/02/21 05:31:54  steve
- *  Put strings for reg objects.
- *
- * Revision 1.65  2006/02/21 02:39:27  steve
- *  Support string values for memory words.
- *
- * Revision 1.64  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.63  2005/06/13 00:54:04  steve
- *  More unified vec4 to hex string functions.
- *
- * Revision 1.62  2005/04/28 04:59:53  steve
- *  Remove dead functor code.
- *
- * Revision 1.61  2005/03/03 04:33:10  steve
- *  Rearrange how memories are supported as vvp_vector4 arrays.
- *
- * Revision 1.60  2004/12/11 02:31:30  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.59  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.58  2004/06/30 03:00:36  steve
- *  Some explination of vpi_func arguments.
- *
- * Revision 1.57  2004/05/19 03:26:24  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.56  2003/06/17 19:17:42  steve
- *  Remove short int restrictions from vvp opcodes.
- *
- * Revision 1.55  2003/05/29 02:21:45  steve
- *  Implement acc_fetch_defname and its infrastructure in vvp.
- *
- * Revision 1.54  2003/05/02 04:29:57  steve
- *  Add put_value with transport delay.
- *
- * Revision 1.53  2003/04/23 03:09:25  steve
- *  VPI Access to named events.
- *
- * Revision 1.52  2003/03/10 23:37:07  steve
- *  Direct support for string parameters.
- *
- * Revision 1.51  2003/03/06 04:32:00  steve
- *  Use hashed name strings for identifiers.
- *
- * Revision 1.50  2003/02/24 06:35:45  steve
- *  Interactive task calls take string arguments.
- *
- * Revision 1.49  2003/02/23 06:41:54  steve
- *  Add to interactive stop mode support for
- *  current scope, the ability to scan/traverse
- *  scopes, and the ability to call system tasks.
- *
- * Revision 1.48  2003/02/10 05:20:10  steve
- *  Add value change callbacks to real variables.
- *
- * Revision 1.47  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- */
 #endif

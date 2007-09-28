@@ -482,10 +482,14 @@ statement
 		{ compile_scope_recall($2); }
 
 
-	|         K_TIMESCALE T_NUMBER ';'
-		{ compile_timescale($2); }
-	|         K_TIMESCALE '-' T_NUMBER ';'
-		{ compile_timescale(-$3); }
+	|         K_TIMESCALE T_NUMBER T_NUMBER';'
+		{ compile_timescale($2, $3); }
+	|         K_TIMESCALE '-' T_NUMBER T_NUMBER';'
+		{ compile_timescale(-$3, $4); }
+	|         K_TIMESCALE T_NUMBER '-' T_NUMBER';'
+		{ compile_timescale($2, -$4); }
+	|         K_TIMESCALE '-' T_NUMBER '-' T_NUMBER';'
+		{ compile_timescale(-$3, -$5); }
 
   /* Thread statements declare a thread with its starting address. The
      starting address must already be defined. The .thread statement
@@ -837,155 +841,3 @@ int compile_design(const char*path)
       return rc;
 }
 
-
-/*
- * $Log: parse.y,v $
- * Revision 1.93  2007/04/19 01:19:06  steve
- *  Handle arrayed strength-aware net devices.
- *
- * Revision 1.92  2007/04/14 03:27:51  steve
- *  Handle system functions with no arguments.
- *
- * Revision 1.91  2007/04/12 04:25:58  steve
- *  vpip_make_binary_const cannot free the string passed in to it.
- *
- * Revision 1.90  2007/04/10 01:26:16  steve
- *  variable arrays generated without writing a record for each word.
- *
- * Revision 1.89  2007/03/02 06:13:22  steve
- *  Add support for edge sensitive spec paths.
- *
- * Revision 1.88  2007/03/01 06:19:39  steve
- *  Add support for conditional specify delay paths.
- *
- * Revision 1.87  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.86  2006/11/22 06:10:05  steve
- *  Fix spurious event from net8 that is forced.
- *
- * Revision 1.85  2006/09/23 04:57:20  steve
- *  Basic support for specify timing.
- *
- * Revision 1.84  2006/07/30 02:51:36  steve
- *  Fix/implement signed right shift.
- *
- * Revision 1.83  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.82  2006/03/18 22:51:10  steve
- *  Syntax for carrying sign with parameter.
- *
- * Revision 1.81  2006/03/08 05:29:42  steve
- *  Add support for logic parameters.
- *
- * Revision 1.80  2006/01/02 05:32:07  steve
- *  Require explicit delay node from source.
- *
- * Revision 1.79  2005/11/25 17:55:26  steve
- *  Put vec8 and vec4 nets into seperate net classes.
- *
- * Revision 1.78  2005/10/12 17:23:15  steve
- *  Add alias nodes.
- *
- * Revision 1.77  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.76  2005/06/17 03:46:53  steve
- *  Make functors know their own width.
- *
- * Revision 1.75  2005/05/24 01:43:27  steve
- *  Add a sign-extension node.
- *
- * Revision 1.74  2005/05/08 23:40:14  steve
- *  Add support for variable part select.
- *
- * Revision 1.73  2005/04/28 04:59:53  steve
- *  Remove dead functor code.
- *
- * Revision 1.72  2005/04/24 20:07:26  steve
- *  Add DFF nodes.
- *
- * Revision 1.71  2005/04/03 05:45:51  steve
- *  Rework the vvp_delay_t class.
- *
- * Revision 1.70  2005/03/18 02:56:04  steve
- *  Add support for LPM_UFUNC user defined functions.
- *
- * Revision 1.69  2005/03/09 05:52:04  steve
- *  Handle case inequality in netlists.
- *
- * Revision 1.68  2005/03/09 04:52:40  steve
- *  reimplement memory ports.
- *
- * Revision 1.67  2005/03/03 04:33:10  steve
- *  Rearrange how memories are supported as vvp_vector4 arrays.
- *
- * Revision 1.66  2005/02/07 22:42:42  steve
- *  Add .repeat functor and BIFIF functors.
- *
- * Revision 1.65  2005/02/03 04:55:13  steve
- *  Add support for reduction logic gates.
- *
- * Revision 1.64  2005/01/22 01:06:20  steve
- *  Implement the .cmp/eeq LPM node.
- *
- * Revision 1.63  2005/01/09 20:11:15  steve
- *  Add the .part/pv node and related functionality.
- *
- * Revision 1.62  2004/12/29 23:45:13  steve
- *  Add the part concatenation node (.concat).
- *
- *  Add a vvp_event_anyedge class to handle the special
- *  case of .event statements of edge type. This also
- *  frees the posedge/negedge types to handle all 4 inputs.
- *
- *  Implement table functor recv_vec4 method to receive
- *  and process vectors.
- *
- * Revision 1.61  2004/12/11 02:31:30  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.60  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.59  2004/08/28 16:26:41  steve
- *  .net range values can be signed.
- *
- * Revision 1.58  2004/06/30 02:15:57  steve
- *  Add signed LPM divide.
- *
- * Revision 1.57  2004/06/16 16:33:26  steve
- *  Add structural equality compare nodes.
- *
- * Revision 1.56  2003/09/04 20:26:31  steve
- *  Add $push flag for threads.
- *
- * Revision 1.55  2003/08/22 23:14:27  steve
- *  Preserve variable ranges all the way to the vpi.
- *
- * Revision 1.54  2003/05/29 02:21:45  steve
- *  Implement acc_fetch_defname and its infrastructure in vvp.
- *
- * Revision 1.53  2003/04/11 05:15:39  steve
- *  Add signed versions of .cmp/gt/ge
- *
- * Revision 1.52  2003/03/10 23:37:07  steve
- *  Direct support for string parameters.
- *
- * Revision 1.51  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.50  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.49  2003/01/25 23:48:06  steve
- *  Add thread word array, and add the instructions,
- *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
- */

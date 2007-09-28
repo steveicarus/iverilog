@@ -151,6 +151,7 @@ static int vpip_get_global(int property)
 {
       switch (property) {
 
+	  case vpiTimeUnit:
 	  case vpiTimePrecision:
 	    return vpip_get_time_precision();
 
@@ -173,6 +174,8 @@ static const char* vpi_property_str(PLI_INT32 code)
 	    return "vpiFullName";
 	  case vpiTimeUnit:
 	    return "vpiTimeUnit";
+	  case vpiTimePrecision:
+	    return "vpiTimePrecision";
 	  default:
 	    sprintf(buf, "%d", code);
       }
@@ -309,8 +312,39 @@ int vpip_time_units_from_handle(vpiHandle obj)
  	    return signal->scope->time_units;
 
 	  default:
-	    fprintf(stderr, "ERROR: vpi_get_time called with object "
-		    "handle type=%u\n", obj->vpi_type->type_code);
+	    fprintf(stderr, "ERROR: vpip_time_units_from_handle called with "
+		    "object handle type=%u\n", obj->vpi_type->type_code);
+	    assert(0);
+	    return 0;
+      }
+}
+
+int vpip_time_precision_from_handle(vpiHandle obj)
+{
+      struct __vpiSysTaskCall*task;
+      struct __vpiScope*scope;
+      struct __vpiSignal*signal;
+
+      if (obj == 0)
+	    return vpip_get_time_precision();
+
+      switch (obj->vpi_type->type_code) {
+	  case vpiSysTaskCall:
+	    task = (struct __vpiSysTaskCall*)obj;
+	    return task->scope->time_precision;
+
+	  case vpiModule:
+	    scope = (struct __vpiScope*)obj;
+	    return scope->time_precision;
+
+	  case vpiNet:
+	  case vpiReg:
+	    signal = (struct __vpiSignal*)obj;
+	    return signal->scope->time_precision;
+
+	  default:
+	    fprintf(stderr, "ERROR: vpip_time_precision_from_handle called "
+		    "with object handle type=%u\n", obj->vpi_type->type_code);
 	    assert(0);
 	    return 0;
       }
