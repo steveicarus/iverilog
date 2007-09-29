@@ -64,8 +64,8 @@ static void show_binary_expression(ivl_expr_t net, unsigned ind)
 	    width = ivl_expr_width(ivl_expr_oper1(net));
 	    width += ivl_expr_width(ivl_expr_oper2(net));
 	    if (ivl_expr_width(net) != width) {
-		  fprintf(out, "%*sERROR: Result width incorrect\n",
-			  ind+3, "");
+		  fprintf(out, "%*sERROR: Result width incorrect. Expecting %u, got %u\n",
+			  ind+3, "", width, ivl_expr_width(net));
 		  stub_errors += 1;
 	    }
 	    break;
