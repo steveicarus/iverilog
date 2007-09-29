@@ -542,6 +542,7 @@ void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
       make_scope_parameters(root_, s);
       root_->type_ = IVL_SCT_MODULE;
       root_->tname_ = root_->name_;
+      root_->time_precision = s->time_precision();
       root_->time_units = s->time_unit();
       root_->nattr = s->attr_cnt();
       root_->attr  = fill_in_attributes(s);
@@ -2001,6 +2002,7 @@ void dll_target::scope(const NetScope*net)
 	    scope->lpm_ = 0;
 	    scope->def = 0;
 	    make_scope_parameters(scope, net);
+	    scope->time_precision = net->time_precision();
 	    scope->time_units = net->time_unit();
 	    scope->nattr = net->attr_cnt();
 	    scope->attr  = fill_in_attributes(net);

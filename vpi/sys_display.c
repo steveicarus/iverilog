@@ -2133,7 +2133,7 @@ static char *pts_convert(int value)
 {
       char *string;
       switch (value) {
-            case   0: string = "s";     break;
+            case   0: string = "1s";    break;
             case  -1: string = "100ms"; break;
             case  -2: string = "10ms";  break;
             case  -3: string = "1ms";   break;

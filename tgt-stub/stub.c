@@ -1387,6 +1387,7 @@ static int show_scope(ivl_scope_t net, void*x)
       }
 
       fprintf(out, " time units = 1e%d\n", ivl_scope_time_units(net));
+      fprintf(out, " time precision = 1e%d\n", ivl_scope_time_precision(net));
 
       for (idx = 0 ;  idx < ivl_scope_attr_cnt(net) ;  idx += 1) {
 	    ivl_attribute_t attr = ivl_scope_attr_val(net, idx);
