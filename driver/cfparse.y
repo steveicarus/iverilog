@@ -60,7 +60,7 @@ static void translate_file_name(char*text)
       char*text;
 };
 
-%token TOK_Da TOK_Dv TOK_Dy
+%token TOK_Da TOK_Dc TOK_Dv TOK_Dy
 %token TOK_DEFINE TOK_INCDIR TOK_LIBDIR TOK_LIBDIR_NOCASE TOK_LIBEXT
 %token TOK_INTEGER_WIDTH
 %token <text> TOK_PLUSARG TOK_PLUSWORD TOK_STRING
@@ -92,6 +92,16 @@ item
   /* The -a flag is completely ignored. */
 
         | TOK_Da { }
+
+  /* Match a -c <cmdfile> or -f <cmdfile> */
+
+        | TOK_Dc TOK_STRING
+		{ char*tmp = substitutions($2);
+		  translate_file_name(tmp);
+		  switch_to_command_file(tmp);
+		  free($2);
+		  free(tmp);
+		}
 
   /* The -v <libfile> flag is ignored, and the <libfile> is processed
      as an ordinary source file. */
@@ -172,6 +182,12 @@ item
 				@1.text, @1.first_line, $1);
 		  }
 		  free($1);
+		}
+
+	| error
+		{ fprintf(stderr, "Error: unable to parse line %d in "
+		          "%s.\n", cflloc.first_line, current_file);
+		  return 1;
 		}
 	;
 

@@ -39,12 +39,13 @@ const char NOTICE[] =
 ;
 
 const char HELP[] =
-"Usage: iverilog [-ESvV] [-B base] [-c cmdfile] [-g1|-g2|-g2x]\n"
+"Usage: iverilog [-ESvV] [-B base] [-c cmdfile|-f cmdfile] [-g1|-g2|-g2x]\n"
 "                [-D macro[=defn]] [-I includedir] [-M depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
 "                [-s topmodule] [-t target] [-T min|typ|max]\n"
 "                [-W class] [-y dir] [-Y suf] source_file(s)\n"
-"See man page for details.";
+"\n"
+"See the man page for details.";
 
 #define MAXSIZE 4096
 
@@ -448,7 +449,7 @@ int process_generation(const char*name)
 
       else {
 	    fprintf(stderr, "Unknown/Unsupported Language generation "
-		    "%s\n", name);
+		    "%s\n\n", name);
 	    fprintf(stderr, "Supported generations are:\n");
 	    fprintf(stderr, "    1   -- IEEE1364-1995 (Verilog 1)\n"
 		            "    2   -- IEEE1364-2001 (Verilog 2001)\n"
@@ -586,7 +587,8 @@ int main(int argc, char **argv)
 			base=optarg;
 		  }
 		  break;
- 		case 'c':
+		case 'c':
+		case 'f':
 		  add_cmd_file(optarg);
  		  break;
 		case 'D':
@@ -595,8 +597,6 @@ int main(int argc, char **argv)
 		case 'E':
 		  e_flag = 1;
 		  break;
-		case 'f':
-		  fprintf(stderr, "warning: The -f flag is moved to -p\n");
 		case 'p':
 		  fprintf(iconfig_file, "flag:%s\n", optarg);
 		  break;
@@ -678,7 +678,7 @@ int main(int argc, char **argv)
 	    pbase = base;
 
       if (version_flag || verbose_flag) {
-	    printf("Icarus Verilog version " VERSION " ($Name:  $)\n");
+	    printf("Icarus Verilog version " VERSION " ($Name:  $)\n\n");
 	    printf("Copyright 1998-2003 Stephen Williams\n");
 	    puts(NOTICE);
 
@@ -711,16 +711,16 @@ int main(int argc, char **argv)
 	    int rc;
 
 	    if (( fp = fopen(command_filename, "r")) == NULL ) {
-		  fprintf(stderr, "%s: Can't open %s\n",
-			  argv[0], command_filename);
+		  fprintf(stderr, "%s: cannot open command file %s "
+			  "for reading.\n", argv[0], command_filename);
 		  return 1;
 	    }
 
 	    cfreset(fp, command_filename);
 	    rc = cfparse();
 	    if (rc != 0) {
-		  fprintf(stderr, "%s: error reading command file\n",
-			  command_filename);
+		  fprintf(stderr, "%s: parsing failed in base command "
+		          "file %s.\n", argv[0], command_filename);
 		  return 1;
 	    }
             free(command_filename);
@@ -743,8 +743,7 @@ int main(int argc, char **argv)
       defines_file = 0;
 
       if (source_count == 0) {
-	    fprintf(stderr, "%s: No input files.\n", argv[0]);
- 	    fprintf(stderr, "%s\n", HELP);
+	    fprintf(stderr, "%s: no source files.\n\n%s\n", argv[0], HELP);
 	    return 1;
       }
 
@@ -808,85 +807,4 @@ int main(int argc, char **argv)
 
       return 0;
 }
-
-/*
- * $Log: main.c,v $
- * Revision 1.76  2007/06/05 01:56:12  steve
- *  Bring in .SFT file automatically if -m used.
- *
- * Revision 1.75  2007/04/19 02:52:53  steve
- *  Add support for -v flag in command file.
- *
- * Revision 1.74  2007/04/18 03:23:38  steve
- *  Add support for multiple command files. (Cary R.)
- *
- * Revision 1.73  2007/03/07 04:24:59  steve
- *  Make integer width controllable.
- *
- * Revision 1.72  2006/10/02 18:15:47  steve
- *  Fix handling of dep path in new argument passing method.
- *
- * Revision 1.71  2006/09/28 04:35:18  steve
- *  Support selective control of specify and xtypes features.
- *
- * Revision 1.70  2006/09/20 22:30:52  steve
- *  Do not pass -D__ICARUS__ to ivlpp.
- *
- * Revision 1.69  2006/07/26 00:11:40  steve
- *  Pass depfiles through temp defines file.
- *
- * Revision 1.68  2006/07/26 00:02:48  steve
- *  Pass defines and includes through temp file.
- *
- * Revision 1.67  2005/07/14 23:38:44  steve
- *  Display as version 0.9.devel
- *
- * Revision 1.66  2005/06/28 04:25:55  steve
- *  Remove reference to SystemVerilog.
- *
- * Revision 1.65  2004/06/17 14:47:22  steve
- *  Add a .sft file for the system functions.
- *
- * Revision 1.64  2004/03/10 04:51:25  steve
- *  Add support for system function table files.
- *
- * Revision 1.63  2004/02/15 18:03:30  steve
- *  Cleanup of warnings.
- *
- * Revision 1.62  2003/12/12 04:36:48  steve
- *  Fix make check to support -tconf configuration method.
- *
- * Revision 1.61  2003/11/18 06:31:46  steve
- *  Remove the iverilog.conf file.
- *
- * Revision 1.60  2003/11/13 05:55:33  steve
- *  Move the DLL= flag to target config files.
- *
- * Revision 1.59  2003/11/13 04:09:49  steve
- *  Pass flags through the temporary config file.
- *
- * Revision 1.58  2003/11/01 04:21:57  steve
- *  Add support for a target static config file.
- *
- * Revision 1.57  2003/10/26 22:43:42  steve
- *  Improve -V messages,
- *
- * Revision 1.56  2003/09/26 21:25:58  steve
- *  Warnings cleanup.
- *
- * Revision 1.55  2003/09/23 05:57:15  steve
- *  Pass -m flag from driver via iconfig file.
- *
- * Revision 1.54  2003/09/22 01:12:09  steve
- *  Pass more ivl arguments through the iconfig file.
- *
- * Revision 1.53  2003/08/26 16:26:02  steve
- *  ifdef idents correctly.
- *
- * Revision 1.52  2003/02/22 04:55:36  steve
- *  portbind adds p, not i, flag.
- *
- * Revision 1.51  2003/02/22 04:12:49  steve
- *  Add the portbind warning.
- */
 
