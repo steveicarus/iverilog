@@ -80,9 +80,13 @@ static void show_function_call(ivl_expr_t net, unsigned ind)
       ivl_scope_t def = ivl_expr_def(net);
       const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
       const char*vt = vt_type_string(net);
+      unsigned idx;
 
-      fprintf(out, "%*s<%s %s function %s>\n", ind, "",
-	      vt, sign, ivl_scope_name(def));
+      fprintf(out, "%*s<%s %s function %s with %u arguments>\n", ind, "",
+	      vt, sign, ivl_scope_name(def), ivl_expr_parms(net));
+
+      for (idx = 0 ;  idx < ivl_expr_parms(net) ;  idx += 1)
+	    show_expression(ivl_expr_parm(net,idx), ind+4);
 }
 
 static void show_memory_expression(ivl_expr_t net, unsigned ind)

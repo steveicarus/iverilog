@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.90 2007/06/04 19:14:06 steve Exp $"
-#endif
 
 # include  <string>
 # include  <vector>
@@ -659,6 +656,10 @@ class PECallFunction : public PExpr {
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     int expr_wid, bool sys_task_arg) const;
 
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  unsigned min, unsigned lval,
+				  bool&unsized_flag) const;
+
     private:
       pform_name_t path_;
       svector<PExpr *> parms_;
@@ -673,160 +674,9 @@ class PECallFunction : public PExpr {
 				   const NetExpr* decay,
 				   Link::strength_t drive0,
 				   Link::strength_t drive1) const;
+      unsigned test_width_sfunc_(Design*des, NetScope*scope,
+				 unsigned min, unsigned lval,
+				 bool&unsized_flag) const;
 };
 
-/*
- * $Log: PExpr.h,v $
- * Revision 1.90  2007/06/04 19:14:06  steve
- *  Build errors in picky GCC compilers.
- *
- * Revision 1.89  2007/06/04 02:19:07  steve
- *  Handle bit/part select of array words in nets.
- *
- * Revision 1.88  2007/05/24 04:07:11  steve
- *  Rework the heirarchical identifier parse syntax and pform
- *  to handle more general combinations of heirarch and bit selects.
- *
- * Revision 1.87  2007/01/16 05:44:14  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.86  2006/11/10 04:54:26  steve
- *  Add test_width methods for PETernary and PEString.
- *
- * Revision 1.85  2006/11/04 06:19:24  steve
- *  Remove last bits of relax_width methods, and use test_width
- *  to calculate the width of an r-value expression that may
- *  contain unsized numbers.
- *
- * Revision 1.84  2006/10/30 05:44:49  steve
- *  Expression widths with unsized literals are pseudo-infinite width.
- *
- * Revision 1.83  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.82  2006/06/02 04:48:49  steve
- *  Make elaborate_expr methods aware of the width that the context
- *  requires of it. In the process, fix sizing of the width of unary
- *  minus is context determined sizes.
- *
- * Revision 1.81  2006/04/28 04:28:35  steve
- *  Allow concatenations as arguments to inout ports.
- *
- * Revision 1.80  2006/04/16 00:54:04  steve
- *  Cleanup lval part select handling.
- *
- * Revision 1.79  2006/04/16 00:15:43  steve
- *  Fix part selects in l-values.
- *
- * Revision 1.78  2006/03/25 02:36:26  steve
- *  Get rid of excess PESTring:: prefix within class declaration.
- *
- * Revision 1.77  2006/02/02 02:43:57  steve
- *  Allow part selects of memory words in l-values.
- *
- * Revision 1.76  2006/01/02 05:33:19  steve
- *  Node delays can be more general expressions in structural contexts.
- *
- * Revision 1.75  2005/12/07 04:04:23  steve
- *  Allow constant concat expressions.
- *
- * Revision 1.74  2005/11/27 17:01:56  steve
- *  Fix for stubborn compiler.
- *
- * Revision 1.73  2005/11/27 05:56:20  steve
- *  Handle bit select of parameter with ranges.
- *
- * Revision 1.72  2005/11/10 13:28:11  steve
- *  Reorganize signal part select handling, and add support for
- *  indexed part selects.
- *
- *  Expand expression constant propagation to eliminate extra
- *  sums in certain cases.
- *
- * Revision 1.71  2005/10/04 04:09:25  steve
- *  Add support for indexed select attached to parameters.
- *
- * Revision 1.70  2005/08/06 17:58:16  steve
- *  Implement bi-directional part selects.
- *
- * Revision 1.69  2005/07/07 16:22:49  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.68  2005/01/09 20:16:00  steve
- *  Use PartSelect/PV and VP to handle part selects through ports.
- *
- * Revision 1.67  2004/12/29 23:55:43  steve
- *  Unify elaboration of l-values for all proceedural assignments,
- *  including assing, cassign and force.
- *
- *  Generate NetConcat devices for gate outputs that feed into a
- *  vector results. Use this to hande gate arrays. Also let gate
- *  arrays handle vectors of gates when the outputs allow for it.
- *
- * Revision 1.66  2004/10/04 01:10:51  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.65  2003/02/08 19:49:21  steve
- *  Calculate delay statement delays using elaborated
- *  expressions instead of pre-elaborated expression
- *  trees.
- *
- *  Remove the eval_pexpr methods from PExpr.
- *
- * Revision 1.64  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.63  2002/11/09 19:20:48  steve
- *  Port expressions for output ports are lnets, not nets.
- *
- * Revision 1.62  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.61  2002/06/04 05:38:43  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.60  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.59  2002/04/23 03:53:59  steve
- *  Add support for non-constant bit select.
- *
- * Revision 1.58  2002/04/14 03:55:25  steve
- *  Precalculate unary - if possible.
- *
- * Revision 1.57  2002/04/13 02:33:17  steve
- *  Detect missing indices to memories (PR#421)
- *
- * Revision 1.56  2002/03/09 04:02:26  steve
- *  Constant expressions are not l-values for task ports.
- *
- * Revision 1.55  2002/03/09 02:10:22  steve
- *  Add the NetUserFunc netlist node.
- *
- * Revision 1.54  2001/12/30 21:32:03  steve
- *  Support elaborate_net for PEString objects.
- *
- * Revision 1.53  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.52  2001/11/08 05:15:50  steve
- *  Remove string paths from PExpr elaboration.
- *
- * Revision 1.51  2001/11/07 04:26:46  steve
- *  elaborate_lnet uses scope instead of string path.
- *
- * Revision 1.50  2001/11/07 04:01:59  steve
- *  eval_const uses scope instead of a string path.
- */
 #endif

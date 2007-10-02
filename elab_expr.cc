@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.126 2007/06/02 03:42:12 steve Exp $"
-#endif
 
 # include "config.h"
 # include "compiler.h"
@@ -38,7 +35,8 @@ unsigned PExpr::test_width(Design*des, NetScope*scope,
 {
       if (debug_elaborate) {
 	    cerr << get_line() << ": debug: test_width defaults to "
-		 << min << ", ignoring unsized_flag" << endl;
+		 << min << ", ignoring unsized_flag. typeid="
+		 << typeid(*this).name() << endl;
       }
       return min;
 }
@@ -307,6 +305,61 @@ unsigned PEBShift::test_width(Design*des, NetScope*scope,
       return wid_left;
 }
 
+unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
+					   unsigned min, unsigned lval,
+					   bool&unsized_flag) const
+{
+      perm_string name = peek_tail_name(path_);
+
+      if (name=="$signed"|| name=="$unsigned") {
+	    PExpr*expr = parms_[0];
+	    if (expr == 0)
+		  return 0;
+	    unsigned wid = expr->test_width(des, scope, min, lval, unsized_flag);
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: test_width"
+		       << " of $signed/$unsigned returns test_width"
+		       << " of subexpression." << endl;
+	    return wid;
+      }
+
+      if (debug_elaborate)
+	    cerr << get_line() << ": debug: test_width "
+		 << "of system function " << name
+		 << " returns 32 always?" << endl;
+      return 32;
+}
+
+unsigned PECallFunction::test_width(Design*des, NetScope*scope,
+				    unsigned min, unsigned lval,
+				    bool&unsized_flag) const
+{
+      if (peek_tail_name(path_)[0] == '$')
+	    return test_width_sfunc_(des, scope, min, lval, unsized_flag);
+
+      NetFuncDef*def = des->find_function(scope, path_);
+      if (def == 0) {
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: test_width "
+		       << "cannot find definition of " << path_
+		       << " in " << scope_path(scope) << "." << endl;
+	    return 0;
+      }
+
+      NetScope*dscope = def->scope();
+      assert(dscope);
+
+      if (NetNet*res = dscope->find_signal(dscope->basename())) {
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: test_width "
+		       << "of function returns width " << res->vector_width()
+		       << "." << endl;
+	    return res->vector_width();
+      }
+
+      ivl_assert(*this, 0);
+      return 0;
+}
 
 /*
  * Given a call to a system function, generate the proper expression
