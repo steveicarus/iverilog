@@ -27,17 +27,21 @@
 # include  "globals.h"
 # include  <string.h>
 
-/*
- * Lexical location information is passed in the yylloc variable to th
- * parser. The file names, strings, are kept in a list so that I can
- * re-use them. The set_file_name function will return a pointer to
- * the name as it exists in the list (and delete the passed string.)
- * If the name is new, it will be added to the list.
- */
-YYLTYPE yylloc;
-
 static int comment_enter;
- static char* trim_trailing_white(char*txt, int trim);
+static char* trim_trailing_white(char*txt, int trim);
+
+/*
+ * Mostly copied from the flex manual. Do not make this arbitrary
+ * depth without checking for looping files.
+ */
+#define MAX_CMDFILE_DEPTH 15
+
+typedef struct t_cmdfile {
+      char *cmdfile;
+      YY_BUFFER_STATE buffer;
+} s_cmdfile;
+s_cmdfile cmdfile_stack[MAX_CMDFILE_DEPTH];
+int cmdfile_stack_ptr = 0;
 
 %}
 
@@ -51,12 +55,12 @@ static int comment_enter;
   /* Accept C++ style comments. */
 "//".* { comment_enter = YY_START; BEGIN(LCOMMENT); }
 <LCOMMENT>.    { yymore(); }
-<LCOMMENT>\n   { yylloc.first_line += 1; BEGIN(comment_enter); }
+<LCOMMENT>\n   { cflloc.first_line += 1; BEGIN(comment_enter); }
 
   /* Accept C style comments. */
 "/*" { comment_enter = YY_START; BEGIN(CCOMMENT); }
 <CCOMMENT>.    { yymore(); }
-<CCOMMENT>\n   { yylloc.first_line += 1; yymore(); }
+<CCOMMENT>\n   { cflloc.first_line += 1; yymore(); }
 <CCOMMENT>"*/" { BEGIN(comment_enter); }
 
   /* Accept shell type comments. */
@@ -65,7 +69,7 @@ static int comment_enter;
   /* Skip white space. */
 [ \t\f\r] { ; }
   /* Skip line ends, but also count the line. */
-\n { yylloc.first_line += 1; }
+\n { cflloc.first_line += 1; }
 
 
 "+define+" { BEGIN(PLUS_ARGS); return TOK_DEFINE; }
@@ -100,11 +104,15 @@ static int comment_enter;
 <PLUS_ARGS>[ \t\b\f\r] { BEGIN(0); }
 
 <PLUS_ARGS>\n {
-      yylloc.first_line += 1;
+      cflloc.first_line += 1;
       BEGIN(0); }
 
   /* Notice the -a flag. */
 "-a" { return TOK_Da; }
+
+  /* Notice the -c or -f flag. */
+"-c" { return TOK_Dc; }
+"-f" { return TOK_Dc; }
 
   /* Notice the -v flag. */
 "-v" { return TOK_Dv; }
@@ -142,6 +150,18 @@ static int comment_enter;
   /* Fallback match. */
 . { return yytext[0]; }
 
+  /* At the end of file switch back to the previous buffer. */
+<<EOF>> {
+      if (--cmdfile_stack_ptr < 0) {
+	    free(current_file);
+	    yyterminate();
+      } else {
+	    yy_delete_buffer(YY_CURRENT_BUFFER);
+	    yy_switch_to_buffer(cmdfile_stack[cmdfile_stack_ptr].buffer);
+	    free(current_file);
+	    current_file = cmdfile_stack[cmdfile_stack_ptr].cmdfile;
+      } }
+
 %%
 
 static char* trim_trailing_white(char*text, int trim)
@@ -164,10 +184,52 @@ int yywrap()
       return 1;
 }
 
+void switch_to_command_file(const char *file)
+{
+      char path[4096];
+      char *cp;
+
+      if (cmdfile_stack_ptr >= MAX_CMDFILE_DEPTH) {
+	    fprintf(stderr, "Error: command files nested too deeply (%d) "
+                    "at %s:%d.\n", MAX_CMDFILE_DEPTH, current_file,
+                    cflloc.first_line);
+	    exit(1);
+      }
+
+      cmdfile_stack[cmdfile_stack_ptr].buffer = YY_CURRENT_BUFFER;
+      cmdfile_stack[cmdfile_stack_ptr].cmdfile = current_file;
+      cmdfile_stack_ptr += 1;
+
+        /*
+         * If this is a relative file then add the current path to the
+         * file name.
+         */
+      if (file[0] != '/') {
+	    strcpy(path, current_file);
+	    cp = strrchr(path, '/');
+	    if (cp == 0) strcpy(path, file);  /* A base file. */
+	    else {
+	          *(cp+1) = '\0';
+	          strcat(path, file);
+	    }
+      } else strcpy(path, file);  /* An absolute path. */
+
+      yyin = fopen(path, "r");
+      if (yyin == NULL) {
+	    fprintf(stderr, "Error: unable to read nested command file (%s) "
+                    "at %s:%d.\n", path, current_file, cflloc.first_line);
+	    exit(1);
+      }
+
+      current_file = strdup(path);
+      yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE));
+      cflloc.first_line = 1;
+}
+
 void cfreset(FILE*fd, const char*path)
 {
       yyin = fd;
       yyrestart(fd);
-      yylloc.first_line = 1;
-      yylloc.text = (char*)path;
+      current_file = strdup(path);
+      cflloc.first_line = 1;
 }
