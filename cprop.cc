@@ -16,16 +16,13 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.56 2007/03/07 00:38:15 steve Exp $"
-#endif
 
 # include "config.h"
 
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "functor.h"
-# include  <assert.h>
+# include  "ivl_assert.h"
 
 
 
@@ -846,15 +843,17 @@ struct cprop_dc_functor  : public functor_t {
 void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 {
 	// 'bz constant values drive high impedance to whatever is
-	// connected to it. In other words, it is a noop.
+	// connected to it. In other words, it is a noop. But that is
+	// only true if *all* the bits of the vectors.
       { unsigned tmp = 0;
-        for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1)
+	ivl_assert(*obj, obj->pin_count()==1);
+	for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
 	      if (obj->value(idx) == verinum::Vz) {
-		    obj->pin(idx).unlink();
 		    tmp += 1;
 	      }
+	}
 
-	if (tmp == obj->pin_count()) {
+	if (tmp == obj->width()) {
 	      delete obj;
 	      return;
 	}
@@ -947,82 +946,4 @@ void cprop(Design*des)
       cprop_dc_functor dc;
       des->functor(&dc);
 }
-
-/*
- * $Log: cprop.cc,v $
- * Revision 1.56  2007/03/07 00:38:15  steve
- *  Lint fixes.
- *
- * Revision 1.55  2006/05/24 04:32:57  steve
- *  Fix handling of ternary-to-bufif0 constant propagation.
- *
- * Revision 1.54  2005/07/15 19:22:52  steve
- *  bufif enable is LOGIC.
- *
- * Revision 1.53  2005/05/15 04:44:30  steve
- *  Disable obsolete logic constant fixup code.
- *
- * Revision 1.52  2005/04/24 23:44:01  steve
- *  Update DFF support to new data flow.
- *
- * Revision 1.51  2005/02/12 22:52:45  steve
- *  Fix copyright notice.
- *
- * Revision 1.50  2005/02/12 06:25:40  steve
- *  Restructure NetMux devices to pass vectors.
- *  Generate NetMux devices from ternary expressions,
- *  Reduce NetMux devices to bufif when appropriate.
- *
- * Revision 1.49  2005/01/16 04:20:32  steve
- *  Implement LPM_COMPARE nodes as two-input vector functors.
- *
- * Revision 1.48  2004/12/11 02:31:25  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.47  2004/02/20 18:53:34  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.46  2003/11/08 17:53:34  steve
- *  Do not remove constants accessible to VPI.
- *
- * Revision 1.45  2003/10/31 02:40:06  steve
- *  Donot elide FF that has set or clr connections.
- *
- * Revision 1.44  2003/04/25 05:06:32  steve
- *  Handle X values in constant == nets.
- *
- * Revision 1.43  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.42  2003/02/26 01:29:24  steve
- *  LPM objects store only their base names.
- *
- * Revision 1.41  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.40  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.39  2002/08/20 04:12:22  steve
- *  Copy gate delays when doing gate delay substitutions.
- *
- * Revision 1.38  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.37  2002/06/25 01:33:22  steve
- *  Cache calculated driven value.
- *
- * Revision 1.36  2002/06/24 01:49:38  steve
- *  Make link_drive_constant cache its results in
- *  the Nexus, to improve cprop performance.
- *
- * Revision 1.35  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- */
 
