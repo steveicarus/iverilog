@@ -45,14 +45,19 @@ NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r, bool lossless_flag)
 	   one. This expands the expression to account for the largest
 	   possible result.
 
+	   Remember to handle the special case of an unsized constant,
+	   which we define to be at least "integer_width" bits.
+
 	   The set_width applied to a constant value will only
 	   truncate the constant so far as it can still hold its
 	   logical value, so this is safe to do. */
       if ( (tmp = dynamic_cast<NetEConst*>(r))
 	   && (! tmp->has_width())
-	   && (tmp->expr_width() > l->expr_width()) ) {
+	   && (tmp->expr_width() > l->expr_width() || integer_width > l->expr_width()) ) {
 
 	    unsigned target_width = l->expr_width() + 1;
+	    if (target_width < integer_width)
+		  target_width = integer_width;
 	    r->set_width(target_width);
 
 	      /* Note: This constant value will not gain a defined
@@ -61,9 +66,11 @@ NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r, bool lossless_flag)
 
       } else if ( (tmp = dynamic_cast<NetEConst*>(l))
 	   && (! tmp->has_width())
-	   && (tmp->expr_width() > r->expr_width()) ) {
+		  && (tmp->expr_width() > r->expr_width() || integer_width > r->expr_width()) ) {
 
 	    unsigned target_width = r->expr_width() + 1;
+	    if (target_width < integer_width)
+		  target_width = integer_width;
 	    l->set_width(target_width);
 
 	      /* Note: This constant value will not gain a defined

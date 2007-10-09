@@ -146,6 +146,11 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 {
       bool flag;
 
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: elaborate expression "
+		 << *this << " expr_wid=" << expr_wid << endl;
+      }
+
       NetEBinary*tmp;
 
       switch (op_) {
