@@ -156,6 +156,8 @@ static struct vcd_info*vcd_list = 0;
 static struct vcd_info*vcd_dmp_list = 0;
 static PLI_UINT64 vcd_cur_time = 0;
 static int dump_is_off = 0;
+static long dump_limit = 0;
+static int dump_is_full = 0;
 
 
 static void show_this_item(struct vcd_info*info)
@@ -247,9 +249,17 @@ static PLI_INT32 variable_cb_1(p_cb_data cause)
       struct t_cb_data cb;
       struct vcd_info*info = (struct vcd_info*)cause->user_data;
 
+      if (dump_is_full) 	 return 0;
       if (dump_is_off) 		 return 0;
       if (dump_header_pending()) return 0;
       if (info->scheduled)       return 0;
+
+      if ((dump_limit > 0) && (ftell(dump_file->handle) > dump_limit)) {
+            dump_is_full = 1;
+            vpi_printf("WARNING: Dump file limit (%ld bytes) "
+                       "exceeded.\n", dump_limit);
+            return 0;
+      }
 
       if (!vcd_dmp_list) {
           cb = *cause;
@@ -485,6 +495,55 @@ static PLI_INT32 sys_dumpflush_calltf(PLI_BYTE8*name)
       return 0;
 }
 
+static PLI_INT32 sys_dumplimit_compiletf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle limit;
+
+      /* Check that there is a argument and get it. */
+      if (argv == 0) {
+            vpi_printf("ERROR: %s requires an argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+      limit = vpi_scan(argv);
+
+      /* Check that we are not given a string. */
+      switch (vpi_get(vpiType, limit)) {
+          case vpiConstant:
+          case vpiParameter:
+            if (vpi_get(vpiConstType, limit) == vpiStringConst) {
+                  vpi_printf("ERROR: %s's argument must be a number.\n", name);
+            }
+      }
+
+      /* Check that there is only a single argument. */
+      limit = vpi_scan(argv);
+      if (limit != 0) {
+            vpi_printf("ERROR: %s takes a single argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      return 0;
+}
+
+static PLI_INT32 sys_dumplimit_calltf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle limit = vpi_scan(argv);
+      s_vpi_value val;
+
+      /* Get the value and set the dump limit. */
+      val.format = vpiIntVal;
+      vpi_get_value(limit, &val);
+      dump_limit = val.value.integer;
+
+      vpi_free_object(argv);
+      return 0;
+}
 
 static void scan_item(unsigned depth, vpiHandle item, int skip)
 {
@@ -829,6 +888,14 @@ void sys_lxt2_register()
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$dumplimit";
+      tf_data.calltf    = sys_dumplimit_calltf;
+      tf_data.compiletf = sys_dumplimit_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$dumplimit";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpvars";
       tf_data.calltf    = sys_dumpvars_calltf;
       tf_data.compiletf = sys_vcd_dumpvars_compiletf;
@@ -837,49 +904,3 @@ void sys_lxt2_register()
       vpi_register_systf(&tf_data);
 }
 
-/*
- * $Log: sys_lxt2.c,v $
- * Revision 1.10  2007/03/14 04:05:51  steve
- *  VPI tasks take PLI_BYTE* by the standard.
- *
- * Revision 1.9  2006/10/30 22:45:37  steve
- *  Updates for Cygwin portability (pr1585922)
- *
- * Revision 1.8  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.7  2004/02/15 20:46:01  steve
- *  Add the $dumpflush function
- *
- * Revision 1.6  2004/02/06 18:23:30  steve
- *  Add support for lxt2 break size
- *
- * Revision 1.5  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.4  2003/09/30 01:33:39  steve
- *  dumpers must be aware of 64bit time.
- *
- * Revision 1.3  2003/09/26 21:23:08  steve
- *  turn partial off when maximally compressing.
- *
- * Revision 1.2  2003/09/10 17:53:42  steve
- *  Add lxt2 support for partial mode.
- *
- * Revision 1.1  2003/09/01 04:04:03  steve
- *  Add lxt2 support.
- *
- * Revision 1.22  2003/08/22 23:14:27  steve
- *  Preserve variable ranges all the way to the vpi.
- *
- * Revision 1.21  2003/05/15 16:51:09  steve
- *  Arrange for mcd id=00_00_00_01 to go to stdout
- *  as well as a user specified log file, set log
- *  file to buffer lines.
- *
- *  Add vpi_flush function, and clear up some cunfused
- *  return codes from other vpi functions.
- *
- *  Adjust $display and vcd/lxt messages to use the
- *  standard output/log file.
- */

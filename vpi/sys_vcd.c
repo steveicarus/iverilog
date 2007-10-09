@@ -83,6 +83,8 @@ static struct vcd_info *vcd_list = 0;
 static struct vcd_info *vcd_dmp_list = 0;
 PLI_UINT64 vcd_cur_time = 0;
 static int dump_is_off = 0;
+static long dump_limit = 0;
+static int dump_is_full = 0;
 
 static char *truncate_bitvec(char *s)
 {
@@ -199,9 +201,19 @@ static PLI_INT32 variable_cb_1(p_cb_data cause)
       struct t_cb_data cb;
       struct vcd_info*info = (struct vcd_info*)cause->user_data;
 
+      if (dump_is_full) 	 return 0;
       if (dump_is_off) 		 return 0;
       if (dump_header_pending()) return 0;
       if (info->scheduled)       return 0;
+
+      if ((dump_limit > 0) && (ftell(dump_file) > dump_limit)) {
+            dump_is_full = 1;
+            vpi_printf("WARNING: Dump file limit (%ld bytes) "
+                               "exceeded.\n", dump_limit);
+            fprintf(dump_file, "$comment Dump file limit (%ld bytes) "
+                               "exceeded. $end\n", dump_limit);
+            return 0;
+      }
 
       if (!vcd_dmp_list) {
           cb = *cause;
@@ -455,6 +467,56 @@ static PLI_INT32 sys_dumpflush_calltf(PLI_BYTE8*name)
       if (dump_file)
 	    fflush(dump_file);
 
+      return 0;
+}
+
+static PLI_INT32 sys_dumplimit_compiletf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle limit;
+
+      /* Check that there is a argument and get it. */
+      if (argv == 0) {
+            vpi_printf("ERROR: %s requires an argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+      limit = vpi_scan(argv);
+
+      /* Check that we are not given a string. */
+      switch (vpi_get(vpiType, limit)) {
+          case vpiConstant:
+          case vpiParameter:
+            if (vpi_get(vpiConstType, limit) == vpiStringConst) {
+                  vpi_printf("ERROR: %s's argument must be a number.\n", name);
+            }
+      }
+
+      /* Check that there is only a single argument. */
+      limit = vpi_scan(argv);
+      if (limit != 0) {
+            vpi_printf("ERROR: %s takes a single argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      return 0;
+}
+
+static PLI_INT32 sys_dumplimit_calltf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle limit = vpi_scan(argv);
+      s_vpi_value val;
+
+      /* Get the value and set the dump limit. */
+      val.format = vpiIntVal;
+      vpi_get_value(limit, &val);
+      dump_limit = val.value.integer;
+
+      vpi_free_object(argv);
       return 0;
 }
 
@@ -822,6 +884,14 @@ void sys_vcd_register()
       tf_data.compiletf = 0;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$dumpflush";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$dumplimit";
+      tf_data.calltf    = sys_dumplimit_calltf;
+      tf_data.compiletf = sys_dumplimit_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$dumplimit";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;

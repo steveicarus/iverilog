@@ -155,6 +155,8 @@ static struct vcd_info*vcd_list = 0;
 static struct vcd_info*vcd_dmp_list = 0;
 static PLI_UINT64 vcd_cur_time = 0;
 static int dump_is_off = 0;
+static long dump_limit = 0;
+static int dump_is_full = 0;
 
 
 static void show_this_item(struct vcd_info*info)
@@ -245,9 +247,17 @@ static PLI_INT32 variable_cb_1(p_cb_data cause)
       struct t_cb_data cb;
       struct vcd_info*info = (struct vcd_info*)cause->user_data;
 
+      if (dump_is_full) 	 return 0;
       if (dump_is_off) 		 return 0;
       if (dump_header_pending()) return 0;
       if (info->scheduled)       return 0;
+
+      if ((dump_limit > 0) && (ftell(dump_file->handle) > dump_limit)) {
+            dump_is_full = 1;
+            vpi_printf("WARNING: Dump file limit (%ld bytes) "
+                       "exceeded.\n", dump_limit);
+            return 0;
+      }
 
       if (!vcd_dmp_list) {
           cb = *cause;
@@ -472,6 +482,56 @@ static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
  */
 static PLI_INT32 sys_dumpflush_calltf(PLI_BYTE8*name)
 {
+      return 0;
+}
+
+static PLI_INT32 sys_dumplimit_compiletf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle limit;
+
+      /* Check that there is a argument and get it. */
+      if (argv == 0) {
+            vpi_printf("ERROR: %s requires an argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+      limit = vpi_scan(argv);
+
+      /* Check that we are not given a string. */
+      switch (vpi_get(vpiType, limit)) {
+          case vpiConstant:
+          case vpiParameter:
+            if (vpi_get(vpiConstType, limit) == vpiStringConst) {
+                  vpi_printf("ERROR: %s's argument must be a number.\n", name);
+            }
+      }
+
+      /* Check that there is only a single argument. */
+      limit = vpi_scan(argv);
+      if (limit != 0) {
+            vpi_printf("ERROR: %s takes a single argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      return 0;
+}
+
+static PLI_INT32 sys_dumplimit_calltf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle limit = vpi_scan(argv);
+      s_vpi_value val;
+
+      /* Get the value and set the dump limit. */
+      val.format = vpiIntVal;
+      vpi_get_value(limit, &val);
+      dump_limit = val.value.integer;
+
+      vpi_free_object(argv);
       return 0;
 }
 
@@ -809,6 +869,14 @@ void sys_lxt_register()
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$dumplimit";
+      tf_data.calltf    = sys_dumplimit_calltf;
+      tf_data.compiletf = sys_dumplimit_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$dumplimit";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpvars";
       tf_data.calltf    = sys_dumpvars_calltf;
       tf_data.compiletf = sys_vcd_dumpvars_compiletf;
@@ -816,105 +884,4 @@ void sys_lxt_register()
       tf_data.user_data = "$dumpvars";
       vpi_register_systf(&tf_data);
 }
-
-/*
- * $Log: sys_lxt.c,v $
- * Revision 1.28  2007/03/14 04:05:51  steve
- *  VPI tasks take PLI_BYTE* by the standard.
- *
- * Revision 1.27  2006/10/30 22:45:37  steve
- *  Updates for Cygwin portability (pr1585922)
- *
- * Revision 1.26  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.25  2004/02/15 20:46:01  steve
- *  Add the $dumpflush function
- *
- * Revision 1.24  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.23  2003/09/30 01:33:39  steve
- *  dumpers must be aware of 64bit time.
- *
- * Revision 1.22  2003/08/22 23:14:27  steve
- *  Preserve variable ranges all the way to the vpi.
- *
- * Revision 1.21  2003/05/15 16:51:09  steve
- *  Arrange for mcd id=00_00_00_01 to go to stdout
- *  as well as a user specified log file, set log
- *  file to buffer lines.
- *
- *  Add vpi_flush function, and clear up some cunfused
- *  return codes from other vpi functions.
- *
- *  Adjust $display and vcd/lxt messages to use the
- *  standard output/log file.
- *
- * Revision 1.20  2003/04/28 01:03:11  steve
- *  Fix stringheap list management failure.
- *
- * Revision 1.19  2003/04/27 02:22:27  steve
- *  Capture VCD dump value in the rosync time period.
- *
- * Revision 1.18  2003/02/21 01:36:25  steve
- *  Move dumpon/dumpoff around to the right times.
- *
- * Revision 1.17  2003/02/20 00:50:06  steve
- *  Update lxt_write implementation, and add compression control flags.
- *
- * Revision 1.16  2003/02/13 18:13:28  steve
- *  Make lxt use stringheap to perm-allocate strings.
- *
- * Revision 1.15  2003/02/12 05:28:01  steve
- *  Set dumpoff of real variables to NaN.
- *
- * Revision 1.14  2003/02/11 05:21:33  steve
- *  Support dump of vpiRealVar objects.
- *
- * Revision 1.13  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.12  2002/11/17 22:28:42  steve
- *  Close old file if $dumpfile is called again.
- *
- * Revision 1.11  2002/08/15 02:12:20  steve
- *  add dumpvars_compiletf to check first argument.
- *
- * Revision 1.10  2002/08/12 01:35:04  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.9  2002/07/17 05:13:43  steve
- *  Implementation of vpi_handle_by_name, and
- *  add the vpiVariables iterator.
- *
- * Revision 1.8  2002/07/15 03:57:30  steve
- *  Fix dangling pointer in pop_scope.
- *
- * Revision 1.7  2002/07/12 17:09:21  steve
- *  Remember to scan IntegerVars.
- *
- * Revision 1.6  2002/07/12 17:08:13  steve
- *  Eliminate use of vpiInternalScope.
- *
- * Revision 1.5  2002/06/21 04:59:36  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.4  2002/06/03 03:56:06  steve
- *  Ignore memories and named events.
- *
- * Revision 1.3  2002/04/06 21:33:29  steve
- *  allow runtime selection of VCD vs LXT.
- *
- * Revision 1.2  2002/04/06 20:25:45  steve
- *  cbValueChange automatically replays.
- *
- * Revision 1.1  2002/03/09 21:54:49  steve
- *  Add LXT dumper support. (Anthony Bybell)
- *
- */
 
