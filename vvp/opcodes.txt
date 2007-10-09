@@ -189,6 +189,12 @@ The %cmp/u and %cmp/s differ only in the handling of the lt bit. The
 compare. In either case, if either operand contains x or z, then lt
 bit gets the x value.
 
+* %cmpi/s <bit-l>, <immr>, <wid>
+* %cmpi/u <bit-l>, <immr>, <wid>
+
+These instructions are similar to the %cmp instructions above, except
+that the right hand operand is an immediate value. This is a positive
+number that the vector is compared with.
 
 * %cmp/wr <bit-l>, <bit-r>
 

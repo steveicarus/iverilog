@@ -867,12 +867,6 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
 
 	/* Correct the lt bit to account for the sign of the parameters. */
       if (lt != BIT4_X) {
-
-	      /* If both numbers are negative (and not equal) then
-		 switch the direction of the lt. */
-	    if ((sig1 == BIT4_1) && (sig2 == BIT4_1) && (eq != BIT4_1))
-		  lt = ~lt;
-
 	      /* If the first is negative and the last positive, then
 		 a < b for certain. */
 	    if ((sig1 == BIT4_1) && (sig2 == BIT4_0))
@@ -883,6 +877,55 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
 	    if ((sig1 == BIT4_0) && (sig2 == BIT4_1))
 		  lt = BIT4_0;
       }
+
+      thr_put_bit(thr, 4, eq);
+      thr_put_bit(thr, 5, lt);
+      thr_put_bit(thr, 6, eeq);
+
+      return true;
+}
+
+bool of_CMPIS(vthread_t thr, vvp_code_t cp)
+{
+      vvp_bit4_t eq  = BIT4_1;
+      vvp_bit4_t eeq = BIT4_1;
+      vvp_bit4_t lt  = BIT4_0;
+
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned imm  = cp->bit_idx[1];
+
+      const unsigned end1 = (idx1 < 4)? idx1 : idx1 + cp->number - 1;
+      thr_check_addr(thr, end1);
+      const vvp_bit4_t sig1 = thr_get_bit(thr, end1);
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    vvp_bit4_t lv = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rv = (imm & 1)? BIT4_1 : BIT4_0;
+	    imm >>= 1;
+
+	    if (lv > rv) {
+		  lt = BIT4_0;
+		  eeq = BIT4_0;
+	    } else if (lv < rv) {
+		  lt = BIT4_1;
+		  eeq = BIT4_0;
+	    }
+	    if (eq != BIT4_X) {
+		  if ((lv == BIT4_0) && (rv != BIT4_0))
+			eq = BIT4_0;
+		  if ((lv == BIT4_1) && (rv != BIT4_1))
+			eq = BIT4_0;
+		  if (bit4_is_xz(lv) || bit4_is_xz(rv))
+			eq = BIT4_X;
+	    }
+
+	    if (idx1 >= 4) idx1 += 1;
+      }
+
+      if (eq == BIT4_X)
+	    lt = BIT4_X;
+      else if (sig1 == BIT4_1)
+	    lt = BIT4_1;
 
       thr_put_bit(thr, 4, eq);
       thr_put_bit(thr, 5, lt);
@@ -2528,6 +2571,20 @@ bool of_MOV_WR(vthread_t thr, vvp_code_t cp)
       unsigned src = cp->bit_idx[1];
 
       thr->words[dst].w_real = thr->words[src].w_real;
+      return true;
+}
+
+bool of_MOVI(vthread_t thr, vvp_code_t cp)
+{
+      unsigned dst = cp->bit_idx[0];
+      unsigned val = cp->bit_idx[1];
+      unsigned wid = cp->number;
+
+      thr_check_addr(thr, dst+wid);
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1, val >>= 1)
+	    thr->bits4.set_bit(dst+idx, (val&1)? BIT4_1 : BIT4_0);
+
       return true;
 }
 

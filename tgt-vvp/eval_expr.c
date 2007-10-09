@@ -36,6 +36,9 @@ int number_is_unknown(ivl_expr_t ex)
       const char*bits;
       unsigned idx;
 
+      if (ivl_expr_type(ex) == IVL_EX_ULONG)
+	    return 0;
+
       assert(ivl_expr_type(ex) == IVL_EX_NUMBER);
 
       bits = ivl_expr_bits(ex);
@@ -65,6 +68,10 @@ int number_is_immediate(ivl_expr_t ex, unsigned lim_wid)
       for (idx = lim_wid ;  idx < ivl_expr_width(ex) ;  idx += 1)
 	    if (bits[idx] != '0')
 		  return 0;
+
+	/* Negative numbers are not "immediate". */
+      if (ivl_expr_signed(ex) && bits[ivl_expr_width(ex)-1]=='1')
+	    return 0;
 
       return 1;
 }
@@ -290,13 +297,7 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 	    return draw_binary_expr_eq_real(exp);
       }
 
-      if ((ivl_expr_type(re) == IVL_EX_ULONG)
-	  && (0 == (ivl_expr_uvalue(re) & ~0xffff)))
-	    return draw_eq_immediate(exp, ewid, le, re, stuff_ok_flag);
-
-      if ((ivl_expr_type(re) == IVL_EX_NUMBER)
-	  && (! number_is_unknown(re))
-	  && number_is_immediate(re, 16))
+      if (number_is_immediate(re,16) && !number_is_unknown(re))
 	    return draw_eq_immediate(exp, ewid, le, re, stuff_ok_flag);
 
       assert(ivl_expr_value(le) == IVL_VT_LOGIC
@@ -683,42 +684,78 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
       assert(ivl_expr_value(re) == IVL_VT_LOGIC
 	     || ivl_expr_value(re) == IVL_VT_BOOL);
 
-      lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
-      rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
+      lv.wid = 0;
+      rv.wid = 0;
 
       switch (ivl_expr_opcode(exp)) {
 	  case 'G':
-	    assert(lv.wid == rv.wid);
-	    fprintf(vvp_out, "    %%cmp/%c %u, %u, %u;\n", s_flag,
-		    rv.base, lv.base, lv.wid);
+	    rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
+	    if (number_is_immediate(le,16) && !number_is_unknown(le)) {
+		  unsigned imm = get_number_immediate(le);
+		  assert(imm >= 0);
+		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
+			  rv.base, imm, rv.wid);
+	    } else {
+		  lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
+		  assert(lv.wid == rv.wid);
+		  fprintf(vvp_out, "    %%cmp/%c %u, %u, %u;\n", s_flag,
+			  rv.base, lv.base, lv.wid);
+	    }
 	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
 	    break;
 
 	  case 'L':
-	    assert(lv.wid == rv.wid);
-	    fprintf(vvp_out, "    %%cmp/%c %u, %u, %u;\n", s_flag,
-		    lv.base, rv.base, lv.wid);
+	    lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
+	    if (number_is_immediate(re,16) && !number_is_unknown(re)) {
+		  unsigned imm = get_number_immediate(re);
+		  assert(imm >= 0);
+		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
+			  lv.base, imm, lv.wid);
+	    } else {
+		  rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
+		  assert(lv.wid == rv.wid);
+		  fprintf(vvp_out, "    %%cmp/%c %u, %u, %u;\n", s_flag,
+			  lv.base, rv.base, lv.wid);
+	    }
 	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
 	    break;
 
 	  case '<':
-	    assert(lv.wid == rv.wid);
-	    fprintf(vvp_out, "    %%cmp/%c %u, %u, %u;\n", s_flag,
-		    lv.base, rv.base, lv.wid);
+	    lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
+	    if (number_is_immediate(re,16) && !number_is_unknown(re)) {
+		  unsigned imm = get_number_immediate(re);
+		  assert(imm >= 0);
+		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
+			  lv.base, imm, lv.wid);
+	    } else {
+		  rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
+		  assert(lv.wid == rv.wid);
+		  fprintf(vvp_out, "    %%cmp/%c %u, %u, %u;\n", s_flag,
+			  lv.base, rv.base, lv.wid);
+	    }
 	    break;
 
 	  case '>':
-	    assert(lv.wid == rv.wid);
-	    fprintf(vvp_out, "    %%cmp/%c %u, %u, %u;\n", s_flag,
-		    rv.base, lv.base, lv.wid);
+	    rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
+	    if (number_is_immediate(le,16) && !number_is_unknown(le)) {
+		  unsigned imm = get_number_immediate(le);
+		  assert(imm >= 0);
+		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
+			  rv.base, imm, rv.wid);
+	    } else {
+		  lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
+		  assert(lv.wid == rv.wid);
+		  fprintf(vvp_out, "    %%cmp/%c %u, %u, %u;\n", s_flag,
+			  rv.base, lv.base, lv.wid);
+	    }
 	    break;
 
 	  default:
 	    assert(0);
       }
 
-      clr_vector(lv);
-      clr_vector(rv);
+      if (lv.wid > 0) clr_vector(lv);
+      if (rv.wid > 0) clr_vector(rv);
 
       if ((stuff_ok_flag&STUFF_OK_47) && (wid == 1)) {
 	    lv.base = 5;
@@ -1364,6 +1401,12 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 	   vector. Allocate the vector and use %mov instructions to
 	   load the constant bit values. */
       res.base = allocate_vector(wid);
+
+      if ((!number_is_unknown(exp)) && number_is_immediate(exp, 16)) {
+	    int val = get_number_immediate(exp);
+	    fprintf(vvp_out, "   %%movi %u, %d, %u;\n", res.base, val, wid);
+	    return res;
+      }
 
       idx = 0;
       while (idx < nwid) {

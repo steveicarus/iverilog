@@ -412,17 +412,8 @@ static char* draw_C4_to_string(ivl_net_const_t cptr)
       dp += strlen(dp);
 
       for (idx = 0 ;  idx < ivl_const_width(cptr) ;  idx += 1) {
-	    switch (bits[ivl_const_width(cptr)-idx-1]) {
-		case '0':
-		  *dp++ = '0';
-		  break;
-		case '1':
-		  *dp++ = '1';
-		  break;
-		default:
-		  *dp++ = bits[idx];
-		  break;
-	    }
+	    char bitchar = bits[ivl_const_width(cptr)-idx-1];
+	    *dp++ = bitchar;
 	    assert((dp - result) < result_len);
       }
 
