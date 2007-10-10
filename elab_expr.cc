@@ -406,7 +406,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	    NetExpr*sub = expr->elaborate_expr(des, scope, -1, true);
 	    sub->cast_signed(false);
 
-	    if (expr_wid > sub->expr_width())
+	    if (expr_wid > 0 && (unsigned)expr_wid > sub->expr_width())
 		  sub = pad_to_width(sub, expr_wid);
 
 	    return sub;
@@ -1264,7 +1264,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 
 	      // Recalculate the constant address with the adjusted base.
 	    unsigned use_addr = net->array_index_to_address(addr);
-	    if (use_addr != addr) {
+	    if (addr < 0 || use_addr != (unsigned long)addr) {
 		  verinum val (use_addr, 8*sizeof(use_addr));
 		  NetEConst*tmp = new NetEConst(val);
 		  tmp->set_line(*this);
