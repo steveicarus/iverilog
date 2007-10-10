@@ -527,6 +527,124 @@ static PLI_INT32 sys_random_calltf(PLI_BYTE8 *name)
       return 0;
 }
 
+/* From System Verilog 3.1a. */
+static PLI_INT32 sys_urandom_range_compiletf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle arg;
+
+      /* Check that there are arguments. */
+      if (argv == 0) {
+            vpi_printf("ERROR: %s requires two arguments.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      /* Check that there are at least two arguments. */
+      arg = vpi_scan(argv);  /* This should never be zero. */
+      arg = vpi_scan(argv);
+      if (arg == 0) {
+            vpi_printf("ERROR: %s requires two arguments.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      /* These functions takes at most two argument. */
+      arg = vpi_scan(argv);
+      if (arg != 0) {
+            vpi_printf("ERROR: %s takes at most two argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      /* vpi_scan returning 0 (NULL) has already freed argv. */
+      return 0;
+}
+
+/* From System Verilog 3.1a. */
+static unsigned long urandom(long *seed, unsigned long max, unsigned long min)
+{
+      static long i_seed = 0;
+      unsigned long result;
+      long max_i, min_i;
+
+      max_i =  max + INT_MIN;
+      min_i =  min + INT_MIN;
+      if (seed != 0) i_seed = *seed;
+      result = rtl_dist_uniform(&i_seed, min_i, max_i) - INT_MIN;
+      if (seed != 0) *seed = i_seed;
+      return result;
+}
+
+/* From System Verilog 3.1a. */
+static PLI_INT32 sys_urandom_calltf(PLI_BYTE8 *name)
+{
+      vpiHandle callh, argv, seed = 0;
+      s_vpi_value val;
+      long i_seed;
+
+      /* Get the argument list and look for a seed. If it is there,
+         get the value and reseed the random number generator. */
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
+      val.format = vpiIntVal;
+      if (argv) {
+            seed = vpi_scan(argv);
+            vpi_free_object(argv);
+            vpi_get_value(seed, &val);
+            i_seed = val.value.integer;
+      }
+
+      /* Calculate and return the result. */
+      if (seed) {
+            val.value.integer = urandom(&i_seed, UINT_MAX, 0);
+      } else {
+            val.value.integer = urandom(0, UINT_MAX, 0);
+      }
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
+
+      /* If it exists send the updated seed back to seed parameter. */
+      if (seed) {
+            val.value.integer = i_seed;
+            vpi_put_value(seed, &val, 0, vpiNoDelay);
+      }
+
+      return 0;
+}
+
+/* From System Verilog 3.1a. */
+static PLI_INT32 sys_urandom_range_calltf(PLI_BYTE8 *name)
+{
+      vpiHandle callh, argv, maxval, minval;
+      s_vpi_value val;
+      unsigned long i_maxval, i_minval, tmp;
+
+      /* Get the argument handles and convert them. */
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
+      maxval = vpi_scan(argv);
+      minval = vpi_scan(argv);
+
+      val.format = vpiIntVal;
+      vpi_get_value(maxval, &val);
+      i_maxval = val.value.integer;
+
+      vpi_get_value(minval, &val);
+      i_minval = val.value.integer;
+
+      /* Swap the two arguments if they are out of order. */
+      if (i_minval > i_maxval) {
+            tmp = i_minval;
+            i_minval = i_maxval;
+            i_maxval = tmp;
+      }
+
+      /* Calculate and return the result. */
+      val.value.integer = urandom(0, i_maxval, i_minval);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
+}
+
 static PLI_INT32 sys_dist_uniform_calltf(PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, start, end;
@@ -769,10 +887,29 @@ void sys_random_register()
       tf_data.sysfunctype = vpiSysFuncInt;
       tf_data.tfname = "$random";
       tf_data.calltf = sys_random_calltf;
-      tf_data.compiletf = 0;
       tf_data.compiletf = sys_random_compiletf;
       tf_data.sizetf = sys_rand_func_sizetf;
       tf_data.user_data = "$random";
+      vpi_register_systf(&tf_data);
+
+      /* From System Verilog 3.1a. */
+      tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncSized;
+      tf_data.tfname = "$urandom";
+      tf_data.calltf = sys_urandom_calltf;
+      tf_data.compiletf = sys_random_compiletf;
+      tf_data.sizetf = sys_rand_func_sizetf;
+      tf_data.user_data = "$urandom";
+      vpi_register_systf(&tf_data);
+
+      /* From System Verilog 3.1a. */
+      tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncSized;
+      tf_data.tfname = "$urandom_range";
+      tf_data.calltf = sys_urandom_range_calltf;
+      tf_data.compiletf = sys_urandom_range_compiletf;
+      tf_data.sizetf = sys_rand_func_sizetf;
+      tf_data.user_data = "$urandom_range";
       vpi_register_systf(&tf_data);
 
       tf_data.type = vpiSysFunc;
@@ -838,27 +975,4 @@ void sys_random_register()
       tf_data.user_data = "$dist_erlang";
       vpi_register_systf(&tf_data);
 }
-
-/*
- * $Log: sys_random.c,v $
- * Revision 1.16  2007/03/14 04:05:51  steve
- *  VPI tasks take PLI_BYTE* by the standard.
- *
- * Revision 1.15  2006/10/30 22:45:37  steve
- *  Updates for Cygwin portability (pr1585922)
- *
- * Revision 1.14  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.13  2004/06/17 14:44:01  steve
- *  Save seed in static variable, in case user doesnt pass it.
- *
- * Revision 1.12  2004/06/10 02:14:42  steve
- *  Fix transcription error scaling c in uniform range.
- *
- * Revision 1.11  2004/06/09 22:14:10  steve
- *  Move Mersenne Twister to $mti_random, and make
- *  the standard $random standard. Also, add $dist_poisson.
- *
- */
 
