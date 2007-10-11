@@ -274,11 +274,12 @@ source_file
 	;
 
 number  : BASED_NUMBER
-	     { $$ = $1; }
+	     { $$ = $1; based_size = 0;}
         | DEC_NUMBER
-	     { $$ = $1; }
+	     { $$ = $1; based_size = 0;}
         | DEC_NUMBER BASED_NUMBER
-	     { $$ = pform_verinum_with_size($1,$2, @2.text, @2.first_line); }
+	     { $$ = pform_verinum_with_size($1,$2, @2.text, @2.first_line);
+	       based_size = 0; }
 	;
 
   /* Verilog-2001 supports attribute lists, which can be attached to a

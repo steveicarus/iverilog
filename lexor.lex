@@ -294,6 +294,7 @@ W [ \t\b\f\r]+
 
 [0-9][0-9_]* {
       yylval.number = make_unsized_dec(yytext);
+      based_size = yylval.number->as_ulong();
       return DEC_NUMBER; }
 
 [0-9][0-9_]*\.[0-9][0-9_]*([Ee][+-]?[0-9][0-9_]*)? {
@@ -462,6 +463,9 @@ static verinum*make_unsized_binary(const char*txt)
       for (const char*idx = ptr ;  *idx ;  idx += 1)
 	    if (*idx != '_') size += 1;
 
+      if ((based_size > 0) && (size > based_size)) yywarn(yylloc,
+          "extra digits given for sized binary constant.");
+
       verinum::V*bits = new verinum::V[size];
 
       unsigned idx = size;
@@ -516,6 +520,13 @@ static verinum*make_unsized_octal(const char*txt)
       unsigned size = 0;
       for (const char*idx = ptr ;  *idx ;  idx += 1)
 	    if (*idx != '_') size += 3;
+
+      if (based_size > 0) {
+            int rem = based_size % 3;
+	    if (rem != 0) based_size += 3 - rem;
+	    if (size > based_size) yywarn(yylloc,
+	        "extra digits given for sized octal constant.");
+      }
 
       verinum::V*bits = new verinum::V[size];
 
@@ -575,6 +586,13 @@ static verinum*make_unsized_hex(const char*txt)
       unsigned size = 0;
       for (const char*idx = ptr ;  *idx ;  idx += 1)
 	    if (*idx != '_') size += 4;
+
+      if (based_size > 0) {
+            int rem = based_size % 4;
+	    if (rem != 0) based_size += 4 - rem;
+	    if (size > based_size) yywarn(yylloc,
+	        "extra digits given for sized hex constant.");
+      }
 
       verinum::V*bits = new verinum::V[size];
 
@@ -802,6 +820,10 @@ static verinum*make_unsized_dec(const char*ptr)
 	    size += 1;
 	    assert(size <= tmp_size);
       }
+
+        /* Since we never have the real number of bits that a decimal
+           number represents we do not check for extra bits. */
+//      if (based_size > 0) { }
 
       verinum*res = new verinum(bits, size, false);
       res->has_sign(signed_flag);

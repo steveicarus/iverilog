@@ -55,33 +55,6 @@ extern void VLerror(const YYLTYPE&loc, const char*msg);
 extern void VLwarn(const YYLTYPE&loc, const char*msg);
 
 extern unsigned error_count, warn_count;
+extern unsigned long based_size;
 
-/*
- * $Log: parse_misc.h,v $
- * Revision 1.7  2003/03/08 20:58:18  steve
- *  More C-like use of vlltype.
- *
- * Revision 1.6  2002/11/03 20:36:53  steve
- *  Support old/new bison yylloc.
- *
- * Revision 1.5  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2000/02/23 02:56:55  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.3  1999/07/10 01:03:18  steve
- *  remove string from lexical phase.
- *
- * Revision 1.2  1998/11/07 17:05:05  steve
- *  Handle procedural conditional, and some
- *  of the conditional expressions.
- *
- *  Elaborate signals and identifiers differently,
- *  allowing the netlist to hold signal information.
- *
- * Revision 1.1  1998/11/03 23:29:03  steve
- *  Introduce verilog to CVS.
- *
- */
 #endif

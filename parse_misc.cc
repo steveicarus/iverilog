@@ -28,6 +28,7 @@
 extern const char*vl_file;
 unsigned error_count = 0;
 unsigned warn_count = 0;
+unsigned long based_size = 0;
 
 void VLerror(const char*msg)
 {
@@ -42,6 +43,7 @@ void VLerror(const YYLTYPE&loc, const char*msg)
 	    cerr << loc.text << ":";
 
       cerr << loc.first_line << ": " << msg << endl;
+      based_size = 0; /* Clear the base information if we have an error. */
 }
 
 void yywarn(const YYLTYPE&loc, const char*msg)
@@ -57,34 +59,4 @@ int VLwrap()
 {
       return -1;
 }
-
-/*
- * $Log: parse_misc.cc,v $
- * Revision 1.7  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.6  2002/06/06 18:57:18  steve
- *  Use standard name for iostream.
- *
- * Revision 1.5  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.4  2000/02/23 02:56:55  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.3  1999/09/29 21:15:31  steve
- *  Standardize formatting of warning messages.
- *
- * Revision 1.2  1998/11/07 17:05:05  steve
- *  Handle procedural conditional, and some
- *  of the conditional expressions.
- *
- *  Elaborate signals and identifiers differently,
- *  allowing the netlist to hold signal information.
- *
- * Revision 1.1  1998/11/03 23:29:02  steve
- *  Introduce verilog to CVS.
- *
- */
 
