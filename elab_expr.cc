@@ -372,7 +372,7 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
  * size_tf functions, make assumptions about widths based on some
  * known function names.
  */
-NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
+NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_wid) const
 {
 
 	/* Catch the special case that the system function is the
@@ -405,6 +405,10 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	    PExpr*expr = parms_[0];
 	    NetExpr*sub = expr->elaborate_expr(des, scope, -1, true);
 	    sub->cast_signed(false);
+
+	    if (expr_wid > 0 && (unsigned)expr_wid > sub->expr_width())
+		  sub = pad_to_width(sub, expr_wid);
+
 	    return sub;
       }
 
@@ -536,7 +540,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					int expr_wid, bool) const
 {
       if (peek_tail_name(path_)[0] == '$')
-	    return elaborate_sfunc_(des, scope);
+	    return elaborate_sfunc_(des, scope, expr_wid);
 
       NetFuncDef*def = des->find_function(scope, path_);
       if (def == 0) {
@@ -570,7 +574,14 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       for (unsigned idx = 0 ;  idx < parms.count() ;  idx += 1) {
 	    PExpr*tmp = parms_[idx];
 	    if (tmp) {
-		  parms[idx] = elab_and_eval(des, scope, tmp, -1);
+		  int argwid = def->port(idx)->vector_width();
+		  parms[idx] = elab_and_eval(des, scope, tmp, argwid);
+		  if (debug_elaborate)
+			cerr << get_line() << ": debug:"
+			     << " function " << path_
+			     << " arg " << (idx+1)
+			     << " argwid=" << argwid
+			     << ": " << *parms[idx] << endl;
 
 	    } else {
 		  missing_parms += 1;
@@ -1253,7 +1264,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 
 	      // Recalculate the constant address with the adjusted base.
 	    unsigned use_addr = net->array_index_to_address(addr);
-	    if (use_addr != addr) {
+	    if (addr < 0 || use_addr != (unsigned long)addr) {
 		  verinum val (use_addr, 8*sizeof(use_addr));
 		  NetEConst*tmp = new NetEConst(val);
 		  tmp->set_line(*this);

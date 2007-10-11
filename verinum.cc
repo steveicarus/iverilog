@@ -912,6 +912,36 @@ static verinum unsigned_divide(verinum num, verinum den)
       return result;
 }
 
+static verinum unsigned_modulus(verinum num, verinum den)
+{
+      unsigned nwid = num.len();
+      while (nwid > 0 && (num.get(nwid-1) == verinum::V0))
+	    nwid -= 1;
+
+      unsigned dwid = den.len();
+      while (dwid > 0 && (den.get(dwid-1) == verinum::V0))
+	    dwid -= 1;
+
+      if (dwid > nwid)
+	    return num;
+
+      den = den << (nwid-dwid);
+
+      unsigned idx = nwid - dwid + 1;
+      verinum result (verinum::V0, idx);
+      while (idx > 0) {
+	    if (den <= num) {
+		  verinum dif = num - den;
+		  num = dif;
+		  result.set(idx-1, verinum::V1);
+	    }
+	    den = den >> 1;
+	    idx -= 1;
+      }
+
+      return num;
+}
+
 /*
  * This operator divides the left number by the right number. If
  * either value is signed, the result is signed. If both values have a
@@ -1039,20 +1069,25 @@ verinum operator % (const verinum&left, const verinum&right)
 
       } else {
 
-	      /* XXXX FIXME XXXX Use native unsigned division to do
+	      /* Use native unsigned division, if possible, to do
 		 the work. This does not work if the result is too
-		 large for the native integer. */
-	    assert(use_len <= 8*sizeof(unsigned long));
-	    unsigned long l = left.as_ulong();
-	    unsigned long r = right.as_ulong();
-	    unsigned long v = l % r;
-	    for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
-		  result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
-		  v >>= 1;
+		 large for the native integer, so resort to a modulus
+		 function in that case. */
+	    if (use_len <= 8*sizeof(unsigned long)) {
+		  assert(use_len <= 8*sizeof(unsigned long));
+		  unsigned long l = left.as_ulong();
+		  unsigned long r = right.as_ulong();
+		  unsigned long v = l % r;
+		  for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
+			result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
+			v >>= 1;
+		  }
+	    } else {
+		  result = unsigned_modulus(left, right);
 	    }
       }
 
-      return result;
+      return trim_vnum(result);
 }
 
 verinum concat(const verinum&left, const verinum&right)
