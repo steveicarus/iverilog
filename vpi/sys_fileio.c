@@ -132,6 +132,66 @@ static PLI_INT32 sys_fopen_sizetf(PLI_BYTE8*x)
 }
 
 /*
+ * Implement the $fopenr(), $fopenw() and $fopena() systen functions
+ * from Chris Spear's File I/O for Verilog.
+ */
+static PLI_INT32 sys_fopenrwa_compiletf(PLI_BYTE8*name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle file;
+
+      /* Check that there are arguments. */
+      if (argv == 0) {
+            vpi_printf("ERROR: %s requires a single argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      file = vpi_scan(argv); /* This should never be zero. */
+
+      /* These functions take at most one argument. */
+      file = vpi_scan(argv);
+      if (file != 0) {
+            vpi_printf("ERROR: %s takes only a single argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      /* vpi_scan returning 0 (NULL) has already freed argv. */
+      return 0;
+}
+
+static PLI_INT32 sys_fopenrwa_calltf(PLI_BYTE8*name)
+{
+      s_vpi_value val;
+      char *mode;
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle file = vpi_scan(argv);
+      vpi_free_object(argv);
+
+      /* Get the mode. */
+      mode = name + strlen(name) - 1;
+
+      /* Get the filename. */
+      val.format = vpiStringVal;
+      vpi_get_value(file, &val);
+      if ((val.format != vpiStringVal) || !val.value.str) {
+	    vpi_printf("ERROR: %s's file name argument must be a string.\n",
+                        name);
+            vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      /* Open the file and return the result. */
+      val.format = vpiIntVal;
+      val.value.integer = vpi_fopen(val.value.str, mode);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
+      return 0;
+}
+
+/*
  * Implement $fclose system function
  */
 static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
@@ -449,6 +509,25 @@ void sys_fileio_register()
       tf_data.user_data = "$fopen";
       vpi_register_systf(&tf_data);
 
+      //============================== fopenr
+      tf_data.type      = vpiSysFunc;
+      tf_data.tfname    = "$fopenr";
+      tf_data.calltf    = sys_fopenrwa_calltf;
+      tf_data.compiletf = sys_fopenrwa_compiletf;
+      tf_data.sizetf    = sys_fopen_sizetf;
+      tf_data.user_data = "$fopenr";
+      vpi_register_systf(&tf_data);
+
+      //============================== fopenw
+      tf_data.tfname    = "$fopenw";
+      tf_data.user_data = "$fopenw";
+      vpi_register_systf(&tf_data);
+
+      //============================== fopena
+      tf_data.tfname    = "$fopena";
+      tf_data.user_data = "$fopena";
+      vpi_register_systf(&tf_data);
+
       //============================== fclose
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fclose";
@@ -507,41 +586,4 @@ void sys_fileio_register()
       vpi_register_systf(&tf_data);
 
 }
-
-/*
- * $Log: sys_fileio.c,v $
- * Revision 1.10  2007/03/14 04:05:51  steve
- *  VPI tasks take PLI_BYTE* by the standard.
- *
- * Revision 1.9  2006/10/30 22:45:37  steve
- *  Updates for Cygwin portability (pr1585922)
- *
- * Revision 1.8  2006/08/03 05:02:46  steve
- *  Use compiletf to check arguments.
- *
- * Revision 1.7  2005/09/20 18:34:01  steve
- *  Clean up compiler warnings.
- *
- * Revision 1.6  2005/01/09 20:12:22  steve
- *  Merge $fopen robustness fix from 0.8
- *
- * Revision 1.5.2.1  2005/01/01 20:07:41  steve
- *  More robust handling of file name argument to $fopen.
- *
- * Revision 1.5  2004/08/24 16:16:23  steve
- *  Fix read count passed to fgets.
- *
- * Revision 1.4  2004/02/20 03:20:04  steve
- *  unused variable warning.
- *
- * Revision 1.3  2004/02/19 21:33:13  steve
- *  Add the $fgets function.
- *
- * Revision 1.2  2003/11/07 19:40:05  steve
- *  Implement basic fflush.
- *
- * Revision 1.1  2003/10/30 03:43:20  steve
- *  Rearrange fileio functions, and add ungetc.
- *
- */
 
