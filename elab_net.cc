@@ -2620,25 +2620,9 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 	    net->local_flag(true);
 	    net->set_signed(value_->has_sign());
 
-	      /* when expanding a constant to fit into the net, extend
-		 the Vx or Vz values if they are in the sign position,
-		 otherwise extend the number with 0 bits. */
-	    verinum::V top_v = verinum::V0;
-	    switch (value_->get(value_->len()-1)) {
-		case verinum::Vx:
-		  top_v = verinum::Vx;
-		  break;
-		case verinum::Vz:
-		  top_v = verinum::Vz;
-		  break;
-		default:   /* V0 and V1, do nothing */
-		  break;
-	    }
-
-	    verinum num(top_v, net->vector_width());
-	    unsigned idx;
-	    for (idx = 0 ;  idx < num.len() && idx < value_->len(); idx += 1)
-		  num.set(idx, value_->get(idx));
+	    verinum num = pad_to_width(*value_, lwidth);
+	    if (num.len() > lwidth)
+		  num = verinum(num, lwidth);
 
 	    NetConst*tmp = new NetConst(scope, scope->local_symbol(), num);
 	    tmp->pin(0).drive0(drive0);

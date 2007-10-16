@@ -25,6 +25,7 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 
+
 /*
  * This function transforms an expression by padding the high bits
  * with V0 until the expression has the desired width. This may mean
@@ -39,18 +40,7 @@ NetExpr*pad_to_width(NetExpr*expr, unsigned wid)
 	/* If the expression is a const, then replace it with a wider
 	   const. This is a more efficient result. */
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
-	    verinum eval = tmp->value();
-	    bool signed_flag = eval.has_sign();
-
-	    verinum::V pad = verinum::V0;
-	    if (signed_flag)
-		  pad = eval.get(eval.len()-1);
-	    verinum oval (pad, wid, eval.has_len());
-
-	    for (unsigned idx = 0 ;  idx < eval.len() ;  idx += 1)
-		  oval.set(idx, eval.get(idx));
-
-	    oval.has_sign(signed_flag);
+	    verinum oval = pad_to_width(tmp->value(), wid);
 	    tmp = new NetEConst(oval);
 	    delete expr;
 	    return tmp;
