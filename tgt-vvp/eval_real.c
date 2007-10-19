@@ -121,9 +121,15 @@ static int draw_number_real(ivl_expr_t exp)
 
 	/* If this is actually a negative number, then get the
 	   positive equivalent, and set the sign bit in the exponent
-	   field. */
+	   field. 
+
+	   To get the positive equivilent of mant we need to take the
+	   negative of the mantissa (0-mant) but also be aware that
+	   the bits may not have been as many bits as the width of the
+	   mant variable. This would lead to spurious '1' bits in the
+	   high bits of mant that are masked by ~((-1UL)<<wid). */
       if (ivl_expr_signed(exp) && (bits[wid-1] == '1')) {
-	    mant = (0-mant) & ((1UL<<wid) - 1UL);
+	    mant = (0-mant) & ~((-1UL) << wid);
 	    vexp |= 0x4000;
       }
 
