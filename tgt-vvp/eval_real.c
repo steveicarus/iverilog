@@ -111,10 +111,11 @@ static int draw_number_real(ivl_expr_t exp)
       int res = allocate_word();
       const char*bits = ivl_expr_bits(exp);
       unsigned wid = ivl_expr_width(exp);
-      unsigned long mant = 0;
+      unsigned long mant = 0, mask = -1UL;
       int vexp = 0x1000;
 
       for (idx = 0 ;  idx < wid ;  idx += 1) {
+	    mask <<= 1;
 	    if (bits[idx] == '1')
 		  mant |= 1 << idx;
       }
@@ -129,7 +130,7 @@ static int draw_number_real(ivl_expr_t exp)
 	   mant variable. This would lead to spurious '1' bits in the
 	   high bits of mant that are masked by ~((-1UL)<<wid). */
       if (ivl_expr_signed(exp) && (bits[wid-1] == '1')) {
-	    mant = (0-mant) & ~((-1UL) << wid);
+	    mant = (0-mant) & ~(mask);
 	    vexp |= 0x4000;
       }
 
