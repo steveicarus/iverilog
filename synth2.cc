@@ -231,7 +231,6 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		      }
 
 		    des->add_node( latchPtr );
-		    delete latchPtr;
 		  }
 
 		catch ( bad_alloc &memoryAllocationException )
@@ -1083,7 +1082,7 @@ bool NetCase::synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
 /*
  * Handle synthesis for an asynchronous condition statement. If we get
  * here, we know that the CE of a DFF has already been filled, so the
- * condition expression goes to the select of an asynchronous mux.
+ * condition expression goes to the select of an asynchronous mux, unless a latch is inferred in which case it goes to the latch's gate input.
  */
 bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 			    struct sync_accounting_cell*nex_ff,

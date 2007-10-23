@@ -28,6 +28,9 @@
 # include  <malloc.h>
 #endif
 
+#include <stdexcept>
+using std::invalid_argument;
+
 /* THE FOLLOWING ARE FUNCTIONS THAT ARE CALLED FROM THE TARGET. */
 
 extern "C" const char*ivl_design_flag(ivl_design_t des, const char*key)
@@ -481,6 +484,7 @@ extern "C" unsigned long ivl_expr_uvalue(ivl_expr_t net)
 
 	  default:
 	    assert(0);
+	    return 0UL;
       }
 
 }
@@ -699,6 +703,21 @@ extern "C" ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net)
       }
 }
 
+extern "C" ivl_nexus_t ivl_lpm_gate( ivl_lpm_t netPtr )
+{
+  assert( netPtr );
+
+  switch ( netPtr->type )
+    {
+    case IVL_LPM_LATCH:
+      return netPtr->u_.latch.gatePtr;
+    default:
+      assert( false );
+      return 0;
+    }
+
+}
+
 extern "C" ivl_expr_t ivl_lpm_aset_value(ivl_lpm_t net)
 {
       assert(net);
@@ -781,6 +800,20 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 		  return net->u_.ff.d.pin;
 	    else
 		  return net->u_.ff.d.pins[idx];
+
+          case IVL_LPM_LATCH:
+
+	    if( idx >= net->u_.latch.width )
+	      {
+		throw invalid_argument( "idx too high" );
+	      }
+
+	    if ( net->u_.latch.width != 1U )
+	      {
+		throw invalid_argument( "Only 1-wide latches are currently supported." );
+	      }
+
+	    return net->u_.latch.dataPtr;
 
 	  default:
 	    assert(0);
@@ -940,6 +973,20 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    else
 		  return net->u_.ff.q.pins[idx];
 
+          case IVL_LPM_LATCH:
+
+	    if ( idx >= net->u_.latch.width )
+	      {
+		throw invalid_argument( "idx too high" );
+	      }
+
+	    if ( net->u_.latch.width != 1U )
+	      {
+		throw invalid_argument( "Only 1-wide latches are currently supported." );
+	      }
+
+	    return net->u_.latch.qPtr;
+
 	  case IVL_LPM_MUX:
 	    assert(idx < net->u_.mux.width);
 	    if (net->u_.mux.width == 1)
@@ -1084,6 +1131,8 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_FF:
 	  case IVL_LPM_RAM:
 	    return net->u_.ff.width;
+          case IVL_LPM_LATCH:
+	    return net->u_.latch.width;
 	  case IVL_LPM_DECODE:
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.width;

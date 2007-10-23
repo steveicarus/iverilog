@@ -3,6 +3,7 @@
 // Class NetLatch member-function definitions
 
 #include "NetLatch.h" // NetLatch class definition
+#include "target.h" // target_t structure definition
 
 // constructor
 NetLatch::NetLatch( NetScope *scope, perm_string name, unsigned width )
@@ -10,6 +11,11 @@ NetLatch::NetLatch( NetScope *scope, perm_string name, unsigned width )
   : NetNode( scope, name, 2U * width + 1U )
 {
 } // end NetLatch constructor
+
+unsigned NetLatch::width() const
+{
+  return ( pin_count() - 1U ) / 2U;
+} // end function width
 
 Link &NetLatch::pin_Data( unsigned w )
 {
@@ -28,4 +34,15 @@ Link &NetLatch::pin_Q( unsigned w )
 Link &NetLatch::pin_Gate()
 {
   return pin( 0 );
-} // end function pin_Q
+} // end function pin_Gate
+
+const Link &NetLatch::pin_Gate() const
+{
+  return pin( 0 );
+} // end function pin_Gate
+
+bool NetLatch::emit_node( target_t *driverPtr ) const
+{
+  driverPtr->lpm_latch( this );
+  return true;
+} // end function emit_node

@@ -230,6 +230,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_DEMUX  = 16,
       IVL_LPM_DIVIDE = 12,
       IVL_LPM_FF     =  3,
+      IVL_LPM_LATCH  = 17,
       IVL_LPM_MOD    = 13,
       IVL_LPM_MULT   =  4,
       IVL_LPM_MUX    =  5,
@@ -749,6 +750,8 @@ extern ivl_nexus_t ivl_lpm_sync_set(ivl_lpm_t net);
 extern ivl_expr_t  ivl_lpm_sset_value(ivl_lpm_t net);
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
+/* IVL_LPM_LATCH */
+extern ivl_nexus_t ivl_lpm_gate( ivl_lpm_t netPtr );
   /* IVL_LPM_FF */
 extern ivl_lpm_t   ivl_lpm_decode(ivl_lpm_t net);
   /* IVL_LPM_UFUNC */
@@ -756,7 +759,7 @@ extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
   /* IVL_LPM_ADD IVL_LPM_DEMUX IVL_LPM_FF IVL_LPM_MULT */
-  /*  IVL_LPM_RAM IVL_LPM_SUB */
+  /*  IVL_LPM_RAM IVL_LPM_SUB IVL_LPM_LATCH */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_DEMUX IVL_LPM_MULT IVL_LPM_SUB */
   /* IVL_LPM_MUX IVL_LPM_UFUNC */
@@ -765,7 +768,7 @@ extern ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx);
   /* IVL_LPM_UFUNC */
 extern unsigned ivl_lpm_data2_width(ivl_lpm_t net, unsigned sdx);
   /* IVL_LPM_ADD IVL_LPM_DEMUX IVL_LPM_FF IVL_LPM_MULT IVL_LPM_RAM IVL_LPM_SUB
-     IVL_LPM_UFUNC */
+     IVL_LPM_UFUNC IVL_LPM_LATCH */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_MUX IVL_LPM_DECODE IVL_LPM_DEMUX IVL_LPM_RAM */
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);

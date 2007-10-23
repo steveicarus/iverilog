@@ -18,6 +18,8 @@ class NetLatch : public NetNode
  public:
   NetLatch( NetScope *, perm_string, unsigned );
 
+  unsigned width() const;
+
   Link &pin_Data( unsigned );
   Link &pin_Q( unsigned );
   Link &pin_Gate();
@@ -25,6 +27,8 @@ class NetLatch : public NetNode
   const Link &pin_Data( unsigned ) const;
   const Link &pin_Q( unsigned ) const;
   const Link &pin_Gate() const;
+
+  virtual bool emit_node( target_t * ) const;
 }; // end class NetLatch
 
 #endif

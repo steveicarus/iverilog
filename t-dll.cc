@@ -33,6 +33,9 @@
 #endif
 # include  <stdlib.h>
 
+#include <new> // standard operator new
+using std::bad_alloc;
+
 #if defined(__WIN32__)
 
 inline ivl_dll_t ivl_dlopen(const char *name)
@@ -1733,6 +1736,33 @@ void dll_target::lpm_ff(const NetFF*net)
 	    }
       }
 }
+
+void dll_target::lpm_latch( const NetLatch *latchPtr )
+{
+  try
+    {
+      ivl_lpm_s *objPtr = new ivl_lpm_s;
+      objPtr->type = IVL_LPM_LATCH;
+      objPtr->name = latchPtr->name();
+      objPtr->scope = find_scope( des_, latchPtr->scope() );
+      assert( objPtr->scope ); // C++ programmers prefer using exceptions rather than assertions.
+
+      objPtr->u_.latch.width = latchPtr->width();
+
+      objPtr->nattr = latchPtr->attr_cnt();
+      objPtr->attr = fill_in_attributes( latchPtr );
+
+      scope_add_lpm( objPtr->scope, objPtr );
+
+      // Set the gate signal to point to the nexus, and the nexus to point back to this device.
+      const Nexus *const nexPtr = latchPtr->pin_Gate().nexus();
+    }
+  catch ( bad_alloc &memoryAllocationException )
+    {
+      cerr << "Exception occurred: " << memoryAllocationException.what() << endl;
+    }
+
+} // end function lpm_latch
 
 void dll_target::lpm_ram_dq(const NetRamDq*net)
 {
