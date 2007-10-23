@@ -494,7 +494,84 @@ static PLI_INT32 sys_ungetc_sizetf(PLI_BYTE8*x)
       return 32;
 }
 
+/* $feof() is from 1364-2005. */
+static PLI_INT32 sys_feof_compiletf(PLI_BYTE8 *ud)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle item;
+      PLI_INT32 type;
 
+      /* Check that there is an argument. */
+      if (argv == 0) {
+	    vpi_printf("ERROR: %s requires an argument.\n", ud);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+      /* Check that the file descriptor is the right type. */
+      item = vpi_scan(argv);
+      type = vpi_get(vpiType, item);
+      switch (type) {
+	    case vpiReg:
+	    case vpiRealVal:
+	    case vpiIntegerVar:
+	      break;
+	    default:
+	      vpi_printf("ERROR: %s fd parameter must be integral", ud);
+	      vpi_printf(", got vpiType=%d\n", type);
+	      vpi_control(vpiFinish, 1);
+	      return 0;
+      }
+
+      /* Check that there is at most one argument. */
+      item = vpi_scan(argv);
+      if (item != 0) {
+	    vpi_printf("ERROR: %s takes a single argument.\n", ud);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      /* vpi_scan returning 0 (NULL) has already freed argv. */
+      return 0;
+}
+
+static PLI_INT32 sys_feof_calltf(PLI_BYTE8 *ud)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle item = vpi_scan(argv);;
+      s_vpi_value val;
+      PLI_INT32 fd;
+      FILE *fp;
+
+      /* Get the file pointer. */
+      vpi_free_object(argv);
+      val.format = vpiIntVal;
+      vpi_get_value(item, &val);
+      fd = val.value.integer;
+      if (IS_MCD(fd)) {
+	    vpi_printf("ERROR: %s cannot be used with a MCD.\n", ud);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+      fp = vpi_get_file(fd);
+
+      /* If we do not have a valid file descriptor return EOF, otherwise
+       * check for EOF and return that value. */
+      if (!fp) {
+	    val.value.integer = EOF;
+      } else {
+	    val.value.integer = feof(fp);
+      }
+      vpi_put_value(callh, &val, 0 , vpiNoDelay);
+
+      return 0;
+}
+
+static PLI_INT32 sys_feof_sizetf(PLI_BYTE8 *ud)
+{
+      return 32;
+}
 
 void sys_fileio_register()
 {
@@ -583,6 +660,17 @@ void sys_fileio_register()
       tf_data.compiletf = sys_ungetc_compiletf;
       tf_data.sizetf    = sys_ungetc_sizetf;
       tf_data.user_data = "$ungetc";
+      vpi_register_systf(&tf_data);
+
+/* $feof() is from 1364-2005. */
+      //============================== feof
+      tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.tfname    = "$feof";
+      tf_data.calltf    = sys_feof_calltf;
+      tf_data.compiletf = sys_feof_compiletf;
+      tf_data.sizetf    = sys_feof_sizetf;
+      tf_data.user_data = "$feof";
       vpi_register_systf(&tf_data);
 
 }

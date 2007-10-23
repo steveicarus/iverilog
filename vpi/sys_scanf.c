@@ -45,7 +45,7 @@ static int byte_getc(struct byte_source*byte)
       }
 
       ch = fgetc(byte->fd);
-      fprintf(stderr, "byte_getc --> '%c' (%d)\n", ch, ch);
+//      fprintf(stderr, "byte_getc --> '%c' (%d)\n", ch, ch);
       return ch;
 }
 
@@ -599,6 +599,3 @@ void sys_scanf_register()
       vpi_register_systf(&tf_data);
 }
 
-/*
- * $Log $
- */
