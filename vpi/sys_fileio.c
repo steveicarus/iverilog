@@ -225,9 +225,74 @@ static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
       return 0;
 }
 
+static PLI_INT32 sys_fflush_compiletf(PLI_BYTE8 *ud)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle item;
+      PLI_INT32 type;
+
+      /* The argument is optional. */
+      if (argv == 0) {
+	    return 0;
+      }
+      /* Check that the file/MC descriptor is the right type. */
+      item = vpi_scan(argv);
+      type = vpi_get(vpiType, item);
+      switch (type) {
+	    case vpiReg:
+	    case vpiRealVal:
+	    case vpiIntegerVar:
+	      break;
+	    default:
+	      vpi_printf("ERROR: %s fd parameter must be integral", ud);
+	      vpi_printf(", got vpiType=%d\n", type);
+	      vpi_control(vpiFinish, 1);
+	      return 0;
+      }
+
+      /* Check that there is at most one argument. */
+      item = vpi_scan(argv);
+      if (item != 0) {
+	    vpi_printf("ERROR: %s takes at most a single argument.\n", ud);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      /* vpi_scan returning 0 (NULL) has already freed argv. */
+      return 0;
+}
+
 static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
 {
-      fflush(0);
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle item;
+      s_vpi_value val;
+      PLI_INT32 fd_mcd;
+      FILE *fp;
+
+      /* If we have no argument then flush all the streams. */
+      if (argv == 0) {
+	    fflush(NULL);
+	    return 0;
+      }
+
+      /* Get the file/MC descriptor. */
+      item = vpi_scan(argv);
+      vpi_free_object(argv);
+      val.format = vpiIntVal;
+      vpi_get_value(item, &val);
+      fd_mcd = val.value.integer;
+
+      if (IS_MCD(fd_mcd)) {
+	    vpi_mcd_flush(fd_mcd);
+      } else {
+	    /* If we have a valid file descriptor flush the file. */
+	    fp = vpi_get_file(fd_mcd);
+	    if (fp) fflush(fp);
+      }
+
       return 0;
 }
 
@@ -752,7 +817,7 @@ void sys_fileio_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fflush";
       tf_data.calltf    = sys_fflush_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_fflush_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fflush";
       vpi_register_systf(&tf_data);
