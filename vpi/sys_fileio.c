@@ -126,13 +126,8 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_fopen_sizetf(PLI_BYTE8*x)
-{
-      return 32;
-}
-
 /*
- * Implement the $fopenr(), $fopenw() and $fopena() systen functions
+ * Implement the $fopenr(), $fopenw() and $fopena() system functions
  * from Chris Spear's File I/O for Verilog.
  */
 static PLI_INT32 sys_fopenrwa_compiletf(PLI_BYTE8*name)
@@ -329,11 +324,6 @@ static PLI_INT32 sys_fgetc_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_fgetc_sizetf(PLI_BYTE8*x)
-{
-      return 32;
-}
-
 static PLI_INT32 sys_fgets_compiletf(PLI_BYTE8*name)
 {
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
@@ -489,13 +479,7 @@ static PLI_INT32 sys_ungetc_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_ungetc_sizetf(PLI_BYTE8*x)
-{
-      return 32;
-}
-
-/* $feof() is from 1364-2005. */
-static PLI_INT32 sys_feof_compiletf(PLI_BYTE8 *ud)
+static PLI_INT32 sys_check_fd_compiletf(PLI_BYTE8 *ud)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -535,11 +519,45 @@ static PLI_INT32 sys_feof_compiletf(PLI_BYTE8 *ud)
       return 0;
 }
 
-static PLI_INT32 sys_feof_calltf(PLI_BYTE8 *ud)
+static PLI_INT32 sys_rewind_calltf(PLI_BYTE8 *ud)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle item = vpi_scan(argv);;
+      vpiHandle item = vpi_scan(argv);
+      s_vpi_value val;
+      PLI_INT32 fd;
+      FILE *fp;
+
+      /* Get the file pointer. */
+      vpi_free_object(argv);
+      val.format = vpiIntVal;
+      vpi_get_value(item, &val);
+      fd = val.value.integer;
+      if (IS_MCD(fd)) {
+	    vpi_printf("ERROR: %s cannot be used with a MCD.\n", ud);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+      fp = vpi_get_file(fd);
+
+      /* If we have a valid file descriptor rewind the file. */
+      if (!fp) {
+	    val.value.integer = EOF;
+      } else {
+	    rewind(fp);
+	    val.value.integer = 0;
+      }
+      vpi_put_value(callh, &val, 0 , vpiNoDelay);
+
+      return 0;
+}
+
+/* $feof() is from 1364-2005. */
+static PLI_INT32 sys_ftell_feof_calltf(PLI_BYTE8 *ud)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle item = vpi_scan(argv);
       s_vpi_value val;
       PLI_INT32 fd;
       FILE *fp;
@@ -557,18 +575,134 @@ static PLI_INT32 sys_feof_calltf(PLI_BYTE8 *ud)
       fp = vpi_get_file(fd);
 
       /* If we do not have a valid file descriptor return EOF, otherwise
-       * check for EOF and return that value. */
+       * return that value. */
       if (!fp) {
 	    val.value.integer = EOF;
       } else {
-	    val.value.integer = feof(fp);
+	    if (ud[2] == 'e') {
+	          val.value.integer = feof(fp);
+	    } else {
+	          val.value.integer = ftell(fp);
+	    }
       }
       vpi_put_value(callh, &val, 0 , vpiNoDelay);
 
       return 0;
 }
 
-static PLI_INT32 sys_feof_sizetf(PLI_BYTE8 *ud)
+static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8 *ud)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle item;
+      PLI_INT32 type;
+
+      /* Check that there is an argument. */
+      if (argv == 0) {
+	    vpi_printf("ERROR: %s requires three arguments.\n", ud);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+      /* Check that the file descriptor is the right type. */
+      item = vpi_scan(argv);
+      type = vpi_get(vpiType, item);
+      switch (type) {
+	    case vpiReg:
+	    case vpiRealVal:
+	    case vpiIntegerVar:
+	      break;
+	    default:
+	      vpi_printf("ERROR: %s fd parameter must be integral", ud);
+	      vpi_printf(", got vpiType=%d\n", type);
+	      vpi_control(vpiFinish, 1);
+	      return 0;
+      }
+
+      /* Check that there is an offset argument. */
+      item = vpi_scan(argv);
+      if (item == 0) {
+	    vpi_printf("ERROR: %s is missing an offset and operation "
+	               "argument.\n", ud);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      /* Check that there is an operation argument. */
+      item = vpi_scan(argv);
+      if (item == 0) {
+	    vpi_printf("ERROR: %s is missing an operation argument.\n", ud);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      /* Check that there is at most one argument. */
+      item = vpi_scan(argv);
+      if (item != 0) {
+	    vpi_printf("ERROR: %s takes at most three argument.\n", ud);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      /* vpi_scan returning 0 (NULL) has already freed argv. */
+
+      return 0;
+}
+
+static PLI_INT32 sys_fseek_calltf(PLI_BYTE8 *ud)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle item;
+      s_vpi_value val;
+      PLI_INT32 fd, offset, oper;
+      FILE *fp;
+
+      val.format = vpiIntVal;
+
+      /* Get the file pointer. */
+      item = vpi_scan(argv);
+      vpi_get_value(item, &val);
+      fd = val.value.integer;
+      if (IS_MCD(fd)) {
+	    vpi_printf("ERROR: %s cannot be used with a MCD.\n", ud);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+      fp = vpi_get_file(fd);
+
+      /* Get the offset. */
+      item = vpi_scan(argv);
+      vpi_get_value(item, &val);
+      offset = val.value.integer;
+
+      /* Get the operation. */
+      item = vpi_scan(argv);
+      vpi_get_value(item, &val);
+      oper = val.value.integer;
+      /* Should this translate to the SEEK_??? codes? */
+      /* What about verifying offset value vs operation ($fseek(fd, -1, 0))? */
+      if ((oper < 0) || (oper > 2)) {
+	    vpi_printf("ERROR: %s's operation must be 0, 1 or 2 given %d.\n",
+	               ud, oper);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      /* If we do not have a valid file descriptor return EOF, otherwise
+       * return that value. */
+      if (!fp) {
+	    val.value.integer = EOF;
+      } else {
+	    fseek(fp, offset, oper);
+	    val.value.integer = 0;
+      }
+      vpi_put_value(callh, &val, 0 , vpiNoDelay);
+
+      vpi_free_object(argv);
+      return 0;
+}
+
+static PLI_INT32 sys_integer_sizetf(PLI_BYTE8 *ud)
 {
       return 32;
 }
@@ -582,7 +716,7 @@ void sys_fileio_register()
       tf_data.tfname    = "$fopen";
       tf_data.calltf    = sys_fopen_calltf;
       tf_data.compiletf = sys_fopen_compiletf;
-      tf_data.sizetf    = sys_fopen_sizetf;
+      tf_data.sizetf    = sys_integer_sizetf;
       tf_data.user_data = "$fopen";
       vpi_register_systf(&tf_data);
 
@@ -591,7 +725,7 @@ void sys_fileio_register()
       tf_data.tfname    = "$fopenr";
       tf_data.calltf    = sys_fopenrwa_calltf;
       tf_data.compiletf = sys_fopenrwa_compiletf;
-      tf_data.sizetf    = sys_fopen_sizetf;
+      tf_data.sizetf    = sys_integer_sizetf;
       tf_data.user_data = "$fopenr";
       vpi_register_systf(&tf_data);
 
@@ -638,7 +772,7 @@ void sys_fileio_register()
       tf_data.tfname    = "$fgetc";
       tf_data.calltf    = sys_fgetc_calltf;
       tf_data.compiletf = 0;
-      tf_data.sizetf    = sys_fgetc_sizetf;
+      tf_data.sizetf    = sys_integer_sizetf;
       tf_data.user_data = "$fgetc";
       vpi_register_systf(&tf_data);
 
@@ -658,8 +792,38 @@ void sys_fileio_register()
       tf_data.tfname    = "$ungetc";
       tf_data.calltf    = sys_ungetc_calltf;
       tf_data.compiletf = sys_ungetc_compiletf;
-      tf_data.sizetf    = sys_ungetc_sizetf;
+      tf_data.sizetf    = sys_integer_sizetf;
       tf_data.user_data = "$ungetc";
+      vpi_register_systf(&tf_data);
+
+      //============================== ftell
+      tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.tfname    = "$ftell";
+      tf_data.calltf    = sys_ftell_feof_calltf;
+      tf_data.compiletf = sys_check_fd_compiletf;
+      tf_data.sizetf    = sys_integer_sizetf;
+      tf_data.user_data = "$ftell";
+      vpi_register_systf(&tf_data);
+
+      //============================== fseek
+      tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.tfname    = "$fseek";
+      tf_data.calltf    = sys_fseek_calltf;
+      tf_data.compiletf = sys_fseek_compiletf;
+      tf_data.sizetf    = sys_integer_sizetf;
+      tf_data.user_data = "$fseek";
+      vpi_register_systf(&tf_data);
+
+      //============================== rewind
+      tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.tfname    = "$rewind";
+      tf_data.calltf    = sys_rewind_calltf;
+      tf_data.compiletf = sys_check_fd_compiletf;
+      tf_data.sizetf    = sys_integer_sizetf;
+      tf_data.user_data = "$rewind";
       vpi_register_systf(&tf_data);
 
 /* $feof() is from 1364-2005. */
@@ -667,9 +831,9 @@ void sys_fileio_register()
       tf_data.type      = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncInt;
       tf_data.tfname    = "$feof";
-      tf_data.calltf    = sys_feof_calltf;
-      tf_data.compiletf = sys_feof_compiletf;
-      tf_data.sizetf    = sys_feof_sizetf;
+      tf_data.calltf    = sys_ftell_feof_calltf;
+      tf_data.compiletf = sys_check_fd_compiletf;
+      tf_data.sizetf    = sys_integer_sizetf;
       tf_data.user_data = "$feof";
       vpi_register_systf(&tf_data);
 
