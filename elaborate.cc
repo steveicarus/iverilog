@@ -1964,7 +1964,13 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
       if (expr_.count() == 0) {
 	    assert(enet);
-	    NexusSet*nset = enet->nex_input();
+	     /* For synthesis we want just the inputs, but for the rest we
+	      * want inputs and outputs that may cause a value to change. */
+	    extern const char *target; /* Target backend from main.cc */
+	    bool rem_out = false;
+	    if (!strcmp(target, "edif") || !strcmp(target, "fpga") ||
+	        !strcmp(target, "xnf")) rem_out = true;
+	    NexusSet*nset = enet->nex_input(rem_out);
 	    if (nset == 0) {
 		  cerr << get_line() << ": internal error: No NexusSet"
 		       << " from statement." << endl;
