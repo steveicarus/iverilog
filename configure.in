@@ -59,9 +59,12 @@ AC_CHECK_LIB(z, gzwrite, HAVE_LIBZ=yes, HAVE_LIBZ=no)
 AC_SUBST(HAVE_LIBZ)
 if test "$WIN32" = "yes"; then
 AC_CHECK_LIB(bz2, main)
+AC_CHECK_LIB(bz2, main, HAVE_LIBBZ2=yes, HAVE_LIBBZ2=no)
 else
 AC_CHECK_LIB(bz2, BZ2_bzdopen)
+AC_CHECK_LIB(bz2, BZ2_bzdopen, HAVE_LIBBZ2=yes, HAVE_LIBBZ2=no)
 fi
+AC_SUBST(HAVE_LIBBZ2)
 
 AC_MSG_CHECKING(for sys/times)
 AC_TRY_LINK(

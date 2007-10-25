@@ -40,7 +40,11 @@ extern void sys_vcd_register();
 extern void sys_vcdoff_register();
 
 #ifdef HAVE_LIBZ
+#ifdef HAVE_LIBBZ2
 extern void sys_lxt_register();
+#else
+static void sys_lxt_register() { fputs("LXT support disabled since libbzip2 not available\n",stderr); exit(1); }
+#endif
 extern void sys_lxt2_register();
 #else
 static void sys_lxt_register() { fputs("LXT support disabled since zlib not available\n",stderr); exit(1); }
