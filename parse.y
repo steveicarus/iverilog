@@ -191,7 +191,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %type <gate>  gate_instance
 %type <gates> gate_instance_list
 
-%type <expr>  expression expr_primary
+%type <expr>  expression expr_primary expr_mintypmax
 %type <expr>  lavalue lpvalue
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt
@@ -877,6 +877,30 @@ expression
 		}
 	;
 
+expr_mintypmax
+	: expression
+		{ $$ = $1; }
+	| expression ':' expression ':' expression
+		{ switch (min_typ_max_flag) {
+		      case MIN:
+			$$ = $1;
+			delete $3;
+			delete $5;
+			break;
+		      case TYP:
+			delete $1;
+			$$ = $3;
+			delete $5;
+			break;
+		      case MAX:
+			delete $1;
+			delete $3;
+			$$ = $5;
+			break;
+		  }
+		}
+	;
+
 
   /* Many contexts take a comma separated list of expressions. Null
      expressions can happen anywhere in the list, so there are two
@@ -970,7 +994,7 @@ expr_primary
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| '(' expression ')'
+	| '(' expr_mintypmax ')'
 		{ $$ = $2; }
 	| '{' expression_list '}'
 		{ PEConcat*tmp = new PEConcat(*$2);
