@@ -1310,6 +1310,54 @@ static int sys_timeformat_calltf(char *xx)
       return 0;
 }
 
+static char *pts_convert(int value)
+{
+      char *string;
+      switch (value) {
+            case   0: string = "1s";    break;
+            case  -1: string = "100ms"; break;
+            case  -2: string = "10ms";  break;
+            case  -3: string = "1ms";   break;
+            case  -4: string = "100us"; break;
+            case  -5: string = "10us";  break;
+            case  -6: string = "1us";   break;
+            case  -7: string = "100ns"; break;
+            case  -8: string = "10ns";  break;
+            case  -9: string = "1ns";   break;
+            case -10: string = "100ps"; break;
+            case -11: string = "10ps";  break;
+            case -12: string = "1ps";   break;
+            case -13: string = "100fs"; break;
+            case -14: string = "10fs";  break;
+            case -15: string = "1fs";   break;
+            default: assert(0);
+      }
+      return string;
+}
+
+static int sys_printtimescale_calltf(char *xx)
+{
+      vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv  = vpi_iterate(vpiArgument, sys);
+      vpiHandle scope;
+      if (!argv) {
+            vpiHandle parent = vpi_handle(vpiScope, sys);
+            while (parent) {
+                   scope = parent;
+                   parent = vpi_handle(vpiScope, scope);
+            }
+      } else {
+            scope = vpi_scan(argv);
+            vpi_free_object(argv);
+      }
+      
+      vpi_printf("Time scale of (%s) is ", vpi_get_str(vpiFullName, scope));
+      vpi_printf("%s / ", pts_convert(vpi_get(vpiTimeUnit, scope)));
+      vpi_printf("%s\n", pts_convert(vpi_get(vpiTimePrecision, scope)));
+
+      return 0;
+}
+
 static int sys_end_of_compile(p_cb_data cb_data)
 {
 	/* The default timeformat prints times in unit of simulation
@@ -1554,6 +1602,13 @@ void sys_display_register()
       tf_data.tfname    = "$timeformat";
       tf_data.calltf    = sys_timeformat_calltf;
       tf_data.compiletf = sys_timeformat_compiletf;
+      tf_data.sizetf    = 0;
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$printtimescale";
+      tf_data.calltf    = sys_printtimescale_calltf;
+      tf_data.compiletf = 0;
       tf_data.sizetf    = 0;
       vpi_register_systf(&tf_data);
 
