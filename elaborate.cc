@@ -2356,6 +2356,13 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	   the for loop. This is also a very specific assignment
 	   statement. Put this into the "body" block. */
       sig = des->find_signal(scope, id2->path());
+      if (sig == 0) {
+	    cerr << get_line() << ": error: Unable to find variable "
+		 << id2->path() << " in for-loop increment expression." << endl;
+	    des->errors += 1;
+	    return body;
+      }
+
       assert(sig);
       lv = new NetAssign_(sig);
 
