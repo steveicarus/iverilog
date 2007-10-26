@@ -27,6 +27,7 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+# include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
 
@@ -50,7 +51,11 @@ vvp_ipoint_t vvp_fvector_get(vvp_fvector_t v, unsigned i)
 {
       if (!v->size)
 	    return ipoint_index(v->cont.iptr, i);
-      assert(i < v->size);
+      if (v->size >= i) {
+	    fprintf(stderr, "ERROR: index value (%d) must be less than "
+	            "element size (%d).\n", i, v->size);
+	    assert(0);
+      }
       return v->iptrs[i];
 }
 
