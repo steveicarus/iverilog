@@ -3573,6 +3573,12 @@ bool PGenerate::elaborate_(Design*des, NetScope*scope) const
       for (proc_it_t cur = behaviors.begin(); cur != behaviors.end(); cur++)
 	    (*cur)->elaborate(des, scope);
 
+      typedef list<PGenerate*>::const_iterator generate_it_t;
+      for (generate_it_t cur = generates.begin()
+		 ; cur != generates.end() ; cur ++ ) {
+	    (*cur)->elaborate(des, scope);
+      }
+
       return true;
 }
 

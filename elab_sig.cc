@@ -309,6 +309,12 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
 	    cur->elaborate_sig(des, scope);
       }
 
+      typedef list<PGenerate*>::const_iterator generate_it_t;
+      for (generate_it_t cur = generates.begin()
+		 ; cur != generates.end() ; cur ++ ) {
+	    (*cur) -> elaborate_sig(des, scope);
+      }
+
       typedef list<PGate*>::const_iterator pgate_list_it_t;
       for (pgate_list_it_t cur = gates.begin()
 		 ; cur != gates.end() ;  cur ++) {

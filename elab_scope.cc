@@ -453,6 +453,16 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 
 void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 {
+	// Scan the generated scope for nested generate schemes,
+	// and *generate* new scopes, which is slightly different
+	// from simple elaboration.
+
+      typedef list<PGenerate*>::const_iterator generate_it_t;
+      for (generate_it_t cur = generates.begin()
+		 ; cur != generates.end() ; cur ++ ) {
+	    (*cur) -> generate_scope(des, scope);
+      }
+
 	// Scan the generated scope for gates that may create
 	// their own scopes.
       typedef list<PGate*>::const_iterator pgate_list_it_t;
