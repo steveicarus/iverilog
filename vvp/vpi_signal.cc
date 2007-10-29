@@ -475,6 +475,11 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		break;
 	  }
 
+	  case vpiRealVal: {
+	    fprintf(stderr, "Sorry: V0.8 cannot convert a bit based signal to a real value.\n");
+	    assert(0);
+	  }
+
 	  default:
 	    fprintf(stderr, "vvp internal error: get_value: "
 		    "value type %u not implemented."
