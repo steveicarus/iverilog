@@ -396,6 +396,7 @@ void NetScope::evaluate_parameters(Design*des)
 			     << ": internal error: "
 			      "unable to evaluate real parameter values: " <<
 			      *expr << endl;
+			cerr << "FYI: V0.8 cannot evaluate constant real expressions." << endl;
 			des->errors += 1;
 			continue;
 		  }
