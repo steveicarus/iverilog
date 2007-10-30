@@ -759,6 +759,10 @@ static int show_stmt_block_named(ivl_statement_t net, ivl_scope_t scope)
       fprintf(vvp_out, "    %%jmp t_%u;\n", out_id);
       fprintf(vvp_out, "t_%u ;\n", sub_id);
 
+	/* The statement within the fork is in a new thread, so no
+	  expression lookaside is valid. */
+      clear_expression_lookaside();
+
       rc = show_stmt_block(net, subscope);
       fprintf(vvp_out, "    %%end;\n");
 
