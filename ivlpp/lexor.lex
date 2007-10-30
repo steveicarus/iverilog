@@ -333,7 +333,7 @@ W [ \t\b\f]+
 <IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR>`endif { ifdef_leave(); yy_pop_state(); }
 
   /* This pattern notices macros and arranges for them to be replaced. */
-`[a-zA-Z][a-zA-Z0-9_$]* { def_match(); }
+`[a-zA-Z_][a-zA-Z0-9_$]* { def_match(); }
 
   /* Any text that is not a directive just gets passed through to the
      output. Very easy. */
