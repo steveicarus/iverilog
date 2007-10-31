@@ -144,6 +144,11 @@ const bool CASE_SENSITIVE = false;
 const bool CASE_SENSITIVE = true;
 #endif
 
+/*
+ * Are we doing synthesis?
+ */
+bool synthesis = false;
+
 extern void cprop(Design*des);
 extern void synth(Design*des);
 extern void synth2(Design*des);
@@ -371,6 +376,9 @@ static void read_iconfig_file(const char*ipath)
 		  parm_to_flagmap(parm);
 
 	    } else if (strcmp(buf,"functor") == 0) {
+		if (strncmp(cp, "synth", 5) == 0) {
+		      synthesis = true;  // We are doing synthesis.
+		}
 		net_func tmp = name_to_net_func(cp);
 		if (tmp == 0) {
 		      cerr << "No such design transform function ``"
