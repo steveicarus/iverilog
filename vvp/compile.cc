@@ -47,21 +47,6 @@
 
 unsigned compile_errors = 0;
 
-
-/* Auxiliary variable used to guard actual modpath input */
-char *actual_modpath_input  ;  
-
-
-/* Auxiliary variable used to guard actual scope label */
-char *actual_modpath_label ; 
-
-
-/* Flag used to identify if actual modpath have been created */
-int modpath_flag = 0 ; 
-vpiHandle   vpiobj, srcobj ;
-vvp_net_t  *actual_modpath_input_net ;
-
-
 /*
  * The opcode table lists all the code mnemonics, along with their
  * opcode and operand types. The table is written sorted by mnemonic
@@ -1135,7 +1120,7 @@ void compile_extend_signed(char*label, long wid, struct symb_s arg)
       input_connect(ptr, 0, arg.text);
 }
 
-vvp_fun_modpath* compile_modpath(char*label, struct symb_s src)
+struct __vpiModPath* compile_modpath(char*label, struct symb_s src)
 {
       vvp_net_t*net = new vvp_net_t;
       vvp_fun_modpath*obj = new vvp_fun_modpath(net);
@@ -1144,35 +1129,20 @@ vvp_fun_modpath* compile_modpath(char*label, struct symb_s src)
       input_connect(net, 0, src.text);
 
       define_functor_symbol(label, net);
-      
-      actual_modpath_input_net = net ;
-      // Make the vpiHandle for the vpiModPath
-      
-      actual_modpath_input=(char *)calloc(strlen(src.text)+1,sizeof(char)) ;
-      
-      strcpy ( actual_modpath_input, src.text ) ;
-      
-      actual_modpath_label =(char *)calloc(strlen(label)+1, sizeof (char )) ;
-      strcpy ( actual_modpath_label, label ) ;
-      
-      
-      vpiobj         =  0       ;
-      modpath_flag   =  0       ; /*
-				    If we are compiling a new
-				    modpath vpiobj, we have to set
-				    the flag = 0, indicating a
-				    new modpath vpiHandle have to
-				    be created
-				  */
-      free(label);
-      return obj;
+
+      vpiHandle tmp = vpip_make_modpath(label, src.text, net);
+      __vpiModPath*modpath = vpip_modpath_from_handle(tmp);
+
+      modpath->modpath = obj;
+      return modpath;
 }
 
-static vvp_net_t*make_modpath_src(vvp_fun_modpath*dst, char edge,
+static vvp_net_t*make_modpath_src(struct __vpiModPath*path, char edge,
 				  struct symb_s src, struct numbv_s vals)
 {
-      vvp_time64_t use_delay[12];
+      vvp_fun_modpath*dst = path->modpath;
 
+      vvp_time64_t use_delay[12];
       assert(vals.cnt == 12);
       for (unsigned idx = 0 ; idx < vals.cnt ;  idx += 1) {
 	    use_delay[idx] = vals.nvec[idx];
@@ -1181,31 +1151,6 @@ static vvp_net_t*make_modpath_src(vvp_fun_modpath*dst, char edge,
       numbv_clear(&vals);
 
       vvp_fun_modpath_src*obj = 0;
-       /*
-	 Added By Yang
-	 
-	 if the modpath_flag is NULL, then,
-	 we have to call the modpath maker
-	 to create a new modpath vpiHandle,
-	 and insert all modpath_src into the vpi
-	 
-	 else
-	 
-	 just call the vpip_modpath_add_src to
-	 insert new modpath source datas
-       */
-      
-      if ( modpath_flag == 0 )
-	{
-	  vpiobj = vpip_make_modpath ( actual_modpath_label, actual_modpath_input , actual_modpath_input_net  ) ;
-	  modpath_flag = 1 ;
-	  free ( actual_modpath_label ) ;
-	  free ( actual_modpath_input ) ;
-	}
-      
-      
-
-
 
       if (edge == 0) {
 	    obj = new vvp_fun_modpath_src(use_delay);
@@ -1240,9 +1185,8 @@ static vvp_net_t*make_modpath_src(vvp_fun_modpath*dst, char edge,
 	Compiling the delays values into actual modpath vpiHandle
       */
       //vpip_add_mopdath_delay ( vpiobj, src.text, use_delay ) ;
-      srcobj = vpip_make_modpath_src ( src.text, use_delay, net ) ;
-      vpip_add_modpath_src ( vpiobj, srcobj ) ;
-      
+      vpiHandle srcobj = vpip_make_modpath_src ( src.text, use_delay, net ) ;
+      vpip_add_modpath_src (vpi_handle(path), srcobj);
 
       net->fun = obj;
       input_connect(net, 0, src.text);
@@ -1251,13 +1195,13 @@ static vvp_net_t*make_modpath_src(vvp_fun_modpath*dst, char edge,
       return net;
 }
 
-void compile_modpath_src(vvp_fun_modpath*dst, char edge,
+void compile_modpath_src(struct __vpiModPath*dst, char edge,
 			 struct symb_s src, struct numbv_s vals)
 {
       make_modpath_src(dst, edge, src, vals);
 }
 
-void compile_modpath_src(vvp_fun_modpath*dst, char edge,
+void compile_modpath_src(struct __vpiModPath*dst, char edge,
 			 struct symb_s src,
 			 struct numbv_s vals,
 			 struct symb_s condit_src)

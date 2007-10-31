@@ -42,7 +42,7 @@ extern FILE*yyin;
  * When parsing a modpath list, this is the processed destination that
  * the source items will attach themselves to.
  */
-static vvp_fun_modpath*modpath_dst = 0;
+static struct __vpiModPath*modpath_dst = 0;
 %}
 
 %union {

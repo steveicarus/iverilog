@@ -102,6 +102,14 @@ struct __vpirt {
 };
 
 /*
+ * In general a vpi object is a structure that contains the member
+ * "base" that is a __vpiHandle object. This template can convert any
+ * of those structures into a vpiHandle object.
+ */
+template <class T> struct __vpiHandle*vpi_handle(T obj)
+{ return &obj->base; }
+
+/*
  * The vpiHandle for an iterator has this structure. The definition of
  * the methods lives in vpi_iter.c
  *
@@ -257,6 +265,8 @@ struct __vpiModPath {
       struct __vpiHandle   base  ;
       struct __vpiScope   *scope ;
   
+      class vvp_fun_modpath*modpath;
+
       /* 
        * The name, input must be removed 
        * in future um ModPathSrc have no 
@@ -278,6 +288,8 @@ struct __vpiModPath {
       unsigned int         src_no ;
 };
 
+extern struct __vpiModPath* vpip_modpath_from_handle(vpiHandle ref);
+extern struct __vpiModPathSrc* vpip_modpath_src_from_handle(vpiHandle ref);
 
 
 /*

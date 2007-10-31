@@ -174,13 +174,13 @@ extern void compile_dff(char*label,
 			struct symb_s arg_e,
 			struct symb_s arg_a);
 
-class vvp_fun_modpath;
-extern vvp_fun_modpath* compile_modpath(char*label, struct symb_s src);
-extern void compile_modpath_src(vvp_fun_modpath*dst,
+class __vpiModPath;
+extern __vpiModPath* compile_modpath(char*label, struct symb_s src);
+extern void compile_modpath_src(__vpiModPath*dst,
 				char edge,
 				struct symb_s input,
 				struct numbv_s d);
-extern void compile_modpath_src(vvp_fun_modpath*dst,
+extern void compile_modpath_src(__vpiModPath*dst,
 				char edge,
 				struct symb_s input,
 				struct numbv_s d,
