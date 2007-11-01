@@ -1081,6 +1081,11 @@ static void div_mod (vvp_vector2_t dividend, vvp_vector2_t divisor,
 
       quotient = vvp_vector2_t(0, dividend.size());
 
+      if (divisor == quotient) {
+	    cerr << "ERROR: division by zero, exiting." << endl;
+	    exit(255);
+      }
+
       if (dividend < divisor) {
 	    remainder = dividend;
 	    return;
@@ -1098,7 +1103,7 @@ static void div_mod (vvp_vector2_t dividend, vvp_vector2_t divisor,
 	    mask <<= 1;
       }
 
-      while (dividend > divisor) {
+      while (dividend >= divisor) {
 	    if (divtmp <= dividend) {
 		  dividend -= divtmp;
 		  quotient += mask;
@@ -1148,6 +1153,27 @@ bool operator > (const vvp_vector2_t&a, const vvp_vector2_t&b)
       return false;
 }
 
+bool operator >= (const vvp_vector2_t&a, const vvp_vector2_t&b)
+{
+      const unsigned awords = (a.wid_ + vvp_vector2_t::BITS_PER_WORD-1) / vvp_vector2_t::BITS_PER_WORD;
+      const unsigned bwords = (b.wid_ + vvp_vector2_t::BITS_PER_WORD-1) / vvp_vector2_t::BITS_PER_WORD;
+
+      const unsigned words = awords > bwords? awords : bwords;
+
+      for (unsigned idx = words ;  idx > 0 ;  idx -= 1) {
+	    unsigned long aw = (idx <= awords)? a.vec_[idx-1] : 0;
+	    unsigned long bw = (idx <= bwords)? b.vec_[idx-1] : 0;
+
+	    if (aw > bw)
+		  return true;
+	    if (aw < bw)
+		  return false;
+      }
+
+	// If the above loop finishes, then the vectors are equal.
+      return true;
+}
+
 bool operator < (const vvp_vector2_t&a, const vvp_vector2_t&b)
 {
       const unsigned awords = (a.wid_ + vvp_vector2_t::BITS_PER_WORD-1) / vvp_vector2_t::BITS_PER_WORD;
@@ -1188,6 +1214,28 @@ bool operator <= (const vvp_vector2_t&a, const vvp_vector2_t&b)
 	// If the above loop finishes, then the vectors are equal.
       return true;
 }
+
+bool operator == (const vvp_vector2_t&a, const vvp_vector2_t&b)
+{
+      const unsigned awords = (a.wid_ + vvp_vector2_t::BITS_PER_WORD-1) / vvp_vector2_t::BITS_PER_WORD;
+      const unsigned bwords = (b.wid_ + vvp_vector2_t::BITS_PER_WORD-1) / vvp_vector2_t::BITS_PER_WORD;
+
+      const unsigned words = awords > bwords? awords : bwords;
+
+      for (unsigned idx = words ;  idx > 0 ;  idx -= 1) {
+	    unsigned long aw = (idx <= awords)? a.vec_[idx-1] : 0;
+	    unsigned long bw = (idx <= bwords)? b.vec_[idx-1] : 0;
+
+	    if (aw > bw)
+		  return false;
+	    if (aw < bw)
+		  return false;
+      }
+
+	// If the above loop finishes, then the vectors are equal.
+      return true;
+}
+
 
 vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&that, unsigned wid)
 {

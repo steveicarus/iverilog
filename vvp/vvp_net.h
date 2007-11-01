@@ -271,8 +271,10 @@ class vvp_vector2_t {
       friend vvp_vector2_t operator * (const vvp_vector2_t&,
 				       const vvp_vector2_t&);
       friend bool operator >  (const vvp_vector2_t&, const vvp_vector2_t&);
+      friend bool operator >= (const vvp_vector2_t&, const vvp_vector2_t&);
       friend bool operator <  (const vvp_vector2_t&, const vvp_vector2_t&);
       friend bool operator <= (const vvp_vector2_t&, const vvp_vector2_t&);
+      friend bool operator == (const vvp_vector2_t&, const vvp_vector2_t&);
 
     public:
       vvp_vector2_t();
@@ -308,9 +310,11 @@ class vvp_vector2_t {
       void copy_from_that_(const vvp_vector2_t&that);
 };
 
-extern bool operator <  (const vvp_vector2_t&, const vvp_vector2_t&);
 extern bool operator >  (const vvp_vector2_t&, const vvp_vector2_t&);
+extern bool operator >= (const vvp_vector2_t&, const vvp_vector2_t&);
+extern bool operator <  (const vvp_vector2_t&, const vvp_vector2_t&);
 extern bool operator <= (const vvp_vector2_t&, const vvp_vector2_t&);
+extern bool operator == (const vvp_vector2_t&, const vvp_vector2_t&);
 extern vvp_vector2_t operator + (const vvp_vector2_t&, const vvp_vector2_t&);
 extern vvp_vector2_t operator * (const vvp_vector2_t&, const vvp_vector2_t&);
 extern vvp_vector2_t operator / (const vvp_vector2_t&, const vvp_vector2_t&);
@@ -1039,201 +1043,4 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
       }
 }
 
-
-/*
- * $Log: vvp_net.h,v $
- * Revision 1.58  2007/06/12 02:36:58  steve
- *  handle constant inf values.
- *
- * Revision 1.57  2007/03/22 16:08:19  steve
- *  Spelling fixes from Larry
- *
- * Revision 1.56  2007/03/02 06:13:22  steve
- *  Add support for edge sensitive spec paths.
- *
- * Revision 1.55  2007/02/05 01:08:10  steve
- *  Handle relink of continuous assignment.
- *
- * Revision 1.54  2007/01/16 05:44:17  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.53  2006/12/09 19:06:53  steve
- *  Handle vpiRealVal reads of signals, and real anyedge events.
- *
- * Revision 1.52  2006/08/04 04:37:37  steve
- *  Support release of a for/linked reg.
- *
- * Revision 1.51  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.50  2006/03/08 05:29:42  steve
- *  Add support for logic parameters.
- *
- * Revision 1.49  2005/11/26 17:16:05  steve
- *  Force instruction that can be indexed.
- *
- * Revision 1.48  2005/11/25 17:55:26  steve
- *  Put vec8 and vec4 nets into seperate net classes.
- *
- * Revision 1.47  2005/11/10 13:27:16  steve
- *  Handle very wide % and / operations using expanded vector2 support.
- *
- * Revision 1.46  2005/09/20 00:51:53  steve
- *  Lazy processing of vvp_fun_part functor.
- *
- * Revision 1.45  2005/09/19 21:45:37  steve
- *  Spelling patches from Larry.
- *
- * Revision 1.44  2005/08/27 02:34:43  steve
- *  Bring threads into the vvp_vector4_t structure.
- *
- * Revision 1.43  2005/07/14 23:34:19  steve
- *  gcc4 compile errors.
- *
- * Revision 1.42  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.41  2005/06/26 01:57:22  steve
- *  Make bit masks of vector4_t 64bit aware.
- *
- * Revision 1.40  2005/06/24 02:16:42  steve
- *  inline the vvp_send_vec4_pv function.
- *
- * Revision 1.39  2005/06/22 18:30:12  steve
- *  Inline more simple stuff, and more vector4_t by const reference for performance.
- *
- * Revision 1.38  2005/06/22 00:04:49  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.37  2005/06/21 22:48:23  steve
- *  Optimize vvp_scalar_t handling, and fun_buf Z handling.
- *
- * Revision 1.36  2005/06/20 01:28:14  steve
- *  Inline some commonly called vvp_vector4_t methods.
- *
- * Revision 1.35  2005/06/19 18:42:00  steve
- *  Optimize the LOAD_VEC implementation.
- *
- * Revision 1.34  2005/06/15 00:47:15  steve
- *  Resolv do not propogate inputs that do not change.
- *
- * Revision 1.33  2005/06/14 00:42:06  steve
- *  Accomodate fussy compilers.
- *
- * Revision 1.32  2005/06/13 00:54:04  steve
- *  More unified vec4 to hex string functions.
- *
- * Revision 1.31  2005/06/12 15:13:37  steve
- *  Support resistive mos devices.
- *
- * Revision 1.30  2005/06/12 00:44:49  steve
- *  Implement nmos and pmos devices.
- *
- * Revision 1.29  2005/06/02 16:02:11  steve
- *  Add support for notif0/1 gates.
- *  Make delay nodes support inertial delay.
- *  Add the %force/link instruction.
- *
- * Revision 1.28  2005/05/24 01:43:27  steve
- *  Add a sign-extension node.
- *
- * Revision 1.27  2005/05/09 00:36:58  steve
- *  Force part base out of bounds if index is invalid.
- *
- * Revision 1.26  2005/05/08 23:40:14  steve
- *  Add support for variable part select.
- *
- * Revision 1.25  2005/05/07 03:14:50  steve
- *  ostream insert for vvp_vector4_t objects.
- *
- * Revision 1.24  2005/04/25 04:42:17  steve
- *  vvp_fun_signal eliminates duplicate propagations.
- *
- * Revision 1.23  2005/04/13 06:34:20  steve
- *  Add vvp driver functor for logic outputs,
- *  Add ostream output operators for debugging.
- *
- * Revision 1.22  2005/04/09 05:30:38  steve
- *  Default behavior for recv_vec8 methods.
- *
- * Revision 1.21  2005/04/03 05:45:51  steve
- *  Rework the vvp_delay_t class.
- *
- * Revision 1.20  2005/04/01 06:02:45  steve
- *  Reimplement combinational UDPs.
- *
- * Revision 1.19  2005/03/18 02:56:04  steve
- *  Add support for LPM_UFUNC user defined functions.
- *
- * Revision 1.18  2005/03/12 04:27:43  steve
- *  Implement VPI access to signal strengths,
- *  Fix resolution of ambiguous drive pairs,
- *  Fix spelling of scalar.
- *
- * Revision 1.17  2005/02/14 01:50:23  steve
- *  Signals may receive part vectors from %set/x0
- *  instructions. Re-implement the %set/x0 to do
- *  just that. Remove the useless %set/x0/x instruction.
- *
- * Revision 1.16  2005/02/13 05:26:30  steve
- *  tri0 and tri1 resolvers must replace HiZ with 0/1 after resolution.
- *
- * Revision 1.15  2005/02/12 06:13:22  steve
- *  Add debug dumps for vectors, and fix vvp_scaler_t make from BIT4_X values.
- *
- * Revision 1.14  2005/02/07 22:42:42  steve
- *  Add .repeat functor and BIFIF functors.
- *
- * Revision 1.13  2005/02/04 05:13:02  steve
- *  Add wide .arith/mult, and vvp_vector2_t vectors.
- *
- * Revision 1.12  2005/02/03 04:55:13  steve
- *  Add support for reduction logic gates.
- *
- * Revision 1.11  2005/01/30 05:06:49  steve
- *  Get .arith/sub working.
- *
- * Revision 1.10  2005/01/29 17:52:06  steve
- *  move AND to buitin instead of table.
- *
- * Revision 1.9  2005/01/28 05:34:25  steve
- *  Add vector4 implementation of .arith/mult.
- *
- * Revision 1.8  2005/01/22 17:36:15  steve
- *  .cmp/x supports signed magnitude compare.
- *
- * Revision 1.7  2005/01/16 04:19:08  steve
- *  Reimplement comparators as vvp_vector4_t nodes.
- *
- * Revision 1.6  2005/01/09 20:11:16  steve
- *  Add the .part/pv node and related functionality.
- *
- * Revision 1.5  2005/01/01 02:12:34  steve
- *  vvp_fun_signal propagates vvp_vector8_t vectors when appropriate.
- *
- * Revision 1.4  2004/12/31 06:00:06  steve
- *  Implement .resolv functors, and stub signals recv_vec8 method.
- *
- * Revision 1.3  2004/12/29 23:45:13  steve
- *  Add the part concatenation node (.concat).
- *
- *  Add a vvp_event_anyedge class to handle the special
- *  case of .event statements of edge type. This also
- *  frees the posedge/negedge types to handle all 4 inputs.
- *
- *  Implement table functor recv_vec4 method to receive
- *  and process vectors.
- *
- * Revision 1.2  2004/12/15 17:16:08  steve
- *  Add basic force/release capabilities.
- *
- * Revision 1.1  2004/12/11 02:31:30  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- */
 #endif
