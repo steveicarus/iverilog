@@ -88,6 +88,8 @@ void vvp_wide_arith_::output_val_(vvp_ipoint_t base, bool push)
 
 inline void vvp_arith_div::wide(vvp_ipoint_t base, bool push)
 {
+      fprintf(stderr, "ERROR: division with wide values not currently "
+              "supported in V0.8.\n");
       assert(0);
 }
 
@@ -150,6 +152,8 @@ void vvp_arith_div::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 inline void vvp_arith_mod::wide(vvp_ipoint_t base, bool push)
 {
+      fprintf(stderr, "ERROR: modulus with wide values not currently "
+              "supported in V0.8.\n");
       assert(0);
 }
 
