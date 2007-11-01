@@ -1,0 +1,123 @@
+/*
+ * Copyright (c) 2007 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+
+# include  "vvp_priv.h"
+# include  <string.h>
+# include  <stdlib.h>
+# include  <assert.h>
+
+/*
+* Draw a .modpath record. The label is the label to use for this
+* record. The driver is the label of the net that feeds into the
+* modpath device. (Note that there is only 1 driver.) The path_sig is
+* the signal that is the output of this modpath. From that signal we
+* can find all the modpath source nodes to generate the complete
+* modpath record.
+*/
+static void draw_modpath_record(const char*label, const char*driver,
+				ivl_signal_t path_sig)
+{
+      unsigned idx;
+      typedef const char*ccharp;
+      ccharp*src_drivers;
+      ccharp*con_drivers;
+
+      src_drivers = calloc(ivl_signal_npath(path_sig), sizeof(ccharp));
+      con_drivers = calloc(ivl_signal_npath(path_sig), sizeof(ccharp));
+      for (idx = 0 ;  idx < ivl_signal_npath(path_sig) ;  idx += 1) {
+	    ivl_delaypath_t path = ivl_signal_path(path_sig, idx);
+	    ivl_nexus_t src = ivl_path_source(path);
+	    ivl_nexus_t con = ivl_path_condit(path);
+
+	    src_drivers[idx] = draw_net_input(src);
+
+	    if (con) con_drivers[idx] = draw_net_input(con);
+	    else con_drivers[idx] = 0;
+      }
+
+      fprintf(vvp_out, "  .scope S_%p;\n", ivl_path_scope(ivl_signal_path(path_sig,0)));
+      fprintf(vvp_out, "%s .modpath %s", label, driver);
+
+      for (idx = 0 ;  idx < ivl_signal_npath(path_sig); idx += 1) {
+	    ivl_delaypath_t path = ivl_signal_path(path_sig, idx);
+	    int ppos = ivl_path_source_posedge(path);
+	    int pneg = ivl_path_source_negedge(path);
+	    const char*edge = ppos? " +" : pneg ? " -" : "";
+	    fprintf(vvp_out, ",\n   %s%s", src_drivers[idx], edge);
+	    fprintf(vvp_out,
+		    " (%"PRIu64",%"PRIu64",%"PRIu64
+		    ", %"PRIu64",%"PRIu64",%"PRIu64
+		    ", %"PRIu64",%"PRIu64",%"PRIu64
+		    ", %"PRIu64",%"PRIu64",%"PRIu64,
+		    ivl_path_delay(path, IVL_PE_01),
+		    ivl_path_delay(path, IVL_PE_10),
+		    ivl_path_delay(path, IVL_PE_0z),
+		    ivl_path_delay(path, IVL_PE_z1),
+		    ivl_path_delay(path, IVL_PE_1z),
+		    ivl_path_delay(path, IVL_PE_z0),
+		    ivl_path_delay(path, IVL_PE_0x),
+		    ivl_path_delay(path, IVL_PE_x1),
+		    ivl_path_delay(path, IVL_PE_1x),
+		    ivl_path_delay(path, IVL_PE_x0),
+		    ivl_path_delay(path, IVL_PE_xz),
+		    ivl_path_delay(path, IVL_PE_zx));
+
+	    if (con_drivers[idx]) {
+		  fprintf(vvp_out, " ? %s", con_drivers[idx]);
+	    }
+
+	    fprintf(vvp_out, ")");
+      }
+
+      fprintf(vvp_out, ";\n");
+
+      free(src_drivers);
+      free(con_drivers);
+}
+
+struct modpath_item {
+      ivl_signal_t path_sig;
+      char*drive_label;
+      struct modpath_item*next;
+};
+
+static struct modpath_item*modpath_list = 0;
+
+void draw_modpath(ivl_signal_t path_sig, char*drive_label)
+{
+      struct modpath_item*cur = calloc(1, sizeof(struct modpath_item));
+      cur->path_sig = path_sig;
+      cur->drive_label = drive_label;
+      cur->next = modpath_list;
+      modpath_list = cur;
+}
+
+void cleanup_modpath(void)
+{
+      while (modpath_list) {
+	    struct modpath_item*cur = modpath_list;
+	    modpath_list = cur->next;
+
+	    char modpath_label[64];
+	    snprintf(modpath_label, sizeof modpath_label, "V_%p/m", cur->path_sig);
+	    draw_modpath_record(modpath_label, cur->drive_label, cur->path_sig);
+	    free(cur->drive_label);
+	    free(cur);
+      }
+}

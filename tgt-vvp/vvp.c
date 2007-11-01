@@ -95,9 +95,13 @@ int target_design(ivl_design_t des)
 
       draw_module_declarations(des);
 
+        /* This causes all structural records to be drawn. */
       ivl_design_roots(des, &roots, &nroots);
       for (i = 0; i < nroots; i++)
 	    draw_scope(roots[i], 0);
+
+        /* Finish up any modpaths that are not yet emitted. */
+      cleanup_modpath();
 
       rc = ivl_design_process(des, draw_process, 0);
 
