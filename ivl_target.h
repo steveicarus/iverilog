@@ -385,6 +385,10 @@ typedef const struct ivl_attribute_s*ivl_attribute_t;
  * block in the verilog source file. The destination signal references
  * the path object, which in turn points to the source for the path.
  *
+ * ivl_path_scope
+ *    This returns the scope of the delay path. This scope corresponds
+ *    to the scope of the specify-block that led to this path.
+ *
  * ivl_path_source
  *    This returns the nexus that is the source end of the delay
  *    path. Transitions on the source are the start of the delay time
@@ -398,6 +402,7 @@ typedef const struct ivl_attribute_s*ivl_attribute_t;
  * ivl_path_source_negedge
  *    These functions return true if the source is edge sensitive.
  */
+extern ivl_scope_t ivl_path_scope(ivl_delaypath_t obj);
 extern ivl_nexus_t ivl_path_source(ivl_delaypath_t obj);
 extern uint64_t ivl_path_delay(ivl_delaypath_t obj, ivl_path_edge_t pt);
 extern ivl_nexus_t ivl_path_condit(ivl_delaypath_t obj);

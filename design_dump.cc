@@ -128,7 +128,7 @@ void NetDelaySrc::dump(ostream&o, unsigned ind) const
 	<< "/" << transition_delays_[IVL_PE_x0]
 	<< "," << transition_delays_[IVL_PE_xz]
 	<< "," << transition_delays_[IVL_PE_zx]
-	<< "): " << endl;
+	<< ") scope=" << scope_path(scope()) << endl;
       dump_node_pins(o, ind+4);
 }
 

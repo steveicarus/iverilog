@@ -2242,6 +2242,7 @@ bool dll_target::signal_paths(const NetNet*net)
 			     << "." << endl;
 		  }
 		  assert(nex->t_cookie());
+		  obj->path[ptr].scope = lookup_scope_(src->scope());
 		  obj->path[ptr].src = nex->t_cookie();
 		  obj->path[ptr].condit = path_condit;
 		  obj->path[ptr].posedge = src->is_posedge();

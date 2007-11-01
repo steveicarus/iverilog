@@ -1141,7 +1141,7 @@ static void show_signal(ivl_signal_t net)
 	    fprintf(out, " %" PRIu64 ",%" PRIu64 ",%" PRIu64
 		         " %" PRIu64 ",%" PRIu64 ",%" PRIu64
 		         " %" PRIu64 ",%" PRIu64 ",%" PRIu64
-		         " %" PRIu64 ",%" PRIu64 ",%" PRIu64 "\n",
+		         " %" PRIu64 ",%" PRIu64 ",%" PRIu64,
 		    ivl_path_delay(path, IVL_PE_01),
 		    ivl_path_delay(path, IVL_PE_10),
 		    ivl_path_delay(path, IVL_PE_0z),
@@ -1154,6 +1154,7 @@ static void show_signal(ivl_signal_t net)
 		    ivl_path_delay(path, IVL_PE_x0),
 		    ivl_path_delay(path, IVL_PE_xz),
 		    ivl_path_delay(path, IVL_PE_zx));
+	    fprintf(out, " scope=%s\n", ivl_scope_name(ivl_path_scope(path)));
       }
 
       for (idx = 0 ;  idx < ivl_signal_attr_cnt(net) ;  idx += 1) {
