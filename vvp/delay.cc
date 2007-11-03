@@ -756,24 +756,24 @@ static vpiHandle modpath_put_value(vpiHandle ref, s_vpi_value *vp )
 
 static vpiHandle modpath_get_handle(int code, vpiHandle ref)
 {
-      assert( (ref->vpi_type->type_code==vpiModPath) );
-      struct __vpiModPath *rfp = (struct __vpiModPath *)ref ;
+      struct __vpiModPath *rfp = vpip_modpath_from_handle(ref);
+      assert(rfp);
 
-      switch (code)
-	{
-	case vpiScope:
-	  return &rfp->scope->base ;
-	  
-	case vpiModule:
-	  {
-	    struct __vpiScope*scope = rfp->scope;
-	    while (scope && scope->base.vpi_type->type_code != vpiModule)
-	      scope = scope->scope;
-	    
-	    assert(scope);
-	    return &scope->base;
-	  }
-	}
+      switch (code) {
+	  case vpiScope:
+	    return vpi_handle(rfp->scope);
+
+	  case vpiModule:
+	      { struct __vpiScope*scope = rfp->scope;
+		while (scope && scope->base.vpi_type->type_code != vpiModule)
+		      scope = scope->scope;
+		assert(scope);
+		return vpi_handle(scope);
+	      }
+
+	  case vpiModPathOut:
+	    return vpi_handle(&rfp->path_term_out);
+      }
       return 0;
 }
 
@@ -798,6 +798,18 @@ static int modpath_free_object( vpiHandle ref )
       return 1 ;
 }
 
+static vpiHandle pathterm_get_handle(int code, vpiHandle ref)
+{
+      struct __vpiModPathTerm*obj = vpip_modpath_term_from_handle(ref);
+      assert(obj);
+
+      switch (code) {
+	  case vpiExpr:
+	    return obj->expr;
+	  default:
+	    return 0;
+      }
+}
 
 
 /*
@@ -819,6 +831,26 @@ static const struct __vpirt vpip_modpath_rt = {
       0  // modpath_put_delays
 };
 
+static const struct __vpirt vpip_modpath_term_rt = {
+      vpiPathTerm,
+      0, // vpi_get
+      0, // vpi_get_str
+      0, // vpi_get_value,
+      0, // vpi_put_value,
+      pathterm_get_handle,
+      0, // vpi_iterate,
+      0, // vpi_index,
+      0, // vpi_free_object,
+      0, // vpi_get_delays,
+      0  // vpi_put_delays
+};
+
+static void initialize_path_term(struct __vpiModPathTerm&obj)
+{
+      obj.base.vpi_type = &vpip_modpath_term_rt;
+      obj.expr = 0;
+}
+
 /*
  * This function will Construct a vpiModPath Object.
  * give a respective "net", and will point to his
@@ -829,8 +861,10 @@ vpiHandle vpip_make_modpath ( char *name, char *input,  vvp_net_t *net )
 {
   
       struct __vpiModPath   *obj = (struct __vpiModPath *) calloc (1, sizeof ( struct __vpiModPath ) ) ;
-      obj->base.vpi_type         = &vpip_modpath_rt ;
-      obj->scope                 = vpip_peek_current_scope ( );
+      obj->base.vpi_type  = &vpip_modpath_rt ;
+      obj->scope          = vpip_peek_current_scope ( );
+
+      initialize_path_term(obj->path_term_out);
 
       obj->name = (char *)calloc(strlen(name) + 1 , sizeof ( char )) ;
       strcpy ( obj->name, name ) ;
@@ -856,6 +890,14 @@ struct __vpiModPath* vpip_modpath_from_handle(vpiHandle ref)
          return 0;
 
       return (struct __vpiModPath *) ref;
+}
+
+struct __vpiModPathTerm* vpip_modpath_term_from_handle(vpiHandle ref)
+{
+      if (ref->vpi_type->type_code != vpiPathTerm)
+         return 0;
+
+      return (struct __vpiModPathTerm*) ref;
 }
 
 /*

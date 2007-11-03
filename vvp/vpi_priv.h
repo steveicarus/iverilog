@@ -253,6 +253,11 @@ struct __vpiModPathSrc {
 } ;
 
 
+struct __vpiModPathTerm {
+      struct __vpiHandle base;
+      vpiHandle expr;
+};
+
 /*
  *
  * The vpiMoaPath vpiHandle will define 
@@ -266,6 +271,8 @@ struct __vpiModPath {
       struct __vpiScope   *scope ;
   
       class vvp_fun_modpath*modpath;
+
+      struct __vpiModPathTerm path_term_out;
 
       /* 
        * The name, input must be removed 
@@ -289,6 +296,7 @@ struct __vpiModPath {
 };
 
 extern struct __vpiModPath* vpip_modpath_from_handle(vpiHandle ref);
+extern struct __vpiModPathTerm* vpip_modpath_term_from_handle(vpiHandle ref);
 extern struct __vpiModPathSrc* vpip_modpath_src_from_handle(vpiHandle ref);
 
 

@@ -175,7 +175,9 @@ extern void compile_dff(char*label,
 			struct symb_s arg_a);
 
 class __vpiModPath;
-extern __vpiModPath* compile_modpath(char*label, struct symb_s src);
+extern __vpiModPath* compile_modpath(char*label,
+				     struct symb_s drv,
+				     struct symb_s dest);
 extern void compile_modpath_src(__vpiModPath*dst,
 				char edge,
 				struct symb_s input,

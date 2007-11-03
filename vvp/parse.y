@@ -320,17 +320,17 @@ statement
      node takes two form, one with an array of constants and a single
      input, and another with an array of inputs. */
 
-        | T_LABEL K_DELAY delay symbol ';'
-                { compile_delay($1, $3, $4); }
-        | T_LABEL K_DELAY  symbols ';'
-                { struct symbv_s obj = $3;
-		  compile_delay($1, obj.cnt, obj.vect);
-		}
+ | T_LABEL K_DELAY delay symbol ';'
+    { compile_delay($1, $3, $4); }
+ | T_LABEL K_DELAY  symbols ';'
+    { struct symbv_s obj = $3;
+      compile_delay($1, obj.cnt, obj.vect);
+    }
 
-        | T_LABEL K_MODPATH symbol ','
-                { modpath_dst = compile_modpath($1, $3); }
-          modpath_src_list ';'
-                { modpath_dst = 0; }
+ | T_LABEL K_MODPATH symbol symbol ','
+    { modpath_dst = compile_modpath($1, $3, $4); }
+   modpath_src_list ';'
+    { modpath_dst = 0; }
 
   /* DFF nodes have an output and take exactly 4 inputs. */
 

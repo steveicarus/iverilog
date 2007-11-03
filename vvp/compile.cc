@@ -1120,18 +1120,21 @@ void compile_extend_signed(char*label, long wid, struct symb_s arg)
       input_connect(ptr, 0, arg.text);
 }
 
-struct __vpiModPath* compile_modpath(char*label, struct symb_s src)
+struct __vpiModPath* compile_modpath(char*label, struct symb_s drv,
+				     struct symb_s dest)
 {
       vvp_net_t*net = new vvp_net_t;
       vvp_fun_modpath*obj = new vvp_fun_modpath(net);
       net->fun = obj;
 
-      input_connect(net, 0, src.text);
+      input_connect(net, 0, drv.text);
 
       define_functor_symbol(label, net);
 
-      vpiHandle tmp = vpip_make_modpath(label, src.text, net);
+      vpiHandle tmp = vpip_make_modpath(label, drv.text, net);
       __vpiModPath*modpath = vpip_modpath_from_handle(tmp);
+
+      compile_vpi_lookup(&modpath->path_term_out.expr, dest.text);
 
       modpath->modpath = obj;
       return modpath;
