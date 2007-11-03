@@ -838,7 +838,6 @@ vpiHandle vpip_make_modpath ( char *name, char *input,  vvp_net_t *net )
       obj->input = (char *)calloc(strlen(input) + 1 , sizeof ( char )) ;
       strcpy ( obj->input,input ) ;
 
-      fprintf(stderr, "XXXX: Add vpiModpath...\n");
       obj->input_net           = net ;
       vpip_attach_to_current_scope (&obj->base) ;
       return &obj->base ;
