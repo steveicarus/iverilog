@@ -128,6 +128,12 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  } else if (! is_fixed_memory_word(expr)){
 			break;
 		  } else {
+			  /* Some array selects need to be evaluated. */
+			ivl_expr_t word_ex = ivl_expr_oper1(expr);
+			if (word_ex && !number_is_immediate(word_ex,
+			                  8*sizeof(unsigned))) {
+			      break;
+			}
 			continue;
 		  }
 
@@ -208,7 +214,11 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			unsigned use_word = 0;
 			ivl_expr_t word_ex = ivl_expr_oper1(expr);
 			if (word_ex) {
-			      assert(number_is_immediate(word_ex, 8*sizeof(use_word)));
+			        /* Some array select have been evaluated. */
+			      if (!number_is_immediate(word_ex,
+			             8*sizeof(unsigned))) {
+			            break;
+			      }
 			      use_word = get_number_immediate(word_ex);
 			}
 			fprintf(vvp_out, ", v%p_%u", sig, use_word);
@@ -314,64 +324,4 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
       return res;
 }
-
-/*
- * $Log: draw_vpi.c,v $
- * Revision 1.17  2007/02/14 05:59:24  steve
- *  Treat BOOL and LOGIC the same according to VPI functions.
- *
- * Revision 1.16  2007/01/30 05:28:23  steve
- *  Treat VPI argument array with constant index specially.
- *
- * Revision 1.15  2007/01/17 04:39:18  steve
- *  Remove dead code related to memories.
- *
- * Revision 1.14  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.13  2005/10/11 18:30:50  steve
- *  Remove obsolete vvp_memory_label function.
- *
- * Revision 1.12  2005/07/11 16:56:51  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.11  2005/06/18 15:55:21  steve
- *  Handle signed display of unsigned signals.
- *
- * Revision 1.10  2004/12/11 02:31:28  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.9  2004/10/04 01:10:57  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.8  2003/04/23 02:22:47  steve
- *  Fix word register leak.
- *
- * Revision 1.7  2003/04/22 04:48:30  steve
- *  Support event names as expressions elements.
- *
- * Revision 1.6  2003/04/12 23:25:20  steve
- *  Properly pass $signed(signal) to tasks.
- *
- * Revision 1.5  2003/03/25 02:15:48  steve
- *  Use hash code for scope labels.
- *
- * Revision 1.4  2003/03/15 04:45:18  steve
- *  Allow real-valued vpi functions to have arguments.
- *
- * Revision 1.3  2003/03/10 23:40:54  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.2  2003/03/07 02:43:32  steve
- *  Handle general $function arguments as expresions.
- *
- * Revision 1.1  2003/02/28 20:21:13  steve
- *  Merge vpi_call and vpi_func draw functions.
- *
- */
 
