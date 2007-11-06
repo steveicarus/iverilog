@@ -22,6 +22,26 @@
 # include  <stdlib.h>
 # include  <assert.h>
 
+static ivl_signal_t find_path_source_port(ivl_delaypath_t path)
+{
+      int idx;
+      ivl_nexus_t nex = ivl_path_source(path);
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+	    if (sig == 0)
+		  continue;
+	    if (ivl_signal_port(sig) == IVL_SIP_NONE)
+		  continue;
+
+	      /* XXXX Should check that the scope is right. */
+	    return sig;
+      }
+
+      return 0;
+}
+
 /*
 * Draw a .modpath record. The label is the label to use for this
 * record. The driver is the label of the net that feeds into the
@@ -52,7 +72,7 @@ static void draw_modpath_record(const char*label, const char*driver,
       }
 
       fprintf(vvp_out, "  .scope S_%p;\n", ivl_path_scope(ivl_signal_path(path_sig,0)));
-      fprintf(vvp_out, "%s .modpath %s", label, driver);
+      fprintf(vvp_out, "%s .modpath %s v%p_0", label, driver, path_sig);
 
       for (idx = 0 ;  idx < ivl_signal_npath(path_sig); idx += 1) {
 	    ivl_delaypath_t path = ivl_signal_path(path_sig, idx);
@@ -83,6 +103,9 @@ static void draw_modpath_record(const char*label, const char*driver,
 	    }
 
 	    fprintf(vvp_out, ")");
+
+	    ivl_signal_t src_sig = find_path_source_port(path);
+	    fprintf(vvp_out, " v%p_0", src_sig);
       }
 
       fprintf(vvp_out, ";\n");
