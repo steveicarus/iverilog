@@ -218,18 +218,19 @@ extern vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 extern __vpiSignal* vpip_signal_from_handle(vpiHandle obj);
 
 
+struct __vpiModPathTerm {
+      struct __vpiHandle base;
+      vpiHandle expr;
+};
+
 struct __vpiModPathSrc {
-      struct __vpiHandle   base  ;
-      struct __vpiScope   *scope ;
-      int   type   ;
-      char *label  ; /* 
-			Must Be removed in Future
-			because the ModPathSrc have 
-			no label
-		     */
-      char *name   ;
-      struct __vpiModPathSrc *next ;
-  
+      struct __vpiHandle   base;
+      struct __vpiModPath *dest;
+      int   type;
+
+	/* This is the input expression for this modpath. */
+      struct __vpiModPathTerm path_term_in;
+
       /* Just Temporary */
       vvp_time64_t use_delay [12] ;
       /* 
@@ -243,20 +244,12 @@ struct __vpiModPathSrc {
       */
       p_vpi_delay    delays  ;
   
-      /*
-	The Posedge, Negedge are already defined 
-	in the "delays->p_vpi_time(da)->high/low"
-    
-	bool posedge, negedge ;
-      */
-      vvp_net_t *node;
+	/* This is the input net for the modpath. signals on this net
+	   are used to determine the modpath. They are *not* propagated
+	   anywhere. */
+      vvp_net_t *net;
 } ;
 
-
-struct __vpiModPathTerm {
-      struct __vpiHandle base;
-      vpiHandle expr;
-};
 
 /*
  *
@@ -267,35 +260,14 @@ struct __vpiModPathTerm {
  */
 
 struct __vpiModPath {
-      struct __vpiHandle   base  ;
       struct __vpiScope   *scope ;
   
       class vvp_fun_modpath*modpath;
 
       struct __vpiModPathTerm path_term_out;
-
-      /* 
-       * The name, input must be removed 
-       * in future um ModPathSrc have no 
-       * name.
-       */
-      char *name  ; 
-      char *input ;
       vvp_net_t *input_net  ;
-      struct __vpiModPathSrc *src_list  ;
-      /* 
-       * Keep an array of internal modpath_src 
-       * vpiHandle 
-       */
-      struct __vpiHandle  **src ;
-      /*
-       * Registering the number of modpath_src 
-       *   number 
-       */
-      unsigned int         src_no ;
 };
 
-extern struct __vpiModPath* vpip_modpath_from_handle(vpiHandle ref);
 extern struct __vpiModPathTerm* vpip_modpath_term_from_handle(vpiHandle ref);
 extern struct __vpiModPathSrc* vpip_modpath_src_from_handle(vpiHandle ref);
 
@@ -305,13 +277,11 @@ extern struct __vpiModPathSrc* vpip_modpath_src_from_handle(vpiHandle ref);
  * for vpiModPath && vpiModPathIn objects
  */
 
-extern vpiHandle vpip_make_modpath_src  ( char *name, 
-					  vvp_time64_t use_delay[12] , 
-					  vvp_net_t *net ) ;
+extern struct __vpiModPathSrc* vpip_make_modpath_src  (struct __vpiModPath*path_dest, 
+					 vvp_time64_t use_delay[12] , 
+					 vvp_net_t *net ) ;
 
-extern vpiHandle vpip_make_modpath ( char *name, 
-				     char *input, 
-				     vvp_net_t *net ) ;
+extern struct __vpiModPath* vpip_make_modpath(vvp_net_t *net) ;
 
 extern void vpip_add_mopdath_delay ( vpiHandle vpiobj,
 				     char *label, 
@@ -322,15 +292,6 @@ extern void vpip_add_mopdath_edge  ( vpiHandle  vpiobj,
 				     vvp_time64_t use_delay[12], 
 				     bool posedge , 
 				     bool negedge ) ;
-
-extern void vpip_add_modpath_src   ( vpiHandle  modpath,
- 				     vpiHandle src ) ;
-
-extern __vpiModPath* vpip_modpath_from_handle ( vpiHandle obj);
-
-extern __vpiModPathSrc* vpip_modpath_src_from_handle( vpiHandle obj);
-
-
 
 
 /*

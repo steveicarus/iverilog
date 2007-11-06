@@ -1131,17 +1131,20 @@ struct __vpiModPath* compile_modpath(char*label, struct symb_s drv,
 
       define_functor_symbol(label, net);
 
-      vpiHandle tmp = vpip_make_modpath(label, drv.text, net);
-      __vpiModPath*modpath = vpip_modpath_from_handle(tmp);
+      __vpiModPath*modpath = vpip_make_modpath(net);
 
       compile_vpi_lookup(&modpath->path_term_out.expr, dest.text);
+
+      free(label);
 
       modpath->modpath = obj;
       return modpath;
 }
 
-static vvp_net_t*make_modpath_src(struct __vpiModPath*path, char edge,
-				  struct symb_s src, struct numbv_s vals)
+static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
+					       char edge,
+					       struct symb_s src,
+					       struct numbv_s vals)
 {
       vvp_fun_modpath*dst = path->modpath;
 
@@ -1188,29 +1191,36 @@ static vvp_net_t*make_modpath_src(struct __vpiModPath*path, char edge,
 	Compiling the delays values into actual modpath vpiHandle
       */
       //vpip_add_mopdath_delay ( vpiobj, src.text, use_delay ) ;
-      vpiHandle srcobj = vpip_make_modpath_src ( src.text, use_delay, net ) ;
-      vpip_add_modpath_src (vpi_handle(path), srcobj);
+      struct __vpiModPathSrc* srcobj = vpip_make_modpath_src (path, use_delay, net) ;
+      vpip_attach_to_current_scope(vpi_handle(srcobj));
 
       net->fun = obj;
       input_connect(net, 0, src.text);
       dst->add_modpath_src(obj);
       
-      return net;
-}
-
-void compile_modpath_src(struct __vpiModPath*dst, char edge,
-			 struct symb_s src, struct numbv_s vals)
-{
-      make_modpath_src(dst, edge, src, vals);
+      return srcobj;
 }
 
 void compile_modpath_src(struct __vpiModPath*dst, char edge,
 			 struct symb_s src,
 			 struct numbv_s vals,
-			 struct symb_s condit_src)
+			 struct symb_s condit_src,
+			 struct symb_s path_term_in)
 {
-      vvp_net_t*net = make_modpath_src(dst, edge, src, vals);
-      input_connect(net, 1, condit_src.text);
+      struct __vpiModPathSrc*obj = make_modpath_src(dst, edge, src, vals);
+      input_connect(obj->net, 1, condit_src.text);
+      compile_vpi_lookup(&obj->path_term_in.expr, path_term_in.text);
+}
+
+void compile_modpath_src(struct __vpiModPath*dst, char edge,
+			 struct symb_s src,
+			 struct numbv_s vals,
+			 int condit_src,
+			 struct symb_s path_term_in)
+{
+      assert(condit_src == 0);
+      struct __vpiModPathSrc*obj = make_modpath_src(dst, edge, src, vals);
+      compile_vpi_lookup(&obj->path_term_in.expr, path_term_in.text);
 }
 
 /*

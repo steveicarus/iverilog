@@ -775,19 +775,19 @@ modpath_src_list
         ;
 
 modpath_src
-        : symbol '(' numbers ')'
-                { compile_modpath_src(modpath_dst, 0, $1, $3); }
-        | symbol '(' numbers '?' symbol ')'
-                { compile_modpath_src(modpath_dst, 0, $1, $3, $5); }
-        | symbol '+' '(' numbers ')'
-                { compile_modpath_src(modpath_dst, '+', $1, $4); }
-        | symbol '+' '(' numbers '?' symbol ')'
-                { compile_modpath_src(modpath_dst, '+', $1, $4, $6); }
-        | symbol '-' '(' numbers ')'
-                { compile_modpath_src(modpath_dst, '-', $1, $4); }
-        | symbol '-' '(' numbers '?' symbol ')'
-                { compile_modpath_src(modpath_dst, '-', $1, $4, $6); }
-        ;
+  : symbol '(' numbers ')' symbol
+      { compile_modpath_src(modpath_dst, 0, $1, $3, 0, $5); }
+  | symbol '(' numbers '?' symbol ')' symbol
+      { compile_modpath_src(modpath_dst, 0, $1, $3, $5, $7); }
+  | symbol '+' '(' numbers ')' symbol
+      { compile_modpath_src(modpath_dst, '+', $1, $4, 0, $6); }
+  | symbol '+' '(' numbers '?' symbol ')' symbol
+      { compile_modpath_src(modpath_dst, '+', $1, $4, $6, $8); }
+  | symbol '-' '(' numbers ')' symbol
+      { compile_modpath_src(modpath_dst, '-', $1, $4, 0, $6); }
+  | symbol '-' '(' numbers '?' symbol ')' symbol
+      { compile_modpath_src(modpath_dst, '-', $1, $4, $6, $8); }
+  ;
 
 udp_table
 	: T_STRING
