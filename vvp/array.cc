@@ -237,7 +237,7 @@ void array_set_word(vvp_array_t arr,
       assert(vsig);
 
       vvp_net_ptr_t ptr (vsig->node, 0);
-      vvp_send_vec4(ptr, val);
+      vvp_send_vec4_pv(ptr, val, part_off, val.size(), vpip_size(vsig));
 }
 
 vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
@@ -501,12 +501,3 @@ void compile_array_alias(char*label, char*name, char*src)
       free(src);
 }
 
-/*
- * $Log: array.cc,v $
- * Revision 1.2  2007/04/10 01:26:16  steve
- *  variable arrays generated without writing a record for each word.
- *
- * Revision 1.1  2007/01/18 00:24:10  steve
- *  Add missing array source files to CVS.
- *
- */

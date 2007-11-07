@@ -48,6 +48,11 @@ struct vpip_string_chunk {
       char data[64*1024 - sizeof (struct vpip_string_chunk*)];
 };
 
+unsigned vpip_size(__vpiSignal *sig)
+{
+      return abs(sig->msb - sig->lsb) + 1;
+}
+
 const char *vpip_string(const char*str)
 {
       static vpip_string_chunk first_chunk = {0, {0}};

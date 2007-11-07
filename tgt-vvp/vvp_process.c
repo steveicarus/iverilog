@@ -126,12 +126,24 @@ static void set_to_lvariable(ivl_lval_t lval,
 		 offset. Load that into index x0 and generate a
 		 vector set instruction. */
 	    assert(ivl_lval_width(lval) == wid);
-	    assert(!word_ix);
 
-	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", part_off);
-	    fprintf(vvp_out, "    %%set/x0 v%p_%lu, %u, %u;\n",
-		    sig, use_word, bit, wid);
+	      /* If the word index is a constant, then we can write
+	         directly to the word and save the index calculation. */
+	    if (word_ix == 0) {
+		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", part_off);
+		  fprintf(vvp_out, "    %%set/x0 v%p_%lu, %u, %u;\n",
+		          sig, use_word, bit, wid);
 
+	    } else {
+		  unsigned skip_set = transient_id++;
+		  unsigned index_reg = 3;
+		  draw_eval_expr_into_integer(word_ix, index_reg);
+		  fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
+		  fprintf(vvp_out, "   %%ix/load 1, %u;\n", part_off);
+		  fprintf(vvp_out, "   %%set/av v%p, %u, %u;\n",
+			  sig, bit, wid);
+		  fprintf(vvp_out, "t_%u ;\n", skip_set);
+	    }
 	      /* save_signal width of 0 CLEARS the signal from the
 	         lookaside. */
 	    save_signal_lookaside(bit, sig, use_word, 0);
@@ -1553,162 +1565,4 @@ int draw_func_definition(ivl_scope_t scope)
       thread_count += 1;
       return rc;
 }
-
-/*
- * $Log: vvp_process.c,v $
- * Revision 1.133  2007/02/27 05:13:34  steve
- *  Do not assign to words constant-indexed out of range.
- *
- * Revision 1.132  2007/02/26 19:49:50  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.131  2007/02/26 01:51:40  steve
- *  Prevent lost of width while calculation address.
- *
- * Revision 1.130  2007/02/02 04:48:49  steve
- *  Lookaside is invalid when working a new scope.
- *
- * Revision 1.129  2007/01/19 02:30:19  steve
- *  Fix bad lookaside references in vvp thread code generator.
- *
- * Revision 1.128  2007/01/17 04:39:18  steve
- *  Remove dead code related to memories.
- *
- * Revision 1.127  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.126  2006/10/05 01:37:34  steve
- *  Remove dead code.
- *
- * Revision 1.125  2006/10/05 01:23:53  steve
- *  Handle non-constant delays on indexed non-blocking assignments.
- *
- * Revision 1.124  2006/08/08 05:11:37  steve
- *  Handle 64bit delay constants.
- *
- * Revision 1.123  2006/04/16 00:15:43  steve
- *  Fix part selects in l-values.
- *
- * Revision 1.122  2006/02/02 02:43:59  steve
- *  Allow part selects of memory words in l-values.
- *
- * Revision 1.121  2005/11/26 17:23:17  steve
- *  Handle indexed l-value to force.
- *
- * Revision 1.120  2005/11/26 00:35:44  steve
- *  More precise about r-value width of constants.
- *
- * Revision 1.119  2005/10/12 17:26:01  steve
- *  force l-values do not support bit/part select.
- *
- * Revision 1.118  2005/10/11 18:30:50  steve
- *  Remove obsolete vvp_memory_label function.
- *
- * Revision 1.117  2005/09/17 01:01:00  steve
- *  More robust use of precalculated expressions, and
- *  Separate lookaside for written variables that can
- *  also be reused.
- *
- * Revision 1.116  2005/09/14 02:53:15  steve
- *  Support bool expressions and compares handle them optimally.
- *
- * Revision 1.115  2005/07/11 16:56:51  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.114  2005/07/07 16:22:50  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.113  2005/06/15 01:33:33  steve
- *  Fix bit offsets when processing lval concatenation.
- *
- * Revision 1.112  2005/06/14 01:45:05  steve
- *  Add the assign_v0_d instruction.
- *
- * Revision 1.111  2005/06/02 16:03:47  steve
- *  Support %force/link
- *
- * Revision 1.110  2005/05/24 02:31:18  steve
- *  Handle assignments to part-select l-values.
- *
- * Revision 1.109  2005/05/17 20:55:42  steve
- *  Detect bit selects that need special handling.
- *
- * Revision 1.108  2005/05/09 00:38:12  steve
- *  Skip assign if index is invalid.
- *
- * Revision 1.107  2005/05/07 03:16:31  steve
- *  Better handle assignment to bit/part select.
- *
- * Revision 1.106  2005/05/01 22:04:12  steve
- *  Link signals that are source of procedural continuous assign.
- *
- * Revision 1.105  2005/03/22 05:18:34  steve
- *  The indexed set can write a vector, not just a bit.
- *
- * Revision 1.104  2005/03/06 17:07:48  steve
- *  Non blocking assign to memory words.
- *
- * Revision 1.103  2005/03/05 05:47:42  steve
- *  Handle memory words in l-value concatenations.
- *
- * Revision 1.102  2005/03/03 04:34:42  steve
- *  Rearrange how memories are supported as vvp_vector4 arrays.
- *
- * Revision 1.101  2005/02/15 07:12:55  steve
- *  Support constant part select writes to l-values, and large part select reads from signals.
- *
- * Revision 1.100  2005/02/14 05:00:11  steve
- *  Handle bitmux lvalues for constant r-values.
- *
- * Revision 1.99  2005/02/14 01:51:39  steve
- *  Handle bit selects in l-values to assignments.
- *
- * Revision 1.98  2005/01/28 19:39:03  steve
- *  Integrate fixes from 0.8 branch.
- *
- * Revision 1.93.2.2  2005/01/28 18:29:29  steve
- *  Add ability to compile real values into index registers.
- *
- * Revision 1.93.2.1  2004/12/12 04:25:10  steve
- *  Fix leak of word registers in code generator.
- *
- * Revision 1.93  2004/10/04 01:10:57  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.92  2004/05/19 03:25:42  steve
- *  Generate code for nb assign to reals.
- *
- * Revision 1.91  2003/12/03 02:46:24  steve
- *  Add support for wait on list of named events.
- *
- * Revision 1.90  2003/10/25 02:07:57  steve
- *  vvp_signal_label does not return a unique string.
- *
- * Revision 1.89  2003/09/04 20:28:06  steve
- *  Support time0 resolution of combinational threads.
- *
- * Revision 1.88  2003/07/29 05:12:10  steve
- *  All the threads of a named fork go into sub-scope.
- *
- * Revision 1.87  2003/05/26 04:45:37  steve
- *  Use set/x0/x if the target vector is too wide for set/x0.
- *
- * Revision 1.86  2003/05/17 04:38:19  steve
- *  Account for nested fork scopes in disable.
- *
- * Revision 1.85  2003/05/14 05:26:41  steve
- *  Support real expressions in case statements.
- *
- * Revision 1.84  2003/03/25 02:15:48  steve
- *  Use hash code for scope labels.
- *
- * Revision 1.83  2003/03/15 04:45:18  steve
- *  Allow real-valued vpi functions to have arguments.
- *
- * Revision 1.82  2003/03/06 01:17:46  steve
- *  Use number for event labels.
- */
 

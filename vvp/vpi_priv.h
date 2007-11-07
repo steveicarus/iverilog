@@ -201,6 +201,7 @@ struct __vpiSignal {
 	/* The represented value is here. */
       vvp_net_t*node;
 };
+extern unsigned vpip_size(__vpiSignal *sig);
 extern vpiHandle vpip_make_int(const char*name, int msb, int lsb,
 			       vvp_net_t*vec);
 extern vpiHandle vpip_make_reg(const char*name, int msb, int lsb,

@@ -2443,7 +2443,12 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
 	    NetExpr*tmp_ex = elab_and_eval(des, scope, index_head.msb, -1);
 	    NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
-	    assert(tmp);
+	    if (!tmp) {
+		  cerr << get_line() << ": error: array " << sig->name()
+		       << " index must be a constant in this context." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
 
 	    long widx_val = tmp->value().as_long();
 	    widx = sig->array_index_to_address(widx_val);
@@ -2453,6 +2458,11 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  cerr << get_line() << ": debug: Use [" << widx << "]"
 		       << " to index l-value array." << endl;
 
+	      /* The array has a part/bit select at the end. */
+	    if (name_tail.index.size() == 2) {
+		  if (! eval_part_select_(des, scope, sig, midx, lidx))
+		        return 0;
+	    }
       } else if (!name_tail.index.empty()) {
 	    if (! eval_part_select_(des, scope, sig, midx, lidx))
 		  return 0;
