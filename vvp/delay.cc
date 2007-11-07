@@ -425,17 +425,7 @@ void vvp_fun_modpath::run_run()
 vvp_fun_modpath_src::vvp_fun_modpath_src(vvp_time64_t del[12])
 {
       for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
-	    {
-	      delay_[idx] = del[idx];
-	      /*
-		Added By Yang.
-		
-		Make the delay[12] value to be Public
-		make the get_delays(), put_delays() to
-		be possible
-	       */
-	      delay [idx] = del[idx];
-	    }
+	    delay_[idx] = del[idx];
 
       next_ = 0;
       wake_time_ = 0;
@@ -444,6 +434,18 @@ vvp_fun_modpath_src::vvp_fun_modpath_src(vvp_time64_t del[12])
 
 vvp_fun_modpath_src::~vvp_fun_modpath_src()
 {
+}
+
+void vvp_fun_modpath_src::get_delay12(vvp_time64_t val[12]) const
+{
+      for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
+	    val[idx] = delay_[idx];
+}
+
+void vvp_fun_modpath_src::put_delay12(const vvp_time64_t val[12])
+{
+      for (unsigned idx = 0 ;  idx < 12 ;  idx += 1)
+	    delay_[idx] = val[idx];
 }
 
 void vvp_fun_modpath_src::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
@@ -567,16 +569,21 @@ static int modpath_src_free_object( vpiHandle ref )
  */
 static void modpath_src_put_delays ( vpiHandle ref, p_vpi_delay delays )
 {
-      int i ;
+      vvp_time64_t tmp[12];
+      int idx;
       struct __vpiModPathSrc * src = vpip_modpath_src_from_handle( ref) ;
       assert(src) ;
 
       vvp_fun_modpath_src *fun = dynamic_cast<vvp_fun_modpath_src*>(src->net->fun);
       assert( fun );
-      
-      for ( i = 0 ; i < delays->no_of_delays ; i++) {
-	    fun->delay[i] = delays->da[ i ].real ;
+      assert(delays->no_of_delays == 12);
+      assert(delays->time_type == vpiSimTime);
+
+      for (idx = 0 ; idx < delays->no_of_delays ; idx += 1) {
+	    tmp[idx] = vpip_timestruct_to_time(delays->da+idx);
       }
+
+      fun->put_delay12(tmp);
 }
 
 /*
@@ -589,14 +596,24 @@ static void modpath_src_put_delays ( vpiHandle ref, p_vpi_delay delays )
 
 static void modpath_src_get_delays ( vpiHandle ref, p_vpi_delay delays )
 {
-      int i ;
-      struct __vpiModPathSrc * src = vpip_modpath_src_from_handle( ref) ;
+      struct __vpiModPathSrc*src = vpip_modpath_src_from_handle( ref) ;
       assert(src);
 
       vvp_fun_modpath_src *fun = dynamic_cast<vvp_fun_modpath_src*>(src->net->fun);
-      assert( fun );
-      for ( i = 0 ; i < delays->no_of_delays ; i++)
-	    delays->da[ i ].real = fun->delay[i];
+      assert(fun);
+      switch (delays->no_of_delays) {
+	  case 12:
+	      { int idx;
+		vvp_time64_t tmp[12];
+		fun->get_delay12(tmp);
+		for (idx = 0; idx < 12; idx += 1) {
+		      vpip_time_to_timestruct(delays->da+idx, tmp[idx]);
+		}
+	      }
+	      break;
+	  default:
+	    assert(0);
+      }
 }
 
 

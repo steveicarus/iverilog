@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.h,v 1.15 2007/03/02 06:13:22 steve Exp $"
-#endif
 
 /*
  */
@@ -186,15 +183,9 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
       virtual bool test_vec4(const vvp_vector4_t&bit);
-      
-       /*
-	 Added By Yang.
-	 
-	 Make the Delay Value be Public too
-	 make the get_delays(), put_delays() be possible
-       */
-      vvp_time64_t delay[12];
-      
+
+      void get_delay12(vvp_time64_t out[12]) const;
+      void put_delay12(const vvp_time64_t in[12]);
 
     private:
 	// FIXME: Needs to be a 12-value array
@@ -223,42 +214,4 @@ class vvp_fun_modpath_edge  : public vvp_fun_modpath_src {
       bool negedge_;
 };
 
-/*
- * $Log: delay.h,v $
- * Revision 1.15  2007/03/02 06:13:22  steve
- *  Add support for edge sensitive spec paths.
- *
- * Revision 1.14  2007/03/01 06:19:39  steve
- *  Add support for conditional specify delay paths.
- *
- * Revision 1.13  2007/01/26 05:15:41  steve
- *  More literal implementation of inertial delay model.
- *
- * Revision 1.12  2006/09/29 03:57:01  steve
- *  Modpath delay chooses correct delay for edge.
- *
- * Revision 1.11  2006/09/23 04:57:20  steve
- *  Basic support for specify timing.
- *
- * Revision 1.10  2006/01/02 05:32:07  steve
- *  Require explicit delay node from source.
- *
- * Revision 1.9  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.8  2005/06/22 00:04:49  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.7  2005/06/02 16:02:11  steve
- *  Add support for notif0/1 gates.
- *  Make delay nodes support inertial delay.
- *  Add the %force/link instruction.
- *
- * Revision 1.6  2005/05/14 19:43:23  steve
- *  Move functor delays to vvp_delay_fun object.
- *
- * Revision 1.5  2005/04/03 05:45:51  steve
- *  Rework the vvp_delay_t class.
- *
- */
 #endif // __delay_H

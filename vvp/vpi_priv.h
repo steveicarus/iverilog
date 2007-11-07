@@ -1,7 +1,7 @@
 #ifndef __vpi_priv_H
 #define __vpi_priv_H
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.74 2007/04/12 04:25:59 steve Exp $"
-#endif
 
 # include  "vpi_user.h"
 # include  "pointers.h"
@@ -230,19 +227,6 @@ struct __vpiModPathSrc {
 
 	/* This is the input expression for this modpath. */
       struct __vpiModPathTerm path_term_in;
-
-      /* Just Temporary */
-      vvp_time64_t use_delay [12] ;
-      /* 
-	 Conform the IEEE1364, we use the
-	 standard delay value structure
-	 (p_vpi_time) to represent delay values 
-	 of each modpath_src delay
-     
-	 the "p_vpi_time" is defined in the
-	 "vpi_user.h"
-      */
-      p_vpi_delay    delays  ;
   
 	/* This is the input net for the modpath. signals on this net
 	   are used to determine the modpath. They are *not* propagated
