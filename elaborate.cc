@@ -129,6 +129,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		       << "Invalid elaborate_net results here:" << endl;
 		  rid->dump_net(cerr, 4);
 		  des->errors += 1;
+		  return;
 	    }
 	    ivl_assert(*this, rid->pin_count() == 1);
 

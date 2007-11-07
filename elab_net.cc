@@ -2242,7 +2242,13 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 	  case index_component_t::SEL_IDX_UP: {
 		NetExpr*tmp_ex = elab_and_eval(des, scope, index_tail.msb, -1);
 		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
-		ivl_assert(*this, tmp);
+		if (!tmp) {
+		      cerr << get_line() << ": error: indexed part select of "
+		           << sig->name()
+		           << " must be a constant in this context." << endl;
+		      des->errors += 1;
+		      return 0;
+		}
 
 		long midx_val = tmp->value().as_long();
 		midx = sig->sb_to_idx(midx_val);
@@ -2430,7 +2436,12 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
       if (sig->array_dimensions() > 0) {
 
-	    ivl_assert(*this, !name_tail.index.empty());
+	    if (name_tail.index.empty()) {
+		  cerr << get_line() << ": error: array " << sig->name()
+		       << " must be used with an index." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
 
 	    const index_component_t&index_head = name_tail.index.front();
 	    if (index_head.sel == index_component_t::SEL_PART) {
@@ -2459,7 +2470,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		       << " to index l-value array." << endl;
 
 	      /* The array has a part/bit select at the end. */
-	    if (name_tail.index.size() == 2) {
+	    if (name_tail.index.size() > sig->array_dimensions()) {
 		  if (! eval_part_select_(des, scope, sig, midx, lidx))
 		        return 0;
 	    }

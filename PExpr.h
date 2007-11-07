@@ -308,8 +308,8 @@ class PEIdent : public PExpr {
     private:
       NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*) const;
       bool elaborate_lval_net_part_(Design*, NetScope*, NetAssign_*) const;
-      bool elaborate_lval_net_idx_up_(Design*, NetScope*, NetAssign_*) const;
-      bool elaborate_lval_net_idx_do_(Design*, NetScope*, NetAssign_*) const;
+      bool elaborate_lval_net_idx_(Design*, NetScope*, NetAssign_*,
+                                   index_component_t::ctype_t) const;
 
     private:
       NetExpr*elaborate_expr_param(Design*des,

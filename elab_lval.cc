@@ -189,15 +189,10 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    return lv;
       }
 
-      if (use_sel == index_component_t::SEL_IDX_UP) {
+      if (use_sel == index_component_t::SEL_IDX_UP ||
+          use_sel == index_component_t::SEL_IDX_DO) {
 	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_idx_up_(des, scope, lv);
-	    return lv;
-      }
-
-      if (use_sel == index_component_t::SEL_IDX_DO) {
-	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_idx_do_(des, scope, lv);
+	    elaborate_lval_net_idx_(des, scope, lv, use_sel);
 	    return lv;
       }
 
@@ -321,6 +316,13 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       ivl_assert(*this, !name_tail.index.empty());
 
       const index_component_t&index_head = name_tail.index.front();
+      if (index_head.sel == index_component_t::SEL_PART) {
+	    cerr << get_line() << ": error: cannot perform a part "
+	         << "select on array " << reg->name() << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       ivl_assert(*this, index_head.sel == index_component_t::SEL_BIT);
       ivl_assert(*this, index_head.msb != 0);
       ivl_assert(*this, index_head.lsb == 0);
@@ -367,11 +369,9 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       if (use_sel == index_component_t::SEL_PART)
 	    elaborate_lval_net_part_(des, scope, lv);
 
-      if (use_sel == index_component_t::SEL_IDX_UP)
-	    elaborate_lval_net_idx_up_(des, scope, lv);
-
-      if (use_sel == index_component_t::SEL_IDX_DO)
-	    elaborate_lval_net_idx_do_(des, scope, lv);
+      if (use_sel == index_component_t::SEL_IDX_UP ||
+          use_sel == index_component_t::SEL_IDX_DO)
+	    elaborate_lval_net_idx_(des, scope, lv, use_sel);
 
       return lv;
 }
@@ -429,9 +429,10 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
       return true;
 }
 
-bool PEIdent::elaborate_lval_net_idx_up_(Design*des,
-					 NetScope*scope,
-					 NetAssign_*lv) const
+bool PEIdent::elaborate_lval_net_idx_(Design*des,
+				      NetScope*scope,
+				      NetAssign_*lv,
+				      index_component_t::ctype_t use_sel) const
 {
       const name_component_t&name_tail = path_.back();;
       ivl_assert(*this, !name_tail.index.empty());
@@ -464,6 +465,10 @@ bool PEIdent::elaborate_lval_net_idx_up_(Design*des,
       else if (reg->lsb() != 0)
 	    base = make_add_expr(base, - reg->lsb());
 
+      if (use_sel == index_component_t::SEL_IDX_DO && wid > 1 ) {
+	    base = make_add_expr(base, 1-(long)wid);
+      }
+
       if (debug_elaborate)
 	    cerr << get_line() << ": debug: Set part select width="
 		 << wid << ", base=" << *base << endl;
@@ -473,23 +478,6 @@ bool PEIdent::elaborate_lval_net_idx_up_(Design*des,
       return true;
 }
 
-bool PEIdent::elaborate_lval_net_idx_do_(Design*des,
-					 NetScope*scope,
-					 NetAssign_*lv) const
-{
-      const name_component_t&name_tail = path_.back();;
-      ivl_assert(*this, !name_tail.index.empty());
-
-      const index_component_t&index_tail = name_tail.index.back();
-      ivl_assert(*this, index_tail.msb != 0);
-      ivl_assert(*this, index_tail.lsb != 0);
-
-      cerr << get_line() << ": internal error: don't know how to "
-	    "deal with SEL_IDX_DO in lval?" << endl;
-      des->errors += 1;
-      return false;
-}
-
 NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 {
       cerr << get_line() << ": error: Constant values not allowed "
@@ -497,76 +485,4 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
       des->errors += 1;
       return 0;
 }
-
-/*
- * $Log: elab_lval.cc,v $
- * Revision 1.44  2007/06/02 03:42:12  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.43  2007/05/24 04:07:11  steve
- *  Rework the heirarchical identifier parse syntax and pform
- *  to handle more general combinations of heirarch and bit selects.
- *
- * Revision 1.42  2007/03/14 05:06:49  steve
- *  Replace some asserts with ivl_asserts.
- *
- * Revision 1.41  2007/03/05 05:59:10  steve
- *  Handle processes within generate loops.
- *
- * Revision 1.40  2007/02/27 05:14:38  steve
- *  Detect and warn about lval array index out fo bounds.
- *
- * Revision 1.39  2007/02/01 05:25:26  steve
- *  Error message better reflects more general reality.
- *
- * Revision 1.38  2007/01/16 05:44:15  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.37  2006/11/04 06:19:25  steve
- *  Remove last bits of relax_width methods, and use test_width
- *  to calculate the width of an r-value expression that may
- *  contain unsized numbers.
- *
- * Revision 1.36  2006/06/02 04:48:50  steve
- *  Make elaborate_expr methods aware of the width that the context
- *  requires of it. In the process, fix sizing of the width of unary
- *  minus is context determined sizes.
- *
- * Revision 1.35  2006/04/16 00:54:04  steve
- *  Cleanup lval part select handling.
- *
- * Revision 1.34  2006/04/16 00:15:43  steve
- *  Fix part selects in l-values.
- *
- * Revision 1.33  2006/02/02 02:43:57  steve
- *  Allow part selects of memory words in l-values.
- *
- * Revision 1.32  2005/07/11 16:56:50  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.31  2004/12/29 23:55:43  steve
- *  Unify elaboration of l-values for all proceedural assignments,
- *  including assing, cassign and force.
- *
- *  Generate NetConcat devices for gate outputs that feed into a
- *  vector results. Use this to hande gate arrays. Also let gate
- *  arrays handle vectors of gates when the outputs allow for it.
- *
- * Revision 1.30  2004/12/11 02:31:25  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.29  2004/10/04 01:10:52  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.28  2004/08/28 14:59:44  steve
- *  More detailed error message about bad variable.
- *
- * Revision 1.27  2003/09/19 03:30:05  steve
- *  Fix name search in elab_lval.
- */
 
