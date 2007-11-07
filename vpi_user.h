@@ -282,6 +282,7 @@ typedef struct t_vpi_delay  {
 #define vpiNamedFork   35
 #define vpiNet         36
 #define vpiParameter   41
+#define vpiPathTerm    43
 #define vpiRealVar     47
 #define vpiReg         48
 #define vpiSysFuncCall 56
@@ -331,6 +332,7 @@ typedef struct t_vpi_delay  {
 #   define vpiSysFuncTime  vpiTimeFunc
 #   define vpiSysFuncSized vpiSizedFunc
 #define vpiSigned    65
+#define vpiExpr      102
 /* IVL private properties */
 #define _vpiNexusId 0x1000000
 

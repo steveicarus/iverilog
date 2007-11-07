@@ -680,66 +680,6 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       return strdup("C<z>");
 }
 
-static void draw_modpath(const char*label, const char*driver,
-			 ivl_signal_t path_sig)
-{
-      unsigned idx;
-      typedef const char*ccharp;
-      ccharp*src_drivers;
-      ccharp*con_drivers;
-
-      src_drivers = calloc(ivl_signal_npath(path_sig), sizeof(ccharp));
-      con_drivers = calloc(ivl_signal_npath(path_sig), sizeof(ccharp));
-      for (idx = 0 ;  idx < ivl_signal_npath(path_sig) ;  idx += 1) {
-	    ivl_delaypath_t path = ivl_signal_path(path_sig, idx);
-	    ivl_nexus_t src = ivl_path_source(path);
-	    ivl_nexus_t con = ivl_path_condit(path);
-
-	    src_drivers[idx] = draw_net_input(src);
-
-	    if (con) con_drivers[idx] = draw_net_input(con);
-	    else con_drivers[idx] = 0;
-      }
-
-      fprintf(vvp_out, "%s .modpath %s", label, driver);
-
-      for (idx = 0 ;  idx < ivl_signal_npath(path_sig); idx += 1) {
-	    ivl_delaypath_t path = ivl_signal_path(path_sig, idx);
-	    int ppos = ivl_path_source_posedge(path);
-	    int pneg = ivl_path_source_negedge(path);
-	    const char*edge = ppos? " +" : pneg ? " -" : "";
-	    fprintf(vvp_out, ",\n   %s%s", src_drivers[idx], edge);
-	    fprintf(vvp_out,
-		    " (%"PRIu64",%"PRIu64",%"PRIu64
-		    ", %"PRIu64",%"PRIu64",%"PRIu64
-		    ", %"PRIu64",%"PRIu64",%"PRIu64
-		    ", %"PRIu64",%"PRIu64",%"PRIu64,
-		    ivl_path_delay(path, IVL_PE_01),
-		    ivl_path_delay(path, IVL_PE_10),
-		    ivl_path_delay(path, IVL_PE_0z),
-		    ivl_path_delay(path, IVL_PE_z1),
-		    ivl_path_delay(path, IVL_PE_1z),
-		    ivl_path_delay(path, IVL_PE_z0),
-		    ivl_path_delay(path, IVL_PE_0x),
-		    ivl_path_delay(path, IVL_PE_x1),
-		    ivl_path_delay(path, IVL_PE_1x),
-		    ivl_path_delay(path, IVL_PE_x0),
-		    ivl_path_delay(path, IVL_PE_xz),
-		    ivl_path_delay(path, IVL_PE_zx));
-
-	    if (con_drivers[idx]) {
-		  fprintf(vvp_out, " ? %s", con_drivers[idx]);
-	    }
-
-	    fprintf(vvp_out, ")");
-      }
-
-      fprintf(vvp_out, ";\n");
-
-      free(src_drivers);
-      free(con_drivers);
-}
-
 static int nexus_drive_is_strength_aware(ivl_nexus_ptr_t nptr)
 {
       if (ivl_nexus_ptr_drive0(nptr) != IVL_DR_STRONG)
@@ -908,9 +848,9 @@ static char* draw_net_input_x(ivl_nexus_t nex,
 		  char modpath_label[64];
 		  snprintf(modpath_label, sizeof modpath_label,
 			   "V_%p/m", path_sig);
-		  draw_modpath(modpath_label, nex_str, path_sig);
 		  nex_private = strdup(modpath_label);
-		  free(nex_str);
+		  draw_modpath(path_sig, nex_str);
+
 	    } else {
 		  nex_private = draw_net_input_drive(nex, drivers[0]);
 	    }

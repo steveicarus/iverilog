@@ -52,7 +52,7 @@ dep:
 	mv $*.d dep
 
 O = vvp.o draw_mux.o draw_ufunc.o draw_vpi.o eval_bool.o eval_expr.o \
-eval_real.o vector.o \
+eval_real.o modpath.o vector.o \
 vvp_process.o vvp_scope.o
 
 ifeq (@WIN32@,yes)

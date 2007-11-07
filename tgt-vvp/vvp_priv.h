@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.43 2007/02/26 19:49:50 steve Exp $"
-#endif
 
 # include  "vvp_config.h"
 # include  "ivl_target.h"
@@ -68,6 +65,20 @@ extern void draw_lpm_mux(ivl_lpm_t net);
 
 extern struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid);
 extern int draw_ufunc_real(ivl_expr_t exp);
+
+/*
+ * modpath.c symbols.
+ *
+ * draw_modpath arranges for a .modpath record to be written out.
+ *
+ * cleanup_modpath() cleans up any pending .modpath records that may
+ * have been scheduled by draw_modpath() but not yet writte.
+ *
+ * Note: draw_modpath drive_label must be malloc'ed by the
+ * caller. This function will free the string sometime in the future.
+ */
+extern void draw_modpath(ivl_signal_t path_sig, char*drive_label);
+extern void cleanup_modpath(void);
 
 /*
  * This function draws the execution of a vpi_call statement, along
@@ -242,125 +253,4 @@ extern void clr_word(int idx);
 extern unsigned local_count;
 extern unsigned thread_count;
 
-/*
- * $Log: vvp_priv.h,v $
- * Revision 1.43  2007/02/26 19:49:50  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.42  2007/01/17 04:39:18  steve
- *  Remove dead code related to memories.
- *
- * Revision 1.41  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.40  2006/02/02 02:43:59  steve
- *  Allow part selects of memory words in l-values.
- *
- * Revision 1.39  2005/10/12 17:26:17  steve
- *  MUX nodes get inputs from nets, not from net inputs,
- *  Detect and draw alias nodes to reduce net size and
- *  handle force confusion.
- *
- * Revision 1.38  2005/10/11 18:30:50  steve
- *  Remove obsolete vvp_memory_label function.
- *
- * Revision 1.37  2005/10/10 04:16:13  steve
- *  Remove dead dram_input_from_net and lpm_inputs_a_b
- *
- * Revision 1.36  2005/09/17 01:01:00  steve
- *  More robust use of precalculated expressions, and
- *  Separate lookaside for written variables that can
- *  also be reused.
- *
- * Revision 1.35  2005/09/15 02:50:13  steve
- *  Preserve precalculated expressions when possible.
- *
- * Revision 1.34  2005/09/14 02:53:15  steve
- *  Support bool expressions and compares handle them optimally.
- *
- * Revision 1.33  2005/09/01 04:11:37  steve
- *  Generate code to handle real valued muxes.
- *
- * Revision 1.32  2005/08/06 17:58:16  steve
- *  Implement bi-directional part selects.
- *
- * Revision 1.31  2005/07/13 04:52:31  steve
- *  Handle functions with real values.
- *
- * Revision 1.30  2005/07/11 16:56:51  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.29  2004/12/11 02:31:28  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.28  2004/01/20 21:00:47  steve
- *  Isolate configure from containing config.h
- *
- * Revision 1.27  2003/06/17 19:17:42  steve
- *  Remove short int restrictions from vvp opcodes.
- *
- * Revision 1.26  2003/06/05 04:18:50  steve
- *  Better width testing for thread vector allocation.
- *
- * Revision 1.25  2003/03/15 04:45:18  steve
- *  Allow real-valued vpi functions to have arguments.
- *
- * Revision 1.24  2003/02/28 20:21:13  steve
- *  Merge vpi_call and vpi_func draw functions.
- *
- * Revision 1.23  2003/01/26 21:16:00  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.22  2002/09/27 16:33:34  steve
- *  Add thread expression lookaside map.
- *
- * Revision 1.21  2002/09/24 04:20:32  steve
- *  Allow results in register bits 47 in certain cases.
- *
- * Revision 1.20  2002/09/13 03:12:50  steve
- *  Optimize ==1 when in context where x vs z doesnt matter.
- *
- * Revision 1.19  2002/08/27 05:39:57  steve
- *  Fix l-value indexing of memories and vectors so that
- *  an unknown (x) index causes so cell to be addresses.
- *
- *  Fix tangling of label identifiers in the fork-join
- *  code generator.
- *
- * Revision 1.18  2002/08/12 01:35:04  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.17  2002/08/04 18:28:15  steve
- *  Do not use hierarchical names of memories to
- *  generate vvp labels. -tdll target does not
- *  used hierarchical name string to look up the
- *  memory objects in the design.
- *
- * Revision 1.16  2002/08/03 22:30:48  steve
- *  Eliminate use of ivl_signal_name for signal labels.
- *
- * Revision 1.15  2002/07/08 04:04:07  steve
- *  Generate code for wide muxes.
- *
- * Revision 1.14  2002/06/02 18:57:17  steve
- *  Generate %cmpi/u where appropriate.
- *
- * Revision 1.13  2002/04/22 02:41:30  steve
- *  Reduce the while loop expression if needed.
- *
- * Revision 1.12  2001/11/01 04:26:57  steve
- *  Generate code for deassign and cassign.
- *
- * Revision 1.11  2001/06/18 03:10:34  steve
- *   1. Logic with more than 4 inputs
- *   2. Id and name mangling
- *   3. A memory leak in draw_net_in_scope()
- *   (Stephan Boettcher)
- */
 #endif

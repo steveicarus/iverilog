@@ -175,6 +175,7 @@ struct dll_target  : public target_t, public expr_scan_t {
  */
 
 struct ivl_delaypath_s {
+      ivl_scope_t scope;
       ivl_nexus_t src;
       ivl_nexus_t condit;
       bool posedge;

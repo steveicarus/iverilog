@@ -1264,6 +1264,13 @@ extern uint64_t ivl_path_delay(ivl_delaypath_t obj, ivl_path_edge_t edg)
       return obj->delay[edg];
 }
 
+extern ivl_scope_t ivl_path_scope(ivl_delaypath_t obj)
+{
+      assert(obj);
+      assert(obj->scope);
+      return obj->scope;
+}
+
 extern ivl_nexus_t ivl_path_source(ivl_delaypath_t net)
 {
       return net->src;

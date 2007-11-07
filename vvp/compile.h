@@ -175,16 +175,21 @@ extern void compile_dff(char*label,
 			struct symb_s arg_a);
 
 class __vpiModPath;
-extern __vpiModPath* compile_modpath(char*label, struct symb_s src);
-extern void compile_modpath_src(__vpiModPath*dst,
-				char edge,
-				struct symb_s input,
-				struct numbv_s d);
+extern __vpiModPath* compile_modpath(char*label,
+				     struct symb_s drv,
+				     struct symb_s dest);
 extern void compile_modpath_src(__vpiModPath*dst,
 				char edge,
 				struct symb_s input,
 				struct numbv_s d,
-				struct symb_s condit_input);
+				int condit_input, /* match with '0' */
+				struct symb_s path_term_input);
+extern void compile_modpath_src(__vpiModPath*dst,
+				char edge,
+				struct symb_s input,
+				struct numbv_s d,
+				struct symb_s condit_input,
+				struct symb_s path_term_input);
 
 extern void compile_reduce_and(char*label, struct symb_s arg);
 extern void compile_reduce_or(char*label, struct symb_s arg);

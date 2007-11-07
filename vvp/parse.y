@@ -320,17 +320,17 @@ statement
      node takes two form, one with an array of constants and a single
      input, and another with an array of inputs. */
 
-        | T_LABEL K_DELAY delay symbol ';'
-                { compile_delay($1, $3, $4); }
-        | T_LABEL K_DELAY  symbols ';'
-                { struct symbv_s obj = $3;
-		  compile_delay($1, obj.cnt, obj.vect);
-		}
+ | T_LABEL K_DELAY delay symbol ';'
+    { compile_delay($1, $3, $4); }
+ | T_LABEL K_DELAY  symbols ';'
+    { struct symbv_s obj = $3;
+      compile_delay($1, obj.cnt, obj.vect);
+    }
 
-        | T_LABEL K_MODPATH symbol ','
-                { modpath_dst = compile_modpath($1, $3); }
-          modpath_src_list ';'
-                { modpath_dst = 0; }
+ | T_LABEL K_MODPATH symbol symbol ','
+    { modpath_dst = compile_modpath($1, $3, $4); }
+   modpath_src_list ';'
+    { modpath_dst = 0; }
 
   /* DFF nodes have an output and take exactly 4 inputs. */
 
@@ -775,19 +775,19 @@ modpath_src_list
         ;
 
 modpath_src
-        : symbol '(' numbers ')'
-                { compile_modpath_src(modpath_dst, 0, $1, $3); }
-        | symbol '(' numbers '?' symbol ')'
-                { compile_modpath_src(modpath_dst, 0, $1, $3, $5); }
-        | symbol '+' '(' numbers ')'
-                { compile_modpath_src(modpath_dst, '+', $1, $4); }
-        | symbol '+' '(' numbers '?' symbol ')'
-                { compile_modpath_src(modpath_dst, '+', $1, $4, $6); }
-        | symbol '-' '(' numbers ')'
-                { compile_modpath_src(modpath_dst, '-', $1, $4); }
-        | symbol '-' '(' numbers '?' symbol ')'
-                { compile_modpath_src(modpath_dst, '-', $1, $4, $6); }
-        ;
+  : symbol '(' numbers ')' symbol
+      { compile_modpath_src(modpath_dst, 0, $1, $3, 0, $5); }
+  | symbol '(' numbers '?' symbol ')' symbol
+      { compile_modpath_src(modpath_dst, 0, $1, $3, $5, $7); }
+  | symbol '+' '(' numbers ')' symbol
+      { compile_modpath_src(modpath_dst, '+', $1, $4, 0, $6); }
+  | symbol '+' '(' numbers '?' symbol ')' symbol
+      { compile_modpath_src(modpath_dst, '+', $1, $4, $6, $8); }
+  | symbol '-' '(' numbers ')' symbol
+      { compile_modpath_src(modpath_dst, '-', $1, $4, 0, $6); }
+  | symbol '-' '(' numbers '?' symbol ')' symbol
+      { compile_modpath_src(modpath_dst, '-', $1, $4, $6, $8); }
+  ;
 
 udp_table
 	: T_STRING
