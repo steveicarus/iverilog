@@ -145,6 +145,7 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
       verireal* realtime;
 
       PSpecPath* specpath;
+      list<index_component_t> *dimensions;
 };
 
 %token <text>   IDENTIFIER SYSTEM_IDENTIFIER STRING
@@ -225,6 +226,7 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %type <exprs> cont_assign cont_assign_list
 
 %type <exprs> range range_opt
+%type <dimensions> dimensions_opt
 %type <nettype>  net_type var_type net_type_opt
 %type <gatetype> gatetype
 %type <porttype> port_type
@@ -2492,6 +2494,36 @@ range_opt
 	: range
 	| { $$ = 0; }
 	;
+dimensions_opt
+	: { $$ = 0; }
+	| '[' expression ':' expression ']'
+		{ list<index_component_t> *tmp = new list<index_component_t>;
+		  index_component_t index;
+		  if (!pform_expression_is_constant($2))
+			yyerror(@2, "error: left array address must be "
+			            "constant.");
+		  index.msb = $2;
+		  if (!pform_expression_is_constant($4))
+			yyerror(@4, "error: right array address must be "
+			            "constant.");
+		  index.lsb = $4;
+		  tmp->push_back(index);
+		  $$ = tmp;
+		}
+	| dimensions_opt '[' expression ':' expression ']'
+		{ list<index_component_t> *tmp = $1;
+		  index_component_t index;
+		  if (!pform_expression_is_constant($3))
+			yyerror(@3, "error: left array address must be "
+			            "constant.");
+		  index.msb = $3;
+		  if (!pform_expression_is_constant($5))
+			yyerror(@5, "error: right array address must be "
+			            "constant.");
+		  index.lsb = $5;
+		  tmp->push_back(index);
+		  $$ = tmp;
+		}
 
   /* This is used to express the return type of a function. */
 function_range_or_type_opt
@@ -2510,10 +2542,19 @@ function_range_or_type_opt
      handle it. The register variable list simply packs them together
      so that bit ranges can be assigned. */
 register_variable
-	: IDENTIFIER
+	: IDENTIFIER dimensions_opt
 		{ pform_makewire(@1, $1, NetNet::REG,
-				 NetNet::NOT_A_PORT,
-				 IVL_VT_NO_TYPE, 0);
+		                 NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
+		  if ($2 != 0) {
+		        index_component_t index;
+		        if ($2->size() > 1) {
+			      yyerror(@2, "sorry: only 1 dimensional arrays "
+			                  "are currently supported.");
+		        }
+		        index = $2->front();
+		        pform_set_reg_idx($1, index.msb, index.lsb);
+		        delete $2;
+		  }
 		  $$ = $1;
 		}
 	| IDENTIFIER '=' expression
@@ -2524,17 +2565,6 @@ register_variable
 			yyerror(@3, "error: register declaration assignment"
 				" value must be a constant expression.");
 		  pform_make_reginit(@1, $1, $3);
-		  $$ = $1;
-		}
-	| IDENTIFIER '[' expression ':' expression ']'
-		{ pform_makewire(@1, $1, NetNet::REG,
-				 NetNet::NOT_A_PORT,
-				 IVL_VT_NO_TYPE, 0);
-		  if (! pform_expression_is_constant($3))
-			yyerror(@3, "error: msb of register range must be constant.");
-		  if (! pform_expression_is_constant($5))
-			yyerror(@3, "error: lsb of register range must be constant.");
-		  pform_set_reg_idx($1, $3, $5);
 		  $$ = $1;
 		}
 	;
@@ -2555,8 +2585,12 @@ register_variable_list
 	;
 
 real_variable
-  : IDENTIFIER
+  : IDENTIFIER dimensions_opt
       { pform_makewire(@1, $1, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_REAL, 0);
+        if ($2 != 0) {
+          yyerror(@2, "sorry: real variables do not currently support arrays.");
+          delete $2;
+        }
 	$$ = $1;
       }
   | IDENTIFIER '=' expression
@@ -2582,21 +2616,19 @@ real_variable_list
   ;
 
 net_variable
-	: IDENTIFIER
+	: IDENTIFIER dimensions_opt
 		{ pform_makewire(@1, $1, NetNet::IMPLICIT,
-				 NetNet::NOT_A_PORT,
-				 IVL_VT_NO_TYPE, 0);
-		  $$ = $1;
-		}
-	| IDENTIFIER '[' expression ':' expression ']'
-		{ pform_makewire(@1, $1, NetNet::IMPLICIT,
-				 NetNet::NOT_A_PORT,
-				 IVL_VT_NO_TYPE, 0);
-		  if (! pform_expression_is_constant($3))
-			yyerror(@3, "error: msb of net range must be constant.");
-		  if (! pform_expression_is_constant($5))
-			yyerror(@3, "error: lsb of net range must be constant.");
-		  pform_set_reg_idx($1, $3, $5);
+		                 NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
+		  if ($2 != 0) {
+		        index_component_t index;
+		        if ($2->size() > 1) {
+			      yyerror(@2, "sorry: only 1 dimensional arrays "
+			                  "are currently supported.");
+		        }
+		        index = $2->front();
+		        pform_set_reg_idx($1, index.msb, index.lsb);
+		        delete $2;
+		  }
 		  $$ = $1;
 		}
 	;
