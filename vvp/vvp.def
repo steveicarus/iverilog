@@ -17,6 +17,7 @@ vpi_handle_by_index
 vpi_handle_by_name
 vpi_iterate
 vpi_mcd_close
+vpi_mcd_flush
 vpi_mcd_name
 vpi_mcd_open
 vpi_mcd_printf
