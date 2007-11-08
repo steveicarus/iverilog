@@ -308,6 +308,7 @@ typedef struct t_vpi_delay  {
 #define vpiName       2
 #define vpiFullName   3
 #define vpiSize       4
+#define vpiTopModule  7
 #define vpiDefName    9
 #define vpiTimeUnit      11
 #define vpiTimePrecision 12

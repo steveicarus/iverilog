@@ -66,8 +66,12 @@ static int scope_get(int code, vpiHandle obj)
       switch (code) {
 	  case vpiTimeUnit:
 	    return ref->time_units;
+
 	  case vpiTimePrecision:
 	    return ref->time_precision;
+
+	  case vpiTopModule:
+	    return 0x0 == ref->scope;
       }
 
       return 0;
