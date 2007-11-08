@@ -197,9 +197,13 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
 
 void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 {
-      assert(lidx_ == 0);
-      assert(ridx_ == 0);
-      lidx_ = ldx;
-      ridx_ = rdx;
+      if (lidx_ != 0 || ridx_ != 0) {
+	    cerr << get_line() << ": error: Array ``" << hname_
+	         << "'' has already been declared." << endl;
+	    error_cnt_ += 1;
+      } else {
+            lidx_ = ldx;
+            ridx_ = rdx;
+      }
 }
 
