@@ -1589,7 +1589,12 @@ void pform_set_type_attrib(perm_string name, const string&key,
  */
 void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r)
 {
-      PWire*cur = pform_cur_module->get_wire(hier_name(name));
+      PWire*cur = 0;
+      if (pform_cur_generate) {
+	    cur = pform_cur_generate->get_wire(hier_name(name));
+      } else {
+	    cur = pform_cur_module->get_wire(hier_name(name));
+      }
       if (cur == 0) {
 	    VLerror("internal error: name is not a valid memory for index.");
 	    return;
