@@ -85,6 +85,7 @@ PLI_UINT64 vcd_cur_time = 0;
 static int dump_is_off = 0;
 static long dump_limit = 0;
 static int dump_is_full = 0;
+static int finish_status = 0;
 
 static char *truncate_bitvec(char *s)
 {
@@ -251,6 +252,22 @@ static PLI_INT32 dumpvars_cb(p_cb_data cause)
       return 0;
 }
 
+static PLI_INT32 finish_cb(p_cb_data cause)
+{
+      if (finish_status != 0)
+	    return 0;
+
+      finish_status = 1;
+
+      dumpvars_time = timerec_to_time64(cause->time);
+
+      if (!dump_is_off && !dump_is_full && dumpvars_time != vcd_cur_time) {
+	    fprintf(dump_file, "#%" PLI_UINT64_FMT "\n", dumpvars_time);
+      }
+
+      return 0;
+}
+
 inline static int install_dumpvars_callback(void)
 {
       struct t_cb_data cb;
@@ -273,6 +290,11 @@ inline static int install_dumpvars_callback(void)
       cb.cb_rtn = dumpvars_cb;
       cb.user_data = 0x0;
       cb.obj = 0x0;
+
+      vpi_register_cb(&cb);
+
+      cb.reason = cbEndOfSimulation;
+      cb.cb_rtn = finish_cb;
 
       vpi_register_cb(&cb);
 

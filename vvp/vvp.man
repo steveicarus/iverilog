@@ -90,7 +90,7 @@ The \fB-lxt-none\fP variant actually suppresses all waveform
 output. This can make long simulations run faster.
 
 .TP 8
-.B -lxt2
+.B -lxt2\fR|\fP-lx2
 The LXT2 format is slower then LXT (faster then VCD) but takes less
 space, and is written out incrementally. Thus, you can view lxt2 files
 while a simulation is still running (or paused) or if your simulation
@@ -102,7 +102,7 @@ The vvp command also accepts some environment variables that control
 its behavior. These can be used to make semi-permanent changes.
 
 .TP 8
-.B IVERILOG_DUMPER=\fIlxt|lxt2|vcd|none\fP
+.B IVERILOG_DUMPER=\fIlxt|lxt2|lx2|vcd|none\fP
 This selects the output format for the waveform output. Normally,
 waveforms are dumped in vcd format, but this variable can be used to
 select lxt format, which is far more compact, though limited to

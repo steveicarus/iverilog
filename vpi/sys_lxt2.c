@@ -158,6 +158,7 @@ static PLI_UINT64 vcd_cur_time = 0;
 static int dump_is_off = 0;
 static long dump_limit = 0;
 static int dump_is_full = 0;
+static int finish_status = 0;
 
 
 static void show_this_item(struct vcd_info*info)
@@ -293,6 +294,21 @@ static PLI_INT32 dumpvars_cb(p_cb_data cause)
       return 0;
 }
 
+static PLI_INT32 finish_cb(p_cb_data cause)
+{
+      if (finish_status != 0)
+	    return 0;
+
+      finish_status = 1;
+
+      dumpvars_time = timerec_to_time64(cause->time);
+      if (!dump_is_off && !dump_is_full && dumpvars_time != vcd_cur_time) {
+            lxt2_wr_set_time64(dump_file, dumpvars_time);
+      }
+
+      return 0;
+}
+
 inline static int install_dumpvars_callback(void)
 {
       struct t_cb_data cb;
@@ -315,6 +331,11 @@ inline static int install_dumpvars_callback(void)
       cb.cb_rtn = dumpvars_cb;
       cb.user_data = 0x0;
       cb.obj = 0x0;
+
+      vpi_register_cb(&cb);
+
+      cb.reason = cbEndOfSimulation;
+      cb.cb_rtn = finish_cb;
 
       vpi_register_cb(&cb);
 
@@ -419,14 +440,14 @@ static void open_dumpfile(const char*path)
 
       if (dump_file == 0) {
 	    vpi_mcd_printf(1,
-			   "LXT Error: Unable to open %s for output.\n",
+			   "LXT2 Error: Unable to open %s for output.\n",
 			   path);
 	    return;
       } else {
 	    int prec = vpi_get(vpiTimePrecision, 0);
 
 	    vpi_mcd_printf(1,
-			   "LXT info: dumpfile %s opened for output.\n",
+			   "LXT2 info: dumpfile %s opened for output.\n",
 			   path);
 
 	    assert(prec >= -15);
@@ -455,7 +476,7 @@ static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
 	    if (vpi_get(vpiType, item) != vpiConstant
 		|| vpi_get(vpiConstType, item) != vpiStringConst) {
 		  vpi_mcd_printf(1,
-				 "LXT Error:"
+				 "LXT2 Error:"
 				 " %s parameter must be a string constant\n",
 				 name);
 		  return 0;
@@ -468,7 +489,7 @@ static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
 	    vpi_free_object(argv);
 
       } else {
-	    path = strdup("dumpfile.lxt");
+	    path = strdup("dump.lx2");
       }
 
       if (dump_file)
@@ -686,7 +707,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 #if 0
 		  vpi_mcd_printf(1,
-				 "LXT info:"
+				 "LXT2 info:"
 				 " scanning scope %s, %u levels\n",
 				 fullname, depth);
 #endif
@@ -696,7 +717,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			vcd_names_add(&lxt_tab, fullname);
 		  else
 		    vpi_mcd_printf(1,
-				   "LXT warning:"
+				   "LXT2 warning:"
 				   " ignoring signals"
 				   " in previously scanned scope %s\n",
 				   fullname);
@@ -719,7 +740,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	  default:
 	    vpi_mcd_printf(1,
-			   "LXT Error: $lxtdumpvars: Unsupported parameter "
+			   "LXT2 Error: $lxtdumpvars: Unsupported parameter "
 			   "type (%d)\n", vpi_get(vpiType, item));
       }
 
@@ -760,7 +781,7 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
       vpiHandle argv;
 
       if (dump_file == 0) {
-	    open_dumpfile("dumpfile.lxt");
+	    open_dumpfile("dump.lx2");
 	    if (dump_file == 0)
 		  return 0;
       }

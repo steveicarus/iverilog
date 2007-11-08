@@ -102,6 +102,18 @@ static void sys_lxt_or_vcd_register()
 	    } else if (strcmp(vlog_info.argv[idx],"-lxt2-none") == 0) {
 		  dumper = "none";
 
+	    } else if (strcmp(vlog_info.argv[idx],"-lx2") == 0) {
+		  dumper = "lxt2";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-lx2-space") == 0) {
+		  dumper = "lxt2";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-lx2-speed") == 0) {
+		  dumper = "lxt2";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-lx2-none") == 0) {
+		  dumper = "none";
+
 	    } else if (strcmp(vlog_info.argv[idx],"-vcd") == 0) {
 		  dumper = "vcd";
 
@@ -130,6 +142,12 @@ static void sys_lxt_or_vcd_register()
 	    sys_lxt2_register();
 
       else if (strcmp(dumper, "LXT2") == 0)
+	    sys_lxt2_register();
+
+      else if (strcmp(dumper, "lx2") == 0)
+	    sys_lxt2_register();
+
+      else if (strcmp(dumper, "LX2") == 0)
 	    sys_lxt2_register();
 
       else if (strcmp(dumper, "none") == 0)
