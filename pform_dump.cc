@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.101 2007/06/04 02:19:07 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -242,6 +239,9 @@ void PEBinary::dump(ostream&out) const
 	    break;
 	  case 'N':
 	    out << "!==";
+	    break;
+	  case 'R':
+	    out << ">>>";
 	    break;
 	  case 'r':
 	    out << ">>";

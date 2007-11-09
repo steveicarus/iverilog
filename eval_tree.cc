@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.77 2007/06/02 03:42:12 steve Exp $"
-#endif
 
 # include "config.h"
 # include "compiler.h"
@@ -1075,9 +1072,13 @@ NetEConst* NetEBShift::eval_tree(int prune_to_width)
 		  wid = prune_to_width;
 
 	    assert(wid);
-	    verinum nv (verinum::V0, wid, lv.has_len());
+	    verinum::V pad = verinum::V0;
+	    if (op() == 'R' && has_sign()) {
+		  pad = lv[lv.len()-1];
+	    }
+	    verinum nv (pad, wid, lv.has_len());
 
-	    if (op() == 'r') {
+	    if (op() == 'r' || op() == 'R') {
 		  unsigned cnt = wid;
 		  if (cnt > nv.len())
 			cnt = nv.len();
