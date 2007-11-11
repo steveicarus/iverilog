@@ -577,10 +577,16 @@ static void modpath_src_put_delays ( vpiHandle ref, p_vpi_delay delays )
       vvp_fun_modpath_src *fun = dynamic_cast<vvp_fun_modpath_src*>(src->net->fun);
       assert( fun );
       assert(delays->no_of_delays == 12);
-      assert(delays->time_type == vpiSimTime);
 
-      for (idx = 0 ; idx < delays->no_of_delays ; idx += 1) {
-	    tmp[idx] = vpip_timestruct_to_time(delays->da+idx);
+      if (delays->time_type == vpiSimTime) {
+	    for (idx = 0 ; idx < delays->no_of_delays ; idx += 1) {
+		  tmp[idx] = vpip_timestruct_to_time(delays->da+idx);
+	    }
+      } else {
+	    for (idx = 0 ; idx < delays->no_of_delays ; idx += 1) {
+		  tmp[idx] = vpip_scaled_real_to_time64(delays->da[idx].real,
+							src->dest->scope);
+	    }
       }
 
       fun->put_delay12(tmp);
@@ -601,18 +607,28 @@ static void modpath_src_get_delays ( vpiHandle ref, p_vpi_delay delays )
 
       vvp_fun_modpath_src *fun = dynamic_cast<vvp_fun_modpath_src*>(src->net->fun);
       assert(fun);
+
+      int idx;
+      vvp_time64_t tmp[12];
+      fun->get_delay12(tmp);
+
       switch (delays->no_of_delays) {
 	  case 12:
-	      { int idx;
-		vvp_time64_t tmp[12];
-		fun->get_delay12(tmp);
-		for (idx = 0; idx < 12; idx += 1) {
-		      vpip_time_to_timestruct(delays->da+idx, tmp[idx]);
-		}
-	      }
-	      break;
+	    if (delays->time_type == vpiSimTime) {
+		  for (idx = 0; idx < 12; idx += 1) {
+			vpip_time_to_timestruct(delays->da+idx, tmp[idx]);
+		  }
+	    } else {
+		  int units = src->dest->scope->time_units;
+		  for (idx = 0; idx < 12; idx += 1) {
+			delays->da[idx].real = vpip_time_to_scaled_real(tmp[idx], src->dest->scope);
+		  }
+	    }
+	    break;
+
 	  default:
 	    assert(0);
+	    break;
       }
 }
 

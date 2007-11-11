@@ -56,6 +56,33 @@ vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts)
       return ti;
 }
 
+double vpip_time_to_scaled_real(vvp_time64_t ti, struct __vpiScope*scope)
+{
+      int units;
+      if (scope)
+	    units = scope->time_units;
+      else
+	    units = vpi_time_precision;
+
+      double val = pow(10.0L, vpi_time_precision - units);
+      val *= ti;
+
+      return val;
+}
+
+vvp_time64_t vpip_scaled_real_to_time64(double val, struct __vpiScope*scope)
+{
+      int units;
+      if (scope)
+	    units = scope->time_units;
+      else
+	    units = vpi_time_precision;
+
+      double scale = pow(10.0L, units - vpi_time_precision);
+      val *= scale;
+
+      return val;
+}
 
 static int timevar_time_get(int code, vpiHandle ref)
 {
@@ -189,9 +216,8 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 	      /* Oops, in this case I want a double power of 10 to do
 		 the scaling, instead of the integer scaling done
 		 everywhere else. */
-	    units = rfp->scope? rfp->scope->time_units : vpi_time_precision;
-	    vp->value.real = pow(10.0L, vpi_time_precision - units);
-	    vp->value.real *= schedule_simtime();
+	    vp->value.real = vpip_time_to_scaled_real(schedule_simtime(),
+						      rfp->scope);
 	    break;
 
 	  case vpiBinStrVal:

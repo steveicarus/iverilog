@@ -480,6 +480,9 @@ extern int vpip_time_precision_from_handle(vpiHandle obj);
 extern void vpip_time_to_timestruct(struct t_vpi_time*ts, vvp_time64_t ti);
 extern vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts);
 
+extern double vpip_time_to_scaled_real(vvp_time64_t ti, struct __vpiScope*sc);
+extern vvp_time64_t vpip_scaled_real_to_time64(double val, struct __vpiScope*sc);
+
 /*
  * These functions are used mostly as compile time to strings into
  * permallocated memory. The vpip_string function is the most general,
