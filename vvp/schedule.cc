@@ -623,6 +623,8 @@ void schedule_simulate(void)
 	    if (schedule_stopped_flag) {
 		  schedule_stopped_flag = false;
 		  stop_handler(0);
+		  // You can finish from the debugger without a time change.
+		  if (!schedule_runnable) break;
 		  continue;
 	    }
 
