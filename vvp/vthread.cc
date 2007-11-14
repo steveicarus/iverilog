@@ -1653,6 +1653,42 @@ bool of_END(vthread_t thr, vvp_code_t)
       return false;
 }
 
+static void unlink_force(vvp_net_t*net)
+{
+      vvp_fun_signal_base*sig
+	    = reinterpret_cast<vvp_fun_signal_base*>(net->fun);
+	/* This node must be a signal... */
+      assert(sig);
+	/* This signal is being forced. */
+      assert(sig->force_link);
+
+      vvp_net_t*src = sig->force_link;
+      sig->force_link = 0;
+
+	/* We are looking for this pointer. */
+      vvp_net_ptr_t net_ptr (net, 2);
+
+	/* If net is first in the fan-out list, then simply pull it
+	   from the front. */
+      if (src->out == net_ptr) {
+	    src->out = net->port[2];
+	    net->port[2] = vvp_net_ptr_t();
+	    return;
+      }
+
+	/* Look for the pointer in the fan-out chain */
+      vvp_net_ptr_t cur_ptr = src->out;
+      assert(!cur_ptr.nil());
+      while (cur_ptr.ptr()->port[cur_ptr.port()] != net_ptr) {
+	    cur_ptr = cur_ptr.ptr()->port[cur_ptr.port()];
+	    assert( !cur_ptr.nil() );
+      }
+
+	/* Remove as if from a singly-linked list. */
+      cur_ptr.ptr()->port[cur_ptr.port()] = net->port[2];
+      net->port[2] = vvp_net_ptr_t();
+}
+
 /*
  * the %force/link instruction connects a source node to a
  * destination node. The destination node must be a signal, as it is
@@ -1674,8 +1710,10 @@ bool of_FORCE_LINK(vthread_t thr, vvp_code_t cp)
       if (sig->force_link == src)
 	    return true;
 
-	/* FIXME: Don't yet support changing the force. */
-      assert(sig->force_link == 0);
+	/* If there is a linked force already, then unlink it. */
+      if (sig->force_link)
+	    unlink_force(dst);
+
       sig->force_link = src;
 
 	/* Link the output of the src to the port[2] (the force
@@ -3051,6 +3089,8 @@ bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
       assert(sig);
 
 	/* XXXX Release for %force/link not yet implemented. */
+      if (sig->force_link)
+	    unlink_force(net);
       assert(sig->force_link == 0);
 
       vvp_net_ptr_t ptr (net, 3);
