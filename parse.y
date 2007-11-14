@@ -226,7 +226,7 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 %type <exprs> cont_assign cont_assign_list
 
 %type <exprs> range range_opt
-%type <dimensions> dimensions_opt
+%type <dimensions> dimensions_opt dimensions
 %type <nettype>  net_type var_type net_type_opt
 %type <gatetype> gatetype
 %type <porttype> port_type
@@ -2496,7 +2496,10 @@ range_opt
 	;
 dimensions_opt
 	: { $$ = 0; }
-	| '[' expression ':' expression ']'
+	| dimensions { $$ = $1; }
+
+dimensions
+	: '[' expression ':' expression ']'
 		{ list<index_component_t> *tmp = new list<index_component_t>;
 		  index_component_t index;
 		  if (!pform_expression_is_constant($2))
@@ -2510,7 +2513,7 @@ dimensions_opt
 		  tmp->push_back(index);
 		  $$ = tmp;
 		}
-	| dimensions_opt '[' expression ':' expression ']'
+	| dimensions '[' expression ':' expression ']'
 		{ list<index_component_t> *tmp = $1;
 		  index_component_t index;
 		  if (!pform_expression_is_constant($3))
