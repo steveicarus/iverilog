@@ -462,6 +462,7 @@ This opcode is the real-valued modulus of the two real values.
 
 * %mov <dst>, <src>, <wid>
 * %mov/wr <dst>, <src>
+* %movi <dst>, <value>, <wid>
 
 This instruction copies a vector from one place in register space to
 another. The destination and source vectors are assumed to be the same
@@ -469,6 +470,8 @@ width and non-overlapping. The <dst> may not be 0-3, but if the <src>
 is one of the 4 constant bits, the effect is to replicate the value
 into the destination vector. This is useful for filling a vector.
 
+The %movi variant moves a binary value, LSB first, into the
+destination vector.
 
 * %mul <bit-l>, <bit-r>, <wid>
 

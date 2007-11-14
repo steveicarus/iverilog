@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.137 2007/04/14 04:43:01 steve Exp $"
-#endif
 
 # include  "vvp_priv.h"
 # include  <string.h>
@@ -1584,7 +1581,7 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
       struct vector_info res;
       char *p, *fp;
       unsigned ewid, nwid;
-      unsigned bit = 0, idx;
+      unsigned idx;
 
       res.wid  = wid;
       nwid = wid;
@@ -1604,25 +1601,31 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
 	   load the constant bit values. */
       res.base = allocate_vector(wid);
 
+	/* Since this is a string, we know that all the bits are
+	   defined and each character represents exactly 8 bits. Use
+	   the %movi instruction to more efficiently move the string
+	   around. */
       idx = 0;
       while (idx < nwid) {
-	    unsigned this_bit = ((*p) & (1 << bit)) ? 1 : 0;
+	    unsigned bits;
+	    unsigned trans = 16;
+	    if (nwid-idx < 16)
+		  trans = nwid-idx;
 
-	    fprintf(vvp_out, "    %%mov %u, %d, 1;\n",
-		    res.base+idx, this_bit);
-
-	    bit++;
-	    if (bit == 8) {
-		  bit = 0;
-		  p--;
+	    bits = *p;
+	    p -= 1;
+	    if (trans > 8) {
+		  bits |= *p << 8;
+		  p -= 1;
 	    }
+	    fprintf(vvp_out, "  %%movi %u, %u, %u;\n", res.base+idx,bits,trans);
 
-	    idx++;
+	    idx += trans;
       }
 
 	/* Pad the number up to the expression width. */
       if (idx < wid)
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n", res.base+idx, wid-idx);
+	    fprintf(vvp_out, "  %%mov %u, 0, %u;\n", res.base+idx, wid-idx);
 
       if (res.base >= 8)
 	    save_expression_lookaside(res.base, exp, wid);
