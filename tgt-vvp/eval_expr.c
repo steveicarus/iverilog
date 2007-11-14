@@ -1544,6 +1544,37 @@ static struct vector_info draw_realnum_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+static char *process_octal_codes(const char *in, unsigned width)
+{
+      unsigned idx = 0;
+      unsigned ridx = 0;
+      unsigned str_len = strlen(in);
+      char *out = (char *)malloc(str_len+1);
+
+        /* If we do not have any octal codes just return the input. */
+      if (width/8 == str_len) {
+	    strcpy(out, in);
+	    return out;
+      }
+
+      while (idx < str_len) {
+	      /* An octal constant always has three digits. */
+	    if (in[ridx] == '\\') {
+		  out[idx] = (in[ridx+1]-'0')*64 + (in[ridx+2]-'0')*8 +
+		            (in[ridx+3]-'0');
+		  idx += 1;
+		  ridx += 4;
+	    } else {
+		  out[idx] = in[ridx];
+		  idx += 1;
+		  ridx += 1;
+	    }
+      }
+      out[idx] = '\0';
+
+      return out;
+}
+
 /*
  * A string in an expression is made up by copying constant bits into
  * the allocated vector.
@@ -1551,7 +1582,7 @@ static struct vector_info draw_realnum_expr(ivl_expr_t exp, unsigned wid)
 static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
 {
       struct vector_info res;
-      const char *p = ivl_expr_string(exp);
+      char *p, *fp;
       unsigned ewid, nwid;
       unsigned bit = 0, idx;
 
@@ -1560,6 +1591,11 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
       ewid = ivl_expr_width(exp);
       if (ewid < nwid)
 	    nwid = ewid;
+
+        /* Our string may have embedded \xxx sequences so they need
+           to be removed before we proceed. Returns a new string. */
+      fp = process_octal_codes(ivl_expr_string(exp), ewid);
+      p = fp;
 
       p += (ewid / 8) - 1;
 
@@ -1591,6 +1627,7 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
       if (res.base >= 8)
 	    save_expression_lookaside(res.base, exp, wid);
 
+      free(fp);
       return res;
 }
 
@@ -2283,8 +2320,4 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 {
       return draw_eval_expr_wid(exp, ivl_expr_width(exp), stuff_ok_flag);
 }
-
-/*
- * $Log: eval_expr.c,v $
- */
 
