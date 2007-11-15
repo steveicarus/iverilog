@@ -267,10 +267,10 @@ bool NetEConst::set_width(unsigned w, bool last_chance)
 	    if (value_.has_sign()) {
 		  pad = value_.get(value_.len()-1);
 
-	    } else if (value_.len() == 0) {
-		  pad = verinum::V0;
-
-	    } else switch (value_.get(value_.len()-1)) {
+	      /* It appears that you always have a defined length here,
+	       * so this logic may be in error. */
+	    } else if (value_.len() != 0 && !value_.has_len())
+	      switch (value_.get(value_.len()-1)) {
 		case verinum::V1:
 		case verinum::V0:
 		  break;
