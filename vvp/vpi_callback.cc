@@ -338,7 +338,9 @@ void vpiPostsim(void) {
       while (EndOfSimulation) {
 	    cur = EndOfSimulation;
 	    EndOfSimulation = cur->next;
-	    vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
+	      /* Only set the time if it is not NULL. */
+	    if (cur->cb_data.time)
+	          vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    delete_vpi_callback(cur);
       }
