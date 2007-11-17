@@ -250,6 +250,13 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 		 ; cur != tasks_.end() ;  cur ++ ) {
 
 	    hname_t use_name( (*cur).first );
+	    if (scope->child(use_name)) {
+		  cerr << get_line() << ": error: task/scope name "
+		       << use_name << " already used in this context."
+		       << endl;
+		  des->errors += 1;
+		  continue;
+	    }
 	    NetScope*task_scope = new NetScope(scope, use_name,
 					       NetScope::TASK);
 	    (*cur).second->elaborate_scope(des, task_scope);
@@ -266,6 +273,13 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 		 ; cur != funcs_.end() ;  cur ++ ) {
 
 	    hname_t use_name( (*cur).first );
+	    if (scope->child(use_name)) {
+		  cerr << get_line() << ": error: function/scope name "
+		       << use_name << " already used in this context."
+		       << endl;
+		  des->errors += 1;
+		  continue;
+	    }
 	    NetScope*func_scope = new NetScope(scope, use_name,
 					       NetScope::FUNC);
 	    (*cur).second->elaborate_scope(des, func_scope);
@@ -366,6 +380,13 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	      // container. The format of using [] is part of the
 	      // Verilog standard.
 	    hname_t use_name (scope_name, genvar);
+	    if (container->child(use_name)) {
+		  cerr << get_line() << ": error: block/scope name "
+		       << use_name << " already used in this context."
+		       << endl;
+		  des->errors += 1;
+		  return false;
+	    }
 	    if (debug_elaborate)
 		  cerr << get_line() << ": debug: "
 		       << "Create generated scope " << use_name << endl;
@@ -437,6 +458,13 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
       }
 
       hname_t use_name (scope_name);
+      if (container->child(use_name)) {
+	    cerr << get_line() << ": error: block/scope name "
+		 << scope_name << " already used in this context."
+		 << endl;
+	    des->errors += 1;
+	    return false;
+      }
       if (debug_elaborate)
 	    cerr << get_line() << ": debug: Generate condition "
 		 << (else_flag? "(else)" : "(if)")
@@ -713,7 +741,15 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
       NetScope*my_scope = scope;
 
       if (name_ != 0) {
-	    my_scope = new NetScope(scope, hname_t(name_), bl_type_==BL_PAR
+	    hname_t use_name(name_);
+	    if (scope->child(use_name)) {
+		  cerr << get_line() << ": error: block/scope name "
+		       << use_name << " already used in this context."
+		       << endl;
+		  des->errors += 1;
+		  return;
+	    }
+	    my_scope = new NetScope(scope, use_name, bl_type_==BL_PAR
 				    ? NetScope::FORK_JOIN
 				    : NetScope::BEGIN_END);
       }
