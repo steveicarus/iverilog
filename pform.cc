@@ -417,8 +417,11 @@ void pform_endgenerate()
       assert(pform_cur_generate != 0);
       assert(pform_cur_module);
 
-	// If there is no explicit block name, then use a default
-	// internal name.
+	// If there is no explicit block name then generate a temporary
+	// name. This will be replaced by the correct name later, once
+	// we know all the explicit names in the surrounding scope. If
+	// the naming scheme used here is changed, PGenerate::elaborate
+	// must be changed to match.
       if (pform_cur_generate->scope_name == 0) {
 	    char tmp[16];
 	    snprintf(tmp, sizeof tmp, "$gen%d", pform_cur_generate->id_number);
