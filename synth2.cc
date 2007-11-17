@@ -83,6 +83,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 		 << "NetAssignBase::synth_async on unsupported lval ";
 	    dump_lval(cerr);
 	    cerr << endl;
+	    des->errors += 1;
 	    return false;
       }
       assert(lval_->more == 0);
@@ -242,6 +243,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    if (stmt == 0) {
 		  cerr << get_line() << ": error: case " << idx
 		       << " is not accounted for in asynchronous mux." << endl;
+		  des->errors += 1;
 		  continue;
 	    }
 
@@ -321,6 +323,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 #else
       cerr << get_line() << ": sorry: "
 	   << "Forgot to implement NetCondit::synth_async" << endl;
+      des->errors += 1;
       return false;
 #endif
 }
@@ -529,6 +532,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       cerr << get_line() << ": sorry: "
 	   << "Forgot to implement NetBlock::synth_sync"
 	   << endl;
+      des->errors += 1;
       return false;
 #endif
 }
@@ -750,6 +754,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 #else
       cerr << get_line() << ": sorry: "
 	   << "Forgot to implement NetCondit::synth_sync" << endl;
+      des->errors += 1;
       return false;
 #endif
 }
@@ -986,6 +991,7 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
 	    cerr << top->get_line() << ": internal error: "
 		 << "is_asynchronous does not match "
 		 << "sync_async results." << endl;
+	    des->errors += 1;
 	    return;
       }
 
@@ -997,23 +1003,4 @@ void synth2(Design*des)
       synth2_f synth_obj;
       des->functor(&synth_obj);
 }
-
-/*
- * $Log: synth2.cc,v $
- * Revision 1.46  2007/03/22 16:08:17  steve
- *  Spelling fixes from Larry
- *
- * Revision 1.45  2005/08/27 04:32:08  steve
- *  Handle synthesis of fully packed case statements.
- *
- * Revision 1.44  2005/05/15 04:45:50  steve
- *  Debug text.
- *
- * Revision 1.43  2005/04/25 01:35:58  steve
- *  Reimplement basic asynchronous processes.
- *
- * Revision 1.42  2005/04/24 23:44:02  steve
- *  Update DFF support to new data flow.
- *
- */
 
