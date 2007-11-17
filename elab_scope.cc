@@ -369,7 +369,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    cerr << get_line() << ": debug: genvar init = " << genvar << endl;
 
       container->genvar_tmp = loop_index;
-      container->genvar_tmp_val = 0;
+      container->genvar_tmp_val = genvar;
       NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1);
       NetEConst*test = dynamic_cast<NetEConst*>(test_ex);
       assert(test);
