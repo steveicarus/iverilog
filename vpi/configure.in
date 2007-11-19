@@ -15,6 +15,14 @@ then
         exit 1
 fi
 
+AC_CHECK_PROGS(YACC,bison,none)
+if test "$YACC" = "none"
+then
+	echo "*** Error: No suitable bison found. ***"
+        echo "    Please install the 'bison' package."
+        exit 1
+fi
+
 AC_EXEEXT
 AC_SUBST(EXEEXT)
 
