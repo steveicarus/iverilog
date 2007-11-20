@@ -108,6 +108,7 @@ static char *create_full_name(const char *name)
 {
       char *n, *n2;
       int len = 0;
+      int is_esc_id = is_escaped_id(name);
       struct lxt_scope *t = lxt_scope_head;
 
 	/* Figure out how long the combined string will be. */
@@ -117,6 +118,7 @@ static char *create_full_name(const char *name)
       }
 
       len += strlen(name) + 1;
+      if (is_esc_id) len += 1;
 
 	/* Allocate a string buffer. */
       n = n2 = malloc(len);
@@ -130,6 +132,10 @@ static char *create_full_name(const char *name)
 	    t=t->next;
       }
 
+      if (is_esc_id) {
+	    *n2 = '\\';
+	    n2++;
+      }
       strcpy(n2, name);
       n2 += strlen(n2);
       assert( (n2 - n + 1) == len );

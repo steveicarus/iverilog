@@ -549,6 +549,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
       const char* type;
       const char* name;
+      const char* prefix;
       const char* ident;
       int nexus_id;
 
@@ -587,6 +588,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  break;
 
 	    name = vpi_get_str(vpiName, item);
+	    prefix = is_escaped_id(name) ? "\\" : "";
 
 	    nexus_id = vpi_get(_vpiNexusId, item);
 
@@ -625,9 +627,9 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  info->cb    = vpi_register_cb(&cb);
 	    }
 
-	    fprintf(dump_file, "$var %s %u %s %s",
+	    fprintf(dump_file, "$var %s %u %s %s%s",
 		    type, vpi_get(vpiSize, item), ident,
-		    name);
+		    prefix, name);
       /* FIXME
 	    if (vpi_get(vpiVector, item)
       */
@@ -646,10 +648,11 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	      /* Declare the variable in the VCD file. */
 	    name = vpi_get_str(vpiName, item);
+	    prefix = is_escaped_id(name) ? "\\" : "";
 	    ident = strdup(vcdid);
 	    gen_new_vcd_id();
-	    fprintf(dump_file, "$var real 1 %s %s $end\n",
-		    ident, name);
+	    fprintf(dump_file, "$var real 1 %s %s%s $end\n",
+		    ident, prefix, name);
 
 	      /* Add a callback for the variable. */
 	    info = malloc(sizeof(*info));

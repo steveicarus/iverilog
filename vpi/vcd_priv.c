@@ -29,7 +29,28 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+# include  <ctype.h>
 # include  "stringheap.h"
+
+int is_escaped_id(const char *name)
+{
+      int lp;
+
+      assert(name);
+        /* The first digit must be alpha or '_' to be a normal id. */
+      if (isalpha(name[0]) || name[0] == '_') {
+	    for (lp=1; name[lp] != '\0'; lp++) {
+		    /* If this digit is not alpha-numeric or '_' we have
+		     * an escaped identifier. */
+		  if (!(isalnum(name[lp]) || name[lp] == '_')) {
+		        return 1;
+		  }
+	    }
+	      /* We looked at all the digits, so this is a normal id. */
+	    return 0;
+      }
+      return 1;
+}
 
 struct stringheap_s name_heap = {0, 0};
 
@@ -166,27 +187,4 @@ void set_nexus_ident(int nex, const char *id)
       bucket->nex = nex;
       vcd_ids[ihash(nex)] = bucket;
 }
-
-
-/*
- * $Log: vcd_priv.c,v $
- * Revision 1.6  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.5  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.4  2003/11/10 20:18:02  steve
- *  Missing config.h.
- *
- * Revision 1.3  2003/04/28 01:03:11  steve
- *  Fix stringheap list management failure.
- *
- * Revision 1.2  2003/02/13 18:13:28  steve
- *  Make lxt use stringheap to perm-allocate strings.
- *
- * Revision 1.1  2003/02/11 05:21:33  steve
- *  Support dump of vpiRealVar objects.
- *
- */
 
