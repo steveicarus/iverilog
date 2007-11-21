@@ -135,9 +135,9 @@ they will be used as root modules instead.
 .B -T\fImin|typ|max\fP
 Use this switch to select min, typ or max times from min:typ:max
 expressions. Normally, the compiler will simply use the typ value from
-these expressions (with a warning) but this switch will tell the
-compiler explicitly which value to use. This will suppress the
-warning that the compiler is making a choice.
+these expressions (printing a warning for the first ten it finds) but
+this switch will tell the compiler explicitly which value to use. This
+will suppress the warning that the compiler is making a choice.
 .TP 8
 .B -t\fItarget\fP
 Use this switch to specify the target output format. See the

@@ -977,6 +977,22 @@ expr_mintypmax
 			$$ = $5;
 			break;
 		  }
+		  if (min_typ_max_warn > 0) {
+		        cerr << $$->get_line() << ": warning: choosing ";
+		        switch (min_typ_max_flag) {
+		            case MIN:
+		              cerr << "min";
+		              break;
+		            case TYP:
+		              cerr << "typ";
+		              break;
+		            case MAX:
+		              cerr << "max";
+		              break;
+		        }
+		        cerr << " expression." << endl;
+		        min_typ_max_warn -= 1;
+		  }
 		}
 	;
 
@@ -2839,6 +2855,22 @@ specparam
 			delete $5;
 			tmp = $7;
 			break;
+		  }
+		  if (min_typ_max_warn > 0) {
+		        cerr << tmp->get_line() << ": warning: choosing ";
+		        switch (min_typ_max_flag) {
+		            case MIN:
+		              cerr << "min";
+		              break;
+		            case TYP:
+		              cerr << "typ";
+		              break;
+		            case MAX:
+		              cerr << "max";
+		              break;
+		        }
+		        cerr << " expression." << endl;
+		        min_typ_max_warn -= 1;
 		  }
 		  pform_set_specparam(lex_strings.make($1), tmp);
 		  delete $1;
