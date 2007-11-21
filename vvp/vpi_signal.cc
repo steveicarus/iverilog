@@ -702,8 +702,8 @@ static struct __vpiSignal* allocate_vpiSignal(void)
  * Construct a vpiNet object. Give the object specified dimensions,
  * and point to the specified functor for the lsb.
  *
- * The name is the PLI name for the object. If it is nil, then this is
- * actually the word of an array and has no name of its own.
+ * The name is the PLI name for the object. If it is an array it is
+ * <name>[<index>].
  */
 vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 			bool signed_flag, vvp_net_t*node)

@@ -191,7 +191,7 @@ extern void vpip_make_root_iterator(struct __vpiHandle**&table,
 struct __vpiSignal {
       struct __vpiHandle base;
       struct __vpiScope* scope;
-	/* The name of this reg/net, or nil if this is an array word. */
+	/* The name of this reg/net, or <name>[<index>] for array words. */
       const char*name;
 	/* The indices that define the width and access offset. */
       int msb, lsb;

@@ -32,6 +32,8 @@ typedef struct __vpiArray* vvp_array_t;
  * table of all the arrays in the design.
  */
 extern vvp_array_t array_find(char*label);
+extern const char *get_array_name(char*label);
+extern const int get_array_base(char*label);
 
 extern void array_word_change(vvp_array_t array, unsigned long addr);
 
@@ -44,21 +46,10 @@ extern void array_set_word(vvp_array_t arr,
 
 extern vvp_vector4_t array_get_word(vvp_array_t array, unsigned adddress);
 
-extern void compile_variablew(char*label, vvp_array_t array,
+extern void compile_variablew(char*label, char*name, vvp_array_t array,
 			      unsigned long array_addr,
 			     int msb, int lsb, char signed_flag);
-extern void compile_varw_real(char*label, vvp_array_t array,
+extern void compile_varw_real(char*label, char*name, vvp_array_t array,
 			      unsigned long array_addr,
 			      int msb, int lsb);
-
-/*
- * $Log: array.h,v $
- * Revision 1.2  2007/04/10 01:26:16  steve
- *  variable arrays generated without writing a record for each word.
- *
- * Revision 1.1  2007/01/18 00:24:10  steve
- *  Add missing array source files to CVS.
- *
- */
-
 #endif
