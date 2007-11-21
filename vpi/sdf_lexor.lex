@@ -26,6 +26,7 @@
 # include  "sdf_parse.h"
 # include  <stdlib.h>
 # include  <strings.h>
+# include  <assert.h>
 
 static void process_quoted_string(void);
 static int lookup_keyword(const char*text);
@@ -104,9 +105,15 @@ static int lookup_keyword(const char*text)
       return IDENTIFIER;
 }
 
+/*
+ * Create a string witout the leading and trailing quotes.
+ */
 static void process_quoted_string(void)
 {
-      yylval.string_val = strdup(yytext);
+      yylval.string_val = strdup(yytext+1);
+      char*endp = yylval.string_val+strlen(yylval.string_val);
+      assert(endp[-1] == '"');
+      endp[-1] = 0;
 }
 
 extern int sdfparse(void);

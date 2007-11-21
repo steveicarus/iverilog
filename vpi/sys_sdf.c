@@ -25,6 +25,99 @@
 # include  <string.h>
 # include  <assert.h>
 
+/*
+ * These are static context
+ */
+
+  /* Scope of the $sdf_annotate call. Annotation starts here. */
+static vpiHandle sdf_scope;
+  /* The cell in process. */
+static vpiHandle sdf_cur_cell;
+
+/*
+ * These functions are called by the SDF parser during parsing to
+ * handling items discovered in the parse.
+ */
+void sdf_select_instance(const char*celltype, const char*cellinst)
+{
+      vpiHandle idx = vpi_iterate(vpiModule, sdf_scope);
+      assert(idx);
+
+      vpiHandle cur;
+      while ( (cur = vpi_scan(idx)) ) {
+
+	      /* If we find the cell in this scope, then save it for
+	         future processing. */
+	    if ( strcmp(cellinst, vpi_get_str(vpiName,cur)) == 0) {
+		  sdf_cur_cell = cur;
+		  vpi_free_object(idx);
+
+		    /* The scope that matches should be a module. */
+		  if (vpi_get(vpiType,sdf_cur_cell) != vpiModule) {
+			vpi_printf("SDF ERROR: Scope %s in %s is not a module.\n",
+				   cellinst, vpi_get_str(vpiName,sdf_scope));
+		  }
+		    /* The matching scope (a module) should have the
+		       expected type. */
+		  if (strcmp(celltype,vpi_get_str(vpiDefName,sdf_cur_cell)) != 0) {
+			vpi_printf("SDF ERROR: Module %s in %s is not a %s; "
+				   "it is an %s\n", cellinst,
+				   vpi_get_str(vpiName,sdf_scope), celltype,
+				   vpi_get_str(vpiDefName,sdf_cur_cell));
+		  }
+
+		  return;
+	    }
+      }
+
+      sdf_cur_cell = 0;
+      vpi_printf("SDF WARNING: Unable to find %s in current scope\n", cellinst);
+}
+
+void sdf_iopath_delays(const char*src, const char*dst)
+{
+      assert(sdf_cur_cell);
+
+      vpiHandle idx = vpi_iterate(vpiModPath, sdf_cur_cell);
+      assert(idx);
+
+	/* Search for the modpath that matches the IOPATH by looking
+	   for the modpath that uses the same ports as the ports that
+	   the parser has found. */
+      vpiHandle path;
+      while ( (path = vpi_scan(idx)) ) {
+	    vpiHandle path_in = vpi_handle(vpiModPathIn,path);
+	    vpiHandle path_out = vpi_handle(vpiModPathOut,path);
+
+	    path_in = vpi_handle(vpiExpr,path_in);
+	    path_out = vpi_handle(vpiExpr,path_out);
+	    assert(vpi_get(vpiType,path_in) == vpiNet);
+	    assert(vpi_get(vpiType,path_out) == vpiNet);
+
+	      /* If the src name doesn't match, go on. */
+	    if (strcmp(src,vpi_get_str(vpiName,path_in)) != 0)
+		  continue;
+
+	      /* If the dst name doesn't match, go on. */
+	    if (strcmp(dst,vpi_get_str(vpiName,path_out)) != 0)
+		  continue;
+
+	      /* Ah, this must be a match! */
+	    break;
+      }
+
+      if (path == 0) {
+	    vpi_printf("SDF ERROR: Unable to find ModPath %s -> %s in %s\n",
+		       src, dst, vpi_get_str(vpiName,sdf_cur_cell));
+	    return;
+      }
+
+        /* No longer need the iterator. */
+      vpi_free_object(idx);
+
+      vpi_printf("XXXX Found the modpath object.\n");
+}
+
 static PLI_INT32 sys_sdf_annotate_compiletf(PLI_BYTE8*name)
 {
       return 0;
@@ -54,6 +147,9 @@ static PLI_INT32 sys_sdf_annotate_calltf(PLI_BYTE8*name)
       char*path_str = strdup(value.value.str);
       FILE*sdf_fd = fopen(path_str, "r");
       assert(sdf_fd);
+
+      sdf_scope = vpi_handle(vpiScope,sys);
+      sdf_cur_cell = 0;
 
       sdf_process_file(sdf_fd, path_str);
 

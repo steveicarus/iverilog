@@ -28,4 +28,12 @@
  */
 extern void sdf_process_file(FILE*fd, const char*path);
 
+
+/* ****
+ * These functions are called by the parser to process the SDF file as
+ * it is parsed.
+ */
+extern void sdf_select_instance(const char*celltype, const char*inst);
+extern void sdf_iopath_delays(const char*src, const char*dst);
+
 #endif

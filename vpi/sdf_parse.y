@@ -23,7 +23,12 @@ extern int sdflex(void);
 static void yyerror(const char*msg);
 # include  "vpi_user.h"
 # include  "sdf_parse_priv.h"
+# include  "sdf_priv.h"
 # include  <stdio.h>
+
+/* This is the hierarchy separator to use. */
+static char use_hchar = '.';
+
 %}
 
 %union {
@@ -40,6 +45,11 @@ static void yyerror(const char*msg);
 %token <string_val> QSTRING IDENTIFIER
 %token <real_val> REAL_NUMBER
 %token <int_val> INTEGER
+
+%type <string_val> celltype
+%type <string_val> cell_instance
+%type <string_val> hierarchical_identifier
+%type <string_val> port port_instance port_spec
 
 %%
 
@@ -68,8 +78,7 @@ sdf_header_item
 
 sdfversion
   : '(' K_SDFVERSION QSTRING ')'
-    { vpi_printf("SDFVERSION: %s\n", $3);
-      free($3);
+    { free($3);
     }
   ;
 
@@ -106,8 +115,8 @@ program_version : '(' K_VERSION QSTRING ')'
 ;
 
 hierarchy_divider
-  : '(' K_DIVIDER '.' ')' { vpi_printf("SDF Use . for hierarchy\n"); }
-  | '(' K_DIVIDER '/' ')' { vpi_printf("SDF Use / for hierarchy\n"); }
+  : '(' K_DIVIDER '.' ')' { use_hchar = '.'; }
+  | '(' K_DIVIDER '/' ')' { use_hchar = '/'; }
   ;
 
 voltage
@@ -139,22 +148,27 @@ cell_list
   ;
 
 cell
-  : '(' K_CELL celltype cell_instance timing_spec_list ')'
+  : '(' K_CELL celltype cell_instance
+      { sdf_select_instance($3, $4); /* find the instance in the design */}
+    timing_spec_list
+    ')'
+      { free($3);
+	free($4); }
   | '(' K_CELL error ')'
-    { vpi_printf("%s:%d: Syntax error in CELL\n",
-		 sdf_parse_path, @2.first_line); }
+      { vpi_printf("%s:%d: Syntax error in CELL\n",
+		   sdf_parse_path, @2.first_line); }
   ;
 
 celltype
   : '(' K_CELLTYPE QSTRING ')'
-    { vpi_printf("%s:%d: SDF CELL TYPE: %s\n", sdf_parse_path, @1.first_line, $3);
-      free($3);
-    }
+      { $$ = $3; }
   ;
 
 cell_instance
   : '(' K_INSTANCE hierarchical_identifier ')'
+      { $$ = $3; }
   | '(' K_INSTANCE '*' ')'
+      { $$ = 0; }
   ;
 
 timing_spec_list
@@ -189,9 +203,13 @@ del_def_list
 
 del_def
   : '(' K_IOPATH port_spec port_instance delval_list ')'
+      { sdf_iopath_delays($3, $4);
+	free($3);
+	free($4);
+      }
   | '(' K_IOPATH error ')'
-    { vpi_printf("%s:%d: Invalid/malformed IOPATH\n",
-		 sdf_parse_path, @2.first_line); }
+      { vpi_printf("%s:%d: Invalid/malformed IOPATH\n",
+		   sdf_parse_path, @2.first_line); }
   ;
 
 port_spec
@@ -200,12 +218,13 @@ port_spec
   ;
 
 port_instance
-  : port
+  : port { $$ = $1; }
   ;
 
 port
   : hierarchical_identifier
-  | hierarchical_identifier '[' INTEGER ']'
+      { $$ = $1; }
+    /* | hierarchical_identifier '[' INTEGER ']' */
   ;
 
 delval_list
@@ -226,7 +245,7 @@ rvalue
 
 hierarchical_identifier
   : IDENTIFIER
-    { free($1); }
+    { $$ = $1; }
   ;
 
 rtriple
