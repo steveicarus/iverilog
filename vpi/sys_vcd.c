@@ -144,10 +144,11 @@ static void show_this_item_x(struct vcd_info*info)
 
 
 /*
- * managed qsorted list of scope names for duplicates bsearching
+ * managed qsorted list of scope names/variables for duplicates bsearching
  */
 
 struct vcd_names_list_s vcd_tab = { 0 };
+struct vcd_names_list_s vcd_var = { 0 };
 
 
 static int dumpvars_status = 0; /* 0:fresh 1:cb installed, 2:callback done */
@@ -277,7 +278,7 @@ inline static int install_dumpvars_callback(void)
 	    return 0;
 
       if (dumpvars_status == 2) {
-	    vpi_mcd_printf(1, "VCD Error:"
+	    vpi_mcd_printf(1, "VCD warning:"
 			   " $dumpvars ignored,"
 			   " previously called at simtime %" PLI_UINT64_FMT "\n",
 			   dumpvars_time);
@@ -584,6 +585,14 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiTimeVar:
 	  case vpiReg:  type = "reg";    }
 
+	      /* Skip this signal if it has already been included. */
+	    if (vcd_names_search(&vcd_var, vpi_get_str(vpiFullName, item))) {
+		  vpi_printf("VCD warning: skipping signal %s, it was "
+		             "previously included.\n",
+		             vpi_get_str(vpiFullName, item));
+		  break;
+	    }
+
 	    if (skip)
 		  break;
 
@@ -642,6 +651,14 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    break;
 
 	  case vpiRealVar:
+
+	      /* Skip this signal if it has already been included. */
+	    if (vcd_names_search(&vcd_var, vpi_get_str(vpiFullName, item))) {
+		  vpi_printf("VCD warning: skipping signal %s, it was "
+		             "previously included.\n",
+		             vpi_get_str(vpiFullName, item));
+		  break;
+	    }
 
 	    if (skip)
 		  break;
@@ -853,14 +870,44 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
       }
 
       for ( ; item; item = argv ? vpi_scan(argv) : 0x0) {
+	    const char *scname;
+	    int add_var = 0;
+   
+	    vcd_names_sort(&vcd_tab);
+
+	      /* If this is a signal make sure it has not already
+	       * been included. */
+	    switch (vpi_get(vpiType, item)) {
+	        case vpiIntegerVar:
+	        case vpiNet:
+	        case vpiRealVar:
+	        case vpiReg:
+	        case vpiTimeVar:
+		  scname = vpi_get_str(vpiFullName, vpi_handle(vpiScope, item));
+		  if (vcd_names_search(&vcd_tab, scname)) {
+		        vpi_mcd_printf(1, "VCD warning: skipping signal %s, "
+		                       "it was previously included.\n",
+		                       vpi_get_str(vpiFullName, item));
+		        continue;
+		  } else {
+		        add_var = 1;
+		  }
+	    }
 
 	    int dep = draw_scope(item);
 
-	    vcd_names_sort(&vcd_tab);
 	    scan_item(depth, item, 0);
 
 	    while (dep--) {
 		  fprintf(dump_file, "$upscope $end\n");
+	    }
+
+	      /* Add this signal to the variable list so we can verify it
+	       * is not included twice. This must be done after it has
+	       * been added */
+	    if (add_var) {
+		  vcd_names_add(&vcd_var, vpi_get_str(vpiFullName, item));
+		  vcd_names_sort(&vcd_var);
 	    }
       }
 

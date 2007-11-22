@@ -26,7 +26,7 @@
 # include "sys_priv.h"
 
 /*
- * This file contains the implementations of the VCD related
+ * This file contains the implementations of the LXT2 related
  * funcitons.
  */
 
@@ -324,7 +324,7 @@ inline static int install_dumpvars_callback(void)
 	    return 0;
 
       if (dumpvars_status == 2) {
-	    vpi_mcd_printf(1, "VCD Error:"
+	    vpi_mcd_printf(1, "LXT2 warning:"
 			   " $dumpvars ignored,"
 			   " previously called at simtime %lu\n",
 			   dumpvars_time);
