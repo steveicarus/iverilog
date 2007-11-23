@@ -91,35 +91,43 @@ sdfversion
 
 design_name
   : '(' K_DESIGN QSTRING ')'
-    { vpi_printf("SDF Design: %s\n", $3);
-      free($3);
-    }
+      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Design: %s\n",
+					sdf_parse_path, @2.first_line, $3);
+        free($3);
+      }
   ;
 
 date
   : '(' K_DATE QSTRING ')'
-    { vpi_printf("SDF Date: %s\n", $3);
-      free($3);
-    }
+      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Date: %s\n",
+					sdf_parse_path, @2.first_line, $3);
+        free($3);
+      }
   ;
 
-vendor : '(' K_VENDOR QSTRING ')'
-    { vpi_printf("SDF Vendor: %s\n", $3);
-      free($3);
-    }
+vendor
+  : '(' K_VENDOR QSTRING ')'
+      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Vendor: %s\n",
+					sdf_parse_path, @2.first_line, $3);
+        free($3);
+      }
 ;
 
-program_name : '(' K_PROGRAM QSTRING ')'
-    { vpi_printf("SDF Program: %s\n", $3);
-      free($3);
-    }
-;
+program_name
+  : '(' K_PROGRAM QSTRING ')'
+      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Program: %s\n",
+					sdf_parse_path, @2.first_line, $3);
+        free($3);
+      }
+  ;
 
-program_version : '(' K_VERSION QSTRING ')'
-    { vpi_printf("SDF Program Version: %s\n", $3);
-      free($3);
-    }
-;
+program_version
+  : '(' K_VERSION QSTRING ')'
+      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Program Version: %s\n",
+					sdf_parse_path, @2.first_line, $3);
+	free($3);
+      }
+  ;
 
 hierarchy_divider
   : '(' K_DIVIDER '.' ')' { use_hchar = '.'; }
@@ -131,11 +139,13 @@ voltage
   | '(' K_VOLTAGE signed_real_number ')'
   ;
 
-process : '(' K_PROCESS QSTRING ')'
-    { vpi_printf("SDF Process: %s\n", $3);
-      free($3);
-    }
-;
+process
+  : '(' K_PROCESS QSTRING ')'
+      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: Process: %s\n",
+					sdf_parse_path, @2.first_line, $3);
+	free($3);
+      }
+  ;
 
 temperature
   : '(' K_TEMPERATURE rtriple ')'
@@ -144,9 +154,10 @@ temperature
 
 time_scale
   : '(' K_TIMESCALE REAL_NUMBER IDENTIFIER ')'
-    { vpi_printf("SDF TIMESCALE : %f%s\n", $3, $4);
-      free($4);
-    }
+      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: TIMESCALE : %f%s\n",
+					sdf_parse_path, @2.first_line, $3, $4);
+	free($4);
+      }
   ;
 
 cell_list

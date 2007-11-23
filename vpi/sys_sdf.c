@@ -29,6 +29,9 @@
  * These are static context
  */
 
+int sdf_flag_warnings = 0;
+int sdf_flag_inform = 0;
+
   /* Scope of the $sdf_annotate call. Annotation starts here. */
 static vpiHandle sdf_scope;
   /* The cell in process. */
@@ -134,8 +137,36 @@ void sdf_iopath_delays(const char*src, const char*dst,
       vpi_put_delays(path, &delays);
 }
 
+static void check_command_line_args(void)
+{
+      struct t_vpi_vlog_info vlog_info;
+      int idx;
+
+      static int sdf_command_line_done = 0;
+      if (sdf_command_line_done)
+	    return;
+
+      vpi_get_vlog_info(&vlog_info);
+
+      for (idx = 0 ;  idx < vlog_info.argc ;  idx += 1) {
+	    if (strcmp(vlog_info.argv[idx],"-sdf-warn") == 0) {
+		  sdf_flag_warnings = 1;
+
+	    } else if (strcmp(vlog_info.argv[idx],"-sdf-info") == 0) {
+		  sdf_flag_inform = 1;
+
+	    } else if (strcmp(vlog_info.argv[idx],"-sdf-verbose") == 0) {
+		  sdf_flag_warnings = 1;
+		  sdf_flag_inform = 1;
+	    }
+      }
+
+      sdf_command_line_done = 1;
+}
+
 static PLI_INT32 sys_sdf_annotate_compiletf(PLI_BYTE8*name)
 {
+      check_command_line_args();
       return 0;
 }
 

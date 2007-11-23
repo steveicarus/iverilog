@@ -28,6 +28,8 @@
  */
 extern void sdf_process_file(FILE*fd, const char*path);
 
+extern int sdf_flag_warning;
+extern int sdf_flag_inform;
 
 /* ****
  * These functions are called by the parser to process the SDF file as
