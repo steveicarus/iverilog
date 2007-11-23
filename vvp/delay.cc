@@ -576,17 +576,51 @@ static void modpath_src_put_delays ( vpiHandle ref, p_vpi_delay delays )
 
       vvp_fun_modpath_src *fun = dynamic_cast<vvp_fun_modpath_src*>(src->net->fun);
       assert( fun );
-      assert(delays->no_of_delays == 12);
+
+      typedef unsigned char map_array_t[12];
+      static const map_array_t map_2 = {0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0};
+      static const map_array_t map12 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+
+      const map_array_t*use_map = 0;
+      switch (delays->no_of_delays) {
+	  case 2:
+	    use_map = &map_2;
+	    break;
+	  case 12:
+	    use_map = &map12;
+	    break;
+	  default:
+	    assert(0);
+	    break;
+      }
 
       if (delays->time_type == vpiSimTime) {
-	    for (idx = 0 ; idx < delays->no_of_delays ; idx += 1) {
-		  tmp[idx] = vpip_timestruct_to_time(delays->da+idx);
+	    for (idx = 0 ; idx < 12 ; idx += 1) {
+		  tmp[idx] = vpip_timestruct_to_time(delays->da+use_map[0][idx]);
 	    }
       } else {
-	    for (idx = 0 ; idx < delays->no_of_delays ; idx += 1) {
-		  tmp[idx] = vpip_scaled_real_to_time64(delays->da[idx].real,
+	    for (idx = 0 ; idx < 12 ; idx += 1) {
+		  tmp[idx] = vpip_scaled_real_to_time64(delays->da[use_map[0][idx]].real,
 							src->dest->scope);
 	    }
+      }
+
+      /* Now clean up any to-from-x delays to me the min/max based on
+         the rules for selecting X delays. This only needs to happen
+         if the X delays are not already explicitly given. */
+      if (delays->no_of_delays <= 6) {
+	    vvp_time64_t t_max = tmp[0];
+	    vvp_time64_t t_min = tmp[1];
+	    for (idx = 1 ; idx < delays->no_of_delays ; idx += 1) {
+		  if (tmp[idx] > t_max) t_max = tmp[idx];
+		  if (tmp[idx] < t_min) t_min = tmp[idx];
+	    }
+	    tmp[DELAY_EDGE_0x] = t_min;
+	    tmp[DELAY_EDGE_x1] = t_max;
+	    tmp[DELAY_EDGE_1x] = t_min;
+	    tmp[DELAY_EDGE_x0] = t_max;
+	    tmp[DELAY_EDGE_xz] = t_max;
+	    tmp[DELAY_EDGE_zx] = t_min;
       }
 
       fun->put_delay12(tmp);

@@ -96,6 +96,20 @@ space, and is written out incrementally. Thus, you can view lxt2 files
 while a simulation is still running (or paused) or if your simulation
 crashes or is killed, you still have a useful dump.
 
+.TP 8
+.B -sdf-warn
+When loading an SDF annnotation file, this option causes the annotator
+to print warnings for questionable but non-fatal issues.
+
+.TP 8
+.B -sdf-info
+When loading an SDF annnotation file, this option causes the annotator
+to print information about the annotation.
+
+.TP 8
+.B -sdf-verbose
+This is shorthand for -sdf-info -sdf-warn.
+
 .SH ENVIRONMENT
 .PP
 The vvp command also accepts some environment variables that control
