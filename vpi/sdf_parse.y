@@ -35,6 +35,8 @@ static char use_hchar = '.';
       unsigned long int_val;
       double real_val;
       char*  string_val;
+
+      struct sdf_delval_list_s delval_list;
 };
 
 %token K_ABSOLUTE K_CELL K_CELLTYPE K_DATE K_DELAYFILE K_DELAY K_DESIGN
@@ -50,6 +52,11 @@ static char use_hchar = '.';
 %type <string_val> cell_instance
 %type <string_val> hierarchical_identifier
 %type <string_val> port port_instance port_spec
+
+%type <real_val> rvalue rtriple signed_real_number
+%type <real_val> delval
+
+%type <delval_list> delval_list
 
 %%
 
@@ -203,7 +210,7 @@ del_def_list
 
 del_def
   : '(' K_IOPATH port_spec port_instance delval_list ')'
-      { sdf_iopath_delays($3, $4);
+      { sdf_iopath_delays($3, $4, &$5);
 	free($3);
 	free($4);
       }
@@ -229,18 +236,41 @@ port
 
 delval_list
   : delval_list delval
+      { int idx;
+	$$.count = $1.count;
+	for (idx = 0 ; idx < $$.count ; idx += 1)
+	      $$.val[idx] = $1.val[idx];
+	if ($$.count < 12) {
+	      $$.val[$$.count] = $2;
+	      $$.count += 1;
+	}
+      }
   | delval
+      { $$.count = 1;
+	$$.val[0] = $1;
+      }
   ;
 
 delval
   : rvalue
+      { $$ = $1; }
   | '(' rvalue rvalue ')'
+      { $$ = $2;
+	vpi_printf("%s:%d: SDF WARNING: Pulse rejection limits ignored\n",
+		   sdf_parse_path, @3.first_line);
+      }
   | '(' rvalue rvalue rvalue ')'
+      { $$ = $2;
+	vpi_printf("%s:%d: SDF WARNING: Pulse rejection limits ignored\n",
+		   sdf_parse_path, @3.first_line);
+      }
   ;
 
 rvalue
   : '(' signed_real_number ')'
+      { $$ = $2; }
   | '(' rtriple ')'
+      { $$ = $2; }
   ;
 
 hierarchical_identifier
@@ -250,12 +280,13 @@ hierarchical_identifier
 
 rtriple
   : signed_real_number ':' signed_real_number ':' signed_real_number
+      { $$ = $3; /* XXXX Assume typical value. */ }
   ;
 
 signed_real_number
-  : REAL_NUMBER
-  | '+' REAL_NUMBER
-  | '-' REAL_NUMBER
+  :     REAL_NUMBER { $$ = $1; }
+  | '+' REAL_NUMBER { $$ = $2; }
+  | '-' REAL_NUMBER { $$ = -$2; }
   ;
 
 %%

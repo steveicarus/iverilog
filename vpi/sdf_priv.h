@@ -33,7 +33,14 @@ extern void sdf_process_file(FILE*fd, const char*path);
  * These functions are called by the parser to process the SDF file as
  * it is parsed.
  */
+
+struct sdf_delval_list_s {
+      int count;
+      double val[12];
+};
+
 extern void sdf_select_instance(const char*celltype, const char*inst);
-extern void sdf_iopath_delays(const char*src, const char*dst);
+extern void sdf_iopath_delays(const char*src, const char*dst,
+			      const struct sdf_delval_list_s*delval);
 
 #endif

@@ -74,18 +74,19 @@ void sdf_select_instance(const char*celltype, const char*cellinst)
       vpi_printf("SDF WARNING: Unable to find %s in current scope\n", cellinst);
 }
 
-void sdf_iopath_delays(const char*src, const char*dst)
+void sdf_iopath_delays(const char*src, const char*dst,
+		       const struct sdf_delval_list_s*delval_list)
 {
       assert(sdf_cur_cell);
 
-      vpiHandle idx = vpi_iterate(vpiModPath, sdf_cur_cell);
-      assert(idx);
+      vpiHandle iter = vpi_iterate(vpiModPath, sdf_cur_cell);
+      assert(iter);
 
 	/* Search for the modpath that matches the IOPATH by looking
 	   for the modpath that uses the same ports as the ports that
 	   the parser has found. */
       vpiHandle path;
-      while ( (path = vpi_scan(idx)) ) {
+      while ( (path = vpi_scan(iter)) ) {
 	    vpiHandle path_in = vpi_handle(vpiModPathIn,path);
 	    vpiHandle path_out = vpi_handle(vpiModPathOut,path);
 
@@ -113,9 +114,24 @@ void sdf_iopath_delays(const char*src, const char*dst)
       }
 
         /* No longer need the iterator. */
-      vpi_free_object(idx);
+      vpi_free_object(iter);
 
-      vpi_printf("XXXX Found the modpath object.\n");
+      struct t_vpi_time delay_vals[12];
+      int idx;
+      for (idx = 0 ; idx < delval_list->count ; idx += 1) {
+	    delay_vals[idx].type = vpiScaledRealTime;
+	    delay_vals[idx].real = delval_list->val[idx];
+      }
+
+      s_vpi_delay delays;
+      delays.da = delay_vals;
+      delays.no_of_delays = delval_list->count;
+      delays.time_type = vpiScaledRealTime;
+      delays.mtm_flag = 0;
+      delays.append_flag = 0;
+      delays.plusere_flag = 0;
+
+      vpi_put_delays(path, &delays);
 }
 
 static PLI_INT32 sys_sdf_annotate_compiletf(PLI_BYTE8*name)
