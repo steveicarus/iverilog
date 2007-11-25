@@ -111,6 +111,20 @@ NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope,
       return tmp;
 }
 
+void PEBinary::surpress_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp)
+{
+	// If either operand is unsigned, then treat the whole
+	// expression as unsigned. This test needs to be done hear
+	// instead of in *_expr_base_ because it needs to be done
+	// ahead of any subexpression evaluation (because they need to
+	// know their signedness to evaluate) and because there are
+	// exceptions to this rule.
+      if (! lp->has_sign())
+	    rp->cast_signed(false);
+      if (! rp->has_sign())
+	    lp->cast_signed(false);
+}
+
 NetEBinary* PEBinary::elaborate_eval_expr_base_(Design*des,
 						NetExpr*lp,
 						NetExpr*rp,
@@ -295,6 +309,8 @@ NetEBinary* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 	    delete rp;
 	    return 0;
       }
+
+      surpress_operand_sign_if_needed_(lp, rp);
 
       return elaborate_eval_expr_base_(des, lp, rp, use_wid);
 }

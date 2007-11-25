@@ -525,6 +525,8 @@ class PEBinary : public PExpr {
       NetEBinary*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetEBinary*elaborate_eval_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
 
+      static void surpress_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp);
+
     private:
       NetNet* elaborate_net_add_(Design*des, NetScope*scope,
 				 unsigned lwidth,
