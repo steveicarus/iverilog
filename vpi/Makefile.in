@@ -87,6 +87,8 @@ system.vpi: $O ../vvp/libvpi.a
 sys_readmem_lex.c: sys_readmem_lex.lex
 	flex -t -Preadmem $(srcdir)/sys_readmem_lex.lex > sys_readmem_lex.c
 
+sdf_lexor.o: sdf_lexor.c sdf_parse.h
+
 sdf_lexor.c: sdf_lexor.lex
 	flex -t -Psdf $(srcdir)/sdf_lexor.lex > sdf_lexor.c
 
@@ -117,6 +119,7 @@ endif
 
 clean:
 	rm -rf *.o sys_readmem_lex.c dep system.vpi bin32
+	rm -f sdf_lexor.c sdf_parse.c sdf_parse.output sdf_parse.h
 
 distclean: clean
 	rm -f Makefile config.status config.log vpi_config.h
