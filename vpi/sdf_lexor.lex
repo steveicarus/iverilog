@@ -41,7 +41,18 @@ static int yywrap(void)
 # define yylval sdflval
 %}
 
+%x CCOMMENT
+
 %%
+
+  /* Skip C++-style comments. */
+"//".* { sdflloc.first_line += 1; }
+
+  /* Skip C-style comments. */
+"/*"           { BEGIN(CCOMMENT); }
+<CCOMMENT>.    { yymore(); }
+<CCOMMENT>\n   { sdflloc.first_line += 1; yymore(); }
+<CCOMMENT>"*/" { BEGIN(0); }
 
 [ \m\t] { /* Skip white space. */; }
 

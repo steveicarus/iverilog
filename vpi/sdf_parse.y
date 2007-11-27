@@ -62,6 +62,10 @@ static char use_hchar = '.';
 
 source_file
   : '(' K_DELAYFILE sdf_header_list cell_list ')'
+  | '(' K_DELAYFILE error ')'
+      { vpi_printf("%s:%d:SDF ERROR: Invalid DELAYFILE format\n",
+		   sdf_parse_path, @2.first_line);
+      }
   ;
 
 sdf_header_list
@@ -304,5 +308,5 @@ signed_real_number
 
 void yyerror(const char*msg)
 {
-      fprintf(stderr, "SDF ERROR: %s\n", msg);
+      vpi_printf("%s:SDF ERROR: Too many errors: %s\n", sdf_parse_path, msg);
 }
