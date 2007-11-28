@@ -29,7 +29,7 @@
  * These are static context
  */
 
-int sdf_flag_warnings = 0;
+int sdf_flag_warning = 0;
 int sdf_flag_inform = 0;
 
   /* Scope of the $sdf_annotate call. Annotation starts here. */
@@ -37,50 +37,78 @@ static vpiHandle sdf_scope;
   /* The cell in process. */
 static vpiHandle sdf_cur_cell;
 
-/*
- * These functions are called by the SDF parser during parsing to
- * handling items discovered in the parse.
- */
-void sdf_select_instance(const char*celltype, const char*cellinst)
+static vpiHandle find_scope(vpiHandle scope, const char*name)
 {
-      vpiHandle idx = vpi_iterate(vpiModule, sdf_scope);
+      vpiHandle idx = vpi_iterate(vpiModule, scope);
       assert(idx);
 
       vpiHandle cur;
       while ( (cur = vpi_scan(idx)) ) {
 
-	      /* If we find the cell in this scope, then save it for
-	         future processing. */
-	    if ( strcmp(cellinst, vpi_get_str(vpiName,cur)) == 0) {
-		  sdf_cur_cell = cur;
+	    if ( strcmp(name, vpi_get_str(vpiName,cur)) == 0) {
 		  vpi_free_object(idx);
-
-		    /* The scope that matches should be a module. */
-		  if (vpi_get(vpiType,sdf_cur_cell) != vpiModule) {
-			vpi_printf("SDF ERROR: Scope %s in %s is not a module.\n",
-				   cellinst, vpi_get_str(vpiName,sdf_scope));
-		  }
-		    /* The matching scope (a module) should have the
-		       expected type. */
-		  if (strcmp(celltype,vpi_get_str(vpiDefName,sdf_cur_cell)) != 0) {
-			vpi_printf("SDF ERROR: Module %s in %s is not a %s; "
-				   "it is an %s\n", cellinst,
-				   vpi_get_str(vpiName,sdf_scope), celltype,
-				   vpi_get_str(vpiDefName,sdf_cur_cell));
-		  }
-
-		  return;
+		  return cur;
 	    }
       }
 
-      sdf_cur_cell = 0;
-      vpi_printf("SDF WARNING: Unable to find %s in current scope\n", cellinst);
+      return 0;
+}
+
+/*
+ * These functions are called by the SDF parser during parsing to
+ * handling items discovered in the parse.
+ */
+
+void sdf_select_instance(const char*celltype, const char*cellinst)
+{
+      char buffer[128];
+
+	/* First follow the hierarchical parts of the cellinst name to
+	   get to the cell that I'm looking for. */
+      vpiHandle scope = sdf_scope;
+      const char*src = cellinst;
+      const char*dp;
+      while ( (dp=strchr(src, '.')) ) {
+	    int len = dp - src;
+	    assert(len < sizeof buffer);
+	    strncpy(buffer, src, len);
+	    buffer[len] = 0;
+
+	    scope = find_scope(scope, buffer);
+	    assert(scope);
+
+	    src = dp + 1;
+      }
+
+	/* Now find the cell. */
+      sdf_cur_cell = find_scope(scope, src);
+      if (sdf_cur_cell == 0) {
+	    vpi_printf("SDF WARNING: Unable to find %s in current scope\n",
+		       cellinst);
+	    return;
+      }
+
+	/* The scope that matches should be a module. */
+      if (vpi_get(vpiType,sdf_cur_cell) != vpiModule) {
+	    vpi_printf("SDF ERROR: Scope %s in %s is not a module.\n",
+		       cellinst, vpi_get_str(vpiName,sdf_scope));
+      }
+
+	/* The matching scope (a module) should have the expected type. */
+      if (strcmp(celltype,vpi_get_str(vpiDefName,sdf_cur_cell)) != 0) {
+	    vpi_printf("SDF ERROR: Module %s in %s is not a %s; "
+		       "it is an %s\n", cellinst,
+		       vpi_get_str(vpiName,sdf_scope), celltype,
+		       vpi_get_str(vpiDefName,sdf_cur_cell));
+      }
+
 }
 
 void sdf_iopath_delays(const char*src, const char*dst,
 		       const struct sdf_delval_list_s*delval_list)
 {
-      assert(sdf_cur_cell);
+      if (sdf_cur_cell == 0)
+	    return;
 
       vpiHandle iter = vpi_iterate(vpiModPath, sdf_cur_cell);
       assert(iter);
@@ -150,13 +178,13 @@ static void check_command_line_args(void)
 
       for (idx = 0 ;  idx < vlog_info.argc ;  idx += 1) {
 	    if (strcmp(vlog_info.argv[idx],"-sdf-warn") == 0) {
-		  sdf_flag_warnings = 1;
+		  sdf_flag_warning = 1;
 
 	    } else if (strcmp(vlog_info.argv[idx],"-sdf-info") == 0) {
 		  sdf_flag_inform = 1;
 
 	    } else if (strcmp(vlog_info.argv[idx],"-sdf-verbose") == 0) {
-		  sdf_flag_warnings = 1;
+		  sdf_flag_warning = 1;
 		  sdf_flag_inform = 1;
 	    }
       }
