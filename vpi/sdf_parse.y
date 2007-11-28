@@ -198,6 +198,10 @@ cell_instance
       { $$ = strdup(""); }
   | '(' K_INSTANCE '*' ')'
       { $$ = 0; }
+  | '(' K_INSTANCE error ')'
+      { vpi_printf("%s:%d:SDF ERROR: Invalid/malformed INSTANCE argument\n",
+		   sdf_parse_path, @2.first_line);
+	    $$ = strdup(""); }
   ;
 
 timing_spec_list

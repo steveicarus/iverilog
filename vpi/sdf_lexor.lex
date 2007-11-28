@@ -65,7 +65,7 @@ static int yywrap(void)
       return REAL_NUMBER;
 }
 
-[a-zA-Z]+ {
+[a-zA-Z][a-zA-Z0-9]* {
       return lookup_keyword(yytext);
 }
 
