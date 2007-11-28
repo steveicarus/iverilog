@@ -74,6 +74,15 @@ static int yywrap(void)
       return QSTRING;
 }
 
+  /* The HCHAR (hierarchy separator) is set by the SDF file itself. We
+     recognize here the HCHAR. */
+[./] {
+      if (sdf_use_hchar==yytext[0])
+	    return HCHAR;
+      else
+	    return yytext[0];
+}
+
 . { return yytext[0]; }
 
 %%
@@ -90,17 +99,25 @@ static struct {
       { "DELAYFILE",  K_DELAYFILE },
       { "DESIGN",     K_DESIGN },
       { "DIVIDER",    K_DIVIDER },
+      { "HOLD",       K_HOLD },
       { "INCREMENT",  K_INCREMENT },
+      { "INTERCONNECT",K_INTERCONNECT },
       { "INSTANCE",   K_INSTANCE },
       { "IOPATH",     K_IOPATH },
       { "PROCESS",    K_PROCESS },
       { "PROGRAM",    K_PROGRAM },
+      { "RECOVERY",   K_RECOVERY },
+      { "REMOVAL",    K_REMOVAL },
       { "SDFVERSION", K_SDFVERSION },
+      { "SETUP",      K_SETUP },
+      { "SETUPHOLD",  K_SETUPHOLD },
       { "TEMPERATURE",K_TEMPERATURE },
       { "TIMESCALE",  K_TIMESCALE },
+      { "TIMINGCHECK",K_TIMINGCHECK },
       { "VENDOR",     K_VENDOR },
       { "VERSION",    K_VERSION },
       { "VOLTAGE",    K_VOLTAGE },
+      { "WIDTH",      K_WIDTH },
       { 0, IDENTIFIER }
 };
 
