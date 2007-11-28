@@ -61,7 +61,7 @@ static long mti_dist_uniform(long*seed, long start, long end)
 }
 
 
-static int sys_mti_dist_uniform_calltf(char*name)
+static PLI_INT32 sys_mti_dist_uniform_calltf(char*name)
 {
       s_vpi_value val;
       vpiHandle call_handle;
@@ -110,12 +110,12 @@ static int sys_mti_dist_uniform_calltf(char*name)
       return 0;
 }
 
-static int sys_mti_dist_uniform_sizetf(char*x)
+static PLI_INT32 sys_mti_dist_uniform_sizetf(char*x)
 {
       return 32;
 }
 
-static int sys_mti_random_calltf(char*name)
+static PLI_INT32 sys_mti_random_calltf(char*name)
 {
       s_vpi_value val;
       vpiHandle call_handle;
@@ -174,7 +174,7 @@ static int sys_mti_random_calltf(char*name)
       return 0;
 }
 
-static int sys_mti_random_sizetf(char*x)
+static PLI_INT32 sys_mti_random_sizetf(char*x)
 {
       return 32;
 }

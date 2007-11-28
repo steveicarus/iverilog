@@ -26,7 +26,7 @@
 # include  "vpi_user.h"
 # include  <assert.h>
 
-static int sys_deposit_calltf(char *name)
+static PLI_INT32 sys_deposit_calltf(char *name)
 {
   vpiHandle sys, argv, target, value;
   s_vpi_value val;

@@ -41,17 +41,17 @@
 
 static FILE*dump_file = 0;
 
-static int sys_dumpoff_calltf(char*name)
+static PLI_INT32 sys_dumpoff_calltf(char*name)
 {
       return 0;
 }
 
-static int sys_dumpon_calltf(char*name)
+static PLI_INT32 sys_dumpon_calltf(char*name)
 {
       return 0;
 }
 
-static int sys_dumpall_calltf(char*name)
+static PLI_INT32 sys_dumpall_calltf(char*name)
 {
       return 0;
 }
@@ -70,7 +70,7 @@ static void open_dumpfile(const char*path)
       }
 }
 
-static int sys_dumpfile_calltf(char*name)
+static PLI_INT32 sys_dumpfile_calltf(char*name)
 {
       char*path;
 
@@ -113,7 +113,7 @@ static int sys_dumpfile_calltf(char*name)
       return 0;
 }
 
-static int sys_dumpvars_calltf(char*name)
+static PLI_INT32 sys_dumpvars_calltf(char*name)
 {
       if (dump_file == 0) {
 	    open_dumpfile("dumpfile.vcd");

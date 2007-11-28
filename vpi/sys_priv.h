@@ -29,7 +29,7 @@
  * This function is used by sys_vcd and sys_lxt as the dumpvars
  * compiletf function.
  */
-extern int sys_vcd_dumpvars_compiletf(char*name);
+extern PLI_INT32 sys_vcd_dumpvars_compiletf(char*name);
 
 /*
  * Context structure for PRNG in mt19937int.c

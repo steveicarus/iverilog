@@ -220,7 +220,7 @@ static void vcd_checkpoint_x()
 	    show_this_item_x(cur);
 }
 
-static int variable_cb_2(p_cb_data cause)
+static PLI_INT32 variable_cb_2(p_cb_data cause)
 {
       struct vcd_info* info = vcd_dmp_list;
       PLI_UINT64 now = timerec_to_time64(cause->time);
@@ -240,7 +240,7 @@ static int variable_cb_2(p_cb_data cause)
       return 0;
 }
 
-static int variable_cb_1(p_cb_data cause)
+static PLI_INT32 variable_cb_1(p_cb_data cause)
 {
       struct t_cb_data cb;
       struct vcd_info*info = (struct vcd_info*)cause->user_data;
@@ -263,7 +263,7 @@ static int variable_cb_1(p_cb_data cause)
       return 0;
 }
 
-static int dumpvars_cb(p_cb_data cause)
+static PLI_INT32 dumpvars_cb(p_cb_data cause)
 {
       if (dumpvars_status != 1)
 	    return 0;
@@ -310,7 +310,7 @@ inline static int install_dumpvars_callback(void)
       return 0;
 }
 
-static int sys_dumpoff_calltf(char*name)
+static PLI_INT32 sys_dumpoff_calltf(char*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
@@ -340,7 +340,7 @@ static int sys_dumpoff_calltf(char*name)
       return 0;
 }
 
-static int sys_dumpon_calltf(char*name)
+static PLI_INT32 sys_dumpon_calltf(char*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
@@ -370,7 +370,7 @@ static int sys_dumpon_calltf(char*name)
       return 0;
 }
 
-static int sys_dumpall_calltf(char*name)
+static PLI_INT32 sys_dumpall_calltf(char*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
@@ -426,7 +426,7 @@ static void open_dumpfile(const char*path)
       }
 }
 
-static int sys_dumpfile_calltf(char*name)
+static PLI_INT32 sys_dumpfile_calltf(char*name)
 {
       char*path;
 
@@ -470,7 +470,7 @@ static int sys_dumpfile_calltf(char*name)
 /*
  * The LXT1 format has no concept of file flushing.
  */
-static int sys_dumpflush_calltf(char*name)
+static PLI_INT32 sys_dumpflush_calltf(char*name)
 {
       return 0;
 }
@@ -674,7 +674,7 @@ static int draw_scope(vpiHandle item)
       return depth;
 }
 
-static int sys_dumpvars_calltf(char*name)
+static PLI_INT32 sys_dumpvars_calltf(char*name)
 {
       unsigned depth;
       s_vpi_value value;

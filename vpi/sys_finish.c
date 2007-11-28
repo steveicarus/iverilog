@@ -25,7 +25,7 @@
 # include  "vpi_user.h"
 # include  <string.h>
 
-static int sys_finish_calltf(char *name)
+static PLI_INT32 sys_finish_calltf(char *name)
 {
       if (strcmp(name,"$stop") == 0) {
 	    vpi_sim_control(vpiStop, 0);

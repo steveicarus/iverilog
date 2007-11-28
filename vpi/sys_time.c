@@ -37,17 +37,17 @@ static vpiHandle module_of_function(vpiHandle obj)
       return obj;
 }
 
-static int sys_time_sizetf(char*x)
+static PLI_INT32 sys_time_sizetf(char*x)
 {
       return 64;
 }
 
-static int sys_stime_sizetf(char*x)
+static PLI_INT32 sys_stime_sizetf(char*x)
 {
       return 32;
 }
 
-static int sys_time_calltf(char*name)
+static PLI_INT32 sys_time_calltf(char*name)
 {
       s_vpi_value val;
       s_vpi_time  now;
@@ -102,7 +102,7 @@ static int sys_time_calltf(char*name)
       return 0;
 }
 
-static int sys_realtime_calltf(char*name)
+static PLI_INT32 sys_realtime_calltf(char*name)
 {
       s_vpi_value val;
       s_vpi_time  now;

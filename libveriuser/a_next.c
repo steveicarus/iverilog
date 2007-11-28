@@ -34,7 +34,7 @@ handle acc_next(PLI_INT32 *type, handle scope, handle prev)
 
       /* trace */
       if (pli_trace) {
-	    int *ip;
+	    PLI_INT32 *ip;
 	    fprintf(pli_trace, "acc_next(%p <", type);
 	    for (ip = type; *ip; ip++) {
 		  fprintf(pli_trace, "%s%d", ip != type ? "," : "", *ip);

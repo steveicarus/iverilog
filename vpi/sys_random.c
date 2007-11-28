@@ -190,7 +190,7 @@ static long poisson(long*seed, long mean)
       return n;
 }
 
-static int sys_dist_poisson_calltf(char*name)
+static PLI_INT32 sys_dist_poisson_calltf(char*name)
 {
       s_vpi_value val;
       vpiHandle call_handle;
@@ -230,12 +230,12 @@ static int sys_dist_poisson_calltf(char*name)
       return 0;
 }
 
-static int sys_dist_poisson_sizetf(char*x)
+static PLI_INT32 sys_dist_poisson_sizetf(char*x)
 {
       return 32;
 }
 
-static int sys_dist_uniform_calltf(char*name)
+static PLI_INT32 sys_dist_uniform_calltf(char*name)
 {
       s_vpi_value val;
       vpiHandle call_handle;
@@ -284,12 +284,12 @@ static int sys_dist_uniform_calltf(char*name)
       return 0;
 }
 
-static int sys_dist_uniform_sizetf(char*x)
+static PLI_INT32 sys_dist_uniform_sizetf(char*x)
 {
       return 32;
 }
 
-static int sys_random_calltf(char*name)
+static PLI_INT32 sys_random_calltf(char*name)
 {
       s_vpi_value val;
       vpiHandle call_handle;
@@ -327,7 +327,7 @@ static int sys_random_calltf(char*name)
       return 0;
 }
 
-static int sys_random_sizetf(char*x)
+static PLI_INT32 sys_random_sizetf(char*x)
 {
       return 32;
 }

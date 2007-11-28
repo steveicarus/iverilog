@@ -100,7 +100,7 @@ static int check_file_name(const char*name, vpiHandle item)
 }
 
 
-static int sys_readmem_calltf(char*name)
+static PLI_INT32 sys_readmem_calltf(char*name)
 {
       int code;
       int wwid;
@@ -355,7 +355,7 @@ static int sys_readmem_calltf(char*name)
       return 0;
 }
 
-static int sys_writemem_calltf(char*name)
+static PLI_INT32 sys_writemem_calltf(char*name)
 {
       int wwid;
       char*path;

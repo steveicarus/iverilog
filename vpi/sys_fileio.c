@@ -33,7 +33,7 @@
 /*
  * Implement the $fopen system function.
  */
-static int sys_fopen_calltf(char *name)
+static PLI_INT32 sys_fopen_calltf(char *name)
 {
       s_vpi_value value;
       unsigned char *mode_string = 0;
@@ -95,7 +95,7 @@ static int sys_fopen_calltf(char *name)
       return 0;
 }
 
-static int sys_fopen_sizetf(char*x)
+static PLI_INT32 sys_fopen_sizetf(char*x)
 {
       return 32;
 }
@@ -103,7 +103,7 @@ static int sys_fopen_sizetf(char*x)
 /*
  * Implement $fclose system function
  */
-static int sys_fclose_calltf(char *name)
+static PLI_INT32 sys_fclose_calltf(char *name)
 {
       unsigned int mcd;
       int type;
@@ -139,14 +139,14 @@ static int sys_fclose_calltf(char *name)
       return 0;
 }
 
-static int sys_fflush_calltf(char *name)
+static PLI_INT32 sys_fflush_calltf(char *name)
 {
       fflush(0);
       return 0;
 }
 
 
-static int sys_fputc_calltf(char *name)
+static PLI_INT32 sys_fputc_calltf(char *name)
 {
       unsigned int mcd;
       int type;
@@ -193,7 +193,7 @@ static int sys_fputc_calltf(char *name)
       return fputc(x, fp);
 }
 
-static int sys_fgetc_calltf(char *name)
+static PLI_INT32 sys_fgetc_calltf(char *name)
 {
       unsigned int mcd;
       int type;
@@ -238,12 +238,12 @@ static int sys_fgetc_calltf(char *name)
       return 0;
 }
 
-static int sys_fgetc_sizetf(char*x)
+static PLI_INT32 sys_fgetc_sizetf(char*x)
 {
       return 32;
 }
 
-static int sys_fgets_compiletf(char*name)
+static PLI_INT32 sys_fgets_compiletf(char*name)
 {
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -276,7 +276,7 @@ static int sys_fgets_compiletf(char*name)
       return 0;
 }
 
-static int sys_fgets_calltf(char *name)
+static PLI_INT32 sys_fgets_calltf(char *name)
 {
       unsigned int mcd;
       FILE*fd;
@@ -326,7 +326,7 @@ static int sys_fgets_calltf(char *name)
       return 0;
 }
 
-static int sys_ungetc_compiletf(char*name)
+static PLI_INT32 sys_ungetc_compiletf(char*name)
 {
       int type;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
@@ -354,7 +354,7 @@ static int sys_ungetc_compiletf(char*name)
       return 0;
 }
 
-static int sys_ungetc_calltf(char *name)
+static PLI_INT32 sys_ungetc_calltf(char *name)
 {
       unsigned int mcd;
       unsigned char x;
@@ -398,7 +398,7 @@ static int sys_ungetc_calltf(char *name)
       return 0;
 }
 
-static int sys_ungetc_sizetf(char*x)
+static PLI_INT32 sys_ungetc_sizetf(char*x)
 {
       return 32;
 }

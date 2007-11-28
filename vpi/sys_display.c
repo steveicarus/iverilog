@@ -931,7 +931,7 @@ static int get_default_format(char *name)
     return default_format;
 }
 
-static int sys_display_calltf(char *name)
+static PLI_INT32 sys_display_calltf(char *name)
 {
       struct strobe_cb_info*info;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
@@ -966,7 +966,7 @@ static int sys_display_calltf(char *name)
  * where it is use to perform the actual formatting and printing.
  */
 
-static int strobe_cb(p_cb_data cb)
+static PLI_INT32 strobe_cb(p_cb_data cb)
 {
       struct strobe_cb_info*info = (struct strobe_cb_info*)cb->user_data;
 
@@ -980,7 +980,7 @@ static int strobe_cb(p_cb_data cb)
       return 0;
 }
 
-static int sys_strobe_calltf(char*name)
+static PLI_INT32 sys_strobe_calltf(char*name)
 {
       struct t_cb_data cb;
       struct t_vpi_time time;
@@ -1070,7 +1070,7 @@ static vpiHandle *monitor_callbacks = 0;
 static int monitor_scheduled = 0;
 static int monitor_enabled = 1;
 
-static int monitor_cb_2(p_cb_data cb)
+static PLI_INT32 monitor_cb_2(p_cb_data cb)
 {
       do_display(1, &monitor_info);
       vpi_printf("\n");
@@ -1084,7 +1084,7 @@ static int monitor_cb_2(p_cb_data cb)
  * display to occur in a ReadOnlySync callback. The monitor_scheduled
  * flag is used to allow only one monitor strobe to be scheduled.
  */
-static int monitor_cb_1(p_cb_data cause)
+static PLI_INT32 monitor_cb_1(p_cb_data cause)
 {
       struct t_cb_data cb;
       struct t_vpi_time time;
@@ -1110,7 +1110,7 @@ static int monitor_cb_1(p_cb_data cause)
       return 0;
 }
 
-static int sys_monitor_calltf(char*name)
+static PLI_INT32 sys_monitor_calltf(char*name)
 {
       unsigned idx;
       struct t_cb_data cb;
@@ -1177,14 +1177,14 @@ static int sys_monitor_calltf(char*name)
       return 0;
 }
 
-static int sys_monitoron_calltf(char*name)
+static PLI_INT32 sys_monitoron_calltf(char*name)
 {
       monitor_enabled = 1;
       monitor_cb_1(0);
       return 0;
 }
 
-static int sys_monitoroff_calltf(char*name)
+static PLI_INT32 sys_monitoroff_calltf(char*name)
 {
       monitor_enabled = 0;
       return 0;
@@ -1193,7 +1193,7 @@ static int sys_monitoroff_calltf(char*name)
 /* Implement $fdisplay and $fwrite.
  * Perhaps this could be merged into sys_display_calltf.
  */
-static int sys_fdisplay_calltf(char *name)
+static PLI_INT32 sys_fdisplay_calltf(char *name)
 {
       struct strobe_cb_info info;
       unsigned int mcd;
@@ -1257,7 +1257,7 @@ static int sys_fdisplay_calltf(char *name)
       return 0;
 }
 
-static int sys_timeformat_compiletf(char *xx)
+static PLI_INT32 sys_timeformat_compiletf(char *xx)
 {
       vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv  = vpi_iterate(vpiArgument, sys);
@@ -1279,7 +1279,7 @@ static int sys_timeformat_compiletf(char *xx)
       return 0;
 }
 
-static int sys_timeformat_calltf(char *xx)
+static PLI_INT32 sys_timeformat_calltf(char *xx)
 {
       s_vpi_value value;
       vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
@@ -1335,7 +1335,7 @@ static char *pts_convert(int value)
       return string;
 }
 
-static int sys_printtimescale_calltf(char *xx)
+static PLI_INT32 sys_printtimescale_calltf(char *xx)
 {
       vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv  = vpi_iterate(vpiArgument, sys);
@@ -1358,7 +1358,7 @@ static int sys_printtimescale_calltf(char *xx)
       return 0;
 }
 
-static int sys_end_of_compile(p_cb_data cb_data)
+static PLI_INT32 sys_end_of_compile(p_cb_data cb_data)
 {
 	/* The default timeformat prints times in unit of simulation
 	   precision. */
