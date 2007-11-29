@@ -20,12 +20,12 @@
 #ident "$Id: iverilog-vpi.sh,v 1.14 2004/05/20 00:40:34 steve Exp $"
 
 # These are the variables used for compiling files
-CC=gcc
-CXX=gcc
-CFLAGS="@PIC@ -O -I@INCLUDEDIR@"
+CC=@IVCC@
+CXX=@IVCXX@
+CFLAGS="@PIC@ @IVCFLAGS@ -I@INCLUDEDIR@"
 
 # These are used for linking...
-LD=gcc
+LD=$CC
 LDFLAGS32="@SHARED@ -L@LIBDIR@"
 LDFLAGS64="@SHARED@ -L@LIBDIR64@"
 LDFLAGS="$LDFLAGS64"
@@ -46,6 +46,7 @@ OBJ=
 LIB=
 OUT=
 INCOPT=
+DEFS=
 
 # --
 # parse the command line switches. This collects the source files
@@ -63,8 +64,16 @@ do
 	 ;;
 
     *.cc) CXSRC="$CXSRC $parm"
+	 LD=$CXX
          if [ x$OUT = x ]; then
 	    OUT=`basename $parm .cc`
+	 fi
+	 ;;
+
+    *.cpp) CXSRC="$CXSRC $parm"
+	 LD=$CXX
+         if [ x$OUT = x ]; then
+	    OUT=`basename $parm .cpp`
 	 fi
 	 ;;
 
@@ -82,7 +91,9 @@ do
 	 ;;
 
     -I*) INCOPT="$INCOPT $parm"
-	 echo "$parm"
+	 ;;
+
+    -D*) DEFS="$DEFS $parm"
 	 ;;
 
     -m32) LDFLAGS="-m32 $LDFLAGS32"
@@ -130,7 +141,7 @@ do
     obj=$base".o"
 
     echo "Compiling $src..."
-    $CC -c -o $obj $CFLAGS $INCOPT $src || compile_errors=`expr $compile_errors + 1`
+    $CC -c -o $obj $DEFS $CFLAGS $INCOPT $src || compile_errors=`expr $compile_errors + 1`
     OBJ="$OBJ $obj"
 done
 
@@ -140,7 +151,7 @@ do
     obj=$base".o"
 
     echo "Compiling $src..."
-    $CXX -c -o $obj $CFLAGS $INCOPT $src || compile_errors=`expr $compile_errors + 1`
+    $CXX -c -o $obj $DEFS $CFLAGS $INCOPT $src || compile_errors=`expr $compile_errors + 1`
     OBJ="$OBJ $obj"
 done
 

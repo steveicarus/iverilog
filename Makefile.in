@@ -139,7 +139,7 @@ ivl@EXEEXT@: $O ivl.def
 	$(CXX) -o ivl@EXEEXT@ $O $(dllib) @EXTRALIBS@
 	dlltool --dllname ivl@EXEEXT@ --def ivl.def \
 		--output-lib libivl.a --output-exp ivl.exp
-	$(CXX) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@
+	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@
 else
 ivl@EXEEXT@: $O
 	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ $O $(dllib)
@@ -153,6 +153,9 @@ all: dep iverilog-vpi
 
 iverilog-vpi: iverilog-vpi.sh
 	sed -e 's;@SHARED@;@shared@;' -e 's;@PIC@;@PICFLAG@;' \
+	    -e 's;@IVCC@;$(CC);' \
+	    -e 's;@IVCXX@;$(CXX);' \
+	    -e 's;@IVCFLAGS@;$(CXXFLAGS);' \
 	    -e 's;@INCLUDEDIR@;@includedir@;' \
 	    -e 's;@LIBDIR64@;@libdir64@;' \
 	    -e 's;@VPIDIR1@;@vpidir1@;' -e 's;@VPIDIR2@;@vpidir2@;' \
