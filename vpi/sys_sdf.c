@@ -74,14 +74,23 @@ void sdf_select_instance(const char*celltype, const char*cellinst)
 	    strncpy(buffer, src, len);
 	    buffer[len] = 0;
 
-	    scope = find_scope(scope, buffer);
-	    assert(scope);
+	    vpiHandle tmp_scope = find_scope(scope, buffer);
+	    if (tmp_scope == 0) {
+		  vpi_printf("SDF WARNING: Cannot find %s in %s?\n",
+			     buffer, vpi_get_str(vpiName,scope));
+		  break;
+	    }
+	    assert(tmp_scope);
+	    scope = tmp_scope;
 
 	    src = dp + 1;
       }
 
 	/* Now find the cell. */
-      sdf_cur_cell = find_scope(scope, src);
+      if (src[0] == 0)
+	    sdf_cur_cell = sdf_scope;
+      else
+	    sdf_cur_cell = find_scope(scope, src);
       if (sdf_cur_cell == 0) {
 	    vpi_printf("SDF WARNING: Unable to find %s in current scope\n",
 		       cellinst);
