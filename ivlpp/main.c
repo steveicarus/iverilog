@@ -130,7 +130,7 @@ static int flist_read_flags(const char*path)
 		  else
 			val = "1";
 
-		  define_macro(arg, val, 0);
+		  define_macro(arg, val, 0, 0);
 
 	    } else if (strcmp(cp,"I") == 0) {
 		  include_dir = realloc(include_dir,
@@ -142,7 +142,7 @@ static int flist_read_flags(const char*path)
 		  char*buf = malloc(strlen(arg) + 2);
 		  buf[0] = '`';
 		  strcpy(buf+1, optarg);
-		  define_macro(optarg, buf, 1);
+		  define_macro(optarg, buf, 1, 0);
 		  free(buf);
 
 	    } else if (strcmp(cp,"M") == 0) {
@@ -202,23 +202,23 @@ int main(int argc, char*argv[])
       FILE*out;
 
 	/* Define preprocessor keywords that I plan to just pass. */
-      define_macro("celldefine",          "`celldefine", 1);
-      define_macro("default_nettype",     "`default_nettype", 1);
-      define_macro("delay_mode_distributed", "`delay_mode_distributed", 1);
-      define_macro("delay_mode_unit",     "`delay_mode_unit", 1);
-      define_macro("delay_mode_path",     "`delay_mode_path", 1);
-      define_macro("disable_portfaults",  "`disable_portfaults", 1);
-      define_macro("enable_portfaults",   "`enable_portfaults", 1);
-      define_macro("endcelldefine",       "`endcelldefine", 1);
-      define_macro("endprotect",          "`endprotect", 1);
-      define_macro("nosuppress_faults",   "`nosuppress_faults", 1);
-      define_macro("nounconnected_drive", "`nounconnected_drive", 1);
-      define_macro("protect",             "`protect", 1);
-      define_macro("resetall",            "`resetall", 1);
-      define_macro("suppress_faults",     "`suppress_faults", 1);
-      define_macro("timescale",           "`timescale", 1);
-      define_macro("unconnected_drive",   "`unconnected_drive", 1);
-      define_macro("uselib",              "`uselib", 1);
+      define_macro("celldefine",          "`celldefine", 1, 0);
+      define_macro("default_nettype",     "`default_nettype", 1, 0);
+      define_macro("delay_mode_distributed", "`delay_mode_distributed", 1, 0);
+      define_macro("delay_mode_unit",     "`delay_mode_unit", 1, 0);
+      define_macro("delay_mode_path",     "`delay_mode_path", 1, 0);
+      define_macro("disable_portfaults",  "`disable_portfaults", 1, 0);
+      define_macro("enable_portfaults",   "`enable_portfaults", 1, 0);
+      define_macro("endcelldefine",       "`endcelldefine", 1, 0);
+      define_macro("endprotect",          "`endprotect", 1, 0);
+      define_macro("nosuppress_faults",   "`nosuppress_faults", 1, 0);
+      define_macro("nounconnected_drive", "`nounconnected_drive", 1, 0);
+      define_macro("protect",             "`protect", 1, 0);
+      define_macro("resetall",            "`resetall", 1, 0);
+      define_macro("suppress_faults",     "`suppress_faults", 1, 0);
+      define_macro("timescale",           "`timescale", 1, 0);
+      define_macro("unconnected_drive",   "`unconnected_drive", 1, 0);
+      define_macro("uselib",              "`uselib", 1, 0);
 
       include_cnt = 2;
       include_dir = malloc(include_cnt*sizeof(char*));
@@ -243,7 +243,7 @@ int main(int argc, char*argv[])
 		char*buf = malloc(strlen(optarg) + 2);
 		buf[0] = '`';
 		strcpy(buf+1, optarg);
-		define_macro(optarg, buf, 1);
+		define_macro(optarg, buf, 1, 0);
 		free(buf);
 		break;
 	  }
@@ -333,4 +333,3 @@ int main(int argc, char*argv[])
 
       return error_count;
 }
-

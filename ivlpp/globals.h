@@ -25,7 +25,8 @@
 # include  <stdio.h>
 
 extern void reset_lexor(FILE*out, char*paths[]);
-extern void define_macro(const char*name, const char*value, int keyword);
+extern void define_macro(const char*name, const char*value, int keyword,
+                         int argc);
 
 /* These variables contain the include directories to be searched when
    an include directive in encountered. */

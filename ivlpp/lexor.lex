@@ -39,13 +39,20 @@
 static void output_init();
 #define YY_USER_INIT output_init()
 
-static void def_match();
 static void def_start();
+static void def_add_arg();
 static void def_finish();
 static void def_undefine();
 static void do_define();
 static int  def_is_done();
 static int  is_defined(const char*name);
+
+static int  macro_needs_args();
+static void macro_start_args();
+static void macro_add_to_arg();
+static void macro_finish_arg();
+static void do_expand(int use_args);
+static char*macro_name();
 
 static void include_filename();
 static void do_include();
@@ -59,8 +66,13 @@ struct include_stack_t {
       FILE*file;
 
         /* If we are reparsing a macro expansion, file is 0 and this
-	   member points to the string is progress */
+	   member points to the string in progress */
       const char*str;
+
+	/* If we are reparsing a macro expansion, this member indicates
+	   the amount of space it occupies in the macro expansion buffer.
+	   This will be zero for macros without arguments. */
+      int  ebs;
 
       unsigned lineno;
       YY_BUFFER_STATE yybs;
@@ -142,12 +154,21 @@ static void ifdef_leave(void)
 } while(0)
 
 static int comment_enter = 0;
+static int pragma_enter = 0;
+static int string_enter = 0;
+
+static int ma_parenthesis_level = 0;
 %}
 
 %option stack
 
 %x PPINCLUDE
-%x PPDEFINE
+%x DEF_NAME
+%x DEF_ARG
+%x DEF_SEP
+%x DEF_TXT
+%x MA_START
+%x MA_ADD
 %x CCOMMENT
 %x IFCCOMMENT
 %x PCOMENT
@@ -182,27 +203,31 @@ W [ \t\b\f]+
      expanded, however. */
 
 "(*"{W}?")" { ECHO; }
-"(*" { comment_enter = YY_START; BEGIN(PCOMENT); ECHO; }
+"(*" { pragma_enter = YY_START; BEGIN(PCOMENT); ECHO; }
 <PCOMENT>[^\r\n]    { ECHO; }
 <PCOMENT>\n\r { istack->lineno += 1; fputc('\n', yyout); }
 <PCOMENT>\r\n { istack->lineno += 1; fputc('\n', yyout); }
 <PCOMENT>\n   { istack->lineno += 1; fputc('\n', yyout); }
 <PCOMENT>\r   { istack->lineno += 1; fputc('\n', yyout); }
-<PCOMENT>"*)" { BEGIN(comment_enter); ECHO; }
-<PCOMENT>`[a-zA-Z][a-zA-Z0-9_$]* { def_match(); }
+<PCOMENT>"*)" { BEGIN(pragma_enter); ECHO; }
+<PCOMENT>`[a-zA-Z][a-zA-Z0-9_$]* {
+      if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
+  }
 
   /* Strings do not contain preprocessor directives, but can expand
      macros. If that happens, they get expanded in the context of the
      string. */
-\"            { comment_enter = YY_START; BEGIN(CSTRING); ECHO; }
+\"            { string_enter = YY_START; BEGIN(CSTRING); ECHO; }
 <CSTRING>\\\" { ECHO; }
 <CSTRING>\r\n { fputc('\n', yyout); }
 <CSTRING>\n\r { fputc('\n', yyout); }
 <CSTRING>\n   { fputc('\n', yyout); }
 <CSTRING>\r   { fputc('\n', yyout); }
-<CSTRING>\"   { BEGIN(comment_enter);  ECHO; }
+<CSTRING>\"   { BEGIN(string_enter);  ECHO; }
 <CSTRING>.    { ECHO; }
-<CSTRING>`[a-zA-Z][a-zA-Z0-9_$]* { def_match(); }
+<CSTRING>`[a-zA-Z][a-zA-Z0-9_$]* {
+      if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
+  }
 
   /* This set of patterns matches the include directive and the name
      that follows it. when the directive ends, the do_include function
@@ -210,7 +235,9 @@ W [ \t\b\f]+
 
 ^{W}?`include { yy_push_state(PPINCLUDE); }
 
-<PPINCLUDE>`[a-zA-Z][a-zA-Z0-9_]* { def_match(); }
+<PPINCLUDE>`[a-zA-Z][a-zA-Z0-9_]* {
+      if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
+  }
 <PPINCLUDE>\"[^\"]*\" { include_filename(); }
 
 <PPINCLUDE>[ \t\b\f] { ; }
@@ -219,7 +246,7 @@ W [ \t\b\f]+
      directive. And while I'm at it, I might as well preserve the
      comment in the output stream. */
 
-<PPINCLUDE>"//".* { ECHO; }
+<PPINCLUDE>"//"[^\r\n]* { ECHO; }
 
   /* These finish the include directive (EOF or EOL) so I revert the
      lexor state and execute the inclusion. */
@@ -239,27 +266,52 @@ W [ \t\b\f]+
       error_count += 1;
       BEGIN(ERROR_LINE); }
 
-  /* Detect the define directive, and match the name. Match any
-     white space that might be found, as well. After I get the
-     directive and the name, go into PPDEFINE mode and prepare to
-     collect the defined value. */
+  /* Detect the define directive, and match the name. If followed by a
+     '(', collect the formal arguments. Consume any white space, then
+     go into DEF_TXT mode and collect the defined value. */
 
-`define{W}[a-zA-Z_][a-zA-Z0-9_$]*{W}? { yy_push_state(PPDEFINE); def_start(); }
+`define{W} { yy_push_state(DEF_NAME); }
 
-<PPDEFINE>.*[^\r\n] { do_define(); }
+<DEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]*"("{W}? { BEGIN(DEF_ARG); def_start(); }
+<DEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]*{W}?    { BEGIN(DEF_TXT); def_start(); }
 
-<PPDEFINE>(\n|"\r\n"|"\n\r"|\r) {
+<DEF_ARG>[a-zA-Z_][a-zA-Z0-9_$]*{W}? { BEGIN(DEF_SEP); def_add_arg(); }
+
+<DEF_SEP>","{W}? { BEGIN(DEF_ARG); }
+<DEF_SEP>")"{W}? { BEGIN(DEF_TXT); }
+
+<DEF_ARG,DEF_SEP>"//"[^\r\n]* { ECHO; }
+
+<DEF_ARG,DEF_SEP>"/*" { comment_enter = YY_START; BEGIN(CCOMMENT); ECHO; }
+
+<DEF_ARG,DEF_SEP>{W} { }
+
+<DEF_ARG,DEF_SEP>(\n|"\r\n"|"\n\r"|\r){W}? {
+      istack->lineno += 1;
+      fputc('\n', yyout);
+  }
+
+<DEF_NAME,DEF_ARG,DEF_SEP>. {
+      emit_pathline(istack);
+      fprintf(stderr, "error: malformed `define directive.\n");
+      error_count += 1;
+      BEGIN(ERROR_LINE);
+  }
+
+<DEF_TXT>.*[^\r\n] { do_define(); }
+
+<DEF_TXT>(\n|"\r\n"|"\n\r"|\r) {
       if (def_is_done()) {
 	    def_finish();
-	    istack->lineno += 1;
 	    yy_pop_state();
       }
+      istack->lineno += 1;
       fputc('\n', yyout);
   }
 
   /* If the define is terminated by an EOF, then finish the define
      whether there was a continuation or not. */
-<PPDEFINE><<EOF>> {
+<DEF_TXT><<EOF>> {
       def_finish();
       istack->lineno += 1;
       fputc('\n', yyout);
@@ -393,7 +445,67 @@ W [ \t\b\f]+
   }
 
   /* This pattern notices macros and arranges for them to be replaced. */
-`[a-zA-Z_][a-zA-Z0-9_$]* { def_match(); }
+`[a-zA-Z_][a-zA-Z0-9_$]* {
+      if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
+  }
+
+<MA_START>\( { BEGIN(MA_ADD); macro_start_args(); }
+
+<MA_START>{W} { }
+
+<MA_START>(\n|"\r\n"|"\n\r"|\r){W}? {
+      istack->lineno += 1;
+      fputc('\n', yyout);
+  }
+
+<MA_START>. {
+      emit_pathline(istack);
+      fprintf(stderr, "error: missing argument list for `%s.\n", 
+	      macro_name());
+      error_count += 1;
+      yy_pop_state();
+      yyless(0);
+  }
+
+<MA_ADD>\"[^\"\n\r]*\" { macro_add_to_arg(0); }
+
+<MA_ADD>\"[^\"\n\r]* {
+      emit_pathline(istack);
+      fprintf(stderr, "error: unterminated string.\n");
+      error_count += 1;
+      BEGIN(ERROR_LINE);
+  }
+
+<MA_ADD>'[^\n\r]' { macro_add_to_arg(0); }
+
+<MA_ADD>{W} { macro_add_to_arg(1); }
+
+<MA_ADD>"(" { macro_add_to_arg(0); ma_parenthesis_level++; }
+
+<MA_ADD>"," { macro_finish_arg(); }
+
+<MA_ADD>")" {
+      if (ma_parenthesis_level > 0) {
+	    macro_add_to_arg(0);
+            ma_parenthesis_level--;
+      } else {
+	    macro_finish_arg();
+	    yy_pop_state();
+	    do_expand(1);
+      }
+  }
+
+<MA_ADD>(\n|"\r\n"|"\n\r"|\r){W}? {
+      macro_add_to_arg(1);
+      istack->lineno += 1;
+      fputc('\n', yyout);
+  }
+
+<MA_ADD>. { macro_add_to_arg(0); }
+
+<MA_START,MA_ADD>"//"[^\r\n]* { ECHO; }
+
+<MA_START,MA_ADD>"/*" { comment_enter = YY_START; BEGIN(CCOMMENT); ECHO; }
 
   /* Any text that is not a directive just gets passed through to the
      output. Very easy. */
@@ -407,6 +519,12 @@ W [ \t\b\f]+
   /* Absorb the rest of the line when a broken directive is detected. */
 <ERROR_LINE>[^\r\n]* { yy_pop_state(); }
 
+<ERROR_LINE>(\n|"\r\n"|"\n\r"|\r) {
+      yy_pop_state();
+      istack->lineno += 1;
+      fputc('\n', yyout);
+  }
+
 %%
   /* Defined macros are kept in this table for convenient lookup. As
      `define directives are matched (and the do_define() function
@@ -417,6 +535,7 @@ struct define_t {
       char*value;
 	/* keywords don't get rescanned for fresh values. */
       int keyword;
+      int argc;
 
       struct define_t*left, *right, *up;
 };
@@ -446,50 +565,92 @@ static int is_defined(const char*name)
       return def_lookup(name) != 0;
 }
 
-  /* When a macro use is discovered in the source, this function is
-     used to look up the name and emit the substitution in its
-     place. If the name is not found, then the `name string is written
-     out instead. */
+/*
+ * The following variables are used to temporarily hold the name and
+ * formal arguments of a macro definition as it is being parsed. As
+ * for C program arguments, def_argc counts the arguments (including
+ * the macro name), the value returned by def_argv(0) points to the
+ * macro name, the value returned by def_argv(1) points to the first
+ * argument, and so on.
+ *
+ * These variables are also used for storing the actual arguments when
+ * a macro is instantiated.
+ */
+#define MAX_DEF_ARG 256 // allows argument IDs to be stored in a single char
 
-static void def_match()
+#define DEF_BUF_CHUNK 256
+
+static char*def_buf = 0;
+static int  def_buf_size = 0;
+static int  def_buf_free = 0;
+
+static int  def_argc = 0;
+static int  def_argo[MAX_DEF_ARG];  // offset of first character in arg
+static int  def_argl[MAX_DEF_ARG];  // length of arg string.
+
+/*
+ * Return a pointer to the start of argument 'arg'. Returned pointers
+ * may go stale after a call to def_buf_grow_to_fit.
+ */
+static inline char*def_argv(int arg)
 {
-      struct define_t*cur = def_lookup(yytext+1);
-      if (cur) {
-	    struct include_stack_t*isp;
+      return def_buf + def_argo[arg];
+}
 
-	    if (cur->keyword) {
-		  fprintf(yyout, "%s", cur->value);
-		  return;
-	    }
-
-	    isp = (struct include_stack_t*)
-		  calloc(1, sizeof(struct include_stack_t));
-	    isp->str = cur->value;
-	    isp->next = istack;
-	    istack->yybs = YY_CURRENT_BUFFER;
-	    istack = isp;
-	    yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
-
-      } else {
+static void check_for_max_args()
+{
+      if (def_argc == MAX_DEF_ARG) {
 	    emit_pathline(istack);
-	    fprintf(stderr, "warning: macro %s undefined "
-		    "(and assumed null) at this point.\n", yytext);
+	    fprintf(stderr, "error: too many macro arguments - aborting\n");
+	    exit(1);
       }
 }
 
-static char def_name[256];
+static void def_buf_grow_to_fit(int length)
+{
+      while (length >= def_buf_free) {
+	    def_buf_size += DEF_BUF_CHUNK;
+	    def_buf_free += DEF_BUF_CHUNK;
+	    def_buf = realloc(def_buf, def_buf_size);
+	    assert(def_buf != 0);
+      }
+}
 
 static void def_start()
 {
-      sscanf(yytext, "`define %s", def_name);
+      def_buf_free = def_buf_size;
+      def_argc = 0;
+      def_add_arg();
 }
 
-void define_macro(const char*name, const char*value, int keyword)
+static void def_add_arg()
+{
+      int length = yyleng;
+
+      check_for_max_args();
+
+	/* Remove trailing white space and, if necessary, opening brace. */
+      while (isspace(yytext[length - 1])) length--;
+      if (yytext[length - 1] == '(') length--;
+      yytext[length] = 0;
+
+	/* Make sure there's room in the buffer for the new argument. */
+      def_buf_grow_to_fit(length);
+
+	/* Store the new argument. */
+      def_argl[def_argc] = length;
+      def_argo[def_argc] = def_buf_size - def_buf_free;
+      strcpy(def_argv(def_argc++), yytext);
+      def_buf_free -= length + 1;
+}
+
+void define_macro(const char*name, const char*value, int keyword, int argc)
 {
       struct define_t*def = malloc(sizeof(struct define_t));
       def->name = strdup(name);
       def->value = strdup(value);
       def->keyword = keyword;
+      def->argc = argc;
       def->left = 0;
       def->right = 0;
       def->up = 0;
@@ -549,7 +710,11 @@ static int define_continue_flag = 0;
  */
 static void do_define()
 {
-      char *cp;
+      char*cp;
+      char*head;
+      char*tail;
+      int  added_cnt;
+      int  arg;
 
       define_continue_flag = 0;
 
@@ -565,7 +730,7 @@ static void do_define()
 	    }
 
 	    if (cp[1] == '*') {
-		  char*tail = strstr(cp+2, "*/");
+		  tail = strstr(cp+2, "*/");
 		  if (tail == 0) {
 			fprintf(stderr, "%s:%u: Unterminated comment "
 				"in define\n", istack->path, istack->lineno);
@@ -609,8 +774,40 @@ static void do_define()
 
 	/* Accumulate this text into the define_text string. */
       define_text = realloc(define_text, define_cnt + (cp-yytext) + 1);
-      strcpy(define_text+define_cnt, yytext);
+      assert(define_text != 0);
+      head = &define_text[define_cnt];
+      strcpy(head, yytext);
       define_cnt += cp-yytext;
+      tail = &define_text[define_cnt];
+
+	/* Look for formal argument names in the definition, and replace
+	   each occurrence with the sequence '\a','\ddd' where ddd is the
+           formal argument index number. '\a' is chosen as a character
+	   that shouldn't normally occur in the define text. */
+      added_cnt = 0;
+      for (arg = 1; arg < def_argc; arg++) {
+	    int argl = def_argl[arg];
+	    cp = strstr(head, def_argv(arg));
+	    while (cp && *cp) {
+		  added_cnt += 2 - argl;
+		  if (added_cnt > 0) {
+			char*base = define_text;
+			define_cnt += added_cnt;
+			define_text = realloc(define_text, define_cnt + 1);
+			assert(define_text != 0);
+			head = &define_text[head - base];
+			tail = &define_text[tail - base];
+			cp   = &define_text[cp   - base];
+			added_cnt = 0;
+		  }
+		  memmove(cp+2, cp+argl, tail-(cp+argl)+1);
+		  tail += 2 - argl;
+		  *cp++ = '%';
+		  *cp++ = '0' + arg;
+		  cp = strstr(cp, def_argv(arg));
+	    }
+      }
+      define_cnt += added_cnt;
 }
 
 /*
@@ -631,17 +828,17 @@ static void def_finish()
 {
       define_continue_flag = 0;
 
-      if (def_name[0]) {
+      if (def_argc > 0) {
 	    if (define_text) {
-		  define_macro(def_name, define_text, 0);
+		  define_macro(def_argv(0), define_text, 0, def_argc);
 		  free(define_text);
 		  define_text = 0;
 		  define_cnt = 0;
 
 	    } else {
-		  define_macro(def_name, "", 0);
+		  define_macro(def_argv(0), "", 0, def_argc);
 	    }
-	    def_name[0] = 0;
+	    def_argc = 0;
       }
 }
 
@@ -649,9 +846,13 @@ static void def_undefine()
 {
       struct define_t*cur, *tail;
 
-      sscanf(yytext, "`undef %s", def_name);
+	/* def_buf is used to store the macro name. Make sure there is
+	   enough space. */
+      def_buf_grow_to_fit(yyleng);
 
-      cur = def_lookup(def_name);
+      sscanf(yytext, "`undef %s", def_buf);
+
+      cur = def_lookup(def_buf);
       if (cur == 0) return;
 
       if (cur->up == 0) {
@@ -727,6 +928,186 @@ static void def_undefine()
       free(cur->name);
       free(cur->value);
       free(cur);
+}
+
+/*
+ * When a macro is instantiated in the source, macro_needs_args() is
+ * used to look up the name and return whether it is a macro that
+ * takes arguments. A pointer to the macro descriptor is stored in
+ * cur_macro so that do_expand() doesn't need to look it up again.
+ */
+static struct define_t*cur_macro = 0;
+
+static int macro_needs_args()
+{
+      cur_macro = def_lookup(yytext+1);
+      if (cur_macro) {
+	    return (cur_macro->argc > 1);
+      } else {
+	    emit_pathline(istack);
+	    fprintf(stderr, "warning: macro %s undefined "
+		    "(and assumed null) at this point.\n", yytext);
+	    return 0;
+      }
+}
+
+static char*macro_name()
+{
+      return cur_macro ? cur_macro->name : "";
+}
+
+static void macro_start_args()
+{
+	/* The macro name can be found via cur_macro, so create a null
+	   entry for arg 0. This will be used by macro_finish_arg() to
+	   calculate the buffer location for arg 1. */
+      def_buf_free = def_buf_size - 1;
+      def_buf[0] = 0;
+      def_argo[0] = 0;
+      def_argl[0] = 0;
+      def_argc = 1;
+};
+      
+static void macro_add_to_arg(int is_white_space)
+{
+      int length = yyleng;
+      char*tail;
+
+      check_for_max_args();
+
+	/* Replace any run of white space with a single space */
+      if (is_white_space) {
+	    yytext[0] = ' ';
+	    yytext[1] = 0;
+	    length = 1;
+      }
+
+	/* Make sure there's room in the buffer for the new argument. */
+      def_buf_grow_to_fit(length);
+
+	/* Store the new text. */
+      tail = &def_buf[def_buf_size - def_buf_free];
+      strcpy(tail, yytext);
+      def_buf_free -= length;
+}
+
+static void macro_finish_arg()
+{
+      char*tail = &def_buf[def_buf_size - def_buf_free];
+
+      check_for_max_args();
+
+      *tail = 0;
+      def_argo[def_argc] = def_argo[def_argc-1] + def_argl[def_argc-1] + 1;
+      def_argl[def_argc] = tail - def_argv(def_argc);
+      def_buf_free -= 1;
+      def_argc++;
+}
+
+/*
+ * The following variables are used to hold macro expansions that are
+ * built dynamically using supplied arguments. Buffer space is allocated
+ * as the macro is expanded, and is only released once the expansion has
+ * been reparsed. This means that the buffer acts as a stack for nested
+ * macro expansions.
+ *
+ * The expansion buffer is only used for macros with arguments - the
+ * text for simple macros can be taken directly from the macro table.
+ */
+#define EXP_BUF_CHUNK 256
+
+static char*exp_buf = 0;
+static int  exp_buf_size = 0;
+static int  exp_buf_free = 0;
+
+static void exp_buf_grow_to_fit(int length)
+{
+      while (length >= exp_buf_free) {
+	    exp_buf_size += EXP_BUF_CHUNK;
+	    exp_buf_free += EXP_BUF_CHUNK;
+	    exp_buf = realloc(exp_buf, exp_buf_size);
+	    assert(exp_buf != 0);
+      }
+}
+
+static void expand_using_args()
+{
+      char*head;
+      char*tail;
+      char*dest;
+      int  arg;
+      int  length;
+
+      if (def_argc != cur_macro->argc) {
+	    emit_pathline(istack);
+	    fprintf(stderr, "error: wrong number of arguments for `%s\n",
+		    cur_macro->name);
+	    return;
+      }
+
+      head = cur_macro->value;
+      tail = head;
+      while (*tail) {
+	    if (*tail == '%') {
+		  arg = tail[1] - '0';
+		  assert(arg < def_argc);
+		  length = (tail - head) + def_argl[arg];
+		  exp_buf_grow_to_fit(length);
+	          dest = &exp_buf[exp_buf_size - exp_buf_free];
+		  memcpy(dest, head, tail - head);
+		  dest += tail - head;
+		  memcpy(dest, def_argv(arg), def_argl[arg]);
+		  exp_buf_free -= length;
+		  head = tail + 2;
+		  tail = head;
+	    } else {
+		  tail++;
+	    }
+      }
+      length = tail - head;
+      exp_buf_grow_to_fit(length);
+      dest = &exp_buf[exp_buf_size - exp_buf_free];
+      memcpy(dest, head, length + 1);
+      exp_buf_free -= length + 1;
+}
+
+/*
+ * When a macro use is discovered in the source, this function is
+ * used to emit the substitution in its place.
+ */
+static void do_expand(int use_args)
+{
+      if (cur_macro) {
+	    struct include_stack_t*isp;
+	    int head;
+	    int tail;
+
+	    if (cur_macro->keyword) {
+		  fprintf(yyout, "%s", cur_macro->value);
+		  return;
+	    }
+
+	    if (use_args) {
+		  head = exp_buf_size - exp_buf_free;
+		  expand_using_args();
+		  tail = exp_buf_size - exp_buf_free;
+		  if (tail == head) return;
+	    }
+
+	    isp = (struct include_stack_t*)
+		  calloc(1, sizeof(struct include_stack_t));
+	    if (use_args) {
+		isp->str = &exp_buf[head];
+		isp->ebs = tail - head;
+	    } else {
+		isp->str = cur_macro->value;
+		isp->ebs = 0;
+	    }
+	    isp->next = istack;
+	    istack->yybs = YY_CURRENT_BUFFER;
+	    istack = isp;
+	    yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
+      }
 }
 
 /*
@@ -821,8 +1202,8 @@ static void do_include()
 
 /* walk the include stack until we find an entry with a valid pathname,
  * and print the file and line from that entry for use in an error message.
- * The istack entries created by def_match() for macro expansions do not
- * contain pathnames.   This finds instead the real file in which the outermost
+ * The istack entries created by do_expand() for macro expansions do not
+ * contain pathnames. This finds instead the real file in which the outermost
  * macro was used.
  */
 static void emit_pathline(struct include_stack_t*isp)
@@ -875,10 +1256,12 @@ static int yywrap()
 		 arrange for a new directive to be printed. */
 	    if (line_direct_flag
 		&& istack && istack->path
-		&& strchr(isp->str, '\n'))
+		&& isp->lineno)
 		  fprintf(yyout, "\n");
 	    else
 		  line_mask_flag = 1;
+
+	    exp_buf_free += isp->ebs;
       }
       free(isp);
 
@@ -941,7 +1324,8 @@ void reset_lexor(FILE*out, char*paths[])
       struct include_stack_t*isp = malloc(sizeof(struct include_stack_t));
       isp->path = strdup(paths[0]);
       isp->file = fopen(paths[0], "r");
-      isp->str  = 0;
+      isp->str = 0;
+      isp->ebs = 0;
       isp->lineno = 0;
       if (isp->file == 0) {
 	    perror(paths[0]);
@@ -967,6 +1351,7 @@ void reset_lexor(FILE*out, char*paths[])
 	    isp->path = strdup(paths[idx]);
 	    isp->file = 0;
 	    isp->str = 0;
+	    isp->ebs = 0;
 	    isp->next = 0;
 	    isp->lineno = 0;
 	    if (tail)
