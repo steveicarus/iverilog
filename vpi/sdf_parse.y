@@ -26,6 +26,7 @@ static void yyerror(const char*msg);
 # include  "sdf_priv.h"
 # include  <stdio.h>
 # include  <string.h>
+# include  <stdlib.h>
 
 /* This is the hierarchy separator to use. */
 char sdf_use_hchar = '.';

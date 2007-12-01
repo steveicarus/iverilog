@@ -195,8 +195,12 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiConstant";
 	  case vpiIntegerVar:
 	    return "vpiIntegerVar";
+	  case vpiIterator:
+	    return "vpiIterator";
 	  case vpiFunction:
 	    return "vpiFunction";
+	  case vpiMemory:
+	    return "vpiMemory";
 	  case vpiModule:
 	    return "vpiModule";
 	  case vpiNet:

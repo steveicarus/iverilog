@@ -28,6 +28,15 @@ Include the named library in the link of the VPI module. This allows
 VPI modules to further reference external libraries.
 
 .TP 8
+.B -I\fIdirectory\fP
+Add \fIdirectory\fP to the list of directories that will be search for
+header files.
+
+.TP 8
+.B -D\fIdefine\fP
+Define a macro named \fIdefine\fP.
+
+.TP 8
 .B --name=\fIname\fP
 Normally, the output VPI module will be named after the first source
 file passed to the command. This flag sets the name (without the .vpi
@@ -38,6 +47,10 @@ suffix) of the output vpi module.
 This flag causes the program to print the install directory for VPI
 modules, then exit. It is a convenience for makefiles or automated
 plug-in installers.
+
+.TP 8
+.B --cflags, --ldflags and -ldlibs
+These flags provide compile time information.
 
 .SH "PC-ONLY OPTIONS"
 
