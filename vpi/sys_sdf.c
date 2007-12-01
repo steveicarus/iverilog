@@ -204,6 +204,21 @@ static void check_command_line_args(void)
 static PLI_INT32 sys_sdf_annotate_compiletf(PLI_BYTE8*name)
 {
       check_command_line_args();
+
+      vpiHandle sys = vpi_handle(vpiSysTfCall,0);
+      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+
+      vpiHandle path = vpi_scan(argv);
+      assert(path);
+
+      vpiHandle scope = vpi_scan(argv);
+      if (scope == 0)
+	    return 0;
+
+      assert(vpi_get(vpiType,scope) == vpiModule);
+
+      vpi_free_object(argv);
+
       return 0;
 }
 
@@ -213,10 +228,9 @@ static PLI_INT32 sys_sdf_annotate_calltf(PLI_BYTE8*name)
       vpiHandle sys = vpi_handle(vpiSysTfCall,0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
 
+	/* The first argument is the path to the SDF file. */
       vpiHandle path = vpi_scan(argv);
       assert(path);
-
-      vpi_free_object(argv);
 
       value.format = vpiStringVal;
       vpi_get_value(path, &value);
@@ -232,7 +246,14 @@ static PLI_INT32 sys_sdf_annotate_calltf(PLI_BYTE8*name)
       FILE*sdf_fd = fopen(path_str, "r");
       assert(sdf_fd);
 
-      sdf_scope = vpi_handle(vpiScope,sys);
+	/* The optional second argument is the scope to annotate. */
+      sdf_scope = vpi_scan(argv);
+      if (sdf_scope)
+	    vpi_free_object(argv);
+      if (sdf_scope == 0) {
+	    sdf_scope = vpi_handle(vpiScope,sys);
+      }
+
       sdf_cur_cell = 0;
 
       sdf_process_file(sdf_fd, path_str);
