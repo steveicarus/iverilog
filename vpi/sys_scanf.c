@@ -20,6 +20,10 @@
 #ident "$Id: sys_scanf.c,v 1.8 2007/04/16 00:09:58 steve Exp $"
 #endif
 
+  /* round() is ISO C99 from math.h. This define should enable it. */
+# define _ISOC99_SOURCE 1
+# define _SVID_SOURCE 1
+
 # include  "vpi_user.h"
 # include  "sys_priv.h"
 # include  <ctype.h>
