@@ -704,6 +704,16 @@ static size_t define_cnt = 0;
 static int define_continue_flag = 0;
 
 /*
+ * Define a special character code used to mark the insertion point
+ * for arguments in the macro text. This should be a character that
+ * will not occur in the Verilog source code.
+ */
+#define ARG_MARK '\a'
+
+#define _STR1(x) #x
+#define _STR2(x) _STR1(x)
+
+/*
  * Collect the definition. Normally, this returns 0. If there is a
  * continuation, then return 1 and this function may be called again
  * to collect another line of the definition.
@@ -780,10 +790,19 @@ static void do_define()
       define_cnt += cp-yytext;
       tail = &define_text[define_cnt];
 
+	/* If the text for a macro with arguments contains occurrences
+	   of ARG_MARK, issue an error message and suppress the macro. */
+      if ((def_argc > 1) && strchr(head, ARG_MARK)) {
+	    emit_pathline(istack);
+	    fprintf(stderr, "error: implementation restriction - macro "
+		    "text may not contain a %s character\n", _STR2(ARG_MARK));
+	    error_count += 1;
+	    def_argc = 0;
+      }
+
 	/* Look for formal argument names in the definition, and replace
-	   each occurrence with the sequence '\a','\ddd' where ddd is the
-           formal argument index number. '\a' is chosen as a character
-	   that shouldn't normally occur in the define text. */
+	   each occurrence with the sequence ARG_MARK,'\ddd' where ddd is
+	   the  formal argument index number. */
       added_cnt = 0;
       for (arg = 1; arg < def_argc; arg++) {
 	    int argl = def_argl[arg];
@@ -802,8 +821,8 @@ static void do_define()
 		  }
 		  memmove(cp+2, cp+argl, tail-(cp+argl)+1);
 		  tail += 2 - argl;
-		  *cp++ = '%';
-		  *cp++ = '0' + arg;
+		  *cp++ = ARG_MARK;
+		  *cp++ = arg;
 		  cp = strstr(cp, def_argv(arg));
 	    }
       }
@@ -1048,8 +1067,8 @@ static void expand_using_args()
       head = cur_macro->value;
       tail = head;
       while (*tail) {
-	    if (*tail == '%') {
-		  arg = tail[1] - '0';
+	    if (*tail == ARG_MARK) {
+		  arg = tail[1];
 		  assert(arg < def_argc);
 		  length = (tail - head) + def_argl[arg];
 		  exp_buf_grow_to_fit(length);
@@ -1079,8 +1098,8 @@ static void do_expand(int use_args)
 {
       if (cur_macro) {
 	    struct include_stack_t*isp;
-	    int head;
-	    int tail;
+	    int head = 0;
+	    int tail = 0;
 
 	    if (cur_macro->keyword) {
 		  fprintf(yyout, "%s", cur_macro->value);
