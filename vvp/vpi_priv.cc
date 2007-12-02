@@ -918,7 +918,7 @@ void vpi_get_delays(vpiHandle expr, p_vpi_delay delays)
 	  if (vpi_trace) 
 	    {
 	      fprintf(vpi_trace, 
-		      "vpi_get_delays(%s, %p) -->\n", expr, delays);
+		      "vpi_get_delays(%p, %p) -->\n", expr, delays);
 	    }
 	} 
 }
@@ -936,7 +936,7 @@ void vpi_put_delays(vpiHandle expr, p_vpi_delay delays)
 	  if (vpi_trace) 
 	    {
 	      fprintf(vpi_trace, 
-		      "vpi_put_delays(%s, %p) -->\n", expr, delays);
+		      "vpi_put_delays(%p, %p) -->\n", expr, delays);
 	    }
 	} 
 }

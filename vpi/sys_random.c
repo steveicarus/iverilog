@@ -643,6 +643,7 @@ static PLI_INT32 sys_urandom_range_calltf(PLI_BYTE8 *name)
       /* Calculate and return the result. */
       val.value.integer = urandom(0, i_maxval, i_minval);
       vpi_put_value(callh, &val, 0, vpiNoDelay);
+      return 0;
 }
 
 static PLI_INT32 sys_dist_uniform_calltf(PLI_BYTE8 *name)

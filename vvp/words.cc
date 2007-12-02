@@ -199,7 +199,7 @@ void compile_netw(char*label, char*array_label, unsigned long array_addr,
       const char *name = get_array_name(array_label);
       unsigned len = strlen(name) + 32;
       char *nbuf = (char *)malloc(len);
-      snprintf(nbuf, len, "%s[%d]", name, array_addr +
+      snprintf(nbuf, len, "%s[%lu]", name, array_addr +
                get_array_base(array_label));
       __compile_net(label, strdup(nbuf), array_label, array_addr,
 		    msb, lsb, signed_flag, net8_flag,
