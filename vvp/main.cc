@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.44 2007/02/16 23:30:14 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "parse_misc.h"
@@ -267,10 +264,10 @@ int main(int argc, char*argv[])
 
       if (verbose_flag) {
 	    vpi_mcd_printf(1, " ... %8lu functors\n", count_functors);
-	    vpi_mcd_printf(1, "           %8lu table\n",  count_functors_table);
+	    vpi_mcd_printf(1, "           %8lu logic\n",  count_functors_logic);
 	    vpi_mcd_printf(1, "           %8lu bufif\n",  count_functors_bufif);
 	    vpi_mcd_printf(1, "           %8lu resolv\n",count_functors_resolv);
-	    vpi_mcd_printf(1, "           %8lu variable\n", count_functors_var);
+	    vpi_mcd_printf(1, "           %8lu signals\n", count_functors_sig);
 	    vpi_mcd_printf(1, " ... %8lu opcodes (%lu bytes)\n",
 		    count_opcodes, (unsigned long)size_opcodes);
 	    vpi_mcd_printf(1, " ... %8lu nets\n",     count_vpi_nets);
@@ -305,90 +302,4 @@ int main(int argc, char*argv[])
 
       return 0;
 }
-
-/*
- * $Log: main.cc,v $
- * Revision 1.44  2007/02/16 23:30:14  steve
- *  Get page size from sysconf.
- *
- * Revision 1.43  2006/04/28 15:44:37  steve
- *  Include math.h with lround implementation.
- *
- * Revision 1.42  2006/04/28 15:40:30  steve
- *  lround takes double, not float.
- *
- * Revision 1.41  2006/04/27 05:04:59  steve
- *  Detect missing lround function.
- *
- * Revision 1.40  2005/01/29 06:28:19  steve
- *  Add the -s flag to start up interactive.
- *
- * Revision 1.39  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.38  2003/06/25 04:04:19  steve
- *  Fix mingw portability problems.
- *
- * Revision 1.37  2003/06/13 19:51:08  steve
- *  Include verbose messages in log output.
- *
- * Revision 1.36  2003/05/15 16:51:09  steve
- *  Arrange for mcd id=00_00_00_01 to go to stdout
- *  as well as a user specified log file, set log
- *  file to buffer lines.
- *
- *  Add vpi_flush function, and clear up some cunfused
- *  return codes from other vpi functions.
- *
- *  Adjust $display and vcd/lxt messages to use the
- *  standard output/log file.
- *
- * Revision 1.35  2003/03/13 04:36:57  steve
- *  Remove the obsolete functor delete functions.
- *
- * Revision 1.34  2003/02/07 02:45:05  steve
- *  Mke getopt ignore options after the file name.
- *
- * Revision 1.33  2003/01/18 23:55:35  steve
- *  Add a means to clear the module search path.
- *
- * Revision 1.32  2003/01/06 23:57:26  steve
- *  Schedule wait lists of threads as a single event,
- *  to save on events. Also, improve efficiency of
- *  event_s allocation. Add some event statistics to
- *  get an idea where performance is really going.
- *
- * Revision 1.31  2002/09/18 03:34:07  steve
- *  printf size warning.
- *
- * Revision 1.30  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.29  2002/07/15 00:21:42  steve
- *  Fix initialization of symbol table string heap.
- *
- * Revision 1.28  2002/07/05 20:08:44  steve
- *  Count different types of functors.
- *
- * Revision 1.27  2002/07/05 17:14:15  steve
- *  Names of vpi objects allocated as vpip_strings.
- *
- * Revision 1.26  2002/07/05 03:47:06  steve
- *  Track opcode memory space.
- *
- * Revision 1.25  2002/07/05 02:50:58  steve
- *  Remove the vpi object symbol table after compile.
- *
- * Revision 1.24  2002/04/12 02:44:02  steve
- *  Formally define extended arguments to vvp.
- *
- * Revision 1.23  2002/03/01 05:43:14  steve
- *  Add cleanup to verbose messages.
- *
- * Revision 1.22  2002/01/09 03:15:23  steve
- *  Add vpi_get_vlog_info support.
- *
- * Revision 1.21  2001/10/20 01:03:42  steve
- *  Print memory usage information if requested (Stephan Boettcher)
- */
 

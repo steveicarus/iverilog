@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,11 +16,11 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.64 2007/06/12 02:36:58 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
 # include  "schedule.h"
+# include  "statistics.h"
 # include  <stdio.h>
 # include  <iostream>
 # include  <typeinfo>
@@ -1406,6 +1406,7 @@ ostream& operator<<(ostream&out, const vvp_vector8_t&that)
 
 vvp_net_fun_t::vvp_net_fun_t()
 {
+      count_functors += 1;
 }
 
 vvp_net_fun_t::~vvp_net_fun_t()
@@ -1477,6 +1478,7 @@ vvp_fun_signal_base::vvp_fun_signal_base()
       continuous_assign_active_ = false;
       force_link = 0;
       cassign_link = 0;
+      count_functors_sig += 1;
 }
 
 void vvp_fun_signal_base::deassign()
