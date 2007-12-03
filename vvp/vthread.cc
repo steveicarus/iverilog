@@ -170,16 +170,17 @@ void vthread_put_real(struct vthread_s*thr, unsigned addr, double val)
 static unsigned long* vector_to_array(struct vthread_s*thr,
 				      unsigned addr, unsigned wid)
 {
-      unsigned awid = (wid + CPU_WORD_BITS - 1) / (CPU_WORD_BITS);
 
 
       if (addr == 0) {
+	    unsigned awid = (wid + CPU_WORD_BITS - 1) / (CPU_WORD_BITS);
 	    unsigned long*val = new unsigned long[awid];
 	    for (unsigned idx = 0 ;  idx < awid ;  idx += 1)
 		  val[idx] = 0;
 	    return val;
       }
       if (addr == 1) {
+	    unsigned awid = (wid + CPU_WORD_BITS - 1) / (CPU_WORD_BITS);
 	    unsigned long*val = new unsigned long[awid];
 	    for (unsigned idx = 0 ;  idx < awid ;  idx += 1)
 		  val[idx] = -1UL;

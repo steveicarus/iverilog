@@ -355,6 +355,9 @@ unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
 	    unsigned long tmp = bits_ptr_[adr/BITS_PER_WORD];
 	    tmp >>= 2UL * (adr%BITS_PER_WORD);
 
+	    unsigned long mask1 = 1;
+	    const unsigned long mask1_last = 1UL << (BIT2_PER_WORD-1);
+	    unsigned long*val_ptr = val;
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		    /* Starting a new word? */
 		  if (adr%BITS_PER_WORD == 0)
@@ -363,10 +366,17 @@ unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
 		  if (tmp&2)
 			goto x_out;
 		  if (tmp&1)
-			val[idx/BIT2_PER_WORD] |= 1UL << (idx % BIT2_PER_WORD);
+			*val_ptr |= mask1;
 
 		  adr += 1;
 		  tmp >>= 2UL;
+
+		  if (mask1 == mask1_last) {
+			val_ptr += 1;
+			mask1 = 1;
+		  } else {
+			mask1 <<= 1;
+		  }
 	    }
       }
 
