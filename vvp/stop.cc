@@ -353,7 +353,7 @@ static void cmd_unknown(unsigned, char*argv[])
 	     "of available commands.\n");
 }
 
-struct {
+struct cmd_table {
       const char*name;
       void (*proc)(unsigned argc, char*argv[]);
       const char*summary;
