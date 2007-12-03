@@ -411,7 +411,7 @@ block_item_decl
 		  yyerrok;
 		}
 	| attribute_list_opt K_realtime error ';'
-		{ yyerror(@1, "error: syntax error in realtime variable list.");
+		{ yyerror(@2, "error: syntax error in realtime variable list.");
 		  yyerrok;
 		}
 	| K_parameter error ';'
@@ -453,7 +453,7 @@ case_item
 		  $$ = tmp;
 		}
 	| error ':' statement_or_null
-		{ yyerror(@1, "error: Incomprehensible case expression.");
+		{ yyerror(@2, "error: Incomprehensible case expression.");
 		  yyerrok;
 		}
 	;
@@ -1985,7 +1985,7 @@ module_item
      reasonable error message can be produced. */
 
 	| K_module error ';'
-		{ yyerror(@2, "error: missing endmodule or attempt to "
+		{ yyerror(@1, "error: missing endmodule or attempt to "
 		              "nest modules.");
 		  pform_error_nested_modules();
 		  yyerrok;
@@ -2453,7 +2453,7 @@ port_name
 		  $$ = tmp;
 		}
 	| '.' IDENTIFIER '(' error ')'
-		{ yyerror(@4, "error: invalid port connection expression.");
+		{ yyerror(@3, "error: invalid port connection expression.");
 		  named_pexpr_t*tmp = new named_pexpr_t;
 		  tmp->name = lex_strings.make($2);
 		  tmp->parm = 0;
@@ -2785,7 +2785,7 @@ specify_simple_path_decl
 		  $$ = pform_assign_path_delay($1, tmp);
 		}
 	| specify_simple_path '=' '(' error ')'
-		{ yyerror(@2, "Syntax error in delay value list.");
+		{ yyerror(@3, "Syntax error in delay value list.");
 		  yyerrok;
 		  $$ = 0;
 		}
@@ -2799,7 +2799,7 @@ specify_simple_path
               K_SG specify_path_identifiers ')'
                 { $$ = pform_make_specify_path(@1, $2, $3, true, $5); }
 	| '(' error ')'
-		{ yyerror(@2, "Invalid simple path");
+		{ yyerror(@1, "Invalid simple path");
 		  yyerrok;
 		}
 	;
@@ -3149,16 +3149,16 @@ statement
 	| K_for '(' lpvalue '=' expression ';' expression ';'
 	  error ')' statement
 		{ $$ = 0;
-		  yyerror(@9, "error: Error in for loop step assignment.");
+		  yyerror(@1, "error: Error in for loop step assignment.");
 		}
 	| K_for '(' lpvalue '=' expression ';' error ';'
 	  lpvalue '=' expression ')' statement
 		{ $$ = 0;
-		  yyerror(@7, "error: Error in for loop condition expression.");
+		  yyerror(@1, "error: Error in for loop condition expression.");
 		}
 	| K_for '(' error ')' statement
 		{ $$ = 0;
-		  yyerror(@3, "error: Incomprehensible for loop.");
+		  yyerror(@1, "error: Incomprehensible for loop.");
 		}
 	| K_while '(' expression ')' statement
 		{ PWhile*tmp = new PWhile($3, $5);
@@ -3166,7 +3166,7 @@ statement
 		}
 	| K_while '(' error ')' statement
 		{ $$ = 0;
-		  yyerror(@3, "error: Error in while loop condition.");
+		  yyerror(@1, "error: Error in while loop condition.");
 		}
 	| delay1 statement_or_null
 		{ PExpr*del = (*$1)[0];
@@ -3207,7 +3207,7 @@ statement
 		  $$ = tmp;
 		}
 	| error '=' expression ';'
-                { yyerror(@1, "Syntax in assignment statement l-value.");
+                { yyerror(@2, "Syntax in assignment statement l-value.");
 		  yyerrok;
 		  $$ = new PNoop;
 		}
@@ -3218,7 +3218,7 @@ statement
 		  $$ = tmp;
 		}
 	| error K_LE expression ';'
-                { yyerror(@1, "Syntax in assignment statement l-value.");
+                { yyerror(@2, "Syntax in assignment statement l-value.");
 		  yyerrok;
 		  $$ = new PNoop;
 		}
@@ -3322,7 +3322,7 @@ statement
 		  $$ = tmp;
 		}
 	| error ';'
-		{ yyerror(@1, "error: malformed statement");
+		{ yyerror(@2, "error: malformed statement");
 		  yyerrok;
 		  $$ = new PNoop;
 		}
