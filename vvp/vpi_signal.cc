@@ -97,6 +97,9 @@ static int signal_get(int code, vpiHandle ref)
 	  case vpiSigned:
 	    return rfp->signed_flag != 0;
 
+	  case vpiArray:
+	    return rfp->parent != 0;
+
 	  case vpiSize:
 	    if (rfp->msb >= rfp->lsb)
 		  return rfp->msb - rfp->lsb + 1;
@@ -162,6 +165,12 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
 
       switch (code) {
 
+	  case vpiParent:
+	    return rfp->parent;
+
+	  case vpiIndex:
+	    return rfp->index;
+
 	  case vpiScope:
 	    return &rfp->scope->base;
 
@@ -173,6 +182,20 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
 		assert(scope);
 		return &scope->base;
 	      }
+      }
+
+      return 0;
+}
+
+static vpiHandle signal_iterate(int code, vpiHandle ref)
+{
+      assert((ref->vpi_type->type_code==vpiNet)
+	     || (ref->vpi_type->type_code==vpiReg));
+
+      struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+
+      if (code == vpiIndex) {
+	    return array_index_iterate(code, rfp->index);
       }
 
       return 0;
@@ -642,6 +665,7 @@ static const struct __vpirt vpip_reg_rt = {
       signal_get_value,
       signal_put_value,
       signal_get_handle,
+      signal_iterate,
       0
 };
 
@@ -652,6 +676,7 @@ static const struct __vpirt vpip_net_rt = {
       signal_get_value,
       signal_put_value,
       signal_get_handle,
+      signal_iterate,
       0
 };
 
@@ -710,6 +735,8 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 {
       struct __vpiSignal*obj = allocate_vpiSignal();
       obj->base.vpi_type = &vpip_net_rt;
+      obj->parent = 0;
+      obj->index = 0;
       obj->name = name? vpip_name_string(name) : 0;
       obj->msb = msb;
       obj->lsb = lsb;

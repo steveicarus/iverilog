@@ -291,6 +291,7 @@ typedef struct t_vpi_delay  {
 #define vpiTimeVar     63
 #define vpiIndex       78
 #define vpiLeftRange   79
+#define vpiParent      81
 #define vpiRightRange  83
 #define vpiScope       84
 #define vpiSysTfCall   85
@@ -312,8 +313,9 @@ typedef struct t_vpi_delay  {
 #define vpiDefName    9
 #define vpiTimeUnit      11
 #define vpiTimePrecision 12
-#define vpiNetType    22
+#define vpiNetType   22
 #   define vpiWire        1
+#define vpiArray     28
 #define vpiConstType 40
 #   define vpiDecConst    1
 #   define vpiRealConst   2

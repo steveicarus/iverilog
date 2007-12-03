@@ -30,6 +30,18 @@
 #endif
 # include  <assert.h>
 
+static int real_var_get(int code, vpiHandle ref)
+{
+      assert(ref->vpi_type->type_code == vpiRealVar);
+
+      struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+
+      if (code == vpiArray) {
+	    return rfp->parent != 0;
+      }
+
+      return 0;
+}
 
 static char* real_var_get_str(int code, vpiHandle ref)
 {
@@ -55,6 +67,37 @@ static char* real_var_get_str(int code, vpiHandle ref)
 	  default:
 	    free(bn);
 	    return 0;
+      }
+
+      return 0;
+}
+
+static vpiHandle real_var_get_handle(int code, vpiHandle ref)
+{
+      assert(ref->vpi_type->type_code == vpiRealVar);
+
+      struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+
+      switch (code) {
+
+	  case vpiParent:
+	    return rfp->parent;
+
+	  case vpiIndex:
+	    return rfp->index;
+      }
+
+      return 0;
+}
+
+static vpiHandle real_var_iterate(int code, vpiHandle ref)
+{
+      assert(ref->vpi_type->type_code == vpiRealVar);
+
+      struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+
+      if (code == vpiIndex) {
+	    return (rfp->index->vpi_type->iterate_)(code, rfp->index);
       }
 
       return 0;
@@ -104,13 +147,13 @@ static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp)
 static const struct __vpirt vpip_real_var_rt = {
       vpiRealVar,
 
-      0,
-      &real_var_get_str,
-      &real_var_get_value,
-      &real_var_put_value,
+      real_var_get,
+      real_var_get_str,
+      real_var_get_value,
+      real_var_put_value,
 
-      0,
-      0,
+      real_var_get_handle,
+      real_var_iterate,
       0,
 
       0
@@ -133,6 +176,8 @@ vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
 	    malloc(sizeof(struct __vpiRealVar));
 
       obj->base.vpi_type = &vpip_real_var_rt;
+      obj->parent = 0;
+      obj->index = 0;
       obj->name = vpip_name_string(name);
       obj->net = net;
 

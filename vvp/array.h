@@ -34,6 +34,7 @@ typedef struct __vpiArray* vvp_array_t;
 extern vvp_array_t array_find(char*label);
 extern const char *get_array_name(char*label);
 extern const int get_array_base(char*label);
+extern vpiHandle array_index_iterate(int code, vpiHandle ref);
 
 extern void array_word_change(vvp_array_t array, unsigned long addr);
 

@@ -91,8 +91,8 @@ struct __vpirt {
       int (*vpi_free_object_)(vpiHandle);
 
        /*
-	 This tow method are used to read/write delay
-	 value from/into modpath record
+	 These two methods are used to read/write delay
+	 values from/into modpath records
        */
        void  (*vpi_get_delays_)(vpiHandle, p_vpi_delay);
        void  (*vpi_put_delays_)(vpiHandle, p_vpi_delay);
@@ -190,6 +190,8 @@ extern void vpip_make_root_iterator(struct __vpiHandle**&table,
  */
 struct __vpiSignal {
       struct __vpiHandle base;
+      vpiHandle parent;
+      vpiHandle index;
       struct __vpiScope* scope;
 	/* The name of this reg/net, or <name>[<index>] for array words. */
       const char*name;
@@ -319,6 +321,8 @@ extern void vpip_run_memory_value_change(vpiHandle ref, unsigned adr);
  */
 struct __vpiRealVar {
       struct __vpiHandle base;
+      vpiHandle parent;
+      vpiHandle index;
       struct __vpiScope* scope;
       const char*name;
       vvp_net_t*net;

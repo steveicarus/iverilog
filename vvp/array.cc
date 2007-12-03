@@ -69,6 +69,12 @@ struct __vpiArrayIterator {
       unsigned next;
 };
 
+struct __vpiArrayIndex {
+      struct __vpiHandle base;
+      struct __vpiDecConst *index;
+      unsigned done;
+};
+
 const char *get_array_name(char*label)
 {
       vvp_array_t array = array_find(label);
@@ -94,6 +100,9 @@ static vpiHandle vpi_array_index(vpiHandle ref, int index);
 static vpiHandle array_iterator_scan(vpiHandle ref, int);
 static int array_iterator_free_object(vpiHandle ref);
 
+static vpiHandle array_index_scan(vpiHandle ref, int);
+static int array_index_free_object(vpiHandle ref);
+
 static const struct __vpirt vpip_arraymem_rt = {
       vpiMemory,
       vpi_array_get,
@@ -115,6 +124,21 @@ static const struct __vpirt vpip_array_iterator_rt = {
       0,
       array_iterator_scan,
       &array_iterator_free_object
+};
+
+/* This should look a bit odd since it provides a fake iteration on
+ * this object. This trickery is used to implement the two forms of
+ * index access, simple handle access and iteration access. */
+static const struct __vpirt vpip_array_index_rt = {
+      vpiIterator,
+      0,
+      0,
+      0,
+      0,
+      0,
+      array_index_iterate,
+      array_index_scan,
+      array_index_free_object
 };
 
 # define ARRAY_HANDLE(ref) (assert(ref->vpi_type->type_code==vpiMemory), \
@@ -239,6 +263,45 @@ static int array_iterator_free_object(vpiHandle ref)
       return 1;
 }
 
+# define ARRAY_INDEX(ref) (assert(ref->vpi_type->type_code==vpiIterator), \
+			   (struct __vpiArrayIndex*)ref)
+
+vpiHandle array_index_iterate(int code, vpiHandle ref)
+{
+      assert(ref->vpi_type->type_code == vpiConstant);
+      struct __vpiDecConst*obj = (struct __vpiDecConst*)ref;
+
+      if (code == vpiIndex) {
+	    struct __vpiArrayIndex*res;
+	    res = (struct __vpiArrayIndex*) calloc(1, sizeof (*res));
+	    res->base.vpi_type = &vpip_array_index_rt;
+	    res->index = obj;
+	    res->done = 0;
+	    return &res->base;
+      }
+      return 0;
+}
+
+static vpiHandle array_index_scan(vpiHandle ref, int)
+{
+      struct __vpiArrayIndex*obj = ARRAY_INDEX(ref);
+
+      if (obj->done == 0) {
+            obj->done = 1;
+            return &obj->index->base;
+      }
+
+      vpi_free_object(ref);
+      return 0;
+}
+
+static int array_index_free_object(vpiHandle ref)
+{
+      struct __vpiArrayIndex*obj = ARRAY_INDEX(ref);
+      free(obj);
+      return 1;
+}
+
 void array_set_word(vvp_array_t arr,
 		    unsigned address,
 		    unsigned part_off,
@@ -328,6 +391,8 @@ void array_attach_word(vvp_array_t array, unsigned long addr, vpiHandle word)
 	    vvp_fun_signal_base*fun = dynamic_cast<vvp_fun_signal_base*>(net->fun);
 	    assert(fun);
 	    fun->attach_as_word(array, addr);
+	    sig->parent = &array->base;
+	    sig->index = vpip_make_dec_const(addr + array->first_addr.value);
       }
 }
 
