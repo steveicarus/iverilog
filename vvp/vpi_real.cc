@@ -49,26 +49,37 @@ static char* real_var_get_str(int code, vpiHandle ref)
 
       struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
       char *bn = strdup(vpi_get_str(vpiFullName, &rfp->scope->base));
-      char *rbuf = need_result_buf(strlen(bn)+strlen(rfp->name) + 2,
-                                   RBUF_STR);
+      char *nm;
+      if (rfp->parent) {
+	    s_vpi_value vp;
+	    nm = strdup(vpi_get_str(vpiName, rfp->parent));
+	    strcat(nm, "[");
+	    vp.format = vpiDecStrVal;
+	    vpi_get_value(rfp->id.index, &vp);
+	    strcat(nm, vp.value.str);
+	    strcat(nm, "]");
+      } else {
+	    nm = strdup(rfp->id.name);
+      }
+      char *rbuf = need_result_buf(strlen(bn)+strlen(nm) + 2, RBUF_STR);
 
       switch (code) {
 
 	  case vpiFullName:
-	    sprintf(rbuf, "%s.%s", bn, rfp->name);
+	    sprintf(rbuf, "%s.%s", bn, nm);
 	    free(bn);
+	    free(nm);
 	    return rbuf;
 
 	  case vpiName:
-	    strcpy(rbuf, rfp->name);
+	    strcpy(rbuf, nm);
 	    free(bn);
+	    free(nm);
 	    return rbuf;
-
-	  default:
-	    free(bn);
-	    return 0;
       }
 
+      free(bn);
+      free(nm);
       return 0;
 }
 
@@ -84,7 +95,7 @@ static vpiHandle real_var_get_handle(int code, vpiHandle ref)
 	    return rfp->parent;
 
 	  case vpiIndex:
-	    return rfp->index;
+	    return rfp->parent ? rfp->id.index : 0;
       }
 
       return 0;
@@ -97,7 +108,8 @@ static vpiHandle real_var_iterate(int code, vpiHandle ref)
       struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
 
       if (code == vpiIndex) {
-	    return (rfp->index->vpi_type->iterate_)(code, rfp->index);
+	    return rfp->parent ? (rfp->id.index->vpi_type->iterate_)
+	                           (code, rfp->id.index) : 0;
       }
 
       return 0;
@@ -170,6 +182,11 @@ void vpip_real_value_change(struct __vpiCallback*cbh,
       fun->add_vpi_callback(cbh);
 }
 
+/*
+ * Since reals do not currently support arrays none of the array code
+ * has been tested! Though it should work since it is a copy of the
+ * signal code.
+ */
 vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
 {
       struct __vpiRealVar*obj = (struct __vpiRealVar*)
@@ -177,8 +194,7 @@ vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
 
       obj->base.vpi_type = &vpip_real_var_rt;
       obj->parent = 0;
-      obj->index = 0;
-      obj->name = vpip_name_string(name);
+      obj->id.name = vpip_name_string(name);
       obj->net = net;
 
       obj->scope = vpip_peek_current_scope();

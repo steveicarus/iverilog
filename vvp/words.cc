@@ -46,11 +46,13 @@ static void __compile_var_real(char*label, char*name,
 
       compile_vpi_symbol(label, obj);
 
-      if (!array && name) {
+      if (name) {
+	    assert(!array);
 	    vpip_attach_to_current_scope(obj);
 	    schedule_init_vector(vvp_net_ptr_t(net,0), fun->real_value());
       }
       if (array) {
+	    assert(!name);
 	    array_attach_word(array, array_addr, obj);
       }
       free(label);
@@ -62,11 +64,11 @@ void compile_var_real(char*label, char*name, int msb, int lsb)
       __compile_var_real(label, name, 0, 0, msb, lsb);
 }
 
-void compile_varw_real(char*label, char*name, vvp_array_t array,
+void compile_varw_real(char*label, vvp_array_t array,
 		       unsigned long addr,
 		       int msb, int lsb)
 {
-      __compile_var_real(label, name, array, addr, msb, lsb);
+      __compile_var_real(label, 0, array, addr, msb, lsb);
 }
 
 /*
@@ -92,13 +94,15 @@ static void __compile_var(char*label, char*name,
       compile_vpi_symbol(label, obj);
 	// If the signal has a name, then it goes into the current
 	// scope as a signal.
-      if (!array && name) {
+      if (name) {
+	    assert(!array);
 	    vpip_attach_to_current_scope(obj);
 	    schedule_init_vector(vvp_net_ptr_t(node,0), vsig->vec4_value());
       }
 	// If this is an array word, then it does not have a name, and
 	// it is attached to the addressed array.
       if (array) {
+	    assert(!name);
 	    array_attach_word(array, array_addr, obj);
       }
       free(label);
@@ -119,11 +123,11 @@ void compile_variable(char*label, char*name,
 * This function is actually used by the compile_array function,
 * instead of directly by the parser.
 */
-void compile_variablew(char*label, char*name, vvp_array_t array,
+void compile_variablew(char*label, vvp_array_t array,
 		       unsigned long array_addr,
 		       int msb, int lsb, char signed_flag)
 {
-      __compile_var(label, name, array, array_addr, msb, lsb, signed_flag);
+      __compile_var(label, 0, array, array_addr, msb, lsb, signed_flag);
 }
 
 /*
@@ -195,16 +199,9 @@ void compile_netw(char*label, char*array_label, unsigned long array_addr,
 		 bool signed_flag, bool net8_flag,
 		 unsigned argc, struct symb_s*argv)
 {
-        /* Get the array name and build the word name. */
-      const char *name = get_array_name(array_label);
-      unsigned len = strlen(name) + 32;
-      char *nbuf = (char *)malloc(len);
-      snprintf(nbuf, len, "%s[%lu]", name, array_addr +
-               get_array_base(array_label));
-      __compile_net(label, strdup(nbuf), array_label, array_addr,
+      __compile_net(label, 0, array_label, array_addr,
 		    msb, lsb, signed_flag, net8_flag,
 		    argc, argv);
-      free(nbuf);
 }
 
 void compile_net_real(char*label, char*name, int msb, int lsb,

@@ -135,8 +135,18 @@ static char* signal_get_str(int code, vpiHandle ref)
       struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
 
       char *bn = strdup(vpi_get_str(vpiFullName, &rfp->scope->base));
-      char *nm = (char*)rfp->name;
-
+      char *nm;
+      if (rfp->parent) {
+	    s_vpi_value vp;
+	    nm = strdup(vpi_get_str(vpiName, rfp->parent));
+	    strcat(nm, "[");
+	    vp.format = vpiDecStrVal;
+	    vpi_get_value(rfp->id.index, &vp);
+	    strcat(nm, vp.value.str);
+	    strcat(nm, "]");
+      } else {
+	    nm = strdup(rfp->id.name);
+      }
       char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 2, RBUF_STR);
 
       switch (code) {
@@ -144,15 +154,18 @@ static char* signal_get_str(int code, vpiHandle ref)
 	  case vpiFullName:
 	    sprintf(rbuf, "%s.%s", bn, nm);
 	    free(bn);
+	    free(nm);
 	    return rbuf;
 
 	  case vpiName:
 	    strcpy(rbuf, nm);
 	    free(bn);
+	    free(nm);
 	    return rbuf;
       }
 
       free(bn);
+      free(nm);
       return 0;
 }
 
@@ -169,7 +182,7 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
 	    return rfp->parent;
 
 	  case vpiIndex:
-	    return rfp->index;
+	    return rfp->parent ? rfp->id.index : 0;
 
 	  case vpiScope:
 	    return &rfp->scope->base;
@@ -195,7 +208,7 @@ static vpiHandle signal_iterate(int code, vpiHandle ref)
       struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
 
       if (code == vpiIndex) {
-	    return array_index_iterate(code, rfp->index);
+	    return rfp->parent ? array_index_iterate(code, rfp->id.index) : 0;
       }
 
       return 0;
@@ -521,7 +534,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    fprintf(stderr, "vvp internal error: get_value: "
 		    "value type %u not implemented."
 		    " Signal is %s in scope %s\n",
-		    vp->format, rfp->name, rfp->scope->name);
+		    vp->format, vpi_get_str(vpiName, ref), rfp->scope->name);
 	    assert(0);
       }
 }
@@ -648,7 +661,7 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 	    fprintf(stderr, "vvp internal error: put_value: "
 		    "value type %u not implemented."
 		    " Signal is %s in scope %s\n",
-		    vp->format, rfp->name, rfp->scope->name);
+		    vp->format, vpi_get_str(vpiName, ref), rfp->scope->name);
 	    assert(0);
 
       }
@@ -736,8 +749,7 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
       struct __vpiSignal*obj = allocate_vpiSignal();
       obj->base.vpi_type = &vpip_net_rt;
       obj->parent = 0;
-      obj->index = 0;
-      obj->name = name? vpip_name_string(name) : 0;
+      obj->id.name = name? vpip_name_string(name) : 0;
       obj->msb = msb;
       obj->lsb = lsb;
       obj->signed_flag = signed_flag? 1 : 0;

@@ -258,10 +258,12 @@ static void cmd_list(unsigned, char*[])
 		case vpiReg:
 		  sig = (struct __vpiSignal*) table[idx];
 		  if ((sig->msb == 0) && (sig->lsb == 0))
-			printf("reg     : %s%s\n", sig->name,
+			printf("reg     : %s%s\n",
+			       vpi_get_str(vpiName, table[idx]),
 			       sig->signed_flag? "signed " : "");
 		  else
-			printf("reg     : %s%s[%d:%d]\n", sig->name,
+			printf("reg     : %s%s[%d:%d]\n",
+			       vpi_get_str(vpiName, table[idx]),
 			       sig->signed_flag? "signed " : "",
 			       sig->msb, sig->lsb);
 		  break;
@@ -269,10 +271,12 @@ static void cmd_list(unsigned, char*[])
 		case vpiNet:
 		  sig = (struct __vpiSignal*) table[idx];
 		  if ((sig->msb == 0) && (sig->lsb == 0))
-			printf("net     : %s%s\n", sig->name,
+			printf("net     : %s%s\n",
+			       vpi_get_str(vpiName, table[idx]),
 			       sig->signed_flag? "signed " : "");
 		  else
-			printf("net     : %s%s[%d:%d]\n", sig->name,
+			printf("net     : %s%s[%d:%d]\n",
+			       vpi_get_str(vpiName, table[idx]),
 			       sig->signed_flag? "signed " : "",
 			       sig->msb, sig->lsb);
 		  break;

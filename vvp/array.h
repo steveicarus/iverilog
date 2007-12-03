@@ -32,8 +32,6 @@ typedef struct __vpiArray* vvp_array_t;
  * table of all the arrays in the design.
  */
 extern vvp_array_t array_find(char*label);
-extern const char *get_array_name(char*label);
-extern const int get_array_base(char*label);
 extern vpiHandle array_index_iterate(int code, vpiHandle ref);
 
 extern void array_word_change(vvp_array_t array, unsigned long addr);
@@ -47,10 +45,10 @@ extern void array_set_word(vvp_array_t arr,
 
 extern vvp_vector4_t array_get_word(vvp_array_t array, unsigned adddress);
 
-extern void compile_variablew(char*label, char*name, vvp_array_t array,
+extern void compile_variablew(char*label, vvp_array_t array,
 			      unsigned long array_addr,
 			     int msb, int lsb, char signed_flag);
-extern void compile_varw_real(char*label, char*name, vvp_array_t array,
+extern void compile_varw_real(char*label, vvp_array_t array,
 			      unsigned long array_addr,
 			      int msb, int lsb);
 #endif

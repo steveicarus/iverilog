@@ -191,10 +191,12 @@ extern void vpip_make_root_iterator(struct __vpiHandle**&table,
 struct __vpiSignal {
       struct __vpiHandle base;
       vpiHandle parent;
-      vpiHandle index;
       struct __vpiScope* scope;
-	/* The name of this reg/net, or <name>[<index>] for array words. */
-      const char*name;
+	/* The name of this reg/net, or the index for array words. */
+      union {
+            const char*name;
+            vpiHandle index;
+      } id;
 	/* The indices that define the width and access offset. */
       int msb, lsb;
 	/* Flags */
@@ -322,9 +324,12 @@ extern void vpip_run_memory_value_change(vpiHandle ref, unsigned adr);
 struct __vpiRealVar {
       struct __vpiHandle base;
       vpiHandle parent;
-      vpiHandle index;
       struct __vpiScope* scope;
-      const char*name;
+	/* The name of this variable, or the index for array words. */
+      union {
+            const char*name;
+            vpiHandle index;
+      } id;
       vvp_net_t*net;
 };
 

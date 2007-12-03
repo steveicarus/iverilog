@@ -75,22 +75,6 @@ struct __vpiArrayIndex {
       unsigned done;
 };
 
-const char *get_array_name(char*label)
-{
-      vvp_array_t array = array_find(label);
-      if (array == 0)
-	    return 0;
-      return array->name;
-}
-
-const int get_array_base(char*label)
-{
-      vvp_array_t array = array_find(label);
-      if (array == 0)
-	    return 0;
-      return array->first_addr.value;
-}
-
 static int vpi_array_get(int code, vpiHandle ref);
 static char*vpi_array_get_str(int code, vpiHandle ref);
 static vpiHandle vpi_array_get_handle(int code, vpiHandle ref);
@@ -392,7 +376,7 @@ void array_attach_word(vvp_array_t array, unsigned long addr, vpiHandle word)
 	    assert(fun);
 	    fun->attach_as_word(array, addr);
 	    sig->parent = &array->base;
-	    sig->index = vpip_make_dec_const(addr + array->first_addr.value);
+	    sig->id.index = vpip_make_dec_const(addr + array->first_addr.value);
       }
 }
 
@@ -420,13 +404,8 @@ void compile_var_array(char*label, char*name, int last, int first,
 	/* Make the words. */
       for (unsigned idx = 0 ;  idx < arr->array_count ;  idx += 1) {
 	    char buf[64];
-	    unsigned len = strlen(name) + 32;
-	    char *nbuf = (char *)malloc(len);
 	    snprintf(buf, sizeof buf, "%s_%u", label, idx);
-	    snprintf(nbuf, len, "%s[%d]", name, idx + arr->first_addr.value);
-	    compile_variablew(strdup(buf), strdup(nbuf), array, idx, msb, lsb,
-	                      signed_flag);
-	    free(nbuf);
+	    compile_variablew(strdup(buf), array, idx, msb, lsb, signed_flag);
       }
 
       free(label);
@@ -444,12 +423,8 @@ void compile_real_array(char*label, char*name, int last, int first,
 	/* Make the words. */
       for (unsigned idx = 0 ;  idx < arr->array_count ;  idx += 1) {
 	    char buf[64];
-	    unsigned len = strlen(name) + 32;
-	    char *nbuf = (char *)malloc(len);
 	    snprintf(buf, sizeof buf, "%s_%u", label, idx);
-	    snprintf(nbuf, len, "%s[%u]", name, idx + arr->first_addr.value);
-	    compile_varw_real(strdup(buf), strdup(nbuf), array, idx, msb, lsb);
-	    free(nbuf);
+	    compile_varw_real(strdup(buf), array, idx, msb, lsb);
       }
 
       free(label);
