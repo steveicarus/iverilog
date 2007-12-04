@@ -39,12 +39,16 @@
 #endif
 # include  <stdlib.h>
 
+/*
+* The vpi_free_object() call to a callback doesn't actually delete
+* anything, we instead allow the object to run its course and delete
+* itself. The semantics of vpi_free_object for a callback is that it
+* deletes the *handle*, and not the object itself, so given the vvp
+* implementation, there is nothing to do here.
+*/
+
 static int free_simple_callback(vpiHandle ref)
 {
-      assert(ref);
-      assert(ref->vpi_type);
-      assert(ref->vpi_type->type_code == vpiCallback);
-      delete ref;
       return 1;
 }
 
