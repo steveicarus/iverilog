@@ -442,11 +442,12 @@ void schedule_simulate(void)
 
       signals_capture();
 
-      while (schedule_runnable && sched_list) {
+      while (sched_list) {
 
 	    if (schedule_stopped_flag) {
 		  schedule_stopped_flag = false;
 		  stop_handler(0);
+		  if (!schedule_runnable) break;
 		  continue;
 	    }
 
@@ -457,6 +458,7 @@ void schedule_simulate(void)
 		 postponed sync events. Run them all. */
 	    if (ctim->delay > 0) {
 
+		  if (!schedule_runnable) break;
 		  struct event_s*sync_cur;
 		  while ( (sync_cur = pull_sync_event()) ) {
 			assert(sync_cur->type == TYPE_GEN);
