@@ -170,8 +170,6 @@ void vthread_put_real(struct vthread_s*thr, unsigned addr, double val)
 static unsigned long* vector_to_array(struct vthread_s*thr,
 				      unsigned addr, unsigned wid)
 {
-
-
       if (addr == 0) {
 	    unsigned awid = (wid + CPU_WORD_BITS - 1) / (CPU_WORD_BITS);
 	    unsigned long*val = new unsigned long[awid];
@@ -430,7 +428,6 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
       unsigned long*lvb = vector_to_array(thr, cp->bit_idx[1], cp->number);
       if (lva == 0 || lvb == 0)
 	    goto x_out;
-
 
       unsigned long carry;
       carry = 0;
@@ -2193,9 +2190,7 @@ vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
       assert(cp->bit_idx[0] >= 4);
       assert(cp->bit_idx[1] > 0);
 
-      unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
-      int64_t addend = thr->words[0].w_int;
       vvp_net_t*net = cp->net;
 
 	/* For the %load to work, the functor must actually be a
