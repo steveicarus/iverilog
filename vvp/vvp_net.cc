@@ -353,22 +353,42 @@ unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
 	      /* Get the first word we are scanning. We may in fact be
 		 somewhere in the middle of that word. */
 	    unsigned long tmp = bits_ptr_[adr/BITS_PER_WORD];
-	    tmp >>= 2UL * (adr%BITS_PER_WORD);
+	    unsigned long off = adr%BITS_PER_WORD;
+	    tmp >>= 2UL * off;
 
+	      // Test for X bits but not beyond the desired wid.
+	    unsigned long xmask = WORD_X_BITS;
+	    if (wid < (BITS_PER_WORD-off))
+		  xmask &= ~(-1UL << 2*wid);
+	    if (tmp & xmask)
+		  goto x_out;
+
+	      // Where in the target array to write the next bit.
 	    unsigned long mask1 = 1;
 	    const unsigned long mask1_last = 1UL << (BIT2_PER_WORD-1);
 	    unsigned long*val_ptr = val;
+	      // Track where the source bit is in the source word.
+	    unsigned adr_bit = adr%BITS_PER_WORD;
+	      // Scan...
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		    /* Starting a new word? */
-		  if (adr%BITS_PER_WORD == 0)
+		  if (adr_bit == BITS_PER_WORD) {
 			tmp = bits_ptr_[adr/BITS_PER_WORD];
+			  // If this is the last word, then only test
+			  // for X in the valid bits.
+			xmask = WORD_X_BITS;
+			if ((wid-idx) < BITS_PER_WORD)
+			      xmask &= ~(WORD_Z_BITS<<2*(wid-idx));
+			if (tmp & xmask)
+			      goto x_out;
+			adr_bit = 0;
+		  }
 
-		  if (tmp&2)
-			goto x_out;
 		  if (tmp&1)
 			*val_ptr |= mask1;
 
 		  adr += 1;
+		  adr_bit += 1;
 		  tmp >>= 2UL;
 
 		  if (mask1 == mask1_last) {
