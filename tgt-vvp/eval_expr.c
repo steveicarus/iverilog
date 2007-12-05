@@ -27,6 +27,8 @@
 
 static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
 				int ok_flags);
+static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
+			     int add_index);
 
 int number_is_unknown(ivl_expr_t ex)
 {
@@ -998,6 +1000,28 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
       return lv;
 }
 
+static struct vector_info draw_load_add_immediate(ivl_expr_t le,
+						  ivl_expr_t re,
+						  unsigned wid)
+{
+      struct vector_info lv;
+      unsigned long imm;
+
+      imm = get_number_immediate(re);
+
+	/* Load the immidiate value into word register 0 */
+      fprintf(vvp_out, "  %%ix/load 0, %lu;\n", imm);
+
+      lv.base = allocate_vector(wid);
+      lv.wid = wid;
+
+	/* Load the signal value with %loads that add the index
+	   register to the value being loaded. */
+      draw_signal_dest(le, lv, 0);
+
+      return lv;
+}
+
 static struct vector_info draw_add_immediate(ivl_expr_t le,
 					     ivl_expr_t re,
 					     unsigned wid)
@@ -1097,6 +1121,26 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
       struct vector_info rv;
 
       const char*sign_string = ivl_expr_signed(exp)? "/s" : "";
+
+      if ((ivl_expr_opcode(exp) == '+')
+	  && (ivl_expr_type(le) == IVL_EX_SIGNAL)
+	  && (ivl_expr_type(re) == IVL_EX_ULONG))
+	    return draw_load_add_immediate(le, re, wid);
+
+      if ((ivl_expr_opcode(exp) == '+')
+	  && (ivl_expr_type(le) == IVL_EX_SIGNAL)
+	  && (ivl_expr_type(re) == IVL_EX_NUMBER))
+	    return draw_load_add_immediate(le, re, wid);
+
+      if ((ivl_expr_opcode(exp) == '+')
+	  && (ivl_expr_type(re) == IVL_EX_SIGNAL)
+	  && (ivl_expr_type(le) == IVL_EX_ULONG))
+	    return draw_load_add_immediate(re, le, wid);
+
+      if ((ivl_expr_opcode(exp) == '+')
+	  && (ivl_expr_type(re) == IVL_EX_SIGNAL)
+	  && (ivl_expr_type(le) == IVL_EX_NUMBER))
+	    return draw_load_add_immediate(re, le, wid);
 
       if ((ivl_expr_opcode(exp) == '+')
 	  && (ivl_expr_type(re) == IVL_EX_ULONG))
@@ -1663,8 +1707,12 @@ static void pad_expr_in_place(ivl_expr_t exp, struct vector_info res, unsigned s
  * into the thread bits. Remember to account for the part select by
  * offsetting the read from the lsi (least significant index) of the
  * signal.
+ *
+ * If the add_index is >=0, then generate a %load/vpp to add the
+ * word0 value to the loaded value before storing it into the destination.
  */
-static void draw_signal_dest(ivl_expr_t exp, struct vector_info res)
+static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
+			     int add_index)
 {
       unsigned swid = ivl_expr_width(exp);
       ivl_signal_t sig = ivl_expr_signal(exp);
@@ -1679,6 +1727,7 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res)
       if (ivl_signal_array_count(sig) > 1) {
 	    ivl_expr_t ix = ivl_expr_oper1(exp);
 	    if (!number_is_immediate(ix, 8*sizeof(unsigned long))) {
+		  assert(add_index < 0);
 		  draw_eval_expr_into_integer(ix, 3);
 		  fprintf(vvp_out, "   %%load/av %u, v%p, %u;\n",
 			  res.base, sig, swid);
@@ -1694,10 +1743,19 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res)
 
       if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
 
+	    assert(add_index < 0);
 	    int tmp = allocate_word();
 	    fprintf(vvp_out, " %%load/wr %d, v%p_%u;\n", tmp, sig, word);
 	    fprintf(vvp_out, " %%cvt/vr %u, %d, %u;\n", res.base, tmp, res.wid);
 	    clr_word(tmp);
+
+      } else if (add_index >= 0) {
+
+	    assert(add_index == 0);
+
+	      /* If this is a REG (a variable) then I can do a vector read. */
+	    fprintf(vvp_out, "    %%load/vp0 %u, v%p_%u, %u;\n",
+		    res.base, sig, word, swid);
 
       } else {
 
@@ -1730,7 +1788,7 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid,
       res.wid  = wid;
       save_expression_lookaside(res.base, exp, wid);
 
-      draw_signal_dest(exp, res);
+      draw_signal_dest(exp, res, -1);
       return res;
 }
 
@@ -2232,7 +2290,7 @@ static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
       switch (ivl_expr_type(exp)) {
 
 	  case IVL_EX_SIGNAL:
-	    draw_signal_dest(exp, dest);
+	    draw_signal_dest(exp, dest, -1);
 	    return;
 
 	  default:

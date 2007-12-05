@@ -121,11 +121,16 @@ class vvp_vector4_t {
 	// Test that the vectors are exactly equal
       bool eeq(const vvp_vector4_t&that) const;
 
+	// Return true if there is an X or Z anywhere in the vector.
+      bool has_xz() const;
+
 	// Change all Z bits to X bits.
       void change_z2x();
 
 	// Display the value into the buf as a string.
       char*as_string(char*buf, size_t buf_len);
+
+      vvp_vector4_t& operator += (int64_t);
 
     private:
 	// Number of vvp_bit4_t bits that can be shoved into a word.

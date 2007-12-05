@@ -2188,13 +2188,14 @@ bool of_LOAD_NX(vthread_t thr, vvp_code_t cp)
  * The functor to read from is the vvp_net_t object pointed to by the
  * cp->net pointer.
  */
-bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
+vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
       assert(cp->bit_idx[1] > 0);
 
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
+      int64_t addend = thr->words[0].w_int;
       vvp_net_t*net = cp->net;
 
 	/* For the %load to work, the functor must actually be a
@@ -2208,6 +2209,40 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t sig_value = sig->vec4_value();
       sig_value.resize(wid);
+
+      return sig_value;
+}
+
+bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+      vvp_vector4_t sig_value = load_base(thr, cp);
+
+	/* Check the address once, before we scan the vector. */
+      thr_check_addr(thr, bit+wid-1);
+
+	/* Copy the vector bits into the bits4 vector. Do the copy
+	   directly to skip the excess calls to thr_check_addr. */
+      thr->bits4.set_vec(bit, sig_value);
+
+      return true;
+}
+
+/*
+* This is like of_LOAD_VEC, but includes an add of an integer value.
+*/
+bool of_LOAD_VP0(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+      int64_t addend = thr->words[0].w_int;
+
+      vvp_vector4_t sig_value = load_base(thr, cp);
+
+	/* Add the addend value */
+      sig_value += addend;
 
 	/* Check the address once, before we scan the vector. */
       thr_check_addr(thr, bit+wid-1);

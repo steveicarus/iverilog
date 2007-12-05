@@ -557,6 +557,31 @@ bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
       return true;
 }
 
+bool vvp_vector4_t::has_xz() const
+{
+      if (size_ < BITS_PER_WORD) {
+	    unsigned long mask = WORD_X_BITS >> 2*(BITS_PER_WORD - size_);
+	    return 0 != (bits_val_&mask);
+      }
+
+      if (size_ == BITS_PER_WORD) {
+	    return 0 != (bits_val_&WORD_X_BITS);
+      }
+
+      unsigned words = size_ / BITS_PER_WORD;
+      for (unsigned idx = 0 ; idx < words ; idx += 1) {
+	    if (bits_ptr_[idx] & WORD_X_BITS)
+		  return true;
+      }
+
+      unsigned long mask = size_%BITS_PER_WORD;
+      if (mask > 0) {
+	    mask = WORD_X_BITS >> 2*(BITS_PER_WORD - mask);
+	    return 0 != bits_ptr_[words]&mask;
+      }
+
+      return false;
+}
 
 void vvp_vector4_t::change_z2x()
 {
@@ -600,6 +625,40 @@ char* vvp_vector4_t::as_string(char*buf, size_t buf_len)
       *buf++ = '>';
       *buf++ = 0;
       return res;
+}
+
+/*
+* Add an integer to the vvp_vector4_t in place, bit by bit so that
+* there is no size limitations.
+*/
+vvp_vector4_t& vvp_vector4_t::operator += (int64_t that)
+{
+      vvp_bit4_t carry = BIT4_0;
+      unsigned idx;
+
+      if (has_xz()) {
+	    vvp_vector4_t xxx (size(), BIT4_X);
+	    *this = xxx;
+	    return *this;
+      }
+
+      for (idx = 0 ; idx < size() ; idx += 1) {
+	    if (that == 0 && carry==BIT4_0)
+		  break;
+
+	    vvp_bit4_t that_bit = (that&1)? BIT4_1 : BIT4_0;
+	    that >>= 1;
+
+	    if (that_bit==BIT4_0 && carry==BIT4_0)
+		  continue;
+
+	    vvp_bit4_t bit = value(idx);
+	    bit = add_with_carry(bit, that_bit, carry);
+
+	    set_bit(idx, bit);
+      }
+
+      return *this;
 }
 
 ostream& operator<< (ostream&out, const vvp_vector4_t&that)
