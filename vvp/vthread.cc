@@ -170,16 +170,15 @@ void vthread_put_real(struct vthread_s*thr, unsigned addr, double val)
 static unsigned long* vector_to_array(struct vthread_s*thr,
 				      unsigned addr, unsigned wid)
 {
-      unsigned awid = (wid + CPU_WORD_BITS - 1) / (CPU_WORD_BITS);
-
-
       if (addr == 0) {
+	    unsigned awid = (wid + CPU_WORD_BITS - 1) / (CPU_WORD_BITS);
 	    unsigned long*val = new unsigned long[awid];
 	    for (unsigned idx = 0 ;  idx < awid ;  idx += 1)
 		  val[idx] = 0;
 	    return val;
       }
       if (addr == 1) {
+	    unsigned awid = (wid + CPU_WORD_BITS - 1) / (CPU_WORD_BITS);
 	    unsigned long*val = new unsigned long[awid];
 	    for (unsigned idx = 0 ;  idx < awid ;  idx += 1)
 		  val[idx] = -1UL;
@@ -429,7 +428,6 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
       unsigned long*lvb = vector_to_array(thr, cp->bit_idx[1], cp->number);
       if (lva == 0 || lvb == 0)
 	    goto x_out;
-
 
       unsigned long carry;
       carry = 0;
@@ -2187,12 +2185,11 @@ bool of_LOAD_NX(vthread_t thr, vvp_code_t cp)
  * The functor to read from is the vvp_net_t object pointed to by the
  * cp->net pointer.
  */
-bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
+vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
       assert(cp->bit_idx[1] > 0);
 
-      unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
       vvp_net_t*net = cp->net;
 
@@ -2207,6 +2204,40 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t sig_value = sig->vec4_value();
       sig_value.resize(wid);
+
+      return sig_value;
+}
+
+bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+      vvp_vector4_t sig_value = load_base(thr, cp);
+
+	/* Check the address once, before we scan the vector. */
+      thr_check_addr(thr, bit+wid-1);
+
+	/* Copy the vector bits into the bits4 vector. Do the copy
+	   directly to skip the excess calls to thr_check_addr. */
+      thr->bits4.set_vec(bit, sig_value);
+
+      return true;
+}
+
+/*
+* This is like of_LOAD_VEC, but includes an add of an integer value.
+*/
+bool of_LOAD_VP0(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+      int64_t addend = thr->words[0].w_int;
+
+      vvp_vector4_t sig_value = load_base(thr, cp);
+
+	/* Add the addend value */
+      sig_value += addend;
 
 	/* Check the address once, before we scan the vector. */
       thr_check_addr(thr, bit+wid-1);

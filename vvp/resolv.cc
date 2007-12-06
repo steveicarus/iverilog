@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.cc,v 1.26 2005/06/22 18:30:12 steve Exp $"
-#endif
 
 # include  "resolv.h"
 # include  "schedule.h"
@@ -31,6 +28,7 @@
 resolv_functor::resolv_functor(vvp_scalar_t hiz_value, const char*debug_l)
 : hiz_(hiz_value), debug_label_(debug_l)
 {
+      count_functors_resolv += 1;
 }
 
 resolv_functor::~resolv_functor()
@@ -95,9 +93,3 @@ void resolv_functor::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
 
       vvp_send_vec8(ptr->out, out);
 }
-
-
-/*
- * $Log: resolv.cc,v $
- */
-

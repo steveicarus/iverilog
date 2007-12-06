@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,11 +16,11 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.64 2007/06/12 02:36:58 steve Exp $"
 
 # include  "config.h"
 # include  "vvp_net.h"
 # include  "schedule.h"
+# include  "statistics.h"
 # include  <stdio.h>
 # include  <iostream>
 # include  <typeinfo>
@@ -353,20 +353,50 @@ unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
 	      /* Get the first word we are scanning. We may in fact be
 		 somewhere in the middle of that word. */
 	    unsigned long tmp = bits_ptr_[adr/BITS_PER_WORD];
-	    tmp >>= 2UL * (adr%BITS_PER_WORD);
+	    unsigned long off = adr%BITS_PER_WORD;
+	    tmp >>= 2UL * off;
 
+	      // Test for X bits but not beyond the desired wid.
+	    unsigned long xmask = WORD_X_BITS;
+	    if (wid < (BITS_PER_WORD-off))
+		  xmask &= ~(-1UL << 2*wid);
+	    if (tmp & xmask)
+		  goto x_out;
+
+	      // Where in the target array to write the next bit.
+	    unsigned long mask1 = 1;
+	    const unsigned long mask1_last = 1UL << (BIT2_PER_WORD-1);
+	    unsigned long*val_ptr = val;
+	      // Track where the source bit is in the source word.
+	    unsigned adr_bit = adr%BITS_PER_WORD;
+	      // Scan...
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		    /* Starting a new word? */
-		  if (adr%BITS_PER_WORD == 0)
+		  if (adr_bit == BITS_PER_WORD) {
 			tmp = bits_ptr_[adr/BITS_PER_WORD];
+			  // If this is the last word, then only test
+			  // for X in the valid bits.
+			xmask = WORD_X_BITS;
+			if ((wid-idx) < BITS_PER_WORD)
+			      xmask &= ~(WORD_Z_BITS<<2*(wid-idx));
+			if (tmp & xmask)
+			      goto x_out;
+			adr_bit = 0;
+		  }
 
-		  if (tmp&2)
-			goto x_out;
 		  if (tmp&1)
-			val[idx/BIT2_PER_WORD] |= 1UL << (idx % BIT2_PER_WORD);
+			*val_ptr |= mask1;
 
 		  adr += 1;
+		  adr_bit += 1;
 		  tmp >>= 2UL;
+
+		  if (mask1 == mask1_last) {
+			val_ptr += 1;
+			mask1 = 1;
+		  } else {
+			mask1 <<= 1;
+		  }
 	    }
       }
 
@@ -547,6 +577,31 @@ bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
       return true;
 }
 
+bool vvp_vector4_t::has_xz() const
+{
+      if (size_ < BITS_PER_WORD) {
+	    unsigned long mask = WORD_X_BITS >> 2*(BITS_PER_WORD - size_);
+	    return 0 != (bits_val_&mask);
+      }
+
+      if (size_ == BITS_PER_WORD) {
+	    return 0 != (bits_val_&WORD_X_BITS);
+      }
+
+      unsigned words = size_ / BITS_PER_WORD;
+      for (unsigned idx = 0 ; idx < words ; idx += 1) {
+	    if (bits_ptr_[idx] & WORD_X_BITS)
+		  return true;
+      }
+
+      unsigned long mask = size_%BITS_PER_WORD;
+      if (mask > 0) {
+	    mask = WORD_X_BITS >> 2*(BITS_PER_WORD - mask);
+	    return 0 != bits_ptr_[words]&mask;
+      }
+
+      return false;
+}
 
 void vvp_vector4_t::change_z2x()
 {
@@ -590,6 +645,40 @@ char* vvp_vector4_t::as_string(char*buf, size_t buf_len)
       *buf++ = '>';
       *buf++ = 0;
       return res;
+}
+
+/*
+* Add an integer to the vvp_vector4_t in place, bit by bit so that
+* there is no size limitations.
+*/
+vvp_vector4_t& vvp_vector4_t::operator += (int64_t that)
+{
+      vvp_bit4_t carry = BIT4_0;
+      unsigned idx;
+
+      if (has_xz()) {
+	    vvp_vector4_t xxx (size(), BIT4_X);
+	    *this = xxx;
+	    return *this;
+      }
+
+      for (idx = 0 ; idx < size() ; idx += 1) {
+	    if (that == 0 && carry==BIT4_0)
+		  break;
+
+	    vvp_bit4_t that_bit = (that&1)? BIT4_1 : BIT4_0;
+	    that >>= 1;
+
+	    if (that_bit==BIT4_0 && carry==BIT4_0)
+		  continue;
+
+	    vvp_bit4_t bit = value(idx);
+	    bit = add_with_carry(bit, that_bit, carry);
+
+	    set_bit(idx, bit);
+      }
+
+      return *this;
 }
 
 ostream& operator<< (ostream&out, const vvp_vector4_t&that)
@@ -1406,6 +1495,7 @@ ostream& operator<<(ostream&out, const vvp_vector8_t&that)
 
 vvp_net_fun_t::vvp_net_fun_t()
 {
+      count_functors += 1;
 }
 
 vvp_net_fun_t::~vvp_net_fun_t()
@@ -1477,6 +1567,7 @@ vvp_fun_signal_base::vvp_fun_signal_base()
       continuous_assign_active_ = false;
       force_link = 0;
       cassign_link = 0;
+      count_functors_sig += 1;
 }
 
 void vvp_fun_signal_base::deassign()

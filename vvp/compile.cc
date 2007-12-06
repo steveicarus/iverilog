@@ -141,6 +141,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%load/mv",of_LOAD_MV,3,  {OA_BIT1,     OA_MEM_PTR,  OA_BIT2} },
       { "%load/nx",of_LOAD_NX,3,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
       { "%load/v", of_LOAD_VEC,3, {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
+      { "%load/vp0",of_LOAD_VP0,3,{OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
       { "%load/wr",of_LOAD_WR,2,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
       { "%load/x", of_LOAD_X, 3,  {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
       { "%load/x.p",of_LOAD_XP, 3,{OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },

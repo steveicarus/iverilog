@@ -43,7 +43,7 @@
 table_functor_s::table_functor_s(truth_t t)
 : table(t)
 {
-      count_functors_table += 1;
+      count_functors_logic += 1;
 }
 
 table_functor_s::~table_functor_s()
@@ -125,6 +125,7 @@ void vvp_fun_boolean_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 vvp_fun_and::vvp_fun_and(unsigned wid, bool invert)
 : vvp_fun_boolean_(wid), invert_(invert)
 {
+      count_functors_logic += 1;
 }
 
 vvp_fun_and::~vvp_fun_and()
@@ -160,6 +161,7 @@ void vvp_fun_and::run_run()
 vvp_fun_eeq::vvp_fun_eeq(unsigned wid, bool invert)
 : vvp_fun_boolean_(wid), invert_(invert)
 {
+      count_functors_logic += 1;
 }
 
 vvp_fun_eeq::~vvp_fun_eeq()
@@ -188,7 +190,7 @@ void vvp_fun_eeq::run_run()
 vvp_fun_buf::vvp_fun_buf()
 {
       net_ = 0;
-      count_functors_table += 1;
+      count_functors_logic += 1;
 }
 
 vvp_fun_buf::~vvp_fun_buf()
@@ -227,7 +229,7 @@ void vvp_fun_buf::run_run()
 
 vvp_fun_bufz::vvp_fun_bufz()
 {
-      count_functors_table += 1;
+      count_functors_logic += 1;
 }
 
 vvp_fun_bufz::~vvp_fun_bufz()
@@ -257,7 +259,7 @@ void vvp_fun_bufz::recv_real(vvp_net_ptr_t ptr, double bit)
 vvp_fun_muxr::vvp_fun_muxr()
 : a_(0.0), b_(0.0)
 {
-      count_functors_table += 1;
+      count_functors_logic += 1;
       select_ = 2;
 }
 
@@ -333,7 +335,7 @@ void vvp_fun_muxr::recv_real(vvp_net_ptr_t ptr, double bit)
 vvp_fun_muxz::vvp_fun_muxz(unsigned wid)
 : a_(wid), b_(wid)
 {
-      count_functors_table += 1;
+      count_functors_logic += 1;
       select_ = 2;
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    a_.set_bit(idx, BIT4_X);
@@ -408,7 +410,7 @@ void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 vvp_fun_not::vvp_fun_not()
 {
       net_ = 0;
-      count_functors_table += 1;
+      count_functors_logic += 1;
 }
 
 vvp_fun_not::~vvp_fun_not()
@@ -452,6 +454,7 @@ void vvp_fun_not::run_run()
 vvp_fun_or::vvp_fun_or(unsigned wid, bool invert)
 : vvp_fun_boolean_(wid), invert_(invert)
 {
+      count_functors_logic += 1;
 }
 
 vvp_fun_or::~vvp_fun_or()
@@ -487,6 +490,7 @@ void vvp_fun_or::run_run()
 vvp_fun_xor::vvp_fun_xor(unsigned wid, bool invert)
 : vvp_fun_boolean_(wid), invert_(invert)
 {
+      count_functors_logic += 1;
 }
 
 vvp_fun_xor::~vvp_fun_xor()
