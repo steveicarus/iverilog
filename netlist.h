@@ -3401,7 +3401,8 @@ class Design {
 	   scope is located starting at the passed scope and working
 	   up if needed. */
       NetScope* find_scope(const std::list<hname_t>&path) const;
-      NetScope* find_scope(NetScope*, const std::list<hname_t>&path) const;
+      NetScope* find_scope(NetScope*, const std::list<hname_t>&path,
+                           NetScope::TYPE type = NetScope::MODULE) const;
 
 	// PARAMETERS
 

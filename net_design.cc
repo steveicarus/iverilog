@@ -149,7 +149,8 @@ NetScope* Design::find_scope(const std::list<hname_t>&path) const
  * I do not find the scope within the passed scope, start looking in
  * parent scopes until I find it, or I run out of parent scopes.
  */
-NetScope* Design::find_scope(NetScope*scope, const std::list<hname_t>&path) const
+NetScope* Design::find_scope(NetScope*scope, const std::list<hname_t>&path,
+                             NetScope::TYPE type) const
 {
       assert(scope);
       if (path.empty())
@@ -162,7 +163,11 @@ NetScope* Design::find_scope(NetScope*scope, const std::list<hname_t>&path) cons
 	    NetScope*cur = scope;
 	    do {
 		  hname_t key = tmp.front();
+		    /* If we are looking for a module or we are not
+		     * looking at the last path component check for
+		     * a name match (second line). */
 		  if (cur->type() == NetScope::MODULE
+		      && (type == NetScope::MODULE || tmp.size() > 1)
 		      && cur->module_name()==key.peek_name()) {
 
 			  /* Up references may match module name */
@@ -463,7 +468,7 @@ NetFuncDef* Design::find_function(NetScope*scope, const pform_name_t&name)
       assert(scope);
 
       std::list<hname_t> eval_path = eval_scope_path(this, scope, name);
-      NetScope*func = find_scope(scope, eval_path);
+      NetScope*func = find_scope(scope, eval_path, NetScope::FUNC);
       if (func && (func->type() == NetScope::FUNC))
 	    return func->func_def();
 
@@ -473,7 +478,7 @@ NetFuncDef* Design::find_function(NetScope*scope, const pform_name_t&name)
 NetScope* Design::find_task(NetScope*scope, const pform_name_t&name)
 {
       std::list<hname_t> eval_path = eval_scope_path(this, scope, name);
-      NetScope*task = find_scope(scope, eval_path);
+      NetScope*task = find_scope(scope, eval_path, NetScope::TASK);
       if (task && (task->type() == NetScope::TASK))
 	    return task;
 
@@ -552,111 +557,4 @@ void Design::delete_process(NetProcTop*top)
 
       delete top;
 }
-
-/*
- * $Log: net_design.cc,v $
- * Revision 1.54  2007/06/05 04:18:09  steve
- *  Upward names may reference modules by module_name.
- *
- * Revision 1.53  2007/06/02 03:42:13  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.52  2007/05/24 04:07:12  steve
- *  Rework the heirarchical identifier parse syntax and pform
- *  to handle more general combinations of heirarch and bit selects.
- *
- * Revision 1.51  2007/04/26 03:06:22  steve
- *  Rework hname_t to use perm_strings.
- *
- * Revision 1.50  2006/08/08 05:11:37  steve
- *  Handle 64bit delay constants.
- *
- * Revision 1.49  2006/07/31 03:50:17  steve
- *  Add support for power in constant expressions.
- *
- * Revision 1.48  2005/11/27 05:56:20  steve
- *  Handle bit select of parameter with ranges.
- *
- * Revision 1.47  2005/09/14 02:53:14  steve
- *  Support bool expressions and compares handle them optimally.
- *
- * Revision 1.46  2005/07/11 16:56:50  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.45  2004/10/04 01:10:54  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.44  2004/02/20 06:22:56  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.43  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.42  2003/11/10 20:59:03  steve
- *  Design::get_flag returns const char* instead of string.
- *
- * Revision 1.41  2003/09/20 01:05:36  steve
- *  Obsolete find_symbol and find_event from the Design class.
- *
- * Revision 1.40  2003/09/19 03:50:12  steve
- *  Remove find_memory method from Design class.
- *
- * Revision 1.39  2003/09/19 03:30:05  steve
- *  Fix name search in elab_lval.
- *
- * Revision 1.38  2003/08/28 04:11:19  steve
- *  Spelling patch.
- *
- * Revision 1.37  2003/06/24 01:38:02  steve
- *  Various warnings fixed.
- *
- * Revision 1.36  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.35  2003/03/06 04:37:12  steve
- *  lex_strings.add module names earlier.
- *
- * Revision 1.34  2003/02/01 23:37:34  steve
- *  Allow parameter expressions to be type real.
- *
- * Revision 1.33  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.32  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.31  2003/01/14 21:16:18  steve
- *  Move strstream to ostringstream for compatibility.
- *
- * Revision 1.30  2002/12/07 02:49:24  steve
- *  Named event triggers can take hierarchical names.
- *
- * Revision 1.29  2002/11/02 03:27:52  steve
- *  Allow named events to be referenced by
- *  hierarchical names.
- *
- * Revision 1.28  2002/10/19 22:59:49  steve
- *  Redo the parameter vector support to allow
- *  parameter names in range expressions.
- *
- * Revision 1.27  2002/08/16 05:18:27  steve
- *  Fix intermix of node functors and node delete.
- *
- * Revision 1.26  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.25  2002/07/03 05:34:59  steve
- *  Fix scope search for events.
- *
- * Revision 1.24  2002/06/25 02:39:34  steve
- *  Fix mishandling of incorect defparam error message.
- *
- * Revision 1.23  2001/12/03 04:47:15  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.22  2001/10/20 05:21:51  steve
- *  Scope/module names are char* instead of string.
- */
 
