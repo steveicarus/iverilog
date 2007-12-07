@@ -333,6 +333,11 @@ bits.
 	5: (reserved)
 	6: (reserved)
 
+* %ix/getv <functor-label>, <bit>
+
+This instruction is like the %ix/get instruction, except that is reads
+directly from a functor label instead of from thread bits. It sets
+bits 4/5/6 just line %ix/get.
 
 * %ix/load <idx>, <value>
 
@@ -415,6 +420,13 @@ the specified thread register bit. The functor-label can refer to a
 from the least significant up to <wid> bits, is loaded starting at
 thread bit <bit>. It is an error for the width to not match the vector
 width at the functor.
+
+* %load/vp0 <bit>, <functor-label>, <wid>
+
+This instruction is the same as %load/v above, except that it also
+adds the integer value is index register 0 into the loaded value. The
+addition is a verilog-style add, which means that if any of the input
+bits are X or Z, the entire result is turned into a vector of X bits.
 
 * %load/wr <bit>, <vpi-label>
 

@@ -107,23 +107,71 @@ unsigned long get_number_immediate(ivl_expr_t ex)
       return imm;
 }
 
+static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
+{
+      switch (ivl_expr_type(expr)) {
+
+	  case IVL_EX_NUMBER: {
+		unsigned value = 0;
+		unsigned idx, nbits = ivl_expr_width(expr);
+		const char*bits = ivl_expr_bits(expr);
+
+		for (idx = 0 ;  idx < nbits ;  idx += 1) switch (bits[idx]) {
+
+		    case '0':
+		      break;
+		    case '1':
+		      assert(idx < (8*sizeof value));
+		      value |= 1 << idx;
+		      break;
+		    default:
+		      assert(0);
+		}
+
+		fprintf(vvp_out, "  %%ix/load %u, %u;\n", ix, value);
+		break;
+	  }
+
+	  case IVL_EX_ULONG:
+	    fprintf(vvp_out, "  %%ix/load %u, %lu;\n", ix, ivl_expr_uvalue(expr));
+	    break;
+
+	  case IVL_EX_SIGNAL: {
+		ivl_signal_t sig = ivl_expr_signal(expr);
+		unsigned word = 0;
+		if (ivl_signal_array_count(sig) > 1) {
+		      ivl_expr_t ixe = ivl_expr_oper1(expr);
+		      assert(number_is_immediate(ixe, 8*sizeof(unsigned long)));
+		      word = get_number_immediate(ixe);
+		}
+		fprintf(vvp_out, "  %%ix/getv %u, v%p_%u;\n", ix, sig, word);
+		break;
+	  }
+
+	  default: {
+		  struct vector_info rv;
+		  rv = draw_eval_expr(expr, 0);
+		  fprintf(vvp_out, "  %%ix/get %u, %u, %u;\n",
+			  ix, rv.base, rv.wid);
+		  clr_vector(rv);
+		  break;
+	    }
+      }
+}
+
 /*
  * This function, in addition to setting the value into index 0, sets
  * bit 4 to 1 if the value is unknown.
  */
 void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
 {
-      struct vector_info vec;
       int word;
 
       switch (ivl_expr_value(expr)) {
 
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
-	    vec = draw_eval_expr(expr, 0);
-	    fprintf(vvp_out, "    %%ix/get %u, %u, %u;\n",
-		    ix, vec.base, vec.wid);
-	    clr_vector(vec);
+	    eval_logic_into_integer(expr, ix);
 	    break;
 
 	  case IVL_VT_REAL:
@@ -954,43 +1002,7 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 	/* Figure out the shift amount and load that into the index
 	   register. The value may be a constant, or may need to be
 	   evaluated at run time. */
-      switch (ivl_expr_type(re)) {
-
-	  case IVL_EX_NUMBER: {
-		unsigned shift = 0;
-		unsigned idx, nbits = ivl_expr_width(re);
-		const char*bits = ivl_expr_bits(re);
-
-		for (idx = 0 ;  idx < nbits ;  idx += 1) switch (bits[idx]) {
-
-		    case '0':
-		      break;
-		    case '1':
-		      assert(idx < (8*sizeof shift));
-		      shift |= 1 << idx;
-		      break;
-		    default:
-		      assert(0);
-		}
-
-		fprintf(vvp_out, "    %%ix/load 0, %u;\n", shift);
-		break;
-	  }
-
-	  case IVL_EX_ULONG:
-	    fprintf(vvp_out, "    %%ix/load 0, %lu;\n", ivl_expr_uvalue(re));
-	    break;
-
-	  default: {
-		  struct vector_info rv;
-		  rv = draw_eval_expr(re, 0);
-		  fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n",
-			  rv.base, rv.wid);
-		  clr_vector(rv);
-		  break;
-	    }
-      }
-
+      eval_logic_into_integer(re,0);
 
       fprintf(vvp_out, "    %s/i0  %u, %u;\n", opcode, lv.base, lv.wid);
 
@@ -1850,11 +1862,14 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	    use_word = get_number_immediate(ix);
       }
 
+#if 0
       shiv = draw_eval_expr(bit_idx, STUFF_OK_XZ|STUFF_OK_RO);
-
       fprintf(vvp_out, "   %%ix/get 0, %u, %u;\n", shiv.base, shiv.wid);
       if (shiv.base >= 8)
 	    clr_vector(shiv);
+#else
+      draw_eval_expr_into_integer(bit_idx, 0);
+#endif
 
 	/* Try the special case that the base is 0 and the width
 	   exactly matches the signal. Just load the signal in one

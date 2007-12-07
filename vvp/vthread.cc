@@ -1947,6 +1947,32 @@ bool of_IX_GET_S(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_IX_GETV(vthread_t thr, vvp_code_t cp)
+{
+      unsigned index = cp->bit_idx[0];
+      vvp_net_t*net = cp->net;
+
+      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(net->fun);
+      if (sig == 0) {
+	    cerr << "%%ix/getv error: Net arg not a vector signal? "
+		 << typeid(*net->fun).name() << endl;
+      }
+      assert(sig);
+
+      vvp_vector4_t vec = sig->vec4_value();
+      unsigned long val;
+      bool known_flag = vector4_to_value(vec, val);
+
+      if (known_flag)
+	    thr->words[index].w_int = val;
+      else
+	    thr->words[index].w_int = 0;
+
+	/* Set bit 4 as a flag if the input is unknown. */
+      thr_put_bit(thr, 4, known_flag? BIT4_0 : BIT4_1);
+
+      return true;
+}
 
 /*
  * The various JMP instruction work simply by pulling the new program
