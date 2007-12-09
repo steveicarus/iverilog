@@ -1862,14 +1862,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	    use_word = get_number_immediate(ix);
       }
 
-#if 0
-      shiv = draw_eval_expr(bit_idx, STUFF_OK_XZ|STUFF_OK_RO);
-      fprintf(vvp_out, "   %%ix/get 0, %u, %u;\n", shiv.base, shiv.wid);
-      if (shiv.base >= 8)
-	    clr_vector(shiv);
-#else
       draw_eval_expr_into_integer(bit_idx, 0);
-#endif
 
 	/* Try the special case that the base is 0 and the width
 	   exactly matches the signal. Just load the signal in one

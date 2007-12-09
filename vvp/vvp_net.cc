@@ -357,10 +357,9 @@ unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
 	    tmp >>= 2UL * off;
 
 	      // Test for X bits but not beyond the desired wid.
-	    unsigned long xmask = WORD_X_BITS;
 	    if (wid < (BITS_PER_WORD-off))
-		  xmask &= ~(-1UL << 2*wid);
-	    if (tmp & xmask)
+		  tmp &= ~(-1UL << 2*wid);
+	    if (tmp & WORD_X_BITS)
 		  goto x_out;
 
 	      // Where in the target array to write the next bit.
@@ -376,10 +375,9 @@ unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
 			tmp = bits_ptr_[adr/BITS_PER_WORD];
 			  // If this is the last word, then only test
 			  // for X in the valid bits.
-			xmask = WORD_X_BITS;
 			if ((wid-idx) < BITS_PER_WORD)
-			      xmask &= ~(WORD_Z_BITS<<2*(wid-idx));
-			if (tmp & xmask)
+			      tmp &= ~(WORD_Z_BITS<<2*(wid-idx));
+			if (tmp & WORD_X_BITS)
 			      goto x_out;
 			adr_bit = 0;
 		  }
