@@ -442,7 +442,7 @@ void schedule_simulate(void)
 
       signals_capture();
 
-      while (sched_list) {
+      if (schedule_runnable) while (sched_list) {
 
 	    if (schedule_stopped_flag) {
 		  schedule_stopped_flag = false;
