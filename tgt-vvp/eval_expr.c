@@ -1811,7 +1811,7 @@ static struct vector_info draw_select_array(ivl_expr_t sube,
 {
       unsigned idx;
       ivl_signal_t sig = ivl_expr_signal(sube);
-      unsigned sig_wid = ivl_expr_width(sube);
+	/* unsigned sig_wid = ivl_expr_width(sube); */
       ivl_expr_t ix = ivl_expr_oper1(sube);
 
       struct vector_info shiv;
@@ -1839,7 +1839,6 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 					     unsigned wid)
 {
       ivl_signal_t sig = ivl_expr_signal(sube);
-      struct vector_info shiv;
       struct vector_info res;
       unsigned idx;
 
@@ -1862,12 +1861,12 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	    use_word = get_number_immediate(ix);
       }
 
-      draw_eval_expr_into_integer(bit_idx, 0);
-
 	/* Try the special case that the base is 0 and the width
 	   exactly matches the signal. Just load the signal in one
 	   instruction. */
-      if (shiv.base == 0 && ivl_expr_width(sube) == wid) {
+      if (number_is_immediate(bit_idx, 32)
+	  && get_number_immediate(bit_idx) == 0
+	  && ivl_expr_width(sube) == wid) {
 	    res.base = allocate_vector(wid);
 	    res.wid = wid;
 	    fprintf(vvp_out, "   %%load/v %u, v%p_%u, %u;\n",
@@ -1879,14 +1878,15 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	/* Try the special case that the part is at the beginning and
 	   nearly the width of the signal. In this case, just load the
 	   entire signal in one go, then simply drop the excess bits. */
-      if (shiv.base == 0
+      if (number_is_immediate(bit_idx, 32)
+	  && get_number_immediate(bit_idx) == 0
 	  && (ivl_expr_width(sube) > wid)
 	  && (ivl_expr_width(sube) < (wid+wid/10))) {
 
 	    res.base = allocate_vector(ivl_expr_width(sube));
 	    res.wid = ivl_expr_width(sube);
-	    fprintf(vvp_out, "   %%load/v %u, v%p_%u, %u; Only need %u bits\n",
-		    res.base, sig, use_word, ivl_expr_width(sube), wid);
+	    fprintf(vvp_out, "   %%load/v %u, v%p_%u, %u; Only need %u of %u bits\n",
+		    res.base, sig, use_word, ivl_expr_width(sube), wid, res.wid);
  
 	    save_signal_lookaside(res.base, sig, use_word, res.wid);
 
@@ -1899,6 +1899,8 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	    }
 	    return res;
       }
+
+      draw_eval_expr_into_integer(bit_idx, 0);
 
 	/* Alas, do it the hard way. */
       res.base = allocate_vector(wid);
