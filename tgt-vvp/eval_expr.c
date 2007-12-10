@@ -1861,42 +1861,20 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	    use_word = get_number_immediate(ix);
       }
 
-	/* Try the special case that the base is 0 and the width
-	   exactly matches the signal. Just load the signal in one
-	   instruction. */
+	/* Try the special case that the part is at the beginning of
+	   the signal (or the entire width). Just load the early bits
+	   in one go. */
       if (number_is_immediate(bit_idx, 32)
 	  && get_number_immediate(bit_idx) == 0
-	  && ivl_expr_width(sube) == wid) {
+	  && (ivl_expr_width(sube) >= wid)) {
+
 	    res.base = allocate_vector(wid);
 	    res.wid = wid;
-	    fprintf(vvp_out, "   %%load/v %u, v%p_%u, %u;\n",
-		    res.base, sig, use_word, ivl_expr_width(sube));
-
-	    return res;
-      }
-
-	/* Try the special case that the part is at the beginning and
-	   nearly the width of the signal. In this case, just load the
-	   entire signal in one go, then simply drop the excess bits. */
-      if (number_is_immediate(bit_idx, 32)
-	  && get_number_immediate(bit_idx) == 0
-	  && (ivl_expr_width(sube) > wid)
-	  && (ivl_expr_width(sube) < (wid+wid/10))) {
-
-	    res.base = allocate_vector(ivl_expr_width(sube));
-	    res.wid = ivl_expr_width(sube);
 	    fprintf(vvp_out, "   %%load/v %u, v%p_%u, %u; Only need %u of %u bits\n",
-		    res.base, sig, use_word, ivl_expr_width(sube), wid, res.wid);
+		    res.base, sig, use_word, wid, wid, ivl_expr_width(sube));
  
 	    save_signal_lookaside(res.base, sig, use_word, res.wid);
 
-	    {
-		  struct vector_info tmp;
-		  tmp.base = res.base + wid;
-		  tmp.wid = res.wid - wid;
-		  clr_vector(tmp);
-		  res.wid = wid;
-	    }
 	    return res;
       }
 

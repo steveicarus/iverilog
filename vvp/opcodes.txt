@@ -418,8 +418,9 @@ This instruction loads a vector value from the given functor node into
 the specified thread register bit. The functor-label can refer to a
 .net, a .var or a .functor with a vector output. The entire vector,
 from the least significant up to <wid> bits, is loaded starting at
-thread bit <bit>. It is an error for the width to not match the vector
-width at the functor.
+thread bit <bit>. It is an OK for the width to not match the vector
+width at the functor. If the <wid> is less then the width at the
+functor, the the most significant bits are dropped.
 
 * %load/vp0 <bit>, <functor-label>, <wid>
 
