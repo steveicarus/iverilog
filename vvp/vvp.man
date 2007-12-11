@@ -68,26 +68,20 @@ There are a few extended arguments that are interpreted by the
 standard system.vpi module, which implements the standard system tasks
 and so is always included. These arguments are described here.
 .TP 8
-.B -vcd\fR|\fP-vcd-none
+.B -vcd
 This extended argument sets the wave dump format to VCD. This is the
 default in the absence of any \fBIVERILOG_DUMPER\fP environment
 variable. The VCD dump files are large and ponderous, but are also
 maximally compatible with third party tools that read waveform dumps.
-.PP
-The \fB-vcd-none\fP variant actually suppresses all waveform
-output. This can make long simulations run faster.
 
 .TP 8
-.B -lxt\fR|\fP-lxt-speed\fR|\fP-lxt-space\fR|\fP-lxt-none
+.B -lxt\fR|\fP-lxt-speed\fR|\fP-lxt-space
 These extended arguments set the wave dump format to lxt, possibly with
 format optimizations. The \fB-lxt-space\fP flag sets the output
 format to lxt with full compression enabled. The resulting files are
 quite small. The \fB-lxt-speed\fP chooses the lxt compression mode
 that leads to the best execution time and the fastest read time, at
 the expense of some file size.
-.PP
-The \fB-lxt-none\fP variant actually suppresses all waveform
-output. This can make long simulations run faster.
 
 .TP 8
 .B -lxt2\fR|\fP-lx2
@@ -97,13 +91,19 @@ while a simulation is still running (or paused) or if your simulation
 crashes or is killed, you still have a useful dump.
 
 .TP 8
+.B -none
+This flag can be used by itself or appended to the end of the above
+dumpers (vcd/lxt/lxt2/lx2) to suppress all waveform output. This can
+make long simulations run faster.
+
+.TP 8
 .B -sdf-warn
-When loading an SDF annnotation file, this option causes the annotator
+When loading an SDF annotation file, this option causes the annotator
 to print warnings for questionable but non-fatal issues.
 
 .TP 8
 .B -sdf-info
-When loading an SDF annnotation file, this option causes the annotator
+When loading an SDF annotation file, this option causes the annotator
 to print information about the annotation.
 
 .TP 8

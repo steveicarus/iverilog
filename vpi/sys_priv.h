@@ -26,12 +26,6 @@
 # include  "vpi_user.h"
 
 /*
- * This function is used by sys_vcd and sys_lxt as the dumpvars
- * compiletf function.
- */
-extern PLI_INT32 sys_vcd_dumpvars_compiletf(PLI_BYTE8*name);
-
-/*
  * Context structure for PRNG in mt19937int.c
  */
 struct context_s {
@@ -56,32 +50,4 @@ struct timeformat_info_s {
 
 extern struct timeformat_info_s timeformat_info;
 
-
-/*
- * $Log: sys_priv.h,v $
- * Revision 1.8  2007/03/14 04:05:51  steve
- *  VPI tasks take PLI_BYTE* by the standard.
- *
- * Revision 1.7  2006/10/30 22:45:37  steve
- *  Updates for Cygwin portability (pr1585922)
- *
- * Revision 1.6  2006/08/12 03:38:12  steve
- *  scanf support for real values.
- *
- * Revision 1.5  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.4  2003/10/30 03:43:20  steve
- *  Rearrange fileio functions, and add ungetc.
- *
- * Revision 1.3  2003/09/30 01:33:39  steve
- *  dumpers must be aware of 64bit time.
- *
- * Revision 1.2  2003/05/14 04:18:16  steve
- *  Use seed to store random number context.
- *
- * Revision 1.1  2002/08/15 02:12:20  steve
- *  add dumpvars_compiletf to check first argument.
- *
- */
 #endif

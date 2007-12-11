@@ -124,6 +124,9 @@ static void sys_lxt_or_vcd_register()
 	    } else if (strcmp(vlog_info.argv[idx],"-vcd-none") == 0) {
 		  dumper = "none";
 
+	    } else if (strcmp(vlog_info.argv[idx],"-none") == 0) {
+		  dumper = "none";
+
 	    }
       }
 
@@ -158,8 +161,8 @@ static void sys_lxt_or_vcd_register()
 	    sys_vcdoff_register();
 
       else {
-	    fprintf(stderr, "system.vpi: Unknown dumper format: %s\n",
-		    dumper);
+	    vpi_mcd_printf(1, "system.vpi: Unknown dumper format: %s,"
+		           " using VCD instead.\n", dumper);
 	    sys_vcd_register();
       }
 }

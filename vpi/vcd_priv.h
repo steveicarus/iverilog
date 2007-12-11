@@ -22,6 +22,8 @@
 #ident "$Id: vcd_priv.h,v 1.2 2003/02/13 18:13:28 steve Exp $"
 #endif
 
+#include "vpi_user.h"
+
 extern int is_escaped_id(const char *name);
 
 struct vcd_names_s;
@@ -43,5 +45,14 @@ extern void vcd_names_sort(struct vcd_names_list_s*tab);
 
 extern const char*find_nexus_ident(int nex);
 extern void       set_nexus_ident(int nex, const char *id);
+
+/* The compiletf routines are common for the VCD, LXT and LXT2 dumpers. */
+extern PLI_INT32 sys_dumpall_compiletf(PLI_BYTE8 *name);
+extern PLI_INT32 sys_dumpfile_compiletf(PLI_BYTE8 *name);
+extern PLI_INT32 sys_dumpflush_compiletf(PLI_BYTE8 *name);
+extern PLI_INT32 sys_dumplimit_compiletf(PLI_BYTE8 *name);
+extern PLI_INT32 sys_dumpoff_compiletf(PLI_BYTE8 *name);
+extern PLI_INT32 sys_dumpon_compiletf(PLI_BYTE8 *name);
+extern PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name);
 
 #endif

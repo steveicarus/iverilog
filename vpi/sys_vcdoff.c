@@ -23,8 +23,7 @@
 # include "sys_priv.h"
 
 /*
- * This file contains the implementations of the VCD related
- * functions. These are stub versions
+ * This file contains do nothing stubs of all the VCD routines.
  */
 
 # include  "vpi_user.h"
@@ -39,86 +38,18 @@
 # include  "vcd_priv.h"
 
 
-static FILE*dump_file = 0;
+static int dump_flag = 0;
 
-static PLI_INT32 sys_dumpoff_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_dump_calltf(PLI_BYTE8*name)
 {
-      return 0;
-}
-
-static PLI_INT32 sys_dumpon_calltf(PLI_BYTE8*name)
-{
-      return 0;
-}
-
-static PLI_INT32 sys_dumpall_calltf(PLI_BYTE8*name)
-{
-      return 0;
-}
-
-static void open_dumpfile(const char*path)
-{
-      dump_file = fopen(path, "w");
-
-      if (dump_file == 0) {
-	    vpi_mcd_printf(6,
-			   "VCD Error: Unable to open %s for output.\n",
-			   path);
-	    return;
-      } else {
-	    fprintf(dump_file, "VCD Dump suppressed.\n");
-      }
-}
-
-static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
-{
-      char*path;
-
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item;
-
-      if (argv && (item = vpi_scan(argv))) {
-	    s_vpi_value value;
-
-	    if (vpi_get(vpiType, item) != vpiConstant
-		|| vpi_get(vpiConstType, item) != vpiStringConst) {
-		  vpi_mcd_printf(6,
-				 "VCD Error:"
-				 " %s parameter must be a string constant\n",
-				 name);
-		  return 0;
-	    }
-
-	    value.format = vpiStringVal;
-	    vpi_get_value(item, &value);
-	    path = strdup(value.value.str);
-
-	    vpi_free_object(argv);
-
-      } else {
-	    path = strdup("dumpfile.vcd");
-      }
-
-      if (dump_file) {
-	    fclose(dump_file);
-	    dump_file = 0;
-      }
-
-      assert(dump_file == 0);
-      open_dumpfile(path);
-
-      free(path);
-
       return 0;
 }
 
 static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 {
-      if (dump_file == 0) {
-	    open_dumpfile("dumpfile.vcd");
-	    if (dump_file == 0)
-		  return 0;
+      if (dump_flag == 0) {
+	    vpi_mcd_printf(1, "VCD info: dumping is suppressed.\n");
+	    dump_flag = 1;
       }
 
       return 0;
@@ -128,63 +59,62 @@ void sys_vcdoff_register()
 {
       s_vpi_systf_data tf_data;
 
+      /* All the compiletf routines are located in vcd_priv.c. */
+
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpall";
-      tf_data.calltf    = sys_dumpall_calltf;
-      tf_data.compiletf = 0;
+      tf_data.calltf    = sys_dump_calltf;
+      tf_data.compiletf = sys_dumpall_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$dumpall";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$dumpfile";
+      tf_data.calltf    = sys_dump_calltf;
+      tf_data.compiletf = sys_dumpfile_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$dumpfile";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$dumpflush";
+      tf_data.calltf    = sys_dump_calltf;
+      tf_data.compiletf = sys_dumpflush_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$dumpflush";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$dumplimit";
+      tf_data.calltf    = sys_dump_calltf;
+      tf_data.compiletf = sys_dumplimit_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$dumplimit";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpoff";
-      tf_data.calltf    = sys_dumpoff_calltf;
-      tf_data.compiletf = 0;
+      tf_data.calltf    = sys_dump_calltf;
+      tf_data.compiletf = sys_dumpoff_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$dumpoff";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpon";
-      tf_data.calltf    = sys_dumpon_calltf;
-      tf_data.compiletf = 0;
+      tf_data.calltf    = sys_dump_calltf;
+      tf_data.compiletf = sys_dumpon_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$dumpon";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
-      tf_data.tfname    = "$dumpfile";
-      tf_data.calltf    = sys_dumpfile_calltf;
-      tf_data.compiletf = 0;
-      tf_data.sizetf    = 0;
-      tf_data.user_data = "$dumpfile";
-      vpi_register_systf(&tf_data);
-
-      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpvars";
       tf_data.calltf    = sys_dumpvars_calltf;
-      tf_data.compiletf = sys_vcd_dumpvars_compiletf;
+      tf_data.compiletf = sys_dumpvars_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$dumpvars";
       vpi_register_systf(&tf_data);
 }
-
-/*
- * $Log: sys_vcdoff.c,v $
- * Revision 1.5  2007/03/14 04:05:52  steve
- *  VPI tasks take PLI_BYTE* by the standard.
- *
- * Revision 1.4  2006/10/30 22:45:38  steve
- *  Updates for Cygwin portability (pr1585922)
- *
- * Revision 1.3  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.2  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.1  2003/03/06 20:04:42  steve
- *  Add means to suppress wveform output
- *
- */
 

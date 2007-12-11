@@ -145,6 +145,7 @@ static char *create_full_name(const char *name)
 }
 
 
+static char *dump_path;
 static struct lxt2_wr_trace *dump_file = 0;
 
 struct vcd_info {
@@ -256,10 +257,10 @@ static PLI_INT32 variable_cb_1(p_cb_data cause)
       struct t_cb_data cb;
       struct vcd_info*info = (struct vcd_info*)cause->user_data;
 
-      if (dump_is_full) 	 return 0;
-      if (dump_is_off) 		 return 0;
+      if (dump_is_full) return 0;
+      if (dump_is_off) return 0;
       if (dump_header_pending()) return 0;
-      if (info->scheduled)       return 0;
+      if (info->scheduled) return 0;
 
       if ((dump_limit > 0) && (ftell(dump_file->handle) > dump_limit)) {
             dump_is_full = 1;
@@ -284,8 +285,7 @@ static PLI_INT32 variable_cb_1(p_cb_data cause)
 
 static PLI_INT32 dumpvars_cb(p_cb_data cause)
 {
-      if (dumpvars_status != 1)
-	    return 0;
+      if (dumpvars_status != 1) return 0;
 
       dumpvars_status = 2;
 
@@ -302,8 +302,7 @@ static PLI_INT32 dumpvars_cb(p_cb_data cause)
 
 static PLI_INT32 finish_cb(p_cb_data cause)
 {
-      if (finish_status != 0)
-	    return 0;
+      if (finish_status != 0) return 0;
 
       finish_status = 1;
 
@@ -320,14 +319,11 @@ inline static int install_dumpvars_callback(void)
       struct t_cb_data cb;
       static struct t_vpi_time time;
 
-      if (dumpvars_status == 1)
-	    return 0;
+      if (dumpvars_status == 1) return 0;
 
       if (dumpvars_status == 2) {
-	    vpi_mcd_printf(1, "LXT2 warning:"
-			   " $dumpvars ignored,"
-			   " previously called at simtime %lu\n",
-			   dumpvars_time);
+	    vpi_mcd_printf(1, "LXT2 warning: $dumpvars ignored, previously"
+			   " called at simtime %lu\n", dumpvars_time);
 	    return 1;
       }
 
@@ -354,23 +350,21 @@ static PLI_INT32 sys_dumpoff_calltf(PLI_BYTE8*name)
       s_vpi_time now;
       PLI_UINT64 now64;
 
-      if (dump_is_off)
-	    return 0;
+      if (dump_is_off) return 0;
 
       dump_is_off = 1;
 
-      if (dump_file == 0)
-	    return 0;
-
-      if (dump_header_pending())
-	    return 0;
+      if (dump_file == 0) return 0;
+      if (dump_header_pending()) return 0;
 
       now.type = vpiSimTime;
       vpi_get_time(0, &now);
       now64 = timerec_to_time64(&now);
-      if (now64 > vcd_cur_time)
+
+      if (now64 > vcd_cur_time) {
             lxt2_wr_set_time(dump_file, now64);
-      vcd_cur_time = now.low;
+            vcd_cur_time = now.low;
+      }
 
       lxt2_wr_set_dumpoff(dump_file);
       vcd_checkpoint_x();
@@ -383,24 +377,21 @@ static PLI_INT32 sys_dumpon_calltf(PLI_BYTE8*name)
       s_vpi_time now;
       PLI_UINT64 now64;
 
-      if (!dump_is_off)
-	    return 0;
+      if (!dump_is_off) return 0;
 
       dump_is_off = 0;
 
-      if (dump_file == 0)
-	    return 0;
-
-      if (dump_header_pending())
-	    return 0;
+      if (dump_file == 0) return 0;
+      if (dump_header_pending()) return 0;
 
       now.type = vpiSimTime;
       vpi_get_time(0, &now);
       now64 = timerec_to_time64(&now);
 
-      if (now64 > vcd_cur_time)
+      if (now64 > vcd_cur_time) {
             lxt2_wr_set_time64(dump_file, now64);
-      vcd_cur_time = now64;
+            vcd_cur_time = now64;
+      }
 
       lxt2_wr_set_dumpon(dump_file);
       vcd_checkpoint();
@@ -413,15 +404,12 @@ static PLI_INT32 sys_dumpall_calltf(PLI_BYTE8*name)
       s_vpi_time now;
       PLI_UINT64 now64;
 
-      if (dump_file == 0)
-	    return 0;
-
-      if (dump_header_pending())
-	    return 0;
+      if (dump_is_off) return 0;
+      if (dump_file == 0) return 0;
+      if (dump_header_pending()) return 0;
 
       now.type = vpiSimTime;
       vpi_get_time(0, &now);
-
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time)
@@ -440,21 +428,22 @@ static void *close_dumpfile(void)
       return 0;
 }
 
-static void open_dumpfile(const char*path)
+static void open_dumpfile(void)
 {
-      dump_file = lxt2_wr_init(path);
+      if (dump_path == 0) dump_path = strdup("dump.lx2");
+
+      dump_file = lxt2_wr_init(dump_path);
 
       if (dump_file == 0) {
-	    vpi_mcd_printf(1,
-			   "LXT2 Error: Unable to open %s for output.\n",
-			   path);
+	    vpi_mcd_printf(1, "LXT2 Error: Unable to open %s for output.\n",
+			   dump_path);
+	    vpi_control(vpiFinish, 1);
 	    return;
       } else {
 	    int prec = vpi_get(vpiTimePrecision, 0);
 
-	    vpi_mcd_printf(1,
-			   "LXT2 info: dumpfile %s opened for output.\n",
-			   path);
+	    vpi_mcd_printf(1, "LXT2 info: dumpfile %s opened for output.\n",
+			   dump_path);
 
 	    assert(prec >= -15);
 	    lxt2_wr_set_timescale(dump_file, prec);
@@ -470,42 +459,33 @@ static void open_dumpfile(const char*path)
 
 static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
 {
-      char*path;
-
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item;
+      s_vpi_value value;
 
-      if (argv && (item = vpi_scan(argv))) {
-	    s_vpi_value value;
+      char*path;
 
-	    if (vpi_get(vpiType, item) != vpiConstant
-		|| vpi_get(vpiConstType, item) != vpiStringConst) {
-		  vpi_mcd_printf(1,
-				 "LXT2 Error:"
-				 " %s parameter must be a string constant\n",
-				 name);
-		  return 0;
-	    }
-
-	    value.format = vpiStringVal;
-	    vpi_get_value(item, &value);
-	    path = strdup(value.value.str);
-
-	    vpi_free_object(argv);
-
-      } else {
-	    path = strdup("dump.lx2");
+        /* $dumpfile must be called before $dumpvars starts! */
+      if (dumpvars_status != 0) {
+	    vpi_mcd_printf(1, "LXT2 warning: %s called after $dumpvars started"
+	                      ",\n              using existing file (%s).\n",
+	                   name, dump_path);
+	    return 0;
       }
 
-      if (dump_file)
-	    close_dumpfile();
+      assert(argv);
+      value.format = vpiStringVal;
+      vpi_get_value(vpi_scan(argv), &value);
+      path = strdup(value.value.str);
 
-      assert(dump_file == 0);
-      open_dumpfile(path);
+      if (dump_path) {
+	    vpi_mcd_printf(1, "LXT2 warning: Overriding dump file %s with"
+	                      " %s.\n", dump_path, path);
+	    free(dump_path);
+      }
+      dump_path = path;
 
-      free(path);
-
+      vpi_free_object(argv);
       return 0;
 }
 
@@ -519,39 +499,6 @@ static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
 static PLI_INT32 sys_dumpflush_calltf(PLI_BYTE8*name)
 {
       if (dump_file) lxt2_wr_flush(dump_file);
-      return 0;
-}
-
-static PLI_INT32 sys_dumplimit_compiletf(PLI_BYTE8 *name)
-{
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle limit;
-
-      /* Check that there is a argument and get it. */
-      if (argv == 0) {
-            vpi_printf("ERROR: %s requires an argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
-      }
-      limit = vpi_scan(argv);
-
-      /* Check that we are not given a string. */
-      switch (vpi_get(vpiType, limit)) {
-          case vpiConstant:
-          case vpiParameter:
-            if (vpi_get(vpiConstType, limit) == vpiStringConst) {
-                  vpi_printf("ERROR: %s's argument must be a number.\n", name);
-            }
-      }
-
-      /* Check that there is only a single argument. */
-      limit = vpi_scan(argv);
-      if (limit != 0) {
-            vpi_printf("ERROR: %s takes a single argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
-      }
 
       return 0;
 }
@@ -560,12 +507,12 @@ static PLI_INT32 sys_dumplimit_calltf(PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle limit = vpi_scan(argv);
       s_vpi_value val;
 
       /* Get the value and set the dump limit. */
+      assert(argv);
       val.format = vpiIntVal;
-      vpi_get_value(limit, &val);
+      vpi_get_value(vpi_scan(argv), &val);
       dump_limit = val.value.integer;
 
       vpi_free_object(argv);
@@ -613,8 +560,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiTimeVar:
 	  case vpiReg:  type = "reg";    }
 
-	    if (skip)
-		  break;
+	    if (skip) break;
 
 	    name = vpi_get_str(vpiName, item);
 	    nexus_id = vpi_get(_vpiNexusId, item);
@@ -629,8 +575,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  ident = strdup_sh(&name_heap, tmp);
 		  free(tmp);
 
-		  if (nexus_id)
-			set_nexus_ident(nexus_id, ident);
+		  if (nexus_id) set_nexus_ident(nexus_id, ident);
 
 		  info = malloc(sizeof(*info));
 
@@ -666,8 +611,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	  case vpiRealVar:
 
-	    if (skip)
-		  break;
+	    if (skip) break;
 
 	    name = vpi_get_str(vpiName, item);
 	    { char*tmp = create_full_name(name);
@@ -722,11 +666,8 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  if (!nskip)
 			vcd_names_add(&lxt_tab, fullname);
 		  else
-		    vpi_mcd_printf(1,
-				   "LXT2 warning:"
-				   " ignoring signals"
-				   " in previously scanned scope %s\n",
-				   fullname);
+		    vpi_mcd_printf(1, "LXT2 warning: ignoring signals in"
+				   " previously scanned scope %s\n", fullname);
 
 		  name = vpi_get_str(vpiName, item);
 
@@ -745,9 +686,8 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    break;
 
 	  default:
-	    vpi_mcd_printf(1,
-			   "LXT2 Error: $lxtdumpvars: Unsupported parameter "
-			   "type (%d)\n", vpi_get(vpiType, item));
+	    vpi_mcd_printf(1, "LXT2 warning: $dumpvars: Unsupported parameter"
+	                      " type (%d)\n", vpi_get(vpiType, item));
       }
 
 }
@@ -759,8 +699,7 @@ static int draw_scope(vpiHandle item)
       char *type;
 
       vpiHandle scope = vpi_handle(vpiScope, item);
-      if (!scope)
-	    return 0;
+      if (!scope) return 0;
 
       depth = 1 + draw_scope(scope);
       name = vpi_get_str(vpiName, scope);
@@ -773,75 +712,50 @@ static int draw_scope(vpiHandle item)
       	  default:             type = "module";     break;
       }
 
-      push_scope(name);	/* keep in type info determination for possible future usage */
+	/* keep in type info determination for possible future usage */
+      push_scope(name);
 
       return depth;
 }
 
 static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 {
-      unsigned depth;
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle item;
       s_vpi_value value;
-      vpiHandle item = 0;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv;
+      unsigned depth = 0;
 
       if (dump_file == 0) {
-	    open_dumpfile("dump.lx2");
-	    if (dump_file == 0)
-		  return 0;
+	    open_dumpfile();
+	    if (dump_file == 0) return 0;
       }
 
-      if (install_dumpvars_callback()) {
-	    return 0;
+      if (install_dumpvars_callback()) return 0;
+
+        /* Get the depth if it exists. */
+      if (argv) {
+	    value.format = vpiIntVal;
+	    vpi_get_value(vpi_scan(argv), &value);
+	    depth = value.value.integer;
+      }
+      if (!depth) depth = 10000;
+
+        /* This dumps all the modules in the design if none are given. */
+      if (!argv || !(item = vpi_scan(argv))) {
+	    argv = vpi_iterate(vpiModule, 0x0);
+	    assert(argv);  // There must be at least one top level module.
+	    item = vpi_scan(argv);
       }
 
-      argv = vpi_iterate(vpiArgument, sys);
-
-      depth = 0;
-      if (argv && (item = vpi_scan(argv)))
-	    switch (vpi_get(vpiType, item)) {
-		case vpiConstant:
-		case vpiNet:
-		case vpiIntegerVar:
-		case vpiReg:
-		case vpiMemoryWord:
-		  value.format = vpiIntVal;
-		  vpi_get_value(item, &value);
-		  depth = value.value.integer;
-		  break;
-	    }
-
-      if (!depth)
-	    depth = 10000;
-
-      if (!argv) {
-	    // $dumpvars;
-	    // search for the toplevel module
-	    vpiHandle parent = vpi_handle(vpiScope, sys);
-	    while (parent) {
-		  item = parent;
-		  parent = vpi_handle(vpiScope, item);
-	    }
-
-      } else if (!item  ||  !(item = vpi_scan(argv))) {
-	    // $dumpvars(level);
-	    // $dumpvars();
-	    // dump the current scope
-	    item = vpi_handle(vpiScope, sys);
-	    argv = 0x0;
-      }
-
-      for ( ; item; item = argv ? vpi_scan(argv) : 0x0) {
+      for ( ; item; item = vpi_scan(argv)) {
 
 	    int dep = draw_scope(item);
 
 	    vcd_names_sort(&lxt_tab);
 	    scan_item(depth, item, 0);
 
-	    while (dep--) {
-		  pop_scope();
-	    }
+	    while (dep--) pop_scope();
       }
 
 	/* Most effective compression. */
@@ -874,34 +788,20 @@ void sys_lxt2_register()
 	    }
       }
 
+      /* All the compiletf routines are located in vcd_priv.c. */
+
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpall";
       tf_data.calltf    = sys_dumpall_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_dumpall_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$dumpall";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
-      tf_data.tfname    = "$dumpoff";
-      tf_data.calltf    = sys_dumpoff_calltf;
-      tf_data.compiletf = 0;
-      tf_data.sizetf    = 0;
-      tf_data.user_data = "$dumpoff";
-      vpi_register_systf(&tf_data);
-
-      tf_data.type      = vpiSysTask;
-      tf_data.tfname    = "$dumpon";
-      tf_data.calltf    = sys_dumpon_calltf;
-      tf_data.compiletf = 0;
-      tf_data.sizetf    = 0;
-      tf_data.user_data = "$dumpon";
-      vpi_register_systf(&tf_data);
-
-      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpfile";
       tf_data.calltf    = sys_dumpfile_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_dumpfile_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$dumpfile";
       vpi_register_systf(&tf_data);
@@ -909,7 +809,7 @@ void sys_lxt2_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpflush";
       tf_data.calltf    = sys_dumpflush_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_dumpflush_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$dumpflush";
       vpi_register_systf(&tf_data);
@@ -923,9 +823,25 @@ void sys_lxt2_register()
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$dumpoff";
+      tf_data.calltf    = sys_dumpoff_calltf;
+      tf_data.compiletf = sys_dumpoff_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$dumpoff";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$dumpon";
+      tf_data.calltf    = sys_dumpon_calltf;
+      tf_data.compiletf = sys_dumpon_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$dumpon";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpvars";
       tf_data.calltf    = sys_dumpvars_calltf;
-      tf_data.compiletf = sys_vcd_dumpvars_compiletf;
+      tf_data.compiletf = sys_dumpvars_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$dumpvars";
       vpi_register_systf(&tf_data);
