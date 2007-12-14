@@ -38,12 +38,13 @@ char sdf_use_hchar = '.';
       double real_val;
       char*  string_val;
 
+      struct port_with_edge_s port_with_edge;
       struct sdf_delval_list_s delval_list;
 };
 
 %token K_ABSOLUTE K_CELL K_CELLTYPE K_DATE K_DELAYFILE K_DELAY K_DESIGN
 %token K_DIVIDER K_HOLD K_INCREMENT K_INSTANCE K_INTERCONNECT K_IOPATH
-%token K_PROCESS K_PROGRAM K_RECOVERY K_REMOVAL
+%token K_NEGEDGE K_POSEDGE K_PROCESS K_PROGRAM K_RECOVERY K_REMOVAL
 %token K_SDFVERSION K_SETUP K_SETUPHOLD K_TEMPERATURE K_TIMESCALE
 %token K_TIMINGCHECK K_VENDOR K_VERSION K_VOLTAGE K_WIDTH
 
@@ -55,10 +56,13 @@ char sdf_use_hchar = '.';
 %type <string_val> celltype
 %type <string_val> cell_instance
 %type <string_val> hierarchical_identifier
-%type <string_val> port port_instance port_spec
+%type <string_val> port port_instance
 
 %type <real_val> rvalue rtriple signed_real_number
 %type <real_val> delval
+
+%type <int_val> edge_identifier
+%type <port_with_edge> port_edge port_spec
 
 %type <delval_list> delval_list
 
@@ -241,8 +245,8 @@ del_def_list
 
 del_def
   : '(' K_IOPATH port_spec port_instance delval_list ')'
-      { sdf_iopath_delays($3, $4, &$5);
-	free($3);
+      { sdf_iopath_delays($3.vpi_edge, $3.string_val, $4, &$5);
+	free($3.string_val);
 	free($4);
       }
   | '(' K_IOPATH error ')'
@@ -281,8 +285,8 @@ port_tchk
   ;
 
 port_spec
-  : port_instance
-    /*  | port_edge */
+  : port_instance { $$.vpi_edge = vpiNoEdge; $$.string_val = $1; }
+  | port_edge     { $$ = $1; }
   ;
 
 port_instance
@@ -293,6 +297,16 @@ port
   : hierarchical_identifier
       { $$ = $1; }
     /* | hierarchical_identifier '[' INTEGER ']' */
+  ;
+
+port_edge
+  : '(' edge_identifier port_instance ')'
+      { $$.vpi_edge = $2; $$.string_val = $3; }
+  ;
+
+edge_identifier
+  : K_POSEDGE { $$ = vpiPosedge; }
+  | K_NEGEDGE { $$ = vpiNegedge; }
   ;
 
 delval_list

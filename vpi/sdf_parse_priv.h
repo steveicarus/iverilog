@@ -24,6 +24,11 @@
  * used to share declarations between the parse and the lexor.
  */
 
+struct port_with_edge_s {
+      int vpi_edge;
+      char*string_val;
+};
+
   /* Path to source for error messages. */
 extern const char*sdf_parse_path;
 
