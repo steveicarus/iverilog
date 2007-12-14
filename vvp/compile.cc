@@ -1160,6 +1160,7 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
 
       vvp_fun_modpath_src*obj = 0;
 
+      int vpi_edge = vpiNoEdge;
       if (edge == 0) {
 	    obj = new vvp_fun_modpath_src(use_delay);
 
@@ -1167,17 +1168,21 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
 	    bool posedge, negedge;
 	    switch (edge) {
 		case '+':
+		  vpi_edge = vpiPosedge;
 		  posedge = true;
 		  negedge = false;
 		  break;
 		case '-':
+		  vpi_edge = vpiNegedge;
 		  posedge = false;
 		  negedge = true;
 		  break;
+#if 0
 		case '*':
 		  posedge = true;
-		  negedge = false;
+		  negedge = true;
 		  break;
+#endif
 		default:
 		  fprintf(stderr, "Unknown edge identifier %c(%d).\n", edge,
 		          edge);
@@ -1187,16 +1192,12 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
       }
 
       vvp_net_t*net = new vvp_net_t;
-      /*
-	Added by Yang
-	
-	Compiling the delays values into actual modpath vpiHandle
-      */
-      //vpip_add_mopdath_delay ( vpiobj, src.text, use_delay ) ;
       struct __vpiModPathSrc* srcobj = vpip_make_modpath_src (path, use_delay, net) ;
       vpip_attach_to_current_scope(vpi_handle(srcobj));
-
       net->fun = obj;
+
+	/* Save the vpiEdge directory into the input path term. */
+      srcobj->path_term_in.edge = vpi_edge;
       input_connect(net, 0, src.text);
       dst->add_modpath_src(obj);
       

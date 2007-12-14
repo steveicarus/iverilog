@@ -223,6 +223,8 @@ extern __vpiSignal* vpip_signal_from_handle(vpiHandle obj);
 struct __vpiModPathTerm {
       struct __vpiHandle base;
       vpiHandle expr;
+	/* The value returned by vpi_get(vpiEdge, ...); */
+      int edge;
 };
 
 struct __vpiModPathSrc {
@@ -271,16 +273,6 @@ extern struct __vpiModPathSrc* vpip_make_modpath_src  (struct __vpiModPath*path_
 					 vvp_net_t *net ) ;
 
 extern struct __vpiModPath* vpip_make_modpath(vvp_net_t *net) ;
-
-extern void vpip_add_mopdath_delay ( vpiHandle vpiobj,
-				     char *label, 
-				     vvp_time64_t use_delay[12] ) ;
-
-extern void vpip_add_mopdath_edge  ( vpiHandle  vpiobj, 
-				     char *label, 
-				     vvp_time64_t use_delay[12], 
-				     bool posedge , 
-				     bool negedge ) ;
 
 
 /*

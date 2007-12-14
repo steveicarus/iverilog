@@ -113,7 +113,18 @@ void sdf_select_instance(const char*celltype, const char*cellinst)
 
 }
 
-void sdf_iopath_delays(const char*src, const char*dst,
+static const char*edge_str(int vpi_edge)
+{
+      if (vpi_edge == vpiNoEdge)
+	    return "";
+      if (vpi_edge == vpiPosedge)
+	    return "posedge ";
+      if (vpi_edge == vpiNegedge)
+	    return "negedge ";
+      return "edge.. ";
+}
+
+void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 		       const struct sdf_delval_list_s*delval_list)
 {
       if (sdf_cur_cell == 0)
@@ -127,16 +138,23 @@ void sdf_iopath_delays(const char*src, const char*dst,
 	   the parser has found. */
       vpiHandle path;
       while ( (path = vpi_scan(iter)) ) {
-	    vpiHandle path_in = vpi_handle(vpiModPathIn,path);
-	    vpiHandle path_out = vpi_handle(vpiModPathOut,path);
+	    vpiHandle path_t_in = vpi_handle(vpiModPathIn,path);
+	    vpiHandle path_t_out = vpi_handle(vpiModPathOut,path);
 
-	    path_in = vpi_handle(vpiExpr,path_in);
-	    path_out = vpi_handle(vpiExpr,path_out);
+	    vpiHandle path_in = vpi_handle(vpiExpr,path_t_in);
+	    vpiHandle path_out = vpi_handle(vpiExpr,path_t_out);
+
+	      /* The expressions for the path terms must be signals,
+	         vpiNet or vpiReg. */
 	    assert(vpi_get(vpiType,path_in) == vpiNet);
-	    assert(vpi_get(vpiType,path_out) == vpiNet);
+	    assert(vpi_get(vpiType,path_out) == vpiNet
+		   || vpi_get(vpiType,path_out) == vpiReg);
 
 	      /* If the src name doesn't match, go on. */
 	    if (strcmp(src,vpi_get_str(vpiName,path_in)) != 0)
+		  continue;
+	      /* The edge type must match too. */
+	    if (vpi_get(vpiEdge,path_t_in) != vpi_edge)
 		  continue;
 
 	      /* If the dst name doesn't match, go on. */
@@ -148,8 +166,8 @@ void sdf_iopath_delays(const char*src, const char*dst,
       }
 
       if (path == 0) {
-	    vpi_printf("SDF ERROR: Unable to find ModPath %s -> %s in %s\n",
-		       src, dst, vpi_get_str(vpiName,sdf_cur_cell));
+	    vpi_printf("SDF ERROR: Unable to find ModPath %s%s -> %s in %s\n",
+		       edge_str(vpi_edge), src, dst, vpi_get_str(vpiName,sdf_cur_cell));
 	    return;
       }
 

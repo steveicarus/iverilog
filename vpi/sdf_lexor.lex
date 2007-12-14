@@ -104,6 +104,8 @@ static struct {
       { "INTERCONNECT",K_INTERCONNECT },
       { "INSTANCE",   K_INSTANCE },
       { "IOPATH",     K_IOPATH },
+      { "NEGEDGE",    K_NEGEDGE },
+      { "POSEDGE",    K_POSEDGE },
       { "PROCESS",    K_PROCESS },
       { "PROGRAM",    K_PROGRAM },
       { "RECOVERY",   K_RECOVERY },

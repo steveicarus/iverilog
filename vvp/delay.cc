@@ -666,6 +666,18 @@ static void modpath_src_get_delays ( vpiHandle ref, p_vpi_delay delays )
       }
 }
 
+static int pathterm_get(int code, vpiHandle ref)
+{
+      struct __vpiModPathTerm*obj = vpip_modpath_term_from_handle(ref);
+      assert(obj);
+
+      switch (code) {
+	  case vpiEdge:
+	    return obj->edge;
+	  default:
+	    return 0;
+      }
+}
 
 static vpiHandle pathterm_get_handle(int code, vpiHandle ref)
 {
@@ -701,7 +713,7 @@ static const struct __vpirt vpip_modpath_src_rt = {
 
 static const struct __vpirt vpip_modpath_term_rt = {
       vpiPathTerm,
-      0, // vpi_get
+      pathterm_get,
       0, // vpi_get_str
       0, // vpi_get_value,
       0, // vpi_put_value,
@@ -717,6 +729,7 @@ static void initialize_path_term(struct __vpiModPathTerm&obj)
 {
       obj.base.vpi_type = &vpip_modpath_term_rt;
       obj.expr = 0;
+      obj.edge = vpiNoEdge;
 }
 
 /*
@@ -782,16 +795,4 @@ struct __vpiModPathSrc* vpip_modpath_src_from_handle(vpiHandle ref)
         return 0;
       
       return (struct __vpiModPathSrc *) ref;
-}
-
-
-
-
-void  vpip_add_mopdath_edge ( vpiHandle vpiobj, char  *label,
-			      vvp_time64_t use_delay[12] ,
-                              bool posedge , bool negedge )
-{
-  // printf(" In the vpip_add_mopdath_edge( ) \n") ;
-  
-
 }
