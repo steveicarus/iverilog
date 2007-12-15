@@ -384,7 +384,26 @@ PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name)
 
       /* The rest of the arguments are either a module or a variable. */
       while (arg = vpi_scan(argv)) {
-/* Need variable checks here. */
+        switch(vpi_get(vpiType, arg)) {
+          /* The module types. */
+          case vpiModule:
+          case vpiTask:
+          case vpiFunction:
+          case vpiNamedBegin:
+          case vpiNamedFork:
+          /* The variable types. */
+          case vpiNet:
+          case vpiReg:
+          case vpiMemoryWord:
+          case vpiIntegerVar:
+          case vpiTimeVar:
+          case vpiRealVar:
+            break;
+          default:
+            vpi_mcd_printf(1, "ERROR: %s cannot dump a %s.\n",
+                           name, vpi_get_str(vpiType, arg));
+            vpi_control(vpiFinish, 1);
+        }
       }
 
       return 0;
