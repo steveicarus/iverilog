@@ -840,36 +840,42 @@ NetNet* NetETernary::synthesize(Design *des)
 
 /*
  * When synthesizing a signal expression, it is usually fine to simply
- * return the NetNet that it refers to. If this is a part select,
- * though, a bit more work needs to be done. Return a temporary that
- * represents the connections to the selected bits.
- *
- * For example, if there is a reg foo, like so:
- *     reg [5:0] foo;
- * and this expression node represents a part select foo[3:2], then
- * create a temporary like so:
- *
- *                     foo
- *                    +---+
- *                    | 5 |
- *                    +---+
- *         tmp        | 4 |
- *        +---+       +---+
- *        | 1 | <---> | 3 |
- *        +---+       +---+
- *        | 0 | <---> | 2 |
- *        +---+       +---+
- *                    | 1 |
- *                    +---+
- *                    | 0 |
- *                    +---+
- * The temporary is marked as a temporary and returned to the
- * caller. This causes the caller to get only the selected part of the
- * signal, and when it hooks up to tmp, it hooks up to the right parts
- * of foo.
+ * return the NetNet that it refers to. If this is an array word though,
+ * a bit more work needs to be done. Return a temporary that represents
+ * the selected word.
  */
 NetNet* NetESignal::synthesize(Design*des)
 {
-      return net_;
-}
+      if (word_ == 0)
+	    return net_;
 
+      NetScope*scope = net_->scope();
+
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+			      NetNet::IMPLICIT, net_->vector_width());
+      tmp->set_line(*this);
+      tmp->local_flag(true);
+      tmp->data_type(net_->data_type());
+
+      if (NetEConst*index_co = dynamic_cast<NetEConst*> (word_)) {
+	    long index = index_co->value().as_long();
+
+	    assert(net_->array_index_is_valid(index));
+	    index = net_->array_index_to_address(index);
+
+	    connect(tmp->pin(0), net_->pin(index));
+      } else {
+	    unsigned selwid = word_->expr_width();
+
+	    NetArrayDq*mux = new NetArrayDq(scope, scope->local_symbol(),
+					    net_, selwid);
+	    mux->set_line(*this);
+	    des->add_node(mux);
+
+	    NetNet*index_net = word_->synthesize(des);
+	    connect(mux->pin_Address(), index_net->pin(0));
+
+	    connect(tmp->pin(0), mux->pin_Result());
+      }
+      return tmp;
+}
