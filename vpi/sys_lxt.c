@@ -683,7 +683,7 @@ static int draw_scope(vpiHandle item)
 {
       int depth;
       const char *name;
-      char *type;
+//      char *type;  // Not needed, see below.
 
       vpiHandle scope = vpi_handle(vpiScope, item);
       if (!scope)
@@ -692,15 +692,20 @@ static int draw_scope(vpiHandle item)
       depth = 1 + draw_scope(scope);
       name = vpi_get_str(vpiName, scope);
 
-      switch (vpi_get(vpiType, item)) {
+#if 0 /* The type information is not needed by the LXT dumper. */
+      switch (vpi_get(vpiType, scope)) {
 	  case vpiNamedBegin:  type = "begin";      break;
 	  case vpiTask:        type = "task";       break;
 	  case vpiFunction:    type = "function";   break;
 	  case vpiNamedFork:   type = "fork";       break;
-      	  default:             type = "module";     break;
+	  case vpiModule:      type = "module";     break;
+	  default:
+            vpi_mcd_printf(1, "LXT Error: $dumpvars: Unsupported scope "
+                           "type (%d)\n", vpi_get(vpiType, item));
+            assert(0);
       }
+#endif
 
-	/* keep in type info determination for possible future usage */
       push_scope(name);
 
       return depth;
