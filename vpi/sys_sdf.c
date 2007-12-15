@@ -226,13 +226,23 @@ static PLI_INT32 sys_sdf_annotate_compiletf(PLI_BYTE8*name)
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
 
       vpiHandle path = vpi_scan(argv);
+      if (path == 0) {
+	    vpi_printf("SDF ERROR: First argument of %s is required.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
       assert(path);
 
       vpiHandle scope = vpi_scan(argv);
       if (scope == 0)
 	    return 0;
 
-      assert(vpi_get(vpiType,scope) == vpiModule);
+      if (vpi_get(vpiType,scope) != vpiModule) {
+	    vpi_printf("SDF ERROR: The second argument of %s",
+		       " must be a module instance.\n", name);
+	    vpi_control(vpiFinish, 1);
+      }
 
       vpi_free_object(argv);
 
@@ -254,14 +264,19 @@ static PLI_INT32 sys_sdf_annotate_calltf(PLI_BYTE8*name)
 
       if ((value.format != vpiStringVal) || !value.value.str) {
 	    vpi_printf("ERROR: %s: File name argument (type=%d)"
-		       " does not have a string value\n",
+		       " does not have a string value.\n",
 		       name, vpi_get(vpiType, path));
+	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
       char*path_str = strdup(value.value.str);
       FILE*sdf_fd = fopen(path_str, "r");
-      assert(sdf_fd);
+      if (sdf_fd == 0) {
+	    vpi_printf("ERROR: %s: Unable to open SDF file `%s'."
+		       " Skipping annotation.\n", name, path_str);
+	    return 0;
+      }
 
 	/* The optional second argument is the scope to annotate. */
       sdf_scope = vpi_scan(argv);
