@@ -133,10 +133,27 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
       vpiHandle iter = vpi_iterate(vpiModPath, sdf_cur_cell);
       assert(iter);
 
+      struct t_vpi_time delay_vals[12];
+      int idx;
+      for (idx = 0 ; idx < delval_list->count ; idx += 1) {
+	    delay_vals[idx].type = vpiScaledRealTime;
+	    delay_vals[idx].real = delval_list->val[idx];
+      }
+
+      s_vpi_delay delays;
+      delays.da = delay_vals;
+      delays.no_of_delays = delval_list->count;
+      delays.time_type = vpiScaledRealTime;
+      delays.mtm_flag = 0;
+      delays.append_flag = 0;
+      delays.plusere_flag = 0;
+
+
 	/* Search for the modpath that matches the IOPATH by looking
 	   for the modpath that uses the same ports as the ports that
 	   the parser has found. */
       vpiHandle path;
+      int match_count = 0;
       while ( (path = vpi_scan(iter)) ) {
 	    vpiHandle path_t_in = vpi_handle(vpiModPathIn,path);
 	    vpiHandle path_t_out = vpi_handle(vpiModPathOut,path);
@@ -153,8 +170,10 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 	      /* If the src name doesn't match, go on. */
 	    if (strcmp(src,vpi_get_str(vpiName,path_in)) != 0)
 		  continue;
-	      /* The edge type must match too. */
-	    if (vpi_get(vpiEdge,path_t_in) != vpi_edge)
+	      /* The edge type must match too. But note that if this
+	         IOPATH has no edge, then it matches with all edges of
+	         the modpath object. */
+	    if (vpi_edge != vpiNoEdge && vpi_get(vpiEdge,path_t_in) != vpi_edge)
 		  continue;
 
 	      /* If the dst name doesn't match, go on. */
@@ -162,34 +181,14 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 		  continue;
 
 	      /* Ah, this must be a match! */
-	    break;
+	    vpi_put_delays(path, &delays);
+	    match_count += 1;
       }
 
-      if (path == 0) {
-	    vpi_printf("SDF ERROR: Unable to find ModPath %s%s -> %s in %s\n",
+      if (match_count == 0) {
+	    vpi_printf("SDF WARNING: Unable to match ModPath %s%s -> %s in %s\n",
 		       edge_str(vpi_edge), src, dst, vpi_get_str(vpiName,sdf_cur_cell));
-	    return;
       }
-
-        /* No longer need the iterator. */
-      vpi_free_object(iter);
-
-      struct t_vpi_time delay_vals[12];
-      int idx;
-      for (idx = 0 ; idx < delval_list->count ; idx += 1) {
-	    delay_vals[idx].type = vpiScaledRealTime;
-	    delay_vals[idx].real = delval_list->val[idx];
-      }
-
-      s_vpi_delay delays;
-      delays.da = delay_vals;
-      delays.no_of_delays = delval_list->count;
-      delays.time_type = vpiScaledRealTime;
-      delays.mtm_flag = 0;
-      delays.append_flag = 0;
-      delays.plusere_flag = 0;
-
-      vpi_put_delays(path, &delays);
 }
 
 static void check_command_line_args(void)
