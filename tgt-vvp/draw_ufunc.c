@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_ufunc.c,v 1.2 2007/01/16 05:44:16 steve Exp $"
-#endif
 
 # include  "vvp_priv.h"
 # include  <string.h>
@@ -114,23 +111,17 @@ struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
       res.base = allocate_vector(wid);
       res.wid  = wid;
 
-      { unsigned load_wid = swid;
-        if (load_wid > ivl_signal_width(retval))
-	      load_wid = ivl_signal_width(retval);
+      unsigned load_wid = swid;
+      if (load_wid > ivl_signal_width(retval))
+	    load_wid = ivl_signal_width(retval);
 
-	assert(ivl_signal_array_count(retval) == 1);
-	fprintf(vvp_out, "    %%load/v  %u, v%p_0, %u;\n",
-		res.base, retval, load_wid);
-
-	if (load_wid < swid)
-	      fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-		      res.base+load_wid, swid-load_wid);
-      }
+      assert(ivl_signal_array_count(retval) == 1);
+      fprintf(vvp_out, "    %%load/v  %u, v%p_0, %u;\n",
+	      res.base, retval, load_wid);
 
 	/* Pad the signal value with zeros. */
-      if (swid < wid)
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-		    res.base+swid, wid-swid);
+      if (load_wid < wid)
+	    pad_expr_in_place(exp, res, swid);
 
       return res;
 }

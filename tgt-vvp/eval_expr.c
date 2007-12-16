@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1697,7 +1697,7 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
 * the res vector. This function just calculates the pad to fill out
 * the res area.
 */
-static void pad_expr_in_place(ivl_expr_t exp, struct vector_info res, unsigned swid)
+void pad_expr_in_place(ivl_expr_t exp, struct vector_info res, unsigned swid)
 {
       if (res.wid <= swid)
 	    return;

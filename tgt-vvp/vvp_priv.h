@@ -29,6 +29,11 @@
  */
 extern FILE* vvp_out;
 
+struct vector_info {
+      unsigned base;
+      unsigned wid;
+};
+
 /*
  * Mangle all non-symbol characters in an identifier, quotes in names
  */
@@ -65,6 +70,8 @@ extern void draw_lpm_mux(ivl_lpm_t net);
 
 extern struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid);
 extern int draw_ufunc_real(ivl_expr_t exp);
+
+extern void pad_expr_in_place(ivl_expr_t exp, struct vector_info res, unsigned swid);
 
 /*
  * modpath.c symbols.
@@ -141,10 +148,6 @@ extern const char*draw_input_from_net(ivl_nexus_t nex);
  *        if the expression might be found in the lookaside table, and
  *        therefore might be multiply allocated if allowed.
  */
-struct vector_info {
-      unsigned base;
-      unsigned wid;
-};
 
 extern struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag);
 extern struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned w,
