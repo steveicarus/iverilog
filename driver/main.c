@@ -342,31 +342,32 @@ static int t_default(char*cmd, unsigned ncmd)
 static void process_warning_switch(const char*name)
 {
       if (strcmp(name,"all") == 0) {
-	    strcat(warning_flags, "ipt");
-
+	    process_warning_switch("implicit");
+	    process_warning_switch("portbind");
+	    process_warning_switch("timescale");
       } else if (strcmp(name,"implicit") == 0) {
-	    if (! strchr(warning_flags+2, 'i'))
+	    if (! strchr(warning_flags, 'i'))
 		  strcat(warning_flags, "i");
       } else if (strcmp(name,"portbind") == 0) {
-	    if (! strchr(warning_flags+2, 'p'))
+	    if (! strchr(warning_flags, 'p'))
 		  strcat(warning_flags, "p");
       } else if (strcmp(name,"timescale") == 0) {
-	    if (! strchr(warning_flags+2, 't'))
+	    if (! strchr(warning_flags, 't'))
 		  strcat(warning_flags, "t");
       } else if (strcmp(name,"no-implicit") == 0) {
-	    char*cp = strchr(warning_flags+2, 'i');
+	    char*cp = strchr(warning_flags, 'i');
 	    if (cp) while (*cp) {
 		  cp[0] = cp[1];
 		  cp += 1;
 	    }
       } else if (strcmp(name,"no-portbind") == 0) {
-	    char*cp = strchr(warning_flags+2, 'p');
+	    char*cp = strchr(warning_flags, 'p');
 	    if (cp) while (*cp) {
 		  cp[0] = cp[1];
 		  cp += 1;
 	    }
       } else if (strcmp(name,"no-timescale") == 0) {
-	    char*cp = strchr(warning_flags+2, 't');
+	    char*cp = strchr(warning_flags, 't');
 	    if (cp) while (*cp) {
 		  cp[0] = cp[1];
 		  cp += 1;
