@@ -251,27 +251,10 @@ struct __vpiStringParam  : public __vpiStringConst {
 static char* string_param_get_str(int code, vpiHandle obj)
 {
       struct __vpiStringParam*rfp = (struct __vpiStringParam*)obj;
-      char *bn = strdup(vpi_get_str(vpiFullName, &rfp->scope->base));
-      char *rbuf = need_result_buf(strlen(bn)+strlen(rfp->basename) + 2,
-                                   RBUF_STR);
 
       assert(obj->vpi_type->type_code == vpiParameter);
 
-      switch (code) {
-          case vpiFullName:
-	    sprintf(rbuf, "%s.%s", bn, rfp->basename);
-	    free(bn);
-	    return rbuf;
-
-	  case vpiName:
-	    strcpy(rbuf, rfp->basename);
-	    free(bn);
-	    return rbuf;
-
-	  default:
-	    free(bn);
-	    return 0;
-      }
+      return generic_get_str(code, &rfp->scope->base, rfp->basename, NULL);
 }
 
 static vpiHandle string_param_handle(int code, vpiHandle obj)
@@ -441,26 +424,10 @@ struct __vpiBinaryParam  : public __vpiBinaryConst {
 static char* binary_param_get_str(int code, vpiHandle obj)
 {
       struct __vpiBinaryParam*rfp = (struct __vpiBinaryParam*)obj;
-      char *bn = strdup(vpi_get_str(vpiFullName, &rfp->scope->base));
-      char *rbuf = need_result_buf(strlen(bn)+strlen(rfp->basename) + 2,
-                                   RBUF_STR);
 
       assert(obj->vpi_type->type_code == vpiParameter);
 
-      switch (code) {
-	  case vpiFullName:
-	    sprintf(rbuf, "%s.%s", bn, rfp->basename);
-	    free(bn);
-	    return rbuf;
-	  case vpiName:
-	    strcpy(rbuf, rfp->basename);
-	    free(bn);
-	    return rbuf;
-
-	  default:
-	    free(bn);
-	    return 0;
-      }
+      return generic_get_str(code, &rfp->scope->base, rfp->basename, NULL);
 }
 
 static vpiHandle binary_param_handle(int code, vpiHandle obj)

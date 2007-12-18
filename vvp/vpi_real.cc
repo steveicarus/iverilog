@@ -48,39 +48,22 @@ static char* real_var_get_str(int code, vpiHandle ref)
       assert(ref->vpi_type->type_code == vpiRealVar);
 
       struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
-      char *bn = strdup(vpi_get_str(vpiFullName, &rfp->scope->base));
-      char *nm;
+
+      char *nm, *ixs;
       if (rfp->parent) {
-	    s_vpi_value vp;
 	    nm = strdup(vpi_get_str(vpiName, rfp->parent));
-	    strcat(nm, "[");
+	    s_vpi_value vp;
 	    vp.format = vpiDecStrVal;
 	    vpi_get_value(rfp->id.index, &vp);
-	    strcat(nm, vp.value.str);
-	    strcat(nm, "]");
+	    ixs = vp.value.str;  /* do I need to strdup() this? */
       } else {
 	    nm = strdup(rfp->id.name);
-      }
-      char *rbuf = need_result_buf(strlen(bn)+strlen(nm) + 2, RBUF_STR);
-
-      switch (code) {
-
-	  case vpiFullName:
-	    sprintf(rbuf, "%s.%s", bn, nm);
-	    free(bn);
-	    free(nm);
-	    return rbuf;
-
-	  case vpiName:
-	    strcpy(rbuf, nm);
-	    free(bn);
-	    free(nm);
-	    return rbuf;
+	    ixs = NULL;
       }
 
-      free(bn);
+      char *rbuf = generic_get_str(code, &rfp->scope->base, nm, ixs);
       free(nm);
-      return 0;
+      return rbuf;
 }
 
 static vpiHandle real_var_get_handle(int code, vpiHandle ref)

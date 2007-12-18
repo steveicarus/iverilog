@@ -109,40 +109,36 @@ static const char* scope_get_type(int code)
 static char* scope_get_str(int code, vpiHandle obj)
 {
       struct __vpiScope*ref = (struct __vpiScope*)obj;
-      char *rbuf;
 
       assert(handle_is_scope(obj));
 
+      char buf[4096];  // XXX is a fixed buffer size really reliable?
+      const char *p=0;
       switch (code) {
-	  case vpiFullName: {
-		char buf[4096];
-		buf[0] = 0;
-		construct_scope_fullname(ref, buf);
-		rbuf = need_result_buf(strlen(buf) + 1, RBUF_STR);
-		strcpy(rbuf, buf);
-		return rbuf;
-	  }
+	  case vpiFullName:
+	    buf[0] = 0;
+	    construct_scope_fullname(ref, buf);
+	    p = buf;
+	    break;
 
 	  case vpiName:
-	    rbuf = need_result_buf(strlen(ref->name) + 1, RBUF_STR);
-	    strcpy(rbuf, ref->name);
-	    return rbuf;
+	    p = ref->name;
+	    break;
 
 	  case vpiDefName:
-	    rbuf = need_result_buf(strlen(ref->tname) + 1, RBUF_STR);
-	    strcpy(rbuf, ref->tname);
-	    return rbuf;
+	    p = ref->tname;
+	    break;
 
 	  case vpiType:
-	    rbuf = need_result_buf(strlen(scope_get_type(code)) + 1, RBUF_STR);
-	    strcpy(rbuf, scope_get_type(code));
-	    return rbuf;
+	    p = scope_get_type(code);
+	    break;
 
 	  default:
 	    fprintf(stderr, "ERROR: invalid code %d.", code);
 	    assert(0);
 	    return 0;
       }
+      return simple_set_rbuf_str(p);
 }
 
 static vpiHandle scope_get_handle(int code, vpiHandle obj)

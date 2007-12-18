@@ -29,30 +29,13 @@
 # include  <string.h>
 # include  <assert.h>
 
-static char* named_event_str(int code, vpiHandle ref)
+static char* named_event_get_str(int code, vpiHandle ref)
 {
       assert((ref->vpi_type->type_code==vpiNamedEvent));
 
       struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)ref;
 
-      char *bn = vpi_get_str(vpiFullName, &obj->scope->base);
-      const char *nm = obj->name;
-
-      char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 1, RBUF_STR);
-
-      switch (code) {
-
-	  case vpiFullName:
-	    sprintf(rbuf, "%s.%s", bn, nm);
-	    return rbuf;
-
-	  case vpiName:
-	    strcpy(rbuf, nm);
-	    return rbuf;
-
-      }
-
-      return 0;
+      return generic_get_str(code, &obj->scope->base, obj->name, NULL);
 }
 
 static vpiHandle named_event_get_handle(int code, vpiHandle ref)
@@ -74,7 +57,7 @@ static const struct __vpirt vpip_named_event_rt = {
       vpiNamedEvent,
 
       0,
-      named_event_str,
+      named_event_get_str,
       0,
       0,
 

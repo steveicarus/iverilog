@@ -107,7 +107,7 @@ static char* timevar_time_get_str(int code, vpiHandle ref)
 {
       switch (code) {
 	  case vpiName:
-	    return "$time";
+	    return simple_set_rbuf_str("$time");
 	  default:
 	    fprintf(stderr, "Code: %d\n", code);
 	    assert(0);
@@ -119,7 +119,7 @@ static char* timevar_simtime_get_str(int code, vpiHandle ref)
 {
       switch (code) {
 	  case vpiName:
-	    return "$simtime";
+	    return simple_set_rbuf_str("$simtime");
 	  default:
 	    fprintf(stderr, "Code: %d\n", code);
 	    assert(0);
@@ -131,7 +131,7 @@ static char* timevar_realtime_get_str(int code, vpiHandle ref)
 {
       switch (code) {
 	  case vpiName:
-	    return "$realtime";
+	    return simple_set_rbuf_str("$realtime");
 	  default:
 	    fprintf(stderr, "Code: %d\n", code);
 	    assert(0);

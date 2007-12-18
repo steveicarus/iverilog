@@ -111,14 +111,10 @@ static char *systask_get_str(int type, vpiHandle ref)
       assert((ref->vpi_type->type_code == vpiSysTaskCall)
 	     || (ref->vpi_type->type_code == vpiSysFuncCall));
 
-      const char *bn = rfp->defn->info.tfname;
-      char *rbuf = need_result_buf(strlen(bn) + 1, RBUF_STR);
-
       switch (type) {
 
           case vpiName:
-            strcpy(rbuf,bn);
-	    return rbuf;
+            return simple_set_rbuf_str(rfp->defn->info.tfname);
       }
 
       return 0;
