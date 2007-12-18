@@ -2002,7 +2002,7 @@ NetEBLogic* NetEBLogic::dup_expr() const
 NetEConst::NetEConst(const verinum&val)
 : NetExpr(val.len()), value_(val)
 {
-      cast_signed(value_.has_sign());
+      cast_signed_base_(value_.has_sign());
 }
 
 NetEConst::~NetEConst()

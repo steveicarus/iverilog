@@ -1103,7 +1103,7 @@ class NetExpr  : public LineInfo {
 	// This method returns true if the expression is
 	// signed. Unsigned expressions return false.
       bool has_sign() const;
-      void cast_signed(bool flag);
+      virtual void cast_signed(bool flag);
 
 	// This returns true if the expression has a definite
 	// width. This is generally true, but in some cases the
@@ -1145,6 +1145,7 @@ class NetExpr  : public LineInfo {
 
     protected:
       void expr_width(unsigned w) { width_ = w; }
+      void cast_signed_base_(bool flag) {signed_flag_ = flag; }
 
     private:
       unsigned width_;
@@ -1169,7 +1170,7 @@ class NetEConst  : public NetExpr {
       const verinum&value() const;
 
       virtual bool set_width(unsigned w, bool last_chance =false);
-
+      virtual void cast_signed(bool sign_flag);
       virtual bool has_width() const;
       virtual ivl_variable_type_t expr_type() const;
 

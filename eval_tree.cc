@@ -248,6 +248,17 @@ NetEConst* NetEBBits::eval_tree(int prune_to_width)
       if (rwid > wid)
 	    rwid = wid;
 
+	// Sub-expressions of bitwise operators need to be the same
+	// width. Pad them out if necessary.
+      if (lwid < wid) {
+	    lval = pad_to_width(lval, wid);
+	    lwid = wid;
+      }
+      if (rwid < wid) {
+	    rval = pad_to_width(rval, wid);
+	    rwid = wid;
+      }
+
       switch (op()) {
 
 	  case '|': {

@@ -326,6 +326,12 @@ bool NetEConst::set_width(unsigned w, bool last_chance)
       }
 }
 
+void NetEConst::cast_signed(bool sign_flag)
+{
+      value_.has_sign(sign_flag);
+      cast_signed_base_(sign_flag);
+}
+
 /*
  * Parameter vectors cannot be resized because they refer to a common
  * value.
