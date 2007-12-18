@@ -114,7 +114,7 @@ NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope,
 void PEBinary::surpress_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp)
 {
 	// If either operand is unsigned, then treat the whole
-	// expression as unsigned. This test needs to be done hear
+	// expression as unsigned. This test needs to be done here
 	// instead of in *_expr_base_ because it needs to be done
 	// ahead of any subexpression evaluation (because they need to
 	// know their signedness to evaluate) and because there are

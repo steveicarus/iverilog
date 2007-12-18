@@ -1595,7 +1595,7 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
       code_label_lookup(code, dest.text);
 
 	/* Figure out the target SCOPE. */
-      compile_vpi_lookup((vpiHandle*)&code->scope, scope.text);
+      compile_vpi_lookup(&code->handle, scope.text);
 }
 
 void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)

@@ -77,11 +77,11 @@ install: all installdirs $(libdir)/ivl/stub.tgt \
 $(libdir)/ivl/stub.tgt: ./stub.tgt
 	$(INSTALL_PROGRAM) ./stub.tgt $(libdir)/ivl/stub.tgt
 
-$(libdir)/ivl/stub.conf: ./stub.conf
-	$(INSTALL_DATA) ./stub.conf $(libdir)/ivl/stub.conf
+$(libdir)/ivl/stub.conf: stub.conf
+	$(INSTALL_DATA) $< $(libdir)/ivl/stub.conf
 
-$(libdir)/ivl/stub-s.conf: ./stub-s.conf
-	$(INSTALL_DATA) ./stub-s.conf $(libdir)/ivl/stub-s.conf
+$(libdir)/ivl/stub-s.conf: stub-s.conf
+	$(INSTALL_DATA) $< $(libdir)/ivl/stub-s.conf
 
 installdirs: ../mkinstalldirs
 	$(srcdir)/../mkinstalldirs $(includedir) $(bindir) $(libdir)/ivl

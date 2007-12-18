@@ -348,7 +348,7 @@ extern void compile_codelabel(char*label);
  * The parser uses these functions to compile .scope statements.
  * The implementations of these live in the vpi_scope.cc file.
  */
-extern void compile_scope_decl(char*typ, char*lab, char*nam,char*tnam,char*par);
+extern void compile_scope_decl(char*typ, char*lab, char*nam,const char*tnam,char*par);
 extern void compile_scope_recall(char*sym);
 
 /*

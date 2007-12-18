@@ -886,8 +886,8 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
 
 
 /*
-  We Increment the tow vpi methods  to enable the 
-  read/write SDF delay values from/into
+  We increment the two vpi methods to enable the 
+  read/write of SDF delay values from/into
   the modpath vpiHandle
   
 

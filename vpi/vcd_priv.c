@@ -279,7 +279,6 @@ PLI_INT32 sys_dumpfile_compiletf(PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle file;
 
       /* Check that there is an argument and that it is a string. */
       if (argv == 0) {

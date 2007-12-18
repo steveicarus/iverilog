@@ -1709,7 +1709,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
       break;
   }
   free(fmtb);
-  /* We can't use strdup her since %u and %z can insert NULL
+  /* We can't use strdup here since %u and %z can insert NULL
    * characters into the stream. */
   *rtn = malloc(size*sizeof(char));
   memcpy(*rtn, result, size);

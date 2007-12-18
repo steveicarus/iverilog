@@ -316,7 +316,7 @@ static void attach_to_scope_(struct __vpiScope*scope, vpiHandle obj)
  * symbol table and the name is used to construct the actual object.
  */
 void
-compile_scope_decl(char*label, char*type, char*name, char*tname, char*parent)
+compile_scope_decl(char*label, char*type, char*name, const char*tname, char*parent)
 {
       struct __vpiScope*scope = new struct __vpiScope;
       count_vpi_scopes += 1;
