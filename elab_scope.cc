@@ -432,6 +432,9 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 		       ; cur != replace.end() ;  cur ++ ) {
 
 		  PExpr*tmp = (*cur).second;
+		    // No expression means that the parameter is not
+		    // replaced at all.
+		  if (tmp == 0) continue;
 		  NetExpr*val = tmp->elaborate_pexpr(des, sc);
 		  bool flag = my_scope->replace_parameter((*cur).first, val);
 		  if (! flag) {

@@ -360,10 +360,14 @@ void PGModule::dump(ostream&out) const
       out << "    " << type_ << " ";
 
 	// If parameters are overridden by order, dump them.
-      if (overrides_) {
+      if (overrides_ && overrides_->count() > 0) {
 	    assert(parms_ == 0);
             out << "#(";
-	    out << *((*overrides_)[0]);
+
+	    if ((*overrides_)[0] == 0)
+	      out << "<nil>";
+	    else
+	      out << *((*overrides_)[0]);
 	    for (unsigned idx = 1 ;  idx < overrides_->count() ;  idx += 1) {
 	          out << "," << *((*overrides_)[idx]);
 	    }
