@@ -103,23 +103,7 @@ static char* memory_get_str(int code, vpiHandle ref)
 
       struct __vpiMemory*rfp = (struct __vpiMemory*)ref;
 
-      char *bn = strdup(vpi_get_str(vpiFullName, &rfp->scope->base));
-
-      char *rbuf = need_result_buf(strlen(bn)+strlen(rfp->name)+2, RBUF_STR);
-
-      switch (code) {
-	  case vpiFullName:
-	    sprintf(rbuf, "%s.%s", bn, rfp->name);
-	    free(bn);
-	    return rbuf;
-	  case vpiName:
-	    strcpy(rbuf, rfp->name);
-	    free(bn);
-	    return rbuf;
-      }
-
-      free(bn);
-      return 0;
+      return generic_get_str(code, &rfp->scope->base, rfp->name, NULL);
 }
 
 static vpiHandle memory_scan(vpiHandle ref, int)
@@ -340,27 +324,10 @@ static char* memory_word_get_str(int code, vpiHandle ref)
 
       struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
 
-      char *bn = strdup(vpi_get_str(vpiFullName, &rfp->mem->scope->base));
-      const char *nm = rfp->mem->name;
+      char number[32];
+      sprintf(number, "%d", rfp->index.value);
 
-      char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 10 + 4, RBUF_STR);
-
-      switch (code) {
-	  case vpiFullName:
-	    sprintf(rbuf, "%s.%s[%d]", bn, nm, rfp->index.value);
-	    free(bn);
-	    return rbuf;
-	    break;
-	  case vpiName: {
-	    sprintf(rbuf, "%s[%d]", nm, rfp->index.value);
-	    free(bn);
-	    return rbuf;
-	    break;
-	  }
-      }
-
-      free(bn);
-      return 0;
+      return generic_get_str(code, &rfp->mem->scope->base, rfp->mem->name, number);
 }
 
 static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)

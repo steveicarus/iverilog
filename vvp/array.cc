@@ -145,26 +145,7 @@ static char*vpi_array_get_str(int code, vpiHandle ref)
 {
       struct __vpiArray*obj = ARRAY_HANDLE(ref);
 
-      char*bn;
-      char*rbuf;
-      size_t len;
-
-      switch (code) {
-	  case vpiFullName:
-	    bn = strdup(vpi_get_str(vpiFullName, &obj->scope->base));
-	    len = strlen(bn)+strlen(obj->name)+2;
-	    rbuf = need_result_buf(len, RBUF_STR);
-	    snprintf(rbuf, len, "%s.%s", bn, obj->name);
-	    free(bn);
-	    return rbuf;
-
-	  case vpiName:
-	    rbuf = need_result_buf(strlen(obj->name)+1, RBUF_STR);
-	    strcpy(rbuf, obj->name);
-	    return rbuf;
-      }
-
-      return 0;
+      return generic_get_str(code, &obj->scope->base, obj->name, NULL);
 }
 
 static vpiHandle vpi_array_get_handle(int code, vpiHandle ref)

@@ -105,8 +105,8 @@ static char* vthr_vec_get_str(int code, vpiHandle ref)
 
       switch (code) {
 
-	  case vpiFullName:
-	    return (char*)rfp->name;
+	  case vpiFullName:   /* should this be vpiName? */
+	    return simple_set_rbuf_str(rfp->name);
       }
 
       return 0;
