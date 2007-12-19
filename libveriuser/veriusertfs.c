@@ -98,6 +98,11 @@ void veriusertfs_register_table(p_tfcell vtable)
 		  tf_data.type = vpiSysTask;
 		  break;
 		case userfunction:
+		  tf_data.sysfunctype = vpiIntFunc;
+		  tf_data.type = vpiSysFunc;
+		  break;
+		case userrealfunction:
+		  tf_data.sysfunctype = vpiRealFunc;
 		  tf_data.type = vpiSysFunc;
 		  break;
 		default:
@@ -387,71 +392,4 @@ PLI_INT32 tf_setrealdelay(double dly)
 {
       return tf_isetrealdelay(dly, tf_getinstance());
 }
-/*
- * $Log: veriusertfs.c,v $
- * Revision 1.17  2007/05/08 22:01:26  steve
- *  Trace file line buffer must be static.
- *
- * Revision 1.16  2006/10/30 22:45:37  steve
- *  Updates for Cygwin portability (pr1585922)
- *
- * Revision 1.15  2004/09/10 23:13:05  steve
- *  Compile cleanup of C code.
- *
- * Revision 1.14  2003/06/25 04:04:19  steve
- *  Fix mingw portability problems.
- *
- * Revision 1.13  2003/06/17 22:09:45  steve
- *  Better trace of PLI1 registration.
- *
- * Revision 1.12  2003/06/17 16:55:08  steve
- *  1) setlinebuf() for vpi_trace
- *  2) Addes error checks for trace file opens
- *  3) removes now extraneous flushes
- *  4) fixes acc_next() bug
- *
- * Revision 1.11  2003/06/04 01:56:20  steve
- * 1) Adds configure logic to clean up compiler warnings
- * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
- *    tf_isetrealdelay, acc_handle_scope
- * 3) makes acc_next reentrant
- * 4) adds basic vpiWire type support
- * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
- * 6) add vpiLeftRange/RigthRange to signals
- *
- * Revision 1.10  2003/05/30 04:05:32  steve
- *  Add tf_rosynchronize and friends.
- *
- * Revision 1.9  2003/05/28 02:42:43  steve
- *  compiler warnings.
- *
- * Revision 1.8  2003/05/18 00:16:35  steve
- *  Add PLI_TRACE tracing of PLI1 modules.
- *
- *  Add tf_isetdelay and friends, and add
- *  callback return values for acc_vcl support.
- *
- * Revision 1.7  2003/04/23 15:01:29  steve
- *  Add tf_synchronize and tf_multiply_long.
- *
- * Revision 1.6  2003/02/16 02:23:14  steve
- *  Change the IV veriusertfs_register to accept table pointers.
- *
- * Revision 1.5  2002/08/12 01:35:02  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2002/06/04 01:42:58  steve
- *  Add misctf support to libveriuser
- *
- * Revision 1.3  2002/06/03 00:08:42  steve
- *  Better typing for veriusertfs table.
- *
- * Revision 1.2  2002/05/31 18:21:39  steve
- *  Check for and don't dereference null pointers,
- *  Avoid copy of static objects.
- *  (mruff)
- *
- * Revision 1.1  2002/05/30 02:37:26  steve
- *  Add the veriusertf_register funciton.
- *
- */
+

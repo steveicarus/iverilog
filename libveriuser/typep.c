@@ -49,6 +49,9 @@ PLI_INT32 tf_typep(PLI_INT32 narg)
 		case vpiStringConst:
 		  rtn = TF_STRING;
 		  break;
+		case vpiRealConst:
+		  rtn = TF_READONLYREAL;
+		  break;
 		default:
 		  rtn = TF_READONLY;
 		  break;
@@ -61,6 +64,10 @@ PLI_INT32 tf_typep(PLI_INT32 narg)
 	    rtn = TF_READWRITE;
 	    break;
 
+	  case vpiRealVar:
+	    rtn = TF_READWRITEREAL;
+	    break;
+
 	  default:
 	    rtn = TF_READONLY;
 	    break;
@@ -69,16 +76,3 @@ PLI_INT32 tf_typep(PLI_INT32 narg)
       vpi_free_object(argv);
       return rtn;
 }
-
-/*
- * $Log: typep.c,v $
- * Revision 1.2  2003/03/13 05:07:46  steve
- *  Declaration warnings.
- *
- * Revision 1.1  2002/12/19 21:37:04  steve
- *  Add tf_message, tf_get/setworkarea, and
- *  ty_typep functions, along with defines
- *  related to these functions.
- *
- */
-
