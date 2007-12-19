@@ -382,7 +382,7 @@ PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name)
                                         " numeric.\n", name);
 
       /* The rest of the arguments are either a module or a variable. */
-      while (arg = vpi_scan(argv)) {
+      while ((arg=vpi_scan(argv)) != NULL) {
         switch(vpi_get(vpiType, arg)) {
           /* The module types. */
           case vpiModule:

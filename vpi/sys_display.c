@@ -1590,6 +1590,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
     case 'u':
     case 'U':
       *idx += 1;
+      size = 0;  /* fallback value if errors */
       if (ljust != 0  || plus != 0 || ld_zero != 0 || width != -1 ||
           prec != -1) {
         vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
@@ -1661,6 +1662,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
     case 'z':
     case 'Z':
       *idx += 1;
+      size = 0;  /* fallback value if errors */
       if (ljust != 0  || plus != 0 || ld_zero != 0 || width != -1 ||
           prec != -1) {
         vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
@@ -2161,6 +2163,7 @@ static PLI_INT32 sys_printtimescale_calltf(PLI_BYTE8*xx)
       vpiHandle scope;
       if (!argv) {
             vpiHandle parent = vpi_handle(vpiScope, sys);
+            scope = NULL;  /* fallback value if parent is NULL */
             while (parent) {
                    scope = parent;
                    parent = vpi_handle(vpiScope, scope);
@@ -2169,7 +2172,7 @@ static PLI_INT32 sys_printtimescale_calltf(PLI_BYTE8*xx)
             scope = vpi_scan(argv);
             vpi_free_object(argv);
       }
-      
+
       vpi_printf("Time scale of (%s) is ", vpi_get_str(vpiFullName, scope));
       vpi_printf("%s / ", pts_convert(vpi_get(vpiTimeUnit, scope)));
       vpi_printf("%s\n", pts_convert(vpi_get(vpiTimePrecision, scope)));
