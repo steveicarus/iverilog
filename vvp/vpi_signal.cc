@@ -172,7 +172,7 @@ static char* signal_get_str(int code, vpiHandle ref)
 
       char *nm, *ixs;
       if (rfp->parent) {
-	    nm = vpi_get_str(vpiName, rfp->parent);
+	    nm = strdup(vpi_get_str(vpiName, rfp->parent));
 	    s_vpi_value vp;
 	    vp.format = vpiDecStrVal;
 	    vpi_get_value(rfp->id.index, &vp);
