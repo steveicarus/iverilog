@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_func.cc,v 1.10 2007/06/02 03:42:13 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "netlist.h"
@@ -94,14 +91,14 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 	    parms_count = 0;
 
       if (dscope->type() != NetScope::FUNC) {
-	    cerr << get_line() << ": error: Attempt to call scope "
+	    cerr << get_fileline() << ": error: Attempt to call scope "
 		 << scope_path(dscope) << " as a function." << endl;
 	    des->errors += 1;
 	    return false;
       }
 
       if (parms_count != dscope->func_def()->port_count()) {
-	    cerr << get_line() << ": error: Function " << scope_path(dscope)
+	    cerr << get_fileline() << ": error: Function " << scope_path(dscope)
 		 << " expects " << (dscope->func_def()->port_count())
 		 << " arguments, you passed " << parms_count << "."
 		 << endl;
@@ -145,41 +142,4 @@ unsigned NetSysFunc::vector_width() const
 {
       return def_->wid;
 }
-
-
-/*
- * $Log: net_func.cc,v $
- * Revision 1.10  2007/06/02 03:42:13  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.9  2007/04/17 04:17:47  steve
- *  Fix argument count in function error message.
- *
- * Revision 1.8  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.7  2005/03/18 02:56:03  steve
- *  Add support for LPM_UFUNC user defined functions.
- *
- * Revision 1.6  2004/05/31 23:34:37  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.5  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.4  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.3  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.2  2002/03/31 04:07:40  steve
- *  Update for gcc 3.0
- *
- * Revision 1.1  2002/03/09 02:10:22  steve
- *  Add the NetUserFunc netlist node.
- *
- */
 

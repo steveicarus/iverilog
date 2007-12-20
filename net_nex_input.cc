@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_input.cc,v 1.16 2007/01/16 05:44:15 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -31,7 +28,7 @@
 
 NexusSet* NetExpr::nex_input(bool rem_out)
 {
-      cerr << get_line()
+      cerr << get_fileline()
 	   << ": internal error: nex_input not implemented: "
 	   << *this << endl;
       return 0;
@@ -39,7 +36,7 @@ NexusSet* NetExpr::nex_input(bool rem_out)
 
 NexusSet* NetProc::nex_input(bool rem_out)
 {
-      cerr << get_line()
+      cerr << get_fileline()
 	   << ": internal error: NetProc::nex_input not implemented"
 	   << endl;
       return 0;
@@ -218,7 +215,7 @@ NexusSet* NetBlock::nex_input(bool rem_out)
 	    return new NexusSet;
 
       if (type_ == PARA) {
-	    cerr << get_line() << ": internal error: Sorry, "
+	    cerr << get_fileline() << ": internal error: Sorry, "
 		 << "I don't know how to synthesize fork/join blocks."
 		 << endl;
 	    return 0;
@@ -291,7 +288,7 @@ NexusSet* NetCase::nex_input(bool rem_out)
 
 NexusSet* NetCAssign::nex_input(bool rem_out)
 {
-      cerr << get_line() << ": internal warning: NetCAssign::nex_input()"
+      cerr << get_fileline() << ": internal warning: NetCAssign::nex_input()"
 	   << " not implemented." << endl;
       return new NexusSet;
 }
@@ -316,7 +313,7 @@ NexusSet* NetCondit::nex_input(bool rem_out)
 
 NexusSet* NetForce::nex_input(bool rem_out)
 {
-      cerr << get_line() << ": internal warning: NetForce::nex_input()"
+      cerr << get_fileline() << ": internal warning: NetForce::nex_input()"
 	   << " not implemented." << endl;
       return new NexusSet;
 }

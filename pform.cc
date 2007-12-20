@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.148 2007/06/12 04:05:45 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -73,6 +70,18 @@ static int pform_time_prec = 0;
 
 static char*pform_timescale_file = 0;
 static unsigned pform_timescale_line = 0;
+
+static inline void FILE_NAME(LineInfo*obj, const char*file, unsigned lineno)
+{
+      obj->set_lineno(lineno);
+      obj->set_file(filename_strings.make(file));
+}
+
+static inline void FILE_NAME(LineInfo*tmp, const struct vlltype&where)
+{
+      tmp->set_lineno(where.first_line);
+      tmp->set_file(filename_strings.make(where.text));
+}
 
 /*
  * The scope stack and the following functions handle the processing
@@ -133,7 +142,7 @@ void pform_set_default_nettype(NetNet::Type type,
 	    cerr << file<<":"<<lineno << ":      : "
 		 << "module " << pform_cur_module->mod_name()
 		 << " starts on line "
-		 << pform_cur_module->get_line() << "." << endl;
+		 << pform_cur_module->get_fileline() << "." << endl;
 	    error_count += 1;
       }
 }
@@ -176,7 +185,7 @@ void pform_set_timescale(int unit, int prec,
 
 		  cerr << file << ":" << lineno << ":        : "
 		       << "  -- module " << (*mod).first
-		       << " declared here: " << mp->get_line() << endl;
+		       << " declared here: " << mp->get_fileline() << endl;
 	    }
       }
 }
@@ -243,8 +252,7 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
       pform_cur_module->time_precision = pform_time_prec;
       pform_cur_module->default_nettype = pform_default_nettype;
 
-      pform_cur_module->set_file(file);
-      pform_cur_module->set_lineno(lineno);
+      FILE_NAME(pform_cur_module, file, lineno);
       pform_cur_module->library_flag = pform_library_flag;
 
 	/* The generate scheme numbering starts with *1*, not
@@ -254,7 +262,7 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
       if (warn_timescale && pform_timescale_file
 	  && (strcmp(pform_timescale_file,file) != 0)) {
 
-	    cerr << pform_cur_module->get_line() << ": warning: "
+	    cerr << pform_cur_module->get_fileline() << ": warning: "
 		 << "timescale for " << name
 		 << " inherited from another file." << endl;
 	    cerr << pform_timescale_file << ":" << pform_timescale_line
@@ -279,8 +287,7 @@ Module::port_t* pform_module_port_reference(char*name,
 {
       Module::port_t*ptmp = new Module::port_t;
       PEIdent*tmp = new PEIdent(lex_strings.make(name));
-      tmp->set_file(file);
-      tmp->set_lineno(lineno);
+      FILE_NAME(tmp, file, lineno);
       ptmp->name = lex_strings.make(name);
       ptmp->expr = svector<PEIdent*>(1);
       ptmp->expr[0] = tmp;
@@ -318,7 +325,7 @@ void pform_endmodule(const char*name)
       if (test != pform_modules.end()) {
 	    ostringstream msg;
 	    msg << "Module " << name << " was already declared here: "
-		<< (*test).second->get_line() << endl;
+		<< (*test).second->get_fileline() << endl;
 	    VLerror(msg.str().c_str());
 	    pform_cur_module = 0;
 	    return;
@@ -344,8 +351,7 @@ void pform_start_generate_for(const struct vlltype&li,
 {
       PGenerate*gen = new PGenerate(scope_generate_counter++);
 
-      gen->set_file(li.text);
-      gen->set_lineno(li.first_line);
+      FILE_NAME(gen, li);
 
 	// For now, assume that generates do not nest.
       gen->parent = pform_cur_generate;
@@ -366,8 +372,7 @@ void pform_start_generate_if(const struct vlltype&li, PExpr*test)
 {
       PGenerate*gen = new PGenerate(scope_generate_counter++);
 
-      gen->set_file(li.text);
-      gen->set_lineno(li.first_line);
+      FILE_NAME(gen, li);
 
 	// For now, assume that generates do not nest.
       gen->parent = pform_cur_generate;
@@ -390,8 +395,7 @@ void pform_start_generate_else(const struct vlltype&li)
 
       PGenerate*gen = new PGenerate(scope_generate_counter++);
 
-      gen->set_file(li.text);
-      gen->set_lineno(li.first_line);
+      FILE_NAME(gen, li);
 
 	// For now, assume that generates do not nest.
       gen->parent = pform_cur_generate;
@@ -468,7 +472,7 @@ PExpr* pform_select_mtm_expr(PExpr*min, PExpr*typ, PExpr*max)
       }
 
       if (min_typ_max_warn > 0) {
-	    cerr << res->get_line() << ": warning: choosing ";
+	    cerr << res->get_fileline() << ": warning: choosing ";
 	    switch (min_typ_max_flag) {
 		case MIN:
 		  cerr << "min";
@@ -761,8 +765,7 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
 			  synchronous_flag? NetNet::REG : NetNet::WIRE,
 			  NetNet::POUTPUT,
 			  IVL_VT_LOGIC);
-      pins[0]->set_file(file);
-      pins[0]->set_lineno(lineno);
+      FILE_NAME(pins[0], file, lineno);
 
 	/* Make the PWire objects for the input ports. */
       { list<perm_string>::iterator cur;
@@ -775,8 +778,7 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
 				    NetNet::WIRE,
 				    NetNet::PINPUT,
 				    IVL_VT_LOGIC);
-	      pins[idx]->set_file(file);
-	      pins[idx]->set_lineno(lineno);
+	      FILE_NAME(pins[idx], file, lineno);
 	}
 	assert(idx == pins.count());
       }
@@ -913,8 +915,7 @@ void pform_set_net_range(list<perm_string>*names,
 static void pform_make_event(perm_string name, const char*fn, unsigned ln)
 {
       PEvent*event = new PEvent(name);
-      event->set_file(fn);
-      event->set_lineno(ln);
+      FILE_NAME(event, fn, ln);
       pform_cur_module->events[name] = event;
 }
 
@@ -961,8 +962,7 @@ void pform_makegate(PGBuiltin::Type type,
 
       cur->strength0(str.str0);
       cur->strength1(str.str1);
-      cur->set_file(info.file);
-      cur->set_lineno(info.lineno);
+      FILE_NAME(cur, info.file, info.lineno);
 
       if (pform_cur_generate)
 	    pform_cur_generate->add_gate(cur);
@@ -1013,8 +1013,7 @@ static void pform_make_modgate(perm_string type,
 			       const char*fn, unsigned ln)
 {
       PGModule*cur = new PGModule(type, name, wires);
-      cur->set_file(fn);
-      cur->set_lineno(ln);
+      FILE_NAME(cur, fn, ln);
       cur->set_range(msb,lsb);
 
       if (overrides && overrides->by_name) {
@@ -1055,8 +1054,7 @@ static void pform_make_modgate(perm_string type,
       }
 
       PGModule*cur = new PGModule(type, name, pins, npins);
-      cur->set_file(fn);
-      cur->set_lineno(ln);
+      FILE_NAME(cur, fn, ln);
       cur->set_range(msb,lsb);
 
       if (overrides && overrides->by_name) {
@@ -1161,8 +1159,7 @@ void pform_make_pgassign_list(svector<PExpr*>*alist,
 	      tmp = pform_make_pgassign((*alist)[2*idx],
 					(*alist)[2*idx+1],
 					del, str);
-	      tmp->set_file(fn);
-	      tmp->set_lineno(lineno);
+	      FILE_NAME(tmp, fn, lineno);
 	}
 }
 
@@ -1194,14 +1191,11 @@ void pform_make_reginit(const struct vlltype&li,
       }
 
       PEIdent*lval = new PEIdent(sname);
-      lval->set_file(li.text);
-      lval->set_lineno(li.first_line);
+      FILE_NAME(lval, li);
       PAssign*ass = new PAssign(lval, expr);
-      ass->set_file(li.text);
-      ass->set_lineno(li.first_line);
+      FILE_NAME(ass, li);
       PProcess*top = new PProcess(PProcess::PR_INITIAL, ass);
-      top->set_file(li.text);
-      top->set_lineno(li.first_line);
+      FILE_NAME(top, li);
 
       pform_cur_module->add_behavior(top);
 }
@@ -1229,7 +1223,7 @@ void pform_module_define_port(const struct vlltype&li,
       if (cur) {
 	    ostringstream msg;
 	    msg << nm << " definition conflicts with "
-		<< "definition at " << cur->get_line()
+		<< "definition at " << cur->get_fileline()
 		<< ".";
 	    VLerror(msg.str().c_str());
 	    return;
@@ -1237,8 +1231,7 @@ void pform_module_define_port(const struct vlltype&li,
 
 
       cur = new PWire(name, type, port_type, IVL_VT_LOGIC);
-      cur->set_file(li.text);
-      cur->set_lineno(li.first_line);
+      FILE_NAME(cur, li);
 
       cur->set_signed(signed_flag);
 
@@ -1304,7 +1297,7 @@ void pform_makewire(const vlltype&li, const char*nm,
 	    if (rc == false) {
 		  ostringstream msg;
 		  msg << nm << " definition conflicts with "
-		      << "definition at " << cur->get_line()
+		      << "definition at " << cur->get_fileline()
 		      << ".";
 		  VLerror(msg.str().c_str());
 		  cerr << "XXXX type=" << type <<", curtype=" << cur->get_wire_type() << endl;
@@ -1318,8 +1311,7 @@ void pform_makewire(const vlltype&li, const char*nm,
 	    cur = new PWire(name, type, pt, dt);
       }
 
-      cur->set_file(li.text);
-      cur->set_lineno(li.first_line);
+      FILE_NAME(cur, li.text, li.first_line);
 
       switch (dt) {
 	  case IVL_VT_REAL:
@@ -1407,12 +1399,10 @@ void pform_makewire(const vlltype&li,
 	    PWire*cur = get_wire_in_module(name);
 	    if (cur != 0) {
 		  PEIdent*lval = new PEIdent(first_name);
-		  lval->set_file(li.text);
-		  lval->set_lineno(li.first_line);
+		  FILE_NAME(lval, li.text, li.first_line);
 		  PGAssign*ass = pform_make_pgassign(lval, first->expr,
 						     delay, str);
-		  ass->set_file(li.text);
-		  ass->set_lineno(li.first_line);
+		  FILE_NAME(ass, li.text, li.first_line);
 	    }
 
 	    free(first->name);
@@ -1428,8 +1418,7 @@ void pform_set_port_type(perm_string nm, NetNet::PortType pt,
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
 	    cur = new PWire(name, NetNet::IMPLICIT, NetNet::PIMPLICIT, IVL_VT_LOGIC);
-	    cur->set_file(file);
-	    cur->set_lineno(lineno);
+	    FILE_NAME(cur, file, lineno);
 	    pform_cur_module->add_wire(cur);
       }
 
@@ -1518,8 +1507,7 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 		  curw->set_port_type(pt);
 	    } else {
 		  curw = new PWire(name, NetNet::IMPLICIT_REG, pt, vtype);
-		  curw->set_file(file);
-		  curw->set_lineno(lineno);
+		  FILE_NAME(curw, file, lineno);
 		  pform_cur_module->add_wire(curw);
 	    }
 
@@ -1666,8 +1654,7 @@ extern PSpecPath* pform_make_specify_path(const struct vlltype&li,
 					  bool full_flag, list<perm_string>*dst)
 {
       PSpecPath*path = new PSpecPath(src->size(), dst->size());
-      path->set_file(li.text);
-      path->set_lineno(li.first_line);
+      FILE_NAME(path, li.text, li.first_line);
 
       unsigned idx;
       list<perm_string>::const_iterator cur;
@@ -1895,7 +1882,7 @@ int pform_parse(const char*path, FILE*file)
 void pform_error_nested_modules()
 {
       assert( pform_cur_module != 0 );
-      cerr << pform_cur_module->get_line() << ": error: original module "
+      cerr << pform_cur_module->get_fileline() << ": error: original module "
               "(" << pform_cur_module->mod_name() << ") defined here." << endl;
 }
 

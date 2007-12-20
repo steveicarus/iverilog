@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.54 2007/06/05 04:18:09 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -223,14 +220,14 @@ void NetScope::run_defparams(Design*des)
 		 is the current scope. */
 	    NetScope*targ_scope = des->find_scope(this, eval_path);
 	    if (targ_scope == 0) {
-		  cerr << val->get_line() << ": warning: scope of " <<
+		  cerr << val->get_fileline() << ": warning: scope of " <<
 			path << "." << perm_name << " not found." << endl;
 		  continue;
 	    }
 
 	    bool flag = targ_scope->replace_parameter(perm_name, val);
 	    if (! flag) {
-		  cerr << val->get_line() << ": warning: parameter "
+		  cerr << val->get_fileline() << ": warning: parameter "
 		       << perm_name << " not found in "
 		       << scope_path(targ_scope) << "." << endl;
 	    }
@@ -280,7 +277,7 @@ void NetScope::evaluate_parameters(Design*des)
 
 			NetExpr*nexpr = expr->eval_tree();
 			if (nexpr == 0) {
-			      cerr << (*cur).second.expr->get_line()
+			      cerr << (*cur).second.expr->get_fileline()
 				   << ": internal error: "
 				   << "unable to evaluate msb expression "
 				   << "for parameter " << (*cur).first << ": "
@@ -311,7 +308,7 @@ void NetScope::evaluate_parameters(Design*des)
 
 			NetExpr*nexpr = expr->eval_tree();
 			if (nexpr == 0) {
-			      cerr << (*cur).second.expr->get_line()
+			      cerr << (*cur).second.expr->get_fileline()
 				   << ": internal error: "
 				   << "unable to evaluate lsb expression "
 				   << "for parameter " << (*cur).first << ": "
@@ -344,7 +341,7 @@ void NetScope::evaluate_parameters(Design*des)
 
 			NetExpr*nexpr = expr->eval_tree();
 			if (nexpr == 0) {
-			      cerr << (*cur).second.expr->get_line()
+			      cerr << (*cur).second.expr->get_fileline()
 				   << ": internal error: "
 				   << "unable to evaluate real parameter value: "
 				   << *expr << endl;
@@ -365,7 +362,7 @@ void NetScope::evaluate_parameters(Design*des)
 			  // Try to evaluate the expression.
 			NetExpr*nexpr = expr->eval_tree();
 			if (nexpr == 0) {
-			      cerr << (*cur).second.expr->get_line()
+			      cerr << (*cur).second.expr->get_fileline()
 				   << ": internal error: "
 				   << "unable to evaluate parameter "
 				   << (*cur).first
@@ -388,7 +385,7 @@ void NetScope::evaluate_parameters(Design*des)
 		  break;
 
 		default:
-		  cerr << (*cur).second.expr->get_line()
+		  cerr << (*cur).second.expr->get_fileline()
 		       << ": internal error: "
 		       << "unhandled expression type?" << endl;
 		  des->errors += 1;

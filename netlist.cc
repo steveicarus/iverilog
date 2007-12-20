@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.258 2007/06/02 03:42:13 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -201,9 +198,9 @@ const NetScope* NetObj::scope() const
 Link& NetObj::pin(unsigned idx)
 {
       if (idx >= npins_) {
-	    cerr << get_line() << ": internal error: pin("<<idx<<")"
+	    cerr << get_fileline() << ": internal error: pin("<<idx<<")"
 		 << " out of bounds("<<npins_<<")" << endl;
-	    cerr << get_line() << ":               : typeid="
+	    cerr << get_fileline() << ":               : typeid="
 		 << typeid(*this).name() << endl;
       }
 
@@ -525,14 +522,14 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 NetNet::~NetNet()
 {
       if (eref_count_ > 0) {
-	    cerr << get_line() << ": internal error: attempt to delete "
+	    cerr << get_fileline() << ": internal error: attempt to delete "
 		 << "signal ``" << name() << "'' which has "
 		 << "expression references." << endl;
 	    dump_net(cerr, 4);
       }
       assert(eref_count_ == 0);
       if (lref_count_ > 0) {
-	    cerr << get_line() << ": internal error: attempt to delete "
+	    cerr << get_fileline() << ": internal error: attempt to delete "
 		 << "signal ``" << name() << "'' which has "
 		 << "assign references." << endl;
 	    dump_net(cerr, 4);
@@ -2189,7 +2186,7 @@ ivl_variable_type_t NetETernary::expr_type() const
 	    return IVL_VT_LOGIC;
 
       if (tru != fal) {
-	    cerr << get_line() << ": internal error:"
+	    cerr << get_fileline() << ": internal error:"
 		 << " Unexpected ?: type clash:"
 		 << " tru=" << tru << ", fal=" << fal << endl;
       }

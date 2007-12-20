@@ -380,9 +380,9 @@ unsigned NetEConcat::repeat()
 	/* This should not be possible, as it was checked earlier to
 	   assure that this is a constant expression. */
       if (repeat_const == 0) {
-	    cerr << get_line() << ": internal error: repeat expression "
+	    cerr << get_fileline() << ": internal error: repeat expression "
 		 << "is not a compile time constant." << endl;
-	    cerr << get_line() << ":               : Expression is: "
+	    cerr << get_fileline() << ":               : Expression is: "
 		 << *repeat_ << endl;
 	    repeat_calculated_ = true;
 	    repeat_value_ = 1;

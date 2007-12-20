@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: LineInfo.cc,v 1.4 2003/01/17 05:49:03 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -26,7 +23,7 @@
 # include  <sstream>
 
 LineInfo::LineInfo()
-: file_(0), lineno_(0)
+: lineno_(0)
 {
 }
 
@@ -34,10 +31,10 @@ LineInfo::~LineInfo()
 {
 }
 
-string LineInfo::get_line() const
+string LineInfo::get_fileline() const
 {
       ostringstream buf;
-      buf << (file_? file_ : "") << ":" << lineno_;
+      buf << (file_.str()? file_.str() : "") << ":" << lineno_;
 
       string res = buf.str();
       return res;
@@ -49,7 +46,7 @@ void LineInfo::set_line(const LineInfo&that)
       lineno_ = that.lineno_;
 }
 
-void LineInfo::set_file(const char*f)
+void LineInfo::set_file(perm_string f)
 {
       file_ = f;
 }
@@ -58,21 +55,3 @@ void LineInfo::set_lineno(unsigned n)
 {
       lineno_ = n;
 }
-
-/*
- * $Log: LineInfo.cc,v $
- * Revision 1.4  2003/01/17 05:49:03  steve
- *  Use stringstream in place of sprintf.
- *
- * Revision 1.3  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.2  2001/07/25 03:10:48  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.1  2000/11/30 17:31:42  steve
- *  Change LineInfo to store const C strings.
- *
- */
-

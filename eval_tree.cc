@@ -128,7 +128,7 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 	    /* Result might have known width. */
 	    if (has_width()) {
 		  if (debug_eval_tree) {
-			cerr << get_line() << ": debug: Evaluate expr=" << *this
+			cerr << get_fileline() << ": debug: Evaluate expr=" << *this
 			     << " --- prune=" << prune_to_width << endl;
 		  }
 		  unsigned lwid = lc->expr_width();
@@ -441,9 +441,9 @@ NetEConst* NetEBComp::eval_leeq_()
       }
 
       if (left_->expr_width() == 0) {
-	    cerr << get_line() << ": internal error: Something wrong "
+	    cerr << get_fileline() << ": internal error: Something wrong "
 		 << "with the left side width of <= ?" << endl;
-	    cerr << get_line() << ":               : " << *this << endl;
+	    cerr << get_fileline() << ":               : " << *this << endl;
       }
 
 	/* Detect the case where the right side is greater that or
@@ -1062,7 +1062,7 @@ NetEConst* NetEBShift::eval_tree(int prune_to_width)
 	    unsigned shift = rv.as_ulong();
 
 	    if (debug_eval_tree) {
-		  cerr << get_line() << ": debug: "
+		  cerr << get_fileline() << ": debug: "
 		       << "Evaluate " << lv << "<<" << op() << ">> "
 		       << rv << ", wid=" << wid << ", shift=" << shift
 		       << ", lv.has_len()=" << lv.has_len() << endl;
@@ -1132,7 +1132,7 @@ NetEConst* NetEConcat::eval_tree(int prune_to_width)
       unsigned local_errors = 0;
 
       if (debug_eval_tree) {
-	    cerr << get_line() << ": debug: Evaluate expr=" << *this
+	    cerr << get_fileline() << ": debug: Evaluate expr=" << *this
 		 << ", prune_to_width=" << prune_to_width << endl;
       }
 
@@ -1162,12 +1162,12 @@ NetEConst* NetEConcat::eval_tree(int prune_to_width)
 		  parms_[idx] = expr;
 
 		  if (! expr->has_width()) {
-			cerr << get_line() << ": error: concatenation "
+			cerr << get_fileline() << ": error: concatenation "
 			     << "operand has indefinite width: "
 			     << *parms_[idx] << endl;
 			local_errors += 1;
 		  } else if (expr->expr_width() == 0) {
-			cerr << expr->get_line() << ": internal error: "
+			cerr << expr->get_fileline() << ": internal error: "
 			     << "Operand of concatenation has no width: "
 			     << *expr << endl;
 			local_errors += 1;
@@ -1233,7 +1233,7 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
       }
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: evaluating expression: "
+	    cerr << get_fileline() << ": debug: evaluating expression: "
 		 << *this << endl;
       }
 
@@ -1242,7 +1242,7 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
       const NetExpr*expr_lsb;
       const NetExpr*expr = scope_->get_parameter(name_, expr_msb, expr_lsb);
       if (expr == 0) {
-	    cerr << get_line() << ": internal error: Unable to match "
+	    cerr << get_fileline() << ": internal error: Unable to match "
 		 << "parameter " << name_ << " in scope "
 		 << scope_path(scope_) << endl;
 	    return 0;
@@ -1275,7 +1275,7 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 	// expression is not a constant expression and I fail here.
       NetExpr*res = nexpr->eval_tree();
       if (res == 0) {
-	    cerr << get_line() << ": internal error: Unable to evaluate "
+	    cerr << get_fileline() << ": internal error: Unable to evaluate "
 		 << "parameter " << name_ << " expression: "
 		 << *nexpr << endl;
 	    delete nexpr;
@@ -1295,7 +1295,7 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 	  case IVL_VT_LOGIC:
 	    { NetEConst*tmp = dynamic_cast<NetEConst*>(res);
 	      if (tmp == 0) {
-		    cerr << get_line() << ": internal error: parameter "
+		    cerr << get_fileline() << ": internal error: parameter "
 			 << name_ << " evaluates to incomprehensible "
 			 << *res << "." << endl;
 		    return 0;
@@ -1312,7 +1312,7 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 	  case IVL_VT_REAL:
 	    { NetECReal*tmp = dynamic_cast<NetECReal*>(res);
 	      if (tmp == 0) {
-		    cerr << get_line() << ": internal error: parameter "
+		    cerr << get_fileline() << ": internal error: parameter "
 			 << name_ << " evaluates to incomprehensible "
 			 << *res << "." << endl;
 		    return 0;
@@ -1468,9 +1468,9 @@ NetExpr* NetETernary::eval_tree(int prune_to_width)
 
       if (true_flag) {
 	    if (debug_eval_tree) {
-		  cerr << get_line() << ": debug: Evaluate ternary with "
+		  cerr << get_fileline() << ": debug: Evaluate ternary with "
 		       << "constant condition value: " << c->value() << endl;
-		  cerr << get_line() << ":      : Selecting true case: "
+		  cerr << get_fileline() << ":      : Selecting true case: "
 		       << *true_val_ << endl;
 	    }
 	    return true_val_->dup_expr();
@@ -1478,9 +1478,9 @@ NetExpr* NetETernary::eval_tree(int prune_to_width)
 
       if (! x_flag) {
 	    if (debug_eval_tree) {
-		  cerr << get_line() << ": debug: Evaluate ternary with "
+		  cerr << get_fileline() << ": debug: Evaluate ternary with "
 		       << "constant condition value: " << c->value() << endl;
-		  cerr << get_line() << ":      : Selecting false case: "
+		  cerr << get_fileline() << ":      : Selecting false case: "
 		       << *true_val_ << endl;
 	    }
 	    return false_val_->dup_expr();
@@ -1517,9 +1517,9 @@ NetExpr* NetETernary::eval_tree(int prune_to_width)
       }
 
       if (debug_eval_tree) {
-	    cerr << get_line() << ": debug: Evaluate ternary with "
+	    cerr << get_fileline() << ": debug: Evaluate ternary with "
 		 << "constant condition value: " << c->value() << endl;
-	    cerr << get_line() << ":      : Blending cases to get "
+	    cerr << get_fileline() << ":      : Blending cases to get "
 		 << val << endl;
       }
 

@@ -568,11 +568,11 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
 {
       switch (type_) {
 	  case NetProcTop::KINITIAL:
-	    o << "initial  /* " << get_line() << " in "
+	    o << "initial  /* " << get_fileline() << " in "
 	      << scope_path(scope_) << " */" << endl;
 	    break;
 	  case NetProcTop::KALWAYS:
-	    o << "always  /* " << get_line() << " in "
+	    o << "always  /* " << get_fileline() << " in "
 	      << scope_path(scope_) << " */" << endl;
 	    break;
       }
@@ -705,7 +705,7 @@ void NetCAssign::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "cassign ";
       dump_lval(o);
-      o << " = " << *rval() << "; /* " << get_line() << " */" << endl;
+      o << " = " << *rval() << "; /* " << get_fileline() << " */" << endl;
 }
 
 void NetCondit::dump(ostream&o, unsigned ind) const
@@ -727,13 +727,13 @@ void NetDeassign::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "deassign ";
       dump_lval(o);
-      o << "; /* " << get_line() << " */" << endl;
+      o << "; /* " << get_fileline() << " */" << endl;
 }
 
 void NetDisable::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "disable " << scope_path(target_) << "; "
-	<< "/* " << get_line() << " */" << endl;
+	<< "/* " << get_fileline() << " */" << endl;
 }
 
 void NetEvProbe::dump_node(ostream&o, unsigned ind) const
@@ -759,7 +759,7 @@ void NetEvProbe::dump_node(ostream&o, unsigned ind) const
 void NetEvTrig::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "-> " << event_->name() << "; "
-	<< "// " << get_line() << endl;
+	<< "// " << get_fileline() << endl;
 }
 
 void NetEvWait::dump(ostream&o, unsigned ind) const
@@ -772,7 +772,7 @@ void NetEvWait::dump(ostream&o, unsigned ind) const
       for (unsigned idx = 1 ;  idx < nevents() ;  idx += 1)
 	    o << " or " << event(idx)->name();
 
-      o << ")  // " << get_line() << endl;
+      o << ")  // " << get_fileline() << endl;
 
       if (statement_)
 	    statement_->dump(o, ind+2);
@@ -784,7 +784,7 @@ void NetForce::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "force ";
       dump_lval(o);
-      o << " = " << *rval() << "; /* " << get_line() << " */" << endl;
+      o << " = " << *rval() << "; /* " << get_fileline() << " */" << endl;
 }
 
 void NetForever::dump(ostream&o, unsigned ind) const
@@ -826,7 +826,7 @@ void NetRelease::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "release ";
       dump_lval(o);
-      o << "; /* " << get_line() << " */" << endl;
+      o << "; /* " << get_fileline() << " */" << endl;
 }
 
 void NetRepeat::dump(ostream&o, unsigned ind) const
@@ -908,7 +908,7 @@ void NetScope::dump(ostream&o) const
       for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_) {
 	    o << "    event " << cur->name() << "; nprobe="
 	      << cur->nprobe() << " scope=" << scope_path(cur->scope())
-	      << " // " << cur->get_line() << endl;
+	      << " // " << cur->get_fileline() << endl;
       }
 
 	// Dump the signals,

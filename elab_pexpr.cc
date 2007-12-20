@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_pexpr.cc,v 1.28 2007/06/02 03:42:12 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -32,7 +29,7 @@
 
 NetExpr*PExpr::elaborate_pexpr(Design*des, NetScope*sc) const
 {
-      cerr << get_line() << ": error: invalid parameter expression: "
+      cerr << get_fileline() << ": error: invalid parameter expression: "
 	   << *this << endl;
       des->errors += 1;
 
@@ -76,7 +73,7 @@ NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
       if (repeat_) {
 	    repeat = repeat_->elaborate_pexpr(des, scope);
 	    if (repeat == 0) {
-		  cerr << get_line() << ": error: "
+		  cerr << get_fileline() << ": error: "
 			"concatenation repeat expression cannot be evaluated."
 		       << endl;
 		  des->errors += 1;
@@ -106,7 +103,7 @@ NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
 		       the width check for later. */
 
 	    } else if (! ex->has_width()) {
-		  cerr << ex->get_line() << ": error: operand of "
+		  cerr << ex->get_fileline() << ": error: operand of "
 		       << "concatenation has indefinite width: "
 		       << *ex << endl;
 		  des->errors += 1;
@@ -158,7 +155,7 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
 	    ivl_assert(*this, pscope);
       }
       if (ex == 0) {
-	    cerr << get_line() << ": error: identifier ``" << name_tail.name <<
+	    cerr << get_fileline() << ": error: identifier ``" << name_tail.name <<
 		  "'' is not a parameter in "<< scope_path(scope)<< "." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -177,7 +174,7 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
 	    break;
 	  default:
 	  case index_component_t::SEL_PART:
-	    cerr << get_line() << ": sorry: Cannot part select "
+	    cerr << get_fileline() << ": sorry: Cannot part select "
 		  "bits of parameters." << endl;
 	    des->errors += 1;
 	    break;

@@ -95,7 +95,7 @@ map<string,const char*> flags;
 char*vpi_module_list = 0;
 
 map<perm_string,unsigned> missing_modules;
-map<string,bool> library_file_map;
+map<perm_string,bool> library_file_map;
 
 list<const char*> library_suff;
 
@@ -134,6 +134,8 @@ unsigned integer_width = 32;
  * efficient way to allocate those strings.
  */
 StringHeapLex lex_strings;
+
+StringHeapLex filename_strings;
 
 /*
  * In library searches, Windows file names are never case sensitive.
@@ -398,7 +400,7 @@ static void read_iconfig_file(const char*ipath)
 		  integer_width = strtoul(cp,0,10);
 
 	    } else if (strcmp(buf, "library_file") == 0) {
-		  const char* path = strdup(cp);
+		  perm_string path = filename_strings.make(cp);
 		  library_file_map[path] = true;
 
 	    } else if (strcmp(buf,"module") == 0) {

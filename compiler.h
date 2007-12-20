@@ -1,7 +1,7 @@
 #ifndef __compiler_H
 #define __compiler_H
 /*
- * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -127,7 +127,7 @@ extern map<perm_string,unsigned> missing_modules;
      matches an entry in this table, it will turn on the
      library_active_flag so that modules know that they are in a
      library. */
-extern map<string,bool> library_file_map;
+extern map<perm_string,bool> library_file_map;
 
 /*
  * the lex_strings are perm_strings made up of tokens from the source
@@ -136,6 +136,14 @@ extern map<string,bool> library_file_map;
  */
 extern StringHeapLex lex_strings;
 extern StringHeap misc_strings;
+
+/*
+ * The filename_strings are perm_strings for file names. They are put
+ * into their own StringHeapLex because these paths are used a *lot*
+ * and this makes them more sure to hash together.
+ */
+extern StringHeapLex filename_strings;
+
 
 /*
  * system task/function listings.

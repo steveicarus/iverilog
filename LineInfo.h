@@ -18,10 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: LineInfo.h,v 1.8 2005/06/14 19:13:43 steve Exp $"
-#endif
 
+# include  "StringHeap.h"
 # include  <string>
 
 using namespace std;
@@ -40,36 +38,18 @@ class LineInfo {
       LineInfo();
       ~LineInfo();
 
-      string get_line() const;
-
+	// Get a fully formatted file/lineno
+      string get_fileline() const;
+	// Set the file/line fro another LineInfo object.
       void set_line(const LineInfo&that);
 
-      void set_file(const char*f);
+	// Access parts of LineInfo data
+      void set_file(perm_string f);
       void set_lineno(unsigned n);
 
     private:
-      const char* file_;
+      perm_string file_;
       unsigned lineno_;
 };
 
-/*
- * $Log: LineInfo.h,v $
- * Revision 1.8  2005/06/14 19:13:43  steve
- *  gcc3/4 compile errors.
- *
- * Revision 1.7  2003/01/17 05:49:03  steve
- *  Use stringstream in place of sprintf.
- *
- * Revision 1.6  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.5  2000/11/30 17:31:42  steve
- *  Change LineInfo to store const C strings.
- *
- * Revision 1.4  2000/02/23 02:56:53  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.3  1999/02/15 02:06:15  steve
- *  Elaborate gate ranges.
- */
 #endif

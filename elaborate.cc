@@ -104,7 +104,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       assert(lval->pin_count() == 1);
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: PGassign: elaborated l-value"
+	    cerr << get_fileline() << ": debug: PGassign: elaborated l-value"
 		 << " width=" << lval->vector_width()
 		 << ", type=" << lval->data_type() << endl;
       }
@@ -125,7 +125,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 	    ivl_assert(*this, rid);
 	    if (rid->pin_count() != 1) {
-		  cerr << get_line() << ": internal error: "
+		  cerr << get_fileline() << ": internal error: "
 		       << "Invalid elaborate_net results here:" << endl;
 		  rid->dump_net(cerr, 4);
 		  des->errors += 1;
@@ -179,7 +179,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 			unsigned use_width = lval->vector_width();
 
 			if (debug_elaborate)
-			      cerr << get_line() << ": debug: PGassign "
+			      cerr << get_fileline() << ": debug: PGassign "
 				   << "Generate sign-extend node." << endl;
 
 			rid = pad_to_width_signed(des, rid, use_width);
@@ -187,7 +187,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		  } else {
 
 			if (debug_elaborate)
-			      cerr << get_line() << ": debug: PGAssign "
+			      cerr << get_fileline() << ": debug: PGAssign "
 				   << "Unsigned pad r-value from "
 				   << cnt << " bits to "
 				   << lval->vector_width() << " bits." << endl;
@@ -200,7 +200,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    } else if (cnt < rid->vector_width()) {
 
 		  if (debug_elaborate)
-			cerr << get_line() << ": debug: PGAssign "
+			cerr << get_fileline() << ": debug: PGAssign "
 			     << "Truncate r-value from "
 			     << cnt << " bits to "
 			     << lval->vector_width() << " bits." << endl;
@@ -218,7 +218,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		       extend it, whichever makes sense. */
 
 		  if (debug_elaborate) {
-			cerr << get_line() << ": debug: PGAssign: "
+			cerr << get_fileline() << ": debug: PGAssign: "
 			     << "Connect lval directly to "
 			     << id->path() << endl;
 		  }
@@ -230,7 +230,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		       strength and delays. */
 
 		  if (debug_elaborate) {
-			cerr << get_line() << ": debug: PGAssign: "
+			cerr << get_fileline() << ": debug: PGAssign: "
 			     << "Connect lval to " << id->path()
 			     << " through bufz. delay=(";
 			if (rise_time)
@@ -272,14 +272,14 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 					  rise_time, fall_time, decay_time,
 					  drive0, drive1);
       if (rval == 0) {
-	    cerr << get_line() << ": error: Unable to elaborate r-value: "
+	    cerr << get_fileline() << ": error: Unable to elaborate r-value: "
 		 << *pin(1) << endl;
 	    des->errors += 1;
 	    return;
       }
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: PGAssign: elaborated r-value"
+	    cerr << get_fileline() << ": debug: PGAssign: elaborated r-value"
 		 << " width="<<rval->vector_width()
 		 << ", type="<< rval->data_type() << endl;
       }
@@ -342,14 +342,14 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    NetEConst*lsb_con = dynamic_cast<NetEConst*>(lsb_exp);
 
 	    if (msb_con == 0) {
-		  cerr << get_line() << ": error: Unable to evaluate "
+		  cerr << get_fileline() << ": error: Unable to evaluate "
 			"expression " << *msb_ << endl;
 		  des->errors += 1;
 		  return;
 	    }
 
 	    if (lsb_con == 0) {
-		  cerr << get_line() << ": error: Unable to evaluate "
+		  cerr << get_fileline() << ": error: Unable to evaluate "
 			"expression " << *lsb_ << endl;
 		  des->errors += 1;
 		  return;
@@ -370,7 +370,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    high = msb.as_long();
 
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: PGBuiltin: Make arrray "
+		  cerr << get_fileline() << ": debug: PGBuiltin: Make arrray "
 		       << "[" << high << ":" << low << "]"
 		       << " of " << count << " gates for " << name << endl;
 	    }
@@ -381,7 +381,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	   wide gate instead of an array of gates. */
 
       if (pin(0) == 0) {
-	    cerr << get_line() << ": error: Logic gate port "
+	    cerr << get_fileline() << ": error: Logic gate port "
 	            "expressions are not optional." << endl;
 	    des->errors += 1;
 	    return;
@@ -397,7 +397,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    count = 1;
 
 	    if (debug_elaborate && instance_width != 1)
-		  cerr << get_line() << ": debug: PGBuiltin: "
+		  cerr << get_fileline() << ": debug: PGBuiltin: "
 			"Collapsed gate array into single wide "
 			"(" << instance_width << ") instance." << endl;
       }
@@ -444,7 +444,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    switch (type()) {
 		case AND:
 		  if (pin_count() < 2) {
-		      cerr << get_line() << ": error: the AND "
+		      cerr << get_fileline() << ": error: the AND "
 		              "primitive must have an input." << endl;
 		      des->errors += 1;
 		      return;
@@ -454,7 +454,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case BUF:
 		  if (pin_count() > 2) {
-		      cerr << get_line() << ": sorry: multiple output BUF "
+		      cerr << get_fileline() << ": sorry: multiple output BUF "
 		              "primitives are not supported." << endl;
 		      des->errors += 1;
 		      return;
@@ -464,7 +464,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case BUFIF0:
 		  if (pin_count() != 3) {
-		      cerr << get_line() << ": error: the BUFIF0 "
+		      cerr << get_fileline() << ": error: the BUFIF0 "
 		              "primitive must have three arguments." << endl;
 		      des->errors += 1;
 		      return;
@@ -474,7 +474,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case BUFIF1:
 		  if (pin_count() != 3) {
-		      cerr << get_line() << ": error: the BUFIF1 "
+		      cerr << get_fileline() << ": error: the BUFIF1 "
 		              "primitive must have three arguments." << endl;
 		      des->errors += 1;
 		      return;
@@ -484,7 +484,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case CMOS:
 		  if (pin_count() != 4) {
-		      cerr << get_line() << ": error: the CMOS "
+		      cerr << get_fileline() << ": error: the CMOS "
 		              "primitive must have four arguments." << endl;
 		      des->errors += 1;
 		      return;
@@ -494,7 +494,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case NAND:
 		  if (pin_count() < 2) {
-		      cerr << get_line() << ": error: the NAND "
+		      cerr << get_fileline() << ": error: the NAND "
 		              "primitive must have an input." << endl;
 		      des->errors += 1;
 		      return;
@@ -504,7 +504,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case NMOS:
 		  if (pin_count() != 3) {
-		      cerr << get_line() << ": error: the NMOS "
+		      cerr << get_fileline() << ": error: the NMOS "
 		              "primitive must have three arguments." << endl;
 		      des->errors += 1;
 		      return;
@@ -514,7 +514,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case NOR:
 		  if (pin_count() < 2) {
-		      cerr << get_line() << ": error: the NOR "
+		      cerr << get_fileline() << ": error: the NOR "
 		              "primitive must have an input." << endl;
 		      des->errors += 1;
 		      return;
@@ -524,7 +524,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case NOT:
 		  if (pin_count() > 2) {
-		      cerr << get_line() << ": sorry: multiple output NOT "
+		      cerr << get_fileline() << ": sorry: multiple output NOT "
 		              "primitives are not supported." << endl;
 		      des->errors += 1;
 		      return;
@@ -534,7 +534,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case NOTIF0:
 		  if (pin_count() != 3) {
-		      cerr << get_line() << ": error: the NOTIF0 "
+		      cerr << get_fileline() << ": error: the NOTIF0 "
 		              "primitive must have three arguments." << endl;
 		      des->errors += 1;
 		      return;
@@ -544,7 +544,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case NOTIF1:
 		  if (pin_count() != 3) {
-		      cerr << get_line() << ": error: the NOTIF1 "
+		      cerr << get_fileline() << ": error: the NOTIF1 "
 		              "primitive must have three arguments." << endl;
 		      des->errors += 1;
 		      return;
@@ -554,7 +554,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case OR:
 		  if (pin_count() < 2) {
-		      cerr << get_line() << ": error: the OR "
+		      cerr << get_fileline() << ": error: the OR "
 		              "primitive must have an input." << endl;
 		      des->errors += 1;
 		      return;
@@ -564,7 +564,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case RCMOS:
 		  if (pin_count() != 4) {
-		      cerr << get_line() << ": error: the RCMOS "
+		      cerr << get_fileline() << ": error: the RCMOS "
 		              "primitive must have four arguments." << endl;
 		      des->errors += 1;
 		      return;
@@ -574,7 +574,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case RNMOS:
 		  if (pin_count() != 3) {
-		      cerr << get_line() << ": error: the RNMOS "
+		      cerr << get_fileline() << ": error: the RNMOS "
 		              "primitive must have three arguments." << endl;
 		      des->errors += 1;
 		      return;
@@ -584,7 +584,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case RPMOS:
 		  if (pin_count() != 3) {
-		      cerr << get_line() << ": error: the RPMOS "
+		      cerr << get_fileline() << ": error: the RPMOS "
 		              "primitive must have three arguments." << endl;
 		      des->errors += 1;
 		      return;
@@ -594,7 +594,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case PMOS:
 		  if (pin_count() != 3) {
-		      cerr << get_line() << ": error: the PMOS "
+		      cerr << get_fileline() << ": error: the PMOS "
 		              "primitive must have three arguments." << endl;
 		      des->errors += 1;
 		      return;
@@ -604,7 +604,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case PULLDOWN:
 		  if (pin_count() > 1) {
-		      cerr << get_line() << ": sorry: multiple output PULLDOWN "
+		      cerr << get_fileline() << ": sorry: multiple output PULLDOWN "
 		              "primitives are not supported." << endl;
 		      des->errors += 1;
 		      return;
@@ -615,7 +615,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case PULLUP:
 		  if (pin_count() > 1) {
-		      cerr << get_line() << ": sorry: multiple output PULLUP "
+		      cerr << get_fileline() << ": sorry: multiple output PULLUP "
 		              "primitives are not supported." << endl;
 		      des->errors += 1;
 		      return;
@@ -625,7 +625,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case XNOR:
 		  if (pin_count() < 2) {
-		      cerr << get_line() << ": error: the XNOR "
+		      cerr << get_fileline() << ": error: the XNOR "
 		              "primitive must have an input." << endl;
 		      des->errors += 1;
 		      return;
@@ -635,7 +635,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  break;
 		case XOR:
 		  if (pin_count() < 2) {
-		      cerr << get_line() << ": error: the XOR "
+		      cerr << get_fileline() << ": error: the XOR "
 		              "primitive must have an input." << endl;
 		      des->errors += 1;
 		      return;
@@ -644,7 +644,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 					      NetLogic::XOR, instance_width);
 		  break;
 		default:
-		  cerr << get_line() << ": internal error: unhandled "
+		  cerr << get_fileline() << ": internal error: unhandled "
 			"gate type." << endl;
 		  des->errors += 1;
 		  return;
@@ -673,7 +673,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    const PExpr*ex = pin(idx);
 	    if (ex == 0) {
-		  cerr << get_line() << ": error: Logic gate port "
+		  cerr << get_fileline() << ": error: Logic gate port "
 		          "expressions are not optional." << endl;
 		  des->errors += 1;
 		  return;
@@ -713,7 +713,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
 		  if (instance_width != sig->vector_width()) {
 
-			cerr << get_line() << ": error: "
+			cerr << get_fileline() << ": error: "
 			     << "Expression width " << sig->vector_width()
 			     << " does not match width " << instance_width
 			     << " of logic gate array port " << idx
@@ -774,7 +774,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  }
 
 	    } else {
-		  cerr << get_line() << ": error: Gate count of " <<
+		  cerr << get_fileline() << ": error: Gate count of " <<
 			count << " does not match net width of " <<
 			sig->vector_width() << " at pin " << idx << "."
 		       << endl;
@@ -855,7 +855,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
       assert(scope);
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: Instantiate module "
+	    cerr << get_fileline() << ": debug: Instantiate module "
 		 << rmod->mod_name() << " with instance name "
 		 << get_name() << " in scope " << scope_path(scope) << endl;
       }
@@ -883,7 +883,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // method will return the port count. Detect that
 		    // as an error.
 		  if (pidx == nexp) {
-			cerr << get_line() << ": error: port ``" <<
+			cerr << get_fileline() << ": error: port ``" <<
 			      pins_[idx].name << "'' is not a port of "
 			     << get_name() << "." << endl;
 			des->errors += 1;
@@ -894,7 +894,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // the pins array will already have a pointer
 		    // value where I want to place this expression.
 		  if (pins[pidx]) {
-			cerr << get_line() << ": error: port ``" <<
+			cerr << get_fileline() << ": error: port ``" <<
 			      pins_[idx].name << "'' already bound." <<
 			      endl;
 			des->errors += 1;
@@ -924,7 +924,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		 right. Check that is is, the get the pin list. */
 
 	    if (pin_count() != rmod->port_count()) {
-		  cerr << get_line() << ": error: Wrong number "
+		  cerr << get_fileline() << ": error: Wrong number "
 			"of ports. Expecting " << rmod->port_count() <<
 			", got " << pin_count() << "."
 		       << endl;
@@ -982,7 +982,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			assert(tmp);
 
 			if (tmp->port_type() == NetNet::PINPUT) {
-			      cerr << get_line() << ": warning: "
+			      cerr << get_fileline() << ": warning: "
 				   << "Instantiating module "
 				   << rmod->mod_name()
 				   << " with dangling input port "
@@ -1002,7 +1002,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    svector<NetNet*>prts (mport.count() * instance.count());
 
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: " << get_name()
+		  cerr << get_fileline() << ": debug: " << get_name()
 		       << ": Port " << idx << " has " << prts.count()
 		       << " sub-ports." << endl;
 	    }
@@ -1066,7 +1066,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 						 desired_vector_width,
 						 0, 0, 0);
 		  if (sig == 0) {
-			cerr << pins[idx]->get_line()
+			cerr << pins[idx]->get_fileline()
 			     << ": internal error: Port expression "
 			     << "too complicated for elaboration." << endl;
 			continue;
@@ -1092,10 +1092,10 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 		  sig = pins[idx]->elaborate_bi_net(des, scope);
 		  if (sig == 0) {
-			cerr << pins[idx]->get_line() << ": error: "
+			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "Inout port expression must support "
 			     << "continuous assignment." << endl;
-			cerr << pins[idx]->get_line() << ":      : "
+			cerr << pins[idx]->get_fileline() << ":      : "
 			     << "Port of " << rmod->mod_name()
 			     << " is " << rmod->ports[idx]->name << endl;
 			des->errors += 1;
@@ -1114,10 +1114,10 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 		  sig = pins[idx]->elaborate_lnet(des, scope, true);
 		  if (sig == 0) {
-			cerr << pins[idx]->get_line() << ": error: "
+			cerr << pins[idx]->get_fileline() << ": error: "
 			     << "Output port expression must support "
 			     << "continuous assignment." << endl;
-			cerr << pins[idx]->get_line() << ":      : "
+			cerr << pins[idx]->get_fileline() << ":      : "
 			     << "Port of " << rmod->mod_name()
 			     << " is " << rmod->ports[idx]->name << endl;
 			des->errors += 1;
@@ -1140,7 +1140,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    if ((instance.count() != 1)
 		&& (sig->vector_width() != prts_vector_width)
 		&& (sig->vector_width() != prts_vector_width/instance.count())) {
-		  cerr << pins[idx]->get_line() << ": error: "
+		  cerr << pins[idx]->get_fileline() << ": error: "
 		       << "Port expression width " << sig->vector_width()
 		       << " does not match expected width "<< prts_vector_width
 		       << " or " << (prts_vector_width/instance.count())
@@ -1150,7 +1150,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    }
 
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: " << get_name()
+		  cerr << get_fileline() << ": debug: " << get_name()
 		       << ": Port " << (idx+1) << " has vector width of "
 		       << prts_vector_width << "." << endl;
 	    }
@@ -1162,20 +1162,20 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		&& (prts_vector_width != sig->vector_width())) {
 		  const char *tmp3 = rmod->ports[idx]->name.str();
 		  if (tmp3 == 0) tmp3 = "???";
-		  cerr << get_line() << ": warning: Port " << (idx+1)
+		  cerr << get_fileline() << ": warning: Port " << (idx+1)
 		       << " (" << tmp3 << ") of "
 		       << type_ << " expects " << prts_vector_width <<
 			" bits, got " << sig->vector_width() << "." << endl;
 
 		  if (prts_vector_width > sig->vector_width()) {
-			cerr << get_line() << ":        : Leaving "
+			cerr << get_fileline() << ":        : Leaving "
 			     << (prts_vector_width-sig->vector_width())
 			     << " high bits of the port unconnected."
 			     << endl;
 
 
 		  } else {
-			cerr << get_line() << ":        : Leaving "
+			cerr << get_fileline() << ":        : Leaving "
 			     << (sig->vector_width()-prts_vector_width)
 			     << " high bits of the expression dangling."
 			     << endl;
@@ -1229,7 +1229,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		       && prts.count()/instance.count() == 1) {
 
 		  if (debug_elaborate){
-			cerr << get_line() << ": debug: " << get_name()
+			cerr << get_fileline() << ": debug: " << get_name()
 			     << ": Replicating " << prts_vector_width
 			     << " bits across all "
 			     << prts_vector_width/instance.count()
@@ -1257,7 +1257,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 		case NetNet::PINPUT:
 		  if (debug_elaborate){
-			cerr << get_line() << ": debug: " << get_name()
+			cerr << get_fileline() << ": debug: " << get_name()
 			     << ": Dividing " << prts_vector_width
 			     << " bits across all "
 			     << prts_vector_width/instance.count()
@@ -1276,17 +1276,17 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  }
 		  break;
 		case NetNet::PINOUT:
-		  cerr << get_line() << ": XXXX: "
+		  cerr << get_fileline() << ": XXXX: "
 		       << "Forgot how to bind inout ports!" << endl;
 		  des->errors += 1;
 		  break;
 		case NetNet::PIMPLICIT:
-		  cerr << get_line() << ": internal error: "
+		  cerr << get_fileline() << ": internal error: "
 		       << "Unexpected IMPLICIT port" << endl;
 		  des->errors += 1;
 		  break;
 		case NetNet::NOT_A_PORT:
-		  cerr << get_line() << ": internal error: "
+		  cerr << get_fileline() << ": internal error: "
 		       << "Unexpected NOT_A_PORT port." << endl;
 		  des->errors += 1;
 		  break;
@@ -1321,9 +1321,9 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    if (dynamic_cast<NetEConst*> (rise_expr)) {
 
 	    } else {
-		  cerr << get_line() << ": error: Delay expressions must be "
+		  cerr << get_fileline() << ": error: Delay expressions must be "
 		       << "constant for primitives." << endl;
-		  cerr << get_line() << ":      : Cannot calculate "
+		  cerr << get_fileline() << ":      : Cannot calculate "
 		       << *rise_expr << endl;
 		  des->errors += 1;
 	    }
@@ -1331,9 +1331,9 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    if (dynamic_cast<NetEConst*> (fall_expr)) {
 
 	    } else {
-		  cerr << get_line() << ": error: Delay expressions must be "
+		  cerr << get_fileline() << ": error: Delay expressions must be "
 		       << "constant for primitives." << endl;
-		  cerr << get_line() << ":      : Cannot calculate "
+		  cerr << get_fileline() << ":      : Cannot calculate "
 		       << *rise_expr << endl;
 		  des->errors += 1;
 	    }
@@ -1341,9 +1341,9 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    if (dynamic_cast<NetEConst*> (decay_expr)) {
 
 	    } else {
-		  cerr << get_line() << ": error: Delay expressions must be "
+		  cerr << get_fileline() << ": error: Delay expressions must be "
 		       << "constant for primitives." << endl;
-		  cerr << get_line() << ":      : Cannot calculate "
+		  cerr << get_fileline() << ":      : Cannot calculate "
 		       << *rise_expr << endl;
 		  des->errors += 1;
 	    }
@@ -1394,7 +1394,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 		    // method will return the port count. Detect that
 		    // as an error.
 		  if (pidx == nexp) {
-			cerr << get_line() << ": error: port ``" <<
+			cerr << get_fileline() << ": error: port ``" <<
 			      pins_[idx].name << "'' is not a port of "
 			     << get_name() << "." << endl;
 			des->errors += 1;
@@ -1405,7 +1405,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 		    // the (*exp) array will already have a pointer
 		    // value where I want to place this expression.
 		  if (pins[pidx]) {
-			cerr << get_line() << ": error: port ``" <<
+			cerr << get_fileline() << ": error: port ``" <<
 			      pins_[idx].name << "'' already bound." <<
 			      endl;
 			des->errors += 1;
@@ -1424,7 +1424,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 		 right. Check that is is, the get the pin list. */
 
 	    if (pin_count() != udp->ports.count()) {
-		  cerr << get_line() << ": error: Wrong number "
+		  cerr << get_fileline() << ": error: Wrong number "
 			"of ports. Expecting " << udp->ports.count() <<
 			", got " << pin_count() << "."
 		       << endl;
@@ -1443,15 +1443,15 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	   output port (the only output port) so must be passed an
 	   l-value net. */
       if (pins[0] == 0) {
-	    cerr << get_line() << ": warning: output port unconnected."
+	    cerr << get_fileline() << ": warning: output port unconnected."
 		 << endl;
 
       } else {
 	    NetNet*sig = pins[0]->elaborate_lnet(des, scope, true);
 	    if (sig == 0) {
-		  cerr << get_line() << ": error: "
+		  cerr << get_fileline() << ": error: "
 		       << "Output port expression is not valid." << endl;
-		  cerr << get_line() << ":      : Output "
+		  cerr << get_fileline() << ":      : Output "
 		       << "port of " << udp->name_
 		       << " is " << udp->ports[0] << "." << endl;
 		  des->errors += 1;
@@ -1510,7 +1510,7 @@ void PGModule::elaborate(Design*des, NetScope*scope) const
 	    return;
       }
 
-      cerr << get_line() << ": internal error: Unknown module type: " <<
+      cerr << get_fileline() << ": internal error: Unknown module type: " <<
 	    type_ << endl;
 }
 
@@ -1549,7 +1549,7 @@ void PGModule::elaborate_scope(Design*des, NetScope*sc) const
 
 	// Not a module or primitive that I know about or can find by
 	// any means, so give up.
-      cerr << get_line() << ": error: Unknown module type: " << type_ << endl;
+      cerr << get_fileline() << ": error: Unknown module type: " << type_ << endl;
       missing_modules[type_] += 1;
       des->errors += 1;
 }
@@ -1557,7 +1557,7 @@ void PGModule::elaborate_scope(Design*des, NetScope*sc) const
 
 NetProc* Statement::elaborate(Design*des, NetScope*) const
 {
-      cerr << get_line() << ": internal error: elaborate: "
+      cerr << get_fileline() << ": internal error: elaborate: "
 	    "What kind of statement? " << typeid(*this).name() << endl;
       NetProc*cur = new NetProc;
       des->errors += 1;
@@ -1693,7 +1693,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    rv = pad_to_width(rv, wid);
 
 	    if (wid > rv->expr_width()) {
-		  cerr << get_line() << ": error: Unable to match "
+		  cerr << get_fileline() << ": error: Unable to match "
 			"expression width of " << rv->expr_width() <<
 			" to l-value width of " << wid << "." << endl;
 		    //XXXX delete rv;
@@ -1725,7 +1725,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    if (event_) {
 		  st = event_->elaborate_st(des, scope, a2);
 		  if (st == 0) {
-			cerr << event_->get_line() << ": error: "
+			cerr << event_->get_fileline() << ": error: "
 			      "unable to elaborate event expression."
 			     << endl;
 			des->errors += 1;
@@ -1778,7 +1778,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       assert(scope);
 
       if (scope->in_func()) {
-	    cerr << get_line() << ": error: functions cannot have non "
+	    cerr << get_fileline() << ": error: functions cannot have non "
 	            "blocking assignment statements." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -1839,7 +1839,7 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
       if (name_.str() != 0) {
 	    nscope = scope->child(hname_t(name_));
 	    if (nscope == 0) {
-		  cerr << get_line() << ": internal error: "
+		  cerr << get_fileline() << ": internal error: "
 			"unable to find block scope " << scope_path(scope)
 		       << "<" << name_ << ">" << endl;
 		  des->errors += 1;
@@ -1899,7 +1899,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 
       NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
-	    cerr << get_line() << ": error: Unable to elaborate this case"
+	    cerr << get_fileline() << ": error: Unable to elaborate this case"
 		  " expression." << endl;
 	    return 0;
       }
@@ -1967,13 +1967,13 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
       assert(scope);
 
       if (debug_elaborate)
-	    cerr << get_line() << ": debug: Elaborate condition statement"
+	    cerr << get_fileline() << ": debug: Elaborate condition statement"
 		 << " with conditional: " << *expr_ << endl;
 
 	// Elaborate and try to evaluate the conditional expression.
       NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
-	    cerr << get_line() << ": error: Unable to elaborate"
+	    cerr << get_fileline() << ": error: Unable to elaborate"
 		  " condition expression." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -1986,7 +1986,7 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
       if (NetEConst*ce = dynamic_cast<NetEConst*>(expr)) {
 	    verinum val = ce->value();
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: Condition expression "
+		  cerr << get_fileline() << ": debug: Condition expression "
 		       << "is a constant " << val << "." << endl;
 	    }
 
@@ -2014,7 +2014,7 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 	// one bit. Turn <e> into <e> != 0;
 
       if (expr->expr_width() < 1) {
-	    cerr << get_line() << ": internal error: "
+	    cerr << get_fileline() << ": internal error: "
 		  "incomprehensible expression width (0)." << endl;
 	    return 0;
       }
@@ -2138,7 +2138,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       assert(scope);
 
       if (scope->in_func()) {
-	    cerr << get_line() << ": error: functions cannot enable/call "
+	    cerr << get_fileline() << ": error: functions cannot enable/call "
 	            "tasks." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2146,7 +2146,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
       NetScope*task = des->find_task(scope, path_);
       if (task == 0) {
-	    cerr << get_line() << ": error: Enable of unknown task "
+	    cerr << get_fileline() << ": error: Enable of unknown task "
 		 << "``" << path_ << "''." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2156,7 +2156,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       assert(task->type() == NetScope::TASK);
       NetTaskDef*def = task->task_def();
       if (def == 0) {
-	    cerr << get_line() << ": internal error: task " << path_
+	    cerr << get_fileline() << ": internal error: task " << path_
 		 << " doesn't have a definition in " << scope_path(scope)
 		 << "." << endl;
 	    des->errors += 1;
@@ -2165,7 +2165,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       assert(def);
 
       if (nparms() != def->port_count()) {
-	    cerr << get_line() << ": error: Port count mismatch in call to ``"
+	    cerr << get_fileline() << ": error: Port count mismatch in call to ``"
 		 << path_ << "''. Got " << nparms()
 		 << " ports, expecting " << def->port_count() << " ports." << endl;
 	    des->errors += 1;
@@ -2253,7 +2253,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    if (parms_[idx]) {
 		  lv = parms_[idx]->elaborate_lval(des, scope, false);
 		  if (lv == 0) {
-			cerr << parms_[idx]->get_line() << ": error: "
+			cerr << parms_[idx]->get_fileline() << ": error: "
 			     << "I give up on task port " << (idx+1)
 			     << " expression: " << *parms_[idx] << endl;
 		  }
@@ -2303,7 +2303,7 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
       dev = new NetCAssign(lval, rexp);
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: Elaborate cassign,"
+	    cerr << get_fileline() << ": debug: Elaborate cassign,"
 		 << " lval width=" << lwid
 		 << " rval width=" << rexp->expr_width()
 		 << " rval=" << *rexp
@@ -2339,7 +2339,7 @@ NetProc* PDelayStatement::elaborate(Design*des, NetScope*scope) const
       assert(scope);
 
       if (scope->in_func()) {
-	    cerr << get_line() << ": error: functions cannot have "
+	    cerr << get_fileline() << ": error: functions cannot have "
 	            "delay statements." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2379,7 +2379,7 @@ NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
 
       NetScope*target = des->find_scope(scope, spath);
       if (target == 0) {
-	    cerr << get_line() << ": error: Cannot find scope "
+	    cerr << get_fileline() << ": error: Cannot find scope "
 		 << scope_ << " in " << scope_path(scope) << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2387,12 +2387,12 @@ NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
 
       switch (target->type()) {
 	  case NetScope::FUNC:
-	    cerr << get_line() << ": error: Cannot disable functions." << endl;
+	    cerr << get_fileline() << ": error: Cannot disable functions." << endl;
 	    des->errors += 1;
 	    return 0;
 
 	  case NetScope::MODULE:
-	    cerr << get_line() << ": error: Cannot disable modules." << endl;
+	    cerr << get_fileline() << ": error: Cannot disable modules." << endl;
 	    des->errors += 1;
 	    return 0;
 
@@ -2491,7 +2491,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
       assert(scope);
 
       if (scope->in_func()) {
-	    cerr << get_line() << ": error: functions cannot have "
+	    cerr << get_fileline() << ": error: functions cannot have "
 	            "event statements." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2523,7 +2523,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    }
 	    NexusSet*nset = enet->nex_input(rem_out);
 	    if (nset == 0) {
-		  cerr << get_line() << ": internal error: No NexusSet"
+		  cerr << get_fileline() << ": internal error: No NexusSet"
 		       << " from statement." << endl;
 		  enet->dump(cerr, 6);
 		  des->errors += 1;
@@ -2531,7 +2531,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    }
 
 	    if (nset->count() == 0) {
-		  cerr << get_line() << ": error: No inputs to statement."
+		  cerr << get_fileline() << ": error: No inputs to statement."
 		       << " The @* cannot execute." << endl;
 		  des->errors += 1;
 		  return enet;
@@ -2659,7 +2659,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
       assert(expr_.count() == 1);
 
       if (scope->in_func()) {
-	    cerr << get_line() << ": error: functions cannot have "
+	    cerr << get_fileline() << ": error: functions cannot have "
 	            "wait statements." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2671,7 +2671,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	   shortly, after we apply a reduction or. */
       NetExpr*expr = pe->elaborate_expr(des, scope, -1, false);
       if (expr == 0) {
-	    cerr << get_line() << ": error: Unable to elaborate"
+	    cerr << get_fileline() << ": error: Unable to elaborate"
 		  " wait condition expression." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2682,7 +2682,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	// one bit. In other words, Turn <e> into |<e>;
 
       if (expr->expr_width() < 1) {
-	    cerr << get_line() << ": internal error: "
+	    cerr << get_fileline() << ": internal error: "
 		  "incomprehensible wait expression width (0)." << endl;
 	    return 0;
       }
@@ -2716,9 +2716,9 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 
 	      /* Otherwise, false. wait(0) blocks permanently. */
 
-	    cerr << get_line() << ": warning: wait expression is "
+	    cerr << get_fileline() << ": warning: wait expression is "
 		 << "constant false." << endl;
-	    cerr << get_line() << ":        : The statement will "
+	    cerr << get_fileline() << ":        : The statement will "
 		 << "block permanently." << endl;
 
 	      /* Create an event wait and an otherwise unreferenced
@@ -2755,14 +2755,14 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 
       NexusSet*wait_set = expr->nex_input();
       if (wait_set == 0) {
-	    cerr << get_line() << ": internal error: No NexusSet"
+	    cerr << get_fileline() << ": internal error: No NexusSet"
 		 << " from wait expression." << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
       if (wait_set->count() == 0) {
-	    cerr << get_line() << ": internal error: Empty NexusSet"
+	    cerr << get_fileline() << ": internal error: Empty NexusSet"
 		 << " from wait expression." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2861,7 +2861,7 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
       dev = new NetForce(lval, rexp);
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: ELaborate force,"
+	    cerr << get_fileline() << ": debug: ELaborate force,"
 		 << " lval width=" << lval->lwidth()
 		 << " rval width=" << rexp->expr_width()
 		 << " rval=" << *rexp
@@ -2902,7 +2902,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	   very specifically an assignment. */
       NetNet*sig = des->find_signal(scope, id1->path());
       if (sig == 0) {
-	    cerr << id1->get_line() << ": register ``" << id1->path()
+	    cerr << id1->get_fileline() << ": register ``" << id1->path()
 		 << "'' unknown in this context." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2923,7 +2923,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       etmp = pad_to_width(etmp, use_width);
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: FOR initial assign: "
+	    cerr << get_fileline() << ": debug: FOR initial assign: "
 		 << sig->name() << " = " << *etmp << endl;
 	    assert(etmp->expr_width() >= lv->lwidth());
       }
@@ -2950,7 +2950,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	   statement. Put this into the "body" block. */
       sig = des->find_signal(scope, id2->path());
       if (sig == 0) {
-	    cerr << get_line() << ": error: Unable to find variable "
+	    cerr << get_fileline() << ": error: Unable to find variable "
 		 << id2->path() << " in for-loop increment expressin." << endl;
 	    des->errors += 1;
 	    return body;
@@ -2978,7 +2978,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       }
 
       if (dynamic_cast<NetEConst*>(ce)) {
-	    cerr << get_line() << ": warning: condition expression "
+	    cerr << get_fileline() << ": warning: condition expression "
 		  "of for-loop is constant." << endl;
       }
 
@@ -3016,7 +3016,7 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
 {
       NetFuncDef*def = scope->func_def();
       if (def == 0) {
-	    cerr << get_line() << ": internal error: "
+	    cerr << get_fileline() << ": internal error: "
 		 << "No function definition for function "
 		 << scope_path(scope) << endl;
 	    return;
@@ -3026,7 +3026,7 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
 
       NetProc*st = statement_->elaborate(des, scope);
       if (st == 0) {
-	    cerr << statement_->get_line() << ": error: Unable to elaborate "
+	    cerr << statement_->get_fileline() << ": error: Unable to elaborate "
 		  "statement in function " << scope->basename() << "." << endl;
 	    des->errors += 1;
 	    return;
@@ -3054,7 +3054,7 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 
       NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
-	    cerr << get_line() << ": Unable to elaborate"
+	    cerr << get_fileline() << ": Unable to elaborate"
 		  " repeat expression." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -3127,9 +3127,9 @@ void PTask::elaborate(Design*des, NetScope*task) const
 
 	    st = statement_->elaborate(des, task);
 	    if (st == 0) {
-		  cerr << statement_->get_line() << ": Unable to elaborate "
+		  cerr << statement_->get_fileline() << ": Unable to elaborate "
 			"statement in task " << scope_path(task)
-		       << " at " << get_line() << "." << endl;
+		       << " at " << get_fileline() << "." << endl;
 		  return;
 	    }
       }
@@ -3149,14 +3149,14 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 					sig, par, eve);
 
       if (found_in == 0) {
-	    cerr << get_line() << ": error: event <" << event_ << ">"
+	    cerr << get_fileline() << ": error: event <" << event_ << ">"
 		 << " not found." << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
       if (eve == 0) {
-	    cerr << get_line() << ": error:  <" << event_ << ">"
+	    cerr << get_fileline() << ": error:  <" << event_ << ">"
 		 << " is not a named event." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -3262,9 +3262,9 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 
 	/* Check for various path types that are not supported. */
       if (conditional && !condition) {
-	    cerr << get_line() << ": sorry: ifnone specify paths"
+	    cerr << get_fileline() << ": sorry: ifnone specify paths"
 		 << " are not supported." << endl;
-	    cerr << get_line() << ":      : Use -g no-specify to ignore"
+	    cerr << get_fileline() << ":      : Use -g no-specify to ignore"
 		 << " specify blocks." << endl;
 	    des->errors += 1;
 	    return;
@@ -3293,7 +3293,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 		  delay_value[idx] = cur_rcon->value().as_long(shift);
 
 	    } else {
-		  cerr << get_line() << ": error: Path delay value "
+		  cerr << get_fileline() << ": error: Path delay value "
 		       << "must be constant." << endl;
 		  delay_value[idx] = 0;
 		  des->errors += 1;
@@ -3309,7 +3309,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	  case 12:
 	    break;
 	  default:
-	    cerr << get_line() << ": error: Incorrect delay configuration."
+	    cerr << get_fileline() << ": error: Incorrect delay configuration."
 		 << endl;
 	    ndelays = 1;
 	    des->errors += 1;
@@ -3336,7 +3336,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 		 ; cur != dst.end() ;  cur ++) {
 
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: Path to " << (*cur);
+		  cerr << get_fileline() << ": debug: Path to " << (*cur);
 		  if (condit_sig)
 			cerr << " if " << condit_sig->name();
 		  cerr << endl;
@@ -3344,7 +3344,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 
 	    NetNet*dst_sig = scope->find_signal(*cur);
 	    if (dst_sig == 0) {
-		  cerr << get_line() << ": error: No such wire "
+		  cerr << get_fileline() << ": error: No such wire "
 		       << *cur << " in this module." << endl;
 		  des->errors += 1;
 		  continue;
@@ -3353,7 +3353,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	    if (dst_sig->port_type() != NetNet::POUTPUT
 		&& dst_sig->port_type() != NetNet::PINOUT) {
 
-		  cerr << get_line() << ": error: Path destination "
+		  cerr << get_fileline() << ": error: Path destination "
 		       << *cur << " must be an output or inout port." << endl;
 		  des->errors += 1;
 	    }
@@ -3405,7 +3405,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 		  if (src_sig->port_type() != NetNet::PINPUT
 		      & src_sig->port_type() != NetNet::PINOUT) {
 
-			cerr << get_line() << ": error: Path source "
+			cerr << get_fileline() << ": error: Path source "
 			     << *cur_src << " must be an input or inout port."
 			     << endl;
 			des->errors += 1;
@@ -3446,7 +3446,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 			value.real_val = val_c->value().as_double();
 
 			if (debug_elaborate)
-			      cerr << get_line() << ": debug: Elaborate "
+			      cerr << get_fileline() << ": debug: Elaborate "
 				   << "specparam " << (*cur).first
 				   << " value=" << value.real_val << endl;
 
@@ -3456,13 +3456,13 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 			value.integer = val_c->value().as_long();
 
 			if (debug_elaborate)
-			      cerr << get_line() << ": debug: Elaborate "
+			      cerr << get_fileline() << ": debug: Elaborate "
 				   << "specparam " << (*cur).first
 				   << " value=" << value.integer << endl;
 
 		  } else {
 			value.type = IVL_VT_NO_TYPE;
-			cerr << (*cur).second->get_line() << ": error: "
+			cerr << (*cur).second->get_fileline() << ": error: "
 			     << "specparam " << (*cur).first << " value"
 			     << " is not constant: " << *val << endl;
 			des->errors += 1;
@@ -3559,13 +3559,13 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 	    const char*name = scope_name.str();
 	    if (name[0] == '$') {
 		  if (!scope->auto_name("genblk", '0', name + 4)) {
-			cerr << get_line() << ": warning: Couldn't build"
+			cerr << get_fileline() << ": warning: Couldn't build"
 			     << " unique name for unnamed generate block"
 			     << " - using internal name " << name << endl;
 		  }
 	    }
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: Elaborate in "
+		  cerr << get_fileline() << ": debug: Elaborate in "
 		       << "scope " << scope_path(scope) << endl;
 
 	    flag = elaborate_(des, scope) & flag;

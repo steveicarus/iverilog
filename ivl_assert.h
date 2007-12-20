@@ -33,7 +33,7 @@
 
 #define __ivl_assert(expression, tok, file, line)  \
       do { \
-	    cerr << (tok).get_line() << ": assert: " \
+	    cerr << (tok).get_fileline() << ": assert: " \
 		 << file << ":" << line \
 		 << ": failed assertion " << (expression) << endl; \
 	    abort(); \

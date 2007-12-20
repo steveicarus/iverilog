@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.46 2007/06/02 03:42:12 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "compiler.h"
@@ -50,7 +47,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 			     const replace_t&replacements) const
 {
       if (debug_scopes) {
-	    cerr << get_line() << ": debug: Elaborate scope "
+	    cerr << get_fileline() << ": debug: Elaborate scope "
 		 << scope_path(scope) << "." << endl;
       }
 
@@ -147,20 +144,20 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
 	    NetExpr*val = (*cur).second;
 	    if (val == 0) {
-		  cerr << get_line() << ": internal error: "
+		  cerr << get_fileline() << ": internal error: "
 		       << "Missing expression in parameter replacement for "
 		       << (*cur).first;
 	    }
 	    assert(val);
 	    if (debug_scopes) {
-		  cerr << get_line() << ": debug: "
+		  cerr << get_fileline() << ": debug: "
 		       << "Replace " << (*cur).first
 		       << " with expression " << *val
-		       << " from " << val->get_line() << "." << endl;
+		       << " from " << val->get_fileline() << "." << endl;
 	    }
 	    bool flag = scope->replace_parameter((*cur).first, val);
 	    if (! flag) {
-		  cerr << val->get_line() << ": warning: parameter "
+		  cerr << val->get_fileline() << ": warning: parameter "
 		       << (*cur).first << " not found in "
 		       << scope_path(scope) << "." << endl;
 	    }
@@ -251,7 +248,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
 	    hname_t use_name( (*cur).first );
 	    if (scope->child(use_name)) {
-		  cerr << get_line() << ": error: task/scope name "
+		  cerr << get_fileline() << ": error: task/scope name "
 		       << use_name << " already used in this context."
 		       << endl;
 		  des->errors += 1;
@@ -274,7 +271,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
 	    hname_t use_name( (*cur).first );
 	    if (scope->child(use_name)) {
-		  cerr << get_line() << ": error: function/scope name "
+		  cerr << get_fileline() << ": error: function/scope name "
 		       << use_name << " already used in this context."
 		       << endl;
 		  des->errors += 1;
@@ -336,7 +333,7 @@ bool PGenerate::generate_scope(Design*des, NetScope*container)
 	    return generate_scope_condit_(des, container, true);
 
 	  default:
-	    cerr << get_line() << ": sorry: Generate of this sort"
+	    cerr << get_fileline() << ": sorry: Generate of this sort"
 		 << " is not supported yet!" << endl;
 	    return false;
       }
@@ -356,7 +353,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
       NetExpr*init_ex = elab_and_eval(des, container, loop_init, -1);
       NetEConst*init = dynamic_cast<NetEConst*> (init_ex);
       if (init == 0) {
-	    cerr << get_line() << ": error: Cannot evaluate genvar"
+	    cerr << get_fileline() << ": error: Cannot evaluate genvar"
 		 << " init expression: " << *loop_init << endl;
 	    des->errors += 1;
 	    return false;
@@ -366,7 +363,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
       delete init_ex;
 
       if (debug_elaborate)
-	    cerr << get_line() << ": debug: genvar init = " << genvar << endl;
+	    cerr << get_fileline() << ": debug: genvar init = " << genvar << endl;
 
       container->genvar_tmp = loop_index;
       container->genvar_tmp_val = genvar;
@@ -381,14 +378,14 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	      // Verilog standard.
 	    hname_t use_name (scope_name, genvar);
 	    if (container->child(use_name)) {
-		  cerr << get_line() << ": error: block/scope name "
+		  cerr << get_fileline() << ": error: block/scope name "
 		       << use_name << " already used in this context."
 		       << endl;
 		  des->errors += 1;
 		  return false;
 	    }
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: "
+		  cerr << get_fileline() << ": debug: "
 		       << "Create generated scope " << use_name << endl;
 
 	    NetScope*scope = new NetScope(container, use_name,
@@ -407,7 +404,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 		  scope->set_localparam(loop_index, gp);
 
 		  if (debug_elaborate)
-			cerr << get_line() << ": debug: "
+			cerr << get_fileline() << ": debug: "
 			     << "Create implicit localparam "
 			     << loop_index << " = " << genvar_verinum << endl;
 	    }
@@ -419,7 +416,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    NetEConst*step = dynamic_cast<NetEConst*>(step_ex);
 	    assert(step);
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: genvar step from "
+		  cerr << get_fileline() << ": debug: genvar step from "
 		       << genvar << " to " << step->value().as_long() << endl;
 
 	    genvar = step->value().as_long();
@@ -449,7 +446,7 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
       if (test->value().as_long() == 0 && !else_flag
 	  || test->value().as_long() != 0 && else_flag) {
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: Generate condition "
+		  cerr << get_fileline() << ": debug: Generate condition "
 		       << (else_flag? "(else)" : "(if)")
 		       << " value=" << test->value() << ": skip generation"
 		       << endl;
@@ -459,14 +456,14 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 
       hname_t use_name (scope_name);
       if (container->child(use_name)) {
-	    cerr << get_line() << ": error: block/scope name "
+	    cerr << get_fileline() << ": error: block/scope name "
 		 << scope_name << " already used in this context."
 		 << endl;
 	    des->errors += 1;
 	    return false;
       }
       if (debug_elaborate)
-	    cerr << get_line() << ": debug: Generate condition "
+	    cerr << get_fileline() << ": debug: Generate condition "
 		 << (else_flag? "(else)" : "(if)")
 		 << " value=" << test->value() << ": Generate scope="
 		 << use_name << endl;
@@ -506,7 +503,7 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 {
       if (get_name() == "") {
-	    cerr << get_line() << ": error: Instantiation of module "
+	    cerr << get_fileline() << ": error: Instantiation of module "
 		 << mod->mod_name() << " requires an instance name." << endl;
 	    des->errors += 1;
 	    return;
@@ -520,7 +517,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	// it.
 
       if (sc->child(hname_t(get_name()))) {
-	    cerr << get_line() << ": error: Instance/Scope name " <<
+	    cerr << get_fileline() << ": error: Instance/Scope name " <<
 		  get_name() << " already used in this context." <<
 		  endl;
 	    des->errors += 1;
@@ -538,10 +535,10 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	    if (strcmp(mod->mod_name(), scn->module_name()) != 0)
 		  continue;
 
-	    cerr << get_line() << ": error: You cannot instantiate "
+	    cerr << get_fileline() << ": error: You cannot instantiate "
 		 << "module " << mod->mod_name() << " within itself." << endl;
 
-	    cerr << get_line() << ":      : The offending instance is "
+	    cerr << get_fileline() << ":      : The offending instance is "
 		 << scope_path(sc) << "." << get_name() << " within "
 		 << scope_path(scn) << "." << endl;
 
@@ -576,7 +573,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 
       NetScope::scope_vec_t instances (instance_count);
       if (debug_scopes) {
-	    cerr << get_line() << ": debug: Create " << instance_count
+	    cerr << get_fileline() << ": debug: Create " << instance_count
 		 << " instances of " << get_name()
 		 << "." << endl;
       }
@@ -599,7 +596,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	    }
 
 	    if (debug_scopes) {
-		  cerr << get_line() << ": debug: Module instance " << use_name
+		  cerr << get_fileline() << ": debug: Module instance " << use_name
 		       << " becomes child of " << scope_path(sc)
 		       << "." << endl;
 	    }
@@ -743,7 +740,7 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
       if (name_ != 0) {
 	    hname_t use_name(name_);
 	    if (scope->child(use_name)) {
-		  cerr << get_line() << ": error: block/scope name "
+		  cerr << get_fileline() << ": error: block/scope name "
 		       << use_name << " already used in this context."
 		       << endl;
 		  des->errors += 1;

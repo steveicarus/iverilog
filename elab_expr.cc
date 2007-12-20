@@ -34,7 +34,7 @@ unsigned PExpr::test_width(Design*des, NetScope*scope,
 			   unsigned min, unsigned lval, bool&) const
 {
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: test_width defaults to "
+	    cerr << get_fileline() << ": debug: test_width defaults to "
 		 << min << ", ignoring unsized_flag. typeid="
 		 << typeid(*this).name() << endl;
       }
@@ -43,9 +43,9 @@ unsigned PExpr::test_width(Design*des, NetScope*scope,
 
 NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, int, bool) const
 {
-      cerr << get_line() << ": internal error: I do not know how to elaborate"
+      cerr << get_fileline() << ": internal error: I do not know how to elaborate"
 	   << " expression. " << endl;
-      cerr << get_line() << ":               : Expression is: " << *this
+      cerr << get_fileline() << ":               : Expression is: " << *this
 	   << endl;
       des->errors += 1;
       return 0;
@@ -161,7 +161,7 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
       bool flag;
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: elaborate expression "
+	    cerr << get_fileline() << ": debug: elaborate expression "
 		 << *this << " expr_wid=" << expr_wid << endl;
       }
 
@@ -195,7 +195,7 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 		 form of verilog. */
 	    if (generation_flag < GN_VER2001X) {
 		  if (lp->expr_type()==IVL_VT_REAL || rp->expr_type()==IVL_VT_REAL) {
-			cerr << get_line() << ": error: Modulus operator may not "
+			cerr << get_fileline() << ": error: Modulus operator may not "
 			      "have REAL operands." << endl;
 			des->errors += 1;
 		  }
@@ -236,7 +236,7 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 	  case 'N': /* !== */
 	    if (lp->expr_type() == IVL_VT_REAL
 		|| rp->expr_type() == IVL_VT_REAL) {
-		  cerr << get_line() << ": error: Case equality may not "
+		  cerr << get_fileline() << ": error: Case equality may not "
 		       << "have real operands." << endl;
 		  return 0;
 	    }
@@ -260,7 +260,7 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 	    tmp->set_line(*this);
 	    flag = tmp->set_width(1);
 	    if (flag == false) {
-		  cerr << get_line() << ": internal error: "
+		  cerr << get_fileline() << ": internal error: "
 			"expression bit width of comparison != 1." << endl;
 		  des->errors += 1;
 	    }
@@ -295,7 +295,7 @@ NetEBinary* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 	    use_wid = right_width;
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: "
+	    cerr << get_fileline() << ": debug: "
 		 << "Comparison expression operands are "
 		 << left_width << " bits and "
 		 << right_width << " bits. Resorting to "
@@ -338,14 +338,14 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 		  return 0;
 	    unsigned wid = expr->test_width(des, scope, min, lval, unsized_flag);
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: test_width"
+		  cerr << get_fileline() << ": debug: test_width"
 		       << " of $signed/$unsigned returns test_width"
 		       << " of subexpression." << endl;
 	    return wid;
       }
 
       if (debug_elaborate)
-	    cerr << get_line() << ": debug: test_width "
+	    cerr << get_fileline() << ": debug: test_width "
 		 << "of system function " << name
 		 << " returns 32 always?" << endl;
       return 32;
@@ -361,7 +361,7 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
       NetFuncDef*def = des->find_function(scope, path_);
       if (def == 0) {
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: test_width "
+		  cerr << get_fileline() << ": debug: test_width "
 		       << "cannot find definition of " << path_
 		       << " in " << scope_path(scope) << "." << endl;
 	    return 0;
@@ -372,7 +372,7 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 
       if (NetNet*res = dscope->find_signal(dscope->basename())) {
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: test_width "
+		  cerr << get_fileline() << ": debug: test_width "
 		       << "of function returns width " << res->vector_width()
 		       << "." << endl;
 	    return res->vector_width();
@@ -398,7 +398,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	   it just changes the interpretation. */
       if (strcmp(peek_tail_name(path_), "$signed") == 0) {
 	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
-		  cerr << get_line() << ": error: The $signed() function "
+		  cerr << get_fileline() << ": error: The $signed() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -412,7 +412,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
       /* add $unsigned to match $signed */
       if (strcmp(peek_tail_name(path_), "$unsigned") == 0) {
 	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
-		  cerr << get_line() << ": error: The $unsigned() function "
+		  cerr << get_fileline() << ": error: The $unsigned() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -435,14 +435,14 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
       if ((strcmp(peek_tail_name(path_), "$sizeof") == 0)
 	  || (strcmp(peek_tail_name(path_), "$bits") == 0)) {
 	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
-		  cerr << get_line() << ": error: The $bits() function "
+		  cerr << get_fileline() << ": error: The $bits() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
 
 	    if (strcmp(peek_tail_name(path_), "$sizeof") == 0)
-		  cerr << get_line() << ": warning: $sizeof is deprecated."
+		  cerr << get_fileline() << ": warning: $sizeof is deprecated."
 		       << " Use $bits() instead." << endl;
 
 	    PExpr*expr = parms_[0];
@@ -471,7 +471,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	   evaluated. */
       if (strcmp(peek_tail_name(path_), "$is_signed") == 0) {
 	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
-		  cerr << get_line() << ": error: The $is_signed() function "
+		  cerr << get_fileline() << ": error: The $is_signed() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -541,10 +541,10 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
       }
 
       if (missing_parms > 0) {
-	    cerr << get_line() << ": error: The function "
+	    cerr << get_fileline() << ": error: The function "
 		 << peek_tail_name(path_)
 		 << " has been called with empty parameters." << endl;
-	    cerr << get_line() << ":      : Verilog doesn't allow "
+	    cerr << get_fileline() << ":      : Verilog doesn't allow "
 		 << "passing empty parameters to functions." << endl;
 	    des->errors += 1;
       }
@@ -560,7 +560,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 
       NetFuncDef*def = des->find_function(scope, path_);
       if (def == 0) {
-	    cerr << get_line() << ": error: No function " << path_ <<
+	    cerr << get_fileline() << ": error: No function " << path_ <<
 		  " in this context (" << scope_path(scope) << ")." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -593,7 +593,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		  int argwid = def->port(idx)->vector_width();
 		  parms[idx] = elab_and_eval(des, scope, tmp, argwid);
 		  if (debug_elaborate)
-			cerr << get_line() << ": debug:"
+			cerr << get_fileline() << ": debug:"
 			     << " function " << path_
 			     << " arg " << (idx+1)
 			     << " argwid=" << argwid
@@ -606,9 +606,9 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       }
 
       if (missing_parms > 0) {
-	    cerr << get_line() << ": error: The function " << path_
+	    cerr << get_fileline() << ": error: The function " << path_
 		 << " has been called with empty parameters." << endl;
-	    cerr << get_line() << ":      : Verilog doesn't allow "
+	    cerr << get_fileline() << ":      : Verilog doesn't allow "
 		 << "passing empty parameters to functions." << endl;
 	    des->errors += 1;
       }
@@ -630,7 +630,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	    return func;
       }
 
-      cerr << get_line() << ": internal error: Unable to locate "
+      cerr << get_fileline() << ": internal error: Unable to locate "
 	    "function return value for " << path_
 	   << " in " << dscope->basename() << "." << endl;
       des->errors += 1;
@@ -644,7 +644,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
       NetExpr* repeat = 0;
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: Elaborate expr=" << *this
+	    cerr << get_fileline() << ": debug: Elaborate expr=" << *this
 		 << ", expr_wid=" << expr_wid << endl;
       }
 
@@ -656,10 +656,10 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	    NetEConst*rep = dynamic_cast<NetEConst*>(tmp);
 
 	    if (rep == 0) {
-		  cerr << get_line() << ": error: "
+		  cerr << get_fileline() << ": error: "
 			"concatenation repeat expression cannot be evaluated."
 		       << endl;
-		  cerr << get_line() << ":      : The expression is: "
+		  cerr << get_fileline() << ":      : The expression is: "
 		       << *tmp << endl;
 		  des->errors += 1;
 	    }
@@ -676,7 +676,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	/* Elaborate all the parameters and attach them to the concat node. */
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 	    if (parms_[idx] == 0) {
-		  cerr << get_line() << ": error: Missing expression "
+		  cerr << get_fileline() << ": error: Missing expression "
 		       << (idx+1) << " of concatenation list." << endl;
 		  des->errors += 1;
 		  continue;
@@ -689,7 +689,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	    ex->set_line(*parms_[idx]);
 
 	    if (! ex->has_width()) {
-		  cerr << ex->get_line() << ": error: operand of "
+		  cerr << ex->get_fileline() << ": error: operand of "
 		       << "concatenation has indefinite width: "
 		       << *ex << endl;
 		  des->errors += 1;
@@ -734,10 +734,10 @@ bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
       NetExpr*lsb_ex = elab_and_eval(des, scope, index_tail.lsb, -1);
       NetEConst*lsb_c = dynamic_cast<NetEConst*>(lsb_ex);
       if (lsb_c == 0) {
-	    cerr << index_tail.lsb->get_line() << ": error: "
+	    cerr << index_tail.lsb->get_fileline() << ": error: "
 		  "Part select expressions must be constant."
 		 << endl;
-	    cerr << index_tail.lsb->get_line() << ":      : "
+	    cerr << index_tail.lsb->get_fileline() << ":      : "
 		  "This lsb expression violates the rule: "
 		 << *index_tail.lsb << endl;
 	    des->errors += 1;
@@ -747,10 +747,10 @@ bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
       NetExpr*msb_ex = elab_and_eval(des, scope, index_tail.msb, -1);
       NetEConst*msb_c = dynamic_cast<NetEConst*>(msb_ex);
       if (msb_c == 0) {
-	    cerr << index_tail.msb->get_line() << ": error: "
+	    cerr << index_tail.msb->get_fileline() << ": error: "
 		  "Part select expressions must be constant."
 		 << endl;
-	    cerr << index_tail.msb->get_line() << ":      : This msb expression "
+	    cerr << index_tail.msb->get_fileline() << ":      : This msb expression "
 		  "violates the rule: " << *index_tail.msb << endl;
 	    des->errors += 1;
 	    return false;
@@ -782,9 +782,9 @@ bool PEIdent::calculate_up_do_width_(Design*des, NetScope*scope,
       NetEConst*wid_c = dynamic_cast<NetEConst*>(wid_ex);
 
       if (wid_c == 0) {
-	    cerr << get_line() << ": error: Indexed part width must be "
+	    cerr << get_fileline() << ": error: Indexed part width must be "
 		 << "constant. Expression in question is..." << endl;
-	    cerr << get_line() << ":      : " << *wid_ex << endl;
+	    cerr << get_fileline() << ":      : " << *wid_ex << endl;
 	    des->errors += 1;
 	    flag = false;
       }
@@ -894,7 +894,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	  && scope->genvar_tmp.str()
 	  && strcmp(peek_tail_name(path_), scope->genvar_tmp) == 0) {
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: " << path_
+		  cerr << get_fileline() << ": debug: " << path_
 		       << " is genvar with value " << scope->genvar_tmp_val
 		       << "." << endl;
 	    verinum val (scope->genvar_tmp_val);
@@ -929,7 +929,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  tmp->set_line(*this);
 
 		  if (debug_elaborate)
-			cerr << get_line() << ": debug: " << path_
+			cerr << get_fileline() << ": debug: " << path_
 			     << " is a specparam" << endl;
 		  return tmp;
 	    }
@@ -941,7 +941,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       if (! sys_task_arg) {
 	      // I cannot interpret this identifier. Error message.
-	    cerr << get_line() << ": error: Unable to bind wire/reg/memory "
+	    cerr << get_fileline() << ": error: Unable to bind wire/reg/memory "
 		  "`" << path_ << "' in `" << scope_path(scope) << "'" << endl;
 	    des->errors += 1;
 	    return 0;
@@ -957,7 +957,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  tmp->set_line(*this);
 
 		  if (debug_elaborate)
-			cerr << get_line() << ": debug: Found scope "
+			cerr << get_fileline() << ": debug: Found scope "
 			     << use_name << " in scope " << scope->basename()
 			     << endl;
 
@@ -975,12 +975,12 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    tmp->set_line(*this);
 
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: Found scope "
+		  cerr << get_fileline() << ": debug: Found scope "
 		       << nsc->basename()
 		       << " path=" << path_ << endl;
 
 	    if (! sys_task_arg) {
-		  cerr << get_line() << ": error: Scope name "
+		  cerr << get_fileline() << ": error: Scope name "
 		       << nsc->basename() << " not allowed here." << endl;
 		  des->errors += 1;
 	    }
@@ -994,14 +994,14 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    tmp->set_line(*this);
 
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: Found scope "
+		  cerr << get_fileline() << ": debug: Found scope "
 		       << nsc->basename() << " in " << scope_path(scope) << endl;
 
 	    return tmp;
       }
 
 	// I cannot interpret this identifier. Error message.
-      cerr << get_line() << ": error: Unable to bind wire/reg/memory "
+      cerr << get_fileline() << ": error: Unable to bind wire/reg/memory "
 	    "`" << path_ << "' in `" << scope_path(scope) << "'" << endl;
       des->errors += 1;
       return 0;
@@ -1041,7 +1041,7 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 	    verinum*lsn = index_tail.lsb->eval_const(des, scope);
 	    verinum*msn = index_tail.msb->eval_const(des, scope);
 	    if ((lsn == 0) || (msn == 0)) {
-		  cerr << get_line() << ": error: "
+		  cerr << get_fileline() << ": error: "
 			"Part select expressions must be "
 			"constant expressions." << endl;
 		  des->errors += 1;
@@ -1051,7 +1051,7 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 	    long lsb = lsn->as_long();
 	    long msb = msn->as_long();
 	    if ((lsb < 0) || (msb < lsb)) {
-		  cerr << get_line() << ": error: invalid part "
+		  cerr << get_fileline() << ": error: invalid part "
 		       << "select: " << path_
 		       << "["<<msb<<":"<<lsb<<"]" << endl;
 		  des->errors += 1;
@@ -1108,7 +1108,7 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 	    NetExpr*wid_ex = elab_and_eval(des, scope, index_tail.lsb, -1);
 	    NetEConst*wid_ec = dynamic_cast<NetEConst*> (wid_ex);
 	    if (wid_ec == 0) {
-		  cerr << index_tail.lsb->get_line() << ": error: "
+		  cerr << index_tail.lsb->get_fileline() << ": error: "
 		       << "Second expression of indexed part select "
 		       << "most be constant." << endl;
 		  des->errors += 1;
@@ -1239,7 +1239,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
       const name_component_t&name_tail = path_.back();
 
       if (name_tail.index.empty() && !sys_task_arg) {
-	    cerr << get_line() << ": error: Array " << path()
+	    cerr << get_fileline() << ": error: Array " << path()
 		 << " Needs an array index here." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -1250,7 +1250,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 	    index_front = name_tail.index.front();
 	    ivl_assert(*this, index_front.sel != index_component_t::SEL_NONE);
 	    if (index_front.sel != index_component_t::SEL_BIT) {
-		  cerr << get_line() << ": error: Array " << path_
+		  cerr << get_fileline() << ": error: Array " << path_
 		       << " cannot be indexed by a range." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -1342,7 +1342,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	   i.e., [1:0], [-4:6], etc. */
       unsigned long wid = 1 + ((msv>lsv)? (msv-lsv) : (lsv-msv));
       if (wid > net->vector_width()) {
-	    cerr << get_line() << ": error: part select ["
+	    cerr << get_fileline() << ": error: part select ["
 		 << msv << ":" << lsv << "] out of range." << endl;
 	    des->errors += 1;
 	      //delete lsn;
@@ -1352,7 +1352,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
       ivl_assert(*this, wid <= net->vector_width());
 
       if (net->sig()->sb_to_idx(msv) < net->sig()->sb_to_idx(lsv)) {
-	    cerr << get_line() << ": error: part select ["
+	    cerr << get_fileline() << ": error: part select ["
 		 << msv << ":" << lsv << "] out of order." << endl;
 	    des->errors += 1;
 	      //delete lsn;
@@ -1362,7 +1362,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 
 
       if (net->sig()->sb_to_idx(msv) >= net->vector_width()) {
-	    cerr << get_line() << ": error: part select ["
+	    cerr << get_fileline() << ": error: part select ["
 		 << msv << ":" << lsv << "] out of range." << endl;
 	    des->errors += 1;
 	      //delete lsn;
@@ -1436,7 +1436,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
       ss->set_line(*this);
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: Elaborate part "
+	    cerr << get_fileline() << ": debug: Elaborate part "
 		 << "select base="<< *base << ", wid="<< wid << endl;
       }
 
@@ -1490,7 +1490,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
       ss->set_line(*this);
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: Elaborate part "
+	    cerr << get_fileline() << ": debug: Elaborate part "
 		 << "select base="<< *base_adjusted << ", wid="<< wid << endl;
       }
 
@@ -1524,11 +1524,11 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 		  NetEConst*tmp = new NetEConst(x);
 		  tmp->set_line(*this);
 
-		  cerr << get_line() << ": warning: Bit select ["
+		  cerr << get_fileline() << ": warning: Bit select ["
 		       << msv << "] out of range of vector "
 		       << net->name() << "[" << net->sig()->msb()
 		       << ":" << net->sig()->lsb() << "]." << endl;
-		  cerr << get_line() << ":        : Replacing "
+		  cerr << get_fileline() << ":        : Replacing "
 		       << "expression with a constant 1'bx." << endl;
 		  delete ex;
 		  return tmp;
@@ -1696,7 +1696,7 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope,
 	    unsigned fal_wid = fal_->test_width(des, scope, 0, 0, flag);
 	    expr_wid = max(tru_wid, fal_wid);
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: "
+		  cerr << get_fileline() << ": debug: "
 		       << "Self-sized ternary chooses wid="<< expr_wid
 		       << " from " <<tru_wid
 		       << " and " << fal_wid << endl;
@@ -1720,7 +1720,7 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope,
       }
 
       if (! test_ternary_operand_compat(tru->expr_type(), fal->expr_type())) {
-	    cerr << get_line() << ": error: Data types "
+	    cerr << get_fileline() << ": error: Data types "
 		 << tru->expr_type() << " and "
 		 << fal->expr_type() << " of ternary"
 		 << " do not match." << endl;

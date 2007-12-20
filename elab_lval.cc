@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.44 2007/06/02 03:42:12 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -73,7 +70,7 @@ NetAssign_* PExpr::elaborate_lval(Design*des,
 {
       NetNet*ll = 0;
       if (ll == 0) {
-	    cerr << get_line() << ": Assignment l-value too complex."
+	    cerr << get_fileline() << ": Assignment l-value too complex."
 		 << endl;
 	    return 0;
       }
@@ -100,7 +97,7 @@ NetAssign_* PEConcat::elaborate_lval(Design*des,
 				     bool is_force) const
 {
       if (repeat_) {
-	    cerr << get_line() << ": error: Repeat concatenations make "
+	    cerr << get_fileline() << ": error: Repeat concatenations make "
 		  "no sense in l-value expressions. I refuse." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -111,7 +108,7 @@ NetAssign_* PEConcat::elaborate_lval(Design*des,
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 
 	    if (parms_[idx] == 0) {
-		  cerr << get_line() << ": error: Empty expressions "
+		  cerr << get_fileline() << ": error: Empty expressions "
 		       << "not allowed in concatenations." << endl;
 		  des->errors += 1;
 		  continue;
@@ -155,7 +152,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
       symbol_search(des, scope, path_, reg, par, eve);
       if (reg == 0) {
-	    cerr << get_line() << ": error: Could not find variable ``"
+	    cerr << get_fileline() << ": error: Could not find variable ``"
 		 << path_ << "'' in ``" << scope_path(scope) <<
 		  "''" << endl;
 
@@ -174,7 +171,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	// This is the special case that the l-value is an entire
 	// memory. This is, in fact, an error.
       if (reg->array_dimensions() > 0 && name_tail.index.empty()) {
-	    cerr << get_line() << ": error: Cannot assign to array "
+	    cerr << get_fileline() << ": error: Cannot assign to array "
 		 << path_ << ". Did you forget a word index?" << endl;
 	    des->errors += 1;
 	    return 0;
@@ -200,10 +197,10 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	   it is a register. Wires are not allows in this context,
 	   unless this is the l-value of a force. */
       if ((reg->type() != NetNet::REG) && !is_force) {
-	    cerr << get_line() << ": error: " << path_ <<
+	    cerr << get_fileline() << ": error: " << path_ <<
 		  " is not a valid l-value in " << scope_path(scope) <<
 		  "." << endl;
-	    cerr << reg->get_line() << ":      : " << path_ <<
+	    cerr << reg->get_fileline() << ":      : " << path_ <<
 		  " is declared here as " << reg->type() << "." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -280,7 +277,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    unsigned wid = moff - loff + 1;
 
 	    if (moff < loff) {
-		  cerr << get_line() << ": error: part select "
+		  cerr << get_fileline() << ": error: part select "
 		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
 		       << " is reversed." << endl;
 		  des->errors += 1;
@@ -293,7 +290,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 		 variable pins. */
 
 	    if ((wid + loff) > reg->vector_width()) {
-		  cerr << get_line() << ": error: bit/part select "
+		  cerr << get_fileline() << ": error: bit/part select "
 		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
 		       << " is out of range." << endl;
 		  des->errors += 1;
@@ -317,7 +314,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 
       const index_component_t&index_head = name_tail.index.front();
       if (index_head.sel == index_component_t::SEL_PART) {
-	    cerr << get_line() << ": error: cannot perform a part "
+	    cerr << get_fileline() << ": error: cannot perform a part "
 	         << "select on array " << reg->name() << "." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -343,7 +340,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       lv->set_word(word);
 
       if (debug_elaborate)
-	    cerr << get_line() << ": debug: Set array word=" << *word << endl;
+	    cerr << get_fileline() << ": debug: Set array word=" << *word << endl;
 
 	// Test for the case that the index is a constant, and is out
 	// of bounds. The "word" expression is the word index already
@@ -353,7 +350,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 	    verinum word_val = word_const->value();
 	    long index = word_val.as_long();
 	    if (index < 0 || index >= reg->array_count()) {
-		  cerr << get_line() << ": warning: Constant array index "
+		  cerr << get_fileline() << ": warning: Constant array index "
 		       << (index + reg->array_first())
 		       << " is out of range for array "
 		       << reg->name() << "." << endl;
@@ -403,7 +400,7 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 	    unsigned wid = moff - loff + 1;
 
 	    if (moff < loff) {
-		  cerr << get_line() << ": error: part select "
+		  cerr << get_fileline() << ": error: part select "
 		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
 		       << " is reversed." << endl;
 		  des->errors += 1;
@@ -416,7 +413,7 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 		 variable pins. */
 
 	    if ((wid + loff) > reg->vector_width()) {
-		  cerr << get_line() << ": error: bit/part select "
+		  cerr << get_fileline() << ": error: bit/part select "
 		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
 		       << " is out of range." << endl;
 		  des->errors += 1;
@@ -445,10 +442,10 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       assert(reg);
 
       if (reg->type() != NetNet::REG) {
-	    cerr << get_line() << ": error: " << path_ <<
+	    cerr << get_fileline() << ": error: " << path_ <<
 		  " is not a reg/integer/time in " << scope_path(scope) <<
 		  "." << endl;
-	    cerr << reg->get_line() << ":      : " << path_ <<
+	    cerr << reg->get_fileline() << ":      : " << path_ <<
 		  " is declared here as " << reg->type() << "." << endl;
 	    des->errors += 1;
 	    return false;
@@ -470,7 +467,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       }
 
       if (debug_elaborate)
-	    cerr << get_line() << ": debug: Set part select width="
+	    cerr << get_fileline() << ": debug: Set part select width="
 		 << wid << ", base=" << *base << endl;
 
       lv->set_part(base, wid);
@@ -480,7 +477,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 
 NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 {
-      cerr << get_line() << ": error: Constant values not allowed "
+      cerr << get_fileline() << ": error: Constant values not allowed "
 	   << "in l-value expressions." << endl;
       des->errors += 1;
       return 0;

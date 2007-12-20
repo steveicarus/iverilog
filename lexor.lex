@@ -3,7 +3,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,9 +20,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.96 2007/06/14 03:50:00 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -50,37 +47,17 @@
  */
 extern YYLTYPE yylloc;
 
-struct file_name_cell {
-      const char*text;
-      struct file_name_cell*next;
-      bool library_flag;
-};
-
-static struct file_name_cell*file_names = 0;
-
 static const char* set_file_name(char*text)
 {
-      struct file_name_cell*cur = file_names;
-      while (cur) {
-	    if (strcmp(cur->text, text) == 0) {
-		  delete[]text;
-		  return cur->text;
-	    }
-
-	    cur = cur->next;
-      }
-
-      cur = new struct file_name_cell;
-      cur->text = text;
-      cur->next = file_names;
+      perm_string path = filename_strings.make(text);
+      delete[]text;
 
 	/* Check this file name with the list of library file
 	   names. If there is a match, then turn on the
 	   pform_library_flag. This is how the parser knows that
 	   modules declared in this file are library modules. */
-      cur->library_flag = library_file_map[cur->text];
-      pform_library_flag = cur->library_flag;
-      return text;
+      pform_library_flag = library_file_map[path];
+      return path;
 }
 
 
@@ -998,11 +975,6 @@ void reset_lexor()
       yyrestart(vl_input);
       yylloc.first_line = 1;
 
-	/* Start the file_names list. From here on, as I get a file
-	   name, I will add it to this list. Only add the name if it
-	   is not already in the list. */
-      file_names = new struct file_name_cell;
-      file_names->text = strdup(vl_file.c_str());
-      file_names->next = 0;
-      yylloc.text = file_names->text;
+	/* Announce the first file name. */
+      yylloc.text = set_file_name(strdup(vl_file.c_str()));
 }

@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: PWire.cc,v 1.14 2007/05/24 04:07:11 steve Exp $"
-#endif
 
 # include "config.h"
 # include  "PWire.h"
@@ -149,7 +146,7 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
       switch (type) {
 	  case SR_PORT:
 	    if (port_set_) {
-		  cerr << get_line() << ": error: Port ``" << hname_
+		  cerr << get_fileline() << ": error: Port ``" << hname_
 		       << "'' has already been declared a port." << endl;
 		  error_cnt_ += 1;
 	    } else {
@@ -161,7 +158,7 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
 
 	  case SR_NET:
 	    if (net_set_) {
-		  cerr << get_line() << ": error: Net ``" << hname_
+		  cerr << get_fileline() << ": error: Net ``" << hname_
 		       << "'' has already been declared." << endl;
 		  error_cnt_ += 1;
 	    } else {
@@ -174,12 +171,12 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
 	  case SR_BOTH:
 	    if (port_set_ || net_set_) {
 		  if (port_set_) {
-		        cerr << get_line() << ": error: Port ``" << hname_
+		        cerr << get_fileline() << ": error: Port ``" << hname_
 		             << "'' has already been declared a port." << endl;
 		        error_cnt_ += 1;
 		  }
 		  if (net_set_) {
-		        cerr << get_line() << ": error: Net ``" << hname_
+		        cerr << get_fileline() << ": error: Net ``" << hname_
 		             << "'' has already been declared." << endl;
 		        error_cnt_ += 1;
 		  }
@@ -198,7 +195,7 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
 void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 {
       if (lidx_ != 0 || ridx_ != 0) {
-	    cerr << get_line() << ": error: Array ``" << hname_
+	    cerr << get_fileline() << ": error: Array ``" << hname_
 	         << "'' has already been declared." << endl;
 	    error_cnt_ += 1;
       } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2003 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2007 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.81 2007/06/02 03:42:13 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -37,7 +34,7 @@ void target_t::scope(const NetScope*)
 
 void target_t::event(const NetEvent*ev)
 {
-      cerr << ev->get_line() << ": error: target (" << typeid(*this).name()
+      cerr << ev->get_fileline() << ": error: target (" << typeid(*this).name()
 	   <<  "): Unhandled event <" << ev->name() << ">." << endl;
 }
 
@@ -241,7 +238,7 @@ void target_t::proc_case(const NetCase*cur)
 bool target_t::proc_cassign(const NetCAssign*dev)
 {
 	cerr << "target (" << typeid(*this).name() <<  "): ";
-	cerr << dev->get_line();
+	cerr << dev->get_fileline();
 	cerr << ": Target does not support procedural continuous assignment." << endl;
       return false;
 }
@@ -256,7 +253,7 @@ bool target_t::proc_condit(const NetCondit*condit)
 
 bool target_t::proc_deassign(const NetDeassign*dev)
 {
-      cerr << dev->get_line() << ": internal error: "
+      cerr << dev->get_fileline() << ": internal error: "
 	   << "target (" << typeid(*this).name() <<  "): "
 	   << "Unhandled proc_deassign." << endl;
       return false;
@@ -271,7 +268,7 @@ bool target_t::proc_delay(const NetPDelay*)
 
 bool target_t::proc_disable(const NetDisable*obj)
 {
-      cerr << obj->get_line() << ": internal error: "
+      cerr << obj->get_fileline() << ": internal error: "
 	   << "target (" << typeid(*this).name() << "): "
 	   << "does not support disable statements." << endl;
       return false;
@@ -292,7 +289,7 @@ void target_t::proc_forever(const NetForever*)
 
 bool target_t::proc_release(const NetRelease*dev)
 {
-      cerr << dev->get_line() << ": internal error: "
+      cerr << dev->get_fileline() << ": internal error: "
 	   << "target (" << typeid(*this).name() <<  "): "
 	   << "Unhandled proc_release." << endl;
       return false;
@@ -306,7 +303,7 @@ void target_t::proc_repeat(const NetRepeat*)
 
 bool target_t::proc_trigger(const NetEvTrig*tr)
 {
-      cerr << tr->get_line() << ": error: target (" << typeid(*this).name()
+      cerr << tr->get_fileline() << ": error: target (" << typeid(*this).name()
 	   <<  "): Unhandled event trigger." << endl;
       return false;
 }
@@ -325,7 +322,7 @@ void target_t::proc_utask(const NetUTask*)
 
 bool target_t::proc_wait(const NetEvWait*tr)
 {
-      cerr << tr->get_line() << ": error: target (" << typeid(*this).name()
+      cerr << tr->get_fileline() << ": error: target (" << typeid(*this).name()
 	   <<  "): Unhandled event wait." << endl;
       return false;
 }
@@ -370,7 +367,7 @@ void expr_scan_t::expr_rparam(const NetECRealParam*that)
 
 void expr_scan_t::expr_concat(const NetEConcat*that)
 {
-      cerr << that->get_line() << ": expr_scan_t (" <<
+      cerr << that->get_fileline() << ": expr_scan_t (" <<
 	    typeid(*this).name() << "): unhandled expr_concat." << endl;
 }
 void expr_scan_t::expr_event(const NetEEvent*)

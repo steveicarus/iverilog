@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.89 2007/01/16 05:44:15 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -466,7 +463,7 @@ void NetECRealParam::expr_scan(struct expr_scan_t*tgt) const
 
 void NetEParam::expr_scan(struct expr_scan_t*tgt) const
 {
-      cerr << get_line() << ":internal error: unexpected NetEParam."
+      cerr << get_fileline() << ":internal error: unexpected NetEParam."
 	   << endl;
 }
 
@@ -523,82 +520,3 @@ int emit(const Design*des, const char*type)
 	   << " not found." << endl;
       return -1;
 }
-
-
-/*
- * $Log: emit.cc,v $
- * Revision 1.89  2007/01/16 05:44:15  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.88  2006/11/10 05:44:44  steve
- *  Process delay paths in second path over signals.
- *
- * Revision 1.87  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.86  2005/07/11 16:56:50  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.85  2005/07/07 16:22:49  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.84  2005/05/24 01:44:27  steve
- *  Do sign extension of structuran nets.
- *
- * Revision 1.83  2005/02/08 00:12:36  steve
- *  Add the NetRepeat node, and code generator support.
- *
- * Revision 1.82  2005/02/03 04:56:20  steve
- *  laborate reduction gates into LPM_RED_ nodes.
- *
- * Revision 1.81  2005/01/24 05:28:30  steve
- *  Remove the NetEBitSel and combine all bit/part select
- *  behavior into the NetESelect node and IVL_EX_SELECT
- *  ivl_target expression type.
- *
- * Revision 1.80  2005/01/22 01:06:55  steve
- *  Change case compare from logic to an LPM node.
- *
- * Revision 1.79  2004/12/29 23:55:43  steve
- *  Unify elaboration of l-values for all proceedural assignments,
- *  including assing, cassign and force.
- *
- *  Generate NetConcat devices for gate outputs that feed into a
- *  vector results. Use this to hande gate arrays. Also let gate
- *  arrays handle vectors of gates when the outputs allow for it.
- *
- * Revision 1.78  2004/12/11 02:31:26  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.77  2004/10/04 01:10:53  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.76  2004/05/31 23:34:37  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.75  2003/09/13 01:30:07  steve
- *  Missing case warnings.
- *
- * Revision 1.74  2003/05/30 02:55:32  steve
- *  Support parameters in real expressions and
- *  as real expressions, and fix multiply and
- *  divide with real results.
- *
- * Revision 1.73  2003/04/22 04:48:29  steve
- *  Support event names as expressions elements.
- *
- * Revision 1.72  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.71  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- */
-

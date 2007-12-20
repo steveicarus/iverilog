@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.47 2007/06/04 19:14:06 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -194,7 +191,7 @@ verinum* PEIdent::eval_const(Design*des, NetScope*scope) const
 
       const NetEConst*eval = dynamic_cast<const NetEConst*>(expr);
       if (eval == 0) {
-	    cerr << get_line() << ": internal error: Unable to evaluate "
+	    cerr << get_fileline() << ": internal error: Unable to evaluate "
 		 << "constant expression (parameter=" << path_
 		 << "): " << *expr << endl;
 	    return 0;
@@ -272,123 +269,3 @@ verinum* PEUnary::eval_const(Design*des, NetScope*scope) const
 	    delete val;
       return 0;
 }
-
-
-/*
- * $Log: eval.cc,v $
- * Revision 1.47  2007/06/04 19:14:06  steve
- *  Build errors in picky GCC compilers.
- *
- * Revision 1.46  2007/05/24 04:07:12  steve
- *  Rework the heirarchical identifier parse syntax and pform
- *  to handle more general combinations of heirarch and bit selects.
- *
- * Revision 1.45  2007/03/07 00:38:15  steve
- *  Lint fixes.
- *
- * Revision 1.44  2007/01/16 05:44:15  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.43  2006/08/08 05:11:37  steve
- *  Handle 64bit delay constants.
- *
- * Revision 1.42  2006/05/19 04:07:24  steve
- *  eval_const is not strict.
- *
- * Revision 1.41  2006/05/17 16:49:30  steve
- *  Error message if concat expression cannot evaluate.
- *
- * Revision 1.40  2006/04/10 00:37:42  steve
- *  Add support for generate loops w/ wires and gates.
- *
- * Revision 1.39  2005/12/07 04:04:23  steve
- *  Allow constant concat expressions.
- *
- * Revision 1.38  2005/11/27 17:01:57  steve
- *  Fix for stubborn compiler.
- *
- * Revision 1.37  2005/11/27 05:56:20  steve
- *  Handle bit select of parameter with ranges.
- *
- * Revision 1.36  2003/06/21 01:21:43  steve
- *  Harmless fixup of warnings.
- *
- * Revision 1.35  2003/04/14 03:40:21  steve
- *  Make some effort to preserve bits while
- *  operating on constant values.
- *
- * Revision 1.34  2003/03/26 06:16:18  steve
- *  Evaluate > and < in constant expressions.
- *
- * Revision 1.33  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.32  2002/10/19 22:59:49  steve
- *  Redo the parameter vector support to allow
- *  parameter names in range expressions.
- *
- * Revision 1.31  2002/10/13 05:01:07  steve
- *  More verbose eval_const assert message.
- *
- * Revision 1.30  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.29  2002/06/07 02:57:54  steve
- *  Simply give up on constants with indices.
- *
- * Revision 1.28  2002/06/06 18:57:04  steve
- *  Better error for identifier index eval.
- *
- * Revision 1.27  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.26  2001/12/29 22:10:10  steve
- *  constant eval of arithmetic with x and z.
- *
- * Revision 1.25  2001/12/29 00:43:55  steve
- *  Evaluate constant right shifts.
- *
- * Revision 1.24  2001/12/03 04:47:15  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.23  2001/11/07 04:01:59  steve
- *  eval_const uses scope instead of a string path.
- *
- * Revision 1.22  2001/11/06 06:11:55  steve
- *  Support more real arithmetic in delay constants.
- *
- * Revision 1.21  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.20  2001/02/09 02:49:59  steve
- *  Be more clear about scope of failure.
- *
- * Revision 1.19  2001/01/27 05:41:48  steve
- *  Fix sign extension of evaluated constants. (PR#91)
- *
- * Revision 1.18  2001/01/14 23:04:56  steve
- *  Generalize the evaluation of floating point delays, and
- *  get it working with delay assignment statements.
- *
- *  Allow parameters to be referenced by hierarchical name.
- *
- * Revision 1.17  2001/01/04 04:47:51  steve
- *  Add support for << is signal indices.
- *
- * Revision 1.16  2000/12/10 22:01:36  steve
- *  Support decimal constants in behavioral delays.
- *
- * Revision 1.15  2000/09/07 22:38:13  steve
- *  Support unary + and - in constants.
- */
-

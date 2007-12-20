@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.239 2007/06/14 03:50:00 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -85,6 +82,12 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
       tmp->push_back(lex_strings.make(id));
       delete id;
       return tmp;
+}
+
+static inline void FILE_NAME(LineInfo*tmp, const struct vlltype&where)
+{
+      tmp->set_lineno(where.first_line);
+      tmp->set_file(filename_strings.make(where.text));
 }
 
 %}
@@ -581,8 +584,7 @@ delay_value_simple
 			$$ = 0;
 		  } else {
 			$$ = new PENumber(tmp);
-			$$->set_file(@1.text);
-			$$->set_lineno(@1.first_line);
+			FILE_NAME($$, @1);
 		  }
 		}
 	| REALTIME
@@ -592,14 +594,12 @@ delay_value_simple
 			$$ = 0;
 		  } else {
 			$$ = new PEFNumber(tmp);
-			$$->set_file(@1.text);
-			$$->set_lineno(@1.first_line);
+			FILE_NAME($$, @1);
 		  }
 		}
 	| IDENTIFIER
                 { PEIdent*tmp = new PEIdent(lex_strings.make($1));
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		  delete $1;
 		}
@@ -667,15 +667,13 @@ event_control
 		{ PEIdent*tmpi = new PEIdent(*$2);
 		  PEEvent*tmpe = new PEEvent(PEEvent::ANYEDGE, tmpi);
 		  PEventStatement*tmps = new PEventStatement(tmpe);
-		  tmps->set_file(@1.text);
-		  tmps->set_lineno(@1.first_line);
+		  FILE_NAME(tmps, @1);
 		  $$ = tmps;
 		  delete $2;
 		}
 	| '@' '(' event_expression_list ')'
 		{ PEventStatement*tmp = new PEventStatement(*$3);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $3;
 		  $$ = tmp;
 		}
@@ -705,24 +703,21 @@ event_expression_list
 event_expression
 	: K_posedge expression
 		{ PEEvent*tmp = new PEEvent(PEEvent::POSEDGE, $2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
 		  (*tl)[0] = tmp;
 		  $$ = tl;
 		}
 	| K_negedge expression
 		{ PEEvent*tmp = new PEEvent(PEEvent::NEGEDGE, $2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
 		  (*tl)[0] = tmp;
 		  $$ = tl;
 		}
 	| expression
 		{ PEEvent*tmp = new PEEvent(PEEvent::ANYEDGE, $1);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
 		  (*tl)[0] = tmp;
 		  $$ = tl;
@@ -736,56 +731,47 @@ expression
 		{ $$ = $2; }
 	| '-' expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('-', $2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| '~' expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('~', $2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| '&' expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('&', $2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| '!' expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('!', $2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| '|' expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('|', $2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| '^' expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('^', $2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| K_NAND expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('A', $2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| K_NOR expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('N', $2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| K_NXOR expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('X', $2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| '!' error %prec UNARY_PREC
@@ -800,158 +786,132 @@ expression
 		}
 	| expression '^' expression
 		{ PEBinary*tmp = new PEBinary('^', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_POW expression
 		{ PEBinary*tmp = new PEBinary('p', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression '*' expression
 		{ PEBinary*tmp = new PEBinary('*', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression '/' expression
 		{ PEBinary*tmp = new PEBinary('/', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression '%' expression
 		{ PEBinary*tmp = new PEBinary('%', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression '+' expression
 		{ PEBinary*tmp = new PEBinary('+', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression '-' expression
 		{ PEBinary*tmp = new PEBinary('-', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression '&' expression
 		{ PEBinary*tmp = new PEBinary('&', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression '|' expression
 		{ PEBinary*tmp = new PEBinary('|', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_NAND expression
 		{ PEBinary*tmp = new PEBinary('A', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_NOR expression
 		{ PEBinary*tmp = new PEBinary('O', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_NXOR expression
 		{ PEBinary*tmp = new PEBinary('X', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression '<' expression
 		{ PEBinary*tmp = new PEBComp('<', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression '>' expression
 		{ PEBinary*tmp = new PEBComp('>', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_LS expression
 		{ PEBinary*tmp = new PEBShift('l', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_RS expression
 		{ PEBinary*tmp = new PEBShift('r', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_RSS expression
 		{ PEBinary*tmp = new PEBShift('R', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_EQ expression
 		{ PEBinary*tmp = new PEBComp('e', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_CEQ expression
 		{ PEBinary*tmp = new PEBComp('E', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_LE expression
 		{ PEBinary*tmp = new PEBComp('L', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_GE expression
 		{ PEBinary*tmp = new PEBComp('G', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_NE expression
 		{ PEBinary*tmp = new PEBComp('n', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_CNE expression
 		{ PEBinary*tmp = new PEBComp('N', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_LOR expression
 		{ PEBinary*tmp = new PEBinary('o', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_LAND expression
 		{ PEBinary*tmp = new PEBinary('a', $1, $3);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression '?' expression ':' expression
 		{ PETernary*tmp = new PETernary($1, $3, $5);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	;
@@ -978,7 +938,7 @@ expr_mintypmax
 			break;
 		  }
 		  if (min_typ_max_warn > 0) {
-		        cerr << $$->get_line() << ": warning: choosing ";
+		        cerr << $$->get_fileline() << ": warning: choosing ";
 		        switch (min_typ_max_flag) {
 		            case MIN:
 		              cerr << "min";
@@ -1046,27 +1006,23 @@ expr_primary
 	: number
 		{ assert($1);
 		  PENumber*tmp = new PENumber($1);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| REALTIME
 		{ PEFNumber*tmp = new PEFNumber($1);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| STRING
 		{ PEString*tmp = new PEString($1);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER
                 { perm_string tn = lex_strings.make($1);
 		  PECallFunction*tmp = new PECallFunction(tn);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		  delete $1;
 		}
@@ -1076,8 +1032,7 @@ expr_primary
 
     | heirarchy_identifier
         { PEIdent*tmp = new PEIdent(*$1);
-	  tmp->set_file(@1.text);
-	  tmp->set_lineno(@1.first_line);
+	  FILE_NAME(tmp, @1);
 	  $$ = tmp;
 	  delete $1;
 	}
@@ -1088,16 +1043,14 @@ expr_primary
 
 	| heirarchy_identifier '(' expression_list_proper ')'
                 { PECallFunction*tmp = new PECallFunction(*$1, *$3);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER '(' expression_list_proper ')'
                 { perm_string tn = lex_strings.make($1);
 		  PECallFunction*tmp = new PECallFunction(tn, *$3);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 
@@ -1110,24 +1063,21 @@ expr_primary
 
 	| '{' expression_list_proper '}'
 		{ PEConcat*tmp = new PEConcat(*$2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $2;
 		  $$ = tmp;
 		}
 	| '{' expression '{' expression_list_proper '}' '}'
 		{ PExpr*rep = $2;
 		  PEConcat*tmp = new PEConcat(*$4, rep);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $4;
 		  $$ = tmp;
 		}
 	| '{' expression '{' expression_list_proper '}' error '}'
 		{ PExpr*rep = $2;
 		  PEConcat*tmp = new PEConcat(*$4, rep);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $4;
 		  $$ = tmp;
 		  yyerror(@5, "error: Syntax error between internal '}' "
@@ -1598,15 +1548,13 @@ signed_opt : K_signed { $$ = true; } | {$$ = false; } ;
 lpvalue
     : heirarchy_identifier
         { PEIdent*tmp = new PEIdent(*$1);
-	  tmp->set_file(@1.text);
-	  tmp->set_lineno(@1.first_line);
+	  FILE_NAME(tmp, @1);
 	  $$ = tmp;
 	  delete $1;
 	}
     | '{' expression_list_proper '}'
 	{ PEConcat*tmp = new PEConcat(*$2);
-	  tmp->set_file(@1.text);
-	  tmp->set_lineno(@1.first_line);
+	  FILE_NAME(tmp, @1);
 	  delete $2;
 	  $$ = tmp;
 	}
@@ -1867,14 +1815,12 @@ module_item
 	| attribute_list_opt K_always statement
 		{ PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS,
 						     $3, $1);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		}
 	| attribute_list_opt K_initial statement
 		{ PProcess*tmp = pform_make_behavior(PProcess::PR_INITIAL,
 						     $3, $1);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @2);
 		}
 
   /* The task declaration rule matches the task declaration
@@ -1892,8 +1838,7 @@ module_item
 	  K_endtask
 		{ PTask*tmp = new PTask;
 		  perm_string tmp2 = lex_strings.make($2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  tmp->set_ports($5);
 		  tmp->set_statement($6);
 		  pform_set_task(tmp2, tmp);
@@ -1909,8 +1854,7 @@ module_item
 	  K_endtask
 		{ PTask*tmp = new PTask;
 		  perm_string tmp2 = lex_strings.make($2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  tmp->set_ports($5);
 		  tmp->set_statement($9);
 		  pform_set_task(tmp2, tmp);
@@ -1929,8 +1873,7 @@ module_item
           K_endfunction
 		{ perm_string name = lex_strings.make($3);
 		  PFunction *tmp = new PFunction(name);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  tmp->set_ports($6);
 		  tmp->set_statement($7);
 		  tmp->set_return($2);
@@ -2228,8 +2171,7 @@ parameter_value_opt
 	| '#' DEC_NUMBER
 		{ assert($2);
 		  PENumber*tmp = new PENumber($2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 
 		  struct parmvalue_t*lst = new struct parmvalue_t;
 		  lst->by_order = new svector<PExpr*>(1);
@@ -2374,8 +2316,7 @@ port_reference
 	  pname.push_back(ntmp);
 
 	  PEIdent*wtmp = new PEIdent(pname);
-	  wtmp->set_file(@1.text);
-	  wtmp->set_lineno(@1.first_line);
+	  FILE_NAME(wtmp, @1);
 
 	  Module::port_t*ptmp = new Module::port_t;
 	  ptmp->name = perm_string();
@@ -2403,8 +2344,7 @@ port_reference
 	  pname.push_back(ntmp);
 
 	  PEIdent*tmp = new PEIdent(pname);
-	  tmp->set_file(@1.text);
-	  tmp->set_lineno(@1.first_line);
+	  FILE_NAME(tmp, @1);
 
 	  Module::port_t*ptmp = new Module::port_t;
 	  ptmp->name = perm_string();
@@ -2418,8 +2358,7 @@ port_reference
         { yyerror(@1, "error: invalid port bit select");
 	  Module::port_t*ptmp = new Module::port_t;
 	  PEIdent*wtmp = new PEIdent(lex_strings.make($1));
-	  wtmp->set_file(@1.text);
-	  wtmp->set_lineno(@1.first_line);
+	  FILE_NAME(wtmp, @1);
 	  ptmp->name = lex_strings.make($1);
 	  ptmp->expr = svector<PEIdent*>(1);
 	  ptmp->expr[0] = wtmp;
@@ -2857,7 +2796,7 @@ specparam
 			break;
 		  }
 		  if (min_typ_max_warn > 0) {
-		        cerr << tmp->get_line() << ": warning: choosing ";
+		        cerr << tmp->get_fileline() << ": warning: choosing ";
 		        switch (min_typ_max_flag) {
 		            case MIN:
 		              cerr << "min";
@@ -2960,15 +2899,13 @@ statement
 
 	: K_assign lpvalue '=' expression ';'
 		{ PCAssign*tmp = new PCAssign($2, $4);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 
 	| K_deassign lpvalue ';'
 		{ PDeassign*tmp = new PDeassign($2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 
@@ -2978,14 +2915,12 @@ statement
 
 	| K_force lpvalue '=' expression ';'
 		{ PForce*tmp = new PForce($2, $4);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| K_release lpvalue ';'
 		{ PRelease*tmp = new PRelease($2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 
@@ -2997,8 +2932,7 @@ statement
 
 	| K_begin statement_list K_end
 		{ PBlock*tmp = new PBlock(PBlock::BL_SEQ, *$2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $2;
 		  $$ = tmp;
 		}
@@ -3009,22 +2943,19 @@ statement
 		{ pform_pop_scope();
 		  PBlock*tmp = new PBlock(lex_strings.make($3),
 					  PBlock::BL_SEQ, *$6);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $3;
 		  delete $6;
 		  $$ = tmp;
 		}
 	| K_begin K_end
 		{ PBlock*tmp = new PBlock(PBlock::BL_SEQ);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| K_begin ':' IDENTIFIER K_end
 		{ PBlock*tmp = new PBlock(PBlock::BL_SEQ);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| K_begin error K_end
@@ -3042,75 +2973,64 @@ statement
 		{ pform_pop_scope();
 		  PBlock*tmp = new PBlock(lex_strings.make($3),
 					  PBlock::BL_PAR, *$6);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $3;
 		  delete $6;
 		  $$ = tmp;
 		}
 	| K_fork K_join
 		{ PBlock*tmp = new PBlock(PBlock::BL_PAR);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| K_fork ':' IDENTIFIER K_join
 		{ PBlock*tmp = new PBlock(PBlock::BL_PAR);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $3;
 		  $$ = tmp;
 		}
 
 	| K_disable heirarchy_identifier ';'
 		{ PDisable*tmp = new PDisable(*$2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $2;
 		  $$ = tmp;
 		}
 	| K_TRIGGER heirarchy_identifier ';'
 		{ PTrigger*tmp = new PTrigger(*$2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $2;
 		  $$ = tmp;
 		}
 	| K_forever statement
 		{ PForever*tmp = new PForever($2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| K_fork statement_list K_join
 		{ PBlock*tmp = new PBlock(PBlock::BL_PAR, *$2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $2;
 		  $$ = tmp;
 		}
 	| K_repeat '(' expression ')' statement
 		{ PRepeat*tmp = new PRepeat($3, $5);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| K_case '(' expression ')' case_items K_endcase
 		{ PCase*tmp = new PCase(NetCase::EQ, $3, $5);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| K_casex '(' expression ')' case_items K_endcase
 		{ PCase*tmp = new PCase(NetCase::EQX, $3, $5);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| K_casez '(' expression ')' case_items K_endcase
 		{ PCase*tmp = new PCase(NetCase::EQZ, $3, $5);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| K_case '(' expression ')' error K_endcase
@@ -3121,14 +3041,12 @@ statement
 		{ yyerrok; }
 	| K_if '(' expression ')' statement_or_null %prec less_than_K_else
 		{ PCondit*tmp = new PCondit($3, $5, 0);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| K_if '(' expression ')' statement_or_null K_else statement_or_null
 		{ PCondit*tmp = new PCondit($3, $5, $7);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| K_if '(' error ')' statement_or_null %prec less_than_K_else
@@ -3142,8 +3060,7 @@ statement
 	| K_for '(' lpvalue '=' expression ';' expression ';'
 	  lpvalue '=' expression ')' statement
 		{ PForStatement*tmp = new PForStatement($3, $5, $7, $9, $11, $13);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| K_for '(' lpvalue '=' expression ';' expression ';'
@@ -3162,6 +3079,7 @@ statement
 		}
 	| K_while '(' expression ')' statement
 		{ PWhile*tmp = new PWhile($3, $5);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| K_while '(' error ')' statement
@@ -3172,8 +3090,7 @@ statement
 		{ PExpr*del = (*$1)[0];
 		  assert($1->count() == 1);
 		  PDelayStatement*tmp = new PDelayStatement(del, $2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| event_control statement_or_null
@@ -3188,22 +3105,19 @@ statement
 		}
 	| '@' '*' statement_or_null
 		{ PEventStatement*tmp = new PEventStatement;
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  tmp->set_statement($3);
 		  $$ = tmp;
 		}
 	| '@' '(' '*' ')' statement_or_null
 		{ PEventStatement*tmp = new PEventStatement;
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  tmp->set_statement($5);
 		  $$ = tmp;
 		}
 	| lpvalue '=' expression ';'
 		{ PAssign*tmp = new PAssign($1,$3);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| error '=' expression ';'
@@ -3213,8 +3127,7 @@ statement
 		}
 	| lpvalue K_LE expression ';'
 		{ PAssignNB*tmp = new PAssignNB($1,$3);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| error K_LE expression ';'
@@ -3226,27 +3139,24 @@ statement
 		{ assert($3->count() == 1);
 		  PExpr*del = (*$3)[0];
 		  PAssign*tmp = new PAssign($1,del,$4);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| lpvalue K_LE delay1 expression ';'
 		{ assert($3->count() == 1);
 		  PExpr*del = (*$3)[0];
 		  PAssignNB*tmp = new PAssignNB($1,del,$4);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| lpvalue '=' event_control expression ';'
 		{ PAssign*tmp = new PAssign($1,$3,$4);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| lpvalue '=' K_repeat '(' expression ')' event_control expression ';'
 		{ PAssign*tmp = new PAssign($1,$7,$8);
-		  tmp->set_file(@1.text);
+		  FILE_NAME(tmp,@1);
 		  tmp->set_lineno(@1.first_line);
 		  yyerror(@3, "sorry: repeat event control not supported.");
 		  delete $5;
@@ -3255,31 +3165,27 @@ statement
 	| lpvalue K_LE event_control expression ';'
 		{ yyerror(@1, "sorry: Event controls not supported here.");
 		  PAssignNB*tmp = new PAssignNB($1,$4);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| lpvalue K_LE K_repeat '(' expression ')' event_control expression ';'
 		{ yyerror(@1, "sorry: Event controls not supported here.");
 		  delete $5;
 		  PAssignNB*tmp = new PAssignNB($1,$8);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| K_wait '(' expression ')' statement_or_null
 		{ PEventStatement*tmp;
 		  PEEvent*etmp = new PEEvent(PEEvent::POSITIVE, $3);
 		  tmp = new PEventStatement(etmp);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp,@1);
 		  tmp->set_statement($5);
 		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER '(' expression_list_with_nuls ')' ';'
                 { PCallTask*tmp = new PCallTask(lex_strings.make($1), *$3);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp,@1);
 		  delete $1;
 		  delete $3;
 		  $$ = tmp;
@@ -3287,15 +3193,13 @@ statement
 	| SYSTEM_IDENTIFIER ';'
 		{ svector<PExpr*>pt (0);
 		  PCallTask*tmp = new PCallTask(lex_strings.make($1), pt);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp,@1);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| heirarchy_identifier '(' expression_list_proper ')' ';'
 		{ PCallTask*tmp = new PCallTask(*$1, *$3);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $1;
 		  delete $3;
 		  $$ = tmp;
@@ -3308,16 +3212,14 @@ statement
 	| heirarchy_identifier '(' ')' ';'
 		{ svector<PExpr*>pt (0);
 		  PCallTask*tmp = new PCallTask(*$1, pt);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| heirarchy_identifier ';'
 		{ svector<PExpr*>pt (0);
 		  PCallTask*tmp = new PCallTask(*$1, pt);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+		  FILE_NAME(tmp, @1);
 		  delete $1;
 		  $$ = tmp;
 		}
@@ -3670,8 +3572,7 @@ udp_initial
 		{ PExpr*etmp = new PENumber($4);
 		  PEIdent*itmp = new PEIdent(lex_strings.make($2));
 		  PAssign*atmp = new PAssign(itmp, etmp);
-		  atmp->set_file(@2.text);
-		  atmp->set_lineno(@2.first_line);
+		  FILE_NAME(atmp, @2);
 		  delete $2;
 		  $$ = atmp;
 		}

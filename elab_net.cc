@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.207 2007/06/12 04:05:45 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -46,7 +43,7 @@ NetNet* PExpr::elaborate_net(Design*des, NetScope*scope, unsigned,
 			     Link::strength_t,
 			     Link::strength_t) const
 {
-      cerr << get_line() << ": error: Unable to elaborate `"
+      cerr << get_fileline() << ": error: Unable to elaborate `"
 	   << *this << "' as gates." << endl;
       return 0;
 }
@@ -102,13 +99,13 @@ NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
       NetNet*lsig = left_->elaborate_net(des, scope, width, 0, 0, 0),
 	    *rsig = right_->elaborate_net(des, scope, width, 0, 0, 0);
       if (lsig == 0) {
-	    cerr << get_line() << ": error: Cannot elaborate ";
+	    cerr << get_fileline() << ": error: Cannot elaborate ";
 	    left_->dump(cerr);
 	    cerr << endl;
 	    return 0;
       }
       if (rsig == 0) {
-	    cerr << get_line() << ": error: Cannot elaborate ";
+	    cerr << get_fileline() << ": error: Cannot elaborate ";
 	    right_->dump(cerr);
 	    cerr << endl;
 	    return 0;
@@ -144,7 +141,7 @@ NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
 	    assert(0);
 	    break;
 	  default:
-	    cerr << get_line() << ": internal error: unsupported"
+	    cerr << get_fileline() << ": internal error: unsupported"
 		  " combinational operator (" << op_ << ")." << endl;
 	    des->errors += 1;
 	    osig = 0;
@@ -169,13 +166,13 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
       NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0),
 	    *rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
       if (lsig == 0) {
-	    cerr << get_line() << ": error: Cannot elaborate ";
+	    cerr << get_fileline() << ": error: Cannot elaborate ";
 	    left_->dump(cerr);
 	    cerr << endl;
 	    return 0;
       }
       if (rsig == 0) {
-	    cerr << get_line() << ": error: Cannot elaborate ";
+	    cerr << get_fileline() << ": error: Cannot elaborate ";
 	    right_->dump(cerr);
 	    cerr << endl;
 	    return 0;
@@ -228,9 +225,9 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 
 	// Check that the argument types match.
       if (lsig->data_type() != rsig->data_type()) {
-	    cerr << get_line() << ": error: Arguments of add/sub "
+	    cerr << get_fileline() << ": error: Arguments of add/sub "
 		 << "have different data types." << endl;
-	    cerr << get_line() << ":      : Left argument is "
+	    cerr << get_fileline() << ":      : Left argument is "
 		 << lsig->data_type() << ", right argument is "
 		 << rsig->data_type() << "." << endl;
 	    des->errors += 1;
@@ -243,7 +240,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
       osig->set_signed(expr_signed);
       osig->local_flag(true);
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: Elaborate NetAddSub "
+	    cerr << get_fileline() << ": debug: Elaborate NetAddSub "
 		 << "width=" << width << " lwidth=" << lwidth
 		 << endl;
       }
@@ -284,13 +281,13 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
       NetNet*lsig = left_->elaborate_net(des, scope, width, 0, 0, 0),
 	    *rsig = right_->elaborate_net(des, scope, width, 0, 0, 0);
       if (lsig == 0) {
-	    cerr << get_line() << ": error: Cannot elaborate ";
+	    cerr << get_fileline() << ": error: Cannot elaborate ";
 	    left_->dump(cerr);
 	    cerr << endl;
 	    return 0;
       }
       if (rsig == 0) {
-	    cerr << get_line() << ": error: Cannot elaborate ";
+	    cerr << get_fileline() << ": error: Cannot elaborate ";
 	    right_->dump(cerr);
 	    cerr << endl;
 	    return 0;
@@ -302,7 +299,7 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 	    rsig = pad_to_width(des, rsig, lsig->vector_width());
 
       if (lsig->data_type() != rsig->data_type()) {
-	    cerr << get_line() << ": error: Types of "
+	    cerr << get_fileline() << ": error: Types of "
 		 << "operands of " << op_ << " do not match: "
 		 << lsig->data_type() << " vs. " << rsig->data_type()
 		 << endl;
@@ -311,7 +308,7 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
       }
 
       if (lsig->vector_width() != rsig->vector_width()) {
-	    cerr << get_line() << ": internal error: lsig width ("
+	    cerr << get_fileline() << ": internal error: lsig width ("
 		 << lsig->vector_width() << ") != rsig pin width ("
 		 << rsig->vector_width() << ")." << endl;
 	    des->errors += 1;
@@ -396,7 +393,7 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 			delete ogate;
 
 			if (debug_elaborate)
-			      cerr << lsig->get_line() << ": debug: "
+			      cerr << lsig->get_fileline() << ": debug: "
 				   << "Equality replaced with "
 				   << oval << " due to high pad mismatch"
 				   << endl;
@@ -427,7 +424,7 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 		  type = op_code == 'e'? NetUReduce::NOR : NetUReduce::OR;
 
 		  if (debug_elaborate) 
-			cerr << lsig->get_line() << ": debug: "
+			cerr << lsig->get_fileline() << ": debug: "
 			     << "Replace net==" << val << " equality with "
 			     << zeros << "-input reduction [N]OR gate." << endl;
 
@@ -435,7 +432,7 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 		  type = op_code == 'e'? NetUReduce::AND : NetUReduce::NAND;
 
 		  if (debug_elaborate) 
-			cerr << lsig->get_line() << ": debug: "
+			cerr << lsig->get_fileline() << ": debug: "
 			     << "Replace net==" << val << " equality with "
 			     << ones << "-input reduction AND gate." << endl;
 	    }
@@ -457,7 +454,7 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
       }
 
       if (debug_elaborate)
-	    cerr << lsig->get_line() << ": debug: "
+	    cerr << lsig->get_fileline() << ": debug: "
 		 << "Give up trying to replace net==" << val
 		 << " equality with "
 		 << ones << "-input AND and "
@@ -485,7 +482,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	   into synthesized nets. */
       NetExpr*lexp = elab_and_eval(des, scope, left_, lwidth);
       if (lexp == 0) {
-	    cerr << get_line() << ": error: Cannot elaborate ";
+	    cerr << get_fileline() << ": error: Cannot elaborate ";
 	    left_->dump(cerr);
 	    cerr << endl;
 	    return 0;
@@ -493,7 +490,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 
       NetExpr*rexp = elab_and_eval(des, scope, right_, lwidth);
       if (rexp == 0) {
-	    cerr << get_line() << ": error: Cannot elaborate ";
+	    cerr << get_fileline() << ": error: Cannot elaborate ";
 	    right_->dump(cerr);
 	    cerr << endl;
 	    return 0;
@@ -521,7 +518,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 
 	    lsig = lexp->synthesize(des);
 	    if (lsig == 0) {
-		  cerr << get_line() << ": internal error: "
+		  cerr << get_fileline() << ": internal error: "
 			"Cannot elaborate net for " << *lexp << endl;
 		  return 0;
 	    }
@@ -645,7 +642,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    }
 
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: Elaborate net == gate."
+		  cerr << get_fileline() << ": debug: Elaborate net == gate."
 		       << endl;
 	    }
 
@@ -734,9 +731,9 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 
 	/* The arguments of a divide must have the same type. */
       if (lsig->data_type() != rsig->data_type()) {
-	    cerr << get_line() << ": error: Arguments of divide "
+	    cerr << get_fileline() << ": error: Arguments of divide "
 		 << "have different data types." << endl;
-	    cerr << get_line() << ":      : Left argument is "
+	    cerr << get_fileline() << ":      : Left argument is "
 		 << lsig->data_type() << ", right argument is "
 		 << rsig->data_type() << "." << endl;
 	    des->errors += 1;
@@ -792,9 +789,9 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 
 	/* The arguments of a modulus must have the same type. */
       if (lsig->data_type() != rsig->data_type()) {
-	    cerr << get_line() << ": error: Arguments of modulus "
+	    cerr << get_fileline() << ": error: Arguments of modulus "
 		 << "have different data types." << endl;
-	    cerr << get_line() << ":      : Left argument is "
+	    cerr << get_fileline() << ":      : Left argument is "
 		 << lsig->data_type() << ", right argument is "
 		 << rsig->data_type() << "." << endl;
 	    des->errors += 1;
@@ -841,13 +838,13 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
       NetNet*lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0);
       NetNet*rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
       if (lsig == 0) {
-	    cerr << get_line() << ": error: Cannot elaborate ";
+	    cerr << get_fileline() << ": error: Cannot elaborate ";
 	    left_->dump(cerr);
 	    cerr << endl;
 	    return 0;
       }
       if (rsig == 0) {
-	    cerr << get_line() << ": error: Cannot elaborate ";
+	    cerr << get_fileline() << ": error: Cannot elaborate ";
 	    right_->dump(cerr);
 	    cerr << endl;
 	    return 0;
@@ -972,9 +969,9 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 
 	/* The arguments of a divide must have the same type. */
       if (lsig->data_type() != rsig->data_type()) {
-	    cerr << get_line() << ": error: Arguments of multiply "
+	    cerr << get_fileline() << ": error: Arguments of multiply "
 		 << "have different data types." << endl;
-	    cerr << get_line() << ":      : Left argument is "
+	    cerr << get_fileline() << ":      : Left argument is "
 		 << lsig->data_type() << ", right argument is "
 		 << rsig->data_type() << "." << endl;
 	    des->errors += 1;
@@ -1148,7 +1145,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	    des->add_node(part);
 
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: Elaborate shift "
+		  cerr << get_fileline() << ": debug: Elaborate shift "
 		       << "(" << op_ << ") as concatenation of "
 		       << pad_width << " zeros with " << part_width
 		       << " bits of expression." << endl;
@@ -1204,7 +1201,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
       connect(rsig->pin(0), gate->pin_Distance());
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: "
+	    cerr << get_fileline() << ": debug: "
 		 << "Elaborate LPM_SHIFT: width="<<gate->width()
 		 << ", swidth="<< gate->width_dist() << endl;
       }
@@ -1239,7 +1236,7 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 	/* Look up the function definition. */
       NetFuncDef*def = des->find_function(scope, path_);
       if (def == 0) {
-	    cerr << get_line() << ": error: No function " << path_ <<
+	    cerr << get_fileline() << ": error: No function " << path_ <<
 		  " in this context (" << scope_path(scope) << ")." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -1269,7 +1266,7 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 						    Link::STRONG,
 						    Link::STRONG);
 	    if (tmp == 0) {
-		  cerr << get_line() << ": error: Unable to elaborate "
+		  cerr << get_fileline() << ": error: Unable to elaborate "
 		       << "port " << idx << " of call to " << path_ <<
 			"." << endl;
 		  errors += 1;
@@ -1328,7 +1325,7 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
 	   $signed did not exist. */
       if (strcmp(name, "$signed") == 0) {
 	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
-		  cerr << get_line() << ": error: The $signed() function "
+		  cerr << get_fileline() << ": error: The $signed() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -1344,7 +1341,7 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
       /* handle $unsigned like $signed */
       if (strcmp(name, "$unsigned") == 0) {
 	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
-		  cerr << get_line() << ": error: The $unsigned() function "
+		  cerr << get_fileline() << ": error: The $unsigned() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -1360,7 +1357,7 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
       const struct sfunc_return_type*def = lookup_sys_func(name);
 
       if (def == 0) {
-	    cerr << get_line() << ": error: System function "
+	    cerr << get_fileline() << ": error: System function "
 		 << peek_tail_name(path_) << " not defined." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -1384,7 +1381,7 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
 						    0, 0, 0,
 						    Link::STRONG, Link::STRONG);
 	    if (tmp == 0) {
-		  cerr << get_line() << ": error: Unable to elaborate "
+		  cerr << get_fileline() << ": error: Unable to elaborate "
 		       << "port " << idx << " of call to " << path_ <<
 			"." << endl;
 		  continue;
@@ -1422,7 +1419,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	    NetEConst*erep = dynamic_cast<NetEConst*>(etmp);
 
 	    if (erep == 0) {
-		  cerr << get_line() << ": error: Unable to "
+		  cerr << get_fileline() << ": error: Unable to "
 		       << "evaluate constant repeat expression." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -1432,7 +1429,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	    delete etmp;
 
 	    if (repeat == 0) {
-		  cerr << get_line() << ": error: Concatenation epeat "
+		  cerr << get_fileline() << ": error: Concatenation epeat "
 			"may not be 0."
 		       << endl;
 		  des->errors += 1;
@@ -1441,7 +1438,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
       }
 
       if (debug_elaborate) {
-	    cerr << get_line() <<": debug: PEConcat concat repeat="
+	    cerr << get_fileline() <<": debug: PEConcat concat repeat="
 		 << repeat << "." << endl;
       }
 
@@ -1455,7 +1452,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
       for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
 
 	    if (parms_[idx] == 0) {
-		  cerr << get_line() << ": error: Empty expressions "
+		  cerr << get_fileline() << ": error: Empty expressions "
 		       << "not allowed in concatenations." << endl;
 		  errors += 1;
 		  continue;
@@ -1468,7 +1465,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 
 	    if (PENumber*tmp = dynamic_cast<PENumber*>(parms_[idx])) {
 		  if (tmp->value().has_len() == false) {
-			cerr << get_line() << ": error: Number "
+			cerr << get_fileline() << ": error: Number "
 			     << tmp->value() << " with indefinite size"
 			     << " in concatenation." << endl;
 			errors += 1;
@@ -1496,7 +1493,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
       }
 
       if (debug_elaborate) {
-	    cerr << get_line() <<": debug: PEConcat concat collected "
+	    cerr << get_fileline() <<": debug: PEConcat concat collected "
 		 << "width=" << vector_width << ", repeat=" << repeat
 		 << " of " << nets.count() << " expressions." << endl;
       }
@@ -1583,7 +1580,7 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
       }
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: Create NetPartSelect "
+	    cerr << get_fileline() << ": debug: Create NetPartSelect "
 		 << "using signal " << sel->name() << " as selector"
 		 << endl;
       }
@@ -1655,7 +1652,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	   is hierarchical. We can't just create a name in another
 	   scope, it's just not allowed. */
       if (sig == 0 && path_.size() != 1) {
-	    cerr << get_line() << ": error: The hierarchical name "
+	    cerr << get_fileline() << ": error: The hierarchical name "
 		 << path_ << " is undefined in "
 		 << scope_path(scope) << "." << endl;
 
@@ -1665,7 +1662,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	    list<hname_t> stmp_path = eval_scope_path(des, scope, tmp_path);
 	    NetScope*tmp_scope = des->find_scope(scope, stmp_path);
 	    if (tmp_scope == 0) {
-		  cerr << get_line() << ":      : I can't even find "
+		  cerr << get_fileline() << ":      : I can't even find "
 		       << "the scope " << tmp_path << "." << endl;
 	    }
 
@@ -1681,13 +1678,13 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	    sig->data_type(IVL_VT_LOGIC);
 
 	    if (error_implicit || (nettype == NetNet::NONE)) {
-		  cerr << get_line() << ": error: "
+		  cerr << get_fileline() << ": error: "
 		       << scope_path(scope) << "." << name_tail.name
 		       << " not defined in this scope." << endl;
 		  des->errors += 1;
 
 	    } else if (warn_implicit) {
-		  cerr << get_line() << ": warning: implicit "
+		  cerr << get_fileline() << ": warning: implicit "
 			"definition of wire " << scope_path(scope)
 		       << "." << name_tail.name << "." << endl;
 	    }
@@ -1698,7 +1695,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	/* Handle the case that this is an array elsewhere. */
       if (sig->array_dimensions() > 0) {
 	    if (name_tail.index.size() == 0) {
-		  cerr << get_line() << ": error: Array " << sig->name()
+		  cerr << get_fileline() << ": error: Array " << sig->name()
 		       << " cannot be used here without an index." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -1734,7 +1731,7 @@ NetNet* PEIdent::process_select_(Design*des, NetScope*scope,
 	    return sig;
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: Elaborate part select"
+	    cerr << get_fileline() << ": debug: Elaborate part select"
 		 << " of word from " << sig->name() << "[base="<<lidx
 		 << " wid=" << part_count << "]" << endl;
       }
@@ -1799,7 +1796,7 @@ NetNet* PEIdent::elaborate_net_net_(Design*des, NetScope*scope,
 
       if (part_count != sig->vector_width()) {
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: Elaborate part select "
+		  cerr << get_fileline() << ": debug: Elaborate part select "
 		       << sig->name() << "[base="<<lidx
 		       << " wid=" << part_count << "]" << endl;
 	    }
@@ -1919,7 +1916,7 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
       ivl_assert(*this, index_head.lsb == 0);
 
       if (debug_elaborate)
-	    cerr << get_line() << ": debug: elaborate array "
+	    cerr << get_fileline() << ": debug: elaborate array "
 		 << name_tail.name << " with index " << index_head << endl;
 
       NetExpr*index_ex = elab_and_eval(des, scope, index_head.msb, -1);
@@ -1951,7 +1948,7 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
 	    index = sig->array_index_to_address(index);
 
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: Elaborate word "
+		  cerr << get_fileline() << ": debug: Elaborate word "
 		       << index << " of " << sig->name() << endl;
 	    }
 
@@ -2008,7 +2005,7 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
 		  break;
 
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: Elaborate part select"
+		  cerr << get_fileline() << ": debug: Elaborate part select"
 		       << " of word from " << sig->name() << "[base="<<lidx
 		       << " wid=" << part_count << "]" << endl;
 	    }
@@ -2052,7 +2049,7 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
       unsigned errors = 0;
 
       if (repeat_) {
-	    cerr << get_line() << ": sorry: I do not know how to"
+	    cerr << get_fileline() << ": sorry: I do not know how to"
 		  " elaborate repeat concatenation nets." << endl;
 	    return 0;
       }
@@ -2061,13 +2058,13 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
       for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
 
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: Elaborate subexpression "
+		  cerr << get_fileline() << ": debug: Elaborate subexpression "
 		       << idx << " of " << nets.count() << " l-values: "
 		       << *parms_[idx] << endl;
 	    }
 
 	    if (parms_[idx] == 0) {
-		  cerr << get_line() << ": error: Empty expressions "
+		  cerr << get_fileline() << ": error: Empty expressions "
 		       << "not allowed in concatenations." << endl;
 		  errors += 1;
 		  continue;
@@ -2110,7 +2107,7 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
       osig->set_line(*this);
 
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: Generating part selects "
+	    cerr << get_fileline() << ": debug: Generating part selects "
 		 << "to connect input l-value to subexpressions."
 		 << endl;
       }
@@ -2161,7 +2158,7 @@ NetNet* PEFNumber::elaborate_net(Design*des, NetScope*scope,
 				 Link::strength_t drive1) const
 {
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: Elaborate real literal node, "
+	    cerr << get_fileline() << ": debug: Elaborate real literal node, "
 		 << "value=" << value() << "." << endl;
       }
 
@@ -2192,13 +2189,13 @@ NetNet* PEIdent::make_implicit_net_(Design*des, NetScope*scope) const
 	    sig->data_type(IVL_VT_LOGIC);
 
 	    if (warn_implicit) {
-		  cerr << get_line() << ": warning: implicit "
+		  cerr << get_fileline() << ": warning: implicit "
 			"definition of wire logic " << scope_path(scope)
 		       << "." << peek_tail_name(path_) << "." << endl;
 	    }
 
       } else {
-	    cerr << get_line() << ": error: Net " << path_
+	    cerr << get_fileline() << ": error: Net " << path_
 		 << " is not defined in this context." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2233,7 +2230,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 
       switch (index_tail.sel) {
 	  default:
-	    cerr << get_line() << ": internal error: "
+	    cerr << get_fileline() << ": internal error: "
 		 << "Unexpected sel_ value = " << index_tail.sel << endl;
 	    ivl_assert(*this, 0);
 	    break;
@@ -2243,7 +2240,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		NetExpr*tmp_ex = elab_and_eval(des, scope, index_tail.msb, -1);
 		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
 		if (!tmp) {
-		      cerr << get_line() << ": error: indexed part select of "
+		      cerr << get_fileline() << ": error: indexed part select of "
 		           << sig->name()
 		           << " must be a constant in this context." << endl;
 		      des->errors += 1;
@@ -2278,36 +2275,15 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 
 		long msb, lsb;
 		bool flag = calculate_parts_(des, scope, msb, lsb);
-#if 0
-		NetExpr*tmp_ex = elab_and_eval(des, scope, index_tail.msb, -1);
-		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
-		assert(tmp);
 
-		long midx_val = tmp->value().as_long();
-		midx = sig->sb_to_idx(midx_val);
-		delete tmp_ex;
-
-		tmp_ex = elab_and_eval(des, scope, index_tail.lsb, -1);
-		tmp = dynamic_cast<NetEConst*>(tmp_ex);
-		if (tmp == 0) {
-		      cerr << get_line() << ": internal error: "
-			   << "lsb expression is not constant?: "
-			   << *tmp_ex << ", " << *index_tail.lsb << endl;
-		}
-		assert(tmp);
-
-		long lidx_val = tmp->value().as_long();
-		lidx = sig->sb_to_idx(lidx_val);
-		delete tmp_ex;
-#endif
 		lidx = sig->sb_to_idx(lsb);
 		midx = sig->sb_to_idx(msb);
 		  /* Detect reversed indices of a part select. */
 		if (lidx > midx) {
-		      cerr << get_line() << ": error: Part select "
+		      cerr << get_fileline() << ": error: Part select "
 			   << sig->name() << "[" << msb << ":"
 			   << lsb << "] indices reversed." << endl;
-		      cerr << get_line() << ":      : Did you mean "
+		      cerr << get_fileline() << ":      : Did you mean "
 			   << sig->name() << "[" << lsb << ":"
 			   << msb << "]?" << endl;
 		      unsigned tmp = midx;
@@ -2318,7 +2294,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 
 		  /* Detect a part select out of range. */
 		if (midx >= sig->vector_width()) {
-		      cerr << get_line() << ": error: Part select "
+		      cerr << get_fileline() << ": error: Part select "
 			   << sig->name() << "[" << msb << ":"
 			   << lsb << "] out of range." << endl;
 		      midx = sig->vector_width() - 1;
@@ -2332,12 +2308,12 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 	    if (name_tail.index.size() > sig->array_dimensions()) {
 		  verinum*mval = index_tail.msb->eval_const(des, scope);
 		  if (mval == 0) {
-			cerr << get_line() << ": error: Index of " << path_ <<
+			cerr << get_fileline() << ": error: Index of " << path_ <<
 			      " needs to be constant in this context." <<
 			      endl;
-			cerr << get_line() << ":      : Index expression is: "
+			cerr << get_fileline() << ":      : Index expression is: "
 			     << *index_tail.msb << endl;
-			cerr << get_line() << ":      : Context scope is: "
+			cerr << get_fileline() << ":      : Context scope is: "
 			     << scope_path(scope) << endl;
 			des->errors += 1;
 			return false;
@@ -2346,7 +2322,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 
 		  midx = sig->sb_to_idx(mval->as_long());
 		  if (midx >= sig->vector_width()) {
-			cerr << get_line() << ": error: Index " << sig->name()
+			cerr << get_fileline() << ": error: Index " << sig->name()
 			     << "[" << mval->as_long() << "] out of range."
 			     << endl;
 			des->errors += 1;
@@ -2355,7 +2331,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		  lidx = midx;
 
 	    } else {
-		  cerr << get_line() << ": internal error: "
+		  cerr << get_fileline() << ": internal error: "
 		       << "Bit select " << path_ << endl;
 		  ivl_assert(*this, 0);
 		  midx = sig->vector_width() - 1;
@@ -2385,7 +2361,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       symbol_search(des, scope, path_, sig, par, eve);
 
       if (eve != 0) {
-	    cerr << get_line() << ": error: named events (" << path_
+	    cerr << get_fileline() << ": error: named events (" << path_
 		 << ") cannot be l-values in continuous "
 		 << "assignments." << endl;
 	    des->errors += 1;
@@ -2401,7 +2377,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 			return 0;
 
 	    } else {
-		  cerr << get_line() << ": error: Net " << path_
+		  cerr << get_fileline() << ": error: Net " << path_
 		       << " is not defined in this context." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -2412,7 +2388,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
 	/* Don't allow registers as assign l-values. */
       if (sig->type() == NetNet::REG) {
-	    cerr << get_line() << ": error: reg " << sig->name()
+	    cerr << get_fileline() << ": error: reg " << sig->name()
 		 << "; cannot be driven by primitives"
 		 << " or continuous assignment." << endl;
 	    des->errors += 1;
@@ -2420,9 +2396,9 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       }
 
       if (sig->port_type() == NetNet::PINPUT) {
-	    cerr << get_line() << ": warning: L-value ``"
+	    cerr << get_fileline() << ": warning: L-value ``"
 		 << sig->name() << "'' is also an input port." << endl;
-	    cerr << sig->get_line() << ": warning: input "
+	    cerr << sig->get_fileline() << ": warning: input "
 		 << sig->name() << "; is coerced to inout." << endl;
 	    sig->port_type(NetNet::PINOUT);
       }
@@ -2437,7 +2413,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       if (sig->array_dimensions() > 0) {
 
 	    if (name_tail.index.empty()) {
-		  cerr << get_line() << ": error: array " << sig->name()
+		  cerr << get_fileline() << ": error: array " << sig->name()
 		       << " must be used with an index." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -2445,7 +2421,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
 	    const index_component_t&index_head = name_tail.index.front();
 	    if (index_head.sel == index_component_t::SEL_PART) {
-		  cerr << get_line() << ": error: cannot perform a part "
+		  cerr << get_fileline() << ": error: cannot perform a part "
 		       << "select on array " << sig->name() << "." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -2455,7 +2431,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    NetExpr*tmp_ex = elab_and_eval(des, scope, index_head.msb, -1);
 	    NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
 	    if (!tmp) {
-		  cerr << get_line() << ": error: array " << sig->name()
+		  cerr << get_fileline() << ": error: array " << sig->name()
 		       << " index must be a constant in this context." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -2466,7 +2442,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    delete tmp_ex;
 
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: Use [" << widx << "]"
+		  cerr << get_fileline() << ": debug: Use [" << widx << "]"
 		       << " to index l-value array." << endl;
 
 	      /* The array has a part/bit select at the end. */
@@ -2509,7 +2485,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  part_dir = NetPartSelect::PV;
 
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: "
+		  cerr << get_fileline() << ": debug: "
 		       << "Elaborate lnet part select "
 		       << sig->name()
 		       << "[base=" << lidx
@@ -2561,7 +2537,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 {
       NetNet*sig = des->find_signal(scope, path_);
       if (sig == 0) {
-	    cerr << get_line() << ": error: no wire/reg " << path_
+	    cerr << get_fileline() << ": error: no wire/reg " << path_
 		 << " in module " << scope_path(scope) << "." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2580,9 +2556,9 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 		 matching input/output/inout declaration. */
 
 	  case NetNet::NOT_A_PORT:
-	    cerr << get_line() << ": error: signal " << path_ << " in"
+	    cerr << get_fileline() << ": error: signal " << path_ << " in"
 		 << " module " << scope_path(scope) << " is not a port." << endl;
-	    cerr << get_line() << ":      : Are you missing an input/"
+	    cerr << get_fileline() << ":      : Are you missing an input/"
 		 << "output/inout declaration?" << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2592,7 +2568,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 		 function should turn it into an output.... I think. */
 
 	  case NetNet::PIMPLICIT:
-	    cerr << get_line() << ": internal error: signal " << path_
+	    cerr << get_fileline() << ": internal error: signal " << path_
 		 << " in module " << scope_path(scope) << " is left as "
 		 << "port type PIMPLICIT." << endl;
 	    des->errors += 1;
@@ -2613,7 +2589,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
       unsigned swid = midx - lidx + 1;
 
       if (swid < sig->vector_width()) {
-	    cerr << get_line() << ": XXXX: Forgot to implement part select"
+	    cerr << get_fileline() << ": XXXX: Forgot to implement part select"
 		 << " of signal port." << endl;
       }
 
@@ -2683,7 +2659,7 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 	   numbers. */
 
       if (must_be_self_determined_flag) {
-	    cerr << get_line() << ": error: No idea how wide to make "
+	    cerr << get_fileline() << ": error: No idea how wide to make "
 		 << "the unsized constant " << *value_ << "." << endl;
 	    des->errors += 1;
       }
@@ -2806,9 +2782,9 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
       ivl_variable_type_t expr_type = tru_sig->data_type();
 
       if (tru_sig->data_type() != fal_sig->data_type()) {
-	    cerr << get_line() << ": error: True and False clauses of"
+	    cerr << get_fileline() << ": error: True and False clauses of"
 		 << " ternary expression have differnt types." << endl;
-	    cerr << get_line() << ":      : True clause is "
+	    cerr << get_fileline() << ":      : True clause is "
 		 << tru_sig->data_type() << ", false clause is "
 		 << fal_sig->data_type() << "." << endl;
 
@@ -2816,7 +2792,7 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 	    expr_type = IVL_VT_NO_TYPE;
 
       } else if (expr_type == IVL_VT_NO_TYPE) {
-	    cerr << get_line() << ": internal error: True and false "
+	    cerr << get_fileline() << ": internal error: True and false "
 		 << "clauses of ternary both have NO TYPE." << endl;
 	    des->errors += 1;
       }
@@ -2998,7 +2974,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    connect(sig->pin(0), con->pin(0));
 
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: Replace expression "
+		  cerr << get_fileline() << ": debug: Replace expression "
 		       << *this << " with constant " << tmp << "."<<endl;
 	    }
 

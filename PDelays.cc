@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: PDelays.cc,v 1.15 2006/07/08 21:48:46 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -116,7 +113,7 @@ static NetExpr* make_delay_nets(Design*des, NetExpr*expr)
 
       NetNet*sig = expr->synthesize(des);
       if (sig == 0) {
-	    cerr << expr->get_line() << ": error: Expression " << *expr
+	    cerr << expr->get_fileline() << ": error: Expression " << *expr
 		 << " is not suitable for delay expression." << endl;
 	    return 0;
       }

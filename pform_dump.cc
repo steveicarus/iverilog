@@ -483,7 +483,7 @@ void Statement::dump(ostream&out, unsigned ind) const
 	   so just print the C++ typeid and let the user figure
 	   it out. */
       out << setw(ind) << "";
-      out << "/* " << get_line() << ": " << typeid(*this).name()
+      out << "/* " << get_fileline() << ": " << typeid(*this).name()
 	  << " */ ;" << endl;
 }
 
@@ -491,14 +491,14 @@ void PAssign::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";
       out << *lval() << " = " << delay_ << " " << *rval() << ";";
-      out << "  /* " << get_line() << " */" << endl;
+      out << "  /* " << get_fileline() << " */" << endl;
 }
 
 void PAssignNB::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";
       out << *lval() << " <= " << delay_ << " " << *rval() << ";";
-      out << "  /* " << get_line() << " */" << endl;
+      out << "  /* " << get_fileline() << " */" << endl;
 }
 
 void PBlock::dump(ostream&out, unsigned ind) const
@@ -535,7 +535,7 @@ void PCallTask::dump(ostream&out, unsigned ind) const
 	    out << ")";
       }
 
-      out << "; /* " << get_line() << " */" << endl;
+      out << "; /* " << get_fileline() << " */" << endl;
 }
 
 void PCase::dump(ostream&out, unsigned ind) const
@@ -552,7 +552,7 @@ void PCase::dump(ostream&out, unsigned ind) const
 	    out << "casez";
 	    break;
       }
-      out << " (" << *expr_ << ") /* " << get_line() << " */" << endl;
+      out << " (" << *expr_ << ") /* " << get_fileline() << " */" << endl;
 
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
 	    PCase::Item*cur = (*items_)[idx];
@@ -596,19 +596,19 @@ void PCondit::dump(ostream&out, unsigned ind) const
 void PCAssign::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "assign " << *lval_ << " = " << *expr_
-	  << "; /* " << get_line() << " */" << endl;
+	  << "; /* " << get_fileline() << " */" << endl;
 }
 
 void PDeassign::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "deassign " << *lval_ << "; /* "
-	  << get_line() << " */" << endl;
+	  << get_fileline() << " */" << endl;
 }
 
 void PDelayStatement::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "#" << *delay_ << " /* " <<
-	    get_line() << " */";
+	    get_fileline() << " */";
       if (statement_) {
 	    out << endl;
 	    statement_->dump(out, ind+2);
@@ -620,7 +620,7 @@ void PDelayStatement::dump(ostream&out, unsigned ind) const
 void PDisable::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "disable " << scope_ << "; /* "
-	  << get_line() << " */" << endl;
+	  << get_fileline() << " */" << endl;
 }
 
 void PEventStatement::dump(ostream&out, unsigned ind) const
@@ -648,12 +648,12 @@ void PEventStatement::dump(ostream&out, unsigned ind) const
 void PForce::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "force " << *lval_ << " = " << *expr_
-	  << "; /* " << get_line() << " */" << endl;
+	  << "; /* " << get_fileline() << " */" << endl;
 }
 
 void PForever::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "" << "forever /* " << get_line() << " */" << endl;
+      out << setw(ind) << "" << "forever /* " << get_fileline() << " */" << endl;
       statement_->dump(out, ind+3);
 }
 
@@ -715,7 +715,7 @@ void PFunction::dump(ostream&out, unsigned ind) const
 void PRelease::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "release " << *lval_ << "; /* "
-	  << get_line() << " */" << endl;
+	  << get_fileline() << " */" << endl;
 }
 
 void PRepeat::dump(ostream&out, unsigned ind) const
@@ -774,7 +774,7 @@ void PProcess::dump(ostream&out, unsigned ind) const
 	    break;
       }
 
-      out << " /* " << get_line() << " */" << endl;
+      out << " /* " << get_fileline() << " */" << endl;
 
       for (map<perm_string,PExpr*>::const_iterator idx = attributes.begin()
 		 ; idx != attributes.end() ; idx++ ) {
@@ -982,7 +982,7 @@ void Module::dump(ostream&out) const
 		 ; cur != events.end() ;  cur ++ ) {
 	    PEvent*ev = (*cur).second;
 	    out << "    event " << ev->name() << "; // "
-		<< ev->get_line() << endl;
+		<< ev->get_fileline() << endl;
       }
 
 	// Iterate through and display all the wires.

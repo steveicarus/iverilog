@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.52 2007/06/02 03:42:12 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -72,24 +69,6 @@ static bool signal_is_in_port(const svector<Module::port_t*>&ports,
       return false;
 }
 
-#if 0
-static NetNet*find_signal_in_scope(NetScope*scope, const hname_t&path)
-{
-      NetScope*cur = scope;
-      unsigned idx = 0;
-
-      while (path.peek_name(idx+1)) {
-	    cur = cur->child(path.peek_name(idx));
-	    if (cur == 0)
-		  return 0;
-
-	    idx += 1;
-      }
-
-      return cur->find_signal(path.peek_name(idx));
-}
-#endif
-
 bool Module::elaborate_sig(Design*des, NetScope*scope) const
 {
       bool flag = true;
@@ -107,7 +86,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 		  wt = wires_.find(port_path);
 
 		  if (wt == wires_.end()) {
-			cerr << get_line() << ": error: "
+			cerr << get_fileline() << ": error: "
 			     << "Port " << pp->expr[cc]->path() << " ("
 			     << (idx+1) << ") of module " << name_
 			     << " is not declared within module." << endl;
@@ -116,7 +95,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 		  }
 
 		  if ((*wt).second->get_port_type() == NetNet::NOT_A_PORT) {
-			cerr << get_line() << ": error: "
+			cerr << get_fileline() << ": error: "
 			     << "Port " << pp->expr[cc]->path() << " ("
 			     << (idx+1) << ") of module " << name_
 			     << " has no direction declaration."
@@ -144,7 +123,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 
 		  if (! signal_is_in_port(ports, sig)) {
 
-			cerr << cur->get_line() << ": error: Signal "
+			cerr << cur->get_fileline() << ": error: Signal "
 			     << sig->name() << " has a declared direction "
 			     << "but is not a port." << endl;
 			des->errors += 1;
@@ -159,7 +138,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 		&& (sig->port_type() == NetNet::PINPUT)
 		&& (sig->type() == NetNet::REG)) {
 
-		  cerr << cur->get_line() << ": error: "
+		  cerr << cur->get_fileline() << ": error: "
 		       << cur->path() << " in module "
 		       << scope->module_name()
 		       << " declared as input and as a reg type." << endl;
@@ -170,7 +149,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 		&& (sig->port_type() == NetNet::PINOUT)
 		&& (sig->type() == NetNet::REG)) {
 
-		  cerr << cur->get_line() << ": error: "
+		  cerr << cur->get_fileline() << ": error: "
 		       << cur->path() << " in  module "
 		       << scope->module_name()
 		       << " declared as inout and as a reg type." << endl;
@@ -212,7 +191,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 	    hname_t use_name ( (*cur).first );
 	    NetScope*fscope = scope->child(use_name);
 	    if (scope == 0) {
-		  cerr << (*cur).second->get_line() << ": internal error: "
+		  cerr << (*cur).second->get_fileline() << ": internal error: "
 		       << "Child scope for function " << (*cur).first
 		       << " missing in " << scope_path(scope) << "." << endl;
 		  des->errors += 1;
@@ -253,7 +232,7 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 	    assert(my_scope);
 
 	    if (my_scope->parent() != scope) {
-		  cerr << get_line() << ": internal error: "
+		  cerr << get_fileline() << ": internal error: "
 		       << "Instance " << scope_path(my_scope)
 		       << " is in parent " << scope_path(my_scope->parent())
 		       << " instead of " << scope_path(scope)
@@ -283,7 +262,7 @@ bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 		  continue;
 
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: Elaborate nets in "
+		  cerr << get_fileline() << ": debug: Elaborate nets in "
 		       << "scope " << scope_path(*cur)
 		       << " in generate " << id_number << endl;
 	    flag = elaborate_sig_(des, *cur) & flag;
@@ -303,7 +282,7 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
 	    PWire*cur = (*wt).second;
 
 	    if (debug_elaborate)
-		  cerr << get_line() << ": debug: Elaborate PWire "
+		  cerr << get_fileline() << ": debug: Elaborate PWire "
 		       << cur->path() << " in scope " << scope_path(scope) << endl;
 
 	    cur->elaborate_sig(des, scope);
@@ -340,9 +319,9 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	   fails this test, print an error message. Keep going so we
 	   can find more errors. */
       if (ports_ == 0) {
-	    cerr << get_line() << ": error: Function " << fname
+	    cerr << get_fileline() << ": error: Function " << fname
 		 << " has no ports." << endl;
-	    cerr << get_line() << ":      : Functions must have"
+	    cerr << get_fileline() << ":      : Functions must have"
 		 << " at least one input port." << endl;
 	    des->errors += 1;
       }
@@ -367,7 +346,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  if (NetEConst*tmp = dynamic_cast<NetEConst*>(me)) {
 			mnum = tmp->value().as_long();
 		  } else {
-			cerr << me->get_line() << ": error: "
+			cerr << me->get_fileline() << ": error: "
 			      "Unable to evaluate constant expression "
 			     << *me << "." << endl;
 			des->errors += 1;
@@ -376,7 +355,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  if (NetEConst*tmp = dynamic_cast<NetEConst*>(le)) {
 			lnum = tmp->value().as_long();
 		  } else {
-			cerr << le->get_line() << ": error: "
+			cerr << le->get_fileline() << ": error: "
 			      "Unable to evaluate constant expression "
 			     << *le << "." << endl;
 			des->errors += 1;
@@ -422,7 +401,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    break;
 
 	  default:
-	    cerr << get_line() << ": internal error: I don't know how "
+	    cerr << get_fileline() << ": internal error: I don't know how "
 		 << "to deal with return type of function "
 		 << scope->basename() << "." << endl;
       }
@@ -443,7 +422,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  perm_string ppath = peek_head_name(path);
 
 		  if (ppath != scope->basename()) {
-			cerr << get_line() << ": internal error: function "
+			cerr << get_fileline() << ": internal error: function "
 			     << "port " << (*ports_)[idx]->path()
 			     << " has wrong name for function "
 			     << scope_path(scope) << "." << endl;
@@ -452,11 +431,11 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 
 		  NetNet*tmp = scope->find_signal(pname);
 		  if (tmp == 0) {
-			cerr << get_line() << ": internal error: function "
+			cerr << get_fileline() << ": internal error: function "
 			     << scope_path(scope) << " is missing port "
 			     << pname << "." << endl;
 			scope->dump(cerr);
-			cerr << get_line() << ": Continuing..." << endl;
+			cerr << get_fileline() << ": Continuing..." << endl;
 			des->errors += 1;
 		  }
 
@@ -509,7 +488,7 @@ void PTask::elaborate_sig(Design*des, NetScope*scope) const
 	    NetNet*tmp = scope->find_signal(port_name);
 
 	    if (tmp == 0) {
-		  cerr << get_line() << ": internal error: "
+		  cerr << get_fileline() << ": internal error: "
 		       << "Could not find port " << port_name
 		       << " in scope " << scope_path(scope) << endl;
 		  scope->dump(cerr);
@@ -549,7 +528,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      scope = scope->child( hname_t(cur.name) );
 
 	      if (scope == 0) {
-		    cerr << get_line() << ": internal error: "
+		    cerr << get_fileline() << ": internal error: "
 			 << "Bad scope component for name "
 			 << hname_ << endl;
 		    assert(scope);
@@ -575,7 +554,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  NetExpr*texpr = elab_and_eval(des, scope, port_msb_, -1);
 
 		  if (! eval_as_long(pmsb, texpr)) {
-			cerr << port_msb_->get_line() << ": error: "
+			cerr << port_msb_->get_fileline() << ": error: "
 			      "Unable to evaluate MSB constant expression ``"
 			     << *port_msb_ << "''." << endl;
 			des->errors += 1;
@@ -587,7 +566,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  texpr = elab_and_eval(des, scope, port_lsb_, -1);
 
 		  if (! eval_as_long(plsb, texpr)) {
-			cerr << port_lsb_->get_line() << ": error: "
+			cerr << port_lsb_->get_fileline() << ": error: "
 			      "Unable to evaluate LSB constant expression ``"
 			     << *port_lsb_ << "''." << endl;
 			des->errors += 1;
@@ -607,7 +586,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  NetExpr*texpr = elab_and_eval(des, scope, net_msb_, -1);
 
 		  if (! eval_as_long(nmsb, texpr)) {
-			cerr << net_msb_->get_line() << ": error: "
+			cerr << net_msb_->get_fileline() << ": error: "
 			      "Unable to evaluate MSB constant expression ``"
 			     << *net_msb_ << "''." << endl;
 			des->errors += 1;
@@ -619,7 +598,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  texpr = elab_and_eval(des, scope, net_lsb_, -1);
 
 		  if (! eval_as_long(nlsb, texpr)) {
-			cerr << net_lsb_->get_line() << ": error: "
+			cerr << net_lsb_->get_fileline() << ": error: "
 			      "Unable to evaluate LSB constant expression ``"
 			     << *net_lsb_ << "''." << endl;
 			des->errors += 1;
@@ -638,12 +617,12 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  /* Scalar port with a vector net/etc. definition */
 		  if (port_msb_ == 0) {
 			if (!gn_io_range_error_flag) {
-			      cerr << get_line()
+			      cerr << get_fileline()
 			           << ": warning: Scalar port ``" << hname_
 			           << "'' has a vectored net declaration ["
 			           << nmsb << ":" << nlsb << "]." << endl;
 			} else {
-			      cerr << get_line()
+			      cerr << get_fileline()
 			           << ": error: Scalar port ``" << hname_
 			           << "'' has a vectored net declaration ["
 			           << nmsb << ":" << nlsb << "]." << endl;
@@ -654,22 +633,22 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 		  /* Vectored port with a scalar net/etc. definition */
 		  if (net_msb_ == 0) {
-			cerr << port_msb_->get_line()
+			cerr << port_msb_->get_fileline()
 			     << ": error: Vectored port ``"
 			     << hname_ << "'' [" << pmsb << ":" << plsb
 			     << "] has a scalar net declaration at "
-			     << get_line() << "." << endl;
+			     << get_fileline() << "." << endl;
 			des->errors += 1;
 			return 0;
 		  }
 
 		  /* Both vectored, but they have different ranges. */
 		  if (port_msb_ != 0 && net_msb_ != 0) {
-			cerr << port_msb_->get_line()
+			cerr << port_msb_->get_fileline()
 			     << ": error: Vectored port ``"
 			     << hname_ << "'' [" << pmsb << ":" << plsb
 			     << "] has a net declaration [" << nmsb << ":"
-			     << nlsb << "] at " << net_msb_->get_line()
+			     << nlsb << "] at " << net_msb_->get_fileline()
 			     << " that does not match." << endl;
 			des->errors += 1;
 			return 0;
@@ -705,7 +684,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    NetExpr*rexp = elab_and_eval(des, scope, ridx_, -1);
 
 	    if ((lexp == 0) || (rexp == 0)) {
-		  cerr << get_line() << ": internal error: There is "
+		  cerr << get_fileline() << ": internal error: There is "
 		       << "a problem evaluating indices for ``"
 		       << hname_ << "''." << endl;
 		  des->errors += 1;
@@ -716,7 +695,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    NetEConst*rcon = dynamic_cast<NetEConst*> (rexp);
 
 	    if ((lcon == 0) || (rcon == 0)) {
-		  cerr << get_line() << ": internal error: The indices "
+		  cerr << get_fileline() << ": internal error: The indices "
 		       << "are not constant for array ``"
 		       << hname_ << "''." << endl;
 		  des->errors += 1;
@@ -762,7 +741,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    wtype = NetNet::WIRE;
 
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: "
+		  cerr << get_fileline() << ": debug: "
 		       << "Generate a SUPPLY pulldown for the "
 		       << "supply0 net." << endl;
 	    }
@@ -770,7 +749,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       perm_string name = peek_tail_name(hname_);
       if (debug_elaborate) {
-	    cerr << get_line() << ": debug: Create signal "
+	    cerr << get_fileline() << ": debug: Create signal "
 		 << wtype << " ["<<msb<<":"<<lsb<<"] " << name
 		 << " in scope " << scope_path(scope) << endl;
       }
@@ -784,7 +763,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       if (use_data_type == IVL_VT_NO_TYPE) {
 	    use_data_type = IVL_VT_LOGIC;
 	    if (debug_elaborate) {
-		  cerr << get_line() << ": debug: "
+		  cerr << get_fileline() << ": debug: "
 		       << "Signal " << name
 		       << " in scope " << scope_path(scope)
 		       << " defaults to data type " << use_data_type << endl;

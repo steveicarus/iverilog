@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.46 2007/03/22 16:08:17 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -40,7 +37,7 @@ bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			 const svector<NetEvProbe*>&events)
 {
       if (events.count() > 0) {
-	    cerr << get_line() << ": error: Events are unaccounted"
+	    cerr << get_fileline() << ": error: Events are unaccounted"
 		 << " for in process synthesis." << endl;
 	    des->errors += 1;
       }
@@ -49,17 +46,6 @@ bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       return synth_async(des, scope, nex_map, nex_out);
 }
 
-#if 0
-static unsigned find_nexus_in_set(const NetBus&nset, const Nexus*nex)
-{
-      unsigned idx = 0;
-      for (idx = 0 ;  idx < nset.pin_count() ;  idx += 1)
-	    if (nset.pin(idx).nexus() == nex)
-		  return idx;
-
-      return idx;
-}
-#endif
 
 /*
  * Async synthesis of assignments is done by synthesizing the rvalue
@@ -79,7 +65,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 
       NetNet*lsig = lval_->sig();
       if (!lsig) {
-	    cerr << get_line() << ": error: "
+	    cerr << get_fileline() << ": error: "
 		 << "NetAssignBase::synth_async on unsupported lval ";
 	    dump_lval(cerr);
 	    cerr << endl;
@@ -89,24 +75,13 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
       assert(lval_->more == 0);
 
       if (debug_synth2) {
-	    cerr << get_line() << ": debug: l-value signal is "
+	    cerr << get_fileline() << ": debug: l-value signal is "
 		 << lsig->vector_width() << " bits, r-value signal is "
 		 << rsig->vector_width() << " bits." << endl;
       }
 
-#if 0
-	/* The l-value and r-value map must have the same width. */
-      if (lval_->lwidth() != nex_map->vector_width()) {
-	    cerr << get_line() << ": error: Assignment synthesis: "
-		 << "vector width mismatch, "
-	         << lval_->lwidth() << " bits != "
-		 << nex_map->vector_width() << " bits." << endl;
-	    return false;
-      }
-#else
 	/* For now, assume there is exactly one output. */
       assert(nex_out.pin_count() == 1);
-#endif
 
       connect(nex_out.pin(0), rsig->pin(0));
 
@@ -241,7 +216,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 
 	    NetProc*stmt = statement_map[idx];
 	    if (stmt == 0) {
-		  cerr << get_line() << ": error: case " << idx
+		  cerr << get_fileline() << ": error: case " << idx
 		       << " is not accounted for in asynchronous mux." << endl;
 		  des->errors += 1;
 		  continue;
@@ -321,7 +296,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
       return true;
 
 #else
-      cerr << get_line() << ": sorry: "
+      cerr << get_fileline() << ": sorry: "
 	   << "Forgot to implement NetCondit::synth_async" << endl;
       des->errors += 1;
       return false;
@@ -349,7 +324,7 @@ bool NetProcTop::synth_async(Design*des)
       statement_->nex_output(nex_set);
 
       if (debug_synth2) {
-	    cerr << get_line() << ": debug: Process has "
+	    cerr << get_fileline() << ": debug: Process has "
 		 << nex_set.count() << " outputs." << endl;
       }
 
@@ -529,7 +504,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       return flag;
 
 #else
-      cerr << get_line() << ": sorry: "
+      cerr << get_fileline() << ": sorry: "
 	   << "Forgot to implement NetBlock::synth_sync"
 	   << endl;
       des->errors += 1;
@@ -752,7 +727,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       return flag;
 
 #else
-      cerr << get_line() << ": sorry: "
+      cerr << get_fileline() << ": sorry: "
 	   << "Forgot to implement NetCondit::synth_sync" << endl;
       des->errors += 1;
       return false;
@@ -764,7 +739,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			   const svector<NetEvProbe*>&events_in)
 {
       if (events_in.count() > 0) {
-	    cerr << get_line() << ": error: Events are unaccounted"
+	    cerr << get_fileline() << ": error: Events are unaccounted"
 		 << " for in process synthesis." << endl;
 	    des->errors += 1;
       }
@@ -796,9 +771,9 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
 	    if (! statement_input ->contains(tmp_nex)) {
 		  if (pclk != 0) {
-			cerr << get_line() << ": error: Too many "
+			cerr << get_fileline() << ": error: Too many "
 			     << "clocks for synchronous logic." << endl;
-			cerr << get_line() << ":      : Perhaps an"
+			cerr << get_fileline() << ":      : Perhaps an"
 			     << " asynchronous set/reset is misused?" << endl;
 			des->errors += 1;
 		  }
@@ -810,9 +785,9 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       }
 
       if (pclk == 0) {
-	    cerr << get_line() << ": error: None of the edges"
+	    cerr << get_fileline() << ": error: None of the edges"
 		 << " are valid clock inputs." << endl;
-	    cerr << get_line() << ":      : Perhaps the clock"
+	    cerr << get_fileline() << ":      : Perhaps the clock"
 		 << " is read by a statement or expression?" << endl;
 	    return false;
       }
@@ -823,7 +798,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    ff->attribute(polarity, verinum("INVERT"));
 
 	    if (debug_synth2) {
-		  cerr << get_line() << ": debug: "
+		  cerr << get_fileline() << ": debug: "
 		       << "Detected a NEGEDGE clock for the synthesized ff."
 		       << endl;
 	    }
@@ -844,7 +819,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 bool NetProcTop::synth_sync(Design*des)
 {
       if (debug_synth2) {
-	    cerr << get_line() << ": debug: "
+	    cerr << get_fileline() << ": debug: "
 		 << "Process is apparently synchronous. Making NetFFs."
 		 << endl;
       }
@@ -857,7 +832,7 @@ bool NetProcTop::synth_sync(Design*des)
 	   and resets. */
 
       if (debug_synth2) {
-	    cerr << get_line() << ": debug: "
+	    cerr << get_fileline() << ": debug: "
 		 << "Top level making a "
 		 << nex_set[0]->vector_width() << "-wide "
 		 << "NetFF device." << endl;
@@ -953,7 +928,7 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
       if (top->is_synchronous()) do {
 	    bool flag = top->synth_sync(des);
 	    if (! flag) {
-		  cerr << top->get_line() << ": error: "
+		  cerr << top->get_fileline() << ": error: "
 		       << "Unable to synthesize synchronous process." << endl;
 		  des->errors += 1;
 		  return;
@@ -965,7 +940,7 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
       if (! top->is_asynchronous()) {
 	    bool synth_error_flag = false;
 	    if (top->attribute(perm_string::literal("ivl_combinational")).as_ulong() != 0) {
-		  cerr << top->get_line() << ": error: "
+		  cerr << top->get_fileline() << ": error: "
 		       << "Process is marked combinational,"
 		       << " but isn't really." << endl;
 		  des->errors += 1;
@@ -973,7 +948,7 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
 	    }
 
 	    if (top->attribute(perm_string::literal("ivl_synthesis_on")).as_ulong() != 0) {
-		  cerr << top->get_line() << ": error: "
+		  cerr << top->get_fileline() << ": error: "
 		       << "Process is marked for synthesis,"
 		       << " but I can't do it." << endl;
 		  des->errors += 1;
@@ -981,14 +956,14 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
 	    }
 
 	    if (! synth_error_flag)
-		  cerr << top->get_line() << ": warning: "
+		  cerr << top->get_fileline() << ": warning: "
 		       << "Process not synthesized." << endl;
 
 	    return;
       }
 
       if (! top->synth_async(des)) {
-	    cerr << top->get_line() << ": internal error: "
+	    cerr << top->get_fileline() << ": internal error: "
 		 << "is_asynchronous does not match "
 		 << "sync_async results." << endl;
 	    des->errors += 1;

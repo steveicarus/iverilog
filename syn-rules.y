@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: syn-rules.y,v 1.34 2007/01/16 05:44:15 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -147,7 +144,7 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
       NetNet*ce = cexp? cexp->synthesize(des) : 0;
 
       if (d == 0) {
-	    cerr << asn->get_line() << ": internal error: "
+	    cerr << asn->get_fileline() << ": internal error: "
 		 << " not a simple signal? " << *asn->rval() << endl;
       }
 

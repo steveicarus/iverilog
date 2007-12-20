@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.14 2007/04/17 04:34:23 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -31,10 +28,10 @@
 
 void NetProc::nex_output(NexusSet&out)
 {
-      cerr << get_line()
+      cerr << get_fileline()
 	   << ": internal error: NetProc::nex_output not implemented"
 	   << endl;
-      cerr << get_line()
+      cerr << get_fileline()
 	   << ":               : on object type " << typeid(*this).name()
 	   << endl;
 }
@@ -53,7 +50,7 @@ void NetAssignBase::nex_output(NexusSet&out)
 		     * "This is not a node because memory objects can only be
 		     * accessed by behavioral code."
 		     */
-		  cerr << get_line() << ": internal error: "
+		  cerr << get_fileline() << ": internal error: "
 		       << "NetAssignBase::nex_output on unsupported lval ";
 		  dump_lval(cerr);
 		  cerr << endl;
@@ -129,52 +126,3 @@ void NetWhile::nex_output(NexusSet&out)
       if (proc_ != 0)
 	    proc_->nex_output(out);
 }
-
-/*
- * $Log: net_nex_output.cc,v $
- * Revision 1.14  2007/04/17 04:34:23  steve
- *  Fix handling calls to tasks in combinational always block
- *
- * Revision 1.13  2007/04/05 01:53:52  steve
- *  Probe of case statement inputs can skip nul statements.
- *
- * Revision 1.12  2005/02/14 04:58:50  steve
- *  l-value input may be a vector.
- *
- * Revision 1.11  2004/09/16 03:17:33  steve
- *  net_output handles l-value concatenations.
- *
- * Revision 1.10  2004/08/28 16:23:05  steve
- *  Fix use of system tasks in AT_STAR statements.
- *
- * Revision 1.9  2004/06/30 15:32:18  steve
- *  nex_output for NetPDelay statements.
- *
- * Revision 1.8  2003/12/20 00:59:31  steve
- *  Synthesis debug messages.
- *
- * Revision 1.7  2003/10/26 04:51:39  steve
- *  Output of While is output of while substatement.
- *
- * Revision 1.6  2002/09/17 04:39:20  steve
- *  Account for part select in l-value.
- *
- * Revision 1.5  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2002/07/29 00:00:28  steve
- *  Asynchronous synthesis of sequential blocks.
- *
- * Revision 1.3  2002/07/07 22:32:15  steve
- *  Asynchronous synthesis of case statements.
- *
- * Revision 1.2  2002/07/01 00:54:21  steve
- *  synth_asych of if/else requires redirecting the target
- *  if sub-statements. Use NetNet objects to manage the
- *  situation.
- *
- * Revision 1.1  2002/06/30 02:21:32  steve
- *  Add structure for asynchronous logic synthesis.
- *
- */
-

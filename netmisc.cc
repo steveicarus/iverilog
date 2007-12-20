@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.cc,v 1.14 2007/06/02 03:42:13 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -73,7 +70,7 @@ NetNet* add_to_net(Design*des, NetNet*sig, long val)
 
       return res;
 #else
-      cerr << sig->get_line() << ": XXXX: Forgot how to implement add_to_net" << endl;
+      cerr << sig->get_fileline() << ": XXXX: Forgot how to implement add_to_net" << endl;
       return 0;
 #endif
 }
@@ -181,7 +178,7 @@ std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 		  delete ctmp;
 		  continue;
 	    } else {
-		  cerr << index.msb->get_line() << ": error: "
+		  cerr << index.msb->get_fileline() << ": error: "
 		       << "Scope index expression is not constant: "
 		       << *index.msb << endl;
 		  des->errors += 1;

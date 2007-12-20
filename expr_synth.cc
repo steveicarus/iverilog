@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.87 2007/06/02 03:42:12 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -30,7 +27,7 @@
 
 NetNet* NetExpr::synthesize(Design*des)
 {
-      cerr << get_line() << ": internal error: cannot synthesize expression: "
+      cerr << get_fileline() << ": internal error: cannot synthesize expression: "
 	   << *this << endl;
       des->errors += 1;
       return 0;
@@ -94,12 +91,12 @@ NetNet* NetEBBits::synthesize(Design*des)
       assert(scope);
 
       if (lsig->vector_width() != rsig->vector_width()) {
-	    cerr << get_line() << ": internal error: bitwise (" << op_
+	    cerr << get_fileline() << ": internal error: bitwise (" << op_
 		 << ") widths do not match: " << lsig->vector_width()
 		 << " != " << rsig->vector_width() << endl;
-	    cerr << get_line() << ":               : width="
+	    cerr << get_fileline() << ":               : width="
 		 << lsig->vector_width() << ": " << *left_ << endl;
-	    cerr << get_line() << ":               : width="
+	    cerr << get_fileline() << ":               : width="
 		 << rsig->vector_width() << ": " << *right_ << endl;
 	    return 0;
       }
@@ -225,7 +222,7 @@ NetNet* NetEBComp::synthesize(Design*des)
 	    break;
 
 	  default:
-	    cerr << get_line() << ": internal error: cannot synthesize "
+	    cerr << get_fileline() << ": internal error: cannot synthesize "
 		  "comparison: " << *this << endl;
 	    des->errors += 1;
 	    return 0;
@@ -236,7 +233,7 @@ NetNet* NetEBComp::synthesize(Design*des)
 
 NetNet* NetEBPow::synthesize(Design*des)
 {
-      cerr << get_line() << ": internal error: Do not yet know how to handle"
+      cerr << get_fileline() << ": internal error: Do not yet know how to handle"
 	   << " power operator in this context." << endl;
       des->errors += 1;
       return 0;
@@ -324,7 +321,7 @@ NetNet* NetEBDiv::synthesize(Design*des)
 	  }
 
 	  default: {
-		cerr << get_line() << ": internal error: "
+		cerr << get_fileline() << ": internal error: "
 		     << "NetEBDiv has unexpeced op() code: "
 		     << op() << endl;
 		des->errors += 1;
@@ -693,7 +690,7 @@ NetNet* NetEUReduce::synthesize(Design*des)
 	    rtype = NetUReduce::XNOR;
 	    break;
 	  default:
-	    cerr << get_line() << ": internal error: "
+	    cerr << get_fileline() << ": internal error: "
 		 << "Unable to synthesize " << *this << "." << endl;
 	    return 0;
       }
