@@ -323,8 +323,9 @@ void show_statement(ivl_statement_t net, unsigned ind)
 	    break;
 
 	  case IVL_ST_STASK: {
-		fprintf(out, "%*sCall %s(%u parameters);\n", ind, "",
-			ivl_stmt_name(net), ivl_stmt_parm_count(net));
+		fprintf(out, "%*sCall %s(%u parameters); /* %s:%u */\n",
+			ind, "", ivl_stmt_name(net), ivl_stmt_parm_count(net),
+			ivl_statement_file(net), ivl_statement_lineno(net));
 		for (idx = 0 ;  idx < ivl_stmt_parm_count(net) ;  idx += 1)
 		      if (ivl_stmt_parm(net, idx))
 			    show_expression(ivl_stmt_parm(net, idx), ind+4);

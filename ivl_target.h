@@ -1611,8 +1611,15 @@ extern ivl_attribute_t ivl_process_attr_val(ivl_process_t net, unsigned idx);
  * The ivl_statement_type() function returns the type code for the
  * statement. This is the major type, and implies which of the later
  * functions are applicable to the statement.
+ *
+ * the ivl_statement_file() and _lineno() functions return the source
+ * file and line number of the statement in the Verilog source. This
+ * information is useful for diagnostic information.
  */
 extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
+
+extern const char* ivl_statement_file(ivl_statement_t net);
+extern unsigned ivl_statement_lineno(ivl_statement_t net);
 
 /*
  * The following functions retrieve specific single values from the

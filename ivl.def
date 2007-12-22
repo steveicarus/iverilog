@@ -170,6 +170,8 @@ ivl_process_scope
 ivl_process_stmt
 ivl_process_type
 
+ivl_statement_file
+ivl_statement_lineno
 ivl_statement_type
 
 ivl_stmt_block_count

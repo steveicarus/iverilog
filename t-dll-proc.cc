@@ -34,6 +34,15 @@
 #endif
 # include  <stdlib.h>
 
+/*
+ * The FILE_NAME function is a shorthand for attaching file/line
+ * information to the statement object.
+ */
+static inline void FILE_NAME(ivl_statement_t stmt, const LineInfo*info)
+{
+      stmt->file = info->get_file();
+      stmt->lineno = info->get_lineno();
+}
 
 bool dll_target::process(const NetProcTop*net)
 {
@@ -196,6 +205,7 @@ void dll_target::proc_assign(const NetAssign*net)
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
       stmt_cur_->type_ = IVL_ST_ASSIGN;
+      FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->u_.assign_.delay = 0;
 
@@ -223,6 +233,8 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
       stmt_cur_->type_ = IVL_ST_ASSIGN_NB;
+      FILE_NAME(stmt_cur_, net);
+
       stmt_cur_->u_.assign_.delay  = 0;
 
 	/* Make the lval fields. */
@@ -254,6 +266,7 @@ bool dll_target::proc_block(const NetBlock*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
 	/* First, count the statements in the block. */
       unsigned count = 0;
@@ -317,6 +330,7 @@ void dll_target::proc_case(const NetCase*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       switch (net->type()) {
 	  case NetCase::EQ:
@@ -377,6 +391,7 @@ bool dll_target::proc_cassign(const NetCAssign*net)
 
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_CASSIGN;
 
@@ -395,6 +410,7 @@ bool dll_target::proc_condit(const NetCondit*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_CONDIT;
       stmt_cur_->u_.condit_.stmt_ = (struct ivl_statement_s*)
@@ -421,6 +437,7 @@ bool dll_target::proc_deassign(const NetDeassign*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_DEASSIGN;
 
@@ -434,6 +451,7 @@ bool dll_target::proc_delay(const NetPDelay*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       ivl_statement_t tmp = (struct ivl_statement_s*)
 	    calloc(1, sizeof(struct ivl_statement_s));
@@ -474,6 +492,7 @@ bool dll_target::proc_disable(const NetDisable*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_DISABLE;
       stmt_cur_->u_.disable_.scope = lookup_scope_(net->target());
@@ -503,6 +522,7 @@ void dll_target::proc_forever(const NetForever*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_FOREVER;
 
@@ -522,6 +542,7 @@ bool dll_target::proc_release(const NetRelease*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_RELEASE;
 
@@ -535,6 +556,7 @@ void dll_target::proc_repeat(const NetRepeat*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_REPEAT;
 
@@ -560,6 +582,7 @@ void dll_target::proc_stask(const NetSTask*net)
       unsigned nparms = net->nparms();
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_STASK;
 	/* System task names are lex_strings strings. */
@@ -581,6 +604,7 @@ bool dll_target::proc_trigger(const NetEvTrig*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_TRIGGER;
       stmt_cur_->u_.wait_.nevent = 1;
@@ -606,6 +630,7 @@ void dll_target::proc_utask(const NetUTask*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_UTASK;
       stmt_cur_->u_.utask_.def = lookup_scope_(net->task());
@@ -615,6 +640,7 @@ bool dll_target::proc_wait(const NetEvWait*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_WAIT;
       stmt_cur_->u_.wait_.stmt_ = (struct ivl_statement_s*)
@@ -708,6 +734,7 @@ void dll_target::proc_while(const NetWhile*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_WHILE;
       stmt_cur_->u_.while_.stmt_ = (struct ivl_statement_s*)

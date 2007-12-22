@@ -2102,6 +2102,7 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
       }
 
       NetSTask*cur = new NetSTask(peek_tail_name(path_), eparms);
+      cur->set_line(*this);
       return cur;
 }
 

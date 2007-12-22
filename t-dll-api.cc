@@ -1642,6 +1642,16 @@ extern "C" ivl_statement_type_t ivl_statement_type(ivl_statement_t net)
       return net->type_;
 }
 
+extern "C" const char* ivl_statement_file(ivl_statement_t net)
+{
+      return net->file.str();
+}
+
+extern "C" unsigned ivl_statement_lineno(ivl_statement_t net)
+{
+      return net->lineno;
+}
+
 extern "C" ivl_scope_t ivl_stmt_block_scope(ivl_statement_t net)
 {
       switch (net->type_) {

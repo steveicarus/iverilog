@@ -47,6 +47,8 @@ class LineInfo {
       void set_file(perm_string f);
       void set_lineno(unsigned n);
 
+      perm_string get_file() const { return file_; }
+      unsigned  get_lineno() const { return lineno_; }
     private:
       perm_string file_;
       unsigned lineno_;

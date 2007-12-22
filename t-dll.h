@@ -607,6 +607,9 @@ struct ivl_signal_s {
  */
 struct ivl_statement_s {
       enum ivl_statement_type_e type_;
+      perm_string file;
+      unsigned lineno;
+
       union {
 	    struct { /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB
 			IVL_ST_CASSIGN, IVL_ST_DEASSIGN */
