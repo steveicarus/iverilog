@@ -136,7 +136,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
 %token K_edge K_else K_end K_endcase K_endfunction K_endmodule
 %token K_endprimitive K_endspecify K_endtable K_endtask K_event K_for
-%token K_force K_forever K_fork K_function K_highz0 K_highz1 K_if
+%token K_force K_forever K_fork K_function K_highz0 K_highz1 K_if K_ifnone
 %token K_initial K_inout K_input K_integer K_join K_large K_localparam
 %token K_macromodule
 %token K_medium K_module K_nand K_negedge K_nmos K_nor K_not K_notif0
@@ -2306,6 +2306,9 @@ specify_item
 		{
 		}
 	| K_if '(' expression ')' specify_edge_path_decl ';'
+		{
+		}
+	| K_ifnone specify_simple_path_decl ';'
 		{
 		}
 	| K_Shold '(' spec_reference_event ',' spec_reference_event
