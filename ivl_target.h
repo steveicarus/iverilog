@@ -646,6 +646,8 @@ extern ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx);
 
 extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
 extern ivl_variable_type_t ivl_expr_value(ivl_expr_t net);
+extern const char*ivl_expr_file(ivl_expr_t net);
+extern unsigned ivl_expr_lineno(ivl_expr_t net);
 
   /* IVL_EX_NUMBER */
 extern const char* ivl_expr_bits(ivl_expr_t net);

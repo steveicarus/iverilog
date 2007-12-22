@@ -199,6 +199,8 @@ struct ivl_event_s {
 struct ivl_expr_s {
       ivl_expr_type_t type_;
       ivl_variable_type_t value_;
+      perm_string file;
+      unsigned lineno;
 
       unsigned width_;
       unsigned signed_ : 1;
@@ -682,5 +684,21 @@ struct ivl_statement_s {
 	    } while_;
       } u_;
 };
+
+/*
+ * The FILE_NAME function is a shorthand for attaching file/line
+ * information to the statement object.
+ */
+static inline void FILE_NAME(ivl_statement_t stmt, const LineInfo*info)
+{
+      stmt->file = info->get_file();
+      stmt->lineno = info->get_lineno();
+}
+
+static inline void FILE_NAME(ivl_expr_t expr, const LineInfo*info)
+{
+      expr->file = info->get_file();
+      expr->lineno = info->get_lineno();
+}
 
 #endif

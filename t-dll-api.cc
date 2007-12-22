@@ -91,6 +91,17 @@ extern "C" ivl_expr_type_t ivl_expr_type(ivl_expr_t net)
       return net->type_;
 }
 
+extern "C" const char*ivl_expr_file(ivl_expr_t net)
+{
+      assert(net);
+      return net->file.str();
+}
+
+extern "C" unsigned ivl_expr_lineno(ivl_expr_t net)
+{
+      assert(net);
+      return net->lineno;
+}
 
 inline static const char *basename(ivl_scope_t scope, const char *inst)
 {

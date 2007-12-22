@@ -34,16 +34,6 @@
 #endif
 # include  <stdlib.h>
 
-/*
- * The FILE_NAME function is a shorthand for attaching file/line
- * information to the statement object.
- */
-static inline void FILE_NAME(ivl_statement_t stmt, const LineInfo*info)
-{
-      stmt->file = info->get_file();
-      stmt->lineno = info->get_lineno();
-}
-
 bool dll_target::process(const NetProcTop*net)
 {
       ivl_process_t obj = (struct ivl_process_s*)

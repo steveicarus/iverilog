@@ -334,6 +334,7 @@ void dll_target::expr_sfunc(const NetESFunc*net)
       assert(expr);
 
       expr->type_ = IVL_EX_SFUNC;
+      FILE_NAME(expr, net);
       expr->value_= net->expr_type();
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
@@ -363,6 +364,7 @@ void dll_target::expr_ternary(const NetETernary*net)
       assert(expr);
 
       expr->type_  = IVL_EX_TERNARY;
+      FILE_NAME(expr, net);
       expr->value_= net->expr_type();
       expr->width_ = net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
@@ -429,6 +431,7 @@ void dll_target::expr_ufunc(const NetEUFunc*net)
       assert(expr);
 
       expr->type_ = IVL_EX_UFUNC;
+      FILE_NAME(expr, net);
       expr->value_= net->expr_type();
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;

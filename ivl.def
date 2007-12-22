@@ -29,6 +29,8 @@ ivl_expr_bits
 ivl_expr_def
 ivl_expr_dvalue
 ivl_expr_event
+ivl_expr_file
+ivl_expr_lineno
 ivl_expr_name
 ivl_expr_opcode
 ivl_expr_oper1

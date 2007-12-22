@@ -512,6 +512,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 
       NetESFunc*fun = new NetESFunc(peek_tail_name(path_), sfunc_type,
 				    wid, nparms);
+      fun->set_line(*this);
       if (sfunc_info->signed_flag)
 	    fun->cast_signed(true);
 

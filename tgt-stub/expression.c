@@ -233,8 +233,9 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	    break;
 
 	  case IVL_EX_SFUNC:
-	    fprintf(out, "%*s<function=\"%s\", width=%u, %s, type=%s>\n",
-		    ind, "", ivl_expr_name(net), width, sign, vt);
+	    fprintf(out, "%*s<function=\"%s\", width=%u, %s, type=%s file=%s:%u>\n",
+		    ind, "", ivl_expr_name(net), width, sign, vt,
+		    ivl_expr_file(net), ivl_expr_lineno(net));
 	    { unsigned cnt = ivl_expr_parms(net);
 	      unsigned idx;
 	      for (idx = 0 ;  idx < cnt ;  idx += 1)
