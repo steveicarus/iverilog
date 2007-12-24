@@ -113,6 +113,9 @@ const char*gen_specify = "specify";
 const char*gen_xtypes = "xtypes";
 const char*gen_io_range_error = "io-range-error";
 
+/* Boolean: true means use a default include dir, false means don't */
+int gen_std_include = 1;
+
 char warning_flags[16] = "";
 
 unsigned integer_width = 32;
@@ -442,6 +445,12 @@ int process_generation(const char*name)
        else if (strcmp(name,"no-specify") == 0)
 	    gen_specify = "no-specify";
 
+       else if (strcmp(name,"std-include") == 0)
+	     gen_std_include = 1;
+
+       else if (strcmp(name,"no-std-include") == 0)
+	     gen_std_include = 0;
+
        else if (strcmp(name,"io-range-error") == 0)
 	    gen_io_range_error = "io-range-error";
 
@@ -457,6 +466,7 @@ int process_generation(const char*name)
 		            "    2x  -- Verilog with extensions\n"
 		            "Other generation flags:\n"
 		            "    specify | no-specify\n"
+		            "    std-include | no-std-include\n"
 		            "    xtypes | no-xtypes\n"
 		            "    io-range-error | no-io-range-error\n");
 	    return 1;
@@ -736,6 +746,12 @@ int main(int argc, char **argv)
       for (idx = optind ;  idx < argc ;  idx += 1)
 	    process_file_name(argv[idx], 0);
 
+	/* If the use of a default include directory is not
+	   specifically disabled, then write that directory as the
+	   very last include directory to use... always. */
+      if (gen_std_include) {
+	    fprintf(defines_file, "I:%s%cinclude", base, sep);
+      }
 
       fclose(source_file);
       source_file = 0;

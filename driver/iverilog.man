@@ -66,6 +66,12 @@ simulation, and in fact can hurt performance of the
 simulation. However, disabling specify blocks reduces accuracy of
 full-timing simulations.
 .TP 8
+.B -gstd-include\fI|\fP-gno-std-include
+Enable (default) or disable the search of a standard installation
+include directory after all other explicit include directories. This
+standard include directory is a convenient place to install standard
+header files that a Verilog program may include.
+.TP 8
 .B -gxtypes\fI|\fP-gno-xtypes
 Enable (default) or disable support for extended types. Enabling
 extended types allows for new types that are supported by Icarus
