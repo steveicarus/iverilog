@@ -1866,15 +1866,18 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	   in one go. */
       if (number_is_immediate(bit_idx, 32)
 	  && get_number_immediate(bit_idx) == 0
-	  && (ivl_expr_width(sube) >= wid)) {
+	  && (ivl_expr_width(sube) >= bit_wid)) {
 
 	    res.base = allocate_vector(wid);
 	    res.wid = wid;
 	    fprintf(vvp_out, "   %%load/v %u, v%p_%u, %u; Only need %u of %u bits\n",
-		    res.base, sig, use_word, wid, wid, ivl_expr_width(sube));
+		    res.base, sig, use_word, bit_wid, bit_wid, ivl_expr_width(sube));
  
-	    save_signal_lookaside(res.base, sig, use_word, res.wid);
-
+	    save_signal_lookaside(res.base, sig, use_word, bit_wid);
+	      /* Pad the part select to the desired width. Note that
+	         this *should* always turn into an unsigned pad
+	         because part selects are always unsigned. */
+	    pad_expr_in_place(sube, res, bit_wid);
 	    return res;
       }
 
