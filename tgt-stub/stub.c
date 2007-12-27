@@ -1116,12 +1116,13 @@ static void show_signal(ivl_signal_t net)
 
 	    nex = ivl_signal_nex(net, idx);
 
-	    fprintf(out, "  %s %s %s%s[%d:%d] %s[word=%u, adr=%d]  <width=%u> nexus=%s\n",
+	    fprintf(out, "  %s %s %s%s[%d:%d] %s[word=%u, adr=%d]  <width=%u%s> nexus=%s\n",
 		    type, sign, port, data_type,
 		    ivl_signal_msb(net), ivl_signal_lsb(net),
 		    ivl_signal_basename(net),
 		    idx, ivl_signal_array_base(net)+idx,
 		    ivl_signal_width(net),
+		    ivl_signal_local(net)? ", local":"",
 		    ivl_nexus_name(nex));
 
 	    show_nexus_details(net, nex);

@@ -1702,6 +1702,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::REG, wid);
+	    tmp->local_flag(true);
 	    tmp->set_line(*this);
 	    tmp->data_type(rv->expr_type());
 

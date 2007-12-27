@@ -974,9 +974,10 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 
       } else {
 
-	    fprintf(vvp_out, "v%p_0 .var%s \"%s\", %d %d;\n",
+	    fprintf(vvp_out, "v%p_0 .var%s \"%s\", %d %d;%s\n",
 		    sig, datatype_flag,
-		    vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
+		    vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb,
+		    ivl_signal_local(sig)? " Local signal" : "");
       }
 }
 
