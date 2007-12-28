@@ -281,10 +281,10 @@ W [ \t\b\f\r]+
 ^{W}?`disable_portfaults{W}?.*   {  }
 ^{W}?`enable_portfaults{W}?.*    {  }
 ^{W}?`endcelldefine{W}?.*        {  }
-^{W}?`endprotect{W}?.*           {  }
+`endprotect                      {  }
 ^{W}?`nosuppress_faults{W}?.*    {  }
 ^{W}?`nounconnected_drive{W}?.*  {  }
-^{W}?`protect{W}?.*              {  }
+`protect                         {  }
 ^{W}?`resetall{W}?.*             {  }
 ^{W}?`suppress_faults{W}?.*      {  }
 ^{W}?`unconnected_drive{W}?.*    {  }
