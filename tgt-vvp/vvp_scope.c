@@ -952,6 +952,7 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 
       const char*datatype_flag = ivl_signal_integer(sig) ? "/i" :
 			       ivl_signal_signed(sig)? "/s" : "";
+      const char*local_flag = ivl_signal_local(sig)? "*" : "";
 
       switch (ivl_signal_data_type(sig)) {
 	  case IVL_VT_REAL:
@@ -974,8 +975,8 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 
       } else {
 
-	    fprintf(vvp_out, "v%p_0 .var%s \"%s\", %d %d;%s\n",
-		    sig, datatype_flag,
+	    fprintf(vvp_out, "v%p_0 .var%s %s\"%s\", %d %d;%s\n",
+		    sig, datatype_flag, local_flag,
 		    vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb,
 		    ivl_signal_local(sig)? " Local signal" : "");
       }
@@ -992,11 +993,8 @@ static void draw_net_in_scope(ivl_signal_t sig)
       int lsb = ivl_signal_lsb(sig);
 
       const char*datatype_flag = ivl_signal_signed(sig)? "/s" : "";
+      const char*local_flag = ivl_signal_local(sig)? "*" : "";
       unsigned iword;
-
-	/* Skip the local signal. */
-      if (ivl_signal_local(sig))
-	    return;
 
       switch (ivl_signal_data_type(sig)) {
 	  case IVL_VT_REAL:
@@ -1049,9 +1047,9 @@ static void draw_net_in_scope(ivl_signal_t sig)
 			/* If this is an isolated word, it uses its
 			   own name. */
 			assert(word_count == 1);
-			fprintf(vvp_out, "v%p_%u .net%s%s \"%s\", %d %d, %s;"
+			fprintf(vvp_out, "v%p_%u .net%s%s %s\"%s\", %d %d, %s;"
 				" %u drivers%s\n",
-				sig, iword, vec8, datatype_flag,
+				sig, iword, vec8, datatype_flag, local_flag,
 				vvp_mangle_name(ivl_signal_basename(sig)),
 				msb, lsb, driver,
 				nex_data->drivers_count,

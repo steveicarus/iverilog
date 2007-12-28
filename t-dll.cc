@@ -2083,7 +2083,7 @@ void dll_target::signal(const NetNet*net)
       obj->lsb_index = net->lsb();
       obj->lsb_dist  = net->msb() >= net->lsb() ? 1 : -1;
       obj->isint_ = false;
-      obj->local_ = (net->local_flag() && (net->peek_eref() == 0))? 1 : 0;
+      obj->local_ = net->local_flag()? 1 : 0;
 
       obj->array_dimensions_ = net->array_dimensions();
 

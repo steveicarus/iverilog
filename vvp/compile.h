@@ -368,7 +368,7 @@ extern void compile_net(char*label, char*name,
 			bool net8_flag, bool local_flag,
 			unsigned argc, struct symb_s*argv);
 extern void compile_net_real(char*label, char*name,
-			     int msb, int lsb,
+			     int msb, int lsb, bool local_flag,
 			     unsigned argc, struct symb_s*argv);
 
 extern void compile_netw(char*label, char*array_symbol,

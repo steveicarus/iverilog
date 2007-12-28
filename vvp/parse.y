@@ -523,33 +523,33 @@ statement
     ',' symbols_net ';'
       { compile_net($1, $4, $6, $7, false, false, $3, $9.cnt, $9.vect); }
 
-        | T_LABEL K_NET_S T_STRING ',' signed_t_number signed_t_number
-	  ',' symbols_net ';'
-{ compile_net($1, $3, $5, $6, true, false, false, $8.cnt, $8.vect); }
+  | T_LABEL K_NET_S local_flag T_STRING ',' signed_t_number signed_t_number
+    ',' symbols_net ';'
+      { compile_net($1, $4, $6, $7, true, false, $3, $9.cnt, $9.vect); }
 
-	| T_LABEL K_NET8 T_STRING ',' signed_t_number signed_t_number
-	  ',' symbols_net ';'
-{ compile_net($1, $3, $5, $6, false, true, false, $8.cnt, $8.vect); }
+  | T_LABEL K_NET8 local_flag T_STRING ',' signed_t_number signed_t_number
+    ',' symbols_net ';'
+      { compile_net($1, $4, $6, $7, false, true, $3, $9.cnt, $9.vect); }
 
-        | T_LABEL K_NET8_S T_STRING ',' signed_t_number signed_t_number
-	  ',' symbols_net ';'
-{ compile_net($1, $3, $5, $6, true, true, false, $8.cnt, $8.vect); }
+  | T_LABEL K_NET8_S local_flag T_STRING ',' signed_t_number signed_t_number
+    ',' symbols_net ';'
+      { compile_net($1, $4, $6, $7, true, true, $3, $9.cnt, $9.vect); }
 
-        | T_LABEL K_NET_R T_STRING ',' signed_t_number signed_t_number
-	  ',' symbols_net ';'
-		{ compile_net_real($1, $3, $5, $6, $8.cnt, $8.vect); }
+  | T_LABEL K_NET_R local_flag T_STRING ',' signed_t_number signed_t_number
+    ',' symbols_net ';'
+      { compile_net_real($1, $4, $6, $7, $3, $9.cnt, $9.vect); }
 
-	| T_LABEL K_ALIAS T_STRING ',' signed_t_number signed_t_number
-	  ',' symbols_net ';'
-		{ compile_alias($1, $3, $5, $6, false, $8.cnt, $8.vect); }
+  | T_LABEL K_ALIAS T_STRING ',' signed_t_number signed_t_number
+    ',' symbols_net ';'
+      { compile_alias($1, $3, $5, $6, false, $8.cnt, $8.vect); }
 
-        | T_LABEL K_ALIAS_S T_STRING ',' signed_t_number signed_t_number
-	  ',' symbols_net ';'
-		{ compile_alias($1, $3, $5, $6, true, $8.cnt, $8.vect); }
+  | T_LABEL K_ALIAS_S T_STRING ',' signed_t_number signed_t_number
+    ',' symbols_net ';'
+      { compile_alias($1, $3, $5, $6, true, $8.cnt, $8.vect); }
 
-        | T_LABEL K_ALIAS_R T_STRING ',' signed_t_number signed_t_number
-	  ',' symbols_net ';'
-		{ compile_alias_real($1, $3, $5, $6, $8.cnt, $8.vect); }
+  | T_LABEL K_ALIAS_R T_STRING ',' signed_t_number signed_t_number
+    ',' symbols_net ';'
+      { compile_alias_real($1, $3, $5, $6, $8.cnt, $8.vect); }
 
   /* Arrayed versions of net directives. */
 

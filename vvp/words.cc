@@ -206,7 +206,7 @@ void compile_netw(char*label, char*array_label, unsigned long array_addr,
 		    argc, argv);
 }
 
-void compile_net_real(char*label, char*name, int msb, int lsb,
+void compile_net_real(char*label, char*name, int msb, int lsb, bool local_flag,
 		      unsigned argc, struct symb_s*argv)
 {
       vvp_net_t*net = new vvp_net_t;
@@ -222,10 +222,12 @@ void compile_net_real(char*label, char*name, int msb, int lsb,
 	/* Connect the source to my input. */
       inputs_connect(net, 1, argv);
 
-	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = vpip_make_real_var(name, net);
-      compile_vpi_symbol(label, obj);
-      vpip_attach_to_current_scope(obj);
+      if (! local_flag) {
+	      /* Make the vpiHandle for the reg. */
+	    vpiHandle obj = vpip_make_real_var(name, net);
+	    compile_vpi_symbol(label, obj);
+	    vpip_attach_to_current_scope(obj);
+      }
 
       free(label);
       free(name);
