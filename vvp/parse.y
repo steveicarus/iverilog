@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.93 2007/04/19 01:19:06 steve Exp $"
-#endif
 
 # include  "parse_misc.h"
 # include  "compile.h"
@@ -49,6 +46,7 @@ static struct __vpiModPath*modpath_dst = 0;
       char*text;
       char **table;
       long numb;
+      bool flag;
 
       comp_operands_t opa;
 
@@ -92,6 +90,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token <text> T_SYMBOL
 %token <vect> T_VECTOR
 
+%type <flag>  local_flag
 %type <numb>  signed_t_number
 %type <symb>  symbol symbol_opt
 %type <symbv> symbols symbols_net
@@ -505,36 +504,36 @@ statement
      creates a functor with the same name that acts as the output of
      the variable in the netlist. */
 
-	| T_LABEL K_VAR T_STRING ',' signed_t_number signed_t_number ';'
-		{ compile_variable($1, $3, $5, $6, 0 /* unsigned */ ); }
+  | T_LABEL K_VAR local_flag T_STRING ',' signed_t_number signed_t_number ';'
+      { compile_variable($1, $4, $6, $7, 0 /* unsigned */, $3); }
 
-	| T_LABEL K_VAR_S T_STRING ',' signed_t_number signed_t_number ';'
-		{ compile_variable($1, $3, $5, $6, 1 /* signed */ ); }
+  | T_LABEL K_VAR_S local_flag T_STRING ',' signed_t_number signed_t_number ';'
+      { compile_variable($1, $4, $6, $7, 1 /* signed */, $3); }
 
-	| T_LABEL K_VAR_I T_STRING ',' T_NUMBER T_NUMBER ';'
-		{ compile_variable($1, $3, $5, $6, 2 /* integer */); }
+  | T_LABEL K_VAR_I local_flag T_STRING ',' T_NUMBER T_NUMBER ';'
+      { compile_variable($1, $4, $6, $7, 2 /* integer */, $3); }
 
-	| T_LABEL K_VAR_R T_STRING ',' signed_t_number signed_t_number ';'
-		{ compile_var_real($1, $3, $5, $6); }
+  | T_LABEL K_VAR_R T_STRING ',' signed_t_number signed_t_number ';'
+      { compile_var_real($1, $3, $5, $6); }
 
   /* Net statements are similar to .var statements, except that they
      declare nets, and they have an input list. */
 
-	| T_LABEL K_NET T_STRING ',' signed_t_number signed_t_number
-	  ',' symbols_net ';'
-		{ compile_net($1, $3, $5, $6, false, false, $8.cnt, $8.vect); }
+  | T_LABEL K_NET local_flag T_STRING ',' signed_t_number signed_t_number
+    ',' symbols_net ';'
+      { compile_net($1, $4, $6, $7, false, false, $3, $9.cnt, $9.vect); }
 
         | T_LABEL K_NET_S T_STRING ',' signed_t_number signed_t_number
 	  ',' symbols_net ';'
-		{ compile_net($1, $3, $5, $6, true, false, $8.cnt, $8.vect); }
+{ compile_net($1, $3, $5, $6, true, false, false, $8.cnt, $8.vect); }
 
 	| T_LABEL K_NET8 T_STRING ',' signed_t_number signed_t_number
 	  ',' symbols_net ';'
-		{ compile_net($1, $3, $5, $6, false, true, $8.cnt, $8.vect); }
+{ compile_net($1, $3, $5, $6, false, true, false, $8.cnt, $8.vect); }
 
         | T_LABEL K_NET8_S T_STRING ',' signed_t_number signed_t_number
 	  ',' symbols_net ';'
-		{ compile_net($1, $3, $5, $6, true, true, $8.cnt, $8.vect); }
+{ compile_net($1, $3, $5, $6, true, true, false, $8.cnt, $8.vect); }
 
         | T_LABEL K_NET_R T_STRING ',' signed_t_number signed_t_number
 	  ',' symbols_net ';'
@@ -591,6 +590,10 @@ statement
 	| ';'
 	;
 
+local_flag
+  : '*' { $$ = true; }
+  |     { $$ = false; }
+  ;
 
   /* There are a few places where the label is optional. This rule
      returns the label value if present, or 0 if not. */

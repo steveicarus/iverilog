@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: words.cc,v 1.9 2007/04/10 01:26:16 steve Exp $"
-#endif
 
 # include  "compile.h"
 # include  "vpi_priv.h"
@@ -43,7 +40,6 @@ static void __compile_var_real(char*label, char*name,
       define_functor_symbol(label, net);
 
       vpiHandle obj = vpip_make_real_var(name, net);
-
       compile_vpi_symbol(label, obj);
 
       if (name) {
@@ -77,7 +73,7 @@ void compile_varw_real(char*label, vvp_array_t array,
  */
 static void __compile_var(char*label, char*name,
 			  vvp_array_t array, unsigned long array_addr,
-			  int msb, int lsb, char signed_flag)
+			  int msb, int lsb, char signed_flag, bool local_flag)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
@@ -87,16 +83,19 @@ static void __compile_var(char*label, char*name,
       node->fun = vsig;
       define_functor_symbol(label, node);
 
-	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = (signed_flag > 1) ?
-			vpip_make_int(name, msb, lsb, node) :
-			vpip_make_reg(name, msb, lsb, signed_flag!=0, node);
-      compile_vpi_symbol(label, obj);
+      vpiHandle obj = 0;
+      if (! local_flag) {
+	      /* Make the vpiHandle for the reg. */
+	    obj = (signed_flag > 1) ?
+		  vpip_make_int(name, msb, lsb, node) :
+		  vpip_make_reg(name, msb, lsb, signed_flag!=0, node);
+	    compile_vpi_symbol(label, obj);
+      }
 	// If the signal has a name, then it goes into the current
 	// scope as a signal.
       if (name) {
 	    assert(!array);
-	    vpip_attach_to_current_scope(obj);
+	    if (obj) vpip_attach_to_current_scope(obj);
 	    schedule_init_vector(vvp_net_ptr_t(node,0), vsig->vec4_value());
       }
 	// If this is an array word, then it does not have a name, and
@@ -110,9 +109,9 @@ static void __compile_var(char*label, char*name,
 }
 
 void compile_variable(char*label, char*name,
-		      int msb, int lsb, char signed_flag)
+		      int msb, int lsb, char signed_flag, bool local_flag)
 {
-      __compile_var(label, name, 0, 0, msb, lsb, signed_flag);
+      __compile_var(label, name, 0, 0, msb, lsb, signed_flag, local_flag);
 }
 
 /*
@@ -127,7 +126,7 @@ void compile_variablew(char*label, vvp_array_t array,
 		       unsigned long array_addr,
 		       int msb, int lsb, char signed_flag)
 {
-      __compile_var(label, 0, array, array_addr, msb, lsb, signed_flag);
+      __compile_var(label, 0, array, array_addr, msb, lsb, signed_flag, false);
 }
 
 /*
@@ -144,7 +143,7 @@ void compile_variablew(char*label, vvp_array_t array,
 static void __compile_net(char*label, char*name,
 			  char*array_label, unsigned long array_addr,
 			  int msb, int lsb,
-			  bool signed_flag, bool net8_flag,
+			  bool signed_flag, bool net8_flag, bool local_flag,
 			  unsigned argc, struct symb_s*argv)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
@@ -167,15 +166,18 @@ static void __compile_net(char*label, char*name,
 	/* Connect the source to my input. */
       inputs_connect(node, 1, argv);
 
-	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = vpip_make_net(name, msb, lsb, signed_flag, node);
-	/* This attaches the label to the vpiHandle */
-      compile_vpi_symbol(label, obj);
+      vpiHandle obj = 0;
+      if (! local_flag) {
+	      /* Make the vpiHandle for the reg. */
+	    obj = vpip_make_net(name, msb, lsb, signed_flag, node);
+	      /* This attaches the label to the vpiHandle */
+	    compile_vpi_symbol(label, obj);
+      }
         /* If this is an array word, then attach it to the
 	   array. Otherwise, attach it to the current scope. */
       if (array)
 	    array_attach_word(array, array_addr, obj);
-      else
+      else if (obj)
 	    vpip_attach_to_current_scope(obj);
 
       free(label);
@@ -186,11 +188,11 @@ static void __compile_net(char*label, char*name,
 
 void compile_net(char*label, char*name,
 		 int msb, int lsb,
-		 bool signed_flag, bool net8_flag,
+		 bool signed_flag, bool net8_flag, bool local_flag,
 		 unsigned argc, struct symb_s*argv)
 {
       __compile_net(label, name, 0, 0,
-		    msb, lsb, signed_flag, net8_flag,
+		    msb, lsb, signed_flag, net8_flag, local_flag,
 		    argc, argv);
 }
 
@@ -200,7 +202,7 @@ void compile_netw(char*label, char*array_label, unsigned long array_addr,
 		 unsigned argc, struct symb_s*argv)
 {
       __compile_net(label, 0, array_label, array_addr,
-		    msb, lsb, signed_flag, net8_flag,
+		    msb, lsb, signed_flag, net8_flag, false,
 		    argc, argv);
 }
 

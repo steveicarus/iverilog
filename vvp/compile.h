@@ -1,7 +1,7 @@
 #ifndef __compile_H
 #define __compile_H
 /*
- * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.88 2007/04/10 01:26:16 steve Exp $"
-#endif
 
 # include  <stdio.h>
 # include  <fstream>
@@ -361,13 +358,14 @@ extern void compile_thread(char*start_sym, char*flag);
  * This function is called to create a var vector with the given name.
  */
 extern void compile_variable(char*label, char*name,
-			     int msb, int lsb, char signed_flag);
+			     int msb, int lsb, char signed_flag,
+			     bool local_flag);
 extern void compile_var_real(char*label, char*name,
 			     int msb, int lsb);
 
 extern void compile_net(char*label, char*name,
 			int msb, int lsb, bool signed_flag,
-			bool net8_flag,
+			bool net8_flag, bool local_flag,
 			unsigned argc, struct symb_s*argv);
 extern void compile_net_real(char*label, char*name,
 			     int msb, int lsb,
