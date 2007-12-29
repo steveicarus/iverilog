@@ -310,6 +310,23 @@ W [ \t\b\f]+
       yy_push_state(IFDEF_SUPR);
   }
 
+<IFDEF_TRUE>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
+      BEGIN(IFDEF_SUPR);
+  }
+<IFDEF_FALSE>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
+      char*name = strchr(yytext, '`');
+      assert(name);
+      name += 6;
+      name += strspn(name, " \t\b\f");
+
+      if (is_defined(name)) {
+	    BEGIN(IFDEF_TRUE);
+      } else {
+	    BEGIN(IFDEF_FALSE);
+      }
+  }
+<IFDEF_SUPR>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {  }
+
 <IFDEF_TRUE>`else  { BEGIN(IFDEF_FALSE); }
 <IFDEF_FALSE>`else { BEGIN(IFDEF_TRUE); }
 <IFDEF_SUPR>`else  {  }
@@ -331,6 +348,42 @@ W [ \t\b\f]+
 <IFDEF_FALSE,IFDEF_SUPR>\r   { istack->lineno += 1; fputc('\n', yyout); }
 
 <IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR>`endif { ifdef_leave(); yy_pop_state(); }
+
+`ifdef {
+      fprintf(stderr, "%s:%u: `ifdef without a macro name - ignored.\n",
+              istack->path, istack->lineno+1);
+      error_count += 1;
+  }
+
+`ifndef {
+      fprintf(stderr, "%s:%u: `ifndef without a macro name - ignored.\n",
+              istack->path, istack->lineno+1);
+      error_count += 1;
+  }
+
+`elsif {
+      fprintf(stderr, "%s:%u: `elsif without a macro name - ignored.\n",
+              istack->path, istack->lineno+1);
+      error_count += 1;
+  }
+
+`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
+      fprintf(stderr, "%s:%u: `elsif without a matching `ifdef - ignored.\n",
+              istack->path, istack->lineno+1);
+      error_count += 1;
+  }
+
+`else {
+      fprintf(stderr, "%s:%u: `else without a matching `ifdef - ignored.\n",
+              istack->path, istack->lineno+1);
+      error_count += 1;
+  }
+
+`endif {
+      fprintf(stderr, "%s:%u: `endif without a matching `ifdef - ignored.\n",
+              istack->path, istack->lineno+1);
+      error_count += 1;
+  }
 
   /* This pattern notices macros and arranges for them to be replaced. */
 `[a-zA-Z_][a-zA-Z0-9_$]* { def_match(); }
