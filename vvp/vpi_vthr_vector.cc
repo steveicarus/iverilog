@@ -261,6 +261,23 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	    }
 	    break;
 
+	  case vpiRealVal:
+	    vp->value.real = 0;
+	    for (unsigned idx = wid ;  idx > 0 ;  idx -= 1) {
+		  vp->value.real *= 2.0;
+		  switch (get_bit(rfp, idx-1)) {
+		      case 0:
+			break;
+		      case 1:
+			vp->value.real += 1.0;
+			break;
+		      case 2:
+		      case 3:
+			break;
+		  }
+	    }
+	    break;
+
 	  case vpiVectorVal:
 	    vp->value.vector = (s_vpi_vecval*)
 		  need_result_buf((wid+31)/32*sizeof(s_vpi_vecval), RBUF_VAL);
