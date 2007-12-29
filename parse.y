@@ -1446,6 +1446,16 @@ list_of_port_declarations
 		   */
 		  $$ = tmp;
 		}
+	| list_of_port_declarations ','
+		{
+		  yyerror(@2, "error: NULL port declarations are not "
+		              "allowed.");
+		}
+	| list_of_port_declarations ';'
+		{
+		  yyerror(@2, "error: ';' is an invalid port declaration "
+		              "separator.");
+		}
         ;
 
 port_declaration
