@@ -2867,6 +2867,19 @@ statement
 		  delete $3;
 		  $$ = tmp;
 		}
+
+ /* NOTE: The standard doesn't really support an empty argument list
+    between parentheses, but it seems natural, and people commonly
+    want it. So accept it explicitly. */
+
+	| identifier '(' ')' ';'
+		{ svector<PExpr*>pt (0);
+		  PCallTask*tmp = new PCallTask(*$1, pt);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $1;
+		  $$ = tmp;
+		}
 	| identifier ';'
 		{ svector<PExpr*>pt (0);
 		  PCallTask*tmp = new PCallTask(*$1, pt);
