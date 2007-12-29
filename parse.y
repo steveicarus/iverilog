@@ -2348,8 +2348,12 @@ specify_item
 	;
 
 specify_delay_value_list
-	: delay_value { }
-	| specify_delay_value_list ',' delay_value { }
+	: delay_value
+		{ delete $1;
+		}
+	| specify_delay_value_list ',' delay_value
+		{ delete $3;
+		}
 	;
 
 specify_item_list
@@ -2362,15 +2366,19 @@ specify_edge_path_decl
 	| specify_edge_path '=' delay_value_simple
 	;
 
+specify_edge_operator
+	: K_posedge
+	| K_negedge
+	;
+
+  /* The first two rules are not in development. */
 specify_edge_path
-	: '(' K_posedge specify_path_identifiers spec_polarity K_EG IDENTIFIER ')'
-	| '(' K_posedge specify_path_identifiers spec_polarity K_EG '(' expr_primary polarity_operator expression ')' ')'
-	| '(' K_posedge specify_path_identifiers spec_polarity K_SG IDENTIFIER ')'
-	| '(' K_posedge specify_path_identifiers spec_polarity K_SG '(' expr_primary polarity_operator expression ')' ')'
-	| '(' K_negedge specify_path_identifiers spec_polarity K_EG IDENTIFIER ')'
-	| '(' K_negedge specify_path_identifiers spec_polarity K_EG '(' expr_primary polarity_operator expression ')' ')'
-	| '(' K_negedge specify_path_identifiers spec_polarity K_SG IDENTIFIER ')'
-	| '(' K_negedge specify_path_identifiers spec_polarity K_SG '(' expr_primary polarity_operator expression ')' ')'
+	: '(' specify_edge_operator specify_path_identifiers spec_polarity K_EG IDENTIFIER ')'
+	| '(' specify_edge_operator specify_path_identifiers spec_polarity K_SG IDENTIFIER ')'
+	| '('                       specify_path_identifiers spec_polarity K_EG '(' specify_path_identifiers polarity_operator expression ')' ')'
+	| '(' specify_edge_operator specify_path_identifiers spec_polarity K_EG '(' specify_path_identifiers polarity_operator expression ')' ')'
+	| '('                       specify_path_identifiers spec_polarity K_SG '(' specify_path_identifiers polarity_operator expression ')' ')'
+	| '(' specify_edge_operator specify_path_identifiers spec_polarity K_SG '(' specify_path_identifiers polarity_operator expression ')' ')'
 	;
 
 polarity_operator
