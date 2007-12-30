@@ -48,7 +48,7 @@ LDFLAGS = @LDFLAGS@
 all: iverilog-vpi@EXEEXT@
 
 clean:
-	rm -f *.o
+	rm -f *.o config.h
 	rm -f iverilog-vpi@EXEEXT@
 
 distclean: clean
@@ -60,8 +60,13 @@ iverilog-vpi@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o iverilog-vpi@EXEEXT@ @EXTRALIBS@
 
 
-main.o: main.c
+main.o: main.c config.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/main.c
+
+config.h: config.h.in
+	sed -e 's;@IVLCC@;@CC@;' -e 's;@IVLCXX@;@CXX@;' \
+	    -e 's;@IVLCFLAGS@;@CXXFLAGS@;' \
+	    -e 's;@SHARED@;@shared@;' $< > $@
 
 # Windows specific...
 res.o: res.rc
