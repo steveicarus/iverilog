@@ -43,6 +43,7 @@
 #endif
 
 struct __vpiScope*stop_current_scope = 0;
+bool stop_is_finish;  /* When set, $stop acts like $finish (set in main.cc). */
 
 #ifndef USE_READLINE
 static char* readline_stub(const char*prompt)
@@ -474,6 +475,13 @@ static void invoke_command(char*txt)
 
 void stop_handler(int rc)
 {
+        /* The user may be running in a non-interactive environment, so
+         * they want $stop and <Control-C> to be the same as $finish. */
+      if (stop_is_finish) {
+	    schedule_finish(0);
+	    return;
+      }
+
       vpi_mcd_printf(1,"** VVP Stop(%d) **\n", rc);
       vpi_mcd_printf(1,"** Current simulation time is %" TIME_FMT "u ticks.\n",
 		     schedule_simtime());
@@ -502,30 +510,4 @@ void stop_handler(int rc)
 
       vpi_mcd_printf(1,"** Continue **\n");
 }
-
-
-/*
- * $Log: stop.cc,v $
- * Revision 1.16  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.15  2005/11/25 18:35:38  steve
- *  stop/continue messages go through MCD for logging.
- *
- * Revision 1.14  2005/09/20 18:34:02  steve
- *  Clean up compiler warnings.
- *
- * Revision 1.13  2005/01/29 06:29:17  steve
- *  Support interactive mode even without readline.
- *
- * Revision 1.12  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.11  2004/02/21 00:44:34  steve
- *  Add load command to interactive stop.
- *  Support decimal constants passed interactive to system tasks.
- *
- * Revision 1.10  2003/11/07 05:58:02  steve
- *  Fix conditional compilation of readline history.
- */
 
