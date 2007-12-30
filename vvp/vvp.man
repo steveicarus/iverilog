@@ -41,6 +41,11 @@ the module. However, if the name includes at least one directory
 character, then the search path is not scanned and the name is assumed
 to be a complete file name.
 .TP 8
+.B -n
+This flag makes $stop or a <Control-C> a synonym for $finish.
+It can be used to give the program a more meaningful interface when
+running in a non-interactive environment.
+.TP 8
 .B -v
 Turn on verbose messages. This will cause information about run time
 progress to be printed to standard out.

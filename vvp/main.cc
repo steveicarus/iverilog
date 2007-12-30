@@ -129,6 +129,7 @@ int main(int argc, char*argv[])
       const char *logfile_name = 0x0;
       FILE *logfile = 0x0;
       extern void vpi_set_vlog_info(int, char**);
+      extern bool stop_is_finish;
 
 #ifdef __MINGW32__
 	/* In the Windows world, we get the first module path
@@ -144,7 +145,10 @@ int main(int argc, char*argv[])
       }
 #endif
 
-      while ((opt = getopt(argc, argv, "+dhl:M:m:v")) != EOF) switch (opt) {
+        /* For non-interactive runs we do not want to run the interactive
+         * debugger, so make $stop just execute a $finish. */
+      stop_is_finish = false;
+      while ((opt = getopt(argc, argv, "+dhl:M:m:nv")) != EOF) switch (opt) {
          case 'h':
            fprintf(stderr,
                    "Usage: vvp [options] input-file [+plusargs...]\n"
@@ -154,6 +158,7 @@ int main(int argc, char*argv[])
                    " -M path        VPI module directory\n"
 		   " -M -           Clear VPI module path\n"
                    " -m module      Load vpi module.\n"
+                   " -n             Non-interactive ($stop = $finish).\n"
                    " -v             Verbose progress messages.\n" );
            exit(0);
 	  case 'l':
@@ -169,6 +174,9 @@ int main(int argc, char*argv[])
 	    break;
 	  case 'm':
 	    module_tab[module_cnt++] = optarg;
+	    break;
+	  case 'n':
+	    stop_is_finish = true;
 	    break;
 	  case 'v':
 	    verbose_flag = true;

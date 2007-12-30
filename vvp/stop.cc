@@ -47,6 +47,7 @@
 #endif
 
 struct __vpiScope*stop_current_scope = 0;
+bool stop_is_finish;  /* When set, $stop acts like $finish (set in main.cc). */
 
 #ifdef USE_READLINE
 
@@ -449,6 +450,13 @@ static void invoke_command(char*txt)
 
 void stop_handler(int rc)
 {
+        /* The user may be running in a non-interactive environment, so
+         * they want $stop and <Control-C> to be the same as $finish. */
+      if (stop_is_finish) {
+	    schedule_finish(0);
+	    return;
+      }
+
       printf("** VVP Stop(%d) **\n", rc);
       printf("** Current simulation time is %" TIME_FMT "u ticks.\n",
       		schedule_simtime());
