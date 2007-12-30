@@ -195,7 +195,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %type <expr>  lavalue lpvalue
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt
-%type <exprs> expression_list
+%type <exprs> expression_list expression_list_proper
 %type <exprs> assign assign_list
 
 %type <exprs> range range_opt
@@ -925,6 +925,19 @@ expression_list
 	| expression_list ','
 		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, 0);
 		  delete $1;
+		  $$ = tmp;
+		}
+	;
+
+expression_list_proper
+	: expression_list_proper ',' expression
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, $3);
+		  delete $1;
+		  $$ = tmp;
+		}
+	| expression
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
+		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
 	;
@@ -2859,7 +2872,7 @@ statement
 		  delete $1;
 		  $$ = tmp;
 		}
-	| identifier '(' expression_list ')' ';'
+	| identifier '(' expression_list_proper ')' ';'
 		{ PCallTask*tmp = new PCallTask(*$1, *$3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
