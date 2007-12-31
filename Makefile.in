@@ -262,7 +262,7 @@ endif
 
 installdirs: mkinstalldirs
 	$(srcdir)/mkinstalldirs $(bindir) $(includedir) $(libdir)/ivl \
-	    $(mandir) $(mandir)/man1
+	    $(libdir)/ivl/include $(mandir) $(mandir)/man1
 
 uninstall:
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
@@ -270,6 +270,7 @@ uninstall:
 	    do (cd $$dir ; $(MAKE) $@); done
 	for f in xnf.conf xnf-s.conf ivl@EXEEXT@; \
 	    do rm -f $(libdir)/ivl/$$f; done
+	-rmdir $(libdir)/ivl/include
 	-rmdir $(libdir)/ivl
 	for f in verilog iverilog-vpi gverilog@EXEEXT@; \
 	    do rm -f $(bindir)/$$f; done
