@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1999-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.48 2007/05/30 23:21:20 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -1329,6 +1326,90 @@ static int yywrap()
 		    istack->lineno+1, istack->path);
 
       return 0;
+}
+
+/*
+ * The dump_precompiled_defines() and load_precompiled_defines()
+ * functions dump/load macro definitions to/from a file. The defines
+ * are in the form:
+ *
+ *       <name>:<argc>:<len>:<value>
+ *
+ * for easy extraction. The value is already precompiled to handle
+ * macro substitution. The <len> is the number of bytes in the
+ * <value>. This is necessary because the value may contain arbitrary
+ * text, including ':' and \n characters.
+ *
+ * Each record is terminated by a \n character.
+ */
+static void do_dump_precompiled_defines(FILE*out, struct define_t*table)
+{
+      if (!table->keyword)
+	    fprintf(out, "%s:%d:%zd:%s\n", table->name, table->argc,
+		    strlen(table->value), table->value);
+      if (table->left)
+	    do_dump_precompiled_defines(out, table->left);
+      if (table->right)
+	  do_dump_precompiled_defines(out, table->right);
+}
+
+void dump_precompiled_defines(FILE*out)
+{
+      if (def_table)
+	    do_dump_precompiled_defines(out, def_table);
+}
+
+void load_precompiled_defines(FILE*src)
+{
+      char buf[4096];
+      int ch;
+
+      while ( (ch = fgetc(src)) != EOF ) {
+	    char *cp = buf;
+
+	    char*name = 0;
+	    char*value = 0;
+	    int argc = 0;
+	    size_t len = 0;
+
+	    name = cp;
+	    while ( ch != EOF && ch != ':') {
+		  *cp++ = ch;
+		  ch = fgetc(src);
+	    }
+	    if (ch != ':') return;
+
+	      /* Terminate the name string. */
+	    *cp++ = 0;
+	      /* Read the argc number */
+	    ch = fgetc(src);
+	    while (isdigit(ch)) {
+		  argc = 10*argc + ch-'0';
+		  ch = fgetc(src);
+	    }
+	    if (ch != ':') return;
+
+	    ch = fgetc(src);
+	    while (isdigit(ch)) {
+		  len = 10*len + ch-'0';
+		  ch = fgetc(src);
+	    }
+	    if (ch != ':') return;
+
+	    value = cp;
+	    while (len > 0) {
+		  ch = fgetc(src);
+		  if (ch == EOF) return;
+		  *cp++ = ch;
+		  len -= 1;
+	    }
+	    *cp++ = 0;
+
+	    ch = fgetc(src);
+	    if (ch != '\n') return;
+
+	    define_macro(name, value, 0, argc);
+      }
 }
 
 /*

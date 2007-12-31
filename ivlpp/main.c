@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1999 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@ const char COPYRIGHT[] =
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.23 2006/10/02 18:16:18 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -60,6 +57,7 @@ extern const char*optarg;
 #endif
 /* Path to the dependency file, if there is one. */
 char *dep_path = NULL;
+
 
 /*
  * Keep in source_list an array of pointers to file names. The array
@@ -200,6 +198,8 @@ int main(int argc, char*argv[])
       unsigned flag_errors = 0;
       char*out_path = 0;
       FILE*out;
+      char*precomp_out_path = 0;
+      FILE*precomp_out = NULL;
 
 	/* Define preprocessor keywords that I plan to just pass. */
       define_macro("celldefine",          "`celldefine", 1, 0);
@@ -225,7 +225,7 @@ int main(int argc, char*argv[])
       include_dir[0] = 0;  /* 0 is reserved for the current files path. */
       include_dir[1] = strdup(".");
 
-      while ((opt=getopt(argc, argv, "F:f:K:Lo:v")) != EOF) switch (opt) {
+      while ((opt=getopt(argc, argv, "F:f:K:Lo:p:P:v")) != EOF) switch (opt) {
 
 	  case 'F':
 	    flist_read_flags(optarg);
@@ -260,6 +260,25 @@ int main(int argc, char*argv[])
 	    }
 	    break;
 
+	  case 'p':
+	    if (precomp_out_path) {
+		  fprintf(stderr, "duplicate -p flag.\n");
+	    } else {
+		  precomp_out_path = optarg;
+	    }
+	    break;
+
+	  case 'P': {
+		FILE*src = fopen(optarg, "rb");
+		if (src == 0) {
+		      perror(optarg);
+		      exit(1);
+		}
+		load_precompiled_defines(src);
+		fclose(src);
+		break;
+	  }
+		
 	  case 'v':
 	    fprintf(stderr, "Icarus Verilog Preprocessor version %s\n",
 		    VERSION);
@@ -279,6 +298,8 @@ int main(int argc, char*argv[])
 		    "    -K<def> - Define a keyword macro that I just pass\n"
 		    "    -L      - Emit line number directives\n"
 		    "    -o<fil> - Send the output to <fil>\n"
+		    "    -p<fil> - Write precompiled defines to <fil>\n"
+		    "    -P<fil> - Read precompiled defines from <fil>\n"
 		    "    -v      - Print version information\n",
 		    argv[0]);
 	    return flag_errors;
@@ -309,6 +330,14 @@ int main(int argc, char*argv[])
 	    out = stdout;
       }
 
+      if (precomp_out_path) {
+	    precomp_out = fopen(precomp_out_path, "wb");
+	    if (precomp_out == 0) {
+		  perror(precomp_out_path);
+		  exit(1);
+	    }
+      }
+
       if(dep_path) {
 	      depend_file = fopen(dep_path, "w");
 	      if (depend_file == 0) {
@@ -329,6 +358,11 @@ int main(int argc, char*argv[])
 
       if(depend_file) {
 	      fclose(depend_file);
+      }
+
+      if (precomp_out) {
+	    dump_precompiled_defines(precomp_out);
+	    fclose(precomp_out);
       }
 
       return error_count;
