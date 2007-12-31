@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.76 2007/06/05 01:56:12 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -135,6 +132,8 @@ FILE*defines_file = 0;
 
 char*iconfig_path = 0;
 FILE*iconfig_file = 0;
+
+char*compiled_defines_path = 0;
 
 static char iconfig_common_path_buf[4096] = "";
 char*iconfig_common_path = iconfig_common_path_buf;
@@ -323,6 +322,7 @@ static int t_default(char*cmd, unsigned ncmd)
 	    remove(source_path);
 	    remove(iconfig_path);
 	    remove(defines_path);
+	    remove(compiled_defines_path);
       }
 
       if (rc != 0) {
@@ -584,6 +584,15 @@ int main(int argc, char **argv)
 	    return 1;
       }
 
+	/* Create a temporary file (I only really need the path) that
+	   can carry preprocessor precompiled defines to the library. */
+      { FILE*tmp_file = 0;
+	compiled_defines_path = strdup(my_tempfile("ivrli", &tmp_file));
+	if (tmp_file) {
+	      fclose(tmp_file);
+	}
+      }
+
       while ((opt = getopt(argc, argv, "B:c:D:Ef:g:hI:M:m:N::o:p:Ss:T:t:vVW:y:Y:")) != EOF) {
 
 	    switch (opt) {
@@ -690,7 +699,7 @@ int main(int argc, char **argv)
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION " ($Name:  $)\n\n");
-	    printf("Copyright 1998-2003 Stephen Williams\n");
+	    printf("Copyright 1998-2007 Stephen Williams\n");
 	    puts(NOTICE);
 
 	    if (version_flag)
@@ -767,9 +776,10 @@ int main(int argc, char **argv)
 
 	/* Start building the preprocess command line. */
 
-      sprintf(tmp, "%s%civlpp %s%s -F%s -f%s ", pbase,sep,
+      sprintf(tmp, "%s%civlpp %s%s -F%s -f%s -p%s ", pbase,sep,
 	      verbose_flag?" -v":"",
-	      e_flag?"":" -L", defines_path, source_path);
+	      e_flag?"":" -L", defines_path, source_path,
+	      compiled_defines_path);
 
       ncmd = strlen(tmp);
       cmd = malloc(ncmd + 1);
@@ -814,8 +824,8 @@ int main(int argc, char **argv)
 	/* Write the preprocessor command needed to preprocess a
 	   single file. This may be used to preprocess library
 	   files. */
-      fprintf(iconfig_file, "ivlpp:%s%civlpp -L -F%s\n",
-	      pbase, sep, defines_path);
+      fprintf(iconfig_file, "ivlpp:%s%civlpp -L -F%s -P%s\n",
+	      pbase, sep, defines_path, compiled_defines_path);
 
 	/* Done writing to the iconfig file. Close it now. */
       fclose(iconfig_file);
