@@ -1047,6 +1047,7 @@ bool dll_target::net_sysfunction(const NetSysFunc*net)
 
       struct ivl_lpm_s*obj = new struct ivl_lpm_s;
       obj->type = IVL_LPM_SFUNC;
+      FILE_NAME(obj, net);
       obj->name  = net->name();
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);

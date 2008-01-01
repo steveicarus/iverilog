@@ -205,6 +205,7 @@ extern void compile_reduce_xnor(char*label, struct symb_s arg);
 extern void compile_extend_signed(char*label, long width, struct symb_s arg);
 
 extern void compile_sfunc(char*label, char*name, char*format_string,
+			  long file_idx, long line_no,
 			  unsigned argc, struct symb_s*argv);
 extern void compile_repeat(char*label, long width, long repeat,
 			   struct symb_s arg);

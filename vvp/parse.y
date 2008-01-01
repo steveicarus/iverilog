@@ -379,12 +379,13 @@ statement
                 { compile_extend_signed($1, $3, $5); }
 
   /* System function call */
-        | T_LABEL K_SFUNC T_STRING ',' T_STRING ',' symbols ';'
-                { compile_sfunc($1, $3, $5, $7.cnt, $7.vect); }
+        | T_LABEL K_SFUNC T_NUMBER T_NUMBER T_STRING ',' T_STRING ','
+          symbols ';'
+                { compile_sfunc($1, $5, $7, $3, $4, $9.cnt, $9.vect); }
 
   /* System function call - no arguments */
-        | T_LABEL K_SFUNC T_STRING ',' T_STRING ';'
-                { compile_sfunc($1, $3, $5, 0, NULL); }
+        | T_LABEL K_SFUNC T_NUMBER T_NUMBER T_STRING ',' T_STRING ';'
+                { compile_sfunc($1, $5, $7, $3, $4, 0, NULL); }
 
   /* Shift nodes. */
 

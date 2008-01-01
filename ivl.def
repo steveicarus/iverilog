@@ -78,6 +78,8 @@ ivl_lpm_data
 ivl_lpm_datab
 ivl_lpm_define
 ivl_lpm_enable
+ivl_lpm_file
+ivl_lpm_lineno
 ivl_lpm_name
 ivl_lpm_q
 ivl_lpm_scope

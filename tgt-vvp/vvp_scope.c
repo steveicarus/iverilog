@@ -1958,7 +1958,9 @@ static void draw_type_string_of_nex(ivl_nexus_t nex)
 static void draw_lpm_sfunc(ivl_lpm_t net)
 {
       unsigned idx;
-      fprintf(vvp_out, "L_%p .sfunc \"%s\"", net, ivl_lpm_string(net));
+      fprintf(vvp_out, "L_%p .sfunc %u %u \"%s\"", net,
+              ivl_file_table_get(ivl_lpm_file(net)), ivl_lpm_lineno(net),
+              ivl_lpm_string(net));
 
 	/* Print the function type descriptor string. */
       fprintf(vvp_out, ", \"");

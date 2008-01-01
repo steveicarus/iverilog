@@ -127,6 +127,7 @@ static int make_vpi_argv(unsigned argc, vpiHandle*vpi_argv,
 
 
 void compile_sfunc(char*label, char*name,  char*format_string,
+		   long file_idx, long line_no,
 		   unsigned argc, struct symb_s*argv)
 {
       vpiHandle*vpi_argv = new vpiHandle[argc];
@@ -136,7 +137,7 @@ void compile_sfunc(char*label, char*name,  char*format_string,
       vvp_net_t*ptr = new vvp_net_t;
 
       vpiHandle sys = vpip_build_vpi_call(name, 0, width_code, ptr,
-					  argc, vpi_argv, 0, 0);
+					  argc, vpi_argv, file_idx, line_no);
       assert(sys);
 
 	/* Create and connect the functor to the label. */

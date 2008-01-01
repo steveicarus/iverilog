@@ -1,7 +1,7 @@
 #ifndef __t_dll_H
 #define __t_dll_H
 /*
- * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.143 2007/06/02 03:42:13 steve Exp $"
-#endif
 
 # include  "target.h"
 # include  "ivl_target.h"
@@ -292,6 +289,8 @@ struct ivl_lpm_s {
       ivl_lpm_type_t type;
       ivl_scope_t scope;
       perm_string name;
+      perm_string file;
+      unsigned lineno;
 	// Value returned by ivl_lpm_width;
       unsigned width;
 
@@ -699,6 +698,12 @@ static inline void FILE_NAME(ivl_expr_t expr, const LineInfo*info)
 {
       expr->file = info->get_file();
       expr->lineno = info->get_lineno();
+}
+
+static inline void FILE_NAME(ivl_lpm_t lpm, const LineInfo*info)
+{
+      lpm->file = info->get_file();
+      lpm->lineno = info->get_lineno();
 }
 
 #endif

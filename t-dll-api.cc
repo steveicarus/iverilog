@@ -823,6 +823,17 @@ extern "C" ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net)
       }
 }
 
+/* The file name and line number are only set for system functions! */
+extern "C" const char* ivl_lpm_file(ivl_lpm_t net)
+{
+      return net->file.str();
+}
+
+extern "C" unsigned ivl_lpm_lineno(ivl_lpm_t net)
+{
+      return net->lineno;
+}
+
 extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 {
       assert(net);
