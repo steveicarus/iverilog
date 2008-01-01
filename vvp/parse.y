@@ -31,6 +31,8 @@
  */
 extern FILE*yyin;
 
+vector <const char*> file_names;
+
 /*
  * Local variables.
  */
@@ -81,7 +83,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_MEM K_MEM_P K_MEM_I
 %token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_func K_vpi_func_r
 %token K_disable K_fork
-%token K_vpi_module K_vpi_time_precision
+%token K_vpi_module K_vpi_time_precision K_file_names
 
 %token <text> T_INSTR
 %token <text> T_LABEL
@@ -105,9 +107,10 @@ static struct __vpiModPath*modpath_dst = 0;
 
 %%
 
-source_file : header_lines_opt program ;
+source_file : header_lines_opt program footer_lines;
 
 header_lines_opt : header_lines | ;
+
 
 header_lines
 	: header_line
@@ -121,6 +124,17 @@ header_line
 		{ compile_vpi_time_precision($3); }
 	| K_vpi_time_precision '-' T_NUMBER ';'
 		{ compile_vpi_time_precision(-$3); }
+	;
+
+footer_lines
+	: K_file_names T_NUMBER ';' { file_names.reserve($2) }
+	  name_strings
+
+name_strings
+	: T_STRING ';'
+		{ file_names.push_back($1); }
+	| name_strings T_STRING ';'
+		{ file_names.push_back($2); }
 	;
 
   /* A program is simply a list of statements. No other structure. */
@@ -423,16 +437,18 @@ statement
      statement is a variant of %vpi_call that includes a thread vector
      after the name, and is used for function calls. */
 
-	| label_opt K_vpi_call T_STRING argument_opt ';'
-		{ compile_vpi_call($1, $3, $4.argc, $4.argv); }
+	| label_opt K_vpi_call T_NUMBER T_NUMBER T_STRING argument_opt ';'
+		{ compile_vpi_call($1, $5, $3, $4, $6.argc, $6.argv); }
 
-	| label_opt K_vpi_func T_STRING ','
+	| label_opt K_vpi_func T_NUMBER T_NUMBER T_STRING ','
 	  T_NUMBER ',' T_NUMBER argument_opt ';'
-		{ compile_vpi_func_call($1, $3, $5, $7, $8.argc, $8.argv); }
+		{ compile_vpi_func_call($1, $5, $7, $9, $3, $4,
+		                        $10.argc, $10.argv); }
 
-	| label_opt K_vpi_func_r T_STRING ',' T_NUMBER argument_opt ';'
-		{ compile_vpi_func_call($1, $3, $5, -vpiRealConst,
-					$6.argc, $6.argv); }
+	| label_opt K_vpi_func_r T_NUMBER T_NUMBER T_STRING ',' T_NUMBER
+	  argument_opt ';'
+		{ compile_vpi_func_call($1, $5, $7, -vpiRealConst, $3, $4,
+					$8.argc, $8.argv); }
 
   /* %disable statements are instructions that takes a scope reference
      as an operand. It therefore is parsed uniquely. */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,10 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_real.cc,v 1.11 2005/09/20 18:34:02 steve Exp $"
-#endif
 
+# include  "compile.h"
 # include  "vpi_priv.h"
 # include  "schedule.h"
 # include  <stdio.h>
@@ -48,6 +46,10 @@ static char* real_var_get_str(int code, vpiHandle ref)
       assert(ref->vpi_type->type_code == vpiRealVar);
 
       struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+
+      if (code == vpiFile) {  // Not implemented for now!
+	    return simple_set_rbuf_str(file_names[0]);
+      }
 
       char *nm, *ixs;
       if (rfp->parent) {

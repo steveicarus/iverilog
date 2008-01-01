@@ -365,6 +365,8 @@ struct __vpiSysTaskCall {
       unsigned vbit;
       signed   vwid;
       class vvp_net_t*fnet;
+      unsigned file_idx;
+      unsigned line_no;
 };
 
 extern struct __vpiSysTaskCall*vpip_cur_task;
@@ -457,7 +459,9 @@ extern vpiHandle vpip_build_vpi_call(const char*name,
 				     unsigned vbit, int vwid,
 				     class vvp_net_t*fnet,
 				     unsigned argc,
-				     vpiHandle*argv);
+				     vpiHandle*argv,
+				     long file_idx,
+				     long line_no);
 
 extern vthread_t vpip_current_vthread;
 

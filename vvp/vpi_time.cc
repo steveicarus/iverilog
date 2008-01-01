@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_time.cc,v 1.17 2005/12/05 21:19:55 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "vpi_priv.h"
@@ -81,7 +78,7 @@ vvp_time64_t vpip_scaled_real_to_time64(double val, struct __vpiScope*scope)
       double scale = pow(10.0L, units - vpi_time_precision);
       val *= scale;
 
-      return val;
+      return (vvp_time64_t) val;
 }
 
 static int timevar_time_get(int code, vpiHandle ref)

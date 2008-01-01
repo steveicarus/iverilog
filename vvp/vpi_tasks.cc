@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.35 2007/04/12 04:45:53 steve Exp $"
-#endif
 
 /*
  * This file keeps the table of system/task definitions. This table is
@@ -80,6 +77,10 @@ static int systask_get(int type, vpiHandle ref)
       switch (type) {
 	  case vpiTimeUnit:
 	    return rfp->scope->time_units;
+
+	  case vpiLineNo:
+	    return rfp->line_no;
+
 	  default:
 	    return vpiUndefined;
       }
@@ -95,6 +96,10 @@ static int sysfunc_get(int type, vpiHandle ref)
       switch (type) {
 	  case vpiSize:
 	    return rfp->vwid;
+
+	  case vpiLineNo:
+	    return rfp->line_no;
+
 	  default:
 	    return vpiUndefined;
       }
@@ -112,6 +117,9 @@ static char *systask_get_str(int type, vpiHandle ref)
 	     || (ref->vpi_type->type_code == vpiSysFuncCall));
 
       switch (type) {
+          case vpiFile:
+            assert(rfp->file_idx < file_names.size());
+            return simple_set_rbuf_str(file_names[rfp->file_idx]);
 
           case vpiName:
             return simple_set_rbuf_str(rfp->defn->info.tfname);
@@ -434,7 +442,7 @@ static const struct __vpirt vpip_sysfunc_rnet_rt = {
       systask_iter
 };
 
-  /* **** Manipulate the internal datastructures. **** */
+  /* **** Manipulate the internal data structures. **** */
 
 static struct __vpiUserSystf**def_table = 0;
 static unsigned def_count = 0;
@@ -485,7 +493,8 @@ struct __vpiUserSystf* vpip_find_systf(const char*name)
  */
 vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 			      class vvp_net_t*fnet,
-			      unsigned argc, vpiHandle*argv)
+			      unsigned argc, vpiHandle*argv,
+			      long file_idx, long line_no)
 {
       struct __vpiUserSystf*defn = vpip_find_systf(name);
       if (defn == 0) {
@@ -550,7 +559,9 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
       obj->vbit  = vbit;
       obj->vwid  = vwid;
       obj->fnet  = fnet;
-      obj->userdata = 0;
+      obj->file_idx  = (unsigned) file_idx;
+      obj->line_no   = (unsigned) line_no;
+      obj->userdata  = 0;
 
       compile_compiletf(obj);
 

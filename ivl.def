@@ -48,6 +48,10 @@ ivl_expr_uvalue
 ivl_expr_value
 ivl_expr_width
 
+ivl_file_table_dump
+ivl_file_table_get
+ivl_file_table_init
+
 ivl_logic_attr
 ivl_logic_attr_cnt
 ivl_logic_attr_val
@@ -172,8 +176,6 @@ ivl_process_scope
 ivl_process_stmt
 ivl_process_type
 
-ivl_statement_file
-ivl_statement_lineno
 ivl_statement_type
 
 ivl_stmt_block_count
@@ -189,6 +191,8 @@ ivl_stmt_cond_true
 ivl_stmt_delay_expr
 ivl_stmt_delay_val
 ivl_stmt_events
+ivl_stmt_file
+ivl_stmt_lineno
 ivl_stmt_lval
 ivl_stmt_lvals
 ivl_stmt_lwidth

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp.c,v 1.17 2004/10/04 01:10:57 steve Exp $"
-#endif
 
 /*
  */
@@ -82,6 +79,9 @@ int target_design(ivl_design_t des)
 	    return -1;
       }
 
+        /* Initialize the file name table. */
+      ivl_file_table_init();
+
       draw_execute_header(des);
 
       { int pre = ivl_design_time_precision(des);
@@ -105,23 +105,11 @@ int target_design(ivl_design_t des)
 
       rc = ivl_design_process(des, draw_process, 0);
 
+        /* Dump the file name table. */
+      ivl_file_table_dump(vvp_out);
+
       fclose(vvp_out);
 
       return rc;
 }
 
-/*
- * $Log: vvp.c,v $
- * Revision 1.17  2004/10/04 01:10:57  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.16  2003/05/16 03:22:52  steve
- *  Use fopen64 to open output file.
- *
- * Revision 1.15  2002/08/12 01:35:03  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.14  2002/08/11 23:47:04  steve
- *  Add missing Log and Ident strings.
- *
- */

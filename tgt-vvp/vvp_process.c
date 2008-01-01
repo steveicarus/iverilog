@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.133 2007/02/27 05:13:34 steve Exp $"
-#endif
 
 # include  "vvp_priv.h"
 # include  <string.h>
@@ -1333,7 +1330,9 @@ static int show_system_task_call(ivl_statement_t net)
       unsigned parm_count = ivl_stmt_parm_count(net);
 
       if (parm_count == 0) {
-	    fprintf(vvp_out, "    %%vpi_call \"%s\";\n", ivl_stmt_name(net));
+	    fprintf(vvp_out, "    %%vpi_call %u %u \"%s\";\n",
+	            ivl_file_table_get(ivl_stmt_file(net)),
+	            ivl_stmt_lineno(net), ivl_stmt_name(net));
 	    clear_expression_lookaside();
 	    return 0;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,10 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_event.cc,v 1.11 2005/06/12 01:10:26 steve Exp $"
-#endif
 
+# include  "compile.h"
 # include  "vpi_priv.h"
 # include  <stdio.h>
 #ifdef HAVE_MALLOC_H
@@ -35,6 +33,9 @@ static char* named_event_get_str(int code, vpiHandle ref)
 
       struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)ref;
 
+      if (code == vpiFile) {  // Not implemented for now!
+	    return simple_set_rbuf_str(file_names[0]);
+      }
       return generic_get_str(code, &obj->scope->base, obj->name, NULL);
 }
 
@@ -89,7 +90,7 @@ vpiHandle vpip_make_named_event(const char*name, vvp_net_t*funct)
  *
  * This also handles the case where the callback has been removed. The
  * vpi_remove_cb doesn't actually remove any callbacks, it marks them
- * as cancelled by clearing the cb_rtn function. This function reaps
+ * as canceled by clearing the cb_rtn function. This function reaps
  * those marked handles when it scans the list.
  */
 void vpip_run_named_event_callbacks(vpiHandle ref)
@@ -121,46 +122,4 @@ void vpip_run_named_event_callbacks(vpiHandle ref)
 	    }
       }
 }
-
-/*
- * $Log: vpi_event.cc,v $
- * Revision 1.11  2005/06/12 01:10:26  steve
- *  Remove useless references to functor.h
- *
- * Revision 1.10  2004/12/11 02:31:30  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.9  2003/05/04 20:43:36  steve
- *  Event callbacks support vpi_remove_cb.
- *
- * Revision 1.8  2003/04/23 03:09:25  steve
- *  VPI Access to named events.
- *
- * Revision 1.7  2003/03/06 04:32:00  steve
- *  Use hashed name strings for identifiers.
- *
- * Revision 1.6  2003/02/02 01:40:24  steve
- *  Five vpi_free_object a default behavior.
- *
- * Revision 1.5  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2002/07/12 18:23:30  steve
- *  Use result buf for event and scope names.
- *
- * Revision 1.3  2002/07/05 17:14:15  steve
- *  Names of vpi objects allocated as vpip_strings.
- *
- * Revision 1.2  2002/05/19 05:18:16  steve
- *  Add callbacks for vpiNamedEvent objects.
- *
- * Revision 1.1  2002/05/18 02:34:11  steve
- *  Add vpi support for named events.
- *
- *  Add vpi_mode_flag to track the mode of the
- *  vpi engine. This is for error checking.
- *
- */
 

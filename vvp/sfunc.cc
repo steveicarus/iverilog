@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sfunc.cc,v 1.1 2006/06/18 04:15:50 steve Exp $"
-#endif
 
 # include  "compile.h"
 # include  "sfunc.h"
@@ -139,7 +136,7 @@ void compile_sfunc(char*label, char*name,  char*format_string,
       vvp_net_t*ptr = new vvp_net_t;
 
       vpiHandle sys = vpip_build_vpi_call(name, 0, width_code, ptr,
-					  argc, vpi_argv);
+					  argc, vpi_argv, 0, 0);
       assert(sys);
 
 	/* Create and connect the functor to the label. */

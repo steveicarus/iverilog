@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,15 +16,13 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.76 2007/01/16 05:44:16 steve Exp $"
-#endif
 
 /*
  * vpiReg handles are handled here. These objects represent vectors of
  * .var objects that can be manipulated by the VPI module.
  */
 
+# include  "compile.h"
 # include  "vpi_priv.h"
 # include  "schedule.h"
 # include  "statistics.h"
@@ -129,6 +127,8 @@ static int signal_get(int code, vpiHandle ref)
       assert(rfp);
 
       switch (code) {
+	  case vpiLineNo:
+	    return 0;  // Not implemented for now!
 
 	  case vpiSigned:
 	    return rfp->signed_flag != 0;
@@ -169,6 +169,10 @@ static char* signal_get_str(int code, vpiHandle ref)
 	     || (ref->vpi_type->type_code==vpiReg));
 
       struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+
+      if (code == vpiFile) {  // Not implemented for now!
+	    return simple_set_rbuf_str(file_names[0]);
+      }
 
       char *nm, *ixs;
       if (rfp->parent) {

@@ -21,11 +21,18 @@
 
 # include  <stdio.h>
 # include  <fstream>
+# include  <vector>
 # include  "parse_misc.h"
 # include  "vpi_user.h"
 # include  "vvp_net.h"
 
 using namespace std;
+
+/*
+ * The file names are kept in this vector. Entry 0 is "N/A" and 1 is
+ * for interactive commands.
+ */
+extern vector<const char*> file_names;
 
 /*
  * The functions described here are the compile time support
@@ -327,6 +334,7 @@ extern void compile_code(char*label, char*mnem, comp_operands_t opa);
 extern void compile_disable(char*label, struct symb_s symb);
 
 extern void compile_vpi_call(char*label, char*name,
+			     long file_idx, long line_no,
 			     unsigned argc, vpiHandle*argv);
 
 /* Compile a function call. The vbit and vwid encode the return
@@ -335,6 +343,7 @@ extern void compile_vpi_call(char*label, char*name,
    code that represents the function type. */
 extern void compile_vpi_func_call(char*label, char*name,
 				  unsigned vbit, int vwid,
+				  long file_idx, long line_no,
 				  unsigned argc, vpiHandle*argv);
 
 extern void compile_fork(char*label, struct symb_s targ_s,

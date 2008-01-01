@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com>
+ * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com>
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -17,10 +17,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.33 2006/03/06 05:43:15 steve Exp $"
-#endif
 
+# include  "compile.h"
 # include  "vpi_priv.h"
 # include  "memory.h"
 # include  "statistics.h"
@@ -103,6 +101,9 @@ static char* memory_get_str(int code, vpiHandle ref)
 
       struct __vpiMemory*rfp = (struct __vpiMemory*)ref;
 
+      if (code == vpiFile) {  // Not implemented for now!
+	    return simple_set_rbuf_str(file_names[0]);
+      }
       return generic_get_str(code, &rfp->scope->base, rfp->name, NULL);
 }
 

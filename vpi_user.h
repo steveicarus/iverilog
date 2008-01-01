@@ -1,7 +1,7 @@
 #ifndef __vpi_user_H
 #define __vpi_user_H
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.37 2007/03/14 04:05:51 steve Exp $"
-#endif
 
 
 #if defined(__MINGW32__) || defined (__CYGWIN32__)
@@ -137,13 +134,13 @@ typedef struct t_vpi_value {
   
   The "da" field of the s_vpi_delay
   structure shall be a user allocated
-  array of "s_vpi_time" struture
+  array of "s_vpi_time" structure
   
-  The arrary shall store delay values returned
+  The array shall store delay values returned
   by vpi_get_delay(). The number of elements in
   the array shall be determined by
   
-  (1) The number of delays to be retrived 
+  (1) The number of delays to be retrieved
       ( normally this is used in vpi_get_delays (..) )
   { 
     (1.1) Setted by "no_of_delays" field
@@ -221,7 +218,7 @@ typedef struct t_vpi_value {
 
 
 typedef struct t_vpi_delay  {
-     struct t_vpi_time  *da; /* Array of delay datas */
+     struct t_vpi_time  *da; /* Array of delay data */
      PLI_INT32  no_of_delays ;
      PLI_INT32  time_type; /* vpiScaledRealTime, vpiSimTime */
      PLI_INT32  mtm_flag;
@@ -309,6 +306,8 @@ typedef struct t_vpi_delay  {
 #define vpiName       2
 #define vpiFullName   3
 #define vpiSize       4
+#define vpiFile       5
+#define vpiLineNo     6
 #define vpiTopModule  7
 #define vpiDefName    9
 #define vpiTimeUnit      11
@@ -565,93 +564,4 @@ extern void vpip_format_strength(char*str, s_vpi_value*value);
 
 EXTERN_C_END
 
-/*
- * $Log: vpi_user.h,v $
- * Revision 1.37  2007/03/14 04:05:51  steve
- *  VPI tasks take PLI_BYTE* by the standard.
- *
- * Revision 1.36  2004/10/04 01:10:56  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.35  2004/09/05 21:30:16  steve
- *  Better type safety.
- *
- * Revision 1.34  2004/03/09 04:29:26  steve
- *  Define function types.
- *
- * Revision 1.33  2004/02/19 21:32:46  steve
- *  Add sysfunctype to calltf structure.
- *
- * Revision 1.32  2004/01/13 02:55:50  steve
- *  Get value for vpoiConstType correct.
- *
- * Revision 1.31  2003/12/07 20:06:24  steve
- *  tfname can be constant.
- *
- * Revision 1.30  2003/10/30 03:42:51  steve
- *  Details on the vpi_get_file function.
- *
- * Revision 1.29  2003/07/15 03:49:22  steve
- *  Spelling fixes.
- *
- * Revision 1.28  2003/06/04 01:56:20  steve
- * 1) Adds configure logic to clean up compiler warnings
- * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
- *    tf_isetrealdelay, acc_handle_scope
- * 3) makes acc_next reentrant
- * 4) adds basic vpiWire type support
- * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
- * 6) add vpiLeftRange/RigthRange to signals
- *
- * Revision 1.27  2003/05/29 02:21:45  steve
- *  Implement acc_fetch_defname and its infrastructure in vvp.
- *
- * Revision 1.26  2003/05/23 04:04:02  steve
- *  Add vpi_fopen and vpi_get_file.
- *
- * Revision 1.25  2003/05/15 16:51:08  steve
- *  Arrange for mcd id=00_00_00_01 to go to stdout
- *  as well as a user specified log file, set log
- *  file to buffer lines.
- *
- *  Add vpi_flush function, and clear up some cunfused
- *  return codes from other vpi functions.
- *
- *  Adjust $display and vcd/lxt messages to use the
- *  standard output/log file.
- *
- * Revision 1.24  2003/04/20 02:49:07  steve
- *  acc_fetch_value support for %v format.
- *
- * Revision 1.23  2003/03/13 18:26:12  steve
- *  Verilog 2001 standart types.
- *
- * Revision 1.22  2003/03/13 04:34:35  steve
- *  Add VPI_TRACE tracing of VPI calls.
- *  vpi_handle_by_name takes a const char*.
- *
- * Revision 1.21  2003/03/12 02:49:38  steve
- *  Move _vpiNexisId safely out of the way.
- *
- * Revision 1.20  2003/03/10 23:40:54  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.19  2003/02/17 06:39:47  steve
- *  Add at least minimal implementations for several
- *  acc_ functions. Add support for standard ACC
- *  string handling.
- *
- *  Add the _pli_types.h header file to carry the
- *  IEEE1364-2001 standard PLI type declarations.
- *
- * Revision 1.18  2003/02/01 05:50:27  steve
- *  Make $time and $realtime available to $display uniquely.
- *
- * Revision 1.17  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.16  2003/01/09 04:10:17  steve
- *  Add vpi_put_userdata
- */
 #endif

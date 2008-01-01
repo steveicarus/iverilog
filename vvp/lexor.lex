@@ -3,7 +3,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,9 +20,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.66 2007/04/10 01:26:16 steve Exp $"
-#endif
 
 # include  "parse_misc.h"
 # include  "compile.h"
@@ -33,9 +30,10 @@
 
 %%
 
-  /* These are some special header keywords. */
+  /* These are some special header/footer keywords. */
 ^":vpi_module" { return K_vpi_module; }
 ^":vpi_time_precision" { return K_vpi_time_precision; }
+^":file_names" { return K_file_names; }
 
 
   /* A label is any non-blank text that appears left justified. */
@@ -187,7 +185,7 @@
       assert(yylval.text);
       return T_SYMBOL; }
 
-  /* Symbols may include komma `,' in certain constructs */
+  /* Symbols may include comma `,' in certain constructs */
 
 [A-Z]"<"[.$_a-zA-Z0-9/,]*">" {
       yylval.text = strdup(yytext);
@@ -214,220 +212,3 @@ int yywrap()
       return -1;
 }
 
-
-/*
- * $Log: lexor.lex,v $
- * Revision 1.66  2007/04/10 01:26:16  steve
- *  variable arrays generated without writing a record for each word.
- *
- * Revision 1.65  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.64  2006/11/22 06:10:05  steve
- *  Fix spurious event from net8 that is forced.
- *
- * Revision 1.63  2006/09/23 04:57:20  steve
- *  Basic support for specify timing.
- *
- * Revision 1.62  2006/07/30 02:51:36  steve
- *  Fix/implement signed right shift.
- *
- * Revision 1.61  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.60  2006/05/17 04:15:25  steve
- *  Lexor os never interactive.
- *
- * Revision 1.59  2006/03/08 05:29:42  steve
- *  Add support for logic parameters.
- *
- * Revision 1.58  2006/01/02 05:32:07  steve
- *  Require explicit delay node from source.
- *
- * Revision 1.57  2005/11/25 17:55:26  steve
- *  Put vec8 and vec4 nets into seperate net classes.
- *
- * Revision 1.56  2005/10/12 17:23:15  steve
- *  Add alias nodes.
- *
- * Revision 1.55  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.54  2005/05/24 01:43:27  steve
- *  Add a sign-extension node.
- *
- * Revision 1.53  2005/05/08 23:40:14  steve
- *  Add support for variable part select.
- *
- * Revision 1.52  2005/04/28 04:59:53  steve
- *  Remove dead functor code.
- *
- * Revision 1.51  2005/04/24 20:07:26  steve
- *  Add DFF nodes.
- *
- * Revision 1.50  2005/03/09 05:52:04  steve
- *  Handle case inequality in netlists.
- *
- * Revision 1.49  2005/02/07 22:42:42  steve
- *  Add .repeat functor and BIFIF functors.
- *
- * Revision 1.48  2005/02/03 04:55:13  steve
- *  Add support for reduction logic gates.
- *
- * Revision 1.47  2005/01/22 01:06:20  steve
- *  Implement the .cmp/eeq LPM node.
- *
- * Revision 1.46  2005/01/09 20:11:15  steve
- *  Add the .part/pv node and related functionality.
- *
- * Revision 1.45  2004/12/29 23:45:13  steve
- *  Add the part concatenation node (.concat).
- *
- *  Add a vvp_event_anyedge class to handle the special
- *  case of .event statements of edge type. This also
- *  frees the posedge/negedge types to handle all 4 inputs.
- *
- *  Implement table functor recv_vec4 method to receive
- *  and process vectors.
- *
- * Revision 1.44  2004/12/11 02:31:29  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.43  2004/06/30 02:15:57  steve
- *  Add signed LPM divide.
- *
- * Revision 1.42  2004/06/16 16:33:26  steve
- *  Add structural equality compare nodes.
- *
- * Revision 1.41  2003/08/26 16:26:02  steve
- *  ifdef idents correctly.
- *
- * Revision 1.40  2003/04/11 05:15:39  steve
- *  Add signed versions of .cmp/gt/ge
- *
- * Revision 1.39  2003/03/10 23:37:07  steve
- *  Direct support for string parameters.
- *
- * Revision 1.38  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.37  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.36  2003/01/25 23:48:06  steve
- *  Add thread word array, and add the instructions,
- *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
- *
- * Revision 1.35  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.34  2002/06/21 04:58:55  steve
- *  Add support for special integer vectors.
- *
- * Revision 1.33  2002/04/14 03:53:20  steve
- *  Allow signed constant vectors for call_vpi parameters.
- *
- * Revision 1.32  2002/03/18 00:19:34  steve
- *  Add the .ufunc statement.
- *
- * Revision 1.31  2002/03/01 05:42:50  steve
- *  out-of-memory asserts.
- *
- * Revision 1.30  2002/02/27 05:46:33  steve
- *  carriage return is white space.
- *
- * Revision 1.29  2002/01/03 04:19:02  steve
- *  Add structural modulus support down to vvp.
- *
- * Revision 1.28  2001/11/01 03:00:19  steve
- *  Add force/cassign/release/deassign support. (Stephan Boettcher)
- *
- * Revision 1.27  2001/10/16 02:47:37  steve
- *  Add arith/div object.
- *
- * Revision 1.26  2001/07/07 02:57:33  steve
- *  Add the .shift/r functor.
- *
- * Revision 1.25  2001/07/06 04:46:44  steve
- *  Add structural left shift (.shift/l)
- *
- * Revision 1.24  2001/06/30 23:03:17  steve
- *  support fast programming by only writing the bits
- *  that are listed in the input file.
- *
- * Revision 1.23  2001/06/18 03:10:34  steve
- *   1. Logic with more than 4 inputs
- *   2. Id and name mangling
- *   3. A memory leak in draw_net_in_scope()
- *   (Stephan Boettcher)
- *
- * Revision 1.22  2001/06/16 23:45:05  steve
- *  Add support for structural multiply in t-dll.
- *  Add code generators and vvp support for both
- *  structural and behavioral multiply.
- *
- * Revision 1.21  2001/06/15 04:07:58  steve
- *  Add .cmp statements for structural comparison.
- *
- * Revision 1.20  2001/06/07 03:09:03  steve
- *  Implement .arith/sub subtraction.
- *
- * Revision 1.19  2001/06/05 03:05:41  steve
- *  Add structural addition.
- *
- * Revision 1.18  2001/05/20 00:46:12  steve
- *  Add support for system function calls.
- *
- * Revision 1.17  2001/05/10 00:26:53  steve
- *  VVP support for memories in expressions,
- *  including general support for thread bit
- *  vectors as system task parameters.
- *  (Stephan Boettcher)
- *
- * Revision 1.16  2001/05/09 02:53:25  steve
- *  Implement the .resolv syntax.
- *
- * Revision 1.15  2001/05/01 01:09:39  steve
- *  Add support for memory objects. (Stephan Boettcher)
- *
- * Revision 1.14  2001/04/24 02:23:59  steve
- *  Support for UDP devices in VVP (Stephen Boettcher)
- *
- * Revision 1.13  2001/04/18 04:21:23  steve
- *  Put threads into scopes.
- *
- * Revision 1.12  2001/04/14 05:10:56  steve
- *  support the .event/or statement.
- *
- * Revision 1.11  2001/04/05 01:34:26  steve
- *  Add the .var/s and .net/s statements for VPI support.
- *
- * Revision 1.10  2001/04/04 04:33:08  steve
- *  Take vector form as parameters to vpi_call.
- *
- * Revision 1.9  2001/03/26 04:00:39  steve
- *  Add the .event statement and the %wait instruction.
- *
- * Revision 1.8  2001/03/25 19:36:45  steve
- *  Accept <> characters in labels and symbols.
- *
- * Revision 1.7  2001/03/25 00:35:35  steve
- *  Add the .net statement.
- *
- * Revision 1.6  2001/03/23 02:40:22  steve
- *  Add the :module header statement.
- *
- * Revision 1.5  2001/03/20 02:48:40  steve
- *  Copyright notices.
- *
- */

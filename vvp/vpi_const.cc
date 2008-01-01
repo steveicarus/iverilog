@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,11 +16,9 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.39 2007/04/12 04:45:52 steve Exp $"
-#endif
 
 # include  "vpi_priv.h"
+# include  "compile.h"
 # include  <stdio.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -34,6 +32,9 @@ static int string_get(int code, vpiHandle ref)
     struct __vpiStringConst*rfp;
 
       switch (code) {
+          case vpiLineNo:
+	      return 0;  // Not implemented for now!
+
           case vpiSize:
 	      rfp = (struct __vpiStringConst*)ref;
 
@@ -254,6 +255,9 @@ static char* string_param_get_str(int code, vpiHandle obj)
 
       assert(obj->vpi_type->type_code == vpiParameter);
 
+      if (code == vpiFile) {  // Not implemented for now!
+	    return simple_set_rbuf_str(file_names[0]);
+      }
       return generic_get_str(code, &rfp->scope->base, rfp->basename, NULL);
 }
 
@@ -313,6 +317,9 @@ static int binary_get(int code, vpiHandle ref)
       switch (code) {
 	  case vpiConstType:
 	    return vpiBinaryConst;
+
+	  case vpiLineNo:
+	    return 0;  // Not implemented for now!
 
 	  case vpiSigned:
 	    return rfp->signed_flag? 1 : 0;
@@ -427,6 +434,9 @@ static char* binary_param_get_str(int code, vpiHandle obj)
 
       assert(obj->vpi_type->type_code == vpiParameter);
 
+      if (code == vpiFile) {  // Not implemented for now!
+	    return simple_set_rbuf_str(file_names[0]);
+      }
       return generic_get_str(code, &rfp->scope->base, rfp->basename, NULL);
 }
 

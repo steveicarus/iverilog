@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.36 2006/04/10 00:37:43 steve Exp $"
-#endif
 
 # include  "compile.h"
 # include  "vpi_priv.h"
@@ -64,6 +61,9 @@ static int scope_get(int code, vpiHandle obj)
       assert(handle_is_scope(obj));
 
       switch (code) {
+	  case vpiLineNo:
+	    return 0;  // Not implemented for now!
+
 	  case vpiTimeUnit:
 	    return ref->time_units;
 
@@ -115,6 +115,10 @@ static char* scope_get_str(int code, vpiHandle obj)
       char buf[4096];  // XXX is a fixed buffer size really reliable?
       const char *p=0;
       switch (code) {
+	  case vpiFile:
+	    p = file_names[0]; // Not implemented for now!
+	    break;
+
 	  case vpiFullName:
 	    buf[0] = 0;
 	    construct_scope_fullname(ref, buf);

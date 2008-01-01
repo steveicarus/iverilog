@@ -1021,7 +1021,7 @@ static struct vector_info draw_load_add_immediate(ivl_expr_t le,
 
       imm = get_number_immediate(re);
 
-	/* Load the immidiate value into word register 0 */
+	/* Load the immediate value into word register 0 */
       fprintf(vvp_out, "  %%ix/load 0, %lu;\n", imm);
 
       lv.base = allocate_vector(wid);
@@ -1734,7 +1734,7 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
       if (swid > res.wid)
 	    swid = res.wid;
 
-	/* If this is an access to an array, handle that by emiting a
+	/* If this is an access to an array, handle that by emitting a
 	   load/av instruction. */
       if (ivl_signal_array_count(sig) > 1) {
 	    ivl_expr_t ix = ivl_expr_oper1(exp);
@@ -1913,7 +1913,7 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
       res.wid = wid;
 
 	/* First look for the self expression in the lookaside, and
-	   allocate that if possible. If I find it, then immediatly
+	   allocate that if possible. If I find it, then immediately
 	   return that. */
       if ( (res.base = allocate_vector_exp(exp, wid, alloc_exclusive)) != 0) {
 	    fprintf(vvp_out, "; Reuse base=%u wid=%u from lookaside.\n",
@@ -2087,8 +2087,10 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
 		   || ivl_expr_value(exp) == IVL_VT_BOOL);
 	    res.base = allocate_vector(wid);
 	    res.wid  = wid;
-	    fprintf(vvp_out, "    %%vpi_func \"%s\", %u, %u;\n",
-		    ivl_expr_name(exp), res.base, res.wid);
+	    fprintf(vvp_out, "    %%vpi_func %u %u \"%s\", %u, %u;\n",
+		    ivl_file_table_get(ivl_expr_file(exp)),
+		    ivl_expr_lineno(exp), ivl_expr_name(exp),
+		    res.base, res.wid);
 	    return res;
 
       }

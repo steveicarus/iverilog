@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.144 2007/04/02 01:12:34 steve Exp $"
-#endif
 
 # include "config.h"
 # include  "StringHeap.h"
@@ -30,6 +27,15 @@
 #endif
 
 static StringHeap api_strings;
+
+struct ltstr
+{
+      bool operator()(const char*s1, const char*s2) const
+      {
+	    return strcmp(s1, s2) < 0;
+      }
+};
+static map<const char*, unsigned, ltstr> file_names;
 
 /* THE FOLLOWING ARE FUNCTIONS THAT ARE CALLED FROM THE TARGET. */
 
@@ -487,6 +493,46 @@ extern "C" unsigned ivl_expr_width(ivl_expr_t net)
 {
       assert(net);
       return net->width_;
+}
+
+extern "C" void ivl_file_table_dump(FILE*fp)
+{
+      assert(fp);
+
+      unsigned size = file_names.size();
+      fprintf(fp, "# The file index is used to find the file name in the "
+                  "following table.\n:file_names %u;\n", size);
+
+        /* We want to print the names in index order so convert the map
+         * to a vector in the correct order. */
+      vector<const char*> names(size);
+      map<const char*, unsigned, ltstr>::iterator cur;
+      for (cur = file_names.begin(); cur != file_names.end(); cur++) {
+	    names[(*cur).second] = (*cur).first;
+      }
+
+      for (unsigned idx = 0; idx < size; idx++) {
+	    fprintf(fp, "    \"%s\";\n", names[idx]);
+      }
+}
+
+extern "C" unsigned ivl_file_table_get(const char*name)
+{
+      if (name == NULL) return 0;
+        /* The new index is the current map size. This is inserted only
+         * if the file name is not currently in the map. */
+      file_names.insert(make_pair(name, file_names.size()));
+      return file_names[name];
+}
+
+extern "C" void ivl_file_table_init()
+{
+      assert(file_names.empty());
+
+        /* The first two index entries do not depend on a real file name
+         * and are always available. */
+      file_names["N/A"] = 0;
+      file_names["<interactive>"] = 1;
 }
 
 extern "C" const char* ivl_logic_attr(ivl_net_logic_t net, const char*key)
@@ -1653,12 +1699,12 @@ extern "C" ivl_statement_type_t ivl_statement_type(ivl_statement_t net)
       return net->type_;
 }
 
-extern "C" const char* ivl_statement_file(ivl_statement_t net)
+extern "C" const char* ivl_stmt_file(ivl_statement_t net)
 {
       return net->file.str();
 }
 
-extern "C" unsigned ivl_statement_lineno(ivl_statement_t net)
+extern "C" unsigned ivl_stmt_lineno(ivl_statement_t net)
 {
       return net->lineno;
 }

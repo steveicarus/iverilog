@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.16 2006/06/18 04:15:50 steve Exp $"
-#endif
 
 /*
  * This file provides a simple command line debugger for the vvp
@@ -27,7 +24,6 @@
  */
 
 # include  "config.h"
-
 
 # include  "vpi_priv.h"
 # include  "vthread.h"
@@ -175,7 +171,8 @@ static void cmd_call(unsigned argc, char*argv[])
 	   when we finish. */
       if (errors == 0) {
 	    vpiHandle call_handle = vpip_build_vpi_call(argv[0], 0, 0, 0,
-							vpi_argc, vpi_argv);
+							vpi_argc, vpi_argv,
+							1, 0);
 	    if (call_handle == 0)
 		  goto out;
 

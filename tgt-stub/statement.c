@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: statement.c,v 1.13 2007/04/02 01:12:34 steve Exp $"
-#endif
 
 # include "config.h"
 # include "priv.h"
@@ -325,7 +322,7 @@ void show_statement(ivl_statement_t net, unsigned ind)
 	  case IVL_ST_STASK: {
 		fprintf(out, "%*sCall %s(%u parameters); /* %s:%u */\n",
 			ind, "", ivl_stmt_name(net), ivl_stmt_parm_count(net),
-			ivl_statement_file(net), ivl_statement_lineno(net));
+			ivl_stmt_file(net), ivl_stmt_lineno(net));
 		for (idx = 0 ;  idx < ivl_stmt_parm_count(net) ;  idx += 1)
 		      if (ivl_stmt_parm(net, idx))
 			    show_expression(ivl_stmt_parm(net, idx), ind+4);

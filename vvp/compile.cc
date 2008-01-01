@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.232 2007/06/07 03:20:16 steve Exp $"
-#endif
 
 # include  "arith.h"
 # include  "compile.h"
@@ -1598,7 +1595,9 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
       compile_vpi_lookup(&code->handle, scope.text);
 }
 
-void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)
+void compile_vpi_call(char*label, char*name,
+                      long file_idx, long line_no,
+                      unsigned argc, vpiHandle*argv)
 {
       if (label)
 	    compile_codelabel(label);
@@ -1609,7 +1608,8 @@ void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)
 
 	/* Create a vpiHandle that bundles the call information, and
 	   store that handle in the instruction. */
-      code->handle = vpip_build_vpi_call(name, 0, 0, 0, argc, argv);
+      code->handle = vpip_build_vpi_call(name, 0, 0, 0, argc, argv,
+                                         file_idx, line_no);
       if (code->handle == 0)
 	    compile_errors += 1;
 
@@ -1619,6 +1619,7 @@ void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)
 
 void compile_vpi_func_call(char*label, char*name,
 			   unsigned vbit, int vwid,
+			   long file_idx, long line_no,
 			   unsigned argc, vpiHandle*argv)
 {
       if (label)
@@ -1630,7 +1631,8 @@ void compile_vpi_func_call(char*label, char*name,
 
 	/* Create a vpiHandle that bundles the call information, and
 	   store that handle in the instruction. */
-      code->handle = vpip_build_vpi_call(name, vbit, vwid, 0, argc, argv);
+      code->handle = vpip_build_vpi_call(name, vbit, vwid, 0, argc, argv,
+                                         file_idx, line_no);
       if (code->handle == 0)
 	    compile_errors += 1;
 
