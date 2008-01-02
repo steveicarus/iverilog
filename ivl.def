@@ -48,9 +48,9 @@ ivl_expr_uvalue
 ivl_expr_value
 ivl_expr_width
 
-ivl_file_table_dump
-ivl_file_table_get
-ivl_file_table_init
+ivl_file_table_index
+ivl_file_table_item
+ivl_file_table_size
 
 ivl_logic_attr
 ivl_logic_attr_cnt

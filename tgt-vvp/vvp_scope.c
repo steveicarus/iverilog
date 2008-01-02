@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.160 2007/04/12 04:40:37 steve Exp $"
-#endif
 
 # include  "vvp_priv.h"
 #ifdef HAVE_MALLOC_H
@@ -1959,7 +1956,7 @@ static void draw_lpm_sfunc(ivl_lpm_t net)
 {
       unsigned idx;
       fprintf(vvp_out, "L_%p .sfunc %u %u \"%s\"", net,
-              ivl_file_table_get(ivl_lpm_file(net)), ivl_lpm_lineno(net),
+              ivl_file_table_index(ivl_lpm_file(net)), ivl_lpm_lineno(net),
               ivl_lpm_string(net));
 
 	/* Print the function type descriptor string. */

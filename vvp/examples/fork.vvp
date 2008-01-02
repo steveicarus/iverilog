@@ -1,6 +1,6 @@
 :vpi_module "system";
 
-; Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+; Copyright (c) 2001-2008  Stephen Williams (steve@icarus.com)
 ;
 ;    This source code is free software; you can redistribute it
 ;    and/or modify it in source code form under the terms of the GNU
@@ -19,15 +19,18 @@
 
 ; This sample demonstrates the behavior of %fork and %join.
 
-S_main .scope "main";
+S_main .scope module, "main";
 
-child	%vpi_call "$display", "I'm a child";
+child	%vpi_call 0 0 "$display", "I'm a child";
 	%end;
 
 parent	%fork	child, S_main;
-	%vpi_call "$display", "I'm a parent";
+	%vpi_call 0 0 "$display", "I'm a parent";
 	%join;
-	%vpi_call "$display", "reaped";
+	%vpi_call 0 0 "$display", "reaped";
 	%end;
 
 	.thread parent;
+:file_names 2;
+    "N/A";
+    "<interactive>";

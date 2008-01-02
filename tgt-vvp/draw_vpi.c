@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -291,7 +291,7 @@ void draw_vpi_task_call(ivl_statement_t tnet)
 {
       char call_string[1024];
       sprintf(call_string, "    %%vpi_call %u %u \"%s\"",
-              ivl_file_table_get(ivl_stmt_file(tnet)),
+              ivl_file_table_index(ivl_stmt_file(tnet)),
               ivl_stmt_lineno(tnet), ivl_stmt_name(tnet));
       draw_vpi_taskfunc_args(call_string, tnet, 0);
 }
@@ -304,7 +304,7 @@ struct vector_info draw_vpi_func_call(ivl_expr_t fnet, unsigned wid)
       res.base = allocate_vector(wid);
       res.wid  = wid;
       sprintf(call_string, "    %%vpi_func %u %u \"%s\", %u, %u",
-              ivl_file_table_get(ivl_expr_file(fnet)),
+              ivl_file_table_index(ivl_expr_file(fnet)),
 	      ivl_expr_lineno(fnet), ivl_expr_name(fnet), res.base, res.wid);
 
       draw_vpi_taskfunc_args(call_string, 0, fnet);
@@ -318,7 +318,7 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
       int res = allocate_word();
 
       sprintf(call_string, "    %%vpi_func/r %u %u \"%s\", %d",
-              ivl_file_table_get(ivl_expr_file(fnet)),
+              ivl_file_table_index(ivl_expr_file(fnet)),
 	      ivl_expr_lineno(fnet), ivl_expr_name(fnet), res);
 
       draw_vpi_taskfunc_args(call_string, 0, fnet);

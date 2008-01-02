@@ -1,6 +1,13 @@
 :vpi_module "system";
 
-; Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+
+; IMPORTANT NOTE:
+;
+; This example uses constructs that are no longer supported. It will
+; not run with the current vvp implementation!
+
+
+; Copyright (c) 2001-2008  Stephen Williams (steve@icarus.com)
 ; Copyright (c) 2001  Stephan Boettcher <stephan@nevis.columbia.edu>
 ;
 ;    This source code is free software; you can redistribute it

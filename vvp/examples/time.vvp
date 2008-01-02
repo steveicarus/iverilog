@@ -1,6 +1,6 @@
 :vpi_module "system";
 
-; Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+; Copyright (c) 2001-2008  Stephen Williams (steve@icarus.com)
 ;
 ;    This source code is free software; you can redistribute it
 ;    and/or modify it in source code form under the terms of the GNU
@@ -28,10 +28,13 @@
 ; This tests that the special $time symbol references the vpiHandle for
 ; the system time.
 
-main	.scope "main";
+main	.scope module, "main";
 
 code
-	%delay 45;
-	%vpi_call "$display", "Hello, Clock: ", $time;
+	%delay 45, 0;
+	%vpi_call 0 0 "$display", "Hello, Clock: ", $time;
 	%end;
 	.thread	code;
+:file_names 2;
+    "N/A";
+    "<interactive>";

@@ -79,9 +79,6 @@ int target_design(ivl_design_t des)
 	    return -1;
       }
 
-        /* Initialize the file name table. */
-      ivl_file_table_init();
-
       draw_execute_header(des);
 
       { int pre = ivl_design_time_precision(des);
@@ -106,7 +103,13 @@ int target_design(ivl_design_t des)
       rc = ivl_design_process(des, draw_process, 0);
 
         /* Dump the file name table. */
-      ivl_file_table_dump(vvp_out);
+      unsigned size = ivl_file_table_size();
+      fprintf(vvp_out, "# The file index is used to find the file name in "
+                       "the following table.\n:file_names %u;\n", size);
+      unsigned idx;
+      for (idx = 0; idx < size; idx++) {
+	    fprintf(vvp_out, "    \"%s\";\n", ivl_file_table_item(idx));
+      }
 
       fclose(vvp_out);
 

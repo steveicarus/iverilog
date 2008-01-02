@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1331,7 +1331,7 @@ static int show_system_task_call(ivl_statement_t net)
 
       if (parm_count == 0) {
 	    fprintf(vvp_out, "    %%vpi_call %u %u \"%s\";\n",
-	            ivl_file_table_get(ivl_stmt_file(net)),
+	            ivl_file_table_index(ivl_stmt_file(net)),
 	            ivl_stmt_lineno(net), ivl_stmt_name(net));
 	    clear_expression_lookaside();
 	    return 0;

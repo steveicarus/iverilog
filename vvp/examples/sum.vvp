@@ -1,6 +1,6 @@
 :vpi_module "system";
 
-; Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+; Copyright (c) 2001-2008  Stephen Williams (steve@icarus.com)
 ;
 ;    This source code is free software; you can redistribute it
 ;    and/or modify it in source code form under the terms of the GNU
@@ -23,8 +23,8 @@
 ;    module main;
 ;      reg [3:0] A, B;
 ;      wire [3:0] Q = A + B;
-:
-:      initial begin
+;
+;      initial begin
 ;        A = 2;
 ;        B = 3;
 ;        #1 $display("%b  %b = %b", A, B, Q);
@@ -36,26 +36,25 @@
 ; passed to the statement.
 
 
-S_main .scope "main";
+S_main .scope module, "main";
 
-A    .var	"A", 3, 0;
-B    .var	"B", 3, 0;
+A    .var	"A", 3 0;
+B    .var	"B", 3 0;
+Q    .net	"Q", 3 0, add;
 
-add  .arith/sum	4, A[0], A[1], A[2], A[3], B[0], B[1], B[2], B[3];
+add  .arith/sum	4, A, B;
 
-Q   .net	"Q", 3, 0, add[0], add[1], add[2], add[3];
 
-start	%set	A[0], 0;
-	%set	A[1], 1;
-	%set	A[2], 0;
-	%set	A[3], 0;
-	%set	B[0], 1;
-	%set	B[1], 1;
-	%set	B[2], 0;
-	%set	B[3], 0;
+start	%movi 8, 2, 4; Load a 4 bit value (2) into location 8
+	%set/v	A, 8, 4;
+	%movi 8, 3, 4; Ditto except the value is 3
+	%set/v	B, 8, 4;
 
-	%delay	1;
+	%delay	1, 0;
 
-	%vpi_call "$display", "%b + %b == %b", A, B, Q;
+	%vpi_call 0 0 "$display", "%b + %b == %b", A, B, Q;
 	%end;
 	.thread start;
+:file_names 2;
+    "N/A";
+    "<interactive>";

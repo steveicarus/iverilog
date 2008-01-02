@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2088,7 +2088,7 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
 	    res.base = allocate_vector(wid);
 	    res.wid  = wid;
 	    fprintf(vvp_out, "    %%vpi_func %u %u \"%s\", %u, %u;\n",
-		    ivl_file_table_get(ivl_expr_file(exp)),
+		    ivl_file_table_index(ivl_expr_file(exp)),
 		    ivl_expr_lineno(exp), ivl_expr_name(exp),
 		    res.base, res.wid);
 	    return res;

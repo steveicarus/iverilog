@@ -1,6 +1,6 @@
 :vpi_module "system";
 
-; Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+; Copyright (c) 2001-2008  Stephen Williams (steve@icarus.com)
 ;
 ;    This source code is free software; you can redistribute it
 ;    and/or modify it in source code form under the terms of the GNU
@@ -34,19 +34,22 @@
 ;    endmodule
 ;
 
-main	.scope "main";
+main	.scope module, "main";
 
-V_main.a	.var "a", 0, 0;
+V_main.a	.var "a", 0 0;
 V_main.b	.event posedge, V_main.a;
 
 code
-	%set V_main.a, 0;
-	%delay 1;
-	%set V_main.a, 1;
+	%set/v V_main.a, 0, 1;
+	%delay 1, 0;
+	%set/v V_main.a, 1, 1;
 	%end;
 	.thread	code;
 
 loop	%wait V_main.b;
-	%vpi_call "$display", "Got a posedge.";
+	%vpi_call 0 0 "$display", "Got a posedge.";
 	%jmp loop;
 	.thread loop;
+:file_names 2;
+    "N/A";
+    "<interactive>";

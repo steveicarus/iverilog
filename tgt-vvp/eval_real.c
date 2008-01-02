@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -211,7 +211,7 @@ static int draw_sfunc_real(ivl_expr_t exp)
 	    if (ivl_expr_parms(exp) == 0) {
 		  res = allocate_word();
 		  fprintf(vvp_out, "    %%vpi_func/r %u %u \"%s\", %d;\n",
-			  ivl_file_table_get(ivl_expr_file(exp)),
+			  ivl_file_table_index(ivl_expr_file(exp)),
 			  ivl_expr_lineno(exp), ivl_expr_name(exp), res);
 
 	    } else {

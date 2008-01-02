@@ -12,7 +12,7 @@ main    .scope module, "main" "main";
 ; The bit range is given for the purposes of VPI access. The range
 ; corresponds to the declaration "reg [7:0] test", so leads to an 8
 ; bit wide vector.
-test	.var	"test", 7, 0;
+test	.var	"test", 7 0;
 
 ; The %set/v opcode writes a value to the target .var vector. The
 ; first operand is the label of the .var object. The second and
@@ -20,16 +20,19 @@ test	.var	"test", 7, 0;
 ; be made into the vector to write.
 
 T0	%set/v	test, 0, 8 ;
-	%vpi_call "$display", "test = %b", test;
+	%vpi_call 0 0 "$display", "test = %b", test;
 
 	%set/v	test, 1, 8 ;
-	%vpi_call "$display", "test = %b", test;
+	%vpi_call 0 0 "$display", "test = %b", test;
 
 	%set/v	test, 2, 8 ;
-	%vpi_call "$display", "test = %b", test;
+	%vpi_call 0 0 "$display", "test = %b", test;
 
 	%set/v	test, 3, 8 ;
-	%vpi_call "$display", "test = %b", test;
+	%vpi_call 0 0 "$display", "test = %b", test;
 
 	%end;
 	.thread T0;
+:file_names 2;
+    "N/A";
+    "<interactive>";

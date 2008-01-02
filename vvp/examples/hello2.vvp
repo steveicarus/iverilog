@@ -1,6 +1,6 @@
 :vpi_module "system";
 
-; Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+; Copyright (c) 2001-2008  Stephen Williams (steve@icarus.com)
 ;
 ;    This source code is free software; you can redistribute it
 ;    and/or modify it in source code form under the terms of the GNU
@@ -34,18 +34,19 @@
 ; notice that the Vmain.value1 label is automatically converted to a
 ; vpiHandle by the compiler when the %vpi_call statement is compiled.
 
-Smain    .scope "main";
+Smain    .scope module, "main";
 
-Vmain.value1	.var "value1", 3, 0;
+Vmain.value1	.var "value1", 3 0;
 
-T00	%set  Vmain.value1[0], 1;
-	%set  Vmain.value1[1], 0;
-	%set  Vmain.value1[2], 0;
-	%set  Vmain.value1[3], 0;
+T00	%movi 8, 1, 4; Load a 4 bit value (1) into location 8.
+	%set/v Vmain.value1, 8, 4;
 
-	%vpi_call "$display", "value = %b", Vmain.value1;
+	%vpi_call 0 0 "$display", "value = %b", Vmain.value1;
 
 	%end;
 
 	.thread T00;
+:file_names 2;
+    "N/A";
+    "<interactive>";
 

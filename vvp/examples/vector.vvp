@@ -1,7 +1,10 @@
 :vpi_module "system";
 
-main	.scope "main";
+main	.scope module, "main";
 
-T0 	%vpi_call "$display", "Display the number: %b", 5'b0zx1;
+T0 	%vpi_call 0 0 "$display", "Display the number: %b", 5'b0zx1;
 	%end;
 	.thread T0;
+:file_names 2;
+    "N/A";
+    "<interactive>";

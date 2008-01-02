@@ -1,6 +1,6 @@
 :vpi_module "system";
 
-; Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+; Copyright (c) 2001-2008  Stephen Williams (steve@icarus.com)
 ;
 ;    This source code is free software; you can redistribute it
 ;    and/or modify it in source code form under the terms of the GNU
@@ -42,8 +42,8 @@
 ;    endmodule
 ;
 
-S_main .scope "main";
-S_test .scope "test", S_main;
+S_main .scope module, "main";
+S_test .scope task, "test", S_main;
 
 
 ; This code in the implementation of the thread that goes into the
@@ -51,9 +51,9 @@ S_test .scope "test", S_main;
 ; job and prints a failure.
     .scope S_test;
 T_0/1 ;
-    %delay 5;
-    %vpi_call "$display", "FAILED -- thread wasn't disabled";
-    %vpi_call "$finish";
+    %delay 5, 0;
+    %vpi_call 0 0 "$display", "FAILED -- thread wasn't disabled";
+    %vpi_call 0 0 "$finish";
     %end;
 
 ; This is the main thread. Fork the thread under test, delay for a
@@ -63,12 +63,15 @@ T_0/1 ;
     .scope S_main;
 T_0 ;
     %fork T_0/1, S_test;
-    %delay 1;
+    %delay 1, 0;
 
     %disable S_test ; This is the statement that I'm testing.
 
     %join;
-    %vpi_call "$display", "PASSED";
+    %vpi_call 0 0 "$display", "PASSED";
     %end;
 
     .thread T_0;
+:file_names 2;
+    "N/A";
+    "<interactive>";

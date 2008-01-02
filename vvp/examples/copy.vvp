@@ -1,6 +1,6 @@
 :vpi_module "system";
 
-; Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+; Copyright (c) 2001-2008  Stephen Williams (steve@icarus.com)
 ;
 ;    This source code is free software; you can redistribute it
 ;    and/or modify it in source code form under the terms of the GNU
@@ -36,18 +36,21 @@
 ; properly. This is a very trivial functor propagation that is initiated
 ; by the %set instruction.
 
-main	.scope "main";
+main	.scope module, "main";
 
-V_main.a	.var "a", 0, 0;
-V_main.b	.net "b", 0, 0, V_main.a;
+V_main.a	.var "a", 0 0;
+V_main.b	.net "b", 0 0, V_main.a;
 
 code
-	%set V_main.a, 0;
-	%delay 1;
-	%vpi_call "$display", "a=%b, b=%b", V_main.a, V_main.b;
-	%set V_main.a, 1;
-	%delay 1;
-	%vpi_call "$display", "a=%b, b=%b", V_main.a, V_main.b;
+	%set/v V_main.a, 0, 1;
+	%delay 1, 0;
+	%vpi_call 0 0 "$display", "a=%b, b=%b", V_main.a, V_main.b;
+	%set/v V_main.a, 1, 1;
+	%delay 1, 0;
+	%vpi_call 0 0 "$display", "a=%b, b=%b", V_main.a, V_main.b;
 	%end;
 
 	.thread	code;
+:file_names 2;
+    "N/A";
+    "<interactive>";

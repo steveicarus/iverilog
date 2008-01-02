@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -27,15 +27,6 @@
 #endif
 
 static StringHeap api_strings;
-
-struct ltstr
-{
-      bool operator()(const char*s1, const char*s2) const
-      {
-	    return strcmp(s1, s2) < 0;
-      }
-};
-static map<const char*, unsigned, ltstr> file_names;
 
 /* THE FOLLOWING ARE FUNCTIONS THAT ARE CALLED FROM THE TARGET. */
 
@@ -495,44 +486,67 @@ extern "C" unsigned ivl_expr_width(ivl_expr_t net)
       return net->width_;
 }
 
-extern "C" void ivl_file_table_dump(FILE*fp)
+/*
+ *  ivl_file_table_index puts entries in the map as needed and returns
+ *  the appropriate index.
+ *  ivl_file_table_size returns the number of entries in the table.
+ *  ivl_file_table_item returns the file name for the given index.
+ */
+struct ltstr
 {
-      assert(fp);
-
-      unsigned size = file_names.size();
-      fprintf(fp, "# The file index is used to find the file name in the "
-                  "following table.\n:file_names %u;\n", size);
-
-        /* We want to print the names in index order so convert the map
-         * to a vector in the correct order. */
-      vector<const char*> names(size);
-      map<const char*, unsigned, ltstr>::iterator cur;
-      for (cur = file_names.begin(); cur != file_names.end(); cur++) {
-	    names[(*cur).second] = (*cur).first;
+      bool operator()(const char*s1, const char*s2) const
+      {
+	    return strcmp(s1, s2) < 0;
       }
+};
+static map<const char*, unsigned, ltstr> fn_map;
+static vector<const char*> fn_vector;
 
-      for (unsigned idx = 0; idx < size; idx++) {
-	    fprintf(fp, "    \"%s\";\n", names[idx]);
-      }
+static void ivl_file_table_init()
+{
+        /* The first two index entries do not depend on a real
+         * file name and are always available. */
+      fn_vector.push_back("N/A");
+      fn_map["N/A"] = 0;
+      fn_vector.push_back("<interactive>");
+      fn_map["<interactive>"] = 1;
 }
 
-extern "C" unsigned ivl_file_table_get(const char*name)
+extern "C" const char* ivl_file_table_item(unsigned idx)
 {
+      if (fn_vector.empty()) {
+	    ivl_file_table_init();
+      }
+
+      assert(idx < fn_vector.size());
+      return fn_vector[idx];
+}
+
+extern "C" unsigned ivl_file_table_index(const char*name)
+{
+      if (fn_vector.empty()) {
+	    ivl_file_table_init();
+      }
+
       if (name == NULL) return 0;
+
         /* The new index is the current map size. This is inserted only
          * if the file name is not currently in the map. */
-      file_names.insert(make_pair(name, file_names.size()));
-      return file_names[name];
+      pair<map<const char*, unsigned, ltstr>::iterator, bool> result;
+      result = fn_map.insert(make_pair(name, fn_vector.size()));
+      if (result.second) {
+	    fn_vector.push_back(name);
+      }
+      return result.first->second;
 }
 
-extern "C" void ivl_file_table_init()
+extern "C" unsigned ivl_file_table_size()
 {
-      assert(file_names.empty());
+      if (fn_vector.empty()) {
+	    ivl_file_table_init();
+      }
 
-        /* The first two index entries do not depend on a real file name
-         * and are always available. */
-      file_names["N/A"] = 0;
-      file_names["<interactive>"] = 1;
+      return fn_vector.size();
 }
 
 extern "C" const char* ivl_logic_attr(ivl_net_logic_t net, const char*key)

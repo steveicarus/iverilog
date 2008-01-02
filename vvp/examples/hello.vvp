@@ -1,6 +1,6 @@
 :vpi_module "system";
 
-; Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+; Copyright (c) 2001-2008  Stephen Williams (steve@icarus.com)
 ;
 ;    This source code is free software; you can redistribute it
 ;    and/or modify it in source code form under the terms of the GNU
@@ -31,6 +31,9 @@
 main	.scope module, "main";
 
 code
-	%vpi_call "$display", "Hello, World.";
+	%vpi_call 0 0 "$display", "Hello, World.";
 	%end;
 	.thread	code;
+:file_names 2;
+    "N/A";
+    "<interactive>";
