@@ -323,7 +323,8 @@ inline static int install_dumpvars_callback(void)
 
       if (dumpvars_status == 2) {
 	    vpi_mcd_printf(1, "LXT2 warning: $dumpvars ignored, previously"
-			   " called at simtime %lu\n", dumpvars_time);
+			   " called at simtime %" PLI_UINT64_FMT "\n",
+			   dumpvars_time);
 	    return 1;
       }
 

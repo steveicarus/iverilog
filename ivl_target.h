@@ -688,6 +688,9 @@ extern unsigned long ivl_expr_uvalue(ivl_expr_t net);
   /* any expression */
 extern unsigned    ivl_expr_width(ivl_expr_t net);
 
+extern const char* ivl_file_table_item(unsigned  idx);
+extern unsigned ivl_file_table_index(const char *);
+extern unsigned ivl_file_table_size(void);
 
 
 /* LOGIC
@@ -850,6 +853,9 @@ extern const char* ivl_udp_row(ivl_udp_t net, unsigned idx);
 extern unsigned    ivl_udp_rows(ivl_udp_t net);
 extern const char* ivl_udp_name(ivl_udp_t net);
 
+
+extern const char* ivl_lpm_file(ivl_lpm_t net);
+extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
 
 /* LPM
  * These functions support access to the properties of LPM
@@ -1620,8 +1626,8 @@ extern ivl_attribute_t ivl_process_attr_val(ivl_process_t net, unsigned idx);
  */
 extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
 
-extern const char* ivl_statement_file(ivl_statement_t net);
-extern unsigned ivl_statement_lineno(ivl_statement_t net);
+extern const char* ivl_stmt_file(ivl_statement_t net);
+extern unsigned ivl_stmt_lineno(ivl_statement_t net);
 
 /*
  * The following functions retrieve specific single values from the

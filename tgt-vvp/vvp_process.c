@@ -773,6 +773,7 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 	    break;
 	  default:
 	    command_name = "ERROR";
+	    command_name_x0 = "ERROR";
 	    assert(0);
 	    break;
       }

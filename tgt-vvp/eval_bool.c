@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,11 +16,11 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: eval_bool.c,v 1.4 2005/12/07 03:43:30 steve Exp $"
 
 /*
  * This file includes functions for evaluating REAL expressions.
  */
+# include  "_pli_types.h" /* To get the UINT64 format */
 # include  "vvp_config.h"
 # include  "vvp_priv.h"
 # include  <string.h>
@@ -64,7 +64,7 @@ static int draw_number_bool64(ivl_expr_t exp)
       }
 
       res = allocate_word();
-      fprintf(vvp_out, "   %%ix/load %d, %lu;\n", res, val);
+      fprintf(vvp_out, "   %%ix/load %d, %" PLI_UINT64_FMT ";\n", res, val);
       return res;
 }
 
@@ -83,20 +83,4 @@ int draw_eval_bool64(ivl_expr_t exp)
 
       return res;
 }
-
-/*
- * $Log: eval_bool.c,v $
- * Revision 1.4  2005/12/07 03:43:30  steve
- *  Include stdint.h if it is present.
- *
- * Revision 1.3  2005/12/05 21:20:55  steve
- *  Some systems donot have stding.h?
- *
- * Revision 1.2  2005/09/19 20:17:59  steve
- *  Include vvp_config.h instead of config.h
- *
- * Revision 1.1  2005/09/14 02:53:15  steve
- *  Support bool expressions and compares handle them optimally.
- *
- */
 
