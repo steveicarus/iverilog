@@ -18,6 +18,9 @@
  */
 
 # include "config.h"
+# include  <typeinfo>
+# include  <cstdlib>
+# include  <cstring>
 # include "compiler.h"
 
 # include  "pform.h"

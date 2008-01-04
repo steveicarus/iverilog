@@ -19,6 +19,7 @@
 
 # include "config.h"
 
+# include  <cstdlib>
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "PExpr.h"

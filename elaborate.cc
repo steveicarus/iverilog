@@ -30,6 +30,7 @@
  */
 
 # include  <typeinfo>
+# include  <cstdlib>
 # include  <sstream>
 # include  <list>
 # include  "pform.h"

@@ -21,6 +21,7 @@
 # include "compiler.h"
 
 # include  <iostream>
+# include  <cstdlib>
 
 # include  "netlist.h"
 # include  "ivl_assert.h"

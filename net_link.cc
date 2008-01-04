@@ -26,6 +26,7 @@
 
 # include  "netlist.h"
 # include  <sstream>
+# include  <cstring>
 # include  <string>
 # include  <typeinfo>
 #ifdef HAVE_MALLOC_H

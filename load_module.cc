@@ -26,6 +26,8 @@
 # include  "compiler.h"
 # include  <iostream>
 # include  <map>
+# include  <cstdlib>
+# include  <cstring>
 # include  <string>
 # include  <sys/types.h>
 # include  <dirent.h>

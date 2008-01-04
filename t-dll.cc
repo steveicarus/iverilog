@@ -21,6 +21,7 @@
 
 # include  <iostream>
 
+# include  <cstring>
 # include  <stdio.h>   // sprintf()
 # include  "compiler.h"
 # include  "t-dll.h"

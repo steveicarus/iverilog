@@ -23,6 +23,7 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "compiler.h"
+# include  <cstdlib>
 # include  <iostream>
 # include  "ivl_assert.h"
 

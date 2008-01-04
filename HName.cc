@@ -23,8 +23,9 @@
 # include  "config.h"
 # include  "HName.h"
 # include  <iostream>
-# include  <string.h>
-# include  <stdlib.h>
+# include  <cstring>
+# include  <cstdlib>
+# include  <climits>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif

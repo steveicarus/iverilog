@@ -29,6 +29,7 @@
 # include  "netlist.h"
 # include  <typeinfo>
 # include  <cassert>
+# include  <cstring>
 
 bool NetNode::emit_node(struct target_t*tgt) const
 {

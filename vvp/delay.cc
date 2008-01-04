@@ -21,6 +21,7 @@
 #include "schedule.h"
 #include "vpi_priv.h"
 #include <iostream>
+#include <cstdlib>
 #include <assert.h>
 
 void vvp_delay_t::calculate_min_delay_()

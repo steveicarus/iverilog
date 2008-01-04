@@ -25,6 +25,7 @@
 
 # include  <iostream>
 
+# include  <cstring>
 # include  "target.h"
 # include  "ivl_target.h"
 # include  "compiler.h"

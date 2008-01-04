@@ -24,6 +24,7 @@
 # include "compiler.h"
 
 # include  "netlist.h"
+# include  <cstring>
 # include  <sstream>
 
 /*

@@ -33,6 +33,8 @@
 # include  <stack>
 # include  <typeinfo>
 # include  <sstream>
+# include  <cstring>
+# include  <cstdlib>
 
 # include  "ivl_assert.h"
 
