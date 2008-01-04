@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -67,8 +67,8 @@ static struct __vpiModPath*modpath_dst = 0;
 
 %token K_ALIAS K_ALIAS_S K_ALIAS_R
 %token K_ARITH_DIV K_ARITH_DIV_R K_ARITH_DIV_S K_ARITH_MOD K_ARITH_MULT
-%token K_ARITH_SUB K_ARITH_SUB_R K_ARITH_SUM K_ARRAY K_ARRAY_I K_ARRAY_R
-%token K_ARRAY_S K_ARRAY_PORT
+%token K_ARITH_MULT_R K_ARITH_SUB K_ARITH_SUB_R K_ARITH_SUM K_ARITH_SUM_R
+%token K_ARRAY K_ARRAY_I K_ARRAY_R K_ARRAY_S K_ARRAY_PORT
 %token K_CMP_EEQ K_CMP_EQ K_CMP_NEE K_CMP_NE
 %token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
 %token K_CONCAT K_DEBUG K_DELAY K_DFF
@@ -275,6 +275,11 @@ statement
 		  compile_arith_mult($1, $3, obj.cnt, obj.vect);
 		}
 
+	| T_LABEL K_ARITH_MULT_R T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_arith_mult_r($1, obj.cnt, obj.vect);
+		}
+
 	| T_LABEL K_ARITH_SUB T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_arith_sub($1, $3, obj.cnt, obj.vect);
@@ -288,6 +293,11 @@ statement
 	| T_LABEL K_ARITH_SUM T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_arith_sum($1, $3, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_ARITH_SUM_R T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_arith_sum_r($1, obj.cnt, obj.vect);
 		}
 
 	| T_LABEL K_CMP_EEQ T_NUMBER ',' symbols ';'

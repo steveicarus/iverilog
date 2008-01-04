@@ -1,7 +1,7 @@
 #ifndef __compile_H
 #define __compile_H
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -169,7 +169,10 @@ extern void compile_cmp_ge(char*label, long width, bool signed_flag,
 extern void compile_cmp_gt(char*label, long width, bool signed_flag,
 			   unsigned argc, struct symb_s*argv);
 
+extern void compile_arith_mult_r(char*label, unsigned argc,
+                                 struct symb_s*argv);
 extern void compile_arith_div_r(char*label, unsigned argc, struct symb_s*argv);
+extern void compile_arith_sum_r(char*label, unsigned argc, struct symb_s*argv);
 extern void compile_arith_sub_r(char*label, unsigned argc, struct symb_s*argv);
 
 extern void compile_dff(char*label,

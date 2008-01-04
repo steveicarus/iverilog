@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.50 2007/01/20 02:09:54 steve Exp $"
-#endif
 
 # include  "arith.h"
 # include  "schedule.h"
@@ -756,6 +753,24 @@ void vvp_arith_real_::dispatch_operand_(vvp_net_ptr_t ptr, double bit)
 }
 
 
+/* Real multiplication. */
+vvp_arith_mult_real::vvp_arith_mult_real()
+{
+}
+
+vvp_arith_mult_real::~vvp_arith_mult_real()
+{
+}
+
+void vvp_arith_mult_real::recv_real(vvp_net_ptr_t ptr, double bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      double val = op_a_ * op_b_;
+      vvp_send_real(ptr.ptr()->out, val);
+}
+
+/* Real division. */
 vvp_arith_div_real::vvp_arith_div_real()
 {
 }
@@ -772,6 +787,24 @@ void vvp_arith_div_real::recv_real(vvp_net_ptr_t ptr, double bit)
       vvp_send_real(ptr.ptr()->out, val);
 }
 
+/* Real summation. */
+vvp_arith_sum_real::vvp_arith_sum_real()
+{
+}
+
+vvp_arith_sum_real::~vvp_arith_sum_real()
+{
+}
+
+void vvp_arith_sum_real::recv_real(vvp_net_ptr_t ptr, double bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      double val = op_a_ + op_b_;
+      vvp_send_real(ptr.ptr()->out, val);
+}
+
+/* Real subtraction. */
 vvp_arith_sub_real::vvp_arith_sub_real()
 {
 }

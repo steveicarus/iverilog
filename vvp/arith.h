@@ -1,7 +1,7 @@
 #ifndef __arith_H
 #define __arith_H
 /*
- * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.34 2006/07/30 02:51:36 steve Exp $"
-#endif
 
 # include  "vvp_net.h"
 
@@ -218,11 +215,27 @@ class vvp_arith_real_  : public vvp_net_fun_t {
 };
 
 
+class vvp_arith_sum_real : public vvp_arith_real_ {
+
+    public:
+      explicit vvp_arith_sum_real();
+      ~vvp_arith_sum_real();
+      void recv_real(vvp_net_ptr_t ptr, double bit);
+};
+
 class vvp_arith_div_real : public vvp_arith_real_ {
 
     public:
       explicit vvp_arith_div_real();
       ~vvp_arith_div_real();
+      void recv_real(vvp_net_ptr_t ptr, double bit);
+};
+
+class vvp_arith_mult_real : public vvp_arith_real_ {
+
+    public:
+      explicit vvp_arith_mult_real();
+      ~vvp_arith_mult_real();
       void recv_real(vvp_net_ptr_t ptr, double bit);
 };
 
@@ -234,54 +247,4 @@ class vvp_arith_sub_real : public vvp_arith_real_ {
       void recv_real(vvp_net_ptr_t ptr, double bit);
 };
 
-/*
- * $Log: arith.h,v $
- * Revision 1.34  2006/07/30 02:51:36  steve
- *  Fix/implement signed right shift.
- *
- * Revision 1.33  2006/01/03 06:19:31  steve
- *  Support wide divide nodes.
- *
- * Revision 1.32  2005/07/06 04:29:25  steve
- *  Implement real valued signals and arith nodes.
- *
- * Revision 1.31  2005/06/22 00:04:48  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.30  2005/06/11 18:11:18  steve
- *  Remove unneeded references to functor.h
- *
- * Revision 1.29  2005/03/19 06:23:49  steve
- *  Handle LPM shifts.
- *
- * Revision 1.28  2005/03/12 06:42:28  steve
- *  Implement .arith/mod.
- *
- * Revision 1.27  2005/03/09 05:52:04  steve
- *  Handle case inequality in netlists.
- *
- * Revision 1.26  2005/02/19 01:32:52  steve
- *  Implement .arith/div.
- *
- * Revision 1.25  2005/02/04 05:13:02  steve
- *  Add wide .arith/mult, and vvp_vector2_t vectors.
- *
- * Revision 1.24  2005/01/28 05:34:25  steve
- *  Add vector4 implementation of .arith/mult.
- *
- * Revision 1.23  2005/01/22 16:21:11  steve
- *  Implement vectored CMP_EQ and NE
- *
- * Revision 1.22  2005/01/22 01:06:20  steve
- *  Implement the .cmp/eeq LPM node.
- *
- * Revision 1.21  2005/01/16 04:19:08  steve
- *  Reimplement comparators as vvp_vector4_t nodes.
- *
- * Revision 1.20  2004/12/11 02:31:29  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- */
 #endif

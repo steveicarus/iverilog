@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -941,12 +941,24 @@ void compile_arith_mult(char*label, long wid,
       make_arith(arith, label, argc, argv);
 }
 
+void compile_arith_mult_r(char*label, unsigned argc, struct symb_s*argv)
+{
+      if (argc != 2) {
+	    fprintf(stderr, "%s .arith/mult.r has wrong number of symbols\n", label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_real_ *arith = new vvp_arith_mult_real;
+      make_arith(arith, label, argc, argv);
+}
+
 void compile_arith_sub(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
 
       if (argc != 2) {
-	    fprintf(stderr, "%s .arith has wrong number of symbols\n", label);
+	    fprintf(stderr, "%s .arith/sub has wrong number of symbols\n", label);
 	    compile_errors += 1;
 	    return;
       }
@@ -972,12 +984,24 @@ void compile_arith_sum(char*label, long wid, unsigned argc, struct symb_s*argv)
       assert( wid > 0 );
 
       if (argc != 2) {
-	    fprintf(stderr, "%s .arith has wrong number of symbols\n", label);
+	    fprintf(stderr, "%s .arith/sum has wrong number of symbols\n", label);
 	    compile_errors += 1;
 	    return;
       }
 
       vvp_arith_ *arith = new vvp_arith_sum(wid);
+      make_arith(arith, label, argc, argv);
+}
+
+void compile_arith_sum_r(char*label, unsigned argc, struct symb_s*argv)
+{
+      if (argc != 2) {
+	    fprintf(stderr, "%s .arith/sum.r has wrong number of symbols\n", label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_real_ *arith = new vvp_arith_sum_real;
       make_arith(arith, label, argc, argv);
 }
 

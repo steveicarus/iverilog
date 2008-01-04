@@ -1613,7 +1613,10 @@ static void draw_lpm_add(ivl_lpm_t net)
 
       switch (ivl_lpm_type(net)) {
 	  case IVL_LPM_ADD:
-	    type = "sum";
+	    if (dto == IVL_VT_REAL)
+		  type = "sum.r";
+	    else
+		  type = "sum";
 	    break;
 	  case IVL_LPM_SUB:
 	    if (dto == IVL_VT_REAL)
@@ -1622,7 +1625,10 @@ static void draw_lpm_add(ivl_lpm_t net)
 		  type = "sub";
 	    break;
 	  case IVL_LPM_MULT:
-	    type = "mult";
+	    if (dto == IVL_VT_REAL)
+		  type = "mult.r";
+	    else
+		  type = "mult";
 	    break;
 	  case IVL_LPM_DIVIDE:
 	    if (dto == IVL_VT_REAL)
@@ -1633,7 +1639,10 @@ static void draw_lpm_add(ivl_lpm_t net)
 		  type = "div";
 	    break;
 	  case IVL_LPM_MOD:
-	    type = "mod";
+	    if (dto == IVL_VT_REAL)
+		  assert(0);  /* Not supported for reals, */
+	    else
+		  type = "mod";
 	    break;
 	  default:
 	    assert(0);
