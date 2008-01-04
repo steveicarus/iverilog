@@ -40,7 +40,7 @@ struct __vpiVThrVec {
       unsigned bas;
       unsigned wid;
       unsigned signed_flag : 1;
-      char *name;
+      const char *name;
 };
 
 inline static
@@ -427,14 +427,14 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag)
       assert(wid < 65536);
       obj->wid = wid;
       obj->signed_flag = signed_flag? 1 : 0;
-      obj->name = "T<>";
+      obj->name = vpip_name_string("T<>");
 
       return &obj->base;
 }
 
 struct __vpiVThrWord {
       struct __vpiHandle base;
-      char* name;
+      const char* name;
       int subtype;
       unsigned index;
 };
@@ -545,7 +545,7 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
       assert(type[0] == 'r');
 
       obj->base.vpi_type = &vpip_vthr_const_real_rt;
-      obj->name = "W<>";
+      obj->name = vpip_name_string("W<>");
       obj->subtype = vpiRealConst;
       assert(base < 65536);
       obj->index = base;
