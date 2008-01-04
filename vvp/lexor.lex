@@ -1,5 +1,6 @@
 
 %option never-interactive
+%option nounput
 
 %{
 /*

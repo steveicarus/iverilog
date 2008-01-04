@@ -25,6 +25,8 @@
 # include  <stdio.h>
 
 static void yyerror(const char*msg);
+extern int yylex (void);
+
 %}
 
 %%

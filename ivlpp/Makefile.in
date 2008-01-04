@@ -58,7 +58,7 @@ ivlpp@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o ivlpp@EXEEXT@ @EXTRALIBS@
 
 lexor.c: lexor.lex
-	flex -s -olexor.c $(srcdir)/lexor.lex
+	flex -olexor.c $(srcdir)/lexor.lex
 
 parse.h parse.c: parse.y
 	bison --verbose -t -d -o parse.c $(srcdir)/parse.y
