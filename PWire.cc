@@ -27,8 +27,9 @@ PWire::PWire(const pform_name_t&n,
 	     NetNet::PortType pt,
 	     ivl_variable_type_t dt)
 : hname_(n), type_(t), port_type_(pt), data_type_(dt),
-  signed_(false), isint_(false), port_set_(false), net_set_(false),
-  port_msb_(0), port_lsb_(0), net_msb_(0), net_lsb_(0), error_cnt_(0),
+  signed_(false), isint_(false),
+  port_msb_(0), port_lsb_(0), port_set_(false),
+  net_msb_(0), net_lsb_(0), net_set_(false), error_cnt_(0),
   lidx_(0), ridx_(0)
 {
       if (t == NetNet::INTEGER) {
