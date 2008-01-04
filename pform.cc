@@ -34,6 +34,8 @@
 # include  <typeinfo>
 # include  <sstream>
 
+# include  "ivl_assert.h"
+
 map<perm_string,Module*> pform_modules;
 map<perm_string,PUdp*> pform_primitives;
 
@@ -1313,9 +1315,17 @@ void pform_makewire(const vlltype&li, const char*nm,
 
       FILE_NAME(cur, li.text, li.first_line);
 
+      bool flag;
       switch (dt) {
 	  case IVL_VT_REAL:
-	    cur->set_data_type(dt);
+	    flag = cur->set_data_type(dt);
+	    if (flag == false) {
+		  cerr << cur->get_fileline() << ": internal error: "
+		       << " wire data type handling mismatch. Cannot change "
+		       << cur->get_data_type()
+		       << " to " << dt << "." << endl;
+	    }
+	    ivl_assert(*cur, flag);
 	    cur->set_range(0, 0, SR_NET);
 	    cur->set_signed(true);
 	    break;
@@ -1417,7 +1427,7 @@ void pform_set_port_type(perm_string nm, NetNet::PortType pt,
       pform_name_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
-	    cur = new PWire(name, NetNet::IMPLICIT, NetNet::PIMPLICIT, IVL_VT_LOGIC);
+	    cur = new PWire(name, NetNet::IMPLICIT, NetNet::PIMPLICIT, IVL_VT_NO_TYPE);
 	    FILE_NAME(cur, file, lineno);
 	    pform_cur_module->add_wire(cur);
       }

@@ -113,6 +113,11 @@ bool PWire::set_data_type(ivl_variable_type_t dt)
       return true;
 }
 
+ivl_variable_type_t PWire::get_data_type() const
+{
+      return data_type_;
+}
+
 void PWire::set_signed(bool flag)
 {
       signed_ = flag;
