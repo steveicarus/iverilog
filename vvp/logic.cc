@@ -629,7 +629,7 @@ void compile_functor(char*label, char*type, unsigned width,
 	/* If both the strengths are the default strong drive, then
 	   there is no need for a specialized driver. Attach the label
 	   to this node and we are finished. */
-      if (strength_aware || ostr0 == 6 && ostr1 == 6) {
+      if (strength_aware || (ostr0 == 6 && ostr1 == 6)) {
 	    define_functor_symbol(label, net);
 	    free(label);
 	    return;

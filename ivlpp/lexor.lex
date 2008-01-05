@@ -159,6 +159,7 @@ static int ma_parenthesis_level = 0;
 
 %option stack
 %option nounput
+%option noinput
 %option noyy_top_state
 
 %x PPINCLUDE

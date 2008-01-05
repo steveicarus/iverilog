@@ -597,7 +597,7 @@ bool vvp_vector4_t::has_xz() const
       unsigned long mask = size_%BITS_PER_WORD;
       if (mask > 0) {
 	    mask = WORD_X_BITS >> 2*(BITS_PER_WORD - mask);
-	    return 0 != bits_ptr_[words]&mask;
+	    return 0 != (bits_ptr_[words]&mask);
       }
 
       return false;
