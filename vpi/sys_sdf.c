@@ -239,7 +239,7 @@ static PLI_INT32 sys_sdf_annotate_compiletf(PLI_BYTE8*name)
 	    return 0;
 
       if (vpi_get(vpiType,scope) != vpiModule) {
-	    vpi_printf("SDF ERROR: The second argument of %s",
+	    vpi_printf("SDF ERROR: The second argument of %s"
 		       " must be a module instance.\n", name);
 	    vpi_control(vpiFinish, 1);
       }
