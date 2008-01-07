@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_convert.c,v 1.7 2007/03/14 04:05:51 steve Exp $"
-#endif
 
 # include  "vpi_config.h"
 # include  "vpi_user.h"
@@ -86,47 +83,59 @@ static void double2bits(double real, PLI_UINT32 bits[2])
 #endif
 }
 
+static void error_message(vpiHandle callh, const char* msg)
+{
+    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+               (int)vpi_get(vpiLineNo, callh));
+    vpi_printf(msg, vpi_get_str(vpiName, callh));
+    vpi_control(vpiFinish, 1);
+}
+
 static PLI_INT32 sizetf_32 (PLI_BYTE8*x) { return 32; }
 static PLI_INT32 sizetf_64 (PLI_BYTE8*x) { return 64; }
 
 static PLI_INT32 sys_convert_compiletf(PLI_BYTE8*name)
 {
-    vpiHandle call_hand, argv, arg;
-    PLI_INT32 rtn = 0;
+    vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+    vpiHandle argv = vpi_iterate(vpiArgument, callh);
+    vpiHandle arg;
 
-    call_hand = vpi_handle(vpiSysTfCall, 0);
-    argv = vpi_iterate(vpiArgument, call_hand);
+    /* Check that there is an argument. */
+    if (argv == 0) {
+	error_message(callh, "%s requires one argument.\n");
+	return 0;
+    }
+
+    /* In Icarus if we have an argv we have at least one argument. */
     arg  = vpi_scan(argv);
 
-    if (!argv) {
-	vpi_printf("ERROR: %s requires a parameter.\n",
-		   vpi_get_str(vpiName, call_hand));
-	rtn = -1;
-    }
-
+    /* Validate the argument. Only $bitstoreal for now. */
     if (!strcmp("$bitstoreal", name) && vpi_get(vpiSize, arg) != 64) {
-	vpi_printf("ERROR: %s requires 64-bit argument.\n",
-		   vpi_get_str(vpiName, call_hand));
-	rtn = -1;
+	error_message(callh, "%s requires a 64-bit argument.\n");
+	return 0;
     }
 
-    /* free iterator */
-    vpi_free_object(argv);
+    /* Save the argument away to make the calltf faster. */
+    vpi_put_userdata(callh, (void *) arg);
 
-    return rtn;
+    /* These functions only take one argument. */
+    arg  = vpi_scan(argv);
+    if (arg != 0) {
+	error_message(callh, "%s takes only one argument.\n");
+	return 0;
+    }
+
+    /* vpi_scan() returning 0 (NULL) had already freed argv. */
+    return 0;
 }
 
 static PLI_INT32 sys_bitstoreal_calltf(PLI_BYTE8*user)
 {
-    vpiHandle sys, argv, arg;
+    vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+    vpiHandle arg  = (vpiHandle) vpi_get_userdata(callh);
     s_vpi_value value;
 
     PLI_UINT32 bits[2];
-
-    /* find argument handle */
-    sys  = vpi_handle(vpiSysTfCall, 0);
-    argv = vpi_iterate(vpiArgument, sys);
-    arg  = vpi_scan(argv);
 
     /* get value */
     value.format = vpiVectorVal;
@@ -139,23 +148,16 @@ static PLI_INT32 sys_bitstoreal_calltf(PLI_BYTE8*user)
     value.format = vpiRealVal;
 
     /* return converted value */
-    vpi_put_value(sys, &value, 0, vpiNoDelay);
-
-    /* free iterator */
-    vpi_free_object(argv);
+    vpi_put_value(callh, &value, 0, vpiNoDelay);
 
     return 0;
 }
 
 static PLI_INT32 sys_itor_calltf(PLI_BYTE8*user)
 {
-    vpiHandle sys, argv, arg;
+    vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+    vpiHandle arg  = (vpiHandle) vpi_get_userdata(callh);
     s_vpi_value value;
-
-    /* find argument handle */
-    sys  = vpi_handle(vpiSysTfCall, 0);
-    argv = vpi_iterate(vpiArgument, sys);
-    arg  = vpi_scan(argv);
 
     /* get value */
     value.format = vpiIntVal;
@@ -166,26 +168,19 @@ static PLI_INT32 sys_itor_calltf(PLI_BYTE8*user)
     value.format = vpiRealVal;
 
     /* return converted value */
-    vpi_put_value(sys, &value, 0, vpiNoDelay);
-
-    /* free iterator */
-    vpi_free_object(argv);
+    vpi_put_value(callh, &value, 0, vpiNoDelay);
 
     return 0;
 }
 
 static PLI_INT32 sys_realtobits_calltf(PLI_BYTE8*user)
 {
-    vpiHandle sys, argv, arg;
+    vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+    vpiHandle arg  = (vpiHandle) vpi_get_userdata(callh);
     s_vpi_value value;
     static struct t_vpi_vecval res[2];
 
     PLI_UINT32 bits[2];
-
-    /* find argument handle */
-    sys  = vpi_handle(vpiSysTfCall, 0);
-    argv = vpi_iterate(vpiArgument, sys);
-    arg  = vpi_scan(argv);
 
     /* get value */
     value.format = vpiRealVal;
@@ -203,24 +198,17 @@ static PLI_INT32 sys_realtobits_calltf(PLI_BYTE8*user)
     value.value.vector = res;
 
     /* return converted value */
-    vpi_put_value(sys, &value, 0, vpiNoDelay);
-
-    /* free iterator */
-    vpi_free_object(argv);
+    vpi_put_value(callh, &value, 0, vpiNoDelay);
 
     return 0;
 }
 
 static PLI_INT32 sys_rtoi_calltf(PLI_BYTE8*user)
 {
-    vpiHandle sys, argv, arg;
+    vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+    vpiHandle arg  = (vpiHandle) vpi_get_userdata(callh);
     s_vpi_value value;
     static struct t_vpi_vecval res;
-
-    /* find argument handle */
-    sys  = vpi_handle(vpiSysTfCall, 0);
-    argv = vpi_iterate(vpiArgument, sys);
-    arg  = vpi_scan(argv);
 
     /* get value */
     value.format = vpiRealVal;
@@ -234,10 +222,7 @@ static PLI_INT32 sys_rtoi_calltf(PLI_BYTE8*user)
     value.value.vector = &res;
 
     /* return converted value */
-    vpi_put_value(sys, &value, 0, vpiNoDelay);
-
-    /* free iterator */
-    vpi_free_object(argv);
+    vpi_put_value(callh, &value, 0, vpiNoDelay);
 
     return 0;
 }
@@ -279,27 +264,3 @@ void sys_convert_register()
       vpi_register_systf(&tf_data);
 }
 
-/*
- * $Log: sys_convert.c,v $
- * Revision 1.7  2007/03/14 04:05:51  steve
- *  VPI tasks take PLI_BYTE* by the standard.
- *
- * Revision 1.6  2006/10/30 22:45:37  steve
- *  Updates for Cygwin portability (pr1585922)
- *
- * Revision 1.5  2004/02/15 18:03:30  steve
- *  Cleanup of warnings.
- *
- * Revision 1.4  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.3  2003/03/17 21:59:54  steve
- *  Implement $itor and $bitstoreal
- *
- * Revision 1.2  2003/03/10 23:40:10  steve
- *  Add support for $rtoi
- *
- * Revision 1.1  2003/03/07 02:44:34  steve
- *  Implement $realtobits.
- *
- */
