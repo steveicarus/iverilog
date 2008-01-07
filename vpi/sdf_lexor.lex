@@ -27,6 +27,7 @@
 # include  "sdf_parse_priv.h"
 # include  "sdf_parse.h"
 # include  <stdlib.h>
+# include  <string.h>
 # include  <strings.h>
 # include  <assert.h>
 
