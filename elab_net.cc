@@ -2931,6 +2931,8 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 			       Link::strength_t drive1) const
 {
       NetExpr*expr = elab_and_eval(des, scope, expr_, width);
+      if (expr == 0)
+	    return 0;
 
 	// Some unary operands allow the operand to be
 	// self-determined, and some do not.
@@ -2963,12 +2965,22 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    }
       }
 
+	// Handle the case that the expression is real-valued.
+      if (expr->expr_type() == IVL_VT_REAL) {
+	    return elab_net_unary_real_(des, scope, expr,
+					width, rise, fall, decay,
+					drive0, drive1);
+      }
+
       NetNet* sub_sig = expr->synthesize(des);
       if (sub_sig == 0) {
 	    des->errors += 1;
 	    return 0;
       }
       assert(sub_sig);
+
+      delete expr;
+      expr = 0;
 
       bool reduction=false;
       NetUReduce::TYPE rtype = NetUReduce::NONE;
@@ -3159,6 +3171,72 @@ NetNet* PEUnary::elab_net_uminus_const_real_(Design*des, NetScope*scope,
       }
 
       delete expr;
+
+      return sig;
+}
+
+NetNet* PEUnary::elab_net_unary_real_(Design*des, NetScope*scope,
+				      NetExpr*expr,
+				      unsigned width,
+				      const NetExpr* rise,
+				      const NetExpr* fall,
+				      const NetExpr* decay,
+				      Link::strength_t drive0,
+				      Link::strength_t drive1) const
+{
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: Elaborate real expression "
+		 << *this << "."<<endl;
+      }
+
+      NetNet* sub_sig = expr->synthesize(des);
+      delete expr;
+      if (sub_sig == 0) {
+	    des->errors += 1;
+	    return 0;
+      }
+      ivl_assert(*this, sub_sig);
+
+      NetNet*sig = new NetNet(scope, scope->local_symbol(),
+			      NetNet::WIRE, 1);
+      sig->data_type(IVL_VT_REAL);
+      sig->set_signed(true);
+      sig->local_flag(true);
+      sig->set_line(*this);
+
+      switch (op_) {
+
+	  default:
+	    cerr << get_fileline() << ": internal error: Unhandled UNARY "
+		 << op_ << " expression with real values." << endl;
+	    des->errors += 1;
+	    break;
+ 
+	  case '-':
+	    NetAddSub*sub = new NetAddSub(scope, scope->local_symbol(), 1);
+	    sub->attribute(perm_string::literal("LPM_Direction"),
+				 verinum("SUB"));
+	    sub->set_line(*this);
+	    des->add_node(sub);
+	    connect(sig->pin(0), sub->pin_Result());
+	    connect(sub_sig->pin(0), sub->pin_DataB());
+
+	    NetLiteral*tmp_con = new NetLiteral(scope, scope->local_symbol(),
+						verireal(0.0));
+	    tmp_con->set_line(*this);
+	    des->add_node(tmp_con);
+
+	    NetNet*tmp_sig = new NetNet(scope, scope->local_symbol(),
+					NetNet::WIRE, 1);
+	    tmp_sig->data_type(IVL_VT_REAL);
+	    tmp_sig->set_signed(true);
+	    tmp_sig->local_flag(true);
+	    tmp_sig->set_line(*this);
+
+	    connect(tmp_sig->pin(0), sub->pin_DataA());
+	    connect(tmp_sig->pin(0), tmp_con->pin(0));
+	    break;
+     }
 
       return sig;
 }
