@@ -25,6 +25,7 @@
 # include  "compiler.h"
 # include  <cstdlib>
 # include  <iostream>
+# include  <climits>
 # include  "ivl_assert.h"
 
 /*
@@ -350,7 +351,8 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       if (NetEConst*word_const = dynamic_cast<NetEConst*>(word)) {
 	    verinum word_val = word_const->value();
 	    long index = word_val.as_long();
-	    if (index < 0 || index >= reg->array_count()) {
+	    assert (reg->array_count() <= LONG_MAX);
+	    if (index < 0 || index >= (long) reg->array_count()) {
 		  cerr << get_fileline() << ": warning: Constant array index "
 		       << (index + reg->array_first())
 		       << " is out of range for array "

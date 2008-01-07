@@ -225,10 +225,11 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val)
 
 	/* Addresses are converted to canonical form by offsetting the
 	   address by the lowest index. */
-      unsigned addr_off = memory_left_range(rfp->mem->mem, 0);
+      long addr_off = memory_left_range(rfp->mem->mem, 0);
       if (memory_right_range(rfp->mem->mem, 0) < addr_off)
 	    addr_off = memory_right_range(rfp->mem->mem, 0);
 
+      assert(addr_off >= 0 && (unsigned) addr_off <= word_addr);
       word_addr -= addr_off;
 
 	/* Build up the word value from whatever format the user
