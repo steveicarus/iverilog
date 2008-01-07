@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,7 +51,8 @@ void sfunc_core::recv_vec4_from_inputs(unsigned port)
 
       obj->bits = value(port);
 
-      invoke_function_();
+        /* Schedule the actual call after this finishes. */
+      schedule_generic(this, 0, false);
 }
 
 void sfunc_core::recv_real_from_inputs(unsigned port)
@@ -64,10 +65,11 @@ void sfunc_core::recv_real_from_inputs(unsigned port)
 
       obj->value = value_r(port);
 
-      invoke_function_();
+        /* Schedule the actual call after this finishes. */
+      schedule_generic(this, 0, false);
 }
 
-void sfunc_core::invoke_function_()
+void sfunc_core::run_run()
 {
       vpip_execute_vpi_call(0, sys_);
 }
