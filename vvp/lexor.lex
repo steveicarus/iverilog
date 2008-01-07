@@ -195,6 +195,11 @@
       assert(yylval.text);
       return T_SYMBOL; }
 
+"Cr<"[.$_a-zA-Z0-9/,\-]*">" {
+      yylval.text = strdup(yytext);
+      assert(yylval.text);
+      return T_SYMBOL; }
+
 
   /* Accept the common assembler style comments, treat them as white
      space. Of course, also skip white space. The semi-colon is
