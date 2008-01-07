@@ -2930,6 +2930,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 			       Link::strength_t drive0,
 			       Link::strength_t drive1) const
 {
+      NetExpr*expr = elab_and_eval(des, scope, expr_, width);
 
 	// Some unary operands allow the operand to be
 	// self-determined, and some do not.
@@ -2948,45 +2949,21 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	// Handle the special case of a 2's complement of a constant
 	// value. This can be reduced to a no-op on a precalculated
 	// result.
-      if (op_ == '-') do {
-	      // TODO: Should replace this with a call to
-	      // elab_and_eval. Possibly blend this with the rest of
-	      // the elaboration as well.
-	    verinum*val = expr_->eval_const(des, scope);
-	    if (val == 0)
-		  break;
-
-	    if (width == 0)
-		  width = val->len();
-
-	    assert(width > 0);
-	    sig = new NetNet(scope, scope->local_symbol(),
-			     NetNet::WIRE, width);
-	    sig->data_type(IVL_VT_LOGIC);
-	    sig->local_flag(true);
-
-	      /* Take the 2s complement by taking the 1s complement
-		 and adding 1. */
-	    verinum tmp (v_not(*val), width);
-	    verinum one (1UL, width);
-	    tmp = verinum(tmp + one, width);
-	    tmp.has_sign(val->has_sign());
-
-	    NetConst*con = new NetConst(scope, scope->local_symbol(), tmp);
-	    connect(sig->pin(0), con->pin(0));
-
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: Replace expression "
-		       << *this << " with constant " << tmp << "."<<endl;
+      if (op_ == '-') {
+	    if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
+		  return elab_net_uminus_const_logic_(des, scope, tmp,
+						      width, rise, fall, decay,
+						      drive0, drive1);
 	    }
 
-	    delete val;
-	    des->add_node(con);
-	    return sig;
+	    if (NetECReal*tmp = dynamic_cast<NetECReal*>(expr)) {
+		  return elab_net_uminus_const_real_(des, scope, tmp,
+						     width, rise, fall, decay,
+						     drive0, drive1);
+	    }
+      }
 
-      } while (0);
-
-      NetNet* sub_sig = expr_->elaborate_net(des, scope, owidth, 0, 0, 0);
+      NetNet* sub_sig = expr->synthesize(des);
       if (sub_sig == 0) {
 	    des->errors += 1;
 	    return 0;
@@ -3115,3 +3092,73 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
       return sig;
 }
 
+NetNet* PEUnary::elab_net_uminus_const_logic_(Design*des, NetScope*scope,
+					      NetEConst*expr,
+					      unsigned width,
+					      const NetExpr* rise,
+					      const NetExpr* fall,
+					      const NetExpr* decay,
+					      Link::strength_t drive0,
+					      Link::strength_t drive1) const
+{
+      verinum val = expr->value();
+
+      if (width == 0)
+	    width = val.len();
+
+      assert(width > 0);
+      NetNet*sig = new NetNet(scope, scope->local_symbol(),
+		       NetNet::WIRE, width);
+      sig->data_type(IVL_VT_LOGIC);
+      sig->local_flag(true);
+
+	/* Take the 2s complement by taking the 1s complement
+	and adding 1. */
+      verinum tmp (v_not(val), width);
+      verinum one (1UL, width);
+      tmp = verinum(tmp + one, width);
+      tmp.has_sign(val.has_sign());
+
+      NetConst*con = new NetConst(scope, scope->local_symbol(), tmp);
+      connect(sig->pin(0), con->pin(0));
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: Replace expression "
+		 << *this << " with constant " << tmp << "."<<endl;
+      }
+
+      delete expr;
+      des->add_node(con);
+      return sig;
+}
+
+NetNet* PEUnary::elab_net_uminus_const_real_(Design*des, NetScope*scope,
+					      NetECReal*expr,
+					      unsigned width,
+					      const NetExpr* rise,
+					      const NetExpr* fall,
+					      const NetExpr* decay,
+					      Link::strength_t drive0,
+					      Link::strength_t drive1) const
+{
+      verireal val = expr->value();
+
+      NetNet*sig = new NetNet(scope, scope->local_symbol(),
+		       NetNet::WIRE, width);
+      sig->data_type(IVL_VT_REAL);
+      sig->local_flag(true);
+
+      NetLiteral*con = new NetLiteral(scope, scope->local_symbol(), -val);
+
+      connect(con->pin(0), sig->pin(0));
+      des->add_node(con);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: Replace expression "
+		 << *this << " with constant " << con->value_real() << "."<<endl;
+      }
+
+      delete expr;
+
+      return sig;
+}
