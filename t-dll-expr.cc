@@ -21,6 +21,7 @@
 
 # include  <iostream>
 
+# include  <cstring>
 # include  "t-dll.h"
 # include  "netlist.h"
 # include  <assert.h>

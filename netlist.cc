@@ -22,6 +22,7 @@
 # include <iostream>
 
 # include  <typeinfo>
+# include  <cstdlib>
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"

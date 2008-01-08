@@ -26,6 +26,7 @@
 # include  "pform.h"
 # include  "Statement.h"
 # include  "PSpec.h"
+# include  <cstring>
 # include  <sstream>
 
 class PSpecPath;

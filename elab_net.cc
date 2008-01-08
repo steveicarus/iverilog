@@ -24,6 +24,8 @@
 # include  "netmisc.h"
 # include  "compiler.h"
 
+# include  <cstdlib>
+# include  <cstring>
 # include  <iostream>
 # include  "ivl_assert.h"
 
@@ -2274,7 +2276,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 	  case index_component_t::SEL_PART: {
 
 		long msb, lsb;
-		bool flag = calculate_parts_(des, scope, msb, lsb);
+		/* bool flag = */ calculate_parts_(des, scope, msb, lsb);
 
 		lidx = sig->sb_to_idx(lsb);
 		midx = sig->sb_to_idx(msb);

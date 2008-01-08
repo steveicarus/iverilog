@@ -23,6 +23,8 @@
 # include  "config.h"
 # include  "compiler.h"
 # include  <stdio.h>
+# include  <cstring>
+# include  <cstdlib>
 
 /*
  * Manage the information about system functions. This information is

@@ -20,6 +20,7 @@
 # include  "config.h"
 # include  "compiler.h"
 # include  "netmisc.h"
+# include  <cstring>
 # include  <iostream>
 # include  <stdio.h>
 

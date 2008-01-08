@@ -414,7 +414,7 @@ void compile_real_array(char*label, char*name, int last, int first,
 
 void compile_net_array(char*label, char*name, int last, int first)
 {
-      vpiHandle obj = common_array_build(label, name, last, first);
+      /* vpiHandle obj = */ common_array_build(label, name, last, first);
 
       free(label);
       free(name);

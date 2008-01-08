@@ -37,6 +37,7 @@
 #define ftello ftell
 #endif
 
+#define wave_alloca alloca
 
 #define LXT2_WR_HDRID (0x1380)
 #define LXT2_WR_VERSION (0x0001)

@@ -22,6 +22,8 @@
 # include  "schedule.h"
 # include  "statistics.h"
 # include  <stdio.h>
+# include  <cstring>
+# include  <cstdlib>
 # include  <iostream>
 # include  <typeinfo>
 # include  <limits.h>

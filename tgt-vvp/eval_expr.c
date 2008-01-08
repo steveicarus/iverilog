@@ -731,8 +731,8 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
       assert(ivl_expr_value(re) == IVL_VT_LOGIC
 	     || ivl_expr_value(re) == IVL_VT_BOOL);
 
-      lv.wid = 0;
-      rv.wid = 0;
+      lv.wid = 0;  lv.base=0;
+      rv.wid = 0;  rv.base=0;
 
       switch (ivl_expr_opcode(exp)) {
 	  case 'G':

@@ -1,4 +1,6 @@
 
+%option nounput
+
 %{
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)

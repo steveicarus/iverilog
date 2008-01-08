@@ -1,9 +1,10 @@
 
 %option never-interactive
+%option nounput
 
 %{
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -91,9 +92,11 @@
 ".arith/div.s"  { return K_ARITH_DIV_S; }
 ".arith/mod"  { return K_ARITH_MOD; }
 ".arith/mult" { return K_ARITH_MULT; }
+".arith/mult.r" { return K_ARITH_MULT_R; }
 ".arith/sub"  { return K_ARITH_SUB; }
 ".arith/sub.r" { return K_ARITH_SUB_R; }
 ".arith/sum"  { return K_ARITH_SUM; }
+".arith/sum.r"  { return K_ARITH_SUM_R; }
 ".array" { return K_ARRAY; }
 ".array/i" { return K_ARRAY_I; }
 ".array/real" { return K_ARRAY_R; }

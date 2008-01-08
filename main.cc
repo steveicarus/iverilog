@@ -44,6 +44,7 @@ const char NOTICE[] =
 # include  <iostream>
 # include  <fstream>
 # include  <queue>
+# include  <cstring>
 # include  <list>
 # include  <map>
 # include  <unistd.h>

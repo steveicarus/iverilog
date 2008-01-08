@@ -1,5 +1,6 @@
 
 %option never-interactive
+%option nounput
 
 %{
 /*
@@ -390,8 +391,9 @@ W [ \t\b\f\r]+
        error_count += 1; }
 
   /* Final catchall. something got lost or mishandled. */
+  /* XXX Should we tell the luser something about the lexical state? */
 
-. {   cerr << yylloc.text << ":" << yylloc.first_line
+<*>.|\n {   cerr << yylloc.text << ":" << yylloc.first_line
 	   << ": error: unmatched character (";
       if (isgraph(yytext[0]))
 	    cerr << yytext[0];

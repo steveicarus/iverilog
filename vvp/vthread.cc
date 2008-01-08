@@ -30,6 +30,7 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+# include  <typeinfo>
 # include  <stdlib.h>
 # include  <limits.h>
 # include  <string.h>

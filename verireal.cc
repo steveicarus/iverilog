@@ -29,6 +29,7 @@
 # include  <iostream>
 # include  <math.h>
 # include  <assert.h>
+# include  <cstring>
 
 verireal::verireal()
 {
