@@ -3405,8 +3405,8 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 		  NetNet*src_sig = scope->find_signal(*cur_src);
 		  assert(src_sig);
 
-		  if (src_sig->port_type() != NetNet::PINPUT
-		      & src_sig->port_type() != NetNet::PINOUT) {
+		  if ( (src_sig->port_type() != NetNet::PINPUT)
+		    && (src_sig->port_type() != NetNet::PINOUT) ) {
 
 			cerr << get_fileline() << ": error: Path source "
 			     << *cur_src << " must be an input or inout port."

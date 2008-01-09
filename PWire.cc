@@ -103,11 +103,12 @@ bool PWire::set_port_type(NetNet::PortType pt)
 
 bool PWire::set_data_type(ivl_variable_type_t dt)
 {
-      if (data_type_ != IVL_VT_NO_TYPE)
+      if (data_type_ != IVL_VT_NO_TYPE) {
 	    if (data_type_ != dt)
 		  return false;
 	    else
 		  return true;
+      }
 
       assert(data_type_ == IVL_VT_NO_TYPE);
       data_type_ = dt;

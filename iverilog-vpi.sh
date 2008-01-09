@@ -157,7 +157,7 @@ done
 
 if test $compile_errors -gt 0
 then
-    echo "Some ($compile_errors) files failed to compile."
+    echo "$0: $compile_errors file(s) failed to compile."
     exit $compile_errors
 fi
 

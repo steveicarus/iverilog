@@ -444,8 +444,8 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 
 	// If the condition evaluates as false, then do not create the
 	// scope.
-      if (test->value().as_long() == 0 && !else_flag
-	  || test->value().as_long() != 0 && else_flag) {
+      if ( (test->value().as_long() == 0 && !else_flag)
+	|| (test->value().as_long() != 0 &&  else_flag) ) {
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: Generate condition "
 		       << (else_flag? "(else)" : "(if)")

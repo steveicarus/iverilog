@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -224,8 +224,8 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp)
 		  unsigned long aval = vp->value.vector[word].aval;
 		  unsigned long bval = vp->value.vector[word].bval;
 
-		  for (unsigned idx = 0 ;  (wdx+idx) < (unsigned)rfp->vwid ;
-		      idx += 1)
+		  for (unsigned idx = 0 ;  (wdx+idx) < (unsigned)rfp->vwid &&
+		       idx < 32; idx += 1)
 		  {
 			int bit = (aval&1) | ((bval<<1)&2);
 			vvp_bit4_t bit4;
@@ -339,7 +339,8 @@ static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp)
 		  unsigned long aval = vp->value.vector[word].aval;
 		  unsigned long bval = vp->value.vector[word].bval;
 
-		  for (unsigned idx = 0 ;  (wdx+idx) < vwid ; idx += 1) {
+		  for (unsigned idx = 0 ;  (wdx+idx) < vwid && idx < 32;
+		       idx += 1) {
 			int bit = (aval&1) | ((bval<<1)&2);
 			vvp_bit4_t bit4;
 

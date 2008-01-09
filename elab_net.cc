@@ -213,17 +213,19 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 
 	// Pad out the operands, if necessary, the match the width of
 	// the adder device.
-      if (lsig->vector_width() < width)
+      if (lsig->vector_width() < width) {
 	    if (expr_signed)
 		  lsig = pad_to_width_signed(des, lsig, width);
 	    else
 		  lsig = pad_to_width(des, lsig, width);
+      }
 
-      if (rsig->vector_width() < width)
+      if (rsig->vector_width() < width) {
 	    if (expr_signed)
 		  rsig = pad_to_width_signed(des, rsig, width);
 	    else
 		  rsig = pad_to_width(des, rsig, width);
+      }
 
 	// Check that the argument types match.
       if (lsig->data_type() != rsig->data_type()) {
