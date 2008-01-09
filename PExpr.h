@@ -487,6 +487,32 @@ class PEUnary : public PExpr {
       virtual bool is_constant(Module*) const;
 
     private:
+      NetNet* elab_net_uminus_const_logic_(Design*des, NetScope*scope,
+					   NetEConst*expr,
+					   unsigned width,
+					   const NetExpr* rise,
+					   const NetExpr* fall,
+					   const NetExpr* decay,
+					   Link::strength_t drive0,
+					   Link::strength_t drive1) const;
+      NetNet* elab_net_uminus_const_real_(Design*des, NetScope*scope,
+					   NetECReal*expr,
+					   unsigned width,
+					   const NetExpr* rise,
+					   const NetExpr* fall,
+					   const NetExpr* decay,
+					   Link::strength_t drive0,
+					   Link::strength_t drive1) const;
+      NetNet* elab_net_unary_real_(Design*des, NetScope*scope,
+				   NetExpr*expr,
+				   unsigned width,
+				   const NetExpr* rise,
+				   const NetExpr* fall,
+				   const NetExpr* decay,
+				   Link::strength_t drive0,
+				   Link::strength_t drive1) const;
+
+    private:
       char op_;
       PExpr*expr_;
 };

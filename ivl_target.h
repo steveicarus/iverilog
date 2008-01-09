@@ -1081,7 +1081,7 @@ extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
  * for the signal function return value. The width of this nexus must
  * exactly match the width of the device from ivl_lpm_width.
  *
- * The ivl_lpm_data function retrives the nexa for all the input
+ * The ivl_lpm_data function retrieves the nexa for all the input
  * ports. The ivl_lpm_size function returns the number of inputs for
  * the device, and the ivl_lpm_data() function index argument selects
  * the port to retrieve. Each port is sized independently.

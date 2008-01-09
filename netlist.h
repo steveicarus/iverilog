@@ -1047,6 +1047,7 @@ class NetSysFunc  : public NetNode {
 		 unsigned ports);
       ~NetSysFunc();
 
+      ivl_variable_type_t data_type() const;
       unsigned vector_width() const;
       const char* func_name() const;
 

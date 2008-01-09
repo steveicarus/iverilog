@@ -1367,6 +1367,11 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: Net system function "
+		 << name << " returns " << def->type << endl;
+      }
+
       NetSysFunc*net = new NetSysFunc(scope, scope->local_symbol(),
 				      def, 1+parms_.count());
       des->add_node(net);
@@ -1375,6 +1380,7 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, def->wid);
       osig->local_flag(true);
+      osig->set_signed(def->type==IVL_VT_REAL? true : false);
       osig->data_type(def->type);
       osig->set_line(*this);
 
@@ -2172,7 +2178,9 @@ NetNet* PEFNumber::elaborate_net(Design*des, NetScope*scope,
 
       NetNet*net = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, 1);
       net->data_type(IVL_VT_REAL);
+      net->set_signed(true);
       net->local_flag(true);
+      net->set_line(*this);
 
       connect(net->pin(0), obj->pin(0));
       return net;
@@ -2932,6 +2940,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 			       Link::strength_t drive0,
 			       Link::strength_t drive1) const
 {
+      NetExpr*expr = elab_and_eval(des, scope, expr_, width);
+      if (expr == 0)
+	    return 0;
 
 	// Some unary operands allow the operand to be
 	// self-determined, and some do not.
@@ -2950,50 +2961,36 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	// Handle the special case of a 2's complement of a constant
 	// value. This can be reduced to a no-op on a precalculated
 	// result.
-      if (op_ == '-') do {
-	      // TODO: Should replace this with a call to
-	      // elab_and_eval. Possibly blend this with the rest of
-	      // the elaboration as well.
-	    verinum*val = expr_->eval_const(des, scope);
-	    if (val == 0)
-		  break;
-
-	    if (width == 0)
-		  width = val->len();
-
-	    assert(width > 0);
-	    sig = new NetNet(scope, scope->local_symbol(),
-			     NetNet::WIRE, width);
-	    sig->data_type(IVL_VT_LOGIC);
-	    sig->local_flag(true);
-
-	      /* Take the 2s complement by taking the 1s complement
-		 and adding 1. */
-	    verinum tmp (v_not(*val), width);
-	    verinum one (1UL, width);
-	    tmp = verinum(tmp + one, width);
-	    tmp.has_sign(val->has_sign());
-
-	    NetConst*con = new NetConst(scope, scope->local_symbol(), tmp);
-	    connect(sig->pin(0), con->pin(0));
-
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: Replace expression "
-		       << *this << " with constant " << tmp << "."<<endl;
+      if (op_ == '-') {
+	    if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
+		  return elab_net_uminus_const_logic_(des, scope, tmp,
+						      width, rise, fall, decay,
+						      drive0, drive1);
 	    }
 
-	    delete val;
-	    des->add_node(con);
-	    return sig;
+	    if (NetECReal*tmp = dynamic_cast<NetECReal*>(expr)) {
+		  return elab_net_uminus_const_real_(des, scope, tmp,
+						     width, rise, fall, decay,
+						     drive0, drive1);
+	    }
+      }
 
-      } while (0);
+	// Handle the case that the expression is real-valued.
+      if (expr->expr_type() == IVL_VT_REAL) {
+	    return elab_net_unary_real_(des, scope, expr,
+					width, rise, fall, decay,
+					drive0, drive1);
+      }
 
-      NetNet* sub_sig = expr_->elaborate_net(des, scope, owidth, 0, 0, 0);
+      NetNet* sub_sig = expr->synthesize(des);
       if (sub_sig == 0) {
 	    des->errors += 1;
 	    return 0;
       }
       assert(sub_sig);
+
+      delete expr;
+      expr = 0;
 
       bool reduction=false;
       NetUReduce::TYPE rtype = NetUReduce::NONE;
@@ -3117,3 +3114,141 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
       return sig;
 }
 
+NetNet* PEUnary::elab_net_uminus_const_logic_(Design*des, NetScope*scope,
+					      NetEConst*expr,
+					      unsigned width,
+					      const NetExpr* rise,
+					      const NetExpr* fall,
+					      const NetExpr* decay,
+					      Link::strength_t drive0,
+					      Link::strength_t drive1) const
+{
+      verinum val = expr->value();
+
+      if (width == 0)
+	    width = val.len();
+
+      assert(width > 0);
+      NetNet*sig = new NetNet(scope, scope->local_symbol(),
+		       NetNet::WIRE, width);
+      sig->data_type(IVL_VT_LOGIC);
+      sig->local_flag(true);
+
+	/* Take the 2s complement by taking the 1s complement
+	and adding 1. */
+      verinum tmp (v_not(val), width);
+      verinum one (1UL, width);
+      tmp = verinum(tmp + one, width);
+      tmp.has_sign(val.has_sign());
+
+      NetConst*con = new NetConst(scope, scope->local_symbol(), tmp);
+      connect(sig->pin(0), con->pin(0));
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: Replace expression "
+		 << *this << " with constant " << tmp << "."<<endl;
+      }
+
+      delete expr;
+      des->add_node(con);
+      return sig;
+}
+
+NetNet* PEUnary::elab_net_uminus_const_real_(Design*des, NetScope*scope,
+					      NetECReal*expr,
+					      unsigned width,
+					      const NetExpr* rise,
+					      const NetExpr* fall,
+					      const NetExpr* decay,
+					      Link::strength_t drive0,
+					      Link::strength_t drive1) const
+{
+      verireal val = expr->value();
+
+      NetNet*sig = new NetNet(scope, scope->local_symbol(),
+		       NetNet::WIRE, width);
+      sig->data_type(IVL_VT_REAL);
+      sig->set_signed(true);
+      sig->local_flag(true);
+      sig->set_line(*this);
+
+      NetLiteral*con = new NetLiteral(scope, scope->local_symbol(), -val);
+
+      connect(con->pin(0), sig->pin(0));
+      des->add_node(con);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: Replace expression "
+		 << *this << " with constant " << con->value_real() << "."<<endl;
+      }
+
+      delete expr;
+
+      return sig;
+}
+
+NetNet* PEUnary::elab_net_unary_real_(Design*des, NetScope*scope,
+				      NetExpr*expr,
+				      unsigned width,
+				      const NetExpr* rise,
+				      const NetExpr* fall,
+				      const NetExpr* decay,
+				      Link::strength_t drive0,
+				      Link::strength_t drive1) const
+{
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: Elaborate real expression "
+		 << *this << "."<<endl;
+      }
+
+      NetNet* sub_sig = expr->synthesize(des);
+      delete expr;
+      if (sub_sig == 0) {
+	    des->errors += 1;
+	    return 0;
+      }
+      ivl_assert(*this, sub_sig);
+
+      NetNet*sig = new NetNet(scope, scope->local_symbol(),
+			      NetNet::WIRE, 1);
+      sig->data_type(IVL_VT_REAL);
+      sig->set_signed(true);
+      sig->local_flag(true);
+      sig->set_line(*this);
+
+      switch (op_) {
+
+	  default:
+	    cerr << get_fileline() << ": internal error: Unhandled UNARY "
+		 << op_ << " expression with real values." << endl;
+	    des->errors += 1;
+	    break;
+ 
+	  case '-':
+	    NetAddSub*sub = new NetAddSub(scope, scope->local_symbol(), 1);
+	    sub->attribute(perm_string::literal("LPM_Direction"),
+				 verinum("SUB"));
+	    sub->set_line(*this);
+	    des->add_node(sub);
+	    connect(sig->pin(0), sub->pin_Result());
+	    connect(sub_sig->pin(0), sub->pin_DataB());
+
+	    NetLiteral*tmp_con = new NetLiteral(scope, scope->local_symbol(),
+						verireal(0.0));
+	    tmp_con->set_line(*this);
+	    des->add_node(tmp_con);
+
+	    NetNet*tmp_sig = new NetNet(scope, scope->local_symbol(),
+					NetNet::WIRE, 1);
+	    tmp_sig->data_type(IVL_VT_REAL);
+	    tmp_sig->set_signed(true);
+	    tmp_sig->local_flag(true);
+	    tmp_sig->set_line(*this);
+
+	    connect(tmp_sig->pin(0), sub->pin_DataA());
+	    connect(tmp_sig->pin(0), tmp_con->pin(0));
+	    break;
+     }
+
+      return sig;
+}

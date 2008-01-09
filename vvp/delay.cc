@@ -563,8 +563,8 @@ static int modpath_src_free_object( vpiHandle ref )
 }
 
 /*
- * This Routine will put  specific demension of delay[] values
- * into a vpiHandle. In this case, he will put an
+ * This routine will put specific dimension of delay[] values
+ * into a vpiHandle. In this case, he will put
  * specific delays values in a vpiModPathIn object
  *
  */
@@ -628,9 +628,9 @@ static void modpath_src_put_delays ( vpiHandle ref, p_vpi_delay delays )
 }
 
 /*
- * This Routine will retrive the delay[12] values
- * of an vpiHandle. In this case, he will get an
- * specific delays values from an vpiModPathIn 
+ * This routine will retrieve the delay[12] values
+ * of a vpiHandle. In this case, he will get an
+ * specific delays values from a vpiModPathIn 
  * object
  *
  */
@@ -734,7 +734,7 @@ static void initialize_path_term(struct __vpiModPathTerm&obj)
 }
 
 /*
- * This function will Construct a vpiModPath Object.
+ * This function will construct a vpiModPath Object.
  * give a respective "net", and will point to his
  * respective functor
  */
@@ -752,7 +752,7 @@ struct __vpiModPath* vpip_make_modpath(vvp_net_t *net)
 
 
 /*
- * This function will Constructs a vpiModPathIn 
+ * This function will construct a vpiModPathIn 
  * ( struct __vpiModPathSrc ) Object. will give
  * a delays[12] values, and point to the specified functor
  *
@@ -772,7 +772,7 @@ struct __vpiModPathSrc* vpip_make_modpath_src (struct __vpiModPath*path, vvp_tim
 
 
 /*
-  this Routine will safetly convert a modpath vpiHandle
+  this routine will safely convert a modpath vpiHandle
   to a struct __vpiModPath { }
 */
 
@@ -785,8 +785,8 @@ struct __vpiModPathTerm* vpip_modpath_term_from_handle(vpiHandle ref)
 }
 
 /*
-  this Routine will safetly convert a modpathsrc vpiHandle
-  to a struct __vpiModPathSrc { }, This is equivalent ao
+  this routine will safely convert a modpathsrc vpiHandle
+  to a struct __vpiModPathSrc { }, This is equivalent to a
   vpiModPathIn handle
 */
 
