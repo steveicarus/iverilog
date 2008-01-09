@@ -1739,6 +1739,12 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
       if (ivl_signal_array_count(sig) > 1) {
 	    ivl_expr_t ix = ivl_expr_oper1(exp);
 	    if (!number_is_immediate(ix, 8*sizeof(unsigned long))) {
+		  if (add_index >= 0) {
+			fprintf(stderr, "%s:%u: vvp-tgt error: "
+				"add_index=%d at %s:%d\n",
+				ivl_expr_file(exp), ivl_expr_lineno(exp),
+				add_index, __FILE__, __LINE__);
+		  }
 		  assert(add_index < 0);
 		  draw_eval_expr_into_integer(ix, 3);
 		  fprintf(vvp_out, "   %%load/av %u, v%p, %u;\n",

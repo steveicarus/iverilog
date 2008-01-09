@@ -407,6 +407,8 @@ void dll_target::expr_signal(const NetESignal*net)
 
       expr_->type_ = IVL_EX_SIGNAL;
       expr_->value_= net->expr_type();
+      expr_->file  = net->get_file();
+      expr_->lineno= net->get_lineno();
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->u_.signal_.word = word_expr;
