@@ -33,9 +33,9 @@
  */
 
 static const struct sfunc_return_type sfunc_table[] = {
-      { "$realtime",   IVL_VT_REAL,   0, 0 },
-      { "$bitstoreal", IVL_VT_REAL,   0, 0 },
-      { "$itor",       IVL_VT_REAL,   0, 0 },
+      { "$realtime",   IVL_VT_REAL,   1, 0 },
+      { "$bitstoreal", IVL_VT_REAL,   1, 0 },
+      { "$itor",       IVL_VT_REAL,   1, 0 },
       { "$realtobits", IVL_VT_LOGIC, 64, 0 },
       { "$time",       IVL_VT_LOGIC, 64, 0 },
       { "$stime",      IVL_VT_LOGIC, 32, 0 },
@@ -127,7 +127,7 @@ int load_sys_func_table(const char*path)
 		  cell = new struct sfunc_return_type_cell;
 		  cell->name = lex_strings.add(name);
 		  cell->type = IVL_VT_REAL;
-		  cell->wid  = 0;
+		  cell->wid  = 1;
 		  cell->signed_flag = true;
 		  cell->next = sfunc_stack;
 		  sfunc_stack = cell;

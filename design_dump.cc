@@ -512,7 +512,8 @@ void NetUReduce::dump_node(ostream&o, unsigned ind) const
 
 void NetSysFunc::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << def_->name << "(...)" << endl;
+      o << setw(ind) << "" << def_->name << "(...) -->"
+	<< data_type() << " width=" << vector_width() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }

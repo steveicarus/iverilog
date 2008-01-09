@@ -138,6 +138,11 @@ const char*NetSysFunc::func_name() const
       return def_->name;
 }
 
+ivl_variable_type_t NetSysFunc::data_type() const
+{
+      return def_->type;
+}
+
 unsigned NetSysFunc::vector_width() const
 {
       return def_->wid;
