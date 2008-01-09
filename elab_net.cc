@@ -1365,6 +1365,11 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: Net system function "
+		 << name << " returns " << def->type << endl;
+      }
+
       NetSysFunc*net = new NetSysFunc(scope, scope->local_symbol(),
 				      def, 1+parms_.count());
       des->add_node(net);
@@ -1373,6 +1378,7 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, def->wid);
       osig->local_flag(true);
+      osig->set_signed(def->type==IVL_VT_REAL? true : false);
       osig->data_type(def->type);
       osig->set_line(*this);
 
@@ -2170,7 +2176,9 @@ NetNet* PEFNumber::elaborate_net(Design*des, NetScope*scope,
 
       NetNet*net = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, 1);
       net->data_type(IVL_VT_REAL);
+      net->set_signed(true);
       net->local_flag(true);
+      net->set_line(*this);
 
       connect(net->pin(0), obj->pin(0));
       return net;
@@ -3158,7 +3166,9 @@ NetNet* PEUnary::elab_net_uminus_const_real_(Design*des, NetScope*scope,
       NetNet*sig = new NetNet(scope, scope->local_symbol(),
 		       NetNet::WIRE, width);
       sig->data_type(IVL_VT_REAL);
+      sig->set_signed(true);
       sig->local_flag(true);
+      sig->set_line(*this);
 
       NetLiteral*con = new NetLiteral(scope, scope->local_symbol(), -val);
 
