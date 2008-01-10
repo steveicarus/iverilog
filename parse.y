@@ -2860,6 +2860,8 @@ spec_reference_event
     { delete $2;
       delete $4;
     }
+  | K_edge '[' edge_descriptor_list ']' expr_primary
+    { delete $5; }
   | K_edge '[' edge_descriptor_list ']' expr_primary K_TAND expression
     { delete $5;
       delete $7;
