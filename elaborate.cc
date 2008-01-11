@@ -814,13 +814,14 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
 
 	  case NetNet::PINPUT:
 	    if (tmp->vector_width() > sig->vector_width()) {
-		  node = new NetPartSelect(sig, 0, tmp->vector_width(),
+		  node = new NetPartSelect(tmp, 0, sig->vector_width(),
 					   NetPartSelect::PV);
+		  connect(node->pin(0), sig->pin(0));
 	    } else {
 		  node = new NetPartSelect(sig, 0, tmp->vector_width(),
 					   NetPartSelect::VP);
+		  connect(node->pin(0), tmp->pin(0));
 	    }
-	    connect(node->pin(0), tmp->pin(0));
 	    break;
 
 	  case NetNet::PINOUT:
