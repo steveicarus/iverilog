@@ -71,6 +71,8 @@ clean:
 distclean: clean
 	rm -f Makefile config.status config.log config.cache
 
+check: all
+
 install: all installdirs $(libdir)/ivl/null.tgt $(INSTALL_DOC) $(libdir)/ivl/null.conf $(libdir)/ivl/null-s.conf
 
 $(libdir)/ivl/null.tgt: ./null.tgt
