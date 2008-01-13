@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -200,6 +200,14 @@ void vvp_send_long(vvp_net_ptr_t ptr, long val)
 
 	    ptr = next;
       }
+}
+
+void vvp_vector4_t::copy_bits(const vvp_vector4_t&that)
+{
+      unsigned bits_to_copy = (that.size_ < size_) ? that.size_ : size_;
+
+      for (unsigned idx = 0; idx < bits_to_copy; idx += 1)
+	    set_bit(idx, that.value(idx));
 }
 
 void vvp_vector4_t::copy_from_(const vvp_vector4_t&that)

@@ -1,7 +1,7 @@
 #ifndef __vvp_net_H
 #define __vvp_net_H
 /*
- * Copyright (c) 2004-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,7 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.58 2007/06/12 02:36:58 steve Exp $"
 
 # include  "config.h"
 # include  <stddef.h>
@@ -117,6 +116,9 @@ class vvp_vector4_t {
 
       void set_bit(unsigned idx, vvp_bit4_t val);
       void set_vec(unsigned idx, const vvp_vector4_t&that);
+
+        // Get the bits from another vector, but keep my size.
+      void copy_bits(const vvp_vector4_t&that);
 
 	// Test that the vectors are exactly equal
       bool eeq(const vvp_vector4_t&that) const;

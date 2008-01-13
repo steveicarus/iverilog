@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.166 2007/06/13 01:03:57 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "vthread.h"
@@ -2105,6 +2102,45 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %load/avp0 <bit>, <array-label>, <wid> ;
+ *
+ * <bit> is the thread bit address for the result
+ * <array-label> is the array to access, and
+ * <wid> is the width of the word to read.
+ *
+ * The address of the word in the array is in index register 3.
+ * An integer value from index register 0 is added to the value.
+ */
+bool of_LOAD_AVP0(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+      int64_t addend = thr->words[0].w_int;
+      unsigned adr = thr->words[3].w_int;
+
+      vvp_vector4_t word = array_get_word(cp->array, adr);
+
+      if (word.size() != wid) {
+	    fprintf(stderr, "internal error: array width=%u, word.size()=%u, wid=%u\n",
+		    0, word.size(), wid);
+      }
+      assert(word.size() == wid);
+
+	/* Add the addend value */
+      word += addend;
+
+	/* Check the address once, before we scan the vector. */
+      thr_check_addr(thr, bit+wid-1);
+
+	/* Copy the vector bits into the bits4 vector. Do the copy
+	   directly to skip the excess calls to thr_check_addr. */
+      thr->bits4.set_vec(bit, word);
+
+
+      return true;
+}
+
+/*
  * %load/avx.p <bit>, <array-label>, <idx> ;
  *
  * <bit> is the thread bit address for the result
@@ -2229,6 +2265,7 @@ vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
       }
       assert(sig);
 
+
       vvp_vector4_t sig_value = sig->vec4_value();
       sig_value.resize(wid);
 
@@ -2253,15 +2290,19 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
 }
 
 /*
-* This is like of_LOAD_VEC, but includes an add of an integer value.
-*/
+ * This is like of_LOAD_VEC, but includes an add of an integer value from
+ * index 0. The <wid> is the expected result width not the vector width.
+ */
 bool of_LOAD_VP0(vthread_t thr, vvp_code_t cp)
 {
       unsigned bit = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
       int64_t addend = thr->words[0].w_int;
+      unsigned wid = thr->words[2].w_int;
 
-      vvp_vector4_t sig_value = load_base(thr, cp);
+        /* We need a vector this wide to make the math work correctly.
+         * Copy the base bits into the vector, but keep the width. */
+      vvp_vector4_t sig_value(wid, BIT4_0);
+      sig_value.copy_bits(load_base(thr, cp));
 
 	/* Add the addend value */
       sig_value += addend;
@@ -3645,8 +3686,4 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
-
-/*
- * $Log: vthread.cc,v $
- */
 

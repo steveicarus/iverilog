@@ -1,7 +1,7 @@
 #ifndef __codes_H
 #define __codes_H
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,10 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.84 2007/06/07 03:20:15 steve Exp $"
-#endif
-
 
 # include  "pointers.h"
 # include  "vvp_net.h"
@@ -92,6 +88,7 @@ extern bool of_JMP0XZ(vthread_t thr, vvp_code_t code);
 extern bool of_JMP1(vthread_t thr, vvp_code_t code);
 extern bool of_JOIN(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_AV(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_AVP0(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_MV(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_NX(vthread_t thr, vvp_code_t code);
@@ -188,154 +185,4 @@ extern vvp_code_t codespace_allocate(void);
 extern vvp_code_t codespace_next(void);
 extern vvp_code_t codespace_null(void);
 
-
-/*
- * $Log: codes.h,v $
- * Revision 1.84  2007/06/07 03:20:15  steve
- *  Properly handle signed conversion to real
- *
- * Revision 1.83  2007/04/14 04:43:02  steve
- *  Finish up part select of array words.
- *
- * Revision 1.82  2007/02/14 05:58:14  steve
- *  Add the mov/wr opcode.
- *
- * Revision 1.81  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.80  2006/10/05 01:23:53  steve
- *  Handle non-constant delays on indexed non-blocking assignments.
- *
- * Revision 1.79  2006/08/09 05:19:08  steve
- *  Add support for real valued modulus.
- *
- * Revision 1.78  2006/02/02 02:44:00  steve
- *  Allow part selects of memory words in l-values.
- *
- * Revision 1.77  2005/11/26 17:16:05  steve
- *  Force instruction that can be indexed.
- *
- * Revision 1.76  2005/09/17 04:01:01  steve
- *  Add the load/v.p instruction.
- *
- * Revision 1.75  2005/09/14 02:50:07  steve
- *  Add word integer compares.
- *
- * Revision 1.74  2005/06/14 01:44:09  steve
- *  Add the assign_v0_d instruction.
- *
- * Revision 1.73  2005/06/02 16:02:11  steve
- *  Add support for notif0/1 gates.
- *  Make delay nodes support inertial delay.
- *  Add the %force/link instruction.
- *
- * Revision 1.72  2005/05/07 03:15:42  steve
- *  Implement non-blocking part assign.
- *
- * Revision 1.71  2005/05/01 22:05:21  steve
- *  Add cassign/link instruction.
- *
- * Revision 1.70  2005/03/03 04:33:10  steve
- *  Rearrange how memories are supported as vvp_vector4 arrays.
- *
- * Revision 1.69  2004/12/17 04:47:47  steve
- *  Replace single release with release/net and release/reg.
- *
- * Revision 1.68  2004/12/15 17:17:42  steve
- *  Add the force/v instruction.
- *
- * Revision 1.67  2004/12/11 02:31:29  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.66  2004/06/19 15:52:53  steve
- *  Add signed modulus operator.
- *
- * Revision 1.65  2004/05/19 03:26:24  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.64  2003/07/03 20:03:36  steve
- *  Remove the vvp_cpoint_t indirect code pointer.
- *
- * Revision 1.63  2003/06/18 03:55:19  steve
- *  Add arithmetic shift operators.
- *
- * Revision 1.62  2003/06/17 19:17:42  steve
- *  Remove short int restrictions from vvp opcodes.
- *
- * Revision 1.61  2003/05/26 04:44:54  steve
- *  Add the set/x0/x instruction.
- *
- * Revision 1.60  2003/05/07 03:39:12  steve
- *  ufunc calls to functions can have scheduling complexities.
- *
- * Revision 1.59  2003/03/28 02:33:56  steve
- *  Add support for division of real operands.
- *
- * Revision 1.58  2003/02/27 20:36:29  steve
- *  Add the cvt/vr instruction.
- *
- * Revision 1.57  2003/02/06 17:41:47  steve
- *  Add the %sub/wr instruction.
- *
- * Revision 1.56  2003/01/26 18:16:22  steve
- *  Add %cvt/ir and %cvt/ri instructions, and support
- *  real values passed as arguments to VPI tasks.
- *
- * Revision 1.55  2003/01/25 23:48:06  steve
- *  Add thread word array, and add the instructions,
- *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
- *
- * Revision 1.54  2002/11/21 22:43:13  steve
- *  %set/x0 instruction to support bounds checking.
- *
- * Revision 1.53  2002/11/08 04:59:57  steve
- *  Add the %assign/v0 instruction.
- *
- * Revision 1.52  2002/11/07 02:32:39  steve
- *  Add vector set and load instructions.
- *
- * Revision 1.51  2002/09/18 04:29:55  steve
- *  Add support for binary NOR operator.
- *
- * Revision 1.50  2002/09/12 15:49:43  steve
- *  Add support for binary nand operator.
- *
- * Revision 1.49  2002/08/28 18:38:07  steve
- *  Add the %subi instruction, and use it where possible.
- *
- * Revision 1.48  2002/08/28 17:15:06  steve
- *  Add the %load/nx opcode to index vpi nets.
- *
- * Revision 1.47  2002/08/22 03:38:40  steve
- *  Fix behavioral eval of x?a:b expressions.
- *
- * Revision 1.46  2002/08/12 01:35:07  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.45  2002/07/05 02:50:58  steve
- *  Remove the vpi object symbol table after compile.
- *
- * Revision 1.44  2002/06/02 18:55:58  steve
- *  Add %cmpi/u instruction.
- *
- * Revision 1.43  2002/05/31 20:04:22  steve
- *  Add the %muli instruction.
- *
- * Revision 1.42  2002/05/31 04:09:58  steve
- *  Slight improvement in %mov performance.
- *
- * Revision 1.41  2002/05/29 16:29:34  steve
- *  Add %addi, which is faster to simulate.
- *
- * Revision 1.40  2002/04/21 22:29:49  steve
- *  Add the assign/d instruction for computed delays.
- *
- * Revision 1.39  2002/04/14 18:41:34  steve
- *  Support signed integer division.
- */
 #endif

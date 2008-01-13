@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.78 2007/06/12 02:36:58 steve Exp $
  */
 
 
@@ -315,7 +314,7 @@ bit:
 * %ix/get/s <idx>, <bit>, <wid>
 
 This instruction loads a thread vector starting at <bit>, size <wid>,
-into the index register <idx>. The <bit> is the lsb of the value in
+into the index register <idx>. The <bit> is the LSB of the value in
 thread bit space, and <wid> is the width of the vector.
 
 The function converts the 4-value bits into a binary number, without
@@ -394,9 +393,15 @@ This instruction loads a word from the specified array. The word
 address is in index register 3. The width should match the width of
 the array word.
 
+* %load/avp0 <bit>, <array-label>, <wid>
+
+This instruction is a mix of %load/av and %load/vp0. It loads an array
+value like %load/av and then adds a value from index register 0 to the
+result like %load/vp0.
+
 * %load/avx.p <bit>, <array-label>, <index>
 
-This instruction is similar ro %load/av, but it loads only a single
+This instruction is similar to %load/av, but it loads only a single
 bit, and the <index> is the selector for the bit to use. If <index> is
 out of range, then x is loaded.
 
@@ -426,8 +431,12 @@ functor, the the most significant bits are dropped.
 
 This instruction is the same as %load/v above, except that it also
 adds the integer value is index register 0 into the loaded value. The
-addition is a verilog-style add, which means that if any of the input
+addition is a Verilog-style add, which means that if any of the input
 bits are X or Z, the entire result is turned into a vector of X bits.
+
+Index register 2 contains the result width. The addition of the loaded
+value and the index are done at this width to avoid the problem of a
+small vector with a large immediate offset indexing an array.
 
 * %load/wr <bit>, <vpi-label>
 
@@ -634,7 +643,7 @@ bits are not written anywhere.
 
 This instruction shifts the vector left (towards more significant
 bits) by the amount in index register 0. The <bit> is the address of
-the lsb of the vector, and <wid> the width of the vector. The shift is
+the LSB of the vector, and <wid> the width of the vector. The shift is
 done in place. Zero values are shifted in.
 
 * %shiftr/i0 <bit>, <wid>
@@ -642,7 +651,7 @@ done in place. Zero values are shifted in.
 
 This instruction shifts the vector right (towards the less significant
 bits) by the amount in the index register 0. The <bit> is the address
-of the lsb of the vector, and <wid> is the width of the vector. The
+of the LSB of the vector, and <wid> is the width of the vector. The
 shift is done in place.
 
 %shiftr/i0 is an unsigned down shift, so zeros are shifted into the
@@ -717,15 +726,15 @@ and leaves the result in the <dst> vector. xnor is this:
 This does a bitwise exclusive or (^) of the <src> and <dst> vector,
 and leaves the result in the <dst> vector. xor is this:
 
-	0 xnor 0 --> 0
-	0 xnor 1 --> 1
-	1 xnor 0 --> 1
-	1 xnor 1 --> 0
+	0 xor 0 --> 0
+	0 xor 1 --> 1
+	1 xor 0 --> 1
+	1 xor 1 --> 0
 	otherwise    x
 
 
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU

@@ -28,7 +28,7 @@
 static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
 				int ok_flags);
 static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
-			     int add_index);
+			     int add_index, unsigned long immediate);
 
 int number_is_unknown(ivl_expr_t ex)
 {
@@ -1020,16 +1020,12 @@ static struct vector_info draw_load_add_immediate(ivl_expr_t le,
       unsigned long imm;
 
       imm = get_number_immediate(re);
-
-	/* Load the immediate value into word register 0 */
-      fprintf(vvp_out, "  %%ix/load 0, %lu;\n", imm);
-
       lv.base = allocate_vector(wid);
       lv.wid = wid;
 
-	/* Load the signal value with %loads that add the index
+	/* Load the signal value with a %load that adds the index
 	   register to the value being loaded. */
-      draw_signal_dest(le, lv, 0);
+      draw_signal_dest(le, lv, 0, imm);
 
       return lv;
 }
@@ -1720,11 +1716,11 @@ void pad_expr_in_place(ivl_expr_t exp, struct vector_info res, unsigned swid)
  * offsetting the read from the lsi (least significant index) of the
  * signal.
  *
- * If the add_index is >=0, then generate a %load/vpp to add the
+ * If the add_index is >=0, then generate a %load/vp0 to add the
  * word0 value to the loaded value before storing it into the destination.
  */
 static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
-			     int add_index)
+			     int add_index, unsigned long immediate)
 {
       unsigned swid = ivl_expr_width(exp);
       ivl_signal_t sig = ivl_expr_signal(exp);
@@ -1739,16 +1735,18 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
       if (ivl_signal_array_count(sig) > 1) {
 	    ivl_expr_t ix = ivl_expr_oper1(exp);
 	    if (!number_is_immediate(ix, 8*sizeof(unsigned long))) {
-		  if (add_index >= 0) {
-			fprintf(stderr, "%s:%u: vvp-tgt error: "
-				"add_index=%d at %s:%d\n",
-				ivl_expr_file(exp), ivl_expr_lineno(exp),
-				add_index, __FILE__, __LINE__);
-		  }
-		  assert(add_index < 0);
 		  draw_eval_expr_into_integer(ix, 3);
-		  fprintf(vvp_out, "   %%load/av %u, v%p, %u;\n",
-			  res.base, sig, swid);
+		  if (add_index < 0) {
+		        fprintf(vvp_out, "   %%load/av %u, v%p, %u;\n",
+			        res.base, sig, swid);
+		  } else {
+		        assert(add_index == 0);
+
+		          /* Add an immediate value to an array value. */
+		        fprintf(vvp_out, "    %%ix/load 0, %lu;\n", immediate);
+		        fprintf(vvp_out, "    %%load/avp0 %u, v%p, %u;\n",
+		                res.base, sig, swid);
+		  }
 		  pad_expr_in_place(exp, res, swid);
 		  return;
 	    }
@@ -1772,8 +1770,11 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 	    assert(add_index == 0);
 
 	      /* If this is a REG (a variable) then I can do a vector read. */
+	    fprintf(vvp_out, "    %%ix/load 0, %lu;\n", immediate);
+	    fprintf(vvp_out, "    %%ix/load 2, %lu;\n", res.wid);
 	    fprintf(vvp_out, "    %%load/vp0 %u, v%p_%u, %u;\n",
 		    res.base, sig, word, swid);
+	    swid = res.wid;
 
       } else {
 
@@ -1806,7 +1807,7 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid,
       res.wid  = wid;
       save_expression_lookaside(res.base, exp, wid);
 
-      draw_signal_dest(exp, res, -1);
+      draw_signal_dest(exp, res, -1, 0L);
       return res;
 }
 
@@ -2289,7 +2290,7 @@ static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
       switch (ivl_expr_type(exp)) {
 
 	  case IVL_EX_SIGNAL:
-	    draw_signal_dest(exp, dest, -1);
+	    draw_signal_dest(exp, dest, -1, 0L);
 	    return;
 
 	  default:
