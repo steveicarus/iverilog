@@ -134,7 +134,8 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
 %token K_always K_and K_assign K_begin K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
-%token K_edge K_else K_end K_endcase K_endfunction K_endmodule
+%token K_edge K_edge_descriptor
+%token K_else K_end K_endcase K_endfunction K_endmodule
 %token K_endprimitive K_endspecify K_endtable K_endtask K_event K_for
 %token K_force K_forever K_fork K_function K_highz0 K_highz1 K_if K_ifnone
 %token K_initial K_inout K_input K_integer K_join K_large K_localparam
@@ -2503,12 +2504,23 @@ spec_reference_event
 		{ delete $2;
 		  delete $4;
 		}
+	| K_edge '[' edge_descriptor_list ']' expr_primary
+		{ delete $5; }
+	| K_edge '[' edge_descriptor_list ']' expr_primary K_TAND expression
+		{ delete $5;
+		  delete $7;
+		}
 	| expr_primary K_TAND expression
 		{ delete $1;
 		  delete $3;
 		}
         | expr_primary
 		{ delete $1; }
+	;
+
+edge_descriptor_list
+	: edge_descriptor_list ',' K_edge_descriptor
+	| K_edge_descriptor
 	;
 
 spec_notifier_opt

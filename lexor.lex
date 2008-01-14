@@ -101,6 +101,7 @@ static int comment_enter;
 %s UDPTABLE
 %x PPTIMESCALE
 %x PPDEFAULT_NETTYPE
+%s EDGES
 
 W [ \t\b\f\r]+
 
@@ -158,7 +159,7 @@ W [ \t\b\f\r]+
      with "*" and return that. */
 "(*"{W}*")" { return '*'; }
 
-
+<EDGES>"]" { BEGIN(0); return yytext[0]; }
 [}{;:\[\],()#=.@&!?<>%|^~+*/-] { return yytext[0]; }
 
 \"            { BEGIN(CSTRING); }
@@ -201,12 +202,25 @@ W [ \t\b\f\r]+
 <UDPTABLE>[pP]     { return 'p'; }
 <UDPTABLE>[01\?\*\-] { return yytext[0]; }
 
+<EDGES>"01" { return K_edge_descriptor; }
+<EDGES>"0x" { return K_edge_descriptor; }
+<EDGES>"0z" { return K_edge_descriptor; }
+<EDGES>"10" { return K_edge_descriptor; }
+<EDGES>"1x" { return K_edge_descriptor; }
+<EDGES>"1z" { return K_edge_descriptor; }
+<EDGES>"x0" { return K_edge_descriptor; }
+<EDGES>"x1" { return K_edge_descriptor; }
+<EDGES>"z0" { return K_edge_descriptor; }
+<EDGES>"z1" { return K_edge_descriptor; }
+
 [a-zA-Z_][a-zA-Z0-9$_]* {
       int rc = lexor_keyword_code(yytext, yyleng);
       if (rc == IDENTIFIER) {
 	    yylval.text = strdup(yytext);
 	    if (strncmp(yylval.text,"PATHPULSE$", 10) == 0)
 		  rc = PATHPULSE_IDENTIFIER;
+      } else if (rc == K_edge) {
+	    BEGIN(EDGES);
       } else {
 	    yylval.text = 0;
       }
