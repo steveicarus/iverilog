@@ -20,7 +20,6 @@
 /*
  * This file includes functions for evaluating REAL expressions.
  */
-# include  "_pli_types.h" /* To get the UINT64 format */
 # include  "vvp_config.h"
 # include  "vvp_priv.h"
 # include  <string.h>
@@ -31,6 +30,15 @@
 #ifdef HAVE_STDINT_H
 # include  <stdint.h>
 #endif
+
+#ifdef HAVE_INTTYPES_H
+# ifndef __STDC_FORMAT_MACROS
+#  define __STDC_FORMAT_MACROS 1
+# endif
+# include  <inttypes.h>
+#else
+#endif
+
 # include  <math.h>
 # include  <assert.h>
 
@@ -64,7 +72,7 @@ static int draw_number_bool64(ivl_expr_t exp)
       }
 
       res = allocate_word();
-      fprintf(vvp_out, "   %%ix/load %d, %" PLI_UINT64_FMT ";\n", res, val);
+      fprintf(vvp_out, "   %%ix/load %d, %" PRIu64 ";\n", res, val);
       return res;
 }
 

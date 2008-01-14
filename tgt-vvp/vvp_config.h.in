@@ -32,6 +32,7 @@
 
 # undef HAVE_MALLOC_H
 # undef HAVE_STDINT_H
+# undef HAVE_INTTYPES_H
 
 # undef _LARGEFILE_SOURCE
 # undef _LARGEFILE64_SOURCE
