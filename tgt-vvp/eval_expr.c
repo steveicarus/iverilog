@@ -1771,7 +1771,7 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 
 	      /* If this is a REG (a variable) then I can do a vector read. */
 	    fprintf(vvp_out, "    %%ix/load 0, %lu;\n", immediate);
-	    fprintf(vvp_out, "    %%ix/load 2, %lu;\n", res.wid);
+	    fprintf(vvp_out, "    %%ix/load 2, %u;\n", res.wid);
 	    fprintf(vvp_out, "    %%load/vp0 %u, v%p_%u, %u;\n",
 		    res.base, sig, word, swid);
 	    swid = res.wid;
