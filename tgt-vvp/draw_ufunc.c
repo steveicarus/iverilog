@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,8 +33,10 @@ static void function_argument_logic(ivl_signal_t port, ivl_expr_t exp)
       assert(ivl_signal_array_count(port) == 1);
 
       res = draw_eval_expr_wid(exp, ivl_signal_width(port), 0);
-      assert(res.wid <= ivl_signal_width(port));
-      fprintf(vvp_out, "    %%set/v v%p_0, %u, %u;\n", port, res.base, res.wid);
+        /* We could have extra bits so only select the ones we need. */
+      unsigned pwidth = ivl_signal_width(port);
+      fprintf(vvp_out, "    %%set/v v%p_0, %u, %u;\n", port, res.base,
+              (res.wid > pwidth) ? pwidth : res.wid);
 
       clr_vector(res);
 }
