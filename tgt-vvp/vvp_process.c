@@ -236,14 +236,28 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 
       if (part_off_ex) {
 	    unsigned skip_assign = transient_id++;
-	    assert(dexp == 0);
-	    draw_eval_expr_into_integer(part_off_ex, 1);
-	      /* If the index expression has XZ bits, skip the assign. */
-	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
-	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
-	    fprintf(vvp_out, "    %%assign/v0/x1 v%p_%lu, %u, %u;\n",
-		    sig, use_word, delay, bit);
-	    fprintf(vvp_out, "t_%u ;\n", skip_assign);
+	    if (dexp == 0) {
+		    /* Constant delay... */
+		  draw_eval_expr_into_integer(part_off_ex, 1);
+		    /* If the index expression has XZ bits, skip the assign. */
+		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+		  fprintf(vvp_out, "    %%assign/v0/x1 v%p_%lu, %u, %u;\n",
+		          sig, use_word, delay, bit);
+		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
+	    } else {
+		    /* Calculated delay... */
+		  int delay_index = allocate_word();
+		  draw_eval_expr_into_integer(dexp, delay_index);
+		  draw_eval_expr_into_integer(part_off_ex, 1);
+		    /* If the index expression has XZ bits, skip the assign. */
+		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+		  fprintf(vvp_out, "    %%assign/v0/x1 v%p_%lu, %u, %u;\n",
+		          sig, use_word, delay_index, bit);
+		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
+		  clr_word(delay_index);
+	    }
 
       } else if (part_off>0 || ivl_lval_width(lval)!=ivl_signal_width(sig)) {
 	      /* There is no mux expression, but a constant part
