@@ -1052,6 +1052,18 @@ void compile_cmp_eq(char*label, long wid, unsigned argc, struct symb_s*argv)
       make_arith(arith, label, argc, argv);
 }
 
+void compile_cmp_eq_r(char*label, unsigned argc, struct symb_s*argv)
+{
+      if (argc != 2) {
+	    fprintf(stderr, "%s .cmp/eq.r has wrong number of symbols\n",label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_real_ *arith = new vvp_cmp_eq_real;
+      make_arith(arith, label, argc, argv);
+}
+
 void compile_cmp_ne(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
@@ -1063,6 +1075,18 @@ void compile_cmp_ne(char*label, long wid, unsigned argc, struct symb_s*argv)
       }
 
       vvp_arith_ *arith = new vvp_cmp_ne(wid);
+      make_arith(arith, label, argc, argv);
+}
+
+void compile_cmp_ne_r(char*label, unsigned argc, struct symb_s*argv)
+{
+      if (argc != 2) {
+	    fprintf(stderr, "%s .cmp/ne.r has wrong number of symbols\n",label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_real_ *arith = new vvp_cmp_ne_real;
       make_arith(arith, label, argc, argv);
 }
 
@@ -1082,6 +1106,18 @@ void compile_cmp_ge(char*label, long wid, bool signed_flag,
       make_arith(arith, label, argc, argv);
 }
 
+void compile_cmp_ge_r(char*label, unsigned argc, struct symb_s*argv)
+{
+      if (argc != 2) {
+	    fprintf(stderr, "%s .cmp/ge.r has wrong number of symbols\n",label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_real_ *arith = new vvp_cmp_ge_real;
+      make_arith(arith, label, argc, argv);
+}
+
 void compile_cmp_gt(char*label, long wid, bool signed_flag,
 		    unsigned argc, struct symb_s*argv)
 {
@@ -1095,6 +1131,18 @@ void compile_cmp_gt(char*label, long wid, bool signed_flag,
 
       vvp_arith_ *arith = new vvp_cmp_gt(wid, signed_flag);
 
+      make_arith(arith, label, argc, argv);
+}
+
+void compile_cmp_gt_r(char*label, unsigned argc, struct symb_s*argv)
+{
+      if (argc != 2) {
+	    fprintf(stderr, "%s .cmp/gt.r has wrong number of symbols\n",label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_real_ *arith = new vvp_cmp_gt_real;
       make_arith(arith, label, argc, argv);
 }
 

@@ -821,3 +821,67 @@ void vvp_arith_sub_real::recv_real(vvp_net_ptr_t ptr, double bit)
       vvp_send_real(ptr.ptr()->out, val);
 }
 
+/* Real compare equal. */
+vvp_cmp_eq_real::vvp_cmp_eq_real()
+{
+}
+
+void vvp_cmp_eq_real::recv_real(vvp_net_ptr_t ptr, const double bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      vvp_vector4_t res (1);
+      if (op_a_ == op_b_) res.set_bit(0, BIT4_1);
+      else res.set_bit(0, BIT4_0);
+
+      vvp_send_vec4(ptr.ptr()->out, res);
+}
+
+/* Real compare not equal. */
+vvp_cmp_ne_real::vvp_cmp_ne_real()
+{
+}
+
+void vvp_cmp_ne_real::recv_real(vvp_net_ptr_t ptr, const double bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      vvp_vector4_t res (1);
+      if (op_a_ != op_b_) res.set_bit(0, BIT4_1);
+      else res.set_bit(0, BIT4_0);
+
+      vvp_send_vec4(ptr.ptr()->out, res);
+}
+
+/* Real compare greater than or equal. */
+vvp_cmp_ge_real::vvp_cmp_ge_real()
+{
+}
+
+void vvp_cmp_ge_real::recv_real(vvp_net_ptr_t ptr, const double bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      vvp_vector4_t res (1);
+      if (op_a_ >= op_b_) res.set_bit(0, BIT4_1);
+      else res.set_bit(0, BIT4_0);
+
+      vvp_send_vec4(ptr.ptr()->out, res);
+}
+
+/* Real compare greater than. */
+vvp_cmp_gt_real::vvp_cmp_gt_real()
+{
+}
+
+void vvp_cmp_gt_real::recv_real(vvp_net_ptr_t ptr, const double bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      vvp_vector4_t res (1);
+      if (op_a_ > op_b_) res.set_bit(0, BIT4_1);
+      else res.set_bit(0, BIT4_0);
+
+      vvp_send_vec4(ptr.ptr()->out, res);
+}
+

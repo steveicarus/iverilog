@@ -174,6 +174,10 @@ extern void compile_arith_mult_r(char*label, unsigned argc,
 extern void compile_arith_div_r(char*label, unsigned argc, struct symb_s*argv);
 extern void compile_arith_sum_r(char*label, unsigned argc, struct symb_s*argv);
 extern void compile_arith_sub_r(char*label, unsigned argc, struct symb_s*argv);
+extern void compile_cmp_eq_r(char*label, unsigned argc, struct symb_s*argv);
+extern void compile_cmp_ne_r(char*label, unsigned argc, struct symb_s*argv);
+extern void compile_cmp_ge_r(char*label, unsigned argc, struct symb_s*argv);
+extern void compile_cmp_gt_r(char*label, unsigned argc, struct symb_s*argv);
 
 extern void compile_dff(char*label,
 			struct symb_s arg_d,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,15 +16,15 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.52 2007/02/25 23:08:24 steve Exp $"
-#endif
 
 # include "config.h"
 
 # include  "verinum.h"
 # include  <iostream>
 # include  <cassert>
+# include  <math.h> // Needed to get pow for as_double().
+
+static verinum::V add_with_carry(verinum::V l, verinum::V r, verinum::V&c);
 
 verinum::verinum()
 : bits_(0), nbits_(0), has_len_(false), has_sign_(false), string_flag_(false)
@@ -329,6 +329,35 @@ signed long verinum::as_long() const
 			val |= mask;
       }
 
+      return val;
+}
+
+double verinum::as_double() const
+{
+      if (nbits_ == 0) return 0.0;
+
+        /* Do we have a signed value? */
+      bool signed_flag = false;
+      if (bits_[nbits_-1] == V1) {
+	    signed_flag = true;
+      }
+
+      double val = 0.0;
+      if (signed_flag) {
+	    V carry = V1;
+	    for (unsigned idx = 0; idx < nbits_; idx += 1) {
+		  V sum = add_with_carry(~bits_[idx], V0, carry);
+		  if (sum == V1)
+			val += pow(2.0, (double)idx);
+	    }
+	    val *= -1.0;
+//	    val = (double) as_long();
+      } else {
+	    for (unsigned idx = 0; idx < nbits_; idx += 1) {
+		  if (bits_[idx] == V1)
+			val += pow(2.0, (double)idx);
+	    }
+      }
       return val;
 }
 
@@ -1157,99 +1186,4 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
       return verinum::Vx;
 }
-
-/*
- * $Log: verinum.cc,v $
- * Revision 1.52  2007/02/25 23:08:24  steve
- *  Process Verilog escape sequences much earlier.
- *
- * Revision 1.51  2007/01/27 05:36:11  steve
- *  Fix padding of x when literal is sized and unsigned.
- *
- * Revision 1.50  2007/01/19 05:42:04  steve
- *  Fix calculation of verinum pow operation.
- *
- * Revision 1.49  2006/12/08 19:56:09  steve
- *  Handle very wide signed divide.
- *
- * Revision 1.48  2006/08/08 05:11:37  steve
- *  Handle 64bit delay constants.
- *
- * Revision 1.47  2006/07/31 03:50:17  steve
- *  Add support for power in constant expressions.
- *
- * Revision 1.46  2006/06/02 04:48:50  steve
- *  Make elaborate_expr methods aware of the width that the context
- *  requires of it. In the process, fix sizing of the width of unary
- *  minus is context determined sizes.
- *
- * Revision 1.45  2006/06/01 03:54:51  steve
- *  Fix broken subtraction of small constants.
- *
- * Revision 1.44  2005/12/07 04:04:24  steve
- *  Allow constant concat expressions.
- *
- * Revision 1.43  2004/05/18 18:43:15  steve
- *  Handle null string as a single nul character.
- *
- * Revision 1.42  2004/02/17 06:52:55  steve
- *  Support unsigned divide of huge numbers.
- *
- * Revision 1.41  2003/10/26 04:54:56  steve
- *  Support constant evaluation of binary ^ operator.
- *
- * Revision 1.40  2003/05/25 03:01:19  steve
- *  Get length of trimed unsigned value right.
- *
- * Revision 1.39  2003/04/14 03:40:21  steve
- *  Make some effort to preserve bits while
- *  operating on constant values.
- *
- * Revision 1.38  2003/04/03 04:30:00  steve
- *  Prevent overrun comparing verinums to zero.
- *
- * Revision 1.37  2003/02/02 00:43:16  steve
- *  Fix conversion of signed numbes to long
- *
- * Revision 1.36  2003/01/30 16:23:08  steve
- *  Spelling fixes.
- *
- * Revision 1.35  2002/08/19 02:39:17  steve
- *  Support parameters with defined ranges.
- *
- * Revision 1.34  2002/08/12 01:35:01  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.33  2002/04/27 23:26:24  steve
- *  Trim leading nulls from string forms.
- *
- * Revision 1.32  2002/04/27 04:48:43  steve
- *  Display string verinums as strings.
- *
- * Revision 1.31  2002/02/01 05:09:14  steve
- *  Propagate sign in unary minus.
- *
- * Revision 1.30  2001/12/31 00:02:33  steve
- *  Include s indicator in dump of signed numbers.
- *
- * Revision 1.29  2001/11/19 02:54:12  steve
- *  Handle division and modulus by zero while
- *  evaluating run-time constants.
- *
- * Revision 1.28  2001/11/06 06:11:55  steve
- *  Support more real arithmetic in delay constants.
- *
- * Revision 1.27  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.26  2001/02/09 05:44:23  steve
- *  support evaluation of constant < in expressions.
- *
- * Revision 1.25  2001/02/08 05:38:18  steve
- *  trim the length of unsized numbers.
- *
- * Revision 1.24  2001/02/07 21:47:13  steve
- *  Fix expression widths for rvalues and parameters (PR#131,132)
- */
 
