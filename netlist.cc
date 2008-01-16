@@ -1132,6 +1132,9 @@ NetArrayDq::NetArrayDq(NetScope*s, perm_string n, NetNet*mem, unsigned awid)
       pin(0).set_name(perm_string::literal("Result"), 0);
       pin(1).set_dir(Link::INPUT);
       pin(1).set_name(perm_string::literal("Address"), 0);
+	// Increment the expression reference count for the target
+	// memory so that it is not deleted underneath me.
+      mem->incr_eref();
 }
 
 NetArrayDq::~NetArrayDq()
