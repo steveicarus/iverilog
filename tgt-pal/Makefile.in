@@ -71,6 +71,8 @@ clean:
 distclean: clean
 	rm -f Makefile
 
+check: all
+
 install: all installdirs $(libdir)/ivl/pal.tgt
 
 $(libdir)/ivl/pal.tgt: ./pal.tgt

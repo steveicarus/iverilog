@@ -117,6 +117,9 @@ distclean: clean
 	rm -f Makefile
 	rm -rf autom4te.cache
 
+check: all
+
+
 install: all installdirs $(vpidir)/system.vpi $(libdir)/ivl/system.sft $(INSTALL32)
 
 $(vpidir)/system.vpi: ./system.vpi

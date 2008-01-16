@@ -70,6 +70,8 @@ clean:
 distclean: clean
 	rm -f Makefile
 
+check: all
+
 install: all installdirs $(libdir)/ivl/verilog.tgt \
 	$(includedir)/vpi_user.h
 

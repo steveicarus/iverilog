@@ -72,6 +72,8 @@ clean:
 distclean: clean
 	rm -f Makefile
 
+check: all
+
 install: all installdirs $(libdir)/ivl/stub.tgt \
 	$(libdir)/ivl/stub.conf \
 	$(libdir)/ivl/stub-s.conf \
