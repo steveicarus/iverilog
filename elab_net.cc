@@ -542,6 +542,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 		  verireal vrl(tmp->value().as_double());
 		  NetECReal rlval(vrl);
 		  rsig = rlval.synthesize(des);
+		  delete rexp;
 	    } else {
 		  NetNet*osig = compare_eq_constant(des, scope,
 					            lsig, tmp, op_,
@@ -563,6 +564,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 		  verireal vrl(tmp->value().as_double());
 		  NetECReal rlval(vrl);
 		  lsig = rlval.synthesize(des);
+		  delete lexp;
 	    } else {
 		  NetNet*osig = compare_eq_constant(des, scope,
 					            rsig, tmp, op_,
