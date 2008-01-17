@@ -1011,7 +1011,7 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 	// The mult is signed if both its operands are signed.
       bool arith_is_signed = lsig->get_signed() && rsig->get_signed();
 
-	/* The arguments of a divide must have the same type. */
+	/* The arguments of a multiply must have the same type. */
       if (lsig->data_type() != rsig->data_type()) {
 	    cerr << get_fileline() << ": error: Arguments of multiply "
 		 << "have different data types." << endl;
@@ -1025,8 +1025,14 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 
       unsigned rwidth = lwidth;
       if (rwidth == 0) {
-	    rwidth = lsig->vector_width() + rsig->vector_width();
-	    lwidth = rwidth;
+	      /* Reals are always 1 wide and lsig/rsig types match here. */
+	    if (lsig->data_type() == IVL_VT_REAL) {
+		  rwidth = 1;
+		  lwidth = 1;
+	    } else {
+		  rwidth = lsig->vector_width() + rsig->vector_width();
+		  lwidth = rwidth;
+	    }
       }
 
       if (arith_is_signed) {
