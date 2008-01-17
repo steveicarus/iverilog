@@ -1400,9 +1400,12 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
 
       const struct sfunc_return_type*def = lookup_sys_func(name);
 
-      if (def == 0) {
+        /* We cannot use the default value for system functions in a
+         * continuous assignment since the function name is NULL. */
+      if (def == 0 || def->name == 0) {
 	    cerr << get_fileline() << ": error: System function "
-		 << peek_tail_name(path_) << " not defined." << endl;
+		 << peek_tail_name(path_) << " not defined in system "
+		 "table or SFT file(s)." << endl;
 	    des->errors += 1;
 	    return 0;
       }
