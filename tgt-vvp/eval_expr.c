@@ -128,12 +128,12 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		      assert(0);
 		}
 
-		fprintf(vvp_out, "  %%ix/load %u, %u;\n", ix, value);
+		fprintf(vvp_out, "    %%ix/load %u, %u;\n", ix, value);
 		break;
 	  }
 
 	  case IVL_EX_ULONG:
-	    fprintf(vvp_out, "  %%ix/load %u, %lu;\n", ix, ivl_expr_uvalue(expr));
+	    fprintf(vvp_out, "    %%ix/load %u, %lu;\n", ix, ivl_expr_uvalue(expr));
 	    break;
 
 	  case IVL_EX_SIGNAL: {
@@ -141,17 +141,25 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		unsigned word = 0;
 		if (ivl_signal_array_count(sig) > 1) {
 		      ivl_expr_t ixe = ivl_expr_oper1(expr);
-		      assert(number_is_immediate(ixe, 8*sizeof(unsigned long)));
-		      word = get_number_immediate(ixe);
+		      if (number_is_immediate(ixe, 8*sizeof(unsigned long)))
+		            word = get_number_immediate(ixe);
+		      else {
+		            struct vector_info rv;
+		            rv = draw_eval_expr(expr, 0);
+		            fprintf(vvp_out, "    %%ix/get %u, %u, %u;\n",
+		                    ix, rv.base, rv.wid);
+		            clr_vector(rv);
+		            break;
+		      }
 		}
-		fprintf(vvp_out, "  %%ix/getv %u, v%p_%u;\n", ix, sig, word);
+		fprintf(vvp_out, "    %%ix/getv %u, v%p_%u;\n", ix, sig, word);
 		break;
 	  }
 
 	  default: {
 		  struct vector_info rv;
 		  rv = draw_eval_expr(expr, 0);
-		  fprintf(vvp_out, "  %%ix/get %u, %u, %u;\n",
+		  fprintf(vvp_out, "    %%ix/get %u, %u, %u;\n",
 			  ix, rv.base, rv.wid);
 		  clr_vector(rv);
 		  break;
@@ -1771,7 +1779,7 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 
 	      /* If this is a REG (a variable) then I can do a vector read. */
 	    fprintf(vvp_out, "    %%ix/load 0, %lu;\n", immediate);
-	    fprintf(vvp_out, "    %%ix/load 2, %lu;\n", res.wid);
+	    fprintf(vvp_out, "    %%ix/load 2, %u;\n", res.wid);
 	    fprintf(vvp_out, "    %%load/vp0 %u, v%p_%u, %u;\n",
 		    res.base, sig, word, swid);
 	    swid = res.wid;

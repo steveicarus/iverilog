@@ -1606,7 +1606,7 @@ static void draw_lpm_add(ivl_lpm_t net)
       ivl_variable_type_t dtb = data_type_of_nexus(ivl_lpm_data(net,1));
       ivl_variable_type_t dto = IVL_VT_LOGIC;
 
-      if (dta == IVL_VT_REAL && dtb == IVL_VT_REAL)
+      if (dta == IVL_VT_REAL || dtb == IVL_VT_REAL)
 	    dto = IVL_VT_REAL;
 
       width = ivl_lpm_width(net);
@@ -1676,29 +1676,51 @@ static void draw_lpm_cmp(ivl_lpm_t net)
       unsigned width;
       const char*type = "";
       const char*signed_string = ivl_lpm_signed(net)? ".s" : "";
+      ivl_variable_type_t dta = data_type_of_nexus(ivl_lpm_data(net,0));
+      ivl_variable_type_t dtb = data_type_of_nexus(ivl_lpm_data(net,1));
+      ivl_variable_type_t dtc = IVL_VT_LOGIC;
+
+      if (dta == IVL_VT_REAL || dtb == IVL_VT_REAL)
+	    dtc = IVL_VT_REAL;
 
       width = ivl_lpm_width(net);
 
       switch (ivl_lpm_type(net)) {
 	  case IVL_LPM_CMP_EEQ:
+	    assert(dtc != IVL_VT_REAL); /* Should never get here! */
 	    type = "eeq";
 	    signed_string = "";
 	    break;
 	  case IVL_LPM_CMP_EQ:
-	    type = "eq";
+	    if (dtc == IVL_VT_REAL)
+		  type = "eq.r";
+	    else
+		  type = "eq";
 	    signed_string = "";
 	    break;
 	  case IVL_LPM_CMP_GE:
-	    type = "ge";
+	    if (dtc == IVL_VT_REAL) {
+		  type = "ge.r";
+		  signed_string = "";
+	    } else
+		  type = "ge";
 	    break;
 	  case IVL_LPM_CMP_GT:
-	    type = "gt";
+	    if (dtc == IVL_VT_REAL) {
+		  type = "gt.r";
+		  signed_string = "";
+	    } else
+		  type = "gt";
 	    break;
 	  case IVL_LPM_CMP_NE:
-	    type = "ne";
+	    if (dtc == IVL_VT_REAL)
+		  type = "ne.r";
+	    else
+		  type = "ne";
 	    signed_string = "";
 	    break;
 	  case IVL_LPM_CMP_NEE:
+	    assert(dtc != IVL_VT_REAL); /* Should never get here! */
 	    type = "nee";
 	    signed_string = "";
 	    break;

@@ -1217,6 +1217,7 @@ void Design::dump(ostream&o) const
       if (nodes_) {
 	    NetNode*cur = nodes_->node_next_;
 	    do {
+		  assert(cur);
 		  cur->dump_node(o, 0);
 		  cur = cur->node_next_;
 	    } while (cur != nodes_->node_next_);

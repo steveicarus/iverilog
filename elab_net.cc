@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -500,16 +500,24 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      unsigned operand_width;
+      bool real_arg = false;
+      if (lexp->expr_type() == IVL_VT_REAL ||
+          rexp->expr_type() == IVL_VT_REAL) {
+	    operand_width = 1;
+	    real_arg = true;
+      } else {
 	/* Choose the operand width to be the width of the widest
 	   self-determined operand. */
-      unsigned operand_width = lexp->expr_width();
-      if (rexp->expr_width() > operand_width)
-	    operand_width = rexp->expr_width();
+	    operand_width = lexp->expr_width();
+	    if (rexp->expr_width() > operand_width)
+	          operand_width = rexp->expr_width();
 
-      lexp->set_width(operand_width);
-      lexp = pad_to_width(lexp, operand_width);
-      rexp->set_width(operand_width);
-      rexp = pad_to_width(rexp, operand_width);
+	    lexp->set_width(operand_width);
+	    lexp = pad_to_width(lexp, operand_width);
+	    rexp->set_width(operand_width);
+	    rexp = pad_to_width(rexp, operand_width);
+      }
 
       NetNet*lsig = 0;
       NetNet*rsig = 0;
@@ -530,12 +538,19 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    delete lexp;
 	    lexp = 0;
 
-	    NetNet*osig = compare_eq_constant(des, scope,
-					      lsig, tmp, op_,
-					      rise, fall, decay);
-	    if (osig != 0) {
+	    if (real_arg) {
+		  verireal vrl(tmp->value().as_double());
+		  NetECReal rlval(vrl);
+		  rsig = rlval.synthesize(des);
 		  delete rexp;
-		  return osig;
+	    } else {
+		  NetNet*osig = compare_eq_constant(des, scope,
+					            lsig, tmp, op_,
+					            rise, fall, decay);
+		  if (osig != 0) {
+		        delete rexp;
+		        return osig;
+		  }
 	    }
       }
 
@@ -545,12 +560,19 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    assert(rsig);
 	    delete rexp;
 
-	    NetNet*osig = compare_eq_constant(des, scope,
-					      rsig, tmp, op_,
-					      rise, fall, decay);
-	    if (osig != 0) {
+	    if (real_arg) {
+		  verireal vrl(tmp->value().as_double());
+		  NetECReal rlval(vrl);
+		  lsig = rlval.synthesize(des);
 		  delete lexp;
-		  return osig;
+	    } else {
+		  NetNet*osig = compare_eq_constant(des, scope,
+					            rsig, tmp, op_,
+					            rise, fall, decay);
+		  if (osig != 0) {
+		        delete lexp;
+		        return osig;
+		  }
 	    }
       }
 
@@ -572,11 +594,18 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	/* Operands of binary compare need to be padded to equal
 	   size. Figure the pad bit needed to extend the narrowest
 	   vector. */
-      if (lsig->vector_width() < dwidth)
+      if (!real_arg && lsig->vector_width() < dwidth)
 	    lsig = pad_to_width(des, lsig, dwidth);
-      if (rsig->vector_width() < dwidth)
+      if (!real_arg && rsig->vector_width() < dwidth)
 	    rsig = pad_to_width(des, rsig, dwidth);
 
+        /* For now the runtime cannot convert a vec4 to a real value. */
+      if (real_arg && (rsig->data_type() != IVL_VT_REAL ||
+                       lsig->data_type() != IVL_VT_REAL)) {
+	    cerr << get_fileline() << ": sorry: comparing bit based signals "
+	            "and real values is not supported." << endl;
+	    return 0;
+      }
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
       osig->data_type(IVL_VT_LOGIC);
@@ -619,6 +648,11 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	  }
 
 	  case 'E': // Case equals (===)
+	    if (real_arg) {
+		cerr << get_fileline() << ": error: Case equality may not "
+		        "have real operands." << endl;
+		return 0;
+	    }
 	    gate = new NetCaseCmp(scope, scope->local_symbol(), dwidth, true);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
@@ -626,6 +660,11 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    break;
 
 	  case 'N': // Case equals (!==)
+	    if (real_arg) {
+		cerr << get_fileline() << ": error: Case inequality may not "
+		        "have real operands." << endl;
+		return 0;
+	    }
 	    gate = new NetCaseCmp(scope, scope->local_symbol(), dwidth, false);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
@@ -636,7 +675,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 
 	      /* Handle the special case of single bit compare with a
 		 single XNOR gate. This is easy and direct. */
-	    if (dwidth == 1) {
+	    if (dwidth == 1 && !real_arg){
 		  gate = new NetLogic(scope, scope->local_symbol(),
 				      3, NetLogic::XNOR, 1);
 		  connect(gate->pin(0), osig->pin(0));
@@ -664,7 +703,8 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 
 	      /* Handle the special case of single bit compare with a
 		 single XOR gate. This is easy and direct. */
-	    if (dwidth == 1) {
+	    if (dwidth == 1 && lsig->data_type() != IVL_VT_REAL &&
+	                       rsig->data_type() != IVL_VT_REAL) {
 		  gate = new NetLogic(scope, scope->local_symbol(),
 				      3, NetLogic::XOR, 1);
 		  connect(gate->pin(0), osig->pin(0));
@@ -1124,7 +1164,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	    connect(cc->pin(0), osig->pin(0));
 
 	      /* Make the part select of the left expression and
-		 connect it to the lsb or msb of the concatenation,
+		 connect it to the LSB or MSB of the concatenation,
 		 depending on the direction of the shift. */
 	    NetPartSelect*part;
 
@@ -1439,7 +1479,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	    delete etmp;
 
 	    if (repeat == 0) {
-		  cerr << get_fileline() << ": error: Concatenation epeat "
+		  cerr << get_fileline() << ": error: Concatenation repeat "
 			"may not be 0."
 		       << endl;
 		  des->errors += 1;
@@ -1448,7 +1488,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
       }
 
       if (debug_elaborate) {
-	    cerr << get_fileline() <<": debug: PEConcat concat repeat="
+	    cerr << get_fileline() <<": debug: PEConcat concatenation repeat="
 		 << repeat << "." << endl;
       }
 
@@ -1861,7 +1901,7 @@ NetNet* PEIdent::elaborate_net_net_idx_up_(Design*des, NetScope*scope,
 	      // convert from -: to +: form.
 	    if (down_flag) lsv -= (wid-1);
 
-	      // If the part select convers exactly the entire
+	      // If the part select covers exactly the entire
 	      // vector, then do not bother with it. Return the
 	      // signal itself.
 	    if (sig->sb_to_idx(lsv) == 0 && wid == sig->vector_width())
@@ -2576,7 +2616,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	    return 0;
 
 	      /* This should not happen. A PWire can only become
-		 PIMPLICIT if this is a udp reg port, and the make_udp
+		 PIMPLICIT if this is a UDP reg port, and the make_udp
 		 function should turn it into an output.... I think. */
 
 	  case NetNet::PIMPLICIT:
@@ -2795,7 +2835,7 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 
       if (tru_sig->data_type() != fal_sig->data_type()) {
 	    cerr << get_fileline() << ": error: True and False clauses of"
-		 << " ternary expression have differnt types." << endl;
+		 << " ternary expression have different types." << endl;
 	    cerr << get_fileline() << ":      : True clause is "
 		 << tru_sig->data_type() << ", false clause is "
 		 << fal_sig->data_type() << "." << endl;

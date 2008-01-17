@@ -69,8 +69,8 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_ARITH_DIV K_ARITH_DIV_R K_ARITH_DIV_S K_ARITH_MOD K_ARITH_MULT
 %token K_ARITH_MULT_R K_ARITH_SUB K_ARITH_SUB_R K_ARITH_SUM K_ARITH_SUM_R
 %token K_ARRAY K_ARRAY_I K_ARRAY_R K_ARRAY_S K_ARRAY_PORT
-%token K_CMP_EEQ K_CMP_EQ K_CMP_NEE K_CMP_NE
-%token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
+%token K_CMP_EEQ K_CMP_EQ K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
+%token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
 %token K_CONCAT K_DEBUG K_DELAY K_DFF
 %token K_EVENT K_EVENT_OR K_EXTEND_S K_FUNCTOR K_MODPATH K_NET K_NET_S K_NET_R
 %token K_NET8 K_NET8_S
@@ -315,14 +315,29 @@ statement
 		  compile_cmp_eq($1, $3, obj.cnt, obj.vect);
 		}
 
+	| T_LABEL K_CMP_EQ_R T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_eq_r($1, obj.cnt, obj.vect);
+		}
+
 	| T_LABEL K_CMP_NE T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_cmp_ne($1, $3, obj.cnt, obj.vect);
 		}
 
+	| T_LABEL K_CMP_NE_R T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_ne_r($1, obj.cnt, obj.vect);
+		}
+
 	| T_LABEL K_CMP_GE T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_cmp_ge($1, $3, false, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_CMP_GE_R T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_ge_r($1, obj.cnt, obj.vect);
 		}
 
 	| T_LABEL K_CMP_GE_S T_NUMBER ',' symbols ';'
@@ -334,6 +349,12 @@ statement
 		{ struct symbv_s obj = $5;
 		  compile_cmp_gt($1, $3, false, obj.cnt, obj.vect);
 		}
+
+	| T_LABEL K_CMP_GT_R T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_gt_r($1, obj.cnt, obj.vect);
+		}
+
 	| T_LABEL K_CMP_GT_S T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_cmp_gt($1, $3, true, obj.cnt, obj.vect);

@@ -247,4 +247,32 @@ class vvp_arith_sub_real : public vvp_arith_real_ {
       void recv_real(vvp_net_ptr_t ptr, double bit);
 };
 
+class vvp_cmp_eq_real  : public vvp_arith_real_ {
+
+    public:
+      explicit vvp_cmp_eq_real();
+      void recv_real(vvp_net_ptr_t ptr, const double bit);
+};
+
+class vvp_cmp_ne_real  : public vvp_arith_real_ {
+
+    public:
+      explicit vvp_cmp_ne_real();
+      void recv_real(vvp_net_ptr_t ptr, const double bit);
+};
+
+class vvp_cmp_ge_real  : public vvp_arith_real_ {
+
+    public:
+      explicit vvp_cmp_ge_real();
+      void recv_real(vvp_net_ptr_t ptr, const double bit);
+};
+
+class vvp_cmp_gt_real  : public vvp_arith_real_ {
+
+    public:
+      explicit vvp_cmp_gt_real();
+      void recv_real(vvp_net_ptr_t ptr, const double bit);
+};
+
 #endif

@@ -104,11 +104,15 @@
 ".array/port" { return K_ARRAY_PORT; }
 ".cmp/eeq"  { return K_CMP_EEQ; }
 ".cmp/eq"   { return K_CMP_EQ; }
+".cmp/eq.r" { return K_CMP_EQ_R; }
 ".cmp/nee"  { return K_CMP_NEE; }
 ".cmp/ne"   { return K_CMP_NE; }
+".cmp/ne.r" { return K_CMP_NE_R; }
 ".cmp/ge"   { return K_CMP_GE; }
+".cmp/ge.r" { return K_CMP_GE_R; }
 ".cmp/ge.s" { return K_CMP_GE_S; }
 ".cmp/gt"   { return K_CMP_GT; }
+".cmp/gt.r" { return K_CMP_GT_R; }
 ".cmp/gt.s" { return K_CMP_GT_S; }
 ".concat"   { return K_CONCAT; }
 ".delay"    { return K_DELAY; }
