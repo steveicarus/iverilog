@@ -4,6 +4,7 @@
 #
 
 $random            vpiSysFuncInt
+$rtoi              vpiSysFuncInt
 $urandom           vpiSysFuncSized 32 unsigned
 $urandom_range     vpiSysFuncSized 32 unsigned
 $dist_uniform      vpiSysFuncInt

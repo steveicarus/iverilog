@@ -34,7 +34,6 @@ static const struct sfunc_return_type sfunc_table[] = {
       { "$bitstoreal", IVL_VT_REAL,   1, 0 },
       { "$itor",       IVL_VT_REAL,   1, 0 },
       { "$realtobits", IVL_VT_LOGIC, 64, 0 },
-      { "$rtoi",       IVL_VT_LOGIC, 32, 0 },
       { "$time",       IVL_VT_LOGIC, 64, 0 },
       { "$stime",      IVL_VT_LOGIC, 32, 0 },
       { "$simtime",    IVL_VT_LOGIC, 64, 0 },
