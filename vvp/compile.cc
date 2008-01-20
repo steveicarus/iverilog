@@ -815,14 +815,43 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 	    return;
       }
 
+	/* Handle the Cr<> constant driver, which is a real-value
+	   driver. The format is broken into mantissa and
+	   exponent. The exponent in turn includes a sign bit.
+
+	   The mantissa is a 64bit integer value (encoded in hex).
+
+	   The exponent included the sign bit (0x4000) and the binary
+	   exponent offset by 0x1000. The actual exponent is the
+	   encoded exponent - 0x1000.
+
+	   The real value is sign * (mant ** exp).  */
       if ((strncmp(label, "Cr<", 3) == 0)
 	  && ((tp = strchr(label,'>')))
 	  && (tp[1] == 0)
-	  && (strspn(label+3, "0123456789.-e")+3 == (unsigned)(tp-label))) {
+	  && (strspn(label+3, "0123456789abcdefmg")+3 == (unsigned)(tp-label))) {
+
+	    char*cp = label+3;
+	    assert(*cp == 'm');
+	    cp += 1;
+	    uint64_t mant = strtoull(cp, &cp, 16);
+	    assert(*cp == 'g');
+	    cp += 1;
+	    int exp = strtoul(cp, 0, 16);
 
 	    double tmp;
+	    if (mant == 0 && exp == 0x3fff) {
+		  tmp = INFINITY;
+	    } else if (mant == 0 && exp == 0x7fff) {
+		  tmp = -INFINITY;
+	    } else if (exp == 0x3fff) {
+		  tmp = nan("");
+	    } else {
+		  double sign = (exp & 0x4000)? -1.0 : 1.0;
+		  exp &= 0x1fff;
 
-	    sscanf(label+3, "%lg", &tmp);
+		  tmp = sign * ldexp((double)mant, exp - 0x1000);
+	    }
 
 	    schedule_set_vector(ifdx, tmp);
 	    free(label);

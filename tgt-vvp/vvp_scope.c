@@ -22,6 +22,7 @@
 # include  <malloc.h>
 #endif
 # include  <stdlib.h>
+# include  <math.h>
 # include  <string.h>
 # include  <inttypes.h>
 # include  <assert.h>
@@ -468,6 +469,42 @@ static char* draw_C8_to_string(ivl_net_const_t cptr,
       return result;
 }
 
+static char* draw_Cr_to_string(ivl_net_const_t cptr)
+{
+      char tmp[256];
+
+      double value = ivl_const_real(cptr);
+      uint64_t mant = 0;
+
+      if (isinf(value)) {
+	    if (value > 0)
+		  snprintf(tmp, sizeof(tmp), "Cr<m0g3fff>");
+	    else
+		  snprintf(tmp, sizeof(tmp), "Cr<m0g7fff>");
+	    return strdup(tmp);
+      }
+
+      int sign = 0;
+      if (value < 0) {
+	    sign = 0x4000;
+	    value *= -1;
+      }
+
+      int expo;
+      double fract = frexp(value, &expo);
+      fract = ldexp(fract, 63);
+      mant = fract;
+      expo -= 63;
+
+      int vexp = expo + 0x1000;
+      assert(vexp >= 0);
+      assert(vexp < 0x2000);
+      vexp += sign;
+
+      snprintf(tmp, sizeof(tmp), "Cr<m%" PRIx64 "g%x>", mant, vexp);
+      return strdup(tmp);
+}
+
 /*
  * This function takes a nexus and looks for an input functor. It then
  * draws to the output a string that represents that functor. What we
@@ -604,11 +641,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  break;
 
 		case IVL_VT_REAL:
-		    { char tmp[256];
-		      snprintf(tmp, sizeof(tmp),
-			       "Cr<%lg>", ivl_const_real(cptr));
-		      result = strdup(tmp);
-		    }
+		  result = draw_Cr_to_string(cptr);
 		  break;
 
 		default:

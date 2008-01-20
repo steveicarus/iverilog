@@ -199,7 +199,7 @@
       assert(yylval.text);
       return T_SYMBOL; }
 
-"Cr<"[.$_a-zA-Z0-9/,\-]*">" {
+"Cr<m"[a-f0-9]*"x"[a-f0-9]*">" {
       yylval.text = strdup(yytext);
       assert(yylval.text);
       return T_SYMBOL; }
