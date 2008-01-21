@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -661,6 +661,44 @@ void dll_target::make_logic_delays_(struct ivl_net_logic_s*obj,
       }
 }
 
+void dll_target::make_lpm_delays_(struct ivl_lpm_s*obj,
+				  const NetObj*net)
+{
+      obj->delay[0] = 0;
+      obj->delay[1] = 0;
+      obj->delay[2] = 0;
+
+	/* Translate delay expressions to ivl_target form. Try to
+	   preserve pointer equality, not as a rule but to save on
+	   expression trees. */
+      if (net->rise_time()) {
+	    expr_ = 0;
+	    net->rise_time()->expr_scan(this);
+	    obj->delay[0] = expr_;
+	    expr_ = 0;
+      }
+      if (net->fall_time()) {
+	    if (net->fall_time() == net->rise_time()) {
+		  obj->delay[1] = obj->delay[0];
+	    } else {
+		  expr_ = 0;
+		  net->fall_time()->expr_scan(this);
+		  obj->delay[1] = expr_;
+		  expr_ = 0;
+	    }
+      }
+      if (net->decay_time()) {
+	    if (net->decay_time() == net->rise_time()) {
+		  obj->delay[2] = obj->delay[0];
+	    } else {
+		  expr_ = 0;
+		  net->decay_time()->expr_scan(this);
+		  obj->delay[2] = expr_;
+		  expr_ = 0;
+	    }
+      }
+}
+
 /*
  * Add a bufz object to the scope that contains it.
  *
@@ -950,6 +988,8 @@ bool dll_target::sign_extend(const NetSignExtend*net)
       obj->u_.reduce.a = nex->t_cookie();
       nexus_lpm_add(obj->u_.reduce.a, obj, 1, IVL_DR_HiZ, IVL_DR_HiZ);
 
+      make_lpm_delays_(obj, net);
+
       scope_add_lpm(obj->scope, obj);
 
       return true;
@@ -1002,6 +1042,8 @@ bool dll_target::ureduce(const NetUReduce*net)
       obj->u_.reduce.a = nex->t_cookie();
       nexus_lpm_add(obj->u_.reduce.a, obj, 1, IVL_DR_HiZ, IVL_DR_HiZ);
 
+      make_lpm_delays_(obj, net);
+
       scope_add_lpm(obj->scope, obj);
 
       return true;
@@ -1037,6 +1079,8 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
 
       obj->u_.arith.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+
+      make_lpm_delays_(obj, net);
 
       scope_add_lpm(obj->scope, obj);
 }
@@ -1077,6 +1121,8 @@ bool dll_target::net_sysfunction(const NetSysFunc*net)
 	    nexus_lpm_add(obj->u_.sfunc.pins[idx], obj, 0,
 			  IVL_DR_HiZ, IVL_DR_HiZ);
       }
+
+      make_lpm_delays_(obj, net);
 
       scope_add_lpm(obj->scope, obj);
       return true;
@@ -1125,6 +1171,8 @@ bool dll_target::net_function(const NetUserFunc*net)
 	    ivl_drive_t drive = idx == 0 ? IVL_DR_STRONG : IVL_DR_HiZ;
 	    nexus_lpm_add(obj->u_.ufunc.pins[idx], obj, idx, drive, drive);
       }
+
+      make_lpm_delays_(obj, net);
 
 	/* All done. Add this LPM to the scope. */
       scope_add_lpm(obj->scope, obj);
@@ -1263,6 +1311,8 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
 	    cerr << "XXXX: t-dll.cc: Forgot how to connect cout." << endl;
       }
 
+      make_lpm_delays_(obj, net);
+
       scope_add_lpm(obj->scope, obj);
 }
 
@@ -1277,6 +1327,8 @@ bool dll_target::lpm_array_dq(const NetArrayDq*net)
       assert(obj->scope);
       obj->width = net->width();
       obj->u_.array.swid = net->awidth();
+
+      make_lpm_delays_(obj, net);
 
       scope_add_lpm(obj->scope, obj);
 
@@ -1340,6 +1392,8 @@ void dll_target::lpm_clshift(const NetCLShift*net)
 
       obj->u_.shift.s = nex->t_cookie();
       nexus_lpm_add(obj->u_.shift.s, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      make_lpm_delays_(obj, net);
 
       scope_add_lpm(obj->scope, obj);
 }
@@ -1446,6 +1500,8 @@ void dll_target::lpm_compare(const NetCompare*net)
       nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
       nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
+      make_lpm_delays_(obj, net);
+
       scope_add_lpm(obj->scope, obj);
 }
 
@@ -1483,6 +1539,7 @@ void dll_target::lpm_divide(const NetDivide*net)
       obj->u_.arith.b = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
+      make_lpm_delays_(obj, net);
 
       scope_add_lpm(obj->scope, obj);
 }
@@ -1520,6 +1577,8 @@ void dll_target::lpm_modulo(const NetModulo*net)
 
       obj->u_.arith.b = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      make_lpm_delays_(obj, net);
 
       scope_add_lpm(obj->scope, obj);
 }
@@ -1657,6 +1716,7 @@ void dll_target::lpm_mult(const NetMult*net)
       obj->u_.arith.b = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
+      make_lpm_delays_(obj, net);
 
       scope_add_lpm(obj->scope, obj);
 }
@@ -1676,6 +1736,8 @@ void dll_target::lpm_mux(const NetMux*net)
       obj->width = net->width();
       obj->u_.mux.size  = net->size();
       obj->u_.mux.swid  = net->sel_width();
+
+      make_lpm_delays_(obj, net);
 
       scope_add_lpm(obj->scope, obj);
 
@@ -1730,6 +1792,8 @@ bool dll_target::concat(const NetConcat*net)
 	    obj->u_.concat.pins[idx] = nex->t_cookie();
 	    nexus_lpm_add(obj->u_.concat.pins[idx], obj, 0, dr, dr);
       }
+
+      make_lpm_delays_(obj, net);
 
       scope_add_lpm(obj->scope, obj);
 
@@ -1836,6 +1900,8 @@ bool dll_target::part_select(const NetPartSelect*net)
       if (obj->u_.part.s)
 	 nexus_lpm_add(obj->u_.part.s, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
+      make_lpm_delays_(obj, net);
+
       scope_add_lpm(obj->scope, obj);
 
       return true;
@@ -1866,6 +1932,8 @@ bool dll_target::replicate(const NetReplicate*net)
 
       obj->u_.repeat.a = nex->t_cookie();
       nexus_lpm_add(obj->u_.repeat.a, obj, 0, dr, dr);
+
+      make_lpm_delays_(obj, net);
 
       scope_add_lpm(obj->scope, obj);
 

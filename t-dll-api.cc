@@ -728,6 +728,12 @@ extern "C" ivl_nexus_t ivl_lpm_sync_clr(ivl_lpm_t net)
       }
 }
 
+extern "C" ivl_expr_t ivl_lpm_delay(ivl_lpm_t net, unsigned transition)
+{
+      assert(transition < 3);
+      return net->delay[transition];
+}
+
 extern "C" ivl_nexus_t ivl_lpm_async_set(ivl_lpm_t net)
 {
       assert(net);

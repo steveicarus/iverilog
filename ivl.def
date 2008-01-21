@@ -77,6 +77,7 @@ ivl_lpm_clk
 ivl_lpm_data
 ivl_lpm_datab
 ivl_lpm_define
+ivl_lpm_delay
 ivl_lpm_enable
 ivl_lpm_file
 ivl_lpm_lineno

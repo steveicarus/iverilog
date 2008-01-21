@@ -96,60 +96,35 @@ NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
 	  case 'r': // >>
 	  case 'R': // >>>
 	    return elaborate_net_shift_(des, scope, width, rise, fall, decay);
+	  case 'p': // **
+	    cerr << get_fileline() << ": sorry: ** is currently unsupported"
+	    " in continuous assignments." << endl;
+	    des->errors += 1;
+
+	    return 0;
       }
 
+        /* This is an undefined operator, but we may as well check the
+           arguments since we are here. */
       NetNet*lsig = left_->elaborate_net(des, scope, width, 0, 0, 0),
 	    *rsig = right_->elaborate_net(des, scope, width, 0, 0, 0);
       if (lsig == 0) {
 	    cerr << get_fileline() << ": error: Cannot elaborate ";
 	    left_->dump(cerr);
 	    cerr << endl;
-	    return 0;
       }
       if (rsig == 0) {
 	    cerr << get_fileline() << ": error: Cannot elaborate ";
 	    right_->dump(cerr);
 	    cerr << endl;
-	    return 0;
       }
 
-      NetNet*osig;
+        /* We can only get here with an undefined operator. */
+      cerr << get_fileline() << ": internal error: unsupported"
+              " combinational operator (" << op_ << ")." << endl;
+      des->errors += 1;
 
-      switch (op_) {
-	  case '^': // XOR
-	  case 'X': // XNOR
-	  case '&': // AND
-	  case '|': // Bitwise OR
-	    assert(0);
-	    break;
-
-	  case 'E': // === (Case equals)
-	  case 'e': // ==
-	  case 'n': // !=
-	  case '<':
-	  case '>':
-	  case 'G': // >=
-	  case 'L': // <=
-	    assert(0);
-	    break;
-
-	  case '+':
-	    assert(0);
-	    break;
-
-	  case 'l':
-	  case 'r':
-	  case 'R':
-	    assert(0);
-	    break;
-	  default:
-	    cerr << get_fileline() << ": internal error: unsupported"
-		  " combinational operator (" << op_ << ")." << endl;
-	    des->errors += 1;
-	    osig = 0;
-      }
-
-      return osig;
+      return 0;
 }
 
 /*
@@ -243,6 +218,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
       osig->data_type(lsig->data_type());
       osig->set_signed(expr_signed);
       osig->local_flag(true);
+      osig->set_line(*this);
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: Elaborate NetAddSub "
 		 << "width=" << width << " lwidth=" << lwidth
@@ -259,6 +235,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 	    connect(osig->pin(width), adder->pin_Cout());
 #endif
       NetNode*gate = adder;
+      gate->set_line(*this);
       gate->rise_time(rise);
       gate->fall_time(fall);
       gate->decay_time(decay);
@@ -324,6 +301,7 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
       NetNet*osig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE,
 			       lsig->vector_width());
       osig->local_flag(true);
+      osig->set_line(*this);
       osig->data_type( lsig->data_type() );
 
       NetLogic::TYPE gtype=NetLogic::AND;
@@ -394,6 +372,10 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 			NetEConst*ogate = new NetEConst(oval);
 			NetNet*osig = ogate->synthesize(des);
 			osig->data_type(lsig->data_type());
+			osig->set_line(*lsig);
+			osig->rise_time(rise);
+			osig->fall_time(fall);
+			osig->decay_time(decay);
 			delete ogate;
 
 			if (debug_elaborate)
@@ -445,6 +427,9 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 					    type, zeros+ones);
 	    des->add_node(red);
 	    red->set_line(*lsig);
+	    red->rise_time(rise);
+	    red->fall_time(fall);
+	    red->decay_time(decay);
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, 0, 0);
@@ -727,6 +712,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    assert(0);
       }
 
+      gate->set_line(*this);
       gate->rise_time(rise);
       gate->fall_time(fall);
       gate->decay_time(decay);
@@ -789,6 +775,10 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
       NetDivide*div = new NetDivide(scope, scope->local_symbol(), rwidth,
 				    lsig->vector_width(),
 				    rsig->vector_width());
+      div->set_line(*this);
+      div->rise_time(rise);
+      div->fall_time(fall);
+      div->decay_time(decay);
       des->add_node(div);
 
       div->set_signed(lsig->get_signed() && rsig->get_signed());
@@ -808,6 +798,7 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, lwidth);
       osig->local_flag(true);
+      osig->set_line(*this);
       osig->data_type(data_type);
       osig->set_signed(div->get_signed());
 
@@ -857,6 +848,9 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 				    lsig->vector_width(),
 				    rsig->vector_width());
       mod->set_line(*this);
+      mod->rise_time(rise);
+      mod->fall_time(fall);
+      mod->decay_time(decay);
       des->add_node(mod);
 
       connect(mod->pin_DataA(), lsig->pin(0));
@@ -893,6 +887,23 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 	    cerr << endl;
 	    return 0;
       }
+      if (rsig->data_type() == IVL_VT_REAL ||
+          lsig->data_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": sorry: ";
+	    switch (op_) {
+	        case 'a':
+	          cerr << "&&";
+	          break;
+	        case 'o':
+	          cerr << "||";
+	          break;
+	        default:
+	          assert(0);
+	    }
+
+	    cerr << " is currently unsupported for real values." << endl;
+	    return 0;
+      }
 
       NetLogic*gate;
       switch (op_) {
@@ -907,9 +918,6 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 	  default:
 	    assert(0);
       }
-      gate->rise_time(rise);
-      gate->fall_time(fall);
-      gate->decay_time(decay);
 
 	// The first OR gate returns 1 if the left value is true...
       if (lsig->vector_width() > 1) {
@@ -960,6 +968,11 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
       osig->local_flag(true);
       osig->data_type(IVL_VT_LOGIC);
       connect(gate->pin(0), osig->pin(0));
+
+      gate->set_line(*this);
+      gate->rise_time(rise);
+      gate->fall_time(fall);
+      gate->decay_time(decay);
       des->add_node(gate);
       return osig;
 }
@@ -990,6 +1003,9 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 
 	    NetConst*odev = new NetConst(scope, scope->local_symbol(), res);
 	    des->add_node(odev);
+	    odev->rise_time(rise);
+	    odev->fall_time(fall);
+	    odev->decay_time(decay);
 	    odev->set_line(*this);
 
 	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
@@ -1044,6 +1060,9 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 				 lsig->vector_width(),
 				 rsig->vector_width());
       mult->set_line(*this);
+      mult->rise_time(rise);
+      mult->fall_time(fall);
+      mult->decay_time(decay);
       des->add_node(mult);
 
       mult->set_signed( arith_is_signed );
@@ -1192,6 +1211,10 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 		  assert(0);
 	    }
 
+	    part->set_line(*this);
+	    part->rise_time(rise);
+	    part->fall_time(fall);
+	    part->decay_time(decay);
 	    des->add_node(part);
 
 	    if (debug_elaborate) {
@@ -1227,6 +1250,10 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
       NetCLShift*gate = new NetCLShift(scope, scope->local_symbol(),
 				       lwidth, rsig->vector_width(),
 				       right_flag, signed_flag);
+      gate->set_line(*this);
+      gate->rise_time(rise);
+      gate->fall_time(fall);
+      gate->decay_time(decay);
       des->add_node(gate);
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
@@ -1330,10 +1357,21 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
       if (errors > 0)
 	    return 0;
 
+      if (def->return_sig()->data_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": sorry: real user functions are"
+		    " not currently supported in continuous assignments."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       NetUserFunc*net = new NetUserFunc(scope,
 					scope->local_symbol(),
 					dscope);
+      net->set_line(*this);
+      net->rise_time(rise);
+      net->fall_time(fall);
+      net->decay_time(decay);
       des->add_node(net);
 
 	/* Create an output signal and connect it to the output pins
@@ -1423,8 +1461,11 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
 
       NetSysFunc*net = new NetSysFunc(scope, scope->local_symbol(),
 				      def, 1+parms_.count());
-      des->add_node(net);
       net->set_line(*this);
+      net->rise_time(rise);
+      net->fall_time(fall);
+      net->decay_time(decay);
+      des->add_node(net);
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, def->wid);
@@ -2231,7 +2272,31 @@ NetNet* PEFNumber::elaborate_net(Design*des, NetScope*scope,
       net->local_flag(true);
       net->set_line(*this);
 
-      connect(net->pin(0), obj->pin(0));
+	/* If there are non-zero output delays, then create bufz
+	   devices to carry the propagation delays. Otherwise, just
+	   connect the result to the output. */
+      if (rise || fall || decay) {
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, lwidth);
+	    tmp->data_type(IVL_VT_REAL);
+	    tmp->local_flag(true);
+
+	    NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol(), lwidth);
+	    tmpz->rise_time(rise);
+	    tmpz->fall_time(fall);
+	    tmpz->decay_time(decay);
+	    tmpz->pin(0).drive0(drive0);
+	    tmpz->pin(0).drive1(drive1);
+
+	    connect(obj->pin(0), tmp->pin(0));
+	    connect(tmp->pin(0), tmpz->pin(1));
+	    connect(tmpz->pin(0), net->pin(0));
+
+	    des->add_node(tmpz);
+      } else {
+	    connect(obj->pin(0), net->pin(0));
+      }
+
       return net;
 }
 
@@ -2959,7 +3024,6 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 	    connect(sig->pin(0), tmpz->pin(0));
 
 	    des->add_node(tmpz);
-
       } else {
 	    connect(mux->pin_Result(), sig->pin(0));
       }
@@ -3182,6 +3246,7 @@ NetNet* PEUnary::elab_net_uminus_const_logic_(Design*des, NetScope*scope,
 		       NetNet::WIRE, width);
       sig->data_type(IVL_VT_LOGIC);
       sig->local_flag(true);
+      sig->set_line(*this);
 
 	/* Take the 2s complement by taking the 1s complement
 	and adding 1. */
@@ -3191,7 +3256,34 @@ NetNet* PEUnary::elab_net_uminus_const_logic_(Design*des, NetScope*scope,
       tmp.has_sign(val.has_sign());
 
       NetConst*con = new NetConst(scope, scope->local_symbol(), tmp);
-      connect(sig->pin(0), con->pin(0));
+
+	/* If there are non-zero output delays, then create bufz
+	   devices to carry the propagation delays. Otherwise, just
+	   connect the result to the output. */
+      if (rise || fall || decay) {
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, width);
+	    tmp->data_type(IVL_VT_LOGIC);
+	    tmp->local_flag(true);
+
+	    NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol(), width);
+	    tmpz->rise_time(rise);
+	    tmpz->fall_time(fall);
+	    tmpz->decay_time(decay);
+	    tmpz->pin(0).drive0(drive0);
+	    tmpz->pin(0).drive1(drive1);
+
+	    connect(con->pin(0), tmp->pin(0));
+	    connect(tmp->pin(0), tmpz->pin(1));
+	    connect(sig->pin(0), tmpz->pin(0));
+
+	    des->add_node(tmpz);
+      } else {
+	    connect(con->pin(0), sig->pin(0));
+      }
+      con->set_line(*this);
+
+      des->add_node(con);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: Replace expression "
@@ -3199,7 +3291,7 @@ NetNet* PEUnary::elab_net_uminus_const_logic_(Design*des, NetScope*scope,
       }
 
       delete expr;
-      des->add_node(con);
+
       return sig;
 }
 
@@ -3223,7 +3315,32 @@ NetNet* PEUnary::elab_net_uminus_const_real_(Design*des, NetScope*scope,
 
       NetLiteral*con = new NetLiteral(scope, scope->local_symbol(), -val);
 
-      connect(con->pin(0), sig->pin(0));
+	/* If there are non-zero output delays, then create bufz
+	   devices to carry the propagation delays. Otherwise, just
+	   connect the result to the output. */
+      if (rise || fall || decay) {
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, width);
+	    tmp->data_type(IVL_VT_REAL);
+	    tmp->local_flag(true);
+
+	    NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol(), width);
+	    tmpz->rise_time(rise);
+	    tmpz->fall_time(fall);
+	    tmpz->decay_time(decay);
+	    tmpz->pin(0).drive0(drive0);
+	    tmpz->pin(0).drive1(drive1);
+
+	    connect(con->pin(0), tmp->pin(0));
+	    connect(tmp->pin(0), tmpz->pin(1));
+	    connect(sig->pin(0), tmpz->pin(0));
+
+	    des->add_node(tmpz);
+      } else {
+	    connect(con->pin(0), sig->pin(0));
+      }
+      con->set_line(*this);
+
       des->add_node(con);
 
       if (debug_elaborate) {
@@ -3272,12 +3389,20 @@ NetNet* PEUnary::elab_net_unary_real_(Design*des, NetScope*scope,
 		 << op_ << " expression with real values." << endl;
 	    des->errors += 1;
 	    break;
+	  case '!':
+	    cerr << get_fileline() << ": sorry: ! is currently unsupported"
+		    " for real values." << endl;
+	    des->errors += 1;
+	    break;
  
 	  case '-':
 	    NetAddSub*sub = new NetAddSub(scope, scope->local_symbol(), 1);
 	    sub->attribute(perm_string::literal("LPM_Direction"),
 				 verinum("SUB"));
 	    sub->set_line(*this);
+	    sub->rise_time(rise);
+	    sub->fall_time(fall);
+	    sub->decay_time(decay);
 	    des->add_node(sub);
 	    connect(sig->pin(0), sub->pin_Result());
 	    connect(sub_sig->pin(0), sub->pin_DataB());

@@ -1682,8 +1682,25 @@ static void draw_lpm_add(ivl_lpm_t net)
       }
 
       draw_lpm_data_inputs(net, 0, 2, src_table);
-      fprintf(vvp_out, "L_%p .arith/%s %u, %s, %s;\n",
-	      net, type, width, src_table[0], src_table[1]);
+
+      ivl_expr_t d_rise = ivl_lpm_delay(net, 0);
+      ivl_expr_t d_fall = ivl_lpm_delay(net, 1);
+      ivl_expr_t d_decay = ivl_lpm_delay(net, 2);
+
+      const char*dly = "";
+      if (d_rise != 0) {
+	    assert(number_is_immediate(d_rise, 64));
+	    assert(number_is_immediate(d_fall, 64));
+	    assert(number_is_immediate(d_decay, 64));
+	    dly = "/d";
+	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
+	            net, get_number_immediate(d_rise),
+	            get_number_immediate(d_rise),
+	            get_number_immediate(d_rise), net);
+      }
+
+      fprintf(vvp_out, "L_%p%s .arith/%s %u, %s, %s;\n",
+	      net, dly, type, width, src_table[0], src_table[1]);
 }
 
 /*
@@ -1762,8 +1779,25 @@ static void draw_lpm_cmp(ivl_lpm_t net)
       }
 
       draw_lpm_data_inputs(net, 0, 2, src_table);
-      fprintf(vvp_out, "L_%p .cmp/%s%s %u, %s, %s;\n",
-	      net, type, signed_string, width,
+
+      ivl_expr_t d_rise = ivl_lpm_delay(net, 0);
+      ivl_expr_t d_fall = ivl_lpm_delay(net, 1);
+      ivl_expr_t d_decay = ivl_lpm_delay(net, 2);
+
+      const char*dly = "";
+      if (d_rise != 0) {
+	    assert(number_is_immediate(d_rise, 64));
+	    assert(number_is_immediate(d_fall, 64));
+	    assert(number_is_immediate(d_decay, 64));
+	    dly = "/d";
+	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
+	            net, get_number_immediate(d_rise),
+	            get_number_immediate(d_rise),
+	            get_number_immediate(d_rise), net);
+      }
+
+      fprintf(vvp_out, "L_%p%s .cmp/%s%s %u, %s, %s;\n",
+	      net, dly, type, signed_string, width,
 	      src_table[0], src_table[1]);
 }
 
@@ -2018,8 +2052,24 @@ static void draw_type_string_of_nex(ivl_nexus_t nex)
 
 static void draw_lpm_sfunc(ivl_lpm_t net)
 {
+      ivl_expr_t d_rise = ivl_lpm_delay(net, 0);
+      ivl_expr_t d_fall = ivl_lpm_delay(net, 1);
+      ivl_expr_t d_decay = ivl_lpm_delay(net, 2);
+
+      const char*dly = "";
+      if (d_rise != 0) {
+	    assert(number_is_immediate(d_rise, 64));
+	    assert(number_is_immediate(d_fall, 64));
+	    assert(number_is_immediate(d_decay, 64));
+	    dly = "/d";
+	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
+	            net, get_number_immediate(d_rise),
+	            get_number_immediate(d_rise),
+	            get_number_immediate(d_rise), net);
+      }
+
       unsigned idx;
-      fprintf(vvp_out, "L_%p .sfunc %u %u \"%s\"", net,
+      fprintf(vvp_out, "L_%p%s .sfunc %u %u \"%s\"", net, dly,
               ivl_file_table_index(ivl_lpm_file(net)), ivl_lpm_lineno(net),
               ivl_lpm_string(net));
 

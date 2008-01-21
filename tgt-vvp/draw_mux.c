@@ -41,7 +41,23 @@ static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
       assert(ivl_lpm_size(net) == 2);
       assert(ivl_lpm_selects(net) == 1);
 
-      fprintf(vvp_out, "L_%p .functor %s %u", net, muxz, width);
+      ivl_expr_t d_rise = ivl_lpm_delay(net, 0);
+      ivl_expr_t d_fall = ivl_lpm_delay(net, 1);
+      ivl_expr_t d_decay = ivl_lpm_delay(net, 2);
+
+      const char*dly = "";
+      if (d_rise != 0) {
+	    assert(number_is_immediate(d_rise, 64));
+	    assert(number_is_immediate(d_fall, 64));
+	    assert(number_is_immediate(d_decay, 64));
+	    dly = "/d";
+	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
+	            net, get_number_immediate(d_rise),
+	            get_number_immediate(d_rise),
+	            get_number_immediate(d_rise), net);
+      }
+
+      fprintf(vvp_out, "L_%p%s .functor %s %u", net, dly, muxz, width);
       fprintf(vvp_out, ", %s", draw_input_from_net(ivl_lpm_data(net,0)));
       fprintf(vvp_out, ", %s", draw_input_from_net(ivl_lpm_data(net,1)));
       fprintf(vvp_out, ", %s", draw_input_from_net(ivl_lpm_select(net)));

@@ -1,7 +1,7 @@
 #ifndef __ivl_target_H
 #define __ivl_target_H
 /*
- * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.182 2007/04/02 01:12:34 steve Exp $"
-#endif
 
 # include  <inttypes.h>
 
@@ -870,6 +867,9 @@ extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
  *    Return the name of the device. The name is the name of the
  *    device with the scope part, and the basename is without the scope.
  *
+ * ivl_lpm_delay
+ *    LPM devices have a delay for each transition (0, 1 and Z).
+ *
  * ivl_lpm_scope
  *    LPM devices exist within a scope. Return the scope that contains
  *    this device.
@@ -1089,6 +1089,7 @@ extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
 
 extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
 extern const char*    ivl_lpm_basename(ivl_lpm_t net);
+extern ivl_expr_t     ivl_lpm_delay(ivl_lpm_t net, unsigned transition);
 extern ivl_scope_t    ivl_lpm_scope(ivl_lpm_t net);
 extern int            ivl_lpm_signed(ivl_lpm_t net);
 extern ivl_lpm_type_t ivl_lpm_type(ivl_lpm_t net);

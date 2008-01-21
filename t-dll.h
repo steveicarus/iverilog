@@ -1,7 +1,7 @@
 #ifndef __t_dll_H
 #define __t_dll_H
 /*
- * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -161,6 +161,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void mul_expr_by_const_(long);
 
       void make_logic_delays_(struct ivl_net_logic_s*obj, const NetObj*net);
+      void make_lpm_delays_(struct ivl_lpm_s*obj, const NetObj*net);
       void make_scope_parameters(ivl_scope_t scope, const NetScope*net);
       void make_scope_param_expr(ivl_parameter_t cur_par, NetExpr*etmp);
 
@@ -293,6 +294,7 @@ struct ivl_lpm_s {
       unsigned lineno;
 	// Value returned by ivl_lpm_width;
       unsigned width;
+      ivl_expr_t delay[3];
 
       union {
 	    struct ivl_lpm_ff_s {
