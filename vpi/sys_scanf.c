@@ -398,7 +398,7 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			assert(item);
 
 			val.format = vpiIntVal;
-			val.value.integer = value;
+			val.value.integer = value * sign_flag;
 			vpi_put_value(item, &val, 0, vpiNoDelay);
 			rc += 1;
 			break;
