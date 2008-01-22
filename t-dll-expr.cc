@@ -30,7 +30,8 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
-# include  <stdlib.h>
+# include  <cstdlib>
+# include  <cstring>
 
 /*
  * This is a little convenience function for converting a NetExpr

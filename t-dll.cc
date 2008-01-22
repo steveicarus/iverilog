@@ -31,7 +31,8 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
-# include  <stdlib.h>
+# include  <cstdlib>
+# include  <cstring>
 
 #include <new> // standard operator new
 using std::bad_alloc;

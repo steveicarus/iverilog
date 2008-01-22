@@ -33,6 +33,7 @@
 # include  "util.h"
 # include  "compiler.h"
 # include  <sstream>
+# include  <cstring>
 
 Design:: Design()
 : errors(0), nodes_(0), procs_(0), lcounter_(0)

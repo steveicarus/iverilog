@@ -24,7 +24,8 @@
 
 # include  "verireal.h"
 # include  "verinum.h"
-# include  <stdlib.h>
+# include  <cstdlib>
+# include  <cstring>
 # include  <ctype.h>
 # include  <iostream>
 # include  <math.h>

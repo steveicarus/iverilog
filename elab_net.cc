@@ -28,6 +28,7 @@
 # include  "compiler.h"
 
 # include  <iostream>
+# include  <cstring>
 
 /*
  * This is a state flag that determines whether an elaborate_net must

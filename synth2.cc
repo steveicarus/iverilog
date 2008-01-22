@@ -28,6 +28,7 @@
 #include <cassert>
 #include "NetLatch.h"
 #include <climits>
+#include <cstdlib>
 
 #include <new> // standard operator new
 using std::bad_alloc;

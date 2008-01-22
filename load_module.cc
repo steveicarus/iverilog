@@ -31,6 +31,8 @@
 # include  <dirent.h>
 # include  <ctype.h>
 # include  <assert.h>
+# include  <cstdlib>
+# include  <cstring>
 
 /*
  * The module library items are maps of key names to file name within

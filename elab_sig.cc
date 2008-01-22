@@ -23,6 +23,7 @@
 # include "config.h"
 
 # include  <iostream>
+# include  <cstdlib>
 
 # include  "Module.h"
 # include  "PExpr.h"

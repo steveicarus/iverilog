@@ -37,6 +37,8 @@
 # include  <string>
 # include  <list>
 # include  <stdio.h>
+# include  <cstring>
+# include  <cstdlib>
 
 /*
  * These classes implement the parsed form (P-form for short) of the

@@ -24,6 +24,7 @@
 # include  "compiler.h"
 # include  <iostream>
 # include  <stdio.h>
+# include  <cstring>
 
 /*
  * Elaboration happens in two passes, generally. The first scans the

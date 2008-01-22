@@ -25,6 +25,7 @@
 
 # include  "netlist.h"
 # include  <sstream>
+# include  <cstring>
 
 /*
  * The NetScope class keeps a scope tree organized. Each node of the

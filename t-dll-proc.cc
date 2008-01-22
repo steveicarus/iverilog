@@ -32,7 +32,8 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
-# include  <stdlib.h>
+# include  <cstdlib>
+# include  <cstring>
 
 
 bool dll_target::process(const NetProcTop*net)
