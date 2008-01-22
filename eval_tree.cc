@@ -447,11 +447,19 @@ NetEConst* NetEBComp::eval_leeq_()
 	    cerr << get_fileline() << ":               : " << *this << endl;
       }
 
-	/* Detect the case where the right side is greater that or
+	/* Detect the case where the right side is greater than or
 	   equal to the largest value the left side can possibly
 	   have. */
       assert(left_->expr_width() > 0);
       verinum lv (verinum::V1, left_->expr_width());
+      if (left_->has_sign() && rv.has_sign()) {
+	      // If the expression is signed, then the largest
+	      // possible value for the left_ needs to have a 0 in the
+	      // sign position.
+	    lv.set(lv.len()-1, verinum::V0);
+	    lv.has_sign(true);
+      }
+
       if (lv <= rv) {
 	    verinum result(verinum::V1, 1);
 	    return new NetEConst(result);

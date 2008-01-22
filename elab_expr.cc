@@ -1770,6 +1770,7 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 		       signed expression and extend it one bit to
 		       accommodate a possible sign bit. */
 		  verinum zero (verinum::V0, val.len()+1, val.has_len());
+		  zero.has_sign(val.has_sign());
 		  verinum nval = zero - val;
 
 		  if (val.has_len())
