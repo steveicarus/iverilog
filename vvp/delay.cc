@@ -387,6 +387,16 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	    }
       }
 
+	/* Handle the special case that there are no delays that
+	   match. This may happen, for example, if the set of
+	   conditional delays is incomplete, leaving some cases
+	   uncovered. In that case, just pass the data without delay */
+      if (src == 0) {
+	    cur_vec4_ = bit;
+	    schedule_generic(this, 0, false);
+	    return;
+      }
+
       assert(src);
 
       vvp_time64_t out_at[12];
