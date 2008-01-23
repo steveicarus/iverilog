@@ -1224,6 +1224,11 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 		  perm_string name = peek_tail_name(path_);
 		  NetEConstParam*ptmp
 			= new NetEConstParam(found_in, name, ctmp->value());
+
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Elaborate parameter <" << name
+			     << "> as constant " << *ptmp << endl;
 		  delete tmp;
 		  tmp = ptmp;
 	    }

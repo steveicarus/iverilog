@@ -1402,6 +1402,8 @@ NetEConst* NetESelect::eval_tree(int prune_to_width)
 	    bval += 1;
       }
 
+      oval.has_sign(has_sign());
+
       NetEConst*res = new NetEConst(oval);
       return res;
 }
