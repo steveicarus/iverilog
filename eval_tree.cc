@@ -318,6 +318,11 @@ NetEConst* NetEBBits::eval_tree(int prune_to_width)
 
 NetEConst* NetEBComp::eval_less_()
 {
+      if (right_->expr_type() == IVL_VT_REAL)
+	    return eval_leeq_real_(left_, right_, false);
+      if (left_->expr_type() == IVL_VT_REAL)
+	    return eval_leeq_real_(left_, right_, false);
+
       NetEConst*r = dynamic_cast<NetEConst*>(right_);
       if (r == 0) return 0;
 
@@ -327,21 +332,8 @@ NetEConst* NetEBComp::eval_less_()
 	    return new NetEConst(result);
       }
 
-
-	/* Detect the case where the right side is greater than or
-	   equal to the largest value the left side can possibly
-	   have. Use the width of the left expression as all 1's to
-	   calculate the maximum possible width for the left_
-	   expression. This test only works of the compare is
-	   unsigned. */
-      if (! (rv.has_sign() || left_->has_sign())) {
-
-	    assert(left_->expr_width() > 0);
-	    verinum lv (verinum::V1, left_->expr_width());
-	    if (lv < rv) {
-		  verinum result(verinum::V1, 1);
-		  return new NetEConst(result);
-	    }
+      if (NetEConst*tmp = must_be_leeq_(left_, rv, false)) {
+	    return tmp;
       }
 
 	/* Now go on to the normal test of the values. */
@@ -353,31 +345,24 @@ NetEConst* NetEBComp::eval_less_()
 	    return new NetEConst(result);
       }
 
-      if (lv.has_sign() && rv.has_sign()) {
-	    if (lv.as_long() < rv.as_long()) {
-		  verinum result(verinum::V1, 1);
-		  return new NetEConst(result);
-	    }
+      if (lv < rv) {
+	    verinum result(verinum::V1, 1);
+	    return new NetEConst(result);
       } else {
-	    if (lv.as_ulong() < rv.as_ulong()) {
-		  verinum result(verinum::V1, 1);
-		  return new NetEConst(result);
-	    }
+	    verinum result(verinum::V0, 1);
+	    return new NetEConst(result);
       }
-
-      verinum result(verinum::V0, 1);
-      return new NetEConst(result);
 }
 
-NetEConst* NetEBComp::eval_leeq_real_()
+NetEConst* NetEBComp::eval_leeq_real_(NetExpr*le, NetExpr*ri, bool eq_flag)
 {
       NetEConst*vtmp;
       NetECReal*rtmp;
       double lv, rv;
 
-      switch (left_->expr_type()) {
+      switch (le->expr_type()) {
 	  case IVL_VT_REAL:
-	    rtmp = dynamic_cast<NetECReal*> (left_);
+	    rtmp = dynamic_cast<NetECReal*> (le);
 	    if (rtmp == 0)
 		  return 0;
 
@@ -385,7 +370,8 @@ NetEConst* NetEBComp::eval_leeq_real_()
 	    break;
 
 	  case IVL_VT_LOGIC:
-	    vtmp = dynamic_cast<NetEConst*> (left_);
+	  case IVL_VT_BOOL:
+	    vtmp = dynamic_cast<NetEConst*> (le);
 	    if (vtmp == 0)
 		  return 0;
 
@@ -393,13 +379,15 @@ NetEConst* NetEBComp::eval_leeq_real_()
 	    break;
 
 	  default:
+	    cerr << get_fileline() << ": internal error: "
+		 << "Unexpected expression type? " << le->expr_type() << endl;
 	    assert(0);
       }
 
 
-      switch (right_->expr_type()) {
+      switch (ri->expr_type()) {
 	  case IVL_VT_REAL:
-	    rtmp = dynamic_cast<NetECReal*> (right_);
+	    rtmp = dynamic_cast<NetECReal*> (ri);
 	    if (rtmp == 0)
 		  return 0;
 
@@ -407,7 +395,8 @@ NetEConst* NetEBComp::eval_leeq_real_()
 	    break;
 
 	  case IVL_VT_LOGIC:
-	    vtmp = dynamic_cast<NetEConst*> (right_);
+	  case IVL_VT_BOOL:
+	    vtmp = dynamic_cast<NetEConst*> (ri);
 	    if (vtmp == 0)
 		  return 0;
 
@@ -415,22 +404,48 @@ NetEConst* NetEBComp::eval_leeq_real_()
 	    break;
 
 	  default:
+	    cerr << get_fileline() << ": internal error: "
+		 << "Unexpected expression type? " << ri->expr_type() << endl;
 	    assert(0);
       }
 
-      verinum result((lv <= rv)? verinum::V1 : verinum::V0, 1);
+      bool test = false;
+      if (lv < rv) test = true;
+      if (test == false && eq_flag && lv == rv) test = true;
+
+      verinum result(test? verinum::V1 : verinum::V0, 1);
       vtmp = new NetEConst(result);
       vtmp->set_line(*this);
 
       return vtmp;
 }
 
+NetEConst* NetEBComp::must_be_leeq_(NetExpr*le, const verinum&rv, bool eq_flag)
+{
+      assert(le->expr_width() > 0);
+      verinum lv (verinum::V1, le->expr_width());
+      if (le->has_sign() && rv.has_sign()) {
+	      // If the expression is signed, then the largest
+	      // possible value for the left_ needs to have a 0 in the
+	      // sign position.
+	    lv.set(lv.len()-1, verinum::V0);
+	    lv.has_sign(true);
+      }
+
+      if (lv < rv || (eq_flag && (lv == rv))) {
+	    verinum result(verinum::V1, 1);
+	    return new NetEConst(result);
+      }
+
+      return 0;
+}
+
 NetEConst* NetEBComp::eval_leeq_()
 {
       if (right_->expr_type() == IVL_VT_REAL)
-	    return eval_leeq_real_();
+	    return eval_leeq_real_(left_, right_, true);
       if (left_->expr_type() == IVL_VT_REAL)
-	    return eval_leeq_real_();
+	    return eval_leeq_real_(left_, right_, true);
 
       NetEConst*r = dynamic_cast<NetEConst*>(right_);
       if (r == 0) return 0;
@@ -447,68 +462,34 @@ NetEConst* NetEBComp::eval_leeq_()
 	    cerr << get_fileline() << ":               : " << *this << endl;
       }
 
-	/* Detect the case where the right side is greater than or
-	   equal to the largest value the left side can possibly
-	   have. */
-      assert(left_->expr_width() > 0);
-      verinum lv (verinum::V1, left_->expr_width());
-      if (left_->has_sign() && rv.has_sign()) {
-	      // If the expression is signed, then the largest
-	      // possible value for the left_ needs to have a 0 in the
-	      // sign position.
-	    lv.set(lv.len()-1, verinum::V0);
-	    lv.has_sign(true);
-      }
-
-      if (lv <= rv) {
-	    verinum result(verinum::V1, 1);
-	    return new NetEConst(result);
+      if (NetEConst*tmp = must_be_leeq_(left_, rv, true)) {
+	    return tmp;
       }
 
 	/* Now go on to the normal test of the values. */
       NetEConst*l = dynamic_cast<NetEConst*>(left_);
       if (l == 0) return 0;
-      lv = l->value();
+      verinum lv = l->value();
       if (! lv.is_defined()) {
 	    verinum result(verinum::Vx, 1);
 	    return new NetEConst(result);
       }
 
-      if (lv.has_sign() && rv.has_sign()) {
-	    if (lv.as_long() <= rv.as_long()) {
-		  verinum result(verinum::V1, 1);
-		  return new NetEConst(result);
-	    }
+      if (lv <= rv) {
+	    verinum result(verinum::V1, 1);
+	    return new NetEConst(result);
       } else {
-	    if (lv.as_ulong() <= rv.as_ulong()) {
-		  verinum result(verinum::V1, 1);
-		  return new NetEConst(result);
-	    }
+	    verinum result(verinum::V0, 1);
+	    return new NetEConst(result);
       }
-
-      verinum result(verinum::V0, 1);
-      return new NetEConst(result);
 }
 
 NetEConst* NetEBComp::eval_gt_()
 {
-      if ((left_->expr_type() == IVL_VT_REAL)
-	  && (right_->expr_type() == IVL_VT_REAL)) {
-
-	    NetECReal*tmpl = dynamic_cast<NetECReal*>(left_);
-	    if (tmpl == 0)
-		  return 0;
-
-	    NetECReal*tmpr = dynamic_cast<NetECReal*>(right_);
-	    if (tmpr == 0)
-		  return 0;
-
-	    double ll = tmpl->value().as_double();
-	    double rr = tmpr->value().as_double();
-
-	    verinum result ((ll > rr)? verinum::V1 : verinum::V0, 1, true);
-	    return new NetEConst(result);
-      }
+      if (right_->expr_type() == IVL_VT_REAL)
+	    return eval_leeq_real_(right_, left_, false);
+      if (left_->expr_type() == IVL_VT_REAL)
+	    return eval_leeq_real_(right_, left_, false);
 
       NetEConst*l = dynamic_cast<NetEConst*>(left_);
       if (l == 0) return 0;
@@ -519,15 +500,8 @@ NetEConst* NetEBComp::eval_gt_()
 	    return new NetEConst(result);
       }
 
-	/* Check for the special case where we know, simply by the
-	   limited width of the right expression, that it cannot
-	   possibly be false. */
-      if (right_->expr_width() > 0) {
-	    verinum rv (verinum::V1, right_->expr_width());
-	    if (lv > rv) {
-		  verinum result(verinum::V1, 1);
-		  return new NetEConst(result);
-	    }
+      if (NetEConst*tmp = must_be_leeq_(right_, lv, false)) {
+	    return tmp;
       }
 
 	/* Compare with a real value. Do it as double precision. */
@@ -552,39 +526,21 @@ NetEConst* NetEBComp::eval_gt_()
 	    return new NetEConst(result);
       }
 
-      if (lv.has_sign() && rv.has_sign() && (lv.as_long() > rv.as_long())) {
+      if (lv > rv) {
 	    verinum result(verinum::V1, 1);
 	    return new NetEConst(result);
-      }
-
-      if (lv.as_ulong() > rv.as_ulong()) {
-	    verinum result(verinum::V1, 1);
+      } else {
+	    verinum result(verinum::V0, 1);
 	    return new NetEConst(result);
       }
-
-      verinum result(verinum::V0, 1);
-      return new NetEConst(result);
 }
 
 NetEConst* NetEBComp::eval_gteq_()
 {
-      if ((left_->expr_type() == IVL_VT_REAL)
-	  && (right_->expr_type() == IVL_VT_REAL)) {
-
-	    NetECReal*tmpl = dynamic_cast<NetECReal*>(left_);
-	    if (tmpl == 0)
-		  return 0;
-
-	    NetECReal*tmpr = dynamic_cast<NetECReal*>(right_);
-	    if (tmpr == 0)
-		  return 0;
-
-	    double ll = tmpl->value().as_double();
-	    double rr = tmpr->value().as_double();
-
-	    verinum result ((ll >= rr)? verinum::V1 : verinum::V0, 1, true);
-	    return new NetEConst(result);
-      }
+      if (right_->expr_type() == IVL_VT_REAL)
+	    return eval_leeq_real_(right_, left_, true);
+      if (left_->expr_type() == IVL_VT_REAL)
+	    return eval_leeq_real_(right_, left_, true);
 
       NetEConst*l = dynamic_cast<NetEConst*>(left_);
       if (l == 0) return 0;
@@ -595,15 +551,8 @@ NetEConst* NetEBComp::eval_gteq_()
 	    return new NetEConst(result);
       }
 
-	/* Detect the case where the left side is greater than the
-	   largest value the right side can possibly have. */
-      if (right_->expr_type() == IVL_VT_LOGIC) {
-	    assert(right_->expr_width() > 0);
-	    verinum rv (verinum::V1, right_->expr_width());
-	    if (lv >= rv) {
-		  verinum result(verinum::V1, 1);
-		  return new NetEConst(result);
-	    }
+      if (NetEConst*tmp = must_be_leeq_(right_, lv, true)) {
+	    return tmp;
       }
 
 	/* Compare with a real value. Do it as double precision. */
@@ -628,22 +577,13 @@ NetEConst* NetEBComp::eval_gteq_()
 	    return new NetEConst(result);
       }
 
-      if (lv.has_sign() && rv.has_sign()) {
-
-	    if (lv.as_long() >= rv.as_long()) {
-		  verinum result(verinum::V1, 1);
-		  return new NetEConst(result);
-	    }
+      if (lv >= rv) {
+	    verinum result(verinum::V1, 1);
+	    return new NetEConst(result);
       } else {
-
-	    if (lv.as_ulong() >= rv.as_ulong()) {
-		  verinum result(verinum::V1, 1);
-		  return new NetEConst(result);
-	    }
+	    verinum result(verinum::V0, 1);
+	    return new NetEConst(result);
       }
-
-      verinum result(verinum::V0, 1);
-      return new NetEConst(result);
 }
 
 NetEConst* NetEBComp::eval_eqeq_(bool ne_flag)

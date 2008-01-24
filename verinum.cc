@@ -682,6 +682,7 @@ verinum::V operator < (const verinum&left, const verinum&right)
 	    if (right[idx-1] == verinum::Vx) return verinum::Vx;
 	    if (right[idx-1] == verinum::Vz) return verinum::Vx;
 	    if (left[idx-1] > right[idx-1]) return verinum::V0;
+	    if (left[idx-1] < right[idx-1]) return verinum::V1;
 	    idx -= 1;
       }
 
