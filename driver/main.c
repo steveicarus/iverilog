@@ -593,7 +593,7 @@ int main(int argc, char **argv)
 	}
       }
 
-      while ((opt = getopt(argc, argv, "B:c:D:Ef:g:hI:M:m:N::o:p:Ss:T:t:vVW:y:Y:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hI:M:m:N::o:p:Ss:T:t:vVW:y:Y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -619,6 +619,9 @@ int main(int argc, char **argv)
 		  break;
 		case 'p':
 		  fprintf(iconfig_file, "flag:%s\n", optarg);
+		  break;
+		case 'd':
+		  fprintf(iconfig_file, "debug:%s\n", optarg);
 		  break;
 
 		case 'g':
