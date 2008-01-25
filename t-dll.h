@@ -446,7 +446,7 @@ struct ivl_net_logic_s {
 struct ivl_udp_s {
       perm_string name;
       unsigned nin;
-      int sequ; /* boolen */
+      int sequ; /* boolean */
       char init;
       unsigned nrows;
       typedef const char*ccharp_t;
@@ -483,7 +483,7 @@ struct ivl_nexus_ptr_s {
 # define __NEXUS_PTR_LPM 3
 
 /*
- * NOTE: ONLY allocat ivl_nexus_s objects with the included "new" operator.
+ * NOTE: ONLY allocate ivl_nexus_s objects with the included "new" operator.
  */
 struct ivl_nexus_s {
       unsigned nptr_;

@@ -32,7 +32,7 @@ using namespace std;
 
 /*
  * This class represents a component of a Verilog hierarchical name. A
- * hierarchical component contains a name string (prepresented here
+ * hierarchical component contains a name string (represented here
  * with a perm_string) and an optional signed number. This signed
  * number is used if the scope is part of an array, for example an
  * array of module instances or a loop generated scope.

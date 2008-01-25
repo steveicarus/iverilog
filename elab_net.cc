@@ -1323,7 +1323,7 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
       NetScope*dscope = def->scope();
       assert(dscope);
 
-	/* This must be a ufuction that returns a signal. */
+	/* This must be a function that returns a signal. */
       assert(def->return_sig());
 
 	/* check the validity of the parameters. */

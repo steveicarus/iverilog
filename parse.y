@@ -221,7 +221,7 @@ static inline void FILE_NAME(LineInfo*tmp, const struct vlltype&where)
 %type <gate>  gate_instance
 %type <gates> gate_instance_list
 
-%type <pform_name> heirarchy_identifier
+%type <pform_name> hierarchy_identifier
 %type <expr>  expression expr_primary expr_mintypmax
 %type <expr>  lpvalue
 %type <expr>  delay_value delay_value_simple
@@ -488,7 +488,7 @@ charge_strength_opt
 	;
 
 defparam_assign
-	: heirarchy_identifier '=' expression
+	: hierarchy_identifier '=' expression
 		{ PExpr*tmp = $3;
 		  if (!pform_expression_is_constant(tmp)) {
 			yyerror(@3, "error: parameter value "
@@ -664,7 +664,7 @@ dr_strength1
 	;
 
 event_control
-	: '@' heirarchy_identifier
+	: '@' hierarchy_identifier
 		{ PEIdent*tmpi = new PEIdent(*$2);
 		  PEEvent*tmpe = new PEEvent(PEEvent::ANYEDGE, tmpi);
 		  PEventStatement*tmps = new PEventStatement(tmpe);
@@ -1028,10 +1028,10 @@ expr_primary
 		  delete $1;
 		}
 
-  /* The heirarchy_identifier rule matches simple identifiers as well as
+  /* The hierarchy_identifier rule matches simple identifiers as well as
      indexed arrays and part selects */
 
-    | heirarchy_identifier
+    | hierarchy_identifier
         { PEIdent*tmp = new PEIdent(*$1);
 	  FILE_NAME(tmp, @1);
 	  $$ = tmp;
@@ -1042,7 +1042,7 @@ expr_primary
      function call. If a system identifier, then a system function
      call. */
 
-	| heirarchy_identifier '(' expression_list_proper ')'
+	| hierarchy_identifier '(' expression_list_proper ')'
                 { PECallFunction*tmp = new PECallFunction(*$1, *$3);
 		  FILE_NAME(tmp, @1);
 		  delete $1;
@@ -1305,19 +1305,19 @@ gatetype
      hierarchical name from the left to the right, forming a list of
      names. */
 
-heirarchy_identifier
+hierarchy_identifier
     : IDENTIFIER
         { $$ = new pform_name_t;
 	  $$->push_back(name_component_t(lex_strings.make($1)));
 	  delete $1;
 	}
-    | heirarchy_identifier '.' IDENTIFIER
+    | hierarchy_identifier '.' IDENTIFIER
         { pform_name_t * tmp = $1;
 	  tmp->push_back(name_component_t(lex_strings.make($3)));
 	  delete $3;
 	  $$ = tmp;
 	}
-    | heirarchy_identifier '[' expression ']'
+    | hierarchy_identifier '[' expression ']'
         { pform_name_t * tmp = $1;
 	  name_component_t&tail = tmp->back();
 	  index_component_t itmp;
@@ -1326,7 +1326,7 @@ heirarchy_identifier
 	  tail.index.push_back(itmp);
 	  $$ = tmp;
 	}
-    | heirarchy_identifier '[' expression ':' expression ']'
+    | hierarchy_identifier '[' expression ':' expression ']'
         { pform_name_t * tmp = $1;
 	  name_component_t&tail = tmp->back();
 	  index_component_t itmp;
@@ -1336,7 +1336,7 @@ heirarchy_identifier
 	  tail.index.push_back(itmp);
 	  $$ = tmp;
 	}
-    | heirarchy_identifier '[' expression K_PO_POS expression ']'
+    | hierarchy_identifier '[' expression K_PO_POS expression ']'
         { pform_name_t * tmp = $1;
 	  name_component_t&tail = tmp->back();
 	  index_component_t itmp;
@@ -1346,7 +1346,7 @@ heirarchy_identifier
 	  tail.index.push_back(itmp);
 	  $$ = tmp;
 	}
-    | heirarchy_identifier '[' expression K_PO_NEG expression ']'
+    | hierarchy_identifier '[' expression K_PO_NEG expression ']'
         { pform_name_t * tmp = $1;
 	  name_component_t&tail = tmp->back();
 	  index_component_t itmp;
@@ -1557,7 +1557,7 @@ signed_opt : K_signed { $$ = true; } | {$$ = false; } ;
      assignments. It is more limited then the general expr_primary
      rule to reflect the rules for assignment l-values. */
 lpvalue
-    : heirarchy_identifier
+    : hierarchy_identifier
         { PEIdent*tmp = new PEIdent(*$1);
 	  FILE_NAME(tmp, @1);
 	  $$ = tmp;
@@ -2892,11 +2892,11 @@ spec_notifier_opt
 spec_notifier
 	: ','
 		{  }
-	| ','  heirarchy_identifier
+	| ','  hierarchy_identifier
 		{ delete $2; }
 	| spec_notifier ','
 		{  }
-	| spec_notifier ',' heirarchy_identifier
+	| spec_notifier ',' hierarchy_identifier
                 { delete $3; }
 	| IDENTIFIER
 		{ delete $1; }
@@ -3003,13 +3003,13 @@ statement
 		  $$ = tmp;
 		}
 
-	| K_disable heirarchy_identifier ';'
+	| K_disable hierarchy_identifier ';'
 		{ PDisable*tmp = new PDisable(*$2);
 		  FILE_NAME(tmp, @1);
 		  delete $2;
 		  $$ = tmp;
 		}
-	| K_TRIGGER heirarchy_identifier ';'
+	| K_TRIGGER hierarchy_identifier ';'
 		{ PTrigger*tmp = new PTrigger(*$2);
 		  FILE_NAME(tmp, @1);
 		  delete $2;
@@ -3210,7 +3210,7 @@ statement
 		  delete $1;
 		  $$ = tmp;
 		}
-	| heirarchy_identifier '(' expression_list_proper ')' ';'
+	| hierarchy_identifier '(' expression_list_proper ')' ';'
 		{ PCallTask*tmp = new PCallTask(*$1, *$3);
 		  FILE_NAME(tmp, @1);
 		  delete $1;
@@ -3222,14 +3222,14 @@ statement
      between parentheses, but it seems natural, and people commonly
      want it. So accept it explicitly. */
 
-	| heirarchy_identifier '(' ')' ';'
+	| hierarchy_identifier '(' ')' ';'
 		{ svector<PExpr*>pt (0);
 		  PCallTask*tmp = new PCallTask(*$1, pt);
 		  FILE_NAME(tmp, @1);
 		  delete $1;
 		  $$ = tmp;
 		}
-	| heirarchy_identifier ';'
+	| hierarchy_identifier ';'
 		{ svector<PExpr*>pt (0);
 		  PCallTask*tmp = new PCallTask(*$1, pt);
 		  FILE_NAME(tmp, @1);
@@ -3649,7 +3649,7 @@ udp_output_sym
 
   /* Port declarations create wires for the inputs and the output. The
      makes for these ports are scoped within the UDP, so there is no
-     heirarchy involved. */
+     hierarchy involved. */
 udp_port_decl
     : K_input list_of_identifiers ';'
         { $$ = pform_make_udp_input_ports($2); }

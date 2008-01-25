@@ -119,7 +119,7 @@ class PExpr : public LineInfo {
 	// Expressions that can be in the l-value of procedural
 	// assignments can be elaborated with this method. If the
 	// is_force flag is true, then the set of valid l-value types
-	// is slightly modified to accomodate the Verilog force
+	// is slightly modified to accommodate the Verilog force
 	// statement
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
@@ -255,7 +255,7 @@ class PEIdent : public PExpr {
       explicit PEIdent(const pform_name_t&);
       ~PEIdent();
 
-	// Add another name to the string of heirarchy that is the
+	// Add another name to the string of hierarchy that is the
 	// current identifier.
       void append_name(perm_string);
 
@@ -551,7 +551,7 @@ class PEBinary : public PExpr {
       NetEBinary*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetEBinary*elaborate_eval_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
 
-      static void surpress_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp);
+      static void suppress_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp);
 
     private:
       NetNet* elaborate_net_add_(Design*des, NetScope*scope,
@@ -597,7 +597,7 @@ class PEBinary : public PExpr {
 };
 
 /*
- * Here are a few specilized classes for handling specific binary
+ * Here are a few specialized classes for handling specific binary
  * operators.
  */
 class PEBComp  : public PEBinary {
@@ -667,7 +667,7 @@ class PETernary : public PExpr {
 class PECallFunction : public PExpr {
     public:
       explicit PECallFunction(const pform_name_t&n, const svector<PExpr *> &parms);
-	// Call of system function (name is not heirarchical)
+	// Call of system function (name is not hierarchical)
       explicit PECallFunction(perm_string n, const svector<PExpr *> &parms);
       explicit PECallFunction(perm_string n);
       ~PECallFunction();
