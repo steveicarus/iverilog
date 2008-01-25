@@ -72,7 +72,7 @@ reporting problems with. However, if you clearly explain what is right
 and wrong about the generated netlist, I will probably be able to fix
 the problem. It may take a few iterations.
 
-In this case, if possible include not only the sample verilog program,
+In this case, if possible include not only the sample Verilog program,
 but the generated netlist file(s) and a clear indication of what went
 wrong. If it is not clear to me, I will ask for clarification.
 
