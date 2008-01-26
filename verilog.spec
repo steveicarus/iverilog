@@ -12,16 +12,6 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-20070812-%{release}-root
 
 BuildRequires: gcc-c++, zlib-devel, bison, flex, gperf, readline-devel
 
-%ifarch x86_64
-BuildRequires: bzip2-32bit, glibc-devel-32bit, glibc-32bit, zlib-devel-32bit
-BuildRequires: termcap-32bit, readline-32bit, readline-devel-32bit
-
-%if 0%{?suse_version} == 1020
-BuildRequires: gcc-32bit, libstdc++41-devel-32bit
-%endif
-
-%endif
-
 # This provides tag allows me to use a more specific name for things
 # that actually depend on me, Icarus Verilog.
 Provides: iverilog
@@ -35,11 +25,7 @@ to the IEEE-1364 standard.
 %setup -n verilog-20070812
 
 %build
-%ifarch x86_64
-./configure --prefix=/usr --mandir='$(prefix)/share/man' libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir2=. --enable-vvp32
-%else
 ./configure --prefix=/usr --mandir='$(prefix)/share/man'
-%endif
 make CXXFLAGS=-O
 
 %install
@@ -77,13 +63,6 @@ rm -rf $RPM_BUILD_ROOT
 #%attr(-,root,root) /usr/lib/ivl/fpga-s.conf
 #%attr(-,root,root) /usr/lib/ivl/xnf.conf
 #%attr(-,root,root) /usr/lib/ivl/xnf-s.conf
-%ifarch x86_64
-%attr(-,root,root) /usr/bin/vvp32
-%attr(-,root,root) /usr/lib/ivl/vpi64/system.vpi
-%attr(-,root,root) /usr/lib/ivl/vpi64/cadpli.vpl
-%attr(-,root,root) /usr/lib64/libvpi.a
-%attr(-,root,root) /usr/lib64/libveriuser.a
-%endif
 %attr(-,root,root) /usr/lib/ivl/system.sft
 %attr(-,root,root) /usr/lib/ivl/system.vpi
 %attr(-,root,root) /usr/lib/ivl/cadpli.vpl
@@ -98,3 +77,6 @@ rm -rf $RPM_BUILD_ROOT
 %changelog -n verilog
 * Sun Feb 28 2007 - steve@icarus.com
 - Added formatting suitable for openSUSE packaging.
+
+* Fri Jan 25 2008 - steve@icarus.com
+- Removed vvp32 support for x86_64 build.

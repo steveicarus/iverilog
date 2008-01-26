@@ -30,7 +30,6 @@ VPATH = $(srcdir)
 
 bindir = @bindir@
 libdir = @libdir@
-libdir64 = @libdir64@
 includedir = $(prefix)/include
 
 CC = @CC@
@@ -57,12 +56,6 @@ O = asynch.o delay.o exprinfo.o finish.o getcstringp.o getinstance.o \
 getlongp.o getp.o getsimtime.o io_print.o math.o mc_scan_plusargs.o \
 nodeinfo.o nump.o putlongp.o putp.o spname.o typep.o workarea.o \
 veriusertfs.o priv.o $A
-
-ifeq (@enable_vvp32@,yes)
-ALL32 = all32
-INSTALL32 = install32
-UNINSTALL32 = uninstall32
-endif
 
 all: dep libveriuser.a $(ALL32)
 
@@ -93,40 +86,15 @@ clean:
 distclean: clean
 	rm -f Makefile config.status config.log config.cache config.h
 
-install:: all installdirs $(libdir64)/libveriuser.a $(INSTALL32)
+install:: all installdirs $(libdir)/libveriuser.a $(INSTALL32)
 
-$(libdir64)/libveriuser.a: ./libveriuser.a
-	$(INSTALL_DATA) ./libveriuser.a $(libdir64)/libveriuser.a
+$(libdir)/libveriuser.a: ./libveriuser.a
+	$(INSTALL_DATA) ./libveriuser.a $(libdir)/libveriuser.a
 
 installdirs: mkinstalldirs
-	$(srcdir)/mkinstalldirs $(includedir) $(libdir64)
+	$(srcdir)/mkinstalldirs $(includedir) $(libdir)
 
 uninstall::
-	rm -f $(libdir64)/libveriuser.a
-
-ifeq (@enable_vvp32@,yes)
-all32: bin32 bin32/libveriuser.a
-
-bin32:
-	mkdir bin32
-
-bin32/%.o: %.c
-	$(CC) -m32 $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $@
-
-bin32/libveriuser.o: $(addprefix bin32/,$O)
-	$(LD) -melf_i386 -r -o $@ $(addprefix bin32/,$O)
-
-bin32/libveriuser.a: bin32/libveriuser.o
-	rm -f $@
-	ar cvq $@ bin32/libveriuser.o
-	$(RANLIB) $@
-
-install32: $(libdir)/libveriuser.a
-
-$(libdir)/libveriuser.a: bin32/libveriuser.a
-	$(INSTALL_DATA) bin32/libveriuser.a $(libdir)/libveriuser.a
-
--include $(patsubst bin32/%.o, bin32/%.d, $(addprefix bin32/,$O))
-endif
+	rm -f $(libdir)/libveriuser.a
 
 -include $(patsubst %.o, dep/%.d, $O)

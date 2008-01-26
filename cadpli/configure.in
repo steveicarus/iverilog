@@ -12,10 +12,6 @@ AX_WIN32
 
 AC_PROG_INSTALL
 
-# vvp32 is by default disabled
-#enable_vvp32=no
-AC_SUBST(enable_vvp32)
-
 AC_CHECK_HEADERS(malloc.h)
 
 AC_CHECK_SIZEOF(unsigned long long)
@@ -61,16 +57,5 @@ AX_C_UNDERSCORES_TRAILING
 #######################
 
 AX_CPP_IDENT
-
-# where to put vpi subdirectories
-AC_MSG_CHECKING(for VPI subdirectories)
-if test x${vpidir1} = x
-then
-	vpidir1="."
-fi
-
-AC_SUBST(vpidir1)
-AC_SUBST(vpidir2)
-AC_MSG_RESULT(${vpidir1} ${vpidir2})
 
 AC_OUTPUT(Makefile)

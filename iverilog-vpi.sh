@@ -26,19 +26,8 @@ CFLAGS="@PIC@ @IVCFLAGS@ -I@INCLUDEDIR@"
 
 # These are used for linking...
 LD=$CC
-LDFLAGS32="@SHARED@ -L@LIBDIR@"
-LDFLAGS64="@SHARED@ -L@LIBDIR64@"
-LDFLAGS="$LDFLAGS64"
+LDFLAGS="@SHARED@ -L@LIBDIR@"
 LDLIBS="-lveriuser -lvpi"
-
-INSTDIR64="@VPIDIR1@"
-INSTDIR32="@VPIDIR2@"
-if test x$INSTDIR32 = x
-then
-    INSTDIR32=$INSTDIR64
-fi
-
-INSTDIR="$INSTDIR64"
 
 CCSRC=
 CXSRC=
@@ -96,11 +85,6 @@ do
     -D*) DEFS="$DEFS $parm"
 	 ;;
 
-    -m32) LDFLAGS="-m32 $LDFLAGS32"
-	  CFLAGS="-m32 $CFLAGS"
-	  INSTDIR="$INSTDIR32"
-	  ;;
-
     --cflags)
 	 echo "$CFLAGS"
 	 exit;
@@ -117,7 +101,7 @@ do
 	 ;;
 
     --install-dir)
-	 echo "@LIBDIR@/ivl/$INSTDIR"
+	 echo "@LIBDIR@/ivl"
 	 exit
 	 ;;
     esac
