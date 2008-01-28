@@ -395,7 +395,7 @@ typedef const struct ivl_attribute_s*ivl_attribute_t;
  *    This returns the nexus that tracks the condition for the
  *    delay. If the delay path is unconditional, this returns nil.
  *
- * ivl_path_srouce_posedge
+ * ivl_path_source_posedge
  * ivl_path_source_negedge
  *    These functions return true if the source is edge sensitive.
  */
@@ -469,7 +469,7 @@ extern ivl_net_const_t ivl_design_const(ivl_design_t, unsigned idx);
  *    The is the type of the node.
  *
  * ivl_const_bits
- *    This returns a pointer to an array of conststant characters,
+ *    This returns a pointer to an array of constant characters,
  *    each byte a '0', '1', 'x' or 'z'. The array is *not* nul
  *    terminated.
  *
@@ -743,7 +743,7 @@ extern unsigned ivl_file_table_size(void);
  * SEMANTIC NOTES
  * The ivl_logic_width applies to all the pins of a logic device. If a
  * logic device has width, that means that it is actually an array of
- * logic devices tha each process a bit slice of the
+ * logic devices that each process a bit slice of the
  * inputs/output. That implies that the widths of all the inputs and
  * the output must be identical.
  *
@@ -925,7 +925,7 @@ extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
  * The ivl_lpm_q nexus is the output from the concatenation.
  *
  * The ivl_lpm_data function returns the connections for the inputs to
- * the concatentation. The ivl_lpm_size function returns the number of
+ * the concatenation. The ivl_lpm_size function returns the number of
  * inputs help by the device.
  *
  * - Divide (IVL_LPM_DIVIDE)
@@ -999,7 +999,7 @@ extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
  * The ivl_lpm_data() method returns the inputs of the MUX device. The
  * ivl_lpm_size() method returns the number of data inputs there
  * are. All the data inputs have the same width, the width of the
- * ivl_lpm_q output. The type of the device is devined from the
+ * ivl_lpm_q output. The type of the device is divined from the
  * inputs and the Q. All the types must be exactly the same.
  *
  * - D-FlipFlop (IVL_LPM_FF)
@@ -1052,7 +1052,7 @@ extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
  * output, but the distance has its own width.
  *
  * The ivl_lpm_signed() flag means for IVL_LPM_SHIFTR that the right
- * shift is *signed*. For SHIFTL, then signed-ness is emaningless.
+ * shift is *signed*. For SHIFTL, then signed-ness is meaningless.
  *
  * - System function call (IVL_LPM_SFUNC)
  * This device represents a netlist call to a system function. The
@@ -1073,8 +1073,8 @@ extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
  * function are connected to the net, as is the output.
  *
  * The function definition is associated with a scope, and the
- * ivl_lpm_define fuction returns the scope that is that definition.
- * See the ivl_scope_* fuctions for how to get at the actual
+ * ivl_lpm_define function returns the scope that is that definition.
+ * See the ivl_scope_* functions for how to get at the actual
  * definition.
  *
  * As with many LPM nodes, the ivl_lpm_q function returns the nexus
@@ -1193,7 +1193,7 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  * an expression that calculates the address of the array word. If
  * the referenced signal has more than one word, this expression must
  * be present. If the signal has exactly one word (it is not an array)
- * then the ivl_lval_idx exression must *not* be present.
+ * then the ivl_lval_idx expression must *not* be present.
  *
  * For array words, the ivl_lval_width is the width of the word.
  */
@@ -1489,7 +1489,7 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  * ivl_signal_array_count
  *    The signal may be arrayed. If so, the array_count is >1. Each
  *    word of the array has its own nexus. The array_base is the
- *    address is the Verilg source for the canonical zero word. This
+ *    address is the Verilog source for the canonical zero word. This
  *    may be negative, positive or zero.
  *
  *    Note that arraying of the signal into words is distinct from the

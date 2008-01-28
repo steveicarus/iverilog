@@ -55,7 +55,7 @@ static bool signal_is_in_port(const svector<Module::port_t*>&ports,
 	      // the port has 0 or more NetEIdent objects concatenated
 	      // together that form the port.
 
-	      // Note that module ports should not have any heirarchy
+	      // Note that module ports should not have any hierarchy
 	      // in their names: they are in the root of the module
 	      // scope by definition.
 

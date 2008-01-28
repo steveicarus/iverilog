@@ -504,7 +504,7 @@ static void show_lpm_part(ivl_lpm_t net)
 	    }
 
 	    if (width_of_nexus(ivl_lpm_q(net,0)) != width) {
-		  fprintf(out, "    ERROR: Part select input mistatch."
+		  fprintf(out, "    ERROR: Part select input mismatch."
 			  " Nexus width=%u, expect width=%u\n",
 			  width_of_nexus(ivl_lpm_q(net,0)), width);
 		  stub_errors += 1;
@@ -520,7 +520,7 @@ static void show_lpm_part(ivl_lpm_t net)
 	    }
 
 	    if (width_of_nexus(ivl_lpm_data(net,0)) != width) {
-		  fprintf(out, "    ERROR: Part select input mistatch."
+		  fprintf(out, "    ERROR: Part select input mismatch."
 			  " Nexus width=%u, expect width=%u\n",
 			  width_of_nexus(ivl_lpm_data(net,0)), width);
 		  stub_errors += 1;
@@ -556,7 +556,7 @@ static void show_lpm_part_bi(ivl_lpm_t net)
 
 	/* The Q vector must be exactly the width of the part select. */
       if (width_of_nexus(ivl_lpm_q(net,0)) != width) {
-	    fprintf(out, "    ERROR: Part select input mistatch."
+	    fprintf(out, "    ERROR: Part select input mismatch."
 		    " Nexus width=%u, expect width=%u\n",
 		    width_of_nexus(ivl_lpm_q(net,0)), width);
 	    stub_errors += 1;
@@ -644,7 +644,7 @@ static void show_lpm_repeat(ivl_lpm_t net)
 	    stub_errors += 1;
 
       } else if (width/count != width_of_nexus(nex_a)) {
-	    fprintf(out, "    ERROR: Windth of D is %u, expecting %u\n",
+	    fprintf(out, "    ERROR: Width of D is %u, expecting %u\n",
 		    width_of_nexus(nex_a), width/count);
 	    stub_errors += 1;
       }
@@ -1447,7 +1447,7 @@ static void show_primitive(ivl_udp_t net, unsigned ref_count)
 {
       unsigned rdx;
 
-      fprintf(out, "primtive %s (referenced %u times)\n",
+      fprintf(out, "primitive %s (referenced %u times)\n",
 	      ivl_udp_name(net), ref_count);
 
       if (ivl_udp_sequ(net))

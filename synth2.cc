@@ -548,7 +548,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
 	      /* XXXX I really should find a way to check that the
 		 edge used on the reset input is correct. This would
-		 involve interpreting the exression that is fed by the
+		 involve interpreting the expression that is fed by the
 		 reset expression. */
 	      //assert(ev->edge() == NetEvProbe::POSEDGE);
 

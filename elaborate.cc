@@ -2843,7 +2843,7 @@ NetProc* PForever::elaborate(Design*des, NetScope*scope) const
  *
  * The <lval> can be anything that a normal behavioral assignment can
  * take, plus net signals. This is a little bit more lax then the
- * other proceedural assignments.
+ * other procedural assignments.
  */
 NetForce* PForce::elaborate(Design*des, NetScope*scope) const
 {

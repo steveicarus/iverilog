@@ -53,7 +53,7 @@ struct name_component_t {
 extern bool operator < (const name_component_t&lef, const name_component_t&rig);
 
 /*
- * The pform_name_t is the general form for a heirarchical identifier.
+ * The pform_name_t is the general form for a hierarchical identifier.
  */
 typedef std::list<name_component_t> pform_name_t;
 

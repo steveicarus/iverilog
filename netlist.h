@@ -740,7 +740,7 @@ class NetCompare  : public NetNode {
  * with pin-1 at the LSB, pin-2 next, and so on. This node is most
  * like the NetLogic node, as it has one output at pin 0 and the
  * remaining pins are the input that are combined to make the
- * output. It is seperated out because it it generally a special case
+ * output. It is separated out because it it generally a special case
  * for the code generators.
  *
  * When constructing the node, the width is the vector_width of the
@@ -993,7 +993,7 @@ class NetMux  : public NetNode {
  * output, and the rpt is the repeat count. The wid must be an even
  * multiple of the cnt, and wid/cnt is the expected input width.
  *
- * The device has exacly 2 pins: pin(0) is the output and pin(1) the
+ * The device has exactly 2 pins: pin(0) is the output and pin(1) the
  * input.
  */
 class NetReplicate  : public NetNode {
@@ -1441,7 +1441,7 @@ class NetLiteral  : public NetNode {
  * of that value that is important.
  *
  * All these devices process vectors bitwise, so each bit can be
- * logically seperated. The exception is the CONCAT gate, which is
+ * logically separated. The exception is the CONCAT gate, which is
  * really an abstract gate that takes the inputs and turns it into a
  * vector of bits.
  */
