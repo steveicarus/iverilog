@@ -32,7 +32,7 @@ struct port_with_edge_s {
   /* Path to source for error messages. */
 extern const char*sdf_parse_path;
 
-/* Hierarchy seperator charactor to use. */
+/* Hierarchy separator character to use. */
 extern char sdf_use_hchar;
 
 #endif

@@ -101,7 +101,7 @@ vvp_udp_comb_s::~vvp_udp_comb_s()
  * actual vector of inputs to be tested.
  *
  * The levels0_ and levels1_ tables have levels_table objects that
- * eack represent a single row. For the row to match the input vector,
+ * each represent a single row. For the row to match the input vector,
  * all the bits that are set in the cur table must also be set in the
  * row being tested.
  *
@@ -677,7 +677,7 @@ vvp_bit4_t vvp_udp_seq_s::calculate_output(const udp_levels_table&cur,
  * next output, or Z if there was no match. (This is different from
  * the combinational version of this function, which returns X for the
  * cases that don't match.) This method assumes that the caller has
- * set the mask bit in bit postion [port_count()] to reflect the
+ * set the mask bit in bit position [port_count()] to reflect the
  * current output.
  */
 vvp_bit4_t vvp_udp_seq_s::test_levels_(const udp_levels_table&cur)

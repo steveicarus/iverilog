@@ -379,7 +379,7 @@ typedef const struct ivl_attribute_s*ivl_attribute_t;
 
 /* DELAYPATH
  * Delaypath objects represent delay paths called out by a specify
- * block in the verilog source file. The destination signal references
+ * block in the Verilog source file. The destination signal references
  * the path object, which in turn points to the source for the path.
  *
  * ivl_path_scope
@@ -1174,7 +1174,7 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  * SEMANTIC NOTES
  * The ivl_lval_width is not necessarily the same as the width of the
  * signal or memory word it represents. It is the width of the vector
- * it receives and assigns. This may be less then the width of the
+ * it receives and assigns. This may be less than the width of the
  * signal (or even 1) if only a part of the l-value signal is to be
  * assigned.
  *

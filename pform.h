@@ -40,7 +40,7 @@
 
 /*
  * These classes implement the parsed form (P-form for short) of the
- * original verilog source. the parser generates the pform for the
+ * original Verilog source. the parser generates the pform for the
  * convenience of later processing steps.
  */
 
@@ -337,7 +337,7 @@ extern svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 
 /*
  * These are functions that the outside-the-parser code uses the do
- * interesting things to the verilog. The parse function reads and
+ * interesting things to the Verilog. The parse function reads and
  * parses the source file and places all the modules it finds into the
  * mod list. The dump function dumps a module to the output stream.
  */

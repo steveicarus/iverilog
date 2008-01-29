@@ -1038,7 +1038,7 @@ expr_primary
 	  delete $1;
 	}
 
-  /* An identifer followed by an expression list in parentheses is a
+  /* An identifier followed by an expression list in parentheses is a
      function call. If a system identifier, then a system function
      call. */
 
@@ -1620,7 +1620,7 @@ module_port_list_opt
 	|                       { $$ = 0; }
 	;
 
-  /* Module declarations include optional ANSII style module parameter
+  /* Module declarations include optional ANSI style module parameter
      ports. These are simply advance ways to declare parameters, so
      that the port declarations may use them. */
 module_parameter_port_list_opt

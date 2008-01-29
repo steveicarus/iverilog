@@ -159,7 +159,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 
       }
 
-	// Run through all the generate schemes to enaborate the
+	// Run through all the generate schemes to elaborate the
 	// signals that they hold. Note that the generate schemes hold
 	// the scopes that they instantiated, so we don't pass any
 	// scope in.

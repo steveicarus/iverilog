@@ -125,7 +125,7 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
       int left_addr, right_addr;
 
       /* start_addr and stop_addr are the parameters given to $readmem in the
-	 verilog code. When not specified, start_addr is equal to the lower of
+	 Verilog code. When not specified, start_addr is equal to the lower of
 	 the [left,right]_addr and stop_addr is equal to the higher of the
 	 [left,right]_addr. */
       int start_addr, stop_addr, addr_incr;
@@ -191,7 +191,7 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
 		  return 0;
 	      }
 
-	      /* Check that ther is no 5th parameter */
+	      /* Check that there is no 5th parameter */
 	      if (vpi_scan(argv) != 0){
 		  vpi_printf("ERROR: %s accepts maximum 4 parameters!\n", name );
 		  vpi_free_object(argv);
@@ -435,7 +435,7 @@ static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
 		  return 0;
 	      }
 
-	      /* Check that ther is no 5th parameter */
+	      /* Check that there is no 5th parameter */
 	      if (vpi_scan(argv) != 0){
 		  vpi_printf("ERROR: %s accepts maximum 4 parameters!\n", name );
 		  vpi_free_object(argv);

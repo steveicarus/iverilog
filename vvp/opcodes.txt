@@ -178,8 +178,8 @@ same, or 0 otherwise. The eq bit is true if the values are logically
 the same. That is, x and z are considered equal. In other words the eq
 bit is the same as ``=='' and the eeq bit ``===''.
 
-The lt bit is 1 if the left vector is less then the right vector, or 0
-if greater then or equal to the right vector. It is the equivalent of
+The lt bit is 1 if the left vector is less than the right vector, or 0
+if greater than or equal to the right vector. It is the equivalent of
 the Verilog < operator. Combinations of these three bits can be used
 to implement all the Verilog comparison operators.
 
@@ -424,8 +424,8 @@ the specified thread register bit. The functor-label can refer to a
 .net, a .var or a .functor with a vector output. The entire vector,
 from the least significant up to <wid> bits, is loaded starting at
 thread bit <bit>. It is an OK for the width to not match the vector
-width at the functor. If the <wid> is less then the width at the
-functor, the the most significant bits are dropped.
+width at the functor. If the <wid> is less than the width at the
+functor, then the most significant bits are dropped.
 
 * %load/vp0 <bit>, <functor-label>, <wid>
 
@@ -634,7 +634,7 @@ The addressing is canonical (0-based) so the compiler must figure out
 non-zero offsets, if any. The width is the width of the part being
 written. The other bits of the vector are not touched.
 
-The index may be signed, and if less then 0, the beginning bits are
+The index may be signed, and if less than 0, the beginning bits are
 not assigned. Also, if the bits go beyond the end of the signal, those
 bits are not written anywhere.
 

@@ -350,7 +350,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 
 	// The initial value for the genvar does not need (nor can it
 	// use) the genvar itself, so we can evaluate this expression
-	// the same way any other paramter value is evaluated.
+	// the same way any other parameter value is evaluated.
       NetExpr*init_ex = elab_and_eval(des, container, loop_init, -1);
       NetEConst*init = dynamic_cast<NetEConst*> (init_ex);
       if (init == 0) {

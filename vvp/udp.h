@@ -60,7 +60,7 @@ struct vvp_udp_s {
  *
  * The ports argument of the constructor is the number of input ports
  * to the device. The single output port is not counted. The port
- * count must be greater then 0.
+ * count must be greater than 0.
  *
  * A level sensitive UDP has a table that includes all the rows that
  * generate a 0 output and another table that includes all the rows
@@ -141,9 +141,9 @@ class vvp_udp_comb_s : public vvp_udp_s {
  * but one of the positions has an edge value.
  *
  * The port_count() for the device is the number of inputs. Sequential
- * devices have and additional phantom port that is the current output
- * value. This implies that the maximim port count for sequential
- * devices is 1 less then for combinational.
+ * devices have an additional phantom port that is the current output
+ * value. This implies that the maximum port count for sequential
+ * devices is 1 less than for combinational.
  *
  * The input table that is passed to the compile_table method is very
  * similar to that for the combinational UDP. The differences are that
@@ -215,7 +215,7 @@ class vvp_udp_seq_s : public vvp_udp_s {
 };
 
 /*
- * Ths looks up a UDP definition from its LABEL.
+ * This looks up a UDP definition from its LABEL.
  */
 struct vvp_udp_s *udp_find(const char *label);
 

@@ -85,7 +85,7 @@ const char*target = "null";
 /*
  * These are the language support control flags. These support which
  * language features (the generation) to support. The generation_flag
- * is a major moce, and the gn_* flags control specifc sub-features.
+ * is a major mode, and the gn_* flags control specific sub-features.
  */
 generation_t generation_flag = GN_DEFAULT;
 bool gn_cadence_types_flag = true;
@@ -728,7 +728,7 @@ int main(int argc, char*argv[])
 
       des->set_flags(flags);
 
-	/* Done iwth all the pform data. Delete the modules. */
+	/* Done with all the pform data. Delete the modules. */
       for (map<perm_string,Module*>::iterator idx = pform_modules.begin()
 		 ; idx != pform_modules.end() ; idx ++) {
 

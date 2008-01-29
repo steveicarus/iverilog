@@ -30,8 +30,8 @@ vvp_fun_pmos_::vvp_fun_pmos_(bool enable_invert)
 
 void vvp_fun_pmos_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
-	/* Data input is processed throught eh recv_vec8 method,
-	   because the strength most be preserved. */
+	/* Data input is processed through eh recv_vec8 method,
+	   because the strength must be preserved. */
       if (ptr.port() == 0) {
 	    vvp_vector8_t tmp = bit;
 	    recv_vec8(ptr, tmp);

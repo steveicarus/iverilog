@@ -76,7 +76,7 @@ In this case, if possible include not only the sample Verilog program,
 but the generated netlist file(s) and a clear indication of what went
 wrong. If it is not clear to me, I will ask for clarification.
 
-* The Output is Correct, But Less Then Ideal
+* The Output is Correct, But Less Than Ideal
 
 If the output is strictly correct, but just not good enough for
 practical use, I would like to know. These sorts of problems are

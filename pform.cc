@@ -49,7 +49,7 @@ string vl_file = "";
 extern int VLparse();
 
   /* This tracks the current module being processed. There can only be
-     exactly one module currently being parsed, since verilog does not
+     exactly one module currently being parsed, since Verilog does not
      allow nested module definitions. */
 static Module*pform_cur_module = 0;
 
@@ -1280,7 +1280,7 @@ void pform_module_define_port(const struct vlltype&li,
  */
 
 /*
- * this is the basic form of pform_makwire. This takes a single simple
+ * this is the basic form of pform_makewire. This takes a single simple
  * name, port type, net type, data type, and attributes, and creates
  * the variable/net. Other forms of pform_makewire ultimately call
  * this one to create the wire and stash it.
@@ -1295,7 +1295,7 @@ void pform_makewire(const vlltype&li, const char*nm,
       PWire*cur = get_wire_in_module(name);
 
 	// If this is not implicit ("implicit" meaning we don't know
-	// what the type is yet) then  set thay type now.
+	// what the type is yet) then set the type now.
       if (cur && type != NetNet::IMPLICIT) {
 	    bool rc = cur->set_wire_type(type);
 	    if (rc == false) {

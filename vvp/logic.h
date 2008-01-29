@@ -131,7 +131,7 @@ class vvp_fun_bufz: public vvp_net_fun_t {
  * The select input must be 1 bit wide. If it is 0, then the port-0
  * vector is passed out. If select is 1, then port-1 is passed
  * out. Otherwise, a vector is passed out that reflects x?: behavior
- * in verilog. The width of the blended output is the width of the largest
+ * in Verilog. The width of the blended output is the width of the largest
  * input (port-0 or port-1) to enter the device. The narrow vector is
  * padded with X values.
  */

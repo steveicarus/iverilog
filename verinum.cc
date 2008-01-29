@@ -532,7 +532,7 @@ ostream& operator<< (ostream&o, verinum::V v)
 }
 
 /*
- * This operator is used by various dumpers to write the verilog
+ * This operator is used by various dumpers to write the Verilog
  * number in a Verilog format.
  */
 ostream& operator<< (ostream&o, const verinum&v)

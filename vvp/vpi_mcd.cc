@@ -204,7 +204,7 @@ extern "C" PLI_INT32 vpi_mcd_flush(PLI_UINT32 mcd)
 /*
  * The vpi_fopen function opens a file with the given path, and
  * returns a file descriptor that includes bit 31 set. This is to
- * differentiate the fd from a mcd discriptor. Note that these
+ * differentiate the fd from a mcd descriptor. Note that these
  * descriptors are distinct from the mcd descriptors, so uses a
  * different fd table.
  */
@@ -230,7 +230,7 @@ extern "C" FILE *vpi_get_file(PLI_INT32 fd)
 	// Only deal with FD's
 	if (IS_MCD(fd)) return NULL;
 
-	// Only know about FD_MAX indicies
+	// Only know about FD_MAX indices
 	if (FD_IDX(fd) >= FD_MAX) return NULL;
 
 	return fd_table[FD_IDX(fd)].fp;

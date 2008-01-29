@@ -35,7 +35,7 @@ static PLI_INT32 sys_finish_compiletf(PLI_BYTE8 *name)
       if (argv == 0) return 0;
       arg = vpi_scan(argv);
 
-      /* A string diagnostic messege level makes no sense. */
+      /* A string diagnostic message level makes no sense. */
       if (vpi_get(vpiType, arg) == vpiConstant &&
           vpi_get(vpiConstType, arg) == vpiStringConst) {
             vpi_printf("Error: %s does not take a string argument.\n", name);

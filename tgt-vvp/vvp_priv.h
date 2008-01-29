@@ -238,7 +238,7 @@ extern int draw_eval_real(ivl_expr_t ex);
 /*
  * draw_eval_bool64 evaluates a bool expression. The return code from
  * the function is the index of the word register that contains the
- * result. The word is allocated widh allocate_word(), so the caller
+ * result. The word is allocated with allocate_word(), so the caller
  * must arrange for it to be released with clr_word(). The width must
  * be such that it fits in a 64bit word.
  */

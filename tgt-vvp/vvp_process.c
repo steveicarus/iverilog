@@ -985,7 +985,7 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
 /*
  * The delay statement is easy. Simply write a ``%delay <n>''
  * instruction to delay the thread, then draw the included statement.
- * The delay statement comes from verilog code like this:
+ * The delay statement comes from Verilog code like this:
  *
  *        ...
  *        #<delay> <stmt>;

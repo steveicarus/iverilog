@@ -124,7 +124,7 @@ static void show_stmt_release(ivl_statement_t net, unsigned ind)
 }
 
 /*
- * A trigger statement is the "-> name;" syntax in verilog, where a
+ * A trigger statement is the "-> name;" syntax in Verilog, where a
  * trigger signal is sent to a named event. The trigger statement is
  * actually a very simple object.
  */

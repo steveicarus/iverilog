@@ -153,7 +153,7 @@ struct expr_scan_t {
    located in the target_table and used. */
 extern int emit(const Design*des, const char*type);
 
-/* This function takes a fully qualified verilog name (which may have,
+/* This function takes a fully qualified Verilog name (which may have,
    for example, dots in it) and produces a mangled version that can be
    used by most any language. */
 extern string mangle(const string&str);

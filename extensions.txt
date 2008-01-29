@@ -59,7 +59,7 @@ types as nets.
 
 - Ports
 
-Module and task ports in standard verilog are restricted to logic
+Module and task ports in standard Verilog are restricted to logic
 types. This extension removes that restriction, allowing any type to
 pass through the port consistent with the continuous assignment
 connectivity that is implied by the type.

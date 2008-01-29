@@ -33,7 +33,7 @@ class PUdp;
 /*
  * These are maps of the modules and primitives parsed from the
  * Verilog source into pform for elaboration. The parser adds modules
- * to these maps as it compiles modules in the verilog source.
+ * to these maps as it compiles modules in the Verilog source.
  */
 extern map<perm_string,Module*> pform_modules;
 extern map<perm_string,PUdp*>   pform_primitives;

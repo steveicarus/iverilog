@@ -89,7 +89,7 @@ extern NetNet*add_to_net(Design*des, NetNet*sig, long val);
  * make_add_expr
  *   Make a NetEBAdd expression with <expr> the first argument and
  *   <val> the second. This may get turned into a subtract if <val> is
- *   less then zero. If val is exactly zero, then return <expr> as is.
+ *   less than zero. If val is exactly zero, then return <expr> as is.
  *
  * make_sub_expr
  *   Make a NetEBAdd(subtract) node that subtracts the given

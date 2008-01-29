@@ -766,7 +766,7 @@ NetEConst* NetEBComp::eval_tree(int prune_to_width)
 	  case '<': // Less than
 	    return eval_less_();
 
-	  case '>': // Greater then
+	  case '>': // Greater than
 	    return eval_gt_();
 
 	  default:

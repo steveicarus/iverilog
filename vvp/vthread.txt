@@ -28,7 +28,7 @@ from the bit registers starting with the LSB and up.
 
 The bit addresses 0, 1, 2 and 3 are special constant bits 0, 1, x and
 z, and are used as read-only immediate values. If the instruction
-takes a single bit operand, the the appropriate value is simply read
+takes a single bit operand, then the appropriate value is simply read
 out. If the instruction expects a vector, then a vector of the
 expected width is created by replicating the constant value.
 

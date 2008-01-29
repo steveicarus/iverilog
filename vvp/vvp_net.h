@@ -333,7 +333,7 @@ extern vvp_vector4_t c4string_to_vector4(const char*str);
 extern ostream& operator<< (ostream&, const vvp_vector2_t&);
 
 /*
- * This class represents a scaler value with strength. These are
+ * This class represents a scalar value with strength. These are
  * heavier then the simple vvp_bit4_t, but more information is
  * carried by that weight.
  *
@@ -412,7 +412,7 @@ extern ostream& operator<< (ostream&, vvp_scalar_t);
  * a well defined bit may have. When you add in ambiguous values, the
  * number of distinct values span the vvp_scalar_t.
  *
- * a vvp_vector8_t object can be created from a vvp_vector4_t and a
+ * A vvp_vector8_t object can be created from a vvp_vector4_t and a
  * strength value. The vvp_vector8_t bits have the values of the input
  * vector, all with the strength specified. If no strength is
  * specified, then the conversion from bit4 to a scalar will use the
@@ -506,8 +506,8 @@ class vvp_net_ptr_t {
 /*
  * Alert! Ugly details. Protective clothing recommended!
  * The vvp_net_ptr_t encodes the bits of a C pointer, and two bits of
- * port identifer into an unsigned long. This works only if vvp_net_t*
- * values are always aligned on 4byte boundaries.
+ * port identifier into an unsigned long. This works only if vvp_net_t*
+ * values are always aligned on 4-byte boundaries.
  */
 
 inline vvp_net_ptr_t::vvp_net_ptr_t()
@@ -688,8 +688,8 @@ class vvp_fun_repeat  : public vvp_net_fun_t {
 /* vvp_fun_drive
  * This node function takes an input vvp_vector4_t as input, and
  * repeats that value as a vvp_vector8_t with all the bits given the
- * strength of the drive. This is the way vvp_scaler8_t objects are
- * created. Input 0 is the value to be drived (vvp_vector4_t) and
+ * strength of the drive. This is the way vvp_scalar8_t objects are
+ * created. Input 0 is the value to be driven (vvp_vector4_t) and
  * inputs 1 and two are the strength0 and strength1 values to use. The
  * strengths may be taken as constant values, or adjusted as longs
  * from the network.
@@ -734,15 +734,15 @@ class vvp_fun_extend_signed  : public vvp_net_fun_t {
  * the type of its port-0 input. If vvp_vector4_t values come in
  * through port-0, then vvp_vector4_t values are propagated. If
  * vvp_vector8_t values come in through port-0, then vvp_vector8_t
- * values are propaged. Thus, this node is sloghtly polymorphic.
+ * values are propagated. Thus, this node is slightly polymorphic.
  *
  * If the signal is a net (i.e. a wire or tri) then this node will
  * have an input that is the data source. The data source will connect
- * through port-0
+ * through port-0.
  *
  * If the signal is a reg, then there will be no netlist input, the
  * values will be written by behavioral statements. The %set and
- * %assign statements will write through port-0
+ * %assign statements will write through port-0.
  *
  * In any case, behavioral code is able to read the value that this
  * node last propagated, by using the value() method. That is important
@@ -778,7 +778,7 @@ class vvp_fun_extend_signed  : public vvp_net_fun_t {
  *  3  -- release/reg
  *          The release/reg command is similar to the release/net
  *          command, but the port-0 value is not propagated. Changes
- *          to port-0 (or port-1 if continuous assing is active) will
+ *          to port-0 (or port-1 if continuous assign is active) will
  *          propagate starting at the next input change.
  */
 
@@ -831,8 +831,8 @@ class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_vpi_callback {
 };
 
 /*
- * This abstract class is a little more specific the the signa_base
- * class, in that in adds vector access methods.
+ * This abstract class is a little more specific than the signal_base
+ * class, in that it adds vector access methods.
  */
 class vvp_fun_signal_vec : public vvp_fun_signal_base {
 
@@ -939,7 +939,7 @@ class vvp_fun_signal_real  : public vvp_fun_signal_base {
  *
  * There are enough input functors to take all the functor inputs, 4
  * per functor. These inputs deliver the changed input value to the
- * wide_fun_core, which carries the infastructure for the thread. The
+ * wide_fun_core, which carries the infrastructure for the thread. The
  * wide_fun_core is also a functor whose output is connected to the rest
  * of the netlist. This is where the result is delivered back to the
  * netlist.

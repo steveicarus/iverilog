@@ -432,9 +432,9 @@ class NetDelaySrc  : public NetObj {
 /*
  * NetNet is a special kind of NetObj that doesn't really do anything,
  * but carries the properties of the wire/reg/trireg, including its
- * name. Scalers and vectors are all the same thing here, a NetNet
- * with a single pin. The difference between a scaler and vector is
- * the video of the atomic vector datum it carries.
+ * name. Scalars and vectors are all the same thing here, a NetNet
+ * with a single pin. The difference between a scalar and vector is
+ * the width of the atomic vector datum it carries.
  *
  * NetNet objects can also appear as side effects of synthesis or
  * other abstractions.
@@ -504,7 +504,7 @@ class NetNet  : public NetObj {
       unsigned long vector_width() const;
 
 	/* This method converts a signed index (the type that might be
-	   found in the verilog source) to a pin number. It accounts
+	   found in the Verilog source) to a pin number. It accounts
 	   for variation in the definition of the reg/wire/whatever. */
       unsigned sb_to_idx(long sb) const;
 
@@ -513,7 +513,7 @@ class NetNet  : public NetObj {
 	   the pin# from the index. */
       bool sb_is_valid(long sb) const;
 
-	/* This method returns 0 for scalers and vectors, and greater
+	/* This method returns 0 for scalars and vectors, and greater
 	   for arrays. The value is the number of array
 	   indices. (Currently only one array index is supported.) */
       unsigned array_dimensions() const;
@@ -586,7 +586,7 @@ class NetAddSub  : public NetNode {
       ~NetAddSub();
 
 	// Get the width of the device (that is, the width of the
-	// operands and results.)
+	// operands and results).
       unsigned width() const;
 
       Link& pin_Aclr();
@@ -989,7 +989,7 @@ class NetMux  : public NetNode {
  * repeat count is a fixed value. This is just like the repeat
  * concatenation of Verilog: {<repeat>{<vector>}}.
  *
- * When construction this node, the wid is the vector width of the
+ * When constructing this node, the wid is the vector width of the
  * output, and the rpt is the repeat count. The wid must be an even
  * multiple of the cnt, and wid/cnt is the expected input width.
  *
@@ -1519,7 +1519,7 @@ class NetUReduce  : public NetNode {
 
 /*
  * The UDP is a User Defined Primitive from the Verilog source. Do not
- * expand it out any further then this in the netlist, as this can be
+ * expand it out any further than this in the netlist, as this can be
  * used to represent target device primitives.
  *
  * The UDP can be combinational or sequential. The sequential UDP
@@ -1596,7 +1596,7 @@ class NetUDP  : public NetNode {
 
 /* =========
  * A process is a behavioral-model description. A process is a
- * statement that may be compound. the various statement types may
+ * statement that may be compound. The various statement types may
  * refer to places in a netlist (by pointing to nodes) but is not
  * linked into the netlist. However, elaborating a process may cause
  * special nodes to be created to handle things like events.
@@ -1607,7 +1607,7 @@ class NetProc : public virtual LineInfo {
       explicit NetProc();
       virtual ~NetProc();
 
-	// Find the Nexa that are input by the statement. This is used
+	// Find the nexa that are input by the statement. This is used
 	// for example by @* to find the inputs to the process for the
 	// sensitivity list.
       virtual NexusSet* nex_input(bool rem_out = true);
@@ -1632,7 +1632,7 @@ class NetProc : public virtual LineInfo {
 	// process. Most process types are not.
       virtual bool is_synchronous();
 
-	// synthesize as asynchronous logic, and return true.
+	// Synthesize as asynchronous logic, and return true.
       virtual bool synth_async(Design*des, NetScope*scope,
 			       const NetBus&nex_map, NetBus&nex_out);
 
@@ -1701,7 +1701,7 @@ class NetAssign_ {
       void set_part(NetExpr* loff, unsigned wid);
 
 	// Get the width of the r-value that this node expects. This
-	// method accounts for the presence of the mux, so it not
+	// method accounts for the presence of the mux, so it is not
 	// necessarily the same as the pin_count().
       unsigned lwidth() const;
 
@@ -1858,7 +1858,7 @@ class NetBlock  : public NetProc {
 };
 
 /*
- * A CASE statement in the verilog source leads, eventually, to one of
+ * A CASE statement in the Verilog source leads, eventually, to one of
  * these. This is different from a simple conditional because of the
  * way the comparisons are performed. Also, it is likely that the
  * target may be able to optimize differently.
@@ -2040,7 +2040,7 @@ class NetDisable  : public NetProc {
  * block and starts the associated statement.
  *
  * The NetEvTrig class represents trigger statements. Executing this
- * statement causes the referenced event to be triggered, which it
+ * statement causes the referenced event to be triggered, which in
  * turn awakens the waiting threads. Each NetEvTrig object references
  * exactly one event object.
  *
@@ -2583,8 +2583,8 @@ class NetProcTop  : public LineInfo, public Attrib {
  *   p  -- Arithmetic power (**)
  *   &  -- Bit-wise AND
  *   |  -- Bit-wise OR
- *   <  -- Less then
- *   >  -- Greater then
+ *   <  -- Less than
+ *   >  -- Greater than
  *   e  -- Logical equality (==)
  *   E  -- Case equality (===)
  *   L  -- Less or equal
@@ -2708,8 +2708,8 @@ class NetEBBits : public NetEBinary {
  * this case the bit width of the expression is 1 bit, and the
  * operands take their natural widths. The supported operators are:
  *
- *   <  -- Less then
- *   >  -- Greater then
+ *   <  -- Less than
+ *   >  -- Greater than
  *   e  -- Logical equality (==)
  *   E  -- Case equality (===)
  *   L  -- Less or equal (<=)
@@ -2791,7 +2791,7 @@ class NetEBMult : public NetEBinary {
 };
 
 /*
- * Support the binary multiplication (*) operator.
+ * Support the binary power (**) operator.
  */
 class NetEBPow : public NetEBinary {
 

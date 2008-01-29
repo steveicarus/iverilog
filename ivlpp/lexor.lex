@@ -59,7 +59,7 @@ static int yywrap();
 struct include_stack_t {
       char* path;
 
-        /* If the current input is the the file, this member is set. */
+        /* If the current input is from a file, this member is set. */
       FILE*file;
 
         /* If we are reparsing a macro expansion, file is 0 and this

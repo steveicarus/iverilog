@@ -156,7 +156,7 @@ typedef struct t_command_file {
 p_command_file cmd_file_head = NULL;  /* The FIFO head */
 p_command_file cmd_file_tail = NULL;  /* The FIFO tail */
 
-/* Function to add a comamnd file name to the FIFO. */
+/* Function to add a command file name to the FIFO. */
 void add_cmd_file(const char* filename)
 {
       p_command_file new;
@@ -173,7 +173,7 @@ void add_cmd_file(const char* filename)
       }
 }
 
-/* Function to return the top comamnd file name from the FIFO. */
+/* Function to return the top command file name from the FIFO. */
 char *get_cmd_file()
 {
       char *filename;

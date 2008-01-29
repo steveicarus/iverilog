@@ -32,7 +32,7 @@
 # include  <stdio.h>
 # include  <assert.h>
 
-/* This is the output file where the verilog program is sent. */
+/* This is the output file where the Verilog program is sent. */
 static FILE*out;
 
 /*

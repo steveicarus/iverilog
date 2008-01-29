@@ -1625,7 +1625,7 @@ vvp_fun_signal::vvp_fun_signal(unsigned wid, vvp_bit4_t init)
  *
  * NOTE: It is a quirk of vvp_fun_signal that it has an initial value
  * that needs to be propagated, but after that it only needs to
- * propagate if the value changes. Elimitating duplicate propagations
+ * propagate if the value changes. Eliminating duplicate propagations
  * should improve performance, but has the quirk that an input that
  * matches the initial value might not be propagated. The hack used
  * herein is to keep a "needs_init_" flag that is turned false after

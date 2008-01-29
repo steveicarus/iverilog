@@ -75,9 +75,9 @@ extern void memory_set_word(vvp_memory_t mem,
 			    vvp_vector4_t val);
 
 /*
- * this doesn't actually write the value to the memory word, but
- * scedules for the write to happen some time in the future. The delay
- * is in simulation clock units
+ * This doesn't actually write the value to the memory word, but
+ * schedules for the write to happen some time in the future. The delay
+ * is in simulation clock units.
  */
 void schedule_memory(vvp_memory_t mem, unsigned addr,
 		     vvp_vector4_t val, unsigned long delay);
@@ -149,7 +149,7 @@ class vvp_fun_memport  : public vvp_net_fun_t {
 ** The memory_find function locates the memory device by name. If the
 ** device does not exist, a nil is returned.
 **
-** The memory_create functio create a new memory device with the given
+** The memory_create function creates a new memory device with the given
 ** name. It is a fatal error to try to create a device that already exists.
 */
 vvp_memory_t memory_find(char *label);

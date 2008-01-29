@@ -168,7 +168,7 @@ long rtl_dist_t(long *seed, long df)
       return i;
 }
 
-/* copied from IEEE1364-2001, with slight midifications for 64bit machines. */
+/* copied from IEEE1364-2001, with slight modifications for 64bit machines. */
 long rtl_dist_uniform(long *seed, long start, long end)
 {
       double r;

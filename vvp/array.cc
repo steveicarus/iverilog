@@ -524,7 +524,7 @@ void compile_array_alias(char*label, char*name, char*src)
       obj->name  = vpip_name_string(name);
       obj->array_count = mem->array_count;
 
-	// XXXX Need to set an accurate range of addreses.
+	// XXXX Need to set an accurate range of addresses.
       vpip_make_dec_const(&obj->first_addr, mem->first_addr.value);
       vpip_make_dec_const(&obj->last_addr, mem->last_addr.value);
 

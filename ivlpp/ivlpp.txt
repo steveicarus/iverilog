@@ -19,7 +19,7 @@
 
 THE IVL PREPROCESSOR
 
-The ivlpp command is a verilog preprocessor that handles file
+The ivlpp command is a Verilog preprocessor that handles file
 inclusion and macro substitution. The program runs separate from the
 actual compiler so as to ease the task of the compiler proper, and
 provides a means of preprocessing files off-line.

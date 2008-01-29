@@ -39,7 +39,7 @@
  *
  * There are enough input functors to take all the function inputs, 4
  * per functor. These inputs deliver the changed input value to the
- * ufunc_core, which carries the infastructure for the thread. The
+ * ufunc_core, which carries the infrastructure for the thread. The
  * ufunc_core is also a functor whose output is connected to the rest
  * of the netlist. This is where the result is delivered back to the
  * netlist.

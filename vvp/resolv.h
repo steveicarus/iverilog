@@ -26,7 +26,7 @@
 # include  "vvp_net.h"
 
 /*
- * This functor type resolves its inputs using the verilog method of
+ * This functor type resolves its inputs using the Verilog method of
  * combining signals, and outputs that resolved value. The puller
  * value is also blended with the result. This helps with the
  * implementation of tri0 and tri1, which have pull constants

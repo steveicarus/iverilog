@@ -33,7 +33,7 @@
 /*
  * All the reduction operations take a single vector input and produce
  * a scalar result. The vvp_reduce_base class codifies these general
- * charactoristics, leaving only the calculation of the result for the
+ * characteristics, leaving only the calculation of the result for the
  * base class.
  */
 class vvp_reduce_base : public vvp_net_fun_t {

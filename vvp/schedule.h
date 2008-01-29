@@ -97,7 +97,7 @@ extern void schedule_init_vector(vvp_net_ptr_t ptr, double val);
  * called.
  *
  * The sync_flag is true if this is intended to be a sync event. These
- * are placed in the stratified event queue after nb assignes. If the
+ * are placed in the stratified event queue after nb assigns. If the
  * ro_flag is true as well, then it is a Read-only sync event, with
  * all that means.
  *

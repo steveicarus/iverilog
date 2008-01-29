@@ -30,7 +30,7 @@
 # include  "ivl_assert.h"
 
 /*
- * The default behavor for the test_width method is to just return the
+ * The default behavior for the test_width method is to just return the
  * minimum width that is passed in.
  */
 unsigned PExpr::test_width(Design*des, NetScope*scope,
@@ -195,7 +195,7 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 	  case '%':
 	      /* The % operator does not support real arguments in
 		 baseline Verilog. But we allow it in our extended
-		 form of verilog. */
+		 form of Verilog. */
 	    if (generation_flag < GN_VER2001X) {
 		  if (lp->expr_type()==IVL_VT_REAL || rp->expr_type()==IVL_VT_REAL) {
 			cerr << get_fileline() << ": error: Modulus operator may not "
@@ -1379,7 +1379,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	    return net;
       }
 
-	// If the part select convers exactly the entire
+	// If the part select covers exactly the entire
 	// vector, then do not bother with it. Return the
 	// signal itself.
       if (net->sig()->sb_to_idx(lsv) == 0 && wid == net->vector_width())
@@ -1417,7 +1417,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
       if (NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
 	    long lsv = base_c->value().as_long();
 
-	      // If the part select convers exactly the entire
+	      // If the part select covers exactly the entire
 	      // vector, then do not bother with it. Return the
 	      // signal itself.
 	    if (net->sig()->sb_to_idx(lsv) == 0 && wid == net->vector_width())
@@ -1476,7 +1476,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
       if (NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
 	    long lsv = base_c->value().as_long();
 
-	      // If the part select convers exactly the entire
+	      // If the part select covers exactly the entire
 	      // vector, then do not bother with it. Return the
 	      // signal itself.
 	    if (net->sig()->sb_to_idx(lsv) == (wid-1) && wid == net->vector_width())
@@ -1544,7 +1544,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	    }
 
 	      // If the vector is only one bit, we are done. The
-	      // bit select will return the scaler itself.
+	      // bit select will return the scalar itself.
 	    if (net->vector_width() == 1)
 		  return net;
 

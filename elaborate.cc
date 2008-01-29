@@ -2836,7 +2836,7 @@ NetProc* PForever::elaborate(Design*des, NetScope*scope) const
 }
 
 /*
- * Force is like a procedural assignment, most notably prodedural
+ * Force is like a procedural assignment, most notably procedural
  * continuous assignment:
  *
  *    force <lval> = <rval>

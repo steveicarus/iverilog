@@ -163,7 +163,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 
 
 	/* The owidth is the output width of the lpm_add_sub
-	   device. If the desired width is greater then the width of
+	   device. If the desired width is greater than the width of
 	   the operands, then widen the adder and let code below pad
 	   the operands. */
       unsigned owidth = width;
@@ -1122,7 +1122,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	      /* Make the constant zero's that I'm going to pad to the
 		 top or bottom of the left expression. Attach a signal
 		 to its output so that I don't have to worry about it
-		 later. If the left expression is less then the
+		 later. If the left expression is less than the
 		 desired width (and we are doing right shifts) then we
 		 can combine the expression padding with the distance
 		 padding to reduce nodes. */

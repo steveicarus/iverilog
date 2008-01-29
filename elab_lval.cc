@@ -33,7 +33,7 @@
  * assignment. This is common code for the = and <= statements.
  *
  * What gets generated depends on the structure of the l-value. If the
- * l-value is a simple name (i.e., foo <= <value>) the the NetAssign_
+ * l-value is a simple name (i.e., foo <= <value>) then the NetAssign_
  * is created the width of the foo reg and connected to all the
  * bits.
  *

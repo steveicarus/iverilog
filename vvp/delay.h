@@ -66,7 +66,7 @@ class vvp_delay_t {
  * effort of calculating strength values either.
  *
  * The node needs a pointer to the vvp_net_t input so that it knows
- * how to find its output when propaging delayed output.
+ * how to find its output when propagating delayed output.
  *
  * NOTE: This node supports vec4 and real by repeating whatever was
  * input. This is a bit of a hack, as it may be more efficient to
@@ -136,7 +136,7 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
 };
 
 /*
-* These objects inplement module delay paths. The fun_modpath functor
+* These objects implement module delay paths. The fun_modpath functor
 * is the output of the modpath, and the vvp_fun_modpath_src is the
 * source of the modpath. The modpath source tracks events on the
 * inputs to enable delays, and the vvp_fun_modpath, when it's time to

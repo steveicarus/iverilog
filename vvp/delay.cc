@@ -195,7 +195,7 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
       if (bit.size() < use_wid)
 	    use_wid = bit.size();
 
-	/* Scan the vectors looking for delays. Select the maximim
+	/* Scan the vectors looking for delays. Select the maximum
 	   delay encountered. */
       vvp_time64_t use_delay;
       use_delay = delay_.get_delay(cur_vec4_.value(0), bit.value(0));

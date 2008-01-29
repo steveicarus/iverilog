@@ -253,10 +253,10 @@ void vpip_bits_get_value(const vpip_bit_t*bits, unsigned nbits,
 	    break;
 
 	  case vpiStringVal:
-	      /* Turn the bits into an ascii string, terminated by a
+	      /* Turn the bits into an ASCII string, terminated by a
 		 null. This is actually a bit tricky as nulls in the
 		 bit array would terminate the C string. I therefore
-		 translate them to ascii ' ' characters. */
+		 translate them to ASCII ' ' characters. */
 	    assert(nbits%8 == 0);
 	    for (idx = nbits ;  idx >= 8 ;  idx -= 8) {
 		  char tmp = 0;
