@@ -1630,6 +1630,33 @@ static void draw_lpm_data_inputs(ivl_lpm_t net, unsigned base,
       }
 }
 
+/*
+ * If needed, draw a .delay node to delay the output from the LPM
+ * device. Return the "/d" string if we drew this .delay node, or the
+ * "" string if the node was not needed. The caller uses that string
+ * to modify labels that are generated.
+ */
+static const char* draw_lpm_output_delay(ivl_lpm_t net)
+{
+      ivl_expr_t d_rise = ivl_lpm_delay(net, 0);
+      ivl_expr_t d_fall = ivl_lpm_delay(net, 1);
+      ivl_expr_t d_decay = ivl_lpm_delay(net, 2);
+
+      const char*dly = "";
+      if (d_rise != 0) {
+	    assert(number_is_immediate(d_rise, 64));
+	    assert(number_is_immediate(d_fall, 64));
+	    assert(number_is_immediate(d_decay, 64));
+	    dly = "/d";
+	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
+	            net, get_number_immediate(d_rise),
+	            get_number_immediate(d_rise),
+	            get_number_immediate(d_rise), net);
+      }
+
+      return dly;
+}
+
 static void draw_lpm_add(ivl_lpm_t net)
 {
       const char*src_table[2];
@@ -1683,21 +1710,7 @@ static void draw_lpm_add(ivl_lpm_t net)
 
       draw_lpm_data_inputs(net, 0, 2, src_table);
 
-      ivl_expr_t d_rise = ivl_lpm_delay(net, 0);
-      ivl_expr_t d_fall = ivl_lpm_delay(net, 1);
-      ivl_expr_t d_decay = ivl_lpm_delay(net, 2);
-
-      const char*dly = "";
-      if (d_rise != 0) {
-	    assert(number_is_immediate(d_rise, 64));
-	    assert(number_is_immediate(d_fall, 64));
-	    assert(number_is_immediate(d_decay, 64));
-	    dly = "/d";
-	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
-	            net, get_number_immediate(d_rise),
-	            get_number_immediate(d_rise),
-	            get_number_immediate(d_rise), net);
-      }
+      const char*dly = draw_lpm_output_delay(net);
 
       fprintf(vvp_out, "L_%p%s .arith/%s %u, %s, %s;\n",
 	      net, dly, type, width, src_table[0], src_table[1]);
@@ -2095,7 +2108,9 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
       unsigned idx;
       ivl_scope_t def = ivl_lpm_define(net);
 
-      fprintf(vvp_out, "L_%p .ufunc TD_%s, %u", net,
+      const char*dly = draw_lpm_output_delay(net);
+
+      fprintf(vvp_out, "L_%p%s .ufunc TD_%s, %u", net, dly,
 	      ivl_scope_name(def),
 	      ivl_lpm_width(net));
 

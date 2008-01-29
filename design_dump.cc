@@ -520,8 +520,10 @@ void NetSysFunc::dump_node(ostream&o, unsigned ind) const
 
 void NetUserFunc::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << scope_path(def_) << "(";
-      o << ")" << endl;
+      o << setw(ind) << "" << "USER FUNC: "
+	<< scope_path(def_)
+	<< " #(" <<*rise_time()<<","<<*fall_time() << "," <<*decay_time() << ")"
+	<< endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }

@@ -740,6 +740,31 @@ static void show_lpm_sfunc(ivl_lpm_t net)
       }
 }
 
+static void show_lpm_delays(ivl_lpm_t net)
+{
+      ivl_expr_t rise = ivl_lpm_delay(net, 0);
+      ivl_expr_t fall = ivl_lpm_delay(net, 1);
+      ivl_expr_t decay= ivl_lpm_delay(net, 2);
+
+      if (rise==0 && fall==0 && decay==0)
+	    return;
+
+      fprintf(out, "    #DELAYS\n");
+      if (rise)
+	    show_expression(rise, 8);
+      else
+	    fprintf(out, "        ERROR: missing rise delay\n");
+      if (fall)
+	    show_expression(fall, 8);
+      else
+	    fprintf(out, "        ERROR: missing fall delay\n");
+      if (decay)
+	    show_expression(decay, 8);
+      else
+	    fprintf(out, "        ERROR: missing decay delay\n");
+      fprintf(out, "    #END DELAYS\n");
+}
+
 static void show_lpm_ufunc(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -750,6 +775,8 @@ static void show_lpm_ufunc(ivl_lpm_t net)
 
       fprintf(out, "  LPM_UFUNC %s: <call=%s, width=%u, ports=%u>\n",
 	      ivl_lpm_basename(net), ivl_scope_name(def), width, ports);
+
+      show_lpm_delays(net);
 
       nex = ivl_lpm_q(net, 0);
       if (width != width_of_nexus(nex)) {
