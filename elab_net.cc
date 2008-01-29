@@ -1357,14 +1357,6 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
       if (errors > 0)
 	    return 0;
 
-      if (def->return_sig()->data_type() == IVL_VT_REAL) {
-	    cerr << get_fileline() << ": sorry: real user functions are"
-		    " not currently supported in continuous assignments."
-		 << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
       NetUserFunc*net = new NetUserFunc(scope,
 					scope->local_symbol(),
 					dscope);

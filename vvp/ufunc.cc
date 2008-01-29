@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: ufunc.cc,v 1.8 2005/06/12 01:10:26 steve Exp $"
-#endif
 
 # include  "compile.h"
 # include  "symbols.h"
@@ -67,7 +64,10 @@ void ufunc_core::assign_bits_to_ports(void)
       for (unsigned idx = 0 ; idx < port_count() ;  idx += 1) {
 	    vvp_net_t*net = ports_[idx];
 	    vvp_net_ptr_t pp (net, 0);
-	    net->fun->recv_vec4(pp, value(idx));
+	    if (vvp_fun_signal_real*tmp = dynamic_cast<vvp_fun_signal_real*>(net->fun))
+		  tmp->recv_real(pp, value_r(idx));
+	    if (vvp_fun_signal_vec*tmp = dynamic_cast<vvp_fun_signal_vec*>(net->fun))
+		  tmp->recv_vec4(pp, value(idx));
       }
 }
 
@@ -79,8 +79,12 @@ void ufunc_core::assign_bits_to_ports(void)
 void ufunc_core::finish_thread(vthread_t thr)
 {
       thread_ = 0;
-      vvp_fun_signal*sig = reinterpret_cast<vvp_fun_signal*>(result_->fun);
-      propagate_vec4(sig->vec4_value());
+      if (vvp_fun_signal_real*sig = dynamic_cast<vvp_fun_signal_real*>(result_->fun))
+
+	    propagate_real(sig->real_value());
+
+      if (vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(result_->fun))
+	    propagate_vec4(sig->vec4_value());
 }
 
 /*
@@ -89,6 +93,16 @@ void ufunc_core::finish_thread(vthread_t thr)
  * arrange for the function to be called.
  */
 void ufunc_core::recv_vec4_from_inputs(unsigned port)
+{
+      invoke_thread_();
+}
+
+void ufunc_core::recv_real_from_inputs(unsigned port)
+{
+      invoke_thread_();
+}
+
+void ufunc_core::invoke_thread_()
 {
       if (thread_ == 0) {
 	    thread_ = vthread_new(code_, scope_);
@@ -179,35 +193,3 @@ void compile_ufunc(char*label, char*code, unsigned wid,
       free(argv);
       free(portv);
 }
-
-
-/*
- * $Log: ufunc.cc,v $
- * Revision 1.8  2005/06/12 01:10:26  steve
- *  Remove useless references to functor.h
- *
- * Revision 1.7  2005/04/01 06:02:45  steve
- *  Reimplement combinational UDPs.
- *
- * Revision 1.6  2005/03/18 02:56:04  steve
- *  Add support for LPM_UFUNC user defined functions.
- *
- * Revision 1.5  2004/12/11 02:31:30  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.4  2003/07/03 20:03:36  steve
- *  Remove the vvp_cpoint_t indirect code pointer.
- *
- * Revision 1.3  2003/05/07 03:39:12  steve
- *  ufunc calls to functions can have scheduling complexities.
- *
- * Revision 1.2  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.1  2002/03/18 00:19:34  steve
- *  Add the .ufunc statement.
- *
- */
-

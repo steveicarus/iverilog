@@ -1997,6 +1997,17 @@ void vvp_wide_fun_core::propagate_vec4(const vvp_vector4_t&bit,
 	    vvp_send_vec4(ptr_->out, bit);
 }
 
+void vvp_wide_fun_core::propagate_real(double bit,
+				       vvp_time64_t delay)
+{
+      if (delay) {
+	      // schedule_assign_vector(ptr_->out, bit, delay);
+	    assert(0); // Need a real-value version of assign_vector.
+      } else {
+	    vvp_send_real(ptr_->out, bit);
+      }
+}
+
 
 unsigned vvp_wide_fun_core::port_count() const
 {

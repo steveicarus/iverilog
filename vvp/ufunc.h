@@ -1,7 +1,7 @@
 #ifndef __ufunc_H
 #define __ufunc_H
 /*
- * Copyright (c) 2002-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: ufunc.h,v 1.6 2005/06/22 00:04:49 steve Exp $"
-#endif
 
 # include  "pointers.h"
 
@@ -67,6 +64,10 @@ class ufunc_core : public vvp_wide_fun_core {
 
     private:
       void recv_vec4_from_inputs(unsigned port);
+      void recv_real_from_inputs(unsigned port);
+
+      void invoke_thread_(void);
+
 
     private:
 	// output width of the function node.
@@ -86,17 +87,4 @@ class ufunc_core : public vvp_wide_fun_core {
       vvp_net_t*result_;
 };
 
-
-/*
- * $Log: ufunc.h,v $
- * Revision 1.6  2005/06/22 00:04:49  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.5  2005/04/01 06:02:45  steve
- *  Reimplement combinational UDPs.
- *
- * Revision 1.4  2005/03/18 02:56:04  steve
- *  Add support for LPM_UFUNC user defined functions.
- *
- */
 #endif

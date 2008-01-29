@@ -957,6 +957,7 @@ class vvp_wide_fun_core : public vvp_net_fun_t {
 
     protected:
       void propagate_vec4(const vvp_vector4_t&bit, vvp_time64_t delay =0);
+      void propagate_real(double bit, vvp_time64_t delay =0);
       unsigned port_count() const;
 
       vvp_vector4_t& value(unsigned);
