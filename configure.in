@@ -42,11 +42,6 @@ AC_SUBST(EXEEXT)
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
 
-# vvp32 is by default disabled
-#enable_vvp32=no
-AC_SUBST(enable_vvp32)
-
-
 AC_LANG_CPLUSPLUS
 
 AC_CHECK_HEADERS(getopt.h malloc.h inttypes.h libiberty.h iosfwd sys/wait.h)
@@ -122,27 +117,6 @@ AX_C_UNDERSCORES_TRAILING
 #######################
 
 AX_CPP_IDENT
-
-# If not otherwise specified, set the libdir64 variable
-# to the same as libdir.
-AC_MSG_CHECKING(for libdir64 path)
-if test x${libdir64} = x
-then
-	libdir64="${libdir}"
-fi
-AC_SUBST(libdir64)
-AC_MSG_RESULT(${libdir64})
-
-# where to put vpi subdirectories
-AC_MSG_CHECKING(for VPI subdirectories)
-if test x${vpidir1} = x
-then
-	vpidir1="."
-fi
-
-AC_SUBST(vpidir1)
-AC_SUBST(vpidir2)
-AC_MSG_RESULT(${vpidir1} ${vpidir2})
 
 # XXX disable tgt-fpga for the moment
 AC_CONFIG_SUBDIRS(vvp vpi tgt-stub tgt-null tgt-vvp libveriuser cadpli)

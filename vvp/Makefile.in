@@ -33,8 +33,6 @@ libdir = @libdir@
 mandir = @mandir@
 includedir = @includedir@
 
-libdir64 = @libdir64@
-
 CC = @CC@
 HOSTCC = @CC@
 CXX = @CXX@
@@ -58,13 +56,7 @@ ifneq (x@vpidir2@,x)
 MDIR2 = -DMODULE_DIR2=\"$(libdir)/ivl/@vpidir2@\"
 endif
 
-ifeq (@enable_vvp32@,yes)
-ALL32 = all32
-INSTALL32 = install32
-UNINSTALL32 = uninstall32
-endif
-
-all: dep vvp@EXEEXT@ libvpi.a $(ALL32)
+all: dep vvp@EXEEXT@ libvpi.a
 
 clean:
 	rm -f *.o *~ parse.cc parse.cc.output parse.h lexor.cc tables.cc
@@ -125,33 +117,6 @@ tables.cc: $(srcdir)/draw_tt.c
 	./draw_tt > tables.cc
 	rm draw_tt@EXEEXT@
 
-ifeq (@enable_vvp32@,yes)
-
-all32: bin32 vvp32
-
-bin32:
-	mkdir bin32
-
-bin32/%.o: %.cc
-	$(CXX) -m32 -DSIZEOF_UNSIGNED_LONG=4 $(CPPFLAGS) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $@
-
-bin32/%.o: %.c
-	$(CC) -m32 $(CPPFLAGS) $(MDIR2) $(CFLAGS) -MD -c $< -o $@
-
-bin32/lexor.o: lexor.cc parse.h
-
-vvp32: $(addprefix bin32/,$O) bin32/libvpi.a
-	$(CXX) -m32 $(LDFLAGS) -o vvp32 $(addprefix bin32/,$O) $(LIBS) $(dllib)
-
-bin32/libvpi.a: libvpi.c
-	$(CC) -m32 $(CPPFLAGS) $(CFLAGS) -o bin32/libvpi.o -c $(srcdir)/libvpi.c
-	rm -f bin32/libvpi.a
-	ar cqv bin32/libvpi.a bin32/libvpi.o
-	$(RANLIB) bin32/libvpi.a
-
--include $(patsubst bin32/%.o, bin32/%.d, $(addprefix bin32/,$O))
-endif
-
 lexor.o: lexor.cc parse.h
 
 parse.o: parse.cc
@@ -183,13 +148,13 @@ Makefile: Makefile.in config.status
 	./config.status
 
 
-install: all installdirs $(bindir)/vvp@EXEEXT@ $(libdir64)/libvpi.a $(INSTALL_DOC) $(INSTALL32)
+install: all installdirs $(bindir)/vvp@EXEEXT@ $(libdir)/libvpi.a $(INSTALL_DOC)
 
 $(bindir)/vvp@EXEEXT@: ./vvp@EXEEXT@
 	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ $(bindir)/vvp@EXEEXT@
 
-$(libdir64)/libvpi.a : ./libvpi.a
-	$(INSTALL_DATA) libvpi.a $(libdir64)/libvpi.a
+$(libdir)/libvpi.a : ./libvpi.a
+	$(INSTALL_DATA) libvpi.a $(libdir)/libvpi.a
 
 $(mandir)/man1/vvp.1: $(srcdir)/vvp.man
 	$(INSTALL_DATA) $(srcdir)/vvp.man $(mandir)/man1/vvp.1
@@ -198,26 +163,12 @@ $(prefix)/vvp.pdf: vvp.pdf
 	$(INSTALL_DATA) vvp.pdf $(prefix)/vvp.pdf
 
 installdirs: $(srcdir)/mkinstalldirs
-	$(srcdir)/mkinstalldirs $(bindir) $(libdir) $(libdir64) $(INSTALL_DOCDIR)
+	$(srcdir)/mkinstalldirs $(bindir) $(libdir) $(libdir) $(INSTALL_DOCDIR)
 
-
-ifeq (@enable_vvp32@,yes)
-install32: all32 $(libdir)/libvpi.a $(bindir)/vvp32
-
-$(libdir)/libvpi.a: bin32/libvpi.a
-	$(INSTALL_DATA) bin32/libvpi.a $(libdir)/libvpi.a
-
-$(bindir)/vvp32: ./vvp32
-	$(INSTALL_PROGRAM) ./vvp32 $(bindir)/vvp32
-
-uninstall32:
-	rm -f $(libdir)/libvpi.a
-	rm -f $(bindir)/vvp32
-endif
 
 uninstall: $(UNINSTALL32)
 	rm -f $(bindir)/vvp@EXEEXT@
-	rm -f $(libdir64)/libvpi.a
+	rm -f $(libdir)/libvpi.a
 	rm -f $(mandir)/man1/vvp.1 $(prefix)/vvp.pdf
 
 -include $(patsubst %.o, dep/%.d, $O)

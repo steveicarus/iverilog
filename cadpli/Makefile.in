@@ -33,7 +33,7 @@ bindir = @bindir@
 libdir = @libdir@
 includedir = $(prefix)/include
 
-vpidir = @libdir@/ivl/@vpidir1@
+vpidir = @libdir@/ivl
 
 CC = @CC@
 INSTALL = @INSTALL@
@@ -47,14 +47,6 @@ LDFLAGS = @LDFLAGS@
 SHARED = @shared@
 
 all:
-
-ifeq (@enable_vvp32@,yes)
-vpidir32 = $(libdir)/ivl/@vpidir2@
-ALL32 = all32
-INSTALL32 = install32
-UNINSTALL32 = uninstall32
-include $(srcdir)/enable_vvp32.mk
-endif
 
 all: dep cadpli.vpl $(ALL32)
 
@@ -96,9 +88,5 @@ uninstall: $(UNINSTALL32)
 	rm -f $(vpidir)/cadpli.vpl
 
 uninstall32:
-
-ifeq (@enable_vvp32@,yes)
-include $(srcdir)/enable_vvp32.mk
-endif
 
 -include $(patsubst %.o, dep/%.d, $O)

@@ -33,7 +33,7 @@ bindir = @bindir@
 libdir = @libdir@
 includedir = $(prefix)/include
 
-vpidir = $(libdir)/ivl/@vpidir1@
+vpidir = $(libdir)/ivl
 
 CC = @CC@
 INSTALL = @INSTALL@
@@ -45,13 +45,6 @@ YACC = @YACC@
 CPPFLAGS = @ident_support@ -I. -I$(srcdir)/.. -I$(srcdir) -I.. @file64_support@ @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
-
-ifeq (@enable_vvp32@,yes)
-vpidir32 = $(libdir)/ivl/@vpidir2@
-ALL32 = all32
-INSTALL32 = install32
-UNINSTALL32 = uninistall32
-endif
 
 all: dep system.vpi $(ALL32)
 
@@ -95,28 +88,6 @@ sdf_lexor.c: sdf_lexor.lex
 sdf_parse.c sdf_parse.h: $(srcdir)/sdf_parse.y
 	$(YACC) --verbose -d -p sdf -o sdf_parse.c $(srcdir)/sdf_parse.y
 
-ifeq (@enable_vvp32@,yes)
-
-all32: bin32 bin32/system.vpi
-
-bin32:
-	mkdir bin32
-
-bin32/%.o: %.c
-	$(CC) -m32 $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $@
-
-bin32/system.vpi: $(addprefix bin32/,$O)
-	$(CC) -m32 @shared@ -o $@ $(addprefix bin32/,$O) -L../vvp/bin32 $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
-
-install32: all32 $(vpidir32)/system.vpi
-
-$(vpidir32)/system.vpi: bin32/system.vpi
-	$(INSTALL_PROGRAM) bin32/system.vpi $(vpidir32)/system.vpi
-
-uninstall32:
-	rm -f $(vpidir32)/system.vpi
-endif
-
 clean:
 	rm -rf *.o sys_readmem_lex.c dep system.vpi bin32
 	rm -f sdf_lexor.c sdf_parse.c sdf_parse.output sdf_parse.h
@@ -126,7 +97,7 @@ distclean: clean
 
 check: all
 
-install: all installdirs $(vpidir)/system.vpi $(libdir)/ivl/system.sft $(INSTALL32)
+install: all installdirs $(vpidir)/system.vpi $(libdir)/ivl/system.sft
 
 $(vpidir)/system.vpi: ./system.vpi
 	$(INSTALL_PROGRAM) ./system.vpi $(vpidir)/system.vpi
@@ -137,7 +108,7 @@ $(libdir)/ivl/system.sft: system.sft
 installdirs: ../mkinstalldirs
 	$(srcdir)/../mkinstalldirs $(vpidir)
 
-uninstall: $(UNINSTALL32)
+uninstall:
 	rm -f $(vpidir)/system.vpi
 	rm -f $(libdir)/ivl/system.sft
 

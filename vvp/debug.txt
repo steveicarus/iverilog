@@ -1,7 +1,7 @@
 
 DEBUG AIDS FOR VVP
 
-Debuging vvp can be fiendishly difficult, so there are some built in
+Debugging vvp can be fiendishly difficult, so there are some built in
 debugging aids. These are enabled by setting the environment variable
 VVP_DEBUG to the path to an output file. Then, various detailed debug
 tools can be enabled as described below.

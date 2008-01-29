@@ -18,7 +18,7 @@ command (man verilog) and the -X switch:
 	% iverilog -fpart=4010e -fncf=prog.ncf -txnf prog.v
 
 This generates from the prog.v Verilog source file the prog.xnf output
-and the prog.ncf netlist constraints file. The verilog program
+and the prog.ncf netlist constraints file. The Verilog program
 arranges to call the preprocessor and the ivl compiler with all the
 correct switches for generating XNF.
 

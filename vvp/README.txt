@@ -140,8 +140,8 @@ The value, then, is appropriate for the data type. For example:
 	P_123 .param/str "hello", "Hello, World.";
 
 The boolean and logic values can also be signed or not. If signed, the
-value is preceeded by a '+' character. (Note that the value is 2s
-compliment, so the '+' says only that it is signed, not positive.)
+value is preceded by a '+' character. (Note that the value is 2s
+complement, so the '+' says only that it is signed, not positive.)
 
 FUNCTOR STATEMENTS:
 
@@ -333,8 +333,8 @@ that arrive through them, while .net nodes reduce strength values to
 4-value logic. The .net8 nodes should only be used when strength
 information really is possible.
 
-The <label> is required and is used to locate the net object that is
-vrepresents. This label does not map to a functor, so only references
+The <label> is required and is used to locate the net object that it
+represents. This label does not map to a functor, so only references
 that know they want to access .nets are able to locate the symbol. In
 particular, this includes behavioral %load and %wait instructions. The
 references to net and reg objects are done through the .net label
@@ -373,7 +373,7 @@ activates the delay.
 ARRAY INDEX STATEMENTS:
 
 Variables can be collected into arrays. The words of the array are
-declared seperately, this statement collects them together:
+declared separately, this statement collects them together:
 
 	<label> .array "name", <last> <first> ;
 

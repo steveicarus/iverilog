@@ -41,8 +41,6 @@ libdir = @libdir@
 includedir = @includedir@
 mandir = @mandir@
 
-libdir64 = @libdir64@
-
 dllib=@DLLIB@
 
 CC = @CC@
@@ -147,8 +145,6 @@ iverilog-vpi: iverilog-vpi.sh
 	    -e 's;@IVCXX@;$(CXX);' \
 	    -e 's;@IVCFLAGS@;$(CXXFLAGS);' \
 	    -e 's;@INCLUDEDIR@;@includedir@;' \
-	    -e 's;@LIBDIR64@;@libdir64@;' \
-	    -e 's;@VPIDIR1@;@vpidir1@;' -e 's;@VPIDIR2@;@vpidir2@;' \
 	    -e 's;@LIBDIR@;@libdir@;' $< > $@
 	chmod +x $@
 endif
