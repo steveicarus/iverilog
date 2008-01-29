@@ -1110,12 +1110,6 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 		 the left signal again. */
 	    if (dist == 0) return lsig;
 
-	      /* Another very special case: constant shift the entire
-		 value away. The result is a const. */
-	    if (dist > lwidth) {
-		  assert(0);
-	    }
-
 	      /* The construction that I'm making will ultimately
 		 connect its output to the osig here. This will be the
 		 result that I return from this function. */
@@ -1154,6 +1148,8 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	    zero->local_flag(true);
 	    zero->set_line(*this);
 
+	    /* Padding bits are zero in most cases, but copies of
+	     * the sign bit in the case of a signed right shift */
 	    if (op_ == 'R') {
 		  NetPartSelect*sign_bit
 			= new NetPartSelect(lsig, lsig->vector_width()-1,
@@ -1178,6 +1174,14 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 					      verinum(verinum::V0, pad_width));
 		  des->add_node(zero_c);
 		  connect(zero->pin(0), zero_c->pin(0));
+	    }
+
+	    /* If all data bits get shifted away, connect the zero or
+ 	     * padding bits directly to output, and stop before building the
+ 	     * concatenation. */
+	    if (dist >= lwidth) {
+		  connect(osig->pin(0), zero->pin(0));
+		  return osig;
 	    }
 
 	      /* Make a concatenation operator that will join the

@@ -402,6 +402,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
     local_flag_(false), eref_count_(0), lref_count_(0)
 {
       assert(s);
+      assert(npins>0);
 
       verinum::V init_value = verinum::Vz;
       Link::DIR dir = Link::PASSIVE;
