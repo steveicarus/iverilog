@@ -1793,21 +1793,7 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 
       draw_lpm_data_inputs(net, 0, 2, src_table);
 
-      ivl_expr_t d_rise = ivl_lpm_delay(net, 0);
-      ivl_expr_t d_fall = ivl_lpm_delay(net, 1);
-      ivl_expr_t d_decay = ivl_lpm_delay(net, 2);
-
-      const char*dly = "";
-      if (d_rise != 0) {
-	    assert(number_is_immediate(d_rise, 64));
-	    assert(number_is_immediate(d_fall, 64));
-	    assert(number_is_immediate(d_decay, 64));
-	    dly = "/d";
-	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
-	            net, get_number_immediate(d_rise),
-	            get_number_immediate(d_rise),
-	            get_number_immediate(d_rise), net);
-      }
+      const char*dly = draw_lpm_output_delay(net);
 
       fprintf(vvp_out, "L_%p%s .cmp/%s%s %u, %s, %s;\n",
 	      net, dly, type, signed_string, width,
@@ -2065,23 +2051,10 @@ static void draw_type_string_of_nex(ivl_nexus_t nex)
 
 static void draw_lpm_sfunc(ivl_lpm_t net)
 {
-      ivl_expr_t d_rise = ivl_lpm_delay(net, 0);
-      ivl_expr_t d_fall = ivl_lpm_delay(net, 1);
-      ivl_expr_t d_decay = ivl_lpm_delay(net, 2);
-
-      const char*dly = "";
-      if (d_rise != 0) {
-	    assert(number_is_immediate(d_rise, 64));
-	    assert(number_is_immediate(d_fall, 64));
-	    assert(number_is_immediate(d_decay, 64));
-	    dly = "/d";
-	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
-	            net, get_number_immediate(d_rise),
-	            get_number_immediate(d_rise),
-	            get_number_immediate(d_rise), net);
-      }
-
       unsigned idx;
+
+      const char*dly = draw_lpm_output_delay(net);
+
       fprintf(vvp_out, "L_%p%s .sfunc %u %u \"%s\"", net, dly,
               ivl_file_table_index(ivl_lpm_file(net)), ivl_lpm_lineno(net),
               ivl_lpm_string(net));
@@ -2285,8 +2258,10 @@ static void draw_lpm_part_bi(ivl_lpm_t net)
  */
 static void draw_lpm_re(ivl_lpm_t net, const char*type)
 {
-      fprintf(vvp_out, "L_%p .reduce/%s %s;\n",
-	      net, type, draw_net_input(ivl_lpm_data(net,0)));
+      const char*dly = draw_lpm_output_delay(net);
+
+      fprintf(vvp_out, "L_%p%s .reduce/%s %s;\n", net, dly,
+	      type, draw_net_input(ivl_lpm_data(net,0)));
 }
 
 static void draw_lpm_repeat(ivl_lpm_t net)

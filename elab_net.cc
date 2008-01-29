@@ -2731,16 +2731,17 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 				Link::strength_t drive0,
 				Link::strength_t drive1) const
 {
+      NetNet *net;
+      NetConst *con;
 
 	/* If we are constrained by a l-value size, then just make a
 	   number constant with the correct size and set as many bits
 	   in that constant as make sense. Pad excess with
 	   zeros. Also, assume that numbers are meant to be logic
 	   type. */
-
       if (lwidth > 0) {
-	    NetNet*net = new NetNet(scope, scope->local_symbol(),
-				    NetNet::IMPLICIT, lwidth);
+	    net = new NetNet(scope, scope->local_symbol(),
+	                     NetNet::IMPLICIT, lwidth);
 	    net->data_type(IVL_VT_LOGIC);
 	    net->local_flag(true);
 	    net->set_signed(value_->has_sign());
@@ -2749,72 +2750,90 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 	    if (num.len() > lwidth)
 		  num = verinum(num, lwidth);
 
-	    NetConst*tmp = new NetConst(scope, scope->local_symbol(), num);
-	    tmp->pin(0).drive0(drive0);
-	    tmp->pin(0).drive1(drive1);
-	    connect(net->pin(0), tmp->pin(0));
-
-	    des->add_node(tmp);
-	    return net;
-      }
+	    con = new NetConst(scope, scope->local_symbol(), num);
+	    con->pin(0).drive0(drive0);
+	    con->pin(0).drive1(drive1);
 
 	/* If the number has a length, then use that to size the
 	   number. Generate a constant object of exactly the user
 	   specified size. */
-      if (value_->has_len()) {
-	    NetNet*net = new NetNet(scope, scope->local_symbol(),
-				    NetNet::IMPLICIT, value_->len());
+      } else if (value_->has_len()) {
+	    net = new NetNet(scope, scope->local_symbol(),
+	                     NetNet::IMPLICIT, value_->len());
 	    net->data_type(IVL_VT_LOGIC);
 	    net->local_flag(true);
 	    net->set_signed(value_->has_sign());
-	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
-					*value_);
-	    connect(net->pin(0), tmp->pin(0));
-
-	    des->add_node(tmp);
-	    return net;
-      }
+	    con = new NetConst(scope, scope->local_symbol(),
+	                       *value_);
 
 	/* None of the above tight constraints are present, so make a
 	   plausible choice for the width. Try to reduce the width as
 	   much as possible by eliminating high zeros of unsigned
 	   numbers. */
+      } else {
 
-      if (must_be_self_determined_flag) {
-	    cerr << get_fileline() << ": error: No idea how wide to make "
-		 << "the unsized constant " << *value_ << "." << endl;
-	    des->errors += 1;
-      }
-
-      unsigned width = value_->len();
-
-      if (value_->has_sign() && (value_->get(width-1) == verinum::V0)) {
-
-	      /* If the number is signed, but known to be positive,
-		 then reduce it down as if it were unsigned.  */
-	    while (width > 1) {
-		  if (value_->get(width-1) != verinum::V0)
-			break;
-		  width -= 1;
+	    if (must_be_self_determined_flag) {
+		  cerr << get_fileline() << ": error: No idea how wide to "
+		  << "make the unsized constant " << *value_ << "." << endl;
+		  des->errors += 1;
 	    }
 
-      } else if (value_->has_sign() == false) {
-	    while ( (width > 1) && (value_->get(width-1) == verinum::V0))
-		  width -= 1;
+	    unsigned width = value_->len();
+
+	    if (value_->has_sign() && (value_->get(width-1) == verinum::V0)) {
+
+		    /* If the number is signed, but known to be positive,
+		       then reduce it down as if it were unsigned.  */
+		  while (width > 1) {
+			if (value_->get(width-1) != verinum::V0)
+			      break;
+			width -= 1;
+		  
+	    }
+
+	    } else if (value_->has_sign() == false) {
+		  while ( (width > 1) && (value_->get(width-1) == verinum::V0))
+			width -= 1;
+	    }
+
+	    verinum num (verinum::V0, width);
+	    for (unsigned idx = 0 ;  idx < width ;  idx += 1)
+		  num.set(idx, value_->get(idx));
+
+	    net = new NetNet(scope, scope->local_symbol(),
+	                     NetNet::IMPLICIT, width);
+	    net->data_type(IVL_VT_LOGIC);
+	    net->local_flag(true);
+	    con = new NetConst(scope, scope->local_symbol(), num);
       }
 
-      verinum num (verinum::V0, width);
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-	    num.set(idx, value_->get(idx));
+	/* If there are non-zero output delays, then create bufz
+	   devices to carry the propagation delays. Otherwise, just
+	   connect the result to the output. */
+      if (rise || fall || decay) {
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, net->vector_width());
+	    tmp->data_type(IVL_VT_LOGIC);
+	    tmp->local_flag(true);
 
-      NetNet*net = new NetNet(scope, scope->local_symbol(),
-			      NetNet::IMPLICIT, width);
-      net->data_type(IVL_VT_LOGIC);
-      net->local_flag(true);
-      NetConst*tmp = new NetConst(scope, scope->local_symbol(), num);
-      connect(net->pin(0), tmp->pin(0));
+	    NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol(),
+	                               net->vector_width());
+	    tmpz->rise_time(rise);
+	    tmpz->fall_time(fall);
+	    tmpz->decay_time(decay);
+	    tmpz->pin(0).drive0(drive0);
+	    tmpz->pin(0).drive1(drive1);
 
-      des->add_node(tmp);
+	    connect(con->pin(0), tmp->pin(0));
+	    connect(tmp->pin(0), tmpz->pin(1));
+	    connect(net->pin(0), tmpz->pin(0));
+
+	    des->add_node(tmpz);
+      } else {
+	    connect(con->pin(0), net->pin(0));
+      }
+
+      des->add_node(con);
       return net;
 }
 
@@ -2858,11 +2877,35 @@ NetNet* PEString::elaborate_net(Design*des, NetScope*scope,
 	    num.set(idx, (byte & mask)? verinum::V1 : verinum::V0);
       }
 
-      NetConst*tmp = new NetConst(scope, scope->local_symbol(), num);
-      tmp->set_line(*this);
-      des->add_node(tmp);
+      NetConst*con = new NetConst(scope, scope->local_symbol(), num);
+      con->set_line(*this);
+      des->add_node(con);
 
-      connect(net->pin(0), tmp->pin(0));
+	/* If there are non-zero output delays, then create bufz
+	   devices to carry the propagation delays. Otherwise, just
+	   connect the result to the output. */
+      if (rise || fall || decay) {
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, net->vector_width());
+	    tmp->data_type(IVL_VT_LOGIC);
+	    tmp->local_flag(true);
+
+	    NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol(),
+	                               net->vector_width());
+	    tmpz->rise_time(rise);
+	    tmpz->fall_time(fall);
+	    tmpz->decay_time(decay);
+	    tmpz->pin(0).drive0(drive0);
+	    tmpz->pin(0).drive1(drive1);
+
+	    connect(con->pin(0), tmp->pin(0));
+	    connect(tmp->pin(0), tmpz->pin(1));
+	    connect(net->pin(0), tmpz->pin(0));
+
+	    des->add_node(tmpz);
+      } else {
+	    connect(con->pin(0), net->pin(0));
+      }
 
       return net;
 }
@@ -3161,6 +3204,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 		  connect(gate->pin(0), sig->pin(0));
 		  connect(gate->pin(1), sub_sig->pin(0));
 		  des->add_node(gate);
+		  gate->set_line(*this);
 		  gate->rise_time(rise);
 		  gate->fall_time(fall);
 		  gate->decay_time(decay);
@@ -3171,7 +3215,10 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 						sig->vector_width());
 		  sub->attribute(perm_string::literal("LPM_Direction"),
 				 verinum("SUB"));
-
+		  sub->set_line(*this);
+		  sub->rise_time(rise);
+		  sub->fall_time(fall);
+		  sub->decay_time(decay);
 		  des->add_node(sub);
 
 		  connect(sig->pin(0), sub->pin_Result());
