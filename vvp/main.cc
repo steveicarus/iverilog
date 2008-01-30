@@ -31,9 +31,6 @@
 #if defined(HAVE_SYS_RESOURCE_H)
 # include  <sys/time.h>
 # include  <sys/resource.h>
-# if defined(LINUX)
-#  include <asm/page.h>
-# endif
 #endif // defined(HAVE_SYS_RESOURCE_H)
 
 #if defined(HAVE_GETOPT_H)
