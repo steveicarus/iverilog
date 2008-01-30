@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2007 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2005-2008 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -132,6 +132,7 @@ vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, vvp_bit4_t init, const vvp_delay_t&d)
 {
       cur_vec4_.set_bit(0, init);
       list_ = 0;
+      initial_ = true;
 }
 
 vvp_fun_delay::~vvp_fun_delay()
@@ -190,21 +191,32 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	    return;
       }
 
-	/* How many bits to compare? */
-      unsigned use_wid = cur_vec4_.size();
-      if (bit.size() < use_wid)
-	    use_wid = bit.size();
-
-	/* Scan the vectors looking for delays. Select the maximum
-	   delay encountered. */
       vvp_time64_t use_delay;
-      use_delay = delay_.get_delay(cur_vec4_.value(0), bit.value(0));
+	/* This is an initial value so it needs to be compared to all the
+	   bits (the order the bits are changed is not deterministic). */
+      if (initial_) {
+	    vvp_bit4_t cur_val = cur_vec4_.value(0);
+	    use_delay = delay_.get_delay(cur_val, bit.value(0));
+	    for (unsigned idx = 1 ;  idx < bit.size() ;  idx += 1) {
+		  vvp_time64_t tmp;
+		  tmp = delay_.get_delay(cur_val, bit.value(idx));
+		  if (tmp > use_delay) use_delay = tmp;
+	    }
+      } else {
 
-      for (unsigned idx = 1 ;  idx < use_wid ;  idx += 1) {
-	    vvp_time64_t tmp;
-	    tmp = delay_.get_delay(cur_vec4_.value(idx), bit.value(idx));
-	    if (tmp > use_delay)
-		  use_delay = tmp;
+	      /* How many bits to compare? */
+	    unsigned use_wid = cur_vec4_.size();
+	    if (bit.size() < use_wid) use_wid = bit.size();
+
+	      /* Scan the vectors looking for delays. Select the maximum
+	         delay encountered. */
+	    use_delay = delay_.get_delay(cur_vec4_.value(0), bit.value(0));
+
+	    for (unsigned idx = 1 ;  idx < use_wid ;  idx += 1) {
+		  vvp_time64_t tmp;
+		  tmp = delay_.get_delay(cur_vec4_.value(idx), bit.value(idx));
+		  if (tmp > use_delay) use_delay = tmp;
+	    }
       }
 
       /* what *should* happen here is we check to see if there is a
@@ -217,6 +229,7 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	/* And propagate it. */
       if (use_delay == 0) {
 	    cur_vec4_ = bit;
+	    initial_ = false;
 	    vvp_send_vec4(net_->out, cur_vec4_);
       } else {
 	    struct event_*cur = new struct event_(use_simtime);
@@ -241,6 +254,7 @@ void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
       vvp_time64_t use_simtime = schedule_simtime() + use_delay;
       if (use_delay == 0) {
 	    cur_vec8_ = bit;
+	    initial_ = false;
 	    vvp_send_vec8(net_->out, cur_vec8_);
       } else {
 	    struct event_*cur = new struct event_(use_simtime);
@@ -284,6 +298,7 @@ void vvp_fun_delay::recv_real(vvp_net_ptr_t port, double bit)
 
       if (use_delay == 0) {
 	    cur_real_ = bit;
+	    initial_ = false;
 	    vvp_send_real(net_->out, cur_real_);
       } else {
 	    struct event_*cur = new struct event_(use_simtime);
@@ -306,6 +321,7 @@ void vvp_fun_delay::run_run()
 	    return;
 
       (this->*(cur->run_run_ptr))(cur);
+      initial_ = false;
       delete cur;
 }
 

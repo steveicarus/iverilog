@@ -1,7 +1,7 @@
 #ifndef __delay_H
 #define __delay_H
 /*
- * Copyright 2005 Stephen Williams
+ * Copyright 2005-2008 Stephen Williams
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,9 +17,6 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
- */
-
-/*
  */
 
 # include  "vvp_net.h"
@@ -104,6 +101,7 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
     private:
       vvp_net_t*net_;
       vvp_delay_t delay_;
+      bool initial_; // Indicates if the value is still the initial value.
 
       vvp_vector4_t cur_vec4_;
       vvp_vector8_t cur_vec8_;
