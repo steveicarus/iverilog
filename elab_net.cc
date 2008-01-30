@@ -832,6 +832,12 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 	    des->errors += 1;
       }
 
+      if (lsig->data_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: The modulus operator "
+		    "is not supported for real values." << endl;
+	    des->errors += 1;
+      }
+
       ivl_variable_type_t data_type = lsig->data_type();
 
 	/* rwidth is result width. */
@@ -1568,8 +1574,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 		  }
 	    }
 
-	    nets[idx] = parms_[idx]->elaborate_net(des, scope, 0,
-						   rise,fall,decay);
+	    nets[idx] = parms_[idx]->elaborate_net(des, scope, 0, 0, 0, 0);
 	    if (nets[idx] == 0)
 		  errors += 1;
 	    else
@@ -1598,6 +1603,9 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 				    vector_width*repeat,
 				    nets.count()*repeat);
       dev->set_line(*this);
+      dev->rise_time(rise);
+      dev->fall_time(fall);
+      dev->decay_time(decay);
       des->add_node(dev);
 
 	/* Make the temporary signal that connects to all the

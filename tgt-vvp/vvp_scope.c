@@ -1851,13 +1851,14 @@ static void draw_lpm_concat(ivl_lpm_t net)
 {
       const char*src_table[4];
       unsigned icnt = ivl_lpm_selects(net);
+      const char*dly = draw_lpm_output_delay(net);
 
       if (icnt <= 4) {
 	      /* This is the easiest case. There are 4 or fewer input
 		 vectors, so the entire IVL_LPM_CONCAT can be
 		 implemented with a single .concat node. */
 	    draw_lpm_data_inputs(net, 0, icnt, src_table);
-	    fprintf(vvp_out, "L_%p .concat ", net);
+	    fprintf(vvp_out, "L_%p%s .concat ", net, dly);
 	    lpm_concat_inputs(net, 0, icnt, src_table);
 
       } else {
@@ -1943,7 +1944,7 @@ static void draw_lpm_concat(ivl_lpm_t net)
 
 	      /* Finally, draw the root node that takes in the final
 		 row of tree nodes and generates a single output. */
-	    fprintf(vvp_out, "L_%p .concat [", net);
+	    fprintf(vvp_out, "L_%p%s .concat [", net, dly);
 	    for (idx = 0 ;  idx < icnt ;  idx += 1)
 		  fprintf(vvp_out, " %u", tree[idx].wid);
 	    for ( ;  idx < 4 ;  idx += 1)
@@ -2020,11 +2021,13 @@ static void draw_lpm_shiftl(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
       const char* signed_flag = ivl_lpm_signed(net)? "s" : "";
+      const char*dly = draw_lpm_output_delay(net);
 
       if (ivl_lpm_type(net) == IVL_LPM_SHIFTR)
-	    fprintf(vvp_out, "L_%p .shift/r%s %u", net, signed_flag, width);
+	    fprintf(vvp_out, "L_%p%s .shift/r%s %u", net, dly, signed_flag,
+	            width);
       else
-	    fprintf(vvp_out, "L_%p .shift/l %u", net, width);
+	    fprintf(vvp_out, "L_%p%s .shift/l %u", net, dly, width);
 
       fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net, 0)));
 
