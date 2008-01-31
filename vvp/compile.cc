@@ -956,6 +956,18 @@ void compile_arith_mod(char*label, long wid,
       make_arith(arith, label, argc, argv);
 }
 
+void compile_arith_mod_r(char*label, unsigned argc, struct symb_s*argv)
+{
+      if (argc != 2) {
+	    fprintf(stderr, "%s .arith/mod.r has wrong number of symbols\n", label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_real_ *arith = new vvp_arith_mod_real;
+      make_arith(arith, label, argc, argv);
+}
+
 void compile_arith_mult(char*label, long wid,
 			unsigned argc, struct symb_s*argv)
 {

@@ -828,20 +828,28 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 	    des->errors += 1;
       }
 
-      if (lsig->data_type() == IVL_VT_REAL) {
-	    cerr << get_fileline() << ": error: The modulus operator "
-		    "is not supported for real values." << endl;
+        /* The % operator does not support real arguments in baseline
+           Verilog. But we allow it in our extended form of Verilog. */
+      if (generation_flag < GN_VER2001X && lsig->data_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: Modulus operator may not "
+	    "have REAL operands." << endl;
 	    des->errors += 1;
       }
 
 	/* rwidth is result width. */
       unsigned rwidth = lwidth;
       if (rwidth == 0) {
-	    rwidth = lsig->vector_width();
-	    if (rsig->vector_width() > rwidth)
-		  rwidth = rsig->vector_width();
+	      /* Reals are always 1 wide and lsig/rsig types match here. */
+	    if (lsig->data_type() == IVL_VT_REAL) {
+		  lwidth = 1;
+		  rwidth = 1;
+	    } else {
+		  rwidth = lsig->vector_width();
+		  if (rsig->vector_width() > rwidth)
+		        rwidth = rsig->vector_width();
 
-	    lwidth = rwidth;
+		  lwidth = rwidth;
+	    }
       }
 
       NetModulo*mod = new NetModulo(scope, scope->local_symbol(), rwidth,

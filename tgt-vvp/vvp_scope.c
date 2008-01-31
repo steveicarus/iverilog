@@ -1701,7 +1701,7 @@ static void draw_lpm_add(ivl_lpm_t net)
 	    break;
 	  case IVL_LPM_MOD:
 	    if (dto == IVL_VT_REAL)
-		  assert(0);  /* Not supported for reals, */
+		  type = "mod.r";
 	    else
 		  type = "mod";
 	    break;

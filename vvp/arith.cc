@@ -805,6 +805,23 @@ void vvp_arith_div_real::recv_real(vvp_net_ptr_t ptr, double bit)
       vvp_send_real(ptr.ptr()->out, val);
 }
 
+/* Real modulus. */
+vvp_arith_mod_real::vvp_arith_mod_real()
+{
+}
+
+vvp_arith_mod_real::~vvp_arith_mod_real()
+{
+}
+
+void vvp_arith_mod_real::recv_real(vvp_net_ptr_t ptr, double bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      double val = fmod(op_a_, op_b_);
+      vvp_send_real(ptr.ptr()->out, val);
+}
+
 /* Real summation. */
 vvp_arith_sum_real::vvp_arith_sum_real()
 {
