@@ -1,7 +1,7 @@
 #ifndef __PExpr_H
 #define __PExpr_H
 /*
- * Copyright (c) 1998-2000 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2008 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -585,6 +585,11 @@ class PEBinary : public PExpr {
 				 const NetExpr* fall,
 				 const NetExpr* decay) const;
       NetNet* elaborate_net_mul_(Design*des, NetScope*scope,
+				 unsigned lwidth,
+				 const NetExpr* rise,
+				 const NetExpr* fall,
+				 const NetExpr* decay) const;
+      NetNet* elaborate_net_pow_(Design*des, NetScope*scope,
 				 unsigned lwidth,
 				 const NetExpr* rise,
 				 const NetExpr* fall,

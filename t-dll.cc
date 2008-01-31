@@ -1770,6 +1770,47 @@ void dll_target::lpm_mux(const NetMux*net)
 
 }
 
+/*
+ * Make the NetPow object into an IVL_LPM_POW node.
+ */
+void dll_target::lpm_pow(const NetPow*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type  = IVL_LPM_POW;
+      obj->name  = net->name();
+      assert(net->scope());
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+
+      unsigned wid = net->width_r();
+
+      obj->width = wid;
+
+      const Nexus*nex;
+
+      nex = net->pin_Result().nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.arith.q = nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+
+      nex = net->pin_DataA().nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.arith.a = nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      nex = net->pin_DataB().nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.arith.b = nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      make_lpm_delays_(obj, net);
+
+      scope_add_lpm(obj->scope, obj);
+}
+
 bool dll_target::concat(const NetConcat*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
@@ -2327,4 +2368,3 @@ bool dll_target::signal_paths(const NetNet*net)
 }
 
 extern const struct target tgt_dll = { "dll", &dll_target_obj };
-

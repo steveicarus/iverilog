@@ -70,6 +70,8 @@ NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
 	    return elaborate_net_mod_(des, scope, width, rise, fall, decay);
 	  case '/':
 	    return elaborate_net_div_(des, scope, width, rise, fall, decay);
+	  case 'p': // **
+	    return elaborate_net_pow_(des, scope, width, rise, fall, decay);
 	  case '+':
 	  case '-':
 	    return elaborate_net_add_(des, scope, width, rise, fall, decay);
@@ -96,10 +98,6 @@ NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
 	  case 'r': // >>
 	  case 'R': // >>>
 	    return elaborate_net_shift_(des, scope, width, rise, fall, decay);
-	  case 'p': // **
-	    cerr << get_fileline() << ": sorry: ** is currently unsupported"
-	    " in continuous assignments." << endl;
-	    des->errors += 1;
 
 	    return 0;
       }
@@ -769,8 +767,6 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 	    des->errors += 1;
       }
 
-      ivl_variable_type_t data_type = lsig->data_type();
-
 	// Create a device with the calculated dimensions.
       NetDivide*div = new NetDivide(scope, scope->local_symbol(), rwidth,
 				    lsig->vector_width(),
@@ -799,7 +795,7 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 			       NetNet::IMPLICIT, lwidth);
       osig->local_flag(true);
       osig->set_line(*this);
-      osig->data_type(data_type);
+      osig->data_type( lsig->data_type() );
       osig->set_signed(div->get_signed());
 
       connect(div->pin_Result(), osig->pin(0));
@@ -838,8 +834,6 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 	    des->errors += 1;
       }
 
-      ivl_variable_type_t data_type = lsig->data_type();
-
 	/* rwidth is result width. */
       unsigned rwidth = lwidth;
       if (rwidth == 0) {
@@ -865,7 +859,7 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, rwidth);
       osig->set_line(*this);
-      osig->data_type(data_type);
+      osig->data_type( lsig->data_type() );
       osig->local_flag(true);
 
       connect(mod->pin_Result(), osig->pin(0));
@@ -1030,9 +1024,6 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
       NetNet*rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
       if (rsig == 0) return 0;
 
-	// The mult is signed if both its operands are signed.
-      bool arith_is_signed = lsig->get_signed() && rsig->get_signed();
-
 	/* The arguments of a multiply must have the same type. */
       if (lsig->data_type() != rsig->data_type()) {
 	    cerr << get_fileline() << ": error: Arguments of multiply "
@@ -1043,7 +1034,8 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 	    des->errors += 1;
       }
 
-      ivl_variable_type_t data_type = lsig->data_type();
+	// The mult is signed if both its operands are signed.
+      bool arith_is_signed = lsig->get_signed() && rsig->get_signed();
 
       unsigned rwidth = lwidth;
       if (rwidth == 0) {
@@ -1079,9 +1071,80 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 	// Make a signal to carry the output from the multiply.
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, rwidth);
-      osig->data_type(data_type);
+      osig->data_type( lsig->data_type() );
       osig->local_flag(true);
       connect(mult->pin_Result(), osig->pin(0));
+
+      return osig;
+}
+
+NetNet* PEBinary::elaborate_net_pow_(Design*des, NetScope*scope,
+				       unsigned lwidth,
+				       const NetExpr* rise,
+				       const NetExpr* fall,
+				       const NetExpr* decay) const
+{
+      NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0);
+      if (lsig == 0) return 0;
+      NetNet*rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
+      if (rsig == 0) return 0;
+
+	/* The arguments of a power must have the same type. */
+      if (lsig->data_type() != rsig->data_type()) {
+	    cerr << get_fileline() << ": error: Arguments of power "
+		 << "have different data types." << endl;
+	    cerr << get_fileline() << ":      : Left argument is "
+		 << lsig->data_type() << ", right argument is "
+		 << rsig->data_type() << "." << endl;
+	    des->errors += 1;
+      }
+
+        /* For now we only support real values. */
+      if (lsig->data_type() != IVL_VT_REAL) {
+	    cerr << get_fileline() << ": sorry: Bit based power (**) is "
+		 << "currently unsupported in continuous assignments." << endl;
+	    return 0;
+      }
+
+	// The power is signed if both its operands are signed.
+      bool arith_is_signed = lsig->get_signed() && rsig->get_signed();
+
+      unsigned rwidth = lwidth;
+      if (rwidth == 0) {
+	      /* Reals are always 1 wide and lsig/rsig types match here. */
+	    if (lsig->data_type() == IVL_VT_REAL) {
+		  rwidth = 1;
+		  lwidth = 1;
+	    } else {
+	      /* Nothing for now. Need integer value.*/
+	    }
+      }
+
+      if (arith_is_signed) {
+	    lsig = pad_to_width_signed(des, lsig, rwidth);
+	    rsig = pad_to_width_signed(des, rsig, rwidth);
+      }
+
+      NetPow*powr = new NetPow(scope, scope->local_symbol(), rwidth,
+			       lsig->vector_width(),
+			       rsig->vector_width());
+      powr->set_line(*this);
+      powr->rise_time(rise);
+      powr->fall_time(fall);
+      powr->decay_time(decay);
+      des->add_node(powr);
+
+      powr->set_signed( arith_is_signed );
+
+      connect(powr->pin_DataA(), lsig->pin(0));
+      connect(powr->pin_DataB(), rsig->pin(0));
+
+	// Make a signal to carry the output from the power.
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::IMPLICIT, rwidth);
+      osig->data_type( lsig->data_type() );
+      osig->local_flag(true);
+      connect(powr->pin_Result(), osig->pin(0));
 
       return osig;
 }
@@ -1100,7 +1163,6 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 
       bool right_flag  =  op_ == 'r' || op_ == 'R';
       bool signed_flag =  op_ == 'R';
-      ivl_variable_type_t data_type = lsig->data_type();
 
 	/* Handle the special case of a constant shift amount. There
 	   is no reason in this case to create a gate at all, just
@@ -1121,7 +1183,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 		 result that I return from this function. */
 	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, lwidth);
-	    osig->data_type( data_type );
+	    osig->data_type( lsig->data_type() );
 	    osig->local_flag(true);
 
 
@@ -1150,7 +1212,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 
 	    NetNet*zero = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, pad_width);
-	    zero->data_type( data_type );
+	    zero->data_type( lsig->data_type() );
 	    zero->local_flag(true);
 	    zero->set_line(*this);
 
@@ -1167,7 +1229,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 		  des->add_node(sign_pad);
 		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 					  NetNet::WIRE, 1);
-		  tmp->data_type( data_type );
+		  tmp->data_type( lsig->data_type() );
 		  tmp->local_flag(true);
 		  tmp->set_line(*this);
 		  connect(sign_bit->pin(0), tmp->pin(0));
@@ -1238,7 +1300,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 		 input) */
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, part_width);
-	    tmp->data_type( data_type );
+	    tmp->data_type( lsig->data_type() );
 	    tmp->local_flag(true);
 	    tmp->set_line(*this);
 	    connect(part->pin(0), tmp->pin(0));
@@ -1268,7 +1330,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, lwidth);
-      osig->data_type( data_type );
+      osig->data_type( lsig->data_type() );
       osig->local_flag(true);
       osig->set_signed(signed_flag);
 

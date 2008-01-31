@@ -678,6 +678,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_SUB:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_MUX:
+	  case IVL_LPM_POW:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_UFUNC:
@@ -1704,6 +1705,12 @@ static void draw_lpm_add(ivl_lpm_t net)
 	    else
 		  type = "mod";
 	    break;
+	  case IVL_LPM_POW:
+	    if (dto == IVL_VT_REAL)
+		  type = "pow.r";
+	    else
+		  assert(0);  /* Not supported for bit based signals, */
+	    break;
 	  default:
 	    assert(0);
       }
@@ -2290,6 +2297,7 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
+	  case IVL_LPM_POW:
 	    draw_lpm_add(net);
 	    return;
 
@@ -2477,4 +2485,3 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       ivl_scope_children(net, (ivl_scope_f*) draw_scope, net);
       return 0;
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.35 2005/07/07 16:22:49 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -80,6 +77,10 @@ void functor_t::lpm_mult(class Design*, class NetMult*)
 }
 
 void functor_t::lpm_mux(class Design*, class NetMux*)
+{
+}
+
+void functor_t::lpm_pow(class Design*, class NetPow*)
 {
 }
 
@@ -223,6 +224,11 @@ void NetMux::functor_node(Design*des, functor_t*fun)
       fun->lpm_mux(des, this);
 }
 
+void NetPow::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_pow(des, this);
+}
+
 void NetSignExtend::functor_node(Design*des, functor_t*fun)
 {
       fun->sign_extend(des, this);
@@ -291,57 +297,3 @@ int proc_match_t::event_wait(NetEvWait*)
 {
       return 0;
 }
-
-/*
- * $Log: functor.cc,v $
- * Revision 1.35  2005/07/07 16:22:49  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.34  2005/05/24 01:44:27  steve
- *  Do sign extension of structuran nets.
- *
- * Revision 1.33  2005/02/03 04:56:20  steve
- *  laborate reduction gates into LPM_RED_ nodes.
- *
- * Revision 1.32  2004/10/04 01:10:53  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.31  2002/08/16 05:18:27  steve
- *  Fix intermix of node functors and node delete.
- *
- * Revision 1.30  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.29  2002/08/10 22:07:38  steve
- *  Remove useless error messages.
- *
- * Revision 1.28  2002/06/05 03:44:25  steve
- *  Add support for memory words in l-value of
- *  non-blocking assignments, and remove the special
- *  NetAssignMem_ and NetAssignMemNB classes.
- *
- * Revision 1.27  2002/06/04 05:38:44  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.26  2001/10/19 21:53:24  steve
- *  Support multiple root modules (Philip Blundell)
- *
- * Revision 1.25  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.24  2000/11/19 20:48:30  steve
- *  Fix cases where signal iteration might die early.
- *
- * Revision 1.23  2000/11/18 04:53:04  steve
- *  Watch out in functor, it may delete the last signal.
- *
- * Revision 1.22  2000/09/17 21:26:15  steve
- *  Add support for modulus (Eric Aardoom)
- *
- * Revision 1.21  2000/08/01 02:48:41  steve
- *  Support <= in synthesis of DFF and ram devices.
- */
-

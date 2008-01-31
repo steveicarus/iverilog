@@ -1,7 +1,7 @@
 #ifndef __functor_H
 #define __functor_H
 /*
- * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.23 2005/07/07 16:22:49 steve Exp $"
-#endif
 
 /*
  * The functor is an object that can be applied to a design to
@@ -81,6 +78,9 @@ struct functor_t {
 	/* This method is called for each MUX. */
       virtual void lpm_mux(class Design*des, class NetMux*);
 
+	/* This method is called for each power. */
+      virtual void lpm_pow(class Design*des, class NetPow*);
+
 	/* This method is called for each unary reduction gate. */
       virtual void lpm_ureduce(class Design*des, class NetUReduce*);
 
@@ -97,44 +97,4 @@ struct proc_match_t {
       virtual int block(class NetBlock*);
 };
 
-
-/*
- * $Log: functor.h,v $
- * Revision 1.23  2005/07/07 16:22:49  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.22  2005/05/24 01:44:27  steve
- *  Do sign extension of structuran nets.
- *
- * Revision 1.21  2005/02/03 04:56:20  steve
- *  laborate reduction gates into LPM_RED_ nodes.
- *
- * Revision 1.20  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.19  2002/06/05 03:44:25  steve
- *  Add support for memory words in l-value of
- *  non-blocking assignments, and remove the special
- *  NetAssignMem_ and NetAssignMemNB classes.
- *
- * Revision 1.18  2002/06/04 05:38:44  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.17  2000/09/17 21:26:15  steve
- *  Add support for modulus (Eric Aardoom)
- *
- * Revision 1.16  2000/08/01 02:48:42  steve
- *  Support <= in synthesis of DFF and ram devices.
- *
- * Revision 1.15  2000/07/16 04:56:07  steve
- *  Handle some edge cases during node scans.
- *
- * Revision 1.14  2000/07/15 05:13:44  steve
- *  Detect muxing Vz as a bufufN.
- *
- * Revision 1.13  2000/04/20 00:28:03  steve
- *  Catch some simple identity compareoptimizations.
- */
 #endif

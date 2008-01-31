@@ -245,6 +245,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_PART_BI= 28, /* part select: bi-directional (part on 0) */
       IVL_LPM_PART_VP= 15, /* part select: vector to part */
       IVL_LPM_PART_PV= 17, /* part select: part written to vector */
+      IVL_LPM_POW    = 31,
       IVL_LPM_RE_AND = 20,
       IVL_LPM_RE_NAND= 21,
       IVL_LPM_RE_NOR = 22,
@@ -947,6 +948,16 @@ extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
  * Multiply may be signed. If so, the output should be sign extended
  * to fill in its result.
  *
+ * - Power (IVL_LPM_POWR)
+ * The power takes two inputs and generates an output. Unlike other
+ * arithmetic nodes, the width only refers to the output. The inputs
+ * have independent widths, to reflect the arithmetic truth that the
+ * width of a general power is the XXXX of the widths of the
+ * inputs.
+ *
+ * Power may be signed. If so, the output should be sign extended
+ * to fill in its result.
+ *
  * - Part Select (IVL_LPM_PART_VP and IVL_LPM_PART_PV)
  * There are two part select devices, one that extracts a part from a
  * vector, and another that writes a part of a vector. The _VP is
@@ -1113,12 +1124,12 @@ extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
   /* IVL_LPM_FF */
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
   /* IVL_LPM_ADD IVL_LPM_CONCAT IVL_LPM_FF IVL_LPM_PART IVL_LPM_MULT
-     IVL_LPM_MUX IVL_LPM_SHIFTL IVL_LPM_SHIFTR IVL_LPM_SUB
+     IVL_LPM_MUX IVL_LPM_POWR IVL_LPM_SHIFTL IVL_LPM_SHIFTR IVL_LPM_SUB
      IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_SUB */
+  /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_POWR IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_PART
+  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_PART IVL_LPM_POWR
      IVL_LPM_SUB IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_MUX */

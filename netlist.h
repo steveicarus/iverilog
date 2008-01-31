@@ -1,7 +1,7 @@
 #ifndef __netlist_H
 #define __netlist_H
 /*
- * Copyright (c) 1998-2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.380 2007/06/02 03:42:13 steve Exp $"
-#endif
 
 /*
  * The netlist types, as described in this header file, are intended
@@ -980,6 +977,51 @@ class NetMux  : public NetNode {
       unsigned width_;
       unsigned size_;
       unsigned swidth_;
+};
+
+
+/*
+ * This class implements a basic LPM_POW combinational power. It
+ * is used as a structural representation of the ** operator. The
+ * device has inputs A and B and output Result all with independent
+ * widths.
+ *
+ * NOTE: Check this width thing. I think that the independence of the
+ * widths is not necessary or even useful.
+ */
+class NetPow  : public NetNode {
+
+    public:
+      NetPow(NetScope*sc, perm_string n, unsigned width,
+	      unsigned wa, unsigned wb);
+      ~NetPow();
+
+      bool get_signed() const;
+      void set_signed(bool);
+
+	// Get the width of the device bussed inputs. There are these
+	// parameterized widths:
+      unsigned width_r() const; // Result
+      unsigned width_a() const; // DataA
+      unsigned width_b() const; // DataB
+
+      Link& pin_DataA();
+      Link& pin_DataB();
+      Link& pin_Result();
+
+      const Link& pin_DataA() const;
+      const Link& pin_DataB() const;
+      const Link& pin_Result() const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+      virtual void functor_node(Design*des, functor_t*fun);
+
+    private:
+      bool signed_;
+      unsigned width_r_;
+      unsigned width_a_;
+      unsigned width_b_;
 };
 
 

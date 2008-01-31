@@ -26,6 +26,7 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+# include  <math.h>
 
 vvp_arith_::vvp_arith_(unsigned wid)
 : wid_(wid), x_val_(wid)
@@ -770,6 +771,23 @@ void vvp_arith_mult_real::recv_real(vvp_net_ptr_t ptr, double bit)
       vvp_send_real(ptr.ptr()->out, val);
 }
 
+/* Real power. */
+vvp_arith_pow_real::vvp_arith_pow_real()
+{
+}
+
+vvp_arith_pow_real::~vvp_arith_pow_real()
+{
+}
+
+void vvp_arith_pow_real::recv_real(vvp_net_ptr_t ptr, double bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      double val = pow(op_a_, op_b_);
+      vvp_send_real(ptr.ptr()->out, val);
+}
+
 /* Real division. */
 vvp_arith_div_real::vvp_arith_div_real()
 {
@@ -884,4 +902,3 @@ void vvp_cmp_gt_real::recv_real(vvp_net_ptr_t ptr, const double bit)
 
       vvp_send_vec4(ptr.ptr()->out, res);
 }
-

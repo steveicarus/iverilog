@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.176 2007/06/02 03:42:12 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -299,6 +296,13 @@ void NetDivide::dump_node(ostream&o, unsigned ind) const
 void NetMult::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_MULT (NetMult): " << name() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetPow::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "LPM_POW (NetPow): " << name() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -1232,4 +1236,3 @@ void Design::dump(ostream&o) const
 	    idx->dump(o, 0);
 
 }
-

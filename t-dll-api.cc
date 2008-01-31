@@ -868,6 +868,7 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
+	  case IVL_LPM_POW:
 	  case IVL_LPM_SUB:
 	    assert(idx <= 1);
 	    if (idx == 0)
@@ -948,6 +949,7 @@ extern "C" ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
+	  case IVL_LPM_POW:
 	  case IVL_LPM_SUB:
 	    assert(idx == 0);
 	    return net->u_.arith.b;
@@ -998,6 +1000,7 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
+	  case IVL_LPM_POW:
 	  case IVL_LPM_SUB:
 	    assert(idx == 0);
 	    return net->u_.arith.q;
@@ -1119,6 +1122,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
+	  case IVL_LPM_POW:
 	  case IVL_LPM_SUB:
 	    return net->u_.arith.signed_flag;
 	  case IVL_LPM_RE_AND:
@@ -2073,4 +2077,3 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
       return 0;
 }
-

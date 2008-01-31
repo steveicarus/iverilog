@@ -239,6 +239,14 @@ class vvp_arith_mult_real : public vvp_arith_real_ {
       void recv_real(vvp_net_ptr_t ptr, double bit);
 };
 
+class vvp_arith_pow_real : public vvp_arith_real_ {
+
+    public:
+      explicit vvp_arith_pow_real();
+      ~vvp_arith_pow_real();
+      void recv_real(vvp_net_ptr_t ptr, double bit);
+};
+
 class vvp_arith_sub_real : public vvp_arith_real_ {
 
     public:

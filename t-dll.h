@@ -79,6 +79,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_modulo(const NetModulo*);
       void lpm_mult(const NetMult*);
       void lpm_mux(const NetMux*);
+      void lpm_pow(const NetPow*);
       bool concat(const NetConcat*);
       bool part_select(const NetPartSelect*);
       bool replicate(const NetReplicate*);

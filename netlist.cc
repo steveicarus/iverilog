@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1557,6 +1557,78 @@ const Link& NetMult::pin_DataB() const
       return pin(2);
 }
 
+NetPow::NetPow(NetScope*sc, perm_string n, unsigned wr,
+		 unsigned wa, unsigned wb)
+: NetNode(sc, n, 3),
+  signed_(false), width_r_(wr), width_a_(wa), width_b_(wb)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("Result"), 0);
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("DataA"), 0);
+      pin(2).set_dir(Link::INPUT);
+      pin(2).set_name(perm_string::literal("DataB"), 0);
+}
+
+NetPow::~NetPow()
+{
+}
+
+void NetPow::set_signed(bool flag)
+{
+      signed_ = flag;
+}
+
+bool NetPow::get_signed() const
+{
+      return signed_;
+}
+
+unsigned NetPow::width_r() const
+{
+      return width_r_;
+}
+
+unsigned NetPow::width_a() const
+{
+      return width_a_;
+}
+
+unsigned NetPow::width_b() const
+{
+      return width_b_;
+}
+
+Link& NetPow::pin_Result()
+{
+      return pin(0);
+}
+
+const Link& NetPow::pin_Result() const
+{
+      return pin(0);
+}
+
+Link& NetPow::pin_DataA()
+{
+      return pin(1);
+}
+
+const Link& NetPow::pin_DataA() const
+{
+      return pin(1);
+}
+
+Link& NetPow::pin_DataB()
+{
+      return pin(2);
+}
+
+const Link& NetPow::pin_DataB() const
+{
+      return pin(2);
+}
+
 /*
  * The NetMux class represents an LPM_MUX device. The pinout is assigned
  * like so:
@@ -2339,157 +2411,3 @@ const NetProc*NetTaskDef::proc() const
 {
       return proc_;
 }
-
-/*
- * $Log: netlist.cc,v $
- * Revision 1.258  2007/06/02 03:42:13  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.257  2007/04/02 01:12:34  steve
- *  Seperate arrayness from word count
- *
- * Revision 1.256  2007/03/02 06:13:22  steve
- *  Add support for edge sensitive spec paths.
- *
- * Revision 1.255  2007/03/01 06:19:38  steve
- *  Add support for conditional specify delay paths.
- *
- * Revision 1.254  2007/02/20 05:58:36  steve
- *  Handle unary minus of real valued expressions.
- *
- * Revision 1.253  2007/02/14 05:59:46  steve
- *  Handle type of ternary expressions properly.
- *
- * Revision 1.252  2007/01/19 04:25:37  steve
- *  Fix missing passive setting for array word pins.
- *
- * Revision 1.251  2007/01/16 05:44:15  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.250  2006/11/10 04:54:26  steve
- *  Add test_width methods for PETernary and PEString.
- *
- * Revision 1.249  2006/09/23 04:57:19  steve
- *  Basic support for specify timing.
- *
- * Revision 1.248  2005/09/14 02:53:14  steve
- *  Support bool expressions and compares handle them optimally.
- *
- * Revision 1.247  2005/08/06 17:58:16  steve
- *  Implement bi-directional part selects.
- *
- * Revision 1.246  2005/07/11 16:56:50  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.245  2005/07/07 16:22:49  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.244  2005/05/24 01:44:28  steve
- *  Do sign extension of structuran nets.
- *
- * Revision 1.243  2005/05/08 23:44:08  steve
- *  Add support for variable part select.
- *
- * Revision 1.242  2005/04/24 23:44:02  steve
- *  Update DFF support to new data flow.
- *
- * Revision 1.241  2005/04/08 04:51:16  steve
- *  All memory addresses are signed.
- *
- * Revision 1.240  2005/04/06 05:29:08  steve
- *  Rework NetRamDq and IVL_LPM_RAM nodes.
- *
- * Revision 1.239  2005/03/09 05:52:04  steve
- *  Handle case inequality in netlists.
- *
- * Revision 1.238  2005/02/19 02:43:38  steve
- *  Support shifts and divide.
- *
- * Revision 1.237  2005/02/12 06:25:40  steve
- *  Restructure NetMux devices to pass vectors.
- *  Generate NetMux devices from ternary expressions,
- *  Reduce NetMux devices to bufif when appropriate.
- *
- * Revision 1.236  2005/02/08 00:12:36  steve
- *  Add the NetRepeat node, and code generator support.
- *
- * Revision 1.235  2005/02/03 04:56:20  steve
- *  laborate reduction gates into LPM_RED_ nodes.
- *
- * Revision 1.234  2005/01/28 05:39:33  steve
- *  Simplified NetMult and IVL_LPM_MULT.
- *
- * Revision 1.233  2005/01/24 05:28:30  steve
- *  Remove the NetEBitSel and combine all bit/part select
- *  behavior into the NetESelect node and IVL_EX_SELECT
- *  ivl_target expression type.
- *
- * Revision 1.232  2005/01/22 18:16:01  steve
- *  Remove obsolete NetSubnet class.
- *
- * Revision 1.231  2005/01/22 01:06:55  steve
- *  Change case compare from logic to an LPM node.
- *
- * Revision 1.230  2005/01/16 04:20:32  steve
- *  Implement LPM_COMPARE nodes as two-input vector functors.
- *
- * Revision 1.229  2005/01/09 20:16:01  steve
- *  Use PartSelect/PV and VP to handle part selects through ports.
- *
- * Revision 1.228  2004/12/29 23:55:43  steve
- *  Unify elaboration of l-values for all proceedural assignments,
- *  including assing, cassign and force.
- *
- *  Generate NetConcat devices for gate outputs that feed into a
- *  vector results. Use this to hande gate arrays. Also let gate
- *  arrays handle vectors of gates when the outputs allow for it.
- *
- * Revision 1.227  2004/12/11 02:31:26  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.226  2004/10/04 01:10:54  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.225  2004/06/30 02:16:26  steve
- *  Implement signed divide and signed right shift in nets.
- *
- * Revision 1.224  2004/06/13 04:56:54  steve
- *  Add support for the default_nettype directive.
- *
- * Revision 1.223  2004/05/31 23:34:37  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.222  2004/02/20 06:22:56  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.221  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.220  2003/11/10 19:44:30  steve
- *  Fix return value warnings.
- *
- * Revision 1.219  2003/09/03 23:32:10  steve
- *  Oops, missing pin_Sset implementation.
- *
- * Revision 1.218  2003/08/15 02:23:52  steve
- *  Add synthesis support for synchronous reset.
- *
- * Revision 1.217  2003/07/05 20:42:08  steve
- *  Fix some enumeration warnings.
- *
- * Revision 1.216  2003/06/18 03:55:18  steve
- *  Add arithmetic shift operators.
- *
- * Revision 1.215  2003/05/01 01:13:57  steve
- *  More complete bit range internal error message,
- *  Better test of part select ranges on non-zero
- *  signal ranges.
- */
-

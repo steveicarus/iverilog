@@ -983,6 +983,18 @@ void compile_arith_mult_r(char*label, unsigned argc, struct symb_s*argv)
       make_arith(arith, label, argc, argv);
 }
 
+void compile_arith_pow_r(char*label, unsigned argc, struct symb_s*argv)
+{
+      if (argc != 2) {
+	    fprintf(stderr, "%s .arith/pow.r has wrong number of symbols\n", label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_real_ *arith = new vvp_arith_pow_real;
+      make_arith(arith, label, argc, argv);
+}
+
 void compile_arith_sub(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
@@ -1788,4 +1800,3 @@ void compile_param_string(char*label, char*name, char*value)
 
       free(label);
 }
-

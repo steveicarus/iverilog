@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2007 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2008 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -135,6 +135,13 @@ void target_t::lpm_mux(const NetMux*)
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetMux." << endl;
 }
+
+void target_t::lpm_pow(const NetPow*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetPow." << endl;
+}
+
 bool target_t::concat(const NetConcat*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
@@ -423,203 +430,3 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
 	    "unhandled expr_binary: " <<*ex  << endl;
 }
-
-/*
- * $Log: target.cc,v $
- * Revision 1.81  2007/06/02 03:42:13  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.80  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.79  2006/11/10 05:44:45  steve
- *  Process delay paths in second path over signals.
- *
- * Revision 1.78  2006/06/18 04:15:50  steve
- *  Add support for system functions in continuous assignments.
- *
- * Revision 1.77  2005/07/11 16:56:51  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.76  2005/07/07 16:22:49  steve
- *  Generalize signals to carry types.
- *
- * Revision 1.75  2005/05/24 01:44:28  steve
- *  Do sign extension of structuran nets.
- *
- * Revision 1.74  2005/02/08 00:12:36  steve
- *  Add the NetRepeat node, and code generator support.
- *
- * Revision 1.73  2005/02/03 04:56:21  steve
- *  laborate reduction gates into LPM_RED_ nodes.
- *
- * Revision 1.72  2005/01/24 05:28:31  steve
- *  Remove the NetEBitSel and combine all bit/part select
- *  behavior into the NetESelect node and IVL_EX_SELECT
- *  ivl_target expression type.
- *
- * Revision 1.71  2004/12/29 23:55:43  steve
- *  Unify elaboration of l-values for all proceedural assignments,
- *  including assing, cassign and force.
- *
- *  Generate NetConcat devices for gate outputs that feed into a
- *  vector results. Use this to hande gate arrays. Also let gate
- *  arrays handle vectors of gates when the outputs allow for it.
- *
- * Revision 1.70  2004/12/11 02:31:28  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.69  2004/05/31 23:34:39  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.68  2003/05/30 02:55:32  steve
- *  Support parameters in real expressions and
- *  as real expressions, and fix multiply and
- *  divide with real results.
- *
- * Revision 1.67  2003/04/22 04:48:30  steve
- *  Support event names as expressions elements.
- *
- * Revision 1.66  2003/03/10 23:40:54  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.65  2003/01/30 16:23:08  steve
- *  Spelling fixes.
- *
- * Revision 1.64  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.63  2002/08/12 01:35:01  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.62  2002/06/05 03:44:25  steve
- *  Add support for memory words in l-value of
- *  non-blocking assignments, and remove the special
- *  NetAssignMem_ and NetAssignMemNB classes.
- *
- * Revision 1.61  2002/06/04 05:38:44  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.60  2002/03/09 02:10:22  steve
- *  Add the NetUserFunc netlist node.
- *
- * Revision 1.59  2002/01/28 00:52:41  steve
- *  Add support for bit select of parameters.
- *  This leads to a NetESelect node and the
- *  vvp code generator to support that.
- *
- * Revision 1.58  2002/01/19 19:02:08  steve
- *  Pass back target errors processing conditionals.
- *
- * Revision 1.57  2001/08/25 23:50:03  steve
- *  Change the NetAssign_ class to refer to the signal
- *  instead of link into the netlist. This is faster
- *  and uses less space. Make the NetAssignNB carry
- *  the delays instead of the NetAssign_ lval objects.
- *
- *  Change the vvp code generator to support multiple
- *  l-values, i.e. concatenations of part selects.
- *
- * Revision 1.56  2001/07/27 04:51:44  steve
- *  Handle part select expressions as variants of
- *  NetESignal/IVL_EX_SIGNAL objects, instead of
- *  creating new and useless temporary signals.
- *
- * Revision 1.55  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.54  2001/06/27 18:34:43  steve
- *  Report line of unsupported cassign.
- *
- * Revision 1.53  2001/04/22 23:09:46  steve
- *  More UDP consolidation from Stephan Boettcher.
- *
- * Revision 1.52  2001/04/06 02:28:02  steve
- *  Generate vvp code for functions with ports.
- *
- * Revision 1.51  2001/04/02 02:28:13  steve
- *  Generate code for task calls.
- *
- * Revision 1.50  2001/03/27 03:31:06  steve
- *  Support error code from target_t::end_design method.
- *
- * Revision 1.49  2000/09/26 01:35:42  steve
- *  Remove the obsolete NetEIdent class.
- *
- * Revision 1.48  2000/09/17 21:26:16  steve
- *  Add support for modulus (Eric Aardoom)
- *
- * Revision 1.47  2000/09/03 17:57:53  steve
- *  Slightly more helpful warning.
- *
- * Revision 1.46  2000/09/02 20:54:21  steve
- *  Rearrange NetAssign to make NetAssign_ separate.
- *
- * Revision 1.45  2000/08/27 15:51:51  steve
- *  t-dll iterates signals, and passes them to the
- *  target module.
- *
- *  Some of NetObj should return char*, not string.
- *
- * Revision 1.44  2000/08/14 04:39:57  steve
- *  add th t-dll functions for net_const, net_bufz and processes.
- *
- * Revision 1.43  2000/08/09 03:43:45  steve
- *  Move all file manipulation out of target class.
- *
- * Revision 1.42  2000/08/08 01:50:42  steve
- *  target methods need not take a file stream.
- *
- * Revision 1.41  2000/07/29 16:21:08  steve
- *  Report code generation errors through proc_delay.
- *
- * Revision 1.40  2000/07/27 05:13:44  steve
- *  Support elaboration of disable statements.
- *
- * Revision 1.39  2000/05/11 23:37:27  steve
- *  Add support for procedural continuous assignment.
- *
- * Revision 1.38  2000/05/04 03:37:59  steve
- *  Add infrastructure for system functions, move
- *  $time to that structure and add $random.
- *
- * Revision 1.37  2000/04/23 03:45:24  steve
- *  Add support for the procedural release statement.
- *
- * Revision 1.36  2000/04/22 04:20:19  steve
- *  Add support for force assignment.
- *
- * Revision 1.35  2000/04/12 04:23:58  steve
- *  Named events really should be expressed with PEIdent
- *  objects in the pform,
- *
- *  Handle named events within the mix of net events
- *  and edges. As a unified lot they get caught together.
- *  wait statements are broken into more complex statements
- *  that include a conditional.
- *
- *  Do not generate NetPEvent or NetNEvent objects in
- *  elaboration. NetEvent, NetEvWait and NetEvProbe
- *  take over those functions in the netlist.
- *
- * Revision 1.34  2000/04/10 05:26:06  steve
- *  All events now use the NetEvent class.
- *
- * Revision 1.33  2000/04/04 03:20:15  steve
- *  Simulate named event trigger and waits.
- *
- * Revision 1.32  2000/04/01 21:40:23  steve
- *  Add support for integer division.
- */
-
