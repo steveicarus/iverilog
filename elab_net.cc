@@ -98,8 +98,6 @@ NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
 	  case 'r': // >>
 	  case 'R': // >>>
 	    return elaborate_net_shift_(des, scope, width, rise, fall, decay);
-
-	    return 0;
       }
 
         /* This is an undefined operator, but we may as well check the
@@ -208,6 +206,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 		 << lsig->data_type() << ", right argument is "
 		 << rsig->data_type() << "." << endl;
 	    des->errors += 1;
+	    return 0;
       }
 
 	// Make the adder as wide as the widest operand
@@ -282,6 +281,24 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 		 << "operands of " << op_ << " do not match: "
 		 << lsig->data_type() << " vs. " << rsig->data_type()
 		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+        /* The types match here and real is not supported. */
+      if (lsig->data_type() == IVL_VT_REAL) {
+	    char *type;
+	    switch (op_) {
+	        case '^': type = "^";  break;  // XOR
+	        case 'X': type = "~^"; break;  // XNOR
+	        case '&': type = "&";  break;  // AND
+	        case 'A': type = "~&"; break;  // NAND (~&)
+	        case '|': type = "|";  break;  // Bitwise OR
+	        case 'O': type = "~|"; break;  // Bitwise NOR
+	        default: assert(0);
+	    }
+	    cerr << get_fileline() << ": error: " << type
+	         << " operator may not have REAL operands." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -765,6 +782,7 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 		 << lsig->data_type() << ", right argument is "
 		 << rsig->data_type() << "." << endl;
 	    des->errors += 1;
+	    return 0;
       }
 
 	// Create a device with the calculated dimensions.
@@ -826,6 +844,7 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 		 << lsig->data_type() << ", right argument is "
 		 << rsig->data_type() << "." << endl;
 	    des->errors += 1;
+	    return 0;
       }
 
         /* The % operator does not support real arguments in baseline
@@ -834,6 +853,7 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 	    cerr << get_fileline() << ": error: Modulus operator may not "
 	    "have REAL operands." << endl;
 	    des->errors += 1;
+	    return 0;
       }
 
 	/* rwidth is result width. */
@@ -1040,6 +1060,7 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 		 << lsig->data_type() << ", right argument is "
 		 << rsig->data_type() << "." << endl;
 	    des->errors += 1;
+	    return 0;
       }
 
 	// The mult is signed if both its operands are signed.
@@ -1105,12 +1126,14 @@ NetNet* PEBinary::elaborate_net_pow_(Design*des, NetScope*scope,
 		 << lsig->data_type() << ", right argument is "
 		 << rsig->data_type() << "." << endl;
 	    des->errors += 1;
+	    return 0;
       }
 
         /* For now we only support real values. */
       if (lsig->data_type() != IVL_VT_REAL) {
 	    cerr << get_fileline() << ": sorry: Bit based power (**) is "
 		 << "currently unsupported in continuous assignments." << endl;
+	    des->errors += 1;
 	    return 0;
       }
 
@@ -1165,6 +1188,14 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 {
       NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0);
       if (lsig == 0) return 0;
+
+        /* Cannot shift a real value. */
+      if (lsig->data_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: shift operators "
+	            "cannot shift a real value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       if (lsig->vector_width() > lwidth)
 	    lwidth = lsig->vector_width();
@@ -1324,6 +1355,14 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 
       NetNet*rsig = right_->elaborate_net(des, scope, dwid, 0, 0, 0);
       if (rsig == 0) return 0;
+
+        /* You cannot shift a value by a real amount. */
+      if (rsig->data_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: shift operators "
+	            "cannot shift by a real value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
 	// Make the shift device itself, and the output
 	// NetNet. Connect the Result output pins to the osig signal
@@ -3503,11 +3542,23 @@ NetNet* PEUnary::elab_net_unary_real_(Design*des, NetScope*scope,
       sig->local_flag(true);
       sig->set_line(*this);
 
+      char *type=0;
+
       switch (op_) {
 
 	  default:
 	    cerr << get_fileline() << ": internal error: Unhandled UNARY "
 		 << op_ << " expression with real values." << endl;
+	    des->errors += 1;
+	    break;
+	  case '&': type = "&";   if(0){
+	  case 'A': type = "~&"; }if(0){
+	  case '|': type = "|";  }if(0){
+	  case 'N': type = "~|"; }if(0){
+	  case '^': type = "^";  }if(0){
+	  case 'X': type = "~^"; }
+	    cerr << get_fileline() << ": error: " << type
+	         << " reduction operator may not have a REAL operand." << endl;
 	    des->errors += 1;
 	    break;
 	  case '!':
