@@ -30,6 +30,26 @@
 # include  "ivl_assert.h"
 
 /*
+ * Human readable version of op_ used in NetEBinary and NetEUnary.
+ * XXX  This isn't a complete list, but it's enough to cover the
+ * restricted cases it is used for.
+ */
+static const char *human_readable_op(const char op_)
+{
+	const char *type;
+	switch (op_) {
+	        case '^': type = "^";  break;  // XOR
+	        case 'X': type = "~^"; break;  // XNOR
+	        case '&': type = "&";  break;  // AND
+	        case 'A': type = "~&"; break;  // NAND (~&)
+	        case '|': type = "|";  break;  // Bitwise OR
+	        case 'O': type = "~|"; break;  // Bitwise NOR
+		default: assert(0);
+	}
+	return type;
+}
+
+/*
  * This is a state flag that determines whether an elaborate_net must
  * report an error when it encounters an unsized number. Normally, it
  * is fine to make an unsized number as small as it can be, but there
@@ -287,17 +307,7 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 
         /* The types match here and real is not supported. */
       if (lsig->data_type() == IVL_VT_REAL) {
-	    char *type;
-	    switch (op_) {
-	        case '^': type = "^";  break;  // XOR
-	        case 'X': type = "~^"; break;  // XNOR
-	        case '&': type = "&";  break;  // AND
-	        case 'A': type = "~&"; break;  // NAND (~&)
-	        case '|': type = "|";  break;  // Bitwise OR
-	        case 'O': type = "~|"; break;  // Bitwise NOR
-	        default: assert(0);
-	    }
-	    cerr << get_fileline() << ": error: " << type
+	    cerr << get_fileline() << ": error: " << human_readable_op(op_)
 	         << " operator may not have REAL operands." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -3542,8 +3552,6 @@ NetNet* PEUnary::elab_net_unary_real_(Design*des, NetScope*scope,
       sig->local_flag(true);
       sig->set_line(*this);
 
-      char *type=0;
-
       switch (op_) {
 
 	  default:
@@ -3551,13 +3559,13 @@ NetNet* PEUnary::elab_net_unary_real_(Design*des, NetScope*scope,
 		 << op_ << " expression with real values." << endl;
 	    des->errors += 1;
 	    break;
-	  case '&': type = "&";   if(0){
-	  case 'A': type = "~&"; }if(0){
-	  case '|': type = "|";  }if(0){
-	  case 'N': type = "~|"; }if(0){
-	  case '^': type = "^";  }if(0){
-	  case 'X': type = "~^"; }
-	    cerr << get_fileline() << ": error: " << type
+	  case '&':
+	  case 'A':
+	  case '|':
+	  case 'N':
+	  case '^':
+	  case 'X':
+	    cerr << get_fileline() << ": error: " << human_readable_op(op_)
 	         << " reduction operator may not have a REAL operand." << endl;
 	    des->errors += 1;
 	    break;
