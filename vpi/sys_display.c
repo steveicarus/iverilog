@@ -148,7 +148,7 @@ static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
  * The fsize is the width of the field to use. Normally, this is -1 to
  * reflect the format string "%t". It may also be 0 for the format
  * string "%0t". This formatter also allows for the nonstandard use of
- * positive values to enforce a with to override the width given in
+ * positive values to enforce a width to override the width given in
  * the $timeformat system task.
  *
  * The value argument is the time value as a decimal string. There are
@@ -924,7 +924,7 @@ static PLI_INT32 sys_display_calltf(PLI_BYTE8*name)
  * passed to the calltf and puts them in to an array for safe
  * keeping. That array (and other bookkeeping) is passed, via the
  * struct_cb_info object, to the REadOnlySych function strobe_cb,
- * where it is use to perform the actual formatting and printing.
+ * where it is used to perform the actual formatting and printing.
  */
 
 static PLI_INT32 strobe_cb(p_cb_data cb)
@@ -1040,7 +1040,7 @@ static PLI_INT32 monitor_cb_2(p_cb_data cb)
 }
 
 /*
- * The monitor_cb_1 callback is called when an even occurs somewhere
+ * The monitor_cb_1 callback is called when an event occurs somewhere
  * in the simulation. All this function does is schedule the actual
  * display to occur in a ReadOnlySync callback. The monitor_scheduled
  * flag is used to allow only one monitor strobe to be scheduled.
@@ -1120,7 +1120,7 @@ static PLI_INT32 sys_monitor_calltf(PLI_BYTE8*name)
 		case vpiIntegerVar:
 		case vpiRealVar:
 		    /* Monitoring reg and net values involves setting
-		       a callback for value changes. pass the storage
+		       a callback for value changes. Pass the storage
 		       pointer for the callback itself as user_data so
 		       that the callback can refresh itself. */
 		  cb.user_data = (char*)(monitor_callbacks+idx);
@@ -1307,7 +1307,7 @@ static void get_time(char *rtn, const char *value, int prec,
 static void get_time_real(char *rtn, double value, int prec,
                           PLI_INT32 time_units)
 {
-  /* Scale the value if it's time units differ from the format units. */
+  /* Scale the value if its time units differ from the format units. */
   if (time_units != timeformat_info.units) {
     value *= pow(10.0, time_units - timeformat_info.units);
   }
@@ -1377,14 +1377,14 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
         } else {
           char *cp;
 
-          /* If a width was not given use a width of zero. */
+          /* If a width was not given, use a width of zero. */
           if (width == -1) width = 0;
           /* Strip the leading zeros. */
           cp = value.value.str;
           if (ld_zero == 1) {
             while (*cp == '0') cp++;
           }
-          /* If the (default buffer is too small make it big enough. */
+          /* If the default buffer is too small, make it big enough. */
           size = strlen(cp) + 1;
           if (size > max_size) result = realloc(result, size*sizeof(char));
 
@@ -1410,7 +1410,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           vpi_printf("WARNING: incompatible value for %s%s.\n", info->name,
                      fmtb);
         } else {
-          /* If a width was not given use a width of zero. */
+          /* If a width was not giveni, use a width of zero. */
           if (width == -1) width = 0;
           if (ljust == 0) sprintf(result, "%*c", width,
                                   value.value.str[strlen(value.value.str)-1]);
@@ -1438,7 +1438,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
         } else {
           char *tbuf;
 
-          /* If a width was not given use the default unless we have a
+          /* If a width was not given, use the default, unless we have a
            * leading zero (width of zero). */
           if (width == -1) {
             width = (ld_zero == 1) ? 0: vpi_get_dec_size(info->items[*idx]);
@@ -1450,7 +1450,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
             tbuf[0] = '+';
             strcpy(&tbuf[1], value.value.str);
           } else strcpy(&tbuf[0], value.value.str);
-          /* If the (default buffer is too small make it big enough. */
+          /* If the default buffer is too small make it big enough. */
           if (size > max_size) result = realloc(result, size*sizeof(char));
           if (ljust == 0) sprintf(result, "%*s", width, tbuf);
           else sprintf(result, "%-*s", width, tbuf);
@@ -1504,7 +1504,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
       if (plus != 0 || prec != -1) {
         vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
       }
-      /* If a width was not given use a width of zero. */
+      /* If a width was not given, use a width of zero. */
       if (width == -1) width = 0;
       if (ljust == 0) sprintf(result, "%*s", width,
                               vpi_get_str(vpiFullName, info->scope));
@@ -1528,9 +1528,9 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           vpi_printf("WARNING: incompatible value for %s%s.\n", info->name,
                      fmtb);
         } else {
-          /* If a width was not given use a width of zero. */
+          /* If a width was not given, use a width of zero. */
           if (width == -1) width = 0;
-          /* If the (default buffer is too small make it big enough. */
+          /* If the default buffer is too small make it big enough. */
           size = strlen(value.value.str) + 1;
           if (size > max_size) result = realloc(result, size*sizeof(char));
           if (ljust == 0) sprintf(result, "%*s", width, value.value.str);
@@ -1609,7 +1609,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
 
           veclen = (vpi_get(vpiSize, info->items[*idx])+31)/32;
           size = veclen * 4 + 1;
-          /* If the (default buffer is too small make it big enough. */
+          /* If the default buffer is too small, make it big enough. */
           if (size > max_size) result = realloc(result, size*sizeof(char));
           cp = result;
           for (word = 0; word < veclen; word += 1) {
@@ -1681,7 +1681,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
 
           veclen = (vpi_get(vpiSize, info->items[*idx])+31)/32;
           size = 2 * veclen * 4 + 1;
-          /* If the (default buffer is too small make it big enough. */
+          /* If the default buffer is too small, make it big enough. */
           if (size > max_size) result = realloc(result, size*sizeof(char));
           cp = result;
           for (word = 0; word < veclen; word += 1) {
