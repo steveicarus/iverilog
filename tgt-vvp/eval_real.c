@@ -91,6 +91,9 @@ static int draw_binary_real(ivl_expr_t exp)
 	      }
 	      break;
 #endif
+	  case 'p':
+	    fprintf(vvp_out, "    %%pow/wr %d, %d;\n", l, r);
+	    break;
 	  default:
 	    fprintf(stderr, "XXXX draw_binary_real(%c)\n",
 		    ivl_expr_opcode(exp));
@@ -438,4 +441,3 @@ int draw_eval_real(ivl_expr_t exp)
 
       return res;
 }
-

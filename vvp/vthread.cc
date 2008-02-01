@@ -3172,6 +3172,15 @@ bool of_NOR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_POW_WR(vthread_t thr, vvp_code_t cp)
+{
+      double l = thr->words[cp->bit_idx[0]].w_real;
+      double r = thr->words[cp->bit_idx[1]].w_real;
+      thr->words[cp->bit_idx[0]].w_real = pow(l, r);
+
+      return true;
+}
+
 /*
  * These implement the %release/net and %release/reg instructions. The
  * %release/net instruction applies to a net kind of functor by
@@ -3686,4 +3695,3 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
-
