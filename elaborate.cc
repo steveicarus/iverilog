@@ -270,7 +270,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	   generated NetNet. */
       NetNet*rval = pin(1)->elaborate_net(des, scope,
 					  lval->vector_width(),
-					  rise_time, fall_time, decay_time,
+					  0, 0, 0,
 					  drive0, drive1);
       if (rval == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate r-value: "
@@ -309,6 +309,12 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    osig->data_type(rval->data_type());
 	    connect(osig->pin(0), tmp->pin(0));
 	    rval = osig;
+      }
+
+	/* If there is a rise/fall/decay time, then attach that delay
+	   to the drivers for this net. */
+      if (rise_time || fall_time || decay_time) {
+	    rval->pin(0).drivers_delays(rise_time, fall_time, decay_time);
       }
 
       connect(lval->pin(0), rval->pin(0));

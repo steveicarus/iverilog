@@ -148,6 +148,9 @@ class Link {
       void set_dir(DIR d);
       DIR get_dir() const;
 
+	// Set the delay for all the drivers to this nexus.
+      void drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay);
+
 	// A link has a drive strength for 0 and 1 values. The drive0
 	// strength is for when the link has the value 0, and drive1
 	// strength is for when the link has a value 1.
@@ -254,6 +257,8 @@ class Nexus {
 
       const char* name() const;
       verinum::V get_init() const;
+
+      void drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay);
 
       Link*first_nlink();
       const Link* first_nlink()const;

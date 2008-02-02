@@ -279,8 +279,13 @@ void NetCompare::dump_node(ostream&o, unsigned ind) const
 void NetConcat::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "NetConcat: "
-	<< name()
-	<< " scope=" << scope_path(scope())
+	<< name();
+      if (rise_time())
+	    o << " #(" << *rise_time()
+	      << "," << *fall_time() << "," << *decay_time() << ")";
+      else
+	    o << " #(0,0,0)";
+      o << " scope=" << scope_path(scope())
 	<< " width=" << width_ << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
@@ -302,7 +307,10 @@ void NetMult::dump_node(ostream&o, unsigned ind) const
 
 void NetPow::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "LPM_POW (NetPow): " << name() << endl;
+      o << setw(ind) << "" << "LPM_POW (NetPow): " << name()
+	<< " scope=" << scope_path(scope())
+	<< " delay=(" << *rise_time() << "," << *fall_time() << ","
+	<<  *decay_time() << ")"  << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -457,7 +465,9 @@ void NetPartSelect::dump_node(ostream&o, unsigned ind) const
 	    break;
       }
       o << setw(ind) << "" << "NetPartSelect(" << pt << "): "
-	<< name() << " off=" << off_ << " wid=" << wid_ <<endl;
+	<< name() << " #(" << rise_time()
+	<< "," << fall_time() << "," << decay_time() << ") "
+	<< " off=" << off_ << " wid=" << wid_ <<endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }

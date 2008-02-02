@@ -101,6 +101,11 @@ Link::DIR Link::get_dir() const
       return dir_;
 }
 
+void Link::drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay)
+{
+      nexus_->drivers_delays(rise, fall, decay);
+}
+
 void Link::drive0(Link::strength_t str)
 {
       drive0_ = str;
@@ -243,6 +248,19 @@ verinum::V Nexus::get_init() const
       }
 
       return verinum::Vz;
+}
+
+void Nexus::drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay)
+{
+      for (Link*cur = list_ ; cur ; cur = cur->next_) {
+	    if (cur->get_dir() != Link::OUTPUT)
+		  continue;
+
+	    NetObj*obj = cur->get_obj();
+	    obj->rise_time(rise);
+	    obj->fall_time(fall);
+	    obj->decay_time(decay);
+      }
 }
 
 void Nexus::unlink(Link*that)
