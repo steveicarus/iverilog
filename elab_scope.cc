@@ -173,7 +173,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	    NetExpr*val = ex->elaborate_pexpr(des, scope);
 	    NetExpr*msb = 0;
 	    NetExpr*lsb = 0;
-	    bool signed_flag = false;
+	    bool signed_flag = (*cur).second.signed_flag;
 
 	      /* If the parameter declaration includes msb and lsb,
 		 then use them to calculate a width for the
@@ -184,10 +184,21 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 		  msb = (*cur).second.msb ->elaborate_pexpr(des, scope);
 		  assert(msb);
 		  lsb = (*cur).second.lsb ->elaborate_pexpr(des, scope);
-		  signed_flag = (*cur).second.signed_flag;
 	    }
 
-	    val->cast_signed(signed_flag);
+	    if (signed_flag) {
+		    /* If explicitly signed, then say so. */
+		  val->cast_signed(true);
+	    } else if ((*cur).second.msb) {
+		    /* If there is a range, then the signedness comes
+		       from the type and not the expression. */
+		  val->cast_signed(signed_flag);
+	    } else {
+		    /* otherwise, let the expression describe
+		       itself. */
+		  signed_flag = val->has_sign();
+	    }
+
 	    val = scope->set_parameter((*cur).first, val,
 				       msb, lsb, signed_flag);
 	    assert(val);
