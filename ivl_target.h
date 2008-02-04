@@ -948,7 +948,7 @@ extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
  * Multiply may be signed. If so, the output should be sign extended
  * to fill in its result.
  *
- * - Power (IVL_LPM_POWR)
+ * - Power (IVL_LPM_POW)
  * The power takes two inputs and generates an output. Unlike other
  * arithmetic nodes, the width only refers to the output. The inputs
  * have independent widths, to reflect the arithmetic truth that the
@@ -1124,12 +1124,12 @@ extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
   /* IVL_LPM_FF */
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
   /* IVL_LPM_ADD IVL_LPM_CONCAT IVL_LPM_FF IVL_LPM_PART IVL_LPM_MULT
-     IVL_LPM_MUX IVL_LPM_POWR IVL_LPM_SHIFTL IVL_LPM_SHIFTR IVL_LPM_SUB
+     IVL_LPM_MUX IVL_LPM_POW IVL_LPM_SHIFTL IVL_LPM_SHIFTR IVL_LPM_SUB
      IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_POWR IVL_LPM_SUB */
+  /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_POW IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_PART IVL_LPM_POWR
+  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_PART IVL_LPM_POW
      IVL_LPM_SUB IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_MUX */

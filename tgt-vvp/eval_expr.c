@@ -1233,6 +1233,10 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 		    lv.base, rv.base, wid);
 	    break;
 
+	  case 'p':
+	    assert(0);
+	    break;
+
 	  default:
 	    assert(0);
       }
@@ -1275,6 +1279,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 	  case '*':
 	  case '/':
 	  case '%':
+	  case 'p':
 	    rv = draw_binary_expr_arith(exp, wid);
 	    break;
 

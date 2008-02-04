@@ -185,6 +185,12 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 	  case 'p':
 	    tmp = new NetEBPow(op_, lp, rp);
 	    tmp->set_line(*this);
+	    if (tmp->expr_type() == IVL_VT_LOGIC) {
+		  cerr << get_fileline() << ": sorry: Power operator is not "
+		          "currently supported on unsigned bit based values."
+		       << endl;
+		  des->errors += 1;
+	    }
 	    break;
 
 	  case '*':
