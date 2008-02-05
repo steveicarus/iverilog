@@ -1234,7 +1234,8 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 	    break;
 
 	  case 'p':
-	    assert(0);
+	    fprintf(vvp_out, "    %%pow%s %u, %u, %u;\n", sign_string,
+		    lv.base, rv.base, wid);
 	    break;
 
 	  default:
@@ -2394,4 +2395,3 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 {
       return draw_eval_expr_wid(exp, ivl_expr_width(exp), stuff_ok_flag);
 }
-

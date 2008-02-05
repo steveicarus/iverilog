@@ -1050,6 +1050,11 @@ vvp_vector2_t::~vvp_vector2_t()
       if (vec_) delete[]vec_;
 }
 
+void vvp_vector2_t::trim()
+{
+      while (value(wid_-1) == 0 && wid_ > 1) wid_ -= 1;
+}
+
 unsigned vvp_vector2_t::size() const
 {
       return wid_;
@@ -2473,4 +2478,3 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
       else
 	    return BIT4_0;
 }
-

@@ -3172,6 +3172,77 @@ bool of_NOR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * Basic idea from "Introduction to Programming using SML" by
+ * Michael R. Hansen and Hans Rischel page 261 and "Seminumerical
+ * Algorithms, Third Edition" by Donald E. Knuth section 4.6.3.
+ */
+static vvp_vector2_t calc_uspow(vvp_vector2_t x, vvp_vector2_t y)
+{
+        /* If we have a zero exponent just return a 1 bit wide 1. */
+      if (y == vvp_vector2_t(0L, 1)) {
+	    return vvp_vector2_t(1L, 1);
+      }
+
+        /* Is the value odd? */
+      if (y.value(0) == 1) {
+	    y.set_bit(0, 0);  // A quick subtract by 1.
+	    vvp_vector2_t res = x * calc_uspow(x, y);
+	    res.trim();  // To keep the size under control trim extra zeros.
+	    return res;
+      }
+
+      y >>= 1;  // A fast divide by two. We know the LSB is zero.
+      vvp_vector2_t z = calc_uspow(x, y);
+      vvp_vector2_t res = z * z;
+      res.trim();  // To keep the size under control trim extra zeros.
+      return res;
+}
+
+bool of_POW(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+      unsigned idx = cp->bit_idx[0];
+      unsigned idy = cp->bit_idx[1];
+      unsigned wid = cp->number;
+      vvp_vector4_t xval = vthread_bits_to_vector(thr, idx, wid);
+      vvp_vector4_t yval = vthread_bits_to_vector(thr, idy, wid);
+
+        /* If we have an X or Z in the arguments return X. */
+      if (xval.has_xz() || yval.has_xz()) {
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
+	    return true;
+      }
+
+        /* To make the result more manageable trim off the extra bits. */
+      unsigned min_x_wid = wid;
+      while (xval.value(min_x_wid-1) == BIT4_0 && min_x_wid > 0) min_x_wid -= 1;
+      xval.resize(min_x_wid);
+      unsigned min_y_wid = wid;
+      while (yval.value(min_y_wid-1) == BIT4_0 && min_y_wid > 0) min_y_wid -= 1;
+      yval.resize(min_y_wid);
+
+
+      vvp_vector2_t result = calc_uspow(vvp_vector2_t(xval),
+                                        vvp_vector2_t(yval));
+
+        /* If the result is too small zero pad it. */
+      if (result.size() < wid) {
+	    for (unsigned idx = wid-1;  idx >= result.size();  idx -= 1)
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_0);
+	    wid = result.size();
+      }
+
+        /* Copy only what we need of the result. */
+      for (unsigned idx = 0;  idx < wid;  idx += 1)
+	    thr_put_bit(thr, cp->bit_idx[0]+idx,
+	                result.value(idx) ? BIT4_1 : BIT4_0);
+
+      return true;
+}
+
 bool of_POW_WR(vthread_t thr, vvp_code_t cp)
 {
       double l = thr->words[cp->bit_idx[0]].w_real;

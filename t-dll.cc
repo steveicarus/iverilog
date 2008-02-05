@@ -1783,6 +1783,7 @@ void dll_target::lpm_pow(const NetPow*net)
       assert(obj->scope);
 
       unsigned wid = net->width_r();
+      obj->u_.arith.signed_flag = net->get_signed()? 1 : 0;
 
       obj->width = wid;
 

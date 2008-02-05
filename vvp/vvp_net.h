@@ -307,6 +307,8 @@ class vvp_vector2_t {
       unsigned size() const;
       int value(unsigned idx) const;
       void set_bit(unsigned idx, int bit);
+	// Make the size just big enough to hold the first 1 bit.
+      void trim();
 
     private:
       enum { BITS_PER_WORD = 8 * sizeof(unsigned long) };

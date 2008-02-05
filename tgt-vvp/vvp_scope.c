@@ -1709,7 +1709,7 @@ static void draw_lpm_add(ivl_lpm_t net)
 	    if (dto == IVL_VT_REAL)
 		  type = "pow.r";
 	    else
-		  assert(0);  /* Not supported for bit based signals, */
+		  assert(0);  /* No support for bit based signals. */
 	    break;
 	  default:
 	    assert(0);

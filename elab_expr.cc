@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -185,12 +185,6 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 	  case 'p':
 	    tmp = new NetEBPow(op_, lp, rp);
 	    tmp->set_line(*this);
-	    if (tmp->expr_type() == IVL_VT_LOGIC) {
-		  cerr << get_fileline() << ": sorry: Power operator is not "
-		          "currently supported on unsigned bit based values."
-		       << endl;
-		  des->errors += 1;
-	    }
 	    break;
 
 	  case '*':

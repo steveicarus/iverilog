@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -979,7 +979,11 @@ NetExpr* NetEBPow::eval_tree(int prune_to_width)
       verinum lval = lc->value();
       verinum rval = rc->value();
 
-      return new NetEConst( pow(lval,rval) );
+      if (lc->has_sign() || rc->has_sign()) {
+	    return new NetEConst( pow(lval,rval) );
+      } else {
+	    return 0; // For now force this to the runtime.
+      }
 
 }
 
@@ -1634,4 +1638,3 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
 
       return new NetEConst(verinum(res, 1));
 }
-
