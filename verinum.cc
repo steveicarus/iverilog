@@ -940,7 +940,7 @@ verinum operator >> (const verinum&that, unsigned shift)
       return result;
 }
 
-static verinum unsigned_divide(verinum num, verinum den)
+static verinum unsigned_divide(verinum num, verinum den, bool signed_result)
 {
       unsigned nwid = num.len();
       while (nwid > 0 && (num.get(nwid-1) == verinum::V0))
@@ -956,7 +956,11 @@ static verinum unsigned_divide(verinum num, verinum den)
       den = den << (nwid-dwid);
 
       unsigned idx = nwid - dwid + 1;
-      verinum result (verinum::V0, idx);
+      verinum result (verinum::V0, signed_result ? idx + 1 : idx);
+      if (signed_result) {
+	    result.set(idx, verinum::V0);
+	    result.has_sign(true);
+      }
       while (idx > 0) {
 	    if (den <= num) {
 		  verinum dif = num - den;
@@ -986,12 +990,10 @@ static verinum unsigned_modulus(verinum num, verinum den)
       den = den << (nwid-dwid);
 
       unsigned idx = nwid - dwid + 1;
-      verinum result (verinum::V0, idx);
       while (idx > 0) {
 	    if (den <= num) {
 		  verinum dif = num - den;
 		  num = dif;
-		  result.set(idx-1, verinum::V1);
 	    }
 	    den = den >> 1;
 	    idx -= 1;
@@ -1047,20 +1049,21 @@ verinum operator / (const verinum&left, const verinum&right)
 	    } else {
 		  verinum use_left, use_right;
 		  verinum zero(verinum::V0, 1, false);
+		  zero.has_sign(true);
 		  bool negative = false;
 		  if (left < zero) {
 			use_left = zero - left;
-			negative ^= negative;
+			negative = !negative;
 		  } else {
 			use_left = left;
 		  }
 		  if (right < zero) {
 			use_right = zero - right;
-			negative ^= negative;
+			negative = !negative;
 		  } else {
 			use_right = right;
 		  }
-		  result = unsigned_divide(use_left, use_right);
+		  result = unsigned_divide(use_left, use_right, true);
 		  if (negative) result = zero - result;
 	    }
 
@@ -1078,7 +1081,7 @@ verinum operator / (const verinum&left, const verinum&right)
 		  }
 
 	    } else {
-		  result = unsigned_divide(left, right);
+		  result = unsigned_divide(left, right, false);
 	    }
       }
 
@@ -1112,27 +1115,38 @@ verinum operator % (const verinum&left, const verinum&right)
       result.has_sign(left.has_sign() || right.has_sign());
 
       if (result.has_sign()) {
-
-	      /* XXXX FIXME XXXX Use native unsigned division to do
-		 the work. This does not work if the result is too
-		 large for the native integer. */
-	    assert(use_len <= 8*sizeof(long));
-	    long l = left.as_long();
-	    long r = right.as_long();
-	    long v = l % r;
-	    for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
-		  result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
-		  v >>= 1;
+	    if (use_len <= 8*sizeof(long)) {
+		    /* Use native signed modulus to do the work. */
+		  long l = left.as_long();
+		  long r = right.as_long();
+		  long v = l % r;
+		  for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
+			result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
+			v >>= 1;
+		  }
+	    } else {
+		  verinum use_left, use_right;
+		  verinum zero(verinum::V0, 1, false);
+		  zero.has_sign(true);
+		  bool negative = false;
+		  if (left < zero) {
+			use_left = zero - left;
+			negative = true;
+		  } else {
+			use_left = left;
+		  }
+		  if (right < zero) {
+			use_right = zero - right;
+		  } else {
+			use_right = right;
+		  }
+		  result = unsigned_modulus(use_left, use_right);
+		  result.has_sign(true);
+		  if (negative) result = zero - result;
 	    }
-
       } else {
-
-	      /* Use native unsigned division, if possible, to do
-		 the work. This does not work if the result is too
-		 large for the native integer, so resort to a modulus
-		 function in that case. */
 	    if (use_len <= 8*sizeof(unsigned long)) {
-		  assert(use_len <= 8*sizeof(unsigned long));
+		    /* Use native unsigned modulus to do the work. */
 		  unsigned long l = left.as_ulong();
 		  unsigned long r = right.as_ulong();
 		  unsigned long v = l % r;
