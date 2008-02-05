@@ -979,12 +979,7 @@ NetExpr* NetEBPow::eval_tree(int prune_to_width)
       verinum lval = lc->value();
       verinum rval = rc->value();
 
-      if (lc->has_sign() || rc->has_sign()) {
-	    return new NetEConst( pow(lval,rval) );
-      } else {
-	    return 0; // For now force this to the runtime.
-      }
-
+      return new NetEConst( pow(lval,rval) );
 }
 
 /*

@@ -496,11 +496,15 @@ verinum trim_vnum(const verinum&that)
       } else {
 
 	      /* If the result is unsigned and has an indefinite
-		 length, then trim off leading zeros. */
-	    tlen = 1;
-	    for (unsigned idx = tlen ;  idx < that.len() ;  idx += 1)
-		  if (that.get(idx) != verinum::V0)
-			tlen = idx+1;
+		 length, then trim off all but one leading zero. */
+	    unsigned top = that.len()-1;
+	    while ((top > 0) && (that.get(top) == verinum::V0))
+		  top -= 1;
+	    tlen = top+2;
+
+	      /* This can only happen when the verinum is all zeros,
+		 so make it a single bit wide. */
+	    if (that.get(top) == verinum::V0) tlen -= 1;
 
       }
 
@@ -1211,4 +1215,3 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
       return verinum::Vx;
 }
-
