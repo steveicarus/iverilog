@@ -5,7 +5,7 @@ iverilog - Icarus Verilog compiler
 .SH SYNOPSIS
 .B iverilog
 [-ESVv] [-Bpath] [-ccmdfile|-fcmdfile] [-Dmacro[=defn]] [-pflag=value]
-[-g1|-g2|-g2x|-gspecify|-gxtypes|-gio-range-error]
+[-dflag=value] [-g1|-g2|-g2x|-gspecify|-gxtypes|-gio-range-error]
 [-Iincludedir] [-mmodule] [-Mfile] [-Nfile] [-ooutputfilename]
 [-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] [-ypath] sourcefile
 
@@ -42,6 +42,12 @@ Verilog source.
 .TP 8
 .B -D\fImacro=defn\fP
 Defines macro \fImacro\fP as \fIdefn\fP.
+.TP 8
+.B -d\fIname\fP
+Activate a class of compiler debugging messages. The \fB-d\fP switch may
+be used as often as necessary to activate all the desired classes.
+Supported classes are scope, eval_tree, elaborate, and synth2;
+any other names are ignored.
 .TP 8
 .B -E
 Preprocess the Verilog source, but do not compile it. The output file
