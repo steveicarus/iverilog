@@ -174,6 +174,9 @@ class Module : public LineInfo {
       map<perm_string,PTask*> tasks_;
       map<perm_string,PFunction*> funcs_;
 
+      static void elaborate_parm_item_(perm_string name, const param_expr_t&cur,
+				       Design*des, NetScope*scope);
+
     private: // Not implemented
       Module(const Module&);
       Module& operator= (const Module&);

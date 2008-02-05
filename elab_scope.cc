@@ -44,6 +44,47 @@
 # include  <typeinfo>
 # include  <assert.h>
 
+void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
+				  Design*des, NetScope*scope)
+{
+      PExpr*ex = cur.expr;
+      assert(ex);
+
+      NetExpr*val = ex->elaborate_pexpr(des, scope);
+      NetExpr*msb = 0;
+      NetExpr*lsb = 0;
+      bool signed_flag = cur.signed_flag;
+
+	/* If the parameter declaration includes msb and lsb,
+	   then use them to calculate a width for the
+	   result. Then make sure the constant expression of the
+	   parameter value is coerced to have the correct
+	   and defined width. */
+      if (cur.msb) {
+	    msb = cur.msb ->elaborate_pexpr(des, scope);
+	    assert(msb);
+	    lsb = cur.lsb ->elaborate_pexpr(des, scope);
+      }
+
+      if (signed_flag) {
+	      /* If explicitly signed, then say so. */
+	    val->cast_signed(true);
+      } else if (cur.msb) {
+	      /* If there is a range, then the signedness comes
+		 from the type and not the expression. */
+	    val->cast_signed(signed_flag);
+      } else {
+	      /* otherwise, let the expression describe
+		 itself. */
+	    signed_flag = val->has_sign();
+      }
+
+      val = scope->set_parameter(name, val,
+				 msb, lsb, signed_flag);
+      assert(val);
+      delete val;
+}
+
 bool Module::elaborate_scope(Design*des, NetScope*scope,
 			     const replace_t&replacements) const
 {
@@ -100,42 +141,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       for (mparm_it_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  cur ++) {
 
-	    PExpr*ex = (*cur).second.expr;
-	    assert(ex);
-
-	    NetExpr*val = ex->elaborate_pexpr(des, scope);
-	    NetExpr*msb = 0;
-	    NetExpr*lsb = 0;
-	    bool signed_flag = (*cur).second.signed_flag;
-
-	      /* If the parameter declaration includes msb and lsb,
-		 then use them to calculate a width for the
-		 result. Then make sure the constant expression of the
-		 parameter value is coerced to have the correct
-		 and defined width. */
-	    if ((*cur).second.msb) {
-		  msb = (*cur).second.msb ->elaborate_pexpr(des, scope);
-		  assert(msb);
-		  lsb = (*cur).second.lsb ->elaborate_pexpr(des, scope);
-	    }
-
-	    if (signed_flag) {
-		    /* If explicitly signed, then say so. */
-		  val->cast_signed(true);
-	    } else if ((*cur).second.msb) {
-		    /* If there is a range, then the signedness comes
-		       from the type and not the expression. */
-		  val->cast_signed(signed_flag);
-	    } else {
-		    /* otherwise, let the expression describe
-		       itself. */
-		  signed_flag = val->has_sign();
-	    }
-
-	    val = scope->set_parameter((*cur).first, val,
-				       msb, lsb, signed_flag);
-	    assert(val);
-	    delete val;
+	    elaborate_parm_item_((*cur).first, (*cur).second, des, scope);
       }
 
 	/* run parameter replacements that were collected from the
@@ -167,42 +173,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       for (mparm_it_t cur = localparams.begin()
 		 ; cur != localparams.end() ;  cur ++) {
 
-	    PExpr*ex = (*cur).second.expr;
-	    assert(ex);
-
-	    NetExpr*val = ex->elaborate_pexpr(des, scope);
-	    NetExpr*msb = 0;
-	    NetExpr*lsb = 0;
-	    bool signed_flag = (*cur).second.signed_flag;
-
-	      /* If the parameter declaration includes msb and lsb,
-		 then use them to calculate a width for the
-		 result. Then make sure the constant expression of the
-		 parameter value is coerced to have the correct
-		 and defined width. */
-	    if ((*cur).second.msb) {
-		  msb = (*cur).second.msb ->elaborate_pexpr(des, scope);
-		  assert(msb);
-		  lsb = (*cur).second.lsb ->elaborate_pexpr(des, scope);
-	    }
-
-	    if (signed_flag) {
-		    /* If explicitly signed, then say so. */
-		  val->cast_signed(true);
-	    } else if ((*cur).second.msb) {
-		    /* If there is a range, then the signedness comes
-		       from the type and not the expression. */
-		  val->cast_signed(signed_flag);
-	    } else {
-		    /* otherwise, let the expression describe
-		       itself. */
-		  signed_flag = val->has_sign();
-	    }
-
-	    val = scope->set_parameter((*cur).first, val,
-				       msb, lsb, signed_flag);
-	    assert(val);
-	    delete val;
+	    elaborate_parm_item_((*cur).first, (*cur).second, des, scope);
       }
 
 	// Run through the defparams for this module, elaborate the
