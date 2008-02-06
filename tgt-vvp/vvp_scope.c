@@ -2094,7 +2094,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
       const char*dly = draw_lpm_output_delay(net);
 
       fprintf(vvp_out, "L_%p%s .ufunc TD_%s, %u", net, dly,
-	      ivl_scope_name(def),
+	      vvp_mangle_id(ivl_scope_name(def)),
 	      ivl_lpm_width(net));
 
 	/* Print all the net signals that connect to the input of the
