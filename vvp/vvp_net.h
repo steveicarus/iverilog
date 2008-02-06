@@ -328,6 +328,8 @@ extern vvp_vector2_t operator + (const vvp_vector2_t&, const vvp_vector2_t&);
 extern vvp_vector2_t operator * (const vvp_vector2_t&, const vvp_vector2_t&);
 extern vvp_vector2_t operator / (const vvp_vector2_t&, const vvp_vector2_t&);
 extern vvp_vector2_t operator % (const vvp_vector2_t&, const vvp_vector2_t&);
+
+vvp_vector2_t pow(const vvp_vector2_t&, vvp_vector2_t&);
 extern vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&, unsigned wid);
 /* A c4string is of the form C4<...> where ... are bits. */
 extern vvp_vector4_t c4string_to_vector4(const char*str);

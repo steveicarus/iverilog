@@ -1708,8 +1708,10 @@ static void draw_lpm_add(ivl_lpm_t net)
 	  case IVL_LPM_POW:
 	    if (dto == IVL_VT_REAL)
 		  type = "pow.r";
+	    else if (ivl_lpm_signed(net))
+		  assert(0);  /* No support for signed bit based signals. */
 	    else
-		  assert(0);  /* No support for bit based signals. */
+		  type = "pow";
 	    break;
 	  default:
 	    assert(0);

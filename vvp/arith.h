@@ -159,6 +159,14 @@ class vvp_arith_mult  : public vvp_arith_ {
       void wide_(vvp_net_ptr_t ptr);
 };
 
+class vvp_arith_pow  : public vvp_arith_ {
+
+    public:
+      explicit vvp_arith_pow(unsigned wid);
+      ~vvp_arith_pow();
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+};
+
 class vvp_arith_sub  : public vvp_arith_ {
 
     public:
