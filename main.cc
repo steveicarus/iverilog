@@ -356,9 +356,9 @@ static void read_iconfig_file(const char*ipath)
 		  basedir = strdup(cp);
 
 	    } else if (strcmp(buf, "debug") == 0) {
-		  if (strcmp(cp, "scope") == 0) {
+		  if (strcmp(cp, "scopes") == 0) {
 			debug_scopes = true;
-			cerr << "debug: Enable scope debug" << endl;
+			cerr << "debug: Enable scopes debug" << endl;
 		  } else if (strcmp(cp,"eval_tree") == 0) {
 			debug_eval_tree = true;
 			cerr << "debug: Enable eval_tree debug" << endl;

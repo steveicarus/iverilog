@@ -5,7 +5,7 @@ iverilog - Icarus Verilog compiler
 .SH SYNOPSIS
 .B iverilog
 [-ESVv] [-Bpath] [-ccmdfile|-fcmdfile] [-Dmacro[=defn]] [-pflag=value]
-[-dflag=value] [-g1|-g2|-g2x|-gspecify|-gxtypes|-gio-range-error]
+[-dname] [-g1|-g2|-g2x|-gspecify|-gxtypes|-gio-range-error]
 [-Iincludedir] [-mmodule] [-Mfile] [-Nfile] [-ooutputfilename]
 [-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] [-ypath] sourcefile
 
@@ -45,8 +45,8 @@ Defines macro \fImacro\fP as \fIdefn\fP.
 .TP 8
 .B -d\fIname\fP
 Activate a class of compiler debugging messages. The \fB-d\fP switch may
-be used as often as necessary to activate all the desired classes.
-Supported classes are scope, eval_tree, elaborate, and synth2;
+be used as often as necessary to activate all the desired messages.
+Supported names are scopes, eval_tree, elaborate, and synth2;
 any other names are ignored.
 .TP 8
 .B -E
@@ -366,7 +366,7 @@ and directory strings.
 
 Variable values come from the operating system environment, and not
 from preprocessor defines elsewhere in the file or the command line.
- 
+
 .SH PREDEFINED MACROS
 
 The following macro is predefined by the compiler:
@@ -402,9 +402,12 @@ Steve Williams (steve@icarus.com)
 vvp(1),
 .BR "<http://www.icarus.com/eda/verilog/>"
 
+Tips on using, debugging, and developing the compiler can be found at
+.BR "<http://iverilog.wikia.com/>"
+
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002 Stephen Williams
+Copyright \(co  2002-2008 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0
