@@ -19,9 +19,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: cfparse_misc.h,v 1.6 2004/02/15 18:03:30 steve Exp $"
-#endif
 
 /*
  * The vlltype supports the passing of detailed source file location

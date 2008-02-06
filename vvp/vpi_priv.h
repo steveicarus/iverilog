@@ -103,7 +103,7 @@ struct __vpirt {
  * "base" that is a __vpiHandle object. This template can convert any
  * of those structures into a vpiHandle object.
  */
-template <class T> struct __vpiHandle*vpi_handle(T obj)
+template <class T> vpiHandle vpi_handle(T obj)
 { return &obj->base; }
 
 /*
