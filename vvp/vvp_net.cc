@@ -1094,6 +1094,33 @@ bool vvp_vector2_t::is_NaN() const
       return wid_ == 0;
 }
 
+/*
+ * Basic idea from "Introduction to Programming using SML" by
+ * Michael R. Hansen and Hans Rischel page 261 and "Seminumerical
+ * Algorithms, Third Edition" by Donald E. Knuth section 4.6.3.
+ */
+vvp_vector2_t pow(const vvp_vector2_t&x, vvp_vector2_t&y)
+{
+        /* If we have a zero exponent just return a 1 bit wide 1. */
+      if (y == vvp_vector2_t(0L, 1)) {
+	    return vvp_vector2_t(1L, 1);
+      }
+
+        /* Is the value odd? */
+      if (y.value(0) == 1) {
+	    y.set_bit(0, 0);  // A quick subtract by 1.
+	    vvp_vector2_t res = x * pow(x, y);
+	    res.trim();  // To keep the size under control trim extra zeros.
+	    return res;
+      }
+
+      y >>= 1;  // A fast divide by two. We know the LSB is zero.
+      vvp_vector2_t z = pow(x, y);
+      vvp_vector2_t res = z * z;
+      res.trim();  // To keep the size under control trim extra zeros.
+      return res;
+}
+
 static void multiply_long(unsigned long a, unsigned long b,
 			  unsigned long&low, unsigned long&high)
 {

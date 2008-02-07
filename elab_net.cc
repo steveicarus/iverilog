@@ -1139,16 +1139,16 @@ NetNet* PEBinary::elaborate_net_pow_(Design*des, NetScope*scope,
 	    return 0;
       }
 
+	// The power is signed if either its operands are signed.
+      bool arith_is_signed = lsig->get_signed() || rsig->get_signed();
+
         /* For now we only support real values. */
-      if (lsig->data_type() != IVL_VT_REAL) {
-	    cerr << get_fileline() << ": sorry: Bit based power (**) is "
+      if (lsig->data_type() != IVL_VT_REAL && arith_is_signed) {
+	    cerr << get_fileline() << ": sorry: Signed bit based power (**) is "
 		 << "currently unsupported in continuous assignments." << endl;
 	    des->errors += 1;
 	    return 0;
       }
-
-	// The power is signed if both its operands are signed.
-      bool arith_is_signed = lsig->get_signed() && rsig->get_signed();
 
       unsigned rwidth = lwidth;
       if (rwidth == 0) {
