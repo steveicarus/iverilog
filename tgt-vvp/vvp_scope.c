@@ -2143,17 +2143,19 @@ static void draw_lpm_part(ivl_lpm_t net)
       unsigned width, base;
       ivl_nexus_t sel;
 
+      const char*dly = draw_lpm_output_delay(net);
+
       width = ivl_lpm_width(net);
       base = ivl_lpm_base(net);
       sel = ivl_lpm_data(net,1);
 
       if (sel == 0) {
-	    fprintf(vvp_out, "L_%p .part %s",
-		    net, draw_net_input(ivl_lpm_data(net, 0)));
+	    fprintf(vvp_out, "L_%p%s .part %s",
+		    net, dly, draw_net_input(ivl_lpm_data(net, 0)));
 	    fprintf(vvp_out, ", %u, %u;\n", base, width);
       } else {
-	    fprintf(vvp_out, "L_%p .part/v %s",
-		    net, draw_net_input(ivl_lpm_data(net,0)));
+	    fprintf(vvp_out, "L_%p%s .part/v %s",
+		    net, dly, draw_net_input(ivl_lpm_data(net,0)));
 	    fprintf(vvp_out, ", %s", draw_net_input(sel));
 	    fprintf(vvp_out, ", %u;\n", width);
       }
