@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -258,7 +258,8 @@ NetEBPow::NetEBPow(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
       assert(op == 'p');
-      expr_width(l->expr_width());
+      /* This is incorrect! a * (2^b - 1) is close. */
+      expr_width(l->expr_width()+r->expr_width());
       cast_signed(l->has_sign() || r->has_sign());
 }
 

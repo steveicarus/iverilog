@@ -400,8 +400,8 @@ void vvp_arith_mult::wide(vvp_ipoint_t base, bool push)
 
 // Power
 
-vvp_arith_pow::vvp_arith_pow(unsigned wid)
-: vvp_arith_(wid)
+vvp_arith_pow::vvp_arith_pow(unsigned wid, bool signed_flag)
+: vvp_arith_(wid), signed_flag_(signed_flag)
 {
 }
 
@@ -413,17 +413,31 @@ void vvp_arith_pow::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
-      vvp_vector2_t a2 (op_a_);
-      vvp_vector2_t b2 (op_b_);
+      vvp_vector4_t res4;
+      if (signed_flag_) {
+	    if (op_a_.has_xz() || op_b_.has_xz()) {
+		  vvp_send_vec4(ptr.ptr()->out, x_val_);
+		  return;
+	    }
 
-      if (a2.is_NaN() || b2.is_NaN()) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
-	    return;
+	    double ad, bd;
+	    vector4_to_value(op_a_, ad, true);
+	    vector4_to_value(op_b_, bd, true);
+
+	    res4 = double_to_vector4(pow(ad, bd), wid_);
+      } else {
+	    vvp_vector2_t a2 (op_a_);
+	    vvp_vector2_t b2 (op_b_);
+
+	    if (a2.is_NaN() || b2.is_NaN()) {
+		  vvp_send_vec4(ptr.ptr()->out, x_val_);
+		  return;
+	    }
+
+	    vvp_vector2_t result = pow(a2, b2);
+	    res4 = vector2_to_vector4(result, wid_);
       }
 
-      vvp_vector2_t result = pow(a2, b2);
-
-      vvp_vector4_t res4 = vector2_to_vector4(result, wid_);
       vvp_send_vec4(ptr.ptr()->out, res4);
 }
 

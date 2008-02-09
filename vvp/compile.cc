@@ -921,7 +921,10 @@ void compile_arith_div(char*label, long wid, bool signed_flag,
       assert( wid > 0 );
 
       if (argc != 2) {
-	    fprintf(stderr, "%s; .arith/div has wrong number of symbols\n", label);
+	    char *suffix = "";
+	    if (signed_flag) suffix = ".s";
+	    fprintf(stderr, "%s; .arith/div%s has wrong number of "
+	                    "symbols\n", label, suffix);
 	    compile_errors += 1;
 	    return;
       }
@@ -998,18 +1001,26 @@ void compile_arith_mult_r(char*label, unsigned argc, struct symb_s*argv)
 }
 
 
-void compile_arith_pow(char*label, long wid,
+void compile_arith_pow(char*label, long wid, bool signed_flag,
 		       unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
+        /* For now we need to do a double to long cast, so the number
+           of bits is limited. This should be caught in the compiler. */
+      if (signed_flag) {
+	    assert( wid <= (long)(8*sizeof(long)) );
+      }
 
       if (argc != 2) {
-	    fprintf(stderr, "%s .arith/pow has wrong number of symbols\n", label);
+	    char *suffix = "";
+	    if (signed_flag) suffix = ".s";
+	    fprintf(stderr, "%s .arith/pow%s has wrong number of "
+	                    "symbols\n", label, suffix);
 	    compile_errors += 1;
 	    return;
       }
 
-      vvp_arith_ *arith = new vvp_arith_pow(wid);
+      vvp_arith_ *arith = new vvp_arith_pow(wid, signed_flag);
       make_arith(arith, label, argc, argv);
 }
 

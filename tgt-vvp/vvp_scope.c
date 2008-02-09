@@ -1708,9 +1708,16 @@ static void draw_lpm_add(ivl_lpm_t net)
 	  case IVL_LPM_POW:
 	    if (dto == IVL_VT_REAL)
 		  type = "pow.r";
-	    else if (ivl_lpm_signed(net))
-		  assert(0);  /* No support for signed bit based signals. */
-	    else
+	    else if (ivl_lpm_signed(net)) {
+		  type = "pow.s";
+		  if (width > 8*sizeof(long)) {
+			fprintf(stderr, "%s:%u: sorry (vvp-tgt): Signed power "
+				"result must be no more than %d bits.\n",
+				ivl_lpm_file(net), ivl_lpm_lineno(net),
+				8*sizeof(long));
+			exit(1);
+		  }
+	    } else
 		  type = "pow";
 	    break;
 	  default:
