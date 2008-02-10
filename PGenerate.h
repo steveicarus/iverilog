@@ -37,7 +37,17 @@ class PGate;
 class PWire;
 
 /*
- * This represents a generate scheme.
+ * This represents a generate scheme. The interpretation of the
+ * members depends on the scheme_type.
+ *
+ * GS_LOOP
+ *
+ * GS_CASE
+ *    loop_test is the expression to be compared.
+ *    generates contains only GS_CASE_ITEM schemes.
+ * GS_CASE_ITEM
+ *    The parent points to the GS_CASE that contains this item.
+ *    the loop_test is compared with the parent->loop_test expression.
  */
 class PGenerate : public LineInfo {
 
@@ -50,7 +60,8 @@ class PGenerate : public LineInfo {
       const unsigned id_number;
       perm_string scope_name;
 
-      enum scheme_t {GS_NONE, GS_LOOP, GS_CONDIT, GS_ELSE};
+      enum scheme_t {GS_NONE, GS_LOOP, GS_CONDIT, GS_ELSE,
+		     GS_CASE, GS_CASE_ITEM};
       scheme_t scheme_type;
 
 	// generate loops have an index variable and three
@@ -88,6 +99,7 @@ class PGenerate : public LineInfo {
     private:
       bool generate_scope_loop_(Design*des, NetScope*container);
       bool generate_scope_condit_(Design*des, NetScope*container, bool else_flag);
+      bool generate_scope_case_(Design*des, NetScope*container);
 
 	// Elaborate_scope within a generated scope.
       void elaborate_subscope_(Design*des, NetScope*scope);

@@ -412,6 +412,51 @@ void pform_start_generate_else(const struct vlltype&li)
       pform_cur_generate->loop_step = 0;
 }
 
+/*
+ * The GS_CASE version of the PGenerate contains only case items. The
+ * items in turn contain the generated items themselves.
+ */
+void pform_start_generate_case(const struct vlltype&li, PExpr*expr)
+{
+      PGenerate*gen = new PGenerate(scope_generate_counter++);
+
+      FILE_NAME(gen, li);
+
+      gen->parent = pform_cur_generate;
+      pform_cur_generate = gen;
+
+      pform_cur_generate->scheme_type = PGenerate::GS_CASE;
+
+      pform_cur_generate->loop_init = 0;
+      pform_cur_generate->loop_test = expr;
+      pform_cur_generate->loop_step = 0;
+}
+
+/*
+ * The generate case item is a special case schema that takes its id
+ * from the case schema that it is a part of. The idea is that the
+ * case schema can only instantiate exactly one item, so the items
+ * need not have a unique number.
+ */
+void pform_generate_case_item(const struct vlltype&li, PExpr*expr)
+{
+      assert(pform_cur_generate);
+      assert(pform_cur_generate->scheme_type == PGenerate::GS_CASE);
+
+      PGenerate*gen = new PGenerate(pform_cur_generate->id_number);
+
+      FILE_NAME(gen, li);
+
+      gen->parent = pform_cur_generate;
+      pform_cur_generate = gen;
+
+      pform_cur_generate->scheme_type = PGenerate::GS_CASE_ITEM;
+
+      pform_cur_generate->loop_init = 0;
+      pform_cur_generate->loop_test = expr;
+      pform_cur_generate->loop_step = 0;
+}
+
 void pform_generate_block_name(char*name)
 {
       assert(pform_cur_generate != 0);
@@ -439,10 +484,14 @@ void pform_endgenerate()
       PGenerate*cur = pform_cur_generate;
       pform_cur_generate = cur->parent;
 
-      if (pform_cur_generate != 0)
+      if (pform_cur_generate != 0) {
+	    assert(cur->scheme_type == PGenerate::GS_CASE_ITEM
+		   || pform_cur_generate->scheme_type != PGenerate::GS_CASE);
 	    pform_cur_generate->generates.push_back(cur);
-      else
+      } else {
+	    assert(cur->scheme_type != PGenerate::GS_CASE_ITEM);
 	    pform_cur_module->generate_schemes.push_back(cur);
+      }
 }
 
 bool pform_expression_is_constant(const PExpr*ex)

@@ -188,6 +188,8 @@ extern void pform_start_generate_for(const struct vlltype&li,
 				     PExpr*next);
 extern void pform_start_generate_if(const struct vlltype&li, PExpr*test);
 extern void pform_start_generate_else(const struct vlltype&li);
+extern void pform_start_generate_case(const struct vlltype&lp, PExpr*test);
+extern void pform_generate_case_item(const struct vlltype&lp, PExpr*test);
 extern void pform_generate_block_name(char*name);
 extern void pform_endgenerate();
 

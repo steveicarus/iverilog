@@ -315,6 +315,15 @@ bool PGenerate::generate_scope(Design*des, NetScope*container)
 	  case GS_ELSE:
 	    return generate_scope_condit_(des, container, true);
 
+	  case GS_CASE:
+	    return generate_scope_case_(des, container);
+	    return true;
+
+	  case GS_CASE_ITEM:
+	    cerr << get_fileline() << ": internal error: "
+		 << "Case item outside of a case generate scheme?" << endl;
+	    return false;
+
 	  default:
 	    cerr << get_fileline() << ": sorry: Generate of this sort"
 		 << " is not supported yet!" << endl;
@@ -345,7 +354,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
       genvar = init->value().as_long();
       delete init_ex;
 
-      if (debug_elaborate)
+      if (debug_scopes)
 	    cerr << get_fileline() << ": debug: genvar init = " << genvar << endl;
 
       container->genvar_tmp = loop_index;
@@ -367,7 +376,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 		  des->errors += 1;
 		  return false;
 	    }
-	    if (debug_elaborate)
+	    if (debug_scopes)
 		  cerr << get_fileline() << ": debug: "
 		       << "Create generated scope " << use_name << endl;
 
@@ -386,7 +395,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 							 genvar_verinum);
 		  scope->set_localparam(loop_index, gp);
 
-		  if (debug_elaborate)
+		  if (debug_scopes)
 			cerr << get_fileline() << ": debug: "
 			     << "Create implicit localparam "
 			     << loop_index << " = " << genvar_verinum << endl;
@@ -398,7 +407,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    NetExpr*step_ex = elab_and_eval(des, container, loop_step, -1);
 	    NetEConst*step = dynamic_cast<NetEConst*>(step_ex);
 	    assert(step);
-	    if (debug_elaborate)
+	    if (debug_scopes)
 		  cerr << get_fileline() << ": debug: genvar step from "
 		       << genvar << " to " << step->value().as_long() << endl;
 
@@ -428,7 +437,7 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 	// scope.
       if ( (test->value().as_long() == 0 && !else_flag)
 	|| (test->value().as_long() != 0 &&  else_flag) ) {
-	    if (debug_elaborate)
+	    if (debug_scopes)
 		  cerr << get_fileline() << ": debug: Generate condition "
 		       << (else_flag? "(else)" : "(if)")
 		       << " value=" << test->value() << ": skip generation"
@@ -445,7 +454,7 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 	    des->errors += 1;
 	    return false;
       }
-      if (debug_elaborate)
+      if (debug_scopes)
 	    cerr << get_fileline() << ": debug: Generate condition "
 		 << (else_flag? "(else)" : "(if)")
 		 << " value=" << test->value() << ": Generate scope="
@@ -455,6 +464,71 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 				    NetScope::GENBLOCK);
 
       elaborate_subscope_(des, scope);
+
+      return true;
+}
+
+bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
+{
+      NetExpr*case_value_ex = elab_and_eval(des, container, loop_test, -1);
+      NetEConst*case_value_co = dynamic_cast<NetEConst*>(case_value_ex);
+      assert(case_value_co);
+
+	// The name of the scope to generate, whatever that item is.
+      hname_t use_name (scope_name);
+
+      if (debug_scopes)
+	    cerr << get_fileline() << ": debug: Generate case "
+		 << "switch value=" << case_value_co->value() << endl;
+
+      PGenerate*default_item = 0;
+
+      typedef list<PGenerate*>::const_iterator generator_it_t;
+      generator_it_t cur = generates.begin();
+      while (cur != generates.end()) {
+	    PGenerate*item = *cur;
+	    assert( item->scheme_type == PGenerate::GS_CASE_ITEM );
+
+	      // Detect that the item is a default.
+	    if (item->loop_test == 0) {
+		  default_item = item;
+		  cur ++;
+		  continue;
+	    }
+
+	    NetExpr*item_value_ex = elab_and_eval(des, container, item->loop_test, -1);
+	    NetEConst*item_value_co = dynamic_cast<NetEConst*>(item_value_ex);
+	    assert(item_value_co);
+
+	      // If we stumble on the item that matches, then break
+	      // out now.
+	    if (case_value_co->value() == item_value_co->value()) {
+		  delete item_value_co;
+		  break;
+	    }
+
+	    delete item_value_co;
+	    cur ++;
+      }
+
+      delete case_value_co;
+      case_value_co = 0;
+
+      PGenerate*item = (cur == generates.end())? default_item : *cur;
+      if (item == 0) {
+	    cerr << get_fileline() << ": debug: "
+		 << "No generate items found" << endl;
+	    return true;
+      }
+
+      if (debug_scopes)
+	    cerr << get_fileline() << ": debug: "
+		 << "Generate case matches item at "
+		 << item->get_fileline() << endl;
+
+      NetScope*scope = new NetScope(container, use_name,
+				    NetScope::GENBLOCK);
+      item->elaborate_subscope_(des, scope);
 
       return true;
 }

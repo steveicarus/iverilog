@@ -1920,6 +1920,12 @@ module_item
     generate_block_opt %prec less_than_K_else
       { pform_endgenerate(); }
 
+  | K_case '(' expression ')'
+      { pform_start_generate_case(@1, $3); }
+    generate_case_items
+    K_endcase
+      { pform_endgenerate(); }
+
   /* specify blocks are parsed but ignored. */
 
 	| K_specify K_endspecify
@@ -1983,6 +1989,18 @@ module_item
 	;
 
 generate_if : K_if '(' expression ')' { pform_start_generate_if(@1, $3); }
+
+generate_case_items
+  : generate_case_items generate_case_item
+  | generate_case_item
+  ;
+
+generate_case_item
+  : expression ':' { pform_generate_case_item(@1, $1); } generate_block
+      { pform_endgenerate(); }
+  | K_default ':' { pform_generate_case_item(@1, 0); } generate_block
+      { pform_endgenerate(); }
+  ;
 
 module_item_list
 	: module_item_list module_item
