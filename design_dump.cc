@@ -348,7 +348,14 @@ void NetConst::dump_node(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "constant " << width_ << "'b";
       for (unsigned idx = width_ ;  idx > 0 ;  idx -= 1)
 	    o << value_[idx-1];
-      o << ": " << name() << endl;
+      o << ": " << name();
+      if (rise_time())
+	    o << " #(" << *rise_time()
+	      << "," << *fall_time()
+	      << "," << *decay_time() << ")";
+      else
+	    o << " #(.,.,.)";
+      o << endl;
       dump_node_pins(o, ind+4);
 }
 
