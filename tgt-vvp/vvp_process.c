@@ -1172,7 +1172,12 @@ static int show_stmt_release(ivl_statement_t net)
 	    unsigned long use_word = 0;
 	    assert(lsig != 0);
 	    assert(ivl_lval_mux(lval) == 0);
-	    assert(ivl_lval_part_off(lval) == 0);
+	    if (ivl_lval_part_off(lval) != 0) {
+		  fprintf(stderr, "%s:%u: sorry (vvp-tgt): Release of part/"
+		          "bit select is not supported.\n",
+		          ivl_stmt_file(net), ivl_stmt_lineno(net));
+		  exit(1);
+	    }
 
 	    switch (ivl_signal_type(lsig)) {
 		case IVL_SIT_REG:
