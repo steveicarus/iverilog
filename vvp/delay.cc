@@ -288,11 +288,15 @@ void vvp_fun_delay::recv_real(vvp_net_ptr_t port, double bit)
 	    return;
       }
 
-      if (cur_real_ == bit)
-	    return;
-
       vvp_time64_t use_delay;
       use_delay = delay_.get_min_delay();
+
+      /* Eliminate glitches. */
+      clean_pulse_events_(use_delay);
+
+      /* This must be done after cleaning pulses to avoid propagating
+       * an incorrect value. */
+      if (cur_real_ == bit) return;
 
       vvp_time64_t use_simtime = schedule_simtime() + use_delay;
 
