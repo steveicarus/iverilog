@@ -1777,6 +1777,7 @@ void dll_target::lpm_pow(const NetPow*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_POW;
+      FILE_NAME(obj, net);
       obj->name  = net->name();
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());

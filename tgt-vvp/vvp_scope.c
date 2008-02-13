@@ -1708,9 +1708,16 @@ static void draw_lpm_add(ivl_lpm_t net)
 	  case IVL_LPM_POW:
 	    if (dto == IVL_VT_REAL)
 		  type = "pow.r";
-	    else if (ivl_lpm_signed(net))
-		  assert(0);  /* No support for signed bit based signals. */
-	    else
+	    else if (ivl_lpm_signed(net)) {
+		  type = "pow.s";
+		  if (width > 8*sizeof(long)) {
+			fprintf(stderr, "%s:%u: sorry (vvp-tgt): Signed power "
+				"result must be no more than %d bits.\n",
+				ivl_lpm_file(net), ivl_lpm_lineno(net),
+				8*sizeof(long));
+			exit(1);
+		  }
+	    } else
 		  type = "pow";
 	    break;
 	  default:
@@ -2145,17 +2152,19 @@ static void draw_lpm_part(ivl_lpm_t net)
       unsigned width, base;
       ivl_nexus_t sel;
 
+      const char*dly = draw_lpm_output_delay(net);
+
       width = ivl_lpm_width(net);
       base = ivl_lpm_base(net);
       sel = ivl_lpm_data(net,1);
 
       if (sel == 0) {
-	    fprintf(vvp_out, "L_%p .part %s",
-		    net, draw_net_input(ivl_lpm_data(net, 0)));
+	    fprintf(vvp_out, "L_%p%s .part %s",
+		    net, dly, draw_net_input(ivl_lpm_data(net, 0)));
 	    fprintf(vvp_out, ", %u, %u;\n", base, width);
       } else {
-	    fprintf(vvp_out, "L_%p .part/v %s",
-		    net, draw_net_input(ivl_lpm_data(net,0)));
+	    fprintf(vvp_out, "L_%p%s .part/v %s",
+		    net, dly, draw_net_input(ivl_lpm_data(net,0)));
 	    fprintf(vvp_out, ", %s", draw_net_input(sel));
 	    fprintf(vvp_out, ", %u;\n", width);
       }

@@ -1142,14 +1142,6 @@ NetNet* PEBinary::elaborate_net_pow_(Design*des, NetScope*scope,
 	// The power is signed if either its operands are signed.
       bool arith_is_signed = lsig->get_signed() || rsig->get_signed();
 
-        /* For now we only support real values. */
-      if (lsig->data_type() != IVL_VT_REAL && arith_is_signed) {
-	    cerr << get_fileline() << ": sorry: Signed bit based power (**) is "
-		 << "currently unsupported in continuous assignments." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
       unsigned rwidth = lwidth;
       if (rwidth == 0) {
 	      /* Reals are always 1 wide and lsig/rsig types match here. */
@@ -1157,7 +1149,9 @@ NetNet* PEBinary::elaborate_net_pow_(Design*des, NetScope*scope,
 		  rwidth = 1;
 		  lwidth = 1;
 	    } else {
-	      /* Nothing for now. Need integer value.*/
+		    /* This is incorrect! a * (2^b - 1) is close. */
+		  rwidth = lsig->vector_width() + rsig->vector_width();
+		  lwidth = rwidth;
 	    }
       }
 

@@ -697,6 +697,32 @@ ostream& operator<< (ostream&out, const vvp_vector4_t&that)
       return out;
 }
 
+/* The width is guaranteed to not be larger than a long.
+ * If the double is outside the integer range (+/-) the
+ * largest/smallest integer value is returned. */
+vvp_vector4_t double_to_vector4(double val, unsigned wid)
+{
+      long span = 1l << (wid-1);
+      double dmin = -1l * span;
+      double dmax = span - 1l;
+
+      if (val > dmax) val = dmax;
+      if (val < dmin) val = dmin;
+
+      vvp_vector4_t res (wid);
+      long bits = lround(val);
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    vvp_bit4_t bit = BIT4_0;
+
+	    if (bits & 1L) bit = BIT4_1;
+
+	    res.set_bit(idx, bit);
+	    bits >>= 1;
+      }
+
+      return res;
+}
+
 bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
 {
       unsigned long res = 0;

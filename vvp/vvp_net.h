@@ -258,6 +258,8 @@ extern vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 				      vvp_bit4_t val_if_equal);
 template <class T> extern T coerce_to_width(const T&that, unsigned width);
 
+extern vvp_vector4_t double_to_vector4(double val, unsigned wid);
+
 /*
  * These functions extract the value of the vector as a native type,
  * if possible, and return true to indicate success. If the vector has

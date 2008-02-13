@@ -3554,6 +3554,27 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 {
       bool flag = true;
 
+	// Handle the special case that this is a CASE scheme. In this
+	// case the PGenerate itself does not have the generated
+	// item. Look instead for the case ITEM that has a scope
+	// generated for it.
+      if (scheme_type == PGenerate::GS_CASE) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: generate case"
+		       << " elaborating in scope "
+		       << scope_path(container) << "." << endl;
+
+	    typedef list<PGenerate*>::const_iterator generate_it_t;
+	    for (generate_it_t cur = generates.begin()
+		       ; cur != generates.end() ; cur ++) {
+		  PGenerate*item = *cur;
+		  if (! item->scope_list_.empty()) {
+			flag &= item->elaborate(des, container);
+		  }
+	    }
+	    return flag;
+      }
+
       typedef list<NetScope*>::const_iterator scope_list_it_t;
       for (scope_list_it_t cur = scope_list_.begin()
 		 ; cur != scope_list_.end() ; cur ++ ) {

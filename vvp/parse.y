@@ -68,7 +68,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_ALIAS K_ALIAS_S K_ALIAS_R
 %token K_ARITH_DIV K_ARITH_DIV_R K_ARITH_DIV_S K_ARITH_MOD K_ARITH_MOD_R
 %token K_ARITH_MULT K_ARITH_MULT_R K_ARITH_SUB K_ARITH_SUB_R
-%token K_ARITH_SUM K_ARITH_SUM_R K_ARITH_POW K_ARITH_POW_R
+%token K_ARITH_SUM K_ARITH_SUM_R K_ARITH_POW K_ARITH_POW_R K_ARITH_POW_S
 %token K_ARRAY K_ARRAY_I K_ARRAY_R K_ARRAY_S K_ARRAY_PORT
 %token K_CMP_EEQ K_CMP_EQ K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
 %token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
@@ -288,12 +288,17 @@ statement
 
 	| T_LABEL K_ARITH_POW T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
-		  compile_arith_pow($1, $3, obj.cnt, obj.vect);
+		  compile_arith_pow($1, $3, false, obj.cnt, obj.vect);
 		}
 
 	| T_LABEL K_ARITH_POW_R T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_arith_pow_r($1, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_ARITH_POW_S T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_arith_pow($1, $3, true, obj.cnt, obj.vect);
 		}
 
 	| T_LABEL K_ARITH_SUB T_NUMBER ',' symbols ';'

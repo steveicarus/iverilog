@@ -348,7 +348,14 @@ void NetConst::dump_node(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "constant " << width_ << "'b";
       for (unsigned idx = width_ ;  idx > 0 ;  idx -= 1)
 	    o << value_[idx-1];
-      o << ": " << name() << endl;
+      o << ": " << name();
+      if (rise_time())
+	    o << " #(" << *rise_time()
+	      << "," << *fall_time()
+	      << "," << *decay_time() << ")";
+      else
+	    o << " #(.,.,.)";
+      o << endl;
       dump_node_pins(o, ind+4);
 }
 
@@ -465,9 +472,14 @@ void NetPartSelect::dump_node(ostream&o, unsigned ind) const
 	    break;
       }
       o << setw(ind) << "" << "NetPartSelect(" << pt << "): "
-	<< name() << " #(" << rise_time()
-	<< "," << fall_time() << "," << decay_time() << ") "
-	<< " off=" << off_ << " wid=" << wid_ <<endl;
+	<< name();
+      if (rise_time())
+	    o << " #(" << *rise_time()
+	      << "," << *fall_time()
+	      << "," << *decay_time() << ")";
+      else
+	    o << " #(.,.,.)";
+      o << " off=" << off_ << " wid=" << wid_ <<endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -535,9 +547,11 @@ void NetSysFunc::dump_node(ostream&o, unsigned ind) const
 void NetUserFunc::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "USER FUNC: "
-	<< scope_path(def_)
-	<< " #(" <<*rise_time()<<","<<*fall_time() << "," <<*decay_time() << ")"
-	<< endl;
+	<< scope_path(def_);
+      if (rise_time())
+	    o << " #(" <<*rise_time()
+	      <<","<<*fall_time()
+	      << "," <<*decay_time() << ")" << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }

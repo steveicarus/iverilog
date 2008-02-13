@@ -96,6 +96,7 @@
 ".arith/mult.r" { return K_ARITH_MULT_R; }
 ".arith/pow" { return K_ARITH_POW; }
 ".arith/pow.r" { return K_ARITH_POW_R; }
+".arith/pow.s" { return K_ARITH_POW_S; }
 ".arith/sub"  { return K_ARITH_SUB; }
 ".arith/sub.r" { return K_ARITH_SUB_R; }
 ".arith/sum"  { return K_ARITH_SUM; }

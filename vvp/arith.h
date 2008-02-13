@@ -162,9 +162,11 @@ class vvp_arith_mult  : public vvp_arith_ {
 class vvp_arith_pow  : public vvp_arith_ {
 
     public:
-      explicit vvp_arith_pow(unsigned wid);
+      explicit vvp_arith_pow(unsigned wid, bool signed_flag);
       ~vvp_arith_pow();
       void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+    private:
+      bool signed_flag_;
 };
 
 class vvp_arith_sub  : public vvp_arith_ {

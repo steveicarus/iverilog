@@ -854,6 +854,15 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 	  case GS_ELSE:
 	    out << " else !(" << *loop_test << ")";
 	    break;
+	  case GS_CASE:
+	    out << " case (" << *loop_test << ")";
+	    break;
+	  case GS_CASE_ITEM:
+	    if (loop_test)
+		  out << " (" << *loop_test << ") == (" << *parent->loop_test << ")";
+	    else
+		  out << " default:";
+	    break;
       }
 
       if (scope_name)
@@ -882,7 +891,7 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 	    (*idx)->dump(out, indent+2);
       }
 
-      out << "    endgenerate" << endl;
+      out << setw(indent) << "" << "endgenerate" << endl;
 }
 
 void Module::dump(ostream&out) const
