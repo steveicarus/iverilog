@@ -124,6 +124,16 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		  return;
 	    }
 
+	      /* If either lval or rid are real then both must be real. */
+	    if ((lval->data_type() == IVL_VT_REAL ||
+	         rid->data_type() == IVL_VT_REAL) &&
+	        lval->data_type() != rid->data_type()) {
+		  cerr << get_fileline() << ": sorry: Both the r-value and "
+		          "the l-value must be real in this context." << endl;
+		  des->errors += 1;
+		  return;
+	    }
+
 	    ivl_assert(*this, rid);
 	    if (rid->pin_count() != 1) {
 		  cerr << get_fileline() << ": internal error: "
@@ -287,6 +297,16 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
       assert(lval && rval);
       assert(rval->pin_count() == 1);
+
+        /* If either lval or rval are real then both must be real. */
+      if ((lval->data_type() == IVL_VT_REAL ||
+           rval->data_type() == IVL_VT_REAL) &&
+          lval->data_type() != rval->data_type()) {
+	    cerr << get_fileline() << ": sorry: Both the r-value and "
+	            "the l-value must be real in this context." << endl;
+	    des->errors += 1;
+	    return;
+      }
 
 	/* If the r-value insists on being smaller then the l-value
 	   (perhaps it is explicitly sized) the pad it out to be the
