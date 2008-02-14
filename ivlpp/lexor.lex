@@ -30,7 +30,6 @@
 # include  <ctype.h>
 # include  <assert.h>
 
-# include  "parse.h"
 # include  "globals.h"
 
 static void output_init();

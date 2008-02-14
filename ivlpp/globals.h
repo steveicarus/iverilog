@@ -39,7 +39,7 @@ extern unsigned error_count;
 
 extern FILE *depend_file;
 
-/* This is the entry to the parser. */
-extern int yyparse();
+/* This is the entry to the lexer. */
+extern int yylex();
 
 #endif

@@ -352,9 +352,9 @@ int main(int argc, char*argv[])
       }
 
 	/* Pass to the lexical analyzer the list of input file, and
-	   start the parser. */
+	   start scanning. */
       reset_lexor(out, source_list);
-      if (yyparse()) return -1;
+      if (yylex()) return -1;
 
       if(depend_file) {
 	      fclose(depend_file);
