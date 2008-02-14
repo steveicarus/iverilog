@@ -1165,7 +1165,7 @@ static void include_filename()
 
 static void do_include()
 {
-
+      /* standby is defined by include_filename() */
       if (standby->path[0] == '/') {
 	    standby->file = fopen(standby->path, "r");
 	    if(depend_file && standby->file) {
