@@ -28,10 +28,10 @@
 # include  "StringHeap.h"
 # include  "HName.h"
 # include  "named.h"
+# include  "PScope.h"
 # include  "LineInfo.h"
 # include  "netlist.h"
 # include  "pform_types.h"
-class PEvent;
 class PExpr;
 class PEIdent;
 class PGate;
@@ -50,7 +50,7 @@ class NetScope;
  * therefore the handle for grasping the described circuit.
  */
 
-class Module : public LineInfo {
+class Module : public PScope, public LineInfo {
 
 	/* The module ports are in general a vector of port_t
 	   objects. Each port has a name and an ordered list of
@@ -113,9 +113,6 @@ class Module : public LineInfo {
 	   named array of PEident pointers. */
       svector<port_t*> ports;
 
-	/* Keep a table of named events declared in the module. */
-      map<perm_string,PEvent*>events;
-
       map<perm_string,PExpr*> attributes;
 
 	/* These are the timescale for this module. The default is
@@ -132,7 +129,8 @@ class Module : public LineInfo {
 
       list<PSpecPath*> specify_paths;
 
-      perm_string mod_name() const { return name_; }
+	// The mod_name() is the name of the module type.
+      perm_string mod_name() const { return pscope_name(); }
 
       void add_gate(PGate*gate);
 
@@ -166,8 +164,6 @@ class Module : public LineInfo {
       bool elaborate_sig(Design*, NetScope*scope) const;
 
     private:
-      perm_string name_;
-
       map<pform_name_t,PWire*> wires_;
       list<PGate*> gates_;
       list<PProcess*> behaviors_;

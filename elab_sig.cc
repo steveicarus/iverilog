@@ -89,7 +89,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 		  if (wt == wires_.end()) {
 			cerr << get_fileline() << ": error: "
 			     << "Port " << pp->expr[cc]->path() << " ("
-			     << (idx+1) << ") of module " << name_
+			     << (idx+1) << ") of module " << mod_name()
 			     << " is not declared within module." << endl;
 			des->errors += 1;
 			continue;
@@ -98,7 +98,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 		  if ((*wt).second->get_port_type() == NetNet::NOT_A_PORT) {
 			cerr << get_fileline() << ": error: "
 			     << "Port " << pp->expr[cc]->path() << " ("
-			     << (idx+1) << ") of module " << name_
+			     << (idx+1) << ") of module " << mod_name()
 			     << " has no direction declaration."
 			     << endl;
 			des->errors += 1;

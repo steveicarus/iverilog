@@ -697,7 +697,7 @@ void PFunction::dump(ostream&out, unsigned ind) const
 	    out << "] ";
       }
 
-      out << name_ << ";" << endl;
+      out << pscope_name() << ";" << endl;
 
       if (ports_)
 	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
@@ -911,7 +911,7 @@ void Module::dump(ostream&out) const
 	    out << " *)  ";
       }
 
-      out << "module " << name_ << ";" << endl;
+      out << "module " << mod_name() << ";" << endl;
 
       for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
 	    port_t*cur = ports[idx];

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,16 +16,13 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: PTask.cc,v 1.7 2002/08/12 01:34:58 steve Exp $"
-#endif
 
 # include "config.h"
 
 # include  "PTask.h"
 
-PTask::PTask()
-: ports_(0), statement_(0)
+PTask::PTask(perm_string name)
+: PScope(name), ports_(0), statement_(0)
 {
 }
 

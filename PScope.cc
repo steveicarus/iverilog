@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,34 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include "config.h"
+# include  "PScope.h"
 
-#include "PTask.h"
-
-PFunction::PFunction(perm_string name)
-: PScope(name), ports_(0), statement_(0)
-{
-      return_type_.type = PTF_NONE;
-}
-
-PFunction::~PFunction()
+PScope::PScope(perm_string n)
+: name_(n)
 {
 }
 
-void PFunction::set_ports(svector<PWire *>*p)
+PScope::~PScope()
 {
-      assert(ports_ == 0);
-      ports_ = p;
-}
-
-void PFunction::set_statement(Statement*s)
-{
-      assert(s != 0);
-      assert(statement_ == 0);
-      statement_ = s;
-}
-
-void PFunction::set_return(PTaskFuncArg t)
-{
-      return_type_ = t;
 }

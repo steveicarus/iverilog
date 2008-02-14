@@ -29,7 +29,7 @@
 
 /* n is a permallocated string. */
 Module::Module(perm_string n)
-: name_(n)
+: PScope(n)
 {
       library_flag = false;
       default_nettype = NetNet::NONE;

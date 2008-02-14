@@ -111,7 +111,7 @@ parse.o parse_misc.o pform.o pform_dump.o pform_types.o \
 set_width.o symbol_search.o sync.o sys_funcs.o \
 verinum.o verireal.o target.o targets.o \
 Attrib.o HName.o LineInfo.o Module.o PDelays.o PEvent.o \
-PExpr.o PGate.o PGenerate.o PSpec.o \
+PExpr.o PGate.o PGenerate.o PScope.o PSpec.o \
 PTask.o PUdp.o PFunction.o PWire.o Statement.o StringHeap.o \
 $(FF) $(TT)
 

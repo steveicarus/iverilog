@@ -1842,36 +1842,36 @@ module_item
      statements in the task body. But we continue to accept it as an
      extension. */
 
-	| K_task IDENTIFIER ';'
-		{ pform_push_scope($2); }
-	  task_item_list_opt
-	  statement_or_null
-	  K_endtask
-		{ PTask*tmp = new PTask;
-		  perm_string tmp2 = lex_strings.make($2);
-		  FILE_NAME(tmp, @1);
-		  tmp->set_ports($5);
-		  tmp->set_statement($6);
-		  pform_set_task(tmp2, tmp);
-		  pform_pop_scope();
-		  delete $2;
-		}
+  | K_task IDENTIFIER ';'
+      { pform_push_scope($2); }
+    task_item_list_opt
+    statement_or_null
+    K_endtask
+      { perm_string task_name = lex_strings.make($2);
+	PTask*tmp = new PTask(task_name);
+	FILE_NAME(tmp, @1);
+	tmp->set_ports($5);
+	tmp->set_statement($6);
+	pform_set_task(task_name, tmp);
+	pform_pop_scope();
+	delete $2;
+      }
 
-	| K_task IDENTIFIER
-		{ pform_push_scope($2); }
-          '(' task_port_decl_list ')' ';'
-	  task_item_list_opt
-	  statement_or_null
-	  K_endtask
-		{ PTask*tmp = new PTask;
-		  perm_string tmp2 = lex_strings.make($2);
-		  FILE_NAME(tmp, @1);
-		  tmp->set_ports($5);
-		  tmp->set_statement($9);
-		  pform_set_task(tmp2, tmp);
-		  pform_pop_scope();
-		  delete $2;
-		}
+  | K_task IDENTIFIER
+      { pform_push_scope($2); }
+    '(' task_port_decl_list ')' ';'
+    task_item_list_opt
+    statement_or_null
+    K_endtask
+      { perm_string task_name = lex_strings.make($2);
+	PTask*tmp = new PTask(task_name);
+	FILE_NAME(tmp, @1);
+	tmp->set_ports($5);
+	tmp->set_statement($9);
+	pform_set_task(task_name, tmp);
+	pform_pop_scope();
+	delete $2;
+      }
 
   /* The function declaration rule matches the function declaration
      header, then pushes the function scope. This causes the
