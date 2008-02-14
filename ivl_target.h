@@ -483,6 +483,9 @@ extern ivl_net_const_t ivl_design_const(ivl_design_t, unsigned idx);
  * ivl_const_width
  *    Return the width, in logical bits, of the constant.
  *
+ * ivl_const_delay
+ *    T0 delay for a transition (0, 1 and Z).
+ *
  * SEMANTIC NOTES
  *
  * The const_type of the literal constant must match the
@@ -498,6 +501,7 @@ extern ivl_net_const_t ivl_design_const(ivl_design_t, unsigned idx);
  */
 extern ivl_variable_type_t ivl_const_type(ivl_net_const_t net);
 extern const char* ivl_const_bits(ivl_net_const_t net);
+extern ivl_expr_t  ivl_const_delay(ivl_net_const_t net, unsigned transition);
 extern ivl_nexus_t ivl_const_nex(ivl_net_const_t net);
 extern int         ivl_const_signed(ivl_net_const_t net);
 extern unsigned    ivl_const_width(ivl_net_const_t net);

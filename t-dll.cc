@@ -699,6 +699,44 @@ void dll_target::make_lpm_delays_(struct ivl_lpm_s*obj,
       }
 }
 
+void dll_target::make_const_delays_(struct ivl_net_const_s*obj,
+				    const NetObj*net)
+{
+      obj->delay[0] = 0;
+      obj->delay[1] = 0;
+      obj->delay[2] = 0;
+
+	/* Translate delay expressions to ivl_target form. Try to
+	   preserve pointer equality, not as a rule but to save on
+	   expression trees. */
+      if (net->rise_time()) {
+	    expr_ = 0;
+	    net->rise_time()->expr_scan(this);
+	    obj->delay[0] = expr_;
+	    expr_ = 0;
+      }
+      if (net->fall_time()) {
+	    if (net->fall_time() == net->rise_time()) {
+		  obj->delay[1] = obj->delay[0];
+	    } else {
+		  expr_ = 0;
+		  net->fall_time()->expr_scan(this);
+		  obj->delay[1] = expr_;
+		  expr_ = 0;
+	    }
+      }
+      if (net->decay_time()) {
+	    if (net->decay_time() == net->rise_time()) {
+		  obj->delay[2] = obj->delay[0];
+	    } else {
+		  expr_ = 0;
+		  net->decay_time()->expr_scan(this);
+		  obj->delay[2] = expr_;
+		  expr_ = 0;
+	    }
+      }
+}
+
 /*
  * Add a bufz object to the scope that contains it.
  *
@@ -2045,6 +2083,8 @@ bool dll_target::net_const(const NetConst*net)
 	    realloc(des_.consts, des_.nconsts * sizeof(ivl_net_const_t));
       des_.consts[des_.nconsts-1] = obj;
 
+      make_const_delays_(obj, net);
+
       return true;
 }
 
@@ -2073,6 +2113,8 @@ bool dll_target::net_literal(const NetLiteral*net)
       des_.consts = (ivl_net_const_t*)
 	    realloc(des_.consts, des_.nconsts * sizeof(ivl_net_const_t));
       des_.consts[des_.nconsts-1] = obj;
+
+      make_const_delays_(obj, net);
 
       return true;
 }

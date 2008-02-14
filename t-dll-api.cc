@@ -129,6 +129,12 @@ extern "C" const char*ivl_const_bits(ivl_net_const_t net)
       }
 }
 
+extern "C" ivl_expr_t ivl_const_delay(ivl_net_const_t net, unsigned transition)
+{
+      assert(transition < 3);
+      return net->delay[transition];
+}
+
 extern "C" ivl_nexus_t ivl_const_nex(ivl_net_const_t net)
 {
       assert(net);

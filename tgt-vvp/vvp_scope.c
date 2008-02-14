@@ -649,6 +649,30 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  break;
 	    }
 
+	    ivl_expr_t d_rise = ivl_const_delay(cptr, 0);
+	    ivl_expr_t d_fall = ivl_const_delay(cptr, 1);
+	    ivl_expr_t d_decay = ivl_const_delay(cptr, 2);
+
+	      /* We have a delayed constant, so we need to build some code. */
+	    if (d_rise != 0) {
+		  assert(number_is_immediate(d_rise, 64));
+		  assert(number_is_immediate(d_fall, 64));
+		  assert(number_is_immediate(d_decay, 64));
+		  
+		  fprintf(vvp_out, "L_%p/d .functor BUFZ 1, %s, "
+		          "C4<0>, C4<0>, C4<0>;\n", cptr, result);
+		  
+		  fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
+	                  cptr, get_number_immediate(d_rise),
+	                  get_number_immediate(d_rise),
+	                  get_number_immediate(d_rise), cptr);
+
+		  free(result);
+		  char tmp[128];
+		  snprintf(tmp, sizeof tmp, "L_%p", cptr);
+		  result = strdup(tmp);
+	    }
+
 	    return result;
       }
 

@@ -163,6 +163,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       void make_logic_delays_(struct ivl_net_logic_s*obj, const NetObj*net);
       void make_lpm_delays_(struct ivl_lpm_s*obj, const NetObj*net);
+      void make_const_delays_(struct ivl_net_const_s*obj, const NetObj*net);
       void make_scope_parameters(ivl_scope_t scope, const NetScope*net);
       void make_scope_param_expr(ivl_parameter_t cur_par, NetExpr*etmp);
 
@@ -417,6 +418,8 @@ struct ivl_net_const_s {
       } b;
 
       ivl_nexus_t pin_;
+
+      ivl_expr_t delay[3];
 };
 
 /*

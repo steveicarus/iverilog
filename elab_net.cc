@@ -2381,6 +2381,11 @@ NetNet* PEFNumber::elaborate_net(Design*des, NetScope*scope,
 
       NetLiteral*obj = new NetLiteral(scope, scope->local_symbol(), value());
       obj->set_line(*this);
+      obj->rise_time(rise);
+      obj->fall_time(fall);
+      obj->decay_time(decay);
+      obj->pin(0).drive0(drive0);
+      obj->pin(0).drive1(drive1);
       des->add_node(obj);
 
       NetNet*net = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, 1);
@@ -2389,30 +2394,7 @@ NetNet* PEFNumber::elaborate_net(Design*des, NetScope*scope,
       net->local_flag(true);
       net->set_line(*this);
 
-	/* If there are non-zero output delays, then create bufz
-	   devices to carry the propagation delays. Otherwise, just
-	   connect the result to the output. */
-      if (rise || fall || decay) {
-	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::WIRE, lwidth);
-	    tmp->data_type(IVL_VT_REAL);
-	    tmp->local_flag(true);
-
-	    NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol(), lwidth);
-	    tmpz->rise_time(rise);
-	    tmpz->fall_time(fall);
-	    tmpz->decay_time(decay);
-	    tmpz->pin(0).drive0(drive0);
-	    tmpz->pin(0).drive1(drive1);
-
-	    connect(obj->pin(0), tmp->pin(0));
-	    connect(tmp->pin(0), tmpz->pin(1));
-	    connect(tmpz->pin(0), net->pin(0));
-
-	    des->add_node(tmpz);
-      } else {
-	    connect(obj->pin(0), net->pin(0));
-      }
+      connect(obj->pin(0), net->pin(0));
 
       return net;
 }
@@ -2872,8 +2854,6 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 		  num = verinum(num, lwidth);
 
 	    con = new NetConst(scope, scope->local_symbol(), num);
-	    con->pin(0).drive0(drive0);
-	    con->pin(0).drive1(drive1);
 
 	/* If the number has a length, then use that to size the
 	   number. Generate a constant object of exactly the user
@@ -2928,31 +2908,13 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 	    con = new NetConst(scope, scope->local_symbol(), num);
       }
 
-	/* If there are non-zero output delays, then create bufz
-	   devices to carry the propagation delays. Otherwise, just
-	   connect the result to the output. */
-      if (rise || fall || decay) {
-	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::WIRE, net->vector_width());
-	    tmp->data_type(IVL_VT_LOGIC);
-	    tmp->local_flag(true);
+      con->rise_time(rise);
+      con->fall_time(fall);
+      con->decay_time(decay);
+      con->pin(0).drive0(drive0);
+      con->pin(0).drive1(drive1);
 
-	    NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol(),
-	                               net->vector_width());
-	    tmpz->rise_time(rise);
-	    tmpz->fall_time(fall);
-	    tmpz->decay_time(decay);
-	    tmpz->pin(0).drive0(drive0);
-	    tmpz->pin(0).drive1(drive1);
-
-	    connect(con->pin(0), tmp->pin(0));
-	    connect(tmp->pin(0), tmpz->pin(1));
-	    connect(net->pin(0), tmpz->pin(0));
-
-	    des->add_node(tmpz);
-      } else {
-	    connect(con->pin(0), net->pin(0));
-      }
+      connect(con->pin(0), net->pin(0));
 
       des->add_node(con);
       return net;
@@ -3000,33 +2962,15 @@ NetNet* PEString::elaborate_net(Design*des, NetScope*scope,
 
       NetConst*con = new NetConst(scope, scope->local_symbol(), num);
       con->set_line(*this);
+      con->rise_time(rise);
+      con->fall_time(fall);
+      con->decay_time(decay);
+      con->pin(0).drive0(drive0);
+      con->pin(0).drive1(drive1);
+
       des->add_node(con);
 
-	/* If there are non-zero output delays, then create bufz
-	   devices to carry the propagation delays. Otherwise, just
-	   connect the result to the output. */
-      if (rise || fall || decay) {
-	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::WIRE, net->vector_width());
-	    tmp->data_type(IVL_VT_LOGIC);
-	    tmp->local_flag(true);
-
-	    NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol(),
-	                               net->vector_width());
-	    tmpz->rise_time(rise);
-	    tmpz->fall_time(fall);
-	    tmpz->decay_time(decay);
-	    tmpz->pin(0).drive0(drive0);
-	    tmpz->pin(0).drive1(drive1);
-
-	    connect(con->pin(0), tmp->pin(0));
-	    connect(tmp->pin(0), tmpz->pin(1));
-	    connect(net->pin(0), tmpz->pin(0));
-
-	    des->add_node(tmpz);
-      } else {
-	    connect(con->pin(0), net->pin(0));
-      }
+      connect(con->pin(0), net->pin(0));
 
       return net;
 }
@@ -3421,31 +3365,14 @@ NetNet* PEUnary::elab_net_uminus_const_logic_(Design*des, NetScope*scope,
 
       NetConst*con = new NetConst(scope, scope->local_symbol(), tmp);
 
-	/* If there are non-zero output delays, then create bufz
-	   devices to carry the propagation delays. Otherwise, just
-	   connect the result to the output. */
-      if (rise || fall || decay) {
-	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::WIRE, width);
-	    tmp->data_type(IVL_VT_LOGIC);
-	    tmp->local_flag(true);
+      connect(con->pin(0), sig->pin(0));
 
-	    NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol(), width);
-	    tmpz->rise_time(rise);
-	    tmpz->fall_time(fall);
-	    tmpz->decay_time(decay);
-	    tmpz->pin(0).drive0(drive0);
-	    tmpz->pin(0).drive1(drive1);
-
-	    connect(con->pin(0), tmp->pin(0));
-	    connect(tmp->pin(0), tmpz->pin(1));
-	    connect(sig->pin(0), tmpz->pin(0));
-
-	    des->add_node(tmpz);
-      } else {
-	    connect(con->pin(0), sig->pin(0));
-      }
       con->set_line(*this);
+      con->rise_time(rise);
+      con->fall_time(fall);
+      con->decay_time(decay);
+      con->pin(0).drive0(drive0);
+      con->pin(0).drive1(drive1);
 
       des->add_node(con);
 
@@ -3479,31 +3406,14 @@ NetNet* PEUnary::elab_net_uminus_const_real_(Design*des, NetScope*scope,
 
       NetLiteral*con = new NetLiteral(scope, scope->local_symbol(), -val);
 
-	/* If there are non-zero output delays, then create bufz
-	   devices to carry the propagation delays. Otherwise, just
-	   connect the result to the output. */
-      if (rise || fall || decay) {
-	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::WIRE, width);
-	    tmp->data_type(IVL_VT_REAL);
-	    tmp->local_flag(true);
+      connect(con->pin(0), sig->pin(0));
 
-	    NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_symbol(), width);
-	    tmpz->rise_time(rise);
-	    tmpz->fall_time(fall);
-	    tmpz->decay_time(decay);
-	    tmpz->pin(0).drive0(drive0);
-	    tmpz->pin(0).drive1(drive1);
-
-	    connect(con->pin(0), tmp->pin(0));
-	    connect(tmp->pin(0), tmpz->pin(1));
-	    connect(sig->pin(0), tmpz->pin(0));
-
-	    des->add_node(tmpz);
-      } else {
-	    connect(con->pin(0), sig->pin(0));
-      }
       con->set_line(*this);
+      con->rise_time(rise);
+      con->fall_time(fall);
+      con->decay_time(decay);
+      con->pin(0).drive0(drive0);
+      con->pin(0).drive1(drive1);
 
       des->add_node(con);
 
