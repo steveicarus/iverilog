@@ -1964,6 +1964,7 @@ vvp_scalar_t vvp_fun_signal8::scalar_value(unsigned idx) const
 
 vvp_fun_signal_real::vvp_fun_signal_real()
 {
+      bits_ = 0.0;
 }
 
 double vvp_fun_signal_real::real_value() const
