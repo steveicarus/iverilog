@@ -52,8 +52,8 @@ static char*macro_name();
 
 static void include_filename();
 static void do_include();
-static int yywrap();
 
+static int load_next_input();
 
 struct include_stack_t {
       char* path;
@@ -160,6 +160,7 @@ static int ma_parenthesis_level = 0;
 %option nounput
 %option noinput
 %option noyy_top_state
+%option noyywrap
 
 %x PPINCLUDE
 %x DEF_NAME
@@ -316,6 +317,9 @@ W [ \t\b\f]+
       istack->lineno += 1;
       fputc('\n', yyout);
       yy_pop_state();
+
+      if (!load_next_input())
+            yyterminate();
   }
 
 `undef{W}[a-zA-Z_][a-zA-Z0-9_$]*{W}?.* { def_undefine(); }
@@ -520,6 +524,8 @@ W [ \t\b\f]+
       istack->lineno += 1;
       fputc('\n', yyout);
   }
+
+<<EOF>> { if (!load_next_input()) yyterminate(); }
 
 %%
   /* Defined macros are kept in this table for convenient lookup. As
@@ -1130,15 +1136,16 @@ static void do_expand(int use_args)
  * files that are opened and being processed. The first item on the
  * stack is the current file being scanned. If I get to an include
  * statement,
+ *
  *    open the new file,
  *    save the current buffer context,
  *    create a new buffer context,
  *    and push the new file information.
  *
- * When the file runs out, the yywrap closes the file and deletes the
- * buffer. If after popping the current file information there is
- * another file on the stack, restore its buffer context and resume
- * parsing.
+ * When the file runs out, it is closed and the buffer is deleted
+ * If after popping the current file information there is another
+ * file on the stack, that file's buffer context is restored and
+ * parsing resumes.
  */
 
 static void output_init()
@@ -1246,12 +1253,7 @@ static void lexor_done()
       }
 }
 
-/*
- * The lexical analyzer calls this function when the current file
- * ends. Here I pop the include stack and resume the previous file. If
- * there is no previous file, then the main input is ended.
- */
-static int yywrap()
+static int load_next_input()
 {
       int line_mask_flag = 0;
       struct include_stack_t*isp = istack;
@@ -1284,7 +1286,7 @@ static int yywrap()
       if (istack == 0) {
 	    if (file_queue == 0) {
 		  lexor_done();
-		  return 1;
+		  return 0;
 	    }
 
 	    istack = file_queue;
@@ -1296,7 +1298,7 @@ static int yywrap()
 	    if (istack->file == 0) {
 		  perror(istack->path);
 		  error_count += 1;
-		  return 1;
+		  return 0;
 	    }
 
 	    if (line_direct_flag)
@@ -1306,7 +1308,7 @@ static int yywrap()
 	    }
 
 	    yyrestart(istack->file);
-	    return 0;
+	    return 1;
       }
 
 
@@ -1319,7 +1321,7 @@ static int yywrap()
 	    fprintf(yyout, "\n`line %u \"%s\" 2\n",
 		    istack->lineno+1, istack->path);
 
-      return 0;
+      return 1;
 }
 
 /*
@@ -1438,7 +1440,7 @@ void reset_lexor(FILE*out, char*paths[])
       isp->next = 0;
 
 	/* Now build up a queue of all the remaining file names, so
-	   that yywrap can pull them when needed. */
+	   that load_next_input() can pull them when needed. */
       file_queue = 0;
       for (idx = 1 ;  paths[idx] ;  idx += 1) {
 	    isp = malloc(sizeof(struct include_stack_t));
