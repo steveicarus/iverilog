@@ -202,7 +202,7 @@ static FILE*fopen_safe(const char*path)
       if (fd != -1)
 	    file = _fdopen(fd, "w");
 
-       return file;
+      return file;
 }
 #else
 # include  <fcntl.h>
@@ -215,7 +215,7 @@ static FILE*fopen_safe(const char*path)
       if (fd != -1)
 	    file = fdopen(fd, "w");
 
-       return file;
+      return file;
 }
 #endif
 
@@ -436,25 +436,25 @@ int process_generation(const char*name)
       else if (strcmp(name,"xtypes") == 0)
 	    gen_xtypes = "xtypes";
 
-       else if (strcmp(name,"no-xtypes") == 0)
+      else if (strcmp(name,"no-xtypes") == 0)
 	    gen_xtypes = "no-xtypes";
 
-       else if (strcmp(name,"specify") == 0)
+      else if (strcmp(name,"specify") == 0)
 	    gen_specify = "specify";
 
-       else if (strcmp(name,"no-specify") == 0)
+      else if (strcmp(name,"no-specify") == 0)
 	    gen_specify = "no-specify";
 
-       else if (strcmp(name,"std-include") == 0)
+      else if (strcmp(name,"std-include") == 0)
 	     gen_std_include = 1;
 
-       else if (strcmp(name,"no-std-include") == 0)
+      else if (strcmp(name,"no-std-include") == 0)
 	     gen_std_include = 0;
 
-       else if (strcmp(name,"io-range-error") == 0)
+      else if (strcmp(name,"io-range-error") == 0)
 	    gen_io_range_error = "io-range-error";
 
-       else if (strcmp(name,"no-io-range-error") == 0)
+      else if (strcmp(name,"no-io-range-error") == 0)
 	    gen_io_range_error = "no-io-range-error";
 
       else {

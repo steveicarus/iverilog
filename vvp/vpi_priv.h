@@ -94,8 +94,8 @@ struct __vpirt {
 	 These two methods are used to read/write delay
 	 values from/into modpath records
        */
-       void  (*vpi_get_delays_)(vpiHandle, p_vpi_delay);
-       void  (*vpi_put_delays_)(vpiHandle, p_vpi_delay);
+      void  (*vpi_get_delays_)(vpiHandle, p_vpi_delay);
+      void  (*vpi_put_delays_)(vpiHandle, p_vpi_delay);
 };
 
 /*

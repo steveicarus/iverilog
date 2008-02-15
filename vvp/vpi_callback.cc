@@ -85,7 +85,7 @@ struct sync_cb  : public vvp_gen_event_s {
       struct __vpiCallback*handle;
       bool sync_flag;
 
-  ~sync_cb () { }
+      ~sync_cb () { }
 
       virtual void run_run();
 };

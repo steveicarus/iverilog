@@ -641,7 +641,7 @@ struct vpip_put_value_event : vvp_gen_event_s {
       vpiHandle handle;
       s_vpi_value value;
       virtual void run_run();
-  ~vpip_put_value_event() { }
+      ~vpip_put_value_event() { }
 };
 
 void vpip_put_value_event::run_run()

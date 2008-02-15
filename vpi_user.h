@@ -218,12 +218,12 @@ typedef struct t_vpi_value {
 
 
 typedef struct t_vpi_delay  {
-     struct t_vpi_time  *da; /* Array of delay data */
-     PLI_INT32  no_of_delays ;
-     PLI_INT32  time_type; /* vpiScaledRealTime, vpiSimTime */
-     PLI_INT32  mtm_flag;
-     PLI_INT32  append_flag;
-     PLI_INT32  plusere_flag;
+      struct t_vpi_time  *da; /* Array of delay data */
+      PLI_INT32  no_of_delays ;
+      PLI_INT32  time_type; /* vpiScaledRealTime, vpiSimTime */
+      PLI_INT32  mtm_flag;
+      PLI_INT32  append_flag;
+      PLI_INT32  plusere_flag;
 } s_vpi_delay, *p_vpi_delay;
 
 

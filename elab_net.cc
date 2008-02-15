@@ -3506,7 +3506,7 @@ NetNet* PEUnary::elab_net_unary_real_(Design*des, NetScope*scope,
 	    connect(tmp_sig->pin(0), sub->pin_DataA());
 	    connect(tmp_sig->pin(0), tmp_con->pin(0));
 	    break;
-     }
+      }
 
       return sig;
 }

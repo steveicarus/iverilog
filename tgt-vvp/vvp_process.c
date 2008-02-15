@@ -471,7 +471,7 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 	/* Evaluate the r-value */
       word = draw_eval_real(rval);
 
-     fprintf(vvp_out, "   %%assign/wr v%p_%lu, %lu, %u;\n",
+      fprintf(vvp_out, "   %%assign/wr v%p_%lu, %lu, %u;\n",
 	      sig, use_word, delay, word);
 
       clr_word(word);

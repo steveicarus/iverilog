@@ -575,7 +575,7 @@ static vpiHandle modpath_src_get_handle(int code, vpiHandle ref)
 
 	  case vpiModPathOut:
 	    return vpi_handle(&rfp->dest->path_term_out);
-       }
+      }
       return 0;
 }
 
@@ -730,17 +730,17 @@ static vpiHandle pathterm_get_handle(int code, vpiHandle ref)
 * are common to a bunch of modpaths, including the destination term.
 */
 static const struct __vpirt vpip_modpath_src_rt = {
-     vpiModPath,
-     modpath_src_get,
-     0, /* vpi_get_str */
-     modpath_src_get_value,
-     modpath_src_put_value,
-     modpath_src_get_handle,
-     0, /* modpath_src_iterate,*/
-     modpath_src_index,
-     modpath_src_free_object,
-     modpath_src_get_delays,
-     modpath_src_put_delays
+      vpiModPath,
+      modpath_src_get,
+      0, /* vpi_get_str */
+      modpath_src_get_value,
+      modpath_src_put_value,
+      modpath_src_get_handle,
+      0, /* modpath_src_iterate,*/
+      modpath_src_index,
+      modpath_src_free_object,
+      modpath_src_get_delays,
+      modpath_src_put_delays
 };
 
 static const struct __vpirt vpip_modpath_term_rt = {
@@ -810,7 +810,7 @@ struct __vpiModPathSrc* vpip_make_modpath_src (struct __vpiModPath*path, vvp_tim
 struct __vpiModPathTerm* vpip_modpath_term_from_handle(vpiHandle ref)
 {
       if (ref->vpi_type->type_code != vpiPathTerm)
-         return 0;
+            return 0;
 
       return (struct __vpiModPathTerm*) ref;
 }
@@ -824,7 +824,7 @@ struct __vpiModPathTerm* vpip_modpath_term_from_handle(vpiHandle ref)
 struct __vpiModPathSrc* vpip_modpath_src_from_handle(vpiHandle ref)
 {
       if (ref->vpi_type->type_code != vpiModPath)
-        return 0;
+            return 0;
       
       return (struct __vpiModPathSrc *) ref;
 }

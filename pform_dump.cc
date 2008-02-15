@@ -97,7 +97,7 @@ ostream& operator<< (ostream&out, const index_component_t&that)
       }
       out << "]";
       return out;
- }
+}
 
 ostream& operator<< (ostream&out, const name_component_t&that)
 {

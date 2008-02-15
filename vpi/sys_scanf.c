@@ -539,7 +539,7 @@ static PLI_INT32 sys_fscanf_calltf(PLI_BYTE8*name)
       src.fd = fd;
       scan_format(sys, &src, argv);
 
-       return 0;
+      return 0;
 }
 
 static PLI_INT32 sys_sscanf_compiletf(PLI_BYTE8*name)

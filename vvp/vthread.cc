@@ -3258,7 +3258,7 @@ bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
 	      // And this is the pointer to be removed.
 	    vvp_net_ptr_t dst_ptr (net, 2);
 	    unlink_from_driver(src, dst_ptr);
-     }
+      }
 
 	// Send a command to this signal to unforce itself.
       vvp_net_ptr_t ptr (net, 3);

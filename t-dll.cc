@@ -1973,13 +1973,13 @@ bool dll_target::part_select(const NetPartSelect*net)
 	   strength aware output, so attach it to the nexus with
 	   strong driver. */
       if (obj->type == IVL_LPM_PART_BI)
-	 nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+	  nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
       else
-	 nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+	  nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
 	/* The select input is optional. */
       if (obj->u_.part.s)
-	 nexus_lpm_add(obj->u_.part.s, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+	  nexus_lpm_add(obj->u_.part.s, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       make_lpm_delays_(obj, net);
 

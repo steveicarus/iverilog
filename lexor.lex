@@ -231,7 +231,7 @@ W [ \t\b\f\r]+
       }
 
       return rc;
- }
+  }
 
 
 \\[^ \t\b\f\r\n]+         {
@@ -337,7 +337,7 @@ W [ \t\b\f\r]+
 	    error_count += 1;
       }
       pform_set_default_nettype(net_type, yylloc.text, yylloc.first_line);
- }
+  }
 <PPDEFAULT_NETTYPE>\n {
       yylloc.first_line += 1;
       BEGIN(0); }

@@ -345,7 +345,7 @@ static void signal_get_IntVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 
 static void signal_get_ScalarVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 {
-     vvp_fun_signal*vsig = dynamic_cast<vvp_fun_signal*>(rfp->node->fun);
+      vvp_fun_signal*vsig = dynamic_cast<vvp_fun_signal*>(rfp->node->fun);
 
       switch (vsig->value(0)) {
 	  case BIT4_0:
@@ -365,47 +365,47 @@ static void signal_get_ScalarVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 
 static void signal_get_StrengthVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 {
-     vvp_fun_signal_vec*vsig = dynamic_cast<vvp_fun_signal_vec*>(rfp->node->fun);
-     unsigned wid = signal_width(rfp);
-     s_vpi_strengthval*op;
+      vvp_fun_signal_vec*vsig = dynamic_cast<vvp_fun_signal_vec*>(rfp->node->fun);
+      unsigned wid = signal_width(rfp);
+      s_vpi_strengthval*op;
 
-     op = (s_vpi_strengthval*)
-	   need_result_buf(wid * sizeof(s_vpi_strengthval), RBUF_VAL);
+      op = (s_vpi_strengthval*)
+	    need_result_buf(wid * sizeof(s_vpi_strengthval), RBUF_VAL);
 
-     for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	   vvp_scalar_t val = vsig->scalar_value(idx);
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    vvp_scalar_t val = vsig->scalar_value(idx);
 
 	     /* vvp_scalar_t strengths are 0-7, but the vpi strength
 		is bit0-bit7. This gets the vpi form of the strengths
 		from the vvp_scalar_t strengths. */
-	   unsigned s0 = 1 << val.strength0();
-	   unsigned s1 = 1 << val.strength1();
+	    unsigned s0 = 1 << val.strength0();
+	    unsigned s1 = 1 << val.strength1();
 
-	   switch (val.value()) {
-	       case BIT4_0:
-		 op[idx].logic = vpi0;
-		 op[idx].s0 = s0|s1;
-		 op[idx].s1 = 0;
-		 break;
-	       case BIT4_1:
-		 op[idx].logic = vpi1;
-		 op[idx].s0 = 0;
-		 op[idx].s1 = s0|s1;
-		 break;
-	       case BIT4_X:
-		 op[idx].logic = vpiX;
-		 op[idx].s0 = s0;
-		 op[idx].s1 = s1;
-		 break;
-	       case BIT4_Z:
-		 op[idx].logic = vpiZ;
-		 op[idx].s0 = vpiHiZ;
-		 op[idx].s1 = vpiHiZ;
-		 break;
-	   }
-     }
+	    switch (val.value()) {
+	        case BIT4_0:
+		  op[idx].logic = vpi0;
+		  op[idx].s0 = s0|s1;
+		  op[idx].s1 = 0;
+		  break;
+	        case BIT4_1:
+		  op[idx].logic = vpi1;
+		  op[idx].s0 = 0;
+		  op[idx].s1 = s0|s1;
+		  break;
+	        case BIT4_X:
+		  op[idx].logic = vpiX;
+		  op[idx].s0 = s0;
+		  op[idx].s1 = s1;
+		  break;
+	        case BIT4_Z:
+		  op[idx].logic = vpiZ;
+		  op[idx].s0 = vpiHiZ;
+		  op[idx].s1 = vpiHiZ;
+		  break;
+	    }
+      }
 
-     vp->value.strength = op;
+      vp->value.strength = op;
 }
 
 /*
