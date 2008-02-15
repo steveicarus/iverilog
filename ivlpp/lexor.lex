@@ -742,7 +742,7 @@ static void do_define()
 		  tail = strstr(cp+2, "*/");
 		  if (tail == 0) {
 			fprintf(stderr, "%s:%u: Unterminated comment "
-				"in define\n", istack->path, istack->lineno);
+				"in define\n", istack->path, istack->lineno+1);
 			*cp = 0;
 			break;
 		  }
