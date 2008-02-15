@@ -189,12 +189,12 @@ W [ \t\b\f]+
      are included within the comments. */
 
 "/*" { comment_enter = YY_START; BEGIN(CCOMMENT); ECHO; }
-<CCOMMENT>[^\r\n]    { ECHO; }
-<CCOMMENT>\n\r { istack->lineno += 1; fputc('\n', yyout); }
-<CCOMMENT>\r\n { istack->lineno += 1; fputc('\n', yyout); }
-<CCOMMENT>\n   { istack->lineno += 1; fputc('\n', yyout); }
-<CCOMMENT>\r   { istack->lineno += 1; fputc('\n', yyout); }
-<CCOMMENT>"*/" { BEGIN(comment_enter); ECHO; }
+<CCOMMENT>[^\r\n] { ECHO; }
+<CCOMMENT>\n\r    |
+<CCOMMENT>\r\n    |
+<CCOMMENT>\n      |
+<CCOMMENT>\r      { istack->lineno += 1; fputc('\n', yyout); }
+<CCOMMENT>"*/"    { BEGIN(comment_enter); ECHO; }
 
   /* Detect and pass multiline pragma comments. As with C-style
      comments, pragma comments are passed through, and preprocessor
@@ -203,12 +203,12 @@ W [ \t\b\f]+
 
 "(*"{W}?")" { ECHO; }
 "(*" { pragma_enter = YY_START; BEGIN(PCOMENT); ECHO; }
-<PCOMENT>[^\r\n]    { ECHO; }
-<PCOMENT>\n\r { istack->lineno += 1; fputc('\n', yyout); }
-<PCOMENT>\r\n { istack->lineno += 1; fputc('\n', yyout); }
-<PCOMENT>\n   { istack->lineno += 1; fputc('\n', yyout); }
-<PCOMENT>\r   { istack->lineno += 1; fputc('\n', yyout); }
-<PCOMENT>"*)" { BEGIN(pragma_enter); ECHO; }
+<PCOMENT>[^\r\n] { ECHO; }
+<PCOMENT>\n\r    |
+<PCOMENT>\r\n    |
+<PCOMENT>\n      |
+<PCOMENT>\r      { istack->lineno += 1; fputc('\n', yyout); }
+<PCOMENT>"*)"    { BEGIN(pragma_enter); ECHO; }
 <PCOMENT>`[a-zA-Z][a-zA-Z0-9_$]* {
       if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
   }
@@ -218,9 +218,9 @@ W [ \t\b\f]+
      string. */
 \"            { string_enter = YY_START; BEGIN(CSTRING); ECHO; }
 <CSTRING>\\\" { ECHO; }
-<CSTRING>\r\n { fputc('\n', yyout); }
-<CSTRING>\n\r { fputc('\n', yyout); }
-<CSTRING>\n   { fputc('\n', yyout); }
+<CSTRING>\r\n |
+<CSTRING>\n\r |
+<CSTRING>\n   |
 <CSTRING>\r   { fputc('\n', yyout); }
 <CSTRING>\"   { BEGIN(string_enter);  ECHO; }
 <CSTRING>.    { ECHO; }
@@ -250,14 +250,18 @@ W [ \t\b\f]+
   /* These finish the include directive (EOF or EOL) so I revert the
      lexor state and execute the inclusion. */
 
-<PPINCLUDE>\r\n { istack->lineno += 1; yy_pop_state(); do_include(); }
-<PPINCLUDE>\n\r { istack->lineno += 1; yy_pop_state(); do_include(); }
-<PPINCLUDE>\n   { istack->lineno += 1; yy_pop_state(); do_include(); }
-<PPINCLUDE>\r   { istack->lineno += 1; yy_pop_state(); do_include(); }
+ /* There is a bug in flex <= 2.5.34 that prevents the continued action '|'
+  * from working properly when the final action is associated with <<EOF>>.
+  * Therefore, the action is repeated. */
+
+<PPINCLUDE>\r\n    |
+<PPINCLUDE>\n\r    |
+<PPINCLUDE>\n      |
+<PPINCLUDE>\r      { istack->lineno += 1; yy_pop_state(); do_include(); }
 <PPINCLUDE><<EOF>> { istack->lineno += 1; yy_pop_state(); do_include(); }
 
   /* Anything that is not matched by the above is an error of some
-     sort. Print and error message and absorb the rest of the line. */
+     sort. Print an error message and absorb the rest of the line. */
 <PPINCLUDE>. {
       emit_pathline(istack);
       fprintf(stderr, "error: malformed `include directive."
@@ -280,11 +284,8 @@ W [ \t\b\f]+
 <DEF_SEP>")"{W}? { BEGIN(DEF_TXT); }
 
 <DEF_ARG,DEF_SEP>"//"[^\r\n]* { ECHO; }
-
-<DEF_ARG,DEF_SEP>"/*" { comment_enter = YY_START; BEGIN(CCOMMENT); ECHO; }
-
-<DEF_ARG,DEF_SEP>{W} { }
-
+<DEF_ARG,DEF_SEP>"/*"         { comment_enter = YY_START; BEGIN(CCOMMENT); ECHO; }
+<DEF_ARG,DEF_SEP>{W}          { }
 <DEF_ARG,DEF_SEP>(\n|"\r\n"|"\n\r"|\r){W}? {
       istack->lineno += 1;
       fputc('\n', yyout);
@@ -359,10 +360,7 @@ W [ \t\b\f]+
       }
   }
 
-<IFDEF_FALSE,IFDEF_SUPR>`ifdef{W} {
-      ifdef_enter();
-      yy_push_state(IFDEF_SUPR);
-  }
+<IFDEF_FALSE,IFDEF_SUPR>`ifdef{W}  |
 <IFDEF_FALSE,IFDEF_SUPR>`ifndef{W} {
       ifdef_enter();
       yy_push_state(IFDEF_SUPR);
@@ -393,17 +391,17 @@ W [ \t\b\f]+
 
 <IFDEF_FALSE,IFDEF_SUPR>"/*" { comment_enter = YY_START; BEGIN(IFCCOMMENT); }
 <IFCCOMMENT>[^\r\n]    {  }
-<IFCCOMMENT>\n\r { istack->lineno += 1; }
-<IFCCOMMENT>\r\n { istack->lineno += 1; }
-<IFCCOMMENT>\n   { istack->lineno += 1; }
+<IFCCOMMENT>\n\r |
+<IFCCOMMENT>\r\n |
+<IFCCOMMENT>\n   |
 <IFCCOMMENT>\r   { istack->lineno += 1; }
 <IFCCOMMENT>"*/" { BEGIN(comment_enter); }
 
-<IFDEF_FALSE,IFDEF_SUPR>[^\r\n]  {  }
-<IFDEF_FALSE,IFDEF_SUPR>\n\r { istack->lineno += 1; fputc('\n', yyout); }
-<IFDEF_FALSE,IFDEF_SUPR>\r\n { istack->lineno += 1; fputc('\n', yyout); }
-<IFDEF_FALSE,IFDEF_SUPR>\n   { istack->lineno += 1; fputc('\n', yyout); }
-<IFDEF_FALSE,IFDEF_SUPR>\r   { istack->lineno += 1; fputc('\n', yyout); }
+<IFDEF_FALSE,IFDEF_SUPR>[^\r\n] {  }
+<IFDEF_FALSE,IFDEF_SUPR>\n\r    |
+<IFDEF_FALSE,IFDEF_SUPR>\r\n    |
+<IFDEF_FALSE,IFDEF_SUPR>\n      |
+<IFDEF_FALSE,IFDEF_SUPR>\r      { istack->lineno += 1; fputc('\n', yyout); }
 
 <IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR>`endif { ifdef_leave(); yy_pop_state(); }
 
@@ -459,8 +457,7 @@ W [ \t\b\f]+
 
 <MA_START>. {
       emit_pathline(istack);
-      fprintf(stderr, "error: missing argument list for `%s.\n", 
-	      macro_name());
+      fprintf(stderr, "error: missing argument list for `%s.\n", macro_name());
       error_count += 1;
       yy_pop_state();
       yyless(0);
@@ -510,10 +507,10 @@ W [ \t\b\f]+
      output. Very easy. */
 
 [^\r\n] { ECHO; }
-\n\r { istack->lineno += 1; fputc('\n', yyout); }
-\r\n { istack->lineno += 1; fputc('\n', yyout); }
-\n   { istack->lineno += 1; fputc('\n', yyout); }
-\r   { istack->lineno += 1; fputc('\n', yyout); }
+\n\r    |
+\r\n    |
+\n      |
+\r      { istack->lineno += 1; fputc('\n', yyout); }
 
   /* Absorb the rest of the line when a broken directive is detected. */
 <ERROR_LINE>[^\r\n]* { yy_pop_state(); }
