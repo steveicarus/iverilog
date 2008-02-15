@@ -1259,15 +1259,12 @@ static int yywrap()
       int line_mask_flag = 0;
       struct include_stack_t*isp = istack;
       istack = isp->next;
-      FILE *delayed_close = (FILE *) 0;
 
 	/* Delete the current input buffers, and free the cell. */
       yy_delete_buffer(YY_CURRENT_BUFFER);
       if (isp->file) {
-	      /* Delay the close of this file, because the yyrestart
-		 below seems to have some memory of this file. */
-	    delayed_close = isp->file;
 	    free(isp->path);
+	    fclose(isp->file);
       } else {
 	      /* If I am printing line directives and I just finished
 		 macro substitution, I should terminate the line and
@@ -1312,7 +1309,6 @@ static int yywrap()
 	    }
 
 	    yyrestart(istack->file);
-	    if (delayed_close) fclose(delayed_close);
 	    return 0;
       }
 
@@ -1321,7 +1317,6 @@ static int yywrap()
 	   top. If I need to print a line directive, do so. */
 
       yy_switch_to_buffer(istack->yybs);
-      if (delayed_close) fclose(delayed_close);
 
       if (line_direct_flag && istack->path && !line_mask_flag)
 	    fprintf(yyout, "\n`line %u \"%s\" 2\n",
