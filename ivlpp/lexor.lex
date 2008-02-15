@@ -181,6 +181,12 @@ static int ma_parenthesis_level = 0;
 
 W [ \t\b\f]+
 
+/* The grouping parentheses are necessary for compatibility with
+ * older versions of flex (at least 2.5.31); they are supposed to
+ * be implied, according to the flex manual.
+ */
+keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
+
 %%
 
 "//"[^\r\n]* { ECHO; }
@@ -210,6 +216,11 @@ W [ \t\b\f]+
 <PCOMENT>\n      |
 <PCOMENT>\r      { istack->lineno += 1; fputc('\n', yyout); }
 <PCOMENT>"*)"    { BEGIN(pragma_enter); ECHO; }
+<PCOMENT>`{keywords} {
+      emit_pathline(istack);
+      fprintf(stderr, "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n", yytext);
+      error_count += 1;
+  }
 <PCOMENT>`[a-zA-Z][a-zA-Z0-9_$]* {
       if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
   }
@@ -225,6 +236,11 @@ W [ \t\b\f]+
 <CSTRING>\r   { fputc('\n', yyout); }
 <CSTRING>\"   { BEGIN(string_enter);  ECHO; }
 <CSTRING>.    { ECHO; }
+<CSTRING>`{keywords} {
+      emit_pathline(istack);
+      fprintf(stderr, "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n", yytext);
+      error_count += 1;
+  }
 <CSTRING>`[a-zA-Z][a-zA-Z0-9_$]* {
       if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
   }
@@ -235,6 +251,11 @@ W [ \t\b\f]+
 
 ^{W}?`include { yy_push_state(PPINCLUDE); }
 
+<PPINCLUDE>`{keywords} {
+      emit_pathline(istack);
+      fprintf(stderr, "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n", yytext);
+      error_count += 1;
+  }
 <PPINCLUDE>`[a-zA-Z][a-zA-Z0-9_]* {
       if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
   }
@@ -276,6 +297,12 @@ W [ \t\b\f]+
 
 `define{W} { yy_push_state(DEF_NAME); }
 
+<DEF_NAME>{keywords}{W}? {
+      emit_pathline(istack);
+      fprintf(stderr, "error: malformed `define directive: macro names cannot be directive keywords\n");
+      error_count += 1;
+      BEGIN(ERROR_LINE);
+  }
 <DEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]*"("{W}? { BEGIN(DEF_ARG); def_start(); }
 <DEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]*{W}?    { BEGIN(DEF_TXT); def_start(); }
 
@@ -445,6 +472,11 @@ W [ \t\b\f]+
       error_count += 1;
   }
 
+`{keywords} {
+      emit_pathline(istack);
+      fprintf(stderr, "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n", yytext);
+      error_count += 1;
+  }
   /* This pattern notices macros and arranges for them to be replaced. */
 `[a-zA-Z_][a-zA-Z0-9_$]* {
       if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
