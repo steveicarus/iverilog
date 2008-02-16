@@ -526,32 +526,32 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 		  sptr += 1;
 	    }
 
-	    unsigned long hshift = doff+remain;
-	    unsigned long hmask;
-	    if (hshift >= BITS_PER_WORD)
-		  hmask = -1UL;
-	    else
-		  hmask = (1UL << 2UL*(doff+remain)) - 1;
-
-	    unsigned long mask = hmask & ~lmask;
-
-	    bits_ptr_[dptr] =
-		  (bits_ptr_[dptr] & ~mask)
-		  | ((that.bits_ptr_[sptr] << 2UL*doff) & mask);
-
-	    if ((doff + remain) > BITS_PER_WORD) {
-		  unsigned tail = doff + remain - BITS_PER_WORD;
-		  if (tail >= BITS_PER_WORD)
-			mask = -1UL;
+	    if (remain > 0) {
+		  unsigned long hshift = doff+remain;
+		  unsigned long hmask;
+		  if (hshift >= BITS_PER_WORD)
+			hmask = -1UL;
 		  else
-			mask = (1UL << 2UL*tail) - 1;
+			hmask = (1UL << 2UL*(doff+remain)) - 1;
 
-		  dptr += 1;
-		  bits_ptr_[dptr] =
-			(bits_ptr_[dptr] & ~mask)
-			| ((that.bits_ptr_[sptr] >> 2UL*(remain-tail))&mask);
+		  unsigned long mask = hmask & ~lmask;
+
+		  bits_ptr_[dptr] = (bits_ptr_[dptr] & ~mask)
+		        | ((that.bits_ptr_[sptr] << 2UL*doff) & mask);
+
+		  if ((doff + remain) > BITS_PER_WORD) {
+			unsigned tail = doff + remain - BITS_PER_WORD;
+			if (tail >= BITS_PER_WORD)
+			      mask = -1UL;
+			else
+			      mask = (1UL << 2UL*tail) - 1;
+
+			dptr += 1;
+			bits_ptr_[dptr] = (bits_ptr_[dptr] & ~mask) |
+			      ((that.bits_ptr_[sptr] >> 2UL*
+			        (remain-tail))&mask);
+		  }
 	    }
-
 
       }
 }

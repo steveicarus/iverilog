@@ -123,7 +123,7 @@ struct vthread_s {
 static inline void thr_check_addr(struct vthread_s*thr, unsigned addr)
 {
       if (thr->bits4.size() <= addr)
-	    thr->bits4.resize(addr + CPU_WORD_BITS);
+	    thr->bits4.resize(addr+1);
 }
 
 static inline vvp_bit4_t thr_get_bit(struct vthread_s*thr, unsigned addr)
@@ -2673,8 +2673,8 @@ static bool of_MOV_(vthread_t thr, vvp_code_t cp)
 	   neither the source nor the destination to be <4. Otherwise,
 	   we copy all the bits manually. */
 
-      thr_check_addr(thr, cp->bit_idx[0]+cp->number);
-      thr_check_addr(thr, cp->bit_idx[1]+cp->number);
+      thr_check_addr(thr, cp->bit_idx[0]+cp->number-1);
+      thr_check_addr(thr, cp->bit_idx[1]+cp->number-1);
 	// Read the source vector out
       vvp_vector4_t tmp (thr->bits4, cp->bit_idx[1], cp->number);
 	// Write it in the new place.
@@ -2717,7 +2717,7 @@ bool of_MOVI(vthread_t thr, vvp_code_t cp)
       unsigned val = cp->bit_idx[1];
       unsigned wid = cp->number;
 
-      thr_check_addr(thr, dst+wid);
+      thr_check_addr(thr, dst+wid-1);
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1, val >>= 1)
 	    thr->bits4.set_bit(dst+idx, (val&1)? BIT4_1 : BIT4_0);
