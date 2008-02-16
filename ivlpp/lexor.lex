@@ -1195,6 +1195,7 @@ static void do_include()
 		  sprintf(path, "%s/%s", include_dir[idx], standby->path);
 		  standby->file = fopen(path, "r");
 		  if (standby->file) {
+			standby->path = strdup(path);
 			if(depend_file) {
 			    fprintf(depend_file, "%s\n", path);
 			}
