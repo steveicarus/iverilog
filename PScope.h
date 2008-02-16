@@ -20,14 +20,15 @@
  */
 
 # include  "StringHeap.h"
+# include  "pform_types.h"
 # include  <map>
 
 class PEvent;
 
 /*
  * The PScope class is a base representation of an object that
- * represents some sort of compile-time scope. For example, a module,
- * a function/task, a named block is derived from a PScope.
+ * represents lexical scope. For example, a module, a function/task, a
+ * named block is derived from a PScope.
  *
  * NOTE: This is note the same concept as the "scope" of an elaborated
  * hierarchy. That is represented by NetScope objects after elaboration.
@@ -35,16 +36,26 @@ class PEvent;
 class PScope {
 
     public:
-      PScope(perm_string name);
-      ~PScope();
+	// When created, a scope has a name and a parent. The name is
+	// the name of the definition. For example, if this is a
+	// module declaration, the name is the name after the "module"
+	// keyword, and if this is a task scope, the name is the task
+	// name. The parent is the lexical parent of this scope. Since
+	// modules do not nest in Verilog, the parent must be nil for
+	// modules. Scopes for tasks and functions point to their
+	// containing module.
+      PScope(perm_string name, PScope*parent);
+      virtual ~PScope();
 
       perm_string pscope_name() const { return name_; }
+      PScope* pscope_parent() { return parent_; }
 
 	// Named events in the scope.
       map<perm_string,PEvent*>events;
 
     private:
       perm_string name_;
+      PScope*parent_;
 };
 
 #endif

@@ -21,8 +21,8 @@
 
 # include  "PTask.h"
 
-PTask::PTask(perm_string name)
-: PScope(name), ports_(0), statement_(0)
+PTask::PTask(perm_string name, PScope*parent)
+: PScope(name, parent), ports_(0), statement_(0)
 {
 }
 

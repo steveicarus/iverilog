@@ -794,8 +794,8 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 {
       NetScope*my_scope = scope;
 
-      if (name_ != 0) {
-	    hname_t use_name(name_);
+      if (pscope_name() != 0) {
+	    hname_t use_name(pscope_name());
 	    if (scope->child(use_name)) {
 		  cerr << get_fileline() << ": error: block/scope name "
 		       << use_name << " already used in this context."

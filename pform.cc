@@ -38,6 +38,7 @@
 
 # include  "ivl_assert.h"
 
+
 map<perm_string,Module*> pform_modules;
 map<perm_string,PUdp*> pform_primitives;
 
@@ -103,6 +104,7 @@ static inline void FILE_NAME(LineInfo*tmp, const struct vlltype&where)
  */
 
 static pform_name_t scope_stack;
+static PScope* lexical_scope = 0;
 
 void pform_push_scope(char*name)
 {
@@ -112,6 +114,7 @@ void pform_push_scope(char*name)
 void pform_pop_scope()
 {
       scope_stack.pop_back();
+      lexical_scope = lexical_scope->pscope_parent();
 }
 
 static pform_name_t hier_name(const char*tail)
@@ -119,6 +122,41 @@ static pform_name_t hier_name(const char*tail)
       pform_name_t name = scope_stack;
       name.push_back(name_component_t(lex_strings.make(tail)));
       return name;
+}
+
+PTask* pform_push_task_scope(char*name)
+{
+      pform_push_scope(name);
+      perm_string task_name = lex_strings.make(name);
+      PTask*task = new PTask(task_name, pform_cur_module);
+
+	// Add the task to the current module
+      pform_cur_module->add_task(task->pscope_name(), task);
+	// Make this the current lexical scope
+      lexical_scope = task;
+      return task;
+}
+
+PFunction* pform_push_function_scope(char*name)
+{
+      pform_push_scope(name);
+      perm_string func_name = lex_strings.make(name);
+      PFunction*func = new PFunction(func_name, lexical_scope);
+
+	// Add the task to the current module
+      pform_cur_module->add_function(func->pscope_name(), func);
+	// Make this the current lexical scope
+      lexical_scope = func;
+      return func;
+}
+
+PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
+{
+      pform_push_scope(name);
+      perm_string block_name = lex_strings.make(name);
+      PBlock*block = new PBlock(block_name, lexical_scope, bt);
+
+      return block;
 }
 
 static PWire*get_wire_in_module(const pform_name_t&name)
@@ -1588,17 +1626,6 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 	    delete range;
       delete names;
       return res;
-}
-
-void pform_set_task(perm_string name, PTask*task)
-{
-      pform_cur_module->add_task(name, task);
-}
-
-
-void pform_set_function(perm_string name, PFunction*func)
-{
-      pform_cur_module->add_function(name, func);
 }
 
 void pform_set_attrib(perm_string name, perm_string key, char*value)

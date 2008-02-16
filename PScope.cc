@@ -19,8 +19,8 @@
 
 # include  "PScope.h"
 
-PScope::PScope(perm_string n)
-: name_(n)
+PScope::PScope(perm_string n, PScope*p)
+    : name_(n), parent_(p)
 {
 }
 

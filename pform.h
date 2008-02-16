@@ -167,8 +167,11 @@ extern void pform_make_udp(perm_string name,
  * name string onto the scope hierarchy. The pop pulls it off and
  * deletes it. Thus, the string pushed must be allocated.
  */
-extern void pform_push_scope(char*name);
 extern void pform_pop_scope();
+
+extern PTask*pform_push_task_scope(char*name);
+extern PFunction*pform_push_function_scope(char*name);
+extern PBlock*pform_push_block_scope(char*name, PBlock::BL_TYPE tt);
 
 
 extern verinum* pform_verinum_with_size(verinum*s, verinum*val,
@@ -248,8 +251,6 @@ extern void pform_set_net_range(list<perm_string>*names,
 extern void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<perm_string>*names);
 extern void pform_set_reg_time(list<perm_string>*names);
-extern void pform_set_task(perm_string name, PTask*);
-extern void pform_set_function(perm_string name, PFunction*);
 
   /* pform_set_attrib and pform_set_type_attrib exist to support the
      $attribute syntax, which can only set string values to

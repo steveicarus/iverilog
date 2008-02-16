@@ -21,8 +21,8 @@
 
 #include "PTask.h"
 
-PFunction::PFunction(perm_string name)
-: PScope(name), ports_(0), statement_(0)
+PFunction::PFunction(perm_string name, PScope*parent)
+: PScope(name, parent), ports_(0), statement_(0)
 {
       return_type_.type = PTF_NONE;
 }

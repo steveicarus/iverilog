@@ -86,18 +86,13 @@ PAssignNB::~PAssignNB()
 {
 }
 
-PBlock::PBlock(perm_string n, BL_TYPE t, const svector<Statement*>&st)
-: name_(n), bl_type_(t), list_(st)
-{
-}
-
-PBlock::PBlock(BL_TYPE t, const svector<Statement*>&st)
-: bl_type_(t), list_(st)
+PBlock::PBlock(perm_string n, PScope*parent, BL_TYPE t)
+: PScope(n, parent), bl_type_(t)
 {
 }
 
 PBlock::PBlock(BL_TYPE t)
-: bl_type_(t)
+: PScope(perm_string(),0), bl_type_(t)
 {
 }
 
@@ -105,6 +100,11 @@ PBlock::~PBlock()
 {
       for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1)
 	    delete list_[idx];
+}
+
+void PBlock::set_statement(const svector<Statement*>&st)
+{
+      list_ = st;
 }
 
 PCallTask::PCallTask(const pform_name_t&n, const svector<PExpr*>&p)

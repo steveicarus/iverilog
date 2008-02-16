@@ -504,8 +504,8 @@ void PAssignNB::dump(ostream&out, unsigned ind) const
 void PBlock::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "begin";
-      if (name_ != 0)
-	    out << " : " << name_;
+      if (pscope_name() != 0)
+	    out << " : " << pscope_name();
       out << endl;
 
       for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1) {

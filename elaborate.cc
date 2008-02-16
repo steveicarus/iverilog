@@ -1846,12 +1846,12 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	    : NetBlock::SEQU;
 
       NetScope*nscope = 0;
-      if (name_.str() != 0) {
-	    nscope = scope->child(hname_t(name_));
+      if (pscope_name() != 0) {
+	    nscope = scope->child(hname_t(pscope_name()));
 	    if (nscope == 0) {
 		  cerr << get_fileline() << ": internal error: "
 			"unable to find block scope " << scope_path(scope)
-		       << "<" << name_ << ">" << endl;
+		       << "<" << pscope_name() << ">" << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -1869,7 +1869,7 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	// statement. There is no need to keep the block node. Also,
 	// don't elide named blocks, because they might be referenced
 	// elsewhere.
-      if ((list_.count() == 1) && (name_.str() == 0)) {
+      if ((list_.count() == 1) && (pscope_name() == 0)) {
 	    assert(list_[0]);
 	    NetProc*tmp = list_[0]->elaborate(des, nscope);
 	    return tmp;

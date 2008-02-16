@@ -45,6 +45,12 @@ static struct {
       svector<PExpr*>* range;
 } port_declaration_context;
 
+/* The task and function rules need to briefly hold the pointer to the
+   task/function that is currently in progress. */
+static PTask* current_task = 0;
+static PFunction* current_function = 0;
+static PBlock* current_block = 0;
+
 /* Later version of bison (including 1.35) will not compile in stack
    extension if the output is compiled with C++ and either the YYSTYPE
    or YYLTYPE are provided by the source code. However, I can get the
@@ -1843,33 +1849,31 @@ module_item
      extension. */
 
   | K_task IDENTIFIER ';'
-      { pform_push_scope($2); }
+      { current_task = pform_push_task_scope($2);
+	FILE_NAME(current_task, @1);
+      }
     task_item_list_opt
     statement_or_null
     K_endtask
-      { perm_string task_name = lex_strings.make($2);
-	PTask*tmp = new PTask(task_name);
-	FILE_NAME(tmp, @1);
-	tmp->set_ports($5);
-	tmp->set_statement($6);
-	pform_set_task(task_name, tmp);
+      { current_task->set_ports($5);
+	current_task->set_statement($6);
 	pform_pop_scope();
+	current_task = 0;
 	delete $2;
       }
 
   | K_task IDENTIFIER
-      { pform_push_scope($2); }
+      { current_task = pform_push_task_scope($2);
+	FILE_NAME(current_task, @1);
+      }
     '(' task_port_decl_list ')' ';'
     task_item_list_opt
     statement_or_null
     K_endtask
-      { perm_string task_name = lex_strings.make($2);
-	PTask*tmp = new PTask(task_name);
-	FILE_NAME(tmp, @1);
-	tmp->set_ports($5);
-	tmp->set_statement($9);
-	pform_set_task(task_name, tmp);
+      { current_task->set_ports($5);
+	current_task->set_statement($9);
 	pform_pop_scope();
+	current_task = 0;
 	delete $2;
       }
 
@@ -1878,20 +1882,17 @@ module_item
      definitions in the func_body to take on the scope of the function
      instead of the module. */
 
-        | K_function function_range_or_type_opt IDENTIFIER ';'
-                { pform_push_scope($3); }
-          function_item_list statement
-          K_endfunction
-		{ perm_string name = lex_strings.make($3);
-		  PFunction *tmp = new PFunction(name);
-		  FILE_NAME(tmp, @1);
-		  tmp->set_ports($6);
-		  tmp->set_statement($7);
-		  tmp->set_return($2);
-		  pform_set_function(name, tmp);
-		  pform_pop_scope();
-		  delete $3;
-		}
+  | K_function function_range_or_type_opt IDENTIFIER ';'
+      { current_function = pform_push_function_scope($3); }
+    function_item_list statement
+    K_endfunction
+      { current_function->set_ports($6);
+	current_function->set_statement($7);
+	current_function->set_return($2);
+	pform_pop_scope();
+	current_function = 0;
+	delete $3;
+      }
 
   /* A generate region can contain further module items. Actually, it
      is supposed to be limited to certain kinds of module items, but
@@ -2961,65 +2962,66 @@ statement
      name. These are handled by pushing the scope name then matching
      the declarations. The scope is popped at the end of the block. */
 
-	| K_begin statement_list K_end
-		{ PBlock*tmp = new PBlock(PBlock::BL_SEQ, *$2);
-		  FILE_NAME(tmp, @1);
-		  delete $2;
-		  $$ = tmp;
-		}
-	| K_begin ':' IDENTIFIER
-		{ pform_push_scope($3); }
-	  block_item_decls_opt
-	  statement_list K_end
-		{ pform_pop_scope();
-		  PBlock*tmp = new PBlock(lex_strings.make($3),
-					  PBlock::BL_SEQ, *$6);
-		  FILE_NAME(tmp, @1);
-		  delete $3;
-		  delete $6;
-		  $$ = tmp;
-		}
-	| K_begin K_end
-		{ PBlock*tmp = new PBlock(PBlock::BL_SEQ);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_begin ':' IDENTIFIER K_end
-		{ PBlock*tmp = new PBlock(PBlock::BL_SEQ);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_begin error K_end
-		{ yyerrok; }
+  | K_begin statement_list K_end
+      { PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+	FILE_NAME(tmp, @1);
+	tmp->set_statement(*$2);
+	delete $2;
+	$$ = tmp;
+      }
+  | K_begin ':' IDENTIFIER
+      { current_block = pform_push_block_scope($3, PBlock::BL_SEQ);
+	FILE_NAME(current_block, @1);
+      }
+    block_item_decls_opt
+    statement_list K_end
+      { pform_pop_scope();
+	current_block->set_statement(*$6);
+	delete $3;
+	delete $6;
+	$$ = current_block;
+      }
+  | K_begin K_end
+      { PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_begin ':' IDENTIFIER K_end
+      { PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_begin error K_end
+      { yyerrok; }
 
   /* fork-join blocks are very similar to begin-end blocks. In fact,
      from the parser's perspective there is no real difference. All we
      need to do is remember that this is a parallel block so that the
      code generator can do the right thing. */
 
-	| K_fork ':' IDENTIFIER
-		{ pform_push_scope($3); }
-	  block_item_decls_opt
-	  statement_list K_join
-		{ pform_pop_scope();
-		  PBlock*tmp = new PBlock(lex_strings.make($3),
-					  PBlock::BL_PAR, *$6);
-		  FILE_NAME(tmp, @1);
-		  delete $3;
-		  delete $6;
-		  $$ = tmp;
-		}
-	| K_fork K_join
-		{ PBlock*tmp = new PBlock(PBlock::BL_PAR);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_fork ':' IDENTIFIER K_join
-		{ PBlock*tmp = new PBlock(PBlock::BL_PAR);
-		  FILE_NAME(tmp, @1);
-		  delete $3;
-		  $$ = tmp;
-		}
+  | K_fork ':' IDENTIFIER
+      { current_block = pform_push_block_scope($3, PBlock::BL_PAR);
+	FILE_NAME(current_block, @1);
+      }
+    block_item_decls_opt
+    statement_list K_join
+      { pform_pop_scope();
+	current_block->set_statement(*$6);
+	delete $3;
+	delete $6;
+	$$ = current_block;
+      }
+  | K_fork K_join
+      { PBlock*tmp = new PBlock(PBlock::BL_PAR);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_fork ':' IDENTIFIER K_join
+      { PBlock*tmp = new PBlock(PBlock::BL_PAR);
+	FILE_NAME(tmp, @1);
+	delete $3;
+	$$ = tmp;
+      }
 
 	| K_disable hierarchy_identifier ';'
 		{ PDisable*tmp = new PDisable(*$2);
@@ -3039,8 +3041,9 @@ statement
 		  $$ = tmp;
 		}
 	| K_fork statement_list K_join
-		{ PBlock*tmp = new PBlock(PBlock::BL_PAR, *$2);
+		{ PBlock*tmp = new PBlock(PBlock::BL_PAR);
 		  FILE_NAME(tmp, @1);
+		  tmp->set_statement(*$2);
 		  delete $2;
 		  $$ = tmp;
 		}

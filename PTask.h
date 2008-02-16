@@ -51,7 +51,7 @@ struct PTaskFuncArg {
 class PTask  : public PScope, public LineInfo {
 
     public:
-      explicit PTask(perm_string name);
+      explicit PTask(perm_string name, PScope*parent);
       ~PTask();
 
       void set_ports(svector<PWire *>*p);
@@ -90,7 +90,7 @@ class PTask  : public PScope, public LineInfo {
 class PFunction : public PScope, public LineInfo {
 
     public:
-      explicit PFunction(perm_string name);
+      explicit PFunction(perm_string name, PScope*parent);
       ~PFunction();
 
       void set_ports(svector<PWire *>*p);
