@@ -1183,44 +1183,44 @@ static void do_include()
 	    /* Add the current path to the start of the include_dir list. */
 	    strcpy(path, istack->path);
 	    cp = strrchr(path, '/');
-	    if (cp == 0) start = 1;  /* A base file so already in [1] */
-	    else *cp = '\0';
-	    /* We do not need a strdup here since the path is read before
-	     * it is overridden. If the search order is changed add a
-	     * strdup here and a free before the include_dir[0] = 0 below.
-	     */
-	    include_dir[0] = path;
+	    if (cp == 0)
+	        start = 1;  /* A base file so already in [1] */
+	    else {
+	        *cp = '\0';
+
+	        /* We do not need a strdup here since the path is read before
+	         * it is overridden. If the search order is changed add a
+	         * strdup here and a free below.
+	         */
+	        include_dir[0] = path;
+	    }
+
 	    standby->file = 0;
 	    for (idx = start ;  idx < include_cnt ;  idx += 1) {
 		  sprintf(path, "%s/%s", include_dir[idx], standby->path);
 		  standby->file = fopen(path, "r");
 		  if (standby->file) {
-			standby->path = strdup(path);
-			if(depend_file) {
+
+			if(depend_file)
 			    fprintf(depend_file, "%s\n", path);
-			}
-			break;
+
+			if (line_direct_flag)
+			    fprintf(yyout, "\n`line %u \"%s\" 1\n", istack->lineno+1, path);
+
+			standby->path = strdup(path);
+			standby->next = istack;
+			istack->yybs = YY_CURRENT_BUFFER;
+			istack = standby;
+			standby = 0;
+			yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
+
+			return;
 		  }
 	    }
-            include_dir[0] = 0;
       }
 
-      if (standby->file == 0) {
-	    fprintf(stderr, "%s:%u: Include file %s not found\n",
-		    istack->path, istack->lineno, standby->path);
-	    exit(1);
-      }
-
-      assert(standby->file);
-      standby->next = istack;
-      istack->yybs = YY_CURRENT_BUFFER;
-      istack = standby;
-      standby = 0;
-      yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
-
-      if (line_direct_flag && istack->path)
-	    fprintf(yyout, "\n`line %u \"%s\" 1\n",
-		    istack->lineno+1, istack->path);
+      fprintf(stderr, "%s:%u: Include file %s not found\n", istack->path, istack->lineno, standby->path);
+      exit(1);
 }
 
 /* walk the include stack until we find an entry with a valid pathname,
