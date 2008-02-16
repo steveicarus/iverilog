@@ -1736,7 +1736,7 @@ static void draw_lpm_add(ivl_lpm_t net)
 		  type = "pow.s";
 		  if (width > 8*sizeof(long)) {
 			fprintf(stderr, "%s:%u: sorry (vvp-tgt): Signed power "
-				"result must be no more than %d bits.\n",
+				"result must be no more than %zu bits.\n",
 				ivl_lpm_file(net), ivl_lpm_lineno(net),
 				8*sizeof(long));
 			exit(1);

@@ -781,6 +781,8 @@ void vvp_shiftr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 
 vvp_arith_real_::vvp_arith_real_()
 {
+      op_a_ = 0.0;
+      op_b_ = 0.0;
 }
 
 void vvp_arith_real_::dispatch_operand_(vvp_net_ptr_t ptr, double bit)

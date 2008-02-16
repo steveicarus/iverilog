@@ -921,7 +921,7 @@ void compile_arith_div(char*label, long wid, bool signed_flag,
       assert( wid > 0 );
 
       if (argc != 2) {
-	    char *suffix = "";
+	    const char *suffix = "";
 	    if (signed_flag) suffix = ".s";
 	    fprintf(stderr, "%s; .arith/div%s has wrong number of "
 	                    "symbols\n", label, suffix);
@@ -1012,7 +1012,7 @@ void compile_arith_pow(char*label, long wid, bool signed_flag,
       }
 
       if (argc != 2) {
-	    char *suffix = "";
+	    const char *suffix = "";
 	    if (signed_flag) suffix = ".s";
 	    fprintf(stderr, "%s .arith/pow%s has wrong number of "
 	                    "symbols\n", label, suffix);

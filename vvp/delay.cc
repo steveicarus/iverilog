@@ -131,6 +131,7 @@ vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, vvp_bit4_t init, const vvp_delay_t&d)
 : net_(n), delay_(d), cur_vec4_(1)
 {
       cur_vec4_.set_bit(0, init);
+      cur_real_ = 0.0;
       list_ = 0;
       initial_ = true;
 }
