@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_scanf.c,v 1.8 2007/04/16 00:09:58 steve Exp $"
-#endif
 
   /* round() is ISO C99 from math.h. This define should enable it. */
 # define _ISOC99_SOURCE 1
@@ -200,7 +197,7 @@ static int scan_format_string(struct byte_source*src, vpiHandle arg)
 	    if (ch == EOF)
 		  break;
 
-	    tmp = realloc(tmp, len+1);
+	    tmp = realloc(tmp, len+2);
 	    tmp[len++] = ch;
 
 	    ch = byte_getc(src);
@@ -602,4 +599,3 @@ void sys_scanf_register()
       tf_data.user_data = "$sscanf";
       vpi_register_systf(&tf_data);
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: dff.cc,v 1.2 2005/06/22 00:04:49 steve Exp $"
-#endif
 
 # include  "compile.h"
 # include  "schedule.h"
@@ -35,6 +32,7 @@ vvp_dff::vvp_dff(bool invert_clk, bool invert_ce)
 : iclk_(invert_clk), ice_(invert_ce)
 {
       clk_cur_ = BIT4_X;
+      enable_ = BIT4_X;
 }
 
 vvp_dff::~vvp_dff()
