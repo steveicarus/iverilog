@@ -528,6 +528,12 @@ static PLI_INT32 sys_fscanf_calltf(PLI_BYTE8*name)
 
       val.format = vpiIntVal;
       vpi_get_value(item, &val);
+      if (val.value.integer == 0) {
+	    vpi_printf("%s:%d: Error: $fscanf called with NULL file "
+	               "descriptor.\n", vpi_get_str(vpiFile, sys),
+	               (int)vpi_get(vpiLineNo, sys));
+	    exit(1);
+      }
 
       fd = vpi_get_file(val.value.integer);
       assert(fd);
