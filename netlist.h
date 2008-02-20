@@ -3138,7 +3138,7 @@ class NetEUnary  : public NetExpr {
       virtual bool set_width(unsigned w, bool last_chance);
 
       virtual NetEUnary* dup_expr() const;
-      virtual NetEConst* eval_tree(int prune_to_width = -1);
+      virtual NetExpr* eval_tree(int prune_to_width = -1);
 
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
@@ -3150,6 +3150,9 @@ class NetEUnary  : public NetExpr {
       NetExpr* expr_;
 
       void eval_expr_();
+
+    private:
+      virtual NetExpr* eval_tree_real_();
 };
 
 class NetEUBits : public NetEUnary {
@@ -3160,7 +3163,7 @@ class NetEUBits : public NetEUnary {
 
       virtual NetNet* synthesize(Design*);
 
-      virtual NetEConst* eval_tree(int prune_to_width = -1);
+      virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual ivl_variable_type_t expr_type() const;
 };
 

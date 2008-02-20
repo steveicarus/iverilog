@@ -1483,6 +1483,8 @@ void NetEUnary::eval_expr_()
       assert(expr_);
       if (dynamic_cast<NetEConst*>(expr_))
 	    return;
+      if (dynamic_cast<NetECReal*>(expr_))
+	    return;
 
       NetExpr*oper = expr_->eval_tree();
       if (oper == 0)
@@ -1492,9 +1494,30 @@ void NetEUnary::eval_expr_()
       expr_ = oper;
 }
 
-NetEConst* NetEUnary::eval_tree(int prune_to_width)
+NetExpr* NetEUnary::eval_tree_real_()
+{
+      NetECReal*val= dynamic_cast<NetECReal*> (expr_), *res;
+      if (val == 0) return 0;
+
+      switch (op_) {
+	  case '+':
+	    res = new NetECReal(val->value());
+	    res->set_line(*this);
+	    return res;
+	  case '-':
+	    res = new NetECReal(-(val->value()));
+	    res->set_line(*this);
+	    return res;
+	  default:
+	    return 0;
+      }
+}
+
+NetExpr* NetEUnary::eval_tree(int prune_to_width)
 {
       eval_expr_();
+      if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
+
       NetEConst*rval = dynamic_cast<NetEConst*>(expr_);
       if (rval == 0)
 	    return 0;
@@ -1549,7 +1572,7 @@ NetEConst* NetEUnary::eval_tree(int prune_to_width)
 }
 
 
-NetEConst* NetEUBits::eval_tree(int prune_to_width)
+NetExpr* NetEUBits::eval_tree(int prune_to_width)
 {
       return NetEUnary::eval_tree(prune_to_width);
 }
