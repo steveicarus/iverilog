@@ -1,4 +1,3 @@
-
 %{
 /*
  * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
@@ -35,119 +34,135 @@
 static void output_init();
 #define YY_USER_INIT output_init()
 
-static void def_start();
-static void def_add_arg();
-static void def_finish();
-static void def_undefine();
-static void do_define();
-static int  def_is_done();
-static int  is_defined(const char*name);
+static void  def_start();
+static void  def_add_arg();
+static void  def_finish();
+static void  def_undefine();
+static void  do_define();
+static int   def_is_done();
+static int   is_defined(const char*name);
 
-static int  macro_needs_args();
-static void macro_start_args();
-static void macro_add_to_arg();
-static void macro_finish_arg();
-static void do_expand(int use_args);
-static char*macro_name();
+static int   macro_needs_args();
+static void  macro_start_args();
+static void  macro_add_to_arg();
+static void  macro_finish_arg();
+static void  do_expand(int use_args);
+static char* macro_name();
 
 static void include_filename();
 static void do_include();
 
 static int load_next_input();
 
-struct include_stack_t {
-      char* path;
+struct include_stack_t
+{
+    char* path;
 
-        /* If the current input is from a file, this member is set. */
-      FILE*file;
+    /* If the current input is from a file, this member is set. */
+    FILE* file;
 
-        /* If we are reparsing a macro expansion, file is 0 and this
-	   member points to the string in progress */
-      const char*str;
+    /* If we are reparsing a macro expansion, file is 0 and this
+     * member points to the string in progress
+     */
+    const char* str;
 
-	/* If we are reparsing a macro expansion, this member indicates
-	   the amount of space it occupies in the macro expansion buffer.
-	   This will be zero for macros without arguments. */
-      int  ebs;
+    /* If we are reparsing a macro expansion, this member indicates
+     * the amount of space it occupies in the macro expansion buffer.
+     * This will be zero for macros without arguments.
+     */
+    int ebs;
 
-      unsigned lineno;
-      YY_BUFFER_STATE yybs;
+    unsigned lineno;
+    YY_BUFFER_STATE yybs;
 
-      struct include_stack_t*next;
+    struct include_stack_t* next;
 };
 
-static void emit_pathline(struct include_stack_t *isp);
+static void emit_pathline(struct include_stack_t* isp);
 
 /*
  * The file_queue is a singly-linked list of the files that were
  * listed on the command line/file list.
  */
-static struct include_stack_t*file_queue = 0;
+static struct include_stack_t* file_queue = 0;
+
 /*
  * The istack is the inclusion stack.
  */
-static struct include_stack_t*istack  = 0;
-static struct include_stack_t*standby = 0;
+static struct include_stack_t* istack  = 0;
+static struct include_stack_t* standby = 0;
 
 /*
  * Keep a stack of active ifdef, so that I can report errors
  * when there are missing endifs.
  */
-struct ifdef_stack_t {
-      char*path;
-      unsigned lineno;
+struct ifdef_stack_t
+{
+    char*    path;
+    unsigned lineno;
 
-      struct ifdef_stack_t*next;
+    struct ifdef_stack_t* next;
 };
 
-static struct ifdef_stack_t *ifdef_stack = 0;
+static struct ifdef_stack_t* ifdef_stack = 0;
 
 static void ifdef_enter(void)
 {
-      struct ifdef_stack_t*cur;
+    struct ifdef_stack_t*cur;
 
-      cur = (struct ifdef_stack_t*)
-	    calloc(1, sizeof(struct ifdef_stack_t));
-      cur->path   = strdup(istack->path);
-      cur->lineno = istack->lineno;
-      cur->next = ifdef_stack;
-      ifdef_stack = cur;
+    cur = (struct ifdef_stack_t*) calloc(1, sizeof(struct ifdef_stack_t));
+    cur->path = strdup(istack->path);
+    cur->lineno = istack->lineno;
+    cur->next = ifdef_stack;
+
+    ifdef_stack = cur;
 }
 
 static void ifdef_leave(void)
 {
-      struct ifdef_stack_t*cur;
+    struct ifdef_stack_t* cur;
 
-      assert(ifdef_stack);
+    assert(ifdef_stack);
 
-      cur = ifdef_stack;
-      ifdef_stack = cur->next;
+    cur = ifdef_stack;
+    ifdef_stack = cur->next;
 
-      if (strcmp(istack->path,cur->path) != 0) {
-	    fprintf(stderr, "%s:%u: warning: "
-		    "This `endif matches an ifdef in another file.\n",
-		    istack->path, istack->lineno+1);
+    if (strcmp(istack->path,cur->path) != 0)
+    {
+        fprintf
+        (
+            stderr,
+            "%s:%u: warning: This `endif matches an ifdef in another file.\n",
+            istack->path,
+            istack->lineno+1
+        );
 
-	    fprintf(stderr, "%s:%u:        : "
-		    "This is the odd matched `ifdef.\n",
-		    cur->path, cur->lineno+1);
-      }
+        fprintf
+        (
+            stderr,
+            "%s:%u: This is the odd matched `ifdef.\n",
+            cur->path,
+            cur->lineno+1
+        );
+    }
 
-      free(cur->path);
-      free(cur);
-
+    free(cur->path);
+    free(cur);
 }
 
-#define YY_INPUT(buf,result,max_size) do { \
-    if (istack->file) { \
+#define YY_INPUT(buf,result,max_size) do {                 \
+    if (istack->file) {                                    \
         size_t rc = fread(buf, 1, max_size, istack->file); \
-        if (rc == 0) result = YY_NULL; \
-        else result = rc; \
-    } else { \
-        if (*istack->str == 0) result = YY_NULL; \
-        else { buf[0] = *istack->str++; result = 1; } \
-    } \
-} while(0)
+        result = (rc == 0) ? YY_NULL : rc;                 \
+    } else {                                               \
+        if (*istack->str == 0)                             \
+            result = YY_NULL;                              \
+        else {                                             \
+            buf[0] = *istack->str++;                       \
+            result = 1;                                    \
+        }                                                  \
+    }                                                      \
+} while (0)
 
 static int comment_enter = 0;
 static int pragma_enter = 0;
@@ -179,7 +194,7 @@ static int ma_parenthesis_level = 0;
 %s IFDEF_TRUE
 %x IFDEF_SUPR
 
-W [ \t\b\f]+
+W        [ \t\b\f]+
 
 /* The grouping parentheses are necessary for compatibility with
  * older versions of flex (at least 2.5.31); they are supposed to
@@ -191,11 +206,12 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 "//"[^\r\n]* { ECHO; }
 
-  /* detect multiline, c-style comments, passing them directly to the
-     output. This is necessary to allow for ignoring directives that
-     are included within the comments. */
+ /* detect multiline, c-style comments, passing them directly to the
+  * output. This is necessary to allow for ignoring directives that
+  * are included within the comments.
+  */
 
-"/*" { comment_enter = YY_START; BEGIN(CCOMMENT); ECHO; }
+"/*"              { comment_enter = YY_START; BEGIN(CCOMMENT); ECHO; }
 <CCOMMENT>[^\r\n] { ECHO; }
 <CCOMMENT>\n\r    |
 <CCOMMENT>\r\n    |
@@ -203,31 +219,39 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <CCOMMENT>\r      { istack->lineno += 1; fputc('\n', yyout); }
 <CCOMMENT>"*/"    { BEGIN(comment_enter); ECHO; }
 
-  /* Detect and pass multiline pragma comments. As with C-style
-     comments, pragma comments are passed through, and preprocessor
-     directives contained within are ignored. Contains macros are
-     expanded, however. */
-
-"(*"{W}?")" { ECHO; }
-"(*" { pragma_enter = YY_START; BEGIN(PCOMENT); ECHO; }
+ /* Detect and pass multiline pragma comments. As with C-style
+  * comments, pragma comments are passed through, and preprocessor
+  * directives contained within are ignored. Contains macros are
+  * expanded, however.
+  */
+"(*"{W}?")"      { ECHO; }
+"(*"             { pragma_enter = YY_START; BEGIN(PCOMENT); ECHO; }
 <PCOMENT>[^\r\n] { ECHO; }
 <PCOMENT>\n\r    |
 <PCOMENT>\r\n    |
 <PCOMENT>\n      |
 <PCOMENT>\r      { istack->lineno += 1; fputc('\n', yyout); }
 <PCOMENT>"*)"    { BEGIN(pragma_enter); ECHO; }
-<PCOMENT>`{keywords} {
-      emit_pathline(istack);
-      fprintf(stderr, "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n", yytext);
-      error_count += 1;
-  }
-<PCOMENT>`[a-zA-Z][a-zA-Z0-9_$]* {
-      if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
-  }
 
-  /* Strings do not contain preprocessor directives, but can expand
-     macros. If that happens, they get expanded in the context of the
-     string. */
+<PCOMENT>`{keywords} {
+    emit_pathline(istack);
+    error_count += 1;
+    fprintf
+    (
+        stderr,
+        "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n",
+        yytext
+    );
+}
+
+<PCOMENT>`[a-zA-Z][a-zA-Z0-9_$]* {
+    if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
+}
+
+ /* Strings do not contain preprocessor directives, but can expand
+  * macros. If that happens, they get expanded in the context of the
+  * string.
+  */
 \"            { string_enter = YY_START; BEGIN(CSTRING); ECHO; }
 <CSTRING>\\\" { ECHO; }
 <CSTRING>\r\n |
@@ -236,41 +260,56 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <CSTRING>\r   { fputc('\n', yyout); }
 <CSTRING>\"   { BEGIN(string_enter);  ECHO; }
 <CSTRING>.    { ECHO; }
+
 <CSTRING>`{keywords} {
-      emit_pathline(istack);
-      fprintf(stderr, "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n", yytext);
-      error_count += 1;
-  }
+    emit_pathline(istack);
+    error_count += 1;
+    fprintf
+    (
+        stderr,
+        "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n",
+        yytext
+    );
+}
+
 <CSTRING>`[a-zA-Z][a-zA-Z0-9_$]* {
-      if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
-  }
+    if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
+}
 
-  /* This set of patterns matches the include directive and the name
-     that follows it. when the directive ends, the do_include function
-     performs the include operation. */
-
+ /* This set of patterns matches the include directive and the name
+  * that follows it. when the directive ends, the do_include function
+  * performs the include operation.
+  */
 ^{W}?`include { yy_push_state(PPINCLUDE); }
 
 <PPINCLUDE>`{keywords} {
-      emit_pathline(istack);
-      fprintf(stderr, "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n", yytext);
-      error_count += 1;
-  }
+    emit_pathline(istack);
+    error_count += 1;
+    fprintf
+    (
+        stderr,
+        "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n",
+        yytext
+    );
+}
+
 <PPINCLUDE>`[a-zA-Z][a-zA-Z0-9_]* {
-      if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
-  }
+    if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
+}
+
 <PPINCLUDE>\"[^\"]*\" { include_filename(); }
 
 <PPINCLUDE>[ \t\b\f] { ; }
 
   /* Catch single-line comments that share the line with an include
-     directive. And while I'm at it, I might as well preserve the
-     comment in the output stream. */
-
+   * directive. And while I'm at it, I might as well preserve the
+   * comment in the output stream.
+   */
 <PPINCLUDE>"//"[^\r\n]* { ECHO; }
 
-  /* These finish the include directive (EOF or EOL) so I revert the
-     lexor state and execute the inclusion. */
+ /* These finish the include directive (EOF or EOL) so I revert the
+  * lexor state and execute the inclusion.
+  */
 
  /* There is a bug in flex <= 2.5.34 that prevents the continued action '|'
   * from working properly when the final action is associated with <<EOF>>.
@@ -282,27 +321,33 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <PPINCLUDE>\r      { istack->lineno += 1; yy_pop_state(); do_include(); }
 <PPINCLUDE><<EOF>> { istack->lineno += 1; yy_pop_state(); do_include(); }
 
-  /* Anything that is not matched by the above is an error of some
-     sort. Print an error message and absorb the rest of the line. */
+ /* Anything that is not matched by the above is an error of some
+  * sort. Print an error message and absorb the rest of the line.
+  */
 <PPINCLUDE>. {
-      emit_pathline(istack);
-      fprintf(stderr, "error: malformed `include directive."
-	      " Did you quote the file name?\n");
-      error_count += 1;
-      BEGIN(ERROR_LINE); }
+    emit_pathline(istack);
+    fprintf(stderr, "error: malformed `include directive. Did you quote the file name?\n");
+    error_count += 1;
+    BEGIN(ERROR_LINE);
+}
 
   /* Detect the define directive, and match the name. If followed by a
-     '(', collect the formal arguments. Consume any white space, then
-     go into DEF_TXT mode and collect the defined value. */
-
+   * '(', collect the formal arguments. Consume any white space, then
+   * go into DEF_TXT mode and collect the defined value.
+   */
 `define{W} { yy_push_state(DEF_NAME); }
 
 <DEF_NAME>{keywords}{W}? {
-      emit_pathline(istack);
-      fprintf(stderr, "error: malformed `define directive: macro names cannot be directive keywords\n");
-      error_count += 1;
-      BEGIN(ERROR_LINE);
-  }
+    emit_pathline(istack);
+    error_count += 1;
+    BEGIN(ERROR_LINE);
+    fprintf
+    (
+        stderr,
+        "error: malformed `define directive: macro names cannot be directive keywords\n"
+    );
+}
+
 <DEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]*"("{W}? { BEGIN(DEF_ARG); def_start(); }
 <DEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]*{W}?    { BEGIN(DEF_TXT); def_start(); }
 
@@ -313,120 +358,116 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <DEF_ARG,DEF_SEP>"//"[^\r\n]* { ECHO; }
 <DEF_ARG,DEF_SEP>"/*"         { comment_enter = YY_START; BEGIN(CCOMMENT); ECHO; }
-<DEF_ARG,DEF_SEP>{W}          { }
-<DEF_ARG,DEF_SEP>(\n|"\r\n"|"\n\r"|\r){W}? {
-      istack->lineno += 1;
-      fputc('\n', yyout);
-  }
+<DEF_ARG,DEF_SEP>{W}          {}
+
+<DEF_ARG,DEF_SEP>(\n|"\r\n"|"\n\r"|\r){W}? { istack->lineno += 1; fputc('\n', yyout); }
 
 <DEF_NAME,DEF_ARG,DEF_SEP>. {
-      emit_pathline(istack);
-      fprintf(stderr, "error: malformed `define directive.\n");
-      error_count += 1;
-      BEGIN(ERROR_LINE);
-  }
+    emit_pathline(istack);
+    fprintf(stderr, "error: malformed `define directive.\n");
+    error_count += 1;
+    BEGIN(ERROR_LINE);
+}
 
 <DEF_TXT>.*[^\r\n] { do_define(); }
 
 <DEF_TXT>(\n|"\r\n"|"\n\r"|\r) {
-      if (def_is_done()) {
-	    def_finish();
-	    yy_pop_state();
-      }
-      istack->lineno += 1;
-      fputc('\n', yyout);
-  }
+    if (def_is_done()) {
+        def_finish();
+        yy_pop_state();
+    }
 
-  /* If the define is terminated by an EOF, then finish the define
-     whether there was a continuation or not. */
+    istack->lineno += 1;
+    fputc('\n', yyout);
+}
+
+ /* If the define is terminated by an EOF, then finish the define
+  * whether there was a continuation or not.
+  */
 <DEF_TXT><<EOF>> {
-      def_finish();
-      istack->lineno += 1;
-      fputc('\n', yyout);
-      yy_pop_state();
+    def_finish();
 
-      if (!load_next_input())
-            yyterminate();
-  }
+    istack->lineno += 1;
+    fputc('\n', yyout);
+
+    yy_pop_state();
+
+    if (!load_next_input())
+        yyterminate();
+}
 
 `undef{W}[a-zA-Z_][a-zA-Z0-9_$]*{W}?.* { def_undefine(); }
 
-
   /* Detect conditional compilation directives, and parse them. If I
-     find the name defined, switch to the IFDEF_TRUE state and stay
-     there until I get an `else or `endif. Otherwise, switch to the
-     IFDEF_FALSE state and start tossing data.
-
-     Handle suppressed `ifdef with an additional suppress start
-     condition that stacks on top of the IFDEF_FALSE so that output is
-     not accidentally turned on within nested ifdefs. */
-
+   * find the name defined, switch to the IFDEF_TRUE state and stay
+   * there until I get an `else or `endif. Otherwise, switch to the
+   * IFDEF_FALSE state and start tossing data.
+   *
+   * Handle suppressed `ifdef with an additional suppress start
+   * condition that stacks on top of the IFDEF_FALSE so that output is
+   * not accidentally turned on within nested ifdefs.
+   */
 `ifdef{W}[a-zA-Z_][a-zA-Z0-9_$]* {
-      char*name = strchr(yytext, '`');
-      assert(name);
-      name += 6;
-      name += strspn(name, " \t\b\f");
+    char* name = strchr(yytext, '`'); assert(name);
 
-      ifdef_enter();
+    name += 6;
+    name += strspn(name, " \t\b\f");
 
-      if (is_defined(name)) {
-	    yy_push_state(IFDEF_TRUE);
-      } else {
-	    yy_push_state(IFDEF_FALSE);
-      }
-  }
+    ifdef_enter();
+
+    if (is_defined(name))
+        yy_push_state(IFDEF_TRUE);
+    else
+        yy_push_state(IFDEF_FALSE);
+}
 
 `ifndef{W}[a-zA-Z_][a-zA-Z0-9_$]* {
-      char*name = strchr(yytext, '`');
-      assert(name);
-      name += 7;
-      name += strspn(name, " \t\b\f");
+    char* name = strchr(yytext, '`'); assert(name);
 
-      ifdef_enter();
+    name += 7;
+    name += strspn(name, " \t\b\f");
 
-      if (!is_defined(name)) {
-	    yy_push_state(IFDEF_TRUE);
-      } else {
-	    yy_push_state(IFDEF_FALSE);
-      }
-  }
+    ifdef_enter();
+
+    if (!is_defined(name))
+        yy_push_state(IFDEF_TRUE);
+    else
+        yy_push_state(IFDEF_FALSE);
+}
 
 <IFDEF_FALSE,IFDEF_SUPR>`ifdef{W}  |
-<IFDEF_FALSE,IFDEF_SUPR>`ifndef{W} {
-      ifdef_enter();
-      yy_push_state(IFDEF_SUPR);
-  }
+<IFDEF_FALSE,IFDEF_SUPR>`ifndef{W} { ifdef_enter(); yy_push_state(IFDEF_SUPR); }
 
-<IFDEF_TRUE>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
-      BEGIN(IFDEF_SUPR);
-  }
+<IFDEF_TRUE>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* { BEGIN(IFDEF_SUPR); }
+
 <IFDEF_FALSE>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
-      char*name = strchr(yytext, '`');
-      assert(name);
-      name += 6;
-      name += strspn(name, " \t\b\f");
+    char* name = strchr(yytext, '`'); assert(name);
 
-      if (is_defined(name)) {
-	    BEGIN(IFDEF_TRUE);
-      } else {
-	    BEGIN(IFDEF_FALSE);
-      }
-  }
+    name += 6;
+    name += strspn(name, " \t\b\f");
+
+    if (is_defined(name))
+        BEGIN(IFDEF_TRUE);
+    else
+        BEGIN(IFDEF_FALSE);
+}
+
 <IFDEF_SUPR>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {  }
 
 <IFDEF_TRUE>`else  { BEGIN(IFDEF_SUPR); }
 <IFDEF_FALSE>`else { BEGIN(IFDEF_TRUE); }
-<IFDEF_SUPR>`else  {  }
+<IFDEF_SUPR>`else  {}
 
-<IFDEF_FALSE,IFDEF_SUPR>"//"[^\r\n]* {  }
+<IFDEF_FALSE,IFDEF_SUPR>"//"[^\r\n]* {}
 
 <IFDEF_FALSE,IFDEF_SUPR>"/*" { comment_enter = YY_START; BEGIN(IFCCOMMENT); }
-<IFCCOMMENT>[^\r\n]    {  }
-<IFCCOMMENT>\n\r |
-<IFCCOMMENT>\r\n |
-<IFCCOMMENT>\n   |
-<IFCCOMMENT>\r   { istack->lineno += 1; }
-<IFCCOMMENT>"*/" { BEGIN(comment_enter); }
+
+<IFCCOMMENT>[^\r\n] {}
+<IFCCOMMENT>\n\r    |
+<IFCCOMMENT>\r\n    |
+<IFCCOMMENT>\n      |
+<IFCCOMMENT>\r      { istack->lineno += 1; }
+<IFCCOMMENT>"*/"    { BEGIN(comment_enter); }
 
 <IFDEF_FALSE,IFDEF_SUPR>[^\r\n] {  }
 <IFDEF_FALSE,IFDEF_SUPR>\n\r    |
@@ -437,76 +478,113 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR>`endif { ifdef_leave(); yy_pop_state(); }
 
 `ifdef {
-      fprintf(stderr, "%s:%u: `ifdef without a macro name - ignored.\n",
-              istack->path, istack->lineno+1);
-      error_count += 1;
-  }
+    error_count += 1;
+    fprintf
+    (
+        stderr,
+        "%s:%u: `ifdef without a macro name - ignored.\n",
+        istack->path, istack->lineno+1
+    );
+}
 
 `ifndef {
-      fprintf(stderr, "%s:%u: `ifndef without a macro name - ignored.\n",
-              istack->path, istack->lineno+1);
-      error_count += 1;
-  }
+    error_count += 1;
+    fprintf
+    (
+        stderr,
+        "%s:%u: `ifndef without a macro name - ignored.\n",
+        istack->path, istack->lineno+1
+    );
+}
 
 `elsif {
-      fprintf(stderr, "%s:%u: `elsif without a macro name - ignored.\n",
-              istack->path, istack->lineno+1);
-      error_count += 1;
-  }
+    error_count += 1;
+    fprintf
+    (
+        stderr,
+        "%s:%u: `elsif without a macro name - ignored.\n",
+        istack->path, istack->lineno+1
+    );
+}
 
 `elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
-      fprintf(stderr, "%s:%u: `elsif without a matching `ifdef - ignored.\n",
-              istack->path, istack->lineno+1);
-      error_count += 1;
-  }
+    error_count += 1;
+    fprintf
+    (
+        stderr,
+        "%s:%u: `elsif without a matching `ifdef - ignored.\n",
+        istack->path, istack->lineno+1
+    );
+}
 
 `else {
-      fprintf(stderr, "%s:%u: `else without a matching `ifdef - ignored.\n",
-              istack->path, istack->lineno+1);
-      error_count += 1;
-  }
+    error_count += 1;
+    fprintf
+    (
+        stderr,
+        "%s:%u: `else without a matching `ifdef - ignored.\n",
+        istack->path, istack->lineno+1
+    );
+}
 
 `endif {
-      fprintf(stderr, "%s:%u: `endif without a matching `ifdef - ignored.\n",
-              istack->path, istack->lineno+1);
-      error_count += 1;
-  }
+    error_count += 1;
+    fprintf
+    (
+        stderr,
+        "%s:%u: `endif without a matching `ifdef - ignored.\n",
+        istack->path, istack->lineno+1
+    );
+}
 
 `{keywords} {
-      emit_pathline(istack);
-      fprintf(stderr, "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n", yytext);
-      error_count += 1;
-  }
-  /* This pattern notices macros and arranges for them to be replaced. */
+    emit_pathline(istack);
+    error_count += 1;
+    fprintf
+    (
+        stderr,
+        "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n",
+        yytext
+    );
+}
+
+ /* This pattern notices macros and arranges for them to be replaced. */
 `[a-zA-Z_][a-zA-Z0-9_$]* {
-      if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
-  }
+    if (macro_needs_args())
+        yy_push_state(MA_START);
+    else
+        do_expand(0);
+}
 
-<MA_START>\( { BEGIN(MA_ADD); macro_start_args(); }
+<MA_START>\(  { BEGIN(MA_ADD); macro_start_args(); }
 
-<MA_START>{W} { }
+<MA_START>{W} {}
 
 <MA_START>(\n|"\r\n"|"\n\r"|\r){W}? {
-      istack->lineno += 1;
-      fputc('\n', yyout);
-  }
+    istack->lineno += 1;
+    fputc('\n', yyout);
+}
 
 <MA_START>. {
-      emit_pathline(istack);
-      fprintf(stderr, "error: missing argument list for `%s.\n", macro_name());
-      error_count += 1;
-      yy_pop_state();
-      yyless(0);
-  }
+    emit_pathline(istack);
+
+    fprintf(stderr, "error: missing argument list for `%s.\n", macro_name());
+    error_count += 1;
+
+    yy_pop_state();
+    yyless(0);
+}
 
 <MA_ADD>\"[^\"\n\r]*\" { macro_add_to_arg(0); }
 
 <MA_ADD>\"[^\"\n\r]* {
-      emit_pathline(istack);
-      fprintf(stderr, "error: unterminated string.\n");
-      error_count += 1;
-      BEGIN(ERROR_LINE);
-  }
+    emit_pathline(istack);
+
+    fprintf(stderr, "error: unterminated string.\n");
+    error_count += 1;
+
+    BEGIN(ERROR_LINE);
+}
 
 <MA_ADD>'[^\n\r]' { macro_add_to_arg(0); }
 
@@ -517,21 +595,21 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <MA_ADD>"," { macro_finish_arg(); }
 
 <MA_ADD>")" {
-      if (ma_parenthesis_level > 0) {
-	    macro_add_to_arg(0);
-            ma_parenthesis_level--;
-      } else {
-	    macro_finish_arg();
-	    yy_pop_state();
-	    do_expand(1);
-      }
-  }
+    if (ma_parenthesis_level > 0) {
+        macro_add_to_arg(0);
+        ma_parenthesis_level--;
+    } else {
+        macro_finish_arg();
+        yy_pop_state();
+        do_expand(1);
+    }
+}
 
 <MA_ADD>(\n|"\r\n"|"\n\r"|\r){W}? {
-      macro_add_to_arg(1);
-      istack->lineno += 1;
-      fputc('\n', yyout);
-  }
+    macro_add_to_arg(1);
+    istack->lineno += 1;
+    fputc('\n', yyout);
+}
 
 <MA_ADD>. { macro_add_to_arg(0); }
 
@@ -539,64 +617,71 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <MA_START,MA_ADD>"/*" { comment_enter = YY_START; BEGIN(CCOMMENT); ECHO; }
 
-  /* Any text that is not a directive just gets passed through to the
-     output. Very easy. */
-
+ /* Any text that is not a directive just gets passed through to the
+  * output. Very easy.
+  */
 [^\r\n] { ECHO; }
 \n\r    |
 \r\n    |
 \n      |
 \r      { istack->lineno += 1; fputc('\n', yyout); }
 
-  /* Absorb the rest of the line when a broken directive is detected. */
+ /* Absorb the rest of the line when a broken directive is detected. */
 <ERROR_LINE>[^\r\n]* { yy_pop_state(); }
 
 <ERROR_LINE>(\n|"\r\n"|"\n\r"|\r) {
-      yy_pop_state();
-      istack->lineno += 1;
-      fputc('\n', yyout);
-  }
+    yy_pop_state();
+    istack->lineno += 1;
+    fputc('\n', yyout);
+}
 
 <<EOF>> { if (!load_next_input()) yyterminate(); }
 
 %%
-  /* Defined macros are kept in this table for convenient lookup. As
-     `define directives are matched (and the do_define() function
-     called) the tree is built up to match names with values. If a
-     define redefines an existing name, the new value it taken. */
-struct define_t {
-      char*name;
-      char*value;
-	/* keywords don't get rescanned for fresh values. */
-      int keyword;
-      int argc;
+ /* Defined macros are kept in this table for convenient lookup. As
+  * `define directives are matched (and the do_define() function
+  * called) the tree is built up to match names with values. If a
+  * define redefines an existing name, the new value it taken.
+  */
+struct define_t
+{
+    char*   name;
+    char*   value;
+    int     keyword; /* keywords don't get rescanned for fresh values. */
+    int     argc;
 
-      struct define_t*left, *right, *up;
+    struct define_t*    left;
+    struct define_t*    right;
+    struct define_t*    up;
 };
 
-static struct define_t*def_table = 0;
+static struct define_t* def_table = 0;
 
-static struct define_t*def_lookup(const char*name)
+static struct define_t* def_lookup(const char*name)
 {
-      struct define_t*cur = def_table;
-      if (cur == 0) return 0;
-      assert(cur->up == 0);
+    struct define_t* cur = def_table;
 
-      while (cur) {
-	    int cmp = strcmp(name, cur->name);
-	    if (cmp == 0) return cur;
-	    if (cmp < 0)
-		  cur = cur->left;
-	    else
-		  cur = cur->right;
-      }
+    if (cur == 0)
+        return 0;
 
-      return 0;
+    assert(cur->up == 0);
+
+    while (cur)
+    {
+        int cmp = strcmp(name, cur->name);
+
+        if (cmp == 0)
+            return cur;
+
+        cur = (cmp < 0) ? cur->left : cur->right;
+    }
+
+    return 0;
 }
 
 static int is_defined(const char*name)
 {
-      return def_lookup(name) != 0;
+    return def_lookup(name) != 0;
 }
 
 /*
@@ -614,115 +699,131 @@ static int is_defined(const char*name)
 
 #define DEF_BUF_CHUNK 256
 
-static char*def_buf = 0;
-static int  def_buf_size = 0;
-static int  def_buf_free = 0;
+static char* def_buf = 0;
+static int   def_buf_size = 0;
+static int   def_buf_free = 0;
 
-static int  def_argc = 0;
-static int  def_argo[MAX_DEF_ARG];  // offset of first character in arg
-static int  def_argl[MAX_DEF_ARG];  // length of arg string.
+static int   def_argc = 0;
+static int   def_argo[MAX_DEF_ARG];  // offset of first character in arg
+static int   def_argl[MAX_DEF_ARG];  // length of arg string.
 
 /*
  * Return a pointer to the start of argument 'arg'. Returned pointers
  * may go stale after a call to def_buf_grow_to_fit.
  */
-static inline char*def_argv(int arg)
+static inline char* def_argv(int arg)
 {
-      return def_buf + def_argo[arg];
+    return def_buf + def_argo[arg];
 }
 
 static void check_for_max_args()
 {
-      if (def_argc == MAX_DEF_ARG) {
-	    emit_pathline(istack);
-	    fprintf(stderr, "error: too many macro arguments - aborting\n");
-	    exit(1);
-      }
+    if (def_argc == MAX_DEF_ARG)
+    {
+        emit_pathline(istack);
+        fprintf(stderr, "error: too many macro arguments - aborting\n");
+        exit(1);
+    }
 }
 
 static void def_buf_grow_to_fit(int length)
 {
-      while (length >= def_buf_free) {
-	    def_buf_size += DEF_BUF_CHUNK;
-	    def_buf_free += DEF_BUF_CHUNK;
-	    def_buf = realloc(def_buf, def_buf_size);
-	    assert(def_buf != 0);
-      }
+    while (length >= def_buf_free)
+    {
+        def_buf_size += DEF_BUF_CHUNK;
+        def_buf_free += DEF_BUF_CHUNK;
+        def_buf = realloc(def_buf, def_buf_size);
+        assert(def_buf != 0);
+    }
 }
 
 static void def_start()
 {
-      def_buf_free = def_buf_size;
-      def_argc = 0;
-      def_add_arg();
+    def_buf_free = def_buf_size;
+    def_argc = 0;
+    def_add_arg();
 }
 
 static void def_add_arg()
 {
-      int length = yyleng;
+    int length = yyleng;
 
-      check_for_max_args();
+    check_for_max_args();
 
-	/* Remove trailing white space and, if necessary, opening brace. */
-      while (isspace(yytext[length - 1])) length--;
-      if (yytext[length - 1] == '(') length--;
-      yytext[length] = 0;
+    /* Remove trailing white space and, if necessary, opening brace. */
+    while (isspace(yytext[length - 1]))
+        length--;
 
-	/* Make sure there's room in the buffer for the new argument. */
-      def_buf_grow_to_fit(length);
+    if (yytext[length - 1] == '(')
+        length--;
 
-	/* Store the new argument. */
-      def_argl[def_argc] = length;
-      def_argo[def_argc] = def_buf_size - def_buf_free;
-      strcpy(def_argv(def_argc++), yytext);
-      def_buf_free -= length + 1;
+    yytext[length] = 0;
+
+    /* Make sure there's room in the buffer for the new argument. */
+    def_buf_grow_to_fit(length);
+
+    /* Store the new argument. */
+    def_argl[def_argc] = length;
+    def_argo[def_argc] = def_buf_size - def_buf_free;
+    strcpy(def_argv(def_argc++), yytext);
+    def_buf_free -= length + 1;
 }
 
-void define_macro(const char*name, const char*value, int keyword, int argc)
+void define_macro(const char* name, const char* value, int keyword, int argc)
 {
-      struct define_t*def = malloc(sizeof(struct define_t));
-      def->name = strdup(name);
-      def->value = strdup(value);
-      def->keyword = keyword;
-      def->argc = argc;
-      def->left = 0;
-      def->right = 0;
-      def->up = 0;
-      if (def_table == 0) {
-	    def_table = def;
+    struct define_t* def;
 
-      } else {
-	    struct define_t*cur = def_table;
-	    for (;;) {
-		  int cmp = strcmp(def->name, cur->name);
-		  if (cmp == 0) {
-			free(cur->value);
-			cur->value = def->value;
-			free(def->name);
-			free(def);
-			break;
+    def = malloc(sizeof(struct define_t));
+    def->name = strdup(name);
+    def->value = strdup(value);
+    def->keyword = keyword;
+    def->argc = argc;
+    def->left = 0;
+    def->right = 0;
+    def->up = 0;
 
-		  } else if (cmp < 0) {
-			if (cur->left == 0) {
-			      cur->left = def;
-			      def->up = cur;
-			      break;
-			} else {
-			      cur = cur->left;
-			}
+    if (def_table == 0)
+        def_table = def;
+    else
+    {
+        struct define_t* cur = def_table;
 
-		  } else {
-			if (cur->right == 0) {
-			      cur->right = def;
-			      def->up = cur;
-			      break;
-			} else {
-			      cur = cur->right;
-			}
-		  }
-	    }
+        while (1)
+        {
+            int cmp = strcmp(def->name, cur->name);
 
-      }
+            if (cmp == 0)
+            {
+                free(cur->value);
+                cur->value = def->value;
+                free(def->name);
+                free(def);
+                break;
+            }
+            else if (cmp < 0)
+            {
+                if (cur->left != 0)
+                    cur = cur->left;
+                else
+                {
+                    cur->left = def;
+                    def->up = cur;
+                    break;
+                }
+            }
+            else
+            {
+                if (cur->right != 0)
+                    cur = cur->right;
+                else
+                {
+                    cur->right = def;
+                    def->up = cur;
+                    break;
+                }
+            }
+        }
+    }
 }
 
 /*
@@ -732,7 +833,7 @@ void define_macro(const char*name, const char*value, int keyword, int argc)
  * is set if do_define detects that the definition is to be continued
  * on the next line.
  */
-static char* define_text = 0;
+static char*  define_text = 0;
 static size_t define_cnt = 0;
 
 static int define_continue_flag = 0;
@@ -754,113 +855,148 @@ static int define_continue_flag = 0;
  */
 static void do_define()
 {
-      char*cp;
-      char*head;
-      char*tail;
-      int  added_cnt;
-      int  arg;
+    char* cp;
+    char* head;
+    char* tail;
+    int added_cnt;
+    int arg;
 
-      define_continue_flag = 0;
+    define_continue_flag = 0;
 
-	/* Look for comments in the definition, and remove them. The
-	   "//" style comments go to the end of the line and terminate
-	   the definition, but the multi-line comments are simply cut
-	   out, and the define continues. */
-      cp = strchr(yytext, '/');
-      while (cp && *cp) {
-	    if (cp[1] == '/') {
-		  *cp = 0;
-		  break;
-	    }
+    /* Look for comments in the definition, and remove them. The
+     * "//" style comments go to the end of the line and terminate
+     * the definition, but the multi-line comments are simply cut
+     * out, and the define continues.
+     */
+    cp = strchr(yytext, '/');
 
-	    if (cp[1] == '*') {
-		  tail = strstr(cp+2, "*/");
-		  if (tail == 0) {
-			fprintf(stderr, "%s:%u: Unterminated comment "
-				"in define\n", istack->path, istack->lineno+1);
-			*cp = 0;
-			break;
-		  }
+    while (cp && *cp)
+    {
+        if (cp[1] == '/') {
+            *cp = 0;
+            break;
+        }
 
-		  memmove(cp, tail+2, strlen(tail+2)+1);
-		  continue;
-	    }
+        if (cp[1] == '*')
+        {
+            tail = strstr(cp+2, "*/");
 
-	    cp = strchr(cp+1, '/');
-      }
+            if (tail == 0)
+            {
+                *cp = 0;
+                fprintf
+                (
+                    stderr,
+                    "%s:%u: Unterminated comment in define\n",
+                    istack->path, istack->lineno+1
+                );
+                break;
+            }
 
-	/* Trim trailing white space. */
-      cp = yytext + strlen(yytext);
-      while (cp > yytext) {
-	    if (!isspace(cp[-1]))
-		  break;
+            memmove(cp, tail+2, strlen(tail+2)+1);
+            continue;
+        }
 
-	    cp -= 1;
-	    *cp = 0;
-      }
+        cp = strchr(cp+1, '/');
+    }
 
-	/* Detect the continuation sequence. If I find it, remove it
-	   and the white space that preceeds it, then replace all that
-	   with a single newline. */
-      if ((cp > yytext) && (cp[-1] == '\\')) {
+    /* Trim trailing white space. */
+    cp = yytext + strlen(yytext);
+    while (cp > yytext)
+    {
+        if (!isspace(cp[-1]))
+            break;
 
-	    cp -= 1;
-	    cp[0] = 0;
-	    while ((cp > yytext) && isspace(cp[-1])) {
-		  cp -= 1;
-		  *cp = 0;
-	    }
+        cp -= 1;
+        *cp = 0;
+    }
 
-	    *cp++ = '\n';
-	    *cp = 0;
-	    define_continue_flag = 1;
-      }
+    /* Detect the continuation sequence. If I find it, remove it
+     * and the white space that preceeds it, then replace all that
+     * with a single newline.
+     */
+    if ((cp > yytext) && (cp[-1] == '\\'))
+    {
+        cp -= 1;
+        cp[0] = 0;
 
-	/* Accumulate this text into the define_text string. */
-      define_text = realloc(define_text, define_cnt + (cp-yytext) + 1);
-      assert(define_text != 0);
-      head = &define_text[define_cnt];
-      strcpy(head, yytext);
-      define_cnt += cp-yytext;
-      tail = &define_text[define_cnt];
+        while ((cp > yytext) && isspace(cp[-1])) {
+            cp -= 1;
+            *cp = 0;
+        }
 
-	/* If the text for a macro with arguments contains occurrences
-	   of ARG_MARK, issue an error message and suppress the macro. */
-      if ((def_argc > 1) && strchr(head, ARG_MARK)) {
-	    emit_pathline(istack);
-	    fprintf(stderr, "error: implementation restriction - macro "
-		    "text may not contain a %s character\n", _STR2(ARG_MARK));
-	    error_count += 1;
-	    def_argc = 0;
-      }
+        *cp++ = '\n';
+        *cp = 0;
 
-	/* Look for formal argument names in the definition, and replace
-	   each occurrence with the sequence ARG_MARK,'\ddd' where ddd is
-	   the  formal argument index number. */
-      added_cnt = 0;
-      for (arg = 1; arg < def_argc; arg++) {
-	    int argl = def_argl[arg];
-	    cp = strstr(head, def_argv(arg));
-	    while (cp && *cp) {
-		  added_cnt += 2 - argl;
-		  if (added_cnt > 0) {
-			char*base = define_text;
-			define_cnt += added_cnt;
-			define_text = realloc(define_text, define_cnt + 1);
-			assert(define_text != 0);
-			head = &define_text[head - base];
-			tail = &define_text[tail - base];
-			cp   = &define_text[cp   - base];
-			added_cnt = 0;
-		  }
-		  memmove(cp+2, cp+argl, tail-(cp+argl)+1);
-		  tail += 2 - argl;
-		  *cp++ = ARG_MARK;
-		  *cp++ = arg;
-		  cp = strstr(cp, def_argv(arg));
-	    }
-      }
-      define_cnt += added_cnt;
+        define_continue_flag = 1;
+    }
+
+    /* Accumulate this text into the define_text string. */
+    define_text = realloc(define_text, define_cnt + (cp-yytext) + 1); assert(define_text != 0);
+
+    head = &define_text[define_cnt];
+    strcpy(head, yytext);
+
+    define_cnt += cp-yytext;
+
+    tail = &define_text[define_cnt];
+
+    /* If the text for a macro with arguments contains occurrences
+     * of ARG_MARK, issue an error message and suppress the macro.
+     */
+    if ((def_argc > 1) && strchr(head, ARG_MARK))
+    {
+        emit_pathline(istack);
+        error_count += 1;
+        def_argc = 0;
+
+        fprintf
+        (
+            stderr,
+            "error: implementation restriction - macro text may not contain a %s character\n",
+            _STR2(ARG_MARK)
+        );
+    }
+
+    /* Look for formal argument names in the definition, and replace
+     * each occurrence with the sequence ARG_MARK,'\ddd' where ddd is
+     * the  formal argument index number.
+     */
+    added_cnt = 0;
+    for (arg = 1; arg < def_argc; arg++)
+    {
+        int argl = def_argl[arg];
+
+        cp = strstr(head, def_argv(arg));
+
+        while (cp && *cp)
+        {
+            added_cnt += 2 - argl;
+
+            if (added_cnt > 0)
+            {
+                char* base = define_text;
+
+                define_cnt += added_cnt;
+                define_text = realloc(define_text, define_cnt + 1); assert(define_text != 0);
+
+                head = &define_text[head - base];
+                tail = &define_text[tail - base];
+                cp   = &define_text[cp   - base];
+
+                added_cnt = 0;
+            }
+
+            memmove(cp+2, cp+argl, tail-(cp+argl)+1);
+
+            tail += 2 - argl;
+
+            *cp++ = ARG_MARK;
+            *cp++ = arg;
+            cp = strstr(cp, def_argv(arg));
+        }
+    }
+    define_cnt += added_cnt;
 }
 
 /*
@@ -869,7 +1005,7 @@ static void do_define()
  */
 static int def_is_done()
 {
-      return define_continue_flag? 0 : 1;
+    return !define_continue_flag;
 }
 
 /*
@@ -879,108 +1015,123 @@ static int def_is_done()
  */
 static void def_finish()
 {
-      define_continue_flag = 0;
+    define_continue_flag = 0;
 
-      if (def_argc > 0) {
-	    if (define_text) {
-		  define_macro(def_argv(0), define_text, 0, def_argc);
-		  free(define_text);
-		  define_text = 0;
-		  define_cnt = 0;
+    if (def_argc <= 0)
+        return;
 
-	    } else {
-		  define_macro(def_argv(0), "", 0, def_argc);
-	    }
-	    def_argc = 0;
-      }
+    if (!define_text)
+        define_macro(def_argv(0), "", 0, def_argc);
+    else
+    {
+        define_macro(def_argv(0), define_text, 0, def_argc);
+
+        free(define_text);
+
+        define_text = 0;
+        define_cnt = 0;
+    }
+
+    def_argc = 0;
 }
 
 static void def_undefine()
 {
-      struct define_t*cur, *tail;
+    struct define_t* cur;
+    struct define_t* tail;
 
-	/* def_buf is used to store the macro name. Make sure there is
-	   enough space. */
-      def_buf_grow_to_fit(yyleng);
+    /* def_buf is used to store the macro name. Make sure there is
+     * enough space.
+     */
+    def_buf_grow_to_fit(yyleng);
 
-      sscanf(yytext, "`undef %s", def_buf);
+    sscanf(yytext, "`undef %s", def_buf);
 
-      cur = def_lookup(def_buf);
-      if (cur == 0) return;
+    cur = def_lookup(def_buf);
+    if (cur == 0) return;
 
-      if (cur->up == 0) {
-	    if ((cur->left == 0) && (cur->right == 0)) {
-		  def_table = 0;
+    if (cur->up == 0)
+    {
+        if ((cur->left == 0) && (cur->right == 0))
+            def_table = 0;
+        else if (cur->left == 0)
+        {
+            def_table = cur->right;
+            if (cur->right)
+            cur->right->up = 0;
+        }
+        else if (cur->right == 0)
+        {
+            assert(cur->left);
+            def_table = cur->left;
+            def_table->up = 0;
+        }
+        else
+        {
+            tail = cur->left;
+            while (tail->right)
+                tail = tail->right;
 
-	    } else if (cur->left == 0) {
-		  def_table = cur->right;
-		  if (cur->right)
-			cur->right->up = 0;
+            tail->right = cur->right;
+            tail->right->up = tail;
 
-	    } else if (cur->right == 0) {
-		  assert(cur->left);
-		  def_table = cur->left;
-		  def_table->up = 0;
+            def_table = cur->left;
+            def_table->up = 0;
+        }
+    }
+    else if (cur->left == 0)
+    {
+        if (cur->up->left == cur)
+            cur->up->left = cur->right;
+        else
+        {
+            assert(cur->up->right == cur);
+            cur->up->right = cur->right;
+        }
 
-	    } else {
-		  tail = cur->left;
-		  while (tail->right)
-			tail = tail->right;
+        if (cur->right)
+            cur->right->up = cur->up;
+    }
+    else if (cur->right == 0)
+    {
+        assert(cur->left);
 
-		  tail->right = cur->right;
-		  tail->right->up = tail;
+        if (cur->up->left == cur)
+            cur->up->left = cur->left;
+        else
+        {
+            assert(cur->up->right == cur);
+            cur->up->right = cur->left;
+        }
 
-		  def_table = cur->left;
-		  def_table->up = 0;
-	    }
+        cur->left->up = cur->up;
+    }
+    else
+    {
+        tail = cur->left;
 
-      } else if (cur->left == 0) {
+        assert(cur->left && cur->right);
 
-	    if (cur->up->left == cur) {
-		  cur->up->left = cur->right;
+        while (tail->right)
+            tail = tail->right;
 
-	    } else {
-		  assert(cur->up->right == cur);
-		  cur->up->right = cur->right;
-	    }
-	    if (cur->right)
-		  cur->right->up = cur->up;
+        tail->right = cur->right;
+        tail->right->up = tail;
 
-      } else if (cur->right == 0) {
+        if (cur->up->left == cur)
+            cur->up->left = cur->left;
+        else
+        {
+            assert(cur->up->right == cur);
+            cur->up->right = cur->left;
+        }
 
-	    assert(cur->left);
+        cur->left->up = cur->up;
+    }
 
-	    if (cur->up->left == cur) {
-		  cur->up->left = cur->left;
-
-	    } else {
-		  assert(cur->up->right == cur);
-		  cur->up->right = cur->left;
-	    }
-	    cur->left->up = cur->up;
-
-      } else {
-	    tail = cur->left;
-	    assert(cur->left && cur->right);
-	    while (tail->right)
-		  tail = tail->right;
-
-	    tail->right = cur->right;
-	    tail->right->up = tail;
-
-	    if (cur->up->left == cur) {
-		  cur->up->left = cur->left;
-
-	    } else {
-		  assert(cur->up->right == cur);
-		  cur->up->right = cur->left;
-	    }
-	    cur->left->up = cur->up;
-      }
-
-      free(cur->name);
-      free(cur->value);
-      free(cur);
+    free(cur->name);
+    free(cur->value);
+    free(cur);
 }
 
 /*
@@ -989,72 +1140,77 @@ static void def_undefine()
  * takes arguments. A pointer to the macro descriptor is stored in
  * cur_macro so that do_expand() doesn't need to look it up again.
  */
-static struct define_t*cur_macro = 0;
+static struct define_t* cur_macro = 0;
 
 static int macro_needs_args()
 {
-      cur_macro = def_lookup(yytext+1);
-      if (cur_macro) {
-	    return (cur_macro->argc > 1);
-      } else {
-	    emit_pathline(istack);
-	    fprintf(stderr, "warning: macro %s undefined "
-		    "(and assumed null) at this point.\n", yytext);
-	    return 0;
-      }
+    cur_macro = def_lookup(yytext+1);
+
+    if (cur_macro)
+        return (cur_macro->argc > 1);
+    else
+    {
+        emit_pathline(istack);
+        fprintf(stderr, "warning: macro %s undefined (and assumed null) at this point.\n", yytext);
+        return 0;
+    }
 }
 
-static char*macro_name()
+static char* macro_name()
 {
-      return cur_macro ? cur_macro->name : "";
+    return cur_macro ? cur_macro->name : "";
 }
 
 static void macro_start_args()
 {
-	/* The macro name can be found via cur_macro, so create a null
-	   entry for arg 0. This will be used by macro_finish_arg() to
-	   calculate the buffer location for arg 1. */
-      def_buf_free = def_buf_size - 1;
-      def_buf[0] = 0;
-      def_argo[0] = 0;
-      def_argl[0] = 0;
-      def_argc = 1;
+    /* The macro name can be found via cur_macro, so create a null
+     * entry for arg 0. This will be used by macro_finish_arg() to
+     * calculate the buffer location for arg 1.
+     */
+    def_buf_free = def_buf_size - 1;
+    def_buf[0] = 0;
+    def_argo[0] = 0;
+    def_argl[0] = 0;
+    def_argc = 1;
 };
-      
+
 static void macro_add_to_arg(int is_white_space)
 {
-      int length = yyleng;
-      char*tail;
+    char* tail;
+    int   length = yyleng;
 
-      check_for_max_args();
+    check_for_max_args();
 
-	/* Replace any run of white space with a single space */
-      if (is_white_space) {
-	    yytext[0] = ' ';
-	    yytext[1] = 0;
-	    length = 1;
-      }
+    /* Replace any run of white space with a single space */
+    if (is_white_space)
+    {
+        yytext[0] = ' ';
+        yytext[1] = 0;
+        length = 1;
+    }
 
-	/* Make sure there's room in the buffer for the new argument. */
-      def_buf_grow_to_fit(length);
+    /* Make sure there's room in the buffer for the new argument. */
+    def_buf_grow_to_fit(length);
 
-	/* Store the new text. */
-      tail = &def_buf[def_buf_size - def_buf_free];
-      strcpy(tail, yytext);
-      def_buf_free -= length;
+    /* Store the new text. */
+    tail = &def_buf[def_buf_size - def_buf_free];
+    strcpy(tail, yytext);
+    def_buf_free -= length;
 }
 
 static void macro_finish_arg()
 {
-      char*tail = &def_buf[def_buf_size - def_buf_free];
+    char* tail = &def_buf[def_buf_size - def_buf_free];
 
-      check_for_max_args();
+    check_for_max_args();
 
-      *tail = 0;
-      def_argo[def_argc] = def_argo[def_argc-1] + def_argl[def_argc-1] + 1;
-      def_argl[def_argc] = tail - def_argv(def_argc);
-      def_buf_free -= 1;
-      def_argc++;
+    *tail = 0;
+
+    def_argo[def_argc] = def_argo[def_argc-1] + def_argl[def_argc-1] + 1;
+    def_argl[def_argc] = tail - def_argv(def_argc);
+
+    def_buf_free -= 1;
+    def_argc++;
 }
 
 /*
@@ -1075,53 +1231,62 @@ static int  exp_buf_free = 0;
 
 static void exp_buf_grow_to_fit(int length)
 {
-      while (length >= exp_buf_free) {
-	    exp_buf_size += EXP_BUF_CHUNK;
-	    exp_buf_free += EXP_BUF_CHUNK;
-	    exp_buf = realloc(exp_buf, exp_buf_size);
-	    assert(exp_buf != 0);
-      }
+    while (length >= exp_buf_free)
+    {
+        exp_buf_size += EXP_BUF_CHUNK;
+        exp_buf_free += EXP_BUF_CHUNK;
+        exp_buf = realloc(exp_buf, exp_buf_size); assert(exp_buf != 0);
+    }
 }
 
 static void expand_using_args()
 {
-      char*head;
-      char*tail;
-      char*dest;
-      int  arg;
-      int  length;
+    char* head;
+    char* tail;
+    char* dest;
+    int arg;
+    int length;
 
-      if (def_argc != cur_macro->argc) {
-	    emit_pathline(istack);
-	    fprintf(stderr, "error: wrong number of arguments for `%s\n",
-		    cur_macro->name);
-	    return;
-      }
+    if (def_argc != cur_macro->argc)
+    {
+        emit_pathline(istack);
+        fprintf(stderr, "error: wrong number of arguments for `%s\n", cur_macro->name);
+        return;
+    }
 
-      head = cur_macro->value;
-      tail = head;
-      while (*tail) {
-	    if (*tail == ARG_MARK) {
-		  arg = tail[1];
-		  assert(arg < def_argc);
-		  length = (tail - head) + def_argl[arg];
-		  exp_buf_grow_to_fit(length);
-	          dest = &exp_buf[exp_buf_size - exp_buf_free];
-		  memcpy(dest, head, tail - head);
-		  dest += tail - head;
-		  memcpy(dest, def_argv(arg), def_argl[arg]);
-		  exp_buf_free -= length;
-		  head = tail + 2;
-		  tail = head;
-	    } else {
-		  tail++;
-	    }
-      }
-      length = tail - head;
-      exp_buf_grow_to_fit(length);
-      dest = &exp_buf[exp_buf_size - exp_buf_free];
-      memcpy(dest, head, length + 1);
-      exp_buf_free -= length + 1;
+    head = cur_macro->value;
+    tail = head;
+
+    while (*tail)
+    {
+        if (*tail != ARG_MARK)
+            tail++;
+        else
+        {
+            arg = tail[1]; assert(arg < def_argc);
+
+            length = (tail - head) + def_argl[arg];
+            exp_buf_grow_to_fit(length);
+
+            dest = &exp_buf[exp_buf_size - exp_buf_free];
+            memcpy(dest, head, tail - head);
+            dest += tail - head;
+            memcpy(dest, def_argv(arg), def_argl[arg]);
+
+            exp_buf_free -= length;
+
+            head = tail + 2;
+            tail = head;
+        }
+    }
+
+    length = tail - head;
+    exp_buf_grow_to_fit(length);
+
+    dest = &exp_buf[exp_buf_size - exp_buf_free];
+    memcpy(dest, head, length + 1);
+
+    exp_buf_free -= length + 1;
 }
 
 /*
@@ -1130,37 +1295,47 @@ static void expand_using_args()
  */
 static void do_expand(int use_args)
 {
-      if (cur_macro) {
-	    struct include_stack_t*isp;
-	    int head = 0;
-	    int tail = 0;
+    if (cur_macro)
+    {
+        struct include_stack_t*isp;
+        int head = 0;
+        int tail = 0;
 
-	    if (cur_macro->keyword) {
-		  fprintf(yyout, "%s", cur_macro->value);
-		  return;
-	    }
+        if (cur_macro->keyword)
+        {
+            fprintf(yyout, "%s", cur_macro->value);
+            return;
+        }
 
-	    if (use_args) {
-		  head = exp_buf_size - exp_buf_free;
-		  expand_using_args();
-		  tail = exp_buf_size - exp_buf_free;
-		  if (tail == head) return;
-	    }
+        if (use_args)
+        {
+            head = exp_buf_size - exp_buf_free;
+            expand_using_args();
+            tail = exp_buf_size - exp_buf_free;
 
-	    isp = (struct include_stack_t*)
-		  calloc(1, sizeof(struct include_stack_t));
-	    if (use_args) {
-		isp->str = &exp_buf[head];
-		isp->ebs = tail - head;
-	    } else {
-		isp->str = cur_macro->value;
-		isp->ebs = 0;
-	    }
-	    isp->next = istack;
-	    istack->yybs = YY_CURRENT_BUFFER;
-	    istack = isp;
-	    yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
-      }
+            if (tail == head)
+                return;
+        }
+
+        isp = (struct include_stack_t*) calloc(1, sizeof(struct include_stack_t));
+
+        if (use_args)
+        {
+            isp->str = &exp_buf[head];
+            isp->ebs = tail - head;
+        }
+        else
+        {
+            isp->str = cur_macro->value;
+            isp->ebs = 0;
+        }
+
+        isp->next = istack;
+        istack->yybs = YY_CURRENT_BUFFER;
+        istack = isp;
+
+        yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
+    }
 }
 
 /*
@@ -1182,77 +1357,91 @@ static void do_expand(int use_args)
 
 static void output_init()
 {
-      if (line_direct_flag)
-	    fprintf(yyout, "`line 1 \"%s\" 0\n", istack->path);
+    if (line_direct_flag)
+        fprintf(yyout, "`line 1 \"%s\" 0\n", istack->path);
 }
 
 static void include_filename()
 {
-      if(standby) {
-	      emit_pathline(istack);
-	      fprintf(stderr, "error: malformed `include directive. Extra junk on line?\n");
-              exit(1);
-      }
-      standby = malloc(sizeof(struct include_stack_t));
-      standby->path = strdup(yytext+1);
-      standby->path[strlen(standby->path)-1] = 0;
-      standby->lineno = 0;
+    if(standby)
+    {
+        emit_pathline(istack);
+        fprintf
+        (
+            stderr,
+            "error: malformed `include directive. Extra junk on line?\n"
+        );
+        exit(1);
+    }
+
+    standby = malloc(sizeof(struct include_stack_t));
+    standby->path = strdup(yytext+1);
+    standby->path[strlen(standby->path)-1] = 0;
+    standby->lineno = 0;
 }
 
 static void do_include()
 {
-      /* standby is defined by include_filename() */
-      if (standby->path[0] == '/') {
-	    standby->file = fopen(standby->path, "r");
-	    if(depend_file && standby->file) {
-		    fprintf(depend_file, "%s\n", istack->path);
-	    }
-      } else {
-	    unsigned idx, start = 0;
-	    char path[4096];
-	    char *cp;
+    /* standby is defined by include_filename() */
+    if (standby->path[0] == '/')
+    {
+        standby->file = fopen(standby->path, "r");
 
-	    /* Add the current path to the start of the include_dir list. */
-	    strcpy(path, istack->path);
-	    cp = strrchr(path, '/');
-	    if (cp == 0)
-	        start = 1;  /* A base file so already in [1] */
-	    else {
-	        *cp = '\0';
+        if(depend_file && standby->file)
+            fprintf(depend_file, "%s\n", istack->path);
+    }
+    else
+    {
+        unsigned idx, start = 0;
+        char path[4096];
+        char *cp;
 
-	        /* We do not need a strdup here since the path is read before
-	         * it is overridden. If the search order is changed add a
-	         * strdup here and a free below.
-	         */
-	        include_dir[0] = path;
-	    }
+        /* Add the current path to the start of the include_dir list. */
+        strcpy(path, istack->path);
+        cp = strrchr(path, '/');
 
-	    standby->file = 0;
-	    for (idx = start ;  idx < include_cnt ;  idx += 1) {
-		  sprintf(path, "%s/%s", include_dir[idx], standby->path);
-		  standby->file = fopen(path, "r");
-		  if (standby->file) {
+        if (cp == 0)
+            start = 1;  /* A base file so already in [1] */
+        else
+        {
+            *cp = '\0';
 
-			if(depend_file)
-			    fprintf(depend_file, "%s\n", path);
+            /* We do not need a strdup here since the path is read before
+             * it is overridden. If the search order is changed add a
+             * strdup here and a free below.
+             */
+            include_dir[0] = path;
+        }
 
-			if (line_direct_flag)
-			    fprintf(yyout, "\n`line %u \"%s\" 1\n", istack->lineno+1, path);
+        for (idx = start ;  idx < include_cnt ;  idx += 1)
+        {
+            sprintf(path, "%s/%s", include_dir[idx], standby->path);
 
-			standby->path = strdup(path);
-			standby->next = istack;
-			istack->yybs = YY_CURRENT_BUFFER;
-			istack = standby;
-			standby = 0;
-			yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
+            if ((standby->file = fopen(path, "r")))
+            {
+                if(depend_file)
+                    fprintf(depend_file, "%s\n", path);
 
-			return;
-		  }
-	    }
-      }
+                if (line_direct_flag)
+                    fprintf(yyout, "\n`line %u \"%s\" 1\n", istack->lineno+1, path);
 
-      fprintf(stderr, "%s:%u: Include file %s not found\n", istack->path, istack->lineno, standby->path);
-      exit(1);
+                standby->path = strdup(path);
+                standby->next = istack;
+
+                istack->yybs = YY_CURRENT_BUFFER;
+                istack = standby;
+
+                standby = 0;
+
+                yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
+
+                return;
+            }
+        }
+    }
+
+    fprintf(stderr, "%s:%u: Include file %s not found\n", istack->path, istack->lineno, standby->path);
+    exit(1);
 }
 
 /* walk the include stack until we find an entry with a valid pathname,
@@ -1261,100 +1450,112 @@ static void do_include()
  * contain pathnames. This finds instead the real file in which the outermost
  * macro was used.
  */
-static void emit_pathline(struct include_stack_t*isp)
+static void emit_pathline(struct include_stack_t* isp)
 {
-	while(isp && (isp->path == NULL)) {
-		isp = isp->next;
-	}
-	assert(isp);
-	fprintf(stderr, "%s:%u: ",
-		isp->path, isp->lineno+1);
+    while(isp && (isp->path == NULL))
+        isp = isp->next;
+
+    assert(isp);
+
+    fprintf(stderr, "%s:%u: ", isp->path, isp->lineno+1);
 }
 
 static void lexor_done()
 {
-      while (ifdef_stack) {
-	    struct ifdef_stack_t*cur = ifdef_stack;
-	    ifdef_stack = cur->next;
+    while (ifdef_stack)
+    {
+        struct ifdef_stack_t*cur = ifdef_stack;
+        ifdef_stack = cur->next;
 
-	    fprintf(stderr, "%s:%u: error: This `ifdef lacks an `endif.\n",
-		    cur->path, cur->lineno+1);
+        fprintf
+        (
+            stderr,
+            "%s:%u: error: This `ifdef lacks an `endif.\n",
+            cur->path, cur->lineno+1
+        );
 
-	    free(cur->path);
-	    free(cur);
-	    error_count += 1;
-      }
+        free(cur->path);
+        free(cur);
+        error_count += 1;
+    }
 }
 
 static int load_next_input()
 {
-      int line_mask_flag = 0;
-      struct include_stack_t*isp = istack;
-      istack = isp->next;
+    int line_mask_flag = 0;
+    struct include_stack_t* isp = istack;
+    istack = isp->next;
 
-	/* Delete the current input buffers, and free the cell. */
-      yy_delete_buffer(YY_CURRENT_BUFFER);
-      if (isp->file) {
-	    free(isp->path);
-	    fclose(isp->file);
-      } else {
-	      /* If I am printing line directives and I just finished
-		 macro substitution, I should terminate the line and
-		 arrange for a new directive to be printed. */
-	    if (line_direct_flag
-		&& istack && istack->path
-		&& isp->lineno)
-		  fprintf(yyout, "\n");
-	    else
-		  line_mask_flag = 1;
+    /* Delete the current input buffers, and free the cell. */
+    yy_delete_buffer(YY_CURRENT_BUFFER);
 
-	    exp_buf_free += isp->ebs;
-      }
-      free(isp);
+    if (isp->file)
+    {
+        free(isp->path);
+        fclose(isp->file);
+    }
+    else
+    {
+        /* If I am printing line directives and I just finished
+         * macro substitution, I should terminate the line and
+         * arrange for a new directive to be printed.
+         */
+        if (line_direct_flag && istack && istack->path && isp->lineno)
+            fprintf(yyout, "\n");
+        else
+            line_mask_flag = 1;
 
-	/* If I am out of include stack, the main input is
-	   done. Look for another file to process in the input
-	   queue. If none are there, give up. Otherwise, open the file
-	   and continue parsing. */
-      if (istack == 0) {
-	    if (file_queue == 0) {
-		  lexor_done();
-		  return 0;
-	    }
+        exp_buf_free += isp->ebs;
+    }
 
-	    istack = file_queue;
-	    file_queue = file_queue->next;
-	    istack->next = 0;
-	    istack->lineno = 0;
+    free(isp);
 
-	    istack->file = fopen(istack->path, "r");
-	    if (istack->file == 0) {
-		  perror(istack->path);
-		  error_count += 1;
-		  return 0;
-	    }
+    /* If I am out of include stack, the main input is
+     * done. Look for another file to process in the input
+     * queue. If none are there, give up. Otherwise, open the file
+     * and continue parsing.
+     */
+    if (istack == 0)
+    {
+        if (file_queue == 0)
+        {
+            lexor_done();
+            return 0;
+        }
 
-	    if (line_direct_flag)
-		  fprintf(yyout, "\n`line 1 \"%s\" 0\n", istack->path);
-	    if(depend_file) {
-		  fprintf(depend_file, "%s\n", istack->path);
-	    }
+        istack = file_queue;
+        file_queue = file_queue->next;
 
-	    yyrestart(istack->file);
-	    return 1;
-      }
+        istack->next = 0;
+        istack->lineno = 0;
+        istack->file = fopen(istack->path, "r");
 
+        if (istack->file == 0)
+        {
+            perror(istack->path);
+            error_count += 1;
+            return 0;
+        }
 
-	/* Otherwise, resume the input buffer that is the new stack
-	   top. If I need to print a line directive, do so. */
+        if (line_direct_flag)
+            fprintf(yyout, "\n`line 1 \"%s\" 0\n", istack->path);
 
-      yy_switch_to_buffer(istack->yybs);
+        if(depend_file)
+            fprintf(depend_file, "%s\n", istack->path);
 
-      if (line_direct_flag && istack->path && !line_mask_flag)
-	    fprintf(yyout, "\n`line %u \"%s\" 2\n",
-		    istack->lineno+1, istack->path);
+        yyrestart(istack->file);
+        return 1;
+    }
 
-      return 1;
+    /* Otherwise, resume the input buffer that is the new stack
+     * top. If I need to print a line directive, do so.
+     */
+    yy_switch_to_buffer(istack->yybs);
+
+    if (line_direct_flag && istack->path && !line_mask_flag)
+        fprintf(yyout, "\n`line %u \"%s\" 2\n", istack->lineno+1, istack->path);
+
+    return 1;
 }
 
 /*
@@ -1371,74 +1572,82 @@ static int load_next_input()
  *
  * Each record is terminated by a \n character.
  */
-static void do_dump_precompiled_defines(FILE*out, struct define_t*table)
+static void do_dump_precompiled_defines(FILE* out, struct define_t* table)
 {
-      if (!table->keyword)
-	    fprintf(out, "%s:%d:%zd:%s\n", table->name, table->argc,
-		    strlen(table->value), table->value);
-      if (table->left)
-	    do_dump_precompiled_defines(out, table->left);
-      if (table->right)
-	  do_dump_precompiled_defines(out, table->right);
+    if (!table->keyword)
+        fprintf(out, "%s:%d:%zd:%s\n", table->name, table->argc, strlen(table->value), table->value);
+
+    if (table->left)
+        do_dump_precompiled_defines(out, table->left);
+
+    if (table->right)
+        do_dump_precompiled_defines(out, table->right);
 }
 
-void dump_precompiled_defines(FILE*out)
+void dump_precompiled_defines(FILE* out)
 {
-      if (def_table)
-	    do_dump_precompiled_defines(out, def_table);
+    if (def_table)
+        do_dump_precompiled_defines(out, def_table);
 }
 
-void load_precompiled_defines(FILE*src)
+void load_precompiled_defines(FILE* src)
 {
-      char buf[4096];
-      int ch;
+    char buf[4096];
+    int ch;
 
-      while ( (ch = fgetc(src)) != EOF ) {
-	    char *cp = buf;
+    while ((ch = fgetc(src)) != EOF)
+    {
+        char* cp = buf;
+        char* name = 0;
+        char* value = 0;
 
-	    char*name = 0;
-	    char*value = 0;
-	    int argc = 0;
-	    size_t len = 0;
+        int argc = 0;
+        size_t len = 0;
 
-	    name = cp;
-	    while ( ch != EOF && ch != ':') {
-		  *cp++ = ch;
-		  ch = fgetc(src);
-	    }
-	    if (ch != ':') return;
+        name = cp;
 
-	      /* Terminate the name string. */
-	    *cp++ = 0;
-	      /* Read the argc number */
-	    ch = fgetc(src);
-	    while (isdigit(ch)) {
-		  argc = 10*argc + ch-'0';
-		  ch = fgetc(src);
-	    }
-	    if (ch != ':') return;
+        while ((ch = fgetc(src)) != EOF && ch != ':')
+            *cp++ = ch;
 
-	    ch = fgetc(src);
-	    while (isdigit(ch)) {
-		  len = 10*len + ch-'0';
-		  ch = fgetc(src);
-	    }
-	    if (ch != ':') return;
+        if (ch != ':')
+            return;
 
-	    value = cp;
-	    while (len > 0) {
-		  ch = fgetc(src);
-		  if (ch == EOF) return;
-		  *cp++ = ch;
-		  len -= 1;
-	    }
-	    *cp++ = 0;
+        /* Terminate the name string. */
+        *cp++ = 0;
 
-	    ch = fgetc(src);
-	    if (ch != '\n') return;
+        /* Read the argc number */
+        while (isdigit(ch = fgetc(src)))
+            argc = 10*argc + ch-'0';
 
-	    define_macro(name, value, 0, argc);
-      }
+        if (ch != ':')
+            return;
+
+        while (isdigit(ch = fgetc(src)))
+            len = 10*len + ch-'0';
+
+        if (ch != ':')
+            return;
+
+        value = cp;
+
+        while (len > 0)
+        {
+            ch = fgetc(src);
+            if (ch == EOF)
+                return;
+
+            *cp++ = ch;
+            len -= 1;
+        }
+
+        *cp++ = 0;
+
+        ch = fgetc(src);
+        if (ch != '\n')
+            return;
+
+        define_macro(name, value, 0, argc);
+    }
 }
 
 /*
@@ -1446,48 +1655,54 @@ void load_precompiled_defines(FILE*src)
  * opened, and the lexor is initialized. The include stack is cleared
  * and ready to go.
  */
-void reset_lexor(FILE*out, char*paths[])
+void reset_lexor(FILE* out, char* paths[])
 {
-      unsigned idx;
-      struct include_stack_t*tail = 0;
-      struct include_stack_t*isp = malloc(sizeof(struct include_stack_t));
-      isp->path = strdup(paths[0]);
-      isp->file = fopen(paths[0], "r");
-      isp->str = 0;
-      isp->ebs = 0;
-      isp->lineno = 0;
-      if (isp->file == 0) {
-	    perror(paths[0]);
-	    exit(1);
-      }
-      if(depend_file) {
-	      fprintf(depend_file, "%s\n", paths[0]);
-      }
+    unsigned idx;
+    struct include_stack_t* isp;
+    struct include_stack_t* tail = 0;
 
-      yyout = out;
+    isp = malloc(sizeof(struct include_stack_t));
+    isp->next = 0;
+    isp->path = strdup(paths[0]);
+    isp->file = fopen(paths[0], "r");
+    isp->str = 0;
+    isp->ebs = 0;
+    isp->lineno = 0;
 
-      yyrestart(isp->file);
+    if (isp->file == 0)
+    {
+        perror(paths[0]);
+        exit(1);
+    }
 
-      assert(istack == 0);
-      istack = isp;
-      isp->next = 0;
+    if(depend_file)
+          fprintf(depend_file, "%s\n", paths[0]);
 
-	/* Now build up a queue of all the remaining file names, so
-	   that load_next_input() can pull them when needed. */
-      file_queue = 0;
-      for (idx = 1 ;  paths[idx] ;  idx += 1) {
-	    isp = malloc(sizeof(struct include_stack_t));
-	    isp->path = strdup(paths[idx]);
-	    isp->file = 0;
-	    isp->str = 0;
-	    isp->ebs = 0;
-	    isp->next = 0;
-	    isp->lineno = 0;
-	    if (tail)
-		  tail->next = isp;
-	    else
-		  file_queue = isp;
+    yyout = out;
 
-	    tail = isp;
-      }
+    yyrestart(isp->file);
+
+    assert(istack == 0);
+    istack = isp;
+
+    /* Now build up a queue of all the remaining file names, so
+     * that load_next_input() can pull them when needed.
+     */
+    for (idx = 1 ; paths[idx] ; idx += 1)
+    {
+        isp = malloc(sizeof(struct include_stack_t));
+        isp->path = strdup(paths[idx]);
+        isp->file = 0;
+        isp->str = 0;
+        isp->ebs = 0;
+        isp->next = 0;
+        isp->lineno = 0;
+
+        if (tail)
+            tail->next = isp;
+        else
+            file_queue = isp;
+
+        tail = isp;
+    }
 }
