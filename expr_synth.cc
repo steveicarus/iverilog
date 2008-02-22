@@ -324,10 +324,40 @@ NetNet* NetEBComp::synthesize(Design*des)
 
 NetNet* NetEBPow::synthesize(Design*des)
 {
-      cerr << get_fileline() << ": internal error: Do not yet know how to handle"
-	   << " power operator in this context." << endl;
-      des->errors += 1;
-      return 0;
+      NetNet *lsig=0, *rsig=0;
+      unsigned width;
+      bool real_args=false;
+      if (process_binary_args(des, left_, right_, lsig, rsig,
+                              real_args, this)) {
+	    return 0;
+      }
+
+      if (real_args) width = 1;
+      else width = expr_width();
+
+      NetScope*scope = lsig->scope();
+      assert(scope);
+
+      NetPow*powr = new NetPow(scope, scope->local_symbol(), width,
+			       lsig->vector_width(),
+			       rsig->vector_width());
+      des->add_node(powr);
+
+      powr->set_signed( has_sign() );
+      powr->set_line(*this);
+
+      connect(powr->pin_DataA(), lsig->pin(0));
+      connect(powr->pin_DataB(), rsig->pin(0));
+
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::IMPLICIT, width);
+      osig->set_line(*this);
+      osig->data_type(expr_type());
+      osig->local_flag(true);
+
+      connect(powr->pin_Result(), osig->pin(0));
+
+      return osig;
 }
 
 NetNet* NetEBMult::synthesize(Design*des)
@@ -360,7 +390,6 @@ NetNet* NetEBMult::synthesize(Design*des)
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, width);
-      osig->data_type(lsig->data_type());
       osig->set_line(*this);
       osig->data_type(expr_type());
       osig->local_flag(true);
