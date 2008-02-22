@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,12 +18,64 @@
  */
 
 # include "config.h"
+# include "compiler.h"
 
 # include  <iostream>
 
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "ivl_assert.h"
+
+NetNet* convert_to_real_const(Design*des, NetExpr*expr, NetExpr*obj)
+{
+      NetNet* sig;
+
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
+	    verireal vrl(tmp->value().as_double());
+	    NetECReal rlval(vrl);
+	    sig = rlval.synthesize(des);
+      } else {
+	    cerr << obj->get_fileline() << ": sorry: Cannot convert "
+	    "bit based value (" << *expr << ") to real." << endl;
+	    des->errors += 1;
+	    sig = 0;
+      }
+
+      return sig;
+}
+
+  /* Note that lsig, rsig and real_args are references. */
+bool process_binary_args(Design*des, NetExpr*left, NetExpr*right,
+                         NetNet*&lsig, NetNet*&rsig, bool&real_args,
+                         NetExpr*obj)
+{
+      if (left->expr_type() == IVL_VT_REAL ||
+          right->expr_type() == IVL_VT_REAL) {
+	    real_args = true;
+
+	      /* Currently we will have a runtime assert if both expressions
+	         are not real, though we can convert constants. */
+	    if (left->expr_type() == IVL_VT_REAL) {
+		  lsig = left->synthesize(des);
+	    } else {
+		  lsig = convert_to_real_const(des, left, obj);
+	    }
+
+	    if (right->expr_type() == IVL_VT_REAL) {
+		  rsig = right->synthesize(des);
+	    } else {
+		  rsig = convert_to_real_const(des, right, obj);
+	    }
+      } else {
+            real_args = false;
+	    lsig = left->synthesize(des);
+	    rsig = right->synthesize(des);
+
+      }
+
+      if (lsig == 0 || rsig == 0) return true;
+      else return false;
+}
 
 NetNet* NetExpr::synthesize(Design*des)
 {
@@ -40,8 +92,12 @@ NetNet* NetEBAdd::synthesize(Design*des)
 {
       assert((op()=='+') || (op()=='-'));
 
-      NetNet*lsig = left_->synthesize(des);
-      NetNet*rsig = right_->synthesize(des);
+      NetNet *lsig=0, *rsig=0;
+      bool real_args=false;
+      if (process_binary_args(des, left_, right_, lsig, rsig,
+                              real_args, this)) {
+	    return 0;
+      }
 
       assert(expr_width() >= lsig->vector_width());
       assert(expr_width() >= rsig->vector_width());
@@ -87,6 +143,17 @@ NetNet* NetEBBits::synthesize(Design*des)
       NetNet*lsig = left_->synthesize(des);
       NetNet*rsig = right_->synthesize(des);
 
+      if (lsig == 0 || rsig == 0) return 0;
+
+        /* You cannot do bitwise operations on real values. */
+      if (lsig->data_type() == IVL_VT_REAL ||
+          rsig->data_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: " << human_readable_op(op_)
+	         << " operator may not have REAL operands." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       NetScope*scope = lsig->scope();
       assert(scope);
 
@@ -98,6 +165,7 @@ NetNet* NetEBBits::synthesize(Design*des)
 		 << lsig->vector_width() << ": " << *left_ << endl;
 	    cerr << get_fileline() << ":               : width="
 		 << rsig->vector_width() << ": " << *right_ << endl;
+	    des->errors += 1;
 	    return 0;
       }
 
@@ -114,6 +182,9 @@ NetNet* NetEBBits::synthesize(Design*des)
       switch (op()) {
 	  case '&':
 	    gate = new NetLogic(scope, oname, 3, NetLogic::AND, wid);
+	    break;
+	  case 'A':
+	    gate = new NetLogic(scope, oname, 3, NetLogic::NAND, wid);
 	    break;
 	  case '|':
 	    gate = new NetLogic(scope, oname, 3, NetLogic::OR, wid);
@@ -144,18 +215,26 @@ NetNet* NetEBBits::synthesize(Design*des)
 NetNet* NetEBComp::synthesize(Design*des)
 {
 
-      NetNet*lsig = left_->synthesize(des);
-      NetNet*rsig = right_->synthesize(des);
+      NetNet *lsig=0, *rsig=0;
+      unsigned width;
+      bool real_args=false;
+      if (process_binary_args(des, left_, right_, lsig, rsig,
+                              real_args, this)) {
+	    return 0;
+      }
+
+      if (real_args) {
+	    width = 1;
+      } else {
+	    width = lsig->vector_width();
+	    if (rsig->vector_width() > width) width = rsig->vector_width();
+
+	    lsig = pad_to_width(des, lsig, width);
+	    rsig = pad_to_width(des, rsig, width);
+      }
 
       NetScope*scope = lsig->scope();
       assert(scope);
-
-      unsigned width = lsig->vector_width();
-      if (rsig->vector_width() > width)
-	    width = rsig->vector_width();
-
-      lsig = pad_to_width(des, lsig, width);
-      rsig = pad_to_width(des, rsig, width);
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, 1);
@@ -165,7 +244,7 @@ NetNet* NetEBComp::synthesize(Design*des)
 
 	/* Handle the special case of a single bit equality
 	   operation. Make an XNOR gate instead of a comparator. */
-      if ((width == 1) && ((op_ == 'e') || (op_ == 'E'))) {
+      if ((width == 1) && ((op_ == 'e') || (op_ == 'E')) && !real_args) {
 	    NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
 					 3, NetLogic::XNOR, 1);
 	    gate->set_line(*this);
@@ -179,7 +258,7 @@ NetNet* NetEBComp::synthesize(Design*des)
 	/* Handle the special case of a single bit inequality
 	   operation. This is similar to single bit equality, but uses
 	   an XOR instead of an XNOR gate. */
-      if ((width == 1) && ((op_ == 'n') || (op_ == 'N'))) {
+      if ((width == 1) && ((op_ == 'n') || (op_ == 'N')) && !real_args) {
 	    NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
 					 3, NetLogic::XOR, 1);
 	    gate->set_line(*this);
@@ -206,8 +285,14 @@ NetNet* NetEBComp::synthesize(Design*des)
 	  case '>':
 	    connect(dev->pin_AGB(), osig->pin(0));
 	    break;
-	  case 'e': // ==
 	  case 'E': // === ?
+	    if (real_args) {
+		  cerr << get_fileline() << ": error: Case equality may "
+		          "not have real operands." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	  case 'e': // ==
 	    connect(dev->pin_AEB(), osig->pin(0));
 	    break;
 	  case 'G': // >=
@@ -216,8 +301,14 @@ NetNet* NetEBComp::synthesize(Design*des)
 	  case 'L': // <=
 	    connect(dev->pin_ALEB(), osig->pin(0));
 	    break;
-	  case 'n': // !=
 	  case 'N': // !==
+	    if (real_args) {
+		  cerr << get_fileline() << ": error: Case inequality may "
+		          "not have real operands." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	  case 'n': // !=
 	    connect(dev->pin_ANEB(), osig->pin(0));
 	    break;
 
@@ -241,20 +332,22 @@ NetNet* NetEBPow::synthesize(Design*des)
 
 NetNet* NetEBMult::synthesize(Design*des)
 {
-      NetNet*lsig = left_->synthesize(des);
-      NetNet*rsig = right_->synthesize(des);
-
-      if (lsig == 0)
+      NetNet *lsig=0, *rsig=0;
+      unsigned width;
+      bool real_args=false;
+      if (process_binary_args(des, left_, right_, lsig, rsig,
+                              real_args, this)) {
 	    return 0;
+      }
 
-      if (rsig == 0)
-	    return 0;
+      if (real_args) width = 1;
+      else width = expr_width();
 
       NetScope*scope = lsig->scope();
       assert(scope);
 
       NetMult*mult = new NetMult(scope, scope->local_symbol(),
-				 expr_width(),
+				 width,
 				 lsig->vector_width(),
 				 rsig->vector_width());
       des->add_node(mult);
@@ -266,7 +359,7 @@ NetNet* NetEBMult::synthesize(Design*des)
       connect(mult->pin_DataB(), rsig->pin(0));
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::IMPLICIT, expr_width());
+			       NetNet::IMPLICIT, width);
       osig->data_type(lsig->data_type());
       osig->set_line(*this);
       osig->data_type(expr_type());
@@ -279,13 +372,21 @@ NetNet* NetEBMult::synthesize(Design*des)
 
 NetNet* NetEBDiv::synthesize(Design*des)
 {
-      NetNet*lsig = left_->synthesize(des);
-      NetNet*rsig  = right_->synthesize(des);
+      NetNet *lsig=0, *rsig=0;
+      unsigned width;
+      bool real_args=false;
+      if (process_binary_args(des, left_, right_, lsig, rsig,
+                              real_args, this)) {
+	    return 0;
+      }
+
+      if (real_args) width = 1;
+      else width = expr_width();
 
       NetScope*scope = lsig->scope();
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::IMPLICIT, expr_width());
+			       NetNet::IMPLICIT, width);
       osig->set_line(*this);
       osig->data_type(lsig->data_type());
       osig->local_flag(true);
@@ -294,7 +395,7 @@ NetNet* NetEBDiv::synthesize(Design*des)
 
 	  case '/': {
 		NetDivide*div = new NetDivide(scope, scope->local_symbol(),
-					      expr_width(),
+					      width,
 					      lsig->vector_width(),
 					      rsig->vector_width());
 		div->set_line(*this);
@@ -307,8 +408,16 @@ NetNet* NetEBDiv::synthesize(Design*des)
 	  }
 
 	  case '%': {
+		  /* Baseline Verilog does not support the % operator with
+		     real arguments, but we allow it in our extended form. */
+		if (real_args && generation_flag < GN_VER2001X) {
+		      cerr << get_fileline() << ": error: Modulus operator "
+		              "may not have REAL operands." << endl;
+		      des->errors += 1;
+		      return 0;
+		}
 		NetModulo*div = new NetModulo(scope, scope->local_symbol(),
-					      expr_width(),
+					      width,
 					      lsig->vector_width(),
 					      rsig->vector_width());
 		div->set_line(*this);
@@ -339,11 +448,16 @@ NetNet* NetEBLogic::synthesize(Design*des)
       NetNet*lsig = left_->synthesize(des);
       NetNet*rsig = right_->synthesize(des);
 
-      if (lsig == 0)
-	    return 0;
+      if (lsig == 0 || rsig == 0) return 0;
 
-      if (rsig == 0)
+        /* You cannot currently do logical operations on real values. */
+      if (lsig->data_type() == IVL_VT_REAL ||
+          rsig->data_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": sorry: " << human_readable_op(op_)
+	         << " is currently unsupported for real values." << endl;
+	    des->errors += 1;
 	    return 0;
+      }
 
       NetScope*scope = lsig->scope();
       assert(scope);
@@ -420,8 +534,17 @@ NetNet* NetEBShift::synthesize(Design*des)
       }
 
       NetNet*lsig = left_->synthesize(des);
-      if (lsig == 0)
+
+      if (lsig == 0) return 0;
+
+        /* Cannot shift a real values. */
+      if (lsig->data_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: shift operator ("
+	         << human_readable_op(op_)
+	         << ") cannot shift a real values." << endl;
+	    des->errors += 1;
 	    return 0;
+      }
 
       bool right_flag  =  op_ == 'r' || op_ == 'R';
       bool signed_flag =  op_ == 'R';
@@ -508,8 +631,8 @@ NetNet* NetEBShift::synthesize(Design*des)
       }
 
       NetNet*rsig = right_->synthesize(des);
-      if (rsig == 0)
-	    return 0;
+
+      if (rsig == 0) return 0;
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, expr_width());
@@ -627,6 +750,16 @@ NetNet* NetEUBits::synthesize(Design*des)
 {
       NetNet*isig = expr_->synthesize(des);
 
+      if (isig == 0) return 0;
+
+      if (isig->data_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: bit-wise negation ("
+	         << human_readable_op(op_)
+	         << ") may not have a REAL operand." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       NetScope*scope = isig->scope();
       assert(scope);
 
@@ -658,6 +791,16 @@ NetNet* NetEUBits::synthesize(Design*des)
 NetNet* NetEUReduce::synthesize(Design*des)
 {
       NetNet*isig = expr_->synthesize(des);
+
+      if (isig == 0) return 0;
+
+      if (isig->data_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: reduction operator ("
+	         << human_readable_op(op_)
+	         << ") may not have a REAL operand." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       NetScope*scope = isig->scope();
       assert(scope);
@@ -710,8 +853,8 @@ NetNet* NetESelect::synthesize(Design *des)
 {
 
       NetNet*sub = expr_->synthesize(des);
-      if (sub == 0)
-	    return 0;
+
+      if (sub == 0) return 0;
 
       NetScope*scope = sub->scope();
 
@@ -803,9 +946,27 @@ NetNet* NetESelect::synthesize(Design *des)
  */
 NetNet* NetETernary::synthesize(Design *des)
 {
-      NetNet*csig = cond_->synthesize(des);
-      NetNet*tsig = true_val_->synthesize(des);
-      NetNet*fsig = false_val_->synthesize(des);
+      NetNet*csig = cond_->synthesize(des),
+            *tsig = true_val_->synthesize(des),
+            *fsig = false_val_->synthesize(des);
+
+      if (csig == 0 || tsig == 0 || fsig == 0) return 0;
+
+      if (tsig->data_type() != fsig->data_type()) {
+	    cerr << get_fileline() << ": error: True and False clauses of "
+	            "ternary expression have different types." << endl;
+	    cerr << get_fileline() << ":      : True  clause is: "
+	         << tsig->data_type() << endl;
+	    cerr << get_fileline() << ":      : False clause is: "
+	         << fsig->data_type() << endl;
+	    des->errors += 1;
+	    return 0;
+      } else if (tsig->data_type() == IVL_VT_NO_TYPE) {
+	    cerr << get_fileline() << ": internal error: True and False "
+	            "clauses of ternary both have NO TYPE." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       perm_string path = csig->scope()->local_symbol();
 
@@ -875,4 +1036,54 @@ NetNet* NetESignal::synthesize(Design*des)
 	    connect(tmp->pin(0), mux->pin_Result());
       }
       return tmp;
+}
+
+NetNet* NetESFunc::synthesize(Design*des)
+{
+      cerr << get_fileline() << ": sorry: cannot synthesize system function: "
+	   << *this << " in this context" << endl;
+      des->errors += 1;
+      return 0;
+}
+
+NetNet* NetEUFunc::synthesize(Design*des)
+{
+      svector<NetNet*> eparms (parms_.count());
+
+        /* Synthesize the arguments. */
+      bool errors = false;
+      for (unsigned idx = 0; idx < eparms.count(); idx += 1) {
+	    NetNet*tmp = parms_[idx]->synthesize(des);
+	    if (tmp == 0) {
+		  cerr << get_fileline() << ": error: Unable to synthesize "
+		          "port " << idx << " of call to "
+		       << func_->basename() << "." << endl;
+		  errors = true;
+		  des->errors += 1;
+		  continue;
+	    }
+	    eparms[idx] = tmp;
+      }
+      if (errors) return 0;
+
+      NetUserFunc*net = new NetUserFunc(scope_, scope_->local_symbol(), func_);
+      net->set_line(*this);
+      des->add_node(net);
+
+        /* Create an output signal and connect it to the function. */
+      NetNet*osig = new NetNet(scope_, scope_->local_symbol(), NetNet::WIRE,
+                               result_sig_->vector_width());
+      osig->local_flag(true);
+      osig->data_type(result_sig_->expr_type());
+      connect(net->pin(0), osig->pin(0));
+
+        /* Connect the pins to the arguments. */
+      NetFuncDef*def = func_->func_def();
+      for (unsigned idx = 0; idx < eparms.count(); idx += 1) {
+	    NetNet*tmp = pad_to_width(des, eparms[idx], 
+	                              def->port(idx)->vector_width());
+	    connect(net->pin(idx+1), tmp->pin(0));
+      }
+
+      return osig;
 }

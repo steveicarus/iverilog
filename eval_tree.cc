@@ -65,7 +65,7 @@ bool NetEBinary::get_real_arguments_(verireal&lval, verireal&rval)
 		NetEConst*lc = dynamic_cast<NetEConst*>(left_);
 		if (lc == 0) return false;
 		verinum tmp = lc->value();
-		lval = verireal(tmp.as_long());
+		lval = verireal(tmp.as_double());
 		break;
 	  }
 
@@ -86,7 +86,7 @@ bool NetEBinary::get_real_arguments_(verireal&lval, verireal&rval)
 		NetEConst*rc = dynamic_cast<NetEConst*>(right_);
 		if (rc == 0) return 0;
 		verinum tmp = rc->value();
-		rval = verireal(tmp.as_long());
+		rval = verireal(tmp.as_double());
 		break;
 	  }
 

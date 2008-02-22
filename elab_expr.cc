@@ -197,9 +197,10 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 		 baseline Verilog. But we allow it in our extended
 		 form of Verilog. */
 	    if (generation_flag < GN_VER2001X) {
-		  if (lp->expr_type()==IVL_VT_REAL || rp->expr_type()==IVL_VT_REAL) {
-			cerr << get_fileline() << ": error: Modulus operator may not "
-			      "have REAL operands." << endl;
+		  if (lp->expr_type()==IVL_VT_REAL ||
+		      rp->expr_type()==IVL_VT_REAL) {
+			cerr << get_fileline() << ": error: Modulus operator "
+			      "may not have REAL operands." << endl;
 			des->errors += 1;
 		  }
 	    }
@@ -237,10 +238,11 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 
 	  case 'E': /* === */
 	  case 'N': /* !== */
-	    if (lp->expr_type() == IVL_VT_REAL
-		|| rp->expr_type() == IVL_VT_REAL) {
-		  cerr << get_fileline() << ": error: Case equality may not "
-		       << "have real operands." << endl;
+	    if (lp->expr_type() == IVL_VT_REAL ||
+		rp->expr_type() == IVL_VT_REAL) {
+		  cerr << get_fileline() << ": error: "
+		       << human_readable_op(op_)
+		       << "may not have real operands." << endl;
 		  return 0;
 	    }
 	      /* Fall through... */
@@ -628,7 +630,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 
       if (NetNet*res = dscope->find_signal(dscope->basename())) {
 	    NetESignal*eres = new NetESignal(res);
-	    NetEUFunc*func = new NetEUFunc(dscope, eres, parms);
+	    NetEUFunc*func = new NetEUFunc(scope, dscope, eres, parms);
 	    func->set_line(*this);
 	    func->cast_signed(res->get_signed());
 	    return func;

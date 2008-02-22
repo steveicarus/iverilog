@@ -2492,7 +2492,7 @@ class NetTaskDef {
 class NetEUFunc  : public NetExpr {
 
     public:
-      NetEUFunc(NetScope*, NetESignal*, svector<NetExpr*>&);
+      NetEUFunc(NetScope*, NetScope*, NetESignal*, svector<NetExpr*>&);
       ~NetEUFunc();
 
       const NetESignal*result_sig() const;
@@ -2509,8 +2509,10 @@ class NetEUFunc  : public NetExpr {
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEUFunc*dup_expr() const;
       virtual NexusSet* nex_input(bool rem_out = true);
+      virtual NetNet* synthesize(Design*des);
 
     private:
+      NetScope*scope_;
       NetScope*func_;
       NetESignal*result_sig_;
       svector<NetExpr*> parms_;
@@ -3067,6 +3069,7 @@ class NetESFunc  : public NetExpr {
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetESFunc*dup_expr() const;
+      virtual NetNet*synthesize(Design*);
 
     private:
       const char* name_;

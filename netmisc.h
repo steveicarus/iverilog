@@ -1,7 +1,7 @@
 #ifndef __netmisc_H
 #define __netmisc_H
 /*
- * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.31 2007/06/02 03:42:13 steve Exp $"
-#endif
 
 # include  "netlist.h"
 
@@ -132,5 +129,10 @@ bool eval_as_long(long&value, NetExpr*expr);
 
 extern std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 					  const pform_name_t&path);
+
+/*
+ * Return a human readable version of the operator.
+ */
+const char *human_readable_op(const char op);
 
 #endif

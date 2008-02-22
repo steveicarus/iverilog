@@ -30,26 +30,6 @@
 # include  "ivl_assert.h"
 
 /*
- * Human readable version of op_ used in NetEBinary and NetEUnary.
- * XXX  This isn't a complete list, but it's enough to cover the
- * restricted cases it is used for.
- */
-static const char *human_readable_op(const char op_)
-{
-	const char *type;
-	switch (op_) {
-	        case '^': type = "^";  break;  // XOR
-	        case 'X': type = "~^"; break;  // XNOR
-	        case '&': type = "&";  break;  // AND
-	        case 'A': type = "~&"; break;  // NAND (~&)
-	        case '|': type = "|";  break;  // Bitwise OR
-	        case 'O': type = "~|"; break;  // Bitwise NOR
-		default: assert(0);
-	}
-	return type;
-}
-
-/*
  * This is a state flag that determines whether an elaborate_net must
  * report an error when it encounters an unsized number. Normally, it
  * is fine to make an unsized number as small as it can be, but there
@@ -158,18 +138,8 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 {
       NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0),
 	    *rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
-      if (lsig == 0) {
-	    cerr << get_fileline() << ": error: Cannot elaborate ";
-	    left_->dump(cerr);
-	    cerr << endl;
-	    return 0;
-      }
-      if (rsig == 0) {
-	    cerr << get_fileline() << ": error: Cannot elaborate ";
-	    right_->dump(cerr);
-	    cerr << endl;
-	    return 0;
-      }
+
+      if (lsig == 0 || rsig == 0) return 0;
 
       NetNet*osig;
 
@@ -278,18 +248,8 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 {
       NetNet*lsig = left_->elaborate_net(des, scope, width, 0, 0, 0),
 	    *rsig = right_->elaborate_net(des, scope, width, 0, 0, 0);
-      if (lsig == 0) {
-	    cerr << get_fileline() << ": error: Cannot elaborate ";
-	    left_->dump(cerr);
-	    cerr << endl;
-	    return 0;
-      }
-      if (rsig == 0) {
-	    cerr << get_fileline() << ": error: Cannot elaborate ";
-	    right_->dump(cerr);
-	    cerr << endl;
-	    return 0;
-      }
+
+      if (lsig == 0 || rsig == 0) return 0;
 
       if (lsig->vector_width() < rsig->vector_width())
 	    lsig = pad_to_width(des, lsig, rsig->vector_width());
@@ -494,21 +454,10 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	   (so that the eval_tree method can reduce constant
 	   expressions, including parameters) then turn those results
 	   into synthesized nets. */
-      NetExpr*lexp = elab_and_eval(des, scope, left_, lwidth);
-      if (lexp == 0) {
-	    cerr << get_fileline() << ": error: Cannot elaborate ";
-	    left_->dump(cerr);
-	    cerr << endl;
-	    return 0;
-      }
+      NetExpr*lexp = elab_and_eval(des, scope, left_, lwidth),
+             *rexp = elab_and_eval(des, scope, right_, lwidth);
 
-      NetExpr*rexp = elab_and_eval(des, scope, right_, lwidth);
-      if (rexp == 0) {
-	    cerr << get_fileline() << ": error: Cannot elaborate ";
-	    right_->dump(cerr);
-	    cerr << endl;
-	    return 0;
-      }
+      if (lexp == 0 || rexp == 0) return 0;
 
       unsigned operand_width;
       bool real_arg = false;
@@ -539,12 +488,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(rexp)) {
 
 	    lsig = lexp->synthesize(des);
-	    if (lsig == 0) {
-		  cerr << get_fileline() << ": internal error: "
-			"Cannot elaborate net for " << *lexp << endl;
-		  return 0;
-	    }
-	    assert(lsig);
+	    if (lsig == 0) return 0;
 	    delete lexp;
 	    lexp = 0;
 
@@ -553,6 +497,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 		  NetECReal rlval(vrl);
 		  rsig = rlval.synthesize(des);
 		  delete rexp;
+		  rexp = 0;
 	    } else {
 		  NetNet*osig = compare_eq_constant(des, scope,
 					            lsig, tmp, op_,
@@ -567,14 +512,16 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(lexp)) {
 
 	    rsig = rexp->synthesize(des);
-	    assert(rsig);
+	    if (rsig == 0) return 0;
 	    delete rexp;
+	    rexp = 0;
 
 	    if (real_arg) {
 		  verireal vrl(tmp->value().as_double());
 		  NetECReal rlval(vrl);
 		  lsig = rlval.synthesize(des);
 		  delete lexp;
+		  lexp = 0;
 	    } else {
 		  NetNet*osig = compare_eq_constant(des, scope,
 					            rsig, tmp, op_,
@@ -588,13 +535,13 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 
       if (lsig == 0) {
 	    lsig = lexp->synthesize(des);
-	    assert(lsig);
+	    if (lsig == 0) return 0;
 	    delete lexp;
       }
 
       if (rsig == 0) {
 	    rsig = rexp->synthesize(des);
-	    assert(rsig);
+	    if (rsig == 0) return 0;
 	    delete rexp;
       }
 
@@ -614,6 +561,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
                        lsig->data_type() != IVL_VT_REAL)) {
 	    cerr << get_fileline() << ": sorry: comparing bit based signals "
 	            "and real values is not supported." << endl;
+	    des->errors += 1;
 	    return 0;
       }
 
@@ -661,6 +609,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    if (real_arg) {
 		cerr << get_fileline() << ": error: Case equality may not "
 		        "have real operands." << endl;
+		des->errors += 1;
 		return 0;
 	    }
 	    gate = new NetCaseCmp(scope, scope->local_symbol(), dwidth, true);
@@ -673,6 +622,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    if (real_arg) {
 		cerr << get_fileline() << ": error: Case inequality may not "
 		        "have real operands." << endl;
+		des->errors += 1;
 		return 0;
 	    }
 	    gate = new NetCaseCmp(scope, scope->local_symbol(), dwidth, false);
@@ -757,11 +707,10 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 				     const NetExpr* fall,
 				     const NetExpr* decay) const
 {
-      NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0);
-      if (lsig == 0) return 0;
-      NetNet*rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
-      if (rsig == 0) return 0;
+      NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0),
+            *rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
 
+      if (lsig == 0 || rsig == 0) return 0;
 
 	// Check the l-value width. If it is unspecified, then use the
 	// largest operand width as the l-value width. Restrict the
@@ -841,10 +790,10 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 				     const NetExpr* fall,
 				     const NetExpr* decay) const
 {
-      NetNet*lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0);
-      if (lsig == 0) return 0;
-      NetNet*rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
-      if (rsig == 0) return 0;
+      NetNet*lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0),
+            *rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
+
+      if (lsig == 0 || rsig == 0) return 0;
 
 	/* The arguments of a modulus must have the same type. */
       if (lsig->data_type() != rsig->data_type()) {
@@ -911,35 +860,16 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 				     const NetExpr* fall,
 				     const NetExpr* decay) const
 {
-      NetNet*lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0);
-      NetNet*rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
-      if (lsig == 0) {
-	    cerr << get_fileline() << ": error: Cannot elaborate ";
-	    left_->dump(cerr);
-	    cerr << endl;
-	    return 0;
-      }
-      if (rsig == 0) {
-	    cerr << get_fileline() << ": error: Cannot elaborate ";
-	    right_->dump(cerr);
-	    cerr << endl;
-	    return 0;
-      }
+      NetNet*lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0),
+            *rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
+
+      if (lsig == 0 || rsig == 0) return 0;
+
       if (rsig->data_type() == IVL_VT_REAL ||
           lsig->data_type() == IVL_VT_REAL) {
-	    cerr << get_fileline() << ": sorry: ";
-	    switch (op_) {
-	        case 'a':
-	          cerr << "&&";
-	          break;
-	        case 'o':
-	          cerr << "||";
-	          break;
-	        default:
-	          assert(0);
-	    }
-
-	    cerr << " is currently unsupported for real values." << endl;
+	    cerr << get_fileline() << ": sorry: " << human_readable_op(op_)
+	         << " is currently unsupported for real values." << endl;
+	    des->errors += 1;
 	    return 0;
       }
 
@@ -1057,10 +987,10 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 	    return osig;
       }
 
-      NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0);
-      if (lsig == 0) return 0;
-      NetNet*rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
-      if (rsig == 0) return 0;
+      NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0),
+            *rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
+
+      if (lsig == 0 || rsig == 0) return 0;
 
 	/* The arguments of a multiply must have the same type. */
       if (lsig->data_type() != rsig->data_type()) {
@@ -1107,7 +1037,7 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
       connect(mult->pin_DataA(), lsig->pin(0));
       connect(mult->pin_DataB(), rsig->pin(0));
 
-	// Make a signal to carry the output from the multiply.
+	/* Make a signal to carry the output from the multiply. */
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, rwidth);
       osig->data_type( lsig->data_type() );
@@ -1123,10 +1053,10 @@ NetNet* PEBinary::elaborate_net_pow_(Design*des, NetScope*scope,
 				       const NetExpr* fall,
 				       const NetExpr* decay) const
 {
-      NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0);
-      if (lsig == 0) return 0;
-      NetNet*rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
-      if (rsig == 0) return 0;
+      NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0),
+            *rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
+
+      if (lsig == 0 || rsig == 0) return 0;
 
 	/* The arguments of a power must have the same type. */
       if (lsig->data_type() != rsig->data_type()) {
@@ -1139,7 +1069,7 @@ NetNet* PEBinary::elaborate_net_pow_(Design*des, NetScope*scope,
 	    return 0;
       }
 
-	// The power is signed if either its operands are signed.
+	/* The power is signed if either of its operands are signed. */
       bool arith_is_signed = lsig->get_signed() || rsig->get_signed();
 
       unsigned rwidth = lwidth;
@@ -1174,7 +1104,7 @@ NetNet* PEBinary::elaborate_net_pow_(Design*des, NetScope*scope,
       connect(powr->pin_DataA(), lsig->pin(0));
       connect(powr->pin_DataB(), rsig->pin(0));
 
-	// Make a signal to carry the output from the power.
+	/* Make a signal to carry the output from the power. */
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, rwidth);
       osig->data_type( lsig->data_type() );
@@ -1191,12 +1121,14 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 				       const NetExpr* decay) const
 {
       NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0);
+
       if (lsig == 0) return 0;
 
         /* Cannot shift a real value. */
       if (lsig->data_type() == IVL_VT_REAL) {
-	    cerr << get_fileline() << ": error: shift operators "
-	            "cannot shift a real value." << endl;
+	    cerr << get_fileline() << ": error: shift operators ("
+	         << human_readable_op(op_)
+	         << ") cannot shift a real value." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -1358,6 +1290,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	    dwid += 1;
 
       NetNet*rsig = right_->elaborate_net(des, scope, dwid, 0, 0, 0);
+
       if (rsig == 0) return 0;
 
         /* You cannot shift a value by a real amount. */
@@ -1441,7 +1374,6 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return 0;
       }
-      assert(def);
 
       NetScope*dscope = def->scope();
       assert(dscope);
@@ -1470,6 +1402,7 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 		       << "port " << idx << " of call to " << path_ <<
 			"." << endl;
 		  errors += 1;
+		  des->errors += 1;
 		  continue;
 	    }
 
@@ -1477,8 +1410,7 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
 	    eparms[idx] = tmp;
       }
 
-      if (errors > 0)
-	    return 0;
+      if (errors > 0) return 0;
 
       NetUserFunc*net = new NetUserFunc(scope,
 					scope->local_symbol(),
@@ -1591,6 +1523,7 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
 
       connect(net->pin(0), osig->pin(0));
 
+      unsigned errors = 0;
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 	    NetNet*tmp = parms_[idx]->elaborate_net(des, scope, 0,
 						    0, 0, 0,
@@ -1599,11 +1532,16 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": error: Unable to elaborate "
 		       << "port " << idx << " of call to " << path_ <<
 			"." << endl;
+		  errors += 1;
+		  des->errors += 1;
 		  continue;
 	    }
 
 	    connect(net->pin(1+idx), tmp->pin(0));
       }
+
+      if (errors > 0) return 0;
+
       return osig;
 }
 
@@ -1702,7 +1640,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	    for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
 		  if (nets[idx]) delete nets[idx];
 	    }
-	    des->errors += 1;
+	    des->errors += errors;
 	    return 0;
       }
 
@@ -2305,7 +2243,7 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
 		  if (nets[idx]) delete nets[idx];
 	    }
-	    des->errors += 1;
+	    des->errors += errors;
 	    return 0;
       }
 
@@ -2997,13 +2935,11 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 				 Link::strength_t drive0,
 				 Link::strength_t drive1) const
 {
-      NetNet* expr_sig = expr_->elaborate_net(des, scope, 0, 0, 0, 0);
-      NetNet* tru_sig = tru_->elaborate_net(des, scope, width, 0, 0, 0);
-      NetNet* fal_sig = fal_->elaborate_net(des, scope, width, 0, 0, 0);
-      if (expr_sig == 0 || tru_sig == 0 || fal_sig == 0) {
-	    des->errors += 1;
-	    return 0;
-      }
+      NetNet*expr_sig = expr_->elaborate_net(des, scope, 0, 0, 0, 0),
+            *tru_sig = tru_->elaborate_net(des, scope, width, 0, 0, 0),
+            *fal_sig = fal_->elaborate_net(des, scope, width, 0, 0, 0);
+
+      if (expr_sig == 0 || tru_sig == 0 || fal_sig == 0) return 0;
 
 	/* The type of the true and false expressions must
 	   match. These become the type of the resulting
@@ -3020,11 +2956,13 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 
 	    des->errors += 1;
 	    expr_type = IVL_VT_NO_TYPE;
+	    return 0;
 
       } else if (expr_type == IVL_VT_NO_TYPE) {
 	    cerr << get_fileline() << ": internal error: True and false "
 		 << "clauses of ternary both have NO TYPE." << endl;
 	    des->errors += 1;
+	    return 0;
       }
 
 	/* The natural width of the expression is the width of the
@@ -3200,11 +3138,8 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
       }
 
       NetNet* sub_sig = expr->synthesize(des);
-      if (sub_sig == 0) {
-	    des->errors += 1;
-	    return 0;
-      }
-      assert(sub_sig);
+
+      if (sub_sig == 0) return 0;
 
       delete expr;
       expr = 0;
@@ -3442,12 +3377,9 @@ NetNet* PEUnary::elab_net_unary_real_(Design*des, NetScope*scope,
       }
 
       NetNet* sub_sig = expr->synthesize(des);
+
+      if (sub_sig == 0) return 0;
       delete expr;
-      if (sub_sig == 0) {
-	    des->errors += 1;
-	    return 0;
-      }
-      ivl_assert(*this, sub_sig);
 
       NetNet*sig = new NetNet(scope, scope->local_symbol(),
 			      NetNet::WIRE, 1);
@@ -3463,14 +3395,21 @@ NetNet* PEUnary::elab_net_unary_real_(Design*des, NetScope*scope,
 		 << op_ << " expression with real values." << endl;
 	    des->errors += 1;
 	    break;
+	  case '~':
+	    cerr << get_fileline() << ": error: bit-wise negation ("
+	         << human_readable_op(op_)
+	         << ") may not have a REAL operand." << endl;
+	    des->errors += 1;
+	    break;
 	  case '&':
 	  case 'A':
 	  case '|':
 	  case 'N':
 	  case '^':
 	  case 'X':
-	    cerr << get_fileline() << ": error: " << human_readable_op(op_)
-	         << " reduction operator may not have a REAL operand." << endl;
+	    cerr << get_fileline() << ": error: reduction operator ("
+	         << human_readable_op(op_)
+	         << ") may not have a REAL operand." << endl;
 	    des->errors += 1;
 	    break;
 	  case '!':
