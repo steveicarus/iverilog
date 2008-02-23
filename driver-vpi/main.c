@@ -33,6 +33,7 @@
 #include <windows.h>
 
 static void setup_ivl_environment();
+static void assign(char **ptr, char *str);
 
 /* The compile options: compiler, flags, etc. are in here */
 #include "config.h"
@@ -77,6 +78,7 @@ static void myExit(int exitVal)
 	deInitDynString(gstr.pCFLAGS);
 	deInitDynString(gstr.pLDLIBS);
 	deInitDynString(gstr.pNewPath);
+	free(gstr.pLD);
 
 	exit(exitVal);
 }
@@ -120,7 +122,7 @@ static void init()
 	initDynString(&gstr.pLDLIBS);
 	initDynString(&gstr.pNewPath);
 	  /* By default use the C compiler to link the programs. */
-	gstr.pLD = IVERILOG_VPI_CC;
+	assign(&gstr.pLD, IVERILOG_VPI_CC);
 }
 
 /* return true if "str" is terminated with with "end", case insensitive */
@@ -306,7 +308,7 @@ static int parse(int argc, char *argv[])
 		  /* Check for C++ source files (*.cc) */
 		else if (endsIn(dot_cc_ext, argv[idx])) {
 			  /* We need to link with the C++ compiler. */
-			gstr.pLD = IVERILOG_VPI_CXX;
+			assign(&gstr.pLD, IVERILOG_VPI_CXX);
 			++srcFileCnt;
 			append(&gstr.pCXSRC, argv[idx]);
 			append(&gstr.pCXSRC, " ");
@@ -317,7 +319,7 @@ static int parse(int argc, char *argv[])
 		  /* Check for C++ source files (*.cpp) */
 		else if (endsIn(dot_cpp_ext, argv[idx])) {
 			  /* We need to link with the C++ compiler. */
-			gstr.pLD = IVERILOG_VPI_CXX;
+			assign(&gstr.pLD, IVERILOG_VPI_CXX);
 			++srcFileCnt;
 			append(&gstr.pCXSRC, argv[idx]);
 			append(&gstr.pCXSRC, " ");
@@ -482,6 +484,7 @@ static void setup_mingw_environment()
 	assign(&gstr.pNewPath,"PATH=");
 	append(&gstr.pNewPath,gstr.pMINGW);
 	appendBackSlash(&gstr.pNewPath);
+	append(&gstr.pNewPath, "\\");
 	append(&gstr.pNewPath,"bin;");
 	append(&gstr.pNewPath,pOldPATH);
 
@@ -512,12 +515,14 @@ static void setup_ivl_environment()
 	append(&gstr.pCFLAGS," -I");
 	append(&gstr.pCFLAGS,gstr.pIVL);
 	appendBackSlash(&gstr.pCFLAGS);
+	append(&gstr.pCFLAGS, "\\");
 	append(&gstr.pCFLAGS,"include");
 
 	  /* Build up the LDFLAGS option string */
 	assign(&gstr.pLDLIBS,"-L");
 	append(&gstr.pLDLIBS,gstr.pIVL);
 	appendBackSlash(&gstr.pLDLIBS);
+	append(&gstr.pLDLIBS, "\\");
 	append(&gstr.pLDLIBS,"lib ");
 	append(&gstr.pLDLIBS,IVERILOG_VPI_LDLIBS);
 }
@@ -537,7 +542,9 @@ static void compile(char *pSource, char **pObject, int *compile_errors, char *co
 		assignn(&src, ptr1, len);
 
 		  /* Build the object file name */
-		ostart = strrchr(ptr1, '/') + 1;
+		ostart = strrchr(ptr1, '/');
+		if (ostart == NULL) ostart = ptr1;
+		else ostart += 1;
 		olen = strrchr(ptr1, '.') - ostart;
 		assignn(&obj, ostart, olen);
 		append(&obj, ".o");
