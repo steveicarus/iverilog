@@ -869,7 +869,8 @@ NetNet* NetFuncDef::synthesize(Design*des, const svector<NetNet*>&inports_)
 	    NetNet*in = inports_[idx];
 	    NetNet*arg = ports_[idx];
 
-	    assert(in->pin_count() == arg->pin_count());
+	    in = pad_to_width(des, in, arg->pin_count());
+
 	    for (unsigned pin = 0 ;  pin < arg->pin_count() ;  pin += 1) {
 		  connect(in->pin(pin), arg->pin(pin));
 		  arg->pin(pin).unlink();
