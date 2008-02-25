@@ -33,19 +33,9 @@ PGenerate::~PGenerate()
 {
 }
 
-PWire* PGenerate::add_wire(PWire*wire)
+PWire* PGenerate::get_wire(perm_string name) const
 {
-      PWire*&ep = wires[wire->path()];
-      if (ep) return ep;
-
-      assert(ep == 0);
-      ep = wire;
-      return wire;
-}
-
-PWire* PGenerate::get_wire(const pform_name_t&name) const
-{
-      map<pform_name_t,PWire*>::const_iterator obj = wires.find(name);
+      map<perm_string,PWire*>::const_iterator obj = wires.find(name);
       if (obj == wires.end())
 	    return 0;
       else

@@ -28,46 +28,58 @@
 # include  "PGenerate.h"
 # include  "PTask.h"
 # include  "PWire.h"
+# include  "Statement.h"
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "util.h"
 # include  "ivl_assert.h"
 
-/*
- * This local function checks if a named signal is connected to a
- * port. It looks in the array of ports passed, for NetEIdent objects
- * within the port_t that have a matching name.
- */
-static bool signal_is_in_port(const svector<Module::port_t*>&ports,
-			      NetNet*sig)
+void Statement::elaborate_sig(Design*des, NetScope*scope) const
 {
-      perm_string name = sig->name();
+}
 
-      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
+bool PScope::elaborate_sig_wires_(Design*des, NetScope*scope) const
+{
+      bool flag = true;
 
-	    Module::port_t*pp = ports[idx];
-	      // Skip internally unconnected ports.
-	    if (pp == 0)
-		  continue;
+      for (map<perm_string,PWire*>::const_iterator wt = wires.begin()
+		 ; wt != wires.end() ; wt ++ ) {
 
-	      // This port has an internal connection. In this case,
-	      // the port has 0 or more NetEIdent objects concatenated
-	      // together that form the port.
+	    PWire*cur = (*wt).second;
+	    NetNet*sig = cur->elaborate_sig(des, scope);
 
-	      // Note that module ports should not have any hierarchy
-	      // in their names: they are in the root of the module
-	      // scope by definition.
 
-	    for (unsigned cc = 0 ;  cc < pp->expr.count() ;  cc += 1) {
-		  perm_string pname = peek_tail_name(pp->expr[cc]->path());
-		  assert(pp->expr[cc]);
-		  if (pname == name)
-			return true;
+	      /* If the signal is an input and is also declared as a
+		 reg, then report an error. */
+
+	    if (sig && (sig->scope() == scope)
+		&& (scope->type() == NetScope::MODULE)
+		&& (sig->port_type() == NetNet::PINPUT)
+		&& (sig->type() == NetNet::REG)) {
+
+		  cerr << cur->get_fileline() << ": error: "
+		       << cur->basename() << " in "
+		       << scope->module_name()
+		       << " declared as input and as a reg type." << endl;
+		  des->errors += 1;
 	    }
+
+	    if (sig && (sig->scope() == scope)
+		&& (scope->type() == NetScope::MODULE)
+		&& (sig->port_type() == NetNet::PINOUT)
+		&& (sig->type() == NetNet::REG)) {
+
+		  cerr << cur->get_fileline() << ": error: "
+		       << cur->basename() << " in "
+		       << scope->module_name()
+		       << " declared as inout and as a reg type." << endl;
+		  des->errors += 1;
+	    }
+
       }
 
-      return false;
+      return flag;
 }
 
 bool Module::elaborate_sig(Design*des, NetScope*scope) const
@@ -81,14 +93,26 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 	    if (pp == 0)
 		  continue;
 
-	    map<pform_name_t,PWire*>::const_iterator wt;
+	      // The port has a name and an array of expressions. The
+	      // expression are all identifiers that should reference
+	      // wires within the scope.
+	    map<perm_string,PWire*>::const_iterator wt;
 	    for (unsigned cc = 0 ;  cc < pp->expr.count() ;  cc += 1) {
 		  pform_name_t port_path (pp->expr[cc]->path());
-		  wt = wires_.find(port_path);
+		    // A concatenated wire of a port really should not
+		    // have any hierarchy.
+		  if (port_path.size() != 1) {
+			cerr << get_fileline() << ": internal error: "
+			     << "Port " << port_path << " has a funny name?"
+			     << endl;
+			des->errors += 1;
+		  }
 
-		  if (wt == wires_.end()) {
+		  wt = wires.find(peek_tail_name(port_path));
+
+		  if (wt == wires.end()) {
 			cerr << get_fileline() << ": error: "
-			     << "Port " << pp->expr[cc]->path() << " ("
+			     << "Port " << port_path << " ("
 			     << (idx+1) << ") of module " << mod_name()
 			     << " is not declared within module." << endl;
 			des->errors += 1;
@@ -106,58 +130,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 	    }
       }
 
-      for (map<pform_name_t,PWire*>::const_iterator wt = wires_.begin()
-		 ; wt != wires_.end() ; wt ++ ) {
-
-	    PWire*cur = (*wt).second;
-	    NetNet*sig = cur->elaborate_sig(des, scope);
-
-	      // If this wire is a signal of the module (as opposed to
-	      // a port of a function) and is a port, then check that
-	      // the module knows about it. We know that the signal is
-	      // the name of a signal within a subscope of a module
-	      // (a task, a function, etc.) if the name for the PWire
-	      // has hierarchy.
-
-	    if (sig && (sig->scope() == scope)
-		&& (cur->get_port_type() != NetNet::NOT_A_PORT)) {
-
-		  if (! signal_is_in_port(ports, sig)) {
-
-			cerr << cur->get_fileline() << ": error: Signal "
-			     << sig->name() << " has a declared direction "
-			     << "but is not a port." << endl;
-			des->errors += 1;
-		  }
-	    }
-
-
-	      /* If the signal is an input and is also declared as a
-		 reg, then report an error. */
-
-	    if (sig && (sig->scope() == scope)
-		&& (sig->port_type() == NetNet::PINPUT)
-		&& (sig->type() == NetNet::REG)) {
-
-		  cerr << cur->get_fileline() << ": error: "
-		       << cur->path() << " in module "
-		       << scope->module_name()
-		       << " declared as input and as a reg type." << endl;
-		  des->errors += 1;
-	    }
-
-	    if (sig && (sig->scope() == scope)
-		&& (sig->port_type() == NetNet::PINOUT)
-		&& (sig->type() == NetNet::REG)) {
-
-		  cerr << cur->get_fileline() << ": error: "
-		       << cur->path() << " in  module "
-		       << scope->module_name()
-		       << " declared as inout and as a reg type." << endl;
-		  des->errors += 1;
-	    }
-
-      }
+      flag = elaborate_sig_wires_(des, scope) && flag;
 
 	// Run through all the generate schemes to elaborate the
 	// signals that they hold. Note that the generate schemes hold
@@ -214,6 +187,18 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 	    NetScope*tscope = scope->child( hname_t((*cur).first) );
 	    assert(tscope);
 	    (*cur).second->elaborate_sig(des, tscope);
+      }
+
+	// initial and always blocks may contain begin-end and
+	// fork-join blocks that can introduce scopes. Therefore, I
+	// get to scan processes here.
+
+      typedef list<PProcess*>::const_iterator proc_it_t;
+
+      for (proc_it_t cur = behaviors_.begin()
+		 ; cur != behaviors_.end() ;  cur ++ ) {
+
+	    (*cur) -> statement() -> elaborate_sig(des, scope);
       }
 
       return flag;
@@ -276,7 +261,7 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
 {
 	// Scan the declared PWires to elaborate the obvious signals
 	// in the current scope.
-      typedef map<pform_name_t,PWire*>::const_iterator wires_it_t;
+      typedef map<perm_string,PWire*>::const_iterator wires_it_t;
       for (wires_it_t wt = wires.begin()
 		 ; wt != wires.end() ;  wt ++ ) {
 
@@ -284,7 +269,7 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
 
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: Elaborate PWire "
-		       << cur->path() << " in scope " << scope_path(scope) << endl;
+		       << cur->basename() << " in scope " << scope_path(scope) << endl;
 
 	    cur->elaborate_sig(des, scope);
       }
@@ -315,6 +300,8 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 {
       perm_string fname = scope->basename();
       assert(scope->type() == NetScope::FUNC);
+
+      elaborate_sig_wires_(des, scope);
 
 	/* Make sure the function has at least one input port. If it
 	   fails this test, print an error message. Keep going so we
@@ -416,19 +403,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		       name. We know by design that the port name is given
 		       as two components: <func>.<port>. */
 
-		  pform_name_t path = (*ports_)[idx]->path();
-		  ivl_assert(*this, path.size() == 2);
-
-		  perm_string pname = peek_tail_name(path);
-		  perm_string ppath = peek_head_name(path);
-
-		  if (ppath != scope->basename()) {
-			cerr << get_fileline() << ": internal error: function "
-			     << "port " << (*ports_)[idx]->path()
-			     << " has wrong name for function "
-			     << scope_path(scope) << "." << endl;
-			des->errors += 1;
-		  }
+		  perm_string pname = (*ports_)[idx]->basename();
 
 		  NetNet*tmp = scope->find_signal(pname);
 		  if (tmp == 0) {
@@ -449,6 +424,10 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 
       assert(def);
       scope->set_func_def(def);
+
+	// Look for further signals in the sub-statement
+      if (statement_)
+	    statement_->elaborate_sig(des, scope);
 }
 
 /*
@@ -464,24 +443,12 @@ void PTask::elaborate_sig(Design*des, NetScope*scope) const
 {
       assert(scope->type() == NetScope::TASK);
 
+      elaborate_sig_wires_(des, scope);
+
       svector<NetNet*>ports (ports_? ports_->count() : 0);
       for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
 
-	      /* Parse the port name into the task name and the reg
-		 name. We know by design that the port name is given
-		 as two components: <task>.<port>. */
-
-	    pform_name_t path = (*ports_)[idx]->path();
-	    ivl_assert(*this, path.size() == 2);
-
-	    perm_string scope_name = peek_head_name(path);
-	    perm_string port_name = peek_tail_name(path);
-
-	      /* check that the current scope really does have the
-		 name of the first component of the task port name. Do
-		 this by looking up the task scope in the parent of
-		 the current scope. */
-	    ivl_assert(*this, scope->basename() == scope_name);
+	    perm_string port_name = (*ports_)[idx]->basename();
 
 	      /* Find the signal for the port. We know by definition
 		 that it is in the scope of the task, so look only in
@@ -493,6 +460,7 @@ void PTask::elaborate_sig(Design*des, NetScope*scope) const
 		       << "Could not find port " << port_name
 		       << " in scope " << scope_path(scope) << endl;
 		  scope->dump(cerr);
+		  des->errors += 1;
 	    }
 
 	    ports[idx] = tmp;
@@ -500,6 +468,82 @@ void PTask::elaborate_sig(Design*des, NetScope*scope) const
 
       NetTaskDef*def = new NetTaskDef(scope, ports);
       scope->set_task_def(def);
+
+	// Look for further signals in the sub-statement
+      if (statement_)
+	    statement_->elaborate_sig(des, scope);
+}
+
+void PBlock::elaborate_sig(Design*des, NetScope*scope) const
+{
+      NetScope*my_scope = scope;
+
+      if (pscope_name() != 0) {
+	    hname_t use_name (pscope_name());
+	    my_scope = scope->child(use_name);
+	    if (my_scope == 0) {
+		  cerr << get_fileline() << ": internal error: "
+		       << "Unable to find child scope " << pscope_name()
+		       << " in this context?" << endl;
+		  des->errors += 1;
+		  my_scope = scope;
+	    } else {
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "elaborate_sig descending into "
+			     << scope_path(my_scope) << "." << endl;
+
+		  elaborate_sig_wires_(des, my_scope);
+	    }
+      }
+
+	// elaborate_sig in the statements included in the
+	// block. There may be named blocks in there.
+      for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1)
+	    list_[idx] -> elaborate_sig(des, my_scope);
+}
+
+void PCase::elaborate_sig(Design*des, NetScope*scope) const
+{
+      if (items_ == 0)
+	    return;
+
+      for (unsigned idx = 0 ; idx < items_->count() ; idx += 1) {
+	    if ( (*items_)[idx]->stat )
+		  (*items_)[idx]->stat ->elaborate_sig(des,scope);
+      }
+}
+
+void PCondit::elaborate_sig(Design*des, NetScope*scope) const
+{
+      if (if_)
+	    if_->elaborate_sig(des, scope);
+      if (else_)
+	    else_->elaborate_sig(des, scope);
+}
+
+void PDelayStatement::elaborate_sig(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_->elaborate_sig(des, scope);
+}
+
+void PEventStatement::elaborate_sig(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_->elaborate_sig(des, scope);
+}
+
+void PForever::elaborate_sig(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_->elaborate_sig(des, scope);
+}
+
+void PForStatement::elaborate_sig(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_->elaborate_sig(des, scope);
 }
 
 bool PGate::elaborate_sig(Design*des, NetScope*scope) const
@@ -516,27 +560,6 @@ bool PGate::elaborate_sig(Design*des, NetScope*scope) const
  */
 NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 {
-
-	/* The parser may produce hierarchical names for wires. I here
-	   follow the scopes down to the base where I actually want to
-	   elaborate the NetNet object. */
-      { pform_name_t tmp_path = hname_;
-        tmp_path.pop_back();
-	while (! tmp_path.empty()) {
-	      name_component_t cur = tmp_path.front();
-	      tmp_path.pop_front();
-
-	      scope = scope->child( hname_t(cur.name) );
-
-	      if (scope == 0) {
-		    cerr << get_fileline() << ": internal error: "
-			 << "Bad scope component for name "
-			 << hname_ << endl;
-		    assert(scope);
-	      }
-	}
-      }
-
       NetNet::Type wtype = type_;
       if (wtype == NetNet::IMPLICIT)
 	    wtype = NetNet::WIRE;
@@ -619,12 +642,12 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  if (port_msb_ == 0) {
 			if (!gn_io_range_error_flag) {
 			      cerr << get_fileline()
-			           << ": warning: Scalar port ``" << hname_
+			           << ": warning: Scalar port ``" << name_
 			           << "'' has a vectored net declaration ["
 			           << nmsb << ":" << nlsb << "]." << endl;
 			} else {
 			      cerr << get_fileline()
-			           << ": error: Scalar port ``" << hname_
+			           << ": error: Scalar port ``" << name_
 			           << "'' has a vectored net declaration ["
 			           << nmsb << ":" << nlsb << "]." << endl;
 			      des->errors += 1;
@@ -636,7 +659,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  if (net_msb_ == 0) {
 			cerr << port_msb_->get_fileline()
 			     << ": error: Vectored port ``"
-			     << hname_ << "'' [" << pmsb << ":" << plsb
+			     << name_ << "'' [" << pmsb << ":" << plsb
 			     << "] has a scalar net declaration at "
 			     << get_fileline() << "." << endl;
 			des->errors += 1;
@@ -647,7 +670,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  if (port_msb_ != 0 && net_msb_ != 0) {
 			cerr << port_msb_->get_fileline()
 			     << ": error: Vectored port ``"
-			     << hname_ << "'' [" << pmsb << ":" << plsb
+			     << name_ << "'' [" << pmsb << ":" << plsb
 			     << "] has a net declaration [" << nmsb << ":"
 			     << nlsb << "] at " << net_msb_->get_fileline()
 			     << " that does not match." << endl;
@@ -687,7 +710,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    if ((lexp == 0) || (rexp == 0)) {
 		  cerr << get_fileline() << ": internal error: There is "
 		       << "a problem evaluating indices for ``"
-		       << hname_ << "''." << endl;
+		       << name_ << "''." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -698,7 +721,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    if ((lcon == 0) || (rcon == 0)) {
 		  cerr << get_fileline() << ": internal error: The indices "
 		       << "are not constant for array ``"
-		       << hname_ << "''." << endl;
+		       << name_ << "''." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -748,24 +771,23 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    }
       }
 
-      perm_string name = peek_tail_name(hname_);
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: Create signal "
-		 << wtype << " ["<<msb<<":"<<lsb<<"] " << name
+		 << wtype << " ["<<msb<<":"<<lsb<<"] " << name_
 		 << " in scope " << scope_path(scope) << endl;
       }
 
 
       NetNet*sig = array_dimensions > 0
-	    ? new NetNet(scope, name, wtype, msb, lsb, array_s0, array_e0)
-	    : new NetNet(scope, name, wtype, msb, lsb);
+	    ? new NetNet(scope, name_, wtype, msb, lsb, array_s0, array_e0)
+	    : new NetNet(scope, name_, wtype, msb, lsb);
 
       ivl_variable_type_t use_data_type = data_type_;
       if (use_data_type == IVL_VT_NO_TYPE) {
 	    use_data_type = IVL_VT_LOGIC;
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: "
-		       << "Signal " << name
+		       << "Signal " << name_
 		       << " in scope " << scope_path(scope)
 		       << " defaults to data type " << use_data_type << endl;
 	    }

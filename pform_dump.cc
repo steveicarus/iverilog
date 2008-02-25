@@ -296,7 +296,7 @@ void PWire::dump(ostream&out, unsigned ind) const
 	    }
       }
 
-      out << " " << hname_;
+      out << " " << name_;
 
 	// If the wire has indices, dump them.
       if (lidx_ || ridx_) {
@@ -508,6 +508,9 @@ void PBlock::dump(ostream&out, unsigned ind) const
 	    out << " : " << pscope_name();
       out << endl;
 
+      if (pscope_name() != 0)
+	    dump_wires_(out, ind+2);
+
       for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1) {
 	    if (list_[idx])
 		  list_[idx]->dump(out, ind+2);
@@ -703,8 +706,10 @@ void PFunction::dump(ostream&out, unsigned ind) const
 	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
 		  out << setw(ind) << "";
 		  out << "input ";
-		  out << (*ports_)[idx]->path() << ";" << endl;
+		  out << (*ports_)[idx]->basename() << ";" << endl;
 	    }
+
+      dump_wires_(out, ind);
 
       if (statement_)
 	    statement_->dump(out, ind);
@@ -743,8 +748,10 @@ void PTask::dump(ostream&out, unsigned ind) const
 			assert(0);
 			break;
 		  }
-		  out << (*ports_)[idx]->path() << ";" << endl;
+		  out << (*ports_)[idx]->basename() << ";" << endl;
 	    }
+
+      dump_wires_(out, ind);
 
       if (statement_)
 	    statement_->dump(out, ind);
@@ -870,7 +877,7 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 
       out << endl;
 
-      for (map<pform_name_t,PWire*>::const_iterator idx = wires.begin()
+      for (map<perm_string,PWire*>::const_iterator idx = wires.begin()
 		 ; idx != wires.end() ;  idx++) {
 
 	    (*idx).second->dump(out, indent+2);
@@ -892,6 +899,16 @@ void PGenerate::dump(ostream&out, unsigned indent) const
       }
 
       out << setw(indent) << "" << "endgenerate" << endl;
+}
+
+void PScope::dump_wires_(ostream&out, unsigned indent) const
+{
+	// Iterate through and display all the wires.
+      for (map<perm_string,PWire*>::const_iterator wire = wires.begin()
+		 ; wire != wires.end() ; wire ++ ) {
+
+	    (*wire).second->dump(out, indent);
+      }
 }
 
 void Module::dump(ostream&out) const
@@ -995,12 +1012,7 @@ void Module::dump(ostream&out) const
       }
 
 	// Iterate through and display all the wires.
-      for (map<pform_name_t,PWire*>::const_iterator wire = wires_.begin()
-		 ; wire != wires_.end()
-		 ; wire ++ ) {
-
-	    (*wire).second->dump(out);
-      }
+      dump_wires_(out, 4);
 
 	// Dump the task definitions.
       typedef map<perm_string,PTask*>::const_iterator task_iter_t;

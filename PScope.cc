@@ -27,3 +27,12 @@ PScope::PScope(perm_string n, PScope*p)
 PScope::~PScope()
 {
 }
+
+PWire* PScope::wires_find(perm_string name)
+{
+      map<perm_string,PWire*>::const_iterator cur = wires.find(name);
+      if (cur == wires.end())
+	    return 0;
+      else
+	    return (*cur).second;
+}

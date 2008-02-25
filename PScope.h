@@ -24,6 +24,10 @@
 # include  <map>
 
 class PEvent;
+class PWire;
+
+class Design;
+class NetScope;
 
 /*
  * The PScope class is a base representation of an object that
@@ -50,8 +54,17 @@ class PScope {
       perm_string pscope_name() const { return name_; }
       PScope* pscope_parent() { return parent_; }
 
+	// Nets an variables (wires) in the scope
+      map<perm_string,PWire*>wires;
+      PWire* wires_find(perm_string name);
+
 	// Named events in the scope.
       map<perm_string,PEvent*>events;
+
+    protected:
+      void dump_wires_(ostream&out, unsigned indent) const;
+
+      bool elaborate_sig_wires_(Design*des, NetScope*scope) const;
 
     private:
       perm_string name_;

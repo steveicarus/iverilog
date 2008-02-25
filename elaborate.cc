@@ -2914,7 +2914,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       NetNet*sig = des->find_signal(scope, id1->path());
       if (sig == 0) {
 	    cerr << id1->get_fileline() << ": register ``" << id1->path()
-		 << "'' unknown in this context." << endl;
+		 << "'' unknown in " << scope_path(scope) << "." << endl;
 	    des->errors += 1;
 	    return 0;
       }

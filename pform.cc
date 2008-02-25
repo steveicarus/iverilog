@@ -89,44 +89,21 @@ static inline void FILE_NAME(LineInfo*tmp, const struct vlltype&where)
 }
 
 /*
- * The scope stack and the following functions handle the processing
- * of scope. As I enter a scope, the push function is called, and as I
- * leave a scope the pop function is called. Entering tasks, functions
- * and named blocks causes scope to be pushed and popped. The module
- * name is not included in this scope stack.
+ * The lexical_scope keeps track of the current lexical scope that is
+ * being parsed. The lexical scope may stack, so the current scope may
+ * have a parent, that is restored when the current scope ends.
  *
- * The hier_name function, therefore, converts the name to the scoped
- * name within the module currently in progress. It never includes an
- * instance name.
- *
- * The scope stack does not include any scope created by a generate
- * scheme.
+ * Items that have scoped names are put in the lexical_scope object.
  */
-
-static pform_name_t scope_stack;
 static PScope* lexical_scope = 0;
-
-void pform_push_scope(char*name)
-{
-      scope_stack.push_back(name_component_t(lex_strings.make(name)));
-}
 
 void pform_pop_scope()
 {
-      scope_stack.pop_back();
       lexical_scope = lexical_scope->pscope_parent();
-}
-
-static pform_name_t hier_name(const char*tail)
-{
-      pform_name_t name = scope_stack;
-      name.push_back(name_component_t(lex_strings.make(tail)));
-      return name;
 }
 
 PTask* pform_push_task_scope(char*name)
 {
-      pform_push_scope(name);
       perm_string task_name = lex_strings.make(name);
       PTask*task = new PTask(task_name, pform_cur_module);
 
@@ -139,7 +116,6 @@ PTask* pform_push_task_scope(char*name)
 
 PFunction* pform_push_function_scope(char*name)
 {
-      pform_push_scope(name);
       perm_string func_name = lex_strings.make(name);
       PFunction*func = new PFunction(func_name, lexical_scope);
 
@@ -152,14 +128,16 @@ PFunction* pform_push_function_scope(char*name)
 
 PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
 {
-      pform_push_scope(name);
       perm_string block_name = lex_strings.make(name);
       PBlock*block = new PBlock(block_name, lexical_scope, bt);
+
+	// Make this the current lexical scope
+      lexical_scope = block;
 
       return block;
 }
 
-static PWire*get_wire_in_module(const pform_name_t&name)
+static PWire*get_wire_in_scope(perm_string name)
 {
 	/* Note that if we are processing a generate, then the
 	   scope depth will be empty because generate schemes
@@ -168,7 +146,7 @@ static PWire*get_wire_in_module(const pform_name_t&name)
       if (pform_cur_generate)
 	    return pform_cur_generate->get_wire(name);
 
-      return pform_cur_module->get_wire(name);
+      return lexical_scope->wires_find(name);
 }
 
 void pform_set_default_nettype(NetNet::Type type,
@@ -297,6 +275,9 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
       FILE_NAME(pform_cur_module, file, lineno);
       pform_cur_module->library_flag = pform_library_flag;
 
+      ivl_assert(*pform_cur_module, lexical_scope == 0);
+      lexical_scope = pform_cur_module;
+
 	/* The generate scheme numbering starts with *1*, not
 	   zero. That's just the way it is, thanks to the standard. */
       scope_generate_counter = 1;
@@ -323,14 +304,14 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
  * reference. This is a name without a .X(...), so the internal name
  * should be generated to be the same as the X.
  */
-Module::port_t* pform_module_port_reference(char*name,
+Module::port_t* pform_module_port_reference(perm_string name,
 					    const char*file,
 					    unsigned lineno)
 {
       Module::port_t*ptmp = new Module::port_t;
-      PEIdent*tmp = new PEIdent(lex_strings.make(name));
+      PEIdent*tmp = new PEIdent(name);
       FILE_NAME(tmp, file, lineno);
-      ptmp->name = lex_strings.make(name);
+      ptmp->name = name;
       ptmp->expr = svector<PEIdent*>(1);
       ptmp->expr[0] = tmp;
 
@@ -372,6 +353,13 @@ void pform_endmodule(const char*name)
 	    pform_cur_module = 0;
 	    return;
       }
+
+	// The current lexical scope should be this module by now, and
+	// this module should not have a parent lexical scope.
+      ivl_assert(*pform_cur_module, lexical_scope == pform_cur_module);
+      lexical_scope = pform_cur_module->pscope_parent();
+      ivl_assert(*pform_cur_module, lexical_scope == 0);
+
       pform_modules[mod_name] = pform_cur_module;
       pform_cur_module = 0;
 }
@@ -583,6 +571,11 @@ PExpr* pform_select_mtm_expr(PExpr*min, PExpr*typ, PExpr*max)
       return res;
 }
 
+template <> inline svector<perm_string>::svector(unsigned size)
+: nitems_(size), items_(new perm_string[size])
+{
+}
+
 static void process_udp_table(PUdp*udp, list<string>*table,
 			      const char*file, unsigned lineno)
 {
@@ -650,7 +643,7 @@ static void process_udp_table(PUdp*udp, list<string>*table,
       udp->toutput  = output;
 }
 
-void pform_make_udp(perm_string name, list<string>*parms,
+void pform_make_udp(perm_string name, list<perm_string>*parms,
 		    svector<PWire*>*decl, list<string>*table,
 		    Statement*init_expr,
 		    const char*file, unsigned lineno)
@@ -662,11 +655,10 @@ void pform_make_udp(perm_string name, list<string>*parms,
 	   off with the parameters in the list. If the port is already
 	   in the map, merge the port type. I will rebuild a list
 	   of parameters for the PUdp object. */
-      map<string,PWire*> defs;
+      map<perm_string,PWire*> defs;
       for (unsigned idx = 0 ;  idx < decl->count() ;  idx += 1) {
 
-	    pform_name_t pname = (*decl)[idx]->path();
-	    string port_name = peek_tail_name(pname).str();
+	    perm_string port_name = (*decl)[idx]->basename();
 
 	    if (PWire*cur = defs[port_name]) {
 		  bool rc = true;
@@ -692,8 +684,8 @@ void pform_make_udp(perm_string name, list<string>*parms,
 	   UDP declaration, and the defs map maps that name to a
 	   PWire* created by an input or output declaration. */
       svector<PWire*> pins (parms->size());
-      svector<string> pin_names (parms->size());
-      { list<string>::iterator cur;
+      svector<perm_string> pin_names (parms->size());
+      { list<perm_string>::iterator cur;
         unsigned idx;
         for (cur = parms->begin(), idx = 0
 		   ; cur != parms->end()
@@ -827,7 +819,7 @@ void pform_make_udp(perm_string name, list<string>*parms,
 
 	      // Make the port list for the UDP
 	    for (unsigned idx = 0 ;  idx < pins.count() ;  idx += 1)
-		  udp->ports[idx] = peek_tail_name(pins[idx]->path());
+		  udp->ports[idx] = pins[idx]->basename();
 
 	    process_udp_table(udp, table, file, lineno);
 	    udp->initial  = init;
@@ -852,10 +844,9 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
       svector<PWire*> pins(parms->size() + 1);
 
 	/* Make the PWire for the output port. */
-      pins[0] = new PWire(hier_name(out_name),
+      pins[0] = new PWire(out_name,
 			  synchronous_flag? NetNet::REG : NetNet::WIRE,
-			  NetNet::POUTPUT,
-			  IVL_VT_LOGIC);
+			  NetNet::POUTPUT, IVL_VT_LOGIC);
       FILE_NAME(pins[0], file, lineno);
 
 	/* Make the PWire objects for the input ports. */
@@ -865,10 +856,8 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
 		   ;  cur != parms->end()
 		   ;  idx += 1, cur++) {
 	      assert(idx < pins.count());
-	      pins[idx] = new PWire(hier_name(*cur),
-				    NetNet::WIRE,
-				    NetNet::PINPUT,
-				    IVL_VT_LOGIC);
+	      pins[idx] = new PWire(*cur, NetNet::WIRE,
+				    NetNet::PINPUT, IVL_VT_LOGIC);
 	      FILE_NAME(pins[idx], file, lineno);
 	}
 	assert(idx == pins.count());
@@ -909,7 +898,7 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
 
 	      // Make the port list for the UDP
 	    for (unsigned idx = 0 ;  idx < pins.count() ;  idx += 1)
-		  udp->ports[idx] = peek_tail_name(pins[idx]->path());
+		  udp->ports[idx] = pins[idx]->basename();
 
 	    assert(udp);
 	    assert(table);
@@ -925,38 +914,17 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
 }
 
 /*
- * This function is used to set the net range for a port that uses
- * the new (1364-2001) list_of_port_declarations, but omitted a
- * register/wire/etc. that would have triggered it to be set elsewhere.
- */
-/*
- * Since implicitly defined list of port declarations are no longer
- * considered fully defined we no longer need this routine to force
- * them to be fully defined.
- *
-void pform_set_net_range(const char* name)
-{
-      PWire*cur = get_wire_in_module(hier_name(name));
-      if (cur == 0) {
-	    VLerror("error: name is not a valid net.");
-	    return;
-      }
-      cur->set_net_range();
-}
-*/
-
-/*
  * This function attaches a range to a given name. The function is
  * only called by the parser within the scope of the net declaration,
  * and the name that I receive only has the tail component.
  */
-static void pform_set_net_range(const char* name,
+static void pform_set_net_range(perm_string name,
 				const svector<PExpr*>*range,
 				bool signed_flag,
 				ivl_variable_type_t dt,
 				PWSRType rt)
 {
-      PWire*cur = get_wire_in_module(hier_name(name));
+      PWire*cur = get_wire_in_scope(name);
       if (cur == 0) {
 	    VLerror("error: name is not a valid net.");
 	    return;
@@ -1271,17 +1239,16 @@ void pform_make_pgassign_list(svector<PExpr*>*alist,
  * BTF-B14.
  */
 void pform_make_reginit(const struct vlltype&li,
-			const char*name, PExpr*expr)
+			perm_string name, PExpr*expr)
 {
-      const pform_name_t sname = hier_name(name);
-      PWire*cur = pform_cur_module->get_wire(sname);
+      PWire*cur = lexical_scope->wires_find(name);
       if (cur == 0) {
 	    VLerror(li, "internal error: reginit to non-register?");
 	    delete expr;
 	    return;
       }
 
-      PEIdent*lval = new PEIdent(sname);
+      PEIdent*lval = new PEIdent(name);
       FILE_NAME(lval, li);
       PAssign*ass = new PAssign(lval, expr);
       FILE_NAME(ass, li);
@@ -1302,18 +1269,17 @@ void pform_make_reginit(const struct vlltype&li,
  * as is done for the old method.
  */
 void pform_module_define_port(const struct vlltype&li,
-			      const char*nm,
+			      perm_string name,
 			      NetNet::PortType port_type,
 			      NetNet::Type type,
 			      bool signed_flag,
 			      svector<PExpr*>*range,
 			      svector<named_pexpr_t*>*attr)
 {
-      pform_name_t name = hier_name(nm);
-      PWire*cur = pform_cur_module->get_wire(name);
+      PWire*cur = lexical_scope->wires_find(name);
       if (cur) {
 	    ostringstream msg;
-	    msg << nm << " definition conflicts with "
+	    msg << name << " definition conflicts with "
 		<< "definition at " << cur->get_fileline()
 		<< ".";
 	    VLerror(msg.str().c_str());
@@ -1344,7 +1310,7 @@ void pform_module_define_port(const struct vlltype&li,
 		      cur->attributes[tmp->name] = tmp->parm;
 	      }
       }
-      pform_cur_module->add_wire(cur);
+      lexical_scope->wires[name] = cur;
 }
 
 /*
@@ -1372,14 +1338,12 @@ void pform_module_define_port(const struct vlltype&li,
  * the variable/net. Other forms of pform_makewire ultimately call
  * this one to create the wire and stash it.
  */
-void pform_makewire(const vlltype&li, const char*nm,
+void pform_makewire(const vlltype&li, perm_string name,
 		    NetNet::Type type, NetNet::PortType pt,
 		    ivl_variable_type_t dt,
 		    svector<named_pexpr_t*>*attr)
 {
-      pform_name_t name = hier_name(nm);
-
-      PWire*cur = get_wire_in_module(name);
+      PWire*cur = get_wire_in_scope(name);
 
 	// If this is not implicit ("implicit" meaning we don't know
 	// what the type is yet) then set the type now.
@@ -1387,7 +1351,7 @@ void pform_makewire(const vlltype&li, const char*nm,
 	    bool rc = cur->set_wire_type(type);
 	    if (rc == false) {
 		  ostringstream msg;
-		  msg << nm << " definition conflicts with "
+		  msg << name << " definition conflicts with "
 		      << "definition at " << cur->get_fileline()
 		      << ".";
 		  VLerror(msg.str().c_str());
@@ -1431,9 +1395,9 @@ void pform_makewire(const vlltype&li, const char*nm,
 
       if (new_wire_flag) {
 	    if (pform_cur_generate)
-		  pform_cur_generate->add_wire(cur);
+		  pform_cur_generate->wires[name] = cur;
 	    else
-		  pform_cur_module->add_wire(cur);
+		  lexical_scope->wires[name] = cur;
       }
 }
 
@@ -1493,32 +1457,28 @@ void pform_makewire(const vlltype&li,
 		                      SR_NET);
 	    }
 
-	    perm_string first_name = lex_strings.make(first->name);
-	    pform_name_t name = hier_name(first_name);
-	    PWire*cur = get_wire_in_module(name);
+	    PWire*cur = get_wire_in_scope(first->name);
 	    if (cur != 0) {
-		  PEIdent*lval = new PEIdent(first_name);
+		  PEIdent*lval = new PEIdent(first->name);
 		  FILE_NAME(lval, li.text, li.first_line);
 		  PGAssign*ass = pform_make_pgassign(lval, first->expr,
 						     delay, str);
 		  FILE_NAME(ass, li.text, li.first_line);
 	    }
 
-	    free(first->name);
 	    delete first;
 	    first = next;
       }
 }
 
-void pform_set_port_type(perm_string nm, NetNet::PortType pt,
+void pform_set_port_type(perm_string name, NetNet::PortType pt,
 			 const char*file, unsigned lineno)
 {
-      pform_name_t name = hier_name(nm);
-      PWire*cur = pform_cur_module->get_wire(name);
+      PWire*cur = lexical_scope->wires_find(name);
       if (cur == 0) {
 	    cur = new PWire(name, NetNet::IMPLICIT, NetNet::PIMPLICIT, IVL_VT_NO_TYPE);
 	    FILE_NAME(cur, file, lineno);
-	    pform_cur_module->add_wire(cur);
+	    lexical_scope->wires[name] = cur;
       }
 
       switch (cur->get_port_type()) {
@@ -1529,14 +1489,14 @@ void pform_set_port_type(perm_string nm, NetNet::PortType pt,
 
 	  case NetNet::NOT_A_PORT:
 	    cerr << file << ":" << lineno << ": error: "
-		 << "port " << nm << " is not in the port list."
+		 << "port " << name << " is not in the port list."
 		 << endl;
 	    error_count += 1;
 	    break;
 
 	  default:
 	    cerr << file << ":" << lineno << ": error: "
-		 << "port " << nm << " already has a port declaration."
+		 << "port " << name << " already has a port declaration."
 		 << endl;
 	    error_count += 1;
 	    break;
@@ -1596,18 +1556,17 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; cur ++ ) {
 
-	    perm_string txt = *cur;
-	    pform_name_t name = hier_name(txt);
+	    perm_string name = *cur;
 
 	      /* Look for a preexisting wire. If it exists, set the
 		 port direction. If not, create it. */
-	    PWire*curw = pform_cur_module->get_wire(name);
+	    PWire*curw = lexical_scope->wires_find(name);
 	    if (curw) {
 		  curw->set_port_type(pt);
 	    } else {
 		  curw = new PWire(name, NetNet::IMPLICIT_REG, pt, vtype);
 		  FILE_NAME(curw, file, lineno);
-		  pform_cur_module->add_wire(curw);
+		  lexical_scope->wires[name] = curw;
 	    }
 
 	    curw->set_signed(signed_flag);
@@ -1630,9 +1589,7 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 
 void pform_set_attrib(perm_string name, perm_string key, char*value)
 {
-      pform_name_t path = hier_name(name);
-
-      if (PWire*cur = pform_cur_module->get_wire(path)) {
+      if (PWire*cur = lexical_scope->wires_find(name)) {
 	    cur->attributes[key] = new PEString(value);
 
       } else if (PGate*cur = pform_cur_module->get_gate(name)) {
@@ -1666,13 +1623,13 @@ void pform_set_type_attrib(perm_string name, const string&key,
  * This function attaches a memory index range to an existing
  * register. (The named wire must be a register.
  */
-void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r)
+void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r)
 {
       PWire*cur = 0;
       if (pform_cur_generate) {
-	    cur = pform_cur_generate->get_wire(hier_name(name));
+	    cur = pform_cur_generate->get_wire(name);
       } else {
-	    cur = pform_cur_module->get_wire(hier_name(name));
+	    cur = lexical_scope->wires_find(name);
       }
       if (cur == 0) {
 	    VLerror("internal error: name is not a valid memory for index.");
@@ -1819,16 +1776,15 @@ void pform_set_port_type(const struct vlltype&li,
 	    delete range;
 }
 
-static void pform_set_reg_integer(const char*nm)
+static void pform_set_reg_integer(perm_string name)
 {
-      pform_name_t name = hier_name(nm);
-      PWire*cur = pform_cur_module->get_wire(name);
+      PWire*cur = lexical_scope->wires_find(name);
       if (cur == 0) {
 	    cur = new PWire(name, NetNet::INTEGER,
 			    NetNet::NOT_A_PORT,
 			    IVL_VT_LOGIC);
 	    cur->set_signed(true);
-	    pform_cur_module->add_wire(cur);
+	    lexical_scope->wires[name] = cur;
       } else {
 	    bool rc = cur->set_wire_type(NetNet::INTEGER);
 	    assert(rc);
@@ -1854,13 +1810,12 @@ void pform_set_reg_integer(list<perm_string>*names)
       delete names;
 }
 
-static void pform_set_reg_time(const char*nm)
+static void pform_set_reg_time(perm_string name)
 {
-      pform_name_t name = hier_name(nm);
-      PWire*cur = pform_cur_module->get_wire(name);
+      PWire*cur = lexical_scope->wires_find(name);
       if (cur == 0) {
 	    cur = new PWire(name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
-	    pform_cur_module->add_wire(cur);
+	    lexical_scope->wires[name] = cur;
       } else {
 	    bool rc = cur->set_wire_type(NetNet::REG);
 	    assert(rc);
@@ -1894,9 +1849,7 @@ svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
 		 ; cur != names->end()
 		 ; cur ++ ) {
 	    perm_string txt = *cur;
-	    pform_name_t tmp;
-	    tmp.push_back(name_component_t(txt));
-	    PWire*pp = new PWire(tmp,
+	    PWire*pp = new PWire(txt,
 				 NetNet::IMPLICIT,
 				 NetNet::PINPUT,
 				 IVL_VT_LOGIC);

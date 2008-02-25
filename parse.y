@@ -26,6 +26,7 @@
 # include  "pform.h"
 # include  "Statement.h"
 # include  "PSpec.h"
+# include  <stack>
 # include  <cstring>
 # include  <sstream>
 
@@ -49,7 +50,7 @@ static struct {
    task/function that is currently in progress. */
 static PTask* current_task = 0;
 static PFunction* current_function = 0;
-static PBlock* current_block = 0;
+static stack<PBlock*> current_block_stack;
 
 /* Later version of bison (including 1.35) will not compile in stack
    extension if the output is compiled with C++ and either the YYSTYPE
@@ -197,7 +198,8 @@ static inline void FILE_NAME(LineInfo*tmp, const struct vlltype&where)
 %type <text>    udp_input_list udp_sequ_entry udp_comb_entry
 %type <perm_strings> udp_input_declaration_list
 %type <strings> udp_entry_list udp_comb_entry_list udp_sequ_entry_list
-%type <strings> udp_body udp_port_list
+%type <strings> udp_body
+%type <perm_strings> udp_port_list
 %type <wires>   udp_port_decl udp_port_decls
 %type <statement> udp_initial udp_init_opt
 %type <expr>    udp_initial_expr_opt
@@ -1411,28 +1413,18 @@ list_of_port_declarations
 		{ svector<Module::port_t*>*tmp
 			  = new svector<Module::port_t*>(1);
 		  (*tmp)[0] = $1;
-		  /*
-		   * Uncommenting this makes lopd always fully specified.
-		   * Some wanted an implicit net to not be fully defined.
-		   *
-		   * pform_set_net_range($1[0].name);
-		   */
 		  $$ = tmp;
 		}
 	| list_of_port_declarations ',' port_declaration
 		{ svector<Module::port_t*>*tmp
 			= new svector<Module::port_t*>(*$1, $3);
 		  delete $1;
-		  /*
-		   * Same as above.
-		   *
-		   * pform_set_net_range($3[0].name);
-		   */
 		  $$ = tmp;
 		}
 	| list_of_port_declarations ',' IDENTIFIER
 		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($3, @3.text,
+		  perm_string name = lex_strings.make($3);
+		  ptmp = pform_module_port_reference(name, @3.text,
 						     @3.first_line);
 		  svector<Module::port_t*>*tmp
 			= new svector<Module::port_t*>(*$1, ptmp);
@@ -1440,17 +1432,13 @@ list_of_port_declarations
 		    /* Get the port declaration details, the port type
 		       and what not, from context data stored by the
 		       last port_declaration rule. */
-		  pform_module_define_port(@3, $3,
+		  pform_module_define_port(@3, name,
 					port_declaration_context.port_type,
 					port_declaration_context.port_net_type,
 					port_declaration_context.sign_flag,
 					port_declaration_context.range, 0);
 		  delete $1;
-		  /*
-		   * Same as above.
-		   *
-		   * pform_set_net_range($3);
-		   */
+		  delete $3;
 		  $$ = tmp;
 		}
 	| list_of_port_declarations ','
@@ -1466,88 +1454,93 @@ list_of_port_declarations
         ;
 
 port_declaration
-	: attribute_list_opt
-          K_input net_type_opt signed_opt range_opt IDENTIFIER
-		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($6, @2.text,
-						     @2.first_line);
-		  pform_module_define_port(@2, $6, NetNet::PINPUT,
-					   $3, $4, $5, $1);
-		  port_declaration_context.port_type = NetNet::PINPUT;
-		  port_declaration_context.port_net_type = $3;
-		  port_declaration_context.sign_flag = $4;
-		  port_declaration_context.range = $5;
-		  delete $1;
-		  delete $6;
-		  $$ = ptmp;
-		}
-	| attribute_list_opt
-          K_inout  net_type_opt signed_opt range_opt IDENTIFIER
-		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($6, @2.text,
-						     @2.first_line);
-		  pform_module_define_port(@2, $6, NetNet::PINOUT,
-					   $3, $4, $5, $1);
-		  port_declaration_context.port_type = NetNet::PINOUT;
-		  port_declaration_context.port_net_type = $3;
-		  port_declaration_context.sign_flag = $4;
-		  port_declaration_context.range = $5;
-		  delete $1;
-		  delete $6;
-		  $$ = ptmp;
-		}
-	| attribute_list_opt
-          K_output net_type_opt signed_opt range_opt IDENTIFIER
-		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($6, @2.text,
-						     @2.first_line);
-		  pform_module_define_port(@2, $6, NetNet::POUTPUT,
-					   $3, $4, $5, $1);
-		  port_declaration_context.port_type = NetNet::POUTPUT;
-		  port_declaration_context.port_net_type = $3;
-		  port_declaration_context.sign_flag = $4;
-		  port_declaration_context.range = $5;
-		  delete $1;
-		  delete $6;
-		  $$ = ptmp;
-		}
-	| attribute_list_opt
-          K_output var_type signed_opt range_opt IDENTIFIER
-		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($6, @2.text,
-						     @2.first_line);
-		  pform_module_define_port(@2, $6, NetNet::POUTPUT,
-					   $3, $4, $5, $1);
-		  port_declaration_context.port_type = NetNet::POUTPUT;
-		  port_declaration_context.port_net_type = $3;
-		  port_declaration_context.sign_flag = $4;
-		  port_declaration_context.range = $5;
-		  delete $1;
-		  delete $6;
-		  $$ = ptmp;
-		}
-	| attribute_list_opt
-          K_output var_type signed_opt range_opt IDENTIFIER '=' expression
-		{ Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($6, @2.text,
-						     @2.first_line);
-		  pform_module_define_port(@2, $6, NetNet::POUTPUT,
-					   $3, $4, $5, $1);
-		  port_declaration_context.port_type = NetNet::POUTPUT;
-		  port_declaration_context.port_net_type = $3;
-		  port_declaration_context.sign_flag = $4;
-		  port_declaration_context.range = $5;
+  : attribute_list_opt
+    K_input net_type_opt signed_opt range_opt IDENTIFIER
+      { Module::port_t*ptmp;
+	perm_string name = lex_strings.make($6);
+	ptmp = pform_module_port_reference(name, @2.text,
+					   @2.first_line);
+	pform_module_define_port(@2, name, NetNet::PINPUT,
+				 $3, $4, $5, $1);
+	port_declaration_context.port_type = NetNet::PINPUT;
+	port_declaration_context.port_net_type = $3;
+	port_declaration_context.sign_flag = $4;
+	port_declaration_context.range = $5;
+	delete $1;
+	delete $6;
+	$$ = ptmp;
+      }
+  | attribute_list_opt
+    K_inout  net_type_opt signed_opt range_opt IDENTIFIER
+      { Module::port_t*ptmp;
+	perm_string name = lex_strings.make($6);
+	ptmp = pform_module_port_reference(name, @2.text,
+					   @2.first_line);
+	pform_module_define_port(@2, name, NetNet::PINOUT,
+				 $3, $4, $5, $1);
+	port_declaration_context.port_type = NetNet::PINOUT;
+	port_declaration_context.port_net_type = $3;
+	port_declaration_context.sign_flag = $4;
+	port_declaration_context.range = $5;
+	delete $1;
+	delete $6;
+	$$ = ptmp;
+      }
+  | attribute_list_opt
+    K_output net_type_opt signed_opt range_opt IDENTIFIER
+      { Module::port_t*ptmp;
+	perm_string name = lex_strings.make($6);
+	ptmp = pform_module_port_reference(name, @2.text,
+					   @2.first_line);
+	pform_module_define_port(@2, name, NetNet::POUTPUT,
+				 $3, $4, $5, $1);
+	port_declaration_context.port_type = NetNet::POUTPUT;
+	port_declaration_context.port_net_type = $3;
+	port_declaration_context.sign_flag = $4;
+	port_declaration_context.range = $5;
+	delete $1;
+	delete $6;
+	$$ = ptmp;
+      }
+  | attribute_list_opt
+    K_output var_type signed_opt range_opt IDENTIFIER
+      { Module::port_t*ptmp;
+	perm_string name = lex_strings.make($6);
+	ptmp = pform_module_port_reference(name, @2.text,
+					   @2.first_line);
+	pform_module_define_port(@2, name, NetNet::POUTPUT,
+				 $3, $4, $5, $1);
+	port_declaration_context.port_type = NetNet::POUTPUT;
+	port_declaration_context.port_net_type = $3;
+	port_declaration_context.sign_flag = $4;
+	port_declaration_context.range = $5;
+	delete $1;
+	delete $6;
+	$$ = ptmp;
+      }
+  | attribute_list_opt
+    K_output var_type signed_opt range_opt IDENTIFIER '=' expression
+      { Module::port_t*ptmp;
+	perm_string name = lex_strings.make($6);
+	ptmp = pform_module_port_reference(name, @2.text,
+					   @2.first_line);
+	pform_module_define_port(@2, name, NetNet::POUTPUT,
+				 $3, $4, $5, $1);
+	port_declaration_context.port_type = NetNet::POUTPUT;
+	port_declaration_context.port_net_type = $3;
+	port_declaration_context.sign_flag = $4;
+	port_declaration_context.range = $5;
 
-		  if (! pform_expression_is_constant($8))
-			yyerror(@8, "error: register declaration assignment"
-				" value must be a constant expression.");
-		  pform_make_reginit(@6, $6, $8);
+	if (! pform_expression_is_constant($8))
+	      yyerror(@8, "error: register declaration assignment"
+		      " value must be a constant expression.");
+	pform_make_reginit(@6, name, $8);
 
-		  delete $1;
-		  delete $6;
-		  $$ = ptmp;
-		}
-	;
+	delete $1;
+	delete $6;
+	$$ = ptmp;
+      }
+  ;
 
 
 
@@ -1849,7 +1842,8 @@ module_item
      extension. */
 
   | K_task IDENTIFIER ';'
-      { current_task = pform_push_task_scope($2);
+      { assert(current_task == 0);
+	current_task = pform_push_task_scope($2);
 	FILE_NAME(current_task, @1);
       }
     task_item_list_opt
@@ -1863,7 +1857,8 @@ module_item
       }
 
   | K_task IDENTIFIER
-      { current_task = pform_push_task_scope($2);
+      { assert(current_task == 0);
+	current_task = pform_push_task_scope($2);
 	FILE_NAME(current_task, @1);
       }
     '(' task_port_decl_list ')' ';'
@@ -1883,7 +1878,9 @@ module_item
      instead of the module. */
 
   | K_function function_range_or_type_opt IDENTIFIER ';'
-      { current_function = pform_push_function_scope($3); }
+      { assert(current_function == 0);
+	current_function = pform_push_function_scope($3);
+      }
     function_item_list statement
     K_endfunction
       { current_function->set_ports($6);
@@ -2037,14 +2034,15 @@ generate_block_opt : generate_block | ';' ;
      side effect, and all I pass up is the name of the l-value. */
 
 net_decl_assign
-	: IDENTIFIER '=' expression
-		{ net_decl_assign_t*tmp = new net_decl_assign_t;
-		  tmp->next = tmp;
-		  tmp->name = $1;
-		  tmp->expr = $3;
-		  $$ = tmp;
-		}
-	;
+  : IDENTIFIER '=' expression
+      { net_decl_assign_t*tmp = new net_decl_assign_t;
+	tmp->next = tmp;
+	tmp->name = lex_strings.make($1);
+	tmp->expr = $3;
+	delete $1;
+	$$ = tmp;
+      }
+  ;
 
 net_decl_assigns
 	: net_decl_assigns ',' net_decl_assign
@@ -2320,7 +2318,8 @@ port_reference
 
     : IDENTIFIER
         { Module::port_t*ptmp;
-	  ptmp = pform_module_port_reference($1, @1.text, @1.first_line);
+	  perm_string name = lex_strings.make($1);
+	  ptmp = pform_module_port_reference(name, @1.text, @1.first_line);
 	  delete $1;
 	  $$ = ptmp;
 	}
@@ -2530,32 +2529,33 @@ function_range_or_type_opt
      handle it. The register variable list simply packs them together
      so that bit ranges can be assigned. */
 register_variable
-	: IDENTIFIER dimensions_opt
-		{ pform_makewire(@1, $1, NetNet::REG,
-		                 NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-		  if ($2 != 0) {
-		        index_component_t index;
-		        if ($2->size() > 1) {
-			      yyerror(@2, "sorry: only 1 dimensional arrays "
-			                  "are currently supported.");
-		        }
-		        index = $2->front();
-		        pform_set_reg_idx($1, index.msb, index.lsb);
-		        delete $2;
-		  }
-		  $$ = $1;
-		}
-	| IDENTIFIER '=' expression
-		{ pform_makewire(@1, $1, NetNet::REG,
-				 NetNet::NOT_A_PORT,
-				 IVL_VT_NO_TYPE, 0);
-		  if (! pform_expression_is_constant($3))
-			yyerror(@3, "error: register declaration assignment"
-				" value must be a constant expression.");
-		  pform_make_reginit(@1, $1, $3);
-		  $$ = $1;
-		}
-	;
+  : IDENTIFIER dimensions_opt
+      { perm_string ident_name = lex_strings.make($1);
+	pform_makewire(@1, ident_name, NetNet::REG,
+		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
+	if ($2 != 0) {
+	      index_component_t index;
+	      if ($2->size() > 1) {
+		    yyerror(@2, "sorry: only 1 dimensional arrays "
+			    "are currently supported.");
+	      }
+	      index = $2->front();
+	      pform_set_reg_idx(ident_name, index.msb, index.lsb);
+	      delete $2;
+	}
+	$$ = $1;
+      }
+  | IDENTIFIER '=' expression
+      { perm_string ident_name = lex_strings.make($1);
+	pform_makewire(@1, ident_name, NetNet::REG,
+		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
+	if (! pform_expression_is_constant($3))
+	      yyerror(@3, "error: register declaration assignment"
+		      " value must be a constant expression.");
+	pform_make_reginit(@1, ident_name, $3);
+	$$ = $1;
+      }
+  ;
 
 register_variable_list
 	: register_variable
@@ -2574,16 +2574,18 @@ register_variable_list
 
 real_variable
   : IDENTIFIER dimensions_opt
-      { pform_makewire(@1, $1, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_REAL, 0);
+      { perm_string name = lex_strings.make($1);
+        pform_makewire(@1, name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_REAL, 0);
         if ($2 != 0) {
-          yyerror(@2, "sorry: real variables do not currently support arrays.");
-          delete $2;
+	      yyerror(@2, "sorry: real variables do not currently support arrays.");
+	      delete $2;
         }
 	$$ = $1;
       }
   | IDENTIFIER '=' expression
-      { pform_makewire(@1, $1, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_REAL, 0);
-	pform_make_reginit(@1, $1, $3);
+      { perm_string name = lex_strings.make($1);
+	pform_makewire(@1, name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_REAL, 0);
+	pform_make_reginit(@1, name, $3);
 	$$ = $1;
       }
   ;
@@ -2604,22 +2606,24 @@ real_variable_list
   ;
 
 net_variable
-	: IDENTIFIER dimensions_opt
-		{ pform_makewire(@1, $1, NetNet::IMPLICIT,
-		                 NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-		  if ($2 != 0) {
-		        index_component_t index;
-		        if ($2->size() > 1) {
-			      yyerror(@2, "sorry: only 1 dimensional arrays "
-			                  "are currently supported.");
-		        }
-		        index = $2->front();
-		        pform_set_reg_idx($1, index.msb, index.lsb);
-		        delete $2;
-		  }
-		  $$ = $1;
-		}
-	;
+  : IDENTIFIER dimensions_opt
+      { perm_string name = lex_strings.make($1);
+	pform_makewire(@1, name, NetNet::IMPLICIT,
+		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
+	if ($2 != 0) {
+	      index_component_t index;
+	      if ($2->size() > 1) {
+		    yyerror(@2, "sorry: only 1 dimensional arrays "
+			    "are currently supported.");
+	      }
+	      index = $2->front();
+	      pform_set_reg_idx(name, index.msb, index.lsb);
+	      delete $2;
+	}
+	$$ = $1;
+      }
+  ;
+
 net_variable_list
 	: net_variable
 		{ list<perm_string>*tmp = new list<perm_string>;
@@ -2970,16 +2974,20 @@ statement
 	$$ = tmp;
       }
   | K_begin ':' IDENTIFIER
-      { current_block = pform_push_block_scope($3, PBlock::BL_SEQ);
-	FILE_NAME(current_block, @1);
+      { PBlock*tmp = pform_push_block_scope($3, PBlock::BL_SEQ);
+	FILE_NAME(tmp, @1);
+	current_block_stack.push(tmp);
       }
     block_item_decls_opt
     statement_list K_end
       { pform_pop_scope();
-	current_block->set_statement(*$6);
+	assert(! current_block_stack.empty());
+	PBlock*tmp = current_block_stack.top();
+	current_block_stack.pop();
+	tmp->set_statement(*$6);
 	delete $3;
 	delete $6;
-	$$ = current_block;
+	$$ = tmp;
       }
   | K_begin K_end
       { PBlock*tmp = new PBlock(PBlock::BL_SEQ);
@@ -3000,16 +3008,20 @@ statement
      code generator can do the right thing. */
 
   | K_fork ':' IDENTIFIER
-      { current_block = pform_push_block_scope($3, PBlock::BL_PAR);
-	FILE_NAME(current_block, @1);
+      { PBlock*tmp = pform_push_block_scope($3, PBlock::BL_PAR);
+	FILE_NAME(tmp, @1);
+	current_block_stack.push(tmp);
       }
     block_item_decls_opt
     statement_list K_join
       { pform_pop_scope();
-	current_block->set_statement(*$6);
+        assert(! current_block_stack.empty());
+	PBlock*tmp = current_block_stack.top();
+	current_block_stack.pop();
+	tmp->set_statement(*$6);
 	delete $3;
 	delete $6;
-	$$ = current_block;
+	$$ = tmp;
       }
   | K_fork K_join
       { PBlock*tmp = new PBlock(PBlock::BL_PAR);
@@ -3672,35 +3684,32 @@ udp_output_sym
      makes for these ports are scoped within the UDP, so there is no
      hierarchy involved. */
 udp_port_decl
-    : K_input list_of_identifiers ';'
-        { $$ = pform_make_udp_input_ports($2); }
-    | K_output IDENTIFIER ';'
-        { pform_name_t pname;
-	  pname.push_back(name_component_t(lex_strings.make($2)));
-	  PWire*pp = new PWire(pname, NetNet::IMPLICIT, NetNet::POUTPUT, IVL_VT_LOGIC);
-	  svector<PWire*>*tmp = new svector<PWire*>(1);
-	  (*tmp)[0] = pp;
-	  $$ = tmp;
-	  delete $2;
-	}
-    | K_reg IDENTIFIER ';'
-        { pform_name_t pname;
-	  pname.push_back(name_component_t(lex_strings.make($2)));
-	  PWire*pp = new PWire(pname, NetNet::REG, NetNet::PIMPLICIT, IVL_VT_LOGIC);
-	  svector<PWire*>*tmp = new svector<PWire*>(1);
-	  (*tmp)[0] = pp;
-	  $$ = tmp;
-	  delete $2;
-	}
-    | K_reg K_output IDENTIFIER ';'
-        { pform_name_t pname;
-	  pname.push_back(name_component_t(lex_strings.make($3)));
-	  PWire*pp = new PWire(pname, NetNet::REG, NetNet::POUTPUT, IVL_VT_LOGIC);
-	  svector<PWire*>*tmp = new svector<PWire*>(1);
-	  (*tmp)[0] = pp;
-	  $$ = tmp;
-	  delete $3;
-	}
+  : K_input list_of_identifiers ';'
+      { $$ = pform_make_udp_input_ports($2); }
+  | K_output IDENTIFIER ';'
+      { perm_string pname = lex_strings.make($2);
+	PWire*pp = new PWire(pname, NetNet::IMPLICIT, NetNet::POUTPUT, IVL_VT_LOGIC);
+	svector<PWire*>*tmp = new svector<PWire*>(1);
+	(*tmp)[0] = pp;
+	$$ = tmp;
+	delete $2;
+      }
+  | K_reg IDENTIFIER ';'
+      { perm_string pname = lex_strings.make($2);
+	PWire*pp = new PWire(pname, NetNet::REG, NetNet::PIMPLICIT, IVL_VT_LOGIC);
+	svector<PWire*>*tmp = new svector<PWire*>(1);
+	(*tmp)[0] = pp;
+	$$ = tmp;
+	delete $2;
+      }
+  | K_reg K_output IDENTIFIER ';'
+      { perm_string pname = lex_strings.make($3);
+	PWire*pp = new PWire(pname, NetNet::REG, NetNet::POUTPUT, IVL_VT_LOGIC);
+	svector<PWire*>*tmp = new svector<PWire*>(1);
+	(*tmp)[0] = pp;
+	$$ = tmp;
+	delete $3;
+      }
     ;
 
 udp_port_decls
@@ -3715,19 +3724,19 @@ udp_port_decls
 	;
 
 udp_port_list
-	: IDENTIFIER
-		{ list<string>*tmp = new list<string>;
-		  tmp->push_back($1);
-		  delete $1;
-		  $$ = tmp;
-		}
-	| udp_port_list ',' IDENTIFIER
-		{ list<string>*tmp = $1;
-		  tmp->push_back($3);
-		  delete $3;
-		  $$ = tmp;
-		}
-	;
+  : IDENTIFIER
+      { list<perm_string>*tmp = new list<perm_string>;
+	tmp->push_back(lex_strings.make($1));
+	delete $1;
+	$$ = tmp;
+      }
+  | udp_port_list ',' IDENTIFIER
+      { list<perm_string>*tmp = $1;
+	tmp->push_back(lex_strings.make($3));
+	delete $3;
+	$$ = tmp;
+      }
+  ;
 
 udp_reg_opt: K_reg  { $$ = true; } | { $$ = false; };
 

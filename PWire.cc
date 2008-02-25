@@ -22,11 +22,11 @@
 # include  "PExpr.h"
 # include  <assert.h>
 
-PWire::PWire(const pform_name_t&n,
+PWire::PWire(perm_string n,
 	     NetNet::Type t,
 	     NetNet::PortType pt,
 	     ivl_variable_type_t dt)
-: hname_(n), type_(t), port_type_(pt), data_type_(dt),
+: name_(n), type_(t), port_type_(pt), data_type_(dt),
   signed_(false), isint_(false),
   port_msb_(0), port_lsb_(0), port_set_(false),
   net_msb_(0), net_lsb_(0), net_set_(false), error_cnt_(0),
@@ -44,9 +44,9 @@ NetNet::Type PWire::get_wire_type() const
       return type_;
 }
 
-const pform_name_t& PWire::path() const
+perm_string PWire::basename() const
 {
-      return hname_;
+      return name_;
 }
 
 bool PWire::set_wire_type(NetNet::Type t)
@@ -153,7 +153,7 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
       switch (type) {
 	  case SR_PORT:
 	    if (port_set_) {
-		  cerr << get_fileline() << ": error: Port ``" << hname_
+		  cerr << get_fileline() << ": error: Port ``" << name_
 		       << "'' has already been declared a port." << endl;
 		  error_cnt_ += 1;
 	    } else {
@@ -165,7 +165,7 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
 
 	  case SR_NET:
 	    if (net_set_) {
-		  cerr << get_fileline() << ": error: Net ``" << hname_
+		  cerr << get_fileline() << ": error: Net ``" << name_
 		       << "'' has already been declared." << endl;
 		  error_cnt_ += 1;
 	    } else {
@@ -178,12 +178,12 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
 	  case SR_BOTH:
 	    if (port_set_ || net_set_) {
 		  if (port_set_) {
-		        cerr << get_fileline() << ": error: Port ``" << hname_
+		        cerr << get_fileline() << ": error: Port ``" << name_
 		             << "'' has already been declared a port." << endl;
 		        error_cnt_ += 1;
 		  }
 		  if (net_set_) {
-		        cerr << get_fileline() << ": error: Net ``" << hname_
+		        cerr << get_fileline() << ": error: Net ``" << name_
 		             << "'' has already been declared." << endl;
 		        error_cnt_ += 1;
 		  }
@@ -202,7 +202,7 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
 void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 {
       if (lidx_ != 0 || ridx_ != 0) {
-	    cerr << get_fileline() << ": error: Array ``" << hname_
+	    cerr << get_fileline() << ": error: Array ``" << name_
 	         << "'' has already been declared." << endl;
 	    error_cnt_ += 1;
       } else {

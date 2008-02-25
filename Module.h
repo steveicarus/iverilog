@@ -1,7 +1,7 @@
 #ifndef __Module_H
 #define __Module_H
 /*
- * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.43 2007/05/24 04:07:11 steve Exp $"
-#endif
+
 
 # include  <list>
 # include  <map>
@@ -133,12 +131,6 @@ class Module : public PScope, public LineInfo {
       perm_string mod_name() const { return pscope_name(); }
 
       void add_gate(PGate*gate);
-
-	// The add_wire method adds a wire by name, but only if the
-	// wire name doesn't already exist. Either way, the result is
-	// the existing wire or the pointer passed in.
-      PWire* add_wire(PWire*wire);
-
       void add_behavior(PProcess*behave);
       void add_task(perm_string name, PTask*def);
       void add_function(perm_string name, PFunction*def);
@@ -147,9 +139,6 @@ class Module : public PScope, public LineInfo {
       const svector<PEIdent*>& get_port(unsigned idx) const;
       unsigned find_port(const char*name) const;
 
-	// Find a wire by name. This is used for connecting gates to
-	// existing wires, etc.
-      PWire* get_wire(const pform_name_t&name) const;
       PGate* get_gate(perm_string name);
 
       const list<PGate*>& get_gates() const;
@@ -164,7 +153,6 @@ class Module : public PScope, public LineInfo {
       bool elaborate_sig(Design*, NetScope*scope) const;
 
     private:
-      map<pform_name_t,PWire*> wires_;
       list<PGate*> gates_;
       list<PProcess*> behaviors_;
       map<perm_string,PTask*> tasks_;
@@ -178,26 +166,4 @@ class Module : public PScope, public LineInfo {
       Module& operator= (const Module&);
 };
 
-
-/*
- * $Log: Module.h,v $
- * Revision 1.43  2007/05/24 04:07:11  steve
- *  Rework the heirarchical identifier parse syntax and pform
- *  to handle more general combinations of heirarch and bit selects.
- *
- * Revision 1.42  2007/04/19 02:52:53  steve
- *  Add support for -v flag in command file.
- *
- * Revision 1.41  2006/09/23 04:57:19  steve
- *  Basic support for specify timing.
- *
- * Revision 1.40  2006/04/10 00:37:42  steve
- *  Add support for generate loops w/ wires and gates.
- *
- * Revision 1.39  2006/03/30 01:49:07  steve
- *  Fix instance arrays indexed by overridden parameters.
- *
- * Revision 1.38  2005/07/11 16:56:50  steve
- *  Remove NetVariable and ivl_variable_t structures.
- */
 #endif

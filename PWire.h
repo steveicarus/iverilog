@@ -56,13 +56,13 @@ enum PWSRType {SR_PORT, SR_NET, SR_BOTH};
 class PWire : public LineInfo {
 
     public:
-      PWire(const pform_name_t&hname,
+      PWire(perm_string name,
 	    NetNet::Type t,
 	    NetNet::PortType pt,
 	    ivl_variable_type_t dt);
 
 	// Return a hierarchical name.
-      const pform_name_t&path() const;
+      perm_string basename() const;
 
       NetNet::Type get_wire_type() const;
       bool set_wire_type(NetNet::Type);
@@ -90,7 +90,7 @@ class PWire : public LineInfo {
       NetNet* elaborate_sig(Design*, NetScope*scope) const;
 
     private:
-      pform_name_t hname_;
+      perm_string name_;
       NetNet::Type type_;
       NetNet::PortType port_type_;
       ivl_variable_type_t data_type_;
