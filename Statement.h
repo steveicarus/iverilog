@@ -27,6 +27,7 @@
 # include  "StringHeap.h"
 # include  "PDelays.h"
 # include  "PExpr.h"
+# include  "PScope.h"
 # include  "HName.h"
 # include  "LineInfo.h"
 class PExpr;
@@ -83,6 +84,7 @@ class Statement : public LineInfo {
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const;
 };
 
 /*
@@ -147,25 +149,27 @@ class PAssignNB  : public PAssign_ {
  * statements before constructing this object, so it knows a priori
  * what is contained.
  */
-class PBlock  : public Statement {
+class PBlock  : public PScope, public Statement {
 
     public:
       enum BL_TYPE { BL_SEQ, BL_PAR };
 
-      explicit PBlock(perm_string n, BL_TYPE t, const svector<Statement*>&st);
-      explicit PBlock(BL_TYPE t, const svector<Statement*>&st);
+	// If the block has a name, it is a scope and also has a parent.
+      explicit PBlock(perm_string n, PScope*parent, BL_TYPE t);
+	// If it doesn't have a name, it's not a scope
       explicit PBlock(BL_TYPE t);
       ~PBlock();
 
       BL_TYPE bl_type() const { return bl_type_; }
 
+      void set_statement(const svector<Statement*>&st);
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const;
 
     private:
-      perm_string name_;
       const BL_TYPE bl_type_;
       svector<Statement*>list_;
 };
@@ -215,6 +219,7 @@ class PCase  : public Statement {
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -250,6 +255,7 @@ class PCondit  : public Statement {
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -284,6 +290,7 @@ class PDelayStatement  : public Statement {
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const;
 
     private:
       PExpr*delay_;
@@ -331,6 +338,7 @@ class PEventStatement  : public Statement {
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const;
 
 	// This method is used to elaborate, but attach a previously
 	// elaborated statement to the event.
@@ -364,6 +372,7 @@ class PForever : public Statement {
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -379,6 +388,7 @@ class PForStatement  : public Statement {
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:

@@ -29,7 +29,7 @@
 
 /* n is a permallocated string. */
 Module::Module(perm_string n)
-: name_(n)
+: PScope(n, 0)
 {
       library_flag = false;
       default_nettype = NetNet::NONE;
@@ -52,16 +52,6 @@ void Module::add_task(perm_string name, PTask*task)
 void Module::add_function(perm_string name, PFunction *func)
 {
       funcs_[name] = func;
-}
-
-PWire* Module::add_wire(PWire*wire)
-{
-      PWire*&ep = wires_[wire->path()];
-      if (ep) return ep;
-
-      assert(ep == 0);
-      ep = wire;
-      return wire;
 }
 
 void Module::add_behavior(PProcess*b)
@@ -110,15 +100,6 @@ unsigned Module::find_port(const char*name) const
       return ports.count();
 }
 
-
-PWire* Module::get_wire(const pform_name_t&name) const
-{
-      map<pform_name_t,PWire*>::const_iterator obj = wires_.find(name);
-      if (obj == wires_.end())
-	    return 0;
-      else
-	    return (*obj).second;
-}
 
 PGate* Module::get_gate(perm_string name)
 {

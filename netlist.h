@@ -3275,7 +3275,7 @@ class NetScope : public Attrib {
 
       void add_event(NetEvent*);
       void rem_event(NetEvent*);
-      NetEvent*find_event(const char*name);
+      NetEvent*find_event(perm_string name);
 
 
 	/* These methods manage signals. The add_ and rem_signal
@@ -3285,7 +3285,7 @@ class NetScope : public Attrib {
 
       void add_signal(NetNet*);
       void rem_signal(NetNet*);
-      NetNet* find_signal(const char*name);
+      NetNet* find_signal(perm_string name);
 
 	/* The parent and child() methods allow users of NetScope
 	   objects to locate nearby scopes. */

@@ -71,9 +71,8 @@ class PGenerate : public LineInfo {
       PExpr*loop_test;
       PExpr*loop_step;
 
-      map<pform_name_t,PWire*>wires;
-      PWire* add_wire(PWire*);
-      PWire* get_wire(const pform_name_t&name) const;
+      map<perm_string,PWire*>wires;
+      PWire* get_wire(perm_string name) const;
 
       list<PGate*> gates;
       void add_gate(PGate*);

@@ -309,8 +309,14 @@ void NetPow::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_POW (NetPow): " << name()
 	<< " scope=" << scope_path(scope())
-	<< " delay=(" << *rise_time() << "," << *fall_time() << ","
-	<<  *decay_time() << ")"  << endl;
+	<< " delay=(";
+      if (rise_time())
+	    o << *rise_time() << "," << *fall_time() << ","
+	      <<  *decay_time();
+      else
+	    o << "0,0,0";
+
+      o << ")"  << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -987,7 +993,10 @@ void NetScope::dump(ostream&o) const
 		  o << "    MISSING FUNCTION DEFINITION" << endl;
 	    break;
 	  case TASK:
-	    task_def()->dump(o, 4);
+	    if (task_def())
+		  task_def()->dump(o, 4);
+	    else
+		  o << "    MISSING TASK DEFINITION" << endl;
 	    break;
 	  default:
 	    break;

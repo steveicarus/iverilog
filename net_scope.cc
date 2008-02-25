@@ -295,10 +295,10 @@ void NetScope::rem_event(NetEvent*ev)
 }
 
 
-NetEvent* NetScope::find_event(const char*name)
+NetEvent* NetScope::find_event(perm_string name)
 {
       for (NetEvent*cur = events_;  cur ;  cur = cur->snext_)
-	    if (strcmp(cur->name(), name) == 0)
+	    if (cur->name() == name)
 		  return cur;
 
       return 0;
@@ -337,7 +337,7 @@ void NetScope::rem_signal(NetNet*net)
  * is assumed to be the base name of the signal, so no sub-scopes are
  * searched.
  */
-NetNet* NetScope::find_signal(const char*key)
+NetNet* NetScope::find_signal(perm_string key)
 {
       if (signals_ == 0)
 	    return 0;

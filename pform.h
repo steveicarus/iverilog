@@ -95,7 +95,7 @@ struct parmvalue_t {
 struct str_pair_t { PGate::strength_t str0, str1; };
 
 struct net_decl_assign_t {
-      char*name;
+      perm_string name;
       PExpr*expr;
       struct net_decl_assign_t*next;
 };
@@ -138,19 +138,19 @@ extern void pform_module_set_ports(svector<Module::port_t*>*);
    port_definition_list. In this case, we have everything needed to
    define the port, all in one place. */
 extern void pform_module_define_port(const struct vlltype&li,
-				     const char*name,
+				     perm_string name,
 				     NetNet::PortType,
 				     NetNet::Type type,
 				     bool signed_flag,
 				     svector<PExpr*>*range,
 				     svector<named_pexpr_t*>*attr);
 
-extern Module::port_t* pform_module_port_reference(char*name,
+extern Module::port_t* pform_module_port_reference(perm_string name,
 						   const char*file,
 						   unsigned lineno);
 extern void pform_endmodule(const char*);
 
-extern void pform_make_udp(perm_string name, list<string>*parms,
+extern void pform_make_udp(perm_string name, list<perm_string>*parms,
 			   svector<PWire*>*decl, list<string>*table,
 			   Statement*init,
 			   const char*file, unsigned lineno);
@@ -167,8 +167,11 @@ extern void pform_make_udp(perm_string name,
  * name string onto the scope hierarchy. The pop pulls it off and
  * deletes it. Thus, the string pushed must be allocated.
  */
-extern void pform_push_scope(char*name);
 extern void pform_pop_scope();
+
+extern PTask*pform_push_task_scope(char*name);
+extern PFunction*pform_push_function_scope(char*name);
+extern PBlock*pform_push_block_scope(char*name, PBlock::BL_TYPE tt);
 
 
 extern verinum* pform_verinum_with_size(verinum*s, verinum*val,
@@ -198,7 +201,7 @@ extern void pform_endgenerate();
  * The makewire functions announce to the pform code new wires. These
  * go into a module that is currently opened.
  */
-extern void pform_makewire(const struct vlltype&li, const char*name,
+extern void pform_makewire(const struct vlltype&li, perm_string name,
 			   NetNet::Type type,
 			   NetNet::PortType pt,
 			   ivl_variable_type_t,
@@ -226,7 +229,7 @@ extern void pform_makewire(const struct vlltype&li,
 			   ivl_variable_type_t);
 
 extern void pform_make_reginit(const struct vlltype&li,
-			       const char*name, PExpr*expr);
+			       perm_string name, PExpr*expr);
 
   /* Look up the names of the wires, and set the port type,
      i.e. input, output or inout. If the wire does not exist, create
@@ -239,17 +242,14 @@ extern void pform_set_port_type(const struct vlltype&li,
 extern void pform_set_port_type(perm_string nm, NetNet::PortType pt,
 				const char*file, unsigned lineno);
 
-extern void pform_set_net_range(const char* name);
 extern void pform_set_net_range(list<perm_string>*names,
 				svector<PExpr*>*,
 				bool signed_flag,
 				ivl_variable_type_t,
 				PWSRType rt = SR_NET);
-extern void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r);
+extern void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<perm_string>*names);
 extern void pform_set_reg_time(list<perm_string>*names);
-extern void pform_set_task(perm_string name, PTask*);
-extern void pform_set_function(perm_string name, PFunction*);
 
   /* pform_set_attrib and pform_set_type_attrib exist to support the
      $attribute syntax, which can only set string values to
