@@ -24,14 +24,17 @@
 
 NetEBComp* NetEBComp::dup_expr() const
 {
-      NetEBComp*result = new NetEBComp(op_, left_->dup_expr(),
-				       right_->dup_expr());
-      return result;
+      NetEBComp*tmp = new NetEBComp(op_, left_->dup_expr(),
+				    right_->dup_expr());
+      assert(tmp);
+      tmp->set_line(*this);
+      return tmp;
 }
 
 NetEConst* NetEConst::dup_expr() const
 {
       NetEConst*tmp = new NetEConst(value_);
+      assert(tmp);
       tmp->set_line(*this);
       return tmp;
 }
@@ -39,6 +42,7 @@ NetEConst* NetEConst::dup_expr() const
 NetEConstParam* NetEConstParam::dup_expr() const
 {
       NetEConstParam*tmp = new NetEConstParam(scope_, name_, value());
+      assert(tmp);
       tmp->set_line(*this);
       return tmp;
 }
@@ -46,6 +50,7 @@ NetEConstParam* NetEConstParam::dup_expr() const
 NetECRealParam* NetECRealParam::dup_expr() const
 {
       NetECRealParam*tmp = new NetECRealParam(scope_, name_, value());
+      assert(tmp);
       tmp->set_line(*this);
       return tmp;
 }
@@ -64,9 +69,12 @@ NetEScope* NetEScope::dup_expr() const
 
 NetESelect* NetESelect::dup_expr() const
 {
-      return new NetESelect(expr_->dup_expr(),
-			    base_? base_->dup_expr() : 0,
-			    expr_width());
+      NetESelect*tmp = new NetESelect(expr_->dup_expr(),
+			              base_? base_->dup_expr() : 0,
+			              expr_width());
+      assert(tmp);
+      tmp->set_line(*this);
+      return tmp;
 }
 
 NetESFunc* NetESFunc::dup_expr() const
@@ -80,6 +88,7 @@ NetESFunc* NetESFunc::dup_expr() const
 	    tmp->parm(idx, tmp->parm(idx)->dup_expr());
       }
 
+      tmp->set_line(*this);
       return tmp;
 }
 
@@ -96,6 +105,8 @@ NetETernary* NetETernary::dup_expr() const
       NetETernary*tmp = new NetETernary(cond_->dup_expr(),
 					true_val_->dup_expr(),
 					false_val_->dup_expr());
+      assert(tmp);
+      tmp->set_line(*this);
       return tmp;
 }
 
@@ -112,6 +123,7 @@ NetEUFunc* NetEUFunc::dup_expr() const
       tmp = new NetEUFunc(scope_, func_, result_sig_->dup_expr(), tmp_parms);
 
       assert(tmp);
+      tmp->set_line(*this);
       return tmp;
 }
 
@@ -119,6 +131,7 @@ NetEUnary* NetEUnary::dup_expr() const
 {
       NetEUnary*tmp = new NetEUnary(op_, expr_->dup_expr());
       assert(tmp);
+      tmp->set_line(*this);
       return tmp;
 }
 
@@ -126,5 +139,6 @@ NetEUReduce* NetEUReduce::dup_expr() const
 {
       NetEUReduce*tmp = new NetEUReduce(op_, expr_->dup_expr());
       assert(tmp);
+      tmp->set_line(*this);
       return tmp;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -187,6 +187,7 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
 	    NetExpr*tmp = name_tail.index.back().msb->elaborate_pexpr(des, scope);
 	    if (tmp != 0) {
 		  res = new NetESelect(res, tmp, 1);
+		  res->set_line(*this);
 	    }
 	    break;
       }
@@ -216,7 +217,10 @@ NetETernary* PETernary::elaborate_pexpr(Design*des, NetScope*scope) const
       if (c == 0) return 0;
       if (t == 0) return 0;
       if (f == 0) return 0;
-      return new NetETernary(c, t, f);
+
+      NetETernary*tmp = new NetETernary(c, t, f);
+      tmp->set_line(*this);
+      return tmp;
 }
 
 NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
@@ -251,4 +255,3 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
       }
       return tmp;
 }
-
