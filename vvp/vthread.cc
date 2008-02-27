@@ -1858,7 +1858,7 @@ bool of_IX_MUL(vthread_t thr, vvp_code_t cp)
 
 bool of_IX_LOAD(vthread_t thr, vvp_code_t cp)
 {
-      thr->words[cp->bit_idx[0] & 3].w_int = cp->number;
+      thr->words[cp->bit_idx[0]].w_int = cp->number;
       return true;
 }
 

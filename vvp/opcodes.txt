@@ -342,9 +342,9 @@ bits 4/5/6 just line %ix/get.
 
 This instruction loads an immediate value into the addressed index
 register. The index register holds numeric values, so the <value> is a
-number. The idx value selects the index register, and may be 0, 1, 2
-or 3. This is different from %ix/get, which loads the index register
-from a value in the thread bit vector.
+number. The idx value selects the index register. This is different
+from %ix/get, which loads the index register from a value in the
+thread bit vector.
 
 
 * %ix/add <idx>, <value>
