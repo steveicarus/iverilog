@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,6 +34,32 @@
 # include  "netmisc.h"
 # include  "util.h"
 # include  "ivl_assert.h"
+
+static bool get_const_argument(NetExpr*exp, verinum&res)
+{
+      switch (exp->expr_type()) {
+	  case IVL_VT_REAL: {
+	    NetECReal*cv = dynamic_cast<NetECReal*>(exp);
+	    if (cv == 0) return false;
+	    verireal tmp = cv->value();
+	    res = verinum(tmp.as_long());
+	    break;
+	  }
+
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC: {
+	    NetEConst*cv = dynamic_cast<NetEConst*>(exp);
+	    if (cv == 0) return false;
+	    res = cv->value();
+	    break;
+	  }
+
+	  default:
+	    assert(0);;
+      }
+
+      return true;
+}
 
 void Statement::elaborate_sig(Design*des, NetScope*scope) const
 {
@@ -715,22 +741,20 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  return 0;
 	    }
 
-	    NetEConst*lcon = dynamic_cast<NetEConst*> (lexp);
-	    NetEConst*rcon = dynamic_cast<NetEConst*> (rexp);
+	    bool const_flag = true;
+	    verinum lval, rval;
+	    const_flag &= get_const_argument(lexp, lval);
+	    const_flag &= get_const_argument(rexp, rval);
+	    delete rexp;
+	    delete lexp;
 
-	    if ((lcon == 0) || (rcon == 0)) {
+	    if (!const_flag) {
 		  cerr << get_fileline() << ": internal error: The indices "
 		       << "are not constant for array ``"
 		       << name_ << "''." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
-
-	    verinum lval = lcon->value();
-	    verinum rval = rcon->value();
-
-	    delete lexp;
-	    delete rexp;
 
 	    array_dimensions = 1;
 	    array_s0 = lval.as_long();
@@ -807,4 +831,3 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       return sig;
 }
-
