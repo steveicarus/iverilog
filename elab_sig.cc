@@ -238,6 +238,27 @@ bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 {
       bool flag = true;
 
+	// Handle the special case that this is a CASE scheme. In this
+	// case the PGenerate itself does not have the generated
+	// item. Look instead for the case ITEM that has a scope
+	// generated for it.
+      if (scheme_type == PGenerate::GS_CASE) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: generate case"
+		       << " elaborate_sig in scope "
+		       << scope_path(container) << "." << endl;
+
+	    typedef list<PGenerate*>::const_iterator generate_it_t;
+	    for (generate_it_t cur = generates.begin()
+		       ; cur != generates.end() ; cur ++) {
+		  PGenerate*item = *cur;
+		  if (! item->scope_list_.empty()) {
+			flag &= item->elaborate_sig(des, container);
+		  }
+	    }
+	    return flag;
+      }
+
       typedef list<NetScope*>::const_iterator scope_list_it_t;
       for (scope_list_it_t cur = scope_list_.begin()
 		 ; cur != scope_list_.end() ; cur ++ ) {
@@ -423,6 +444,11 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
       if (ret_sig)  def = new NetFuncDef(scope, ret_sig, ports);
 
       assert(def);
+      if (debug_elaborate)
+	    cerr << get_fileline() << ": debug: "
+		 << "Attach function definition to scope "
+		 << scope_path(scope) << "." << endl;
+
       scope->set_func_def(def);
 
 	// Look for further signals in the sub-statement

@@ -3050,6 +3050,7 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
 	    cerr << get_fileline() << ": internal error: "
 		 << "No function definition for function "
 		 << scope_path(scope) << endl;
+	    des->errors += 1;
 	    return;
       }
 

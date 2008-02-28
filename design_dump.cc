@@ -839,7 +839,7 @@ void NetForever::dump(ostream&o, unsigned ind) const
 
 void NetFuncDef::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "function " << scope_path(scope_) << endl;
+      o << setw(ind) << "" << "function definition for " << scope_path(scope_) << endl;
       if (result_sig_)
 	    o << setw(ind+2) << "" << "Return signal: "
 	      << result_sig_->name() << endl;
