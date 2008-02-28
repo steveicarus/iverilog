@@ -1,7 +1,7 @@
 #ifndef __part_H
 #define __part_H
 /*
- * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,7 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: part.h,v 1.2 2006/11/16 01:11:26 steve Exp $"
 
 # include  "schedule.h"
 
@@ -84,6 +83,9 @@ class vvp_fun_part_var  : public vvp_net_fun_t {
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+			unsigned, unsigned, unsigned);
+
     private:
       unsigned base_;
       unsigned wid_;
@@ -92,14 +94,4 @@ class vvp_fun_part_var  : public vvp_net_fun_t {
       vvp_vector4_t ref_;
 };
 
-
-/*
- * $Log: part.h,v $
- * Revision 1.2  2006/11/16 01:11:26  steve
- *  Support part writes into  part select nodes.
- *
- * Revision 1.1  2005/09/20 00:51:53  steve
- *  Lazy processing of vvp_fun_part functor.
- *
- */
 #endif

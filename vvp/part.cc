@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,7 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: part.cc,v 1.12 2006/11/16 01:11:26 steve Exp $"
 
 # include  "compile.h"
 # include  "part.h"
@@ -154,6 +153,20 @@ void vvp_fun_part_var::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
       }
 }
 
+void vvp_fun_part_var::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+				    unsigned base, unsigned wid, unsigned vwid)
+{
+      assert(bit.size() == wid);
+
+      vvp_vector4_t tmp = source_;
+      if (tmp.size() == 0)
+	    tmp = vvp_vector4_t(vwid);
+
+      assert(tmp.size() == vwid);
+      tmp.set_vec(base, bit);
+      recv_vec4(port, tmp);
+
+}
 
 /*
  * Given a node functor, create a network node and link it into the
