@@ -353,8 +353,7 @@ thread bit vector.
 
 This instruction adds, subtracts, or multiplies an immediate value to
 the addressed index register. The index register holds numeric values,
-so the <value> is a number. The <idx> value selects the index register,
-and may be 0, 1, 2 or 3.
+so the <value> is a number. The <idx> value selects the index register.
 
 
 * %jmp <code-label>
