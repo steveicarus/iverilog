@@ -3332,9 +3332,9 @@ class NetScope : public Attrib {
       void default_nettype(NetNet::Type);
       NetNet::Type default_nettype() const;
 
-	/* The name of the scope is the fully qualified hierarchical
-	   name, whereas the basename is just my name within my parent
-	   scope. */
+	/* The fullname of the scope is the hierarchical name
+	   component (which includes the name and array index) whereas
+	   the basename is just my name. */
       perm_string basename() const;
       const hname_t& fullname() const { return name_; }
 

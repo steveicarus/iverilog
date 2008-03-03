@@ -1454,7 +1454,12 @@ static int show_scope(ivl_scope_t net, void*x)
 	  case IVL_SCT_FUNCTION:
 	  case IVL_SCT_TASK:
 	    fprintf(out, "  scope function/task definition\n");
-	    show_statement(ivl_scope_def(net), 6);
+	    if (ivl_scope_def(net) == 0) {
+		  fprintf(out, "  ERROR: scope missing required task definition\n");
+		  stub_errors += 1;
+	    } else {
+		  show_statement(ivl_scope_def(net), 6);
+	    }
 	    break;
 
 	  default:

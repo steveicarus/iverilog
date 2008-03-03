@@ -1880,6 +1880,7 @@ module_item
   | K_function function_range_or_type_opt IDENTIFIER ';'
       { assert(current_function == 0);
 	current_function = pform_push_function_scope($3);
+	FILE_NAME(current_function, @1);
       }
     function_item_list statement
     K_endfunction

@@ -378,7 +378,9 @@ bool NetScope::emit_defs(struct target_t*tgt) const
 	  case TASK:
 	    tgt->task_def(this);
 	    break;
-	  default:  /* BEGIN_END and FORK_JOIN, do nothing */
+	  default:  /* BEGIN_END and FORK_JOIN, GENERATE... */
+	    for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
+		  flag &= cur->emit_defs(tgt);
 	    break;
       }
 
