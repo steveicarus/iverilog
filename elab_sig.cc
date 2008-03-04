@@ -221,8 +221,8 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 
       typedef list<PProcess*>::const_iterator proc_it_t;
 
-      for (proc_it_t cur = behaviors_.begin()
-		 ; cur != behaviors_.end() ;  cur ++ ) {
+      for (proc_it_t cur = behaviors.begin()
+		 ; cur != behaviors.end() ;  cur ++ ) {
 
 	    (*cur) -> statement() -> elaborate_sig(des, scope);
       }

@@ -131,7 +131,6 @@ class Module : public PScope, public LineInfo {
       perm_string mod_name() const { return pscope_name(); }
 
       void add_gate(PGate*gate);
-      void add_behavior(PProcess*behave);
       void add_task(perm_string name, PTask*def);
       void add_function(perm_string name, PFunction*def);
 
@@ -142,7 +141,6 @@ class Module : public PScope, public LineInfo {
       PGate* get_gate(perm_string name);
 
       const list<PGate*>& get_gates() const;
-      const list<PProcess*>& get_behaviors() const;
 
       void dump(ostream&out) const;
       bool elaborate(Design*, NetScope*scope) const;
@@ -154,7 +152,6 @@ class Module : public PScope, public LineInfo {
 
     private:
       list<PGate*> gates_;
-      list<PProcess*> behaviors_;
       map<perm_string,PTask*> tasks_;
       map<perm_string,PFunction*> funcs_;
 

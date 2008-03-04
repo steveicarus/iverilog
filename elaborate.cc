@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.374 2007/06/05 21:35:51 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -1878,6 +1875,7 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 
 	    assert(nscope);
 
+	    elaborate_behaviors_(des, nscope);
       }
 
       NetBlock*cur = new NetBlock(type, nscope);
@@ -3148,6 +3146,11 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 
 void PTask::elaborate(Design*des, NetScope*task) const
 {
+	// Elaborate any processes that are part of this scope that
+	// aren't the definition itself. This can happen, for example,
+	// with variable initialization statements in this scope.
+      elaborate_behaviors_(des, task);
+
       NetTaskDef*def = task->task_def();
       assert(def);
 
@@ -3552,13 +3555,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	// Elaborate the behaviors, making processes out of them. This
 	// involves scanning the PProcess* list, creating a NetProcTop
 	// for each process.
-      const list<PProcess*>&sl = get_behaviors();
-
-      for (list<PProcess*>::const_iterator st = sl.begin()
-		 ; st != sl.end() ; st ++ ) {
-
-	    result_flag &= (*st)->elaborate(des, scope);
-      }
+      result_flag &= elaborate_behaviors_(des, scope);
 
 	// Elaborate the specify paths of the module.
 
@@ -3644,6 +3641,22 @@ bool PGenerate::elaborate_(Design*des, NetScope*scope) const
       }
 
       return true;
+}
+
+bool PScope::elaborate_behaviors_(Design*des, NetScope*scope) const
+{
+      bool result_flag = true;
+
+	// Elaborate the behaviors, making processes out of them. This
+	// involves scanning the PProcess* list, creating a NetProcTop
+	// for each process.
+      for (list<PProcess*>::const_iterator st = behaviors.begin()
+		 ; st != behaviors.end() ; st ++ ) {
+
+	    result_flag &= (*st)->elaborate(des, scope);
+      }
+
+      return result_flag;
 }
 
 struct root_elem {

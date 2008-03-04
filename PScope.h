@@ -24,6 +24,7 @@
 # include  <map>
 
 class PEvent;
+class PProcess;
 class PWire;
 
 class Design;
@@ -61,10 +62,15 @@ class PScope {
 	// Named events in the scope.
       map<perm_string,PEvent*>events;
 
+	// Behaviors (processes) in this scope
+      list<PProcess*> behaviors;
+
     protected:
       void dump_wires_(ostream&out, unsigned indent) const;
 
       bool elaborate_sig_wires_(Design*des, NetScope*scope) const;
+
+      bool elaborate_behaviors_(Design*des, NetScope*scope) const;
 
     private:
       perm_string name_;

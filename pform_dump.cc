@@ -1042,8 +1042,8 @@ void Module::dump(ostream&out) const
       }
 
 
-      for (list<PProcess*>::const_iterator behav = behaviors_.begin()
-		 ; behav != behaviors_.end()
+      for (list<PProcess*>::const_iterator behav = behaviors.begin()
+		 ; behav != behaviors.end()
 		 ; behav ++ ) {
 
 	    (*behav)->dump(out, 4);

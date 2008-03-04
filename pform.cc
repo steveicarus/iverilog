@@ -1255,7 +1255,7 @@ void pform_make_reginit(const struct vlltype&li,
       PProcess*top = new PProcess(PProcess::PR_INITIAL, ass);
       FILE_NAME(top, li);
 
-      pform_cur_module->add_behavior(top);
+      lexical_scope->behaviors.push_back(top);
 }
 
 /*
@@ -1877,7 +1877,7 @@ PProcess* pform_make_behavior(PProcess::Type type, Statement*st,
       if (pform_cur_generate)
 	    pform_cur_generate->add_behavior(pp);
       else
-	    pform_cur_module->add_behavior(pp);
+	    pform_cur_module->behaviors.push_back(pp);
 
       return pp;
 }
