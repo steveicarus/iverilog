@@ -1385,10 +1385,8 @@ static void do_include()
     /* standby is defined by include_filename() */
     if (standby->path[0] == '/')
     {
-        standby->file = fopen(standby->path, "r");
-
-        if(depend_file && standby->file)
-            fprintf(depend_file, "%s\n", istack->path);
+        if ((standby->file = fopen(standby->path, "r")))
+            goto code_that_switches_buffers;
     }
     else
     {
@@ -1419,29 +1417,31 @@ static void do_include()
 
             if ((standby->file = fopen(path, "r")))
             {
-                if(depend_file)
-                    fprintf(depend_file, "%s\n", path);
-
-                if (line_direct_flag)
-                    fprintf(yyout, "\n`line %u \"%s\" 1\n", istack->lineno+1, path);
-
                 standby->path = strdup(path);
-                standby->next = istack;
-
-                istack->yybs = YY_CURRENT_BUFFER;
-                istack = standby;
-
-                standby = 0;
-
-                yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
-
-                return;
+                goto code_that_switches_buffers;
             }
         }
     }
 
     fprintf(stderr, "%s:%u: Include file %s not found\n", istack->path, istack->lineno, standby->path);
     exit(1);
+
+                                    code_that_switches_buffers:
+
+    if(depend_file)
+        fprintf(depend_file, "%s\n", standby->path);
+
+    if (line_direct_flag)
+        fprintf(yyout, "\n`line %u \"%s\" 1\n", istack->lineno+1, standby->path);
+
+    standby->next = istack;
+
+    istack->yybs = YY_CURRENT_BUFFER;
+    istack = standby;
+
+    standby = 0;
+
+    yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
 }
 
 /* walk the include stack until we find an entry with a valid pathname,
