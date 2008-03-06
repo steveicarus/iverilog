@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -595,6 +595,7 @@ delay_value_simple
 			$$ = new PENumber(tmp);
 			FILE_NAME($$, @1);
 		  }
+		  based_size = 0;
 		}
 	| REALTIME
 		{ verireal*tmp = $1;
@@ -2207,6 +2208,7 @@ parameter_value_opt
 		  (*lst->by_order)[0] = tmp;
 		  lst->by_name = 0;
 		  $$ = lst;
+		  based_size = 0;
 		}
 	| '#' error
 		{ yyerror(@1, "error: syntax error in parameter value "
