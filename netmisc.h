@@ -119,6 +119,11 @@ class PExpr;
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 			      const PExpr*pe, int expr_wid,
 			      int prune_width =-1);
+/*
+ * This procedure elaborates an expression and if the elaboration is
+ * successful the original expression is replaced with the new one.
+ */
+void eval_expr(NetExpr*&expr, int prune_width =-1);
 
 /*
  * Get the long integer value for the passed in expression, if
@@ -134,5 +139,17 @@ extern std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
  * Return a human readable version of the operator.
  */
 const char *human_readable_op(const char op);
+
+/*
+ * Is the expression a constant value and if so what is its logical
+ * value.
+ *
+ * C_NON - the expression is not a constant value.
+ * C_0   - the expression is constant and it has a false value.
+ * C_1   - the expression is constant and it has a true value.
+ * C_X   - the expression is constant and it has an 'bX value.
+ */
+enum const_bool { C_NON, C_0, C_1, C_X };
+const_bool const_logical(const NetExpr*expr);
 
 #endif

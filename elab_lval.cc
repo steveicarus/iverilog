@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -333,9 +333,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       if (long base = reg->array_first()) {
 
 	    word = make_add_expr(word, 0-base);
-	    if (NetExpr*tmp = word->eval_tree()) {
-		  word = tmp;
-	    }
+	    eval_expr(word);
       }
 
       NetAssign_*lv = new NetAssign_(reg);
@@ -485,4 +483,3 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
       des->errors += 1;
       return 0;
 }
-

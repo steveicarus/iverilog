@@ -2678,7 +2678,6 @@ class NetEBinary  : public NetExpr {
       NetExpr* left_;
       NetExpr* right_;
 
-      void eval_sub_tree_();
       bool get_real_arguments_(verireal&lv, verireal&rv);
 };
 
@@ -3151,8 +3150,6 @@ class NetEUnary  : public NetExpr {
     protected:
       char op_;
       NetExpr* expr_;
-
-      void eval_expr_();
 
     private:
       virtual NetExpr* eval_tree_real_();

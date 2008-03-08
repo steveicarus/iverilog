@@ -135,19 +135,8 @@ NetEBinary* PEBinary::elaborate_eval_expr_base_(Design*des,
 {
 	/* If either expression can be evaluated ahead of time, then
 	   do so. This can prove helpful later. */
-      { NetExpr*tmp;
-        tmp = lp->eval_tree();
-	if (tmp) {
-	      delete lp;
-	      lp = tmp;
-	}
-
-	tmp = rp->eval_tree();
-	if (tmp) {
-	      delete rp;
-	      rp = tmp;
-	}
-      }
+      eval_expr(lp);
+      eval_expr(rp);
 
       return elaborate_expr_base_(des, lp, rp, expr_wid);
 }
@@ -533,12 +522,8 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	    PExpr*expr = parms_[idx];
 	    if (expr) {
 		  NetExpr*tmp1 = expr->elaborate_expr(des, scope, -1, true);
-		  if (NetExpr*tmp2 = tmp1->eval_tree()) {
-			delete tmp1;
-			fun->parm(idx, tmp2);
-		  } else {
-			fun->parm(idx, tmp1);
-		  }
+		  eval_expr(tmp1);
+		  fun->parm(idx, tmp1);
 
 	    } else {
 		  missing_parms += 1;
@@ -1147,13 +1132,7 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 		 select attached to it. Generate a NetESelect
 		 object to select the bit as desired. */
 	    NetExpr*mtmp = index_tail.msb->elaborate_expr(des, scope, -1,false);
-	    if (! dynamic_cast<NetEConst*>(mtmp)) {
-		  NetExpr*re = mtmp->eval_tree();
-		  if (re) {
-			delete mtmp;
-			mtmp = re;
-		  }
-	    }
+	    eval_expr(mtmp);
 
 	      /* Let's first try to get constant values for both
 		 the parameter and the bit select. If they are
@@ -1305,9 +1284,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
             if (long base = net->array_first()) {
 
                   word_index = make_add_expr(word_index, 0-base);
-                  if (NetExpr*tmp = word_index->eval_tree()) {
-                        word_index = tmp;
-                  }
+                  eval_expr(word_index);
             }
       }
 
@@ -1683,6 +1660,12 @@ static bool test_ternary_operand_compat(ivl_variable_type_t l,
 	    return true;
       if (l == IVL_VT_BOOL && r == IVL_VT_LOGIC)
 	    return true;
+
+      if (l == IVL_VT_REAL && (r == IVL_VT_LOGIC || r == IVL_VT_BOOL))
+	    return true;
+      if (r == IVL_VT_REAL && (l == IVL_VT_LOGIC || l == IVL_VT_BOOL))
+	    return true;
+
       if (l == r)
 	    return true;
 

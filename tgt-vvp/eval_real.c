@@ -80,17 +80,6 @@ static int draw_binary_real(ivl_expr_t exp)
 	  case '%':
 	    fprintf(vvp_out, "    %%mod/wr %d, %d;\n", l, r);
 	    break;
-#if 0
-	  case '%':
-	      { struct vector_info res = draw_eval_expr(exp, STUFF_OK_XZ);
-		l = allocate_word();
-		fprintf(vvp_out, "    %%ix/get %d, %u, %u;\n",
-			l, res.base, res.wid);
-		fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", l, l);
-	        clr_vector(res);
-	      }
-	      break;
-#endif
 	  case 'p':
 	    fprintf(vvp_out, "    %%pow/wr %d, %d;\n", l, r);
 	    break;
@@ -285,7 +274,7 @@ static int draw_signal_real_real(ivl_expr_t exp)
 	    word = get_number_immediate(ix);
       }
 
-      fprintf(vvp_out, "   %%load/wr %d, v%p_%lu;\n", res, sig, word);
+      fprintf(vvp_out, "    %%load/wr %d, v%p_%lu;\n", res, sig, word);
 
       return res;
 }
@@ -316,6 +305,7 @@ static int draw_ternary_real(ivl_expr_t exp)
 
       unsigned lab_true = local_count++;
       unsigned lab_false = local_count++;
+      unsigned lab_out = local_count++;
 
       int tru, fal;
       int res = allocate_word();
@@ -335,21 +325,32 @@ static int draw_ternary_real(ivl_expr_t exp)
 	    tst.wid = 1;
       }
 
-      fprintf(vvp_out, "  %%jmp/0  T_%d.%d, %u;\n",
+      fprintf(vvp_out, "    %%jmp/0  T_%d.%d, %u;\n",
 	      thread_count, lab_true, tst.base);
 
       tru = draw_eval_real(true_ex);
-      fprintf(vvp_out, "  %%mov/wr %d, %d;\n", res, tru);
-      fprintf(vvp_out, "  %%jmp T_%d.%d;\n", thread_count, lab_false);
+      fprintf(vvp_out, "    %%mov/wr %d, %d;\n", res, tru);
+      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, %u; End of true expr.\n",
+              thread_count, lab_out, tst.base);
       clr_word(tru);
 
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_true);
-
       fal = draw_eval_real(false_ex);
-      fprintf(vvp_out, "  %%mov/wr %d, %d;\n", res, fal);
+      fprintf(vvp_out, "    %%jmp/0  T_%d.%d, %u; End of false expr.\n",
+              thread_count, lab_false, tst.base);
+
+      fprintf(vvp_out, "    %%blend/wr %d, %d;\n", res, fal);
+      fprintf(vvp_out, "    %%jmp  T_%d.%d; End of blend\n",
+              thread_count, lab_out);
+
+      fprintf(vvp_out, "T_%d.%d ; Move false result.\n",
+              thread_count, lab_false);
+
+      fprintf(vvp_out, "    %%mov/wr %d, %d;\n", res, fal);
       clr_word(fal);
 
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_false);
+	/* This is the out label. */
+      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
 
       clr_vector(tst);
 
@@ -366,8 +367,8 @@ static int draw_unary_real(ivl_expr_t exp)
 
       if (ivl_expr_opcode(exp) == '-') {
 	    int res = allocate_word();
-	    fprintf(vvp_out, "  %%loadi/wr %d, 0, 0; load 0.0\n", res);
-	    fprintf(vvp_out, "  %%sub/wr %d, %d;\n", res, sub);
+	    fprintf(vvp_out, "    %%loadi/wr %d, 0, 0; load 0.0\n", res);
+	    fprintf(vvp_out, "    %%sub/wr %d, %d;\n", res, sub);
 
 	    clr_word(sub);
 	    return res;
@@ -424,10 +425,10 @@ int draw_eval_real(ivl_expr_t exp)
 		  clr_vector(sv);
 		  res = allocate_word();
 
-		  fprintf(vvp_out, "  %%ix/get%s %d, %u, %u;\n",
+		  fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 			  sign_flag, res, sv.base, sv.wid);
 
-		  fprintf(vvp_out, "  %%cvt/ri %d, %d;\n", res, res);
+		  fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
 
 	    } else {
 		  fprintf(stderr, "XXXX Evaluate real expression (%d)\n",

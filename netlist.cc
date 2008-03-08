@@ -2263,6 +2263,11 @@ ivl_variable_type_t NetETernary::expr_type() const
       if (tru == IVL_VT_BOOL && fal == IVL_VT_LOGIC)
 	    return IVL_VT_LOGIC;
 
+      if (tru == IVL_VT_REAL && (fal == IVL_VT_LOGIC || fal == IVL_VT_BOOL))
+	    return IVL_VT_REAL;
+      if (fal == IVL_VT_REAL && (tru == IVL_VT_LOGIC || tru == IVL_VT_BOOL))
+	    return IVL_VT_REAL;
+
       if (tru != fal) {
 	    cerr << get_fileline() << ": internal error:"
 		 << " Unexpected ?: type clash:"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,6 +24,7 @@
 # include  "PDelays.h"
 # include  "PExpr.h"
 # include  "verinum.h"
+# include  "netmisc.h"
 
 PDelays::PDelays()
 {
@@ -63,10 +64,7 @@ static NetExpr*calculate_val(Design*des, NetScope*scope, const PExpr*expr)
 {
 
       NetExpr*dex = expr->elaborate_expr(des, scope, -1, false);
-      if (NetExpr*tmp = dex->eval_tree()) {
-	    delete dex;
-	    dex = tmp;
-      }
+      eval_expr(dex);
 
 	/* If the delay expression is a real constant or vector
 	   constant, then evaluate it, scale it to the local time
@@ -163,63 +161,3 @@ void PDelays::eval_delays(Design*des, NetScope*scope,
 	    decay_time = 0;
       }
 }
-
-/*
- * $Log: PDelays.cc,v $
- * Revision 1.15  2006/07/08 21:48:46  steve
- *  Handle real valued literals in net contexts.
- *
- * Revision 1.14  2006/06/02 04:48:49  steve
- *  Make elaborate_expr methods aware of the width that the context
- *  requires of it. In the process, fix sizing of the width of unary
- *  minus is context determined sizes.
- *
- * Revision 1.13  2006/01/03 05:22:14  steve
- *  Handle complex net node delays.
- *
- * Revision 1.12  2006/01/02 05:33:19  steve
- *  Node delays can be more general expressions in structural contexts.
- *
- * Revision 1.11  2003/06/21 01:21:42  steve
- *  Harmless fixup of warnings.
- *
- * Revision 1.10  2003/02/08 19:49:21  steve
- *  Calculate delay statement delays using elaborated
- *  expressions instead of pre-elaborated expression
- *  trees.
- *
- *  Remove the eval_pexpr methods from PExpr.
- *
- * Revision 1.9  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.8  2001/12/29 20:19:31  steve
- *  Do not delete delay expressions of UDP instances.
- *
- * Revision 1.7  2001/11/22 06:20:59  steve
- *  Use NetScope instead of string for scope path.
- *
- * Revision 1.6  2001/11/07 04:01:59  steve
- *  eval_const uses scope instead of a string path.
- *
- * Revision 1.5  2001/07/25 03:10:48  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.4  2001/01/20 02:15:50  steve
- *  apologize for not supporting non-constant delays.
- *
- * Revision 1.3  2001/01/14 23:04:55  steve
- *  Generalize the evaluation of floating point delays, and
- *  get it working with delay assignment statements.
- *
- *  Allow parameters to be referenced by hierarchical name.
- *
- * Revision 1.2  2000/02/23 02:56:53  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.1  1999/09/04 19:11:46  steve
- *  Add support for delayed non-blocking assignments.
- *
- */
-

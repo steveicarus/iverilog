@@ -127,15 +127,25 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope,
 		       const PExpr*pe, int expr_wid, int prune_width)
 {
       NetExpr*tmp = pe->elaborate_expr(des, scope, expr_wid, false);
-      if (tmp == 0)
-	    return 0;
+      if (tmp == 0) return 0;
 
-      if (NetExpr*tmp2 = tmp->eval_tree(prune_width)) {
-	    delete tmp;
-	    tmp = tmp2;
-      }
+      eval_expr(tmp, prune_width);
 
       return tmp;
+}
+
+void eval_expr(NetExpr*&expr, int prune_width)
+{
+      assert(expr);
+      if (dynamic_cast<NetEConst*>(expr)) return;
+      if (dynamic_cast<NetECReal*>(expr)) return;
+
+      NetExpr*tmp = expr->eval_tree(prune_width);
+      if (tmp != 0) {
+	    tmp->set_line(*expr);
+	    delete expr;
+	    expr = tmp;
+      }
 }
 
 bool eval_as_long(long&value, NetExpr*expr)
@@ -220,4 +230,44 @@ const char *human_readable_op(const char op)
 		default: assert(0);
 	}
 	return type;
+}
+
+const_bool const_logical(const NetExpr*expr)
+{
+      switch (expr->expr_type()) {
+	  case IVL_VT_REAL: {
+	    const NetECReal*val = dynamic_cast<const NetECReal*> (expr);
+	    if (val == 0) return C_NON;
+	    if (val->value().as_double() == 0.0) return C_0;
+	    else return C_1;
+	  }
+
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC: {
+	    const NetEConst*val = dynamic_cast<const NetEConst*> (expr);
+	    if (val == 0) return C_NON;
+	    verinum cval = val->value();
+	    const_bool res = C_0;
+	    for (unsigned idx = 0; idx < cval.len(); idx += 1) {
+		  switch (cval.get(idx)) {
+		      case verinum::V1:
+			res = C_1;
+			break;
+
+		      case verinum::V0:
+			break;
+
+		      default:
+			if (res == C_0) res = C_X;
+			break;
+		  }
+	    }
+	    return res;
+	  }
+
+	  default:
+	    break;
+      }
+
+      return C_NON;
 }

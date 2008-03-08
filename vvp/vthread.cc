@@ -738,6 +738,14 @@ bool of_BLEND(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_BLEND_WR(vthread_t thr, vvp_code_t cp)
+{
+      double t = thr->words[cp->bit_idx[0]].w_real;
+      double f = thr->words[cp->bit_idx[1]].w_real;
+      thr->words[cp->bit_idx[0]].w_real = (t == f) ? t : 0.0;
+      return true;
+}
+
 bool of_BREAKPOINT(vthread_t thr, vvp_code_t cp)
 {
       return true;

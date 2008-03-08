@@ -1713,20 +1713,14 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
       if (sig->msb() < sig->lsb()) {
 	    NetExpr*sel_expr = index_tail.msb->elaborate_expr(des, scope, -1, false);
 	    sel_expr = make_sub_expr(sig->lsb(), sel_expr);
-	    if (NetExpr*tmp = sel_expr->eval_tree()) {
-		  delete sel_expr;
-		  sel_expr = tmp;
-	    }
+	    eval_expr(sel_expr);
 
 	    sel = sel_expr->synthesize(des);
 
       } else if (sig->lsb() != 0) {
 	    NetExpr*sel_expr = index_tail.msb->elaborate_expr(des, scope, -1,false);
 	    sel_expr = make_add_expr(sel_expr, - sig->lsb());
-	    if (NetExpr*tmp = sel_expr->eval_tree()) {
-		  delete sel_expr;
-		  sel_expr = tmp;
-	    }
+	    eval_expr(sel_expr);
 
 	    sel = sel_expr->synthesize(des);
 
@@ -2935,9 +2929,31 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 				 Link::strength_t drive0,
 				 Link::strength_t drive1) const
 {
-      NetNet*expr_sig = expr_->elaborate_net(des, scope, 0, 0, 0, 0),
-            *tru_sig = tru_->elaborate_net(des, scope, width, 0, 0, 0),
-            *fal_sig = fal_->elaborate_net(des, scope, width, 0, 0, 0);
+      NetNet *expr_sig, *tru_sig, *fal_sig;
+
+      NetExpr*expr = elab_and_eval(des, scope, expr_, 0);
+      if (expr == 0) return 0;
+
+	/* If we have a constant conditional we can avoid some steps. */
+      switch (const_logical(expr)) {
+	  case C_0:
+            fal_sig = fal_->elaborate_net(des, scope, width, 0, 0, 0);
+            if (fal_sig == 0) return 0;
+tru_sig = tru_->elaborate_net(des, scope, width, 0, 0, 0);
+            break;
+
+	  case C_1:
+            tru_sig = tru_->elaborate_net(des, scope, width, 0, 0, 0);
+            if (tru_sig == 0) return 0;
+fal_sig = fal_->elaborate_net(des, scope, width, 0, 0, 0);
+            break;
+
+	  default:
+            tru_sig = tru_->elaborate_net(des, scope, width, 0, 0, 0);
+            fal_sig = fal_->elaborate_net(des, scope, width, 0, 0, 0);
+            break;
+      }
+      expr_sig = expr->synthesize(des);
 
       if (expr_sig == 0 || tru_sig == 0 || fal_sig == 0) return 0;
 
@@ -2970,14 +2986,11 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 	   but if we do not get a size from the context, or the
 	   expressions resist, we need to cope. */
       unsigned iwidth = tru_sig->vector_width();
-      if (fal_sig->vector_width() > iwidth)
-	    iwidth = fal_sig->vector_width();
-
+      if (fal_sig->vector_width() > iwidth) iwidth = fal_sig->vector_width();
 
 	/* If the width is not passed from the context, then take the
 	   widest result as our width. */
-      if (width == 0)
-	    width = iwidth;
+      if (width == 0) width = iwidth;
 
 	/* If the expression has width, then generate a boolean result
 	   by connecting an OR gate to calculate the truth value of
