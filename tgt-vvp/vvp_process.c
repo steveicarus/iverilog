@@ -394,7 +394,7 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
 
       assert(ivl_signal_array_count(var) == 1);
 
-      fprintf(vvp_out, "   %%set/wr v%p_0, %d;\n", var, res);
+      fprintf(vvp_out, "    %%set/wr v%p_0, %d;\n", var, res);
 
       return 0;
 }

@@ -554,13 +554,7 @@ NetNet* NetEBLogic::synthesize(Design*des)
 
 NetNet* NetEBShift::synthesize(Design*des)
 {
-      if (! dynamic_cast<NetEConst*>(right_)) {
-	    NetExpr*tmp = right_->eval_tree();
-	    if (tmp) {
-		  delete right_;
-		  right_ = tmp;
-	    }
-      }
+      eval_expr(right_);
 
       NetNet*lsig = left_->synthesize(des);
 

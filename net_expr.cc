@@ -20,6 +20,7 @@
 # include  "config.h"
 # include  "netlist.h"
 # include  "compiler.h"
+# include  "netmisc.h"
 # include  <iostream>
 
 /*
@@ -366,15 +367,7 @@ unsigned NetEConcat::repeat()
       if (repeat_calculated_)
 	    return repeat_value_;
 
-      assert(repeat_);
-
-      if (! dynamic_cast<NetEConst*>(repeat_)) {
-	    NetExpr*tmp = repeat_->eval_tree();
-	    if (tmp != 0) {
-		  delete repeat_;
-		  repeat_ = tmp;
-	    }
-      }
+      eval_expr(repeat_);
 
       NetEConst*repeat_const = dynamic_cast<NetEConst*>(repeat_);
 

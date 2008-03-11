@@ -25,82 +25,51 @@
 
 # include  "netlist.h"
 # include  "ivl_assert.h"
+# include  "netmisc.h"
 
 NetExpr* NetExpr::eval_tree(int prune_to_width)
 {
       return 0;
 }
 
-/*
- * Some of the derived classes can be evaluated by the compiler, this
- * method provides the common aid of evaluating the parameter
- * expressions.
- */
-void NetEBinary::eval_sub_tree_()
+static bool get_real_arg_(NetExpr*expr, verireal&val)
 {
-      NetExpr*tmp = left_->eval_tree();
-      if (tmp) {
-	    delete left_;
-	    left_ = tmp;
+      switch (expr->expr_type()) {
+	  case IVL_VT_REAL: {
+		NetECReal*c = dynamic_cast<NetECReal*> (expr);
+		if (c == 0) return false;
+		val = c->value();
+		break;
+	  }
+
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC: {
+		NetEConst*c = dynamic_cast<NetEConst*>(expr);
+		if (c == 0) return false;
+		verinum tmp = c->value();
+		val = verireal(tmp.as_double());
+		break;
+	  }
+
+	  default:
+	    assert(0);
       }
-      tmp = right_->eval_tree();
-      if (tmp){
-	    delete right_;
-	    right_ = tmp;
-      }
+
+      return true;
 }
 
 bool NetEBinary::get_real_arguments_(verireal&lval, verireal&rval)
 {
-      switch (left_->expr_type()) {
-	  case IVL_VT_REAL: {
-		NetECReal*lc = dynamic_cast<NetECReal*> (left_);
-		if (lc == 0) return false;
-		lval = lc->value();
-		break;
-	  }
-
-	  case IVL_VT_BOOL:
-	  case IVL_VT_LOGIC: {
-		NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-		if (lc == 0) return false;
-		verinum tmp = lc->value();
-		lval = verireal(tmp.as_double());
-		break;
-	  }
-
-	  default:
-	    assert(0);
-      }
-
-      switch (right_->expr_type()) {
-	  case IVL_VT_REAL: {
-		NetECReal*rc = dynamic_cast<NetECReal*> (right_);
-		if (rc == 0) return 0;
-		rval = rc->value();
-		break;
-	  }
-
-	  case IVL_VT_BOOL:
-	  case IVL_VT_LOGIC: {
-		NetEConst*rc = dynamic_cast<NetEConst*>(right_);
-		if (rc == 0) return 0;
-		verinum tmp = rc->value();
-		rval = verireal(tmp.as_double());
-		break;
-	  }
-
-	  default:
-	    assert(0);
-      }
-
+      if (!get_real_arg_(left_, lval)) return false;
+      if (!get_real_arg_(right_, rval)) return false;
 
       return true;
 }
 
 NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 {
-      eval_sub_tree_();
+      eval_expr(left_, prune_to_width);
+      eval_expr(right_, prune_to_width);
 
       if (left_->expr_type() == IVL_VT_REAL || right_->expr_type()==IVL_VT_REAL)
 	    return eval_tree_real_();
@@ -170,6 +139,7 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 	    NetEConst*tmp = new NetEConst(val);
 	    left_ = se->left_->dup_expr();
 	    delete se;
+	    tmp->set_line(*right_);
 	    delete right_;
 	    right_ = tmp;
 	      /* We've changed the subexpression, but the result is
@@ -208,26 +178,25 @@ NetECReal* NetEBAdd::eval_tree_real_()
 
 NetEConst* NetEBBits::eval_tree(int prune_to_width)
 {
-      eval_sub_tree_();
+      eval_expr(left_);
+      eval_expr(right_);
 
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
       NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      if (lc == 0 || rc == 0) return 0;
 
 	/* Notice the special case where one of the operands is 0 and
 	   this is a bitwise &. If this happens, then the result is
 	   known to be 0. */
-      if ((op() == '&') && lc && (lc->value() == verinum(0))) {
+      if ((op() == '&') && (lc->value() == verinum(0))) {
 	    verinum res (verinum::V0, expr_width());
 	    return new NetEConst(res);
       }
 
-      if ((op() == '&') && rc && (rc->value() == verinum(0))) {
+      if ((op() == '&') && (rc->value() == verinum(0))) {
 	    verinum res (verinum::V0, expr_width());
 	    return new NetEConst(res);
       }
-
-      if (lc == 0) return 0;
-      if (rc == 0) return 0;
 
       verinum lval = lc->value();
       verinum rval = rc->value();
@@ -737,12 +706,14 @@ NetEConst* NetEBComp::eval_neeqeq_()
 	    res = new NetEConst(verinum(verinum::V0,1));
 
       delete tmp;
+      res->set_line(*this);
       return res;
 }
 
 NetEConst* NetEBComp::eval_tree(int prune_to_width)
 {
-      eval_sub_tree_();
+      eval_expr(left_);
+      eval_expr(right_);
 
       switch (op_) {
 	  case 'E': // Case equality (===)
@@ -780,7 +751,8 @@ NetEConst* NetEBComp::eval_tree(int prune_to_width)
  */
 NetExpr* NetEBDiv::eval_tree(int prune_to_width)
 {
-      eval_sub_tree_();
+      eval_expr(left_);
+      eval_expr(right_);
 
       if (expr_type() == IVL_VT_REAL) {
 	    NetECReal*lc = dynamic_cast<NetECReal*>(left_);
@@ -850,11 +822,12 @@ NetExpr* NetEBDiv::eval_tree(int prune_to_width)
 
 NetEConst* NetEBLogic::eval_tree(int prune_to_width)
 {
-      eval_sub_tree_();
+      eval_expr(left_);
+      eval_expr(right_);
+
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-      if (lc == 0) return 0;
       NetEConst*rc = dynamic_cast<NetEConst*>(right_);
-      if (rc == 0) return 0;
+      if (lc == 0 || rc == 0) return 0;
 
       verinum::V lv = verinum::V0;
       verinum::V rv = verinum::V0;
@@ -931,7 +904,8 @@ NetExpr* NetEBMult::eval_tree_real_()
 
 NetExpr* NetEBMult::eval_tree(int prune_to_width)
 {
-      eval_sub_tree_();
+      eval_expr(left_);
+      eval_expr(right_);
 
       if (expr_type() == IVL_VT_REAL)
 	    return eval_tree_real_();
@@ -939,9 +913,8 @@ NetExpr* NetEBMult::eval_tree(int prune_to_width)
       assert(expr_type() == IVL_VT_LOGIC);
 
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-      if (lc == 0) return 0;
       NetEConst*rc = dynamic_cast<NetEConst*>(right_);
-      if (rc == 0) return 0;
+      if (lc == 0 || rc == 0) return 0;
 
       verinum lval = lc->value();
       verinum rval = rc->value();
@@ -964,7 +937,8 @@ NetExpr* NetEBPow::eval_tree_real_()
 
 NetExpr* NetEBPow::eval_tree(int prune_to_width)
 {
-      eval_sub_tree_();
+      eval_expr(left_);
+      eval_expr(right_);
 
       if (expr_type() == IVL_VT_REAL)
 	    return eval_tree_real_();
@@ -972,9 +946,8 @@ NetExpr* NetEBPow::eval_tree(int prune_to_width)
       assert(expr_type() == IVL_VT_LOGIC);
 
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-      if (lc == 0) return 0;
       NetEConst*rc = dynamic_cast<NetEConst*>(right_);
-      if (rc == 0) return 0;
+      if (lc == 0 || rc == 0) return 0;
 
       verinum lval = lc->value();
       verinum rval = rc->value();
@@ -988,14 +961,12 @@ NetExpr* NetEBPow::eval_tree(int prune_to_width)
  */
 NetEConst* NetEBShift::eval_tree(int prune_to_width)
 {
-      eval_sub_tree_();
-      NetEConst*re = dynamic_cast<NetEConst*>(right_);
-      if (re == 0)
-	    return 0;
+      eval_expr(left_);
+      eval_expr(right_);
 
       NetEConst*le = dynamic_cast<NetEConst*>(left_);
-      if (le == 0)
-	    return 0;
+      NetEConst*re = dynamic_cast<NetEConst*>(right_);
+      if (le == 0 || re == 0) return 0;
 
       NetEConst*res;
 
@@ -1018,7 +989,7 @@ NetEConst* NetEBShift::eval_tree(int prune_to_width)
 
 	    if ((wid == 0) || ! lv.has_len()) {
 		    /* If the caller doesn't care what the width is,
-		       then calcuate a width from the trimmed left
+		       then calculate a width from the trimmed left
 		       expression, plus the shift. This avoids
 		       data loss. */
 		  lv = trim_vnum(lv);
@@ -1064,8 +1035,7 @@ NetEConst* NetEBShift::eval_tree(int prune_to_width)
 	    res = new NetEConst(nv);
 
       } else {
-	    if (wid == 0)
-		  wid = left_->expr_width();
+	    if (wid == 0) wid = left_->expr_width();
 
 	    verinum nv (verinum::Vx, wid);
 	    res = new NetEConst(nv);
@@ -1089,9 +1059,7 @@ NetEConst* NetEConcat::eval_tree(int prune_to_width)
 
 	      // Parameter not here? This is an error, but presumably
 	      // already caught and we are here just to catch more.
-	    if (parms_[idx] == 0)
-		  continue;
-
+	    if (parms_[idx] == 0) continue;
 
 	      // If this parameter is already a constant, all is well
 	      // so go on.
@@ -1106,6 +1074,7 @@ NetEConst* NetEConcat::eval_tree(int prune_to_width)
 	    assert(parms_[idx]);
 	    NetExpr*expr = parms_[idx]->eval_tree(0);
 	    if (expr) {
+		  expr->set_line(*parms_[idx]);
 		  delete parms_[idx];
 		  parms_[idx] = expr;
 
@@ -1126,8 +1095,7 @@ NetEConst* NetEConcat::eval_tree(int prune_to_width)
 
       }
 
-      if (local_errors > 0)
-	    return 0;
+      if (local_errors > 0) return 0;
 
 	// Handle the special case that the repeat expression is
 	// zero. In this case, just return a 0 value with the expected
@@ -1282,38 +1250,20 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 
 NetEConst* NetESelect::eval_tree(int prune_to_width)
 {
+      eval_expr(expr_);
       NetEConst*expr = dynamic_cast<NetEConst*>(expr_);
-      if (expr == 0) {
-	    NetExpr*tmp = expr_->eval_tree();
-	    if (tmp != 0) {
-		  delete expr_;
-		  expr_ = tmp;
-	    }
-
-	    expr = dynamic_cast<NetEConst*>(expr_);
-      }
 
       long bval = 0;
       if (base_) {
+	    eval_expr(base_);
 	    NetEConst*base = dynamic_cast<NetEConst*>(base_);
-	    if (base == 0) {
-		  NetExpr*tmp = base_->eval_tree();
-		  if (tmp != 0) {
-			delete base_;
-			base_ = tmp;
-		  }
 
-		  base = dynamic_cast<NetEConst*>(base_);
-	    }
-
-	    if (base == 0)
-		  return 0;
+	    if (base == 0) return 0;
 
 	    bval = base->value().as_long();
       }
 
-      if (expr == 0)
-	    return 0;
+      if (expr == 0) return 0;
 
       verinum eval = expr->value();
       verinum oval (verinum::V0, expr_width(), true);
@@ -1348,6 +1298,19 @@ NetEConst* NetESelect::eval_tree(int prune_to_width)
 }
 
 
+static void print_ternary_cond(NetExpr*expr)
+{
+      if (NetEConst*c = dynamic_cast<NetEConst*>(expr)) {
+	    cerr << c->value() << endl;
+	    return;
+      }
+      if (NetECReal*c = dynamic_cast<NetECReal*>(expr)) {
+	    cerr << c->value() << endl;
+	    return;
+      }
+      assert(0);
+}
+
 /*
  * A ternary expression evaluation is controlled by the condition
  * expression. If the condition evaluates to true or false, then
@@ -1357,98 +1320,89 @@ NetEConst* NetESelect::eval_tree(int prune_to_width)
  */
 NetExpr* NetETernary::eval_tree(int prune_to_width)
 {
-      NetExpr*tmp;
-
-      assert(cond_);
-      if (0 == dynamic_cast<NetEConst*>(cond_)) {
-	    tmp = cond_->eval_tree();
-	    if (tmp != 0) {
-		  delete cond_;
-		  cond_ = tmp;
+      eval_expr(cond_);
+      switch (const_logical(cond_)) {
+	  case C_0:
+	    eval_expr(false_val_);
+	    if (debug_eval_tree) {
+		  
+		  cerr << get_fileline() << ": debug: Evaluate ternary with "
+		       << "constant condition value: ";
+		  print_ternary_cond(cond_);
+		  cerr << get_fileline() << ":      : Selecting false case: "
+		       << *false_val_ << endl;
 	    }
-      }
 
-      assert(true_val_);
-      if (0 == dynamic_cast<NetEConst*>(true_val_)) {
-	    tmp = true_val_->eval_tree();
-	    if (tmp != 0) {
-		  delete true_val_;
-		  true_val_ = tmp;
+	    if (expr_type() == IVL_VT_REAL &&
+	        false_val_->expr_type() != IVL_VT_REAL) {
+		  verireal f;
+		  if (get_real_arg_(false_val_, f)) {
+			NetECReal*rc = new NetECReal(f);
+			rc->set_line(*this);
+			return rc;
+		  }
 	    }
-      }
 
-      assert(false_val_);
-      if (0 == dynamic_cast<NetEConst*>(false_val_)) {
-	    tmp = false_val_->eval_tree();
-	    if (tmp != 0) {
-		  delete false_val_;
-		  false_val_ = tmp;
-	    }
-      }
+	    return false_val_->dup_expr();
 
-
-      NetEConst*c = dynamic_cast<NetEConst*>(cond_);
-      if (c == 0)
-	    return 0;
-
-	/* Check the boolean value of the constant condition
-	   expression. Note that the X case is handled explicitly, so
-	   we must differentiate. */
-
-      verinum cond_value = c->value();
-      bool true_flag = false;
-      bool x_flag = false;
-
-      for (unsigned idx = 0 ;  idx < cond_value.len() ;  idx += 1) {
-	    switch (cond_value.get(idx)) {
-		case verinum::V1:
-		  true_flag = true;
-		  break;
-		case verinum::V0:
-		  break;
-		default:
-		  x_flag = true;
-	    }
-      }
-
-
-	/* If the condition is 1 or 0, return the true or false
-	   expression. Try to evaluate the expression down as far as
-	   we can. */
-
-      if (true_flag) {
+	  case C_1:
+	    eval_expr(true_val_);
 	    if (debug_eval_tree) {
 		  cerr << get_fileline() << ": debug: Evaluate ternary with "
-		       << "constant condition value: " << c->value() << endl;
+		       << "constant condition value: ";
+		  print_ternary_cond(cond_);
 		  cerr << get_fileline() << ":      : Selecting true case: "
 		       << *true_val_ << endl;
 	    }
-	    return true_val_->dup_expr();
-      }
 
-      if (! x_flag) {
-	    if (debug_eval_tree) {
-		  cerr << get_fileline() << ": debug: Evaluate ternary with "
-		       << "constant condition value: " << c->value() << endl;
-		  cerr << get_fileline() << ":      : Selecting false case: "
-		       << *true_val_ << endl;
+	    if (expr_type() == IVL_VT_REAL &&
+	        true_val_->expr_type() != IVL_VT_REAL) {
+		  verireal t;
+		  if (get_real_arg_(true_val_, t)) {
+			NetECReal*rc = new NetECReal(t);
+			rc->set_line(*this);
+			return rc;
+		  }
 	    }
-	    return false_val_->dup_expr();
+
+	    return true_val_->dup_expr();
+
+	  case C_X:
+	    break;
+
+	  default:
+	    return 0;
       }
 
 	/* Here we have a more complex case. We need to evaluate both
 	   expressions down to constants then compare the values to
 	   build up a constant result. */
 
+      eval_expr(true_val_);
+      eval_expr(false_val_);
+
       NetEConst*t = dynamic_cast<NetEConst*>(true_val_);
-      if (t == 0)
-	    return 0;
-
-
       NetEConst*f = dynamic_cast<NetEConst*>(false_val_);
-      if (f == 0)
-	    return 0;
+      if (t == 0 || f == 0) {
+	    verireal tv, fv;
+	    if (!get_real_arg_(true_val_, tv)) return 0;
+	    if (!get_real_arg_(false_val_, fv)) return 0;
 
+	    verireal val = verireal(0.0);
+	    if (tv.as_double() == fv.as_double()) val = tv;
+
+	    if (debug_eval_tree) {
+		  cerr << get_fileline() << ": debug: Evaluate ternary with "
+		       << "constant condition value: ";
+		  print_ternary_cond(cond_);
+		  cerr << get_fileline() << ":      : Blending real cases "
+		       << "to get " << val << endl;
+	    }
+
+	    NetECReal*rc = new NetECReal(val);
+	    rc->set_line(*this);
+	    return rc;
+      }
 
       unsigned tsize = t->expr_width();
       unsigned fsize = f->expr_width();
@@ -1458,17 +1412,16 @@ NetExpr* NetETernary::eval_tree(int prune_to_width)
       verinum val (verinum::V0, rsize);
       for (unsigned idx = 0 ;  idx < rsize ;  idx += 1) {
 	    verinum::V tv = idx < tsize? t->value().get(idx) : verinum::V0;
-	    verinum::V fv = idx < rsize? f->value().get(idx) : verinum::V0;
+	    verinum::V fv = idx < fsize? f->value().get(idx) : verinum::V0;
 
-	    if (tv == fv)
-		  val.set(idx, tv);
-	    else
-		  val.set(idx, verinum::Vx);
+	    if (tv == fv) val.set(idx, tv);
+	    else val.set(idx, verinum::Vx);
       }
 
       if (debug_eval_tree) {
 	    cerr << get_fileline() << ": debug: Evaluate ternary with "
-		 << "constant condition value: " << c->value() << endl;
+		 << "constant condition value: ";
+	    print_ternary_cond(cond_);
 	    cerr << get_fileline() << ":      : Blending cases to get "
 		 << val << endl;
       }
@@ -1476,22 +1429,6 @@ NetExpr* NetETernary::eval_tree(int prune_to_width)
       NetEConst*rc = new NetEConst(val);
       rc->set_line(*this);
       return rc;
-}
-
-void NetEUnary::eval_expr_()
-{
-      assert(expr_);
-      if (dynamic_cast<NetEConst*>(expr_))
-	    return;
-      if (dynamic_cast<NetECReal*>(expr_))
-	    return;
-
-      NetExpr*oper = expr_->eval_tree();
-      if (oper == 0)
-	    return;
-
-      delete expr_;
-      expr_ = oper;
 }
 
 NetExpr* NetEUnary::eval_tree_real_()
@@ -1504,10 +1441,12 @@ NetExpr* NetEUnary::eval_tree_real_()
 	    res = new NetECReal(val->value());
 	    res->set_line(*this);
 	    return res;
+
 	  case '-':
 	    res = new NetECReal(-(val->value()));
 	    res->set_line(*this);
 	    return res;
+
 	  default:
 	    return 0;
       }
@@ -1515,12 +1454,11 @@ NetExpr* NetEUnary::eval_tree_real_()
 
 NetExpr* NetEUnary::eval_tree(int prune_to_width)
 {
-      eval_expr_();
+      eval_expr(expr_);
       if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
 
       NetEConst*rval = dynamic_cast<NetEConst*>(expr_);
-      if (rval == 0)
-	    return 0;
+      if (rval == 0) return 0;
 
       verinum val = rval->value();
 
@@ -1579,10 +1517,9 @@ NetExpr* NetEUBits::eval_tree(int prune_to_width)
 
 NetEConst* NetEUReduce::eval_tree(int prune_to_width)
 {
-      eval_expr_();
+      eval_expr(expr_);
       NetEConst*rval = dynamic_cast<NetEConst*>(expr_);
-      if (rval == 0)
-	    return 0;
+      if (rval == 0) return 0;
 
       verinum val = rval->value();
       verinum::V res;

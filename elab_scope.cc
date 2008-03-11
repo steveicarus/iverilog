@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,6 +51,7 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
       assert(ex);
 
       NetExpr*val = ex->elaborate_pexpr(des, scope);
+      if (val == 0) return;
       NetExpr*msb = 0;
       NetExpr*lsb = 0;
       bool signed_flag = cur.signed_flag;
@@ -741,7 +742,11 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 
 	/* Stash the instance array of scopes into the parent
 	   scope. Later elaboration passes will use this vector to
-	   further elaborate the array. */
+	   further elaborate the array.
+
+	   Note that the array is ordered from LSB to MSB. We will use
+	   that fact in the main elaborate to connect things in the
+	   correct order. */
       sc->instance_arrays[get_name()] = instances;
 }
 

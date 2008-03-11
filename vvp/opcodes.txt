@@ -139,6 +139,11 @@ manner like the expression (x ? <a> : <b>). The truth table is:
 In other words, if the bits are identical, then take that
 value. Otherwise, the value is x.
 
+* %blend/wr <bit-l>, <bit-r>
+
+This instruction blends real values for the ternary operator. If the
+values match return that otherwise return 0.0.
+
 * %breakpoint
 
 This instruction unconditionally breaks the simulator into the

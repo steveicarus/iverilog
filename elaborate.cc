@@ -1037,7 +1037,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    unsigned prts_vector_width = 0;
 
 	    for (unsigned inst = 0 ;  inst < instance.count() ;  inst += 1) {
-		  NetScope*inst_scope = instance[inst];
+		    // Scan the instances from MSB to LSB. The port
+		    // will be assembled in that order as well.
+		  NetScope*inst_scope = instance[instance.count()-inst-1];
 
 		    // Scan the module sub-ports for this instance...
 		  for (unsigned ldx = 0 ;  ldx < mport.count() ;  ldx += 1) {
@@ -2121,12 +2123,7 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 	      /* Attempt to pre-evaluate the parameters. It may be
 		 possible to at least partially reduce the
 		 expression. */
-	    if (eparms[idx]) {
-		  if (NetExpr*tmp = eparms[idx]->eval_tree()) {
-			delete eparms[idx];
-			eparms[idx] = tmp;
-		  }
-	    }
+	    if (eparms[idx]) eval_expr(eparms[idx]);
       }
 
       NetSTask*cur = new NetSTask(peek_tail_name(path_), eparms);
@@ -2723,10 +2720,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
       }
 
 	/* precalculate as much as possible of the wait expression. */
-      if (NetExpr*tmp = expr->eval_tree()) {
-	    delete expr;
-	    expr = tmp;
-      }
+      eval_expr(expr);
 
 	/* Detect the unusual case that the wait expression is
 	   constant. Constant true is OK (it becomes transparent) but
@@ -2769,11 +2763,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	   wait. */
       assert(expr->expr_width() == 1);
       expr = new NetEBComp('N', expr, new NetEConst(verinum(verinum::V1)));
-      NetExpr*tmp = expr->eval_tree();
-      if (tmp) {
-	    delete expr;
-	    expr = tmp;
-      }
+      eval_expr(expr);
 
       NetEvent*wait_event = new NetEvent(scope->local_symbol());
       scope->add_event(wait_event);
@@ -3764,4 +3754,3 @@ Design* elaborate(list<perm_string>roots)
 
       return des;
 }
-

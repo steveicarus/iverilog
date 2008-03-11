@@ -78,6 +78,7 @@ NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
 			"concatenation repeat expression cannot be evaluated."
 		       << endl;
 		  des->errors += 1;
+		  return 0;
 	    }
 
 	      /* continue on even if the repeat expression doesn't
@@ -108,7 +109,8 @@ NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
 		       << "concatenation has indefinite width: "
 		       << *ex << endl;
 		  des->errors += 1;
-
+		  delete tmp;
+		  return 0;
 	    }
 
 	    tmp->set(idx, ex);
@@ -173,22 +175,26 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
       switch (use_sel) {
 	  case index_component_t::SEL_NONE:
 	    break;
+
 	  default:
 	  case index_component_t::SEL_PART:
 	    cerr << get_fileline() << ": sorry: Cannot part select "
-		  "bits of parameters." << endl;
+		    "bits of parameters." << endl;
 	    des->errors += 1;
-	    break;
+	    delete res;
+	    return 0;
 
 	  case index_component_t::SEL_BIT:
 
 	      /* We have here a bit select. Insert a NetESelect node
 		 to handle it. */
 	    NetExpr*tmp = name_tail.index.back().msb->elaborate_pexpr(des, scope);
-	    if (tmp != 0) {
-		  res = new NetESelect(res, tmp, 1);
-		  res->set_line(*this);
+	    if (tmp == 0) {
+		  delete res;
+		  return 0;
 	    }
+	    res = new NetESelect(res, tmp, 1);
+	    res->set_line(*this);
 	    break;
       }
 
@@ -214,9 +220,7 @@ NetETernary* PETernary::elaborate_pexpr(Design*des, NetScope*scope) const
       NetExpr*c = expr_->elaborate_pexpr(des, scope);
       NetExpr*t = tru_->elaborate_pexpr(des, scope);
       NetExpr*f = fal_->elaborate_pexpr(des, scope);
-      if (c == 0) return 0;
-      if (t == 0) return 0;
-      if (f == 0) return 0;
+      if (c == 0 || t == 0 || f == 0) return 0;
 
       NetETernary*tmp = new NetETernary(c, t, f);
       tmp->set_line(*this);
@@ -238,10 +242,12 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 	    tmp = new NetEUnary(op_, ip);
 	    tmp->set_line(*this);
 	    break;
+
 	  case '~':
 	    tmp = new NetEUBits(op_, ip);
 	    tmp->set_line(*this);
 	    break;
+
 	  case '!': // Logical NOT
 	  case '&': // Reduction AND
 	  case '|': // Reduction OR
@@ -253,5 +259,6 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 	    tmp->set_line(*this);
 	    break;
       }
+
       return tmp;
 }
