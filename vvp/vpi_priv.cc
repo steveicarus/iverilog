@@ -640,13 +640,14 @@ void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
 struct vpip_put_value_event : vvp_gen_event_s {
       vpiHandle handle;
       s_vpi_value value;
+      int flags;
       virtual void run_run();
       ~vpip_put_value_event() { }
 };
 
 void vpip_put_value_event::run_run()
 {
-      handle->vpi_type->vpi_put_value_ (handle, &value);
+      handle->vpi_type->vpi_put_value_ (handle, &value, flags);
 }
 
 vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
@@ -657,7 +658,10 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
       if (obj->vpi_type->vpi_put_value_ == 0)
 	    return 0;
 
-      if (flags != vpiNoDelay) {
+      int return_event_flag = flags & vpiReturnEvent;
+      flags &= ~vpiReturnEvent;
+
+      if (flags!=vpiNoDelay && flags!=vpiForceFlag && flags!=vpiReleaseFlag) {
 	    vvp_time64_t dly;
 
 	    assert(when != 0);
@@ -680,11 +684,12 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 	    vpip_put_value_event*put = new vpip_put_value_event;
 	    put->handle = obj;
 	    put->value = *vp;
+	    put->flags = flags;
 	    schedule_generic(put, dly, false);
 	    return 0;
       }
 
-      (obj->vpi_type->vpi_put_value_)(obj, vp);
+      (obj->vpi_type->vpi_put_value_)(obj, vp, flags);
 
       return 0;
 }

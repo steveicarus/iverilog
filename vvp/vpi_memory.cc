@@ -212,7 +212,7 @@ static int memory_word_get(int code, vpiHandle ref)
       }
 }
 
-static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val)
+static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val, int)
 {
       struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
       assert(ref->vpi_type->type_code==vpiMemoryWord);

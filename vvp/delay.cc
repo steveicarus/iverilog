@@ -544,7 +544,7 @@ static void modpath_src_get_value(vpiHandle ref, p_vpi_value vp)
       return  ;
 }
 
-static vpiHandle modpath_src_put_value(vpiHandle ref, s_vpi_value *vp )
+static vpiHandle modpath_src_put_value(vpiHandle ref, s_vpi_value *vp, int )
 {
       assert((ref->vpi_type->type_code == vpiModPathIn));
       struct __vpiModPathSrc* modpathsrc = vpip_modpath_src_from_handle( ref) ;
@@ -599,7 +599,7 @@ static int modpath_src_free_object( vpiHandle ref )
  * specific delays values in a vpiModPathIn object
  *
  */
-static void modpath_src_put_delays ( vpiHandle ref, p_vpi_delay delays )
+static void modpath_src_put_delays (vpiHandle ref, p_vpi_delay delays)
 {
       vvp_time64_t tmp[12];
       int idx;

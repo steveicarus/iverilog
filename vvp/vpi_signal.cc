@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -594,20 +594,11 @@ static vvp_vector4_t from_stringval(const char*str, unsigned wid)
       return val;
 }
 
-static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
+static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 {
       unsigned wid;
-      struct __vpiSignal*rfp;
-
-      assert((ref->vpi_type->type_code==vpiNet)
-	     || (ref->vpi_type->type_code==vpiReg));
-
-      rfp = (struct __vpiSignal*)ref;
-
-	/* This is the destination that I'm going to poke into. Make
-	   it from the vvp_net_t pointer, and assume a write to
-	   port-0. This is the port where signals receive input. */
-      vvp_net_ptr_t destination (rfp->node, 0);
+      struct __vpiSignal*rfp = vpip_signal_from_handle(ref);
+      assert(rfp);
 
 	/* Make a vvp_vector4_t vector to receive the translated value
 	   that we are going to poke. This will get populated
@@ -630,26 +621,6 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 		break;
 	  }
 
-#if 0
-	  case vpiScalarVal:
-	    switch (vp->value.scalar) {
-		case vpi0:
-		  functor_poke(rfp, 0, 0, St0, 0);
-		  break;
-		case vpi1:
-		  functor_poke(rfp, 0, 1, St1, 0);
-		  break;
-		case vpiX:
-		  functor_poke(rfp, 0, 2, StX, 0);
-		  break;
-		case vpiZ:
-		  functor_poke(rfp, 0, 3, HiZ, 0);
-		  break;
-		default:
-		  assert(0);
-	    }
-	    break;
-#endif
 	  case vpiVectorVal:
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  unsigned long aval = vp->value.vector[idx/32].aval;
@@ -687,6 +658,21 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp)
 	    assert(0);
 
       }
+
+      if (flags == vpiReleaseFlag) {
+	    vvp_net_ptr_t dest_cmd(rfp->node, 3);
+	    vvp_send_long(dest_cmd, 2 /* release/net */);
+	    return ref;
+      }
+
+      int dest_port = 0;
+      if (flags == vpiForceFlag)
+	    dest_port = 2;
+
+	/* This is the destination that I'm going to poke into. Make
+	   it from the vvp_net_t pointer, and assume a write to
+	   port-0. This is the port where signals receive input. */
+      vvp_net_ptr_t destination (rfp->node, dest_port);
 
       vvp_send_vec4(destination, val);
 

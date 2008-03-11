@@ -161,7 +161,7 @@ static const struct __vpirt vpip_systask_rt = {
  * bits and set into the thread space bits that were selected at
  * compile time.
  */
-static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp)
+static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp, int)
 {
       assert(ref->vpi_type->type_code == vpiSysFuncCall);
 
@@ -265,7 +265,7 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp)
       return 0;
 }
 
-static vpiHandle sysfunc_put_real_value(vpiHandle ref, p_vpi_value vp)
+static vpiHandle sysfunc_put_real_value(vpiHandle ref, p_vpi_value vp, int)
 {
       assert(ref->vpi_type->type_code == vpiSysFuncCall);
 
@@ -291,7 +291,7 @@ static vpiHandle sysfunc_put_real_value(vpiHandle ref, p_vpi_value vp)
       return 0;
 }
 
-static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp)
+static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp, int)
 {
       assert(ref->vpi_type->type_code == vpiSysFuncCall);
 
@@ -379,7 +379,7 @@ static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp)
       return 0;
 }
 
-static vpiHandle sysfunc_put_rnet_value(vpiHandle ref, p_vpi_value vp)
+static vpiHandle sysfunc_put_rnet_value(vpiHandle ref, p_vpi_value vp, int)
 {
       assert(ref->vpi_type->type_code == vpiSysFuncCall);
 

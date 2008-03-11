@@ -80,7 +80,7 @@ struct __vpirt {
       int   (*vpi_get_)(int, vpiHandle);
       char* (*vpi_get_str_)(int, vpiHandle);
       void  (*vpi_get_value_)(vpiHandle, p_vpi_value);
-      vpiHandle (*vpi_put_value_)(vpiHandle, p_vpi_value);
+      vpiHandle (*vpi_put_value_)(vpiHandle, p_vpi_value, int flags);
 
 	/* These methods follow references. */
       vpiHandle (*handle_)(int, vpiHandle);

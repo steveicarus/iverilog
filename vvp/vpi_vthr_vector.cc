@@ -321,7 +321,7 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 /*
  * The put_value method writes the value into the vector.
  */
-static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp)
+static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp, int)
 {
       assert((ref->vpi_type->type_code==vpiNet)
 	     || (ref->vpi_type->type_code==vpiReg));

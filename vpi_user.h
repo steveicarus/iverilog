@@ -357,7 +357,7 @@ typedef struct t_vpi_delay  {
 
 #define vpiForceFlag   5
 #define vpiReleaseFlag 6
-
+#define vpiReturnEvent 0x1000
 
 /* VPI FUNCTIONS */
 extern void vpi_register_systf(const struct t_vpi_systf_data*ss);

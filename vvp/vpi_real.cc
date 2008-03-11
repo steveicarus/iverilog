@@ -112,7 +112,7 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
       fun->get_value(vp);
 }
 
-static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp)
+static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp, int)
 {
       assert(ref->vpi_type->type_code == vpiRealVar);
 
