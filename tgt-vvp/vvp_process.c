@@ -820,7 +820,7 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 	    if (part_off != 0 || use_wid != ivl_signal_width(lsig)) {
 
 		  command_name = command_name_x0;
-		  fprintf(vvp_out, "  %%ix/load 0, %u;\n", part_off);
+		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", part_off);
 
 	    } else {
 		    /* Do not support bit or part selects of l-values yet. */
@@ -831,7 +831,7 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 		  assert((roff + use_wid) <= rvec.wid);
 	    }
 
-	    fprintf(vvp_out, "  %s v%p_%lu, %u, %u;\n", command_name,
+	    fprintf(vvp_out, "    %s v%p_%lu, %u, %u;\n", command_name,
 		    lsig, use_word, rvec.base+roff, use_wid);
 
 	    if (rvec.base >= 4)
@@ -870,6 +870,17 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
       lval = ivl_stmt_lval(net, 0);
       lsig = ivl_lval_sig(lval);
 
+	/* We do not currently support driving a signal to a bit or
+	 * part select (this could give us multiple drivers). */
+      ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
+      if (ivl_signal_width(lsig) > ivl_signal_width(rsig) ||
+          (part_off_ex && get_number_immediate(part_off_ex) != 0)) {
+	    fprintf(stderr, "%s:%u: vvp-tgt sorry: cannot %s signal to "
+	            "a bit/part select.\n", ivl_expr_file(rval),
+	            ivl_expr_lineno(rval), command_name);
+	    exit(1);
+      }
+
 	/* At least for now, only handle force to fixed words of an array. */
       if ((lword_idx = ivl_lval_idx(lval)) != 0) {
 	    assert(number_is_immediate(lword_idx, 8*sizeof(unsigned long)));
@@ -884,7 +895,7 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
       assert(ivl_signal_array_count(rsig) == 1);
       use_rword = 0;
 
-      fprintf(vvp_out, "  %s/link", command_name);
+      fprintf(vvp_out, "    %s/link", command_name);
       fprintf(vvp_out, " v%p_%lu", lsig, use_lword);
       fprintf(vvp_out, ", v%p_%lu;\n", rsig, use_rword);
 }
@@ -1172,11 +1183,13 @@ static int show_stmt_release(ivl_statement_t net)
 	    unsigned long use_word = 0;
 	    assert(lsig != 0);
 	    assert(ivl_lval_mux(lval) == 0);
-	    if (ivl_lval_part_off(lval) != 0) {
-		  fprintf(stderr, "%s:%u: sorry (vvp-tgt): Release of part/"
-		          "bit select is not supported.\n",
-		          ivl_stmt_file(net), ivl_stmt_lineno(net));
-		  exit(1);
+
+	    unsigned use_wid = ivl_lval_width(lval);
+	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
+	    unsigned part_off = 0;
+	    if (part_off_ex != 0) {
+		  assert(number_is_immediate(part_off_ex, 64));
+		  part_off = get_number_immediate(part_off_ex);
 	    }
 
 	    switch (ivl_signal_type(lsig)) {
@@ -1195,8 +1208,8 @@ static int show_stmt_release(ivl_statement_t net)
 
 	      /* Generate the appropriate release statement for this
 		 l-value. */
-	    fprintf(vvp_out, "  %%release/%s v%p_%lu;\n",
-		    opcode, lsig, use_word);
+	    fprintf(vvp_out, "    %%release/%s v%p_%lu, %u, %u;\n",
+		    opcode, lsig, use_word, part_off, use_wid);
       }
 
       return 0;
@@ -1584,4 +1597,3 @@ int draw_func_definition(ivl_scope_t scope)
       thread_count += 1;
       return rc;
 }
-

@@ -1467,7 +1467,7 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 
       if ((!number_is_unknown(exp)) && number_is_immediate(exp, 16)) {
 	    int val = get_number_immediate(exp);
-	    fprintf(vvp_out, "   %%movi %u, %d, %u;\n", res.base, val, wid);
+	    fprintf(vvp_out, "    %%movi %u, %d, %u;\n", res.base, val, wid);
 	    return res;
       }
 

@@ -639,6 +639,8 @@ class vvp_net_fun_t {
 	// Part select variants of above
       virtual void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
 				unsigned base, unsigned wid, unsigned vwid);
+      virtual void recv_long_pv(vvp_net_ptr_t port, long bit,
+                                unsigned base, unsigned wid);
 
     private: // not implemented
       vvp_net_fun_t(const vvp_net_fun_t&);
@@ -816,6 +818,8 @@ class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_vpi_callback {
     public:
       vvp_fun_signal_base();
       void recv_long(vvp_net_ptr_t port, long bit);
+      void recv_long_pv(vvp_net_ptr_t port, long bit,
+                        unsigned base, unsigned wid);
 
     public:
 
@@ -834,6 +838,8 @@ class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_vpi_callback {
 
       void deassign();
       virtual void release(vvp_net_ptr_t ptr, bool net) =0;
+      virtual void release_pv(vvp_net_ptr_t ptr, bool net,
+                              unsigned base, unsigned wid) =0;
 };
 
 /*
@@ -870,6 +876,8 @@ class vvp_fun_signal  : public vvp_fun_signal_vec {
 
 	// Commands
       void release(vvp_net_ptr_t port, bool net);
+      void release_pv(vvp_net_ptr_t port, bool net,
+                      unsigned base, unsigned wid);
 
       void get_value(struct t_vpi_value*value);
 
@@ -900,6 +908,8 @@ class vvp_fun_signal8  : public vvp_fun_signal_vec {
 
 	// Commands
       void release(vvp_net_ptr_t port, bool net);
+      void release_pv(vvp_net_ptr_t port, bool net,
+                      unsigned base, unsigned wid);
 
       void get_value(struct t_vpi_value*value);
 
@@ -923,6 +933,8 @@ class vvp_fun_signal_real  : public vvp_fun_signal_base {
 
 	// Commands
       void release(vvp_net_ptr_t port, bool net);
+      void release_pv(vvp_net_ptr_t port, bool net,
+                      unsigned base, unsigned wid);
 
       void get_value(struct t_vpi_value*value);
 
@@ -1024,6 +1036,8 @@ inline void vvp_send_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val)
 extern void vvp_send_vec8(vvp_net_ptr_t ptr, vvp_vector8_t val);
 extern void vvp_send_real(vvp_net_ptr_t ptr, double val);
 extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
+extern void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
+                             unsigned base, unsigned width);
 
 /*
  * Part-vector versions of above functions. This function uses the

@@ -3238,17 +3238,34 @@ bool of_POW_WR(vthread_t thr, vvp_code_t cp)
 bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
+      unsigned base  = cp->bit_idx[0];
+      unsigned width = cp->bit_idx[1];
 
-      vvp_fun_signal_base*sig = reinterpret_cast<vvp_fun_signal_base*>(net->fun);
+      vvp_fun_signal_vec*sig = reinterpret_cast<vvp_fun_signal_vec*>(net->fun);
       assert(sig);
 
-	/* XXXX Release for %force/link not yet implemented. */
-      if (sig->force_link)
+      if (base >= sig->size()) return true;
+      if (base+width > sig->size()) width = sig->size() - base;
+
+      bool full_sig = base == 0 && width == sig->size();
+
+      if (sig->force_link) {
+	    if (!full_sig) {
+		  fprintf(stderr, "Sorry: when a signal is forcing a "
+		          "net, I cannot release part of it.\n");
+		  exit(1);
+	    }
 	    unlink_force(net);
+      }
       assert(sig->force_link == 0);
 
+	/* Do we release all or part of the net? */
       vvp_net_ptr_t ptr (net, 3);
-      vvp_send_long(ptr, 2);
+      if (full_sig) {
+	    vvp_send_long(ptr, 2);
+      } else {
+	    vvp_send_long_pv(ptr, 2, base, width);
+      }
 
       return true;
 }
@@ -3257,20 +3274,37 @@ bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
 bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
+      unsigned base  = cp->bit_idx[0];
+      unsigned width = cp->bit_idx[1];
 
-      vvp_fun_signal_base*sig = reinterpret_cast<vvp_fun_signal_base*>(net->fun);
+      vvp_fun_signal_vec*sig = reinterpret_cast<vvp_fun_signal_vec*>(net->fun);
       assert(sig);
+
+      if (base >= sig->size()) return true;
+      if (base+width > sig->size()) width = sig->size() - base;
+
+      bool full_sig = base == 0 && width == sig->size();
 
 	// This is the net that is forcing me...
       if (vvp_net_t*src = sig->force_link) {
+	    if (!full_sig) {
+		  fprintf(stderr, "Sorry: when a signal is forcing a "
+		          "register, I cannot release part of it.\n");
+		  exit(1);
+	    }
 	      // And this is the pointer to be removed.
 	    vvp_net_ptr_t dst_ptr (net, 2);
 	    unlink_from_driver(src, dst_ptr);
       }
 
 	// Send a command to this signal to unforce itself.
+	/* Do we release all or part of the net? */
       vvp_net_ptr_t ptr (net, 3);
-      vvp_send_long(ptr, 3);
+      if (full_sig) {
+	    vvp_send_long(ptr, 3);
+      } else {
+	    vvp_send_long_pv(ptr, 3, base, width);
+      }
 
       return true;
 }

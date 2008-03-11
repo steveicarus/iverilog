@@ -586,8 +586,8 @@ This opcode raises <bit-l> (real) to the power of <bit-r> (real). The
 result replaces the left operand.
 
 
-* %release/net <functor-label>
-* %release/reg <functor-label>
+* %release/net <functor-label>, <base>, <width>
+* %release/reg <functor-label>, <base>, <width>
 
 Release the force on the signal that is represented by the functor
 <functor-label>.  The force was previously activated with a %force/v
@@ -597,6 +597,10 @@ command with net semantics: the unforced value is propagated to the
 output of the signal after the release is complete. The %release/reg
 sends the release command with reg semantics: the signal holds its
 forced value until another value propagates through.
+
+The <base> and <width> are used to determine what part of the signal
+will be released. For a full release the <base> is 0 and <width> is
+the entire signal width.
 
 * %set/v <var-label>, <bit>, <wid>
 

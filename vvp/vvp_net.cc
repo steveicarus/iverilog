@@ -202,6 +202,19 @@ void vvp_send_long(vvp_net_ptr_t ptr, long val)
       }
 }
 
+void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
+                      unsigned base, unsigned wid)
+{
+      while (struct vvp_net_t*cur = ptr.ptr()) {
+	    vvp_net_ptr_t next = cur->port[ptr.port()];
+
+	    if (cur->fun)
+		  cur->fun->recv_long_pv(ptr, val, base, wid);
+
+	    ptr = next;
+      }
+}
+
 void vvp_vector4_t::copy_bits(const vvp_vector4_t&that)
 {
       unsigned bits_to_copy = (that.size_ < size_) ? that.size_ : size_;
@@ -1603,6 +1616,13 @@ void vvp_net_fun_t::recv_long(vvp_net_ptr_t, long)
       assert(0);
 }
 
+void vvp_net_fun_t::recv_long_pv(vvp_net_ptr_t, long, unsigned, unsigned)
+{
+      fprintf(stderr, "internal error: %s: recv_long_pv not implemented\n",
+	      typeid(*this).name());
+      assert(0);
+}
+
 /* **** vvp_fun_drive methods **** */
 
 vvp_fun_drive::vvp_fun_drive(vvp_bit4_t init, unsigned str0, unsigned str1)
@@ -1658,6 +1678,37 @@ void vvp_fun_signal_base::recv_long(vvp_net_ptr_t ptr, long bit)
 		  break;
 		case 3: // release/reg
 		  release(ptr, false);
+		  break;
+		default:
+		  fprintf(stderr, "Unsupported command %ld.\n", bit);
+		  assert(0);
+		  break;
+	    }
+	    break;
+
+	  default: // Other ports are errors.
+	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
+	    assert(0);
+	    break;
+      }
+}
+
+void vvp_fun_signal_base::recv_long_pv(vvp_net_ptr_t ptr, long bit,
+                                       unsigned base, unsigned wid)
+{
+      switch (ptr.port()) {
+	  case 3: // Command port
+	    switch (bit) {
+		case 1: // deassign command
+		  fprintf(stderr, "Sorry: cannot deassign a partial signal\n");
+		  assert(0);
+		  deassign();
+		  break;
+		case 2: // release/net
+		  release_pv(ptr, true, base, wid);
+		  break;
+		case 3: // release/reg
+		  release_pv(ptr, false, base, wid);
 		  break;
 		default:
 		  fprintf(stderr, "Unsupported command %ld.\n", bit);
@@ -1810,6 +1861,19 @@ void vvp_fun_signal::release(vvp_net_ptr_t ptr, bool net)
       }
 }
 
+void vvp_fun_signal::release_pv(vvp_net_ptr_t ptr, bool net,
+                                unsigned base, unsigned wid)
+{
+      assert(bits4_.size() >= base + wid);
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    force_mask_.set_bit(base+idx, 0);
+	    if (!net) bits4_.set_bit(base+idx, force_.value(base+idx));
+      }
+
+      if (net) calculate_output_(ptr);
+}
+
 unsigned vvp_fun_signal::size() const
 {
       if (force_mask_.size())
@@ -1930,6 +1994,19 @@ void vvp_fun_signal8::release(vvp_net_ptr_t ptr, bool net)
       }
 }
 
+void vvp_fun_signal8::release_pv(vvp_net_ptr_t ptr, bool net,
+                                 unsigned base, unsigned wid)
+{
+      assert(bits8_.size() >= base + wid);
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    force_mask_.set_bit(base+idx, 0);
+	    if (!net) bits8_.set_bit(base+idx, force_.value(base+idx));
+      }
+
+      if (net) calculate_output_(ptr);
+}
+
 unsigned vvp_fun_signal8::size() const
 {
       if (force_mask_.size())
@@ -2029,6 +2106,13 @@ void vvp_fun_signal_real::release(vvp_net_ptr_t ptr, bool net)
       } else {
 	    bits_ = force_;
       }
+}
+
+void vvp_fun_signal_real::release_pv(vvp_net_ptr_t ptr, bool net,
+                                     unsigned base, unsigned wid)
+{
+      fprintf(stderr, "Error: cannot take bit/part select of a real value!\n");
+      assert(0);
 }
 
 /* **** vvp_wide_fun_* methods **** */
