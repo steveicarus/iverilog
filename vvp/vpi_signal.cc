@@ -600,6 +600,16 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
       struct __vpiSignal*rfp = vpip_signal_from_handle(ref);
       assert(rfp);
 
+	/* If this is a release, then we are not really putting a
+	   value. Instead, issue a release "command" to the signal
+	   node to cause it to release a forced value. */
+      if (flags == vpiReleaseFlag) {
+	    vvp_net_ptr_t dest_cmd(rfp->node, 3);
+	      /* Assume this is a net. (XXXX Are we sure?) */
+	    vvp_send_long(dest_cmd, 2 /* release/net */);
+	    return ref;
+      }
+
 	/* Make a vvp_vector4_t vector to receive the translated value
 	   that we are going to poke. This will get populated
 	   differently depending on the format. */
@@ -659,12 +669,8 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 
       }
 
-      if (flags == vpiReleaseFlag) {
-	    vvp_net_ptr_t dest_cmd(rfp->node, 3);
-	    vvp_send_long(dest_cmd, 2 /* release/net */);
-	    return ref;
-      }
-
+	/* If this is a vpiForce, then instead of writing to the
+	   signal input port, we write to the special "force" port. */
       int dest_port = 0;
       if (flags == vpiForceFlag)
 	    dest_port = 2;
