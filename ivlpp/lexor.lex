@@ -253,7 +253,8 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
   * string.
   */
 \"            { string_enter = YY_START; BEGIN(CSTRING); ECHO; }
-<CSTRING>\\\" { ECHO; }
+<CSTRING>\\\" |
+<CSTRING>\\`  { ECHO; }
 <CSTRING>\r\n |
 <CSTRING>\n\r |
 <CSTRING>\n   |
