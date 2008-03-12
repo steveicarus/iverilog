@@ -2336,7 +2336,7 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 	    fprintf(stderr, "%s:%u:  vvp-tgt error: unhandled expr. type: "
 	            "%u at %s:%d\n", ivl_expr_file(exp), ivl_expr_lineno(exp),
                     ivl_expr_type(exp), __FILE__, __LINE__);
-	    assert(0);
+	    exit(1);
 	    res.base = 0;
 	    res.wid = 0;
 	    break;

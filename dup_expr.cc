@@ -94,9 +94,10 @@ NetESFunc* NetESFunc::dup_expr() const
 
 NetESignal* NetESignal::dup_expr() const
 {
-      NetESignal*tmp = new NetESignal(net_);
+      NetESignal*tmp = new NetESignal(net_, word_);
       assert(tmp);
       tmp->expr_width(expr_width());
+      tmp->set_line(*this);
       return tmp;
 }
 
