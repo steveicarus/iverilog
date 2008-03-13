@@ -600,7 +600,6 @@ struct vvp_net_t {
       vvp_net_ptr_t port[4];
       vvp_net_ptr_t out;
       vvp_net_fun_t*fun;
-      long fun_flags;
 };
 
 /*
