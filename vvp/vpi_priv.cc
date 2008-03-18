@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.54 2007/04/18 01:57:07 steve Exp $"
-#endif
 
 # include  "vpi_priv.h"
 # include  "schedule.h"
@@ -658,7 +655,6 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
       if (obj->vpi_type->vpi_put_value_ == 0)
 	    return 0;
 
-      int return_event_flag = flags & vpiReturnEvent;
       flags &= ~vpiReturnEvent;
 
       if (flags!=vpiNoDelay && flags!=vpiForceFlag && flags!=vpiReleaseFlag) {
@@ -1011,4 +1007,3 @@ extern "C" void vpi_control(PLI_INT32 operation, ...)
       vpi_sim_vcontrol(operation, ap);
       va_end(ap);
 }
-
