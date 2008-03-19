@@ -2886,6 +2886,30 @@ NetNet* PEString::elaborate_net(Design*des, NetScope*scope,
       return net;
 }
 
+/* Common processing for the case when a single argument is always
+ * selected in a ternary operator. */
+static void process_single_ternary(Design*des, const PExpr*base,
+                                   unsigned width, NetNet*&sig)
+{
+	/* We must have a type for the signal. */
+      if (sig->data_type() == IVL_VT_NO_TYPE) {
+	    cerr << base->get_fileline() << ": internal error: constant "
+		 << "selected ternary clause has NO TYPE." << endl;
+	    des->errors += 1;
+	    sig = 0;
+      }
+
+	/* Use the signal width if one is not provided.
+	 * Pad or crop as needed. */
+      if (width == 0) width = sig->vector_width();
+
+      if (sig->vector_width() < width) sig = pad_to_width(des, sig, width);
+
+      if (width < sig->vector_width()) sig = crop_to_width(des, sig, width);
+
+      sig->set_line(*base);
+}
+
 /*
  * Elaborate the ternary operator in a netlist by creating a LPM_MUX
  * with width matching the result, size == 2 and 1 select input. These
@@ -2918,18 +2942,24 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 	  case C_0:
             fal_sig = fal_->elaborate_net(des, scope, width, 0, 0, 0);
             if (fal_sig == 0) return 0;
-tru_sig = tru_->elaborate_net(des, scope, width, 0, 0, 0);
+            process_single_ternary(des, this, width, fal_sig);
+            return fal_sig;
             break;
 
 	  case C_1:
             tru_sig = tru_->elaborate_net(des, scope, width, 0, 0, 0);
             if (tru_sig == 0) return 0;
-fal_sig = fal_->elaborate_net(des, scope, width, 0, 0, 0);
+            process_single_ternary(des, this, width, tru_sig);
+            return tru_sig;
             break;
 
 	  default:
             tru_sig = tru_->elaborate_net(des, scope, width, 0, 0, 0);
             fal_sig = fal_->elaborate_net(des, scope, width, 0, 0, 0);
+            /* We should really see if these are constant values and
+             * mix them as needed so we can omit the MUX? below, but
+             * since this is a very uncommon case, I'm going to pass
+             * on this for now. */
             break;
       }
       expr_sig = expr->synthesize(des);
