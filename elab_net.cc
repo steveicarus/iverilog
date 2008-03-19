@@ -2188,7 +2188,6 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
  * make the l-value connections.
  */
 NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
-					 bool implicit_net_ok,
 					 bool bidirectional_flag) const
 {
       assert(scope);
@@ -2222,8 +2221,7 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    if (bidirectional_flag) {
 		  nets[idx] = parms_[idx]->elaborate_bi_net(des, scope);
 	    } else {
-		  nets[idx] = parms_[idx]->elaborate_lnet(des, scope,
-							  implicit_net_ok);
+		  nets[idx] = parms_[idx]->elaborate_lnet(des, scope);
 	    }
 	    if (nets[idx] == 0)
 		  errors += 1;
@@ -2284,15 +2282,14 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
       return osig;
 }
 
-NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
-				 bool implicit_net_ok) const
+NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope) const
 {
-      return elaborate_lnet_common_(des, scope, implicit_net_ok, false);
+      return elaborate_lnet_common_(des, scope, false);
 }
 
 NetNet* PEConcat::elaborate_bi_net(Design*des, NetScope*scope) const
 {
-      return elaborate_lnet_common_(des, scope, true, true);
+      return elaborate_lnet_common_(des, scope, true);
 }
 
 /*
@@ -2506,7 +2503,6 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
  * so most of the work for both is done here.
  */
 NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
-					bool implicit_net_ok,
 					bool bidirectional_flag) const
 {
       assert(scope);
@@ -2526,19 +2522,10 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       }
 
       if (sig == 0) {
-
-	    if (implicit_net_ok) {
-
-		  sig = make_implicit_net_(des, scope);
-		  if (sig == 0)
-			return 0;
-
-	    } else {
-		  cerr << get_fileline() << ": error: Net " << path_
-		       << " is not defined in this context." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
+	    cerr << get_fileline() << ": error: Net " << path_
+		 << " is not defined in this context." << endl;
+	    des->errors += 1;
+	    return 0;
       }
 
       assert(sig);
@@ -2671,15 +2658,14 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
  * Identifiers in continuous assignment l-values are limited to wires
  * and that ilk. Detect registers and memories here and report errors.
  */
-NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
-					bool implicit_net_ok) const
+NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope) const
 {
-      return elaborate_lnet_common_(des, scope, implicit_net_ok, false);
+      return elaborate_lnet_common_(des, scope, false);
 }
 
 NetNet* PEIdent::elaborate_bi_net(Design*des, NetScope*scope) const
 {
-      return elaborate_lnet_common_(des, scope, true, true);
+      return elaborate_lnet_common_(des, scope, true);
 }
 
 /*

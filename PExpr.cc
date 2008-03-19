@@ -43,7 +43,7 @@ bool PExpr::is_constant(Module*) const
       return false;
 }
 
-NetNet* PExpr::elaborate_lnet(Design*des, NetScope*, bool) const
+NetNet* PExpr::elaborate_lnet(Design*des, NetScope*) const
 {
       cerr << get_fileline() << ": error: expression not valid in assign l-value: "
 	   << *this << endl;

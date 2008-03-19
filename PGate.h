@@ -129,6 +129,7 @@ class PGAssign  : public PGate {
 
       void dump(ostream&out, unsigned ind =4) const;
       virtual void elaborate(Design*des, NetScope*scope) const;
+      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
     private:
 };
@@ -166,6 +167,7 @@ class PGBuiltin  : public PGate {
 
       virtual void dump(ostream&out, unsigned ind =4) const;
       virtual void elaborate(Design*, NetScope*scope) const;
+      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
     private:
       Type type_;

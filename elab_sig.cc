@@ -230,6 +230,64 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
       return flag;
 }
 
+bool PExpr::elaborate_sig(Design*des, NetScope*scope) const
+{
+      return true;
+}
+
+bool PEConcat::elaborate_sig(Design*des, NetScope*scope) const
+{
+      bool flag = true;
+      for (unsigned idx = 0 ; idx < parms_.count() ; idx += 1)
+	    flag = parms_[idx]->elaborate_sig(des, scope) && flag;
+
+      return flag;
+}
+
+bool PEIdent::elaborate_sig(Design*des, NetScope*scope) const
+{
+      NetNet*       sig = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+
+      symbol_search(des, scope, path_, sig, par, eve);
+
+      if (eve != 0)
+	    return false;
+
+      if (sig == 0)
+	    sig = make_implicit_net_(des, scope);
+
+      return sig != 0;
+}
+
+bool PGate::elaborate_sig(Design*des, NetScope*scope) const
+{
+      return true;
+}
+
+bool PGBuiltin::elaborate_sig(Design*des, NetScope*scope) const
+{
+      bool flag = true;
+
+      for (unsigned idx = 0 ; idx < pin_count() ; idx += 1)
+	    flag = pin(idx)->elaborate_sig(des, scope) && flag;
+
+      return flag;
+}
+
+bool PGAssign::elaborate_sig(Design*des, NetScope*scope) const
+{
+      /* Normally, l-values to continuous assignments are NOT allowed
+         to implicitly declare nets. However, so many tools do allow
+         it that Icarus Verilog will allow it, at least if extensions
+         are enabled. */
+      if (generation_flag == GN_VER2001X)
+	    return pin(0)->elaborate_sig(des, scope);
+
+      return true;
+}
+
 bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 				  Module*rmod) const
 {
@@ -596,11 +654,6 @@ void PForStatement::elaborate_sig(Design*des, NetScope*scope) const
 {
       if (statement_)
 	    statement_->elaborate_sig(des, scope);
-}
-
-bool PGate::elaborate_sig(Design*des, NetScope*scope) const
-{
-      return true;
 }
 
 /*
