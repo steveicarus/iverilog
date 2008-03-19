@@ -74,6 +74,10 @@ class PExpr : public LineInfo {
 				  unsigned min, unsigned lval,
 				  bool&unsized_flag) const;
 
+	// During the elaborate_sig phase, we may need to scan
+	// expressions to find implicit net declarations.
+      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
+
 	// Procedural elaboration of the expression. The expr_width is
 	// the width of the context of the expression (i.e. the
 	// l-value width of an assignment),
@@ -107,8 +111,7 @@ class PExpr : public LineInfo {
 
 	// This method elaborates the expression as gates, but
 	// restricted for use as l-values of continuous assignments.
-      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope,
-				     bool implicit_net_ok =false) const;
+      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
 
 	// This is similar to elaborate_lnet, except that the
 	// expression is evaluated to be bi-directional. This is
@@ -157,8 +160,8 @@ class PEConcat : public PExpr {
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
       virtual void dump(ostream&) const;
 
-      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope,
-				     bool implicit_net_ok =false) const;
+      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
+      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
       virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
@@ -177,7 +180,6 @@ class PEConcat : public PExpr {
 
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
-				     bool implicit_net_ok,
 				     bool bidirectional_flag) const;
     private:
       svector<PExpr*>parms_;
@@ -264,9 +266,10 @@ class PEIdent : public PExpr {
 				  unsigned min, unsigned lval,
 				  bool&unsized_flag) const;
 
+      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
+
 	// Identifiers are allowed (with restrictions) is assign l-values.
-      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope,
-				     bool implicit_net_ok =false) const;
+      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
 
       virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
 
@@ -379,7 +382,6 @@ class PEIdent : public PExpr {
 
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
-				     bool implicit_net_ok,
 				     bool bidirectional_flag) const;
 
       NetNet*make_implicit_net_(Design*des, NetScope*scope) const;
