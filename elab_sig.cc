@@ -300,14 +300,23 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
       bool flag = true;
 
 	// First, elaborate the signals that may be created implicitly
-	// by ports to this module instantiation.
-      for (unsigned idx = 0 ; idx < pin_count() ; idx += 1) {
-	    const PExpr*tmp = pin(idx);
-	    if (tmp == 0)
-		  continue;
-	    flag = tmp->elaborate_sig(des, scope) && flag;
-      }
-
+	// by ports to this module instantiation. Handle the case that
+	// the ports are passed by name (pins_ != 0) or position.
+      if (pins_)
+	    for (unsigned idx =  0 ; idx < npins_ ; idx += 1) {
+		  const PExpr*tmp = pins_[idx].parm;
+		  if (tmp == 0)
+			continue;
+		  flag = tmp->elaborate_sig(des, scope) && flag;
+	    }
+      else
+	    for (unsigned idx = 0 ; idx < pin_count() ; idx += 1) {
+		  const PExpr*tmp = pin(idx);
+		  if (tmp == 0)
+			continue;
+		  flag = tmp->elaborate_sig(des, scope) && flag;
+	    }
+	    
 
       NetScope::scope_vec_t instance = scope->instance_arrays[get_name()];
 
