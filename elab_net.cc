@@ -2334,25 +2334,18 @@ NetNet* PEFNumber::elaborate_net(Design*des, NetScope*scope,
 NetNet* PEIdent::make_implicit_net_(Design*des, NetScope*scope) const
 {
       NetNet::Type nettype = scope->default_nettype();
-      NetNet*sig = 0;
+      assert(nettype != NetNet::NONE);
 
-      if (!error_implicit && nettype!=NetNet::NONE) {
-	    sig = new NetNet(scope, peek_tail_name(path_),
-			     NetNet::IMPLICIT, 1);
-	      /* Implicit nets are always scalar logic. */
-	    sig->data_type(IVL_VT_LOGIC);
+      NetNet*sig = new NetNet(scope, peek_tail_name(path_),
+			      NetNet::IMPLICIT, 1);
+      sig->set_line(*this);
+	/* Implicit nets are always scalar logic. */
+      sig->data_type(IVL_VT_LOGIC);
 
-	    if (warn_implicit) {
-		  cerr << get_fileline() << ": warning: implicit "
-			"definition of wire logic " << scope_path(scope)
-		       << "." << peek_tail_name(path_) << "." << endl;
-	    }
-
-      } else {
-	    cerr << get_fileline() << ": error: Net " << path_
-		 << " is not defined in this context." << endl;
-	    des->errors += 1;
-	    return 0;
+      if (warn_implicit) {
+	    cerr << get_fileline() << ": warning: implicit "
+		  "definition of wire logic " << scope_path(scope)
+		 << "." << peek_tail_name(path_) << "." << endl;
       }
 
       return sig;

@@ -250,6 +250,12 @@ bool PEIdent::elaborate_sig(Design*des, NetScope*scope) const
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
+	// If implicit net creation is turned off, then stop now.
+      if (scope->default_nettype() == NetNet::NONE)
+	    return true;
+      if (error_implicit)
+	    return true;
+
       symbol_search(des, scope, path_, sig, par, eve);
 
       if (eve != 0)
@@ -292,6 +298,16 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 				  Module*rmod) const
 {
       bool flag = true;
+
+	// First, elaborate the signals that may be created implicitly
+	// by ports to this module instantiation.
+      for (unsigned idx = 0 ; idx < pin_count() ; idx += 1) {
+	    const PExpr*tmp = pin(idx);
+	    if (tmp == 0)
+		  continue;
+	    flag = tmp->elaborate_sig(des, scope) && flag;
+      }
+
 
       NetScope::scope_vec_t instance = scope->instance_arrays[get_name()];
 
