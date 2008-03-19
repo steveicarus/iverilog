@@ -840,9 +840,35 @@ void NetForever::dump(ostream&o, unsigned ind) const
 void NetFuncDef::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "function definition for " << scope_path(scope_) << endl;
-      if (result_sig_)
-	    o << setw(ind+2) << "" << "Return signal: "
-	      << result_sig_->name() << endl;
+      if (result_sig_) {
+	    o << setw(ind+2) << "" << "Return signal: ";
+	    if (result_sig_->get_signed()) o << "+";
+	    o << result_sig_->name() << "[" << result_sig_->msb() << ":"
+	      << result_sig_->lsb() << "]" << endl;
+      }
+      o << setw(ind+2) << "" << "Arguments: ";
+      if (port_count() == 0) o << "<none>";
+      o << endl;
+      for (unsigned idx = 0; idx < port_count(); idx += 1) {
+	    o << setw(ind+4) << "" << "Arg[" << idx+1 << "] = ";
+	    switch (port(idx)->port_type()) {
+		default:
+		  o << "implicit-port? ";
+		  break;
+		case NetNet::PINPUT:
+		  o << "input ";
+		  break;
+		case NetNet::POUTPUT:
+		  o << "output ";
+		  break;
+		case NetNet::PINOUT:
+		  o << "inout ";
+		  break;
+	    }
+	    if (port(idx)->get_signed()) o << "+";
+	    o << port(idx)->name() << "[" << port(idx)->msb() << ":"
+	      << port(idx)->lsb() << "]" << endl;
+      }
       if (statement_)
 	    statement_->dump(o, ind+2);
       else
