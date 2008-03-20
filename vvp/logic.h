@@ -1,7 +1,7 @@
 #ifndef __logic_H
 #define __logic_H
 /*
- * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.25 2006/11/28 05:57:20 steve Exp $"
-#endif
 
 # include  "vvp_net.h"
 # include  "schedule.h"
@@ -135,7 +132,7 @@ class vvp_fun_bufz: public vvp_net_fun_t {
  * input (port-0 or port-1) to enter the device. The narrow vector is
  * padded with X values.
  */
-class vvp_fun_muxz : public vvp_net_fun_t {
+class vvp_fun_muxz : public vvp_net_fun_t, private vvp_gen_event_s {
 
     public:
       explicit vvp_fun_muxz(unsigned width);
@@ -144,12 +141,16 @@ class vvp_fun_muxz : public vvp_net_fun_t {
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
 
     private:
+      void run_run();
+
+    private:
       vvp_vector4_t a_;
       vvp_vector4_t b_;
       int select_;
+      vvp_net_t*net_;
 };
 
-class vvp_fun_muxr : public vvp_net_fun_t {
+class vvp_fun_muxr : public vvp_net_fun_t, private vvp_gen_event_s {
 
     public:
       explicit vvp_fun_muxr();
@@ -159,9 +160,13 @@ class vvp_fun_muxr : public vvp_net_fun_t {
       void recv_real(vvp_net_ptr_t p, double bit);
 
     private:
+      void run_run();
+
+    private:
       double a_;
       double b_;
       int select_;
+      vvp_net_t*net_;
 };
 
 class vvp_fun_not: public vvp_net_fun_t, private vvp_gen_event_s {

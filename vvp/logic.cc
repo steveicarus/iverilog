@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.38 2007/02/12 05:08:27 steve Exp $"
-#endif
 
 # include  "logic.h"
 # include  "compile.h"
@@ -259,6 +256,7 @@ void vvp_fun_bufz::recv_real(vvp_net_ptr_t ptr, double bit)
 vvp_fun_muxr::vvp_fun_muxr()
 : a_(0.0), b_(0.0)
 {
+      net_ = 0;
       count_functors_logic += 1;
       select_ = 2;
 }
@@ -270,7 +268,7 @@ vvp_fun_muxr::~vvp_fun_muxr()
 void vvp_fun_muxr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
 	/* The real valued mux can only take in the select as a
-	   vector4_t. the muxed data is rea. */
+	   vector4_t. The muxed data is real. */
       if (ptr.port() != 2)
 	    return;
 
@@ -278,30 +276,21 @@ void vvp_fun_muxr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 
       switch (bit.value(0)) {
 	  case BIT4_0:
+	    if (select_ == 0) return;
 	    select_ = 0;
 	    break;
 	  case BIT4_1:
+	    if (select_ == 1) return;
 	    select_ = 1;
 	    break;
 	  default:
+	    if (select_ == 2) return;
 	    select_ = 2;
       }
 
-      switch (select_) {
-	  case 0:
-	    vvp_send_real(ptr.ptr()->out, a_);
-	    break;
-	  case 1:
-	    vvp_send_real(ptr.ptr()->out, b_);
-	    break;
-	  default:
-	    if (a_ == b_) {
-		  vvp_send_real(ptr.ptr()->out, a_);
-	    } else {
-		    // Should send NaN?
-		  vvp_send_real(ptr.ptr()->out, 0.0);
-	    }
-	    break;
+      if (net_ == 0) {
+	    net_ = ptr.ptr();
+	    schedule_generic(this, 0, false);
       }
 }
 
@@ -309,32 +298,54 @@ void vvp_fun_muxr::recv_real(vvp_net_ptr_t ptr, double bit)
 {
       switch (ptr.port()) {
 	  case 0:
-	    if (a_ == bit)
-		  break;
-
+	    if (a_ == bit) return;
 	    a_ = bit;
-	    if (select_ == 0)
-		  vvp_send_real(ptr.ptr()->out, a_);
+	    if (select_ == 1) return; // The other port is selected.
 	    break;
 
 	  case 1:
-	    if (b_ == bit)
-		  break;
-
+	    if (b_ == bit) return;
 	    b_ = bit;
-	    if (select_ == 1)
-		  vvp_send_real(ptr.ptr()->out, b_);
+	    if (select_ == 0) return; // The other port is selected.
 	    break;
 
 	  default:
 	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
 	    assert(0);
       }
+
+      if (net_ == 0) {
+	    net_ = ptr.ptr();
+	    schedule_generic(this, 0, false);
+      }
+}
+
+void vvp_fun_muxr::run_run()
+{
+      vvp_net_t*ptr = net_;
+      net_ = 0;
+
+      switch (select_) {
+	  case 0:
+	    vvp_send_real(ptr->out, a_);
+	    break;
+	  case 1:
+	    vvp_send_real(ptr->out, b_);
+	    break;
+	  default:
+	    if (a_ == b_) {
+		  vvp_send_real(ptr->out, a_);
+	    } else {
+		  vvp_send_real(ptr->out, 0.0); // Should this be NaN?
+	    }
+	    break;
+      }
 }
 
 vvp_fun_muxz::vvp_fun_muxz(unsigned wid)
 : a_(wid), b_(wid)
 {
+      net_ = 0;
       count_functors_logic += 1;
       select_ = 2;
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -351,21 +362,28 @@ void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       switch (ptr.port()) {
 	  case 0:
+	    if (a_ .eeq(bit)) return;
 	    a_ = bit;
+	    if (select_ == 1) return; // The other port is selected.
 	    break;
 	  case 1:
+	    if (b_ .eeq(bit)) return;
 	    b_ = bit;
+	    if (select_ == 0) return; // The other port is selected.
 	    break;
 	  case 2:
 	    assert(bit.size() == 1);
 	    switch (bit.value(0)) {
 		case BIT4_0:
+		  if (select_ == 0) return;
 		  select_ = 0;
 		  break;
 		case BIT4_1:
+		  if (select_ == 1) return;
 		  select_ = 1;
 		  break;
 		default:
+		  if (select_ == 2) return;
 		  select_ = 2;
 	    }
 	    break;
@@ -373,12 +391,23 @@ void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    return;
       }
 
+      if (net_ == 0) {
+	    net_ = ptr.ptr();
+	    schedule_generic(this, 0, false);
+      }
+}
+
+void vvp_fun_muxz::run_run()
+{
+      vvp_net_t*ptr = net_;
+      net_ = 0;
+
       switch (select_) {
 	  case 0:
-	    vvp_send_vec4(ptr.ptr()->out, a_);
+	    vvp_send_vec4(ptr->out, a_);
 	    break;
 	  case 1:
-	    vvp_send_vec4(ptr.ptr()->out, b_);
+	    vvp_send_vec4(ptr->out, b_);
 	    break;
 	  default:
 	      {
@@ -401,7 +430,7 @@ void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 		    for (unsigned idx = min_size ;  idx < max_size ;  idx += 1)
 			  res.set_bit(idx, BIT4_X);
 
-		    vvp_send_vec4(ptr.ptr()->out, res);
+		    vvp_send_vec4(ptr->out, res);
 	      }
 	    break;
       }
@@ -645,4 +674,3 @@ void compile_functor(char*label, char*type, unsigned width,
       define_functor_symbol(label, net_drv);
       free(label);
 }
-
