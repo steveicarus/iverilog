@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -234,6 +234,28 @@ void compile_net_real(char*label, char*name, int msb, int lsb, bool local_flag,
       free(argv);
 }
 
+void compile_aliasw(char*label, char*array_label, unsigned long array_addr,
+                    int msb, int lsb, unsigned argc, struct symb_s*argv)
+{
+      vvp_array_t array = array_find(array_label);
+      assert(array);
+
+      assert(argc == 1);
+      vvp_net_t*node = vvp_net_lookup(argv[0].text);
+
+	/* Add the label into the functor symbol table. */
+      define_functor_symbol(label, node);
+
+      vpiHandle obj = vvp_lookup_handle(argv[0].text);
+      assert(obj);
+      array_alias_word(array, array_addr, obj);
+
+      free(label);
+      free(array_label);
+      free(argv[0].text);
+      free(argv);
+}
+
 void compile_alias(char*label, char*name, int msb, int lsb, bool signed_flag,
 		 unsigned argc, struct symb_s*argv)
 {
@@ -277,4 +299,3 @@ void compile_alias_real(char*label, char*name, int msb, int lsb,
       free(argv[0].text);
       free(argv);
 }
-

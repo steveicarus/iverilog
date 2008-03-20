@@ -72,6 +72,7 @@ extern void wide_inputs_connect(vvp_wide_fun_core*core,
 				unsigned argc, struct symb_s*argv);
 
 extern vvp_net_t* vvp_net_lookup(const char*label);
+extern vpiHandle vvp_lookup_handle(const char*label);
 
 /*
  *  Add a functor to the symbol table
@@ -408,5 +409,8 @@ extern void compile_alias(char*label, char*name,
 extern void compile_alias_real(char*label, char*name,
 			       int msb, int lsb,
 			       unsigned argc, struct symb_s*argv);
+extern void compile_aliasw(char*label, char*array_symbol,
+			   unsigned long array_addr, int msb, int lsb,
+			   unsigned argc, struct symb_s*argv);
 
 #endif

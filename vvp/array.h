@@ -1,7 +1,7 @@
 #ifndef __array_H                                      // -*- c++ -*-
 #define __array_H
 /*
- * Copyright (c) 2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: array.h,v 1.2 2007/04/10 01:26:16 steve Exp $"
-#endif
 
 #include "vvp_net.h"
 #include "vpi_user.h"
@@ -36,7 +33,10 @@ extern vpiHandle array_index_iterate(int code, vpiHandle ref);
 
 extern void array_word_change(vvp_array_t array, unsigned long addr);
 
-extern void array_attach_word(vvp_array_t array, unsigned long addr, vpiHandle word);
+extern void array_attach_word(vvp_array_t array, unsigned long addr,
+                              vpiHandle word);
+extern void array_alias_word(vvp_array_t array, unsigned long addr,
+                             vpiHandle word);
 
 extern void array_set_word(vvp_array_t arr,
 			    unsigned idx,

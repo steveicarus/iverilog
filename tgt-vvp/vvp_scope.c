@@ -1120,19 +1120,31 @@ static void draw_net_in_scope(ivl_signal_t sig)
 		       discover that the entire array can be collapsed,
 		       so the word count for the signal and the alias
 		       *must* match. */
-		  assert(word_count == ivl_signal_array_count(nex_data->net));
 
-		  if (iword == 0) {
-			fprintf(vvp_out, "v%p .array \"%s\", v%p; Alias to %s\n",
-				sig, vvp_mangle_name(ivl_signal_basename(sig)),
-				nex_data->net, ivl_signal_basename(nex_data->net));
+		  if (word_count == ivl_signal_array_count(nex_data->net)) {
+		    if (iword == 0) {
+		      fprintf(vvp_out, "v%p .array \"%s\", v%p; Alias to %s\n",
+			      sig, vvp_mangle_name(ivl_signal_basename(sig)),
+			      nex_data->net,
+			      ivl_signal_basename(nex_data->net));
+		    }
+		    /* An alias for an individual word. */
+		  } else {
+			if (iword == 0) {
+			      int first = ivl_signal_array_base(sig);
+			      int last = first + word_count-1;
+			      fprintf(vvp_out, "v%p .array \"%s\", %d %d;\n",
+				      sig,
+				      vvp_mangle_name(ivl_signal_basename(sig)),
+				      last, first);
+			}
+
+			fprintf(vvp_out, "v%p_%u .alias%s v%p %u, %d %d, "
+			        "v%p_%u; Alias to %s\n", sig, iword,
+			        datatype_flag, sig, iword, msb, lsb,
+			        nex_data->net, nex_data->net_word,
+			        ivl_signal_basename(nex_data->net));
 		  }
-		    /* An alias for the individual words? */
-#if 0
-		  fprintf(vvp_out, "v%p_%u .alias%s v%p, %d %d, v%p_%u;\n",
-			  sig, iword, datatype_flag, sig,
-			  msb, lsb, nex_data->net, nex_data->net_word);
-#endif
 	    } else {
 		    /* Finally, we may have an alias that is a word
 		       connected to another word. Again, this is a

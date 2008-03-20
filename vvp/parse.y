@@ -642,6 +642,18 @@ statement
           symbols_net ';'
                  { compile_netw($1, $3, $4, $6, $7, true, true, $9.cnt, $9.vect); }
 
+  /* Array word versions of alias directives. */
+
+        | T_LABEL K_ALIAS T_SYMBOL T_NUMBER ','
+	  signed_t_number signed_t_number ','
+          symbols_net ';'
+                 { compile_aliasw($1, $3, $4, $6, $7, $9.cnt, $9.vect); }
+
+        | T_LABEL K_ALIAS_R T_SYMBOL T_NUMBER ','
+	  signed_t_number signed_t_number ','
+          symbols_net ';'
+                 { compile_aliasw($1, $3, $4, $6, $7, $9.cnt, $9.vect); }
+
   /* Parameter statements come in a few simple forms. The most basic
      is the string parameter. */
 

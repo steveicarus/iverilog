@@ -247,6 +247,13 @@ static vvp_net_t*lookup_functor_symbol(const char*label)
       return val.net;
 }
 
+vpiHandle vvp_lookup_handle(const char*label)
+{
+      symbol_value_t val = sym_get_value(sym_vpi, label);
+      if (val.ptr) return (vpiHandle) val.ptr;
+      return 0;
+}
+
 vvp_net_t* vvp_net_lookup(const char*label)
 {
         /* First, look to see if the symbol is a vpi object of some
