@@ -1509,6 +1509,10 @@ bool PGModule::elaborate_sig(Design*des, NetScope*scope) const
       if (mod != pform_modules.end())
 	    return elaborate_sig_mod_(des, scope, (*mod).second);
 
+      map<perm_string,PUdp*>::const_iterator udp = pform_primitives.find(type_);
+      if (udp != pform_primitives.end())
+	    return elaborate_sig_udp_(des, scope, (*udp).second);
+
       return true;
 }
 

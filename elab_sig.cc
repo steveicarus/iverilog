@@ -343,6 +343,28 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
       return flag;
 }
 
+bool PGModule::elaborate_sig_udp_(Design*des, NetScope*scope, PUdp*udp) const
+{
+      bool flag = true;
+
+      if (pins_)
+	    for (unsigned idx =  0 ; idx < npins_ ; idx += 1) {
+		  const PExpr*tmp = pins_[idx].parm;
+		  if (tmp == 0)
+			continue;
+		  flag = tmp->elaborate_sig(des, scope) && flag;
+	    }
+      else
+	    for (unsigned idx = 0 ; idx < pin_count() ; idx += 1) {
+		  const PExpr*tmp = pin(idx);
+		  if (tmp == 0)
+			continue;
+		  flag = tmp->elaborate_sig(des, scope) && flag;
+	    }
+
+      return flag;
+}
+
 bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 {
       bool flag = true;

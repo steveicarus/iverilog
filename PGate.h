@@ -236,6 +236,7 @@ class PGModule  : public PGate {
       void elaborate_udp_(Design*, PUdp  *udp, NetScope*scope) const;
       void elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const;
       bool elaborate_sig_mod_(Design*des, NetScope*scope, Module*mod) const;
+      bool elaborate_sig_udp_(Design*des, NetScope*scope, PUdp*udp) const;
 
       NetNet*resize_net_to_port_(Design*des, NetScope*scope,
 				 NetNet*sig, unsigned port_wid,
