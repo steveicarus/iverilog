@@ -3730,7 +3730,7 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 {
       thr->pc = codespace_null();
       if ((thr->parent == 0) && (thr->child == 0))
-	    delete thr;
+	    schedule_del_thr(thr);
 
       return false;
 }
