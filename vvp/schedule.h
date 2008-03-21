@@ -1,7 +1,7 @@
 #ifndef __schedule_H
 #define __schedule_H
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.29 2007/01/16 05:44:16 steve Exp $"
-#endif
 
 # include  "vthread.h"
 # include  "pointers.h"
@@ -109,6 +106,9 @@ typedef struct vvp_gen_event_s *vvp_gen_event_t;
 
 extern void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay,
 			     bool sync_flag, bool ro_flag =true);
+
+/* Use this is schedule thread deletion (after rosync). */
+extern void schedule_del_thr(vthread_t thr);
 
 struct vvp_gen_event_s
 {

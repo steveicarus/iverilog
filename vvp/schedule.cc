@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.45 2007/01/16 05:44:16 steve Exp $"
-#endif
 
 # include  "schedule.h"
 # include  "memory.h"
@@ -63,6 +60,7 @@ struct event_time_s {
       struct event_s*nbassign;
       struct event_s*rwsync;
       struct event_s*rosync;
+      struct event_s*del_thr;
 
       struct event_time_s*next;
 
@@ -86,6 +84,16 @@ void vthread_event_s::run_run(void)
 {
       count_thread_events += 1;
       vthread_run(thr);
+}
+
+struct del_thr_event_s : public event_s {
+      vthread_t thr;
+      void run_run(void);
+};
+
+void del_thr_event_s::run_run(void)
+{
+      vthread_delete(thr);
 }
 
 struct assign_vector4_event_s  : public event_s {
@@ -280,7 +288,8 @@ static void signals_revert(void)
  * itself, and the structure is placed in the right place in the
  * queue.
  */
-typedef enum event_queue_e { SEQ_ACTIVE, SEQ_NBASSIGN, SEQ_RWSYNC, SEQ_ROSYNC } event_queue_t;
+typedef enum event_queue_e { SEQ_ACTIVE, SEQ_NBASSIGN, SEQ_RWSYNC, SEQ_ROSYNC,
+                             DEL_THREAD } event_queue_t;
 
 static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 			    event_queue_t select_queue)
@@ -297,6 +306,7 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 	    ctim->nbassign = 0;
 	    ctim->rwsync = 0;
 	    ctim->rosync = 0;
+	    ctim->del_thr = 0;
 	    ctim->delay = delay;
 	    ctim->next  = 0;
 	    sched_list = ctim;
@@ -310,6 +320,7 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 	    tmp->nbassign = 0;
 	    tmp->rwsync = 0;
 	    tmp->rosync = 0;
+	    tmp->del_thr = 0;
 	    tmp->delay = delay;
 	    tmp->next = ctim;
 	    ctim->delay -= delay;
@@ -331,6 +342,7 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 		  tmp->nbassign = 0;
 		  tmp->rwsync = 0;
 		  tmp->rosync = 0;
+		  tmp->del_thr = 0;
 		  tmp->delay = delay;
 		  tmp->next  = prev->next;
 		  prev->next = tmp;
@@ -347,6 +359,7 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 		  tmp->nbassign = 0;
 		  tmp->rwsync = 0;
 		  tmp->rosync = 0;
+		  tmp->del_thr = 0;
 		  tmp->delay = delay - ctim->delay;
 		  tmp->next = 0;
 		  ctim->next = tmp;
@@ -406,6 +419,18 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 		  cur->next = ctim->rosync->next;
 		  ctim->rosync->next = cur;
 		  ctim->rosync = cur;
+	    }
+	    break;
+
+	  case DEL_THREAD:
+	    if (ctim->del_thr == 0) {
+		  ctim->del_thr = cur;
+
+	    } else {
+		    /* Put the cur event on the end of the active list. */
+		  cur->next = ctim->del_thr->next;
+		  ctim->del_thr->next = cur;
+		  ctim->del_thr = cur;
 	    }
 	    break;
       }
@@ -549,6 +574,15 @@ void schedule_init_vector(vvp_net_ptr_t ptr, double bit)
       schedule_init_list = cur;
 }
 
+void schedule_del_thr(vthread_t thr)
+{
+      struct del_thr_event_s*cur = new del_thr_event_s;
+
+      cur->thr = thr;
+
+      schedule_event_(cur, 0, DEL_THREAD);
+}
+
 void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay,
 		      bool sync_flag, bool ro_flag)
 {
@@ -576,6 +610,9 @@ extern void vpiNextSimTime(void);
  * it is legal for a rosync callback to create other rosync
  * callbacks. It is *not* legal for them to create any other kinds of
  * events, and that is why the rosync is treated specially.
+ *
+ * Once all the rosync callbacks are done we can safely delete any
+ * threads that finished during this time step.
  */
 static void run_rosync(struct event_time_s*ctim)
 {
@@ -585,6 +622,18 @@ static void run_rosync(struct event_time_s*ctim)
 		  ctim->rosync = 0;
 	    } else {
 		  ctim->rosync->next = cur->next;
+	    }
+
+	    cur->run_run();
+	    delete cur;
+      }
+
+      while (ctim->del_thr) {
+	    struct event_s*cur = ctim->del_thr->next;
+	    if (cur->next == cur) {
+		  ctim->del_thr = 0;
+	    } else {
+		  ctim->del_thr->next = cur->next;
 	    }
 
 	    cur->run_run();
@@ -655,7 +704,8 @@ void schedule_simulate(void)
 			ctim->rwsync = 0;
 
 			  /* If out of rw events, then run the rosync
-			     events and delete this timestep. */
+			     events and delete this timestep. This also
+			     deletes threads as needed. */
 			if (ctim->active == 0) {
 			      run_rosync(ctim);
 			      sched_list = ctim->next;
@@ -686,4 +736,3 @@ void schedule_simulate(void)
       // Execute post-simulation callbacks
       vpiPostsim();
 }
-

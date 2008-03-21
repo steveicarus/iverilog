@@ -265,8 +265,6 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
  */
 static void vthread_reap(vthread_t thr)
 {
-      thr->bits4 = vvp_vector4_t();
-
       if (thr->child) {
 	    assert(thr->child->parent == thr);
 	    thr->child->parent = thr->parent;
@@ -290,8 +288,14 @@ static void vthread_reap(vthread_t thr)
       if ((thr->is_scheduled == 0) && (thr->waiting_for_event == 0)) {
 	    assert(thr->fork_count == 0);
 	    assert(thr->wait_next == 0);
-	    delete thr;
+	    schedule_del_thr(thr);
       }
+}
+
+void vthread_delete(vthread_t thr)
+{
+      thr->bits4 = vvp_vector4_t();
+      delete thr;
 }
 
 void vthread_mark_scheduled(vthread_t thr)
