@@ -234,6 +234,7 @@ extern void compile_vpi_lookup(vpiHandle *objref, char*label);
 extern void compile_param_string(char*label, char*name, char*value);
 extern void compile_param_logic(char*label, char*name, char*value,
 				bool signed_flag);
+extern void compile_param_real(char*label, char*name, char*value);
 
 /*
  * This function schedules a lookup of an indexed label. The ref

@@ -1,7 +1,7 @@
 #ifndef __vpi_priv_H
 #define __vpi_priv_H
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -415,6 +415,7 @@ struct __vpiRealConst {
 };
 
 vpiHandle vpip_make_real_const(double value);
+vpiHandle vpip_make_real_param(char*name, double value);
 
 /*
  *  This one looks like a constant, but really is a vector in the current

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -589,6 +589,12 @@ static int real_get(int code, vpiHandle ref)
 {
 
       switch (code) {
+	  case vpiLineNo:
+	    return 0;  // Not implemented for now!
+
+	  case vpiSize:
+	    return 1;
+
 	  case vpiConstType:
 	    return vpiRealConst;
 
@@ -606,7 +612,8 @@ static int real_get(int code, vpiHandle ref)
 static void real_value(vpiHandle ref, p_vpi_value vp)
 {
       struct __vpiRealConst*rfp = (struct __vpiRealConst*)ref;
-      assert(ref->vpi_type->type_code == vpiConstant);
+      assert((ref->vpi_type->type_code == vpiConstant) ||
+             (ref->vpi_type->type_code == vpiParameter));
 
       switch (vp->format) {
 	  case vpiObjTypeVal:
@@ -644,3 +651,62 @@ vpiHandle vpip_make_real_const(double value)
       return vpip_make_real_const(obj, value);
 }
 
+struct __vpiRealParam  : public __vpiRealConst {
+      const char*basename;
+      struct __vpiScope* scope;
+};
+
+static char* real_param_get_str(int code, vpiHandle obj)
+{
+      struct __vpiRealParam*rfp = (struct __vpiRealParam*)obj;
+
+      assert(obj->vpi_type->type_code == vpiParameter);
+
+      if (code == vpiFile) {  // Not implemented for now!
+            return simple_set_rbuf_str(file_names[0]);
+      }
+      return generic_get_str(code, &rfp->scope->base, rfp->basename, NULL);
+}
+
+static vpiHandle real_param_handle(int code, vpiHandle obj)
+{
+      struct __vpiRealParam*rfp = (struct __vpiRealParam*)obj;
+
+      assert(obj->vpi_type->type_code == vpiParameter);
+
+      switch (code) {
+          case vpiScope:
+            return &rfp->scope->base;
+
+          default:
+            return 0;
+      }
+}
+
+static const struct __vpirt vpip_real_param_rt = {
+      vpiParameter,
+      real_get,
+      real_param_get_str,
+      real_value,
+      0,
+
+      real_param_handle,
+      0,
+      0,
+
+      0
+};
+
+vpiHandle vpip_make_real_param(char*name, double value)
+{
+      struct __vpiRealParam*obj;
+
+      obj = (struct __vpiRealParam*)
+            malloc(sizeof (struct __vpiRealParam));
+      obj->base.vpi_type = &vpip_real_param_rt;
+      obj->value = value;
+      obj->basename = name;
+      obj->scope = vpip_peek_current_scope();
+
+      return &obj->base;
+}

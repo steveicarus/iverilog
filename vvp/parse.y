@@ -75,7 +75,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_CONCAT K_DEBUG K_DELAY K_DFF
 %token K_EVENT K_EVENT_OR K_EXTEND_S K_FUNCTOR K_MODPATH K_NET K_NET_S K_NET_R
 %token K_NET8 K_NET8_S
-%token K_PARAM_STR K_PARAM_L K_PART K_PART_PV
+%token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
 %token K_PART_V K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
 %token K_RESOLV K_SCOPE K_SFUNC K_SHIFTL K_SHIFTR K_SHIFTRS
@@ -653,6 +653,9 @@ statement
 
 	| T_LABEL K_PARAM_L T_STRING ',' '+' T_SYMBOL ';'
 		{ compile_param_logic($1, $3, $6, true); }
+
+	| T_LABEL K_PARAM_REAL T_STRING ',' T_SYMBOL ';'
+		{ compile_param_real($1, $3, $5); }
 
   /* Oh and by the way, empty statements are OK as well. */
 

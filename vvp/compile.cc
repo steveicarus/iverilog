@@ -738,6 +738,47 @@ void compile_vpi_time_precision(long pre)
 }
 
 /*
+ * Convert a Cr string value to double.
+ * 
+ * The format is broken into mantissa and exponent.
+ * The exponent in turn includes a sign bit.
+ *
+ * The mantissa is a 64bit integer value (encoded in hex).
+ *
+ * The exponent included the sign bit (0x4000) and the binary
+ * exponent offset by 0x1000. The actual exponent is the
+ * encoded exponent - 0x1000.
+ *
+ * The real value is sign * (mant ** exp).
+ */
+double crstring_to_double(char*label)
+{
+      char*cp = label+3;
+      assert(*cp == 'm');
+      cp += 1;
+      uint64_t mant = strtoull(cp, &cp, 16);
+      assert(*cp == 'g');
+      cp += 1;
+      int exp = strtoul(cp, 0, 16);
+
+      double tmp;
+      if (mant == 0 && exp == 0x3fff) {
+	    tmp = INFINITY;
+      } else if (mant == 0 && exp == 0x7fff) {
+	    tmp = -INFINITY;
+      } else if (exp == 0x3fff) {
+	    tmp = nan("");
+      } else {
+	    double sign = (exp & 0x4000)? -1.0 : 1.0;
+	    exp &= 0x1fff;
+
+	    tmp = sign * ldexp((double)mant, exp - 0x1000);
+      }
+
+      return tmp;
+}
+
+/*
  * Run through the arguments looking for the nodes that are
  * connected to my input ports. For each source functor that I
  * find, connect the output of that functor to the indexed
@@ -819,42 +860,13 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
       }
 
 	/* Handle the Cr<> constant driver, which is a real-value
-	   driver. The format is broken into mantissa and
-	   exponent. The exponent in turn includes a sign bit.
-
-	   The mantissa is a 64bit integer value (encoded in hex).
-
-	   The exponent included the sign bit (0x4000) and the binary
-	   exponent offset by 0x1000. The actual exponent is the
-	   encoded exponent - 0x1000.
-
-	   The real value is sign * (mant ** exp).  */
+	   driver. */
       if ((strncmp(label, "Cr<", 3) == 0)
 	  && ((tp = strchr(label,'>')))
 	  && (tp[1] == 0)
 	  && (strspn(label+3, "0123456789abcdefmg")+3 == (unsigned)(tp-label))) {
 
-	    char*cp = label+3;
-	    assert(*cp == 'm');
-	    cp += 1;
-	    uint64_t mant = strtoull(cp, &cp, 16);
-	    assert(*cp == 'g');
-	    cp += 1;
-	    int exp = strtoul(cp, 0, 16);
-
-	    double tmp;
-	    if (mant == 0 && exp == 0x3fff) {
-		  tmp = INFINITY;
-	    } else if (mant == 0 && exp == 0x7fff) {
-		  tmp = -INFINITY;
-	    } else if (exp == 0x3fff) {
-		  tmp = nan("");
-	    } else {
-		  double sign = (exp & 0x4000)? -1.0 : 1.0;
-		  exp &= 0x1fff;
-
-		  tmp = sign * ldexp((double)mant, exp - 0x1000);
-	    }
+	    double tmp = crstring_to_double(label);
 
 	    schedule_set_vector(ifdx, tmp);
 	    free(label);
@@ -1841,4 +1853,15 @@ void compile_param_string(char*label, char*name, char*value)
       vpip_attach_to_current_scope(obj);
 
       free(label);
+}
+
+void compile_param_real(char*label, char*name, char*value)
+{
+      double dvalue = crstring_to_double(value);
+      vpiHandle obj = vpip_make_real_param(name, dvalue);
+      compile_vpi_symbol(label, obj);
+      vpip_attach_to_current_scope(obj);
+
+      free(label);
+      free(value);
 }

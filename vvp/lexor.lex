@@ -133,6 +133,7 @@
 ".net/s"    { return K_NET_S; }
 ".param/l"  { return K_PARAM_L; }
 ".param/str" { return K_PARAM_STR; }
+".param/real" { return K_PARAM_REAL; }
 ".part"     { return K_PART; }
 ".part/pv"  { return K_PART_PV; }
 ".part/v"   { return K_PART_V; }

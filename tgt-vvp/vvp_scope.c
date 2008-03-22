@@ -469,11 +469,10 @@ static char* draw_C8_to_string(ivl_net_const_t cptr,
       return result;
 }
 
-static char* draw_Cr_to_string(ivl_net_const_t cptr)
+static char* draw_Cr_to_string(double value)
 {
       char tmp[256];
 
-      double value = ivl_const_real(cptr);
       uint64_t mant = 0;
 
       if (isinf(value)) {
@@ -641,7 +640,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  break;
 
 		case IVL_VT_REAL:
-		  result = draw_Cr_to_string(cptr);
+		  result = draw_Cr_to_string(ivl_const_real(cptr));
 		  break;
 
 		default:
@@ -2467,6 +2466,12 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 			  fprintf(vvp_out, "%c", bits[nbits-bb-1]);
 		  }
 		  fprintf(vvp_out, ">;\n");
+		  break;
+		case IVL_EX_REALNUM:
+		  fprintf(vvp_out, "P_%p .param/real \"%s\", %s; value=%g\n",
+			  par, ivl_parameter_basename(par),
+			  draw_Cr_to_string(ivl_expr_dvalue(pex)),
+			  ivl_expr_dvalue(pex));
 		  break;
 		default:
 		  fprintf(vvp_out, "; parameter type %d unsupported\n",
