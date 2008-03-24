@@ -267,6 +267,28 @@ bool PEIdent::elaborate_sig(Design*des, NetScope*scope) const
       return sig != 0;
 }
 
+bool PEBinary::elaborate_sig(Design*des, NetScope*scope) const
+{
+      bool flag = true;
+
+      flag = left_->elaborate_sig(des, scope)  && flag;
+      flag = right_->elaborate_sig(des, scope) && flag;
+      return flag;
+}
+
+bool PETernary::elaborate_sig(Design*des, NetScope*scope) const
+{
+      bool flag = true;
+      flag = tru_->elaborate_sig(des, scope)  && flag;
+      flag = fal_->elaborate_sig(des, scope)  && flag;
+      return flag;
+}
+
+bool PEUnary::elaborate_sig(Design*des, NetScope*scope) const
+{
+      return expr_->elaborate_sig(des, scope);
+}
+
 bool PGate::elaborate_sig(Design*des, NetScope*scope) const
 {
       return true;

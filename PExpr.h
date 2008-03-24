@@ -474,6 +474,8 @@ class PEUnary : public PExpr {
 
       virtual void dump(ostream&out) const;
 
+      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
+
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
 				    const NetExpr* rise,
@@ -532,6 +534,8 @@ class PEBinary : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  bool&unsized_flag) const;
+
+      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
@@ -647,6 +651,8 @@ class PETernary : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  bool&unsized_flag) const;
+
+      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
 				    unsigned width,
