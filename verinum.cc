@@ -429,6 +429,11 @@ bool verinum::is_zero() const
       return true;
 }
 
+bool verinum::is_negative() const
+{
+      return (bits_[nbits_-1] == V1) && has_sign();
+}
+
 verinum pad_to_width(const verinum&that, unsigned width)
 {
       if (that.len() >= width)

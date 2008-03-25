@@ -71,6 +71,7 @@ class verinum {
 	// A number is "defined" if there are no x or z bits in its value.
       bool is_defined() const;
       bool is_zero() const;
+      bool is_negative() const;
 
 	// A number is "a string" if its value came directly from
 	// an ASCII description instead of a number value.

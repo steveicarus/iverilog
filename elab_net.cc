@@ -1578,6 +1578,14 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 		  return 0;
 	    }
 
+	    if (erep->value().is_negative()) {
+		  cerr << get_fileline() << ": error: Concatenation repeat "
+		       << "may not be negative (" << erep->value().as_long()
+		       << ")." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
 	    repeat = erep->value().as_ulong();
 	    delete etmp;
 
