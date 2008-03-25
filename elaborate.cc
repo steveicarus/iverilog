@@ -2943,6 +2943,15 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	    assert(etmp->expr_width() >= lv->lwidth());
       }
 
+	/* Based on the specific type of the l-value, do cleanup
+	   processing on the r-value. */
+      if (etmp->expr_type() != IVL_VT_REAL) {
+	    unsigned wid = count_lval_width(lv);
+	    etmp->set_width(wid);
+	    etmp = pad_to_width(etmp, wid);
+	    assert(etmp->expr_width() >= wid);
+      }
+
       NetAssign*init = new NetAssign(lv, etmp);
       init->set_line(*this);
 
