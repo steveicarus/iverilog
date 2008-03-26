@@ -808,13 +808,18 @@ NetExpr* NetEBDiv::eval_tree(int prune_to_width)
 	    verinum lval = lc->value();
 	    verinum rval = rc->value();
 
+	    NetExpr*tmp = 0;
 	    switch (op_) {
 		case '/':
-		  return new NetEConst(lval / rval);
-
+		  tmp = new NetEConst(lval / rval);
+		  break;
 		case '%':
-		  return new NetEConst(lval % rval);
+		  tmp = new NetEConst(lval % rval);
+		  break;
 	    }
+	    ivl_assert(*this, tmp);
+	    tmp->set_line(*this);
+	    return tmp;
       }
 
       return 0;
@@ -919,7 +924,13 @@ NetExpr* NetEBMult::eval_tree(int prune_to_width)
       verinum lval = lc->value();
       verinum rval = rc->value();
 
-      return new NetEConst(lval * rval);
+      NetEConst*tmp = new NetEConst(lval * rval);
+
+      if (debug_eval_tree)
+	    cerr << get_fileline() << ": debug: Evaluate "
+		 << lval << " * " << rval << " --> " << *tmp << endl;
+
+      return tmp;
 }
 
 NetExpr* NetEBPow::eval_tree_real_()

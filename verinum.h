@@ -104,6 +104,19 @@ class verinum {
       bool string_flag_;
 };
 
+/*
+ * This returns the sign bit of the verinum value. If the value is
+ * unsigned, then return an implicit sign bit of 0. Otherwise, return
+ * the high bit.
+ */
+inline verinum::V sign_bit(const verinum&val)
+{
+      if (val.has_sign())
+	    return val.get(val.len()-1);
+      else
+	    return verinum::V0;
+}
+
 /* Return a verinum that has the same value as the input, but is at
    least as wide as the requested width. This may involve sign
    extension, if the value is signed. */
