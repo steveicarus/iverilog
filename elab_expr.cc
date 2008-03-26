@@ -1743,12 +1743,22 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope,
 NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 				 int expr_wid, bool) const
 {
+	/* Reduction operators and ! always have a self determined width. */
+      switch (op_) {
+	  case '!':
+	  case '&': // Reduction AND
+	  case '|': // Reduction OR
+	  case '^': // Reduction XOR
+	  case 'A': // Reduction NAND (~&)
+	  case 'N': // Reduction NOR (~|)
+	  case 'X': // Reduction NXOR (~^)
+	    expr_wid = -1;
+	  default:
+	    break;
+      }
+
       NetExpr*ip = expr_->elaborate_expr(des, scope, expr_wid, false);
       if (ip == 0) return 0;
-
-      /* Should we evaluate expressions ahead of time,
-       * just like in PEBinary::elaborate_expr() ?
-       */
 
       NetExpr*tmp;
       switch (op_) {

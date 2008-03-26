@@ -3125,10 +3125,6 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 			       Link::strength_t drive0,
 			       Link::strength_t drive1) const
 {
-      NetExpr*expr = elab_and_eval(des, scope, expr_, width);
-      if (expr == 0)
-	    return 0;
-
 	// Some unary operands allow the operand to be
 	// self-determined, and some do not.
       unsigned owidth = 0;
@@ -3138,6 +3134,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    owidth = width;
 	    break;
       }
+
+      NetExpr*expr = elab_and_eval(des, scope, expr_, owidth);
+      if (expr == 0) return 0;
 
       NetNet* sig = 0;
       NetLogic*gate;

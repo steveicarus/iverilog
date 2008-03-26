@@ -157,46 +157,39 @@ NetNet* NetEBBits::synthesize(Design*des)
       NetScope*scope = lsig->scope();
       assert(scope);
 
-      if (lsig->vector_width() != rsig->vector_width()) {
-	    cerr << get_fileline() << ": internal error: bitwise (" << op_
-		 << ") widths do not match: " << lsig->vector_width()
-		 << " != " << rsig->vector_width() << endl;
-	    cerr << get_fileline() << ":               : width="
-		 << lsig->vector_width() << ": " << *left_ << endl;
-	    cerr << get_fileline() << ":               : width="
-		 << rsig->vector_width() << ": " << *right_ << endl;
-	    des->errors += 1;
-	    return 0;
-      }
+      unsigned width = lsig->vector_width();
+      if (rsig->vector_width() > width) width = rsig->vector_width();
+
+      lsig = pad_to_width(des, lsig, width);
+      rsig = pad_to_width(des, rsig, width);
 
       assert(lsig->vector_width() == rsig->vector_width());
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::IMPLICIT, lsig->vector_width());
+			       NetNet::IMPLICIT, width);
       osig->local_flag(true);
       osig->data_type(expr_type());
 
       perm_string oname = scope->local_symbol();
-      unsigned wid = lsig->vector_width();
       NetLogic*gate;
 
       switch (op()) {
 	  case '&':
-	    gate = new NetLogic(scope, oname, 3, NetLogic::AND, wid);
+	    gate = new NetLogic(scope, oname, 3, NetLogic::AND, width);
 	    break;
 	  case 'A':
-	    gate = new NetLogic(scope, oname, 3, NetLogic::NAND, wid);
+	    gate = new NetLogic(scope, oname, 3, NetLogic::NAND, width);
 	    break;
 	  case '|':
-	    gate = new NetLogic(scope, oname, 3, NetLogic::OR, wid);
+	    gate = new NetLogic(scope, oname, 3, NetLogic::OR, width);
 	    break;
 	  case '^':
-	    gate = new NetLogic(scope, oname, 3, NetLogic::XOR, wid);
+	    gate = new NetLogic(scope, oname, 3, NetLogic::XOR, width);
 	    break;
 	  case 'O':
-	    gate = new NetLogic(scope, oname, 3, NetLogic::NOR, wid);
+	    gate = new NetLogic(scope, oname, 3, NetLogic::NOR, width);
 	    break;
 	  case 'X':
-	    gate = new NetLogic(scope, oname, 3, NetLogic::XNOR, wid);
+	    gate = new NetLogic(scope, oname, 3, NetLogic::XNOR, width);
 	    break;
 	  default:
 	    assert(0);
