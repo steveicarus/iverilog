@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -850,6 +850,34 @@ static int define_continue_flag = 0;
 #define _STR2(x) _STR1(x)
 
 /*
+ * Find an argument, but only if it is not directly preceded by something
+ * that would make it part of another simple identifier ([a-zA-Z0-9_$]).
+ */
+static char *find_arg(char*ptr, char*head, char*arg)
+{
+    char *cp = ptr;
+
+    while (1) {
+        /* Look for a candidate match, just return if none is found. */
+        cp = strstr(cp, arg);
+        if (!cp) break;
+
+        /* If we are not at the start of the string verify that this
+         * match is not in the middle of another identifier.
+         */
+        if (cp != head &&
+            (isalnum(*(cp-1)) || *(cp-1) == '_' || *(cp-1) == '$')) {
+            cp++;
+            continue;
+        }
+
+        break;
+    }
+
+    return cp;
+}
+
+/*
  * Collect the definition. Normally, this returns 0. If there is a
  * continuation, then return 1 and this function may be called again
  * to collect another line of the definition.
@@ -968,7 +996,7 @@ static void do_define()
     {
         int argl = def_argl[arg];
 
-        cp = strstr(head, def_argv(arg));
+        cp = find_arg(head, head, def_argv(arg));
 
         while (cp && *cp)
         {
@@ -994,7 +1022,7 @@ static void do_define()
 
             *cp++ = ARG_MARK;
             *cp++ = arg;
-            cp = strstr(cp, def_argv(arg));
+            cp = find_arg(cp, head, def_argv(arg));
         }
     }
     define_cnt += added_cnt;
