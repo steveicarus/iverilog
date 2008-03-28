@@ -1246,6 +1246,8 @@ void dll_target::udp(const NetUDP*net)
 	  u->sequ = net->is_sequential();
 	  if (u->sequ)
 	    u->init = net->get_initial();
+	  else
+	    u->init = 'x';
 	  u->name = net->udp_name();
 	  string inp;
 	  char out;

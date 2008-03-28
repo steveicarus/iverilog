@@ -81,14 +81,14 @@ static list<perm_string>* list_from_identifier(char*id)
 {
       list<perm_string>*tmp = new list<perm_string>;
       tmp->push_back(lex_strings.make(id));
-      delete id;
+      delete[]id;
       return tmp;
 }
 
 static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
 {
       tmp->push_back(lex_strings.make(id));
-      delete id;
+      delete[]id;
       return tmp;
 }
 
@@ -325,7 +325,7 @@ attribute
 		{ named_pexpr_t*tmp = new named_pexpr_t;
 		  tmp->name = lex_strings.make($1);
 		  tmp->parm = 0;
-		  delete $1;
+		  delete[]$1;
 		  $$ = tmp;
 		}
 	| IDENTIFIER '=' expression
@@ -339,7 +339,7 @@ attribute
 		  named_pexpr_t*tmp2 = new named_pexpr_t;
 		  tmp2->name = lex_strings.make($1);
 		  tmp2->parm = tmp;
-		  delete $1;
+		  delete[]$1;
 		  $$ = tmp2;
 		}
 	;
@@ -611,7 +611,7 @@ delay_value_simple
                 { PEIdent*tmp = new PEIdent(lex_strings.make($1));
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
-		  delete $1;
+		  delete[]$1;
 		}
 	;
 
@@ -621,7 +621,7 @@ description
 	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
 		{ perm_string tmp3 = lex_strings.make($3);
 		  pform_set_type_attrib(tmp3, $5, $7);
-		  delete $3;
+		  delete[]$3;
 		  delete $5;
 		}
 	;
@@ -1034,7 +1034,7 @@ expr_primary
 		  PECallFunction*tmp = new PECallFunction(tn);
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
-		  delete $1;
+		  delete[]$1;
 		}
 
   /* The hierarchy_identifier rule matches simple identifiers as well as
@@ -1061,6 +1061,7 @@ expr_primary
                 { perm_string tn = lex_strings.make($1);
 		  PECallFunction*tmp = new PECallFunction(tn, *$3);
 		  FILE_NAME(tmp, @1);
+		  delete[]$1;
 		  $$ = tmp;
 		}
 
@@ -1192,7 +1193,7 @@ gate_instance
 		  tmp->parms = $3;
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
-		  delete $1;
+		  delete[]$1;
 		  $$ = tmp;
 		}
 
@@ -1205,7 +1206,7 @@ gate_instance
 		  tmp->range[1] = (*rng)[1];
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
-		  delete $1;
+		  delete[]$1;
 		  delete rng;
 		  $$ = tmp;
 		}
@@ -1230,7 +1231,7 @@ gate_instance
 		  tmp->range[1] = (*rng)[1];
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
-		  delete $1;
+		  delete[]$1;
 		  delete rng;
 		  $$ = tmp;
 		}
@@ -1244,7 +1245,7 @@ gate_instance
 		  tmp->parms_by_name = $3;
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
-		  delete $1;
+		  delete[]$1;
 		  $$ = tmp;
 		}
 
@@ -1258,7 +1259,7 @@ gate_instance
 		  tmp->range[1] = (*rng)[1];
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
-		  delete $1;
+		  delete[]$1;
 		  delete rng;
 		  $$ = tmp;
 		}
@@ -1318,12 +1319,12 @@ hierarchy_identifier
     : IDENTIFIER
         { $$ = new pform_name_t;
 	  $$->push_back(name_component_t(lex_strings.make($1)));
-	  delete $1;
+	  delete[]$1;
 	}
     | hierarchy_identifier '.' IDENTIFIER
         { pform_name_t * tmp = $1;
 	  tmp->push_back(name_component_t(lex_strings.make($3)));
-	  delete $3;
+	  delete[]$3;
 	  $$ = tmp;
 	}
     | hierarchy_identifier '[' expression ']'
@@ -1439,7 +1440,7 @@ list_of_port_declarations
 					port_declaration_context.sign_flag,
 					port_declaration_context.range, 0);
 		  delete $1;
-		  delete $3;
+		  delete[]$3;
 		  $$ = tmp;
 		}
 	| list_of_port_declarations ','
@@ -1468,7 +1469,7 @@ port_declaration
 	port_declaration_context.sign_flag = $4;
 	port_declaration_context.range = $5;
 	delete $1;
-	delete $6;
+	delete[]$6;
 	$$ = ptmp;
       }
   | attribute_list_opt
@@ -1484,7 +1485,7 @@ port_declaration
 	port_declaration_context.sign_flag = $4;
 	port_declaration_context.range = $5;
 	delete $1;
-	delete $6;
+	delete[]$6;
 	$$ = ptmp;
       }
   | attribute_list_opt
@@ -1500,7 +1501,7 @@ port_declaration
 	port_declaration_context.sign_flag = $4;
 	port_declaration_context.range = $5;
 	delete $1;
-	delete $6;
+	delete[]$6;
 	$$ = ptmp;
       }
   | attribute_list_opt
@@ -1516,7 +1517,7 @@ port_declaration
 	port_declaration_context.sign_flag = $4;
 	port_declaration_context.range = $5;
 	delete $1;
-	delete $6;
+	delete[]$6;
 	$$ = ptmp;
       }
   | attribute_list_opt
@@ -1538,7 +1539,7 @@ port_declaration
 	pform_make_reginit(@6, name, $8);
 
 	delete $1;
-	delete $6;
+	delete[]$6;
 	$$ = ptmp;
       }
   ;
@@ -1607,7 +1608,7 @@ module  : attribute_list_opt module_start IDENTIFIER
 	  module_item_list_opt
 	  K_endmodule
 		{ pform_endmodule($3);
-		  delete $3;
+		  delete[]$3;
 		}
 
 	;
@@ -1804,13 +1805,14 @@ module_item
 	  IDENTIFIER parameter_value_opt gate_instance_list ';'
 		{ perm_string tmp1 = lex_strings.make($2);
 		  pform_make_modgates(tmp1, $3, $4);
-		  delete $2;
+		  delete[]$2;
 		  if ($1) delete $1;
 		}
 
         | attribute_list_opt
 	  IDENTIFIER parameter_value_opt error ';'
 		{ yyerror(@2, "error: Invalid module instantiation");
+		  delete[]$2;
 		  if ($1) delete $1;
 		}
 
@@ -1854,7 +1856,7 @@ module_item
 	current_task->set_statement($6);
 	pform_pop_scope();
 	current_task = 0;
-	delete $2;
+	delete[]$2;
       }
 
   | K_task IDENTIFIER
@@ -1870,7 +1872,7 @@ module_item
 	current_task->set_statement($9);
 	pform_pop_scope();
 	current_task = 0;
-	delete $2;
+	delete[]$2;
       }
 
   /* The function declaration rule matches the function declaration
@@ -1890,7 +1892,7 @@ module_item
 	current_function->set_return($2);
 	pform_pop_scope();
 	current_function = 0;
-	delete $3;
+	delete[]$3;
       }
 
   /* A generate region can contain further module items. Actually, it
@@ -1981,7 +1983,7 @@ module_item
 		{ perm_string tmp3 = lex_strings.make($3);
 		  perm_string tmp5 = lex_strings.make($5);
 		  pform_set_attrib(tmp3, tmp5, $7);
-		  delete $3;
+		  delete[]$3;
 		  delete $5;
 		}
 	| KK_attribute '(' error ')' ';'
@@ -2041,7 +2043,7 @@ net_decl_assign
 	tmp->next = tmp;
 	tmp->name = lex_strings.make($1);
 	tmp->expr = $3;
-	delete $1;
+	delete[]$1;
 	$$ = tmp;
       }
   ;
@@ -2124,7 +2126,7 @@ parameter_assign
 					    active_signed,
 					    active_range, tmp);
 		  }
-		  delete $1;
+		  delete[]$1;
 		}
 	;
 
@@ -2146,7 +2148,7 @@ localparam_assign
 					     active_signed,
 					     active_range, tmp);
 		  }
-		  delete $1;
+		  delete[]$1;
 		}
 	;
 
@@ -2224,14 +2226,14 @@ parameter_value_byname
 		{ named_pexpr_t*tmp = new named_pexpr_t;
 		  tmp->name = lex_strings.make($2);
 		  tmp->parm = $4;
-		  free($2);
+		  delete[]$2;
 		  $$ = tmp;
 		}
 	| '.' IDENTIFIER '(' ')'
 		{ named_pexpr_t*tmp = new named_pexpr_t;
 		  tmp->name = lex_strings.make($2);
 		  tmp->parm = 0;
-		  free($2);
+		  delete[]$2;
 		  $$ = tmp;
 		}
 	;
@@ -2276,7 +2278,7 @@ port
 	| '.' IDENTIFIER '(' port_reference ')'
 		{ Module::port_t*tmp = $4;
 		  tmp->name = lex_strings.make($2);
-		  delete $2;
+		  delete[]$2;
 		  $$ = tmp;
 		}
 
@@ -2296,7 +2298,7 @@ port
 	| '.' IDENTIFIER '(' '{' port_reference_list '}' ')'
 		{ Module::port_t*tmp = $5;
 		  tmp->name = lex_strings.make($2);
-		  delete $2;
+		  delete[]$2;
 		  $$ = tmp;
 		}
 	;
@@ -2323,7 +2325,7 @@ port_reference
         { Module::port_t*ptmp;
 	  perm_string name = lex_strings.make($1);
 	  ptmp = pform_module_port_reference(name, @1.text, @1.first_line);
-	  delete $1;
+	  delete[]$1;
 	  $$ = ptmp;
 	}
 
@@ -2355,7 +2357,7 @@ port_reference
 	  ptmp->expr = svector<PEIdent*>(1);
 	  ptmp->expr[0] = wtmp;
 
-	  delete $1;
+	  delete[]$1;
 	  $$ = ptmp;
 	}
 
@@ -2382,7 +2384,7 @@ port_reference
 	  ptmp->name = perm_string();
 	  ptmp->expr = svector<PEIdent*>(1);
 	  ptmp->expr[0] = tmp;
-	  delete $1;
+	  delete[]$1;
 	  $$ = ptmp;
 	}
 
@@ -2394,7 +2396,7 @@ port_reference
 	  ptmp->name = lex_strings.make($1);
 	  ptmp->expr = svector<PEIdent*>(1);
 	  ptmp->expr[0] = wtmp;
-	  delete $1;
+	  delete[]$1;
 	  $$ = ptmp;
 	}
     ;
@@ -2420,7 +2422,7 @@ port_name
 		{ named_pexpr_t*tmp = new named_pexpr_t;
 		  tmp->name = lex_strings.make($2);
 		  tmp->parm = $4;
-		  delete $2;
+		  delete[]$2;
 		  $$ = tmp;
 		}
 	| '.' IDENTIFIER '(' error ')'
@@ -2428,14 +2430,14 @@ port_name
 		  named_pexpr_t*tmp = new named_pexpr_t;
 		  tmp->name = lex_strings.make($2);
 		  tmp->parm = 0;
-		  delete $2;
+		  delete[]$2;
 		  $$ = tmp;
 		}
 	| '.' IDENTIFIER '(' ')'
 		{ named_pexpr_t*tmp = new named_pexpr_t;
 		  tmp->name = lex_strings.make($2);
 		  tmp->parm = 0;
-		  delete $2;
+		  delete[]$2;
 		  $$ = tmp;
 		}
 	;
@@ -2811,7 +2813,7 @@ specparam
 	: IDENTIFIER '=' expression
 		{ PExpr*tmp = $3;
 		  pform_set_specparam(lex_strings.make($1), tmp);
-		  delete $1;
+		  delete[]$1;
 		}
 	| IDENTIFIER '=' expression ':' expression ':' expression
                 { PExpr*tmp = 0;
@@ -2849,14 +2851,14 @@ specparam
 		        min_typ_max_warn -= 1;
 		  }
 		  pform_set_specparam(lex_strings.make($1), tmp);
-		  delete $1;
+		  delete[]$1;
 		}
 	| PATHPULSE_IDENTIFIER '=' expression
-		{ delete $1;
+		{ delete[]$1;
 		  delete $3;
 		}
 	| PATHPULSE_IDENTIFIER '=' '(' expression ',' expression ')'
-		{ delete $1;
+		{ delete[]$1;
 		  delete $4;
 		  delete $6;
 		}
@@ -2925,7 +2927,7 @@ spec_notifier
 	| spec_notifier ',' hierarchy_identifier
                 { delete $3; }
 	| IDENTIFIER
-		{ delete $1; }
+		{ delete[]$1; }
 	;
 
 
@@ -2988,7 +2990,7 @@ statement
 	PBlock*tmp = current_block_stack.top();
 	current_block_stack.pop();
 	tmp->set_statement(*$6);
-	delete $3;
+	delete[]$3;
 	delete $6;
 	$$ = tmp;
       }
@@ -3000,6 +3002,7 @@ statement
   | K_begin ':' IDENTIFIER K_end
       { PBlock*tmp = new PBlock(PBlock::BL_SEQ);
 	FILE_NAME(tmp, @1);
+	delete[]$3;
 	$$ = tmp;
       }
   | K_begin error K_end
@@ -3022,7 +3025,7 @@ statement
 	PBlock*tmp = current_block_stack.top();
 	current_block_stack.pop();
 	tmp->set_statement(*$6);
-	delete $3;
+	delete[]$3;
 	delete $6;
 	$$ = tmp;
       }
@@ -3034,7 +3037,7 @@ statement
   | K_fork ':' IDENTIFIER K_join
       { PBlock*tmp = new PBlock(PBlock::BL_PAR);
 	FILE_NAME(tmp, @1);
-	delete $3;
+	delete[]$3;
 	$$ = tmp;
       }
 
@@ -3235,7 +3238,7 @@ statement
 	| SYSTEM_IDENTIFIER '(' expression_list_with_nuls ')' ';'
                 { PCallTask*tmp = new PCallTask(lex_strings.make($1), *$3);
 		  FILE_NAME(tmp,@1);
-		  delete $1;
+		  delete[]$1;
 		  delete $3;
 		  $$ = tmp;
 		}
@@ -3243,7 +3246,7 @@ statement
 		{ svector<PExpr*>pt (0);
 		  PCallTask*tmp = new PCallTask(lex_strings.make($1), pt);
 		  FILE_NAME(tmp,@1);
-		  delete $1;
+		  delete[]$1;
 		  $$ = tmp;
 		}
 	| hierarchy_identifier '(' expression_list_proper ')' ';'
@@ -3576,13 +3579,13 @@ udp_comb_entry_list
 	: udp_comb_entry
 		{ list<string>*tmp = new list<string>;
 		  tmp->push_back($1);
-		  delete $1;
+		  delete[]$1;
 		  $$ = tmp;
 		}
 	| udp_comb_entry_list udp_comb_entry
 		{ list<string>*tmp = $1;
 		  tmp->push_back($2);
-		  delete $2;
+		  delete[]$2;
 		  $$ = tmp;
 		}
 	;
@@ -3591,13 +3594,13 @@ udp_sequ_entry_list
 	: udp_sequ_entry
 		{ list<string>*tmp = new list<string>;
 		  tmp->push_back($1);
-		  delete $1;
+		  delete[]$1;
 		  $$ = tmp;
 		}
 	| udp_sequ_entry_list udp_sequ_entry
 		{ list<string>*tmp = $1;
 		  tmp->push_back($2);
-		  delete $2;
+		  delete[]$2;
 		  $$ = tmp;
 		}
 	;
@@ -3622,7 +3625,7 @@ udp_initial
 		  PEIdent*itmp = new PEIdent(lex_strings.make($2));
 		  PAssign*atmp = new PAssign(itmp, etmp);
 		  FILE_NAME(atmp, @2);
-		  delete $2;
+		  delete[]$2;
 		  $$ = atmp;
 		}
 	;
@@ -3695,7 +3698,7 @@ udp_port_decl
 	svector<PWire*>*tmp = new svector<PWire*>(1);
 	(*tmp)[0] = pp;
 	$$ = tmp;
-	delete $2;
+	delete[]$2;
       }
   | K_reg IDENTIFIER ';'
       { perm_string pname = lex_strings.make($2);
@@ -3703,7 +3706,7 @@ udp_port_decl
 	svector<PWire*>*tmp = new svector<PWire*>(1);
 	(*tmp)[0] = pp;
 	$$ = tmp;
-	delete $2;
+	delete[]$2;
       }
   | K_reg K_output IDENTIFIER ';'
       { perm_string pname = lex_strings.make($3);
@@ -3711,7 +3714,7 @@ udp_port_decl
 	svector<PWire*>*tmp = new svector<PWire*>(1);
 	(*tmp)[0] = pp;
 	$$ = tmp;
-	delete $3;
+	delete[]$3;
       }
     ;
 
@@ -3730,13 +3733,13 @@ udp_port_list
   : IDENTIFIER
       { list<perm_string>*tmp = new list<perm_string>;
 	tmp->push_back(lex_strings.make($1));
-	delete $1;
+	delete[]$1;
 	$$ = tmp;
       }
   | udp_port_list ',' IDENTIFIER
       { list<perm_string>*tmp = $1;
 	tmp->push_back(lex_strings.make($3));
-	delete $3;
+	delete[]$3;
 	$$ = tmp;
       }
   ;

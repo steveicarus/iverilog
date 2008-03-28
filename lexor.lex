@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -47,6 +47,11 @@
  * If the name is new, it will be added to the list.
  */
 extern YYLTYPE yylloc;
+
+static char* strdupnew(char const *str)
+{
+       return str ? strcpy(new char [strlen(str)+1], str) : 0;
+}
 
 static const char* set_file_name(char*text)
 {
@@ -205,7 +210,7 @@ W [ \t\b\f\r]+
       int rc = lexor_keyword_code(yytext, yyleng);
       switch (rc) {
 	  case IDENTIFIER:
-	    yylval.text = strdup(yytext);
+	    yylval.text = strdupnew(yytext);
 	    if (strncmp(yylval.text,"PATHPULSE$", 10) == 0)
 		  rc = PATHPULSE_IDENTIFIER;
 	    break;
@@ -214,7 +219,7 @@ W [ \t\b\f\r]+
 	  case K_logic:
 	  case K_wone:
 	    if (! gn_cadence_types_enabled()) {
-		  yylval.text = strdup(yytext);
+		  yylval.text = strdupnew(yytext);
 		  rc = IDENTIFIER;
 	    } else {
 		  yylval.text = 0;
@@ -235,7 +240,7 @@ W [ \t\b\f\r]+
 
 
 \\[^ \t\b\f\r\n]+         {
-      yylval.text = strdup(yytext+1);
+      yylval.text = strdupnew(yytext+1);
       return IDENTIFIER; }
 
 \$([a-zA-Z0-9$_]+)        {
@@ -255,7 +260,7 @@ W [ \t\b\f\r]+
 	    return K_Ssetup;
       if (strcmp(yytext,"$width") == 0)
 	    return K_Swidth;
-      yylval.text = strdup(yytext);
+      yylval.text = strdupnew(yytext);
       return SYSTEM_IDENTIFIER; }
 
 
@@ -978,5 +983,5 @@ void reset_lexor()
       yylloc.first_line = 1;
 
 	/* Announce the first file name. */
-      yylloc.text = set_file_name(strdup(vl_file.c_str()));
+      yylloc.text = set_file_name(strdupnew(vl_file.c_str()));
 }
