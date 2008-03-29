@@ -298,8 +298,18 @@ bool PGBuiltin::elaborate_sig(Design*des, NetScope*scope) const
 {
       bool flag = true;
 
-      for (unsigned idx = 0 ; idx < pin_count() ; idx += 1)
-	    flag = pin(idx)->elaborate_sig(des, scope) && flag;
+      for (unsigned idx = 0 ; idx < pin_count() ; idx += 1) {
+	    const PExpr* pin_expr = pin(idx);
+	    if (pin_expr == 0) {
+		    // If there is no pin expression for this port,
+		    // then skip it. Do not bother generating an error
+		    // message here, that will be done during
+		    // elaboration where these semantic details are tested.
+		  continue;
+	    }
+	    ivl_assert(*this, pin_expr);
+	    flag = pin_expr->elaborate_sig(des, scope) && flag;
+      }
 
       return flag;
 }
