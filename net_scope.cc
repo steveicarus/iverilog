@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.38 2007/06/02 03:42:13 steve Exp $"
-#endif
 
 # include "config.h"
 # include "compiler.h"
@@ -44,11 +41,13 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
       lcounter_ = 0;
 
       if (up) {
+	    default_nettype_ = up->default_nettype();
 	    time_unit_ = up->time_unit();
 	    time_prec_ = up->time_precision();
 	    sib_ = up_->sub_;
 	    up_->sub_ = this;
       } else {
+	    default_nettype_ = NetNet::NONE;
 	    time_unit_ = 0;
 	    time_prec_ = 0;
 	    assert(t == MODULE);
@@ -403,4 +402,3 @@ string NetScope::local_hsymbol()
       return string(name()) + "." + string(local_symbol());
 }
 #endif
-
