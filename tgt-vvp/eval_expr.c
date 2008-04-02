@@ -1490,7 +1490,7 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 		  break;
 	    }
 
-	    for (cnt = 1 ;  idx+cnt < wid ;  cnt += 1)
+	    for (cnt = 1 ;  idx+cnt < nwid ;  cnt += 1)
 		  if (bits[idx+cnt] != bits[idx])
 			break;
 
@@ -1620,7 +1620,7 @@ static char *process_octal_codes(const char *in, unsigned width)
 	    return out;
       }
 
-      while (idx < str_len) {
+      while (ridx < str_len) {
 	      /* An octal constant always has three digits. */
 	    if (in[ridx] == '\\') {
 		  out[idx] = (in[ridx+1]-'0')*64 + (in[ridx+2]-'0')*8 +
