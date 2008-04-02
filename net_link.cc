@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.21 2007/06/02 03:42:13 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -431,7 +428,7 @@ NexusSet::~NexusSet()
 {
       if (nitems_ > 0) {
 	    assert(items_ != 0);
-	    delete[] items_;
+	    free(items_);
       } else {
 	    assert(items_ == 0);
       }
@@ -541,83 +538,3 @@ bool NexusSet::intersect(const NexusSet&that) const
 
       return false;
 }
-
-/*
- * $Log: net_link.cc,v $
- * Revision 1.21  2007/06/02 03:42:13  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.20  2007/03/26 18:17:50  steve
- *  Remove pretense of general use for t_cookie.
- *
- * Revision 1.19  2006/02/02 02:43:58  steve
- *  Allow part selects of memory words in l-values.
- *
- * Revision 1.18  2005/09/25 23:40:11  steve
- *  Simplify NexusSet set handling.
- *
- * Revision 1.17  2005/06/13 23:22:37  steve
- *  Fix compile errors.
- *
- * Revision 1.16  2005/04/24 23:44:02  steve
- *  Update DFF support to new data flow.
- *
- * Revision 1.15  2005/01/09 20:16:01  steve
- *  Use PartSelect/PV and VP to handle part selects through ports.
- *
- * Revision 1.14  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.13  2003/01/14 21:16:18  steve
- *  Move strstream to ostringstream for compatibility.
- *
- * Revision 1.12  2002/10/21 01:42:08  steve
- *  Synthesizer support for synchronous begin-end blocks.
- *
- * Revision 1.11  2002/08/18 22:07:16  steve
- *  Detect temporaries in sequential block synthesis.
- *
- * Revision 1.10  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.9  2002/07/03 03:08:47  steve
- *  Clear drive cache on link or unlink.
- *
- * Revision 1.8  2002/06/30 02:21:31  steve
- *  Add structure for asynchronous logic synthesis.
- *
- * Revision 1.7  2002/06/24 01:49:39  steve
- *  Make link_drive_constant cache its results in
- *  the Nexus, to improve cprop performance.
- *
- * Revision 1.6  2002/04/21 04:59:08  steve
- *  Add support for conbinational events by finding
- *  the inputs to expressions and some statements.
- *  Get case and assignment statements working.
- *
- * Revision 1.5  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.4  2000/10/06 23:46:50  steve
- *  ivl_target updates, including more complete
- *  handling of ivl_nexus_t objects. Much reduced
- *  dependencies on pointers to netlist objects.
- *
- * Revision 1.3  2000/08/26 00:54:03  steve
- *  Get at gate information for ivl_target interface.
- *
- * Revision 1.2  2000/07/14 06:12:57  steve
- *  Move inital value handling from NetNet to Nexus
- *  objects. This allows better propogation of inital
- *  values.
- *
- *  Clean up constant propagation  a bit to account
- *  for regs that are not really values.
- *
- * Revision 1.1  2000/06/25 19:59:42  steve
- *  Redesign Links to include the Nexus class that
- *  carries properties of the connected set of links.
- *
- */
-
