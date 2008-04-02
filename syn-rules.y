@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2000-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -263,6 +263,9 @@ struct tokenize : public proc_match_t {
 	    last_->next_ = cur;
 	    last_ = cur;
 
+	    /* Because synthesis is broken this is needed to prevent
+	     * a seg. fault. */
+	    if (!dev->if_clause()) return 0;
 	    dev -> if_clause() -> match_proc(this);
 
 	    if (dev->else_clause()) {
