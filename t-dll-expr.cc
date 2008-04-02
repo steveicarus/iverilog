@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -183,6 +183,7 @@ void dll_target::expr_concat(const NetEConcat*net)
       cur->type_  = IVL_EX_CONCAT;
       cur->value_ = IVL_VT_VECTOR;
       cur->width_ = net->expr_width();
+      cur->signed_ = 0;
 
       cur->u_.concat_.rept  = net->repeat();
       cur->u_.concat_.parms = net->nparms();
@@ -474,4 +475,3 @@ void dll_target::expr_unary(const NetEUnary*net)
       expr_->u_.unary_.op_ = net->op();
       expr_->u_.unary_.sub_ = sub;
 }
-
