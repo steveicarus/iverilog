@@ -190,13 +190,6 @@
 
 
 
-  /* Symbols are pretty much what is left. They are used to refer to
-     labels so the rule must match a string that a label would match. */
-[.$_a-zA-Z\\][.$_a-zA-Z\\0-9/]* {
-      yylval.text = strdup(yytext);
-      assert(yylval.text);
-      return T_SYMBOL; }
-
   /* Handle some specialized constant/literals as symbols. */
 
 "C4<"[01xz]*">" {
@@ -223,6 +216,14 @@
       yylval.text = strdup(yytext);
       assert(yylval.text);
       return T_SYMBOL; }
+
+  /* Symbols are pretty much what is left. They are used to refer to
+     labels so the rule must match a string that a label would match. */
+[.$_a-zA-Z\\][.$_a-zA-Z\\0-9<>/]* {
+      yylval.text = strdup(yytext);
+      assert(yylval.text);
+      return T_SYMBOL; }
+
 
   /* Accept the common assembler style comments, treat them as white
      space. Of course, also skip white space. The semi-colon is
