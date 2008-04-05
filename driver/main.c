@@ -806,8 +806,11 @@ int main(int argc, char **argv)
 	    rc = system(cmd);
 	    remove(source_path);
 	    fclose(iconfig_file);
-	    if ( ! getenv("IVERILOG_ICONFIG"))
+	    if ( ! getenv("IVERILOG_ICONFIG")) {
 		  remove(iconfig_path);
+		  remove(defines_path);
+		  remove(compiled_defines_path);
+	    }
 
 	    if (rc != 0) {
 		  if (WIFEXITED(rc)) {
