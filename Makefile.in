@@ -124,9 +124,9 @@ ifeq (@WIN32@,yes)
 # The first step makes an ivl.exe that dlltool can use to make an
 # export and import library, and the last link makes a, ivl.exe
 # that really exports the things that the import library imports.
-ivl@EXEEXT@: $O ivl.def
+ivl@EXEEXT@: $O $(srcdir)/ivl.def
 	$(CXX) -o ivl@EXEEXT@ $O $(dllib) @EXTRALIBS@
-	dlltool --dllname ivl@EXEEXT@ --def ivl.def \
+	dlltool --dllname ivl@EXEEXT@ --def $(srcdir)/ivl.def \
 		--output-lib libivl.a --output-exp ivl.exp
 	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@
 else

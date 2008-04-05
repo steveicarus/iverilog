@@ -85,9 +85,9 @@ ifeq (@WIN32@,yes)
 # The first step makes an ivl.exe that dlltool can use to make an
 # export and import library, and the last link makes a, ivl.exe
 # that really exports the things that the import library imports.
-vvp@EXEEXT@ libvpi.a: $O vvp.def
+vvp@EXEEXT@ libvpi.a: $O $(srcdir)/vvp.def
 	$(CXX) -o vvp@EXEEXT@ $(LDFLAGS) $O $(dllib) $(LIBS)
-	dlltool --dllname vvp@EXEEXT@ --def vvp.def \
+	dlltool --dllname vvp@EXEEXT@ --def $(srcdir)/vvp.def \
 		--output-lib libvpi.a --output-exp vvp.exp
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) $O $(dllib) $(LIBS)
 else
