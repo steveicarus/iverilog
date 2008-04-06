@@ -57,7 +57,7 @@ CXXFLAGS = -Wall @CXXFLAGS@
 PICFLAGS = @PICFLAG@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 
-all: dep ivl@EXEEXT@
+all: dep version.h ivl@EXEEXT@
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for dir in ivlpp ; \
 	    do (cd $$dir ; $(MAKE) $@); done
@@ -181,6 +181,11 @@ iverilog-vpi.ps: $(srcdir)/iverilog-vpi.man
 
 iverilog-vpi.pdf: iverilog-vpi.ps
 	ps2pdf iverilog-vpi.ps iverilog-vpi.pdf
+
+version.h: .git/index
+	git --git-dir $(srcdir)/.git describe \
+	    | sed -e 's;\(.*\);#define VERSION_TAG "\1";' > $@tmp
+	diff $@tmp $(srcdir)/$@ > /dev/null 2>&1 || mv $@tmp $(srcdir)/$@
 
 ifeq (@MING32@,yes)
 INSTALL_DOC = $(prefix)/iverilog-vpi.pdf $(mandir)/man1/iverilog-vpi.1

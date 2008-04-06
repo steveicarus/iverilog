@@ -68,7 +68,7 @@ cfparse.h cfparse.c: cfparse.y
 	bison --verbose -t -d -o cfparse.c --name-prefix=cf $(srcdir)/cfparse.y
 
 
-main.o: main.c globals.h
+main.o: main.c globals.h ../version.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -DIVL_ROOT='"@libdir@/ivl"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DDLLIB='"@DLLIB@"' $(srcdir)/main.c
 
 build_string.o: build_string.c globals.h
