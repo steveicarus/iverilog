@@ -261,6 +261,9 @@ bool PEIdent::elaborate_sig(Design*des, NetScope*scope) const
       if (eve != 0)
 	    return false;
 
+      if (par != 0)
+	    return true;
+
       if (sig == 0)
 	    sig = make_implicit_net_(des, scope);
 
