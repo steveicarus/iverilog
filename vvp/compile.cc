@@ -88,6 +88,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%and",    of_AND,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and/r",  of_ANDR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%assign/av",of_ASSIGN_AV,3,{OA_ARR_PTR,OA_BIT1,     OA_BIT2} },
+      { "%assign/av/d",of_ASSIGN_AVD,3,{OA_ARR_PTR,OA_BIT1,  OA_BIT2} },
       { "%assign/mv",of_ASSIGN_MV,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/v0",of_ASSIGN_V0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%assign/v0/d",of_ASSIGN_V0D,3,{OA_FUNC_PTR,OA_BIT1, OA_BIT2} },

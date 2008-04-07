@@ -57,6 +57,7 @@ means the following:
 	otherwise   x
 
 * %assign/av <array-label>, <delay>, <bit>
+* %assign/av/d <array-label>, <delayx>, <bit>
 
 The %assign/av instruction assigns a vector value to a word in the
 labeled array. The <delay> is the delay in simulation time to the
@@ -69,6 +70,11 @@ The base of a part select is retrieved from index register 1.
 
 The address of the word in the memory is from index register 3. The
 address is canonical form.
+
+The %assign/av/d variation reads the delay from an integer register that
+is given by the <delayx> value. This should not be 0, 1 or 3, of course,
+since these registers contain the vector width, base part select and
+word address.
 
 * %assign/mv <memory-label>, <delay>, <bit> (DEPRECATED)
 

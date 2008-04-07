@@ -564,6 +564,29 @@ bool of_ASSIGN_AV(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/* %assign/av/d <array>, <delay_idx>, <bit>
+ * This generates an assignment event to an array. Index register 0
+ * contains the width of the vector (and the word) and index register
+ * 3 contains the canonical address of the word in memory. The named
+ * index register contains the delay.
+ */
+bool of_ASSIGN_AVD(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = thr->words[0].w_int;
+      unsigned off = thr->words[1].w_int;
+      unsigned adr = thr->words[3].w_int;
+
+      assert(wid > 0);
+
+      unsigned long delay = thr->words[cp->bit_idx[0]].w_int;
+      unsigned bit = cp->bit_idx[1];
+
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      schedule_assign_array_word(cp->array, adr, off, value, delay);
+      return true;
+}
+
 /*
  * This is %assign/v0 <label>, <delay>, <bit>
  * Index register 0 contains a vector width.

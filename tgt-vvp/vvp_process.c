@@ -184,22 +184,44 @@ static void set_to_lvariable(ivl_lval_t lval,
 }
 
 static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
-				 unsigned bit, unsigned delay, unsigned width)
+				 unsigned bit, unsigned delay, ivl_expr_t dexp,
+				 unsigned width)
 {
       unsigned skip_assign = transient_id++;
 
-	/* Calculate array word index into index register 3 */
-      draw_eval_expr_into_integer(word_ix, 3);
-	/* Skip assignment if word expression is not defined. */
-      fprintf(vvp_out, "  %%jmp/1 t_%u, 4;\n", skip_assign);
+      if (dexp == 0) {
+	      /* Constant delay... */
+	      /* Calculate array word index into index register 3 */
+	    draw_eval_expr_into_integer(word_ix, 3);
+	      /* Skip assignment if word expression is not defined. */
+	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
 
-	/* Store expression width into index word 0 */
-      fprintf(vvp_out, "  %%ix/load 0, %u; // word width\n", width);
-	/* Store constant (0) word part select into index 1 */
-      fprintf(vvp_out, "  %%ix/load 1, 0;\n");
+	      /* Store expression width into index word 0 */
+	    fprintf(vvp_out, "    %%ix/load 0, %u; // word width\n", width);
+	      /* Store constant (0) word part select into index 1 */
+	    fprintf(vvp_out, "    %%ix/load 1, 0;\n");
 
-      fprintf(vvp_out, "  %%assign/av v%p, %u, %u;\n", lsig, delay, bit);
-      fprintf(vvp_out, "t_%u ;\n", skip_assign);
+	    fprintf(vvp_out, "    %%assign/av v%p, %u, %u;\n", lsig,
+	            delay, bit);
+	    fprintf(vvp_out, "t_%u ;\n", skip_assign);
+      } else {
+	      /* Calculated delay... */
+	    int delay_index = allocate_word();
+	    draw_eval_expr_into_integer(dexp, delay_index);
+	      /* Calculate array word index into index register 3 */
+	    draw_eval_expr_into_integer(word_ix, 3);
+	      /* Skip assignment if word expression is not defined. */
+	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+
+	      /* Store expression width into index word 0 */
+	    fprintf(vvp_out, "    %%ix/load 0, %u; // word width\n", width);
+	      /* Store constant (0) word part select into index 1 */
+	    fprintf(vvp_out, "    %%ix/load 1, 0;\n");
+
+	    fprintf(vvp_out, "    %%assign/av/d v%p, %d, %u;\n", lsig,
+	            delay_index, bit);
+	    fprintf(vvp_out, "t_%u ;\n", skip_assign);
+      }
 
       clear_expression_lookaside();
 }
@@ -218,8 +240,7 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
       if (ivl_signal_array_count(sig) > 1) {
 	    assert(word_ix);
 	    if (! number_is_immediate(word_ix, 8*sizeof(use_word))) {
-		  assert(!dexp);
-		  assign_to_array_word(sig, word_ix, bit, delay, width);
+		  assign_to_array_word(sig, word_ix, bit, delay, dexp, width);
 		  return;
 	    }
 
@@ -280,7 +301,7 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 		  draw_eval_expr_into_integer(dexp, delay_index);
 		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
 		  fprintf(vvp_out, "    %%ix/load 1, %u;\n", part_off);
-		  fprintf(vvp_out, "    %%assign/v0/x1/d v%p_%lu, %u, %u;\n",
+		  fprintf(vvp_out, "    %%assign/v0/x1/d v%p_%lu, %d, %u;\n",
 			  sig, use_word, delay_index, bit);
 		  clr_word(delay_index);
 	    }

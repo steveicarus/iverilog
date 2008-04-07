@@ -1751,7 +1751,7 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 	    if (!number_is_immediate(ix, 8*sizeof(unsigned long))) {
 		  draw_eval_expr_into_integer(ix, 3);
 		  if (add_index < 0) {
-		        fprintf(vvp_out, "   %%load/av %u, v%p, %u;\n",
+		        fprintf(vvp_out, "    %%load/av %u, v%p, %u;\n",
 			        res.base, sig, swid);
 		  } else {
 		        assert(add_index == 0);
