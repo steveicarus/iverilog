@@ -121,6 +121,8 @@ class vvp_fun_bufz: public vvp_net_fun_t {
     private:
 };
 
+enum sel_type {SEL_PORT0, SEL_PORT1, SEL_BOTH};
+
 /*
  * The muxz functor is an A-B mux device, with the data inputs on
  * ports 0 and 1. port 2 is the select input.
@@ -146,8 +148,8 @@ class vvp_fun_muxz : public vvp_net_fun_t, private vvp_gen_event_s {
     private:
       vvp_vector4_t a_;
       vvp_vector4_t b_;
-      int select_;
       vvp_net_t*net_;
+      sel_type select_;
       bool has_run_;
 };
 
@@ -166,8 +168,8 @@ class vvp_fun_muxr : public vvp_net_fun_t, private vvp_gen_event_s {
     private:
       double a_;
       double b_;
-      int select_;
       vvp_net_t*net_;
+      sel_type select_;
 };
 
 class vvp_fun_not: public vvp_net_fun_t, private vvp_gen_event_s {

@@ -258,7 +258,7 @@ vvp_fun_muxr::vvp_fun_muxr()
 {
       net_ = 0;
       count_functors_logic += 1;
-      select_ = 2;
+      select_ = SEL_BOTH;
 }
 
 vvp_fun_muxr::~vvp_fun_muxr()
@@ -276,16 +276,16 @@ void vvp_fun_muxr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 
       switch (bit.value(0)) {
 	  case BIT4_0:
-	    if (select_ == 0) return;
-	    select_ = 0;
+	    if (select_ == SEL_PORT0) return;
+	    select_ = SEL_PORT0;
 	    break;
 	  case BIT4_1:
-	    if (select_ == 1) return;
-	    select_ = 1;
+	    if (select_ == SEL_PORT1) return;
+	    select_ = SEL_PORT1;
 	    break;
 	  default:
-	    if (select_ == 2) return;
-	    select_ = 2;
+	    if (select_ == SEL_BOTH) return;
+	    select_ = SEL_BOTH;
       }
 
       if (net_ == 0) {
@@ -300,13 +300,13 @@ void vvp_fun_muxr::recv_real(vvp_net_ptr_t ptr, double bit)
 	  case 0:
 	    if (a_ == bit) return;
 	    a_ = bit;
-	    if (select_ == 1) return; // The other port is selected.
+	    if (select_ == SEL_PORT1) return; // The other port is selected.
 	    break;
 
 	  case 1:
 	    if (b_ == bit) return;
 	    b_ = bit;
-	    if (select_ == 0) return; // The other port is selected.
+	    if (select_ == SEL_PORT0) return; // The other port is selected.
 	    break;
 
 	  default:
@@ -326,10 +326,10 @@ void vvp_fun_muxr::run_run()
       net_ = 0;
 
       switch (select_) {
-	  case 0:
+	  case SEL_PORT0:
 	    vvp_send_real(ptr->out, a_);
 	    break;
-	  case 1:
+	  case SEL_PORT1:
 	    vvp_send_real(ptr->out, b_);
 	    break;
 	  default:
@@ -347,7 +347,7 @@ vvp_fun_muxz::vvp_fun_muxz(unsigned wid)
 {
       net_ = 0;
       count_functors_logic += 1;
-      select_ = 2;
+      select_ = SEL_BOTH;
       has_run_ = false;
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    a_.set_bit(idx, BIT4_X);
@@ -365,27 +365,27 @@ void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	  case 0:
 	    if (a_ .eeq(bit) && has_run_) return;
 	    a_ = bit;
-	    if (select_ == 1) return; // The other port is selected.
+	    if (select_ == SEL_PORT1) return; // The other port is selected.
 	    break;
 	  case 1:
 	    if (b_ .eeq(bit) && has_run_) return;
 	    b_ = bit;
-	    if (select_ == 0) return; // The other port is selected.
+	    if (select_ == SEL_PORT0) return; // The other port is selected.
 	    break;
 	  case 2:
 	    assert(bit.size() == 1);
 	    switch (bit.value(0)) {
 		case BIT4_0:
-		  if (select_ == 0) return;
-		  select_ = 0;
+		  if (select_ == SEL_PORT0) return;
+		  select_ = SEL_PORT0;
 		  break;
 		case BIT4_1:
-		  if (select_ == 1) return;
-		  select_ = 1;
+		  if (select_ == SEL_PORT1) return;
+		  select_ = SEL_PORT1;
 		  break;
 		default:
-		  if (select_ == 2 && has_run_) return;
-		  select_ = 2;
+		  if (select_ == SEL_BOTH && has_run_) return;
+		  select_ = SEL_BOTH;
 	    }
 	    break;
 	  default:
@@ -405,10 +405,10 @@ void vvp_fun_muxz::run_run()
       net_ = 0;
 
       switch (select_) {
-	  case 0:
+	  case SEL_PORT0:
 	    vvp_send_vec4(ptr->out, a_);
 	    break;
-	  case 1:
+	  case SEL_PORT1:
 	    vvp_send_vec4(ptr->out, b_);
 	    break;
 	  default:
