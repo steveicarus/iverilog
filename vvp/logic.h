@@ -148,6 +148,7 @@ class vvp_fun_muxz : public vvp_net_fun_t, private vvp_gen_event_s {
       vvp_vector4_t b_;
       int select_;
       vvp_net_t*net_;
+      bool has_run_;
 };
 
 class vvp_fun_muxr : public vvp_net_fun_t, private vvp_gen_event_s {

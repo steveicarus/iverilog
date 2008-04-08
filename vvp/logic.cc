@@ -348,6 +348,7 @@ vvp_fun_muxz::vvp_fun_muxz(unsigned wid)
       net_ = 0;
       count_functors_logic += 1;
       select_ = 2;
+      has_run_ = false;
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    a_.set_bit(idx, BIT4_X);
 	    b_.set_bit(idx, BIT4_X);
@@ -362,12 +363,12 @@ void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       switch (ptr.port()) {
 	  case 0:
-	    if (a_ .eeq(bit)) return;
+	    if (a_ .eeq(bit) && has_run_) return;
 	    a_ = bit;
 	    if (select_ == 1) return; // The other port is selected.
 	    break;
 	  case 1:
-	    if (b_ .eeq(bit)) return;
+	    if (b_ .eeq(bit) && has_run_) return;
 	    b_ = bit;
 	    if (select_ == 0) return; // The other port is selected.
 	    break;
@@ -383,7 +384,7 @@ void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 		  select_ = 1;
 		  break;
 		default:
-		  if (select_ == 2) return;
+		  if (select_ == 2 && has_run_) return;
 		  select_ = 2;
 	    }
 	    break;
@@ -399,6 +400,7 @@ void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 
 void vvp_fun_muxz::run_run()
 {
+      has_run_ = true;
       vvp_net_t*ptr = net_;
       net_ = 0;
 
