@@ -1136,6 +1136,13 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 	    ivl_assert(*this, index_tail.msb);
 	    ivl_assert(*this, !index_tail.lsb);
 
+	    const NetEConst*par_me =dynamic_cast<const NetEConst*>(par_msb);
+	    const NetEConst*par_le =dynamic_cast<const NetEConst*>(par_lsb);
+
+	    ivl_assert(*this, par_me || !par_msb);
+	    ivl_assert(*this, par_le || !par_lsb);
+	    ivl_assert(*this, par_me || !par_le);
+
 	      /* Handle the case where a parameter has a bit
 		 select attached to it. Generate a NetESelect
 		 object to select the bit as desired. */
@@ -1157,7 +1164,20 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 		  verinum rv = re->value();
 		  verinum::V rb = verinum::Vx;
 
+		  long par_mv = lv.len()-1;
+		  long par_lv = 0;
+		  if (par_me) {
+			par_mv = par_me->value().as_long();
+			par_lv = par_le->value().as_long();
+		  }
+		    /* Convert the index to cannonical bit address. */
 		  long ridx = rv.as_long();
+		  if (par_mv >= par_lv) {
+			ridx -= par_lv;
+		  } else {
+			ridx = par_mv - ridx + par_lv;
+		  }
+
 		  if ((ridx >= 0) && ((unsigned long) ridx < lv.len())) {
 			rb = lv[ridx];
 
@@ -1174,13 +1194,6 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 		  tmp = re;
 
 	    } else {
-
-		  const NetEConst*par_me =dynamic_cast<const NetEConst*>(par_msb);
-		  const NetEConst*par_le =dynamic_cast<const NetEConst*>(par_lsb);
-
-		  assert(par_me || !par_msb);
-		  assert(par_le || !par_lsb);
-		  assert(par_me || !par_le);
 
 		  if (par_me) {
 			long par_mv = par_me->value().as_long();
