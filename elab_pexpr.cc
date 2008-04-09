@@ -193,6 +193,11 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
 		  delete res;
 		  return 0;
 	    }
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "Bit select [" << *tmp << "]"
+		       << " in parameter expression." << endl;
+
 	    res = new NetESelect(res, tmp, 1);
 	    res->set_line(*this);
 	    break;
