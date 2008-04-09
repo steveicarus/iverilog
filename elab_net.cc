@@ -1772,7 +1772,9 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      symbol_search(des, scope, path_, sig, par, eve);
+      const NetExpr*id_msb;
+      const NetExpr*id_lsb;
+      symbol_search(des, scope, path_, sig, par, eve, id_msb, id_lsb);
 
 	/* If this is a parameter name, then create a constant node
 	   that connects to a signal with the correct name. */
@@ -1793,8 +1795,23 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 		  pvalue = tmp;
 	    }
 
+	      /* If the parameter has declared dimensions, then apply
+		 those to the dimensions of the net that we create. */
+	    long msb = pvalue.len()-1;
+	    long lsb = 0;
+	    if (id_msb || id_lsb) {
+		  assert(id_msb && id_lsb);
+		  const NetEConst*tmp = dynamic_cast<const NetEConst*>(id_msb);
+		  ivl_assert(*this, tmp);		  
+		  msb = tmp->value().as_long();
+
+		  tmp = dynamic_cast<const NetEConst*>(id_lsb);
+		  ivl_assert(*this, tmp);
+		  lsb = tmp->value().as_long();
+	    }
+
 	    sig = new NetNet(scope, scope->local_symbol(),
-			     NetNet::IMPLICIT, pvalue.len());
+			     NetNet::IMPLICIT, msb, lsb);
 	    sig->set_line(*this);
 	    sig->data_type(IVL_VT_LOGIC);
 	    NetConst*cp = new NetConst(scope, scope->local_symbol(),
