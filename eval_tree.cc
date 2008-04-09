@@ -1159,7 +1159,7 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 	    return 0;
       }
 
-      if (debug_elaborate) {
+      if (debug_eval_tree) {
 	    cerr << get_fileline() << ": debug: evaluating expression: "
 		 << *this << endl;
       }
