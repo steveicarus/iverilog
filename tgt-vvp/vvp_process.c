@@ -174,9 +174,11 @@ static void set_to_lvariable(ivl_lval_t lval,
 
 
       } else {
-	    save_signal_lookaside(bit, sig, use_word, wid);
 	    fprintf(vvp_out, "    %%set/v v%p_%lu, %u, %u;\n",
 		    sig, use_word, bit, wid);
+	      /* save_signal width of 0 CLEARS the signal from the
+	         lookaside. */
+	    save_signal_lookaside(bit, sig, use_word, 0);
 
       }
 }
