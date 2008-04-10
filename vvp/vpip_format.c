@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpip_format.c,v 1.1 2003/04/20 02:49:07 steve Exp $"
-#endif
 
 # include  <vpi_user.h>
 # include  <assert.h>
@@ -44,7 +41,7 @@ static const char str_char2_table[256] = {
       "50102010" "30102010" /* E0 EF */ "40102010" "30102010" /* F0 FF */ };
 
 
-void vpip_format_strength(char*str, s_vpi_value*value)
+void vpip_format_strength(char*str, s_vpi_value*value, unsigned bit)
 {
       str[0] = '.';
       str[1] = '.';
@@ -53,42 +50,42 @@ void vpip_format_strength(char*str, s_vpi_value*value)
 
       assert(value->format == vpiStrengthVal);
 
-      switch (value->value.strength[0].logic) {
+      switch (value->value.strength[bit].logic) {
 	  case vpi0:
-	    str[0] = str_char1_table[value->value.strength[0].s0];
-	    str[1] = str_char2_table[value->value.strength[0].s0];
+	    str[0] = str_char1_table[value->value.strength[bit].s0];
+	    str[1] = str_char2_table[value->value.strength[bit].s0];
 	    str[2] = '0';
 	    break;
 	  case vpi1:
-	    str[0] = str_char1_table[value->value.strength[0].s1];
-	    str[1] = str_char2_table[value->value.strength[0].s1];
+	    str[0] = str_char1_table[value->value.strength[bit].s1];
+	    str[1] = str_char2_table[value->value.strength[bit].s1];
 	    str[2] = '1';
 	    break;
 	  case vpiX:
-	    if (value->value.strength[0].s0 == 1) {
-		  str[0] = str_char1_table[value->value.strength[0].s1];
-		  str[1] = str_char2_table[value->value.strength[0].s1];
+	    if (value->value.strength[bit].s0 == 1) {
+		  str[0] = str_char1_table[value->value.strength[bit].s1];
+		  str[1] = str_char2_table[value->value.strength[bit].s1];
 		  str[2] = 'H';
-	    } else if (value->value.strength[0].s1 == 1) {
-		  str[0] = str_char1_table[value->value.strength[0].s0];
-		  str[1] = str_char2_table[value->value.strength[0].s0];
+	    } else if (value->value.strength[bit].s1 == 1) {
+		  str[0] = str_char1_table[value->value.strength[bit].s0];
+		  str[1] = str_char2_table[value->value.strength[bit].s0];
 		  str[2] = 'L';
-	    } else if (value->value.strength[0].s1 ==
-		       value->value.strength[0].s0) {
-		  str[0] = str_char1_table[value->value.strength[0].s0];
-		  str[1] = str_char2_table[value->value.strength[0].s0];
+	    } else if (value->value.strength[bit].s1 ==
+		       value->value.strength[bit].s0) {
+		  str[0] = str_char1_table[value->value.strength[bit].s0];
+		  str[1] = str_char2_table[value->value.strength[bit].s0];
 		  str[2] = 'X';
 	    } else {
 		  int ss;
 
 		  str[0] = '0';
-		  ss = value->value.strength[0].s0;
+		  ss = value->value.strength[bit].s0;
 		  while (ss > 1) {
 			str[0] += 1;
 			ss >>= 1;
 		  }
 		  str[1] = '0';
-		  ss = value->value.strength[0].s1;
+		  ss = value->value.strength[bit].s1;
 		  while (ss > 1) {
 			str[1] += 1;
 			ss >>= 1;
@@ -103,8 +100,7 @@ void vpip_format_strength(char*str, s_vpi_value*value)
 	    break;
 	  default:
 	    fprintf(stderr, "Unsupported type %d.\n",
-	            value->value.strength[0].logic);
+	            value->value.strength[bit].logic);
 	    assert(0);
       }
 }
-
