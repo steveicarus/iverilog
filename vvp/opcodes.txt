@@ -168,6 +168,13 @@ variable. This is similar to %set, but it uses the cassign port
 signal responds differently. See "VARIABLE STATEMENTS" in the
 README.txt file.
 
+* %cassign/x0 <label>, <bit>, <wid>
+
+Perform continuous assign of a constant value to part of the target
+variable. This is similar to %set/x instruction, but it uses the
+cassign port (port-1) of the signal functor instead of the normal
+assign port (port-0), so the signal responds differently. See
+"VARIABLE STATEMENTS" and "NET STATEMENTS" in the README.txt file.
 
 * %cmp/u <bit-l>, <bit-r>, <wid>
 * %cmp/s <bit-l>, <bit-r>, <wid>
@@ -239,10 +246,14 @@ The %cvt/vr opcode converts a real word <bit-r> to a thread vector
 starting at <bit-l> and with the width <wid>. Non-integer precision is
 lost in the conversion.
 
-* %deassign <var-label>
+* %deassign <var-label>, <base>, <width>
 
 Deactivate and disconnect a procedural continuous assignment to a
 variable. The <var-label> identifies the affected variable.
+
+The <base> and <width> are used to determine what part of the signal
+will be deactivated. For a full deactivation the <base> is 0 and
+<width> is the entire signal width.
 
 * %delay <delay>
 
@@ -291,8 +302,8 @@ in the README.txt file.
 
 * %force/x0 <label>, <bit>, <wid>
 
-Force a constant value to part target variable. This is similar to
-%set/x instruction, but it uses the force port (port-2) of the signal
+Force a constant value to part of the target variable. This is similar
+to %set/x instruction, but it uses the force port (port-2) of the signal
 functor instead of the normal assign port (port-0), so the signal
 responds differently. See "VARIABLE STATEMENTS" and "NET STATEMENTS"
 in the README.txt file.

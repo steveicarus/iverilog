@@ -845,6 +845,40 @@ bool of_CASSIGN_V(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_CASSIGN_X0(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+      unsigned base = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+	// Implicitly, we get the base into the target vector from the
+	// X0 register.
+      long index = thr->words[0].w_int;
+
+      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
+
+      if (index < 0 && (wid <= (unsigned)-index))
+	    return true;
+
+      if (index >= (long)sig->size())
+	    return true;
+
+      if (index < 0) {
+	    wid -= (unsigned) -index;
+	    index = 0;
+      }
+
+      if (index+wid > sig->size())
+	    wid = sig->size() - index;
+
+      vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
+
+      vvp_net_ptr_t ptr (net, 1);
+      vvp_send_vec4_pv(ptr, vector, index, wid, sig->size());
+
+      return true;
+}
+
 bool of_CMPS(vthread_t thr, vvp_code_t cp)
 {
       vvp_bit4_t eq  = BIT4_1;
@@ -1185,9 +1219,24 @@ bool of_CVT_VR(vthread_t thr, vvp_code_t cp)
 bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
+      unsigned base  = cp->bit_idx[0];
+      unsigned width = cp->bit_idx[1];
 
+      vvp_fun_signal_vec*sig = reinterpret_cast<vvp_fun_signal_vec*>(net->fun);
+      assert(sig);
+
+      if (base >= sig->size()) return true;
+      if (base+width > sig->size()) width = sig->size() - base;
+
+      bool full_sig = base == 0 && width == sig->size();
+
+	/* Do we release all or part of the net? */
       vvp_net_ptr_t ptr (net, 3);
-      vvp_send_long(ptr, 1);
+      if (full_sig) {
+	    vvp_send_long(ptr, 1);
+      } else {
+	    vvp_send_long_pv(ptr, 1, base, width);
+      }
 
       return true;
 }
@@ -1777,7 +1826,7 @@ bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
 	/* Collect the thread bits into a vector4 item. */
       vvp_vector4_t value = vthread_bits_to_vector(thr, base, wid);
 
-	/* set the value into port 1 of the destination. */
+	/* Set the value into port 2 of the destination. */
       vvp_net_ptr_t ptr (net, 2);
       vvp_send_vec4(ptr, value);
 
@@ -1787,7 +1836,7 @@ bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
 bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
-      unsigned bit = cp->bit_idx[0];
+      unsigned base = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
 
 	// Implicitly, we get the base into the target vector from the
@@ -1810,19 +1859,14 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
       if (index+wid > sig->size())
 	    wid = sig->size() - index;
 
-      vvp_vector4_t bit_vec(wid);
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_bit4_t bit_val = thr_get_bit(thr, bit);
-	    bit_vec.set_bit(idx, bit_val);
-	    if (bit >= 4)
-		  bit += 1;
-      }
+      vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
 
       vvp_net_ptr_t ptr (net, 2);
-      vvp_send_vec4_pv(ptr, bit_vec, index, wid, sig->size());
+      vvp_send_vec4_pv(ptr, vector, index, wid, sig->size());
 
       return true;
 }
+
 /*
  * The %fork instruction causes a new child to be created and pushed
  * in front of any existing child. This causes the new child to be the

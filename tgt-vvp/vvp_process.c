@@ -802,7 +802,7 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
       switch (ivl_statement_type(net)) {
 	  case IVL_ST_CASSIGN:
 	    command_name = "%cassign/v";
-	    command_name_x0 = "ERROR";
+	    command_name_x0 = "%cassign/x0";
 	    break;
 	  case IVL_ST_FORCE:
 	    command_name = "%force/v";
@@ -842,12 +842,6 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 
 	    if (part_off != 0 || use_wid != ivl_signal_width(lsig)) {
 
-		  if (ivl_statement_type(net) == IVL_ST_CASSIGN) {
-			fprintf(stderr, "%s:%u: vvp-tgt sorry: cannot assign "
-			        "signal to a bit/part select.\n",
-			        ivl_stmt_file(net), ivl_stmt_lineno(net));
-			exit(1);
-		  }
 		  command_name = command_name_x0;
 		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", part_off);
 
@@ -967,15 +961,12 @@ static int show_stmt_deassign(ivl_statement_t net)
 	    assert(lsig != 0);
 	    assert(ivl_lval_mux(lval) == 0);
 
-	      /* We do not currently support deassigning a bit or
-	       * part select. */
+	    unsigned use_wid = ivl_lval_width(lval);
 	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
-	    if (ivl_signal_width(lsig) > ivl_lval_width(lval) ||
-	        (part_off_ex && get_number_immediate(part_off_ex) != 0)) {
-		  fprintf(stderr, "%s:%u: vvp-tgt sorry: cannot deassign "
-		  "a bit/part select.\n", ivl_stmt_file(net),
-		  ivl_stmt_lineno(net));
-		  exit(1);
+	    unsigned part_off = 0;
+	    if (part_off_ex != 0) {
+		  assert(number_is_immediate(part_off_ex, 64));
+		  part_off = get_number_immediate(part_off_ex);
 	    }
 
 	    if (word_idx != 0) {
@@ -984,7 +975,8 @@ static int show_stmt_deassign(ivl_statement_t net)
 	    }
 
 
-	    fprintf(vvp_out, "    %%deassign v%p_%lu;\n", lsig, use_word);
+	    fprintf(vvp_out, "    %%deassign v%p_%lu, %u, %u;\n",
+		    lsig, use_word, part_off, use_wid);
       }
 
       return 0;

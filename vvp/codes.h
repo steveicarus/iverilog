@@ -52,6 +52,7 @@ extern bool of_BLEND_WR(vthread_t thr, vvp_code_t code);
 extern bool of_BREAKPOINT(vthread_t thr, vvp_code_t code);
 extern bool of_CASSIGN_LINK(vthread_t thr, vvp_code_t code);
 extern bool of_CASSIGN_V(vthread_t thr, vvp_code_t code);
+extern bool of_CASSIGN_X0(vthread_t thr, vvp_code_t code);
 extern bool of_CMPIS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPIU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPS(vthread_t thr, vvp_code_t code);
