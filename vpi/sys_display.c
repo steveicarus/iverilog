@@ -326,6 +326,7 @@ static void format_strength(unsigned int mcd, s_vpi_value*value,
       for (bit = size-1; bit >= 0; bit -= 1) {
 	    vpip_format_strength(str, value, (unsigned) bit);
 	    my_mcd_printf(mcd, "%s", str);
+	    if (bit > 0) my_mcd_printf(mcd, "_");
       }
 }
 
@@ -1660,13 +1661,17 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           /* If a width was not given use a width of zero. */
           if (width == -1) width = 0;
           nbits = vpi_get(vpiSize, info->items[*idx]);
-          rsize = nbits*3 + 1;
+          /* This is 4 chars for all but the last bit (strenght + "_")
+           * which only needs three chars (strength), but then you need
+           * space for the EOS '\0', so it is just number of bits * 4. */
+          rsize = nbits*4;
           rbuf = malloc(rsize*sizeof(char));
           if (rsize > ini_size) result = realloc(result, rsize*sizeof(char));
           strcpy(rbuf, "");
           for (bit = nbits-1; bit >= 0; bit -= 1) {
             vpip_format_strength(tbuf, &value, bit);
             strcat(rbuf, tbuf);
+	    if (bit > 0) strcat(rbuf, "_");
           }
           if (ljust == 0) sprintf(result, "%*s", width, rbuf);
           else sprintf(result, "%-*s", width, rbuf);
