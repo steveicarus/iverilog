@@ -1784,17 +1784,6 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	    assert(pc);
 	    verinum pvalue = pc->value();
 
-	      /* If the desired lwidth is more than the width of the
-		 constant value, extend the value to fit the desired
-		 output. */
-	    if (lwidth > pvalue.len()) {
-		  verinum tmp ((uint64_t)0, lwidth);
-		  for (unsigned idx = 0 ;  idx < pvalue.len() ;  idx += 1)
-			tmp.set(idx, pvalue.get(idx));
-
-		  pvalue = tmp;
-	    }
-
 	      /* If the parameter has declared dimensions, then apply
 		 those to the dimensions of the net that we create. */
 	    long msb = pvalue.len()-1;
@@ -1810,10 +1799,23 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 		  lsb = tmp->value().as_long();
 	    }
 
+	      /* If the constant is smaller than its defined width extend
+		 the value. If needed this will be padded later to fit
+		 the real signal width. */
+	    unsigned  pwidth = msb > lsb ? msb - lsb : lsb - msb;
+	    if (pwidth > pvalue.len()) {
+		  verinum tmp ((uint64_t)0, pwidth);
+		  for (unsigned idx = 0 ;  idx < pvalue.len() ;  idx += 1)
+			tmp.set(idx, pvalue.get(idx));
+
+		  pvalue = tmp;
+	    }
+
 	    sig = new NetNet(scope, scope->local_symbol(),
 			     NetNet::IMPLICIT, msb, lsb);
 	    sig->set_line(*this);
 	    sig->data_type(IVL_VT_LOGIC);
+	    sig->local_flag(true);
 	    NetConst*cp = new NetConst(scope, scope->local_symbol(),
 				       pvalue);
 	    cp->set_line(*this);
