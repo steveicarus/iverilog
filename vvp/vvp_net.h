@@ -306,6 +306,7 @@ class vvp_vector2_t {
       vvp_vector2_t&operator = (const vvp_vector2_t&);
 
       bool is_NaN() const;
+      bool is_zero() const;
       unsigned size() const;
       int value(unsigned idx) const;
       void set_bit(unsigned idx, int bit);
@@ -834,8 +835,10 @@ class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_vpi_callback {
       bool needs_init_;
       bool continuous_assign_active_;
       vvp_vector2_t force_mask_;
+      vvp_vector2_t assign_mask_;
 
       void deassign();
+      void deassign_pv(unsigned base, unsigned wid);
       virtual void release(vvp_net_ptr_t ptr, bool net) =0;
       virtual void release_pv(vvp_net_ptr_t ptr, bool net,
                               unsigned base, unsigned wid) =0;
@@ -896,8 +899,10 @@ class vvp_fun_signal8  : public vvp_fun_signal_vec {
       void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
 
 	// Part select variants of above
-	//void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-	//			unsigned base, unsigned wid, unsigned vwid);
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                        unsigned base, unsigned wid, unsigned vwid);
+      void recv_vec8_pv(vvp_net_ptr_t port, vvp_vector8_t bit,
+                        unsigned base, unsigned wid, unsigned vwid);
 
 	// Get information about the vector value.
       unsigned   size() const;

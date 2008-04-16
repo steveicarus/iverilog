@@ -1,7 +1,7 @@
 #ifndef __vpi_user_H
 #define __vpi_user_H
 /*
- * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -560,7 +560,7 @@ extern DLLEXPORT void (*vlog_startup_routines[])();
 
   /* Format a scalar a la %v. The str points to a 4byte character
      buffer. The value must be a vpiStrengthVal. */
-extern void vpip_format_strength(char*str, s_vpi_value*value);
+extern void vpip_format_strength(char*str, s_vpi_value*value, unsigned bit);
 
 EXTERN_C_END
 

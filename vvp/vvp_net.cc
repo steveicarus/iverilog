@@ -1133,6 +1133,18 @@ bool vvp_vector2_t::is_NaN() const
       return wid_ == 0;
 }
 
+bool vvp_vector2_t::is_zero() const
+{
+      const unsigned words = (wid_ + BITS_PER_WORD-1) / BITS_PER_WORD;
+
+      for (unsigned idx = 0; idx < words; idx += 1) {
+	    if (vec_[idx] == 0) continue;
+	    return false;
+      }
+
+      return true;
+}
+
 /*
  * Basic idea from "Introduction to Programming using SML" by
  * Michael R. Hansen and Hans Rischel page 261 and "Seminumerical
@@ -1659,6 +1671,18 @@ vvp_fun_signal_base::vvp_fun_signal_base()
 void vvp_fun_signal_base::deassign()
 {
       continuous_assign_active_ = false;
+      assign_mask_ = vvp_vector2_t();
+}
+
+void vvp_fun_signal_base::deassign_pv(unsigned base, unsigned wid)
+{
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    assign_mask_.set_bit(base+idx, 0);
+      }
+
+      if (assign_mask_.is_zero()) {
+	    assign_mask_ = vvp_vector2_t();
+      }
 }
 
 /*
@@ -1700,9 +1724,7 @@ void vvp_fun_signal_base::recv_long_pv(vvp_net_ptr_t ptr, long bit,
 	  case 3: // Command port
 	    switch (bit) {
 		case 1: // deassign command
-		  fprintf(stderr, "Sorry: cannot deassign a partial signal\n");
-		  assert(0);
-		  deassign();
+		  deassign_pv(base, wid);
 		  break;
 		case 2: // release/net
 		  release_pv(ptr, true, base, wid);
@@ -1745,13 +1767,25 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       switch (ptr.port()) {
 	  case 0: // Normal input (feed from net, or set from process)
-	      /* If continuous assign is active, then this is a var
-		 and the continuous assigned values overrides any
-		 normal input. So process input only if continuous
-		 assignment is not active. */
-	    if (!continuous_assign_active_) {
+	      /* If we don't have a continuous assign mask then just
+		 copy the bits, otherwise we need to see if there are
+		 any holes in the mask so we can set those bits. */
+	    if (assign_mask_.size() == 0) {
 		  if (needs_init_ || !bits4_.eeq(bit)) {
 			bits4_ = bit;
+			needs_init_ = false;
+			calculate_output_(ptr);
+		  }
+	    } else {
+		  bool changed = false;
+		  assert(bits4_.size() == assign_mask_.size());
+		  for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1) {
+			if (idx >= bits4_.size()) break;
+			if (assign_mask_.value(idx)) continue;
+			bits4_.set_bit(idx, bit.value(idx));
+			changed = true;
+		  }
+		  if (changed) {
 			needs_init_ = false;
 			calculate_output_(ptr);
 		  }
@@ -1759,8 +1793,8 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    break;
 
 	  case 1: // Continuous assign value
-	    continuous_assign_active_ = true;
 	    bits4_ = bit;
+	    assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL1, size());
 	    calculate_output_(ptr);
 	    break;
 
@@ -1792,15 +1826,39 @@ void vvp_fun_signal::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 
       switch (ptr.port()) {
 	  case 0: // Normal input
-	    if (! continuous_assign_active_) {
+	    if (assign_mask_.size() == 0) {
 		  for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-			if (base+idx >= bits4_.size())
-			      break;
+			if (base+idx >= bits4_.size()) break;
 			bits4_.set_bit(base+idx, bit.value(idx));
 		  }
 		  needs_init_ = false;
 		  calculate_output_(ptr);
+	    } else {
+		  bool changed = false;
+		  assert(bits4_.size() == assign_mask_.size());
+		  for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+			if (base+idx >= bits4_.size()) break;
+			if (assign_mask_.value(base+idx)) continue;
+			bits4_.set_bit(base+idx, bit.value(idx));
+			changed = true;
+		  }
+		  if (changed) {
+			needs_init_ = false;
+			calculate_output_(ptr);
+		  }
 	    }
+	    break;
+
+	  case 1: // Continuous assign value
+	    if (assign_mask_.size() == 0)
+		  assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, size());
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  if (base+idx >= bits4_.size())
+			break;
+		  bits4_.set_bit(base+idx, bit.value(idx));
+		  assign_mask_.set_bit(base+idx, 1);
+	    }
+	    calculate_output_(ptr);
 	    break;
 
 	  case 2: // Force value
@@ -1870,6 +1928,7 @@ void vvp_fun_signal::release_pv(vvp_net_ptr_t ptr, bool net,
 	    force_mask_.set_bit(base+idx, 0);
 	    if (!net) bits4_.set_bit(base+idx, force_.value(base+idx));
       }
+      if (force_mask_.is_zero()) force_mask_ = vvp_vector2_t();
 
       if (net) calculate_output_(ptr);
 }
@@ -1929,19 +1988,18 @@ void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
 {
       switch (ptr.port()) {
 	  case 0: // Normal input (feed from net, or set from process)
-	    if (!continuous_assign_active_) {
-		  if (needs_init_ || !bits8_.eeq(bit)) {
-			bits8_ = bit;
-			needs_init_ = false;
-			calculate_output_(ptr);
-		  }
+	    if (needs_init_ || !bits8_.eeq(bit)) {
+		  bits8_ = bit;
+		  needs_init_ = false;
+		  calculate_output_(ptr);
 	    }
 	    break;
 
 	  case 1: // Continuous assign value
-	    continuous_assign_active_ = true;
-	    bits8_ = bit;
-	    calculate_output_(ptr);
+	    /* This is a procedural continuous assign and it can
+	     * only be used on a register and a register is never
+	     * strength aware. */
+	    assert(0);
 	    break;
 
 	  case 2: // Force value
@@ -1954,6 +2012,57 @@ void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
 		  force_ = bit;
 
 	    force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL1, size());
+	    calculate_output_(ptr);
+	    break;
+
+	  default:
+	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
+	    assert(0);
+	    break;
+      }
+}
+
+void vvp_fun_signal8::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                                   unsigned base, unsigned wid, unsigned vwid)
+{
+      recv_vec8_pv(ptr, bit, base, wid, vwid);
+}
+
+void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, vvp_vector8_t bit,
+				   unsigned base, unsigned wid, unsigned vwid)
+{
+      assert(bit.size() == wid);
+      assert(bits8_.size() == vwid);
+
+      switch (ptr.port()) {
+	  case 0: // Normal input
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  if (base+idx >= bits8_.size()) break;
+		  bits8_.set_bit(base+idx, bit.value(idx));
+	    }
+	    needs_init_ = false;
+	    calculate_output_(ptr);
+	    break;
+
+	  case 1: // Continuous assign value
+	    /* This is a procedural continuous assign and it can
+	     * only be used on a register and a register is never
+	     * strength aware. */
+	    assert(0);
+	    break;
+
+	  case 2: // Force value
+
+	    if (force_mask_.size() == 0)
+		  force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, size());
+	    if (force_.size() == 0)
+		  force_ = vvp_vector8_t(vvp_vector4_t(vwid, BIT4_Z));
+
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  force_mask_.set_bit(base+idx, 1);
+		  force_.set_bit(base+idx, bit.value(idx));
+	    }
+
 	    calculate_output_(ptr);
 	    break;
 
@@ -2003,6 +2112,7 @@ void vvp_fun_signal8::release_pv(vvp_net_ptr_t ptr, bool net,
 	    force_mask_.set_bit(base+idx, 0);
 	    if (!net) bits8_.set_bit(base+idx, force_.value(base+idx));
       }
+      if (force_mask_.is_zero()) force_mask_ = vvp_vector2_t();
 
       if (net) calculate_output_(ptr);
 }
@@ -2025,9 +2135,14 @@ vvp_bit4_t vvp_fun_signal8::value(unsigned idx) const
 
 vvp_vector4_t vvp_fun_signal8::vec4_value() const
 {
-      if (force_mask_.size())
-	    return reduce4(force_);
-      else
+      if (force_mask_.size()) {
+	    vvp_vector8_t bits (bits8_);
+	    for (unsigned idx = 0 ;  idx < bits.size() ;  idx += 1) {
+		  if (force_mask_.value(idx))
+			bits.set_bit(idx, force_.value(idx));
+	    }
+	    return reduce4(bits);
+      } else
 	    return reduce4(bits8_);
 }
 

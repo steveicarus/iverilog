@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.79 2007/04/18 02:40:20 steve Exp $"
-#endif
 
 # include "vpi_config.h"
 
@@ -320,11 +317,17 @@ static void format_time_real(unsigned mcd, int fsize,
 }
 
 
-static void format_strength(unsigned int mcd, s_vpi_value*value)
+static void format_strength(unsigned int mcd, s_vpi_value*value,
+                            unsigned size)
 {
       char str[4];
-      vpip_format_strength(str, value);
-      my_mcd_printf(mcd, "%s", str);
+      int bit;
+
+      for (bit = size-1; bit >= 0; bit -= 1) {
+	    vpip_format_strength(str, value, (unsigned) bit);
+	    my_mcd_printf(mcd, "%s", str);
+	    if (bit > 0) my_mcd_printf(mcd, "_");
+      }
 }
 
 static void format_error_msg(const char*msg, int leading_zero,
@@ -695,7 +698,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 		  return 1;
 	    }
 
-	    format_strength(mcd, &value);
+	    format_strength(mcd, &value, vpi_get(vpiSize, argv[idx]));
 
 	    use_count = 1;
 	    break;
@@ -1322,12 +1325,16 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
   s_vpi_value value;
   char *result, *fmtb;
   unsigned int size;
-  unsigned int max_size = 256;  /* The initial size of the buffer. */
+  unsigned int ini_size = 256;  /* The initial size of the buffer. */
+
+  /* Make sure the width fits in the initial buffer. */
+  if (width+1 > ini_size) ini_size = width + 1;
 
   /* The default return value is the full format. */
-  result = malloc(max_size*sizeof(char));
+  result = malloc(ini_size*sizeof(char));
   fmtb = format_as_string(ljust, plus, ld_zero, width, prec, fmt);
   strcpy(result, fmtb);
+  size = strlen(result) + 1; /* fallback value if errors */
   switch (fmt) {
 
     case '%':
@@ -1386,13 +1393,13 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           }
           /* If the default buffer is too small, make it big enough. */
           size = strlen(cp) + 1;
-          if (size > max_size) result = realloc(result, size*sizeof(char));
+          if (size > ini_size) result = realloc(result, size*sizeof(char));
 
           if (ljust == 0) sprintf(result, "%*s", width, cp);
           else sprintf(result, "%-*s", width, cp);
+          size = strlen(result) + 1;
         }
       }
-      size = strlen(result) + 1;
       break;
 
     case 'c':
@@ -1416,9 +1423,9 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
                                   value.value.str[strlen(value.value.str)-1]);
           else sprintf(result, "%-*c", width,
                        value.value.str[strlen(value.value.str)-1]);
+          size = strlen(result) + 1;
         }
       }
-      size = strlen(result) + 1;
       break;
 
     case 'd':
@@ -1451,13 +1458,13 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
             strcpy(&tbuf[1], value.value.str);
           } else strcpy(&tbuf[0], value.value.str);
           /* If the default buffer is too small make it big enough. */
-          if (size > max_size) result = realloc(result, size*sizeof(char));
+          if (size > ini_size) result = realloc(result, size*sizeof(char));
           if (ljust == 0) sprintf(result, "%*s", width, tbuf);
           else sprintf(result, "%-*s", width, tbuf);
           free(tbuf);
+          size = strlen(result) + 1;
         }
       }
-      size = strlen(result) + 1;
       break;
 
     case 'e':
@@ -1485,9 +1492,9 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           while (*cp != '>') cp++;
           *cp = '\0';
           sprintf(result, fmtb+1, value.value.real);
+          size = strlen(result) + 1;
         }
       }
-      size = strlen(result) + 1;
       break;
 
     /* This Verilog format specifier is not currently supported!
@@ -1496,7 +1503,6 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
     case 'L':
       vpi_printf("WARNING: %%%c currently unsupported %s%s.\n", fmt,
                  info->name, fmtb);
-      size = strlen(result) + 1;
       break;
 
     case 'm':
@@ -1532,12 +1538,12 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           if (width == -1) width = 0;
           /* If the default buffer is too small make it big enough. */
           size = strlen(value.value.str) + 1;
-          if (size > max_size) result = realloc(result, size*sizeof(char));
+          if (size > ini_size) result = realloc(result, size*sizeof(char));
           if (ljust == 0) sprintf(result, "%*s", width, value.value.str);
           else sprintf(result, "%-*s", width, value.value.str);
+          size = strlen(result) + 1;
         }
       }
-      size = strlen(result) + 1;
       break;
 
     case 't':
@@ -1570,6 +1576,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
             get_time_real(tbuf, value.value.real, prec, time_units);
             if (ljust == 0) sprintf(result, "%*s", width, tbuf);
             else sprintf(result, "%-*s", width, tbuf);
+            size = strlen(result) + 1;
           }
         } else {
           value.format = vpiDecStrVal;
@@ -1581,16 +1588,15 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
             get_time(tbuf, value.value.str, prec, time_units);
             if (ljust == 0) sprintf(result, "%*s", width, tbuf);
             else sprintf(result, "%-*s", width, tbuf);
+            size = strlen(result) + 1;
           }
         }
       }
-      size = strlen(result) + 1;
       break;
 
     case 'u':
     case 'U':
       *idx += 1;
-      size = 0;  /* fallback value if errors */
       if (ljust != 0  || plus != 0 || ld_zero != 0 || width != -1 ||
           prec != -1) {
         vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
@@ -1610,7 +1616,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           veclen = (vpi_get(vpiSize, info->items[*idx])+31)/32;
           size = veclen * 4 + 1;
           /* If the default buffer is too small, make it big enough. */
-          if (size > max_size) result = realloc(result, size*sizeof(char));
+          if (size > ini_size) result = realloc(result, size*sizeof(char));
           cp = result;
           for (word = 0; word < veclen; word += 1) {
             bits = value.value.vector[word].aval &
@@ -1647,22 +1653,38 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           vpi_printf("WARNING: incompatible value for %s%s.\n", info->name,
                      fmtb);
         } else {
-          char tbuf[4];
+          char tbuf[4], *rbuf;
+          PLI_INT32 nbits;
+          unsigned rsize;
+          int bit;
 
           /* If a width was not given use a width of zero. */
           if (width == -1) width = 0;
-          vpip_format_strength(tbuf, &value);
-          if (ljust == 0) sprintf(result, "%*s", width, tbuf);
-          else sprintf(result, "%-*s", width, tbuf);
+          nbits = vpi_get(vpiSize, info->items[*idx]);
+          /* This is 4 chars for all but the last bit (strenght + "_")
+           * which only needs three chars (strength), but then you need
+           * space for the EOS '\0', so it is just number of bits * 4. */
+          rsize = nbits*4;
+          rbuf = malloc(rsize*sizeof(char));
+          if (rsize > ini_size) result = realloc(result, rsize*sizeof(char));
+          strcpy(rbuf, "");
+          for (bit = nbits-1; bit >= 0; bit -= 1) {
+            vpip_format_strength(tbuf, &value, bit);
+            strcat(rbuf, tbuf);
+	    if (bit > 0) strcat(rbuf, "_");
+          }
+          if (ljust == 0) sprintf(result, "%*s", width, rbuf);
+          else sprintf(result, "%-*s", width, rbuf);
+          free(rbuf);
+          size = strlen(result) + 1;
         }
       }
-      size = strlen(result) + 1;
       break;
 
     case 'z':
     case 'Z':
       *idx += 1;
-      size = 0;  /* fallback value if errors */
+      size = strlen(result) + 1; /* fallback value if errors */
       if (ljust != 0  || plus != 0 || ld_zero != 0 || width != -1 ||
           prec != -1) {
         vpi_printf("WARNING: invalid format %s%s.\n", info->name, fmtb);
@@ -1682,7 +1704,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           veclen = (vpi_get(vpiSize, info->items[*idx])+31)/32;
           size = 2 * veclen * 4 + 1;
           /* If the default buffer is too small, make it big enough. */
-          if (size > max_size) result = realloc(result, size*sizeof(char));
+          if (size > ini_size) result = realloc(result, size*sizeof(char));
           cp = result;
           for (word = 0; word < veclen; word += 1) {
             /* Write the aval followed by the bval in endian order. */

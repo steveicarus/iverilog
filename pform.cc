@@ -350,8 +350,8 @@ void pform_endmodule(const char*name)
 	    msg << "Module " << name << " was already declared here: "
 		<< (*test).second->get_fileline() << endl;
 	    VLerror(msg.str().c_str());
-	    pform_cur_module = 0;
-	    return;
+      } else {
+	    pform_modules[mod_name] = pform_cur_module;
       }
 
 	// The current lexical scope should be this module by now, and
@@ -360,7 +360,6 @@ void pform_endmodule(const char*name)
       lexical_scope = pform_cur_module->pscope_parent();
       ivl_assert(*pform_cur_module, lexical_scope == 0);
 
-      pform_modules[mod_name] = pform_cur_module;
       pform_cur_module = 0;
 }
 
