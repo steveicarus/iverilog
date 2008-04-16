@@ -95,12 +95,14 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 		  return 0;
 	    }
 
+	    if (debug_eval_tree) {
+		  cerr << get_fileline() << ": debug: Evaluate expr=" << *this
+		       << " --- prune=" << prune_to_width
+		       << " has_width=" << (has_width()? "true" : "false") << endl;
+	    }
+
 	    /* Result might have known width. */
 	    if (has_width()) {
-		  if (debug_eval_tree) {
-			cerr << get_fileline() << ": debug: Evaluate expr=" << *this
-			     << " --- prune=" << prune_to_width << endl;
-		  }
 		  unsigned lwid = lc->expr_width();
 		  unsigned rwid = rc->expr_width();
 		  unsigned  wid = (rwid > lwid) ? rwid : lwid;
@@ -108,6 +110,10 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 			wid += 1;
 		  verinum val2=verinum(val,wid);
 		  val=val2;
+	    } else {
+		    /* No fixed width, so trim the bits losslessly. */
+		  verinum val2 = trim_vnum(val);
+		  val = val2;
 	    }
 
 	    return new NetEConst(val);

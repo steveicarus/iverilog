@@ -505,12 +505,20 @@ verinum trim_vnum(const verinum&that)
 	    unsigned top = that.len()-1;
 	    while ((top > 0) && (that.get(top) == verinum::V0))
 		  top -= 1;
+
+	      /* Now top is the index of the highest non-zero bit. If
+		 that turns out to the highest bit in the vector, then
+		 tere is no trimming possible. */
+	    if (top+1 == that.len())
+		  return that;
+
+	      /* Make tlen wide enough to include the highest non-zero
+		 bit, plus one extra 0 bit. */
 	    tlen = top+2;
 
 	      /* This can only happen when the verinum is all zeros,
 		 so make it a single bit wide. */
 	    if (that.get(top) == verinum::V0) tlen -= 1;
-
       }
 
       verinum tmp (verinum::V0, tlen, false);
