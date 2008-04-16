@@ -801,6 +801,37 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
       return 0;
 }
 
+static void force_real_to_lval(ivl_statement_t net, int res)
+{
+      const char*command_name;
+
+      switch (ivl_statement_type(net)) {
+	  case IVL_ST_CASSIGN:
+	    command_name = "%cassign/wr";
+	    break;
+	  case IVL_ST_FORCE:
+	    command_name = "%force/wr";
+	    break;
+	  default:
+	    command_name = "ERROR";
+	    assert(0);
+	    break;
+      }
+
+      assert(ivl_stmt_lvals(net) == 1);
+      ivl_lval_t lval = ivl_stmt_lval(net, 0);
+      ivl_signal_t lsig = ivl_lval_sig(lval);
+
+      assert(ivl_lval_width(lval) == 1);
+      assert(ivl_lval_part_off(lval) == 0);
+      assert(ivl_lval_idx(lval) == 0);
+	/* L-Value must be a signal: reg or wire */
+      assert(lsig != 0);
+
+      fprintf(vvp_out, "    %s v%p_0, %d;\n", command_name, lsig, res);
+
+}
+
 static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 {
       unsigned lidx;
@@ -936,16 +967,28 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 static int show_stmt_cassign(ivl_statement_t net)
 {
       ivl_expr_t rval;
-      struct vector_info rvec;
+      ivl_signal_t sig;
 
       rval = ivl_stmt_rval(net);
       assert(rval);
 
-      rvec = draw_eval_expr(rval, STUFF_OK_47);
+      sig = ivl_lval_sig(ivl_stmt_lval(net, 0));
+      if (sig && ivl_signal_data_type(sig) == IVL_VT_REAL) {
+	    int res;
 
-	/* Write out initial continuous assign instructions to assign
-	   the expression value to the l-value. */
-      force_vector_to_lval(net, rvec);
+	    res = draw_eval_real(ivl_stmt_rval(net));
+	    clr_word(res);
+
+	    force_real_to_lval(net, res);
+      } else {
+	    struct vector_info rvec;
+
+	    rvec = draw_eval_expr(rval, STUFF_OK_47);
+
+	      /* Write out initial continuous assign instructions to assign
+	         the expression value to the l-value. */
+	    force_vector_to_lval(net, rvec);
+      }
 
       force_link_rval(net, rval);
 
@@ -959,6 +1002,18 @@ static int show_stmt_cassign(ivl_statement_t net)
  */
 static int show_stmt_deassign(ivl_statement_t net)
 {
+      ivl_signal_t sig = ivl_lval_sig(ivl_stmt_lval(net, 0));
+      if (sig && ivl_signal_data_type(sig) == IVL_VT_REAL) {
+	    assert(ivl_stmt_lvals(net) == 1);
+	    ivl_lval_t lval = ivl_stmt_lval(net, 0);
+	    assert(ivl_lval_width(lval) == 1);
+	    assert(ivl_lval_part_off(lval) == 0);
+	    assert(ivl_lval_idx(lval) == 0);
+
+	    fprintf(vvp_out, "    %%deassign/wr v%p_0;\n", sig);
+	    return 0;
+      }
+
       unsigned lidx;
 
       for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
@@ -1115,16 +1170,28 @@ static int show_stmt_disable(ivl_statement_t net, ivl_scope_t sscope)
 static int show_stmt_force(ivl_statement_t net)
 {
       ivl_expr_t rval;
-      struct vector_info rvec;
+      ivl_signal_t sig;
 
       rval = ivl_stmt_rval(net);
       assert(rval);
 
-      rvec = draw_eval_expr(rval, STUFF_OK_47);
+      sig = ivl_lval_sig(ivl_stmt_lval(net, 0));
+      if (sig && ivl_signal_data_type(sig) == IVL_VT_REAL) {
+            int res;
 
-	/* Write out initial continuous assign instructions to assign
-	   the expression value to the l-value. */
-      force_vector_to_lval(net, rvec);
+            res = draw_eval_real(ivl_stmt_rval(net));
+            clr_word(res);
+
+            force_real_to_lval(net, res);
+      } else {
+            struct vector_info rvec;
+
+            rvec = draw_eval_expr(rval, STUFF_OK_47);
+
+              /* Write out initial continuous assign instructions to assign
+                 the expression value to the l-value. */
+            force_vector_to_lval(net, rvec);
+      }
 
       force_link_rval(net, rval);
 
@@ -1213,6 +1280,22 @@ static int show_stmt_noop(ivl_statement_t net)
 
 static int show_stmt_release(ivl_statement_t net)
 {
+      ivl_signal_t sig = ivl_lval_sig(ivl_stmt_lval(net, 0));
+      if (sig && ivl_signal_data_type(sig) == IVL_VT_REAL) {
+	    unsigned type = 0;
+
+	    assert(ivl_stmt_lvals(net) == 1);
+	    ivl_lval_t lval = ivl_stmt_lval(net, 0);
+	    assert(ivl_lval_width(lval) == 1);
+	    assert(ivl_lval_part_off(lval) == 0);
+	    assert(ivl_lval_idx(lval) == 0);
+
+	    if (ivl_signal_type(sig) == IVL_SIT_REG) type = 1;
+
+	    fprintf(vvp_out, "    %%release/wr v%p_0, %u;\n", sig, type);
+	    return 0;
+      }
+
       unsigned lidx;
 
       for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {

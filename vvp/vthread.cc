@@ -845,6 +845,18 @@ bool of_CASSIGN_V(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_CASSIGN_WR(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net  = cp->net;
+      double value = thr->words[cp->bit_idx[0]].w_real;
+
+	/* Set the value into port 1 of the destination. */
+      vvp_net_ptr_t ptr (net, 1);
+      vvp_send_real(ptr, value);
+
+      return true;
+}
+
 bool of_CASSIGN_X0(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
@@ -1240,6 +1252,20 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
+
+bool of_DEASSIGN_WR(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_fun_signal_real*sig = reinterpret_cast<vvp_fun_signal_real*>(net->fun);
+      assert(sig);
+
+      vvp_net_ptr_t ptr (net, 3);
+      vvp_send_long(ptr, 1);
+
+      return true;
+}
+
 
 /*
  * The delay takes two 32bit numbers to make up a 64bit time.
@@ -1832,6 +1858,19 @@ bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
+
+bool of_FORCE_WR(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net  = cp->net;
+      double value = thr->words[cp->bit_idx[0]].w_real;
+
+	/* Set the value into port 2 of the destination. */
+      vvp_net_ptr_t ptr (net, 2);
+      vvp_send_real(ptr, value);
+
+      return true;
+}
+
 
 bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
 {
@@ -3380,6 +3419,28 @@ bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/* The type is 1 for registers and 0 for everything else. */
+bool of_RELEASE_WR(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+      unsigned type  = cp->bit_idx[0];
+
+      vvp_fun_signal_real*sig = reinterpret_cast<vvp_fun_signal_real*>(net->fun);
+      assert(sig);
+
+	// This is the net that is forcing me...
+      if (vvp_net_t*src = sig->force_link) {
+	      // And this is the pointer to be removed.
+	    vvp_net_ptr_t dst_ptr (net, 2);
+	    unlink_from_driver(src, dst_ptr);
+      }
+
+	// Send a command to this signal to unforce itself.
+      vvp_net_ptr_t ptr (net, 3);
+      vvp_send_long(ptr, 2 + type);
+
+      return true;
+}
 
 /*
  * This implements the "%set/av <label>, <bit>, <wid>" instruction. In

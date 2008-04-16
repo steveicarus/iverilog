@@ -168,6 +168,11 @@ variable. This is similar to %set, but it uses the cassign port
 signal responds differently. See "VARIABLE STATEMENTS" in the
 README.txt file.
 
+* %cassign/wr <var-label>, <bit>
+
+Perform a continuous assign of a constant real value to the target
+variable. See %cassign/v above.
+
 * %cassign/x0 <label>, <bit>, <wid>
 
 Perform continuous assign of a constant value to part of the target
@@ -255,6 +260,10 @@ The <base> and <width> are used to determine what part of the signal
 will be deactivated. For a full deactivation the <base> is 0 and
 <width> is the entire signal width.
 
+* %deassign/wr <var-label>
+
+The same as %deassign above except this is used for real variables.
+
 * %delay <delay>
 
 This opcode pauses the thread, and causes it to be rescheduled for a
@@ -299,6 +308,10 @@ and %cassign/v, but it uses the force port (port-2) of the signal
 functor instead of the normal assign port (port-0), so the signal
 responds differently. See "VARIABLE STATEMENTS" and "NET STATEMENTS"
 in the README.txt file.
+
+* %force/wr <var-label>, <bit>
+
+Force a constant real value to the target variable. See %force/v above.
 
 * %force/x0 <label>, <bit>, <wid>
 
@@ -618,6 +631,13 @@ forced value until another value propagates through.
 The <base> and <width> are used to determine what part of the signal
 will be released. For a full release the <base> is 0 and <width> is
 the entire signal width.
+
+* %release/wr <functor-label>, <type>
+
+Release the force on the real signal that is represented by the functor
+<functor-label>.  The force was previously activated with a %force/wr
+statement. The <type> is 0 for nets and 1 for registers. See the other
+%release commands above.
 
 * %set/v <var-label>, <bit>, <wid>
 
