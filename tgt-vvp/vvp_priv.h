@@ -29,6 +29,11 @@
  */
 extern FILE* vvp_out;
 
+/*
+ * Keep a count of errors that would render the output unusable.
+ */
+extern int vvp_errors;
+
 struct vector_info {
       unsigned base;
       unsigned wid;

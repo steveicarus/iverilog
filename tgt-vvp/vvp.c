@@ -27,6 +27,7 @@
 # include  <sys/stat.h>
 
 FILE*vvp_out = 0;
+int vvp_errors = 0;
 
 inline static void draw_execute_header(ivl_design_t des)
 {
@@ -79,6 +80,8 @@ int target_design(ivl_design_t des)
 	    return -1;
       }
 
+      vvp_errors = 0;
+
       draw_execute_header(des);
 
       { int pre = ivl_design_time_precision(des);
@@ -113,6 +116,6 @@ int target_design(ivl_design_t des)
 
       fclose(vvp_out);
 
-      return rc;
+      return rc + vvp_errors;
 }
 

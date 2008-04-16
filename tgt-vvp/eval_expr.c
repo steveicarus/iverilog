@@ -277,6 +277,14 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 	   expressions. */
       if (lv.base < 8) {
 	    unsigned base = allocate_vector(ewid);
+	    if (base == 0) {
+		  fprintf(stderr, "%s:%u: vvp.tgt error: "
+			  "Unable to allocate %u thread bits "
+			  "for result of equality compare.\n",
+			  ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+		  vvp_errors += 1;
+	    }
+
 	    fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
 	    lv.base = base;
 	    lv.wid = ewid;
@@ -285,6 +293,14 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 
       } else if (lv.wid < ewid) {
 	    unsigned base = allocate_vector(ewid);
+	    if (base == 0) {
+		  fprintf(stderr, "%s:%u: vvp.tgt error: "
+			  "Unable to allocate %u thread bits "
+			  "for result of equality compare.\n",
+			  ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+		  vvp_errors += 1;
+	    }
+
 	    if (lv.base >= 8)
 		  clr_vector(lv);
 	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", base,
@@ -309,6 +325,7 @@ static struct vector_info draw_binary_expr_eq_real(ivl_expr_t exp)
 
       res.base = allocate_vector(1);
       res.wid  = 1;
+      assert(res.base);
 
       lword = draw_eval_real(ivl_expr_oper1(exp));
       rword = draw_eval_real(ivl_expr_oper2(exp));
@@ -441,6 +458,14 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 	   uses. This is because that bit may be clobbered by other
 	   expressions. */
       { unsigned base = allocate_vector(ewid);
+	if (base == 0) {
+	      fprintf(stderr, "%s:%u: vvp.tgt error: "
+		      "Unable to allocate %u thread bits "
+		      "for result of equality compare.\n",
+		      ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+	    vvp_errors += 1;
+	}
+
         fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
 	lv.base = base;
 	lv.wid = ewid;
@@ -467,6 +492,7 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
 	    clr_vector(lv);
 	    tmp.base = allocate_vector(1);
 	    tmp.wid = 1;
+	    assert(tmp.base);
 	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n", tmp.base,
 		    lv.base, lv.wid);
 	    lv = tmp;
@@ -478,6 +504,7 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
 	    clr_vector(rv);
 	    tmp.base = allocate_vector(1);
 	    tmp.wid = 1;
+	    assert(tmp.base);
 	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n", tmp.base,
 		    rv.base, rv.wid);
 	    rv = tmp;
@@ -514,6 +541,14 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
 
 	/* Write the result into a zero-padded result. */
       { unsigned base = allocate_vector(wid);
+	if (base == 0) {
+	      fprintf(stderr, "%s:%u: vvp.tgt error: "
+		      "Unable to allocate %u thread bits "
+		      "for result of padded logical AND.\n",
+		      ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+	      vvp_errors += 1;
+	}
+
         fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
 	clr_vector(lv);
 	lv.base = base;
@@ -541,6 +576,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
 	    clr_vector(lv);
 	    tmp.base = allocate_vector(1);
 	    tmp.wid = 1;
+	    assert(tmp.base);
 	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n", tmp.base,
 		    lv.base, lv.wid);
 	    lv = tmp;
@@ -555,6 +591,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
 	    clr_vector(rv);
 	    tmp.base = allocate_vector(1);
 	    tmp.wid = 1;
+	    assert(tmp.base);
 	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n", tmp.base,
 		    rv.base, rv.wid);
 	    rv = tmp;
@@ -592,6 +629,14 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
 
 	/* Write the result into a zero-padded result. */
       { unsigned base = allocate_vector(wid);
+	if (base == 0) {
+	      fprintf(stderr, "%s:%u: vvp.tgt error: "
+		      "Unable to allocate %u thread bits "
+		      "for result of padded logical OR.\n",
+		      ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+	      vvp_errors += 1;
+	}
+
         fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
 	clr_vector(lv);
 	lv.base = base;
@@ -614,6 +659,8 @@ static struct vector_info draw_binary_expr_le_real(ivl_expr_t exp)
 
       res.base = allocate_vector(1);
       res.wid  = 1;
+
+      assert(res.base);
 
       clr_word(lword);
       clr_word(rword);
@@ -695,6 +742,14 @@ static struct vector_info draw_binary_expr_le_bool(ivl_expr_t exp,
 	   uses. This is because that bit may be clobbered by other
 	   expressions. */
       { unsigned base = allocate_vector(wid);
+	if (base == 0) {
+	      fprintf(stderr, "%s:%u: vvp.tgt error: "
+		      "Unable to allocate %u thread bits "
+		      "for result of padded inequality compare.\n",
+		      ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+	      vvp_errors += 1;
+	}
+
         fprintf(vvp_out, "    %%mov %u, 5, 1;\n", base);
 	tmp.base = base;
 	tmp.wid = wid;
@@ -822,6 +877,14 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
 	   uses. This is because that bit may be clobbered by other
 	   expressions. */
       { unsigned base = allocate_vector(wid);
+	if (base == 0) {
+	      fprintf(stderr, "%s:%u: vvp.tgt error: "
+		      "Unable to allocate %u thread bits "
+		      "for result of padded inequality compare.\n",
+		      ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+	      vvp_errors += 1;
+	}
+
         fprintf(vvp_out, "    %%mov %u, 5, 1;\n", base);
 	lv.base = base;
 	lv.wid = wid;
@@ -858,6 +921,14 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
 		  struct vector_info tmp;
 		  tmp.base = allocate_vector(lv.wid);
 		  tmp.wid = lv.wid;
+		  if (tmp.base == 0) {
+			fprintf(stderr, "%s:%u: vvp.tgt error: "
+				"Unable to allocate %u thread bits "
+				"for result of binary logic.\n",
+				ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+			vvp_errors += 1;
+		  }
+
 		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 			  tmp.base, lv.base, tmp.wid);
 		  lv = tmp;
@@ -933,6 +1004,14 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 		  struct vector_info tmp;
 		  tmp.base = allocate_vector(lv.wid);
 		  tmp.wid = lv.wid;
+		  if (tmp.base == 0) {
+			fprintf(stderr, "%s:%u: vvp.tgt error: "
+				"Unable to allocate %u thread bits "
+				"for result of left shift (<<).\n",
+				ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+			vvp_errors += 1;
+		  }
+
 		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 			  tmp.base, lv.base, lv.wid);
 		  lv = tmp;
@@ -960,6 +1039,14 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 		  struct vector_info tmp;
 		  tmp.base = allocate_vector(lv.wid);
 		  tmp.wid = lv.wid;
+		  if (tmp.base == 0) {
+			fprintf(stderr, "%s:%u: vvp.tgt error: "
+				"Unable to allocate %u thread bits "
+				"for result of right shift (>>).\n",
+				ivl_expr_file(exp), ivl_expr_lineno(exp), lv.wid);
+			vvp_errors += 1;
+		  }
+
 		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 			  tmp.base, lv.base, lv.wid);
 		  lv = tmp;
@@ -992,6 +1079,14 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 		  struct vector_info tmp;
 		  tmp.base = allocate_vector(lv.wid);
 		  tmp.wid = lv.wid;
+		  if (tmp.base == 0) {
+			fprintf(stderr, "%s:%u: vvp.tgt error: "
+				"Unable to allocate %u thread bits "
+				"for result of right shift (>>>).\n",
+				ivl_expr_file(exp), ivl_expr_lineno(exp), lv.wid);
+			vvp_errors += 1;
+		  }
+
 		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 			  tmp.base, lv.base, lv.wid);
 		  lv = tmp;
@@ -1030,6 +1125,13 @@ static struct vector_info draw_load_add_immediate(ivl_expr_t le,
       imm = get_number_immediate(re);
       lv.base = allocate_vector(wid);
       lv.wid = wid;
+      if (lv.base == 0) {
+	    fprintf(stderr, "%s:%u: vvp.tgt error: "
+		    "Unable to allocate %u thread bits "
+		    "for result of addition.\n",
+		    ivl_expr_file(le), ivl_expr_lineno(le), wid);
+	    vvp_errors += 1;
+      }
 
 	/* Load the signal value with a %load that adds the index
 	   register to the value being loaded. */
@@ -1093,6 +1195,14 @@ static struct vector_info draw_sub_immediate(ivl_expr_t le,
 	  case 0:
 	  case 1:
 	    tmp = allocate_vector(wid);
+	    if (tmp == 0) {
+		  fprintf(stderr, "%s:%u: vvp.tgt error: "
+			  "Unable to allocate %u thread bits "
+			  "for result of subtraction.\n",
+			  ivl_expr_file(le), ivl_expr_lineno(le), wid);
+		  vvp_errors += 1;
+	    }
+
 	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", tmp, lv.base, wid);
 	    lv.base = tmp;
 	    fprintf(vvp_out, "    %%subi %u, %lu, %u;\n", lv.base, imm, wid);
@@ -1205,6 +1315,14 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 
 	    tmp.base = allocate_vector(wid);
 	    tmp.wid = wid;
+	    if (tmp.base == 0) {
+		  fprintf(stderr, "%s:%u: vvp.tgt error: "
+			  "Unable to allocate %u thread bits "
+			  "for result of arithmetic expression.\n",
+			  ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+		  vvp_errors += 1;
+	    }
+
 	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", tmp.base,
 		    lv.base, wid);
 	    lv = tmp;
@@ -1343,6 +1461,14 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
 	/* Allocate a vector to hold the result. */
       res.base = allocate_vector(wid);
       res.wid = wid;
+      if (res.base == 0) {
+	    fprintf(stderr, "%s:%u: vvp.tgt error: "
+		    "Unable to allocate %u thread bits "
+		    "for result of concatenation.\n",
+		    ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+	    vvp_errors += 1;
+      }
+
 
 	/* Get the repeat count. This must be a constant that has been
 	   evaluated at compile time. The operands will be repeated to
@@ -1464,6 +1590,13 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 	   vector. Allocate the vector and use %mov instructions to
 	   load the constant bit values. */
       res.base = allocate_vector(wid);
+      if (res.base == 0) {
+	    fprintf(stderr, "%s:%u: vvp.tgt error: "
+		    "Unable to allocate %u thread bits "
+		    "for number value.\n",
+		    ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+	    vvp_errors += 1;
+      }
 
       if ((!number_is_unknown(exp)) && number_is_immediate(exp, 16)) {
 	    int val = get_number_immediate(exp);
@@ -1546,6 +1679,13 @@ static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
 
       res.base = allocate_vector(wid);
       res.wid = wid;
+      if (res.base == 0) {
+	    fprintf(stderr, "%s:%u: vvp.tgt error: "
+		    "Unable to allocate %u thread bits "
+		    "to pad expression.\n",
+		    ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+	    vvp_errors += 1;
+      }
 
       fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 	      res.base, subv.base, subv.wid);
@@ -1580,6 +1720,7 @@ static struct vector_info draw_realnum_expr(ivl_expr_t exp, unsigned wid)
 
       res.base = allocate_vector(wid);
       res.wid = wid;
+      assert(res.base);
 
       addr = res.base;
       run = 1;
@@ -1666,6 +1807,13 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
 	   vector. Allocate the vector and use %mov instructions to
 	   load the constant bit values. */
       res.base = allocate_vector(wid);
+      if (res.base == 0) {
+	    fprintf(stderr, "%s:%u: vvp.tgt error: "
+		    "Unable to allocate %u thread bits "
+		    "for string value.\n",
+		    ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+	    vvp_errors += 1;
+      }
 
 	/* Since this is a string, we know that all the bits are
 	   defined and each character represents exactly 8 bits. Use
@@ -1819,6 +1967,14 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid,
 
       res.base = allocate_vector(wid);
       res.wid  = wid;
+      if (res.base == 0) {
+	    fprintf(stderr, "%s:%u: vvp.tgt error: "
+		    "Unable to allocate %u thread bits "
+		    "to load variable/wire.\n",
+		    ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+	    vvp_errors += 1;
+      }
+
       save_expression_lookaside(res.base, exp, wid);
 
       draw_signal_dest(exp, res, -1, 0L);
@@ -1846,6 +2002,13 @@ static struct vector_info draw_select_array(ivl_expr_t sube,
 
       res.base = allocate_vector(wid);
       res.wid = wid;
+      if (res.base == 0) {
+	    fprintf(stderr, "%s:%u: vvp.tgt error: "
+		    "Unable to allocate %u thread bits "
+		    "to hold selected value.\n",
+		    ivl_expr_file(sube), ivl_expr_lineno(sube), wid);
+	    vvp_errors += 1;
+      }
 
       for (idx = 0 ;  idx < wid ;  idx += 1) {
 	    fprintf(vvp_out, "  %%load/avx.p %u, v%p, 0;\n", res.base+idx, sig);
@@ -1891,6 +2054,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 
 	    res.base = allocate_vector(wid);
 	    res.wid = wid;
+	    assert(res.base);
 	    fprintf(vvp_out, "   %%load/v %u, v%p_%u, %u; Only need %u of %u bits\n",
 		    res.base, sig, use_word, bit_wid, bit_wid, ivl_expr_width(sube));
  
@@ -1907,6 +2071,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	/* Alas, do it the hard way. */
       res.base = allocate_vector(wid);
       res.wid = wid;
+      assert(res.base);
 
       for (idx = 0 ;  idx < res.wid ;  idx += 1) {
 	    if (idx >= bit_wid) {
@@ -1981,6 +2146,7 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
       if (subv.base < 4) {
 	    res.base = allocate_vector(subv.wid);
 	    res.wid = subv.wid;
+	    assert(res.base);
 	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", res.base,
 		    subv.base, res.wid);
 	    subv = res;
@@ -2051,6 +2217,7 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
 	    struct vector_info tmp;
 	    tmp.base = allocate_vector(wid);
 	    tmp.wid = wid;
+	    assert(tmp.base);
 	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 		    tmp.base, tru.base, wid);
 	    tru = tmp;
@@ -2108,6 +2275,7 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
 		   || ivl_expr_value(exp) == IVL_VT_BOOL);
 	    res.base = allocate_vector(wid);
 	    res.wid  = wid;
+	    assert(res.base);
 	    fprintf(vvp_out, "    %%vpi_func %u %u \"%s\", %u, %u;\n",
 		    ivl_file_table_index(ivl_expr_file(exp)),
 		    ivl_expr_lineno(exp), ivl_expr_name(exp),
@@ -2221,6 +2389,14 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 		  struct vector_info tmp;
 		  tmp.base = allocate_vector(wid);
 		  tmp.wid = wid;
+		  if (tmp.base == 0) {
+			fprintf(stderr, "%s:%u: vvp.tgt error: "
+				"Unable to allocate %u thread bits "
+				"to pad unary expression result.\n",
+				ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+			vvp_errors += 1;
+		  }
+
 		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 			  tmp.base, res.base, res.wid);
 		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
@@ -2246,6 +2422,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 		  if (res.base < 4) {
 			tmp.base = allocate_vector(res.wid);
 			tmp.wid = res.wid;
+			assert(res.base);
 			fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 				tmp.base, res.base, res.wid);
 			res = tmp;
@@ -2269,6 +2446,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 		  struct vector_info tmp;
 		  tmp.base = allocate_vector(wid);
 		  tmp.wid = wid;
+		  assert(res.base);
 		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 			  tmp.base, res.base, res.wid);
 		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n",

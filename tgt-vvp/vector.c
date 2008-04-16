@@ -91,6 +91,9 @@ static unsigned allocate_vector_no_lookaside(unsigned wid, int skip_lookaside)
       unsigned idx = 0;
 
       while (idx < wid) {
+	    if (base+idx >= MAX_VEC)
+		  return 0;
+
 	    assert((base + idx) < MAX_VEC);
 	    if ((allocation_map[base+idx].alloc > 0)
 		|| (skip_lookaside && peek_exp(base+idx))) {
@@ -121,6 +124,9 @@ static unsigned allocate_vector_no_lookaside(unsigned wid, int skip_lookaside)
  * again without worrying about trashing lookaside results. This
  * should lead to preferentially allocating new bits instead of
  * constantly overwriting intermediate results.
+ *
+ * If there is no space for a vector of the given width, then give up
+ * and return 0.
  */
 unsigned allocate_vector(unsigned wid)
 {

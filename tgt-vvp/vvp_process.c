@@ -374,6 +374,14 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    vec.base = allocate_vector(wid);
 	    vec.wid = wid;
 
+	    if (vec.base == 0) {
+		  fprintf(stderr, "%s:%u: vvp.tgt error: "
+			  "Unable to allocate %u thread bits for "
+			  "r-value expression.\n", ivl_expr_file(rval),
+			  ivl_expr_lineno(rval), wid);
+		  vvp_errors += 1;
+	    }
+
 	    fprintf(vvp_out, "    %%cvt/vr %u, %d, %u;\n",
 		    vec.base, word, vec.wid);
 
@@ -604,6 +612,7 @@ static int show_stmt_block_named(ivl_statement_t net, ivl_scope_t scope)
 
 static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 {
+      int rc = 0;
       ivl_expr_t exp = ivl_stmt_cond_expr(net);
       struct vector_info cond = draw_eval_expr(exp, 0);
       unsigned count = ivl_stmt_case_count(net);
@@ -688,7 +697,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 	/* Emit code for the default case. */
       if (default_case < count) {
 	    ivl_statement_t cst = ivl_stmt_case_stmt(net, default_case);
-	    show_statement(cst, sscope);
+	    rc += show_statement(cst, sscope);
       }
 
 	/* Jump to the out of the case. */
@@ -703,7 +712,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 
 	    fprintf(vvp_out, "T_%d.%d ;\n", thread_count, local_base+idx);
 	    clear_expression_lookaside();
-	    show_statement(cst, sscope);
+	    rc += show_statement(cst, sscope);
 
 	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count,
 		    local_base+count);
@@ -715,11 +724,12 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
       fprintf(vvp_out, "T_%d.%d ;\n",  thread_count, local_base+count);
       clear_expression_lookaside();
 
-      return 0;
+      return rc;
 }
 
 static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 {
+      int rc = 0;
       ivl_expr_t exp = ivl_stmt_cond_expr(net);
       int cond = draw_eval_real(exp);
       unsigned count = ivl_stmt_case_count(net);
@@ -762,7 +772,7 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 	   fall through to this statement. */
       if (default_case < count) {
 	    ivl_statement_t cst = ivl_stmt_case_stmt(net, default_case);
-	    show_statement(cst, sscope);
+	    rc += show_statement(cst, sscope);
       }
 
 	/* Jump to the out of the case. */
@@ -777,7 +787,7 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 
 	    fprintf(vvp_out, "T_%d.%d ;\n", thread_count, local_base+idx);
 	    clear_expression_lookaside();
-	    show_statement(cst, sscope);
+	    rc += show_statement(cst, sscope);
 
 	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count,
 		    local_base+count);
@@ -1344,6 +1354,7 @@ static struct vector_info reduction_or(struct vector_info cvec)
 	    clr_vector(cvec);
 	    result.base = allocate_vector(1);
 	    result.wid = 1;
+	    assert(result.base);
 	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n", result.base,
 		    cvec.base, cvec.wid);
 	    break;

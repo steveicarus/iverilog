@@ -303,6 +303,13 @@ struct vector_info draw_vpi_func_call(ivl_expr_t fnet, unsigned wid)
 
       res.base = allocate_vector(wid);
       res.wid  = wid;
+      if (res.base == 0) {
+	    fprintf(stderr, "%s:%u: vvp.tgt error: "
+		    "Unable to allocate %u thread bits for system function result.\n",
+		    ivl_expr_file(fnet), ivl_expr_lineno(fnet), wid);
+	    vvp_errors += 1;
+      }
+
       sprintf(call_string, "    %%vpi_func %u %u \"%s\", %u, %u",
               ivl_file_table_index(ivl_expr_file(fnet)),
 	      ivl_expr_lineno(fnet), ivl_expr_name(fnet), res.base, res.wid);

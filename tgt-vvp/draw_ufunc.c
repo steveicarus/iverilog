@@ -112,6 +112,15 @@ struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
 
       res.base = allocate_vector(wid);
       res.wid  = wid;
+      if (res.base == 0) {
+	    fprintf(stderr, "%s:%u: vvp.tgt error: "
+		    "Unable to allocate %u thread bits for function result.\n",
+		    ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+	    vvp_errors += 1;
+	    return res;
+      }
+
+      assert(res.base != 0);
 
       unsigned load_wid = swid;
       if (load_wid > ivl_signal_width(retval))
