@@ -802,7 +802,7 @@ bool of_CASSIGN_LINK(vthread_t thr, vvp_code_t cp)
 	/* If there is an existing cassign driving this node, then
 	   unlink it. We can have only 1 cassign at a time. */
       if (sig->cassign_link != 0) {
-	    vvp_net_ptr_t tmp (dst,1);
+	    vvp_net_ptr_t tmp (dst, 1);
 	    unlink_from_driver(sig->cassign_link, tmp);
       }
 
@@ -1225,8 +1225,6 @@ bool of_CVT_VR(vthread_t thr, vvp_code_t cp)
  * This implements the %deassign instruction. All we do is write a
  * long(1) to port-3 of the addressed net. This turns off an active
  * continuous assign activated by %cassign/v
- *
- * FIXME: This does not remove a linked %cassign/link. It should.
  */
 bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
 {
@@ -1241,6 +1239,19 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
       if (base+width > sig->size()) width = sig->size() - base;
 
       bool full_sig = base == 0 && width == sig->size();
+
+	// This is the net that is forcing me...
+      if (vvp_net_t*src = sig->cassign_link) {
+	    if (!full_sig) {
+		  fprintf(stderr, "Sorry: when a signal is assigning a "
+		          "register, I cannot deassign part of it.\n");
+		  exit(1);
+	    }
+	      // And this is the pointer to be removed.
+	    vvp_net_ptr_t dst_ptr (net, 1);
+	    unlink_from_driver(src, dst_ptr);
+	    sig->cassign_link = 0;
+      }
 
 	/* Do we release all or part of the net? */
       vvp_net_ptr_t ptr (net, 3);
@@ -1259,6 +1270,14 @@ bool of_DEASSIGN_WR(vthread_t thr, vvp_code_t cp)
 
       vvp_fun_signal_real*sig = reinterpret_cast<vvp_fun_signal_real*>(net->fun);
       assert(sig);
+
+	// This is the net that is forcing me...
+      if (vvp_net_t*src = sig->cassign_link) {
+	      // And this is the pointer to be removed.
+	    vvp_net_ptr_t dst_ptr (net, 1);
+	    unlink_from_driver(src, dst_ptr);
+	    sig->cassign_link = 0;
+      }
 
       vvp_net_ptr_t ptr (net, 3);
       vvp_send_long(ptr, 1);
@@ -3405,6 +3424,7 @@ bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
 	      // And this is the pointer to be removed.
 	    vvp_net_ptr_t dst_ptr (net, 2);
 	    unlink_from_driver(src, dst_ptr);
+	    sig->force_link = 0;
       }
 
 	// Send a command to this signal to unforce itself.
@@ -3433,6 +3453,7 @@ bool of_RELEASE_WR(vthread_t thr, vvp_code_t cp)
 	      // And this is the pointer to be removed.
 	    vvp_net_ptr_t dst_ptr (net, 2);
 	    unlink_from_driver(src, dst_ptr);
+	    sig->force_link = 0;
       }
 
 	// Send a command to this signal to unforce itself.
