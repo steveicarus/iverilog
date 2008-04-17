@@ -1635,6 +1635,8 @@ void load_precompiled_defines(FILE* src)
 
         name = cp;
 
+	*cp++ = ch;
+
         while ((ch = fgetc(src)) != EOF && ch != ':')
             *cp++ = ch;
 
