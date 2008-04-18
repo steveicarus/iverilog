@@ -3331,7 +3331,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	    delete cur;
       }
 
-      switch (ndelays) {
+      switch (delays.size()) {
 	  case 1:
 	  case 2:
 	  case 3:
@@ -3340,7 +3340,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	    break;
 	  default:
 	    cerr << get_fileline() << ": error: Incorrect delay configuration."
-		 << endl;
+		 << " Given " << delays.size() << " delay expressions." << endl;
 	    ndelays = 1;
 	    des->errors += 1;
 	    break;
