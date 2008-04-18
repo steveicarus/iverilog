@@ -189,9 +189,9 @@ iverilog-vpi.pdf: iverilog-vpi.ps
 version.h:
 	@if test -d $(srcdir)/.git; then \
 	    echo "Using git-describe for VERSION_TAG"; \
-	    git --git-dir $(srcdir)/.git describe \
-		| sed -e 's;\(.*\);#define VERSION_TAG "\1";' > $@tmp; \
-	    diff $@tmp $@ > /dev/null 2>&1 || mv $@tmp $@; \
+	    tmp=`git --git-dir $(srcdir)/.git describe \
+		   | sed -e 's;\(.*\);#define VERSION_TAG "\1";'`; \
+	    echo "$$tmp" | diff - $@ > /dev/null 2>&1 || echo "$$tmp" > $@ || exit 1; \
 	elif test -r $(srcdir)/$@; then \
 	    echo "Using $(srcdir)/$@ for VERSION_TAG"; \
 	    diff $(srcdir)/$@ $@ > /dev/null 2>&1 || cp $(srcdir)/$@ $@; \
