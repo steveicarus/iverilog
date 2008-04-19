@@ -2121,6 +2121,11 @@ localparam_assign_decl
 		{ active_range = 0;
 		  active_signed = false;
 		}
+	| K_integer      { active_range = 0; active_signed = true; }
+          localparam_assign_list
+		{ active_range = 0;
+		  active_signed = false;
+		}
 	;
 
 localparam_assign_list
