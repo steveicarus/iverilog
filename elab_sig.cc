@@ -593,6 +593,8 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  perm_string pname = (*ports_)[idx]->basename();
 
 		  NetNet*tmp = scope->find_signal(pname);
+		  ports[idx] = 0;
+
 		  if (tmp == 0) {
 			cerr << get_fileline() << ": internal error: function "
 			     << scope_path(scope) << " is missing port "
@@ -600,9 +602,27 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 			scope->dump(cerr);
 			cerr << get_fileline() << ": Continuing..." << endl;
 			des->errors += 1;
+			continue;
+		  }
+
+		  if (tmp->port_type() == NetNet::NOT_A_PORT) {
+			cerr << get_fileline() << ": internal error: function "
+			     << scope_path(scope) << " port " << pname
+			     << " is a port but is not a port?" << endl;
+			des->errors += 1;
+			scope->dump(cerr);
+			continue;
 		  }
 
 		  ports[idx] = tmp;
+		  if (tmp->port_type() != NetNet::PINPUT) {
+			cerr << tmp->get_fileline() << ": error: function "
+			     << scope_path(scope) << " port " << pname
+			     << " is not an input port." << endl;
+			cerr << tmp->get_fileline() << ":      : Function arguments "
+			     << "must be input ports." << endl;
+			des->errors += 1;
+		  }
 	    }
 
 

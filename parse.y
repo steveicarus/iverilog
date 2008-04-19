@@ -1097,76 +1097,9 @@ expr_primary
 		}
 	;
 
-  /* A function_item is either a block item (i.e. a reg or integer
-     declaration) or an input declaration. There are no output or
-     inout ports. */
-function_item
-	: K_input signed_opt range_opt list_of_identifiers ';'
-                { svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_NO_TYPE, $2,
-						$3, $4,
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_output signed_opt range_opt list_of_identifiers ';'
-                { svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_NO_TYPE, $2,
-						$3, $4,
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		  yyerror(@1, "Functions may not have output ports.");
-		}
-	| K_inout signed_opt range_opt list_of_identifiers ';'
-                { svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_NO_TYPE, $2,
-						$3, $4,
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		  yyerror(@1, "Functions may not have inout ports.");
-		}
-
-  /* When the port is an integer, infer a signed vector of the integer
-     shape. Generate a range to make it work. */
-
-	| K_input K_integer list_of_identifiers ';'
-                { svector<PExpr*>*range_stub
-			= new svector<PExpr*>(2);
-		  PExpr*re;
-		  re = new PENumber(new verinum(integer_width-1,
-						integer_width));
-		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, integer_width));
-		  (*range_stub)[1] = re;
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_LOGIC, true,
-						range_stub, $3,
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-
-  /* Ports can be real. */
-
-	| K_input K_real list_of_identifiers ';'
-		{ svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_REAL, false,
-						0, $3,
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-
-	| block_item_decl
-                { $$ = 0; }
-	;
-
-  /* A function_item_list only lists the input/output/inout
-     declarations. The integer and reg declarations are handled in
-     place, so are not listed. The list builder needs to account for
-     the possibility that the various parts may be NULL. */
+  /* A function_item_list borrows the task_port_item run to match
+     declarations of ports. We check later to make sure there are no
+     output or inout ports actually used. */
 function_item_list
 	: function_item
                 { $$ = $1; }
@@ -1183,6 +1116,13 @@ function_item_list
 		  }
 		}
 	;
+
+function_item
+  : task_port_item
+      { $$ = $1; }
+  | block_item_decl
+      { $$ = 0; }
+  ;
 
   /* A gate_instance is a module instantiation or a built in part
      type. In any case, the gate has a set of connections to ports. */
@@ -1865,7 +1805,7 @@ module_item
 	FILE_NAME(current_task, @1);
       }
     '(' task_port_decl_list ')' ';'
-    task_item_list_opt
+    block_item_decls_opt
     statement_or_null
     K_endtask
       { current_task->set_ports($5);
@@ -1889,6 +1829,23 @@ module_item
     K_endfunction
       { current_function->set_ports($6);
 	current_function->set_statement($7);
+	current_function->set_return($2);
+	pform_pop_scope();
+	current_function = 0;
+	delete[]$3;
+      }
+
+  | K_function function_range_or_type_opt IDENTIFIER
+      { assert(current_function == 0);
+	current_function = pform_push_function_scope($3);
+	FILE_NAME(current_function, @1);
+      }
+    '(' task_port_decl_list ')' ';'
+    block_item_decls_opt
+    statement
+    K_endfunction
+      { current_function->set_ports($6);
+	current_function->set_statement($10);
 	current_function->set_return($2);
 	pform_pop_scope();
 	current_function = 0;
@@ -3312,7 +3269,7 @@ task_port_item
 	: K_input signed_opt range_opt list_of_identifiers ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_LOGIC, $2,
+						IVL_VT_NO_TYPE, $2,
 						$3, $4,
 						@1.text, @1.first_line);
 		  $$ = tmp;
