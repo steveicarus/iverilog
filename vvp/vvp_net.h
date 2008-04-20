@@ -136,31 +136,50 @@ class vvp_vector4_t {
 
     private:
 	// Number of vvp_bit4_t bits that can be shoved into a word.
-      enum { BITS_PER_WORD = 8*sizeof(unsigned long)/2 };
+      enum { BITS_PER_WORD = 8*sizeof(unsigned long) };
 #if SIZEOF_UNSIGNED_LONG == 8
-      enum { WORD_0_BITS = 0x0000000000000000UL };
-      enum { WORD_1_BITS = 0x5555555555555555UL };
-      enum { WORD_X_BITS = 0xaaaaaaaaaaaaaaaaUL };
-      enum { WORD_Z_BITS = 0xffffffffffffffffUL };
+      enum { WORD_0_ABITS = 0x0000000000000000UL,
+	     WORD_0_BBITS = 0x0000000000000000UL };
+      enum { WORD_1_ABITS = 0xFFFFFFFFFFFFFFFFUL,
+	     WORD_1_BBITS = 0x0000000000000000UL };
+      enum { WORD_X_ABITS = 0xFFFFFFFFFFFFFFFFUL,
+	     WORD_X_BBITS = 0xFFFFFFFFFFFFFFFFUL };
+      enum { WORD_Z_ABITS = 0x0000000000000000UL,
+             WORD_Z_BBITS = 0xFFFFFFFFFFFFFFFFUL };
 #elif SIZEOF_UNSIGNED_LONG == 4
-      enum { WORD_0_BITS = 0x00000000UL };
-      enum { WORD_1_BITS = 0x55555555UL };
-      enum { WORD_X_BITS = 0xaaaaaaaaUL };
-      enum { WORD_Z_BITS = 0xffffffffUL };
+      enum { WORD_0_ABITS = 0x00000000UL, WORD_0_BBITS = 0x00000000UL };
+      enum { WORD_1_ABITS = 0xFFFFFFFFUL, WORD_1_BBITS = 0x00000000UL };
+      enum { WORD_X_ABITS = 0xFFFFFFFFUL, WORD_X_BBITS = 0xFFFFFFFFUL };
+      enum { WORD_Z_ABITS = 0x00000000UL, WORD_Z_BBITS = 0xFFFFFFFFUL };
 #else
-#error "WORD_X_BITS not defined for this architecture?"
+#error "WORD_X_xBITS not defined for this architecture?"
 #endif
 
 	// Initialize and operator= use this private method to copy
 	// the data from that object into this object.
       void copy_from_(const vvp_vector4_t&that);
 
-      void allocate_words_(unsigned size, unsigned long init);
+      void allocate_words_(unsigned size, unsigned long inita, unsigned long initb);
+
+	// Values in the vvp_vector4_t are stored split accross two
+	// arrays. For each bit in the vector, there is an abit and a
+	// bbit. the encoding of a vvp_vector4_t is:
+	//
+	//         abit bbit
+	//         ---- ----
+	// BIT4_0    0    0   (Note that for BIT4_0 and BIT4_1, the bbit
+	// BIT4_1    1    0    value is 0. This makes detecting XZ fast.)
+	// BIT4_X    1    1
+	// BIT4_Z    0    1
 
       unsigned size_;
       union {
-	    unsigned long bits_val_;
-	    unsigned long*bits_ptr_;
+	    unsigned long abits_val_;
+	    unsigned long*abits_ptr_;
+      };
+      union {
+	    unsigned long bbits_val_;
+	    unsigned long*bbits_ptr_;
       };
 };
 
@@ -173,19 +192,26 @@ inline vvp_vector4_t::vvp_vector4_t(unsigned size, vvp_bit4_t val)
 : size_(size)
 {
 	/* note: this relies on the bit encoding for the vvp_bit4_t. */
-      const static unsigned long init_table[4] = {
-	    WORD_0_BITS,
-	    WORD_1_BITS,
-	    WORD_X_BITS,
-	    WORD_Z_BITS };
+      const static unsigned long init_atable[4] = {
+	    WORD_0_ABITS,
+	    WORD_1_ABITS,
+	    WORD_X_ABITS,
+	    WORD_Z_ABITS };
+      const static unsigned long init_btable[4] = {
+	    WORD_0_BBITS,
+	    WORD_1_BBITS,
+	    WORD_X_BBITS,
+	    WORD_Z_BBITS };
 
-      allocate_words_(size, init_table[val]);
+      allocate_words_(size, init_atable[val], init_btable[val]);
 }
 
 inline vvp_vector4_t::~vvp_vector4_t()
 {
       if (size_ > BITS_PER_WORD) {
-	    delete[] bits_ptr_;
+	    delete[] abits_ptr_;
+	      // bbits_ptr_ actually points half-way into a
+	      // double-length array started at abits_ptr_
       }
 }
 
@@ -195,7 +221,7 @@ inline vvp_vector4_t& vvp_vector4_t::operator= (const vvp_vector4_t&that)
 	    return *this;
 
       if (size_ > BITS_PER_WORD)
-	    delete[] bits_ptr_;
+	    delete[] abits_ptr_;
 
       copy_from_(that);
 
@@ -211,18 +237,28 @@ inline vvp_bit4_t vvp_vector4_t::value(unsigned idx) const
       unsigned wdx = idx / BITS_PER_WORD;
       unsigned long off = idx % BITS_PER_WORD;
 
-      unsigned long bits;
+      unsigned long abits, bbits;
       if (size_ > BITS_PER_WORD) {
-	    bits = bits_ptr_[wdx];
+	    abits = abits_ptr_[wdx];
+	    bbits = bbits_ptr_[wdx];
       } else {
-	    bits = bits_val_;
+	    abits = abits_val_;
+	    bbits = bbits_val_;
       }
 
-      bits >>= (off * 2UL);
+      abits >>= off;
+      bbits >>= off;
+      int tmp = ((bbits&1) << 1) + (abits&1);
+      static const vvp_bit4_t bits_bit4_map[4] = {
+	    BIT4_0, // bbit==0, abit==0
+	    BIT4_1, // bbit==0, abit==1
+	    BIT4_Z, // bbit==1, abit==0
+	    BIT4_X  // bbit==1, abit==1
+      };
 
 	/* Casting is evil, but this cast matches the un-cast done
 	   when the vvp_bit4_t value is put into the vector. */
-      return (vvp_bit4_t) (bits & 3);
+      return bits_bit4_map[tmp];
 }
 
 inline vvp_vector4_t vvp_vector4_t::subvalue(unsigned adr, unsigned wid) const
@@ -235,15 +271,41 @@ inline void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
       assert(idx < size_);
 
       unsigned long off = idx % BITS_PER_WORD;
-      unsigned long mask = 3UL << (2UL*off);
+      unsigned long amask = 0, bmask = 0;
+      switch (val) {
+	  case BIT4_0:
+	    amask = 0;
+	    bmask = 0;
+	    break;
+	  case BIT4_1:
+	    amask = 1;
+	    bmask = 0;
+	    break;
+	  case BIT4_X:
+	    amask = 1;
+	    bmask = 1;
+	    break;
+	  case BIT4_Z:
+	    amask = 0;
+	    bmask = 1;
+	    break;
+      }
+
+      unsigned long mask = 1UL << off;
+      amask <<= off;
+      bmask <<= off;
 
       if (size_ > BITS_PER_WORD) {
 	    unsigned wdx = idx / BITS_PER_WORD;
-	    bits_ptr_[wdx] &= ~mask;
-	    bits_ptr_[wdx] |= (unsigned long)val << (2UL*off);
+	    abits_ptr_[wdx] &= ~mask;
+	    abits_ptr_[wdx] |= amask;
+	    bbits_ptr_[wdx] &= ~mask;
+	    bbits_ptr_[wdx] |= bmask;
       } else {
-	    bits_val_ &= ~mask;
-	    bits_val_ |=  (unsigned long)val << (2UL*off);
+	    abits_val_ &= ~mask;
+	    abits_val_ |= amask;
+	    bbits_val_ &= ~mask;
+	    bbits_val_ |= bmask;
       }
 }
 

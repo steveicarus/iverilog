@@ -228,26 +228,34 @@ void vvp_vector4_t::copy_from_(const vvp_vector4_t&that)
       size_ = that.size_;
       if (size_ > BITS_PER_WORD) {
 	    unsigned words = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
-	    bits_ptr_ = new unsigned long[words];
+	    abits_ptr_ = new unsigned long[2*words];
+	    bbits_ptr_ = abits_ptr_ + words;
 
 	    for (unsigned idx = 0 ;  idx < words ;  idx += 1)
-		  bits_ptr_[idx] = that.bits_ptr_[idx];
+		  abits_ptr_[idx] = that.abits_ptr_[idx];
+	    for (unsigned idx = 0 ;  idx < words ;  idx += 1)
+		  bbits_ptr_[idx] = that.bbits_ptr_[idx];
 
       } else {
-	    bits_val_ = that.bits_val_;
+	    abits_val_ = that.abits_val_;
+	    bbits_val_ = that.bbits_val_;
       }
 }
 
-void vvp_vector4_t::allocate_words_(unsigned wid, unsigned long init)
+void vvp_vector4_t::allocate_words_(unsigned wid, unsigned long inita, unsigned long initb)
 {
       if (size_ > BITS_PER_WORD) {
 	    unsigned cnt = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
-	    bits_ptr_ = new unsigned long[cnt];
+	    abits_ptr_ = new unsigned long[2*cnt];
+	    bbits_ptr_ = abits_ptr_ + cnt;
 	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
-		  bits_ptr_[idx] = init;
+		  abits_ptr_[idx] = inita;
+	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+		  bbits_ptr_[idx] = initb;
 
       } else {
-	    bits_val_ = init;
+	    abits_val_ = inita;
+	    bbits_val_ = initb;
       }
 }
 
@@ -257,20 +265,21 @@ vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
       size_ = wid;
       assert((adr + wid) <= that.size_);
 
-      allocate_words_(wid, WORD_X_BITS);
+      allocate_words_(wid, WORD_X_ABITS, WORD_X_BBITS);
 
       if (wid > BITS_PER_WORD) {
 	      /* In this case, the subvector and the source vector are
 		 long. Do the transfer reasonably efficiently. */
 	    unsigned ptr = adr / BITS_PER_WORD;
-	    unsigned off = adr % BITS_PER_WORD;
-	    unsigned noff = BITS_PER_WORD - off;
-	    unsigned long lmask = (1UL << 2UL*off) - 1UL;
+	    unsigned long off = adr % BITS_PER_WORD;
+	    unsigned long noff = BITS_PER_WORD - off;
+	    unsigned long lmask = (1UL << off) - 1UL;
 	    unsigned trans = 0;
 	    unsigned dst = 0;
 	    while (trans < wid) {
 		    // The low bits of the result.
-		  bits_ptr_[dst] = (that.bits_ptr_[ptr] & ~lmask) >> 2UL*off;
+		  abits_ptr_[dst] = (that.abits_ptr_[ptr] & ~lmask) >> off;
+		  bbits_ptr_[dst] = (that.bbits_ptr_[ptr] & ~lmask) >> off;
 		  trans += noff;
 
 		  if (trans >= wid)
@@ -281,7 +290,8 @@ vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
 		    // The high bits of the result. Skip this if the
 		    // source and destination are perfectly aligned.
 		  if (noff != BITS_PER_WORD) {
-			bits_ptr_[dst] |= (that.bits_ptr_[ptr]&lmask) << 2*noff;
+			abits_ptr_[dst] |= (that.abits_ptr_[ptr]&lmask) << noff;
+			bbits_ptr_[dst] |= (that.bbits_ptr_[ptr]&lmask) << noff;
 			trans += off;
 		  }
 
@@ -293,6 +303,7 @@ vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
 		  set_bit(idx, that.value(adr+idx));
 	    }
       }
+
 }
 
 /*
@@ -308,7 +319,7 @@ void vvp_vector4_t::resize(unsigned newsize)
 
       if (newsize > BITS_PER_WORD) {
 	    unsigned newcnt = (newsize + BITS_PER_WORD - 1) / BITS_PER_WORD;
-	    unsigned long*newbits = new unsigned long[newcnt];
+	    unsigned long*newbits = new unsigned long[2*newcnt];
 
 	    if (cnt > 1) {
 		  unsigned trans = cnt;
@@ -316,26 +327,33 @@ void vvp_vector4_t::resize(unsigned newsize)
 			trans = newcnt;
 
 		  for (unsigned idx = 0 ;  idx < trans ;  idx += 1)
-			newbits[idx] = bits_ptr_[idx];
+			newbits[idx] = abits_ptr_[idx];
+		  for (unsigned idx = 0 ;  idx < trans ;  idx += 1)
+			newbits[newcnt+idx] = bbits_ptr_[idx];
 
-		  delete[]bits_ptr_;
+		  delete[]abits_ptr_;
 
 	    } else {
-		  newbits[0] = bits_val_;
+		  newbits[0] = abits_val_;
+		  newbits[newcnt] = bbits_val_;
 	    }
 
 	    for (unsigned idx = cnt ;  idx < newcnt ;  idx += 1)
-		  newbits[idx] = WORD_X_BITS;
+		  newbits[idx] = WORD_X_ABITS;
+	    for (unsigned idx = cnt ;  idx < newcnt ;  idx += 1)
+		  newbits[newcnt+idx] = WORD_X_BBITS;
 
 	    size_ = newsize;
-	    bits_ptr_ = newbits;
+	    abits_ptr_ = newbits;
+	    bbits_ptr_ = newbits + newcnt;
 
       } else {
-	    unsigned long newval;
 	    if (cnt > 1) {
-		  newval = bits_ptr_[0];
-		  delete[]bits_ptr_;
-		  bits_val_ = newval;
+		  unsigned long newvala = abits_ptr_[0];
+		  unsigned long newvalb = bbits_ptr_[0];
+		  delete[]abits_ptr_;
+		  abits_val_ = newvala;
+		  bbits_val_ = newvalb;
 	    }
 
 	    size_ = newsize;
@@ -354,69 +372,49 @@ unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
 
       if (size_ <= BITS_PER_WORD) {
 	      /* Handle the special case that the array is small. The
-		 entire value of the vector4 is within the bits_val_
+		 entire value of the vector4 is within the xbits_val_
 		 so we know that the result is a single word, the
 		 source is a single word, and we just have to loop
 		 through that word. */
-	    unsigned long tmp = bits_val_ >> 2UL*adr;
-	    tmp &= (1UL << 2*wid) - 1;
-	    if (tmp & WORD_X_BITS)
-		  goto x_out;
+	    unsigned long atmp = abits_val_ >> adr;
+	    unsigned long btmp = bbits_val_ >> adr;
+	    atmp &= (1UL << wid) - 1;
+	    btmp &= (1UL << wid) - 1;
+	    if (btmp) goto x_out;
 
-	    unsigned long mask1 = 1;
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  if (tmp & 1) val[0] |= mask1;
-		  mask1 <<= 1UL;
-		  tmp >>= 2UL;
-	    }
+	    val[0] = atmp;
 	    return val;
 
       } else {
 
+	    unsigned val_ptr = 0;
+	    unsigned val_off = 0;
+
 	      /* Get the first word we are scanning. We may in fact be
 		 somewhere in the middle of that word. */
-	    unsigned long tmp = bits_ptr_[adr/BITS_PER_WORD];
-	    unsigned long off = adr%BITS_PER_WORD;
-	    tmp >>= 2UL * off;
+	    while (wid > 0) {
+		  unsigned long atmp = abits_ptr_[adr/BITS_PER_WORD];
+		  unsigned long btmp = bbits_ptr_[adr/BITS_PER_WORD];
+		  unsigned long off = adr%BITS_PER_WORD;
+		  atmp >>= off;
+		  btmp >>= off;
 
-	      // Test for X bits but not beyond the desired wid.
-	    if (wid < (BITS_PER_WORD-off))
-		  tmp &= ~(-1UL << 2*wid);
-	    if (tmp & WORD_X_BITS)
-		  goto x_out;
+		  unsigned long trans = BITS_PER_WORD - off;
+		  if (trans > (8*sizeof(val[0]) - val_off))
+			trans = 8*sizeof(val[0]) - val_off;
+		  if (wid < trans)
+			trans = wid;
+		  atmp &= (1UL << trans) - 1;
+		  btmp &= (1UL << trans) - 1;
+		  if (btmp) goto x_out;
 
-	      // Where in the target array to write the next bit.
-	    unsigned long mask1 = 1;
-	    const unsigned long mask1_last = 1UL << (BIT2_PER_WORD-1);
-	    unsigned long*val_ptr = val;
-	      // Track where the source bit is in the source word.
-	    unsigned adr_bit = adr%BITS_PER_WORD;
-	      // Scan...
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		    /* Starting a new word? */
-		  if (adr_bit == BITS_PER_WORD) {
-			tmp = bits_ptr_[adr/BITS_PER_WORD];
-			  // If this is the last word, then only test
-			  // for X in the valid bits.
-			if ((wid-idx) < BITS_PER_WORD)
-			      tmp &= ~(WORD_Z_BITS<<2*(wid-idx));
-			if (tmp & WORD_X_BITS)
-			      goto x_out;
-			adr_bit = 0;
-		  }
-
-		  if (tmp&1)
-			*val_ptr |= mask1;
-
-		  adr += 1;
-		  adr_bit += 1;
-		  tmp >>= 2UL;
-
-		  if (mask1 == mask1_last) {
+		  val[val_ptr] |= atmp << val_off;
+		  adr += trans;
+		  wid -= trans;
+		  val_off += trans;
+		  if (val_off == 8*sizeof(val[0])) {
 			val_ptr += 1;
-			mask1 = 1;
-		  } else {
-			mask1 <<= 1;
+			val_off = 0;
 		  }
 	    }
       }
@@ -447,50 +445,59 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 		 for all the bits that are to come from that. Do the
 		 job by some shifting, masking and OR. */
 
-	    unsigned long lmask = (1UL << 2UL*adr) - 1;
+	    unsigned long lmask = (1UL << adr) - 1;
 	    unsigned long hmask;
 	    unsigned long hshift = adr+that.size_;
 	    if (hshift >= BITS_PER_WORD)
 		  hmask = -1UL;
 	    else
-		  hmask = (1UL << 2UL*(adr+that.size_)) - 1;
+		  hmask = (1UL << (adr+that.size_)) - 1;
 	    unsigned long mask = hmask & ~lmask;
 
-	    bits_val_ =
-		  (bits_val_ & ~mask)
-		  | ((that.bits_val_<<2UL*adr) & mask);
+	    abits_val_ =
+		  (abits_val_ & ~mask)
+		  | ((that.abits_val_<<adr) & mask);
+	    bbits_val_ =
+		  (bbits_val_ & ~mask)
+		  | ((that.bbits_val_<<adr) & mask);
 
       } else if (that.size_ <= BITS_PER_WORD) {
 
 	      /* This vector is more than a word, but that vector is
 		 still small. Write into the destination, possibly
-		 spanning two destination works, depending on whether
+		 spanning two destination words, depending on whether
 		 the source vector spans a word transition. */
 	    unsigned long dptr = adr / BITS_PER_WORD;
 	    unsigned long doff = adr % BITS_PER_WORD;
 
-	    unsigned long lmask = (1UL << 2UL*doff) - 1;
+	    unsigned long lmask = (1UL << doff) - 1;
 	    unsigned long hshift = doff+that.size_;
 	    unsigned long hmask;
 	    if (hshift >= BITS_PER_WORD)
 		  hmask = -1UL;
 	    else
-		  hmask = (1UL << 2*hshift) - 1UL;
+		  hmask = (1UL << hshift) - 1UL;
 
 	    unsigned long mask = hmask & ~lmask;
 
-	    bits_ptr_[dptr] =
-		  (bits_ptr_[dptr] & ~mask)
-		  | ((that.bits_val_ << 2UL*doff) & mask);
+	    abits_ptr_[dptr] =
+		  (abits_ptr_[dptr] & ~mask)
+		  | ((that.abits_val_ << doff) & mask);
+	    bbits_ptr_[dptr] =
+		  (bbits_ptr_[dptr] & ~mask)
+		  | ((that.bbits_val_ << doff) & mask);
 
 	    if ((doff + that.size_) > BITS_PER_WORD) {
 		  unsigned tail = doff + that.size_ - BITS_PER_WORD;
-		  mask = (1UL << 2UL*tail) - 1;
+		  mask = (1UL << tail) - 1;
 
 		  dptr += 1;
-		  bits_ptr_[dptr] =
-			(bits_ptr_[dptr] & ~mask)
-			| ((that.bits_val_ >> 2UL*(that.size_-tail)) & mask);
+		  abits_ptr_[dptr] =
+			(abits_ptr_[dptr] & ~mask)
+			| ((that.abits_val_ >> (that.size_-tail)) & mask);
+		  bbits_ptr_[dptr] =
+			(bbits_ptr_[dptr] & ~mask)
+			| ((that.bbits_val_ >> (that.size_-tail)) & mask);
 	    }
 
       } else if (adr%BITS_PER_WORD == 0) {
@@ -503,15 +510,21 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 	    unsigned sptr = 0;
 	    unsigned dptr = adr / BITS_PER_WORD;
 	    while (remain >= BITS_PER_WORD) {
-		  bits_ptr_[dptr++] = that.bits_ptr_[sptr++];
+		  abits_ptr_[dptr] = that.abits_ptr_[sptr];
+		  bbits_ptr_[dptr] = that.bbits_ptr_[sptr];
+		  dptr += 1;
+		  sptr += 1;
 		  remain -= BITS_PER_WORD;
 	    }
 
 	    if (remain > 0) {
-		  unsigned long mask = (1UL << 2UL*remain) - 1;
-		  bits_ptr_[dptr] =
-			(bits_ptr_[dptr] & ~mask)
-			| (that.bits_ptr_[sptr] & mask);
+		  unsigned long mask = (1UL << remain) - 1;
+		  abits_ptr_[dptr] =
+			(abits_ptr_[dptr] & ~mask)
+			| (that.abits_ptr_[sptr] & mask);
+		  bbits_ptr_[dptr] =
+			(bbits_ptr_[dptr] & ~mask)
+			| (that.bbits_ptr_[sptr] & mask);
 	    }
 
       } else {
@@ -523,17 +536,23 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 	    unsigned sptr = 0;
 	    unsigned dptr = adr / BITS_PER_WORD;
 	    unsigned doff = adr % BITS_PER_WORD;
-	    unsigned long lmask = (1UL << 2UL*doff) - 1;
+	    unsigned long lmask = (1UL << doff) - 1;
 	    unsigned ndoff = BITS_PER_WORD - doff;
 	    while (remain >= BITS_PER_WORD) {
-		  bits_ptr_[dptr] =
-			(bits_ptr_[dptr] & lmask)
-			| ((that.bits_ptr_[sptr] << 2UL*doff) & ~lmask);
+		  abits_ptr_[dptr] =
+			(abits_ptr_[dptr] & lmask)
+			| ((that.abits_ptr_[sptr] << doff) & ~lmask);
+		  bbits_ptr_[dptr] =
+			(bbits_ptr_[dptr] & lmask)
+			| ((that.bbits_ptr_[sptr] << doff) & ~lmask);
 		  dptr += 1;
 
-		  bits_ptr_[dptr] =
-			(bits_ptr_[dptr] & ~lmask)
-			| ((that.bits_ptr_[sptr] >> 2UL*ndoff) & lmask);
+		  abits_ptr_[dptr] =
+			(abits_ptr_[dptr] & ~lmask)
+			| ((that.abits_ptr_[sptr] >> ndoff) & lmask);
+		  bbits_ptr_[dptr] =
+			(bbits_ptr_[dptr] & ~lmask)
+			| ((that.bbits_ptr_[sptr] >> ndoff) & lmask);
 
 		  remain -= BITS_PER_WORD;
 		  sptr += 1;
@@ -545,28 +564,32 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 		  if (hshift >= BITS_PER_WORD)
 			hmask = -1UL;
 		  else
-			hmask = (1UL << 2UL*(doff+remain)) - 1;
+			hmask = (1UL << (doff+remain)) - 1;
 
 		  unsigned long mask = hmask & ~lmask;
 
-		  bits_ptr_[dptr] = (bits_ptr_[dptr] & ~mask)
-		        | ((that.bits_ptr_[sptr] << 2UL*doff) & mask);
+		  abits_ptr_[dptr] = (abits_ptr_[dptr] & ~mask)
+		        | ((that.abits_ptr_[sptr] << doff) & mask);
+		  bbits_ptr_[dptr] = (bbits_ptr_[dptr] & ~mask)
+		        | ((that.bbits_ptr_[sptr] << doff) & mask);
 
 		  if ((doff + remain) > BITS_PER_WORD) {
 			unsigned tail = doff + remain - BITS_PER_WORD;
 			if (tail >= BITS_PER_WORD)
 			      mask = -1UL;
 			else
-			      mask = (1UL << 2UL*tail) - 1;
+			      mask = (1UL << tail) - 1;
 
 			dptr += 1;
-			bits_ptr_[dptr] = (bits_ptr_[dptr] & ~mask) |
-			      ((that.bits_ptr_[sptr] >> 2UL*
-			        (remain-tail))&mask);
+			abits_ptr_[dptr] = (abits_ptr_[dptr] & ~mask) |
+			      ((that.abits_ptr_[sptr] >> (remain-tail))&mask);
+			bbits_ptr_[dptr] = (bbits_ptr_[dptr] & ~mask) |
+			      ((that.bbits_ptr_[sptr] >> (remain-tail))&mask);
 		  }
 	    }
 
       }
+
 }
 
 bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
@@ -575,24 +598,29 @@ bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
 	    return false;
 
       if (size_ < BITS_PER_WORD) {
-	    unsigned long mask = (1UL << 2UL * size_) - 1;
-	    return (bits_val_&mask) == (that.bits_val_&mask);
+	    unsigned long mask = (1UL << size_) - 1;
+	    return (abits_val_&mask) == (that.abits_val_&mask)
+		  && (bbits_val_&mask) == (that.bbits_val_&mask);
       }
 
       if (size_ == BITS_PER_WORD) {
-	    return bits_val_ == that.bits_val_;
+	    return (abits_val_ == that.abits_val_)
+		  && (bbits_val_ == that.bbits_val_);
       }
 
       unsigned words = size_ / BITS_PER_WORD;
       for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
-	    if (bits_ptr_[idx] != that.bits_ptr_[idx])
+	    if (abits_ptr_[idx] != that.abits_ptr_[idx])
+		  return false;
+	    if (bbits_ptr_[idx] != that.bbits_ptr_[idx])
 		  return false;
       }
 
       unsigned long mask = size_%BITS_PER_WORD;
       if (mask > 0) {
-	    mask = (1UL << 2UL*mask) - 1;
-	    return (bits_ptr_[words]&mask) == (that.bits_ptr_[words]&mask);
+	    mask = (1UL << mask) - 1;
+	    return (abits_ptr_[words]&mask) == (that.abits_ptr_[words]&mask)
+		  && (bbits_ptr_[words]&mask) == (that.bbits_ptr_[words]&mask);
       }
 
       return true;
@@ -601,24 +629,24 @@ bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
 bool vvp_vector4_t::has_xz() const
 {
       if (size_ < BITS_PER_WORD) {
-	    unsigned long mask = WORD_X_BITS >> 2*(BITS_PER_WORD - size_);
-	    return 0 != (bits_val_&mask);
+	    unsigned long mask = -1UL >> (BITS_PER_WORD - size_);
+	    return bbits_val_&mask;
       }
 
       if (size_ == BITS_PER_WORD) {
-	    return 0 != (bits_val_&WORD_X_BITS);
+	    return bbits_val_;
       }
 
       unsigned words = size_ / BITS_PER_WORD;
       for (unsigned idx = 0 ; idx < words ; idx += 1) {
-	    if (bits_ptr_[idx] & WORD_X_BITS)
+	    if (bbits_ptr_[idx])
 		  return true;
       }
 
       unsigned long mask = size_%BITS_PER_WORD;
       if (mask > 0) {
-	    mask = WORD_X_BITS >> 2*(BITS_PER_WORD - mask);
-	    return 0 != (bits_ptr_[words]&mask);
+	    mask = -1UL >> (BITS_PER_WORD - mask);
+	    return bbits_ptr_[words]&mask;
       }
 
       return false;
@@ -626,15 +654,18 @@ bool vvp_vector4_t::has_xz() const
 
 void vvp_vector4_t::change_z2x()
 {
-      assert(BIT4_Z == 3 && BIT4_X == 2);
-# define Z2X(val) do{ (val) = (val) & ~(((val)&WORD_X_BITS) >> 1UL); }while(0)
+	// This method relies on the fact that both BIT4_X and BIT4_Z
+	// have the bbit set in the vector4 encoding, and also that
+	// the BIT4_X has abit set in the vector4 encoding. By simply
+	// or-ing the bbit into the abit, BIT4_X and BIT4_Z both
+	// become BIT4_X.
 
       if (size_ <= BITS_PER_WORD) {
-	    Z2X(bits_val_);
+	    abits_val_ |= bbits_val_;
       } else {
 	    unsigned words = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
 	    for (unsigned idx = 0 ;  idx < words ;  idx += 1)
-		  Z2X(bits_ptr_[idx]);
+		  abits_ptr_[idx] |= bbits_ptr_[idx];
       }
 }
 
