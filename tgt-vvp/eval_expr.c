@@ -938,17 +938,17 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
       switch (ivl_expr_opcode(exp)) {
 
 	  case '&':
-	    fprintf(vvp_out, "   %%and %u, %u, %u;\n",
+	    fprintf(vvp_out, "    %%and %u, %u, %u;\n",
 		    lv.base, rv.base, wid);
 	    break;
 
 	  case '|':
-	    fprintf(vvp_out, "   %%or %u, %u, %u;\n",
+	    fprintf(vvp_out, "    %%or %u, %u, %u;\n",
 		    lv.base, rv.base, wid);
 	    break;
 
 	  case '^':
-	    fprintf(vvp_out, "   %%xor %u, %u, %u;\n",
+	    fprintf(vvp_out, "    %%xor %u, %u, %u;\n",
 		    lv.base, rv.base, wid);
 	    break;
 

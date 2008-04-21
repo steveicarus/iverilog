@@ -51,10 +51,39 @@ void clr_word(int res)
       word_alloc_mask &= ~ (1U << res);
 }
 
-
 static int draw_binary_real(ivl_expr_t exp)
 {
       int l, r = -1;
+
+	/* If the opcode is a vector only opcode then the sub expression
+	 * must not be a real expression, so use vector evaluation and
+	 * then convert that result to a real value. */
+      switch (ivl_expr_opcode(exp)) {
+	  case 'E':
+	  case 'N':
+	  case 'l':
+	  case 'r':
+	  case 'R':
+	  case '&':
+	  case '|':
+	  case '^':
+	  case 'A':
+	  case 'O':
+	  case 'X':
+	    {
+	    struct vector_info vi;
+	    vi = draw_eval_expr(exp, STUFF_OK_XZ);
+	    int res = allocate_word();
+	    const char*sign_flag = ivl_expr_signed(exp)? "/s" : "";
+	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
+		    sign_flag, res, vi.base, vi.wid);
+
+	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
+
+	    clr_vector(vi);
+	    return res;
+	    }
+      }
 
       l = draw_eval_real(ivl_expr_oper1(exp));
       r = draw_eval_real(ivl_expr_oper2(exp));
@@ -359,6 +388,23 @@ static int draw_ternary_real(ivl_expr_t exp)
 
 static int draw_unary_real(ivl_expr_t exp)
 {
+	/* If the opcode is a ~ then the sub expression must not be a
+	 * real expression, so use vector evaluation and then convert
+	 * that result to a real value. */
+      if (ivl_expr_opcode(exp) == '~') {
+	    struct vector_info vi;
+	    vi = draw_eval_expr(exp, STUFF_OK_XZ);
+	    int res = allocate_word();
+	    const char*sign_flag = ivl_expr_signed(exp)? "/s" : "";
+	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
+		    sign_flag, res, vi.base, vi.wid);
+
+	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
+
+	    clr_vector(vi);
+	    return res;
+      }
+
       ivl_expr_t sube = ivl_expr_oper1(exp);
       int sub = draw_eval_real(sube);
 
