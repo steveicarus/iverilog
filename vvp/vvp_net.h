@@ -57,8 +57,8 @@ class  vvp_delay_t;
 enum vvp_bit4_t {
       BIT4_0 = 0,
       BIT4_1 = 1,
-      BIT4_X = 2,
-      BIT4_Z = 3
+      BIT4_X = 3,
+      BIT4_Z = 2
 };
 
 extern vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c);
@@ -67,11 +67,25 @@ extern vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c);
      implementation here relies on the encoding of vvp_bit4_t values. */
 inline bool bit4_is_xz(vvp_bit4_t a) { return a >= 2; }
 
+  /* This function converts BIT4_Z to BIT4_X, but passes other values
+     unchanged. This fast implementation relies of the encoding of the
+     vvp_bit4_t values. In particular, the BIT4_X==3 and BIT4_Z==2 */
+inline vvp_bit4_t bit4_z2x(vvp_bit4_t a)
+{ return (vvp_bit4_t) ( (int)a | ((int)a >> 1) ); }
+
   /* Some common boolean operators. These implement the Verilog rules
-     for 4-value bit operations. */
-extern vvp_bit4_t operator ~ (vvp_bit4_t a);
-extern vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b);
+     for 4-value bit operations. The fast implementations here rely
+     on the encoding of vvp_bit4_t values. */
+
+  // ~BIT4_0 --> BIT4_1
+  // ~BIT4_1 --> BIT4_0
+  // ~BIT4_X --> BIT4_X
+  // ~BIT4_Z --> BIT4_X
+inline vvp_bit4_t operator ~ (vvp_bit4_t a)
+{ return bit4_z2x((vvp_bit4_t) (((int)a) ^ 1)); }
+
 extern vvp_bit4_t operator | (vvp_bit4_t a, vvp_bit4_t b);
+extern vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b);
 extern vvp_bit4_t operator ^ (vvp_bit4_t a, vvp_bit4_t b);
 extern ostream& operator<< (ostream&o, vvp_bit4_t a);
 
@@ -195,13 +209,13 @@ inline vvp_vector4_t::vvp_vector4_t(unsigned size, vvp_bit4_t val)
       const static unsigned long init_atable[4] = {
 	    WORD_0_ABITS,
 	    WORD_1_ABITS,
-	    WORD_X_ABITS,
-	    WORD_Z_ABITS };
+	    WORD_Z_ABITS,
+	    WORD_X_ABITS };
       const static unsigned long init_btable[4] = {
 	    WORD_0_BBITS,
 	    WORD_1_BBITS,
-	    WORD_X_BBITS,
-	    WORD_Z_BBITS };
+	    WORD_Z_BBITS,
+	    WORD_X_BBITS };
 
       allocate_words_(size, init_atable[val], init_btable[val]);
 }
