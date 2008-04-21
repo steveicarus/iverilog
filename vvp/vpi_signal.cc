@@ -239,26 +239,13 @@ static vpiHandle signal_iterate(int code, vpiHandle ref)
 
 static char *signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 {
-      unsigned wid = (rfp->msb >= rfp->lsb)
-	    ? (rfp->msb - rfp->lsb + 1)
-	    : (rfp->lsb - rfp->msb + 1);
-
       vvp_fun_signal_vec*vsig = dynamic_cast<vvp_fun_signal_vec*>(rfp->node->fun);
       assert(vsig);
 
-	/* FIXME: bits should be an array of vvp_bit4_t. */
-      unsigned char* bits = new unsigned char[wid];
-
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    bits[idx] = vsig->value(idx);
-      }
-
-      unsigned hwid = (wid+2) / 3 + 1;
+      unsigned hwid = (vsig->size()+2) / 3 + 1;
       char *rbuf = need_result_buf(hwid, RBUF_VAL);
 
-      vpip_bits_to_dec_str(bits, wid, rbuf, hwid, rfp->signed_flag);
-
-      delete[]bits;
+      vpip_vec4_to_dec_str(vsig->vec4_value(), rbuf, hwid, rfp->signed_flag);
 
       return rbuf;
 }
@@ -445,7 +432,20 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    rbuf = need_result_buf(wid+1, RBUF_VAL);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  rbuf[wid-idx-1] = "01xz"[vsig->value(idx)];
+		  switch (vsig->value(idx)) {
+		      case BIT4_0:
+			rbuf[wid-idx-1] = '0';
+			break;
+		      case BIT4_1:
+			rbuf[wid-idx-1] = '1';
+			break;
+		      case BIT4_Z:
+			rbuf[wid-idx-1] = 'z';
+			break;
+		      case BIT4_X:
+			rbuf[wid-idx-1] = 'x';
+			break;
+		  }
 	    }
 	    rbuf[wid] = 0;
 	    vp->value.str = rbuf;
@@ -470,7 +470,22 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		rbuf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      hval = hval | (vsig->value(idx) << 2*(idx % 3));
+		      unsigned tmp = 0;
+		      switch (vsig->value(idx)) {
+			  case BIT4_0:
+			    tmp = 0;
+			    break;
+			  case BIT4_1:
+			    tmp = 1;
+			    break;
+			  case BIT4_Z:
+			    tmp = 3;
+			    break;
+			  case BIT4_X:
+			    tmp = 2;
+			    break;
+		      }
+		      hval = hval | (tmp << 2*(idx % 3));
 
 		      if (idx%3 == 2) {
 			    hwid -= 1;

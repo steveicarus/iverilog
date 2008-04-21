@@ -1444,10 +1444,10 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
 	    obj = new resolv_functor(vvp_scalar_t(BIT4_1, 5));
 
       } else if (strcmp(type,"triand") == 0) {
-	    obj = new table_functor_s(ft_TRIAND);
+	    obj = new resolv_triand;
 
       } else if (strcmp(type,"trior") == 0) {
-	    obj = new table_functor_s(ft_TRIOR);
+	    obj = new resolv_trior;
 
       } else {
 	    fprintf(stderr, "invalid resolver type: %s\n", type);

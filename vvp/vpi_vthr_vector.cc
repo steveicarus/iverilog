@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -17,9 +17,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.24 2007/02/19 01:45:56 steve Exp $"
-#endif
 
 /*
  * vpiReg handles are handled here. These objects represent vectors of
@@ -44,7 +41,7 @@ struct __vpiVThrVec {
 };
 
 inline static
-unsigned get_bit(struct __vpiVThrVec *rfp, unsigned idx)
+vvp_bit4_t get_bit(struct __vpiVThrVec *rfp, unsigned idx)
 {
       return vthread_get_bit(vpip_current_vthread, rfp->bas+idx);
 }
@@ -114,13 +111,14 @@ static char* vthr_vec_get_str(int code, vpiHandle ref)
 
 static void vthr_vec_DecStrVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 {
-      unsigned char*bits = new unsigned char[rfp->wid];
-      char *rbuf = need_result_buf((rfp->wid+2)/3 + 1, RBUF_VAL);
+      int nbuf = (rfp->wid+2)/3 + 1;
+      char *rbuf = need_result_buf(nbuf, RBUF_VAL);
 
+      vvp_vector4_t tmp (rfp->wid);
       for (unsigned idx = 0 ;  idx < rfp->wid ;  idx += 1)
-	    bits[idx] = get_bit(rfp, idx);
+	    tmp.set_bit(idx, get_bit(rfp, idx));
 
-      vpip_bits_to_dec_str(bits, rfp->wid, rbuf, rfp->wid+1, rfp->signed_flag);
+      vpip_vec4_to_dec_str(tmp, rbuf, nbuf, rfp->signed_flag);
       vp->value.str = rbuf;
 
       return;

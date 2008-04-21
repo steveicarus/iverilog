@@ -503,14 +503,9 @@ extern const char* vpip_name_string(const char*str);
 
 /*
  * This function is used to make decimal string versions of various
- * vectors. The input format is an array of bit values (0, 1, 2, 3)
- * lsb first, and the result is written into buf, without overflowing
- * nbuf.
+ * vectors. The input format is a vvp_vector4_t, and the result is
+ * written into buf, without overflowing nbuf.
  */
-extern unsigned vpip_bits_to_dec_str(const unsigned char *bits,
-				     unsigned int nbits,
-				     char *buf, unsigned int nbuf,
-				     int signed_flag);
 extern unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
 				     char *buf, unsigned int nbuf,
 				     int signed_flag);
@@ -521,8 +516,6 @@ extern void vpip_bin_str_to_vec4(vvp_vector4_t&val,
 extern void vpip_vec4_to_hex_str(const vvp_vector4_t&bits, char*buf,
 				 unsigned nbuf, bool signed_flag);
 
-extern void vpip_bits_to_oct_str(const unsigned char*bits, unsigned nbits,
-				 char*buf, unsigned nbuf, bool signed_flag);
 extern void vpip_vec4_to_oct_str(const vvp_vector4_t&bits, char*buf,
 				 unsigned nbuf, bool signed_flag);
 

@@ -31,52 +31,6 @@
 # include  <malloc.h>
 #endif
 
-
-/*
- *   Implementation of the table functor, which provides logic with up
- *   to 4 inputs.
- */
-
-table_functor_s::table_functor_s(truth_t t)
-: table(t)
-{
-      count_functors_logic += 1;
-}
-
-table_functor_s::~table_functor_s()
-{
-}
-
-/*
- * WARNING: This function assumes that the table generator encodes the
- * values 0/1/x/z the same as the vvp_bit4_t enumeration values.
- */
-void table_functor_s::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val)
-{
-      input_[ptr.port()] = val;
-
-      vvp_vector4_t result (val.size());
-
-      for (unsigned idx = 0 ;  idx < val.size() ;  idx += 1) {
-
-	    unsigned lookup = 0;
-	    for (unsigned pdx = 4 ;  pdx > 0 ;  pdx -= 1) {
-		  lookup <<= 2;
-		  if (idx < input_[pdx-1].size())
-			lookup |= input_[pdx-1].value(idx);
-	    }
-
-	    unsigned off = lookup / 4;
-	    unsigned shift = lookup % 4 * 2;
-
-	    unsigned bit_val = table[off] >> shift;
-	    bit_val &= 3;
-	    result.set_bit(idx, (vvp_bit4_t)bit_val);
-      }
-
-      vvp_send_vec4(ptr.ptr()->out, result);
-}
-
 vvp_fun_boolean_::vvp_fun_boolean_(unsigned wid)
 {
       net_ = 0;
@@ -603,9 +557,6 @@ void compile_functor(char*label, char*type, unsigned width,
 
       } else if (strcmp(type, "MUXR") == 0) {
 	    obj = new vvp_fun_muxr;
-
-      } else if (strcmp(type, "MUXX") == 0) {
-	    obj = new table_functor_s(ft_MUXX);
 
       } else if (strcmp(type, "MUXZ") == 0) {
 	    obj = new vvp_fun_muxz(width);
