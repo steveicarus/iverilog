@@ -250,7 +250,20 @@ static char *signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
       unsigned char* bits = new unsigned char[wid];
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    bits[idx] = vsig->value(idx);
+	    switch (vsig->value(idx)) {
+		case BIT4_0:
+		  bits[idx] = 0;
+		  break;
+		case BIT4_1:
+		  bits[idx] = 1;
+		  break;
+		case BIT4_Z:
+		  bits[idx] = 3;
+		  break;
+		case BIT4_X:
+		  bits[idx] = 2;
+		  break;
+	    }
       }
 
       unsigned hwid = (wid+2) / 3 + 1;
@@ -445,7 +458,20 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    rbuf = need_result_buf(wid+1, RBUF_VAL);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  rbuf[wid-idx-1] = "01xz"[vsig->value(idx)];
+		  switch (vsig->value(idx)) {
+		      case BIT4_0:
+			rbuf[wid-idx-1] = '0';
+			break;
+		      case BIT4_1:
+			rbuf[wid-idx-1] = '1';
+			break;
+		      case BIT4_Z:
+			rbuf[wid-idx-1] = 'z';
+			break;
+		      case BIT4_X:
+			rbuf[wid-idx-1] = 'x';
+			break;
+		  }
 	    }
 	    rbuf[wid] = 0;
 	    vp->value.str = rbuf;
@@ -470,7 +496,22 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		rbuf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      hval = hval | (vsig->value(idx) << 2*(idx % 3));
+		      unsigned tmp = 0;
+		      switch (vsig->value(idx)) {
+			  case BIT4_0:
+			    tmp = 0;
+			    break;
+			  case BIT4_1:
+			    tmp = 1;
+			    break;
+			  case BIT4_Z:
+			    tmp = 3;
+			    break;
+			  case BIT4_X:
+			    tmp = 2;
+			    break;
+		      }
+		      hval = hval | (tmp << 2*(idx % 3));
 
 		      if (idx%3 == 2) {
 			    hwid -= 1;

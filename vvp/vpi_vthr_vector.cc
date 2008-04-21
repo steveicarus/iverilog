@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -17,9 +17,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.24 2007/02/19 01:45:56 steve Exp $"
-#endif
 
 /*
  * vpiReg handles are handled here. These objects represent vectors of
@@ -118,7 +115,20 @@ static void vthr_vec_DecStrVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
       char *rbuf = need_result_buf((rfp->wid+2)/3 + 1, RBUF_VAL);
 
       for (unsigned idx = 0 ;  idx < rfp->wid ;  idx += 1)
-	    bits[idx] = get_bit(rfp, idx);
+	    switch (get_bit(rfp, idx)) {
+		case BIT4_0:
+		  bits[idx] = 0;
+		  break;
+		case BIT4_1:
+		  bits[idx] = 1;
+		  break;
+		case BIT4_X:
+		  bits[idx] = 2;
+		  break;
+		case BIT4_Z:
+		  bits[idx] = 3;
+		  break;
+	    }
 
       vpip_bits_to_dec_str(bits, rfp->wid, rbuf, rfp->wid+1, rfp->signed_flag);
       vp->value.str = rbuf;

@@ -93,3 +93,84 @@ void resolv_functor::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
 
       vvp_send_vec8(ptr->out, out);
 }
+
+resolv_wired_logic::resolv_wired_logic()
+{
+}
+
+resolv_wired_logic::~resolv_wired_logic()
+{
+}
+
+void resolv_wired_logic::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
+{
+      unsigned pdx = port.port();
+      vvp_net_t*ptr = port.ptr();
+
+      if (val_[pdx].eeq(bit))
+	    return;
+
+      val_[pdx] = bit;
+
+      vvp_vector4_t out (bit);
+      for (unsigned idx = 0 ; idx < 4 ; idx += 1) {
+	    if (idx == pdx)
+		  continue;
+	    if (val_[idx].size() == 0)
+		  continue;
+
+	    out = wired_logic_math_(out, val_[idx]);
+      }
+
+      vvp_send_vec4(ptr->out, out);
+}
+
+vvp_vector4_t resolv_triand::wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b)
+{
+      assert(a.size() == b.size());
+
+      vvp_vector4_t out (a.size());
+
+      for (unsigned idx = 0 ; idx < out.size() ; idx += 1) {
+	    vvp_bit4_t abit = a.value(idx);
+	    vvp_bit4_t bbit = b.value(idx);
+	    if (abit == BIT4_Z) {
+		  out.set_bit(idx, bbit);
+	    } else if (bbit == BIT4_Z) {
+		  out.set_bit(idx, abit);
+	    } else if (abit == BIT4_0 || bbit == BIT4_0) {
+		  out.set_bit(idx, BIT4_0);
+	    } else if (abit == BIT4_X || bbit == BIT4_X) {
+		  out.set_bit(idx, BIT4_X);
+	    } else {
+		  out.set_bit(idx, BIT4_1);
+	    }
+      }
+
+      return out;
+}
+
+vvp_vector4_t resolv_trior::wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b)
+{
+      assert(a.size() == b.size());
+
+      vvp_vector4_t out (a.size());
+
+      for (unsigned idx = 0 ; idx < out.size() ; idx += 1) {
+	    vvp_bit4_t abit = a.value(idx);
+	    vvp_bit4_t bbit = b.value(idx);
+	    if (abit == BIT4_Z) {
+		  out.set_bit(idx, bbit);
+	    } else if (bbit == BIT4_Z) {
+		  out.set_bit(idx, abit);
+	    } else if (abit == BIT4_1 || bbit == BIT4_1) {
+		  out.set_bit(idx, BIT4_1);
+	    } else if (abit == BIT4_X || bbit == BIT4_X) {
+		  out.set_bit(idx, BIT4_X);
+	    } else {
+		  out.set_bit(idx, BIT4_0);
+	    }
+      }
+
+      return out;
+}

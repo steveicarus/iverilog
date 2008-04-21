@@ -24,26 +24,6 @@
 # include  <stddef.h>
 
 /*
- * Table driven functor. This kind of node takes 4 inputs and
- * generates a single output. The logic is bitwise, and implemented
- * with a lookup table.
- */
-
-class table_functor_s: public vvp_net_fun_t {
-
-    public:
-      typedef const unsigned char *truth_t;
-      explicit table_functor_s(truth_t t);
-      virtual ~table_functor_s();
-
-      void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
-
-    private:
-      truth_t table;
-      vvp_vector4_t input_[4];
-};
-
-/*
  * vvp_fun_boolean_ is just a common hook for holding operands.
  */
 class vvp_fun_boolean_ : public vvp_net_fun_t, protected vvp_gen_event_s {
@@ -209,12 +189,5 @@ class vvp_fun_xor  : public vvp_fun_boolean_ {
       void run_run();
       bool invert_;
 };
-
-// table functor types
-
-extern const unsigned char ft_MUXX[];
-extern const unsigned char ft_EEQ[];
-extern const unsigned char ft_TRIAND[];
-extern const unsigned char ft_TRIOR[];
 
 #endif // __logic_H

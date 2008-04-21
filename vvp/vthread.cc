@@ -119,6 +119,9 @@ struct vthread_s {
       struct vthread_s*scope_next, *scope_prev;
 };
 
+// this table maps the thread special index bit addresses to
+// vvp_bit4_t bit values.
+static vvp_bit4_t thr_index_to_bit4[4] = { BIT4_0, BIT4_1, BIT4_X, BIT4_Z };
 
 static inline void thr_check_addr(struct vthread_s*thr, unsigned addr)
 {
@@ -203,7 +206,7 @@ static vvp_vector4_t vthread_bits_to_vector(struct vthread_s*thr,
 
       } else {
 	    vvp_vector4_t value(wid);
-	    vvp_bit4_t bit_val = (vvp_bit4_t)bit;
+	    vvp_bit4_t bit_val = thr_index_to_bit4[bit];
 	    for (unsigned idx = 0; idx < wid; idx +=1) {
 		  value.set_bit(idx, bit_val);
 	    }
@@ -2799,7 +2802,7 @@ bool of_MOD_WR(vthread_t thr, vvp_code_t cp)
 static bool of_MOV1XZ_(vthread_t thr, vvp_code_t cp)
 {
       thr_check_addr(thr, cp->bit_idx[0]+cp->number-1);
-      vvp_vector4_t tmp (cp->number, (vvp_bit4_t)cp->bit_idx[1]);
+      vvp_vector4_t tmp (cp->number, thr_index_to_bit4[cp->bit_idx[1]]);
       thr->bits4.set_vec(cp->bit_idx[0], tmp);
       return true;
 }
@@ -3528,9 +3531,8 @@ bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
 
       } else {
 	      /* Make a vector of the desired width. */
-	    vvp_bit4_t bit_val = (vvp_bit4_t)bit;
+	    vvp_bit4_t bit_val = thr_index_to_bit4[bit];
 	    vvp_vector4_t value(wid, bit_val);
-
 	    vvp_send_vec4(ptr, value);
       }
 
