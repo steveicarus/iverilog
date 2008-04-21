@@ -239,39 +239,13 @@ static vpiHandle signal_iterate(int code, vpiHandle ref)
 
 static char *signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 {
-      unsigned wid = (rfp->msb >= rfp->lsb)
-	    ? (rfp->msb - rfp->lsb + 1)
-	    : (rfp->lsb - rfp->msb + 1);
-
       vvp_fun_signal_vec*vsig = dynamic_cast<vvp_fun_signal_vec*>(rfp->node->fun);
       assert(vsig);
 
-	/* FIXME: bits should be an array of vvp_bit4_t. */
-      unsigned char* bits = new unsigned char[wid];
-
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    switch (vsig->value(idx)) {
-		case BIT4_0:
-		  bits[idx] = 0;
-		  break;
-		case BIT4_1:
-		  bits[idx] = 1;
-		  break;
-		case BIT4_Z:
-		  bits[idx] = 3;
-		  break;
-		case BIT4_X:
-		  bits[idx] = 2;
-		  break;
-	    }
-      }
-
-      unsigned hwid = (wid+2) / 3 + 1;
+      unsigned hwid = (vsig->size()+2) / 3 + 1;
       char *rbuf = need_result_buf(hwid, RBUF_VAL);
 
-      vpip_bits_to_dec_str(bits, wid, rbuf, hwid, rfp->signed_flag);
-
-      delete[]bits;
+      vpip_vec4_to_dec_str(vsig->vec4_value(), rbuf, hwid, rfp->signed_flag);
 
       return rbuf;
 }

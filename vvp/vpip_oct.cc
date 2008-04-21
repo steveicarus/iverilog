@@ -88,37 +88,6 @@ void vpip_oct_str_to_vec4(vvp_vector4_t&val, const char*str)
       }
 }
 
-
-void vpip_bits_to_oct_str(const unsigned char*bits, unsigned nbits,
-			  char*buf, unsigned nbuf, bool signed_flag)
-{
-      unsigned slen = (nbits + 2) / 3;
-      unsigned val = 0;
-      assert(slen < nbuf);
-
-      buf[slen] = 0;
-
-      for (unsigned idx = 0 ;  idx < nbits ;  idx += 1) {
-	    unsigned bi = idx/4;
-	    unsigned bs = (idx%4) * 2;
-	    unsigned bit = (bits[bi] >> bs) & 3;
-
-	    unsigned vs = (idx%3) * 2;
-	    val |= bit << vs;
-
-	    if (vs == 4) {
-		  slen -= 1;
-		  buf[slen] = oct_digits[val];
-		  val = 0;
-	    }
-      }
-
-      if (slen > 0) {
-	    slen -= 1;
-	    buf[slen] = oct_digits[val];
-      }
-}
-
 void vpip_vec4_to_oct_str(const vvp_vector4_t&bits, char*buf, unsigned nbuf,
 			  bool signed_flag)
 {

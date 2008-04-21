@@ -41,7 +41,7 @@ struct __vpiVThrVec {
 };
 
 inline static
-unsigned get_bit(struct __vpiVThrVec *rfp, unsigned idx)
+vvp_bit4_t get_bit(struct __vpiVThrVec *rfp, unsigned idx)
 {
       return vthread_get_bit(vpip_current_vthread, rfp->bas+idx);
 }
@@ -111,26 +111,14 @@ static char* vthr_vec_get_str(int code, vpiHandle ref)
 
 static void vthr_vec_DecStrVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 {
-      unsigned char*bits = new unsigned char[rfp->wid];
-      char *rbuf = need_result_buf((rfp->wid+2)/3 + 1, RBUF_VAL);
+      int nbuf = (rfp->wid+2)/3 + 1;
+      char *rbuf = need_result_buf(nbuf, RBUF_VAL);
 
+      vvp_vector4_t tmp (rfp->wid);
       for (unsigned idx = 0 ;  idx < rfp->wid ;  idx += 1)
-	    switch (get_bit(rfp, idx)) {
-		case BIT4_0:
-		  bits[idx] = 0;
-		  break;
-		case BIT4_1:
-		  bits[idx] = 1;
-		  break;
-		case BIT4_X:
-		  bits[idx] = 2;
-		  break;
-		case BIT4_Z:
-		  bits[idx] = 3;
-		  break;
-	    }
+	    tmp.set_bit(idx, get_bit(rfp, idx));
 
-      vpip_bits_to_dec_str(bits, rfp->wid, rbuf, rfp->wid+1, rfp->signed_flag);
+      vpip_vec4_to_dec_str(tmp, rbuf, nbuf, rfp->signed_flag);
       vp->value.str = rbuf;
 
       return;
