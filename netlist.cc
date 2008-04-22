@@ -2417,3 +2417,207 @@ const NetProc*NetTaskDef::proc() const
 {
       return proc_;
 }
+
+/*
+ * These are the delay_type() functions. They are used to determine
+ * the type of delay for the given object.
+ */
+
+/*
+ * This function implements the following table:
+ *
+ * in_A  in_B   out
+ *   NO    NO    NO
+ *   NO  ZERO  ZERO
+ *   NO   POS   POS
+ *   NO   DEF   POS
+ * ZERO    NO  ZERO
+ * ZERO  ZERO  ZERO
+ * ZERO   POS   POS
+ * ZERO   DEF   POS
+ *  POS    NO   POS
+ *  POS  ZERO   POS
+ *  POS   POS   POS
+ *  POS   DEF   POS
+ *  DEF    NO   POS
+ *  DEF  ZERO   POS
+ *  DEF   POS   POS
+ *  DEF   DEF   DEF
+ *
+ * It is used to combine two delay values.
+ */
+static DelayType combine_delays(const DelayType a, const DelayType b)
+{
+	/* The default is POSSIBLE_DELAY. */
+      DelayType result = POSSIBLE_DELAY;
+
+	/* If both are no or zero delay then we return ZERO_DELAY. */
+      if ((a == NO_DELAY || a == ZERO_DELAY) &&
+          (b == NO_DELAY || b == ZERO_DELAY)) {
+	    result = ZERO_DELAY;
+      }
+
+	/* Except if both are no delay then we return NO_DELAY. */
+      if (a == NO_DELAY && b == NO_DELAY) {
+	    result = NO_DELAY;
+      }
+
+	/* If both are definite delay then we return DEFINITE_DELAY. */
+      if (a == DEFINITE_DELAY && b == DEFINITE_DELAY) {
+	    result = DEFINITE_DELAY;
+      }
+
+      return result;
+}
+
+/*
+ * This is used to see what we can find out about the delay when it
+ * is given as an expression. We also use this for loop expressions.
+ */
+static DelayType delay_type_from_expr(const NetExpr*expr)
+{
+      DelayType result = POSSIBLE_DELAY;
+
+      if (const NetEConst*e = dynamic_cast<const NetEConst*>(expr)) {
+	    if (e->value().is_zero()) result = ZERO_DELAY;
+	    else result = DEFINITE_DELAY;
+      }
+
+      if (const NetECReal*e = dynamic_cast<const NetECReal*>(expr)) {
+	    if (e->value().as_double() == 0.0) result = ZERO_DELAY;
+	    else result = DEFINITE_DELAY;
+      }
+
+      return result;
+}
+
+/*
+ * The looping structures can use the same basic code so put it here
+ * instead of duplicating it for each one (repeat and while).
+ */
+static DelayType get_loop_delay_type(const NetExpr*expr, const NetProc*proc)
+{
+      DelayType result;
+
+      switch (delay_type_from_expr(expr)) {
+	    /* We have a constant false expression so the body never runs. */
+	  case ZERO_DELAY:
+	    result = NO_DELAY;
+	    break;
+	    /* We have a constant true expression so the body always runs. */
+	  case DEFINITE_DELAY:
+	    result = proc->delay_type();
+	    break;
+	    /* We don't know if the body will run so reduce a DEFINITE_DELAY
+	     * to a POSSIBLE_DELAY. All other stay the same. */
+	  case POSSIBLE_DELAY:
+	    result = combine_delays(NO_DELAY, proc->delay_type());
+	    break;
+	    /* This should never happen since delay_type_from_expr() only
+	     * returns three different values. */
+	  default:
+	    assert(0);
+      }
+
+      return result;
+}
+
+/* The default object does not have any delay. */
+DelayType NetProc::delay_type() const
+{
+      return NO_DELAY;
+}
+
+DelayType NetBlock::delay_type() const
+{
+      DelayType result = NO_DELAY;
+
+      for (const NetProc*cur = proc_first(); cur; cur = proc_next(cur)) {
+	    DelayType dt = cur->delay_type();
+            if (dt > result) result = dt;
+      }
+
+      return result;
+}
+
+DelayType NetCase::delay_type() const
+{
+      DelayType result = NO_DELAY;
+      bool def_stmt = false;
+      unsigned nstmts = nitems();
+
+      for (unsigned idx = 0; idx < nstmts; idx += 1) {
+	    if (!expr(idx)) def_stmt = true;
+            if (idx == 0) {
+		  result = stat(idx)->delay_type();
+            } else {
+		  result = combine_delays(result, stat(idx)->delay_type());
+            }
+      }
+
+	/* If we don't have a default statement we don't know for sure
+	 * that we have a delay. */
+      if (!def_stmt) result = combine_delays(NO_DELAY, result);
+
+      return result;
+}
+
+DelayType NetCondit::delay_type() const
+{
+      DelayType result;
+
+      if (else_) {
+	    result = combine_delays(if_->delay_type(), else_->delay_type());
+      } else {
+	    result = if_->delay_type();
+      }
+
+      return result;
+}
+
+DelayType NetEvWait::delay_type() const
+{
+      return DEFINITE_DELAY;
+}
+
+DelayType NetForever::delay_type() const
+{
+      return statement_->delay_type();
+}
+
+DelayType NetPDelay::delay_type() const
+{
+      if (expr_) {
+	    return delay_type_from_expr(expr_);
+      } else {
+	    if (delay() > 0) {
+		  return DEFINITE_DELAY;
+	    } else {
+		  if (statement_) {
+			return statement_->delay_type();
+		  } else {
+			return NO_DELAY;
+		  }
+	    }
+      }
+}
+
+DelayType NetRepeat::delay_type() const
+{
+      return get_loop_delay_type(expr_, statement_);
+}
+
+DelayType NetTaskDef::delay_type() const
+{
+      return proc_->delay_type();
+}
+
+DelayType NetUTask::delay_type() const
+{
+      return task()->task_def()->delay_type();
+}
+
+DelayType NetWhile::delay_type() const
+{
+      return get_loop_delay_type(cond_, proc_);
+}

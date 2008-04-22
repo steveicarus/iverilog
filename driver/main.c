@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -358,6 +358,11 @@ static void process_warning_switch(const char*name)
       } else if (strcmp(name,"timescale") == 0) {
 	    if (! strchr(warning_flags, 't'))
 		  strcat(warning_flags, "t");
+	/* Since the infinite loop check is not part of 'all' it
+	 * does not have a no- version. */
+      } else if (strcmp(name,"infloop") == 0) {
+	    if (! strchr(warning_flags, 'l'))
+		  strcat(warning_flags, "l");
       } else if (strcmp(name,"no-implicit") == 0) {
 	    char*cp = strchr(warning_flags, 'i');
 	    if (cp) while (*cp) {
@@ -703,7 +708,7 @@ int main(int argc, char **argv)
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
-	    printf("Copyright 1998-2007 Stephen Williams\n");
+	    printf("Copyright 1998-2008 Stephen Williams\n");
 	    puts(NOTICE);
 
 	    if (version_flag)
@@ -841,4 +846,3 @@ int main(int argc, char **argv)
 
       return 0;
 }
-

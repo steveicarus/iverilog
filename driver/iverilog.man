@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2007/06/05 01:56:12 $" Version "$Date: 2007/06/05 01:56:12 $"
+.TH iverilog 1 "April 22nd, 2008" Version "0.9.devel"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -250,6 +250,21 @@ directive. It detects if some modules have no timescale, or if modules
 inherit timescale from another file. Both probably mean that
 timescales are inconsistent, and simulation timing can be confusing
 and dependent on compilation order.
+
+.TP 8
+.B infloop
+This enables warnings for \fRalways\fP statements that may have runtime
+infinite loops (has paths with no or zero delay). This class of warnings
+is not included in \fB-Wall\fP and hence does not have a \fBno-\fP variant.
+A fatal error message will always be printed when the compiler can
+determine that there will definitely be an infinite loop (all paths have
+no or zero delay).
+
+When you suspect an always statement is producing a runtime infinite loop
+use this flag to find the always statements that need to have their logic
+verified. It is expected that many of the warnings will be false
+positives, since the code treats the value of all variables and signals
+as indeterminate.
 
 .SH "SYSTEM FUNCTION TABLE FILES"
 If the source file name as a \fB.sft\fP suffix, then it is taken to be

@@ -21,7 +21,7 @@
 #
 SHELL = /bin/sh
 
-VERSION = 0.8
+VERSION = 0.9.devel
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@

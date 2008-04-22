@@ -1,7 +1,7 @@
 #ifndef __compiler_H
 #define __compiler_H
 /*
- * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -75,6 +75,9 @@ extern bool warn_timescale;
 
 /* Warn about legal but questionable module port bindings. */
 extern bool warn_portbinding;
+
+/* Warn about structures that may have infinite loops. */
+extern bool warn_inf_loop;
 
 /* This is true if verbose output is requested. */
 extern bool verbose_flag;

@@ -3277,6 +3277,29 @@ bool PProcess::elaborate(Design*des, NetScope*scope) const
 			   verinum(1));
       } while (0);
 
+	/* If this is an always block and we have no or zero delay then
+	 * a runtime infinite loop will happen. If we possible have some
+	 * delay then print a warning that an infinite loop is possible.
+	 */
+      if (type() == PProcess::PR_ALWAYS) {
+	    DelayType dly_type = top->statement()->delay_type();
+
+	    if (dly_type == NO_DELAY || dly_type == ZERO_DELAY) {
+		  cerr << get_fileline() << ": error: always statement"
+		       << " does not have any delay." << endl;
+		  cerr << get_fileline() << ":      : A runtime infinite"
+		       << " loop will occur." << endl;
+		  des->errors += 1;
+		  return false;
+
+	    } else if (dly_type == POSSIBLE_DELAY && warn_inf_loop) {
+		  cerr << get_fileline() << ": warning: always statement"
+		       << " may not have any delay." << endl;
+		  cerr << get_fileline() << ":        : A runtime infinite"
+		       << " loop may be possible." << endl;
+	    }
+      }
+
       return true;
 }
 

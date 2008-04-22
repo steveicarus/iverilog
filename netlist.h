@@ -1640,6 +1640,7 @@ class NetUDP  : public NetNode {
       PUdp *udp;
 };
 
+enum DelayType { NO_DELAY, ZERO_DELAY, POSSIBLE_DELAY, DEFINITE_DELAY };
 
 /* =========
  * A process is a behavioral-model description. A process is a
@@ -1688,6 +1689,9 @@ class NetProc : public virtual LineInfo {
 			      const svector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
+
+	// Recursively checks to see if there is delay in this element.
+      virtual DelayType delay_type() const;
 
     private:
       friend class NetBlock;
@@ -1896,6 +1900,7 @@ class NetBlock  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
+      virtual DelayType delay_type() const;
 
     private:
       const Type type_;
@@ -1939,6 +1944,7 @@ class NetCase  : public NetProc {
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
+      virtual DelayType delay_type() const;
 
     private:
 
@@ -2012,6 +2018,7 @@ class NetCondit  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
+      virtual DelayType delay_type() const;
 
     private:
       NetExpr* expr_;
@@ -2229,6 +2236,7 @@ class NetEvWait  : public NetProc {
 			      const svector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
+      virtual DelayType delay_type() const;
 
     private:
       NetProc*statement_;
@@ -2296,6 +2304,7 @@ class NetForever : public NetProc {
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
+      virtual DelayType delay_type() const;
 
     private:
       NetProc*statement_;
@@ -2368,6 +2377,7 @@ class NetPDelay  : public NetProc {
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
+      virtual DelayType delay_type() const;
 
       bool emit_proc_recurse(struct target_t*) const;
 
@@ -2392,6 +2402,7 @@ class NetRepeat : public NetProc {
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
+      virtual DelayType delay_type() const;
 
     private:
       NetExpr*expr_;
@@ -2473,6 +2484,7 @@ class NetTaskDef {
       NetNet*port(unsigned idx);
 
       void dump(ostream&, unsigned) const;
+      DelayType delay_type() const;
 
     private:
       NetScope*scope_;
@@ -2541,6 +2553,7 @@ class NetUTask  : public NetProc {
       virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
+      virtual DelayType delay_type() const;
 
     private:
       NetScope*task_;
@@ -2565,6 +2578,7 @@ class NetWhile  : public NetProc {
       virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
+      virtual DelayType delay_type() const;
 
     private:
       NetExpr* cond_;
