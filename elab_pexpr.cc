@@ -53,7 +53,7 @@ NetExpr*PEBinary::elaborate_pexpr (Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      NetEBinary*tmp = elaborate_expr_base_(des, lp, rp, -2);
+      NetExpr*tmp = elaborate_expr_base_(des, lp, rp, -2);
       return tmp;
 }
 

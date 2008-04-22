@@ -544,7 +544,7 @@ class PEBinary : public PExpr {
 				    const NetExpr* decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
-      virtual NetEBinary*elaborate_expr(Design*des, NetScope*,
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 					int expr_width, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
@@ -554,8 +554,8 @@ class PEBinary : public PExpr {
       PExpr*left_;
       PExpr*right_;
 
-      NetEBinary*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
-      NetEBinary*elaborate_eval_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
+      NetExpr*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
+      NetExpr*elaborate_eval_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
 
       static void suppress_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp);
 
@@ -621,8 +621,8 @@ class PEBComp  : public PEBinary {
 				  unsigned min, unsigned lval,
 				  bool&flag) const;
 
-      NetEBinary* elaborate_expr(Design*des, NetScope*scope,
-				 int expr_width, bool sys_task_arg) const;
+      NetExpr* elaborate_expr(Design*des, NetScope*scope,
+			      int expr_width, bool sys_task_arg) const;
 };
 
 class PEBShift  : public PEBinary {
