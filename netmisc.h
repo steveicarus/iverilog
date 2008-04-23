@@ -65,6 +65,13 @@ extern NetNet*pad_to_width(Design*des, NetNet*n, unsigned w);
 extern NetNet*pad_to_width_signed(Design*des, NetNet*n, unsigned w);
 
 /*
+ * Take the input expression and return a variation that assures that
+ * the expression is 1-bit wide and logical. This reflects the needs
+ * of conditions i.e. for "if" statements or logical operators.
+ */
+extern NetExpr*condition_reduce(NetExpr*expr);
+
+/*
  * This function transforms an expression by cropping the high bits
  * off with a part select. The result has the width w passed in. This
  * function does not pad, use pad_to_width if padding is desired.

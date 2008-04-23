@@ -2045,14 +2045,8 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      if (expr->expr_width() > 1) {
-	    assert(expr->expr_width() > 1);
-	    verinum zero (verinum::V0, expr->expr_width());
-	    NetEConst*ezero = new NetEConst(zero);
-	    ezero->set_width(expr->expr_width());
-	    NetEBComp*cmp = new NetEBComp('n', expr, ezero);
-	    expr = cmp;
-      }
+	// Make sure the condition expression evaluates to a condition.
+      expr = condition_reduce(expr);
 
 	// Well, I actually need to generate code to handle the
 	// conditional, so elaborate.

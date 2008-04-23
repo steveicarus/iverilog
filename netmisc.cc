@@ -123,6 +123,25 @@ NetExpr* make_sub_expr(long val, NetExpr*expr)
       return res;
 }
 
+NetExpr* condition_reduce(NetExpr*expr)
+{
+      if (expr->expr_width() == 1)
+	    return expr;
+
+      verinum zero (verinum::V0, expr->expr_width());
+
+      NetEConst*ezero = new NetEConst(zero);
+      ezero->cast_signed(expr->has_sign());
+      ezero->set_line(*expr);
+      ezero->set_width(expr->expr_width());
+
+      NetEBComp*cmp = new NetEBComp('n', expr, ezero);
+      cmp->cast_signed(false);
+      cmp->set_line(*expr);
+
+      return cmp;
+}
+
 NetExpr* elab_and_eval(Design*des, NetScope*scope,
 		       const PExpr*pe, int expr_wid, int prune_width)
 {

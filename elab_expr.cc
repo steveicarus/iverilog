@@ -167,6 +167,8 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 
 	  case 'a':
 	  case 'o':
+	    lp = condition_reduce(lp);
+	    rp = condition_reduce(rp);
 	    tmp = new NetEBLogic(op_, lp, rp);
 	    tmp->set_line(*this);
 	    break;
