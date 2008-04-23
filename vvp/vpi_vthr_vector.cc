@@ -384,7 +384,7 @@ static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp, int)
 		  set_bit(rfp, 0, BIT4_Z);
 		  break;
 		default:
-		  fprintf(stderr, "Unsupported bit value %d.\n",
+		  fprintf(stderr, "Unsupported scalar value %d.\n",
 		          vp->value.scalar);
 		  assert(0);
 	    }
@@ -578,4 +578,3 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
       return &obj->base;
 }
-

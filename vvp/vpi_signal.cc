@@ -596,6 +596,23 @@ static vvp_vector4_t from_stringval(const char*str, unsigned wid)
       return val;
 }
 
+static vvp_bit4_t scalar_to_bit4(PLI_INT32 scalar)
+{
+      switch(scalar) {
+	  case vpi0:
+	    return BIT4_0;
+	  case vpi1:
+	    return BIT4_1;
+	  case vpiX:
+	    return BIT4_X;
+	  case vpiZ:
+	    return BIT4_Z;
+	  default:
+	    fprintf(stderr, "Unsupported scalar value %d.\n", scalar);
+	    assert(0);
+      }
+}
+
 static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 {
       unsigned wid;
@@ -640,9 +657,7 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 		  aval >>= idx%32;
 		  bval >>= idx%32;
 		  int bitmask = (aval&1) | ((bval<<1)&2);
-		  static const vvp_bit4_t bit_table[4] = {
-			BIT4_0, BIT4_1, BIT4_X, BIT4_Z };
-		  vvp_bit4_t bit = bit_table[bitmask];
+		  vvp_bit4_t bit = scalar_to_bit4(bitmask);
 		  val.set_bit(idx, bit);
 	    }
 	    break;
@@ -657,6 +672,9 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 	    break;
 	  case vpiHexStrVal:
 	    vpip_hex_str_to_vec4(val, vp->value.str);
+	    break;
+	  case vpiScalarVal:
+	    val.set_bit(0, scalar_to_bit4(vp->value.scalar));
 	    break;
 	  case vpiStringVal:
 	    val = from_stringval(vp->value.str, wid);
@@ -778,4 +796,3 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
       return &obj->base;
 }
-
