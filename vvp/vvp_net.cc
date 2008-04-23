@@ -414,6 +414,72 @@ unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
       return 0;
 }
 
+void vvp_vector4_t::setarray(unsigned adr, unsigned wid, const unsigned long*val)
+{
+      assert(adr+wid <= size_);
+
+      const unsigned BIT2_PER_WORD = 8*sizeof(unsigned long);
+
+      if (size_ <= BITS_PER_WORD) {
+	      // We know here that both the source and the target are
+	      // within a single word. Write the bits into the
+	      // abits_val_ directly.
+
+	    assert(BIT2_PER_WORD <= BITS_PER_WORD);
+	    unsigned long lmask = (1UL << adr) - 1UL;
+	    unsigned long hmask = ((adr+wid) < BITS_PER_WORD)
+		  ? -1UL << (adr+wid)
+		  : 0;
+	    unsigned long mask = ~(hmask | lmask);
+
+	    abits_val_ &= ~mask;
+	    bbits_val_ &= ~mask;
+
+	    abits_val_ |= mask & (val[0] << adr);
+
+      } else {
+	      // The general case, there are multiple words of
+	      // destination, and possibly multiple words of source
+	      // data. Shift and mask as we go.
+	    unsigned off = adr % BITS_PER_WORD;
+	    unsigned ptr = adr / BITS_PER_WORD;
+	    unsigned val_off = 0;
+	    unsigned val_ptr = 0;
+	    while (wid > 0) {
+		  unsigned trans = wid;
+		  if (trans > (BIT2_PER_WORD-val_off))
+			trans = BIT2_PER_WORD-val_off;
+		  if (trans > (BITS_PER_WORD-off))
+			trans = BITS_PER_WORD-off;
+
+		  unsigned long lmask = (1UL << off) - 1UL;
+		  unsigned long hmask = ((off+trans) < BITS_PER_WORD)
+			? -1UL << (off+trans)
+			: 0;
+		  unsigned long mask = ~(hmask | lmask);
+
+		  abits_ptr_[ptr] &= ~mask;
+		  bbits_ptr_[ptr] &= ~mask;
+		  if (val_off >= off)
+			abits_ptr_[ptr] |= mask & (val[val_ptr] >> (val_off-off));
+		  else
+			abits_ptr_[ptr] |= mask & (val[val_ptr] << (off-val_off));
+
+		  wid -= trans;
+		  val_off += trans;
+		  if (val_off == BIT2_PER_WORD) {
+			val_off = 0;
+			val_ptr += 1;
+		  }
+		  off += trans;
+		  if (off == BITS_PER_WORD) {
+			off = 0;
+			ptr += 1;
+		  }
+	    }
+      }
+}
+
 /*
  * Set the bits of that vector, which must be a subset of this vector,
  * into the addressed part of this vector. Use bit masking and word

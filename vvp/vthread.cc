@@ -453,10 +453,7 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
 	/* We know from the vector_to_array that the address is valid
 	   in the thr->bitr4 vector, so just do the set bit. */
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned bit = lva[idx/CPU_WORD_BITS] >> (idx % CPU_WORD_BITS);
-	    thr->bits4.set_bit(cp->bit_idx[0]+idx, (bit&1) ? BIT4_1 : BIT4_0);
-      }
+      thr->bits4.setarray(cp->bit_idx[0], cp->number, lva);
 
       delete[]lva;
       delete[]lvb;
@@ -525,11 +522,10 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
 	    lva[idx] = sum;
       }
 
-      thr_check_addr(thr, bit_addr + bit_width - 1);
-      for (unsigned idx = 0 ;  idx < bit_width ;  idx += 1) {
-	    unsigned long bit = lva[idx/CPU_WORD_BITS] >> (idx%CPU_WORD_BITS);
-	    thr->bits4.set_bit(bit_addr+idx, (bit&1UL) ? BIT4_1:BIT4_0);
-      }
+	/* We know from the vector_to_array that the address is valid
+	   in the thr->bitr4 vector, so just do the set bit. */
+
+      thr->bits4.setarray(bit_addr, bit_width, lva);
 
       delete[]lva;
       delete[]lvb;
@@ -3761,10 +3757,10 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
 	    lva[idx] = sum;
       }
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned bit = lva[idx/CPU_WORD_BITS] >> (idx % CPU_WORD_BITS);
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, (bit&1) ? BIT4_1 : BIT4_0);
-      }
+	/* We know from the vector_to_array that the address is valid
+	   in the thr->bitr4 vector, so just do the set bit. */
+
+      thr->bits4.setarray(cp->bit_idx[0], cp->number, lva);
 
       delete[]lva;
       delete[]lvb;

@@ -130,6 +130,7 @@ class vvp_vector4_t {
 	// array of longs, or a nil pointer if an XZ bit was detected
 	// in the array.
       unsigned long*subarray(unsigned idx, unsigned size) const;
+      void setarray(unsigned idx, unsigned size, const unsigned long*val);
 
       void set_bit(unsigned idx, vvp_bit4_t val);
       void set_vec(unsigned idx, const vvp_vector4_t&that);
