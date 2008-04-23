@@ -63,16 +63,16 @@ void vpip_bin_str_to_vec4(vvp_vector4_t&vec4,
 	/* Calculate the pad value based on the top bit and the signed
 	   flag. We may sign extend or zero extend. */
       switch (last) {
-	  case 0:
+	  case BIT4_0:
 	    last = BIT4_0;
 	    break;
-	  case 1:
+	  case BIT4_1:
 	    last = signed_flag? BIT4_1 : BIT4_0;
 	    break;
-	  case 2:
+	  case BIT4_X:
 	    last = BIT4_X;
 	    break;
-	  case 3:
+	  case BIT4_Z:
 	    last = BIT4_Z;
 	    break;
       }

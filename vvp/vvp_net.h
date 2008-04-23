@@ -61,6 +61,9 @@ enum vvp_bit4_t {
       BIT4_Z = 2
 };
 
+  /* Return an ASCII character that represents the vvp_bit4_t value. */
+inline char vvp_bit4_to_ascii(vvp_bit4_t a) { return "01zx"[a]; }
+
 extern vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c);
 
   /* Return TRUE if the bit is BIT4_X or BIT4_Z. The fast

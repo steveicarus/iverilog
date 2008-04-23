@@ -134,9 +134,9 @@ static void vthr_vec_StringVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 	tmp <<= 1;
 
 	switch(get_bit(rfp, bitnr)){
-	  case 0:
+	  case BIT4_0:
 	      break;
-	  case 1:
+	  case BIT4_1:
 	      tmp |= 1;
 	      break;
 	  default:
@@ -179,7 +179,7 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	  case vpiBinStrVal:
 	    rbuf = need_result_buf(wid+1, RBUF_VAL);
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  rbuf[wid-idx-1] = "01xz"[get_bit(rfp, idx)];
+		  rbuf[wid-idx-1] = vvp_bit4_to_ascii(get_bit(rfp, idx));
 	    }
 	    rbuf[wid] = 0;
 	    vp->value.str = rbuf;
@@ -192,7 +192,22 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 		rbuf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      hval = hval | (get_bit(rfp, idx) << 2*(idx % 4));
+		      unsigned tmp = 0;
+		      switch (get_bit(rfp, idx)) {
+			  case BIT4_0:
+			    tmp = 0;
+			    break;
+			  case BIT4_1:
+			    tmp = 1;
+			    break;
+			  case BIT4_X:
+			    tmp = 2;
+			    break;
+			  case BIT4_Z:
+			    tmp = 3;
+			    break;
+		      }
+		      hval = hval | (tmp << 2*(idx % 4));
 
 		      if (idx%4 == 3) {
 			    hwid -= 1;
@@ -217,7 +232,22 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 		rbuf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      hval = hval | (get_bit(rfp,idx) << 2*(idx % 3));
+		      unsigned tmp = 0;
+		      switch (get_bit(rfp, idx)) {
+			  case BIT4_0:
+			    tmp = 0;
+			    break;
+			  case BIT4_1:
+			    tmp = 1;
+			    break;
+			  case BIT4_X:
+			    tmp = 2;
+			    break;
+			  case BIT4_Z:
+			    tmp = 3;
+			    break;
+		      }
+		      hval = hval | (tmp << 2*(idx % 3));
 
 		      if (idx%3 == 2) {
 			    hwid -= 1;
@@ -247,13 +277,12 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	    long ival = 0;
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  switch (get_bit(rfp, idx)) {
-		      case 0:
+		      case BIT4_0:
 			break;
-		      case 1:
+		      case BIT4_1:
 			ival |= 1 << idx;
 			break;
-		      case 2:
-		      case 3:
+		      default:
 			break;
 		  }
 	    }
@@ -266,13 +295,12 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	    for (unsigned idx = wid ;  idx > 0 ;  idx -= 1) {
 	    	  vp->value.real *= 2.0;
 		  switch (get_bit(rfp, idx-1)) {
-		      case 0:
+		      case BIT4_0:
 			break;
-		      case 1:
+		      case BIT4_1:
 			vp->value.real += 1.0;
 			break;
-		      case 2:
-		      case 3:
+		      default:
 			break;
 		  }
 	    }
@@ -288,19 +316,19 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 		  PLI_INT32 mask = 1 << (idx%32);
 
 		  switch (get_bit(rfp,idx)) {
-		      case 0:
+		      case BIT4_0:
 			vp->value.vector[word].aval &= ~mask;
 			vp->value.vector[word].bval &= ~mask;
 			break;
-		      case 1:
+		      case BIT4_1:
 			vp->value.vector[word].aval |=  mask;
 			vp->value.vector[word].bval &= ~mask;
 			break;
-		      case 2:
+		      case BIT4_X:
 			vp->value.vector[word].aval |=  mask;
 			vp->value.vector[word].bval |=  mask;
 			break;
-		      case 3:
+		      case BIT4_Z:
 			vp->value.vector[word].aval &= ~mask;
 			vp->value.vector[word].bval |=  mask;
 			break;

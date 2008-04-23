@@ -432,20 +432,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    rbuf = need_result_buf(wid+1, RBUF_VAL);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  switch (vsig->value(idx)) {
-		      case BIT4_0:
-			rbuf[wid-idx-1] = '0';
-			break;
-		      case BIT4_1:
-			rbuf[wid-idx-1] = '1';
-			break;
-		      case BIT4_Z:
-			rbuf[wid-idx-1] = 'z';
-			break;
-		      case BIT4_X:
-			rbuf[wid-idx-1] = 'x';
-			break;
-		  }
+		  rbuf[wid-idx-1] = vvp_bit4_to_ascii(vsig->value(idx));
 	    }
 	    rbuf[wid] = 0;
 	    vp->value.str = rbuf;

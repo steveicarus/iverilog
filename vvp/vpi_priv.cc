@@ -444,20 +444,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	    rbuf = need_result_buf(width+1, RBUF_VAL);
 	    for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
 		  vvp_bit4_t bit = word_val.value(idx);
-		  switch (bit) {
-		      case BIT4_0:
-			rbuf[width-idx-1] = '0';
-			break;
-		      case BIT4_1:
-			rbuf[width-idx-1] = '1';
-			break;
-		      case BIT4_Z:
-			rbuf[width-idx-1] = 'z';
-			break;
-		      case BIT4_X:
-			rbuf[width-idx-1] = 'x';
-			break;
-		  }
+		  rbuf[width-idx-1] = vvp_bit4_to_ascii(bit);
 	    }
 	    rbuf[width] = 0;
 	    vp->value.str = rbuf;
