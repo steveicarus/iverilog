@@ -301,21 +301,25 @@ W [ \t\b\f\r]+
   /* These are directives that I do not yet support. I think that IVL
      should handle these, not an external preprocessor. */
 
-^{W}?`celldefine{W}?.*           {  }
+^{W}?`celldefine{W}?.*              {  }
+^{W}?`default_decay_time{W}?.*      {  }
+^{W}?`default_trireg_strength{W}?.* {  }
 ^{W}?`delay_mode_distributed{W}?.*  {  }
-^{W}?`delay_mode_unit{W}?.*      {  }
-^{W}?`delay_mode_path{W}?.*      {  }
-^{W}?`disable_portfaults{W}?.*   {  }
-^{W}?`enable_portfaults{W}?.*    {  }
-^{W}?`endcelldefine{W}?.*        {  }
-`endprotect                      {  }
-^{W}?`nosuppress_faults{W}?.*    {  }
-^{W}?`nounconnected_drive{W}?.*  {  }
-`protect                         {  }
-^{W}?`resetall{W}?.*             {  }
-^{W}?`suppress_faults{W}?.*      {  }
-^{W}?`unconnected_drive{W}?.*    {  }
-^{W}?`uselib{W}?.*               {  }
+^{W}?`delay_mode_unit{W}?.*         {  }
+^{W}?`delay_mode_path{W}?.*         {  }
+^{W}?`delay_mode_zero{W}?.*         {  }
+^{W}?`disable_portfaults{W}?.*      {  }
+^{W}?`enable_portfaults{W}?.*       {  }
+^{W}?`endcelldefine{W}?.*           {  }
+`endprotect                         {  }
+^{W}?`line{W}?.*                    {  }
+^{W}?`nosuppress_faults{W}?.*       {  }
+^{W}?`nounconnected_drive{W}?.*     {  }
+`protect                            {  }
+^{W}?`resetall{W}?.*                {  }
+^{W}?`suppress_faults{W}?.*         {  }
+^{W}?`unconnected_drive{W}?.*       {  }
+^{W}?`uselib{W}?.*                  {  }
 
   /* Notice and handle the default_nettype directive. The lexor
      detects the default_nettype keyword, and the second part of the
