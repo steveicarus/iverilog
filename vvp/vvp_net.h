@@ -107,6 +107,8 @@ extern int edge(vvp_bit4_t from, vvp_bit4_t to);
  */
 class vvp_vector4_t {
 
+      friend vvp_vector4_t operator ~(const vvp_vector4_t&that);
+
     public:
       explicit vvp_vector4_t(unsigned size =0, vvp_bit4_t bits =BIT4_X);
 

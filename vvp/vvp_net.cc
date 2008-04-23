@@ -2722,22 +2722,12 @@ vvp_bit4_t compare_gtge(const vvp_vector4_t&lef, const vvp_vector4_t&rig,
 	// then the result of the compare is BIT4_X.
 
 	// Check for X/Z in the left operand
-      for (unsigned idx = 0 ;  idx < lef.size() ;  idx += 1) {
-	    vvp_bit4_t bit = lef.value(idx);
-	    if (bit == BIT4_X)
-		  return BIT4_X;
-	    if (bit == BIT4_Z)
-		  return BIT4_X;
-      }
+      if (lef.has_xz())
+	    return BIT4_X;
 
 	// Check for X/Z in the right operand
-      for (unsigned idx = 0 ;  idx < rig.size() ;  idx += 1) {
-	    vvp_bit4_t bit = rig.value(idx);
-	    if (bit == BIT4_X)
-		  return BIT4_X;
-	    if (bit == BIT4_Z)
-		  return BIT4_X;
-      }
+      if (lef.has_xz())
+	    return BIT4_X;
 
       for (unsigned idx = lef.size() ; idx > rig.size() ;  idx -= 1) {
 	    if (lef.value(idx-1) == BIT4_1)
@@ -2767,9 +2757,14 @@ vvp_bit4_t compare_gtge(const vvp_vector4_t&lef, const vvp_vector4_t&rig,
 
 vvp_vector4_t operator ~ (const vvp_vector4_t&that)
 {
-      vvp_vector4_t res (that.size());
-      for (unsigned idx = 0 ;  idx < res.size() ;  idx += 1)
-	    res.set_bit(idx, ~ that.value(idx));
+      vvp_vector4_t res = that;
+      if (res.size_ <= vvp_vector4_t::BITS_PER_WORD) {
+	    res.abits_val_ = res.bbits_val_ | ~res.abits_val_;
+      } else {
+	    unsigned cnt = (res.size_ + vvp_vector4_t::BITS_PER_WORD - 1) / vvp_vector4_t::BITS_PER_WORD;
+	    for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+		  res.abits_ptr_[idx] = res.bbits_val_ | ~res.abits_val_;
+      }
 
       return res;
 }
@@ -2784,31 +2779,19 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
       vvp_bit4_t a_sign = a.value(sign_idx);
       vvp_bit4_t b_sign = b.value(sign_idx);
 
-      if (a_sign == BIT4_X)
+      if (bit4_is_xz(a_sign))
 	    return BIT4_X;
-      if (a_sign == BIT4_Z)
+      if (bit4_is_xz(b_sign))
 	    return BIT4_X;
-      if (b_sign == BIT4_X)
-	    return BIT4_X;
-      if (b_sign == BIT4_Z)
-	    return BIT4_Z;
 
       if (a_sign == b_sign)
 	    return compare_gtge(a, b, out_if_equal);
 
-      for (unsigned idx = 0 ;  idx < sign_idx ;  idx += 1) {
-	    vvp_bit4_t a_bit = a.value(idx);
-	    vvp_bit4_t b_bit = a.value(idx);
+      if (a.has_xz())
+	    return BIT4_X;
 
-	    if (a_bit == BIT4_X)
-		  return BIT4_X;
-	    if (a_bit == BIT4_Z)
-		  return BIT4_X;
-	    if (b_bit == BIT4_X)
-		  return BIT4_X;
-	    if (b_bit == BIT4_Z)
-		  return BIT4_Z;
-      }
+      if (b.has_xz())
+	    return BIT4_X;
 
       if(a_sign == BIT4_0)
 	    return BIT4_1;
