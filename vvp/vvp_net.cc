@@ -363,12 +363,13 @@ unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
 		 through that word. */
 	    unsigned long atmp = abits_val_ >> adr;
 	    unsigned long btmp = bbits_val_ >> adr;
-	    atmp &= (1UL << wid) - 1;
-	    btmp &= (1UL << wid) - 1;
+	    if (wid < BIT2_PER_WORD) {
+		  atmp &= (1UL << wid) - 1;
+		  btmp &= (1UL << wid) - 1;
+	    }
 	    if (btmp) goto x_out;
 
 	    val[0] = atmp;
-	    return val;
 
       } else {
 
@@ -385,19 +386,21 @@ unsigned long* vvp_vector4_t::subarray(unsigned adr, unsigned wid) const
 		  btmp >>= off;
 
 		  unsigned long trans = BITS_PER_WORD - off;
-		  if (trans > (8*sizeof(val[0]) - val_off))
-			trans = 8*sizeof(val[0]) - val_off;
+		  if (trans > (BIT2_PER_WORD - val_off))
+			trans = BIT2_PER_WORD - val_off;
 		  if (wid < trans)
 			trans = wid;
-		  atmp &= (1UL << trans) - 1;
-		  btmp &= (1UL << trans) - 1;
+		  if (trans < BIT2_PER_WORD) {
+			atmp &= (1UL << trans) - 1;
+			btmp &= (1UL << trans) - 1;
+		  }
 		  if (btmp) goto x_out;
 
 		  val[val_ptr] |= atmp << val_off;
 		  adr += trans;
 		  wid -= trans;
 		  val_off += trans;
-		  if (val_off == 8*sizeof(val[0])) {
+		  if (val_off == BIT2_PER_WORD) {
 			val_ptr += 1;
 			val_off = 0;
 		  }
@@ -572,7 +575,6 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 			      ((that.bbits_ptr_[sptr] >> (remain-tail))&mask);
 		  }
 	    }
-
       }
 
 }
