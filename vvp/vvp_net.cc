@@ -2726,7 +2726,7 @@ vvp_bit4_t compare_gtge(const vvp_vector4_t&lef, const vvp_vector4_t&rig,
 	    return BIT4_X;
 
 	// Check for X/Z in the right operand
-      if (lef.has_xz())
+      if (rig.has_xz())
 	    return BIT4_X;
 
       for (unsigned idx = lef.size() ; idx > rig.size() ;  idx -= 1) {
