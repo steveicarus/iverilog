@@ -42,9 +42,11 @@ static bool active_signed = false;
 static struct {
       NetNet::Type port_net_type;
       NetNet::PortType port_type;
+      ivl_variable_type_t var_type;
       bool sign_flag;
       svector<PExpr*>* range;
-} port_declaration_context;
+} port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT,
+                              IVL_VT_NO_TYPE, false, 0};
 
 /* The task and function rules need to briefly hold the pointer to the
    task/function that is currently in progress. */
@@ -96,6 +98,19 @@ static inline void FILE_NAME(LineInfo*tmp, const struct vlltype&where)
 {
       tmp->set_lineno(where.first_line);
       tmp->set_file(filename_strings.make(where.text));
+}
+
+static svector<PExpr*>* copy_range(svector<PExpr*>* orig)
+{
+      svector<PExpr*>*copy = 0;
+
+      if (orig) {
+	    copy = new svector<PExpr*>(2);
+	    (*copy)[0] = (*orig)[0];
+	    (*copy)[1] = (*orig)[1];
+      }
+
+      return copy;
 }
 
 %}
@@ -1407,6 +1422,7 @@ port_declaration
 	port_declaration_context.port_type = NetNet::PINPUT;
 	port_declaration_context.port_net_type = $3;
 	port_declaration_context.sign_flag = $4;
+	delete port_declaration_context.range;
 	port_declaration_context.range = $5;
 	delete $1;
 	delete[]$6;
@@ -1423,6 +1439,7 @@ port_declaration
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = $3;
 	port_declaration_context.sign_flag = $4;
+	delete port_declaration_context.range;
 	port_declaration_context.range = $5;
 	delete $1;
 	delete[]$6;
@@ -1439,6 +1456,7 @@ port_declaration
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = $3;
 	port_declaration_context.sign_flag = $4;
+	delete port_declaration_context.range;
 	port_declaration_context.range = $5;
 	delete $1;
 	delete[]$6;
@@ -1455,6 +1473,7 @@ port_declaration
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = $3;
 	port_declaration_context.sign_flag = $4;
+	delete port_declaration_context.range;
 	port_declaration_context.range = $5;
 	delete $1;
 	delete[]$6;
@@ -1471,6 +1490,7 @@ port_declaration
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = $3;
 	port_declaration_context.sign_flag = $4;
+	delete port_declaration_context.range;
 	port_declaration_context.range = $5;
 
 	if (! pform_expression_is_constant($8))
@@ -3397,7 +3417,12 @@ task_item_list_opt
 task_port_decl
 
 	: K_input signed_opt range_opt IDENTIFIER
-		{ svector<PWire*>*tmp
+		{ port_declaration_context.port_type = NetNet::PINPUT;
+		  port_declaration_context.var_type = IVL_VT_LOGIC;
+		  port_declaration_context.sign_flag = $2;
+		  delete port_declaration_context.range;
+		  port_declaration_context.range = copy_range($3);
+		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT,
 						IVL_VT_LOGIC, $2,
 						$3, list_from_identifier($4),
@@ -3406,7 +3431,12 @@ task_port_decl
 		}
 
 	| K_output signed_opt range_opt IDENTIFIER
-		{ svector<PWire*>*tmp
+		{ port_declaration_context.port_type = NetNet::POUTPUT;
+		  port_declaration_context.var_type = IVL_VT_LOGIC;
+		  port_declaration_context.sign_flag = $2;
+		  delete port_declaration_context.range;
+		  port_declaration_context.range = copy_range($3);
+		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::POUTPUT,
 						IVL_VT_LOGIC, $2,
 						$3, list_from_identifier($4),
@@ -3414,7 +3444,12 @@ task_port_decl
 		  $$ = tmp;
 		}
 	| K_inout signed_opt range_opt IDENTIFIER
-		{ svector<PWire*>*tmp
+		{ port_declaration_context.port_type = NetNet::PINOUT;
+		  port_declaration_context.var_type = IVL_VT_LOGIC;
+		  port_declaration_context.sign_flag = $2;
+		  delete port_declaration_context.range;
+		  port_declaration_context.range = copy_range($3);
+		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINOUT,
 						IVL_VT_LOGIC, $2,
 						$3, list_from_identifier($4),
@@ -3431,6 +3466,11 @@ task_port_decl
 		  (*range_stub)[0] = re;
 		  re = new PENumber(new verinum((uint64_t)0, integer_width));
 		  (*range_stub)[1] = re;
+		  port_declaration_context.port_type = NetNet::PINPUT;
+		  port_declaration_context.var_type = IVL_VT_LOGIC;
+		  port_declaration_context.sign_flag = true;
+		  delete port_declaration_context.range;
+		  port_declaration_context.range = copy_range(range_stub);
 		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT,
 						IVL_VT_LOGIC, true,
@@ -3448,6 +3488,11 @@ task_port_decl
 		  (*range_stub)[0] = re;
 		  re = new PENumber(new verinum((uint64_t)0, integer_width));
 		  (*range_stub)[1] = re;
+		  port_declaration_context.port_type = NetNet::POUTPUT;
+		  port_declaration_context.var_type = IVL_VT_LOGIC;
+		  port_declaration_context.sign_flag = true;
+		  delete port_declaration_context.range;
+		  port_declaration_context.range = copy_range(range_stub);
 		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::POUTPUT,
 						IVL_VT_LOGIC, true,
@@ -3465,6 +3510,11 @@ task_port_decl
 		  (*range_stub)[0] = re;
 		  re = new PENumber(new verinum((uint64_t)0, integer_width));
 		  (*range_stub)[1] = re;
+		  port_declaration_context.port_type = NetNet::PINOUT;
+		  port_declaration_context.var_type = IVL_VT_LOGIC;
+		  port_declaration_context.sign_flag = true;
+		  delete port_declaration_context.range;
+		  port_declaration_context.range = copy_range(range_stub);
 		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINOUT,
 						IVL_VT_LOGIC, true,
@@ -3477,7 +3527,12 @@ task_port_decl
   /* Ports can be real. */
 
 	| K_input K_real IDENTIFIER
-		{ svector<PWire*>*tmp
+		{ port_declaration_context.port_type = NetNet::PINPUT;
+		  port_declaration_context.var_type = IVL_VT_REAL;
+		  port_declaration_context.sign_flag = false;
+		  delete port_declaration_context.range;
+		  port_declaration_context.range = 0;
+		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT,
 						IVL_VT_REAL, false,
 						0, list_from_identifier($3),
@@ -3485,7 +3540,12 @@ task_port_decl
 		  $$ = tmp;
 		}
 	| K_output K_real IDENTIFIER
-		{ svector<PWire*>*tmp
+		{ port_declaration_context.port_type = NetNet::POUTPUT;
+		  port_declaration_context.var_type = IVL_VT_REAL;
+		  port_declaration_context.sign_flag = false;
+		  delete port_declaration_context.range;
+		  port_declaration_context.range = 0;
+		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::POUTPUT,
 						IVL_VT_REAL, false,
 						0, list_from_identifier($3),
@@ -3493,7 +3553,12 @@ task_port_decl
 		  $$ = tmp;
 		}
 	| K_inout K_real IDENTIFIER
-		{ svector<PWire*>*tmp
+		{ port_declaration_context.port_type = NetNet::PINOUT;
+		  port_declaration_context.var_type = IVL_VT_REAL;
+		  port_declaration_context.sign_flag = false;
+		  delete port_declaration_context.range;
+		  port_declaration_context.range = 0;
+		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINOUT,
 						IVL_VT_REAL, false,
 						0, list_from_identifier($3),
@@ -3511,6 +3576,31 @@ task_port_decl_list
 		}
 	| task_port_decl
 		{ $$ = $1; }
+	| task_port_decl_list ',' IDENTIFIER
+		{ svector<PWire*>*new_decl
+			= pform_make_task_ports(
+				port_declaration_context.port_type,
+				port_declaration_context.var_type,
+				port_declaration_context.sign_flag,
+				copy_range(port_declaration_context.range),
+				list_from_identifier($3),
+				@3.text, @3.first_line);
+		  svector<PWire*>*tmp = new svector<PWire*>(*$1, *new_decl);
+		  delete $1;
+		  delete new_decl;
+		  $$ = tmp;
+		}
+	| task_port_decl_list ','
+		{
+		  yyerror(@2, "error: NULL port declarations are not "
+		              "allowed.");
+		}
+	| task_port_decl_list ';'
+		{
+		  yyerror(@2, "error: ';' is an invalid port declaration "
+		              "separator.");
+		}
+        ;
 	;
 
 udp_body
