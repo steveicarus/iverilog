@@ -1834,6 +1834,12 @@ module_item
 	current_task = 0;
 	delete[]$2;
       }
+  | K_task IDENTIFIER error K_endtask
+      {
+	pform_pop_scope();
+	current_task = 0;
+	delete[]$2;
+      }
 
   /* The function declaration rule matches the function declaration
      header, then pushes the function scope. This causes the
@@ -1869,6 +1875,12 @@ module_item
 	current_function->set_return($2);
 	pform_pop_scope();
 	current_function = 0;
+	delete[]$3;
+      }
+  | K_function function_range_or_type_opt IDENTIFIER error K_endfunction
+      {
+	pform_pop_scope();
+	current_task = 0;
 	delete[]$3;
       }
 
