@@ -22,6 +22,7 @@
 #include "vpi_priv.h"
 #include <iostream>
 #include <cstdlib>
+#include <list>
 #include <assert.h>
 
 void vvp_delay_t::calculate_min_delay_()
@@ -392,17 +393,24 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
       if (cur_vec4_.eeq(bit))
 	    return;
 
-	/* Select a time delay source that applies. */
-      vvp_fun_modpath_src*src = 0;
+	/* Select a time delay source that applies. Notice that there
+	   may be multiple delay sources that apply, so collect all
+	   the candidates into a list first. */
+      list<vvp_fun_modpath_src*>candidate_list;
+      vvp_time64_t candidate_wake_time = 0;
       for (vvp_fun_modpath_src*cur = src_list_ ;  cur ;  cur=cur->next_) {
 	      /* Skip paths that are disabled by conditions. */
 	    if (cur->condition_flag_ == false)
 		  continue;
 
-	    if (src == 0) {
-		  src = cur;
-	    } else if (cur->wake_time_ > src->wake_time_) {
-		  src = cur;
+	    if (candidate_list.empty()) {
+		  candidate_list.push_back(cur);
+		  candidate_wake_time = cur->wake_time_;
+	    } else if (cur->wake_time_ == candidate_wake_time) {
+		  candidate_list.push_back(cur);
+	    } else if (cur->wake_time_ > candidate_wake_time) {
+		  candidate_list.assign(1, cur);
+		  candidate_wake_time = cur->wake_time_;
 	    } else {
 		  continue; /* Skip this entry. */
 	    }
@@ -412,22 +420,43 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	   match. This may happen, for example, if the set of
 	   conditional delays is incomplete, leaving some cases
 	   uncovered. In that case, just pass the data without delay */
-      if (src == 0) {
+      if (candidate_list.empty()) {
 	    cur_vec4_ = bit;
 	    schedule_generic(this, 0, false);
 	    return;
       }
 
-      assert(src);
-
+	/* Now given that we have a list of candidate delays, find for
+	   each if the 12 numbers the minimum from all the
+	   candidates. This minimum set becomes the chosen delay to
+	   use. */
       vvp_time64_t out_at[12];
       vvp_time64_t now = schedule_simtime();
+
+      typedef list<vvp_fun_modpath_src*>::const_iterator iter_t;
+
+      iter_t cur = candidate_list.begin();
+      vvp_fun_modpath_src*src = *cur;
+
       for (unsigned idx = 0 ;  idx < 12 ;  idx += 1) {
 	    out_at[idx] = src->wake_time_ + src->delay_[idx];
 	    if (out_at[idx] <= now)
 		  out_at[idx] = 0;
 	    else
 		  out_at[idx] -= now;
+      }
+
+      for (cur ++ ; cur != candidate_list.end() ; cur ++) {
+	    src = *cur;
+	    for (unsigned idx = 0 ;  idx < 12 ;  idx += 1) {
+		  vvp_time64_t tmp = src->wake_time_ + src->delay_[idx];
+		  if (tmp <= now)
+			tmp = 0;
+		  else
+			tmp -= now;
+		  if (tmp < out_at[idx])
+			out_at[idx] = tmp;
+	    }
       }
 
 	/* Given the scheduled output time, create an output event. */
