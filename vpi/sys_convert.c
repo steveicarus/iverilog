@@ -215,7 +215,10 @@ static PLI_INT32 sys_rtoi_calltf(PLI_BYTE8*user)
     vpi_get_value(arg, &value);
 
     /* convert */
-    res.aval = (unsigned)value.value.real;
+    if (value.value.real >= 0.0)
+      res.aval = (unsigned)value.value.real;
+    else
+      res.aval = - (unsigned)-value.value.real;
     res.bval = 0;
 
     value.format = vpiVectorVal;
