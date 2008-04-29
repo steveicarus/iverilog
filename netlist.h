@@ -382,8 +382,8 @@ class NetNode  : public NetObj {
 class NetDelaySrc  : public NetObj {
 
     public:
-      explicit NetDelaySrc(NetScope*s, perm_string n,
-			   unsigned nsrc, bool condit_src);
+      explicit NetDelaySrc(NetScope*s, perm_string n, unsigned nsrc,
+                           bool condit_src, bool conditional);
       ~NetDelaySrc();
 
 	// These functions set the delays from the values in the
@@ -415,6 +415,7 @@ class NetDelaySrc  : public NetObj {
       const Link&src_pin(unsigned) const;
 
       bool is_condit() const;
+      bool has_condit() const;
       Link&condit_pin();
       const Link&condit_pin() const;
 
@@ -423,6 +424,7 @@ class NetDelaySrc  : public NetObj {
     private:
       uint64_t transition_delays_[12];
       bool condit_flag_;
+      bool conditional_;
       bool posedge_;
       bool negedge_;
 

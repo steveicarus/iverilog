@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.148 2007/06/12 02:23:40 steve Exp $"
-#endif
 
 /*
  * This is a sample target module. All this does is write to the
@@ -1166,6 +1163,7 @@ static void show_signal(ivl_signal_t net)
 	    if (posedge) fprintf(out, " posedge");
 	    if (negedge) fprintf(out, " negedge");
 	    if (con) fprintf(out, " (if %s)", ivl_nexus_name(con));
+	    else if (ivl_path_is_condit(path)) fprintf(out, " (ifnone)");
 	    fprintf(out, " %" PRIu64 ",%" PRIu64 ",%" PRIu64
 		         " %" PRIu64 ",%" PRIu64 ",%" PRIu64
 		         " %" PRIu64 ",%" PRIu64 ",%" PRIu64
@@ -1549,4 +1547,3 @@ int target_design(ivl_design_t des)
 
       return stub_errors;
 }
-

@@ -150,7 +150,7 @@ class vvp_fun_modpath  : public vvp_net_fun_t, private vvp_gen_event_s {
       vvp_fun_modpath(vvp_net_t*net);
       ~vvp_fun_modpath();
 
-      void add_modpath_src(vvp_fun_modpath_src*that);
+      void add_modpath_src(vvp_fun_modpath_src*that, bool ifnone);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
@@ -163,6 +163,7 @@ class vvp_fun_modpath  : public vvp_net_fun_t, private vvp_gen_event_s {
       vvp_vector4_t cur_vec4_;
 
       vvp_fun_modpath_src*src_list_;
+      vvp_fun_modpath_src*ifnone_list_;
 
     private: // not implemented
       vvp_fun_modpath(const vvp_fun_modpath&);

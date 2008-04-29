@@ -178,6 +178,7 @@ struct ivl_delaypath_s {
       ivl_scope_t scope;
       ivl_nexus_t src;
       ivl_nexus_t condit;
+      bool conditional;
       bool posedge;
       bool negedge;
       uint64_t delay[12];

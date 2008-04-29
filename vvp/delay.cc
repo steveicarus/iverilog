@@ -350,7 +350,7 @@ void vvp_fun_delay::run_run_real_(struct vvp_fun_delay::event_*cur)
 }
 
 vvp_fun_modpath::vvp_fun_modpath(vvp_net_t*net)
-: net_(net), src_list_(0)
+: net_(net), src_list_(0), ifnone_list_(0)
 {
 }
 
@@ -362,16 +362,27 @@ vvp_fun_modpath::~vvp_fun_modpath()
 	    src_list_ = tmp->next_;
 	    delete tmp;
       }
+      while (ifnone_list_) {
+	    vvp_fun_modpath_src*tmp = ifnone_list_;
+	    ifnone_list_ = tmp->next_;
+	    delete tmp;
+      }
 }
 
-void vvp_fun_modpath::add_modpath_src(vvp_fun_modpath_src*that)
+void vvp_fun_modpath::add_modpath_src(vvp_fun_modpath_src*that, bool ifnone)
 {
       assert(that->next_ == 0);
-      that->next_ = src_list_;
-      src_list_ = that;
+      if (ifnone) {
+	    that->next_ = ifnone_list_;
+	    ifnone_list_ = that;
+      } else {
+	    that->next_ = src_list_;
+	    src_list_ = that;
+      }
 }
 
-static vvp_time64_t delay_from_edge(vvp_bit4_t a, vvp_bit4_t b, vvp_time64_t array[12])
+static vvp_time64_t delay_from_edge(vvp_bit4_t a, vvp_bit4_t b,
+                                           vvp_time64_t array[12])
 {
       typedef delay_edge_t bit4_table4[4];
       const static bit4_table4 edge_table[4] = {
@@ -411,6 +422,24 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	    } else if (cur->wake_time_ > candidate_wake_time) {
 		  candidate_list.assign(1, cur);
 		  candidate_wake_time = cur->wake_time_;
+	    } else {
+		  continue; /* Skip this entry. */
+	    }
+      }
+
+	/* Only add the ifnone delay if it has a later wake_time_ or
+	 * if there are no normal delays. */
+      vvp_time64_t ifnone_wake_time = candidate_wake_time;
+      for (vvp_fun_modpath_src*cur = ifnone_list_ ;  cur ;  cur=cur->next_) {
+	    if (candidate_list.empty()) {
+		  candidate_list.push_back(cur);
+		  ifnone_wake_time = cur->wake_time_;
+	    } else if (cur->wake_time_ == ifnone_wake_time &&
+	               ifnone_wake_time > candidate_wake_time) {
+		  candidate_list.push_back(cur);
+	    } else if (cur->wake_time_ > ifnone_wake_time) {
+		  candidate_list.assign(1, cur);
+		  ifnone_wake_time = cur->wake_time_;
 	    } else {
 		  continue; /* Skip this entry. */
 	    }

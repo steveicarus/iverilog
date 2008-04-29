@@ -1324,7 +1324,8 @@ struct __vpiModPath* compile_modpath(char*label, struct symb_s drv,
 static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
 					       char edge,
 					       struct symb_s src,
-					       struct numbv_s vals)
+					       struct numbv_s vals,
+					       bool ifnone)
 {
       vvp_fun_modpath*dst = path->modpath;
 
@@ -1377,7 +1378,7 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
 	/* Save the vpiEdge directory into the input path term. */
       srcobj->path_term_in.edge = vpi_edge;
       input_connect(net, 0, src.text);
-      dst->add_modpath_src(obj);
+      dst->add_modpath_src(obj, ifnone);
       
       return srcobj;
 }
@@ -1388,7 +1389,8 @@ void compile_modpath_src(struct __vpiModPath*dst, char edge,
 			 struct symb_s condit_src,
 			 struct symb_s path_term_in)
 {
-      struct __vpiModPathSrc*obj = make_modpath_src(dst, edge, src, vals);
+      struct __vpiModPathSrc*obj =
+	    make_modpath_src(dst, edge, src, vals, false);
       input_connect(obj->net, 1, condit_src.text);
       compile_vpi_lookup(&obj->path_term_in.expr, path_term_in.text);
 }
@@ -1397,10 +1399,12 @@ void compile_modpath_src(struct __vpiModPath*dst, char edge,
 			 struct symb_s src,
 			 struct numbv_s vals,
 			 int condit_src,
-			 struct symb_s path_term_in)
+			 struct symb_s path_term_in,
+			 bool ifnone)
 {
       assert(condit_src == 0);
-      struct __vpiModPathSrc*obj = make_modpath_src(dst, edge, src, vals);
+      struct __vpiModPathSrc*obj =
+	    make_modpath_src(dst, edge, src, vals, ifnone);
       compile_vpi_lookup(&obj->path_term_in.expr, path_term_in.text);
 }
 

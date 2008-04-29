@@ -1356,6 +1356,12 @@ extern "C" ivl_nexus_t ivl_path_condit(ivl_delaypath_t obj)
       return obj->condit;
 }
 
+extern "C" int ivl_path_is_condit(ivl_delaypath_t obj)
+{
+      assert(obj);
+      return obj->conditional ? 1 : 0;
+}
+
 extern uint64_t ivl_path_delay(ivl_delaypath_t obj, ivl_path_edge_t edg)
 {
       assert(obj);

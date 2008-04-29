@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -68,6 +68,7 @@ static void draw_modpath_record(const char*label, const char*driver,
 	    src_drivers[idx] = draw_net_input(src);
 
 	    if (con) con_drivers[idx] = draw_net_input(con);
+	    else if (ivl_path_is_condit(path)) con_drivers[idx] = "";
 	    else con_drivers[idx] = 0;
       }
 

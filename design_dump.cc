@@ -112,6 +112,9 @@ void NetDelaySrc::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "specify delay";
       if (posedge_) o << " posedge";
       if (negedge_) o << " negedge";
+      if (is_condit())
+	    if (has_condit()) o << " if";
+	    else o << " ifnone";
       o << " src "
 	<< "(" << transition_delays_[IVL_PE_01]
 	<< "," << transition_delays_[IVL_PE_10]

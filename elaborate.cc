@@ -3307,16 +3307,6 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       if (!gn_specify_blocks_flag)
 	    return;
 
-	/* Check for various path types that are not supported. */
-      if (conditional && !condition) {
-	    cerr << get_fileline() << ": sorry: ifnone specify paths"
-		 << " are not supported." << endl;
-	    cerr << get_fileline() << ":      : Use -g no-specify to ignore"
-		 << " specify blocks." << endl;
-	    des->errors += 1;
-	    return;
-      }
-
       ivl_assert(*this, conditional || (condition==0));
 
       ndelays = delays.size();
@@ -3364,8 +3354,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       }
 
       NetNet*condit_sig = 0;
-      if (conditional) {
-	    ivl_assert(*this, condition);
+      if (conditional && condition) {
 
 	    NetExpr*tmp = elab_and_eval(des, scope, condition, -1);
 	    ivl_assert(*condition, tmp);
@@ -3386,7 +3375,9 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 		  cerr << get_fileline() << ": debug: Path to " << (*cur);
 		  if (condit_sig)
 			cerr << " if " << condit_sig->name();
-		  cerr << endl;
+		  else if (conditional)
+			cerr << " ifnone";
+		  cerr << " from ";
 	    }
 
 	    NetNet*dst_sig = scope->find_signal(*cur);
@@ -3406,7 +3397,8 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	    }
 
 	    NetDelaySrc*path = new NetDelaySrc(scope, scope->local_symbol(),
-					       src.size(), condit_sig);
+					       src.size(), condit_sig,
+					       conditional);
 	    path->set_line(*this);
 
 	      // The presence of the data_source_expression indicates
@@ -3449,6 +3441,11 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 		  NetNet*src_sig = scope->find_signal(*cur_src);
 		  assert(src_sig);
 
+		  if (debug_elaborate) {
+			if (cur_src != src.begin()) cerr << " and ";
+			cerr << src_sig->name();
+		  }
+
 		  if ( (src_sig->port_type() != NetNet::PINPUT)
 		    && (src_sig->port_type() != NetNet::PINOUT) ) {
 
@@ -3460,6 +3457,9 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 
 		  connect(src_sig->pin(0), path->pin(idx));
 		  idx += 1;
+	    }
+	    if (debug_elaborate) {
+		  cerr << endl;
 	    }
 
 	    if (condit_sig)

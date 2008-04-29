@@ -235,11 +235,12 @@ NetBus::~NetBus()
 {
 }
 
-NetDelaySrc::NetDelaySrc(NetScope*s, perm_string n,
-			 unsigned npins, bool condit_src)
+NetDelaySrc::NetDelaySrc(NetScope*s, perm_string n, unsigned npins,
+                         bool condit_src, bool conditional)
 : NetObj(s, n, npins + (condit_src?1:0))
 {
       condit_flag_ = false;
+      conditional_ = conditional;
       posedge_ = false;
       negedge_ = false;
       for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
@@ -379,6 +380,11 @@ const Link& NetDelaySrc::src_pin(unsigned idx) const
 }
 
 bool NetDelaySrc::is_condit() const
+{
+      return conditional_;
+}
+
+bool NetDelaySrc::has_condit() const
 {
       return condit_flag_;
 }

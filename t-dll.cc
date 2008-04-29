@@ -2382,7 +2382,7 @@ bool dll_target::signal_paths(const NetNet*net)
 
 	      /* If this path has a condition, then hook it up. */
 	    ivl_nexus_t path_condit = 0;
-	    if (src->is_condit()) {
+	    if (src->has_condit()) {
 		  const Nexus*nt = src->condit_pin().nexus();
 		  path_condit = nt->t_cookie();
 	    }
@@ -2399,6 +2399,7 @@ bool dll_target::signal_paths(const NetNet*net)
 		  obj->path[ptr].scope = lookup_scope_(src->scope());
 		  obj->path[ptr].src = nex->t_cookie();
 		  obj->path[ptr].condit = path_condit;
+		  obj->path[ptr].conditional = src->is_condit();
 		  obj->path[ptr].posedge = src->is_posedge();
 		  obj->path[ptr].negedge = src->is_negedge();
 		  for (unsigned pe = 0 ;  pe < 12 ;  pe += 1) {

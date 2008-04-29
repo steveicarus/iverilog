@@ -199,7 +199,8 @@ extern void compile_modpath_src(__vpiModPath*dst,
 				struct symb_s input,
 				struct numbv_s d,
 				int condit_input, /* match with '0' */
-				struct symb_s path_term_input);
+				struct symb_s path_term_input,
+				bool ifnone);
 extern void compile_modpath_src(__vpiModPath*dst,
 				char edge,
 				struct symb_s input,
