@@ -1,10 +1,10 @@
 Summary: Icarus Verilog
 Name: verilog
-Version: 0.9.0.20080314
+Version: 0.9.0.20080429
 Release: 0
 License: GPL
 Group: Productivity/Scientific/Electronics
-Source: verilog-20080314.tar.gz
+Source: verilog-20080429.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
 
@@ -22,7 +22,7 @@ engineering formats, including simulation. It strives to be true
 to the IEEE-1364 standard.
 
 %prep
-%setup -n verilog-20080314
+%setup -n verilog-20080429
 
 %build
 ./configure --prefix=/usr --mandir='$(prefix)/share/man'
