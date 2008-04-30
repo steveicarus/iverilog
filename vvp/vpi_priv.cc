@@ -37,7 +37,7 @@ static s_vpi_error_info vpip_last_error = { 0, 0, 0, 0, 0, 0, 0 };
 
 /*
  * The vpip_string function creates a constant string from the pass
- * input. This constant string is permanently allocate from an
+ * input. This constant string is permanently allocated from an
  * efficient string buffer store.
  */
 struct vpip_string_chunk {
@@ -115,7 +115,7 @@ PLI_INT32 vpi_chk_error(p_vpi_error_info info)
       info->level = vpip_last_error.level;
       info->message = vpip_last_error.message;
       info->product = vpi_vlog_info.product;
-      info->code = "";
+      info->code = (char *) "";
       info->file = 0;
       info->line = 0;
 
