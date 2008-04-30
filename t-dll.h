@@ -537,6 +537,10 @@ struct ivl_scope_s {
 
       perm_string name_;
       perm_string tname_;
+      perm_string file;
+      perm_string def_file;
+      unsigned lineno;
+      unsigned def_lineno;
       ivl_scope_type_t type_;
 
       unsigned nsigs_;
@@ -711,6 +715,14 @@ static inline void FILE_NAME(ivl_lpm_t lpm, const LineInfo*info)
 {
       lpm->file = info->get_file();
       lpm->lineno = info->get_lineno();
+}
+
+static inline void FILE_NAME(ivl_scope_t scope, const NetScope*info)
+{
+      scope->file = info->get_file();
+      scope->def_file = info->get_def_file();
+      scope->lineno = info->get_lineno();
+      scope->def_lineno = info->get_def_lineno();
 }
 
 #endif

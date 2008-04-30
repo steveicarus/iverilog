@@ -1456,6 +1456,18 @@ extern "C" ivl_statement_t ivl_scope_def(ivl_scope_t net)
       return net->def;
 }
 
+extern "C" const char*ivl_scope_def_file(ivl_scope_t net)
+{
+      assert(net);
+      return net->def_file.str();
+}
+
+extern "C" unsigned ivl_scope_def_lineno(ivl_scope_t net)
+{
+      assert(net);
+      return net->def_lineno;
+}
+
 extern "C" unsigned ivl_scope_events(ivl_scope_t net)
 {
       assert(net);
@@ -1467,6 +1479,18 @@ extern "C" ivl_event_t ivl_scope_event(ivl_scope_t net, unsigned idx)
       assert(net);
       assert(idx < net->nevent_);
       return net->event_[idx];
+}
+
+extern "C" const char*ivl_scope_file(ivl_scope_t net)
+{
+      assert(net);
+      return net->file.str();
+}
+
+extern "C" unsigned ivl_scope_lineno(ivl_scope_t net)
+{
+      assert(net);
+      return net->lineno;
 }
 
 extern "C" unsigned ivl_scope_logs(ivl_scope_t net)

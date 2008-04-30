@@ -165,6 +165,10 @@ struct __vpiScope {
 	/* The scope has a name. */
       const char*name;
       const char*tname;
+      unsigned file_idx;
+      unsigned lineno;
+      unsigned def_file_idx;
+      unsigned def_lineno;
 	/* The scope has a system time of its own. */
       struct __vpiSystemTime scoped_time;
       struct __vpiSystemTime scoped_realtime;
@@ -366,7 +370,7 @@ struct __vpiSysTaskCall {
       signed   vwid;
       class vvp_net_t*fnet;
       unsigned file_idx;
-      unsigned line_no;
+      unsigned lineno;
 };
 
 extern struct __vpiSysTaskCall*vpip_cur_task;
@@ -462,7 +466,7 @@ extern vpiHandle vpip_build_vpi_call(const char*name,
 				     unsigned argc,
 				     vpiHandle*argv,
 				     long file_idx,
-				     long line_no);
+				     long lineno);
 
 extern vthread_t vpip_current_vthread;
 

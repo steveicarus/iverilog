@@ -2444,12 +2444,15 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       default:               type = "?";        assert(0);
       }
 
-      fprintf(vvp_out, "S_%p .scope %s, \"%s\" \"%s\"",
+      fprintf(vvp_out, "S_%p .scope %s, \"%s\" \"%s\" %d %d",
 	      net, type, vvp_mangle_name(ivl_scope_basename(net)),
-	      ivl_scope_tname(net));
+              ivl_scope_tname(net), ivl_file_table_index(ivl_scope_file(net)),
+              ivl_scope_lineno(net));
 
       if (parent) {
-	    fprintf(vvp_out, ", S_%p;\n", parent);
+	    fprintf(vvp_out, ", %d %d, S_%p;\n",
+	            ivl_file_table_index(ivl_scope_def_file(net)),
+	            ivl_scope_def_lineno(net), parent);
       } else {
 
 	    fprintf(vvp_out, ";\n");

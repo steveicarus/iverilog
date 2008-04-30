@@ -3319,6 +3319,15 @@ class NetScope : public Attrib {
       NetTaskDef* task_def();
       NetFuncDef* func_def();
 
+      void set_line(perm_string file, perm_string def_file,
+                    unsigned lineno, unsigned def_lineno);
+      void set_line(perm_string file, unsigned lineno);
+      void set_line(const LineInfo *info);
+      perm_string get_file() const { return file_; };
+      perm_string get_def_file() const { return def_file_; };
+      unsigned get_lineno() const { return lineno_; };
+      unsigned get_def_lineno() const { return def_lineno_; };
+
       bool in_func();
 
       const NetTaskDef* task_def() const;
@@ -3408,6 +3417,11 @@ class NetScope : public Attrib {
     private:
       TYPE type_;
       hname_t name_;
+
+      perm_string file_;
+      perm_string def_file_;
+      unsigned lineno_;
+      unsigned def_lineno_;
 
       signed char time_unit_, time_prec_;
       NetNet::Type default_nettype_;

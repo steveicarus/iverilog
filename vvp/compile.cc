@@ -1781,7 +1781,7 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
 }
 
 void compile_vpi_call(char*label, char*name,
-                      long file_idx, long line_no,
+                      long file_idx, long lineno,
                       unsigned argc, vpiHandle*argv)
 {
       if (label)
@@ -1794,7 +1794,7 @@ void compile_vpi_call(char*label, char*name,
 	/* Create a vpiHandle that bundles the call information, and
 	   store that handle in the instruction. */
       code->handle = vpip_build_vpi_call(name, 0, 0, 0, argc, argv,
-                                         file_idx, line_no);
+                                         file_idx, lineno);
       if (code->handle == 0)
 	    compile_errors += 1;
 
@@ -1804,7 +1804,7 @@ void compile_vpi_call(char*label, char*name,
 
 void compile_vpi_func_call(char*label, char*name,
 			   unsigned vbit, int vwid,
-			   long file_idx, long line_no,
+			   long file_idx, long lineno,
 			   unsigned argc, vpiHandle*argv)
 {
       if (label)
@@ -1817,7 +1817,7 @@ void compile_vpi_func_call(char*label, char*name,
 	/* Create a vpiHandle that bundles the call information, and
 	   store that handle in the instruction. */
       code->handle = vpip_build_vpi_call(name, vbit, vwid, 0, argc, argv,
-                                         file_idx, line_no);
+                                         file_idx, lineno);
       if (code->handle == 0)
 	    compile_errors += 1;
 

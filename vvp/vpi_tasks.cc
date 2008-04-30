@@ -79,7 +79,7 @@ static int systask_get(int type, vpiHandle ref)
 	    return rfp->scope->time_units;
 
 	  case vpiLineNo:
-	    return rfp->line_no;
+	    return rfp->lineno;
 
 	  default:
 	    return vpiUndefined;
@@ -98,7 +98,7 @@ static int sysfunc_get(int type, vpiHandle ref)
 	    return rfp->vwid;
 
 	  case vpiLineNo:
-	    return rfp->line_no;
+	    return rfp->lineno;
 
 	  default:
 	    return vpiUndefined;
@@ -495,7 +495,7 @@ struct __vpiUserSystf* vpip_find_systf(const char*name)
 vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 			      class vvp_net_t*fnet,
 			      unsigned argc, vpiHandle*argv,
-			      long file_idx, long line_no)
+			      long file_idx, long lineno)
 {
       struct __vpiUserSystf*defn = vpip_find_systf(name);
       if (defn == 0) {
@@ -561,7 +561,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
       obj->vwid  = vwid;
       obj->fnet  = fnet;
       obj->file_idx  = (unsigned) file_idx;
-      obj->line_no   = (unsigned) line_no;
+      obj->lineno   = (unsigned) lineno;
       obj->userdata  = 0;
 
       compile_compiletf(obj);
@@ -641,4 +641,3 @@ void* vpi_get_userdata(vpiHandle ref)
 
       return rfp->userdata;
 }
-

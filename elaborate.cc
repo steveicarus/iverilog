@@ -3707,6 +3707,7 @@ Design* elaborate(list<perm_string>roots)
 
 	      // Make the root scope.
 	    NetScope*scope = des->make_root_scope(*root);
+	    scope->set_line(rmod);
 	    scope->time_unit(rmod->time_unit);
 	    scope->time_precision(rmod->time_precision);
 	    scope->default_nettype(rmod->default_nettype);

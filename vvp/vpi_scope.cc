@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -61,8 +61,11 @@ static int scope_get(int code, vpiHandle obj)
       assert(handle_is_scope(obj));
 
       switch (code) {
+	  case vpiDefLineNo:
+	    return ref->def_lineno;
+
 	  case vpiLineNo:
-	    return 0;  // Not implemented for now!
+	    return ref->lineno;
 
 	  case vpiTimeUnit:
 	    return ref->time_units;
@@ -115,8 +118,12 @@ static char* scope_get_str(int code, vpiHandle obj)
       char buf[4096];  // XXX is a fixed buffer size really reliable?
       const char *p=0;
       switch (code) {
+	  case vpiDefFile:
+	    p = file_names[ref->def_file_idx];
+	    break;
+
 	  case vpiFile:
-	    p = file_names[0]; // Not implemented for now!
+	    p = file_names[ref->file_idx];
 	    break;
 
 	  case vpiFullName:
@@ -316,7 +323,9 @@ static void attach_to_scope_(struct __vpiScope*scope, vpiHandle obj)
  * symbol table and the name is used to construct the actual object.
  */
 void
-compile_scope_decl(char*label, char*type, char*name, const char*tname, char*parent)
+compile_scope_decl(char*label, char*type, char*name, const char*tname,
+                   char*parent, long file_idx, long lineno,
+                   long def_file_idx, long def_lineno)
 {
       struct __vpiScope*scope = new struct __vpiScope;
       count_vpi_scopes += 1;
@@ -342,6 +351,10 @@ compile_scope_decl(char*label, char*type, char*name, const char*tname, char*pare
 
       scope->name = vpip_name_string(name);
       scope->tname = vpip_name_string(tname);
+      scope->file_idx = (unsigned) file_idx;
+      scope->lineno  = (unsigned) lineno;
+      scope->def_file_idx = (unsigned) def_file_idx;
+      scope->def_lineno  = (unsigned) def_lineno;
       scope->intern = 0;
       scope->nintern = 0;
       scope->threads = 0;
@@ -414,4 +427,3 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 {
       attach_to_scope_(current_scope, obj);
 }
-

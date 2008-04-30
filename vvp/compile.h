@@ -218,7 +218,7 @@ extern void compile_reduce_xnor(char*label, struct symb_s arg);
 extern void compile_extend_signed(char*label, long width, struct symb_s arg);
 
 extern void compile_sfunc(char*label, char*name, char*format_string,
-			  long file_idx, long line_no,
+			  long file_idx, long lineno,
 			  unsigned argc, struct symb_s*argv);
 extern void compile_repeat(char*label, long width, long repeat,
 			   struct symb_s arg);
@@ -349,7 +349,7 @@ extern void compile_code(char*label, char*mnem, comp_operands_t opa);
 extern void compile_disable(char*label, struct symb_s symb);
 
 extern void compile_vpi_call(char*label, char*name,
-			     long file_idx, long line_no,
+			     long file_idx, long lineno,
 			     unsigned argc, vpiHandle*argv);
 
 /* Compile a function call. The vbit and vwid encode the return
@@ -358,7 +358,7 @@ extern void compile_vpi_call(char*label, char*name,
    code that represents the function type. */
 extern void compile_vpi_func_call(char*label, char*name,
 				  unsigned vbit, int vwid,
-				  long file_idx, long line_no,
+				  long file_idx, long lineno,
 				  unsigned argc, vpiHandle*argv);
 
 extern void compile_fork(char*label, struct symb_s targ_s,
@@ -369,7 +369,9 @@ extern void compile_codelabel(char*label);
  * The parser uses these functions to compile .scope statements.
  * The implementations of these live in the vpi_scope.cc file.
  */
-extern void compile_scope_decl(char*typ, char*lab, char*nam,const char*tnam,char*par);
+extern void compile_scope_decl(char*typ, char*lab, char*nam,const char*tnam,
+                               char*par, long file_idx, long lineno,
+                               long def_file_idx, long def_lineno);
 extern void compile_scope_recall(char*sym);
 
 /*

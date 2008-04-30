@@ -78,6 +78,31 @@ NetScope::~NetScope()
 	/* name_ and module_name_ are perm-allocated. */
 }
 
+void NetScope::set_line(const LineInfo*info)
+{
+      file_ = info->get_file();
+      def_file_ = file_;
+      lineno_ = info->get_lineno();
+      def_lineno_ = lineno_;
+}
+
+void NetScope::set_line(perm_string file, unsigned lineno)
+{
+      file_ = file;
+      def_file_ = file;
+      lineno_ = lineno;
+      def_lineno_ = lineno;
+}
+
+void NetScope::set_line(perm_string file, perm_string def_file,
+                        unsigned lineno, unsigned def_lineno)
+{
+      file_ = file;
+      def_file_ = def_file;
+      lineno_ = lineno;
+      def_lineno_ = def_lineno;
+}
+
 NetExpr* NetScope::set_parameter(perm_string key, NetExpr*expr,
 				 NetExpr*msb, NetExpr*lsb, bool signed_flag)
 {

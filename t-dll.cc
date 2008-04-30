@@ -525,6 +525,7 @@ void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
       ivl_scope_t root_ = new struct ivl_scope_s;
       perm_string name = s->basename();
       root_->name_ = name;
+      FILE_NAME(root_, s);
       root_->child_ = 0;
       root_->sibling_ = 0;
       root_->parent = 0;
@@ -2142,6 +2143,7 @@ void dll_target::scope(const NetScope*net)
 	    perm_string sname = make_scope_name(net->fullname());
 	    scope = new struct ivl_scope_s;
 	    scope->name_ = sname;
+	    FILE_NAME(scope, net);
 	    scope->child_ = 0;
 	    scope->sibling_ = 0;
 	    scope->parent = find_scope(des_, net->parent());

@@ -240,6 +240,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	    }
 	    NetScope*task_scope = new NetScope(scope, use_name,
 					       NetScope::TASK);
+	    task_scope->set_line((*cur).second);
 	    (*cur).second->elaborate_scope(des, task_scope);
       }
 
@@ -263,6 +264,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	    }
 	    NetScope*func_scope = new NetScope(scope, use_name,
 					       NetScope::FUNC);
+	    func_scope->set_line((*cur).second);
 	    (*cur).second->elaborate_scope(des, func_scope);
       }
 
@@ -383,6 +385,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 
 	    NetScope*scope = new NetScope(container, use_name,
 					  NetScope::GENBLOCK);
+	    scope->set_line(get_file(), get_lineno());
 
 	      // Set in the scope a localparam for the value of the
 	      // genvar within this instance of the generate
@@ -463,6 +466,7 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 
       NetScope*scope = new NetScope(container, use_name,
 				    NetScope::GENBLOCK);
+      scope->set_line(get_file(), get_lineno());
 
       elaborate_subscope_(des, scope);
 
@@ -529,6 +533,7 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 
       NetScope*scope = new NetScope(container, use_name,
 				    NetScope::GENBLOCK);
+      scope->set_line(get_file(), get_lineno());
       item->elaborate_subscope_(des, scope);
 
       return true;
@@ -661,6 +666,8 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 
 	      // Create the new scope as a MODULE with my name.
 	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE);
+	    my_scope->set_line(get_file(), mod->get_file(),
+	                       get_lineno(), mod->get_lineno());
 	    my_scope->set_module_name(mod->mod_name());
 	    my_scope->default_nettype(mod->default_nettype);
 
@@ -811,6 +818,7 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 	    my_scope = new NetScope(scope, use_name, bl_type_==BL_PAR
 				    ? NetScope::FORK_JOIN
 				    : NetScope::BEGIN_END);
+	    my_scope->set_line(get_file(), get_lineno());
       }
 
       for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1)

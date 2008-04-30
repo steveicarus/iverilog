@@ -529,19 +529,20 @@ statement
      The final symbol is the label of the parent scope. If there is no
      parent scope, then this is a root scope. */
 
-	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING ';'
-		{ compile_scope_decl($1, $3, $5, $6, 0); }
+	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING T_NUMBER T_NUMBER ';'
+		{ compile_scope_decl($1, $3, $5, $6, 0, $7, $8, $7, $8); }
 
-	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING ',' T_SYMBOL ';'
-		{ compile_scope_decl($1, $3, $5, $6, $8); }
+	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING T_NUMBER T_NUMBER ','
+	  T_NUMBER T_NUMBER ',' T_SYMBOL ';'
+		{ compile_scope_decl($1, $3, $5, $6, $13, $7, $8, $10, $11); }
 
   /* XXXX Legacy declaration has no type name. */
 
 	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING ';'
-		{ compile_scope_decl($1, $3, $5, "", 0); }
+		{ compile_scope_decl($1, $3, $5, "", 0, 0, 0, 0, 0); }
 
 	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING ',' T_SYMBOL ';'
-		{ compile_scope_decl($1, $3, $5, "", $7); }
+		{ compile_scope_decl($1, $3, $5, "", $7, 0, 0, 0, 0); }
 
   /* Scope recall has no label of its own, but refers by label to a
      declared scope. */

@@ -312,6 +312,8 @@ typedef struct t_vpi_delay  {
 #define vpiDefName    9
 #define vpiTimeUnit      11
 #define vpiTimePrecision 12
+#define vpiDefFile   15
+#define vpiDefLineNo 16
 #define vpiNetType   22
 #   define vpiWire        1
 #define vpiArray     28

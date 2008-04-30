@@ -1391,9 +1391,17 @@ extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
  *    ivl_scope_def function must return a statement for scopes that
  *    are type FUNCTION or TASK, and must return nil otherwise.
  *
+ * ivl_scope_def_file
+ * ivl_scope_def_lineno
+ *    Returns the file and line where this scope is defined.
+ *
  * ivl_scope_event
  * ivl_scope_events
  *    Scopes have 0 or more event objects in them.
+ *
+ * ivl_scope_file
+ * ivl_scope_lineno
+ *    Returns the instantiation file and line for this scope.
  *
  * ivl_scope_var
  * ivl_scope_vars
@@ -1465,9 +1473,13 @@ extern int          ivl_scope_children(ivl_scope_t net,
 				       ivl_scope_f func, void*cd);
 
 extern ivl_statement_t ivl_scope_def(ivl_scope_t net);
+extern const char* ivl_scope_def_file(ivl_scope_t net);
+extern unsigned ivl_scope_def_lineno(ivl_scope_t net);
 
 extern unsigned     ivl_scope_events(ivl_scope_t net);
 extern ivl_event_t  ivl_scope_event(ivl_scope_t net, unsigned idx);
+extern const char* ivl_scope_file(ivl_scope_t net);
+extern unsigned ivl_scope_lineno(ivl_scope_t net);
 extern unsigned     ivl_scope_logs(ivl_scope_t net);
 extern ivl_net_logic_t ivl_scope_log(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_lpms(ivl_scope_t net);
