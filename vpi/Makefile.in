@@ -46,7 +46,7 @@ CPPFLAGS = @ident_support@ -I. -I$(srcdir)/.. -I$(srcdir) -I.. @file64_support@ 
 CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-all: dep system.vpi $(ALL32)
+all: dep system.vpi va_math.vpi $(ALL32)
 
 dep:
 	mkdir dep
@@ -55,6 +55,7 @@ dep:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
+# Object files for system.vpi
 O = sys_table.o sys_convert.o sys_deposit.o sys_display.o sys_fileio.o \
 sys_finish.o sys_plusargs.o sys_random.o sys_random_mti.o \
 sys_readmem.o sys_readmem_lex.o sys_scanf.o sys_sdf.o \
@@ -68,10 +69,15 @@ endif
 O += sys_lxt2.o lxt2_write.o
 endif
 
+# Object files for va_math.vpi
+V = va_math.o
+
 LIBS = @LIBS@
 SYSTEM_VPI_LDFLAGS = $(LIBS)
+VA_MATH_LDFLAGS = 
 ifeq (@MING32@,yes)
     SYSTEM_VPI_LDFLAGS += @EXTRALIBS@
+    VA_MATH_LDFLAGS += @EXTRALIBS@
 endif
 
 system.vpi: $O ../vvp/libvpi.a
@@ -88,8 +94,11 @@ sdf_lexor.c: sdf_lexor.lex
 sdf_parse.c sdf_parse.h: $(srcdir)/sdf_parse.y
 	$(YACC) --verbose -d -p sdf -o sdf_parse.c $(srcdir)/sdf_parse.y
 
+va_math.vpi: $V ../vvp/libvpi.a
+	$(CC) @shared@ -o $@ $V -L../vvp $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
+
 clean:
-	rm -rf *.o sys_readmem_lex.c dep system.vpi bin32
+	rm -rf *.o sys_readmem_lex.c dep system.vpi va_math.vpi bin32
 	rm -f sdf_lexor.c sdf_parse.c sdf_parse.output sdf_parse.h
 
 distclean: clean
@@ -97,12 +106,21 @@ distclean: clean
 
 check: all
 
-install: all installdirs $(vpidir)/system.vpi $(libdir)/ivl/system.sft
+install: all installdirs \
+    $(vpidir)/system.vpi $(libdir)/ivl/system.sft \
+    $(vpidir)/va_math.vpi $(libdir)/ivl/va_math.sft \
+    $(vpidir)/include/
 
 $(vpidir)/system.vpi: ./system.vpi
 	$(INSTALL_PROGRAM) ./system.vpi $(vpidir)/system.vpi
 
 $(libdir)/ivl/system.sft: system.sft
+	$(INSTALL_DATA) $< $@
+
+$(vpidir)/va_math.vpi: ./va_math.vpi
+	$(INSTALL_PROGRAM) ./va_math.vpi $(vpidir)/va_math.vpi
+
+$(libdir)/ivl/va_math.sft: va_math.sft
 	$(INSTALL_DATA) $< $@
 
 installdirs: ../mkinstalldirs
@@ -111,6 +129,8 @@ installdirs: ../mkinstalldirs
 uninstall:
 	rm -f $(vpidir)/system.vpi
 	rm -f $(libdir)/ivl/system.sft
+	rm -f $(vpidir)/va_math.vpi
+	rm -f $(libdir)/ivl/va_math.sft
 
 
 -include $(patsubst %.o, dep/%.d, $O)

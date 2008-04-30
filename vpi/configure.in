@@ -45,18 +45,8 @@ AC_CHECK_LIB(bz2, BZ2_bzdopen, HAVE_LIBBZ2=yes, HAVE_LIBBZ2=no)
 fi
 AC_SUBST(HAVE_LIBBZ2)
 
-# --
-# Look for a dl library to use. First look for the standard dlopen
-# functions, and failing that look for the HP specific shl_load function.
-
-AC_CHECK_HEADERS(dlfcn.h dl.h, break)
-
-DLLIB=''
-AC_CHECK_LIB(dl,dlopen,[DLLIB=-ldl])
-if test -z "$DLLIB" ; then
-AC_CHECK_LIB(dld,shl_load,[DLLIB=-ldld])
-fi
-AC_SUBST(DLLIB)
+# fmin and fmax are needed by va_math.vpi
+AC_CHECK_FUNCS_ONCE(fmin fmax)
 
 AC_PROG_INSTALL
 

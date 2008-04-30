@@ -217,7 +217,7 @@ endif
 
 XNF_INSTALL = $(libdir)/ivl/xnf.conf $(libdir)/ivl/xnf-s.conf
 
-install: all installdirs $(libdir)/ivl/ivl@EXEEXT@  $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
+install: all installdirs $(libdir)/ivl/ivl@EXEEXT@  $(libdir)/ivl/include/constants.vams $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for dir in vpi ivlpp driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
@@ -227,6 +227,9 @@ $(bindir)/iverilog-vpi: ./iverilog-vpi
 
 $(libdir)/ivl/ivl@EXEEXT@: ./ivl@EXEEXT@
 	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ $(libdir)/ivl/ivl@EXEEXT@
+
+$(libdir)/ivl/include/constants.vams: $(srcdir)/constants.vams
+	$(INSTALL_DATA) $(srcdir)/constants.vams $@
 
 $(libdir)/ivl/xnf-s.conf: $(srcdir)/xnf-s.conf
 	$(INSTALL_DATA) $(srcdir)/xnf-s.conf $(libdir)/ivl/xnf-s.conf
@@ -283,7 +286,7 @@ uninstall:
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for dir in vpi ivlpp driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
-	for f in xnf.conf xnf-s.conf ivl@EXEEXT@; \
+	for f in xnf.conf xnf-s.conf ivl@EXEEXT@ include/constants.vams; \
 	    do rm -f $(libdir)/ivl/$$f; done
 	-rmdir $(libdir)/ivl/include
 	-rmdir $(libdir)/ivl
