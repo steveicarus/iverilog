@@ -680,10 +680,13 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       return 0;
 }
 
+// Keep track of the concatenation/repeat depth.
+static int concat_depth = 0;
 
 NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 				  int expr_wid, bool) const
 {
+      concat_depth += 1;
       NetExpr* repeat = 0;
 
       if (debug_elaborate) {
@@ -712,6 +715,15 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 		       << "may not be negative (" << rep->value().as_long()
 		       << ")." << endl;
 		  des->errors += 1;
+		  concat_depth -= 1;
+		  return 0;
+	    }
+
+	    if (rep->value().is_zero() && concat_depth < 2) {
+		  cerr << get_fileline() << ": error: Concatenation repeat "
+		       << "may not be zero in this context." << endl;
+		  des->errors += 1;
+		  concat_depth -= 1;
 		  return 0;
 	    }
 
@@ -752,6 +764,15 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 
       tmp->set_width(wid_sum * tmp->repeat());
 
+      if (wid_sum == 0 && concat_depth < 2) {
+	    cerr << get_fileline() << ": error: Concatenation may not "
+	         << "have zero width in this context." << endl;
+	    des->errors += 1;
+	    concat_depth -= 1;
+	    return 0;
+      }
+
+      concat_depth -= 1;
       return tmp;
 }
 
