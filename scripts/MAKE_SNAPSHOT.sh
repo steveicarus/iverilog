@@ -45,17 +45,17 @@ if [ -e $destdir/$prefix ]; then
 fi
 
 echo "Exporting $tag to $destdir/$prefix..."
-git-archive --prefix="$prefix/" $tag | ( cd "$destdir" ; tar xf - )
+git-archive --prefix="$prefix/" $tag | ( cd "$destdir" && tar xf - )
 
-versionh="$destdir/verilog-$id/version.h"
+versionh="$destdir/$prefix/version.h"
 echo "Create $versionh ..."
 echo "#define VERSION_TAG \"$tag\"" > $versionh
 
 echo "Running autoconf.sh..."
-( cd $destdir/$prefix ; sh autoconf.sh )
+( cd $destdir/$prefix && sh autoconf.sh )
 
 echo "Making bundle $prefix.tar.gz..."
-tar czf $prefix.tar.gz -C "$destdir" $prefix
+tar czf $prefix.tar.gz --exclude=autom4te.cache -C "$destdir" $prefix
 
 echo "Removing temporary $destdir/$prefix..."
 rm -rf "$destdir/$prefix"
