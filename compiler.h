@@ -120,6 +120,18 @@ extern bool gn_specify_blocks_flag;
    is scalar and the net/register definition is vectored. */
 extern bool gn_io_range_error_flag;
 
+/* The bits of these GN_KEYWORDS_* constants define non-intersecting
+   sets of keywords. The compiler enables groups of keywords by setting
+   lexor_keyword_mask with the OR of the bits for the keywords to be
+   enabled. */
+enum { GN_KEYWORDS_1364_1995        = 0x0001,
+       GN_KEYWORDS_1364_2001        = 0x0002,
+       GN_KEYWORDS_1364_2001_CONFIG = 0x0004,
+       GN_KEYWORDS_1364_2005        = 0x0008,
+       GN_KEYWORDS_ICARUS           = 0x8000
+};
+extern int lexor_keyword_mask;
+
   /* This is the string to use to invoke the preprocessor. */
 extern char*ivlpp_string;
 

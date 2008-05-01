@@ -592,6 +592,26 @@ int main(int argc, char*argv[])
 	      }
       }
 
+      lexor_keyword_mask = 0;
+      switch (generation_flag) {
+        case GN_VER1995:
+	  lexor_keyword_mask |= GN_KEYWORDS_1364_1995;
+	  break;
+        case GN_VER2001:
+	  lexor_keyword_mask |= GN_KEYWORDS_1364_1995;
+	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001;
+	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001_CONFIG;
+	  break;
+        case GN_VER2001X:
+	  lexor_keyword_mask |= GN_KEYWORDS_1364_1995;
+	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001;
+	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001_CONFIG;
+	  lexor_keyword_mask |= GN_KEYWORDS_ICARUS;
+	  break;
+      }
+
+      if (gn_cadence_types_enabled())
+	lexor_keyword_mask |= GN_KEYWORDS_ICARUS;
 
       if (verbose_flag) {
 	    if (times_flag)

@@ -6,121 +6,124 @@
 #include "parse.h"
 #include <string.h>
 #include "lexor_keyword.h"
+#include "compiler.h"
 
 %}
-struct lexor_keyword { const char*name; int tokenType; };
+struct lexor_keyword { const char*name; int mask; int tokenType; };
 %%
-always,		K_always
-and,		K_and
-assign,		K_assign
-begin,		K_begin
-bool,		K_bool
-buf,		K_buf
-bufif0,		K_bufif0
-bufif1,		K_bufif1
-case,		K_case
-casex,		K_casex
-casez,		K_casez
-cmos,		K_cmos
-deassign,	K_deassign
-default,	K_default
-defparam,	K_defparam
-disable,	K_disable
-edge,		K_edge
-else,		K_else
-end,		K_end
-endcase,	K_endcase
-endfunction,	K_endfunction
-endgenerate,	K_endgenerate
-endmodule,	K_endmodule
-endprimitive,	K_endprimitive
-endspecify,	K_endspecify
-endtable,	K_endtable
-endtask,	K_endtask
-event,		K_event
-for,		K_for
-force,		K_force
-forever,	K_forever
-fork,		K_fork
-function,	K_function
-generate,	K_generate
-genvar,		K_genvar
-highz0,		K_highz0
-highz1,		K_highz1
-if,		K_if
-ifnone,		K_ifnone
-initial,	K_initial
-inout,		K_inout
-input,		K_input
-integer,	K_integer
-join,		K_join
-large,		K_large
-localparam,	K_localparam
-logic,		K_logic
-macromodule,	K_macromodule
-medium,		K_medium
-module,		K_module
-nand,		K_nand
-negedge,	K_negedge
-nmos,		K_nmos
-nor,		K_nor
-not,		K_not
-notif0,		K_notif0
-notif1,		K_notif1
-or,		K_or
-output,		K_output
-parameter,	K_parameter
-pmos,		K_pmos
-posedge,	K_posedge
-primitive,	K_primitive
-pull0,		K_pull0
-pull1,		K_pull1
-pulldown,	K_pulldown
-pullup,		K_pullup
-rcmos,		K_rcmos
-real,		K_real
-realtime,	K_realtime
-reg,		K_reg
-release,	K_release
-repeat,		K_repeat
-rnmos,		K_rnmos
-rpmos,		K_rpmos
-rtran,		K_rtran
-rtranif0,	K_rtranif0
-rtranif1,	K_rtranif1
-scalared,	K_scalared
-signed,		K_signed
-small,		K_small
-specify,	K_specify
-specparam,	K_specparam
-strong0,	K_strong0
-strong1,	K_strong1
-supply0,	K_supply0
-supply1,	K_supply1
-table,		K_table
-task,		K_task
-time,		K_time
-tran,		K_tran
-tranif0,	K_tranif0
-tranif1,	K_tranif1
-tri,		K_tri
-tri0,		K_tri0
-tri1,		K_tri1
-triand,		K_triand
-trior,		K_trior
-trireg,		K_trireg
-vectored,	K_vectored
-wait,		K_wait
-wand,		K_wand
-weak0,		K_weak0
-weak1,		K_weak1
-while,		K_while
-wire,		K_wire
-wone,		K_wone
-wor,		K_wor
-xnor,		K_xnor
-xor,		K_xor
+always,		GN_KEYWORDS_1364_1995,	K_always
+and,		GN_KEYWORDS_1364_1995,	K_and
+assign,		GN_KEYWORDS_1364_1995,	K_assign
+begin,		GN_KEYWORDS_1364_1995,	K_begin
+bool,		GN_KEYWORDS_ICARUS,	K_bool
+buf,		GN_KEYWORDS_1364_1995,	K_buf
+bufif0,		GN_KEYWORDS_1364_1995,	K_bufif0
+bufif1,		GN_KEYWORDS_1364_1995,	K_bufif1
+case,		GN_KEYWORDS_1364_1995,	K_case
+casex,		GN_KEYWORDS_1364_1995,	K_casex
+casez,		GN_KEYWORDS_1364_1995,	K_casez
+cmos,		GN_KEYWORDS_1364_1995,	K_cmos
+deassign,	GN_KEYWORDS_1364_1995,	K_deassign
+default,	GN_KEYWORDS_1364_1995,	K_default
+defparam,	GN_KEYWORDS_1364_1995,	K_defparam
+disable,	GN_KEYWORDS_1364_1995,	K_disable
+edge,		GN_KEYWORDS_1364_1995,	K_edge
+else,		GN_KEYWORDS_1364_1995,	K_else
+end,		GN_KEYWORDS_1364_1995,	K_end
+endcase,	GN_KEYWORDS_1364_1995,	K_endcase
+endfunction,	GN_KEYWORDS_1364_1995,	K_endfunction
+endgenerate,	GN_KEYWORDS_1364_1995,	K_endgenerate
+endmodule,	GN_KEYWORDS_1364_1995,	K_endmodule
+endprimitive,	GN_KEYWORDS_1364_1995,	K_endprimitive
+endspecify,	GN_KEYWORDS_1364_1995,	K_endspecify
+endtable,	GN_KEYWORDS_1364_1995,	K_endtable
+endtask,	GN_KEYWORDS_1364_1995,	K_endtask
+event,		GN_KEYWORDS_1364_1995,	K_event
+for,		GN_KEYWORDS_1364_1995,	K_for
+force,		GN_KEYWORDS_1364_1995,	K_force
+forever,	GN_KEYWORDS_1364_1995,	K_forever
+fork,		GN_KEYWORDS_1364_1995,	K_fork
+function,	GN_KEYWORDS_1364_1995,	K_function
+generate,	GN_KEYWORDS_1364_2001,	K_generate
+genvar,		GN_KEYWORDS_1364_2001,	K_genvar
+highz0,		GN_KEYWORDS_1364_1995,	K_highz0
+highz1,		GN_KEYWORDS_1364_1995,	K_highz1
+if,		GN_KEYWORDS_1364_1995,	K_if
+ifnone,		GN_KEYWORDS_1364_1995,	K_ifnone
+initial,	GN_KEYWORDS_1364_1995,	K_initial
+inout,		GN_KEYWORDS_1364_1995,	K_inout
+input,		GN_KEYWORDS_1364_1995,	K_input
+integer,	GN_KEYWORDS_1364_1995,	K_integer
+join,		GN_KEYWORDS_1364_1995,	K_join
+large,		GN_KEYWORDS_1364_1995,	K_large
+localparam,	GN_KEYWORDS_1364_2001,	K_localparam
+logic,		GN_KEYWORDS_ICARUS,	K_logic
+macromodule,	GN_KEYWORDS_1364_1995,	K_macromodule
+medium,		GN_KEYWORDS_1364_1995,	K_medium
+module,		GN_KEYWORDS_1364_1995,	K_module
+nand,		GN_KEYWORDS_1364_1995,	K_nand
+negedge,	GN_KEYWORDS_1364_1995,	K_negedge
+nmos,		GN_KEYWORDS_1364_1995,	K_nmos
+nor,		GN_KEYWORDS_1364_1995,	K_nor
+not,		GN_KEYWORDS_1364_1995,	K_not
+notif0,		GN_KEYWORDS_1364_1995,	K_notif0
+notif1,		GN_KEYWORDS_1364_1995,	K_notif1
+or,		GN_KEYWORDS_1364_1995,	K_or
+output,		GN_KEYWORDS_1364_1995,	K_output
+parameter,	GN_KEYWORDS_1364_1995,	K_parameter
+pmos,		GN_KEYWORDS_1364_1995,	K_pmos
+posedge,	GN_KEYWORDS_1364_1995,	K_posedge
+primitive,	GN_KEYWORDS_1364_1995,	K_primitive
+pull0,		GN_KEYWORDS_1364_1995,	K_pull0
+pull1,		GN_KEYWORDS_1364_1995,	K_pull1
+pulldown,	GN_KEYWORDS_1364_1995,	K_pulldown
+pullup,		GN_KEYWORDS_1364_1995,	K_pullup
+rcmos,		GN_KEYWORDS_1364_1995,	K_rcmos
+real,		GN_KEYWORDS_1364_1995,	K_real
+realtime,	GN_KEYWORDS_1364_1995,	K_realtime
+reg,		GN_KEYWORDS_1364_1995,	K_reg
+release,	GN_KEYWORDS_1364_1995,	K_release
+repeat,		GN_KEYWORDS_1364_1995,	K_repeat
+rnmos,		GN_KEYWORDS_1364_1995,	K_rnmos
+rpmos,		GN_KEYWORDS_1364_1995,	K_rpmos
+rtran,		GN_KEYWORDS_1364_1995,	K_rtran
+rtranif0,	GN_KEYWORDS_1364_1995,	K_rtranif0
+rtranif1,	GN_KEYWORDS_1364_1995,	K_rtranif1
+scalared,	GN_KEYWORDS_1364_1995,	K_scalared
+signed,		GN_KEYWORDS_1364_2001,	K_signed
+small,		GN_KEYWORDS_1364_1995,	K_small
+specify,	GN_KEYWORDS_1364_1995,	K_specify
+specparam,	GN_KEYWORDS_1364_1995,	K_specparam
+strong0,	GN_KEYWORDS_1364_1995,	K_strong0
+strong1,	GN_KEYWORDS_1364_1995,	K_strong1
+supply0,	GN_KEYWORDS_1364_1995,	K_supply0
+supply1,	GN_KEYWORDS_1364_1995,	K_supply1
+table,		GN_KEYWORDS_1364_1995,	K_table
+task,		GN_KEYWORDS_1364_1995,	K_task
+time,		GN_KEYWORDS_1364_1995,	K_time
+tran,		GN_KEYWORDS_1364_1995,	K_tran
+tranif0,	GN_KEYWORDS_1364_1995,	K_tranif0
+tranif1,	GN_KEYWORDS_1364_1995,	K_tranif1
+tri,		GN_KEYWORDS_1364_1995,	K_tri
+tri0,		GN_KEYWORDS_1364_1995,	K_tri0
+tri1,		GN_KEYWORDS_1364_1995,	K_tri1
+triand,		GN_KEYWORDS_1364_1995,	K_triand
+trior,		GN_KEYWORDS_1364_1995,	K_trior
+trireg,		GN_KEYWORDS_1364_1995,	K_trireg
+vectored,	GN_KEYWORDS_1364_1995,	K_vectored
+wait,		GN_KEYWORDS_1364_1995,	K_wait
+wand,		GN_KEYWORDS_1364_1995,	K_wand
+weak0,		GN_KEYWORDS_1364_1995,	K_weak0
+weak1,		GN_KEYWORDS_1364_1995,	K_weak1
+while,		GN_KEYWORDS_1364_1995,	K_while
+wire,		GN_KEYWORDS_1364_1995,	K_wire
+wone,		GN_KEYWORDS_1364_1995,	K_wone
+wor,		GN_KEYWORDS_1364_1995,	K_wor
+xnor,		GN_KEYWORDS_1364_1995,	K_xnor
+xor,		GN_KEYWORDS_1364_1995,	K_xor
 %%
+
+int lexor_keyword_mask = 0;
 
 int lexor_keyword_code(const char*str, unsigned nstr)
 {

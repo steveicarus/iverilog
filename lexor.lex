@@ -34,7 +34,7 @@
 # include  <ctype.h>
 # include  <string.h>
 # include  "lexor_keyword.h"
-
+# include  <list>
 
 # define YY_USER_INIT reset_lexor();
 # define yylval VLlval
@@ -83,6 +83,8 @@ static int dec_buf_div2(char *buf);
 
 static void process_timescale(const char*txt);
 
+static list<int> keyword_mask_stack;
+
 static int comment_enter;
 %}
 
@@ -93,6 +95,7 @@ static int comment_enter;
 %s UDPTABLE
 %x PPTIMESCALE
 %x PPDEFAULT_NETTYPE
+%x PPBEGIN_KEYWORDS
 %s EDGES
 
 W [ \t\b\f\r]+
@@ -320,6 +323,51 @@ W [ \t\b\f\r]+
 ^{W}?`suppress_faults{W}?.*         {  }
 ^{W}?`unconnected_drive{W}?.*       {  }
 ^{W}?`uselib{W}?.*                  {  }
+
+^{W}?`begin_keywords{W}? { BEGIN(PPBEGIN_KEYWORDS); }
+
+<PPBEGIN_KEYWORDS>\"[a-zA-Z0-9 -]*\".* {
+      keyword_mask_stack.push_front(lexor_keyword_mask);
+
+      char*word = yytext+1;
+      char*tail = strchr(word, '"');
+      tail[0] = 0;
+      if (strcmp(word,"1364-1995") == 0) {
+	    lexor_keyword_mask = GN_KEYWORDS_1364_1995;
+      } else if (strcmp(word,"1364-2001") == 0) {
+	    lexor_keyword_mask = GN_KEYWORDS_1364_1995
+		                |GN_KEYWORDS_1364_2001
+		                |GN_KEYWORDS_1364_2001_CONFIG;
+      } else if (strcmp(word,"1364-2001-noconfig") == 0) {
+	    lexor_keyword_mask = GN_KEYWORDS_1364_1995
+		                |GN_KEYWORDS_1364_2001;
+      } else if (strcmp(word,"1364-2005") == 0) {
+	    lexor_keyword_mask = GN_KEYWORDS_1364_1995
+		                |GN_KEYWORDS_1364_2001
+		                |GN_KEYWORDS_1364_2001_CONFIG
+		                |GN_KEYWORDS_1364_2005;
+      } else {
+	    fprintf(stderr, "%s:%d: Ignoring unknown keywords string: %s\n",
+		    yylloc.text, yylloc.first_line, word);
+      }
+      BEGIN(0);
+ }
+
+<PPBEGIN_KEYWORDS>.* {
+      fprintf(stderr, "%s:%d: Malformed keywords specification: %s\n",
+	      yylloc.text, yylloc.first_line, yytext);
+      BEGIN(0);
+ }
+
+^{W}?`end_keywords{W}?.* {
+      if (!keyword_mask_stack.empty()) {
+	    lexor_keyword_mask = keyword_mask_stack.front();
+	    keyword_mask_stack.pop_front();
+      } else {
+	    fprintf(stderr, "%s:%d: Mismatched end_keywords directive\n",
+		    yylloc.text, yylloc.first_line);
+      }
+ }
 
   /* Notice and handle the default_nettype directive. The lexor
      detects the default_nettype keyword, and the second part of the
