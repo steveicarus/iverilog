@@ -75,8 +75,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) /usr/include/_pli_types.h
 
 %changelog -n verilog
-* Sun Feb 28 2007 - steve@icarus.com
-- Added formatting suitable for openSUSE packaging.
-
 * Fri Jan 25 2008 - steve@icarus.com
 - Removed vvp32 support for x86_64 build.
+
+* Sun Feb 28 2007 - steve@icarus.com
+- Added formatting suitable for openSUSE packaging.
