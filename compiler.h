@@ -116,6 +116,10 @@ inline bool gn_cadence_types_enabled()
    is false, then skip elaboration of specify behavior. */
 extern bool gn_specify_blocks_flag;
 
+
+/* If this flag is true, then support/elaborate Verilog-AMS. */
+extern bool gn_verilog_ams_flag;
+
 /* If this flag is false a warning is printed when the port declaration
    is scalar and the net/register definition is vectored. */
 extern bool gn_io_range_error_flag;
@@ -128,6 +132,7 @@ enum { GN_KEYWORDS_1364_1995        = 0x0001,
        GN_KEYWORDS_1364_2001        = 0x0002,
        GN_KEYWORDS_1364_2001_CONFIG = 0x0004,
        GN_KEYWORDS_1364_2005        = 0x0008,
+       GN_KEYWORDS_VAMS_2_3         = 0x0010,
        GN_KEYWORDS_ICARUS           = 0x8000
 };
 extern int lexor_keyword_mask;

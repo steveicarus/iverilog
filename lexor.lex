@@ -346,6 +346,12 @@ W [ \t\b\f\r]+
 		                |GN_KEYWORDS_1364_2001
 		                |GN_KEYWORDS_1364_2001_CONFIG
 		                |GN_KEYWORDS_1364_2005;
+      } else if (strcmp(word,"VAMS-2.3") == 0) {
+	    lexor_keyword_mask = GN_KEYWORDS_1364_1995
+		                |GN_KEYWORDS_1364_2001
+		                |GN_KEYWORDS_1364_2001_CONFIG
+		                |GN_KEYWORDS_1364_2005
+		                |GN_KEYWORDS_VAMS_2_3;
       } else {
 	    fprintf(stderr, "%s:%d: Ignoring unknown keywords string: %s\n",
 		    yylloc.text, yylloc.first_line, word);

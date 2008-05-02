@@ -110,6 +110,7 @@ const char*generation = "2x";
 const char*gen_specify = "specify";
 const char*gen_xtypes = "xtypes";
 const char*gen_io_range_error = "io-range-error";
+const char*gen_verilog_ams = "no-verilog-ams";
 
 /* Boolean: true means use a default include dir, false means don't */
 int gen_std_include = 1;
@@ -462,6 +463,12 @@ int process_generation(const char*name)
 
       else if (strcmp(name,"no-io-range-error") == 0)
 	    gen_io_range_error = "no-io-range-error";
+
+      else if (strcmp(name,"verilog-ams") == 0)
+	    gen_verilog_ams = "verilog_ams";
+
+      else if (strcmp(name,"no-verilog-ams") == 0)
+	    gen_verilog_ams = "no-verilog-ams";
 
       else {
 	    fprintf(stderr, "Unknown/Unsupported Language generation "
