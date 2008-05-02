@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,8 +34,15 @@ static int real_var_get(int code, vpiHandle ref)
 
       struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
 
-      if (code == vpiArray) {
+      switch (code) {
+	case vpiArray:
 	    return rfp->parent != 0;
+
+	case vpiSize:
+	    return 1;
+
+	case vpiLineNo:
+	    return 0; // Not implemented for now!
       }
 
       return 0;
@@ -186,4 +193,3 @@ vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
 
       return &obj->base;
 }
-

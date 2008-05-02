@@ -130,6 +130,9 @@ static int vpi_array_get(int code, vpiHandle ref)
       struct __vpiArray*obj = ARRAY_HANDLE(ref);
 
       switch (code) {
+	  case vpiLineNo:
+	    return 0; // Not implemented for now!
+
 	  case vpiSize:
 	    return (int) obj->array_count;
 
@@ -141,6 +144,10 @@ static int vpi_array_get(int code, vpiHandle ref)
 static char*vpi_array_get_str(int code, vpiHandle ref)
 {
       struct __vpiArray*obj = ARRAY_HANDLE(ref);
+
+      if (code == vpiFile) {  // Not implemented for now!
+            return simple_set_rbuf_str(file_names[0]);
+      }
 
       return generic_get_str(code, &obj->scope->base, obj->name, NULL);
 }

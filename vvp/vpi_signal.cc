@@ -136,6 +136,15 @@ static int signal_get(int code, vpiHandle ref)
 	  case vpiArray:
 	    return rfp->parent != 0;
 
+	  case vpiIndex: // This only works while we have a single index.
+	    if (rfp->parent) {
+		  s_vpi_value vp;
+		  vp.format = vpiIntVal;
+		  vpi_get_value(rfp->id.index, &vp);
+		  return vp.value.integer;
+	    } else
+		  return 0;
+
 	  case vpiSize:
 	    if (rfp->msb >= rfp->lsb)
 		  return rfp->msb - rfp->lsb + 1;

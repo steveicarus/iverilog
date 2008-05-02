@@ -1591,7 +1591,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 
 	    if (repeat == 0) {
 		  cerr << get_fileline() << ": error: Concatenation repeat "
-			"may not be 0."
+			"may not be zero."
 		       << endl;
 		  des->errors += 1;
 		  return 0;
@@ -1688,7 +1688,6 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 		  connect(dev->pin(cur_pin++), cur->pin(0));
 	    }
       }
-
 
       osig->local_flag(true);
       return osig;
