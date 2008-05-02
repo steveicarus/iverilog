@@ -1,10 +1,15 @@
+#norootforbuild
+#
+%define rev_date 20080429
+#
+#
 Summary: Icarus Verilog
 Name: verilog
-Version: 0.9.0.20080429
+Version: 0.9.0.%{rev_date}
 Release: 0
 License: GPL
 Group: Productivity/Scientific/Electronics
-Source: verilog-20080429.tar.gz
+Source: verilog-%{rev_date}.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
 
@@ -22,14 +27,14 @@ engineering formats, including simulation. It strives to be true
 to the IEEE-1364 standard.
 
 %prep
-%setup -n verilog-20080429
+%setup -n verilog-%{rev_date}
 
 %build
-./configure --prefix=/usr --mandir='$(prefix)/share/man'
+%{configure}
 make CXXFLAGS=-O
 
 %install
-make prefix=$RPM_BUILD_ROOT/usr install
+%{makeinstall}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -39,35 +44,35 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) %doc COPYING README.txt BUGS.txt QUICK_START.txt ieee1364-notes.txt mingw.txt swift.txt netlist.txt t-dll.txt vpi.txt xnf.txt tgt-fpga/fpga.txt cadpli/cadpli.txt xilinx-hint.txt
 %attr(-,root,root) %doc examples/*
 
-%attr(-,root,root) /usr/share/man/man1/iverilog.1.gz
+%attr(-,root,root) %{_mandir}/man1/iverilog.1.gz
 #%attr(-,root,root) /usr/man/man1/iverilog-fpga.1.gz
-%attr(-,root,root) /usr/share/man/man1/iverilog-vpi.1.gz
-%attr(-,root,root) /usr/share/man/man1/vvp.1.gz
+%attr(-,root,root) %{_mandir}/man1/iverilog-vpi.1.gz
+%attr(-,root,root) %{_mandir}/man1/vvp.1.gz
 
-%attr(-,root,root) /usr/bin/iverilog
-%attr(-,root,root) /usr/bin/iverilog-vpi
-%attr(-,root,root) /usr/bin/vvp
-%attr(-,root,root) /usr/lib/ivl/ivl
-%attr(-,root,root) /usr/lib/ivl/ivlpp
-%attr(-,root,root) /usr/lib/ivl/null.tgt
-%attr(-,root,root) /usr/lib/ivl/null.conf
-%attr(-,root,root) /usr/lib/ivl/null-s.conf
-%attr(-,root,root) /usr/lib/ivl/stub.tgt
-%attr(-,root,root) /usr/lib/ivl/stub.conf
-%attr(-,root,root) /usr/lib/ivl/stub-s.conf
-%attr(-,root,root) /usr/lib/ivl/vvp.tgt
-%attr(-,root,root) /usr/lib/ivl/vvp.conf
-%attr(-,root,root) /usr/lib/ivl/vvp-s.conf
-#%attr(-,root,root) /usr/lib/ivl/fpga.tgt
-#%attr(-,root,root) /usr/lib/ivl/fpga.conf
-#%attr(-,root,root) /usr/lib/ivl/fpga-s.conf
-#%attr(-,root,root) /usr/lib/ivl/xnf.conf
-#%attr(-,root,root) /usr/lib/ivl/xnf-s.conf
-%attr(-,root,root) /usr/lib/ivl/system.sft
-%attr(-,root,root) /usr/lib/ivl/system.vpi
-%attr(-,root,root) /usr/lib/ivl/cadpli.vpl
-%attr(-,root,root) /usr/lib/libvpi.a
-%attr(-,root,root) /usr/lib/libveriuser.a
+%attr(-,root,root) %{_bindir}/iverilog
+%attr(-,root,root) %{_bindir}/iverilog-vpi
+%attr(-,root,root) %{_bindir}/vvp
+%attr(-,root,root) %{_libdir}/ivl/ivl
+%attr(-,root,root) %{_libdir}/ivl/ivlpp
+%attr(-,root,root) %{_libdir}/ivl/null.tgt
+%attr(-,root,root) %{_libdir}/ivl/null.conf
+%attr(-,root,root) %{_libdir}/ivl/null-s.conf
+%attr(-,root,root) %{_libdir}/ivl/stub.tgt
+%attr(-,root,root) %{_libdir}/ivl/stub.conf
+%attr(-,root,root) %{_libdir}/ivl/stub-s.conf
+%attr(-,root,root) %{_libdir}/ivl/vvp.tgt
+%attr(-,root,root) %{_libdir}/ivl/vvp.conf
+%attr(-,root,root) %{_libdir}/ivl/vvp-s.conf
+#%attr(-,root,root) %{_libdir}/ivl/fpga.tgt
+#%attr(-,root,root) %{_libdir}/ivl/fpga.conf
+#%attr(-,root,root) %{_libdir}/ivl/fpga-s.conf
+#%attr(-,root,root) %{_libdir}/ivl/xnf.conf
+#%attr(-,root,root) %{_libdir}/ivl/xnf-s.conf
+%attr(-,root,root) %{_libdir}/ivl/system.sft
+%attr(-,root,root) %{_libdir}/ivl/system.vpi
+%attr(-,root,root) %{_libdir}/ivl/cadpli.vpl
+%attr(-,root,root) %{_libdir}/libvpi.a
+%attr(-,root,root) %{_libdir}/libveriuser.a
 %attr(-,root,root) /usr/include/ivl_target.h
 %attr(-,root,root) /usr/include/vpi_user.h
 %attr(-,root,root) /usr/include/acc_user.h

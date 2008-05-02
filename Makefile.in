@@ -223,40 +223,40 @@ install: all installdirs $(libdir)/ivl/ivl@EXEEXT@  $(libdir)/ivl/include/consta
 	    do (cd $$dir ; $(MAKE) $@); done
 
 $(bindir)/iverilog-vpi: ./iverilog-vpi
-	$(INSTALL_SCRIPT) ./iverilog-vpi $(bindir)/iverilog-vpi
+	$(INSTALL_SCRIPT) ./iverilog-vpi $(DESTDIR)$(bindir)/iverilog-vpi
 
 $(libdir)/ivl/ivl@EXEEXT@: ./ivl@EXEEXT@
-	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ $(libdir)/ivl/ivl@EXEEXT@
+	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ $(DESTDIR)$(libdir)/ivl/ivl@EXEEXT@
 
 $(libdir)/ivl/include/constants.vams: $(srcdir)/constants.vams
 	$(INSTALL_DATA) $(srcdir)/constants.vams $@
 
 $(libdir)/ivl/xnf-s.conf: $(srcdir)/xnf-s.conf
-	$(INSTALL_DATA) $(srcdir)/xnf-s.conf $(libdir)/ivl/xnf-s.conf
+	$(INSTALL_DATA) $(srcdir)/xnf-s.conf $(DESTDIR)$(libdir)/ivl/xnf-s.conf
 
 $(libdir)/ivl/xnf.conf: $(srcdir)/xnf.conf
-	$(INSTALL_DATA) $(srcdir)/xnf.conf $(libdir)/ivl/xnf.conf
+	$(INSTALL_DATA) $(srcdir)/xnf.conf $(DESTDIR)$(libdir)/ivl/xnf.conf
 
 $(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
-	$(INSTALL_DATA) $(srcdir)/ivl_target.h $(includedir)/ivl_target.h
+	$(INSTALL_DATA) $(srcdir)/ivl_target.h $(DESTDIR)$(includedir)/ivl_target.h
 
 $(includedir)/_pli_types.h: _pli_types.h
-	$(INSTALL_DATA) $< $(includedir)/_pli_types.h
+	$(INSTALL_DATA) $< $(DESTDIR)$(includedir)/_pli_types.h
 
 $(includedir)/vpi_user.h: $(srcdir)/vpi_user.h
-	$(INSTALL_DATA) $(srcdir)/vpi_user.h $(includedir)/vpi_user.h
+	$(INSTALL_DATA) $(srcdir)/vpi_user.h $(DESTDIR)$(includedir)/vpi_user.h
 
 $(includedir)/acc_user.h: $(srcdir)/acc_user.h
-	$(INSTALL_DATA) $(srcdir)/acc_user.h $(includedir)/acc_user.h
+	$(INSTALL_DATA) $(srcdir)/acc_user.h $(DESTDIR)$(includedir)/acc_user.h
 
 $(includedir)/veriuser.h: $(srcdir)/veriuser.h
-	$(INSTALL_DATA) $(srcdir)/veriuser.h $(includedir)/veriuser.h
+	$(INSTALL_DATA) $(srcdir)/veriuser.h $(DESTDIR)$(includedir)/veriuser.h
 
 $(mandir)/man1/iverilog-vpi.1: $(srcdir)/iverilog-vpi.man
-	$(INSTALL_DATA) $(srcdir)/iverilog-vpi.man $(mandir)/man1/iverilog-vpi.1
+	$(INSTALL_DATA) $(srcdir)/iverilog-vpi.man $(DESTDIR)$(mandir)/man1/iverilog-vpi.1
 
 $(prefix)/iverilog-vpi.pdf: iverilog-vpi.pdf
-	$(INSTALL_DATA) iverilog-vpi.pdf $(prefix)/iverilog-vpi.pdf
+	$(INSTALL_DATA) iverilog-vpi.pdf $(DESTDIR)$(prefix)/iverilog-vpi.pdf
 
 # In windows installations, put a few examples and the quick_start
 # into the destination directory.
@@ -279,22 +279,22 @@ $(prefix)/QUICK_START.txt: $(srcdir)/QUICK_START.txt
 endif
 
 installdirs: mkinstalldirs
-	$(srcdir)/mkinstalldirs $(bindir) $(includedir) $(libdir)/ivl \
-	    $(libdir)/ivl/include $(mandir) $(mandir)/man1
+	$(srcdir)/mkinstalldirs $(DESTDIR)$(bindir) $(DESTDIR)$(includedir) $(DESTDIR)$(libdir)/ivl \
+	    $(DESTDIR)$(libdir)/ivl/include $(DESTDIR)$(mandir) $(DESTDIR)$(mandir)/man1
 
 uninstall:
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for dir in vpi ivlpp driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
 	for f in xnf.conf xnf-s.conf ivl@EXEEXT@ include/constants.vams; \
-	    do rm -f $(libdir)/ivl/$$f; done
-	-rmdir $(libdir)/ivl/include
-	-rmdir $(libdir)/ivl
+	    do rm -f $(DESTDIR)$(libdir)/ivl/$$f; done
+	-rmdir $(DESTDIR)$(libdir)/ivl/include
+	-rmdir $(DESTDIR)$(libdir)/ivl
 	for f in verilog iverilog-vpi gverilog@EXEEXT@; \
-	    do rm -f $(bindir)/$$f; done
+	    do rm -f $(DESTDIR)$(bindir)/$$f; done
 	for f in ivl_target.h vpi_user.h _pli_types.h acc_user.h veriuser.h; \
-	    do rm -f $(includedir)/$$f; done
-	rm -f $(mandir)/man1/iverilog-vpi.1 $(prefix)/iverilog-vpi.pdf
+	    do rm -f $(DESTDIR)$(includedir)/$$f; done
+	rm -f $(DESTDIR)$(mandir)/man1/iverilog-vpi.1 $(DESTDIR)$(prefix)/iverilog-vpi.pdf
 
 
 -include $(patsubst %.o, dep/%.d, $O)
