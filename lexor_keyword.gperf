@@ -130,6 +130,8 @@ int lexor_keyword_code(const char*str, unsigned nstr)
       const struct lexor_keyword*rc = check_identifier(str, nstr);
       if (rc == 0)
 	  return IDENTIFIER;
+      else if ((rc->mask & lexor_keyword_mask) == 0)
+          return IDENTIFIER;
       else
 	  return rc->tokenType;
 }
