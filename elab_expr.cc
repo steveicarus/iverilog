@@ -311,6 +311,12 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 		  des->errors += 1;
 	    }
 	    break;
+
+	  case 'm': // min(l,r)
+	  case 'M': // max(l,r)
+	    tmp = new NetEBMinMax(op_, lp, rp);
+	    tmp->set_line(*this);
+	    break;
       }
 
       return tmp;

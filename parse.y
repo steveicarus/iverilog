@@ -203,7 +203,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_PO_POS K_PO_NEG K_POW
 %token K_PSTAR K_STARP
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
-%token K_acos K_acosh K_asin K_asinh K_atan K_atanh K_atan2
+%token K_abs K_acos K_acosh K_asin K_asinh K_atan K_atanh K_atan2
 %token K_always K_and K_assign K_begin K_bool K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_ceil K_cmos K_cos K_cosh
 %token K_deassign K_default K_defparam K_disable
@@ -213,8 +213,8 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_for K_force K_forever K_fork K_function K_generate K_genvar
 %token K_highz0 K_highz1 K_hypot K_if K_ifnone
 %token K_initial K_inout K_input K_integer K_join K_large K_ln K_localparam
-%token K_log K_logic K_macromodule
-%token K_medium K_module K_nand K_negedge K_nmos K_nor K_not K_notif0
+%token K_log K_logic K_macromodule K_max
+%token K_medium K_min K_module K_nand K_negedge K_nmos K_nor K_not K_notif0
 %token K_notif1 K_or K_output K_parameter K_pmos K_posedge K_pow K_primitive
 %token K_pull0 K_pull1 K_pulldown K_pullup K_rcmos K_real K_realtime
 %token K_reg K_release K_repeat
@@ -1250,6 +1250,28 @@ expr_primary
   | K_tanh '(' expression ')'
       { perm_string tn = perm_string::literal("$tanh");
 	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  /* These mathematical functions are conveniently expressed as unary
+     and binary expressions. They behave much like unary/binary
+     operators, even though they are parsed as functions.  */
+
+  | K_abs '(' expression ')'
+      { PEUnary*tmp = new PEUnary('m', $3);
+        FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_max '(' expression ',' expression ')'
+      { PEBinary*tmp = new PEBinary('M', $3, $5);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_min '(' expression ',' expression ')'
+      { PEBinary*tmp = new PEBinary('m', $3, $5);
 	FILE_NAME(tmp,@1);
 	$$ = tmp;
       }

@@ -1082,6 +1082,20 @@ void NetExpr::dump(ostream&o) const
 
 void NetEBinary::dump(ostream&o) const
 {
+      if (op_ == 'm' || op_ == 'M') {
+	    if (op_ == 'm')
+		  o << "min";
+	    else
+		  o << "max";
+
+	    o << "(";
+	    left_->dump(o);
+	    o << ", ";
+	    right_->dump(o);
+	    o << ")";
+	    return;
+      }
+
       o << "(";
       left_->dump(o);
       o << ")";
@@ -1267,6 +1281,9 @@ void NetEUFunc::dump(ostream&o) const
 void NetEUnary::dump(ostream&o) const
 {
       switch (op_) {
+	  case 'm':
+	    o << "abs";
+	    break;
 	  case 'N':
 	    o << "~|";
 	    break;

@@ -2664,6 +2664,8 @@ class NetProcTop  : public LineInfo, public Attrib {
  *   r  -- Right shift (>>)
  *   R  -- signed right shift (>>>)
  *   X  -- Bitwise exclusive NOR (~^)
+ *   m  -- min(a,b)
+ *   M  -- max(a,b)
  */
 class NetEBinary  : public NetExpr {
 
@@ -2831,6 +2833,24 @@ class NetEBLogic : public NetEBinary {
     private:
 };
 
+/*
+ * Support the binary min(l,r) and max(l,r) operators. The opcodes
+ * supported are:
+ *
+ *   m -- min
+ *   M -- max
+ */
+class NetEBMinMax : public NetEBinary {
+
+    public:
+      NetEBMinMax(char op, NetExpr*l, NetExpr*r);
+      ~NetEBMinMax();
+
+      virtual ivl_variable_type_t expr_type() const;
+
+    private:
+
+};
 
 /*
  * Support the binary multiplication (*) operator.
@@ -3143,6 +3163,7 @@ class NetETernary  : public NetExpr {
  *   A  -- Reduction NAND (~&)
  *   N  -- Reduction NOR (~|)
  *   X  -- Reduction NXOR (~^ or ^~)
+ *   m  -- abs(x)  (i.e. "magnitude")
  */
 class NetEUnary  : public NetExpr {
 

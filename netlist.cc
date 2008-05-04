@@ -2294,6 +2294,7 @@ NetEUnary::NetEUnary(char op, NetExpr*ex)
       switch (op_) {
 	  case '-':
 	  case '+':
+	  case 'm': // abs()
 	    cast_signed(ex->has_sign());
 	    break;
 	  default:

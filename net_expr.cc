@@ -219,6 +219,27 @@ ivl_variable_type_t NetEBDiv::expr_type() const
       return IVL_VT_LOGIC;
 }
 
+NetEBMinMax::NetEBMinMax(char op, NetExpr*l, NetExpr*r)
+: NetEBinary(op, l, r)
+{
+      expr_width( max(l->expr_width(), r->expr_width()) );
+      cast_signed(l->has_sign() || r->has_sign());
+}
+
+NetEBMinMax::~NetEBMinMax()
+{
+}
+
+ivl_variable_type_t NetEBMinMax::expr_type() const
+{
+      if (left_->expr_type() == IVL_VT_REAL)
+	    return IVL_VT_REAL;
+      if (right_->expr_type() == IVL_VT_REAL)
+	    return IVL_VT_REAL;
+
+      return IVL_VT_LOGIC;
+}
+
 NetEBMult::NetEBMult(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {

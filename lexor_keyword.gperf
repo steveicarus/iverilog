@@ -11,6 +11,7 @@
 %}
 struct lexor_keyword { const char*name; int mask; int tokenType; };
 %%
+abs,		GN_KEYWORDS_VAMS_2_3,	K_abs
 acos,		GN_KEYWORDS_VAMS_2_3,	K_acos
 acosh,		GN_KEYWORDS_VAMS_2_3,	K_acosh
 always,		GN_KEYWORDS_1364_1995,	K_always
@@ -74,7 +75,9 @@ localparam,	GN_KEYWORDS_1364_2001,	K_localparam
 log,		GN_KEYWORDS_VAMS_2_3,	K_log
 logic,		GN_KEYWORDS_ICARUS,	K_logic
 macromodule,	GN_KEYWORDS_1364_1995,	K_macromodule
+max,		GN_KEYWORDS_VAMS_2_3,	K_max
 medium,		GN_KEYWORDS_1364_1995,	K_medium
+min,		GN_KEYWORDS_VAMS_2_3,	K_min
 module,		GN_KEYWORDS_1364_1995,	K_module
 nand,		GN_KEYWORDS_1364_1995,	K_nand
 negedge,	GN_KEYWORDS_1364_1995,	K_negedge

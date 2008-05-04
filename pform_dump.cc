@@ -215,11 +215,30 @@ void PETernary::dump(ostream&out) const
 
 void PEUnary::dump(ostream&out) const
 {
-      out << op_ << "(" << *expr_ << ")";
+      switch (op_) {
+	  case 'm':
+	    out << "abs";
+	    break;
+	  default:
+	    out << op_;
+	    break;
+      }
+      out << "(" << *expr_ << ")";
 }
 
 void PEBinary::dump(ostream&out) const
 {
+	/* Handle some special cases, where the operators are written
+	   in function notation. */
+      if (op_ == 'm') {
+	    out << "min(" << *left_ << "," << *right_ << ")";
+	    return;
+      }
+      if (op_ == 'M') {
+	    out << "min(" << *left_ << "," << *right_ << ")";
+	    return;
+      }
+
       out << "(" << *left_ << ")";
       switch (op_) {
 	  case 'a':
