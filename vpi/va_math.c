@@ -68,7 +68,12 @@ typedef struct s_single_data {
 static t_single_data va_single_data[]= {
     {"$sqrt",  sqrt},
     {"$ln",    log},
-    {"$log",   log10},
+    {"$log",   log10}, /* FIXME: The $log function is replaced by the
+			  $log10 function to eliminate confusion with
+			  the natural log. In C, "log" is ln and log10
+			  is log-base-10. The $log is being left in for
+			  compatibility. */
+    {"$log10", log10},
     {"$exp",   exp},
     {"$abs",   fabs},
     {"$ceil",  ceil},

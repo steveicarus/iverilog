@@ -1206,7 +1206,7 @@ expr_primary
       }
 
   | K_log '(' expression ')'
-      { perm_string tn = perm_string::literal("$log");
+      { perm_string tn = perm_string::literal("$log10");
 	PECallFunction*tmp = make_call_function(tn, $3);
 	FILE_NAME(tmp,@1);
 	$$ = tmp;
