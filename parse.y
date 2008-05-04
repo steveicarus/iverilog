@@ -113,6 +113,27 @@ static svector<PExpr*>* copy_range(svector<PExpr*>* orig)
       return copy;
 }
 
+/*
+ * This is a shorthand for making a PECallFunction that takes a single
+ * arg. This is used by some of the code that detects built-ins.
+ */
+static PECallFunction*make_call_function(perm_string tn, PExpr*arg)
+{
+      svector<PExpr*> parms(1);
+      parms[0] = arg;
+      PECallFunction*tmp = new PECallFunction(tn, parms);
+      return tmp;
+}
+
+static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
+{
+      svector<PExpr*> parms(2);
+      parms[0] = arg1;
+      parms[1] = arg2;
+      PECallFunction*tmp = new PECallFunction(tn, parms);
+      return tmp;
+}
+
 %}
 
 %union {
@@ -182,22 +203,25 @@ static svector<PExpr*>* copy_range(svector<PExpr*>* orig)
 %token K_PO_POS K_PO_NEG K_POW
 %token K_PSTAR K_STARP
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
+%token K_acos K_acosh K_asin K_asinh K_atan K_atanh K_atan2
 %token K_always K_and K_assign K_begin K_bool K_buf K_bufif0 K_bufif1 K_case
-%token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
+%token K_casex K_casez K_ceil K_cmos K_cos K_cosh
+%token K_deassign K_default K_defparam K_disable
 %token K_edge K_edge_descriptor
 %token K_else K_end K_endcase K_endfunction K_endgenerate K_endmodule
-%token K_endprimitive K_endspecify K_endtable K_endtask K_event K_for
-%token K_force K_forever K_fork K_function K_generate K_genvar
-%token K_highz0 K_highz1 K_if K_ifnone
-%token K_initial K_inout K_input K_integer K_join K_large K_localparam
-%token K_logic K_macromodule
+%token K_endprimitive K_endspecify K_endtable K_endtask K_event K_exp K_floor
+%token K_for K_force K_forever K_fork K_function K_generate K_genvar
+%token K_highz0 K_highz1 K_hypot K_if K_ifnone
+%token K_initial K_inout K_input K_integer K_join K_large K_ln K_localparam
+%token K_log K_logic K_macromodule
 %token K_medium K_module K_nand K_negedge K_nmos K_nor K_not K_notif0
-%token K_notif1 K_or K_output K_parameter K_pmos K_posedge K_primitive
+%token K_notif1 K_or K_output K_parameter K_pmos K_posedge K_pow K_primitive
 %token K_pull0 K_pull1 K_pulldown K_pullup K_rcmos K_real K_realtime
 %token K_reg K_release K_repeat
 %token K_rnmos K_rpmos K_rtran K_rtranif0 K_rtranif1 K_scalared
-%token K_signed K_small K_specify
-%token K_specparam K_strong0 K_strong1 K_supply0 K_supply1 K_table K_task
+%token K_signed K_sin K_sinh K_small K_specify
+%token K_specparam K_sqrt K_strong0 K_strong1 K_supply0 K_supply1 K_table
+%token K_tan K_tanh K_task
 %token K_time K_tran K_tranif0 K_tranif1 K_tri K_tri0 K_tri1 K_triand
 %token K_trior K_trireg K_vectored K_wait K_wand K_weak0 K_weak1
 %token K_while K_wire
@@ -1066,19 +1090,169 @@ expr_primary
      function call. If a system identifier, then a system function
      call. */
 
-	| hierarchy_identifier '(' expression_list_proper ')'
-                { PECallFunction*tmp = new PECallFunction(*$1, *$3);
-		  FILE_NAME(tmp, @1);
-		  delete $1;
-		  $$ = tmp;
-		}
-	| SYSTEM_IDENTIFIER '(' expression_list_proper ')'
-                { perm_string tn = lex_strings.make($1);
-		  PECallFunction*tmp = new PECallFunction(tn, *$3);
-		  FILE_NAME(tmp, @1);
-		  delete[]$1;
-		  $$ = tmp;
-		}
+  | hierarchy_identifier '(' expression_list_proper ')'
+      { PECallFunction*tmp = new PECallFunction(*$1, *$3);
+	FILE_NAME(tmp, @1);
+	delete $1;
+	$$ = tmp;
+      }
+  | SYSTEM_IDENTIFIER '(' expression_list_proper ')'
+      { perm_string tn = lex_strings.make($1);
+	PECallFunction*tmp = new PECallFunction(tn, *$3);
+	FILE_NAME(tmp, @1);
+	delete[]$1;
+	$$ = tmp;
+      }
+
+  /* Many of the VAMS built-in functions are available as builtin
+     functions with $system_function equivilents. */
+
+  | K_acos '(' expression ')'
+      { perm_string tn = perm_string::literal("$acos");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_acosh '(' expression ')'
+      { perm_string tn = perm_string::literal("$acosh");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_asin '(' expression ')'
+      { perm_string tn = perm_string::literal("$asin");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_asinh '(' expression ')'
+      { perm_string tn = perm_string::literal("$asinh");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_atan '(' expression ')'
+      { perm_string tn = perm_string::literal("$atan");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_atanh '(' expression ')'
+      { perm_string tn = perm_string::literal("$atanh");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_atan2 '(' expression ',' expression ')'
+      { perm_string tn = perm_string::literal("$atan2");
+	PECallFunction*tmp = make_call_function(tn, $3, $5);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_ceil '(' expression ')'
+      { perm_string tn = perm_string::literal("$ceil");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_cos '(' expression ')'
+      { perm_string tn = perm_string::literal("$cos");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_cosh '(' expression ')'
+      { perm_string tn = perm_string::literal("$cosh");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_exp '(' expression ')'
+      { perm_string tn = perm_string::literal("$exp");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_floor '(' expression ')'
+      { perm_string tn = perm_string::literal("$floor");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_hypot '(' expression ',' expression ')'
+      { perm_string tn = perm_string::literal("$hypot");
+	PECallFunction*tmp = make_call_function(tn, $3, $5);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_ln '(' expression ')'
+      { perm_string tn = perm_string::literal("$ln");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_log '(' expression ')'
+      { perm_string tn = perm_string::literal("$log");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_pow '(' expression ',' expression ')'
+      { perm_string tn = perm_string::literal("$pow");
+        PECallFunction*tmp = make_call_function(tn, $3, $5);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_sin '(' expression ')'
+      { perm_string tn = perm_string::literal("$sin");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_sinh '(' expression ')'
+      { perm_string tn = perm_string::literal("$sinh");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_sqrt '(' expression ')'
+      { perm_string tn = perm_string::literal("$sqrt");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_tan '(' expression ')'
+      { perm_string tn = perm_string::literal("$tan");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
+  | K_tanh '(' expression ')'
+      { perm_string tn = perm_string::literal("$tanh");
+	PECallFunction*tmp = make_call_function(tn, $3);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
 
   /* Parenthesized expressions are primaries. */
 

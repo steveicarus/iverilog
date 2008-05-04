@@ -11,9 +11,16 @@
 %}
 struct lexor_keyword { const char*name; int mask; int tokenType; };
 %%
+acos,		GN_KEYWORDS_VAMS_2_3,	K_acos
+acosh,		GN_KEYWORDS_VAMS_2_3,	K_acosh
 always,		GN_KEYWORDS_1364_1995,	K_always
 and,		GN_KEYWORDS_1364_1995,	K_and
+asin,		GN_KEYWORDS_VAMS_2_3,	K_asin
+asinh,		GN_KEYWORDS_VAMS_2_3,	K_asinh
 assign,		GN_KEYWORDS_1364_1995,	K_assign
+atan,		GN_KEYWORDS_VAMS_2_3,	K_atan
+atan2,		GN_KEYWORDS_VAMS_2_3,	K_atan2
+atanh,		GN_KEYWORDS_VAMS_2_3,	K_atanh
 begin,		GN_KEYWORDS_1364_1995,	K_begin
 bool,		GN_KEYWORDS_ICARUS,	K_bool
 buf,		GN_KEYWORDS_1364_1995,	K_buf
@@ -22,7 +29,10 @@ bufif1,		GN_KEYWORDS_1364_1995,	K_bufif1
 case,		GN_KEYWORDS_1364_1995,	K_case
 casex,		GN_KEYWORDS_1364_1995,	K_casex
 casez,		GN_KEYWORDS_1364_1995,	K_casez
+ceil,		GN_KEYWORDS_VAMS_2_3,	K_ceil
 cmos,		GN_KEYWORDS_1364_1995,	K_cmos
+cos,		GN_KEYWORDS_VAMS_2_3,	K_cos
+cosh,		GN_KEYWORDS_VAMS_2_3,	K_cosh
 deassign,	GN_KEYWORDS_1364_1995,	K_deassign
 default,	GN_KEYWORDS_1364_1995,	K_default
 defparam,	GN_KEYWORDS_1364_1995,	K_defparam
@@ -39,6 +49,8 @@ endspecify,	GN_KEYWORDS_1364_1995,	K_endspecify
 endtable,	GN_KEYWORDS_1364_1995,	K_endtable
 endtask,	GN_KEYWORDS_1364_1995,	K_endtask
 event,		GN_KEYWORDS_1364_1995,	K_event
+exp,		GN_KEYWORDS_VAMS_2_3,	K_exp
+floor,		GN_KEYWORDS_VAMS_2_3,	K_floor
 for,		GN_KEYWORDS_1364_1995,	K_for
 force,		GN_KEYWORDS_1364_1995,	K_force
 forever,	GN_KEYWORDS_1364_1995,	K_forever
@@ -48,6 +60,7 @@ generate,	GN_KEYWORDS_1364_2001,	K_generate
 genvar,		GN_KEYWORDS_1364_2001,	K_genvar
 highz0,		GN_KEYWORDS_1364_1995,	K_highz0
 highz1,		GN_KEYWORDS_1364_1995,	K_highz1
+hypot,		GN_KEYWORDS_VAMS_2_3,	K_hypot
 if,		GN_KEYWORDS_1364_1995,	K_if
 ifnone,		GN_KEYWORDS_1364_1995,	K_ifnone
 initial,	GN_KEYWORDS_1364_1995,	K_initial
@@ -56,7 +69,9 @@ input,		GN_KEYWORDS_1364_1995,	K_input
 integer,	GN_KEYWORDS_1364_1995,	K_integer
 join,		GN_KEYWORDS_1364_1995,	K_join
 large,		GN_KEYWORDS_1364_1995,	K_large
+ln,		GN_KEYWORDS_VAMS_2_3,	K_ln
 localparam,	GN_KEYWORDS_1364_2001,	K_localparam
+log,		GN_KEYWORDS_VAMS_2_3,	K_log
 logic,		GN_KEYWORDS_ICARUS,	K_logic
 macromodule,	GN_KEYWORDS_1364_1995,	K_macromodule
 medium,		GN_KEYWORDS_1364_1995,	K_medium
@@ -73,6 +88,7 @@ output,		GN_KEYWORDS_1364_1995,	K_output
 parameter,	GN_KEYWORDS_1364_1995,	K_parameter
 pmos,		GN_KEYWORDS_1364_1995,	K_pmos
 posedge,	GN_KEYWORDS_1364_1995,	K_posedge
+pow,		GN_KEYWORDS_VAMS_2_3,	K_pow
 primitive,	GN_KEYWORDS_1364_1995,	K_primitive
 pull0,		GN_KEYWORDS_1364_1995,	K_pull0
 pull1,		GN_KEYWORDS_1364_1995,	K_pull1
@@ -91,14 +107,19 @@ rtranif0,	GN_KEYWORDS_1364_1995,	K_rtranif0
 rtranif1,	GN_KEYWORDS_1364_1995,	K_rtranif1
 scalared,	GN_KEYWORDS_1364_1995,	K_scalared
 signed,		GN_KEYWORDS_1364_2001,	K_signed
+sin,		GN_KEYWORDS_VAMS_2_3,	K_sin
+sinh,		GN_KEYWORDS_VAMS_2_3,	K_sinh
 small,		GN_KEYWORDS_1364_1995,	K_small
 specify,	GN_KEYWORDS_1364_1995,	K_specify
 specparam,	GN_KEYWORDS_1364_1995,	K_specparam
+sqrt,		GN_KEYWORDS_VAMS_2_3,	K_sqrt
 strong0,	GN_KEYWORDS_1364_1995,	K_strong0
 strong1,	GN_KEYWORDS_1364_1995,	K_strong1
 supply0,	GN_KEYWORDS_1364_1995,	K_supply0
 supply1,	GN_KEYWORDS_1364_1995,	K_supply1
 table,		GN_KEYWORDS_1364_1995,	K_table
+tan,		GN_KEYWORDS_VAMS_2_3,	K_tan
+tanh,		GN_KEYWORDS_VAMS_2_3,	K_tanh
 task,		GN_KEYWORDS_1364_1995,	K_task
 time,		GN_KEYWORDS_1364_1995,	K_time
 tran,		GN_KEYWORDS_1364_1995,	K_tran
