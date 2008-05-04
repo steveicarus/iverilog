@@ -465,7 +465,7 @@ int process_generation(const char*name)
 	    gen_io_range_error = "no-io-range-error";
 
       else if (strcmp(name,"verilog-ams") == 0)
-	    gen_verilog_ams = "verilog_ams";
+	    gen_verilog_ams = "verilog-ams";
 
       else if (strcmp(name,"no-verilog-ams") == 0)
 	    gen_verilog_ams = "no-verilog-ams";
@@ -739,6 +739,7 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "generation:%s\n", gen_specify);
       fprintf(iconfig_file, "generation:%s\n", gen_xtypes);
       fprintf(iconfig_file, "generation:%s\n", gen_io_range_error);
+      fprintf(iconfig_file, "generation:%s\n", gen_verilog_ams);
       fprintf(iconfig_file, "warnings:%s\n", warning_flags);
       fprintf(iconfig_file, "out:%s\n", opath);
       if (depfile) fprintf(iconfig_file, "depfile:%s\n", depfile);
