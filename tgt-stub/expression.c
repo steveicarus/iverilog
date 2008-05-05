@@ -160,6 +160,28 @@ static void show_ternary_expression(ivl_expr_t net, unsigned ind)
       }
 }
 
+void show_unary_expression(ivl_expr_t net, unsigned ind)
+{
+      unsigned width = ivl_expr_width(net);
+      const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
+      const char*vt = vt_type_string(net);
+
+      char name[8];
+      switch (ivl_expr_opcode(net)) {
+	  default:
+	    snprintf(name, sizeof name, "%c", ivl_expr_opcode(net));
+	    break;
+
+	  case 'm':
+	    snprintf(name, sizeof name, "abs()");
+	    break;
+      }
+
+      fprintf(out, "%*s<unary \"%s\" width=%u, %s, type=%s>\n", ind, "",
+	      name, width, sign, vt);
+      show_expression(ivl_expr_oper1(net), ind+4);
+}
+
 void show_expression(ivl_expr_t net, unsigned ind)
 {
       unsigned idx;
@@ -252,9 +274,7 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	    break;
 
 	  case IVL_EX_UNARY:
-	    fprintf(out, "%*s<unary \"%c\" width=%u, %s, type=%s>\n", ind, "",
-		    ivl_expr_opcode(net), width, sign, vt);
-	    show_expression(ivl_expr_oper1(net), ind+4);
+	    show_unary_expression(net, ind);
 	    break;
 
 	  case IVL_EX_UFUNC:

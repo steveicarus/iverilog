@@ -2456,6 +2456,32 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 	    }
 	    break;
 
+	  case 'm': /* abs() */
+	    res = draw_eval_expr_wid(sub, wid, 0);
+
+	    if (!ivl_expr_signed(sub))
+		  break;
+
+	    if (res.base == 0 || res.base == 2 || res.base == 3)
+		  break;
+
+	      /* Handle the special case of a -1 constant. Make the
+	         result a 1. */
+	    if (res.base == 1) {
+		  res.base = allocate_vector(wid);
+		  fprintf(vvp_out, "   %%movi %d, 1, %u;\n",
+			  res.base, res.wid);
+		  break;
+	    }
+
+	    fprintf(vvp_out, "   %%cmpi/s %d, 0, %u;\n", res.base, res.wid);
+	    fprintf(vvp_out, "   %%jmp/0xz T_%u.%u, 5;\n", thread_count, local_count);
+	    fprintf(vvp_out, "   %%inv %d, %u;\n", res.base, res.wid);
+	    fprintf(vvp_out, "   %%addi %d, 1, %u;\n", res.base, res.wid);
+	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_count);
+	    local_count += 1;
+	    break;
+
 	  default:
 	    fprintf(stderr, "vvp error: unhandled unary: %c\n",
 		    ivl_expr_opcode(exp));
