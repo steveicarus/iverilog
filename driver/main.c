@@ -734,6 +734,13 @@ int main(int argc, char **argv)
 	   how to handle them. */
       fprintf(iconfig_file, "sys_func:%s%csystem.sft\n", base, sep);
 
+	/* If verilog-ams is enabled, then include the va_math module
+	   as well. */
+      if (strcmp(gen_verilog_ams,"verilog-ams") == 0) {
+	    fprintf(iconfig_file, "sys_func:%s%cva_math.sft\n", base, sep);
+	    fprintf(iconfig_file, "module:va_math\n");
+      }
+
       if (mtm != 0) fprintf(iconfig_file, "-T:%s\n", mtm);
       fprintf(iconfig_file, "generation:%s\n", generation);
       fprintf(iconfig_file, "generation:%s\n", gen_specify);
