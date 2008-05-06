@@ -995,7 +995,7 @@ void Module::dump(ostream&out) const
 		  out << "/* ERROR */;" << endl;
       }
 
-      typedef list<pair<perm_string,LineInfo*> >::const_iterator genvar_iter_t;
+      typedef map<perm_string,LineInfo*>::const_iterator genvar_iter_t;
       for (genvar_iter_t cur = genvars.begin()
 		 ; cur != genvars.end() ; cur++) {
 	    out << "    genvar " << ((*cur).first) << ";" << endl;

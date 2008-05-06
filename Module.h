@@ -121,7 +121,7 @@ class Module : public PScope, public LineInfo {
 
 	/* The module has a list of genvars that may be used in
 	   various generate schemes. */
-      list<pair<perm_string,LineInfo*> > genvars;
+      map<perm_string,LineInfo*> genvars;
 
 	/* the module has a list of generate schemes that appear in
 	   the module definition. These are used at elaboration time. */

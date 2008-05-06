@@ -191,7 +191,7 @@ PEIdent::~PEIdent()
 
 /*
  * An identifier can be in a constant expression if (and only if) it is
- * a parameter.
+ * a parameter or genvar.
  *
  * NOTE: This test does not work if the name is hierarchical!
  */
@@ -210,6 +210,11 @@ bool PEIdent::is_constant(Module*mod) const
       { map<perm_string,Module::param_expr_t>::const_iterator cur;
         cur = mod->localparams.find(tmp);
 	if (cur != mod->localparams.end()) return true;
+      }
+
+      { map<perm_string,LineInfo*>::const_iterator cur;
+        cur = mod->genvars.find(tmp);
+	if (cur != mod->genvars.end()) return true;
       }
 
       return false;

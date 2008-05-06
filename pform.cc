@@ -369,8 +369,7 @@ void pform_genvars(const struct vlltype&li, list<perm_string>*names)
       for (cur = names->begin(); cur != names->end() ; *cur++) {
 	    LineInfo*lni = new LineInfo();
 	    FILE_NAME(lni, li);
-	    pform_cur_module->genvars.push_back(
-	          pair<perm_string,LineInfo*>(*cur, lni));
+	    pform_cur_module->genvars[*cur] = lni;
       }
 
       delete names;
