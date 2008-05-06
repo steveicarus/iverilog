@@ -235,6 +235,8 @@ NetNet* NetEBComp::synthesize(Design*des)
       osig->local_flag(true);
       osig->data_type(IVL_VT_LOGIC);
 
+      bool signed_compare = lsig->get_signed() && rsig->get_signed();
+
 	/* Handle the special case of a single bit equality
 	   operation. Make an XNOR gate instead of a comparator. */
       if ((width == 1) && ((op_ == 'e') || (op_ == 'E')) && !real_args) {
@@ -274,9 +276,11 @@ NetNet* NetEBComp::synthesize(Design*des)
       switch (op_) {
 	  case '<':
 	    connect(dev->pin_ALB(), osig->pin(0));
+	    dev->set_signed(signed_compare);
 	    break;
 	  case '>':
 	    connect(dev->pin_AGB(), osig->pin(0));
+	    dev->set_signed(signed_compare);
 	    break;
 	  case 'E': // === ?
 	    if (real_args) {
@@ -290,9 +294,11 @@ NetNet* NetEBComp::synthesize(Design*des)
 	    break;
 	  case 'G': // >=
 	    connect(dev->pin_AGEB(), osig->pin(0));
+	    dev->set_signed(signed_compare);
 	    break;
 	  case 'L': // <=
 	    connect(dev->pin_ALEB(), osig->pin(0));
+	    dev->set_signed(signed_compare);
 	    break;
 	  case 'N': // !==
 	    if (real_args) {
@@ -923,6 +929,7 @@ NetNet* NetESelect::synthesize(Design *des)
 
 	    connect(pad->pin(1), sub->pin(0));
 	    connect(pad->pin(0), net->pin(0));
+	    net->set_signed(true);
 
       } else {
 
