@@ -2466,13 +2466,17 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    ivl_expr_t pex = ivl_parameter_expr(par);
 	    switch (ivl_expr_type(pex)) {
 		case IVL_EX_STRING:
-		  fprintf(vvp_out, "P_%p .param/str \"%s\", \"%s\";\n",
+		  fprintf(vvp_out, "P_%p .param/str \"%s\" %d %d, \"%s\";\n",
 			  par, ivl_parameter_basename(par),
+			  ivl_file_table_index(ivl_parameter_file(par)),
+			  ivl_parameter_lineno(par),
 			  ivl_expr_string(pex));
 		  break;
 		case IVL_EX_NUMBER:
-		  fprintf(vvp_out, "P_%p .param/l \"%s\", %sC4<",
+		  fprintf(vvp_out, "P_%p .param/l \"%s\" %d %d, %sC4<",
 			  par, ivl_parameter_basename(par),
+			  ivl_file_table_index(ivl_parameter_file(par)),
+			  ivl_parameter_lineno(par),
 			  ivl_expr_signed(pex)? "+":"");
 		  { const char*bits = ivl_expr_bits(pex);
 		    unsigned nbits = ivl_expr_width(pex);
@@ -2483,8 +2487,10 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 		  fprintf(vvp_out, ">;\n");
 		  break;
 		case IVL_EX_REALNUM:
-		  fprintf(vvp_out, "P_%p .param/real \"%s\", %s; value=%g\n",
+		  fprintf(vvp_out, "P_%p .param/real \"%s\" %d %d, %s; value=%g\n",
 			  par, ivl_parameter_basename(par),
+			  ivl_file_table_index(ivl_parameter_file(par)),
+			  ivl_parameter_lineno(par),
 			  draw_Cr_to_string(ivl_expr_dvalue(pex)),
 			  ivl_expr_dvalue(pex));
 		  break;

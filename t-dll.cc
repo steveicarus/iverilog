@@ -470,6 +470,8 @@ void dll_target::make_scope_parameters(ivl_scope_t scope, const NetScope*net)
 	    ivl_parameter_t cur_par = scope->param_ + idx;
 	    cur_par->basename = (*cur_pit).first;
 	    cur_par->scope = scope;
+	    cur_par->file = (*cur_pit).second.file;
+	    cur_par->lineno = (*cur_pit).second.lineno;
 
 	    NetExpr*etmp = (*cur_pit).second.expr;
 	    make_scope_param_expr(cur_par, etmp);
@@ -482,6 +484,8 @@ void dll_target::make_scope_parameters(ivl_scope_t scope, const NetScope*net)
 	    ivl_parameter_t cur_par = scope->param_ + idx;
 	    cur_par->basename = (*cur_pit).first;
 	    cur_par->scope = scope;
+	    cur_par->file = (*cur_pit).second.file;
+	    cur_par->lineno = (*cur_pit).second.lineno;
 
 	    NetExpr*etmp = (*cur_pit).second.expr;
 	    make_scope_param_expr(cur_par, etmp);
@@ -2216,6 +2220,8 @@ void dll_target::signal(const NetNet*net)
 	   object, or creating the sigs_ array if this is the first
 	   signal. */
       obj->scope_ = find_scope(des_, net->scope());
+      obj->file = perm_string::literal("N/A");
+      obj->lineno = 0;
       assert(obj->scope_);
 
       if (obj->scope_->nsigs_ == 0) {

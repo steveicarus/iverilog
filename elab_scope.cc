@@ -45,7 +45,8 @@
 # include  <assert.h>
 
 void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
-				  Design*des, NetScope*scope)
+				  Design*des, NetScope*scope,
+				  perm_string file, unsigned lineno)
 {
       PExpr*ex = cur.expr;
       assert(ex);
@@ -81,7 +82,7 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
       }
 
       val = scope->set_parameter(name, val,
-				 msb, lsb, signed_flag);
+				 msb, lsb, signed_flag, file, lineno);
       assert(val);
       delete val;
 }
@@ -119,7 +120,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	    tmp->set_line(*((*cur).second.expr));
 	    tmp->cast_signed( (*cur).second.signed_flag );
 
-	    scope->set_parameter((*cur).first, tmp, 0, 0, false);
+	    scope->set_parameter((*cur).first, tmp, 0, 0, false,
+	                         (*cur).second.file, (*cur).second.lineno);
       }
 
       for (mparm_it_t cur = localparams.begin()
@@ -130,7 +132,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	    if ((*cur).second.msb)
 		  tmp->cast_signed( (*cur).second.signed_flag );
 
-	    scope->set_parameter((*cur).first, tmp, 0, 0, false);
+	    scope->set_parameter((*cur).first, tmp, 0, 0, false,
+	                         (*cur).second.file, (*cur).second.lineno);
       }
 
 
@@ -142,7 +145,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       for (mparm_it_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  cur ++) {
 
-	    elaborate_parm_item_((*cur).first, (*cur).second, des, scope);
+	    elaborate_parm_item_((*cur).first, (*cur).second, des, scope,
+	                         (*cur).second.file, (*cur).second.lineno);
       }
 
 	/* run parameter replacements that were collected from the
@@ -174,7 +178,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       for (mparm_it_t cur = localparams.begin()
 		 ; cur != localparams.end() ;  cur ++) {
 
-	    elaborate_parm_item_((*cur).first, (*cur).second, des, scope);
+	    elaborate_parm_item_((*cur).first, (*cur).second, des, scope,
+	                         (*cur).second.file, (*cur).second.lineno);
       }
 
 	// Run through the defparams for this module, elaborate the
@@ -339,6 +344,11 @@ bool PGenerate::generate_scope(Design*des, NetScope*container)
  */
 bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 {
+	// Check that the loop_index variable was declared in a
+	// genvar statement.
+
+	// MISSING CODE!
+
 	// We're going to need a genvar...
       int genvar;
 
@@ -354,12 +364,24 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    return false;
       }
 
+	// Since we will be adding the genvar value as a local parameter
+	// to each instances scope. We need to make sure a parameter does
+	// not already exist.
+      const NetExpr*tmsb;
+      const NetExpr*tlsb;
+      const NetExpr*texpr = container->get_parameter(loop_index, tmsb, tlsb);
+      if (texpr != 0) {
+	    cerr << get_fileline() << ": error: Cannot have a genvar "
+		 << "and parameter with the same name: " << loop_index << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
       genvar = init->value().as_long();
       delete init_ex;
 
       if (debug_scopes)
 	    cerr << get_fileline() << ": debug: genvar init = " << genvar << endl;
-
       container->genvar_tmp = loop_index;
       container->genvar_tmp_val = genvar;
       NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1);
@@ -397,7 +419,10 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 		  NetEConstParam*gp = new NetEConstParam(scope,
 							 loop_index,
 							 genvar_verinum);
-		  scope->set_localparam(loop_index, gp);
+		    // The file and line information should really come
+		    // from the genvar statement, not the for loop.
+		  scope->set_localparam(loop_index, gp, get_file(),
+		                        get_lineno());
 
 		  if (debug_scopes)
 			cerr << get_fileline() << ": debug: "

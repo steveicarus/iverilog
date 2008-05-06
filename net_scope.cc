@@ -104,7 +104,8 @@ void NetScope::set_line(perm_string file, perm_string def_file,
 }
 
 NetExpr* NetScope::set_parameter(perm_string key, NetExpr*expr,
-				 NetExpr*msb, NetExpr*lsb, bool signed_flag)
+				 NetExpr*msb, NetExpr*lsb, bool signed_flag,
+				 perm_string file, unsigned lineno)
 {
       param_expr_t&ref = parameters[key];
       NetExpr* res = ref.expr;
@@ -112,6 +113,8 @@ NetExpr* NetScope::set_parameter(perm_string key, NetExpr*expr,
       ref.msb = msb;
       ref.lsb = lsb;
       ref.signed_flag = signed_flag;
+      ref.file = file;
+      ref.lineno = lineno;
       return res;
 }
 
@@ -134,29 +137,30 @@ bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
 }
 
 /*
- * Return false if this creates a new parameter.
+ * Return false if the parameter does not already exist.
+ * A parameter is not automatically created.
  */
 bool NetScope::replace_parameter(perm_string key, NetExpr*expr)
 {
-      bool flag = true;
-      param_expr_t&ref = parameters[key];
+      bool flag = false;
 
-      NetExpr* res = ref.expr;
+      if (parameters.find(key) != parameters.end()) {
+	    param_expr_t&ref = parameters[key];
 
-      if (res) {
-	    delete res;
-      } else {
-	    flag = false;
-	    ref.msb = 0;
-	    ref.lsb = 0;
-	    ref.signed_flag = false;
+	    delete ref.expr;
+	    ref.expr = expr;
+	    flag = true;
       }
 
-      ref.expr = expr;
       return flag;
 }
 
-NetExpr* NetScope::set_localparam(perm_string key, NetExpr*expr)
+/*
+ * This is not really complete (msb, lsb, sign). It is currently only
+ * used to add a genver to the local parameter list.
+ */
+NetExpr* NetScope::set_localparam(perm_string key, NetExpr*expr,
+				  perm_string file, unsigned lineno)
 {
       param_expr_t&ref = localparams[key];
       NetExpr* res = ref.expr;
@@ -164,6 +168,8 @@ NetExpr* NetScope::set_localparam(perm_string key, NetExpr*expr)
       ref.msb = 0;
       ref.lsb = 0;
       ref.signed_flag = false;
+      ref.file = file;
+      ref.lineno = lineno;
       return res;
 }
 

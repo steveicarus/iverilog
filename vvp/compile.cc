@@ -1852,10 +1852,12 @@ void compile_thread(char*start_sym, char*flag)
 	    free(flag);
 }
 
-void compile_param_logic(char*label, char*name, char*value, bool signed_flag)
+void compile_param_logic(char*label, char*name, char*value, bool signed_flag,
+                         long file_idx, long lineno)
 {
       vvp_vector4_t value4 = c4string_to_vector4(value);
-      vpiHandle obj = vpip_make_binary_param(name, value4, signed_flag);
+      vpiHandle obj = vpip_make_binary_param(name, value4, signed_flag,
+                                             file_idx, lineno);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
@@ -1863,19 +1865,21 @@ void compile_param_logic(char*label, char*name, char*value, bool signed_flag)
       free(value);
 }
 
-void compile_param_string(char*label, char*name, char*value)
+void compile_param_string(char*label, char*name, char*value,
+                          long file_idx, long lineno)
 {
-      vpiHandle obj = vpip_make_string_param(name, value);
+      vpiHandle obj = vpip_make_string_param(name, value, file_idx, lineno);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
       free(label);
 }
 
-void compile_param_real(char*label, char*name, char*value)
+void compile_param_real(char*label, char*name, char*value,
+                        long file_idx, long lineno)
 {
       double dvalue = crstring_to_double(value);
-      vpiHandle obj = vpip_make_real_param(name, dvalue);
+      vpiHandle obj = vpip_make_real_param(name, dvalue, file_idx, lineno);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 

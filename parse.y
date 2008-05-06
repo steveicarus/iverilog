@@ -2087,7 +2087,7 @@ module_item
   | K_generate module_item_list_opt K_endgenerate
 
   | K_genvar list_of_identifiers ';'
-      { pform_genvars($2); }
+      { pform_genvars(@1, $2); }
 
   | K_for '(' IDENTIFIER '=' expression ';'
               expression ';'
@@ -2309,7 +2309,8 @@ parameter_assign
 		  } else {
 			pform_set_parameter(lex_strings.make($1),
 					    active_signed,
-					    active_range, tmp);
+					    active_range, tmp,
+					    @1.text, @1.first_line);
 		  }
 		  delete[]$1;
 		}
@@ -2331,7 +2332,8 @@ localparam_assign
 		  } else {
 			pform_set_localparam(lex_strings.make($1),
 					     active_signed,
-					     active_range, tmp);
+					     active_range, tmp,
+					     @1.text, @1.first_line);
 		  }
 		  delete[]$1;
 		}

@@ -658,17 +658,17 @@ statement
   /* Parameter statements come in a few simple forms. The most basic
      is the string parameter. */
 
-	| T_LABEL K_PARAM_STR T_STRING ',' T_STRING ';'
-		{ compile_param_string($1, $3, $5); }
+	| T_LABEL K_PARAM_STR T_STRING T_NUMBER T_NUMBER',' T_STRING ';'
+		{ compile_param_string($1, $3, $7, $4, $5); }
 
-	| T_LABEL K_PARAM_L T_STRING ',' T_SYMBOL ';'
-		{ compile_param_logic($1, $3, $5, false); }
+	| T_LABEL K_PARAM_L T_STRING T_NUMBER T_NUMBER',' T_SYMBOL ';'
+		{ compile_param_logic($1, $3, $7, false, $4, $5); }
 
-	| T_LABEL K_PARAM_L T_STRING ',' '+' T_SYMBOL ';'
-		{ compile_param_logic($1, $3, $6, true); }
+	| T_LABEL K_PARAM_L T_STRING T_NUMBER T_NUMBER',' '+' T_SYMBOL ';'
+		{ compile_param_logic($1, $3, $8, true, $4, $5); }
 
-	| T_LABEL K_PARAM_REAL T_STRING ',' T_SYMBOL ';'
-		{ compile_param_real($1, $3, $5); }
+	| T_LABEL K_PARAM_REAL T_STRING T_NUMBER T_NUMBER',' T_SYMBOL ';'
+		{ compile_param_real($1, $3, $7, $4, $5); }
 
   /* Oh and by the way, empty statements are OK as well. */
 

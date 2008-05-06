@@ -390,7 +390,8 @@ struct __vpiStringConst {
 };
 
 vpiHandle vpip_make_string_const(char*text, bool persistent =true);
-vpiHandle vpip_make_string_param(char*name, char*value);
+vpiHandle vpip_make_string_param(char*name, char*value,
+                                 long file_idx, long lineno);
 
 struct __vpiBinaryConst {
       struct __vpiHandle base;
@@ -403,7 +404,8 @@ struct __vpiBinaryConst {
 
 vpiHandle vpip_make_binary_const(unsigned wid, const char*bits);
 vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
-				 bool signed_flag);
+				 bool signed_flag,
+				 long file_idx, long lineno);
 
 struct __vpiDecConst {
       struct __vpiHandle base;
@@ -419,7 +421,8 @@ struct __vpiRealConst {
 };
 
 vpiHandle vpip_make_real_const(double value);
-vpiHandle vpip_make_real_param(char*name, double value);
+vpiHandle vpip_make_real_param(char*name, double value,
+                               long file_idx, long lineno);
 
 /*
  *  This one looks like a constant, but really is a vector in the current

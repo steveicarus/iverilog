@@ -509,6 +509,8 @@ struct ivl_parameter_s {
       perm_string basename;
       ivl_scope_t scope;
       ivl_expr_t  value;
+      perm_string file;
+      unsigned lineno;
 };
 /*
  * All we know about a process it its type (initial or always) and the
@@ -581,6 +583,8 @@ struct ivl_signal_s {
       ivl_signal_type_t type_;
       ivl_signal_port_t port_;
       ivl_variable_type_t data_type;
+      perm_string file;
+      unsigned lineno;
 
       unsigned width_;
       unsigned signed_ : 1;

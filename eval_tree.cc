@@ -1217,7 +1217,12 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 
 	// The result can be saved as the value of the parameter for
 	// future reference, and return a copy to the caller.
-      scope_->replace_parameter(name_, res);
+      bool flag = scope_->replace_parameter(name_, res);
+      if (!flag) {
+	    cerr << get_fileline() << ": internal error: Could not "
+		 << "replace parameter expression for " << name_ << endl;
+	    return 0;
+      }
 
 	/* Return as a result a NetEConstParam or NetECRealParam
 	   object, depending on the type of the expression. */

@@ -1344,6 +1344,18 @@ extern "C" ivl_expr_t ivl_parameter_expr(ivl_parameter_t net)
       return net->value;
 }
 
+extern "C" const char* ivl_parameter_file(ivl_parameter_t net)
+{
+      assert(net);
+      return net->file.str();
+}
+
+extern "C" unsigned ivl_parameter_lineno(ivl_parameter_t net)
+{
+      assert(net);
+      return net->lineno;
+}
+
 extern "C" ivl_scope_t ivl_parameter_scope(ivl_parameter_t net)
 {
       assert(net);
@@ -1737,6 +1749,18 @@ extern "C" int ivl_signal_local(ivl_signal_t net)
 extern "C" int ivl_signal_signed(ivl_signal_t net)
 {
       return net->signed_;
+}
+
+extern "C" const char* ivl_signal_file(ivl_signal_t net)
+{
+      assert(net);
+      return net->file.str();
+}
+
+extern "C" unsigned ivl_signal_lineno(ivl_signal_t net)
+{
+      assert(net);
+      return net->lineno;
 }
 
 extern "C" int ivl_signal_integer(ivl_signal_t net)

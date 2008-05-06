@@ -32,9 +32,6 @@ static int string_get(int code, vpiHandle ref)
     struct __vpiStringConst*rfp;
 
       switch (code) {
-          case vpiLineNo:
-	      return 0;  // Not implemented for now!
-
           case vpiSize:
 	      rfp = (struct __vpiStringConst*)ref;
 
@@ -247,7 +244,22 @@ vpiHandle vpip_make_string_const(char*text, bool persistent_flag)
 struct __vpiStringParam  : public __vpiStringConst {
       const char*basename;
       struct __vpiScope* scope;
+      unsigned file_idx;
+      unsigned lineno;
 };
+
+static int string_param_get(int code, vpiHandle ref)
+{
+      struct __vpiStringParam*rfp = (struct __vpiStringParam*)ref;
+
+      assert(ref->vpi_type->type_code == vpiParameter);
+
+      if (code == vpiLineNo) {
+	    return rfp->lineno;
+      }
+
+      return string_get(code, ref);
+}
 
 static char* string_param_get_str(int code, vpiHandle obj)
 {
@@ -255,9 +267,10 @@ static char* string_param_get_str(int code, vpiHandle obj)
 
       assert(obj->vpi_type->type_code == vpiParameter);
 
-      if (code == vpiFile) {  // Not implemented for now!
-	    return simple_set_rbuf_str(file_names[0]);
+      if (code == vpiFile) {
+	    return simple_set_rbuf_str(file_names[rfp->file_idx]);
       }
+
       return generic_get_str(code, &rfp->scope->base, rfp->basename, NULL);
 }
 
@@ -278,7 +291,7 @@ static vpiHandle string_param_handle(int code, vpiHandle obj)
 
 static const struct __vpirt vpip_string_param_rt = {
       vpiParameter,
-      string_get,
+      string_param_get,
       string_param_get_str,
       string_value,
       0,
@@ -291,7 +304,8 @@ static const struct __vpirt vpip_string_param_rt = {
 };
 
 
-vpiHandle vpip_make_string_param(char*name, char*text)
+vpiHandle vpip_make_string_param(char*name, char*text,
+                                 long file_idx, long lineno)
 {
       struct __vpiStringParam*obj;
 
@@ -302,6 +316,8 @@ vpiHandle vpip_make_string_param(char*name, char*text)
       obj->value_len = 0;
       obj->basename = name;
       obj->scope = vpip_peek_current_scope();
+      obj->file_idx = (unsigned) file_idx;
+      obj->lineno = (unsigned) lineno;
 
       vpip_process_string(obj);
 
@@ -426,7 +442,22 @@ vpiHandle vpip_make_binary_const(unsigned wid, const char*bits)
 struct __vpiBinaryParam  : public __vpiBinaryConst {
       const char*basename;
       struct __vpiScope*scope;
+      unsigned file_idx;
+      unsigned lineno;
 };
+
+static int binary_param_get(int code, vpiHandle ref)
+{
+      struct __vpiBinaryParam*rfp = (struct __vpiBinaryParam*)ref;
+
+      assert(ref->vpi_type->type_code == vpiParameter);
+
+      if (code == vpiLineNo) {
+	    return rfp->lineno;
+      }
+
+      return binary_get(code, ref);
+}
 
 static char* binary_param_get_str(int code, vpiHandle obj)
 {
@@ -434,9 +465,10 @@ static char* binary_param_get_str(int code, vpiHandle obj)
 
       assert(obj->vpi_type->type_code == vpiParameter);
 
-      if (code == vpiFile) {  // Not implemented for now!
-	    return simple_set_rbuf_str(file_names[0]);
+      if (code == vpiFile) {
+	    return simple_set_rbuf_str(file_names[rfp->file_idx]);
       }
+
       return generic_get_str(code, &rfp->scope->base, rfp->basename, NULL);
 }
 
@@ -457,7 +489,7 @@ static vpiHandle binary_param_handle(int code, vpiHandle obj)
 
 static const struct __vpirt vpip_binary_param_rt = {
       vpiParameter,
-      binary_get,
+      binary_param_get,
       binary_param_get_str,
       binary_value,
       0,
@@ -470,7 +502,8 @@ static const struct __vpirt vpip_binary_param_rt = {
 };
 
 vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
-				 bool signed_flag)
+				 bool signed_flag,
+				 long file_idx, long lineno)
 {
       struct __vpiBinaryParam*obj = new __vpiBinaryParam;
 
@@ -480,6 +513,8 @@ vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
       obj->sized_flag = 0;
       obj->basename = name;
       obj->scope = vpip_peek_current_scope();
+      obj->file_idx = (unsigned) file_idx;
+      obj->lineno = (unsigned) lineno;
 
       return &obj->base;
 }
@@ -654,7 +689,22 @@ vpiHandle vpip_make_real_const(double value)
 struct __vpiRealParam  : public __vpiRealConst {
       const char*basename;
       struct __vpiScope* scope;
+      unsigned file_idx;
+      unsigned lineno;
 };
+
+static int real_param_get(int code, vpiHandle ref)
+{
+      struct __vpiRealParam*rfp = (struct __vpiRealParam*)ref;
+
+      assert(ref->vpi_type->type_code == vpiParameter);
+
+      if (code == vpiLineNo) {
+	    return rfp->lineno;
+      }
+
+      return real_get(code, ref);
+}
 
 static char* real_param_get_str(int code, vpiHandle obj)
 {
@@ -662,9 +712,10 @@ static char* real_param_get_str(int code, vpiHandle obj)
 
       assert(obj->vpi_type->type_code == vpiParameter);
 
-      if (code == vpiFile) {  // Not implemented for now!
-            return simple_set_rbuf_str(file_names[0]);
+      if (code == vpiFile) {
+            return simple_set_rbuf_str(file_names[rfp->file_idx]);
       }
+
       return generic_get_str(code, &rfp->scope->base, rfp->basename, NULL);
 }
 
@@ -685,7 +736,7 @@ static vpiHandle real_param_handle(int code, vpiHandle obj)
 
 static const struct __vpirt vpip_real_param_rt = {
       vpiParameter,
-      real_get,
+      real_param_get,
       real_param_get_str,
       real_value,
       0,
@@ -697,7 +748,8 @@ static const struct __vpirt vpip_real_param_rt = {
       0
 };
 
-vpiHandle vpip_make_real_param(char*name, double value)
+vpiHandle vpip_make_real_param(char*name, double value,
+                               long file_idx, long lineno)
 {
       struct __vpiRealParam*obj;
 
@@ -707,6 +759,8 @@ vpiHandle vpip_make_real_param(char*name, double value)
       obj->value = value;
       obj->basename = name;
       obj->scope = vpip_peek_current_scope();
+      obj->file_idx = (unsigned) file_idx;
+      obj->lineno = (unsigned) lineno;
 
       return &obj->base;
 }

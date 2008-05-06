@@ -82,6 +82,8 @@ class Module : public PScope, public LineInfo {
 	    PExpr*expr;
 	    PExpr*msb;
 	    PExpr*lsb;
+	    perm_string file;
+	    unsigned lineno;
 	    bool signed_flag;
       };
       map<perm_string,param_expr_t>parameters;
@@ -119,7 +121,7 @@ class Module : public PScope, public LineInfo {
 
 	/* The module has a list of genvars that may be used in
 	   various generate schemes. */
-      list<perm_string> genvars;
+      list<pair<perm_string,LineInfo*> > genvars;
 
 	/* the module has a list of generate schemes that appear in
 	   the module definition. These are used at elaboration time. */
@@ -156,7 +158,8 @@ class Module : public PScope, public LineInfo {
       map<perm_string,PFunction*> funcs_;
 
       static void elaborate_parm_item_(perm_string name, const param_expr_t&cur,
-				       Design*des, NetScope*scope);
+				       Design*des, NetScope*scope,
+				       perm_string file, unsigned lineno);
 
     private: // Not implemented
       Module(const Module&);

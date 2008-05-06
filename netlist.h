@@ -3294,8 +3294,10 @@ class NetScope : public Attrib {
 	   previous expression, if there was one. */
 
       NetExpr* set_parameter(perm_string name, NetExpr*val,
-			     NetExpr*msb, NetExpr*lsb, bool signed_flag);
-      NetExpr* set_localparam(perm_string name, NetExpr*val);
+			     NetExpr*msb, NetExpr*lsb, bool signed_flag,
+			     perm_string file, unsigned lineno);
+      NetExpr* set_localparam(perm_string name, NetExpr*val,
+			      perm_string file, unsigned lineno);
 
       const NetExpr*get_parameter(const char* name,
 				  const NetExpr*&msb,
@@ -3410,6 +3412,8 @@ class NetScope : public Attrib {
 	    NetExpr*expr;
 	    NetExpr*msb;
 	    NetExpr*lsb;
+	    perm_string file;
+	    unsigned lineno;
 	    bool signed_flag;
       };
       map<perm_string,param_expr_t>parameters;

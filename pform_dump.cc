@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -995,10 +995,10 @@ void Module::dump(ostream&out) const
 		  out << "/* ERROR */;" << endl;
       }
 
-      typedef list<perm_string>::const_iterator genvar_iter_t;
+      typedef list<pair<perm_string,LineInfo*> >::const_iterator genvar_iter_t;
       for (genvar_iter_t cur = genvars.begin()
 		 ; cur != genvars.end() ; cur++) {
-	    out << "    genvar " << (*cur) << ";" << endl;
+	    out << "    genvar " << ((*cur).first) << ";" << endl;
       }
 
       typedef list<PGenerate*>::const_iterator genscheme_iter_t;
@@ -1123,4 +1123,3 @@ void PUdp::dump(ostream&out) const
 
       out << "endprimitive" << endl;
 }
-

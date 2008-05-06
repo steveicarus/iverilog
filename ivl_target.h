@@ -1339,10 +1339,17 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
  * ivl_parameter_expr
  *    Return the value of the parameter. This should be a simple
  *    constant expression, an IVL_EX_STRING or IVL_EX_NUMBER.
+ *
+ * ivl_parameter_file
+ * ivl_parameter_lineno
+ *    Returns the file and line where this parameter is define
  */
 extern const char* ivl_parameter_basename(ivl_parameter_t net);
 extern ivl_scope_t ivl_parameter_scope(ivl_parameter_t net);
 extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
+
+extern const char* ivl_parameter_file(ivl_parameter_t net);
+extern unsigned ivl_parameter_lineno(ivl_parameter_t net);
 
 
 /* SCOPE
@@ -1586,6 +1593,10 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  *    the attribute value (a string) associated with a key. This
  *    function returns the attribute value for the given key. If the
  *    key does not exist, the function returns 0.
+ *
+ * ivl_signal_file
+ * ivl_signal_lineno
+ *    Returns the file and line where this signal is defined.
  */
 
 extern ivl_nexus_t ivl_signal_nex(ivl_signal_t net, unsigned word);
@@ -1606,6 +1617,9 @@ extern ivl_variable_type_t ivl_signal_data_type(ivl_signal_t net);
 extern const char* ivl_signal_name(ivl_signal_t net);
 extern const char* ivl_signal_basename(ivl_signal_t net);
 extern const char* ivl_signal_attr(ivl_signal_t net, const char*key);
+
+extern const char* ivl_signal_file(ivl_signal_t net);
+extern unsigned ivl_signal_lineno(ivl_signal_t net);
 
 extern unsigned        ivl_signal_attr_cnt(ivl_signal_t net);
 extern ivl_attribute_t ivl_signal_attr_val(ivl_signal_t net, unsigned idx);

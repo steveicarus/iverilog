@@ -233,10 +233,13 @@ extern void compile_timescale(long units, long precision);
 extern void compile_vpi_symbol(const char*label, vpiHandle obj);
 extern void compile_vpi_lookup(vpiHandle *objref, char*label);
 
-extern void compile_param_string(char*label, char*name, char*value);
+extern void compile_param_string(char*label, char*name, char*value,
+                                 long file_idx, long lineno);
 extern void compile_param_logic(char*label, char*name, char*value,
-				bool signed_flag);
-extern void compile_param_real(char*label, char*name, char*value);
+				bool signed_flag,
+                                long file_idx, long lineno);
+extern void compile_param_real(char*label, char*name, char*value,
+                               long file_idx, long lineno);
 
 /*
  * This function schedules a lookup of an indexed label. The ref

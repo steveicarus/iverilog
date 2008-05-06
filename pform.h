@@ -1,7 +1,7 @@
 #ifndef __pform_H
 #define __pform_H
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.91 2007/05/24 04:07:12 steve Exp $"
-#endif
 
 # include  "netlist.h"
 # include  "HName.h"
@@ -175,13 +172,13 @@ extern PBlock*pform_push_block_scope(char*name, PBlock::BL_TYPE tt);
 
 
 extern verinum* pform_verinum_with_size(verinum*s, verinum*val,
-					const char*file, unsigned loneno);
+					const char*file, unsigned lineno);
 
 /*
  * This function takes the list of names as new genvars to declare in
  * the current module scope.
  */
-extern void pform_genvars(list<perm_string>*names);
+extern void pform_genvars(const struct vlltype&li, list<perm_string>*names);
 
 extern void pform_start_generate_for(const struct vlltype&li,
 				     char*ident1,
@@ -263,11 +260,13 @@ extern void pform_set_type_attrib(perm_string name, const string&key,
 extern void pform_set_parameter(perm_string name,
 				bool signed_flag,
 				svector<PExpr*>*range,
-				PExpr*expr);
+				PExpr*expr,
+				const char*file, unsigned lineno);
 extern void pform_set_localparam(perm_string name,
-				bool signed_flag,
-				svector<PExpr*>*range,
-				 PExpr*expr);
+				 bool signed_flag,
+				 svector<PExpr*>*range,
+				 PExpr*expr,
+				 const char*file, unsigned lineno);
 extern void pform_set_defparam(const pform_name_t&name, PExpr*expr);
 
 /*

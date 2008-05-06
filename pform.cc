@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -363,11 +363,14 @@ void pform_endmodule(const char*name)
       pform_cur_module = 0;
 }
 
-void pform_genvars(list<perm_string>*names)
+void pform_genvars(const struct vlltype&li, list<perm_string>*names)
 {
       list<perm_string>::const_iterator cur;
       for (cur = names->begin(); cur != names->end() ; *cur++) {
-	    pform_cur_module->genvars.push_back( *cur );
+	    LineInfo*lni = new LineInfo();
+	    FILE_NAME(lni, li);
+	    pform_cur_module->genvars.push_back(
+	          pair<perm_string,LineInfo*>(*cur, lni));
       }
 
       delete names;
@@ -1639,7 +1642,8 @@ void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r)
 }
 
 void pform_set_parameter(perm_string name, bool signed_flag,
-			 svector<PExpr*>*range, PExpr*expr)
+			 svector<PExpr*>*range, PExpr*expr,
+			 const char*file, unsigned lineno)
 {
       assert(expr);
       pform_cur_module->parameters[name].expr = expr;
@@ -1655,12 +1659,15 @@ void pform_set_parameter(perm_string name, bool signed_flag,
 	    pform_cur_module->parameters[name].lsb = 0;
       }
       pform_cur_module->parameters[name].signed_flag = signed_flag;
+      pform_cur_module->parameters[name].file = filename_strings.make(file);
+      pform_cur_module->parameters[name].lineno = lineno;
 
       pform_cur_module->param_names.push_back(name);
 }
 
 void pform_set_localparam(perm_string name, bool signed_flag,
-			 svector<PExpr*>*range, PExpr*expr)
+			  svector<PExpr*>*range, PExpr*expr,
+			  const char*file, unsigned lineno)
 {
       assert(expr);
       pform_cur_module->localparams[name].expr = expr;
@@ -1676,6 +1683,8 @@ void pform_set_localparam(perm_string name, bool signed_flag,
 	    pform_cur_module->localparams[name].lsb  = 0;
       }
       pform_cur_module->localparams[name].signed_flag = signed_flag;
+      pform_cur_module->localparams[name].file = filename_strings.make(file);
+      pform_cur_module->localparams[name].lineno = lineno;
 }
 
 void pform_set_specparam(perm_string name, PExpr*expr)
@@ -1925,4 +1934,3 @@ void pform_error_nested_modules()
       cerr << pform_cur_module->get_fileline() << ": error: original module "
               "(" << pform_cur_module->mod_name() << ") defined here." << endl;
 }
-
