@@ -40,6 +40,10 @@ void functor_t::process(class Design*, class NetProcTop*)
 {
 }
 
+void functor_t::lpm_abs(class Design*, class NetAbs*)
+{
+}
+
 void functor_t::lpm_add_sub(class Design*, class NetAddSub*)
 {
 }
@@ -172,6 +176,11 @@ void Design::functor(functor_t*fun)
 
 void NetNode::functor_node(Design*, functor_t*)
 {
+}
+
+void NetAbs::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_abs(des, this);
 }
 
 void NetAddSub::functor_node(Design*des, functor_t*fun)

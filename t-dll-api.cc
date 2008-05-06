@@ -864,6 +864,10 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 {
       assert(net);
       switch (net->type) {
+	  case IVL_LPM_ABS:
+	    assert(idx == 0);
+	    return net->u_.arith.a;
+
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
@@ -1002,6 +1006,7 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
       assert(net);
 
       switch (net->type) {
+	  case IVL_LPM_ABS:
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
@@ -1118,6 +1123,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_FF:
 	  case IVL_LPM_MUX:
 	    return 0;
+	  case IVL_LPM_ABS:
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:

@@ -579,6 +579,27 @@ class NetNet  : public NetObj {
 };
 
 /*
+ * This class implements the LPM_ABS component. The node has a single
+ * input, a signe expression, that it converts to the absolute
+ * value. The gate is simple: pin(0) is the output and pin(1) is the input.
+ */
+class NetAbs  : public NetNode {
+
+    public:
+      NetAbs(NetScope*s, perm_string n, unsigned width);
+      ~NetAbs();
+
+      unsigned width() const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+      virtual void functor_node(Design*des, functor_t*fun);
+
+    private:
+      unsigned width_;
+};
+
+/*
  * This class implements the LPM_ADD_SUB component as described in the
  * EDIF LPM Version 2 1 0 standard. It is used as a structural
  * implementation of the + and - operators.

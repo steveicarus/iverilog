@@ -48,6 +48,9 @@ struct functor_t {
 	/* This method is called for each process in the design. */
       virtual void process(class Design*des, class NetProcTop*);
 
+	/* This method is called for each structural abs(). */
+      virtual void lpm_abs(class Design*des, class NetAbs*);
+
 	/* This method is called for each structural adder. */
       virtual void lpm_add_sub(class Design*des, class NetAddSub*);
 

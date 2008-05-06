@@ -175,6 +175,32 @@ static void show_lpm_arithmetic_pins(ivl_lpm_t net)
       fprintf(out, "    DataB: %s\n", nex? ivl_nexus_name(nex) : "");
 }
 
+static void show_lpm_abs(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_ABS %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      ivl_nexus_t nex;
+      nex = ivl_lpm_q(net, 0);
+      fprintf(out, "    Q: %s\n", ivl_nexus_name(ivl_lpm_q(net, 0)));
+
+      nex = ivl_lpm_data(net, 0);
+      fprintf(out, "    D: %s\n", nex? ivl_nexus_name(nex) : "");
+      if (nex == 0) {
+	    fprintf(out, "    ERROR: missing input\n");
+	    stub_errors += 1;
+	    return;
+      }
+
+      if (width_of_nexus(nex) != width) {
+	    fprintf(out, "    ERROR: D width (%d) is wrong\n",
+		    width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+}
+
 static void show_lpm_add(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -795,6 +821,10 @@ static void show_lpm(ivl_lpm_t net)
 {
 
       switch (ivl_lpm_type(net)) {
+
+	  case IVL_LPM_ABS:
+	    show_lpm_abs(net);
+	    break;
 
 	  case IVL_LPM_ADD:
 	    show_lpm_add(net);

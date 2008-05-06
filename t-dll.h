@@ -70,6 +70,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool ureduce(const NetUReduce*);
       void net_case_cmp(const NetCaseCmp*);
       void udp(const NetUDP*);
+      void lpm_abs(const NetAbs*);
       void lpm_add_sub(const NetAddSub*);
       bool lpm_array_dq(const NetArrayDq*);
       void lpm_clshift(const NetCLShift*);

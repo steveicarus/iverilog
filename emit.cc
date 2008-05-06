@@ -49,6 +49,12 @@ bool NetUDP::emit_node(struct target_t*tgt) const
       return true;
 }
 
+bool NetAbs::emit_node(struct target_t*tgt) const
+{
+      tgt->lpm_abs(this);
+      return true;
+}
+
 bool NetAddSub::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_add_sub(this);
