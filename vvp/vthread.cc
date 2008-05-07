@@ -401,6 +401,14 @@ void vthread_schedule_list(vthread_t thr)
       schedule_vthread(thr, 0);
 }
 
+bool of_ABS_WR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned dst = cp->bit_idx[0];
+      unsigned src = cp->bit_idx[1];
+
+      thr->words[dst].w_real = fabs(thr->words[src].w_real);
+      return true;
+}
 
 bool of_AND(vthread_t thr, vvp_code_t cp)
 {

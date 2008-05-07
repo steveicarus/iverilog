@@ -32,6 +32,7 @@ typedef bool (*vvp_code_fun)(vthread_t thr, vvp_code_t code);
  * implementation lives in the vthread.cc file so that they have
  * access to the thread context.
  */
+extern bool of_ABS_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ADD(vthread_t thr, vvp_code_t code);
 extern bool of_ADD_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ADDI(vthread_t thr, vvp_code_t code);

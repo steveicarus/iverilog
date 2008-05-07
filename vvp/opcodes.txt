@@ -19,6 +19,10 @@ the left operand, the right operand, and the base. The left operand is
 replaced with the result, which is the same width as the left and
 right operands.
 
+* %abs/wr <bit-o>, <bit-i>
+
+This instructure calculate the absolute value of a real value. It uses
+the fabs() function in the run-time to do the work.
 
 * %add <bit-l>, <bit-r>, <wid>
 

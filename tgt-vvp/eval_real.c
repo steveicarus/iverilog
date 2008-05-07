@@ -115,18 +115,36 @@ static int draw_binary_real(ivl_expr_t exp)
 
 	  case 'm': { // min(l,r)
 		int lab_out = local_count++;
+		int lab_r = local_count++;
+		  /* If r is NaN, the go out and accept l as result. */
+		fprintf(vvp_out, "  %%cmp/wr %d, %d; Is NaN?\n", r, r);
+		fprintf(vvp_out, "  %%jmp/0xz T_%d.%d, 4;\n", thread_count, lab_out);
+		  /* If l is NaN, the go out and accept r as result. */
+		fprintf(vvp_out, "  %%cmp/wr %d, %d; Is NaN?\n", l, l);
+		fprintf(vvp_out, "  %%jmp/0xz T_%d.%d, 4;\n", thread_count, lab_r);
+		  /* If l <= r then go out. */
 		fprintf(vvp_out, "   %%cmp/wr %d, %d;\n", r, l);
 		fprintf(vvp_out, "   %%jmp/0xz T_%d.%d, 5;\n", thread_count, lab_out);
-		fprintf(vvp_out, "   %%mov/wr %d, %d;\n", l, r);
+		  /* At this point we know we want r as the result. */
+		fprintf(vvp_out, "T_%d.%d %%mov/wr %d, %d;\n", thread_count, lab_r, l, r);
 		fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
 		break;
 	  }
 
 	  case 'M': { // max(l,r)
 		int lab_out = local_count++;
-		fprintf(vvp_out, "   %%cmp/wr %d, %d;\n", l, r);
-		fprintf(vvp_out, "   %%jmp/0xz T_%d.%d, 5;\n", thread_count, lab_out);
-		fprintf(vvp_out, "   %%mov/wr %d, %d;\n", l, r);
+		int lab_r = local_count++;
+		  /* If r is NaN, the go out and accept l as result. */
+		fprintf(vvp_out, "  %%cmp/wr %d, %d; Is NaN?\n", r, r);
+		fprintf(vvp_out, "  %%jmp/0xz T_%d.%d, 4;\n", thread_count, lab_out);
+		  /* If l is NaN, the go out and accept r as result. */
+		fprintf(vvp_out, "  %%cmp/wr %d, %d; Is NaN?\n", l, l);
+		fprintf(vvp_out, "  %%jmp/0xz T_%d.%d, 4;\n", thread_count, lab_r);
+		  /* if l >= r then go out. */
+		fprintf(vvp_out, "  %%cmp/wr %d, %d;\n", l, r);
+		fprintf(vvp_out, "  %%jmp/0xz T_%d.%d, 5;\n", thread_count, lab_out);
+
+		fprintf(vvp_out, "T_%d.%d %%mov/wr %d, %d;\n", thread_count, lab_r, l, r);
 		fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
 		break;
 	  }
@@ -439,22 +457,8 @@ static int draw_unary_real(ivl_expr_t exp)
       }
 
       if (ivl_expr_opcode(exp) == 'm') { /* abs(sube) */
-	    unsigned lab_positive = local_count++;
-	    unsigned lab_out = local_count++;
-	    int res = allocate_word();
-	    fprintf(vvp_out, "   %%loadi/wr %d, 0, 0; load 0.0 -- %d = abs(%d)\n",
-		    res, res, sub);
-	    fprintf(vvp_out, "   %%cmp/wr %d, %d;\n", sub, res);
-	    fprintf(vvp_out, "   %%jmp/0xz T_%d.%d, 5;\n",
-		    thread_count, lab_positive);
-	    fprintf(vvp_out, "   %%sub/wr %d, %d;\n", res, sub);
-	    fprintf(vvp_out, "   %%jmp T_%d.%d;\n", thread_count, lab_out);
-	    fprintf(vvp_out, "T_%d.%d %%mov/wr %d, %d;\n",
-		    thread_count, lab_positive, res, sub);
-	    fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
-
-	    clr_word(sub);
-	    return res;
+	    fprintf(vvp_out, "    %%abs/wr %d, %d;\n", sub, sub);
+	    return sub;
       }
 
       fprintf(vvp_out, "; XXXX unary (%c)\n", ivl_expr_opcode(exp));

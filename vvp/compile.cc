@@ -82,6 +82,7 @@ struct opcode_table_s {
 };
 
 const static struct opcode_table_s opcode_table[] = {
+      { "%abs/wr", of_ABS_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%add",    of_ADD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%add/wr", of_ADD_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%addi",   of_ADDI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
