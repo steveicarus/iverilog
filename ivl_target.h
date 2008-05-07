@@ -228,6 +228,7 @@ typedef enum ivl_logic_e {
 
 /* This is the type of an LPM object. */
 typedef enum ivl_lpm_type_e {
+      IVL_LPM_ABS    = 32,
       IVL_LPM_ADD    =  0,
       IVL_LPM_ARRAY  = 30,
       IVL_LPM_CONCAT = 16,

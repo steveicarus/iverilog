@@ -247,6 +247,15 @@ void NetObj::dump_obj_attr(ostream&o, unsigned ind) const
       }
 }
 
+void NetAbs::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "Absolute value (NetAbs): " << name()
+	<< " width=" << width() << " pin_count=" << pin_count()
+	<< endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
 void NetAddSub::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Adder (NetAddSub): " << name()

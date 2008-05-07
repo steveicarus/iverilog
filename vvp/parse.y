@@ -66,7 +66,8 @@ static struct __vpiModPath*modpath_dst = 0;
 };
 
 %token K_ALIAS K_ALIAS_S K_ALIAS_R
-%token K_ARITH_DIV K_ARITH_DIV_R K_ARITH_DIV_S K_ARITH_MOD K_ARITH_MOD_R
+%token K_ARITH_ABS K_ARITH_DIV K_ARITH_DIV_R K_ARITH_DIV_S K_ARITH_MOD
+%token K_ARITH_MOD_R
 %token K_ARITH_MULT K_ARITH_MULT_R K_ARITH_SUB K_ARITH_SUB_R
 %token K_ARITH_SUM K_ARITH_SUM_R K_ARITH_POW K_ARITH_POW_R K_ARITH_POW_S
 %token K_ARRAY K_ARRAY_I K_ARRAY_R K_ARRAY_S K_ARRAY_PORT
@@ -247,6 +248,14 @@ statement
         | T_LABEL K_CONCAT '[' T_NUMBER T_NUMBER T_NUMBER T_NUMBER ']' ','
 	  symbols ';'
                 { compile_concat($1, $4, $5, $6, $7, $10.cnt, $10.vect); }
+
+  /* The ABS statement is a special arithmetic node that takes 1
+     input. Re-use the symbols rule. */
+
+        | T_LABEL K_ARITH_ABS symbols ';'
+		{ struct symbv_s obj = $3;
+		  compile_arith_abs($1, obj.cnt, obj.vect);
+		}
 
   /* Arithmetic statements generate functor arrays of a given width
      that take like size input vectors. */

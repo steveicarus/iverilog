@@ -1307,6 +1307,38 @@ void dll_target::udp(const NetUDP*net)
       scope_add_logic(scope, obj);
 }
 
+void dll_target::lpm_abs(const NetAbs*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_ABS;
+      obj->name = net->name(); // NetAddSub names are permallocated.
+      assert(net->scope());
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+
+      obj->u_.arith.signed_flag = 0;
+      obj->width = net->width();
+
+      const Nexus*nex;
+	/* the output is pin(0) */
+      nex = net->pin(0).nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.arith.q = nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+
+      nex = net->pin(1).nexus();
+      assert(nex->t_cookie());
+
+	/* pin(1) is the input data. */
+      obj->u_.arith.a = nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      make_lpm_delays_(obj, net);
+
+      scope_add_lpm(obj->scope, obj);
+}
+
 void dll_target::lpm_add_sub(const NetAddSub*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;

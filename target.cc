@@ -81,6 +81,12 @@ bool target_t::ureduce(const NetUReduce*)
       return false;
 }
 
+void target_t::lpm_abs(const NetAbs*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetAbs." << endl;
+}
+
 void target_t::lpm_add_sub(const NetAddSub*)
 {
       cerr << "target (" << typeid(*this).name() << "): "

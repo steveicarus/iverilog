@@ -68,6 +68,7 @@ struct target_t {
       virtual bool func_def(const NetScope*);
 
 	/* LPM style components are handled here. */
+      virtual void lpm_abs(const NetAbs*);
       virtual void lpm_add_sub(const NetAddSub*);
       virtual bool lpm_array_dq(const NetArrayDq*);
       virtual void lpm_clshift(const NetCLShift*);

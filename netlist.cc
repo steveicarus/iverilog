@@ -1046,6 +1046,24 @@ const verinum& NetFF::sset_value() const
 }
 
 
+NetAbs::NetAbs(NetScope*s, perm_string n, unsigned w)
+: NetNode(s, n, 2), width_(w)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("Result"), 0);
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("DataA"), 0);
+}
+
+NetAbs::~NetAbs()
+{
+}
+
+unsigned NetAbs::width() const
+{
+      return width_;
+}
+
 /*
  * The NetAddSub class represents an LPM_ADD_SUB device. The pinout is
  * assigned like so:

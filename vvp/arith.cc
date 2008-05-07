@@ -55,6 +55,41 @@ void vvp_arith_::dispatch_operand_(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 }
 
 
+vvp_arith_abs::vvp_arith_abs()
+{
+}
+
+vvp_arith_abs::~vvp_arith_abs()
+{
+}
+
+void vvp_arith_abs::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+{
+      vvp_vector4_t out (bit.size(), BIT4_0);;
+
+      vvp_bit4_t cmp = compare_gtge_signed(bit, out, BIT4_1);
+      switch (cmp) {
+	  case BIT4_1: // bit >= 0
+	    out = bit;
+	    break;
+	  case BIT4_0: //  bit < 0
+	    out = ~bit;
+	    out += 1;
+	    break;
+	  default: // There's an X.
+	    out = vvp_vector4_t(bit.size(), BIT4_X);
+	    break;
+      }
+
+      vvp_send_vec4(ptr.ptr()->out, out);
+}
+
+void vvp_arith_abs::recv_real(vvp_net_ptr_t ptr, double bit)
+{
+      double out = fabs(bit);
+      vvp_send_real(ptr.ptr()->out, out);
+}
+
 // Division
 
 vvp_arith_div::vvp_arith_div(unsigned wid, bool signed_flag)

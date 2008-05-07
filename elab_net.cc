@@ -3212,6 +3212,32 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    connect(gate->pin(0), sig->pin(0));
 	    break;
 
+	  case 'm': // abs(sub_sig)
+	      // If this expression is self determined, get its width
+	      // from the sub_expression.
+	    if (owidth == 0)
+		  owidth = sub_sig->vector_width();
+
+	    if (sub_sig->vector_width() < owidth)
+		  sub_sig = pad_to_width(des, sub_sig, owidth);
+
+	    sig = new NetNet(scope, scope->local_symbol(),
+			     NetNet::WIRE, owidth);
+	    sig->set_line(*this);
+	    sig->data_type(sub_sig->data_type());
+	    sig->local_flag(true);
+
+	    NetAbs*tmp = new NetAbs(scope, scope->local_symbol(), sub_sig->vector_width());
+	    tmp->set_line(*this);
+	    des->add_node(tmp);
+	    tmp->rise_time(rise);
+	    tmp->fall_time(fall);
+	    tmp->decay_time(decay);
+
+	    connect(tmp->pin(1), sub_sig->pin(0));
+	    connect(tmp->pin(0), sig->pin(0));	    
+	    break;
+
 	  case 'N': // Reduction NOR
 	  case '!': // Reduction NOT
 	    reduction=true; rtype = NetUReduce::NOR; break;
@@ -3290,7 +3316,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    break;
 
 	  default:
-	    cerr << "internal error: Unhandled UNARY '" << op_ << "'" << endl;
+	    cerr << get_fileline() << ": internal error: Unhandled UNARY '" << op_ << "'" << endl;
 	    sig = 0;
       }
 
@@ -3465,6 +3491,18 @@ NetNet* PEUnary::elab_net_unary_real_(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    break;
  
+	  case 'm': // abs()
+	    NetAbs*tmp = new NetAbs(scope, scope->local_symbol(), 1);
+	    tmp->set_line(*this);
+	    tmp->rise_time(rise);
+	    tmp->fall_time(fall);
+	    tmp->decay_time(decay);
+	    des->add_node(tmp);
+
+	    connect(tmp->pin(0), sig->pin(0));
+	    connect(tmp->pin(1), sub_sig->pin(0));
+	    break;
+
 	  case '-':
 	    NetAddSub*sub = new NetAddSub(scope, scope->local_symbol(), 1);
 	    sub->attribute(perm_string::literal("LPM_Direction"),
