@@ -3227,15 +3227,16 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    sig->data_type(sub_sig->data_type());
 	    sig->local_flag(true);
 
-	    NetAbs*tmp = new NetAbs(scope, scope->local_symbol(), sub_sig->vector_width());
-	    tmp->set_line(*this);
-	    des->add_node(tmp);
-	    tmp->rise_time(rise);
-	    tmp->fall_time(fall);
-	    tmp->decay_time(decay);
+	    { NetAbs*tmp = new NetAbs(scope, scope->local_symbol(), sub_sig->vector_width());
+	      tmp->set_line(*this);
+	      des->add_node(tmp);
+	      tmp->rise_time(rise);
+	      tmp->fall_time(fall);
+	      tmp->decay_time(decay);
 
-	    connect(tmp->pin(1), sub_sig->pin(0));
-	    connect(tmp->pin(0), sig->pin(0));	    
+	      connect(tmp->pin(1), sub_sig->pin(0));
+	      connect(tmp->pin(0), sig->pin(0));	    
+	    }
 	    break;
 
 	  case 'N': // Reduction NOR
@@ -3491,17 +3492,18 @@ NetNet* PEUnary::elab_net_unary_real_(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    break;
  
-	  case 'm': // abs()
-	    NetAbs*tmp = new NetAbs(scope, scope->local_symbol(), 1);
-	    tmp->set_line(*this);
-	    tmp->rise_time(rise);
-	    tmp->fall_time(fall);
-	    tmp->decay_time(decay);
-	    des->add_node(tmp);
+	  case 'm': { // abs()
+		NetAbs*tmp = new NetAbs(scope, scope->local_symbol(), 1);
+		tmp->set_line(*this);
+		tmp->rise_time(rise);
+		tmp->fall_time(fall);
+		tmp->decay_time(decay);
+		des->add_node(tmp);
 
-	    connect(tmp->pin(0), sig->pin(0));
-	    connect(tmp->pin(1), sub_sig->pin(0));
-	    break;
+		connect(tmp->pin(0), sig->pin(0));
+		connect(tmp->pin(1), sub_sig->pin(0));
+		break;
+	  }
 
 	  case '-':
 	    NetAddSub*sub = new NetAddSub(scope, scope->local_symbol(), 1);
