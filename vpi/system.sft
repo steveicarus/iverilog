@@ -14,3 +14,4 @@ $dist_poisson      vpiSysFuncInt
 $dist_chi_square   vpiSysFuncInt
 $dist_t            vpiSysFuncInt
 $dist_erlang       vpiSysFuncInt
+$vvp_cpu_wordsize  vpiSysFuncInt

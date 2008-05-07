@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_table.c,v 1.26 2006/08/03 05:06:04 steve Exp $"
-#endif
 
 # include "vpi_config.h"
 # include "vpi_user.h"
@@ -40,6 +37,7 @@ extern void sys_sdf_register();
 extern void sys_time_register();
 extern void sys_vcd_register();
 extern void sys_vcdoff_register();
+extern void sys_special_register();
 
 #ifdef HAVE_LIBZ
 #ifdef HAVE_LIBBZ2
@@ -181,6 +179,6 @@ void (*vlog_startup_routines[])() = {
       sys_time_register,
       sys_lxt_or_vcd_register,
       sys_sdf_register,
+      sys_special_register,
       0
 };
-
