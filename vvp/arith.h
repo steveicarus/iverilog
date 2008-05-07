@@ -49,6 +49,17 @@ class vvp_arith_  : public vvp_net_fun_t {
       vvp_vector4_t x_val_;
 };
 
+class vvp_arith_abs : public vvp_net_fun_t {
+    public:
+      explicit vvp_arith_abs();
+      ~vvp_arith_abs();
+
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+      void recv_real(vvp_net_ptr_t ptr, double bit);
+
+    private:
+};
+
 class vvp_arith_div : public vvp_arith_ {
 
     public:

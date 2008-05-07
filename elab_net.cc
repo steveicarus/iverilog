@@ -3491,6 +3491,18 @@ NetNet* PEUnary::elab_net_unary_real_(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    break;
  
+	  case 'm': // abs()
+	    NetAbs*tmp = new NetAbs(scope, scope->local_symbol(), 1);
+	    tmp->set_line(*this);
+	    tmp->rise_time(rise);
+	    tmp->fall_time(fall);
+	    tmp->decay_time(decay);
+	    des->add_node(tmp);
+
+	    connect(tmp->pin(0), sig->pin(0));
+	    connect(tmp->pin(1), sub_sig->pin(0));
+	    break;
+
 	  case '-':
 	    NetAddSub*sub = new NetAddSub(scope, scope->local_symbol(), 1);
 	    sub->attribute(perm_string::literal("LPM_Direction"),

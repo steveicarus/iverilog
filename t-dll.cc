@@ -1323,7 +1323,7 @@ void dll_target::lpm_abs(const NetAbs*net)
       obj->u_.arith.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
-      nex = net->pin(0).nexus();
+      nex = net->pin(1).nexus();
       assert(nex->t_cookie());
 
 	/* pin(1) is the input data. */

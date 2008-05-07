@@ -679,6 +679,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       if (lpm) switch (ivl_lpm_type(lpm)) {
 
 	  case IVL_LPM_FF:
+	  case IVL_LPM_ABS:
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_ARRAY:
 	  case IVL_LPM_CONCAT:
@@ -1693,6 +1694,17 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net)
       return dly;
 }
 
+static void draw_lpm_abs(ivl_lpm_t net)
+{
+      const char*src_table[1];
+      draw_lpm_data_inputs(net, 0, 1, src_table);
+
+      const char*dly = draw_lpm_output_delay(net);
+
+      fprintf(vvp_out, "L_%p%s .abs %s;\n",
+	      net, dly, src_table[0]);
+}
+
 static void draw_lpm_add(ivl_lpm_t net)
 {
       const char*src_table[2];
@@ -2337,6 +2349,10 @@ static void draw_lpm_sign_ext(ivl_lpm_t net)
 static void draw_lpm_in_scope(ivl_lpm_t net)
 {
       switch (ivl_lpm_type(net)) {
+
+	  case IVL_LPM_ABS:
+	    draw_lpm_abs(net);
+	    return;
 
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_SUB:
