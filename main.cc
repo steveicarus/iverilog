@@ -85,6 +85,7 @@ const char*target = "null";
  * is a major mode, and the gn_* flags control specific sub-features.
  */
 generation_t generation_flag = GN_DEFAULT;
+bool gn_icarus_misc_flag = true;
 bool gn_cadence_types_flag = true;
 bool gn_specify_blocks_flag = true;
 bool gn_io_range_error_flag = true;
@@ -198,14 +199,30 @@ const char *net_func_to_name(const net_func func)
 
 static void process_generation_flag(const char*gen)
 {
-      if (strcmp(gen,"1") == 0) {
+      if (strcmp(gen,"1") == 0) { // FIXME: Deprecated for 1995
 	    generation_flag = GN_VER1995;
 
-      } else if (strcmp(gen,"2") == 0) {
+      } else if (strcmp(gen,"2") == 0) { // FIXME: Deprecated for 2001
 	    generation_flag = GN_VER2001;
 
-      } else if (strcmp(gen,"2x") == 0) {
-	    generation_flag = GN_VER2001X;
+      } else if (strcmp(gen,"2x") == 0) { // FIXME: Deprecated for 2001
+	    generation_flag = GN_VER2001;
+	    gn_icarus_misc_flag = true;
+
+      } else if (strcmp(gen,"1995") == 0) {
+	    generation_flag = GN_VER1995;
+
+      } else if (strcmp(gen,"2001") == 0) {
+	    generation_flag = GN_VER2001;
+
+      } else if (strcmp(gen,"2005") == 0) {
+	    generation_flag = GN_VER2005;
+
+      } else if (strcmp(gen,"icarus-misc") == 0) {
+	    gn_icarus_misc_flag = true;
+
+      } else if (strcmp(gen,"no-icarus-misc") == 0) {
+	    gn_icarus_misc_flag = false;
 
       } else if (strcmp(gen,"xtypes") == 0) {
 	    gn_cadence_types_flag = true;
@@ -609,15 +626,15 @@ int main(int argc, char*argv[])
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001;
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001_CONFIG;
 	  break;
-        case GN_VER2001X:
+        case GN_VER2005:
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_1995;
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001;
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001_CONFIG;
-	  lexor_keyword_mask |= GN_KEYWORDS_ICARUS;
+	  lexor_keyword_mask |= GN_KEYWORDS_1364_2005;
 	  break;
       }
 
-      if (gn_cadence_types_enabled())
+      if (gn_cadence_types_flag)
 	    lexor_keyword_mask |= GN_KEYWORDS_ICARUS;
 
       if (gn_verilog_ams_flag)
@@ -635,8 +652,8 @@ int main(int argc, char*argv[])
 		case GN_VER2001:
 		  cout << "IEEE1364-2001";
 		  break;
-		case GN_VER2001X:
-		  cout << "IEEE1364-2001+Extensions";
+		case GN_VER2005:
+		  cout << "IEEE1364-2005";
 		  break;
 	    }
 
@@ -652,6 +669,11 @@ int main(int argc, char*argv[])
 		  cout << ",xtypes";
 	    else
 		  cout << ",no-xtypes";
+
+	    if (gn_icarus_misc_flag)
+		  cout << ",icarus-misc";
+	    else
+		  cout << ",no-icarus-misc";
 
 	    cout << endl << "PARSING INPUT" << endl;
       }

@@ -218,17 +218,6 @@ W [ \t\b\f\r]+
 		  rc = PATHPULSE_IDENTIFIER;
 	    break;
 
-	  case K_bool:
-	  case K_logic:
-	  case K_wone:
-	    if (! gn_cadence_types_enabled()) {
-		  yylval.text = strdupnew(yytext);
-		  rc = IDENTIFIER;
-	    } else {
-		  yylval.text = 0;
-	    }
-	    break;
-
 	  case K_edge:
 	    BEGIN(EDGES);
 	    break;

@@ -323,7 +323,7 @@ bool PGAssign::elaborate_sig(Design*des, NetScope*scope) const
          to implicitly declare nets. However, so many tools do allow
          it that Icarus Verilog will allow it, at least if extensions
          are enabled. */
-      if (generation_flag == GN_VER2001X)
+      if (gn_icarus_misc_flag)
 	    return pin(0)->elaborate_sig(des, scope);
 
       return true;

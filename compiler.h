@@ -100,22 +100,21 @@ extern int build_library_index(const char*path, bool key_case_sensitive);
 enum generation_t {
       GN_VER1995  = 1,
       GN_VER2001  = 2,
-      GN_VER2001X = 3,
+      GN_VER2005  = 3,
       GN_DEFAULT  = 3
 };
 
 extern generation_t generation_flag;
 
+/* If this flag is true, enable extended types support. */
 extern bool gn_cadence_types_flag;
 
-/* These functions test that specific features are enabled. */
-inline bool gn_cadence_types_enabled()
-{ return gn_cadence_types_flag && generation_flag==GN_VER2001X; }
+/* If this flag is true, enable miscellaneous extensions. */
+extern bool gn_icarus_misc_flag;
 
 /* If this flag is true, then elaborate specify blocks. If this flag
    is false, then skip elaboration of specify behavior. */
 extern bool gn_specify_blocks_flag;
-
 
 /* If this flag is true, then support/elaborate Verilog-AMS. */
 extern bool gn_verilog_ams_flag;

@@ -5,7 +5,7 @@ iverilog - Icarus Verilog compiler
 .SH SYNOPSIS
 .B iverilog
 [-ESVv] [-Bpath] [-ccmdfile|-fcmdfile] [-Dmacro[=defn]] [-pflag=value]
-[-dname] [-g1|-g2|-g2x|-gspecify|-gxtypes|-gio-range-error]
+[-dname] [-g1995|-g2001|-g2005|-g<feature>]
 [-Iincludedir] [-mmodule] [-Mfile] [-Nfile] [-ooutputfilename]
 [-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] [-ypath] sourcefile
 
@@ -55,14 +55,17 @@ is the Verilog input, but with file inclusions and macro references
 expanded and removed. This is useful, for example, to preprocess
 Verilog source for use by other compilers.
 .TP 8
-.B -g1\fI|\fP-g2\fI|\fP-g2x
+.B -g1995\fI|\fP-g2001\fI|\fP-g2005
 Select the Verilog language \fIgeneration\fP to support in the
-compiler. This selects between \fIIEEE1364-1995\fP(1),
-\fIIEEE1364-2001\fP(2), or \fIVerilog with extension\fP(2x). Normally,
+compiler. This selects between \fIIEEE1364-1995\fP,
+\fIIEEE1364-2001\fP(2), or \fIIEEE1364-2005\fP. Normally,
 Icarus Verilog defaults to the latest known generation of the
 language. This flag is most useful to restrict the language to a set
 supported by tools of specific generations, for compatibility with
 other tools.
+.TP 8
+.B -gverilog-ams\fI|-fP-gno-verilog-ams
+Enable or disable (default) support for Verilog-AMS.
 .TP 8
 .B -gspecify\fI|\fP-gno-specify
 Enable (default) or disable specify block support. When enabled,

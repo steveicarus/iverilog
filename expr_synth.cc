@@ -438,7 +438,7 @@ NetNet* NetEBDiv::synthesize(Design*des)
 	  case '%': {
 		  /* Baseline Verilog does not support the % operator with
 		     real arguments, but we allow it in our extended form. */
-		if (real_args && generation_flag < GN_VER2001X) {
+		if (real_args && !gn_icarus_misc_flag) {
 		      cerr << get_fileline() << ": error: Modulus operator "
 		              "may not have REAL operands." << endl;
 		      des->errors += 1;

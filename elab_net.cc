@@ -808,7 +808,7 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 
         /* The % operator does not support real arguments in baseline
            Verilog. But we allow it in our extended form of Verilog. */
-      if (generation_flag < GN_VER2001X && lsig->data_type() == IVL_VT_REAL) {
+      if (gn_icarus_misc_flag==false && lsig->data_type() == IVL_VT_REAL) {
 	    cerr << get_fileline() << ": error: Modulus operator may not "
 	    "have REAL operands." << endl;
 	    des->errors += 1;

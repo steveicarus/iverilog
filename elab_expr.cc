@@ -187,7 +187,7 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	      /* The % operator does not support real arguments in
 		 baseline Verilog. But we allow it in our extended
 		 form of Verilog. */
-	    if (generation_flag < GN_VER2001X) {
+	    if (! gn_icarus_misc_flag) {
 		  if (lp->expr_type()==IVL_VT_REAL ||
 		      rp->expr_type()==IVL_VT_REAL) {
 			cerr << get_fileline() << ": error: Modulus operator "

@@ -109,6 +109,7 @@ const char*depfile = 0;
 const char*generation = "2x";
 const char*gen_specify = "specify";
 const char*gen_xtypes = "xtypes";
+const char*gen_icarus = "icarus-misc";
 const char*gen_io_range_error = "io-range-error";
 const char*gen_verilog_ams = "no-verilog-ams";
 
@@ -431,20 +432,41 @@ void process_file_name(const char*name, int lib_flag)
 
 int process_generation(const char*name)
 {
-      if (strcmp(name,"1") == 0)
-	    generation = "1";
+      if (strcmp(name,"1995") == 0)
+	    generation = "1995";
 
-      else if (strcmp(name,"2") == 0)
-	    generation = "2";
+      else if (strcmp(name,"2001") == 0)
+	    generation = "2001";
 
-      else if (strcmp(name,"2x") == 0)
-	    generation = "2x";
+      else if (strcmp(name,"2005") == 0)
+	    generation = "2005";
 
-      else if (strcmp(name,"xtypes") == 0)
+      else if (strcmp(name,"1") == 0) { /* Deprecated: use 1995 */
+	    generation = "1995";
+	    gen_xtypes = "no-xtypes";
+	    gen_icarus = "no-icarus-misc";
+
+      } else if (strcmp(name,"2") == 0) { /* Deprecated: use 2001 */
+	    generation = "2001";
+	    gen_xtypes = "no-xtypes";
+	    gen_icarus = "no-icarus-misc";
+
+      } else if (strcmp(name,"2x") == 0) { /* Deprecated: use 2005/xtypes */
+	    generation = "2005";
+	    gen_xtypes = "xtypes";
+	    gen_icarus = "icarus-misc";
+
+      } else if (strcmp(name,"xtypes") == 0)
 	    gen_xtypes = "xtypes";
 
       else if (strcmp(name,"no-xtypes") == 0)
 	    gen_xtypes = "no-xtypes";
+
+      else if (strcmp(name,"icarus-misc") == 0)
+	    gen_icarus = "icarus-misc";
+
+      else if (strcmp(name,"no-icarus-misc") == 0)
+	    gen_icarus = "no-icarus-misc";
 
       else if (strcmp(name,"specify") == 0)
 	    gen_specify = "specify";
@@ -474,13 +496,15 @@ int process_generation(const char*name)
 	    fprintf(stderr, "Unknown/Unsupported Language generation "
 		    "%s\n\n", name);
 	    fprintf(stderr, "Supported generations are:\n");
-	    fprintf(stderr, "    1   -- IEEE1364-1995 (Verilog 1)\n"
-		            "    2   -- IEEE1364-2001 (Verilog 2001)\n"
-		            "    2x  -- Verilog with extensions\n"
+	    fprintf(stderr, "    1995 -- IEEE1364-1995\n"
+		            "    2001 -- IEEE1364-2001\n"
+		            "    2005 -- IEEE1364-2005\n"
 		            "Other generation flags:\n"
 		            "    specify | no-specify\n"
+		            "    verilog-ams | no-verinlog-ams\n"
 		            "    std-include | no-std-include\n"
 		            "    xtypes | no-xtypes\n"
+		            "    icarus-misc | no-icarus-misc\n"
 		            "    io-range-error | no-io-range-error\n");
 	    return 1;
       }
@@ -747,6 +771,7 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "generation:%s\n", gen_xtypes);
       fprintf(iconfig_file, "generation:%s\n", gen_io_range_error);
       fprintf(iconfig_file, "generation:%s\n", gen_verilog_ams);
+      fprintf(iconfig_file, "generation:%s\n", gen_icarus);
       fprintf(iconfig_file, "warnings:%s\n", warning_flags);
       fprintf(iconfig_file, "out:%s\n", opath);
       if (depfile) fprintf(iconfig_file, "depfile:%s\n", depfile);
