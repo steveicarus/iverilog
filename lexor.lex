@@ -97,8 +97,11 @@ static int comment_enter;
 %x PPDEFAULT_NETTYPE
 %x PPBEGIN_KEYWORDS
 %s EDGES
+%x REAL_SCALE
 
 W [ \t\b\f\r]+
+
+S [afpnumkKMGT]
 
 %%
 
@@ -271,6 +274,46 @@ W [ \t\b\f\r]+
       yylval.number = make_unsized_dec(yytext);
       based_size = yylval.number->as_ulong();
       return DEC_NUMBER; }
+
+  /* These rules handle the scaled real literals from Verilog-AMS. The
+     value is a number with a single letter scale factor. If
+     verilog-ams is not enabled, then reject this rule. If it is
+     enabled, then collect the scale and use it to scale the value. */
+[0-9][0-9_]*\.[0-9][0-9_]*/{S} {
+      if (!gn_verilog_ams_flag) REJECT;
+      BEGIN(REAL_SCALE);
+      yymore();  }
+
+[0-9][0-9_]*/{S} {
+      if (!gn_verilog_ams_flag) REJECT;
+      BEGIN(REAL_SCALE);
+      yymore();  }
+
+<REAL_SCALE>{S} {
+      size_t token_len = strlen(yytext);
+      char*tmp = new char[token_len + 5];
+      int scale = 0;
+      strcpy(tmp, yytext);
+      switch (tmp[token_len-1]) {
+	  case 'a': scale = -18; break; /* atto- */
+	  case 'f': scale = -15; break; /* femto- */
+	  case 'p': scale = -12; break; /* pico- */
+	  case 'n': scale = -9;  break; /* nano- */
+	  case 'u': scale = -6;  break; /* micro- */
+	  case 'm': scale = -3;  break; /* milli- */
+	  case 'k': scale = 3;  break; /* kilo- */
+	  case 'K': scale = 3;  break; /* kilo- */
+	  case 'M': scale = 6;  break; /* mega- */
+	  case 'G': scale = 9;  break; /* giga- */
+	  case 'T': scale = 12; break; /* tera- */
+	  default: assert(0); break;
+      }
+      snprintf(tmp+token_len-1, 5, "e%d", scale);
+      yylval.realtime = new verireal(tmp);
+      delete[]tmp;
+
+      BEGIN(0);
+      return REALTIME;  }
 
 [0-9][0-9_]*\.[0-9][0-9_]*([Ee][+-]?[0-9][0-9_]*)? {
       yylval.realtime = new verireal(yytext);
