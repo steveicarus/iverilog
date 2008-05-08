@@ -594,6 +594,8 @@ int main(int argc, char **argv)
       }
 
       fprintf(defines_file, "D:__ICARUS__=1\n");
+      if (strcmp(gen_verilog_ams,"verilog-ams") == 0)
+	    fprintf(defines_file, "D:__VAMS_ENABLE__=1\n");
 
 	/* Create another temporary file for passing configuration
 	   information to ivl. */
