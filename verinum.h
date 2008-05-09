@@ -130,6 +130,9 @@ extern verinum trim_vnum(const verinum&);
 extern ostream& operator<< (ostream&, const verinum&);
 extern ostream& operator<< (ostream&, verinum::V);
 
+inline verinum::V bit4_z2x(verinum::V bit)
+{ return bit<2? bit : verinum::Vx; /* Relies on V0 and V1 being <2 */}
+
 extern verinum::V operator ~ (verinum::V l);
 extern verinum::V operator | (verinum::V l, verinum::V r);
 extern verinum::V operator & (verinum::V l, verinum::V r);
