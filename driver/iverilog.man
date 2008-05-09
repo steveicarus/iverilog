@@ -387,9 +387,14 @@ from preprocessor defines elsewhere in the file or the command line.
 
 .SH PREDEFINED MACROS
 
-The following macro is predefined by the compiler:
+The following macros are predefined by the compiler:
 .TP 8
 .B __ICARUS__ = 1\fP
+This is defined always when compiling with Icarus Verilog.
+
+.TP 8
+.B __VAMS_ENABLE__ = 1\fp
+This is defined if Verilog-AMS is enabled.
 
 .SH EXAMPLES
 These examples assume that you have a Verilog source file called hello.v in
