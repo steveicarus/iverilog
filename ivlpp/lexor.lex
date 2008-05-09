@@ -42,7 +42,7 @@ static void  do_define();
 static int   def_is_done();
 static int   is_defined(const char*name);
 
-static int   macro_needs_args();
+static int   macro_needs_args(const char*name);
 static void  macro_start_args();
 static void  macro_add_to_arg();
 static void  macro_finish_arg();
@@ -72,6 +72,8 @@ struct include_stack_t
      */
     int ebs;
 
+    int stringify_flag;
+
     unsigned lineno;
     YY_BUFFER_STATE yybs;
 
@@ -85,6 +87,8 @@ static void emit_pathline(struct include_stack_t* isp);
  * listed on the command line/file list.
  */
 static struct include_stack_t* file_queue = 0;
+
+static int do_expand_stringify_flag = 0;
 
 /*
  * The istack is the inclusion stack.
@@ -245,7 +249,7 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 }
 
 <PCOMENT>`[a-zA-Z][a-zA-Z0-9_$]* {
-    if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
+    if (macro_needs_args(yytext+1)) yy_push_state(MA_START); else do_expand(0);
 }
 
  /* Strings do not contain preprocessor directives, but can expand
@@ -261,21 +265,6 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <CSTRING>\r   { fputc('\n', yyout); }
 <CSTRING>\"   { BEGIN(string_enter);  ECHO; }
 <CSTRING>.    { ECHO; }
-
-<CSTRING>`{keywords} {
-    emit_pathline(istack);
-    error_count += 1;
-    fprintf
-    (
-        stderr,
-        "error: macro names cannot be directive keywords ('%s'); replaced with nothing.\n",
-        yytext
-    );
-}
-
-<CSTRING>`[a-zA-Z][a-zA-Z0-9_$]* {
-    if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
-}
 
  /* This set of patterns matches the include directive and the name
   * that follows it. when the directive ends, the do_include function
@@ -295,7 +284,7 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 }
 
 <PPINCLUDE>`[a-zA-Z][a-zA-Z0-9_]* {
-    if (macro_needs_args()) yy_push_state(MA_START); else do_expand(0);
+    if (macro_needs_args(yytext+1)) yy_push_state(MA_START); else do_expand(0);
 }
 
 <PPINCLUDE>\"[^\"]*\" { include_filename(); }
@@ -551,10 +540,21 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
  /* This pattern notices macros and arranges for them to be replaced. */
 `[a-zA-Z_][a-zA-Z0-9_$]* {
-    if (macro_needs_args())
+    if (macro_needs_args(yytext+1))
         yy_push_state(MA_START);
     else
         do_expand(0);
+}
+
+  /* Stringified version of macro expansion. */
+``[a-zA-Z_][a-zA-Z0-9_$]* {
+      assert(do_expand_stringify_flag == 0);
+      do_expand_stringify_flag = 1;
+      fputc('"', yyout);
+      if (macro_needs_args(yytext+2))
+	    yy_push_state(MA_START);
+      else
+	    do_expand(0);
 }
 
 <MA_START>\(  { BEGIN(MA_ADD); macro_start_args(); }
@@ -1171,16 +1171,16 @@ static void def_undefine()
  */
 static struct define_t* cur_macro = 0;
 
-static int macro_needs_args()
+static int macro_needs_args(const char*text)
 {
-    cur_macro = def_lookup(yytext+1);
+    cur_macro = def_lookup(text);
 
     if (cur_macro)
         return (cur_macro->argc > 1);
     else
     {
         emit_pathline(istack);
-        fprintf(stderr, "warning: macro %s undefined (and assumed null) at this point.\n", yytext);
+        fprintf(stderr, "warning: macro %s undefined (and assumed null) at this point.\n", text);
         return 0;
     }
 }
@@ -1348,6 +1348,8 @@ static void do_expand(int use_args)
 
         isp = (struct include_stack_t*) calloc(1, sizeof(struct include_stack_t));
 
+	isp->stringify_flag = do_expand_stringify_flag;
+	do_expand_stringify_flag = 0;
         if (use_args)
         {
             isp->str = &exp_buf[head];
@@ -1364,6 +1366,11 @@ static void do_expand(int use_args)
         istack = isp;
 
         yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
+    } else {
+	  if (do_expand_stringify_flag) {
+		do_expand_stringify_flag = 0;
+		fputc('"', yyout);
+	  }
     }
 }
 
@@ -1535,6 +1542,10 @@ static int load_next_input()
             line_mask_flag = 1;
 
         exp_buf_free += isp->ebs;
+    }
+
+    if (isp->stringify_flag) {
+	  fputc('"', yyout);
     }
 
     free(isp);
