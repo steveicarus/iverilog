@@ -413,8 +413,10 @@ bool NetETernary::set_width(unsigned w, bool last_chance)
  */
 bool NetEUFunc::set_width(unsigned wid, bool)
 {
-      expr_width(wid);
-      return true;
+      if (result_sig_->expr_width() == wid)
+	    return true;
+      else
+	    return false;
 }
 
 bool NetEUnary::set_width(unsigned w, bool)

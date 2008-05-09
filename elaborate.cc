@@ -1711,7 +1711,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	   netlist. The compound statement is exactly equivalent. */
 
       if (delay || event_) {
-	    unsigned wid = lv->lwidth();
+	    unsigned wid = count_lval_width(lv);
 
 	    rv->set_width(wid);
 	    rv = pad_to_width(rv, wid);
