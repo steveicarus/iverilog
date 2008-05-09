@@ -46,7 +46,7 @@ fi
 AC_SUBST(HAVE_LIBBZ2)
 
 # fmin and fmax are needed by va_math.vpi
-AC_CHECK_FUNCS_ONCE(fmin fmax)
+AC_CHECK_FUNCS(fmin fmax)
 
 AC_PROG_INSTALL
 
