@@ -1866,16 +1866,15 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 		  if (expr_wid > 0)
 			val = pad_to_width(val, expr_wid);
 
-		    /* When taking the - of a number, turn it into a
-		       signed expression and extend it one bit to
-		       accommodate a possible sign bit. */
+		    /* When taking the - of a number, extend it one
+		       bit to accommodate a possible sign bit. */
 		  verinum zero (verinum::V0, val.len()+1, val.has_len());
 		  zero.has_sign(val.has_sign());
 		  verinum nval = zero - val;
 
 		  if (val.has_len())
 			nval = verinum(nval, val.len());
-		  nval.has_sign(true);
+		  nval.has_sign(val.has_sign());
 		  tmp = new NetEConst(nval);
 		  tmp->set_line(*this);
 		  delete ip;
