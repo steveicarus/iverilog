@@ -81,6 +81,7 @@ NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r, bool lossless_flag)
       }
 
       unsigned pad_width = lossless_flag? 1 : 0;
+      cast_signed(l->has_sign() && r->has_sign());
 
 	/* Now that we have the operand sizes the way we like, or as
 	   good as we are going to get them, set the size of myself. */
@@ -91,8 +92,6 @@ NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r, bool lossless_flag)
       } else {
 	    expr_width(l->expr_width() + pad_width);
       }
-
-      cast_signed(l->has_sign() && r->has_sign());
 }
 
 NetEBAdd::~NetEBAdd()

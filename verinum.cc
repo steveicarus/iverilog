@@ -448,7 +448,7 @@ verinum pad_to_width(const verinum&that, unsigned width)
       verinum::V pad = that[that.len()-1];
       if (pad==verinum::V1 && !that.has_sign())
 	    pad = verinum::V0;
-      if (that.has_len()) {
+      if (that.has_len() && !that.has_sign()) {
 	    if (pad==verinum::Vx)
 		  pad = verinum::V0;
 	    if (pad==verinum::Vz)
