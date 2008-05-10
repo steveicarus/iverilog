@@ -203,27 +203,33 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_PO_POS K_PO_NEG K_POW
 %token K_PSTAR K_STARP
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
-%token K_abs K_acos K_acosh K_asin K_asinh K_atan K_atanh K_atan2
+%token K_abs K_abstol K_access K_acos K_acosh K_asin K_analog K_asinh
+%token K_atan K_atanh K_atan2
 %token K_always K_and K_assign K_begin K_bool K_buf K_bufif0 K_bufif1 K_case
-%token K_casex K_casez K_ceil K_cmos K_cos K_cosh
-%token K_deassign K_default K_defparam K_disable
-%token K_edge K_edge_descriptor
-%token K_else K_end K_endcase K_endfunction K_endgenerate K_endmodule
-%token K_endprimitive K_endspecify K_endtable K_endtask K_event K_exp K_floor
+%token K_casex K_casez K_ceil K_cmos K_continuous K_cos K_cosh
+%token K_ddt_nature K_deassign K_default K_defparam K_disable K_discrete
+%token K_domain K_edge K_edge_descriptor K_discipline
+%token K_else K_end K_endcase K_enddiscipline K_endfunction K_endgenerate
+%token K_endmodule K_endnature
+%token K_endprimitive K_endspecify K_endtable K_endtask K_event
+%token K_exclude K_exp K_floor K_flow K_from
 %token K_for K_force K_forever K_fork K_function K_generate K_genvar
-%token K_highz0 K_highz1 K_hypot K_if K_ifnone
+%token K_ground K_highz0 K_highz1 K_hypot K_idt_nature K_if K_ifnone
 %token K_initial K_inout K_input K_integer K_join K_large K_ln K_localparam
 %token K_log K_logic K_macromodule K_max
-%token K_medium K_min K_module K_nand K_negedge K_nmos K_nor K_not K_notif0
-%token K_notif1 K_or K_output K_parameter K_pmos K_posedge K_pow K_primitive
+%token K_medium K_min K_module K_nand K_nature K_negedge
+%token K_nmos K_nor K_not K_notif0
+%token K_notif1 K_or K_output K_parameter K_pmos K_posedge K_potential
+%token K_pow K_primitive
 %token K_pull0 K_pull1 K_pulldown K_pullup K_rcmos K_real K_realtime
 %token K_reg K_release K_repeat
 %token K_rnmos K_rpmos K_rtran K_rtranif0 K_rtranif1 K_scalared
 %token K_signed K_sin K_sinh K_small K_specify
-%token K_specparam K_sqrt K_strong0 K_strong1 K_supply0 K_supply1 K_table
+%token K_specparam K_sqrt K_string K_strong0 K_strong1 K_supply0 K_supply1
+%token K_table
 %token K_tan K_tanh K_task
 %token K_time K_tran K_tranif0 K_tranif1 K_tri K_tri0 K_tri1 K_triand
-%token K_trior K_trireg K_vectored K_wait K_wand K_weak0 K_weak1
+%token K_trior K_trireg K_units K_vectored K_wait K_wand K_weak0 K_weak1
 %token K_while K_wire
 %token K_wone K_wor K_xnor K_xor
 %token K_Shold K_Speriod K_Srecovery K_Srecrem K_Ssetup K_Swidth K_Ssetuphold
@@ -655,15 +661,58 @@ delay_value_simple
 	;
 
 description
-	: module
-	| udp_primitive
-	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
-		{ perm_string tmp3 = lex_strings.make($3);
-		  pform_set_type_attrib(tmp3, $5, $7);
-		  delete[]$3;
-		  delete $5;
-		}
-	;
+  : module
+  | udp_primitive
+  | nature_declaration
+  | discipline_declaration
+  | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
+      { perm_string tmp3 = lex_strings.make($3);
+	pform_set_type_attrib(tmp3, $5, $7);
+	delete[]$3;
+	delete $5;
+      }
+  ;
+
+discipline_declaration
+  : K_discipline IDENTIFIER discipline_items K_enddiscipline
+      { delete[]$2; }
+  ;
+
+discipline_items
+  : discipline_items discipline_item
+  | discipline_item
+  ;
+
+discipline_item
+  : K_domain K_discrete ';'
+  | K_domain K_continuous ';'
+  | K_potential IDENTIFIER ';'
+      { delete[] $2; }
+  | K_flow IDENTIFIER ';'
+      { delete[] $2; }
+  ;
+
+nature_declaration
+  : K_nature IDENTIFIER nature_items K_endnature
+      { delete[] $2; }
+  ;
+
+nature_items
+  : nature_items nature_item
+  | nature_item
+  ;
+
+nature_item
+  : K_units '=' STRING ';'
+      { delete[] $3; }
+  | K_abstol '=' expression ';'
+  | K_access '=' IDENTIFIER ';'
+      { delete[] $3; }
+  | K_idt_nature '=' IDENTIFIER ';'
+      { delete[] $3; }
+  | K_ddt_nature '=' IDENTIFIER ';'
+      { delete[] $3; }
+  ;
 
 drive_strength
 	: '(' dr_strength0 ',' dr_strength1 ')'

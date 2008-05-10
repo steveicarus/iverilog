@@ -1,0 +1,72 @@
+
+// Standard definitions for Verilog-AMS
+`ifdef DISCIPLINES_VAMS
+`else
+`define DISCIPLINES_VAMS 1
+
+discipline \logic
+  domain discrete;
+enddiscipline
+
+discipline ddiscrete
+  domain discrete;
+enddiscipline
+
+nature Current
+  units      = "A";
+  access     = I;
+  idt_nature = Charge;
+`ifdef CURRENT_ABSTOL
+  abstol     = `CURRENT_ABSTOL
+`else
+  abstol     = 1e-12;
+`endif
+endnature
+
+nature Charge
+  units      = "coul";
+  access     = Q;
+  ddt_nature = Current;
+`ifdef CHARGE_ABSTOL
+  abstol     = `CHARGE_ABSTOL;
+`else
+  abstol     = 1e-14;
+`endif
+endnature
+
+nature Voltage
+  units      = "V";
+  access     = V;
+  idt_nature = Flux;
+`ifdef VOLTAGE_ABSTOL
+  abstol     = `VOLTAGE_ABSTOL;
+`else
+  abstol     = 1e-6;
+`endif
+endnature
+
+nature Flux
+  units      = "Wb";
+  access     = Phi;
+  ddt_nature = Voltage;
+`ifdef FLUX_ABSTOL
+  abstol     = `flux_ABSTOL;
+`else
+  abstol     = 1e-9;
+`endif
+endnature
+
+discipline electrical
+  potential Voltage;
+  flow Current;
+enddiscipline
+
+discipline voltage
+  potential Voltage;
+enddiscipline
+
+discipline current
+  flow Current;
+enddiscipline
+
+`endif // !`ifdef DISCIPLINES_VAMS

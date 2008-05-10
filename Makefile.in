@@ -174,7 +174,7 @@ lexor.cc: $(srcdir)/lexor.lex
 lexor_keyword.o: lexor_keyword.cc parse.h
 
 lexor_keyword.cc: lexor_keyword.gperf
-	gperf -o -i 7 -C -k 1-3,$$ -L ANSI-C -H keyword_hash -N check_identifier -t $(srcdir)/lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
+	gperf -o -i 7 -C -k 1-4,$$ -L ANSI-C -H keyword_hash -N check_identifier -t $(srcdir)/lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
 
 iverilog-vpi.ps: $(srcdir)/iverilog-vpi.man
 	man -t $(srcdir)/iverilog-vpi.man > iverilog-vpi.ps
@@ -217,7 +217,7 @@ endif
 
 XNF_INSTALL = $(libdir)/ivl/xnf.conf $(libdir)/ivl/xnf-s.conf
 
-install: all installdirs $(libdir)/ivl/ivl@EXEEXT@  $(libdir)/ivl/include/constants.vams $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
+install: all installdirs $(libdir)/ivl/ivl@EXEEXT@  $(libdir)/ivl/include/constants.vams $(libdir)/ivl/include/disciplines.vams $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for dir in vpi ivlpp driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
@@ -230,6 +230,9 @@ $(libdir)/ivl/ivl@EXEEXT@: ./ivl@EXEEXT@
 
 $(libdir)/ivl/include/constants.vams: $(srcdir)/constants.vams
 	$(INSTALL_DATA) $(srcdir)/constants.vams $@
+
+$(libdir)/ivl/include/disciplines.vams: $(srcdir)/disciplines.vams
+	$(INSTALL_DATA) $(srcdir)/disciplines.vams $@
 
 $(libdir)/ivl/xnf-s.conf: $(srcdir)/xnf-s.conf
 	$(INSTALL_DATA) $(srcdir)/xnf-s.conf $(DESTDIR)$(libdir)/ivl/xnf-s.conf
@@ -286,7 +289,7 @@ uninstall:
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for dir in vpi ivlpp driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
-	for f in xnf.conf xnf-s.conf ivl@EXEEXT@ include/constants.vams; \
+	for f in xnf.conf xnf-s.conf ivl@EXEEXT@ include/constants.vams include/disciplines.vams; \
 	    do rm -f $(DESTDIR)$(libdir)/ivl/$$f; done
 	-rmdir $(DESTDIR)$(libdir)/ivl/include
 	-rmdir $(DESTDIR)$(libdir)/ivl
