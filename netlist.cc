@@ -648,7 +648,7 @@ bool NetNet::sb_is_valid(long sb) const
 	    return (sb <= lsb_) && (sb >= msb_);
 }
 
-unsigned NetNet::sb_to_idx(long sb) const
+long NetNet::sb_to_idx(long sb) const
 {
       if (msb_ >= lsb_)
 	    return sb - lsb_;

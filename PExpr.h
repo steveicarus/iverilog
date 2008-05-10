@@ -387,7 +387,7 @@ class PEIdent : public PExpr {
       NetNet*make_implicit_net_(Design*des, NetScope*scope) const;
 
       bool eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
-			     unsigned&midx, unsigned&lidx) const;
+			     long&midx, long&lidx) const;
       NetNet*process_select_(Design*des, NetScope*scope, NetNet*sig) const;
 
 };

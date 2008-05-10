@@ -1894,10 +1894,11 @@ NetNet* PEIdent::process_select_(Design*des, NetScope*scope,
 	// dimensions, then treat them as word part selects. For
 	// example, if this is a memory array, then array dimensions
 	// is the first and part select the remainder.
-      unsigned midx, lidx;
+      long midx, lidx;
       if (! eval_part_select_(des, scope, sig, midx, lidx))
 	    return sig;
 
+      ivl_assert(*this, lidx >= 0);
       unsigned part_count = midx-lidx+1;
 
 	// Maybe this is a full-width constant part select? If
@@ -1963,12 +1964,70 @@ NetNet* PEIdent::elaborate_net_net_(Design*des, NetScope*scope,
 	    delete mval;
       }
 
-      unsigned midx, lidx;
+      long midx, lidx;
       if (! eval_part_select_(des, scope, sig, midx, lidx))
 	    return 0;
 
       unsigned part_count = midx-lidx+1;
+      unsigned output_width = part_count;
 
+	/* Detect and handle the special case that the entire part
+	   select is outside the range of the signal. Return a
+	   constant xxx. */
+      if (midx < 0 || lidx >= (long)sig->vector_width()) {
+	    ivl_assert(*this, sig->data_type() == IVL_VT_LOGIC);
+	    verinum xxx (verinum::Vx, part_count);
+	    NetConst*con = new NetConst(scope, scope->local_symbol(), xxx);
+	    con->set_line(*sig);
+	    des->add_node(con);
+
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, part_count-1, 0);
+	    tmp->data_type( sig->data_type() );
+	    tmp->local_flag(true);
+	    connect(tmp->pin(0), con->pin(0));
+	    return tmp;
+      }
+
+      NetNet*below = 0;
+      if (lidx < 0) {
+	    ivl_assert(*this, sig->data_type() == IVL_VT_LOGIC);
+	    unsigned xxx_wid = 0-lidx;
+	    verinum xxx (verinum::Vx, xxx_wid);
+	    NetConst*con = new NetConst(scope, scope->local_symbol(), xxx);
+	    con->set_line(*sig);
+	    des->add_node(con);
+
+	    below = new NetNet(scope, scope->local_symbol(),
+			       NetNet::WIRE, xxx_wid);
+	    below->data_type( sig->data_type() );
+	    below->local_flag(true);
+	    connect(below->pin(0), con->pin(0));
+
+	    lidx = 0;
+	    part_count = midx-lidx+1;
+      }
+
+      NetNet*above = 0;
+      if (midx >= (long)sig->vector_width()) {
+	    ivl_assert(*this, sig->data_type() == IVL_VT_LOGIC);
+	    unsigned xxx_wid = midx - sig->vector_width() + 1;
+	    verinum xxx (verinum::Vx, xxx_wid);
+	    NetConst*con = new NetConst(scope, scope->local_symbol(), xxx);
+	    con->set_line(*sig);
+	    des->add_node(con);
+
+	    above = new NetNet(scope, scope->local_symbol(),
+			       NetNet::WIRE, xxx_wid);
+	    above->data_type( sig->data_type() );
+	    above->local_flag(true);
+	    connect(above->pin(0), con->pin(0));
+
+	    midx = sig->vector_width()-1;
+	    part_count = midx-lidx+1;
+      }
+
+      ivl_assert(*this, lidx >= 0);
       if (part_count != sig->vector_width()) {
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Elaborate part select "
@@ -1990,7 +2049,36 @@ NetNet* PEIdent::elaborate_net_net_(Design*des, NetScope*scope,
 	    sig = tmp;
       }
 
+      unsigned segment_count = 1;
+      if (below) segment_count += 1;
+      if (above) segment_count += 1;
+      if (segment_count > 1) {
+	    NetConcat*cc = new NetConcat(scope, scope->local_symbol(),
+					 output_width, segment_count);
+	    cc->set_line(*sig);
+	    des->add_node(cc);
 
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, output_width);
+	    tmp->data_type( sig->data_type() );
+	    tmp->local_flag(true);
+	    connect(tmp->pin(0), cc->pin(0));
+
+	    unsigned pdx = 1;
+	    if (below) {
+		  connect(cc->pin(pdx), below->pin(0));
+		  pdx += 1;
+	    }
+	    connect(cc->pin(pdx), sig->pin(0));
+	    pdx += 1;
+	    if (above) {
+		  connect(cc->pin(pdx), above->pin(0));
+		  pdx += 1;
+	    }
+	    ivl_assert(*sig, segment_count == pdx-1);
+
+	    sig = tmp;
+      }
 
       return sig;
 }
@@ -2385,7 +2473,7 @@ NetNet* PEIdent::make_implicit_net_(Design*des, NetScope*scope) const
  * anything in between. The values are in canonical indices.
  */
 bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
-				unsigned&midx, unsigned&lidx) const
+				long&midx, long&lidx) const
 {
       const name_component_t&name_tail = path_.back();
 	// Only treat as part/bit selects any index that is beyond the
@@ -2449,31 +2537,36 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		long msb, lsb;
 		/* bool flag = */ calculate_parts_(des, scope, msb, lsb);
 
-		lidx = sig->sb_to_idx(lsb);
-		midx = sig->sb_to_idx(msb);
+		long lidx_tmp = sig->sb_to_idx(lsb);
+		long midx_tmp = sig->sb_to_idx(msb);
 		  /* Detect reversed indices of a part select. */
-		if (lidx > midx) {
+		if (lidx_tmp > midx_tmp) {
 		      cerr << get_fileline() << ": error: Part select "
 			   << sig->name() << "[" << msb << ":"
 			   << lsb << "] indices reversed." << endl;
 		      cerr << get_fileline() << ":      : Did you mean "
 			   << sig->name() << "[" << lsb << ":"
 			   << msb << "]?" << endl;
-		      unsigned tmp = midx;
-		      midx = lidx;
-		      lidx = tmp;
+		      long tmp = midx_tmp;
+		      midx_tmp = lidx_tmp;
+		      lidx_tmp = tmp;
 		      des->errors += 1;
 		}
 
 		  /* Detect a part select out of range. */
-		if (midx >= sig->vector_width()) {
-		      cerr << get_fileline() << ": error: Part select "
+		if (midx_tmp >= (long)sig->vector_width() || lidx_tmp < 0) {
+		      cerr << get_fileline() << ": warning: Part select "
 			   << sig->name() << "[" << msb << ":"
 			   << lsb << "] out of range." << endl;
-		      midx = sig->vector_width() - 1;
-		      lidx = 0;
+#if 0
+		      midx_tmp = sig->vector_width() - 1;
+		      lidx_tmp = 0;
 		      des->errors += 1;
+#endif
 		}
+
+		midx = midx_tmp;
+		lidx = lidx_tmp;
 		break;
 	  }
 
@@ -2494,7 +2587,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		  assert(mval);
 
 		  midx = sig->sb_to_idx(mval->as_long());
-		  if (midx >= sig->vector_width()) {
+		  if (midx >= (long)sig->vector_width()) {
 			cerr << get_fileline() << ": error: Index " << sig->name()
 			     << "[" << mval->as_long() << "] out of range."
 			     << endl;
@@ -2610,12 +2703,21 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
 	      /* The array has a part/bit select at the end. */
 	    if (name_tail.index.size() > sig->array_dimensions()) {
-		  if (! eval_part_select_(des, scope, sig, midx, lidx))
+		  long midx_tmp, lidx_tmp;
+		  if (! eval_part_select_(des, scope, sig, midx_tmp, lidx_tmp))
 		        return 0;
+		  ivl_assert(*this, lidx_tmp >= 0);
+		  midx = midx_tmp;
+		  lidx = lidx_tmp;
 	    }
       } else if (!name_tail.index.empty()) {
-	    if (! eval_part_select_(des, scope, sig, midx, lidx))
+	    long midx_tmp, lidx_tmp;
+	    if (! eval_part_select_(des, scope, sig, midx_tmp, lidx_tmp))
 		  return 0;
+
+	    ivl_assert(*this, lidx_tmp >= 0);
+	    midx = midx_tmp;
+	    lidx = lidx_tmp;
       }
 
       unsigned subnet_wid = midx-lidx+1;
@@ -2737,8 +2839,8 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      unsigned midx;
-      unsigned lidx;
+      long midx;
+      long lidx;
 
 	/* Evaluate the part/bit select expressions, to get the part
 	   select of the signal that attaches to the port. Also handle

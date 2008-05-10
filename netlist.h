@@ -510,7 +510,7 @@ class NetNet  : public NetObj {
 	/* This method converts a signed index (the type that might be
 	   found in the Verilog source) to a pin number. It accounts
 	   for variation in the definition of the reg/wire/whatever. */
-      unsigned sb_to_idx(long sb) const;
+      long sb_to_idx(long sb) const;
 
 	/* This method checks that the signed index is valid for this
 	   signal. If it is, the above sb_to_idx can be used to get
