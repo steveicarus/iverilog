@@ -57,6 +57,7 @@ const char NOTICE[] =
 # include  "netlist.h"
 # include  "target.h"
 # include  "compiler.h"
+# include  "discipline.h"
 
 #if defined(__MINGW32__) && !defined(HAVE_GETOPT_H)
 extern "C" int getopt(int argc, char*argv[], const char*fmt);
@@ -683,6 +684,11 @@ int main(int argc, char*argv[])
 
       if (pf_path) {
 	    ofstream out (pf_path);
+	    out << "PFORM DUMP DISCIPLINES:" << endl;
+	    for (map<perm_string,discipline_t*>::iterator cur = disciplines.begin()
+		       ; cur != disciplines.end() ; cur ++ ) {
+		  pform_dump(out, (*cur).second);
+	    }
 	    out << "PFORM DUMP MODULES:" << endl;
 	    for (map<perm_string,Module*>::iterator mod = pform_modules.begin()
 		       ; mod != pform_modules.end()

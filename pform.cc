@@ -27,6 +27,7 @@
 # include  "PUdp.h"
 # include  "PGenerate.h"
 # include  "PSpec.h"
+# include  "discipline.h"
 # include  <list>
 # include  <map>
 # include  <assert.h>
@@ -37,7 +38,6 @@
 # include  <cstdlib>
 
 # include  "ivl_assert.h"
-
 
 map<perm_string,Module*> pform_modules;
 map<perm_string,PUdp*> pform_primitives;
@@ -80,12 +80,6 @@ static inline void FILE_NAME(LineInfo*obj, const char*file, unsigned lineno)
 {
       obj->set_lineno(lineno);
       obj->set_file(filename_strings.make(file));
-}
-
-static inline void FILE_NAME(LineInfo*tmp, const struct vlltype&where)
-{
-      tmp->set_lineno(where.first_line);
-      tmp->set_file(filename_strings.make(where.text));
 }
 
 /*

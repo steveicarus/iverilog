@@ -23,6 +23,7 @@
 #endif
 
 # include  <list>
+# include  "compiler.h"
 # include  "pform.h"
 
 /*
@@ -38,6 +39,13 @@ struct vlltype {
       const char*text;
 };
 # define YYLTYPE struct vlltype
+
+class LineInfo;
+inline void FILE_NAME(LineInfo*tmp, const struct vlltype&where)
+{
+      tmp->set_lineno(where.first_line);
+      tmp->set_file(filename_strings.make(where.text));
+}
 
   /* This for compatibility with new and older bison versions. */
 #ifndef yylloc

@@ -115,6 +115,7 @@ struct lgate {
       unsigned lineno;
 };
 
+
   /* The lexor calls this function to change the default nettype. */
 extern void pform_set_default_nettype(NetNet::Type net,
 				     const char*file,
@@ -349,5 +350,19 @@ extern void pform_dump(ostream&out, Module*mod);
  * (missing endmodule) is found by the parser.
  */
 extern void pform_error_nested_modules();
+
+/* ** pform_discipline.cc
+ * Functions for handling the parse of natures and disciplines. These
+ * functions are in pform_disciplines.cc
+ */
+class discipline_t;
+
+extern void pform_start_discipline(const char*name);
+extern void pform_end_discipline(const struct vlltype&loc);
+
+extern void pform_attach_discipline(const struct vlltype&loc,
+				    discipline_t*discipline, list<perm_string>*names);
+
+extern void pform_dump(ostream&out, discipline_t*);
 
 #endif

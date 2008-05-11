@@ -34,6 +34,7 @@
 # include  <ctype.h>
 # include  <string.h>
 # include  "lexor_keyword.h"
+# include  "discipline.h"
 # include  <list>
 
 # define YY_USER_INIT reset_lexor();
@@ -152,6 +153,7 @@ S [afpnumkKMGT]
 "->" { return K_TRIGGER; }
 "+:" { return K_PO_POS; }
 "-:" { return K_PO_NEG; }
+"<+" { return K_CONTRIBUTE; }
 
   /* Watch out for the tricky case of (*). Cannot parse this as "(*"
      and ")", but since I know that this is really ( * ), replace it
@@ -228,6 +230,18 @@ S [afpnumkKMGT]
 	  default:
 	    yylval.text = 0;
 	    break;
+      }
+
+	/* If this identifier names a discipline, then return this as
+	   a DISCIPLINE_IDENTIFIER and return the discipline as the
+	   value instead. */
+      if (rc == IDENTIFIER && gn_verilog_ams_flag) {
+	    perm_string tmp = lex_strings.make(yylval.text);
+	    map<perm_string,discipline_t*>::iterator cur = disciplines.find(tmp);
+	    if (cur != disciplines.end()) {
+		  yylval.discipline = (*cur).second;
+		  rc = DISCIPLINE_IDENTIFIER;
+	    }
       }
 
       return rc;

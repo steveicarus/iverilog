@@ -94,12 +94,6 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
       return tmp;
 }
 
-static inline void FILE_NAME(LineInfo*tmp, const struct vlltype&where)
-{
-      tmp->set_lineno(where.first_line);
-      tmp->set_file(filename_strings.make(where.text));
-}
-
 static svector<PExpr*>* copy_range(svector<PExpr*>* orig)
 {
       svector<PExpr*>*copy = 0;
@@ -146,6 +140,8 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       char*text;
       list<perm_string>*perm_strings;
       pform_name_t*pform_name;
+
+      discipline_t*discipline;
 
       hname_t*hier;
 
@@ -196,10 +192,13 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 };
 
 %token <text>   IDENTIFIER SYSTEM_IDENTIFIER STRING
+%token <discipline> DISCIPLINE_IDENTIFIER
 %token <text>   PATHPULSE_IDENTIFIER
 %token <number> BASED_NUMBER DEC_NUMBER
 %token <realtime> REALTIME
 %token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LS K_RS K_RSS K_SG
+ /* K_CONTRIBUTE is <+, the contribution assign. */
+%token K_CONTRIBUTE
 %token K_PO_POS K_PO_NEG K_POW
 %token K_PSTAR K_STARP
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
@@ -674,8 +673,10 @@ description
   ;
 
 discipline_declaration
-  : K_discipline IDENTIFIER discipline_items K_enddiscipline
-      { delete[]$2; }
+  : K_discipline IDENTIFIER
+      { pform_start_discipline($2); }
+    discipline_items K_enddiscipline
+      { pform_end_discipline(@1); delete[] $2; }
   ;
 
 discipline_items
@@ -821,6 +822,15 @@ event_expression
 		  $$ = tl;
 		}
 	;
+
+  /* A branch probe expression applies a probe function (potential or
+     flow) to a branch. The branch may be implicit as a pair of nets
+     or explicit as a named branch. Elaboration will check that the
+     function name really is a nature attribute identifier. */
+branch_probe_expression
+  : IDENTIFIER '(' IDENTIFIER ',' IDENTIFIER ')'
+  | IDENTIFIER '(' IDENTIFIER ')'
+  ;
 
 expression
 	: expr_primary
@@ -1951,6 +1961,12 @@ module_item
 		  yyerrok;
 		}
 
+  /* Maybe this is a discipline declaration? If so, then the lexor
+     will see the discipline name as an identifier. We match it to the
+     discipline or type name semantically. */
+  | DISCIPLINE_IDENTIFIER list_of_identifiers ';'
+  { pform_attach_discipline(@1, $1, $2); }
+
   /* block_item_decl rule is shared with task blocks and named
      begin/end. */
 
@@ -2030,16 +2046,16 @@ module_item
 
   /* Always and initial items are behavioral processes. */
 
-	| attribute_list_opt K_always statement
-		{ PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS,
-						     $3, $1);
-		  FILE_NAME(tmp, @2);
-		}
-	| attribute_list_opt K_initial statement
-		{ PProcess*tmp = pform_make_behavior(PProcess::PR_INITIAL,
-						     $3, $1);
-		  FILE_NAME(tmp, @2);
-		}
+  | attribute_list_opt K_always statement
+      { PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS, $3, $1);
+	FILE_NAME(tmp, @2);
+      }
+  | attribute_list_opt K_initial statement
+      { PProcess*tmp = pform_make_behavior(PProcess::PR_INITIAL, $3, $1);
+	FILE_NAME(tmp, @2);
+      }
+
+  | attribute_list_opt K_analog analog_statement
 
   /* The task declaration rule matches the task declaration
      header, then pushes the function scope. This causes the
@@ -3540,6 +3556,12 @@ statement_or_null
 	: statement
 	| ';' { $$ = 0; }
 	;
+
+
+analog_statement
+  : branch_probe_expression K_CONTRIBUTE expression ';'
+      { yyerror(@1, "sorry: Analog contribution statements not supported."); }
+  ;
 
   /* Task items are, other than the statement, task port items and
      other block items. */
