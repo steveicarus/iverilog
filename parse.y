@@ -673,7 +673,7 @@ description
   ;
 
 discipline_declaration
-  : K_discipline IDENTIFIER
+  : K_discipline IDENTIFIER ';'
       { pform_start_discipline($2); }
     discipline_items K_enddiscipline
       { pform_end_discipline(@1); delete[] $2; }
@@ -694,7 +694,9 @@ discipline_item
   ;
 
 nature_declaration
-  : K_nature IDENTIFIER nature_items K_endnature
+  : K_nature IDENTIFIER ';'
+    nature_items
+    K_endnature
       { delete[] $2; }
   ;
 

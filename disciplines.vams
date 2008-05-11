@@ -4,15 +4,15 @@
 `else
 `define DISCIPLINES_VAMS 1
 
-discipline \logic
+discipline \logic ;
   domain discrete;
 enddiscipline
 
-discipline ddiscrete
+discipline ddiscrete;
   domain discrete;
 enddiscipline
 
-nature Current
+nature Current;
   units      = "A";
   access     = I;
   idt_nature = Charge;
@@ -23,7 +23,7 @@ nature Current
 `endif
 endnature
 
-nature Charge
+nature Charge;
   units      = "coul";
   access     = Q;
   ddt_nature = Current;
@@ -34,7 +34,7 @@ nature Charge
 `endif
 endnature
 
-nature Voltage
+nature Voltage;
   units      = "V";
   access     = V;
   idt_nature = Flux;
@@ -45,7 +45,7 @@ nature Voltage
 `endif
 endnature
 
-nature Flux
+nature Flux;
   units      = "Wb";
   access     = Phi;
   ddt_nature = Voltage;
@@ -56,16 +56,16 @@ nature Flux
 `endif
 endnature
 
-discipline electrical
+discipline electrical;
   potential Voltage;
   flow Current;
 enddiscipline
 
-discipline voltage
+discipline voltage;
   potential Voltage;
 enddiscipline
 
-discipline current
+discipline current;
   flow Current;
 enddiscipline
 
