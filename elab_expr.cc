@@ -1558,7 +1558,8 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 	      // If the part select covers exactly the entire
 	      // vector, then do not bother with it. Return the
 	      // signal itself.
-	    if (net->sig()->sb_to_idx(lsv) == (wid-1) && wid == net->vector_width())
+	    long l = net->sig()->sb_to_idx(lsv);
+	    if (l >= 0 && (unsigned) l == (wid-1) && wid == net->vector_width())
 		  return net;
 
 	      // Otherwise, make a part select that covers the right range.
