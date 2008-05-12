@@ -131,7 +131,7 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
       return block;
 }
 
-static PWire*get_wire_in_scope(perm_string name)
+PWire*pform_get_wire_in_scope(perm_string name)
 {
 	/* Note that if we are processing a generate, then the
 	   scope depth will be empty because generate schemes
@@ -919,7 +919,7 @@ static void pform_set_net_range(perm_string name,
 				ivl_variable_type_t dt,
 				PWSRType rt)
 {
-      PWire*cur = get_wire_in_scope(name);
+      PWire*cur = pform_get_wire_in_scope(name);
       if (cur == 0) {
 	    VLerror("error: name is not a valid net.");
 	    return;
@@ -1338,7 +1338,7 @@ void pform_makewire(const vlltype&li, perm_string name,
 		    ivl_variable_type_t dt,
 		    svector<named_pexpr_t*>*attr)
 {
-      PWire*cur = get_wire_in_scope(name);
+      PWire*cur = pform_get_wire_in_scope(name);
 
 	// If this is not implicit ("implicit" meaning we don't know
 	// what the type is yet) then set the type now.
@@ -1452,7 +1452,7 @@ void pform_makewire(const vlltype&li,
 		                      SR_NET);
 	    }
 
-	    PWire*cur = get_wire_in_scope(first->name);
+	    PWire*cur = pform_get_wire_in_scope(first->name);
 	    if (cur != 0) {
 		  PEIdent*lval = new PEIdent(first->name);
 		  FILE_NAME(lval, li.text, li.first_line);

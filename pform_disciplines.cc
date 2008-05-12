@@ -47,45 +47,36 @@ void pform_end_discipline(const struct vlltype&loc)
 }
 
 /*
- * The parser uses this function to attach a discipline to a declared wire.
+ * The parser uses this function to attach a discipline to a wire. The
+ * wire may be declared by now, or will be declared further later. If
+ * it is already declared, we just attach the discipline. If it is not
+ * declared yet, then this is the declaration and we create the signal
+ * in the current lexical scope.
  */
 void pform_attach_discipline(const struct vlltype&loc,
 			     discipline_t*discipline, list<perm_string>*names)
 {
-      error_count += 1;
-      cerr << yylloc.text << ";" << yylloc.first_line << ": sorry: "
-	   << "Net discipline declarations not supported." << endl;
-
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; cur ++ ) {
-	    cerr << yylloc.text << ";" << yylloc.first_line << ":      : "
-		 << "discipline=" << discipline->name()
-		 << ", net=" << *cur << endl;
-      }
-}
 
-void pform_dump(std::ostream&out, discipline_t*dis)
-{
-      out << "discipline " << dis->name() << endl;
-      out << "    domain " << dis->domain() << ";" << endl;
-      out << "enddiscipline" << endl;
-}
+	    PWire* cur_net = pform_get_wire_in_scope(*cur);
+	    if (cur_net == 0) {
+		    /* Not declared yet, declare it now. */
+		  pform_makewire(loc, *cur, NetNet::WIRE,
+				 NetNet::NOT_A_PORT, IVL_VT_REAL, 0);
+		  cur_net = pform_get_wire_in_scope(*cur);
+		  assert(cur_net);
+	    }
 
-std::ostream& operator << (std::ostream&out, ddomain_t dom)
-{
-      switch (dom) {
-	  case DD_NONE:
-	    out << "no-domain";
-	    break;
-	  case DD_DISCRETE:
-	    out << "discrete";
-	    break;
-	  case DD_CONTINUOUS:
-	    out << "continuous";
-	    break;
-	  default:
-	    assert(0);
-	    break;
+	    if (discipline_t*tmp = cur_net->get_discipline()) {
+		  cerr << loc.text << ":" << loc.first_line << ": error: "
+		       << "discipline " << discipline->name()
+		       << " cannot override existing discipline " << tmp->name()
+		       << " on net " << cur_net->basename() << endl;
+		  error_count += 1;
+
+	    } else {
+		  cur_net->set_discipline(discipline);
+	    }
       }
-      return out;
 }

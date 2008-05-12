@@ -30,7 +30,7 @@ PWire::PWire(perm_string n,
   signed_(false), isint_(false),
   port_msb_(0), port_lsb_(0), port_set_(false),
   net_msb_(0), net_lsb_(0), net_set_(false), error_cnt_(0),
-  lidx_(0), ridx_(0)
+    lidx_(0), ridx_(0), discipline_(0)
 {
       if (t == NetNet::INTEGER) {
 	    type_ = NetNet::REG;
@@ -135,19 +135,6 @@ bool PWire::get_isint() const
       return isint_;
 }
 
-/*
- * Since implicitly defined list of port declarations are no longer
- * considered fully defined we no longer need this routine to force
- * them to be fully defined.
- *
-void PWire::set_net_range()
-{
-      net_msb_ = port_msb_;
-      net_lsb_ = port_lsb_;
-      net_set_ = true;
-}
-*/
-
 void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
 {
       switch (type) {
@@ -211,3 +198,13 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
       }
 }
 
+void PWire::set_discipline(discipline_t*d)
+{
+      assert(discipline_ == 0);
+      discipline_ = d;
+}
+
+discipline_t* PWire::get_discipline(void) const
+{
+      return discipline_;
+}

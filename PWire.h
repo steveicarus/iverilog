@@ -36,6 +36,7 @@ class ostream;
 
 class PExpr;
 class Design;
+class discipline_t;
 
 /*
  * The different type of PWire::set_range() calls.
@@ -78,9 +79,11 @@ class PWire : public LineInfo {
       ivl_variable_type_t get_data_type() const;
 
       void set_range(PExpr*msb, PExpr*lsb, PWSRType type);
-      void set_net_range();
 
       void set_memory_idx(PExpr*ldx, PExpr*rdx);
+
+      void set_discipline(discipline_t*);
+      discipline_t* get_discipline(void) const;
 
       map<perm_string,PExpr*> attributes;
 
@@ -111,6 +114,8 @@ class PWire : public LineInfo {
 	// me the size and address range of the memory.
       PExpr*lidx_;
       PExpr*ridx_;
+
+      discipline_t*discipline_;
 
     private: // not implemented
       PWire(const PWire&);

@@ -29,6 +29,7 @@
 # include  "PEvent.h"
 # include  "PGenerate.h"
 # include  "PSpec.h"
+# include  "discipline.h"
 # include  <iostream>
 # include  <iomanip>
 # include  <typeinfo>
@@ -126,6 +127,26 @@ ostream& operator<< (ostream&o, const pform_name_t&that)
       }
 
       return o;
+}
+
+
+std::ostream& operator << (std::ostream&out, ddomain_t dom)
+{
+      switch (dom) {
+	  case DD_NONE:
+	    out << "no-domain";
+	    break;
+	  case DD_DISCRETE:
+	    out << "discrete";
+	    break;
+	  case DD_CONTINUOUS:
+	    out << "continuous";
+	    break;
+	  default:
+	    assert(0);
+	    break;
+      }
+      return out;
 }
 
 void PExpr::dump(ostream&out) const
@@ -298,6 +319,10 @@ void PWire::dump(ostream&out, unsigned ind) const
 
       if (signed_) {
 	    out << " signed";
+      }
+
+      if (discipline_) {
+	    out << " discipline<" << discipline_->name() << ">";
       }
 
       if (port_set_) {
@@ -1122,4 +1147,11 @@ void PUdp::dump(ostream&out) const
       }
 
       out << "endprimitive" << endl;
+}
+
+void pform_dump(std::ostream&out, discipline_t*dis)
+{
+      out << "discipline " << dis->name() << endl;
+      out << "    domain " << dis->domain() << ";" << endl;
+      out << "enddiscipline" << endl;
 }

@@ -122,6 +122,13 @@ extern void pform_set_default_nettype(NetNet::Type net,
 				     unsigned lineno);
 
 /*
+ * Look for the given wire in the current lexical scope. If the wire
+ * (including variables of any type) cannot be found in the current
+ * scope, then return 0.
+ */
+extern PWire* pform_get_wire_in_scope(perm_string name);
+
+/*
  * The parser uses startmodule and endmodule together to build up a
  * module as it parses it. The startmodule tells the pform code that a
  * module has been noticed in the source file and the following events
