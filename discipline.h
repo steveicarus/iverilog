@@ -33,19 +33,43 @@
 typedef enum { DD_NONE, DD_DISCRETE, DD_CONTINUOUS } ddomain_t;
 extern std::ostream& operator << (std::ostream&, ddomain_t);
 
+class nature_t : public LineInfo {
+    public:
+      explicit nature_t(perm_string name, perm_string access);
+      ~nature_t();
+
+      perm_string name() const   { return name_; }
+	// Identifier for the access function for this nature
+      perm_string access() const { return access_; }
+
+    private:
+      perm_string name_;
+      perm_string access_;
+};
+
 class discipline_t : public LineInfo {
     public:
-      explicit discipline_t (perm_string name, ddomain_t dom);
+      explicit discipline_t (perm_string name, ddomain_t dom,
+			     nature_t*pot, nature_t*flow);
       ~discipline_t();
 
-      perm_string name() const { return name_; }
-      ddomain_t domain() const { return domain_; }
+      perm_string name() const         { return name_; }
+      ddomain_t domain() const         { return domain_; }
+      const nature_t*potential() const { return potential_; }
+      const nature_t*flow() const      { return flow_; }
 
     private:
       perm_string name_;
       ddomain_t domain_;
+      nature_t*potential_;
+      nature_t*flow_;
+
+    private: // not implemented
+      discipline_t(const discipline_t&);
+      discipline_t& operator = (const discipline_t&);
 };
 
+extern map<perm_string,nature_t*> natures;
 extern map<perm_string,discipline_t*> disciplines;
 
 #endif

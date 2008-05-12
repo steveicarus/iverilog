@@ -686,18 +686,21 @@ discipline_items
 
 discipline_item
   : K_domain K_discrete ';'
+      { pform_discipline_domain(@1, DD_DISCRETE); }
   | K_domain K_continuous ';'
+      { pform_discipline_domain(@1, DD_CONTINUOUS); }
   | K_potential IDENTIFIER ';'
-      { delete[] $2; }
+      { pform_discipline_potential(@1, $2); delete[] $2; }
   | K_flow IDENTIFIER ';'
-      { delete[] $2; }
+      { pform_discipline_flow(@1, $2); delete[] $2; }
   ;
 
 nature_declaration
   : K_nature IDENTIFIER ';'
+      { pform_start_nature($2); }
     nature_items
     K_endnature
-      { delete[] $2; }
+      { pform_end_nature(@1); delete[] $2; }
   ;
 
 nature_items
@@ -710,7 +713,7 @@ nature_item
       { delete[] $3; }
   | K_abstol '=' expression ';'
   | K_access '=' IDENTIFIER ';'
-      { delete[] $3; }
+      { pform_nature_access(@1, $3); delete[] $3; }
   | K_idt_nature '=' IDENTIFIER ';'
       { delete[] $3; }
   | K_ddt_nature '=' IDENTIFIER ';'

@@ -23,10 +23,58 @@
 # include  "parse_misc.h"
 # include  "discipline.h"
 
+map<perm_string,nature_t*> natures;
 map<perm_string,discipline_t*> disciplines;
+
+static perm_string nature_name = perm_string::perm_string();
+static perm_string nature_access = perm_string::perm_string();
+
+void pform_start_nature(const char*name)
+{
+      nature_name = lex_strings.make(name);
+}
+
+void pform_nature_access(const struct vlltype&loc, const char*name)
+{
+      if (nature_access) {
+	    cerr << loc.text << ":" << loc.first_line << ": error: "
+		 << "Too many access names for nature "
+		 << nature_name << "." << endl;
+	    error_count += 1;
+	    return;
+      }
+
+      nature_access = lex_strings.make(name);
+}
+
+void pform_end_nature(const struct vlltype&loc)
+{
+	// The nature access function is required. If it is missing,
+	// then signal an error. For a temporary expedient, we can set
+	// the nature name as the access function, but don't expect it
+	// to work.
+      if (! nature_access) {
+	    cerr << loc.text << ":" << loc.first_line << ": error: "
+		 << "Missing access name for nature "
+		 << nature_name << "." << endl;
+	    error_count += 1;
+	    nature_access = nature_name;
+      }
+
+      nature_t*tmp = new nature_t(nature_name, nature_access);
+      natures[nature_name] = tmp;
+
+      FILE_NAME(tmp, loc);
+
+      nature_name = perm_string::perm_string();
+      nature_access = perm_string::perm_string();
+}
+
 
 static perm_string discipline_name;
 static ddomain_t discipline_domain = DD_NONE;
+static nature_t* discipline_potential = 0;
+static nature_t* discipline_flow = 0;
 
 void pform_start_discipline(const char*name)
 {
@@ -34,9 +82,72 @@ void pform_start_discipline(const char*name)
       discipline_domain = DD_NONE;
 }
 
+void pform_discipline_domain(const struct vlltype&loc, ddomain_t use_domain)
+{
+      assert(use_domain != DD_NONE);
+
+      if (discipline_domain != DD_NONE) {
+	    cerr << loc.text << ":" << loc.first_line << ": error: "
+		 << "Too many domain attributes for discipline "
+		 << discipline_name << "." << endl;
+	    error_count += 1;
+	    return;
+      }
+
+      discipline_domain = use_domain;
+}
+
+void pform_discipline_potential(const struct vlltype&loc, const char*name)
+{
+      if (discipline_potential) {
+	    cerr << loc.text << ":" << loc.first_line << ": error: "
+		 << "Too many potential natures for discipline "
+		 << discipline_name << "." << endl;
+	    error_count += 1;
+	    return;
+      }
+
+      perm_string key = lex_strings.make(name);
+      discipline_potential = natures[key];
+
+      if (discipline_potential == 0) {
+	    cerr << loc.text << ":" << loc.first_line << ": error: "
+		 << "nature " << key << " is not declared." << endl;
+	    error_count += 1;
+	    return;
+      }
+}
+
+void pform_discipline_flow(const struct vlltype&loc, const char*name)
+{
+      if (discipline_flow) {
+	    cerr << loc.text << ":" << loc.first_line << ": error: "
+		 << "Too many flow natures for discipline "
+		 << discipline_name << "." << endl;
+	    error_count += 1;
+	    return;
+      }
+
+      perm_string key = lex_strings.make(name);
+      discipline_flow = natures[key];
+
+      if (discipline_flow == 0) {
+	    cerr << loc.text << ":" << loc.first_line << ": error: "
+		 << "nature " << key << " is not declared." << endl;
+	    error_count += 1;
+	    return;
+      }
+}
+
 void pform_end_discipline(const struct vlltype&loc)
 {
-      discipline_t*tmp = new discipline_t(discipline_name, discipline_domain);
+	// If the domain is not otherwise specified, then take it to
+	// be continuous if potential or flow natures are given.
+      if (discipline_domain == DD_NONE && discipline_potential||discipline_flow)
+	    discipline_domain = DD_CONTINUOUS;
+
+      discipline_t*tmp = new discipline_t(discipline_name, discipline_domain,
+					  discipline_potential, discipline_flow);
       disciplines[discipline_name] = tmp;
 
       FILE_NAME(tmp, loc);
@@ -44,6 +155,8 @@ void pform_end_discipline(const struct vlltype&loc)
 	/* Clear the static variables for the next item. */
       discipline_name = perm_string::perm_string();
       discipline_domain = DD_NONE;
+      discipline_potential = 0;
+      discipline_flow = 0;
 }
 
 /*
