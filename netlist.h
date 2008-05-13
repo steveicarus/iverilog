@@ -2465,6 +2465,7 @@ class NetUTask  : public NetProc {
       const NetScope* task() const;
 
       virtual NexusSet* nex_input(bool rem_out = true);
+      virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 

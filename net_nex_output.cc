@@ -159,6 +159,15 @@ void NetSTask::nex_output(NexusSet&out)
 {
 }
 
+/*
+* Consider a task call to not have any outputs. This is not quite
+* right, we should be listing as outputs all the output ports, but for
+* the purposes that this method is used, this will do for now.
+*/
+void NetUTask::nex_output(NexusSet&out)
+{
+}
+
 void NetWhile::nex_output(NexusSet&out)
 {
       if (proc_ != 0)
