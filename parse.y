@@ -672,8 +672,14 @@ description
       }
   ;
 
+  /* The discipline and nature declarations used to take no ';' after
+     the identifier. The 2.3 LRM adds the ';', but since there are
+     programs written to the 2.1 and 2.2 standard that don't, we
+     choose to make the ';' optional in this context. */
+optional_semicolon : ';' | ;
+
 discipline_declaration
-  : K_discipline IDENTIFIER ';'
+  : K_discipline IDENTIFIER optional_semicolon
       { pform_start_discipline($2); }
     discipline_items K_enddiscipline
       { pform_end_discipline(@1); delete[] $2; }
@@ -696,7 +702,7 @@ discipline_item
   ;
 
 nature_declaration
-  : K_nature IDENTIFIER ';'
+  : K_nature IDENTIFIER optional_semicolon
       { pform_start_nature($2); }
     nature_items
     K_endnature
