@@ -266,16 +266,20 @@ extern void pform_set_attrib(perm_string name, perm_string key,
 extern void pform_set_type_attrib(perm_string name, const string&key,
 				  char*value);
 
-extern void pform_set_parameter(perm_string name,
+extern Module::range_t* pform_parameter_value_range(bool exclude_flag,
+						    bool low_open, PExpr*low_expr,
+						    bool hig_open, PExpr*hig_expr);
+
+extern void pform_set_parameter(const struct vlltype&loc,
+				perm_string name,
 				bool signed_flag,
 				svector<PExpr*>*range,
-				PExpr*expr,
-				const char*file, unsigned lineno);
-extern void pform_set_localparam(perm_string name,
+				PExpr*expr, Module::range_t*value_range);
+extern void pform_set_localparam(const struct vlltype&loc,
+				 perm_string name,
 				 bool signed_flag,
 				 svector<PExpr*>*range,
-				 PExpr*expr,
-				 const char*file, unsigned lineno);
+				 PExpr*expr);
 extern void pform_set_defparam(const pform_name_t&name, PExpr*expr);
 
 /*

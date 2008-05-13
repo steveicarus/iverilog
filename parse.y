@@ -156,6 +156,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       svector<lgate>*gates;
 
       Module::port_t *mport;
+      Module::range_t* value_range;
       svector<Module::port_t*>*mports;
 
       named_pexpr_t*named_pexpr;
@@ -213,7 +214,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_endprimitive K_endspecify K_endtable K_endtask K_event
 %token K_exclude K_exp K_floor K_flow K_from
 %token K_for K_force K_forever K_fork K_function K_generate K_genvar
-%token K_ground K_highz0 K_highz1 K_hypot K_idt_nature K_if K_ifnone
+%token K_ground K_highz0 K_highz1 K_hypot K_idt_nature K_if K_ifnone K_inf
 %token K_initial K_inout K_input K_integer K_join K_large K_ln K_localparam
 %token K_log K_logic K_macromodule K_max
 %token K_medium K_min K_module K_nand K_nature K_negedge
@@ -235,6 +236,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 
 %token KK_attribute
 
+%type <flag>    from_exclude
 %type <number>  number
 %type <flag>    signed_opt udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
@@ -256,6 +258,9 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %type <mport> port port_opt port_reference port_reference_list
 %type <mport> port_declaration
 %type <mports> list_of_ports module_port_list_opt list_of_port_declarations
+%type <value_range> parameter_value_range parameter_value_ranges
+%type <value_range> parameter_value_ranges_opt
+%type <expr> value_range_expression
 
 %type <wires> task_item task_item_list task_item_list_opt
 %type <wires> task_port_item task_port_decl task_port_decl_list
@@ -2375,22 +2380,43 @@ parameter_assign_list
 	;
 
 parameter_assign
-	: IDENTIFIER '=' expression
-		{ PExpr*tmp = $3;
-		  if (!pform_expression_is_constant(tmp)) {
-			yyerror(@3, "error: parameter value "
-			            "must be a constant expression.");
-			delete tmp;
-			tmp = 0;
-		  } else {
-			pform_set_parameter(lex_strings.make($1),
-					    active_signed,
-					    active_range, tmp,
-					    @1.text, @1.first_line);
-		  }
-		  delete[]$1;
-		}
-	;
+  : IDENTIFIER '=' expression parameter_value_ranges_opt
+      { PExpr*tmp = $3;
+	pform_set_parameter(@1, lex_strings.make($1),
+			    active_signed, active_range, tmp, $4);
+	delete[]$1;
+      }
+  ;
+
+parameter_value_ranges_opt : parameter_value_ranges { $$ = $1; } | { $$ = 0; } ;
+
+parameter_value_ranges
+  : parameter_value_ranges parameter_value_range
+      { $$ = $2; $$->next = $1; }
+  | parameter_value_range
+      { $$ = $1; $$->next = 0; }
+  ;
+
+parameter_value_range
+  : from_exclude '[' value_range_expression ':' value_range_expression ']'
+      { $$ = pform_parameter_value_range($1, false, $3, false, $5); }
+  | from_exclude '[' value_range_expression ':' value_range_expression ')'
+      { $$ = pform_parameter_value_range($1, false, $3, true, $5); }
+  | from_exclude '(' value_range_expression ':' value_range_expression ']'
+      { $$ = pform_parameter_value_range($1, true, $3, false, $5); }
+  | from_exclude '(' value_range_expression ':' value_range_expression ')'
+      { $$ = pform_parameter_value_range($1, true, $3, true, $5); }
+    /* | K_exclude  expression */
+  ;
+
+value_range_expression
+  : expression { $$ = $1; }
+  | K_inf { $$ = 0; }
+  | '+' K_inf { $$ = 0; }
+  | '-' K_inf { $$ = 0; }
+  ;
+
+from_exclude : K_from { $$ = false; } | K_exclude { $$ = true; } ;
 
   /* Localparam assignments and assignment lists are broken into
      separate BNF so that I can call slightly different parameter
@@ -2406,10 +2432,9 @@ localparam_assign
 			delete tmp;
 			tmp = 0;
 		  } else {
-			pform_set_localparam(lex_strings.make($1),
+			pform_set_localparam(@1, lex_strings.make($1),
 					     active_signed,
-					     active_range, tmp,
-					     @1.text, @1.first_line);
+					     active_range, tmp);
 		  }
 		  delete[]$1;
 		}

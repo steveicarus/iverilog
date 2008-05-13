@@ -1002,9 +1002,34 @@ void Module::dump(ostream&out) const
 		      << *(*cur).second.lsb << "] ";
 	    out << (*cur).first << " = ";
 	    if ((*cur).second.expr)
-		  out << *(*cur).second.expr << ";" << endl;
+		  out << *(*cur).second.expr;
 	    else
-		  out << "/* ERROR */;" << endl;
+		  out << "/* ERROR */";
+	    for (Module::range_t*tmp = (*cur).second.range
+		       ; tmp ; tmp = tmp->next) {
+		  if (tmp->exclude_flag)
+			out << " exclude ";
+		  else
+			out << " from ";
+		  if (tmp->low_open_flag)
+			out << "(";
+		  else
+			out << "[";
+		  if (tmp->low_expr)
+			out << *(tmp->low_expr);
+		  else
+			out << "<>";
+		  out << ":";
+		  if (tmp->high_expr)
+			out << *(tmp->high_expr);
+		  else
+			out << "<>";
+		  if (tmp->high_open_flag)
+			out << ")";
+		  else
+			out << "]";
+	    }
+	    out << ";" << endl;
       }
 
       for (parm_iter_t cur = localparams.begin()

@@ -79,6 +79,7 @@ hypot,		GN_KEYWORDS_VAMS_2_3,	K_hypot
 idt_nature,	GN_KEYWORDS_VAMS_2_3,	K_idt_nature
 if,		GN_KEYWORDS_1364_1995,	K_if
 ifnone,		GN_KEYWORDS_1364_1995,	K_ifnone
+inf,		GN_KEYWORDS_VAMS_2_3,	K_inf
 initial,	GN_KEYWORDS_1364_1995,	K_initial
 inout,		GN_KEYWORDS_1364_1995,	K_inout
 input,		GN_KEYWORDS_1364_1995,	K_input

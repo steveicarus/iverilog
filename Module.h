@@ -75,16 +75,29 @@ class Module : public PScope, public LineInfo {
 
       NetNet::Type default_nettype;
 
+      struct range_t {
+	      // True if this is an exclude
+	    bool exclude_flag;
+	      // lower bound
+	    bool low_open_flag;
+	    PExpr*low_expr;
+	      // upper bound
+	    bool high_open_flag;
+	    PExpr*high_expr;
+	      // Next range description in list
+	    struct range_t*next;
+      };
+
 	/* The module has parameters that are evaluated when the
 	   module is elaborated. During parsing, I put the parameters
 	   into this map. */
-      struct param_expr_t {
+      struct param_expr_t : public LineInfo {
 	    PExpr*expr;
 	    PExpr*msb;
 	    PExpr*lsb;
-	    perm_string file;
-	    unsigned lineno;
 	    bool signed_flag;
+	      // If there are range constrants, list them here
+	    range_t*range;
       };
       map<perm_string,param_expr_t>parameters;
       map<perm_string,param_expr_t>localparams;
@@ -158,8 +171,7 @@ class Module : public PScope, public LineInfo {
       map<perm_string,PFunction*> funcs_;
 
       static void elaborate_parm_item_(perm_string name, const param_expr_t&cur,
-				       Design*des, NetScope*scope,
-				       perm_string file, unsigned lineno);
+				       Design*des, NetScope*scope);
 
     private: // Not implemented
       Module(const Module&);

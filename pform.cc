@@ -1634,50 +1634,69 @@ void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r)
       cur->set_memory_idx(l, r);
 }
 
-void pform_set_parameter(perm_string name, bool signed_flag,
+Module::range_t* pform_parameter_value_range(bool exclude_flag,
+					     bool low_open, PExpr*low_expr,
+					     bool hig_open, PExpr*hig_expr)
+{
+      Module::range_t*tmp = new Module::range_t;
+      tmp->exclude_flag = exclude_flag;
+      tmp->low_open_flag = low_open;
+      tmp->low_expr = low_expr;
+      tmp->high_open_flag = hig_open;
+      tmp->high_expr = hig_expr;
+      tmp->next = 0;
+      return tmp;
+}
+
+void pform_set_parameter(const struct vlltype&loc,
+			 perm_string name, bool signed_flag,
 			 svector<PExpr*>*range, PExpr*expr,
-			 const char*file, unsigned lineno)
+			 Module::range_t*value_range)
 {
       assert(expr);
-      pform_cur_module->parameters[name].expr = expr;
+      Module::param_expr_t&parm = pform_cur_module->parameters[name];
+      FILE_NAME(&parm, loc);
+
+      parm.expr = expr;
 
       if (range) {
 	    assert(range->count() == 2);
 	    assert((*range)[0]);
 	    assert((*range)[1]);
-	    pform_cur_module->parameters[name].msb = (*range)[0];
-	    pform_cur_module->parameters[name].lsb = (*range)[1];
+	    parm.msb = (*range)[0];
+	    parm.lsb = (*range)[1];
       } else {
-	    pform_cur_module->parameters[name].msb = 0;
-	    pform_cur_module->parameters[name].lsb = 0;
+	    parm.msb = 0;
+	    parm.lsb = 0;
       }
-      pform_cur_module->parameters[name].signed_flag = signed_flag;
-      pform_cur_module->parameters[name].file = filename_strings.make(file);
-      pform_cur_module->parameters[name].lineno = lineno;
+      parm.signed_flag = signed_flag;
+      parm.range = value_range;
 
       pform_cur_module->param_names.push_back(name);
 }
 
-void pform_set_localparam(perm_string name, bool signed_flag,
-			  svector<PExpr*>*range, PExpr*expr,
-			  const char*file, unsigned lineno)
+void pform_set_localparam(const struct vlltype&loc,
+			  perm_string name, bool signed_flag,
+			  svector<PExpr*>*range, PExpr*expr)
 {
       assert(expr);
-      pform_cur_module->localparams[name].expr = expr;
+      Module::param_expr_t&parm = pform_cur_module->localparams[name];
+      FILE_NAME(&parm, loc);
+
+      parm.expr = expr;
 
       if (range) {
 	    assert(range->count() == 2);
 	    assert((*range)[0]);
 	    assert((*range)[1]);
-	    pform_cur_module->localparams[name].msb = (*range)[0];
-	    pform_cur_module->localparams[name].lsb = (*range)[1];
+	    parm.msb = (*range)[0];
+	    parm.lsb = (*range)[1];
       } else {
-	    pform_cur_module->localparams[name].msb  = 0;
-	    pform_cur_module->localparams[name].lsb  = 0;
+	    parm.msb  = 0;
+	    parm.lsb  = 0;
       }
-      pform_cur_module->localparams[name].signed_flag = signed_flag;
-      pform_cur_module->localparams[name].file = filename_strings.make(file);
-      pform_cur_module->localparams[name].lineno = lineno;
+      parm.signed_flag = signed_flag;
+      parm.range = 0;
 }
 
 void pform_set_specparam(perm_string name, PExpr*expr)

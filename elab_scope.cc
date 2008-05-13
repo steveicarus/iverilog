@@ -45,8 +45,7 @@
 # include  <assert.h>
 
 void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
-				  Design*des, NetScope*scope,
-				  perm_string file, unsigned lineno)
+				  Design*des, NetScope*scope)
 {
       PExpr*ex = cur.expr;
       assert(ex);
@@ -81,8 +80,8 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
 	    signed_flag = val->has_sign();
       }
 
-      val = scope->set_parameter(name, val,
-				 msb, lsb, signed_flag, file, lineno);
+      val = scope->set_parameter(name, val, msb, lsb, signed_flag,
+				 cur.get_file(), cur.get_lineno());
       assert(val);
       delete val;
 }
@@ -121,7 +120,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	    tmp->cast_signed( (*cur).second.signed_flag );
 
 	    scope->set_parameter((*cur).first, tmp, 0, 0, false,
-	                         (*cur).second.file, (*cur).second.lineno);
+	                         (*cur).second.get_file(),
+				 (*cur).second.get_lineno());
       }
 
       for (mparm_it_t cur = localparams.begin()
@@ -133,7 +133,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 		  tmp->cast_signed( (*cur).second.signed_flag );
 
 	    scope->set_parameter((*cur).first, tmp, 0, 0, false,
-	                         (*cur).second.file, (*cur).second.lineno);
+	                         (*cur).second.get_file(),
+				 (*cur).second.get_lineno());
       }
 
 
@@ -145,8 +146,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       for (mparm_it_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  cur ++) {
 
-	    elaborate_parm_item_((*cur).first, (*cur).second, des, scope,
-	                         (*cur).second.file, (*cur).second.lineno);
+	    elaborate_parm_item_((*cur).first, (*cur).second, des, scope);
       }
 
 	/* run parameter replacements that were collected from the
@@ -178,8 +178,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       for (mparm_it_t cur = localparams.begin()
 		 ; cur != localparams.end() ;  cur ++) {
 
-	    elaborate_parm_item_((*cur).first, (*cur).second, des, scope,
-	                         (*cur).second.file, (*cur).second.lineno);
+	    elaborate_parm_item_((*cur).first, (*cur).second, des, scope);
       }
 
 	// Run through the defparams for this module, elaborate the
