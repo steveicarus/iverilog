@@ -1449,7 +1449,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
       }
 
 
-      if (net->sig()->sb_to_idx(msv) >= net->vector_width()) {
+      if (net->sig()->sb_to_idx(msv) >= (signed) net->vector_width()) {
 	    cerr << get_fileline() << ": error: part select ["
 		 << msv << ":" << lsv << "] out of range." << endl;
 	    des->errors += 1;
@@ -1558,7 +1558,8 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 	      // If the part select covers exactly the entire
 	      // vector, then do not bother with it. Return the
 	      // signal itself.
-	    if (net->sig()->sb_to_idx(lsv) == (wid-1) && wid == net->vector_width())
+	    if (net->sig()->sb_to_idx(lsv) == (signed) (wid-1) &&
+	        wid == net->vector_width())
 		  return net;
 
 	      // Otherwise, make a part select that covers the right range.
