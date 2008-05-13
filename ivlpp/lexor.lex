@@ -1471,6 +1471,7 @@ static void do_include()
         fprintf(yyout, "\n`line %u \"%s\" 1\n", istack->lineno+1, standby->path);
 
     standby->next = istack;
+    standby->stringify_flag = 0;
 
     istack->yybs = YY_CURRENT_BUFFER;
     istack = standby;
@@ -1710,6 +1711,7 @@ void reset_lexor(FILE* out, char* paths[])
     isp->str = 0;
     isp->ebs = 0;
     isp->lineno = 0;
+    isp->stringify_flag = 0;
 
     if (isp->file == 0)
     {
