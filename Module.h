@@ -79,9 +79,11 @@ class Module : public PScope, public LineInfo {
 	      // True if this is an exclude
 	    bool exclude_flag;
 	      // lower bound
+	      // If low_open_flag is false and low_expr=0, then use -inf
 	    bool low_open_flag;
 	    PExpr*low_expr;
 	      // upper bound
+	      // If high_open_flag is false and high_expr=0, then use +inf
 	    bool high_open_flag;
 	    PExpr*high_expr;
 	      // Next range description in list

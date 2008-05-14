@@ -1017,13 +1017,17 @@ void Module::dump(ostream&out) const
 			out << "[";
 		  if (tmp->low_expr)
 			out << *(tmp->low_expr);
+		  else if (tmp->low_open_flag==false)
+			out << "-inf";
 		  else
-			out << "<>";
+			out << "<nil>";
 		  out << ":";
 		  if (tmp->high_expr)
 			out << *(tmp->high_expr);
+		  else if (tmp->high_open_flag==false)
+			out << "inf";
 		  else
-			out << "<>";
+			out << "<nil>";
 		  if (tmp->high_open_flag)
 			out << ")";
 		  else

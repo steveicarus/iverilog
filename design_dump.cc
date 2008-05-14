@@ -966,8 +966,37 @@ void NetScope::dump(ostream&o) const
 			o << "[" << *(*pp).second.msb
 			  << ":" << *(*pp).second.lsb << "] ";
 
-		  o << (*pp).first << " = "  <<
-			*(*pp).second.expr << ";" << endl;
+		  o << (*pp).first << " = "  << *(*pp).second.expr;
+
+		  for (range_t*ran = (*pp).second.range ; ran ; ran = ran->next) {
+			if (ran->exclude_flag)
+			      o << " exclude ";
+			else
+			      o << " from ";
+
+			if (ran->low_open_flag)
+			      o << "(";
+			else
+			      o << "[";
+			if (ran->low_expr)
+			      o << *ran->low_expr;
+			else if (ran->low_open_flag==false)
+			      o << "-inf";
+			else
+			      o << "<?>";
+			if (ran->high_expr)
+			      o << ":" << *ran->high_expr;
+			else if (ran->high_open_flag==false)
+			      o << ":inf";
+			else
+			      o << ":<?>";
+			if (ran->high_open_flag)
+			      o << ")";
+			else
+			      o << "]";
+		  }
+
+		  o << ";" << endl;
 	    }
 
 	    for (pp = localparams.begin()

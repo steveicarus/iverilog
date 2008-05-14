@@ -3314,11 +3314,13 @@ class NetScope : public Attrib {
 	   the scope. The return value from set_parameter is the
 	   previous expression, if there was one. */
 
+      struct range_t;
       NetExpr* set_parameter(perm_string name, NetExpr*val,
 			     NetExpr*msb, NetExpr*lsb, bool signed_flag,
-			     perm_string file, unsigned lineno);
+			     NetScope::range_t*range_list,
+			     const LineInfo&file_line);
       NetExpr* set_localparam(perm_string name, NetExpr*val,
-			      perm_string file, unsigned lineno);
+			      const LineInfo&file_line);
 
       const NetExpr*get_parameter(const char* name,
 				  const NetExpr*&msb,
@@ -3427,15 +3429,30 @@ class NetScope : public Attrib {
       map<pform_name_t,NetExpr*>defparams;
 
     public:
+      struct range_t {
+	    bool exclude_flag;
+	      // Lower bound
+	    bool low_open_flag;
+	    NetExpr*low_expr;
+	      // Upper bound
+	    bool high_open_flag;
+	    NetExpr*high_expr;
+	      // Link to the next range specification
+	    struct range_t*next;
+      };
+
 	/* After everything is all set up, the code generators like
 	   access to these things to make up the parameter lists. */
-      struct param_expr_t {
-	    NetExpr*expr;
+      struct param_expr_t : public LineInfo {
+	    param_expr_t() : range(0) { }
+	      // Type information
+	    bool signed_flag;
 	    NetExpr*msb;
 	    NetExpr*lsb;
-	    perm_string file;
-	    unsigned lineno;
-	    bool signed_flag;
+	      // range constraints
+	    struct range_t*range;
+	      // Expression value
+	    NetExpr*expr;
       };
       map<perm_string,param_expr_t>parameters;
       map<perm_string,param_expr_t>localparams;

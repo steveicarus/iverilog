@@ -1638,6 +1638,11 @@ Module::range_t* pform_parameter_value_range(bool exclude_flag,
 					     bool low_open, PExpr*low_expr,
 					     bool hig_open, PExpr*hig_expr)
 {
+	// Detect +-inf and make the the *_open flags false to force
+	// the range interpretation as inf.
+      if (low_expr == 0) low_open = false;
+      if (hig_expr == 0) hig_open = false;
+
       Module::range_t*tmp = new Module::range_t;
       tmp->exclude_flag = exclude_flag;
       tmp->low_open_flag = low_open;

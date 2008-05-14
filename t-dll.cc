@@ -470,8 +470,8 @@ void dll_target::make_scope_parameters(ivl_scope_t scope, const NetScope*net)
 	    ivl_parameter_t cur_par = scope->param_ + idx;
 	    cur_par->basename = (*cur_pit).first;
 	    cur_par->scope = scope;
-	    cur_par->file = (*cur_pit).second.file;
-	    cur_par->lineno = (*cur_pit).second.lineno;
+	    cur_par->file = (*cur_pit).second.get_file();
+	    cur_par->lineno = (*cur_pit).second.get_lineno();
 
 	    NetExpr*etmp = (*cur_pit).second.expr;
 	    make_scope_param_expr(cur_par, etmp);
@@ -484,8 +484,8 @@ void dll_target::make_scope_parameters(ivl_scope_t scope, const NetScope*net)
 	    ivl_parameter_t cur_par = scope->param_ + idx;
 	    cur_par->basename = (*cur_pit).first;
 	    cur_par->scope = scope;
-	    cur_par->file = (*cur_pit).second.file;
-	    cur_par->lineno = (*cur_pit).second.lineno;
+	    cur_par->file = (*cur_pit).second.get_file();
+	    cur_par->lineno = (*cur_pit).second.get_lineno();
 
 	    NetExpr*etmp = (*cur_pit).second.expr;
 	    make_scope_param_expr(cur_par, etmp);

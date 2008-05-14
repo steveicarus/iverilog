@@ -23,6 +23,7 @@
 # include  "netlist.h"
 # include  <cstring>
 # include  <sstream>
+# include  "ivl_assert.h"
 
 /*
  * The NetScope class keeps a scope tree organized. Each node of the
@@ -105,7 +106,8 @@ void NetScope::set_line(perm_string file, perm_string def_file,
 
 NetExpr* NetScope::set_parameter(perm_string key, NetExpr*expr,
 				 NetExpr*msb, NetExpr*lsb, bool signed_flag,
-				 perm_string file, unsigned lineno)
+				 NetScope::range_t*range_list,
+				 const LineInfo&file_line)
 {
       param_expr_t&ref = parameters[key];
       NetExpr* res = ref.expr;
@@ -113,8 +115,9 @@ NetExpr* NetScope::set_parameter(perm_string key, NetExpr*expr,
       ref.msb = msb;
       ref.lsb = lsb;
       ref.signed_flag = signed_flag;
-      ref.file = file;
-      ref.lineno = lineno;
+      ivl_assert(file_line, ref.range == 0);
+      ref.range = range_list;
+      ref.set_line(file_line);
       return res;
 }
 
@@ -160,7 +163,7 @@ bool NetScope::replace_parameter(perm_string key, NetExpr*expr)
  * used to add a genver to the local parameter list.
  */
 NetExpr* NetScope::set_localparam(perm_string key, NetExpr*expr,
-				  perm_string file, unsigned lineno)
+				  const LineInfo&file_line)
 {
       param_expr_t&ref = localparams[key];
       NetExpr* res = ref.expr;
@@ -168,8 +171,7 @@ NetExpr* NetScope::set_localparam(perm_string key, NetExpr*expr,
       ref.msb = 0;
       ref.lsb = 0;
       ref.signed_flag = false;
-      ref.file = file;
-      ref.lineno = lineno;
+      ref.set_line(file_line);
       return res;
 }
 

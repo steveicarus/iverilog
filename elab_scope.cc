@@ -43,6 +43,7 @@
 # include  "util.h"
 # include  <typeinfo>
 # include  <assert.h>
+# include  "ivl_assert.h"
 
 void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
 				  Design*des, NetScope*scope)
@@ -80,8 +81,28 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
 	    signed_flag = val->has_sign();
       }
 
-      val = scope->set_parameter(name, val, msb, lsb, signed_flag,
-				 cur.get_file(), cur.get_lineno());
+      NetScope::range_t*range_list = 0;
+      for (Module::range_t*range = cur.range ; range ; range = range->next) {
+	    NetScope::range_t*tmp = new NetScope::range_t;
+	    tmp->exclude_flag = range->exclude_flag;
+	    tmp->low_open_flag = range->low_open_flag;
+	    tmp->high_open_flag = range->high_open_flag;
+
+	    if (range->low_expr) {
+		  tmp->low_expr = elab_and_eval(des, scope, range->low_expr, -1);
+		  ivl_assert(*range->low_expr, tmp->low_expr);
+	    }
+
+	    if (range->high_expr) {
+		  tmp->high_expr = elab_and_eval(des, scope, range->high_expr, -1);
+		  ivl_assert(*range->high_expr, tmp->high_expr);
+	    }
+
+	    tmp->next = range_list;
+	    range_list = tmp;
+      }
+
+      val = scope->set_parameter(name, val, msb, lsb, signed_flag, range_list, cur);
       assert(val);
       delete val;
 }
@@ -119,9 +140,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	    tmp->set_line(*((*cur).second.expr));
 	    tmp->cast_signed( (*cur).second.signed_flag );
 
-	    scope->set_parameter((*cur).first, tmp, 0, 0, false,
-	                         (*cur).second.get_file(),
-				 (*cur).second.get_lineno());
+	    scope->set_parameter((*cur).first, tmp, 0, 0, false, 0, (*cur).second);
       }
 
       for (mparm_it_t cur = localparams.begin()
@@ -132,9 +151,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	    if ((*cur).second.msb)
 		  tmp->cast_signed( (*cur).second.signed_flag );
 
-	    scope->set_parameter((*cur).first, tmp, 0, 0, false,
-	                         (*cur).second.get_file(),
-				 (*cur).second.get_lineno());
+	    scope->set_parameter((*cur).first, tmp, 0, 0, false, 0, (*cur).second);
       }
 
 
@@ -420,9 +437,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 							 genvar_verinum);
 		    // The file and line information should really come
 		    // from the genvar statement, not the for loop.
-		  scope->set_localparam(loop_index, gp, get_file(),
-		                        get_lineno());
-
+		  scope->set_localparam(loop_index, gp, *this);
 		  if (debug_scopes)
 			cerr << get_fileline() << ": debug: "
 			     << "Create implicit localparam "
