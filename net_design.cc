@@ -31,6 +31,7 @@
 # include  "compiler.h"
 # include  "netmisc.h"
 # include  <sstream>
+# include  "ivl_assert.h"
 
 Design:: Design()
 : errors(0), nodes_(0), procs_(0), lcounter_(0)
@@ -411,6 +412,62 @@ void NetScope::evaluate_parameters(Design*des)
 			val = new NetEConst(tmp);
 			(*cur).second.expr = val;
 		  }
+	    }
+
+	    if (NetEConst*val = dynamic_cast<NetEConst*>((*cur).second.expr)) {
+		  verinum value = val->value();
+		  bool from_flag = (*cur).second.range == 0? true : false;
+		  for (range_t*value_range = (*cur).second.range
+			     ; value_range ; value_range = value_range->next) {
+
+			  // If we already know that the value is
+			  // within a "from" range, then do not test
+			  // any more of the from ranges.
+			if (from_flag && value_range->exclude_flag==false)
+			      continue;
+
+			if (value_range->low_expr) {
+			      NetEConst*tmp = dynamic_cast<NetEConst*>(value_range->low_expr);
+			      ivl_assert(*value_range->low_expr, tmp);
+			      if (value_range->low_open_flag && value <= tmp->value())
+				    continue;
+			      else if (value < tmp->value())
+				    continue;
+			}
+
+			if (value_range->high_expr) {
+			      NetEConst*tmp = dynamic_cast<NetEConst*>(value_range->high_expr);
+			      ivl_assert(*value_range->high_expr, tmp);
+			      if (value_range->high_open_flag && value >= tmp->value())
+				    continue;
+			      else if (value > tmp->value())
+				    continue;
+			}
+
+			  // Within the range. If this is a "from"
+			  // range, then set the from_flag and continue.
+			if (value_range->exclude_flag == false) {
+			      from_flag = true;
+			      continue;
+			}
+
+			  // OH NO! In an excluded range. signal an error.
+			break;
+		  }
+
+		    // If we found no from range that contains the
+		    // value, then report an error.
+		  if (! from_flag) {
+			cerr << val->get_fileline() << ": error: "
+			     << "Parameter value " << value
+			     << " is out of range for parameter " << (*cur).first
+			     << "." << endl;
+			des->errors += 1;
+		  }
+
+	    } else if (NetECReal*val = dynamic_cast<NetECReal*>((*cur).second.expr)) {
+		    // XXXX Haven't implemented this yet
+		  ivl_assert(*val, (*cur).second.range == 0);
 	    }
       }
 
