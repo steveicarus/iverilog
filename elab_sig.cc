@@ -758,6 +758,18 @@ void PForStatement::elaborate_sig(Design*des, NetScope*scope) const
 	    statement_->elaborate_sig(des, scope);
 }
 
+void PRepeat::elaborate_sig(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_->elaborate_sig(des, scope);
+}
+
+void PWhile::elaborate_sig(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_->elaborate_sig(des, scope);
+}
+
 /*
  * Elaborate a source wire. The "wire" is the declaration of wires,
  * registers, ports and memories. The parser has already merged the

@@ -1,7 +1,7 @@
 #ifndef __Statement_H
 #define __Statement_H
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: Statement.h,v 1.44 2007/05/24 04:07:11 steve Exp $"
-#endif
 
 # include  <string>
 # include  "svector.h"
@@ -417,6 +414,7 @@ class PRepeat : public Statement {
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -462,6 +460,7 @@ class PWhile  : public Statement {
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -469,93 +468,4 @@ class PWhile  : public Statement {
       Statement*statement_;
 };
 
-/*
- * $Log: Statement.h,v $
- * Revision 1.44  2007/05/24 04:07:11  steve
- *  Rework the heirarchical identifier parse syntax and pform
- *  to handle more general combinations of heirarch and bit selects.
- *
- * Revision 1.43  2007/03/05 05:59:10  steve
- *  Handle processes within generate loops.
- *
- * Revision 1.42  2005/12/05 21:21:18  steve
- *  Fixes for stubborn compilers.
- *
- * Revision 1.41  2004/12/11 02:31:25  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.40  2004/02/20 18:53:33  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.39  2004/02/18 17:11:54  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.38  2003/05/19 02:50:58  steve
- *  Implement the wait statement behaviorally instead of as nets.
- *
- * Revision 1.37  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.36  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.35  2002/06/04 05:38:44  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.34  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- *
- * Revision 1.33  2002/04/21 22:31:02  steve
- *  Redo handling of assignment internal delays.
- *  Leave it possible for them to be calculated
- *  at run time.
- *
- * Revision 1.32  2002/04/21 04:59:07  steve
- *  Add support for conbinational events by finding
- *  the inputs to expressions and some statements.
- *  Get case and assignment statements working.
- *
- * Revision 1.31  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.30  2001/11/22 06:20:59  steve
- *  Use NetScope instead of string for scope path.
- *
- * Revision 1.29  2000/09/09 15:21:26  steve
- *  move lval elaboration to PExpr virtual methods.
- *
- * Revision 1.28  2000/09/03 17:58:35  steve
- *  Change elaborate_lval to return NetAssign_ objects.
- *
- * Revision 1.27  2000/07/26 05:08:07  steve
- *  Parse disable statements to pform.
- *
- * Revision 1.26  2000/05/11 23:37:26  steve
- *  Add support for procedural continuous assignment.
- *
- * Revision 1.25  2000/04/22 04:20:19  steve
- *  Add support for force assignment.
- *
- * Revision 1.24  2000/04/12 04:23:57  steve
- *  Named events really should be expressed with PEIdent
- *  objects in the pform,
- *
- *  Handle named events within the mix of net events
- *  and edges. As a unified lot they get caught together.
- *  wait statements are broken into more complex statements
- *  that include a conditional.
- *
- *  Do not generate NetPEvent or NetNEvent objects in
- *  elaboration. NetEvent, NetEvWait and NetEvProbe
- *  take over those functions in the netlist.
- */
 #endif
