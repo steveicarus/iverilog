@@ -85,6 +85,9 @@ static int vthr_vec_get(int code, vpiHandle ref)
 	  case vpiSigned:
 	    return rfp->signed_flag;
 
+	  case vpiConstType:
+	    return vpiBinaryConst; // If this is a constant it is Binary.
+
 	  case vpiSize:
 	    return rfp->wid;
 
