@@ -863,10 +863,16 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
        */
       if (scope) {
 	    /* Some implementations support either a module or a scope. */
-	    if (vpi_get(vpiType, scope ) == vpiScope) {
+	    switch (vpi_get(vpiType, scope)) {
+		case vpiScope:
 	          hand = vpi_handle(vpiModule, scope);
-	    } else {
+	          break;
+		case vpiModule:
 	          hand = scope;
+	          break;
+		default:
+	          // Use vpi_chk_error() here when it is implemented.
+	          return 0;
 	    }
       } else {
 	    hand = find_scope(name, NULL, 0);
