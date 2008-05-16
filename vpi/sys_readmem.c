@@ -109,7 +109,6 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
       FILE*file;
       unsigned addr;
       s_vpi_value value;
-      vpiHandle words;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
       vpiHandle item = vpi_scan(argv);
@@ -283,11 +282,7 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
 	  }
       }
 
-
-      words = vpi_iterate(vpiMemoryWord, mitem);
-      assert(words);
-
-      item = vpi_scan(words);
+      item = vpi_handle_by_index(mitem,0);
       wwid = vpi_get(vpiSize, item);
 
       /* variable that will be uses by the lexer to pass values
@@ -347,9 +342,6 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
 
  bailout:
       free(value.value.vector);
-
-      if (item)
-	  vpi_free_object(words);
       free(path);
       fclose(file);
       return 0;
