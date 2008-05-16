@@ -530,6 +530,8 @@ extern void vpip_oct_str_to_vec4(vvp_vector4_t&val, const char*str);
 extern void vpip_dec_str_to_vec4(vvp_vector4_t&val, const char*str, bool sign);
 extern void vpip_hex_str_to_vec4(vvp_vector4_t&val, const char*str);
 
+extern vvp_vector4_t vec4_from_vpi_value(s_vpi_value*vp, unsigned wid);
+
 extern void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 				bool signed_flag, s_vpi_value*vp);
 

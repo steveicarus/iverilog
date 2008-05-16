@@ -55,9 +55,12 @@ struct __vpiArray {
       unsigned array_count;
       struct __vpiDecConst first_addr;
       struct __vpiDecConst last_addr;
+	// If this is a net array, nets lists the handles.
       vpiHandle*nets;
-      vvp_vector4_t*vals;
-      unsigned vals_width;
+	// If this is a var array, then these are used instead of nets.
+      vvp_vector4_t        *vals;
+      unsigned              vals_width;
+      struct __vpiArrayWord*vals_words;
 
       class vvp_fun_arrayport*ports_;
 };
@@ -74,6 +77,30 @@ struct __vpiArrayIndex {
       unsigned done;
 };
 
+/*
+ * The vpiArrayWord is magic. It is used as the handle to return when
+ * vpi code tries to index or scan an array of variable words. The
+ * array word handle contains no actual data. It is just a hook for
+ * the vpi methods and to point to the parent.
+ *
+ * How the point to the parent works is tricky. The vpiArrayWord
+ * objects for an array are themselves allocated as an array. All the
+ * ArrayWord objects in the array have a word0 that points to the base
+ * of the array. Thus, the position into the array (and the index into
+ * the memory) is calculated by subtracting word0 from the ArrayWord
+ * pointer.
+ *
+ * To then get to the parent, use word0[-1].parent.
+ */
+struct __vpiArrayWord {
+      struct __vpiHandle base;
+      union {
+	    struct __vpiArray*parent;
+	    struct __vpiArrayWord*word0;
+      };
+};
+
+
 static int vpi_array_get(int code, vpiHandle ref);
 static char*vpi_array_get_str(int code, vpiHandle ref);
 static vpiHandle vpi_array_get_handle(int code, vpiHandle ref);
@@ -85,6 +112,10 @@ static int array_iterator_free_object(vpiHandle ref);
 
 static vpiHandle array_index_scan(vpiHandle ref, int);
 static int array_index_free_object(vpiHandle ref);
+
+static int vpi_array_var_word_get(int code, vpiHandle);
+static void vpi_array_var_word_get_value(vpiHandle, p_vpi_value);
+static vpiHandle vpi_array_var_word_put_value(vpiHandle, p_vpi_value, int);
 
 static const struct __vpirt vpip_arraymem_rt = {
       vpiMemory,
@@ -124,8 +155,48 @@ static const struct __vpirt vpip_array_index_rt = {
       array_index_free_object
 };
 
+static const struct __vpirt vpip_array_var_word_rt = {
+      vpiMemoryWord,
+      &vpi_array_var_word_get,
+      0,
+      &vpi_array_var_word_get_value,
+      &vpi_array_var_word_put_value,
+      0,
+      0,
+      0,
+      0
+};
+
 # define ARRAY_HANDLE(ref) (assert(ref->vpi_type->type_code==vpiMemory), \
 			    (struct __vpiArray*)ref)
+
+# define ARRAY_VAR_WORD(ref) (assert(ref->vpi_type->type_code==vpiMemoryWord), \
+			      (struct __vpiArrayWord*)ref)
+
+static void array_make_vals_words(struct __vpiArray*parent)
+{
+      assert(parent->vals_words == 0);
+      parent->vals_words = new struct __vpiArrayWord[parent->array_count + 1];
+
+	// Make word[-1] point to the parent.
+      parent->vals_words->parent = parent;
+	// Now point to word-0
+      parent->vals_words += 1;
+
+      struct __vpiArrayWord*words = parent->vals_words;
+      for (unsigned idx = 0 ; idx < parent->array_count ; idx += 1) {
+	    words[idx].base.vpi_type = &vpip_array_var_word_rt;
+	    words[idx].word0 = words;
+      }
+}
+
+static unsigned decode_array_word_pointer(struct __vpiArrayWord*word,
+					  struct __vpiArray*&parent)
+{
+      struct __vpiArrayWord*word0 = word->word0;
+      parent = (word0 - 1) -> parent;
+      return word - word0;
+}
 
 static int vpi_array_get(int code, vpiHandle ref)
 {
@@ -207,9 +278,52 @@ static vpiHandle vpi_array_index(vpiHandle ref, int index)
       if (index < 0)
 	    return 0;
 
-      assert(obj->nets != 0);
+      if (obj->nets != 0) {
+	    return obj->nets[index];
+      }
 
-      return obj->nets[index];
+      if (obj->vals_words == 0)
+	    array_make_vals_words(obj);
+
+      return &(obj->vals_words[index].base);
+}
+
+static int vpi_array_var_word_get(int code, vpiHandle ref)
+{
+      struct __vpiArrayWord*obj = ARRAY_VAR_WORD(ref);
+      struct __vpiArray*parent;
+
+      decode_array_word_pointer(obj, parent);
+
+      switch (code) {
+	  case vpiSize:
+	    return (int) parent->vals_width;
+
+	  default:
+	    return 0;
+      }
+}
+
+static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value value)
+{
+      struct __vpiArrayWord*obj = ARRAY_VAR_WORD(ref);
+      struct __vpiArray*parent;
+
+      unsigned index = decode_array_word_pointer(obj, parent);
+
+      assert(0);
+}
+
+static vpiHandle vpi_array_var_word_put_value(vpiHandle ref, p_vpi_value vp, int flags)
+{
+      struct __vpiArrayWord*obj = ARRAY_VAR_WORD(ref);
+      struct __vpiArray*parent;
+
+      unsigned index = decode_array_word_pointer(obj, parent);
+
+      vvp_vector4_t val = vec4_from_vpi_value(vp, parent->vals_width);
+      array_set_word(parent, index, 0, val);
+      return ref;
 }
 
 # define ARRAY_ITERATOR(ref) (assert(ref->vpi_type->type_code==vpiIterator), \
@@ -381,6 +495,7 @@ static vpiHandle vpip_make_array(char*label, const char*name,
       obj->nets = 0;
       obj->vals = 0;
       obj->vals_width = 0;
+      obj->vals_words = 0;
 
 	// Initialize (clear) the read-ports list.
       obj->ports_ = 0;
