@@ -237,16 +237,12 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
       unsigned part_off = 0;
 
       ivl_expr_t word_ix = ivl_lval_idx(lval);
-      unsigned long use_word = 0;
+      const unsigned long use_word = 0;
 
       if (ivl_signal_array_count(sig) > 1) {
 	    assert(word_ix);
-	    if (! number_is_immediate(word_ix, 8*sizeof(use_word))) {
-		  assign_to_array_word(sig, word_ix, bit, delay, dexp, width);
-		  return;
-	    }
-
-	    use_word = get_number_immediate(word_ix);
+	    assign_to_array_word(sig, word_ix, bit, delay, dexp, width);
+	    return;
       }
 
       if (part_off_ex == 0) {
