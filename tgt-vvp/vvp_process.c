@@ -151,8 +151,10 @@ static void set_to_lvariable(ivl_lval_t lval,
 	         directly to the word and save the index calculation. */
 	    if (word_ix == 0) {
 		  if (use_word < ivl_signal_array_count(sig)) {
-			fprintf(vvp_out, "   %%set/v v%p_%lu, %u, %u;\n",
-				sig, use_word, bit, wid);
+			fprintf(vvp_out, "   %%ix/load 1, 0;\n");
+			fprintf(vvp_out, "   %%ix/load 3, %lu;\n", use_word);
+			fprintf(vvp_out, "   %%set/av v%p, %u, %u;\n",
+				sig, bit, wid);
 		  } else {
 			fprintf(vvp_out, " ; %%set/v v%p_%lu, %u, %u "
 				"OUT OF BOUNDS\n", sig, use_word, bit, wid);

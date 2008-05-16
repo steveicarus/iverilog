@@ -295,7 +295,10 @@ extern void compile_net_array(char*label, char*name,
 			      int last, int first);
 extern void compile_array_alias(char*label, char*name, char*src);
 
+  /* Index is a net. */
 extern void compile_array_port(char*label, char*name, char*addr);
+  /* Index is a constant address */
+extern void compile_array_port(char*label, char*name, long addr);
 
 extern void compile_memory(char *label, char *name, int lsb, int msb,
 			   unsigned idxs, long *idx);

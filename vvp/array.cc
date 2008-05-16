@@ -55,7 +55,9 @@ struct __vpiArray {
       unsigned array_count;
       struct __vpiDecConst first_addr;
       struct __vpiDecConst last_addr;
-      vpiHandle*words;
+      vpiHandle*nets;
+      vvp_vector4_t*vals;
+      unsigned vals_width;
 
       class vvp_fun_arrayport*ports_;
 };
@@ -205,7 +207,9 @@ static vpiHandle vpi_array_index(vpiHandle ref, int index)
       if (index < 0)
 	    return 0;
 
-      return obj->words[index];
+      assert(obj->nets != 0);
+
+      return obj->nets[index];
 }
 
 # define ARRAY_ITERATOR(ref) (assert(ref->vpi_type->type_code==vpiIterator), \
@@ -220,7 +224,9 @@ static vpiHandle array_iterator_scan(vpiHandle ref, int)
 	    return 0;
       }
 
-      vpiHandle res = obj->array->words[obj->next];
+      assert(obj->array->nets != 0);
+
+      vpiHandle res = obj->array->nets[obj->next];
       obj->next += 1;
       return res;
 }
@@ -279,22 +285,61 @@ void array_set_word(vvp_array_t arr,
       if (address >= arr->array_count)
 	    return;
 
+      if (arr->vals) {
+	    assert(arr->nets == 0);
+	    if (part_off != 0) {
+		  if (arr->vals[address].size() == 0)
+			arr->vals[address] = vvp_vector4_t(arr->vals_width, BIT4_X);
+		  if ((part_off + val.size()) > arr->vals[address].size()) {
+			cerr << "part_off=" << part_off
+			     << " val.size()=" << val.size()
+			     << " arr->vals[address].size()=" << arr->vals[address].size()
+			     << " arr->vals_width=" << arr->vals_width << endl;
+			assert(0);
+		  }
+		  arr->vals[address].set_vec(part_off, val);
+	    } else {
+		  arr->vals[address] = val;
+	    }
+	    array_word_change(arr, address);
+	    return;
+      }
+
+      assert(arr->nets != 0);
+
 	// Select the word of the array that we affect.
-      vpiHandle word = arr->words[address];
+      vpiHandle word = arr->nets[address];
       struct __vpiSignal*vsig = vpip_signal_from_handle(word);
       assert(vsig);
 
       vvp_net_ptr_t ptr (vsig->node, 0);
       vvp_send_vec4_pv(ptr, val, part_off, val.size(), vpip_size(vsig));
+      array_word_change(arr, address);
 }
 
 vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 {
+      if (arr->vals) {
+	    assert(arr->nets == 0);
+
+	    vvp_vector4_t tmp;
+	    if (address < arr->array_count)
+		  tmp = arr->vals[address];
+
+	    if (tmp.size() == 0)
+		  tmp = vvp_vector4_t(arr->vals_width, BIT4_X);
+
+	    return tmp;
+      }
+
+      assert(arr->vals == 0);
+      assert(arr->nets != 0);
+
       if (address >= arr->array_count) {
 	      // Reading outside the array. Return X's but get the
 	      // width by looking at a word that we know is present.
 	    assert(arr->array_count > 0);
-	    vpiHandle word = arr->words[0];
+	    vpiHandle word = arr->nets[0];
 	    struct __vpiSignal*vsig = vpip_signal_from_handle(word);
 	    assert(vsig);
 	    vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (vsig->node->fun);
@@ -302,7 +347,7 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 	    return vvp_vector4_t(sig->size(), BIT4_X);
       }
 
-      vpiHandle word = arr->words[address];
+      vpiHandle word = arr->nets[address];
       struct __vpiSignal*vsig = vpip_signal_from_handle(word);
       assert(vsig);
       vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (vsig->node->fun);
@@ -332,7 +377,10 @@ static vpiHandle vpip_make_array(char*label, const char*name,
       vpip_make_dec_const(&obj->first_addr, first_addr);
       vpip_make_dec_const(&obj->last_addr, last_addr);
 
-      obj->words = (vpiHandle*)calloc(array_count, sizeof(vpiHandle));
+	// Start off now knowing if we are nets or variables.
+      obj->nets = 0;
+      obj->vals = 0;
+      obj->vals_width = 0;
 
 	// Initialize (clear) the read-ports list.
       obj->ports_ = 0;
@@ -346,19 +394,29 @@ static vpiHandle vpip_make_array(char*label, const char*name,
       v.ptr = obj;
       sym_set_value(array_table, label, v);
 
+	/* Add this into the table of VPI objects. This is used for
+	   contexts that try to look up VPI objects in
+	   general. (i.e. arguments to vpi_task calls.) */
+      compile_vpi_symbol(label, &(obj->base));
+
+	/* Blindly attach to the scope as an object. */
+      vpip_attach_to_current_scope(&(obj->base));
+
       return &(obj->base);
 }
 
 void array_alias_word(vvp_array_t array, unsigned long addr, vpiHandle word)
 {
       assert(addr < array->array_count);
-      array->words[addr] = word;
+      assert(array->nets);
+      array->nets[addr] = word;
 }
 
 void array_attach_word(vvp_array_t array, unsigned long addr, vpiHandle word)
 {
       assert(addr < array->array_count);
-      array->words[addr] = word;
+      assert(array->nets);
+      array->nets[addr] = word;
 
       if (struct __vpiSignal*sig = vpip_signal_from_handle(word)) {
 	    vvp_net_t*net = sig->node;
@@ -371,33 +429,16 @@ void array_attach_word(vvp_array_t array, unsigned long addr, vpiHandle word)
       }
 }
 
-static vpiHandle common_array_build(char*label, char*name, int last, int first)
-{
-      vpiHandle obj = vpip_make_array(label, name, first, last);
-	/* Add this into the table of VPI objects. This is used for
-	   contexts that try to look up VPI objects in
-	   general. (i.e. arguments to vpi_task calls.) */
-      compile_vpi_symbol(label, obj);
-	/* Blindly attach to the scope as an object. */
-      vpip_attach_to_current_scope(obj);
-
-      return obj;
-}
-
 void compile_var_array(char*label, char*name, int last, int first,
 		   int msb, int lsb, char signed_flag)
 {
-      vpiHandle obj = common_array_build(label, name, last, first);
+      vpiHandle obj = vpip_make_array(label, name, first, last);
 
       struct __vpiArray*arr = ARRAY_HANDLE(obj);
-      vvp_array_t array = array_find(label);
 
 	/* Make the words. */
-      for (unsigned idx = 0 ;  idx < arr->array_count ;  idx += 1) {
-	    char buf[64];
-	    snprintf(buf, sizeof buf, "%s_%u", label, idx);
-	    compile_variablew(strdup(buf), array, idx, msb, lsb, signed_flag);
-      }
+      arr->vals = new vvp_vector4_t[arr->array_count];
+      arr->vals_width = labs(msb-lsb) + 1;
 
       free(label);
       free(name);
@@ -406,7 +447,7 @@ void compile_var_array(char*label, char*name, int last, int first,
 void compile_real_array(char*label, char*name, int last, int first,
 			int msb, int lsb)
 {
-      vpiHandle obj = common_array_build(label, name, last, first);
+      vpiHandle obj = vpip_make_array(label, name, first, last);
 
       struct __vpiArray*arr = ARRAY_HANDLE(obj);
       vvp_array_t array = array_find(label);
@@ -424,7 +465,10 @@ void compile_real_array(char*label, char*name, int last, int first,
 
 void compile_net_array(char*label, char*name, int last, int first)
 {
-      /* vpiHandle obj = */ common_array_build(label, name, last, first);
+      vpiHandle obj = vpip_make_array(label, name, first, last);
+
+      struct __vpiArray*arr = ARRAY_HANDLE(obj);
+      arr->nets = (vpiHandle*)calloc(arr->array_count, sizeof(vpiHandle));
 
       free(label);
       free(name);
@@ -434,6 +478,7 @@ class vvp_fun_arrayport  : public vvp_net_fun_t {
 
     public:
       explicit vvp_fun_arrayport(vvp_array_t mem, vvp_net_t*net);
+      explicit vvp_fun_arrayport(vvp_array_t mem, vvp_net_t*net, long addr);
       ~vvp_fun_arrayport();
 
       void check_word_change(unsigned long addr);
@@ -452,6 +497,12 @@ class vvp_fun_arrayport  : public vvp_net_fun_t {
 
 vvp_fun_arrayport::vvp_fun_arrayport(vvp_array_t mem, vvp_net_t*net)
 : arr_(mem), net_(net), addr_(0)
+{
+      next_ = 0;
+}
+
+vvp_fun_arrayport::vvp_fun_arrayport(vvp_array_t mem, vvp_net_t*net, long addr)
+: arr_(mem), net_(net), addr_(addr)
 {
       next_ = 0;
 }
@@ -521,6 +572,25 @@ void compile_array_port(char*label, char*array, char*addr)
 	// The input_connect arranges for the array string to be free'ed.
 }
 
+void compile_array_port(char*label, char*array, long addr)
+{
+      vvp_array_t mem = array_find(array);
+      assert(mem);
+
+      vvp_net_t*ptr = new vvp_net_t;
+      vvp_fun_arrayport*fun = new vvp_fun_arrayport(mem, ptr, addr);
+      ptr->fun = fun;
+
+      define_functor_symbol(label, ptr);
+
+	// Other then the array itself, this kind of array port has no
+	// inputs.
+      array_attach_port(mem, fun);
+
+      free(label);
+      free(array);
+}
+
 void compile_array_alias(char*label, char*name, char*src)
 {
       vvp_array_t mem = array_find(src);
@@ -539,7 +609,8 @@ void compile_array_alias(char*label, char*name, char*src)
       vpip_make_dec_const(&obj->last_addr, mem->last_addr.value);
 
 	// Share the words with the source array.
-      obj->words = mem->words;
+      obj->nets = mem->nets;
+      obj->vals = mem->vals;
 
       obj->ports_ = 0;
 

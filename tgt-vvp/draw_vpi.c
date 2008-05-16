@@ -55,6 +55,9 @@ static int is_fixed_memory_word(ivl_expr_t net)
       if (ivl_signal_array_count(sig) == 1)
 	    return 1;
 
+      if (ivl_signal_type(sig) == IVL_SIT_REG)
+	    return 0;
+
       if (number_is_immediate(ivl_expr_oper1(net), 8*sizeof(unsigned)))
 	    return 1;
 

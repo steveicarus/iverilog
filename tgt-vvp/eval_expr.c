@@ -138,8 +138,22 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 
 	  case IVL_EX_SIGNAL: {
 		ivl_signal_t sig = ivl_expr_signal(expr);
+
 		unsigned word = 0;
 		if (ivl_signal_array_count(sig) > 1) {
+
+			/* Detect the special case that this is a
+			   variable array. In this case, the ix/getv
+			   will not work, so do it the hard way. */
+		      if (ivl_signal_type(sig) == IVL_SIT_REG) {
+			    struct vector_info rv;
+			    rv = draw_eval_expr(expr, 0);
+			    fprintf(vvp_out, "   %%ix/get %u, %u, %u;\n",
+				    ix, rv.base, rv.wid);
+			    clr_vector(rv);
+			    break;
+		      }
+
 		      ivl_expr_t ixe = ivl_expr_oper1(expr);
 		      if (number_is_immediate(ixe, 8*sizeof(unsigned long)))
 		            word = get_number_immediate(ixe);
@@ -1896,26 +1910,21 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 	   load/av instruction. */
       if (ivl_signal_array_count(sig) > 1) {
 	    ivl_expr_t ix = ivl_expr_oper1(exp);
-	    if (!number_is_immediate(ix, 8*sizeof(unsigned long))) {
-		  draw_eval_expr_into_integer(ix, 3);
-		  if (add_index < 0) {
-		        fprintf(vvp_out, "    %%load/av %u, v%p, %u;\n",
-			        res.base, sig, swid);
-		  } else {
-		        assert(add_index == 0);
 
-		          /* Add an immediate value to an array value. */
-		        fprintf(vvp_out, "    %%ix/load 0, %lu;\n", immediate);
-		        fprintf(vvp_out, "    %%load/avp0 %u, v%p, %u;\n",
-		                res.base, sig, swid);
-		  }
-		  pad_expr_in_place(exp, res, swid);
-		  return;
+	    draw_eval_expr_into_integer(ix, 3);
+	    if (add_index < 0) {
+		  fprintf(vvp_out, "    %%load/av %u, v%p, %u;\n",
+			  res.base, sig, swid);
+	    } else {
+		  assert(add_index == 0);
+
+		    /* Add an immediate value to an array value. */
+		  fprintf(vvp_out, "    %%ix/load 0, %lu;\n", immediate);
+		  fprintf(vvp_out, "    %%load/avp0 %u, v%p, %u;\n",
+			  res.base, sig, swid);
 	    }
-
-	      /* The index is constant, so we can return to direct
-	         readout with the specific word selected. */
-	    word = get_number_immediate(ix);
+	    pad_expr_in_place(exp, res, swid);
+	    return;
       }
 
 

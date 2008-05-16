@@ -211,6 +211,9 @@ statement
         | T_LABEL K_ARRAY_PORT T_SYMBOL ',' T_SYMBOL ';'
 		{ compile_array_port($1, $3, $5); }
 
+        | T_LABEL K_ARRAY_PORT T_SYMBOL ',' T_NUMBER ';'
+		{ compile_array_port($1, $3, $5); }
+
         | T_LABEL K_ARRAY T_STRING ',' T_SYMBOL ';'
                 { compile_array_alias($1, $3, $5); }
 
