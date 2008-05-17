@@ -564,25 +564,11 @@ ostream& operator<< (ostream&o, const verinum&v)
 	   output. */
       if (v.has_len()) {
 	    o << v.len();
-	    if (v.has_sign())
-		  o << "'sb";
-	    else
-		  o << "'b";
-
-	    if (v.len() == 0) {
-		  o << "0";
-		  return o;
-	    }
-
-	    for (unsigned idx = v.len() ;  idx > 0 ;  idx -= 1)
-		  o << v[idx-1];
-
-	    return o;
       }
 
 	/* If the number is fully defined (no x or z) then print it
 	   out as a decimal number. */
-      if (v.is_defined() && v.len() < sizeof(long)) {
+      if (v.is_defined() && v.len() < 8*sizeof(long)) {
 	    if (v.has_sign())
 		  o << "'sd" << v.as_long();
 	    else
