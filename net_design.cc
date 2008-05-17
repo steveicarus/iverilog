@@ -350,6 +350,12 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       expr->set_line(*(*cur).second.expr);
       (*cur).second.expr = expr;
 
+	// If there are no value ranges to test the value against,
+	// then we are done.
+      if ((*cur).second.range == 0) {
+	    return;
+      }
+
       NetEConst*val = dynamic_cast<NetEConst*>((*cur).second.expr);
       ivl_assert(*(*cur).second.expr, (*cur).second.expr);
       ivl_assert(*(*cur).second.expr, val);
