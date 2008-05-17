@@ -1654,8 +1654,8 @@ Module::range_t* pform_parameter_value_range(bool exclude_flag,
 }
 
 void pform_set_parameter(const struct vlltype&loc,
-			 perm_string name, bool signed_flag,
-			 svector<PExpr*>*range, PExpr*expr,
+			 perm_string name, ivl_variable_type_t type,
+			 bool signed_flag, svector<PExpr*>*range, PExpr*expr,
 			 Module::range_t*value_range)
 {
       assert(expr);
@@ -1664,6 +1664,7 @@ void pform_set_parameter(const struct vlltype&loc,
 
       parm.expr = expr;
 
+      parm.type = type;
       if (range) {
 	    assert(range->count() == 2);
 	    assert((*range)[0]);
@@ -1681,8 +1682,8 @@ void pform_set_parameter(const struct vlltype&loc,
 }
 
 void pform_set_localparam(const struct vlltype&loc,
-			  perm_string name, bool signed_flag,
-			  svector<PExpr*>*range, PExpr*expr)
+			  perm_string name, ivl_variable_type_t type,
+			  bool signed_flag, svector<PExpr*>*range, PExpr*expr)
 {
       assert(expr);
       Module::param_expr_t&parm = pform_cur_module->localparams[name];
@@ -1690,6 +1691,7 @@ void pform_set_localparam(const struct vlltype&loc,
 
       parm.expr = expr;
 
+      parm.type = type;
       if (range) {
 	    assert(range->count() == 2);
 	    assert((*range)[0]);

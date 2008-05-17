@@ -105,6 +105,7 @@ void NetScope::set_line(perm_string file, perm_string def_file,
 }
 
 NetExpr* NetScope::set_parameter(perm_string key, NetExpr*expr,
+				 ivl_variable_type_t type,
 				 NetExpr*msb, NetExpr*lsb, bool signed_flag,
 				 NetScope::range_t*range_list,
 				 const LineInfo&file_line)
@@ -112,6 +113,7 @@ NetExpr* NetScope::set_parameter(perm_string key, NetExpr*expr,
       param_expr_t&ref = parameters[key];
       NetExpr* res = ref.expr;
       ref.expr = expr;
+      ref.type = type;
       ref.msb = msb;
       ref.lsb = lsb;
       ref.signed_flag = signed_flag;
@@ -201,6 +203,20 @@ const NetExpr* NetScope::get_parameter(const char* key,
 	    lsb = (*idx).second.lsb;
 	    return (*idx).second.expr;
       }
+
+      return 0;
+}
+map<perm_string,NetScope::param_expr_t>::iterator NetScope::find_parameter(perm_string key)
+{
+      map<perm_string,param_expr_t>::iterator idx;
+
+      idx = parameters.find(key);
+      if (idx != parameters.end())
+	    return idx;
+
+      idx = localparams.find(perm_string::literal(key));
+      if (idx != localparams.end())
+	    return idx;
 
       return 0;
 }

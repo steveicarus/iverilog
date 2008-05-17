@@ -476,7 +476,12 @@ NetEParam::NetEParam()
 }
 
 NetEParam::NetEParam(Design*d, NetScope*s, perm_string n)
-: des_(d), scope_(s), name_(n)
+    : des_(d), scope_(s), reference_(scope_->find_parameter(n))
+{
+}
+
+NetEParam::NetEParam(Design*d, NetScope*s, ref_t ref)
+    : des_(d), scope_(s), reference_(ref)
 {
 }
 
@@ -489,9 +494,14 @@ bool NetEParam::has_width() const
       return false;
 }
 
+ivl_variable_type_t NetEParam::expr_type() const
+{
+      return (*reference_).second.type;
+}
+
 NetEParam* NetEParam::dup_expr() const
 {
-      NetEParam*tmp = new NetEParam(des_, scope_, name_);
+      NetEParam*tmp = new NetEParam(des_, scope_, reference_);
       tmp->set_line(*this);
       return tmp;
 }

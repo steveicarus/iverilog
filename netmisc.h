@@ -138,6 +138,7 @@ void eval_expr(NetExpr*&expr, int prune_width =-1);
  * down to a constant) then return false and leave value unchanged.
  */
 bool eval_as_long(long&value, NetExpr*expr);
+bool eval_as_double(double&value, NetExpr*expr);
 
 extern std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 					  const pform_name_t&path);

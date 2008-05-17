@@ -63,9 +63,11 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
 	   parameter value is coerced to have the correct
 	   and defined width. */
       if (cur.msb) {
+	    assert(cur.lsb);
 	    msb = cur.msb ->elaborate_pexpr(des, scope);
 	    assert(msb);
 	    lsb = cur.lsb ->elaborate_pexpr(des, scope);
+	    assert(lsb);
       }
 
       if (signed_flag) {
@@ -102,7 +104,7 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
 	    range_list = tmp;
       }
 
-      val = scope->set_parameter(name, val, msb, lsb, signed_flag, range_list, cur);
+      val = scope->set_parameter(name, val, cur.type, msb, lsb, signed_flag, range_list, cur);
       assert(val);
       delete val;
 }
@@ -140,7 +142,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	    tmp->set_line(*((*cur).second.expr));
 	    tmp->cast_signed( (*cur).second.signed_flag );
 
-	    scope->set_parameter((*cur).first, tmp, 0, 0, false, 0, (*cur).second);
+	    scope->set_parameter((*cur).first, tmp, (*cur).second.type,
+				 0, 0, false, 0, (*cur).second);
       }
 
       for (mparm_it_t cur = localparams.begin()
@@ -151,7 +154,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	    if ((*cur).second.msb)
 		  tmp->cast_signed( (*cur).second.signed_flag );
 
-	    scope->set_parameter((*cur).first, tmp, 0, 0, false, 0, (*cur).second);
+	    scope->set_parameter((*cur).first, tmp, (*cur).second.type,
+				 0, 0, false, 0, (*cur).second);
       }
 
 
@@ -183,6 +187,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 		       << "Replace " << (*cur).first
 		       << " with expression " << *val
 		       << " from " << val->get_fileline() << "." << endl;
+		  cerr << get_fileline() << ":      : "
+		       << "Type=" << val->expr_type() << endl;
 	    }
 	    bool flag = scope->replace_parameter((*cur).first, val);
 	    if (! flag) {

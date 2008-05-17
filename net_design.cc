@@ -243,6 +243,253 @@ void Design::evaluate_parameters()
 	    (*scope)->evaluate_parameters(this);
 }
 
+void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
+{
+      long msb = 0;
+      long lsb = 0;
+      bool range_flag = false;
+
+	/* Evaluate the msb expression, if it is present. */
+      if ((*cur).second.msb) {
+	    eval_expr((*cur).second.msb);
+	    if (! eval_as_long(msb, (*cur).second.msb)) {
+		  cerr << (*cur).second.expr->get_fileline()
+		       << ": internal error: "
+		       << "unable to evaluate msb expression "
+		       << "for parameter " << (*cur).first << ": "
+		       << *(*cur).second.msb << endl;
+		  des->errors += 1;
+		  return;
+	    }
+
+	    range_flag = true;
+      }
+
+	/* Evaluate the lsb expression, if it is present. */
+      if ((*cur).second.lsb) {
+	    eval_expr((*cur).second.lsb);
+	    if (! eval_as_long(lsb, (*cur).second.lsb)) {
+		  cerr << (*cur).second.expr->get_fileline()
+		       << ": internal error: "
+		       << "unable to evaluate lsb expression "
+		       << "for parameter " << (*cur).first << ": "
+		       << *(*cur).second.lsb << endl;
+		  des->errors += 1;
+		  return;
+	    }
+
+	    range_flag = true;
+      }
+
+
+	/* Evaluate the parameter expression, if necessary. */
+      NetExpr*expr = (*cur).second.expr;
+      assert(expr);
+
+      eval_expr(expr);
+
+      switch (expr->expr_type()) {
+	  case IVL_VT_REAL:
+	    if (! dynamic_cast<const NetECReal*>(expr)) {
+		  cerr << (*cur).second.expr->get_fileline()
+		       << ": internal error: "
+		       << "unable to evaluate real parameter value: "
+		       << *expr << endl;
+		  des->errors += 1;
+		  return;
+	    }
+	    break;
+
+	  case IVL_VT_LOGIC:
+	  case IVL_VT_BOOL:
+	    if (! dynamic_cast<const NetEConst*>(expr)) {
+		  cerr << (*cur).second.expr->get_fileline()
+		       << ": internal error: "
+		       << "unable to evaluate parameter "
+		       << (*cur).first
+		       << " value: " << *expr << endl;
+		  des->errors += 1;
+		  return;
+	    }
+	    break;
+
+	  default:
+	    cerr << (*cur).second.expr->get_fileline()
+		 << ": internal error: "
+		 << "unhandled expression type?" << endl;
+	    des->errors += 1;
+	    return;
+      }
+
+	/* If the parameter has range information, then make
+	sure the value is set right. Note that if the
+	parameter doesn't have an explicit range, then it
+	will get the signedness from the expression itself. */
+      if (range_flag) {
+	    unsigned long wid = (msb >= lsb)? msb - lsb : lsb - msb;
+	    wid += 1;
+
+	    NetEConst*val = dynamic_cast<NetEConst*>(expr);
+	    assert(val);
+
+	    verinum value = val->value();
+
+	    if (! (value.has_len()
+		   && (value.len() == wid)
+		   && (value.has_sign() == (*cur).second.signed_flag))) {
+
+		  verinum tmp (value, wid);
+		  tmp.has_sign ( (*cur).second.signed_flag );
+		  delete val;
+		  val = new NetEConst(tmp);
+		  expr = val;
+	    }
+      }
+
+	// Done fiddling with the expression, save it back in the parameter.
+      expr->set_line(*(*cur).second.expr);
+      (*cur).second.expr = expr;
+
+      NetEConst*val = dynamic_cast<NetEConst*>((*cur).second.expr);
+      ivl_assert(*(*cur).second.expr, (*cur).second.expr);
+      ivl_assert(*(*cur).second.expr, val);
+
+      verinum value = val->value();
+
+      bool from_flag = (*cur).second.range == 0? true : false;
+      for (range_t*value_range = (*cur).second.range
+		 ; value_range ; value_range = value_range->next) {
+
+	      // If we already know that the value is
+	      // within a "from" range, then do not test
+	      // any more of the from ranges.
+	    if (from_flag && value_range->exclude_flag==false)
+		  continue;
+
+	    if (value_range->low_expr) {
+		  NetEConst*tmp = dynamic_cast<NetEConst*>(value_range->low_expr);
+		  ivl_assert(*value_range->low_expr, tmp);
+		  if (value_range->low_open_flag && value <= tmp->value())
+			continue;
+		  else if (value < tmp->value())
+			continue;
+	    }
+
+	    if (value_range->high_expr) {
+		  NetEConst*tmp = dynamic_cast<NetEConst*>(value_range->high_expr);
+		  ivl_assert(*value_range->high_expr, tmp);
+		  if (value_range->high_open_flag && value >= tmp->value())
+			continue;
+		  else if (value > tmp->value())
+			continue;
+	    }
+
+	      // Within the range. If this is a "from"
+	      // range, then set the from_flag and continue.
+	    if (value_range->exclude_flag == false) {
+		  from_flag = true;
+		  continue;
+	    }
+
+	      // OH NO! In an excluded range. signal an error.
+	    from_flag = false;
+	    break;
+      }
+
+	// If we found no from range that contains the
+	// value, then report an error.
+      if (! from_flag) {
+	    cerr << val->get_fileline() << ": error: "
+		 << "Parameter value " << value
+		 << " is out of range for parameter " << (*cur).first
+		 << "." << endl;
+	    des->errors += 1;
+      }
+}
+
+void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
+{
+      NetExpr*expr = (*cur).second.expr;
+      assert(expr);
+
+      NetECReal*res = 0;
+      eval_expr(expr);
+
+      switch (expr->expr_type()) {
+	  case IVL_VT_REAL:
+	    if (NetECReal*tmp = dynamic_cast<NetECReal*>(expr)) {
+		  res = tmp;
+	    } else {
+		  ivl_assert(*expr, 0);
+	    }
+	    break;
+
+	  case IVL_VT_LOGIC:
+	  case IVL_VT_BOOL:
+	    if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
+		  verireal val (tmp->value().as_long());
+		  res = new NetECReal(val);
+		  res->set_line(*tmp);
+	    } else {
+		  ivl_assert(*expr, 0);
+	    }
+	    break;
+
+	  default:
+	    ivl_assert(*expr, 0);
+	    break;
+      }
+
+      (*cur).second.expr = res;
+      double value = res->value().as_double();
+
+      bool from_flag = (*cur).second.range == 0? true : false;
+      for (range_t*value_range = (*cur).second.range
+		 ; value_range ; value_range = value_range->next) {
+
+	    if (from_flag && value_range->exclude_flag==false)
+		  continue;
+
+	    if (value_range->low_expr) {
+		  double tmp;
+		  bool flag = eval_as_double(tmp, value_range->low_expr);
+		  ivl_assert(*value_range->low_expr, flag);
+		  if (value_range->low_open_flag && value <= tmp)
+			continue;
+		  else if (value < tmp)
+			continue;
+	    }
+
+	    if (value_range->high_expr) {
+		  double tmp;
+		  bool flag = eval_as_double(tmp, value_range->high_expr);
+		  ivl_assert(*value_range->high_expr, flag);
+		  if (value_range->high_open_flag && value >= tmp)
+			continue;
+		  else if (value > tmp)
+			continue;
+	    }
+
+	    if (value_range->exclude_flag == false) {
+		  from_flag = true;
+		  continue;
+	    }
+
+	      // All the above tests failed, so we must have tripped
+	      // an exclude rule.
+	    from_flag = false;
+	    break;
+      }
+
+      if (! from_flag) {
+	    cerr << res->get_fileline() << ": error: "
+		 << "Parameter value " << value
+		 << " is out of range for parameter " << (*cur).first
+		 << "." << endl;
+	    des->errors += 1;
+      }
+}
+
 void NetScope::evaluate_parameters(Design*des)
 {
       NetScope*cur = sub_;
@@ -257,217 +504,25 @@ void NetScope::evaluate_parameters(Design*des)
 	// scanning code. Now the parameter expression can be fully
 	// evaluated, or it cannot be evaluated at all.
 
-      typedef map<perm_string,param_expr_t>::iterator mparm_it_t;
-
-      for (mparm_it_t cur = parameters.begin()
+      for (param_ref_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  cur ++) {
 
-	    long msb = 0;
-	    long lsb = 0;
-	    bool range_flag = false;
-	    NetExpr*expr;
-
-	      /* Evaluate the msb expression, if it is present. */
-	    expr = (*cur).second.msb;
-
-	    if (expr) {
-
-		  NetEConst*tmp = dynamic_cast<NetEConst*>(expr);
-
-		  if (! tmp) {
-
-			NetExpr*nexpr = expr->eval_tree();
-			if (nexpr == 0) {
-			      cerr << (*cur).second.expr->get_fileline()
-				   << ": internal error: "
-				   << "unable to evaluate msb expression "
-				   << "for parameter " << (*cur).first << ": "
-				   << *expr << endl;
-			      des->errors += 1;
-			      continue;
-			}
-
-			assert(nexpr);
-			delete expr;
-			(*cur).second.msb = nexpr;
-
-			tmp = dynamic_cast<NetEConst*>(nexpr);
-		  }
-
-		  assert(tmp);
-		  msb = tmp->value().as_long();
-		  range_flag = true;
-	    }
-
-	      /* Evaluate the lsb expression, if it is present. */
-	    expr = (*cur).second.lsb;
-	    if (expr) {
-
-		  NetEConst*tmp = dynamic_cast<NetEConst*>(expr);
-
-		  if (! tmp) {
-
-			NetExpr*nexpr = expr->eval_tree();
-			if (nexpr == 0) {
-			      cerr << (*cur).second.expr->get_fileline()
-				   << ": internal error: "
-				   << "unable to evaluate lsb expression "
-				   << "for parameter " << (*cur).first << ": "
-				   << *expr << endl;
-			      des->errors += 1;
-			      continue;
-			}
-
-			assert(nexpr);
-			delete expr;
-			(*cur).second.lsb = nexpr;
-
-			tmp = dynamic_cast<NetEConst*>(nexpr);
-		  }
-
-		  assert(tmp);
-		  lsb = tmp->value().as_long();
-
-		  assert(range_flag);
-	    }
-
-
-	      /* Evaluate the parameter expression, if necessary. */
-	    expr = (*cur).second.expr;
-	    assert(expr);
-
-	    switch (expr->expr_type()) {
-		case IVL_VT_REAL:
-		  if (! dynamic_cast<const NetECReal*>(expr)) {
-
-			NetExpr*nexpr = expr->eval_tree();
-			if (nexpr == 0) {
-			      cerr << (*cur).second.expr->get_fileline()
-				   << ": internal error: "
-				   << "unable to evaluate real parameter value: "
-				   << *expr << endl;
-			      des->errors += 1;
-			      continue;
-			}
-
-			assert(nexpr);
-			delete expr;
-			(*cur).second.expr = nexpr;
-		  }
+	    switch ((*cur).second.type) {
+		case IVL_VT_BOOL:
+		case IVL_VT_LOGIC:
+		  evaluate_parameter_logic_(des, cur);
 		  break;
 
-		case IVL_VT_LOGIC:
-		case IVL_VT_BOOL:
-		  if (! dynamic_cast<const NetEConst*>(expr)) {
-
-			  // Try to evaluate the expression.
-			NetExpr*nexpr = expr->eval_tree();
-			if (nexpr == 0) {
-			      cerr << (*cur).second.expr->get_fileline()
-				   << ": internal error: "
-				   << "unable to evaluate parameter "
-				   << (*cur).first
-				   << " value: " <<
-				    *expr << endl;
-			      des->errors += 1;
-			      continue;
-			}
-
-			  // The evaluate worked, replace the old
-			  // expression with this constant value.
-			assert(nexpr);
-			delete expr;
-			(*cur).second.expr = nexpr;
-		  }
+		case IVL_VT_REAL:
+		  evaluate_parameter_real_(des, cur);
 		  break;
 
 		default:
-		  cerr << (*cur).second.expr->get_fileline()
-		       << ": internal error: "
-		       << "unhandled expression type?" << endl;
-		  des->errors += 1;
-		  continue;
-	    }
-
-	      /* If the parameter has range information, then make
-		 sure the value is set right. Note that if the
-		 parameter doesn't have an explicit range, then it
-		 will get the signedness from the expression itself. */
-	    if (range_flag) {
-		  unsigned long wid = (msb >= lsb)? msb - lsb : lsb - msb;
-		  wid += 1;
-
-		  NetEConst*val = dynamic_cast<NetEConst*>((*cur).second.expr);
-		  assert(val);
-
-		  verinum value = val->value();
-
-		  if (! (value.has_len()
-			 && (value.len() == wid)
-			 && (value.has_sign() == (*cur).second.signed_flag))) {
-
-			verinum tmp (value, wid);
-			tmp.has_sign ( (*cur).second.signed_flag );
-			delete val;
-			val = new NetEConst(tmp);
-			(*cur).second.expr = val;
-		  }
-	    }
-
-	    if (NetEConst*val = dynamic_cast<NetEConst*>((*cur).second.expr)) {
-		  verinum value = val->value();
-		  bool from_flag = (*cur).second.range == 0? true : false;
-		  for (range_t*value_range = (*cur).second.range
-			     ; value_range ; value_range = value_range->next) {
-
-			  // If we already know that the value is
-			  // within a "from" range, then do not test
-			  // any more of the from ranges.
-			if (from_flag && value_range->exclude_flag==false)
-			      continue;
-
-			if (value_range->low_expr) {
-			      NetEConst*tmp = dynamic_cast<NetEConst*>(value_range->low_expr);
-			      ivl_assert(*value_range->low_expr, tmp);
-			      if (value_range->low_open_flag && value <= tmp->value())
-				    continue;
-			      else if (value < tmp->value())
-				    continue;
-			}
-
-			if (value_range->high_expr) {
-			      NetEConst*tmp = dynamic_cast<NetEConst*>(value_range->high_expr);
-			      ivl_assert(*value_range->high_expr, tmp);
-			      if (value_range->high_open_flag && value >= tmp->value())
-				    continue;
-			      else if (value > tmp->value())
-				    continue;
-			}
-
-			  // Within the range. If this is a "from"
-			  // range, then set the from_flag and continue.
-			if (value_range->exclude_flag == false) {
-			      from_flag = true;
-			      continue;
-			}
-
-			  // OH NO! In an excluded range. signal an error.
-			break;
-		  }
-
-		    // If we found no from range that contains the
-		    // value, then report an error.
-		  if (! from_flag) {
-			cerr << val->get_fileline() << ": error: "
-			     << "Parameter value " << value
-			     << " is out of range for parameter " << (*cur).first
-			     << "." << endl;
-			des->errors += 1;
-		  }
-
-	    } else if (NetECReal*val = dynamic_cast<NetECReal*>((*cur).second.expr)) {
-		    // XXXX Haven't implemented this yet
-		  ivl_assert(*val, (*cur).second.range == 0);
+		  cerr << (*cur).second.get_fileline() << ": internal error: "
+		       << "Unexpected expression type " << (*cur).second.type
+		       << "." << endl;
+		  ivl_assert((*cur).second, 0);
+		  break;
 	    }
       }
 

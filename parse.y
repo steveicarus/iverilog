@@ -35,8 +35,9 @@ class PSpecPath;
 extern void lex_start_table();
 extern void lex_end_table();
 
-static svector<PExpr*>* active_range = 0;
-static bool active_signed = false;
+static svector<PExpr*>* param_active_range = 0;
+static bool param_active_signed = false;
+static ivl_variable_type_t param_active_type = IVL_VT_LOGIC;
 
 /* Port declaration lists use this structure for context. */
 static struct {
@@ -2356,23 +2357,48 @@ var_type
      generates a type (optional) and a list of assignments. */
 
 parameter_assign_decl
-	: parameter_assign_list
-	| range          { active_range = $1; active_signed = false; }
-          parameter_assign_list
-		{ active_range = 0;
-		  active_signed = false;
-		}
-	| K_signed range { active_range = $2; active_signed = true; }
-          parameter_assign_list
-		{ active_range = 0;
-		  active_signed = false;
-		}
-	| K_integer      { active_range = 0; active_signed = true; }
-          parameter_assign_list
-		{ active_range = 0;
-		  active_signed = false;
-		}
-	;
+  : parameter_assign_list
+  | range
+      { param_active_range = $1;
+        param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+    parameter_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+  | K_signed range
+      { param_active_range = $2;
+	param_active_signed = true;
+	param_active_type = IVL_VT_LOGIC;
+      }
+    parameter_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+  | K_integer
+      { param_active_range = 0;
+	param_active_signed = true;
+	param_active_type = IVL_VT_LOGIC;
+      }
+    parameter_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+  | K_real
+      { param_active_range = 0;
+	param_active_signed = true;
+	param_active_type = IVL_VT_REAL;
+      }
+    parameter_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+  ;
 
 parameter_assign_list
 	: parameter_assign
@@ -2382,8 +2408,8 @@ parameter_assign_list
 parameter_assign
   : IDENTIFIER '=' expression parameter_value_ranges_opt
       { PExpr*tmp = $3;
-	pform_set_parameter(@1, lex_strings.make($1),
-			    active_signed, active_range, tmp, $4);
+	pform_set_parameter(@1, lex_strings.make($1), param_active_type,
+			    param_active_signed, param_active_range, tmp, $4);
 	delete[]$1;
       }
   ;
@@ -2424,40 +2450,59 @@ from_exclude : K_from { $$ = false; } | K_exclude { $$ = true; } ;
      behave differently when someone tries to override them. */
 
 localparam_assign
-	: IDENTIFIER '=' expression
-		{ PExpr*tmp = $3;
-		  if (!pform_expression_is_constant(tmp)) {
-			yyerror(@3, "error: parameter value "
-			            "must be constant.");
-			delete tmp;
-			tmp = 0;
-		  } else {
-			pform_set_localparam(@1, lex_strings.make($1),
-					     active_signed,
-					     active_range, tmp);
-		  }
-		  delete[]$1;
-		}
-	;
+  : IDENTIFIER '=' expression
+      { PExpr*tmp = $3;
+	pform_set_localparam(@1, lex_strings.make($1),
+			     param_active_type,
+			     param_active_signed,
+			     param_active_range, tmp);
+	delete[]$1;
+      }
+  ;
 
 localparam_assign_decl
-	: localparam_assign_list
-	| range { active_range = $1; active_signed = false; }
-          localparam_assign_list
-		{ active_range = 0;
-		  active_signed = false;
-		}
-	| K_signed range { active_range = $2; active_signed = true; }
-          localparam_assign_list
-		{ active_range = 0;
-		  active_signed = false;
-		}
-	| K_integer      { active_range = 0; active_signed = true; }
-          localparam_assign_list
-		{ active_range = 0;
-		  active_signed = false;
-		}
-	;
+  : localparam_assign_list
+  | range
+      { param_active_range = $1;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+    localparam_assign_list
+      { param_active_range = 0;
+        param_active_signed = false;
+	param_active_type = IVL_VT_NO_TYPE;
+      }
+  | K_signed range
+      { param_active_range = $2;
+	param_active_signed = true;
+	param_active_type = IVL_VT_LOGIC;
+      }
+    localparam_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_NO_TYPE;
+      }
+  | K_integer
+      { param_active_range = 0;
+	param_active_signed = true;
+	param_active_type = IVL_VT_LOGIC;
+      }
+    localparam_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_NO_TYPE;
+      }
+  | K_real
+      { param_active_range = 0;
+	param_active_signed = true;
+	param_active_type = IVL_VT_REAL;
+      }
+    localparam_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_NO_TYPE;
+      }
+  ;
 
 localparam_assign_list
 	: localparam_assign

@@ -1171,17 +1171,11 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
       }
 
       assert(scope_);
-      const NetExpr*expr_msb;
-      const NetExpr*expr_lsb;
-      const NetExpr*expr = scope_->get_parameter(name_, expr_msb, expr_lsb);
-      if (expr == 0) {
-	    cerr << get_fileline() << ": internal error: Unable to match "
-		 << "parameter " << name_ << " in scope "
-		 << scope_path(scope_) << endl;
-	    return 0;
-      }
-
-      assert(expr);
+      perm_string name = (*reference_).first;
+      const NetExpr*expr_msb = (*reference_).second.msb;
+      const NetExpr*expr_lsb = (*reference_).second.lsb;
+      const NetExpr*expr = (*reference_).second.expr;
+      ivl_assert(*this, expr);
 
       NetExpr*nexpr = expr->dup_expr();
       assert(nexpr);
@@ -1190,7 +1184,7 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 	// return the constant value.
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(nexpr)) {
 	    verinum val = tmp->value();
-	    NetEConstParam*ptmp = new NetEConstParam(scope_, name_, val);
+	    NetEConstParam*ptmp = new NetEConstParam(scope_, name, val);
 	    ptmp->set_line(*this);
 	    delete nexpr;
 	    return ptmp;
@@ -1198,7 +1192,7 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 
       if (NetECReal*tmp = dynamic_cast<NetECReal*>(nexpr)) {
 	    verireal val = tmp->value();
-	    NetECRealParam*ptmp = new NetECRealParam(scope_, name_, val);
+	    NetECRealParam*ptmp = new NetECRealParam(scope_, name, val);
 	    ptmp->set_line(*this);
 	    delete nexpr;
 	    return ptmp;
@@ -1209,7 +1203,7 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
       NetExpr*res = nexpr->eval_tree();
       if (res == 0) {
 	    cerr << get_fileline() << ": internal error: Unable to evaluate "
-		 << "parameter " << name_ << " expression: "
+		 << "parameter " << name << " expression: "
 		 << *nexpr << endl;
 	    delete nexpr;
 	    return 0;
@@ -1217,10 +1211,10 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 
 	// The result can be saved as the value of the parameter for
 	// future reference, and return a copy to the caller.
-      bool flag = scope_->replace_parameter(name_, res);
+      bool flag = scope_->replace_parameter(name, res);
       if (!flag) {
 	    cerr << get_fileline() << ": internal error: Could not "
-		 << "replace parameter expression for " << name_ << endl;
+		 << "replace parameter expression for " << name << endl;
 	    return 0;
       }
 
@@ -1234,7 +1228,7 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 	    { NetEConst*tmp = dynamic_cast<NetEConst*>(res);
 	      if (tmp == 0) {
 		    cerr << get_fileline() << ": internal error: parameter "
-			 << name_ << " evaluates to incomprehensible "
+			 << name << " evaluates to incomprehensible "
 			 << *res << "." << endl;
 		    return 0;
 	      }
@@ -1242,7 +1236,7 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 	      assert(tmp);
 
 	      verinum val = tmp->value();
-	      NetEConstParam*ptmp = new NetEConstParam(scope_, name_, val);
+	      NetEConstParam*ptmp = new NetEConstParam(scope_, name, val);
 
 	      return ptmp;
 	    }
@@ -1251,7 +1245,7 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 	    { NetECReal*tmp = dynamic_cast<NetECReal*>(res);
 	      if (tmp == 0) {
 		    cerr << get_fileline() << ": internal error: parameter "
-			 << name_ << " evaluates to incomprehensible "
+			 << name << " evaluates to incomprehensible "
 			 << *res << "." << endl;
 		    return 0;
 	      }
@@ -1259,7 +1253,7 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 	      assert(tmp);
 
 	      verireal val = tmp->value();
-	      NetECRealParam*ptmp = new NetECRealParam(scope_, name_, val);
+	      NetECRealParam*ptmp = new NetECRealParam(scope_, name, val);
 
 	      return ptmp;
 	    }

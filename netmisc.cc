@@ -182,6 +182,21 @@ bool eval_as_long(long&value, NetExpr*expr)
       return false;
 }
 
+bool eval_as_double(double&value, NetExpr*expr)
+{
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr) ) {
+	    value = tmp->value().as_long();
+	    return true;
+      }
+
+      if (NetECReal*rtmp = dynamic_cast<NetECReal*>(expr)) {
+	    value = rtmp->value().as_double();
+	    return true;
+      }
+
+      return false;
+}
+
 std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 				   const pform_name_t&path)
 {

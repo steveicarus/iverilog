@@ -272,11 +272,13 @@ extern Module::range_t* pform_parameter_value_range(bool exclude_flag,
 
 extern void pform_set_parameter(const struct vlltype&loc,
 				perm_string name,
+				ivl_variable_type_t type,
 				bool signed_flag,
 				svector<PExpr*>*range,
 				PExpr*expr, Module::range_t*value_range);
 extern void pform_set_localparam(const struct vlltype&loc,
 				 perm_string name,
+				 ivl_variable_type_t type,
 				 bool signed_flag,
 				 svector<PExpr*>*range,
 				 PExpr*expr);

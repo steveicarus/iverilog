@@ -994,7 +994,7 @@ void Module::dump(ostream&out) const
       typedef map<pform_name_t,PExpr*>::const_iterator parm_hiter_t;
       for (parm_iter_t cur = parameters.begin()
 		 ; cur != parameters.end() ; cur ++) {
-	    out << "    parameter ";
+	    out << "    parameter " << (*cur).second.type << " ";
 	    if ((*cur).second.signed_flag)
 		  out << "signed ";
 	    if ((*cur).second.msb)

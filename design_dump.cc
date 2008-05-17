@@ -1290,11 +1290,9 @@ void NetESignal::dump(ostream&o) const
 void NetEParam::dump(ostream&o) const
 {
       if (scope_ != 0)
-	    o << "<" << scope_path(scope_) << "." << name_ << ">";
-      else if (name_)
-	    o << "<" << name_ << ">";
+	    o << "<" << scope_path(scope_) << "." << (*reference_).first << ">";
       else
-	    o << "<" "???" ">";
+	    o << "<" << (*reference_).first << ">";
 }
 
 void NetETernary::dump(ostream&o) const
