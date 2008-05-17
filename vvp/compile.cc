@@ -321,13 +321,12 @@ vvp_net_t* vvp_net_lookup(const char*label)
  */
 static struct resolv_list_s*resolv_list = 0;
 
-struct resolv_list_s {
-      virtual ~resolv_list_s() { }
-      struct resolv_list_s*next;
-      virtual bool resolve(bool mes = false) = 0;
-};
+resolv_list_s::~resolv_list_s()
+{
+      free(label_);
+}
 
-static void resolv_submit(struct resolv_list_s*cur)
+void resolv_submit(struct resolv_list_s*cur)
 {
       if (cur->resolve()) {
 	    delete cur;
@@ -346,8 +345,8 @@ static void resolv_submit(struct resolv_list_s*cur)
  * put net->port[port] into the fan-out list for that node.
  */
 struct vvp_net_resolv_list_s: public resolv_list_s {
-	// node to locate
-      char*source;
+
+      vvp_net_resolv_list_s(char*l) : resolv_list_s(l) { }
 	// port to be driven by the located node.
       vvp_net_ptr_t port;
       virtual bool resolve(bool mes);
@@ -355,20 +354,18 @@ struct vvp_net_resolv_list_s: public resolv_list_s {
 
 bool vvp_net_resolv_list_s::resolve(bool mes)
 {
-      vvp_net_t*tmp = vvp_net_lookup(source);
+      vvp_net_t*tmp = vvp_net_lookup(label());
 
       if (tmp) {
 	      // Link the input port to the located output.
 	    vvp_net_t*net = port.ptr();
 	    net->port[port.port()] = tmp->out;
 	    tmp->out = port;
-
-	    free(source);
 	    return true;
       }
 
       if (mes)
-	    fprintf(stderr, "unresolved vvp_net reference: %s\n", source);
+	    fprintf(stderr, "unresolved vvp_net reference: %s\n", label());
 
       return false;
 }
@@ -376,10 +373,8 @@ bool vvp_net_resolv_list_s::resolve(bool mes)
 inline static
 void postpone_functor_input(vvp_net_ptr_t port, char*lab)
 {
-      struct vvp_net_resolv_list_s*res = new struct vvp_net_resolv_list_s;
-
+      struct vvp_net_resolv_list_s*res = new struct vvp_net_resolv_list_s(lab);
       res->port   = port;
-      res->source = lab;
 
       resolv_submit(res);
 }
@@ -390,24 +385,22 @@ void postpone_functor_input(vvp_net_ptr_t port, char*lab)
  */
 
 struct functor_gen_resolv_list_s: public resolv_list_s {
-      char*source;
+      explicit functor_gen_resolv_list_s(char*txt) : resolv_list_s(txt) { }
       vvp_net_t**ref;
       virtual bool resolve(bool mes);
 };
 
 bool functor_gen_resolv_list_s::resolve(bool mes)
 {
-      vvp_net_t*tmp = vvp_net_lookup(source);
+      vvp_net_t*tmp = vvp_net_lookup(label());
 
       if (tmp) {
 	    *ref = tmp;
-
-	    free(source);
 	    return true;
       }
 
       if (mes)
-	    fprintf(stderr, "unresolved functor reference: %s\n", source);
+	    fprintf(stderr, "unresolved functor reference: %s\n", label());
 
       return false;
 }
@@ -415,10 +408,9 @@ bool functor_gen_resolv_list_s::resolve(bool mes)
 void functor_ref_lookup(vvp_net_t**ref, char*lab)
 {
       struct functor_gen_resolv_list_s*res =
-	    new struct functor_gen_resolv_list_s;
+	    new struct functor_gen_resolv_list_s(lab);
 
       res->ref    = ref;
-      res->source = lab;
 
       resolv_submit(res);
 }
@@ -428,27 +420,27 @@ void functor_ref_lookup(vvp_net_t**ref, char*lab)
  */
 
 struct vpi_handle_resolv_list_s: public resolv_list_s {
-      vpiHandle *handle;
-      char *label;
+      explicit vpi_handle_resolv_list_s(char*label) : resolv_list_s(label) { }
       virtual bool resolve(bool mes);
+      vpiHandle *handle;
 };
 
 bool vpi_handle_resolv_list_s::resolve(bool mes)
 {
-      symbol_value_t val = sym_get_value(sym_vpi, label);
+      symbol_value_t val = sym_get_value(sym_vpi, label());
       if (!val.ptr) {
 	    // check for thread vector  T<base,wid>
 	    unsigned base, wid;
 	    unsigned n = 0;
 	    char ss[32];
-	    if (2 <= sscanf(label, "T<%u,%u>%n", &base, &wid, &n)
-		&& n == strlen(label)) {
+	    if (2 <= sscanf(label(), "T<%u,%u>%n", &base, &wid, &n)
+		&& n == strlen(label())) {
 		  val.ptr = vpip_make_vthr_vector(base, wid, false);
-		  sym_set_value(sym_vpi, label, val);
+		  sym_set_value(sym_vpi, label(), val);
 
-	    } else if (3 <= sscanf(label, "T<%u,%u,%[su]>%n", &base,
+	    } else if (3 <= sscanf(label(), "T<%u,%u,%[su]>%n", &base,
 				   &wid, ss, &n)
-		       && n == strlen(label)) {
+		       && n == strlen(label())) {
 
 		  bool signed_flag = false;
 		  for (char*fp = ss ;  *fp ;  fp += 1) switch (*fp) {
@@ -463,13 +455,13 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 		  }
 
 		  val.ptr = vpip_make_vthr_vector(base, wid, signed_flag);
-		  sym_set_value(sym_vpi, label, val);
+		  sym_set_value(sym_vpi, label(), val);
 
-	    } else if (2 == sscanf(label, "W<%u,%[r]>%n", &base, ss, &n)
-		       && n == strlen(label)) {
+	    } else if (2 == sscanf(label(), "W<%u,%[r]>%n", &base, ss, &n)
+		       && n == strlen(label())) {
 
 		  val.ptr = vpip_make_vthr_word(base, ss);
-		  sym_set_value(sym_vpi, label, val);
+		  sym_set_value(sym_vpi, label(), val);
 	    }
 
       }
@@ -480,12 +472,11 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 
       if (val.ptr) {
 	    *handle = (vpiHandle) val.ptr;
-	    free(label);
 	    return true;
       }
 
       if (mes)
-	    fprintf(stderr, "unresolved vpi name lookup: %s\n", label);
+	    fprintf(stderr, "unresolved vpi name lookup: %s\n", label());
 
       return false;
 }
@@ -517,10 +508,9 @@ void compile_vpi_lookup(vpiHandle *handle, char*label)
       }
 
       struct vpi_handle_resolv_list_s*res
-	    = new struct vpi_handle_resolv_list_s;
+	    = new struct vpi_handle_resolv_list_s(label);
 
       res->handle = handle;
-      res->label  = label;
       resolv_submit(res);
 }
 
@@ -529,27 +519,24 @@ void compile_vpi_lookup(vpiHandle *handle, char*label)
  */
 
 struct code_label_resolv_list_s: public resolv_list_s {
+      code_label_resolv_list_s(char*label) : resolv_list_s(label) { }
       struct vvp_code_s *code;
-      char *label;
       virtual bool resolve(bool mes);
 };
 
 bool code_label_resolv_list_s::resolve(bool mes)
 {
-      symbol_value_t val = sym_get_value(sym_codespace, label);
+      symbol_value_t val = sym_get_value(sym_codespace, label());
       if (val.num) {
 	    if (code->opcode == of_FORK)
 		  code->cptr2 = reinterpret_cast<vvp_code_t>(val.ptr);
 	    else
 		  code->cptr = reinterpret_cast<vvp_code_t>(val.ptr);
-	    free(label);
 	    return true;
       }
 
       if (mes)
-	    fprintf(stderr,
-		    "unresolved code label: %s\n",
-		    label);
+	    fprintf(stderr, "unresolved code label: %s\n", label());
 
       return false;
 }
@@ -557,10 +544,9 @@ bool code_label_resolv_list_s::resolve(bool mes)
 void code_label_lookup(struct vvp_code_s *code, char *label)
 {
       struct code_label_resolv_list_s *res
-	    = new struct code_label_resolv_list_s;
+	    = new struct code_label_resolv_list_s(label);
 
       res->code  = code;
-      res->label = label;
 
       resolv_submit(res);
 }
@@ -569,21 +555,20 @@ void code_label_lookup(struct vvp_code_s *code, char *label)
  * Lookup memories.
  */
 struct memory_resolv_list_s: public resolv_list_s {
+      memory_resolv_list_s(char*label) : resolv_list_s(label) { }
       struct vvp_code_s *code;
-      char *label;
       virtual bool resolve(bool mes);
 };
 
 bool memory_resolv_list_s::resolve(bool mes)
 {
-      code->mem = memory_find(label);
+      code->mem = memory_find(label());
       if (code->mem != 0) {
-	    free(label);
 	    return true;
       }
 
       if (mes)
-	    fprintf(stderr, "Memory unresolved: %s\n", label);
+	    fprintf(stderr, "Memory unresolved: %s\n", label());
 
       return false;
 }
@@ -591,41 +576,38 @@ bool memory_resolv_list_s::resolve(bool mes)
 static void compile_mem_lookup(struct vvp_code_s *code, char *label)
 {
       struct memory_resolv_list_s *res
-	    = new struct memory_resolv_list_s;
+	    = new struct memory_resolv_list_s(label);
 
       res->code  = code;
-      res->label = label;
 
       resolv_submit(res);
 }
 
-struct array_resolv_list_s: public resolv_list_s {
+struct code_array_resolv_list_s: public resolv_list_s {
+      code_array_resolv_list_s(char*label) : resolv_list_s(label) { }
       struct vvp_code_s *code;
-      char *label;
       virtual bool resolve(bool mes);
 };
 
-bool array_resolv_list_s::resolve(bool mes)
+bool code_array_resolv_list_s::resolve(bool mes)
 {
-      code->array = array_find(label);
+      code->array = array_find(label());
       if (code->array != 0) {
-	    free(label);
 	    return true;
       }
 
       if (mes)
-	    fprintf(stderr, "Array unresolved: %s\n", label);
+	    fprintf(stderr, "Array unresolved: %s\n", label());
 
       return false;
 }
 
 static void compile_array_lookup(struct vvp_code_s*code, char*label)
 {
-      struct array_resolv_list_s *res
-	    = new struct array_resolv_list_s;
+      struct code_array_resolv_list_s *res
+	    = new struct code_array_resolv_list_s(label);
 
       res->code  = code;
-      res->label = label;
 
       resolv_submit(res);
 }

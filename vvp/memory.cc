@@ -62,7 +62,7 @@ struct vvp_memory_s
 
 static symbol_table_t memory_table = 0;
 
-vvp_memory_t memory_find(char *label)
+vvp_memory_t memory_find(const char *label)
 {
       if (memory_table == 0)
 	    return 0;

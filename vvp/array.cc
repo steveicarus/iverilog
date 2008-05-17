@@ -35,7 +35,7 @@ static symbol_table_t array_table =0;
 class vvp_fun_arrayport;
 static void array_attach_port(vvp_array_t, vvp_fun_arrayport*);
 
-vvp_array_t array_find(char*label)
+vvp_array_t array_find(const char*label)
 {
       if (array_table == 0)
 	    return 0;
@@ -667,43 +667,66 @@ void array_word_change(vvp_array_t array, unsigned long addr)
 	    cur->check_word_change(addr);
 }
 
-void compile_array_port(char*label, char*array, char*addr)
+class array_port_resolv_list_t : public resolv_list_s {
+
+    public:
+      explicit array_port_resolv_list_t(char*label) : resolv_list_s(label) { }
+
+      vvp_net_t*ptr;
+      bool use_addr;
+      long addr;
+      bool resolve(bool mes);
+
+    private:
+};
+
+bool array_port_resolv_list_t::resolve(bool mes)
 {
-      vvp_array_t mem = array_find(array);
-      assert(mem);
+      vvp_array_t mem = array_find(label());
+      if (mem == 0) {
+	    assert(mem || !mes);
+	    return false;
+      }
 
-      vvp_net_t*ptr = new vvp_net_t;
-      vvp_fun_arrayport*fun = new vvp_fun_arrayport(mem, ptr);
+      vvp_fun_arrayport*fun;
+      if (use_addr)
+	    fun = new vvp_fun_arrayport(mem, ptr, addr);
+      else
+	    fun = new vvp_fun_arrayport(mem, ptr);
       ptr->fun = fun;
-
-      define_functor_symbol(label, ptr);
-	// Connect the port-0 input as the address.
-      input_connect(ptr, 0, addr);
 
       array_attach_port(mem, fun);
 
+      return true;
+}
+
+void compile_array_port(char*label, char*array, char*addr)
+{
+      array_port_resolv_list_t*resolv_mem
+	    = new array_port_resolv_list_t(array);
+
+      resolv_mem->ptr = new vvp_net_t;
+      resolv_mem->use_addr = false;
+      define_functor_symbol(label, resolv_mem->ptr);
       free(label);
-      free(array);
-	// The input_connect arranges for the array string to be free'ed.
+	// Connect the port-0 input as the address.
+      input_connect(resolv_mem->ptr, 0, addr);
+
+      resolv_submit(resolv_mem);
 }
 
 void compile_array_port(char*label, char*array, long addr)
 {
-      vvp_array_t mem = array_find(array);
-      assert(mem);
+      array_port_resolv_list_t*resolv_mem
+	    = new array_port_resolv_list_t(array);
 
-      vvp_net_t*ptr = new vvp_net_t;
-      vvp_fun_arrayport*fun = new vvp_fun_arrayport(mem, ptr, addr);
-      ptr->fun = fun;
-
-      define_functor_symbol(label, ptr);
-
-	// Other then the array itself, this kind of array port has no
-	// inputs.
-      array_attach_port(mem, fun);
-
+      resolv_mem->ptr = new vvp_net_t;
+      resolv_mem->use_addr = true;
+      resolv_mem->addr = addr;
+      define_functor_symbol(label, resolv_mem->ptr);
       free(label);
-      free(array);
+
+      resolv_submit(resolv_mem);
 }
 
 void compile_array_alias(char*label, char*name, char*src)

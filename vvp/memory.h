@@ -152,7 +152,7 @@ class vvp_fun_memport  : public vvp_net_fun_t {
 ** The memory_create function creates a new memory device with the given
 ** name. It is a fatal error to try to create a device that already exists.
 */
-vvp_memory_t memory_find(char *label);
+vvp_memory_t memory_find(const char *label);
 vvp_memory_t memory_create(char *label);
 
 /*

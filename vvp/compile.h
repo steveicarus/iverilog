@@ -244,6 +244,41 @@ extern void compile_param_real(char*label, char*name, char*value,
                                long file_idx, long lineno);
 
 /*
+ * The resolv_list_s is the base class for a symbol resolve
+ * action. Some function creates an instance of a resolv_list_s object
+ * that contains the data pertinent to that resolution request, and
+ * executes it with the resolv_submit function. If the operation can
+ * complete, then the resolv_submit deletes the object. Otherwise, it
+ * pushes it onto the resolv_list for later processing.
+ *
+ * Derived classes implement the resolve function to perform the
+ * actual binding or resolution that the instance requires. If the
+ * function succeeds, the resolve method returns true and the object
+ * can be deleted any time.
+ *
+ * The mes parameter of the resolve method tells the resolver that
+ * this call is its last chance. If it cannot complete the operation,
+ * it must print an error message and return false.
+ */
+class resolv_list_s {
+
+    public:
+      explicit resolv_list_s(char*lab) : label_(lab) { }
+      virtual ~resolv_list_s();
+      virtual bool resolve(bool mes = false) = 0;
+
+    protected:
+      const char*label() const { return label_; }
+
+    private:
+      friend void ::resolv_submit(struct resolv_list_s*cur);
+      friend void ::compile_cleanup(void);
+
+      char*label_;
+      struct resolv_list_s*next;
+};
+
+/*
  * This function schedules a lookup of an indexed label. The ref
  * points to the vvp_net_t that receives the result. The result may
  * be assigned later, if the symbol is defined later in the source

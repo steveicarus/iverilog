@@ -28,7 +28,7 @@ typedef struct __vpiArray* vvp_array_t;
  * This function tries to find the array (by label) in the global
  * table of all the arrays in the design.
  */
-extern vvp_array_t array_find(char*label);
+extern vvp_array_t array_find(const char*label);
 extern vpiHandle array_index_iterate(int code, vpiHandle ref);
 
 extern void array_word_change(vvp_array_t array, unsigned long addr);
