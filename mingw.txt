@@ -47,6 +47,8 @@ critical, but these are the versions I use.
      msys-1.0			<http://www.mingw/org>
      msysDTK-1.0		<http://www.mingw.org>
      Mingw32-5.x		<http://www.mingw.org>
+        ... including the sub-packages binutils, gcc-core and gcc-g++
+	if you are given the option.
      readline-4.2-20010727.zip  <http://mingwrep.sourceforge.net>
      bzip2-1.0.3		<http://gnuwin32.sourceforge.net>
      zlib-1.2.3			<http://gnuwin32.sourceforge.net>

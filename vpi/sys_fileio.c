@@ -480,22 +480,39 @@ static PLI_INT32 sys_ungetc_compiletf(PLI_BYTE8*name)
       vpiHandle item = vpi_scan(argv);
 
       if (item == 0) {
-	    vpi_printf("%s: mcd parameter missing.\n", name);
+	    vpi_printf("%s: character parameter missing.\n", name);
 	    return 0;
       }
-
       type = vpi_get(vpiType, item);
       switch (type) {
 	    case vpiReg:
-	    case vpiRealVal:
+	    case vpiRealVal: // Is this correct?
 	    case vpiIntegerVar:
 	      break;
 	    default:
-	      vpi_printf("ERROR: %s mcd parameter must be of integral", name);
-	      vpi_printf(", got vpiType=%d\n", type);
+	      vpi_printf("ERROR: %s character parameter must be ", name);
+	      vpi_printf("integral, got vpiType=%d\n", type);
 	      vpi_free_object(argv);
 	      return 0;
       }
+
+      item = vpi_scan(argv);
+      type = vpi_get(vpiType, item);
+      switch (type) {
+	    case vpiReg:
+	    case vpiRealVal: // Is this correct?
+	    case vpiIntegerVar:
+	      break;
+	    default:
+	      vpi_printf("ERROR: %s mcd parameter must be integral, ", name);
+	      vpi_printf("got vpiType=%d\n", type);
+	      vpi_free_object(argv);
+	      return 0;
+      }
+
+	/* That should be all the arguments. */
+      item = vpi_scan(argv);
+      assert(item == 0);
 
       return 0;
 }
@@ -504,7 +521,7 @@ static PLI_INT32 sys_ungetc_calltf(PLI_BYTE8*name)
 {
       unsigned int mcd;
       unsigned char x;
-      s_vpi_value value, xvalue, rval;
+      s_vpi_value val, rval;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
       vpiHandle item = vpi_scan(argv);
@@ -512,23 +529,21 @@ static PLI_INT32 sys_ungetc_calltf(PLI_BYTE8*name)
 
       rval.format = vpiIntVal;
 
-      assert(item);
+      val.format = vpiIntVal;
+      vpi_get_value(item, &val);
+      x = val.value.integer;
 
-      value.format = vpiIntVal;
-      vpi_get_value(item, &value);
-      mcd = value.value.integer;
+      item = vpi_scan(argv);
+
+      val.format = vpiIntVal;
+      vpi_get_value(item, &val);
+      mcd = val.value.integer;
 
       if (IS_MCD(mcd)) {
 	    rval.value.integer = EOF;
 	    vpi_put_value(sys, &rval, 0, vpiNoDelay);
 	    return 0;
       }
-
-      item = vpi_scan(argv);
-
-      xvalue.format = vpiIntVal;
-      vpi_get_value(item, &xvalue);
-      x = xvalue.value.integer;
 
       fp = vpi_get_file(mcd);
       if ( !fp ) {
