@@ -22,6 +22,7 @@
 # include  "netmisc.h"
 # include  <cstring>
 # include  <iostream>
+# include  <cstdlib>
 # include  <stdio.h>
 
 /*
