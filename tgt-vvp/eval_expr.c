@@ -2039,14 +2039,16 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
       unsigned use_word = 0;
 
 	/* If this is an access to an array, try to get the index as a
-	   constant. If it is, then this reduces to a signal access
-	   and we stay here. If it is not constant, then give up and
-	   do an array index in front of this part select. */
+	   constant. If it is (and the array is not a reg array then
+	   this reduces to a signal access and we stay here. If it is
+	   not constant, then give up and do an array index in front
+	   of this part select. */
 
       if (ivl_signal_dimensions(sig) > 0) {
 	    ivl_expr_t ix = ivl_expr_oper1(sube);
 
-	    if (!number_is_immediate(ix, 8*sizeof(unsigned long)))
+	    if (ivl_signal_type(sig)==IVL_SIT_REG
+		|| !number_is_immediate(ix, 8*sizeof(unsigned long)))
 		  return draw_select_array(sube, bit_idx, bit_wid, wid);
 
 	      /* The index is constant, so we can return to direct
