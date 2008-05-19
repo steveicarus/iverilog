@@ -52,7 +52,7 @@ static int is_fixed_memory_word(ivl_expr_t net)
 
       sig = ivl_expr_signal(net);
 
-      if (ivl_signal_array_count(sig) == 1)
+      if (ivl_signal_dimensions(sig) == 0)
 	    return 1;
 
       if (ivl_signal_type(sig) == IVL_SIT_REG)

@@ -140,7 +140,7 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		ivl_signal_t sig = ivl_expr_signal(expr);
 
 		unsigned word = 0;
-		if (ivl_signal_array_count(sig) > 1) {
+		if (ivl_signal_dimensions(sig) > 0) {
 
 			/* Detect the special case that this is a
 			   variable array. In this case, the ix/getv
@@ -1908,7 +1908,7 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 
 	/* If this is an access to an array, handle that by emitting a
 	   load/av instruction. */
-      if (ivl_signal_array_count(sig) > 1) {
+      if (ivl_signal_dimensions(sig) > 0) {
 	    ivl_expr_t ix = ivl_expr_oper1(exp);
 
 	    draw_eval_expr_into_integer(ix, 3);
@@ -2043,7 +2043,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	   and we stay here. If it is not constant, then give up and
 	   do an array index in front of this part select. */
 
-      if (ivl_signal_array_count(sig) > 1) {
+      if (ivl_signal_dimensions(sig) > 0) {
 	    ivl_expr_t ix = ivl_expr_oper1(sube);
 
 	    if (!number_is_immediate(ix, 8*sizeof(unsigned long)))
