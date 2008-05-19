@@ -99,7 +99,7 @@ static void set_to_lvariable(ivl_lval_t lval,
       if (ivl_lval_mux(lval))
 	    part_off_ex = ivl_lval_mux(lval);
 
-      if (part_off_ex) {
+      if (part_off_ex && ivl_signal_dimensions(sig) == 0) {
 	    unsigned skip_set = transient_id++;
 
 	      /* There is a mux expression, so this must be a write to
@@ -117,6 +117,39 @@ static void set_to_lvariable(ivl_lval_t lval,
 	      /* save_signal width of 0 CLEARS the signal from the
 	         lookaside. */
 	    save_signal_lookaside(bit, sig, use_word, 0);
+
+      } else if (part_off_ex && ivl_signal_dimensions(sig) > 0) {
+
+	      /* Here we have a part select write into an array word. */
+	    unsigned skip_set = transient_id++;
+	    if (word_ix) {
+		  draw_eval_expr_into_integer(word_ix, 3);
+		  fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
+	    } else {
+		  fprintf(vvp_out, "   %%ix/load 3, %lu;\n", use_word);
+	    }
+	    draw_eval_expr_into_integer(part_off_ex, 1);
+	    fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
+	    fprintf(vvp_out, "   %%set/av v%p, %u, %u;\n",
+		    sig, bit, wid);
+	    fprintf(vvp_out, "t_%u ;\n", skip_set);
+
+      } else if ((part_off>0 || ivl_lval_width(lval)!=ivl_signal_width(sig))
+		 && ivl_signal_dimensions(sig) > 0) {
+
+	      /* Here we have a part select write into an array word. */
+	    unsigned skip_set = transient_id++;
+	    if (word_ix) {
+		  draw_eval_expr_into_integer(word_ix, 3);
+		  fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
+	    } else {
+		  fprintf(vvp_out, "   %%ix/load 3, %lu;\n", use_word);
+	    }
+	    fprintf(vvp_out, "   %%ix/load 1, %u;\n", part_off);
+	    fprintf(vvp_out, "   %%set/av v%p, %u, %u;\n",
+		    sig, bit, wid);
+	    if (word_ix) /* Only need this label if word_ix is set. */
+		  fprintf(vvp_out, "t_%u ;\n", skip_set);
 
       } else if (part_off>0 || ivl_lval_width(lval)!=ivl_signal_width(sig)) {
 	      /* There is no mux expression, but a constant part
@@ -145,7 +178,7 @@ static void set_to_lvariable(ivl_lval_t lval,
 	         lookaside. */
 	    save_signal_lookaside(bit, sig, use_word, 0);
 
-      } else if (ivl_signal_array_count(sig) > 1) {
+      } else if (ivl_signal_dimensions(sig) > 0) {
 
 	      /* If the word index is a constant, then we can write
 	         directly to the word and save the index calculation. */
