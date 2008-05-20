@@ -67,6 +67,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool bufz(const NetBUFZ*);
       void event(const NetEvent*);
       void logic(const NetLogic*);
+      bool tran(const NetTran*);
       bool ureduce(const NetUReduce*);
       void net_case_cmp(const NetCaseCmp*);
       void udp(const NetUDP*);

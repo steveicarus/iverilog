@@ -611,6 +611,17 @@ void NetTaskDef::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "endtask" << endl;
 }
 
+void NetTran::dump_node(ostream&o, unsigned ind) const
+{
+      const char*r = resistive_? "r" : "";
+      const char*ifx = enable_==0? "" : enable_>0? "if1" : "if0";
+
+      o << setw(ind) << "" << r << "tran" << ifx << " " << name() << endl;
+
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
 void NetUDP::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "UDP (" << udp_name() << "): ";

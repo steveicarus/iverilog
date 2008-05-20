@@ -1359,6 +1359,20 @@ class NetSysFunc  : public NetNode {
       const struct sfunc_return_type*def_;
 };
 
+class NetTran  : public NetNode {
+
+    public:
+      NetTran(NetScope*scope, perm_string n, bool resistive, int enable);
+      ~NetTran();
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+
+    private:
+      bool resistive_;
+      bool enable_;
+};
+
 /* =========
  * There are cases where expressions need to be represented. The
  * NetExpr class is the root of a hierarchy that serves that purpose.

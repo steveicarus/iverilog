@@ -1008,6 +1008,13 @@ void dll_target::logic(const NetLogic*net)
       scope_add_logic(scope, obj);
 }
 
+bool dll_target::tran(const NetTran*net)
+{
+      cerr << net->get_fileline() << ": sorry: "
+	   << "trans devices not supported." << endl;
+      return false;
+}
+
 bool dll_target::sign_extend(const NetSignExtend*net)
 {
       struct ivl_lpm_s*obj = new struct ivl_lpm_s;

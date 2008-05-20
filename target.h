@@ -86,6 +86,7 @@ struct target_t {
 
 	/* Output a gate (called for each gate) */
       virtual void logic(const NetLogic*);
+      virtual bool tran(const NetTran*);
       virtual bool ureduce(const NetUReduce*); /* unary reduction operator */
       virtual bool bufz(const NetBUFZ*);
       virtual void udp(const NetUDP*);

@@ -61,6 +61,13 @@ void target_t::logic(const NetLogic*)
 	    "Unhandled logic gate" << endl;
 }
 
+bool target_t::tran(const NetTran*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	   << "TRAN devices not supported." << endl;
+      return false;
+}
+
 bool target_t::bufz(const NetBUFZ*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "

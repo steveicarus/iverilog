@@ -165,6 +165,11 @@ bool NetUserFunc::emit_node(struct target_t*tgt) const
       return tgt->net_function(this);
 }
 
+bool NetTran::emit_node(struct target_t*tgt) const
+{
+      return tgt->tran(this);
+}
+
 bool NetBUFZ::emit_node(struct target_t*tgt) const
 {
       return tgt->bufz(this);

@@ -419,7 +419,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
       }
 
 	/* Allocate all the netlist nodes for the gates. */
-      NetLogic**cur = new NetLogic*[count];
+      NetNode**cur = new NetNode*[count];
       assert(cur);
 
 	/* Calculate the gate delays from the delay expressions
@@ -659,6 +659,67 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		      cur[idx] = new NetLogic(scope, inm, pin_count(),
 					      NetLogic::XOR, instance_width);
 		  break;
+		case TRAN:
+		  if (pin_count() != 2) {
+			cerr << get_fileline() << ": error: Pin count for "
+			     << "tran device." << endl;
+			des->errors += 1;
+			return;
+		  } else {
+			cur[idx] = new NetTran(scope, inm, false, 0);
+		  }
+		  break;
+		case RTRAN:
+		  if (pin_count() != 2) {
+			cerr << get_fileline() << ": error: Pin count for "
+			     << "rtran device." << endl;
+			des->errors += 1;
+			return;
+		  } else {
+			cur[idx] = new NetTran(scope, inm, true, 0);
+			return;
+		  }
+		  break;
+		case TRANIF0:
+		  if (pin_count() != 3) {
+			cerr << get_fileline() << ": error: Pin count for "
+			     << "tranif0 device." << endl;
+			des->errors += 1;
+			return;
+		  } else {
+			cur[idx] = new NetTran(scope, inm, false, -1);
+		  }
+		  break;
+		case RTRANIF0:
+		  if (pin_count() != 3) {
+			cerr << get_fileline() << ": error: Pin count for "
+			     << "rtranif0 device." << endl;
+			des->errors += 1;
+			return;
+		  } else {
+			cur[idx] = new NetTran(scope, inm, true, -1);
+		  }
+		  break;
+		case TRANIF1:
+		  if (pin_count() != 3) {
+			cerr << get_fileline() << ": error: Pin count for "
+			     << "tranif1 device." << endl;
+			des->errors += 1;
+			return;
+		  } else {
+			cur[idx] = new NetTran(scope, inm, false, 1);
+		  }
+		  break;
+		case RTRANIF1:
+		  if (pin_count() != 3) {
+			cerr << get_fileline() << ": error: Pin count for "
+			     << "rtranif1 device." << endl;
+			des->errors += 1;
+			return;
+		  } else {
+			cur[idx] = new NetTran(scope, inm, true, 1);
+		  }
+		  break;
 		default:
 		  cerr << get_fileline() << ": internal error: unhandled "
 			"gate type." << endl;
@@ -670,13 +731,18 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  cur[idx]->attribute(attrib_list[adx].key,
 				      attrib_list[adx].val);
 
-	    cur[idx]->rise_time(rise_time);
-	    cur[idx]->fall_time(fall_time);
-	    cur[idx]->decay_time(decay_time);
+	      /* The logic devices have some uniform processing. Then
+	         all may have output delays and output drive strength. */
+	    if (NetLogic*log = dynamic_cast<NetLogic*> (cur[idx])) {
+		  log->rise_time(rise_time);
+		  log->fall_time(fall_time);
+		  log->decay_time(decay_time);
 
-	    cur[idx]->pin(0).drive0(drive_type(strength0()));
-	    cur[idx]->pin(0).drive1(drive_type(strength1()));
+		  log->pin(0).drive0(drive_type(strength0()));
+		  log->pin(0).drive1(drive_type(strength1()));
+	    }
 
+	    cur[idx]->set_line(*this);
 	    des->add_node(cur[idx]);
       }
 
