@@ -288,7 +288,7 @@ void show_statement(ivl_statement_t net, unsigned ind)
 	    break;
 
 	  case IVL_ST_DELAY:
-	    fprintf(out, "%*s#%llu\n", ind, "", ivl_stmt_delay_val(net));
+	    fprintf(out, "%*s#%" PRIu64 "\n", ind, "", ivl_stmt_delay_val(net));
 	    show_statement(ivl_stmt_sub_stmt(net), ind+2);
 	    break;
 
