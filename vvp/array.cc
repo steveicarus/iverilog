@@ -401,7 +401,7 @@ void array_set_word(vvp_array_t arr,
 
       if (arr->vals) {
 	    assert(arr->nets == 0);
-	    if (part_off != 0) {
+	    if (part_off != 0 || val.size() != arr->vals_width) {
 		  if (arr->vals[address].size() == 0)
 			arr->vals[address] = vvp_vector4_t(arr->vals_width, BIT4_X);
 		  if ((part_off + val.size()) > arr->vals[address].size()) {

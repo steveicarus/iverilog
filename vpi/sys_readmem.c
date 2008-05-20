@@ -282,7 +282,7 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
 	  }
       }
 
-      item = vpi_handle_by_index(mitem,0);
+      item = vpi_handle_by_index(mitem,min_addr);
       wwid = vpi_get(vpiSize, item);
 
       /* variable that will be uses by the lexer to pass values
