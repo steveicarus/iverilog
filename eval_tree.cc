@@ -1172,8 +1172,6 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 
       assert(scope_);
       perm_string name = (*reference_).first;
-      const NetExpr*expr_msb = (*reference_).second.msb;
-      const NetExpr*expr_lsb = (*reference_).second.lsb;
       const NetExpr*expr = (*reference_).second.expr;
       ivl_assert(*this, expr);
 
