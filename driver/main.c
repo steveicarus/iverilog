@@ -329,6 +329,9 @@ static int t_default(char*cmd, unsigned ncmd)
       remove(source_path);
       if ( ! getenv("IVERILOG_ICONFIG"))
 	    remove(iconfig_path);
+#ifdef __MINGW32__  /* MinGW just returns the exit status, so return it! */
+      return rc;
+#else
       if (rc != 0) {
 	    if (rc == 127) {
 		  fprintf(stderr, "Failed to execute: %s\n", cmd);
@@ -343,6 +346,7 @@ static int t_default(char*cmd, unsigned ncmd)
       }
 
       return 0;
+#endif
 }
 
 
