@@ -65,7 +65,7 @@ static struct __vpiModPath*modpath_dst = 0;
       vvp_delay_t*cdelay;
 };
 
-%token K_ALIAS K_ALIAS_S K_ALIAS_R
+%token K_A K_ALIAS K_ALIAS_S K_ALIAS_R
 %token K_ARITH_ABS K_ARITH_DIV K_ARITH_DIV_R K_ARITH_DIV_S K_ARITH_MOD
 %token K_ARITH_MOD_R
 %token K_ARITH_MULT K_ARITH_MULT_R K_ARITH_SUB K_ARITH_SUB_R
@@ -766,38 +766,40 @@ argument_opt
 	;
 
 argument_list
-	: argument
-		{ struct argv_s tmp;
-		  argv_init(&tmp);
-		  argv_add(&tmp, $1);
-		  $$ = tmp;
-		}
-	| argument_list ',' argument
-		{ struct argv_s tmp = $1;
-		  argv_add(&tmp, $3);
-		  $$ = tmp;
-		}
-	| T_SYMBOL
-		{ struct argv_s tmp;
-		  argv_init(&tmp);
-		  argv_sym_add(&tmp, $1);
-		  $$ = tmp;
-		}
-	| argument_list ',' T_SYMBOL
-		{ struct argv_s tmp = $1;
-		  argv_sym_add(&tmp, $3);
-		  $$ = tmp;
-		}
-	;
+  : argument
+      { struct argv_s tmp;
+	argv_init(&tmp);
+	argv_add(&tmp, $1);
+	$$ = tmp;
+      }
+  | argument_list ',' argument
+      { struct argv_s tmp = $1;
+	argv_add(&tmp, $3);
+	$$ = tmp;
+      }
+  | T_SYMBOL
+      { struct argv_s tmp;
+	argv_init(&tmp);
+	argv_sym_add(&tmp, $1);
+	$$ = tmp;
+      }
+  | argument_list ',' T_SYMBOL
+      { struct argv_s tmp = $1;
+	argv_sym_add(&tmp, $3);
+	$$ = tmp;
+      }
+  ;
 
 argument
-	: T_STRING
-		{ $$ = vpip_make_string_const($1); }
-	| T_VECTOR
-		{ $$ = vpip_make_binary_const($1.idx, $1.text);
-		  free($1.text);
-		}
-	;
+  : T_STRING
+      { $$ = vpip_make_string_const($1); }
+  | T_VECTOR
+      { $$ = vpip_make_binary_const($1.idx, $1.text);
+	free($1.text);
+      }
+  | K_A '<' T_SYMBOL ',' T_NUMBER '>'
+      { $$ = vpip_make_vthr_A($3, $5); }
+  ;
 
 
   /* functor operands can only be a list of symbols. */

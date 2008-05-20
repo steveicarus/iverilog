@@ -433,6 +433,8 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag);
 
 vpiHandle vpip_make_vthr_word(unsigned base, const char*type);
 
+vpiHandle vpip_make_vthr_A(char*symbol, unsigned index);
+
 /*
  * This function is called before any compilation to load VPI
  * modules. This gives the modules a chance to announce their

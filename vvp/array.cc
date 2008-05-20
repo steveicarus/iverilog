@@ -77,6 +77,12 @@ struct __vpiArrayIndex {
       unsigned done;
 };
 
+struct __vpiArrayVthrA {
+      struct __vpiHandle base;
+      struct __vpiArray*array;
+      unsigned address;
+};
+
 /*
  * The vpiArrayWord is magic. It is used as the handle to return when
  * vpi code tries to index or scan an array of variable words. The
@@ -116,6 +122,10 @@ static int array_index_free_object(vpiHandle ref);
 static int vpi_array_var_word_get(int code, vpiHandle);
 static void vpi_array_var_word_get_value(vpiHandle, p_vpi_value);
 static vpiHandle vpi_array_var_word_put_value(vpiHandle, p_vpi_value, int);
+
+static int vpi_array_vthr_A_get(int code, vpiHandle);
+static void vpi_array_vthr_A_get_value(vpiHandle, p_vpi_value);
+static vpiHandle vpi_array_vthr_A_put_value(vpiHandle, p_vpi_value, int);
 
 static const struct __vpirt vpip_arraymem_rt = {
       vpiMemory,
@@ -167,11 +177,26 @@ static const struct __vpirt vpip_array_var_word_rt = {
       0
 };
 
+static const struct __vpirt vpip_array_vthr_A_rt = {
+      vpiMemoryWord,
+      &vpi_array_vthr_A_get,
+      0,
+      &vpi_array_vthr_A_get_value,
+      &vpi_array_vthr_A_put_value,
+      0,
+      0,
+      0,
+      0
+};
+
 # define ARRAY_HANDLE(ref) (assert(ref->vpi_type->type_code==vpiMemory), \
 			    (struct __vpiArray*)ref)
 
 # define ARRAY_VAR_WORD(ref) (assert(ref->vpi_type->type_code==vpiMemoryWord), \
 			      (struct __vpiArrayWord*)ref)
+
+# define ARRAY_VTHR_A_HANDLE(ref) (assert(ref->vpi_type->type_code==vpiMemoryWord), \
+			    (struct __vpiArrayVthrA*)ref)
 
 static void array_make_vals_words(struct __vpiArray*parent)
 {
@@ -398,6 +423,53 @@ static int array_index_free_object(vpiHandle ref)
       free(obj);
       return 1;
 }
+
+static int vpi_array_vthr_A_get(int code, vpiHandle ref)
+{
+      struct __vpiArrayVthrA*obj = ARRAY_VTHR_A_HANDLE(ref);
+      struct __vpiArray*parent = obj->array;
+
+      switch (code) {
+	  case vpiLineNo:
+	    return 0; // Not implemented for now!
+
+	  case vpiSize:
+	    assert(parent->vals);
+	    return parent->vals_width;
+
+	  default:
+	    return 0;
+      }
+}
+static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value value)
+{
+      struct __vpiArrayVthrA*obj = ARRAY_VTHR_A_HANDLE(ref);
+      struct __vpiArray*parent = obj->array;
+
+      assert(parent);
+      assert(parent->vals);
+      assert(obj->address < parent->array_count);
+
+      vpip_vec4_get_value(parent->vals[obj->address],
+			  parent->vals_width, false, value);
+}
+
+static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int)
+{
+      struct __vpiArrayVthrA*obj = ARRAY_VTHR_A_HANDLE(ref);
+      struct __vpiArray*parent = obj->array;
+
+      unsigned index = obj->address;
+
+      assert(parent);
+      assert(obj->address < parent->array_count);
+
+      vvp_vector4_t val = vec4_from_vpi_value(vp, parent->vals_width);
+      array_set_word(parent, index, 0, val);
+
+      return ref;
+}
+
 
 void array_set_word(vvp_array_t arr,
 		    unsigned address,
@@ -772,4 +844,20 @@ void compile_array_alias(char*label, char*name, char*src)
       free(label);
       free(name);
       free(src);
+}
+
+vpiHandle vpip_make_vthr_A(char*label, unsigned addr)
+{
+      struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*)
+	    malloc(sizeof (struct __vpiArrayVthrA));
+
+      obj->base.vpi_type = &vpip_array_vthr_A_rt;
+
+      obj->array = array_find(label);
+      assert(obj->array);
+
+      obj->address = addr;
+      assert(addr < obj->array->array_count);
+
+      return &(obj->base);
 }

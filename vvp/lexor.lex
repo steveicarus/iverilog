@@ -190,6 +190,7 @@
       return T_NUMBER; }
 
 
+"&A" { return K_A; }
 
   /* Handle some specialized constant/literals as symbols. */
 
