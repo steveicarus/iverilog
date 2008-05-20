@@ -994,6 +994,8 @@ const char*draw_input_from_net(ivl_nexus_t nex)
       ivl_signal_t sig = signal_of_nexus(nex, &word);
       if (sig == 0)
 	    return draw_net_input(nex);
+      if (ivl_signal_type(sig)==IVL_SIT_REG && ivl_signal_dimensions(sig)>0)
+	    return draw_net_input(nex);
 
       snprintf(result, sizeof result, "v%p_%u", sig, word);
       return result;
