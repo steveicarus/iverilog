@@ -311,7 +311,8 @@ static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value value)
 
       unsigned index = decode_array_word_pointer(obj, parent);
 
-      assert(0);
+      vpip_vec4_get_value(parent->vals[index], parent->vals_width,
+			  false, value);
 }
 
 static vpiHandle vpi_array_var_word_put_value(vpiHandle ref, p_vpi_value vp, int flags)
@@ -338,11 +339,18 @@ static vpiHandle array_iterator_scan(vpiHandle ref, int)
 	    return 0;
       }
 
-      assert(obj->array->nets != 0);
-
-      vpiHandle res = obj->array->nets[obj->next];
+      unsigned use_index = obj->next;
       obj->next += 1;
-      return res;
+
+      if (obj->array->nets)
+	    return obj->array->nets[obj->next];
+
+      assert(obj->array->vals);
+
+      if (obj->array->vals_words == 0)
+	    array_make_vals_words(obj->array);
+
+      return &(obj->array->vals_words[use_index].base);
 }
 
 static int array_iterator_free_object(vpiHandle ref)
