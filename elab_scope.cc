@@ -94,11 +94,15 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
 	    if (range->low_expr) {
 		  tmp->low_expr = elab_and_eval(des, scope, range->low_expr, -1);
 		  ivl_assert(*range->low_expr, tmp->low_expr);
+	    } else {
+		  tmp->low_expr = 0;
 	    }
 
 	    if (range->high_expr) {
 		  tmp->high_expr = elab_and_eval(des, scope, range->high_expr, -1);
 		  ivl_assert(*range->high_expr, tmp->high_expr);
+	    } else {
+		  tmp->high_expr = 0;
 	    }
 
 	    tmp->next = range_list;
