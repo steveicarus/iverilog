@@ -22,7 +22,6 @@
 # include  "vpi_user.h"
 # include  "pointers.h"
 # include  "vvp_net.h"
-# include  "memory.h"
 
 
 /*
@@ -307,12 +306,6 @@ extern void vpip_real_value_change(struct __vpiCallback*cbh,
  * back to the memory and uses an index to identify its position in
  * the memory.
  */
-
-extern vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name);
-extern void vpip_memory_value_change(struct __vpiCallback*cbh,
-				     vpiHandle ref);
-
-extern void vpip_run_memory_value_change(vpiHandle ref, unsigned adr);
 
 /*
  * These are the various variable types.

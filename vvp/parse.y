@@ -82,7 +82,6 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_RESOLV K_SCOPE K_SFUNC K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
-%token K_MEM K_MEM_P K_MEM_I
 %token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_func K_vpi_func_r
 %token K_disable K_fork
 %token K_vpi_module K_vpi_time_precision K_file_names
@@ -184,14 +183,6 @@ statement
 
 
   /* Memory.  Definition, port, initialization */
-
-        | T_LABEL K_MEM T_STRING ',' T_NUMBER ',' T_NUMBER ',' numbers ';'
-		{ compile_memory($1, $3, $5, $7, $9.cnt, $9.nvec); }
-
-        | T_LABEL K_MEM_P T_SYMBOL ',' symbols ';'
-		{ compile_memory_port($1, $3, $5.cnt, $5.vect); }
-
-	| mem_init_stmt
 
         | T_LABEL K_ARRAY T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
                 { compile_var_array($1, $3, $5, $6, $8, $9, 0); }
@@ -903,19 +894,6 @@ udp_table
 	| udp_table ',' T_STRING
 		{ $$ = compile_udp_table($1,  $3); }
 	;
-
-mem_init_stmt
-        : K_MEM_I symbol T_NUMBER ','
-                { compile_memory_init($2.text, $3, 0); }
-          mem_init_list ';'
-        ;
-
-mem_init_list
-        : mem_init_list ',' T_NUMBER
-                { compile_memory_init(0, 0, $3); }
-        | T_NUMBER
-                { compile_memory_init(0, 0, $1); }
-        ;
 
 signed_t_number
 	: T_NUMBER     { $$ = $1; }

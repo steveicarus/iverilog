@@ -22,7 +22,6 @@
 # include  "logic.h"
 # include  "resolv.h"
 # include  "udp.h"
-# include  "memory.h"
 # include  "symbols.h"
 # include  "codes.h"
 # include  "schedule.h"
@@ -67,8 +66,6 @@ enum operand_e {
       OA_FUNC_PTR,
  	/* The operand is a second functor pointer */
       OA_FUNC_PTR2,
-       /* The operand is a pointer to a memory */
-      OA_MEM_PTR,
 	/* The operand is a VPI handle */
       OA_VPI_PTR,
 };
@@ -90,7 +87,6 @@ const static struct opcode_table_s opcode_table[] = {
       { "%and/r",  of_ANDR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%assign/av",of_ASSIGN_AV,3,{OA_ARR_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/av/d",of_ASSIGN_AVD,3,{OA_ARR_PTR,OA_BIT1,  OA_BIT2} },
-      { "%assign/mv",of_ASSIGN_MV,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/v0",of_ASSIGN_V0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%assign/v0/d",of_ASSIGN_V0D,3,{OA_FUNC_PTR,OA_BIT1, OA_BIT2} },
       { "%assign/v0/x1",of_ASSIGN_V0X1,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
@@ -144,7 +140,6 @@ const static struct opcode_table_s opcode_table[] = {
       { "%load/av",of_LOAD_AV,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
       { "%load/avp0",of_LOAD_AVP0,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
       { "%load/avx.p",of_LOAD_AVX_P,3,{OA_BIT1, OA_ARR_PTR,  OA_BIT2} },
-      { "%load/mv",of_LOAD_MV,3,  {OA_BIT1,     OA_MEM_PTR,  OA_BIT2} },
       { "%load/nx",of_LOAD_NX,3,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
       { "%load/v", of_LOAD_VEC,3, {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
       { "%load/vp0",of_LOAD_VP0,3,{OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
@@ -174,7 +169,6 @@ const static struct opcode_table_s opcode_table[] = {
       { "%release/reg",of_RELEASE_REG,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/wr",of_RELEASE_WR,2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
       { "%set/av", of_SET_AV, 3,  {OA_ARR_PTR,  OA_BIT1,     OA_BIT2} },
-      { "%set/mv", of_SET_MV, 3,  {OA_MEM_PTR,  OA_BIT1,     OA_BIT2} },
       { "%set/v",  of_SET_VEC,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%set/wr", of_SET_WORDR,2,{OA_VPI_PTR,  OA_BIT1,     OA_NONE} },
       { "%set/x0", of_SET_X0, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
@@ -545,38 +539,6 @@ void code_label_lookup(struct vvp_code_s *code, char *label)
 {
       struct code_label_resolv_list_s *res
 	    = new struct code_label_resolv_list_s(label);
-
-      res->code  = code;
-
-      resolv_submit(res);
-}
-
-/*
- * Lookup memories.
- */
-struct memory_resolv_list_s: public resolv_list_s {
-      memory_resolv_list_s(char*label) : resolv_list_s(label) { }
-      struct vvp_code_s *code;
-      virtual bool resolve(bool mes);
-};
-
-bool memory_resolv_list_s::resolve(bool mes)
-{
-      code->mem = memory_find(label());
-      if (code->mem != 0) {
-	    return true;
-      }
-
-      if (mes)
-	    fprintf(stderr, "Memory unresolved: %s\n", label());
-
-      return false;
-}
-
-static void compile_mem_lookup(struct vvp_code_s *code, char *label)
-{
-      struct memory_resolv_list_s *res
-	    = new struct memory_resolv_list_s(label);
 
       res->code  = code;
 
@@ -1504,90 +1466,6 @@ char **compile_udp_table(char **table, char *row)
   return table;
 }
 
-/*
- * Take the detailed parse items from a .mem statement and generate
- * the necessary internal structures.
- *
- *     <label>  .mem <name>, <msb>, <lsb>, <idxs...> ;
- *
- */
-void compile_memory(char *label, char *name, int msb, int lsb,
-		    unsigned narg, long *args)
-{
-	/* Create an empty memory in the symbol table. */
-      vvp_memory_t mem = memory_create(label);
-
-      assert( narg > 0 && narg%2 == 0 );
-
-      struct memory_address_range*ranges
-	    = new struct memory_address_range[narg/2];
-
-      for (unsigned idx = 0 ;  idx < narg ;  idx += 2) {
-	    ranges[idx/2].msb = args[idx+0];
-	    ranges[idx/2].lsb = args[idx+1];
-      }
-
-      memory_configure(mem, msb, lsb, narg/2, ranges);
-
-      delete[]ranges;
-
-      vpiHandle obj = vpip_make_memory(mem, name);
-      compile_vpi_symbol(label, obj);
-      vpip_attach_to_current_scope(obj);
-
-      free(label);
-      free(name);
-}
-
-void compile_memory_port(char *label, char *memid,
-			 unsigned argc, struct symb_s *argv)
-{
-      vvp_memory_t mem = memory_find(memid);
-      free(memid);
-      assert(mem);
-
-      vvp_net_t*ptr = new vvp_net_t;
-      vvp_fun_memport*fun = new vvp_fun_memport(mem, ptr);
-      ptr->fun = fun;
-
-      define_functor_symbol(label, ptr);
-      free(label);
-
-      inputs_connect(ptr, argc, argv);
-      free(argv);
-}
-
-/*
- * The parser calls this multiple times to parse a .mem/init
- * statement. The first call includes a memid label and is used to
- * select the memory and the start address. Subsequent calls contain
- * only the word value to assign.
- */
-void compile_memory_init(char *memid, unsigned i, long val)
-{
-      static vvp_memory_t current_mem = 0;
-      static unsigned current_word;
-
-      if (memid) {
-	    current_mem = memory_find(memid);
-	    free(memid);
-	    current_word = i;
-	    return;
-      }
-
-      assert(current_mem);
-
-      unsigned word_wid = memory_word_width(current_mem);
-
-      vvp_vector4_t val4 (word_wid);
-      for (unsigned idx = 0 ;  idx < word_wid ;  idx += 1) {
-	    vvp_bit4_t bit = val & 1 ? BIT4_1 : BIT4_0;
-	    val4.set_bit(idx, bit);
-      }
-
-      memory_init_word(current_mem, current_word, val4);
-      current_word += 1;
-}
 
 /*
  * The parser uses this function to compile and link an executable
@@ -1701,15 +1579,6 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  }
 
 		  code->number = opa->argv[idx].numb;
-		  break;
-
-        	case OA_MEM_PTR:
-		  if (opa->argv[idx].ltype != L_SYMB) {
-			yyerror("operand format");
-			break;
-		  }
-
-		  compile_mem_lookup(code, opa->argv[idx].symb.text);
 		  break;
 
 		case OA_VPI_PTR:

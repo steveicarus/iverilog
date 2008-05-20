@@ -335,14 +335,6 @@ extern void compile_array_port(char*label, char*name, char*addr);
   /* Index is a constant address */
 extern void compile_array_port(char*label, char*name, long addr);
 
-extern void compile_memory(char *label, char *name, int lsb, int msb,
-			   unsigned idxs, long *idx);
-
-extern void compile_memory_port(char *label, char *memid,
-				unsigned argc, struct symb_s *argv);
-
-extern void compile_memory_init(char *memid, unsigned idx, long val);
-
 /*
  * Compile the .ufunc statement.
  */

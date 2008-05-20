@@ -162,10 +162,6 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	    nev->callbacks = obj;
 	    break;
 
-	  case vpiMemory:
-	    vpip_memory_value_change(obj, data->obj);
-	    break;
-
 	  case vpiModule:
 	  case vpiConstant:
 	  case vpiParameter:

@@ -18,7 +18,6 @@
  */
 
 # include  "schedule.h"
-# include  "memory.h"
 # include  "vthread.h"
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -139,20 +138,6 @@ void assign_real_event_s::run_run(void)
 {
       count_assign_events += 1;
       vvp_send_real(ptr, val);
-}
-
-struct assign_memory_word_s  : public event_s {
-      vvp_memory_t mem;
-      unsigned adr;
-      vvp_vector4_t val;
-      unsigned off;
-      void run_run(void);
-};
-
-void assign_memory_word_s::run_run(void)
-{
-      count_assign_events += 1;
-      memory_set_word(mem, adr, off, val);
 }
 
 struct assign_array_word_s  : public event_s {
@@ -497,20 +482,6 @@ void schedule_assign_vector(vvp_net_ptr_t ptr,
       cur->val = bit;
       cur->vwid = 0;
       cur->base = 0;
-      schedule_event_(cur, delay, SEQ_NBASSIGN);
-}
-
-void schedule_assign_memory_word(vvp_memory_t mem,
-				 unsigned word_addr,
-				 unsigned off,
-				 vvp_vector4_t val,
-				 vvp_time64_t delay)
-{
-      struct assign_memory_word_s*cur = new struct assign_memory_word_s;
-      cur->mem = mem;
-      cur->adr = word_addr;
-      cur->off = off;
-      cur->val = val;
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
 

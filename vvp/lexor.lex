@@ -161,9 +161,6 @@
 ".udp"         { return K_UDP; }
 ".udp/c"(omb)? { return K_UDP_C; }
 ".udp/s"(equ)? { return K_UDP_S; }
-".mem" 	       { return K_MEM; }
-".mem/p"(ort)? { return K_MEM_P; }
-".mem/i"(nit)? { return K_MEM_I; }
 "-debug" { return K_DEBUG; }
 
   /* instructions start with a % character. The compiler decides what
