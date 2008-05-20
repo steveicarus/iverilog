@@ -143,7 +143,7 @@ void pform_end_discipline(const struct vlltype&loc)
 {
 	// If the domain is not otherwise specified, then take it to
 	// be continuous if potential or flow natures are given.
-      if (discipline_domain == DD_NONE && discipline_potential||discipline_flow)
+      if (discipline_domain == DD_NONE && (discipline_potential||discipline_flow))
 	    discipline_domain = DD_CONTINUOUS;
 
       discipline_t*tmp = new discipline_t(discipline_name, discipline_domain,
