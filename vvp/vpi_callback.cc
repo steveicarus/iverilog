@@ -103,7 +103,7 @@ struct __vpiCallback* new_vpi_callback()
       return obj;
 }
 
-static void delete_vpi_callback(struct __vpiCallback* ref)
+void delete_vpi_callback(struct __vpiCallback* ref)
 {
       assert(ref);
       assert(ref->base.vpi_type);
@@ -160,6 +160,10 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	    nev = reinterpret_cast<__vpiNamedEvent*>(data->obj);
 	    obj->next = nev->callbacks;
 	    nev->callbacks = obj;
+	    break;
+
+	  case vpiMemoryWord:
+	    vpip_array_word_change(obj, data->obj);
 	    break;
 
 	  case vpiModule:
@@ -461,27 +465,17 @@ void callback_execute(struct __vpiCallback*cur)
 vvp_vpi_callback::vvp_vpi_callback()
 {
       vpi_callbacks_ = 0;
-      array_ = 0;
-      array_word_ = 0;
 }
 
 vvp_vpi_callback::~vvp_vpi_callback()
 {
       assert(vpi_callbacks_ == 0);
-      assert(array_ == 0);
 }
 
 void vvp_vpi_callback::add_vpi_callback(__vpiCallback*cb)
 {
       cb->next = vpi_callbacks_;
       vpi_callbacks_ = cb;
-}
-
-void vvp_vpi_callback::attach_as_word(vvp_array_t arr, unsigned long addr)
-{
-      assert(array_ == 0);
-      array_ = arr;
-      array_word_ = addr;
 }
 
 /*
@@ -494,8 +488,6 @@ void vvp_vpi_callback::run_vpi_callbacks()
 {
       struct __vpiCallback *next = vpi_callbacks_;
       struct __vpiCallback *prev = 0;
-
-      if (array_) array_word_change(array_, array_word_);
 
       while (next) {
 	    struct __vpiCallback*cur = next;
@@ -521,6 +513,31 @@ void vvp_vpi_callback::run_vpi_callbacks()
 		  delete_vpi_callback(cur);
 	    }
       }
+}
+
+vvp_vpi_callback_wordable::vvp_vpi_callback_wordable()
+{
+      array_ = 0;
+      array_word_ = 0;
+}
+
+vvp_vpi_callback_wordable::~vvp_vpi_callback_wordable()
+{
+      assert(array_ == 0);
+}
+
+void vvp_vpi_callback_wordable::run_vpi_callbacks()
+{
+      if (array_) array_word_change(array_, array_word_);
+
+      vvp_vpi_callback::run_vpi_callbacks();
+}
+
+void vvp_vpi_callback_wordable::attach_as_word(vvp_array_t arr, unsigned long addr)
+{
+      assert(array_ == 0);
+      array_ = arr;
+      array_word_ = addr;
 }
 
 void vvp_fun_signal::get_value(struct t_vpi_value*vp)

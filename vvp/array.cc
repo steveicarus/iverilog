@@ -63,6 +63,7 @@ struct __vpiArray {
       struct __vpiArrayWord*vals_words;
 
       class vvp_fun_arrayport*ports_;
+      struct __vpiCallback *vpi_callbacks;
 };
 
 struct __vpiArrayIterator {
@@ -192,11 +193,25 @@ static const struct __vpirt vpip_array_vthr_A_rt = {
 # define ARRAY_HANDLE(ref) (assert(ref->vpi_type->type_code==vpiMemory), \
 			    (struct __vpiArray*)ref)
 
-# define ARRAY_VAR_WORD(ref) (assert(ref->vpi_type->type_code==vpiMemoryWord), \
-			      (struct __vpiArrayWord*)ref)
+static struct __vpiArrayWord* array_var_word_from_handle(vpiHandle ref)
+{
+      if (ref == 0)
+	    return 0;
+      if (ref->vpi_type != &vpip_array_var_word_rt)
+	    return 0;
 
-# define ARRAY_VTHR_A_HANDLE(ref) (assert(ref->vpi_type->type_code==vpiMemoryWord), \
-			    (struct __vpiArrayVthrA*)ref)
+      return (struct __vpiArrayWord*) ref;
+}
+
+static struct __vpiArrayVthrA* array_vthr_a_from_handle(vpiHandle ref)
+{
+      if (ref == 0)
+	    return 0;
+      if (ref->vpi_type != &vpip_array_vthr_A_rt)
+	    return 0;
+
+      return (struct __vpiArrayVthrA*) ref;
+}
 
 static void array_make_vals_words(struct __vpiArray*parent)
 {
@@ -315,9 +330,10 @@ static vpiHandle vpi_array_index(vpiHandle ref, int index)
 
 static int vpi_array_var_word_get(int code, vpiHandle ref)
 {
-      struct __vpiArrayWord*obj = ARRAY_VAR_WORD(ref);
+      struct __vpiArrayWord*obj = array_var_word_from_handle(ref);
       struct __vpiArray*parent;
 
+      assert(obj);
       decode_array_word_pointer(obj, parent);
 
       switch (code) {
@@ -331,9 +347,10 @@ static int vpi_array_var_word_get(int code, vpiHandle ref)
 
 static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value value)
 {
-      struct __vpiArrayWord*obj = ARRAY_VAR_WORD(ref);
+      struct __vpiArrayWord*obj = array_var_word_from_handle(ref);
       struct __vpiArray*parent;
 
+      assert(obj);
       unsigned index = decode_array_word_pointer(obj, parent);
 
       vpip_vec4_get_value(parent->vals[index], parent->vals_width,
@@ -342,9 +359,10 @@ static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value value)
 
 static vpiHandle vpi_array_var_word_put_value(vpiHandle ref, p_vpi_value vp, int flags)
 {
-      struct __vpiArrayWord*obj = ARRAY_VAR_WORD(ref);
+      struct __vpiArrayWord*obj = array_var_word_from_handle(ref);
       struct __vpiArray*parent;
 
+      assert(obj);
       unsigned index = decode_array_word_pointer(obj, parent);
 
       vvp_vector4_t val = vec4_from_vpi_value(vp, parent->vals_width);
@@ -426,7 +444,8 @@ static int array_index_free_object(vpiHandle ref)
 
 static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 {
-      struct __vpiArrayVthrA*obj = ARRAY_VTHR_A_HANDLE(ref);
+      struct __vpiArrayVthrA*obj = array_vthr_a_from_handle(ref);
+      assert(obj);
       struct __vpiArray*parent = obj->array;
 
       switch (code) {
@@ -443,7 +462,8 @@ static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 }
 static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value value)
 {
-      struct __vpiArrayVthrA*obj = ARRAY_VTHR_A_HANDLE(ref);
+      struct __vpiArrayVthrA*obj = array_vthr_a_from_handle(ref);
+      assert(obj);
       struct __vpiArray*parent = obj->array;
 
       assert(parent);
@@ -456,7 +476,8 @@ static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value value)
 
 static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int)
 {
-      struct __vpiArrayVthrA*obj = ARRAY_VTHR_A_HANDLE(ref);
+      struct __vpiArrayVthrA*obj = array_vthr_a_from_handle(ref);
+      assert(obj);
       struct __vpiArray*parent = obj->array;
 
       unsigned index = obj->address;
@@ -579,6 +600,7 @@ static vpiHandle vpip_make_array(char*label, const char*name,
 
 	// Initialize (clear) the read-ports list.
       obj->ports_ = 0;
+      obj->vpi_callbacks = 0;
 
 	/* Add this symbol to the array_symbols table for later lookup. */
       if (!array_table)
@@ -745,6 +767,42 @@ void array_word_change(vvp_array_t array, unsigned long addr)
 {
       for (vvp_fun_arrayport*cur = array->ports_; cur; cur = cur->next_)
 	    cur->check_word_change(addr);
+
+	// Run callbacks attatched to the array itself.
+      struct __vpiCallback *next = array->vpi_callbacks;
+      struct __vpiCallback *prev = 0;
+
+      while (next) {
+	    struct __vpiCallback*cur = next;
+	    next = cur->next;
+
+	      // Skip callbacks for callbacks not for me.
+	    if (cur->extra_data != (long)addr) {
+		  prev = cur;
+		  continue;
+	    }
+
+	    if (cur->cb_data.cb_rtn != 0) {
+		  if (cur->cb_data.value)
+			vpip_vec4_get_value(array->vals[addr], array->vals_width,
+					    false, cur->cb_data.value);
+
+		  callback_execute(cur);
+		  prev = cur;
+
+	    } else if (prev == 0) {
+
+		  array->vpi_callbacks = next;
+		  cur->next = 0;
+		  delete_vpi_callback(cur);
+
+	    } else {
+		  assert(prev->next == cur);
+		  prev->next = next;
+		  cur->next = 0;
+		  delete_vpi_callback(cur);
+	    }
+      }
 }
 
 class array_port_resolv_list_t : public resolv_list_s {
@@ -778,6 +836,23 @@ bool array_port_resolv_list_t::resolve(bool mes)
       array_attach_port(mem, fun);
 
       return true;
+}
+
+void vpip_array_word_change(struct __vpiCallback*cb, vpiHandle obj)
+{
+      struct __vpiArray*parent = 0;
+      if (struct __vpiArrayWord*word = array_var_word_from_handle(obj)) {
+	    unsigned addr = decode_array_word_pointer(word, parent);
+	    cb->extra_data = addr;
+
+      } else if (struct __vpiArrayVthrA*word = array_vthr_a_from_handle(obj)) {
+	    parent = word->array;
+	    cb->extra_data = word->address;
+      }
+
+      assert(parent);
+      cb->next = parent->vpi_callbacks;
+      parent->vpi_callbacks = cb;
 }
 
 void compile_array_port(char*label, char*array, char*addr)

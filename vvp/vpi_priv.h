@@ -141,11 +141,15 @@ struct __vpiCallback {
 	// scheduled event
       struct sync_cb* cb_sync;
 
+	// The calback holder may use this for various purposes.
+      long extra_data;
+
 	// Used for listing callbacks.
       struct __vpiCallback*next;
 };
 
 extern struct __vpiCallback* new_vpi_callback();
+extern void delete_vpi_callback(struct __vpiCallback* ref);
 extern void callback_execute(struct __vpiCallback*cur);
 
 struct __vpiSystemTime {
