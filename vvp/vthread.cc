@@ -728,28 +728,6 @@ bool of_ASSIGN_X0(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-/* %assign/mv <memory>, <delay>, <bit>
- * This generates an assignment event to a memory. Index register 0
- * contains the width of the vector (and the word) and index register
- * 3 contains the canonical address of the word in memory.
- */
-bool of_ASSIGN_MV(vthread_t thr, vvp_code_t cp)
-{
-      unsigned wid = thr->words[0].w_int;
-      unsigned off = thr->words[1].w_int;
-      unsigned adr = thr->words[3].w_int;
-
-      assert(wid > 0);
-
-      unsigned delay = cp->bit_idx[0];
-      unsigned bit = cp->bit_idx[1];
-
-      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
-
-      schedule_assign_memory_word(cp->mem, adr, off, value, delay);
-      return true;
-}
-
 bool of_BLEND(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -2315,38 +2293,6 @@ bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %load/mv <bit>, <mem-label>, <wid> ;
- *
- * <bit> is the thread bit address for the result
- * <mem-label> is the memory device to access, and
- * <wid> is the width of the word to read.
- *
- * The address of the word in the memory is in index register 3.
- */
-bool of_LOAD_MV(vthread_t thr, vvp_code_t cp)
-{
-      unsigned bit = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-      unsigned adr = thr->words[3].w_int;
-
-      vvp_vector4_t word = memory_get_word(cp->mem, adr);
-
-      if (word.size() != wid) {
-	    fprintf(stderr, "internal error: mem width=%u, word.size()=%u, wid=%u\n",
-		    memory_word_width(cp->mem), word.size(), wid);
-      }
-      assert(word.size() == wid);
-
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1, bit += 1) {
-	    vvp_bit4_t val = word.value(idx);
-	    thr_put_bit(thr, bit, val);
-      }
-
-      return true;
-}
-
-
-/*
  * %load/nx <bit>, <vpi-label>, <idx>  ; Load net/indexed.
  *
  * cp->bit_idx[0] contains the <bit> value, an index into the thread
@@ -3486,25 +3432,6 @@ bool of_SET_AV(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
       array_set_word(cp->array, adr, off, value);
-      return true;
-}
-
-/*
- * This implements the "%set/mv <label>, <bit>, <wid>" instruction. In
- * this case, the <label> is a memory label, and the <bit> and <wid>
- * are the thread vector of a value to be written in.
- */
-bool of_SET_MV(vthread_t thr, vvp_code_t cp)
-{
-      unsigned bit = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-      unsigned off = thr->words[1].w_int;
-      unsigned adr = thr->words[3].w_int;
-
-	/* Make a vector of the desired width. */
-      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
-
-      memory_set_word(cp->mem, adr, off, value);
       return true;
 }
 

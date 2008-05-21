@@ -57,10 +57,14 @@ static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
 	            get_number_immediate(d_rise), net);
       }
 
+      const char* input[3];
+      input[0] = draw_net_input(ivl_lpm_data(net,0));
+      input[1] = draw_net_input(ivl_lpm_data(net,1));
+      input[2] = draw_net_input(ivl_lpm_select(net));
       fprintf(vvp_out, "L_%p%s .functor %s %u", net, dly, muxz, width);
-      fprintf(vvp_out, ", %s", draw_input_from_net(ivl_lpm_data(net,0)));
-      fprintf(vvp_out, ", %s", draw_input_from_net(ivl_lpm_data(net,1)));
-      fprintf(vvp_out, ", %s", draw_input_from_net(ivl_lpm_select(net)));
+      fprintf(vvp_out, ", %s", input[0]);
+      fprintf(vvp_out, ", %s", input[1]);
+      fprintf(vvp_out, ", %s", input[2]);
       fprintf(vvp_out, ", C4<>;\n");
 }
 

@@ -22,7 +22,6 @@
 # include  "vthread.h"
 # include  "pointers.h"
 # include  "vvp_net.h"
-# include  "memory.h"
 # include  "array.h"
 
 /*
@@ -57,11 +56,6 @@ extern void schedule_assign_array_word(vvp_array_t mem,
 				       unsigned off,
 				       vvp_vector4_t val,
 				       vvp_time64_t delay);
-extern void schedule_assign_memory_word(vvp_memory_t mem,
-					unsigned word_address,
-					unsigned off,
-					vvp_vector4_t val,
-					vvp_time64_t delay);
 /*
  * This is very similar to schedule_assign_vector, but generates an
  * event in the active queue. It is used at link time to assign a

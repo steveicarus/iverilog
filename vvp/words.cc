@@ -84,7 +84,7 @@ static void __compile_var(char*label, char*name,
       define_functor_symbol(label, node);
 
       vpiHandle obj = 0;
-      if (! local_flag) {
+      if (! local_flag && !array) {
 	      /* Make the vpiHandle for the reg. */
 	    obj = (signed_flag > 1) ?
 		  vpip_make_int(name, msb, lsb, node) :
@@ -102,7 +102,7 @@ static void __compile_var(char*label, char*name,
 	// it is attached to the addressed array.
       if (array) {
 	    assert(!name);
-	    array_attach_word(array, array_addr, obj);
+	    if (obj) array_attach_word(array, array_addr, obj);
       }
       free(label);
       if (name) free(name);

@@ -22,7 +22,6 @@
 # include  "vpi_user.h"
 # include  "pointers.h"
 # include  "vvp_net.h"
-# include  "memory.h"
 
 
 /*
@@ -142,11 +141,15 @@ struct __vpiCallback {
 	// scheduled event
       struct sync_cb* cb_sync;
 
+	// The calback holder may use this for various purposes.
+      long extra_data;
+
 	// Used for listing callbacks.
       struct __vpiCallback*next;
 };
 
 extern struct __vpiCallback* new_vpi_callback();
+extern void delete_vpi_callback(struct __vpiCallback* ref);
 extern void callback_execute(struct __vpiCallback*cur);
 
 struct __vpiSystemTime {
@@ -308,12 +311,6 @@ extern void vpip_real_value_change(struct __vpiCallback*cbh,
  * the memory.
  */
 
-extern vpiHandle vpip_make_memory(vvp_memory_t mem, const char*name);
-extern void vpip_memory_value_change(struct __vpiCallback*cbh,
-				     vpiHandle ref);
-
-extern void vpip_run_memory_value_change(vpiHandle ref, unsigned adr);
-
 /*
  * These are the various variable types.
  */
@@ -433,6 +430,8 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag);
 
 vpiHandle vpip_make_vthr_word(unsigned base, const char*type);
 
+vpiHandle vpip_make_vthr_A(char*symbol, unsigned index);
+
 /*
  * This function is called before any compilation to load VPI
  * modules. This gives the modules a chance to announce their
@@ -529,6 +528,8 @@ extern void vpip_vec4_to_oct_str(const vvp_vector4_t&bits, char*buf,
 extern void vpip_oct_str_to_vec4(vvp_vector4_t&val, const char*str);
 extern void vpip_dec_str_to_vec4(vvp_vector4_t&val, const char*str, bool sign);
 extern void vpip_hex_str_to_vec4(vvp_vector4_t&val, const char*str);
+
+extern vvp_vector4_t vec4_from_vpi_value(s_vpi_value*vp, unsigned wid);
 
 extern void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 				bool signed_flag, s_vpi_value*vp);
