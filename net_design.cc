@@ -288,10 +288,15 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 
       eval_expr(expr);
 
+      /* The eval_expr may delete any replace the expr pointer, so the
+         second.expr value cannot be relied on. Might as well replace
+         it now with the expression that we evaluated. */
+      (*cur).second.expr = expr;
+
       switch (expr->expr_type()) {
 	  case IVL_VT_REAL:
 	    if (! dynamic_cast<const NetECReal*>(expr)) {
-		  cerr << (*cur).second.expr->get_fileline()
+		  cerr << expr->get_fileline()
 		       << ": internal error: "
 		       << "unable to evaluate real parameter value: "
 		       << *expr << endl;
@@ -303,7 +308,7 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	  case IVL_VT_LOGIC:
 	  case IVL_VT_BOOL:
 	    if (! dynamic_cast<const NetEConst*>(expr)) {
-		  cerr << (*cur).second.expr->get_fileline()
+		  cerr << expr->get_fileline()
 		       << ": internal error: "
 		       << "unable to evaluate parameter "
 		       << (*cur).first
@@ -314,7 +319,7 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	    break;
 
 	  default:
-	    cerr << (*cur).second.expr->get_fileline()
+	    cerr << expr->get_fileline()
 		 << ": internal error: "
 		 << "unhandled expression type?" << endl;
 	    des->errors += 1;
@@ -345,10 +350,6 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 		  expr = val;
 	    }
       }
-
-	// Done fiddling with the expression, save it back in the parameter.
-      expr->set_line(*(*cur).second.expr);
-      (*cur).second.expr = expr;
 
 	// If there are no value ranges to test the value against,
 	// then we are done.
