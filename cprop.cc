@@ -828,6 +828,27 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	    count += 1;
 	    return;
       }
+
+	/* If the select input is constant, then replace with a BUFZ */
+      flag = obj->pin_Sel().nexus()->drivers_constant();
+      verinum::V sel_val = flag? obj->pin_Data(1).nexus()->driven_value() : verinum::Vx;
+      if ((sel_val != verinum::Vz) && (sel_val != verinum::Vx)) {
+	    NetBUFZ*tmp = new NetBUFZ(obj->scope(), obj->name(), obj->width());
+	    tmp->set_line(*obj);
+
+	    tmp->rise_time(obj->rise_time());
+	    tmp->fall_time(obj->fall_time());
+	    tmp->decay_time(obj->decay_time());
+
+	    connect(tmp->pin(0), obj->pin_Result());
+	    if (sel_val == verinum::V1)
+		  connect(tmp->pin(1), obj->pin_Data(1));
+	    else
+		  connect(tmp->pin(1), obj->pin_Data(0));
+	    delete obj;
+	    des->add_node(tmp);
+	    count += 1;
+      }
 }
 
 /*
