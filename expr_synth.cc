@@ -62,6 +62,7 @@ NetNet* NetEBitSel::synthesize(Design*des)
 
       NetMux*mux = new NetMux(scope, scope->local_symbol(),
 			      1, net->pin_count(), adr->pin_count());
+      mux->set_line(*this);
       des->add_node(mux);
 
       for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1)

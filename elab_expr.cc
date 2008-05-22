@@ -500,6 +500,17 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       NetScope*found_in = symbol_search(des, scope, path_,
 					net, mem, var, par, eve);
 
+      if (net && mem) {
+	    assert(net == mem->reg_from_explode());
+	    net = 0;
+      }
+
+      if (net && net->mref()) {
+	    mem = net->mref();
+	    assert(net == mem->reg_from_explode());
+	    net = 0;
+      }
+
 	// If the identifier name is a parameter name, then return
 	// a reference to the parameter expression.
       if (par != 0) {

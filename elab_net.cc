@@ -499,7 +499,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	   use of the situation, or 0 if it cannot. */
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(rexp)) {
 
-	    lsig = lexp->synthesize(des);
+	    lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0);
 	    if (lsig == 0) {
 		  cerr << get_line() << ": internal error: "
 			"Cannot elaborate net for " << *lexp << endl;
@@ -519,7 +519,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(lexp)) {
 
-	    rsig = rexp->synthesize(des);
+	    rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
 	    assert(rsig);
 	    delete rexp;
 
@@ -533,13 +533,13 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
       }
 
       if (lsig == 0) {
-	    lsig = lexp->synthesize(des);
+	    lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0);
 	    assert(lsig);
 	    delete lexp;
       }
 
       if (rsig == 0) {
-	    rsig = rexp->synthesize(des);
+	    rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
 	    assert(rsig);
 	    delete rexp;
       }

@@ -2226,6 +2226,7 @@ NetNet* NetMemory::explode_to_reg()
 	    return explode_;
 
       explode_ = new NetNet(scope_, name_, NetNet::REG, count()*width_);
+      explode_->mref(this);
 	//explode_->incr_lref();
       return explode_;
 }

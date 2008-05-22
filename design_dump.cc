@@ -77,6 +77,8 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    o << " (local)";
       if (signed_)
 	    o << " signed";
+      if (mref_)
+	    o << " mref_=" << mref_->name();
       switch (port_type_) {
 	  case NetNet::NOT_A_PORT:
 	    break;
@@ -464,7 +466,7 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
 void NetAssign_::dump_lval(ostream&o) const
 {
       if (sig_) {
-	    o << sig_->name();
+	    o << "sig=" << sig_->name();
 	    if (bmux_) {
 		  o << "[" << *bmux_ << "]";
 
@@ -475,7 +477,7 @@ void NetAssign_::dump_lval(ostream&o) const
 	    // Is there an obvious way to flag memories in the dump
 	    // as different from the _real_ bit mux case?
 	    // o << "**memory**";
-	    o << mem_->name() << "[";
+	    o << "mem=" << mem_->name() << "[";
 	    if (bmux_) o << *bmux_;
 	      else     o << "**oops**";
 	    o << "]";
