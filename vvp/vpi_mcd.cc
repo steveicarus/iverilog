@@ -152,7 +152,15 @@ vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
 		    mcd, fmt);
       }
 
+#ifdef __MINGW32__
+	/*
+	 * The MinGW runtime (version 3.14) fixes some things, but breaks
+	 * %f for us, so we have to us the underlying version.
+	 */
+      rc = _vsnprintf(buffer, sizeof buffer, fmt, ap);
+#else
       rc = vsnprintf(buffer, sizeof buffer, fmt, ap);
+#endif
 
       for(int i = 0; i < 31; i++) {
 	    if((mcd>>i) & 1) {

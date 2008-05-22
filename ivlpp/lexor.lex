@@ -1616,7 +1616,11 @@ static int load_next_input()
 static void do_dump_precompiled_defines(FILE* out, struct define_t* table)
 {
     if (!table->keyword)
+#ifdef __MINGW32__  /* MinGW does not know about z. */
+        fprintf(out, "%s:%d:%d:%s\n", table->name, table->argc, strlen(table->value), table->value);
+#else
         fprintf(out, "%s:%d:%zd:%s\n", table->name, table->argc, strlen(table->value), table->value);
+#endif
 
     if (table->left)
         do_dump_precompiled_defines(out, table->left);

@@ -27,6 +27,10 @@
 # include  <inttypes.h>
 # include  <assert.h>
 
+#ifdef __MINGW32__  /* MinGW has inconsistent %p output. */
+#define snprintf _snprintf
+#endif
+
 struct vvp_nexus_data {
 	/* draw_net_input uses this */
       const char*net_input;
@@ -1759,7 +1763,11 @@ static void draw_lpm_add(ivl_lpm_t net)
 		  type = "pow.s";
 		  if (width > 8*sizeof(long)) {
 			fprintf(stderr, "%s:%u: sorry (vvp-tgt): Signed power "
+#ifdef __MINGW32__  /* MinGW does not know about z. */
+				"result must be no more than %u bits.\n",
+#else
 				"result must be no more than %zu bits.\n",
+#endif
 				ivl_lpm_file(net), ivl_lpm_lineno(net),
 				8*sizeof(long));
 			exit(1);

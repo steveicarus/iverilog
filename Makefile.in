@@ -16,9 +16,6 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.181 2007/05/24 04:07:11 steve Exp $"
-#
-#
 SHELL = /bin/sh
 
 # This version string is only used in the version message printed
@@ -51,6 +48,9 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 LEX = @LEX@
 YACC = @YACC@
+MAN = @MAN@
+PS2PDF = @PS2PDF@
+GIT = @GIT@
 
 CPPFLAGS = @ident_support@ @DEFS@ -I. -I$(srcdir) @CPPFLAGS@
 CXXFLAGS = -Wall @CXXFLAGS@
@@ -65,7 +65,7 @@ all: dep version.h ivl@EXEEXT@
 
 # In the windows world, the installer will need a dosify program to
 # dosify text files.
-ifeq (@MING32@,yes)
+ifeq (@MINGW32@,yes)
 all: dep dosify.exe
 dosify.exe: dosify.c
 	$(CC) -o dosify.exe dosify.c
@@ -177,19 +177,22 @@ lexor_keyword.cc: lexor_keyword.gperf
 	gperf -o -i 7 -C -k 1-4,$$ -L ANSI-C -H keyword_hash -N check_identifier -t $(srcdir)/lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
 
 iverilog-vpi.ps: $(srcdir)/iverilog-vpi.man
-	man -t $(srcdir)/iverilog-vpi.man > iverilog-vpi.ps
+	$(MAN) -t $(srcdir)/iverilog-vpi.man > iverilog-vpi.ps
 
 iverilog-vpi.pdf: iverilog-vpi.ps
-	ps2pdf iverilog-vpi.ps iverilog-vpi.pdf
+	$(PS2PDF) iverilog-vpi.ps iverilog-vpi.pdf
 
 # For VERSION_TAG in driver/main.c, first try git-describe, then look for a
 # version.h file in the source tree (included in snapshots and releases), and
 # finally use nothing.
 .PHONY: version.h
 version.h:
+ifeq ($(GIT),none)
+	@echo '#define VERSION_TAG ""' > $@;
+else
 	@if test -d $(srcdir)/.git; then \
 	    echo "Using git-describe for VERSION_TAG"; \
-	    tmp=`git --git-dir $(srcdir)/.git describe \
+	    tmp=`$(GIT) --git-dir $(srcdir)/.git describe \
 		   | sed -e 's;\(.*\);#define VERSION_TAG "\1";'`; \
 	    echo "$$tmp" | diff - $@ > /dev/null 2>&1 || echo "$$tmp" > $@ || exit 1; \
 	elif test -r $(srcdir)/$@; then \
@@ -199,11 +202,20 @@ version.h:
 	    echo "Using empty VERSION_TAG"; \
 	    echo '#define VERSION_TAG ""' > $@; \
 	fi
+endif
 
-ifeq (@MING32@,yes)
+ifeq (@MINGW32@,yes)
+ifeq ($(MAN),none)
+INSTALL_DOC = $(mandir)/man1/iverilog-vpi.1
+else
+ifeq ($(PS2PDF),none)
+INSTALL_DOC = $(mandir)/man1/iverilog-vpi.1
+else
 INSTALL_DOC = $(prefix)/iverilog-vpi.pdf $(mandir)/man1/iverilog-vpi.1
-INSTALL_DOCDIR = $(mandir)/man1
 all: dep iverilog-vpi.pdf
+endif
+endif
+INSTALL_DOCDIR = $(mandir)/man1
 else
 INSTALL_DOC = $(mandir)/man1/iverilog-vpi.1
 INSTALL_DOCDIR = $(mandir)/man1

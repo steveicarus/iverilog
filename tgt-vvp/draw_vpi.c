@@ -25,6 +25,10 @@
 # include  <stdlib.h>
 # include  <assert.h>
 
+#ifdef __MINGW32__  /* MinGW has inconsistent %p output. */
+#define snprintf _snprintf
+#endif
+
 static const char* magic_sfuncs[] = {
       "$time",
       "$stime",
