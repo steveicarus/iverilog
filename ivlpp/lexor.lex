@@ -1745,6 +1745,7 @@ void reset_lexor(FILE* out, char* paths[])
         isp->ebs = 0;
         isp->next = 0;
         isp->lineno = 0;
+        isp->stringify_flag = 0;
 
         if (tail)
             tail->next = isp;
