@@ -202,10 +202,84 @@ void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
 
 void vvp_vector4_t::copy_bits(const vvp_vector4_t&that)
 {
-      unsigned bits_to_copy = (that.size_ < size_) ? that.size_ : size_;
 
-      for (unsigned idx = 0; idx < bits_to_copy; idx += 1)
-	    set_bit(idx, that.value(idx));
+      if (size_ == that.size_) {
+	    if (size_ > BITS_PER_WORD) {
+		  unsigned words = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
+		  for (unsigned idx = 0 ;  idx < words ;  idx += 1)
+			abits_ptr_[idx] = that.abits_ptr_[idx];
+		  for (unsigned idx = 0 ;  idx < words ;  idx += 1)
+			bbits_ptr_[idx] = that.bbits_ptr_[idx];
+	    } else {
+		  abits_val_ = that.abits_val_;
+		  bbits_val_ = that.bbits_val_;
+	    }
+	    return;
+      }
+
+	/* Now we know that the sizes of this and that are definitely
+	   different. We can use that in code below. In any case, we
+	   need to copy only the smaller of the sizes. */
+
+	/* If source and destination are both short, then mask/copy
+	   the bit values. */
+      if (size_ <= BITS_PER_WORD && that.size_ <= BITS_PER_WORD) {
+	    unsigned bits_to_copy = (that.size_ < size_) ? that.size_ : size_;
+	    unsigned long mask = (1UL << bits_to_copy) - 1UL;
+	    abits_val_ &= ~mask;
+	    bbits_val_ &= ~mask;
+	    abits_val_ |= that.abits_val_&mask;
+	    bbits_val_ |= that.bbits_val_&mask;
+	    return;
+      }
+
+	/* Now we know that either source or destination are long. If
+	   the destination is short, then mask/copy from the low word
+	   of the long source. */
+      if (size_ <= BITS_PER_WORD) {
+	    abits_val_ = that.abits_ptr_[0];
+	    bbits_val_ = that.bbits_ptr_[0];
+	    if (size_ < BITS_PER_WORD) {
+		  unsigned long mask = (1UL << size_) - 1UL;
+		  abits_val_ &= mask;
+		  bbits_val_ &= mask;
+	    }
+	    return;
+      }
+
+	/* Now we know that the destination must be long. If the
+	   source is short, then mask/copy from its value. */
+      if (that.size_ <= BITS_PER_WORD) {
+	    unsigned long mask;
+	    if (that.size_ < BITS_PER_WORD) {
+		  mask = (1UL << that.size_) - 1UL;
+		  abits_ptr_[0] &= ~mask;
+		  bbits_ptr_[0] &= ~mask;
+	    } else {
+		  mask = -1UL;
+	    }
+	    abits_ptr_[0] |= that.abits_val_&mask;
+	    bbits_ptr_[0] |= that.bbits_val_&mask;
+	    return;
+      }
+
+	/* Finally, we know that source and destination are long. copy
+	   words until we get to the last. */
+      unsigned bits_to_copy = (that.size_ < size_) ? that.size_ : size_;
+      unsigned word = 0;
+      while (bits_to_copy >= BITS_PER_WORD) {
+	    abits_ptr_[word] = that.abits_ptr_[word];
+	    bbits_ptr_[word] = that.bbits_ptr_[word];
+	    bits_to_copy -= BITS_PER_WORD;
+	    word += 1;
+      }
+      if (bits_to_copy > 0) {
+	    unsigned long mask = (1UL << bits_to_copy) - 1UL;
+	    abits_ptr_[word] &= ~mask;
+	    bbits_ptr_[word] &= ~mask;
+	    abits_ptr_[word] |= that.abits_ptr_[word] & mask;
+	    bbits_ptr_[word] |= that.bbits_ptr_[word] & mask;
+      }
 }
 
 void vvp_vector4_t::copy_from_(const vvp_vector4_t&that)
@@ -283,10 +357,58 @@ vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
 		  dst += 1;
 	    }
 
-      } else {
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  set_bit(idx, that.value(adr+idx));
+      } else if (that.size_ > BITS_PER_WORD) {
+	      /* In this case, the subvector fits in a single word,
+		 but the source is large. */
+	    unsigned ptr = adr / BITS_PER_WORD;
+	    unsigned long off = adr % BITS_PER_WORD;
+	    unsigned trans = BITS_PER_WORD - off;
+	    if (trans > wid)
+		  trans = wid;
+
+	    if (trans == BITS_PER_WORD) {
+		    // Very special case: Copy exactly 1 perfectly
+		    // aligned word.
+		  abits_val_ = that.abits_ptr_[ptr];
+		  bbits_val_ = that.bbits_ptr_[ptr];
+
+	    } else {
+		    // lmask is the low bits of the destination,
+		    // masked into the source.
+		  unsigned long lmask = (1UL<<trans) - 1UL;
+		  lmask <<= off;
+
+		    // The low bits of the result.
+		  abits_val_ = (that.abits_ptr_[ptr] & lmask) >> off;
+		  bbits_val_ = (that.bbits_ptr_[ptr] & lmask) >> off;
+
+		  if (trans < wid) {
+			  // If there are more bits, then get them
+			  // from the bottom of the next word of the
+			  // source.
+			unsigned long hmask = (1UL << (wid-trans)) - 1UL;
+
+			  // The high bits of the result.
+			abits_val_ |= (that.abits_ptr_[ptr+1]&hmask) << trans;
+			bbits_val_ |= (that.bbits_ptr_[ptr+1]&hmask) << trans;
+		  }
 	    }
+
+      } else if (size_ == BITS_PER_WORD) {
+	      /* We know that source and destination are short. If the
+		 destination is a full word, then we know the copy is
+		 aligned and complete. */
+	    abits_val_ = that.abits_val_;
+	    bbits_val_ = that.bbits_val_;
+
+      } else {
+	      /* Finally, the source and destination vectors are both
+		 short, so there is a single mask/shift/copy. */
+	    unsigned long mask = (1UL << size_) - 1UL;
+	    mask <<= adr;
+
+	    abits_val_ = (that.abits_val_ & mask) >> adr;
+	    bbits_val_ = (that.bbits_val_ & mask) >> adr;
       }
 
 }

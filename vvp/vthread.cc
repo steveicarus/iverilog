@@ -210,12 +210,7 @@ static vvp_vector4_t vthread_bits_to_vector(struct vthread_s*thr,
 	    return vvp_vector4_t(thr->bits4, bit, wid);
 
       } else {
-	    vvp_vector4_t value(wid);
-	    vvp_bit4_t bit_val = thr_index_to_bit4[bit];
-	    for (unsigned idx = 0; idx < wid; idx +=1) {
-		  value.set_bit(idx, bit_val);
-	    }
-	    return value;
+	    return vvp_vector4_t(wid, thr_index_to_bit4[bit]);
       }
 }
 
@@ -2282,13 +2277,15 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
       if (word.size() != wid) {
 	    fprintf(stderr, "internal error: array width=%u, word.size()=%u, wid=%u\n",
 		    0, word.size(), wid);
+	    assert(word.size() == wid);
       }
-      assert(word.size() == wid);
 
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1, bit += 1) {
-	    vvp_bit4_t val = word.value(idx);
-	    thr_put_bit(thr, bit, val);
-      }
+	/* Check the address once, before we scan the vector. */
+      thr_check_addr(thr, bit+wid-1);
+
+	/* Copy the vector bits into the bits4 vector. Do the copy
+	   directly to skip the excess calls to thr_check_addr. */
+      thr->bits4.set_vec(bit, word);
 
       return true;
 }
@@ -3526,16 +3523,7 @@ bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
 	/* set the value into port 0 of the destination. */
       vvp_net_ptr_t ptr (cp->net, 0);
 
-      if (bit >= 4) {
-	    vvp_vector4_t value(thr->bits4,bit,wid);
-	    vvp_send_vec4(ptr, value);
-
-      } else {
-	      /* Make a vector of the desired width. */
-	    vvp_bit4_t bit_val = thr_index_to_bit4[bit];
-	    vvp_vector4_t value(wid, bit_val);
-	    vvp_send_vec4(ptr, value);
-      }
+      vvp_send_vec4(ptr, vthread_bits_to_vector(thr, bit, wid));
 
       return true;
 }
