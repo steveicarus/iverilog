@@ -619,6 +619,12 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	      /* Input is a .var. This device may be a non-zero pin
 	         because it may be an array of reg vectors. */
 	    snprintf(tmp, sizeof tmp, "v%p_%u", sptr, nptr_pin);
+
+	    if (ivl_signal_array_count(sptr) > 1) {
+		  fprintf(vvp_out, "v%p_%u .array/port v%p, %u;\n",
+			  sptr, nptr_pin, sptr, nptr_pin);
+	    }
+
 	    return strdup(tmp);
       }
 
@@ -991,6 +997,8 @@ const char*draw_input_from_net(ivl_nexus_t nex)
 
       ivl_signal_t sig = signal_of_nexus(nex, &word);
       if (sig == 0)
+	    return draw_net_input(nex);
+      if (ivl_signal_type(sig)==IVL_SIT_REG && ivl_signal_dimensions(sig)>0)
 	    return draw_net_input(nex);
 
       snprintf(result, sizeof result, "v%p_%u", sig, word);

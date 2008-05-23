@@ -1178,11 +1178,6 @@ void vvp_vector2_t::trim()
       while (value(wid_-1) == 0 && wid_ > 1) wid_ -= 1;
 }
 
-unsigned vvp_vector2_t::size() const
-{
-      return wid_;
-}
-
 int vvp_vector2_t::value(unsigned idx) const
 {
       if (idx >= wid_)

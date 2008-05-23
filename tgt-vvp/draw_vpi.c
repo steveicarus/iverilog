@@ -56,8 +56,11 @@ static int is_fixed_memory_word(ivl_expr_t net)
 
       sig = ivl_expr_signal(net);
 
-      if (ivl_signal_array_count(sig) == 1)
+      if (ivl_signal_dimensions(sig) == 0)
 	    return 1;
+
+      if (ivl_signal_type(sig) == IVL_SIT_REG)
+	    return 0;
 
       if (number_is_immediate(ivl_expr_oper1(net), 8*sizeof(unsigned)))
 	    return 1;
@@ -73,9 +76,14 @@ static void draw_vpi_taskfunc_args(const char*call_string,
       unsigned parm_count = tnet
 	    ? ivl_stmt_parm_count(tnet)
 	    : ivl_expr_parms(fnet);
-      struct vector_info *vec = 0x0;
-      unsigned int vecs= 0;
-      unsigned int veci= 0;
+
+      struct args_info {
+	    char*text;
+	    int vec_flag; /* True if the vec must be released. */
+	    struct vector_info vec;
+      } *args = calloc(parm_count, sizeof(struct args_info));
+
+      char buffer[4096];
 
       ivl_parameter_t par;
 
@@ -93,17 +101,56 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		       with VPI handles of their own. Therefore, skip
 		       them in the process of evaluating expressions. */
 		case IVL_EX_NONE:
+		  args[idx].text = strdup("\" \"");
+		  continue;
+
 		case IVL_EX_ARRAY:
-		case IVL_EX_NUMBER:
+		  snprintf(buffer, sizeof buffer,
+			   "v%p", ivl_expr_signal(expr));
+		  args[idx].text = strdup(buffer);
+		  continue;
+
+		case IVL_EX_NUMBER: {
+		      unsigned bit, wid = ivl_expr_width(expr);
+		      const char*bits = ivl_expr_bits(expr);
+		      char*dp;
+
+		      snprintf(buffer, sizeof buffer,
+			       "%u'%sb", wid, ivl_expr_signed(expr)? "s" : "");
+		      dp = buffer + strlen(buffer);
+		      for (bit = wid ;  bit > 0 ;  bit -= 1)
+			    *dp++ = bits[bit-1];
+		      *dp++ = 0;
+		      assert(dp - buffer <= sizeof buffer);
+		      args[idx].text = strdup(buffer);
+		      continue;
+		}
+
 		case IVL_EX_STRING:
+		  if (( par = ivl_expr_parameter(expr) )) {
+			snprintf(buffer, sizeof buffer, "P_%p", par);
+
+		  } else {
+			snprintf(buffer, sizeof buffer, "\"%s\"", ivl_expr_string(expr));
+		  }
+		  args[idx].text = strdup(buffer);
+		  continue;
+
 		case IVL_EX_EVENT:
+		  snprintf(buffer, sizeof buffer, "E_%p", ivl_expr_event(expr));
+		  args[idx].text = strdup(buffer);
+		  continue;
 		case IVL_EX_SCOPE:
+		  snprintf(buffer, sizeof buffer, "S_%p", ivl_expr_scope(expr));
+		  args[idx].text = strdup(buffer);
 		  continue;
 
 		case IVL_EX_SFUNC:
-		  if (is_magic_sfunc(ivl_expr_name(expr)))
+		  if (is_magic_sfunc(ivl_expr_name(expr))) {
+			snprintf(buffer, sizeof buffer, "%s", ivl_expr_name(expr));
+			args[idx].text = strdup(buffer);
 			continue;
-
+		  }
 		  break;
 
 		case IVL_EX_SIGNAL:
@@ -126,21 +173,47 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  } else if (ivl_expr_signed(expr) !=
 			     ivl_signal_signed(ivl_expr_signal(expr))) {
 			break;
-		  } else if (! is_fixed_memory_word(expr)){
-			break;
-		  } else {
-			  /* Some array selects need to be evaluated. */
+		  } else if (is_fixed_memory_word(expr)) {
+			  /* This is a word of a non-array, or a word
+			     of a net array, so we can address the
+			     word directly. */
+			ivl_signal_t sig = ivl_expr_signal(expr);
+			unsigned use_word = 0;
 			ivl_expr_t word_ex = ivl_expr_oper1(expr);
-			if (word_ex && !number_is_immediate(word_ex,
-			                  8*sizeof(unsigned))) {
-			      break;
+			if (word_ex) {
+			        /* Some array select have been evaluated. */
+			      if (number_is_immediate(word_ex, 8*sizeof(unsigned))) {
+				    use_word = get_number_immediate(word_ex);
+				    word_ex = 0;
+			      }
 			}
+			if (word_ex)
+			      break;
+
+			assert(word_ex == 0);
+			snprintf(buffer, sizeof buffer, "v%p_%u", sig, use_word);
+			args[idx].text = strdup(buffer);
 			continue;
-		  }
 
+		  } else {
+			  /* What's left, this is the work of a var
+			     array. Create the right code to handle
+			     it. */
+			ivl_signal_t sig = ivl_expr_signal(expr);
+			unsigned use_word = 0;
+			ivl_expr_t word_ex = ivl_expr_oper1(expr);
+			if (word_ex) {
+			        /* Some array select have been evaluated. */
+			      if (number_is_immediate(word_ex, 8*sizeof(unsigned))) {
+				    use_word = get_number_immediate(word_ex);
+				    word_ex = 0;
+			      }
+			}
+			if (word_ex)
+			      break;
 
-		case IVL_EX_MEMORY:
-		  if (!ivl_expr_oper1(expr)) {
+			snprintf(buffer, sizeof buffer, "&A<v%p, %u>", sig, use_word);
+			args[idx].text = strdup(buffer);
 			continue;
 		  }
 
@@ -150,143 +223,43 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  break;
 	    }
 
-	    vec = (struct vector_info *)
-		  realloc(vec, (vecs+1)*sizeof(struct vector_info));
-
 	    switch (ivl_expr_value(expr)) {
 		case IVL_VT_LOGIC:
 		case IVL_VT_BOOL:
-		  vec[vecs] = draw_eval_expr(expr, 0);
+		  args[idx].vec_flag = 1;
+		  args[idx].vec = draw_eval_expr(expr, 0);
+		  snprintf(buffer, sizeof buffer,
+			   "T<%u,%u,%s>", args[idx].vec.base, args[idx].vec.wid,
+			   ivl_expr_signed(expr)? "s" : "u");
 		  break;
 		case IVL_VT_REAL:
-		  vec[vecs].base = draw_eval_real(expr);
-		  vec[vecs].wid = 0;
+		  args[idx].vec_flag = 1;
+		  args[idx].vec.base = draw_eval_real(expr);
+		  args[idx].vec.wid  = 0;
+		  snprintf(buffer, sizeof buffer,
+			   "W<%u,r>", args[idx].vec.base);
 		  break;
 		default:
 		  assert(0);
 	    }
-	    vecs++;
+	    args[idx].text = strdup(buffer);
       }
 
       fprintf(vvp_out, "%s", call_string);
 
       for (idx = 0 ;  idx < parm_count ;  idx += 1) {
-	    ivl_expr_t expr = tnet
-		  ? ivl_stmt_parm(tnet, idx)
-		  : ivl_expr_parm(fnet, idx);
 
-	    switch (ivl_expr_type(expr)) {
-		case IVL_EX_NONE:
-		  fprintf(vvp_out, ", \" \"");
-		  continue;
-
-		case IVL_EX_ARRAY:
-		  fprintf(vvp_out, ", v%p", ivl_expr_signal(expr));
-		  continue;
-
-		case IVL_EX_NUMBER: {
-		      unsigned bit, wid = ivl_expr_width(expr);
-		      const char*bits = ivl_expr_bits(expr);
-
-		      fprintf(vvp_out, ", %u'%sb", wid,
-			      ivl_expr_signed(expr)? "s" : "");
-		      for (bit = wid ;  bit > 0 ;  bit -= 1)
-			    fputc(bits[bit-1], vvp_out);
-		      continue;
-		}
-
-		case IVL_EX_SIGNAL:
-		    /* If this is a part select, then the value was
-		       calculated above. Otherwise, just pass the
-		       signal. */
-		  if (ivl_expr_width(expr) !=
-		      ivl_signal_width(ivl_expr_signal(expr))) {
-			break;
-
-		  } else if (ivl_expr_signed(expr) !=
-			     ivl_signal_signed(ivl_expr_signal(expr))) {
-			break;
-
-		  } else if (! is_fixed_memory_word(expr)){
-			break;
-
-		  } else {
-			ivl_signal_t sig = ivl_expr_signal(expr);
-			unsigned use_word = 0;
-			ivl_expr_t word_ex = ivl_expr_oper1(expr);
-			if (word_ex) {
-			        /* Some array select have been evaluated. */
-			      if (!number_is_immediate(word_ex,
-			             8*sizeof(unsigned))) {
-			            break;
-			      }
-			      use_word = get_number_immediate(word_ex);
-			}
-			fprintf(vvp_out, ", v%p_%u", sig, use_word);
-			continue;
-		  }
-		  assert(0);
-		  continue;
-
-		case IVL_EX_STRING:
-		  if (( par = ivl_expr_parameter(expr) )) {
-			fprintf(vvp_out, ", P_%p", par);
-
-		  } else {
-			fprintf(vvp_out, ", \"%s\"",
-				ivl_expr_string(expr));
-		  }
-		  continue;
-
-		case IVL_EX_EVENT:
-		  fprintf(vvp_out, ", E_%p", ivl_expr_event(expr));
-		  continue;
-
-		case IVL_EX_SCOPE:
-		  fprintf(vvp_out, ", S_%p", ivl_expr_scope(expr));
-		  continue;
-
-		case IVL_EX_SFUNC:
-		  if (is_magic_sfunc(ivl_expr_name(expr))) {
-			fprintf(vvp_out, ", %s", ivl_expr_name(expr));
-			continue;
-		  }
-		  break;
-
-		default:
-		  break;
+	    fprintf(vvp_out, ", %s", args[idx].text);
+	    free(args[idx].text);
+	    if (args[idx].vec_flag) {
+		  if (args[idx].vec.wid > 0)
+			clr_vector(args[idx].vec);
+		  else
+			clr_word(args[idx].vec.base);
 	    }
-	    assert(veci < vecs);
-
-	    switch (ivl_expr_value(expr)) {
-
-		case IVL_VT_LOGIC:
-		case IVL_VT_BOOL:
-		  fprintf(vvp_out, ", T<%u,%u,%s>", vec[veci].base,
-			  vec[veci].wid, ivl_expr_signed(expr)? "s" : "u");
-		  break;
-
-		case IVL_VT_REAL:
-		  fprintf(vvp_out, ", W<%u,r>", vec[veci].base);
-		  break;
-
-		default:
-		  assert(0);
-	    }
-	    veci++;
       }
 
-      assert(veci == vecs);
-
-      if (vecs) {
-	    for (idx = 0; idx < vecs; idx++) {
-		  if (vec[idx].wid > 0)
-			clr_vector(vec[idx]);
-		  else if (vec[idx].wid == 0)
-			clr_word(vec[idx].base);
-	    }
-	    free(vec);
-      }
+      free(args);
 
       fprintf(vvp_out, ";\n");
 }
