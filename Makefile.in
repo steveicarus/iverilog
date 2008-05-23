@@ -188,7 +188,13 @@ iverilog-vpi.pdf: iverilog-vpi.ps
 .PHONY: version.h
 version.h:
 ifeq ($(GIT),none)
-	@echo '#define VERSION_TAG ""' > $@;
+	@if test -r $(srcdir)/$@; then \
+	    echo "Using $(srcdir)/$@ for VERSION_TAG"; \
+	    diff $(srcdir)/$@ $@ > /dev/null 2>&1 || cp $(srcdir)/$@ $@; \
+	else \
+	    echo "Using empty VERSION_TAG"; \
+	    echo '#define VERSION_TAG ""' > $@; \
+	fi
 else
 	@if test -d $(srcdir)/.git; then \
 	    echo "Using git-describe for VERSION_TAG"; \
