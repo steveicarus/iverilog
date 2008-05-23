@@ -123,6 +123,9 @@ _BEGIN_DECL
  *    ivl_process_t object holds one of these, but a statement may in
  *    turn contain other statements.
  *
+ * ivl_switch_t
+ *    Switches are the tran/tranif devices in the design.
+ *
  * -- A Note About Bit Sets --
  * Some objects hold a value as an array of bits. In these cases there
  * is some method that retrieves the width of the value and another
@@ -155,6 +158,7 @@ typedef struct ivl_parameter_s*ivl_parameter_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
+typedef struct ivl_switch_s   *ivl_switch_t;
 typedef struct ivl_memory_s   *ivl_memory_t; /* DEPRECATED */
 typedef struct ivl_statement_s*ivl_statement_t;
 
@@ -225,6 +229,16 @@ typedef enum ivl_logic_e {
 
       IVL_LO_UDP    = 21
 } ivl_logic_t;
+
+/* This is the type of a ivl_switch_t object */
+typedef enum ivl_switch_type_e {
+      IVL_SW_TRAN     = 0,
+      IVL_SW_TRANIF0  = 1,
+      IVL_SW_TRANIF1  = 2,
+      IVL_SW_RTRAN    = 3,
+      IVL_SW_RTRANIF0 = 4,
+      IVL_SW_RTRANIF1 = 5
+} ivl_switch_type_t;
 
 /* This is the type of an LPM object. */
 typedef enum ivl_lpm_type_e {
@@ -1826,6 +1840,39 @@ extern ivl_expr_t ivl_stmt_rval(ivl_statement_t net);
      IVL_ST_WAIT, IVL_ST_WHILE */
 extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
 
+/* SWITCHES
+ *
+ * The switches represent the tran devices in the design.
+ *
+ * FUNCTION SUMMARY
+ *
+ * ivl_switch_type
+ *    Return the enumerated value that is the type of the switch.
+ *
+ * ivl_switch_basename
+ *    This is the name given to the device in the source code.
+ *
+ * ivl_switch_scope
+ *    The scope where the switch device appears.
+ *
+ * ivl_switch_a
+ * ivl_switch_b
+ *    The a and b ports are the two ports of the switch.
+ *
+ * ivl_switch_enable
+ *    If the device has an enable (tranifX) then this is the enable
+ *    port.
+ *
+ * SEMANTIC NOTES
+ * The a/b ports can be any type, but the types must exactly
+ * match. The enable must be a scalar.
+ */
+extern ivl_switch_type_t ivl_switch_type(ivl_switch_t net);
+extern const char*ivl_switch_basename(ivl_switch_t net);
+extern ivl_scope_t ivl_switch_scope(ivl_switch_t net);
+extern ivl_nexus_t ivl_switch_a(ivl_switch_t net);
+extern ivl_nexus_t ivl_switch_b(ivl_switch_t net);
+extern ivl_nexus_t ivl_switch_enable(ivl_switch_t net);
 
 #if defined(__MINGW32__) || defined (__CYGWIN32__)
 #  define DLLEXPORT __declspec(dllexport)

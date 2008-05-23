@@ -28,12 +28,25 @@
 # include  "netmisc.h"
 # include  "ivl_assert.h"
 
-NetTran::NetTran(NetScope*scope, perm_string n, bool resistive, int enable)
-: NetNode(scope, n, enable? 3 : 2)
+static bool has_enable(ivl_switch_type_t tt)
+{
+      switch (tt) {
+	  case IVL_SW_TRANIF0:
+	  case IVL_SW_TRANIF1:
+	  case IVL_SW_RTRANIF0:
+	  case IVL_SW_RTRANIF1:
+	    return true;
+	  default:
+	    return false;
+      }
+}
+
+NetTran::NetTran(NetScope*scope, perm_string n, ivl_switch_type_t tt)
+: NetNode(scope, n, has_enable(tt)? 3 : 2)
 {
       pin(0).set_dir(Link::PASSIVE); pin(0).set_name(perm_string::literal("A"), 0);
       pin(1).set_dir(Link::PASSIVE); pin(1).set_name(perm_string::literal("B"), 0);
-      if (enable) {
+      if (pin_count() == 3) {
 	    pin(2).set_dir(Link::INPUT);
 	    pin(2).set_name(perm_string::literal("E"), 0);
       }

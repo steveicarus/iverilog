@@ -666,7 +666,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			des->errors += 1;
 			return;
 		  } else {
-			cur[idx] = new NetTran(scope, inm, false, 0);
+			cur[idx] = new NetTran(scope, inm, IVL_SW_TRAN);
 		  }
 		  break;
 		case RTRAN:
@@ -676,7 +676,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			des->errors += 1;
 			return;
 		  } else {
-			cur[idx] = new NetTran(scope, inm, true, 0);
+			cur[idx] = new NetTran(scope, inm, IVL_SW_RTRAN);
 			return;
 		  }
 		  break;
@@ -687,7 +687,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			des->errors += 1;
 			return;
 		  } else {
-			cur[idx] = new NetTran(scope, inm, false, -1);
+			cur[idx] = new NetTran(scope, inm, IVL_SW_TRANIF0);
 		  }
 		  break;
 		case RTRANIF0:
@@ -697,7 +697,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			des->errors += 1;
 			return;
 		  } else {
-			cur[idx] = new NetTran(scope, inm, true, -1);
+			cur[idx] = new NetTran(scope, inm, IVL_SW_RTRANIF0);
 		  }
 		  break;
 		case TRANIF1:
@@ -707,7 +707,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			des->errors += 1;
 			return;
 		  } else {
-			cur[idx] = new NetTran(scope, inm, false, 1);
+			cur[idx] = new NetTran(scope, inm, IVL_SW_TRANIF1);
 		  }
 		  break;
 		case RTRANIF1:
@@ -717,7 +717,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			des->errors += 1;
 			return;
 		  } else {
-			cur[idx] = new NetTran(scope, inm, true, 1);
+			cur[idx] = new NetTran(scope, inm, IVL_SW_RTRANIF1);
 		  }
 		  break;
 		default:

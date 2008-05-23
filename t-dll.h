@@ -446,6 +446,17 @@ struct ivl_net_logic_s {
       ivl_expr_t delay[3];
 };
 
+struct ivl_switch_s {
+      ivl_switch_type_t type;
+
+      perm_string name;
+      ivl_scope_t scope;
+
+      struct ivl_attribute_s*attr;
+      unsigned nattr;
+
+      ivl_nexus_t pins[3];
+};
 
 /*
  * UDP definition.
