@@ -23,6 +23,7 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "functor.h"
+# include  "compiler.h"
 # include  "ivl_assert.h"
 
 
@@ -831,10 +832,15 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 
 	/* If the select input is constant, then replace with a BUFZ */
       flag = obj->pin_Sel().nexus()->drivers_constant();
-      verinum::V sel_val = flag? obj->pin_Data(1).nexus()->driven_value() : verinum::Vx;
+      verinum::V sel_val = flag? obj->pin_Sel().nexus()->driven_value() : verinum::Vx;
       if ((sel_val != verinum::Vz) && (sel_val != verinum::Vx)) {
 	    NetBUFZ*tmp = new NetBUFZ(obj->scope(), obj->name(), obj->width());
 	    tmp->set_line(*obj);
+
+	    if (debug_optimizer)
+		  cerr << obj->get_fileline() << ": debug: "
+		       << "Replace binary MUX with constant select=" << sel_val
+		       << " with a BUFZ to the selected input." << endl;
 
 	    tmp->rise_time(obj->rise_time());
 	    tmp->fall_time(obj->fall_time());

@@ -86,6 +86,7 @@ extern bool debug_scopes;
 extern bool debug_eval_tree;
 extern bool debug_elaborate;
 extern bool debug_synth2;
+extern bool debug_optimizer;
 
 /* Path to a directory useful for finding subcomponents. */
 extern const char*basedir;
