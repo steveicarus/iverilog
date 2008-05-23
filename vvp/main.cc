@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -66,6 +66,12 @@ extern "C" long int lround(double x)
 #endif
 
 bool verbose_flag = false;
+static int vvp_return_value = 0;
+
+void vpip_set_return_value(int value)
+{
+      vvp_return_value = value;
+}
 
 static char log_buffer[4096];
 
@@ -305,6 +311,5 @@ int main(int argc, char*argv[])
 		    count_gen_events);
       }
 
-      return 0;
+      return vvp_return_value;
 }
-
