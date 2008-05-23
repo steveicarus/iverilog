@@ -183,6 +183,11 @@ static unsigned long* vector_to_array(struct vthread_s*thr,
 	    unsigned long*val = new unsigned long[awid];
 	    for (unsigned idx = 0 ;  idx < awid ;  idx += 1)
 		  val[idx] = -1UL;
+
+	    wid -= (awid-1) * CPU_WORD_BITS;
+	    if (wid < CPU_WORD_BITS)
+		  val[awid-1] &= (-1UL) >> (CPU_WORD_BITS-wid);
+
 	    return val;
       }
 
@@ -996,54 +1001,92 @@ bool of_CMPIS(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_CMPIU(vthread_t thr, vvp_code_t cp)
+/*
+ * The of_CMPIU below punts to this function if there are any xz bits
+ * in the vector part of the instruction. In this case we know that
+ * there is at least 1 xz bit in the left expression (and there are
+ * none in the imm value) so the eeq result must be false. Otherwise,
+ * the eq result may me 0 or x, and the lt bit is x.
+ */
+static bool of_CMPIU_the_hard_way(vthread_t thr, vvp_code_t cp)
 {
-      vvp_bit4_t eq  = BIT4_1;
-      vvp_bit4_t eeq = BIT4_1;
-      vvp_bit4_t lt  = BIT4_0;
 
       unsigned idx1 = cp->bit_idx[0];
       unsigned imm  = cp->bit_idx[1];
+      unsigned wid  = cp->number;
+      if (idx1 >= 4)
+	    thr_check_addr(thr, idx1+wid-1);
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    vvp_bit4_t lv = thr_get_bit(thr, idx1);
+      vvp_bit4_t lv = thr_get_bit(thr, idx1);
+      if (bit4_is_xz(lv)) {
+	    thr_put_bit(thr, 4, BIT4_X);
+	    thr_put_bit(thr, 5, BIT4_X);
+	    thr_put_bit(thr, 6, BIT4_0);
+      }
+
+      vvp_bit4_t eq  = BIT4_0;
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    vvp_bit4_t rv = (imm & 1)? BIT4_1 : BIT4_0;
 	    imm >>= 1;
 
-	    if (lv > rv) {
-		  lt = BIT4_0;
-		  eeq = BIT4_0;
-	    } else if (lv < rv) {
-		  lt = BIT4_1;
-		  eeq = BIT4_0;
-	    }
-	    if (eq != BIT4_X) {
-		  if ((lv == BIT4_0) && (rv != BIT4_0))
-			eq = BIT4_0;
-		  if ((lv == BIT4_1) && (rv != BIT4_1))
-			eq = BIT4_0;
-		  if (bit4_is_xz(lv) || bit4_is_xz(rv))
-			eq = BIT4_X;
+	    if (bit4_is_xz(lv)) {
+		  eq = BIT4_X;
+	    } else if (lv != rv) {
+		  break;
 	    }
 
-	    if (idx1 >= 4) idx1 += 1;
+	    if (idx1 >= 4) {
+		  idx1 += 1;
+		  if (idx1 < wid)
+			lv = thr_get_bit(thr, idx1);
+	    }
       }
 
-      if (eq == BIT4_X)
-	    lt = BIT4_X;
-
       thr_put_bit(thr, 4, eq);
-      thr_put_bit(thr, 5, lt);
-      thr_put_bit(thr, 6, eeq);
+      thr_put_bit(thr, 5, BIT4_X);
+      thr_put_bit(thr, 6, BIT4_0);
 
       return true;
 }
 
-bool of_CMPU(vthread_t thr, vvp_code_t cp)
+bool of_CMPIU(vthread_t thr, vvp_code_t cp)
+{
+      unsigned addr = cp->bit_idx[0];
+      unsigned long imm  = cp->bit_idx[1];
+      unsigned wid  = cp->number;
+
+      unsigned long*array = vector_to_array(thr, addr, wid);
+	// If there are xz bits in the right hand expression, then we
+	// have to do the compare the hard way. That is because even
+	// though we know that eeq must be false (the immediate value
+	// cannot have x or z bits) we don't know what the EQ or LT
+	// bits will be.
+      if (array == 0)
+	    return of_CMPIU_the_hard_way(thr, cp);
+
+      unsigned words = (wid+CPU_WORD_BITS-1) / CPU_WORD_BITS;
+      vvp_bit4_t eq  = BIT4_1;
+      vvp_bit4_t lt  = BIT4_0;
+      for (unsigned idx = 0 ; idx < words ; idx += 1, imm = 0UL) {
+	    if (array[idx] == imm)
+		  continue;
+
+	    eq = BIT4_0;
+	    lt = (array[idx] < imm) ? BIT4_1 : BIT4_0;
+      }
+
+      delete[]array;
+
+      thr_put_bit(thr, 4, eq);
+      thr_put_bit(thr, 5, lt);
+      thr_put_bit(thr, 6, eq);
+      return true;
+}
+
+bool of_CMPU_the_hard_way(vthread_t thr, vvp_code_t cp)
 {
       vvp_bit4_t eq = BIT4_1;
       vvp_bit4_t eeq = BIT4_1;
-      vvp_bit4_t lt = BIT4_0;
 
       unsigned idx1 = cp->bit_idx[0];
       unsigned idx2 = cp->bit_idx[1];
@@ -1052,33 +1095,68 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
 	    vvp_bit4_t lv = thr_get_bit(thr, idx1);
 	    vvp_bit4_t rv = thr_get_bit(thr, idx2);
 
-	    if (lv > rv) {
-		  lt  = BIT4_0;
+	    if (lv != rv)
 		  eeq = BIT4_0;
-	    } else if (lv < rv) {
-		  lt  = BIT4_1;
-		  eeq = BIT4_0;
-	    }
-	    if (eq != BIT4_X) {
-		  if ((lv == BIT4_0) && (rv != BIT4_0))
-			eq = BIT4_0;
-		  if ((lv == BIT4_1) && (rv != BIT4_1))
-			eq = BIT4_0;
-		  if (bit4_is_xz(lv) || bit4_is_xz(rv))
-			eq = BIT4_X;
-	    }
+
+	    if (eq==BIT4_1 && (bit4_is_xz(lv) || bit4_is_xz(rv)))
+		  eq = BIT4_X;
+	    if ((lv == BIT4_0) && (rv==BIT4_1))
+		  eq = BIT4_0;
+	    if ((lv == BIT4_1) && (rv==BIT4_0))
+		  eq = BIT4_0;
+
+	    if (eq == BIT4_0)
+		  break;
 
 	    if (idx1 >= 4) idx1 += 1;
 	    if (idx2 >= 4) idx2 += 1;
 
       }
 
-      if (eq == BIT4_X)
-	    lt = BIT4_X;
+      thr_put_bit(thr, 4, eq);
+      thr_put_bit(thr, 5, BIT4_X);
+      thr_put_bit(thr, 6, eeq);
+
+      return true;
+}
+
+bool of_CMPU(vthread_t thr, vvp_code_t cp)
+{
+      vvp_bit4_t eq = BIT4_1;
+      vvp_bit4_t lt = BIT4_0;
+
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
+      unsigned wid  = cp->number;
+
+      unsigned long*larray = vector_to_array(thr, idx1, wid);
+      if (larray == 0) return of_CMPU_the_hard_way(thr, cp);
+
+      unsigned long*rarray = vector_to_array(thr, idx2, wid);
+      if (rarray == 0) {
+	    delete[]larray;
+	    return of_CMPU_the_hard_way(thr, cp);
+      }
+
+      unsigned words = (wid+CPU_WORD_BITS-1) / CPU_WORD_BITS;
+
+      for (unsigned wdx = 0 ; wdx < words ; wdx += 1) {
+	    if (larray[wdx] == rarray[wdx])
+		  continue;
+
+	    eq = BIT4_0;
+	    if (larray[wdx] < rarray[wdx])
+		  lt = BIT4_1;
+	    else
+		  lt = BIT4_0;
+      }
+
+      delete[]larray;
+      delete[]rarray;
 
       thr_put_bit(thr, 4, eq);
       thr_put_bit(thr, 5, lt);
-      thr_put_bit(thr, 6, eeq);
+      thr_put_bit(thr, 6, eq);
 
       return true;
 }
@@ -2003,27 +2081,19 @@ bool of_IX_GET(vthread_t thr, vvp_code_t cp)
       unsigned base  = cp->bit_idx[1];
       unsigned width = cp->number;
 
-      unsigned long v = 0;
-      bool unknown_flag = false;
-
-      for (unsigned i = 0 ;  i<width ;  i += 1) {
-	    vvp_bit4_t vv = thr_get_bit(thr, base);
-	    if (bit4_is_xz(vv)) {
-		  v = 0UL;
-		  unknown_flag = true;
-		  break;
-	    }
-
-	    v |= (unsigned long) vv << i;
-
-	    if (base >= 4)
-		  base += 1;
+      unsigned long*array = vector_to_array(thr, base, width);
+      if (array == 0) {
+	      /* If there are unknowns in the vector bits, then give
+		 up immediately. Set the value to 0, and set thread
+		 bit 4 to 1 to flag the error. */
+	    thr->words[index].w_int = 0;
+	    thr_put_bit(thr, 4, BIT4_1);
+	    return true;
       }
-      thr->words[index].w_int = v;
 
-	/* Set bit 4 as a flag if the input is unknown. */
-      thr_put_bit(thr, 4, unknown_flag? BIT4_1 : BIT4_0);
-
+      thr->words[index].w_int = array[0];
+      thr_put_bit(thr, 4, BIT4_0);
+      delete[]array;
       return true;
 }
 

@@ -421,6 +421,12 @@ extern vvp_vector4_t c4string_to_vector4(const char*str);
 
 extern ostream& operator<< (ostream&, const vvp_vector2_t&);
 
+/* Inline some of the vector2_t methods. */
+inline unsigned vvp_vector2_t::size() const
+{
+      return wid_;
+}
+
 /*
  * This class represents a scalar value with strength. These are
  * heavier then the simple vvp_bit4_t, but more information is
