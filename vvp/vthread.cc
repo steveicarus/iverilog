@@ -410,26 +410,47 @@ bool of_ABS_WR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_AND(vthread_t thr, vvp_code_t cp)
+static bool of_AND_wide(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx[0] >= 4);
-
       unsigned idx1 = cp->bit_idx[0];
       unsigned idx2 = cp->bit_idx[1];
+      unsigned wid = cp->number;
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+      vvp_vector4_t val = vthread_bits_to_vector(thr, idx1, wid);
+      val &= vthread_bits_to_vector(thr, idx2, wid);
+      thr->bits4.set_vec(idx1, val);
 
+      return true;
+}
+
+static bool of_AND_narrow(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
+      unsigned wid = cp->number;
+
+      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
 	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
 	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
-
-	    thr_put_bit(thr, idx1, lb & rb);
-
+	    thr_put_bit(thr, idx1, lb&rb);
 	    idx1 += 1;
 	    if (idx2 >= 4)
 		  idx2 += 1;
       }
 
       return true;
+}
+
+bool of_AND(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+      if (cp->number <= 4)
+	    cp->opcode = &of_AND_narrow;
+      else
+	    cp->opcode = &of_AND_wide;
+
+      return cp->opcode(thr, cp);
 }
 
 
@@ -2007,25 +2028,41 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+static bool of_INV_wide(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+      vvp_vector4_t val = vthread_bits_to_vector(thr, idx1, wid);
+      thr->bits4.set_vec(idx1, ~val);
+
+      return true;
+}
+
+static bool of_INV_narrow(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
+	    thr_put_bit(thr, idx1, ~lb);
+	    idx1 += 1;
+      }
+
+      return true;
+}
+
 bool of_INV(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
-      for (unsigned idx = 0 ;  idx < cp->bit_idx[1] ;  idx += 1) {
-	    vvp_bit4_t val = thr_get_bit(thr, cp->bit_idx[0]+idx);
-	    switch (val) {
-		case BIT4_0:
-		  val = BIT4_1;
-		  break;
-		case BIT4_1:
-		  val = BIT4_0;
-		  break;
-		default:
-		  val = BIT4_X;
-		  break;
-	    }
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, val);
-      }
-      return true;
+
+      if (cp->number <= 4)
+	    cp->opcode = &of_INV_narrow;
+      else
+	    cp->opcode = &of_INV_wide;
+
+      return cp->opcode(thr, cp);
 }
 
 
@@ -3091,34 +3128,47 @@ bool of_MULI(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_NAND(vthread_t thr, vvp_code_t cp)
+static bool of_NAND_wide(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx[0] >= 4);
-
       unsigned idx1 = cp->bit_idx[0];
       unsigned idx2 = cp->bit_idx[1];
+      unsigned wid = cp->number;
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+      vvp_vector4_t val = vthread_bits_to_vector(thr, idx1, wid);
+      val &= vthread_bits_to_vector(thr, idx2, wid);
+      thr->bits4.set_vec(idx1, ~val);
 
+      return true;
+}
+
+static bool of_NAND_narrow(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
+      unsigned wid = cp->number;
+
+      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
 	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
 	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
-
-	    if ((lb == BIT4_0) || (rb == BIT4_0)) {
-		  thr_put_bit(thr, idx1, BIT4_1);
-
-	    } else if ((lb == BIT4_1) && (rb == BIT4_1)) {
-		  thr_put_bit(thr, idx1, BIT4_0);
-
-	    } else {
-		  thr_put_bit(thr, idx1, BIT4_X);
-	    }
-
+	    thr_put_bit(thr, idx1, ~(lb&rb));
 	    idx1 += 1;
 	    if (idx2 >= 4)
 		  idx2 += 1;
       }
 
       return true;
+}
+
+bool of_NAND(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+      if (cp->number <= 4)
+	    cp->opcode = &of_NAND_narrow;
+      else
+	    cp->opcode = &of_NAND_wide;
+
+      return cp->opcode(thr, cp);
 }
 
 
@@ -3269,28 +3319,74 @@ bool of_XNORR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+static bool of_OR_wide(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
+      unsigned wid = cp->number;
+
+      vvp_vector4_t val = vthread_bits_to_vector(thr, idx1, wid);
+      val |= vthread_bits_to_vector(thr, idx2, wid);
+      thr->bits4.set_vec(idx1, val);
+
+      return true;
+}
+
+static bool of_OR_narrow(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
+      unsigned wid = cp->number;
+
+      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
+	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
+	    thr_put_bit(thr, idx1, lb|rb);
+	    idx1 += 1;
+	    if (idx2 >= 4)
+		  idx2 += 1;
+      }
+
+      return true;
+}
+
 bool of_OR(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+      if (cp->number <= 4)
+	    cp->opcode = &of_OR_narrow;
+      else
+	    cp->opcode = &of_OR_wide;
+
+      return cp->opcode(thr, cp);
+}
+
+static bool of_NOR_wide(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
 
       unsigned idx1 = cp->bit_idx[0];
       unsigned idx2 = cp->bit_idx[1];
+      unsigned wid = cp->number;
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+      vvp_vector4_t val = vthread_bits_to_vector(thr, idx1, wid);
+      val |= vthread_bits_to_vector(thr, idx2, wid);
+      thr->bits4.set_vec(idx1, ~val);
 
+      return true;
+}
+
+static bool of_NOR_narrow(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
+      unsigned wid = cp->number;
+
+      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
 	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
 	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
-
-	    if ((lb == BIT4_1) || (rb == BIT4_1)) {
-		  thr_put_bit(thr, idx1, BIT4_1);
-
-	    } else if ((lb == BIT4_0) && (rb == BIT4_0)) {
-		  thr_put_bit(thr, idx1, BIT4_0);
-
-	    } else {
-		  thr_put_bit(thr, idx1, BIT4_X);
-	    }
-
+	    thr_put_bit(thr, idx1, ~(lb|rb));
 	    idx1 += 1;
 	    if (idx2 >= 4)
 		  idx2 += 1;
@@ -3303,30 +3399,12 @@ bool of_NOR(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
 
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
+      if (cp->number <= 4)
+	    cp->opcode = &of_NOR_narrow;
+      else
+	    cp->opcode = &of_NOR_wide;
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-
-	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
-	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
-
-	    if ((lb == BIT4_1) || (rb == BIT4_1)) {
-		  thr_put_bit(thr, idx1, BIT4_0);
-
-	    } else if ((lb == BIT4_0) && (rb == BIT4_0)) {
-		  thr_put_bit(thr, idx1, BIT4_1);
-
-	    } else {
-		  thr_put_bit(thr, idx1, BIT4_X);
-	    }
-
-	    idx1 += 1;
-	    if (idx2 >= 4)
-		  idx2 += 1;
-      }
-
-      return true;
+      return cp->opcode(thr, cp);
 }
 
 bool of_POW(vthread_t thr, vvp_code_t cp)

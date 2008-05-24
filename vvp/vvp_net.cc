@@ -874,6 +874,93 @@ char* vvp_vector4_t::as_string(char*buf, size_t buf_len)
       return res;
 }
 
+void vvp_vector4_t::invert()
+{
+      if (size_ <= BITS_PER_WORD) {
+	    unsigned long mask = (size_<BITS_PER_WORD)? (1UL<<size_)-1UL : -1UL;
+	    abits_val_ = mask & ~abits_val_;
+	    abits_val_ |= bbits_val_;
+      } else {
+	    unsigned remaining = size_;
+	    unsigned idx = 0;
+	    while (remaining >= BITS_PER_WORD) {
+		  abits_ptr_[idx] = ~abits_ptr_[idx];
+		  abits_ptr_[idx] |= bbits_ptr_[idx];
+		  idx += 1;
+		  remaining -= BITS_PER_WORD;
+	    }
+	    if (remaining > 0) {
+		  unsigned long mask = (1UL<<remaining) - 1UL;
+		  abits_ptr_[idx] = mask & ~abits_ptr_[idx];
+		  abits_ptr_[idx] |= bbits_ptr_[idx];
+	    }
+      }
+}
+
+vvp_vector4_t& vvp_vector4_t::operator &= (const vvp_vector4_t&that)
+{
+	// Make sure that all Z bits are turned into X bits.
+      change_z2x();
+
+	// This is sneaky. The truth table is:
+	//     00 01 11
+	//  00 00 00 00
+	//  01 00 01 11
+	//  11 00 11 11
+      if (size_ <= BITS_PER_WORD) {
+	      // Each tmp bit is true if that is 1, X or Z.
+	    unsigned long tmp = that.abits_val_ | that.bbits_val_;
+	    abits_val_ &= that.abits_val_;
+	    bbits_val_ = (bbits_val_ & tmp) | (abits_val_&that.bbits_val_);
+
+      } else {
+	    unsigned words = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
+	    for (unsigned idx = 0; idx < words ; idx += 1) {
+		  unsigned long tmp = that.abits_ptr_[idx]|that.bbits_ptr_[idx];
+		  abits_ptr_[idx] &= that.abits_ptr_[idx];
+		  bbits_ptr_[idx] = (bbits_ptr_[idx]&tmp) | (abits_ptr_[idx]&that.bbits_ptr_[idx]);
+	    }
+      }
+
+      return *this;
+}
+
+vvp_vector4_t& vvp_vector4_t::operator |= (const vvp_vector4_t&that)
+{
+	// Make sure that all Z bits are turned into X bits.
+      change_z2x();
+
+	// This is sneaky.
+	// The OR is 1 if either operand is 1.
+	// The OR is 0 if both operants are 0.
+	// Otherwise, the AND is X. The truth table is:
+	//
+	//     00 01 11
+	//  00 00 01 11
+	//  01 01 01 01
+	//  11 11 01 11
+      if (size_ <= BITS_PER_WORD) {
+	      // Each tmp bit is true if that is 1, X or Z.
+	    unsigned long tmp1 = abits_val_ | bbits_val_;
+	    unsigned long tmp2 = that.abits_val_ | that.bbits_val_;
+	    bbits_val_ =  (bbits_val_& ~(that.abits_val_^that.bbits_val_))
+		        | (that.bbits_val_& ~abits_val_);
+	    abits_val_ = tmp1 | tmp2;
+
+      } else {
+	    unsigned words = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
+	    for (unsigned idx = 0; idx < words ; idx += 1) {
+		  unsigned long tmp1 = abits_ptr_[idx] | bbits_ptr_[idx];
+		  unsigned long tmp2 = that.abits_ptr_[idx] | that.bbits_ptr_[idx];
+	    bbits_ptr_[idx] =  (bbits_ptr_[idx]& ~(that.abits_ptr_[idx]^that.bbits_ptr_[idx]))
+		        | (that.bbits_ptr_[idx]& ~abits_ptr_[idx]);
+	    abits_ptr_[idx] = tmp1 | tmp2;
+	    }
+      }
+
+      return *this;
+}
+
 /*
 * Add an integer to the vvp_vector4_t in place, bit by bit so that
 * there is no size limitations.
@@ -2870,20 +2957,6 @@ vvp_bit4_t compare_gtge(const vvp_vector4_t&lef, const vvp_vector4_t&rig,
       }
 
       return out_if_equal;
-}
-
-vvp_vector4_t operator ~ (const vvp_vector4_t&that)
-{
-      vvp_vector4_t res = that;
-      if (res.size_ <= vvp_vector4_t::BITS_PER_WORD) {
-	    res.abits_val_ = res.bbits_val_ | ~res.abits_val_;
-      } else {
-	    unsigned cnt = (res.size_ + vvp_vector4_t::BITS_PER_WORD - 1) / vvp_vector4_t::BITS_PER_WORD;
-	    for (unsigned idx = 0 ; idx < cnt ; idx += 1)
-		  res.abits_ptr_[idx] = res.bbits_val_ | ~res.abits_val_;
-      }
-
-      return res;
 }
 
 vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,

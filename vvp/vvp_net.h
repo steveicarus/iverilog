@@ -152,6 +152,9 @@ class vvp_vector4_t {
 	// Display the value into the buf as a string.
       char*as_string(char*buf, size_t buf_len);
 
+      void invert();
+      vvp_vector4_t& operator &= (const vvp_vector4_t&that);
+      vvp_vector4_t& operator |= (const vvp_vector4_t&that);
       vvp_vector4_t& operator += (int64_t);
 
     private:
@@ -329,7 +332,13 @@ inline void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
       }
 }
 
-extern vvp_vector4_t operator ~ (const vvp_vector4_t&that);
+inline vvp_vector4_t operator ~ (const vvp_vector4_t&that)
+{
+      vvp_vector4_t res = that;
+      res.invert();
+      return res;
+}
+
 extern ostream& operator << (ostream&, const vvp_vector4_t&);
 
 extern vvp_bit4_t compare_gtge(const vvp_vector4_t&a,
