@@ -1616,7 +1616,11 @@ static int load_next_input()
 static void do_dump_precompiled_defines(FILE* out, struct define_t* table)
 {
     if (!table->keyword)
+#ifdef __MINGW32__  /* MinGW does not know about z. */
+        fprintf(out, "%s:%d:%d:%s\n", table->name, table->argc, strlen(table->value), table->value);
+#else
         fprintf(out, "%s:%d:%zd:%s\n", table->name, table->argc, strlen(table->value), table->value);
+#endif
 
     if (table->left)
         do_dump_precompiled_defines(out, table->left);
@@ -1741,6 +1745,7 @@ void reset_lexor(FILE* out, char* paths[])
         isp->ebs = 0;
         isp->next = 0;
         isp->lineno = 0;
+        isp->stringify_flag = 0;
 
         if (tail)
             tail->next = isp;

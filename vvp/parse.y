@@ -65,7 +65,7 @@ static struct __vpiModPath*modpath_dst = 0;
       vvp_delay_t*cdelay;
 };
 
-%token K_ALIAS K_ALIAS_S K_ALIAS_R
+%token K_A K_ALIAS K_ALIAS_S K_ALIAS_R
 %token K_ARITH_ABS K_ARITH_DIV K_ARITH_DIV_R K_ARITH_DIV_S K_ARITH_MOD
 %token K_ARITH_MOD_R
 %token K_ARITH_MULT K_ARITH_MULT_R K_ARITH_SUB K_ARITH_SUB_R
@@ -82,7 +82,6 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_RESOLV K_SCOPE K_SFUNC K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
-%token K_MEM K_MEM_P K_MEM_I
 %token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_func K_vpi_func_r
 %token K_disable K_fork
 %token K_vpi_module K_vpi_time_precision K_file_names
@@ -185,14 +184,6 @@ statement
 
   /* Memory.  Definition, port, initialization */
 
-        | T_LABEL K_MEM T_STRING ',' T_NUMBER ',' T_NUMBER ',' numbers ';'
-		{ compile_memory($1, $3, $5, $7, $9.cnt, $9.nvec); }
-
-        | T_LABEL K_MEM_P T_SYMBOL ',' symbols ';'
-		{ compile_memory_port($1, $3, $5.cnt, $5.vect); }
-
-	| mem_init_stmt
-
         | T_LABEL K_ARRAY T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
                 { compile_var_array($1, $3, $5, $6, $8, $9, 0); }
  
@@ -209,6 +200,9 @@ statement
                 { compile_net_array($1, $3, $5, $6); }
  
         | T_LABEL K_ARRAY_PORT T_SYMBOL ',' T_SYMBOL ';'
+		{ compile_array_port($1, $3, $5); }
+
+        | T_LABEL K_ARRAY_PORT T_SYMBOL ',' T_NUMBER ';'
 		{ compile_array_port($1, $3, $5); }
 
         | T_LABEL K_ARRAY T_STRING ',' T_SYMBOL ';'
@@ -763,38 +757,40 @@ argument_opt
 	;
 
 argument_list
-	: argument
-		{ struct argv_s tmp;
-		  argv_init(&tmp);
-		  argv_add(&tmp, $1);
-		  $$ = tmp;
-		}
-	| argument_list ',' argument
-		{ struct argv_s tmp = $1;
-		  argv_add(&tmp, $3);
-		  $$ = tmp;
-		}
-	| T_SYMBOL
-		{ struct argv_s tmp;
-		  argv_init(&tmp);
-		  argv_sym_add(&tmp, $1);
-		  $$ = tmp;
-		}
-	| argument_list ',' T_SYMBOL
-		{ struct argv_s tmp = $1;
-		  argv_sym_add(&tmp, $3);
-		  $$ = tmp;
-		}
-	;
+  : argument
+      { struct argv_s tmp;
+	argv_init(&tmp);
+	argv_add(&tmp, $1);
+	$$ = tmp;
+      }
+  | argument_list ',' argument
+      { struct argv_s tmp = $1;
+	argv_add(&tmp, $3);
+	$$ = tmp;
+      }
+  | T_SYMBOL
+      { struct argv_s tmp;
+	argv_init(&tmp);
+	argv_sym_add(&tmp, $1);
+	$$ = tmp;
+      }
+  | argument_list ',' T_SYMBOL
+      { struct argv_s tmp = $1;
+	argv_sym_add(&tmp, $3);
+	$$ = tmp;
+      }
+  ;
 
 argument
-	: T_STRING
-		{ $$ = vpip_make_string_const($1); }
-	| T_VECTOR
-		{ $$ = vpip_make_binary_const($1.idx, $1.text);
-		  free($1.text);
-		}
-	;
+  : T_STRING
+      { $$ = vpip_make_string_const($1); }
+  | T_VECTOR
+      { $$ = vpip_make_binary_const($1.idx, $1.text);
+	free($1.text);
+      }
+  | K_A '<' T_SYMBOL ',' T_NUMBER '>'
+      { $$ = vpip_make_vthr_A($3, $5); }
+  ;
 
 
   /* functor operands can only be a list of symbols. */
@@ -898,19 +894,6 @@ udp_table
 	| udp_table ',' T_STRING
 		{ $$ = compile_udp_table($1,  $3); }
 	;
-
-mem_init_stmt
-        : K_MEM_I symbol T_NUMBER ','
-                { compile_memory_init($2.text, $3, 0); }
-          mem_init_list ';'
-        ;
-
-mem_init_list
-        : mem_init_list ',' T_NUMBER
-                { compile_memory_init(0, 0, $3); }
-        | T_NUMBER
-                { compile_memory_init(0, 0, $1); }
-        ;
 
 signed_t_number
 	: T_NUMBER     { $$ = $1; }

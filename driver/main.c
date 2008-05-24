@@ -327,6 +327,9 @@ static int t_default(char*cmd, unsigned ncmd)
 	    remove(defines_path);
 	    remove(compiled_defines_path);
       }
+#ifdef __MINGW32__  /* MinGW just returns the exit status, so return it! */
+      return rc;
+#else
 
       if (rc != 0) {
 	    if (rc == 127) {
@@ -342,6 +345,7 @@ static int t_default(char*cmd, unsigned ncmd)
       }
 
       return 0;
+#endif
 }
 
 

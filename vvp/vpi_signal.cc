@@ -645,6 +645,27 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 	    ? (rfp->msb - rfp->lsb + 1)
 	    : (rfp->lsb - rfp->msb + 1);
 
+
+      vvp_vector4_t val = vec4_from_vpi_value(vp, wid);
+
+	/* If this is a vpiForce, then instead of writing to the
+	   signal input port, we write to the special "force" port. */
+      int dest_port = 0;
+      if (flags == vpiForceFlag)
+	    dest_port = 2;
+
+	/* This is the destination that I'm going to poke into. Make
+	   it from the vvp_net_t pointer, and assume a write to
+	   port-0. This is the port where signals receive input. */
+      vvp_net_ptr_t destination (rfp->node, dest_port);
+
+      vvp_send_vec4(destination, val);
+
+      return ref;
+}
+
+vvp_vector4_t vec4_from_vpi_value(s_vpi_value*vp, unsigned wid)
+{
       vvp_vector4_t val (wid, BIT4_0);
 
       switch (vp->format) {
@@ -691,27 +712,13 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 
 	  default:
 	    fprintf(stderr, "vvp internal error: put_value: "
-		    "value type %u not implemented."
-		    " Signal is %s in scope %s\n",
-		    vp->format, vpi_get_str(vpiName, ref), rfp->scope->name);
+		    "value type %u not implemented here.\n",
+		    vp->format);
 	    assert(0);
 
       }
 
-	/* If this is a vpiForce, then instead of writing to the
-	   signal input port, we write to the special "force" port. */
-      int dest_port = 0;
-      if (flags == vpiForceFlag)
-	    dest_port = 2;
-
-	/* This is the destination that I'm going to poke into. Make
-	   it from the vvp_net_t pointer, and assume a write to
-	   port-0. This is the port where signals receive input. */
-      vvp_net_ptr_t destination (rfp->node, dest_port);
-
-      vvp_send_vec4(destination, val);
-
-      return ref;
+      return val;
 }
 
 static const struct __vpirt vpip_reg_rt = {

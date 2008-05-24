@@ -20,6 +20,7 @@
 # include "config.h"
 
 # include  <iostream>
+# include  <cstdlib>
 
 /*
  * This source file contains all the implementations of the Design

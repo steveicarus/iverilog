@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2008 Stephen Williams (steve@icarus.com)
  *
  * (This is a rewrite of code that was ...
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
@@ -19,9 +19,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.35 2007/03/04 06:26:33 steve Exp $"
-#endif
 
 #include "udp.h"
 #include "schedule.h"
@@ -228,7 +225,11 @@ void vvp_udp_comb_s::compile_table(char**tab)
 	    cur.maskx = 0;
 	    if (port_count() > 8*sizeof(cur.mask0)) {
 		  fprintf(stderr, "internal error: primitive port count=%u "
+#ifdef __MINGW32__  /* MinGW does not know about z. */
+			  " > %u\n", port_count(), sizeof(cur.mask0));
+#else
 			  " > %zu\n", port_count(), sizeof(cur.mask0));
+#endif
 		  assert(port_count() <= 8*sizeof(cur.mask0));
 	    }
 	    for (unsigned pp = 0 ;  pp < port_count() ;  pp += 1) {
@@ -954,4 +955,3 @@ void compile_udp_functor(char*label, char*type,
       wide_inputs_connect(core, argc, argv);
       free(argv);
 }
-

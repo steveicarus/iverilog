@@ -152,6 +152,9 @@ class vvp_vector4_t {
 	// Display the value into the buf as a string.
       char*as_string(char*buf, size_t buf_len);
 
+      void invert();
+      vvp_vector4_t& operator &= (const vvp_vector4_t&that);
+      vvp_vector4_t& operator |= (const vvp_vector4_t&that);
       vvp_vector4_t& operator += (int64_t);
 
     private:
@@ -329,7 +332,13 @@ inline void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
       }
 }
 
-extern vvp_vector4_t operator ~ (const vvp_vector4_t&that);
+inline vvp_vector4_t operator ~ (const vvp_vector4_t&that)
+{
+      vvp_vector4_t res = that;
+      res.invert();
+      return res;
+}
+
 extern ostream& operator << (ostream&, const vvp_vector4_t&);
 
 extern vvp_bit4_t compare_gtge(const vvp_vector4_t&a,
@@ -420,6 +429,12 @@ extern vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&, unsigned wid);
 extern vvp_vector4_t c4string_to_vector4(const char*str);
 
 extern ostream& operator<< (ostream&, const vvp_vector2_t&);
+
+/* Inline some of the vector2_t methods. */
+inline unsigned vvp_vector2_t::size() const
+{
+      return wid_;
+}
 
 /*
  * This class represents a scalar value with strength. These are
@@ -882,20 +897,29 @@ class vvp_vpi_callback {
       vvp_vpi_callback();
       virtual ~vvp_vpi_callback();
 
-      void run_vpi_callbacks();
+      virtual void run_vpi_callbacks();
       void add_vpi_callback(struct __vpiCallback*);
 
       virtual void get_value(struct t_vpi_value*value) =0;
 
+    private:
+      struct __vpiCallback*vpi_callbacks_;
+};
+
+class vvp_vpi_callback_wordable : public vvp_vpi_callback {
+    public:
+      vvp_vpi_callback_wordable();
+      ~vvp_vpi_callback_wordable();
+
+      void run_vpi_callbacks();
       void attach_as_word(class __vpiArray* arr, unsigned long addr);
 
     private:
-      struct __vpiCallback*vpi_callbacks_;
       class __vpiArray* array_;
       unsigned long array_word_;
 };
 
-class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_vpi_callback {
+class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_vpi_callback_wordable {
 
     public:
       vvp_fun_signal_base();

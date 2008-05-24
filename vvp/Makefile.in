@@ -43,6 +43,8 @@ INSTALL_DATA = @INSTALL_DATA@
 RANLIB = @RANLIB@
 LEX = @LEX@
 YACC = @YACC@
+MAN = @MAN@
+PS2PDF = @PS2PDF@
 
 CPPFLAGS = @ident_support@ -I. -I.. -I $(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@
 CXXFLAGS = -Wall @CXXFLAGS@
@@ -70,14 +72,14 @@ check: all
 
 V = vpi_modules.o vpi_callback.o vpi_const.o vpi_event.o vpi_iter.o vpi_mcd.o \
 vpi_priv.o vpi_scope.o vpi_real.o vpi_signal.o vpi_tasks.o vpi_time.o \
-vpi_memory.o vpi_vthr_vector.o vpip_bin.o vpip_hex.o vpip_oct.o \
+vpi_vthr_vector.o vpip_bin.o vpip_hex.o vpip_oct.o \
 vpip_to_dec.o vpip_format.o vvp_vpi.o
 
 O = main.o parse.o parse_misc.o lexor.o arith.o array.o bufif.o compile.o \
 concat.o \
 dff.o extend.o npmos.o part.o reduce.o resolv.o sfunc.o stop.o symbols.o \
 ufunc.o codes.o \
-vthread.o schedule.o statistics.o tables.o udp.o vvp_net.o memory.o \
+vthread.o schedule.o statistics.o tables.o udp.o vvp_net.o \
 event.o logic.o delay.o words.o $V
 
 ifeq (@WIN32@,yes)
@@ -133,12 +135,20 @@ lexor.cc: $(srcdir)/lexor.lex
 	$(LEX) -s -olexor.cc $(srcdir)/lexor.lex
 
 vvp.pdf: $(srcdir)/vvp.man
-	man -t $(srcdir)/vvp.man | ps2pdf - vvp.pdf
+	$(MAN) -t $(srcdir)/vvp.man | $(PS2PDF) - vvp.pdf
 
-ifeq (@MING32@,yes)
+ifeq (@MINGW32@,yes)
+ifeq ($(MAN),none)
+INSTALL_DOC = $(mandir)/man1/vvp.1
+else
+ifeq ($(PS2PDF),none)
+INSTALL_DOC = $(mandir)/man1/vvp.1
+else
 INSTALL_DOC = $(prefix)/vvp.pdf $(mandir)/man1/vvp.1
-INSTALL_DOCDIR = $(mandir)/man1
 all: vvp.pdf
+endif
+endif
+INSTALL_DOCDIR = $(mandir)/man1
 else
 INSTALL_DOC = $(mandir)/man1/vvp.1
 INSTALL_DOCDIR = $(mandir)/man1

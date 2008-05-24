@@ -124,6 +124,8 @@ bool debug_scopes = false;
 bool debug_eval_tree = false;
 bool debug_elaborate = false;
 bool debug_synth2 = false;
+bool debug_optimizer = false;
+
 /*
  * Verbose messages enabled.
  */
@@ -391,6 +393,9 @@ static void read_iconfig_file(const char*ipath)
 		  } else if (strcmp(cp,"synth2") == 0) {
 			debug_synth2 = true;
 			cerr << "debug: Enable synth2 debug" << endl;
+		  } else if (strcmp(cp,"optimizer") == 0) {
+			debug_optimizer = true;
+			cerr << "debug: Enable optimizer debug" << endl;
 		  } else {
 		  }
 

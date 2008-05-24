@@ -336,6 +336,14 @@ static int parse(int argc, char *argv[])
 			   assignn(&gstr.pOUT, argv[idx],
 			           strlen(argv[idx])-strlen(dot_o_ext));
 		}
+		  /* Check for the -mingw option */
+		else if (startsWith(mingw_option, argv[idx]))
+			assignn(&gstr.pMINGW, argv[idx]+sizeof(mingw_option)-1,
+			        strlen(argv[idx])-(sizeof(mingw_option)-1));
+		  /* Check for the -ivl   option */
+		else if (startsWith(ivl_option, argv[idx]))
+			assignn(&gstr.pIVL, argv[idx]+sizeof(ivl_option)-1,
+			        strlen(argv[idx])-(sizeof(ivl_option)-1));
 		  /* Check for the --name option */
 		else if (startsWith(name_option, argv[idx])) {
 			assignn(&gstr.pOUT, argv[idx]+sizeof(name_option)-1,
@@ -356,14 +364,6 @@ static int parse(int argc, char *argv[])
 			append(&gstr.pDEFS, " ");
 			append(&gstr.pDEFS, argv[idx]);
 		}
-		  /* Check for the -mingw option */
-		else if (startsWith(mingw_option, argv[idx]))
-			assignn(&gstr.pMINGW, argv[idx]+sizeof(mingw_option)-1,
-			        strlen(argv[idx])-(sizeof(mingw_option)-1));
-		  /* Check for the -ivl   option */
-		else if (startsWith(ivl_option, argv[idx]))
-			assignn(&gstr.pIVL, argv[idx]+sizeof(ivl_option)-1,
-			        strlen(argv[idx])-(sizeof(ivl_option)-1));
 		  /* Check for the --cflags option */
 		else if (stricmp("--cflags", argv[idx]) == 0) {
 			setup_ivl_environment();

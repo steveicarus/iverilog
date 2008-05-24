@@ -22,6 +22,7 @@
 
 # include  "netlist.h"
 # include  <cstring>
+# include  <cstdlib>
 # include  <sstream>
 # include  "ivl_assert.h"
 
@@ -218,7 +219,7 @@ map<perm_string,NetScope::param_expr_t>::iterator NetScope::find_parameter(perm_
       if (idx != localparams.end())
 	    return idx;
 
-      return 0;
+      return (map<perm_string,param_expr_t>::iterator) 0;
 }
 
 NetScope::TYPE NetScope::type() const

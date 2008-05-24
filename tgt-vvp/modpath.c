@@ -22,6 +22,10 @@
 # include  <stdlib.h>
 # include  <assert.h>
 
+#ifdef __MINGW32__  /* MinGW has inconsistent %p output. */
+#define snprintf _snprintf
+#endif
+
 static ivl_signal_t find_path_source_port(ivl_delaypath_t path)
 {
       int idx;
