@@ -23,6 +23,7 @@
 # include  "ivl_target.h"
 # include  "StringHeap.h"
 # include  "netlist.h"
+# include  <vector>
 
 #if defined(__MINGW32__)
 #include <windows.h>
@@ -147,6 +148,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       ivl_scope_t lookup_scope_(const NetScope*scope);
 
       ivl_attribute_s* fill_in_attributes(const Attrib*net);
+      void switch_attributes(struct ivl_switch_s *obj, const NetNode*net);
       void logic_attributes(struct ivl_net_logic_s *obj, const NetNode*net);
 
     private:
@@ -446,6 +448,19 @@ struct ivl_net_logic_s {
       ivl_expr_t delay[3];
 };
 
+struct ivl_switch_s {
+      ivl_switch_type_t type;
+
+      perm_string name;
+      ivl_scope_t scope;
+
+      struct ivl_attribute_s*attr;
+      unsigned nattr;
+
+      ivl_nexus_t pins[3];
+      perm_string file;
+      unsigned lineno;
+};
 
 /*
  * UDP definition.
@@ -482,12 +497,14 @@ struct ivl_nexus_ptr_s {
 	    ivl_net_logic_t log; /* type 1 */
 	    ivl_net_const_t con; /* type 2 */
 	    ivl_lpm_t       lpm; /* type 3 */
+	    ivl_switch_t    swi; /* type 4 */
       } l;
 };
 # define __NEXUS_PTR_SIG 0
 # define __NEXUS_PTR_LOG 1
 # define __NEXUS_PTR_CON 2
 # define __NEXUS_PTR_LPM 3
+# define __NEXUS_PTR_SWI 4
 
 /*
  * NOTE: ONLY allocate ivl_nexus_s objects with the included "new" operator.
@@ -567,6 +584,8 @@ struct ivl_scope_s {
 
       unsigned ports;
       ivl_signal_t*port;
+
+      std::vector<ivl_switch_t>switches;
 
       signed int time_precision :8;
       signed int time_units :8;
@@ -729,6 +748,12 @@ static inline void FILE_NAME(ivl_scope_t scope, const NetScope*info)
       scope->def_file = info->get_def_file();
       scope->lineno = info->get_lineno();
       scope->def_lineno = info->get_def_lineno();
+}
+
+static inline void FILE_NAME(ivl_switch_t net, const LineInfo*info)
+{
+      net->file = info->get_file();
+      net->lineno = info->get_lineno();
 }
 
 #endif

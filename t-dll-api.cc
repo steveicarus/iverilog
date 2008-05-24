@@ -1627,6 +1627,19 @@ extern "C" ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx)
       return net->sigs_[idx];
 }
 
+extern "C" unsigned ivl_scope_switches(ivl_scope_t net)
+{
+      assert(net);
+      return net->switches.size();
+}
+
+extern "C" ivl_switch_t ivl_scope_switch(ivl_scope_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->switches.size());
+      return net->switches[idx];
+}
+      
 extern "C" int ivl_scope_time_precision(ivl_scope_t net)
 {
       assert(net);
@@ -2142,4 +2155,29 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
       }
 
       return 0;
+}
+
+extern "C" const char*ivl_switch_basename(ivl_switch_t net)
+{
+      return net->name;
+}
+
+extern "C" ivl_switch_type_t ivl_switch_type(ivl_switch_t net)
+{
+      return net->type;
+}
+
+extern "C" ivl_nexus_t ivl_switch_a(ivl_switch_t net)
+{
+      return net->pins[0];
+}
+
+extern "C" ivl_nexus_t ivl_switch_b(ivl_switch_t net)
+{
+      return net->pins[1];
+}
+
+extern "C" ivl_nexus_t ivl_switch_enable(ivl_switch_t net)
+{
+      return net->pins[2];
 }

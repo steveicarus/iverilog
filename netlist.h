@@ -1362,15 +1362,16 @@ class NetSysFunc  : public NetNode {
 class NetTran  : public NetNode {
 
     public:
-      NetTran(NetScope*scope, perm_string n, bool resistive, int enable);
+      NetTran(NetScope*scope, perm_string n, ivl_switch_type_t type);
       ~NetTran();
+
+      ivl_switch_type_t type() const { return type_; }
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
 
     private:
-      bool resistive_;
-      bool enable_;
+      ivl_switch_type_t type_;
 };
 
 /* =========

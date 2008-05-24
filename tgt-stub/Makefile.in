@@ -51,7 +51,7 @@ dep:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
-O = stub.o expression.o statement.o
+O = stub.o expression.o statement.o switches.o
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
