@@ -716,6 +716,15 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
+	    if (!rep->value().is_defined()) {
+		  cerr << get_fileline() << ": error: Concatenation repeat "
+		       << "may not be undefined (" << rep->value()
+		       << ")." << endl;
+		  des->errors += 1;
+		  concat_depth -= 1;
+		  return 0;
+	    }
+
 	    if (rep->value().is_negative()) {
 		  cerr << get_fileline() << ": error: Concatenation repeat "
 		       << "may not be negative (" << rep->value().as_long()
