@@ -2476,7 +2476,7 @@ bool of_LOAD_NX(vthread_t thr, vvp_code_t cp)
  * The functor to read from is the vvp_net_t object pointed to by the
  * cp->net pointer.
  */
-vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
+static vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
       assert(cp->bit_idx[1] > 0);
@@ -2490,9 +2490,8 @@ vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
       if (sig == 0) {
 	    cerr << "%%load/v error: Net arg not a vector signal? "
 		 << typeid(*net->fun).name() << endl;
+	    assert(sig);
       }
-      assert(sig);
-
 
       vvp_vector4_t sig_value = sig->vec4_value();
       sig_value.resize(wid);
@@ -2532,15 +2531,35 @@ bool of_LOAD_VP0(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t sig_value(wid, BIT4_0);
       sig_value.copy_bits(load_base(thr, cp));
 
-	/* Add the addend value */
-      sig_value += addend;
-
 	/* Check the address once, before we scan the vector. */
       thr_check_addr(thr, bit+wid-1);
 
+      unsigned long*val = sig_value.subarray(0, wid);
+      if (val == 0) {
+	    vvp_vector4_t tmp(wid, BIT4_X);
+	    thr->bits4.set_vec(bit, tmp);
+	    return true;
+      }
+
+      unsigned words = (wid + CPU_WORD_BITS - 1) / CPU_WORD_BITS;
+      unsigned long carry = 0;
+      unsigned long imm = addend;
+      if (addend >= 0) {
+	    for (unsigned idx = 0 ; idx < words ; idx += 1) {
+		  val[idx] = add_with_carry(val[idx], imm, carry);
+		  imm = 0UL;
+	    }
+      } else {
+	    for (unsigned idx = 0 ; idx < words ; idx += 1) {
+		  val[idx] = add_with_carry(val[idx], imm, carry);
+		  imm = -1UL;
+	    }
+      }
+
 	/* Copy the vector bits into the bits4 vector. Do the copy
 	   directly to skip the excess calls to thr_check_addr. */
-      thr->bits4.set_vec(bit, sig_value);
+      thr->bits4.setarray(bit, wid, val);
+      delete[]val;
 
       return true;
 }
