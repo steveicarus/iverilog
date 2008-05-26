@@ -214,6 +214,67 @@ static vvp_vector4_t vthread_bits_to_vector(struct vthread_s*thr,
       }
 }
 
+/*
+ * Some of the instructions do wide addition to arrays of long. They
+ * use this add_with_cary function to help.
+ */
+static inline unsigned long add_with_carry(unsigned long a, unsigned long b,
+					   unsigned long&carry)
+{
+      unsigned long tmp = b + carry;
+      unsigned long sum = a + tmp;
+      carry = 0;
+      if (tmp < b)
+	    carry = 1;
+      if (sum < tmp)
+	    carry = 1;
+      if (sum < a)
+	    carry = 1;
+      return sum;
+}
+
+static unsigned long multiply_with_carry(unsigned long a, unsigned long b,
+					 unsigned long&carry)
+{
+      const unsigned long mask = (1UL << (CPU_WORD_BITS/2)) - 1;
+      unsigned long a0 = a & mask;
+      unsigned long a1 = (a >> (CPU_WORD_BITS/2)) & mask;
+      unsigned long b0 = b & mask;
+      unsigned long b1 = (b >> (CPU_WORD_BITS/2)) & mask;
+
+      unsigned long tmp = a0 * b0;
+
+      unsigned long r00 = tmp & mask;
+      unsigned long c00 = (tmp >> (CPU_WORD_BITS/2)) & mask;
+
+      tmp = a0 * b1;
+
+      unsigned long r01 = tmp & mask;
+      unsigned long c01 = (tmp >> (CPU_WORD_BITS/2)) & mask;
+
+      tmp = a1 * b0;
+
+      unsigned long r10 = tmp & mask;
+      unsigned long c10 = (tmp >> (CPU_WORD_BITS/2)) & mask;
+
+      tmp = a1 * b1;
+
+      unsigned long r11 = tmp & mask;
+      unsigned long c11 = (tmp >> (CPU_WORD_BITS/2)) & mask;
+
+      unsigned long r1 = c00 + r01 + r10;
+      unsigned long r2 = (r1 >> (CPU_WORD_BITS/2)) & mask;
+      r1 &= mask;
+      r2 += c01 + c10 + r11;
+      unsigned long r3 = (r2 >> (CPU_WORD_BITS/2)) & mask;
+      r2 &= mask;
+      r3 += c11;
+      r3 &= mask;
+
+      carry = (r3 << (CPU_WORD_BITS/2)) + r2;
+      return (r1 << (CPU_WORD_BITS/2)) + r00;
+}
+
 
 /*
  * Create a new thread with the given start address.
@@ -465,19 +526,8 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
 
       unsigned long carry;
       carry = 0;
-      for (unsigned idx = 0 ;  (idx*CPU_WORD_BITS) < cp->number ;  idx += 1) {
-
-	    unsigned long tmp = lvb[idx] + carry;
-	    unsigned long sum = lva[idx] + tmp;
-	    carry = 0;
-	    if (tmp < lvb[idx])
-		  carry = 1;
-	    if (sum < tmp)
-		  carry = 1;
-	    if (sum < lva[idx])
-		  carry = 1;
-	    lva[idx] = sum;
-      }
+      for (unsigned idx = 0 ;  (idx*CPU_WORD_BITS) < cp->number ;  idx += 1)
+	    lva[idx] = add_with_carry(lva[idx], lvb[idx], carry);
 
 	/* We know from the vector_to_array that the address is valid
 	   in the thr->bitr4 vector, so just do the set bit. */
@@ -525,30 +575,15 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
       unsigned word_count = (bit_width+CPU_WORD_BITS-1)/CPU_WORD_BITS;
 
       unsigned long*lva = vector_to_array(thr, bit_addr, bit_width);
-      unsigned long*lvb = 0;
       if (lva == 0)
 	    goto x_out;
 
-      lvb = new unsigned long[word_count];
-
-      lvb[0] = imm_value;
-      for (unsigned idx = 1 ;  idx < word_count ;  idx += 1)
-	    lvb[idx] = 0;
 
       unsigned long carry;
       carry = 0;
-      for (unsigned idx = 0 ;  (idx*CPU_WORD_BITS) < bit_width ;  idx += 1) {
-
-	    unsigned long tmp = lvb[idx] + carry;
-	    unsigned long sum = lva[idx] + tmp;
-	    carry = 0;
-	    if (tmp < lvb[idx])
-		  carry = 1;
-	    if (sum < tmp)
-		  carry = 1;
-	    if (sum < lva[idx])
-		  carry = 1;
-	    lva[idx] = sum;
+      for (unsigned idx = 0 ;  idx < word_count ;  idx += 1) {
+	    lva[idx] = add_with_carry(lva[idx], imm_value, carry);
+	    imm_value = 0;
       }
 
 	/* We know from the vector_to_array that the address is valid
@@ -557,7 +592,6 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
       thr->bits4.setarray(bit_addr, bit_width, lva);
 
       delete[]lva;
-      delete[]lvb;
 
       return true;
 
@@ -2921,101 +2955,59 @@ bool of_MOVI(vthread_t thr, vvp_code_t cp)
 
 bool of_MUL(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx[0] >= 4);
-      if(cp->number <= 8*sizeof(unsigned long)) {
+      unsigned adra = cp->bit_idx[0];
+      unsigned adrb = cp->bit_idx[1];
+      unsigned wid = cp->number;
 
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
-      unsigned long lv = 0, rv = 0;
+      assert(adra >= 4);
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
-	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
-
-	    if (bit4_is_xz(lb) || bit4_is_xz(rb))
-		  goto x_out;
-
-	    lv |= (unsigned long) lb << idx;
-	    rv |= (unsigned long) rb << idx;
-
-	    idx1 += 1;
-	    if (idx2 >= 4)
-		  idx2 += 1;
+      unsigned long*ap = vector_to_array(thr, adra, wid);
+      if (ap == 0) {
+	    vvp_vector4_t tmp(wid, BIT4_X);
+	    thr->bits4.set_vec(adra, tmp);
+	    return true;
       }
 
-      lv *= rv;
-
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? BIT4_1 : BIT4_0);
-	    lv >>= 1;
+      unsigned long*bp = vector_to_array(thr, adrb, wid);
+      if (bp == 0) {
+	    delete[]ap;
+	    vvp_vector4_t tmp(wid, BIT4_X);
+	    thr->bits4.set_vec(adra, tmp);
+	    return true;
       }
 
-      return true;
-      } else {
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
+	// If the value fits in a single CPU word, then do it the easy way.
+      if (wid <= CPU_WORD_BITS) {
+	    ap[0] *= bp[0];
+	    thr->bits4.setarray(adra, wid, ap);
+	    delete[]ap;
+	    delete[]bp;
+	    return true;
+      }
 
-      unsigned char *a, *b, *sum;
-      a = new unsigned char[cp->number];
-      b = new unsigned char[cp->number];
-      sum = new unsigned char[cp->number];
+      unsigned words = (wid+CPU_WORD_BITS-1) / CPU_WORD_BITS;
+      unsigned long*res = new unsigned long[words];
+      for (unsigned idx = 0 ; idx < words ; idx += 1)
+	    res[idx] = 0;
 
-      int mxa = -1;
-      int mxb = -1;
-
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
-	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
-
-	    if (bit4_is_xz(lb) || bit4_is_xz(rb))
-		  {
-                  delete[]sum;
-                  delete[]b;
-                  delete[]a;
-		  goto x_out;
+      for (unsigned mul_a = 0 ; mul_a < words ; mul_a += 1) {
+	    for (unsigned mul_b = 0 ; mul_b < words ; mul_b += 1) {
+		  unsigned long sum;
+		  unsigned long tmp = multiply_with_carry(ap[mul_a], bp[mul_b], sum);
+		  unsigned base = mul_a + mul_b;
+		  unsigned long carry = 0;
+		  res[base] = add_with_carry(res[base], tmp, carry);
+		  for (unsigned add_idx = base+1; add_idx < words; add_idx += 1) {
+			res[add_idx] = add_with_carry(res[add_idx], sum, carry);
+			sum = 0;
 		  }
-
-	    if((a[idx] = lb)) mxa=idx+1;
-	    if((b[idx] = rb)) mxb=idx;
-            sum[idx]=0;
-
-	    idx1 += 1;
-	    if (idx2 >= 4)
-		  idx2 += 1;
+	    }
       }
 
-//    do "unsigned ZZ sum = a * b" the hard way..
-      for(int i=0;i<=mxb;i++)
-                {
-                if(b[i])
-                        {
-                        unsigned char carry=0;
-                        unsigned char temp;
-
-                        for(int j=0;j<=mxa;j++)
-                                {
-                                if(i+j>=(int)cp->number) break;
-                                temp=sum[i+j]+a[j]+carry;
-                                sum[i+j]=(temp&1);
-                                carry=(temp>>1);
-                                }
-                        }
-                }
-
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, sum[idx]?BIT4_1:BIT4_0);
-      }
-
-      delete[]sum;
-      delete[]b;
-      delete[]a;
-      return true;
-      }
-
- x_out:
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
-
+      thr->bits4.setarray(adra, wid, res);
+      delete[]ap;
+      delete[]bp;
+      delete[]res;
       return true;
 }
 
@@ -3030,101 +3022,48 @@ bool of_MUL_WR(vthread_t thr, vvp_code_t cp)
 
 bool of_MULI(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx[0] >= 4);
+      unsigned adr = cp->bit_idx[0];
+      unsigned long imm = cp->bit_idx[1];
+      unsigned wid = cp->number;
 
-	/* If the value fits into a native unsigned long, then make an
-	   unsigned long variable with the numbers, to a native
-	   multiply, and work with that. */
+      assert(adr >= 4);
 
-      if(cp->number <= 8*sizeof(unsigned long)) {
-	    unsigned idx1 = cp->bit_idx[0];
-	    unsigned long lv = 0, rv = cp->bit_idx[1];
-
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  vvp_bit4_t lb = thr_get_bit(thr, idx1);
-
-		  if (bit4_is_xz(lb))
-			goto x_out;
-
-		  lv |= (unsigned long) lb << idx;
-
-		  idx1 += 1;
-	    }
-
-	    lv *= rv;
-
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1)? BIT4_1 : BIT4_0);
-		  lv >>= 1;
-	    }
-
+      unsigned long*val = vector_to_array(thr, adr, wid);
+	// If there are X bits in the value, then return X.
+      if (val == 0) {
+	    vvp_vector4_t tmp(cp->number, BIT4_X);
+	    thr->bits4.set_vec(cp->bit_idx[0], tmp);
 	    return true;
       }
 
-	/* number is too large for local long, so do bitwise
-	   multiply. */
-
-      unsigned idx1; idx1 = cp->bit_idx[0];
-      unsigned imm;  imm  = cp->bit_idx[1];
-
-      unsigned char *a, *b, *sum;
-      a = new unsigned char[cp->number];
-      b = new unsigned char[cp->number];
-      sum = new unsigned char[cp->number];
-
-      int mxa; mxa = -1;
-      int mxb; mxb = -1;
-
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
-	    vvp_bit4_t rb = (imm & 1)? BIT4_1 : BIT4_0;
-
-	    imm >>= 1;
-
-	    if (bit4_is_xz(lb)) {
-                  delete[]sum;
-                  delete[]b;
-                  delete[]a;
-		  goto x_out;
-	    }
-
-	    if((a[idx] = lb)) mxa=idx+1;
-	    if((b[idx] = rb)) mxb=idx;
-            sum[idx]=0;
-
-	    idx1 += 1;
+	// If everything fits in a word, then do it the easy way.
+      if (wid <= CPU_WORD_BITS) {
+	    val[0] *= imm;
+	    thr->bits4.setarray(adr, wid, val);
+	    delete[]val;
+	    return true;
       }
 
-//    do "unsigned ZZ sum = a * b" the hard way..
-      for(int i=0;i<=mxb;i++) {
-	    if(b[i]) {
-		  unsigned char carry=0;
-		  unsigned char temp;
+      unsigned words = (wid+CPU_WORD_BITS-1) / CPU_WORD_BITS;
+      unsigned long*res = new unsigned long[words];
+      for (unsigned idx = 0 ; idx < words ; idx += 1)
+	    res[idx] = 0;
 
-		  for(int j=0;j<=mxa;j++) {
-			if(i+j>=(int)cp->number) break;
-			temp=sum[i+j]+a[j]+carry;
-			sum[i+j]=(temp&1);
-			carry=(temp>>1);
-		  }
+      for (unsigned mul_idx = 0 ; mul_idx < words ; mul_idx += 1) {
+	    unsigned long sum;
+	    unsigned long tmp = multiply_with_carry(val[mul_idx], imm, sum);
+
+	    unsigned long carry = 0;
+	    res[mul_idx] = add_with_carry(res[mul_idx], tmp, carry);
+	    for (unsigned add_idx = mul_idx+1 ; add_idx < words ; add_idx += 1) {
+		  res[add_idx] = add_with_carry(res[add_idx], sum, carry);
+		  sum = 0;
 	    }
       }
 
-
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, sum[idx]?BIT4_1:BIT4_0);
-      }
-
-      delete[]sum;
-      delete[]b;
-      delete[]a;
-
-      return true;
-
- x_out:
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
-
+      thr->bits4.setarray(adr, wid, res);
+      delete[]val;
+      delete[]res;
       return true;
 }
 
@@ -3754,20 +3693,10 @@ bool of_SUB(vthread_t thr, vvp_code_t cp)
 	    goto x_out;
 
 
-      unsigned carry;
+      unsigned long carry;
       carry = 1;
-      for (unsigned idx = 0 ;  (idx*CPU_WORD_BITS) < cp->number ;  idx += 1) {
-	    unsigned long tmp = ~lvb[idx] + carry;
-	    unsigned long sum = tmp + lva[idx];
-	    carry = 0;
-	    if (tmp < ~lvb[idx])
-		  carry = 1;
-	    if (sum < tmp)
-		  carry = 1;
-	    if (sum < lva[idx])
-		  carry = 1;
-	    lva[idx] = sum;
-      }
+      for (unsigned idx = 0 ;  (idx*CPU_WORD_BITS) < cp->number ;  idx += 1)
+	    lva[idx] = add_with_carry(lva[idx], ~lvb[idx], carry);
 
 
 	/* We know from the vector_to_array that the address is valid
@@ -3802,34 +3731,17 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
       assert(cp->bit_idx[0] >= 4);
 
       unsigned word_count = (cp->number+CPU_WORD_BITS-1)/CPU_WORD_BITS;
-
+      unsigned long imm = cp->bit_idx[1];
       unsigned long*lva = vector_to_array(thr, cp->bit_idx[0], cp->number);
-      unsigned long*lvb;
       if (lva == 0)
 	    goto x_out;
 
-      lvb = new unsigned long[word_count];
-
-
-      lvb[0] = cp->bit_idx[1];
-      lvb[0] = ~lvb[0];
-      for (unsigned idx = 1 ;  idx < word_count ;  idx += 1)
-	    lvb[idx] = ~0UL;
 
       unsigned long carry;
       carry = 1;
-      for (unsigned idx = 0 ;  (idx*CPU_WORD_BITS) < cp->number ;  idx += 1) {
-
-	    unsigned long tmp = lvb[idx] + carry;
-	    unsigned long sum = lva[idx] + tmp;
-	    carry = 0UL;
-	    if (tmp < lvb[idx])
-		  carry = 1;
-	    if (sum < tmp)
-		  carry = 1;
-	    if (sum < lva[idx])
-		  carry = 1;
-	    lva[idx] = sum;
+      for (unsigned idx = 0 ;  idx < word_count ;  idx += 1) {
+	    lva[idx] = add_with_carry(lva[idx], ~imm, carry);
+	    imm = ~0UL;
       }
 
 	/* We know from the vector_to_array that the address is valid
@@ -3838,7 +3750,6 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
       thr->bits4.setarray(cp->bit_idx[0], cp->number, lva);
 
       delete[]lva;
-      delete[]lvb;
 
       return true;
 
