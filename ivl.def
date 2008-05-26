@@ -222,10 +222,7 @@ ivl_switch_a
 ivl_switch_b
 ivl_switch_basename
 ivl_switch_enable
-ivl_switch_scope
 ivl_switch_type
-ivl_switch_attr_cnt;
-ivl_switch_attr_val;
 
 ivl_udp_init
 ivl_udp_name
