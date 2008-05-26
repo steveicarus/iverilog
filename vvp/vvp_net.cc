@@ -61,28 +61,6 @@ vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c)
       }
 }
 
-vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b)
-{
-      if (a == BIT4_0)
-	    return BIT4_0;
-      if (b == BIT4_0)
-	    return BIT4_0;
-      if (bit4_is_xz(a))
-	    return BIT4_X;
-      if (bit4_is_xz(b))
-	    return BIT4_X;
-      return BIT4_1;
-}
-
-vvp_bit4_t operator | (vvp_bit4_t a, vvp_bit4_t b)
-{
-      if (a == BIT4_1)
-	    return BIT4_1;
-      if (b == BIT4_1)
-	    return BIT4_1;
-      return bit4_z2x( (vvp_bit4_t) ((int)a | (int)b) );
-}
-
 vvp_bit4_t operator ^ (vvp_bit4_t a, vvp_bit4_t b)
 {
       if (bit4_is_xz(a))
