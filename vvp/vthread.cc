@@ -275,6 +275,24 @@ static unsigned long multiply_with_carry(unsigned long a, unsigned long b,
       return (r1 << (CPU_WORD_BITS/2)) + r00;
 }
 
+static void multiply_array_imm(unsigned long*res, unsigned long*val,
+			       unsigned words, unsigned long imm)
+{
+      for (unsigned idx = 0 ; idx < words ; idx += 1)
+	    res[idx] = 0;
+
+      for (unsigned mul_idx = 0 ; mul_idx < words ; mul_idx += 1) {
+	    unsigned long sum;
+	    unsigned long tmp = multiply_with_carry(val[mul_idx], imm, sum);
+
+	    unsigned long carry = 0;
+	    res[mul_idx] = add_with_carry(res[mul_idx], tmp, carry);
+	    for (unsigned add_idx = mul_idx+1 ; add_idx < words ; add_idx += 1) {
+		  res[add_idx] = add_with_carry(res[add_idx], sum, carry);
+		  sum = 0;
+	    }
+      }
+}
 
 /*
  * Create a new thread with the given start address.
@@ -1511,297 +1529,268 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
       return ! disabled_myself_flag;
 }
 
-static void divide_bits(unsigned len, unsigned char*lbits,
-			const unsigned char*rbits)
+/*
+ * This function divides a 2-word number {high, a} by a 1-word
+ * number. Assume that high < b.
+ */
+static unsigned long divide2words(unsigned long a, unsigned long b,
+				  unsigned long high)
 {
-      unsigned char *a, *b, *z, *t;
-      a = new unsigned char[len+1];
-      b = new unsigned char[len+1];
-      z = new unsigned char[len+1];
-      t = new unsigned char[len+1];
+      unsigned long result = 0;
+      while (high > 0) {
+	    unsigned long tmp_result = ULONG_MAX / b;
+	    unsigned long remain = ULONG_MAX % b;
 
-      unsigned char carry;
-      unsigned char temp;
-
-      int mxa = -1, mxz = -1;
-      int i;
-      int current, copylen;
-
-
-      for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
-	    unsigned lb = lbits[idx];
-	    unsigned rb = rbits[idx];
-
-	    z[idx]=lb;
-	    a[idx]=1-rb;	// for 2s complement add..
-
-      }
-      z[len]=0;
-      a[len]=1;
-
-      for(i=0;i<(int)len+1;i++) {
-	    b[i]=0;
-      }
-
-      for(i=len-1;i>=0;i--) {
-	    if(!a[i]) {
-		  mxa=i;
-		  break;
-	    }
-      }
-
-      for(i=len-1;i>=0;i--) {
-	    if(z[i]) {
-		  mxz=i;
-		  break;
-	    }
-      }
-
-      if((mxa>mxz)||(mxa==-1)) {
-	    if(mxa==-1) {
-		  fprintf(stderr, "Division By Zero error, exiting.\n");
-		  exit(255);
+	    remain += 1;
+	    if (remain >= b) {
+		  remain -= b;
+		  result += 1;
 	    }
 
-	    goto tally;
+	      // Now 0x1_0...0 = b*tmp_result + remain
+	      // high*0x1_0...0 = high*(b*tmp_result + remain)
+	      // high*0x1_0...0 = high*b*tmp_result + high*remain
+
+	      // We know that high*0x1_0...0 >= high*b*tmp_result, and
+	      // we know that high*0x1_0...0 > high*remain. Use
+	      // high*remain as the remainder for another iteration,
+	      // and add tmp_result*high into the current estimate of
+	      // the result.
+	    result += tmp_result * high;
+
+	      // The new iteration starts with high*remain + a.
+	    remain = multiply_with_carry(high, remain, high);
+	    a = add_with_carry(a, remain, high);
+
+	      // Now result*b + {high,a} == the input {high,a}. It is
+	      // possible that the new high >= 1. If so, it will
+	      // certainly be less then high from the previous
+	      // iteration. Do another iteration and it will shrink,
+	      // eventually to 0.
       }
 
-      copylen = mxa + 2;
-      current = mxz - mxa;
+	// high is now 0, so a is the remaining remainder, so we can
+	// finish off the integer divide with a simple a/b.
 
-      while(current > -1) {
-	    carry = 1;
-	    for(i=0;i<copylen;i++) {
-		  temp = z[i+current] + a[i] + carry;
-		  t[i] = (temp&1);
-		  carry = (temp>>1);
+      return result + a/b;
+}
+
+static unsigned long* divide_bits(unsigned long*ap, unsigned long*bp, unsigned wid)
+{
+
+      unsigned words = (wid+CPU_WORD_BITS-1) / CPU_WORD_BITS;
+
+      unsigned btop = words-1;
+      while (btop > 0 && bp[btop] == 0)
+	    btop -= 1;
+
+	// Detect divide by 0, and exit.
+      if (btop==0 && bp[0]==0)
+	    return 0;
+
+      unsigned long*diff  = new unsigned long[words];
+      unsigned long*result= new unsigned long[words];
+      for (unsigned idx = 0 ; idx < words ; idx += 1)
+	    result[idx] = 0;
+
+      for (unsigned cur = words-btop ; cur > 0 ; cur -= 1) {
+	    unsigned cur_ptr = cur-1;
+	    unsigned long cur_res;
+	    if (ap[cur_ptr+btop] >= bp[btop]) {
+		  cur_res = ap[cur_ptr+btop] / bp[btop];
+
+	    } else if (cur_ptr+btop+1 >= words) {
+		  continue;
+
+	    } else if (ap[cur_ptr+btop+1] == 0) {
+		  continue;
+
+	    } else {
+		  cur_res = divide2words(ap[cur_ptr+btop], bp[btop],
+					 ap[cur_ptr+btop+1]);
 	    }
 
-	    if(carry) {
-		  for(i=0;i<copylen;i++) {
-			z[i+current] = t[i];
-		  }
-		  b[current] = 1;
+	      // cur_res is a guestimate of the result this far. It
+	      // may be 1 too big. (But it will also be >0) Try it,
+	      // and if the difference comes out negative, then adjust
+	      // then.
+
+	    multiply_array_imm(diff+cur_ptr, bp, words-cur_ptr, cur_res);
+	    unsigned long carry = 1;
+	    for (unsigned idx = cur_ptr ; idx < words ; idx += 1)
+		  ap[idx] = add_with_carry(ap[idx], ~diff[idx], carry);
+
+	      // ap has the diff subtracted out of it. If cur_res was
+	      // too large, then ap will turn negative. (We easily
+	      // tell that ap turned negative by looking at
+	      // carry&1. If it is 0, then it is *negative*.) In that
+	      // case, we know that cur_res was too large by 1. Correct by
+	      // adding 1b back in and reducing cur_res.
+	    if (carry&1 == 0) {
+		  cur_res -= 1;
+		  carry = 0;
+		  for (unsigned idx = cur_ptr ; idx < words ; idx += 1)
+			ap[idx] = add_with_carry(ap[idx], bp[idx-cur_ptr], carry);
+		    // The sign *must* have changed again.
+		  assert(carry == 1);
 	    }
 
-	    current--;
+	    result[cur_ptr] = cur_res;
       }
 
- tally:
-      for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
-	      // n.b., z[] has the remainder...
-	    lbits[idx] = b[idx];
-      }
+	// Now ap contains the remainder and result contains the
+	// desired result. We should find that:
+	//  input-a = bp * result + ap;
 
-      delete []t;
-      delete []z;
-      delete []b;
-      delete []a;
+      delete[]diff;
+      return result;
 }
 
 bool of_DIV(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx[0] >= 4);
+      unsigned adra = cp->bit_idx[0];
+      unsigned adrb = cp->bit_idx[1];
+      unsigned wid = cp->number;
 
-      if(cp->number <= 8*sizeof(unsigned long)) {
-	    unsigned idx1 = cp->bit_idx[0];
-	    unsigned idx2 = cp->bit_idx[1];
-	    unsigned long lv = 0, rv = 0;
+      assert(adra >= 4);
 
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  vvp_bit4_t lb = thr_get_bit(thr, idx1);
-		  vvp_bit4_t rb = thr_get_bit(thr, idx2);
-
-		  if (bit4_is_xz(lb) || bit4_is_xz(rb))
-			goto x_out;
-
-		  lv |= (unsigned long) lb << idx;
-		  rv |= (unsigned long) rb << idx;
-
-		  idx1 += 1;
-		  if (idx2 >= 4)
-			idx2 += 1;
-	    }
-
-	    if (rv == BIT4_0)
-		  goto x_out;
-
-	    lv /= rv;
-
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? BIT4_1 : BIT4_0);
-		  lv >>= 1;
-	    }
-
-	    return true;
-
-      } else {
-
-	      /* Make a string of the bits of the numbers to be
-		 divided. Then divide them, and write the results into
-		 the thread. */
-	    unsigned char*lbits = new unsigned char[cp->number];
-	    unsigned char*rbits = new unsigned char[cp->number];
-	    unsigned idx1 = cp->bit_idx[0];
-	    unsigned idx2 = cp->bit_idx[1];
-	    bool rval_is_zero = true;
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  lbits[idx] = thr_get_bit(thr, idx1);
-		  rbits[idx] = thr_get_bit(thr, idx2);
-		  if ((lbits[idx] | rbits[idx]) > 1) {
-			delete[]lbits;
-			delete[]rbits;
-			goto x_out;
-		  }
-
-		  if (rbits[idx] != 0)
-			rval_is_zero = false;
-
-		  idx1 += 1;
-		  if (idx2 >= 4)
-			idx2 += 1;
-	    }
-
-	      /* Notice the special case of divide by 0. */
-	    if (rval_is_zero) {
-		  delete[]lbits;
-		  delete[]rbits;
-		  goto x_out;
-	    }
-
-	    divide_bits(cp->number, lbits, rbits);
-
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, lbits[idx]?BIT4_1:BIT4_0);
-	    }
-
-	    delete[]lbits;
-	    delete[]rbits;
+      unsigned long*ap = vector_to_array(thr, adra, wid);
+      if (ap == 0) {
+	    vvp_vector4_t tmp(wid, BIT4_X);
+	    thr->bits4.set_vec(adra, tmp);
 	    return true;
       }
 
- x_out:
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
+      unsigned long*bp = vector_to_array(thr, adrb, wid);
+      if (bp == 0) {
+	    delete[]ap;
+	    vvp_vector4_t tmp(wid, BIT4_X);
+	    thr->bits4.set_vec(adra, tmp);
+	    return true;
+      }
 
+	// If the value fits in a single CPU word, then do it the easy way.
+      if (wid <= CPU_WORD_BITS) {
+	    if (bp[0] == 0) {
+		  vvp_vector4_t tmp(wid, BIT4_X);
+		  thr->bits4.set_vec(adra, tmp);
+	    } else {
+		  ap[0] /= bp[0];
+		  thr->bits4.setarray(adra, wid, ap);
+	    }
+	    delete[]ap;
+	    delete[]bp;
+	    return true;
+      }
+
+      unsigned long*result = divide_bits(ap, bp, wid);
+      if (result == 0) {
+	    delete[]ap;
+	    delete[]bp;
+	    vvp_vector4_t tmp(wid, BIT4_X);
+	    thr->bits4.set_vec(adra, tmp);
+	    return true;
+      }
+
+	// Now ap contains the remainder and result contains the
+	// desired result. We should find that:
+	//  input-a = bp * result + ap;
+
+      thr->bits4.setarray(adra, wid, result);
+      delete[]ap;
+      delete[]bp;
+      delete[]result;
       return true;
 }
 
-static void negate_bits(unsigned len, unsigned char*bits)
+
+static void negate_words(unsigned long*val, unsigned words)
 {
-      unsigned char carry = 1;
-      for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
-	    carry += bits[idx]? 0 : 1;
-	    bits[idx] = carry & 1;
-	    carry >>= 1;
-      }
+      unsigned long carry = 1;
+      for (unsigned idx = 0 ; idx < words ; idx += 1)
+	    val[idx] = add_with_carry(0, ~val[idx], carry);
 }
 
 bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx[0] >= 4);
+      unsigned adra = cp->bit_idx[0];
+      unsigned adrb = cp->bit_idx[1];
+      unsigned wid = cp->number;
+      unsigned words = (wid + CPU_WORD_BITS - 1) / CPU_WORD_BITS;
 
-      if(cp->number <= 8*sizeof(long)) {
-	    unsigned idx1 = cp->bit_idx[0];
-	    unsigned idx2 = cp->bit_idx[1];
-	    long lv = 0, rv = 0;
+      assert(adra >= 4);
 
-	    unsigned lb = 0;
-	    unsigned rb = 0;
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  lb = thr_get_bit(thr, idx1);
-		  rb = thr_get_bit(thr, idx2);
-
-		  if ((lb | rb) & 2)
-			goto x_out;
-
-		  lv |= (long)lb << idx;
-		  rv |= (long)rb << idx;
-
-		  idx1 += 1;
-		  if (idx2 >= 4)
-			idx2 += 1;
-	    }
-
-	      /* Extend the sign to fill the native long. */
-	    for (unsigned idx = cp->number; idx < (8*sizeof lv); idx += 1) {
-		  lv |= (long)lb << idx;
-		  rv |= (long)rb << idx;
-	    }
-
-	    if (rv == 0)
-		  goto x_out;
-
-	    lv /= rv;
-
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1)?BIT4_1:BIT4_0);
-		  lv >>= 1;
-	    }
-
-      } else {
-	    unsigned char*lbits = new unsigned char[cp->number];
-	    unsigned char*rbits = new unsigned char[cp->number];
-	    unsigned idx1 = cp->bit_idx[0];
-	    unsigned idx2 = cp->bit_idx[1];
-	    bool rval_is_zero = true;
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  lbits[idx] = thr_get_bit(thr, idx1);
-		  rbits[idx] = thr_get_bit(thr, idx2);
-		  if ((lbits[idx] | rbits[idx]) > 1) {
-			delete[]lbits;
-			delete[]rbits;
-			goto x_out;
-		  }
-
-		  if (rbits[idx] != 0)
-			rval_is_zero = false;
-
-		  idx1 += 1;
-		  if (idx2 >= 4)
-			idx2 += 1;
-	    }
-
-	      /* Notice the special case of divide by 0. */
-	    if (rval_is_zero) {
-		  delete[]lbits;
-		  delete[]rbits;
-		  goto x_out;
-	    }
-
-	      /* Signed division is unsigned division on the absolute
-		 values of the operands, then corrected for the number
-		 of signs. */
-	    unsigned sign_flag = 0;
-	    if (lbits[cp->number-1]) {
-		  sign_flag += 1;
-		  negate_bits(cp->number, lbits);
-	    }
-	    if (rbits[cp->number-1]) {
-		  sign_flag += 1;
-		  negate_bits(cp->number, rbits);
-	    }
-
-	    divide_bits(cp->number, lbits, rbits);
-
-	    if (sign_flag & 1) {
-		  negate_bits(cp->number, lbits);
-	    }
-
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, lbits[idx]?BIT4_1:BIT4_0);
-	    }
-
-	    delete[]lbits;
-	    delete[]rbits;
+      unsigned long*ap = vector_to_array(thr, adra, wid);
+      if (ap == 0) {
+	    vvp_vector4_t tmp(wid, BIT4_X);
+	    thr->bits4.set_vec(adra, tmp);
+	    return true;
       }
 
-      return true;
+      unsigned long*bp = vector_to_array(thr, adrb, wid);
+      if (bp == 0) {
+	    delete[]ap;
+	    vvp_vector4_t tmp(wid, BIT4_X);
+	    thr->bits4.set_vec(adra, tmp);
+	    return true;
+      }
 
- x_out:
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
+      unsigned long sign_mask = 0;
+      if (unsigned long sign_bits = (words*CPU_WORD_BITS) - wid) {
+	    sign_mask = -1UL << (CPU_WORD_BITS-sign_bits);
+	    if (ap[words-1] & (sign_mask>>1))
+		  ap[words-1] |= sign_mask;
+	    if (bp[words-1] & (sign_mask>>1))
+		  bp[words-1] |= sign_mask;
+      }
 
+      if (wid <= CPU_WORD_BITS) {
+	    if (bp[0] == 0) {
+		  vvp_vector4_t tmp(wid, BIT4_X);
+		  thr->bits4.set_vec(adra, tmp);
+	    } else {
+		  long tmpa = (long) ap[0];
+		  long tmpb = (long) bp[0];
+		  long res = tmpa / tmpb;
+		  ap[0] = ((unsigned long)res) & ~sign_mask;
+		  thr->bits4.setarray(adra, wid, ap);
+	    }
+	    delete[]ap;
+	    delete[]bp;
+	    return true;
+      }
+
+	// We need to the actual division to positive integers. Make
+	// them positive here, and remember the negations.
+      bool negate_flag = false;
+      if ( ((long) ap[words-1]) < 0 ) {
+	    negate_flag = true;
+	    negate_words(ap, words);
+      }
+      if ( ((long) bp[words-1]) < 0 ) {
+	    negate_flag ^= true;
+	    negate_words(bp, words);
+      }
+
+      unsigned long*result = divide_bits(ap, bp, wid);
+      if (result == 0) {
+	    delete[]ap;
+	    delete[]bp;
+	    vvp_vector4_t tmp(wid, BIT4_X);
+	    thr->bits4.set_vec(adra, tmp);
+	    return true;
+      }
+
+      if (negate_flag) {
+	    negate_words(result, words);
+      }
+
+      result[words-1] &= ~sign_mask;
+
+      thr->bits4.setarray(adra, wid, result);
+      delete[]ap;
+      delete[]bp;
+      delete[]result;
       return true;
 }
 
@@ -3065,20 +3054,8 @@ bool of_MULI(vthread_t thr, vvp_code_t cp)
 
       unsigned words = (wid+CPU_WORD_BITS-1) / CPU_WORD_BITS;
       unsigned long*res = new unsigned long[words];
-      for (unsigned idx = 0 ; idx < words ; idx += 1)
-	    res[idx] = 0;
 
-      for (unsigned mul_idx = 0 ; mul_idx < words ; mul_idx += 1) {
-	    unsigned long sum;
-	    unsigned long tmp = multiply_with_carry(val[mul_idx], imm, sum);
-
-	    unsigned long carry = 0;
-	    res[mul_idx] = add_with_carry(res[mul_idx], tmp, carry);
-	    for (unsigned add_idx = mul_idx+1 ; add_idx < words ; add_idx += 1) {
-		  res[add_idx] = add_with_carry(res[add_idx], sum, carry);
-		  sum = 0;
-	    }
-      }
+      multiply_array_imm(res, val, words, imm);
 
       thr->bits4.setarray(adr, wid, res);
       delete[]val;
