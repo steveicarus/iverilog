@@ -88,6 +88,31 @@ ostream& operator << (ostream&o, ivl_variable_type_t val)
       return o;
 }
 
+ostream& operator << (ostream&o, ivl_switch_type_t val)
+{
+      switch (val) {
+	  case IVL_SW_TRAN:
+	    o << "tran";
+	    break;
+	  case IVL_SW_TRANIF0:
+	    o << "tranif0";
+	    break;
+	  case IVL_SW_TRANIF1:
+	    o << "tranif1";
+	    break;
+	  case IVL_SW_RTRAN:
+	    o << "rtran";
+	    break;
+	  case IVL_SW_RTRANIF0:
+	    o << "rtranif0";
+	    break;
+	  case IVL_SW_RTRANIF1:
+	    o << "rtranif1";
+	    break;
+      }
+      return o;
+}
+
 static inline void dump_scope_path(ostream&o, const NetScope*scope)
 {
       if (const NetScope*parent = scope->parent()) {
@@ -609,6 +634,13 @@ void NetTaskDef::dump(ostream&o, unsigned ind) const
       proc_->dump(o, ind+4);
 
       o << setw(ind) << "" << "endtask" << endl;
+}
+
+void NetTran::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << type_ << " " << name() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
 }
 
 void NetUDP::dump_node(ostream&o, unsigned ind) const

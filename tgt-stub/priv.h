@@ -36,6 +36,15 @@ extern FILE*out;
 extern int stub_errors;
 
 /*
+ * This function finds the vector width of a signal. It relies on the
+ * assumption that all the signal inputs to the nexus have the same
+ * width. The ivl_target API should assert that condition.
+ */
+extern unsigned width_of_nexus(ivl_nexus_t nex);
+
+extern ivl_variable_type_t type_of_nexus(ivl_nexus_t nex);
+
+/*
  * Show the details of the expression.
  */
 extern void show_expression(ivl_expr_t net, unsigned ind);
@@ -44,6 +53,8 @@ extern void show_expression(ivl_expr_t net, unsigned ind);
  * Show the statement.
  */
 extern void show_statement(ivl_statement_t net, unsigned ind);
+
+extern void show_switch(ivl_switch_t net);
 
 /*
 */

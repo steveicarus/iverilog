@@ -152,6 +152,8 @@ ivl_scope_port
 ivl_scope_ports
 ivl_scope_sigs
 ivl_scope_sig
+ivl_scope_switch
+ivl_scope_switches
 ivl_scope_time_precision
 ivl_scope_time_units
 ivl_scope_type
@@ -215,6 +217,15 @@ ivl_stmt_parm
 ivl_stmt_parm_count
 ivl_stmt_rval
 ivl_stmt_sub_stmt
+
+ivl_switch_a
+ivl_switch_b
+ivl_switch_basename
+ivl_switch_enable
+ivl_switch_scope
+ivl_switch_type
+ivl_switch_attr_cnt;
+ivl_switch_attr_val;
 
 ivl_udp_init
 ivl_udp_name

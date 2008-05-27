@@ -1478,6 +1478,9 @@ static int show_scope(ivl_scope_t net, void*x)
       for (idx = 0 ;  idx < ivl_scope_lpms(net) ;  idx += 1)
 	    show_lpm(ivl_scope_lpm(net, idx));
 
+      for (idx = 0 ; idx < ivl_scope_switches(net) ; idx += 1)
+	    show_switch(ivl_scope_switch(net, idx));
+
       switch (ivl_scope_type(net)) {
 	  case IVL_SCT_FUNCTION:
 	  case IVL_SCT_TASK:

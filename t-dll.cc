@@ -380,6 +380,19 @@ static void nexus_lpm_add(ivl_nexus_t nex, ivl_lpm_t net, unsigned pin,
       nex->ptrs_[top-1].l.lpm= net;
 }
 
+static void nexus_switch_add(ivl_nexus_t nex, ivl_switch_t net, unsigned pin)
+{
+      unsigned top = nex->nptr_ + 1;
+      nex->ptrs_ = (struct ivl_nexus_ptr_s*)
+	    realloc(nex->ptrs_, top*sizeof(struct ivl_nexus_ptr_s));
+      nex->nptr_ = top;
+
+      nex->ptrs_[top-1].type_= __NEXUS_PTR_SWI;
+      nex->ptrs_[top-1].drive0 = IVL_DR_HiZ;
+      nex->ptrs_[top-1].drive1 = IVL_DR_HiZ;
+      nex->ptrs_[top-1].pin_ = pin;
+      nex->ptrs_[top-1].l.swi= net;
+}
 
 void scope_add_logic(ivl_scope_t scope, ivl_net_logic_t net)
 {
@@ -429,6 +442,11 @@ static void scope_add_lpm(ivl_scope_t scope, ivl_lpm_t net)
 			  scope->nlpm_*sizeof(ivl_lpm_t));
 	    scope->lpm_[scope->nlpm_-1] = net;
       }
+}
+
+static void scope_add_switch(ivl_scope_t scope, ivl_switch_t net)
+{
+      scope->switches.push_back(net);
 }
 
 ivl_parameter_t dll_target::scope_find_param(ivl_scope_t scope,
@@ -619,6 +637,13 @@ int dll_target::end_design(const Design*)
       int rc = (target_)(&des_);
       ivl_dlclose(dll_);
       return rc;
+}
+
+void dll_target::switch_attributes(struct ivl_switch_s *obj,
+				   const NetNode*net)
+{
+      obj->nattr = net->attr_cnt();
+      obj->attr  = fill_in_attributes(net);
 }
 
 void dll_target::logic_attributes(struct ivl_net_logic_s *obj,
@@ -1006,6 +1031,42 @@ void dll_target::logic(const NetLogic*net)
       make_logic_delays_(obj, net);
 
       scope_add_logic(scope, obj);
+}
+
+bool dll_target::tran(const NetTran*net)
+{
+      struct ivl_switch_s*obj = new struct ivl_switch_s;
+      obj->type = net->type();
+      obj->name = net->name();
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+
+      const Nexus*nex;
+
+      nex = net->pin(0).nexus();
+      assert(nex->t_cookie());
+      obj->pins[0] = nex->t_cookie();
+
+      nex = net->pin(1).nexus();
+      assert(nex->t_cookie());
+      obj->pins[1] = nex->t_cookie();
+
+      nexus_switch_add(obj->pins[0], obj, 0);
+      nexus_switch_add(obj->pins[1], obj, 1);
+
+      if (net->pin_count() > 2) {
+	    nex = net->pin(2).nexus();
+	    assert(nex->t_cookie());
+	    obj->pins[2] = nex->t_cookie();
+	    nexus_switch_add(obj->pins[2], obj, 2);
+      } else {
+	    obj->pins[2] = 0;
+      }
+
+      switch_attributes(obj, net);
+      scope_add_switch(obj->scope, obj);
+
+      return true;
 }
 
 bool dll_target::sign_extend(const NetSignExtend*net)
