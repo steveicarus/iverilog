@@ -368,6 +368,7 @@ struct __vpiSysTaskCall {
       class vvp_net_t*fnet;
       unsigned file_idx;
       unsigned lineno;
+      bool put_value;
 };
 
 extern struct __vpiSysTaskCall*vpip_cur_task;
