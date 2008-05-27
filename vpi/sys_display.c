@@ -827,6 +827,7 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		case vpiReg:
 		case vpiIntegerVar:
 		case vpiMemoryWord:
+		case vpiPartSelect:
 		  do_display_numeric(mcd, info, item);
 		  break;
 
@@ -1836,6 +1837,7 @@ static char *get_display(unsigned int *rtnsz, struct strobe_cb_info *info)
       case vpiReg:
       case vpiIntegerVar:
       case vpiMemoryWord:
+      case vpiPartSelect:
         width = get_numeric(&result, info, item);
         rtn = realloc(rtn, (size+width)*sizeof(char));
         memcpy(rtn+size-1, result, width);

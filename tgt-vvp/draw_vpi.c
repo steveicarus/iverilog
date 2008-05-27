@@ -29,6 +29,82 @@
 #define snprintf _snprintf
 #endif
 
+/*
+ * Check to see if the expression (number) can be correctly represented
+ * with a long variable.
+ */
+static int is_constant_number(ivl_expr_t ex)
+{
+	/* Make sure this matches the return type of constant_number(). */
+      unsigned lim_wid = 8*sizeof(long);
+      const char*bits;
+      char pad_bit = '0';
+      unsigned idx;
+      unsigned nbits = ivl_expr_width(ex);
+
+      if (ivl_expr_type(ex) != IVL_EX_NUMBER
+          && ivl_expr_type(ex) != IVL_EX_ULONG)
+            return 0;
+
+      bits = ivl_expr_bits(ex);
+
+	/* For unsigned values the effective MSB and on must be '0'. */
+      if (!ivl_expr_signed(ex)) lim_wid -= 1;
+
+	/* For negative values the pad bit is '1'. */
+      if (ivl_expr_signed(ex) && bits[nbits-1]=='1') {
+            pad_bit = '1';
+      }
+
+	/* For the number to fit in the variable all the upper bits must
+	 * match the pad bits. */
+      for (idx = lim_wid ;  idx < nbits ;  idx += 1) {
+            if (bits[idx] != pad_bit) return 0;
+      }
+
+      return 1;
+}
+
+/*
+ * Convert the expression (number) to a long value.
+ */
+static long get_constant_number(ivl_expr_t ex)
+{
+      long rtn = 0;
+
+      switch (ivl_expr_type(ex)) {
+	  case IVL_EX_ULONG:
+	    rtn = (signed)ivl_expr_value(ex);
+	    break;
+	  case IVL_EX_NUMBER: {
+	    unsigned idx;
+	    const char*bits = ivl_expr_bits(ex);
+	    unsigned nbits = ivl_expr_width(ex);
+	    char pad_bit = bits[nbits-1];
+	      /* Define all the bits in the long (negative numbers). */
+	    for (idx = 0 ;  idx < 8*sizeof(long) ;  idx += 1) {
+		  char bit;
+		  if (idx < nbits) bit = bits[idx];
+		  else bit = pad_bit;
+		  switch (bit) {
+		      case '0':
+			break;
+		      case '1':
+			rtn |= 1 << idx;
+			break;
+		      default:
+			assert(0);
+		  }
+	    }
+	    break;
+	  }
+	  default:
+	    assert(0);
+      }
+
+      return rtn;
+}
+
 static const char* magic_sfuncs[] = {
       "$time",
       "$stime",
@@ -216,6 +292,39 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			args[idx].text = strdup(buffer);
 			continue;
 		  }
+
+		case IVL_EX_SELECT: {
+		  ivl_expr_t vexpr = ivl_expr_oper1(expr);
+                  assert(vexpr);
+
+		    /* This code is only for signals. */
+		  if (ivl_expr_type(vexpr) != IVL_EX_SIGNAL) break;
+
+		    /* The signal is part of an array. */
+		    /* Add &APV<> code here when it is finished. */
+		  if (ivl_expr_oper1(vexpr)) break;
+
+                  ivl_expr_t bexpr = ivl_expr_oper2(expr);
+                  assert(bexpr);
+
+		    /* This is a constant bit/part select. */
+                  if (is_constant_number(bexpr)) {
+			snprintf(buffer, sizeof buffer, "&PV<v%p_0, %ld, %u>",
+			         ivl_expr_signal(vexpr),
+			         get_constant_number(bexpr),
+			         ivl_expr_width(expr));
+		    /* This is an indexed bit/part select. */
+                  } else {
+			struct vector_info rv;
+			rv = draw_eval_expr(bexpr, STUFF_OK_XZ);
+			snprintf(buffer, sizeof buffer, "&PV<v%p_0, %u %u, %u>",
+			         ivl_expr_signal(vexpr),
+			         rv.base, rv.wid,
+			         ivl_expr_width(expr));
+                  }
+		  args[idx].text = strdup(buffer);
+		  continue;
+		}
 
 		    /* Everything else will need to be evaluated and
 		       passed as a constant to the vpi task. */

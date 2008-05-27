@@ -77,7 +77,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_EVENT K_EVENT_OR K_EXTEND_S K_FUNCTOR K_MODPATH K_NET K_NET_S K_NET_R
 %token K_NET8 K_NET8_S
 %token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
-%token K_PART_V K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
+%token K_PART_V K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
 %token K_RESOLV K_SCOPE K_SFUNC K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_THREAD K_TIMESCALE K_UFUNC
@@ -790,8 +790,13 @@ argument
       }
   | K_A '<' T_SYMBOL ',' T_NUMBER '>'
       { $$ = vpip_make_vthr_A($3, $5); }
+  | K_PV '<' T_SYMBOL ',' T_NUMBER ',' T_NUMBER '>'
+      { $$ = vpip_make_PV($3, $5, $7); }
+  | K_PV '<' T_SYMBOL ',' '-' T_NUMBER ',' T_NUMBER '>'
+      { $$ = vpip_make_PV($3, -$6, $8); }
+  | K_PV '<' T_SYMBOL ',' T_NUMBER T_NUMBER ',' T_NUMBER '>'
+      { $$ = vpip_make_PV($3, $5, $6, $8); }
   ;
-
 
   /* functor operands can only be a list of symbols. */
 symbols
