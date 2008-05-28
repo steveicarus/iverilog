@@ -533,6 +533,28 @@ bool of_AND(vthread_t thr, vvp_code_t cp)
 }
 
 
+bool of_ANDI(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned long imm = cp->bit_idx[1];
+      unsigned wid = cp->number;
+
+      assert(idx1 >= 4);
+
+      vvp_vector4_t val = vthread_bits_to_vector(thr, idx1, wid);
+      vvp_vector4_t imv (wid, BIT4_0);
+
+      unsigned trans = wid;
+      if (trans > CPU_WORD_BITS)
+	    trans = CPU_WORD_BITS;
+      imv.setarray(0, trans, &imm);
+
+      val &= imv;
+
+      thr->bits4.set_vec(idx1, val);
+      return true;
+}
+
 bool of_ADD(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -2950,13 +2972,24 @@ bool of_MOV_WR(vthread_t thr, vvp_code_t cp)
 bool of_MOVI(vthread_t thr, vvp_code_t cp)
 {
       unsigned dst = cp->bit_idx[0];
-      unsigned val = cp->bit_idx[1];
+      static unsigned long val[8] = {0, 0, 0, 0, 0, 0, 0, 0};
       unsigned wid = cp->number;
 
       thr_check_addr(thr, dst+wid-1);
 
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1, val >>= 1)
-	    thr->bits4.set_bit(dst+idx, (val&1)? BIT4_1 : BIT4_0);
+      val[0] = cp->bit_idx[1];
+
+      while (wid > 0) {
+	    unsigned trans = wid;
+	    if (trans > 8*CPU_WORD_BITS)
+		  trans = 8*CPU_WORD_BITS;
+
+	    thr->bits4.setarray(dst, trans, val);
+
+	    val[0] = 0;
+	    wid -= trans;
+	    dst += trans;
+      }
 
       return true;
 }

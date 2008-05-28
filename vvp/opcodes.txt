@@ -531,7 +531,8 @@ is one of the 4 constant bits, the effect is to replicate the value
 into the destination vector. This is useful for filling a vector.
 
 The %movi variant moves a binary value, LSB first, into the
-destination vector.
+destination vector. The immediate value is up to 32bits, padded with
+zeros to fillout the width.
 
 * %mul <bit-l>, <bit-r>, <wid>
 

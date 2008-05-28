@@ -37,6 +37,7 @@ extern bool of_ADD(vthread_t thr, vvp_code_t code);
 extern bool of_ADD_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ADDI(vthread_t thr, vvp_code_t code);
 extern bool of_AND(vthread_t thr, vvp_code_t code);
+extern bool of_ANDI(vthread_t thr, vvp_code_t code);
 extern bool of_ANDR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_AV(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_AVD(vthread_t thr, vvp_code_t code);
@@ -167,7 +168,7 @@ struct vvp_code_s {
       };
 
       union {
-	    unsigned bit_idx[2];
+	    uint32_t    bit_idx[2];
 	    vvp_net_t   *net2;
 	    vvp_code_t   cptr2;
 	    struct ufunc_core*ufunc_core_ptr;
