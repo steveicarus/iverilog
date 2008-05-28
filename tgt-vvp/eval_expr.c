@@ -92,7 +92,7 @@ unsigned long get_number_immediate(ivl_expr_t ex)
 		    case '0':
 		      break;
 		    case '1':
-		      imm |= 1 << idx;
+		      imm |= 1UL << idx;
 		      break;
 		    default:
 		      assert(0);
@@ -909,11 +909,42 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
       return lv;
 }
 
+static struct vector_info draw_logic_immediate(ivl_expr_t exp,
+					       ivl_expr_t le,
+					       ivl_expr_t re,
+					       unsigned wid)
+{
+      struct vector_info lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
+      unsigned long imm = get_number_immediate(re);
+
+      assert(lv.base >= 4);
+
+      switch (ivl_expr_opcode(exp)) {
+
+	  case '&':
+	    fprintf(vvp_out, "   %%andi %u, %lu, %u;\n", lv.base, imm, lv.wid);
+	    break;
+
+	  default:
+	    assert(0);
+	    break;
+      }
+
+      return lv;
+}
+
 static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
 						 unsigned wid)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
       ivl_expr_t re = ivl_expr_oper2(exp);
+
+      if (ivl_expr_opcode(exp) == '&') {
+	    if (number_is_immediate(re, IMM_WID) && !number_is_unknown(re))
+		  return draw_logic_immediate(exp, le, re, wid);
+	    if (number_is_immediate(le, IMM_WID) && !number_is_unknown(le))
+		  return draw_logic_immediate(exp, re, le, wid);
+      }
 
       struct vector_info lv;
       struct vector_info rv;
@@ -1167,15 +1198,15 @@ static struct vector_info draw_add_immediate(ivl_expr_t le,
       imm = get_number_immediate(re);
 
 	/* Now generate enough %addi instructions to add the entire
-	   immediate value to the destination. The adds are done 16
-	   bits at a time, but 17 bits are done to push the carry into
+	   immediate value to the destination. The adds are done IMM_WID
+	   bits at a time, but +1 bits are done to push the carry into
 	   the higher bits if needed. */
       { unsigned base;
-        for (base = 0 ;  base < lv.wid ;  base += 16) {
-	      unsigned long tmp = imm & 0xffffUL;
+        for (base = 0 ;  base < lv.wid ;  base += IMM_WID) {
+	      unsigned long tmp = imm & 0xffffffffUL;
 	      unsigned add_wid = lv.wid - base;
 
-	      imm >>= 16;
+	      imm >>= IMM_WID;
 
 	      fprintf(vvp_out, "    %%addi %u, %lu, %u;\n",
 		      lv.base+base, tmp, add_wid);
@@ -1203,7 +1234,7 @@ static struct vector_info draw_sub_immediate(ivl_expr_t le,
       assert(lv.wid == wid);
 
       imm = get_number_immediate(re);
-      assert( (imm & ~0xffff) == 0 );
+      assert( (imm & ~0xffffffffUL) == 0 );
 
       switch (lv.base) {
 	  case 0:
@@ -1299,13 +1330,13 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
       if ((ivl_expr_opcode(exp) == '-')
 	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
 	  && (! number_is_unknown(re))
-	  && number_is_immediate(re, 16))
+	  && number_is_immediate(re, IMM_WID))
 	    return draw_sub_immediate(le, re, wid);
 
       if ((ivl_expr_opcode(exp) == '*')
 	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
 	  && (! number_is_unknown(re))
-	  && number_is_immediate(re, 16))
+	  && number_is_immediate(re, IMM_WID))
 	    return draw_mul_immediate(le, re, wid);
 
       lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
@@ -1612,9 +1643,9 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 	    vvp_errors += 1;
       }
 
-      if ((!number_is_unknown(exp)) && number_is_immediate(exp, 16)) {
-	    int val = get_number_immediate(exp);
-	    fprintf(vvp_out, "    %%movi %u, %d, %u;\n", res.base, val, wid);
+      if ((!number_is_unknown(exp)) && number_is_immediate(exp, IMM_WID)) {
+	    unsigned long val = get_number_immediate(exp);
+	    fprintf(vvp_out, "   %%movi %u, %lu, %u;\n", res.base, val, wid);
 	    return res;
       }
 
@@ -1836,8 +1867,8 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
       idx = 0;
       while (idx < nwid) {
 	    unsigned bits;
-	    unsigned trans = 16;
-	    if (nwid-idx < 16)
+	    unsigned trans = IMM_WID;
+	    if (nwid-idx < trans)
 		  trans = nwid-idx;
 
 	    bits = *p;
@@ -1845,6 +1876,14 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
 	    if (trans > 8) {
 		  bits |= *p << 8;
 		  p -= 1;
+		  if (trans > 16) {
+			bits |= *p << 16;
+			p -= 1;
+			if (trans > 24) {
+			      bits |= *p << 24;
+			      p -= 1;
+			}
+		  }
 	    }
 	    fprintf(vvp_out, "  %%movi %u, %u, %u;\n", res.base+idx,bits,trans);
 
@@ -1881,8 +1920,14 @@ void pad_expr_in_place(ivl_expr_t exp, struct vector_info res, unsigned swid)
 			  res.base+idx, res.base+swid-1);
 
       } else {
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-		    res.base+swid, res.wid-swid);
+	    unsigned base = res.base+swid;
+	    unsigned count = res.wid-swid;
+	      /* The %movi is faster for larger widths, but for very
+		 small counts, the %mov is faster. */
+	    if (count > 4)
+		  fprintf(vvp_out, "   %%movi %u, 0, %u;\n", base, count);
+	    else
+		  fprintf(vvp_out, "   %%mov %u, 0, %u;\n", base, count);
       }
 }
 
@@ -2086,7 +2131,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 
       for (idx = 0 ;  idx < res.wid ;  idx += 1) {
 	    if (idx >= bit_wid) {
-		  fprintf(vvp_out, "   %%mov %u, 0, %u; Pad from %u to %u\n",
+		  fprintf(vvp_out, "   %%movi %u, 0, %u; Pad from %u to %u\n",
 			  res.base+idx, res.wid-idx,
 			  ivl_expr_width(sube), wid);
 		  break;
@@ -2410,7 +2455,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 
 		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 			  tmp.base, res.base, res.wid);
-		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+		  fprintf(vvp_out, "    %%movi %u, 0, %u;\n",
 			  tmp.base+res.wid, tmp.wid-res.wid);
 		  clr_vector(res);
 		  res = tmp;
@@ -2460,7 +2505,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 		  assert(res.base);
 		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 			  tmp.base, res.base, res.wid);
-		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+		  fprintf(vvp_out, "    %%movi %u, 0, %u;\n",
 			  tmp.base+res.wid, tmp.wid-res.wid);
 		  clr_vector(res);
 		  res = tmp;
