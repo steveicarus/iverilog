@@ -3770,7 +3770,7 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
       carry = 1;
       for (unsigned idx = 0 ;  idx < word_count ;  idx += 1) {
 	    lva[idx] = add_with_carry(lva[idx], ~imm, carry);
-	    imm = ~0UL;
+	    imm = 0UL;
       }
 
 	/* We know from the vector_to_array that the address is valid
