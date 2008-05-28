@@ -940,9 +940,9 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
       ivl_expr_t re = ivl_expr_oper2(exp);
 
       if (ivl_expr_opcode(exp) == '&') {
-	    if (number_is_immediate(re, IMM_WID))
+	    if (number_is_immediate(re, IMM_WID) && !number_is_unknown(re))
 		  return draw_logic_immediate(exp, le, re, wid);
-	    if (number_is_immediate(le, IMM_WID))
+	    if (number_is_immediate(le, IMM_WID) && !number_is_unknown(le))
 		  return draw_logic_immediate(exp, re, le, wid);
       }
 
