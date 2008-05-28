@@ -1063,6 +1063,9 @@ bool dll_target::tran(const NetTran*net)
 	    obj->pins[2] = 0;
       }
 
+      obj->file = net->get_file();
+      obj->lineno = net->get_lineno();
+
       switch_attributes(obj, net);
       scope_add_switch(obj->scope, obj);
 

@@ -1879,6 +1879,9 @@ extern ivl_nexus_t ivl_switch_enable(ivl_switch_t net);
 extern unsigned        ivl_switch_attr_cnt(ivl_switch_t net);
 extern ivl_attribute_t ivl_switch_attr_val(ivl_switch_t net, unsigned idx);
 
+extern const char* ivl_switch_file(ivl_switch_t net);
+extern unsigned ivl_switch_lineno(ivl_switch_t net);
+
 #if defined(__MINGW32__) || defined (__CYGWIN32__)
 #  define DLLEXPORT __declspec(dllexport)
 #else

@@ -105,6 +105,11 @@ extern struct vector_info draw_vpi_func_call(ivl_expr_t exp,
 extern int draw_vpi_rfunc_call(ivl_expr_t exp);
 
 /*
+ * Switches (tran)
+ */
+extern void draw_switch_in_scope(ivl_switch_t sw);
+
+/*
  * Given a nexus, draw a string that represents the functor output
  * that feeds the nexus. This function can be used to get the input to
  * a functor, event, or even a %load in cases where I have the

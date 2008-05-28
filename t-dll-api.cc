@@ -2181,3 +2181,13 @@ extern "C" ivl_nexus_t ivl_switch_enable(ivl_switch_t net)
 {
       return net->pins[2];
 }
+
+extern "C" const char* ivl_switch_file(ivl_switch_t net)
+{
+      return net->file;
+}
+
+extern "C" unsigned ivl_switch_lineno(ivl_switch_t net)
+{
+      return net->lineno;
+}

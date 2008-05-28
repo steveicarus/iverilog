@@ -2569,6 +2569,11 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    draw_lpm_in_scope(lpm);
       }
 
+      for (idx = 0 ; idx < ivl_scope_switches(net) ; idx += 1) {
+	    ivl_switch_t sw = ivl_scope_switch(net, idx);
+	    draw_switch_in_scope(sw);
+      }
+
       if (ivl_scope_type(net) == IVL_SCT_TASK)
 	    draw_task_definition(net);
 
