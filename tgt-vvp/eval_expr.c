@@ -1197,23 +1197,50 @@ static struct vector_info draw_add_immediate(ivl_expr_t le,
 
       imm = get_number_immediate(re);
 
-	/* Now generate enough %addi instructions to add the entire
-	   immediate value to the destination. The adds are done IMM_WID
-	   bits at a time, but +1 bits are done to push the carry into
-	   the higher bits if needed. */
-      { unsigned base;
-        for (base = 0 ;  base < lv.wid ;  base += IMM_WID) {
-	      unsigned long tmp = imm & 0xffffffffUL;
-	      unsigned add_wid = lv.wid - base;
+	/* This shouldn't generally happen, because the elaborator
+	   should take care of simple constant propagation like this,
+	   but it doesn't have to and it is easy to catch here. */
+      if (imm == 0)
+	    return lv;
 
-	      imm >>= IMM_WID;
+      switch (lv.base) {
+	  case 0: /* Left expression is 0. */
+	    lv.base = allocate_vector(wid);
+	    if (lv.base == 0) {
+		  fprintf(stderr, "%s:%u: vvp.tgt error: "
+			  "Unable to allocate %u thread bits "
+			  "for result of addition.\n",
+			  ivl_expr_file(re), ivl_expr_lineno(re), wid);
+		  vvp_errors += 1;
+	    }
+	    fprintf(vvp_out, "   %%movi %u, %lu %u;\n", lv.base, imm, wid);
+	    break;
 
-	      fprintf(vvp_out, "    %%addi %u, %lu, %u;\n",
-		      lv.base+base, tmp, add_wid);
+	  case 1: /* Left expression is 1...1 (i.e. -1) */
+	    imm -= 1;
+	    if (imm == 0) {
+		  lv.base = 0;
+	    } else {
+		  lv.base = allocate_vector(wid);
+		  if (lv.base == 0) {
+			fprintf(stderr, "%s:%u: vvp.tgt error: "
+				"Unable to allocate %u thread bits "
+				"for result of addition.\n",
+				ivl_expr_file(re), ivl_expr_lineno(re), wid);
+			vvp_errors += 1;
+		  }
+		  fprintf(vvp_out, "   %%movi %u, %lu %u;\n", lv.base, imm, wid);
+	    }
+	    break;
 
-	      if (imm == 0)
-		    break;
-	}
+	  case 2: /* Left expression is X or Z */
+	  case 3:
+	    lv.base = 2;
+	    break;
+
+	  default: /* The regular case. */
+	    fprintf(vvp_out, "   %%addi %u, %lu, %u;\n", lv.base, imm, wid);
+	    break;
       }
 
       return lv;
@@ -1234,7 +1261,8 @@ static struct vector_info draw_sub_immediate(ivl_expr_t le,
       assert(lv.wid == wid);
 
       imm = get_number_immediate(re);
-      assert( (imm & ~0xffffffffUL) == 0 );
+      if (imm == 0)
+	    return lv;
 
       switch (lv.base) {
 	  case 0:
@@ -1248,20 +1276,20 @@ static struct vector_info draw_sub_immediate(ivl_expr_t le,
 		  vvp_errors += 1;
 	    }
 
-	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", tmp, lv.base, wid);
+	    fprintf(vvp_out, "   %%mov %u, %u, %u;\n", tmp, lv.base, wid);
 	    lv.base = tmp;
-	    fprintf(vvp_out, "    %%subi %u, %lu, %u;\n", lv.base, imm, wid);
-	    return lv;
+	    fprintf(vvp_out, "   %%subi %u, %lu, %u;\n", lv.base, imm, wid);
+	    break;
 
 	  case 2:
 	  case 3:
 	    lv.base = 2;
-	    return lv;
+	    break;
 
 	  default:
-	    fprintf(vvp_out, "    %%subi %u, %lu, %u;\n", lv.base, imm, wid);
+	    fprintf(vvp_out, "   %%subi %u, %lu, %u;\n", lv.base, imm, wid);
+	    break;
       }
-
 
       return lv;
 }
@@ -1277,8 +1305,10 @@ static struct vector_info draw_mul_immediate(ivl_expr_t le,
       assert(lv.wid == wid);
 
       imm = get_number_immediate(re);
+      if (imm == 0)
+	    return lv;
 
-      fprintf(vvp_out, "    %%muli %u, %lu, %u;\n", lv.base, imm, lv.wid);
+      fprintf(vvp_out, "   %%muli %u, %lu, %u;\n", lv.base, imm, lv.wid);
 
       return lv;
 }
