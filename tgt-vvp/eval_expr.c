@@ -92,6 +92,7 @@ unsigned long get_number_immediate(ivl_expr_t ex)
 		    case '0':
 		      break;
 		    case '1':
+		      assert(idx < 8*sizeof(imm));
 		      imm |= 1UL << idx;
 		      break;
 		    default:
