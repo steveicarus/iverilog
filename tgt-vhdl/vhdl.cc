@@ -23,6 +23,26 @@
 
 #include <iostream>
 #include <fstream>
+#include <cstdarg>
+#include <cstdio>
+
+static int g_errors = 0;  // Total number of errors encountered
+
+/*
+ * Called when an unrecoverable problem is encountered.
+ */
+void error(const char *fmt, ...)
+{
+   std::va_list args;
+
+   va_start(args, fmt);
+   std::printf("VHDL conversion error: ");  // Source/line number?
+   std::vprintf(fmt, args);
+   std::putchar('\n');
+   va_end(args);
+
+   g_errors++;
+}
 
 extern "C" int target_design(ivl_design_t des)
 {
@@ -40,11 +60,15 @@ extern "C" int target_design(ivl_design_t des)
       // Dummy output to test regression script
       vhdl_entity test_ent(scope_name);
       vhdl_arch test_arch(scope_name);
+      vhdl_process test_proc;
+      test_arch.set_comment("I am a comment");
+      test_arch.add_stmt(&test_proc);
+      test_proc.set_comment("I am a process");
       test_ent.emit(outfile);
       test_arch.emit(outfile);
    }
    
    outfile.close();
       
-   return 0;
+   return g_errors;
 }

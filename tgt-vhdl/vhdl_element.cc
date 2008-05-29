@@ -20,6 +20,68 @@
 
 #include "vhdl_element.hh"
 
+#include <algorithm>
+
+
+//////// HELPER FUNCTIONS ////////
+
+static const int VHDL_INDENT = 2;  // Spaces to indent
+
+static int indent(int level)
+{
+   return level + VHDL_INDENT;
+}
+
+/*
+ * Emit a newline and indent to the correct level.
+ */
+static void newline(std::ofstream &of, int level)
+{
+   of << std::endl;
+   while (level--)
+      of << ' ';
+}
+
+static void blank_line(std::ofstream &of, int level)
+{
+   of << std::endl;
+   newline(of, level);
+}
+
+template <class T>
+void emit_children(std::ofstream &of,
+                   const std::list<T*> &children,
+                   int level) 
+{      
+   // Don't indent if there are no children
+   if (children.size() == 0)
+      newline(of, level);
+   else {
+      typename std::list<T*>::const_iterator it;
+      for (it = children.begin(); it != children.end(); ++it) {
+         newline(of, indent(level));
+         (*it)->emit(of, indent(level));
+      }
+      newline(of, level);
+   }
+}
+
+
+//////// ALL ELEMENTS ////////
+
+void vhdl_element::set_comment(std::string comment)
+{
+   comment_ = comment;
+}
+
+void vhdl_element::emit_comment(std::ofstream &of, int level) const
+{
+   if (comment_.size() > 0) {
+      of << "-- " << comment_;
+      newline(of, level);
+   }
+}
+
 
 //////// ENTITY ////////
 
@@ -29,11 +91,15 @@ vhdl_entity::vhdl_entity(const char *name)
 
 }
 
-void vhdl_entity::emit(std::ofstream &of)
+void vhdl_entity::emit(std::ofstream &of, int level) const
 {
-   of << "entity " << name_ << " is" << std::endl;
+   emit_comment(of, level);
+   of << "entity " << name_ << " is";
    // ...ports...
-   of << "end entity; " << std::endl;
+   // newline(indent(level));
+   newline(of, level);
+   of << "end entity; ";
+   blank_line(of, level);  // Extra blank line after entities
 }
 
 
@@ -45,12 +111,52 @@ vhdl_arch::vhdl_arch(const char *entity, const char *name)
    
 }
 
-void vhdl_arch::emit(std::ofstream &of)
+void vhdl_arch::add_stmt(vhdl_conc_stmt* stmt)
 {
+   stmts_.push_back(stmt);
+}
+
+void vhdl_arch::emit(std::ofstream &of, int level) const
+{
+   emit_comment(of, level);
    of << "architecture " << name_ << " of " << entity_;
-   of << " is" << std::endl;
+   of << " is";
    // ...declarations...
-   of << "begin" << std::endl;
+   // newline(indent(level));
+   newline(of, level);
+   of << "begin";
+   emit_children<vhdl_conc_stmt>(of, stmts_, level);
+   of << "end architecture;";
+   blank_line(of, level);  // Extra blank line after architectures;
+}
+
+
+//////// PROCESS ////////
+
+vhdl_process::vhdl_process(const char *name)
+   : name_(name)
+{
+
+}
+
+void vhdl_process::add_stmt(vhdl_seq_stmt* stmt)
+{
+   stmts_.push_back(stmt);
+}
+
+void vhdl_process::emit(std::ofstream &of, int level) const
+{
+   emit_comment(of, level);
+   if (name_)
+      of << name_ << ": ";
+   of << "process is";  // TODO: sensitivity
+   newline(of, level);
+   // ...declarations...
+   of << "begin";
+   newline(of, level);
    // ...statements...
-   of << "end architecture;" << std::endl;   
+   of << "wait;";   // Just to stop the simulation hanging
+   newline(of, level);
+   of << "end process;";
+   newline(of, level);
 }

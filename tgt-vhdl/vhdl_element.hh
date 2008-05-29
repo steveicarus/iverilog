@@ -22,18 +22,51 @@
 #define INC_VHDL_ELEMENT_HH
 
 #include <fstream>
+#include <list>
+#include <string>
+
+
+class vhdl_element;
+typedef std::list<vhdl_element*> element_list_t; 
 
 class vhdl_element {
-public:
-   virtual void emit(std::ofstream &of) = 0;
+public:   
+   virtual void emit(std::ofstream &of, int level=0) const = 0;
+
+   void set_comment(std::string comment);
+protected:
+   void emit_comment(std::ofstream &of, int level) const;
+private:
+   std::string comment_;
 };
 
 class vhdl_entity : public vhdl_element {
 public:
    vhdl_entity(const char *name);
 
-   void emit(std::ofstream &of);
+   void emit(std::ofstream &of, int level=0) const;
 private:
+   const char *name_;
+};
+
+class vhdl_conc_stmt : public vhdl_element {
+};
+
+typedef std::list<vhdl_conc_stmt*> conc_stmt_list_t;
+
+class vhdl_seq_stmt : public vhdl_element {
+};
+
+typedef std::list<vhdl_seq_stmt*> seq_stmt_list_t;
+
+class vhdl_process : public vhdl_conc_stmt {
+public:
+   vhdl_process(const char *name = NULL);
+
+   void emit(std::ofstream &of, int level) const;
+   void add_stmt(vhdl_seq_stmt* stmt);
+private:
+   seq_stmt_list_t stmts_;
    const char *name_;
 };
 
@@ -41,9 +74,12 @@ class vhdl_arch : public vhdl_element {
 public:
    vhdl_arch(const char *entity, const char *name="Behavioural");
 
-   void emit(std::ofstream &of);
+   void emit(std::ofstream &of, int level=0) const;
+   void add_stmt(vhdl_conc_stmt* stmt);
 private:
+   conc_stmt_list_t stmts_;
    const char *name_, *entity_;
 };
 
 #endif
+
