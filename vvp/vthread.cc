@@ -1648,7 +1648,7 @@ static unsigned long* divide_bits(unsigned long*ap, unsigned long*bp, unsigned w
 	      // carry&1. If it is 0, then it is *negative*.) In that
 	      // case, we know that cur_res was too large by 1. Correct by
 	      // adding 1b back in and reducing cur_res.
-	    if (carry&1 == 0) {
+	    if ((carry&1) == 0) {
 		  cur_res -= 1;
 		  carry = 0;
 		  for (unsigned idx = cur_ptr ; idx < words ; idx += 1)
