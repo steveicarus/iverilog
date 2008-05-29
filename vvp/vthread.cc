@@ -3032,7 +3032,7 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
 	    res[idx] = 0;
 
       for (unsigned mul_a = 0 ; mul_a < words ; mul_a += 1) {
-	    for (unsigned mul_b = 0 ; mul_b < words ; mul_b += 1) {
+	    for (unsigned mul_b = 0 ; mul_b < (words-mul_a) ; mul_b += 1) {
 		  unsigned long sum;
 		  unsigned long tmp = multiply_with_carry(ap[mul_a], bp[mul_b], sum);
 		  unsigned base = mul_a + mul_b;
