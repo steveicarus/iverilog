@@ -221,6 +221,20 @@ extern vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 			       bool signed_flag, vvp_net_t*node);
 
 /*
+ * This is used by system calls to represent a bit/part select of
+ * a simple variable or constant array word.
+ */
+struct __vpiPV {
+      struct __vpiHandle base;
+      vpiHandle parent;
+      vvp_net_t*net;
+      int tbase;
+      unsigned twid, width;
+};
+extern vpiHandle vpip_make_PV(char*name, int base, int width);
+extern vpiHandle vpip_make_PV(char*name, int tbase, int twid, int width);
+
+/*
  * This function safely converts a vpiHandle back to a
  * __vpiSignal. Return a nil if the type is not appropriate.
  */
@@ -368,6 +382,7 @@ struct __vpiSysTaskCall {
       class vvp_net_t*fnet;
       unsigned file_idx;
       unsigned lineno;
+      bool put_value;
 };
 
 extern struct __vpiSysTaskCall*vpip_cur_task;

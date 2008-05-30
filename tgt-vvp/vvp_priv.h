@@ -40,6 +40,12 @@ struct vector_info {
 };
 
 /*
+ * Convenient constants...
+ */
+  /* Width limit for typical immediate arguments. */
+# define IMM_WID 32
+
+/*
  * Mangle all non-symbol characters in an identifier, quotes in names
  */
 extern const char *vvp_mangle_id(const char *);

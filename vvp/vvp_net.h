@@ -87,8 +87,21 @@ inline vvp_bit4_t bit4_z2x(vvp_bit4_t a)
 inline vvp_bit4_t operator ~ (vvp_bit4_t a)
 { return bit4_z2x((vvp_bit4_t) (((int)a) ^ 1)); }
 
-extern vvp_bit4_t operator | (vvp_bit4_t a, vvp_bit4_t b);
-extern vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b);
+inline vvp_bit4_t operator | (vvp_bit4_t a, vvp_bit4_t b)
+{
+      if (a==BIT4_1 || b==BIT4_1)
+	    return BIT4_1;
+      return bit4_z2x( (vvp_bit4_t) ((int)a | (int)b) );
+}
+
+inline vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b)
+{
+      if (a==BIT4_0 || b==BIT4_0)
+	    return BIT4_0;
+      return bit4_z2x( (vvp_bit4_t) ((int)a | (int)b) );
+}
+
+
 extern vvp_bit4_t operator ^ (vvp_bit4_t a, vvp_bit4_t b);
 extern ostream& operator<< (ostream&o, vvp_bit4_t a);
 
@@ -294,41 +307,47 @@ inline void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
       assert(idx < size_);
 
       unsigned long off = idx % BITS_PER_WORD;
-      unsigned long amask = 0, bmask = 0;
-      switch (val) {
-	  case BIT4_0:
-	    amask = 0;
-	    bmask = 0;
-	    break;
-	  case BIT4_1:
-	    amask = 1;
-	    bmask = 0;
-	    break;
-	  case BIT4_X:
-	    amask = 1;
-	    bmask = 1;
-	    break;
-	  case BIT4_Z:
-	    amask = 0;
-	    bmask = 1;
-	    break;
-      }
-
       unsigned long mask = 1UL << off;
-      amask <<= off;
-      bmask <<= off;
 
       if (size_ > BITS_PER_WORD) {
 	    unsigned wdx = idx / BITS_PER_WORD;
-	    abits_ptr_[wdx] &= ~mask;
-	    abits_ptr_[wdx] |= amask;
-	    bbits_ptr_[wdx] &= ~mask;
-	    bbits_ptr_[wdx] |= bmask;
+	    switch (val) {
+		case BIT4_0:
+		  abits_ptr_[wdx] &= ~mask;
+		  bbits_ptr_[wdx] &= ~mask;
+		  break;
+		case BIT4_1:
+		  abits_ptr_[wdx] |=  mask;
+		  bbits_ptr_[wdx] &= ~mask;
+		  break;
+		case BIT4_X:
+		  abits_ptr_[wdx] |=  mask;
+		  bbits_ptr_[wdx] |=  mask;
+		  break;
+		case BIT4_Z:
+		  abits_ptr_[wdx] &= ~mask;
+		  bbits_ptr_[wdx] |=  mask;
+		  break;
+	    }
       } else {
-	    abits_val_ &= ~mask;
-	    abits_val_ |= amask;
-	    bbits_val_ &= ~mask;
-	    bbits_val_ |= bmask;
+	    switch (val) {
+		case BIT4_0:
+		  abits_val_ &= ~mask;
+		  bbits_val_ &= ~mask;
+		  break;
+		case BIT4_1:
+		  abits_val_ |=  mask;
+		  bbits_val_ &= ~mask;
+		  break;
+		case BIT4_X:
+		  abits_val_ |=  mask;
+		  bbits_val_ |=  mask;
+		  break;
+		case BIT4_Z:
+		  abits_val_ &= ~mask;
+		  bbits_val_ |=  mask;
+		  break;
+	    }
       }
 }
 

@@ -173,21 +173,23 @@
 "%disable"  { return K_disable; }
 "%fork"     { return K_fork; }
 
+  /* Handle the specialized variable access functions. */
+
+"&A" { return K_A; }
+"&PV" { return K_PV; }
+
 "%"[.$_/a-zA-Z0-9]+ {
       yylval.text = strdup(yytext);
       assert(yylval.text);
       return T_INSTR; }
 
 [0-9][0-9]* {
-      yylval.numb = strtol(yytext, 0, 0);
+      yylval.numb = strtoul(yytext, 0, 0);
       return T_NUMBER; }
 
 "0x"[0-9a-fA-F]+ {
-      yylval.numb = strtol(yytext, 0, 0);
+      yylval.numb = strtoul(yytext, 0, 0);
       return T_NUMBER; }
-
-
-"&A" { return K_A; }
 
   /* Handle some specialized constant/literals as symbols. */
 

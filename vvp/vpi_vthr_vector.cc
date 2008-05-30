@@ -67,7 +67,7 @@ void set_bit(struct __vpiVThrVec *rfp, unsigned idx, vvp_bit4_t bit)
 
 extern const char hex_digits[256];
 
-extern const char oct_digits[256];
+extern const char oct_digits[64];
 
 /*
  *  vpi_get
