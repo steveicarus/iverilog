@@ -44,6 +44,16 @@ void error(const char *fmt, ...)
    g_errors++;
 }
 
+int dummy(ivl_process_t net, void *cd)
+{
+   std::cout << "process" << std::endl;
+
+   ivl_scope_t scope = ivl_process_scope(net);
+   std::cout << ivl_scope_name(scope) << std::endl;
+   
+   return 0;
+}
+
 extern "C" int target_design(ivl_design_t des)
 {
    ivl_scope_t *roots;
@@ -67,6 +77,8 @@ extern "C" int target_design(ivl_design_t des)
       test_ent.emit(outfile);
       test_arch.emit(outfile);
    }
+
+   ivl_design_process(des, dummy, 0);
    
    outfile.close();
       
