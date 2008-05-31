@@ -59,7 +59,7 @@ typedef std::list<vhdl_seq_stmt*> seq_stmt_list_t;
 class vhdl_process : public vhdl_conc_stmt {
 public:
    vhdl_process(const char *name = NULL);
-   virtual ~vhdl_process() {}
+   virtual ~vhdl_process();
 
    void emit(std::ofstream &of, int level) const;
    void add_stmt(vhdl_seq_stmt* stmt);
@@ -71,7 +71,7 @@ private:
 class vhdl_arch : public vhdl_element {
 public:
    vhdl_arch(const char *entity, const char *name="Behavioural");
-   virtual ~vhdl_arch() {}
+   virtual ~vhdl_arch();
 
    void emit(std::ofstream &of, int level=0) const;
    void add_stmt(vhdl_conc_stmt* stmt);
@@ -83,7 +83,7 @@ private:
 class vhdl_entity : public vhdl_element {
 public:
    vhdl_entity(const char *name, vhdl_arch *arch);
-   virtual ~vhdl_entity() {}
+   virtual ~vhdl_entity();
 
    void emit(std::ofstream &of, int level=0) const;
    vhdl_arch *get_arch() const { return arch_; }

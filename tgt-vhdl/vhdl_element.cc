@@ -91,6 +91,11 @@ vhdl_entity::vhdl_entity(const char *name, vhdl_arch *arch)
 
 }
 
+vhdl_entity::~vhdl_entity()
+{
+   delete arch_;
+}
+
 void vhdl_entity::emit(std::ofstream &of, int level) const
 {
    emit_comment(of, level);
@@ -110,6 +115,14 @@ vhdl_arch::vhdl_arch(const char *entity, const char *name)
    : name_(name), entity_(entity)
 {
    
+}
+
+vhdl_arch::~vhdl_arch()
+{
+   conc_stmt_list_t::iterator it;
+   for (it = stmts_.begin(); it != stmts_.end(); ++it)
+      delete (*it);
+   stmts_.clear();
 }
 
 void vhdl_arch::add_stmt(vhdl_conc_stmt* stmt)
@@ -138,6 +151,14 @@ vhdl_process::vhdl_process(const char *name)
    : name_(name)
 {
 
+}
+
+vhdl_process::~vhdl_process()
+{
+   seq_stmt_list_t::iterator it;
+   for (it = stmts_.begin(); it != stmts_.end(); ++it)
+      delete (*it);
+   stmts_.clear();
 }
 
 void vhdl_process::add_stmt(vhdl_seq_stmt* stmt)

@@ -91,6 +91,11 @@ extern "C" int target_design(ivl_design_t des)
       (*it)->emit(outfile);
    
    outfile.close();
-      
+
+   // Clean up
+   for (it = g_entities.begin(); it != g_entities.end(); ++it)
+      delete (*it);
+   g_entities.clear();
+   
    return g_errors;
 }
