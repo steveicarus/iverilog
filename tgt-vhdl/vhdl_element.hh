@@ -30,7 +30,9 @@ class vhdl_element;
 typedef std::list<vhdl_element*> element_list_t; 
 
 class vhdl_element {
-public:   
+public:
+   virtual ~vhdl_element() {}
+   
    virtual void emit(std::ofstream &of, int level=0) const = 0;
 
    void set_comment(std::string comment);
@@ -40,21 +42,16 @@ private:
    std::string comment_;
 };
 
-class vhdl_entity : public vhdl_element {
-public:
-   vhdl_entity(const char *name);
-
-   void emit(std::ofstream &of, int level=0) const;
-private:
-   const char *name_;
-};
-
 class vhdl_conc_stmt : public vhdl_element {
+public:
+   virtual ~vhdl_conc_stmt() {}
 };
 
 typedef std::list<vhdl_conc_stmt*> conc_stmt_list_t;
 
 class vhdl_seq_stmt : public vhdl_element {
+public:
+   virtual ~vhdl_seq_stmt() {}
 };
 
 typedef std::list<vhdl_seq_stmt*> seq_stmt_list_t;
@@ -62,6 +59,7 @@ typedef std::list<vhdl_seq_stmt*> seq_stmt_list_t;
 class vhdl_process : public vhdl_conc_stmt {
 public:
    vhdl_process(const char *name = NULL);
+   virtual ~vhdl_process() {}
 
    void emit(std::ofstream &of, int level) const;
    void add_stmt(vhdl_seq_stmt* stmt);
@@ -73,6 +71,7 @@ private:
 class vhdl_arch : public vhdl_element {
 public:
    vhdl_arch(const char *entity, const char *name="Behavioural");
+   virtual ~vhdl_arch() {}
 
    void emit(std::ofstream &of, int level=0) const;
    void add_stmt(vhdl_conc_stmt* stmt);
@@ -80,6 +79,22 @@ private:
    conc_stmt_list_t stmts_;
    const char *name_, *entity_;
 };
+
+class vhdl_entity : public vhdl_element {
+public:
+   vhdl_entity(const char *name, vhdl_arch *arch);
+   virtual ~vhdl_entity() {}
+
+   void emit(std::ofstream &of, int level=0) const;
+   vhdl_arch *get_arch() const { return arch_; }
+   const char *get_name() const { return name_; }
+private:
+   const char *name_;
+   vhdl_arch *arch_;  // Entity may only have a single architecture
+};
+
+typedef std::list<vhdl_entity*> entity_list_t;
+
 
 #endif
 

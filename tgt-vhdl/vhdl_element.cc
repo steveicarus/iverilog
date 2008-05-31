@@ -85,8 +85,8 @@ void vhdl_element::emit_comment(std::ofstream &of, int level) const
 
 //////// ENTITY ////////
 
-vhdl_entity::vhdl_entity(const char *name)
-   : name_(name)
+vhdl_entity::vhdl_entity(const char *name, vhdl_arch *arch)
+   : name_(name), arch_(arch)
 {
 
 }
@@ -100,6 +100,7 @@ void vhdl_entity::emit(std::ofstream &of, int level) const
    newline(of, level);
    of << "end entity; ";
    blank_line(of, level);  // Extra blank line after entities
+   arch_->emit(of, level);
 }
 
 

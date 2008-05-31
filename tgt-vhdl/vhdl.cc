@@ -25,8 +25,12 @@
 #include <fstream>
 #include <cstdarg>
 #include <cstdio>
+#include <cassert>
+#include <cstring>
 
 static int g_errors = 0;  // Total number of errors encountered
+
+static entity_list_t g_entities;  // All entities to emit
 
 /*
  * Called when an unrecoverable problem is encountered.
@@ -44,14 +48,27 @@ void error(const char *fmt, ...)
    g_errors++;
 }
 
-int dummy(ivl_process_t net, void *cd)
+/*
+ * Find an entity given a type name.
+ */
+vhdl_entity *find_entity(const char *tname)
 {
-   std::cout << "process" << std::endl;
+   entity_list_t::const_iterator it;
+   for (it = g_entities.begin(); it != g_entities.end(); ++it) {
+      if (strcmp((*it)->get_name(), tname) == 0)
+         return *it;
+   }
+   return NULL;
+}
 
-   ivl_scope_t scope = ivl_process_scope(net);
-   std::cout << ivl_scope_name(scope) << std::endl;
-   
-   return 0;
+/*
+ * Add an entity/architecture pair to the list of entities
+ * to emit.
+ */
+void remember_entity(vhdl_entity* ent)
+{
+   assert(find_entity(ent->get_name()) == NULL);
+   g_entities.push_back(ent);
 }
 
 extern "C" int target_design(ivl_design_t des)
@@ -60,25 +77,18 @@ extern "C" int target_design(ivl_design_t des)
    unsigned int nroots;
    ivl_design_roots(des, &roots, &nroots);
 
+   for (unsigned int i = 0; i < nroots; i++)
+      draw_scope(roots[i], NULL);
+
+   ivl_design_process(des, draw_process, NULL);
+
+   // Write the generated elements to the output file
    const char *ofname = ivl_design_flag(des, "-o");
    std::ofstream outfile(ofname);
 
-   for (unsigned int i = 0; i < nroots; i++) {
-      ivl_scope_t scope = roots[i];
-      const char *scope_name = ivl_scope_basename(scope);
-      
-      // Dummy output to test regression script
-      vhdl_entity test_ent(scope_name);
-      vhdl_arch test_arch(scope_name);
-      vhdl_process test_proc;
-      test_arch.set_comment("I am a comment");
-      test_arch.add_stmt(&test_proc);
-      test_proc.set_comment("I am a process");
-      test_ent.emit(outfile);
-      test_arch.emit(outfile);
-   }
-
-   ivl_design_process(des, dummy, 0);
+   entity_list_t::const_iterator it;
+   for (it = g_entities.begin(); it != g_entities.end(); ++it)
+      (*it)->emit(outfile);
    
    outfile.close();
       
