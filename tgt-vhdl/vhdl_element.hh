@@ -25,10 +25,9 @@
 #include <list>
 #include <string>
 
-
-class vhdl_element;
-typedef std::list<vhdl_element*> element_list_t; 
-
+/*
+ * Any VHDL syntax element. Each element can also contain a comment.
+ */
 class vhdl_element {
 public:
    virtual ~vhdl_element() {}
@@ -42,6 +41,13 @@ private:
    std::string comment_;
 };
 
+typedef std::list<vhdl_element*> element_list_t; 
+
+
+/*
+ * A concurrent statement appears in architecture bodies but not
+ * processes.
+ */
 class vhdl_conc_stmt : public vhdl_element {
 public:
    virtual ~vhdl_conc_stmt() {}
@@ -49,6 +55,10 @@ public:
 
 typedef std::list<vhdl_conc_stmt*> conc_stmt_list_t;
 
+
+/*
+ * Any sequential statement in a process.
+ */
 class vhdl_seq_stmt : public vhdl_element {
 public:
    virtual ~vhdl_seq_stmt() {}
@@ -56,6 +66,10 @@ public:
 
 typedef std::list<vhdl_seq_stmt*> seq_stmt_list_t;
 
+
+/*
+ * Container for sequential statements.
+ */
 class vhdl_process : public vhdl_conc_stmt {
 public:
    vhdl_process(const char *name = NULL);
@@ -68,6 +82,10 @@ private:
    const char *name_;
 };
 
+
+/*
+ * An architecture which implements an entity. 
+ */
 class vhdl_arch : public vhdl_element {
 public:
    vhdl_arch(const char *entity, const char *name="Behavioural");
@@ -80,6 +98,11 @@ private:
    const char *name_, *entity_;
 };
 
+/*
+ * An entity defines the ports, parameters, etc. of a module. Each
+ * entity is associated with a single architecture (although
+ * technically this need not be the case). 
+ */
 class vhdl_entity : public vhdl_element {
 public:
    vhdl_entity(const char *name, vhdl_arch *arch);
