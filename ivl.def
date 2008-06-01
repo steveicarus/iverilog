@@ -115,6 +115,7 @@ ivl_nexus_ptr_pin
 ivl_nexus_ptr_lpm
 ivl_nexus_ptr_log
 ivl_nexus_ptr_sig
+ivl_nexus_ptr_switch
 
 ivl_parameter_basename
 ivl_parameter_expr

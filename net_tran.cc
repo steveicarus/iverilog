@@ -42,7 +42,7 @@ static bool has_enable(ivl_switch_type_t tt)
 }
 
 NetTran::NetTran(NetScope*scope, perm_string n, ivl_switch_type_t tt)
-: NetNode(scope, n, has_enable(tt)? 3 : 2)
+    : NetNode(scope, n, has_enable(tt)? 3 : 2), type_(tt)
 {
       pin(0).set_dir(Link::PASSIVE); pin(0).set_name(perm_string::literal("A"), 0);
       pin(1).set_dir(Link::PASSIVE); pin(1).set_name(perm_string::literal("B"), 0);

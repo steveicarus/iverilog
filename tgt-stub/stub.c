@@ -1059,6 +1059,7 @@ static void show_nexus_details(ivl_signal_t net, ivl_nexus_t nex)
 	    ivl_net_logic_t log;
 	    ivl_lpm_t lpm;
 	    ivl_signal_t sig;
+	    ivl_switch_t swt;
 	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
 
 	    const char*dr0 = str_tab[ivl_nexus_ptr_drive0(ptr)];
@@ -1091,6 +1092,11 @@ static void show_nexus_details(ivl_signal_t net, ivl_nexus_t nex)
 		  fprintf(out, "      LPM %s.%s (%s0, %s1)\n",
 			  ivl_scope_name(ivl_lpm_scope(lpm)),
 			  ivl_lpm_basename(lpm), dr0, dr1);
+
+	    } else if ((swt = ivl_nexus_ptr_switch(ptr))) {
+		  fprintf(out, "      SWITCH %s.%s\n",
+			  ivl_scope_name(ivl_switch_scope(swt)),
+			  ivl_switch_basename(swt));
 
 	    } else if ((con = ivl_nexus_ptr_con(ptr))) {
 		  signal_nexus_const(net, ptr, con);

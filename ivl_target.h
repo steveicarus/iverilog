@@ -1327,6 +1327,7 @@ extern unsigned     ivl_nexus_ptr_pin(ivl_nexus_ptr_t net);
 extern ivl_net_const_t ivl_nexus_ptr_con(ivl_nexus_ptr_t net);
 extern ivl_net_logic_t ivl_nexus_ptr_log(ivl_nexus_ptr_t net);
 extern ivl_lpm_t    ivl_nexus_ptr_lpm(ivl_nexus_ptr_t net);
+extern ivl_switch_t ivl_nexus_ptr_switch(ivl_nexus_ptr_t net);
 extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
 
 /* PARAMETER
@@ -1867,6 +1868,7 @@ extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
  * match. The enable must be a scalar.
  */
 extern ivl_switch_type_t ivl_switch_type(ivl_switch_t net);
+extern ivl_scope_t ivl_switch_scope(ivl_switch_t net);
 extern const char*ivl_switch_basename(ivl_switch_t net);
 extern ivl_nexus_t ivl_switch_a(ivl_switch_t net);
 extern ivl_nexus_t ivl_switch_b(ivl_switch_t net);
@@ -1875,10 +1877,10 @@ extern ivl_nexus_t ivl_switch_enable(ivl_switch_t net);
 /* Not implemented yet
 extern unsigned        ivl_switch_attr_cnt(ivl_switch_t net);
 extern ivl_attribute_t ivl_switch_attr_val(ivl_switch_t net, unsigned idx);
-
+*** */
 extern const char* ivl_switch_file(ivl_switch_t net);
 extern unsigned ivl_switch_lineno(ivl_switch_t net);
-*** */
+
 #if defined(__MINGW32__) || defined (__CYGWIN32__)
 #  define DLLEXPORT __declspec(dllexport)
 #else

@@ -1338,6 +1338,15 @@ extern "C" ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net)
       return net->l.sig;
 }
 
+extern "C" ivl_switch_t ivl_nexus_ptr_switch(ivl_nexus_ptr_t net)
+{
+      if (net == 0)
+	    return 0;
+      if (net->type_ != __NEXUS_PTR_SWI)
+	    return 0;
+      return net->l.swi;
+}
+
 extern "C" const char* ivl_parameter_basename(ivl_parameter_t net)
 {
       assert(net);
@@ -2160,6 +2169,11 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 extern "C" const char*ivl_switch_basename(ivl_switch_t net)
 {
       return net->name;
+}
+
+extern "C" ivl_scope_t ivl_switch_scope(ivl_switch_t net)
+{
+      return net->scope;
 }
 
 extern "C" ivl_switch_type_t ivl_switch_type(ivl_switch_t net)
