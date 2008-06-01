@@ -74,13 +74,14 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_CMP_EEQ K_CMP_EQ K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
 %token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
 %token K_CONCAT K_DEBUG K_DELAY K_DFF
-%token K_EVENT K_EVENT_OR K_EXTEND_S K_FUNCTOR K_MODPATH K_NET K_NET_S K_NET_R
+%token K_EVENT K_EVENT_OR K_EXPORT K_EXTEND_S K_FUNCTOR K_IMPORT K_ISLAND
+%token K_MODPATH K_NET K_NET_S K_NET_R
 %token K_NET8 K_NET8_S
 %token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
-%token K_PART_V K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
+%token K_PART_V K_PORT K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
 %token K_RESOLV K_SCOPE K_SFUNC K_SHIFTL K_SHIFTR K_SHIFTRS
-%token K_THREAD K_TIMESCALE K_UFUNC
+%token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_func K_vpi_func_r
 %token K_disable K_fork
@@ -672,6 +673,26 @@ statement
 
 	| T_LABEL K_PARAM_REAL T_STRING T_NUMBER T_NUMBER',' T_SYMBOL ';'
 		{ compile_param_real($1, $3, $7, $4, $5); }
+
+  /* Islands */
+
+  | T_LABEL K_ISLAND T_SYMBOL ';'
+      { compile_island($1, $3); }
+
+  | T_LABEL K_PORT T_SYMBOL ',' T_SYMBOL ';'
+      { compile_island_port($1, $3, $5); }
+
+  | T_LABEL K_IMPORT T_SYMBOL ',' T_SYMBOL ';'
+      { compile_island_import($1, $3, $5); }
+
+  | T_LABEL K_EXPORT T_SYMBOL ';'
+      { compile_island_export($1, $3); }
+
+  | K_TRANIF0 T_SYMBOL ',' T_SYMBOL T_SYMBOL ',' T_SYMBOL ';'
+      { compile_island_tranif(0, $2, $4, $5, $7); }
+
+  | K_TRANIF1 T_SYMBOL ',' T_SYMBOL T_SYMBOL ',' T_SYMBOL ';'
+      { compile_island_tranif(1, $2, $4, $5, $7); }
 
   /* Oh and by the way, empty statements are OK as well. */
 

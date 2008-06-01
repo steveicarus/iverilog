@@ -124,8 +124,11 @@
 ".dff"      { return K_DFF; }
 ".event"    { return K_EVENT; }
 ".event/or" { return K_EVENT_OR; }
+".export"   { return K_EXPORT; }
 ".extend/s" { return K_EXTEND_S; }
 ".functor"  { return K_FUNCTOR; }
+".import"   { return K_IMPORT; }
+".island"   { return K_ISLAND; }
 ".modpath" { return K_MODPATH; }
 ".net"      { return K_NET; }
 ".net8"     { return K_NET8; }
@@ -138,6 +141,7 @@
 ".part"     { return K_PART; }
 ".part/pv"  { return K_PART_PV; }
 ".part/v"   { return K_PART_V; }
+".port"     { return K_PORT; }
 ".reduce/and" { return K_REDUCE_AND; }
 ".reduce/or"  { return K_REDUCE_OR; }
 ".reduce/xor" { return K_REDUCE_XOR; }
@@ -153,6 +157,9 @@
 ".shift/rs" { return K_SHIFTRS; }
 ".thread"   { return K_THREAD; }
 ".timescale" { return K_TIMESCALE; }
+".tran"     { return K_TRAN; }
+".tranif0"  { return K_TRANIF0; }
+".tranif1"  { return K_TRANIF1; }
 ".ufunc"    { return K_UFUNC; }
 ".var"      { return K_VAR; }
 ".var/real" { return K_VAR_R; }

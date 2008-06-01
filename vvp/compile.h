@@ -335,6 +335,8 @@ extern void compile_array_port(char*label, char*name, char*addr);
   /* Index is a constant address */
 extern void compile_array_port(char*label, char*name, long addr);
 
+extern void compile_array_cleanup(void);
+
 /*
  * Compile the .ufunc statement.
  */
@@ -450,5 +452,15 @@ extern void compile_alias_real(char*label, char*name,
 extern void compile_aliasw(char*label, char*array_symbol,
 			   unsigned long array_addr, int msb, int lsb,
 			   unsigned argc, struct symb_s*argv);
+
+extern void compile_island(char*label, char*type);
+extern void compile_island_port(char*label, char*island, char*src);
+extern void compile_island_import(char*label, char*island, char*src);
+extern void compile_island_export(char*label, char*island);
+
+extern void compile_island_tranif(int sense, char*island,
+				  char*ba, char*bb, char*src);
+
+extern void compile_island_cleanup(void);
 
 #endif

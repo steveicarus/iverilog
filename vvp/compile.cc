@@ -645,6 +645,8 @@ void compile_cleanup(void)
       delete_symbol_table(sym_functors);
       sym_functors = 0;
 
+      compile_island_cleanup();
+
       if (verbose_flag) {
 	    fprintf(stderr, " ... Compiletf functions\n");
 	    fflush(stderr);

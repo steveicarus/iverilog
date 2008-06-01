@@ -30,7 +30,7 @@
 # include  "compile.h"
 # include  <assert.h>
 
-static symbol_table_t array_table =0;
+static symbol_map_s<struct __vpiArray>* array_table =0;
 
 class vvp_fun_arrayport;
 static void array_attach_port(vvp_array_t, vvp_fun_arrayport*);
@@ -40,8 +40,8 @@ vvp_array_t array_find(const char*label)
       if (array_table == 0)
 	    return 0;
 
-      symbol_value_t v = sym_get_value(array_table, label);
-      return (vvp_array_t)v.ptr;
+      vvp_array_t v = array_table->sym_get_value(label);
+      return v;
 }
 
 /*
@@ -604,12 +604,10 @@ static vpiHandle vpip_make_array(char*label, const char*name,
 
 	/* Add this symbol to the array_symbols table for later lookup. */
       if (!array_table)
-	    array_table = new_symbol_table();
+	    array_table = new symbol_map_s<struct __vpiArray>;
 
       assert(!array_find(label));
-      symbol_value_t v;
-      v.ptr = obj;
-      sym_set_value(array_table, label, v);
+      array_table->sym_set_value(label, obj);
 
 	/* Add this into the table of VPI objects. This is used for
 	   contexts that try to look up VPI objects in
@@ -909,9 +907,7 @@ void compile_array_alias(char*label, char*name, char*src)
 
       assert(array_table);
       assert(!array_find(label));
-      symbol_value_t v;
-      v.ptr = obj;
-      sym_set_value(array_table, label, v);
+      array_table->sym_set_value(label, obj);
 
       compile_vpi_symbol(label, &obj->base);
       vpip_attach_to_current_scope(&obj->base);
@@ -935,4 +931,12 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned addr)
       assert(addr < obj->array->array_count);
 
       return &(obj->base);
+}
+
+void compile_array_cleanup(void)
+{
+      if (array_table) {
+	    delete array_table;
+	    array_table = 0;
+      }
 }

@@ -37,7 +37,6 @@ class  vvp_scalar_t;
 
 /* Basic netlist types. */
 class  vvp_net_t;
-class  vvp_net_ptr_t;
 class  vvp_net_fun_t;
 
 /* Core net function types. */
@@ -605,77 +604,45 @@ inline void vvp_vector8_t::set_bit(unsigned idx, vvp_scalar_t val)
  * the vvp_net_t. Use this pointer to point only to the inputs of
  * vvp_net_t objects. To point to vvp_net_t objects as a whole, use
  * vvp_net_t* pointers.
- */
-class vvp_net_ptr_t {
-
-    public:
-      vvp_net_ptr_t();
-      vvp_net_ptr_t(vvp_net_t*ptr, unsigned port);
-      ~vvp_net_ptr_t() { }
-
-      vvp_net_t* ptr();
-      const vvp_net_t* ptr() const;
-      unsigned  port() const;
-
-      bool nil() const;
-
-      bool operator == (vvp_net_ptr_t that) const;
-      bool operator != (vvp_net_ptr_t that) const;
-
-    private:
-      unsigned long bits_;
-};
-
-/*
+ *
  * Alert! Ugly details. Protective clothing recommended!
  * The vvp_net_ptr_t encodes the bits of a C pointer, and two bits of
  * port identifier into an unsigned long. This works only if vvp_net_t*
  * values are always aligned on 4-byte boundaries.
  */
+template <class T> class vvp_sub_pointer_t {
 
-inline vvp_net_ptr_t::vvp_net_ptr_t()
-{
-      bits_ = 0;
-}
+    public:
+      vvp_sub_pointer_t() : bits_(0) { }
 
-inline vvp_net_ptr_t::vvp_net_ptr_t(vvp_net_t*ptr, unsigned port)
-{
-      bits_ = reinterpret_cast<unsigned long> (ptr);
-      assert( (bits_ & 3) == 0 );
-      assert( (port & ~3) == 0 );
-      bits_ |= port;
-}
+      vvp_sub_pointer_t(T*ptr, unsigned port)
+      {
+	    bits_ = reinterpret_cast<unsigned long> (ptr);
+	    assert( (bits_ & 3) == 0 );
+	    assert( (port & ~3) == 0 );
+	    bits_ |= port;
+      }
 
-inline vvp_net_t* vvp_net_ptr_t::ptr()
-{
-      return reinterpret_cast<vvp_net_t*> (bits_ & ~3UL);
-}
+      ~vvp_sub_pointer_t() { }
 
-inline const vvp_net_t* vvp_net_ptr_t::ptr() const
-{
-      return reinterpret_cast<const vvp_net_t*> (bits_ & ~3UL);
-}
+      T* ptr()
+      { return reinterpret_cast<T*> (bits_ & ~3UL); }
 
-inline unsigned vvp_net_ptr_t::port() const
-{
-      return bits_ & 3;
-}
+      const T* ptr() const
+      { return reinterpret_cast<const T*> (bits_ & ~3UL); }
 
-inline bool vvp_net_ptr_t::nil() const
-{
-      return bits_ == 0;
-}
+      unsigned  port() const { return bits_ & 3; }
 
-inline bool vvp_net_ptr_t::operator == (vvp_net_ptr_t that) const
-{
-      return bits_ == that.bits_;
-}
+      bool nil() const { return bits_ == 0; }
 
-inline bool vvp_net_ptr_t::operator != (vvp_net_ptr_t that) const
-{
-      return bits_ != that.bits_;
-}
+      bool operator == (vvp_sub_pointer_t that) const { return bits_ == that.bits_; }
+      bool operator != (vvp_sub_pointer_t that) const { return bits_ != that.bits_; }
 
+    private:
+      unsigned long bits_;
+};
+
+typedef vvp_sub_pointer_t<vvp_net_t> vvp_net_ptr_t;
 
 /*
  * This is the basic unit of netlist connectivity. It is a fan-in of
