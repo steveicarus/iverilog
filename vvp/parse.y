@@ -688,6 +688,9 @@ statement
   | T_LABEL K_EXPORT T_SYMBOL ';'
       { compile_island_export($1, $3); }
 
+  | K_TRAN T_SYMBOL ',' T_SYMBOL T_SYMBOL ';'
+      { compile_island_tranif(0, $2, $4, $5, 0); }
+
   | K_TRANIF0 T_SYMBOL ',' T_SYMBOL T_SYMBOL ',' T_SYMBOL ';'
       { compile_island_tranif(0, $2, $4, $5, $7); }
 

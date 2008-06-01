@@ -490,14 +490,18 @@ void compile_island_tranif(int sense, char*island, char*pa, char*pb, char*pe)
       else
 	    br->active_high = false;
 
-      br->en = use_island->find_port(pe);
-      assert(br->en);
+      if (pe == 0) {
+	    br->en = 0;
+      } else {
+	    br->en = use_island->find_port(pe);
+	    assert(br->en);
+	    free(pe);
+      }
 
       use_island->add_branch(br, pa, pb);
 
       free(pa);
       free(pb);
-      free(pe);
 }
 
 void compile_island_cleanup(void)
