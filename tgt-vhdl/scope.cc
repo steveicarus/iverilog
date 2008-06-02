@@ -80,22 +80,33 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
    if (parent != NULL) {
       vhdl_entity *parent_ent = find_entity(ivl_scope_tname(parent));
       assert(parent_ent != NULL);
-      vhdl_arch *parent_arch = parent_ent->get_arch();
-      assert(parent_arch != NULL);
-      
-      // Create a forward declaration for it
-      if (!parent_arch->have_declared_component(ent->get_name())) {
-         vhdl_decl *comp_decl = vhdl_component_decl::component_decl_for(ent);
-         parent_arch->add_decl(comp_decl);
-      }
 
-      // And an instantiation statement
-      const char *inst_name = ivl_scope_basename(scope);
-      vhdl_comp_inst *inst = new vhdl_comp_inst(inst_name, ent->get_name().c_str());
-      std::ostringstream ss;
-      ss << "Scope name " << ivl_scope_name(scope);
-      inst->set_comment(ss.str());
-      parent_arch->add_stmt(inst);      
+      
+      // Make sure we only collect instantiations from *one*
+      // example of this module in the hieararchy
+      if (parent_ent->get_derived_from() == ivl_scope_name(parent)) {
+
+         vhdl_arch *parent_arch = parent_ent->get_arch();
+         assert(parent_arch != NULL);
+         
+         // Create a forward declaration for it
+         if (!parent_arch->have_declared_component(ent->get_name())) {
+            vhdl_decl *comp_decl = vhdl_component_decl::component_decl_for(ent);
+            parent_arch->add_decl(comp_decl);
+         }
+         
+         // And an instantiation statement
+         const char *inst_name = ivl_scope_basename(scope);
+         vhdl_comp_inst *inst = new vhdl_comp_inst(inst_name, ent->get_name().c_str());
+         std::ostringstream ss;
+         ss << "Generated from " << ivl_scope_name(scope);
+         inst->set_comment(ss.str());
+         parent_arch->add_stmt(inst);
+      }
+      else {
+         std::cout << "Ignoring instantiation " << ivl_scope_name(scope);
+         std::cout << " (already accounted for)" << std::endl;
+      }
    }
    
    return 0;
