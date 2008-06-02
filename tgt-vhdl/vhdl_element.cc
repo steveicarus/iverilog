@@ -21,6 +21,9 @@
 #include "vhdl_element.hh"
 
 #include <algorithm>
+#include <cassert>
+#include <typeinfo>
+#include <iostream>
 
 
 //////// HELPER FUNCTIONS ////////
@@ -120,15 +123,27 @@ vhdl_arch::vhdl_arch(const char *entity, const char *name)
 
 vhdl_arch::~vhdl_arch()
 {
-   conc_stmt_list_t::iterator it;
-   for (it = stmts_.begin(); it != stmts_.end(); ++it)
+   for (conc_stmt_list_t::iterator it = stmts_.begin();
+        it != stmts_.end();
+        ++it)
       delete (*it);
    stmts_.clear();
+   
+   for (decl_list_t::iterator it = decls_.begin();
+        it != decls_.end();
+        ++it)
+      delete (*it);
+   decls_.clear();
 }
 
-void vhdl_arch::add_stmt(vhdl_conc_stmt* stmt)
+void vhdl_arch::add_stmt(vhdl_conc_stmt *stmt)
 {
    stmts_.push_back(stmt);
+}
+
+void vhdl_arch::add_decl(vhdl_decl *decl)
+{
+   decls_.push_back(decl);
 }
 
 void vhdl_arch::emit(std::ofstream &of, int level) const
@@ -136,13 +151,28 @@ void vhdl_arch::emit(std::ofstream &of, int level) const
    emit_comment(of, level);
    of << "architecture " << name_ << " of " << entity_;
    of << " is";
-   // ...declarations...
-   // newline(indent(level));
-   newline(of, level);
+   emit_children<vhdl_decl>(of, decls_, level);
    of << "begin";
    emit_children<vhdl_conc_stmt>(of, stmts_, level);
    of << "end architecture;";
    blank_line(of, level);  // Extra blank line after architectures;
+}
+
+/*
+ * True if component `name' has already been declared in this
+ * architecture. This is a bit of hack, since it uses typeid
+ * to distinguish between components and other declarations.
+ */
+bool vhdl_arch::have_declared_component(const std::string &name) const
+{
+   std::string comp_typename(typeid(vhdl_component_decl).name());
+   decl_list_t::const_iterator it;
+   for (it = decls_.begin(); it != decls_.end(); ++it) {
+      if (comp_typename == typeid(**it).name()
+          && (*it)->get_name() == name)
+         return true;
+   }
+   return false;
 }
 
 
@@ -182,4 +212,52 @@ void vhdl_process::emit(std::ofstream &of, int level) const
    newline(of, level);
    of << "end process;";
    newline(of, level);
+}
+
+
+//////// COMPONENT INSTANTIATION ////////
+
+vhdl_comp_inst::vhdl_comp_inst(const char *inst_name, const char *comp_name)
+   : comp_name_(comp_name), inst_name_(inst_name)
+{
+   
+}
+
+void vhdl_comp_inst::emit(std::ofstream &of, int level) const
+{
+   // If there are no ports or generics we don't need to mention them...
+   emit_comment(of, level);
+   of << inst_name_ << ": " << comp_name_ << ";";
+   newline(of, level);
+}
+
+
+//////// COMPONENT DECLARATIONS ////////
+
+vhdl_component_decl::vhdl_component_decl(const char *name)
+   : vhdl_decl(name)
+{
+
+}
+
+/*
+ * Create a component declaration for the given entity.
+ */
+vhdl_component_decl *vhdl_component_decl::component_decl_for(const vhdl_entity *ent)
+{
+   assert(ent != NULL);
+
+   vhdl_component_decl *decl = new vhdl_component_decl
+      (ent->get_name().c_str());
+
+   return decl;
+}
+
+void vhdl_component_decl::emit(std::ofstream &of, int level) const
+{
+   emit_comment(of, level);
+   of << "component " << name_ << " is";
+   // ...ports...
+   newline(of, level);
+   of << "end component;";
 }
