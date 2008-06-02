@@ -216,6 +216,7 @@ void vvp_island::add_port(const char*key, vvp_net_t*net)
 
 void vvp_island::add_branch(vvp_island_branch*branch, const char*pa, const char*pb)
 {
+      assert(ports_);
       branch->a = ports_->sym_get_value(pa);
       branch->b = ports_->sym_get_value(pb);
 
@@ -248,7 +249,10 @@ void vvp_island::add_branch(vvp_island_branch*branch, const char*pa, const char*
 
 vvp_net_t* vvp_island::find_port(const char*key)
 {
-      return ports_->sym_get_value(key);
+      if (ports_ == 0)
+	    return 0;
+      else
+	    return ports_->sym_get_value(key);
 }
 
 void vvp_island::compile_cleanup()
