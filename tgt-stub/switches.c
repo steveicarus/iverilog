@@ -54,7 +54,7 @@ void show_switch(ivl_switch_t net)
 	    break;
       }
 
-      fprintf(out, "\n");
+      fprintf(out, " island=%p\n", ivl_switch_island(net));
 
       ivl_nexus_t nex = ivl_switch_a(net);
       const char*nex_name = nex? ivl_nexus_name(nex) : "";

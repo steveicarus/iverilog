@@ -1,7 +1,7 @@
 #ifndef __vvp_priv_H
 #define __vvp_priv_H
 /*
- * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,6 +51,8 @@ struct vector_info {
 extern const char *vvp_mangle_id(const char *);
 extern const char *vvp_mangle_name(const char *);
 
+extern char* draw_Cr_to_string(double value);
+
 /*
  * This generates a string from a signal that uniquely identifies
  * that signal with letters that can be used in a label.
@@ -64,6 +66,8 @@ extern const char* vvp_signal_label(ivl_signal_t sig);
 
 extern unsigned width_of_nexus(ivl_nexus_t nex);
 extern ivl_variable_type_t data_type_of_nexus(ivl_nexus_t nex);
+
+extern int can_elide_bufz(ivl_net_logic_t net, ivl_nexus_ptr_t nptr);
 
 /*
  * This function draws a process (initial or always) into the output
@@ -115,6 +119,19 @@ extern int draw_vpi_rfunc_call(ivl_expr_t exp);
  */
 extern void draw_switch_in_scope(ivl_switch_t sw);
 
+/* Draw_net_input and friends uses this. */
+struct vvp_nexus_data {
+	/* draw_net_input uses this */
+      const char*net_input;
+      unsigned drivers_count;
+      int flags;
+	/* draw_net_in_scope uses these to identify the controlling word. */
+      ivl_signal_t net;
+      unsigned net_word;
+};
+#define VVP_NEXUS_DATA_STR 0x0001
+
+
 /*
  * Given a nexus, draw a string that represents the functor output
  * that feeds the nexus. This function can be used to get the input to
@@ -124,6 +141,17 @@ extern void draw_switch_in_scope(ivl_switch_t sw);
  * cache it.
  */
 extern const char* draw_net_input(ivl_nexus_t nex);
+
+/*
+ * See draw_net_input.c for details on draw_net_input_x. (It would be
+ * nice if this can be made private.)
+ */
+  /* Omit LPMPART_BI device pin-data(0) drivers. */
+# define OMIT_PART_BI_DATA 0x0001
+struct vvp_nexus_data;
+extern char* draw_net_input_x(ivl_nexus_t nex,
+			      ivl_nexus_ptr_t omit_ptr, int omit_flags,
+			      struct vvp_nexus_data*nex_data);
 
 /*
  * This function is different from draw_net_input in that it will
