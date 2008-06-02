@@ -208,7 +208,7 @@ void vhdl_process::emit(std::ofstream &of, int level) const
    of << "begin";
    newline(of, level);
    // ...statements...
-   of << "wait;";   // Just to stop the simulation hanging
+   of << "  wait;";   // Just to stop the simulation hanging
    newline(of, level);
    of << "end process;";
    newline(of, level);

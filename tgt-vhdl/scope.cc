@@ -48,9 +48,7 @@ static vhdl_entity *create_entity_for(ivl_scope_t scope)
 
    // Build a comment to add to the entity/architecture
    std::ostringstream ss;
-   ss << "Generated from " << ivl_scope_name(scope);
-   ss << " (" << ivl_scope_def_file(scope) << ":";
-   ss << ivl_scope_def_lineno(scope) << ")";
+   ss << "Generated from Verilog module " << ivl_scope_tname(scope);
    
    arch->set_comment(ss.str());
    ent->set_comment(ss.str());
@@ -97,10 +95,8 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
          
          // And an instantiation statement
          const char *inst_name = ivl_scope_basename(scope);
-         vhdl_comp_inst *inst = new vhdl_comp_inst(inst_name, ent->get_name().c_str());
-         std::ostringstream ss;
-         ss << "Generated from " << ivl_scope_name(scope);
-         inst->set_comment(ss.str());
+         vhdl_comp_inst *inst =
+            new vhdl_comp_inst(inst_name, ent->get_name().c_str());
          parent_arch->add_stmt(inst);
       }
       else {

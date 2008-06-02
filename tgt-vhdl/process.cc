@@ -40,8 +40,8 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    const char *type = ivl_process_type(proc) == IVL_PR_INITIAL
       ? "initial" : "always";
    std::ostringstream ss;
-   ss << "Generated from " << type << " process in scope ";
-   ss << ivl_scope_name(scope);
+   ss << "Generated from " << type << " process in ";
+   ss << ivl_scope_tname(scope);
    vhdl_proc->set_comment(ss.str());
 
    // Store it in the entity's architecture
