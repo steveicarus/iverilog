@@ -35,12 +35,16 @@ static vhdl_entity *create_entity_for(ivl_scope_t scope)
    // The type name will become the entity name
    const char *tname = ivl_scope_tname(scope);
 
+   // Remember the scope name this entity was derived from so
+   // the correct processes can be added later
+   const char *derived_from = ivl_scope_name(scope);
+   
    // Verilog does not have the entity/architecture distinction
    // so we always create a pair and associate the architecture
    // with the entity for convenience (this also means that we
    // retain a 1-to-1 mapping of scope to VHDL element)
    vhdl_arch *arch = new vhdl_arch(tname);
-   vhdl_entity *ent = new vhdl_entity(tname, arch);
+   vhdl_entity *ent = new vhdl_entity(tname, derived_from, arch);
 
    // Build a comment to add to the entity/architecture
    std::ostringstream ss;
@@ -51,6 +55,9 @@ static vhdl_entity *create_entity_for(ivl_scope_t scope)
    arch->set_comment(ss.str());
    ent->set_comment(ss.str());
 
+   std::cout << "Generated entity " << tname;
+   std::cout << " from " << ivl_scope_name(scope) << std::endl;
+   
    remember_entity(ent);
    return ent;
 }
@@ -67,10 +74,6 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
    if (NULL == ent)
       ent = create_entity_for(scope);
    assert(ent);
-
-   if (parent != NULL) {
-      std::cout << "parent " << ivl_scope_name(parent) << std::endl;
-   }
       
    return 0;
 }

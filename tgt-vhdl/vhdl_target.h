@@ -6,13 +6,15 @@
 
 #include "vhdl_element.hh"
 
+#include <string>
+
 void error(const char *fmt, ...);
 
 int draw_scope(ivl_scope_t scope, void *_parent);
 int draw_process(ivl_process_t net, void *cd);
 
 void remember_entity(vhdl_entity *ent);
-vhdl_entity *find_entity(const char *tname);
+vhdl_entity *find_entity(const std::string &tname);
 
 #endif /* #ifndef INC_VHDL_TARGET_H */
  

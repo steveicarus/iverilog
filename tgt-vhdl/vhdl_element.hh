@@ -72,19 +72,20 @@ typedef std::list<vhdl_seq_stmt*> seq_stmt_list_t;
  */
 class vhdl_process : public vhdl_conc_stmt {
 public:
-   vhdl_process(const char *name = NULL);
+   vhdl_process(const char *name = "");
    virtual ~vhdl_process();
 
    void emit(std::ofstream &of, int level) const;
    void add_stmt(vhdl_seq_stmt* stmt);
 private:
    seq_stmt_list_t stmts_;
-   const char *name_;
+   std::string name_;
 };
 
 
 /*
- * An architecture which implements an entity. 
+ * An architecture which implements an entity. Entities are `derived'
+ * from instantiations of Verilog module scopes in the hierarchy.
  */
 class vhdl_arch : public vhdl_element {
 public:
@@ -95,7 +96,7 @@ public:
    void add_stmt(vhdl_conc_stmt* stmt);
 private:
    conc_stmt_list_t stmts_;
-   const char *name_, *entity_;
+   std::string name_, entity_;
 };
 
 /*
@@ -105,15 +106,19 @@ private:
  */
 class vhdl_entity : public vhdl_element {
 public:
-   vhdl_entity(const char *name, vhdl_arch *arch);
+   vhdl_entity(const char *name, const char *derived_from,
+               vhdl_arch *arch);
    virtual ~vhdl_entity();
 
    void emit(std::ofstream &of, int level=0) const;
    vhdl_arch *get_arch() const { return arch_; }
-   const char *get_name() const { return name_; }
+   const std::string &get_name() const { return name_; }
+
+   const std::string &get_derived_from() const { return derived_from_; }
 private:
-   const char *name_;
+   std::string name_;
    vhdl_arch *arch_;  // Entity may only have a single architecture
+   std::string derived_from_;
 };
 
 typedef std::list<vhdl_entity*> entity_list_t;

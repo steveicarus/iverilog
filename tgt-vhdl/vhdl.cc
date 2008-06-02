@@ -51,11 +51,11 @@ void error(const char *fmt, ...)
 /*
  * Find an entity given a type name.
  */
-vhdl_entity *find_entity(const char *tname)
+vhdl_entity *find_entity(const std::string &tname)
 {
    entity_list_t::const_iterator it;
    for (it = g_entities.begin(); it != g_entities.end(); ++it) {
-      if (strcmp((*it)->get_name(), tname) == 0)
+      if ((*it)->get_name() == tname)
          return *it;
    }
    return NULL;

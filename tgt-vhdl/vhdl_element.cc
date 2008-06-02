@@ -85,8 +85,9 @@ void vhdl_element::emit_comment(std::ofstream &of, int level) const
 
 //////// ENTITY ////////
 
-vhdl_entity::vhdl_entity(const char *name, vhdl_arch *arch)
-   : name_(name), arch_(arch)
+vhdl_entity::vhdl_entity(const char *name, const char *derived_from,
+                         vhdl_arch *arch)
+   : name_(name), arch_(arch), derived_from_(derived_from)
 {
 
 }
@@ -169,7 +170,7 @@ void vhdl_process::add_stmt(vhdl_seq_stmt* stmt)
 void vhdl_process::emit(std::ofstream &of, int level) const
 {
    emit_comment(of, level);
-   if (name_)
+   if (name_.size() > 0)
       of << name_ << ": ";
    of << "process is";  // TODO: sensitivity
    newline(of, level);
