@@ -864,6 +864,17 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    }
 
       }
+
+	// If these new nodes can belong to an island, then run tests
+	// to joind islands now.
+      if (dynamic_cast<IslandBranch*> (cur[0])) {
+	    for (unsigned idx = 0 ; idx < count ; idx += 1) {
+		  join_island(cur[idx]);
+	    }
+      }
+
+	// "cur" is an array of pointers, and we don't need it any more.
+      delete[]cur;
 }
 
 NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,

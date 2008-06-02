@@ -1039,7 +1039,9 @@ bool dll_target::tran(const NetTran*net)
       obj->type = net->type();
       obj->name = net->name();
       obj->scope = find_scope(des_, net->scope());
+      obj->island = net->island;
       assert(obj->scope);
+      assert(obj->island);
 
       const Nexus*nex;
 

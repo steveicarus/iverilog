@@ -638,7 +638,8 @@ void NetTaskDef::dump(ostream&o, unsigned ind) const
 
 void NetTran::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << type_ << " " << name() << endl;
+      o << setw(ind) << "" << type_ << " " << name()
+	<< " island " << island << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }

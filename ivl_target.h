@@ -80,6 +80,13 @@ _BEGIN_DECL
  *    processes. Structural expressions are instead treated as logic
  *    gates.
  *
+ * ivl_island_t
+ *    Certain types of objects may belong to islands. The island that
+ *    they belong to is represented by the ivl_island_t cookie. To
+ *    know if object belong to the same island, it is sufficient to
+ *    compare island cookies. If a==b, then island a is the same as
+ *    island b.
+ *
  * ivl_lpm_t
  *    This object is the base class for all the various LPM type
  *    device nodes. This object carries a few base properties
@@ -146,6 +153,7 @@ typedef struct ivl_delaypath_s*ivl_delaypath_t;
 typedef struct ivl_design_s   *ivl_design_t;
 typedef struct ivl_event_s    *ivl_event_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
+typedef struct ivl_island_s   *ivl_island_t;
 typedef struct ivl_lpm_s      *ivl_lpm_t;
 typedef struct ivl_lval_s     *ivl_lval_t;
 typedef struct ivl_net_const_s*ivl_net_const_t;
@@ -712,6 +720,16 @@ extern const char* ivl_file_table_item(unsigned  idx);
 extern unsigned ivl_file_table_index(const char *);
 extern unsigned ivl_file_table_size(void);
 
+
+/* ISLAND
+ *
+ * ivl_island_flag_set
+ * ivl_island_flag_test
+ *    Allow the user to test or set a boolean flag associated with the
+ *    island.
+ */
+extern int ivl_island_flag_set(ivl_island_t net, int flag, int value);
+extern int ivl_island_flag_test(ivl_island_t net, int flag);
 
 /* LOGIC
  * These types and functions support manipulation of logic gates. The
@@ -1873,6 +1891,7 @@ extern const char*ivl_switch_basename(ivl_switch_t net);
 extern ivl_nexus_t ivl_switch_a(ivl_switch_t net);
 extern ivl_nexus_t ivl_switch_b(ivl_switch_t net);
 extern ivl_nexus_t ivl_switch_enable(ivl_switch_t net);
+extern ivl_island_t ivl_switch_island(ivl_switch_t net);
 
 /* Not implemented yet
 extern unsigned        ivl_switch_attr_cnt(ivl_switch_t net);

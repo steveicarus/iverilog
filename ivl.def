@@ -224,6 +224,7 @@ ivl_switch_b
 ivl_switch_basename
 ivl_switch_enable
 ivl_switch_file
+ivl_switch_island
 ivl_switch_lineno
 ivl_switch_scope
 ivl_switch_type

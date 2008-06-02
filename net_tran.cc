@@ -26,6 +26,7 @@
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "ivl_target_priv.h"
 # include  "ivl_assert.h"
 
 static bool has_enable(ivl_switch_type_t tt)
@@ -54,4 +55,47 @@ NetTran::NetTran(NetScope*scope, perm_string n, ivl_switch_type_t tt)
 
 NetTran::~NetTran()
 {
+}
+
+void join_island(NetObj*obj)
+{
+      IslandBranch*branch = dynamic_cast<IslandBranch*> (obj);
+      if (branch == 0)
+	    return;
+
+      ivl_assert(*obj, branch->island == 0);
+      struct ivl_island_s*use_island = 0;
+
+      for (unsigned idx = 0 ; idx < obj->pin_count() ; idx += 1) {
+	    Nexus*nex = obj->pin(idx).nexus();
+	    for (Link*cur = nex->first_nlink() ; cur ; cur = cur->next_nlink()) {
+		  unsigned pin;
+		  NetObj*tmp;
+		  cur->cur_link(tmp, pin);
+		  if (tmp == obj)
+			continue;
+
+		  IslandBranch*tmp_branch = dynamic_cast<IslandBranch*> (tmp);
+		  if (tmp_branch == 0)
+			continue;
+
+		  ivl_assert(*tmp, tmp_branch->island);
+		  ivl_assert(*obj, use_island==0 || use_island==tmp_branch->island);
+		  use_island = tmp_branch->island;
+	    }
+      }
+
+      if (use_island == 0) {
+	    use_island = new ivl_island_s;
+	    use_island->discipline = 0;
+	    if (debug_elaborate)
+		  cerr << obj->get_fileline() << ": debug: "
+		       << "Create new island for this branch" << endl;
+      } else {
+	    if (debug_elaborate)
+		  cerr << obj->get_fileline() << ": debug: "
+		       << "Join this brach to existing island." << endl;
+      }
+
+      branch->island = use_island;
 }

@@ -52,6 +52,7 @@ class Nexus;
 class NetEvent;
 class NetNet;
 class NetNode;
+class NetObj;
 class NetProc;
 class NetProcTop;
 class NetRelease;
@@ -70,6 +71,8 @@ struct target;
 struct functor_t;
 
 ostream& operator << (ostream&o, ivl_variable_type_t val);
+
+extern void join_island(NetObj*obj);
 
 /* =========
  * A NetObj is anything that has any kind of behavior in the
@@ -129,6 +132,20 @@ class NetObj  : public Attrib, public virtual LineInfo {
       const NetExpr* delay1_;
       const NetExpr* delay2_;
       const NetExpr* delay3_;
+};
+
+/*
+* Objects that can be island branches are derived from this. (It is
+* possible for an object to be a NetObj and an IslandBranch.) This is
+* used to collect island information about the node.
+*/
+
+class IslandBranch {
+    public:
+      IslandBranch() : island(0) { }
+
+    public:
+      struct ivl_island_s* island;
 };
 
 class Link {
@@ -1359,7 +1376,7 @@ class NetSysFunc  : public NetNode {
       const struct sfunc_return_type*def_;
 };
 
-class NetTran  : public NetNode {
+class NetTran  : public NetNode, public IslandBranch {
 
     public:
       NetTran(NetScope*scope, perm_string n, ivl_switch_type_t type);

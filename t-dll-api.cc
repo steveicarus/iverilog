@@ -555,6 +555,28 @@ extern "C" unsigned ivl_file_table_size()
       return fn_vector.size();
 }
 
+extern "C" int ivl_island_flag_set(ivl_island_t net, int flag, int value)
+{
+      if (flag >= net->flags.size()) {
+	    if (value == 0)
+		  return 0;
+	    else
+		  net->flags.resize(flag+1, false);
+      }
+
+      int old_flag = net->flags[flag];
+      net->flags[flag] = value != 0;
+      return old_flag;
+}
+
+extern "C" int ivl_island_flag_test(ivl_island_t net, int flag)
+{
+      if (flag >= net->flags.size())
+	    return 0;
+      else
+	    return net->flags[flag];
+}
+
 extern "C" const char* ivl_logic_attr(ivl_net_logic_t net, const char*key)
 {
       assert(net);
@@ -2199,6 +2221,11 @@ extern "C" ivl_nexus_t ivl_switch_enable(ivl_switch_t net)
 extern "C" const char* ivl_switch_file(ivl_switch_t net)
 {
       return net->file;
+}
+
+extern "C" ivl_island_t ivl_switch_island(ivl_switch_t net)
+{
+      return net->island;
 }
 
 extern "C" unsigned ivl_switch_lineno(ivl_switch_t net)

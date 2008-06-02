@@ -21,6 +21,7 @@
 
 # include  "target.h"
 # include  "ivl_target.h"
+# include  "ivl_target_priv.h"
 # include  "StringHeap.h"
 # include  "netlist.h"
 # include  <vector>
@@ -453,6 +454,7 @@ struct ivl_switch_s {
 
       perm_string name;
       ivl_scope_t scope;
+      ivl_island_t island;
 
       struct ivl_attribute_s*attr;
       unsigned nattr;
