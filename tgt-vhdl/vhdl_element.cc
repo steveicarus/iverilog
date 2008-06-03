@@ -67,16 +67,34 @@ void emit_children(std::ofstream &of,
    }
 }
 
+template <class T>
+void delete_children(std::list<T*> &children)
+{
+   typename std::list<T*>::iterator it;
+   for (it = children.begin(); it != children.end(); ++it)
+      delete *it;
+   children.clear();
+}
+
 void vhdl_element::set_comment(std::string comment)
 {
    comment_ = comment;
 }
 
-void vhdl_element::emit_comment(std::ofstream &of, int level) const
+/*
+ * Draw the comment for any element. The comment is either on
+ * a line before the element (end_of_line is false) or at the
+ * end of the line containing the element (end_of_line is true).
+ */
+void vhdl_element::emit_comment(std::ofstream &of, int level,
+                                bool end_of_line) const
 {
    if (comment_.size() > 0) {
+      if (end_of_line)
+         of << "  ";
       of << "-- " << comment_;
-      newline(of, level);
+      if (!end_of_line)
+         newline(of, level);
    }
 }
 
@@ -112,17 +130,8 @@ vhdl_arch::vhdl_arch(const char *entity, const char *name)
 
 vhdl_arch::~vhdl_arch()
 {
-   for (conc_stmt_list_t::iterator it = stmts_.begin();
-        it != stmts_.end();
-        ++it)
-      delete (*it);
-   stmts_.clear();
-   
-   for (decl_list_t::iterator it = decls_.begin();
-        it != decls_.end();
-        ++it)
-      delete (*it);
-   decls_.clear();
+   delete_children<vhdl_conc_stmt>(stmts_);
+   delete_children<vhdl_decl>(decls_);
 }
 
 void vhdl_arch::add_stmt(vhdl_conc_stmt *stmt)
@@ -172,15 +181,28 @@ vhdl_process::vhdl_process(const char *name)
 
 vhdl_process::~vhdl_process()
 {
-   seq_stmt_list_t::iterator it;
-   for (it = stmts_.begin(); it != stmts_.end(); ++it)
-      delete (*it);
-   stmts_.clear();
+   delete_children<vhdl_seq_stmt>(stmts_);
+   delete_children<vhdl_decl>(decls_);
 }
 
 void vhdl_process::add_stmt(vhdl_seq_stmt* stmt)
 {
    stmts_.push_back(stmt);
+}
+
+void vhdl_process::add_decl(vhdl_decl* decl)
+{
+   decls_.push_back(decl);
+}
+
+bool vhdl_process::have_declared_var(const std::string &name) const
+{
+   decl_list_t::const_iterator it;
+   for (it = decls_.begin(); it != decls_.end(); ++it) {
+      if ((*it)->get_name() == name)
+         return true;
+   }
+   return false;
 }
 
 void vhdl_process::emit(std::ofstream &of, int level) const
@@ -189,8 +211,7 @@ void vhdl_process::emit(std::ofstream &of, int level) const
    if (name_.size() > 0)
       of << name_ << ": ";
    of << "process is";  // TODO: sensitivity
-   newline(of, level);
-   // ...declarations...
+   emit_children<vhdl_decl>(of, decls_, level);
    of << "begin";
    emit_children<vhdl_seq_stmt>(of, stmts_, level);
    of << "end process;";
@@ -248,4 +269,17 @@ void vhdl_wait_stmt::emit(std::ofstream &of, int level) const
 void vhdl_scalar_type::emit(std::ofstream &of, int level) const
 {
    of << name_;
+}
+
+vhdl_var_decl::~vhdl_var_decl()
+{
+   delete type_;
+}
+
+void vhdl_var_decl::emit(std::ofstream &of, int level) const
+{
+   of << "variable " << name_ << " : ";
+   type_->emit(of, level);
+   of << ";";
+   emit_comment(of, level, true);
 }

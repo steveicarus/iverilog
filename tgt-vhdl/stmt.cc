@@ -28,18 +28,32 @@
  * This is implemented using the functions in std.textio. Each
  * parameter is written to a line variable in the process and
  * then the line is written to the special variable `Output'
- * (which represents the console). Subsequent $displays will use
- * the same line variable.
+ * (which represents the console). Subsequent $displays will
+ * use the same line variable.
  *
  * It's possible, although quite unlikely, that there will be
  * name collision with an existing variable called
- * `Verilog_Display_Line' - do something about this? It's also
- * possible for there to be a name collision with the special
- * variable `Output'.
+ * `Verilog_Display_Line' -- do something about this?
+ * It's also possible for there to be a name collision with
+ * the special variable `Output'.
  */
 static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
 {
    require_package("std.textio");
+
+   const char *display_line = "Verilog_Display_Line";
+   
+   if (!proc->have_declared_var(display_line)) {
+      vhdl_type *line_type = new vhdl_scalar_type("Line");
+      vhdl_var_decl *line_var =
+         new vhdl_var_decl(display_line, line_type);
+      line_var->set_comment("For generating $display output");
+      proc->add_decl(line_var);
+   }
+
+   // TODO: Write the data into the line
+
+   // TODO: Write_Line(Output, Verilog_Display_Line)
    
    return 0;
 }

@@ -38,7 +38,8 @@ public:
 
    void set_comment(std::string comment);
 protected:
-   void emit_comment(std::ofstream &of, int level) const;
+   void emit_comment(std::ofstream &of, int level,
+                     bool end_of_line=false) const;
 private:
    std::string comment_;
 };
@@ -55,7 +56,7 @@ public:
  * too much more complex, as Verilog's type system is much
  * simpler than VHDL's.
  */
-class vhdl_scalar_type : public vhdl_element {
+class vhdl_scalar_type : public vhdl_type {
 public:
    vhdl_scalar_type(const char *name) : name_(name) {}
 
@@ -141,7 +142,13 @@ private:
  */
 class vhdl_var_decl : public vhdl_decl {
 public:
+   vhdl_var_decl(const char *name, vhdl_type *type)
+      : vhdl_decl(name), type_(type) {}
+   ~vhdl_var_decl();
    
+   void emit(std::ofstream &of, int level) const;
+private:
+   vhdl_type *type_;
 };
 
 
@@ -172,8 +179,11 @@ public:
 
    void emit(std::ofstream &of, int level) const;
    void add_stmt(vhdl_seq_stmt *stmt);
+   void add_decl(vhdl_decl *decl);
+   bool have_declared_var(const std::string &name) const;
 private:
    seq_stmt_list_t stmts_;
+   decl_list_t decls_;
    std::string name_;
 };
 
