@@ -244,3 +244,8 @@ void vhdl_wait_stmt::emit(std::ofstream &of, int level) const
    // TODO: There are lots of different types of `wait'
    of << "wait;";
 }
+
+void vhdl_scalar_type::emit(std::ofstream &of, int level) const
+{
+   of << name_;
+}

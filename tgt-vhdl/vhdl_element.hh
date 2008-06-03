@@ -45,6 +45,24 @@ private:
 
 typedef std::list<vhdl_element*> element_list_t; 
 
+class vhdl_type : public vhdl_element {
+public:
+   virtual ~vhdl_type() {}
+};
+
+/*
+ * A type at the moment is just a name. It shouldn't get
+ * too much more complex, as Verilog's type system is much
+ * simpler than VHDL's.
+ */
+class vhdl_scalar_type : public vhdl_element {
+public:
+   vhdl_scalar_type(const char *name) : name_(name) {}
+
+   void emit(std::ofstream &of, int level) const;
+private:
+   std::string name_;
+};
 
 /*
  * A concurrent statement appears in architecture bodies but not
@@ -114,6 +132,16 @@ private:
    vhdl_component_decl(const char *name);
 
    // TODO: Ports, etc.
+};
+
+
+/*
+ * A variable declaration inside a process (although this isn't
+ * enforced here).
+ */
+class vhdl_var_decl : public vhdl_decl {
+public:
+   
 };
 
 
