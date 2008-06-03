@@ -68,6 +68,17 @@ public:
 
 typedef std::list<vhdl_seq_stmt*> seq_stmt_list_t;
 
+
+/*
+ * Delay simulation indefinitely, until an event, or for a
+ * specified time.
+ */
+class vhdl_wait_stmt : public vhdl_seq_stmt {
+public:
+   void emit(std::ofstream &of, int level) const;
+};
+
+
 /*
  * A declaration of some sort (variable, component, etc.).
  * Declarations have names, which is the identifier of the variable,

@@ -206,10 +206,7 @@ void vhdl_process::emit(std::ofstream &of, int level) const
    newline(of, level);
    // ...declarations...
    of << "begin";
-   newline(of, level);
-   // ...statements...
-   of << "  wait;";   // Just to stop the simulation hanging
-   newline(of, level);
+   emit_children<vhdl_seq_stmt>(of, stmts_, level);
    of << "end process;";
    newline(of, level);
 }
@@ -260,4 +257,13 @@ void vhdl_component_decl::emit(std::ofstream &of, int level) const
    // ...ports...
    newline(of, level);
    of << "end component;";
+}
+
+
+//////// WAIT STATEMENT ////////
+
+void vhdl_wait_stmt::emit(std::ofstream &of, int level) const
+{
+   // TODO: There are lots of different types of `wait'
+   of << "wait;";
 }

@@ -33,8 +33,14 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
 {
    vhdl_process *vhdl_proc = new vhdl_process();
 
-   // TODO: Add statements
-
+   // Initial processes are translated to VHDL processes with
+   // no sensitivity list and and indefinite wait statement at
+   // the end
+   if (ivl_process_type(proc) == IVL_PR_INITIAL) {
+      vhdl_wait_stmt *wait = new vhdl_wait_stmt();
+      vhdl_proc->add_stmt(wait);
+   }
+   
    // Add a comment indicating where it came from
    ivl_scope_t scope = ivl_process_scope(proc);
    const char *type = ivl_process_type(proc) == IVL_PR_INITIAL
