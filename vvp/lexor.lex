@@ -160,6 +160,7 @@
 ".tran"     { return K_TRAN; }
 ".tranif0"  { return K_TRANIF0; }
 ".tranif1"  { return K_TRANIF1; }
+".tranvp"   { return K_TRANVP; }
 ".ufunc"    { return K_UFUNC; }
 ".var"      { return K_VAR; }
 ".var/real" { return K_VAR_R; }

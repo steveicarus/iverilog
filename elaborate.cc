@@ -889,6 +889,32 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
       tmp->local_flag(true);
       tmp->set_line(*sig);
 
+	// Handle the special case of a bi-directional part
+	// select. Create a NetTran(VP) instead of a uni-directional
+	// NetPartSelect node.
+      if (dir == NetNet::PINOUT) {
+	    unsigned wida = sig->vector_width();
+	    unsigned widb = tmp->vector_width();
+	    bool part_b = widb < wida;
+	    NetTran*node = new NetTran(scope, scope->local_symbol(),
+				       part_b? wida : widb,
+				       part_b? widb : wida,
+				       0);
+	    if (part_b) {
+		  connect(node->pin(0), tmp->pin(0));
+		  connect(node->pin(1), sig->pin(0));
+	    } else {
+		  connect(node->pin(0), sig->pin(0));
+		  connect(node->pin(1), tmp->pin(0));
+	    }
+
+	    node->set_line(*this);
+	    des->add_node(node);
+	    join_island(node);
+
+	    return tmp;
+      }
+
       NetPartSelect*node = 0;
 
       switch (dir) {
@@ -917,15 +943,7 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
 	    break;
 
 	  case NetNet::PINOUT:
-	    if (sig->vector_width() > tmp->vector_width()) {
-		  node = new NetPartSelect(sig, 0, tmp->vector_width(),
-					   NetPartSelect::BI);
-		  connect(node->pin(0), tmp->pin(0));
-	    } else {
-		  node = new NetPartSelect(tmp, 0, sig->vector_width(),
-					   NetPartSelect::BI);
-		  connect(node->pin(0), sig->pin(0));
-	    }
+	    ivl_assert(*this, 0);
 	    break;
 
 	  default:

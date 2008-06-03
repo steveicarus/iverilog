@@ -226,8 +226,11 @@ ivl_switch_enable
 ivl_switch_file
 ivl_switch_island
 ivl_switch_lineno
+ivl_switch_offset
+ivl_switch_part
 ivl_switch_scope
 ivl_switch_type
+ivl_switch_width
 
 ivl_udp_init
 ivl_udp_name

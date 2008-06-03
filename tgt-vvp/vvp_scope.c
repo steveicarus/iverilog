@@ -1612,94 +1612,6 @@ static void draw_lpm_part_pv(ivl_lpm_t net)
 }
 
 /*
- * Handle the drawing of a bi-directional part select. The two ports
- * are simultaneously input and output. A simple minded connect of the
- * input to the output causes a functor cycle which will lock into an
- * X value, so something special is needed.
- *
- * NOTE: The inputs of the tran device at this point need to be from
- * all the drivers of the nexus *except* the tran itself. This
- * function will draw three labels that can be linked:
- *
- * The ivl_lpm_q of a part(bi) may be a smaller vector then the
- * ivl_lpm_data, the tran acts like a forward part select in that
- * way.
- *
- * The device creates these nodes:
- *
- * - L_%p/i
- * This is the Q port of the tran resolved and padded to the maximum
- * width of the tran. The tran itself is not included in the
- * resolution of this port.
- *
- * - L_%p/V
- * This is the Q and D parts resolved together, still without the tran
- * driving anything.
- *
- * - L_%p/P
- * This is the /V node part-selected back to the dimensions of the Q
- * side.
- */
-static void draw_lpm_part_bi(ivl_lpm_t net)
-{
-      unsigned width = ivl_lpm_width(net);
-      unsigned base  = ivl_lpm_base(net);
-      unsigned signal_width = width_of_nexus(ivl_lpm_data(net,0));
-
-      unsigned idx;
-      ivl_nexus_t nex;
-      ivl_nexus_ptr_t ptr = 0;
-
-      char*p_str;
-      char*v_str;
-
-	/* It seems implausible that the two inputs of a tran will be
-	   connected together. So assert that this is so to simplify
-	   the code to look for the nexus_ptr_t objects. */
-      assert(ivl_lpm_q(net,0) != ivl_lpm_data(net,0));
-
-      nex = ivl_lpm_q(net,0);
-      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    ptr = ivl_nexus_ptr(nex, idx);
-	    if (ivl_nexus_ptr_lpm(ptr) == net)
-		  break;
-      }
-      assert(ptr != 0);
-      p_str = draw_net_input_x(nex, ptr, 0, 0);
-
-      nex = ivl_lpm_data(net,0);
-      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    ptr = ivl_nexus_ptr(nex, idx);
-	    if (ivl_nexus_ptr_lpm(ptr) == net)
-		  break;
-      }
-      v_str = draw_net_input_x(nex, ptr, OMIT_PART_BI_DATA, 0);
-
-	/* Pad the part-sized input out to a common width...
-	   The /i label is the Q side of the tran, resolved except for
-	   the tran itself and padded (with z) to the larger width. */
-      fprintf(vvp_out, "L_%p/i .part/pv %s, %u, %u, %u;\n",
-	      net, p_str, base, width, signal_width);
-
-	/* Resolve together the two halves of the tran...
-	   The /V label is the ports of the tran (now the same width)
-	   resolved together. Neither input to this resolver includes
-	   the tran itself. */
-      fprintf(vvp_out, "L_%p/V .resolv tri, L_%p/i, %s;\n",
-	      net, net, v_str);
-
-	/* The full-width side is created by the tran device, all we
-	   have left to to is take a part select of that for the
-	   smaller output, and this becomes the part select output of
-	   the BI device. */
-      fprintf(vvp_out, "L_%p/P .part L_%p/V, %u, %u;\n", net,
-	      net, base, width);
-
-      free(p_str);
-      free(v_str);
-}
-
-/*
  * Draw unary reduction devices.
  */
 static void draw_lpm_re(ivl_lpm_t net, const char*type)
@@ -1743,10 +1655,6 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 
 	  case IVL_LPM_ARRAY:
 	    draw_lpm_array(net);
-	    return;
-
-	  case IVL_LPM_PART_BI:
-	    draw_lpm_part_bi(net);
 	    return;
 
 	  case IVL_LPM_PART_VP:

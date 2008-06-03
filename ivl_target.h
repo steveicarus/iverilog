@@ -245,7 +245,8 @@ typedef enum ivl_switch_type_e {
       IVL_SW_TRANIF1  = 2,
       IVL_SW_RTRAN    = 3,
       IVL_SW_RTRANIF0 = 4,
-      IVL_SW_RTRANIF1 = 5
+      IVL_SW_RTRANIF1 = 5,
+      IVL_SW_TRAN_VP  = 6
 } ivl_switch_type_t;
 
 /* This is the type of an LPM object. */
@@ -265,7 +266,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_MOD    = 13,
       IVL_LPM_MULT   =  4,
       IVL_LPM_MUX    =  5,
-      IVL_LPM_PART_BI= 28, /* part select: bi-directional (part on 0) */
+      /* IVL_LPM_PART_BI= 28, / obsolete */
       IVL_LPM_PART_VP= 15, /* part select: vector to part */
       IVL_LPM_PART_PV= 17, /* part select: part written to vector */
       IVL_LPM_POW    = 31,
@@ -728,8 +729,8 @@ extern unsigned ivl_file_table_size(void);
  *    Allow the user to test or set a boolean flag associated with the
  *    island.
  */
-extern int ivl_island_flag_set(ivl_island_t net, int flag, int value);
-extern int ivl_island_flag_test(ivl_island_t net, int flag);
+extern int ivl_island_flag_set(ivl_island_t net, unsigned flag, int value);
+extern int ivl_island_flag_test(ivl_island_t net, unsigned flag);
 
 /* LOGIC
  * These types and functions support manipulation of logic gates. The
@@ -1883,7 +1884,11 @@ extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
  *
  * SEMANTIC NOTES
  * The a/b ports can be any type, but the types must exactly
- * match. The enable must be a scalar.
+ * match, including vector widths. The enable must be a scalar.
+ *
+ * The IVL_SW_TRAN_VP is an exception to the above. In this case,
+ * the B side may be a different size, and the a side will have a
+ * a fixed width. The unused bits are padded to Z on the A side.
  */
 extern ivl_switch_type_t ivl_switch_type(ivl_switch_t net);
 extern ivl_scope_t ivl_switch_scope(ivl_switch_t net);
@@ -1892,6 +1897,11 @@ extern ivl_nexus_t ivl_switch_a(ivl_switch_t net);
 extern ivl_nexus_t ivl_switch_b(ivl_switch_t net);
 extern ivl_nexus_t ivl_switch_enable(ivl_switch_t net);
 extern ivl_island_t ivl_switch_island(ivl_switch_t net);
+
+  /* These are only support for IVL_SW_TRAN_VP switches. */
+extern unsigned ivl_switch_width(ivl_switch_t net);
+extern unsigned ivl_switch_part(ivl_switch_t net);
+extern unsigned ivl_switch_offset(ivl_switch_t net);
 
 /* Not implemented yet
 extern unsigned        ivl_switch_attr_cnt(ivl_switch_t net);

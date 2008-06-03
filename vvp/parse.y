@@ -81,7 +81,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_PART_V K_PORT K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
 %token K_RESOLV K_SCOPE K_SFUNC K_SHIFTL K_SHIFTR K_SHIFTRS
-%token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_UFUNC
+%token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_func K_vpi_func_r
 %token K_disable K_fork
@@ -696,6 +696,9 @@ statement
 
   | K_TRANIF1 T_SYMBOL ',' T_SYMBOL T_SYMBOL ',' T_SYMBOL ';'
       { compile_island_tranif(1, $2, $4, $5, $7); }
+
+  | K_TRANVP T_NUMBER T_NUMBER T_NUMBER ',' T_SYMBOL ',' T_SYMBOL T_SYMBOL ';'
+      { compile_island_tranvp($6, $8, $9, $2, $3, $4); }
 
   /* Oh and by the way, empty statements are OK as well. */
 

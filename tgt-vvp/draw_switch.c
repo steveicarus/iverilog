@@ -53,14 +53,19 @@ void draw_switch_in_scope(ivl_switch_t sw)
 
       switch (ivl_switch_type(sw)) {
 	  case IVL_SW_TRAN:
-	    fprintf(vvp_out, " .tran ");
+	    fprintf(vvp_out, " .tran");
 	    break;
 	  case IVL_SW_TRANIF0:
-	    fprintf(vvp_out, " .tranif0 ");
+	    fprintf(vvp_out, " .tranif0");
 	    break;
 	  case IVL_SW_TRANIF1:
-	    fprintf(vvp_out, " .tranif1 ");
+	    fprintf(vvp_out, " .tranif1");
 	    break;
+	  case IVL_SW_TRAN_VP:
+	    fprintf(vvp_out, " .tranvp %u %u %u,",
+		    ivl_switch_width(sw), ivl_switch_part(sw), ivl_switch_offset(sw));
+	    break;
+
 	  default:
 	    fprintf(stderr, "%s:%u: sorry: vvp target does not support switch modeling.\n",
 		    ivl_switch_file(sw), ivl_switch_lineno(sw));

@@ -451,6 +451,9 @@ struct ivl_net_logic_s {
 
 struct ivl_switch_s {
       ivl_switch_type_t type;
+      unsigned width;
+      unsigned part;
+      unsigned offset;
 
       perm_string name;
       ivl_scope_t scope;

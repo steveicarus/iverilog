@@ -556,7 +556,7 @@ class vvp_vector8_t {
 
       unsigned size() const { return size_; }
       vvp_scalar_t value(unsigned idx) const;
-      vvp_vector8_t subvalue(unsigned idx, unsigned size) const;
+      vvp_vector8_t subvalue(unsigned adr, unsigned width) const;
       void set_bit(unsigned idx, vvp_scalar_t val);
 
 	// Test that the vectors are exactly equal

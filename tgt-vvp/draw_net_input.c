@@ -421,17 +421,6 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	    }
 	    break;
 
-	  case IVL_LPM_PART_BI:
-	    if (ivl_lpm_q(lpm, 0) == nex) {
-		  char tmp[128];
-		  snprintf(tmp, sizeof tmp, "L_%p/P", lpm);
-		  return strdup(tmp);
-	    } else if (ivl_lpm_data(lpm,0) == nex) {
-		  char tmp[128];
-		  snprintf(tmp, sizeof tmp, "L_%p/V", lpm);
-		  return strdup(tmp);
-	    }
-	    break;
       }
 
       fprintf(stderr, "internal error: no input to nexus %s\n",
@@ -440,7 +429,8 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       return strdup("C<z>");
 }
 
-static char* draw_island_port(ivl_island_t island, ivl_nexus_t nex, const char*src)
+static char* draw_island_port(ivl_island_t island,
+			      ivl_nexus_t nex, const char*src)
 {
       char result[64];
       if (ivl_island_flag_test(island,0) == 0) {
@@ -450,6 +440,7 @@ static char* draw_island_port(ivl_island_t island, ivl_nexus_t nex, const char*s
 
       fprintf(vvp_out, "p%p .port I%p, %s;\n", nex, island, src);
       snprintf(result, sizeof result, "p%p", nex);
+
       return strdup(result);
 }
 
@@ -517,13 +508,14 @@ char* draw_net_input_x(ivl_nexus_t nex,
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
 	    ivl_lpm_t lpm_tmp;
-	    ivl_switch_t sw;
+	    ivl_switch_t sw = 0;
 	    ivl_nexus_ptr_t nptr = ivl_nexus_ptr(nex, idx);
 
 	      /* If this object is part of an island, then we'll be
 	         making a port. Save the island cookie. */
-	    if ( (sw = ivl_nexus_ptr_switch(nptr)) )
+	    if ( (sw = ivl_nexus_ptr_switch(nptr)) ) {
 		 island = ivl_switch_island(sw);
+	    }
 
 	      /* If we are supposed to skip LPM_PART_BI data pins,
 		 check that this driver is that. */
@@ -589,6 +581,11 @@ char* draw_net_input_x(ivl_nexus_t nex,
 	    }
 	    *tmp++ = '>';
 	    *tmp = 0;
+	    if (island) {
+		  char*tmp = draw_island_port(island, nex, nex_private);
+		  free(nex_private);
+		  nex_private = tmp;
+	    }
 	    return nex_private;
       }
 

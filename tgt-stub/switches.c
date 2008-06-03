@@ -52,18 +52,23 @@ void show_switch(ivl_switch_t net)
 	    fprintf(out, "  rtranif1 %s", name);
 	    has_enable = 1;
 	    break;
+	  case IVL_SW_TRAN_VP:
+	    fprintf(out, "  tran(PV wid=%u, part=%u, off=%u) %s",
+		    ivl_switch_width(net), ivl_switch_part(net),
+		    ivl_switch_offset(net), name);
+	    break;
       }
 
       fprintf(out, " island=%p\n", ivl_switch_island(net));
 
-      ivl_nexus_t nex = ivl_switch_a(net);
-      const char*nex_name = nex? ivl_nexus_name(nex) : "";
-      ivl_variable_type_t nex_type_a = nex? type_of_nexus(nex) : IVL_VT_NO_TYPE;
+      ivl_nexus_t nexa = ivl_switch_a(net);
+      const char*nex_name = nexa? ivl_nexus_name(nexa) : "";
+      ivl_variable_type_t nex_type_a = nexa? type_of_nexus(nexa) : IVL_VT_NO_TYPE;
       fprintf(out, "    A: %s <type=%s>\n", nex_name, data_type_string(nex_type_a));
 
-      nex = ivl_switch_b(net);
-      nex_name = nex? ivl_nexus_name(nex) : "";
-      ivl_variable_type_t nex_type_b = nex? type_of_nexus(nex) : IVL_VT_NO_TYPE;
+      ivl_nexus_t nexb = ivl_switch_b(net);
+      nex_name = nexb? ivl_nexus_name(nexb) : "";
+      ivl_variable_type_t nex_type_b = nexb? type_of_nexus(nexb) : IVL_VT_NO_TYPE;
       fprintf(out, "    B: %s <type=%s>\n", nex_name, data_type_string(nex_type_b));
 
 	/* The A/B pins of the switch must be present, and must match. */
@@ -80,13 +85,40 @@ void show_switch(ivl_switch_t net)
 	    stub_errors += 1;
       }
 
+      if (ivl_switch_type(net) == IVL_SW_TRAN_VP) {
+	      /* The TRAN_VP nodes are special in that the specific
+		 width matters for each port and should be exactly
+		 right for both. */
+	    if (width_of_nexus(nexa) != ivl_switch_width(net)) {
+		  fprintf(out, "    A: ERROR: part vector nexus "
+			  "width=%u, expecting width=%u\n",
+			  width_of_nexus(nexa), ivl_switch_width(net));
+		  stub_errors += 1;
+	    }
+	    if (width_of_nexus(nexb) != ivl_switch_part(net)) {
+		  fprintf(out, "    B: ERROR: part select nexus "
+			  "width=%u, expecting width=%u\n",
+			  width_of_nexus(nexb), ivl_switch_part(net));
+		  stub_errors += 1;
+	    }
+      } else {
+	      /* All other TRAN nodes will have matching vector
+		 widths, but the actual value doesn't matter. */
+	    if (width_of_nexus(nexa) != width_of_nexus(nexb)) {
+		  fprintf(out, "    A/B: ERROR: Width of ports don't match"
+			  ": A=%u, B=%u\n",
+			  width_of_nexus(nexa), width_of_nexus(nexb));
+		  stub_errors += 1;
+	    }
+      }
+
       if (has_enable) {
-	    nex = ivl_switch_enable(net);
-	    nex_name = nex? ivl_nexus_name(nex) : "";
+	    ivl_nexus_t nexe = ivl_switch_enable(net);
+	    nex_name = nexe? ivl_nexus_name(nexe) : "";
 	    fprintf(out, "    E: %s\n", nex_name);
-	    if (width_of_nexus(nex) != 1) {
+	    if (width_of_nexus(nexe) != 1) {
 		  fprintf(out, "    E: ERROR: Nexus width is %u\n",
-			  width_of_nexus(nex));
+			  width_of_nexus(nexe));
 	    }
       }
 }

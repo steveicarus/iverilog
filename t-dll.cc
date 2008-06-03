@@ -1037,6 +1037,9 @@ bool dll_target::tran(const NetTran*net)
 {
       struct ivl_switch_s*obj = new struct ivl_switch_s;
       obj->type = net->type();
+      obj->width = 0;
+      obj->part = 0;
+      obj->offset = 0;
       obj->name = net->name();
       obj->scope = find_scope(des_, net->scope());
       obj->island = net->island;
@@ -1063,6 +1066,12 @@ bool dll_target::tran(const NetTran*net)
 	    nexus_switch_add(obj->pins[2], obj, 2);
       } else {
 	    obj->pins[2] = 0;
+      }
+
+      if (obj->type == IVL_SW_TRAN_VP) {
+	    obj->width = net->vector_width();
+	    obj->part  = net->part_width();
+	    obj->offset= net->part_offset();
       }
 
       obj->file = net->get_file();
@@ -1996,9 +2005,6 @@ bool dll_target::part_select(const NetPartSelect*net)
 	  case NetPartSelect::PV:
 	    obj->type = IVL_LPM_PART_PV;
 	    break;
-	  case NetPartSelect::BI:
-	    obj->type = IVL_LPM_PART_BI;
-	    break;
       }
       obj->name = net->name(); // NetPartSelect names are permallocated.
       assert(net->scope());
@@ -2052,35 +2058,12 @@ bool dll_target::part_select(const NetPartSelect*net)
 	    obj->u_.part.a = nex->t_cookie();
 	    break;
 
-	  case IVL_LPM_PART_BI:
-	      /* For now, handle this exactly the same as a PV */
-
-	      /* NetPartSelect:pin(0) is the output pin. */
-	    nex = net->pin(0).nexus();
-	    assert(nex->t_cookie());
-
-	    obj->u_.part.q = nex->t_cookie();
-
-	      /* NetPartSelect:pin(1) is the input pin. */
-	    nex = net->pin(1).nexus();
-	    assert(nex->t_cookie());
-
-	    obj->u_.part.a = nex->t_cookie();
-	    break;
-
 	  default:
 	    assert(0);
       }
 
       nexus_lpm_add(obj->u_.part.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
-
-	/* If the device is a PART_BI, then the "input" is also a
-	   strength aware output, so attach it to the nexus with
-	   strong driver. */
-      if (obj->type == IVL_LPM_PART_BI)
-	  nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
-      else
-	  nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+      nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
 	/* The select input is optional. */
       if (obj->u_.part.s)

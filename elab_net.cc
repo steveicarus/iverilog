@@ -2375,29 +2375,54 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
       osig->local_flag(true);
       osig->set_line(*this);
 
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: Generating part selects "
-		 << "to connect input l-value to subexpressions."
-		 << endl;
+      if (bidirectional_flag) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: Generating tran(VP) "
+		       << "to connect input l-value to subexpressions."
+		       << endl;
+	    }
+
+	    for (unsigned idx = 0 ; idx < nets.count() ; idx += 1) {
+		  unsigned wid = nets[idx]->vector_width();
+		  unsigned off = width - wid;
+		  NetTran*ps = new NetTran(scope, scope->local_symbol(),
+					   osig->vector_width(), wid, off);
+		  des->add_node(ps);
+		  ps->set_line(*this);
+
+		  connect(ps->pin(0), osig->pin(0));
+		  connect(ps->pin(1), nets[idx]->pin(0));
+
+		  join_island(ps);
+
+		  ivl_assert(*this, wid <= width);
+		  width -= wid;
+	    }
+
+      } else {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: Generating part selects "
+		       << "to connect input l-value to subexpressions."
+		       << endl;
+	    }
+
+	    NetPartSelect::dir_t part_dir = NetPartSelect::VP;
+
+	    for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+		  unsigned wid = nets[idx]->vector_width();
+		  unsigned off = width - wid;
+		  NetPartSelect*ps = new NetPartSelect(osig, off, wid, part_dir);
+		  des->add_node(ps);
+		  ps->set_line(*this);
+
+		  connect(ps->pin(1), osig->pin(0));
+		  connect(ps->pin(0), nets[idx]->pin(0));
+
+		  assert(wid <= width);
+		  width -= wid;
+	    }
+	    assert(width == 0);
       }
-
-      NetPartSelect::dir_t part_dir = bidirectional_flag
-	    ? NetPartSelect::BI
-	    : NetPartSelect::VP;
-
-      for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
-	    unsigned wid = nets[idx]->vector_width();
-	    unsigned off = width - wid;
-	    NetPartSelect*ps = new NetPartSelect(osig, off, wid, part_dir);
-	    des->add_node(ps);
-
-	    connect(ps->pin(1), osig->pin(0));
-	    connect(ps->pin(0), nets[idx]->pin(0));
-
-	    assert(wid <= width);
-	    width -= wid;
-      }
-      assert(width == 0);
 
       osig->data_type(nets[0]->data_type());
       osig->local_flag(true);
@@ -2751,11 +2776,6 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	      /* If we are processing a tran or inout, then the
 		 partselect is bi-directional. Otherwise, it is a
 		 Part-to-Vector select. */
-	    NetPartSelect::dir_t part_dir;
-	    if (bidirectional_flag)
-		  part_dir = NetPartSelect::BI;
-	    else
-		  part_dir = NetPartSelect::PV;
 
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: "
@@ -2772,11 +2792,24 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    subsig->local_flag(true);
 	    subsig->set_line(*this);
 
-	    NetPartSelect*sub = new NetPartSelect(sig, lidx, subnet_wid,
-						  part_dir);
-	    des->add_node(sub);
-	    connect(sub->pin(0), subsig->pin(0));
+	    if (bidirectional_flag) {
+		    // Make a tran(VP)
+		  NetTran*sub = new NetTran(scope, scope->local_symbol(),
+					    sig->vector_width(),
+					    subnet_wid, lidx);
+		  sub->set_line(*this);
+		  des->add_node(sub);
+		  connect(sub->pin(0), sig->pin(0));
+		  connect(sub->pin(1), subsig->pin(0));
+		  join_island(sub);
 
+	    } else {
+		  NetPartSelect*sub = new NetPartSelect(sig, lidx, subnet_wid,
+							NetPartSelect::PV);
+		  des->add_node(sub);
+		  sub->set_line(*this);
+		  connect(sub->pin(0), subsig->pin(0));
+	    }
 	    sig = subsig;
       }
 

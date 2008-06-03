@@ -166,6 +166,7 @@ struct vvp_island_branch {
       bool enabled_flag;
       vvp_net_t*en;
       int flags;
+      unsigned width, part, offset;
 };
 
 /*
@@ -321,7 +322,7 @@ bool vvp_island_branch::run_test_enabled()
 {
       flags = 0;
 
-      vvp_island_port*ep = dynamic_cast<vvp_island_port*> (en->fun);
+      vvp_island_port*ep = en? dynamic_cast<vvp_island_port*> (en->fun) : 0;
 
 	// If there is no ep port (no "enabled" input) then this is a
 	// tran branch. Assume it is always enabled.
@@ -343,63 +344,138 @@ bool vvp_island_branch::run_test_enabled()
       return true;
 }
 
-void collect_connections(list<vvp_net_t*>&connections, vvp_branch_ptr_t cur)
+static vvp_branch_ptr_t next(vvp_branch_ptr_t cur)
 {
       vvp_island_branch*ptr = cur.ptr();
       unsigned ab = cur.port();
-      unsigned other_ab = ab^1;
-
-      int ab_mask = 1 << ab;
-
-      if ( (ptr->flags&ab_mask) != 0)
-	    return;
-
-      ptr->flags |= ab_mask;
-      connections.push_back( ab? ptr->b : ptr->a );
-
-      if (ptr->enabled_flag)
-	    collect_connections(connections, vvp_branch_ptr_t(ptr, other_ab));
-      collect_connections(connections, ptr->link[ab]);
+      return ptr->link[ab];
 }
-		  
+
+static void collect_node(list<vvp_branch_ptr_t>&conn, vvp_branch_ptr_t cur)
+{
+      conn .push_back(cur);
+      for (vvp_branch_ptr_t idx = next(cur) ; idx != cur ; idx = next(idx))
+	    conn.push_back(idx);
+}
+
+static vvp_vector8_t get_value(vvp_net_t*net)
+{
+      vvp_island_port*fun = dynamic_cast<vvp_island_port*>(net->fun);
+      return fun->invalue;
+}
+
+static vvp_vector8_t get_value_from_branch(vvp_branch_ptr_t cur)
+{
+      vvp_island_branch*ptr = cur.ptr();
+      unsigned ab = cur.port();
+      unsigned ab_other = ab^1;
+
+	// If the branch link is disabled, return nil.
+      if (ptr->enabled_flag == false)
+	    return vvp_vector8_t();
+
+	// If the branch other side is already visited, return nil.
+      if (ptr->flags & (1<<ab_other))
+	    return vvp_vector8_t();
+
+      vvp_branch_ptr_t other (ptr, ab_other);
+
+	// Other side net, and port value.
+      vvp_net_t*net = ab? ptr->a : ptr->b;
+      vvp_vector8_t val_other = get_value(net);
+
+	// Temporarily mark as visited.
+      ptr->flags |= 1<<ab_other;
+
+	// recurse
+      list<vvp_branch_ptr_t> connections;
+      collect_node(connections, other);
+
+      for (list<vvp_branch_ptr_t>::iterator idx = connections.begin()
+		 ; idx != connections.end() ; idx ++ ) {
+	    vvp_vector8_t tmp = get_value_from_branch(*idx);
+	    if (val_other.size() == 0)
+		  val_other = tmp;
+	    else if (tmp.size() != 0)
+		  val_other = resolve(val_other, tmp);
+      }
+
+	// Remove visited flag
+      ptr->flags &= ~(1<<ab_other);
+
+      if (val_other.size() == 0)
+	    return val_other;
+
+      if (ptr->width) {
+	    if (ab == 0) {
+		  val_other = part_expand(val_other, ptr->width, ptr->offset);
+	    } else {
+		  val_other = val_other.subvalue(ptr->offset, ptr->part);
+	    }
+      }
+
+      return val_other;
+}
+
 void vvp_island_branch::run_resolution()
 {
-      if ( (flags&1) == 0) {
-	    list<vvp_net_t*>collection;
-	    collect_connections(collection, vvp_branch_ptr_t(this, 0));
-	    vvp_vector8_t tmp;
-	    for (list<vvp_net_t*>::iterator cur = collection.begin()
-		       ; cur != collection.end() ; cur ++ ) {
-		  vvp_island_port*fun = dynamic_cast<vvp_island_port*>((*cur)->fun);
-		  if (tmp.size() == 0)
-			tmp = fun->invalue;
-		  else if (fun->invalue.size() != 0)
-			tmp = resolve(tmp, fun->invalue);
-	    }
+	// Collect all the branch endpoints that are joined to my A
+	// side.
+      list<vvp_branch_ptr_t> connections;
+      collect_node(connections, vvp_branch_ptr_t(this, 0));
 
-	    for (list<vvp_net_t*>::iterator cur = collection.begin()
-		       ; cur != collection.end() ; cur ++ )
-		  vvp_send_vec8((*cur)->out, tmp);
+	// Mark my A side as done. Do this early to prevent recursing
+	// back.
+      flags |= 1;
+
+	// Prime the resolution with the port value for this node.
+      vvp_vector8_t val = get_value(a);
+
+	// Now scan the other sides of all the branches connected to
+	// my A side. The get_value_from_branch() will recurse as
+	// necessary to depth-first walk the graph.
+      for (list<vvp_branch_ptr_t>::iterator idx = connections.begin()
+		 ; idx != connections.end() ; idx ++ ) {
+	    vvp_vector8_t tmp = get_value_from_branch(*idx);
+	    if (val.size() == 0)
+		  val = tmp;
+	    else if (tmp.size() != 0)
+		  val = resolve(val, tmp);
       }
 
-      if ( (flags&2) == 0) {
-	    list<vvp_net_t*>collection;
-	    collect_connections(collection, vvp_branch_ptr_t(this, 1));
-	    vvp_vector8_t tmp;
-	    for (list<vvp_net_t*>::iterator cur = collection.begin()
-		       ; cur != collection.end() ; cur ++ ) {
-		  vvp_island_port*fun = dynamic_cast<vvp_island_port*>((*cur)->fun);
-		  if (tmp.size() == 0)
-			tmp = fun->invalue;
-		  else if (fun->invalue.size() != 0)
-			tmp = resolve(tmp, fun->invalue);
-	    }
+	// A side is done.
+      vvp_send_vec8(a->out, val);
 
-	    for (list<vvp_net_t*>::iterator cur = collection.begin()
-		       ; cur != collection.end() ; cur ++ )
-		  vvp_send_vec8((*cur)->out, tmp);
+      flags &= ~1;
+
+	// If this is a connected branch without a part select, then
+	// we know from the start that the other side has the same
+	// value as this. Mark it and finish.
+      if (enabled_flag && width==0) {
+	    vvp_send_vec8(b->out, val);
+	    return;
       }
 
+	// Repeat the above for the B side.
+
+      connections.clear();
+      collect_node(connections, vvp_branch_ptr_t(this, 1));
+
+      flags |= 2;
+
+      val = get_value(b);
+
+      for (list<vvp_branch_ptr_t>::iterator idx = connections.begin()
+		 ; idx != connections.end() ; idx ++ ) {
+	    vvp_vector8_t tmp = get_value_from_branch(*idx);
+	    if (val.size() == 0)
+		  val = tmp;
+	    else if (tmp.size() != 0)
+		  val = resolve(val, tmp);
+      }
+
+      flags &= ~2;
+      vvp_send_vec8(b->out, val);
 }
 
 /* **** COMPILE/LINK SUPPORT **** */
@@ -501,6 +577,31 @@ void compile_island_tranif(int sense, char*island, char*pa, char*pb, char*pe)
 	    assert(br->en);
 	    free(pe);
       }
+
+      br->width = 0;
+      br->part = 0;
+      br->offset = 0;
+
+      use_island->add_branch(br, pa, pb);
+
+      free(pa);
+      free(pb);
+}
+
+void compile_island_tranvp(char*island, char*pa, char*pb,
+			   unsigned wid, unsigned par, unsigned off)
+{
+      assert(island_table);
+      vvp_island*use_island = island_table->sym_get_value(island);
+      assert(use_island);
+      free(island);
+
+      vvp_island_branch*br = new vvp_island_branch;
+      br->active_high = false;
+      br->en = 0;
+      br->width = wid;
+      br->part = par;
+      br->offset = off;
 
       use_island->add_branch(br, pa, pb);
 

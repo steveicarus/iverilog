@@ -555,7 +555,7 @@ extern "C" unsigned ivl_file_table_size()
       return fn_vector.size();
 }
 
-extern "C" int ivl_island_flag_set(ivl_island_t net, int flag, int value)
+extern "C" int ivl_island_flag_set(ivl_island_t net, unsigned flag, int value)
 {
       if (flag >= net->flags.size()) {
 	    if (value == 0)
@@ -569,7 +569,7 @@ extern "C" int ivl_island_flag_set(ivl_island_t net, int flag, int value)
       return old_flag;
 }
 
-extern "C" int ivl_island_flag_test(ivl_island_t net, int flag)
+extern "C" int ivl_island_flag_test(ivl_island_t net, unsigned flag)
 {
       if (flag >= net->flags.size())
 	    return 0;
@@ -804,7 +804,6 @@ extern "C" unsigned ivl_lpm_base(ivl_lpm_t net)
       switch (net->type) {
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
-	  case IVL_LPM_PART_BI:
 	    return net->u_.part.base;
 	  default:
 	    assert(0);
@@ -940,7 +939,6 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
-	  case IVL_LPM_PART_BI:
 	    assert(idx <= 1);
 	    if (idx == 0)
 		  return net->u_.part.a;
@@ -1083,7 +1081,6 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
-	  case IVL_LPM_PART_BI:
 	    assert(idx == 0);
 	    return net->u_.part.q;
 
@@ -1179,7 +1176,6 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	    return 0;
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
-	  case IVL_LPM_PART_BI:
 	    return net->u_.part.signed_flag;
 	  case IVL_LPM_REPEAT:
 	    return 0;
@@ -2216,6 +2212,21 @@ extern "C" ivl_nexus_t ivl_switch_b(ivl_switch_t net)
 extern "C" ivl_nexus_t ivl_switch_enable(ivl_switch_t net)
 {
       return net->pins[2];
+}
+
+extern "C" unsigned ivl_switch_width(ivl_switch_t net)
+{
+      return net->width;
+}
+
+extern "C" unsigned ivl_switch_part(ivl_switch_t net)
+{
+      return net->part;
+}
+
+extern "C" unsigned ivl_switch_offset(ivl_switch_t net)
+{
+      return net->offset;
 }
 
 extern "C" const char* ivl_switch_file(ivl_switch_t net)

@@ -555,38 +555,6 @@ static void show_lpm_part(ivl_lpm_t net)
       }
 }
 
-static void show_lpm_part_bi(ivl_lpm_t net)
-{
-      unsigned width = ivl_lpm_width(net);
-      unsigned base  = ivl_lpm_base(net);
-      ivl_nexus_t port_p = ivl_lpm_q(net,0);
-      ivl_nexus_t port_v = ivl_lpm_data(net,0);
-
-      fprintf(out, "  LPM_PART_BI %s: <width=%u, base=%u, signed=%d>\n",
-	      ivl_lpm_basename(net), width, base, ivl_lpm_signed(net));
-      fprintf(out, "    P: %s\n", ivl_nexus_name(port_p));
-      fprintf(out, "    V: %s <width=%u>\n", ivl_nexus_name(port_v),
-	      width_of_nexus(port_v));
-
-
-	/* The data(0) port must be large enough for the part select. */
-      if (width_of_nexus(ivl_lpm_data(net,0)) < (width+base)) {
-	    fprintf(out, "    ERROR: Part select is out of range."
-		    " Data nexus width=%u, width+base=%u\n",
-		    width_of_nexus(ivl_lpm_data(net,0)), width+base);
-	    stub_errors += 1;
-      }
-
-	/* The Q vector must be exactly the width of the part select. */
-      if (width_of_nexus(ivl_lpm_q(net,0)) != width) {
-	    fprintf(out, "    ERROR: Part select input mismatch."
-		    " Nexus width=%u, expect width=%u\n",
-		    width_of_nexus(ivl_lpm_q(net,0)), width);
-	    stub_errors += 1;
-      }
-}
-
-
 /*
  * The reduction operators have similar characteristics and are
  * displayed here.
@@ -903,11 +871,6 @@ static void show_lpm(ivl_lpm_t net)
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
 	    show_lpm_part(net);
-	    break;
-
-	      /* The BI part select is slightly special. */
-	  case IVL_LPM_PART_BI:
-	    show_lpm_part_bi(net);
 	    break;
 
 	  case IVL_LPM_REPEAT:

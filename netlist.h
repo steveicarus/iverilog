@@ -1379,16 +1379,28 @@ class NetSysFunc  : public NetNode {
 class NetTran  : public NetNode, public IslandBranch {
 
     public:
+	// Tran devices other then TRAN_VP
       NetTran(NetScope*scope, perm_string n, ivl_switch_type_t type);
+	// Create a TRAN_VP
+      NetTran(NetScope*scope, perm_string n, unsigned wid,
+	      unsigned part, unsigned off);
       ~NetTran();
 
       ivl_switch_type_t type() const { return type_; }
+
+	// These are only used for IVL_SW_TRAN_PV
+      unsigned vector_width() const;
+      unsigned part_width() const;
+      unsigned part_offset() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
 
     private:
       ivl_switch_type_t type_;
+      unsigned wid_;
+      unsigned part_;
+      unsigned off_;
 };
 
 /* =========
@@ -1605,8 +1617,8 @@ class NetECRealParam  : public NetECReal {
  * selector as the input.
  *
  * The NetPartSelect can be output from the signal (i.e. reading a
- * part), input into the signal, or bi-directional. The DIR method
- * gives the type of the node.
+ * part) or input into the signal. The DIR method gives the type of
+ * the node.
  *
  * VP (Vector-to-Part)
  *  Output pin 0 is the part select, and input pin 1 is connected to
@@ -1616,10 +1628,6 @@ class NetECRealParam  : public NetECReal {
  *  Output pin 1 is connected to the NetNet, and input pin 0 is the
  *  part select. In this case, the node is driving the NetNet.
  *
- * BI (BI-directional)
- *  Pin 0 is the part select and pin 1 is connected to the NetNet, but
- *  the ports are intended to be bi-directional.
- *
  * Note that whatever the direction that data is intended to flow,
  * pin-0 is the part select and pin-1 is connected to the NetNet.
  */
@@ -1627,7 +1635,7 @@ class NetPartSelect  : public NetNode {
 
     public:
 	// enum for the device direction
-      enum dir_t { VP, PV, BI };
+      enum dir_t { VP, PV};
 
       explicit NetPartSelect(NetNet*sig,
 			     unsigned off, unsigned wid, dir_t dir);

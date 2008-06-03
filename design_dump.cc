@@ -109,6 +109,9 @@ ostream& operator << (ostream&o, ivl_switch_type_t val)
 	  case IVL_SW_RTRANIF1:
 	    o << "rtranif1";
 	    break;
+	  case IVL_SW_TRAN_VP:
+	    o << "tran(VP)";
+	    break;
       }
       return o;
 }
@@ -518,9 +521,6 @@ void NetPartSelect::dump_node(ostream&o, unsigned ind) const
 	  case PV:
 	    pt = "PV";
 	    break;
-	  case BI:
-	    pt = "BI";
-	    break;
       }
       o << setw(ind) << "" << "NetPartSelect(" << pt << "): "
 	<< name();
@@ -639,7 +639,13 @@ void NetTaskDef::dump(ostream&o, unsigned ind) const
 void NetTran::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << type_ << " " << name()
-	<< " island " << island << endl;
+	<< " island " << island;
+      if (type_ == IVL_SW_TRAN_VP) {
+	    o << " width=" << vector_width()
+	      << " part=" << part_width()
+	      << " offset=" << part_offset();
+      }
+      o << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
