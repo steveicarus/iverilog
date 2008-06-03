@@ -25,10 +25,22 @@
 
 /*
  * Generate VHDL for the $display system task.
- * TODO: How is this going to work??
+ * This is implemented using the functions in std.textio. Each
+ * parameter is written to a line variable in the process and
+ * then the line is written to the special variable `Output'
+ * (which represents the console). Subsequent $displays will use
+ * the same line variable.
+ *
+ * It's possible, although quite unlikely, that there will be
+ * name collision with an existing variable called
+ * `Verilog_Display_Line' - do something about this? It's also
+ * possible for there to be a name collision with the special
+ * variable `Output'.
  */
 static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
 {
+   require_package("std.textio");
+   
    return 0;
 }
 
