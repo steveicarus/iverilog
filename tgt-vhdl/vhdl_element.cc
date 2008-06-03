@@ -26,8 +26,6 @@
 #include <iostream>
 
 
-//////// HELPER FUNCTIONS ////////
-
 static const int VHDL_INDENT = 2;  // Spaces to indent
 
 static int indent(int level)
@@ -69,9 +67,6 @@ void emit_children(std::ofstream &of,
    }
 }
 
-
-//////// ALL ELEMENTS ////////
-
 void vhdl_element::set_comment(std::string comment)
 {
    comment_ = comment;
@@ -84,9 +79,6 @@ void vhdl_element::emit_comment(std::ofstream &of, int level) const
       newline(of, level);
    }
 }
-
-
-//////// ENTITY ////////
 
 vhdl_entity::vhdl_entity(const char *name, const char *derived_from,
                          vhdl_arch *arch)
@@ -111,9 +103,6 @@ void vhdl_entity::emit(std::ofstream &of, int level) const
    blank_line(of, level);  // Extra blank line after entities
    arch_->emit(of, level);
 }
-
-
-//////// ARCHITECTURE ////////
 
 vhdl_arch::vhdl_arch(const char *entity, const char *name)
    : name_(name), entity_(entity)
@@ -175,9 +164,6 @@ bool vhdl_arch::have_declared_component(const std::string &name) const
    return false;
 }
 
-
-//////// PROCESS ////////
-
 vhdl_process::vhdl_process(const char *name)
    : name_(name)
 {
@@ -211,9 +197,6 @@ void vhdl_process::emit(std::ofstream &of, int level) const
    newline(of, level);
 }
 
-
-//////// COMPONENT INSTANTIATION ////////
-
 vhdl_comp_inst::vhdl_comp_inst(const char *inst_name, const char *comp_name)
    : comp_name_(comp_name), inst_name_(inst_name)
 {
@@ -227,9 +210,6 @@ void vhdl_comp_inst::emit(std::ofstream &of, int level) const
    of << inst_name_ << ": " << comp_name_ << ";";
    newline(of, level);
 }
-
-
-//////// COMPONENT DECLARATIONS ////////
 
 vhdl_component_decl::vhdl_component_decl(const char *name)
    : vhdl_decl(name)
@@ -258,9 +238,6 @@ void vhdl_component_decl::emit(std::ofstream &of, int level) const
    newline(of, level);
    of << "end component;";
 }
-
-
-//////// WAIT STATEMENT ////////
 
 void vhdl_wait_stmt::emit(std::ofstream &of, int level) const
 {
