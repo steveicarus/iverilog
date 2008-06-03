@@ -21,6 +21,34 @@
 #include "vhdl_target.h"
 
 #include <iostream>
+#include <cstring>
+
+/*
+ * Generate VHDL for the $display system task.
+ * TODO: How is this going to work??
+ */
+static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
+{
+   return 0;
+}
+
+/*
+ * Generate VHDL for system tasks (like $display). Not all of
+ * these are supported.
+ */
+static int draw_stask(vhdl_process *proc, ivl_statement_t stmt)
+{
+   const char *name = ivl_stmt_name(stmt);
+ 
+   std::cout << "IVL_ST_STASK " << name << std::endl;
+
+   if (strcmp(name, "$display") == 0)
+      return draw_stask_display(proc, stmt);
+   else {
+      error("No VHDL translation for system task %s", name);
+      return 0;
+   }
+}
 
 /*
  * Generate VHDL statements for the given Verilog statement and
@@ -28,5 +56,13 @@
  */
 int draw_stmt(vhdl_process *proc, ivl_statement_t stmt)
 {
-   return 0;
+   switch (ivl_statement_type(stmt)) {
+   case IVL_ST_STASK:
+      return draw_stask(proc, stmt);
+   default:
+      error("No VHDL translation for statement at %s:%d (type = %d)",
+            ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
+            ivl_statement_type(stmt));
+      return 1;            
+   }
 }
