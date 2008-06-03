@@ -542,6 +542,8 @@ extern ostream& operator<< (ostream&, vvp_scalar_t);
  */
 class vvp_vector8_t {
 
+      friend vvp_vector8_t part_expand(const vvp_vector8_t&, unsigned, unsigned);
+
     public:
       explicit vvp_vector8_t(unsigned size =0);
 	// Make a vvp_vector8_t from a vector4 and a specified strength.
@@ -554,6 +556,7 @@ class vvp_vector8_t {
 
       unsigned size() const { return size_; }
       vvp_scalar_t value(unsigned idx) const;
+      vvp_vector8_t subvalue(unsigned idx, unsigned size) const;
       void set_bit(unsigned idx, vvp_scalar_t val);
 
 	// Test that the vectors are exactly equal
@@ -576,6 +579,7 @@ extern vvp_vector8_t resistive_reduction(const vvp_vector8_t&a);
   /* The reduce4 function converts a vector8 to a vector4, losing
      strength information in the process. */
 extern vvp_vector4_t reduce4(const vvp_vector8_t&that);
+extern vvp_vector8_t part_expand(const vvp_vector8_t&a, unsigned wid, unsigned off);
   /* Print a vector8 value to a stream. */
 extern ostream& operator<< (ostream&, const vvp_vector8_t&);
 
@@ -643,6 +647,8 @@ template <class T> class vvp_sub_pointer_t {
 };
 
 typedef vvp_sub_pointer_t<vvp_net_t> vvp_net_ptr_t;
+template <class T> ostream& operator << (ostream&out, vvp_sub_pointer_t<T> val)
+{ out << val.ptr() << "[" << val.port() << "]"; return out; }
 
 /*
  * This is the basic unit of netlist connectivity. It is a fan-in of

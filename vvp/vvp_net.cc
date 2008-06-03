@@ -1840,6 +1840,34 @@ bool vvp_vector8_t::eeq(const vvp_vector8_t&that) const
       return true;
 }
 
+vvp_vector8_t vvp_vector8_t::subvalue(unsigned base, unsigned wid) const
+{
+      vvp_vector8_t tmp (wid);
+
+      unsigned idx = 0;
+      while (base+idx < size_) {
+	    tmp.bits_[idx] = bits_[base+idx];
+	    idx += 1;
+      }
+
+      return tmp;
+}
+
+vvp_vector8_t part_expand(const vvp_vector8_t&that, unsigned wid, unsigned off)
+{
+      assert(off < wid);
+      vvp_vector8_t tmp (wid);
+
+      unsigned idx = off;
+
+      while (idx < wid && that.size_ > (idx-off)) {
+	    tmp.bits_[idx] = that.bits_[idx-off];
+	    idx += 1;
+      }
+
+      return tmp;
+}
+
 ostream& operator<<(ostream&out, const vvp_vector8_t&that)
 {
       out << "C8<";
