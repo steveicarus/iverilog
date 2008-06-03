@@ -198,7 +198,6 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp, int)
 		}
 		break;
 
-
 	  case vpiScalarVal:
 	    switch (vp->value.scalar) {
 		case vpi0:
@@ -218,6 +217,29 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp, int)
 		  assert(0);
 	    }
 	    break;
+
+	  case vpiStringVal: {
+	    unsigned len = strlen(vp->value.str) - 1;
+	    assert(len*8 <= (unsigned)rfp->vwid);
+	    for (unsigned wdx = 0 ;  wdx < (unsigned)rfp->vwid ;  wdx += 8) {
+		  unsigned word = wdx / 8;
+		  char bits;
+		  if (word <= len) {
+			bits = vp->value.str[len-word];
+		  } else {
+			bits = 0;
+		  }
+		  for (unsigned idx = 0 ;  (wdx+idx) < (unsigned)rfp->vwid &&
+		       idx < 8; idx += 1) {
+			vvp_bit4_t bit4 = BIT4_0;
+			if (bits & 1) bit4 = BIT4_1;
+			vthread_put_bit(vpip_current_vthread,
+					rfp->vbit+wdx+idx, bit4);
+			bits >>= 1;
+		  }
+	    }
+	    break;
+	  }
 
 	  case vpiVectorVal:
 

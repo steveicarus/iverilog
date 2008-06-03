@@ -60,16 +60,6 @@ struct strobe_cb_info {
       unsigned mcd;
 };
 
-int is_constant(vpiHandle obj)
-{
-      if (vpi_get(vpiType, obj) == vpiConstant)
-	    return vpiConstant;
-      if (vpi_get(vpiType, obj) == vpiParameter)
-	    return vpiParameter;
-
-      return 0;
-}
-
 // The number of decimal digits needed to represent a
 // nr_bits binary number is floor(nr_bits*log_10(2))+1,
 // where log_10(2) = 0.30102999566398....  and I approximate
@@ -665,7 +655,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 		  return 0;
 	    }
 
-	    if (is_constant(argv[idx])
+	    if (is_constant_obj(argv[idx])
 		&& (vpi_get(vpiConstType, argv[idx]) == vpiRealConst)) {
 
 		  value.format = vpiRealVal;
@@ -2187,12 +2177,7 @@ static PLI_INT32 sys_printtimescale_calltf(PLI_BYTE8*xx)
       vpiHandle argv  = vpi_iterate(vpiArgument, sys);
       vpiHandle scope;
       if (!argv) {
-            vpiHandle parent = vpi_handle(vpiScope, sys);
-            scope = NULL;  /* fallback value if parent is NULL */
-            while (parent) {
-                   scope = parent;
-                   parent = vpi_handle(vpiScope, scope);
-            }
+            scope = sys_func_module(sys);
       } else {
             scope = vpi_scan(argv);
             vpi_free_object(argv);

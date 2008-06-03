@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_fileio.c,v 1.10 2007/03/14 04:05:51 steve Exp $"
-#endif
 
 # include  "vpi_user.h"
 # include  "sys_priv.h"
@@ -60,7 +57,7 @@ static PLI_INT32 sys_fopen_compiletf(PLI_BYTE8*name)
 	    return 0;
       }
 
-      if (! is_constant(item)) {
+      if (! is_constant_obj(item)) {
 	    vpi_printf("ERROR: %s mode argument must be a constant\n", name);
 	    vpi_control(vpiFinish, 1);
       }
@@ -918,4 +915,3 @@ void sys_fileio_register()
       vpi_register_systf(&tf_data);
 
 }
-

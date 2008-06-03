@@ -16,38 +16,9 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "vpi_config.h"
 #include <assert.h>
 #include <vpi_user.h>
-
-
-/*
- * Routine to return the width in bits of a CPU word (long).
- */
-static PLI_INT32 vvp_cpu_wordsize_calltf(PLI_BYTE8* ud)
-{
-    vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-    assert(callh != 0);
-    s_vpi_value val;
-    (void) ud;  /* Not used! */
-
-    /* Calculate the result */
-    val.format = vpiIntVal;
-    val.value.integer = 8*sizeof(long);
-
-    /* Return the result */
-    vpi_put_value(callh, &val, 0, vpiNoDelay);
-
-    return 0;
-}
-
-static PLI_INT32 size_32(PLI_BYTE8* ud)
-{
-    (void) ud;  /* Not used! */
-
-    return 32;
-}
-
+#include "sys_priv.h"
 
 /*
  * Routine to finish the simulation and return a value to the
@@ -56,8 +27,8 @@ static PLI_INT32 size_32(PLI_BYTE8* ud)
 static PLI_INT32 finish_and_return_compiletf(PLI_BYTE8* ud)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+    assert(callh);
     vpiHandle argv = vpi_iterate(vpiArgument, callh);
-    vpiHandle arg;
     (void) ud;  /* Not used! */
 
     /* We must have at least one argument. */
@@ -70,42 +41,19 @@ static PLI_INT32 finish_and_return_compiletf(PLI_BYTE8* ud)
     }
 
     /* This must be a numeric argument. */
-    arg = vpi_scan(argv);
-    switch(vpi_get(vpiType, arg)) {
-      case vpiConstant:
-      case vpiParameter:
-	/* String constants are invalid numeric values. */
-	if (vpi_get(vpiConstType, arg) == vpiStringConst) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
-	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("The argument to $finish_and_return must be numeric.\n");
-	    vpi_control(vpiFinish, 1);
-	return 0;
-	}
-	break;
-
-      case vpiIntegerVar:
-      case vpiMemoryWord:
-      case vpiNet:
-      case vpiRealVar:
-      case vpiReg:
-      case vpiTimeVar:
-	break;
-
-      default:
+    if (! is_numeric_obj(vpi_scan(argv))) {
 	vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
 	           (int)vpi_get(vpiLineNo, callh));
 	vpi_printf("The argument to $finish_and_return must be numeric.\n");
 	vpi_control(vpiFinish, 1);
 	return 0;
-	break;
     }
 
     /* We can only have one argument. */
     if (vpi_scan(argv) != 0) {
 	vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
 	           (int)vpi_get(vpiLineNo, callh));
-	vpi_printf("$finish_and_return takes a single argument.\n");
+	vpi_printf("$finish_and_return takes only a single argument.\n");
 	vpi_control(vpiFinish, 1);
 	return 0;
     }
@@ -141,15 +89,6 @@ static PLI_INT32 finish_and_return_calltf(PLI_BYTE8* ud)
 void sys_special_register(void)
 {
     s_vpi_systf_data tf_data;
-
-    tf_data.type        = vpiSysFunc;
-    tf_data.sysfunctype = vpiIntFunc;
-    tf_data.calltf      = vvp_cpu_wordsize_calltf;
-    tf_data.compiletf   = 0;
-    tf_data.sizetf      = size_32;
-    tf_data.tfname      = "$vvp_cpu_wordsize";
-    tf_data.user_data   = 0;
-    vpi_register_systf(&tf_data);
 
     tf_data.type        = vpiSysTask;
     tf_data.calltf      = finish_and_return_calltf;
