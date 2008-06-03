@@ -12,6 +12,7 @@ void error(const char *fmt, ...);
 
 int draw_scope(ivl_scope_t scope, void *_parent);
 int draw_process(ivl_process_t net, void *cd);
+int draw_stmt(vhdl_process *proc, ivl_statement_t stmt);
 
 void remember_entity(vhdl_entity *ent);
 vhdl_entity *find_entity(const std::string &tname);

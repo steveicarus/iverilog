@@ -33,6 +33,11 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
 {
    vhdl_process *vhdl_proc = new vhdl_process();
 
+   ivl_statement_t stmt = ivl_process_stmt(proc);
+   int rc = draw_stmt(vhdl_proc, stmt);
+   if (rc != 0)
+      return rc;
+   
    // Initial processes are translated to VHDL processes with
    // no sensitivity list and and indefinite wait statement at
    // the end
