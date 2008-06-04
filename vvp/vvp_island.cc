@@ -484,34 +484,81 @@ static void resolve_values_from_connections(vvp_vector8_t&val,
       }
 }
 
+static void push_value_through_branches(const vvp_vector8_t&val,
+					list<vvp_branch_ptr_t>&connections)
+{
+      for (list<vvp_branch_ptr_t>::iterator idx = connections.begin()
+		 ; idx != connections.end() ; idx ++ ) {
+
+	    vvp_island_branch*tmp_ptr = idx->ptr();
+	    unsigned tmp_ab = idx->port();
+	    unsigned other_ab = tmp_ab^1;
+
+	      // If other side already done, skip
+	    if (tmp_ptr->flags & (1<<other_ab))
+		  continue;
+
+	      // If link is not enabled, skip.
+	    if (! tmp_ptr->enabled_flag)
+		  continue;
+
+	    vvp_net_t*other_net = other_ab? tmp_ptr->b : tmp_ptr->a;
+
+	    if (tmp_ptr->width == 0) {
+		    // Mark this end as done
+		  tmp_ptr->flags |= (1 << other_ab);
+		  vvp_send_vec8(other_net->out, val);
+
+	    } if (other_ab == 1) {
+		    // Mark as done
+		  tmp_ptr->flags |= (1 << other_ab);
+		  vvp_vector8_t tmp = val.subvalue(tmp_ptr->offset, tmp_ptr->part);
+		  vvp_send_vec8(other_net->out, tmp);
+	    } else {
+		    // Otherwise, the other side is not fully
+		    // specified, so we can't take this shortcut.
+	    }
+      }
+}
+
 void vvp_island_branch::run_resolution()
 {
 	// Collect all the branch endpoints that are joined to my A
 	// side.
       list<vvp_branch_ptr_t> connections;
-      collect_node(connections, vvp_branch_ptr_t(this, 0));
+      bool processed_a_side = false;
+      vvp_vector8_t val;
 
-	// Mark my A side as done. Do this early to prevent recursing
-	// back. All the connections that share this port are also
-	// done. Make sure their flags are set appropriately.
-      mark_done_flags(connections);
+      if ((flags & 1) == 0) {
+	    processed_a_side = true;
+	    collect_node(connections, vvp_branch_ptr_t(this, 0));
 
-      vvp_vector8_t val = get_value(a);
-      mark_visited_flags(connections); // Mark as visited.
+	      // Mark my A side as done. Do this early to prevent recursing
+	      // back. All the connections that share this port are also
+	      // done. Make sure their flags are set appropriately.
+	    mark_done_flags(connections);
 
-	// Now scan the other sides of all the branches connected to
-	// my A side. The get_value_from_branch() will recurse as
-	// necessary to depth-first walk the graph.
-      resolve_values_from_connections(val, connections);
+	    val = get_value(a);
+	    mark_visited_flags(connections); // Mark as visited.
 
-	// A side is done.
-      vvp_send_vec8(a->out, val);
+	      // Now scan the other sides of all the branches connected to
+	      // my A side. The get_value_from_branch() will recurse as
+	      // necessary to depth-first walk the graph.
+	    resolve_values_from_connections(val, connections);
 
-	// Clear the visited flags. This must be done so that other
-	// branches can read this input value.
-      clear_visited_flags(connections);
+	      // A side is done.
+	    vvp_send_vec8(a->out, val);
+
+	      // Clear the visited flags. This must be done so that other
+	      // branches can read this input value.
+	    clear_visited_flags(connections);
+
+	    push_value_through_branches(val, connections);
+      }
 
 	// Repeat the above for the B side.
+      if (flags & 2)
+	    return;
 
       connections.clear();
       collect_node(connections, vvp_branch_ptr_t(this, 1));
@@ -519,16 +566,22 @@ void vvp_island_branch::run_resolution()
 
       	// If this is a connected branch without a part select, then
 	// we know from the start that the B side has the same
-	// value as this. Mark it and finish.
-      if (enabled_flag && width==0) {
-	    vvp_send_vec8(b->out, val);
-	    return;
+	// value as this. Even if the B side is a part select, the
+	// simple part select must be correct because the recursive
+	// resolve_values_from_connections above must of cycled back
+	// to the B side of myself when resolving the connections.
+      if (enabled_flag && processed_a_side) {
+	    if (width != 0)
+		  val = val.subvalue(offset, part);
+
+      } else {
+
+	    val = get_value(b);
+	    mark_visited_flags(connections);
+	    resolve_values_from_connections(val, connections);
+	    clear_visited_flags(connections);
       }
 
-      val = get_value(b);
-      mark_visited_flags(connections);
-      resolve_values_from_connections(val, connections);
-      clear_visited_flags(connections);
       vvp_send_vec8(b->out, val);
 }
 
