@@ -52,14 +52,30 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
       proc->add_decl(line_var);
    }
 
-   // TODO: Write the data into the line
+   
+
+   // Write the data into the line
+   int count = ivl_stmt_parm_count(stmt);
+   for (int i = 0; i < count; i++) {
+      // TODO: This is a bit simplistic since it will only
+      // work with strings
+      // --> Need to add a call to Type'Image for non-string
+      //     expressions
+      vhdl_expr *e = translate_expr(ivl_stmt_parm(stmt, i));
+      if (NULL == e)
+         return 1;
+
+      vhdl_pcall_stmt *write = new vhdl_pcall_stmt("Write");
+      write->add_expr(new vhdl_var_ref(display_line));
+      write->add_expr(e);
+
+      proc->add_stmt(write);
+   }
 
    // WriteLine(Output, Verilog_Display_Line)
-   vhdl_var_ref *output_ref = new vhdl_var_ref("Output");
-   vhdl_var_ref *line_ref = new vhdl_var_ref(display_line);
    vhdl_pcall_stmt *write_line = new vhdl_pcall_stmt("WriteLine");
-   write_line->add_expr(output_ref);
-   write_line->add_expr(line_ref);
+   write_line->add_expr(new vhdl_var_ref("Output"));
+   write_line->add_expr(new vhdl_var_ref(display_line));
    proc->add_stmt(write_line);
    
    return 0;

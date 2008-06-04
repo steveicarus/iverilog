@@ -83,6 +83,15 @@ private:
    std::string name_;
 };
 
+class vhdl_const_string : public vhdl_expr {
+public:
+   vhdl_const_string(const char *value) : value_(value) {}
+
+   void emit(std::ofstream &of, int level) const;
+private:
+   std::string value_;
+};
+
 class vhdl_expr_list : public vhdl_element {
 public:
    ~vhdl_expr_list();

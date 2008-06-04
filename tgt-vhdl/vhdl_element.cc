@@ -354,3 +354,8 @@ void vhdl_var_ref::emit(std::ofstream &of, int level) const
 {
    of << name_;
 }
+
+void vhdl_const_string::emit(std::ofstream &of, int level) const
+{
+   of << "\"" << value_ << "\"";
+}

@@ -23,11 +23,29 @@
 #include <iostream>
 #include <cassert>
 
+/*
+ * Convert a constant Verilog string to a constant VHDL string.
+ */
+static vhdl_expr *translate_string(ivl_expr_t e)
+{   
+   // TODO: May need to inspect or escape parts of this
+   const char *str = ivl_expr_string(e);
+   return new vhdl_const_string(str);
+}
 
 /*
  * Generate a VHDL expression from a Verilog expression.
  */
 vhdl_expr *translate_expr(ivl_expr_t e)
 {
-   assert(false);
+   ivl_expr_type_t type = ivl_expr_type(e);
+
+   switch (type) {
+   case IVL_EX_STRING:
+      return translate_string(e);
+   default:
+      error("No VHDL translation for expression at %s:%d (type = %d)",
+            ivl_expr_file(e), ivl_expr_lineno(e), type);
+      return NULL;
+   }
 }
