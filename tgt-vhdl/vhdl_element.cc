@@ -283,3 +283,40 @@ void vhdl_var_decl::emit(std::ofstream &of, int level) const
    of << ";";
    emit_comment(of, level, true);
 }
+
+void vhdl_expr_list::add_expr(vhdl_expr *e)
+{
+   exprs_.push_back(e);
+}
+
+vhdl_expr_list::~vhdl_expr_list()
+{
+   delete_children<vhdl_expr>(exprs_);
+}
+
+void vhdl_expr_list::emit(std::ofstream &of, int level) const
+{
+   of << "(";
+   
+   int size = exprs_.size();
+   std::list<vhdl_expr*>::const_iterator it;
+   for (it = exprs_.begin(); it != exprs_.end(); ++it) {
+      (*it)->emit(of, level);
+      if (--size > 0)
+         of << ", ";
+   }
+
+   of << ")";
+}
+
+void vhdl_pcall_stmt::emit(std::ofstream &of, int level) const
+{
+   of << name_;
+   exprs_.emit(of, level);
+   of << ";";
+}
+
+void vhdl_var_ref::emit(std::ofstream &of, int level) const
+{
+   of << name_;
+}

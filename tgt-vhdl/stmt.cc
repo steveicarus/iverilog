@@ -53,7 +53,13 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
 
    // TODO: Write the data into the line
 
-   // TODO: Write_Line(Output, Verilog_Display_Line)
+   // Write_Line(Output, Verilog_Display_Line)
+   vhdl_var_ref *output_ref = new vhdl_var_ref("Output");
+   vhdl_var_ref *line_ref = new vhdl_var_ref(display_line);
+   vhdl_pcall_stmt *write_line = new vhdl_pcall_stmt("Write_Line");
+   write_line->add_expr(output_ref);
+   write_line->add_expr(line_ref);
+   proc->add_stmt(write_line);
    
    return 0;
 }

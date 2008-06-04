@@ -65,6 +65,34 @@ private:
    std::string name_;
 };
 
+class vhdl_expr : public vhdl_element {
+public:
+   virtual ~vhdl_expr() {}
+};
+
+/*
+ * A normal scalar variable reference.
+ */
+class vhdl_var_ref : public vhdl_expr {
+public:
+   vhdl_var_ref(const char *name) : name_(name) {}
+
+   void emit(std::ofstream &of, int level) const;
+private:
+   std::string name_;
+};
+
+class vhdl_expr_list : public vhdl_element {
+public:
+   ~vhdl_expr_list();
+   
+   void emit(std::ofstream &of, int level) const;
+   void add_expr(vhdl_expr *e);
+private:
+   std::list<vhdl_expr*> exprs_;
+};
+
+
 /*
  * A concurrent statement appears in architecture bodies but not
  * processes.
@@ -95,6 +123,22 @@ typedef std::list<vhdl_seq_stmt*> seq_stmt_list_t;
 class vhdl_wait_stmt : public vhdl_seq_stmt {
 public:
    void emit(std::ofstream &of, int level) const;
+};
+
+
+/*
+ * A procedure call. Which is a statement, unlike a function
+ * call which is an expression.
+ */
+class vhdl_pcall_stmt : public vhdl_seq_stmt {
+public:
+   vhdl_pcall_stmt(const char *name) : name_(name) {}
+   
+   void emit(std::ofstream &of, int level) const;
+   void add_expr(vhdl_expr *e) { exprs_.add_expr(e); }
+private:
+   std::string name_;
+   vhdl_expr_list exprs_;
 };
 
 
