@@ -79,13 +79,8 @@ int draw_process(ivl_process_t proc, void *cd)
    // from this Verilog process. This ensures that each process
    // is translated at most once, no matter how many times it
    // appears in the hierarchy.
-   if (ent->get_derived_from() == scope_name) {
-      std::cout << "New process encountered in " << scope_name << std::endl;
+   if (ent->get_derived_from() == scope_name)
       return generate_vhdl_process(ent, proc);
-   }
-   else {
-      std::cout << "Ignoring already seen process in ";
-      std::cout << scope_name << std::endl;
+   else
       return 0;
-   }
 }

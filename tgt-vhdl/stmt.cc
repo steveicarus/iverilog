@@ -94,8 +94,6 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
 static int draw_stask(vhdl_process *proc, ivl_statement_t stmt)
 {
    const char *name = ivl_stmt_name(stmt);
- 
-   std::cout << "IVL_ST_STASK " << name << std::endl;
 
    if (strcmp(name, "$display") == 0)
       return draw_stask_display(proc, stmt);

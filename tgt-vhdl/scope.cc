@@ -52,9 +52,6 @@ static vhdl_entity *create_entity_for(ivl_scope_t scope)
    
    arch->set_comment(ss.str());
    ent->set_comment(ss.str());
-
-   std::cout << "Generated entity " << tname;
-   std::cout << " from " << ivl_scope_name(scope) << std::endl;
    
    remember_entity(ent);
    return ent;
@@ -99,8 +96,7 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
          parent_arch->add_stmt(inst);
       }
       else {
-         std::cout << "Ignoring instantiation " << ivl_scope_name(scope);
-         std::cout << " (already accounted for)" << std::endl;
+         // Ignore this instantiation (already accounted for)
       }
    }
    
@@ -111,11 +107,6 @@ int draw_scope(ivl_scope_t scope, void *_parent)
 {
    ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
    
-   const char *name = ivl_scope_name(scope);
-   const char *basename = ivl_scope_basename(scope);
-
-   std::cout << "scope " << name << " (" << basename << ")" << std::endl;
-
    ivl_scope_type_t type = ivl_scope_type(scope);
    int rc = 0;
    switch (type) {
