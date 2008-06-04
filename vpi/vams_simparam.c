@@ -57,31 +57,29 @@ static PLI_INT32 simparam_compiletf(PLI_BYTE8* ud)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("The first argument to $simparam%s must be a string.\n", ud);
 	    vpi_control(vpiFinish, 1);
-	    return 0;
       }
 
 	/* The second argument (default value) is optional. */
       arg = vpi_scan(argv);
       if (arg == 0) return 0;
+
 	/* For the string version the default must also be a string. */
       if (strcmp(ud, "$str") == 0) {
 	    if (! is_string_obj(arg)) {
 		  vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
-		  vpi_printf("When provided the second argument to $simparam%s"
+		  vpi_printf("When provided, the second argument to $simparam%s"
 		             "must be a string.\n", ud);
 		  vpi_control(vpiFinish, 1);
-		  return 0;
 	    }
 	/* For the rest the default must be numeric. */
       } else {
 	    if (! is_numeric_obj(arg)) {
 		  vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
-		  vpi_printf("When provided the second argument to $simparam%s"
+		  vpi_printf("When provided, the second argument to $simparam%s"
 		             "must be numeric.\n", ud);
 		  vpi_control(vpiFinish, 1);
-		  return 0;
 	    }
       }
 
@@ -91,7 +89,6 @@ static PLI_INT32 simparam_compiletf(PLI_BYTE8* ud)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("$simparam%s takes at most two arguments.\n", ud);
 	    vpi_control(vpiFinish, 1);
-	    return 0;
       }
 
       return 0;

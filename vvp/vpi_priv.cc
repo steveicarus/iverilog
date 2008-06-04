@@ -190,26 +190,32 @@ static const char* vpi_type_values(PLI_INT32 code)
       switch (code) {
 	  case vpiConstant:
 	    return "vpiConstant";
+	  case vpiFunction:
+	    return "vpiFunction";
 	  case vpiIntegerVar:
 	    return "vpiIntegerVar";
 	  case vpiIterator:
 	    return "vpiIterator";
-	  case vpiFunction:
-	    return "vpiFunction";
 	  case vpiMemory:
 	    return "vpiMemory";
+	  case vpiMemoryWord:
+	    return "vpiMemoryWord";
 	  case vpiModule:
 	    return "vpiModule";
 	  case vpiNet:
 	    return "vpiNet";
 	  case vpiParameter:
 	    return "vpiParameter";
+	  case vpiPartSelect:
+	    return "vpiPartSelect";
 	  case vpiRealVar:
 	    return "vpiRealVar";
 	  case vpiReg:
 	    return "vpiReg";
 	  case vpiTask:
 	    return "vpiTask";
+	  case vpiTimeVar:
+	    return "vpiTimeVar";
 	  default:
 	    sprintf(buf, "%d", code);
       }

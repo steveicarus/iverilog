@@ -1109,11 +1109,16 @@ static PLI_INT32 sys_monitor_calltf(PLI_BYTE8*name)
       for (idx = 0 ;  idx < monitor_info.nitems ;  idx += 1) {
 
 	    switch (vpi_get(vpiType, monitor_info.items[idx])) {
+		case vpiMemoryWord:
+		  /*
+		   * We only support constant selections. Make this
+		   * better when we add a real compiletf routine.
+		   */
+		  assert(vpi_get(vpiConstantSelect, monitor_info.items[idx]));
 		case vpiNet:
 		case vpiReg:
 		case vpiIntegerVar:
 		case vpiRealVar:
-		case vpiMemoryWord:
 		    /* Monitoring reg and net values involves setting
 		       a callback for value changes. Pass the storage
 		       pointer for the callback itself as user_data so
