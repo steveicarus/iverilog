@@ -125,8 +125,10 @@ static void vpi_array_var_word_get_value(vpiHandle, p_vpi_value);
 static vpiHandle vpi_array_var_word_put_value(vpiHandle, p_vpi_value, int);
 
 static int vpi_array_vthr_A_get(int code, vpiHandle);
+static char*vpi_array_vthr_A_get_str(int code, vpiHandle);
 static void vpi_array_vthr_A_get_value(vpiHandle, p_vpi_value);
 static vpiHandle vpi_array_vthr_A_put_value(vpiHandle, p_vpi_value, int);
+static vpiHandle vpi_array_vthr_A_get_handle(int code, vpiHandle ref);
 
 static const struct __vpirt vpip_arraymem_rt = {
       vpiMemory,
@@ -181,10 +183,10 @@ static const struct __vpirt vpip_array_var_word_rt = {
 static const struct __vpirt vpip_array_vthr_A_rt = {
       vpiMemoryWord,
       &vpi_array_vthr_A_get,
-      0,
+      &vpi_array_vthr_A_get_str,
       &vpi_array_vthr_A_get_value,
       &vpi_array_vthr_A_put_value,
-      0,
+      &vpi_array_vthr_A_get_handle,
       0,
       0,
       0
@@ -456,10 +458,31 @@ static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 	    assert(parent->vals);
 	    return parent->vals_width;
 
+	  // For now &A<> is only a constant select. This will need
+	  // to be changed when it supports variable selection.
+	  case vpiConstantSelect:
+	    return 1;
+
 	  default:
 	    return 0;
       }
 }
+
+static char*vpi_array_vthr_A_get_str(int code, vpiHandle ref)
+{
+      struct __vpiArrayVthrA*obj = array_vthr_a_from_handle(ref);
+      assert(obj);
+      struct __vpiArray*parent = obj->array;
+
+      if (code == vpiFile) {  // Not implemented for now!
+            return simple_set_rbuf_str(file_names[0]);
+      }
+
+      char index [64];
+      snprintf(index, 63, "%d", (int)obj->address + parent->first_addr.value);
+      return generic_get_str(code, &parent->scope->base, parent->name, index);
+}
+
 static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value value)
 {
       struct __vpiArrayVthrA*obj = array_vthr_a_from_handle(ref);
@@ -489,6 +512,21 @@ static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int)
       array_set_word(parent, index, 0, val);
 
       return ref;
+}
+
+static vpiHandle vpi_array_vthr_A_get_handle(int code, vpiHandle ref)
+{
+      struct __vpiArrayVthrA*obj = array_vthr_a_from_handle(ref);
+      assert(obj);
+      struct __vpiArray*parent = obj->array;
+
+      switch (code) {
+
+	  case vpiScope:
+	    return &parent->scope->base;
+      }
+
+      return 0;
 }
 
 
