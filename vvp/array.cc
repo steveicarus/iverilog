@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
-*
+ *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
  *    General Public License as published by the Free Software
@@ -55,6 +55,8 @@ struct __vpiArray {
       unsigned array_count;
       struct __vpiDecConst first_addr;
       struct __vpiDecConst last_addr;
+      struct __vpiDecConst msb;
+      struct __vpiDecConst lsb;
 	// If this is a net array, nets lists the handles.
       vpiHandle*nets;
 	// If this is a var array, then these are used instead of nets.
@@ -121,8 +123,10 @@ static vpiHandle array_index_scan(vpiHandle ref, int);
 static int array_index_free_object(vpiHandle ref);
 
 static int vpi_array_var_word_get(int code, vpiHandle);
+static char*vpi_array_var_word_get_str(int code, vpiHandle);
 static void vpi_array_var_word_get_value(vpiHandle, p_vpi_value);
 static vpiHandle vpi_array_var_word_put_value(vpiHandle, p_vpi_value, int);
+static vpiHandle vpi_array_var_word_get_handle(int code, vpiHandle ref);
 
 static int vpi_array_vthr_A_get(int code, vpiHandle);
 static char*vpi_array_vthr_A_get_str(int code, vpiHandle);
@@ -171,10 +175,10 @@ static const struct __vpirt vpip_array_index_rt = {
 static const struct __vpirt vpip_array_var_word_rt = {
       vpiMemoryWord,
       &vpi_array_var_word_get,
-      0,
+      &vpi_array_var_word_get_str,
       &vpi_array_var_word_get_value,
       &vpi_array_var_word_put_value,
-      0,
+      &vpi_array_var_word_get_handle,
       0,
       0,
       0
@@ -342,9 +346,32 @@ static int vpi_array_var_word_get(int code, vpiHandle ref)
 	  case vpiSize:
 	    return (int) parent->vals_width;
 
+	  case vpiLeftRange:
+	    return parent->msb.value;
+
+	  case vpiRightRange:
+	    return parent->lsb.value;
+
 	  default:
 	    return 0;
       }
+}
+
+static char*vpi_array_var_word_get_str(int code, vpiHandle ref)
+{
+      struct __vpiArrayWord*obj = array_var_word_from_handle(ref);
+      struct __vpiArray*parent;
+
+      assert(obj);
+      unsigned index = decode_array_word_pointer(obj, parent);
+
+      if (code == vpiFile) {  // Not implemented for now!
+	    return simple_set_rbuf_str(file_names[0]);
+      }
+
+      char sidx [64];
+      snprintf(sidx, 63, "%d", (int)index + parent->first_addr.value);
+      return generic_get_str(code, &parent->scope->base, parent->name, sidx);
 }
 
 static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value value)
@@ -375,6 +402,35 @@ static vpiHandle vpi_array_var_word_put_value(vpiHandle ref, p_vpi_value vp, int
       vvp_vector4_t val = vec4_from_vpi_value(vp, parent->vals_width);
       array_set_word(parent, index, 0, val);
       return ref;
+}
+
+static vpiHandle vpi_array_var_word_get_handle(int code, vpiHandle ref)
+{
+      struct __vpiArrayWord*obj = array_var_word_from_handle(ref);
+      struct __vpiArray*parent;
+
+      assert(obj);
+      decode_array_word_pointer(obj, parent);
+
+      switch (code) {
+
+	  case vpiIndex:
+	    break;  // Not implemented!
+
+	  case vpiLeftRange:
+	    return &parent->msb.base;
+
+	  case vpiRightRange:
+	    return &parent->lsb.base;
+
+	  case vpiParent:
+	    return &parent->base;
+
+	  case vpiScope:
+	    return &parent->scope->base;
+      }
+
+      return 0;
 }
 
 # define ARRAY_ITERATOR(ref) (assert(ref->vpi_type->type_code==vpiIterator), \
@@ -463,6 +519,12 @@ static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 	    assert(parent->vals);
 	    return parent->vals_width;
 
+	  case vpiLeftRange:
+	    return parent->msb.value;
+
+	  case vpiRightRange:
+	    return parent->lsb.value;
+
 	  // For now &A<> is only a constant select. This will need
 	  // to be changed when it supports variable selection.
 	  case vpiConstantSelect:
@@ -483,9 +545,9 @@ static char*vpi_array_vthr_A_get_str(int code, vpiHandle ref)
             return simple_set_rbuf_str(file_names[0]);
       }
 
-      char index [64];
-      snprintf(index, 63, "%d", (int)obj->address + parent->first_addr.value);
-      return generic_get_str(code, &parent->scope->base, parent->name, index);
+      char sidx [64];
+      snprintf(sidx, 63, "%d", (int)obj->address + parent->first_addr.value);
+      return generic_get_str(code, &parent->scope->base, parent->name, sidx);
 }
 
 static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value value)
@@ -534,13 +596,24 @@ static vpiHandle vpi_array_vthr_A_get_handle(int code, vpiHandle ref)
 
       switch (code) {
 
+	  case vpiIndex:
+	    break;  // Not implemented!
+
+	  case vpiLeftRange:
+	    return &parent->msb.base;
+
+	  case vpiRightRange:
+	    return &parent->lsb.base;
+
+	  case vpiParent:
+	    return &parent->base;
+
 	  case vpiScope:
 	    return &parent->scope->base;
       }
 
       return 0;
 }
-
 
 void array_set_word(vvp_array_t arr,
 		    unsigned address,
@@ -646,6 +719,8 @@ static vpiHandle vpip_make_array(char*label, const char*name,
       obj->nets = 0;
       obj->vals = 0;
       obj->vals_width = 0;
+      vpip_make_dec_const(&obj->msb, 0);
+      vpip_make_dec_const(&obj->lsb, 0);
       obj->vals_words = 0;
 
 	// Initialize (clear) the read-ports list.
@@ -704,6 +779,8 @@ void compile_var_array(char*label, char*name, int last, int first,
 	/* Make the words. */
       arr->vals = new vvp_vector4_t[arr->array_count];
       arr->vals_width = labs(msb-lsb) + 1;
+      vpip_make_dec_const(&arr->msb, msb);
+      vpip_make_dec_const(&arr->lsb, lsb);
 
       free(label);
       free(name);
