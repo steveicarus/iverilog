@@ -85,16 +85,19 @@ extern "C" int target_design(ivl_design_t des)
    ivl_design_process(des, draw_process, NULL);
 
    // Write the generated elements to the output file
-   const char *ofname = ivl_design_flag(des, "-o");
-   std::ofstream outfile(ofname);
-
-   for (entity_list_t::iterator it = g_entities.begin();
-        it != g_entities.end();
-        ++it)
-      (*it)->emit(outfile);
+   // only if there are no errors
+   if (0 == g_errors) {
+      const char *ofname = ivl_design_flag(des, "-o");
+      std::ofstream outfile(ofname);
+      
+      for (entity_list_t::iterator it = g_entities.begin();
+           it != g_entities.end();
+           ++it)
+         (*it)->emit(outfile);
+      
+      outfile.close();
+   }
    
-   outfile.close();
-
    // Clean up
    for (entity_list_t::iterator it = g_entities.begin();
         it != g_entities.end();
