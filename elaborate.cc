@@ -901,11 +901,11 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
 				       part_b? widb : wida,
 				       0);
 	    if (part_b) {
-		  connect(node->pin(0), tmp->pin(0));
-		  connect(node->pin(1), sig->pin(0));
-	    } else {
 		  connect(node->pin(0), sig->pin(0));
 		  connect(node->pin(1), tmp->pin(0));
+	    } else {
+		  connect(node->pin(0), tmp->pin(0));
+		  connect(node->pin(1), sig->pin(0));
 	    }
 
 	    node->set_line(*this);

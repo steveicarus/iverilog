@@ -53,7 +53,7 @@ void show_switch(ivl_switch_t net)
 	    has_enable = 1;
 	    break;
 	  case IVL_SW_TRAN_VP:
-	    fprintf(out, "  tran(PV wid=%u, part=%u, off=%u) %s",
+	    fprintf(out, "  tran(VP wid=%u, part=%u, off=%u) %s",
 		    ivl_switch_width(net), ivl_switch_part(net),
 		    ivl_switch_offset(net), name);
 	    break;
