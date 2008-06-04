@@ -825,6 +825,11 @@ int main(int argc, char*argv[])
 	    func(des);
       }
 
+      if (verbose_flag) {
+	    cout << "CALCULATING ISLANDS" << endl;
+      }
+      des->join_islands();
+
       if (net_path) {
 	    if (verbose_flag)
 		  cerr<<" dumping netlist to " <<net_path<< "..." <<endl;

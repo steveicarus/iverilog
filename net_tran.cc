@@ -82,42 +82,79 @@ unsigned NetTran::part_offset() const
 void join_island(NetObj*obj)
 {
       IslandBranch*branch = dynamic_cast<IslandBranch*> (obj);
+
+	// If this is not even a branch, then stop now.
       if (branch == 0)
 	    return;
 
-      ivl_assert(*obj, branch->island == 0);
-      struct ivl_island_s*use_island = 0;
+	// If this is a branch, but already given to an island, then
+	// stop.
+      if (branch->island)
+	    return;
 
+      list<NetObj*> uncommitted_neighbors;
+
+	// Look for neighboring objects that might already be in
+	// islands. If we find something, then join that island.
       for (unsigned idx = 0 ; idx < obj->pin_count() ; idx += 1) {
 	    Nexus*nex = obj->pin(idx).nexus();
 	    for (Link*cur = nex->first_nlink() ; cur ; cur = cur->next_nlink()) {
 		  unsigned pin;
 		  NetObj*tmp;
 		  cur->cur_link(tmp, pin);
+
+		    // Skip self.
 		  if (tmp == obj)
 			continue;
 
+		    // If tmb is not a branch, then skip it.
 		  IslandBranch*tmp_branch = dynamic_cast<IslandBranch*> (tmp);
 		  if (tmp_branch == 0)
 			continue;
 
-		  ivl_assert(*tmp, tmp_branch->island);
-		  ivl_assert(*obj, use_island==0 || use_island==tmp_branch->island);
-		  use_island = tmp_branch->island;
+		    // If that is an uncommitted branch, then save
+		    // it. When I finally choose an island for self,
+		    // these branches will be scanned so tha they join
+		    // this island as well.
+		  if (tmp_branch->island == 0) {
+			uncommitted_neighbors.push_back(tmp);
+			continue;
+		  }
+
+		  ivl_assert(*obj, branch->island==0 || branch->island==tmp_branch->island);
+
+		    // We found an existing island to join. Join it
+		    // now. Keep scanning in order to find more neighbors.
+		  if (branch->island == 0) {
+			if (debug_elaborate)
+			      cerr << obj->get_fileline() << ": debug: "
+				   << "Join brach to existing island." << endl;
+			branch->island = tmp_branch->island;
+
+		  } else if (branch->island != tmp_branch->island) {
+			cerr << obj->get_fileline() << ": internal error: "
+			     << "Oops, Found 2 neighboring islands." << endl;
+			ivl_assert(*obj, 0);
+		  }
 	    }
       }
 
-      if (use_island == 0) {
-	    use_island = new ivl_island_s;
-	    use_island->discipline = 0;
+	// If after all that we did not find an idland to join, then
+	// start the island not and join it.
+      if (branch->island == 0) {
+	    branch->island = new ivl_island_s;
+	    branch->island->discipline = 0;
 	    if (debug_elaborate)
 		  cerr << obj->get_fileline() << ": debug: "
 		       << "Create new island for this branch" << endl;
-      } else {
-	    if (debug_elaborate)
-		  cerr << obj->get_fileline() << ": debug: "
-		       << "Join this brach to existing island." << endl;
       }
 
-      branch->island = use_island;
+	// Now scan all the uncommitted neighbors I found. Calling
+	// join_island() on them will cause them to notice me in the
+	// process, and thus they will join my island. This process
+	// will recurse until all the connected branches join this island.
+      for (list<NetObj*>::iterator cur = uncommitted_neighbors.begin()
+		 ; cur != uncommitted_neighbors.end() ; cur ++ ) {
+	    join_island(*cur);
+      }
 }

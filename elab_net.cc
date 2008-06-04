@@ -2393,8 +2393,6 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  connect(ps->pin(0), osig->pin(0));
 		  connect(ps->pin(1), nets[idx]->pin(0));
 
-		  join_island(ps);
-
 		  ivl_assert(*this, wid <= width);
 		  width -= wid;
 	    }
@@ -2801,7 +2799,6 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  des->add_node(sub);
 		  connect(sub->pin(0), sig->pin(0));
 		  connect(sub->pin(1), subsig->pin(0));
-		  join_island(sub);
 
 	    } else {
 		  NetPartSelect*sub = new NetPartSelect(sig, lidx, subnet_wid,

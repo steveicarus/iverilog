@@ -3638,6 +3638,7 @@ class Design {
 	// Iterate over the design...
       void dump(ostream&) const;
       void functor(struct functor_t*);
+      void join_islands(void);
       int emit(struct target_t*) const;
 
 	// This is incremented by elaboration when an error is

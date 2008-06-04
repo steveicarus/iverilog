@@ -673,3 +673,14 @@ void Design::delete_process(NetProcTop*top)
       delete top;
 }
 
+void Design::join_islands(void)
+{
+      if (nodes_ == 0)
+	    return;
+
+      NetNode*cur = nodes_->node_next_;
+      do {
+	    join_island(cur);
+	    cur = cur->node_next_;
+      } while (cur != nodes_->node_next_);
+}
