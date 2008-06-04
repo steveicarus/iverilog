@@ -16,7 +16,6 @@ int draw_stmt(vhdl_process *proc, ivl_statement_t stmt);
 
 void remember_entity(vhdl_entity *ent);
 vhdl_entity *find_entity(const std::string &tname);
-void require_package(const char *name);
 
 #endif /* #ifndef INC_VHDL_TARGET_H */
  

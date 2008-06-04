@@ -39,7 +39,8 @@
  */
 static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
 {
-   require_package("std.textio");
+   // Add the package requirement to the containing entity
+   proc->get_parent()->get_parent()->requires_package("std.textio");
 
    const char *display_line = "Verilog_Display_Line";
    
@@ -53,10 +54,10 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
 
    // TODO: Write the data into the line
 
-   // Write_Line(Output, Verilog_Display_Line)
+   // WriteLine(Output, Verilog_Display_Line)
    vhdl_var_ref *output_ref = new vhdl_var_ref("Output");
    vhdl_var_ref *line_ref = new vhdl_var_ref(display_line);
-   vhdl_pcall_stmt *write_line = new vhdl_pcall_stmt("Write_Line");
+   vhdl_pcall_stmt *write_line = new vhdl_pcall_stmt("WriteLine");
    write_line->add_expr(output_ref);
    write_line->add_expr(line_ref);
    proc->add_stmt(write_line);

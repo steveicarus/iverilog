@@ -31,8 +31,14 @@
  */
 static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
 {
+   
+   // Create a new process and store it in the entity's
+   // architecture. This needs to be done first or the
+   // parent link won't be valid (and draw_stmt needs this
+   // to add information to the architecture)
    vhdl_process *vhdl_proc = new vhdl_process();
-
+   ent->get_arch()->add_stmt(vhdl_proc);   
+   
    ivl_statement_t stmt = ivl_process_stmt(proc);
    int rc = draw_stmt(vhdl_proc, stmt);
    if (rc != 0)
@@ -55,9 +61,6 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    ss << ivl_scope_tname(scope);
    vhdl_proc->set_comment(ss.str());
 
-   // Store it in the entity's architecture
-   ent->get_arch()->add_stmt(vhdl_proc);
-   
    return 0;
 }
 

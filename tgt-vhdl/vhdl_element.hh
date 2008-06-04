@@ -26,6 +26,7 @@
 #include <string>
 
 class vhdl_entity;
+class vhdl_arch;
 
 /*
  * Any VHDL syntax element. Each element can also contain a comment.
@@ -98,8 +99,14 @@ private:
  * processes.
  */
 class vhdl_conc_stmt : public vhdl_element {
+   friend class vhdl_arch;  // Can set its parent
 public:
+   vhdl_conc_stmt() : parent_(NULL) {}
    virtual ~vhdl_conc_stmt() {}
+
+   vhdl_arch *get_parent() const;
+private:
+   vhdl_arch *parent_;
 };
 
 typedef std::list<vhdl_conc_stmt*> conc_stmt_list_t;
@@ -236,6 +243,7 @@ private:
  * An architecture which implements an entity.
  */
 class vhdl_arch : public vhdl_element {
+   friend class vhdl_entity;  // Can set its parent
 public:
    vhdl_arch(const char *entity, const char *name="Behavioural");
    virtual ~vhdl_arch();
@@ -244,7 +252,9 @@ public:
    bool have_declared_component(const std::string &name) const;
    void add_decl(vhdl_decl *decl);
    void add_stmt(vhdl_conc_stmt *stmt);
+   vhdl_entity *get_parent() const;
 private:
+   vhdl_entity *parent_;
    conc_stmt_list_t stmts_;
    decl_list_t decls_;
    std::string name_, entity_;
@@ -265,12 +275,13 @@ public:
    void emit(std::ofstream &of, int level=0) const;
    vhdl_arch *get_arch() const { return arch_; }
    const std::string &get_name() const { return name_; }
-
+   void requires_package(const char *spec);
    const std::string &get_derived_from() const { return derived_from_; }
 private:
    std::string name_;
    vhdl_arch *arch_;  // Entity may only have a single architecture
    std::string derived_from_;
+   std::list<std::string> uses_;
 };
 
 typedef std::list<vhdl_entity*> entity_list_t;

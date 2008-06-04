@@ -33,11 +33,6 @@ static int g_errors = 0;  // Total number of errors encountered
 
 static entity_list_t g_entities;  // All entities to emit
 
-typedef std::string package_name_t;
-typedef std::list<package_name_t> require_list_t;
-
-static require_list_t g_requires;  // External packages required
-
 
 /*
  * Called when an unrecoverable problem is encountered.
@@ -78,21 +73,6 @@ void remember_entity(vhdl_entity* ent)
    g_entities.push_back(ent);
 }
 
-/*
- * Add a package to the list of packages that should be
- * use-ed at the start of the program.
- */
-void require_package(const char *name)
-{
-   package_name_t pname(name);
-   require_list_t::iterator it;
-   for (it = g_requires.begin(); it != g_requires.end(); ++it) {
-      if (*it == pname)
-         return;
-   }
-   g_requires.push_back(pname);
-}
-
 extern "C" int target_design(ivl_design_t des)
 {
    ivl_scope_t *roots;
@@ -108,14 +88,6 @@ extern "C" int target_design(ivl_design_t des)
    const char *ofname = ivl_design_flag(des, "-o");
    std::ofstream outfile(ofname);
 
-   // Write all the required packages (and libraries?)
-   //outfile << "library ieee;" << std::endl;
-   for (require_list_t::iterator it = g_requires.begin();
-        it != g_requires.end();
-        ++it)
-      outfile << "use " << *it << ".all;" << std::endl;
-   outfile << std::endl;
-   
    for (entity_list_t::iterator it = g_entities.begin();
         it != g_entities.end();
         ++it)

@@ -102,7 +102,7 @@ vhdl_entity::vhdl_entity(const char *name, const char *derived_from,
                          vhdl_arch *arch)
    : name_(name), arch_(arch), derived_from_(derived_from)
 {
-
+   arch->parent_ = this;
 }
 
 vhdl_entity::~vhdl_entity()
@@ -110,8 +110,29 @@ vhdl_entity::~vhdl_entity()
    delete arch_;
 }
 
+/*
+ * Add a package to the list of `use' statements before
+ * the entity.
+ */
+void vhdl_entity::requires_package(const char *spec)
+{
+   std::string pname(spec);
+   std::list<std::string>::iterator it;
+   for (it = uses_.begin(); it != uses_.end(); ++it) {
+      if (*it == pname)
+         return;
+   }
+   uses_.push_back(spec);
+}
+
 void vhdl_entity::emit(std::ofstream &of, int level) const
 {
+   for (std::list<std::string>::const_iterator it = uses_.begin();
+        it != uses_.end();
+        ++it)
+      of << "use " << *it << ".all;" << std::endl;
+   of << std::endl;
+   
    emit_comment(of, level);
    of << "entity " << name_ << " is";
    // ...ports...
@@ -123,7 +144,7 @@ void vhdl_entity::emit(std::ofstream &of, int level) const
 }
 
 vhdl_arch::vhdl_arch(const char *entity, const char *name)
-   : name_(name), entity_(entity)
+   : parent_(NULL), name_(name), entity_(entity)
 {
    
 }
@@ -136,12 +157,19 @@ vhdl_arch::~vhdl_arch()
 
 void vhdl_arch::add_stmt(vhdl_conc_stmt *stmt)
 {
+   stmt->parent_ = this;
    stmts_.push_back(stmt);
 }
 
 void vhdl_arch::add_decl(vhdl_decl *decl)
 {
    decls_.push_back(decl);
+}
+
+vhdl_entity *vhdl_arch::get_parent() const
+{
+   assert(parent_);
+   return parent_;
 }
 
 void vhdl_arch::emit(std::ofstream &of, int level) const
@@ -171,6 +199,12 @@ bool vhdl_arch::have_declared_component(const std::string &name) const
          return true;
    }
    return false;
+}
+
+vhdl_arch *vhdl_conc_stmt::get_parent() const
+{
+   assert(parent_);
+   return parent_;
 }
 
 vhdl_process::vhdl_process(const char *name)
