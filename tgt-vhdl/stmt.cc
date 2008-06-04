@@ -57,10 +57,8 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
    // Write the data into the line
    int count = ivl_stmt_parm_count(stmt);
    for (int i = 0; i < count; i++) {
-      // TODO: This is a bit simplistic since it will only
-      // work with strings
-      // --> Need to add a call to Type'Image for non-string
-      //     expressions
+      // TODO: Need to add a call to Type'Image for types not
+      // supported by std.textio
       vhdl_expr *e = translate_expr(ivl_stmt_parm(stmt, i));
       if (NULL == e)
          return 1;

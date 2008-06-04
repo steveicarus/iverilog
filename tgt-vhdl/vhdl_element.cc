@@ -357,5 +357,9 @@ void vhdl_var_ref::emit(std::ofstream &of, int level) const
 
 void vhdl_const_string::emit(std::ofstream &of, int level) const
 {
-   of << "\"" << value_ << "\"";
+   // In some instances a string literal can be ambiguous between
+   // a String type and some other types (e.g. std_logic_vector)
+   // The explicit cast to String removes this ambiguity (although
+   // isn't always strictly necessary) 
+   of << "String'(\"" << value_ << "\")";
 }

@@ -79,7 +79,6 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
       vhdl_entity *parent_ent = find_entity(ivl_scope_tname(parent));
       assert(parent_ent != NULL);
 
-      
       // Make sure we only collect instantiations from *one*
       // example of this module in the hieararchy
       if (parent_ent->get_derived_from() == ivl_scope_name(parent)) {
