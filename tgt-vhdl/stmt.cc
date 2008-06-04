@@ -35,8 +35,6 @@
  * It's possible, although quite unlikely, that there will be
  * name collision with an existing variable called
  * `Verilog_Display_Line' -- do something about this?
- * It's also possible for there to be a name collision with
- * the special variable `Output'.
  */
 static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
 {
@@ -80,7 +78,7 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
 
    // WriteLine(Output, Verilog_Display_Line)
    vhdl_pcall_stmt *write_line = new vhdl_pcall_stmt("WriteLine");
-   write_line->add_expr(new vhdl_var_ref("Output"));
+   write_line->add_expr(new vhdl_var_ref("std.textio.Output"));
    write_line->add_expr(new vhdl_var_ref(display_line));
    proc->add_stmt(write_line);
    
