@@ -733,7 +733,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  return strdup(tmp);
 	    } else if (ivl_lpm_data(lpm,0) == nex) {
 		  char tmp[128];
-		  snprintf(tmp, sizeof tmp, "L_%p/V", lpm);
+		  snprintf(tmp, sizeof tmp, "L_%p/i", lpm);
 		  return strdup(tmp);
 	    }
 	    break;
