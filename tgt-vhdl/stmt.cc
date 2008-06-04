@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <cstring>
+#include <cassert>
 
 /*
  * Generate VHDL for the $display system task.
@@ -51,17 +52,24 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
       line_var->set_comment("For generating $display output");
       proc->add_decl(line_var);
    }
-
    
-
    // Write the data into the line
    int count = ivl_stmt_parm_count(stmt);
    for (int i = 0; i < count; i++) {
-      // TODO: Need to add a call to Type'Image for types not
-      // supported by std.textio
-      vhdl_expr *e = translate_expr(ivl_stmt_parm(stmt, i));
-      if (NULL == e)
-         return 1;
+      // $display may have an empty parameter, in which case
+      // the expression will be null
+      // The behaviour here seems to be to output a space
+      ivl_expr_t net = ivl_stmt_parm(stmt, i);
+      vhdl_expr *e = NULL;
+      if (net) {
+         // TODO: Need to add a call to Type'Image for types not
+         // supported by std.textio
+         e = translate_expr(net);
+         if (NULL == e)
+            return 1;
+      }
+      else
+         e = new vhdl_const_string(" ");
 
       vhdl_pcall_stmt *write = new vhdl_pcall_stmt("Write");
       write->add_expr(new vhdl_var_ref(display_line));
@@ -98,6 +106,22 @@ static int draw_stask(vhdl_process *proc, ivl_statement_t stmt)
 }
 
 /*
+ * Generate VHDL for a block of Verilog statements. This doesn't
+ * actually do anything, other than recursively translate the
+ * block's statements and add them to the process. This is OK as
+ * `begin' and `end process' function like a Verilog block.
+ */
+static int draw_block(vhdl_process *proc, ivl_statement_t stmt)
+{
+   int count = ivl_stmt_block_count(stmt);
+   for (int i = 0; i < count; i++) {
+      if (draw_stmt(proc, ivl_stmt_block_stmt(stmt, i)) != 0)
+         return 1;
+   }
+   return 0;
+}
+
+/*
  * Generate VHDL statements for the given Verilog statement and
  * add them to the given VHDL process.
  */
@@ -106,6 +130,8 @@ int draw_stmt(vhdl_process *proc, ivl_statement_t stmt)
    switch (ivl_statement_type(stmt)) {
    case IVL_ST_STASK:
       return draw_stask(proc, stmt);
+   case IVL_ST_BLOCK:
+      return draw_block(proc, stmt);
    default:
       error("No VHDL translation for statement at %s:%d (type = %d)",
             ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
