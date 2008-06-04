@@ -1802,6 +1802,10 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that,
 
 vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 {
+	// Assign to self.
+      if (size_ > 0 && bits_ == that.bits_)
+	    return *this;
+
       if (size_ != that.size_) {
 	    if (size_ > 0)
 		  delete[]bits_;
@@ -1845,7 +1849,7 @@ vvp_vector8_t vvp_vector8_t::subvalue(unsigned base, unsigned wid) const
       vvp_vector8_t tmp (wid);
 
       unsigned idx = 0;
-      while (base+idx < size_) {
+      while (idx < wid && base+idx < size_) {
 	    tmp.bits_[idx] = bits_[base+idx];
 	    idx += 1;
       }

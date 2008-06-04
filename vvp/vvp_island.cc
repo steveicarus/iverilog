@@ -124,6 +124,8 @@ class vvp_island_port  : public vvp_net_fun_t {
       ~vvp_island_port();
 
       virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      virtual void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+				unsigned base, unsigned wid, unsigned vwid);
       virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t bit);
 
       vvp_vector8_t invalue;
@@ -220,6 +222,7 @@ void vvp_island::add_branch(vvp_island_branch*branch, const char*pa, const char*
       assert(ports_);
       branch->a = ports_->sym_get_value(pa);
       branch->b = ports_->sym_get_value(pb);
+      assert(branch->a && branch->b);
 
       vvp_branch_ptr_t ptra (branch, 0);
       vvp_branch_ptr_t ptrb (branch, 1);
@@ -285,6 +288,26 @@ void vvp_island_port::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       recv_vec8(port, vvp_vector8_t(bit, 6, 6));
 }
+
+void vvp_island_port::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+				   unsigned base, unsigned wid, unsigned vwid)
+{
+      vvp_vector8_t tmp(bit, 6, 6);
+      if (invalue.size()==0) {
+	    assert(tmp.size() == wid);
+	    invalue = part_expand(tmp, vwid, base);
+      } else {
+	    assert(invalue.size() == vwid);
+	    for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+		  if ((base+idx) >= invalue.size())
+			break;
+		  invalue.set_bit(base+idx, tmp.value(idx));
+	    }
+      }
+
+      island_->flag_island();
+}
+
 
 void vvp_island_port::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t bit)
 {
