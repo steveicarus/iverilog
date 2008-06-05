@@ -354,9 +354,14 @@ static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value value)
 
       assert(obj);
       unsigned index = decode_array_word_pointer(obj, parent);
+      unsigned width = parent->vals_width;
 
-      vpip_vec4_get_value(parent->vals[index], parent->vals_width,
-			  false, value);
+	/* If we don't have a value yet just return X. */
+      if (parent->vals[index].size() == 0) {
+	    vpip_vec4_get_value(vvp_vector4_t(width), width, false, value);
+      } else {
+	    vpip_vec4_get_value(parent->vals[index], width, false, value);
+      }
 }
 
 static vpiHandle vpi_array_var_word_put_value(vpiHandle ref, p_vpi_value vp, int flags)
@@ -493,8 +498,15 @@ static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value value)
       assert(parent->vals);
       assert(obj->address < parent->array_count);
 
-      vpip_vec4_get_value(parent->vals[obj->address],
-			  parent->vals_width, false, value);
+      unsigned index = obj->address;
+      unsigned width = parent->vals_width;
+
+	/* If we don't have a value yet just return X. */
+      if (parent->vals[index].size() == 0) {
+	    vpip_vec4_get_value(vvp_vector4_t(width), width, false, value);
+      } else {
+	    vpip_vec4_get_value(parent->vals[index], width, false, value);
+      }
 }
 
 static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int)
