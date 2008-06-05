@@ -118,6 +118,16 @@ static int draw_block(vhdl_process *proc, ivl_statement_t stmt)
 }
 
 /*
+ * A no-op statement. This corresponds to a `null' statement in
+ * VHDL.
+ */
+static int draw_noop(vhdl_process *proc, ivl_statement_t stmt)
+{
+   proc->add_stmt(new vhdl_null_stmt());
+   return 0;
+}
+
+/*
  * Generate VHDL statements for the given Verilog statement and
  * add them to the given VHDL process.
  */
@@ -128,6 +138,8 @@ int draw_stmt(vhdl_process *proc, ivl_statement_t stmt)
       return draw_stask(proc, stmt);
    case IVL_ST_BLOCK:
       return draw_block(proc, stmt);
+   case IVL_ST_NOOP:
+      return draw_noop(proc, stmt);
    default:
       error("No VHDL translation for statement at %s:%d (type = %d)",
             ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),

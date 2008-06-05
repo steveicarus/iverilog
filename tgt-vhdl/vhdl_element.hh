@@ -142,6 +142,12 @@ public:
 };
 
 
+class vhdl_null_stmt : public vhdl_seq_stmt {
+public:
+   void emit(std::ofstream &of, int level) const;
+};
+
+
 /*
  * A procedure call. Which is a statement, unlike a function
  * call which is an expression.

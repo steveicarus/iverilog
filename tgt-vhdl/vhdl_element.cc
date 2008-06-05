@@ -363,3 +363,8 @@ void vhdl_const_string::emit(std::ofstream &of, int level) const
    // isn't always strictly necessary) 
    of << "String'(\"" << value_ << "\")";
 }
+
+void vhdl_null_stmt::emit(std::ofstream &of, int level) const
+{
+   of << "null;";
+}
