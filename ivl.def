@@ -53,6 +53,9 @@ ivl_file_table_index
 ivl_file_table_item
 ivl_file_table_size
 
+ivl_island_flag_set
+ivl_island_flag_test
+
 ivl_logic_attr
 ivl_logic_attr_cnt
 ivl_logic_attr_val
