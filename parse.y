@@ -2480,7 +2480,7 @@ localparam_assign_decl
     localparam_assign_list
       { param_active_range = 0;
 	param_active_signed = false;
-	param_active_type = IVL_VT_NO_TYPE;
+	param_active_type = IVL_VT_LOGIC;
       }
   | K_integer
       { param_active_range = 0;
@@ -2490,7 +2490,7 @@ localparam_assign_decl
     localparam_assign_list
       { param_active_range = 0;
 	param_active_signed = false;
-	param_active_type = IVL_VT_NO_TYPE;
+	param_active_type = IVL_VT_LOGIC;
       }
   | K_real
       { param_active_range = 0;
@@ -2500,7 +2500,7 @@ localparam_assign_decl
     localparam_assign_list
       { param_active_range = 0;
 	param_active_signed = false;
-	param_active_type = IVL_VT_NO_TYPE;
+	param_active_type = IVL_VT_LOGIC;
       }
   ;
 

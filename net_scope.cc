@@ -121,6 +121,9 @@ NetExpr* NetScope::set_parameter(perm_string key, NetExpr*expr,
       ivl_assert(file_line, ref.range == 0);
       ref.range = range_list;
       ref.set_line(file_line);
+
+      ivl_assert(file_line, type != IVL_VT_NO_TYPE);
+
       return res;
 }
 
