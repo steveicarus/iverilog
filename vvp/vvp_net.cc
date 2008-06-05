@@ -1849,7 +1849,7 @@ vvp_vector8_t vvp_vector8_t::subvalue(unsigned base, unsigned wid) const
       vvp_vector8_t tmp (wid);
 
       unsigned idx = 0;
-      while (idx < wid && base+idx < size_) {
+      while ((idx < wid) && (base+idx < size_)) {
 	    tmp.bits_[idx] = bits_[base+idx];
 	    idx += 1;
       }
