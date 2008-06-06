@@ -323,9 +323,14 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %left K_POW
 %left UNARY_PREC
 
+
 /* to resolve dangling else ambiguity. */
 %nonassoc less_than_K_else
 %nonassoc K_else
+
+ /* to resolve exclude (... ambiguity */
+%nonassoc '('
+%nonassoc K_exclude
 
 %%
 
@@ -2432,7 +2437,8 @@ parameter_value_range
       { $$ = pform_parameter_value_range($1, true, $3, false, $5); }
   | from_exclude '(' value_range_expression ':' value_range_expression ')'
       { $$ = pform_parameter_value_range($1, true, $3, true, $5); }
-    /* | K_exclude  expression */
+  | K_exclude expression
+      { $$ = pform_parameter_value_range(true, false, $2, false, $2); }
   ;
 
 value_range_expression
