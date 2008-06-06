@@ -150,13 +150,53 @@ static int draw_delay(vhdl_process *proc, ivl_statement_t stmt)
 
 /*
  * A wait statement waits for a level change on a @(..) list of
- * signals. This needs to be implemented by an `if' statement
- * inside the process (which the appropriate signals added to
- * the sensitivity list).
+ * signals.
+ * TODO: This won't yet handle the posedge to rising_edge, etc.
+ * mapping.
  */
 static int draw_wait(vhdl_process *proc, ivl_statement_t stmt)
 {
-   std::cout << "draw_wait" << std::endl;
+   int nevents = ivl_stmt_nevent(stmt);
+   for (int i = 0; i < nevents; i++) {
+      ivl_event_t event = ivl_stmt_events(stmt, i);
+
+      if (ivl_event_nneg(event) != 0)
+         error("Negative edge events not supported yet");
+      if (ivl_event_npos(event) != 0)
+         error("Positive edge events not supported yet");
+
+      int nany = ivl_event_nany(event);
+      for (int i = 0; i < nany; i++) {
+         ivl_nexus_t nexus = ivl_event_any(event, i);
+         std::cout << "event nexus " << ivl_nexus_name(nexus) << std::endl;
+
+         int nptrs = ivl_nexus_ptrs(nexus);
+         for (int j = 0; j < nptrs; j++) {
+            ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, j);
+
+            ivl_net_logic_t log;
+            ivl_signal_t sig;
+            if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
+               const char *signame = ivl_signal_basename(sig);
+               std::cout << "signal " << signame << std::endl;
+               
+               proc->add_sensitivity(signame);
+               return 0;
+            }
+            else if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
+               error("Nexus points to net logic");
+               return 1;
+            }
+            else {
+               error("Nexus points to unknown");
+               return 1;
+            }
+         }
+      }         
+   }
+
+   ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
+   
    return 0;
 }
 

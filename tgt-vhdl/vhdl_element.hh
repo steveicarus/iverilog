@@ -28,6 +28,8 @@
 class vhdl_entity;
 class vhdl_arch;
 
+typedef std::list<std::string> string_list_t;
+
 /*
  * Any VHDL syntax element. Each element can also contain a comment.
  */
@@ -246,11 +248,13 @@ public:
    void emit(std::ofstream &of, int level) const;
    void add_stmt(vhdl_seq_stmt *stmt);
    void add_decl(vhdl_decl *decl);
+   void add_sensitivity(const char *name);
    bool have_declared_var(const std::string &name) const;
 private:
    seq_stmt_list_t stmts_;
    decl_list_t decls_;
    std::string name_;
+   string_list_t sens_;
 };
 
 
@@ -296,7 +300,7 @@ private:
    std::string name_;
    vhdl_arch *arch_;  // Entity may only have a single architecture
    std::string derived_from_;
-   std::list<std::string> uses_;
+   string_list_t uses_;
 };
 
 typedef std::list<vhdl_entity*> entity_list_t;

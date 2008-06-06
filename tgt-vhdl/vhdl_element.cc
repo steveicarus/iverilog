@@ -229,6 +229,11 @@ void vhdl_process::add_decl(vhdl_decl* decl)
    decls_.push_back(decl);
 }
 
+void vhdl_process::add_sensitivity(const char *name)
+{
+   sens_.push_back(name);
+}
+
 bool vhdl_process::have_declared_var(const std::string &name) const
 {
    decl_list_t::const_iterator it;
@@ -244,7 +249,21 @@ void vhdl_process::emit(std::ofstream &of, int level) const
    emit_comment(of, level);
    if (name_.size() > 0)
       of << name_ << ": ";
-   of << "process is";  // TODO: sensitivity
+   of << "process ";
+   
+   int num_sens = sens_.size();
+   if (num_sens > 0) {
+      of << "(";
+      string_list_t::const_iterator it;
+      for (it = sens_.begin(); it != sens_.end(); ++it) {
+         of << *it;
+         if (--num_sens > 0)
+            of << ", ";
+      }
+      of << ") ";
+   }
+
+   of << "is";
    emit_children<vhdl_decl>(of, decls_, level);
    of << "begin";
    emit_children<vhdl_seq_stmt>(of, stmts_, level);
