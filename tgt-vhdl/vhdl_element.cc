@@ -106,7 +106,7 @@ vhdl_entity::vhdl_entity(const char *name, const char *derived_from,
 }
 
 vhdl_entity::~vhdl_entity()
-{
+{   
    delete arch_;
 }
 
@@ -127,6 +127,11 @@ void vhdl_entity::requires_package(const char *spec)
 
 void vhdl_entity::emit(std::ofstream &of, int level) const
 {
+   // Pretty much every design will use std_logic so we
+   // might as well include it by default
+   of << "library ieee;" << std::endl;
+   of << "use ieee.std_logic_1164.all;" << std::endl;
+   
    for (std::list<std::string>::const_iterator it = uses_.begin();
         it != uses_.end();
         ++it)
@@ -196,6 +201,20 @@ bool vhdl_arch::have_declared_component(const std::string &name) const
    for (it = decls_.begin(); it != decls_.end(); ++it) {
       if (comp_typename == typeid(**it).name()
           && (*it)->get_name() == name)
+         return true;
+   }
+   return false;
+}
+
+/*
+ * True if any declaration of `name' has been added to the
+ * architecture.
+ */
+bool vhdl_arch::have_declared(const std::string &name) const
+{
+   decl_list_t::const_iterator it;
+   for (it = decls_.begin(); it != decls_.end(); ++it) {
+      if ((*it)->get_name() == name)
          return true;
    }
    return false;
@@ -332,6 +351,19 @@ vhdl_var_decl::~vhdl_var_decl()
 void vhdl_var_decl::emit(std::ofstream &of, int level) const
 {
    of << "variable " << name_ << " : ";
+   type_->emit(of, level);
+   of << ";";
+   emit_comment(of, level, true);
+}
+
+vhdl_signal_decl::~vhdl_signal_decl()
+{
+   delete type_;
+}
+
+void vhdl_signal_decl::emit(std::ofstream &of, int level) const
+{
+   of << "signal " << name_ << " : ";
    type_->emit(of, level);
    of << ";";
    emit_comment(of, level, true);

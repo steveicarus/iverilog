@@ -221,6 +221,21 @@ private:
 
 
 /*
+ * A signal declaration in architecture.
+ */
+class vhdl_signal_decl : public vhdl_decl {
+public:
+   vhdl_signal_decl(const char *name, vhdl_type *type)
+      : vhdl_decl(name), type_(type) {}
+   ~vhdl_signal_decl();
+
+   void emit(std::ofstream &of, int level) const;
+private:
+   vhdl_type *type_;
+};
+
+
+/*
  * Instantiation of component. This is really only a placeholder
  * at the moment until the port mappings are worked out.
  */
@@ -269,6 +284,7 @@ public:
 
    void emit(std::ofstream &of, int level=0) const;
    bool have_declared_component(const std::string &name) const;
+   bool have_declared(const std::string &name) const;
    void add_decl(vhdl_decl *decl);
    void add_stmt(vhdl_conc_stmt *stmt);
    vhdl_entity *get_parent() const;
@@ -295,7 +311,7 @@ public:
    vhdl_arch *get_arch() const { return arch_; }
    const std::string &get_name() const { return name_; }
    void requires_package(const char *spec);
-   const std::string &get_derived_from() const { return derived_from_; }
+   const std::string &get_derived_from() const { return derived_from_; }   
 private:
    std::string name_;
    vhdl_arch *arch_;  // Entity may only have a single architecture
