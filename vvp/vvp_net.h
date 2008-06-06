@@ -483,7 +483,6 @@ class vvp_scalar_t {
       explicit vvp_scalar_t();
 
 	// Make an unambiguous value.
-      explicit vvp_scalar_t(vvp_bit4_t val, unsigned str);
       explicit vvp_scalar_t(vvp_bit4_t val, unsigned str0, unsigned str1);
 
 	// Get the vvp_bit4_t version of the value
@@ -503,27 +502,43 @@ inline vvp_scalar_t::vvp_scalar_t()
       value_ = 0;
 }
 
-inline vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str)
+inline vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str0, unsigned str1)
 {
-      assert(str <= 7);
+      assert(str0 <= 7);
+      assert(str1 <= 7);
 
-      if (str == 0) {
+      if (str0 == 0 && str1 == 0) {
 	    value_ = 0x00;
       } else switch (val) {
 	  case BIT4_0:
-	    value_ = str | (str<<4);
+	    value_ = str0 | (str0<<4);
 	    break;
 	  case BIT4_1:
-	    value_ = str | (str<<4) | 0x88;
+	    value_ = str1 | (str1<<4) | 0x88;
 	    break;
 	  case BIT4_X:
-	    value_ = str | (str<<4) | 0x80;
+	    value_ = str0 | (str1<<4) | 0x80;
 	    break;
 	  case BIT4_Z:
 	    value_ = 0x00;
 	    break;
       }
 }
+
+inline vvp_bit4_t vvp_scalar_t::value() const
+{
+      if (value_ == 0) {
+	    return BIT4_Z;
+      } else switch (value_ & 0x88) {
+	  case 0x00:
+	    return BIT4_0;
+	  case 0x88:
+	    return BIT4_1;
+	  default:
+	    return BIT4_X;
+      }
+}
+
 
 extern vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b);
 extern ostream& operator<< (ostream&, vvp_scalar_t);
@@ -546,8 +561,8 @@ class vvp_vector8_t {
 
     public:
       explicit vvp_vector8_t(unsigned size =0);
-	// Make a vvp_vector8_t from a vector4 and a specified strength.
-      vvp_vector8_t(const vvp_vector4_t&that, unsigned str =6);
+	// Make a vvp_vector8_t from a vector4 and a specified
+	// strength.
       explicit vvp_vector8_t(const vvp_vector4_t&that,
 			     unsigned str0,
 			     unsigned str1);
@@ -572,7 +587,18 @@ class vvp_vector8_t {
 
   /* Resolve uses the default Verilog resolver algorithm to resolve
      two drive vectors to a single output. */
-extern vvp_vector8_t resolve(const vvp_vector8_t&a, const vvp_vector8_t&b);
+inline vvp_vector8_t resolve(const vvp_vector8_t&a, const vvp_vector8_t&b)
+{
+      assert(a.size() == b.size());
+      vvp_vector8_t out (a.size());
+
+      for (unsigned idx = 0 ;  idx < out.size() ;  idx += 1) {
+	    out.set_bit(idx, resolve(a.value(idx), b.value(idx)));
+      }
+
+      return out;
+}
+
   /* This function implements the strength reduction implied by
      Verilog standard resistive devices. */
 extern vvp_vector8_t resistive_reduction(const vvp_vector8_t&a);
@@ -583,10 +609,37 @@ extern vvp_vector8_t part_expand(const vvp_vector8_t&a, unsigned wid, unsigned o
   /* Print a vector8 value to a stream. */
 extern ostream& operator<< (ostream&, const vvp_vector8_t&);
 
+inline vvp_vector8_t::vvp_vector8_t(unsigned size)
+: size_(size)
+{
+      if (size_ == 0) {
+	    bits_ = 0;
+	    return;
+      }
+      bits_ = new vvp_scalar_t[size_];
+}
+
 inline vvp_vector8_t::~vvp_vector8_t()
 {
       if (size_ > 0)
 	    delete[]bits_;
+}
+
+  // Exactly-equal for vvp_vector8_t is common and should be as tight
+  // as possible.
+inline bool vvp_vector8_t::eeq(const vvp_vector8_t&that) const
+{
+      if (size_ != that.size_)
+	    return false;
+      if (size_ == 0)
+	    return true;
+
+      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1) {
+	    if (! bits_[idx] .eeq( that.bits_[idx] ))
+		return false;
+      }
+
+      return true;
 }
 
 inline vvp_scalar_t vvp_vector8_t::value(unsigned idx) const
@@ -721,7 +774,7 @@ class vvp_net_fun_t {
       virtual ~vvp_net_fun_t();
 
       virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-      virtual void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+      virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
       virtual void recv_real(vvp_net_ptr_t port, double bit);
       virtual void recv_long(vvp_net_ptr_t port, long bit);
 
@@ -962,7 +1015,7 @@ class vvp_fun_signal  : public vvp_fun_signal_vec {
       explicit vvp_fun_signal(unsigned wid, vvp_bit4_t init=BIT4_X);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
 	// Part select variants of above
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -994,12 +1047,12 @@ class vvp_fun_signal8  : public vvp_fun_signal_vec {
       explicit vvp_fun_signal8(unsigned wid);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
 	// Part select variants of above
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                         unsigned base, unsigned wid, unsigned vwid);
-      void recv_vec8_pv(vvp_net_ptr_t port, vvp_vector8_t bit,
+      void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
                         unsigned base, unsigned wid, unsigned vwid);
 
 	// Get information about the vector value.
@@ -1135,7 +1188,7 @@ inline void vvp_send_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val)
       }
 }
 
-extern void vvp_send_vec8(vvp_net_ptr_t ptr, vvp_vector8_t val);
+extern void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val);
 extern void vvp_send_real(vvp_net_ptr_t ptr, double val);
 extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
 extern void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,

@@ -129,7 +129,7 @@ int edge(vvp_bit4_t from, vvp_bit4_t to)
       return 0;
 }
 
-void vvp_send_vec8(vvp_net_ptr_t ptr, vvp_vector8_t val)
+void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val)
 {
       while (struct vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
@@ -1751,38 +1751,13 @@ ostream& operator<< (ostream&out, const vvp_vector2_t&that)
 vvp_vector8_t::vvp_vector8_t(const vvp_vector8_t&that)
 {
       size_ = that.size_;
-
-      bits_ = new vvp_scalar_t[size_];
-
-      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-	    bits_[idx] = that.bits_[idx];
-
-}
-
-vvp_vector8_t::vvp_vector8_t(unsigned size)
-: size_(size)
-{
-      if (size_ == 0) {
+      if (size_==0) {
 	    bits_ = 0;
-	    return;
+      } else {
+	    bits_ = new vvp_scalar_t[size_];
+	    for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
+		  bits_[idx] = that.bits_[idx];
       }
-
-      bits_ = new vvp_scalar_t[size_];
-}
-
-vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that, unsigned str)
-: size_(that.size())
-{
-      if (size_ == 0) {
-	    bits_ = 0;
-	    return;
-      }
-
-      bits_ = new vvp_scalar_t[size_];
-
-      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-	    bits_[idx] = vvp_scalar_t (that.value(idx), str);
-
 }
 
 vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that,
@@ -1826,22 +1801,6 @@ vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 	    bits_[idx] = that.bits_[idx];
 
       return *this;
-}
-
-bool vvp_vector8_t::eeq(const vvp_vector8_t&that) const
-{
-      if (size_ != that.size_)
-	    return false;
-
-      if (size_ == 0)
-	    return true;
-
-      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1) {
-	    if (! bits_[idx] .eeq( that.bits_[idx] ))
-		return false;
-      }
-
-      return true;
 }
 
 vvp_vector8_t vvp_vector8_t::subvalue(unsigned base, unsigned wid) const
@@ -1907,7 +1866,7 @@ void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bits,
       assert(0);
 }
 
-void vvp_net_fun_t::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
+void vvp_net_fun_t::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 {
       recv_vec4(port, reduce4(bit));
 }
@@ -2200,7 +2159,7 @@ void vvp_fun_signal::calculate_output_(vvp_net_ptr_t ptr)
       run_vpi_callbacks();
 }
 
-void vvp_fun_signal::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+void vvp_fun_signal::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 {
       recv_vec4(ptr, reduce4(bit));
 }
@@ -2279,10 +2238,10 @@ vvp_fun_signal8::vvp_fun_signal8(unsigned wid)
 
 void vvp_fun_signal8::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
-      recv_vec8(ptr, bit);
+      recv_vec8(ptr, vvp_vector8_t(bit,6,6));
 }
 
-void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 {
       switch (ptr.port()) {
 	  case 0: // Normal input (feed from net, or set from process)
@@ -2323,10 +2282,10 @@ void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
 void vvp_fun_signal8::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
                                    unsigned base, unsigned wid, unsigned vwid)
 {
-      recv_vec8_pv(ptr, bit, base, wid, vwid);
+      recv_vec8_pv(ptr, vvp_vector8_t(bit,6,6), base, wid, vwid);
 }
 
-void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, vvp_vector8_t bit,
+void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
 				   unsigned base, unsigned wid, unsigned vwid)
 {
       assert(bit.size() == wid);
@@ -2354,7 +2313,7 @@ void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, vvp_vector8_t bit,
 	    if (force_mask_.size() == 0)
 		  force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, size());
 	    if (force_.size() == 0)
-		  force_ = vvp_vector8_t(vvp_vector4_t(vwid, BIT4_Z));
+		  force_ = vvp_vector8_t(vvp_vector4_t(vwid, BIT4_Z),6,6);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  force_mask_.set_bit(base+idx, 1);
@@ -2668,51 +2627,8 @@ void vvp_wide_fun_t::recv_real(vvp_net_ptr_t port, double bit)
  */
 # define UNAMBIG(v)  (((v) & 0x0f) == (((v) >> 4) & 0x0f))
 
-#if 0
-# define STREN1(v) ( ((v)&0x80)? ((v)&0xf0) : (0x70 - ((v)&0xf0)) )
-# define STREN0(v) ( ((v)&0x08)? ((v)&0x0f) : (0x07 - ((v)&0x0f)) )
-#else
 # define STREN1(v) (((v)&0x70) >> 4)
 # define STREN0(v) ((v)&0x07)
-#endif
-
-vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str0, unsigned str1)
-{
-      assert(str0 <= 7);
-      assert(str1 <= 7);
-
-      if (str0 == 0 && str1 == 0) {
-	    value_ = 0x00;
-      } else switch (val) {
-	  case BIT4_0:
-	    value_ = str0 | (str0<<4);
-	    break;
-	  case BIT4_1:
-	    value_ = str1 | (str1<<4) | 0x88;
-	    break;
-	  case BIT4_X:
-	    value_ = str0 | (str1<<4) | 0x80;
-	    break;
-	  case BIT4_Z:
-	    value_ = 0x00;
-	    break;
-      }
-}
-
-vvp_bit4_t vvp_scalar_t::value() const
-{
-      if (value_ == 0) {
-	    return BIT4_Z;
-
-      } else switch (value_ & 0x88) {
-	  case 0x00:
-	    return BIT4_0;
-	  case 0x88:
-	    return BIT4_1;
-	  default:
-	    return BIT4_X;
-      }
-}
 
 unsigned vvp_scalar_t::strength0() const
 {
@@ -2869,19 +2785,6 @@ vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b)
 	    res.value_ = 0;
 
       return res;
-}
-
-vvp_vector8_t resolve(const vvp_vector8_t&a, const vvp_vector8_t&b)
-{
-      assert(a.size() == b.size());
-
-      vvp_vector8_t out (a.size());
-
-      for (unsigned idx = 0 ;  idx < out.size() ;  idx += 1) {
-	    out.set_bit(idx, resolve(a.value(idx), b.value(idx)));
-      }
-
-      return out;
 }
 
 vvp_vector8_t resistive_reduction(const vvp_vector8_t&that)

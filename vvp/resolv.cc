@@ -26,7 +26,7 @@
 
 
 resolv_functor::resolv_functor(vvp_scalar_t hiz_value, const char*debug_l)
-: hiz_(hiz_value), debug_label_(debug_l)
+: net_(0), hiz_(hiz_value), debug_label_(debug_l)
 {
       count_functors_resolv += 1;
 }
@@ -37,7 +37,7 @@ resolv_functor::~resolv_functor()
 
 void resolv_functor::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
-      recv_vec8(port, vvp_vector8_t(bit, 6 /* STRONG */));
+      recv_vec8(port, vvp_vector8_t(bit, 6,6 /* STRONG */));
 }
 
 void resolv_functor::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -58,7 +58,7 @@ void resolv_functor::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       recv_vec4(port, res);
 }
 
-void resolv_functor::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
+void resolv_functor::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 {
       unsigned pdx = port.port();
       vvp_net_t*ptr = port.ptr();
@@ -68,14 +68,26 @@ void resolv_functor::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
 
       val_[pdx] = bit;
 
-      vvp_vector8_t out (bit);
+      if (net_ == 0) {
+	    net_ = ptr;
+	    schedule_generic(this, 0, false);
+      }
+}
+
+void resolv_functor::run_run()
+{
+      vvp_net_t*ptr = net_;
+      net_ = 0;
+
+      vvp_vector8_t out;
 
       for (unsigned idx = 0 ;  idx < 4 ;  idx += 1) {
-	    if (idx == pdx)
-		  continue;
 	    if (val_[idx].size() == 0)
 		  continue;
-	    out = resolve(out, val_[idx]);
+	    if (out.size()==0)
+		  out = val_[idx];
+	    else
+		  out = resolve(out, val_[idx]);
       }
 
       if (! hiz_.is_hiz()) {

@@ -242,7 +242,7 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
       }
 }
 
-void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
+void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 {
       assert(port.port() == 0);
 

@@ -21,6 +21,7 @@
 
 # include  "config.h"
 # include  "vvp_net.h"
+# include  "schedule.h"
 
 /*
  * This functor type resolves its inputs using the Verilog method of
@@ -34,19 +35,22 @@
  * strong values (or HiZ) for the sake of resolution. In any case, the
  * propagated value is a vvp_vector8_t value.
  */
-class resolv_functor : public vvp_net_fun_t {
+class resolv_functor : public vvp_net_fun_t, private vvp_gen_event_s {
 
     public:
       explicit resolv_functor(vvp_scalar_t hiz_value, const char* debug =0);
       ~resolv_functor();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 			unsigned base, unsigned wid, unsigned vwid);
 
     private:
+      vvp_net_t*net_;
+      void run_run();
+
       vvp_vector8_t val_[4];
 	// Bit value to emit for HiZ bits.
       vvp_scalar_t hiz_;
