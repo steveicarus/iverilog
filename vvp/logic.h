@@ -69,7 +69,7 @@ class vvp_fun_eeq  : public vvp_fun_boolean_ {
  * The retransmitted vector has all Z values changed to X, just like
  * the buf(Q,D) gate in Verilog.
  */
-class vvp_fun_buf: public vvp_net_fun_t, private vvp_gen_event_s {
+class vvp_fun_buf: public vvp_net_fun_t {
 
     public:
       explicit vvp_fun_buf();
@@ -78,11 +78,7 @@ class vvp_fun_buf: public vvp_net_fun_t, private vvp_gen_event_s {
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
 
     private:
-      void run_run();
-
-    private:
       vvp_vector4_t input_;
-      vvp_net_t*net_;
 };
 
 /*
@@ -152,7 +148,7 @@ class vvp_fun_muxr : public vvp_net_fun_t, private vvp_gen_event_s {
       sel_type select_;
 };
 
-class vvp_fun_not: public vvp_net_fun_t, private vvp_gen_event_s {
+class vvp_fun_not: public vvp_net_fun_t {
 
     public:
       explicit vvp_fun_not();
@@ -161,11 +157,7 @@ class vvp_fun_not: public vvp_net_fun_t, private vvp_gen_event_s {
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit);
 
     private:
-      void run_run();
-
-    private:
       vvp_vector4_t input_;
-      vvp_net_t*net_;
 };
 
 class vvp_fun_or  : public vvp_fun_boolean_ {

@@ -779,6 +779,41 @@ bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
       return true;
 }
 
+bool vvp_vector4_t::eq_xz(const vvp_vector4_t&that) const
+{
+      if (size_ != that.size_)
+	    return false;
+
+      if (size_ < BITS_PER_WORD) {
+	    unsigned long mask = (1UL << size_) - 1;
+	    return ((abits_val_|bbits_val_)&mask) == ((that.abits_val_|that.bbits_val_)&mask)
+		  && (bbits_val_&mask) == (that.bbits_val_&mask);
+      }
+
+      if (size_ == BITS_PER_WORD) {
+	    return ((abits_val_|bbits_val_) == (that.abits_val_|that.bbits_val_))
+		  && (bbits_val_ == that.bbits_val_);
+      }
+
+      unsigned words = size_ / BITS_PER_WORD;
+      for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
+	    if ((abits_ptr_[idx]|bbits_ptr_[idx]) != (that.abits_ptr_[idx]|that.bbits_ptr_[idx]))
+		  return false;
+	    if (bbits_ptr_[idx] != that.bbits_ptr_[idx])
+		  return false;
+      }
+
+      unsigned long mask = size_%BITS_PER_WORD;
+      if (mask > 0) {
+	    mask = (1UL << mask) - 1;
+	    return ((abits_ptr_[words]|bbits_ptr_[words])&mask) == ((that.abits_ptr_[words]|that.bbits_ptr_[words])&mask)
+		  && (bbits_ptr_[words]&mask) == (that.bbits_ptr_[words]&mask);
+      }
+
+      return true;
+}
+
+
 bool vvp_vector4_t::has_xz() const
 {
       if (size_ < BITS_PER_WORD) {

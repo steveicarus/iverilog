@@ -44,18 +44,14 @@ void resolv_functor::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 				  unsigned base, unsigned wid, unsigned vwid)
 {
       assert(bit.size() == wid);
-      vvp_vector4_t res (vwid);
 
-      for (unsigned idx = 0 ;  idx < base ;  idx += 1)
-	    res.set_bit(idx, BIT4_Z);
+      vvp_vector8_t tmp (bit,6,6);
+      vvp_vector8_t tmpw (vwid);
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-	    res.set_bit(idx+base, bit.value(idx));
+	    tmpw.set_bit(idx+base, tmp.value(idx));
 
-      for (unsigned idx = base+wid ;  idx < vwid ;  idx += 1)
-	    res.set_bit(idx, BIT4_Z);
-
-      recv_vec4(port, res);
+      recv_vec8(port, tmpw);
 }
 
 void resolv_functor::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)

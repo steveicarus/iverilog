@@ -28,7 +28,7 @@
 # include  <assert.h>
 
 vvp_fun_part::vvp_fun_part(unsigned base, unsigned wid)
-: base_(base), wid_(wid)
+: base_(base), val_(wid)
 {
       net_ = 0;
 }
@@ -41,10 +41,18 @@ void vvp_fun_part::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       assert(port.port() == 0);
 
-      if (val_ .eeq( bit ))
+      vvp_vector4_t tmp = val_;
+      for (unsigned idx = 0 ;  idx < tmp.size() ;  idx += 1) {
+	    if ((idx + base_) < bit.size())
+		  tmp.set_bit(idx, bit.value(base_+idx));
+	    else
+		  tmp.set_bit(idx, BIT4_X);
+      }
+
+      if (val_ .eeq( tmp ))
 	    return;
 
-      val_ = bit;
+      val_ = tmp;
 
       if (net_ == 0) {
 	    net_ = port.ptr();
@@ -63,6 +71,11 @@ void vvp_fun_part::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 {
       assert(bit.size() == wid);
 
+      if (base >= base_+val_.size())
+	    return;
+      if ((base+wid) <= base_)
+	    return;
+
       vvp_vector4_t tmp = val_;
       if (tmp.size() == 0)
 	    tmp = vvp_vector4_t(vwid);
@@ -76,13 +89,7 @@ void vvp_fun_part::run_run()
 {
       vvp_net_t*ptr = net_;
       net_ = 0;
-
-      vvp_vector4_t res (wid_, BIT4_X);
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    if (idx + base_ < val_.size())
-		  res.set_bit(idx, val_.value(base_+idx));
-      }
-      vvp_send_vec4(ptr->out, res);
+      vvp_send_vec4(ptr->out, val_);
 }
 
 vvp_fun_part_pv::vvp_fun_part_pv(unsigned b, unsigned w, unsigned v)

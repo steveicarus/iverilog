@@ -140,7 +140,6 @@ void vvp_fun_eeq::run_run()
 
 vvp_fun_buf::vvp_fun_buf()
 {
-      net_ = 0;
       count_functors_logic += 1;
 }
 
@@ -157,25 +156,12 @@ void vvp_fun_buf::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       if (ptr.port() != 0)
 	    return;
 
-      if (input_ .eeq( bit ))
+      if (input_ .eq_xz( bit ))
 	    return;
 
       input_ = bit;
-
-      if (net_ == 0) {
-	    net_ = ptr.ptr();
-	    schedule_generic(this, 0, false);
-      }
-}
-
-void vvp_fun_buf::run_run()
-{
-      vvp_net_t*ptr = net_;
-      net_ = 0;
-
-      vvp_vector4_t tmp (input_);
-      tmp.change_z2x();
-      vvp_send_vec4(ptr->out, tmp);
+      input_.change_z2x();
+      vvp_send_vec4(ptr.ptr()->out, input_);
 }
 
 vvp_fun_bufz::vvp_fun_bufz()
@@ -394,7 +380,6 @@ void vvp_fun_muxz::run_run()
 
 vvp_fun_not::vvp_fun_not()
 {
-      net_ = 0;
       count_functors_logic += 1;
 }
 
@@ -411,30 +396,13 @@ void vvp_fun_not::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       if (ptr.port() != 0)
 	    return;
 
-      if (input_ .eeq( bit ))
+      if (input_ .eq_xz( bit ))
 	    return;
 
       input_ = bit;
-      if (net_ == 0) {
-	    net_ = ptr.ptr();
-	    schedule_generic(this, 0, false);
-      }
+      vvp_send_vec4(ptr.ptr()->out, ~input_);
 }
 
-void vvp_fun_not::run_run()
-{
-      vvp_net_t*ptr = net_;
-      net_ = 0;
-
-      vvp_vector4_t result (input_);
-
-      for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
-	    vvp_bit4_t bitbit = ~ result.value(idx);
-	    result.set_bit(idx, bitbit);
-      }
-
-      vvp_send_vec4(ptr->out, result);
-}
 
 vvp_fun_or::vvp_fun_or(unsigned wid, bool invert)
 : vvp_fun_boolean_(wid), invert_(invert)

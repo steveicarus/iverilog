@@ -20,6 +20,7 @@
 
 # include  "compile.h"
 # include  "vvp_net.h"
+# include  "schedule.h"
 # include  <stdlib.h>
 # include  <iostream>
 #ifdef HAVE_MALLOC_H
@@ -27,18 +28,41 @@
 #endif
 # include  <assert.h>
 
+/* vvp_fun_concat
+ * This node function creates vectors (vvp_vector4_t) from the
+ * concatenation of the inputs. The inputs (4) may be vector or
+ * vector8 objects, but they are reduced to vector4 values and
+ * strength information lost.
+ *
+ * The expected widths of the input vectors must be given up front so
+ * that the positions in the output vector (and also the size of the
+ * output vector) can be worked out. The input vectors must match the
+ * expected width.
+ */
+class vvp_fun_concat  : public vvp_net_fun_t, private vvp_gen_event_s {
+
+    public:
+      vvp_fun_concat(unsigned w0, unsigned w1,
+		     unsigned w2, unsigned w3);
+      ~vvp_fun_concat();
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+
+    private:
+      void run_run();
+      vvp_net_t*net_;
+      vvp_vector4_t input_[4];
+};
+
 
 vvp_fun_concat::vvp_fun_concat(unsigned w0, unsigned w1,
 			       unsigned w2, unsigned w3)
-: val_(w0+w1+w2+w3)
+: net_(0)
 {
-      wid_[0] = w0;
-      wid_[1] = w1;
-      wid_[2] = w2;
-      wid_[3] = w3;
-
-      for (unsigned idx = 0 ;  idx < val_.size() ;  idx += 1)
-	    val_.set_bit(idx, BIT4_X);
+      input_[0] = vvp_vector4_t(w0);
+      input_[1] = vvp_vector4_t(w1);
+      input_[2] = vvp_vector4_t(w2);
+      input_[3] = vvp_vector4_t(w3);
 }
 
 vvp_fun_concat::~vvp_fun_concat()
@@ -49,22 +73,38 @@ void vvp_fun_concat::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       unsigned pdx = port.port();
 
-      if (bit.size() != wid_[pdx]) {
+      if (bit.size() != input_[pdx].size()) {
 	    cerr << "internal error: port " << pdx
-		 << " expects wid=" << wid_[pdx]
+		 << " expects wid=" << input_[pdx].size()
 		 << ", got wid=" << bit.size() << endl;
 	    assert(0);
       }
 
-      unsigned off = 0;
-      for (unsigned idx = 0 ;  idx < pdx ;  idx += 1)
-	    off += wid_[idx];
+      if (input_[pdx] .eeq(bit))
+	    return;
 
-      for (unsigned idx = 0 ;  idx < wid_[pdx] ;  idx += 1) {
-	    val_.set_bit(off+idx, bit.value(idx));
+      input_[pdx] = bit;
+      if (net_ == 0) {
+	    net_ = port.ptr();
+	    schedule_generic(this, 0, false);
+      }
+}
+
+void vvp_fun_concat::run_run()
+{
+      vvp_net_t*ptr = net_;
+      net_ = 0;
+
+      unsigned off = 0;
+      unsigned owid = input_[0].size() + input_[1].size() + input_[2].size() + input_[3].size();
+
+      vvp_vector4_t res (owid);
+      for (unsigned idx = 0 ; idx < 4 && (off<owid) ; idx += 1) {
+	    res.set_vec(off, input_[idx]);
+	    off += input_[idx].size();
       }
 
-      vvp_send_vec4(port.ptr()->out, val_);
+      vvp_send_vec4(ptr->out, res);
 }
 
 void compile_concat(char*label, unsigned w0, unsigned w1,

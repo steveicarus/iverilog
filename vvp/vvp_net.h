@@ -40,7 +40,6 @@ class  vvp_net_t;
 class  vvp_net_fun_t;
 
 /* Core net function types. */
-class  vvp_fun_concat;
 class  vvp_fun_drive;
 class  vvp_fun_part;
 
@@ -154,6 +153,8 @@ class vvp_vector4_t {
 
 	// Test that the vectors are exactly equal
       bool eeq(const vvp_vector4_t&that) const;
+	// Test that the vectors are equal, with x and z comparing equal.
+      bool eq_xz(const vvp_vector4_t&that) const;
 
 	// Return true if there is an X or Z anywhere in the vector.
       bool has_xz() const;
@@ -790,31 +791,6 @@ class vvp_net_fun_t {
 };
 
 /* **** Some core net functions **** */
-
-/* vvp_fun_concat
- * This node function creates vectors (vvp_vector4_t) from the
- * concatenation of the inputs. The inputs (4) may be vector or
- * vector8 objects, but they are reduced to vector4 values and
- * strength information lost.
- *
- * The expected widths of the input vectors must be given up front so
- * that the positions in the output vector (and also the size of the
- * output vector) can be worked out. The input vectors must match the
- * expected width.
- */
-class vvp_fun_concat  : public vvp_net_fun_t {
-
-    public:
-      vvp_fun_concat(unsigned w0, unsigned w1,
-		     unsigned w2, unsigned w3);
-      ~vvp_fun_concat();
-
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-
-    private:
-      unsigned wid_[4];
-      vvp_vector4_t val_;
-};
 
 /* vvp_fun_repeat
  * This node function create vectors by repeating the input. The width
