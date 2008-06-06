@@ -128,6 +128,39 @@ static int draw_noop(vhdl_process *proc, ivl_statement_t stmt)
 }
 
 /*
+ * A non-blocking assignment inside a process. The semantics for
+ * this are essentially the same as VHDL's non-blocking signal
+ * assignment.
+ */
+static int draw_nbassign(vhdl_process *proc, ivl_statement_t stmt)
+{
+   std::cout << "draw_nbassign" << std::endl;
+   return 0;
+}
+
+/*
+ * Delay statements are equivalent to the `wait for' form of the
+ * VHDL wait statement.
+ */
+static int draw_delay(vhdl_process *proc, ivl_statement_t stmt)
+{
+   std::cout << "draw_delay" << std::endl;
+   return 0;
+}
+
+/*
+ * A wait statement waits for a level change on a @(..) list of
+ * signals. This needs to be implemented by an `if' statement
+ * inside the process (which the appropriate signals added to
+ * the sensitivity list).
+ */
+static int draw_wait(vhdl_process *proc, ivl_statement_t stmt)
+{
+   std::cout << "draw_wait" << std::endl;
+   return 0;
+}
+
+/*
  * Generate VHDL statements for the given Verilog statement and
  * add them to the given VHDL process.
  */
@@ -140,6 +173,12 @@ int draw_stmt(vhdl_process *proc, ivl_statement_t stmt)
       return draw_block(proc, stmt);
    case IVL_ST_NOOP:
       return draw_noop(proc, stmt);
+   case IVL_ST_ASSIGN_NB:
+      return draw_nbassign(proc, stmt);
+   case IVL_ST_DELAY:
+      return draw_delay(proc, stmt);
+   case IVL_ST_WAIT:
+      return draw_wait(proc, stmt);
    default:
       error("No VHDL translation for statement at %s:%d (type = %d)",
             ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
