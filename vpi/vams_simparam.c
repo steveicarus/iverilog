@@ -34,7 +34,7 @@
 /*
  * Check that the routines are called with the correct arguments.
  */
-static PLI_INT32 simparam_compiletf(PLI_BYTE8* ud)
+static PLI_INT32 simparam_compiletf(PLI_BYTE8* name_ext)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       assert(callh != 0);
@@ -45,7 +45,7 @@ static PLI_INT32 simparam_compiletf(PLI_BYTE8* ud)
       if (argv == 0) {
 	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("$simparam%s requires an argument.\n", ud);
+	    vpi_printf("$simparam%s requires a string argument.\n", name_ext);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -55,7 +55,8 @@ static PLI_INT32 simparam_compiletf(PLI_BYTE8* ud)
       if (! is_string_obj(arg)) {
 	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("The first argument to $simparam%s must be a string.\n", ud);
+	    vpi_printf("The first argument to $simparam%s must be a string.\n",
+	                name_ext);
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -64,12 +65,12 @@ static PLI_INT32 simparam_compiletf(PLI_BYTE8* ud)
       if (arg == 0) return 0;
 
 	/* For the string version the default must also be a string. */
-      if (strcmp(ud, "$str") == 0) {
+      if (strcmp(name_ext, "$str") == 0) {
 	    if (! is_string_obj(arg)) {
 		  vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("When provided, the second argument to $simparam%s"
-		             "must be a string.\n", ud);
+		             "must be a string.\n", name_ext);
 		  vpi_control(vpiFinish, 1);
 	    }
 	/* For the rest the default must be numeric. */
@@ -78,23 +79,32 @@ static PLI_INT32 simparam_compiletf(PLI_BYTE8* ud)
 		  vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("When provided, the second argument to $simparam%s"
-		             "must be numeric.\n", ud);
+		             "must be numeric.\n", name_ext);
 		  vpi_control(vpiFinish, 1);
 	    }
       }
 
 	/* We can only have two argument. */
       if (vpi_scan(argv) != 0) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
-	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("$simparam%s takes at most two arguments.\n", ud);
-	    vpi_control(vpiFinish, 1);
+	    char msg [64];
+	    snprintf(msg, 64, "ERROR: %s line %d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+
+	    unsigned argc = 1;
+	    while (vpi_scan(argv)) argc += 1;
+
+            vpi_printf("%s $simparam%s takes at most two arguments.\n",
+	               msg, name_ext);
+            vpi_printf("%*s Found %u extra argument%s.\n",
+	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
+            vpi_control(vpiFinish, 1);
       }
 
       return 0;
 }
 
-static PLI_INT32 simparam_calltf(PLI_BYTE8* ud)
+static PLI_INT32 simparam_calltf(PLI_BYTE8* name_ext)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -153,7 +163,8 @@ static PLI_INT32 simparam_calltf(PLI_BYTE8* ud)
 	    if (! have_def_val) {
 		  vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
-		  vpi_printf("unknown parameter name \"%s\".\n", param);
+		  vpi_printf("$simparam%s unknown parameter name \"%s\".\n",
+		              name_ext, param);
 	    }
 	    retval = defval;
       }
@@ -168,7 +179,7 @@ static PLI_INT32 simparam_calltf(PLI_BYTE8* ud)
       return 0;
 }
 
-static PLI_INT32 simparam_str_calltf(PLI_BYTE8* ud)
+static PLI_INT32 simparam_str_calltf(PLI_BYTE8* name_ext)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -217,7 +228,8 @@ static PLI_INT32 simparam_str_calltf(PLI_BYTE8* ud)
 	    if (defval == 0) {
 		  vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
-		  vpi_printf("unknown parameter name \"%s\".\n", param);
+		  vpi_printf("$simparam%s unknown parameter name \"%s\".\n",
+		             name_ext, param);
 		  defval = strdup("<error>");
 	    }
 	    retval = defval;
@@ -234,9 +246,9 @@ static PLI_INT32 simparam_str_calltf(PLI_BYTE8* ud)
       return 0;
 }
 
-static PLI_INT32 simparam_str_sizetf(PLI_BYTE8* ud)
+static PLI_INT32 simparam_str_sizetf(PLI_BYTE8* name_ext)
 {
-      (void) ud; //* Not used! */
+      (void) name_ext; //* Not used! */
 
       return MAX_STRING_RESULT;  // 128 characters max!
 }

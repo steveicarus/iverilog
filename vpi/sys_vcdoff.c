@@ -85,7 +85,7 @@ void sys_vcdoff_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumplimit";
       tf_data.calltf    = sys_dummy_calltf;
-      tf_data.compiletf = sys_dumplimit_compiletf;
+      tf_data.compiletf = sys_one_numeric_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$dumplimit";
       vpi_register_systf(&tf_data);

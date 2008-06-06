@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include <string.h>
 #include "sys_priv.h"
 
 PLI_UINT64 timerec_to_time64(const struct t_vpi_time*time)
@@ -128,4 +129,109 @@ vpiHandle sys_func_module(vpiHandle obj)
       }
 
       return obj;
+}
+
+/*
+ * Standard compiletf routines.
+ */
+
+/* For system functions that do not take an argument. */
+PLI_INT32 sys_no_arg_compiletf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+
+      /* Make sure there are no arguments. */
+      if (argv != 0) {
+	    char msg [64];
+	    snprintf(msg, 64, "ERROR: %s line %d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+
+	    unsigned argc = 0;
+	    while (vpi_scan(argv)) argc += 1;
+
+            vpi_printf("%s %s does not take an argument.\n", msg, name);
+            vpi_printf("%*s Found %u extra argument%s.\n",
+	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
+            vpi_control(vpiFinish, 1);
+      }
+
+      return 0;
+}
+
+/* For system functions that take a single numeric argument. */
+PLI_INT32 sys_one_numeric_arg_compiletf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+
+      /* Check that there is an argument and that it is numeric. */
+      if (argv == 0) {
+            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+                       (int)vpi_get(vpiLineNo, callh));
+            vpi_printf("%s requires a single numeric argument.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      if (! is_numeric_obj(vpi_scan(argv))) {
+            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+                       (int)vpi_get(vpiLineNo, callh));
+            vpi_printf("%s's argument must be numeric.\n", name);
+            vpi_control(vpiFinish, 1);
+      }
+
+      /* Make sure there are no extra arguments. */
+      if (vpi_scan(argv) != 0) {
+	    char msg [64];
+	    snprintf(msg, 64, "ERROR: %s line %d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+
+	    unsigned argc = 1;
+	    while (vpi_scan(argv)) argc += 1;
+
+            vpi_printf("%s %s takes a single numeric argument.\n", msg, name);
+            vpi_printf("%*s Found %u extra argument%s.\n",
+	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
+            vpi_control(vpiFinish, 1);
+      }
+
+      return 0;
+}
+
+/* For system functions that take a single optional numeric argument. */
+PLI_INT32 sys_one_opt_numeric_arg_compiletf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+
+      /* The argument is optional so just return if none are found. */
+      if (argv == 0) return 0;
+
+      if (! is_numeric_obj(vpi_scan(argv))) {
+            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+                       (int)vpi_get(vpiLineNo, callh));
+            vpi_printf("%s's argument must be numeric.\n", name);
+            vpi_control(vpiFinish, 1);
+      }
+
+      /* Make sure there are no extra arguments. */
+      if (vpi_scan(argv) != 0) {
+	    char msg [64];
+	    snprintf(msg, 64, "ERROR: %s line %d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+
+	    unsigned argc = 1;
+	    while (vpi_scan(argv)) argc += 1;
+
+            vpi_printf("%s %s takes a single numeric argument.\n", msg, name);
+            vpi_printf("%*s Found %u extra argument%s.\n",
+	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
+            vpi_control(vpiFinish, 1);
+      }
+
+      return 0;
 }

@@ -20,54 +20,13 @@
 #include <vpi_user.h>
 #include "sys_priv.h"
 
-/*
- * Routine to finish the simulation and return a value to the
- * calling environment.
- */
-static PLI_INT32 finish_and_return_compiletf(PLI_BYTE8* ud)
-{
-    vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-    assert(callh);
-    vpiHandle argv = vpi_iterate(vpiArgument, callh);
-    (void) ud;  /* Not used! */
-
-    /* We must have at least one argument. */
-    if (argv == 0) {
-	vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
-	           (int)vpi_get(vpiLineNo, callh));
-	vpi_printf("$finish_and_return requires an argument.\n");
-	vpi_control(vpiFinish, 1);
-	return 0;
-    }
-
-    /* This must be a numeric argument. */
-    if (! is_numeric_obj(vpi_scan(argv))) {
-	vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
-	           (int)vpi_get(vpiLineNo, callh));
-	vpi_printf("The argument to $finish_and_return must be numeric.\n");
-	vpi_control(vpiFinish, 1);
-	return 0;
-    }
-
-    /* We can only have one argument. */
-    if (vpi_scan(argv) != 0) {
-	vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
-	           (int)vpi_get(vpiLineNo, callh));
-	vpi_printf("$finish_and_return takes only a single argument.\n");
-	vpi_control(vpiFinish, 1);
-	return 0;
-    }
-
-    return 0;
-}
-
-static PLI_INT32 finish_and_return_calltf(PLI_BYTE8* ud)
+static PLI_INT32 finish_and_return_calltf(PLI_BYTE8* name)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     vpiHandle argv = vpi_iterate(vpiArgument, callh);
     vpiHandle arg;
     s_vpi_value val;
-    (void) ud;  /* Not used! */
+    (void) name;  /* Not used! */
 
     /* Get the return value. */
     arg = vpi_scan(argv);
@@ -92,9 +51,9 @@ void sys_special_register(void)
 
     tf_data.type        = vpiSysTask;
     tf_data.calltf      = finish_and_return_calltf;
-    tf_data.compiletf   = finish_and_return_compiletf;
+    tf_data.compiletf   = sys_one_numeric_arg_compiletf;
     tf_data.sizetf      = 0;
     tf_data.tfname      = "$finish_and_return";
-    tf_data.user_data   = 0;
+    tf_data.user_data   = "$finish_and_return";
     vpi_register_systf(&tf_data);
 }
