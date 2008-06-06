@@ -191,7 +191,6 @@ static int draw_wait(vhdl_process *proc, ivl_statement_t stmt)
                }
                   
                proc->add_sensitivity(signame);
-               return 0;
             }
             else if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
                error("Nexus points to net logic");
@@ -206,6 +205,7 @@ static int draw_wait(vhdl_process *proc, ivl_statement_t stmt)
    }
 
    ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
+   draw_stmt(proc, sub_stmt);
    
    return 0;
 }
