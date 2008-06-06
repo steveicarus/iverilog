@@ -529,6 +529,10 @@ void NetScope::evaluate_parameters(Design*des)
 		  cerr << (*cur).second.get_fileline() << ": internal error: "
 		       << "Unexpected expression type " << (*cur).second.type
 		       << "." << endl;
+		  cerr << (*cur).second.get_fileline() << ":               : "
+		       << "Parameter name: " << (*cur).first << endl;
+		  cerr << (*cur).second.get_fileline() << ":               : "
+		       << "Expression is: " << *(*cur).second.expr << endl;
 		  ivl_assert((*cur).second, 0);
 		  break;
 	    }

@@ -761,10 +761,6 @@ NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
 	    pin(0).set_dir(Link::INPUT);
 	    pin(1).set_dir(Link::OUTPUT);
 	    break;
-	  case NetPartSelect::BI:
-	    pin(0).set_dir(Link::OUTPUT);
-	    pin(1).set_dir(Link::OUTPUT);
-	    break;
       }
       pin(0).set_name(perm_string::literal("Part"), 0);
       pin(1).set_name(perm_string::literal("Vect"), 0);
@@ -786,10 +782,6 @@ NetPartSelect::NetPartSelect(NetNet*sig, NetNet*sel,
 	  case NetPartSelect::PV:
 	    pin(0).set_dir(Link::INPUT);
 	    pin(1).set_dir(Link::OUTPUT);
-	    break;
-	  case NetPartSelect::BI:
-	    pin(0).set_dir(Link::PASSIVE);
-	    pin(1).set_dir(Link::PASSIVE);
 	    break;
       }
       pin(2).set_dir(Link::INPUT);

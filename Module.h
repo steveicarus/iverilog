@@ -94,7 +94,7 @@ class Module : public PScope, public LineInfo {
 	   module is elaborated. During parsing, I put the parameters
 	   into this map. */
       struct param_expr_t : public LineInfo {
-	    param_expr_t() : range(0) { }
+	    param_expr_t() : type(IVL_VT_NO_TYPE), msb(0), lsb(0), signed_flag(false), expr(0), range(0) { }
 	      // Type information
 	    ivl_variable_type_t type;
 	    PExpr*msb;
