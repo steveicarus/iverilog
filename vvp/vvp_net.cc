@@ -1758,12 +1758,12 @@ ostream& operator<< (ostream&out, const vvp_vector2_t&that)
 vvp_vector8_t::vvp_vector8_t(const vvp_vector8_t&that)
 {
       size_ = that.size_;
-      if (size_==0) {
-	    bits_ = 0;
+      if (size_ <= PTR_THRESH) {
+	    memcpy(val_, that.val_, sizeof(val_));
       } else {
-	    bits_ = new vvp_scalar_t[size_];
+	    ptr_ = new vvp_scalar_t[size_];
 	    for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-		  bits_[idx] = that.bits_[idx];
+		  ptr_[idx] = that.ptr_[idx];
       }
 }
 
@@ -1771,26 +1771,29 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that,
 			     unsigned str0, unsigned str1)
 : size_(that.size())
 {
-      if (size_ == 0) {
-	    bits_ = 0;
+      if (size_ == 0)
 	    return;
-      }
 
-      bits_ = new vvp_scalar_t[size_];
+      vvp_scalar_t*tmp;
+      if (size_ <= PTR_THRESH)
+	    tmp = new (val_) vvp_scalar_t[PTR_THRESH];
+      else
+	    tmp = ptr_ = new vvp_scalar_t[size_];
+
       for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-	    bits_[idx] = vvp_scalar_t (that.value(idx), str0, str1);
+	    tmp[idx] = vvp_scalar_t (that.value(idx), str0, str1);
 
 }
 
 vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 {
 	// Assign to self.
-      if (size_ > 0 && bits_ == that.bits_)
+      if (size_ > PTR_THRESH && that.size_ > PTR_THRESH && ptr_ == that.ptr_)
 	    return *this;
 
       if (size_ != that.size_) {
-	    if (size_ > 0)
-		  delete[]bits_;
+	    if (size_ > PTR_THRESH)
+		  delete[]ptr_;
 	    size_ = 0;
       }
 
@@ -1799,13 +1802,19 @@ vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 	    return *this;
       }
 
+      if (that.size_ <= PTR_THRESH) {
+	    size_ = that.size_;
+	    memcpy(val_, that.val_, sizeof(val_));
+	    return *this;
+      }
+
       if (size_ == 0) {
 	    size_ = that.size_;
-	    bits_ = new vvp_scalar_t[size_];
+	    ptr_ = new vvp_scalar_t[size_];
       }
 
       for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-	    bits_[idx] = that.bits_[idx];
+	    ptr_[idx] = that.ptr_[idx];
 
       return *this;
 }
@@ -1814,9 +1823,12 @@ vvp_vector8_t vvp_vector8_t::subvalue(unsigned base, unsigned wid) const
 {
       vvp_vector8_t tmp (wid);
 
+      vvp_scalar_t* tmp_ptr = tmp.size_<=PTR_THRESH? reinterpret_cast<vvp_scalar_t*>(tmp.val_) : tmp.ptr_;
+      const vvp_scalar_t* ptr = size_<=PTR_THRESH? reinterpret_cast<const vvp_scalar_t*>(val_) : ptr_;
+
       unsigned idx = 0;
       while ((idx < wid) && (base+idx < size_)) {
-	    tmp.bits_[idx] = bits_[base+idx];
+	    tmp_ptr[idx] = ptr[base+idx];
 	    idx += 1;
       }
 
@@ -1828,10 +1840,13 @@ vvp_vector8_t part_expand(const vvp_vector8_t&that, unsigned wid, unsigned off)
       assert(off < wid);
       vvp_vector8_t tmp (wid);
 
+      vvp_scalar_t* tmp_ptr = tmp.size_<=vvp_vector8_t::PTR_THRESH? reinterpret_cast<vvp_scalar_t*>(tmp.val_) : tmp.ptr_;
+      const vvp_scalar_t* that_ptr = that.size_<=vvp_vector8_t::PTR_THRESH? reinterpret_cast<const vvp_scalar_t*>(that.val_) : that.ptr_;
+
       unsigned idx = off;
 
       while (idx < wid && that.size_ > (idx-off)) {
-	    tmp.bits_[idx] = that.bits_[idx-off];
+	    tmp_ptr[idx] = that_ptr[idx-off];
 	    idx += 1;
       }
 

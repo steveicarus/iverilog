@@ -21,6 +21,7 @@
 
 # include  "config.h"
 # include  <stddef.h>
+# include  <new>
 # include  <assert.h>
 
 #ifdef HAVE_IOSFWD
@@ -581,8 +582,15 @@ class vvp_vector8_t {
       vvp_vector8_t& operator= (const vvp_vector8_t&that);
 
     private:
+	// This is the number of vvp_scalar_t objects we can keep in
+	// the val_ buffer. If the vector8 is bigger then this, then
+	// resort to allocations to get a larger buffer.
+      enum { PTR_THRESH = 8 };
       unsigned size_;
-      vvp_scalar_t*bits_;
+      union {
+	    vvp_scalar_t*ptr_;
+	    char val_[PTR_THRESH * sizeof(vvp_scalar_t)];
+      };
 };
 
   /* Resolve uses the default Verilog resolver algorithm to resolve
@@ -612,17 +620,35 @@ extern ostream& operator<< (ostream&, const vvp_vector8_t&);
 inline vvp_vector8_t::vvp_vector8_t(unsigned size)
 : size_(size)
 {
-      if (size_ == 0) {
-	    bits_ = 0;
-	    return;
+      if (size_ <= PTR_THRESH) {
+	    new (val_) vvp_scalar_t[PTR_THRESH];
+      } else {
+	    ptr_ = new vvp_scalar_t[size_];
       }
-      bits_ = new vvp_scalar_t[size_];
 }
 
 inline vvp_vector8_t::~vvp_vector8_t()
 {
-      if (size_ > 0)
-	    delete[]bits_;
+      if (size_ > PTR_THRESH)
+	    delete[]ptr_;
+}
+
+inline vvp_scalar_t vvp_vector8_t::value(unsigned idx) const
+{
+      assert(idx < size_);
+      if (size_ <= PTR_THRESH)
+	    return reinterpret_cast<const vvp_scalar_t*>(val_) [idx];
+      else
+	    return ptr_[idx];
+}
+
+inline void vvp_vector8_t::set_bit(unsigned idx, vvp_scalar_t val)
+{
+      assert(idx < size_);
+      if (size_ <= PTR_THRESH)
+	    reinterpret_cast<vvp_scalar_t*>(val_) [idx] = val;
+      else
+	    ptr_[idx] = val;
 }
 
   // Exactly-equal for vvp_vector8_t is common and should be as tight
@@ -634,24 +660,15 @@ inline bool vvp_vector8_t::eeq(const vvp_vector8_t&that) const
       if (size_ == 0)
 	    return true;
 
+      if (size_ <= PTR_THRESH)
+	    return 0 == memcmp(val_, that.val_, sizeof(val_));
+
       for (unsigned idx = 0 ;  idx < size_ ;  idx += 1) {
-	    if (! bits_[idx] .eeq( that.bits_[idx] ))
+	    if (! ptr_[idx] .eeq( that.ptr_[idx] ))
 		return false;
       }
 
       return true;
-}
-
-inline vvp_scalar_t vvp_vector8_t::value(unsigned idx) const
-{
-      assert(idx < size_);
-      return bits_[idx];
-}
-
-inline void vvp_vector8_t::set_bit(unsigned idx, vvp_scalar_t val)
-{
-      assert(idx < size_);
-      bits_[idx] = val;
 }
 
 /*
