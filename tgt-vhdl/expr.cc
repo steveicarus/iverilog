@@ -34,6 +34,16 @@ static vhdl_expr *translate_string(ivl_expr_t e)
 }
 
 /*
+ * A reference to a signal in an expression. It's assumed that the
+ * signal has already been defined elsewhere.
+ */
+static vhdl_expr *translate_signal(ivl_expr_t e)
+{
+   ivl_signal_t sig = ivl_expr_signal(e);
+   return new vhdl_var_ref(ivl_signal_basename(sig));
+}
+
+/*
  * Generate a VHDL expression from a Verilog expression.
  */
 vhdl_expr *translate_expr(ivl_expr_t e)
@@ -43,6 +53,8 @@ vhdl_expr *translate_expr(ivl_expr_t e)
    switch (type) {
    case IVL_EX_STRING:
       return translate_string(e);
+   case IVL_EX_SIGNAL:
+      return translate_signal(e);
    default:
       error("No VHDL translation for expression at %s:%d (type = %d)",
             ivl_expr_file(e), ivl_expr_lineno(e), type);

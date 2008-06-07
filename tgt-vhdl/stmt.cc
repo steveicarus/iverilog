@@ -178,23 +178,12 @@ static int draw_wait(vhdl_process *proc, ivl_statement_t stmt)
             ivl_signal_t sig;
             if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
                const char *signame = ivl_signal_basename(sig);
-               std::cout << "signal " << signame << std::endl;
-
-               if (!proc->get_parent()->have_declared(signame)) {
-                  // First time this signal has been encountered
-                  vhdl_scalar_type *std_logic =
-                     new vhdl_scalar_type("std_logic");
-                  vhdl_signal_decl *sig_decl =
-                     new vhdl_signal_decl(signame, std_logic);
-                  
-                  proc->get_parent()->add_decl(sig_decl);
-               }
-                  
+               std::cout << "signal " << signame << std::endl;               
                proc->add_sensitivity(signame);
             }
             else if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
-               error("Nexus points to net logic");
-               return 1;
+               std::cout << "net logic " << ivl_logic_basename(log) << " ";
+               std::cout << "type = " << ivl_logic_type(log) << std::endl;
             }
             else {
                error("Nexus points to unknown");
