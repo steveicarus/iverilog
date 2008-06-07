@@ -166,11 +166,11 @@ static int draw_nbassign(vhdl_process *proc, ivl_statement_t stmt)
 
       vhdl_decl *decl = proc->get_parent()->get_decl(signame);
       assert(decl);
-      
-      vhdl_expr *rhs =
-         decl->get_type()->cast(translate_expr(ivl_stmt_rval(stmt)));
-      if (NULL == rhs)
+
+      vhdl_expr *rhs_raw = translate_expr(ivl_stmt_rval(stmt));
+      if (NULL == rhs_raw)
          return 1;
+      vhdl_expr *rhs =  decl->get_type()->cast(rhs_raw);
 
       // The type here can be null as it is never actually needed
       vhdl_var_ref *lval_ref = new vhdl_var_ref(signame, NULL);
