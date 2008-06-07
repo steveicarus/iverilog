@@ -54,6 +54,8 @@ public:
    vhdl_type(const char *name) : name_(name) {}
    virtual ~vhdl_type() {}
 
+   virtual vhdl_type *clone() const = 0;
+
    const std::string &get_name() const { return name_; }
 protected:
    std::string name_;
@@ -70,6 +72,7 @@ public:
       : vhdl_type(name) {}
 
    void emit(std::ofstream &of, int level) const;
+   vhdl_type *clone() const;
 
    // Common types
    static vhdl_scalar_type *std_logic();
@@ -179,7 +182,7 @@ public:
    vhdl_nbassign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
       : lhs_(lhs), rhs_(rhs) {}
 
-   void emit(std::ofstream &of, int level);
+   void emit(std::ofstream &of, int level) const;
 private:
    vhdl_var_ref *lhs_;
    vhdl_expr *rhs_;

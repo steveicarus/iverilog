@@ -343,6 +343,15 @@ void vhdl_wait_stmt::emit(std::ofstream &of, int level) const
    of << "wait;";
 }
 
+/*
+ * Create a deep copy of this type, so it can appear in more
+ * than one place in the AST.
+ */
+vhdl_type *vhdl_scalar_type::clone() const
+{
+   return new vhdl_scalar_type(name_.c_str());
+}
+
 vhdl_scalar_type *vhdl_scalar_type::std_logic()
 {
    return new vhdl_scalar_type("std_logic");

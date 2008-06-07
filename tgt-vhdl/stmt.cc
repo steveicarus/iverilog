@@ -153,7 +153,37 @@ static int draw_noop(vhdl_process *proc, ivl_statement_t stmt)
  */
 static int draw_nbassign(vhdl_process *proc, ivl_statement_t stmt)
 {
-   std::cout << "draw_nbassign" << std::endl;
+   int nlvals = ivl_stmt_lvals(stmt);
+   if (nlvals != 1) {
+      error("Can only have 1 lval at the moment (found %d)", nlvals);
+      return 1;
+   }
+
+   ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
+   ivl_signal_t sig;
+   if ((sig = ivl_lval_sig(lval))) {
+      const char *signame = ivl_signal_basename(sig);
+
+      vhdl_expr *rhs = translate_expr(ivl_stmt_rval(stmt));
+      if (NULL == rhs)
+         return 1;
+      
+      vhdl_decl *decl = proc->get_parent()->get_decl(signame);
+      assert(decl);
+      
+      vhdl_type *lval_type = decl->get_type()->clone();
+      vhdl_var_ref *lval_ref = new vhdl_var_ref(signame, lval_type);
+      
+      // TODO: Internal sanity check:
+      //   ensure rhs->get_type() == lval_type
+
+      proc->add_stmt(new vhdl_nbassign_stmt(lval_ref, rhs));
+   }
+   else {
+      error("Only signals as lvals supported at the moment");
+      return 1;
+   }
+   
    return 0;
 }
 
