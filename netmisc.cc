@@ -123,6 +123,13 @@ NetExpr* make_sub_expr(long val, NetExpr*expr)
       return res;
 }
 
+NetEConst* make_const_x(unsigned long wid)
+{
+      verinum xxx (verinum::Vx, wid);
+      NetEConst*resx = new NetEConst(xxx);
+      return resx;
+}
+
 NetExpr* condition_reduce(NetExpr*expr)
 {
       if (expr->expr_width() == 1)

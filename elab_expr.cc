@@ -1370,8 +1370,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 	      // Special case: The index is out of range, so the value
 	      // of this expression is a 'bx vector the width of a word.
 	    if (!net->array_index_is_valid(addr)) {
-		  verinum xxx (verinum::Vx, net->vector_width());
-		  NetEConst*resx = new NetEConst(xxx);
+		  NetEConst*resx = make_const_x(net->vector_width());
 		  resx->set_line(*this);
 		  delete word_index;
 		  return resx;
@@ -1437,16 +1436,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	   negative values. However, the width that they represent is
 	   unsigned. Remember that any order is possible,
 	   i.e., [1:0], [-4:6], etc. */
-      unsigned long wid = 1 + ((msv>lsv)? (msv-lsv) : (lsv-msv));
-      if (wid > net->vector_width()) {
-	    cerr << get_fileline() << ": error: part select ["
-		 << msv << ":" << lsv << "] out of range." << endl;
-	    des->errors += 1;
-	      //delete lsn;
-	      //delete msn;
-	    return net;
-      }
-      ivl_assert(*this, wid <= net->vector_width());
+      unsigned long wid = 1 + labs(msv-lsv);
 
       if (net->sig()->sb_to_idx(msv) < net->sig()->sb_to_idx(lsv)) {
 	    cerr << get_fileline() << ": error: part select ["
@@ -1457,27 +1447,79 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	    return net;
       }
 
-
-      if (net->sig()->sb_to_idx(msv) >= (signed) net->vector_width()) {
-	    cerr << get_fileline() << ": error: part select ["
-		 << msv << ":" << lsv << "] out of range." << endl;
-	    des->errors += 1;
-	      //delete lsn;
-	      //delete msn;
-	    return net;
-      }
+      long sb_lsb = net->sig()->sb_to_idx(lsv);
+      long sb_msb = net->sig()->sb_to_idx(msv);
 
 	// If the part select covers exactly the entire
 	// vector, then do not bother with it. Return the
 	// signal itself.
-      if (net->sig()->sb_to_idx(lsv) == 0 && wid == net->vector_width())
+      if (sb_lsb == 0 && wid == net->vector_width())
 	    return net;
 
-      NetExpr*ex = new NetEConst(verinum(net->sig()->sb_to_idx(lsv)));
-      NetESelect*ss = new NetESelect(net, ex, wid);
-      ss->set_line(*this);
+	// If the part select covers NONE of the vector, then return a
+	// constant X.
 
-      return ss;
+      if ((sb_lsb >= (signed) net->vector_width()) || (sb_msb < 0)) {
+	    NetEConst*tmp = make_const_x(wid);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+	// If the part select is entirely within the vector, then make
+	// a simple part select.
+      if (sb_lsb >= 0 && sb_msb < (signed)net->vector_width()) {
+	    NetExpr*ex = new NetEConst(verinum(sb_lsb));
+	    NetESelect*ss = new NetESelect(net, ex, wid);
+	    ss->set_line(*this);
+	    return ss;
+      }
+
+	// Now the hard stuff. The part select is falling off at least
+	// one end. We're going to need a NetEConcat to  mix the
+	// selection with overrun.
+
+      NetEConst*bot = 0;
+      if (sb_lsb < 0) {
+	    bot = make_const_x( 0-sb_lsb );
+	    bot->set_line(*this);
+	    sb_lsb = 0;
+      }
+      NetEConst*top = 0;
+      if (sb_msb >= (signed)net->vector_width()) {
+	    top = make_const_x( 1+sb_msb-net->vector_width() );
+	    top->set_line(*this);
+	    sb_msb = net->vector_width()-1;
+      }
+
+      unsigned concat_count = 1;
+      if (bot) concat_count += 1;
+      if (top) concat_count += 1;
+
+      NetEConcat*concat = new NetEConcat(concat_count);
+      concat->set_line(*this);
+
+      if (bot) {
+	    concat_count -= 1;
+	    concat->set(concat_count, bot);
+      }
+      if (sb_lsb == 0 && sb_msb+1 == (signed)net->vector_width()) {
+	    concat_count -= 1;
+	    concat->set(concat_count, net);
+      } else {
+	    NetExpr*ex = new NetEConst(verinum(sb_lsb));
+	    ex->set_line(*this);
+	    NetESelect*ss = new NetESelect(net, ex, 1+sb_msb-sb_lsb);
+	    ss->set_line(*this);
+	    concat_count -= 1;
+	    concat->set(concat_count, ss);
+      }
+      if (top) {
+	    concat_count -= 1;
+	    concat->set(concat_count, top);
+      }
+      ivl_assert(*this, concat_count==0);
+
+      return concat;
 }
 
 /*
@@ -1618,8 +1660,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 		    /* The bit select is out of range of the
 		       vector. This is legal, but returns a
 		       constant 1'bx value. */
-		  verinum x (verinum::Vx);
-		  NetEConst*tmp = new NetEConst(x);
+		  NetEConst*tmp = make_const_x(1);
 		  tmp->set_line(*this);
 
 		  cerr << get_fileline() << ": warning: Bit select ["
