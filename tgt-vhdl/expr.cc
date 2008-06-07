@@ -48,6 +48,14 @@ static vhdl_expr *translate_signal(ivl_expr_t e)
 }
 
 /*
+ * A numeric literal ends up as std_logic bit string.
+ */
+static vhdl_expr *translate_number(ivl_expr_t e)
+{
+   return new vhdl_const_bits(ivl_expr_bits(e));
+}
+
+/*
  * Generate a VHDL expression from a Verilog expression.
  */
 vhdl_expr *translate_expr(ivl_expr_t e)
@@ -59,6 +67,8 @@ vhdl_expr *translate_expr(ivl_expr_t e)
       return translate_string(e);
    case IVL_EX_SIGNAL:
       return translate_signal(e);
+   case IVL_EX_NUMBER:
+      return translate_number(e);
    default:
       error("No VHDL translation for expression at %s:%d (type = %d)",
             ivl_expr_file(e), ivl_expr_lineno(e), type);

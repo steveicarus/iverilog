@@ -33,10 +33,15 @@ static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
    int nsigs = ivl_scope_sigs(scope);
    for (int i = 0; i < nsigs; i++) {
       ivl_signal_t sig = ivl_scope_sig(scope, i);
-      vhdl_scalar_type *std_logic =
-         new vhdl_scalar_type("std_logic");
+
+      int width = ivl_signal_width(sig);
+      vhdl_type *sig_type;
+      if (width > 0)
+         sig_type = vhdl_scalar_type::std_logic();
+      else
+         sig_type = vhdl_vector_type::std_logic_vector(width-1, 0);
       vhdl_signal_decl *decl =
-         new vhdl_signal_decl(ivl_signal_basename(sig), std_logic);
+         new vhdl_signal_decl(ivl_signal_basename(sig), sig_type);
       arch->add_decl(decl);
    }
 }

@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <typeinfo>
 #include <iostream>
 
@@ -343,15 +344,6 @@ void vhdl_wait_stmt::emit(std::ofstream &of, int level) const
    of << "wait;";
 }
 
-/*
- * Create a deep copy of this type, so it can appear in more
- * than one place in the AST.
- */
-vhdl_type *vhdl_scalar_type::clone() const
-{
-   return new vhdl_scalar_type(name_.c_str());
-}
-
 vhdl_scalar_type *vhdl_scalar_type::std_logic()
 {
    return new vhdl_scalar_type("std_logic");
@@ -370,6 +362,55 @@ vhdl_scalar_type *vhdl_scalar_type::line()
 void vhdl_scalar_type::emit(std::ofstream &of, int level) const
 {
    of << name_;
+}
+
+/*
+ * Cast something to a scalar type. There are a few ugly hacks here
+ * to handle special cases.
+ */
+vhdl_expr *vhdl_scalar_type::cast(vhdl_expr *expr) const
+{
+   if (typeid(*expr) == typeid(vhdl_const_bits)
+       && name_ == "std_logic") {
+
+      // Converting a literal bit string to std_logic is fairly
+      // common so this hack is justified by the increase in
+      // output readability :-)
+
+      const std::string &value =
+         dynamic_cast<vhdl_const_bits*>(expr)->get_value();
+   
+      // Take the least significant bit
+      char lsb = value[0];
+
+      // Discard the given expression and return a brand new one
+      delete expr;
+      return new vhdl_const_bit(lsb);
+   }
+   else {
+      // Otherwise just assume there's a pre-defined conversion
+      const char *c_name = name_.c_str();
+      vhdl_fcall *conv =
+         new vhdl_fcall(c_name, new vhdl_scalar_type(c_name));
+      conv->add_expr(expr);
+      
+      return conv;
+   }
+}
+
+vhdl_vector_type *vhdl_vector_type::std_logic_vector(int msb, int lsb)
+{
+   return new vhdl_vector_type("std_logic_vector", msb, lsb);
+}
+
+void vhdl_vector_type::emit(std::ofstream &of, int level) const
+{
+   of << name_ << "(" << msb_ << " downto " << lsb_ << ")";
+}
+
+vhdl_expr *vhdl_vector_type::cast(vhdl_expr *expr) const
+{
+   return expr;
 }
 
 vhdl_var_decl::~vhdl_var_decl()
@@ -466,4 +507,28 @@ void vhdl_nbassign_stmt::emit(std::ofstream &of, int level) const
    of << " <= ";
    rhs_->emit(of, level);
    of << ";";
+}
+
+vhdl_const_bits::vhdl_const_bits(const char *value)   
+   : vhdl_expr(vhdl_vector_type::std_logic_vector(strlen(value)-1, 0)),
+     value_(value)
+{
+   
+}
+
+void vhdl_const_bits::emit(std::ofstream &of, int level) const
+{
+   of << "std_logic_vector'(\"";
+
+   // The bits appear to be in reverse order
+   std::string::const_reverse_iterator it;
+   for (it = value_.rbegin(); it != value_.rend(); ++it)
+      of << *it;
+
+   of << "\")";
+}
+
+void vhdl_const_bit::emit(std::ofstream &of, int level) const
+{
+   of << "'" << bit_ << "'";
 }

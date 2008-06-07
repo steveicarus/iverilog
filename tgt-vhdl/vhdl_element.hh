@@ -27,6 +27,7 @@
 
 class vhdl_entity;
 class vhdl_arch;
+class vhdl_expr;
 
 typedef std::list<std::string> string_list_t;
 
@@ -54,7 +55,7 @@ public:
    vhdl_type(const char *name) : name_(name) {}
    virtual ~vhdl_type() {}
 
-   virtual vhdl_type *clone() const = 0;
+   virtual vhdl_expr *cast(vhdl_expr *expr) const = 0;
 
    const std::string &get_name() const { return name_; }
 protected:
@@ -72,12 +73,29 @@ public:
       : vhdl_type(name) {}
 
    void emit(std::ofstream &of, int level) const;
-   vhdl_type *clone() const;
-
+   vhdl_expr *cast(vhdl_expr *expr) const;
+   
    // Common types
    static vhdl_scalar_type *std_logic();
    static vhdl_scalar_type *string();
    static vhdl_scalar_type *line();
+};
+
+/*
+ * A vector type like std_logic_vector.
+ */
+class vhdl_vector_type : public vhdl_type {
+public:
+   vhdl_vector_type(const char *name, int msb, int lsb)
+      : vhdl_type(name), msb_(msb), lsb_(lsb) {}
+
+   void emit(std::ofstream &of, int level) const;
+   vhdl_expr *cast(vhdl_expr *expr) const;
+
+   // Common types
+   static vhdl_vector_type *std_logic_vector(int msb, int lsb);
+private:
+   int msb_, lsb_;
 };
 
 class vhdl_expr : public vhdl_element {
@@ -115,6 +133,23 @@ private:
    std::string value_;
 };
 
+class vhdl_const_bits : public vhdl_expr {
+public:
+   vhdl_const_bits(const char *value);
+   void emit(std::ofstream &of, int level) const;
+   const std::string &get_value() const { return value_; }
+private:
+   std::string value_;
+};
+
+class vhdl_const_bit : public vhdl_expr {
+public:
+   vhdl_const_bit(char bit)
+      : vhdl_expr(vhdl_scalar_type::std_logic()), bit_(bit) {}
+   void emit(std::ofstream &of, int level) const;
+private:
+   char bit_;
+};
 
 class vhdl_expr_list : public vhdl_element {
 public:

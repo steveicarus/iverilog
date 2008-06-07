@@ -164,7 +164,11 @@ static int draw_nbassign(vhdl_process *proc, ivl_statement_t stmt)
    if ((sig = ivl_lval_sig(lval))) {
       const char *signame = ivl_signal_basename(sig);
 
-      vhdl_expr *rhs = translate_expr(ivl_stmt_rval(stmt));
+      vhdl_decl *decl = proc->get_parent()->get_decl(signame);
+      assert(decl);
+      
+      vhdl_expr *rhs =
+         decl->get_type()->cast(translate_expr(ivl_stmt_rval(stmt)));
       if (NULL == rhs)
          return 1;
 
