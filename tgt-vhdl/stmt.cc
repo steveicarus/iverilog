@@ -23,6 +23,7 @@
 #include <iostream>
 #include <cstring>
 #include <cassert>
+#include <sstream>
 
 /*
  * Generate VHDL for the $display system task.
@@ -60,11 +61,24 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
       ivl_expr_t net = ivl_stmt_parm(stmt, i);
       vhdl_expr *e = NULL;
       if (net) {
-         // TODO: Need to add a call to Type'Image for types not
-         // supported by std.textio
-         e = translate_expr(net);
-         if (NULL == e)
+         vhdl_expr *base = translate_expr(net);
+         if (NULL == base)
             return 1;
+
+         
+         // Need to add a call to Type'Image for types not
+         // supported by std.textio
+         if (base->get_type()->get_name() != "String") {
+            std::string name(base->get_type()->get_name());
+            name += "'Image";
+            
+            vhdl_fcall *cast
+               = new vhdl_fcall(name.c_str(), vhdl_scalar_type::string());
+            cast->add_expr(base);
+            e = cast;
+         }
+         else
+            e = base;
       }
       else
          e = new vhdl_const_string(" ");

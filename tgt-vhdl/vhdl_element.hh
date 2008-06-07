@@ -51,7 +51,12 @@ typedef std::list<vhdl_element*> element_list_t;
 
 class vhdl_type : public vhdl_element {
 public:
+   vhdl_type(const char *name) : name_(name) {}
    virtual ~vhdl_type() {}
+
+   const std::string &get_name() const { return name_; }
+protected:
+   std::string name_;
 };
 
 /*
@@ -61,7 +66,8 @@ public:
  */
 class vhdl_scalar_type : public vhdl_type {
 public:
-   vhdl_scalar_type(const char *name) : name_(name) {}
+   vhdl_scalar_type(const char *name)
+      : vhdl_type(name) {}
 
    void emit(std::ofstream &of, int level) const;
 
@@ -69,14 +75,14 @@ public:
    static vhdl_scalar_type *std_logic();
    static vhdl_scalar_type *string();
    static vhdl_scalar_type *line();
-private:
-   std::string name_;
 };
 
 class vhdl_expr : public vhdl_element {
 public:
    vhdl_expr(vhdl_type* type) : type_(type) {}
    virtual ~vhdl_expr();
+
+   const vhdl_type *get_type() const { return type_; }
 private:
    vhdl_type *type_;
 };
