@@ -451,3 +451,10 @@ void vhdl_fcall::emit(std::ofstream &of, int level) const
    exprs_.emit(of, level);
 }
 
+void vhdl_nbassign_stmt::emit(std::ofstream &of, int level) const
+{
+   lhs_->emit(of, level);
+   of << " <= ";
+   rhs_->emit(of, level);
+   of << ";";
+}

@@ -171,6 +171,21 @@ typedef std::list<vhdl_seq_stmt*> seq_stmt_list_t;
 
 
 /*
+ * Similar to Verilog non-blocking assignment, except the LHS
+ * must be a signal not a variable.
+ */
+class vhdl_nbassign_stmt : public vhdl_seq_stmt {
+public:
+   vhdl_nbassign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
+      : lhs_(lhs), rhs_(rhs) {}
+
+   void emit(std::ofstream &of, int level);
+private:
+   vhdl_var_ref *lhs_;
+   vhdl_expr *rhs_;
+};
+
+/*
  * Delay simulation indefinitely, until an event, or for a
  * specified time.
  */

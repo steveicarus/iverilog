@@ -64,7 +64,6 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
          vhdl_expr *base = translate_expr(net);
          if (NULL == base)
             return 1;
-
          
          // Need to add a call to Type'Image for types not
          // supported by std.textio
