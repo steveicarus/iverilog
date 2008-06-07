@@ -168,26 +168,23 @@ static int draw_wait(vhdl_process *proc, ivl_statement_t stmt)
       int nany = ivl_event_nany(event);
       for (int i = 0; i < nany; i++) {
          ivl_nexus_t nexus = ivl_event_any(event, i);
-         std::cout << "event nexus " << ivl_nexus_name(nexus) << std::endl;
 
          int nptrs = ivl_nexus_ptrs(nexus);
          for (int j = 0; j < nptrs; j++) {
             ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, j);
 
-            ivl_net_logic_t log;
             ivl_signal_t sig;
             if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
                const char *signame = ivl_signal_basename(sig);
-               std::cout << "signal " << signame << std::endl;               
-               proc->add_sensitivity(signame);
-            }
-            else if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
-               std::cout << "net logic " << ivl_logic_basename(log) << " ";
-               std::cout << "type = " << ivl_logic_type(log) << std::endl;
+
+               // Only add this signal to the sensitivity if it's part
+               // of the containing architecture (i.e. it has already
+               // been declared)
+               if (proc->get_parent()->have_declared(signame))
+                  proc->add_sensitivity(signame);
             }
             else {
-               error("Nexus points to unknown");
-               return 1;
+               // Ignore all other types of nexus pointer
             }
          }
       }         

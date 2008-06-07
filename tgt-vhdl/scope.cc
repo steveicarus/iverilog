@@ -26,6 +26,22 @@
 #include <cassert>
 
 /*
+ * Declare all signals for a scope in an architecture.
+ */
+static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
+{
+   int nsigs = ivl_scope_sigs(scope);
+   for (int i = 0; i < nsigs; i++) {
+      ivl_signal_t sig = ivl_scope_sig(scope, i);
+      vhdl_scalar_type *std_logic =
+         new vhdl_scalar_type("std_logic");
+      vhdl_signal_decl *decl =
+         new vhdl_signal_decl(ivl_signal_basename(sig), std_logic);
+      arch->add_decl(decl);
+   }
+}
+
+/*
  * Create a VHDL entity for scopes of type IVL_SCT_MODULE.
  */
 static vhdl_entity *create_entity_for(ivl_scope_t scope)
@@ -45,6 +61,10 @@ static vhdl_entity *create_entity_for(ivl_scope_t scope)
    // retain a 1-to-1 mapping of scope to VHDL element)
    vhdl_arch *arch = new vhdl_arch(tname);
    vhdl_entity *ent = new vhdl_entity(tname, derived_from, arch);
+
+   // Locate all the signals in this module and add them to
+   // the architecture
+   declare_signals(arch, scope);
 
    // Build a comment to add to the entity/architecture
    std::ostringstream ss;
