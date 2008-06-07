@@ -167,15 +167,9 @@ static int draw_nbassign(vhdl_process *proc, ivl_statement_t stmt)
       vhdl_expr *rhs = translate_expr(ivl_stmt_rval(stmt));
       if (NULL == rhs)
          return 1;
-      
-      vhdl_decl *decl = proc->get_parent()->get_decl(signame);
-      assert(decl);
-      
-      vhdl_type *lval_type = decl->get_type()->clone();
-      vhdl_var_ref *lval_ref = new vhdl_var_ref(signame, lval_type);
-      
-      // TODO: Internal sanity check:
-      //   ensure rhs->get_type() == lval_type
+
+      // The type here can be null as it is never actually needed
+      vhdl_var_ref *lval_ref = new vhdl_var_ref(signame, NULL);
 
       proc->add_stmt(new vhdl_nbassign_stmt(lval_ref, rhs));
    }
