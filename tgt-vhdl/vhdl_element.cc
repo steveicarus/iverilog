@@ -343,6 +343,21 @@ void vhdl_wait_stmt::emit(std::ofstream &of, int level) const
    of << "wait;";
 }
 
+vhdl_scalar_type *vhdl_scalar_type::std_logic()
+{
+   return new vhdl_scalar_type("std_logic");
+}
+
+vhdl_scalar_type *vhdl_scalar_type::string()
+{
+   return new vhdl_scalar_type("String");
+}
+
+vhdl_scalar_type *vhdl_scalar_type::line()
+{
+   return new vhdl_scalar_type("Line");
+}
+
 void vhdl_scalar_type::emit(std::ofstream &of, int level) const
 {
    of << name_;
@@ -372,6 +387,11 @@ void vhdl_signal_decl::emit(std::ofstream &of, int level) const
    type_->emit(of, level);
    of << ";";
    emit_comment(of, level, true);
+}
+
+vhdl_expr::~vhdl_expr()
+{
+   delete type_;
 }
 
 void vhdl_expr_list::add_expr(vhdl_expr *e)

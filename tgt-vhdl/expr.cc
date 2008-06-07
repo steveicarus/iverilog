@@ -40,7 +40,11 @@ static vhdl_expr *translate_string(ivl_expr_t e)
 static vhdl_expr *translate_signal(ivl_expr_t e)
 {
    ivl_signal_t sig = ivl_expr_signal(e);
-   return new vhdl_var_ref(ivl_signal_basename(sig));
+
+   // Assume all signals are single bits at the moment
+   vhdl_type *type = vhdl_scalar_type::std_logic();
+   
+   return new vhdl_var_ref(ivl_signal_basename(sig), type);
 }
 
 /*

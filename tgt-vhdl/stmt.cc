@@ -70,7 +70,9 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
          e = new vhdl_const_string(" ");
 
       vhdl_pcall_stmt *write = new vhdl_pcall_stmt("Write");
-      write->add_expr(new vhdl_var_ref(display_line));
+      vhdl_var_ref *ref =
+         new vhdl_var_ref(display_line, vhdl_scalar_type::line());
+      write->add_expr(ref);
       write->add_expr(e);
 
       proc->add_stmt(write);
@@ -78,8 +80,12 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
 
    // WriteLine(Output, Verilog_Display_Line)
    vhdl_pcall_stmt *write_line = new vhdl_pcall_stmt("WriteLine");
-   write_line->add_expr(new vhdl_var_ref("std.textio.Output"));
-   write_line->add_expr(new vhdl_var_ref(display_line));
+   vhdl_var_ref *output_ref =
+      new vhdl_var_ref("std.textio.Output", new vhdl_scalar_type("File"));
+   write_line->add_expr(output_ref);
+   vhdl_var_ref *ref =
+      new vhdl_var_ref(display_line, vhdl_scalar_type::line());
+   write_line->add_expr(ref);
    proc->add_stmt(write_line);
    
    return 0;

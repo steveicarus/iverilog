@@ -64,13 +64,21 @@ public:
    vhdl_scalar_type(const char *name) : name_(name) {}
 
    void emit(std::ofstream &of, int level) const;
+
+   // Common types
+   static vhdl_scalar_type *std_logic();
+   static vhdl_scalar_type *string();
+   static vhdl_scalar_type *line();
 private:
    std::string name_;
 };
 
 class vhdl_expr : public vhdl_element {
 public:
-   virtual ~vhdl_expr() {}
+   vhdl_expr(vhdl_type* type) : type_(type) {}
+   virtual ~vhdl_expr();
+private:
+   vhdl_type *type_;
 };
 
 /*
@@ -78,7 +86,8 @@ public:
  */
 class vhdl_var_ref : public vhdl_expr {
 public:
-   vhdl_var_ref(const char *name) : name_(name) {}
+   vhdl_var_ref(const char *name, vhdl_type *type)
+      : vhdl_expr(type), name_(name) {}
 
    void emit(std::ofstream &of, int level) const;
 private:
@@ -87,7 +96,8 @@ private:
 
 class vhdl_const_string : public vhdl_expr {
 public:
-   vhdl_const_string(const char *value) : value_(value) {}
+   vhdl_const_string(const char *value)
+      : vhdl_expr(vhdl_scalar_type::string()), value_(value) {}
 
    void emit(std::ofstream &of, int level) const;
 private:
