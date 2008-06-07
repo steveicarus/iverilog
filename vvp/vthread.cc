@@ -700,10 +700,15 @@ bool of_ASSIGN_V0(vthread_t thr, vvp_code_t cp)
       unsigned delay = cp->bit_idx[0];
       unsigned bit = cp->bit_idx[1];
 
-      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
-
       vvp_net_ptr_t ptr (cp->net, 0);
-      schedule_assign_vector(ptr, value, delay);
+      if (bit >= 4) {
+	      // If the vector is not a synthetic one, then have the
+	      // scheduler pluck it direcly out of my vector space.
+	    schedule_assign_plucked_vector(ptr, delay, thr->bits4, bit, wid);
+      } else {
+	    vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+	    schedule_assign_vector(ptr, value, delay);
+      }
 
       return true;
 }
@@ -721,10 +726,14 @@ bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t cp)
       unsigned long delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
 
-      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
-
       vvp_net_ptr_t ptr (cp->net, 0);
-      schedule_assign_vector(ptr, value, delay);
+
+      if (bit >= 4) {
+	    schedule_assign_plucked_vector(ptr, delay, thr->bits4, bit, wid);
+      } else {
+	    vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+	    schedule_assign_vector(ptr, value, delay);
+      }
 
       return true;
 }

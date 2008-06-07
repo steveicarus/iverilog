@@ -27,10 +27,15 @@ extern unsigned long count_functors_logic;
 extern unsigned long count_functors_bufif;
 extern unsigned long count_functors_resolv;
 extern unsigned long count_functors_sig;
+extern unsigned long count_vvp_nets;
 extern unsigned long count_vpi_nets;
 extern unsigned long count_vpi_scopes;
 extern unsigned long count_vpi_memories;
 
+extern unsigned long count_time_events;
+extern unsigned long count_time_pool;
+
 extern size_t size_opcodes;
+extern size_t size_vvp_nets;
 
 #endif

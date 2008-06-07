@@ -279,9 +279,11 @@ int main(int argc, char*argv[])
 	    vpi_mcd_printf(1, "           %8lu bufif\n",  count_functors_bufif);
 	    vpi_mcd_printf(1, "           %8lu resolv\n",count_functors_resolv);
 	    vpi_mcd_printf(1, "           %8lu signals\n", count_functors_sig);
-	    vpi_mcd_printf(1, " ... %8lu opcodes (%lu bytes)\n",
+	    vpi_mcd_printf(1, " ... %8lu opcodes (%zu bytes)\n",
 		    count_opcodes, (unsigned long)size_opcodes);
 	    vpi_mcd_printf(1, " ... %8lu nets\n",     count_vpi_nets);
+	    vpi_mcd_printf(1, " ... %8lu vvp_nets (%zu bytes)\n",
+			   count_vvp_nets, size_vvp_nets);
 	    vpi_mcd_printf(1, " ... %8lu memories\n", count_vpi_memories);
 	    vpi_mcd_printf(1, " ... %8lu scopes\n",   count_vpi_scopes);
       }
@@ -299,12 +301,11 @@ int main(int argc, char*argv[])
 	    my_getrusage(cycles+2);
 	    print_rusage(cycles+2, cycles+1);
 
-	    vpi_mcd_printf(1, "Event counts: (event pool = %lu)\n",
-		    count_event_pool);
+	    vpi_mcd_printf(1, "Event counts:\n");
+	    vpi_mcd_printf(1, "    %8lu time steps (pool=%lu)\n",
+			   count_time_events, count_time_pool);
 	    vpi_mcd_printf(1, "    %8lu thread schedule events\n",
 		    count_thread_events);
-	    vpi_mcd_printf(1, "    %8lu propagation events\n",
-		    count_prop_events);
 	    vpi_mcd_printf(1, "    %8lu assign events\n",
 		    count_assign_events);
 	    vpi_mcd_printf(1, "    %8lu other events\n",

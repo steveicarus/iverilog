@@ -30,9 +30,9 @@
 
 unsigned long count_assign_events = 0;
 unsigned long count_gen_events = 0;
-unsigned long count_prop_events = 0;
 unsigned long count_thread_events = 0;
-unsigned long count_event_pool = 0;
+  // Count the time events (A time cell created)
+unsigned long count_time_events = 0;
 unsigned long count_time_pool = 0;
 
 
@@ -96,6 +96,12 @@ void del_thr_event_s::run_run(void)
 }
 
 struct assign_vector4_event_s  : public event_s {
+	/* The default constructor. */
+      assign_vector4_event_s() { }
+	/* A constructor that makes the val directly. */
+      assign_vector4_event_s(const vvp_vector4_t&that, unsigned adr, unsigned wid)
+      : val(that,adr,wid) { }
+
 	/* Where to do the assign. */
       vvp_net_ptr_t ptr;
 	/* Value to assign. */
@@ -480,6 +486,19 @@ void schedule_assign_vector(vvp_net_ptr_t ptr,
       struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
       cur->ptr = ptr;
       cur->val = bit;
+      cur->vwid = 0;
+      cur->base = 0;
+      schedule_event_(cur, delay, SEQ_NBASSIGN);
+}
+
+void schedule_assign_plucked_vector(vvp_net_ptr_t ptr,
+				    vvp_time64_t delay,
+				    const vvp_vector4_t&src,
+				    unsigned adr, unsigned wid)
+{
+      struct assign_vector4_event_s*cur
+	    = new struct assign_vector4_event_s(src,adr,wid);
+      cur->ptr = ptr;
       cur->vwid = 0;
       cur->base = 0;
       schedule_event_(cur, delay, SEQ_NBASSIGN);

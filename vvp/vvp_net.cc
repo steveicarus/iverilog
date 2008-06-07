@@ -30,6 +30,31 @@
 # include  <math.h>
 # include  <assert.h>
 
+// Allocate around 1Megbytes/chunk.
+static const size_t VVP_NET_CHUNK = 1024*1024/sizeof(vvp_net_t);
+static vvp_net_t*vvp_net_alloc_table = 0;
+static size_t vvp_net_alloc_remaining = 0;
+// For statistics, count the vvp_nets allocated and the bytes of alloc
+// chunks allocated.
+unsigned long count_vvp_nets = 0;
+size_t size_vvp_nets = 0;
+
+void* vvp_net_t::operator new (size_t size)
+{
+      assert(size == sizeof(vvp_net_t));
+      if (vvp_net_alloc_remaining == 0) {
+	    vvp_net_alloc_table = ::new vvp_net_t[VVP_NET_CHUNK];
+	    vvp_net_alloc_remaining = VVP_NET_CHUNK;
+	    size_vvp_nets += size*VVP_NET_CHUNK;
+      }
+
+      vvp_net_t*return_this = vvp_net_alloc_table;
+      vvp_net_alloc_table += 1;
+      vvp_net_alloc_remaining -= 1;
+      count_vvp_nets += 1;
+      return return_this;
+}
+      
 /* *** BIT operations *** */
 vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c)
 {

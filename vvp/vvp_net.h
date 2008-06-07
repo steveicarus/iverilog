@@ -760,6 +760,13 @@ struct vvp_net_t {
       vvp_net_ptr_t port[4];
       vvp_net_ptr_t out;
       vvp_net_fun_t*fun;
+
+    public: // Need a better new for these objects.
+      static void* operator new(std::size_t size);
+      static void operator delete(void*); // not implemented
+    private: // not implemented
+      static void* operator new[](std::size_t size);
+      static void operator delete[](void*);
 };
 
 /*
