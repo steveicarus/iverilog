@@ -173,12 +173,15 @@ private:
  */
 class vhdl_decl : public vhdl_element {
 public:
-   vhdl_decl(const char *name) : name_(name) {}
+   vhdl_decl(const char *name, vhdl_type *type=NULL)
+      : name_(name), type_(type) {}
    virtual ~vhdl_decl() {};
 
    const std::string &get_name() const { return name_; }
+   const vhdl_type *get_type() const { return type_; }
 protected:
    std::string name_;
+   vhdl_type *type_;
 };
 
 typedef std::list<vhdl_decl*> decl_list_t;
@@ -211,12 +214,10 @@ private:
 class vhdl_var_decl : public vhdl_decl {
 public:
    vhdl_var_decl(const char *name, vhdl_type *type)
-      : vhdl_decl(name), type_(type) {}
+      : vhdl_decl(name, type) {}
    ~vhdl_var_decl();
    
    void emit(std::ofstream &of, int level) const;
-private:
-   vhdl_type *type_;
 };
 
 
@@ -226,12 +227,10 @@ private:
 class vhdl_signal_decl : public vhdl_decl {
 public:
    vhdl_signal_decl(const char *name, vhdl_type *type)
-      : vhdl_decl(name), type_(type) {}
+      : vhdl_decl(name, type) {}
    ~vhdl_signal_decl();
 
    void emit(std::ofstream &of, int level) const;
-private:
-   vhdl_type *type_;
 };
 
 
@@ -285,6 +284,7 @@ public:
    void emit(std::ofstream &of, int level=0) const;
    bool have_declared_component(const std::string &name) const;
    bool have_declared(const std::string &name) const;
+   vhdl_decl *get_decl(const std::string &name) const;
    void add_decl(vhdl_decl *decl);
    void add_stmt(vhdl_conc_stmt *stmt);
    vhdl_entity *get_parent() const;

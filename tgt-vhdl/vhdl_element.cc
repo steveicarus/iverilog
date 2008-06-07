@@ -189,6 +189,16 @@ void vhdl_arch::emit(std::ofstream &of, int level) const
    blank_line(of, level);  // Extra blank line after architectures;
 }
 
+vhdl_decl *vhdl_arch::get_decl(const std::string &name) const
+{
+   decl_list_t::const_iterator it;
+   for (it = decls_.begin(); it != decls_.end(); ++it) {
+      if ((*it)->get_name() == name)
+         return *it;
+   }
+   return NULL;
+}
+
 /*
  * True if component `name' has already been declared in this
  * architecture. This is a bit of hack, since it uses typeid
@@ -212,12 +222,7 @@ bool vhdl_arch::have_declared_component(const std::string &name) const
  */
 bool vhdl_arch::have_declared(const std::string &name) const
 {
-   decl_list_t::const_iterator it;
-   for (it = decls_.begin(); it != decls_.end(); ++it) {
-      if ((*it)->get_name() == name)
-         return true;
-   }
-   return false;
+   return get_decl(name) != NULL;
 }
 
 vhdl_arch *vhdl_conc_stmt::get_parent() const
