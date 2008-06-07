@@ -81,6 +81,7 @@ private:
    vhdl_type *type_;
 };
 
+
 /*
  * A normal scalar variable reference.
  */
@@ -94,6 +95,7 @@ private:
    std::string name_;
 };
 
+
 class vhdl_const_string : public vhdl_expr {
 public:
    vhdl_const_string(const char *value)
@@ -104,6 +106,7 @@ private:
    std::string value_;
 };
 
+
 class vhdl_expr_list : public vhdl_element {
 public:
    ~vhdl_expr_list();
@@ -112,6 +115,23 @@ public:
    void add_expr(vhdl_expr *e);
 private:
    std::list<vhdl_expr*> exprs_;
+};
+
+
+/*
+ * A function call within an expression.
+ */
+class vhdl_fcall : public vhdl_expr {
+public:
+   vhdl_fcall(const char *name, vhdl_type *rtype)
+      : vhdl_expr(rtype), name_(name) {};
+   ~vhdl_fcall() {}
+
+   void add_expr(vhdl_expr *e) { exprs_.add_expr(e); }
+   void emit(std::ofstream &of, int level) const;
+private:
+   std::string name_;
+   vhdl_expr_list exprs_;
 };
 
 

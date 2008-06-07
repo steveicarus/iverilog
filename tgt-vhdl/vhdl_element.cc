@@ -444,3 +444,10 @@ void vhdl_null_stmt::emit(std::ofstream &of, int level) const
 {
    of << "null;";
 }
+
+void vhdl_fcall::emit(std::ofstream &of, int level) const
+{
+   of << name_;
+   exprs_.emit(of, level);
+}
+
