@@ -127,6 +127,7 @@ public:
    vhdl_const_bits(const char *value);
    void emit(std::ofstream &of, int level) const;
    const std::string &get_value() const { return value_; }
+   vhdl_expr *cast(const vhdl_type *to);
 private:
    std::string value_;
 };

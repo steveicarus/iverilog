@@ -388,53 +388,6 @@ void vhdl_type::emit(std::ofstream &of, int level) const
    of << get_string();
 }
 
-/*
- * The default cast just assumes there's a VHDL cast function to
- * do the job for us.
- */
-vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
-{
-   vhdl_fcall *conv =
-      new vhdl_fcall(to->get_string().c_str(), new vhdl_type(*to));
-   conv->add_expr(this);
-
-   return conv;
-}
-
-/*
- * Cast something to a scalar type. There are a few ugly hacks here
- * to handle special cases.
- */
-/*vhdl_expr *vhdl_scalar_type::cast(vhdl_expr *expr) const
-{
-   if (typeid(*expr) == typeid(vhdl_const_bits)
-       && name_ == "std_logic") {
-
-      // Converting a literal bit string to std_logic is fairly
-      // common so this hack is justified by the increase in
-      // output readability :-)
-
-      const std::string &value =
-         dynamic_cast<vhdl_const_bits*>(expr)->get_value();
-   
-      // Take the least significant bit
-      char lsb = value[0];
-
-      // Discard the given expression and return a brand new one
-      delete expr;
-      return new vhdl_const_bit(lsb);
-   }
-   else {
-      // Otherwise just assume there's a pre-defined conversion
-      const char *c_name = name_.c_str();
-      vhdl_fcall *conv =
-         new vhdl_fcall(c_name, new vhdl_scalar_type(c_name));
-      conv->add_expr(expr);
-      
-      return conv;
-   }
-   }*/
-
 vhdl_type *vhdl_type::std_logic_vector(int msb, int lsb)
 {
    return new vhdl_type(VHDL_TYPE_STD_LOGIC_VECTOR, msb, lsb);
@@ -469,6 +422,19 @@ void vhdl_signal_decl::emit(std::ofstream &of, int level) const
 vhdl_expr::~vhdl_expr()
 {
    delete type_;
+}
+
+/*
+ * The default cast just assumes there's a VHDL cast function to
+ * do the job for us.
+ */
+vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
+{
+   vhdl_fcall *conv =
+      new vhdl_fcall(to->get_string().c_str(), new vhdl_type(*to));
+   conv->add_expr(this);
+
+   return conv;
 }
 
 void vhdl_expr_list::add_expr(vhdl_expr *e)
@@ -541,6 +507,22 @@ vhdl_const_bits::vhdl_const_bits(const char *value)
      value_(value)
 {
    
+}
+
+vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
+{
+   if (to->get_name() == VHDL_TYPE_STD_LOGIC) {
+      // VHDL won't let us cast directly between a vector and
+      // a scalar type
+      // But we don't need to here as we have the bits available
+
+      // Take the least significant bit
+      char lsb = value_[0];
+
+      return new vhdl_const_bit(lsb);
+   }
+   else
+      return vhdl_expr::cast(to);
 }
 
 void vhdl_const_bits::emit(std::ofstream &of, int level) const
