@@ -4,7 +4,8 @@
 #include "vhdl_config.h"
 #include "ivl_target.h"
 
-#include "vhdl_element.hh"
+#include "vhdl_syntax.hh"
+#include "vhdl_type.hh"
 
 #include <string>
 

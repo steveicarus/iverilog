@@ -1,5 +1,5 @@
 /*
- *  VHDL abstract syntax elements.
+ *  Helper functions for VHDL syntax elements.
  *
  *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
  *
@@ -18,37 +18,37 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef INC_VHDL_ELEMENT_HH
-#define INC_VHDL_ELEMENT_HH
+#ifndef INC_VHDL_HELPER_HH
+#define INC_VHDL_HELPER_HH
 
 #include <fstream>
 #include <list>
-#include <string>
 
-typedef std::list<std::string> string_list_t;
+template <class T>
+void emit_children(std::ofstream &of,
+                   const std::list<T*> &children,
+                   int level) 
+{      
+   // Don't indent if there are no children
+   if (children.size() == 0)
+      newline(of, level);
+   else {
+      typename std::list<T*>::const_iterator it;
+      for (it = children.begin(); it != children.end(); ++it) {
+         newline(of, indent(level));
+         (*it)->emit(of, indent(level));
+      }
+      newline(of, level);
+   }
+}
 
-/*
- * Any VHDL syntax element. Each element can also contain a comment.
- */
-class vhdl_element {
-public:
-   virtual ~vhdl_element() {}
-   
-   virtual void emit(std::ofstream &of, int level=0) const = 0;
-
-   void set_comment(std::string comment);
-protected:
-   void emit_comment(std::ofstream &of, int level,
-                     bool end_of_line=false) const;
-private:
-   std::string comment_;
-};
-
-typedef std::list<vhdl_element*> element_list_t;
-
-int indent(int level);
-void newline(std::ofstream &of, int level);
-void blank_line(std::ofstream &of, int level);
+template <class T>
+void delete_children(std::list<T*> &children)
+{
+   typename std::list<T*>::iterator it;
+   for (it = children.begin(); it != children.end(); ++it)
+      delete *it;
+   children.clear();
+}
 
 #endif
-
