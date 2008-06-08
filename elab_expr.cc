@@ -882,6 +882,34 @@ bool PEIdent::calculate_up_do_width_(Design*des, NetScope*scope,
       return flag;
 }
 
+bool PEIdent::calculate_param_range_(Design*des, NetScope*scope,
+				     const NetExpr*par_msb, long&par_msv,
+				     const NetExpr*par_lsb, long&par_lsv) const
+{
+      if (par_msb == 0) {
+	      // If the parameter doesn't have an explicit range, then
+	      // just return range values of 0:0. The par_msv==0 is
+	      // correct. The par_msv is not necessarily correct, but
+	      // clients of this function don't need a correct value.
+	    ivl_assert(*this, par_lsb == 0);
+	    par_msv = 0;
+	    par_lsv = 0;
+	    return true;
+      }
+
+      const NetEConst*tmp = dynamic_cast<const NetEConst*> (par_msb);
+      ivl_assert(*this, tmp);
+
+      par_msv = tmp->value().as_long();
+
+      tmp = dynamic_cast<const NetEConst*> (par_lsb);
+      ivl_assert(*this, tmp);
+
+      par_lsv = tmp->value().as_long();
+
+      return true;
+}
+
 unsigned PEIdent::test_width(Design*des, NetScope*scope,
 			     unsigned min, unsigned lval,
 			     bool&unsized_flag) const
@@ -1094,6 +1122,71 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       return 0;
 }
 
+NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
+					     const NetExpr*par,
+					     NetScope*found_in,
+					     const NetExpr*par_msb,
+					     const NetExpr*par_lsb) const
+{
+      long msv, lsv;
+      bool flag = calculate_parts_(des, scope, msv, lsv);
+      if (!flag)
+	    return 0;
+
+      long par_msv, par_lsv;
+      flag = calculate_param_range_(des, scope, par_msb, par_msv, par_lsb, par_lsv);
+      if (!flag)
+	    return 0;
+
+	// Notice that the par_msv is not used is this function other
+	// then for this test. It is used to tell the direction that
+	// the bits are numbers, so that we can make sure the
+	// direction matches the part select direction. After that,
+	// we only need the par_lsv.
+      if (msv>lsv && par_msv<par_lsv || msv<lsv && par_msv>=par_lsv) {
+	    cerr << get_fileline() << ": error: Part select "
+		 << "[" << msv << ":" << lsv << "] is out of order." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      long wid = 1 + labs(msv-lsv);
+
+      if (debug_elaborate)
+	    cerr << get_fileline() << ": debug: Calculate part select "
+		 << "[" << msv << ":" << lsv << "] from range "
+		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
+
+      verinum result (verinum::Vx, wid, true);
+
+      const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
+      ivl_assert(*this, par_ex);
+      verinum par_val = par_ex->value();
+
+      for (long idx = 0 ; idx < wid ; idx += 1) {
+	    long off = idx + lsv - par_lsv;
+	    if (off < 0)
+		  result.set(idx, verinum::Vx);
+	    else if (off < (long)par_val.len())
+		  result.set(idx, par_val.get(off));
+	    else if (par_val.is_string()) // Pad strings with nulls.
+		  result.set(idx, verinum::V0);
+	    else if (par_val.has_len()) // Pad sized parameters with X
+		  result.set(idx, verinum::Vx);
+	    else // Unsized parameters are "infinite" width.
+		  result.set(idx, sign_bit(par_val));
+      }
+
+	// If the input is a string, and the part select is working on
+	// byte boundaries, then make the result into a string.
+      if (par_val.is_string() && (labs(lsv-par_lsv)%8 == 0) && (wid%8 == 0))
+	    result = verinum(result.as_string());
+
+      NetEConst*result_ex = new NetEConst(result);
+      result_ex->set_line(*this);
+      return result_ex;
+}
+
 /*
  * Handle the case that the identifier is a parameter reference. The
  * parameter expression has already been located for us (as the par
@@ -1106,84 +1199,25 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 				       const NetExpr*par_msb,
 				       const NetExpr*par_lsb) const
 {
-      NetExpr*tmp = par->dup_expr();
-
       const name_component_t&name_tail = path_.back();
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
       if (!name_tail.index.empty())
 	    use_sel = name_tail.index.back().sel;
 
-      if (use_sel == index_component_t::SEL_PART) {
-	    ivl_assert(*this, !name_tail.index.empty());
-	    const index_component_t&index_tail = name_tail.index.back();
-	    ivl_assert(*this, index_tail.msb);
-	    ivl_assert(*this, index_tail.lsb);
+	// NOTE TO SELF: This is the way I want to see this code
+	// structured. This closely follows the structure of the
+	// elaborate_expr_net_ code, which splits all the various
+	// selects to different methods.
+      if (use_sel == index_component_t::SEL_PART)
+	    return elaborate_expr_param_part_(des, scope, par, found_in,
+					      par_msb, par_lsb);
 
-	      /* If the identifier has a part select, we support
-		 it by pulling the right bits out and making a
-		 sized unsigned constant. This code assumes the
-		 lsb of a parameter is 0 and the msb is the
-		 width of the parameter. */
+	// NOTE TO SELF (continued): The code below should be
+	// rewritten in the above format, as I get to it.
 
-	    verinum*lsn = index_tail.lsb->eval_const(des, scope);
-	    verinum*msn = index_tail.msb->eval_const(des, scope);
-	    if ((lsn == 0) || (msn == 0)) {
-		  cerr << get_fileline() << ": error: "
-			"Part select expressions must be "
-			"constant expressions." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
+      NetExpr*tmp = par->dup_expr();
 
-	    long lsb = lsn->as_long();
-	    long msb = msn->as_long();
-	    if ((lsb < 0) || (msb < lsb)) {
-		  cerr << get_fileline() << ": error: invalid part "
-		       << "select: " << path_
-		       << "["<<msb<<":"<<lsb<<"]" << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-	    unsigned long ulsb=lsb;
-	    unsigned long umsb=msb;
-
-	    NetEConst*le = dynamic_cast<NetEConst*>(tmp);
-	    assert(le);
-
-	    verinum result (verinum::V0, msb-lsb+1, true);
-	    verinum exl = le->value();
-
-	      /* Pull the bits from the parameter, one at a
-		 time. If the bit is within the range, simply
-		 copy it to the result. If the bit is outside
-		 the range, we sign extend signed unsized
-		 numbers, zero extend unsigned unsigned numbers,
-		 and X extend sized numbers. */
-	    for (unsigned long idx = ulsb ;  idx <= umsb ;  idx += 1) {
-		  if (idx < exl.len())
-			result.set(idx-lsb, exl.get(idx));
-		  else if (exl.is_string())
-			result.set(idx-lsb, verinum::V0);
-		  else if (exl.has_len())
-			result.set(idx-lsb, verinum::Vx);
-		  else if (exl.has_sign())
-			result.set(idx-lsb, exl.get(exl.len()-1));
-		  else
-			result.set(idx-lsb, verinum::V0);
-	    }
-
-	      /* If the input is a string, and the part select
-		 is working on byte boundaries, then the result
-		 can be made into a string. */
-	    if (exl.is_string()
-		&& (lsb%8 == 0)
-		&& (result.len()%8 == 0))
-		  result = verinum(result.as_string());
-
-	    delete tmp;
-	    tmp = new NetEConst(result);
-
-      } else if (use_sel == index_component_t::SEL_IDX_UP || use_sel == index_component_t::SEL_IDX_DO) {
+      if (use_sel == index_component_t::SEL_IDX_UP || use_sel == index_component_t::SEL_IDX_DO) {
 
 	    ivl_assert(*this, !name_tail.index.empty());
 	    const index_component_t&index_tail = name_tail.index.back();
