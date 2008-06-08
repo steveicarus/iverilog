@@ -45,9 +45,8 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
    const char *display_line = "Verilog_Display_Line";
    
    if (!proc->have_declared_var(display_line)) {
-      vhdl_type *line_type = new vhdl_scalar_type("Line");
       vhdl_var_decl *line_var =
-         new vhdl_var_decl(display_line, line_type);
+         new vhdl_var_decl(display_line, vhdl_type::line());
       line_var->set_comment("For generating $display output");
       proc->add_decl(line_var);
    }
@@ -67,12 +66,12 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
          
          // Need to add a call to Type'Image for types not
          // supported by std.textio
-         if (base->get_type()->get_name() != "String") {
-            std::string name(base->get_type()->get_name());
+         if (base->get_type()->get_name() != VHDL_TYPE_STRING) {
+            std::string name(base->get_type()->get_string());
             name += "'Image";
             
             vhdl_fcall *cast
-               = new vhdl_fcall(name.c_str(), vhdl_scalar_type::string());
+               = new vhdl_fcall(name.c_str(), vhdl_type::string());
             cast->add_expr(base);
             e = cast;
          }
@@ -84,7 +83,7 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
 
       vhdl_pcall_stmt *write = new vhdl_pcall_stmt("Write");
       vhdl_var_ref *ref =
-         new vhdl_var_ref(display_line, vhdl_scalar_type::line());
+         new vhdl_var_ref(display_line, vhdl_type::line());
       write->add_expr(ref);
       write->add_expr(e);
 
@@ -94,10 +93,10 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
    // WriteLine(Output, Verilog_Display_Line)
    vhdl_pcall_stmt *write_line = new vhdl_pcall_stmt("WriteLine");
    vhdl_var_ref *output_ref =
-      new vhdl_var_ref("std.textio.Output", new vhdl_scalar_type("File"));
+      new vhdl_var_ref("std.textio.Output", new vhdl_type(VHDL_TYPE_FILE));
    write_line->add_expr(output_ref);
    vhdl_var_ref *ref =
-      new vhdl_var_ref(display_line, vhdl_scalar_type::line());
+      new vhdl_var_ref(display_line, vhdl_type::line());
    write_line->add_expr(ref);
    proc->add_stmt(write_line);
    
@@ -170,7 +169,7 @@ static int draw_nbassign(vhdl_process *proc, ivl_statement_t stmt)
       vhdl_expr *rhs_raw = translate_expr(ivl_stmt_rval(stmt));
       if (NULL == rhs_raw)
          return 1;
-      vhdl_expr *rhs =  decl->get_type()->cast(rhs_raw);
+      vhdl_expr *rhs = rhs_raw->cast(decl->get_type());
 
       // The type here can be null as it is never actually needed
       vhdl_var_ref *lval_ref = new vhdl_var_ref(signame, NULL);

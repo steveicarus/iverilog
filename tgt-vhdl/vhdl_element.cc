@@ -25,6 +25,7 @@
 #include <cstring>
 #include <typeinfo>
 #include <iostream>
+#include <sstream>
 
 
 static const int VHDL_INDENT = 2;  // Spaces to indent
@@ -344,31 +345,67 @@ void vhdl_wait_stmt::emit(std::ofstream &of, int level) const
    of << "wait;";
 }
 
-vhdl_scalar_type *vhdl_scalar_type::std_logic()
+vhdl_type *vhdl_type::std_logic()
 {
-   return new vhdl_scalar_type("std_logic");
+   return new vhdl_type(VHDL_TYPE_STD_LOGIC);
 }
 
-vhdl_scalar_type *vhdl_scalar_type::string()
+vhdl_type *vhdl_type::string()
 {
-   return new vhdl_scalar_type("String");
+   return new vhdl_type(VHDL_TYPE_STRING);
 }
 
-vhdl_scalar_type *vhdl_scalar_type::line()
+vhdl_type *vhdl_type::line()
 {
-   return new vhdl_scalar_type("Line");
+   return new vhdl_type(VHDL_TYPE_LINE);
 }
 
-void vhdl_scalar_type::emit(std::ofstream &of, int level) const
+std::string vhdl_type::get_string() const
 {
-   of << name_;
+   switch (name_) {
+   case VHDL_TYPE_STD_LOGIC:
+      return std::string("std_logic");
+   case VHDL_TYPE_STD_LOGIC_VECTOR:
+      {
+         std::ostringstream ss;
+         ss << "std_logic_vector(" << msb_;
+         ss << " downto " << lsb_ << ")";
+         return ss.str();
+      }      
+   case VHDL_TYPE_STRING:
+      return std::string("String");
+   case VHDL_TYPE_LINE:
+      return std::string("Line");
+   case VHDL_TYPE_FILE:
+      return std::string("File");
+   default:
+      return std::string("BadType");
+   }
+}
+
+void vhdl_type::emit(std::ofstream &of, int level) const
+{
+   of << get_string();
+}
+
+/*
+ * The default cast just assumes there's a VHDL cast function to
+ * do the job for us.
+ */
+vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
+{
+   vhdl_fcall *conv =
+      new vhdl_fcall(to->get_string().c_str(), new vhdl_type(*to));
+   conv->add_expr(this);
+
+   return conv;
 }
 
 /*
  * Cast something to a scalar type. There are a few ugly hacks here
  * to handle special cases.
  */
-vhdl_expr *vhdl_scalar_type::cast(vhdl_expr *expr) const
+/*vhdl_expr *vhdl_scalar_type::cast(vhdl_expr *expr) const
 {
    if (typeid(*expr) == typeid(vhdl_const_bits)
        && name_ == "std_logic") {
@@ -396,21 +433,11 @@ vhdl_expr *vhdl_scalar_type::cast(vhdl_expr *expr) const
       
       return conv;
    }
-}
+   }*/
 
-vhdl_vector_type *vhdl_vector_type::std_logic_vector(int msb, int lsb)
+vhdl_type *vhdl_type::std_logic_vector(int msb, int lsb)
 {
-   return new vhdl_vector_type("std_logic_vector", msb, lsb);
-}
-
-void vhdl_vector_type::emit(std::ofstream &of, int level) const
-{
-   of << name_ << "(" << msb_ << " downto " << lsb_ << ")";
-}
-
-vhdl_expr *vhdl_vector_type::cast(vhdl_expr *expr) const
-{
-   return expr;
+   return new vhdl_type(VHDL_TYPE_STD_LOGIC_VECTOR, msb, lsb);
 }
 
 vhdl_var_decl::~vhdl_var_decl()
@@ -510,7 +537,7 @@ void vhdl_nbassign_stmt::emit(std::ofstream &of, int level) const
 }
 
 vhdl_const_bits::vhdl_const_bits(const char *value)   
-   : vhdl_expr(vhdl_vector_type::std_logic_vector(strlen(value)-1, 0)),
+   : vhdl_expr(vhdl_type::std_logic_vector(strlen(value)-1, 0)),
      value_(value)
 {
    

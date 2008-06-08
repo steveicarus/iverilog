@@ -50,16 +50,13 @@ private:
 
 typedef std::list<vhdl_element*> element_list_t; 
 
-class vhdl_type : public vhdl_element {
-public:
-   vhdl_type(const char *name) : name_(name) {}
-   virtual ~vhdl_type() {}
 
-   virtual vhdl_expr *cast(vhdl_expr *expr) const = 0;
-
-   const std::string &get_name() const { return name_; }
-protected:
-   std::string name_;
+enum vhdl_type_name_t {
+   VHDL_TYPE_STD_LOGIC,
+   VHDL_TYPE_STD_LOGIC_VECTOR,
+   VHDL_TYPE_STRING,
+   VHDL_TYPE_LINE,
+   VHDL_TYPE_FILE
 };
 
 /*
@@ -67,36 +64,27 @@ protected:
  * too much more complex, as Verilog's type system is much
  * simpler than VHDL's.
  */
-class vhdl_scalar_type : public vhdl_type {
+class vhdl_type : public vhdl_element {
 public:
-   vhdl_scalar_type(const char *name)
-      : vhdl_type(name) {}
+   vhdl_type(vhdl_type_name_t name, int msb = 0, int lsb = 0)
+      : name_(name), msb_(msb), lsb_(lsb) {}
+   virtual ~vhdl_type() {}
 
    void emit(std::ofstream &of, int level) const;
-   vhdl_expr *cast(vhdl_expr *expr) const;
+   vhdl_type_name_t get_name() const { return name_; }
+   std::string get_string() const;
+   int get_width() const { return msb_ - lsb_ + 1; }
    
    // Common types
-   static vhdl_scalar_type *std_logic();
-   static vhdl_scalar_type *string();
-   static vhdl_scalar_type *line();
-};
-
-/*
- * A vector type like std_logic_vector.
- */
-class vhdl_vector_type : public vhdl_type {
-public:
-   vhdl_vector_type(const char *name, int msb, int lsb)
-      : vhdl_type(name), msb_(msb), lsb_(lsb) {}
-
-   void emit(std::ofstream &of, int level) const;
-   vhdl_expr *cast(vhdl_expr *expr) const;
-
-   // Common types
-   static vhdl_vector_type *std_logic_vector(int msb, int lsb);
-private:
+   static vhdl_type *std_logic();
+   static vhdl_type *string();
+   static vhdl_type *line();
+   static vhdl_type *std_logic_vector(int msb, int lsb);
+protected:
+   vhdl_type_name_t name_;
    int msb_, lsb_;
 };
+
 
 class vhdl_expr : public vhdl_element {
 public:
@@ -104,6 +92,7 @@ public:
    virtual ~vhdl_expr();
 
    const vhdl_type *get_type() const { return type_; }
+   virtual vhdl_expr *cast(const vhdl_type *to);
 private:
    vhdl_type *type_;
 };
@@ -126,7 +115,7 @@ private:
 class vhdl_const_string : public vhdl_expr {
 public:
    vhdl_const_string(const char *value)
-      : vhdl_expr(vhdl_scalar_type::string()), value_(value) {}
+      : vhdl_expr(vhdl_type::string()), value_(value) {}
 
    void emit(std::ofstream &of, int level) const;
 private:
@@ -145,7 +134,7 @@ private:
 class vhdl_const_bit : public vhdl_expr {
 public:
    vhdl_const_bit(char bit)
-      : vhdl_expr(vhdl_scalar_type::std_logic()), bit_(bit) {}
+      : vhdl_expr(vhdl_type::std_logic()), bit_(bit) {}
    void emit(std::ofstream &of, int level) const;
 private:
    char bit_;
