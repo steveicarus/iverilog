@@ -26,6 +26,34 @@
 #include <cassert>
 
 /*
+ * Given a nexus and an architecture, find the first signal
+ * that is connected to the nexus, if there is one.
+ */
+static vhdl_var_ref *nexus_to_var_ref(vhdl_arch *arch, ivl_nexus_t nexus)
+{
+   int nptrs = ivl_nexus_ptrs(nexus);
+   for (int i = 0; i < nptrs; i++) {
+      ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
+
+      ivl_signal_t sig;
+      if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
+         const char *signame = ivl_signal_basename(sig);
+         
+         vhdl_decl *decl = arch->get_decl(signame);
+         assert(decl);
+
+         vhdl_type *type = new vhdl_type(*(decl->get_type()));
+         return new vhdl_var_ref(signame, type);
+      }
+      else {
+         // Ignore other types of nexus pointer
+      }
+   }
+   
+   assert(false);
+}
+
+/*
  * Translate all the primitive logic gates into concurrent
  * signal assignments.
  */
@@ -34,6 +62,10 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
    int nlogs = ivl_scope_logs(scope);
    for (int i = 0; i < nlogs; i++) {
       ivl_net_logic_t log = ivl_scope_log(scope, i);
+
+      // The output is always pin zero
+      ivl_nexus_t output = ivl_logic_pin(log, 0);
+      vhdl_var_ref *lhs = nexus_to_var_ref(arch, output);
 
       switch (ivl_logic_type(log)) {
       case IVL_LO_NOT:

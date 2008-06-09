@@ -53,6 +53,43 @@ private:
 };
 
 
+enum vhdl_binop_t {
+   VHDL_BINOP_AND,
+   VHDL_BINOP_OR,
+};
+
+class vhdl_binop_expr : public vhdl_expr {
+public:
+   vhdl_binop_expr(vhdl_expr *left, vhdl_binop_t op,
+                   vhdl_expr *right, vhdl_type *type)
+      : vhdl_expr(type), left_(left), right_(right), op_(op) {}
+   ~vhdl_binop_expr();
+
+   void emit(std::ofstream &of, int level) const;
+private:
+   vhdl_expr *left_, *right_;
+   vhdl_binop_t op_;
+};
+
+
+enum vhdl_unaryop_t {
+   VHDL_UNARYOP_NOT,
+};
+
+class vhdl_unaryop_expr : public vhdl_expr {
+public:
+   vhdl_unaryop_expr(vhdl_unaryop_t op, vhdl_expr *operand,
+                     vhdl_type *type)
+      : vhdl_expr(type), op_(op), operand_(operand) {}
+   ~vhdl_unaryop_expr();
+
+   void emit(std::ofstream &of, int level) const;
+private:
+   vhdl_unaryop_t op_;
+   vhdl_expr *operand_;
+};
+
+
 class vhdl_const_string : public vhdl_expr {
 public:
    vhdl_const_string(const char *value)

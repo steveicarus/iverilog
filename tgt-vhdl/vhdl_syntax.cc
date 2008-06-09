@@ -455,3 +455,49 @@ void vhdl_cassign_stmt::emit(std::ofstream &of, int level) const
    rhs_->emit(of, level);
    of << ";";
 }
+
+vhdl_unaryop_expr::~vhdl_unaryop_expr()
+{
+   delete operand_;
+}
+
+void vhdl_unaryop_expr::emit(std::ofstream &of, int level) const
+{
+   switch (op_) {
+   case VHDL_UNARYOP_NOT:
+      of << "not ";
+      break;
+   }
+   operand_->emit(of, level);
+}
+
+vhdl_binop_expr::~vhdl_binop_expr()
+{
+   delete left_;
+   delete right_;
+}
+
+void vhdl_binop_expr::emit(std::ofstream &of, int level) const
+{
+   // Expressions are fully parenthesized to remove any
+   // ambiguity in the output
+   of << "(";
+   right_->emit(of, level);
+
+   switch (op_) {
+   case VHDL_BINOP_AND:
+      of << " and ";
+      break;
+   case VHDL_BINOP_OR:
+      of << " or ";
+      break;
+   }
+
+   right_->emit(of, level);
+   of << ")";
+}
+
+
+
+
+
