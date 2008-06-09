@@ -50,4 +50,11 @@ extern unsigned is_string_obj(vpiHandle obj);
 
 extern vpiHandle sys_func_module(vpiHandle obj);
 
+/*
+ * The standard compiletf routines.
+ */
+extern PLI_INT32 sys_no_arg_compiletf(PLI_BYTE8 *name);
+extern PLI_INT32 sys_one_numeric_arg_compiletf(PLI_BYTE8 *name);
+extern PLI_INT32 sys_one_opt_numeric_arg_compiletf(PLI_BYTE8 *name);
+
 #endif

@@ -103,6 +103,11 @@ extern NetExpr*make_add_expr(NetExpr*expr, long val);
 extern NetExpr*make_sub_expr(long val, NetExpr*expr);
 
 /*
+ * Make a NetEConst object that contains only X bits.
+ */
+extern NetEConst*make_const_x(unsigned long wid);
+
+/*
  * In some cases the lval is accessible as a pointer to the head of
  * a list of NetAssign_ objects. This function returns the width of
  * the l-value represented by this list.

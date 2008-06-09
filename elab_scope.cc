@@ -98,7 +98,16 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
 		  tmp->low_expr = 0;
 	    }
 
-	    if (range->high_expr) {
+	    if (range->high_expr && range->high_expr==range->low_expr) {
+		    // Detect the special case of a "point"
+		    // range. These are called out by setting the high
+		    // and low expression ranges to the same
+		    // expression. The exclude_flags should be false
+		    // in this case
+		  ivl_assert(*range->high_expr, tmp->low_open_flag==false && tmp->high_open_flag==false);
+		  tmp->high_expr = tmp->low_expr;
+
+	    } else if (range->high_expr) {
 		  tmp->high_expr = elab_and_eval(des, scope, range->high_expr, -1);
 		  ivl_assert(*range->high_expr, tmp->high_expr);
 	    } else {

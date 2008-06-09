@@ -116,7 +116,7 @@ void sys_time_register()
       tf_data.tfname      = "$time";
       tf_data.sysfunctype = vpiTimeFunc;
       tf_data.calltf      = sys_time_calltf;
-      tf_data.compiletf   = 0;
+      tf_data.compiletf   = sys_no_arg_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$time";
       vpi_register_systf(&tf_data);
@@ -125,7 +125,7 @@ void sys_time_register()
       tf_data.tfname      = "$realtime";
       tf_data.sysfunctype = vpiRealFunc;
       tf_data.calltf      = sys_realtime_calltf;
-      tf_data.compiletf   = 0;
+      tf_data.compiletf   = sys_no_arg_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$realtime";
       vpi_register_systf(&tf_data);
@@ -134,7 +134,7 @@ void sys_time_register()
       tf_data.tfname      = "$stime";
       tf_data.sysfunctype = vpiIntFunc;
       tf_data.calltf      = sys_time_calltf;
-      tf_data.compiletf   = 0;
+      tf_data.compiletf   = sys_no_arg_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$stime";
       vpi_register_systf(&tf_data);
@@ -143,7 +143,7 @@ void sys_time_register()
       tf_data.tfname      = "$simtime";
       tf_data.sysfunctype = vpiTimeFunc;
       tf_data.calltf      = sys_time_calltf;
-      tf_data.compiletf   = 0;
+      tf_data.compiletf   = sys_no_arg_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$simtime";
       vpi_register_systf(&tf_data);

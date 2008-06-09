@@ -44,9 +44,7 @@ extern const char*find_nexus_ident(int nex);
 extern void       set_nexus_ident(int nex, const char *id);
 
 /* The compiletf routines are common for the VCD, LXT and LXT2 dumpers. */
-extern PLI_INT32 sys_no_arg_compiletf(PLI_BYTE8 *name);
 extern PLI_INT32 sys_dumpfile_compiletf(PLI_BYTE8 *name);
-extern PLI_INT32 sys_dumplimit_compiletf(PLI_BYTE8 *name);
 extern PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name);
 
 #endif
