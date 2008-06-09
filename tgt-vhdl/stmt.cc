@@ -199,8 +199,10 @@ static int draw_delay(vhdl_process *proc, ivl_statement_t stmt)
    // VHDL wait statement compute the value from that.
    // The other solution is to add them as parameters to
    // the vhdl_process class
-   std::cout << "Delay for " << value << std::endl;
-
+   vhdl_wait_stmt *wait =
+      new vhdl_wait_stmt(VHDL_WAIT_FOR_NS, new vhdl_const_int(value));
+   proc->add_stmt(wait);
+   
    // Expand the sub-statement as well
    // Often this can result in a useless `null' statement
    // Maybe add a check here and ignore it if it IVL_ST_NOOP?
