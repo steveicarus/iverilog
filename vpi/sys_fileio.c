@@ -205,6 +205,7 @@ static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
 	    case vpiReg:
 	    case vpiRealVal:
 	    case vpiIntegerVar:
+	    case vpiMemoryWord:
 	      break;
 	    default:
 	      vpi_printf("ERROR: %s mcd parameter must be of integral type",
