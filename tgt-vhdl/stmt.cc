@@ -204,9 +204,11 @@ static int draw_delay(vhdl_process *proc, ivl_statement_t stmt)
    proc->add_stmt(wait);
    
    // Expand the sub-statement as well
-   // Often this can result in a useless `null' statement
-   // Maybe add a check here and ignore it if it IVL_ST_NOOP?
-   draw_stmt(proc, ivl_stmt_sub_stmt(stmt));
+   // Often this would result in a useless `null' statement which
+   // is caught here instead
+   ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
+   if (ivl_statement_type(sub_stmt) != IVL_ST_NOOP)
+      draw_stmt(proc, sub_stmt);
    
    return 0;
 }
