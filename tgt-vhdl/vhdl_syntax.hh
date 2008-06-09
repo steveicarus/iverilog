@@ -276,7 +276,7 @@ class vhdl_decl : public vhdl_element {
 public:
    vhdl_decl(const char *name, vhdl_type *type=NULL)
       : name_(name), type_(type) {}
-   virtual ~vhdl_decl() {};
+   virtual ~vhdl_decl();
 
    const std::string &get_name() const { return name_; }
    const vhdl_type *get_type() const { return type_; }
@@ -296,8 +296,6 @@ typedef std::list<vhdl_decl*> decl_list_t;
  */
 class vhdl_component_decl : public vhdl_decl {
 public:
-   virtual ~vhdl_component_decl() {};
-   
    static vhdl_component_decl *component_decl_for(const vhdl_entity *ent);
 
    void emit(std::ofstream &of, int level) const;
@@ -316,8 +314,6 @@ class vhdl_var_decl : public vhdl_decl {
 public:
    vhdl_var_decl(const char *name, vhdl_type *type)
       : vhdl_decl(name, type) {}
-   ~vhdl_var_decl();
-   
    void emit(std::ofstream &of, int level) const;
 };
 
@@ -329,9 +325,30 @@ class vhdl_signal_decl : public vhdl_decl {
 public:
    vhdl_signal_decl(const char *name, vhdl_type *type)
       : vhdl_decl(name, type) {}
-   ~vhdl_signal_decl();
+   virtual void emit(std::ofstream &of, int level) const;
+};
+
+
+enum vhdl_port_mode_t {
+   VHDL_PORT_IN,
+   VHDL_PORT_OUT,
+   VHDL_PORT_INOUT,
+};
+
+/*
+ * A port declaration is like a signal declaration except
+ * it has a direction and appears in the entity rather than
+ * the architecture.
+ */
+class vhdl_port_decl : public vhdl_decl {
+public:
+   vhdl_port_decl(const char *name, vhdl_type *type,
+                  vhdl_port_mode_t mode)
+      : vhdl_decl(name, type), mode_(mode) {}
 
    void emit(std::ofstream &of, int level) const;
+private:
+   vhdl_port_mode_t mode_;
 };
 
 
@@ -409,7 +426,9 @@ public:
    virtual ~vhdl_entity();
 
    void emit(std::ofstream &of, int level=0) const;
+   void add_port(vhdl_port_decl *decl);
    vhdl_arch *get_arch() const { return arch_; }
+   vhdl_decl *get_decl(const std::string &name) const;
    const std::string &get_name() const { return name_; }
    void requires_package(const char *spec);
    const std::string &get_derived_from() const { return derived_from_; }   
@@ -418,6 +437,7 @@ private:
    vhdl_arch *arch_;  // Entity may only have a single architecture
    std::string derived_from_;
    string_list_t uses_;
+   decl_list_t ports_;
 };
 
 typedef std::list<vhdl_entity*> entity_list_t;

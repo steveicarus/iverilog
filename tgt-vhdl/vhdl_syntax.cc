@@ -22,6 +22,7 @@
 #include "vhdl_helper.hh"
 
 #include <cassert>
+#include <iostream>
 
 vhdl_entity::vhdl_entity(const char *name, const char *derived_from,
                          vhdl_arch *arch)
@@ -33,6 +34,7 @@ vhdl_entity::vhdl_entity(const char *name, const char *derived_from,
 vhdl_entity::~vhdl_entity()
 {   
    delete arch_;
+   delete_children<vhdl_decl>(ports_);
 }
 
 /*
@@ -48,6 +50,24 @@ void vhdl_entity::requires_package(const char *spec)
          return;
    }
    uses_.push_back(spec);
+}
+
+/*
+ * Find a port declaration by name
+ */
+vhdl_decl *vhdl_entity::get_decl(const std::string &name) const
+{
+   decl_list_t::const_iterator it;
+   for (it = ports_.begin(); it != ports_.end(); ++it) {
+      if ((*it)->get_name() == name)
+         return *it;
+   }
+   return NULL;
+}
+
+void vhdl_entity::add_port(vhdl_port_decl *decl)
+{
+   ports_.push_back(decl);
 }
 
 void vhdl_entity::emit(std::ofstream &of, int level) const
@@ -121,7 +141,10 @@ vhdl_decl *vhdl_arch::get_decl(const std::string &name) const
       if ((*it)->get_name() == name)
          return *it;
    }
-   return NULL;
+
+   // Maybe it's a port rather than an internal signal?
+   assert(parent_);
+   return parent_->get_decl(name);
 }
 
 /*
@@ -286,10 +309,31 @@ void vhdl_wait_stmt::emit(std::ofstream &of, int level) const
    of << ";";
 }
 
-
-vhdl_var_decl::~vhdl_var_decl()
+vhdl_decl::~vhdl_decl()
 {
-   delete type_;
+   if (type_ != NULL)
+      delete type_;
+}
+
+void vhdl_port_decl::emit(std::ofstream &of, int level) const
+{
+   of << name_ << " : ";
+   
+   switch (mode_) {
+   case VHDL_PORT_IN:
+      of << "in ";
+      break;
+   case VHDL_PORT_OUT:
+      of << "out ";
+      break;
+   case VHDL_PORT_INOUT:
+      of << "inout ";
+      break;
+   }
+   
+   type_->emit(of, level);
+   of << ";";
+   emit_comment(of, level, true);
 }
 
 void vhdl_var_decl::emit(std::ofstream &of, int level) const
@@ -298,11 +342,6 @@ void vhdl_var_decl::emit(std::ofstream &of, int level) const
    type_->emit(of, level);
    of << ";";
    emit_comment(of, level, true);
-}
-
-vhdl_signal_decl::~vhdl_signal_decl()
-{
-   delete type_;
 }
 
 void vhdl_signal_decl::emit(std::ofstream &of, int level) const

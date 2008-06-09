@@ -74,7 +74,7 @@ static vhdl_expr *inputs_to_expr(vhdl_arch *arch, vhdl_binop_t op,
 }
 
 /*
- * Covert a gate intput to an unary expression.
+ * Convert a gate intput to an unary expression.
  */
 static vhdl_expr *input_to_expr(vhdl_arch *arch, vhdl_unaryop_t op,
                                 ivl_net_logic_t log)
@@ -137,9 +137,26 @@ static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
          sig_type = vhdl_type::std_logic();
       else
          sig_type = vhdl_type::std_logic_vector(width-1, 0);
-      vhdl_signal_decl *decl =
-         new vhdl_signal_decl(ivl_signal_basename(sig), sig_type);
-      arch->add_decl(decl);
+
+      const char *name = ivl_signal_basename(sig);
+      ivl_signal_port_t mode = ivl_signal_port(sig);
+      switch (mode) {
+      case IVL_SIP_NONE:
+         arch->add_decl(new vhdl_signal_decl(name, sig_type));
+         break;
+      case IVL_SIP_INPUT:
+         arch->get_parent()->add_port
+            (new vhdl_port_decl(name, sig_type, VHDL_PORT_IN));
+         break;
+      case IVL_SIP_OUTPUT:
+         arch->get_parent()->add_port
+            (new vhdl_port_decl(name, sig_type, VHDL_PORT_OUT));
+         break;
+      case IVL_SIP_INOUT:
+         arch->get_parent()->add_port
+            (new vhdl_port_decl(name, sig_type, VHDL_PORT_INOUT));
+         break;
+      }
    }
 }
 
