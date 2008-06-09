@@ -82,6 +82,15 @@ private:
    char bit_;
 };
 
+class vhdl_const_int : public vhdl_expr {
+public:
+   vhdl_const_int(int64_t value)
+      : vhdl_expr(vhdl_type::integer()), value_(value) {}
+   void emit(std::ofstream &of, int level) const;
+private:
+   int64_t value_;
+};
+
 class vhdl_expr_list : public vhdl_element {
 public:
    ~vhdl_expr_list();

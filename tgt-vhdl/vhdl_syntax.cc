@@ -435,3 +435,9 @@ void vhdl_const_bit::emit(std::ofstream &of, int level) const
 {
    of << "'" << bit_ << "'";
 }
+
+void vhdl_const_int::emit(std::ofstream &of, int level) const
+{
+   of << value_;
+}
+

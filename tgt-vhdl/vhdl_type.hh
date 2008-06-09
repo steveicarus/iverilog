@@ -28,7 +28,8 @@ enum vhdl_type_name_t {
    VHDL_TYPE_STD_LOGIC_VECTOR,
    VHDL_TYPE_STRING,
    VHDL_TYPE_LINE,
-   VHDL_TYPE_FILE
+   VHDL_TYPE_FILE,
+   VHDL_TYPE_INTEGER,
 };
 
 /*
@@ -52,6 +53,7 @@ public:
    static vhdl_type *string();
    static vhdl_type *line();
    static vhdl_type *std_logic_vector(int msb, int lsb);
+   static vhdl_type *integer();
 protected:
    vhdl_type_name_t name_;
    int msb_, lsb_;

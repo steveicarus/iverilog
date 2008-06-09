@@ -38,6 +38,11 @@ vhdl_type *vhdl_type::line()
    return new vhdl_type(VHDL_TYPE_LINE);
 }
 
+vhdl_type *vhdl_type::integer()
+{
+   return new vhdl_type(VHDL_TYPE_INTEGER);
+}
+
 std::string vhdl_type::get_string() const
 {
    switch (name_) {
@@ -56,6 +61,8 @@ std::string vhdl_type::get_string() const
       return std::string("Line");
    case VHDL_TYPE_FILE:
       return std::string("File");
+   case VHDL_TYPE_INTEGER:
+      return std::string("Integer");
    default:
       return std::string("BadType");
    }
