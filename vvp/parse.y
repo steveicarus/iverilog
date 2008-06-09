@@ -817,6 +817,8 @@ argument
       }
   | K_A '<' T_SYMBOL ',' T_NUMBER '>'
       { $$ = vpip_make_vthr_A($3, $5); }
+  | K_A '<' T_SYMBOL ',' T_SYMBOL '>'
+      { $$ = vpip_make_vthr_A($3, $5); }
   | K_PV '<' T_SYMBOL ',' T_NUMBER ',' T_NUMBER '>'
       { $$ = vpip_make_PV($3, $5, $7); }
   | K_PV '<' T_SYMBOL ',' '-' T_NUMBER ',' T_NUMBER '>'

@@ -285,10 +285,17 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 				    word_ex = 0;
 			      }
 			}
-			if (word_ex)
-			      break;
-
-			snprintf(buffer, sizeof buffer, "&A<v%p, %u>", sig, use_word);
+			if (word_ex) {
+			      struct vector_info av;
+			      av = draw_eval_expr(word_ex, STUFF_OK_XZ);
+			      snprintf(buffer, sizeof buffer,
+				       "&A<v%p, T<%u,%u,u>>", sig, av.base, av.wid);
+			      args[idx].vec = av;
+			      args[idx].vec_flag = 1;
+			} else {
+			      snprintf(buffer, sizeof buffer,
+				       "&A<v%p, %u>", sig, use_word);
+			}
 			args[idx].text = strdup(buffer);
 			continue;
 		  }

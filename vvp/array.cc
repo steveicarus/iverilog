@@ -83,7 +83,25 @@ struct __vpiArrayIndex {
 struct __vpiArrayVthrA {
       struct __vpiHandle base;
       struct __vpiArray*array;
+	// If wid==0, then address is the address into the array.
       unsigned address;
+	// If wid >0, then the address is the base and wid the vector
+	// width of the index to pull from the thread.
+      unsigned wid;
+
+      unsigned get_address() const
+      {
+	    if (wid == 0)
+		  return address;
+	    vvp_vector4_t tmp (wid);
+	    for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+		  vvp_bit4_t bit = vthread_get_bit(vpip_current_vthread, address+idx);
+		  tmp.set_bit(idx, bit);
+	    }
+	    unsigned long val;
+	    vector4_to_value(tmp, val);
+	    return val;
+      }
 };
 
 /*
@@ -516,7 +534,6 @@ static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 	    return 0; // Not implemented for now!
 
 	  case vpiSize:
-	    assert(parent->vals);
 	    return parent->vals_width;
 
 	  case vpiLeftRange:
@@ -546,7 +563,7 @@ static char*vpi_array_vthr_A_get_str(int code, vpiHandle ref)
       }
 
       char sidx [64];
-      snprintf(sidx, 63, "%d", (int)obj->address + parent->first_addr.value);
+      snprintf(sidx, 63, "%d", (int)obj->get_address() + parent->first_addr.value);
       return generic_get_str(code, &parent->scope->base, parent->name, sidx);
 }
 
@@ -557,18 +574,10 @@ static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value value)
       struct __vpiArray*parent = obj->array;
 
       assert(parent);
-      assert(parent->vals);
-      assert(obj->address < parent->array_count);
 
-      unsigned index = obj->address;
-      unsigned width = parent->vals_width;
-
-	/* If we don't have a value yet just return X. */
-      if (parent->vals[index].size() == 0) {
-	    vpip_vec4_get_value(vvp_vector4_t(width), width, false, value);
-      } else {
-	    vpip_vec4_get_value(parent->vals[index], width, false, value);
-      }
+      unsigned index = obj->get_address();
+      vvp_vector4_t tmp = array_get_word(parent, index);
+      vpip_vec4_get_value(tmp, parent->vals_width, false, value);
 }
 
 static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int)
@@ -577,10 +586,10 @@ static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int)
       assert(obj);
       struct __vpiArray*parent = obj->array;
 
-      unsigned index = obj->address;
+      unsigned index = obj->get_address();
 
       assert(parent);
-      assert(obj->address < parent->array_count);
+      assert(index < parent->array_count);
 
       vvp_vector4_t val = vec4_from_vpi_value(vp, parent->vals_width);
       array_set_word(parent, index, 0, val);
@@ -1053,9 +1062,36 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned addr)
 
       obj->array = array_find(label);
       assert(obj->array);
+      free(label);
 
       obj->address = addr;
+      obj->wid = 0;
       assert(addr < obj->array->array_count);
+
+      return &(obj->base);
+}
+
+vpiHandle vpip_make_vthr_A(char*label, char*symbol)
+{
+      struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*)
+	    malloc(sizeof (struct __vpiArrayVthrA));
+
+      obj->base.vpi_type = &vpip_array_vthr_A_rt;
+
+      obj->array = array_find(label);
+      assert(obj->array);
+      free(label);
+
+      unsigned base;
+      unsigned wid;
+      char sflag;
+      int rc = sscanf(symbol, "T<%u,%u,%c>", &base, &wid, &sflag);
+      assert(rc == 3);
+      free(symbol);
+
+      obj->address = base;
+      obj->wid     = wid;
+      assert(sflag == 'u');
 
       return &(obj->base);
 }

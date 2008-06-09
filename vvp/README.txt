@@ -754,6 +754,47 @@ by the fork atomically joins that scope. Once the transient thread
 joins the scope, it stays there until it ends. Threads never change
 scopes, not even transient threads.
 
+VPI TASK/FUNCTION CALLS
+
+Threads call vpi tasks with the %vpi_call or %vpi_func
+instructions. The formats are:
+
+   %vpi_call <file-index> <lineno> <name>, <args>... ;
+   %vpi_func <file-index> <lineno> <name>, <args>... ;
+   %vpi_func/r <file-index> <lineno> <name>, <args>... ;
+
+The <file-index> is an index into the string table. The indexed string
+is the source code file name where this call appears. The <lineno> is
+the line number from the source code where this task/function appears.
+
+The <name> is a string that is the name of the system
+task/function. For example, "$display", $strobe", etc. This name is
+looked up and compared with the registered system tasks/functions.
+
+The <args>... is a comma (",") separated list of arguments. These are
+made available to the VPI code as vpi handles.
+
+* The &A<> argument
+
+The &A<> argument is a reference to the word of a variable array. The
+syntax is:
+
+   &A '<' <symbol> , <number> '>'
+
+The <symbol> is the label for a variable array, and the <number> is
+the cannonical word index as an unsigned integer.
+
+* The T<> argument
+
+This is the catch-all for arguments that are not otherwise
+handled. This references the bits directly in the thread. The format
+is:
+
+   T '<' <base>, <wid>, <su> '>'
+
+The <base> and <wid> are the base of a vector value in the thread and
+the width of the vector. The <su> is 's' or 'u' for signed or unsigned.
+
 TRUTH TABLES
 
 The logic that a functor represents is expressed as a truth table. The
