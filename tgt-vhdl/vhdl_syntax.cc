@@ -262,10 +262,28 @@ void vhdl_component_decl::emit(std::ofstream &of, int level) const
    of << "end component;";
 }
 
+vhdl_wait_stmt::~vhdl_wait_stmt()
+{
+   if (expr_ != NULL)
+      delete expr_;
+}
+
 void vhdl_wait_stmt::emit(std::ofstream &of, int level) const
 {
-   // TODO: There are lots of different types of `wait'
-   of << "wait;";
+   of << "wait";
+
+   switch (type_) {
+   case VHDL_WAIT_INDEF:
+      break;
+   case VHDL_WAIT_FOR_NS:
+      assert(expr_);
+      of << " for ";
+      expr_->emit(of, level);
+      of << " ns";
+      break;
+   }
+   
+   of << ";";
 }
 
 

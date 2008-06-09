@@ -73,7 +73,7 @@ int draw_process(ivl_process_t proc, void *cd)
    assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
    vhdl_entity *ent = find_entity(ivl_scope_tname(scope));
    assert(ent != NULL);
-
+   
    // If the scope this process belongs to is the same as the
    // VHDL entity was generated from, then create a VHDL process
    // from this Verilog process. This ensures that each process

@@ -190,7 +190,22 @@ static int draw_nbassign(vhdl_process *proc, ivl_statement_t stmt)
  */
 static int draw_delay(vhdl_process *proc, ivl_statement_t stmt)
 {
-   std::cout << "draw_delay" << std::endl;
+   uint64_t value = ivl_stmt_delay_val(stmt);
+
+   // This currently ignores the time units and precision
+   // of the enclosing scope
+   // A neat way to do this would be to make these values
+   // constants in the scope (type is Time), and have the
+   // VHDL wait statement compute the value from that.
+   // The other solution is to add them as parameters to
+   // the vhdl_process class
+   std::cout << "Delay for " << value << std::endl;
+
+   // Expand the sub-statement as well
+   // Often this can result in a useless `null' statement
+   // Maybe add a check here and ignore it if it IVL_ST_NOOP?
+   draw_stmt(proc, ivl_stmt_sub_stmt(stmt));
+   
    return 0;
 }
 

@@ -154,13 +154,26 @@ private:
    vhdl_expr *rhs_;
 };
 
+enum vhdl_wait_type_t {
+   VHDL_WAIT_INDEF,    // Suspend indefinitely
+   VHDL_WAIT_FOR_NS,   // Wait for a constant number of nanoseconds
+};
+
 /*
  * Delay simulation indefinitely, until an event, or for a
  * specified time.
  */
 class vhdl_wait_stmt : public vhdl_seq_stmt {
 public:
+   vhdl_wait_stmt(vhdl_wait_type_t type = VHDL_WAIT_INDEF,
+                  vhdl_expr *expr = NULL)
+      : type_(type), expr_(expr) {}
+   ~vhdl_wait_stmt();
+   
    void emit(std::ofstream &of, int level) const;
+private:
+   vhdl_wait_type_t type_;
+   vhdl_expr *expr_;
 };
 
 
