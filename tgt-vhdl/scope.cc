@@ -31,7 +31,23 @@
  */
 static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
 {
-   
+   int nlogs = ivl_scope_logs(scope);
+   for (int i = 0; i < nlogs; i++) {
+      ivl_net_logic_t log = ivl_scope_log(scope, i);
+
+      switch (ivl_logic_type(log)) {
+      case IVL_LO_NOT:
+         break;
+      case IVL_LO_AND:
+         break;
+      case IVL_LO_OR:
+         break;
+      default:
+         error("Don't know how to translate logic type = %d",
+               ivl_logic_type(log));
+         break;
+      }
+   }
 }
 
 /*

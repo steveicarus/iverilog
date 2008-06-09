@@ -136,6 +136,20 @@ private:
 
 typedef std::list<vhdl_conc_stmt*> conc_stmt_list_t;
 
+/*
+ * A concurrent signal assignment (i.e. not part of a process).
+ */
+class vhdl_cassign_stmt : public vhdl_conc_stmt {
+public:
+   vhdl_cassign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
+      : lhs_(lhs), rhs_(rhs) {}
+   ~vhdl_cassign_stmt();
+
+   void emit(std::ofstream &of, int level) const;
+private:
+   vhdl_var_ref *lhs_;
+   vhdl_expr *rhs_;
+};
 
 /*
  * Any sequential statement in a process.

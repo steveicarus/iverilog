@@ -442,3 +442,16 @@ void vhdl_const_int::emit(std::ofstream &of, int level) const
    of << value_;
 }
 
+vhdl_cassign_stmt::~vhdl_cassign_stmt()
+{
+   delete lhs_;
+   delete rhs_;
+}
+
+void vhdl_cassign_stmt::emit(std::ofstream &of, int level) const
+{
+   lhs_->emit(of, level);
+   of << " <= ";
+   rhs_->emit(of, level);
+   of << ";";
+}
