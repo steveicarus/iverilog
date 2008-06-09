@@ -882,6 +882,23 @@ bool PEIdent::calculate_up_do_width_(Design*des, NetScope*scope,
       return flag;
 }
 
+/*
+ * When we know that this is an indexed part select (up or down) this
+ * method calculates the up/down base, as far at it can be calculated.
+ */
+NetExpr* PEIdent::calculate_up_do_base_(Design*des, NetScope*scope) const
+{
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
+
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.lsb != 0);
+      ivl_assert(*this, index_tail.msb != 0);
+
+      NetExpr*tmp = elab_and_eval(des, scope, index_tail.msb, -1);
+      return tmp;
+}
+
 bool PEIdent::calculate_param_range_(Design*des, NetScope*scope,
 				     const NetExpr*par_msb, long&par_msv,
 				     const NetExpr*par_lsb, long&par_lsv) const
@@ -1122,6 +1139,33 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       return 0;
 }
 
+static verinum param_part_select_bits(const verinum&par_val, long wid,
+				     long lsv, long par_lsv)
+{
+      verinum result (verinum::Vx, wid, true);
+
+      for (long idx = 0 ; idx < wid ; idx += 1) {
+	    long off = idx + lsv - par_lsv;
+	    if (off < 0)
+		  result.set(idx, verinum::Vx);
+	    else if (off < (long)par_val.len())
+		  result.set(idx, par_val.get(off));
+	    else if (par_val.is_string()) // Pad strings with nulls.
+		  result.set(idx, verinum::V0);
+	    else if (par_val.has_len()) // Pad sized parameters with X
+		  result.set(idx, verinum::Vx);
+	    else // Unsized parameters are "infinite" width.
+		  result.set(idx, sign_bit(par_val));
+      }
+
+	// If the input is a string, and the part select is working on
+	// byte boundaries, then make the result into a string.
+      if (par_val.is_string() && (labs(lsv-par_lsv)%8 == 0) && (wid%8 == 0))
+	    return result.as_string();
+
+      return result;
+}
+
 NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 					     const NetExpr*par,
 					     NetScope*found_in,
@@ -1157,34 +1201,67 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 		 << "[" << msv << ":" << lsv << "] from range "
 		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
 
-      verinum result (verinum::Vx, wid, true);
+      const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
+      ivl_assert(*this, par_ex);
+
+      verinum result = param_part_select_bits(par_ex->value(), wid, lsv, par_lsv);
+      NetEConst*result_ex = new NetEConst(result);
+      result_ex->set_line(*this);
+
+      return result_ex;
+}
+
+NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
+					       const NetExpr*par,
+					       NetScope*found_in,
+					       const NetExpr*par_msb,
+					       const NetExpr*par_lsb) const
+{
+
+      long par_msv, par_lsv;
+      bool flag = calculate_param_range_(des, scope, par_msb, par_msv, par_lsb, par_lsv);
+      if (!flag)
+	    return 0;
+
+      NetExpr*base = calculate_up_do_base_(des, scope);
+      if (base == 0)
+	    return 0;
+
+      unsigned long wid = 0;
+      calculate_up_do_width_(des, scope, wid);
 
       const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
       ivl_assert(*this, par_ex);
-      verinum par_val = par_ex->value();
 
-      for (long idx = 0 ; idx < wid ; idx += 1) {
-	    long off = idx + lsv - par_lsv;
-	    if (off < 0)
-		  result.set(idx, verinum::Vx);
-	    else if (off < (long)par_val.len())
-		  result.set(idx, par_val.get(off));
-	    else if (par_val.is_string()) // Pad strings with nulls.
-		  result.set(idx, verinum::V0);
-	    else if (par_val.has_len()) // Pad sized parameters with X
-		  result.set(idx, verinum::Vx);
-	    else // Unsized parameters are "infinite" width.
-		  result.set(idx, sign_bit(par_val));
+      if (debug_elaborate)
+	    cerr << get_fileline() << ": debug: Calculate part select "
+		 << "[" << *base << "+:" << wid << "] from range "
+		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
+
+	// Handle the special case that the base is constant. In this
+	// case, just precalculate the entire constant result.
+      if (NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
+	    long lsv = base_c->value().as_long();
+
+	      // Watch out for reversed bit numbering. We're making
+	      // the part select from LSB to MSB.
+	    if (par_msv < par_lsv)
+		  lsv = lsv - wid + 1;
+
+	    verinum result = param_part_select_bits(par_ex->value(), wid,
+						    lsv, par_lsv);
+	    NetEConst*result_ex = new NetEConst(result);
+	    result_ex->set_line(*this);
+	    return result_ex;
       }
 
-	// If the input is a string, and the part select is working on
-	// byte boundaries, then make the result into a string.
-      if (par_val.is_string() && (labs(lsv-par_lsv)%8 == 0) && (wid%8 == 0))
-	    result = verinum(result.as_string());
+      if ((par_msb < par_lsb) && (wid>1))
+	    base = make_add_expr(base, 1-(long)wid);
 
-      NetEConst*result_ex = new NetEConst(result);
-      result_ex->set_line(*this);
-      return result_ex;
+      NetExpr*tmp = par->dup_expr();
+      tmp = new NetESelect(tmp, base, wid);
+      tmp->set_line(*this);
+      return tmp;
 }
 
 /*
@@ -1212,12 +1289,16 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 	    return elaborate_expr_param_part_(des, scope, par, found_in,
 					      par_msb, par_lsb);
 
+      if (use_sel == index_component_t::SEL_IDX_UP)
+	    return elaborate_expr_param_idx_up_(des, scope, par, found_in,
+						par_msb, par_lsb);
+
 	// NOTE TO SELF (continued): The code below should be
 	// rewritten in the above format, as I get to it.
 
       NetExpr*tmp = par->dup_expr();
 
-      if (use_sel == index_component_t::SEL_IDX_UP || use_sel == index_component_t::SEL_IDX_DO) {
+      if (use_sel == index_component_t::SEL_IDX_DO) {
 
 	    ivl_assert(*this, !name_tail.index.empty());
 	    const index_component_t&index_tail = name_tail.index.back();
@@ -1562,14 +1643,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 				      NetESignal*net, NetScope*found_in) const
 {
-      const name_component_t&name_tail = path_.back();
-      ivl_assert(*this, !name_tail.index.empty());
-
-      const index_component_t&index_tail = name_tail.index.back();
-      ivl_assert(*this, index_tail.lsb != 0);
-      ivl_assert(*this, index_tail.msb != 0);
-
-      NetExpr*base = elab_and_eval(des, scope, index_tail.msb, -1);
+      NetExpr*base = calculate_up_do_base_(des, scope);
 
       unsigned long wid = 0;
       calculate_up_do_width_(des, scope, wid);
