@@ -85,8 +85,14 @@ void vhdl_entity::emit(std::ofstream &of, int level) const
    
    emit_comment(of, level);
    of << "entity " << name_ << " is";
-   // ...ports...
-   // newline(indent(level));
+
+   if (ports_.size() > 0) {
+      newline(of, indent(level));
+      of << "port (";
+      emit_children<vhdl_decl>(of, ports_, indent(level), ";");
+      of << ");";
+   }
+   
    newline(of, level);
    of << "end entity; ";
    blank_line(of, level);  // Extra blank line after entities
@@ -332,8 +338,6 @@ void vhdl_port_decl::emit(std::ofstream &of, int level) const
    }
    
    type_->emit(of, level);
-   of << ";";
-   emit_comment(of, level, true);
 }
 
 void vhdl_var_decl::emit(std::ofstream &of, int level) const
