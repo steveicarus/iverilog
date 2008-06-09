@@ -56,6 +56,35 @@ static vhdl_var_ref *nexus_to_var_ref(vhdl_arch *arch, ivl_nexus_t nexus)
 /*
  * Convert the inputs of a logic gate to a binary expression.
  */
+static vhdl_expr *inputs_to_expr(vhdl_arch *arch, vhdl_binop_t op,
+                                 ivl_net_logic_t log)
+{
+   // Not always std_logic but this is probably OK since
+   // the program has already been type checked
+   vhdl_binop_expr *gate =
+      new vhdl_binop_expr(op, vhdl_type::std_logic());
+   
+   int npins = ivl_logic_pins(log);
+   for (int i = 1; i < npins; i++) {
+      ivl_nexus_t input = ivl_logic_pin(log, i);
+      gate->add_expr(nexus_to_var_ref(arch, input));
+   }
+
+   return gate;
+}
+
+/*
+ * Covert a gate intput to an unary expression.
+ */
+static vhdl_expr *input_to_expr(vhdl_arch *arch, vhdl_unaryop_t op,
+                                ivl_net_logic_t log)
+{
+   ivl_nexus_t input = ivl_logic_pin(log, 1);
+   assert(input);
+
+   vhdl_expr *operand = nexus_to_var_ref(arch, input);
+   return new vhdl_unaryop_expr(op, operand, vhdl_type::std_logic()); 
+}
 
 /*
  * Translate all the primitive logic gates into concurrent
@@ -71,18 +100,25 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
       ivl_nexus_t output = ivl_logic_pin(log, 0);
       vhdl_var_ref *lhs = nexus_to_var_ref(arch, output);
 
+      vhdl_expr *rhs = NULL;
       switch (ivl_logic_type(log)) {
       case IVL_LO_NOT:
+         rhs = input_to_expr(arch, VHDL_UNARYOP_NOT, log);
          break;
       case IVL_LO_AND:
+         rhs = inputs_to_expr(arch, VHDL_BINOP_AND, log);
          break;
       case IVL_LO_OR:
+         rhs = inputs_to_expr(arch, VHDL_BINOP_OR, log);
          break;
       default:
          error("Don't know how to translate logic type = %d",
                ivl_logic_type(log));
-         break;
+         continue;
       }
+      assert(rhs);
+
+      arch->add_stmt(new vhdl_cassign_stmt(lhs, rhs));
    }
 }
 

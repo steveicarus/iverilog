@@ -499,9 +499,8 @@ void vhdl_binop_expr::emit(std::ofstream &of, int level) const
    assert(operands_.size() > 0);   
    std::list<vhdl_expr*>::const_iterator it = operands_.begin();
 
-   do {
-      (*it)->emit(of, level);
-      
+   (*it)->emit(of, level);
+   while (++it != operands_.end()) {
       switch (op_) {
       case VHDL_BINOP_AND:
          of << " and ";
@@ -510,7 +509,9 @@ void vhdl_binop_expr::emit(std::ofstream &of, int level) const
          of << " or ";
          break;
       }
-   } while (++it != operands_.end());      
+
+      (*it)->emit(of, level);
+   }      
 
    of << ")";
 }
