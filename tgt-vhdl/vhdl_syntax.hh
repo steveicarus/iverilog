@@ -58,16 +58,24 @@ enum vhdl_binop_t {
    VHDL_BINOP_OR,
 };
 
+/*
+ * A binary expression contains a list of operands rather
+ * than just two: this is to model n-input gates and the
+ * like. A second constructor is provided to handle the
+ * common case of a true binary expression.
+ */
 class vhdl_binop_expr : public vhdl_expr {
 public:
+   vhdl_binop_expr(vhdl_binop_t op, vhdl_type *type)
+      : vhdl_expr(type), op_(op) {}
    vhdl_binop_expr(vhdl_expr *left, vhdl_binop_t op,
-                   vhdl_expr *right, vhdl_type *type)
-      : vhdl_expr(type), left_(left), right_(right), op_(op) {}
+                   vhdl_expr *right, vhdl_type *type);
    ~vhdl_binop_expr();
 
+   void add_expr(vhdl_expr *e);
    void emit(std::ofstream &of, int level) const;
 private:
-   vhdl_expr *left_, *right_;
+   std::list<vhdl_expr*> operands_;
    vhdl_binop_t op_;
 };
 

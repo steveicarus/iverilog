@@ -54,6 +54,10 @@ static vhdl_var_ref *nexus_to_var_ref(vhdl_arch *arch, ivl_nexus_t nexus)
 }
 
 /*
+ * Convert the inputs of a logic gate to a binary expression.
+ */
+
+/*
  * Translate all the primitive logic gates into concurrent
  * signal assignments.
  */

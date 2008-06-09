@@ -471,29 +471,47 @@ void vhdl_unaryop_expr::emit(std::ofstream &of, int level) const
    operand_->emit(of, level);
 }
 
+vhdl_binop_expr::vhdl_binop_expr(vhdl_expr *left, vhdl_binop_t op,
+                                 vhdl_expr *right, vhdl_type *type)
+   : vhdl_expr(type), op_(op)
+{
+   add_expr(left);
+   add_expr(right);
+}
+
 vhdl_binop_expr::~vhdl_binop_expr()
 {
-   delete left_;
-   delete right_;
+   delete_children<vhdl_expr>(operands_);
+}
+
+void vhdl_binop_expr::add_expr(vhdl_expr *e)
+{
+   operands_.push_back(e);
 }
 
 void vhdl_binop_expr::emit(std::ofstream &of, int level) const
 {
    // Expressions are fully parenthesized to remove any
    // ambiguity in the output
+
    of << "(";
-   right_->emit(of, level);
 
-   switch (op_) {
-   case VHDL_BINOP_AND:
-      of << " and ";
-      break;
-   case VHDL_BINOP_OR:
-      of << " or ";
-      break;
-   }
+   assert(operands_.size() > 0);   
+   std::list<vhdl_expr*>::const_iterator it = operands_.begin();
 
-   right_->emit(of, level);
+   do {
+      (*it)->emit(of, level);
+      
+      switch (op_) {
+      case VHDL_BINOP_AND:
+         of << " and ";
+         break;
+      case VHDL_BINOP_OR:
+         of << " or ";
+         break;
+      }
+   } while (++it != operands_.end());      
+
    of << ")";
 }
 
