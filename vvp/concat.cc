@@ -28,6 +28,8 @@
 #endif
 # include  <assert.h>
 
+# define SCHEDULE_OUTPUT 0
+
 /* vvp_fun_concat
  * This node function creates vectors (vvp_vector4_t) from the
  * concatenation of the inputs. The inputs (4) may be vector or
@@ -84,9 +86,13 @@ void vvp_fun_concat::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	    return;
 
       input_[pdx] = bit;
+
       if (net_ == 0) {
 	    net_ = port.ptr();
-	    schedule_generic(this, 0, false);
+	    if (SCHEDULE_OUTPUT)
+		  schedule_generic(this, 0, false);
+	    else
+		  run_run();
       }
 }
 
