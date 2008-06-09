@@ -30,7 +30,7 @@
 vvp_fun_part::vvp_fun_part(unsigned base, unsigned wid)
 : base_(base), val_(wid)
 {
-      net_ = 0;
+      needs_push_ = true;
 }
 
 vvp_fun_part::~vvp_fun_part()
@@ -41,23 +41,20 @@ void vvp_fun_part::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
       assert(port.port() == 0);
 
-      vvp_vector4_t tmp = val_;
+      vvp_vector4_t tmp (val_.size());
       for (unsigned idx = 0 ;  idx < tmp.size() ;  idx += 1) {
 	    if ((idx + base_) < bit.size())
 		  tmp.set_bit(idx, bit.value(base_+idx));
 	    else
-		  tmp.set_bit(idx, BIT4_X);
+		  tmp.set_bit(idx, val_.value(idx));
       }
 
-      if (val_ .eeq( tmp ))
+      if (val_ .eeq(tmp) && !needs_push_)
 	    return;
 
       val_ = tmp;
-
-      if (net_ == 0) {
-	    net_ = port.ptr();
-	    schedule_generic(this, 0, false);
-      }
+      needs_push_ = false;
+      vvp_send_vec4(port.ptr()->out, val_);
 }
 
 /*
@@ -71,25 +68,31 @@ void vvp_fun_part::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 {
       assert(bit.size() == wid);
 
+	// If there is no overlap between input part select and output
+	// part select, then do nothing.
       if (base >= base_+val_.size())
 	    return;
       if ((base+wid) <= base_)
 	    return;
 
-      vvp_vector4_t tmp = val_;
-      if (tmp.size() == 0)
-	    tmp = vvp_vector4_t(vwid);
+	// There is at least some overlap, so build a new output part
+	// select from the previous output and the new input.
+      vvp_vector4_t tmp (val_.size());
+      for (unsigned idx = 0 ;  idx < tmp.size() ;  idx += 1) {
+	    if ((idx + base_) < base)
+		  tmp.set_bit(idx, val_.value(idx));
+	    else if ((idx + base_) < (base+bit.size()))
+		  tmp.set_bit(idx, bit.value(base_+idx));
+	    else
+		  tmp.set_bit(idx, val_.value(idx));
+      }
 
-      assert(tmp.size() == vwid);
-      tmp.set_vec(base, bit);
-      recv_vec4(port, tmp);
-}
+      if (val_ .eeq(tmp) && !needs_push_)
+	    return;
 
-void vvp_fun_part::run_run()
-{
-      vvp_net_t*ptr = net_;
-      net_ = 0;
-      vvp_send_vec4(ptr->out, val_);
+      val_ = tmp;
+      needs_push_ = false;
+      vvp_send_vec4(port.ptr()->out, val_);
 }
 
 vvp_fun_part_pv::vvp_fun_part_pv(unsigned b, unsigned w, unsigned v)

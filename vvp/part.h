@@ -19,15 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "schedule.h"
-
 /* vvp_fun_part
  * This node takes a part select of the input vector. Input 0 is the
- * vector to be selected from, and input 1 is the location where the
- * select starts. Input 2, which is typically constant, is the width
- * of the result.
+ * vector to be selected from, and the base and wid are where to pull
+ * the part from.
  */
-class vvp_fun_part  : public vvp_net_fun_t, private vvp_gen_event_s {
+class vvp_fun_part  : public vvp_net_fun_t {
 
     public:
       vvp_fun_part(unsigned base, unsigned wid);
@@ -40,13 +37,10 @@ class vvp_fun_part  : public vvp_net_fun_t, private vvp_gen_event_s {
 			unsigned, unsigned, unsigned);
 
     private:
-      void run_run();
-
-    private:
+      bool needs_push_;
       unsigned base_;
       unsigned wid_;
       vvp_vector4_t val_;
-      vvp_net_t*net_;
 };
 
 /* vvp_fun_part_pv
