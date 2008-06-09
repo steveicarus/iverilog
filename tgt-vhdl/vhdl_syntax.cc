@@ -315,7 +315,7 @@ void vhdl_signal_decl::emit(std::ofstream &of, int level) const
 
 vhdl_expr::~vhdl_expr()
 {
-   if (type != NULL)
+   if (type_ != NULL)
       delete type_;
 }
 

@@ -26,6 +26,15 @@
 #include <cassert>
 
 /*
+ * Translate all the primitive logic gates into concurrent
+ * signal assignments.
+ */
+static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
+{
+   
+}
+
+/*
  * Declare all signals for a scope in an architecture.
  */
 static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
@@ -71,6 +80,9 @@ static vhdl_entity *create_entity_for(ivl_scope_t scope)
    // the architecture
    declare_signals(arch, scope);
 
+   // Similarly, add all the primitive logic gates
+   declare_logic(arch, scope);
+   
    // Build a comment to add to the entity/architecture
    std::ostringstream ss;
    ss << "Generated from Verilog module " << ivl_scope_tname(scope);
