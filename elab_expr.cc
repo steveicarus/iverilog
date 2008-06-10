@@ -1182,12 +1182,12 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
       if (!flag)
 	    return 0;
 
-	// Notice that the par_msv is not used is this function other
-	// then for this test. It is used to tell the direction that
+	// Notice that the par_msv is not used in this function other
+	// than for this test. It is used to tell the direction that
 	// the bits are numbers, so that we can make sure the
 	// direction matches the part select direction. After that,
 	// we only need the par_lsv.
-      if (msv>lsv && par_msv<par_lsv || msv<lsv && par_msv>=par_lsv) {
+      if ((msv>lsv && par_msv<par_lsv) || (msv<lsv && par_msv>=par_lsv)) {
 	    cerr << get_fileline() << ": error: Part select "
 		 << "[" << msv << ":" << lsv << "] is out of order." << endl;
 	    des->errors += 1;
