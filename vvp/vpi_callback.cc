@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.46 2007/04/10 04:32:05 steve Exp $"
-#endif
 
 /*
  * Callbacks are objects that carry a function to be called when some
@@ -108,6 +105,7 @@ void delete_vpi_callback(struct __vpiCallback* ref)
       assert(ref);
       assert(ref->base.vpi_type);
       assert(ref->base.vpi_type->type_code == vpiCallback);
+      if (ref->cb_sync != 0) delete ref->cb_sync;
       delete ref;
 }
 
@@ -626,4 +624,3 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 		    vp->format);
       }
 }
-

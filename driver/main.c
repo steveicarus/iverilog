@@ -266,6 +266,7 @@ static const char*my_tempfile(const char*str, FILE**fout)
  */
 static int t_default(char*cmd, unsigned ncmd)
 {
+      int rtn = 0;
       unsigned rc;
 #ifdef __MINGW32__
       unsigned ncmd_start = ncmd;
@@ -328,23 +329,24 @@ static int t_default(char*cmd, unsigned ncmd)
 	    remove(compiled_defines_path);
       }
 #ifdef __MINGW32__  /* MinGW just returns the exit status, so return it! */
+      free(cmd);
       return rc;
 #else
 
       if (rc != 0) {
 	    if (rc == 127) {
 		  fprintf(stderr, "Failed to execute: %s\n", cmd);
-		  return 1;
-	    }
-
-	    if (WIFEXITED(rc))
-		  return WEXITSTATUS(rc);
-
-	    fprintf(stderr, "Command signaled: %s\n", cmd);
-	    return -1;
+		  rtn = 1;
+	    } else if (WIFEXITED(rc)) {
+		  rtn = WEXITSTATUS(rc);
+	    } else {
+		  fprintf(stderr, "Command signaled: %s\n", cmd);
+		  rtn = -1;
+	    } 
       }
 
-      return 0;
+      free(cmd);
+      return rtn;
 #endif
 }
 
@@ -871,6 +873,7 @@ int main(int argc, char **argv)
 		  }
 
 		  fprintf(stderr, "Command signaled: %s\n", cmd);
+		  free(cmd);
 		  return -1;
 	    }
 
@@ -889,6 +892,4 @@ int main(int argc, char **argv)
       fclose(iconfig_file);
 
       return t_default(cmd, ncmd);
-
-      return 0;
 }
