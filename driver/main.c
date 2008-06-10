@@ -266,7 +266,6 @@ static const char*my_tempfile(const char*str, FILE**fout)
  */
 static int t_default(char*cmd, unsigned ncmd)
 {
-      int rtn = 0;
       unsigned rc;
 #ifdef __MINGW32__
       unsigned ncmd_start = ncmd;
@@ -332,7 +331,7 @@ static int t_default(char*cmd, unsigned ncmd)
       free(cmd);
       return rc;
 #else
-
+      int rtn = 0;
       if (rc != 0) {
 	    if (rc == 127) {
 		  fprintf(stderr, "Failed to execute: %s\n", cmd);
