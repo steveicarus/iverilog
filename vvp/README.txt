@@ -783,7 +783,7 @@ syntax is:
    &A '<' <symbol> , <base> <width> '>'
 
 The <symbol> is the label for a variable array, and the <number> is
-the cannonical word index as an unsigned integer. The second form
+the canonical word index as an unsigned integer. The second form
 retrives the index from thread space (<width> bits starting at <base>).
 
 * The &PV<> argument
