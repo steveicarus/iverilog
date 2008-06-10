@@ -302,7 +302,7 @@ public:
 private:
    vhdl_component_decl(const char *name);
 
-   // TODO: Ports, etc.
+   decl_list_t ports_;
 };
 
 
@@ -429,6 +429,7 @@ public:
    void add_port(vhdl_port_decl *decl);
    vhdl_arch *get_arch() const { return arch_; }
    vhdl_decl *get_decl(const std::string &name) const;
+   const decl_list_t &get_ports() const { return ports_; }
    const std::string &get_name() const { return name_; }
    void requires_package(const char *spec);
    const std::string &get_derived_from() const { return derived_from_; }   

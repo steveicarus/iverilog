@@ -279,6 +279,8 @@ vhdl_component_decl *vhdl_component_decl::component_decl_for(const vhdl_entity *
    vhdl_component_decl *decl = new vhdl_component_decl
       (ent->get_name().c_str());
 
+   decl->ports_ = ent->get_ports();
+   
    return decl;
 }
 
@@ -286,7 +288,14 @@ void vhdl_component_decl::emit(std::ofstream &of, int level) const
 {
    emit_comment(of, level);
    of << "component " << name_ << " is";
-   // ...ports...
+
+   if (ports_.size() > 0) {
+      newline(of, indent(level));
+      of << "port (";
+      emit_children<vhdl_decl>(of, ports_, indent(level), ";");
+      of << ");";
+   }
+   
    newline(of, level);
    of << "end component;";
 }
