@@ -1078,28 +1078,44 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
 {
       assert(ref->vpi_type->type_code == vpiPartSelect);
       struct __vpiPV*rfp = (struct __vpiPV*)ref;
-      vvp_fun_signal_vec*sig = reinterpret_cast<vvp_fun_signal_vec*>(rfp->net);
+      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(rfp->net->fun);
       assert(sig);
 
+      unsigned sig_size = sig->size();
       unsigned width = rfp->width;
       int base = PV_get_base(rfp);
-      if (base >= (signed) sig->size()) return 0;
+      if (base >= (signed) sig_size) return 0;
+      if (base + (signed) width < 0) return 0;
+
+      vvp_vector4_t val = vec4_from_vpi_value(vp, width);
+
+	/*
+	 * If the base is less than zero then trim off any unneeded
+	 * lower bits.
+	 */
       if (base < 0) {
 	    width += base;
+	    val = val.subvalue(-base, width);
 	    base = 0;
       }
-      if (base+width > sig->size()) width = sig->size() - base;
 
-      bool full_sig = base == 0 && width == sig->size();
+	/*
+	 * If the value is wider than the signal then trim off any
+	 * unneeded upper bits.
+	 */
+      if (base+width > sig_size) {
+	    width = sig_size - base;
+	    val = val.subvalue(0, width);
+      }
 
-      vvp_net_ptr_t ptr (rfp->net, 0);
+      bool full_sig = base == 0 && width == sig_size;
 
-/* We only support integer values. */
-      assert(vp->format == vpiIntVal);
+      vvp_net_ptr_t dest(rfp->net, 0);
+
       if (full_sig) {
-	    vvp_send_long(ptr, vp->value.integer);
+	    vvp_send_vec4(dest, val);
       } else {
-	    vvp_send_long_pv(ptr, vp->value.integer, base, width);
+	    vvp_send_vec4_pv(dest, val, base, width, sig_size);
       }
 
       return 0;
