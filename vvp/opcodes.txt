@@ -429,12 +429,6 @@ This instruction is similar to %load/av, but it loads only a single
 bit, and the <index> is the selector for the bit to use. If <index> is
 out of range, then x is loaded.
 
-* %load/nx <bit>, <vpi-label>, <idx>
-
-This instruction load a value from a .net object bit. Since .net
-objects don't really exist (they are only named indirection into the
-netlist) this instruction indexes into the .net list of bits.
-
 * %load/v <bit>, <functor-label>, <wid>
 
 This instruction loads a vector value from the given functor node into
@@ -461,7 +455,6 @@ small vector with a large immediate offset indexing an array.
 This instruction reads a real value from the vpi-like object to a word
 register.
 
-* %load/x <bit>, <functor-label>, <idx>
 * %load/x.p <bit>, <functor-label>, <idx>
 
 This is an indexed load. It uses the contents of the specified index

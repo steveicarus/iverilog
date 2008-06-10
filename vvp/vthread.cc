@@ -2441,37 +2441,6 @@ bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-/*
- * %load/nx <bit>, <vpi-label>, <idx>  ; Load net/indexed.
- *
- * cp->bit_idx[0] contains the <bit> value, an index into the thread
- * bit register.
- *
- * cp->bin_idx[1] is the <idx> value from the words array.
- *
- * cp->handle is the linked reference to the __vpiSignal that we are
- * to read from.
- */
-bool of_LOAD_NX(vthread_t thr, vvp_code_t cp)
-{
-      assert(cp->bit_idx[0] >= 4);
-      assert(cp->bit_idx[1] <  4);
-      assert(cp->handle->vpi_type->type_code == vpiNet);
-
-      struct __vpiSignal*sig =
-	    reinterpret_cast<struct __vpiSignal*>(cp->handle);
-
-      unsigned idx = thr->words[cp->bit_idx[1]].w_int;
-
-      vvp_fun_signal_vec*fun = dynamic_cast<vvp_fun_signal_vec*>(sig->node->fun);
-      assert(sig != 0);
-
-      vvp_bit4_t val = fun->value(idx);
-      thr_put_bit(thr, cp->bit_idx[0], val);
-
-      return true;
-}
-
 /* %load/v <bit>, <label>, <wid>
  *
  * Implement the %load/v instruction. Load the vector value of the
@@ -2593,7 +2562,7 @@ bool of_LOAD_WR(vthread_t thr, vvp_code_t cp)
  *
  * <bit> is the destination thread bit and must be >= 4.
  */
-bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
+static bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
 {
 	// <bit> is the thread bit to load
       assert(cp->bit_idx[0] >= 4);
