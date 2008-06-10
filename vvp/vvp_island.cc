@@ -32,7 +32,7 @@
 
 /*
 * Islands are mutually connected bidirectional meshes that have a
-* discipline other then the implicit ddiscipline of the rest of the
+* discipline other than the implicit ddiscipline of the rest of the
 * run time.
 *
 * In the vvp input, an island is created with this record:

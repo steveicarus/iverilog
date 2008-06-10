@@ -141,7 +141,7 @@ struct __vpiCallback {
 	// scheduled event
       struct sync_cb* cb_sync;
 
-	// The calback holder may use this for various purposes.
+	// The callback holder may use this for various purposes.
       long extra_data;
 
 	// Used for listing callbacks.

@@ -1586,7 +1586,7 @@ static unsigned long divide2words(unsigned long a, unsigned long b,
 
 	      // Now result*b + {high,a} == the input {high,a}. It is
 	      // possible that the new high >= 1. If so, it will
-	      // certainly be less then high from the previous
+	      // certainly be less than high from the previous
 	      // iteration. Do another iteration and it will shrink,
 	      // eventually to 0.
       }

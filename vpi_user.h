@@ -143,7 +143,7 @@ typedef struct t_vpi_value {
   (1) The number of delays to be retrieved
       ( normally this is used in vpi_get_delays (..) )
   { 
-    (1.1) Setted by "no_of_delays" field
+    (1.1) Set by "no_of_delays" field
    
     (1.2) For the primitive_object, the no_of_delays
         shall be 2 or 3

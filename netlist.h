@@ -1379,7 +1379,7 @@ class NetSysFunc  : public NetNode {
 class NetTran  : public NetNode, public IslandBranch {
 
     public:
-	// Tran devices other then TRAN_VP
+	// Tran devices other than TRAN_VP
       NetTran(NetScope*scope, perm_string n, ivl_switch_type_t type);
 	// Create a TRAN_VP
       NetTran(NetScope*scope, perm_string n, unsigned wid,

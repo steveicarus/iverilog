@@ -1373,7 +1373,7 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 			par_mv = par_me->value().as_long();
 			par_lv = par_le->value().as_long();
 		  }
-		    /* Convert the index to cannonical bit address. */
+		    /* Convert the index to canonical bit address. */
 		  long ridx = rv.as_long();
 		  if (par_mv >= par_lv) {
 			ridx -= par_lv;

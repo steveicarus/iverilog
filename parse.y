@@ -1186,7 +1186,7 @@ expr_primary
       }
 
   /* Many of the VAMS built-in functions are available as builtin
-     functions with $system_function equivilents. */
+     functions with $system_function equivalents. */
 
   | K_acos '(' expression ')'
       { perm_string tn = perm_string::literal("$acos");

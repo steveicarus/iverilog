@@ -57,7 +57,7 @@ class hname_t {
 
     private:
       perm_string name_;
-	// If the number is anything other then INT_MIN, then this is
+	// If the number is anything other than INT_MIN, then this is
 	// the numeric part of the name. Otherwise, it is not part of
 	// the name at all.
       int number_;

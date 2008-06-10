@@ -114,7 +114,7 @@ void join_island(NetObj*obj)
 
 		    // If that is an uncommitted branch, then save
 		    // it. When I finally choose an island for self,
-		    // these branches will be scanned so tha they join
+		    // these branches will be scanned so that they join
 		    // this island as well.
 		  if (tmp_branch->island == 0) {
 			uncommitted_neighbors.push_back(tmp);
