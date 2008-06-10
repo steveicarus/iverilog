@@ -255,11 +255,36 @@ vhdl_comp_inst::vhdl_comp_inst(const char *inst_name, const char *comp_name)
    
 }
 
+void vhdl_comp_inst::map_port(const char *name, vhdl_expr *expr)
+{
+   port_map_t pmap = { name, expr };
+   mapping_.push_back(pmap);
+}
+
 void vhdl_comp_inst::emit(std::ofstream &of, int level) const
 {
-   // If there are no ports or generics we don't need to mention them...
    emit_comment(of, level);
-   of << inst_name_ << ": " << comp_name_ << ";";
+   of << inst_name_ << ": " << comp_name_;
+
+   // If there are no ports or generics we don't need to mention them...
+   if (mapping_.size() > 0) {
+      newline(of, indent(level));
+      of << "port map (";
+
+      int sz = mapping_.size();
+      port_map_list_t::const_iterator it;
+      for (it = mapping_.begin(); it != mapping_.end(); ++it) {
+         newline(of, indent(indent(level)));
+         of << (*it).name << " => ";
+         (*it).expr->emit(of, level);
+         if (--sz > 0)
+            of << ",";
+      }
+      newline(of, indent(level));
+      of << ")";
+   }
+   
+   of << ";";
    newline(of, level);
 }
 

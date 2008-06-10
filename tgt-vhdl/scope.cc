@@ -217,7 +217,6 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
       ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nexus, i);
       if ((sig = ivl_nexus_ptr_sig(ptr)) != NULL) {
          const char *basename = ivl_signal_basename(sig);
-         std::cout << "checking " << basename << std::endl;
          if (sig == to) {
             // Don't map a signal to itself!
             continue;
@@ -226,8 +225,10 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
             // It's a signal declared in the parent
             // Pick this one (any one will do as they're all
             // connected together if there's more than one)
-            std::cout << "= " << std::hex << sig << std::endl;
-            std::cout << "-> " << ivl_signal_basename(sig) << std::endl;
+            vhdl_var_ref *ref =
+               new vhdl_var_ref(basename, vhdl_type::std_logic());
+            inst->map_port(ivl_signal_basename(to), ref);
+
             return;
          }
       }
@@ -247,8 +248,6 @@ static void port_map(ivl_scope_t scope, vhdl_entity *parent,
    int nsigs = ivl_scope_sigs(scope);
    for (int i = 0; i < nsigs; i++) {
       ivl_signal_t sig = ivl_scope_sig(scope, i);
-
-      const char *basename = ivl_signal_basename(sig);
       
       ivl_signal_port_t mode = ivl_signal_port(sig);
       switch (mode) {

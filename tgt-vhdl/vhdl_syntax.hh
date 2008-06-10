@@ -351,6 +351,15 @@ private:
    vhdl_port_mode_t mode_;
 };
 
+/*
+ * A mapping from port name to an expression.
+ */
+struct port_map_t {
+   std::string name;
+   vhdl_expr *expr;
+};
+
+typedef std::list<port_map_t> port_map_list_t;
 
 /*
  * Instantiation of component. This is really only a placeholder
@@ -362,10 +371,10 @@ public:
    virtual ~vhdl_comp_inst() {}
 
    void emit(std::ofstream &of, int level) const;
+   void map_port(const char *name, vhdl_expr *expr);
 private:
    std::string comp_name_, inst_name_;
-
-   // TODO: Port mappings, etc.
+   port_map_list_t mapping_;
 };
 
 
