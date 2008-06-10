@@ -446,7 +446,7 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag);
 vpiHandle vpip_make_vthr_word(unsigned base, const char*type);
 
 vpiHandle vpip_make_vthr_A(char*symbol, unsigned index);
-vpiHandle vpip_make_vthr_A(char*symbol, char*symbol);
+vpiHandle vpip_make_vthr_A(char*label, char*symbol);
 vpiHandle vpip_make_vthr_A(char*symbol, unsigned tbase, unsigned twid);
 
 /*
