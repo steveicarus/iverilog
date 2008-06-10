@@ -368,7 +368,7 @@ typedef std::list<port_map_t> port_map_list_t;
 class vhdl_comp_inst : public vhdl_conc_stmt {
 public:
    vhdl_comp_inst(const char *inst_name, const char *comp_name);
-   virtual ~vhdl_comp_inst() {}
+   ~vhdl_comp_inst();
 
    void emit(std::ofstream &of, int level) const;
    void map_port(const char *name, vhdl_expr *expr);

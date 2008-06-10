@@ -255,6 +255,15 @@ vhdl_comp_inst::vhdl_comp_inst(const char *inst_name, const char *comp_name)
    
 }
 
+vhdl_comp_inst::~vhdl_comp_inst()
+{
+   port_map_list_t::iterator it;
+   for (it = mapping_.begin(); it != mapping_.end(); ++it) {
+      delete (*it).expr;
+   }
+   mapping_.clear();
+}
+
 void vhdl_comp_inst::map_port(const char *name, vhdl_expr *expr)
 {
    port_map_t pmap = { name, expr };
