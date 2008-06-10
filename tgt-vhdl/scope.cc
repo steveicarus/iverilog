@@ -200,6 +200,71 @@ static vhdl_entity *create_entity_for(ivl_scope_t scope)
 }
 
 /*
+ * Map two signals together in an instantiation.
+ * The signals are joined by a nexus.
+ */
+static void map_signal(ivl_signal_t to, vhdl_entity *parent,
+                       vhdl_comp_inst *inst)
+{
+   // TODO: Work for multiple words
+   ivl_nexus_t nexus = ivl_signal_nex(to, 0);
+   
+   int nptrs = ivl_nexus_ptrs(nexus);
+   for (int i = 0; i < nptrs; i++) {
+      ivl_signal_t sig;
+      vhdl_decl *decl;
+      
+      ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nexus, i);
+      if ((sig = ivl_nexus_ptr_sig(ptr)) != NULL) {
+         const char *basename = ivl_signal_basename(sig);
+         std::cout << "checking " << basename << std::endl;
+         if (sig == to) {
+            // Don't map a signal to itself!
+            continue;
+         }
+         else if ((decl = parent->get_arch()->get_decl(basename))) {
+            // It's a signal declared in the parent
+            // Pick this one (any one will do as they're all
+            // connected together if there's more than one)
+            std::cout << "= " << std::hex << sig << std::endl;
+            std::cout << "-> " << ivl_signal_basename(sig) << std::endl;
+            return;
+         }
+      }
+   }
+
+   error("Failed to find signal to connect to port %s",
+         ivl_signal_basename(to));
+}
+
+/*
+ * Find all the port mappings of a module instantiation.
+ */
+static void port_map(ivl_scope_t scope, vhdl_entity *parent,
+                     vhdl_comp_inst *inst)
+{
+   // Find all the port mappings
+   int nsigs = ivl_scope_sigs(scope);
+   for (int i = 0; i < nsigs; i++) {
+      ivl_signal_t sig = ivl_scope_sig(scope, i);
+
+      const char *basename = ivl_signal_basename(sig);
+      
+      ivl_signal_port_t mode = ivl_signal_port(sig);
+      switch (mode) {
+      case IVL_SIP_NONE:
+         // Internal signals don't appear in the port map
+         break;
+      case IVL_SIP_INPUT:
+      case IVL_SIP_OUTPUT:
+      case IVL_SIP_INOUT:
+         map_signal(sig, parent, inst);
+         break;         
+      }
+   }
+}
+
+/*
  * Instantiate an entity in the hierarchy, and possibly create
  * that entity if it hasn't been encountered yet.
  */
@@ -235,6 +300,8 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
          const char *inst_name = ivl_scope_basename(scope);
          vhdl_comp_inst *inst =
             new vhdl_comp_inst(inst_name, ent->get_name().c_str());
+         port_map(scope, parent_ent, inst);         
+
          parent_arch->add_stmt(inst);
       }
       else {

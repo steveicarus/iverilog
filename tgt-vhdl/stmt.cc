@@ -50,7 +50,7 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
       line_var->set_comment("For generating $display output");
       proc->add_decl(line_var);
    }
-   
+    
    // Write the data into the line
    int count = ivl_stmt_parm_count(stmt);
    for (int i = 0; i < count; i++) {
