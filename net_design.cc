@@ -227,6 +227,10 @@ void NetScope::run_defparams(Design*des)
 		  continue;
 	    }
 
+	      // Once placed in the parameter map, the expression may
+	      // be deleted when evaluated, so give it a copy of this
+	      // expression, not the original.
+	    val = val->dup_expr();
 	    bool flag = targ_scope->replace_parameter(perm_name, val);
 	    if (! flag) {
 		  cerr << val->get_fileline() << ": warning: parameter "
@@ -348,7 +352,7 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 		  tmp.has_sign ( (*cur).second.signed_flag );
 		  delete val;
 		  val = new NetEConst(tmp);
-		  expr = val;
+		  (*cur).second.expr = expr = val;
 	    }
       }
 
