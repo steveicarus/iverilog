@@ -780,9 +780,23 @@ The &A<> argument is a reference to the word of a variable array. The
 syntax is:
 
    &A '<' <symbol> , <number> '>'
+   &A '<' <symbol> , <base> <width> '>'
 
 The <symbol> is the label for a variable array, and the <number> is
-the cannonical word index as an unsigned integer.
+the cannonical word index as an unsigned integer. The second form
+retrives the index from thread space (<width> bits starting at <base>).
+
+* The &PV<> argument
+
+The &PV<> argument is a reference to part of a signal. The syntax is:
+
+   &PV '<' <symbol> , <base> , <width> '>'
+   &PV '<' <symbol> , <tbase> <twid> , <width> '>'
+
+The <symbol> is the label for a signal, the <base> is the cannonical
+starting bit of the part select and <width> is the number of bits in
+the select. The second form retreives the <base> from thread space
+using <twid> bits starting at <tbase>.
 
 * The T<> argument
 

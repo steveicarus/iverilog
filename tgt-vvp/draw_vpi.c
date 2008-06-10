@@ -289,7 +289,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			      struct vector_info av;
 			      av = draw_eval_expr(word_ex, STUFF_OK_XZ);
 			      snprintf(buffer, sizeof buffer,
-				       "&A<v%p, T<%u,%u,u>>", sig, av.base, av.wid);
+				       "&A<v%p, %u %u>", sig, av.base, av.wid);
 			      args[idx].vec = av;
 			      args[idx].vec_flag = 1;
 			} else {

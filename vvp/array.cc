@@ -1071,7 +1071,7 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned addr)
       return &(obj->base);
 }
 
-vpiHandle vpip_make_vthr_A(char*label, char*symbol)
+vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid)
 {
       struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*)
 	    malloc(sizeof (struct __vpiArrayVthrA));
@@ -1082,16 +1082,8 @@ vpiHandle vpip_make_vthr_A(char*label, char*symbol)
       assert(obj->array);
       free(label);
 
-      unsigned base;
-      unsigned wid;
-      char sflag;
-      int rc = sscanf(symbol, "T<%u,%u,%c>", &base, &wid, &sflag);
-      assert(rc == 3);
-      free(symbol);
-
-      obj->address = base;
-      obj->wid     = wid;
-      assert(sflag == 'u');
+      obj->address = tbase;
+      obj->wid     = twid;
 
       return &(obj->base);
 }
