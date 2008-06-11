@@ -104,6 +104,19 @@ static int draw_stask_display(vhdl_process *proc, ivl_statement_t stmt)
 }
 
 /*
+ * VHDL has no real equivalent of Verilog's $finish task. The
+ * current solution is to use `assert false ...' to terminate
+ * the simulator. This isn't great, as the simulator will
+ * return a failure exit code when in fact it completed
+ * successfully.
+ */
+static int draw_stask_finish(vhdl_process *proc, ivl_statement_t stmt)
+{
+   proc->add_stmt(new vhdl_assert_stmt("SIMULATION FINISHED"));
+   return 0;
+}
+
+/*
  * Generate VHDL for system tasks (like $display). Not all of
  * these are supported.
  */
@@ -113,6 +126,8 @@ static int draw_stask(vhdl_process *proc, ivl_statement_t stmt)
 
    if (strcmp(name, "$display") == 0)
       return draw_stask_display(proc, stmt);
+   else if (strcmp(name, "$finish") == 0)
+      return draw_stask_finish(proc, stmt);
    else {
       error("No VHDL translation for system task %s", name);
       return 0;

@@ -251,6 +251,17 @@ public:
 };
 
 
+class vhdl_assert_stmt : public vhdl_seq_stmt {
+public:
+   vhdl_assert_stmt(const char *reason)
+      : reason_(reason) {}
+
+   void emit(std::ofstream &of, int level) const;
+private:
+   std::string reason_;
+};
+
+
 /*
  * A procedure call. Which is a statement, unlike a function
  * call which is an expression.

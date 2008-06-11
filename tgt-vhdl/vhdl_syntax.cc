@@ -542,6 +542,12 @@ void vhdl_cassign_stmt::emit(std::ofstream &of, int level) const
    of << ";";
 }
 
+void vhdl_assert_stmt::emit(std::ofstream &of, int level) const
+{
+   of << "assert false ";  // TODO: Allow arbitrary expression 
+   of << " report \"" << reason_ << "\" severity failure;";
+}
+
 vhdl_unaryop_expr::~vhdl_unaryop_expr()
 {
    delete operand_;
