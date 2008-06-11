@@ -405,7 +405,7 @@ private:
 class vhdl_arch : public vhdl_element {
    friend class vhdl_entity;  // Can set its parent
 public:
-   vhdl_arch(const char *entity, const char *name="Behavioural");
+   vhdl_arch(const char *entity, const char *name);
    virtual ~vhdl_arch();
 
    void emit(std::ofstream &of, int level=0) const;

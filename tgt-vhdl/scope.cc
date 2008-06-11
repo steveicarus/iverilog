@@ -178,7 +178,7 @@ static vhdl_entity *create_entity_for(ivl_scope_t scope)
    // so we always create a pair and associate the architecture
    // with the entity for convenience (this also means that we
    // retain a 1-to-1 mapping of scope to VHDL element)
-   vhdl_arch *arch = new vhdl_arch(tname);
+   vhdl_arch *arch = new vhdl_arch(tname, "FromVerilog");
    vhdl_entity *ent = new vhdl_entity(tname, derived_from, arch);
 
    // Locate all the signals in this module and add them to
