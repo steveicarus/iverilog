@@ -404,6 +404,13 @@ void vvp_vector4_t::resize(unsigned newsize)
 
       if (newsize > BITS_PER_WORD) {
 	    unsigned newcnt = (newsize + BITS_PER_WORD - 1) / BITS_PER_WORD;
+	    if (newcnt == cnt) {
+		    // If the word count doesn't change, then there is
+		    // no need for re-allocation so we are done now.
+		  size_ = newsize;
+		  return;
+	    }
+
 	    unsigned long*newbits = new unsigned long[2*newcnt];
 
 	    if (cnt > 1) {

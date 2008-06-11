@@ -2461,7 +2461,6 @@ static vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
       assert(cp->bit_idx[0] >= 4);
       assert(cp->bit_idx[1] > 0);
 
-      unsigned wid = cp->bit_idx[1];
       vvp_net_t*net = cp->net;
 
 	/* For the %load to work, the functor must actually be a
@@ -2473,10 +2472,7 @@ static vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
 	    assert(sig);
       }
 
-      vvp_vector4_t sig_value = sig->vec4_value();
-      sig_value.resize(wid);
-
-      return sig_value;
+      return sig->vec4_value();
 }
 
 bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
@@ -2489,9 +2485,15 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
 	/* Check the address once, before we scan the vector. */
       thr_check_addr(thr, bit+wid-1);
 
+      if (sig_value.size() > wid)
+	    sig_value.resize(wid);
+
 	/* Copy the vector bits into the bits4 vector. Do the copy
 	   directly to skip the excess calls to thr_check_addr. */
       thr->bits4.set_vec(bit, sig_value);
+
+      for (unsigned idx = sig_value.size() ; idx < wid ; idx += 1)
+	    thr->bits4.set_bit(bit+idx, BIT4_X);
 
       return true;
 }
