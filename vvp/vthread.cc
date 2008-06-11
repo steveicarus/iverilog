@@ -2586,7 +2586,7 @@ bool of_LOAD_X1P(vthread_t thr, vvp_code_t cp)
       for (long idx = 0 ; idx < wid ; idx += 1) {
 	    long use_index = index + idx;
 	    vvp_bit4_t val;
-	    if (use_index < 0 || use_index >= sig->size())
+	    if (use_index < 0 || use_index >= (signed)sig->size())
 		  val = BIT4_X;
 	    else
 		  val = sig->value(use_index);
