@@ -101,7 +101,7 @@ extern bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VEC(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VP0(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_WR(vthread_t thr, vvp_code_t code);
-extern bool of_LOAD_XP(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_X1P(vthread_t thr, vvp_code_t code);
 extern bool of_LOADI_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MOD(vthread_t thr, vvp_code_t code);
 extern bool of_MOD_S(vthread_t thr, vvp_code_t code);

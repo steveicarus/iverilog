@@ -2558,20 +2558,19 @@ bool of_LOAD_WR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %load/x <bit>, <functor>, <index>
+ * %load/x16 <bit>, <functor>, <wid>
  *
  * <bit> is the destination thread bit and must be >= 4.
  */
-static bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
+bool of_LOAD_X1P(vthread_t thr, vvp_code_t cp)
 {
 	// <bit> is the thread bit to load
       assert(cp->bit_idx[0] >= 4);
       unsigned bit = cp->bit_idx[0];
+      int wid = cp->bit_idx[1];
 
-	// <index> is the index register to use. The actual index into
-	// the vector is the value of the index register.
-      unsigned index_idx = cp->bit_idx[1];
-      unsigned index = thr->words[index_idx].w_int;
+	// <index> is the canonical base address of the part select.
+      long index = thr->words[1].w_int;
 
 	// <functor> is converted to a vvp_net_t pointer from which we
 	// read our value.
@@ -2582,20 +2581,16 @@ static bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
       assert(sig);
 
-      vvp_bit4_t val = index >= sig->size()? BIT4_X : sig->value(index);
-      thr_put_bit(thr, bit, val);
+      for (long idx = 0 ; idx < wid ; idx += 1) {
+	    long use_index = index + idx;
+	    vvp_bit4_t val;
+	    if (use_index < 0 || use_index >= sig->size())
+		  val = BIT4_X;
+	    else
+		  val = sig->value(use_index);
 
-      return true;
-}
-
-bool of_LOAD_XP(vthread_t thr, vvp_code_t cp)
-{
-	// First do the normal handling of the %load/x
-      of_LOAD_X(thr, cp);
-
-	// Now do the post-increment
-      unsigned index_idx = cp->bit_idx[1];
-      thr->words[index_idx].w_int += 1;
+	    thr_put_bit(thr, bit+idx, val);
+      }
 
       return true;
 }

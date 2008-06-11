@@ -455,17 +455,17 @@ small vector with a large immediate offset indexing an array.
 This instruction reads a real value from the vpi-like object to a word
 register.
 
-* %load/x.p <bit>, <functor-label>, <idx>
+* %load/x1p <bit>, <functor-label>, <wid>
 
-This is an indexed load. It uses the contents of the specified index
-register to select a bit from a vector functor at <functor-label>. The
-bit is pulled from the indexed bit of the addressed functor and loaded
-into the destination thread bit. If the indexed value is beyond the
-width of the vector, then the result is X.
+This is an indexed load. It uses the contents of index register 1 to
+select a part from a vector functor at <functor-label>. The 
+part is pulled from the indexed bit of the addressed functor and loaded
+into the destination thread bit. The <wid> is the width of the
+part. If any bit of the desired value is outside the vector, then that
+bit is set to X. The index register 1 is interpreted as a signed value.
 
-The %load/x.p is the same, but when the operation is done, it
-increments the specified index register. This provides a basic
-auto-increment feature.
+When the operation is done, the <wid> is added to index register 1, to
+provide a basic auto-increment behavior.
 
 * %loadi/wr <bit>, <mant>, <exp>
 

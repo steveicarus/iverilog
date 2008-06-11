@@ -2109,7 +2109,6 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 {
       ivl_signal_t sig = ivl_expr_signal(sube);
       struct vector_info res;
-      unsigned idx;
 
 	/* Use this word of the signal. */
       unsigned use_word = 0;
@@ -2153,23 +2152,23 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	    return res;
       }
 
-      draw_eval_expr_into_integer(bit_idx, 0);
-
 	/* Alas, do it the hard way. */
+
+      draw_eval_expr_into_integer(bit_idx, 1);
+
       res.base = allocate_vector(wid);
       res.wid = wid;
       assert(res.base);
 
-      for (idx = 0 ;  idx < res.wid ;  idx += 1) {
-	    if (idx >= bit_wid) {
-		  fprintf(vvp_out, "   %%movi %u, 0, %u; Pad from %u to %u\n",
-			  res.base+idx, res.wid-idx,
-			  ivl_expr_width(sube), wid);
-		  break;
-	    }
-	    fprintf(vvp_out, "   %%load/x.p %u, v%p_%u, 0;\n",
-		    res.base+idx, sig, use_word);
-      }
+      unsigned use_wid = res.wid;
+      if (use_wid > bit_wid)
+	    use_wid = bit_wid;
+
+      fprintf(vvp_out, "   %%load/x1p %u, v%p_%u, %u;\n",
+	      res.base, sig, use_word, use_wid);
+      if (use_wid < res.wid)
+	    fprintf(vvp_out, "   %%movi %u, 0, %u;\n",
+		    res.base + use_wid, res.wid - use_wid);
 
       return res;
 }
