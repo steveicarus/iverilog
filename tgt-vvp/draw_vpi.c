@@ -285,7 +285,12 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 				    word_ex = 0;
 			      }
 			}
-			if (word_ex) {
+			if (word_ex && ivl_expr_type(word_ex)==IVL_EX_SIGNAL) {
+				/* Special case: the index is a signal. */
+			      snprintf(buffer, sizeof buffer,
+				       "&A<v%p, v%p_0 >", sig, ivl_expr_signal(word_ex));
+			} else if (word_ex) {
+				/* fallback case: evaluate expression. */
 			      struct vector_info av;
 			      av = draw_eval_expr(word_ex, STUFF_OK_XZ);
 			      snprintf(buffer, sizeof buffer,

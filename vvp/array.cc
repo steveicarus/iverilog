@@ -83,6 +83,8 @@ struct __vpiArrayIndex {
 struct __vpiArrayVthrA {
       struct __vpiHandle base;
       struct __vpiArray*array;
+	// If this is set, then use it to get the index value.
+      vpiHandle address_handle;
 	// If wid==0, then address is the address into the array.
       unsigned address;
 	// If wid >0, then the address is the base and wid the vector
@@ -91,8 +93,16 @@ struct __vpiArrayVthrA {
 
       unsigned get_address() const
       {
+	    if (address_handle) {
+		  s_vpi_value vp;
+		  vp.format = vpiIntVal;
+		  vpi_get_value(address_handle, &vp);
+		  return vp.value.integer;
+	    }
+
 	    if (wid == 0)
 		  return address;
+
 	    vvp_vector4_t tmp (wid);
 	    for (unsigned idx = 0 ; idx < wid ; idx += 1) {
 		  vvp_bit4_t bit = vthread_get_bit(vpip_current_vthread, address+idx);
@@ -1064,6 +1074,7 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned addr)
       assert(obj->array);
       free(label);
 
+      obj->address_handle = 0;
       obj->address = addr;
       obj->wid = 0;
       assert(addr < obj->array->array_count);
@@ -1082,8 +1093,28 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid)
       assert(obj->array);
       free(label);
 
+      obj->address_handle = 0;
       obj->address = tbase;
       obj->wid     = twid;
+
+      return &(obj->base);
+}
+
+vpiHandle vpip_make_vthr_A(char*label, char*symbol)
+{
+      struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*)
+	    malloc(sizeof (struct __vpiArrayVthrA));
+
+      obj->base.vpi_type = &vpip_array_vthr_A_rt;
+
+      obj->array = array_find(label);
+      assert(obj->array);
+      free(label);
+
+      obj->address_handle = 0;
+      compile_vpi_lookup(&obj->address_handle, symbol);
+      obj->address = 0;
+      obj->wid = 0;
 
       return &(obj->base);
 }
