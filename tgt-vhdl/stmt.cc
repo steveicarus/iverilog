@@ -287,6 +287,19 @@ static int draw_wait(vhdl_process *proc, stmt_container *container,
 static int draw_if(vhdl_process *proc, stmt_container *container,
                    ivl_statement_t stmt)
 {
+   vhdl_expr *test = translate_expr(ivl_stmt_cond_expr(stmt));
+   if (NULL == test)
+      return 1;
+   
+   vhdl_if_stmt *vhdif = new vhdl_if_stmt(test);
+
+   draw_stmt(proc, vhdif->get_then_container(),
+             ivl_stmt_cond_true(stmt));
+   draw_stmt(proc, vhdif->get_else_container(),
+             ivl_stmt_cond_false(stmt));
+
+   container->add_stmt(vhdif);
+   
    return 0;
 }
 
