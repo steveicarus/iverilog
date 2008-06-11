@@ -193,13 +193,7 @@ vhdl_process::vhdl_process(const char *name)
 
 vhdl_process::~vhdl_process()
 {
-   delete_children<vhdl_seq_stmt>(stmts_);
    delete_children<vhdl_decl>(decls_);
-}
-
-void vhdl_process::add_stmt(vhdl_seq_stmt* stmt)
-{
-   stmts_.push_back(stmt);
 }
 
 void vhdl_process::add_decl(vhdl_decl* decl)
@@ -244,9 +238,24 @@ void vhdl_process::emit(std::ofstream &of, int level) const
    of << "is";
    emit_children<vhdl_decl>(of, decls_, level);
    of << "begin";
-   emit_children<vhdl_seq_stmt>(of, stmts_, level);
+   stmts_.emit(of, level);
    of << "end process;";
    newline(of, level);
+}
+
+stmt_container::~stmt_container()
+{
+   delete_children<vhdl_seq_stmt>(stmts_);
+}
+
+void stmt_container::add_stmt(vhdl_seq_stmt *stmt)
+{
+   stmts_.push_back(stmt);
+}
+
+void stmt_container::emit(std::ofstream &of, int level) const
+{
+   emit_children<vhdl_seq_stmt>(of, stmts_, level);  
 }
 
 vhdl_comp_inst::vhdl_comp_inst(const char *inst_name, const char *comp_name)
@@ -546,6 +555,24 @@ void vhdl_assert_stmt::emit(std::ofstream &of, int level) const
 {
    of << "assert false ";  // TODO: Allow arbitrary expression 
    of << " report \"" << reason_ << "\" severity failure;";
+}
+
+vhdl_if_stmt::~vhdl_if_stmt()
+{
+   delete test_;
+}
+
+void vhdl_if_stmt::emit(std::ofstream &of, int level) const
+{
+   of << "if ";
+   test_->emit(of, level);
+   of << " then";
+   newline(of, level);
+   then_part_.emit(of, level);
+   of << "else";
+   newline(of, level);
+   else_part_.emit(of, level);
+   of << "end if;";
 }
 
 vhdl_unaryop_expr::~vhdl_unaryop_expr()

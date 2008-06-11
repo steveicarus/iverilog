@@ -204,7 +204,20 @@ public:
    virtual ~vhdl_seq_stmt() {}
 };
 
-typedef std::list<vhdl_seq_stmt*> seq_stmt_list_t;
+
+/*
+ * A list of sequential statements. For example inside a
+ * process, loop, or if statement.
+ */
+class stmt_container {
+public:
+   ~stmt_container();
+   
+   void add_stmt(vhdl_seq_stmt *stmt);
+   void emit(std::ofstream &of, int level) const;
+private:
+   std::list<vhdl_seq_stmt*> stmts_;
+};
 
 
 /*
@@ -259,6 +272,21 @@ public:
    void emit(std::ofstream &of, int level) const;
 private:
    std::string reason_;
+};
+
+
+class vhdl_if_stmt : public vhdl_seq_stmt {
+public:
+   vhdl_if_stmt(vhdl_expr *test)
+      : test_(test) {}
+   ~vhdl_if_stmt();
+
+   stmt_container *get_then_container() { return &then_part_; }
+   stmt_container *get_else_container() { return &else_part_; }
+   void emit(std::ofstream &of, int level) const;
+private:
+   vhdl_expr *test_;
+   stmt_container then_part_, else_part_;
 };
 
 
@@ -398,12 +426,12 @@ public:
    virtual ~vhdl_process();
 
    void emit(std::ofstream &of, int level) const;
-   void add_stmt(vhdl_seq_stmt *stmt);
+   stmt_container *get_container() { return &stmts_; }
    void add_decl(vhdl_decl *decl);
    void add_sensitivity(const char *name);
    bool have_declared_var(const std::string &name) const;
 private:
-   seq_stmt_list_t stmts_;
+   stmt_container stmts_;
    decl_list_t decls_;
    std::string name_;
    string_list_t sens_;

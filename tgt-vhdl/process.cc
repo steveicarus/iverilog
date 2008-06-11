@@ -39,7 +39,7 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    ent->get_arch()->add_stmt(vhdl_proc);   
    
    ivl_statement_t stmt = ivl_process_stmt(proc);
-   int rc = draw_stmt(vhdl_proc, stmt);
+   int rc = draw_stmt(vhdl_proc, vhdl_proc->get_container(), stmt);
    if (rc != 0)
       return rc;
    
@@ -48,7 +48,7 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    // the end
    if (ivl_process_type(proc) == IVL_PR_INITIAL) {
       vhdl_wait_stmt *wait = new vhdl_wait_stmt();
-      vhdl_proc->add_stmt(wait);
+      vhdl_proc->get_container()->add_stmt(wait);
    }
    
    // Add a comment indicating where it came from
