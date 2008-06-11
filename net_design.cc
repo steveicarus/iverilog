@@ -339,6 +339,14 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	    unsigned long wid = (msb >= lsb)? msb - lsb : lsb - msb;
 	    wid += 1;
 
+	    /* If we have a real value convert it to an integer. */
+	    if(NetECReal*tmp = dynamic_cast<NetECReal*>(expr)) {
+		  verinum nval(tmp->value().as_long64());
+		  expr = new NetEConst(nval);
+		  expr->set_line(*((*cur).second.expr));
+		  (*cur).second.expr = expr;
+	    }
+
 	    NetEConst*val = dynamic_cast<NetEConst*>(expr);
 	    assert(val);
 

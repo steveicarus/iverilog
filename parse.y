@@ -2384,7 +2384,14 @@ parameter_assign_decl
 	param_active_type = IVL_VT_LOGIC;
       }
   | K_integer
-      { param_active_range = 0;
+      { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
+        PExpr*re;
+        re = new PENumber(new verinum(integer_width-1, integer_width));
+        (*range_stub)[0] = re;
+        re = new PENumber(new verinum((uint64_t)0, integer_width));
+        (*range_stub)[1] = re;
+        /* The default range is [31:0] */
+        param_active_range = range_stub;
 	param_active_signed = true;
 	param_active_type = IVL_VT_LOGIC;
       }
@@ -2393,7 +2400,34 @@ parameter_assign_decl
 	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
+  | K_time
+      { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
+        PExpr*re;
+        re = new PENumber(new verinum((uint64_t)63, integer_width));
+        (*range_stub)[0] = re;
+        re = new PENumber(new verinum((uint64_t)0, integer_width));
+        (*range_stub)[1] = re;
+        /* The range is [63:0] */
+        param_active_range = range_stub;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+    parameter_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
   | K_real
+      { param_active_range = 0;
+	param_active_signed = true;
+	param_active_type = IVL_VT_REAL;
+      }
+    parameter_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+  | K_realtime
       { param_active_range = 0;
 	param_active_signed = true;
 	param_active_type = IVL_VT_REAL;
@@ -2489,7 +2523,14 @@ localparam_assign_decl
 	param_active_type = IVL_VT_LOGIC;
       }
   | K_integer
-      { param_active_range = 0;
+      { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
+        PExpr*re;
+        re = new PENumber(new verinum(integer_width-1, integer_width));
+        (*range_stub)[0] = re;
+        re = new PENumber(new verinum((uint64_t)0, integer_width));
+        (*range_stub)[1] = re;
+        /* The default range is [31:0] */
+        param_active_range = range_stub;
 	param_active_signed = true;
 	param_active_type = IVL_VT_LOGIC;
       }
@@ -2498,7 +2539,34 @@ localparam_assign_decl
 	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
+  | K_time
+      { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
+        PExpr*re;
+        re = new PENumber(new verinum((uint64_t)63, integer_width));
+        (*range_stub)[0] = re;
+        re = new PENumber(new verinum((uint64_t)0, integer_width));
+        (*range_stub)[1] = re;
+        /* The range is [63:0] */
+        param_active_range = range_stub;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+    localparam_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
   | K_real
+      { param_active_range = 0;
+	param_active_signed = true;
+	param_active_type = IVL_VT_REAL;
+      }
+    localparam_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+  | K_realtime
       { param_active_range = 0;
 	param_active_signed = true;
 	param_active_type = IVL_VT_REAL;

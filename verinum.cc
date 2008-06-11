@@ -205,7 +205,7 @@ verinum::verinum(int64_t that)
       bits_ = new V[nbits_];
       for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1) {
 	    bits_[idx] = (that & 1)? V1 : V0;
-	    that /= 2;
+	    that >>= 1;
       }
 }
 
