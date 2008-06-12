@@ -38,6 +38,11 @@ vhdl_type *vhdl_type::line()
    return new vhdl_type(VHDL_TYPE_LINE);
 }
 
+vhdl_type *vhdl_type::boolean()
+{
+   return new vhdl_type(VHDL_TYPE_BOOLEAN);
+}
+
 vhdl_type *vhdl_type::integer()
 {
    return new vhdl_type(VHDL_TYPE_INTEGER);

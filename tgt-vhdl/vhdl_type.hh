@@ -30,6 +30,7 @@ enum vhdl_type_name_t {
    VHDL_TYPE_LINE,
    VHDL_TYPE_FILE,
    VHDL_TYPE_INTEGER,
+   VHDL_TYPE_BOOLEAN,
 };
 
 /*
@@ -54,6 +55,7 @@ public:
    static vhdl_type *line();
    static vhdl_type *std_logic_vector(int msb, int lsb);
    static vhdl_type *integer();
+   static vhdl_type *boolean();
 protected:
    vhdl_type_name_t name_;
    int msb_, lsb_;

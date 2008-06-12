@@ -163,7 +163,6 @@ private:
    vhdl_expr_list exprs_;
 };
 
-
 /*
  * A concurrent statement appears in architecture bodies but not
  * processes.
