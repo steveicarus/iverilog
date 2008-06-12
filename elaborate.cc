@@ -386,7 +386,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    high = msb.as_long();
 
 	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: PGBuiltin: Make arrray "
+		  cerr << get_fileline() << ": debug: PGBuiltin: Make array "
 		       << "[" << high << ":" << low << "]"
 		       << " of " << count << " gates for " << name << endl;
 	    }
@@ -1189,8 +1189,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		       identifier elaborates to the same NetNet in
 		       both cases so the extra elaboration has no
 		       effect. But if the expression passed to the
-		       inout port is a part select, aspecial part
-		       select must be created that can paqss data in
+		       inout port is a part select, a special part
+		       select must be created that can pass data in
 		       both directions.
 
 		       Use the elaborate_bi_net method to handle all
@@ -3055,7 +3055,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       sig = des->find_signal(scope, id2->path());
       if (sig == 0) {
 	    cerr << get_fileline() << ": error: Unable to find variable "
-		 << id2->path() << " in for-loop increment expressin." << endl;
+		 << id2->path() << " in for-loop increment expression." << endl;
 	    des->errors += 1;
 	    return body;
       }

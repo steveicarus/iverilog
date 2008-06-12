@@ -267,7 +267,7 @@ static void format_time(unsigned mcd, int fsize,
 	/* Fill the leading characters to make up the desired
 	   width. This may require a '0' if the last character
 	   written was the decimal point. This may also require a '0'
-	   if there are no other characters at all in the ouput. */
+	   if there are no other characters at all in the output. */
       if (fusize > 0) {
 	    while (bp > start_address) {
 		  if (*bp == '.' || strcmp(bp, timeformat_info.suff) == 0)
@@ -1415,7 +1415,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           vpi_printf("WARNING: incompatible value for %s%s.\n", info->name,
                      fmtb);
         } else {
-          /* If a width was not giveni, use a width of zero. */
+          /* If a width was not given, use a width of zero. */
           if (width == -1) width = 0;
           if (ljust == 0) sprintf(result, "%*c", width,
                                   value.value.str[strlen(value.value.str)-1]);
@@ -1659,7 +1659,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           /* If a width was not given use a width of zero. */
           if (width == -1) width = 0;
           nbits = vpi_get(vpiSize, info->items[*idx]);
-          /* This is 4 chars for all but the last bit (strenght + "_")
+          /* This is 4 chars for all but the last bit (strength + "_")
            * which only needs three chars (strength), but then you need
            * space for the EOS '\0', so it is just number of bits * 4. */
           rsize = nbits*4;

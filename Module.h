@@ -102,7 +102,7 @@ class Module : public PScope, public LineInfo {
 	    bool signed_flag;
 	      // Value expression
 	    PExpr*expr;
-	      // If there are range constrants, list them here
+	      // If there are range constraints, list them here
 	    range_t*range;
       };
       map<perm_string,param_expr_t>parameters;

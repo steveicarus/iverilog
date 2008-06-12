@@ -508,7 +508,7 @@ verinum trim_vnum(const verinum&that)
 
 	      /* Now top is the index of the highest non-zero bit. If
 		 that turns out to the highest bit in the vector, then
-		 tere is no trimming possible. */
+		 there is no trimming possible. */
 	    if (top+1 == that.len())
 		  return that;
 

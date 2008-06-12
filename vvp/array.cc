@@ -912,7 +912,7 @@ void array_word_change(vvp_array_t array, unsigned long addr)
       for (vvp_fun_arrayport*cur = array->ports_; cur; cur = cur->next_)
 	    cur->check_word_change(addr);
 
-	// Run callbacks attatched to the array itself.
+	// Run callbacks attached to the array itself.
       struct __vpiCallback *next = array->vpi_callbacks;
       struct __vpiCallback *prev = 0;
 

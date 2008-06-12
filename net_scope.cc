@@ -166,7 +166,7 @@ bool NetScope::replace_parameter(perm_string key, NetExpr*expr)
 
 /*
  * This is not really complete (msb, lsb, sign). It is currently only
- * used to add a genver to the local parameter list.
+ * used to add a genvar to the local parameter list.
  */
 NetExpr* NetScope::set_localparam(perm_string key, NetExpr*expr,
 				  const LineInfo&file_line)
@@ -275,7 +275,7 @@ const NetFuncDef* NetScope::func_def() const
 void NetScope::set_module_name(perm_string n)
 {
       assert(type_ == MODULE);
-      module_name_ = n; /* NOTE: n mus have been permallocated. */
+      module_name_ = n; /* NOTE: n must have been permallocated. */
 }
 
 perm_string NetScope::module_name() const

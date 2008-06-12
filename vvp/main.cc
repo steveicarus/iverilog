@@ -176,7 +176,7 @@ int main(int argc, char*argv[])
                    " -M path        VPI module directory\n"
 		   " -M -           Clear VPI module path\n"
                    " -m module      Load vpi module.\n"
-		   " -n             Non-interctive ($stop = $finish).\n"
+		   " -n             Non-interactive ($stop = $finish).\n"
 		   " -s             $stop right away.\n"
                    " -v             Verbose progress messages.\n" );
            exit(0);

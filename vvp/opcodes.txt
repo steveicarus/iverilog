@@ -14,14 +14,14 @@ describes the specific behavior of each opcode, in enough detail
 
 General principles of Arithmetic:
 
-The binary arithmetic instruction in general take three parameters,
+The binary arithmetic instruction in general takes three parameters,
 the left operand, the right operand, and the base. The left operand is
 replaced with the result, which is the same width as the left and
 right operands.
 
 * %abs/wr <bit-o>, <bit-i>
 
-This instructure calculate the absolute value of a real value. It uses
+This instruction calculates the absolute value of a real value. It uses
 the fabs() function in the run-time to do the work.
 
 * %add <bit-l>, <bit-r>, <wid>
@@ -510,7 +510,7 @@ into the destination vector. This is useful for filling a vector.
 
 The %movi variant moves a binary value, LSB first, into the
 destination vector. The immediate value is up to 32bits, padded with
-zeros to fillout the width.
+zeros to fill out the width.
 
 * %mul <bit-l>, <bit-r>, <wid>
 

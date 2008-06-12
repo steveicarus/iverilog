@@ -139,7 +139,7 @@ static int lookup_keyword(const char*text)
 }
 
 /*
- * Create a string witout the leading and trailing quotes.
+ * Create a string without the leading and trailing quotes.
  */
 static void process_quoted_string(void)
 {

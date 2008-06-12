@@ -397,7 +397,7 @@ static PLI_INT32 sys_rand_two_args_compiletf(PLI_BYTE8 *name)
                   break;
             default:
                   vpi_printf("ERROR: %s's seed must be an integer/time"
-                             " varible or a register.\n", name);
+                             " variable or a register.\n", name);
                   vpi_control(vpiFinish, 1);
                   return 0;
       }
@@ -449,7 +449,7 @@ static PLI_INT32 sys_rand_three_args_compiletf(PLI_BYTE8 *name)
                   break;
             default:
                   vpi_printf("ERROR: %s's seed must be an integer/time"
-                             " varible or a register.\n", name);
+                             " variable or a register.\n", name);
                   vpi_control(vpiFinish, 1);
                   return 0;
       }
@@ -484,7 +484,7 @@ static PLI_INT32 sys_random_compiletf(PLI_BYTE8 *name)
                   break;
             default:
                   vpi_printf("ERROR: %s's seed must be an integer/time"
-                             " varible or a register.\n", name);
+                             " variable or a register.\n", name);
                   vpi_control(vpiFinish, 1);
                   return 0;
       }

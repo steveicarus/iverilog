@@ -906,7 +906,7 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
   the modpath vpiHandle
   
 
-  baiscally, they will redirect the generic vpi_interface
+  basically, they will redirect the generic vpi_interface
   
   vpi_get_delay ( .. )  
   vpi_put_delay ( .. )

@@ -506,7 +506,7 @@ int process_generation(const char*name)
 		            "    2005 -- IEEE1364-2005\n"
 		            "Other generation flags:\n"
 		            "    specify | no-specify\n"
-		            "    verilog-ams | no-verinlog-ams\n"
+		            "    verilog-ams | no-verilog-ams\n"
 		            "    std-include | no-std-include\n"
 		            "    xtypes | no-xtypes\n"
 		            "    icarus-misc | no-icarus-misc\n"

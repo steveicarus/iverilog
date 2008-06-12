@@ -432,7 +432,7 @@ block_item_decl
 
   /* Integer declarations are simpler in that they do not have all the
      trappings of a general variable declaration. All of that is
-     implicit in the "integer" of the declaratin. */
+     implicit in the "integer" of the declaration. */
 
 	| attribute_list_opt K_integer register_variable_list ';'
 		{ pform_set_reg_integer($3);
@@ -445,7 +445,7 @@ block_item_decl
 
   /* real declarations are fairly simple as there is no range of
      signed flag in the declaration. Create the real as a NetNet::REG
-     with real value. Note that real and realtime are interchangable
+     with real value. Note that real and realtime are interchangeable
      in this context. */
 
   | attribute_list_opt K_real real_variable_list ';'

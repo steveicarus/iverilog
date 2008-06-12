@@ -128,7 +128,7 @@ void join_island(NetObj*obj)
 		  if (branch->island == 0) {
 			if (debug_elaborate)
 			      cerr << obj->get_fileline() << ": debug: "
-				   << "Join brach to existing island." << endl;
+				   << "Join branch to existing island." << endl;
 			branch->island = tmp_branch->island;
 
 		  } else if (branch->island != tmp_branch->island) {
@@ -139,7 +139,7 @@ void join_island(NetObj*obj)
 	    }
       }
 
-	// If after all that we did not find an idland to join, then
+	// If after all that we did not find an island to join, then
 	// start the island not and join it.
       if (branch->island == 0) {
 	    branch->island = new ivl_island_s;

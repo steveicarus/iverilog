@@ -827,7 +827,7 @@ class NetScope : public Attrib {
 
 /*
  * This class implements the LPM_ABS component. The node has a single
- * input, a signe expression, that it converts to the absolute
+ * input, a signed expression, that it converts to the absolute
  * value. The gate is simple: pin(0) is the output and pin(1) is the input.
  */
 class NetAbs  : public NetNode {

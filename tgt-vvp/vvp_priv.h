@@ -94,7 +94,7 @@ extern void pad_expr_in_place(ivl_expr_t exp, struct vector_info res, unsigned s
  * draw_modpath arranges for a .modpath record to be written out.
  *
  * cleanup_modpath() cleans up any pending .modpath records that may
- * have been scheduled by draw_modpath() but not yet writte.
+ * have been scheduled by draw_modpath() but not yet written.
  *
  * Note: draw_modpath drive_label must be malloc'ed by the
  * caller. This function will free the string sometime in the future.

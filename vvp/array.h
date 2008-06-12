@@ -43,7 +43,7 @@ extern void array_set_word(vvp_array_t arr,
 			    unsigned off,
 			    vvp_vector4_t val);
 
-extern vvp_vector4_t array_get_word(vvp_array_t array, unsigned adddress);
+extern vvp_vector4_t array_get_word(vvp_array_t array, unsigned address);
 
 /* VPI hooks */
 

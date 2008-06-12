@@ -795,7 +795,7 @@ The &PV<> argument is a reference to part of a signal. The syntax is:
 
 The <symbol> is the label for a signal, the <base> is the cannonical
 starting bit of the part select and <width> is the number of bits in
-the select. The second form retreives the <base> from thread space
+the select. The second form retrieves the <base> from thread space
 using <twid> bits starting at <tbase>.
 
 * The T<> argument

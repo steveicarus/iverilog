@@ -198,7 +198,7 @@ class vvp_vector4_t {
 
       void allocate_words_(unsigned size, unsigned long inita, unsigned long initb);
 
-	// Values in the vvp_vector4_t are stored split accross two
+	// Values in the vvp_vector4_t are stored split across two
 	// arrays. For each bit in the vector, there is an abit and a
 	// bbit. the encoding of a vvp_vector4_t is:
 	//

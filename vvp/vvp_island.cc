@@ -78,7 +78,7 @@ class vvp_island  : private vvp_gen_event_s {
       virtual void run_island() =0;
 
     protected:
-	// The base class collects a list of all the braches in the
+	// The base class collects a list of all the branches in the
 	// island. The derived island class can access this list for
 	// scanning the mesh.
       vvp_island_branch*branches_;
@@ -135,7 +135,7 @@ class vvp_island_port  : public vvp_net_fun_t {
     private:
       vvp_island*island_;
 
-    private: // not imlemented
+    private: // not implemented
       vvp_island_port(const vvp_island_port&);
       vvp_island_port& operator = (const vvp_island_port&);
 };
@@ -157,7 +157,7 @@ static void send_value(vvp_net_t*net, const vvp_vector8_t&val)
 }
 
 /*
-* Branches are connected together to form a mesh of brances. Each
+* Branches are connected together to form a mesh of branches. Each
 * endpoint (there are two) connects circularly to other branch
 * endpoints that are connected together. This list of endpoints forms
 * a node. Thus it is possible for branches to fully specify the mesh
@@ -217,7 +217,7 @@ void vvp_island::flag_island()
 
 /*
 * This method handles the callback from the scheduler. It does basic
-* housecleaning and calles the run_island() method implemented by the
+* housecleaning and calls the run_island() method implemented by the
 * derived class.
 */
 void vvp_island::run_run()

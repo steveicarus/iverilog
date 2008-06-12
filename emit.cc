@@ -362,7 +362,7 @@ void NetScope::emit_scope(struct target_t*tgt) const
 	      /* Run the signals again, but this time to connect the
 	         delay paths. This is done as a second pass because
 	         the paths reference other signals that may be later
-	         in the list. We can do it here becase delay paths are
+	         in the list. We can do it here because delay paths are
 	         always connected within the scope. */
 	    cur = signals_->sig_next_;
 	    do {
