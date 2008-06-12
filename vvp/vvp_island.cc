@@ -127,9 +127,10 @@ class vvp_island_port  : public vvp_net_fun_t {
       virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
       virtual void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 				unsigned base, unsigned wid, unsigned vwid);
-      virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t bit);
+      virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
       vvp_vector8_t invalue;
+      vvp_vector8_t outvalue;
 
     private:
       vvp_island*island_;
@@ -138,6 +139,22 @@ class vvp_island_port  : public vvp_net_fun_t {
       vvp_island_port(const vvp_island_port&);
       vvp_island_port& operator = (const vvp_island_port&);
 };
+
+static vvp_vector8_t get_value(vvp_net_t*net)
+{
+      vvp_island_port*fun = dynamic_cast<vvp_island_port*>(net->fun);
+      return fun->invalue;
+}
+
+static void send_value(vvp_net_t*net, const vvp_vector8_t&val)
+{
+      vvp_island_port*fun = dynamic_cast<vvp_island_port*>(net->fun);
+      if (fun->outvalue .eeq(val))
+	    return;
+
+      fun->outvalue = val;
+      vvp_send_vec8(net->out, fun->outvalue);
+}
 
 /*
 * Branches are connected together to form a mesh of brances. Each
@@ -316,8 +333,11 @@ void vvp_island_port::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 }
 
 
-void vvp_island_port::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t bit)
+void vvp_island_port::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 {
+      if (invalue .eeq(bit))
+	    return;
+
       invalue = bit;
       island_->flag_island();
 }
@@ -386,12 +406,6 @@ static void collect_node(list<vvp_branch_ptr_t>&conn, vvp_branch_ptr_t cur)
       conn .push_back(cur);
       for (vvp_branch_ptr_t idx = next(cur) ; idx != cur ; idx = next(idx))
 	    conn.push_back(idx);
-}
-
-static vvp_vector8_t get_value(vvp_net_t*net)
-{
-      vvp_island_port*fun = dynamic_cast<vvp_island_port*>(net->fun);
-      return fun->invalue;
 }
 
 static void mark_done_flags(list<vvp_branch_ptr_t>&connections)
@@ -511,13 +525,13 @@ static void push_value_through_branches(const vvp_vector8_t&val,
 	    if (tmp_ptr->width == 0) {
 		    // Mark this end as done
 		  tmp_ptr->flags |= (1 << other_ab);
-		  vvp_send_vec8(other_net->out, val);
+		  send_value(other_net, val);
 
 	    } if (other_ab == 1) {
 		    // Mark as done
 		  tmp_ptr->flags |= (1 << other_ab);
 		  vvp_vector8_t tmp = val.subvalue(tmp_ptr->offset, tmp_ptr->part);
-		  vvp_send_vec8(other_net->out, tmp);
+		  send_value(other_net, tmp);
 	    } else {
 		    // Otherwise, the other side is not fully
 		    // specified, so we can't take this shortcut.
@@ -553,7 +567,7 @@ void vvp_island_branch::run_resolution()
 	    resolve_values_from_connections(val, connections);
 
 	      // A side is done.
-	    vvp_send_vec8(a->out, val);
+	    send_value(a, val);
 
 	      // Clear the visited flags. This must be done so that other
 	      // branches can read this input value.
@@ -599,7 +613,7 @@ void vvp_island_branch::run_resolution()
 	    clear_visited_flags(connections);
       }
 
-      vvp_send_vec8(b->out, val);
+      send_value(b, val);
 }
 
 /* **** COMPILE/LINK SUPPORT **** */

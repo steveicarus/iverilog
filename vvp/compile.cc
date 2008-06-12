@@ -1397,16 +1397,16 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
       vvp_net_fun_t* obj = 0;
 
       if (strcmp(type,"tri") == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0));
+	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0,0));
 
       } else if (strncmp(type,"tri$",4) == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0), strdup(type+4));
+	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0,0), strdup(type+4));
 
       } else if (strcmp(type,"tri0") == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_0, 5));
+	    obj = new resolv_functor(vvp_scalar_t(BIT4_0, 5,5));
 
       } else if (strcmp(type,"tri1") == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_1, 5));
+	    obj = new resolv_functor(vvp_scalar_t(BIT4_1, 5,5));
 
       } else if (strcmp(type,"triand") == 0) {
 	    obj = new resolv_triand;

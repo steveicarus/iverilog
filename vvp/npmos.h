@@ -66,7 +66,7 @@ class vvp_fun_pmos  : public vvp_fun_pmos_ {
     public:
       explicit vvp_fun_pmos(bool enable_invert);
 
-      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 };
 
 /*
@@ -79,7 +79,7 @@ class vvp_fun_rpmos  : public vvp_fun_pmos_ {
     public:
       explicit vvp_fun_rpmos(bool enable_invert);
 
-      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 };
 
 /*
@@ -121,14 +121,14 @@ class vvp_fun_cmos : public vvp_fun_cmos_ {
     public:
       explicit vvp_fun_cmos();
 
-      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 };
 
 class vvp_fun_rcmos : public vvp_fun_cmos_ {
     public:
       explicit vvp_fun_rcmos();
 
-      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 };
 
 #endif

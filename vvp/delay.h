@@ -86,7 +86,7 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
       ~vvp_fun_delay();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
       void recv_real(vvp_net_ptr_t port, double bit);
 	//void recv_long(vvp_net_ptr_t port, long bit);
 
