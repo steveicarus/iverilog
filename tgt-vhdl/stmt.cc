@@ -242,6 +242,8 @@ static int draw_delay(vhdl_process *proc, stmt_container *container,
 static int draw_wait(vhdl_process *proc, stmt_container *container,
                      ivl_statement_t stmt)
 {
+   ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
+   
    int nevents = ivl_stmt_nevent(stmt);
    for (int i = 0; i < nevents; i++) {
       ivl_event_t event = ivl_stmt_events(stmt, i);
@@ -268,6 +270,7 @@ static int draw_wait(vhdl_process *proc, stmt_container *container,
                if (proc->get_parent()->have_declared(signame)) {
                   proc->add_sensitivity(signame);
                   non_edges.push_back(signame);
+                  break;
                }
             }
             else {
@@ -298,6 +301,7 @@ static int draw_wait(vhdl_process *proc, stmt_container *container,
                      (new vhdl_var_ref(ivl_signal_basename(sig),
                                        vhdl_type::std_logic()));
                   test->add_expr(detect);
+                  break;
                }
             }
          }
@@ -318,6 +322,7 @@ static int draw_wait(vhdl_process *proc, stmt_container *container,
                      (new vhdl_var_ref(ivl_signal_basename(sig),
                                        vhdl_type::std_logic()));
                   test->add_expr(detect);
+                  break;
                }
             }
          }
@@ -329,17 +334,18 @@ static int draw_wait(vhdl_process *proc, stmt_container *container,
                (new vhdl_var_ref((*it + "'Event").c_str(),
                                  vhdl_type::boolean()));
          }
+
+         vhdl_if_stmt *edge_det = new vhdl_if_stmt(test);
+         container->add_stmt(edge_det);
          
-         container->add_stmt(new vhdl_if_stmt(test));
+         draw_stmt(proc, edge_det->get_then_container(), sub_stmt);
       }
       else {
          // Don't bother generating an edge detector if there
          // are no edge-triggered events
+         draw_stmt(proc, container, sub_stmt);
       }
    }
-
-   ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
-   draw_stmt(proc, container, sub_stmt);
    
    return 0;
 }

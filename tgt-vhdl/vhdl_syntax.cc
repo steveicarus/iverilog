@@ -567,10 +567,8 @@ void vhdl_if_stmt::emit(std::ofstream &of, int level) const
    of << "if ";
    test_->emit(of, level);
    of << " then";
-   newline(of, level);
    then_part_.emit(of, level);
    of << "else";
-   newline(of, level);
    else_part_.emit(of, level);
    of << "end if;";
 }

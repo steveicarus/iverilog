@@ -55,6 +55,12 @@ static vhdl_expr *translate_number(ivl_expr_t e)
    return new vhdl_const_bits(ivl_expr_bits(e));
 }
 
+static vhdl_expr *translate_unary(ivl_expr_t e)
+{
+   std::cout << "Unary opcode " << ivl_expr_opcode(e) << std::endl;
+   return NULL;
+}
+
 /*
  * Generate a VHDL expression from a Verilog expression.
  */
@@ -69,6 +75,8 @@ vhdl_expr *translate_expr(ivl_expr_t e)
       return translate_signal(e);
    case IVL_EX_NUMBER:
       return translate_number(e);
+   case IVL_EX_UNARY:
+      return translate_unary(e);
    default:
       error("No VHDL translation for expression at %s:%d (type = %d)",
             ivl_expr_file(e), ivl_expr_lineno(e), type);
