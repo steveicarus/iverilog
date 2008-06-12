@@ -171,7 +171,7 @@ static int draw_noop(vhdl_process *proc, stmt_container *container,
  * assignment.
  */
 static int draw_nbassign(vhdl_process *proc, stmt_container *container,
-                         ivl_statement_t stmt)
+                         ivl_statement_t stmt, vhdl_expr *after = NULL)
 {
    int nlvals = ivl_stmt_lvals(stmt);
    if (nlvals != 1) {
@@ -195,7 +195,10 @@ static int draw_nbassign(vhdl_process *proc, stmt_container *container,
       // The type here can be null as it is never actually needed
       vhdl_var_ref *lval_ref = new vhdl_var_ref(signame, NULL);
 
-      container->add_stmt(new vhdl_nbassign_stmt(lval_ref, rhs));
+      vhdl_nbassign_stmt *nbassign = new vhdl_nbassign_stmt(lval_ref, rhs);
+      if (after != NULL)
+         nbassign->set_after(after);
+      container->add_stmt(nbassign);
    }
    else {
       error("Only signals as lvals supported at the moment");
@@ -221,16 +224,28 @@ static int draw_delay(vhdl_process *proc, stmt_container *container,
    // VHDL wait statement compute the value from that.
    // The other solution is to add them as parameters to
    // the vhdl_process class
-   vhdl_wait_stmt *wait =
-      new vhdl_wait_stmt(VHDL_WAIT_FOR_NS, new vhdl_const_int(value));
-   container->add_stmt(wait);
-   
-   // Expand the sub-statement as well
-   // Often this would result in a useless `null' statement which
-   // is caught here instead
+   vhdl_expr *time = new vhdl_const_int(value);
+
+   // If the sub-statement is an assignment then VHDL lets
+   // us put the delay after it, which is more compact and
+   // idiomatic
    ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
-   if (ivl_statement_type(sub_stmt) != IVL_ST_NOOP)
-      draw_stmt(proc, container, sub_stmt);
+   ivl_statement_type_t type = ivl_statement_type(sub_stmt);
+   if (type == IVL_ST_ASSIGN_NB) {
+      draw_nbassign(proc, container, sub_stmt, time);
+   }
+   else {
+      vhdl_wait_stmt *wait =
+         new vhdl_wait_stmt(VHDL_WAIT_FOR_NS, time);
+      container->add_stmt(wait);
+
+      // Expand the sub-statement as well
+      // Often this would result in a useless `null' statement which
+      // is caught here instead
+      if (ivl_statement_type(sub_stmt) != IVL_ST_NOOP)
+         draw_stmt(proc, container, sub_stmt);
+   
+   }
    
    return 0;
 }

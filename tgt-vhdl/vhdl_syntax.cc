@@ -484,11 +484,26 @@ void vhdl_fcall::emit(std::ofstream &of, int level) const
    exprs_.emit(of, level);
 }
 
+vhdl_nbassign_stmt::~vhdl_nbassign_stmt()
+{
+   delete lhs_;
+   delete rhs_;
+   if (after_)
+      delete after_;
+}
+
 void vhdl_nbassign_stmt::emit(std::ofstream &of, int level) const
 {
    lhs_->emit(of, level);
    of << " <= ";
    rhs_->emit(of, level);
+
+   if (after_) {
+      of << " after ";
+      after_->emit(of, level);
+      of << " ns";
+   }
+   
    of << ";";
 }
 

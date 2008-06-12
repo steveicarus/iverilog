@@ -226,12 +226,14 @@ private:
 class vhdl_nbassign_stmt : public vhdl_seq_stmt {
 public:
    vhdl_nbassign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
-      : lhs_(lhs), rhs_(rhs) {}
+      : lhs_(lhs), rhs_(rhs), after_(NULL) {}
+   ~vhdl_nbassign_stmt();
 
+   void set_after(vhdl_expr *after) { after_ = after; }
    void emit(std::ofstream &of, int level) const;
 private:
    vhdl_var_ref *lhs_;
-   vhdl_expr *rhs_;
+   vhdl_expr *rhs_, *after_;
 };
 
 enum vhdl_wait_type_t {
