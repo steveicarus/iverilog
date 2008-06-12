@@ -57,8 +57,19 @@ static vhdl_expr *translate_number(ivl_expr_t e)
 
 static vhdl_expr *translate_unary(ivl_expr_t e)
 {
-   std::cout << "Unary opcode " << ivl_expr_opcode(e) << std::endl;
-   return NULL;
+   vhdl_expr *operand = translate_expr(ivl_expr_oper1(e));
+   if (NULL == operand)
+      return NULL;
+      
+   switch (ivl_expr_opcode(e)) {
+   case '!':
+      return new vhdl_unaryop_expr
+         (VHDL_UNARYOP_NOT, operand, new vhdl_type(*operand->get_type()));
+   default:
+      error("No translation for unary opcode '%c'\n",
+            ivl_expr_opcode(e));
+      return NULL;
+   }
 }
 
 /*
