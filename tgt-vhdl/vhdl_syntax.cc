@@ -522,14 +522,14 @@ void vhdl_const_bits::emit(std::ofstream &of, int level) const
    // The bits appear to be in reverse order
    std::string::const_reverse_iterator it;
    for (it = value_.rbegin(); it != value_.rend(); ++it)
-      of << *it;
+      of << vl_to_vhdl_bit(*it);
 
    of << "\")";
 }
 
 void vhdl_const_bit::emit(std::ofstream &of, int level) const
 {
-   of << "'" << bit_ << "'";
+   of << "'" << vl_to_vhdl_bit(bit_) << "'";
 }
 
 void vhdl_const_int::emit(std::ofstream &of, int level) const

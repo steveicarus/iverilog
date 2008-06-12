@@ -23,6 +23,7 @@
 
 #include <fstream>
 #include <list>
+#include <cassert>
 
 template <class T>
 void emit_children(std::ofstream &of,
@@ -52,6 +53,22 @@ void delete_children(std::list<T*> &children)
    for (it = children.begin(); it != children.end(); ++it)
       delete *it;
    children.clear();
+}
+
+static inline char vl_to_vhdl_bit(char bit)
+{
+   switch (bit) {
+   case '0':
+   case 'Z':
+   case '1':
+      return bit;
+   case 'z':
+      return 'Z';
+   case 'x':
+   case 'X':
+      return 'U';
+   }
+   assert(false);
 }
 
 #endif
