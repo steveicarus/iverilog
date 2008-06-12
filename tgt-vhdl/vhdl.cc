@@ -28,10 +28,26 @@
 #include <cassert>
 #include <cstring>
 #include <list>
+#include <map>
+
+/*
+ * Maps a signal to the entity it is defined within. Also
+ * provides a mechanism for renaming signals -- i.e. when
+ * an output has the same name as register: valid in Verilog
+ * but not in VHDL, so two separate signals need to be
+ * defined. 
+ */
+struct signal_defn_t {
+   std::string renamed;    // The name of the VHDL signal
+   const vhdl_entity *ent; // The entity where it is defined
+};
+
+typedef std::map<ivl_signal_t, signal_defn_t> signal_defn_map_t;
+
 
 static int g_errors = 0;  // Total number of errors encountered
-
 static entity_list_t g_entities;  // All entities to emit
+static signal_defn_map_t g_known_signals;
 
 
 /*
@@ -72,6 +88,42 @@ void remember_entity(vhdl_entity* ent)
    assert(find_entity(ent->get_name()) == NULL);
    g_entities.push_back(ent);
 }
+
+/*
+ * Remeber the association of signal to entity.
+ */
+void remember_signal(ivl_signal_t sig, const vhdl_entity *ent)
+{
+   assert(g_known_signals.find(sig) == g_known_signals.end());
+
+   signal_defn_t defn = { ivl_signal_basename(sig), ent };
+   g_known_signals[sig] = defn;
+}
+
+/*
+ * Change the VHDL name of a Verilog signal.
+ */
+void rename_signal(ivl_signal_t sig, const std::string &renamed)
+{
+   assert(g_known_signals.find(sig) != g_known_signals.end());
+
+   g_known_signals[sig].renamed = renamed;
+}
+
+const vhdl_entity *find_entity_for_signal(ivl_signal_t sig)
+{
+   assert(g_known_signals.find(sig) != g_known_signals.end());
+
+   return g_known_signals[sig].ent;
+}
+
+const std::string &get_renamed_signal(ivl_signal_t sig)
+{
+   assert(g_known_signals.find(sig) != g_known_signals.end());
+
+   return g_known_signals[sig].renamed;
+}
+
 
 extern "C" int target_design(ivl_design_t des)
 {

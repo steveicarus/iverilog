@@ -21,5 +21,12 @@ vhdl_expr *translate_expr(ivl_expr_t e);
 void remember_entity(vhdl_entity *ent);
 vhdl_entity *find_entity(const std::string &tname);
 
+
+void remember_signal(ivl_signal_t sig, const vhdl_entity *ent);
+void rename_signal(ivl_signal_t sig, const std::string &renamed);
+const vhdl_entity *find_entity_for_signal(ivl_signal_t sig);
+const std::string &get_renamed_signal(ivl_signal_t sig);
+
+
 #endif /* #ifndef INC_VHDL_TARGET_H */
  
