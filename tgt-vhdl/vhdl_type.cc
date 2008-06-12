@@ -68,6 +68,8 @@ std::string vhdl_type::get_string() const
       return std::string("File");
    case VHDL_TYPE_INTEGER:
       return std::string("Integer");
+   case VHDL_TYPE_BOOLEAN:
+      return std::string("Boolean");
    default:
       return std::string("BadType");
    }

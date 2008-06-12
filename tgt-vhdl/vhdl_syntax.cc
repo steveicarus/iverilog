@@ -420,11 +420,21 @@ vhdl_expr::~vhdl_expr()
  */
 vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
 {
-   vhdl_fcall *conv =
-      new vhdl_fcall(to->get_string().c_str(), new vhdl_type(*to));
-   conv->add_expr(this);
-
-   return conv;
+   if (to->get_name() == type_->get_name())
+      return this;
+   else if (to->get_name() == VHDL_TYPE_BOOLEAN) {
+      // '1' is true all else are false
+      vhdl_const_bit *one = new vhdl_const_bit('1');
+      return new vhdl_binop_expr
+         (this, VHDL_BINOP_EQ, one, vhdl_type::boolean());
+   }
+   else {
+      vhdl_fcall *conv =
+         new vhdl_fcall(to->get_string().c_str(), new vhdl_type(*to));
+      conv->add_expr(this);
+      
+      return conv;
+   }
 }
 
 void vhdl_expr_list::add_expr(vhdl_expr *e)
@@ -572,6 +582,13 @@ void vhdl_assert_stmt::emit(std::ofstream &of, int level) const
    of << " report \"" << reason_ << "\" severity failure;";
 }
 
+vhdl_if_stmt::vhdl_if_stmt(vhdl_expr *test)
+{
+   // Need to ensure that the expression is Boolean
+   vhdl_type boolean(VHDL_TYPE_BOOLEAN);
+   test_ = test->cast(&boolean);
+}
+
 vhdl_if_stmt::~vhdl_if_stmt()
 {
    delete test_;
@@ -639,6 +656,9 @@ void vhdl_binop_expr::emit(std::ofstream &of, int level) const
          break;
       case VHDL_BINOP_OR:
          of << " or ";
+         break;
+      case VHDL_BINOP_EQ:
+         of << " = ";
          break;
       }
 

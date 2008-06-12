@@ -56,6 +56,7 @@ private:
 enum vhdl_binop_t {
    VHDL_BINOP_AND,
    VHDL_BINOP_OR,
+   VHDL_BINOP_EQ,
 };
 
 /*
@@ -278,8 +279,7 @@ private:
 
 class vhdl_if_stmt : public vhdl_seq_stmt {
 public:
-   vhdl_if_stmt(vhdl_expr *test)
-      : test_(test) {}
+   vhdl_if_stmt(vhdl_expr *test);
    ~vhdl_if_stmt();
 
    stmt_container *get_then_container() { return &then_part_; }
