@@ -1146,6 +1146,14 @@ static const struct __vpirt vpip_PV_rt = {
       0
 };
 
+struct __vpiPV* vpip_PV_from_handle(vpiHandle obj)
+{
+      if (obj->vpi_type->type_code == vpiPartSelect)
+	    return (__vpiPV*) obj;
+      else
+	    return 0;
+}
+
 vpiHandle vpip_make_PV(char*var, int base, int width)
 {
 
@@ -1173,4 +1181,17 @@ vpiHandle vpip_make_PV(char*var, int tbase, int twid, int width)
       functor_ref_lookup(&obj->net, var);
 
       return &obj->base;
+}
+
+void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle ref)
+{
+      struct __vpiPV*obj = vpip_PV_from_handle(ref);
+      assert(obj);
+
+      vvp_fun_signal_base*sig_fun;
+      sig_fun = dynamic_cast<vvp_fun_signal_base*>(obj->net->fun);
+      assert(sig_fun);
+
+	/* Attach the __vpiCallback object to the signal. */
+      sig_fun->add_vpi_callback(cbh);
 }

@@ -234,6 +234,10 @@ struct __vpiPV {
 extern vpiHandle vpip_make_PV(char*name, int base, int width);
 extern vpiHandle vpip_make_PV(char*name, int tbase, int twid, int width);
 
+extern struct __vpiPV* vpip_PV_from_handle(vpiHandle obj);
+extern void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle obj);
+
+
 /*
  * This function safely converts a vpiHandle back to a
  * __vpiSignal. Return a nil if the type is not appropriate.

@@ -1119,6 +1119,7 @@ static PLI_INT32 sys_monitor_calltf(PLI_BYTE8*name)
 		case vpiReg:
 		case vpiIntegerVar:
 		case vpiRealVar:
+		case vpiPartSelect:
 		    /* Monitoring reg and net values involves setting
 		       a callback for value changes. Pass the storage
 		       pointer for the callback itself as user_data so
