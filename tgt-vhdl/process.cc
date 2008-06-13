@@ -51,7 +51,11 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    // Initial processes are translated to VHDL processes with
    // no sensitivity list and and indefinite wait statement at
    // the end
-   if (ivl_process_type(proc) == IVL_PR_INITIAL) {
+   // However, if no statements were added to the container
+   // by draw_stmt, don't bother adding a wait as `emit'
+   // will optimise the process out of the output
+   if (ivl_process_type(proc) == IVL_PR_INITIAL
+       && !vhdl_proc->get_container()->empty()) {
       vhdl_wait_stmt *wait = new vhdl_wait_stmt();
       vhdl_proc->get_container()->add_stmt(wait);
    }

@@ -218,6 +218,14 @@ bool vhdl_process::have_declared_var(const std::string &name) const
 
 void vhdl_process::emit(std::ofstream &of, int level) const
 {
+   // If there are no statements in the body, this process
+   // can't possibly do anything, so don't bother to emit it
+   if (stmts_.empty()) {
+      of << "-- Removed one empty process";
+      newline(of, level);
+      return;
+   }
+   
    emit_comment(of, level);
    if (name_.size() > 0)
       of << name_ << ": ";
