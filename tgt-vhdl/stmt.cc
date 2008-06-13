@@ -192,13 +192,25 @@ static int draw_nbassign(vhdl_process *proc, stmt_container *container,
          return 1;
       vhdl_expr *rhs = rhs_raw->cast(decl->get_type());
 
-      // The type here can be null as it is never actually needed
-      vhdl_var_ref *lval_ref = new vhdl_var_ref(signame, NULL);
-
-      vhdl_nbassign_stmt *nbassign = new vhdl_nbassign_stmt(lval_ref, rhs);
-      if (after != NULL)
-         nbassign->set_after(after);
-      container->add_stmt(nbassign);
+      // If this is an `inital' process and we haven't yet
+      // generated a `wait' statement then initializing the
+      // signal here is equivalent to initializing to in the
+      // declaration
+      // The second test ensures that we only try to initialise
+      // internal signals not ports
+      if (proc->is_initial()
+          && !proc->get_parent()->get_parent()->get_decl(signame)) {
+         std::cout << "Pushing " << signame << " init up" << std::endl;
+      }
+      else {
+         // The type here can be null as it is never actually needed
+         vhdl_var_ref *lval_ref = new vhdl_var_ref(signame, NULL);
+         
+         vhdl_nbassign_stmt *nbassign = new vhdl_nbassign_stmt(lval_ref, rhs);
+         if (after != NULL)
+            nbassign->set_after(after);
+         container->add_stmt(nbassign);
+      }
    }
    else {
       error("Only signals as lvals supported at the moment");
@@ -244,8 +256,11 @@ static int draw_delay(vhdl_process *proc, stmt_container *container,
       // is caught here instead
       if (ivl_statement_type(sub_stmt) != IVL_ST_NOOP)
          draw_stmt(proc, container, sub_stmt);
-   
    }
+   
+   // Any further assignments occur after simulation time 0
+   // so they cannot be used to initialize signal declarations
+   proc->set_initial(false);
    
    return 0;
 }
@@ -277,7 +292,6 @@ static void edge_detector(ivl_nexus_t nexus, vhdl_process *proc,
       }
    }
 }
-
 
 /*
  * A wait statement waits for a level change on a @(..) list of

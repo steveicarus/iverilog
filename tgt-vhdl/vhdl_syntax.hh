@@ -420,6 +420,9 @@ private:
 
 /*
  * Container for sequential statements.
+ * Verilog `initial' processes are used for variable
+ * initialisation whereas VHDL initialises variables in
+ * their declaration.
  */
 class vhdl_process : public vhdl_conc_stmt {
 public:
@@ -431,11 +434,14 @@ public:
    void add_decl(vhdl_decl *decl);
    void add_sensitivity(const char *name);
    bool have_declared_var(const std::string &name) const;
+   void set_initial(bool i) { initial_ = i; }
+   bool is_initial() const { return initial_; }
 private:
    stmt_container stmts_;
    decl_list_t decls_;
    std::string name_;
    string_list_t sens_;
+   bool initial_;
 };
 
 

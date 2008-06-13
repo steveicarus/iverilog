@@ -36,7 +36,12 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    // parent link won't be valid (and draw_stmt needs this
    // to add information to the architecture)
    vhdl_process *vhdl_proc = new vhdl_process();
-   ent->get_arch()->add_stmt(vhdl_proc);   
+   ent->get_arch()->add_stmt(vhdl_proc);
+
+   // If this is an initial process, push signal initialisation
+   // into the declarations
+   if (ivl_process_type(proc) == IVL_PR_INITIAL)
+      vhdl_proc->set_initial(true);
    
    ivl_statement_t stmt = ivl_process_stmt(proc);
    int rc = draw_stmt(vhdl_proc, vhdl_proc->get_container(), stmt);
