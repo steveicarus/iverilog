@@ -95,7 +95,7 @@ void remember_entity(vhdl_entity* ent)
 void remember_signal(ivl_signal_t sig, const vhdl_entity *ent)
 {
    assert(g_known_signals.find(sig) == g_known_signals.end());
-
+   
    signal_defn_t defn = { ivl_signal_basename(sig), ent };
    g_known_signals[sig] = defn;
 }

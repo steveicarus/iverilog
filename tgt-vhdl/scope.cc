@@ -137,6 +137,8 @@ static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
          sig_type = vhdl_type::std_logic();
       else
          sig_type = vhdl_type::std_logic_vector(width-1, 0);
+      
+      remember_signal(sig, arch->get_parent());
 
       const char *name = ivl_signal_basename(sig);
       ivl_signal_port_t mode = ivl_signal_port(sig);
@@ -151,6 +153,27 @@ static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
       case IVL_SIP_OUTPUT:
          arch->get_parent()->add_port
             (new vhdl_port_decl(name, sig_type, VHDL_PORT_OUT));
+
+         if (ivl_signal_type(sig) == IVL_SIT_REG) {
+            // A registered output
+            // In Verilog the output and reg can have the
+            // same name: this is not valid in VHDL
+            // Instead a new signal foo_Reg is created
+            // which represents the register
+            std::string newname(name);
+            newname += "_Reg";
+            rename_signal(sig, newname.c_str());
+
+            vhdl_type *reg_type = new vhdl_type(*sig_type);
+            arch->add_decl(new vhdl_signal_decl(newname.c_str(), reg_type));            
+
+            // Create a concurrent assignment statement to
+            // connect the register to the output
+            arch->add_stmt
+               (new vhdl_cassign_stmt
+                (new vhdl_var_ref(name, NULL),
+                 new vhdl_var_ref(newname.c_str(), NULL)));
+         }
          break;
       case IVL_SIP_INOUT:
          arch->get_parent()->add_port
