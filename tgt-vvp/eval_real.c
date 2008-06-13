@@ -328,7 +328,7 @@ static int draw_signal_real_real(ivl_expr_t exp)
 
       if (ivl_signal_array_count(sig) > 1) {
 	    ivl_expr_t ix = ivl_expr_oper1(exp);
-	    if (!number_is_immediate(ix, 8*sizeof(word))) {
+	    if (!number_is_immediate(ix, 8*sizeof(word), 0)) {
 		    /* XXXX Need to generate a %load/ar instruction. */
 		  assert(0);
 		  return res;

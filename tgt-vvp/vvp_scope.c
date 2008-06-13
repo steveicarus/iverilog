@@ -546,9 +546,9 @@ static void draw_delay(ivl_net_logic_t lptr)
 	    return;
 
 	/* FIXME: Assume that the expression is a constant */
-      assert(number_is_immediate(d0, 64));
-      assert(number_is_immediate(d1, 64));
-      assert(number_is_immediate(d2, 64));
+      assert(number_is_immediate(d0, 64, 0));
+      assert(number_is_immediate(d1, 64, 0));
+      assert(number_is_immediate(d2, 64, 0));
 
       if (d0 == d1 && d1 == d2)
 	    fprintf(vvp_out, " (%lu)", get_number_immediate(d0));
@@ -862,9 +862,9 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    ivl_expr_t fall_exp  = ivl_logic_delay(lptr,1);
 	    ivl_expr_t decay_exp = ivl_logic_delay(lptr,2);
 
-	    if (number_is_immediate(rise_exp,64)
-		&& number_is_immediate(fall_exp,64)
-		&& number_is_immediate(decay_exp,64)) {
+	    if (number_is_immediate(rise_exp,64,0)
+		&& number_is_immediate(fall_exp,64,0)
+		&& number_is_immediate(decay_exp,64,0)) {
 
 		  fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
 			  lptr, get_number_immediate(rise_exp),
@@ -1055,9 +1055,9 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net)
 
       const char*dly = "";
       if (d_rise != 0) {
-	    assert(number_is_immediate(d_rise, 64));
-	    assert(number_is_immediate(d_fall, 64));
-	    assert(number_is_immediate(d_decay, 64));
+	    assert(number_is_immediate(d_rise, 64, 0));
+	    assert(number_is_immediate(d_fall, 64, 0));
+	    assert(number_is_immediate(d_decay, 64, 0));
 	    dly = "/d";
 	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
 	            net, get_number_immediate(d_rise),

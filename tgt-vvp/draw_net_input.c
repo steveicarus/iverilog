@@ -359,9 +359,9 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
 	      /* We have a delayed constant, so we need to build some code. */
 	    if (d_rise != 0) {
-		  assert(number_is_immediate(d_rise, 64));
-		  assert(number_is_immediate(d_fall, 64));
-		  assert(number_is_immediate(d_decay, 64));
+		  assert(number_is_immediate(d_rise, 64, 0));
+		  assert(number_is_immediate(d_fall, 64, 0));
+		  assert(number_is_immediate(d_decay, 64, 0));
 		  
 		  fprintf(vvp_out, "L_%p/d .functor BUFZ 1, %s, "
 		          "C4<0>, C4<0>, C4<0>;\n", cptr, result);

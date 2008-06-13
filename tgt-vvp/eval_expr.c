@@ -54,9 +54,11 @@ int number_is_unknown(ivl_expr_t ex)
  * above bitX. The maximum size of the immediate may vary, so use
  * lim_wid at the width limit to use.
  */
-int number_is_immediate(ivl_expr_t ex, unsigned lim_wid)
+int number_is_immediate(ivl_expr_t ex, unsigned lim_wid, int negative_ok_flag)
 {
       const char*bits;
+      unsigned nbits = ivl_expr_width(ex);
+      char pad_bit = '0';
       unsigned idx;
 
       if (ivl_expr_type(ex) != IVL_EX_NUMBER
@@ -64,13 +66,16 @@ int number_is_immediate(ivl_expr_t ex, unsigned lim_wid)
 	    return 0;
 
       bits = ivl_expr_bits(ex);
-      for (idx = lim_wid ;  idx < ivl_expr_width(ex) ;  idx += 1)
-	    if (bits[idx] != '0')
-		  return 0;
 
-	/* Negative numbers are not "immediate". */
-      if (ivl_expr_signed(ex) && bits[ivl_expr_width(ex)-1]=='1')
+      if (ivl_expr_signed(ex) && bits[nbits-1]=='1')
+	    pad_bit = '1';
+
+      if (pad_bit == '1' && !negative_ok_flag)
 	    return 0;
+
+      for (idx = lim_wid ;  idx < nbits ;  idx += 1)
+	    if (bits[idx] != pad_bit)
+		  return 0;
 
       return 1;
 }
@@ -146,7 +151,7 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		      }
 
 		      ivl_expr_t ixe = ivl_expr_oper1(expr);
-		      if (number_is_immediate(ixe, 8*sizeof(unsigned long)))
+		      if (number_is_immediate(ixe, 8*sizeof(unsigned long), 0))
 		            word = get_number_immediate(ixe);
 		      else {
 		            struct vector_info rv;
@@ -374,7 +379,7 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 	    return draw_binary_expr_eq_real(exp);
       }
 
-      if (number_is_immediate(re,16) && !number_is_unknown(re))
+      if (number_is_immediate(re,16,0) && !number_is_unknown(re))
 	    return draw_eq_immediate(exp, ewid, le, re, stuff_ok_flag);
 
       assert(ivl_expr_value(le) == IVL_VT_LOGIC
@@ -805,7 +810,7 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
       switch (ivl_expr_opcode(exp)) {
 	  case 'G':
 	    rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
-	    if (number_is_immediate(le,16) && !number_is_unknown(le)) {
+	    if (number_is_immediate(le,16,0) && !number_is_unknown(le)) {
 		  unsigned imm = get_number_immediate(le);
 		  assert(imm >= 0);
 		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
@@ -821,7 +826,7 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
 
 	  case 'L':
 	    lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
-	    if (number_is_immediate(re,16) && !number_is_unknown(re)) {
+	    if (number_is_immediate(re,16,0) && !number_is_unknown(re)) {
 		  unsigned imm = get_number_immediate(re);
 		  assert(imm >= 0);
 		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
@@ -837,7 +842,7 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
 
 	  case '<':
 	    lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
-	    if (number_is_immediate(re,16) && !number_is_unknown(re)) {
+	    if (number_is_immediate(re,16,0) && !number_is_unknown(re)) {
 		  unsigned imm = get_number_immediate(re);
 		  assert(imm >= 0);
 		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
@@ -852,7 +857,7 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
 
 	  case '>':
 	    rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
-	    if (number_is_immediate(le,16) && !number_is_unknown(le)) {
+	    if (number_is_immediate(le,16,0) && !number_is_unknown(le)) {
 		  unsigned imm = get_number_immediate(le);
 		  assert(imm >= 0);
 		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
@@ -931,9 +936,9 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
       ivl_expr_t re = ivl_expr_oper2(exp);
 
       if (ivl_expr_opcode(exp) == '&') {
-	    if (number_is_immediate(re, IMM_WID) && !number_is_unknown(re))
+	    if (number_is_immediate(re, IMM_WID, 0) && !number_is_unknown(re))
 		  return draw_logic_immediate(exp, le, re, wid);
-	    if (number_is_immediate(le, IMM_WID) && !number_is_unknown(le))
+	    if (number_is_immediate(le, IMM_WID, 0) && !number_is_unknown(le))
 		  return draw_logic_immediate(exp, re, le, wid);
       }
 
@@ -1341,7 +1346,7 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
       if ((ivl_expr_opcode(exp) == '+')
 	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
 	  && (! number_is_unknown(re))
-	  && number_is_immediate(re, 8*sizeof(unsigned long)))
+	  && number_is_immediate(re, 8*sizeof(unsigned long), 0))
 	    return draw_add_immediate(le, re, wid);
 
       if ((ivl_expr_opcode(exp) == '-')
@@ -1351,13 +1356,13 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
       if ((ivl_expr_opcode(exp) == '-')
 	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
 	  && (! number_is_unknown(re))
-	  && number_is_immediate(re, IMM_WID))
+	  && number_is_immediate(re, IMM_WID, 0))
 	    return draw_sub_immediate(le, re, wid);
 
       if ((ivl_expr_opcode(exp) == '*')
 	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
 	  && (! number_is_unknown(re))
-	  && number_is_immediate(re, IMM_WID))
+	  && number_is_immediate(re, IMM_WID, 0))
 	    return draw_mul_immediate(le, re, wid);
 
       lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
@@ -1664,7 +1669,7 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 	    vvp_errors += 1;
       }
 
-      if ((!number_is_unknown(exp)) && number_is_immediate(exp, IMM_WID)) {
+      if ((!number_is_unknown(exp)) && number_is_immediate(exp, IMM_WID,0)) {
 	    unsigned long val = get_number_immediate(exp);
 	    fprintf(vvp_out, "   %%movi %u, %lu, %u;\n", res.base, val, wid);
 	    return res;
@@ -2113,7 +2118,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	    ivl_expr_t ix = ivl_expr_oper1(sube);
 
 	    if (ivl_signal_type(sig)==IVL_SIT_REG
-		|| !number_is_immediate(ix, 8*sizeof(unsigned long)))
+		|| !number_is_immediate(ix, 8*sizeof(unsigned long),0))
 		  return draw_select_array(sube, bit_idx, bit_wid, wid);
 
 	      /* The index is constant, so we can return to direct
@@ -2124,7 +2129,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	/* Try the special case that the part is at the beginning of
 	   the signal (or the entire width). Just load the early bits
 	   in one go. */
-      if (number_is_immediate(bit_idx, 32)
+      if (number_is_immediate(bit_idx, 32, 0)
 	  && get_number_immediate(bit_idx) == 0
 	  && (ivl_expr_width(sube) >= bit_wid)) {
 
