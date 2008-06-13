@@ -193,9 +193,13 @@ static int draw_nbassign(vhdl_process *proc, stmt_container *container,
       vhdl_expr *rhs = rhs_raw->cast(decl->get_type());
 
       // If this is an `inital' process and we haven't yet
-      // generated a `wait' statement then initializing the
-      // signal here is equivalent to initializing to in the
-      // declaration
+      // generated a `wait' statement then this assignment
+      // needs to be moved to the declaration. Otherwise the
+      // Verilog behaviour won't be preserved: VHDL does not
+      // distinguish `initial' and `always' processes so an
+      // `always' process might be activatated before an
+      // `initial' process at time 0. The `always' process may
+      // then use the uninitialized signal value.
       // The second test ensures that we only try to initialise
       // internal signals not ports
       if (proc->is_initial() && ivl_signal_port(sig) == IVL_SIP_NONE) {
