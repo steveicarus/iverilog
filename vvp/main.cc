@@ -280,7 +280,7 @@ int main(int argc, char*argv[])
 	    vpi_mcd_printf(1, "           %8lu resolv\n",count_functors_resolv);
 	    vpi_mcd_printf(1, "           %8lu signals\n", count_functors_sig);
 	    vpi_mcd_printf(1, " ... %8lu opcodes (%zu bytes)\n",
-		    count_opcodes, (unsigned long)size_opcodes);
+	                   count_opcodes, size_opcodes);
 	    vpi_mcd_printf(1, " ... %8lu nets\n",     count_vpi_nets);
 	    vpi_mcd_printf(1, " ... %8lu vvp_nets (%zu bytes)\n",
 			   count_vvp_nets, size_vvp_nets);
