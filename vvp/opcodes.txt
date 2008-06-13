@@ -369,7 +369,7 @@ This instruction loads an immediate value into the addressed index
 register. The index register holds numeric values, so the <value> is a
 number. The idx value selects the index register. This is different
 from %ix/get, which loads the index register from a value in the
-thread bit vector.
+thread bit vector. The value is a signed decimal value >= 0.
 
 
 * %ix/add <idx>, <value>
@@ -462,7 +462,12 @@ select a part from a vector functor at <functor-label>. The
 part is pulled from the indexed bit of the addressed functor and loaded
 into the destination thread bit. The <wid> is the width of the
 part. If any bit of the desired value is outside the vector, then that
-bit is set to X. The index register 1 is interpreted as a signed value.
+bit is set to X.
+
+The index register 1 is interpreted as a signed value. Even though the
+address is cannonical (from 0 to the width of the signal) the value in
+index register 1 may be <0 or >=wid. The load instruction handles
+filling in the out-of-bounds bits with x.
 
 When the operation is done, the <wid> is added to index register 1, to
 provide a basic auto-increment behavior.

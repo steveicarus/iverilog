@@ -270,7 +270,7 @@ extern unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
 
 extern int number_is_unknown(ivl_expr_t ex);
 extern int number_is_immediate(ivl_expr_t ex, unsigned lim_wid);
-extern unsigned long get_number_immediate(ivl_expr_t ex);
+extern long get_number_immediate(ivl_expr_t ex);
 
 /*
  * draw_eval_real evaluates real value expressions. The return code
