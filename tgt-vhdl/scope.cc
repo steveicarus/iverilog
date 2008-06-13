@@ -37,7 +37,7 @@ static vhdl_var_ref *nexus_to_var_ref(vhdl_arch *arch, ivl_nexus_t nexus)
 
       ivl_signal_t sig;
       if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
-         const char *signame = ivl_signal_basename(sig);
+         const char *signame = get_renamed_signal(sig).c_str();
          
          vhdl_decl *decl = arch->get_decl(signame);
          assert(decl);

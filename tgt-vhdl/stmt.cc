@@ -182,7 +182,7 @@ static int draw_nbassign(vhdl_process *proc, stmt_container *container,
    ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
    ivl_signal_t sig;
    if ((sig = ivl_lval_sig(lval))) {
-      const char *signame = ivl_signal_basename(sig);
+      const char *signame = get_renamed_signal(sig).c_str();
 
       vhdl_decl *decl = proc->get_parent()->get_decl(signame);
       assert(decl);
