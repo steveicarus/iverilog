@@ -1567,9 +1567,11 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 
 	// If the part select covers exactly the entire
 	// vector, then do not bother with it. Return the
-	// signal itself.
-      if (sb_lsb == 0 && wid == net->vector_width())
+	// signal itself, casting to unsigned if necessary.
+      if (sb_lsb == 0 && wid == net->vector_width()) {
+	    net->cast_signed(false);
 	    return net;
+      }
 
 	// If the part select covers NONE of the vector, then return a
 	// constant X.
@@ -1580,61 +1582,10 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	    return tmp;
       }
 
-	// If the part select is entirely within the vector, then make
-	// a simple part select.
-      if (sb_lsb >= 0 && sb_msb < (signed)net->vector_width()) {
-	    NetExpr*ex = new NetEConst(verinum(sb_lsb));
-	    NetESelect*ss = new NetESelect(net, ex, wid);
-	    ss->set_line(*this);
-	    return ss;
-      }
-
-	// Now the hard stuff. The part select is falling off at least
-	// one end. We're going to need a NetEConcat to  mix the
-	// selection with overrun.
-
-      NetEConst*bot = 0;
-      if (sb_lsb < 0) {
-	    bot = make_const_x( 0-sb_lsb );
-	    bot->set_line(*this);
-	    sb_lsb = 0;
-      }
-      NetEConst*top = 0;
-      if (sb_msb >= (signed)net->vector_width()) {
-	    top = make_const_x( 1+sb_msb-net->vector_width() );
-	    top->set_line(*this);
-	    sb_msb = net->vector_width()-1;
-      }
-
-      unsigned concat_count = 1;
-      if (bot) concat_count += 1;
-      if (top) concat_count += 1;
-
-      NetEConcat*concat = new NetEConcat(concat_count);
-      concat->set_line(*this);
-
-      if (bot) {
-	    concat_count -= 1;
-	    concat->set(concat_count, bot);
-      }
-      if (sb_lsb == 0 && sb_msb+1 == (signed)net->vector_width()) {
-	    concat_count -= 1;
-	    concat->set(concat_count, net);
-      } else {
-	    NetExpr*ex = new NetEConst(verinum(sb_lsb));
-	    ex->set_line(*this);
-	    NetESelect*ss = new NetESelect(net, ex, 1+sb_msb-sb_lsb);
-	    ss->set_line(*this);
-	    concat_count -= 1;
-	    concat->set(concat_count, ss);
-      }
-      if (top) {
-	    concat_count -= 1;
-	    concat->set(concat_count, top);
-      }
-      ivl_assert(*this, concat_count==0);
-
-      return concat;
+      NetExpr*ex = new NetEConst(verinum(sb_lsb));
+      NetESelect*ss = new NetESelect(net, ex, wid);
+      ss->set_line(*this);
+      return ss;
 }
 
 /*

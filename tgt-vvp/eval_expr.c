@@ -75,9 +75,9 @@ int number_is_immediate(ivl_expr_t ex, unsigned lim_wid)
       return 1;
 }
 
-unsigned long get_number_immediate(ivl_expr_t ex)
+long get_number_immediate(ivl_expr_t ex)
 {
-      unsigned long imm = 0;
+      long imm = 0;
       unsigned idx;
 
       switch (ivl_expr_type(ex)) {
@@ -93,11 +93,13 @@ unsigned long get_number_immediate(ivl_expr_t ex)
 		      break;
 		    case '1':
 		      assert(idx < 8*sizeof(imm));
-		      imm |= 1UL << idx;
+		      imm |= 1L << idx;
 		      break;
 		    default:
 		      assert(0);
 		}
+		if (ivl_expr_signed(ex) && bits[nbits-1]=='1' && nbits < 8*sizeof(imm))
+		      imm |= -1L << nbits;
 		break;
 	  }
 
@@ -112,30 +114,18 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 {
       switch (ivl_expr_type(expr)) {
 
-	  case IVL_EX_NUMBER: {
-		unsigned value = 0;
-		unsigned idx, nbits = ivl_expr_width(expr);
-		const char*bits = ivl_expr_bits(expr);
-
-		for (idx = 0 ;  idx < nbits ;  idx += 1) switch (bits[idx]) {
-
-		    case '0':
-		      break;
-		    case '1':
-		      assert(idx < (8*sizeof value));
-		      value |= 1 << idx;
-		      break;
-		    default:
-		      assert(0);
-		}
-
-		fprintf(vvp_out, "    %%ix/load %u, %u;\n", ix, value);
-		break;
-	  }
-
+	  case IVL_EX_NUMBER:
 	  case IVL_EX_ULONG:
-	    fprintf(vvp_out, "    %%ix/load %u, %lu;\n", ix, ivl_expr_uvalue(expr));
-	    break;
+	      {
+		    long imm = get_number_immediate(expr);
+		    if (imm >= 0) {
+			  fprintf(vvp_out, "   %%ix/load %u, %ld;\n", ix, imm);
+		    } else {
+			  fprintf(vvp_out, "   %%ix/load %u, 0; loading %ld\n", ix, imm);
+			  fprintf(vvp_out, "   %%ix/sub %u, %ld;\n", ix, -imm);
+		    }
+	      }
+	      break;
 
 	  case IVL_EX_SIGNAL: {
 		ivl_signal_t sig = ivl_expr_signal(expr);
