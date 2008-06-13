@@ -946,12 +946,21 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 static int PV_get_base(struct __vpiPV*rfp)
 {
+	/* We return from the symbol base if it is defined. */
+      if (rfp->sbase != 0) {
+	    s_vpi_value val;
+	    val.format = vpiIntVal;
+	    vpi_get_value(rfp->sbase, &val);
+	    return val.value.integer;
+      }
+
+	/* If the width is zero then tbase is the constant. */
       if (rfp->twid == 0) return rfp->tbase;
 
       int tval = 0;
       for (unsigned idx = 0 ;  idx < rfp->twid ;  idx += 1) {
 	    vvp_bit4_t bit = vthread_get_bit(vpip_current_vthread,
-                                              rfp->tbase + idx);
+                                             rfp->tbase + idx);
 	    if (bit == BIT4_1) {
 		  tval |= 1<<idx;
 	    }
@@ -1156,11 +1165,26 @@ struct __vpiPV* vpip_PV_from_handle(vpiHandle obj)
 
 vpiHandle vpip_make_PV(char*var, int base, int width)
 {
-
       struct __vpiPV*obj = (struct __vpiPV*) malloc(sizeof(struct __vpiPV));
       obj->base.vpi_type = &vpip_PV_rt;
       obj->parent = vvp_lookup_handle(var);
+      obj->sbase = 0;
       obj->tbase = base;
+      obj->twid = 0;
+      obj->width = (unsigned) width;
+      obj->net = (vvp_net_t*) malloc(sizeof(vvp_net_t));
+      functor_ref_lookup(&obj->net, var);
+
+      return &obj->base;
+}
+
+vpiHandle vpip_make_PV(char*var, char*symbol, int width)
+{
+      struct __vpiPV*obj = (struct __vpiPV*) malloc(sizeof(struct __vpiPV));
+      obj->base.vpi_type = &vpip_PV_rt;
+      obj->parent = vvp_lookup_handle(var);
+      compile_vpi_lookup(&obj->sbase, symbol);
+      obj->tbase = 0;
       obj->twid = 0;
       obj->width = (unsigned) width;
       obj->net = (vvp_net_t*) malloc(sizeof(vvp_net_t));
@@ -1174,6 +1198,7 @@ vpiHandle vpip_make_PV(char*var, int tbase, int twid, int width)
       struct __vpiPV*obj = (struct __vpiPV*) malloc(sizeof(struct __vpiPV));
       obj->base.vpi_type = &vpip_PV_rt;
       obj->parent = vvp_lookup_handle(var);
+      obj->sbase = 0;
       obj->tbase = tbase;
       obj->twid = (unsigned) twid;
       obj->width = (unsigned) width;

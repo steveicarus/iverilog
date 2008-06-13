@@ -212,9 +212,10 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			if (word_ex && ivl_expr_type(word_ex)==IVL_EX_SIGNAL) {
 				/* Special case: the index is a signal. */
 			      snprintf(buffer, sizeof buffer,
-				       "&A<v%p, v%p_0 >", sig, ivl_expr_signal(word_ex));
+				       "&A<v%p, v%p_0 >", sig,
+				       ivl_expr_signal(word_ex));
 			} else if (word_ex) {
-				/* fallback case: evaluate expression. */
+				/* Fallback case: evaluate expression. */
 			      struct vector_info av;
 			      av = draw_eval_expr(word_ex, STUFF_OK_XZ);
 			      snprintf(buffer, sizeof buffer,
@@ -250,7 +251,14 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			         get_number_immediate(bexpr),
 			         ivl_expr_width(expr));
 		    /* This is an indexed bit/part select. */
+                  } else if (ivl_expr_type(bexpr) == IVL_EX_SIGNAL) {
+			  /* Sepcial case: the base is a signal. */
+			snprintf(buffer, sizeof buffer, "&PV<v%p_0, v%p_0, %u>",
+			         ivl_expr_signal(vexpr),
+			         ivl_expr_signal(bexpr),
+			         ivl_expr_width(expr));
                   } else {
+			  /* Fallback case: evaluate the expression. */
 			struct vector_info rv;
 			rv = draw_eval_expr(bexpr, STUFF_OK_XZ);
 			snprintf(buffer, sizeof buffer, "&PV<v%p_0, %u %u, %u>",
