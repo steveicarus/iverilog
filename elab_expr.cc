@@ -1567,9 +1567,11 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 
 	// If the part select covers exactly the entire
 	// vector, then do not bother with it. Return the
-	// signal itself.
-      if (sb_lsb == 0 && wid == net->vector_width())
+	// signal itself, casting to unsigned if necessary.
+      if (sb_lsb == 0 && wid == net->vector_width()) {
+	    net->cast_signed(false);
 	    return net;
+      }
 
 	// If the part select covers NONE of the vector, then return a
 	// constant X.
