@@ -251,6 +251,35 @@ static int draw_delay(vhdl_process *proc, stmt_container *container,
 }
 
 /*
+ * Make edge detectors from the signals in `nexus' and add them
+ * to the expression `test'. Also adds the signals to the process
+ * sensitivity list. Type should be one of `rising_edge' or
+ * `falling_edge'.
+ */
+static void edge_detector(ivl_nexus_t nexus, vhdl_process *proc,
+                          vhdl_binop_expr *test, const char *type)
+{
+   int nptrs = ivl_nexus_ptrs(nexus);
+   for (int j = 0; j < nptrs; j++) {
+      ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, j);
+      
+      ivl_signal_t sig;
+      if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
+         const char *signame = get_renamed_signal(sig).c_str();
+         
+         vhdl_fcall *detect
+            = new vhdl_fcall(type, vhdl_type::boolean());
+         detect->add_expr
+            (new vhdl_var_ref(signame, vhdl_type::std_logic()));
+         test->add_expr(detect);
+         proc->add_sensitivity(signame);
+         break;
+      }
+   }
+}
+
+
+/*
  * A wait statement waits for a level change on a @(..) list of
  * signals.
  */
@@ -301,47 +330,13 @@ static int draw_wait(vhdl_process *proc, stmt_container *container,
             new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
 
          // Generate falling_edge(..) calls for each negedge event
-         for (int i = 0; i < nneg; i++) {
-            ivl_nexus_t nexus = ivl_event_neg(event, i);
-
-            int nptrs = ivl_nexus_ptrs(nexus);
-            for (int j = 0; j < nptrs; j++) {
-               ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, j);
-
-               ivl_signal_t sig;
-               if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
-                  vhdl_fcall *detect
-                     = new vhdl_fcall("falling_edge", vhdl_type::boolean());
-                  detect->add_expr
-                     (new vhdl_var_ref(ivl_signal_basename(sig),
-                                       vhdl_type::std_logic()));
-                  test->add_expr(detect);
-                  break;
-               }
-            }
-         }
-
+         for (int i = 0; i < nneg; i++)
+            edge_detector(ivl_event_neg(event, i), proc, test, "falling_edge");
+        
          // Generate rising_edge(..) calls for each posedge event
-         for (int i = 0; i < npos; i++) {
-            ivl_nexus_t nexus = ivl_event_pos(event, i);
-
-            int nptrs = ivl_nexus_ptrs(nexus);
-            for (int j = 0; j < nptrs; j++) {
-               ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, j);
-
-               ivl_signal_t sig;
-               if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
-                  vhdl_fcall *detect
-                     = new vhdl_fcall("rising_edge", vhdl_type::boolean());
-                  detect->add_expr
-                     (new vhdl_var_ref(ivl_signal_basename(sig),
-                                       vhdl_type::std_logic()));
-                  test->add_expr(detect);
-                  break;
-               }
-            }
-         }
-
+         for (int i = 0; i < npos; i++)
+            edge_detector(ivl_event_pos(event, i), proc, test, "rising_edge");
+        
          // Add Name'Event terms for each non-edge-triggered signal
          string_list_t::iterator it;
          for (it = non_edges.begin(); it != non_edges.end(); ++it) {
