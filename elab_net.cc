@@ -137,7 +137,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 				     const NetExpr* decay) const
 {
       NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0),
-	    *rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
+            *rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
 
       if (lsig == 0 || rsig == 0) return 0;
 
@@ -449,26 +449,21 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 				     const NetExpr* fall,
 				     const NetExpr* decay) const
 {
-
 	/* Elaborate the operands of the compare first as expressions
 	   (so that the eval_tree method can reduce constant
 	   expressions, including parameters) then turn those results
 	   into synthesized nets. */
-      NetExpr*lexp = elab_and_eval(des, scope, left_, lwidth),
-             *rexp = elab_and_eval(des, scope, right_, lwidth);
+      NetExpr*lexp = elab_and_eval(des, scope, left_, -1),
+             *rexp = elab_and_eval(des, scope, right_, -1);
 
       if (lexp == 0 || rexp == 0) return 0;
 
-      unsigned operand_width;
-      bool real_arg = false;
-      if (lexp->expr_type() == IVL_VT_REAL ||
-          rexp->expr_type() == IVL_VT_REAL) {
-	    operand_width = 1;
-	    real_arg = true;
-      } else {
+      bool real_arg = true;
+      if (lexp->expr_type() != IVL_VT_REAL &&
+          rexp->expr_type() != IVL_VT_REAL) {
 	/* Choose the operand width to be the width of the widest
 	   self-determined operand. */
-	    operand_width = lexp->expr_width();
+	    unsigned operand_width = lexp->expr_width();
 	    if (rexp->expr_width() > operand_width)
 	          operand_width = rexp->expr_width();
 
@@ -476,6 +471,8 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    lexp = pad_to_width(lexp, operand_width);
 	    rexp->set_width(operand_width);
 	    rexp = pad_to_width(rexp, operand_width);
+
+	    real_arg = false;
       }
 
       NetNet*lsig = 0;
@@ -790,8 +787,8 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 				     const NetExpr* fall,
 				     const NetExpr* decay) const
 {
-      NetNet*lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0),
-            *rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
+      NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0),
+            *rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
 
       if (lsig == 0 || rsig == 0) return 0;
 

@@ -94,7 +94,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       assert(lval->pin_count() == 1);
 
       if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: PGassign: elaborated l-value"
+	    cerr << get_fileline() << ": debug: PGAssign: elaborated l-value"
 		 << " width=" << lval->vector_width()
 		 << ", type=" << lval->data_type() << endl;
       }
