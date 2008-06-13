@@ -314,15 +314,18 @@ private:
  */
 class vhdl_decl : public vhdl_element {
 public:
-   vhdl_decl(const char *name, vhdl_type *type=NULL)
-      : name_(name), type_(type) {}
+   vhdl_decl(const char *name, vhdl_type *type = NULL,
+             vhdl_expr *initial = NULL)
+      : name_(name), type_(type), initial_(initial) {}
    virtual ~vhdl_decl();
 
    const std::string &get_name() const { return name_; }
    const vhdl_type *get_type() const { return type_; }
+   void set_initial(vhdl_expr *initial);
 protected:
    std::string name_;
    vhdl_type *type_;
+   vhdl_expr *initial_;
 };
 
 typedef std::list<vhdl_decl*> decl_list_t;

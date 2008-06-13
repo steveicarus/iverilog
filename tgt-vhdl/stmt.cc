@@ -198,9 +198,8 @@ static int draw_nbassign(vhdl_process *proc, stmt_container *container,
       // declaration
       // The second test ensures that we only try to initialise
       // internal signals not ports
-      if (proc->is_initial()
-          && !proc->get_parent()->get_parent()->get_decl(signame)) {
-         std::cout << "Pushing " << signame << " init up" << std::endl;
+      if (proc->is_initial() && ivl_signal_port(sig) == IVL_SIP_NONE) {
+         decl->set_initial(rhs);
       }
       else {
          // The type here can be null as it is never actually needed

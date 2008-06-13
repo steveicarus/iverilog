@@ -371,6 +371,15 @@ vhdl_decl::~vhdl_decl()
 {
    if (type_ != NULL)
       delete type_;
+   if (initial_ != NULL)
+      delete initial_;
+}
+
+void vhdl_decl::set_initial(vhdl_expr *initial)
+{
+   if (initial_ != NULL)
+      delete initial_;
+   initial_ = initial;
 }
 
 void vhdl_port_decl::emit(std::ofstream &of, int level) const
@@ -396,6 +405,12 @@ void vhdl_var_decl::emit(std::ofstream &of, int level) const
 {
    of << "variable " << name_ << " : ";
    type_->emit(of, level);
+   
+   if (initial_) {
+      of << " := ";
+      initial_->emit(of, level);
+   }
+       
    of << ";";
    emit_comment(of, level, true);
 }
@@ -404,6 +419,12 @@ void vhdl_signal_decl::emit(std::ofstream &of, int level) const
 {
    of << "signal " << name_ << " : ";
    type_->emit(of, level);
+   
+   if (initial_) {
+      of << " := ";
+      initial_->emit(of, level);
+   }
+       
    of << ";";
    emit_comment(of, level, true);
 }
