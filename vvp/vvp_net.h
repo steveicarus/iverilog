@@ -21,6 +21,7 @@
 
 # include  "config.h"
 # include  <stddef.h>
+# include  <string.h>
 # include  <new>
 # include  <assert.h>
 
