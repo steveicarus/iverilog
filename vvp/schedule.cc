@@ -19,9 +19,8 @@
 
 # include  "schedule.h"
 # include  "vthread.h"
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
+# include  "slab.h"
+# include  <new>
 # include  <signal.h>
 # include  <stdlib.h>
 # include  <assert.h>
@@ -33,7 +32,7 @@ unsigned long count_gen_events = 0;
 unsigned long count_thread_events = 0;
   // Count the time events (A time cell created)
 unsigned long count_time_events = 0;
-unsigned long count_time_pool = 0;
+
 
 
 /*
@@ -50,9 +49,14 @@ struct event_s {
       struct event_s*next;
       virtual ~event_s() { }
       virtual void run_run(void) =0;
+
+	// Fallback new/delete
+      static void*operator new (size_t size) { return ::new char[size]; }
+      static void operator delete(void*ptr)  { ::delete[]( (char*)ptr ); }
 };
 
 struct event_time_s {
+      event_time_s() { count_time_events += 1; }
       vvp_time64_t delay;
 
       struct event_s*active;
@@ -63,8 +67,8 @@ struct event_time_s {
 
       struct event_time_s*next;
 
-      void* operator new (size_t);
-      void operator delete(void*obj, size_t s);
+      static void* operator new (size_t);
+      static void operator delete(void*obj, size_t s);
 };
 
 vvp_gen_event_s::~vvp_gen_event_s()
@@ -77,12 +81,29 @@ vvp_gen_event_s::~vvp_gen_event_s()
 struct vthread_event_s : public event_s {
       vthread_t thr;
       void run_run(void);
+
+      static void* operator new(size_t);
+      static void operator delete(void*);
 };
 
 void vthread_event_s::run_run(void)
 {
       count_thread_events += 1;
       vthread_run(thr);
+}
+
+static const size_t VTHR_CHUNK_COUNT = 8192 / sizeof(struct vthread_event_s);
+static slab_t<sizeof(vthread_event_s),VTHR_CHUNK_COUNT> vthread_event_heap;
+
+inline void* vthread_event_s::operator new(size_t size)
+{
+      assert(size == sizeof(vthread_event_s));
+      return vthread_event_heap.alloc_slab();
+}
+
+void vthread_event_s::operator delete(void*ptr)
+{
+      vthread_event_heap.free_slab(ptr);
 }
 
 struct del_thr_event_s : public event_s {
@@ -111,6 +132,9 @@ struct assign_vector4_event_s  : public event_s {
 	/* Width of the destination vector. */
       unsigned vwid;
       void run_run(void);
+
+      static void* operator new(size_t);
+      static void operator delete(void*);
 };
 
 void assign_vector4_event_s::run_run(void)
@@ -122,10 +146,29 @@ void assign_vector4_event_s::run_run(void)
 	    vvp_send_vec4(ptr, val);
 }
 
+static const size_t ASSIGN4_CHUNK_COUNT = 524288 / sizeof(struct assign_vector4_event_s);
+static slab_t<sizeof(assign_vector4_event_s),ASSIGN4_CHUNK_COUNT> assign4_heap;
+
+inline void* assign_vector4_event_s::operator new(size_t size)
+{
+      assert(size == sizeof(assign_vector4_event_s));
+      return assign4_heap.alloc_slab();
+}
+
+void assign_vector4_event_s::operator delete(void*ptr)
+{
+      assign4_heap.free_slab(ptr);
+}
+
+unsigned long count_assign4_pool(void) { return assign4_heap.pool; }
+
 struct assign_vector8_event_s  : public event_s {
       vvp_net_ptr_t ptr;
       vvp_vector8_t val;
       void run_run(void);
+
+      static void* operator new(size_t);
+      static void operator delete(void*);
 };
 
 void assign_vector8_event_s::run_run(void)
@@ -134,10 +177,29 @@ void assign_vector8_event_s::run_run(void)
       vvp_send_vec8(ptr, val);
 }
 
+static const size_t ASSIGN8_CHUNK_COUNT = 8192 / sizeof(struct assign_vector8_event_s);
+static slab_t<sizeof(assign_vector8_event_s),ASSIGN8_CHUNK_COUNT> assign8_heap;
+
+inline void* assign_vector8_event_s::operator new(size_t size)
+{
+      assert(size == sizeof(assign_vector8_event_s));
+      return assign8_heap.alloc_slab();
+}
+
+void assign_vector8_event_s::operator delete(void*ptr)
+{
+      assign8_heap.free_slab(ptr);
+}
+
+unsigned long count_assign8_pool() { return assign8_heap.pool; }
+
 struct assign_real_event_s  : public event_s {
       vvp_net_ptr_t ptr;
       double val;
       void run_run(void);
+
+      static void* operator new(size_t);
+      static void operator delete(void*);
 };
 
 void assign_real_event_s::run_run(void)
@@ -146,12 +208,31 @@ void assign_real_event_s::run_run(void)
       vvp_send_real(ptr, val);
 }
 
+static const size_t ASSIGNR_CHUNK_COUNT = 8192 / sizeof(struct assign_real_event_s);
+static slab_t<sizeof(assign_real_event_s),ASSIGNR_CHUNK_COUNT> assignr_heap;
+
+inline void* assign_real_event_s::operator new (size_t size)
+{
+      assert(size == sizeof(assign_real_event_s));
+      return assignr_heap.alloc_slab();
+}
+
+void assign_real_event_s::operator delete(void*ptr)
+{
+      assignr_heap.free_slab(ptr);
+}
+
+unsigned long count_assign_real_pool(void) { return assignr_heap.pool; }
+
 struct assign_array_word_s  : public event_s {
       vvp_array_t mem;
       unsigned adr;
       vvp_vector4_t val;
       unsigned off;
       void run_run(void);
+
+      static void* operator new(size_t);
+      static void operator delete(void*);
 };
 
 void assign_array_word_s::run_run(void)
@@ -160,10 +241,29 @@ void assign_array_word_s::run_run(void)
       array_set_word(mem, adr, off, val);
 }
 
+static const size_t ARRAY_W_CHUNK_COUNT = 8192 / sizeof(struct assign_array_word_s);
+static slab_t<sizeof(assign_array_word_s),ARRAY_W_CHUNK_COUNT> array_w_heap;
+
+inline void* assign_array_word_s::operator new (size_t size)
+{
+      assert(size == sizeof(assign_array_word_s));
+      return array_w_heap.alloc_slab();
+}
+
+void assign_array_word_s::operator delete(void*ptr)
+{
+      array_w_heap.free_slab(ptr);
+}
+
+unsigned long count_assign_aword_pool(void) { return array_w_heap.pool; }
+
 struct generic_event_s : public event_s {
       vvp_gen_event_t obj;
       unsigned char val;
       void run_run(void);
+
+      static void* operator new(size_t);
+      static void operator delete(void*);
 };
 
 void generic_event_s::run_run(void)
@@ -173,43 +273,44 @@ void generic_event_s::run_run(void)
 	    obj->run_run();
 }
 
+static const size_t GENERIC_CHUNK_COUNT = 131072 / sizeof(struct generic_event_s);
+static slab_t<sizeof(generic_event_s),GENERIC_CHUNK_COUNT> generic_event_heap;
+
+inline void* generic_event_s::operator new(size_t size)
+{
+      assert(size == sizeof(generic_event_s));
+      return generic_event_heap.alloc_slab();
+}
+
+void generic_event_s::operator delete(void*ptr)
+{
+      generic_event_heap.free_slab(ptr);
+}
+
+unsigned long count_gen_pool(void) { return generic_event_heap.pool; }
+
 /*
 ** These event_time_s will be required a lot, at high frequency.
 ** Once allocated, we never free them, but stash them away for next time.
 */
 
 
-static struct event_time_s* time_free_list = 0;
-static const unsigned TIME_CHUNK_COUNT = 8192 / sizeof(struct event_time_s);
+static const size_t TIME_CHUNK_COUNT = 8192 / sizeof(struct event_time_s);
+static slab_t<sizeof(event_time_s),TIME_CHUNK_COUNT> event_time_heap;
 
 inline void* event_time_s::operator new (size_t size)
 {
       assert(size == sizeof(struct event_time_s));
-
-      struct event_time_s* cur = time_free_list;
-      if (!cur) {
-	    cur = (struct event_time_s*)
-		  malloc(TIME_CHUNK_COUNT * sizeof(struct event_time_s));
-	    for (unsigned idx = 1 ;  idx < TIME_CHUNK_COUNT ;  idx += 1) {
-		  cur[idx].next = time_free_list;
-		  time_free_list = cur + idx;
-	    }
-
-	    count_time_pool += TIME_CHUNK_COUNT;
-
-      } else {
-	    time_free_list = cur->next;
-      }
-
-      return cur;
+      void*ptr = event_time_heap.alloc_slab();
+      return ptr;
 }
 
-inline void event_time_s::operator delete(void*obj, size_t size)
+inline void event_time_s::operator delete(void*ptr, size_t size)
 {
-      struct event_time_s*cur = reinterpret_cast<event_time_s*>(obj);
-      cur->next = time_free_list;
-      time_free_list = cur;
+      event_time_heap.free_slab(ptr);
 }
+
+unsigned long count_time_pool(void) { return event_time_heap.pool; }
 
 /*
  * This is the head of the list of pending events. This includes all

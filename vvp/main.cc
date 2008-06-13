@@ -303,13 +303,21 @@ int main(int argc, char*argv[])
 
 	    vpi_mcd_printf(1, "Event counts:\n");
 	    vpi_mcd_printf(1, "    %8lu time steps (pool=%lu)\n",
-			   count_time_events, count_time_pool);
+			   count_time_events, count_time_pool());
 	    vpi_mcd_printf(1, "    %8lu thread schedule events\n",
 		    count_thread_events);
 	    vpi_mcd_printf(1, "    %8lu assign events\n",
 		    count_assign_events);
-	    vpi_mcd_printf(1, "    %8lu other events\n",
-		    count_gen_events);
+	    vpi_mcd_printf(1, "             ...assign(vec4) pool=%lu\n",
+			   count_assign4_pool());
+	    vpi_mcd_printf(1, "             ...assign(vec8) pool=%lu\n",
+			   count_assign8_pool());
+	    vpi_mcd_printf(1, "             ...assign(real) pool=%lu\n",
+			   count_assign_real_pool());
+	    vpi_mcd_printf(1, "             ...assign(word) pool=%lu\n",
+			   count_assign_aword_pool());
+	    vpi_mcd_printf(1, "    %8lu other events (pool=%lu)\n",
+			   count_gen_events, count_gen_pool());
       }
 
       return vvp_return_value;

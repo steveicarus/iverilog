@@ -33,7 +33,16 @@ extern unsigned long count_vpi_scopes;
 extern unsigned long count_vpi_memories;
 
 extern unsigned long count_time_events;
-extern unsigned long count_time_pool;
+extern unsigned long count_time_pool(void);
+
+extern unsigned long count_assign_events;
+extern unsigned long count_assign4_pool(void);
+extern unsigned long count_assign8_pool(void);
+extern unsigned long count_assign_real_pool(void);
+extern unsigned long count_assign_aword_pool(void);
+
+extern unsigned long count_gen_events;
+extern unsigned long count_gen_pool(void);
 
 extern size_t size_opcodes;
 extern size_t size_vvp_nets;
