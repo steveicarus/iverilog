@@ -285,7 +285,14 @@ int main(int argc, char*argv[])
 	    vpi_mcd_printf(1, " ... %8lu nets\n",     count_vpi_nets);
 	    vpi_mcd_printf(1, " ... %8lu vvp_nets (%zu bytes)\n",
 			   count_vvp_nets, size_vvp_nets);
-	    vpi_mcd_printf(1, " ... %8lu memories\n", count_vpi_memories);
+	    vpi_mcd_printf(1, " ... %8lu arrays (%lu words)\n",
+			   count_net_arrays, count_net_array_words);
+	    vpi_mcd_printf(1, " ... %8lu memories\n",
+			   count_var_arrays+count_real_arrays);
+	    vpi_mcd_printf(1, "           %8lu logic (%lu words)\n",
+			   count_var_arrays, count_var_array_words);
+	    vpi_mcd_printf(1, "           %8lu real (%lu words)\n",
+			   count_real_arrays, count_real_array_words);
 	    vpi_mcd_printf(1, " ... %8lu scopes\n",   count_vpi_scopes);
       }
 

@@ -30,6 +30,13 @@
 # include  "compile.h"
 # include  <assert.h>
 
+unsigned long count_net_arrays = 0;
+unsigned long count_net_array_words = 0;
+unsigned long count_var_arrays = 0;
+unsigned long count_var_array_words = 0;
+unsigned long count_real_arrays = 0;
+unsigned long count_real_array_words = 0;
+
 static symbol_map_s<struct __vpiArray>* array_table =0;
 
 class vvp_fun_arrayport;
@@ -801,6 +808,9 @@ void compile_var_array(char*label, char*name, int last, int first,
       vpip_make_dec_const(&arr->msb, msb);
       vpip_make_dec_const(&arr->lsb, lsb);
 
+      count_var_arrays += 1;
+      count_var_array_words += arr->array_count;
+
       free(label);
       free(name);
 }
@@ -820,6 +830,9 @@ void compile_real_array(char*label, char*name, int last, int first,
 	    compile_varw_real(strdup(buf), array, idx, msb, lsb);
       }
 
+      count_real_arrays += 1;
+      count_real_array_words += arr->array_count;
+
       free(label);
       free(name);
 }
@@ -830,6 +843,9 @@ void compile_net_array(char*label, char*name, int last, int first)
 
       struct __vpiArray*arr = ARRAY_HANDLE(obj);
       arr->nets = (vpiHandle*)calloc(arr->array_count, sizeof(vpiHandle));
+
+      count_net_arrays += 1;
+      count_net_array_words += arr->array_count;
 
       free(label);
       free(name);

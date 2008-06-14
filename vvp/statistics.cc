@@ -32,8 +32,6 @@ unsigned long count_functors_sig   = 0;
 
 unsigned long count_vpi_nets = 0;
 
-unsigned long count_vpi_memories = 0;
-
 unsigned long count_vpi_scopes = 0;
 
 size_t size_opcodes = 0;

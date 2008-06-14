@@ -393,18 +393,12 @@ compile_scope_decl(char*label, char*type, char*name, const char*tname,
 	    scope->time_units = vpip_get_time_precision();
 	    scope->time_precision = vpip_get_time_precision();
       }
-#if 0
-      functor_set_scope(&current_scope->base);
-#endif
 }
 
 void compile_scope_recall(char*symbol)
 {
       compile_vpi_lookup((vpiHandle*)&current_scope, symbol);
       assert(current_scope);
-#if 0
-      functor_set_scope(&current_scope->base);
-#endif
 }
 
 /*

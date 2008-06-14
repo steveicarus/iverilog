@@ -30,7 +30,14 @@ extern unsigned long count_functors_sig;
 extern unsigned long count_vvp_nets;
 extern unsigned long count_vpi_nets;
 extern unsigned long count_vpi_scopes;
-extern unsigned long count_vpi_memories;
+
+extern unsigned long count_net_arrays;
+extern unsigned long count_net_array_words;
+extern unsigned long count_var_arrays;
+extern unsigned long count_var_array_words;
+extern unsigned long count_real_arrays;
+extern unsigned long count_real_array_words;
+
 
 extern unsigned long count_time_events;
 extern unsigned long count_time_pool(void);
