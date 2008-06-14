@@ -2467,9 +2467,6 @@ bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
  */
 static vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx[0] >= 4);
-      assert(cp->bit_idx[1] > 0);
-
       vvp_net_t*net = cp->net;
 
 	/* For the %load to work, the functor must actually be a
@@ -2501,6 +2498,8 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
 	   directly to skip the excess calls to thr_check_addr. */
       thr->bits4.set_vec(bit, sig_value);
 
+	/* If the source is shorter then the desired width, then pad
+	   with BIT4_X values. */
       for (unsigned idx = sig_value.size() ; idx < wid ; idx += 1)
 	    thr->bits4.set_bit(bit+idx, BIT4_X);
 
@@ -2511,16 +2510,12 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
  * This is like of_LOAD_VEC, but includes an add of an integer value from
  * index 0. The <wid> is the expected result width not the vector width.
  */
-bool of_LOAD_VP0(vthread_t thr, vvp_code_t cp)
+
+static void load_vp0_common(vthread_t thr, vvp_code_t cp, const vvp_vector4_t&sig_value)
 {
       unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
       int64_t addend = thr->words[0].w_int;
-      unsigned wid = thr->words[2].w_int;
-
-        /* We need a vector this wide to make the math work correctly.
-         * Copy the base bits into the vector, but keep the width. */
-      vvp_vector4_t sig_value(wid, BIT4_0);
-      sig_value.copy_bits(load_base(thr, cp));
 
 	/* Check the address once, before we scan the vector. */
       thr_check_addr(thr, bit+wid-1);
@@ -2529,7 +2524,7 @@ bool of_LOAD_VP0(vthread_t thr, vvp_code_t cp)
       if (val == 0) {
 	    vvp_vector4_t tmp(wid, BIT4_X);
 	    thr->bits4.set_vec(bit, tmp);
-	    return true;
+	    return;
       }
 
       unsigned words = (wid + CPU_WORD_BITS - 1) / CPU_WORD_BITS;
@@ -2551,7 +2546,33 @@ bool of_LOAD_VP0(vthread_t thr, vvp_code_t cp)
 	   directly to skip the excess calls to thr_check_addr. */
       thr->bits4.setarray(bit, wid, val);
       delete[]val;
+}
 
+bool of_LOAD_VP0(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[1];
+
+        /* We need a vector this wide to make the math work correctly.
+         * Copy the base bits into the vector, but keep the width. */
+      vvp_vector4_t sig_value(wid, BIT4_0);
+      sig_value.copy_bits(load_base(thr, cp));
+
+      load_vp0_common(thr, cp, sig_value);
+      return true;
+}
+
+bool of_LOAD_VP0_S(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[1];
+
+      vvp_vector4_t tmp (load_base(thr, cp));
+
+        /* We need a vector this wide to make the math work correctly.
+         * Copy the base bits into the vector, but keep the width. */
+      vvp_vector4_t sig_value(wid, tmp.value(tmp.size()-1));
+      sig_value.copy_bits(tmp);
+
+      load_vp0_common(thr, cp, sig_value);
       return true;
 }
 

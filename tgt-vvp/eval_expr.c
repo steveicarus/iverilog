@@ -28,7 +28,7 @@
 static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
 				int ok_flags);
 static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
-			     int add_index, unsigned long immediate);
+			     int add_index, long immediate);
 
 int number_is_unknown(ivl_expr_t ex)
 {
@@ -1158,12 +1158,11 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 
 static struct vector_info draw_load_add_immediate(ivl_expr_t le,
 						  ivl_expr_t re,
-						  unsigned wid)
+						  unsigned wid,
+						  int signed_flag)
 {
       struct vector_info lv;
-      unsigned long imm;
-
-      imm = get_number_immediate(re);
+      long imm = get_number_immediate(re);
       lv.base = allocate_vector(wid);
       lv.wid = wid;
       if (lv.base == 0) {
@@ -1176,7 +1175,7 @@ static struct vector_info draw_load_add_immediate(ivl_expr_t le,
 
 	/* Load the signal value with a %load that adds the index
 	   register to the value being loaded. */
-      draw_signal_dest(le, lv, 0, imm);
+      draw_signal_dest(le, lv, signed_flag, imm);
 
       return lv;
 }
@@ -1319,25 +1318,27 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 
       const char*sign_string = ivl_expr_signed(le) && ivl_expr_signed(re)? "/s" : "";
 
+      int signed_flag = ivl_expr_signed(exp)? 1 : 0;
+
       if ((ivl_expr_opcode(exp) == '+')
 	  && (ivl_expr_type(le) == IVL_EX_SIGNAL)
 	  && (ivl_expr_type(re) == IVL_EX_ULONG))
-	    return draw_load_add_immediate(le, re, wid);
+	    return draw_load_add_immediate(le, re, wid, signed_flag);
 
       if ((ivl_expr_opcode(exp) == '+')
 	  && (ivl_expr_type(le) == IVL_EX_SIGNAL)
 	  && (ivl_expr_type(re) == IVL_EX_NUMBER))
-	    return draw_load_add_immediate(le, re, wid);
+	    return draw_load_add_immediate(le, re, wid, signed_flag);
 
       if ((ivl_expr_opcode(exp) == '+')
 	  && (ivl_expr_type(re) == IVL_EX_SIGNAL)
 	  && (ivl_expr_type(le) == IVL_EX_ULONG))
-	    return draw_load_add_immediate(re, le, wid);
+	    return draw_load_add_immediate(re, le, wid, signed_flag);
 
       if ((ivl_expr_opcode(exp) == '+')
 	  && (ivl_expr_type(re) == IVL_EX_SIGNAL)
 	  && (ivl_expr_type(le) == IVL_EX_NUMBER))
-	    return draw_load_add_immediate(re, le, wid);
+	    return draw_load_add_immediate(re, le, wid, signed_flag);
 
       if ((ivl_expr_opcode(exp) == '+')
 	  && (ivl_expr_type(re) == IVL_EX_ULONG))
@@ -1963,11 +1964,13 @@ void pad_expr_in_place(ivl_expr_t exp, struct vector_info res, unsigned swid)
  * offsetting the read from the lsi (least significant index) of the
  * signal.
  *
- * If the add_index is >=0, then generate a %load/vp0 to add the
- * word0 value to the loaded value before storing it into the destination.
+ * If the add_index is 0, then generate a %load/vp0 to add the
+ * word0 value to the loaded value before storing it into the
+ * destination. If the add_index is 1, then generate a %load/vp0/s to
+ * do a signed load.
  */
 static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
-			     int add_index, unsigned long immediate)
+			     int add_index, long immediate)
 {
       unsigned swid = ivl_expr_width(exp);
       ivl_signal_t sig = ivl_expr_signal(exp);
@@ -2009,13 +2012,17 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 
       } else if (add_index >= 0) {
 
-	    assert(add_index == 0);
+	    const char*sign_flag = add_index==1? "/s" : "";
 
 	      /* If this is a REG (a variable) then I can do a vector read. */
-	    fprintf(vvp_out, "    %%ix/load 0, %lu;\n", immediate);
-	    fprintf(vvp_out, "    %%ix/load 2, %u;\n", res.wid);
-	    fprintf(vvp_out, "    %%load/vp0 %u, v%p_%u, %u;\n",
-		    res.base, sig, word, swid);
+	    if (immediate >= 0) {
+		  fprintf(vvp_out, "    %%ix/load 0, %lu;\n", immediate);
+	    } else {
+		  fprintf(vvp_out, "   %%ix/load 0, 0; immediate=%ld\n", immediate);
+		  fprintf(vvp_out, "   %%ix/sub 0, %ld;\n", -immediate);
+	    }
+	    fprintf(vvp_out, "    %%load/vp0%s %u, v%p_%u, %u;\n", sign_flag,
+		    res.base, sig,word, res.wid);
 	    swid = res.wid;
 
       } else {

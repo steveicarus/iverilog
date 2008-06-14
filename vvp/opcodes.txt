@@ -437,18 +437,21 @@ the specified thread register bit. The functor-label can refer to a
 from the least significant up to <wid> bits, is loaded starting at
 thread bit <bit>. It is an OK for the width to not match the vector
 width at the functor. If the <wid> is less than the width at the
-functor, then the most significant bits are dropped.
+functor, then the most significant bits are dropped. If the <wid> is
+more than the width at the functor, the value is padded with X bits.
 
 * %load/vp0 <bit>, <functor-label>, <wid>
+* %load/vp0/s <bit>, <functor-label>, <wid>
 
-This instruction is the same as %load/v above, except that it also
-adds the integer value is index register 0 into the loaded value. The
-addition is a Verilog-style add, which means that if any of the input
-bits are X or Z, the entire result is turned into a vector of X bits.
+This instruction is the similar %load/v above, except that it also
+adds the signed integer value in index register 0 into the loaded
+value. The addition is a Verilog-style add, which means that if any of
+the input bits are X or Z, the entire result is turned into a vector
+of X bits.
 
-Index register 2 contains the result width. The addition of the loaded
-value and the index are done at this width to avoid the problem of a
-small vector with a large immediate offset indexing an array.
+The <wid> is, line the %load/v, the result width. But unlike the
+%load/v, the vector is padded with 0s (%load/vp0) or sign extended
+(%load/vp0/s) to the desired width.
 
 * %load/wr <bit>, <vpi-label>
 
