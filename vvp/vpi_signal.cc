@@ -1164,7 +1164,7 @@ vpiHandle vpip_make_PV(char*var, int base, int width)
       obj->tbase = base;
       obj->twid = 0;
       obj->width = (unsigned) width;
-      obj->net = (vvp_net_t*) malloc(sizeof(vvp_net_t));
+      obj->net = 0;
       functor_ref_lookup(&obj->net, var);
 
       return &obj->base;
@@ -1179,7 +1179,7 @@ vpiHandle vpip_make_PV(char*var, char*symbol, int width)
       obj->tbase = 0;
       obj->twid = 0;
       obj->width = (unsigned) width;
-      obj->net = (vvp_net_t*) malloc(sizeof(vvp_net_t));
+      obj->net = 0;
       functor_ref_lookup(&obj->net, var);
 
       return &obj->base;
@@ -1194,7 +1194,7 @@ vpiHandle vpip_make_PV(char*var, int tbase, int twid, int width)
       obj->tbase = tbase;
       obj->twid = (unsigned) twid;
       obj->width = (unsigned) width;
-      obj->net = (vvp_net_t*) malloc(sizeof(vvp_net_t));
+      obj->net = 0;
       functor_ref_lookup(&obj->net, var);
 
       return &obj->base;
