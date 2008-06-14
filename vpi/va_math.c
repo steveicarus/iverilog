@@ -68,7 +68,7 @@ typedef struct s_single_data {
 static t_single_data va_single_data[]= {
     {"$sqrt",  sqrt},
     {"$ln",    log},
-    {"$log",   log10}, /* FIXME: The $log function is replaced by the
+    {"$log",   log10}, /* NOTE: The $log function is replaced by the
 			  $log10 function to eliminate confusion with
 			  the natural log. In C, "log" is ln and log10
 			  is log-base-10. The $log is being left in for
@@ -141,8 +141,8 @@ typedef struct {
  * Standard error message routine. The format string must take one
  * string argument (the name of the function).
  */
-static void va_error_message(vpiHandle callh, const char* format,
-                             const char* name) {
+static void va_error_message(vpiHandle callh, const char *format,
+                             const char *name) {
     vpi_printf("%s:%d: error: ", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
     vpi_printf(format, name);
@@ -153,8 +153,8 @@ static void va_error_message(vpiHandle callh, const char* format,
 /*
  * Process an argument.
  */
-vpiHandle va_process_argument(vpiHandle callh, const char* name,
-                              vpiHandle arg, const char* post) {
+vpiHandle va_process_argument(vpiHandle callh, const char *name,
+                              vpiHandle arg, const char *post) {
     PLI_INT32 type;
 
     if (arg == NULL) return 0;
@@ -178,7 +178,7 @@ vpiHandle va_process_argument(vpiHandle callh, const char* name,
 /*
  * Routine to check all the single argument math functions.
  */
-static PLI_INT32 va_single_argument_compiletf(PLI_BYTE8* ud)
+static PLI_INT32 va_single_argument_compiletf(PLI_BYTE8 *ud)
 {
     assert(ud != 0);
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
@@ -225,7 +225,7 @@ static PLI_INT32 va_single_argument_compiletf(PLI_BYTE8* ud)
 /*
  * Routine to implement the single argument math functions.
  */
-static PLI_INT32 va_single_argument_calltf(PLI_BYTE8* ud)
+static PLI_INT32 va_single_argument_calltf(PLI_BYTE8 *ud)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     s_vpi_value val;
@@ -249,7 +249,7 @@ static PLI_INT32 va_single_argument_calltf(PLI_BYTE8* ud)
 /*
  * Routine to check all the double argument math functions.
  */
-static PLI_INT32 va_double_argument_compiletf(PLI_BYTE8* ud)
+static PLI_INT32 va_double_argument_compiletf(PLI_BYTE8 *ud)
 {
     assert(ud != 0);
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);

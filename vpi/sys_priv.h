@@ -56,5 +56,7 @@ extern vpiHandle sys_func_module(vpiHandle obj);
 extern PLI_INT32 sys_no_arg_compiletf(PLI_BYTE8 *name);
 extern PLI_INT32 sys_one_numeric_arg_compiletf(PLI_BYTE8 *name);
 extern PLI_INT32 sys_one_opt_numeric_arg_compiletf(PLI_BYTE8 *name);
+extern PLI_INT32 sys_two_numeric_args_compiletf(PLI_BYTE8 *name);
+extern PLI_INT32 sys_one_string_arg_compiletf(PLI_BYTE8 *name);
 
 #endif

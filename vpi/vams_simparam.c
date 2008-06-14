@@ -34,7 +34,7 @@
 /*
  * Check that the routines are called with the correct arguments.
  */
-static PLI_INT32 simparam_compiletf(PLI_BYTE8* name_ext)
+static PLI_INT32 simparam_compiletf(PLI_BYTE8 *name_ext)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       assert(callh != 0);
@@ -104,7 +104,7 @@ static PLI_INT32 simparam_compiletf(PLI_BYTE8* name_ext)
       return 0;
 }
 
-static PLI_INT32 simparam_calltf(PLI_BYTE8* name_ext)
+static PLI_INT32 simparam_calltf(PLI_BYTE8 *name_ext)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -179,7 +179,7 @@ static PLI_INT32 simparam_calltf(PLI_BYTE8* name_ext)
       return 0;
 }
 
-static PLI_INT32 simparam_str_calltf(PLI_BYTE8* name_ext)
+static PLI_INT32 simparam_str_calltf(PLI_BYTE8 *name_ext)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -246,9 +246,9 @@ static PLI_INT32 simparam_str_calltf(PLI_BYTE8* name_ext)
       return 0;
 }
 
-static PLI_INT32 simparam_str_sizetf(PLI_BYTE8* name_ext)
+static PLI_INT32 simparam_str_sizetf(PLI_BYTE8 *name_ext)
 {
-      (void) name_ext; //* Not used! */
+      (void) name_ext;  /* Not used! */
 
       return MAX_STRING_RESULT;  // 128 characters max!
 }

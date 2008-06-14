@@ -781,7 +781,7 @@ void sys_lxt2_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpfile";
       tf_data.calltf    = sys_dumpfile_calltf;
-      tf_data.compiletf = sys_dumpfile_compiletf;
+      tf_data.compiletf = sys_one_string_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$dumpfile";
       vpi_register_systf(&tf_data);

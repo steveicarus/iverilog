@@ -189,48 +189,8 @@ void set_nexus_ident(int nex, const char *id)
 /*
  * Since the compiletf routines are all the same they are located here,
  * so we only need a single copy. Some are generic enough they can use
- * the ones in sys_priv.c (no arg, one numeric arg.
+ * the ones in sys_priv.c (no arg, one numeric argument, etc.).
  */
-
-/* $dumpfile takes a single string argument. */
-PLI_INT32 sys_dumpfile_compiletf(PLI_BYTE8 *name)
-{
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-
-      /* Check that there is an argument and that it is a string. */
-      if (argv == 0) {
-            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
-                       (int)vpi_get(vpiLineNo, callh));
-            vpi_printf("%s requires a single string argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
-      }
-      if (! is_string_obj(vpi_scan(argv))) {
-            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
-                       (int)vpi_get(vpiLineNo, callh));
-            vpi_printf("%s's argument must be a string.\n", name);
-            vpi_control(vpiFinish, 1);
-      }
-
-      /* Make sure there are no extra arguments. */
-      if (vpi_scan(argv) != 0) {
-	    char msg [64];
-	    snprintf(msg, 64, "ERROR: %s line %d:",
-	             vpi_get_str(vpiFile, callh),
-	             (int)vpi_get(vpiLineNo, callh));
-
-	    unsigned argc = 1;
-	    while (vpi_scan(argv)) argc += 1;
-
-            vpi_printf("%s %s takes a single string argument.\n", msg, name);
-            vpi_printf("%*s Found %u extra argument%s.\n",
-	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
-            vpi_control(vpiFinish, 1);
-      }
-
-      return 0;
-}
 
 /* $dumpvars takes a variety of arguments. */
 PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name)
