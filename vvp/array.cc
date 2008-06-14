@@ -834,7 +834,8 @@ void array_attach_word(vvp_array_t array, unsigned long addr, vpiHandle word)
 	    vvp_fun_signal_base*fun = dynamic_cast<vvp_fun_signal_base*>(net->fun);
 	    assert(fun);
 	    fun->attach_as_word(array, addr);
-	    sig->parent = &array->base;
+	    sig->is_netarray = 1;
+	    sig->within.parent = &array->base;
 	    sig->id.index = vpip_make_dec_const(addr + array->first_addr.value);
       }
 }

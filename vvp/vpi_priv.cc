@@ -50,6 +50,14 @@ unsigned vpip_size(__vpiSignal *sig)
       return abs(sig->msb - sig->lsb) + 1;
 }
 
+struct __vpiScope* vpip_scope(__vpiSignal*sig)
+{
+      if (sig->is_netarray)
+	    return  (struct __vpiScope*) vpi_handle(vpiScope, sig->within.parent);
+      else
+	    return sig->within.scope;
+}
+
 const char *vpip_string(const char*str)
 {
       static vpip_string_chunk first_chunk = {0, {0}};
@@ -320,8 +328,9 @@ int vpip_time_units_from_handle(vpiHandle obj)
 
 	  case vpiNet:
 	  case vpiReg:
-	    signal = (struct __vpiSignal*)obj;
- 	    return signal->scope->time_units;
+	    signal = vpip_signal_from_handle(obj);
+	    scope = vpip_scope(signal);
+ 	    return scope->time_units;
 
 	  default:
 	    fprintf(stderr, "ERROR: vpip_time_units_from_handle called with "
@@ -351,8 +360,9 @@ int vpip_time_precision_from_handle(vpiHandle obj)
 
 	  case vpiNet:
 	  case vpiReg:
-	    signal = (struct __vpiSignal*)obj;
-	    return signal->scope->time_precision;
+	    signal = vpip_signal_from_handle(obj);
+	    scope = vpip_scope(signal);
+	    return scope->time_precision;
 
 	  default:
 	    fprintf(stderr, "ERROR: vpip_time_precision_from_handle called "

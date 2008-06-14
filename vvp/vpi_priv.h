@@ -197,10 +197,11 @@ extern void vpip_make_root_iterator(struct __vpiHandle**&table,
  */
 struct __vpiSignal {
       struct __vpiHandle base;
-      vpiHandle parent;
-      struct __vpiScope* scope;
-	/* The name of this reg/net, or the index for array words. */
-      union {
+      union { // The scope or parent array that contains me.
+	    vpiHandle parent;
+	    struct __vpiScope* scope;
+      } within;
+      union { // The name of this reg/net, or the index for array words.
             const char*name;
             vpiHandle index;
       } id;
@@ -208,11 +209,14 @@ struct __vpiSignal {
       int msb, lsb;
 	/* Flags */
       unsigned signed_flag  : 1;
-      unsigned isint_ : 1;	// original type was integer
+      unsigned isint_       : 1; // original type was integer
+      unsigned is_netarray  : 1; // This is word of a net array
 	/* The represented value is here. */
       vvp_net_t*node;
 };
 extern unsigned vpip_size(__vpiSignal *sig);
+extern struct __vpiScope* vpip_scope(__vpiSignal*sig);
+
 extern vpiHandle vpip_make_int(const char*name, int msb, int lsb,
 			       vvp_net_t*vec);
 extern vpiHandle vpip_make_reg(const char*name, int msb, int lsb,

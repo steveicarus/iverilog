@@ -505,16 +505,17 @@ static int signal_get(int code, vpiHandle ref)
 	    return rfp->signed_flag != 0;
 
 	  case vpiArray:
-	    return rfp->parent != 0;
+	    return rfp->is_netarray != 0;
 
 	  case vpiIndex: // This only works while we have a single index.
-	    if (rfp->parent) {
+	    if (rfp->is_netarray) {
 		  s_vpi_value vp;
 		  vp.format = vpiIntVal;
 		  vpi_get_value(rfp->id.index, &vp);
 		  return vp.value.integer;
-	    } else
+	    } else {
 		  return 0;
+	    }
 
 	  case vpiSize:
 	    if (rfp->msb >= rfp->lsb)
@@ -555,8 +556,8 @@ static char* signal_get_str(int code, vpiHandle ref)
       }
 
       char *nm, *ixs;
-      if (rfp->parent) {
-	    nm = strdup(vpi_get_str(vpiName, rfp->parent));
+      if (rfp->is_netarray) {
+	    nm = strdup(vpi_get_str(vpiName, rfp->within.parent));
 	    s_vpi_value vp;
 	    vp.format = vpiDecStrVal;
 	    vpi_get_value(rfp->id.index, &vp);
@@ -566,7 +567,7 @@ static char* signal_get_str(int code, vpiHandle ref)
 	    ixs = NULL;
       }
 
-      char *rbuf = generic_get_str(code, &rfp->scope->base, nm, ixs);
+      char *rbuf = generic_get_str(code, &(vpip_scope(rfp)->base), nm, ixs);
       free(nm);
       return rbuf;
 }
@@ -576,21 +577,21 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
       assert((ref->vpi_type->type_code==vpiNet)
 	     || (ref->vpi_type->type_code==vpiReg));
 
-      struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+      struct __vpiSignal*rfp = vpip_signal_from_handle(ref);
 
       switch (code) {
 
 	  case vpiParent:
-	    return rfp->parent;
+	    return rfp->is_netarray? rfp->within.parent : 0;
 
 	  case vpiIndex:
-	    return rfp->parent ? rfp->id.index : 0;
+	    return rfp->is_netarray? rfp->id.index : 0;
 
 	  case vpiScope:
-	    return &rfp->scope->base;
+	    return &(vpip_scope(rfp)->base);
 
 	  case vpiModule:
-	      { struct __vpiScope*scope = rfp->scope;
+	      { struct __vpiScope*scope = vpip_scope(rfp);
 	        while (scope && scope->base.vpi_type->type_code != vpiModule)
 		      scope = scope->scope;
 
@@ -610,7 +611,7 @@ static vpiHandle signal_iterate(int code, vpiHandle ref)
       struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
 
       if (code == vpiIndex) {
-	    return rfp->parent ? array_index_iterate(code, rfp->id.index) : 0;
+	    return rfp->is_netarray? array_index_iterate(code, rfp->id.index) : 0;
       }
 
       return 0;
@@ -690,7 +691,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    fprintf(stderr, "vvp internal error: get_value: "
 		    "value type %u not implemented."
 		    " Signal is %s in scope %s\n",
-		    vp->format, vpi_get_str(vpiName, ref), rfp->scope->name);
+		    vp->format, vpi_get_str(vpiName, ref), vpip_scope(rfp)->name);
 	    assert(0);
       }
 }
@@ -921,15 +922,18 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 {
       struct __vpiSignal*obj = allocate_vpiSignal();
       obj->base.vpi_type = &vpip_net_rt;
-      obj->parent = 0;
       obj->id.name = name? vpip_name_string(name) : 0;
       obj->msb = msb;
       obj->lsb = lsb;
       obj->signed_flag = signed_flag? 1 : 0;
-      obj->isint_ = false;
+      obj->isint_ = 0;
+      obj->is_netarray = 0;
       obj->node = node;
 
-      obj->scope = vpip_peek_current_scope();
+	// Place this object within a scope. If this object is
+	// attached to an array, then this value will be replaced with
+	// the handle to the parent.
+      obj->within.scope = vpip_peek_current_scope();
 
       count_vpi_nets += 1;
 
