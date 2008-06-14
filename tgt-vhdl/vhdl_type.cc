@@ -48,6 +48,16 @@ vhdl_type *vhdl_type::integer()
    return new vhdl_type(VHDL_TYPE_INTEGER);
 }
 
+vhdl_type *vhdl_type::nunsigned(int width)
+{
+   return new vhdl_type(VHDL_TYPE_UNSIGNED, width-1, 0);
+}
+
+vhdl_type *vhdl_type::nsigned(int width)
+{
+   return new vhdl_type(VHDL_TYPE_SIGNED, width-1, 0);
+}
+
 std::string vhdl_type::get_string() const
 {
    switch (name_) {

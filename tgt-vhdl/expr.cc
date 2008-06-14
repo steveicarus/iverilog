@@ -68,6 +68,68 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
    default:
       error("No translation for unary opcode '%c'\n",
             ivl_expr_opcode(e));
+      delete operand;
+      return NULL;
+   }
+}
+
+/*
+ * Translate a numeric binary operator (+, -, etc.) to
+ * a VHDL equivalent using the numeric_std package.
+ */
+static vhdl_expr *translate_numeric(vhdl_expr *lhs, vhdl_expr *rhs,
+                                    vhdl_binop_t op)
+{
+   int lwidth = lhs->get_type()->get_width();
+   int rwidth = rhs->get_type()->get_width();
+
+   vhdl_type ltype(VHDL_TYPE_UNSIGNED, lhs->get_type()->get_msb(),
+                   lhs->get_type()->get_lsb());
+   vhdl_type rtype(VHDL_TYPE_UNSIGNED, rhs->get_type()->get_msb(),
+                   rhs->get_type()->get_lsb());
+   
+   vhdl_expr *l_cast = lhs->cast(&ltype);   
+   vhdl_expr *r_cast = lhs->cast(&rtype);
+   
+   // May need to resize the left or right hand side
+   if (lwidth < rwidth) {
+      vhdl_fcall *resize =
+         new vhdl_fcall("resize", vhdl_type::nunsigned(rwidth));
+      resize->add_expr(l_cast);
+      resize->add_expr(new vhdl_const_int(rwidth));
+      //      l_cast = resize;
+   }
+   else if (rwidth < lwidth) {
+      vhdl_fcall *resize =
+         new vhdl_fcall("resize", vhdl_type::nunsigned(lwidth));
+      resize->add_expr(r_cast);
+      resize->add_expr(new vhdl_const_int(lwidth));
+      //r_cast = resize;      
+   }
+
+   
+   return new vhdl_binop_expr(l_cast, op, r_cast,
+                              vhdl_type::nunsigned(lwidth));
+}
+
+static vhdl_expr *translate_binary(ivl_expr_t e)
+{
+   vhdl_expr *lhs = translate_expr(ivl_expr_oper1(e));
+   if (NULL == lhs)
+      return NULL;
+   
+   vhdl_expr *rhs = translate_expr(ivl_expr_oper2(e));
+   if (NULL == rhs)
+      return NULL;
+
+   switch (ivl_expr_opcode(e)) {
+   case '+':
+      return translate_numeric(lhs, rhs, VHDL_BINOP_ADD);
+   default:
+      error("No translation for binary opcode '%c'\n",
+            ivl_expr_opcode(e));
+      delete lhs;
+      delete rhs;
       return NULL;
    }
 }
@@ -88,6 +150,8 @@ vhdl_expr *translate_expr(ivl_expr_t e)
       return translate_number(e);
    case IVL_EX_UNARY:
       return translate_unary(e);
+   case IVL_EX_BINARY:
+      return translate_binary(e);
    default:
       error("No VHDL translation for expression at %s:%d (type = %d)",
             ivl_expr_file(e), ivl_expr_lineno(e), type);

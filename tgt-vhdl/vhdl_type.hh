@@ -31,6 +31,8 @@ enum vhdl_type_name_t {
    VHDL_TYPE_FILE,
    VHDL_TYPE_INTEGER,
    VHDL_TYPE_BOOLEAN,
+   VHDL_TYPE_SIGNED,
+   VHDL_TYPE_UNSIGNED,
 };
 
 /*
@@ -48,12 +50,16 @@ public:
    vhdl_type_name_t get_name() const { return name_; }
    std::string get_string() const;
    int get_width() const { return msb_ - lsb_ + 1; }
+   int get_msb() const { return msb_; }
+   int get_lsb() const { return lsb_; }
    
    // Common types
    static vhdl_type *std_logic();
    static vhdl_type *string();
    static vhdl_type *line();
    static vhdl_type *std_logic_vector(int msb, int lsb);
+   static vhdl_type *nunsigned(int width);
+   static vhdl_type *nsigned(int width);
    static vhdl_type *integer();
    static vhdl_type *boolean();
 protected:
