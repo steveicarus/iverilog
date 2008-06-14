@@ -1078,6 +1078,34 @@ vvp_vector4_t double_to_vector4(double val, unsigned wid)
       return res;
 }
 
+bool vector4_to_value(const vvp_vector4_t&vec, long&val, bool is_signed)
+{
+      long res = 0;
+      long msk = 1;
+
+      for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
+	    switch (vec.value(idx)) {
+		case BIT4_0:
+		  break;
+		case BIT4_1:
+		  res |= msk;
+		  break;
+		default:
+		  return false;
+	    }
+
+	    msk <<= 1L;
+      }
+
+      if (is_signed && vec.value(vec.size()-1) == BIT4_1) {
+	    if (vec.size() < 8*sizeof(val))
+		  res |= (-1L) << vec.size();
+      }
+
+      val = res;
+      return true;
+}
+
 bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
 {
       unsigned long res = 0;

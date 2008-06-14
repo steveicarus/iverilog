@@ -294,21 +294,13 @@ static void format_vpiDecStrVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
 }
 
 static void format_vpiIntVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
-                             s_vpi_value*vp)
+                             int signed_flag, s_vpi_value*vp)
 {
-      unsigned iwid = 8 * sizeof(vp->value.integer);
-      long ssize = (signed)sig->size();
-
-      if (wid > iwid) wid = iwid;
-      long end = base + (signed)wid;
-      if (end > ssize) end = ssize;
-
-      vp->value.integer = 0;
-      for (long idx = (base < 0) ? 0 : base ;  idx < end ;  idx += 1) {
-	    if (sig->value(idx) == BIT4_1) {
-		  vp->value.integer |= 1<<(idx-base);
-	    }
-      }
+      vvp_vector4_t sub = sig->vec4_value().subvalue(base, wid);
+      long val = 0;
+      bool flag = vector4_to_value(sub, val, signed_flag);
+      if (! flag) val = 0;
+      vp->value.integer = val;
 }
 
 static void format_vpiRealVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
@@ -653,7 +645,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
       switch (vp->format) {
 
 	  case vpiIntVal:
-	    format_vpiIntVal(vsig, 0, wid, vp);
+	    format_vpiIntVal(vsig, 0, wid, rfp->signed_flag, vp);
 	    break;
 
 	  case vpiScalarVal:
@@ -1036,7 +1028,7 @@ static void PV_get_value(vpiHandle ref, p_vpi_value vp)
       switch (vp->format) {
 
 	  case vpiIntVal:
-	    format_vpiIntVal(sig, PV_get_base(rfp), rfp->width, vp);
+	    format_vpiIntVal(sig, PV_get_base(rfp), rfp->width, 0, vp);
 	    break;
 
 	  case vpiBinStrVal:

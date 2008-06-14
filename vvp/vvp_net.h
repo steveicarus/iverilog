@@ -379,6 +379,7 @@ extern vvp_vector4_t double_to_vector4(double val, unsigned wid);
  * to real and integers) and the return value becomes false to
  * indicate an error.
  */
+extern bool vector4_to_value(const vvp_vector4_t&a, long&val, bool is_signed);
 extern bool vector4_to_value(const vvp_vector4_t&a, unsigned long&val);
 extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
 
