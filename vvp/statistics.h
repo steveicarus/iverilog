@@ -46,5 +46,6 @@ extern unsigned long count_gen_pool(void);
 
 extern size_t size_opcodes;
 extern size_t size_vvp_nets;
+extern size_t size_vvp_net_funs;
 
 #endif

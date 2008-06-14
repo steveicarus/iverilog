@@ -809,9 +809,14 @@ class vvp_net_fun_t {
       virtual void recv_long_pv(vvp_net_ptr_t port, long bit,
                                 unsigned base, unsigned wid);
 
+    public: // These objects are only permallocated.
+      static void* operator new(std::size_t size);
+      static void operator delete(void*); // not implemented
     private: // not implemented
       vvp_net_fun_t(const vvp_net_fun_t&);
       vvp_net_fun_t& operator= (const vvp_net_fun_t&);
+      static void* operator new[](std::size_t size);
+      static void operator delete[](void*);
 };
 
 /* **** Some core net functions **** */
