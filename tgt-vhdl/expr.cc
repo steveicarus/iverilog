@@ -41,10 +41,17 @@ static vhdl_expr *translate_signal(ivl_expr_t e)
 {
    ivl_signal_t sig = ivl_expr_signal(e);
 
-   // Assume all signals are single bits at the moment
-   vhdl_type *type = vhdl_type::std_logic();
+   const vhdl_entity *ent = find_entity_for_signal(sig);
+   assert(ent);
+
+   const char *renamed = get_renamed_signal(sig).c_str();
    
-   return new vhdl_var_ref(get_renamed_signal(sig).c_str(), type);
+   const vhdl_decl *decl = ent->get_arch()->get_decl(renamed);
+   assert(decl);
+
+   vhdl_type *type = new vhdl_type(*decl->get_type());
+   
+   return new vhdl_var_ref(renamed, type);
 }
 
 /*
