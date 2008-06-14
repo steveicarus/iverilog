@@ -79,7 +79,7 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
  */
 static vhdl_expr *translate_numeric(vhdl_expr *lhs, vhdl_expr *rhs,
                                     vhdl_binop_t op)
-{
+{ 
    int lwidth = lhs->get_type()->get_width();
    int rwidth = rhs->get_type()->get_width();
 
@@ -88,28 +88,25 @@ static vhdl_expr *translate_numeric(vhdl_expr *lhs, vhdl_expr *rhs,
    vhdl_type rtype(VHDL_TYPE_UNSIGNED, rhs->get_type()->get_msb(),
                    rhs->get_type()->get_lsb());
    
-   vhdl_expr *l_cast = lhs->cast(&ltype);   
-   vhdl_expr *r_cast = lhs->cast(&rtype);
-   
    // May need to resize the left or right hand side
    if (lwidth < rwidth) {
       vhdl_fcall *resize =
-         new vhdl_fcall("resize", vhdl_type::nunsigned(rwidth));
-      resize->add_expr(l_cast);
+         new vhdl_fcall("resize", vhdl_type::nsigned(rwidth));
+      resize->add_expr(lhs);
       resize->add_expr(new vhdl_const_int(rwidth));
-      //      l_cast = resize;
+      lhs = resize;
+      lwidth = rwidth;
    }
    else if (rwidth < lwidth) {
       vhdl_fcall *resize =
-         new vhdl_fcall("resize", vhdl_type::nunsigned(lwidth));
-      resize->add_expr(r_cast);
+         new vhdl_fcall("resize", vhdl_type::nsigned(lwidth));
+      resize->add_expr(rhs);
       resize->add_expr(new vhdl_const_int(lwidth));
-      //r_cast = resize;      
+      rhs = resize;
+      rwidth = lwidth;
    }
-
    
-   return new vhdl_binop_expr(l_cast, op, r_cast,
-                              vhdl_type::nunsigned(lwidth));
+   return new vhdl_binop_expr(lhs, op, rhs, vhdl_type::nsigned(lwidth));
 }
 
 static vhdl_expr *translate_binary(ivl_expr_t e)

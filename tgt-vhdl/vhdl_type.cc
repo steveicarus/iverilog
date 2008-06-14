@@ -58,18 +58,16 @@ vhdl_type *vhdl_type::nsigned(int width)
    return new vhdl_type(VHDL_TYPE_SIGNED, width-1, 0);
 }
 
+/*
+ * This is just the name of the type, without any parameters.
+ */
 std::string vhdl_type::get_string() const
 {
    switch (name_) {
    case VHDL_TYPE_STD_LOGIC:
       return std::string("std_logic");
    case VHDL_TYPE_STD_LOGIC_VECTOR:
-      {
-         std::ostringstream ss;
-         ss << "std_logic_vector(" << msb_;
-         ss << " downto " << lsb_ << ")";
-         return ss.str();
-      }      
+      return std::string("std_logic_vector");      
    case VHDL_TYPE_STRING:
       return std::string("String");
    case VHDL_TYPE_LINE:
@@ -80,14 +78,38 @@ std::string vhdl_type::get_string() const
       return std::string("Integer");
    case VHDL_TYPE_BOOLEAN:
       return std::string("Boolean");
+   case VHDL_TYPE_SIGNED:
+      return std::string("signed");
+   case VHDL_TYPE_UNSIGNED:
+      return std::string("unsigned");
    default:
       return std::string("BadType");
    }
 }
 
+/*
+ * The is the qualified name of the type.
+ */
+std::string vhdl_type::get_decl_string() const
+{
+   switch (name_) {
+   case VHDL_TYPE_STD_LOGIC_VECTOR:
+   case VHDL_TYPE_UNSIGNED:
+   case VHDL_TYPE_SIGNED:
+      {
+         std::ostringstream ss;
+         ss << get_string() << "(" << msb_;
+         ss << " downto " << lsb_ << ")";
+         return ss.str();
+      }
+   default:
+      return get_string();
+   }
+}
+
 void vhdl_type::emit(std::ofstream &of, int level) const
 {
-   of << get_string();
+   of << get_decl_string();
 }
 
 vhdl_type *vhdl_type::std_logic_vector(int msb, int lsb)

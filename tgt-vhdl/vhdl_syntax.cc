@@ -76,6 +76,7 @@ void vhdl_entity::emit(std::ofstream &of, int level) const
    // might as well include it by default
    of << "library ieee;" << std::endl;
    of << "use ieee.std_logic_1164.all;" << std::endl;
+   of << "use ieee.numeric_std.all;" << std::endl;
    
    for (std::list<std::string>::const_iterator it = uses_.begin();
         it != uses_.end();
@@ -547,14 +548,14 @@ void vhdl_nbassign_stmt::emit(std::ofstream &of, int level) const
 }
 
 vhdl_const_bits::vhdl_const_bits(const char *value)   
-   : vhdl_expr(vhdl_type::std_logic_vector(strlen(value)-1, 0)),
+   : vhdl_expr(vhdl_type::nsigned(strlen(value))),
      value_(value)
 {
    
 }
 
 vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
-{
+{  
    if (to->get_name() == VHDL_TYPE_STD_LOGIC) {
       // VHDL won't let us cast directly between a vector and
       // a scalar type
@@ -571,7 +572,7 @@ vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
 
 void vhdl_const_bits::emit(std::ofstream &of, int level) const
 {
-   of << "std_logic_vector'(\"";
+   of << "signed'(\"";
 
    // The bits appear to be in reverse order
    std::string::const_reverse_iterator it;

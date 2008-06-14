@@ -133,10 +133,10 @@ static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
 
       int width = ivl_signal_width(sig);
       vhdl_type *sig_type;
-      if (width > 0)
+      if (width == 1)
          sig_type = vhdl_type::std_logic();
       else
-         sig_type = vhdl_type::std_logic_vector(width-1, 0);
+         sig_type = vhdl_type::nsigned(width);
       
       remember_signal(sig, arch->get_parent());
 
