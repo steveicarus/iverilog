@@ -97,6 +97,7 @@ extern bool of_JMP1(vthread_t thr, vvp_code_t code);
 extern bool of_JOIN(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_AV(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_AVP0(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_AVP0_S(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VEC(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VP0(vthread_t thr, vvp_code_t code);
