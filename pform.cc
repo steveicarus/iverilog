@@ -1236,7 +1236,7 @@ void pform_make_pgassign_list(svector<PExpr*>*alist,
 void pform_make_reginit(const struct vlltype&li,
 			perm_string name, PExpr*expr)
 {
-      PWire*cur = lexical_scope->wires_find(name);
+      PWire*cur = pform_get_wire_in_scope(name);
       if (cur == 0) {
 	    VLerror(li, "internal error: reginit to non-register?");
 	    delete expr;
@@ -1250,7 +1250,10 @@ void pform_make_reginit(const struct vlltype&li,
       PProcess*top = new PProcess(PProcess::PR_INITIAL, ass);
       FILE_NAME(top, li);
 
-      lexical_scope->behaviors.push_back(top);
+      if (pform_cur_generate)
+	    pform_cur_generate->add_behavior(top);
+      else
+	    lexical_scope->behaviors.push_back(top);
 }
 
 /*
