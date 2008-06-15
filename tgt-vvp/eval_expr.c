@@ -1987,17 +1987,17 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 
 	    draw_eval_expr_into_integer(ix, 3);
 	    if (add_index < 0) {
-		  fprintf(vvp_out, "    %%load/av %u, v%p, %u;\n",
+		  fprintf(vvp_out, "   %%load/av %u, v%p, %u;\n",
 			  res.base, sig, swid);
+		  pad_expr_in_place(exp, res, swid);
 	    } else {
-		  assert(add_index == 0);
+		  const char*sign_flag = (add_index>0)? "/s" : "";
 
 		    /* Add an immediate value to an array value. */
-		  fprintf(vvp_out, "    %%ix/load 0, %lu;\n", immediate);
-		  fprintf(vvp_out, "    %%load/avp0 %u, v%p, %u;\n",
-			  res.base, sig, swid);
+		  fprintf(vvp_out, "   %%ix/load 0, %lu;\n", immediate);
+		  fprintf(vvp_out, "   %%load/avp0%s %u, v%p, %u;\n",
+			  sign_flag, res.base, sig, res.wid);
 	    }
-	    pad_expr_in_place(exp, res, swid);
 	    return;
       }
 

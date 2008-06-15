@@ -418,10 +418,16 @@ address is in index register 3. The width should match the width of
 the array word.
 
 * %load/avp0 <bit>, <array-label>, <wid>
+* %load/avp0/s <bit>, <array-label>, <wid>
 
 This instruction is a mix of %load/av and %load/vp0. It loads an array
 value like %load/av and then adds a value from index register 0 to the
-result like %load/vp0.
+result like %load/vp0. The loaded value is zero-extended to <wid>,
+then added arithmetically to the signed index register 0. The result
+is then stored in <bit>.
+
+The %load/avp0/s instruction is the same, except that the loaded
+vector is sign extended (instead of 0-extended) before the addition.
 
 * %load/avx.p <bit>, <array-label>, <index>
 

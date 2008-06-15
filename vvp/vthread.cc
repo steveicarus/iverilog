@@ -2382,6 +2382,46 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %load/vp0, %load/vp0/s, %load/avp0 and %load/avp0/s share this function.
+*/
+static void load_vp0_common(vthread_t thr, vvp_code_t cp, const vvp_vector4_t&sig_value)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+      int64_t addend = thr->words[0].w_int;
+
+	/* Check the address once, before we scan the vector. */
+      thr_check_addr(thr, bit+wid-1);
+
+      unsigned long*val = sig_value.subarray(0, wid);
+      if (val == 0) {
+	    vvp_vector4_t tmp(wid, BIT4_X);
+	    thr->bits4.set_vec(bit, tmp);
+	    return;
+      }
+
+      unsigned words = (wid + CPU_WORD_BITS - 1) / CPU_WORD_BITS;
+      unsigned long carry = 0;
+      unsigned long imm = addend;
+      if (addend >= 0) {
+	    for (unsigned idx = 0 ; idx < words ; idx += 1) {
+		  val[idx] = add_with_carry(val[idx], imm, carry);
+		  imm = 0UL;
+	    }
+      } else {
+	    for (unsigned idx = 0 ; idx < words ; idx += 1) {
+		  val[idx] = add_with_carry(val[idx], imm, carry);
+		  imm = -1UL;
+	    }
+      }
+
+	/* Copy the vector bits into the bits4 vector. Do the copy
+	   directly to skip the excess calls to thr_check_addr. */
+      thr->bits4.setarray(bit, wid, val);
+      delete[]val;
+}
+
+/*
  * %load/avp0 <bit>, <array-label>, <wid> ;
  *
  * <bit> is the thread bit address for the result
@@ -2393,30 +2433,31 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
  */
 bool of_LOAD_AVP0(vthread_t thr, vvp_code_t cp)
 {
-      unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
-      int64_t addend = thr->words[0].w_int;
       unsigned adr = thr->words[3].w_int;
 
-      vvp_vector4_t word = array_get_word(cp->array, adr);
+        /* We need a vector this wide to make the math work correctly.
+         * Copy the base bits into the vector, but keep the width. */
+      vvp_vector4_t sig_value(wid, BIT4_0);
+      sig_value.copy_bits(array_get_word(cp->array, adr));
 
-      if (word.size() != wid) {
-	    fprintf(stderr, "internal error: array width=%u, word.size()=%u, wid=%u\n",
-		    0, word.size(), wid);
-      }
-      assert(word.size() == wid);
+      load_vp0_common(thr, cp, sig_value);
+      return true;
+}
 
-	/* Add the addend value */
-      word += addend;
+bool of_LOAD_AVP0_S(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[1];
+      unsigned adr = thr->words[3].w_int;
 
-	/* Check the address once, before we scan the vector. */
-      thr_check_addr(thr, bit+wid-1);
+      vvp_vector4_t tmp (array_get_word(cp->array, adr));
 
-	/* Copy the vector bits into the bits4 vector. Do the copy
-	   directly to skip the excess calls to thr_check_addr. */
-      thr->bits4.set_vec(bit, word);
+        /* We need a vector this wide to make the math work correctly.
+         * Copy the base bits into the vector, but keep the width. */
+      vvp_vector4_t sig_value(wid, tmp.value(tmp.size()-1));
+      sig_value.copy_bits(tmp);
 
-
+      load_vp0_common(thr, cp, sig_value);
       return true;
 }
 
@@ -2510,43 +2551,6 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
  * This is like of_LOAD_VEC, but includes an add of an integer value from
  * index 0. The <wid> is the expected result width not the vector width.
  */
-
-static void load_vp0_common(vthread_t thr, vvp_code_t cp, const vvp_vector4_t&sig_value)
-{
-      unsigned bit = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-      int64_t addend = thr->words[0].w_int;
-
-	/* Check the address once, before we scan the vector. */
-      thr_check_addr(thr, bit+wid-1);
-
-      unsigned long*val = sig_value.subarray(0, wid);
-      if (val == 0) {
-	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->bits4.set_vec(bit, tmp);
-	    return;
-      }
-
-      unsigned words = (wid + CPU_WORD_BITS - 1) / CPU_WORD_BITS;
-      unsigned long carry = 0;
-      unsigned long imm = addend;
-      if (addend >= 0) {
-	    for (unsigned idx = 0 ; idx < words ; idx += 1) {
-		  val[idx] = add_with_carry(val[idx], imm, carry);
-		  imm = 0UL;
-	    }
-      } else {
-	    for (unsigned idx = 0 ; idx < words ; idx += 1) {
-		  val[idx] = add_with_carry(val[idx], imm, carry);
-		  imm = -1UL;
-	    }
-      }
-
-	/* Copy the vector bits into the bits4 vector. Do the copy
-	   directly to skip the excess calls to thr_check_addr. */
-      thr->bits4.setarray(bit, wid, val);
-      delete[]val;
-}
 
 bool of_LOAD_VP0(vthread_t thr, vvp_code_t cp)
 {
