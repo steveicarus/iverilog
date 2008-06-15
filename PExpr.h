@@ -315,6 +315,7 @@ class PEIdent : public PExpr {
 
     private:
       NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*) const;
+      bool elaborate_lval_net_bit_(Design*, NetScope*, NetAssign_*) const;
       bool elaborate_lval_net_part_(Design*, NetScope*, NetAssign_*) const;
       bool elaborate_lval_net_idx_(Design*, NetScope*, NetAssign_*,
                                    index_component_t::ctype_t) const;

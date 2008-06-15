@@ -3608,17 +3608,26 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
 
       vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
 
+	// If the entire part is below the beginning of the vector,
+	// then we are done.
       if (index < 0 && (wid <= (unsigned)-index))
 	    return true;
 
+	// If the entire part is above then end of the vector, then we
+	// are done.
       if (index >= (long)sig->size())
 	    return true;
 
+	// If the part starts below the vector, then skip the first
+	// few bits and reduce enough bits to start at the beginning
+	// of the vector.
       if (index < 0) {
+	    if (bit >= 4) bit += (unsigned) -index;
 	    wid -= (unsigned) -index;
 	    index = 0;
       }
 
+	// Reduce the width to keep the part inside the vector.
       if (index+wid > sig->size())
 	    wid = sig->size() - index;
 
