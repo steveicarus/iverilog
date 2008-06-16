@@ -48,6 +48,7 @@ public:
       : vhdl_expr(type), name_(name) {}
 
    void emit(std::ofstream &of, int level) const;
+   const std::string &get_name() const { return name_; }
 private:
    std::string name_;
 };

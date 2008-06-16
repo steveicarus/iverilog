@@ -277,23 +277,11 @@ static int draw_delay(vhdl_process *proc, stmt_container *container,
 static void edge_detector(ivl_nexus_t nexus, vhdl_process *proc,
                           vhdl_binop_expr *test, const char *type)
 {
-   int nptrs = ivl_nexus_ptrs(nexus);
-   for (int j = 0; j < nptrs; j++) {
-      ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, j);
-      
-      ivl_signal_t sig;
-      if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
-         const char *signame = get_renamed_signal(sig).c_str();
-         
-         vhdl_fcall *detect
-            = new vhdl_fcall(type, vhdl_type::boolean());
-         detect->add_expr
-            (new vhdl_var_ref(signame, vhdl_type::std_logic()));
-         test->add_expr(detect);
-         proc->add_sensitivity(signame);
-         break;
-      }
-   }
+   vhdl_var_ref *ref = nexus_to_var_ref(proc->get_parent(), nexus);
+   vhdl_fcall *detect = new vhdl_fcall(type, vhdl_type::boolean());
+   detect->add_expr(ref);
+   test->add_expr(detect);
+   proc->add_sensitivity(ref->get_name().c_str());
 }
 
 /*
