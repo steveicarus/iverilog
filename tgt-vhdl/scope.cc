@@ -29,7 +29,7 @@
  * Given a nexus and an architecture, find the first signal
  * that is connected to the nexus, if there is one.
  */
-static vhdl_var_ref *nexus_to_var_ref(vhdl_arch *arch, ivl_nexus_t nexus)
+vhdl_var_ref *nexus_to_var_ref(vhdl_arch *arch, ivl_nexus_t nexus)
 {
    int nptrs = ivl_nexus_ptrs(nexus);
    for (int i = 0; i < nptrs; i++) {
@@ -189,6 +189,16 @@ static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
 }
 
 /*
+ * Generate VHDL for LPM instances in a module.
+ */
+static void declare_lpm(vhdl_arch *arch, ivl_scope_t scope)
+{
+   int nlpms = ivl_scope_lpms(scope);
+   for (int i = 0; i < nlpms; i++)
+      draw_lpm(arch, ivl_scope_lpm(scope, i));
+}
+
+/*
  * Create a VHDL entity for scopes of type IVL_SCT_MODULE.
  */
 static vhdl_entity *create_entity_for(ivl_scope_t scope)
@@ -215,6 +225,9 @@ static vhdl_entity *create_entity_for(ivl_scope_t scope)
 
    // Similarly, add all the primitive logic gates
    declare_logic(arch, scope);
+
+   // ...and all the LPM devices
+   declare_lpm(arch, scope);
    
    // Build a comment to add to the entity/architecture
    std::ostringstream ss;
