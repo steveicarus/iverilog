@@ -59,7 +59,7 @@ static vhdl_expr *translate_signal(ivl_expr_t e)
  */
 static vhdl_expr *translate_number(ivl_expr_t e)
 {
-   return new vhdl_const_bits(ivl_expr_bits(e));
+   return new vhdl_const_bits(ivl_expr_bits(e), ivl_expr_width(e));
 }
 
 static vhdl_expr *translate_unary(ivl_expr_t e)

@@ -187,7 +187,7 @@ vhdl_arch *vhdl_conc_stmt::get_parent() const
 }
 
 vhdl_process::vhdl_process(const char *name)
-   : name_(name)
+   : name_(name), initial_(false)
 {
 
 }
@@ -547,11 +547,12 @@ void vhdl_nbassign_stmt::emit(std::ofstream &of, int level) const
    of << ";";
 }
 
-vhdl_const_bits::vhdl_const_bits(const char *value)   
-   : vhdl_expr(vhdl_type::nsigned(strlen(value))),
-     value_(value)
+vhdl_const_bits::vhdl_const_bits(const char *value, int width)   
+   : vhdl_expr(vhdl_type::nsigned(width))
 {
-   
+   // Can't rely on value being NULL-terminated
+   while (width--)
+      value_.push_back(*value++);
 }
 
 vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
