@@ -119,7 +119,11 @@ static vhdl_expr *translate_numeric(vhdl_expr *lhs, vhdl_expr *rhs,
 static vhdl_expr *translate_relation(vhdl_expr *lhs, vhdl_expr *rhs,
                                      vhdl_binop_t op)
 {
-   return new vhdl_binop_expr(lhs, op, rhs, vhdl_type::boolean());
+   // Generate any necessary casts
+   // Arbitrarily, the RHS is casted to the type of the LHS
+   vhdl_expr *r_cast = rhs->cast(lhs->get_type());
+   
+   return new vhdl_binop_expr(lhs, op, r_cast, vhdl_type::boolean());
 }
 
 static vhdl_expr *translate_binary(ivl_expr_t e)
@@ -137,6 +141,8 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
       return translate_numeric(lhs, rhs, VHDL_BINOP_ADD);
    case 'e':
       return translate_relation(lhs, rhs, VHDL_BINOP_EQ);
+   case 'N':
+      return translate_relation(lhs, rhs, VHDL_BINOP_NEQ);
    default:
       error("No translation for binary opcode '%c'\n",
             ivl_expr_opcode(e));

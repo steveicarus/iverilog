@@ -690,6 +690,9 @@ void vhdl_binop_expr::emit(std::ofstream &of, int level) const
       case VHDL_BINOP_EQ:
          of << " = ";
          break;
+      case VHDL_BINOP_NEQ:
+         of << " /= ";
+         break;
       case VHDL_BINOP_ADD:
          of << " + ";
          break;
