@@ -56,6 +56,8 @@ vvp_array_t array_find(const char*label)
 * represent the words of the array. The vpi_array_t is a pointer to this.
 */
 struct __vpiArray {
+      __vpiArray() { }
+
       struct __vpiHandle base;
       struct __vpiScope*scope;
       const char*name; /* Permanently allocated string */
@@ -64,11 +66,11 @@ struct __vpiArray {
       struct __vpiDecConst last_addr;
       struct __vpiDecConst msb;
       struct __vpiDecConst lsb;
+      unsigned vals_width;
 	// If this is a net array, nets lists the handles.
       vpiHandle*nets;
 	// If this is a var array, then these are used instead of nets.
-      vvp_vector4_t        *vals;
-      unsigned              vals_width;
+      vvp_vector4array_t   *vals;
       struct __vpiArrayWord*vals_words;
 
       class vvp_fun_arrayport*ports_;
@@ -411,7 +413,7 @@ static int vpi_array_var_word_get(int code, vpiHandle ref)
 
       switch (code) {
 	  case vpiSize:
-	    return (int) parent->vals_width;
+	    return (int) parent->vals->width();
 
 	  case vpiLeftRange:
 	    return parent->msb.value;
@@ -448,14 +450,9 @@ static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value value)
 
       assert(obj);
       unsigned index = decode_array_word_pointer(obj, parent);
-      unsigned width = parent->vals_width;
+      unsigned width = parent->vals->width();
 
-	/* If we don't have a value yet just return X. */
-      if (parent->vals[index].size() == 0) {
-	    vpip_vec4_get_value(vvp_vector4_t(width), width, false, value);
-      } else {
-	    vpip_vec4_get_value(parent->vals[index], width, false, value);
-      }
+      vpip_vec4_get_value(parent->vals->get_word(index), width, false, value);
 }
 
 static vpiHandle vpi_array_var_word_put_value(vpiHandle ref, p_vpi_value vp, int flags)
@@ -696,18 +693,18 @@ void array_set_word(vvp_array_t arr,
       if (arr->vals) {
 	    assert(arr->nets == 0);
 	    if (part_off != 0 || val.size() != arr->vals_width) {
-		  if (arr->vals[address].size() == 0)
-			arr->vals[address] = vvp_vector4_t(arr->vals_width, BIT4_X);
-		  if ((part_off + val.size()) > arr->vals[address].size()) {
+		  vvp_vector4_t tmp = arr->vals->get_word(address);
+		  if ((part_off + val.size()) > tmp.size()) {
 			cerr << "part_off=" << part_off
 			     << " val.size()=" << val.size()
-			     << " arr->vals[address].size()=" << arr->vals[address].size()
+			     << " arr->vals[address].size()=" << tmp.size()
 			     << " arr->vals_width=" << arr->vals_width << endl;
 			assert(0);
 		  }
-		  arr->vals[address].set_vec(part_off, val);
+		  tmp.set_vec(part_off, val);
+		  arr->vals->set_word(address, tmp);
 	    } else {
-		  arr->vals[address] = val;
+		  arr->vals->set_word(address, val);
 	    }
 	    array_word_change(arr, address);
 	    return;
@@ -730,14 +727,7 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
       if (arr->vals) {
 	    assert(arr->nets == 0);
 
-	    vvp_vector4_t tmp;
-	    if (address < arr->array_count)
-		  tmp = arr->vals[address];
-
-	    if (tmp.size() == 0)
-		  tmp = vvp_vector4_t(arr->vals_width, BIT4_X);
-
-	    return tmp;
+	    return arr->vals->get_word(address);
       }
 
       assert(arr->vals == 0);
@@ -848,8 +838,8 @@ void compile_var_array(char*label, char*name, int last, int first,
       struct __vpiArray*arr = ARRAY_HANDLE(obj);
 
 	/* Make the words. */
-      arr->vals = new vvp_vector4_t[arr->array_count];
       arr->vals_width = labs(msb-lsb) + 1;
+      arr->vals = new vvp_vector4array_t(arr->vals_width, arr->array_count);
       vpip_make_dec_const(&arr->msb, msb);
       vpip_make_dec_const(&arr->lsb, lsb);
 
@@ -989,7 +979,8 @@ void array_word_change(vvp_array_t array, unsigned long addr)
 
 	    if (cur->cb_data.cb_rtn != 0) {
 		  if (cur->cb_data.value)
-			vpip_vec4_get_value(array->vals[addr], array->vals_width,
+			vpip_vec4_get_value(array->vals->get_word(addr),
+					    array->vals_width,
 					    false, cur->cb_data.value);
 
 		  callback_execute(cur);

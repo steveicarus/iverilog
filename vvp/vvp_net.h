@@ -122,6 +122,7 @@ extern int edge(vvp_bit4_t from, vvp_bit4_t to);
 class vvp_vector4_t {
 
       friend vvp_vector4_t operator ~(const vvp_vector4_t&that);
+      friend class vvp_vector4array_t;
 
     public:
       explicit vvp_vector4_t(unsigned size =0, vvp_bit4_t bits =BIT4_X);
@@ -382,6 +383,42 @@ extern vvp_vector4_t double_to_vector4(double val, unsigned wid);
 extern bool vector4_to_value(const vvp_vector4_t&a, long&val, bool is_signed);
 extern bool vector4_to_value(const vvp_vector4_t&a, unsigned long&val);
 extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
+
+/*
+ * vvp_vector4array_t
+ */
+class vvp_vector4array_t {
+
+    public:
+      vvp_vector4array_t(unsigned width, unsigned words);
+      ~vvp_vector4array_t();
+
+      unsigned width() const { return width_; }
+      unsigned words() const { return words_; }
+
+      vvp_vector4_t get_word(unsigned idx) const;
+      void set_word(unsigned idx, const vvp_vector4_t&that);
+
+    private:
+      struct v4cell {
+	    union {
+		  unsigned long abits_val_;
+		  unsigned long*abits_ptr_;
+	    };
+	    union {
+		  unsigned long bbits_val_;
+		  unsigned long*bbits_ptr_;
+	    };
+      };
+
+      unsigned width_;
+      unsigned words_;
+      v4cell* array_;
+
+    private: // Not implemented
+      vvp_vector4array_t(const vvp_vector4array_t&);
+      vvp_vector4array_t& operator = (const vvp_vector4array_t&);
+};
 
 /* vvp_vector2_t
  */

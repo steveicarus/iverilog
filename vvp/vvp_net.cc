@@ -1177,6 +1177,94 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
       return flag;
 }
 
+vvp_vector4array_t::vvp_vector4array_t(unsigned width, unsigned words)
+: width_(width), words_(words)
+{
+      array_ = new v4cell[words_];
+
+      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
+	    for (unsigned idx = 0 ; idx < words_ ; idx += 1) {
+		  array_[idx].abits_val_ = vvp_vector4_t::WORD_X_ABITS;
+		  array_[idx].bbits_val_ = vvp_vector4_t::WORD_X_BBITS;
+	    }
+      } else {
+	    for (unsigned idx = 0 ; idx < words_ ; idx += 1) {
+		  array_[idx].abits_ptr_ = 0;
+		  array_[idx].bbits_ptr_ = 0;
+	    }
+      }
+}
+
+vvp_vector4array_t::~vvp_vector4array_t()
+{
+      if (array_) {
+	    if (width_ > vvp_vector4_t::BITS_PER_WORD) {
+		  for (unsigned idx = 0 ; idx < words_ ; idx += 1)
+			if (array_[idx].abits_ptr_)
+			      delete[]array_[idx].abits_ptr_;
+	    }
+	    delete[]array_;
+      }
+}
+
+void vvp_vector4array_t::set_word(unsigned index, const vvp_vector4_t&that)
+{
+      assert(index < words_);
+      assert(that.size_ == width_);
+
+      v4cell&cell = array_[index];
+
+      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
+	    cell.abits_val_ = that.abits_val_;
+	    cell.bbits_val_ = that.bbits_val_;
+	    return;
+      }
+
+      unsigned cnt = (width_ + vvp_vector4_t::BITS_PER_WORD-1)/vvp_vector4_t::BITS_PER_WORD;
+
+      if (cell.abits_ptr_ == 0) {
+	    cell.abits_ptr_ = new unsigned long[2*cnt];
+	    cell.bbits_ptr_ = cell.abits_ptr_ + cnt;
+      }
+
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    cell.abits_ptr_[idx] = that.abits_ptr_[idx];
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    cell.bbits_ptr_[idx] = that.bbits_ptr_[idx];
+}
+
+vvp_vector4_t vvp_vector4array_t::get_word(unsigned index) const
+{
+      if (index >= words_)
+	    return vvp_vector4_t(width_, BIT4_X);
+
+      assert(index < words_);
+
+      v4cell&cell = array_[index];
+
+      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
+	    vvp_vector4_t res;
+	    res.size_ = width_;
+	    res.abits_val_ = cell.abits_val_;
+	    res.bbits_val_ = cell.bbits_val_;
+	    return res;
+      }
+
+      vvp_vector4_t res (width_, BIT4_X);
+      if (cell.abits_ptr_ == 0)
+	    return res;
+
+      unsigned cnt = (width_ + vvp_vector4_t::BITS_PER_WORD-1)/vvp_vector4_t::BITS_PER_WORD;
+
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    res.abits_ptr_[idx] = cell.abits_ptr_[idx];
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    res.bbits_ptr_[idx] = cell.bbits_ptr_[idx];
+
+      return res;
+
+}
+
 template <class T> T coerce_to_width(const T&that, unsigned width)
 {
       if (that.size() == width)
