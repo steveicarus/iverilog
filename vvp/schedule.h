@@ -47,9 +47,6 @@ extern void schedule_assign_vector(vvp_net_ptr_t ptr,
 				   const vvp_vector4_t&val,
 				   vvp_time64_t  delay);
 
-extern void schedule_assign_vector(vvp_net_ptr_t ptr,
-				   const vvp_vector4_t&val,
-				   vvp_time64_t  delay);
 extern void schedule_assign_plucked_vector(vvp_net_ptr_t ptr,
 					   vvp_time64_t  delay,
 					   const vvp_vector4_t&val,
@@ -66,7 +63,7 @@ extern void schedule_assign_array_word(vvp_array_t mem,
  * constant value (i.e. C4<...>) to the input of a functor. This
  * creates an event in the active queue.
  */
-extern void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector4_t val);
+extern void schedule_set_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&val);
 extern void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector8_t val);
 extern void schedule_set_vector(vvp_net_ptr_t ptr, double val);
 

@@ -2621,7 +2621,7 @@ void vvp_wide_fun_core::propagate_vec4(const vvp_vector4_t&bit,
 				       vvp_time64_t delay)
 {
       if (delay)
-	    schedule_assign_vector(ptr_->out, bit, delay);
+	    schedule_assign_plucked_vector(ptr_->out, delay, bit, 0, bit.size());
       else
 	    vvp_send_vec4(ptr_->out, bit);
 }
