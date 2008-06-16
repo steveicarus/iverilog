@@ -59,6 +59,8 @@ enum vhdl_binop_t {
    VHDL_BINOP_EQ,
    VHDL_BINOP_NEQ,
    VHDL_BINOP_ADD,
+   VHDL_BINOP_SUB,
+   VHDL_BINOP_MULT,
 };
 
 /*

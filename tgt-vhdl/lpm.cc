@@ -38,7 +38,20 @@ static int draw_binop_lpm(vhdl_arch *arch, ivl_lpm_t lpm, vhdl_binop_t op)
       return 1;
 
    vhdl_type *result_type = new vhdl_type(*lhs->get_type());
-   vhdl_binop_expr *expr = new vhdl_binop_expr(lhs, op, rhs, result_type);
+   vhdl_expr *expr = new vhdl_binop_expr(lhs, op, rhs, result_type);
+
+   if (op == VHDL_BINOP_MULT) {
+      // Need to resize the output to the desired size,
+      // as this does not happen automatically in VHDL
+      
+      unsigned out_width = ivl_lpm_width(lpm);
+      vhdl_fcall *resize =
+         new vhdl_fcall("Resize", vhdl_type::nsigned(out_width));
+      resize->add_expr(expr);
+      resize->add_expr(new vhdl_const_int(out_width));
+      
+      expr = resize;
+   }
 
    arch->add_stmt(new vhdl_cassign_stmt(out, expr));
       
@@ -50,6 +63,10 @@ int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
    switch (ivl_lpm_type(lpm)) {
    case IVL_LPM_ADD:
       return draw_binop_lpm(arch, lpm, VHDL_BINOP_ADD);
+   case IVL_LPM_SUB:
+      return draw_binop_lpm(arch, lpm, VHDL_BINOP_SUB);
+   case IVL_LPM_MULT:
+      return draw_binop_lpm(arch, lpm, VHDL_BINOP_MULT);
    default:
       error("Unsupported LPM type: %d", ivl_lpm_type(lpm));
       return 1;
