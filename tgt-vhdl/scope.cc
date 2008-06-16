@@ -140,19 +140,24 @@ static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
       
       remember_signal(sig, arch->get_parent());
 
-      const char *name = ivl_signal_basename(sig);
+      // Make sure the signal name conforms to VHDL naming rules
+      std::string name(ivl_signal_basename(sig));
+      if (name[0] == '_')
+         name.insert(0, "VL");
+      rename_signal(sig, name.c_str());
+      
       ivl_signal_port_t mode = ivl_signal_port(sig);
       switch (mode) {
       case IVL_SIP_NONE:
-         arch->add_decl(new vhdl_signal_decl(name, sig_type));
+         arch->add_decl(new vhdl_signal_decl(name.c_str(), sig_type));
          break;
       case IVL_SIP_INPUT:
          arch->get_parent()->add_port
-            (new vhdl_port_decl(name, sig_type, VHDL_PORT_IN));
+            (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_IN));
          break;
       case IVL_SIP_OUTPUT:
          arch->get_parent()->add_port
-            (new vhdl_port_decl(name, sig_type, VHDL_PORT_OUT));
+            (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_OUT));
 
          if (ivl_signal_type(sig) == IVL_SIT_REG) {
             // A registered output
@@ -165,19 +170,19 @@ static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
             rename_signal(sig, newname.c_str());
 
             vhdl_type *reg_type = new vhdl_type(*sig_type);
-            arch->add_decl(new vhdl_signal_decl(newname.c_str(), reg_type));            
-
+            arch->add_decl(new vhdl_signal_decl(newname.c_str(), reg_type));
+            
             // Create a concurrent assignment statement to
             // connect the register to the output
             arch->add_stmt
                (new vhdl_cassign_stmt
-                (new vhdl_var_ref(name, NULL),
+                (new vhdl_var_ref(name.c_str(), NULL),
                  new vhdl_var_ref(newname.c_str(), NULL)));
          }
          break;
       case IVL_SIP_INOUT:
          arch->get_parent()->add_port
-            (new vhdl_port_decl(name, sig_type, VHDL_PORT_INOUT));
+            (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_INOUT));
          break;
       }
    }
