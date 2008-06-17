@@ -402,6 +402,7 @@ int draw_stmt(vhdl_process *proc, stmt_container *container,
       return draw_block(proc, container, stmt);
    case IVL_ST_NOOP:
       return draw_noop(proc, container, stmt);
+   case IVL_ST_ASSIGN:   // TODO: remove!
    case IVL_ST_ASSIGN_NB:
       return draw_nbassign(proc, container, stmt);
    case IVL_ST_DELAY:
