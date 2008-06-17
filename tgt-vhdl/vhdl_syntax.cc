@@ -495,7 +495,8 @@ void vhdl_expr_list::emit(std::ofstream &of, int level) const
 void vhdl_pcall_stmt::emit(std::ofstream &of, int level) const
 {
    of << name_;
-   exprs_.emit(of, level);
+   if (!exprs_.empty())
+      exprs_.emit(of, level);
    of << ";";
 }
 

@@ -48,6 +48,7 @@ typedef std::map<ivl_signal_t, signal_defn_t> signal_defn_map_t;
 static int g_errors = 0;  // Total number of errors encountered
 static entity_list_t g_entities;  // All entities to emit
 static signal_defn_map_t g_known_signals;
+static ivl_design_t g_design;
 
 
 /*
@@ -124,12 +125,18 @@ const std::string &get_renamed_signal(ivl_signal_t sig)
    return g_known_signals[sig].renamed;
 }
 
+ivl_design_t get_vhdl_design()
+{
+   return g_design;
+}
 
 extern "C" int target_design(ivl_design_t des)
 {
    ivl_scope_t *roots;
    unsigned int nroots;
    ivl_design_roots(des, &roots, &nroots);
+
+   g_design = des;
 
    for (unsigned int i = 0; i < nroots; i++)
       draw_scope(roots[i], NULL);

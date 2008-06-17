@@ -110,11 +110,24 @@ static int draw_stask_display(vhdl_process *proc, stmt_container *container,
  * the simulator. This isn't great, as the simulator will
  * return a failure exit code when in fact it completed
  * successfully.
+ *
+ * An alternative is to use the VHPI interface supported by
+ * some VHDL simulators and implement the $finish funcitonality
+ * in C. This function can be enabled with the flag
+ * -puse-vhpi-finish=1. 
  */
 static int draw_stask_finish(vhdl_process *proc, stmt_container *container,
                              ivl_statement_t stmt)
 {
-   container->add_stmt(new vhdl_assert_stmt("SIMULATION FINISHED"));
+   const char *use_vhpi = ivl_design_flag(get_vhdl_design(), "use-vhpi-finish");
+   if (strcmp(use_vhpi, "1") == 0) {
+      proc->get_parent()->get_parent()->requires_package("work.Verilog_Support");
+      container->add_stmt(new vhdl_pcall_stmt("work.Verilog_Support.Finish"));
+   }
+   else {
+      container->add_stmt(new vhdl_assert_stmt("SIMULATION FINISHED"));
+   }
+   
    return 0;
 }
 

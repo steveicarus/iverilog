@@ -147,6 +147,7 @@ public:
    ~vhdl_expr_list();
    
    void emit(std::ofstream &of, int level) const;
+   bool empty() const { return exprs_.empty(); }
    void add_expr(vhdl_expr *e);
 private:
    std::list<vhdl_expr*> exprs_;

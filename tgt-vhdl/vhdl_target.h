@@ -22,6 +22,8 @@ vhdl_expr *translate_expr(ivl_expr_t e);
 void remember_entity(vhdl_entity *ent);
 vhdl_entity *find_entity(const std::string &tname);
 
+ivl_design_t get_vhdl_design();
+
 vhdl_var_ref *nexus_to_var_ref(vhdl_arch *arch, ivl_nexus_t nexus);
 
 void remember_signal(ivl_signal_t sig, const vhdl_entity *ent);
