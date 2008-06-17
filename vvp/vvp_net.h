@@ -516,7 +516,7 @@ inline unsigned vvp_vector2_t::size() const
  */
 class vvp_scalar_t {
 
-      friend vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b);
+      friend vvp_scalar_t fully_featured_resolv_(vvp_scalar_t a, vvp_scalar_t b);
 
     public:
 	// Make a HiZ value.
@@ -580,7 +580,24 @@ inline vvp_bit4_t vvp_scalar_t::value() const
 }
 
 
-extern vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b);
+inline vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b)
+{
+      extern vvp_scalar_t fully_featured_resolv_(vvp_scalar_t a, vvp_scalar_t b);
+
+	// If the value is HiZ, resolution is simply a matter of
+	// returning the *other* value.
+      if (a.is_hiz())
+	    return b;
+      if (b.is_hiz())
+	    return a;
+	// If the values are the identical, then resolution is simply
+	// returning *either* value.
+      if (a .eeq( b ))
+	    return a;
+
+      return fully_featured_resolv_(a,b);
+}
+
 extern ostream& operator<< (ostream&, vvp_scalar_t);
 
 /*
