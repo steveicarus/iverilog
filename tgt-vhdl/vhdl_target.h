@@ -33,7 +33,7 @@ const std::string &get_renamed_signal(ivl_signal_t sig);
 
 void blocking_assign_to(vhdl_process *proc, ivl_signal_t sig);
 std::string strip_var(const std::string &str);
-
+void draw_blocking_assigns(vhdl_process *proc);
 
 #endif /* #ifndef INC_VHDL_TARGET_H */
  

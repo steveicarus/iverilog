@@ -311,6 +311,10 @@ static int draw_delay(vhdl_process *proc, stmt_container *container,
       draw_nbassign(proc, container, sub_stmt, time);
    }
    else {
+      // All blocking assignments need to be made visible
+      // at this point
+      draw_blocking_assigns(proc);
+      
       vhdl_wait_stmt *wait =
          new vhdl_wait_stmt(VHDL_WAIT_FOR_NS, time);
       container->add_stmt(wait);

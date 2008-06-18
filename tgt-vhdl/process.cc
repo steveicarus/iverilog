@@ -24,13 +24,13 @@
 #include <iostream>
 #include <cassert>
 #include <sstream>
-#include <set>
+#include <map>
 
 /*
  * TODO: Explanation here.
  */
-typedef std::set<std::string> string_set_t;
-static string_set_t g_assign_vars;
+typedef std::map<std::string, ivl_signal_t> var_temp_set_t;
+static var_temp_set_t g_assign_vars;
 
 void blocking_assign_to(vhdl_process *proc, ivl_signal_t sig)
 {
@@ -51,8 +51,37 @@ void blocking_assign_to(vhdl_process *proc, ivl_signal_t sig)
       proc->add_decl(new vhdl_var_decl(var.c_str(), type));
 
       rename_signal(sig, var);
-      g_assign_vars.insert(var);
+      g_assign_vars[var] = sig;
    }
+}
+
+/*
+ * Assign all _Var variables to the corresponding signals. This makes
+ * the new values visible outside the current process. This should be
+ * called before any `wait' statement or the end of the process.
+ */
+void draw_blocking_assigns(vhdl_process *proc)
+{
+   var_temp_set_t::const_iterator it;
+   for (it = g_assign_vars.begin(); it != g_assign_vars.end(); ++it) {
+      std::string stripped(strip_var((*it).first));
+
+      vhdl_decl *decl = proc->get_decl(stripped);
+      assert(decl);
+      vhdl_type *type = new vhdl_type(*decl->get_type());
+      
+      vhdl_var_ref *lhs = new vhdl_var_ref(stripped.c_str(), NULL);
+      vhdl_expr *rhs = new vhdl_var_ref((*it).first.c_str(), type);
+
+      // TODO: I'm not sure this will work properly if, e.g., the delay
+      // is inside a `if' statement
+      proc->get_container()->add_stmt(new vhdl_nbassign_stmt(lhs, rhs));
+
+      // Undo the renaming (since the temporary is no longer needed)
+      rename_signal((*it).second, stripped);
+   }
+
+   g_assign_vars.clear();
 }
 
 /*
@@ -110,6 +139,9 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    ss << "Generated from " << type << " process in ";
    ss << ivl_scope_tname(scope);
    vhdl_proc->set_comment(ss.str());
+
+   // Output any remaning blocking assignments
+   draw_blocking_assigns(vhdl_proc);
 
    return 0;
 }
