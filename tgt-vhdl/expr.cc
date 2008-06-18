@@ -46,7 +46,7 @@ static vhdl_expr *translate_signal(ivl_expr_t e)
 
    const char *renamed = get_renamed_signal(sig).c_str();
    
-   const vhdl_decl *decl = ent->get_arch()->get_decl(renamed);
+   const vhdl_decl *decl = ent->get_arch()->get_decl(strip_var(renamed));
    assert(decl);
 
    vhdl_type *type = new vhdl_type(*decl->get_type());

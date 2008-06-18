@@ -31,7 +31,8 @@ void rename_signal(ivl_signal_t sig, const std::string &renamed);
 const vhdl_entity *find_entity_for_signal(ivl_signal_t sig);
 const std::string &get_renamed_signal(ivl_signal_t sig);
 
-void blocking_assign_to(vhdl_process *proc, std::string var);
+void blocking_assign_to(vhdl_process *proc, ivl_signal_t sig);
+std::string strip_var(const std::string &str);
 
 
 #endif /* #ifndef INC_VHDL_TARGET_H */

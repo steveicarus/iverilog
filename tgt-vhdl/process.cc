@@ -32,11 +32,40 @@
 typedef std::set<std::string> string_set_t;
 static string_set_t g_assign_vars;
 
-void blocking_assign_to(vhdl_process *proc, std::string var)
+void blocking_assign_to(vhdl_process *proc, ivl_signal_t sig)
 {
+   std::string var(get_renamed_signal(sig));
+   
    std::cout << "blocking_assign_to " << var << std::endl;
+
+   if (g_assign_vars.find(var) == g_assign_vars.end()) {
+      // This is the first time a non-blocking assignment
+      // has been made to this signal: create a variable
+      // to shadow it.
+
+      vhdl_decl *decl = proc->get_parent()->get_decl(var);
+      assert(decl);
+      vhdl_type *type = new vhdl_type(*decl->get_type());
+
+      var += "_Var";
+      proc->add_decl(new vhdl_var_decl(var.c_str(), type));
+
+      rename_signal(sig, var);
+      g_assign_vars.insert(var);
+   }
 }
 
+/*
+ * Remove _Var from the end of a string, if it is present.
+ */
+std::string strip_var(const std::string &str)
+{
+   std::string result(str);
+   size_t pos = result.find("_Var");
+   if (pos != std::string::npos)
+      result.erase(pos, 4);
+   return result;
+}
 
 /*
  * Convert a Verilog process to VHDL and add it to the architecture

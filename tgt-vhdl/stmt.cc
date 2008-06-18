@@ -250,8 +250,6 @@ static int draw_assign(vhdl_process *proc, stmt_container *container,
    if ((sig = ivl_lval_sig(lval))) {
       const std::string &signame = get_renamed_signal(sig);
 
-      blocking_assign_to(proc, signame);
-
       vhdl_decl *decl = proc->get_decl(signame);
       assert(decl);
 
@@ -266,8 +264,13 @@ static int draw_assign(vhdl_process *proc, stmt_container *container,
          decl->set_initial(rhs);
       }
       else {
+         blocking_assign_to(proc, sig);
+
+         // The signal may have been renamed by the above call
+         const std::string &renamed = get_renamed_signal(sig);
+         
          // The type here can be null as it is never actually needed
-         vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), NULL);
+         vhdl_var_ref *lval_ref = new vhdl_var_ref(renamed.c_str(), NULL);
          
          vhdl_assign_stmt *assign = new vhdl_assign_stmt(lval_ref, rhs);
          container->add_stmt(assign);
