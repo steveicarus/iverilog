@@ -24,13 +24,15 @@
 #include <iostream>
 #include <cassert>
 #include <sstream>
+#include <set>
 
 /*
  * TODO: Explanation here.
  */
-static string_list_t g_assign_vars;
+typedef std::set<std::string> string_set_t;
+static string_set_t g_assign_vars;
 
-void blocking_assign_to(std::string var)
+void blocking_assign_to(vhdl_process *proc, std::string var)
 {
    std::cout << "blocking_assign_to " << var << std::endl;
 }

@@ -256,6 +256,15 @@ public:
 };
 
 
+class vhdl_assign_stmt : public vhdl_abstract_assign_stmt {
+public:
+   vhdl_assign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
+      : vhdl_abstract_assign_stmt(lhs, rhs) {}
+
+   void emit(std::ofstream &of, int level) const;
+};
+
+
 enum vhdl_wait_type_t {
    VHDL_WAIT_INDEF,    // Suspend indefinitely
    VHDL_WAIT_FOR_NS,   // Wait for a constant number of nanoseconds
@@ -456,6 +465,7 @@ public:
    void add_decl(vhdl_decl *decl);
    void add_sensitivity(const char *name);
    bool have_declared_var(const std::string &name) const;
+   vhdl_decl *get_decl(const std::string &name) const;
    void set_initial(bool i) { initial_ = i; }
    bool is_initial() const { return initial_; }
 private:

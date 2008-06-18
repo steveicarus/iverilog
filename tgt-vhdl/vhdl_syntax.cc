@@ -202,6 +202,19 @@ void vhdl_process::add_decl(vhdl_decl* decl)
    decls_.push_back(decl);
 }
 
+vhdl_decl *vhdl_process::get_decl(const std::string &name) const
+{
+   decl_list_t::const_iterator it;
+   for (it = decls_.begin(); it != decls_.end(); ++it) {
+      if ((*it)->get_name() == name)
+         return *it;
+   }
+
+   // Maybe it's a signal rather than a variable?
+   assert(get_parent());
+   return get_parent()->get_decl(name);
+}
+
 void vhdl_process::add_sensitivity(const char *name)
 {
    sens_.push_back(name);
@@ -545,6 +558,14 @@ void vhdl_nbassign_stmt::emit(std::ofstream &of, int level) const
       of << " ns";
    }
    
+   of << ";";
+}
+
+void vhdl_assign_stmt::emit(std::ofstream &of, int level) const
+{
+   lhs_->emit(of, level);
+   of << " := ";
+   rhs_->emit(of, level);
    of << ";";
 }
 
