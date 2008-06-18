@@ -849,6 +849,15 @@ const NetScope* NetProcTop::scope() const
       return scope_;
 }
 
+NetCastReal::NetCastReal(NetScope*scope, perm_string n, bool signed_flag)
+: NetNode(scope, n, 2), signed_flag_(signed_flag)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("O"), 0);
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("I"), 0);
+}
+
 NetConcat::NetConcat(NetScope*scope, perm_string n, unsigned wid, unsigned cnt)
 : NetNode(scope, n, cnt+1), width_(wid)
 {

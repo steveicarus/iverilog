@@ -72,6 +72,11 @@ bool NetCaseCmp::emit_node(struct target_t*tgt) const
       return true;
 }
 
+bool NetCastReal::emit_node(struct target_t*tgt) const
+{
+      return tgt->lpm_cast_real(this);
+}
+
 bool NetCLShift::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_clshift(this);

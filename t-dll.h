@@ -76,6 +76,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_abs(const NetAbs*);
       void lpm_add_sub(const NetAddSub*);
       bool lpm_array_dq(const NetArrayDq*);
+      bool lpm_cast_real(const NetCastReal*);
       void lpm_clshift(const NetCLShift*);
       void lpm_compare(const NetCompare*);
       void lpm_divide(const NetDivide*);

@@ -889,6 +889,21 @@ template <class T_> void make_arith(T_ *arith, char*label,
       free(argv);
 }
 
+void compile_arith_cast_real(char*label, unsigned argc, struct symb_s*argv)
+{
+      vvp_arith_cast_real*arith = new vvp_arith_cast_real(false);
+
+      vvp_net_t* ptr = new vvp_net_t;
+      ptr->fun = arith;
+
+      define_functor_symbol(label, ptr);
+      free(label);
+
+      assert(argc == 1);
+      inputs_connect(ptr, argc, argv);
+      free(argv);
+}
+
 void compile_arith_abs(char*label, unsigned argc, struct symb_s*argv)
 {
       vvp_arith_abs*arith = new vvp_arith_abs;

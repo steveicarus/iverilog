@@ -886,6 +886,7 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_ABS:
+	  case IVL_LPM_CAST_REAL:
 	    assert(idx == 0);
 	    return net->u_.arith.a;
 
@@ -1028,20 +1029,18 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
       switch (net->type) {
 	  case IVL_LPM_ABS:
 	  case IVL_LPM_ADD:
-	  case IVL_LPM_DIVIDE:
-	  case IVL_LPM_MOD:
-	  case IVL_LPM_MULT:
-	  case IVL_LPM_POW:
-	  case IVL_LPM_SUB:
-	    assert(idx == 0);
-	    return net->u_.arith.q;
-
+	  case IVL_LPM_CAST_REAL:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_DIVIDE:
+	  case IVL_LPM_MOD:
+	  case IVL_LPM_MULT:
+	  case IVL_LPM_POW:
+	  case IVL_LPM_SUB:
 	    assert(idx == 0);
 	    return net->u_.arith.q;
 
@@ -1144,6 +1143,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	    return 0;
 	  case IVL_LPM_ABS:
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_CAST_REAL:
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_GE:

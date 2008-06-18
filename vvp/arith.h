@@ -60,6 +60,17 @@ class vvp_arith_abs : public vvp_net_fun_t {
     private:
 };
 
+class vvp_arith_cast_real : public vvp_net_fun_t {
+    public:
+      explicit vvp_arith_cast_real(bool signed_flag);
+      ~vvp_arith_cast_real();
+
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+
+    private:
+      bool signed_;
+};
+
 class vvp_arith_div : public vvp_arith_ {
 
     public:

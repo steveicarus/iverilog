@@ -90,6 +90,22 @@ void vvp_arith_abs::recv_real(vvp_net_ptr_t ptr, double bit)
       vvp_send_real(ptr.ptr()->out, out);
 }
 
+vvp_arith_cast_real::vvp_arith_cast_real(bool signed_flag)
+: signed_(signed_flag)
+{
+}
+
+vvp_arith_cast_real::~vvp_arith_cast_real()
+{
+}
+
+void vvp_arith_cast_real::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+{
+      double val;
+      vector4_to_value(bit, val, signed_);
+      vvp_send_real(ptr.ptr()->out, val);
+}
+
 // Division
 
 vvp_arith_div::vvp_arith_div(unsigned wid, bool signed_flag)
