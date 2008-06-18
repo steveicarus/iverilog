@@ -52,7 +52,7 @@ class PWire;
 class PGenerate : public LineInfo {
 
     public:
-      PGenerate(unsigned id_number);
+      explicit PGenerate(unsigned id_number);
       ~PGenerate();
 
 	// Generate schemes have an ID number, for when the scope is
@@ -78,9 +78,9 @@ class PGenerate : public LineInfo {
       void add_gate(PGate*);
 
       list<PProcess*> behaviors;
-      void add_behavior(PProcess*behave);
 
-      list<PGenerate*> generates;
+	// Generate schemes can contain further generate schemes.
+      list<PGenerate*> generate_schemes;
       PGenerate*parent;
 
 	// This method is called by the elaboration of a module to

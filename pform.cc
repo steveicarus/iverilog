@@ -508,7 +508,7 @@ void pform_endgenerate()
       if (pform_cur_generate != 0) {
 	    assert(cur->scheme_type == PGenerate::GS_CASE_ITEM
 		   || pform_cur_generate->scheme_type != PGenerate::GS_CASE);
-	    pform_cur_generate->generates.push_back(cur);
+	    pform_cur_generate->generate_schemes.push_back(cur);
       } else {
 	    assert(cur->scheme_type != PGenerate::GS_CASE_ITEM);
 	    pform_cur_module->generate_schemes.push_back(cur);
@@ -1251,7 +1251,7 @@ void pform_make_reginit(const struct vlltype&li,
       FILE_NAME(top, li);
 
       if (pform_cur_generate)
-	    pform_cur_generate->add_behavior(top);
+	    pform_cur_generate->behaviors.push_back(top);
       else
 	    lexical_scope->behaviors.push_back(top);
 }
@@ -1905,7 +1905,7 @@ PProcess* pform_make_behavior(PProcess::Type type, Statement*st,
       }
 
       if (pform_cur_generate)
-	    pform_cur_generate->add_behavior(pp);
+	    pform_cur_generate->behaviors.push_back(pp);
       else
 	    pform_cur_module->behaviors.push_back(pp);
 

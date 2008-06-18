@@ -415,8 +415,8 @@ bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 		       << scope_path(container) << "." << endl;
 
 	    typedef list<PGenerate*>::const_iterator generate_it_t;
-	    for (generate_it_t cur = generates.begin()
-		       ; cur != generates.end() ; cur ++) {
+	    for (generate_it_t cur = generate_schemes.begin()
+		       ; cur != generate_schemes.end() ; cur ++) {
 		  PGenerate*item = *cur;
 		  if (! item->scope_list_.empty()) {
 			flag &= item->elaborate_sig(des, container);
@@ -462,8 +462,8 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
       }
 
       typedef list<PGenerate*>::const_iterator generate_it_t;
-      for (generate_it_t cur = generates.begin()
-		 ; cur != generates.end() ; cur ++ ) {
+      for (generate_it_t cur = generate_schemes.begin()
+		 ; cur != generate_schemes.end() ; cur ++ ) {
 	    (*cur) -> elaborate_sig(des, scope);
       }
 

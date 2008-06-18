@@ -937,8 +937,8 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 	    (*idx)->dump(out, indent+2);
       }
 
-      for (list<PGenerate*>::const_iterator idx = generates.begin()
-		 ; idx != generates.end() ;  idx++) {
+      for (list<PGenerate*>::const_iterator idx = generate_schemes.begin()
+		 ; idx != generate_schemes.end() ;  idx++) {
 	    (*idx)->dump(out, indent+2);
       }
 

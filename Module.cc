@@ -26,7 +26,7 @@
 
 /* n is a permallocated string. */
 Module::Module(perm_string n)
-: PScope(n, 0)
+: PScope(n)
 {
       library_flag = false;
       default_nettype = NetNet::NONE;

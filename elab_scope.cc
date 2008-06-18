@@ -548,8 +548,8 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
       PGenerate*default_item = 0;
 
       typedef list<PGenerate*>::const_iterator generator_it_t;
-      generator_it_t cur = generates.begin();
-      while (cur != generates.end()) {
+      generator_it_t cur = generate_schemes.begin();
+      while (cur != generate_schemes.end()) {
 	    PGenerate*item = *cur;
 	    assert( item->scheme_type == PGenerate::GS_CASE_ITEM );
 
@@ -578,7 +578,7 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
       delete case_value_co;
       case_value_co = 0;
 
-      PGenerate*item = (cur == generates.end())? default_item : *cur;
+      PGenerate*item = (cur == generate_schemes.end())? default_item : *cur;
       if (item == 0) {
 	    cerr << get_fileline() << ": debug: "
 		 << "No generate items found" << endl;
@@ -605,8 +605,8 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 	// from simple elaboration.
 
       typedef list<PGenerate*>::const_iterator generate_it_t;
-      for (generate_it_t cur = generates.begin()
-		 ; cur != generates.end() ; cur ++ ) {
+      for (generate_it_t cur = generate_schemes.begin()
+		 ; cur != generate_schemes.end() ; cur ++ ) {
 	    (*cur) -> generate_scope(des, scope);
       }
 
@@ -616,6 +616,12 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
       for (pgate_list_it_t cur = gates.begin()
 		 ; cur != gates.end() ;  cur ++) {
 	    (*cur) ->elaborate_scope(des, scope);
+      }
+
+      typedef list<PProcess*>::const_iterator proc_it_t;
+      for (proc_it_t cur = behaviors.begin()
+		 ; cur != behaviors.end() ;  cur ++ ) {
+	    (*cur) -> statement() -> elaborate_scope(des, scope);
       }
 
 	// Save the scope that we created, for future use.

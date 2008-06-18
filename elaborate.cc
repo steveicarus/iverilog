@@ -1952,7 +1952,7 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	    if (nscope == 0) {
 		  cerr << get_fileline() << ": internal error: "
 			"unable to find block scope " << scope_path(scope)
-		       << "<" << pscope_name() << ">" << endl;
+		       << "." << pscope_name() << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -3681,8 +3681,8 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 		       << scope_path(container) << "." << endl;
 
 	    typedef list<PGenerate*>::const_iterator generate_it_t;
-	    for (generate_it_t cur = generates.begin()
-		       ; cur != generates.end() ; cur ++) {
+	    for (generate_it_t cur = generate_schemes.begin()
+		       ; cur != generate_schemes.end() ; cur ++) {
 		  PGenerate*item = *cur;
 		  if (! item->scope_list_.empty()) {
 			flag &= item->elaborate(des, container);
@@ -3733,8 +3733,8 @@ bool PGenerate::elaborate_(Design*des, NetScope*scope) const
 	    (*cur)->elaborate(des, scope);
 
       typedef list<PGenerate*>::const_iterator generate_it_t;
-      for (generate_it_t cur = generates.begin()
-		 ; cur != generates.end() ; cur ++ ) {
+      for (generate_it_t cur = generate_schemes.begin()
+		 ; cur != generate_schemes.end() ; cur ++ ) {
 	    (*cur)->elaborate(des, scope);
       }
 

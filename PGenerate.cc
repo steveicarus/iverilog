@@ -46,8 +46,3 @@ void PGenerate::add_gate(PGate*gate)
 {
       gates.push_back(gate);
 }
-
-void PGenerate::add_behavior(PProcess*proc)
-{
-      behaviors.push_back(proc);
-}

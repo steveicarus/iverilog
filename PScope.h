@@ -50,6 +50,7 @@ class PScope {
 	// modules. Scopes for tasks and functions point to their
 	// containing module.
       PScope(perm_string name, PScope*parent);
+      PScope(perm_string name);
       virtual ~PScope();
 
       perm_string pscope_name() const { return name_; }
