@@ -525,7 +525,7 @@ void vhdl_fcall::emit(std::ofstream &of, int level) const
    exprs_.emit(of, level);
 }
 
-vhdl_nbassign_stmt::~vhdl_nbassign_stmt()
+vhdl_abstract_assign_stmt::~vhdl_abstract_assign_stmt()
 {
    delete lhs_;
    delete rhs_;

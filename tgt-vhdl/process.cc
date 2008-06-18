@@ -26,6 +26,17 @@
 #include <sstream>
 
 /*
+ * TODO: Explanation here.
+ */
+static string_list_t g_assign_vars;
+
+void blocking_assign_to(std::string var)
+{
+   std::cout << "blocking_assign_to " << var << std::endl;
+}
+
+
+/*
  * Convert a Verilog process to VHDL and add it to the architecture
  * of the given entity.
  */

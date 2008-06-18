@@ -178,13 +178,9 @@ static int draw_noop(vhdl_process *proc, stmt_container *container,
    return 0;
 }
 
-/*
- * A non-blocking assignment inside a process. The semantics for
- * this are essentially the same as VHDL's non-blocking signal
- * assignment.
- */
-static int draw_nbassign(vhdl_process *proc, stmt_container *container,
-                         ivl_statement_t stmt, vhdl_expr *after = NULL)
+template <class T>
+static int draw_generic_assign(vhdl_process *proc, stmt_container *container,
+                               ivl_statement_t stmt, vhdl_expr *after = NULL)
 {
    int nlvals = ivl_stmt_lvals(stmt);
    if (nlvals != 1) {
@@ -222,16 +218,36 @@ static int draw_nbassign(vhdl_process *proc, stmt_container *container,
          // The type here can be null as it is never actually needed
          vhdl_var_ref *lval_ref = new vhdl_var_ref(signame, NULL);
          
-         vhdl_nbassign_stmt *nbassign = new vhdl_nbassign_stmt(lval_ref, rhs);
+         T *assign = new T(lval_ref, rhs);
          if (after != NULL)
-            nbassign->set_after(after);
-         container->add_stmt(nbassign);
+            assign->set_after(after);
+         container->add_stmt(assign);
       }
    }
    else {
       error("Only signals as lvals supported at the moment");
       return 1;
    }
+   
+   return 0;
+}
+
+/*
+ * A non-blocking assignment inside a process. The semantics for
+ * this are essentially the same as VHDL's non-blocking signal
+ * assignment.
+ */
+static int draw_nbassign(vhdl_process *proc, stmt_container *container,
+                         ivl_statement_t stmt, vhdl_expr *after = NULL)
+{
+   return draw_generic_assign<vhdl_nbassign_stmt>
+      (proc, container, stmt, after);
+}
+
+static int draw_assign(vhdl_process *proc, stmt_container *container,
+                       ivl_statement_t stmt)
+{
+   
    
    return 0;
 }
@@ -415,7 +431,8 @@ int draw_stmt(vhdl_process *proc, stmt_container *container,
       return draw_block(proc, container, stmt);
    case IVL_ST_NOOP:
       return draw_noop(proc, container, stmt);
-   case IVL_ST_ASSIGN:   // TODO: remove!
+   case IVL_ST_ASSIGN:
+      return draw_assign(proc, container, stmt);
    case IVL_ST_ASSIGN_NB:
       return draw_nbassign(proc, container, stmt);
    case IVL_ST_DELAY:

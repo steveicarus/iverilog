@@ -228,21 +228,33 @@ private:
 
 
 /*
+ * Shared between blocking and non-blocking assignment.
+ */
+class vhdl_abstract_assign_stmt : public vhdl_seq_stmt {
+public:
+   vhdl_abstract_assign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
+      : lhs_(lhs), rhs_(rhs), after_(NULL) {}
+   virtual ~vhdl_abstract_assign_stmt();
+
+   void set_after(vhdl_expr *after) { after_ = after; }
+protected:
+   vhdl_var_ref *lhs_;
+   vhdl_expr *rhs_, *after_;
+};                                                      
+
+
+/*
  * Similar to Verilog non-blocking assignment, except the LHS
  * must be a signal not a variable.
  */
-class vhdl_nbassign_stmt : public vhdl_seq_stmt {
+class vhdl_nbassign_stmt : public vhdl_abstract_assign_stmt {
 public:
    vhdl_nbassign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
-      : lhs_(lhs), rhs_(rhs), after_(NULL) {}
-   ~vhdl_nbassign_stmt();
-
-   void set_after(vhdl_expr *after) { after_ = after; }
+      : vhdl_abstract_assign_stmt(lhs, rhs) {}
+   
    void emit(std::ofstream &of, int level) const;
-private:
-   vhdl_var_ref *lhs_;
-   vhdl_expr *rhs_, *after_;
 };
+
 
 enum vhdl_wait_type_t {
    VHDL_WAIT_INDEF,    // Suspend indefinitely
