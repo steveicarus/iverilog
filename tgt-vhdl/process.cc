@@ -27,31 +27,75 @@
 #include <map>
 
 /*
- * TODO: Explanation here.
+ * Implementing blocking assignment is a little tricky since
+ * the semantics are a little different to VHDL:
+ *
+ * In Verilog a blocking assignment (=) can be used anywhere
+ * non-blocking assignment (<=) can be. In VHDL blocking
+ * assignment (:=) can only be used with variables, and
+ * non-blocking assignment (<=) can only be used with signals.
+ * All Verilog variables are translated into signals in the
+ * VHDL architecture. This means we cannot use the VHDL :=
+ * operator directly. Furthermore, VHDL variables can only
+ * be declared within processes, so it wouldn't help to
+ * make all Verilog variables VHDL variables.
+ *
+ * The solution is to generate a VHDL variable in a process
+ * whenever a blocking assignment is made to a signal. The
+ * assignment is made to this variable instead, and
+ * g_assign_vars below remembers the temporary variables
+ * that have been generated. Any subsequent blocking assignments
+ * are made to the same variable. At either the end of the
+ * process or a `wait' statement, the temporaries are assigned
+ * back to the signals, and the temporaries are forgotten. This
+ * has exactly the same (external) behaviour as the Verilog
+ * blocking assignment, since no external process will be able
+ * to observe that the assignment wasn't made immediately.
+ *
+ * For example:
+ *
+ *   initial begin
+ *     a = 5;
+ *     b = a + 3;
+ *   end
+ *
+ * Is translated to:
+ *
+ *   process is
+ *     variable a_Var : Some_Type;
+ *     variable b_Var : Some_Type;
+ *   begin
+ *     a_Var := 5; 
+ *     b_Var := a_Var + 3;
+ *     a <= a_Var;
+ *     b <= b_Var;
+ *   end process;
  */
 typedef std::map<std::string, ivl_signal_t> var_temp_set_t;
 static var_temp_set_t g_assign_vars;
 
+/*
+ * Called whenever a blocking assignment is made to sig.
+ */
 void blocking_assign_to(vhdl_process *proc, ivl_signal_t sig)
 {
    std::string var(get_renamed_signal(sig));
-   
-   std::cout << "blocking_assign_to " << var << std::endl;
-
+   std::string tmpname(var + "_Var");
+      
    if (g_assign_vars.find(var) == g_assign_vars.end()) {
       // This is the first time a non-blocking assignment
       // has been made to this signal: create a variable
       // to shadow it.
-
-      vhdl_decl *decl = proc->get_parent()->get_decl(var);
-      assert(decl);
-      vhdl_type *type = new vhdl_type(*decl->get_type());
-
-      var += "_Var";
-      proc->add_decl(new vhdl_var_decl(var.c_str(), type));
-
-      rename_signal(sig, var);
-      g_assign_vars[var] = sig;
+      if (!proc->have_declared_var(tmpname)) {
+         vhdl_decl *decl = proc->get_parent()->get_decl(var);
+         assert(decl);
+         vhdl_type *type = new vhdl_type(*decl->get_type());
+         
+         proc->add_decl(new vhdl_var_decl(tmpname.c_str(), type));
+      }
+         
+      rename_signal(sig, tmpname);
+      g_assign_vars[tmpname] = sig;
    }
 }
 
