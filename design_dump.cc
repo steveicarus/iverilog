@@ -302,6 +302,14 @@ void NetArrayDq::dump_node(ostream&o, unsigned ind) const
       dump_obj_attr(o, ind+4);
 }
 
+void NetCastReal::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "Cast to real (NetCastReal): " <<
+	    name() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
 void NetCLShift::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Combinatorial shift (NetCLShift): " <<

@@ -707,7 +707,7 @@ bool of_ASSIGN_V0(vthread_t thr, vvp_code_t cp)
 	    schedule_assign_plucked_vector(ptr, delay, thr->bits4, bit, wid);
       } else {
 	    vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
-	    schedule_assign_vector(ptr, value, delay);
+	    schedule_assign_plucked_vector(ptr, delay, value, 0, wid);
       }
 
       return true;
@@ -732,7 +732,7 @@ bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t cp)
 	    schedule_assign_plucked_vector(ptr, delay, thr->bits4, bit, wid);
       } else {
 	    vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
-	    schedule_assign_vector(ptr, value, delay);
+	    schedule_assign_plucked_vector(ptr, delay, value, 0, wid);
       }
 
       return true;

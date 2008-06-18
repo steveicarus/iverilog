@@ -1177,6 +1177,94 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
       return flag;
 }
 
+vvp_vector4array_t::vvp_vector4array_t(unsigned width, unsigned words)
+: width_(width), words_(words)
+{
+      array_ = new v4cell[words_];
+
+      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
+	    for (unsigned idx = 0 ; idx < words_ ; idx += 1) {
+		  array_[idx].abits_val_ = vvp_vector4_t::WORD_X_ABITS;
+		  array_[idx].bbits_val_ = vvp_vector4_t::WORD_X_BBITS;
+	    }
+      } else {
+	    for (unsigned idx = 0 ; idx < words_ ; idx += 1) {
+		  array_[idx].abits_ptr_ = 0;
+		  array_[idx].bbits_ptr_ = 0;
+	    }
+      }
+}
+
+vvp_vector4array_t::~vvp_vector4array_t()
+{
+      if (array_) {
+	    if (width_ > vvp_vector4_t::BITS_PER_WORD) {
+		  for (unsigned idx = 0 ; idx < words_ ; idx += 1)
+			if (array_[idx].abits_ptr_)
+			      delete[]array_[idx].abits_ptr_;
+	    }
+	    delete[]array_;
+      }
+}
+
+void vvp_vector4array_t::set_word(unsigned index, const vvp_vector4_t&that)
+{
+      assert(index < words_);
+      assert(that.size_ == width_);
+
+      v4cell&cell = array_[index];
+
+      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
+	    cell.abits_val_ = that.abits_val_;
+	    cell.bbits_val_ = that.bbits_val_;
+	    return;
+      }
+
+      unsigned cnt = (width_ + vvp_vector4_t::BITS_PER_WORD-1)/vvp_vector4_t::BITS_PER_WORD;
+
+      if (cell.abits_ptr_ == 0) {
+	    cell.abits_ptr_ = new unsigned long[2*cnt];
+	    cell.bbits_ptr_ = cell.abits_ptr_ + cnt;
+      }
+
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    cell.abits_ptr_[idx] = that.abits_ptr_[idx];
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    cell.bbits_ptr_[idx] = that.bbits_ptr_[idx];
+}
+
+vvp_vector4_t vvp_vector4array_t::get_word(unsigned index) const
+{
+      if (index >= words_)
+	    return vvp_vector4_t(width_, BIT4_X);
+
+      assert(index < words_);
+
+      v4cell&cell = array_[index];
+
+      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
+	    vvp_vector4_t res;
+	    res.size_ = width_;
+	    res.abits_val_ = cell.abits_val_;
+	    res.bbits_val_ = cell.bbits_val_;
+	    return res;
+      }
+
+      vvp_vector4_t res (width_, BIT4_X);
+      if (cell.abits_ptr_ == 0)
+	    return res;
+
+      unsigned cnt = (width_ + vvp_vector4_t::BITS_PER_WORD-1)/vvp_vector4_t::BITS_PER_WORD;
+
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    res.abits_ptr_[idx] = cell.abits_ptr_[idx];
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    res.bbits_ptr_[idx] = cell.bbits_ptr_[idx];
+
+      return res;
+
+}
+
 template <class T> T coerce_to_width(const T&that, unsigned width)
 {
       if (that.size() == width)
@@ -2621,7 +2709,7 @@ void vvp_wide_fun_core::propagate_vec4(const vvp_vector4_t&bit,
 				       vvp_time64_t delay)
 {
       if (delay)
-	    schedule_assign_vector(ptr_->out, bit, delay);
+	    schedule_assign_plucked_vector(ptr_->out, delay, bit, 0, bit.size());
       else
 	    vvp_send_vec4(ptr_->out, bit);
 }
@@ -2774,16 +2862,13 @@ ostream& operator <<(ostream&out, vvp_scalar_t a)
       return out;
 }
 
-vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b)
+/*
+ * This function is only called if the actual interface function rules
+ * out some of the eazy cases. If we get here, we can assume that
+ * neither of the values is HiZ, and the values are not exactly equal.
+ */
+vvp_scalar_t fully_featured_resolv_(vvp_scalar_t a, vvp_scalar_t b)
 {
-	// If the value is 0, that is the same as HiZ. In that case,
-	// resolution is simply a matter of returning the *other* value.
-      if (a.value_ == 0)
-	    return b;
-      if (b.value_ == 0)
-	    return a;
-
-      vvp_scalar_t res = a;
 
       if (UNAMBIG(a.value_) && UNAMBIG(b.value_)) {
 
@@ -2792,107 +2877,111 @@ vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b)
 		 but different values, then this becomes
 		 ambiguous. */
 
-	    if (a.value_ == b.value_) {
+	    if ((b.value_&0x07) > (a.value_&0x07)) {
 
-		    /* values are equal. do nothing. */
+		    /* b value is stronger. Take it. */
+		  return b;
 
-	    } else if ((b.value_&0x07) > (res.value_&0x07)) {
+	    } else if ((b.value_&0x77) == (a.value_&0x77)) {
 
-		    /* New value is stronger. Take it. */
-		  res.value_ = b.value_;
-
-	    } else if ((b.value_&0x77) == (res.value_&0x77)) {
-
-		    /* Strengths are the same. Make value ambiguous. */
-		  res.value_ = (res.value_&0x70) | (b.value_&0x07) | 0x80;
+		    // Strengths are the same. Since we know already
+		    // that the values are not the same, Make value
+		    // into "x".
+		  vvp_scalar_t tmp (a);
+		  tmp.value_ = (tmp.value_&0x77) | 0x80;
+		  return tmp;
 
 	    } else {
 
-		    /* Must be res is the stronger one. */
+		    /* Must be "a" is the stronger one. */
+		  return a;
 	    }
 
-      } else if (UNAMBIG(res.value_)) {
-	    unsigned tmp = 0;
+      }
 
-	    if ((res.value_&0x70) > (b.value_&0x70))
-		  tmp |= res.value_&0xf0;
+	/* If one of the signals is unambiguous, then it
+	   will sweep up the weaker parts of the ambiguous
+	   signal. The result may be ambiguous, or maybe not. */
+
+      if (UNAMBIG(a.value_)) {
+	    vvp_scalar_t res;
+
+	    if ((a.value_&0x70) > (b.value_&0x70))
+		  res.value_ |= a.value_&0xf0;
 	    else
-		  tmp |= b.value_&0xf0;
+		  res.value_ |= b.value_&0xf0;
 
-	    if ((res.value_&0x07) > (b.value_&0x07))
-		  tmp |= res.value_&0x0f;
+	    if ((a.value_&0x07) > (b.value_&0x07))
+		  res.value_ |= a.value_&0x0f;
 	    else
-		  tmp |= b.value_&0x0f;
+		  res.value_ |= b.value_&0x0f;
 
-	    res.value_ = tmp;
+	    return res;
 
       } else if (UNAMBIG(b.value_)) {
 
-	      /* If one of the signals is unambiguous, then it
-		 will sweep up the weaker parts of the ambiguous
-		 signal. The result may be ambiguous, or maybe not. */
+	    vvp_scalar_t res;
 
-	    unsigned tmp = 0;
-
-	    if ((b.value_&0x70) > (res.value_&0x70))
-		  tmp |= b.value_&0xf0;
+	    if ((b.value_&0x70) > (a.value_&0x70))
+		  res.value_ |= b.value_&0xf0;
 	    else
-		  tmp |= res.value_&0xf0;
+		  res.value_ |= a.value_&0xf0;
 
-	    if ((b.value_&0x07) > (res.value_&0x07))
-		  tmp |= b.value_&0x0f;
+	    if ((b.value_&0x07) > (a.value_&0x07))
+		  res.value_ |= b.value_&0x0f;
 	    else
-		  tmp |= res.value_&0x0f;
+		  res.value_ |= a.value_&0x0f;
 
-	    res.value_ = tmp;
+	    return res;
 
-      } else {
-
-	      /* If both signals are ambiguous, then the result
-		 has an even wider ambiguity. */
-
-	    unsigned tmp = 0;
-	    int sv1a = a.value_&0x80 ? STREN1(a.value_) : - STREN1(a.value_);
-	    int sv0a = a.value_&0x08 ? STREN0(a.value_) : - STREN0(a.value_);
-	    int sv1b = b.value_&0x80 ? STREN1(b.value_) : - STREN1(b.value_);
-	    int sv0b = b.value_&0x08 ? STREN0(b.value_) : - STREN0(b.value_);
-
-	    int sv1 = sv1a;
-	    int sv0 = sv0a;
-
-	    if (sv0a > sv1)
-		  sv1 = sv0a;
-	    if (sv1b > sv1)
-		  sv1 = sv1b;
-	    if (sv0b > sv1)
-		  sv1 = sv0b;
-
-	    if (sv1a < sv0)
-		  sv0 = sv1a;
-	    if (sv1b < sv0)
-		  sv0 = sv1b;
-	    if (sv0b < sv0)
-		  sv0 = sv0b;
-
-	    if (sv1 > 0) {
-		  tmp |= 0x80;
-		  tmp |= sv1 << 4;
-	    } else {
-		    /* Set the MSB when both arguments MSBs are set. This
-		       can only happen if both one strengths are zero. */
-		  tmp |= (a.value_&b.value_)&0x80;
-		  tmp |= (-sv1) << 4;
-	    }
-
-	    if (sv0 > 0) {
-		  tmp |= 0x08;
-		  tmp |= sv0;
-	    } else {
-		  tmp |= (-sv0);
-	    }
-
-	    res.value_ = tmp;
       }
+
+
+	/* If both signals are ambiguous, then the result
+	   has an even wider ambiguity. */
+
+      unsigned tmp = 0;
+      int sv1a = a.value_&0x80 ? STREN1(a.value_) : - STREN1(a.value_);
+      int sv0a = a.value_&0x08 ? STREN0(a.value_) : - STREN0(a.value_);
+      int sv1b = b.value_&0x80 ? STREN1(b.value_) : - STREN1(b.value_);
+      int sv0b = b.value_&0x08 ? STREN0(b.value_) : - STREN0(b.value_);
+
+      int sv1 = sv1a;
+      int sv0 = sv0a;
+
+      if (sv0a > sv1)
+	    sv1 = sv0a;
+      if (sv1b > sv1)
+	    sv1 = sv1b;
+      if (sv0b > sv1)
+	    sv1 = sv0b;
+
+      if (sv1a < sv0)
+	    sv0 = sv1a;
+      if (sv1b < sv0)
+	    sv0 = sv1b;
+      if (sv0b < sv0)
+	    sv0 = sv0b;
+
+      if (sv1 > 0) {
+	    tmp |= 0x80;
+	    tmp |= sv1 << 4;
+      } else {
+	      /* Set the MSB when both arguments MSBs are set. This
+		 can only happen if both one strengths are zero. */
+	    tmp |= (a.value_&b.value_)&0x80;
+	    tmp |= (-sv1) << 4;
+      }
+
+      if (sv0 > 0) {
+	    tmp |= 0x08;
+	    tmp |= sv0;
+      } else {
+	    tmp |= (-sv0);
+      }
+
+      vvp_scalar_t res;
+      res.value_ = tmp;
 
 	/* Canonicalize the HiZ value. */
       if ((res.value_&0x77) == 0)

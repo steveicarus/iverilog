@@ -151,6 +151,8 @@ extern void compile_arith_pow(char*label, long width, bool signed_flag,
 			      unsigned argc, struct symb_s*argv);
 extern void compile_arith_abs(char*label,
 			      unsigned argc, struct symb_s*argv);
+extern void compile_arith_cast_real(char*label,
+			      unsigned argc, struct symb_s*argv);
 extern void compile_arith_div(char*label, long width, bool signed_flag,
 			      unsigned argc, struct symb_s*argv);
 extern void compile_arith_mod(char*label, long width,

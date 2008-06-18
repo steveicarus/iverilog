@@ -716,6 +716,16 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 
       unsigned rwidth = lwidth;
 
+	// If either operand is IVL_VT_REAL, then cast the other to
+	// IVL_VT_REAL so that the division can become IVL_VT_REAL.
+
+      if (lsig->data_type()==IVL_VT_REAL || rsig->data_type()==IVL_VT_REAL) {
+	    if (lsig->data_type() != IVL_VT_REAL)
+		  lsig = cast_to_real(des, scope, lsig);
+	    if (rsig->data_type() != IVL_VT_REAL)
+		  rsig = cast_to_real(des, scope, rsig);
+      }
+
       if (rwidth == 0) {
 	    rwidth = lsig->vector_width();
 	    if (rsig->vector_width() > rwidth)

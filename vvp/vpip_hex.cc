@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpip_hex.cc,v 1.4 2006/02/21 02:39:27 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "vpi_priv.h"
@@ -140,21 +137,24 @@ void vpip_vec4_to_hex_str(const vvp_vector4_t&bits, char*buf,
 	    }
       }
 
-      if (slen > 0) {
-	    unsigned padd = 0;
+	/* Fill in X or Z if they are the only thing in the value. */
+      switch (bits.size() % 4) {
+	  case 1:
+	    if (val == 2) val = 170;
+	    else if (val == 3) val = 255;
+	    break;
+	  case 2:
+	    if (val == 10) val = 170;
+	    else if (val == 15) val = 255;
+	    break;
+	  case 3:
+	    if (val == 42) val = 170;
+	    else if (val == 63) val = 255;
+	    break;
+      }
 
+      if (slen > 0) {
 	    slen -= 1;
 	    buf[slen] = hex_digits[val];
-	    switch(buf[slen]) {
-		case 'X': padd = 2; break;
-		case 'Z': padd = 3; break;
-	    }
-	    if (padd) {
-		  for (unsigned idx = bits.size() % 4; idx < 4; idx += 1) {
-			val = val | padd << 2*idx;
-		  }
-		  buf[slen] = hex_digits[val];
-	    }
       }
 }
-

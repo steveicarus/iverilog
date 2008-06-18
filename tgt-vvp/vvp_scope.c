@@ -1079,6 +1079,17 @@ static void draw_lpm_abs(ivl_lpm_t net)
 	      net, dly, src_table[0]);
 }
 
+static void draw_lpm_cast_real(ivl_lpm_t net)
+{
+      const char*src_table[1];
+      draw_lpm_data_inputs(net, 0, 1, src_table);
+
+      const char*dly = draw_lpm_output_delay(net);
+
+      fprintf(vvp_out, "L_%p%s .cast/real %s;\n",
+	      net, dly, src_table[0]);
+}
+
 static void draw_lpm_add(ivl_lpm_t net)
 {
       const char*src_table[2];
@@ -1642,6 +1653,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 
 	  case IVL_LPM_ABS:
 	    draw_lpm_abs(net);
+	    return;
+
+	  case IVL_LPM_CAST_REAL:
+	    draw_lpm_cast_real(net);
 	    return;
 
 	  case IVL_LPM_ADD:

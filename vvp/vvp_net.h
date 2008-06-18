@@ -122,6 +122,7 @@ extern int edge(vvp_bit4_t from, vvp_bit4_t to);
 class vvp_vector4_t {
 
       friend vvp_vector4_t operator ~(const vvp_vector4_t&that);
+      friend class vvp_vector4array_t;
 
     public:
       explicit vvp_vector4_t(unsigned size =0, vvp_bit4_t bits =BIT4_X);
@@ -383,6 +384,42 @@ extern bool vector4_to_value(const vvp_vector4_t&a, long&val, bool is_signed);
 extern bool vector4_to_value(const vvp_vector4_t&a, unsigned long&val);
 extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
 
+/*
+ * vvp_vector4array_t
+ */
+class vvp_vector4array_t {
+
+    public:
+      vvp_vector4array_t(unsigned width, unsigned words);
+      ~vvp_vector4array_t();
+
+      unsigned width() const { return width_; }
+      unsigned words() const { return words_; }
+
+      vvp_vector4_t get_word(unsigned idx) const;
+      void set_word(unsigned idx, const vvp_vector4_t&that);
+
+    private:
+      struct v4cell {
+	    union {
+		  unsigned long abits_val_;
+		  unsigned long*abits_ptr_;
+	    };
+	    union {
+		  unsigned long bbits_val_;
+		  unsigned long*bbits_ptr_;
+	    };
+      };
+
+      unsigned width_;
+      unsigned words_;
+      v4cell* array_;
+
+    private: // Not implemented
+      vvp_vector4array_t(const vvp_vector4array_t&);
+      vvp_vector4array_t& operator = (const vvp_vector4array_t&);
+};
+
 /* vvp_vector2_t
  */
 class vvp_vector2_t {
@@ -479,7 +516,7 @@ inline unsigned vvp_vector2_t::size() const
  */
 class vvp_scalar_t {
 
-      friend vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b);
+      friend vvp_scalar_t fully_featured_resolv_(vvp_scalar_t a, vvp_scalar_t b);
 
     public:
 	// Make a HiZ value.
@@ -543,7 +580,24 @@ inline vvp_bit4_t vvp_scalar_t::value() const
 }
 
 
-extern vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b);
+inline vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b)
+{
+      extern vvp_scalar_t fully_featured_resolv_(vvp_scalar_t a, vvp_scalar_t b);
+
+	// If the value is HiZ, resolution is simply a matter of
+	// returning the *other* value.
+      if (a.is_hiz())
+	    return b;
+      if (b.is_hiz())
+	    return a;
+	// If the values are the identical, then resolution is simply
+	// returning *either* value.
+      if (a .eeq( b ))
+	    return a;
+
+      return fully_featured_resolv_(a,b);
+}
+
 extern ostream& operator<< (ostream&, vvp_scalar_t);
 
 /*

@@ -65,6 +65,12 @@ extern NetNet*pad_to_width(Design*des, NetNet*n, unsigned w);
 extern NetNet*pad_to_width_signed(Design*des, NetNet*n, unsigned w);
 
 /*
+ * Generate the nodes necessary to cast an expression (a net) to a
+ * real value.
+ */
+extern NetNet*cast_to_real(Design*des, NetScope*scope, NetNet*src);
+
+/*
  * Take the input expression and return a variation that assures that
  * the expression is 1-bit wide and logical. This reflects the needs
  * of conditions i.e. for "if" statements or logical operators.

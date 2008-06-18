@@ -118,7 +118,7 @@ void del_thr_event_s::run_run(void)
 
 struct assign_vector4_event_s  : public event_s {
 	/* The default constructor. */
-      assign_vector4_event_s() { }
+      assign_vector4_event_s(const vvp_vector4_t&that) : val(that) { }
 	/* A constructor that makes the val directly. */
       assign_vector4_event_s(const vvp_vector4_t&that, unsigned adr, unsigned wid)
       : val(that,adr,wid) { }
@@ -572,23 +572,10 @@ void schedule_assign_vector(vvp_net_ptr_t ptr,
 			    const vvp_vector4_t&bit,
 			    vvp_time64_t delay)
 {
-      struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
+      struct assign_vector4_event_s*cur = new struct assign_vector4_event_s(bit);
       cur->ptr = ptr;
       cur->base = base;
       cur->vwid = vwid;
-      cur->val = bit;
-      schedule_event_(cur, delay, SEQ_NBASSIGN);
-}
-
-void schedule_assign_vector(vvp_net_ptr_t ptr,
-			    const vvp_vector4_t&bit,
-			    vvp_time64_t delay)
-{
-      struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
-      cur->ptr = ptr;
-      cur->val = bit;
-      cur->vwid = 0;
-      cur->base = 0;
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
 
@@ -619,11 +606,10 @@ void schedule_assign_array_word(vvp_array_t mem,
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
 
-void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void schedule_set_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
-      struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
+      struct assign_vector4_event_s*cur = new struct assign_vector4_event_s(bit);
       cur->ptr = ptr;
-      cur->val = bit;
       cur->base = 0;
       cur->vwid = 0;
       schedule_event_(cur, 0, SEQ_ACTIVE);
@@ -647,9 +633,8 @@ void schedule_set_vector(vvp_net_ptr_t ptr, double bit)
 
 void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
-      struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
+      struct assign_vector4_event_s*cur = new struct assign_vector4_event_s(bit);
       cur->ptr = ptr;
-      cur->val = bit;
       cur->base = 0;
       cur->vwid = 0;
       cur->next = schedule_init_list;

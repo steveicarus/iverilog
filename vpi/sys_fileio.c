@@ -20,6 +20,7 @@
 # include  "vpi_user.h"
 # include  "sys_priv.h"
 # include  <assert.h>
+# include  <ctype.h>
 # include  <string.h>
 # include  <stdio.h>
 # include  <stdlib.h>
@@ -91,6 +92,7 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
       s_vpi_value val;
       int fail = 0;
       char *mode_string = 0;
+      unsigned idx;
       vpiHandle item = vpi_scan(argv);
       vpiHandle mode = vpi_scan(argv);
 
@@ -103,10 +105,54 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
 		  vpi_printf("WARNING: %s line %d: ",
 		             vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
-		  vpi_printf("%s's mode argument was not a valid string.\n",
+		  vpi_printf("%s's mode argument is not a valid string.\n",
 		             name);
 		  fail = 1;
 	    }
+
+	      /* Make sure the mode string is correct. */
+	    if (strlen(val.value.str) > 3) {
+		  vpi_printf("WARNING: %s line %d: ",
+		             vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s's mode argument (%s) is too long.\n",
+		             name, val.value.str);
+		  fail = 1;
+	    } else {
+		  unsigned bin = 0, plus = 0;
+		  switch (val.value.str[0]) {
+		      case 'r':
+		      case 'w':
+		      case 'a':
+			for (idx = 1; idx < 3 ; idx++) {
+			      if (val.value.str[idx] == '\0') break;
+			      switch (val.value.str[idx]) {
+				    case 'b':
+				      if (bin) fail = 1;
+				      bin = 1;
+				      break;
+				    case '+':
+				      if (plus) fail = 1;
+				      plus = 1;
+				      break;
+				    default:
+				      fail = 1;
+				      break;
+			      }
+			}
+			if (! fail) break;
+
+		      default:
+			vpi_printf("WARNING: %s line %d: ",
+			           vpi_get_str(vpiFile, callh),
+			           (int)vpi_get(vpiLineNo, callh));
+			vpi_printf("%s's mode argument (%s) is invalid.\n",
+			name, val.value.str);
+			fail = 1;
+			break;
+		  }
+	    }
+
             mode_string = strdup(val.value.str);
 
 	    vpi_free_object(argv);
@@ -121,10 +167,29 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
       if (val.format != vpiStringVal || !*(val.value.str)) {
 	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s's file name argument was not a valid string.\n",
+	    vpi_printf("%s's file name argument is not a valid string.\n",
 	                name);
 	    fail = 1;
 	    if (mode) free(mode_string);
+      }
+
+	/*
+	 * Verify that the file name is composed of only printable
+	 * characters.
+	 */
+      unsigned len = strlen(val.value.str);
+      for (idx = 0; idx < len; idx++) {
+	    if (! isprint(val.value.str[idx])) {
+		  char msg [64];
+		  snprintf(msg, 64, "WARNING: %s line %d:",
+		           vpi_get_str(vpiFile, callh),
+		           (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s %s's file name argument contains non-"
+		             "printable characters.\n", msg, name);
+		  vpi_printf("%*s \"%s\"\n", strlen(msg), " ", val.value.str);
+		  fail = 1;
+		  if (mode) free(mode_string);
+	    }
       }
 
 	/* If either the mode or file name are not valid just return. */
@@ -168,9 +233,27 @@ static PLI_INT32 sys_fopenrwa_calltf(PLI_BYTE8*name)
       if (val.format != vpiStringVal || !*(val.value.str)) {
 	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s's file name argument was not a valid string.\n",
+	    vpi_printf("%s's file name argument is not a valid string.\n",
 	                name);
 	    return 0;
+      }
+
+	/*
+	 * Verify that the file name is composed of only printable
+	 * characters.
+	 */
+      unsigned idx, len = strlen(val.value.str);
+      for (idx = 0; idx < len; idx++) {
+	    if (! isprint(val.value.str[idx])) {
+		  char msg [64];
+		  snprintf(msg, 64, "WARNING: %s line %d:",
+		           vpi_get_str(vpiFile, callh),
+		           (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s %s's file name argument contains non-"
+		             "printable characters.\n", msg, name);
+		  vpi_printf("%*s \"%s\"\n", strlen(msg), " ", val.value.str);
+		  return 0;
+	    }
       }
 
 	/* Open the file and return the result. */
@@ -616,19 +699,19 @@ static PLI_INT32 sys_common_fd_calltf(PLI_BYTE8*name)
 
       val.format = vpiIntVal;
       switch (name[4]) {
-	case 'l':  /* $ftell() */
+	  case 'l':  /* $ftell() */
 	    val.value.integer = ftell(fp);
 	    break;
-	case 'f':  /* $feof() is from 1264-2005*/
+	  case 'f':  /* $feof() is from 1264-2005*/
 	    val.value.integer = feof(fp);
 	    break;
-	case 'i':  /* $rewind() */
+	  case 'i':  /* $rewind() */
 	    val.value.integer = fseek(fp, 0L, SEEK_SET);
 	    break;
-	case 't':  /* $fgetc() */
+	  case 't':  /* $fgetc() */
 	    val.value.integer = fgetc(fp);
 	    break;
-	default:
+	  default:
 	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s cannot be processed with this routine.\n", name);

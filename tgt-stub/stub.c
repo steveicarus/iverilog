@@ -240,6 +240,31 @@ static void show_lpm_array(ivl_lpm_t net)
       }
 }
 
+static void show_lpm_cast_real(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_CAST_REAL %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      ivl_nexus_t q = ivl_lpm_q(net,0);
+      ivl_nexus_t a = ivl_lpm_data(net,0);
+      fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
+      fprintf(out, "    A: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
+
+      if (type_of_nexus(q) != IVL_VT_REAL) {
+	    fprintf(out, "    ERROR: Data type of Q is %s, expecting real\n",
+		    data_type_string(type_of_nexus(q)));
+	    stub_errors += 1;
+      }
+
+      if (type_of_nexus(a) == IVL_VT_REAL) {
+	    fprintf(out, "    ERROR: Data type of A is %s, expecting !real\n",
+		    data_type_string(type_of_nexus(a)));
+	    stub_errors += 1;
+      }
+}
+
 static void show_lpm_divide(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -800,6 +825,10 @@ static void show_lpm(ivl_lpm_t net)
 
 	  case IVL_LPM_ARRAY:
 	    show_lpm_array(net);
+	    break;
+
+	  case IVL_LPM_CAST_REAL:
+	    show_lpm_cast_real(net);
 	    break;
 
 	  case IVL_LPM_DIVIDE:

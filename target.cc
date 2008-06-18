@@ -107,6 +107,13 @@ bool target_t::lpm_array_dq(const NetArrayDq*)
       return false;
 }
 
+bool target_t::lpm_cast_real(const NetCastReal*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetCastReal." << endl;
+      return false;
+}
+
 void target_t::lpm_clshift(const NetCLShift*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
