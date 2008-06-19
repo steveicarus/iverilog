@@ -30,6 +30,15 @@ unsigned error_count = 0;
 unsigned warn_count = 0;
 unsigned long based_size = 0;
 
+std::ostream& operator << (std::ostream&o, const YYLTYPE&loc)
+{
+      if (loc.text)
+	    o << loc.text << ":";
+      o << loc.first_line;
+      return o;
+}
+
+
 void VLerror(const char*msg)
 {
       error_count += 1;
@@ -39,20 +48,14 @@ void VLerror(const char*msg)
 void VLerror(const YYLTYPE&loc, const char*msg)
 {
       error_count += 1;
-      if (loc.text)
-	    cerr << loc.text << ":";
-
-      cerr << loc.first_line << ": " << msg << endl;
+      cerr << loc << ": " << msg << endl;
       based_size = 0; /* Clear the base information if we have an error. */
 }
 
 void yywarn(const YYLTYPE&loc, const char*msg)
 {
       warn_count += 1;
-      if (loc.text)
-	    cerr << loc.text << ":";
-
-      cerr << loc.first_line << ": warning: " << msg << endl;
+      cerr << loc << ": warning: " << msg << endl;
 }
 
 int VLwrap()

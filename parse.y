@@ -2200,6 +2200,15 @@ module_item
     K_endcase
       { pform_endgenerate(); }
 
+  /* Handle some anachronistic syntax cases. */
+  | K_generate K_begin module_item_list_opt K_end K_endgenerate
+      { /* Detect and warn about anachronistic begin/end use */
+	if (generation_flag > GN_VER2001) {
+	      warn_count += 1;
+	      cerr << @2 << ": warning: Anachronistic use of begin/end to surround generate schemes." << endl;
+	}
+      }
+
   /* specify blocks are parsed but ignored. */
 
 	| K_specify K_endspecify

@@ -23,6 +23,7 @@
 #endif
 
 # include  <list>
+# include  <ostream>
 # include  "compiler.h"
 # include  "pform.h"
 
@@ -61,6 +62,8 @@ extern void VLerror(const char*msg);
 extern void VLerror(const YYLTYPE&loc, const char*msg);
 #define yywarn VLwarn
 extern void VLwarn(const YYLTYPE&loc, const char*msg);
+
+extern ostream& operator << (ostream&, const YYLTYPE&loc);
 
 extern unsigned error_count, warn_count;
 extern unsigned long based_size;
