@@ -70,6 +70,7 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
       
    switch (ivl_expr_opcode(e)) {
    case '!':
+   case '~':
       return new vhdl_unaryop_expr
          (VHDL_UNARYOP_NOT, operand, new vhdl_type(*operand->get_type()));
    default:
@@ -136,13 +137,36 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    if (NULL == rhs)
       return NULL;
 
+   // For === and !== we need to compare std_logic_vectors
+   // rather than signeds
+   vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR);
+   bool vectorop =
+      (lhs->get_type()->get_name() == VHDL_TYPE_SIGNED
+       || lhs->get_type()->get_name() == VHDL_TYPE_UNSIGNED) &&
+      (rhs->get_type()->get_name() == VHDL_TYPE_SIGNED
+       || rhs->get_type()->get_name() == VHDL_TYPE_UNSIGNED);
+      
    switch (ivl_expr_opcode(e)) {
    case '+':
       return translate_numeric(lhs, rhs, VHDL_BINOP_ADD);
    case 'e':
       return translate_relation(lhs, rhs, VHDL_BINOP_EQ);
-   case 'N':
+   case 'E':
+      if (vectorop)
+         return translate_relation(lhs->cast(&std_logic_vector),
+                                   rhs->cast(&std_logic_vector), VHDL_BINOP_EQ);
+      else
+         return translate_relation(lhs, rhs, VHDL_BINOP_EQ);
+   case 'n':
       return translate_relation(lhs, rhs, VHDL_BINOP_NEQ);
+   case 'N':
+      if (vectorop)
+         return translate_relation(lhs->cast(&std_logic_vector),
+                                   rhs->cast(&std_logic_vector), VHDL_BINOP_NEQ);
+      else
+         return translate_relation(lhs, rhs, VHDL_BINOP_NEQ);
+   case 'o':
+      return translate_relation(lhs, rhs, VHDL_BINOP_OR);
    default:
       error("No translation for binary opcode '%c'\n",
             ivl_expr_opcode(e));
