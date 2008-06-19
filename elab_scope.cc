@@ -123,6 +123,64 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
       delete val;
 }
 
+static void elaborate_scope_tasks(Design*des, NetScope*scope,
+				  const LineInfo&loc,
+				  const map<perm_string,PTask*>&tasks)
+{
+      typedef map<perm_string,PTask*>::const_iterator tasks_it_t;
+
+      for (tasks_it_t cur = tasks.begin()
+		 ; cur != tasks.end() ;  cur ++ ) {
+
+	    hname_t use_name( (*cur).first );
+	    if (scope->child(use_name)) {
+		  cerr << loc.get_fileline() << ": error: task/scope name "
+		       << use_name << " already used in this context."
+		       << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+	    NetScope*task_scope = new NetScope(scope, use_name,
+					       NetScope::TASK);
+	    task_scope->set_line((*cur).second);
+
+	    if (debug_scopes)
+		  cerr << cur->second->get_fileline() << ": debug: "
+		       << "Elaborate task scope " << scope_path(task_scope) << endl;
+	    (*cur).second->elaborate_scope(des, task_scope);
+      }
+
+}
+
+static void elaborate_scope_funcs(Design*des, NetScope*scope,
+				  const LineInfo&loc,
+				  const map<perm_string,PFunction*>&funcs)
+{
+      typedef map<perm_string,PFunction*>::const_iterator funcs_it_t;
+
+      for (funcs_it_t cur = funcs.begin()
+		 ; cur != funcs.end() ;  cur ++ ) {
+
+	    hname_t use_name( (*cur).first );
+	    if (scope->child(use_name)) {
+		  cerr << loc.get_fileline() << ": error: function/scope name "
+		       << use_name << " already used in this context."
+		       << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+	    NetScope*func_scope = new NetScope(scope, use_name,
+					       NetScope::FUNC);
+	    func_scope->set_line((*cur).second);
+
+	    if (debug_scopes)
+		  cerr << cur->second->get_fileline() << ": debug: "
+		       << "Elaborate function scope " << scope_path(func_scope) << endl;
+	    (*cur).second->elaborate_scope(des, func_scope);
+      }
+
+}
+
 bool Module::elaborate_scope(Design*des, NetScope*scope,
 			     const replace_t&replacements) const
 {
@@ -266,49 +324,14 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// elaborate_scope method of the PTask for detailed
 	// processing.
 
-      typedef map<perm_string,PTask*>::const_iterator tasks_it_t;
-
-      for (tasks_it_t cur = tasks_.begin()
-		 ; cur != tasks_.end() ;  cur ++ ) {
-
-	    hname_t use_name( (*cur).first );
-	    if (scope->child(use_name)) {
-		  cerr << get_fileline() << ": error: task/scope name "
-		       << use_name << " already used in this context."
-		       << endl;
-		  des->errors += 1;
-		  continue;
-	    }
-	    NetScope*task_scope = new NetScope(scope, use_name,
-					       NetScope::TASK);
-	    task_scope->set_line((*cur).second);
-	    (*cur).second->elaborate_scope(des, task_scope);
-      }
+      elaborate_scope_tasks(des, scope, *this, tasks);
 
 
 	// Functions are very similar to tasks, at least from the
 	// perspective of scopes. So handle them exactly the same
 	// way.
 
-      typedef map<perm_string,PFunction*>::const_iterator funcs_it_t;
-
-      for (funcs_it_t cur = funcs_.begin()
-		 ; cur != funcs_.end() ;  cur ++ ) {
-
-	    hname_t use_name( (*cur).first );
-	    if (scope->child(use_name)) {
-		  cerr << get_fileline() << ": error: function/scope name "
-		       << use_name << " already used in this context."
-		       << endl;
-		  des->errors += 1;
-		  continue;
-	    }
-	    NetScope*func_scope = new NetScope(scope, use_name,
-					       NetScope::FUNC);
-	    func_scope->set_line((*cur).second);
-	    (*cur).second->elaborate_scope(des, func_scope);
-      }
-
+      elaborate_scope_funcs(des, scope, *this, funcs);
 
 	// Gates include modules, which might introduce new scopes, so
 	// scan all of them to create those scopes.
@@ -609,6 +632,9 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 		 ; cur != generate_schemes.end() ; cur ++ ) {
 	    (*cur) -> generate_scope(des, scope);
       }
+
+      elaborate_scope_tasks(des, scope, *this, tasks);
+      elaborate_scope_funcs(des, scope, *this, funcs);
 
 	// Scan the generated scope for gates that may create
 	// their own scopes.

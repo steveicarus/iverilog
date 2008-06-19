@@ -138,6 +138,10 @@ class Module : public PScope, public LineInfo {
 	   set by the `timescale directive. */
       int time_unit, time_precision;
 
+	/* Task definitions within this module */
+      map<perm_string,PTask*> tasks;
+      map<perm_string,PFunction*> funcs;
+
 	/* The module has a list of genvars that may be used in
 	   various generate schemes. */
       map<perm_string,LineInfo*> genvars;
@@ -152,8 +156,6 @@ class Module : public PScope, public LineInfo {
       perm_string mod_name() const { return pscope_name(); }
 
       void add_gate(PGate*gate);
-      void add_task(perm_string name, PTask*def);
-      void add_function(perm_string name, PFunction*def);
 
       unsigned port_count() const;
       const svector<PEIdent*>& get_port(unsigned idx) const;
@@ -173,8 +175,6 @@ class Module : public PScope, public LineInfo {
 
     private:
       list<PGate*> gates_;
-      map<perm_string,PTask*> tasks_;
-      map<perm_string,PFunction*> funcs_;
 
       static void elaborate_parm_item_(perm_string name, const param_expr_t&cur,
 				       Design*des, NetScope*scope);

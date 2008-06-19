@@ -108,6 +108,42 @@ bool PScope::elaborate_sig_wires_(Design*des, NetScope*scope) const
       return flag;
 }
 
+static void elaborate_sig_funcs(Design*des, NetScope*scope,
+				const map<perm_string,PFunction*>&funcs)
+{
+      typedef map<perm_string,PFunction*>::const_iterator mfunc_it_t;
+
+      for (mfunc_it_t cur = funcs.begin()
+		 ; cur != funcs.end() ;  cur ++) {
+
+	    hname_t use_name ( (*cur).first );
+	    NetScope*fscope = scope->child(use_name);
+	    if (scope == 0) {
+		  cerr << (*cur).second->get_fileline() << ": internal error: "
+		       << "Child scope for function " << (*cur).first
+		       << " missing in " << scope_path(scope) << "." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
+	    (*cur).second->elaborate_sig(des, fscope);
+      }
+}
+
+static void elaborate_sig_tasks(Design*des, NetScope*scope,
+				const map<perm_string,PTask*>&tasks)
+{
+      typedef map<perm_string,PTask*>::const_iterator mtask_it_t;
+
+      for (mtask_it_t cur = tasks.begin()
+		 ; cur != tasks.end() ;  cur ++) {
+	    NetScope*tscope = scope->child( hname_t((*cur).first) );
+	    assert(tscope);
+	    (*cur).second->elaborate_sig(des, tscope);
+      }
+}
+
+				
 bool Module::elaborate_sig(Design*des, NetScope*scope) const
 {
       bool flag = true;
@@ -182,38 +218,12 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 	    flag &= (*gt)->elaborate_sig(des, scope);
       }
 
-
-      typedef map<perm_string,PFunction*>::const_iterator mfunc_it_t;
-
-      for (mfunc_it_t cur = funcs_.begin()
-		 ; cur != funcs_.end() ;  cur ++) {
-
-	    hname_t use_name ( (*cur).first );
-	    NetScope*fscope = scope->child(use_name);
-	    if (scope == 0) {
-		  cerr << (*cur).second->get_fileline() << ": internal error: "
-		       << "Child scope for function " << (*cur).first
-		       << " missing in " << scope_path(scope) << "." << endl;
-		  des->errors += 1;
-		  continue;
-	    }
-
-	    (*cur).second->elaborate_sig(des, fscope);
-      }
-
-
 	// After all the wires are elaborated, we are free to
 	// elaborate the ports of the tasks defined within this
 	// module. Run through them now.
 
-      typedef map<perm_string,PTask*>::const_iterator mtask_it_t;
-
-      for (mtask_it_t cur = tasks_.begin()
-		 ; cur != tasks_.end() ;  cur ++) {
-	    NetScope*tscope = scope->child( hname_t((*cur).first) );
-	    assert(tscope);
-	    (*cur).second->elaborate_sig(des, tscope);
-      }
+      elaborate_sig_funcs(des, scope, funcs);
+      elaborate_sig_tasks(des, scope, tasks);
 
 	// initial and always blocks may contain begin-end and
 	// fork-join blocks that can introduce scopes. Therefore, I
@@ -460,6 +470,9 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
 
 	    cur->elaborate_sig(des, scope);
       }
+
+      elaborate_sig_funcs(des, scope, funcs);
+      elaborate_sig_tasks(des, scope, tasks);
 
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()

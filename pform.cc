@@ -102,7 +102,11 @@ PTask* pform_push_task_scope(char*name)
       PTask*task = new PTask(task_name, pform_cur_module);
 
 	// Add the task to the current module
-      pform_cur_module->add_task(task->pscope_name(), task);
+      if (pform_cur_generate)
+	    pform_cur_generate->tasks[task->pscope_name()] = task;
+      else
+	    pform_cur_module->tasks[task->pscope_name()] = task;
+
 	// Make this the current lexical scope
       lexical_scope = task;
       return task;
@@ -114,7 +118,11 @@ PFunction* pform_push_function_scope(char*name)
       PFunction*func = new PFunction(func_name, lexical_scope);
 
 	// Add the task to the current module
-      pform_cur_module->add_function(func->pscope_name(), func);
+      if (pform_cur_generate)
+	    pform_cur_generate->funcs[func->pscope_name()] = func;
+      else
+	    pform_cur_module->funcs[func->pscope_name()] = func;
+
 	// Make this the current lexical scope
       lexical_scope = func;
       return func;

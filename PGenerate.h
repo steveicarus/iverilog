@@ -1,7 +1,7 @@
 #ifndef __PGenerate_H
 #define __PGenerate_H
 /*
- * Copyright (c) 2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: PGenerate.h,v 1.4 2007/06/02 03:42:12 steve Exp $"
-#endif
 
 # include  "LineInfo.h"
 # include  "StringHeap.h"
@@ -32,7 +29,9 @@
 class Design;
 class NetScope;
 class PExpr;
+class PFunction;
 class PProcess;
+class PTask;
 class PGate;
 class PWire;
 
@@ -78,6 +77,10 @@ class PGenerate : public LineInfo {
       void add_gate(PGate*);
 
       list<PProcess*> behaviors;
+
+	// Tasks instantiated within this scheme.
+      map<perm_string,PTask*> tasks;
+      map<perm_string,PFunction*>funcs;
 
 	// Generate schemes can contain further generate schemes.
       list<PGenerate*> generate_schemes;

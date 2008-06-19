@@ -3556,6 +3556,34 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 
 }
 
+static void elaborate_functions(Design*des, NetScope*scope,
+				const map<perm_string,PFunction*>&funcs)
+{
+      typedef map<perm_string,PFunction*>::const_iterator mfunc_it_t;
+      for (mfunc_it_t cur = funcs.begin()
+		 ; cur != funcs.end() ;  cur ++) {
+
+	    hname_t use_name ( (*cur).first );
+	    NetScope*fscope = scope->child(use_name);
+	    assert(fscope);
+	    (*cur).second->elaborate(des, fscope);
+      }
+}
+
+static void elaborate_tasks(Design*des, NetScope*scope,
+			    const map<perm_string,PTask*>&tasks)
+{
+      typedef map<perm_string,PTask*>::const_iterator mtask_it_t;
+      for (mtask_it_t cur = tasks.begin()
+		 ; cur != tasks.end() ;  cur ++) {
+
+	    hname_t use_name ( (*cur).first );
+	    NetScope*tscope = scope->child(use_name);
+	    assert(tscope);
+	    (*cur).second->elaborate(des, tscope);
+      }
+}
+
 /*
  * When a module is instantiated, it creates the scope then uses this
  * method to elaborate the contents of the module.
@@ -3615,28 +3643,12 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       }
 
 	// Elaborate functions.
-      typedef map<perm_string,PFunction*>::const_iterator mfunc_it_t;
-      for (mfunc_it_t cur = funcs_.begin()
-		 ; cur != funcs_.end() ;  cur ++) {
-
-	    hname_t use_name ( (*cur).first );
-	    NetScope*fscope = scope->child(use_name);
-	    assert(fscope);
-	    (*cur).second->elaborate(des, fscope);
-      }
+      elaborate_functions(des, scope, funcs);
 
 	// Elaborate the task definitions. This is done before the
 	// behaviors so that task calls may reference these, and after
 	// the signals so that the tasks can reference them.
-      typedef map<perm_string,PTask*>::const_iterator mtask_it_t;
-      for (mtask_it_t cur = tasks_.begin()
-		 ; cur != tasks_.end() ;  cur ++) {
-
-	    hname_t use_name ( (*cur).first );
-	    NetScope*tscope = scope->child(use_name);
-	    assert(tscope);
-	    (*cur).second->elaborate(des, tscope);
-      }
+      elaborate_tasks(des, scope, tasks);
 
 	// Get all the gates of the module and elaborate them by
 	// connecting them to the signals. The gate may be simple or
@@ -3724,6 +3736,9 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 
 bool PGenerate::elaborate_(Design*des, NetScope*scope) const
 {
+      elaborate_functions(des, scope, funcs);
+      elaborate_tasks(des, scope, tasks);
+
       typedef list<PGate*>::const_iterator gates_it_t;
       for (gates_it_t cur = gates.begin() ; cur != gates.end() ; cur ++ )
 	    (*cur)->elaborate(des, scope);
