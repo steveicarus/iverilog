@@ -141,9 +141,20 @@ static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
       remember_signal(sig, arch->get_parent());
 
       // Make sure the signal name conforms to VHDL naming rules
-      std::string name(ivl_signal_basename(sig));
+      std::string name(ivl_signal_basename(sig));      
       if (name[0] == '_')
          name.insert(0, "VL");
+
+      const char *vhdl_reserved[] = {
+         "in", "out", "entity", "architecture", "inout", // Etc...
+         NULL
+      };
+      for (const char **p = vhdl_reserved; *p != NULL; p++) {
+         if (name == *p) {
+            name.insert(0, "VL_");
+            break;
+         }
+      }      
       rename_signal(sig, name.c_str());
       
       ivl_signal_port_t mode = ivl_signal_port(sig);
