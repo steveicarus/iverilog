@@ -58,6 +58,11 @@ vhdl_type *vhdl_type::nsigned(int width)
    return new vhdl_type(VHDL_TYPE_SIGNED, width-1, 0);
 }
 
+vhdl_type *vhdl_type::time()
+{
+   return new vhdl_type(VHDL_TYPE_TIME);
+}
+
 /*
  * This is just the name of the type, without any parameters.
  */

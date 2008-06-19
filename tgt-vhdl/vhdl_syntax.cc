@@ -378,11 +378,10 @@ void vhdl_wait_stmt::emit(std::ofstream &of, int level) const
    switch (type_) {
    case VHDL_WAIT_INDEF:
       break;
-   case VHDL_WAIT_FOR_NS:
+   case VHDL_WAIT_FOR:
       assert(expr_);
       of << " for ";
       expr_->emit(of, level);
-      of << " ns";
       break;
    }
    
@@ -471,6 +470,12 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
       return new vhdl_binop_expr
          (this, VHDL_BINOP_EQ, one, vhdl_type::boolean());
    }
+   else if (to->get_name() == VHDL_TYPE_INTEGER) {
+      vhdl_fcall *conv = new vhdl_fcall("To_Integer", new vhdl_type(*to));
+      conv->add_expr(this);
+
+      return conv;
+   }
    else {
       vhdl_fcall *conv =
          new vhdl_fcall(to->get_string().c_str(), new vhdl_type(*to));
@@ -555,7 +560,6 @@ void vhdl_nbassign_stmt::emit(std::ofstream &of, int level) const
    if (after_) {
       of << " after ";
       after_->emit(of, level);
-      of << " ns";
    }
    
    of << ";";
@@ -613,6 +617,15 @@ void vhdl_const_bit::emit(std::ofstream &of, int level) const
 void vhdl_const_int::emit(std::ofstream &of, int level) const
 {
    of << value_;
+}
+
+void vhdl_const_time::emit(std::ofstream &of, int level) const
+{
+   of << value_;
+   switch (units_) {
+   case TIME_UNIT_NS:
+      of << " ns";
+   }
 }
 
 vhdl_cassign_stmt::~vhdl_cassign_stmt()

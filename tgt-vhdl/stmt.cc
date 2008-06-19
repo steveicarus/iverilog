@@ -291,8 +291,6 @@ static int draw_assign(vhdl_process *proc, stmt_container *container,
 static int draw_delay(vhdl_process *proc, stmt_container *container,
                       ivl_statement_t stmt)
 {
-   uint64_t value = ivl_stmt_delay_val(stmt);
-
    // This currently ignores the time units and precision
    // of the enclosing scope
    // A neat way to do this would be to make these values
@@ -300,7 +298,23 @@ static int draw_delay(vhdl_process *proc, stmt_container *container,
    // VHDL wait statement compute the value from that.
    // The other solution is to add them as parameters to
    // the vhdl_process class
-   vhdl_expr *time = new vhdl_const_int(value);
+   vhdl_expr *time;
+   if (ivl_statement_type(stmt) == IVL_ST_DELAY) {
+      uint64_t value = ivl_stmt_delay_val(stmt);
+      time = new vhdl_const_time(value, TIME_UNIT_NS);
+   }
+   else {
+      time = translate_expr(ivl_stmt_delay_expr(stmt));
+      if (NULL == time)
+         return 1;
+
+      vhdl_type integer(VHDL_TYPE_INTEGER);
+      time = time->cast(&integer);
+
+      vhdl_expr *ns1 = new vhdl_const_time(1, TIME_UNIT_NS);
+      time = new vhdl_binop_expr(time, VHDL_BINOP_MULT, ns1,
+                                 vhdl_type::time());
+   }
 
    // If the sub-statement is an assignment then VHDL lets
    // us put the delay after it, which is more compact and
@@ -316,7 +330,7 @@ static int draw_delay(vhdl_process *proc, stmt_container *container,
       draw_blocking_assigns(proc);
       
       vhdl_wait_stmt *wait =
-         new vhdl_wait_stmt(VHDL_WAIT_FOR_NS, time);
+         new vhdl_wait_stmt(VHDL_WAIT_FOR, time);
       container->add_stmt(wait);
 
       // Expand the sub-statement as well
@@ -472,6 +486,7 @@ int draw_stmt(vhdl_process *proc, stmt_container *container,
    case IVL_ST_ASSIGN_NB:
       return draw_nbassign(proc, container, stmt);
    case IVL_ST_DELAY:
+   case IVL_ST_DELAYX:
       return draw_delay(proc, container, stmt);
    case IVL_ST_WAIT:
       return draw_wait(proc, container, stmt);

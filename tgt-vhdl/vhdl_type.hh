@@ -33,6 +33,7 @@ enum vhdl_type_name_t {
    VHDL_TYPE_BOOLEAN,
    VHDL_TYPE_SIGNED,
    VHDL_TYPE_UNSIGNED,
+   VHDL_TYPE_TIME,
 };
 
 /*
@@ -63,6 +64,7 @@ public:
    static vhdl_type *nsigned(int width);
    static vhdl_type *integer();
    static vhdl_type *boolean();
+   static vhdl_type *time();
 protected:
    vhdl_type_name_t name_;
    int msb_, lsb_;

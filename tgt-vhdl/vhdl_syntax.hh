@@ -133,6 +133,20 @@ private:
    char bit_;
 };
 
+enum time_unit_t {
+   TIME_UNIT_NS,
+};
+
+class vhdl_const_time : public vhdl_expr {
+public:
+   vhdl_const_time(int64_t value, time_unit_t units)
+      : vhdl_expr(vhdl_type::time()), value_(value), units_(units) {}
+   void emit(std::ofstream &of, int level) const;
+private:
+   int64_t value_;
+   time_unit_t units_;
+};
+
 class vhdl_const_int : public vhdl_expr {
 public:
    vhdl_const_int(int64_t value)
@@ -266,8 +280,8 @@ public:
 
 
 enum vhdl_wait_type_t {
-   VHDL_WAIT_INDEF,    // Suspend indefinitely
-   VHDL_WAIT_FOR_NS,   // Wait for a constant number of nanoseconds
+   VHDL_WAIT_INDEF,  // Suspend indefinitely
+   VHDL_WAIT_FOR,    // Wait for a constant amount of time
 };
 
 /*
