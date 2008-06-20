@@ -62,7 +62,9 @@ static int draw_stask(vhdl_process *proc, stmt_container *container,
    const char *name = ivl_stmt_name(stmt);
 
    if (strcmp(name, "$display") == 0)
-      return draw_stask_display(proc, container, stmt);
+      return draw_stask_display(proc, container, stmt, true);
+   else if (strcmp(name, "$write") == 0)
+      return draw_stask_display(proc, container, stmt, false);
    else if (strcmp(name, "$finish") == 0)
       return draw_stask_finish(proc, container, stmt);
    else {

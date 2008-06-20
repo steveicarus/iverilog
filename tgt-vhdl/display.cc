@@ -161,7 +161,8 @@ int draw_stask_display(vhdl_process *proc, stmt_container *container,
          display_write(container, new vhdl_const_string(" "));
    }
 
-   display_line(container);
+   if (newline)
+      display_line(container);
    
    return 0;
 }
