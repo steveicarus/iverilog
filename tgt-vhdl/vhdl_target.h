@@ -35,5 +35,8 @@ void blocking_assign_to(vhdl_process *proc, ivl_signal_t sig);
 std::string strip_var(const std::string &str);
 void draw_blocking_assigns(vhdl_process *proc);
 
+int draw_stask_display(vhdl_process *proc, stmt_container *container,
+                       ivl_statement_t stmt, bool newline = true);
+
 #endif /* #ifndef INC_VHDL_TARGET_H */
  

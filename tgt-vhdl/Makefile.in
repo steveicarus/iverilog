@@ -50,7 +50,7 @@ dep:
 	mv $*.d dep
 
 O = vhdl.o vhdl_element.o vhdl_type.o vhdl_syntax.o scope.o process.o \
-	stmt.o expr.o lpm.o 
+	stmt.o expr.o lpm.o display.o
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
