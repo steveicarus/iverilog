@@ -27,19 +27,11 @@ PGenerate::PGenerate(unsigned id)
 : id_number(id)
 {
       parent = 0;
+      lexical_scope = 0;
 }
 
 PGenerate::~PGenerate()
 {
-}
-
-PWire* PGenerate::get_wire(perm_string name) const
-{
-      map<perm_string,PWire*>::const_iterator obj = wires.find(name);
-      if (obj == wires.end())
-	    return 0;
-      else
-	    return (*obj).second;
 }
 
 void PGenerate::add_gate(PGate*gate)

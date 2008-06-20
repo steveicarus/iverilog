@@ -38,7 +38,22 @@ class NetScope;
  * NOTE: This is note the same concept as the "scope" of an elaborated
  * hierarchy. That is represented by NetScope objects after elaboration.
  */
-class PScope {
+
+class LexicalScope {
+
+    public:
+      explicit LexicalScope()  { }
+	// A virtual destructor is so that dynamic_cast can work.
+      virtual ~LexicalScope() { }
+
+	// Nets an variables (wires) in the scope
+      map<perm_string,PWire*>wires;
+      PWire* wires_find(perm_string name);
+
+    private:
+};
+
+class PScope : public LexicalScope {
 
     public:
 	// When created, a scope has a name and a parent. The name is
@@ -55,10 +70,6 @@ class PScope {
 
       perm_string pscope_name() const { return name_; }
       PScope* pscope_parent() { return parent_; }
-
-	// Nets an variables (wires) in the scope
-      map<perm_string,PWire*>wires;
-      PWire* wires_find(perm_string name);
 
 	// Named events in the scope.
       map<perm_string,PEvent*>events;

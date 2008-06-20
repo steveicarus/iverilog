@@ -33,7 +33,7 @@ PScope::~PScope()
 {
 }
 
-PWire* PScope::wires_find(perm_string name)
+PWire* LexicalScope::wires_find(perm_string name)
 {
       map<perm_string,PWire*>::const_iterator cur = wires.find(name);
       if (cur == wires.end())

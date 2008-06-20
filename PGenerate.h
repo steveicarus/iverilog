@@ -22,6 +22,7 @@
 # include  "LineInfo.h"
 # include  "StringHeap.h"
 # include  "HName.h"
+# include  "PScope.h"
 # include  <list>
 # include  <map>
 # include  "pform_types.h"
@@ -48,7 +49,7 @@ class PWire;
  *    The parent points to the GS_CASE that contains this item.
  *    the loop_test is compared with the parent->loop_test expression.
  */
-class PGenerate : public LineInfo {
+class PGenerate : public LineInfo, public LexicalScope {
 
     public:
       explicit PGenerate(unsigned id_number);
@@ -58,6 +59,10 @@ class PGenerate : public LineInfo {
 	// implicit.
       const unsigned id_number;
       perm_string scope_name;
+
+	// This is used during parsing to stack lexical scopes within
+	// this generate scheme.
+      PScope*lexical_scope;
 
       enum scheme_t {GS_NONE, GS_LOOP, GS_CONDIT, GS_ELSE,
 		     GS_CASE, GS_CASE_ITEM};
@@ -69,9 +74,6 @@ class PGenerate : public LineInfo {
       PExpr*loop_init;
       PExpr*loop_test;
       PExpr*loop_step;
-
-      map<perm_string,PWire*>wires;
-      PWire* get_wire(perm_string name) const;
 
       list<PGate*> gates;
       void add_gate(PGate*);
