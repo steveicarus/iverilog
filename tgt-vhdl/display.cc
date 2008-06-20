@@ -38,9 +38,17 @@ static void display_write(stmt_container *container, vhdl_expr *expr)
       new vhdl_var_ref(DISPLAY_LINE, vhdl_type::line());
    write->add_expr(ref);
 
-   // Need to add a call to Type'Image for types not
-   // supported by std.textio
-   if (expr->get_type()->get_name() != VHDL_TYPE_STRING) {
+   vhdl_type_name_t type = expr->get_type()->get_name();
+   if (type == VHDL_TYPE_SIGNED || type == VHDL_TYPE_UNSIGNED) {
+      vhdl_fcall *toint =
+         new vhdl_fcall("To_Integer", vhdl_type::integer());
+      toint->add_expr(expr);
+
+      write->add_expr(toint);
+   }
+   else if (type != VHDL_TYPE_STRING) {
+      // Need to add a call to Type'Image for types not
+      // supported by std.textio
       std::string name(expr->get_type()->get_string());
       name += "'Image";
       
