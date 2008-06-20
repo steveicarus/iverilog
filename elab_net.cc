@@ -1794,8 +1794,32 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	   that connects to a signal with the correct name. */
       if (par != 0) {
 
+	      // Detect and handle the special case that we have a
+	      // real valued parameter. Return a NetLiteral and a
+	      // properly typed net.
+	    if (const NetECReal*pc = dynamic_cast<const NetECReal*>(par)) {
+		  NetLiteral*tmp = new NetLiteral(scope, scope->local_symbol(),
+						  pc->value());
+		  des->add_node(tmp);
+		  tmp->set_line(*par);
+		  sig = new NetNet(scope, scope->local_symbol(),
+				   NetNet::IMPLICIT);
+		  sig->set_line(*tmp);
+		  sig->data_type(tmp->data_type());
+		  sig->local_flag(true);
+
+		  connect(tmp->pin(0), sig->pin(0));
+		  return sig;
+	    }
+
 	    const NetEConst*pc = dynamic_cast<const NetEConst*>(par);
-	    assert(pc);
+	    if (pc == 0) {
+		  cerr << get_fileline() << ": internal error: "
+		       << "Non-consant parameter value?: " << *par << endl;
+		  cerr << get_fileline() << ":               : "
+		       << "Expression type is " << par->expr_type() << endl;
+	    }
+	    ivl_assert(*this, pc);
 	    verinum pvalue = pc->value();
 
 	      /* If the parameter has declared dimensions, then apply

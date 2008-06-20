@@ -1505,6 +1505,11 @@ NetLiteral::~NetLiteral()
 {
 }
 
+ivl_variable_type_t NetLiteral::data_type() const
+{
+      return IVL_VT_REAL;
+}
+
 const verireal& NetLiteral::value_real() const
 {
       return real_;
