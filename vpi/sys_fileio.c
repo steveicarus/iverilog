@@ -78,7 +78,7 @@ static PLI_INT32 sys_fopen_compiletf(PLI_BYTE8 *name)
 	    vpi_printf("%s %s takes at most two string arguments.\n",
 	               msg, name);
 	    vpi_printf("%*s Found %u extra argument%s.\n",
-	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -186,7 +186,7 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
 		           (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s %s's file name argument contains non-"
 		             "printable characters.\n", msg, name);
-		  vpi_printf("%*s \"%s\"\n", strlen(msg), " ", val.value.str);
+		  vpi_printf("%*s \"%s\"\n", (int) strlen(msg), " ", val.value.str);
 		  fail = 1;
 		  if (mode) free(mode_string);
 	    }
@@ -251,7 +251,7 @@ static PLI_INT32 sys_fopenrwa_calltf(PLI_BYTE8*name)
 		           (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s %s's file name argument contains non-"
 		             "printable characters.\n", msg, name);
-		  vpi_printf("%*s \"%s\"\n", strlen(msg), " ", val.value.str);
+		  vpi_printf("%*s \"%s\"\n", (int) strlen(msg), " ", val.value.str);
 		  return 0;
 	    }
       }
@@ -415,7 +415,7 @@ static PLI_INT32 sys_fgets_compiletf(PLI_BYTE8*name)
 
 	    vpi_printf("%s %s takes two arguments.\n", msg, name);
 	    vpi_printf("%*s Found %u extra argument%s.\n",
-	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
 	    vpi_control(vpiFinish, 1);
       }
 
@@ -599,7 +599,7 @@ static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8*name)
 
 	    vpi_printf("%s %s takes three arguments.\n", msg, name);
 	    vpi_printf("%*s Found %u extra argument%s.\n",
-	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
 	    vpi_control(vpiFinish, 1);
       }
 

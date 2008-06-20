@@ -153,7 +153,7 @@ PLI_INT32 sys_no_arg_compiletf(PLI_BYTE8 *name)
 
             vpi_printf("%s %s does not take an argument.\n", msg, name);
             vpi_printf("%*s Found %u extra argument%s.\n",
-	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
             vpi_control(vpiFinish, 1);
       }
 
@@ -194,7 +194,7 @@ PLI_INT32 sys_one_numeric_arg_compiletf(PLI_BYTE8 *name)
 
             vpi_printf("%s %s takes a single numeric argument.\n", msg, name);
             vpi_printf("%*s Found %u extra argument%s.\n",
-	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
             vpi_control(vpiFinish, 1);
       }
 
@@ -230,7 +230,7 @@ PLI_INT32 sys_one_opt_numeric_arg_compiletf(PLI_BYTE8 *name)
             vpi_printf("%s %s takes at most one numeric argument.\n",
 	               msg, name);
             vpi_printf("%*s Found %u extra argument%s.\n",
-	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
             vpi_control(vpiFinish, 1);
       }
 
@@ -288,7 +288,7 @@ PLI_INT32 sys_two_numeric_args_compiletf(PLI_BYTE8 *name)
 
             vpi_printf("%s %s takes two numeric arguments.\n", msg, name);
             vpi_printf("%*s Found %u extra argument%s.\n",
-	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
             vpi_control(vpiFinish, 1);
       }
 
@@ -328,7 +328,7 @@ PLI_INT32 sys_one_string_arg_compiletf(PLI_BYTE8 *name)
 
             vpi_printf("%s %s takes a single string argument.\n", msg, name);
             vpi_printf("%*s Found %u extra argument%s.\n",
-	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
             vpi_control(vpiFinish, 1);
       }
 

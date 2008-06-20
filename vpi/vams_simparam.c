@@ -97,7 +97,7 @@ static PLI_INT32 simparam_compiletf(PLI_BYTE8 *name_ext)
             vpi_printf("%s $simparam%s takes at most two arguments.\n",
 	               msg, name_ext);
             vpi_printf("%*s Found %u extra argument%s.\n",
-	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
             vpi_control(vpiFinish, 1);
       }
 
