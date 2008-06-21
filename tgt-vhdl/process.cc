@@ -162,6 +162,9 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    int rc = draw_stmt(vhdl_proc, vhdl_proc->get_container(), stmt);
    if (rc != 0)
       return rc;
+
+   // Output any remaning blocking assignments
+   draw_blocking_assigns(vhdl_proc);
    
    // Initial processes are translated to VHDL processes with
    // no sensitivity list and and indefinite wait statement at
@@ -183,9 +186,6 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    ss << "Generated from " << type << " process in ";
    ss << ivl_scope_tname(scope);
    vhdl_proc->set_comment(ss.str());
-
-   // Output any remaning blocking assignments
-   draw_blocking_assigns(vhdl_proc);
 
    return 0;
 }
