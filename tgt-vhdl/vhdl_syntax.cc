@@ -781,7 +781,6 @@ void vhdl_case_branch::emit(std::ofstream &of, int level) const
    of << "when ";
    when_->emit(of, level);
    of << " =>";
-   newline(of, indent(level));
    stmts_.emit(of, indent(level));
 }
 
@@ -795,7 +794,12 @@ void vhdl_case_stmt::emit(std::ofstream &of, int level) const
    of << "case ";
    test_->emit(of, level);
    of << " is";
-   emit_children<vhdl_case_branch>(of, branches_, level);
+   newline(of, indent(level));
+
+   case_branch_list_t::const_iterator it;
+   for (it = branches_.begin(); it != branches_.end(); ++it)
+      (*it)->emit(of, level);
+   
    of << "end case;";
 }
 

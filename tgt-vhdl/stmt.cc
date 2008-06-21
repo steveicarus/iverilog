@@ -405,7 +405,8 @@ static int draw_case(vhdl_process *proc, stmt_container *container,
          return 1;
 
       vhdl_case_branch *branch = new vhdl_case_branch(when);
-
+      vhdlcase->add_branch(branch);
+      
       draw_stmt(proc, branch->get_container(), ivl_stmt_case_stmt(stmt, i));
    }
    
