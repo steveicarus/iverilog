@@ -585,7 +585,7 @@ void vhdl_assign_stmt::emit(std::ofstream &of, int level) const
 }
 
 vhdl_const_bits::vhdl_const_bits(const char *value, int width)   
-   : vhdl_expr(vhdl_type::nsigned(width))
+   : vhdl_expr(vhdl_type::nsigned(width), true)
 {
    // Can't rely on value being NULL-terminated
    while (width--)

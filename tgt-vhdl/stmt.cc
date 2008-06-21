@@ -138,7 +138,8 @@ static int draw_nbassign(vhdl_process *proc, stmt_container *container,
       // then use the uninitialized signal value.
       // The second test ensures that we only try to initialise
       // internal signals not ports
-      if (proc->is_initial() && ivl_signal_port(sig) == IVL_SIP_NONE) {
+      if (proc->is_initial() && ivl_signal_port(sig) == IVL_SIP_NONE
+          && rhs->constant()) {
          decl->set_initial(rhs);
       }
       else {
@@ -181,9 +182,10 @@ static int draw_assign(vhdl_process *proc, stmt_container *container,
          return 1;
       vhdl_expr *rhs = rhs_raw->cast(decl->get_type());
 
-      // As with non-blocking assignment, push assignments into the
-      // initialisation if we can
-      if (proc->is_initial() && ivl_signal_port(sig) == IVL_SIP_NONE) {
+      // As with non-blocking assignment, push constant assignments
+      // into the initialisation if we can
+      if (proc->is_initial() && ivl_signal_port(sig) == IVL_SIP_NONE
+          && rhs->constant()) {
          decl->set_initial(rhs);
       }
       else {

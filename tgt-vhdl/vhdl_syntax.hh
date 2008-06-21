@@ -29,13 +29,16 @@ class vhdl_arch;
 
 class vhdl_expr : public vhdl_element {
 public:
-   vhdl_expr(vhdl_type* type) : type_(type) {}
+   vhdl_expr(vhdl_type* type, bool isconst=false)
+      : type_(type), isconst_(isconst) {}
    virtual ~vhdl_expr();
 
    const vhdl_type *get_type() const { return type_; }
+   bool constant() const { return isconst_; }
    virtual vhdl_expr *cast(const vhdl_type *to);
 private:
    vhdl_type *type_;
+   bool isconst_;
 };
 
 
@@ -114,7 +117,7 @@ private:
 class vhdl_const_string : public vhdl_expr {
 public:
    vhdl_const_string(const char *value)
-      : vhdl_expr(vhdl_type::string()), value_(value) {}
+      : vhdl_expr(vhdl_type::string(), true), value_(value) {}
 
    void emit(std::ofstream &of, int level) const;
 private:
@@ -134,7 +137,7 @@ private:
 class vhdl_const_bit : public vhdl_expr {
 public:
    vhdl_const_bit(char bit)
-      : vhdl_expr(vhdl_type::std_logic()), bit_(bit) {}
+      : vhdl_expr(vhdl_type::std_logic(), true), bit_(bit) {}
    void emit(std::ofstream &of, int level) const;
 private:
    char bit_;
@@ -147,7 +150,7 @@ enum time_unit_t {
 class vhdl_const_time : public vhdl_expr {
 public:
    vhdl_const_time(int64_t value, time_unit_t units)
-      : vhdl_expr(vhdl_type::time()), value_(value), units_(units) {}
+      : vhdl_expr(vhdl_type::time(), true), value_(value), units_(units) {}
    void emit(std::ofstream &of, int level) const;
 private:
    int64_t value_;
@@ -157,7 +160,7 @@ private:
 class vhdl_const_int : public vhdl_expr {
 public:
    vhdl_const_int(int64_t value)
-      : vhdl_expr(vhdl_type::integer()), value_(value) {}
+      : vhdl_expr(vhdl_type::integer(), true), value_(value) {}
    void emit(std::ofstream &of, int level) const;
 private:
    int64_t value_;
