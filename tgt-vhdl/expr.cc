@@ -169,6 +169,10 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
       return translate_numeric(lhs, rhs, VHDL_BINOP_AND);
    case 'o':
       return translate_relation(lhs, rhs, VHDL_BINOP_OR);
+   case '<':
+      return translate_relation(lhs, rhs, VHDL_BINOP_LT);
+   case '>':
+      return translate_relation(lhs, rhs, VHDL_BINOP_GT);
    default:
       error("No translation for binary opcode '%c'\n",
             ivl_expr_opcode(e));

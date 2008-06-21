@@ -740,6 +740,12 @@ void vhdl_binop_expr::emit(std::ofstream &of, int level) const
       case VHDL_BINOP_MULT:
          of << " * ";
          break;
+      case VHDL_BINOP_LT:
+         of << " < ";
+         break;
+      case VHDL_BINOP_GT:
+         of << " > ";
+         break;
       }
 
       (*it)->emit(of, level);
@@ -789,10 +795,3 @@ void vhdl_while_stmt::emit(std::ofstream &of, int level) const
    stmts_.emit(of, indent(level));
    of << "end loop;";
 }
-
-
-
-
-
-
-
