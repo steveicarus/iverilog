@@ -412,6 +412,21 @@ static int draw_case(vhdl_process *proc, stmt_container *container,
    return 0;
 }
 
+int draw_while(vhdl_process *proc, stmt_container *container,
+               ivl_statement_t stmt)
+{
+   vhdl_expr *test = translate_expr(ivl_stmt_cond_expr(stmt));
+   if (NULL == test)
+      return 1;
+
+   vhdl_while_stmt *loop = new vhdl_while_stmt(test);
+   container->add_stmt(loop);
+
+   draw_stmt(proc, loop->get_container(), ivl_stmt_sub_stmt(stmt));
+   
+   return 0;
+}
+
 /*
  * Generate VHDL statements for the given Verilog statement and
  * add them to the given VHDL process. The container is the
@@ -443,6 +458,8 @@ int draw_stmt(vhdl_process *proc, stmt_container *container,
       return draw_if(proc, container, stmt);
    case IVL_ST_CASE:
       return draw_case(proc, container, stmt);
+   case IVL_ST_WHILE:
+      return draw_while(proc, container, stmt);
    default:
       error("No VHDL translation for statement at %s:%d (type = %d)",
             ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),

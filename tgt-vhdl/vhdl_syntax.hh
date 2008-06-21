@@ -364,6 +364,19 @@ private:
 };
 
 
+class vhdl_while_stmt : public vhdl_seq_stmt {
+public:
+   vhdl_while_stmt(vhdl_expr *test) : test_(test) {}
+   ~vhdl_while_stmt();
+
+   stmt_container *get_container() { return &stmts_; }
+   void emit(std::ofstream &of, int level) const;
+private:
+   vhdl_expr *test_;
+   stmt_container stmts_;
+};
+
+
 /*
  * A procedure call. Which is a statement, unlike a function
  * call which is an expression.

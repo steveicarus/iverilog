@@ -776,6 +776,22 @@ void vhdl_case_stmt::emit(std::ofstream &of, int level) const
    of << "end case;";
 }
 
+vhdl_while_stmt::~vhdl_while_stmt()
+{
+   delete test_;
+}
+
+void vhdl_while_stmt::emit(std::ofstream &of, int level) const
+{
+   of << "while ";
+   test_->emit(of, level);
+   of << " loop";
+   stmts_.emit(of, indent(level));
+   of << "end loop;";
+}
+
+
+
 
 
 
