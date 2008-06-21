@@ -90,6 +90,20 @@ void vvp_arith_abs::recv_real(vvp_net_ptr_t ptr, double bit)
       vvp_send_real(ptr.ptr()->out, out);
 }
 
+vvp_arith_cast_int::vvp_arith_cast_int(unsigned wid)
+: wid_(wid)
+{
+}
+
+vvp_arith_cast_int::~vvp_arith_cast_int()
+{
+}
+
+void vvp_arith_cast_int::recv_real(vvp_net_ptr_t ptr, double bit)
+{
+      vvp_send_vec4(ptr.ptr()->out, vvp_vector4_t(wid_, bit));
+}
+
 vvp_arith_cast_real::vvp_arith_cast_real(bool signed_flag)
 : signed_(signed_flag)
 {
@@ -475,7 +489,7 @@ void vvp_arith_pow::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    vector4_to_value(op_a_, ad, true);
 	    vector4_to_value(op_b_, bd, true);
 
-	    res4 = double_to_vector4(pow(ad, bd), wid_);
+	    res4 = vvp_vector4_t(wid_, pow(ad, bd));
       } else {
 	    vvp_vector2_t a2 (op_a_);
 	    vvp_vector2_t b2 (op_b_);

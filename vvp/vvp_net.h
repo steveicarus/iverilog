@@ -127,6 +127,8 @@ class vvp_vector4_t {
     public:
       explicit vvp_vector4_t(unsigned size =0, vvp_bit4_t bits =BIT4_X);
 
+      explicit vvp_vector4_t(unsigned size, double val);
+
 	// Construct a vector4 from the subvalue of another vector4.
       explicit vvp_vector4_t(const vvp_vector4_t&that,
 			     unsigned adr, unsigned wid);
@@ -175,6 +177,8 @@ class vvp_vector4_t {
     private:
 	// Number of vvp_bit4_t bits that can be shoved into a word.
       enum { BITS_PER_WORD = 8*sizeof(unsigned long) };
+	// The double value constructor requires that WORD_0_BBITS
+	// and WORD_1_BBITS have the same value!
 #if SIZEOF_UNSIGNED_LONG == 8
       enum { WORD_0_ABITS = 0x0000000000000000UL,
 	     WORD_0_BBITS = 0x0000000000000000UL };
@@ -369,8 +373,6 @@ extern vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 				      const vvp_vector4_t&b,
 				      vvp_bit4_t val_if_equal);
 template <class T> extern T coerce_to_width(const T&that, unsigned width);
-
-extern vvp_vector4_t double_to_vector4(double val, unsigned wid);
 
 /*
  * These functions extract the value of the vector as a native type,

@@ -360,6 +360,87 @@ void vvp_vector4_t::allocate_words_(unsigned wid, unsigned long inita, unsigned 
       }
 }
 
+vvp_vector4_t::vvp_vector4_t(unsigned size, double val)
+: size_(size)
+{
+      bool is_neg = false;
+      double fraction;
+      int exponent;
+
+	/* We return 'bx for a NaN. */
+      if (val != val)  {
+	    allocate_words_(size, WORD_X_ABITS, WORD_X_BBITS);
+	    return;
+      }
+
+	/* We return 'b1 for + or - infinity. */
+      if (val && (val == 0.5*val)) {
+	    allocate_words_(size, WORD_1_ABITS, WORD_1_BBITS);
+	    return;
+      }
+
+	/* Convert to a positive result. */
+      if (val < 0.0) {
+	    is_neg = true;
+	    val = -val;
+      }
+      allocate_words_(size, WORD_0_ABITS, WORD_0_BBITS);
+
+	/* Get the exponent and fractional part of the number. */
+      fraction = frexp(val, &exponent);
+
+	/* If the value is small enough just use lround(). */
+      if (exponent < BITS_PER_WORD-2) {
+	    if (is_neg) this->invert();  // Invert the bits if negative.
+	    long sval = lround(val);
+	    if (is_neg) sval = -sval;
+	      /* This requires that 0 and 1 have the same bbit value. */
+	    if (size_ > BITS_PER_WORD) {
+		  abits_ptr_[0] = sval;
+	    } else {
+		  abits_val_ = sval;
+	    }
+	    return;
+      }
+
+      unsigned nwords = (exponent-1) / BITS_PER_WORD;
+      unsigned my_words = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD - 1;
+
+      fraction = ldexp(fraction, (exponent-1) % BITS_PER_WORD + 1);
+
+	/* Skip any leading bits. */
+      for (int idx = (signed) nwords; idx > (signed) my_words; idx -=1) {
+	    unsigned bits = (unsigned) fraction;
+	    fraction = fraction - (double) bits;
+	    fraction = ldexp(fraction, BITS_PER_WORD);
+      }
+
+	/* Convert the remaining bits as appropriate. */
+      if (my_words == 0) {
+		  unsigned bits = (unsigned) fraction;
+		  abits_val_ = bits;
+		  fraction = fraction - (double) bits;
+		    /* Round any fractional part up. */
+		  if (fraction >= 0.5) *this += (int64_t) 1;
+      } else {
+	    if (nwords < my_words) my_words = nwords;
+	    for (int idx = (signed)my_words; idx >= 0; idx -= 1) {
+		  unsigned bits = (unsigned) fraction;
+		  abits_ptr_[idx] = bits;
+		  fraction = fraction - (double) bits;
+		  fraction = ldexp(fraction, BITS_PER_WORD);
+	    }
+	      /* Round any fractional part up. */
+	    if (fraction >= ldexp(0.5, BITS_PER_WORD)) *this += (int64_t) 1;
+       }
+
+	/* Convert to a negative number if needed. */
+      if (is_neg) {
+	    this->invert();
+	    *this += (int64_t) 1;
+      }
+}
+
 vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
 			    unsigned adr, unsigned wid)
 {
@@ -1050,32 +1131,6 @@ ostream& operator<< (ostream&out, const vvp_vector4_t&that)
       for (unsigned idx = 0 ;  idx < that.size() ;  idx += 1)
 	    out << that.value(that.size()-idx-1);
       return out;
-}
-
-/* The width is guaranteed to not be larger than a long.
- * If the double is outside the integer range (+/-) the
- * largest/smallest integer value is returned. */
-vvp_vector4_t double_to_vector4(double val, unsigned wid)
-{
-      long span = 1l << (wid-1);
-      double dmin = -1l * span;
-      double dmax = span - 1l;
-
-      if (val > dmax) val = dmax;
-      if (val < dmin) val = dmin;
-
-      vvp_vector4_t res (wid);
-      long bits = lround(val);
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_bit4_t bit = BIT4_0;
-
-	    if (bits & 1L) bit = BIT4_1;
-
-	    res.set_bit(idx, bit);
-	    bits >>= 1;
-      }
-
-      return res;
 }
 
 bool vector4_to_value(const vvp_vector4_t&vec, long&val, bool is_signed)

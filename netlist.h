@@ -917,6 +917,24 @@ class NetArrayDq  : public NetNode {
 };
 
 /*
+ * Convert an IVL_VT_REAL input to a logical value with the
+ * given width. The input is pin(1) and the output is pin(0).
+ */
+class NetCastInt  : public NetNode {
+
+    public:
+      NetCastInt(NetScope*s, perm_string n, unsigned width);
+
+      unsigned width() const { return width_; }
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+
+    private:
+      unsigned width_;
+};
+
+/*
  * Convert an input to IVL_VT_REAL. The input is pin(1), which can be
  * any vector type (VT_BOOL or VT_LOGIC) and the output is pin(0),
  * which is IVL_VT_REAL. The conversion interprets the input as an

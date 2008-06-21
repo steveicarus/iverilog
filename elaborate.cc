@@ -113,14 +113,13 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		  return;
 	    }
 
-	      /* If either lval or rid are real then both must be real. */
-	    if ((lval->data_type() == IVL_VT_REAL ||
-	         rid->data_type() == IVL_VT_REAL) &&
-	        lval->data_type() != rid->data_type()) {
-		  cerr << get_fileline() << ": sorry: Both the r-value and "
-		          "the l-value must be real in this context." << endl;
-		  des->errors += 1;
-		  return;
+	      /* Cast the right side when needed. */
+	    if ((lval->data_type() == IVL_VT_REAL &&
+	         rid->data_type() != IVL_VT_REAL)) {
+		  rid = cast_to_real(des, scope, rid);
+	    } else if ((lval->data_type() != IVL_VT_REAL &&
+	                rid->data_type() == IVL_VT_REAL)) {
+		  rid = cast_to_int(des, scope, rid, lval->vector_width());
 	    }
 
 	    ivl_assert(*this, rid);
@@ -287,14 +286,13 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       assert(lval && rval);
       assert(rval->pin_count() == 1);
 
-        /* If either lval or rval are real then both must be real. */
-      if ((lval->data_type() == IVL_VT_REAL ||
-           rval->data_type() == IVL_VT_REAL) &&
-          lval->data_type() != rval->data_type()) {
-	    cerr << get_fileline() << ": sorry: Both the r-value and "
-	            "the l-value must be real in this context." << endl;
-	    des->errors += 1;
-	    return;
+	/* Cast the right side when needed. */
+      if ((lval->data_type() == IVL_VT_REAL &&
+           rval->data_type() != IVL_VT_REAL)) {
+	    rval = cast_to_real(des, scope, rval);
+      } else if ((lval->data_type() != IVL_VT_REAL &&
+                  rval->data_type() == IVL_VT_REAL)) {
+	    rval = cast_to_int(des, scope, rval, lval->vector_width());
       }
 
 	/* If the r-value insists on being smaller then the l-value

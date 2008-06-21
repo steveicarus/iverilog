@@ -886,6 +886,7 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_ABS:
+	  case IVL_LPM_CAST_INT:
 	  case IVL_LPM_CAST_REAL:
 	    assert(idx == 0);
 	    return net->u_.arith.a;
@@ -1029,6 +1030,7 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
       switch (net->type) {
 	  case IVL_LPM_ABS:
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_CAST_INT:
 	  case IVL_LPM_CAST_REAL:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
@@ -1166,6 +1168,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    return net->u_.shift.signed_flag;
+	  case IVL_LPM_CAST_INT:
 	  case IVL_LPM_SIGN_EXT: // Sign extend is always signed.
 	    return 1;
 	  case IVL_LPM_SFUNC:

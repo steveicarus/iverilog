@@ -1079,6 +1079,17 @@ static void draw_lpm_abs(ivl_lpm_t net)
 	      net, dly, src_table[0]);
 }
 
+static void draw_lpm_cast_int(ivl_lpm_t net)
+{
+      const char*src_table[1];
+      draw_lpm_data_inputs(net, 0, 1, src_table);
+
+      const char*dly = draw_lpm_output_delay(net);
+
+      fprintf(vvp_out, "L_%p%s .cast/int %u, %s;\n",
+	      net, dly, ivl_lpm_width(net), src_table[0]);
+}
+
 static void draw_lpm_cast_real(ivl_lpm_t net)
 {
       const char*src_table[1];
@@ -1086,8 +1097,11 @@ static void draw_lpm_cast_real(ivl_lpm_t net)
 
       const char*dly = draw_lpm_output_delay(net);
 
-      fprintf(vvp_out, "L_%p%s .cast/real %s;\n",
-	      net, dly, src_table[0]);
+      const char*is_signed = "";
+      if (ivl_lpm_signed(net)) is_signed = ".s";
+
+      fprintf(vvp_out, "L_%p%s .cast/real%s %s;\n",
+	      net, dly, is_signed, src_table[0]);
 }
 
 static void draw_lpm_add(ivl_lpm_t net)
@@ -1140,20 +1154,9 @@ static void draw_lpm_add(ivl_lpm_t net)
 	  case IVL_LPM_POW:
 	    if (dto == IVL_VT_REAL)
 		  type = "pow.r";
-	    else if (ivl_lpm_signed(net)) {
+	    else if (ivl_lpm_signed(net))
 		  type = "pow.s";
-		  if (width > 8*sizeof(long)) {
-			fprintf(stderr, "%s:%u: sorry (vvp-tgt): Signed power "
-#ifdef __MINGW32__  /* MinGW does not know about z. */
-				"result must be no more than %u bits.\n",
-#else
-				"result must be no more than %zu bits.\n",
-#endif
-				ivl_lpm_file(net), ivl_lpm_lineno(net),
-				8*sizeof(long));
-			exit(1);
-		  }
-	    } else
+	    else
 		  type = "pow";
 	    break;
 	  default:
@@ -1653,6 +1656,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 
 	  case IVL_LPM_ABS:
 	    draw_lpm_abs(net);
+	    return;
+
+	  case IVL_LPM_CAST_INT:
+	    draw_lpm_cast_int(net);
 	    return;
 
 	  case IVL_LPM_CAST_REAL:

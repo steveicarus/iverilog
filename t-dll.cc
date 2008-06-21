@@ -1550,6 +1550,38 @@ void dll_target::lpm_clshift(const NetCLShift*net)
       scope_add_lpm(obj->scope, obj);
 }
 
+bool dll_target::lpm_cast_int(const NetCastInt*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_CAST_INT;
+      obj->name = net->name(); // NetCastInt names are permallocated
+      assert(net->scope());
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+
+      obj->width = net->width();
+
+      const Nexus*nex;
+
+      nex = net->pin(0).nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.arith.q = nex->t_cookie();
+
+      nex = net->pin(1).nexus();
+      assert(nex->t_cookie());
+      obj->u_.arith.a = nex->t_cookie();
+
+      nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+      nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      make_lpm_delays_(obj, net);
+
+      scope_add_lpm(obj->scope, obj);
+
+      return true;
+}
+
 bool dll_target::lpm_cast_real(const NetCastReal*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;

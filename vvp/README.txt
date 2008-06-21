@@ -345,6 +345,24 @@ The .alias statements do not create new nodes, but instead create net
 names that are aliases of an existing node. This handles special cases
 where a net has different names, possibly in different scopes.
 
+CAST STATEMENTS:
+
+Sometimes nets need to be cast from a real valued net to a bit based
+net or from a bit based net to a real valued net. These statements
+are used to performa that operation:
+
+	<label> .case/int <width>, <symbol>;
+	<label> .case/real <symbol>;
+	<label> .case/real.s <symbol>;
+
+For .case/int the output <label> is a bit based net that is <width>
+bits wide. The input <symbol> is expected to put real values to
+this functor.
+
+For .case/real the output <label> is a real valued net. The input
+<symbol> is expected to put bit based values and for .case/real.s
+the bits will be interpreted as a signed value.
+
 DELAY STATEMENTS:
 
 Delay nodes are structural net delay nodes that carry and manage
@@ -793,7 +811,7 @@ The &PV<> argument is a reference to part of a signal. The syntax is:
    &PV '<' <symbol> , <base> , <width> '>'
    &PV '<' <symbol> , <tbase> <twid> , <width> '>'
 
-The <symbol> is the label for a signal, the <base> is the cannonical
+The <symbol> is the label for a signal, the <base> is the canonical
 starting bit of the part select and <width> is the number of bits in
 the select. The second form retrieves the <base> from thread space
 using <twid> bits starting at <tbase>.

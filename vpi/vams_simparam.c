@@ -84,7 +84,7 @@ static PLI_INT32 simparam_compiletf(PLI_BYTE8 *name_ext)
 	    }
       }
 
-	/* We can only have two argument. */
+	/* We can have a maximum of two arguments. */
       if (vpi_scan(argv) != 0) {
 	    char msg [64];
 	    snprintf(msg, 64, "ERROR: %s line %d:",
