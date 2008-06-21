@@ -40,17 +40,20 @@ private:
 
 
 /*
- * A normal scalar variable reference.
+ * A scalar or array variable reference.
  */
 class vhdl_var_ref : public vhdl_expr {
 public:
-   vhdl_var_ref(const char *name, vhdl_type *type)
-      : vhdl_expr(type), name_(name) {}
-
+   vhdl_var_ref(const char *name, vhdl_type *type,
+                vhdl_expr *slice = NULL)
+      : vhdl_expr(type), name_(name), slice_(slice) {}
+   ~vhdl_var_ref();
+   
    void emit(std::ofstream &of, int level) const;
    const std::string &get_name() const { return name_; }
 private:
    std::string name_;
+   vhdl_expr *slice_;
 };
 
 

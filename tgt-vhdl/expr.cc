@@ -37,7 +37,7 @@ static vhdl_expr *translate_string(ivl_expr_t e)
  * A reference to a signal in an expression. It's assumed that the
  * signal has already been defined elsewhere.
  */
-static vhdl_expr *translate_signal(ivl_expr_t e)
+static vhdl_var_ref *translate_signal(ivl_expr_t e)
 {
    ivl_signal_t sig = ivl_expr_signal(e);
 
@@ -149,6 +149,8 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    switch (ivl_expr_opcode(e)) {
    case '+':
       return translate_numeric(lhs, rhs, VHDL_BINOP_ADD);
+   case '-':
+      return translate_numeric(lhs, rhs, VHDL_BINOP_SUB);
    case 'e':
       return translate_relation(lhs, rhs, VHDL_BINOP_EQ);
    case 'E':
@@ -186,6 +188,21 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    }
 }
 
+vhdl_expr *translate_select(ivl_expr_t e)
+{
+   vhdl_expr *from = translate_expr(ivl_expr_oper1(e));
+   if (NULL == from)
+      return NULL;   
+   
+   // Hack: resize it to the correct size
+   vhdl_type *rtype = vhdl_type::nsigned(ivl_expr_width(e));     
+   vhdl_fcall *resize = new vhdl_fcall("Resize", rtype);
+   resize->add_expr(from);
+   resize->add_expr(new vhdl_const_int(ivl_expr_width(e)));
+   
+   return resize;
+}
+
 /*
  * Generate a VHDL expression from a Verilog expression.
  */
@@ -205,6 +222,8 @@ vhdl_expr *translate_expr(ivl_expr_t e)
       return translate_unary(e);
    case IVL_EX_BINARY:
       return translate_binary(e);
+   case IVL_EX_SELECT:
+      return translate_select(e);
    default:
       error("No VHDL translation for expression at %s:%d (type = %d)",
             ivl_expr_file(e), ivl_expr_lineno(e), type);

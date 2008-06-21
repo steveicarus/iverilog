@@ -518,9 +518,20 @@ void vhdl_pcall_stmt::emit(std::ofstream &of, int level) const
    of << ";";
 }
 
+vhdl_var_ref::~vhdl_var_ref()
+{
+   if (slice_)
+      delete slice_;
+}
+
 void vhdl_var_ref::emit(std::ofstream &of, int level) const
 {
    of << name_;
+   if (slice_) {
+      of << "(";
+      slice_->emit(of, level);
+      of << ")";
+   }
 }
 
 void vhdl_const_string::emit(std::ofstream &of, int level) const
