@@ -748,6 +748,34 @@ void vhdl_binop_expr::emit(std::ofstream &of, int level) const
    of << ")";
 }
 
+vhdl_case_branch::~vhdl_case_branch()
+{
+   delete when_;
+}
+
+void vhdl_case_branch::emit(std::ofstream &of, int level) const
+{
+   of << "when ";
+   when_->emit(of, level);
+   of << " =>";
+   newline(of, indent(level));
+   stmts_.emit(of, indent(level));
+}
+
+vhdl_case_stmt::~vhdl_case_stmt()
+{
+   delete test_;
+}
+
+void vhdl_case_stmt::emit(std::ofstream &of, int level) const
+{
+   of << "case ";
+   test_->emit(of, level);
+   of << " is";
+   emit_children<vhdl_case_branch>(of, branches_, level);
+   of << "end case;";
+}
+
 
 
 

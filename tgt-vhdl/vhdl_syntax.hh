@@ -334,6 +334,37 @@ private:
 
 
 /*
+ * A single branch in a case statement consisting of an
+ * expression part and a statement container.
+ */
+class vhdl_case_branch : public vhdl_element {
+public:
+   vhdl_case_branch(vhdl_expr *when) : when_(when) {}
+   ~vhdl_case_branch();
+
+   stmt_container *get_container() { return &stmts_; }
+   void emit(std::ofstream &of, int level) const;
+private:
+   vhdl_expr *when_;
+   stmt_container stmts_;
+};
+
+typedef std::list<vhdl_case_branch*> case_branch_list_t;
+
+class vhdl_case_stmt : public vhdl_seq_stmt {
+public:
+   vhdl_case_stmt(vhdl_expr *test) : test_(test) {}
+   ~vhdl_case_stmt();
+
+   void add_branch(vhdl_case_branch *b) { branches_.push_back(b); }
+   void emit(std::ofstream &of, int level) const;
+private:
+   vhdl_expr *test_;
+   case_branch_list_t branches_;
+};
+
+
+/*
  * A procedure call. Which is a statement, unlike a function
  * call which is an expression.
  */

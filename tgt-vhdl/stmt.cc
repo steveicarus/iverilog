@@ -388,6 +388,30 @@ static int draw_if(vhdl_process *proc, stmt_container *container,
    return 0;
 }
 
+static int draw_case(vhdl_process *proc, stmt_container *container,
+                     ivl_statement_t stmt)
+{
+   vhdl_expr *test = translate_expr(ivl_stmt_cond_expr(stmt));
+   if (NULL == test)
+      return 1;
+   
+   vhdl_case_stmt *vhdlcase = new vhdl_case_stmt(test);
+   container->add_stmt(vhdlcase);
+   
+   int nbranches = ivl_stmt_case_count(stmt);
+   for (int i = 0; i < nbranches; i++) {
+      vhdl_expr *when = translate_expr(ivl_stmt_case_expr(stmt, i));
+      if (NULL == when)
+         return 1;
+
+      vhdl_case_branch *branch = new vhdl_case_branch(when);
+
+      draw_stmt(proc, branch->get_container(), ivl_stmt_case_stmt(stmt, i));
+   }
+   
+   return 0;
+}
+
 /*
  * Generate VHDL statements for the given Verilog statement and
  * add them to the given VHDL process. The container is the
@@ -397,6 +421,8 @@ static int draw_if(vhdl_process *proc, stmt_container *container,
 int draw_stmt(vhdl_process *proc, stmt_container *container,
               ivl_statement_t stmt)
 {
+   assert(stmt);
+   
    switch (ivl_statement_type(stmt)) {
    case IVL_ST_STASK:
       return draw_stask(proc, container, stmt);
@@ -415,6 +441,8 @@ int draw_stmt(vhdl_process *proc, stmt_container *container,
       return draw_wait(proc, container, stmt);
    case IVL_ST_CONDIT:
       return draw_if(proc, container, stmt);
+   case IVL_ST_CASE:
+      return draw_case(proc, container, stmt);
    default:
       error("No VHDL translation for statement at %s:%d (type = %d)",
             ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),

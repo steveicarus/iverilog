@@ -181,6 +181,7 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
  */
 vhdl_expr *translate_expr(ivl_expr_t e)
 {
+   assert(e);
    ivl_expr_type_t type = ivl_expr_type(e);
 
    switch (type) {
