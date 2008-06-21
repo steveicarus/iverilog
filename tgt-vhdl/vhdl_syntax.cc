@@ -746,6 +746,12 @@ void vhdl_binop_expr::emit(std::ofstream &of, int level) const
       case VHDL_BINOP_GT:
          of << " > ";
          break;
+      case VHDL_BINOP_SL:
+         of << " sll ";
+         break;
+      case VHDL_BINOP_SR:
+         of << " srl ";
+         break;
       }
 
       (*it)->emit(of, level);
