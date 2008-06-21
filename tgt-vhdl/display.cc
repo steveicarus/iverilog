@@ -141,7 +141,7 @@ int draw_stask_display(vhdl_process *proc, stmt_container *container,
                   }
                   else
                      ss << ch;
-                  p += 4;
+                  p += 3;
                }
                else
                   ss << *p;
