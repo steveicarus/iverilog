@@ -3775,6 +3775,12 @@ struct root_elem {
       NetScope *scope;
 };
 
+/*
+ * This function is the root of all elaboration. The input is the list
+ * of root module names. The function locates the Module definitions
+ * for each root, does the whole elaboration sequence, and fills in
+ * the resulting Design.
+ */
 Design* elaborate(list<perm_string>roots)
 {
       svector<root_elem*> root_elems(roots.size());
@@ -3785,7 +3791,7 @@ Design* elaborate(list<perm_string>roots)
 	// module and elaborate what I find.
       Design*des = new Design;
 
-	// Scan the root modules, and elaborate their scopes.
+	// Scan the root modules by name, and elaborate their scopes.
       for (list<perm_string>::const_iterator root = roots.begin()
 		 ; root != roots.end()
 		 ; root++) {
@@ -3804,27 +3810,40 @@ Design* elaborate(list<perm_string>roots)
 	      // Get the module definition for this root instance.
 	    Module *rmod = (*mod).second;
 
-	      // Make the root scope.
+	      // Make the root scope. This makes a NetScoep object and
+	      // pushes it into the list of root scopes in the Design.
 	    NetScope*scope = des->make_root_scope(*root);
+
+	      // Collect some basic properties of this scope from the
+	      // Module definition.
 	    scope->set_line(rmod);
 	    scope->time_unit(rmod->time_unit);
 	    scope->time_precision(rmod->time_precision);
 	    scope->default_nettype(rmod->default_nettype);
 	    des->set_precision(rmod->time_precision);
 
-	    Module::replace_t stub;
 
-	      // Recursively elaborate from this root scope down. This
-	      // does a lot of the grunt work of creating sub-scopes, etc.
-	    if (! rmod->elaborate_scope(des, scope, stub)) {
-		  delete des;
-		  return 0;
-	    }
-
+	      // Save this scope, along with its defintion, in the
+	      // "root_elems" list for later passes.
 	    struct root_elem *r = new struct root_elem;
 	    r->mod = rmod;
 	    r->scope = scope;
 	    root_elems[i++] = r;
+      }
+
+	// Elaborate the instances of the root modules into the root
+	// scopes that we created. The elaborate_scope for each will
+	// recurse down the design, furtner elaborating sub-scope all
+	// the way down to the leaves.
+      for (i = 0; i < root_elems.count(); i += 1) {
+	    Module*rmod = root_elems[i]->mod;
+	    NetScope*scope = root_elems[i]->scope;
+
+	    Module::replace_t stub;
+	    if (! rmod->elaborate_scope(des, scope, stub)) {
+		  delete des;
+		  return 0;
+	    }
       }
 
 	// Errors already? Probably missing root modules. Just give up

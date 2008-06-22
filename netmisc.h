@@ -152,6 +152,16 @@ void eval_expr(NetExpr*&expr, int prune_width =-1);
 bool eval_as_long(long&value, NetExpr*expr);
 bool eval_as_double(double&value, NetExpr*expr);
 
+/*
+ * Evaluate the component of a scope path to get an hname_t value. Do
+ * the evaluation in the context of the given scope.
+ */
+extern hname_t eval_path_component(Design*des, NetScope*scope,
+				   const name_component_t&comp);
+
+/*
+ * Evaluate an entire scope path in the context of the given scope.
+ */
 extern std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 					  const pform_name_t&path);
 

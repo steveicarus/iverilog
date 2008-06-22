@@ -53,9 +53,33 @@ struct name_component_t {
 extern bool operator < (const name_component_t&lef, const name_component_t&rig);
 
 /*
- * The pform_name_t is the general form for a hierarchical identifier.
+ * The pform_name_t is the general form for a hierarchical
+ * identifier. It is an ordered list of name components. Each name
+ * component is an identifier and an optional list of bit/part
+ * selects. The simplest name component is a simple identifier:
+ *
+ *    foo
+ *
+ * The bit/part selects come from the source and are made part of the
+ * name component. A bit select is a single number that may be a bit
+ * select of a vector or a word select of an array:
+ *
+ *    foo[5]     -- a bit select/word index
+ *    foo[6:4]   -- a part select
+ *
+ * The index components of a name component are collected into an
+ * ordered list, so there may be many, for example:
+ *
+ *    foo[5][6:4] -- a part select of an array word
+ *
+ * The pform_name_t, then, is an ordered list of these name
+ * components. The list of names comes from a hierarchical name in the
+ * source, like this:
+ *
+ *    foo[5].bar[6:4]  -- a part select of a vector in sub-scope foo[5].
  */
 typedef std::list<name_component_t> pform_name_t;
+
 
 inline perm_string peek_head_name(const pform_name_t&that)
 {
