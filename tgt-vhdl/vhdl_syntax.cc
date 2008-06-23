@@ -462,8 +462,18 @@ vhdl_expr::~vhdl_expr()
  */
 vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
 {
-   if (to->get_name() == type_->get_name())
-      return this;
+   if (to->get_name() == type_->get_name()) {
+      if (to->get_width() == type_->get_width())
+         return this;  // Identical
+      else {
+         vhdl_type *rtype = vhdl_type::nsigned(to->get_width());     
+         vhdl_fcall *resize = new vhdl_fcall("Resize", rtype);
+         resize->add_expr(this);
+         resize->add_expr(new vhdl_const_int(to->get_width()));
+
+         return resize;
+      }
+   }
    else if (to->get_name() == VHDL_TYPE_BOOLEAN) {
       // '1' is true all else are false
       vhdl_const_bit *one = new vhdl_const_bit('1');

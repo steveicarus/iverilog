@@ -90,27 +90,14 @@ static vhdl_expr *translate_numeric(vhdl_expr *lhs, vhdl_expr *rhs,
 { 
    int lwidth = lhs->get_type()->get_width();
    int rwidth = rhs->get_type()->get_width();
-
-   vhdl_type ltype(VHDL_TYPE_UNSIGNED, lhs->get_type()->get_msb(),
-                   lhs->get_type()->get_lsb());
-   vhdl_type rtype(VHDL_TYPE_UNSIGNED, rhs->get_type()->get_msb(),
-                   rhs->get_type()->get_lsb());
    
    // May need to resize the left or right hand side
    if (lwidth < rwidth) {
-      vhdl_fcall *resize =
-         new vhdl_fcall("resize", vhdl_type::nsigned(rwidth));
-      resize->add_expr(lhs);
-      resize->add_expr(new vhdl_const_int(rwidth));
-      lhs = resize;
+      lhs = lhs->cast(rhs->get_type());
       lwidth = rwidth;
    }
    else if (rwidth < lwidth) {
-      vhdl_fcall *resize =
-         new vhdl_fcall("resize", vhdl_type::nsigned(lwidth));
-      resize->add_expr(rhs);
-      resize->add_expr(new vhdl_const_int(lwidth));
-      rhs = resize;
+      rhs = rhs->cast(lhs->get_type());
       rwidth = lwidth;
    }
    
