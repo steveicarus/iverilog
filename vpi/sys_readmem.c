@@ -445,7 +445,7 @@ static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
       /* Open the data file. */
       file = fopen(path, "w");
       if (file == 0) {
-	    vpi_printf("%s: Unable to open %s for writeing.\n", name, path);
+	    vpi_printf("%s: Unable to open %s for writing.\n", name, path);
 	    free(path);
 	    return 0;
       }

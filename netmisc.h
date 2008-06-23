@@ -65,6 +65,13 @@ extern NetNet*pad_to_width(Design*des, NetNet*n, unsigned w);
 extern NetNet*pad_to_width_signed(Design*des, NetNet*n, unsigned w);
 
 /*
+ * Generate the nodes necessary to cast an expression (a net) to a
+ * real value.
+ */
+extern NetNet*cast_to_int(Design*des, NetScope*scope, NetNet*src, unsigned wid);
+extern NetNet*cast_to_real(Design*des, NetScope*scope, NetNet*src);
+
+/*
  * Take the input expression and return a variation that assures that
  * the expression is 1-bit wide and logical. This reflects the needs
  * of conditions i.e. for "if" statements or logical operators.
@@ -101,6 +108,11 @@ extern NetNet*add_to_net(Design*des, NetNet*sig, long val);
  */
 extern NetExpr*make_add_expr(NetExpr*expr, long val);
 extern NetExpr*make_sub_expr(long val, NetExpr*expr);
+
+/*
+ * Make a NetEConst object that contains only X bits.
+ */
+extern NetEConst*make_const_x(unsigned long wid);
 
 /*
  * In some cases the lval is accessible as a pointer to the head of

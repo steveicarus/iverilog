@@ -19,8 +19,13 @@
 
 # include  "PScope.h"
 
-PScope::PScope(perm_string n, PScope*p)
-    : name_(n), parent_(p)
+PScope::PScope(perm_string n, PScope*parent)
+: name_(n), parent_(parent)
+{
+}
+
+PScope::PScope(perm_string n)
+: name_(n), parent_(0)
 {
 }
 
@@ -28,7 +33,7 @@ PScope::~PScope()
 {
 }
 
-PWire* PScope::wires_find(perm_string name)
+PWire* LexicalScope::wires_find(perm_string name)
 {
       map<perm_string,PWire*>::const_iterator cur = wires.find(name);
       if (cur == wires.end())

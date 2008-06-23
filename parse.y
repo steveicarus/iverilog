@@ -323,9 +323,14 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %left K_POW
 %left UNARY_PREC
 
+
 /* to resolve dangling else ambiguity. */
 %nonassoc less_than_K_else
 %nonassoc K_else
+
+ /* to resolve exclude (... ambiguity */
+%nonassoc '('
+%nonassoc K_exclude
 
 %%
 
@@ -427,7 +432,7 @@ block_item_decl
 
   /* Integer declarations are simpler in that they do not have all the
      trappings of a general variable declaration. All of that is
-     implicit in the "integer" of the declaratin. */
+     implicit in the "integer" of the declaration. */
 
 	| attribute_list_opt K_integer register_variable_list ';'
 		{ pform_set_reg_integer($3);
@@ -440,7 +445,7 @@ block_item_decl
 
   /* real declarations are fairly simple as there is no range of
      signed flag in the declaration. Create the real as a NetNet::REG
-     with real value. Note that real and realtime are interchangable
+     with real value. Note that real and realtime are interchangeable
      in this context. */
 
   | attribute_list_opt K_real real_variable_list ';'
@@ -1181,7 +1186,7 @@ expr_primary
       }
 
   /* Many of the VAMS built-in functions are available as builtin
-     functions with $system_function equivilents. */
+     functions with $system_function equivalents. */
 
   | K_acos '(' expression ')'
       { perm_string tn = perm_string::literal("$acos");
@@ -2195,6 +2200,15 @@ module_item
     K_endcase
       { pform_endgenerate(); }
 
+  /* Handle some anachronistic syntax cases. */
+  | K_generate K_begin module_item_list_opt K_end K_endgenerate
+      { /* Detect and warn about anachronistic begin/end use */
+	if (generation_flag > GN_VER2001) {
+	      warn_count += 1;
+	      cerr << @2 << ": warning: Anachronistic use of begin/end to surround generate schemes." << endl;
+	}
+      }
+
   /* specify blocks are parsed but ignored. */
 
 	| K_specify K_endspecify
@@ -2379,7 +2393,14 @@ parameter_assign_decl
 	param_active_type = IVL_VT_LOGIC;
       }
   | K_integer
-      { param_active_range = 0;
+      { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
+        PExpr*re;
+        re = new PENumber(new verinum(integer_width-1, integer_width));
+        (*range_stub)[0] = re;
+        re = new PENumber(new verinum((uint64_t)0, integer_width));
+        (*range_stub)[1] = re;
+        /* The default range is [31:0] */
+        param_active_range = range_stub;
 	param_active_signed = true;
 	param_active_type = IVL_VT_LOGIC;
       }
@@ -2388,7 +2409,34 @@ parameter_assign_decl
 	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
+  | K_time
+      { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
+        PExpr*re;
+        re = new PENumber(new verinum((uint64_t)63, integer_width));
+        (*range_stub)[0] = re;
+        re = new PENumber(new verinum((uint64_t)0, integer_width));
+        (*range_stub)[1] = re;
+        /* The range is [63:0] */
+        param_active_range = range_stub;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+    parameter_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
   | K_real
+      { param_active_range = 0;
+	param_active_signed = true;
+	param_active_type = IVL_VT_REAL;
+      }
+    parameter_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+  | K_realtime
       { param_active_range = 0;
 	param_active_signed = true;
 	param_active_type = IVL_VT_REAL;
@@ -2432,7 +2480,8 @@ parameter_value_range
       { $$ = pform_parameter_value_range($1, true, $3, false, $5); }
   | from_exclude '(' value_range_expression ':' value_range_expression ')'
       { $$ = pform_parameter_value_range($1, true, $3, true, $5); }
-    /* | K_exclude  expression */
+  | K_exclude expression
+      { $$ = pform_parameter_value_range(true, false, $2, false, $2); }
   ;
 
 value_range_expression
@@ -2480,17 +2529,41 @@ localparam_assign_decl
     localparam_assign_list
       { param_active_range = 0;
 	param_active_signed = false;
-	param_active_type = IVL_VT_NO_TYPE;
+	param_active_type = IVL_VT_LOGIC;
       }
   | K_integer
-      { param_active_range = 0;
+      { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
+        PExpr*re;
+        re = new PENumber(new verinum(integer_width-1, integer_width));
+        (*range_stub)[0] = re;
+        re = new PENumber(new verinum((uint64_t)0, integer_width));
+        (*range_stub)[1] = re;
+        /* The default range is [31:0] */
+        param_active_range = range_stub;
 	param_active_signed = true;
 	param_active_type = IVL_VT_LOGIC;
       }
     localparam_assign_list
       { param_active_range = 0;
 	param_active_signed = false;
-	param_active_type = IVL_VT_NO_TYPE;
+	param_active_type = IVL_VT_LOGIC;
+      }
+  | K_time
+      { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
+        PExpr*re;
+        re = new PENumber(new verinum((uint64_t)63, integer_width));
+        (*range_stub)[0] = re;
+        re = new PENumber(new verinum((uint64_t)0, integer_width));
+        (*range_stub)[1] = re;
+        /* The range is [63:0] */
+        param_active_range = range_stub;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+    localparam_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
       }
   | K_real
       { param_active_range = 0;
@@ -2500,7 +2573,17 @@ localparam_assign_decl
     localparam_assign_list
       { param_active_range = 0;
 	param_active_signed = false;
-	param_active_type = IVL_VT_NO_TYPE;
+	param_active_type = IVL_VT_LOGIC;
+      }
+  | K_realtime
+      { param_active_range = 0;
+	param_active_signed = true;
+	param_active_type = IVL_VT_REAL;
+      }
+    localparam_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
       }
   ;
 

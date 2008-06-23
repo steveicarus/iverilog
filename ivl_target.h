@@ -80,6 +80,13 @@ _BEGIN_DECL
  *    processes. Structural expressions are instead treated as logic
  *    gates.
  *
+ * ivl_island_t
+ *    Certain types of objects may belong to islands. The island that
+ *    they belong to is represented by the ivl_island_t cookie. To
+ *    know if object belong to the same island, it is sufficient to
+ *    compare island cookies. If a==b, then island a is the same as
+ *    island b.
+ *
  * ivl_lpm_t
  *    This object is the base class for all the various LPM type
  *    device nodes. This object carries a few base properties
@@ -146,6 +153,7 @@ typedef struct ivl_delaypath_s*ivl_delaypath_t;
 typedef struct ivl_design_s   *ivl_design_t;
 typedef struct ivl_event_s    *ivl_event_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
+typedef struct ivl_island_s   *ivl_island_t;
 typedef struct ivl_lpm_s      *ivl_lpm_t;
 typedef struct ivl_lval_s     *ivl_lval_t;
 typedef struct ivl_net_const_s*ivl_net_const_t;
@@ -237,7 +245,8 @@ typedef enum ivl_switch_type_e {
       IVL_SW_TRANIF1  = 2,
       IVL_SW_RTRAN    = 3,
       IVL_SW_RTRANIF0 = 4,
-      IVL_SW_RTRANIF1 = 5
+      IVL_SW_RTRANIF1 = 5,
+      IVL_SW_TRAN_VP  = 6
 } ivl_switch_type_t;
 
 /* This is the type of an LPM object. */
@@ -245,6 +254,8 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_ABS    = 32,
       IVL_LPM_ADD    =  0,
       IVL_LPM_ARRAY  = 30,
+      IVL_LPM_CAST_INT = 34,
+      IVL_LPM_CAST_REAL = 33,
       IVL_LPM_CONCAT = 16,
       IVL_LPM_CMP_EEQ= 18, /* Case EQ (===) */
       IVL_LPM_CMP_EQ = 10,
@@ -257,7 +268,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_MOD    = 13,
       IVL_LPM_MULT   =  4,
       IVL_LPM_MUX    =  5,
-      IVL_LPM_PART_BI= 28, /* part select: bi-directional (part on 0) */
+      /* IVL_LPM_PART_BI= 28, / obsolete */
       IVL_LPM_PART_VP= 15, /* part select: vector to part */
       IVL_LPM_PART_PV= 17, /* part select: part written to vector */
       IVL_LPM_POW    = 31,
@@ -712,6 +723,16 @@ extern const char* ivl_file_table_item(unsigned  idx);
 extern unsigned ivl_file_table_index(const char *);
 extern unsigned ivl_file_table_size(void);
 
+
+/* ISLAND
+ *
+ * ivl_island_flag_set
+ * ivl_island_flag_test
+ *    Allow the user to test or set a boolean flag associated with the
+ *    island.
+ */
+extern int ivl_island_flag_set(ivl_island_t net, unsigned flag, int value);
+extern int ivl_island_flag_test(ivl_island_t net, unsigned flag);
 
 /* LOGIC
  * These types and functions support manipulation of logic gates. The
@@ -1327,6 +1348,7 @@ extern unsigned     ivl_nexus_ptr_pin(ivl_nexus_ptr_t net);
 extern ivl_net_const_t ivl_nexus_ptr_con(ivl_nexus_ptr_t net);
 extern ivl_net_logic_t ivl_nexus_ptr_log(ivl_nexus_ptr_t net);
 extern ivl_lpm_t    ivl_nexus_ptr_lpm(ivl_nexus_ptr_t net);
+extern ivl_switch_t ivl_nexus_ptr_switch(ivl_nexus_ptr_t net);
 extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
 
 /* PARAMETER
@@ -1854,9 +1876,6 @@ extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
  * ivl_switch_basename
  *    This is the name given to the device in the source code.
  *
- * ivl_switch_scope
- *    The scope where the switch device appears.
- *
  * ivl_switch_a
  * ivl_switch_b
  *    The a and b ports are the two ports of the switch.
@@ -1867,17 +1886,31 @@ extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
  *
  * SEMANTIC NOTES
  * The a/b ports can be any type, but the types must exactly
- * match. The enable must be a scalar.
+ * match, including vector widths. The enable must be a scalar.
+ *
+ * The IVL_SW_TRAN_VP is an exception to the above. In this case,
+ * the B side may be a different size, and the a side will have a
+ * a fixed width. The unused bits are padded to Z on the A side.
  */
 extern ivl_switch_type_t ivl_switch_type(ivl_switch_t net);
-extern const char*ivl_switch_basename(ivl_switch_t net);
 extern ivl_scope_t ivl_switch_scope(ivl_switch_t net);
+extern const char*ivl_switch_basename(ivl_switch_t net);
 extern ivl_nexus_t ivl_switch_a(ivl_switch_t net);
 extern ivl_nexus_t ivl_switch_b(ivl_switch_t net);
 extern ivl_nexus_t ivl_switch_enable(ivl_switch_t net);
+extern ivl_island_t ivl_switch_island(ivl_switch_t net);
 
+  /* These are only support for IVL_SW_TRAN_VP switches. */
+extern unsigned ivl_switch_width(ivl_switch_t net);
+extern unsigned ivl_switch_part(ivl_switch_t net);
+extern unsigned ivl_switch_offset(ivl_switch_t net);
+
+/* Not implemented yet
 extern unsigned        ivl_switch_attr_cnt(ivl_switch_t net);
 extern ivl_attribute_t ivl_switch_attr_val(ivl_switch_t net, unsigned idx);
+*** */
+extern const char* ivl_switch_file(ivl_switch_t net);
+extern unsigned ivl_switch_lineno(ivl_switch_t net);
 
 #if defined(__MINGW32__) || defined (__CYGWIN32__)
 #  define DLLEXPORT __declspec(dllexport)

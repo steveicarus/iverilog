@@ -345,6 +345,24 @@ The .alias statements do not create new nodes, but instead create net
 names that are aliases of an existing node. This handles special cases
 where a net has different names, possibly in different scopes.
 
+CAST STATEMENTS:
+
+Sometimes nets need to be cast from a real valued net to a bit based
+net or from a bit based net to a real valued net. These statements
+are used to performa that operation:
+
+	<label> .case/int <width>, <symbol>;
+	<label> .case/real <symbol>;
+	<label> .case/real.s <symbol>;
+
+For .case/int the output <label> is a bit based net that is <width>
+bits wide. The input <symbol> is expected to put real values to
+this functor.
+
+For .case/real the output <label> is a real valued net. The input
+<symbol> is expected to put bit based values and for .case/real.s
+the bits will be interpreted as a signed value.
+
 DELAY STATEMENTS:
 
 Delay nodes are structural net delay nodes that carry and manage
@@ -385,82 +403,6 @@ existing array. The dimensions and storage are taken from the .array
 at <src>.
 
         <label> .array "name", <src> ;
-
-MEMORY STATEMENTS:
-
-Memories are arrays of words, each word a vvp_vector4_t vector of the
-same width. The memory is canonically addressed as a 1-dimensional
-array of words, although indices are stored with the memory for
-calculating a canonical address from a multi-dimensional address.
-
-Three types of memory statement perform (1) creation of a memory, (2)
-connecting a read port to an existing memory, and (3) initializing the
-memory's contents.
-
-       <label> .mem "name", <msb>,<lsb>, <last>,<first> ... ;
-
-The pair of numbers <msb>,<lsb> defines the word width.  The pair
-<last>,<first> defines the address range.  Multiple address ranges are
-allowed for multidimensional indexing. This statement creates the
-memory array and makes it available to procedural code.
-
-Procedural access to the memory references the memory as single array
-of words, with the base address==0, and the last address the size (in
-words) of the memory -1. It is up to the compiler to convert Verilog
-index sets to a canonical address. The multi-dimensional index set is
-available for VPI use.
-
-Structural read access is implemented in terms of address and data
-ports.  The addresses applied to the address port are expected to be
-in canonical form.
-
-A read port is a functor that takes a single input, the read address,
-and outputs the word value at the given (canonical) address.
-
-	<label> .mem/port <memid>, <address> ;
-
-<label> identifies the vector of output functors, to allow connections
-to the data output.  <memid> is the label of the memory.
-
-Any address input change, or any change in the addressed memory
-contents, is immediately propagated to the port output.
-
-A write port is a superset of a read port.  It is a 4-input functor
-that accepts the word address, an event input, a write enable input,
-and the data input.
-
-	<label> .mem/port <memid>, <address>, <event>, <we>, <data> ;
-
-<event> is an event functor that triggers a write, if the <we> input
-is true.  <data> is the input that connect to the data input
-port.  For asynchronous transparent write operation, connect
-<event> to C4<z>, the RAM will transparently follow any changes on
-address and data lines, while <we> is true.
-
-There is no Verilog construct that calls for a structural write port
-to a memory, but synthesis may ask for lpm_ram_d[pq] objects.
-
-To initialize a memory, use:
-
-   .mem/init <memid> <start>, val , val ... ;
-
-<memid> is the label of the memory, and the <start> is the start
-address (canonical) of the first word to be initialized. The start
-address allows multiple statements be used to initialize words of a
-memory.
-
-The values are one per word.
-
-Procedural access to the memory employs an index register to address a
-bit location in the memory, via the commands:
-
-	%load/m   <bit>, <memid> ;
-	%set/m    <memid>, <bit> ;
-	%assign/m <memid>, <delay>, <bit> ;
-
-The memory bit is addressed by index register 3.  The value of
-register 3 is the index in the memory's bit space, where each data
-word occupies a multiple of four bits.
 
 
 EVENT STATEMENTS
@@ -829,6 +771,61 @@ instruction. The scope is referenced by name, and the thread created
 by the fork atomically joins that scope. Once the transient thread
 joins the scope, it stays there until it ends. Threads never change
 scopes, not even transient threads.
+
+VPI TASK/FUNCTION CALLS
+
+Threads call vpi tasks with the %vpi_call or %vpi_func
+instructions. The formats are:
+
+   %vpi_call <file-index> <lineno> <name>, <args>... ;
+   %vpi_func <file-index> <lineno> <name>, <args>... ;
+   %vpi_func/r <file-index> <lineno> <name>, <args>... ;
+
+The <file-index> is an index into the string table. The indexed string
+is the source code file name where this call appears. The <lineno> is
+the line number from the source code where this task/function appears.
+
+The <name> is a string that is the name of the system
+task/function. For example, "$display", $strobe", etc. This name is
+looked up and compared with the registered system tasks/functions.
+
+The <args>... is a comma (",") separated list of arguments. These are
+made available to the VPI code as vpi handles.
+
+* The &A<> argument
+
+The &A<> argument is a reference to the word of a variable array. The
+syntax is:
+
+   &A '<' <symbol> , <number> '>'
+   &A '<' <symbol> , <base> <width> '>'
+
+The <symbol> is the label for a variable array, and the <number> is
+the canonical word index as an unsigned integer. The second form
+retrives the index from thread space (<width> bits starting at <base>).
+
+* The &PV<> argument
+
+The &PV<> argument is a reference to part of a signal. The syntax is:
+
+   &PV '<' <symbol> , <base> , <width> '>'
+   &PV '<' <symbol> , <tbase> <twid> , <width> '>'
+
+The <symbol> is the label for a signal, the <base> is the canonical
+starting bit of the part select and <width> is the number of bits in
+the select. The second form retrieves the <base> from thread space
+using <twid> bits starting at <tbase>.
+
+* The T<> argument
+
+This is the catch-all for arguments that are not otherwise
+handled. This references the bits directly in the thread. The format
+is:
+
+   T '<' <base>, <wid>, <su> '>'
+
+The <base> and <wid> are the base of a vector value in the thread and
+the width of the vector. The <su> is 's' or 'u' for signed or unsigned.
 
 TRUTH TABLES
 

@@ -761,10 +761,6 @@ NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
 	    pin(0).set_dir(Link::INPUT);
 	    pin(1).set_dir(Link::OUTPUT);
 	    break;
-	  case NetPartSelect::BI:
-	    pin(0).set_dir(Link::OUTPUT);
-	    pin(1).set_dir(Link::OUTPUT);
-	    break;
       }
       pin(0).set_name(perm_string::literal("Part"), 0);
       pin(1).set_name(perm_string::literal("Vect"), 0);
@@ -786,10 +782,6 @@ NetPartSelect::NetPartSelect(NetNet*sig, NetNet*sel,
 	  case NetPartSelect::PV:
 	    pin(0).set_dir(Link::INPUT);
 	    pin(1).set_dir(Link::OUTPUT);
-	    break;
-	  case NetPartSelect::BI:
-	    pin(0).set_dir(Link::PASSIVE);
-	    pin(1).set_dir(Link::PASSIVE);
 	    break;
       }
       pin(2).set_dir(Link::INPUT);
@@ -855,6 +847,24 @@ NetScope* NetProcTop::scope()
 const NetScope* NetProcTop::scope() const
 {
       return scope_;
+}
+
+NetCastInt::NetCastInt(NetScope*scope, perm_string n, unsigned width)
+: NetNode(scope, n, 2), width_(width)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("O"), 0);
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("I"), 0);
+}
+
+NetCastReal::NetCastReal(NetScope*scope, perm_string n, bool signed_flag)
+: NetNode(scope, n, 2), signed_flag_(signed_flag)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("O"), 0);
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("I"), 0);
 }
 
 NetConcat::NetConcat(NetScope*scope, perm_string n, unsigned wid, unsigned cnt)
@@ -1502,6 +1512,11 @@ NetLiteral::NetLiteral(NetScope*sc, perm_string n, const verireal&val)
 
 NetLiteral::~NetLiteral()
 {
+}
+
+ivl_variable_type_t NetLiteral::data_type() const
+{
+      return IVL_VT_REAL;
 }
 
 const verireal& NetLiteral::value_real() const

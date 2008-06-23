@@ -167,6 +167,8 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp, int)
 
       struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
 
+      rfp->put_value = true;
+
       assert(rfp->vbit >= 4);
 
       switch (vp->format) {
@@ -196,7 +198,6 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp, int)
 		}
 		break;
 
-
 	  case vpiScalarVal:
 	    switch (vp->value.scalar) {
 		case vpi0:
@@ -216,6 +217,29 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp, int)
 		  assert(0);
 	    }
 	    break;
+
+	  case vpiStringVal: {
+	    unsigned len = strlen(vp->value.str) - 1;
+	    assert(len*8 <= (unsigned)rfp->vwid);
+	    for (unsigned wdx = 0 ;  wdx < (unsigned)rfp->vwid ;  wdx += 8) {
+		  unsigned word = wdx / 8;
+		  char bits;
+		  if (word <= len) {
+			bits = vp->value.str[len-word];
+		  } else {
+			bits = 0;
+		  }
+		  for (unsigned idx = 0 ;  (wdx+idx) < (unsigned)rfp->vwid &&
+		       idx < 8; idx += 1) {
+			vvp_bit4_t bit4 = BIT4_0;
+			if (bits & 1) bit4 = BIT4_1;
+			vthread_put_bit(vpip_current_vthread,
+					rfp->vbit+wdx+idx, bit4);
+			bits >>= 1;
+		  }
+	    }
+	    break;
+	  }
 
 	  case vpiVectorVal:
 
@@ -271,6 +295,8 @@ static vpiHandle sysfunc_put_real_value(vpiHandle ref, p_vpi_value vp, int)
 
       struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
 
+      rfp->put_value = true;
+
 	/* Make sure this is a real valued function. */
       assert(rfp->vwid == -vpiRealConst);
 
@@ -296,6 +322,8 @@ static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp, int)
       assert(ref->vpi_type->type_code == vpiSysFuncCall);
 
       struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+
+      rfp->put_value = true;
 
       unsigned vwid = (unsigned) rfp->vwid;
       vvp_vector4_t val (vwid);
@@ -384,8 +412,10 @@ static vpiHandle sysfunc_put_rnet_value(vpiHandle ref, p_vpi_value vp, int)
       assert(ref->vpi_type->type_code == vpiSysFuncCall);
 
       struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
-      double val;
 
+      rfp->put_value = true;
+
+      double val;
       switch (vp->format) {
 
 	  case vpiRealVal:
@@ -563,6 +593,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
       obj->file_idx  = (unsigned) file_idx;
       obj->lineno   = (unsigned) lineno;
       obj->userdata  = 0;
+      obj->put_value = false;
 
       compile_compiletf(obj);
 
@@ -590,8 +621,23 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
       if (vpip_cur_task->defn->info.calltf) {
 	    assert(vpi_mode_flag == VPI_MODE_NONE);
 	    vpi_mode_flag = VPI_MODE_CALLTF;
+	    vpip_cur_task->put_value = false;
 	    vpip_cur_task->defn->info.calltf(vpip_cur_task->defn->info.user_data);
 	    vpi_mode_flag = VPI_MODE_NONE;
+	      /* If the function call did not set a value then put a
+	       * default value (0). */
+	    if (ref->vpi_type->type_code == vpiSysFuncCall &&
+	        !vpip_cur_task->put_value) {
+		  s_vpi_value val;
+		  if (vpip_cur_task->vwid == -vpiRealConst) {
+			val.format = vpiRealVal;
+			val.value.real = 0.0;
+		  } else {
+			val.format = vpiIntVal;
+			val.value.integer = 0;
+		  }
+		  vpi_put_value(ref, &val, 0, vpiNoDelay);
+	    }
       }
 }
 

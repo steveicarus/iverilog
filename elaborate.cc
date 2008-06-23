@@ -94,7 +94,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       assert(lval->pin_count() == 1);
 
       if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: PGassign: elaborated l-value"
+	    cerr << get_fileline() << ": debug: PGAssign: elaborated l-value"
 		 << " width=" << lval->vector_width()
 		 << ", type=" << lval->data_type() << endl;
       }
@@ -113,14 +113,13 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		  return;
 	    }
 
-	      /* If either lval or rid are real then both must be real. */
-	    if ((lval->data_type() == IVL_VT_REAL ||
-	         rid->data_type() == IVL_VT_REAL) &&
-	        lval->data_type() != rid->data_type()) {
-		  cerr << get_fileline() << ": sorry: Both the r-value and "
-		          "the l-value must be real in this context." << endl;
-		  des->errors += 1;
-		  return;
+	      /* Cast the right side when needed. */
+	    if ((lval->data_type() == IVL_VT_REAL &&
+	         rid->data_type() != IVL_VT_REAL)) {
+		  rid = cast_to_real(des, scope, rid);
+	    } else if ((lval->data_type() != IVL_VT_REAL &&
+	                rid->data_type() == IVL_VT_REAL)) {
+		  rid = cast_to_int(des, scope, rid, lval->vector_width());
 	    }
 
 	    ivl_assert(*this, rid);
@@ -287,14 +286,13 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       assert(lval && rval);
       assert(rval->pin_count() == 1);
 
-        /* If either lval or rval are real then both must be real. */
-      if ((lval->data_type() == IVL_VT_REAL ||
-           rval->data_type() == IVL_VT_REAL) &&
-          lval->data_type() != rval->data_type()) {
-	    cerr << get_fileline() << ": sorry: Both the r-value and "
-	            "the l-value must be real in this context." << endl;
-	    des->errors += 1;
-	    return;
+	/* Cast the right side when needed. */
+      if ((lval->data_type() == IVL_VT_REAL &&
+           rval->data_type() != IVL_VT_REAL)) {
+	    rval = cast_to_real(des, scope, rval);
+      } else if ((lval->data_type() != IVL_VT_REAL &&
+                  rval->data_type() == IVL_VT_REAL)) {
+	    rval = cast_to_int(des, scope, rval, lval->vector_width());
       }
 
 	/* If the r-value insists on being smaller then the l-value
@@ -386,7 +384,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    high = msb.as_long();
 
 	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: PGBuiltin: Make arrray "
+		  cerr << get_fileline() << ": debug: PGBuiltin: Make array "
 		       << "[" << high << ":" << low << "]"
 		       << " of " << count << " gates for " << name << endl;
 	    }
@@ -864,6 +862,9 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    }
 
       }
+
+	// "cur" is an array of pointers, and we don't need it any more.
+      delete[]cur;
 }
 
 NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
@@ -877,6 +878,31 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
 			      NetNet::WIRE, port_wid);
       tmp->local_flag(true);
       tmp->set_line(*sig);
+
+	// Handle the special case of a bi-directional part
+	// select. Create a NetTran(VP) instead of a uni-directional
+	// NetPartSelect node.
+      if (dir == NetNet::PINOUT) {
+	    unsigned wida = sig->vector_width();
+	    unsigned widb = tmp->vector_width();
+	    bool part_b = widb < wida;
+	    NetTran*node = new NetTran(scope, scope->local_symbol(),
+				       part_b? wida : widb,
+				       part_b? widb : wida,
+				       0);
+	    if (part_b) {
+		  connect(node->pin(0), sig->pin(0));
+		  connect(node->pin(1), tmp->pin(0));
+	    } else {
+		  connect(node->pin(0), tmp->pin(0));
+		  connect(node->pin(1), sig->pin(0));
+	    }
+
+	    node->set_line(*this);
+	    des->add_node(node);
+
+	    return tmp;
+      }
 
       NetPartSelect*node = 0;
 
@@ -906,15 +932,7 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
 	    break;
 
 	  case NetNet::PINOUT:
-	    if (sig->vector_width() > tmp->vector_width()) {
-		  node = new NetPartSelect(sig, 0, tmp->vector_width(),
-					   NetPartSelect::BI);
-		  connect(node->pin(0), tmp->pin(0));
-	    } else {
-		  node = new NetPartSelect(tmp, 0, sig->vector_width(),
-					   NetPartSelect::BI);
-		  connect(node->pin(0), sig->pin(0));
-	    }
+	    ivl_assert(*this, 0);
 	    break;
 
 	  default:
@@ -1169,8 +1187,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		       identifier elaborates to the same NetNet in
 		       both cases so the extra elaboration has no
 		       effect. But if the expression passed to the
-		       inout port is a part select, aspecial part
-		       select must be created that can paqss data in
+		       inout port is a part select, a special part
+		       select must be created that can pass data in
 		       both directions.
 
 		       Use the elaborate_bi_net method to handle all
@@ -1932,7 +1950,7 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	    if (nscope == 0) {
 		  cerr << get_fileline() << ": internal error: "
 			"unable to find block scope " << scope_path(scope)
-		       << "<" << pscope_name() << ">" << endl;
+		       << "." << pscope_name() << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -3035,7 +3053,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       sig = des->find_signal(scope, id2->path());
       if (sig == 0) {
 	    cerr << get_fileline() << ": error: Unable to find variable "
-		 << id2->path() << " in for-loop increment expressin." << endl;
+		 << id2->path() << " in for-loop increment expression." << endl;
 	    des->errors += 1;
 	    return body;
       }
@@ -3536,6 +3554,34 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 
 }
 
+static void elaborate_functions(Design*des, NetScope*scope,
+				const map<perm_string,PFunction*>&funcs)
+{
+      typedef map<perm_string,PFunction*>::const_iterator mfunc_it_t;
+      for (mfunc_it_t cur = funcs.begin()
+		 ; cur != funcs.end() ;  cur ++) {
+
+	    hname_t use_name ( (*cur).first );
+	    NetScope*fscope = scope->child(use_name);
+	    assert(fscope);
+	    (*cur).second->elaborate(des, fscope);
+      }
+}
+
+static void elaborate_tasks(Design*des, NetScope*scope,
+			    const map<perm_string,PTask*>&tasks)
+{
+      typedef map<perm_string,PTask*>::const_iterator mtask_it_t;
+      for (mtask_it_t cur = tasks.begin()
+		 ; cur != tasks.end() ;  cur ++) {
+
+	    hname_t use_name ( (*cur).first );
+	    NetScope*tscope = scope->child(use_name);
+	    assert(tscope);
+	    (*cur).second->elaborate(des, tscope);
+      }
+}
+
 /*
  * When a module is instantiated, it creates the scope then uses this
  * method to elaborate the contents of the module.
@@ -3595,28 +3641,12 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       }
 
 	// Elaborate functions.
-      typedef map<perm_string,PFunction*>::const_iterator mfunc_it_t;
-      for (mfunc_it_t cur = funcs_.begin()
-		 ; cur != funcs_.end() ;  cur ++) {
-
-	    hname_t use_name ( (*cur).first );
-	    NetScope*fscope = scope->child(use_name);
-	    assert(fscope);
-	    (*cur).second->elaborate(des, fscope);
-      }
+      elaborate_functions(des, scope, funcs);
 
 	// Elaborate the task definitions. This is done before the
 	// behaviors so that task calls may reference these, and after
 	// the signals so that the tasks can reference them.
-      typedef map<perm_string,PTask*>::const_iterator mtask_it_t;
-      for (mtask_it_t cur = tasks_.begin()
-		 ; cur != tasks_.end() ;  cur ++) {
-
-	    hname_t use_name ( (*cur).first );
-	    NetScope*tscope = scope->child(use_name);
-	    assert(tscope);
-	    (*cur).second->elaborate(des, tscope);
-      }
+      elaborate_tasks(des, scope, tasks);
 
 	// Get all the gates of the module and elaborate them by
 	// connecting them to the signals. The gate may be simple or
@@ -3661,8 +3691,8 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 		       << scope_path(container) << "." << endl;
 
 	    typedef list<PGenerate*>::const_iterator generate_it_t;
-	    for (generate_it_t cur = generates.begin()
-		       ; cur != generates.end() ; cur ++) {
+	    for (generate_it_t cur = generate_schemes.begin()
+		       ; cur != generate_schemes.end() ; cur ++) {
 		  PGenerate*item = *cur;
 		  if (! item->scope_list_.empty()) {
 			flag &= item->elaborate(des, container);
@@ -3704,6 +3734,9 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 
 bool PGenerate::elaborate_(Design*des, NetScope*scope) const
 {
+      elaborate_functions(des, scope, funcs);
+      elaborate_tasks(des, scope, tasks);
+
       typedef list<PGate*>::const_iterator gates_it_t;
       for (gates_it_t cur = gates.begin() ; cur != gates.end() ; cur ++ )
 	    (*cur)->elaborate(des, scope);
@@ -3713,8 +3746,8 @@ bool PGenerate::elaborate_(Design*des, NetScope*scope) const
 	    (*cur)->elaborate(des, scope);
 
       typedef list<PGenerate*>::const_iterator generate_it_t;
-      for (generate_it_t cur = generates.begin()
-		 ; cur != generates.end() ; cur ++ ) {
+      for (generate_it_t cur = generate_schemes.begin()
+		 ; cur != generate_schemes.end() ; cur ++ ) {
 	    (*cur)->elaborate(des, scope);
       }
 

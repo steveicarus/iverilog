@@ -62,7 +62,7 @@ static int is_fixed_memory_word(ivl_expr_t net)
       if (ivl_signal_type(sig) == IVL_SIT_REG)
 	    return 0;
 
-      if (number_is_immediate(ivl_expr_oper1(net), 8*sizeof(unsigned)))
+      if (number_is_immediate(ivl_expr_oper1(net), 8*sizeof(unsigned), 0))
 	    return 1;
 
       return 0;
@@ -182,7 +182,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			ivl_expr_t word_ex = ivl_expr_oper1(expr);
 			if (word_ex) {
 			        /* Some array select have been evaluated. */
-			      if (number_is_immediate(word_ex, 8*sizeof(unsigned))) {
+			      if (number_is_immediate(word_ex, 8*sizeof(unsigned), 0)) {
 				    use_word = get_number_immediate(word_ex);
 				    word_ex = 0;
 			      }
@@ -204,18 +204,71 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			ivl_expr_t word_ex = ivl_expr_oper1(expr);
 			if (word_ex) {
 			        /* Some array select have been evaluated. */
-			      if (number_is_immediate(word_ex, 8*sizeof(unsigned))) {
+			      if (number_is_immediate(word_ex, 8*sizeof(unsigned), 0)) {
 				    use_word = get_number_immediate(word_ex);
 				    word_ex = 0;
 			      }
 			}
-			if (word_ex)
-			      break;
-
-			snprintf(buffer, sizeof buffer, "&A<v%p, %u>", sig, use_word);
+			if (word_ex && ivl_expr_type(word_ex)==IVL_EX_SIGNAL) {
+				/* Special case: the index is a signal. */
+			      snprintf(buffer, sizeof buffer,
+				       "&A<v%p, v%p_0 >", sig,
+				       ivl_expr_signal(word_ex));
+			} else if (word_ex) {
+				/* Fallback case: evaluate expression. */
+			      struct vector_info av;
+			      av = draw_eval_expr(word_ex, STUFF_OK_XZ);
+			      snprintf(buffer, sizeof buffer,
+				       "&A<v%p, %u %u>", sig, av.base, av.wid);
+			      args[idx].vec = av;
+			      args[idx].vec_flag = 1;
+			} else {
+			      snprintf(buffer, sizeof buffer,
+				       "&A<v%p, %u>", sig, use_word);
+			}
 			args[idx].text = strdup(buffer);
 			continue;
 		  }
+
+		case IVL_EX_SELECT: {
+		  ivl_expr_t vexpr = ivl_expr_oper1(expr);
+                  assert(vexpr);
+
+		    /* This code is only for signals. */
+		  if (ivl_expr_type(vexpr) != IVL_EX_SIGNAL) break;
+
+		    /* The signal is part of an array. */
+		    /* Add &APV<> code here when it is finished. */
+		  if (ivl_expr_oper1(vexpr)) break;
+
+                  ivl_expr_t bexpr = ivl_expr_oper2(expr);
+                  assert(bexpr);
+
+		    /* This is a constant bit/part select. */
+                  if (number_is_immediate(bexpr, 64, 1)) {
+			snprintf(buffer, sizeof buffer, "&PV<v%p_0, %ld, %u>",
+			         ivl_expr_signal(vexpr),
+			         get_number_immediate(bexpr),
+			         ivl_expr_width(expr));
+		    /* This is an indexed bit/part select. */
+                  } else if (ivl_expr_type(bexpr) == IVL_EX_SIGNAL) {
+			  /* Sepcial case: the base is a signal. */
+			snprintf(buffer, sizeof buffer, "&PV<v%p_0, v%p_0, %u>",
+			         ivl_expr_signal(vexpr),
+			         ivl_expr_signal(bexpr),
+			         ivl_expr_width(expr));
+                  } else {
+			  /* Fallback case: evaluate the expression. */
+			struct vector_info rv;
+			rv = draw_eval_expr(bexpr, STUFF_OK_XZ);
+			snprintf(buffer, sizeof buffer, "&PV<v%p_0, %u %u, %u>",
+			         ivl_expr_signal(vexpr),
+			         rv.base, rv.wid,
+			         ivl_expr_width(expr));
+                  }
+		  args[idx].text = strdup(buffer);
+		  continue;
+		}
 
 		    /* Everything else will need to be evaluated and
 		       passed as a constant to the vpi task. */

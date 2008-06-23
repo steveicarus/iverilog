@@ -47,9 +47,9 @@ static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
 
       const char*dly = "";
       if (d_rise != 0) {
-	    assert(number_is_immediate(d_rise, 64));
-	    assert(number_is_immediate(d_fall, 64));
-	    assert(number_is_immediate(d_decay, 64));
+	    assert(number_is_immediate(d_rise, 64, 0));
+	    assert(number_is_immediate(d_fall, 64, 0));
+	    assert(number_is_immediate(d_decay, 64, 0));
 	    dly = "/d";
 	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
 	            net, get_number_immediate(d_rise),

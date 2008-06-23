@@ -52,6 +52,7 @@ class Nexus;
 class NetEvent;
 class NetNet;
 class NetNode;
+class NetObj;
 class NetProc;
 class NetProcTop;
 class NetRelease;
@@ -70,6 +71,8 @@ struct target;
 struct functor_t;
 
 ostream& operator << (ostream&o, ivl_variable_type_t val);
+
+extern void join_island(NetObj*obj);
 
 /* =========
  * A NetObj is anything that has any kind of behavior in the
@@ -129,6 +132,20 @@ class NetObj  : public Attrib, public virtual LineInfo {
       const NetExpr* delay1_;
       const NetExpr* delay2_;
       const NetExpr* delay3_;
+};
+
+/*
+* Objects that can be island branches are derived from this. (It is
+* possible for an object to be a NetObj and an IslandBranch.) This is
+* used to collect island information about the node.
+*/
+
+class IslandBranch {
+    public:
+      IslandBranch() : island(0) { }
+
+    public:
+      struct ivl_island_s* island;
 };
 
 class Link {
@@ -810,7 +827,7 @@ class NetScope : public Attrib {
 
 /*
  * This class implements the LPM_ABS component. The node has a single
- * input, a signe expression, that it converts to the absolute
+ * input, a signed expression, that it converts to the absolute
  * value. The gate is simple: pin(0) is the output and pin(1) is the input.
  */
 class NetAbs  : public NetNode {
@@ -897,6 +914,44 @@ class NetArrayDq  : public NetNode {
       NetNet*mem_;
       unsigned awidth_;
 
+};
+
+/*
+ * Convert an IVL_VT_REAL input to a logical value with the
+ * given width. The input is pin(1) and the output is pin(0).
+ */
+class NetCastInt  : public NetNode {
+
+    public:
+      NetCastInt(NetScope*s, perm_string n, unsigned width);
+
+      unsigned width() const { return width_; }
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+
+    private:
+      unsigned width_;
+};
+
+/*
+ * Convert an input to IVL_VT_REAL. The input is pin(1), which can be
+ * any vector type (VT_BOOL or VT_LOGIC) and the output is pin(0),
+ * which is IVL_VT_REAL. The conversion interprets the input as an
+ * unsigned value unless the signed_flag is true.
+ */
+class NetCastReal  : public NetNode {
+
+    public:
+      NetCastReal(NetScope*s, perm_string n, bool signed_flag);
+
+      bool signed_flag() const { return signed_flag_; }
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+
+    private:
+      bool signed_flag_;
 };
 
 /*
@@ -1359,19 +1414,31 @@ class NetSysFunc  : public NetNode {
       const struct sfunc_return_type*def_;
 };
 
-class NetTran  : public NetNode {
+class NetTran  : public NetNode, public IslandBranch {
 
     public:
+	// Tran devices other than TRAN_VP
       NetTran(NetScope*scope, perm_string n, ivl_switch_type_t type);
+	// Create a TRAN_VP
+      NetTran(NetScope*scope, perm_string n, unsigned wid,
+	      unsigned part, unsigned off);
       ~NetTran();
 
       ivl_switch_type_t type() const { return type_; }
+
+	// These are only used for IVL_SW_TRAN_PV
+      unsigned vector_width() const;
+      unsigned part_width() const;
+      unsigned part_offset() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
 
     private:
       ivl_switch_type_t type_;
+      unsigned wid_;
+      unsigned part_;
+      unsigned off_;
 };
 
 /* =========
@@ -1588,8 +1655,8 @@ class NetECRealParam  : public NetECReal {
  * selector as the input.
  *
  * The NetPartSelect can be output from the signal (i.e. reading a
- * part), input into the signal, or bi-directional. The DIR method
- * gives the type of the node.
+ * part) or input into the signal. The DIR method gives the type of
+ * the node.
  *
  * VP (Vector-to-Part)
  *  Output pin 0 is the part select, and input pin 1 is connected to
@@ -1599,10 +1666,6 @@ class NetECRealParam  : public NetECReal {
  *  Output pin 1 is connected to the NetNet, and input pin 0 is the
  *  part select. In this case, the node is driving the NetNet.
  *
- * BI (BI-directional)
- *  Pin 0 is the part select and pin 1 is connected to the NetNet, but
- *  the ports are intended to be bi-directional.
- *
  * Note that whatever the direction that data is intended to flow,
  * pin-0 is the part select and pin-1 is connected to the NetNet.
  */
@@ -1610,7 +1673,7 @@ class NetPartSelect  : public NetNode {
 
     public:
 	// enum for the device direction
-      enum dir_t { VP, PV, BI };
+      enum dir_t { VP, PV};
 
       explicit NetPartSelect(NetNet*sig,
 			     unsigned off, unsigned wid, dir_t dir);
@@ -3613,6 +3676,7 @@ class Design {
 	// Iterate over the design...
       void dump(ostream&) const;
       void functor(struct functor_t*);
+      void join_islands(void);
       int emit(struct target_t*) const;
 
 	// This is incremented by elaboration when an error is

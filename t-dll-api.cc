@@ -555,6 +555,28 @@ extern "C" unsigned ivl_file_table_size()
       return fn_vector.size();
 }
 
+extern "C" int ivl_island_flag_set(ivl_island_t net, unsigned flag, int value)
+{
+      if (flag >= net->flags.size()) {
+	    if (value == 0)
+		  return 0;
+	    else
+		  net->flags.resize(flag+1, false);
+      }
+
+      int old_flag = net->flags[flag];
+      net->flags[flag] = value != 0;
+      return old_flag;
+}
+
+extern "C" int ivl_island_flag_test(ivl_island_t net, unsigned flag)
+{
+      if (flag >= net->flags.size())
+	    return 0;
+      else
+	    return net->flags[flag];
+}
+
 extern "C" const char* ivl_logic_attr(ivl_net_logic_t net, const char*key)
 {
       assert(net);
@@ -782,7 +804,6 @@ extern "C" unsigned ivl_lpm_base(ivl_lpm_t net)
       switch (net->type) {
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
-	  case IVL_LPM_PART_BI:
 	    return net->u_.part.base;
 	  default:
 	    assert(0);
@@ -865,6 +886,8 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_ABS:
+	  case IVL_LPM_CAST_INT:
+	  case IVL_LPM_CAST_REAL:
 	    assert(idx == 0);
 	    return net->u_.arith.a;
 
@@ -918,7 +941,6 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
-	  case IVL_LPM_PART_BI:
 	    assert(idx <= 1);
 	    if (idx == 0)
 		  return net->u_.part.a;
@@ -1008,20 +1030,19 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
       switch (net->type) {
 	  case IVL_LPM_ABS:
 	  case IVL_LPM_ADD:
-	  case IVL_LPM_DIVIDE:
-	  case IVL_LPM_MOD:
-	  case IVL_LPM_MULT:
-	  case IVL_LPM_POW:
-	  case IVL_LPM_SUB:
-	    assert(idx == 0);
-	    return net->u_.arith.q;
-
+	  case IVL_LPM_CAST_INT:
+	  case IVL_LPM_CAST_REAL:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_DIVIDE:
+	  case IVL_LPM_MOD:
+	  case IVL_LPM_MULT:
+	  case IVL_LPM_POW:
+	  case IVL_LPM_SUB:
 	    assert(idx == 0);
 	    return net->u_.arith.q;
 
@@ -1061,7 +1082,6 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
-	  case IVL_LPM_PART_BI:
 	    assert(idx == 0);
 	    return net->u_.part.q;
 
@@ -1125,6 +1145,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	    return 0;
 	  case IVL_LPM_ABS:
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_CAST_REAL:
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_GE:
@@ -1147,6 +1168,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    return net->u_.shift.signed_flag;
+	  case IVL_LPM_CAST_INT:
 	  case IVL_LPM_SIGN_EXT: // Sign extend is always signed.
 	    return 1;
 	  case IVL_LPM_SFUNC:
@@ -1157,7 +1179,6 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	    return 0;
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
-	  case IVL_LPM_PART_BI:
 	    return net->u_.part.signed_flag;
 	  case IVL_LPM_REPEAT:
 	    return 0;
@@ -1336,6 +1357,15 @@ extern "C" ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net)
       if (net->type_ != __NEXUS_PTR_SIG)
 	    return 0;
       return net->l.sig;
+}
+
+extern "C" ivl_switch_t ivl_nexus_ptr_switch(ivl_nexus_ptr_t net)
+{
+      if (net == 0)
+	    return 0;
+      if (net->type_ != __NEXUS_PTR_SWI)
+	    return 0;
+      return net->l.swi;
 }
 
 extern "C" const char* ivl_parameter_basename(ivl_parameter_t net)
@@ -2162,6 +2192,11 @@ extern "C" const char*ivl_switch_basename(ivl_switch_t net)
       return net->name;
 }
 
+extern "C" ivl_scope_t ivl_switch_scope(ivl_switch_t net)
+{
+      return net->scope;
+}
+
 extern "C" ivl_switch_type_t ivl_switch_type(ivl_switch_t net)
 {
       return net->type;
@@ -2180,4 +2215,34 @@ extern "C" ivl_nexus_t ivl_switch_b(ivl_switch_t net)
 extern "C" ivl_nexus_t ivl_switch_enable(ivl_switch_t net)
 {
       return net->pins[2];
+}
+
+extern "C" unsigned ivl_switch_width(ivl_switch_t net)
+{
+      return net->width;
+}
+
+extern "C" unsigned ivl_switch_part(ivl_switch_t net)
+{
+      return net->part;
+}
+
+extern "C" unsigned ivl_switch_offset(ivl_switch_t net)
+{
+      return net->offset;
+}
+
+extern "C" const char* ivl_switch_file(ivl_switch_t net)
+{
+      return net->file;
+}
+
+extern "C" ivl_island_t ivl_switch_island(ivl_switch_t net)
+{
+      return net->island;
+}
+
+extern "C" unsigned ivl_switch_lineno(ivl_switch_t net)
+{
+      return net->lineno;
 }

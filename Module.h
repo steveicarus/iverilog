@@ -94,7 +94,7 @@ class Module : public PScope, public LineInfo {
 	   module is elaborated. During parsing, I put the parameters
 	   into this map. */
       struct param_expr_t : public LineInfo {
-	    param_expr_t() : range(0) { }
+	    param_expr_t() : type(IVL_VT_NO_TYPE), msb(0), lsb(0), signed_flag(false), expr(0), range(0) { }
 	      // Type information
 	    ivl_variable_type_t type;
 	    PExpr*msb;
@@ -102,7 +102,7 @@ class Module : public PScope, public LineInfo {
 	    bool signed_flag;
 	      // Value expression
 	    PExpr*expr;
-	      // If there are range constrants, list them here
+	      // If there are range constraints, list them here
 	    range_t*range;
       };
       map<perm_string,param_expr_t>parameters;
@@ -138,6 +138,10 @@ class Module : public PScope, public LineInfo {
 	   set by the `timescale directive. */
       int time_unit, time_precision;
 
+	/* Task definitions within this module */
+      map<perm_string,PTask*> tasks;
+      map<perm_string,PFunction*> funcs;
+
 	/* The module has a list of genvars that may be used in
 	   various generate schemes. */
       map<perm_string,LineInfo*> genvars;
@@ -152,8 +156,6 @@ class Module : public PScope, public LineInfo {
       perm_string mod_name() const { return pscope_name(); }
 
       void add_gate(PGate*gate);
-      void add_task(perm_string name, PTask*def);
-      void add_function(perm_string name, PFunction*def);
 
       unsigned port_count() const;
       const svector<PEIdent*>& get_port(unsigned idx) const;
@@ -173,8 +175,6 @@ class Module : public PScope, public LineInfo {
 
     private:
       list<PGate*> gates_;
-      map<perm_string,PTask*> tasks_;
-      map<perm_string,PFunction*> funcs_;
 
       static void elaborate_parm_item_(perm_string name, const param_expr_t&cur,
 				       Design*des, NetScope*scope);

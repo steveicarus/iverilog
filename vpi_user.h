@@ -143,7 +143,7 @@ typedef struct t_vpi_value {
   (1) The number of delays to be retrieved
       ( normally this is used in vpi_get_delays (..) )
   { 
-    (1.1) Setted by "no_of_delays" field
+    (1.1) Set by "no_of_delays" field
    
     (1.2) For the primitive_object, the no_of_delays
         shall be 2 or 3
@@ -279,6 +279,7 @@ typedef struct t_vpi_delay  {
 #define vpiNamedFork   35
 #define vpiNet         36
 #define vpiParameter   41
+#define vpiPartSelect  42
 #define vpiPathTerm    43
 #define vpiRealVar     47
 #define vpiReg         48
@@ -297,6 +298,7 @@ typedef struct t_vpi_delay  {
 #define vpiModPathIn     95
 #define vpiModPathOut    96 
 #define vpiVariables   100
+#define vpiExpr        102
 
 #define vpiCallback  1000
 
@@ -346,8 +348,8 @@ typedef struct t_vpi_delay  {
 #   define vpiSysFuncReal  vpiRealFunc
 #   define vpiSysFuncTime  vpiTimeFunc
 #   define vpiSysFuncSized vpiSizedFunc
-#define vpiSigned    65
-#define vpiExpr      102
+#define vpiConstantSelect 53
+#define vpiSigned         65
 /* IVL private properties */
 #define _vpiNexusId 0x1000000
 

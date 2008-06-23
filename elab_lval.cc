@@ -208,101 +208,18 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    return 0;
       }
 
-      long msb, lsb;
-      NetExpr*mux;
 
       if (use_sel == index_component_t::SEL_BIT) {
-
-	    const index_component_t&index_tail = name_tail.index.back();
-	    ivl_assert(*this, index_tail.msb != 0);
-	    ivl_assert(*this, index_tail.lsb == 0);
-
-	      /* If there is only a single select expression, it is a
-		 bit select. Evaluate the constant value and treat it
-		 as a part select with a bit width of 1. If the
-		 expression it not constant, then return the
-		 expression as a mux. */
-
-	    NetExpr*index_expr = elab_and_eval(des, scope, index_tail.msb, -1);
-
-	    if (NetEConst*index_con = dynamic_cast<NetEConst*> (index_expr)) {
-		  msb = index_con->value().as_long();
-		  lsb = index_con->value().as_long();
-		  mux = 0;
-
-	    } else {
-		  msb = 0;
-		  lsb = 0;
-		  mux = index_expr;
-	    }
-
-      } else {
-
-	      /* No select expressions, so presume a part select the
-		 width of the register. */
-
-	    msb = reg->msb();
-	    lsb = reg->lsb();
-	    mux = 0;
+	    NetAssign_*lv = new NetAssign_(reg);
+	    elaborate_lval_net_bit_(des, scope, lv);
+	    return lv;
       }
 
+      ivl_assert(*this, use_sel == index_component_t::SEL_NONE);
 
-      NetAssign_*lv;
-      if (mux) {
+	/* No select expressions. */
 
-	      /* If there is a non-constant bit select, make a
-		 NetAssign_ to the target reg and attach a
-		 bmux to select the target bit. */
-	    lv = new NetAssign_(reg);
-
-	      /* Correct the mux for the range of the vector. */
-	    if (reg->msb() < reg->lsb())
-		  mux = make_sub_expr(reg->lsb(), mux);
-	    else if (reg->lsb() != 0)
-		  mux = make_add_expr(mux, - reg->lsb());
-
-	    lv->set_part(mux, 1);
-
-      } else if (msb == reg->msb() && lsb == reg->lsb()) {
-
-	      /* No bit select, and part select covers the entire
-		 vector. Simplest case. */
-	    lv = new NetAssign_(reg);
-
-      } else {
-
-	      /* If the bit/part select is constant, then make the
-		 NetAssign_ only as wide as it needs to be and connect
-		 only to the selected bits of the reg. */
-	    unsigned loff = reg->sb_to_idx(lsb);
-	    unsigned moff = reg->sb_to_idx(msb);
-	    unsigned wid = moff - loff + 1;
-
-	    if (moff < loff) {
-		  cerr << get_fileline() << ": error: part select "
-		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
-		       << " is reversed." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	      /* If the part select extends beyond the extreme of the
-		 variable, then report an error. Note that loff is
-		 converted to normalized form so is relative the
-		 variable pins. */
-
-	    if ((wid + loff) > reg->vector_width()) {
-		  cerr << get_fileline() << ": error: bit/part select "
-		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
-		       << " is out of range." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    lv = new NetAssign_(reg);
-	    lv->set_part(new NetEConst(verinum(loff)), wid);
-      }
-
+      NetAssign_*lv = new NetAssign_(reg);
 
       return lv;
 }
@@ -374,10 +291,67 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       return lv;
 }
 
+bool PEIdent::elaborate_lval_net_bit_(Design*des,
+				      NetScope*scope,
+				      NetAssign_*lv) const
+{
+      const name_component_t&name_tail = path_.back();
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.msb != 0);
+      ivl_assert(*this, index_tail.lsb == 0);
+
+      NetNet*reg = lv->sig();
+
+	// Bit selects have a single select expression. Evaluate the
+	// constant value and treat it as a part select with a bit
+	// width of 1.
+      NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1);
+      long lsb = 0;
+
+      if (NetEConst*index_con = dynamic_cast<NetEConst*> (mux)) {
+	    lsb = index_con->value().as_long();
+	    mux = 0;
+      }
+
+      if (mux) {
+	      // Non-constant bit mux. Correct the mux for the range
+	      // of the vector, then set the l-value part select expression.
+	    if (reg->msb() < reg->lsb())
+		  mux = make_sub_expr(reg->lsb(), mux);
+	    else if (reg->lsb() != 0)
+		  mux = make_add_expr(mux, - reg->lsb());
+
+	    lv->set_part(mux, 1);
+
+      } else if (lsb == reg->msb() && lsb == reg->lsb()) {
+	      // Constant bit mux that happens to select the only bit
+	      // of the l-value. Don't bother with any select at all.
+
+      } else {
+	      // Constant bit select that does something useful.
+	    long loff = reg->sb_to_idx(lsb);
+
+	    if (loff < 0 || loff >= (long)reg->vector_width()) {
+		  cerr << get_fileline() << ": error: bit select "
+		       << reg->name() << "[" <<lsb<<"]"
+		       << " is out of range." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    lv->set_part(new NetEConst(verinum(loff)), 1);
+      }
+
+      return true;
+}
+
 bool PEIdent::elaborate_lval_net_part_(Design*des,
 				       NetScope*scope,
 				       NetAssign_*lv) const
 {
+	// The range expressions of a part select must be
+	// constant. The calculate_parts_ function calculates the
+	// values into msb and lsb.
       long msb, lsb;
       bool flag = calculate_parts_(des, scope, msb, lsb);
       if (!flag)
@@ -388,17 +362,14 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 
       if (msb == reg->msb() && lsb == reg->lsb()) {
 
-	      /* No bit select, and part select covers the entire
-		 vector. Simplest case. */
+	      /* Part select covers the entire vector. Simplest case. */
 
       } else {
 
-	      /* If the bit/part select is constant, then make the
-		 NetAssign_ only as wide as it needs to be and connect
-		 only to the selected bits of the reg. */
-	    unsigned loff = reg->sb_to_idx(lsb);
-	    unsigned moff = reg->sb_to_idx(msb);
-	    unsigned wid = moff - loff + 1;
+	      /* Get the canonical offsets into the vector. */
+	    long loff = reg->sb_to_idx(lsb);
+	    long moff = reg->sb_to_idx(msb);
+	    long wid = moff - loff + 1;
 
 	    if (moff < loff) {
 		  cerr << get_fileline() << ": error: part select "
@@ -408,17 +379,15 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 		  return false;
 	    }
 
-	      /* If the part select extends beyond the extreme of the
+	      /* If the part select extends beyond the extremes of the
 		 variable, then report an error. Note that loff is
 		 converted to normalized form so is relative the
 		 variable pins. */
 
-	    if ((wid + loff) > reg->vector_width()) {
-		  cerr << get_fileline() << ": error: bit/part select "
+	    if (loff < 0 || moff >= (signed)reg->vector_width()) {
+		  cerr << get_fileline() << ": warning: Part select "
 		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
 		       << " is out of range." << endl;
-		  des->errors += 1;
-		  return false;
 	    }
 
 	    lv->set_part(new NetEConst(verinum(loff)), wid);

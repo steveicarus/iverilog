@@ -107,6 +107,9 @@
 ".array/real" { return K_ARRAY_R; }
 ".array/s" { return K_ARRAY_S; }
 ".array/port" { return K_ARRAY_PORT; }
+".cast/int" { return K_CAST_INT; }
+".cast/real" { return K_CAST_REAL; }
+".cast/real.s" { return K_CAST_REAL_S; }
 ".cmp/eeq"  { return K_CMP_EEQ; }
 ".cmp/eq"   { return K_CMP_EQ; }
 ".cmp/eq.r" { return K_CMP_EQ_R; }
@@ -124,8 +127,11 @@
 ".dff"      { return K_DFF; }
 ".event"    { return K_EVENT; }
 ".event/or" { return K_EVENT_OR; }
+".export"   { return K_EXPORT; }
 ".extend/s" { return K_EXTEND_S; }
 ".functor"  { return K_FUNCTOR; }
+".import"   { return K_IMPORT; }
+".island"   { return K_ISLAND; }
 ".modpath" { return K_MODPATH; }
 ".net"      { return K_NET; }
 ".net8"     { return K_NET8; }
@@ -138,6 +144,7 @@
 ".part"     { return K_PART; }
 ".part/pv"  { return K_PART_PV; }
 ".part/v"   { return K_PART_V; }
+".port"     { return K_PORT; }
 ".reduce/and" { return K_REDUCE_AND; }
 ".reduce/or"  { return K_REDUCE_OR; }
 ".reduce/xor" { return K_REDUCE_XOR; }
@@ -153,6 +160,10 @@
 ".shift/rs" { return K_SHIFTRS; }
 ".thread"   { return K_THREAD; }
 ".timescale" { return K_TIMESCALE; }
+".tran"     { return K_TRAN; }
+".tranif0"  { return K_TRANIF0; }
+".tranif1"  { return K_TRANIF1; }
+".tranvp"   { return K_TRANVP; }
 ".ufunc"    { return K_UFUNC; }
 ".var"      { return K_VAR; }
 ".var/real" { return K_VAR_R; }
@@ -173,21 +184,23 @@
 "%disable"  { return K_disable; }
 "%fork"     { return K_fork; }
 
+  /* Handle the specialized variable access functions. */
+
+"&A" { return K_A; }
+"&PV" { return K_PV; }
+
 "%"[.$_/a-zA-Z0-9]+ {
       yylval.text = strdup(yytext);
       assert(yylval.text);
       return T_INSTR; }
 
 [0-9][0-9]* {
-      yylval.numb = strtol(yytext, 0, 0);
+      yylval.numb = strtoul(yytext, 0, 0);
       return T_NUMBER; }
 
 "0x"[0-9a-fA-F]+ {
-      yylval.numb = strtol(yytext, 0, 0);
+      yylval.numb = strtoul(yytext, 0, 0);
       return T_NUMBER; }
-
-
-"&A" { return K_A; }
 
   /* Handle some specialized constant/literals as symbols. */
 
@@ -218,7 +231,7 @@
 
   /* Symbols are pretty much what is left. They are used to refer to
      labels so the rule must match a string that a label would match. */
-[.$_a-zA-Z\\][.$_a-zA-Z\\0-9<>/]* {
+[.$_a-zA-Z\\]([.$_a-zA-Z\\0-9/]|(\\.))* {
       yylval.text = strdup(yytext);
       assert(yylval.text);
       return T_SYMBOL; }

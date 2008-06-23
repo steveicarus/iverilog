@@ -21,6 +21,8 @@
 
 # include  "config.h"
 # include  <stddef.h>
+# include  <string.h>
+# include  <new>
 # include  <assert.h>
 
 #ifdef HAVE_IOSFWD
@@ -37,7 +39,6 @@ class  vvp_scalar_t;
 
 /* Basic netlist types. */
 class  vvp_net_t;
-class  vvp_net_ptr_t;
 class  vvp_net_fun_t;
 
 /* Core net function types. */
@@ -121,9 +122,12 @@ extern int edge(vvp_bit4_t from, vvp_bit4_t to);
 class vvp_vector4_t {
 
       friend vvp_vector4_t operator ~(const vvp_vector4_t&that);
+      friend class vvp_vector4array_t;
 
     public:
       explicit vvp_vector4_t(unsigned size =0, vvp_bit4_t bits =BIT4_X);
+
+      explicit vvp_vector4_t(unsigned size, double val);
 
 	// Construct a vector4 from the subvalue of another vector4.
       explicit vvp_vector4_t(const vvp_vector4_t&that,
@@ -173,6 +177,8 @@ class vvp_vector4_t {
     private:
 	// Number of vvp_bit4_t bits that can be shoved into a word.
       enum { BITS_PER_WORD = 8*sizeof(unsigned long) };
+	// The double value constructor requires that WORD_0_BBITS
+	// and WORD_1_BBITS have the same value!
 #if SIZEOF_UNSIGNED_LONG == 8
       enum { WORD_0_ABITS = 0x0000000000000000UL,
 	     WORD_0_BBITS = 0x0000000000000000UL };
@@ -197,7 +203,7 @@ class vvp_vector4_t {
 
       void allocate_words_(unsigned size, unsigned long inita, unsigned long initb);
 
-	// Values in the vvp_vector4_t are stored split accross two
+	// Values in the vvp_vector4_t are stored split across two
 	// arrays. For each bit in the vector, there is an abit and a
 	// bbit. the encoding of a vvp_vector4_t is:
 	//
@@ -368,8 +374,6 @@ extern vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 				      vvp_bit4_t val_if_equal);
 template <class T> extern T coerce_to_width(const T&that, unsigned width);
 
-extern vvp_vector4_t double_to_vector4(double val, unsigned wid);
-
 /*
  * These functions extract the value of the vector as a native type,
  * if possible, and return true to indicate success. If the vector has
@@ -378,8 +382,45 @@ extern vvp_vector4_t double_to_vector4(double val, unsigned wid);
  * to real and integers) and the return value becomes false to
  * indicate an error.
  */
+extern bool vector4_to_value(const vvp_vector4_t&a, long&val, bool is_signed);
 extern bool vector4_to_value(const vvp_vector4_t&a, unsigned long&val);
 extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
+
+/*
+ * vvp_vector4array_t
+ */
+class vvp_vector4array_t {
+
+    public:
+      vvp_vector4array_t(unsigned width, unsigned words);
+      ~vvp_vector4array_t();
+
+      unsigned width() const { return width_; }
+      unsigned words() const { return words_; }
+
+      vvp_vector4_t get_word(unsigned idx) const;
+      void set_word(unsigned idx, const vvp_vector4_t&that);
+
+    private:
+      struct v4cell {
+	    union {
+		  unsigned long abits_val_;
+		  unsigned long*abits_ptr_;
+	    };
+	    union {
+		  unsigned long bbits_val_;
+		  unsigned long*bbits_ptr_;
+	    };
+      };
+
+      unsigned width_;
+      unsigned words_;
+      v4cell* array_;
+
+    private: // Not implemented
+      vvp_vector4array_t(const vvp_vector4array_t&);
+      vvp_vector4array_t& operator = (const vvp_vector4array_t&);
+};
 
 /* vvp_vector2_t
  */
@@ -477,14 +518,13 @@ inline unsigned vvp_vector2_t::size() const
  */
 class vvp_scalar_t {
 
-      friend vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b);
+      friend vvp_scalar_t fully_featured_resolv_(vvp_scalar_t a, vvp_scalar_t b);
 
     public:
 	// Make a HiZ value.
       explicit vvp_scalar_t();
 
 	// Make an unambiguous value.
-      explicit vvp_scalar_t(vvp_bit4_t val, unsigned str);
       explicit vvp_scalar_t(vvp_bit4_t val, unsigned str0, unsigned str1);
 
 	// Get the vvp_bit4_t version of the value
@@ -504,21 +544,22 @@ inline vvp_scalar_t::vvp_scalar_t()
       value_ = 0;
 }
 
-inline vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str)
+inline vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str0, unsigned str1)
 {
-      assert(str <= 7);
+      assert(str0 <= 7);
+      assert(str1 <= 7);
 
-      if (str == 0) {
+      if (str0 == 0 && str1 == 0) {
 	    value_ = 0x00;
       } else switch (val) {
 	  case BIT4_0:
-	    value_ = str | (str<<4);
+	    value_ = str0 | (str0<<4);
 	    break;
 	  case BIT4_1:
-	    value_ = str | (str<<4) | 0x88;
+	    value_ = str1 | (str1<<4) | 0x88;
 	    break;
 	  case BIT4_X:
-	    value_ = str | (str<<4) | 0x80;
+	    value_ = str0 | (str1<<4) | 0x80;
 	    break;
 	  case BIT4_Z:
 	    value_ = 0x00;
@@ -526,7 +567,39 @@ inline vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str)
       }
 }
 
-extern vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b);
+inline vvp_bit4_t vvp_scalar_t::value() const
+{
+      if (value_ == 0) {
+	    return BIT4_Z;
+      } else switch (value_ & 0x88) {
+	  case 0x00:
+	    return BIT4_0;
+	  case 0x88:
+	    return BIT4_1;
+	  default:
+	    return BIT4_X;
+      }
+}
+
+
+inline vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b)
+{
+      extern vvp_scalar_t fully_featured_resolv_(vvp_scalar_t a, vvp_scalar_t b);
+
+	// If the value is HiZ, resolution is simply a matter of
+	// returning the *other* value.
+      if (a.is_hiz())
+	    return b;
+      if (b.is_hiz())
+	    return a;
+	// If the values are the identical, then resolution is simply
+	// returning *either* value.
+      if (a .eeq( b ))
+	    return a;
+
+      return fully_featured_resolv_(a,b);
+}
+
 extern ostream& operator<< (ostream&, vvp_scalar_t);
 
 /*
@@ -543,10 +616,12 @@ extern ostream& operator<< (ostream&, vvp_scalar_t);
  */
 class vvp_vector8_t {
 
+      friend vvp_vector8_t part_expand(const vvp_vector8_t&, unsigned, unsigned);
+
     public:
       explicit vvp_vector8_t(unsigned size =0);
-	// Make a vvp_vector8_t from a vector4 and a specified strength.
-      vvp_vector8_t(const vvp_vector4_t&that, unsigned str =6);
+	// Make a vvp_vector8_t from a vector4 and a specified
+	// strength.
       explicit vvp_vector8_t(const vvp_vector4_t&that,
 			     unsigned str0,
 			     unsigned str1);
@@ -555,6 +630,7 @@ class vvp_vector8_t {
 
       unsigned size() const { return size_; }
       vvp_scalar_t value(unsigned idx) const;
+      vvp_vector8_t subvalue(unsigned adr, unsigned width) const;
       void set_bit(unsigned idx, vvp_scalar_t val);
 
 	// Test that the vectors are exactly equal
@@ -564,38 +640,93 @@ class vvp_vector8_t {
       vvp_vector8_t& operator= (const vvp_vector8_t&that);
 
     private:
+	// This is the number of vvp_scalar_t objects we can keep in
+	// the val_ buffer. If the vector8 is bigger then this, then
+	// resort to allocations to get a larger buffer.
+      enum { PTR_THRESH = 8 };
       unsigned size_;
-      vvp_scalar_t*bits_;
+      union {
+	    vvp_scalar_t*ptr_;
+	    char val_[PTR_THRESH * sizeof(vvp_scalar_t)];
+      };
 };
 
   /* Resolve uses the default Verilog resolver algorithm to resolve
      two drive vectors to a single output. */
-extern vvp_vector8_t resolve(const vvp_vector8_t&a, const vvp_vector8_t&b);
+inline vvp_vector8_t resolve(const vvp_vector8_t&a, const vvp_vector8_t&b)
+{
+      assert(a.size() == b.size());
+      vvp_vector8_t out (a.size());
+
+      for (unsigned idx = 0 ;  idx < out.size() ;  idx += 1) {
+	    out.set_bit(idx, resolve(a.value(idx), b.value(idx)));
+      }
+
+      return out;
+}
+
   /* This function implements the strength reduction implied by
      Verilog standard resistive devices. */
 extern vvp_vector8_t resistive_reduction(const vvp_vector8_t&a);
   /* The reduce4 function converts a vector8 to a vector4, losing
      strength information in the process. */
 extern vvp_vector4_t reduce4(const vvp_vector8_t&that);
+extern vvp_vector8_t part_expand(const vvp_vector8_t&a, unsigned wid, unsigned off);
   /* Print a vector8 value to a stream. */
 extern ostream& operator<< (ostream&, const vvp_vector8_t&);
 
+inline vvp_vector8_t::vvp_vector8_t(unsigned size)
+: size_(size)
+{
+      if (size_ <= PTR_THRESH) {
+	    new (val_) vvp_scalar_t[PTR_THRESH];
+      } else {
+	    ptr_ = new vvp_scalar_t[size_];
+      }
+}
+
 inline vvp_vector8_t::~vvp_vector8_t()
 {
-      if (size_ > 0)
-	    delete[]bits_;
+      if (size_ > PTR_THRESH)
+	    delete[]ptr_;
 }
 
 inline vvp_scalar_t vvp_vector8_t::value(unsigned idx) const
 {
       assert(idx < size_);
-      return bits_[idx];
+      if (size_ <= PTR_THRESH)
+	    return reinterpret_cast<const vvp_scalar_t*>(val_) [idx];
+      else
+	    return ptr_[idx];
 }
 
 inline void vvp_vector8_t::set_bit(unsigned idx, vvp_scalar_t val)
 {
       assert(idx < size_);
-      bits_[idx] = val;
+      if (size_ <= PTR_THRESH)
+	    reinterpret_cast<vvp_scalar_t*>(val_) [idx] = val;
+      else
+	    ptr_[idx] = val;
+}
+
+  // Exactly-equal for vvp_vector8_t is common and should be as tight
+  // as possible.
+inline bool vvp_vector8_t::eeq(const vvp_vector8_t&that) const
+{
+      if (size_ != that.size_)
+	    return false;
+      if (size_ == 0)
+	    return true;
+
+      if (size_ <= PTR_THRESH)
+	    return 0 == memcmp(val_, that.val_, sizeof(val_));
+
+      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1) {
+	    if (! ptr_[idx] .eeq( that.ptr_[idx] ))
+		return false;
+      }
+
+      return true;
 }
 
 /*
@@ -605,77 +736,47 @@ inline void vvp_vector8_t::set_bit(unsigned idx, vvp_scalar_t val)
  * the vvp_net_t. Use this pointer to point only to the inputs of
  * vvp_net_t objects. To point to vvp_net_t objects as a whole, use
  * vvp_net_t* pointers.
- */
-class vvp_net_ptr_t {
-
-    public:
-      vvp_net_ptr_t();
-      vvp_net_ptr_t(vvp_net_t*ptr, unsigned port);
-      ~vvp_net_ptr_t() { }
-
-      vvp_net_t* ptr();
-      const vvp_net_t* ptr() const;
-      unsigned  port() const;
-
-      bool nil() const;
-
-      bool operator == (vvp_net_ptr_t that) const;
-      bool operator != (vvp_net_ptr_t that) const;
-
-    private:
-      unsigned long bits_;
-};
-
-/*
+ *
  * Alert! Ugly details. Protective clothing recommended!
  * The vvp_net_ptr_t encodes the bits of a C pointer, and two bits of
  * port identifier into an unsigned long. This works only if vvp_net_t*
  * values are always aligned on 4-byte boundaries.
  */
+template <class T> class vvp_sub_pointer_t {
 
-inline vvp_net_ptr_t::vvp_net_ptr_t()
-{
-      bits_ = 0;
-}
+    public:
+      vvp_sub_pointer_t() : bits_(0) { }
 
-inline vvp_net_ptr_t::vvp_net_ptr_t(vvp_net_t*ptr, unsigned port)
-{
-      bits_ = reinterpret_cast<unsigned long> (ptr);
-      assert( (bits_ & 3) == 0 );
-      assert( (port & ~3) == 0 );
-      bits_ |= port;
-}
+      vvp_sub_pointer_t(T*ptr, unsigned port)
+      {
+	    bits_ = reinterpret_cast<unsigned long> (ptr);
+	    assert( (bits_ & 3) == 0 );
+	    assert( (port & ~3) == 0 );
+	    bits_ |= port;
+      }
 
-inline vvp_net_t* vvp_net_ptr_t::ptr()
-{
-      return reinterpret_cast<vvp_net_t*> (bits_ & ~3UL);
-}
+      ~vvp_sub_pointer_t() { }
 
-inline const vvp_net_t* vvp_net_ptr_t::ptr() const
-{
-      return reinterpret_cast<const vvp_net_t*> (bits_ & ~3UL);
-}
+      T* ptr()
+      { return reinterpret_cast<T*> (bits_ & ~3UL); }
 
-inline unsigned vvp_net_ptr_t::port() const
-{
-      return bits_ & 3;
-}
+      const T* ptr() const
+      { return reinterpret_cast<const T*> (bits_ & ~3UL); }
 
-inline bool vvp_net_ptr_t::nil() const
-{
-      return bits_ == 0;
-}
+      unsigned  port() const { return bits_ & 3; }
 
-inline bool vvp_net_ptr_t::operator == (vvp_net_ptr_t that) const
-{
-      return bits_ == that.bits_;
-}
+      bool nil() const { return bits_ == 0; }
 
-inline bool vvp_net_ptr_t::operator != (vvp_net_ptr_t that) const
-{
-      return bits_ != that.bits_;
-}
+      bool operator == (vvp_sub_pointer_t that) const { return bits_ == that.bits_; }
+      bool operator != (vvp_sub_pointer_t that) const { return bits_ != that.bits_; }
 
+    private:
+      unsigned long bits_;
+};
+
+typedef vvp_sub_pointer_t<vvp_net_t> vvp_net_ptr_t;
+template <class T> ostream& operator << (ostream&out, vvp_sub_pointer_t<T> val)
+{ out << val.ptr() << "[" << val.port() << "]"; return out; }
 
 /*
  * This is the basic unit of netlist connectivity. It is a fan-in of
@@ -717,6 +818,13 @@ struct vvp_net_t {
       vvp_net_ptr_t port[4];
       vvp_net_ptr_t out;
       vvp_net_fun_t*fun;
+
+    public: // Need a better new for these objects.
+      static void* operator new(std::size_t size);
+      static void operator delete(void*); // not implemented
+    private: // not implemented
+      static void* operator new[](std::size_t size);
+      static void operator delete[](void*);
 };
 
 /*
@@ -748,7 +856,7 @@ class vvp_net_fun_t {
       virtual ~vvp_net_fun_t();
 
       virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-      virtual void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+      virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
       virtual void recv_real(vvp_net_ptr_t port, double bit);
       virtual void recv_long(vvp_net_ptr_t port, long bit);
 
@@ -758,9 +866,14 @@ class vvp_net_fun_t {
       virtual void recv_long_pv(vvp_net_ptr_t port, long bit,
                                 unsigned base, unsigned wid);
 
+    public: // These objects are only permallocated.
+      static void* operator new(std::size_t size);
+      static void operator delete(void*); // not implemented
     private: // not implemented
       vvp_net_fun_t(const vvp_net_fun_t&);
       vvp_net_fun_t& operator= (const vvp_net_fun_t&);
+      static void* operator new[](std::size_t size);
+      static void operator delete[](void*);
 };
 
 /* **** Some core net functions **** */
@@ -989,7 +1102,7 @@ class vvp_fun_signal  : public vvp_fun_signal_vec {
       explicit vvp_fun_signal(unsigned wid, vvp_bit4_t init=BIT4_X);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
 	// Part select variants of above
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -1021,12 +1134,12 @@ class vvp_fun_signal8  : public vvp_fun_signal_vec {
       explicit vvp_fun_signal8(unsigned wid);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-      void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
 	// Part select variants of above
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                         unsigned base, unsigned wid, unsigned vwid);
-      void recv_vec8_pv(vvp_net_ptr_t port, vvp_vector8_t bit,
+      void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
                         unsigned base, unsigned wid, unsigned vwid);
 
 	// Get information about the vector value.
@@ -1162,7 +1275,7 @@ inline void vvp_send_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val)
       }
 }
 
-extern void vvp_send_vec8(vvp_net_ptr_t ptr, vvp_vector8_t val);
+extern void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val);
 extern void vvp_send_real(vvp_net_ptr_t ptr, double val);
 extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
 extern void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,

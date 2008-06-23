@@ -31,23 +31,6 @@
 #define snprintf _snprintf
 #endif
 
-struct vvp_nexus_data {
-	/* draw_net_input uses this */
-      const char*net_input;
-      unsigned drivers_count;
-      int flags;
-	/* draw_net_in_scope uses these to identify the controlling word. */
-      ivl_signal_t net;
-      unsigned net_word;
-};
-#define VVP_NEXUS_DATA_STR 0x0001
-
-
-static struct vvp_nexus_data*new_nexus_data()
-{
-      struct vvp_nexus_data*data = calloc(1, sizeof(struct vvp_nexus_data));
-      return data;
-}
 
 /*
  *  Escape non-symbol characters in ids, and quotes in strings.
@@ -147,27 +130,6 @@ const char *vvp_mangle_name(const char *id)
       return out;
 }
 
-static void draw_C4_repeated_constant(char bit_char, unsigned width)
-{
-      unsigned idx;
-
-      fprintf(vvp_out, "C4<");
-      for (idx = 0 ;  idx < width ;  idx += 1)
-	    fprintf(vvp_out, "%c", bit_char);
-
-      fprintf(vvp_out, ">");
-}
-
-static void str_repeat(char*buf, const char*str, unsigned rpt)
-{
-      unsigned idx;
-      size_t len = strlen(str);
-      for (idx = 0 ;  idx < rpt ;  idx += 1) {
-	    strcpy(buf, str);
-	    buf += len;
-      }
-}
-
 /* REMOVE ME: vvp_signal_label should not be used. DEAD CODE
  * Given a signal, generate a string name that is suitable for use as
  * a label. The only rule is that the same signal will always have the
@@ -196,31 +158,6 @@ ivl_signal_t signal_of_nexus(ivl_nexus_t nex, unsigned*word)
       }
 
       return 0;
-}
-
-ivl_signal_type_t signal_type_of_nexus(ivl_nexus_t nex)
-{
-      unsigned idx;
-      ivl_signal_type_t out = IVL_SIT_TRI;
-
-      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    ivl_signal_type_t stype;
-	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
-	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
-	    if (sig == 0)
-		  continue;
-
-	    stype = ivl_signal_type(sig);
-	    if (stype == IVL_SIT_REG)
-		  continue;
-	    if (stype == IVL_SIT_TRI)
-		  continue;
-	    if (stype == IVL_SIT_NONE)
-		  continue;
-	    out = stype;
-      }
-
-      return out;
 }
 
 unsigned width_of_nexus(ivl_nexus_t nex)
@@ -332,7 +269,7 @@ const char*drive_string(ivl_drive_t drive)
  * gate will be generated for this node. Otherwise, the code generator
  * will connect its input to its output and skip the gate.
  */
-static int can_elide_bufz(ivl_net_logic_t net, ivl_nexus_ptr_t nptr)
+int can_elide_bufz(ivl_net_logic_t net, ivl_nexus_ptr_t nptr)
 {
       ivl_nexus_t in_n;
       unsigned idx;
@@ -380,100 +317,7 @@ static int can_elide_bufz(ivl_net_logic_t net, ivl_nexus_ptr_t nptr)
       return 1;
 }
 
-/*
- * Given a nexus, look for a signal that has module delay
- * paths. Return that signal. (There should be no more than 1.) If we
- * don't find any, then return nil.
- */
-static ivl_signal_t find_modpath(ivl_nexus_t nex)
-{
-      unsigned idx;
-      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex,idx);
-	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
-	    if (sig == 0)
-		  continue;
-	    if (ivl_signal_npath(sig) == 0)
-		  continue;
-
-	    return sig;
-      }
-
-      return 0;
-}
-
-static char* draw_C4_to_string(ivl_net_const_t cptr)
-{
-      const char*bits = ivl_const_bits(cptr);
-      unsigned idx;
-
-      size_t result_len = 5 + ivl_const_width(cptr);
-      char*result = malloc(result_len);
-      char*dp = result;
-      strcpy(dp, "C4<");
-      dp += strlen(dp);
-
-      for (idx = 0 ;  idx < ivl_const_width(cptr) ;  idx += 1) {
-	    char bitchar = bits[ivl_const_width(cptr)-idx-1];
-	    *dp++ = bitchar;
-	    assert((dp - result) < result_len);
-      }
-
-      strcpy(dp, ">");
-      return result;
-}
-
-static char* draw_C8_to_string(ivl_net_const_t cptr,
-			       ivl_drive_t dr0, ivl_drive_t dr1)
-{
-      size_t nresult = 5 + 3*ivl_const_width(cptr);
-      char*result = malloc(nresult);
-      const char*bits = ivl_const_bits(cptr);
-      unsigned idx;
-
-      char dr0c = "01234567"[dr0];
-      char dr1c = "01234567"[dr1];
-      char*dp = result;
-
-      strcpy(dp, "C8<");
-      dp += strlen(dp);
-
-      for (idx = 0 ;  idx < ivl_const_width(cptr) ;  idx += 1) {
-	    switch (bits[ivl_const_width(cptr)-idx-1]) {
-		case '0':
-		  *dp++ = dr0c;
-		  *dp++ = dr0c;
-		  *dp++ = '0';
-		  break;
-		case '1':
-		  *dp++ = dr1c;
-		  *dp++ = dr1c;
-		  *dp++ = '1';
-		  break;
-		case 'x':
-		case 'X':
-		  *dp++ = dr0c;
-		  *dp++ = dr1c;
-		  *dp++ = 'x';
-		  break;
-		case 'z':
-		case 'Z':
-		  *dp++ = '0';
-		  *dp++ = '0';
-		  *dp++ = 'z';
-		  break;
-		default:
-		  assert(0);
-		  break;
-	    }
-	    assert(dp - result < nresult);
-      }
-
-      strcpy(dp, ">");
-      return result;
-}
-
-static char* draw_Cr_to_string(double value)
+char* draw_Cr_to_string(double value)
 {
       char tmp[256];
 
@@ -506,488 +350,6 @@ static char* draw_Cr_to_string(double value)
 
       snprintf(tmp, sizeof(tmp), "Cr<m%" PRIx64 "g%x>", mant, vexp);
       return strdup(tmp);
-}
-
-/*
- * This function takes a nexus and looks for an input functor. It then
- * draws to the output a string that represents that functor. What we
- * are trying to do here is find the input to the net that is attached
- * to this nexus.
- */
-
-static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
-{
-      unsigned nptr_pin = ivl_nexus_ptr_pin(nptr);
-      ivl_net_const_t cptr;
-      ivl_net_logic_t lptr;
-      ivl_signal_t sptr;
-      ivl_lpm_t lpm;
-
-      lptr = ivl_nexus_ptr_log(nptr);
-      if (lptr && (ivl_logic_type(lptr) == IVL_LO_BUFZ) && (nptr_pin == 0))
-	    do {
-		  if (! can_elide_bufz(lptr, nptr))
-			break;
-
-		  return strdup(draw_net_input(ivl_logic_pin(lptr, 1)));
-	    } while(0);
-
-	/* If this is a pulldown device, then there is a single pin
-	   that drives a constant value to the entire width of the
-	   vector. The driver normally drives a pull0 value, so a C8<>
-	   constant is appropriate, but if the drive is really strong,
-	   then we can draw a C4<> constant instead. */
-      if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLDOWN)) {
-	    if (ivl_nexus_ptr_drive0(nptr) == IVL_DR_STRONG) {
-		  size_t result_len = ivl_logic_width(lptr) + 5;
-		  char*result = malloc(result_len);
-		  char*dp = result;
-		  strcpy(dp, "C4<");
-		  dp += strlen(dp);
-		  str_repeat(dp, "0", ivl_logic_width(lptr));
-		  dp += ivl_logic_width(lptr);
-		  *dp++ = '>';
-		  *dp = 0;
-		  assert((dp-result) <= result_len);
-		  return result;
-	    } else {
-		  char val[4];
-		  size_t result_len = 3*ivl_logic_width(lptr) + 5;
-		  char*result = malloc(result_len);
-		  char*dp = result;
-
-		  val[0] = "01234567"[ivl_nexus_ptr_drive0(nptr)];
-		  val[1] = val[0];
-		  val[2] = '0';
-		  val[3] = 0;
-
-		  strcpy(dp, "C8<");
-		  dp += strlen(dp);
-		  str_repeat(dp, val, ivl_logic_width(lptr));
-		  dp += 3*ivl_logic_width(lptr);
-		  *dp++ = '>';
-		  *dp = 0;
-		  assert((dp-result) <= result_len);
-		  return result;
-	    }
-      }
-
-      if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLUP)) {
-	    if (ivl_nexus_ptr_drive1(nptr) == IVL_DR_STRONG) {
-		  size_t result_len = 5 + ivl_logic_width(lptr);
-		  char*result = malloc(result_len);
-		  char*dp = result;
-		  strcpy(dp, "C4<");
-		  dp += strlen(dp);
-		  str_repeat(dp, "1", ivl_logic_width(lptr));
-		  dp += ivl_logic_width(lptr);
-		  *dp++ = '>';
-		  *dp = 0;
-		  assert((dp-result) <= result_len);
-		  return result;
-	    } else {
-		  char val[4];
-		  size_t result_len = 5 + 3*ivl_logic_width(lptr);
-		  char*result = malloc(result_len);
-		  char*dp = result;
-
-		  val[0] = "01234567"[ivl_nexus_ptr_drive0(nptr)];
-		  val[1] = val[0];
-		  val[2] = '1';
-		  val[3] = 0;
-
-		  strcpy(dp, "C8<");
-		  dp += strlen(dp);
-		  str_repeat(dp, val, ivl_logic_width(lptr));
-		  dp += 3*ivl_logic_width(lptr);
-		  *dp++ = '>';
-		  *dp = 0;
-		  assert((dp-result) <= result_len);
-		  return result;
-	    }
-      }
-
-      if (lptr && (nptr_pin == 0)) {
-	    char tmp[128];
-	    snprintf(tmp, sizeof tmp, "L_%p", lptr);
-	    return strdup(tmp);
-      }
-
-      sptr = ivl_nexus_ptr_sig(nptr);
-      if (sptr && (ivl_signal_type(sptr) == IVL_SIT_REG)) {
-	    char tmp[128];
-	      /* Input is a .var. This device may be a non-zero pin
-	         because it may be an array of reg vectors. */
-	    snprintf(tmp, sizeof tmp, "v%p_%u", sptr, nptr_pin);
-
-	    if (ivl_signal_array_count(sptr) > 1) {
-		  fprintf(vvp_out, "v%p_%u .array/port v%p, %u;\n",
-			  sptr, nptr_pin, sptr, nptr_pin);
-	    }
-
-	    return strdup(tmp);
-      }
-
-      cptr = ivl_nexus_ptr_con(nptr);
-      if (cptr) {
-	      /* Constants should have exactly 1 pin, with a literal value. */
-	    assert(nptr_pin == 0);
-	    char *result = 0;
-
-	    switch (ivl_const_type(cptr)) {
-		case IVL_VT_LOGIC:
-		case IVL_VT_BOOL:
-		  if ((ivl_nexus_ptr_drive0(nptr) == IVL_DR_STRONG)
-		      && (ivl_nexus_ptr_drive1(nptr) == IVL_DR_STRONG)) {
-
-			result = draw_C4_to_string(cptr);
-
-		  } else {
-			result = draw_C8_to_string(cptr,
-						   ivl_nexus_ptr_drive0(nptr),
-						   ivl_nexus_ptr_drive1(nptr));
-		  }
-		  break;
-
-		case IVL_VT_REAL:
-		  result = draw_Cr_to_string(ivl_const_real(cptr));
-		  break;
-
-		default:
-		  assert(0);
-		  break;
-	    }
-
-	    ivl_expr_t d_rise = ivl_const_delay(cptr, 0);
-	    ivl_expr_t d_fall = ivl_const_delay(cptr, 1);
-	    ivl_expr_t d_decay = ivl_const_delay(cptr, 2);
-
-	      /* We have a delayed constant, so we need to build some code. */
-	    if (d_rise != 0) {
-		  assert(number_is_immediate(d_rise, 64));
-		  assert(number_is_immediate(d_fall, 64));
-		  assert(number_is_immediate(d_decay, 64));
-		  
-		  fprintf(vvp_out, "L_%p/d .functor BUFZ 1, %s, "
-		          "C4<0>, C4<0>, C4<0>;\n", cptr, result);
-		  
-		  fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
-	                  cptr, get_number_immediate(d_rise),
-	                  get_number_immediate(d_rise),
-	                  get_number_immediate(d_rise), cptr);
-
-		  free(result);
-		  char tmp[128];
-		  snprintf(tmp, sizeof tmp, "L_%p", cptr);
-		  result = strdup(tmp);
-	    }
-
-	    return result;
-      }
-
-      lpm = ivl_nexus_ptr_lpm(nptr);
-      if (lpm) switch (ivl_lpm_type(lpm)) {
-
-	  case IVL_LPM_FF:
-	  case IVL_LPM_ABS:
-	  case IVL_LPM_ADD:
-	  case IVL_LPM_ARRAY:
-	  case IVL_LPM_CONCAT:
-	  case IVL_LPM_CMP_EEQ:
-	  case IVL_LPM_CMP_EQ:
-	  case IVL_LPM_CMP_GE:
-	  case IVL_LPM_CMP_GT:
-	  case IVL_LPM_CMP_NE:
-	  case IVL_LPM_CMP_NEE:
-	  case IVL_LPM_RE_AND:
-	  case IVL_LPM_RE_OR:
-	  case IVL_LPM_RE_XOR:
-	  case IVL_LPM_RE_NAND:
-	  case IVL_LPM_RE_NOR:
-	  case IVL_LPM_RE_XNOR:
-	  case IVL_LPM_SFUNC:
-	  case IVL_LPM_SHIFTL:
-	  case IVL_LPM_SHIFTR:
-	  case IVL_LPM_SIGN_EXT:
-	  case IVL_LPM_SUB:
-	  case IVL_LPM_MULT:
-	  case IVL_LPM_MUX:
-	  case IVL_LPM_POW:
-	  case IVL_LPM_DIVIDE:
-	  case IVL_LPM_MOD:
-	  case IVL_LPM_UFUNC:
-	  case IVL_LPM_PART_VP:
-	  case IVL_LPM_PART_PV: /* NOTE: This is only a partial driver. */
-	  case IVL_LPM_REPEAT:
-	    if (ivl_lpm_q(lpm, 0) == nex) {
-		  char tmp[128];
-		  snprintf(tmp, sizeof tmp, "L_%p", lpm);
-		  return strdup(tmp);
-	    }
-	    break;
-
-	  case IVL_LPM_PART_BI:
-	    if (ivl_lpm_q(lpm, 0) == nex) {
-		  char tmp[128];
-		  snprintf(tmp, sizeof tmp, "L_%p/P", lpm);
-		  return strdup(tmp);
-	    } else if (ivl_lpm_data(lpm,0) == nex) {
-		  char tmp[128];
-		  snprintf(tmp, sizeof tmp, "L_%p/V", lpm);
-		  return strdup(tmp);
-	    }
-	    break;
-      }
-
-      fprintf(stderr, "internal error: no input to nexus %s\n",
-	      ivl_nexus_name(nex));
-      assert(0);
-      return strdup("C<z>");
-}
-
-static int nexus_drive_is_strength_aware(ivl_nexus_ptr_t nptr)
-{
-      if (ivl_nexus_ptr_drive0(nptr) != IVL_DR_STRONG)
-	    return 1;
-      if (ivl_nexus_ptr_drive1(nptr) != IVL_DR_STRONG)
-	    return 1;
-
-      ivl_net_logic_t log = ivl_nexus_ptr_log(nptr);
-      if (log != 0) {
-	      /* These logic gates are able to generate unusual
-	         strength values and so their outputs are considered
-	         strength aware. */
-	    if (ivl_logic_type(log) == IVL_LO_BUFIF0)
-		  return 1;
-	    if (ivl_logic_type(log) == IVL_LO_BUFIF1)
-		  return 1;
-	    if (ivl_logic_type(log) == IVL_LO_PMOS)
-		  return 1;
-	    if (ivl_logic_type(log) == IVL_LO_NMOS)
-		  return 1;
-	    if (ivl_logic_type(log) == IVL_LO_CMOS)
-		  return 1;
-      }
-
-      return 0;
-}
-
-/*
- * This function draws the input to a net into a string. What that
- * means is that it returns a static string that can be used to
- * represent a resolved driver to a nexus. If there are multiple
- * drivers to the nexus, then it writes out the resolver declarations
- * needed to perform strength resolution.
- *
- * The string that this returns is malloced, and that means that the
- * caller must free the string or store it permanently. This function
- * does *not* check for a previously calculated string. Use the
- * draw_net_input for the general case.
- */
-  /* Omit LPMPART_BI device pin-data(0) drivers. */
-# define OMIT_PART_BI_DATA 0x0001
-
-static char* draw_net_input_x(ivl_nexus_t nex,
-			      ivl_nexus_ptr_t omit_ptr, int omit_flags,
-			      struct vvp_nexus_data*nex_data)
-{
-      ivl_signal_type_t res;
-      char result[512];
-      unsigned idx;
-      int level;
-      unsigned ndrivers = 0;
-      static ivl_nexus_ptr_t *drivers = 0x0;
-      static unsigned adrivers = 0;
-
-      const char*resolv_type;
-
-      char*nex_private = 0;
-
-	/* Accumulate nex_data flags. */
-      int nex_flags = 0;
-
-      res = signal_type_of_nexus(nex);
-      switch (res) {
-	  case IVL_SIT_TRI:
-	    resolv_type = "tri";
-	    break;
-	  case IVL_SIT_TRI0:
-	    resolv_type = "tri0";
-	    nex_flags |= VVP_NEXUS_DATA_STR;
-	    break;
-	  case IVL_SIT_TRI1:
-	    resolv_type = "tri1";
-	    nex_flags |= VVP_NEXUS_DATA_STR;
-	    break;
-	  case IVL_SIT_TRIAND:
-	    resolv_type = "triand";
-	    break;
-	  case IVL_SIT_TRIOR:
-	    resolv_type = "trior";
-	    break;
-	  default:
-	    fprintf(stderr, "vvp.tgt: Unsupported signal type: %u\n", res);
-	    assert(0);
-	    resolv_type = "tri";
-	    break;
-      }
-
-
-      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    ivl_lpm_t lpm_tmp;
-	    ivl_nexus_ptr_t nptr = ivl_nexus_ptr(nex, idx);
-
-	      /* If we are supposed to skip LPM_PART_BI data pins,
-		 check that this driver is that. */
-	    if ((omit_flags&OMIT_PART_BI_DATA)
-		&& (lpm_tmp = ivl_nexus_ptr_lpm(nptr))
-		&& (nex == ivl_lpm_data(lpm_tmp,0)))
-		  continue;
-
-	    if (nptr == omit_ptr)
-		  continue;
-
-	      /* Skip input only pins. */
-	    if ((ivl_nexus_ptr_drive0(nptr) == IVL_DR_HiZ)
-		&& (ivl_nexus_ptr_drive1(nptr) == IVL_DR_HiZ))
-		  continue;
-
-	      /* Mark the strength-aware flag if the driver can
-		 generate values other than the standard "6"
-		 strength. */
-	    if (nexus_drive_is_strength_aware(nptr))
-		  nex_flags |= VVP_NEXUS_DATA_STR;
-
-	      /* Save this driver. */
-	    if (ndrivers >= adrivers) {
-		  adrivers += 4;
-		  drivers = realloc(drivers, adrivers*sizeof(ivl_nexus_ptr_t));
-		  assert(drivers);
-	    }
-	    drivers[ndrivers] = nptr;
-	    ndrivers += 1;
-      }
-
-	/* If the caller is collecting nexus information, then save
-	   the nexus driver count in the nex_data. */
-      if (nex_data) {
-	    nex_data->drivers_count = ndrivers;
-	    nex_data->flags |= nex_flags;
-      }
-
-	/* If the nexus has no drivers, then send a constant HiZ into
-	   the net. */
-      if (ndrivers == 0) {
-	    unsigned idx, wid = width_of_nexus(nex);
-	    char*tmp = malloc(wid + 5);
-	    nex_private = tmp;
-	    strcpy(tmp, "C4<");
-	    tmp += strlen(tmp);
-	    switch (res) {
-		case IVL_SIT_TRI:
-		  for (idx = 0 ;  idx < wid ;  idx += 1)
-			*tmp++ = 'z';
-		  break;
-		case IVL_SIT_TRI0:
-		  for (idx = 0 ;  idx < wid ;  idx += 1)
-			*tmp++ = '0';
-		  break;
-		case IVL_SIT_TRI1:
-		  for (idx = 0 ;  idx < wid ;  idx += 1)
-			*tmp++ = '1';
-		  break;
-		default:
-		  assert(0);
-	    }
-	    *tmp++ = '>';
-	    *tmp = 0;
-	    return nex_private;
-      }
-
-
-	/* If the nexus has exactly one driver, then simply draw
-	   it. Note that this will *not* work if the nexus is not a
-	   TRI type nexus. */
-      if (ndrivers == 1 && res == IVL_SIT_TRI) {
-	    ivl_signal_t path_sig = find_modpath(nex);
-	    if (path_sig) {
-		  char*nex_str = draw_net_input_drive(nex, drivers[0]);
-		  char modpath_label[64];
-		  snprintf(modpath_label, sizeof modpath_label,
-			   "V_%p/m", path_sig);
-		  nex_private = strdup(modpath_label);
-		  draw_modpath(path_sig, nex_str);
-
-	    } else {
-		  nex_private = draw_net_input_drive(nex, drivers[0]);
-	    }
-	    return nex_private;
-      }
-
-      level = 0;
-      while (ndrivers) {
-	    unsigned int inst;
-	    for (inst = 0; inst < ndrivers; inst += 4) {
-		  if (ndrivers > 4)
-			fprintf(vvp_out, "RS_%p/%d/%d .resolv tri",
-				nex, level, inst);
-		  else
-			fprintf(vvp_out, "RS_%p .resolv %s",
-				nex, resolv_type);
-
-		  for (idx = inst; idx < ndrivers && idx < inst+4; idx += 1) {
-			if (level) {
-			      fprintf(vvp_out, ", RS_%p/%d/%d",
-				      nex, level - 1, idx*4);
-			} else {
-			      char*drive = draw_net_input_drive(nex, drivers[idx]);
-			      fprintf(vvp_out, ", %s", drive);
-			      free(drive);
-			}
-		  }
-		  for ( ;  idx < inst+4 ;  idx += 1) {
-			fprintf(vvp_out, ", ");
-			draw_C4_repeated_constant('z',width_of_nexus(nex));
-		  }
-
-		  fprintf(vvp_out, ";\n");
-	    }
-	    if (ndrivers > 4)
-		  ndrivers = (ndrivers+3) / 4;
-	    else
-		  ndrivers = 0;
-	    level += 1;
-      }
-
-      sprintf(result, "RS_%p", nex);
-      nex_private = strdup(result);
-      return nex_private;
-}
-
-/*
- * Get a cached description of the nexus input, or create one if this
- * nexus has not been cached yet. This is a wrapper for the common
- * case call to draw_net_input_x.
- */
-const char*draw_net_input(ivl_nexus_t nex)
-{
-      struct vvp_nexus_data*nex_data = (struct vvp_nexus_data*)
-	    ivl_nexus_get_private(nex);
-
-	/* If this nexus already has a label, then its input is
-	   already figured out. Just return the existing label. */
-      if (nex_data && nex_data->net_input)
-	    return nex_data->net_input;
-
-      if (nex_data == 0) {
-	    nex_data = new_nexus_data();
-	    ivl_nexus_set_private(nex, nex_data);
-      }
-
-      assert(nex_data->net_input == 0);
-      nex_data->net_input = draw_net_input_x(nex, 0, 0, nex_data);
-
-      return nex_data->net_input;
 }
 
 const char*draw_input_from_net(ivl_nexus_t nex)
@@ -1184,9 +546,9 @@ static void draw_delay(ivl_net_logic_t lptr)
 	    return;
 
 	/* FIXME: Assume that the expression is a constant */
-      assert(number_is_immediate(d0, 64));
-      assert(number_is_immediate(d1, 64));
-      assert(number_is_immediate(d2, 64));
+      assert(number_is_immediate(d0, 64, 0));
+      assert(number_is_immediate(d1, 64, 0));
+      assert(number_is_immediate(d2, 64, 0));
 
       if (d0 == d1 && d1 == d2)
 	    fprintf(vvp_out, " (%lu)", get_number_immediate(d0));
@@ -1500,9 +862,9 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    ivl_expr_t fall_exp  = ivl_logic_delay(lptr,1);
 	    ivl_expr_t decay_exp = ivl_logic_delay(lptr,2);
 
-	    if (number_is_immediate(rise_exp,64)
-		&& number_is_immediate(fall_exp,64)
-		&& number_is_immediate(decay_exp,64)) {
+	    if (number_is_immediate(rise_exp,64,0)
+		&& number_is_immediate(fall_exp,64,0)
+		&& number_is_immediate(decay_exp,64,0)) {
 
 		  fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
 			  lptr, get_number_immediate(rise_exp),
@@ -1693,9 +1055,9 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net)
 
       const char*dly = "";
       if (d_rise != 0) {
-	    assert(number_is_immediate(d_rise, 64));
-	    assert(number_is_immediate(d_fall, 64));
-	    assert(number_is_immediate(d_decay, 64));
+	    assert(number_is_immediate(d_rise, 64, 0));
+	    assert(number_is_immediate(d_fall, 64, 0));
+	    assert(number_is_immediate(d_decay, 64, 0));
 	    dly = "/d";
 	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
 	            net, get_number_immediate(d_rise),
@@ -1715,6 +1077,31 @@ static void draw_lpm_abs(ivl_lpm_t net)
 
       fprintf(vvp_out, "L_%p%s .abs %s;\n",
 	      net, dly, src_table[0]);
+}
+
+static void draw_lpm_cast_int(ivl_lpm_t net)
+{
+      const char*src_table[1];
+      draw_lpm_data_inputs(net, 0, 1, src_table);
+
+      const char*dly = draw_lpm_output_delay(net);
+
+      fprintf(vvp_out, "L_%p%s .cast/int %u, %s;\n",
+	      net, dly, ivl_lpm_width(net), src_table[0]);
+}
+
+static void draw_lpm_cast_real(ivl_lpm_t net)
+{
+      const char*src_table[1];
+      draw_lpm_data_inputs(net, 0, 1, src_table);
+
+      const char*dly = draw_lpm_output_delay(net);
+
+      const char*is_signed = "";
+      if (ivl_lpm_signed(net)) is_signed = ".s";
+
+      fprintf(vvp_out, "L_%p%s .cast/real%s %s;\n",
+	      net, dly, is_signed, src_table[0]);
 }
 
 static void draw_lpm_add(ivl_lpm_t net)
@@ -1767,20 +1154,9 @@ static void draw_lpm_add(ivl_lpm_t net)
 	  case IVL_LPM_POW:
 	    if (dto == IVL_VT_REAL)
 		  type = "pow.r";
-	    else if (ivl_lpm_signed(net)) {
+	    else if (ivl_lpm_signed(net))
 		  type = "pow.s";
-		  if (width > 8*sizeof(long)) {
-			fprintf(stderr, "%s:%u: sorry (vvp-tgt): Signed power "
-#ifdef __MINGW32__  /* MinGW does not know about z. */
-				"result must be no more than %u bits.\n",
-#else
-				"result must be no more than %zu bits.\n",
-#endif
-				ivl_lpm_file(net), ivl_lpm_lineno(net),
-				8*sizeof(long));
-			exit(1);
-		  }
-	    } else
+	    else
 		  type = "pow";
 	    break;
 	  default:
@@ -2250,94 +1626,6 @@ static void draw_lpm_part_pv(ivl_lpm_t net)
 }
 
 /*
- * Handle the drawing of a bi-directional part select. The two ports
- * are simultaneously input and output. A simple minded connect of the
- * input to the output causes a functor cycle which will lock into an
- * X value, so something special is needed.
- *
- * NOTE: The inputs of the tran device at this point need to be from
- * all the drivers of the nexus *except* the tran itself. This
- * function will draw three labels that can be linked:
- *
- * The ivl_lpm_q of a part(bi) may be a smaller vector then the
- * ivl_lpm_data, the tran acts like a forward part select in that
- * way.
- *
- * The device creates these nodes:
- *
- * - L_%p/i
- * This is the Q port of the tran resolved and padded to the maximum
- * width of the tran. The tran itself is not included in the
- * resolution of this port.
- *
- * - L_%p/V
- * This is the Q and D parts resolved together, still without the tran
- * driving anything.
- *
- * - L_%p/P
- * This is the /V node part-selected back to the dimensions of the Q
- * side.
- */
-static void draw_lpm_part_bi(ivl_lpm_t net)
-{
-      unsigned width = ivl_lpm_width(net);
-      unsigned base  = ivl_lpm_base(net);
-      unsigned signal_width = width_of_nexus(ivl_lpm_data(net,0));
-
-      unsigned idx;
-      ivl_nexus_t nex;
-      ivl_nexus_ptr_t ptr = 0;
-
-      char*p_str;
-      char*v_str;
-
-	/* It seems implausible that the two inputs of a tran will be
-	   connected together. So assert that this is so to simplify
-	   the code to look for the nexus_ptr_t objects. */
-      assert(ivl_lpm_q(net,0) != ivl_lpm_data(net,0));
-
-      nex = ivl_lpm_q(net,0);
-      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    ptr = ivl_nexus_ptr(nex, idx);
-	    if (ivl_nexus_ptr_lpm(ptr) == net)
-		  break;
-      }
-      assert(ptr != 0);
-      p_str = draw_net_input_x(nex, ptr, 0, 0);
-
-      nex = ivl_lpm_data(net,0);
-      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    ptr = ivl_nexus_ptr(nex, idx);
-	    if (ivl_nexus_ptr_lpm(ptr) == net)
-		  break;
-      }
-      v_str = draw_net_input_x(nex, ptr, OMIT_PART_BI_DATA, 0);
-
-	/* Pad the part-sized input out to a common width...
-	   The /i label is the Q side of the tran, resolved except for
-	   the tran itself and padded (with z) to the larger width. */
-      fprintf(vvp_out, "L_%p/i .part/pv %s, %u, %u, %u;\n",
-	      net, p_str, base, width, signal_width);
-
-	/* Resolve together the two halves of the tran...
-	   The /V label is the ports of the tran (now the same width)
-	   resolved together. Neither input to this resolver includes
-	   the tran itself. */
-      fprintf(vvp_out, "L_%p/V .resolv tri, L_%p/i, %s;\n",
-	      net, net, v_str);
-
-	/* The full-width side is created by the tran device, all we
-	   have left to to is take a part select of that for the
-	   smaller output, and this becomes the part select output of
-	   the BI device. */
-      fprintf(vvp_out, "L_%p/P .part L_%p/V, %u, %u;\n", net,
-	      net, base, width);
-
-      free(p_str);
-      free(v_str);
-}
-
-/*
  * Draw unary reduction devices.
  */
 static void draw_lpm_re(ivl_lpm_t net, const char*type)
@@ -2370,6 +1658,14 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	    draw_lpm_abs(net);
 	    return;
 
+	  case IVL_LPM_CAST_INT:
+	    draw_lpm_cast_int(net);
+	    return;
+
+	  case IVL_LPM_CAST_REAL:
+	    draw_lpm_cast_real(net);
+	    return;
+
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_SUB:
 	  case IVL_LPM_MULT:
@@ -2381,10 +1677,6 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 
 	  case IVL_LPM_ARRAY:
 	    draw_lpm_array(net);
-	    return;
-
-	  case IVL_LPM_PART_BI:
-	    draw_lpm_part_bi(net);
 	    return;
 
 	  case IVL_LPM_PART_VP:
@@ -2567,6 +1859,11 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       for (idx = 0 ;  idx < ivl_scope_lpms(net) ;  idx += 1) {
 	    ivl_lpm_t lpm = ivl_scope_lpm(net, idx);
 	    draw_lpm_in_scope(lpm);
+      }
+
+      for (idx = 0 ; idx < ivl_scope_switches(net) ; idx += 1) {
+	    ivl_switch_t sw = ivl_scope_switch(net, idx);
+	    draw_switch_in_scope(sw);
       }
 
       if (ivl_scope_type(net) == IVL_SCT_TASK)

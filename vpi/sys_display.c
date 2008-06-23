@@ -60,16 +60,6 @@ struct strobe_cb_info {
       unsigned mcd;
 };
 
-int is_constant(vpiHandle obj)
-{
-      if (vpi_get(vpiType, obj) == vpiConstant)
-	    return vpiConstant;
-      if (vpi_get(vpiType, obj) == vpiParameter)
-	    return vpiParameter;
-
-      return 0;
-}
-
 // The number of decimal digits needed to represent a
 // nr_bits binary number is floor(nr_bits*log_10(2))+1,
 // where log_10(2) = 0.30102999566398....  and I approximate
@@ -277,7 +267,7 @@ static void format_time(unsigned mcd, int fsize,
 	/* Fill the leading characters to make up the desired
 	   width. This may require a '0' if the last character
 	   written was the decimal point. This may also require a '0'
-	   if there are no other characters at all in the ouput. */
+	   if there are no other characters at all in the output. */
       if (fusize > 0) {
 	    while (bp > start_address) {
 		  if (*bp == '.' || strcmp(bp, timeformat_info.suff) == 0)
@@ -665,7 +655,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 		  return 0;
 	    }
 
-	    if (is_constant(argv[idx])
+	    if (is_constant_obj(argv[idx])
 		&& (vpi_get(vpiConstType, argv[idx]) == vpiRealConst)) {
 
 		  value.format = vpiRealVal;
@@ -827,6 +817,7 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		case vpiReg:
 		case vpiIntegerVar:
 		case vpiMemoryWord:
+		case vpiPartSelect:
 		  do_display_numeric(mcd, info, item);
 		  break;
 
@@ -1118,11 +1109,17 @@ static PLI_INT32 sys_monitor_calltf(PLI_BYTE8*name)
       for (idx = 0 ;  idx < monitor_info.nitems ;  idx += 1) {
 
 	    switch (vpi_get(vpiType, monitor_info.items[idx])) {
+		case vpiMemoryWord:
+		  /*
+		   * We only support constant selections. Make this
+		   * better when we add a real compiletf routine.
+		   */
+		  assert(vpi_get(vpiConstantSelect, monitor_info.items[idx]));
 		case vpiNet:
 		case vpiReg:
 		case vpiIntegerVar:
 		case vpiRealVar:
-		case vpiMemoryWord:
+		case vpiPartSelect:
 		    /* Monitoring reg and net values involves setting
 		       a callback for value changes. Pass the storage
 		       pointer for the callback itself as user_data so
@@ -1418,7 +1415,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           vpi_printf("WARNING: incompatible value for %s%s.\n", info->name,
                      fmtb);
         } else {
-          /* If a width was not giveni, use a width of zero. */
+          /* If a width was not given, use a width of zero. */
           if (width == -1) width = 0;
           if (ljust == 0) sprintf(result, "%*c", width,
                                   value.value.str[strlen(value.value.str)-1]);
@@ -1662,7 +1659,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           /* If a width was not given use a width of zero. */
           if (width == -1) width = 0;
           nbits = vpi_get(vpiSize, info->items[*idx]);
-          /* This is 4 chars for all but the last bit (strenght + "_")
+          /* This is 4 chars for all but the last bit (strength + "_")
            * which only needs three chars (strength), but then you need
            * space for the EOS '\0', so it is just number of bits * 4. */
           rsize = nbits*4;
@@ -1836,6 +1833,7 @@ static char *get_display(unsigned int *rtnsz, struct strobe_cb_info *info)
       case vpiReg:
       case vpiIntegerVar:
       case vpiMemoryWord:
+      case vpiPartSelect:
         width = get_numeric(&result, info, item);
         rtn = realloc(rtn, (size+width)*sizeof(char));
         memcpy(rtn+size-1, result, width);
@@ -2185,12 +2183,7 @@ static PLI_INT32 sys_printtimescale_calltf(PLI_BYTE8*xx)
       vpiHandle argv  = vpi_iterate(vpiArgument, sys);
       vpiHandle scope;
       if (!argv) {
-            vpiHandle parent = vpi_handle(vpiScope, sys);
-            scope = NULL;  /* fallback value if parent is NULL */
-            while (parent) {
-                   scope = parent;
-                   parent = vpi_handle(vpiScope, scope);
-            }
+            scope = sys_func_module(sys);
       } else {
             scope = vpi_scan(argv);
             vpi_free_object(argv);

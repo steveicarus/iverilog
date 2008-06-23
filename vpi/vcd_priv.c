@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,21 +16,19 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vcd_priv.c,v 1.6 2004/10/04 01:10:58 steve Exp $"
-#endif
 
-# include  "vpi_config.h"
-# include  "vcd_priv.h"
-# include  <stdio.h>
-# include  <stdlib.h>
-# include  <string.h>
-# include  <assert.h>
+#include  "vpi_config.h"
+#include  "vcd_priv.h"
+#include  <stdio.h>
+#include  <stdlib.h>
+#include  <string.h>
+#include  <assert.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
-# include  <ctype.h>
-# include  "stringheap.h"
+#include  <ctype.h>
+#include  "stringheap.h"
+#include  <sys_priv.h>
 
 int is_escaped_id(const char *name)
 {
@@ -133,7 +131,7 @@ void vcd_names_sort(struct vcd_names_list_s*tab)
 
    The new signal will be listed as a $var, but no callback
    will be installed.  This saves considerable CPU time and leads
-   to smalle VCD files.
+   to smaller VCD files.
 
    The _vpiNexusId is a private (int) property of IVL simulators.
 */
@@ -188,183 +186,11 @@ void set_nexus_ident(int nex, const char *id)
       vcd_ids[ihash(nex)] = bucket;
 }
 
-/* This is used by the compiletf routines to check if an argument
- * is numeric. */
-static void check_numeric_arg(vpiHandle arg, char *msg, PLI_BYTE8 *name)
-{
-      assert(arg);
-
-      switch (vpi_get(vpiType, arg)) {
-         case vpiConstant:
-         case vpiParameter:
-             /* String constants are invalid numeric values. */
-           if (vpi_get(vpiConstType, arg) == vpiStringConst) {
-                 vpi_mcd_printf(1, msg, name);
-                 vpi_control(vpiFinish, 1);
-           }
-           break;
-
-           /* These have valid numeric values. */
-         case vpiIntegerVar:
-         case vpiMemoryWord:
-         case vpiNet:
-         case vpiRealVar:
-         case vpiReg:
-         case vpiTimeVar:
-           break;
-
-         default:
-             /* Anything else is not a numeric value. */
-           vpi_mcd_printf(1, msg, name);
-           vpi_control(vpiFinish, 1);
-           break;
-      }
-}
-
-/* This is used by the compiletf routines to check if an argument
- * is a string value. */
-static void check_string_arg(vpiHandle arg, char *msg, PLI_BYTE8 *name)
-{
-      assert(arg);
-      PLI_INT32 ctype = 0;
-
-      switch (vpi_get(vpiType, arg)) {
-         case vpiConstant:
-         case vpiParameter:
-             /* These must be a string or binary constant. */
-           ctype = vpi_get(vpiConstType, arg);
-           if (ctype != vpiStringConst && ctype != vpiBinaryConst) {
-                 vpi_mcd_printf(1, msg, name);
-                 vpi_control(vpiFinish, 1);
-           }
-           break;
-
-           /* These have valid string values. */
-         case vpiIntegerVar:
-         case vpiMemoryWord:
-         case vpiNet:
-         case vpiReg:
-         case vpiTimeVar:
-           break;
-
-         default:
-             /* Anything else is not a string. */
-           vpi_mcd_printf(1, msg, name);
-           vpi_control(vpiFinish, 1);
-           break;
-      }
-}
-
 /*
  * Since the compiletf routines are all the same they are located here,
- * so we only need a single copy.
+ * so we only need a single copy. Some are generic enough they can use
+ * the ones in sys_priv.c (no arg, one numeric argument, etc.).
  */
-
-/* $dumpall does not take an argument. */
-PLI_INT32 sys_dumpall_compiletf(PLI_BYTE8 *name)
-{
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-
-      if (argv != 0) {
-            vpi_mcd_printf(1, "ERROR: %s does not take an argument.\n", name);
-            vpi_control(vpiFinish, 1);
-      }
-
-      return 0;
-}
-
-/* $dumpfile takes a single string argument. */
-PLI_INT32 sys_dumpfile_compiletf(PLI_BYTE8 *name)
-{
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-
-      /* Check that there is an argument and that it is a string. */
-      if (argv == 0) {
-            vpi_mcd_printf(1, "ERROR: %s requires an argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
-      }
-      check_string_arg(vpi_scan(argv), "ERROR: %s's argument must be a"
-                                       " string.\n", name);
-
-      /* Check that there is only a single argument. */
-      if (vpi_scan(argv) != 0) {
-            vpi_mcd_printf(1, "ERROR: %s takes a single argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
-      }
-
-      return 0;
-}
-
-/* $dumpflush does not take an argument. */
-PLI_INT32 sys_dumpflush_compiletf(PLI_BYTE8 *name)
-{
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-
-      if (argv != 0) {
-            vpi_mcd_printf(1, "ERROR: %s does not take an argument.\n", name);
-            vpi_control(vpiFinish, 1);
-      }
-
-      return 0;
-}
-
-/* $dumplimit takes a single numeric argument. */
-PLI_INT32 sys_dumplimit_compiletf(PLI_BYTE8 *name)
-{
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-
-      /* Check that there is an argument and that it is numeric. */
-      if (argv == 0) {
-            vpi_mcd_printf(1, "ERROR: %s requires an argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
-      }
-      check_numeric_arg(vpi_scan(argv), "ERROR: %s's argument must be"
-                                        " numeric.\n", name);
-
-      /* Check that there is only a single argument. */
-      if (vpi_scan(argv) != 0) {
-            vpi_mcd_printf(1, "ERROR: %s takes a single argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
-      }
-
-      return 0;
-}
-
-/* $dumpoff does not take an argument. */
-PLI_INT32 sys_dumpoff_compiletf(PLI_BYTE8 *name)
-{
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-
-      if (argv != 0) {
-            vpi_mcd_printf(1, "ERROR: %s does not take an argument.\n", name);
-            vpi_control(vpiFinish, 1);
-      }
-
-      return 0;
-}
-
-/* $dumpon does not take an argument. */
-PLI_INT32 sys_dumpon_compiletf(PLI_BYTE8 *name)
-{
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-
-      if (argv != 0) {
-            vpi_mcd_printf(1, "ERROR: %s does not take an argument.\n", name);
-            vpi_control(vpiFinish, 1);
-      }
-
-      return 0;
-}
 
 /* $dumpvars takes a variety of arguments. */
 PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name)
@@ -374,16 +200,27 @@ PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name)
       vpiHandle arg;
 
       /* No arguments is OK, dump everything. */
-      if (argv == 0)
-	    return 0;
+      if (argv == 0) return 0;
 
       /* The first argument is the numeric level. */
-      check_numeric_arg(vpi_scan(argv), "ERROR: %s's first argument must be"
-                                        " numeric.\n", name);
+      if (! is_numeric_obj(vpi_scan(argv))) {
+            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+                       (int)vpi_get(vpiLineNo, callh));
+            vpi_printf("%s's argument must be numeric.\n", name);
+            vpi_control(vpiFinish, 1);
+      }
 
       /* The rest of the arguments are either a module or a variable. */
       while ((arg=vpi_scan(argv)) != NULL) {
         switch(vpi_get(vpiType, arg)) {
+          case vpiMemoryWord:
+            if (vpi_get(vpiConstantSelect, arg) == 0) {
+		  vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s cannot dump a non-constant select %s.\n", name,
+		             vpi_get_str(vpiType, arg));
+		  vpi_control(vpiFinish, 1);
+            }
           /* The module types. */
           case vpiModule:
           case vpiTask:
@@ -393,18 +230,18 @@ PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name)
           /* The variable types. */
           case vpiNet:
           case vpiReg:
-          case vpiMemoryWord:
           case vpiIntegerVar:
           case vpiTimeVar:
           case vpiRealVar:
             break;
           default:
-            vpi_mcd_printf(1, "ERROR: %s cannot dump a %s.\n",
-                           name, vpi_get_str(vpiType, arg));
+            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+                       (int)vpi_get(vpiLineNo, callh));
+            vpi_printf("%s cannot dump a %s.\n", name,
+                       vpi_get_str(vpiType, arg));
             vpi_control(vpiFinish, 1);
         }
       }
 
       return 0;
 }
-

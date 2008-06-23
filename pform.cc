@@ -93,40 +93,64 @@ static PScope* lexical_scope = 0;
 
 void pform_pop_scope()
 {
-      lexical_scope = lexical_scope->pscope_parent();
+      if (pform_cur_generate) {
+	    assert(pform_cur_generate->lexical_scope);
+	    PScope*cur = pform_cur_generate->lexical_scope;
+	    pform_cur_generate->lexical_scope = cur->pscope_parent();
+      } else {
+	    assert(lexical_scope);
+	    lexical_scope = lexical_scope->pscope_parent();
+      }
 }
 
 PTask* pform_push_task_scope(char*name)
 {
       perm_string task_name = lex_strings.make(name);
-      PTask*task = new PTask(task_name, pform_cur_module);
 
-	// Add the task to the current module
-      pform_cur_module->add_task(task->pscope_name(), task);
-	// Make this the current lexical scope
-      lexical_scope = task;
+      PTask*task;
+      if (pform_cur_generate) {
+	    task = new PTask(task_name, pform_cur_generate->lexical_scope);
+	    pform_cur_generate->tasks[task->pscope_name()] = task;
+	    pform_cur_generate->lexical_scope = task;
+      } else {
+	    task = new PTask(task_name, lexical_scope);
+	    pform_cur_module->tasks[task->pscope_name()] = task;
+	    lexical_scope = task;
+      }
+
       return task;
 }
 
 PFunction* pform_push_function_scope(char*name)
 {
       perm_string func_name = lex_strings.make(name);
-      PFunction*func = new PFunction(func_name, lexical_scope);
 
-	// Add the task to the current module
-      pform_cur_module->add_function(func->pscope_name(), func);
-	// Make this the current lexical scope
-      lexical_scope = func;
+      PFunction*func;
+      if (pform_cur_generate) {
+	    func = new PFunction(func_name, pform_cur_generate->lexical_scope);
+	    pform_cur_generate->funcs[func->pscope_name()] = func;
+	    pform_cur_generate->lexical_scope = func;
+      } else {
+	    func = new PFunction(func_name, lexical_scope);
+	    pform_cur_module->funcs[func->pscope_name()] = func;
+	    lexical_scope = func;
+      }
+
       return func;
 }
 
 PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
 {
       perm_string block_name = lex_strings.make(name);
-      PBlock*block = new PBlock(block_name, lexical_scope, bt);
 
-	// Make this the current lexical scope
-      lexical_scope = block;
+      PBlock*block;
+      if (pform_cur_generate) {
+	    block = new PBlock(block_name, pform_cur_generate->lexical_scope, bt);
+	    pform_cur_generate->lexical_scope = block;
+      } else {
+	    block = new PBlock(block_name, lexical_scope, bt);
+	    lexical_scope = block;
+      }
 
       return block;
 }
@@ -138,9 +162,34 @@ PWire*pform_get_wire_in_scope(perm_string name)
 	   cannot be within sub-scopes. Only directly in
 	   modules. */
       if (pform_cur_generate)
-	    return pform_cur_generate->get_wire(name);
+	    if (pform_cur_generate->lexical_scope)
+		  return pform_cur_generate->lexical_scope->wires_find(name);
+	    else
+		  return pform_cur_generate->wires_find(name);
+      else
+	    return lexical_scope->wires_find(name);
+}
 
-      return lexical_scope->wires_find(name);
+static void pform_put_wire_in_scope(perm_string name, PWire*net)
+{
+      if (pform_cur_generate)
+	    if (pform_cur_generate->lexical_scope)
+		  pform_cur_generate->lexical_scope->wires[name] = net;
+	    else
+		  pform_cur_generate->wires[name] = net;
+      else
+	    lexical_scope->wires[name] = net;
+}
+
+static void pform_put_behavior_in_scope(PProcess*pp)
+{
+      if (pform_cur_generate)
+	    if (pform_cur_generate->lexical_scope)
+		  pform_cur_generate->lexical_scope->behaviors.push_back(pp);
+	    else
+		  pform_cur_generate->behaviors.push_back(pp);
+      else
+	    lexical_scope->behaviors.push_back(pp);
 }
 
 void pform_set_default_nettype(NetNet::Type type,
@@ -508,7 +557,7 @@ void pform_endgenerate()
       if (pform_cur_generate != 0) {
 	    assert(cur->scheme_type == PGenerate::GS_CASE_ITEM
 		   || pform_cur_generate->scheme_type != PGenerate::GS_CASE);
-	    pform_cur_generate->generates.push_back(cur);
+	    pform_cur_generate->generate_schemes.push_back(cur);
       } else {
 	    assert(cur->scheme_type != PGenerate::GS_CASE_ITEM);
 	    pform_cur_module->generate_schemes.push_back(cur);
@@ -1236,7 +1285,7 @@ void pform_make_pgassign_list(svector<PExpr*>*alist,
 void pform_make_reginit(const struct vlltype&li,
 			perm_string name, PExpr*expr)
 {
-      PWire*cur = lexical_scope->wires_find(name);
+      PWire*cur = pform_get_wire_in_scope(name);
       if (cur == 0) {
 	    VLerror(li, "internal error: reginit to non-register?");
 	    delete expr;
@@ -1250,7 +1299,7 @@ void pform_make_reginit(const struct vlltype&li,
       PProcess*top = new PProcess(PProcess::PR_INITIAL, ass);
       FILE_NAME(top, li);
 
-      lexical_scope->behaviors.push_back(top);
+      pform_put_behavior_in_scope(top);
 }
 
 /*
@@ -1271,7 +1320,7 @@ void pform_module_define_port(const struct vlltype&li,
 			      svector<PExpr*>*range,
 			      svector<named_pexpr_t*>*attr)
 {
-      PWire*cur = lexical_scope->wires_find(name);
+      PWire*cur = pform_get_wire_in_scope(name);
       if (cur) {
 	    ostringstream msg;
 	    msg << name << " definition conflicts with "
@@ -1305,7 +1354,7 @@ void pform_module_define_port(const struct vlltype&li,
 		      cur->attributes[tmp->name] = tmp->parm;
 	      }
       }
-      lexical_scope->wires[name] = cur;
+      pform_put_wire_in_scope(name, cur);
 }
 
 /*
@@ -1388,12 +1437,8 @@ void pform_makewire(const vlltype&li, perm_string name,
 	    }
       }
 
-      if (new_wire_flag) {
-	    if (pform_cur_generate)
-		  pform_cur_generate->wires[name] = cur;
-	    else
-		  lexical_scope->wires[name] = cur;
-      }
+      if (new_wire_flag)
+	    pform_put_wire_in_scope(name, cur);
 }
 
 /*
@@ -1469,11 +1514,11 @@ void pform_makewire(const vlltype&li,
 void pform_set_port_type(perm_string name, NetNet::PortType pt,
 			 const char*file, unsigned lineno)
 {
-      PWire*cur = lexical_scope->wires_find(name);
+      PWire*cur = pform_get_wire_in_scope(name);
       if (cur == 0) {
 	    cur = new PWire(name, NetNet::IMPLICIT, NetNet::PIMPLICIT, IVL_VT_NO_TYPE);
 	    FILE_NAME(cur, file, lineno);
-	    lexical_scope->wires[name] = cur;
+	    pform_put_wire_in_scope(name, cur);
       }
 
       switch (cur->get_port_type()) {
@@ -1555,13 +1600,13 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 
 	      /* Look for a preexisting wire. If it exists, set the
 		 port direction. If not, create it. */
-	    PWire*curw = lexical_scope->wires_find(name);
+	    PWire*curw = pform_get_wire_in_scope(name);
 	    if (curw) {
 		  curw->set_port_type(pt);
 	    } else {
 		  curw = new PWire(name, NetNet::IMPLICIT_REG, pt, vtype);
 		  FILE_NAME(curw, file, lineno);
-		  lexical_scope->wires[name] = curw;
+		  pform_put_wire_in_scope(name, curw);
 	    }
 
 	    curw->set_signed(signed_flag);
@@ -1622,7 +1667,7 @@ void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r)
 {
       PWire*cur = 0;
       if (pform_cur_generate) {
-	    cur = pform_cur_generate->get_wire(name);
+	    cur = pform_cur_generate->wires_find(name);
       } else {
 	    cur = lexical_scope->wires_find(name);
       }
@@ -1805,13 +1850,13 @@ void pform_set_port_type(const struct vlltype&li,
 
 static void pform_set_reg_integer(perm_string name)
 {
-      PWire*cur = lexical_scope->wires_find(name);
+      PWire*cur = pform_get_wire_in_scope(name);
       if (cur == 0) {
 	    cur = new PWire(name, NetNet::INTEGER,
 			    NetNet::NOT_A_PORT,
 			    IVL_VT_LOGIC);
 	    cur->set_signed(true);
-	    lexical_scope->wires[name] = cur;
+	    pform_put_wire_in_scope(name, cur);
       } else {
 	    bool rc = cur->set_wire_type(NetNet::INTEGER);
 	    assert(rc);
@@ -1839,10 +1884,10 @@ void pform_set_reg_integer(list<perm_string>*names)
 
 static void pform_set_reg_time(perm_string name)
 {
-      PWire*cur = lexical_scope->wires_find(name);
+      PWire*cur = pform_get_wire_in_scope(name);
       if (cur == 0) {
 	    cur = new PWire(name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
-	    lexical_scope->wires[name] = cur;
+	    pform_put_wire_in_scope(name, cur);
       } else {
 	    bool rc = cur->set_wire_type(NetNet::REG);
 	    assert(rc);
@@ -1901,11 +1946,7 @@ PProcess* pform_make_behavior(PProcess::Type type, Statement*st,
 	    delete attr;
       }
 
-      if (pform_cur_generate)
-	    pform_cur_generate->add_behavior(pp);
-      else
-	    pform_cur_module->behaviors.push_back(pp);
-
+      pform_put_behavior_in_scope(pp);
       return pp;
 }
 

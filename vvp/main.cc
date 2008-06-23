@@ -176,7 +176,7 @@ int main(int argc, char*argv[])
                    " -M path        VPI module directory\n"
 		   " -M -           Clear VPI module path\n"
                    " -m module      Load vpi module.\n"
-		   " -n             Non-interctive ($stop = $finish).\n"
+		   " -n             Non-interactive ($stop = $finish).\n"
 		   " -s             $stop right away.\n"
                    " -v             Verbose progress messages.\n" );
            exit(0);
@@ -274,15 +274,25 @@ int main(int argc, char*argv[])
       }
 
       if (verbose_flag) {
-	    vpi_mcd_printf(1, " ... %8lu functors\n", count_functors);
+	    vpi_mcd_printf(1, " ... %8lu functors (net_fun pool=%zu bytes)\n",
+			   count_functors, size_vvp_net_funs);
 	    vpi_mcd_printf(1, "           %8lu logic\n",  count_functors_logic);
 	    vpi_mcd_printf(1, "           %8lu bufif\n",  count_functors_bufif);
 	    vpi_mcd_printf(1, "           %8lu resolv\n",count_functors_resolv);
 	    vpi_mcd_printf(1, "           %8lu signals\n", count_functors_sig);
-	    vpi_mcd_printf(1, " ... %8lu opcodes (%lu bytes)\n",
-		    count_opcodes, (unsigned long)size_opcodes);
+	    vpi_mcd_printf(1, " ... %8lu opcodes (%zu bytes)\n",
+	                   count_opcodes, size_opcodes);
 	    vpi_mcd_printf(1, " ... %8lu nets\n",     count_vpi_nets);
-	    vpi_mcd_printf(1, " ... %8lu memories\n", count_vpi_memories);
+	    vpi_mcd_printf(1, " ... %8lu vvp_nets (%zu bytes)\n",
+			   count_vvp_nets, size_vvp_nets);
+	    vpi_mcd_printf(1, " ... %8lu arrays (%lu words)\n",
+			   count_net_arrays, count_net_array_words);
+	    vpi_mcd_printf(1, " ... %8lu memories\n",
+			   count_var_arrays+count_real_arrays);
+	    vpi_mcd_printf(1, "           %8lu logic (%lu words)\n",
+			   count_var_arrays, count_var_array_words);
+	    vpi_mcd_printf(1, "           %8lu real (%lu words)\n",
+			   count_real_arrays, count_real_array_words);
 	    vpi_mcd_printf(1, " ... %8lu scopes\n",   count_vpi_scopes);
       }
 
@@ -299,16 +309,23 @@ int main(int argc, char*argv[])
 	    my_getrusage(cycles+2);
 	    print_rusage(cycles+2, cycles+1);
 
-	    vpi_mcd_printf(1, "Event counts: (event pool = %lu)\n",
-		    count_event_pool);
+	    vpi_mcd_printf(1, "Event counts:\n");
+	    vpi_mcd_printf(1, "    %8lu time steps (pool=%lu)\n",
+			   count_time_events, count_time_pool());
 	    vpi_mcd_printf(1, "    %8lu thread schedule events\n",
 		    count_thread_events);
-	    vpi_mcd_printf(1, "    %8lu propagation events\n",
-		    count_prop_events);
 	    vpi_mcd_printf(1, "    %8lu assign events\n",
 		    count_assign_events);
-	    vpi_mcd_printf(1, "    %8lu other events\n",
-		    count_gen_events);
+	    vpi_mcd_printf(1, "             ...assign(vec4) pool=%lu\n",
+			   count_assign4_pool());
+	    vpi_mcd_printf(1, "             ...assign(vec8) pool=%lu\n",
+			   count_assign8_pool());
+	    vpi_mcd_printf(1, "             ...assign(real) pool=%lu\n",
+			   count_assign_real_pool());
+	    vpi_mcd_printf(1, "             ...assign(word) pool=%lu\n",
+			   count_assign_aword_pool());
+	    vpi_mcd_printf(1, "    %8lu other events (pool=%lu)\n",
+			   count_gen_events, count_gen_pool());
       }
 
       return vvp_return_value;

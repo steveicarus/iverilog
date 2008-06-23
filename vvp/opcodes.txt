@@ -14,14 +14,14 @@ describes the specific behavior of each opcode, in enough detail
 
 General principles of Arithmetic:
 
-The binary arithmetic instruction in general take three parameters,
+The binary arithmetic instruction in general takes three parameters,
 the left operand, the right operand, and the base. The left operand is
 replaced with the result, which is the same width as the left and
 right operands.
 
 * %abs/wr <bit-o>, <bit-i>
 
-This instructure calculate the absolute value of a real value. It uses
+This instruction calculates the absolute value of a real value. It uses
 the fabs() function in the run-time to do the work.
 
 * %add <bit-l>, <bit-r>, <wid>
@@ -79,20 +79,6 @@ The %assign/av/d variation reads the delay from an integer register that
 is given by the <delayx> value. This should not be 0, 1 or 3, of course,
 since these registers contain the vector width, base part select and
 word address.
-
-* %assign/mv <memory-label>, <delay>, <bit> (DEPRECATED)
-
-the %assign/mv instruction assigns a vector value to a word in the
-labeled memory. The <delay> is the delay in simulation time to the
-assignment (0 for non-blocking assignment) and the <bit> is the base
-of the vector to write.
-
-The width of the word is retrieved from index register 0.
-
-The base of a part select is retrieved from index register 1.
-
-The address of the word in the memory is from index register 3. The
-address is canonical form.
 
 * %assign/v0 <var-label>, <delay>, <bit>
 * %assign/v0/d <var-label>, <delayx>, <bit>
@@ -383,7 +369,7 @@ This instruction loads an immediate value into the addressed index
 register. The index register holds numeric values, so the <value> is a
 number. The idx value selects the index register. This is different
 from %ix/get, which loads the index register from a value in the
-thread bit vector.
+thread bit vector. The value is a signed decimal value >= 0.
 
 
 * %ix/add <idx>, <value>
@@ -432,28 +418,22 @@ address is in index register 3. The width should match the width of
 the array word.
 
 * %load/avp0 <bit>, <array-label>, <wid>
+* %load/avp0/s <bit>, <array-label>, <wid>
 
 This instruction is a mix of %load/av and %load/vp0. It loads an array
 value like %load/av and then adds a value from index register 0 to the
-result like %load/vp0.
+result like %load/vp0. The loaded value is zero-extended to <wid>,
+then added arithmetically to the signed index register 0. The result
+is then stored in <bit>.
+
+The %load/avp0/s instruction is the same, except that the loaded
+vector is sign extended (instead of 0-extended) before the addition.
 
 * %load/avx.p <bit>, <array-label>, <index>
 
 This instruction is similar to %load/av, but it loads only a single
 bit, and the <index> is the selector for the bit to use. If <index> is
 out of range, then x is loaded.
-
-* %load/mv <bit>, <memory-label>, <wid>
-
-this instruction loads a word from the specified memory. The word
-address is in index register 3. The width should match the width of
-the memory word.
-
-* %load/nx <bit>, <vpi-label>, <idx>
-
-This instruction load a value from a .net object bit. Since .net
-objects don't really exist (they are only named indirection into the
-netlist) this instruction indexes into the .net list of bits.
 
 * %load/v <bit>, <functor-label>, <wid>
 
@@ -463,36 +443,43 @@ the specified thread register bit. The functor-label can refer to a
 from the least significant up to <wid> bits, is loaded starting at
 thread bit <bit>. It is an OK for the width to not match the vector
 width at the functor. If the <wid> is less than the width at the
-functor, then the most significant bits are dropped.
+functor, then the most significant bits are dropped. If the <wid> is
+more than the width at the functor, the value is padded with X bits.
 
 * %load/vp0 <bit>, <functor-label>, <wid>
+* %load/vp0/s <bit>, <functor-label>, <wid>
 
-This instruction is the same as %load/v above, except that it also
-adds the integer value is index register 0 into the loaded value. The
-addition is a Verilog-style add, which means that if any of the input
-bits are X or Z, the entire result is turned into a vector of X bits.
+This instruction is the similar %load/v above, except that it also
+adds the signed integer value in index register 0 into the loaded
+value. The addition is a Verilog-style add, which means that if any of
+the input bits are X or Z, the entire result is turned into a vector
+of X bits.
 
-Index register 2 contains the result width. The addition of the loaded
-value and the index are done at this width to avoid the problem of a
-small vector with a large immediate offset indexing an array.
+The <wid> is, line the %load/v, the result width. But unlike the
+%load/v, the vector is padded with 0s (%load/vp0) or sign extended
+(%load/vp0/s) to the desired width.
 
 * %load/wr <bit>, <vpi-label>
 
 This instruction reads a real value from the vpi-like object to a word
 register.
 
-* %load/x <bit>, <functor-label>, <idx>
-* %load/x.p <bit>, <functor-label>, <idx>
+* %load/x1p <bit>, <functor-label>, <wid>
 
-This is an indexed load. It uses the contents of the specified index
-register to select a bit from a vector functor at <functor-label>. The
-bit is pulled from the indexed bit of the addressed functor and loaded
-into the destination thread bit. If the indexed value is beyond the
-width of the vector, then the result is X.
+This is an indexed load. It uses the contents of index register 1 to
+select a part from a vector functor at <functor-label>. The 
+part is pulled from the indexed bit of the addressed functor and loaded
+into the destination thread bit. The <wid> is the width of the
+part. If any bit of the desired value is outside the vector, then that
+bit is set to X.
 
-The %load/x.p is the same, but when the operation is done, it
-increments the specified index register. This provides a basic
-auto-increment feature.
+The index register 1 is interpreted as a signed value. Even though the
+address is cannonical (from 0 to the width of the signal) the value in
+index register 1 may be <0 or >=wid. The load instruction handles
+filling in the out-of-bounds bits with x.
+
+When the operation is done, the <wid> is added to index register 1, to
+provide a basic auto-increment behavior.
 
 * %loadi/wr <bit>, <mant>, <exp>
 
@@ -532,7 +519,7 @@ into the destination vector. This is useful for filling a vector.
 
 The %movi variant moves a binary value, LSB first, into the
 destination vector. The immediate value is up to 32bits, padded with
-zeros to fillout the width.
+zeros to fill out the width.
 
 * %mul <bit-l>, <bit-r>, <wid>
 
@@ -667,19 +654,6 @@ width is implied from the <wid> that is the argument. This is the part
 
 The address (in canonical form) is precalculated and loaded into index
 register 3. This is the address of the word within the array.
-
-* %set/mv <memory-label>, <bit>, <wid>
-
-This sets a thread vector to a memory word. The <memory-label>
-addresses a memory device, and the <bit>,<wid> describe a vector to be
-written. Index register 3 contains the address of the word within the
-memory.
-
-The base of a part select is retrieved from index register 1.
-
-The address (in canonical form) is precalculated and loaded into index
-register 3.
-
 
 * %set/wr <vpi-label>, <bit>
 

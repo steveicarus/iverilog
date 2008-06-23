@@ -1,7 +1,7 @@
 #ifndef __vpi_sys_priv_H
 #define __vpi_sys_priv_H
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,12 +18,9 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_priv.h,v 1.8 2007/03/14 04:05:51 steve Exp $"
-#endif
 
-# include  "vpi_config.h"
-# include  "vpi_user.h"
+#include "vpi_config.h"
+#include "vpi_user.h"
 
 /*
  * Context structure for PRNG in mt19937int.c
@@ -36,9 +33,6 @@ struct context_s {
 extern void sgenrand(struct context_s *context, unsigned long seed);
 extern unsigned long genrand(struct context_s *context);
 
-
-extern int is_constant(vpiHandle obj);
-
 extern PLI_UINT64 timerec_to_time64(const struct t_vpi_time*time);
 
 struct timeformat_info_s {
@@ -49,5 +43,20 @@ struct timeformat_info_s {
 };
 
 extern struct timeformat_info_s timeformat_info;
+
+extern unsigned is_constant_obj(vpiHandle obj);
+extern unsigned is_numeric_obj(vpiHandle obj);
+extern unsigned is_string_obj(vpiHandle obj);
+
+extern vpiHandle sys_func_module(vpiHandle obj);
+
+/*
+ * The standard compiletf routines.
+ */
+extern PLI_INT32 sys_no_arg_compiletf(PLI_BYTE8 *name);
+extern PLI_INT32 sys_one_numeric_arg_compiletf(PLI_BYTE8 *name);
+extern PLI_INT32 sys_one_opt_numeric_arg_compiletf(PLI_BYTE8 *name);
+extern PLI_INT32 sys_two_numeric_args_compiletf(PLI_BYTE8 *name);
+extern PLI_INT32 sys_one_string_arg_compiletf(PLI_BYTE8 *name);
 
 #endif

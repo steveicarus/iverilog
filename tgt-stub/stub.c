@@ -240,6 +240,56 @@ static void show_lpm_array(ivl_lpm_t net)
       }
 }
 
+static void show_lpm_cast_int(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_CAST_INT %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      ivl_nexus_t q = ivl_lpm_q(net,0);
+      ivl_nexus_t a = ivl_lpm_data(net,0);
+      fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
+      fprintf(out, "    A: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
+
+      if (type_of_nexus(q) == IVL_VT_REAL) {
+	    fprintf(out, "    ERROR: Data type of Q is %s, expecting !real\n",
+		    data_type_string(type_of_nexus(q)));
+	    stub_errors += 1;
+      }
+
+      if (type_of_nexus(a) != IVL_VT_REAL) {
+	    fprintf(out, "    ERROR: Data type of A is %s, expecting real\n",
+		    data_type_string(type_of_nexus(a)));
+	    stub_errors += 1;
+      }
+}
+
+static void show_lpm_cast_real(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_CAST_REAL %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      ivl_nexus_t q = ivl_lpm_q(net,0);
+      ivl_nexus_t a = ivl_lpm_data(net,0);
+      fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
+      fprintf(out, "    A: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
+
+      if (type_of_nexus(q) != IVL_VT_REAL) {
+	    fprintf(out, "    ERROR: Data type of Q is %s, expecting real\n",
+		    data_type_string(type_of_nexus(q)));
+	    stub_errors += 1;
+      }
+
+      if (type_of_nexus(a) == IVL_VT_REAL) {
+	    fprintf(out, "    ERROR: Data type of A is %s, expecting !real\n",
+		    data_type_string(type_of_nexus(a)));
+	    stub_errors += 1;
+      }
+}
+
 static void show_lpm_divide(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -555,38 +605,6 @@ static void show_lpm_part(ivl_lpm_t net)
       }
 }
 
-static void show_lpm_part_bi(ivl_lpm_t net)
-{
-      unsigned width = ivl_lpm_width(net);
-      unsigned base  = ivl_lpm_base(net);
-      ivl_nexus_t port_p = ivl_lpm_q(net,0);
-      ivl_nexus_t port_v = ivl_lpm_data(net,0);
-
-      fprintf(out, "  LPM_PART_BI %s: <width=%u, base=%u, signed=%d>\n",
-	      ivl_lpm_basename(net), width, base, ivl_lpm_signed(net));
-      fprintf(out, "    P: %s\n", ivl_nexus_name(port_p));
-      fprintf(out, "    V: %s <width=%u>\n", ivl_nexus_name(port_v),
-	      width_of_nexus(port_v));
-
-
-	/* The data(0) port must be large enough for the part select. */
-      if (width_of_nexus(ivl_lpm_data(net,0)) < (width+base)) {
-	    fprintf(out, "    ERROR: Part select is out of range."
-		    " Data nexus width=%u, width+base=%u\n",
-		    width_of_nexus(ivl_lpm_data(net,0)), width+base);
-	    stub_errors += 1;
-      }
-
-	/* The Q vector must be exactly the width of the part select. */
-      if (width_of_nexus(ivl_lpm_q(net,0)) != width) {
-	    fprintf(out, "    ERROR: Part select input mismatch."
-		    " Nexus width=%u, expect width=%u\n",
-		    width_of_nexus(ivl_lpm_q(net,0)), width);
-	    stub_errors += 1;
-      }
-}
-
-
 /*
  * The reduction operators have similar characteristics and are
  * displayed here.
@@ -834,6 +852,14 @@ static void show_lpm(ivl_lpm_t net)
 	    show_lpm_array(net);
 	    break;
 
+	  case IVL_LPM_CAST_INT:
+	    show_lpm_cast_int(net);
+	    break;
+
+	  case IVL_LPM_CAST_REAL:
+	    show_lpm_cast_real(net);
+	    break;
+
 	  case IVL_LPM_DIVIDE:
 	    show_lpm_divide(net);
 	    break;
@@ -903,11 +929,6 @@ static void show_lpm(ivl_lpm_t net)
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
 	    show_lpm_part(net);
-	    break;
-
-	      /* The BI part select is slightly special. */
-	  case IVL_LPM_PART_BI:
-	    show_lpm_part_bi(net);
 	    break;
 
 	  case IVL_LPM_REPEAT:
@@ -1059,6 +1080,7 @@ static void show_nexus_details(ivl_signal_t net, ivl_nexus_t nex)
 	    ivl_net_logic_t log;
 	    ivl_lpm_t lpm;
 	    ivl_signal_t sig;
+	    ivl_switch_t swt;
 	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
 
 	    const char*dr0 = str_tab[ivl_nexus_ptr_drive0(ptr)];
@@ -1091,6 +1113,11 @@ static void show_nexus_details(ivl_signal_t net, ivl_nexus_t nex)
 		  fprintf(out, "      LPM %s.%s (%s0, %s1)\n",
 			  ivl_scope_name(ivl_lpm_scope(lpm)),
 			  ivl_lpm_basename(lpm), dr0, dr1);
+
+	    } else if ((swt = ivl_nexus_ptr_switch(ptr))) {
+		  fprintf(out, "      SWITCH %s.%s\n",
+			  ivl_scope_name(ivl_switch_scope(swt)),
+			  ivl_switch_basename(swt));
 
 	    } else if ((con = ivl_nexus_ptr_con(ptr))) {
 		  signal_nexus_const(net, ptr, con);

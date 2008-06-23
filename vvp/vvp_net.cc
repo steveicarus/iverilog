@@ -30,6 +30,70 @@
 # include  <math.h>
 # include  <assert.h>
 
+// Allocate around 1Megbytes/chunk.
+static const size_t VVP_NET_CHUNK = 1024*1024/sizeof(vvp_net_t);
+static vvp_net_t*vvp_net_alloc_table = 0;
+static size_t vvp_net_alloc_remaining = 0;
+// For statistics, count the vvp_nets allocated and the bytes of alloc
+// chunks allocated.
+unsigned long count_vvp_nets = 0;
+size_t size_vvp_nets = 0;
+size_t size_vvp_net_funs = 0;
+
+void* vvp_net_t::operator new (size_t size)
+{
+      assert(size == sizeof(vvp_net_t));
+      if (vvp_net_alloc_remaining == 0) {
+	    vvp_net_alloc_table = ::new vvp_net_t[VVP_NET_CHUNK];
+	    vvp_net_alloc_remaining = VVP_NET_CHUNK;
+	    size_vvp_nets += size*VVP_NET_CHUNK;
+      }
+
+      vvp_net_t*return_this = vvp_net_alloc_table;
+      vvp_net_alloc_table += 1;
+      vvp_net_alloc_remaining -= 1;
+      count_vvp_nets += 1;
+      return return_this;
+}
+
+void* vvp_net_fun_t::operator new(size_t size)
+{
+	// Link in an initial chunk of space for net_fun_t
+	// objects. This chunk doesn't need to be the same size as the
+	// subsequent chunks, but we do need to make sure it is
+	// aligned with pointer alignment. (Hence the union with "align".)
+      static union { void*align; char bytes[512*1024]; } initial_chunk;
+
+	// Initialize the pointer to the initial chunk.
+      static char*chunk_ptr = initial_chunk.bytes;
+      static size_t chunk_remaining = sizeof(initial_chunk);
+
+	// Once the initial chunk fills up, allocate new chunks in
+	// fairly large blocks to reduce the system allocator
+	// overhead, but not such big chunks that we create our own
+	// waste. (Expect the typical waste to be CHUNK_BYTES/2.)
+      const size_t CHUNK_BYTES = 256*1024;
+
+      if (size > chunk_remaining) {
+	    chunk_ptr = ::new char[CHUNK_BYTES];
+	    chunk_remaining = CHUNK_BYTES;
+	    size_vvp_net_funs += CHUNK_BYTES;
+      }
+
+      assert( (size%sizeof(void*)) == 0 );
+
+      void*res = chunk_ptr;
+      chunk_ptr += size;
+      chunk_remaining -= size;
+
+      return res;
+}
+
+void vvp_net_fun_t::operator delete(void*)
+{
+      assert(0);
+}
+
 /* *** BIT operations *** */
 vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c)
 {
@@ -129,7 +193,7 @@ int edge(vvp_bit4_t from, vvp_bit4_t to)
       return 0;
 }
 
-void vvp_send_vec8(vvp_net_ptr_t ptr, vvp_vector8_t val)
+void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val)
 {
       while (struct vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
@@ -296,6 +360,87 @@ void vvp_vector4_t::allocate_words_(unsigned wid, unsigned long inita, unsigned 
       }
 }
 
+vvp_vector4_t::vvp_vector4_t(unsigned size, double val)
+: size_(size)
+{
+      bool is_neg = false;
+      double fraction;
+      int exponent;
+
+	/* We return 'bx for a NaN. */
+      if (val != val)  {
+	    allocate_words_(size, WORD_X_ABITS, WORD_X_BBITS);
+	    return;
+      }
+
+	/* We return 'b1 for + or - infinity. */
+      if (val && (val == 0.5*val)) {
+	    allocate_words_(size, WORD_1_ABITS, WORD_1_BBITS);
+	    return;
+      }
+
+	/* Convert to a positive result. */
+      if (val < 0.0) {
+	    is_neg = true;
+	    val = -val;
+      }
+      allocate_words_(size, WORD_0_ABITS, WORD_0_BBITS);
+
+	/* Get the exponent and fractional part of the number. */
+      fraction = frexp(val, &exponent);
+
+	/* If the value is small enough just use lround(). */
+      if (exponent < BITS_PER_WORD-2) {
+	    if (is_neg) this->invert();  // Invert the bits if negative.
+	    long sval = lround(val);
+	    if (is_neg) sval = -sval;
+	      /* This requires that 0 and 1 have the same bbit value. */
+	    if (size_ > BITS_PER_WORD) {
+		  abits_ptr_[0] = sval;
+	    } else {
+		  abits_val_ = sval;
+	    }
+	    return;
+      }
+
+      unsigned nwords = (exponent-1) / BITS_PER_WORD;
+      unsigned my_words = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD - 1;
+
+      fraction = ldexp(fraction, (exponent-1) % BITS_PER_WORD + 1);
+
+	/* Skip any leading bits. */
+      for (int idx = (signed) nwords; idx > (signed) my_words; idx -=1) {
+	    unsigned bits = (unsigned) fraction;
+	    fraction = fraction - (double) bits;
+	    fraction = ldexp(fraction, BITS_PER_WORD);
+      }
+
+	/* Convert the remaining bits as appropriate. */
+      if (my_words == 0) {
+		  unsigned bits = (unsigned) fraction;
+		  abits_val_ = bits;
+		  fraction = fraction - (double) bits;
+		    /* Round any fractional part up. */
+		  if (fraction >= 0.5) *this += (int64_t) 1;
+      } else {
+	    if (nwords < my_words) my_words = nwords;
+	    for (int idx = (signed)my_words; idx >= 0; idx -= 1) {
+		  unsigned bits = (unsigned) fraction;
+		  abits_ptr_[idx] = bits;
+		  fraction = fraction - (double) bits;
+		  fraction = ldexp(fraction, BITS_PER_WORD);
+	    }
+	      /* Round any fractional part up. */
+	    if (fraction >= ldexp(0.5, BITS_PER_WORD)) *this += (int64_t) 1;
+       }
+
+	/* Convert to a negative number if needed. */
+      if (is_neg) {
+	    this->invert();
+	    *this += (int64_t) 1;
+      }
+}
+
 vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
 			    unsigned adr, unsigned wid)
 {
@@ -404,6 +549,13 @@ void vvp_vector4_t::resize(unsigned newsize)
 
       if (newsize > BITS_PER_WORD) {
 	    unsigned newcnt = (newsize + BITS_PER_WORD - 1) / BITS_PER_WORD;
+	    if (newcnt == cnt) {
+		    // If the word count doesn't change, then there is
+		    // no need for re-allocation so we are done now.
+		  size_ = newsize;
+		  return;
+	    }
+
 	    unsigned long*newbits = new unsigned long[2*newcnt];
 
 	    if (cnt > 1) {
@@ -981,30 +1133,32 @@ ostream& operator<< (ostream&out, const vvp_vector4_t&that)
       return out;
 }
 
-/* The width is guaranteed to not be larger than a long.
- * If the double is outside the integer range (+/-) the
- * largest/smallest integer value is returned. */
-vvp_vector4_t double_to_vector4(double val, unsigned wid)
+bool vector4_to_value(const vvp_vector4_t&vec, long&val, bool is_signed)
 {
-      long span = 1l << (wid-1);
-      double dmin = -1l * span;
-      double dmax = span - 1l;
+      long res = 0;
+      long msk = 1;
 
-      if (val > dmax) val = dmax;
-      if (val < dmin) val = dmin;
+      for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
+	    switch (vec.value(idx)) {
+		case BIT4_0:
+		  break;
+		case BIT4_1:
+		  res |= msk;
+		  break;
+		default:
+		  return false;
+	    }
 
-      vvp_vector4_t res (wid);
-      long bits = lround(val);
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_bit4_t bit = BIT4_0;
-
-	    if (bits & 1L) bit = BIT4_1;
-
-	    res.set_bit(idx, bit);
-	    bits >>= 1;
+	    msk <<= 1L;
       }
 
-      return res;
+      if (is_signed && vec.value(vec.size()-1) == BIT4_1) {
+	    if (vec.size() < 8*sizeof(val))
+		  res |= (-1L) << vec.size();
+      }
+
+      val = res;
+      return true;
 }
 
 bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
@@ -1076,6 +1230,94 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
       }
       val = res;
       return flag;
+}
+
+vvp_vector4array_t::vvp_vector4array_t(unsigned width, unsigned words)
+: width_(width), words_(words)
+{
+      array_ = new v4cell[words_];
+
+      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
+	    for (unsigned idx = 0 ; idx < words_ ; idx += 1) {
+		  array_[idx].abits_val_ = vvp_vector4_t::WORD_X_ABITS;
+		  array_[idx].bbits_val_ = vvp_vector4_t::WORD_X_BBITS;
+	    }
+      } else {
+	    for (unsigned idx = 0 ; idx < words_ ; idx += 1) {
+		  array_[idx].abits_ptr_ = 0;
+		  array_[idx].bbits_ptr_ = 0;
+	    }
+      }
+}
+
+vvp_vector4array_t::~vvp_vector4array_t()
+{
+      if (array_) {
+	    if (width_ > vvp_vector4_t::BITS_PER_WORD) {
+		  for (unsigned idx = 0 ; idx < words_ ; idx += 1)
+			if (array_[idx].abits_ptr_)
+			      delete[]array_[idx].abits_ptr_;
+	    }
+	    delete[]array_;
+      }
+}
+
+void vvp_vector4array_t::set_word(unsigned index, const vvp_vector4_t&that)
+{
+      assert(index < words_);
+      assert(that.size_ == width_);
+
+      v4cell&cell = array_[index];
+
+      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
+	    cell.abits_val_ = that.abits_val_;
+	    cell.bbits_val_ = that.bbits_val_;
+	    return;
+      }
+
+      unsigned cnt = (width_ + vvp_vector4_t::BITS_PER_WORD-1)/vvp_vector4_t::BITS_PER_WORD;
+
+      if (cell.abits_ptr_ == 0) {
+	    cell.abits_ptr_ = new unsigned long[2*cnt];
+	    cell.bbits_ptr_ = cell.abits_ptr_ + cnt;
+      }
+
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    cell.abits_ptr_[idx] = that.abits_ptr_[idx];
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    cell.bbits_ptr_[idx] = that.bbits_ptr_[idx];
+}
+
+vvp_vector4_t vvp_vector4array_t::get_word(unsigned index) const
+{
+      if (index >= words_)
+	    return vvp_vector4_t(width_, BIT4_X);
+
+      assert(index < words_);
+
+      v4cell&cell = array_[index];
+
+      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
+	    vvp_vector4_t res;
+	    res.size_ = width_;
+	    res.abits_val_ = cell.abits_val_;
+	    res.bbits_val_ = cell.bbits_val_;
+	    return res;
+      }
+
+      vvp_vector4_t res (width_, BIT4_X);
+      if (cell.abits_ptr_ == 0)
+	    return res;
+
+      unsigned cnt = (width_ + vvp_vector4_t::BITS_PER_WORD-1)/vvp_vector4_t::BITS_PER_WORD;
+
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    res.abits_ptr_[idx] = cell.abits_ptr_[idx];
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    res.bbits_ptr_[idx] = cell.bbits_ptr_[idx];
+
+      return res;
+
 }
 
 template <class T> T coerce_to_width(const T&that, unsigned width)
@@ -1751,60 +1993,42 @@ ostream& operator<< (ostream&out, const vvp_vector2_t&that)
 vvp_vector8_t::vvp_vector8_t(const vvp_vector8_t&that)
 {
       size_ = that.size_;
-
-      bits_ = new vvp_scalar_t[size_];
-
-      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-	    bits_[idx] = that.bits_[idx];
-
-}
-
-vvp_vector8_t::vvp_vector8_t(unsigned size)
-: size_(size)
-{
-      if (size_ == 0) {
-	    bits_ = 0;
-	    return;
+      if (size_ <= PTR_THRESH) {
+	    memcpy(val_, that.val_, sizeof(val_));
+      } else {
+	    ptr_ = new vvp_scalar_t[size_];
+	    for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
+		  ptr_[idx] = that.ptr_[idx];
       }
-
-      bits_ = new vvp_scalar_t[size_];
-}
-
-vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that, unsigned str)
-: size_(that.size())
-{
-      if (size_ == 0) {
-	    bits_ = 0;
-	    return;
-      }
-
-      bits_ = new vvp_scalar_t[size_];
-
-      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-	    bits_[idx] = vvp_scalar_t (that.value(idx), str);
-
 }
 
 vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that,
 			     unsigned str0, unsigned str1)
 : size_(that.size())
 {
-      if (size_ == 0) {
-	    bits_ = 0;
+      if (size_ == 0)
 	    return;
-      }
 
-      bits_ = new vvp_scalar_t[size_];
+      vvp_scalar_t*tmp;
+      if (size_ <= PTR_THRESH)
+	    tmp = new (val_) vvp_scalar_t[PTR_THRESH];
+      else
+	    tmp = ptr_ = new vvp_scalar_t[size_];
+
       for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-	    bits_[idx] = vvp_scalar_t (that.value(idx), str0, str1);
+	    tmp[idx] = vvp_scalar_t (that.value(idx), str0, str1);
 
 }
 
 vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 {
+	// Assign to self.
+      if (size_ > PTR_THRESH && that.size_ > PTR_THRESH && ptr_ == that.ptr_)
+	    return *this;
+
       if (size_ != that.size_) {
-	    if (size_ > 0)
-		  delete[]bits_;
+	    if (size_ > PTR_THRESH)
+		  delete[]ptr_;
 	    size_ = 0;
       }
 
@@ -1813,31 +2037,55 @@ vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 	    return *this;
       }
 
+      if (that.size_ <= PTR_THRESH) {
+	    size_ = that.size_;
+	    memcpy(val_, that.val_, sizeof(val_));
+	    return *this;
+      }
+
       if (size_ == 0) {
 	    size_ = that.size_;
-	    bits_ = new vvp_scalar_t[size_];
+	    ptr_ = new vvp_scalar_t[size_];
       }
 
       for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-	    bits_[idx] = that.bits_[idx];
+	    ptr_[idx] = that.ptr_[idx];
 
       return *this;
 }
 
-bool vvp_vector8_t::eeq(const vvp_vector8_t&that) const
+vvp_vector8_t vvp_vector8_t::subvalue(unsigned base, unsigned wid) const
 {
-      if (size_ != that.size_)
-	    return false;
+      vvp_vector8_t tmp (wid);
 
-      if (size_ == 0)
-	    return true;
+      vvp_scalar_t* tmp_ptr = tmp.size_<=PTR_THRESH? reinterpret_cast<vvp_scalar_t*>(tmp.val_) : tmp.ptr_;
+      const vvp_scalar_t* ptr = size_<=PTR_THRESH? reinterpret_cast<const vvp_scalar_t*>(val_) : ptr_;
 
-      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1) {
-	    if (! bits_[idx] .eeq( that.bits_[idx] ))
-		return false;
+      unsigned idx = 0;
+      while ((idx < wid) && (base+idx < size_)) {
+	    tmp_ptr[idx] = ptr[base+idx];
+	    idx += 1;
       }
 
-      return true;
+      return tmp;
+}
+
+vvp_vector8_t part_expand(const vvp_vector8_t&that, unsigned wid, unsigned off)
+{
+      assert(off < wid);
+      vvp_vector8_t tmp (wid);
+
+      vvp_scalar_t* tmp_ptr = tmp.size_<=vvp_vector8_t::PTR_THRESH? reinterpret_cast<vvp_scalar_t*>(tmp.val_) : tmp.ptr_;
+      const vvp_scalar_t* that_ptr = that.size_<=vvp_vector8_t::PTR_THRESH? reinterpret_cast<const vvp_scalar_t*>(that.val_) : that.ptr_;
+
+      unsigned idx = off;
+
+      while (idx < wid && that.size_ > (idx-off)) {
+	    tmp_ptr[idx] = that_ptr[idx-off];
+	    idx += 1;
+      }
+
+      return tmp;
 }
 
 ostream& operator<<(ostream&out, const vvp_vector8_t&that)
@@ -1875,7 +2123,7 @@ void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bits,
       assert(0);
 }
 
-void vvp_net_fun_t::recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit)
+void vvp_net_fun_t::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 {
       recv_vec4(port, reduce4(bit));
 }
@@ -2168,7 +2416,7 @@ void vvp_fun_signal::calculate_output_(vvp_net_ptr_t ptr)
       run_vpi_callbacks();
 }
 
-void vvp_fun_signal::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+void vvp_fun_signal::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 {
       recv_vec4(ptr, reduce4(bit));
 }
@@ -2247,10 +2495,10 @@ vvp_fun_signal8::vvp_fun_signal8(unsigned wid)
 
 void vvp_fun_signal8::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
-      recv_vec8(ptr, bit);
+      recv_vec8(ptr, vvp_vector8_t(bit,6,6));
 }
 
-void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 {
       switch (ptr.port()) {
 	  case 0: // Normal input (feed from net, or set from process)
@@ -2291,10 +2539,10 @@ void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
 void vvp_fun_signal8::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
                                    unsigned base, unsigned wid, unsigned vwid)
 {
-      recv_vec8_pv(ptr, bit, base, wid, vwid);
+      recv_vec8_pv(ptr, vvp_vector8_t(bit,6,6), base, wid, vwid);
 }
 
-void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, vvp_vector8_t bit,
+void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
 				   unsigned base, unsigned wid, unsigned vwid)
 {
       assert(bit.size() == wid);
@@ -2322,7 +2570,7 @@ void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, vvp_vector8_t bit,
 	    if (force_mask_.size() == 0)
 		  force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, size());
 	    if (force_.size() == 0)
-		  force_ = vvp_vector8_t(vvp_vector4_t(vwid, BIT4_Z));
+		  force_ = vvp_vector8_t(vvp_vector4_t(vwid, BIT4_Z),6,6);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  force_mask_.set_bit(base+idx, 1);
@@ -2516,7 +2764,7 @@ void vvp_wide_fun_core::propagate_vec4(const vvp_vector4_t&bit,
 				       vvp_time64_t delay)
 {
       if (delay)
-	    schedule_assign_vector(ptr_->out, bit, delay);
+	    schedule_assign_plucked_vector(ptr_->out, delay, bit, 0, bit.size());
       else
 	    vvp_send_vec4(ptr_->out, bit);
 }
@@ -2636,51 +2884,8 @@ void vvp_wide_fun_t::recv_real(vvp_net_ptr_t port, double bit)
  */
 # define UNAMBIG(v)  (((v) & 0x0f) == (((v) >> 4) & 0x0f))
 
-#if 0
-# define STREN1(v) ( ((v)&0x80)? ((v)&0xf0) : (0x70 - ((v)&0xf0)) )
-# define STREN0(v) ( ((v)&0x08)? ((v)&0x0f) : (0x07 - ((v)&0x0f)) )
-#else
 # define STREN1(v) (((v)&0x70) >> 4)
 # define STREN0(v) ((v)&0x07)
-#endif
-
-vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str0, unsigned str1)
-{
-      assert(str0 <= 7);
-      assert(str1 <= 7);
-
-      if (str0 == 0 && str1 == 0) {
-	    value_ = 0x00;
-      } else switch (val) {
-	  case BIT4_0:
-	    value_ = str0 | (str0<<4);
-	    break;
-	  case BIT4_1:
-	    value_ = str1 | (str1<<4) | 0x88;
-	    break;
-	  case BIT4_X:
-	    value_ = str0 | (str1<<4) | 0x80;
-	    break;
-	  case BIT4_Z:
-	    value_ = 0x00;
-	    break;
-      }
-}
-
-vvp_bit4_t vvp_scalar_t::value() const
-{
-      if (value_ == 0) {
-	    return BIT4_Z;
-
-      } else switch (value_ & 0x88) {
-	  case 0x00:
-	    return BIT4_0;
-	  case 0x88:
-	    return BIT4_1;
-	  default:
-	    return BIT4_X;
-      }
-}
 
 unsigned vvp_scalar_t::strength0() const
 {
@@ -2712,16 +2917,13 @@ ostream& operator <<(ostream&out, vvp_scalar_t a)
       return out;
 }
 
-vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b)
+/*
+ * This function is only called if the actual interface function rules
+ * out some of the eazy cases. If we get here, we can assume that
+ * neither of the values is HiZ, and the values are not exactly equal.
+ */
+vvp_scalar_t fully_featured_resolv_(vvp_scalar_t a, vvp_scalar_t b)
 {
-	// If the value is 0, that is the same as HiZ. In that case,
-	// resolution is simply a matter of returning the *other* value.
-      if (a.value_ == 0)
-	    return b;
-      if (b.value_ == 0)
-	    return a;
-
-      vvp_scalar_t res = a;
 
       if (UNAMBIG(a.value_) && UNAMBIG(b.value_)) {
 
@@ -2730,126 +2932,117 @@ vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b)
 		 but different values, then this becomes
 		 ambiguous. */
 
-	    if (a.value_ == b.value_) {
+	    if ((b.value_&0x07) > (a.value_&0x07)) {
 
-		    /* values are equal. do nothing. */
+		    /* b value is stronger. Take it. */
+		  return b;
 
-	    } else if ((b.value_&0x07) > (res.value_&0x07)) {
+	    } else if ((b.value_&0x77) == (a.value_&0x77)) {
 
-		    /* New value is stronger. Take it. */
-		  res.value_ = b.value_;
-
-	    } else if ((b.value_&0x77) == (res.value_&0x77)) {
-
-		    /* Strengths are the same. Make value ambiguous. */
-		  res.value_ = (res.value_&0x70) | (b.value_&0x07) | 0x80;
+		    // Strengths are the same. Since we know already
+		    // that the values are not the same, Make value
+		    // into "x".
+		  vvp_scalar_t tmp (a);
+		  tmp.value_ = (tmp.value_&0x77) | 0x80;
+		  return tmp;
 
 	    } else {
 
-		    /* Must be res is the stronger one. */
+		    /* Must be "a" is the stronger one. */
+		  return a;
 	    }
 
-      } else if (UNAMBIG(res.value_)) {
-	    unsigned tmp = 0;
+      }
 
-	    if ((res.value_&0x70) > (b.value_&0x70))
-		  tmp |= res.value_&0xf0;
+	/* If one of the signals is unambiguous, then it
+	   will sweep up the weaker parts of the ambiguous
+	   signal. The result may be ambiguous, or maybe not. */
+
+      if (UNAMBIG(a.value_)) {
+	    vvp_scalar_t res;
+
+	    if ((a.value_&0x70) > (b.value_&0x70))
+		  res.value_ |= a.value_&0xf0;
 	    else
-		  tmp |= b.value_&0xf0;
+		  res.value_ |= b.value_&0xf0;
 
-	    if ((res.value_&0x07) > (b.value_&0x07))
-		  tmp |= res.value_&0x0f;
+	    if ((a.value_&0x07) > (b.value_&0x07))
+		  res.value_ |= a.value_&0x0f;
 	    else
-		  tmp |= b.value_&0x0f;
+		  res.value_ |= b.value_&0x0f;
 
-	    res.value_ = tmp;
+	    return res;
 
       } else if (UNAMBIG(b.value_)) {
 
-	      /* If one of the signals is unambiguous, then it
-		 will sweep up the weaker parts of the ambiguous
-		 signal. The result may be ambiguous, or maybe not. */
+	    vvp_scalar_t res;
 
-	    unsigned tmp = 0;
-
-	    if ((b.value_&0x70) > (res.value_&0x70))
-		  tmp |= b.value_&0xf0;
+	    if ((b.value_&0x70) > (a.value_&0x70))
+		  res.value_ |= b.value_&0xf0;
 	    else
-		  tmp |= res.value_&0xf0;
+		  res.value_ |= a.value_&0xf0;
 
-	    if ((b.value_&0x07) > (res.value_&0x07))
-		  tmp |= b.value_&0x0f;
+	    if ((b.value_&0x07) > (a.value_&0x07))
+		  res.value_ |= b.value_&0x0f;
 	    else
-		  tmp |= res.value_&0x0f;
+		  res.value_ |= a.value_&0x0f;
 
-	    res.value_ = tmp;
+	    return res;
 
-      } else {
-
-	      /* If both signals are ambiguous, then the result
-		 has an even wider ambiguity. */
-
-	    unsigned tmp = 0;
-	    int sv1a = a.value_&0x80 ? STREN1(a.value_) : - STREN1(a.value_);
-	    int sv0a = a.value_&0x08 ? STREN0(a.value_) : - STREN0(a.value_);
-	    int sv1b = b.value_&0x80 ? STREN1(b.value_) : - STREN1(b.value_);
-	    int sv0b = b.value_&0x08 ? STREN0(b.value_) : - STREN0(b.value_);
-
-	    int sv1 = sv1a;
-	    int sv0 = sv0a;
-
-	    if (sv0a > sv1)
-		  sv1 = sv0a;
-	    if (sv1b > sv1)
-		  sv1 = sv1b;
-	    if (sv0b > sv1)
-		  sv1 = sv0b;
-
-	    if (sv1a < sv0)
-		  sv0 = sv1a;
-	    if (sv1b < sv0)
-		  sv0 = sv1b;
-	    if (sv0b < sv0)
-		  sv0 = sv0b;
-
-	    if (sv1 > 0) {
-		  tmp |= 0x80;
-		  tmp |= sv1 << 4;
-	    } else {
-		    /* Set the MSB when both arguments MSBs are set. This
-		       can only happen if both one strengths are zero. */
-		  tmp |= (a.value_&b.value_)&0x80;
-		  tmp |= (-sv1) << 4;
-	    }
-
-	    if (sv0 > 0) {
-		  tmp |= 0x08;
-		  tmp |= sv0;
-	    } else {
-		  tmp |= (-sv0);
-	    }
-
-	    res.value_ = tmp;
       }
+
+
+	/* If both signals are ambiguous, then the result
+	   has an even wider ambiguity. */
+
+      unsigned tmp = 0;
+      int sv1a = a.value_&0x80 ? STREN1(a.value_) : - STREN1(a.value_);
+      int sv0a = a.value_&0x08 ? STREN0(a.value_) : - STREN0(a.value_);
+      int sv1b = b.value_&0x80 ? STREN1(b.value_) : - STREN1(b.value_);
+      int sv0b = b.value_&0x08 ? STREN0(b.value_) : - STREN0(b.value_);
+
+      int sv1 = sv1a;
+      int sv0 = sv0a;
+
+      if (sv0a > sv1)
+	    sv1 = sv0a;
+      if (sv1b > sv1)
+	    sv1 = sv1b;
+      if (sv0b > sv1)
+	    sv1 = sv0b;
+
+      if (sv1a < sv0)
+	    sv0 = sv1a;
+      if (sv1b < sv0)
+	    sv0 = sv1b;
+      if (sv0b < sv0)
+	    sv0 = sv0b;
+
+      if (sv1 > 0) {
+	    tmp |= 0x80;
+	    tmp |= sv1 << 4;
+      } else {
+	      /* Set the MSB when both arguments MSBs are set. This
+		 can only happen if both one strengths are zero. */
+	    tmp |= (a.value_&b.value_)&0x80;
+	    tmp |= (-sv1) << 4;
+      }
+
+      if (sv0 > 0) {
+	    tmp |= 0x08;
+	    tmp |= sv0;
+      } else {
+	    tmp |= (-sv0);
+      }
+
+      vvp_scalar_t res;
+      res.value_ = tmp;
 
 	/* Canonicalize the HiZ value. */
       if ((res.value_&0x77) == 0)
 	    res.value_ = 0;
 
       return res;
-}
-
-vvp_vector8_t resolve(const vvp_vector8_t&a, const vvp_vector8_t&b)
-{
-      assert(a.size() == b.size());
-
-      vvp_vector8_t out (a.size());
-
-      for (unsigned idx = 0 ;  idx < out.size() ;  idx += 1) {
-	    out.set_bit(idx, resolve(a.value(idx), b.value(idx)));
-      }
-
-      return out;
 }
 
 vvp_vector8_t resistive_reduction(const vvp_vector8_t&that)

@@ -306,10 +306,16 @@ class PEIdent : public PExpr {
     private:
 	// Common functions to calculate parts of part/bit selects.
       bool calculate_parts_(Design*, NetScope*, long&msb, long&lsb) const;
+      NetExpr* calculate_up_do_base_(Design*, NetScope*) const;
+      bool calculate_param_range_(Design*, NetScope*,
+				  const NetExpr*msb_ex, long&msb,
+				  const NetExpr*lsb_ex, long&lsb) const;
+
       bool calculate_up_do_width_(Design*, NetScope*, unsigned long&wid) const;
 
     private:
       NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*) const;
+      bool elaborate_lval_net_bit_(Design*, NetScope*, NetAssign_*) const;
       bool elaborate_lval_net_part_(Design*, NetScope*, NetAssign_*) const;
       bool elaborate_lval_net_idx_(Design*, NetScope*, NetAssign_*,
                                    index_component_t::ctype_t) const;
@@ -321,6 +327,18 @@ class PEIdent : public PExpr {
 				   NetScope*found,
 				   const NetExpr*par_msb,
 				   const NetExpr*par_lsb) const;
+      NetExpr*elaborate_expr_param_part_(Design*des,
+					 NetScope*scope,
+					 const NetExpr*par,
+					 NetScope*found,
+					 const NetExpr*par_msb,
+					 const NetExpr*par_lsb) const;
+      NetExpr*elaborate_expr_param_idx_up_(Design*des,
+					   NetScope*scope,
+					   const NetExpr*par,
+					   NetScope*found,
+					   const NetExpr*par_msb,
+					   const NetExpr*par_lsb) const;
       NetExpr*elaborate_expr_net(Design*des,
 				 NetScope*scope,
 				 NetNet*net,

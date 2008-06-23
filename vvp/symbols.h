@@ -1,7 +1,7 @@
 #ifndef __symbols_H
 #define __symbols_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: symbols.h,v 1.5 2004/12/11 02:31:30 steve Exp $"
-#endif
 
 /*
  * The symbol_table_t is intended as a means to hold and quickly index
@@ -46,7 +43,7 @@
  * try to look inside. The actual implementation is given in the
  * symbols.cc source file.
  */
-typedef struct symbol_table_s *symbol_table_t;
+typedef class symbol_table_s *symbol_table_t;
 
 typedef struct symbol_value_s {
       union {
@@ -56,6 +53,32 @@ typedef struct symbol_value_s {
       };
 } symbol_value_t;
 
+
+class symbol_table_s {
+    public:
+      explicit symbol_table_s();
+      virtual ~symbol_table_s();
+
+	// This method locates the value in the symbol table and sets its
+	// value. If the key doesn't yet exist, create it.
+      void sym_set_value(const char*key, symbol_value_t val);
+
+	// This method locates the value in the symbol table and returns
+	// it. If the value does not exist, create it, initialize it with
+	// zero and return the zero value.
+      symbol_value_t sym_get_value(const char*key);
+
+    private:
+      struct tree_node_*root;
+      struct key_strings*str_chunk;
+      unsigned str_used;
+
+      symbol_value_t find_value_(struct tree_node_*cur,
+				 const char*key, symbol_value_t val,
+				 bool force_flag);
+      char*key_strdup_(const char*str);
+};
+
 /*
  * Create a new symbol table or release an existing one. A new symbol
  * table has no keys and no values. As a symbol table is built up, it
@@ -63,41 +86,32 @@ typedef struct symbol_value_s {
  * the delete_symbol_table method will delete the table, including all
  * the space for the keys.
  */
-extern symbol_table_t new_symbol_table(void);
-extern void delete_symbol_table(symbol_table_t tbl);
+inline symbol_table_t new_symbol_table(void) { return new symbol_table_s; }
+inline void delete_symbol_table(symbol_table_t tbl) { delete tbl; }
+
+// These are obsolete, and here only to support older code.
+inline void sym_set_value(symbol_table_t tbl, const char*key, symbol_value_t val)
+{ tbl->sym_set_value(key, val); }
+
+inline symbol_value_t sym_get_value(symbol_table_t tbl, const char*key)
+{ return tbl->sym_get_value(key); }
 
 /*
- * This method locates the value in the symbol table and sets its
- * value. If the key doesn't yet exist, create it.
+ * This template is a type-safe interface to the symbol table.
  */
-void sym_set_value(symbol_table_t tbl, const char*key, symbol_value_t val);
+template <class T> class symbol_map_s : private symbol_table_s {
 
-/*
- * This method locates the value in the symbol table and returns
- * it. If the value does not exist, create it, initialize it with
- * zero and return the zero value.
- */
-symbol_value_t sym_get_value(symbol_table_t tbl, const char*key);
+    public:
+      void sym_set_value(const char*key, T*val)
+      { symbol_value_t tmp;
+	tmp.ptr = val;
+	symbol_table_s::sym_set_value(key, tmp);
+      }
 
-/*
- * $Log: symbols.h,v $
- * Revision 1.5  2004/12/11 02:31:30  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.4  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.3  2001/05/09 04:23:19  steve
- *  Now that the interactive debugger exists,
- *  there is no use for the output dump.
- *
- * Revision 1.2  2001/03/18 00:37:55  steve
- *  Add support for vpi scopes.
- *
- * Revision 1.1  2001/03/11 00:29:39  steve
- *  Add the vvp engine to cvs.
- *
- */
+      T* sym_get_value(const char*key)
+      { symbol_value_t val = symbol_table_s::sym_get_value(key);
+	return reinterpret_cast<T*>(val.ptr);
+      }
+};
+
 #endif

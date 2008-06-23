@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,13 +16,11 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_fileio.c,v 1.10 2007/03/14 04:05:51 steve Exp $"
-#endif
 
 # include  "vpi_user.h"
 # include  "sys_priv.h"
 # include  <assert.h>
+# include  <ctype.h>
 # include  <string.h>
 # include  <stdio.h>
 # include  <stdlib.h>
@@ -33,95 +31,178 @@
 /*
  * Implement the $fopen system function.
  */
-static PLI_INT32 sys_fopen_compiletf(PLI_BYTE8*name)
+static PLI_INT32 sys_fopen_compiletf(PLI_BYTE8 *name)
 {
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item;
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      assert(callh != 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle arg;
 
+	/* Check that there is a file name argument and that it is a string. */
       if (argv == 0) {
-	    vpi_printf("%s: file name argument missing.\n", name);
+	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires a string file name argument.\n", name);
 	    vpi_control(vpiFinish, 1);
-	    return -1;
-      }
-
-      item = vpi_scan(argv);
-      if (item == 0) {
-	    vpi_printf("%s: file name argument missing.\n", name);
-	    vpi_control(vpiFinish, 1);
-	    return -1;
-      }
-
-      item = vpi_scan(argv);
-      if (item == 0) {
-	      /* The mode argument is optional. It is OK for it
-		 to be missing. In this case, there are no more
-		 arguments, and we're done. */
 	    return 0;
       }
-
-      if (! is_constant(item)) {
-	    vpi_printf("ERROR: %s mode argument must be a constant\n", name);
+      if (! is_string_obj(vpi_scan(argv))) {
+	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's file name argument must be a string.\n", name);
 	    vpi_control(vpiFinish, 1);
       }
 
-      if (vpi_get(vpiConstType, item) != vpiStringConst) {
-	    vpi_printf("ERROR: %s mode argument must be a string.\n", name);
+	/* The type argument is optional. */
+      arg = vpi_scan(argv);
+      if (arg == 0) return 0;
+
+	/* When provided, the type argument must be a string. */
+      if (! is_string_obj(arg)) {
+	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's type argument must be a string.\n", name);
 	    vpi_control(vpiFinish, 1);
       }
- 
-      item = vpi_scan(argv);
-      if (item == 0) {
-	      /* There should be no more arguments. */
-	    return 0;
+
+	/* Make sure there are no extra arguments. */
+      if (vpi_scan(argv) != 0) {
+	    char msg [64];
+	    snprintf(msg, 64, "ERROR: %s line %d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+
+	    unsigned argc = 1;
+	    while (vpi_scan(argv)) argc += 1;
+
+	    vpi_printf("%s %s takes at most two string arguments.\n",
+	               msg, name);
+	    vpi_printf("%*s Found %u extra argument%s.\n",
+	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	    vpi_control(vpiFinish, 1);
       }
 
-      vpi_free_object(argv);
-      vpi_printf("%s: Too many arguments to system function.\n", name);
       return 0;
 }
 
 static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
 {
-      s_vpi_value value;
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      s_vpi_value val;
+      int fail = 0;
       char *mode_string = 0;
-
-      vpiHandle call_handle = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, call_handle);
+      unsigned idx;
       vpiHandle item = vpi_scan(argv);
       vpiHandle mode = vpi_scan(argv);
 
-      assert(item);
-
+	/* Get the mode handle if it exists. */
       if (mode) {
-           value.format = vpiStringVal;
-           vpi_get_value(mode, &value);
-           mode_string = strdup(value.value.str);
+            val.format = vpiStringVal;
+            vpi_get_value(mode, &val);
+	      /* Verify that we have a string and that it is not NULL. */
+            if (val.format != vpiStringVal || !*(val.value.str)) {
+		  vpi_printf("WARNING: %s line %d: ",
+		             vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s's mode argument is not a valid string.\n",
+		             name);
+		  fail = 1;
+	    }
 
-	   vpi_free_object(argv);
+	      /* Make sure the mode string is correct. */
+	    if (strlen(val.value.str) > 3) {
+		  vpi_printf("WARNING: %s line %d: ",
+		             vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s's mode argument (%s) is too long.\n",
+		             name, val.value.str);
+		  fail = 1;
+	    } else {
+		  unsigned bin = 0, plus = 0;
+		  switch (val.value.str[0]) {
+		      case 'r':
+		      case 'w':
+		      case 'a':
+			for (idx = 1; idx < 3 ; idx++) {
+			      if (val.value.str[idx] == '\0') break;
+			      switch (val.value.str[idx]) {
+				    case 'b':
+				      if (bin) fail = 1;
+				      bin = 1;
+				      break;
+				    case '+':
+				      if (plus) fail = 1;
+				      plus = 1;
+				      break;
+				    default:
+				      fail = 1;
+				      break;
+			      }
+			}
+			if (! fail) break;
+
+		      default:
+			vpi_printf("WARNING: %s line %d: ",
+			           vpi_get_str(vpiFile, callh),
+			           (int)vpi_get(vpiLineNo, callh));
+			vpi_printf("%s's mode argument (%s) is invalid.\n",
+			name, val.value.str);
+			fail = 1;
+			break;
+		  }
+	    }
+
+            mode_string = strdup(val.value.str);
+
+	    vpi_free_object(argv);
       }
 
 	/* Get the string form of the file name from the file name
 	   argument. */
-      value.format = vpiStringVal;
-      vpi_get_value(item, &value);
+      val.format = vpiStringVal;
+      vpi_get_value(item, &val);
 
-      if ((value.format != vpiStringVal) || !value.value.str) {
-	    vpi_printf("ERROR: %s: File name argument (type=%d)"
-		       " does not have a string value\n",
-		       name, vpi_get(vpiType, item));
+	/* Verify that we have a string and that it is not NULL. */
+      if (val.format != vpiStringVal || !*(val.value.str)) {
+	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's file name argument is not a valid string.\n",
+	                name);
+	    fail = 1;
 	    if (mode) free(mode_string);
-	    return 0;
       }
 
-      value.format = vpiIntVal;
+	/*
+	 * Verify that the file name is composed of only printable
+	 * characters.
+	 */
+      unsigned len = strlen(val.value.str);
+      for (idx = 0; idx < len; idx++) {
+	    if (! isprint(val.value.str[idx])) {
+		  char msg [64];
+		  snprintf(msg, 64, "WARNING: %s line %d:",
+		           vpi_get_str(vpiFile, callh),
+		           (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s %s's file name argument contains non-"
+		             "printable characters.\n", msg, name);
+		  vpi_printf("%*s \"%s\"\n", (int) strlen(msg), " ", val.value.str);
+		  fail = 1;
+		  if (mode) free(mode_string);
+	    }
+      }
+
+	/* If either the mode or file name are not valid just return. */
+      if (fail) return 0;
+
+      val.format = vpiIntVal;
       if (mode) {
-	    value.value.integer = vpi_fopen(value.value.str, mode_string);
+	    val.value.integer = vpi_fopen(val.value.str, mode_string);
 	    free(mode_string);
       } else
-	    value.value.integer = vpi_mcd_open(value.value.str);
+	    val.value.integer = vpi_mcd_open(val.value.str);
 
-      vpi_put_value(call_handle, &value, 0, vpiNoDelay);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
 
       return 0;
 }
@@ -130,59 +211,56 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
  * Implement the $fopenr(), $fopenw() and $fopena() system functions
  * from Chris Spear's File I/O for Verilog.
  */
-static PLI_INT32 sys_fopenrwa_compiletf(PLI_BYTE8*name)
-{
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle file;
-
-      /* Check that there are arguments. */
-      if (argv == 0) {
-            vpi_printf("ERROR: %s requires a single argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
-      }
-
-      file = vpi_scan(argv); /* This should never be zero. */
-
-      /* These functions take at most one argument. */
-      file = vpi_scan(argv);
-      if (file != 0) {
-            vpi_printf("ERROR: %s takes only a single argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
-      }
-
-      /* vpi_scan returning 0 (NULL) has already freed argv. */
-      return 0;
-}
 
 static PLI_INT32 sys_fopenrwa_calltf(PLI_BYTE8*name)
 {
-      s_vpi_value val;
-      char *mode;
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       vpiHandle file = vpi_scan(argv);
       vpi_free_object(argv);
 
-      /* Get the mode. */
+      s_vpi_value val;
+      char *mode;
+
+	/* Get the mode. */
       mode = name + strlen(name) - 1;
 
-      /* Get the filename. */
+	/* Get the filename. */
       val.format = vpiStringVal;
       vpi_get_value(file, &val);
-      if ((val.format != vpiStringVal) || !val.value.str) {
-	    vpi_printf("ERROR: %s's file name argument must be a string.\n",
-                        name);
-            vpi_control(vpiFinish, 1);
+
+	/* Verify that we have a string and that it is not NULL. */
+      if (val.format != vpiStringVal || !*(val.value.str)) {
+	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's file name argument is not a valid string.\n",
+	                name);
 	    return 0;
       }
 
-      /* Open the file and return the result. */
+	/*
+	 * Verify that the file name is composed of only printable
+	 * characters.
+	 */
+      unsigned idx, len = strlen(val.value.str);
+      for (idx = 0; idx < len; idx++) {
+	    if (! isprint(val.value.str[idx])) {
+		  char msg [64];
+		  snprintf(msg, 64, "WARNING: %s line %d:",
+		           vpi_get_str(vpiFile, callh),
+		           (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s %s's file name argument contains non-"
+		             "printable characters.\n", msg, name);
+		  vpi_printf("%*s \"%s\"\n", (int) strlen(msg), " ", val.value.str);
+		  return 0;
+	    }
+      }
+
+	/* Open the file and return the result. */
       val.format = vpiIntVal;
       val.value.integer = vpi_fopen(val.value.str, mode);
       vpi_put_value(callh, &val, 0, vpiNoDelay);
+
       return 0;
 }
 
@@ -191,75 +269,21 @@ static PLI_INT32 sys_fopenrwa_calltf(PLI_BYTE8*name)
  */
 static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
 {
-      unsigned int mcd;
-      int type;
-      s_vpi_value value;
-
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item = vpi_scan(argv);
-
-      if (item == 0) {
-	    vpi_printf("%s: mcd parameter missing.\n", name);
-	    return 0;
-      }
-      type = vpi_get(vpiType, item);
-      switch (type) {
-	    case vpiReg:
-	    case vpiRealVal:
-	    case vpiIntegerVar:
-	      break;
-	    default:
-	      vpi_printf("ERROR: %s mcd parameter must be of integral type",
-		name);
-	      vpi_printf(", got vpiType=%d\n", type);
-	      vpi_free_object(argv);
-	      return 0;
-      }
-
-      value.format = vpiIntVal;
-      vpi_get_value(item, &value);
-      mcd = value.value.integer;
-
-      vpi_mcd_close(mcd);
-      return 0;
-}
-
-static PLI_INT32 sys_fflush_compiletf(PLI_BYTE8 *ud)
-{
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle item;
-      PLI_INT32 type;
+      vpiHandle fd = vpi_scan(argv);
+      vpi_free_object(argv);
+      (void) name;  /* Not used! */
 
-      /* The argument is optional. */
-      if (argv == 0) {
-	    return 0;
-      }
-      /* Check that the file/MC descriptor is the right type. */
-      item = vpi_scan(argv);
-      type = vpi_get(vpiType, item);
-      switch (type) {
-	    case vpiReg:
-	    case vpiRealVal:
-	    case vpiIntegerVar:
-	      break;
-	    default:
-	      vpi_printf("ERROR: %s fd parameter must be integral", ud);
-	      vpi_printf(", got vpiType=%d\n", type);
-	      vpi_control(vpiFinish, 1);
-	      return 0;
-      }
+      s_vpi_value val;
+      PLI_UINT32 fd_mcd;
 
-      /* Check that there is at most one argument. */
-      item = vpi_scan(argv);
-      if (item != 0) {
-	    vpi_printf("ERROR: %s takes at most a single argument.\n", ud);
-	    vpi_control(vpiFinish, 1);
-	    return 0;
-      }
+      val.format = vpiIntVal;
+      vpi_get_value(fd, &val);
+      fd_mcd = val.value.integer;
 
-      /* vpi_scan returning 0 (NULL) has already freed argv. */
+      vpi_mcd_close(fd_mcd);
+
       return 0;
 }
 
@@ -267,28 +291,29 @@ static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle item;
+      vpiHandle arg;
       s_vpi_value val;
-      PLI_INT32 fd_mcd;
+      PLI_UINT32 fd_mcd;
       FILE *fp;
+      (void) name;  /* Not used! */
 
-      /* If we have no argument then flush all the streams. */
+	/* If we have no argument then flush all the streams. */
       if (argv == 0) {
 	    fflush(NULL);
 	    return 0;
       }
 
-      /* Get the file/MC descriptor. */
-      item = vpi_scan(argv);
+	/* Get the file/MC descriptor. */
+      arg = vpi_scan(argv);
       vpi_free_object(argv);
       val.format = vpiIntVal;
-      vpi_get_value(item, &val);
+      vpi_get_value(arg, &val);
       fd_mcd = val.value.integer;
 
       if (IS_MCD(fd_mcd)) {
 	    vpi_mcd_flush(fd_mcd);
       } else {
-	    /* If we have a valid file descriptor flush the file. */
+	      /* If we have a valid file descriptor flush the file. */
 	    fp = vpi_get_file(fd_mcd);
 	    if (fp) fflush(fp);
       }
@@ -296,495 +321,406 @@ static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-
 static PLI_INT32 sys_fputc_calltf(PLI_BYTE8*name)
 {
-      unsigned int mcd;
-      int type;
-      unsigned char x;
-      s_vpi_value value, xvalue;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item = vpi_scan(argv);
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle arg;
+      s_vpi_value val;
+      PLI_UINT32 fd_mcd;
       FILE *fp;
+      unsigned char chr;
+      (void) name;  /* Not used! */
 
-      if (item == 0) {
-	    vpi_printf("%s: mcd parameter missing.\n", name);
-	    return 0;
-      }
+	/* Get the character. */
+      arg = vpi_scan(argv);
+      val.format = vpiIntVal;
+      vpi_get_value(arg, &val);
+      chr = val.value.integer;
 
-      type = vpi_get(vpiType, item);
-      switch (type) {
-	    case vpiReg:
-	    case vpiRealVal:
-	    case vpiIntegerVar:
-	      break;
-	    default:
-	      vpi_printf("ERROR: %s mcd parameter must be of integral", name);
-	      vpi_printf(", got vpiType=%d\n", type);
-	      vpi_free_object(argv);
-	      return 0;
-      }
 
-      value.format = vpiIntVal;
-      vpi_get_value(item, &value);
-      mcd = value.value.integer;
+	/* Get the file/MC descriptor. */
+      arg = vpi_scan(argv);
+      vpi_free_object(argv);
+      val.format = vpiIntVal;
+      vpi_get_value(arg, &val);
+      fd_mcd = val.value.integer;
 
-      if (IS_MCD(mcd)) return EOF;
-
-      item = vpi_scan(argv);
-
-      xvalue.format = vpiIntVal;
-      vpi_get_value(item, &xvalue);
-      x = xvalue.value.integer;
-
-      fp = vpi_get_file(mcd);
-      if (!fp) return EOF;
-
-      return fputc(x, fp);
-}
-
-static PLI_INT32 sys_fgetc_calltf(PLI_BYTE8*name)
-{
-      unsigned int mcd;
-      int type;
-      s_vpi_value value, rval;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item = vpi_scan(argv);
-      FILE *fp;
-
-      if (item == 0) {
-	    vpi_printf("%s: mcd parameter missing.\n", name);
-	    return 0;
-      }
-
-      type = vpi_get(vpiType, item);
-      switch (type) {
-	    case vpiReg:
-	    case vpiRealVal:
-	    case vpiIntegerVar:
-	      break;
-	    default:
-	      vpi_printf("ERROR: %s mcd parameter must be of integral", name);
-	      vpi_printf(", got vpiType=%d\n", type);
-	      vpi_free_object(argv);
-	      return 0;
-      }
-
-      value.format = vpiIntVal;
-      vpi_get_value(item, &value);
-      mcd = value.value.integer;
-
-      rval.format = vpiIntVal;
-
-      fp = vpi_get_file(mcd);
-      if (!fp || IS_MCD(mcd))
-	  rval.value.integer = EOF;
-      else
-	  rval.value.integer = fgetc(fp);
-
-      vpi_put_value(sys, &rval, 0, vpiNoDelay);
+	/* Put the character and return the result. */
+      fp = vpi_get_file(fd_mcd);
+      val.format = vpiIntVal;
+      if (!fp || IS_MCD(fd_mcd)) {
+	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
+	               name);
+	    val.value.integer = EOF;
+      } else
+	    val.value.integer = fputc(chr, fp);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
 
       return 0;
 }
 
 static PLI_INT32 sys_fgets_compiletf(PLI_BYTE8*name)
 {
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item = vpi_scan(argv);
-      int type;
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle arg;
 
-      if (item == 0) {
-	    vpi_printf("%s: string parameter missing.\n", name);
+	/*
+	 * Check that there are two arguments and that the first is a
+	 * register and that the second is numeric.
+	 */
+      if (argv == 0) {
+	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires two arguments.\n", name);
+	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
-      type = vpi_get(vpiType, item);
+      if (vpi_get(vpiType, vpi_scan(argv)) != vpiReg) {
+	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's first argument must be a reg.\n", name);
+	    vpi_control(vpiFinish, 1);
+      }
 
-      if (type != vpiReg) {
-	    vpi_printf("%s: string parameter must be a reg.\n", name);
-	    vpi_free_object(argv);
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires a second (numeric) argument.\n", name);
+	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
-      item = vpi_scan(argv);
-      if (item == 0) {
-	    vpi_printf("%s: mcd parameter missing.\n", name);
-	    return 0;
+      if (! is_numeric_obj(arg)) {
+	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's second argument must be numeric.\n", name);
+	    vpi_control(vpiFinish, 1);
       }
 
-	/* That should be all the arguments. */
-      item = vpi_scan(argv);
-      assert(item == 0);
+	/* Make sure there are no extra arguments. */
+      if (vpi_scan(argv) != 0) {
+	    char msg [64];
+	    snprintf(msg, 64, "ERROR: %s line %d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+
+	    unsigned argc = 1;
+	    while (vpi_scan(argv)) argc += 1;
+
+	    vpi_printf("%s %s takes two arguments.\n", msg, name);
+	    vpi_printf("%*s Found %u extra argument%s.\n",
+	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	    vpi_control(vpiFinish, 1);
+      }
 
       return 0;
 }
 
 static PLI_INT32 sys_fgets_calltf(PLI_BYTE8*name)
 {
-      unsigned int mcd;
-      FILE*fd;
-      s_vpi_value value, rval;
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle regh;
+      vpiHandle arg;
+      s_vpi_value val;
+      PLI_UINT32 fd_mcd;
+      FILE *fp;
+      PLI_INT32 reg_size;
+      char*text;
+      (void) name;  /* Not used! */
 
-      char*txt;
-      unsigned txt_len;
+	/* Get the register handle. */
+      regh = vpi_scan(argv);
 
-      vpiHandle sys  = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle str  = vpi_scan(argv);
-      vpiHandle mch  = vpi_scan(argv);
+	/* Get the file/MCD descriptor. */
+      arg = vpi_scan(argv);
+      vpi_free_object(argv);
+      val.format = vpiIntVal;
+      vpi_get_value(arg, &val);
+      fd_mcd = val.value.integer;
 
-      value.format = vpiIntVal;
-      vpi_get_value(mch, &value);
-      mcd = value.value.integer;
-
-      fd = vpi_get_file(mcd);
-      if (!fd || IS_MCD(mcd)) {
-	    rval.format = vpiIntVal;
-	    rval.value.integer = 0;
-	    vpi_put_value(sys, &rval, 0, vpiNoDelay);
+	/* Return zero if this is not a valid fd. */
+      fp = vpi_get_file(fd_mcd);
+      if (!fp || IS_MCD(fd_mcd)) {
+	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
+	               name);
+	    val.format = vpiIntVal;
+	    val.value.integer = 0;
+	    vpi_put_value(callh, &val, 0, vpiNoDelay);
 	    return 0;
       }
 
-      txt_len = vpi_get(vpiSize, str) / 8;
-      txt = malloc(txt_len + 1);
+	/* Get the register size in bytes and allocate the buffer. */
+      reg_size = vpi_get(vpiSize, regh) / 8;
+      text = malloc(reg_size + 1);
 
-      if (fgets(txt, txt_len+1, fd) == 0) {
-	    rval.format = vpiIntVal;
-	    rval.value.integer = 0;
-	    vpi_put_value(sys, &rval, 0, vpiNoDelay);
-	    free(txt);
+	/* Read in the bytes. Return 0 if there was an error. */
+      if (fgets(text, reg_size+1, fp) == 0) {
+	    val.format = vpiIntVal;
+	    val.value.integer = 0;
+	    vpi_put_value(callh, &val, 0, vpiNoDelay);
+	    free(text);
 	    return 0;
       }
 
-      rval.format = vpiIntVal;
-      rval.value.integer = strlen(txt);
-      vpi_put_value(sys, &rval, 0, vpiNoDelay);
+	/* Return the number of character read. */
+      val.format = vpiIntVal;
+      val.value.integer = strlen(text);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
 
-      value.format = vpiStringVal;
-      value.value.str = txt;
-      vpi_put_value(str, &value, 0, vpiNoDelay);
-
-      free(txt);
-
-      return 0;
-}
-
-static PLI_INT32 sys_ungetc_compiletf(PLI_BYTE8*name)
-{
-      int type;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item = vpi_scan(argv);
-
-      if (item == 0) {
-	    vpi_printf("%s: character parameter missing.\n", name);
-	    return 0;
-      }
-      type = vpi_get(vpiType, item);
-      switch (type) {
-	    case vpiReg:
-	    case vpiRealVal: // Is this correct?
-	    case vpiIntegerVar:
-	      break;
-	    default:
-	      vpi_printf("ERROR: %s character parameter must be ", name);
-	      vpi_printf("integral, got vpiType=%d\n", type);
-	      vpi_free_object(argv);
-	      return 0;
-      }
-
-      item = vpi_scan(argv);
-      type = vpi_get(vpiType, item);
-      switch (type) {
-	    case vpiReg:
-	    case vpiRealVal: // Is this correct?
-	    case vpiIntegerVar:
-	      break;
-	    default:
-	      vpi_printf("ERROR: %s mcd parameter must be integral, ", name);
-	      vpi_printf("got vpiType=%d\n", type);
-	      vpi_free_object(argv);
-	      return 0;
-      }
-
-	/* That should be all the arguments. */
-      item = vpi_scan(argv);
-      assert(item == 0);
+	/* Return the characters to the register. */
+      val.format = vpiStringVal;
+      val.value.str = text;
+      vpi_put_value(regh, &val, 0, vpiNoDelay);
+      free(text);
 
       return 0;
 }
 
 static PLI_INT32 sys_ungetc_calltf(PLI_BYTE8*name)
 {
-      unsigned int mcd;
-      unsigned char x;
-      s_vpi_value val, rval;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item = vpi_scan(argv);
-      FILE *fp;
-
-      rval.format = vpiIntVal;
-
-      val.format = vpiIntVal;
-      vpi_get_value(item, &val);
-      x = val.value.integer;
-
-      item = vpi_scan(argv);
-
-      val.format = vpiIntVal;
-      vpi_get_value(item, &val);
-      mcd = val.value.integer;
-
-      if (IS_MCD(mcd)) {
-	    rval.value.integer = EOF;
-	    vpi_put_value(sys, &rval, 0, vpiNoDelay);
-	    return 0;
-      }
-
-      fp = vpi_get_file(mcd);
-      if ( !fp ) {
-	    rval.value.integer = EOF;
-	    vpi_put_value(sys, &rval, 0, vpiNoDelay);
-	    return 0;
-      }
-
-      ungetc(x, fp);
-
-      rval.value.integer = 0;
-      vpi_put_value(sys, &rval, 0, vpiNoDelay);
-      return 0;
-}
-
-static PLI_INT32 sys_check_fd_compiletf(PLI_BYTE8 *ud)
-{
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle item;
-      PLI_INT32 type;
-
-      /* Check that there is an argument. */
-      if (argv == 0) {
-	    vpi_printf("ERROR: %s requires an argument.\n", ud);
-	    vpi_control(vpiFinish, 1);
-	    return 0;
-      }
-      /* Check that the file descriptor is the right type. */
-      item = vpi_scan(argv);
-      type = vpi_get(vpiType, item);
-      switch (type) {
-	    case vpiReg:
-	    case vpiRealVal:
-	    case vpiIntegerVar:
-	      break;
-	    default:
-	      vpi_printf("ERROR: %s fd parameter must be integral", ud);
-	      vpi_printf(", got vpiType=%d\n", type);
-	      vpi_control(vpiFinish, 1);
-	      return 0;
-      }
-
-      /* Check that there is at most one argument. */
-      item = vpi_scan(argv);
-      if (item != 0) {
-	    vpi_printf("ERROR: %s takes a single argument.\n", ud);
-	    vpi_control(vpiFinish, 1);
-	    return 0;
-      }
-
-      /* vpi_scan returning 0 (NULL) has already freed argv. */
-      return 0;
-}
-
-static PLI_INT32 sys_rewind_calltf(PLI_BYTE8 *ud)
-{
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle item = vpi_scan(argv);
+      vpiHandle arg;
       s_vpi_value val;
-      PLI_INT32 fd;
+      PLI_UINT32 fd_mcd;
       FILE *fp;
+      unsigned char chr;
+      (void) name;  /* Not used! */
 
-      /* Get the file pointer. */
+	/* Get the character. */
+      arg = vpi_scan(argv);
+      val.format = vpiIntVal;
+      vpi_get_value(arg, &val);
+      chr = val.value.integer;
+
+	/* Get the file/MC descriptor. */
+      arg = vpi_scan(argv);
       vpi_free_object(argv);
       val.format = vpiIntVal;
-      vpi_get_value(item, &val);
-      fd = val.value.integer;
-      if (IS_MCD(fd)) {
-	    vpi_printf("ERROR: %s cannot be used with a MCD.\n", ud);
-	    vpi_control(vpiFinish, 1);
+      vpi_get_value(arg, &val);
+      fd_mcd = val.value.integer;
+
+	/* Return EOF if this is not a valid fd. */
+      fp = vpi_get_file(fd_mcd);
+      if (!fp || IS_MCD(fd_mcd)) {
+	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
+	               name);
+	    val.format = vpiIntVal;
+	    val.value.integer = EOF;
+	    vpi_put_value(callh, &val, 0, vpiNoDelay);
 	    return 0;
       }
-      fp = vpi_get_file(fd);
 
-      /* If we have a valid file descriptor rewind the file. */
-      if (!fp) {
-	    val.value.integer = EOF;
-      } else {
-	    rewind(fp);
-	    val.value.integer = 0;
-      }
-      vpi_put_value(callh, &val, 0 , vpiNoDelay);
-
-      return 0;
-}
-
-/* $feof() is from 1364-2005. */
-static PLI_INT32 sys_ftell_feof_calltf(PLI_BYTE8 *ud)
-{
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle item = vpi_scan(argv);
-      s_vpi_value val;
-      PLI_INT32 fd;
-      FILE *fp;
-
-      /* Get the file pointer. */
-      vpi_free_object(argv);
+	/* ungetc the character and return the result. */
       val.format = vpiIntVal;
-      vpi_get_value(item, &val);
-      fd = val.value.integer;
-      if (IS_MCD(fd)) {
-	    vpi_printf("ERROR: %s cannot be used with a MCD.\n", ud);
-	    vpi_control(vpiFinish, 1);
-	    return 0;
-      }
-      fp = vpi_get_file(fd);
-
-      /* If we do not have a valid file descriptor return EOF, otherwise
-       * return that value. */
-      if (!fp) {
-	    val.value.integer = EOF;
-      } else {
-	    if (ud[2] == 'e') {
-	          val.value.integer = feof(fp);
-	    } else {
-	          val.value.integer = ftell(fp);
-	    }
-      }
-      vpi_put_value(callh, &val, 0 , vpiNoDelay);
+      val.value.integer = ungetc(chr, fp);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
 
       return 0;
 }
 
-static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8 *ud)
+static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle item;
-      PLI_INT32 type;
+      vpiHandle arg;
 
-      /* Check that there is an argument. */
+	/* Check that there are three numeric arguments. */
       if (argv == 0) {
-	    vpi_printf("ERROR: %s requires three arguments.\n", ud);
-	    vpi_control(vpiFinish, 1);
-	    return 0;
-      }
-      /* Check that the file descriptor is the right type. */
-      item = vpi_scan(argv);
-      type = vpi_get(vpiType, item);
-      switch (type) {
-	    case vpiReg:
-	    case vpiRealVal:
-	    case vpiIntegerVar:
-	      break;
-	    default:
-	      vpi_printf("ERROR: %s fd parameter must be integral", ud);
-	      vpi_printf(", got vpiType=%d\n", type);
-	      vpi_control(vpiFinish, 1);
-	      return 0;
-      }
-
-      /* Check that there is an offset argument. */
-      item = vpi_scan(argv);
-      if (item == 0) {
-	    vpi_printf("ERROR: %s is missing an offset and operation "
-	               "argument.\n", ud);
+	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires three arguments.\n", name);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
-      /* Check that there is an operation argument. */
-      item = vpi_scan(argv);
-      if (item == 0) {
-	    vpi_printf("ERROR: %s is missing an operation argument.\n", ud);
+	/* Check that the first argument is numeric. */
+      if (! is_numeric_obj(vpi_scan(argv))) {
+	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's first argument must be numeric.\n", name);
+	    vpi_control(vpiFinish, 1);
+      }
+
+	/* Check that the second argument exists and is numeric. */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires a second (numeric) argument.\n", name);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
-      /* Check that there is at most one argument. */
-      item = vpi_scan(argv);
-      if (item != 0) {
-	    vpi_printf("ERROR: %s takes at most three argument.\n", ud);
+      if (!arg || !is_numeric_obj(arg)) {
+	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's second argument must be numeric.\n", name);
+	    vpi_control(vpiFinish, 1);
+      }
+
+	/* Check that the third argument exists and is numeric. */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires a third (numeric) argument.\n", name);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
-      /* vpi_scan returning 0 (NULL) has already freed argv. */
+      if (!arg || !is_numeric_obj(arg)) {
+	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's third argument must be numeric.\n", name);
+	    vpi_control(vpiFinish, 1);
+      }
+
+	/* Make sure there are no extra arguments. */
+      if (vpi_scan(argv) != 0) {
+	    char msg [64];
+	    snprintf(msg, 64, "ERROR: %s line %d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+
+	    unsigned argc = 1;
+	    while (vpi_scan(argv)) argc += 1;
+
+	    vpi_printf("%s %s takes three arguments.\n", msg, name);
+	    vpi_printf("%*s Found %u extra argument%s.\n",
+	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	    vpi_control(vpiFinish, 1);
+      }
 
       return 0;
 }
 
-static PLI_INT32 sys_fseek_calltf(PLI_BYTE8 *ud)
+static PLI_INT32 sys_fseek_calltf(PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle item;
+      vpiHandle arg;
       s_vpi_value val;
-      PLI_INT32 fd, offset, oper;
+      PLI_UINT32 fd_mcd;
+      PLI_INT32 offset, oper;
       FILE *fp;
 
+
+	/* Get the file pointer. */
+      arg = vpi_scan(argv);
       val.format = vpiIntVal;
+      vpi_get_value(arg, &val);
+      fd_mcd = val.value.integer;
 
-      /* Get the file pointer. */
-      item = vpi_scan(argv);
-      vpi_get_value(item, &val);
-      fd = val.value.integer;
-      if (IS_MCD(fd)) {
-	    vpi_printf("ERROR: %s cannot be used with a MCD.\n", ud);
-	    vpi_control(vpiFinish, 1);
-	    return 0;
-      }
-      fp = vpi_get_file(fd);
-
-      /* Get the offset. */
-      item = vpi_scan(argv);
-      vpi_get_value(item, &val);
+	/* Get the offset. */
+      arg = vpi_scan(argv);
+      val.format = vpiIntVal;
+      vpi_get_value(arg, &val);
       offset = val.value.integer;
 
-      /* Get the operation. */
-      item = vpi_scan(argv);
-      vpi_get_value(item, &val);
+	/* Get the operation. */
+      arg = vpi_scan(argv);
+      vpi_free_object(argv);
+      val.format = vpiIntVal;
+      vpi_get_value(arg, &val);
       oper = val.value.integer;
-      /* Should this translate to the SEEK_??? codes? */
-      /* What about verifying offset value vs operation ($fseek(fd, -1, 0))? */
+
+	/* Check that the operation is in the valid range. */
       if ((oper < 0) || (oper > 2)) {
-	    vpi_printf("ERROR: %s's operation must be 0, 1 or 2 given %d.\n",
-	               ud, oper);
-	    vpi_control(vpiFinish, 1);
+	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's operation must be 0, 1 or 2 given %d.\n",
+	               name, oper);
+	    val.format = vpiIntVal;
+	    val.value.integer = EOF;
+	    vpi_put_value(callh, &val, 0, vpiNoDelay);
 	    return 0;
       }
 
-      /* If we do not have a valid file descriptor return EOF, otherwise
-       * return that value. */
-      if (!fp) {
+	/* Return EOF if this is not a valid fd. */
+      fp = vpi_get_file(fd_mcd);
+      if (!fp || IS_MCD(fd_mcd)) {
+	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
+	               name);
+	    val.format = vpiIntVal;
 	    val.value.integer = EOF;
-      } else {
-	    fseek(fp, offset, oper);
-	    val.value.integer = 0;
+	    vpi_put_value(callh, &val, 0, vpiNoDelay);
+	    return 0;
       }
+
+      val.format = vpiIntVal;
+      val.value.integer = fseek(fp, offset, oper);
       vpi_put_value(callh, &val, 0 , vpiNoDelay);
 
-      vpi_free_object(argv);
       return 0;
 }
 
-static PLI_INT32 sys_integer_sizetf(PLI_BYTE8 *ud)
+static PLI_INT32 sys_common_fd_calltf(PLI_BYTE8*name)
 {
-      return 32;
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle arg;
+      s_vpi_value val;
+      PLI_UINT32 fd_mcd;
+      FILE *fp;
+
+	/* Get the file pointer. */
+      arg = vpi_scan(argv);
+      vpi_free_object(argv);
+      val.format = vpiIntVal;
+      vpi_get_value(arg, &val);
+      fd_mcd = val.value.integer;
+
+	/* Return EOF if this is not a valid fd. */
+      fp = vpi_get_file(fd_mcd);
+      if (!fp || IS_MCD(fd_mcd)) {
+	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
+	               name);
+	    val.format = vpiIntVal;
+	    val.value.integer = EOF;
+	    vpi_put_value(callh, &val, 0, vpiNoDelay);
+	    return 0;
+      }
+
+      val.format = vpiIntVal;
+      switch (name[4]) {
+	  case 'l':  /* $ftell() */
+	    val.value.integer = ftell(fp);
+	    break;
+	  case 'f':  /* $feof() is from 1264-2005*/
+	    val.value.integer = feof(fp);
+	    break;
+	  case 'i':  /* $rewind() */
+	    val.value.integer = fseek(fp, 0L, SEEK_SET);
+	    break;
+	  case 't':  /* $fgetc() */
+	    val.value.integer = fgetc(fp);
+	    break;
+	  default:
+	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s cannot be processed with this routine.\n", name);
+	    assert(0);
+	    break;
+      }
+      vpi_put_value(callh, &val, 0 , vpiNoDelay);
+
+      return 0;
 }
 
 void sys_fileio_register()
@@ -792,38 +728,40 @@ void sys_fileio_register()
       s_vpi_systf_data tf_data;
 
       //============================== fopen
-      tf_data.type      = vpiSysFunc;
-      tf_data.tfname    = "$fopen";
-      tf_data.calltf    = sys_fopen_calltf;
-      tf_data.compiletf = sys_fopen_compiletf;
-      tf_data.sizetf    = sys_integer_sizetf;
-      tf_data.user_data = "$fopen";
+      tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.tfname      = "$fopen";
+      tf_data.calltf      = sys_fopen_calltf;
+      tf_data.compiletf   = sys_fopen_compiletf;
+      tf_data.sizetf      = 0;
+      tf_data.user_data   = "$fopen";
       vpi_register_systf(&tf_data);
 
       //============================== fopenr
-      tf_data.type      = vpiSysFunc;
-      tf_data.tfname    = "$fopenr";
-      tf_data.calltf    = sys_fopenrwa_calltf;
-      tf_data.compiletf = sys_fopenrwa_compiletf;
-      tf_data.sizetf    = sys_integer_sizetf;
-      tf_data.user_data = "$fopenr";
+      tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.tfname      = "$fopenr";
+      tf_data.calltf      = sys_fopenrwa_calltf;
+      tf_data.compiletf   = sys_one_string_arg_compiletf;
+      tf_data.sizetf      = 0;
+      tf_data.user_data   = "$fopenr";
       vpi_register_systf(&tf_data);
 
       //============================== fopenw
-      tf_data.tfname    = "$fopenw";
-      tf_data.user_data = "$fopenw";
+      tf_data.tfname      = "$fopenw";
+      tf_data.user_data   = "$fopenw";
       vpi_register_systf(&tf_data);
 
       //============================== fopena
-      tf_data.tfname    = "$fopena";
-      tf_data.user_data = "$fopena";
+      tf_data.tfname      = "$fopena";
+      tf_data.user_data   = "$fopena";
       vpi_register_systf(&tf_data);
 
       //============================== fclose
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fclose";
       tf_data.calltf    = sys_fclose_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_one_numeric_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fclose";
       vpi_register_systf(&tf_data);
@@ -832,7 +770,7 @@ void sys_fileio_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fflush";
       tf_data.calltf    = sys_fflush_calltf;
-      tf_data.compiletf = sys_fflush_compiletf;
+      tf_data.compiletf = sys_one_opt_numeric_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fflush";
       vpi_register_systf(&tf_data);
@@ -841,24 +779,24 @@ void sys_fileio_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fputc";
       tf_data.calltf    = sys_fputc_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_two_numeric_args_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fputc";
       vpi_register_systf(&tf_data);
 
       //============================== fgetc
       tf_data.type      = vpiSysFunc;
-      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$fgetc";
-      tf_data.calltf    = sys_fgetc_calltf;
-      tf_data.compiletf = 0;
-      tf_data.sizetf    = sys_integer_sizetf;
+      tf_data.calltf    = sys_common_fd_calltf;
+      tf_data.compiletf = sys_one_numeric_arg_compiletf;
+      tf_data.sizetf    = 0;
       tf_data.user_data = "$fgetc";
       vpi_register_systf(&tf_data);
 
       //============================== fgets
       tf_data.type      = vpiSysFunc;
-      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$fgets";
       tf_data.calltf    = sys_fgets_calltf;
       tf_data.compiletf = sys_fgets_compiletf;
@@ -868,54 +806,53 @@ void sys_fileio_register()
 
       //============================== ungetc
       tf_data.type      = vpiSysFunc;
-      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$ungetc";
       tf_data.calltf    = sys_ungetc_calltf;
-      tf_data.compiletf = sys_ungetc_compiletf;
-      tf_data.sizetf    = sys_integer_sizetf;
+      tf_data.compiletf = sys_two_numeric_args_compiletf;
+      tf_data.sizetf    = 0;
       tf_data.user_data = "$ungetc";
       vpi_register_systf(&tf_data);
 
       //============================== ftell
       tf_data.type      = vpiSysFunc;
-      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$ftell";
-      tf_data.calltf    = sys_ftell_feof_calltf;
-      tf_data.compiletf = sys_check_fd_compiletf;
-      tf_data.sizetf    = sys_integer_sizetf;
+      tf_data.calltf    = sys_common_fd_calltf;
+      tf_data.compiletf = sys_one_numeric_arg_compiletf;
+      tf_data.sizetf    = 0;
       tf_data.user_data = "$ftell";
       vpi_register_systf(&tf_data);
 
       //============================== fseek
       tf_data.type      = vpiSysFunc;
-      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$fseek";
       tf_data.calltf    = sys_fseek_calltf;
       tf_data.compiletf = sys_fseek_compiletf;
-      tf_data.sizetf    = sys_integer_sizetf;
+      tf_data.sizetf    = 0;
       tf_data.user_data = "$fseek";
       vpi_register_systf(&tf_data);
 
       //============================== rewind
       tf_data.type      = vpiSysFunc;
-      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$rewind";
-      tf_data.calltf    = sys_rewind_calltf;
-      tf_data.compiletf = sys_check_fd_compiletf;
-      tf_data.sizetf    = sys_integer_sizetf;
+      tf_data.calltf    = sys_common_fd_calltf;
+      tf_data.compiletf = sys_one_numeric_arg_compiletf;
+      tf_data.sizetf    = 0;
       tf_data.user_data = "$rewind";
       vpi_register_systf(&tf_data);
 
 /* $feof() is from 1364-2005. */
       //============================== feof
       tf_data.type      = vpiSysFunc;
-      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$feof";
-      tf_data.calltf    = sys_ftell_feof_calltf;
-      tf_data.compiletf = sys_check_fd_compiletf;
-      tf_data.sizetf    = sys_integer_sizetf;
+      tf_data.calltf    = sys_common_fd_calltf;
+      tf_data.compiletf = sys_one_numeric_arg_compiletf;
+      tf_data.sizetf    = 0;
       tf_data.user_data = "$feof";
       vpi_register_systf(&tf_data);
 
 }
-

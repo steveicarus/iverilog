@@ -141,7 +141,7 @@ struct __vpiCallback {
 	// scheduled event
       struct sync_cb* cb_sync;
 
-	// The calback holder may use this for various purposes.
+	// The callback holder may use this for various purposes.
       long extra_data;
 
 	// Used for listing callbacks.
@@ -197,10 +197,11 @@ extern void vpip_make_root_iterator(struct __vpiHandle**&table,
  */
 struct __vpiSignal {
       struct __vpiHandle base;
-      vpiHandle parent;
-      struct __vpiScope* scope;
-	/* The name of this reg/net, or the index for array words. */
-      union {
+      union { // The scope or parent array that contains me.
+	    vpiHandle parent;
+	    struct __vpiScope* scope;
+      } within;
+      union { // The name of this reg/net, or the index for array words.
             const char*name;
             vpiHandle index;
       } id;
@@ -208,17 +209,40 @@ struct __vpiSignal {
       int msb, lsb;
 	/* Flags */
       unsigned signed_flag  : 1;
-      unsigned isint_ : 1;	// original type was integer
+      unsigned isint_       : 1; // original type was integer
+      unsigned is_netarray  : 1; // This is word of a net array
 	/* The represented value is here. */
       vvp_net_t*node;
 };
 extern unsigned vpip_size(__vpiSignal *sig);
+extern struct __vpiScope* vpip_scope(__vpiSignal*sig);
+
 extern vpiHandle vpip_make_int(const char*name, int msb, int lsb,
 			       vvp_net_t*vec);
 extern vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
 			       bool signed_flag, vvp_net_t*net);
 extern vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 			       bool signed_flag, vvp_net_t*node);
+
+/*
+ * This is used by system calls to represent a bit/part select of
+ * a simple variable or constant array word.
+ */
+struct __vpiPV {
+      struct __vpiHandle base;
+      vpiHandle parent;
+      vvp_net_t*net;
+      vpiHandle sbase;
+      int tbase;
+      unsigned twid, width;
+};
+extern vpiHandle vpip_make_PV(char*name, int base, int width);
+extern vpiHandle vpip_make_PV(char*name, char*symbol, int width);
+extern vpiHandle vpip_make_PV(char*name, int tbase, int twid, int width);
+
+extern struct __vpiPV* vpip_PV_from_handle(vpiHandle obj);
+extern void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle obj);
+
 
 /*
  * This function safely converts a vpiHandle back to a
@@ -368,6 +392,7 @@ struct __vpiSysTaskCall {
       class vvp_net_t*fnet;
       unsigned file_idx;
       unsigned lineno;
+      bool put_value;
 };
 
 extern struct __vpiSysTaskCall*vpip_cur_task;
@@ -431,6 +456,8 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag);
 vpiHandle vpip_make_vthr_word(unsigned base, const char*type);
 
 vpiHandle vpip_make_vthr_A(char*symbol, unsigned index);
+vpiHandle vpip_make_vthr_A(char*label, char*symbol);
+vpiHandle vpip_make_vthr_A(char*symbol, unsigned tbase, unsigned twid);
 
 /*
  * This function is called before any compilation to load VPI

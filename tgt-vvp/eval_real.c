@@ -328,7 +328,7 @@ static int draw_signal_real_real(ivl_expr_t exp)
 
       if (ivl_signal_array_count(sig) > 1) {
 	    ivl_expr_t ix = ivl_expr_oper1(exp);
-	    if (!number_is_immediate(ix, 8*sizeof(word))) {
+	    if (!number_is_immediate(ix, 8*sizeof(word), 0)) {
 		    /* XXXX Need to generate a %load/ar instruction. */
 		  assert(0);
 		  return res;
@@ -441,7 +441,22 @@ static int draw_unary_real(ivl_expr_t exp)
 	    return res;
       }
 
+      if (ivl_expr_opcode(exp) == '!') {
+	    struct vector_info vi;
+	    vi = draw_eval_expr(exp, STUFF_OK_XZ);
+	    int res = allocate_word();
+	    const char*sign_flag = ivl_expr_signed(exp)? "/s" : "";
+	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
+		    sign_flag, res, vi.base, vi.wid);
+
+	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
+
+	    clr_vector(vi);
+	    return res;
+      }
+
       ivl_expr_t sube = ivl_expr_oper1(exp);
+
       int sub = draw_eval_real(sube);
 
       if (ivl_expr_opcode(exp) == '+')
@@ -461,8 +476,8 @@ static int draw_unary_real(ivl_expr_t exp)
 	    return sub;
       }
 
-      fprintf(vvp_out, "; XXXX unary (%c)\n", ivl_expr_opcode(exp));
-      fprintf(stderr, "XXXX evaluate unary (%c)\n", ivl_expr_opcode(exp));
+      fprintf(vvp_out, "; XXXX unary (%c) on sube in %d\n", ivl_expr_opcode(exp), sub);
+      fprintf(stderr, "XXXX evaluate unary (%c) on sube in %d\n", ivl_expr_opcode(exp), sub);
       return 0;
 }
 

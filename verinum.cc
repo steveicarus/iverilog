@@ -205,7 +205,7 @@ verinum::verinum(int64_t that)
       bits_ = new V[nbits_];
       for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1) {
 	    bits_[idx] = (that & 1)? V1 : V0;
-	    that /= 2;
+	    that >>= 1;
       }
 }
 
@@ -508,7 +508,7 @@ verinum trim_vnum(const verinum&that)
 
 	      /* Now top is the index of the highest non-zero bit. If
 		 that turns out to the highest bit in the vector, then
-		 tere is no trimming possible. */
+		 there is no trimming possible. */
 	    if (top+1 == that.len())
 		  return that;
 

@@ -154,7 +154,7 @@
  *
  * The POST_MAP compiler directive causes the GSR manipulations
  * included in the test bench to be compiled in, to simulate the chip
- * startup. Other then that, the test bench runs the post-map design
+ * startup. Other than that, the test bench runs the post-map design
  * the same way the pre-synthesis design works.
  *
  * Run this design with the command:

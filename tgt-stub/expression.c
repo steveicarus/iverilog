@@ -178,6 +178,11 @@ void show_unary_expression(ivl_expr_t net, unsigned ind)
 	    break;
       }
 
+      if (ivl_expr_opcode(net) == '!' && ivl_expr_type(net)==IVL_VT_REAL) {
+	    fprintf(out, "%*sERROR: Real argument to unary ! !?\n", ind,"");
+	    stub_errors += 1;
+      }
+
       fprintf(out, "%*s<unary \"%s\" width=%u, %s, type=%s>\n", ind, "",
 	      name, width, sign, vt);
       show_expression(ivl_expr_oper1(net), ind+4);

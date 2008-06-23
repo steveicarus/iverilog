@@ -250,7 +250,7 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 	    if (isspace(*fmtp)) {
 		    /* White space matches a string of white space in
 		       the input. The number of spaces is not
-		       relevent, and the match may be 0 or more
+		       relevant, and the match may be 0 or more
 		       spaces. */
 		  while (*fmtp && isspace(*fmtp))
 			fmtp += 1;

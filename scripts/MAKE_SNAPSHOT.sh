@@ -7,7 +7,7 @@
 #    sh scripts/MAKE_SNAPSHOT.sh 20080428 ~/tmp
 #
 # The above assumes that there is a tag "s20080428" at the point
-# to be snaphot. (The tag has the "s", but the argument to this
+# to be snapshot. (The tag has the "s", but the argument to this
 # script does not have the "s"). This script extracts based on the
 # tag, uses the temporary directory to stage intermediate results,
 # and finally creates a file called verilog-20080428.tar.gz that

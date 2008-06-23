@@ -21,6 +21,7 @@
 
 # include  "target.h"
 # include  "ivl_target.h"
+# include  "ivl_target_priv.h"
 # include  "StringHeap.h"
 # include  "netlist.h"
 # include  <vector>
@@ -75,6 +76,8 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_abs(const NetAbs*);
       void lpm_add_sub(const NetAddSub*);
       bool lpm_array_dq(const NetArrayDq*);
+      bool lpm_cast_int(const NetCastInt*);
+      bool lpm_cast_real(const NetCastReal*);
       void lpm_clshift(const NetCLShift*);
       void lpm_compare(const NetCompare*);
       void lpm_divide(const NetDivide*);
@@ -450,9 +453,13 @@ struct ivl_net_logic_s {
 
 struct ivl_switch_s {
       ivl_switch_type_t type;
+      unsigned width;
+      unsigned part;
+      unsigned offset;
 
       perm_string name;
       ivl_scope_t scope;
+      ivl_island_t island;
 
       struct ivl_attribute_s*attr;
       unsigned nattr;

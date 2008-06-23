@@ -328,23 +328,24 @@ static int t_default(char*cmd, unsigned ncmd)
 	    remove(compiled_defines_path);
       }
 #ifdef __MINGW32__  /* MinGW just returns the exit status, so return it! */
+      free(cmd);
       return rc;
 #else
-
+      int rtn = 0;
       if (rc != 0) {
 	    if (rc == 127) {
 		  fprintf(stderr, "Failed to execute: %s\n", cmd);
-		  return 1;
-	    }
-
-	    if (WIFEXITED(rc))
-		  return WEXITSTATUS(rc);
-
-	    fprintf(stderr, "Command signaled: %s\n", cmd);
-	    return -1;
+		  rtn = 1;
+	    } else if (WIFEXITED(rc)) {
+		  rtn = WEXITSTATUS(rc);
+	    } else {
+		  fprintf(stderr, "Command signaled: %s\n", cmd);
+		  rtn = -1;
+	    } 
       }
 
-      return 0;
+      free(cmd);
+      return rtn;
 #endif
 }
 
@@ -505,7 +506,7 @@ int process_generation(const char*name)
 		            "    2005 -- IEEE1364-2005\n"
 		            "Other generation flags:\n"
 		            "    specify | no-specify\n"
-		            "    verilog-ams | no-verinlog-ams\n"
+		            "    verilog-ams | no-verilog-ams\n"
 		            "    std-include | no-std-include\n"
 		            "    xtypes | no-xtypes\n"
 		            "    icarus-misc | no-icarus-misc\n"
@@ -871,6 +872,7 @@ int main(int argc, char **argv)
 		  }
 
 		  fprintf(stderr, "Command signaled: %s\n", cmd);
+		  free(cmd);
 		  return -1;
 	    }
 
@@ -889,6 +891,4 @@ int main(int argc, char **argv)
       fclose(iconfig_file);
 
       return t_default(cmd, ncmd);
-
-      return 0;
 }

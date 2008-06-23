@@ -1037,9 +1037,14 @@ bool dll_target::tran(const NetTran*net)
 {
       struct ivl_switch_s*obj = new struct ivl_switch_s;
       obj->type = net->type();
+      obj->width = 0;
+      obj->part = 0;
+      obj->offset = 0;
       obj->name = net->name();
       obj->scope = find_scope(des_, net->scope());
+      obj->island = net->island;
       assert(obj->scope);
+      assert(obj->island);
 
       const Nexus*nex;
 
@@ -1062,6 +1067,15 @@ bool dll_target::tran(const NetTran*net)
       } else {
 	    obj->pins[2] = 0;
       }
+
+      if (obj->type == IVL_SW_TRAN_VP) {
+	    obj->width = net->vector_width();
+	    obj->part  = net->part_width();
+	    obj->offset= net->part_offset();
+      }
+
+      obj->file = net->get_file();
+      obj->lineno = net->get_lineno();
 
       switch_attributes(obj, net);
       scope_add_switch(obj->scope, obj);
@@ -1536,6 +1550,71 @@ void dll_target::lpm_clshift(const NetCLShift*net)
       scope_add_lpm(obj->scope, obj);
 }
 
+bool dll_target::lpm_cast_int(const NetCastInt*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_CAST_INT;
+      obj->name = net->name(); // NetCastInt names are permallocated
+      assert(net->scope());
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+
+      obj->width = net->width();
+
+      const Nexus*nex;
+
+      nex = net->pin(0).nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.arith.q = nex->t_cookie();
+
+      nex = net->pin(1).nexus();
+      assert(nex->t_cookie());
+      obj->u_.arith.a = nex->t_cookie();
+
+      nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+      nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      make_lpm_delays_(obj, net);
+
+      scope_add_lpm(obj->scope, obj);
+
+      return true;
+}
+
+bool dll_target::lpm_cast_real(const NetCastReal*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_CAST_REAL;
+      obj->name = net->name(); // NetCastReal names are permallocated
+      assert(net->scope());
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+
+      obj->width = 0;
+      obj->u_.arith.signed_flag = net->signed_flag()? 1 : 0;
+
+      const Nexus*nex;
+
+      nex = net->pin(0).nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.arith.q = nex->t_cookie();
+
+      nex = net->pin(1).nexus();
+      assert(nex->t_cookie());
+      obj->u_.arith.a = nex->t_cookie();
+
+      nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+      nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      make_lpm_delays_(obj, net);
+
+      scope_add_lpm(obj->scope, obj);
+
+      return true;
+}
+
 /*
  * Make out of the NetCompare object an ivl_lpm_s object. The
  * comparators in ivl_target do not support < or <=, but they can be
@@ -1991,9 +2070,6 @@ bool dll_target::part_select(const NetPartSelect*net)
 	  case NetPartSelect::PV:
 	    obj->type = IVL_LPM_PART_PV;
 	    break;
-	  case NetPartSelect::BI:
-	    obj->type = IVL_LPM_PART_BI;
-	    break;
       }
       obj->name = net->name(); // NetPartSelect names are permallocated.
       assert(net->scope());
@@ -2047,35 +2123,12 @@ bool dll_target::part_select(const NetPartSelect*net)
 	    obj->u_.part.a = nex->t_cookie();
 	    break;
 
-	  case IVL_LPM_PART_BI:
-	      /* For now, handle this exactly the same as a PV */
-
-	      /* NetPartSelect:pin(0) is the output pin. */
-	    nex = net->pin(0).nexus();
-	    assert(nex->t_cookie());
-
-	    obj->u_.part.q = nex->t_cookie();
-
-	      /* NetPartSelect:pin(1) is the input pin. */
-	    nex = net->pin(1).nexus();
-	    assert(nex->t_cookie());
-
-	    obj->u_.part.a = nex->t_cookie();
-	    break;
-
 	  default:
 	    assert(0);
       }
 
       nexus_lpm_add(obj->u_.part.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
-
-	/* If the device is a PART_BI, then the "input" is also a
-	   strength aware output, so attach it to the nexus with
-	   strong driver. */
-      if (obj->type == IVL_LPM_PART_BI)
-	  nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
-      else
-	  nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+      nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
 	/* The select input is optional. */
       if (obj->u_.part.s)

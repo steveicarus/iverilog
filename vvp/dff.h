@@ -25,7 +25,7 @@
 /*
  * The vvp_dff implements a D-type FF that is agnostic to the data
  * type that is holds. The clock and clock-enable inputs are single
- * bits and may be invertable. An output is propagated on the logical
+ * bits and may be invertible. An output is propagated on the logical
  * rising edge of the clock input, or whenever an asynchronous input
  * is received. Ports are:
  *

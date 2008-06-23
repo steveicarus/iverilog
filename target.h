@@ -72,6 +72,8 @@ struct target_t {
       virtual void lpm_add_sub(const NetAddSub*);
       virtual bool lpm_array_dq(const NetArrayDq*);
       virtual void lpm_clshift(const NetCLShift*);
+      virtual bool lpm_cast_int(const NetCastInt*);
+      virtual bool lpm_cast_real(const NetCastReal*);
       virtual void lpm_compare(const NetCompare*);
       virtual void lpm_divide(const NetDivide*);
       virtual void lpm_modulo(const NetModulo*);

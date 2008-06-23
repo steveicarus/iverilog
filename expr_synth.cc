@@ -459,7 +459,7 @@ NetNet* NetEBDiv::synthesize(Design*des)
 
 	  default: {
 		cerr << get_fileline() << ": internal error: "
-		     << "NetEBDiv has unexpeced op() code: "
+		     << "NetEBDiv has unexpected op() code: "
 		     << op() << endl;
 		des->errors += 1;
 

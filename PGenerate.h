@@ -1,7 +1,7 @@
 #ifndef __PGenerate_H
 #define __PGenerate_H
 /*
- * Copyright (c) 2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,13 +18,11 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: PGenerate.h,v 1.4 2007/06/02 03:42:12 steve Exp $"
-#endif
 
 # include  "LineInfo.h"
 # include  "StringHeap.h"
 # include  "HName.h"
+# include  "PScope.h"
 # include  <list>
 # include  <map>
 # include  "pform_types.h"
@@ -32,7 +30,9 @@
 class Design;
 class NetScope;
 class PExpr;
+class PFunction;
 class PProcess;
+class PTask;
 class PGate;
 class PWire;
 
@@ -49,16 +49,20 @@ class PWire;
  *    The parent points to the GS_CASE that contains this item.
  *    the loop_test is compared with the parent->loop_test expression.
  */
-class PGenerate : public LineInfo {
+class PGenerate : public LineInfo, public LexicalScope {
 
     public:
-      PGenerate(unsigned id_number);
+      explicit PGenerate(unsigned id_number);
       ~PGenerate();
 
 	// Generate schemes have an ID number, for when the scope is
 	// implicit.
       const unsigned id_number;
       perm_string scope_name;
+
+	// This is used during parsing to stack lexical scopes within
+	// this generate scheme.
+      PScope*lexical_scope;
 
       enum scheme_t {GS_NONE, GS_LOOP, GS_CONDIT, GS_ELSE,
 		     GS_CASE, GS_CASE_ITEM};
@@ -71,16 +75,17 @@ class PGenerate : public LineInfo {
       PExpr*loop_test;
       PExpr*loop_step;
 
-      map<perm_string,PWire*>wires;
-      PWire* get_wire(perm_string name) const;
-
       list<PGate*> gates;
       void add_gate(PGate*);
 
       list<PProcess*> behaviors;
-      void add_behavior(PProcess*behave);
 
-      list<PGenerate*> generates;
+	// Tasks instantiated within this scheme.
+      map<perm_string,PTask*> tasks;
+      map<perm_string,PFunction*>funcs;
+
+	// Generate schemes can contain further generate schemes.
+      list<PGenerate*> generate_schemes;
       PGenerate*parent;
 
 	// This method is called by the elaboration of a module to

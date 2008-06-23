@@ -98,7 +98,16 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
 		  tmp->low_expr = 0;
 	    }
 
-	    if (range->high_expr) {
+	    if (range->high_expr && range->high_expr==range->low_expr) {
+		    // Detect the special case of a "point"
+		    // range. These are called out by setting the high
+		    // and low expression ranges to the same
+		    // expression. The exclude_flags should be false
+		    // in this case
+		  ivl_assert(*range->high_expr, tmp->low_open_flag==false && tmp->high_open_flag==false);
+		  tmp->high_expr = tmp->low_expr;
+
+	    } else if (range->high_expr) {
 		  tmp->high_expr = elab_and_eval(des, scope, range->high_expr, -1);
 		  ivl_assert(*range->high_expr, tmp->high_expr);
 	    } else {
@@ -112,6 +121,64 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
       val = scope->set_parameter(name, val, cur.type, msb, lsb, signed_flag, range_list, cur);
       assert(val);
       delete val;
+}
+
+static void elaborate_scope_tasks(Design*des, NetScope*scope,
+				  const LineInfo&loc,
+				  const map<perm_string,PTask*>&tasks)
+{
+      typedef map<perm_string,PTask*>::const_iterator tasks_it_t;
+
+      for (tasks_it_t cur = tasks.begin()
+		 ; cur != tasks.end() ;  cur ++ ) {
+
+	    hname_t use_name( (*cur).first );
+	    if (scope->child(use_name)) {
+		  cerr << loc.get_fileline() << ": error: task/scope name "
+		       << use_name << " already used in this context."
+		       << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+	    NetScope*task_scope = new NetScope(scope, use_name,
+					       NetScope::TASK);
+	    task_scope->set_line((*cur).second);
+
+	    if (debug_scopes)
+		  cerr << cur->second->get_fileline() << ": debug: "
+		       << "Elaborate task scope " << scope_path(task_scope) << endl;
+	    (*cur).second->elaborate_scope(des, task_scope);
+      }
+
+}
+
+static void elaborate_scope_funcs(Design*des, NetScope*scope,
+				  const LineInfo&loc,
+				  const map<perm_string,PFunction*>&funcs)
+{
+      typedef map<perm_string,PFunction*>::const_iterator funcs_it_t;
+
+      for (funcs_it_t cur = funcs.begin()
+		 ; cur != funcs.end() ;  cur ++ ) {
+
+	    hname_t use_name( (*cur).first );
+	    if (scope->child(use_name)) {
+		  cerr << loc.get_fileline() << ": error: function/scope name "
+		       << use_name << " already used in this context."
+		       << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+	    NetScope*func_scope = new NetScope(scope, use_name,
+					       NetScope::FUNC);
+	    func_scope->set_line((*cur).second);
+
+	    if (debug_scopes)
+		  cerr << cur->second->get_fileline() << ": debug: "
+		       << "Elaborate function scope " << scope_path(func_scope) << endl;
+	    (*cur).second->elaborate_scope(des, func_scope);
+      }
+
 }
 
 bool Module::elaborate_scope(Design*des, NetScope*scope,
@@ -257,49 +324,14 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// elaborate_scope method of the PTask for detailed
 	// processing.
 
-      typedef map<perm_string,PTask*>::const_iterator tasks_it_t;
-
-      for (tasks_it_t cur = tasks_.begin()
-		 ; cur != tasks_.end() ;  cur ++ ) {
-
-	    hname_t use_name( (*cur).first );
-	    if (scope->child(use_name)) {
-		  cerr << get_fileline() << ": error: task/scope name "
-		       << use_name << " already used in this context."
-		       << endl;
-		  des->errors += 1;
-		  continue;
-	    }
-	    NetScope*task_scope = new NetScope(scope, use_name,
-					       NetScope::TASK);
-	    task_scope->set_line((*cur).second);
-	    (*cur).second->elaborate_scope(des, task_scope);
-      }
+      elaborate_scope_tasks(des, scope, *this, tasks);
 
 
 	// Functions are very similar to tasks, at least from the
 	// perspective of scopes. So handle them exactly the same
 	// way.
 
-      typedef map<perm_string,PFunction*>::const_iterator funcs_it_t;
-
-      for (funcs_it_t cur = funcs_.begin()
-		 ; cur != funcs_.end() ;  cur ++ ) {
-
-	    hname_t use_name( (*cur).first );
-	    if (scope->child(use_name)) {
-		  cerr << get_fileline() << ": error: function/scope name "
-		       << use_name << " already used in this context."
-		       << endl;
-		  des->errors += 1;
-		  continue;
-	    }
-	    NetScope*func_scope = new NetScope(scope, use_name,
-					       NetScope::FUNC);
-	    func_scope->set_line((*cur).second);
-	    (*cur).second->elaborate_scope(des, func_scope);
-      }
-
+      elaborate_scope_funcs(des, scope, *this, funcs);
 
 	// Gates include modules, which might introduce new scopes, so
 	// scan all of them to create those scopes.
@@ -539,8 +571,8 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
       PGenerate*default_item = 0;
 
       typedef list<PGenerate*>::const_iterator generator_it_t;
-      generator_it_t cur = generates.begin();
-      while (cur != generates.end()) {
+      generator_it_t cur = generate_schemes.begin();
+      while (cur != generate_schemes.end()) {
 	    PGenerate*item = *cur;
 	    assert( item->scheme_type == PGenerate::GS_CASE_ITEM );
 
@@ -569,7 +601,7 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
       delete case_value_co;
       case_value_co = 0;
 
-      PGenerate*item = (cur == generates.end())? default_item : *cur;
+      PGenerate*item = (cur == generate_schemes.end())? default_item : *cur;
       if (item == 0) {
 	    cerr << get_fileline() << ": debug: "
 		 << "No generate items found" << endl;
@@ -596,10 +628,13 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 	// from simple elaboration.
 
       typedef list<PGenerate*>::const_iterator generate_it_t;
-      for (generate_it_t cur = generates.begin()
-		 ; cur != generates.end() ; cur ++ ) {
+      for (generate_it_t cur = generate_schemes.begin()
+		 ; cur != generate_schemes.end() ; cur ++ ) {
 	    (*cur) -> generate_scope(des, scope);
       }
+
+      elaborate_scope_tasks(des, scope, *this, tasks);
+      elaborate_scope_funcs(des, scope, *this, funcs);
 
 	// Scan the generated scope for gates that may create
 	// their own scopes.
@@ -607,6 +642,12 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
       for (pgate_list_it_t cur = gates.begin()
 		 ; cur != gates.end() ;  cur ++) {
 	    (*cur) ->elaborate_scope(des, scope);
+      }
+
+      typedef list<PProcess*>::const_iterator proc_it_t;
+      for (proc_it_t cur = behaviors.begin()
+		 ; cur != behaviors.end() ;  cur ++ ) {
+	    (*cur) -> statement() -> elaborate_scope(des, scope);
       }
 
 	// Save the scope that we created, for future use.

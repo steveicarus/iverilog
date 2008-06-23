@@ -53,6 +53,9 @@ ivl_file_table_index
 ivl_file_table_item
 ivl_file_table_size
 
+ivl_island_flag_set
+ivl_island_flag_test
+
 ivl_logic_attr
 ivl_logic_attr_cnt
 ivl_logic_attr_val
@@ -115,6 +118,7 @@ ivl_nexus_ptr_pin
 ivl_nexus_ptr_lpm
 ivl_nexus_ptr_log
 ivl_nexus_ptr_sig
+ivl_nexus_ptr_switch
 
 ivl_parameter_basename
 ivl_parameter_expr
@@ -222,10 +226,14 @@ ivl_switch_a
 ivl_switch_b
 ivl_switch_basename
 ivl_switch_enable
+ivl_switch_file
+ivl_switch_island
+ivl_switch_lineno
+ivl_switch_offset
+ivl_switch_part
 ivl_switch_scope
 ivl_switch_type
-ivl_switch_attr_cnt;
-ivl_switch_attr_val;
+ivl_switch_width
 
 ivl_udp_init
 ivl_udp_name

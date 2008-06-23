@@ -455,7 +455,7 @@ static void unlink_from_driver(vvp_net_t*src, vvp_net_ptr_t dst_ptr)
 }
 
 /*
- * The CHUNK_LINK instruction is a specla next pointer for linking
+ * The CHUNK_LINK instruction is a special next pointer for linking
  * chunks of code space. It's like a simplified %jmp.
  */
 bool of_CHUNK_LINK(vthread_t thr, vvp_code_t code)
@@ -700,10 +700,15 @@ bool of_ASSIGN_V0(vthread_t thr, vvp_code_t cp)
       unsigned delay = cp->bit_idx[0];
       unsigned bit = cp->bit_idx[1];
 
-      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
-
       vvp_net_ptr_t ptr (cp->net, 0);
-      schedule_assign_vector(ptr, value, delay);
+      if (bit >= 4) {
+	      // If the vector is not a synthetic one, then have the
+	      // scheduler pluck it direcly out of my vector space.
+	    schedule_assign_plucked_vector(ptr, delay, thr->bits4, bit, wid);
+      } else {
+	    vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+	    schedule_assign_plucked_vector(ptr, delay, value, 0, wid);
+      }
 
       return true;
 }
@@ -721,10 +726,14 @@ bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t cp)
       unsigned long delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
 
-      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
-
       vvp_net_ptr_t ptr (cp->net, 0);
-      schedule_assign_vector(ptr, value, delay);
+
+      if (bit >= 4) {
+	    schedule_assign_plucked_vector(ptr, delay, thr->bits4, bit, wid);
+      } else {
+	    vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+	    schedule_assign_plucked_vector(ptr, delay, value, 0, wid);
+      }
 
       return true;
 }
@@ -1102,7 +1111,7 @@ static bool of_CMPIU_the_hard_way(vthread_t thr, vvp_code_t cp)
 {
 
       unsigned idx1 = cp->bit_idx[0];
-      unsigned imm  = cp->bit_idx[1];
+      unsigned long imm  = cp->bit_idx[1];
       unsigned wid  = cp->number;
       if (idx1 >= 4)
 	    thr_check_addr(thr, idx1+wid-1);
@@ -1116,8 +1125,8 @@ static bool of_CMPIU_the_hard_way(vthread_t thr, vvp_code_t cp)
 
       vvp_bit4_t eq  = BIT4_0;
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_bit4_t rv = (imm & 1)? BIT4_1 : BIT4_0;
-	    imm >>= 1;
+	    vvp_bit4_t rv = (imm & 1UL)? BIT4_1 : BIT4_0;
+	    imm >>= 1UL;
 
 	    if (bit4_is_xz(lv)) {
 		  eq = BIT4_X;
@@ -1586,7 +1595,7 @@ static unsigned long divide2words(unsigned long a, unsigned long b,
 
 	      // Now result*b + {high,a} == the input {high,a}. It is
 	      // possible that the new high >= 1. If so, it will
-	      // certainly be less then high from the previous
+	      // certainly be less than high from the previous
 	      // iteration. Do another iteration and it will shrink,
 	      // eventually to 0.
       }
@@ -1648,7 +1657,7 @@ static unsigned long* divide_bits(unsigned long*ap, unsigned long*bp, unsigned w
 	      // carry&1. If it is 0, then it is *negative*.) In that
 	      // case, we know that cur_res was too large by 1. Correct by
 	      // adding 1b back in and reducing cur_res.
-	    if (carry&1 == 0) {
+	    if ((carry&1) == 0) {
 		  cur_res -= 1;
 		  carry = 0;
 		  for (unsigned idx = cur_ptr ; idx < words ; idx += 1)
@@ -2373,6 +2382,46 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %load/vp0, %load/vp0/s, %load/avp0 and %load/avp0/s share this function.
+*/
+static void load_vp0_common(vthread_t thr, vvp_code_t cp, const vvp_vector4_t&sig_value)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+      int64_t addend = thr->words[0].w_int;
+
+	/* Check the address once, before we scan the vector. */
+      thr_check_addr(thr, bit+wid-1);
+
+      unsigned long*val = sig_value.subarray(0, wid);
+      if (val == 0) {
+	    vvp_vector4_t tmp(wid, BIT4_X);
+	    thr->bits4.set_vec(bit, tmp);
+	    return;
+      }
+
+      unsigned words = (wid + CPU_WORD_BITS - 1) / CPU_WORD_BITS;
+      unsigned long carry = 0;
+      unsigned long imm = addend;
+      if (addend >= 0) {
+	    for (unsigned idx = 0 ; idx < words ; idx += 1) {
+		  val[idx] = add_with_carry(val[idx], imm, carry);
+		  imm = 0UL;
+	    }
+      } else {
+	    for (unsigned idx = 0 ; idx < words ; idx += 1) {
+		  val[idx] = add_with_carry(val[idx], imm, carry);
+		  imm = -1UL;
+	    }
+      }
+
+	/* Copy the vector bits into the bits4 vector. Do the copy
+	   directly to skip the excess calls to thr_check_addr. */
+      thr->bits4.setarray(bit, wid, val);
+      delete[]val;
+}
+
+/*
  * %load/avp0 <bit>, <array-label>, <wid> ;
  *
  * <bit> is the thread bit address for the result
@@ -2384,30 +2433,31 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
  */
 bool of_LOAD_AVP0(vthread_t thr, vvp_code_t cp)
 {
-      unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
-      int64_t addend = thr->words[0].w_int;
       unsigned adr = thr->words[3].w_int;
 
-      vvp_vector4_t word = array_get_word(cp->array, adr);
+        /* We need a vector this wide to make the math work correctly.
+         * Copy the base bits into the vector, but keep the width. */
+      vvp_vector4_t sig_value(wid, BIT4_0);
+      sig_value.copy_bits(array_get_word(cp->array, adr));
 
-      if (word.size() != wid) {
-	    fprintf(stderr, "internal error: array width=%u, word.size()=%u, wid=%u\n",
-		    0, word.size(), wid);
-      }
-      assert(word.size() == wid);
+      load_vp0_common(thr, cp, sig_value);
+      return true;
+}
 
-	/* Add the addend value */
-      word += addend;
+bool of_LOAD_AVP0_S(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[1];
+      unsigned adr = thr->words[3].w_int;
 
-	/* Check the address once, before we scan the vector. */
-      thr_check_addr(thr, bit+wid-1);
+      vvp_vector4_t tmp (array_get_word(cp->array, adr));
 
-	/* Copy the vector bits into the bits4 vector. Do the copy
-	   directly to skip the excess calls to thr_check_addr. */
-      thr->bits4.set_vec(bit, word);
+        /* We need a vector this wide to make the math work correctly.
+         * Copy the base bits into the vector, but keep the width. */
+      vvp_vector4_t sig_value(wid, tmp.value(tmp.size()-1));
+      sig_value.copy_bits(tmp);
 
-
+      load_vp0_common(thr, cp, sig_value);
       return true;
 }
 
@@ -2441,37 +2491,6 @@ bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-/*
- * %load/nx <bit>, <vpi-label>, <idx>  ; Load net/indexed.
- *
- * cp->bit_idx[0] contains the <bit> value, an index into the thread
- * bit register.
- *
- * cp->bin_idx[1] is the <idx> value from the words array.
- *
- * cp->handle is the linked reference to the __vpiSignal that we are
- * to read from.
- */
-bool of_LOAD_NX(vthread_t thr, vvp_code_t cp)
-{
-      assert(cp->bit_idx[0] >= 4);
-      assert(cp->bit_idx[1] <  4);
-      assert(cp->handle->vpi_type->type_code == vpiNet);
-
-      struct __vpiSignal*sig =
-	    reinterpret_cast<struct __vpiSignal*>(cp->handle);
-
-      unsigned idx = thr->words[cp->bit_idx[1]].w_int;
-
-      vvp_fun_signal_vec*fun = dynamic_cast<vvp_fun_signal_vec*>(sig->node->fun);
-      assert(sig != 0);
-
-      vvp_bit4_t val = fun->value(idx);
-      thr_put_bit(thr, cp->bit_idx[0], val);
-
-      return true;
-}
-
 /* %load/v <bit>, <label>, <wid>
  *
  * Implement the %load/v instruction. Load the vector value of the
@@ -2489,10 +2508,6 @@ bool of_LOAD_NX(vthread_t thr, vvp_code_t cp)
  */
 static vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx[0] >= 4);
-      assert(cp->bit_idx[1] > 0);
-
-      unsigned wid = cp->bit_idx[1];
       vvp_net_t*net = cp->net;
 
 	/* For the %load to work, the functor must actually be a
@@ -2504,10 +2519,7 @@ static vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
 	    assert(sig);
       }
 
-      vvp_vector4_t sig_value = sig->vec4_value();
-      sig_value.resize(wid);
-
-      return sig_value;
+      return sig->vec4_value();
 }
 
 bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
@@ -2520,9 +2532,17 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
 	/* Check the address once, before we scan the vector. */
       thr_check_addr(thr, bit+wid-1);
 
+      if (sig_value.size() > wid)
+	    sig_value.resize(wid);
+
 	/* Copy the vector bits into the bits4 vector. Do the copy
 	   directly to skip the excess calls to thr_check_addr. */
       thr->bits4.set_vec(bit, sig_value);
+
+	/* If the source is shorter then the desired width, then pad
+	   with BIT4_X values. */
+      for (unsigned idx = sig_value.size() ; idx < wid ; idx += 1)
+	    thr->bits4.set_bit(bit+idx, BIT4_X);
 
       return true;
 }
@@ -2531,47 +2551,32 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
  * This is like of_LOAD_VEC, but includes an add of an integer value from
  * index 0. The <wid> is the expected result width not the vector width.
  */
+
 bool of_LOAD_VP0(vthread_t thr, vvp_code_t cp)
 {
-      unsigned bit = cp->bit_idx[0];
-      int64_t addend = thr->words[0].w_int;
-      unsigned wid = thr->words[2].w_int;
+      unsigned wid = cp->bit_idx[1];
 
         /* We need a vector this wide to make the math work correctly.
          * Copy the base bits into the vector, but keep the width. */
       vvp_vector4_t sig_value(wid, BIT4_0);
       sig_value.copy_bits(load_base(thr, cp));
 
-	/* Check the address once, before we scan the vector. */
-      thr_check_addr(thr, bit+wid-1);
+      load_vp0_common(thr, cp, sig_value);
+      return true;
+}
 
-      unsigned long*val = sig_value.subarray(0, wid);
-      if (val == 0) {
-	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->bits4.set_vec(bit, tmp);
-	    return true;
-      }
+bool of_LOAD_VP0_S(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->bit_idx[1];
 
-      unsigned words = (wid + CPU_WORD_BITS - 1) / CPU_WORD_BITS;
-      unsigned long carry = 0;
-      unsigned long imm = addend;
-      if (addend >= 0) {
-	    for (unsigned idx = 0 ; idx < words ; idx += 1) {
-		  val[idx] = add_with_carry(val[idx], imm, carry);
-		  imm = 0UL;
-	    }
-      } else {
-	    for (unsigned idx = 0 ; idx < words ; idx += 1) {
-		  val[idx] = add_with_carry(val[idx], imm, carry);
-		  imm = -1UL;
-	    }
-      }
+      vvp_vector4_t tmp (load_base(thr, cp));
 
-	/* Copy the vector bits into the bits4 vector. Do the copy
-	   directly to skip the excess calls to thr_check_addr. */
-      thr->bits4.setarray(bit, wid, val);
-      delete[]val;
+        /* We need a vector this wide to make the math work correctly.
+         * Copy the base bits into the vector, but keep the width. */
+      vvp_vector4_t sig_value(wid, tmp.value(tmp.size()-1));
+      sig_value.copy_bits(tmp);
 
+      load_vp0_common(thr, cp, sig_value);
       return true;
 }
 
@@ -2589,20 +2594,19 @@ bool of_LOAD_WR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %load/x <bit>, <functor>, <index>
+ * %load/x16 <bit>, <functor>, <wid>
  *
  * <bit> is the destination thread bit and must be >= 4.
  */
-bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
+bool of_LOAD_X1P(vthread_t thr, vvp_code_t cp)
 {
 	// <bit> is the thread bit to load
       assert(cp->bit_idx[0] >= 4);
       unsigned bit = cp->bit_idx[0];
+      int wid = cp->bit_idx[1];
 
-	// <index> is the index register to use. The actual index into
-	// the vector is the value of the index register.
-      unsigned index_idx = cp->bit_idx[1];
-      unsigned index = thr->words[index_idx].w_int;
+	// <index> is the canonical base address of the part select.
+      long index = thr->words[1].w_int;
 
 	// <functor> is converted to a vvp_net_t pointer from which we
 	// read our value.
@@ -2613,20 +2617,16 @@ bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
       assert(sig);
 
-      vvp_bit4_t val = index >= sig->size()? BIT4_X : sig->value(index);
-      thr_put_bit(thr, bit, val);
+      for (long idx = 0 ; idx < wid ; idx += 1) {
+	    long use_index = index + idx;
+	    vvp_bit4_t val;
+	    if (use_index < 0 || use_index >= (signed)sig->size())
+		  val = BIT4_X;
+	    else
+		  val = sig->value(use_index);
 
-      return true;
-}
-
-bool of_LOAD_XP(vthread_t thr, vvp_code_t cp)
-{
-	// First do the normal handling of the %load/x
-      of_LOAD_X(thr, cp);
-
-	// Now do the post-increment
-      unsigned index_idx = cp->bit_idx[1];
-      thr->words[index_idx].w_int += 1;
+	    thr_put_bit(thr, bit+idx, val);
+      }
 
       return true;
 }
@@ -3032,7 +3032,7 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
 	    res[idx] = 0;
 
       for (unsigned mul_a = 0 ; mul_a < words ; mul_a += 1) {
-	    for (unsigned mul_b = 0 ; mul_b < words ; mul_b += 1) {
+	    for (unsigned mul_b = 0 ; mul_b < (words-mul_a) ; mul_b += 1) {
 		  unsigned long sum;
 		  unsigned long tmp = multiply_with_carry(ap[mul_a], bp[mul_b], sum);
 		  unsigned base = mul_a + mul_b;
@@ -3608,17 +3608,26 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
 
       vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
 
+	// If the entire part is below the beginning of the vector,
+	// then we are done.
       if (index < 0 && (wid <= (unsigned)-index))
 	    return true;
 
+	// If the entire part is above then end of the vector, then we
+	// are done.
       if (index >= (long)sig->size())
 	    return true;
 
+	// If the part starts below the vector, then skip the first
+	// few bits and reduce enough bits to start at the beginning
+	// of the vector.
       if (index < 0) {
+	    if (bit >= 4) bit += (unsigned) -index;
 	    wid -= (unsigned) -index;
 	    index = 0;
       }
 
+	// Reduce the width to keep the part inside the vector.
       if (index+wid > sig->size())
 	    wid = sig->size() - index;
 
@@ -3928,7 +3937,7 @@ bool of_FORK_UFUNC(vthread_t thr, vvp_code_t cp)
 
 	/* After this function, the .ufunc code has placed an of_JOIN
 	   to pause this thread. Since the child was pushed by the
-	   flag to schecule_vthread, the called function starts up
+	   flag to schedule_vthread, the called function starts up
 	   immediately. */
       return true;
 }

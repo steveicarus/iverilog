@@ -137,7 +137,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 				     const NetExpr* decay) const
 {
       NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0),
-	    *rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
+            *rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
 
       if (lsig == 0 || rsig == 0) return 0;
 
@@ -449,26 +449,21 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 				     const NetExpr* fall,
 				     const NetExpr* decay) const
 {
-
 	/* Elaborate the operands of the compare first as expressions
 	   (so that the eval_tree method can reduce constant
 	   expressions, including parameters) then turn those results
 	   into synthesized nets. */
-      NetExpr*lexp = elab_and_eval(des, scope, left_, lwidth),
-             *rexp = elab_and_eval(des, scope, right_, lwidth);
+      NetExpr*lexp = elab_and_eval(des, scope, left_, -1),
+             *rexp = elab_and_eval(des, scope, right_, -1);
 
       if (lexp == 0 || rexp == 0) return 0;
 
-      unsigned operand_width;
-      bool real_arg = false;
-      if (lexp->expr_type() == IVL_VT_REAL ||
-          rexp->expr_type() == IVL_VT_REAL) {
-	    operand_width = 1;
-	    real_arg = true;
-      } else {
+      bool real_arg = true;
+      if (lexp->expr_type() != IVL_VT_REAL &&
+          rexp->expr_type() != IVL_VT_REAL) {
 	/* Choose the operand width to be the width of the widest
 	   self-determined operand. */
-	    operand_width = lexp->expr_width();
+	    unsigned operand_width = lexp->expr_width();
 	    if (rexp->expr_width() > operand_width)
 	          operand_width = rexp->expr_width();
 
@@ -476,6 +471,8 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    lexp = pad_to_width(lexp, operand_width);
 	    rexp->set_width(operand_width);
 	    rexp = pad_to_width(rexp, operand_width);
+
+	    real_arg = false;
       }
 
       NetNet*lsig = 0;
@@ -719,6 +716,16 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 
       unsigned rwidth = lwidth;
 
+	// If either operand is IVL_VT_REAL, then cast the other to
+	// IVL_VT_REAL so that the division can become IVL_VT_REAL.
+
+      if (lsig->data_type()==IVL_VT_REAL || rsig->data_type()==IVL_VT_REAL) {
+	    if (lsig->data_type() != IVL_VT_REAL)
+		  lsig = cast_to_real(des, scope, lsig);
+	    if (rsig->data_type() != IVL_VT_REAL)
+		  rsig = cast_to_real(des, scope, rsig);
+      }
+
       if (rwidth == 0) {
 	    rwidth = lsig->vector_width();
 	    if (rsig->vector_width() > rwidth)
@@ -790,8 +797,8 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 				     const NetExpr* fall,
 				     const NetExpr* decay) const
 {
-      NetNet*lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0),
-            *rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
+      NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0),
+            *rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
 
       if (lsig == 0 || rsig == 0) return 0;
 
@@ -1578,6 +1585,14 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 		  return 0;
 	    }
 
+	    if (!erep->value().is_defined()) {
+		  cerr << get_fileline() << ": error: Concatenation repeat "
+		       << "may not be undefined (" << erep->value()
+		       << ")." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
 	    if (erep->value().is_negative()) {
 		  cerr << get_fileline() << ": error: Concatenation repeat "
 		       << "may not be negative (" << erep->value().as_long()
@@ -1779,8 +1794,32 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	   that connects to a signal with the correct name. */
       if (par != 0) {
 
+	      // Detect and handle the special case that we have a
+	      // real valued parameter. Return a NetLiteral and a
+	      // properly typed net.
+	    if (const NetECReal*pc = dynamic_cast<const NetECReal*>(par)) {
+		  NetLiteral*tmp = new NetLiteral(scope, scope->local_symbol(),
+						  pc->value());
+		  des->add_node(tmp);
+		  tmp->set_line(*par);
+		  sig = new NetNet(scope, scope->local_symbol(),
+				   NetNet::IMPLICIT);
+		  sig->set_line(*tmp);
+		  sig->data_type(tmp->data_type());
+		  sig->local_flag(true);
+
+		  connect(tmp->pin(0), sig->pin(0));
+		  return sig;
+	    }
+
 	    const NetEConst*pc = dynamic_cast<const NetEConst*>(par);
-	    assert(pc);
+	    if (pc == 0) {
+		  cerr << get_fileline() << ": internal error: "
+		       << "Non-consant parameter value?: " << *par << endl;
+		  cerr << get_fileline() << ":               : "
+		       << "Expression type is " << par->expr_type() << endl;
+	    }
+	    ivl_assert(*this, pc);
 	    verinum pvalue = pc->value();
 
 	      /* If the parameter has declared dimensions, then apply
@@ -2367,29 +2406,52 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
       osig->local_flag(true);
       osig->set_line(*this);
 
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: Generating part selects "
-		 << "to connect input l-value to subexpressions."
-		 << endl;
+      if (bidirectional_flag) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: Generating tran(VP) "
+		       << "to connect input l-value to subexpressions."
+		       << endl;
+	    }
+
+	    for (unsigned idx = 0 ; idx < nets.count() ; idx += 1) {
+		  unsigned wid = nets[idx]->vector_width();
+		  unsigned off = width - wid;
+		  NetTran*ps = new NetTran(scope, scope->local_symbol(),
+					   osig->vector_width(), wid, off);
+		  des->add_node(ps);
+		  ps->set_line(*this);
+
+		  connect(ps->pin(0), osig->pin(0));
+		  connect(ps->pin(1), nets[idx]->pin(0));
+
+		  ivl_assert(*this, wid <= width);
+		  width -= wid;
+	    }
+
+      } else {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: Generating part selects "
+		       << "to connect input l-value to subexpressions."
+		       << endl;
+	    }
+
+	    NetPartSelect::dir_t part_dir = NetPartSelect::VP;
+
+	    for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+		  unsigned wid = nets[idx]->vector_width();
+		  unsigned off = width - wid;
+		  NetPartSelect*ps = new NetPartSelect(osig, off, wid, part_dir);
+		  des->add_node(ps);
+		  ps->set_line(*this);
+
+		  connect(ps->pin(1), osig->pin(0));
+		  connect(ps->pin(0), nets[idx]->pin(0));
+
+		  assert(wid <= width);
+		  width -= wid;
+	    }
+	    assert(width == 0);
       }
-
-      NetPartSelect::dir_t part_dir = bidirectional_flag
-	    ? NetPartSelect::BI
-	    : NetPartSelect::VP;
-
-      for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
-	    unsigned wid = nets[idx]->vector_width();
-	    unsigned off = width - wid;
-	    NetPartSelect*ps = new NetPartSelect(osig, off, wid, part_dir);
-	    des->add_node(ps);
-
-	    connect(ps->pin(1), osig->pin(0));
-	    connect(ps->pin(0), nets[idx]->pin(0));
-
-	    assert(wid <= width);
-	    width -= wid;
-      }
-      assert(width == 0);
 
       osig->data_type(nets[0]->data_type());
       osig->local_flag(true);
@@ -2743,11 +2805,6 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	      /* If we are processing a tran or inout, then the
 		 partselect is bi-directional. Otherwise, it is a
 		 Part-to-Vector select. */
-	    NetPartSelect::dir_t part_dir;
-	    if (bidirectional_flag)
-		  part_dir = NetPartSelect::BI;
-	    else
-		  part_dir = NetPartSelect::PV;
 
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: "
@@ -2764,11 +2821,23 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    subsig->local_flag(true);
 	    subsig->set_line(*this);
 
-	    NetPartSelect*sub = new NetPartSelect(sig, lidx, subnet_wid,
-						  part_dir);
-	    des->add_node(sub);
-	    connect(sub->pin(0), subsig->pin(0));
+	    if (bidirectional_flag) {
+		    // Make a tran(VP)
+		  NetTran*sub = new NetTran(scope, scope->local_symbol(),
+					    sig->vector_width(),
+					    subnet_wid, lidx);
+		  sub->set_line(*this);
+		  des->add_node(sub);
+		  connect(sub->pin(0), sig->pin(0));
+		  connect(sub->pin(1), subsig->pin(0));
 
+	    } else {
+		  NetPartSelect*sub = new NetPartSelect(sig, lidx, subnet_wid,
+							NetPartSelect::PV);
+		  des->add_node(sub);
+		  sub->set_line(*this);
+		  connect(sub->pin(0), subsig->pin(0));
+	    }
 	    sig = subsig;
       }
 

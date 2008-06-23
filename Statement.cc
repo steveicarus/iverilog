@@ -92,7 +92,7 @@ PBlock::PBlock(perm_string n, PScope*parent, BL_TYPE t)
 }
 
 PBlock::PBlock(BL_TYPE t)
-: PScope(perm_string(),0), bl_type_(t)
+: PScope(perm_string()), bl_type_(t)
 {
 }
 

@@ -26,6 +26,7 @@
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "ivl_target_priv.h"
 # include  "ivl_assert.h"
 
 static bool has_enable(ivl_switch_type_t tt)
@@ -42,7 +43,7 @@ static bool has_enable(ivl_switch_type_t tt)
 }
 
 NetTran::NetTran(NetScope*scope, perm_string n, ivl_switch_type_t tt)
-: NetNode(scope, n, has_enable(tt)? 3 : 2)
+: NetNode(scope, n, has_enable(tt)? 3 : 2), type_(tt)
 {
       pin(0).set_dir(Link::PASSIVE); pin(0).set_name(perm_string::literal("A"), 0);
       pin(1).set_dir(Link::PASSIVE); pin(1).set_name(perm_string::literal("B"), 0);
@@ -52,6 +53,108 @@ NetTran::NetTran(NetScope*scope, perm_string n, ivl_switch_type_t tt)
       }
 }
 
+NetTran::NetTran(NetScope*scope, perm_string n, unsigned wid, unsigned part, unsigned off)
+: NetNode(scope, n, 2), type_(IVL_SW_TRAN_VP), wid_(wid), part_(part), off_(off)
+{
+      pin(0).set_dir(Link::PASSIVE); pin(0).set_name(perm_string::literal("A"), 0);
+      pin(1).set_dir(Link::PASSIVE); pin(1).set_name(perm_string::literal("B"), 0);
+}
+
 NetTran::~NetTran()
 {
+}
+
+unsigned NetTran::vector_width() const
+{
+      return wid_;
+}
+
+unsigned NetTran::part_width() const
+{
+      return part_;
+}
+
+unsigned NetTran::part_offset() const
+{
+      return off_;
+}
+
+void join_island(NetObj*obj)
+{
+      IslandBranch*branch = dynamic_cast<IslandBranch*> (obj);
+
+	// If this is not even a branch, then stop now.
+      if (branch == 0)
+	    return;
+
+	// If this is a branch, but already given to an island, then
+	// stop.
+      if (branch->island)
+	    return;
+
+      list<NetObj*> uncommitted_neighbors;
+
+	// Look for neighboring objects that might already be in
+	// islands. If we find something, then join that island.
+      for (unsigned idx = 0 ; idx < obj->pin_count() ; idx += 1) {
+	    Nexus*nex = obj->pin(idx).nexus();
+	    for (Link*cur = nex->first_nlink() ; cur ; cur = cur->next_nlink()) {
+		  unsigned pin;
+		  NetObj*tmp;
+		  cur->cur_link(tmp, pin);
+
+		    // Skip self.
+		  if (tmp == obj)
+			continue;
+
+		    // If tmb is not a branch, then skip it.
+		  IslandBranch*tmp_branch = dynamic_cast<IslandBranch*> (tmp);
+		  if (tmp_branch == 0)
+			continue;
+
+		    // If that is an uncommitted branch, then save
+		    // it. When I finally choose an island for self,
+		    // these branches will be scanned so that they join
+		    // this island as well.
+		  if (tmp_branch->island == 0) {
+			uncommitted_neighbors.push_back(tmp);
+			continue;
+		  }
+
+		  ivl_assert(*obj, branch->island==0 || branch->island==tmp_branch->island);
+
+		    // We found an existing island to join. Join it
+		    // now. Keep scanning in order to find more neighbors.
+		  if (branch->island == 0) {
+			if (debug_elaborate)
+			      cerr << obj->get_fileline() << ": debug: "
+				   << "Join branch to existing island." << endl;
+			branch->island = tmp_branch->island;
+
+		  } else if (branch->island != tmp_branch->island) {
+			cerr << obj->get_fileline() << ": internal error: "
+			     << "Oops, Found 2 neighboring islands." << endl;
+			ivl_assert(*obj, 0);
+		  }
+	    }
+      }
+
+	// If after all that we did not find an island to join, then
+	// start the island not and join it.
+      if (branch->island == 0) {
+	    branch->island = new ivl_island_s;
+	    branch->island->discipline = 0;
+	    if (debug_elaborate)
+		  cerr << obj->get_fileline() << ": debug: "
+		       << "Create new island for this branch" << endl;
+      }
+
+	// Now scan all the uncommitted neighbors I found. Calling
+	// join_island() on them will cause them to notice me in the
+	// process, and thus they will join my island. This process
+	// will recurse until all the connected branches join this island.
+      for (list<NetObj*>::iterator cur = uncommitted_neighbors.begin()
+		 ; cur != uncommitted_neighbors.end() ; cur ++ ) {
+	    join_island(*cur);
+      }
 }

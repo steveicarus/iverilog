@@ -1,5 +1,7 @@
+#ifndef __vvp_island_H
+#define __vvp_island_H
 /*
- * Copyright (c) 2002-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,22 +19,9 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "statistics.h"
+# include  "config.h"
+# include  "vvp_net.h"
+# include  <assert.h>
 
-/*
- * This is a count of the instruction opcodes that were created.
- */
-unsigned long count_opcodes = 0;
 
-unsigned long count_functors = 0;
-unsigned long count_functors_logic = 0;
-unsigned long count_functors_bufif = 0;
-unsigned long count_functors_resolv= 0;
-unsigned long count_functors_sig   = 0;
-
-unsigned long count_vpi_nets = 0;
-
-unsigned long count_vpi_scopes = 0;
-
-size_t size_opcodes = 0;
-
+#endif

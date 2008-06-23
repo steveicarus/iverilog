@@ -598,7 +598,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       delete expr_input;
 
 	/* Detect the case that this is a *synchronous* set/reset. It
-	   is not asyncronous because we know the condition is not
+	   is not asynchronous because we know the condition is not
 	   included in the sensitivity list, but if the if_ case is
 	   constant (has no inputs) then we can model this as a
 	   synchronous set/reset.

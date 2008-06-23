@@ -937,8 +937,8 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 	    (*idx)->dump(out, indent+2);
       }
 
-      for (list<PGenerate*>::const_iterator idx = generates.begin()
-		 ; idx != generates.end() ;  idx++) {
+      for (list<PGenerate*>::const_iterator idx = generate_schemes.begin()
+		 ; idx != generate_schemes.end() ;  idx++) {
 	    (*idx)->dump(out, indent+2);
       }
 
@@ -1089,8 +1089,8 @@ void Module::dump(ostream&out) const
 
 	// Dump the task definitions.
       typedef map<perm_string,PTask*>::const_iterator task_iter_t;
-      for (task_iter_t cur = tasks_.begin()
-		 ; cur != tasks_.end() ; cur ++) {
+      for (task_iter_t cur = tasks.begin()
+		 ; cur != tasks.end() ; cur ++) {
 	    out << "    task " << (*cur).first << ";" << endl;
 	    (*cur).second->dump(out, 6);
 	    out << "    endtask;" << endl;
@@ -1098,8 +1098,8 @@ void Module::dump(ostream&out) const
 
 	// Dump the function definitions.
       typedef map<perm_string,PFunction*>::const_iterator func_iter_t;
-      for (func_iter_t cur = funcs_.begin()
-		 ; cur != funcs_.end() ; cur ++) {
+      for (func_iter_t cur = funcs.begin()
+		 ; cur != funcs.end() ; cur ++) {
 	    out << "    function " << (*cur).first << ";" << endl;
 	    (*cur).second->dump(out, 6);
 	    out << "    endfunction;" << endl;

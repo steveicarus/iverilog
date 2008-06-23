@@ -83,7 +83,7 @@ static void set_to_lvariable(ivl_lval_t lval,
 
       if (part_off_ex == 0) {
 	    part_off = 0;
-      } else if (number_is_immediate(part_off_ex, 64)) {
+      } else if (number_is_immediate(part_off_ex, 64, 0)) {
 	    part_off = get_number_immediate(part_off_ex);
 	    part_off_ex = 0;
       }
@@ -91,7 +91,7 @@ static void set_to_lvariable(ivl_lval_t lval,
 	/* If the word index is a constant expression, then evaluate
 	   it to select the word, and pay no further heed to the
 	   expression itself. */
-      if (word_ix && number_is_immediate(word_ix, 8*sizeof(use_word))) {
+      if (word_ix && number_is_immediate(word_ix, 8*sizeof(use_word), 0)) {
 	    use_word = get_number_immediate(word_ix);
 	    word_ix = 0;
       }
@@ -227,14 +227,14 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       unsigned part_off = 0;
       if (part_off_ex == 0) {
 	    part_off = 0;
-      } else if (number_is_immediate(part_off_ex, 64)) {
+      } else if (number_is_immediate(part_off_ex, 64, 0)) {
 	    part_off = get_number_immediate(part_off_ex);
 	    part_off_ex = 0;
       }
 
       if (dexp == 0) {
 	      /* Constant delay... */
-	    if (number_is_immediate(word_ix, 64)) {
+	    if (number_is_immediate(word_ix, 64, 0)) {
 		  fprintf(vvp_out, "   %%ix/load 3, %lu; address\n",
 			  get_number_immediate(word_ix));
 	    } else {
@@ -259,7 +259,7 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	      /* Calculated delay... */
 	    int delay_index = allocate_word();
 	    draw_eval_expr_into_integer(dexp, delay_index);
-	    if (number_is_immediate(word_ix, 64)) {
+	    if (number_is_immediate(word_ix, 64, 0)) {
 		  fprintf(vvp_out, "   %%ix/load 3, %lu; address\n",
 			  get_number_immediate(word_ix));
 	    } else {
@@ -306,7 +306,7 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 
       if (part_off_ex == 0) {
 	    part_off = 0;
-      } else if (number_is_immediate(part_off_ex, 64)) {
+      } else if (number_is_immediate(part_off_ex, 64, 0)) {
 	    part_off = get_number_immediate(part_off_ex);
 	    part_off_ex = 0;
       }
@@ -543,7 +543,7 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
       if (ivl_signal_array_count(sig) > 1) {
 	    word_ix = ivl_lval_idx(lval);
 	    assert(word_ix);
-	    assert(number_is_immediate(word_ix, 8*sizeof(use_word)));
+	    assert(number_is_immediate(word_ix, 8*sizeof(use_word), 0));
 	    use_word = get_number_immediate(word_ix);
       }
 
@@ -700,7 +700,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 	    if ((ivl_statement_type(net) == IVL_ST_CASE)
 		&& (ivl_expr_type(cex) == IVL_EX_NUMBER)
 		&& (! number_is_unknown(cex))
-		&& number_is_immediate(cex, 16)) {
+		&& number_is_immediate(cex, 16, 0)) {
 
 		  unsigned long imm = get_number_immediate(cex);
 
@@ -926,12 +926,12 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 	    if (part_off_ex == 0) {
 		  part_off = 0;
 	    } else {
-		  assert(number_is_immediate(part_off_ex, 64));
+		  assert(number_is_immediate(part_off_ex, 64, 0));
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 
 	    if (word_idx != 0) {
-		  assert(number_is_immediate(word_idx, 8*sizeof(unsigned long)));
+		  assert(number_is_immediate(word_idx, 8*sizeof(unsigned long), 0));
 		  use_word = get_number_immediate(word_idx);
 	    }
 
@@ -1004,12 +1004,12 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 
 	/* At least for now, only handle force to fixed words of an array. */
       if ((lword_idx = ivl_lval_idx(lval)) != 0) {
-	    assert(number_is_immediate(lword_idx, 8*sizeof(unsigned long)));
+	    assert(number_is_immediate(lword_idx, 8*sizeof(unsigned long), 0));
 	    use_lword = get_number_immediate(lword_idx);
       }
 
       if ((rword_idx = ivl_expr_oper1(rval)) != 0) {
-	    assert(number_is_immediate(rword_idx, 8*sizeof(unsigned long)));
+	    assert(number_is_immediate(rword_idx, 8*sizeof(unsigned long), 0));
 	    use_rword = get_number_immediate(rword_idx);
       }
 
@@ -1087,12 +1087,12 @@ static int show_stmt_deassign(ivl_statement_t net)
 	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
 	    unsigned part_off = 0;
 	    if (part_off_ex != 0) {
-		  assert(number_is_immediate(part_off_ex, 64));
+		  assert(number_is_immediate(part_off_ex, 64, 0));
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 
 	    if (word_idx != 0) {
-		  assert(number_is_immediate(word_idx, 8*sizeof(use_word)));
+		  assert(number_is_immediate(word_idx, 8*sizeof(use_word), 0));
 		  use_word = get_number_immediate(word_idx);
 	    }
 
@@ -1369,7 +1369,7 @@ static int show_stmt_release(ivl_statement_t net)
 	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
 	    unsigned part_off = 0;
 	    if (part_off_ex != 0) {
-		  assert(number_is_immediate(part_off_ex, 64));
+		  assert(number_is_immediate(part_off_ex, 64, 0));
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 
@@ -1383,7 +1383,7 @@ static int show_stmt_release(ivl_statement_t net)
 	    }
 
 	    if (word_idx != 0) {
-		  assert(number_is_immediate(word_idx, 8*sizeof(use_word)));
+		  assert(number_is_immediate(word_idx, 8*sizeof(use_word), 0));
 		  use_word = get_number_immediate(word_idx);
 	    }
 

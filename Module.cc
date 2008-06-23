@@ -26,7 +26,7 @@
 
 /* n is a permallocated string. */
 Module::Module(perm_string n)
-: PScope(n, 0)
+: PScope(n)
 {
       library_flag = false;
       default_nettype = NetNet::NONE;
@@ -39,16 +39,6 @@ Module::~Module()
 void Module::add_gate(PGate*gate)
 {
       gates_.push_back(gate);
-}
-
-void Module::add_task(perm_string name, PTask*task)
-{
-      tasks_[name] = task;
-}
-
-void Module::add_function(perm_string name, PFunction *func)
-{
-      funcs_[name] = func;
 }
 
 unsigned Module::port_count() const

@@ -140,13 +140,13 @@ const static struct opcode_table_s opcode_table[] = {
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%load/av",of_LOAD_AV,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
       { "%load/avp0",of_LOAD_AVP0,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
+      { "%load/avp0/s",of_LOAD_AVP0_S,3,{OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
       { "%load/avx.p",of_LOAD_AVX_P,3,{OA_BIT1, OA_ARR_PTR,  OA_BIT2} },
-      { "%load/nx",of_LOAD_NX,3,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
       { "%load/v", of_LOAD_VEC,3, {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
       { "%load/vp0",of_LOAD_VP0,3,{OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
+      { "%load/vp0/s",of_LOAD_VP0_S,3,{OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
       { "%load/wr",of_LOAD_WR,2,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
-      { "%load/x", of_LOAD_X, 3,  {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
-      { "%load/x.p",of_LOAD_XP, 3,{OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
+      { "%load/x1p",of_LOAD_X1P,3,{OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
       { "%loadi/wr",of_LOADI_WR,3,{OA_BIT1,     OA_NUMBER,   OA_BIT2} },
       { "%mod",    of_MOD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mod/s",  of_MOD_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -645,6 +645,8 @@ void compile_cleanup(void)
       delete_symbol_table(sym_functors);
       sym_functors = 0;
 
+      compile_island_cleanup();
+
       if (verbose_flag) {
 	    fprintf(stderr, " ... Compiletf functions\n");
 	    fflush(stderr);
@@ -887,6 +889,38 @@ template <class T_> void make_arith(T_ *arith, char*label,
       free(argv);
 }
 
+void compile_arith_cast_int(char*label, long width,
+                            unsigned argc, struct symb_s*argv)
+{
+      vvp_arith_cast_int*arith = new vvp_arith_cast_int((unsigned) width);
+
+      vvp_net_t* ptr = new vvp_net_t;
+      ptr->fun = arith;
+
+      define_functor_symbol(label, ptr);
+      free(label);
+
+      assert(argc == 1);
+      inputs_connect(ptr, argc, argv);
+      free(argv);
+}
+
+void compile_arith_cast_real(char*label, bool signed_flag,
+                             unsigned argc, struct symb_s*argv)
+{
+      vvp_arith_cast_real*arith = new vvp_arith_cast_real(signed_flag);
+
+      vvp_net_t* ptr = new vvp_net_t;
+      ptr->fun = arith;
+
+      define_functor_symbol(label, ptr);
+      free(label);
+
+      assert(argc == 1);
+      inputs_connect(ptr, argc, argv);
+      free(argv);
+}
+
 void compile_arith_abs(char*label, unsigned argc, struct symb_s*argv)
 {
       vvp_arith_abs*arith = new vvp_arith_abs;
@@ -992,11 +1026,6 @@ void compile_arith_pow(char*label, long wid, bool signed_flag,
 		       unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
-        /* For now we need to do a double to long cast, so the number
-           of bits is limited. This should be caught in the compiler. */
-      if (signed_flag) {
-	    assert( wid <= (long)(8*sizeof(long)) );
-      }
 
       if (argc != 2) {
 	    const char *suffix = "";
@@ -1397,16 +1426,16 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
       vvp_net_fun_t* obj = 0;
 
       if (strcmp(type,"tri") == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0));
+	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0,0));
 
       } else if (strncmp(type,"tri$",4) == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0), strdup(type+4));
+	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0,0), strdup(type+4));
 
       } else if (strcmp(type,"tri0") == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_0, 5));
+	    obj = new resolv_functor(vvp_scalar_t(BIT4_0, 5,5));
 
       } else if (strcmp(type,"tri1") == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_1, 5));
+	    obj = new resolv_functor(vvp_scalar_t(BIT4_1, 5,5));
 
       } else if (strcmp(type,"triand") == 0) {
 	    obj = new resolv_triand;
