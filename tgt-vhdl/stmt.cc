@@ -185,7 +185,7 @@ static int draw_assign(vhdl_process *proc, stmt_container *container,
       // As with non-blocking assignment, push constant assignments
       // into the initialisation if we can
       if (proc->is_initial() && ivl_signal_port(sig) == IVL_SIP_NONE
-          && rhs->constant()) {
+          && rhs->constant() && !proc->have_declared_var(signame)) {
          decl->set_initial(rhs);
 
          // This signal may be used e.g. in a loop test so we need
