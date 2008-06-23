@@ -252,7 +252,7 @@ static int draw_delay(vhdl_process *proc, stmt_container *container,
    else {
       // All blocking assignments need to be made visible
       // at this point
-      draw_blocking_assigns(proc);
+      draw_blocking_assigns(proc, container);
       
       vhdl_wait_stmt *wait =
          new vhdl_wait_stmt(VHDL_WAIT_FOR, time);

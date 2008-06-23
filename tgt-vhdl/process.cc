@@ -104,7 +104,7 @@ void blocking_assign_to(vhdl_process *proc, ivl_signal_t sig)
  * the new values visible outside the current process. This should be
  * called before any `wait' statement or the end of the process.
  */
-void draw_blocking_assigns(vhdl_process *proc)
+void draw_blocking_assigns(vhdl_process *proc, stmt_container *container)
 {
    var_temp_set_t::const_iterator it;
    for (it = g_assign_vars.begin(); it != g_assign_vars.end(); ++it) {
@@ -117,9 +117,7 @@ void draw_blocking_assigns(vhdl_process *proc)
       vhdl_var_ref *lhs = new vhdl_var_ref(stripped.c_str(), NULL);
       vhdl_expr *rhs = new vhdl_var_ref((*it).first.c_str(), type);
 
-      // TODO: I'm not sure this will work properly if, e.g., the delay
-      // is inside a `if' statement
-      proc->get_container()->add_stmt(new vhdl_nbassign_stmt(lhs, rhs));
+      container->add_stmt(new vhdl_nbassign_stmt(lhs, rhs));
 
       // Undo the renaming (since the temporary is no longer needed)
       rename_signal((*it).second, stripped);
@@ -164,7 +162,7 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
       return rc;
 
    // Output any remaning blocking assignments
-   draw_blocking_assigns(vhdl_proc);
+   draw_blocking_assigns(vhdl_proc, vhdl_proc->get_container());
    
    // Initial processes are translated to VHDL processes with
    // no sensitivity list and and indefinite wait statement at
