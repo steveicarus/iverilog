@@ -462,6 +462,11 @@ vhdl_expr::~vhdl_expr()
  */
 vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
 {
+   std::cout << "Cast: from=" << type_->get_string()
+             << " (" << type_->get_width() << ") "
+             << " to=" << to->get_string() << " ("
+             << to->get_width() << ")" << std::endl;
+   
    if (to->get_name() == type_->get_name()) {
       if (to->get_width() == type_->get_width())
          return this;  // Identical
@@ -481,10 +486,14 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
       return conv;
    }
    else {
+      vhdl_expr *tocast = this;
+      if (to->get_width() != type_->get_width())
+         tocast = resize(to->get_width());
+      
       vhdl_fcall *conv =
          new vhdl_fcall(to->get_string().c_str(), new vhdl_type(*to));
-      conv->add_expr(this);
-      
+      conv->add_expr(tocast);
+
       return conv;
    }
 }
@@ -598,9 +607,14 @@ void vhdl_assign_stmt::emit(std::ofstream &of, int level) const
    of << ";";
 }
 
-vhdl_const_bits::vhdl_const_bits(const char *value, int width)   
-   : vhdl_expr(vhdl_type::nsigned(width), true), qualified_(false)
+vhdl_const_bits::vhdl_const_bits(const char *value, int width, bool issigned)   
+   : vhdl_expr(issigned ? vhdl_type::nsigned(width)
+               : vhdl_type::nunsigned(width), true),
+     qualified_(false),
+     signed_(issigned)
 {
+   std::cout << (issigned ? "signed" : "unsigned") << " bits" << std::endl;
+   
    // Can't rely on value being NULL-terminated
    while (width--)
       value_.push_back(*value++);
@@ -643,7 +657,10 @@ vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
 
 void vhdl_const_bits::emit(std::ofstream &of, int level) const
 {
-   of << (qualified_ ? "signed'(\"" : "\"");
+   if (qualified_)
+      of << (signed_ ? "signed" : "unsigned") << "'(\"";
+   else
+      of << "\"";
 
    // The bits appear to be in reverse order
    std::string::const_reverse_iterator it;

@@ -49,6 +49,8 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
    const vhdl_decl *decl = ent->get_arch()->get_decl(strip_var(renamed));
    assert(decl);
 
+   std::cout << "ref: " << renamed << " width=" << decl->get_type()->get_width() << std::endl;
+
    vhdl_type *type = new vhdl_type(*decl->get_type());
    
    return new vhdl_var_ref(renamed, type);
@@ -59,7 +61,8 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
  */
 static vhdl_expr *translate_number(ivl_expr_t e)
 {
-   return new vhdl_const_bits(ivl_expr_bits(e), ivl_expr_width(e));
+   return new vhdl_const_bits(ivl_expr_bits(e), ivl_expr_width(e),
+                              ivl_expr_signed(e) != 0);
 }
 
 static vhdl_expr *translate_unary(ivl_expr_t e)
@@ -127,14 +130,24 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    int rwidth = rhs->get_type()->get_width();
 
    // May need to resize the left or right hand side
-   if (lwidth < rwidth)
+   int opwidth;
+   if (lwidth < rwidth) {
       rhs = rhs->cast(lhs->get_type());
-   else if (rwidth < lwidth)
+      opwidth = lwidth;
+   }
+   else if (rwidth < lwidth) {
       lhs = lhs->cast(rhs->get_type());
+      opwidth = rwidth;
+   }
+   else
+      opwidth = lwidth;
+
+   std::cout << "lwidth=" << lwidth << " rwidth=" << rwidth << std::endl;
 
    // For === and !== we need to compare std_logic_vectors
    // rather than signeds
-   vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR);
+   int msb = ivl_expr_width(e) - 1;
+   vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR, opwidth-1, 0);
    bool vectorop =
       (lhs->get_type()->get_name() == VHDL_TYPE_SIGNED
        || lhs->get_type()->get_name() == VHDL_TYPE_UNSIGNED) &&
@@ -190,12 +203,7 @@ vhdl_expr *translate_select(ivl_expr_t e)
       return NULL;   
    
    // Hack: resize it to the correct size
-   vhdl_type *rtype = vhdl_type::nsigned(ivl_expr_width(e));     
-   vhdl_fcall *resize = new vhdl_fcall("Resize", rtype);
-   resize->add_expr(from);
-   resize->add_expr(new vhdl_const_int(ivl_expr_width(e)));
-   
-   return resize;
+   return from->resize(ivl_expr_width(e));
 }
 
 /*

@@ -127,13 +127,13 @@ private:
 
 class vhdl_const_bits : public vhdl_expr {
 public:
-   vhdl_const_bits(const char *value, int width);
+   vhdl_const_bits(const char *value, int width, bool issigned);
    void emit(std::ofstream &of, int level) const;
    const std::string &get_value() const { return value_; }
    vhdl_expr *cast(const vhdl_type *to);
 private:
    std::string value_;
-   bool qualified_;
+   bool qualified_, signed_;
 };
 
 class vhdl_const_bit : public vhdl_expr {
