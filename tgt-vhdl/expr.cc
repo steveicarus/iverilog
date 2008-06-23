@@ -49,8 +49,6 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
    const vhdl_decl *decl = ent->get_arch()->get_decl(strip_var(renamed));
    assert(decl);
 
-   std::cout << "ref: " << renamed << " width=" << decl->get_type()->get_width() << std::endl;
-
    vhdl_type *type = new vhdl_type(*decl->get_type());
    
    return new vhdl_var_ref(renamed, type);
@@ -142,11 +140,8 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    else
       opwidth = lwidth;
 
-   std::cout << "lwidth=" << lwidth << " rwidth=" << rwidth << std::endl;
-
    // For === and !== we need to compare std_logic_vectors
    // rather than signeds
-   int msb = ivl_expr_width(e) - 1;
    vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR, opwidth-1, 0);
    bool vectorop =
       (lhs->get_type()->get_name() == VHDL_TYPE_SIGNED

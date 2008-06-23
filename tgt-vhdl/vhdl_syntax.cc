@@ -462,10 +462,10 @@ vhdl_expr::~vhdl_expr()
  */
 vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
 {
-   std::cout << "Cast: from=" << type_->get_string()
-             << " (" << type_->get_width() << ") "
-             << " to=" << to->get_string() << " ("
-             << to->get_width() << ")" << std::endl;
+   //std::cout << "Cast: from=" << type_->get_string()
+   //          << " (" << type_->get_width() << ") "
+   //          << " to=" << to->get_string() << " ("
+   //          << to->get_width() << ")" << std::endl;
    
    if (to->get_name() == type_->get_name()) {
       if (to->get_width() == type_->get_width())
@@ -618,9 +618,6 @@ vhdl_const_bits::vhdl_const_bits(const char *value, int width, bool issigned)
    // Can't rely on value being NULL-terminated
    while (width--)
       value_.push_back(*value++);
-
-   std::cout << (issigned ? "signed" : "unsigned") << " bits: "
-             << value_ << std::endl;
 }
 
 vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
