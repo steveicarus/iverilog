@@ -92,6 +92,14 @@ static char parse_octal(const char *p)
       + (*(p+2) - '0') * 1;
 }
 
+static void flush_string(std::ostringstream &ss, stmt_container *container)
+{
+   display_write(container, new vhdl_const_string(ss.str().c_str()));
+
+   // Clear the stream
+   ss.str("");
+}
+
 /*
  * Generate VHDL for the $display system task.
  * This is implemented using the functions in std.textio. Each
@@ -132,16 +140,25 @@ int draw_stask_display(vhdl_process *proc, stmt_container *container,
                   // Octal escape
                   char ch = parse_octal(p+1);
                   if (ch == '\n') {
-                     display_write(container,
-                                   new vhdl_const_string(ss.str().c_str()));
+                     flush_string(ss, container);
                      display_line(container);
-
-                     // Clear the stream
-                     ss.str("");
                   }
                   else
                      ss << ch;
                   p += 3;
+               }
+               else if (*p == '%') {
+                  flush_string(ss, container);
+
+                  p++;   // Ignore the format (!)
+                  ivl_expr_t net = ivl_stmt_parm(stmt, i++);
+                  assert(net);
+
+                  vhdl_expr *base = translate_expr(net);
+                  if (NULL == base)
+                     return 1;
+                  
+                  display_write(container, base);
                }
                else
                   ss << *p;
