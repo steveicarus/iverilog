@@ -396,6 +396,21 @@ static int draw_case(vhdl_process *proc, stmt_container *container,
    vhdl_expr *test = translate_expr(ivl_stmt_cond_expr(stmt));
    if (NULL == test)
       return 1;
+
+   // VHDL case expressions are required to be quite simple: variable
+   // references or slices. So we may need to create a temporary
+   // variable to hold the result of the expression evaluation
+   if (typeid(test) != typeid(vhdl_var_ref)) {
+      // TODO: Check if this is already declared
+      const char *tmp_name = "Verilog_Case_Ex";
+      vhdl_type *test_type = new vhdl_type(*test->get_type());
+      proc->add_decl(new vhdl_var_decl(tmp_name, test_type));
+
+      vhdl_var_ref *tmp_ref = new vhdl_var_ref(tmp_name, NULL);
+      container->add_stmt(new vhdl_assign_stmt(tmp_ref, test));
+
+      test = new vhdl_var_ref(tmp_name, new vhdl_type(*test_type));
+   }
    
    vhdl_case_stmt *vhdlcase = new vhdl_case_stmt(test);
    container->add_stmt(vhdlcase);
