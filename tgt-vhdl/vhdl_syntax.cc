@@ -842,6 +842,6 @@ void vhdl_while_stmt::emit(std::ofstream &of, int level) const
    of << "while ";
    test_->emit(of, level);
    of << " loop";
-   stmts_.emit(of, indent(level));
+   stmts_.emit(of, level);
    of << "end loop;";
 }
