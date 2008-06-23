@@ -130,7 +130,7 @@ static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
    int nsigs = ivl_scope_sigs(scope);
    for (int i = 0; i < nsigs; i++) {
       ivl_signal_t sig = ivl_scope_sig(scope, i);
-
+      
       int width = ivl_signal_width(sig);
       vhdl_type *sig_type;
       if (width == 1)

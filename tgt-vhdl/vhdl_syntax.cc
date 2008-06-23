@@ -465,14 +465,8 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
    if (to->get_name() == type_->get_name()) {
       if (to->get_width() == type_->get_width())
          return this;  // Identical
-      else {
-         vhdl_type *rtype = vhdl_type::nsigned(to->get_width());     
-         vhdl_fcall *resize = new vhdl_fcall("Resize", rtype);
-         resize->add_expr(this);
-         resize->add_expr(new vhdl_const_int(to->get_width()));
-
-         return resize;
-      }
+      else
+         return resize(to->get_width());
    }
    else if (to->get_name() == VHDL_TYPE_BOOLEAN) {
       // '1' is true all else are false
@@ -493,6 +487,16 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
       
       return conv;
    }
+}
+
+vhdl_expr *vhdl_expr::resize(int newwidth)
+{
+   vhdl_type *rtype = vhdl_type::nsigned(newwidth);     
+   vhdl_fcall *resize = new vhdl_fcall("Resize", rtype);
+   resize->add_expr(this);
+   resize->add_expr(new vhdl_const_int(newwidth));
+   
+   return resize;
 }
 
 void vhdl_expr_list::add_expr(vhdl_expr *e)

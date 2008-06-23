@@ -87,21 +87,9 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
  */
 static vhdl_expr *translate_numeric(vhdl_expr *lhs, vhdl_expr *rhs,
                                     vhdl_binop_t op)
-{ 
-   int lwidth = lhs->get_type()->get_width();
-   int rwidth = rhs->get_type()->get_width();
-   
-   // May need to resize the left or right hand side
-   if (lwidth < rwidth) {
-      lhs = lhs->cast(rhs->get_type());
-      lwidth = rwidth;
-   }
-   else if (rwidth < lwidth) {
-      rhs = rhs->cast(lhs->get_type());
-      rwidth = lwidth;
-   }
-   
-   return new vhdl_binop_expr(lhs, op, rhs, vhdl_type::nsigned(lwidth));
+{
+   vhdl_type *rtype = new vhdl_type(*lhs->get_type());
+   return new vhdl_binop_expr(lhs, op, rhs, rtype);
 }
 
 static vhdl_expr *translate_relation(vhdl_expr *lhs, vhdl_expr *rhs,
@@ -134,6 +122,15 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    vhdl_expr *rhs = translate_expr(ivl_expr_oper2(e));
    if (NULL == rhs)
       return NULL;
+   
+   int lwidth = lhs->get_type()->get_width();
+   int rwidth = rhs->get_type()->get_width();
+
+   // May need to resize the left or right hand side
+   if (lwidth < rwidth)
+      rhs = rhs->cast(lhs->get_type());
+   else if (rwidth < lwidth)
+      lhs = lhs->cast(rhs->get_type());
 
    // For === and !== we need to compare std_logic_vectors
    // rather than signeds

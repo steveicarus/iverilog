@@ -36,6 +36,7 @@ public:
    const vhdl_type *get_type() const { return type_; }
    bool constant() const { return isconst_; }
    virtual vhdl_expr *cast(const vhdl_type *to);
+   virtual vhdl_expr *resize(int newwidth);
 private:
    vhdl_type *type_;
    bool isconst_;
