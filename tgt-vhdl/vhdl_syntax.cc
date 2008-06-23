@@ -585,7 +585,7 @@ void vhdl_assign_stmt::emit(std::ofstream &of, int level) const
 }
 
 vhdl_const_bits::vhdl_const_bits(const char *value, int width)   
-   : vhdl_expr(vhdl_type::nsigned(width), true)
+   : vhdl_expr(vhdl_type::nsigned(width), true), qualified_(false)
 {
    // Can't rely on value being NULL-terminated
    while (width--)
@@ -604,20 +604,39 @@ vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
 
       return new vhdl_const_bit(lsb);
    }
+   else if (to->get_name() == VHDL_TYPE_STD_LOGIC_VECTOR) {
+      // Don't need to do anything
+      return this;
+   }
+   else if (to->get_name() == VHDL_TYPE_SIGNED
+            || to->get_name() == VHDL_TYPE_UNSIGNED) {
+      // Might need to drop some bits (but not extend?)
+      assert(to->get_width() <= get_type()->get_width());
+
+      value_.resize(to->get_width());
+      return this;
+   }
+   else if (to->get_name() == VHDL_TYPE_INTEGER) {
+      // Need to explicitly qualify the type (or the VHDL
+      // compiler gets confused between signed/unsigned)
+      qualified_ = true;
+
+      return vhdl_expr::cast(to);
+   }
    else
       return vhdl_expr::cast(to);
 }
 
 void vhdl_const_bits::emit(std::ofstream &of, int level) const
 {
-   of << "signed'(\"";
+   of << (qualified_ ? "signed'(\"" : "\"");
 
    // The bits appear to be in reverse order
    std::string::const_reverse_iterator it;
    for (it = value_.rbegin(); it != value_.rend(); ++it)
       of << vl_to_vhdl_bit(*it);
 
-   of << "\")";
+   of << (qualified_ ? "\")" : "\"");
 }
 
 void vhdl_const_bit::emit(std::ofstream &of, int level) const

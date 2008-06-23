@@ -132,6 +132,7 @@ public:
    vhdl_expr *cast(const vhdl_type *to);
 private:
    std::string value_;
+   bool qualified_;
 };
 
 class vhdl_const_bit : public vhdl_expr {
