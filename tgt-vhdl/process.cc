@@ -123,7 +123,11 @@ void draw_blocking_assigns(vhdl_process *proc, stmt_container *container)
       rename_signal((*it).second, stripped);
    }
 
-   g_assign_vars.clear();
+   // If this this wait is within e.g. an `if' statement then
+   // we cannot correctly clear the variables list here (since
+   // they might not be assigned on another path)
+   if (container == proc->get_container())
+      g_assign_vars.clear();
 }
 
 /*
@@ -163,6 +167,7 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
 
    // Output any remaning blocking assignments
    draw_blocking_assigns(vhdl_proc, vhdl_proc->get_container());
+   g_assign_vars.clear();
    
    // Initial processes are translated to VHDL processes with
    // no sensitivity list and and indefinite wait statement at
