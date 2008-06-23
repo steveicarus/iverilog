@@ -486,15 +486,17 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
       return conv;
    }
    else {
-      vhdl_expr *tocast = this;
-      if (to->get_width() != type_->get_width())
-         tocast = resize(to->get_width());
-      
+      // We have to cast the expression before resizing or the
+      // wrong sign bit may be extended (i.e. when casting between
+      // signed/unsigned *and* resizing)
       vhdl_fcall *conv =
          new vhdl_fcall(to->get_string().c_str(), new vhdl_type(*to));
-      conv->add_expr(tocast);
+      conv->add_expr(this);
 
-      return conv;
+      if (to->get_width() != type_->get_width())
+         return conv->resize(to->get_width());
+      else
+         return conv;      
    }
 }
 
@@ -612,12 +614,13 @@ vhdl_const_bits::vhdl_const_bits(const char *value, int width, bool issigned)
                : vhdl_type::nunsigned(width), true),
      qualified_(false),
      signed_(issigned)
-{
-   std::cout << (issigned ? "signed" : "unsigned") << " bits" << std::endl;
-   
+{   
    // Can't rely on value being NULL-terminated
    while (width--)
       value_.push_back(*value++);
+
+   std::cout << (issigned ? "signed" : "unsigned") << " bits: "
+             << value_ << std::endl;
 }
 
 vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
