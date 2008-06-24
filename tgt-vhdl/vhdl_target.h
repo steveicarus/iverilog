@@ -32,11 +32,11 @@ void rename_signal(ivl_signal_t sig, const std::string &renamed);
 const vhdl_entity *find_entity_for_signal(ivl_signal_t sig);
 const std::string &get_renamed_signal(ivl_signal_t sig);
 
-void blocking_assign_to(vhdl_process *proc, ivl_signal_t sig);
+void blocking_assign_to(vhdl_procedural *proc, ivl_signal_t sig);
 std::string strip_var(const std::string &str);
-void draw_blocking_assigns(vhdl_process *proc, stmt_container *container);
+void draw_blocking_assigns(vhdl_procedural *proc, stmt_container *container);
 
-int draw_stask_display(vhdl_process *proc, stmt_container *container,
+int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
                        ivl_statement_t stmt, bool newline = true);
 
 #endif /* #ifndef INC_VHDL_TARGET_H */

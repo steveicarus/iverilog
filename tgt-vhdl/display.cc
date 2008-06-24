@@ -112,7 +112,7 @@ static void flush_string(std::ostringstream &ss, stmt_container *container)
  * name collision with an existing variable called
  * `Verilog_Display_Line' -- do something about this?
  */
-int draw_stask_display(vhdl_process *proc, stmt_container *container,
+int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
                        ivl_statement_t stmt, bool newline)
 {
    if (!proc->get_scope()->have_declared(DISPLAY_LINE)) {

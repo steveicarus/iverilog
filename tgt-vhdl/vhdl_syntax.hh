@@ -545,8 +545,10 @@ private:
 class vhdl_procedural {
 public:
    stmt_container *get_container() { return &stmts_; }
+   vhdl_scope *get_scope() { return &scope_; }
 protected:
    stmt_container stmts_;
+   vhdl_scope scope_;
 };
 
 class vhdl_process : public vhdl_conc_stmt, public vhdl_procedural {
@@ -555,9 +557,7 @@ public:
 
    void emit(std::ofstream &of, int level) const;
    void add_sensitivity(const char *name);
-   vhdl_scope *get_scope() { return &scope_; }
 private:
-   vhdl_scope scope_;
    std::string name_;
    string_list_t sens_;
 };

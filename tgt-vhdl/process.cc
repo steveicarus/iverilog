@@ -77,7 +77,7 @@ static var_temp_set_t g_assign_vars;
 /*
  * Called whenever a blocking assignment is made to sig.
  */
-void blocking_assign_to(vhdl_process *proc, ivl_signal_t sig)
+void blocking_assign_to(vhdl_procedural *proc, ivl_signal_t sig)
 {
    std::string var(get_renamed_signal(sig));
    std::string tmpname(var + "_Var");
@@ -104,7 +104,7 @@ void blocking_assign_to(vhdl_process *proc, ivl_signal_t sig)
  * the new values visible outside the current process. This should be
  * called before any `wait' statement or the end of the process.
  */
-void draw_blocking_assigns(vhdl_process *proc, stmt_container *container)
+void draw_blocking_assigns(vhdl_procedural *proc, stmt_container *container)
 {
    var_temp_set_t::const_iterator it;
    for (it = g_assign_vars.begin(); it != g_assign_vars.end(); ++it) {
