@@ -542,17 +542,21 @@ private:
    bool init_;
 };
 
+class vhdl_procedural {
+public:
+   stmt_container *get_container() { return &stmts_; }
+protected:
+   stmt_container stmts_;
+};
 
-class vhdl_process : public vhdl_conc_stmt {
+class vhdl_process : public vhdl_conc_stmt, public vhdl_procedural {
 public:
    vhdl_process(const char *name = "") : name_(name) {}
 
    void emit(std::ofstream &of, int level) const;
-   stmt_container *get_container() { return &stmts_; }
    void add_sensitivity(const char *name);
    vhdl_scope *get_scope() { return &scope_; }
 private:
-   stmt_container stmts_;
    vhdl_scope scope_;
    std::string name_;
    string_list_t sens_;
