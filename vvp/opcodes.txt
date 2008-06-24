@@ -474,7 +474,7 @@ part. If any bit of the desired value is outside the vector, then that
 bit is set to X.
 
 The index register 1 is interpreted as a signed value. Even though the
-address is cannonical (from 0 to the width of the signal) the value in
+address is canonical (from 0 to the width of the signal) the value in
 index register 1 may be <0 or >=wid. The load instruction handles
 filling in the out-of-bounds bits with x.
 

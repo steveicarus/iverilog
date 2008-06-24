@@ -1946,7 +1946,7 @@ void dll_target::lpm_mux(const NetMux*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_MUX;
-      obj->name  = net->name(); // The NetMux perallocates its name.
+      obj->name  = net->name(); // The NetMux permallocates its name.
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
