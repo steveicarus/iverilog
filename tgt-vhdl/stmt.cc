@@ -38,7 +38,7 @@
  * in C. This function can be enabled with the flag
  * -puse-vhpi-finish=1. 
  */
-static int draw_stask_finish(vhdl_process *proc, stmt_container *container,
+static int draw_stask_finish(vhdl_procedural *proc, stmt_container *container,
                              ivl_statement_t stmt)
 {
    const char *use_vhpi = ivl_design_flag(get_vhdl_design(), "use-vhpi-finish");
@@ -57,7 +57,7 @@ static int draw_stask_finish(vhdl_process *proc, stmt_container *container,
  * Generate VHDL for system tasks (like $display). Not all of
  * these are supported.
  */
-static int draw_stask(vhdl_process *proc, stmt_container *container,
+static int draw_stask(vhdl_procedural *proc, stmt_container *container,
                       ivl_statement_t stmt)
 {
    const char *name = ivl_stmt_name(stmt);
@@ -80,7 +80,7 @@ static int draw_stask(vhdl_process *proc, stmt_container *container,
  * block's statements and add them to the process. This is OK as
  * the stmt_container class behaves like a Verilog block.
  */
-static int draw_block(vhdl_process *proc, stmt_container *container,
+static int draw_block(vhdl_procedural *proc, stmt_container *container,
                       ivl_statement_t stmt)
 {
    int count = ivl_stmt_block_count(stmt);
@@ -95,7 +95,7 @@ static int draw_block(vhdl_process *proc, stmt_container *container,
  * A no-op statement. This corresponds to a `null' statement in
  * VHDL.
  */
-static int draw_noop(vhdl_process *proc, stmt_container *container,
+static int draw_noop(vhdl_procedural *proc, stmt_container *container,
                      ivl_statement_t stmt)
 {
    container->add_stmt(new vhdl_null_stmt());
@@ -107,7 +107,7 @@ static int draw_noop(vhdl_process *proc, stmt_container *container,
  * this are essentially the same as VHDL's non-blocking signal
  * assignment.
  */
-static int draw_nbassign(vhdl_process *proc, stmt_container *container,
+static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
                          ivl_statement_t stmt, vhdl_expr *after = NULL)
 {
    int nlvals = ivl_stmt_lvals(stmt);
@@ -164,7 +164,7 @@ static int draw_nbassign(vhdl_process *proc, stmt_container *container,
    return 0;
 }
 
-static int draw_assign(vhdl_process *proc, stmt_container *container,
+static int draw_assign(vhdl_procedural *proc, stmt_container *container,
                        ivl_statement_t stmt)
 {
    int nlvals = ivl_stmt_lvals(stmt);
@@ -233,7 +233,7 @@ static int draw_assign(vhdl_process *proc, stmt_container *container,
  * Delay statements are equivalent to the `wait for' form of the
  * VHDL wait statement.
  */
-static int draw_delay(vhdl_process *proc, stmt_container *container,
+static int draw_delay(vhdl_procedural *proc, stmt_container *container,
                       ivl_statement_t stmt)
 {
    // This currently ignores the time units and precision
@@ -313,9 +313,13 @@ static void edge_detector(ivl_nexus_t nexus, vhdl_process *proc,
  * A wait statement waits for a level change on a @(..) list of
  * signals.
  */
-static int draw_wait(vhdl_process *proc, stmt_container *container,
+static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
                      ivl_statement_t stmt)
 {
+   // Wait statements only occur in processes
+   vhdl_process *proc = dynamic_cast<vhdl_process*>(_proc);
+   assert(proc);   // Catch not process
+   
    ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
    
    int nevents = ivl_stmt_nevent(stmt);
@@ -390,7 +394,7 @@ static int draw_wait(vhdl_process *proc, stmt_container *container,
    return 0;
 }
 
-static int draw_if(vhdl_process *proc, stmt_container *container,
+static int draw_if(vhdl_procedural *proc, stmt_container *container,
                    ivl_statement_t stmt)
 {
    vhdl_expr *test = translate_expr(ivl_stmt_cond_expr(stmt));
@@ -411,7 +415,7 @@ static int draw_if(vhdl_process *proc, stmt_container *container,
    return 0;
 }
 
-static int draw_case(vhdl_process *proc, stmt_container *container,
+static int draw_case(vhdl_procedural *proc, stmt_container *container,
                      ivl_statement_t stmt)
 {
    vhdl_expr *test = translate_expr(ivl_stmt_cond_expr(stmt));
@@ -457,7 +461,7 @@ static int draw_case(vhdl_process *proc, stmt_container *container,
    return 0;
 }
 
-int draw_while(vhdl_process *proc, stmt_container *container,
+int draw_while(vhdl_procedural *proc, stmt_container *container,
                ivl_statement_t stmt)
 {
    vhdl_expr *test = translate_expr(ivl_stmt_cond_expr(stmt));
@@ -478,7 +482,7 @@ int draw_while(vhdl_process *proc, stmt_container *container,
  * location to add statements: e.g. the process body, a branch
  * of an if statement, etc.
  */
-int draw_stmt(vhdl_process *proc, stmt_container *container,
+int draw_stmt(vhdl_procedural *proc, stmt_container *container,
               ivl_statement_t stmt)
 {
    assert(stmt);

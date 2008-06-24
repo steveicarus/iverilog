@@ -544,6 +544,8 @@ private:
 
 class vhdl_procedural {
 public:
+   virtual ~vhdl_procedural() {}
+   
    stmt_container *get_container() { return &stmts_; }
    vhdl_scope *get_scope() { return &scope_; }
 protected:

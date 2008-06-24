@@ -13,7 +13,7 @@ void error(const char *fmt, ...);
 
 int draw_scope(ivl_scope_t scope, void *_parent);
 int draw_process(ivl_process_t net, void *cd);
-int draw_stmt(vhdl_process *proc, stmt_container *container,
+int draw_stmt(vhdl_procedural *proc, stmt_container *container,
               ivl_statement_t stmt);
 int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm);
 
