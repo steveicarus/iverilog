@@ -73,6 +73,7 @@ enum vhdl_binop_t {
    VHDL_BINOP_GT,
    VHDL_BINOP_SL,
    VHDL_BINOP_SR,
+   VHDL_BINOP_XOR,
 };
 
 /*

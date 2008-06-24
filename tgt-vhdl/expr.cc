@@ -182,6 +182,8 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
       return translate_shift(lhs, rhs, VHDL_BINOP_SL);
    case 'r':
       return translate_shift(lhs, rhs, VHDL_BINOP_SR);
+   case '^':
+      return translate_numeric(lhs, rhs, VHDL_BINOP_XOR);
    default:
       error("No translation for binary opcode '%c'\n",
             ivl_expr_opcode(e));

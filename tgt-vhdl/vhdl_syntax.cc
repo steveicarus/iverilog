@@ -23,6 +23,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <typeinfo>
 
 vhdl_entity::vhdl_entity(const char *name, const char *derived_from,
                          vhdl_arch *arch)
@@ -812,6 +813,9 @@ void vhdl_binop_expr::emit(std::ofstream &of, int level) const
          break;
       case VHDL_BINOP_SR:
          of << " srl ";
+         break;
+      case VHDL_BINOP_XOR:
+         of << " xor ";
          break;
       }
 

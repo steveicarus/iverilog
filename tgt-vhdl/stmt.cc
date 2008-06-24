@@ -24,6 +24,7 @@
 #include <cstring>
 #include <cassert>
 #include <sstream>
+#include <typeinfo>
 
 /*
  * VHDL has no real equivalent of Verilog's $finish task. The
@@ -430,10 +431,16 @@ static int draw_case(vhdl_process *proc, stmt_container *container,
    
    int nbranches = ivl_stmt_case_count(stmt);
    for (int i = 0; i < nbranches; i++) {
-      vhdl_expr *when = translate_expr(ivl_stmt_case_expr(stmt, i));
-      if (NULL == when)
-         return 1;
-
+      vhdl_expr *when;
+      ivl_expr_t net = ivl_stmt_case_expr(stmt, i);
+      if (net) {
+         when = translate_expr(net);
+         if (NULL == when)
+            return 1;
+      }
+      else
+         when = new vhdl_var_ref("others", NULL);      
+      
       vhdl_case_branch *branch = new vhdl_case_branch(when);
       vhdlcase->add_branch(branch);
       
