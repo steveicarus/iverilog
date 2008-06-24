@@ -24,6 +24,7 @@
 #include "vhdl_element.hh"
 #include "vhdl_type.hh"
 
+class vhdl_scope;
 class vhdl_entity;
 class vhdl_arch;
 
@@ -438,7 +439,7 @@ typedef std::list<vhdl_decl*> decl_list_t;
  */
 class vhdl_component_decl : public vhdl_decl {
 public:
-   static vhdl_component_decl *component_decl_for(const vhdl_entity *ent);
+   static vhdl_component_decl *component_decl_for(vhdl_entity *ent);
 
    void emit(std::ofstream &of, int level) const;
 private:
@@ -521,11 +522,25 @@ private:
 
 
 /*
- * Container for sequential statements.
- * Verilog `initial' processes are used for variable
- * initialisation whereas VHDL initialises variables in
- * their declaration.
+ * Contains a list of declarations in a hierarchy.
  */
+class vhdl_scope {
+public:
+   vhdl_scope();
+   ~vhdl_scope();
+   
+   void add_decl(vhdl_decl *decl);
+   vhdl_decl *get_decl(const std::string &name) const;
+   bool have_declared(const std::string &name) const;
+   
+   bool empty() const { return decls_.empty(); }
+   const decl_list_t &get_decls() const { return decls_; }
+private:
+   decl_list_t decls_;
+   vhdl_scope *parent_;
+};
+
+
 class vhdl_process : public vhdl_conc_stmt {
 public:
    vhdl_process(const char *name = "");
@@ -587,16 +602,17 @@ public:
    void add_port(vhdl_port_decl *decl);
    vhdl_arch *get_arch() const { return arch_; }
    vhdl_decl *get_decl(const std::string &name) const;
-   const decl_list_t &get_ports() const { return ports_; }
    const std::string &get_name() const { return name_; }
    void requires_package(const char *spec);
-   const std::string &get_derived_from() const { return derived_from_; }   
+   const std::string &get_derived_from() const { return derived_from_; }
+
+   vhdl_scope *get_scope() { return &ports_; }
 private:
    std::string name_;
    vhdl_arch *arch_;  // Entity may only have a single architecture
    std::string derived_from_;
    string_list_t uses_;
-   decl_list_t ports_;
+   vhdl_scope ports_;
 };
 
 typedef std::list<vhdl_entity*> entity_list_t;

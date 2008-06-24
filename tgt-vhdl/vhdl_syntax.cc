@@ -25,6 +25,38 @@
 #include <iostream>
 #include <typeinfo>
 
+vhdl_scope::vhdl_scope()
+   : parent_(NULL)
+{
+
+}
+
+vhdl_scope::~vhdl_scope()
+{
+   delete_children<vhdl_decl>(decls_);
+}
+
+void vhdl_scope::add_decl(vhdl_decl *decl)
+{
+   decls_.push_back(decl);
+}
+
+vhdl_decl *vhdl_scope::get_decl(const std::string &name) const
+{
+   decl_list_t::const_iterator it;
+   for (it = decls_.begin(); it != decls_.end(); ++it) {
+      if ((*it)->get_name() == name)
+         return *it;
+   }
+
+   return parent_ ? parent_->get_decl(name) : NULL;
+}
+
+bool vhdl_scope::have_declared(const std::string &name) const
+{
+   return get_decl(name) != NULL;
+}
+
 vhdl_entity::vhdl_entity(const char *name, const char *derived_from,
                          vhdl_arch *arch)
    : name_(name), arch_(arch), derived_from_(derived_from)
@@ -35,7 +67,6 @@ vhdl_entity::vhdl_entity(const char *name, const char *derived_from,
 vhdl_entity::~vhdl_entity()
 {   
    delete arch_;
-   delete_children<vhdl_decl>(ports_);
 }
 
 /*
@@ -58,17 +89,12 @@ void vhdl_entity::requires_package(const char *spec)
  */
 vhdl_decl *vhdl_entity::get_decl(const std::string &name) const
 {
-   decl_list_t::const_iterator it;
-   for (it = ports_.begin(); it != ports_.end(); ++it) {
-      if ((*it)->get_name() == name)
-         return *it;
-   }
-   return NULL;
+   return ports_.get_decl(name);
 }
 
 void vhdl_entity::add_port(vhdl_port_decl *decl)
 {
-   ports_.push_back(decl);
+   ports_.add_decl(decl);
 }
 
 void vhdl_entity::emit(std::ofstream &of, int level) const
@@ -88,10 +114,10 @@ void vhdl_entity::emit(std::ofstream &of, int level) const
    emit_comment(of, level);
    of << "entity " << name_ << " is";
 
-   if (ports_.size() > 0) {
+   if (!ports_.empty()) {
       newline(of, indent(level));
       of << "port (";
-      emit_children<vhdl_decl>(of, ports_, indent(level), ";");
+      emit_children<vhdl_decl>(of, ports_.get_decls(), indent(level), ";");
       of << ");";
    }
    
@@ -338,14 +364,14 @@ vhdl_component_decl::vhdl_component_decl(const char *name)
 /*
  * Create a component declaration for the given entity.
  */
-vhdl_component_decl *vhdl_component_decl::component_decl_for(const vhdl_entity *ent)
+vhdl_component_decl *vhdl_component_decl::component_decl_for(vhdl_entity *ent)
 {
    assert(ent != NULL);
 
    vhdl_component_decl *decl = new vhdl_component_decl
       (ent->get_name().c_str());
 
-   decl->ports_ = ent->get_ports();
+   decl->ports_ = ent->get_scope()->get_decls();
    
    return decl;
 }
