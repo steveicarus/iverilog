@@ -639,10 +639,9 @@ vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
    }
    else if (to->get_name() == VHDL_TYPE_SIGNED
             || to->get_name() == VHDL_TYPE_UNSIGNED) {
-      // Might need to drop some bits (but not extend?)
-      assert(to->get_width() <= get_type()->get_width());
 
-      value_.resize(to->get_width());
+      // Extend with sign bit
+      value_.resize(to->get_width(), value_[0]);  
       return this;
    }
    else if (to->get_name() == VHDL_TYPE_INTEGER) {
