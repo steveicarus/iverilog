@@ -416,6 +416,7 @@ public:
    const std::string &get_name() const { return name_; }
    const vhdl_type *get_type() const { return type_; }
    void set_initial(vhdl_expr *initial);
+   bool has_initial() const { return initial_ != NULL; }
 protected:
    std::string name_;
    vhdl_type *type_;

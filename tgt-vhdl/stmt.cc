@@ -129,20 +129,23 @@ static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
          return 1;
       vhdl_expr *rhs = rhs_raw->cast(decl->get_type());
 
-      // TODO: CORRECT THIS!!!
-      // If this is an `inital' process and we haven't yet
-      // generated a `wait' statement then this assignment
-      // needs to be moved to the declaration. Otherwise the
-      // Verilog behaviour won't be preserved: VHDL does not
-      // distinguish `initial' and `always' processes so an
-      // `always' process might be activatated before an
-      // `initial' process at time 0. The `always' process may
-      // then use the uninitialized signal value.
+      // Where possible, move constant assignments into the
+      // declaration as initializers. This optimisation is only
+      // performed on assignments of constant values to prevent
+      // ordering problems.
+      
+      // This also has another application: If this is an `inital'
+      // process and we haven't yet generated a `wait' statement then
+      // moving the assignment to the initialization preserves the
+      // expected Verilog behaviour: VHDL does not distinguish
+      // `initial' and `always' processes so an `always' process might
+      // be activatated before an `initial' process at time 0. The
+      // `always' process may then use the uninitialized signal value.
       // The second test ensures that we only try to initialise
       // internal signals not ports
       if (proc->get_scope()->initializing()
           && ivl_signal_port(sig) == IVL_SIP_NONE
-          && rhs->constant()) {
+          && !decl->has_initial() && rhs->constant()) {
 
          decl->set_initial(rhs);
       }
@@ -186,12 +189,15 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
          return 1;
       vhdl_expr *rhs = rhs_raw->cast(decl->get_type());
 
+      bool isvar = strip_var(signame) != signame;
+
       // As with non-blocking assignment, push constant assignments
-      // into the initialisation if we can
+      // into the initialisation if we can (but only if this is
+      // the first time we assign to this variable).
       if (proc->get_scope()->initializing()
           && ivl_signal_port(sig) == IVL_SIP_NONE
-          && rhs->constant()
-          && !proc->get_scope()->have_declared(signame)) {
+          && rhs->constant() && !decl->has_initial()
+          && !isvar) {
 
          decl->set_initial(rhs);
 

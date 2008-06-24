@@ -47,10 +47,7 @@
  * that have been generated. Any subsequent blocking assignments
  * are made to the same variable. At either the end of the
  * process or a `wait' statement, the temporaries are assigned
- * back to the signals, and the temporaries are forgotten. This
- * has exactly the same (external) behaviour as the Verilog
- * blocking assignment, since no external process will be able
- * to observe that the assignment wasn't made immediately.
+ * back to the signals, and the temporaries are forgotten.
  *
  * For example:
  *
