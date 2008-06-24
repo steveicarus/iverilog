@@ -517,6 +517,8 @@ private:
 
 /*
  * Contains a list of declarations in a hierarchy.
+ * A scope can be `initializing' where assignments automatically
+ * create initial values for declarations.
  */
 class vhdl_scope {
 public:
@@ -531,28 +533,29 @@ public:
    bool empty() const { return decls_.empty(); }
    const decl_list_t &get_decls() const { return decls_; }
    void set_parent(vhdl_scope *p) { parent_ = p; }
+
+   bool initializing() const { return init_; }
+   void set_initializing(bool i) { init_ = i; }
 private:
    decl_list_t decls_;
    vhdl_scope *parent_;
+   bool init_;
 };
 
 
 class vhdl_process : public vhdl_conc_stmt {
 public:
-   vhdl_process(const char *name = "");
+   vhdl_process(const char *name = "") : name_(name) {}
 
    void emit(std::ofstream &of, int level) const;
    stmt_container *get_container() { return &stmts_; }
    void add_sensitivity(const char *name);
    vhdl_scope *get_scope() { return &scope_; }
-   void set_initial(bool i) { initial_ = i; }
-   bool is_initial() const { return initial_; }
 private:
    stmt_container stmts_;
    vhdl_scope scope_;
    std::string name_;
    string_list_t sens_;
-   bool initial_;
 };
 
 
@@ -561,7 +564,8 @@ private:
  */
 class vhdl_arch : public vhdl_element {
 public:
-   vhdl_arch(const char *entity, const char *name);
+   vhdl_arch(const char *entity, const char *name)
+      : name_(name), entity_(entity) {}
    virtual ~vhdl_arch();
 
    void emit(std::ofstream &of, int level=0) const;

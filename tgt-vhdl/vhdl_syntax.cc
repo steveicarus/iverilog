@@ -26,7 +26,7 @@
 #include <typeinfo>
 
 vhdl_scope::vhdl_scope()
-   : parent_(NULL)
+   : parent_(NULL), init_(false)
 {
 
 }
@@ -106,12 +106,6 @@ void vhdl_entity::emit(std::ofstream &of, int level) const
    arch_->emit(of, level);
 }
 
-vhdl_arch::vhdl_arch(const char *entity, const char *name)
-   : name_(name), entity_(entity)
-{
-   
-}
-
 vhdl_arch::~vhdl_arch()
 {
    delete_children<vhdl_conc_stmt>(stmts_);
@@ -138,12 +132,6 @@ void vhdl_arch::emit(std::ofstream &of, int level) const
    emit_children<vhdl_conc_stmt>(of, stmts_, level);
    of << "end architecture;";
    blank_line(of, level);  // Extra blank line after architectures;
-}
-
-vhdl_process::vhdl_process(const char *name)
-   : name_(name), initial_(false)
-{
-
 }
 
 void vhdl_process::add_sensitivity(const char *name)
