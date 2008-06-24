@@ -25,15 +25,15 @@
 
 static int draw_binop_lpm(vhdl_arch *arch, ivl_lpm_t lpm, vhdl_binop_t op)
 {
-   vhdl_expr *lhs = nexus_to_var_ref(arch, ivl_lpm_data(lpm, 0));
+   vhdl_expr *lhs = nexus_to_var_ref(arch->get_scope(), ivl_lpm_data(lpm, 0));
    if (NULL == lhs)
       return 1;
 
-   vhdl_expr *rhs = nexus_to_var_ref(arch, ivl_lpm_data(lpm, 1));
+   vhdl_expr *rhs = nexus_to_var_ref(arch->get_scope(), ivl_lpm_data(lpm, 1));
    if (NULL == rhs)
       return 1;
 
-   vhdl_var_ref *out = nexus_to_var_ref(arch, ivl_lpm_q(lpm, 0));
+   vhdl_var_ref *out = nexus_to_var_ref(arch->get_scope(), ivl_lpm_q(lpm, 0));
    if (NULL == out)
       return 1;
 

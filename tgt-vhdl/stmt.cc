@@ -43,7 +43,7 @@ static int draw_stask_finish(vhdl_process *proc, stmt_container *container,
 {
    const char *use_vhpi = ivl_design_flag(get_vhdl_design(), "use-vhpi-finish");
    if (strcmp(use_vhpi, "1") == 0) {
-      proc->get_parent()->get_parent()->requires_package("work.Verilog_Support");
+      //get_active_entity()->requires_package("work.Verilog_Support");
       container->add_stmt(new vhdl_pcall_stmt("work.Verilog_Support.Finish"));
    }
    else {
@@ -121,7 +121,7 @@ static int draw_nbassign(vhdl_process *proc, stmt_container *container,
    if ((sig = ivl_lval_sig(lval))) {
       const char *signame = get_renamed_signal(sig).c_str();
 
-      vhdl_decl *decl = proc->get_parent()->get_decl(signame);
+      vhdl_decl *decl = proc->get_scope()->get_decl(signame);
       assert(decl);
 
       vhdl_expr *rhs_raw = translate_expr(ivl_stmt_rval(stmt));
@@ -175,7 +175,7 @@ static int draw_assign(vhdl_process *proc, stmt_container *container,
    if ((sig = ivl_lval_sig(lval))) {
       const std::string signame(get_renamed_signal(sig));
 
-      vhdl_decl *decl = proc->get_decl(signame);
+      vhdl_decl *decl = proc->get_scope()->get_decl(signame);
       assert(decl);
 
       vhdl_expr *rhs_raw = translate_expr(ivl_stmt_rval(stmt));
@@ -186,7 +186,7 @@ static int draw_assign(vhdl_process *proc, stmt_container *container,
       // As with non-blocking assignment, push constant assignments
       // into the initialisation if we can
       if (proc->is_initial() && ivl_signal_port(sig) == IVL_SIP_NONE
-          && rhs->constant() && !proc->have_declared_var(signame)) {
+          && rhs->constant() && !proc->get_scope()->have_declared(signame)) {
          decl->set_initial(rhs);
 
          // This signal may be used e.g. in a loop test so we need
@@ -295,7 +295,7 @@ static int draw_delay(vhdl_process *proc, stmt_container *container,
 static void edge_detector(ivl_nexus_t nexus, vhdl_process *proc,
                           vhdl_binop_expr *test, const char *type)
 {
-   vhdl_var_ref *ref = nexus_to_var_ref(proc->get_parent(), nexus);
+   vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope()->get_parent(), nexus);
    vhdl_fcall *detect = new vhdl_fcall(type, vhdl_type::boolean());
    detect->add_expr(ref);
    test->add_expr(detect);
@@ -334,7 +334,7 @@ static int draw_wait(vhdl_process *proc, stmt_container *container,
                // Only add this signal to the sensitivity if it's part
                // of the containing architecture (i.e. it has already
                // been declared)
-               if (proc->get_parent()->have_declared(signame)) {
+               if (proc->get_scope()->get_parent()->have_declared(signame)) {
                   proc->add_sensitivity(signame);
                   non_edges.push_back(signame);
                   break;
@@ -418,7 +418,7 @@ static int draw_case(vhdl_process *proc, stmt_container *container,
       // TODO: Check if this is already declared
       const char *tmp_name = "Verilog_Case_Ex";
       vhdl_type *test_type = new vhdl_type(*test->get_type());
-      proc->add_decl(new vhdl_var_decl(tmp_name, test_type));
+      proc->get_scope()->add_decl(new vhdl_var_decl(tmp_name, test_type));
 
       vhdl_var_ref *tmp_ref = new vhdl_var_ref(tmp_name, NULL);
       container->add_stmt(new vhdl_assign_stmt(tmp_ref, test));

@@ -203,14 +203,8 @@ private:
  * processes.
  */
 class vhdl_conc_stmt : public vhdl_element {
-   friend class vhdl_arch;  // Can set its parent
 public:
-   vhdl_conc_stmt() : parent_(NULL) {}
    virtual ~vhdl_conc_stmt() {}
-
-   vhdl_arch *get_parent() const;
-private:
-   vhdl_arch *parent_;
 };
 
 typedef std::list<vhdl_conc_stmt*> conc_stmt_list_t;
@@ -532,9 +526,11 @@ public:
    void add_decl(vhdl_decl *decl);
    vhdl_decl *get_decl(const std::string &name) const;
    bool have_declared(const std::string &name) const;
+   vhdl_scope *get_parent();
    
    bool empty() const { return decls_.empty(); }
    const decl_list_t &get_decls() const { return decls_; }
+   void set_parent(vhdl_scope *p) { parent_ = p; }
 private:
    decl_list_t decls_;
    vhdl_scope *parent_;
@@ -544,19 +540,16 @@ private:
 class vhdl_process : public vhdl_conc_stmt {
 public:
    vhdl_process(const char *name = "");
-   virtual ~vhdl_process();
 
    void emit(std::ofstream &of, int level) const;
    stmt_container *get_container() { return &stmts_; }
-   void add_decl(vhdl_decl *decl);
    void add_sensitivity(const char *name);
-   bool have_declared_var(const std::string &name) const;
-   vhdl_decl *get_decl(const std::string &name) const;
+   vhdl_scope *get_scope() { return &scope_; }
    void set_initial(bool i) { initial_ = i; }
    bool is_initial() const { return initial_; }
 private:
    stmt_container stmts_;
-   decl_list_t decls_;
+   vhdl_scope scope_;
    std::string name_;
    string_list_t sens_;
    bool initial_;
@@ -567,22 +560,20 @@ private:
  * An architecture which implements an entity.
  */
 class vhdl_arch : public vhdl_element {
-   friend class vhdl_entity;  // Can set its parent
 public:
    vhdl_arch(const char *entity, const char *name);
    virtual ~vhdl_arch();
 
    void emit(std::ofstream &of, int level=0) const;
-   bool have_declared_component(const std::string &name) const;
    bool have_declared(const std::string &name) const;
    vhdl_decl *get_decl(const std::string &name) const;
    void add_decl(vhdl_decl *decl);
+   void add_stmt(vhdl_process *proc);
    void add_stmt(vhdl_conc_stmt *stmt);
-   vhdl_entity *get_parent() const;
+   vhdl_scope *get_scope() { return &scope_; }
 private:
-   vhdl_entity *parent_;
    conc_stmt_list_t stmts_;
-   decl_list_t decls_;
+   vhdl_scope scope_;
    std::string name_, entity_;
 };
 
@@ -601,9 +592,7 @@ public:
    void emit(std::ofstream &of, int level=0) const;
    void add_port(vhdl_port_decl *decl);
    vhdl_arch *get_arch() const { return arch_; }
-   vhdl_decl *get_decl(const std::string &name) const;
    const std::string &get_name() const { return name_; }
-   void requires_package(const char *spec);
    const std::string &get_derived_from() const { return derived_from_; }
 
    vhdl_scope *get_scope() { return &ports_; }
@@ -611,7 +600,6 @@ private:
    std::string name_;
    vhdl_arch *arch_;  // Entity may only have a single architecture
    std::string derived_from_;
-   string_list_t uses_;
    vhdl_scope ports_;
 };
 

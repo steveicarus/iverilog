@@ -23,8 +23,9 @@ void remember_entity(vhdl_entity *ent);
 vhdl_entity *find_entity(const std::string &tname);
 
 ivl_design_t get_vhdl_design();
+vhdl_entity *get_active_entity();
 
-vhdl_var_ref *nexus_to_var_ref(vhdl_arch *arch, ivl_nexus_t nexus);
+vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus);
 
 void remember_signal(ivl_signal_t sig, const vhdl_entity *ent);
 void rename_signal(ivl_signal_t sig, const std::string &renamed);

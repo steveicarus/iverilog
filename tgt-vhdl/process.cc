@@ -86,12 +86,12 @@ void blocking_assign_to(vhdl_process *proc, ivl_signal_t sig)
       // This is the first time a non-blocking assignment
       // has been made to this signal: create a variable
       // to shadow it.
-      if (!proc->have_declared_var(tmpname)) {
-         vhdl_decl *decl = proc->get_parent()->get_decl(var);
+      if (!proc->get_scope()->have_declared(tmpname)) {
+         vhdl_decl *decl = proc->get_scope()->get_decl(var);
          assert(decl);
          vhdl_type *type = new vhdl_type(*decl->get_type());
          
-         proc->add_decl(new vhdl_var_decl(tmpname.c_str(), type));
+         proc->get_scope()->add_decl(new vhdl_var_decl(tmpname.c_str(), type));
       }
          
       rename_signal(sig, tmpname);
@@ -110,7 +110,7 @@ void draw_blocking_assigns(vhdl_process *proc, stmt_container *container)
    for (it = g_assign_vars.begin(); it != g_assign_vars.end(); ++it) {
       std::string stripped(strip_var((*it).first));
 
-      vhdl_decl *decl = proc->get_decl(stripped);
+      vhdl_decl *decl = proc->get_scope()->get_decl(stripped);
       assert(decl);
       vhdl_type *type = new vhdl_type(*decl->get_type());
       

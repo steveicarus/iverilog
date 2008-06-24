@@ -25,11 +25,12 @@
 #include <sstream>
 #include <cassert>
 
+
 /*
- * Given a nexus and an architecture, find the first signal
+ * Given a nexus and an architecture scope, find the first signal
  * that is connected to the nexus, if there is one.
  */
-vhdl_var_ref *nexus_to_var_ref(vhdl_arch *arch, ivl_nexus_t nexus)
+vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
 {
    int nptrs = ivl_nexus_ptrs(nexus);
    for (int i = 0; i < nptrs; i++) {
@@ -39,7 +40,7 @@ vhdl_var_ref *nexus_to_var_ref(vhdl_arch *arch, ivl_nexus_t nexus)
       if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
          const char *signame = get_renamed_signal(sig).c_str();
          
-         vhdl_decl *decl = arch->get_decl(signame);
+         vhdl_decl *decl = arch_scope->get_decl(signame);
          assert(decl);
 
          vhdl_type *type = new vhdl_type(*(decl->get_type()));
@@ -67,7 +68,7 @@ static vhdl_expr *inputs_to_expr(vhdl_arch *arch, vhdl_binop_t op,
    int npins = ivl_logic_pins(log);
    for (int i = 1; i < npins; i++) {
       ivl_nexus_t input = ivl_logic_pin(log, i);
-      gate->add_expr(nexus_to_var_ref(arch, input));
+      gate->add_expr(nexus_to_var_ref(arch->get_scope(), input));
    }
 
    return gate;
@@ -82,7 +83,7 @@ static vhdl_expr *input_to_expr(vhdl_arch *arch, vhdl_unaryop_t op,
    ivl_nexus_t input = ivl_logic_pin(log, 1);
    assert(input);
 
-   vhdl_expr *operand = nexus_to_var_ref(arch, input);
+   vhdl_expr *operand = nexus_to_var_ref(arch->get_scope(), input);
    return new vhdl_unaryop_expr(op, operand, vhdl_type::std_logic()); 
 }
 
@@ -98,7 +99,7 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
 
       // The output is always pin zero
       ivl_nexus_t output = ivl_logic_pin(log, 0);
-      vhdl_var_ref *lhs = nexus_to_var_ref(arch, output);
+      vhdl_var_ref *lhs = nexus_to_var_ref(arch->get_scope(), output);
 
       vhdl_expr *rhs = NULL;
       switch (ivl_logic_type(log)) {
@@ -123,9 +124,9 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
 }
 
 /*
- * Declare all signals for a scope in an architecture.
+ * Declare all signals and ports for a scope.
  */
-static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
+static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
 {
    int nsigs = ivl_scope_sigs(scope);
    for (int i = 0; i < nsigs; i++) {
@@ -140,7 +141,7 @@ static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
       else
          sig_type = vhdl_type::nunsigned(width);
       
-      remember_signal(sig, arch->get_parent());
+      remember_signal(sig, ent);
 
       // Make sure the signal name conforms to VHDL naming rules
       std::string name(ivl_signal_basename(sig));      
@@ -162,14 +163,14 @@ static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
       ivl_signal_port_t mode = ivl_signal_port(sig);
       switch (mode) {
       case IVL_SIP_NONE:
-         arch->add_decl(new vhdl_signal_decl(name.c_str(), sig_type));
+         ent->get_arch()->add_decl(new vhdl_signal_decl(name.c_str(), sig_type));
          break;
       case IVL_SIP_INPUT:
-         arch->get_parent()->add_port
+         ent->get_scope()->add_decl
             (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_IN));
          break;
       case IVL_SIP_OUTPUT:
-         arch->get_parent()->add_port
+         ent->get_scope()->add_decl
             (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_OUT));
 
          if (ivl_signal_type(sig) == IVL_SIT_REG) {
@@ -183,18 +184,18 @@ static void declare_signals(vhdl_arch *arch, ivl_scope_t scope)
             rename_signal(sig, newname.c_str());
 
             vhdl_type *reg_type = new vhdl_type(*sig_type);
-            arch->add_decl(new vhdl_signal_decl(newname.c_str(), reg_type));
+            ent->get_arch()->add_decl(new vhdl_signal_decl(newname.c_str(), reg_type));
             
             // Create a concurrent assignment statement to
             // connect the register to the output
-            arch->add_stmt
+            ent->get_arch()->add_stmt
                (new vhdl_cassign_stmt
                 (new vhdl_var_ref(name.c_str(), NULL),
                  new vhdl_var_ref(newname.c_str(), NULL)));
          }
          break;
       case IVL_SIP_INOUT:
-         arch->get_parent()->add_port
+         ent->get_scope()->add_decl
             (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_INOUT));
          break;
       }
@@ -231,10 +232,10 @@ static vhdl_entity *create_entity_for(ivl_scope_t scope)
    // retain a 1-to-1 mapping of scope to VHDL element)
    vhdl_arch *arch = new vhdl_arch(tname, "FromVerilog");
    vhdl_entity *ent = new vhdl_entity(tname, derived_from, arch);
-
+   
    // Locate all the signals in this module and add them to
    // the architecture
-   declare_signals(arch, scope);
+   declare_signals(ent, scope);
 
    // Similarly, add all the primitive logic gates
    declare_logic(arch, scope);
@@ -344,7 +345,7 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
          assert(parent_arch != NULL);
          
          // Create a forward declaration for it
-         if (!parent_arch->have_declared_component(ent->get_name())) {
+         if (!parent_arch->have_declared(ent->get_name())) {
             vhdl_decl *comp_decl = vhdl_component_decl::component_decl_for(ent);
             parent_arch->add_decl(comp_decl);
          }

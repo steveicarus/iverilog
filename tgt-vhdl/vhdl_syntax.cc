@@ -57,39 +57,22 @@ bool vhdl_scope::have_declared(const std::string &name) const
    return get_decl(name) != NULL;
 }
 
+vhdl_scope *vhdl_scope::get_parent()
+{
+   assert(parent_);
+   return parent_;
+}
+
 vhdl_entity::vhdl_entity(const char *name, const char *derived_from,
                          vhdl_arch *arch)
    : name_(name), arch_(arch), derived_from_(derived_from)
 {
-   arch->parent_ = this;
+   arch->get_scope()->set_parent(&ports_);
 }
 
 vhdl_entity::~vhdl_entity()
 {   
    delete arch_;
-}
-
-/*
- * Add a package to the list of `use' statements before
- * the entity.
- */
-void vhdl_entity::requires_package(const char *spec)
-{
-   std::string pname(spec);
-   std::list<std::string>::iterator it;
-   for (it = uses_.begin(); it != uses_.end(); ++it) {
-      if (*it == pname)
-         return;
-   }
-   uses_.push_back(spec);
-}
-
-/*
- * Find a port declaration by name
- */
-vhdl_decl *vhdl_entity::get_decl(const std::string &name) const
-{
-   return ports_.get_decl(name);
 }
 
 void vhdl_entity::add_port(vhdl_port_decl *decl)
@@ -104,11 +87,7 @@ void vhdl_entity::emit(std::ofstream &of, int level) const
    of << "library ieee;" << std::endl;
    of << "use ieee.std_logic_1164.all;" << std::endl;
    of << "use ieee.numeric_std.all;" << std::endl;
-   
-   for (std::list<std::string>::const_iterator it = uses_.begin();
-        it != uses_.end();
-        ++it)
-      of << "use " << *it << ".all;" << std::endl;
+   of << "use std.textio.all;" << std::endl;
    of << std::endl;
    
    emit_comment(of, level);
@@ -128,7 +107,7 @@ void vhdl_entity::emit(std::ofstream &of, int level) const
 }
 
 vhdl_arch::vhdl_arch(const char *entity, const char *name)
-   : parent_(NULL), name_(name), entity_(entity)
+   : name_(name), entity_(entity)
 {
    
 }
@@ -136,24 +115,22 @@ vhdl_arch::vhdl_arch(const char *entity, const char *name)
 vhdl_arch::~vhdl_arch()
 {
    delete_children<vhdl_conc_stmt>(stmts_);
-   delete_children<vhdl_decl>(decls_);
+}
+
+void vhdl_arch::add_stmt(vhdl_process *proc)
+{
+   proc->get_scope()->set_parent(&scope_);
+   stmts_.push_back(proc);
 }
 
 void vhdl_arch::add_stmt(vhdl_conc_stmt *stmt)
 {
-   stmt->parent_ = this;
    stmts_.push_back(stmt);
 }
 
 void vhdl_arch::add_decl(vhdl_decl *decl)
 {
-   decls_.push_back(decl);
-}
-
-vhdl_entity *vhdl_arch::get_parent() const
-{
-   assert(parent_);
-   return parent_;
+   scope_.add_decl(decl);
 }
 
 void vhdl_arch::emit(std::ofstream &of, int level) const
@@ -161,7 +138,7 @@ void vhdl_arch::emit(std::ofstream &of, int level) const
    emit_comment(of, level);
    of << "architecture " << name_ << " of " << entity_;
    of << " is";
-   emit_children<vhdl_decl>(of, decls_, level);
+   emit_children<vhdl_decl>(of, scope_.get_decls(), level);
    of << "begin";
    emit_children<vhdl_conc_stmt>(of, stmts_, level);
    of << "end architecture;";
@@ -170,32 +147,7 @@ void vhdl_arch::emit(std::ofstream &of, int level) const
 
 vhdl_decl *vhdl_arch::get_decl(const std::string &name) const
 {
-   decl_list_t::const_iterator it;
-   for (it = decls_.begin(); it != decls_.end(); ++it) {
-      if ((*it)->get_name() == name)
-         return *it;
-   }
-
-   // Maybe it's a port rather than an internal signal?
-   assert(parent_);
-   return parent_->get_decl(name);
-}
-
-/*
- * True if component `name' has already been declared in this
- * architecture. This is a bit of hack, since it uses typeid
- * to distinguish between components and other declarations.
- */
-bool vhdl_arch::have_declared_component(const std::string &name) const
-{
-   std::string comp_typename(typeid(vhdl_component_decl).name());
-   decl_list_t::const_iterator it;
-   for (it = decls_.begin(); it != decls_.end(); ++it) {
-      if (comp_typename == typeid(**it).name()
-          && (*it)->get_name() == name)
-         return true;
-   }
-   return false;
+   return scope_.get_decl(name);
 }
 
 /*
@@ -204,14 +156,9 @@ bool vhdl_arch::have_declared_component(const std::string &name) const
  */
 bool vhdl_arch::have_declared(const std::string &name) const
 {
-   return get_decl(name) != NULL;
+   return scope_.have_declared(name);
 }
 
-vhdl_arch *vhdl_conc_stmt::get_parent() const
-{
-   assert(parent_);
-   return parent_;
-}
 
 vhdl_process::vhdl_process(const char *name)
    : name_(name), initial_(false)
@@ -219,42 +166,9 @@ vhdl_process::vhdl_process(const char *name)
 
 }
 
-vhdl_process::~vhdl_process()
-{
-   delete_children<vhdl_decl>(decls_);
-}
-
-void vhdl_process::add_decl(vhdl_decl* decl)
-{
-   decls_.push_back(decl);
-}
-
-vhdl_decl *vhdl_process::get_decl(const std::string &name) const
-{
-   decl_list_t::const_iterator it;
-   for (it = decls_.begin(); it != decls_.end(); ++it) {
-      if ((*it)->get_name() == name)
-         return *it;
-   }
-
-   // Maybe it's a signal rather than a variable?
-   assert(get_parent());
-   return get_parent()->get_decl(name);
-}
-
 void vhdl_process::add_sensitivity(const char *name)
 {
    sens_.push_back(name);
-}
-
-bool vhdl_process::have_declared_var(const std::string &name) const
-{
-   decl_list_t::const_iterator it;
-   for (it = decls_.begin(); it != decls_.end(); ++it) {
-      if ((*it)->get_name() == name)
-         return true;
-   }
-   return false;
 }
 
 void vhdl_process::emit(std::ofstream &of, int level) const
@@ -285,7 +199,7 @@ void vhdl_process::emit(std::ofstream &of, int level) const
    }
 
    of << "is";
-   emit_children<vhdl_decl>(of, decls_, level);
+   emit_children<vhdl_decl>(of, scope_.get_decls(), level);
    of << "begin";
    stmts_.emit(of, level);
    of << "end process;";

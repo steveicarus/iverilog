@@ -115,14 +115,11 @@ static void flush_string(std::ostringstream &ss, stmt_container *container)
 int draw_stask_display(vhdl_process *proc, stmt_container *container,
                        ivl_statement_t stmt, bool newline)
 {
-   // Add the package requirement to the containing entity
-   proc->get_parent()->get_parent()->requires_package("std.textio");
-   
-   if (!proc->have_declared_var(DISPLAY_LINE)) {
+   if (!proc->get_scope()->have_declared(DISPLAY_LINE)) {
       vhdl_var_decl *line_var =
          new vhdl_var_decl(DISPLAY_LINE, vhdl_type::line());
       line_var->set_comment("For generating $display output");
-      proc->add_decl(line_var);
+      proc->get_scope()->add_decl(line_var);
    }
     
    // Write the data into the line
