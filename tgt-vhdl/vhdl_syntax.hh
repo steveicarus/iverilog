@@ -565,9 +565,6 @@ public:
    virtual ~vhdl_arch();
 
    void emit(std::ofstream &of, int level=0) const;
-   bool have_declared(const std::string &name) const;
-   vhdl_decl *get_decl(const std::string &name) const;
-   void add_decl(vhdl_decl *decl);
    void add_stmt(vhdl_process *proc);
    void add_stmt(vhdl_conc_stmt *stmt);
    vhdl_scope *get_scope() { return &scope_; }

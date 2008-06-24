@@ -128,11 +128,6 @@ void vhdl_arch::add_stmt(vhdl_conc_stmt *stmt)
    stmts_.push_back(stmt);
 }
 
-void vhdl_arch::add_decl(vhdl_decl *decl)
-{
-   scope_.add_decl(decl);
-}
-
 void vhdl_arch::emit(std::ofstream &of, int level) const
 {
    emit_comment(of, level);
@@ -144,21 +139,6 @@ void vhdl_arch::emit(std::ofstream &of, int level) const
    of << "end architecture;";
    blank_line(of, level);  // Extra blank line after architectures;
 }
-
-vhdl_decl *vhdl_arch::get_decl(const std::string &name) const
-{
-   return scope_.get_decl(name);
-}
-
-/*
- * True if any declaration of `name' has been added to the
- * architecture.
- */
-bool vhdl_arch::have_declared(const std::string &name) const
-{
-   return scope_.have_declared(name);
-}
-
 
 vhdl_process::vhdl_process(const char *name)
    : name_(name), initial_(false)

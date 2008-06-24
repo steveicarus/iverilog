@@ -163,7 +163,7 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
       ivl_signal_port_t mode = ivl_signal_port(sig);
       switch (mode) {
       case IVL_SIP_NONE:
-         ent->get_arch()->add_decl(new vhdl_signal_decl(name.c_str(), sig_type));
+         ent->get_arch()->get_scope()->add_decl(new vhdl_signal_decl(name.c_str(), sig_type));
          break;
       case IVL_SIP_INPUT:
          ent->get_scope()->add_decl
@@ -184,7 +184,7 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
             rename_signal(sig, newname.c_str());
 
             vhdl_type *reg_type = new vhdl_type(*sig_type);
-            ent->get_arch()->add_decl(new vhdl_signal_decl(newname.c_str(), reg_type));
+            ent->get_arch()->get_scope()->add_decl(new vhdl_signal_decl(newname.c_str(), reg_type));
             
             // Create a concurrent assignment statement to
             // connect the register to the output
@@ -276,7 +276,7 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
             // Don't map a signal to itself!
             continue;
          }
-         else if ((decl = parent->get_arch()->get_decl(basename))) {
+         else if ((decl = parent->get_arch()->get_scope()->get_decl(basename))) {
             // It's a signal declared in the parent
             // Pick this one (any one will do as they're all
             // connected together if there's more than one)
@@ -345,9 +345,9 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
          assert(parent_arch != NULL);
          
          // Create a forward declaration for it
-         if (!parent_arch->have_declared(ent->get_name())) {
+         if (!parent_arch->get_scope()->have_declared(ent->get_name())) {
             vhdl_decl *comp_decl = vhdl_component_decl::component_decl_for(ent);
-            parent_arch->add_decl(comp_decl);
+            parent_arch->get_scope()->add_decl(comp_decl);
          }
          
          // And an instantiation statement
