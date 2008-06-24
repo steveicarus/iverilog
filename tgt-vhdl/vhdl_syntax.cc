@@ -779,44 +779,12 @@ void vhdl_binop_expr::emit(std::ofstream &of, int level) const
 
    (*it)->emit(of, level);
    while (++it != operands_.end()) {
-      switch (op_) {
-      case VHDL_BINOP_AND:
-         of << " and ";
-         break;
-      case VHDL_BINOP_OR:
-         of << " or ";
-         break;
-      case VHDL_BINOP_EQ:
-         of << " = ";
-         break;
-      case VHDL_BINOP_NEQ:
-         of << " /= ";
-         break;
-      case VHDL_BINOP_ADD:
-         of << " + ";
-         break;
-      case VHDL_BINOP_SUB:
-         of << " - ";
-         break;
-      case VHDL_BINOP_MULT:
-         of << " * ";
-         break;
-      case VHDL_BINOP_LT:
-         of << " < ";
-         break;
-      case VHDL_BINOP_GT:
-         of << " > ";
-         break;
-      case VHDL_BINOP_SL:
-         of << " sll ";
-         break;
-      case VHDL_BINOP_SR:
-         of << " srl ";
-         break;
-      case VHDL_BINOP_XOR:
-         of << " xor ";
-         break;
-      }
+      const char* ops[] = {
+         "and", "or", "=", "/=", "+", "-", "*", "<",
+         ">", "sll", "srl", "xor"
+      };
+
+      of << " " << ops[op_] << " ";
 
       (*it)->emit(of, level);
    }      

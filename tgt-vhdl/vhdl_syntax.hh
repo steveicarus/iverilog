@@ -62,7 +62,7 @@ private:
 
 
 enum vhdl_binop_t {
-   VHDL_BINOP_AND,
+   VHDL_BINOP_AND = 0,
    VHDL_BINOP_OR,
    VHDL_BINOP_EQ,
    VHDL_BINOP_NEQ,
