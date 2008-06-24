@@ -129,6 +129,7 @@ static int draw_nbassign(vhdl_process *proc, stmt_container *container,
          return 1;
       vhdl_expr *rhs = rhs_raw->cast(decl->get_type());
 
+      // TODO: CORRECT THIS!!!
       // If this is an `inital' process and we haven't yet
       // generated a `wait' statement then this assignment
       // needs to be moved to the declaration. Otherwise the
@@ -139,8 +140,10 @@ static int draw_nbassign(vhdl_process *proc, stmt_container *container,
       // then use the uninitialized signal value.
       // The second test ensures that we only try to initialise
       // internal signals not ports
-      if (proc->is_initial() && ivl_signal_port(sig) == IVL_SIP_NONE
+      if (proc->get_scope()->initializing()
+          && ivl_signal_port(sig) == IVL_SIP_NONE
           && rhs->constant()) {
+
          decl->set_initial(rhs);
       }
       else {
@@ -185,8 +188,11 @@ static int draw_assign(vhdl_process *proc, stmt_container *container,
 
       // As with non-blocking assignment, push constant assignments
       // into the initialisation if we can
-      if (proc->is_initial() && ivl_signal_port(sig) == IVL_SIP_NONE
-          && rhs->constant() && !proc->get_scope()->have_declared(signame)) {
+      if (proc->get_scope()->initializing()
+          && ivl_signal_port(sig) == IVL_SIP_NONE
+          && rhs->constant()
+          && !proc->get_scope()->have_declared(signame)) {
+
          decl->set_initial(rhs);
 
          // This signal may be used e.g. in a loop test so we need
@@ -281,7 +287,8 @@ static int draw_delay(vhdl_process *proc, stmt_container *container,
    
    // Any further assignments occur after simulation time 0
    // so they cannot be used to initialize signal declarations
-   proc->set_initial(false);
+   // (if this scope is an initial process)
+   proc->get_scope()->set_initializing(false);
    
    return 0;
 }

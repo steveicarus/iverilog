@@ -158,7 +158,7 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    // If this is an initial process, push signal initialisation
    // into the declarations
    if (ivl_process_type(proc) == IVL_PR_INITIAL)
-      vhdl_proc->set_initial(true);
+      vhdl_proc->get_scope()->set_initializing(true);
    
    ivl_statement_t stmt = ivl_process_stmt(proc);
    int rc = draw_stmt(vhdl_proc, vhdl_proc->get_container(), stmt);
