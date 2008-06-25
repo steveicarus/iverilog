@@ -116,6 +116,8 @@ static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
       return 1;
    }
 
+   assert(proc->get_scope()->allow_signal_assignment());
+
    ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
    ivl_signal_t sig;
    if ((sig = ivl_lval_sig(lval))) {
@@ -201,21 +203,27 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
 
          decl->set_initial(rhs);
 
-         // This signal may be used e.g. in a loop test so we need
-         // to make a variable as well
-         blocking_assign_to(proc, sig);
-
-         // The signal may have been renamed by the above call
-         const std::string &renamed = get_renamed_signal(sig);
+         if (proc->get_scope()->allow_signal_assignment()) {
+            // This signal may be used e.g. in a loop test so we need
+            // to make a variable as well
+            blocking_assign_to(proc, sig);
+            
+            // The signal may have been renamed by the above call
+            const std::string &renamed = get_renamed_signal(sig);
          
-         vhdl_var_ref *lval_ref = new vhdl_var_ref(renamed.c_str(), NULL);
-         vhdl_var_ref *sig_ref = new vhdl_var_ref(signame.c_str(), NULL);
-         
-         vhdl_assign_stmt *assign = new vhdl_assign_stmt(lval_ref, sig_ref);
-         container->add_stmt(assign);
+            vhdl_var_ref *lval_ref = new vhdl_var_ref(renamed.c_str(), NULL);
+            vhdl_var_ref *sig_ref = new vhdl_var_ref(signame.c_str(), NULL);
+            
+            vhdl_assign_stmt *assign = new vhdl_assign_stmt(lval_ref, sig_ref);
+            container->add_stmt(assign);
+         }
       }
       else {
-         blocking_assign_to(proc, sig);
+         if (proc->get_scope()->allow_signal_assignment()) {
+            // Remember we need to write the variable back to the
+            // original signal
+            blocking_assign_to(proc, sig);
+         }
 
          // The signal may have been renamed by the above call
          const std::string &renamed = get_renamed_signal(sig);

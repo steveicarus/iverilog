@@ -425,6 +425,11 @@ int draw_function(ivl_scope_t scope, ivl_scope_t parent)
       remember_signal(sig, func->get_scope());
       rename_signal(sig, signame);
    }
+
+   // Non-blocking assignment not allowed in functions
+   func->get_scope()->set_allow_signal_assignment(false);
+   
+   draw_stmt(func, func->get_container(), ivl_scope_def(scope));
    
    assert(func); 
    ent->get_arch()->get_scope()->add_decl(func);   

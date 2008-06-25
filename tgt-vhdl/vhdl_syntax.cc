@@ -26,7 +26,7 @@
 #include <typeinfo>
 
 vhdl_scope::vhdl_scope()
-   : parent_(NULL), init_(false)
+   : parent_(NULL), init_(false), sig_assign_(true)
 {
 
 }

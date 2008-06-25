@@ -547,10 +547,13 @@ public:
 
    bool initializing() const { return init_; }
    void set_initializing(bool i) { init_ = i; }
+
+   void set_allow_signal_assignment(bool b) { sig_assign_ = b; }
+   bool allow_signal_assignment() const { return sig_assign_; }
 private:
    decl_list_t decls_;
    vhdl_scope *parent_;
-   bool init_;
+   bool init_, sig_assign_;
 };
 
 
