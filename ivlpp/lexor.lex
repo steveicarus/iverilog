@@ -93,7 +93,7 @@ static void ifdef_enter(void)
 
       cur = (struct ifdef_stack_t*)
 	    calloc(1, sizeof(struct ifdef_stack_t));
-      cur->path   = strdup(istack->path);
+      if (istack->path) cur->path = strdup(istack->path);
       cur->lineno = istack->lineno;
       cur->next = ifdef_stack;
       ifdef_stack = cur;
@@ -108,7 +108,10 @@ static void ifdef_leave(void)
       cur = ifdef_stack;
       ifdef_stack = cur->next;
 
-      if (strcmp(istack->path,cur->path) != 0) {
+      /* If either path is from a non-file context e.g.(macro expansion)
+       * we assume that the non-file part is from this file. */
+      if (istack->path != NULL && cur->path != NULL &&
+          strcmp(istack->path,cur->path) != 0) {
 	    fprintf(stderr, "%s:%u: warning: "
 		    "This `endif matches an ifdef in another file.\n",
 		    istack->path, istack->lineno);
@@ -459,8 +462,6 @@ static void def_match()
 		  calloc(1, sizeof(struct include_stack_t));
 	    isp->str = cur->value;
 	    isp->next = istack;
-	    isp->path = istack->path;
-	    isp->lineno = istack->lineno;
 	    istack->yybs = YY_CURRENT_BUFFER;
 	    istack = isp;
 	    yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
