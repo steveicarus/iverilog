@@ -27,9 +27,9 @@ vhdl_entity *get_active_entity();
 
 vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus);
 
-void remember_signal(ivl_signal_t sig, const vhdl_entity *ent);
+void remember_signal(ivl_signal_t sig, const vhdl_scope *scope);
 void rename_signal(ivl_signal_t sig, const std::string &renamed);
-const vhdl_entity *find_entity_for_signal(ivl_signal_t sig);
+const vhdl_scope *find_scope_for_signal(ivl_signal_t sig);
 const std::string &get_renamed_signal(ivl_signal_t sig);
 
 void blocking_assign_to(vhdl_procedural *proc, ivl_signal_t sig);

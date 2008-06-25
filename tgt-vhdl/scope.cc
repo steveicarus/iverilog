@@ -141,7 +141,7 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
       else
          sig_type = vhdl_type::nunsigned(width);
       
-      remember_signal(sig, ent);
+      remember_signal(sig, ent->get_arch()->get_scope());
 
       // Make sure the signal name conforms to VHDL naming rules
       std::string name(ivl_signal_basename(sig));      
@@ -381,8 +381,11 @@ int draw_function(ivl_scope_t scope, ivl_scope_t parent)
 
    vhdl_function *func = new vhdl_function(funcname, vhdl_type::std_logic());
 
-   ent->get_arch()->get_scope()->add_decl(func);
+   int nports = ivl_scope_ports(scope);
+   std::cout << "function has " << nports << " ports" << std::endl;
    
+   
+   ent->get_arch()->get_scope()->add_decl(func);   
    return 0;
 }
 

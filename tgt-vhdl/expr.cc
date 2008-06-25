@@ -41,12 +41,12 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
 {
    ivl_signal_t sig = ivl_expr_signal(e);
 
-   const vhdl_entity *ent = find_entity_for_signal(sig);
-   assert(ent);
+   const vhdl_scope *scope = find_scope_for_signal(sig);
+   assert(scope);
 
    const char *renamed = get_renamed_signal(sig).c_str();
    
-   const vhdl_decl *decl = ent->get_arch()->get_scope()->get_decl(strip_var(renamed));
+   const vhdl_decl *decl = scope->get_decl(strip_var(renamed));
    assert(decl);
 
    vhdl_type *type = new vhdl_type(*decl->get_type());

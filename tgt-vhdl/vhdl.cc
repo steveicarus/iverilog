@@ -38,8 +38,8 @@
  * defined. 
  */
 struct signal_defn_t {
-   std::string renamed;    // The name of the VHDL signal
-   const vhdl_entity *ent; // The entity where it is defined
+   std::string renamed;     // The name of the VHDL signal
+   const vhdl_scope *scope; // The scope where it is defined
 };
 
 typedef std::map<ivl_signal_t, signal_defn_t> signal_defn_map_t;
@@ -93,11 +93,11 @@ void remember_entity(vhdl_entity* ent)
 /*
  * Remeber the association of signal to entity.
  */
-void remember_signal(ivl_signal_t sig, const vhdl_entity *ent)
+void remember_signal(ivl_signal_t sig, const vhdl_scope *scope)
 {
    assert(g_known_signals.find(sig) == g_known_signals.end());
    
-   signal_defn_t defn = { ivl_signal_basename(sig), ent };
+   signal_defn_t defn = { ivl_signal_basename(sig), scope };
    g_known_signals[sig] = defn;
 }
 
@@ -111,11 +111,11 @@ void rename_signal(ivl_signal_t sig, const std::string &renamed)
    g_known_signals[sig].renamed = renamed;
 }
 
-const vhdl_entity *find_entity_for_signal(ivl_signal_t sig)
+const vhdl_scope *find_scope_for_signal(ivl_signal_t sig)
 {
    assert(g_known_signals.find(sig) != g_known_signals.end());
 
-   return g_known_signals[sig].ent;
+   return g_known_signals[sig].scope;
 }
 
 const std::string &get_renamed_signal(ivl_signal_t sig)
