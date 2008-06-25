@@ -1133,10 +1133,12 @@ ostream& operator<< (ostream&out, const vvp_vector4_t&that)
       return out;
 }
 
-bool vector4_to_value(const vvp_vector4_t&vec, long&val, bool is_signed)
+bool vector4_to_value(const vvp_vector4_t&vec, long&val,
+		      bool is_signed, bool is_arithmetic)
 {
       long res = 0;
       long msk = 1;
+      bool rc_flag = true;
 
       for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
 	    switch (vec.value(idx)) {
@@ -1146,7 +1148,10 @@ bool vector4_to_value(const vvp_vector4_t&vec, long&val, bool is_signed)
 		  res |= msk;
 		  break;
 		default:
-		  return false;
+		  if (is_arithmetic)
+			return false;
+		  else
+			rc_flag = false;
 	    }
 
 	    msk <<= 1L;
@@ -1158,7 +1163,7 @@ bool vector4_to_value(const vvp_vector4_t&vec, long&val, bool is_signed)
       }
 
       val = res;
-      return true;
+      return rc_flag;
 }
 
 bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
