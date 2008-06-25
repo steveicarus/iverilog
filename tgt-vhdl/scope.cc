@@ -401,12 +401,18 @@ int draw_function(ivl_scope_t scope, ivl_scope_t parent)
       std::string signame = make_safe_name(sig);
 
       vhdl_type *sigtype = get_signal_type(sig);
-      if (ivl_signal_type(sig) == IVL_SIT_REG) {
+
+      switch (ivl_signal_port(sig)) {
+      case IVL_SIP_OUTPUT:
+         assert(func == NULL);
          func = new vhdl_function(funcname, sigtype);
-         
-      }
-      else {
+         break;
+      case IVL_SIP_INPUT:
          assert(func);
+         func->add_param(new vhdl_param_decl(signame.c_str(), sigtype));
+         break;
+      default:
+         assert(false);
       }
 
       remember_signal(sig, func->get_scope());

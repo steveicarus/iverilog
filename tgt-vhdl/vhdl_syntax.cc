@@ -765,10 +765,10 @@ vhdl_function::vhdl_function(const char *name, vhdl_type *ret_type)
 void vhdl_function::emit(std::ofstream &of, int level) const
 {
    of << "function " << name_ << " (";
-   emit_children<vhdl_decl>(of, scope_.get_decls(), level, ",");
-   of << ") return ";
-   type_->emit(of, level);
-   of << " is";
+   emit_children<vhdl_decl>(of, scope_.get_decls(), level, ";");
+   of << ") ";
+   newline(of, level);
+   of << "return " << type_->get_string() << " is";
    emit_children<vhdl_decl>(of, variables_.get_decls(), level);
    of << "begin";
    stmts_.emit(of, level);
