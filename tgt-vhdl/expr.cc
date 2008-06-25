@@ -203,6 +203,31 @@ vhdl_expr *translate_select(ivl_expr_t e)
    return from->resize(ivl_expr_width(e));
 }
 
+vhdl_expr *translate_ufunc(ivl_expr_t e)
+{
+   ivl_scope_t defscope = ivl_expr_def(e);
+   ivl_scope_t parentscope = ivl_scope_parent(defscope);
+   assert(ivl_scope_type(parentscope) == IVL_SCT_MODULE);
+
+   // A function is always declared in a module, which should have
+   // a corresponding entity by this point: so we can get type
+   // information, etc. from the declaration
+   vhdl_entity *parent_ent = find_entity(ivl_scope_tname(parentscope));
+   assert(parent_ent);
+
+   const char *funcname = ivl_scope_tname(defscope);
+   
+   vhdl_decl *fdecl =
+      parent_ent->get_arch()->get_scope()->get_decl(funcname);
+   assert(fdecl);
+   
+   vhdl_type *rettype = new vhdl_type(*fdecl->get_type());
+   
+   vhdl_fcall *fcall = new vhdl_fcall(funcname, rettype);
+
+   return fcall;
+}
+
 /*
  * Generate a VHDL expression from a Verilog expression.
  */
@@ -224,6 +249,8 @@ vhdl_expr *translate_expr(ivl_expr_t e)
       return translate_binary(e);
    case IVL_EX_SELECT:
       return translate_select(e);
+   case IVL_EX_UFUNC:
+      return translate_ufunc(e);
    default:
       error("No VHDL translation for expression at %s:%d (type = %d)",
             ivl_expr_file(e), ivl_expr_lineno(e), type);

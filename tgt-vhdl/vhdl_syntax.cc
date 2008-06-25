@@ -305,6 +305,12 @@ vhdl_decl::~vhdl_decl()
       delete initial_;
 }
 
+const vhdl_type *vhdl_decl::get_type() const
+{
+   assert(type_);
+   return type_;
+}
+
 void vhdl_decl::set_initial(vhdl_expr *initial)
 {
    if (initial_ != NULL)
