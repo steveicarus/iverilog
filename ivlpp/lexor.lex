@@ -459,7 +459,7 @@ static void def_match()
 		  calloc(1, sizeof(struct include_stack_t));
 	    isp->str = cur->value;
 	    isp->next = istack;
-	    isp->path = strdup(istack->path);
+	    isp->path = istack->path;
 	    isp->lineno = istack->lineno;
 	    istack->yybs = YY_CURRENT_BUFFER;
 	    istack = isp;
