@@ -1362,6 +1362,8 @@ static void do_expand(int use_args)
         }
 
         isp->next = istack;
+        isp->path = strdup(istack->path);
+        isp->lineno = istack->lineno;
         istack->yybs = YY_CURRENT_BUFFER;
         istack = isp;
 
