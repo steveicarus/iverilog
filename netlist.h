@@ -3598,6 +3598,18 @@ class NetESignal  : public NetExpr {
       NetExpr*word_;
 };
 
+/*
+ * The Design object keeps a list of work items for processing
+ * elaboration. This is the type of those work items.
+ */
+struct elaborator_work_item_t {
+      explicit elaborator_work_item_t(Design*d)
+      : des(d) { }
+      virtual ~elaborator_work_item_t() { }
+      virtual void elaborate_runrun() =0;
+    protected:
+      Design*des;
+};
 
 /*
  * This class contains an entire design. It includes processes and a
@@ -3646,6 +3658,15 @@ class Design {
       NetScope* find_scope(const std::list<hname_t>&path) const;
       NetScope* find_scope(NetScope*, const std::list<hname_t>&path,
                            NetScope::TYPE type = NetScope::MODULE) const;
+
+	/* These members help manage elaboration of scopes. When we
+	   get to a point in scope elaboration where we want to put
+	   off a scope elaboration, an object of scope_elaboration_t
+	   is pushed onto the scope_elaborations list. The scope
+	   elaborator will go through this list elaborating scopes
+	   until the list is empty. */
+      list<elaborator_work_item_t*>elaboration_work_list;
+      void run_elaboration_work(void);
 
 	// PARAMETERS
 
