@@ -459,6 +459,8 @@ static void def_match()
 		  calloc(1, sizeof(struct include_stack_t));
 	    isp->str = cur->value;
 	    isp->next = istack;
+	    isp->path = strdup(istack->path);
+	    isp->lineno = istack->lineno;
 	    istack->yybs = YY_CURRENT_BUFFER;
 	    istack = isp;
 	    yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
