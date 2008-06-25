@@ -222,8 +222,16 @@ vhdl_expr *translate_ufunc(ivl_expr_t e)
    assert(fdecl);
    
    vhdl_type *rettype = new vhdl_type(*fdecl->get_type());
-   
    vhdl_fcall *fcall = new vhdl_fcall(funcname, rettype);
+
+   int nparams = ivl_expr_parms(e);
+   for (int i = 0; i < nparams; i++) {
+      vhdl_expr *param = translate_expr(ivl_expr_parm(e, i));
+      if (NULL == param)
+         return NULL;
+
+      fcall->add_expr(param);
+   }
 
    return fcall;
 }

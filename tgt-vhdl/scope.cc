@@ -404,8 +404,15 @@ int draw_function(ivl_scope_t scope, ivl_scope_t parent)
 
       switch (ivl_signal_port(sig)) {
       case IVL_SIP_OUTPUT:
-         assert(func == NULL);
-         func = new vhdl_function(funcname, sigtype);
+         {
+            assert(func == NULL);
+            func = new vhdl_function(funcname, sigtype);
+
+            // The magic variable Verilog_Result holds the return value
+            signame = "Verilog_Result";
+            func->get_scope()->add_decl
+               (new vhdl_var_decl(signame.c_str(), new vhdl_type(*sigtype)));
+         }
          break;
       case IVL_SIP_INPUT:
          assert(func);
@@ -417,9 +424,9 @@ int draw_function(ivl_scope_t scope, ivl_scope_t parent)
 
       remember_signal(sig, func->get_scope());
       rename_signal(sig, signame);
-   }   
-
-   assert(func);
+   }
+   
+   assert(func); 
    ent->get_arch()->get_scope()->add_decl(func);   
    return 0;
 }

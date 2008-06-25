@@ -772,6 +772,8 @@ void vhdl_function::emit(std::ofstream &of, int level) const
    emit_children<vhdl_decl>(of, variables_.get_decls(), level);
    of << "begin";
    stmts_.emit(of, level);
+   of << "  return Verilog_Result;";
+   newline(of, level);
    of << "end function;";
 }
 
