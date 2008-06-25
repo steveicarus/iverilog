@@ -543,6 +543,12 @@ private:
    bool init_;
 };
 
+
+/*
+ * Any sort of procedural element: process, function, or
+ * procedure. Roughly these map onto Verilog's processes,
+ * functions, and tasks.
+ */
 class vhdl_procedural {
 public:
    virtual ~vhdl_procedural() {}
@@ -553,6 +559,17 @@ protected:
    stmt_container stmts_;
    vhdl_scope scope_;
 };
+
+
+class vhdl_function : public vhdl_decl, public vhdl_procedural {
+public:
+   vhdl_function(const char *name, vhdl_type *ret_type)
+      : vhdl_decl(name, ret_type) {}
+
+   void emit(std::ofstream &of, int level) const;
+private:
+};
+
 
 class vhdl_process : public vhdl_conc_stmt, public vhdl_procedural {
 public:

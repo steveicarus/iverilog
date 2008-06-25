@@ -366,6 +366,21 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
    return 0;
 }
 
+/*
+ * Create a VHDL function from a Verilog function definition.
+ */
+int draw_function(ivl_scope_t scope, ivl_scope_t parent)
+{
+   assert(ivl_scope_type(scope) == IVL_SCT_FUNCTION);
+
+   // Find the containing entity
+   vhdl_entity *ent = find_entity(ivl_scope_tname(parent));
+   assert(ent);
+
+   return 1;
+}
+
+
 int draw_scope(ivl_scope_t scope, void *_parent)
 {
    ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
@@ -375,6 +390,9 @@ int draw_scope(ivl_scope_t scope, void *_parent)
    switch (type) {
    case IVL_SCT_MODULE:
       rc = draw_module(scope, parent);
+      break;
+   case IVL_SCT_FUNCTION:
+      rc = draw_function(scope, parent);
       break;
    default:
       error("No VHDL conversion for %s (at %s)",
