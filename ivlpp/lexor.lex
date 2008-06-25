@@ -115,7 +115,7 @@ static void ifdef_enter(void)
     struct ifdef_stack_t*cur;
 
     cur = (struct ifdef_stack_t*) calloc(1, sizeof(struct ifdef_stack_t));
-    cur->path = strdup(istack->path);
+    if (istack->path) cur->path = strdup(istack->path);
     cur->lineno = istack->lineno;
     cur->next = ifdef_stack;
 
@@ -131,8 +131,10 @@ static void ifdef_leave(void)
     cur = ifdef_stack;
     ifdef_stack = cur->next;
 
-    if (strcmp(istack->path,cur->path) != 0)
-    {
+    /* If either path is from a non-file context e.g.(macro expansion)
+     * we assume that the non-file part is from this file. */
+    if (istack->path != NULL && cur->path != NULL &&
+        strcmp(istack->path,cur->path) != 0) {
         fprintf
         (
             stderr,
@@ -1362,8 +1364,6 @@ static void do_expand(int use_args)
         }
 
         isp->next = istack;
-        isp->path = istack->path;
-        isp->lineno = istack->lineno;
         istack->yybs = YY_CURRENT_BUFFER;
         istack = isp;
 
