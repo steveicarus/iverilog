@@ -654,6 +654,36 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
       scope_list_.push_back(scope);
 }
 
+class delayed_elaborate_scope_mod_instances : public elaborator_work_item_t {
+
+    public:
+      delayed_elaborate_scope_mod_instances(Design*des,
+					    const PGModule*obj,
+					    Module*mod,
+					    NetScope*sc)
+      : elaborator_work_item_t(des), obj_(obj), mod_(mod), sc_(sc)
+      { }
+      ~delayed_elaborate_scope_mod_instances() { }
+
+      virtual void elaborate_runrun();
+
+    private:
+      const PGModule*obj_;
+      Module*mod_;
+      NetScope*sc_;
+};
+
+void delayed_elaborate_scope_mod_instances::elaborate_runrun()
+{
+      obj_->elaborate_scope_mod_instances_(des, mod_, sc_);
+}
+
+/*
+ * Here we handle the elaborate scope of a module instance. The caller
+ * has already figured out that this "gate" is a module, and has found
+ * the module definition. The "sc" argument is the scope that will
+ * contain this instance.
+ */
 void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 {
       if (get_name() == "") {
@@ -700,6 +730,36 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	    return;
       }
 
+      if (msb_ || lsb_) {
+	      // If there are expressions to evaluate in order to know
+	      // the actual number of instances that will be
+	      // instantiated, then we have to delay further scope
+	      // elaboration until after defparams (above me) are
+	      // run. Do that by appending a work item to the
+	      // elaboration work list.
+	    if (debug_scopes)
+		  cerr << get_fileline() << ": debug: delay elaborate_scope"
+		       << " of array of " << get_name()
+		       << " in scope " << scope_path(sc) << "." << endl;
+
+	    elaborator_work_item_t*tmp
+		  = new delayed_elaborate_scope_mod_instances(des, this, mod, sc);
+	    des->elaboration_work_list.push_back(tmp);
+
+      } else {
+	      // If there are no expressions that need to be evaluated
+	      // to elaborate the scope of this next instances, then
+	      // get right to it.
+	    elaborate_scope_mod_instances_(des, mod, sc);
+      }
+}
+
+/*
+ * This method is called to process a module instantiation after basic
+ * sanity testing is already complete.
+ */
+void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*sc) const
+{
       NetExpr*mse = msb_ ? elab_and_eval(des, sc, msb_, -1) : 0;
       NetExpr*lse = lsb_ ? elab_and_eval(des, sc, lsb_, -1) : 0;
       NetEConst*msb = dynamic_cast<NetEConst*> (mse);
