@@ -124,41 +124,55 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
 }
 
 /*
+ * Make sure a signal name conforms to VHDL naming rules.
+ */
+static std::string make_safe_name(ivl_signal_t sig)
+{
+   std::string name(ivl_signal_basename(sig));      
+   if (name[0] == '_')
+      name.insert(0, "VL");
+   
+   const char *vhdl_reserved[] = {
+      "in", "out", "entity", "architecture", "inout", // Etc...
+      NULL
+   };
+   for (const char **p = vhdl_reserved; *p != NULL; p++) {
+      if (name == *p) {
+         name.insert(0, "VL_");
+         break;
+      }
+   }
+   return name;
+}
+
+/*
+ * Create a VHDL type for a Verilog signal.
+ */
+static vhdl_type *get_signal_type(ivl_signal_t sig)
+{
+   int width = ivl_signal_width(sig);
+   if (width == 1)
+      return vhdl_type::std_logic();
+   else if (ivl_signal_signed(sig))
+      return vhdl_type::nsigned(width);
+   else
+      return vhdl_type::nunsigned(width);
+}
+
+/*
  * Declare all signals and ports for a scope.
  */
 static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
 {
    int nsigs = ivl_scope_sigs(scope);
    for (int i = 0; i < nsigs; i++) {
-      ivl_signal_t sig = ivl_scope_sig(scope, i);
-      
-      int width = ivl_signal_width(sig);
-      vhdl_type *sig_type;
-      if (width == 1)
-         sig_type = vhdl_type::std_logic();
-      else if (ivl_signal_signed(sig))
-         sig_type = vhdl_type::nsigned(width);
-      else
-         sig_type = vhdl_type::nunsigned(width);
-      
+      ivl_signal_t sig = ivl_scope_sig(scope, i);      
       remember_signal(sig, ent->get_arch()->get_scope());
 
-      // Make sure the signal name conforms to VHDL naming rules
-      std::string name(ivl_signal_basename(sig));      
-      if (name[0] == '_')
-         name.insert(0, "VL");
-
-      const char *vhdl_reserved[] = {
-         "in", "out", "entity", "architecture", "inout", // Etc...
-         NULL
-      };
-      for (const char **p = vhdl_reserved; *p != NULL; p++) {
-         if (name == *p) {
-            name.insert(0, "VL_");
-            break;
-         }
-      }      
-      rename_signal(sig, name.c_str());
+      vhdl_type *sig_type = get_signal_type(sig);
+      
+      std::string name = make_safe_name(sig);
+      rename_signal(sig, name);
       
       ivl_signal_port_t mode = ivl_signal_port(sig);
       switch (mode) {
@@ -379,12 +393,27 @@ int draw_function(ivl_scope_t scope, ivl_scope_t parent)
 
    const char *funcname = ivl_scope_tname(scope);
 
-   vhdl_function *func = new vhdl_function(funcname, vhdl_type::std_logic());
-
+   // This logic relies on the return value being the first port
+   vhdl_function *func = NULL;
    int nports = ivl_scope_ports(scope);
-   std::cout << "function has " << nports << " ports" << std::endl;
-   
-   
+   for (int i = 0; i < nports; i++) {
+      ivl_signal_t sig = ivl_scope_port(scope, i);
+      std::string signame = make_safe_name(sig);
+
+      vhdl_type *sigtype = get_signal_type(sig);
+      if (ivl_signal_type(sig) == IVL_SIT_REG) {
+         func = new vhdl_function(funcname, sigtype);
+         
+      }
+      else {
+         assert(func);
+      }
+
+      remember_signal(sig, func->get_scope());
+      rename_signal(sig, signame);
+   }   
+
+   assert(func);
    ent->get_arch()->get_scope()->add_decl(func);   
    return 0;
 }
