@@ -40,11 +40,8 @@ static void display_write(stmt_container *container, vhdl_expr *expr)
 
    vhdl_type_name_t type = expr->get_type()->get_name();
    if (type == VHDL_TYPE_SIGNED || type == VHDL_TYPE_UNSIGNED) {
-      vhdl_fcall *toint =
-         new vhdl_fcall("To_Integer", vhdl_type::integer());
-      toint->add_expr(expr);
-
-      write->add_expr(toint);
+      vhdl_type integer(VHDL_TYPE_INTEGER);
+      write->add_expr(expr->cast(&integer));
    }
    else if (type != VHDL_TYPE_STRING) {
       // Need to add a call to Type'Image for types not
