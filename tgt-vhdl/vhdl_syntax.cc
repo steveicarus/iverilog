@@ -751,3 +751,32 @@ void vhdl_while_stmt::emit(std::ofstream &of, int level) const
    stmts_.emit(of, level);
    of << "end loop;";
 }
+
+vhdl_function::vhdl_function(const char *name, vhdl_type *ret_type)
+   : vhdl_decl(name, ret_type)
+{
+   // A function contains two scopes:
+   //  scope_ = The paramters
+   //  variables_ = Local variables
+   // A call to get_scope returns variables_ whose parent is scope_
+   variables_.set_parent(&scope_);
+}
+
+void vhdl_function::emit(std::ofstream &of, int level) const
+{
+   of << "function " << name_ << " (";
+   emit_children<vhdl_decl>(of, scope_.get_decls(), level, ",");
+   of << ") return ";
+   type_->emit(of, level);
+   of << " is";
+   emit_children<vhdl_decl>(of, variables_.get_decls(), level);
+   of << "begin";
+   stmts_.emit(of, level);
+   of << "end function;";
+}
+
+void vhdl_param_decl::emit(std::ofstream &of, int level) const
+{
+   of << name_ << " : ";
+   type_->emit(of, level);
+}

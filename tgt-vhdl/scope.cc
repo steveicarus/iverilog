@@ -377,9 +377,14 @@ int draw_function(ivl_scope_t scope, ivl_scope_t parent)
    vhdl_entity *ent = find_entity(ivl_scope_tname(parent));
    assert(ent);
 
-   return 1;
-}
+   const char *funcname = ivl_scope_tname(scope);
 
+   vhdl_function *func = new vhdl_function(funcname, vhdl_type::std_logic());
+
+   ent->get_arch()->get_scope()->add_decl(func);
+   
+   return 0;
+}
 
 int draw_scope(ivl_scope_t scope, void *_parent)
 {

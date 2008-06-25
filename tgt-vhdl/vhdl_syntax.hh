@@ -467,6 +467,16 @@ public:
 };
 
 
+/*
+ * A parameter to a function.
+ */
+class vhdl_param_decl : public vhdl_decl {
+public:
+   vhdl_param_decl(const char *name, vhdl_type *type)
+      : vhdl_decl(name, type) {}
+   void emit(std::ofstream &of, int level) const;
+};
+
 enum vhdl_port_mode_t {
    VHDL_PORT_IN,
    VHDL_PORT_OUT,
@@ -553,8 +563,8 @@ class vhdl_procedural {
 public:
    virtual ~vhdl_procedural() {}
    
-   stmt_container *get_container() { return &stmts_; }
-   vhdl_scope *get_scope() { return &scope_; }
+   virtual stmt_container *get_container() { return &stmts_; }
+   virtual vhdl_scope *get_scope() { return &scope_; }
 protected:
    stmt_container stmts_;
    vhdl_scope scope_;
@@ -563,11 +573,13 @@ protected:
 
 class vhdl_function : public vhdl_decl, public vhdl_procedural {
 public:
-   vhdl_function(const char *name, vhdl_type *ret_type)
-      : vhdl_decl(name, ret_type) {}
-
+   vhdl_function(const char *name, vhdl_type *ret_type);
+   
    void emit(std::ofstream &of, int level) const;
+   vhdl_scope *get_scope() { return &variables_; }
+   void add_param(vhdl_param_decl *p) { scope_.add_decl(p); }
 private:
+   vhdl_scope variables_;
 };
 
 
