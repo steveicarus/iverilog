@@ -780,7 +780,7 @@ void schedule_simulate(void)
 			ctim->rwsync = 0;
 
 			  /* If out of rw events, then run the rosync
-			     events and delete this timestep. This also
+			     events and delete this time step. This also
 			     deletes threads as needed. */
 			if (ctim->active == 0) {
 			      run_rosync(ctim);

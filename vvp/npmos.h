@@ -43,7 +43,7 @@
  *
  * This class also implements the NMOS device, which is the same as
  * the PMOS device, but the Control input inverted. The enable_invert
- * flag to the costructor activates this invertion.
+ * flag to the constructor activates this inversion.
  */
 
 class vvp_fun_pmos_ : public vvp_net_fun_t {

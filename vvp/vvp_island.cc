@@ -357,11 +357,11 @@ class vvp_island_tran : public vvp_island {
 void vvp_island_tran::run_island()
 {
 	// Test to see if any of the branches are enabled.
-      bool runable = false;
+      bool runnable = false;
       for (vvp_island_branch*cur = branches_ ; cur ; cur = cur->next_branch) {
-	    runable |= cur->run_test_enabled();
+	    runnable |= cur->run_test_enabled();
       }
-      if (runable == false)
+      if (runnable == false)
 	    return;
 
       for (vvp_island_branch*cur = branches_ ; cur ; cur = cur->next_branch)

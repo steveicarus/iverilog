@@ -1158,7 +1158,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 		    /* Input to module. elaborate the expression to
 		       the desired width. If this in an instance
-		       array, then let the net determine it's own
+		       array, then let the net determine its own
 		       width. We use that, then, to decide how to hook
 		       it up.
 
@@ -2954,7 +2954,7 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
       dev = new NetForce(lval, rexp);
 
       if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: ELaborate force,"
+	    cerr << get_fileline() << ": debug: Elaborate force,"
 		 << " lval width=" << lval->lwidth()
 		 << " rval width=" << rexp->expr_width()
 		 << " rval=" << *rexp
