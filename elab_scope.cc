@@ -294,7 +294,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
 	    NetExpr*val = ex->elaborate_pexpr(des, scope);
 	    if (val == 0) continue;
-	    scope->defparams[(*cur).first] = val;
+	    scope->defparams.push_back(make_pair(cur->first, val));
       }
 
 	// Evaluate the attributes. Evaluate them in the scope of the
@@ -675,6 +675,11 @@ class delayed_elaborate_scope_mod_instances : public elaborator_work_item_t {
 
 void delayed_elaborate_scope_mod_instances::elaborate_runrun()
 {
+      if (debug_scopes)
+	    cerr << obj_->get_fileline() << ": debug: "
+		 << "Resume scope elaboration of instances of "
+		 << mod_->mod_name() << "." << endl;
+
       obj_->elaborate_scope_mod_instances_(des, mod_, sc_);
 }
 

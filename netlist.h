@@ -29,6 +29,7 @@
 # include  <map>
 # include  <list>
 # include  <vector>
+# include  <utility>
 # include  "ivl_target.h"
 # include  "pform_types.h"
 # include  "config.h"
@@ -718,6 +719,8 @@ class NetScope : public Attrib {
       const hname_t& fullname() const { return name_; }
 
       void run_defparams(class Design*);
+      void run_defparams_later(class Design*);
+
       void evaluate_parameters(class Design*);
 
 	/* This method generates a non-hierarchical name that is
@@ -737,7 +740,8 @@ class NetScope : public Attrib {
 	   assignments from the scope pass to the parameter evaluation
 	   step. After that, it is not used. */
 
-      map<pform_name_t,NetExpr*>defparams;
+      list<pair<pform_name_t,NetExpr*> > defparams;
+      list<pair<list<hname_t>,NetExpr*> > defparams_later;
 
     public:
       struct range_t {
