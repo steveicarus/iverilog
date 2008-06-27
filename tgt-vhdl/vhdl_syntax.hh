@@ -56,6 +56,7 @@ public:
    
    void emit(std::ofstream &of, int level) const;
    const std::string &get_name() const { return name_; }
+   void set_slice(vhdl_expr *s) { slice_ = s; }
 private:
    std::string name_;
    vhdl_expr *slice_;
