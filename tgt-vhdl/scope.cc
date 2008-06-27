@@ -393,38 +393,35 @@ int draw_function(ivl_scope_t scope, ivl_scope_t parent)
 
    const char *funcname = ivl_scope_tname(scope);
 
-   // This logic relies on the return value being the first port
-   vhdl_function *func = NULL;
-   int nports = ivl_scope_ports(scope);
-   for (int i = 0; i < nports; i++) {
-      ivl_signal_t sig = ivl_scope_port(scope, i);
-      std::string signame = make_safe_name(sig);
-
+   // The return type is worked out from the output port
+   vhdl_function *func = new vhdl_function(funcname, NULL);
+   
+   int nsigs = ivl_scope_sigs(scope);
+   for (int i = 0; i < nsigs; i++) {
+      ivl_signal_t sig = ivl_scope_sig(scope, i);            
       vhdl_type *sigtype = get_signal_type(sig);
+      
+      std::string signame = make_safe_name(sig);
 
       switch (ivl_signal_port(sig)) {
       case IVL_SIP_OUTPUT:
-         {
-            assert(func == NULL);
-            func = new vhdl_function(funcname, sigtype);
-
-            // The magic variable Verilog_Result holds the return value
-            signame = "Verilog_Result";
-            func->get_scope()->add_decl
-               (new vhdl_var_decl(signame.c_str(), new vhdl_type(*sigtype)));
-         }
+         // The magic variable Verilog_Result holds the return value
+         signame = "Verilog_Result";
+         func->set_type(sigtype);
+         func->get_scope()->add_decl
+            (new vhdl_var_decl(signame.c_str(), new vhdl_type(*sigtype)));
          break;
       case IVL_SIP_INPUT:
-         assert(func);
          func->add_param(new vhdl_param_decl(signame.c_str(), sigtype));
          break;
       default:
          assert(false);
       }
-
+      
       remember_signal(sig, func->get_scope());
       rename_signal(sig, signame);
    }
+      
 
    // Non-blocking assignment not allowed in functions
    func->get_scope()->set_allow_signal_assignment(false);
