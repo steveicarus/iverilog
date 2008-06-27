@@ -410,17 +410,16 @@ int draw_function(ivl_scope_t scope, ivl_scope_t parent)
       case IVL_SIP_OUTPUT:
          // The magic variable Verilog_Result holds the return value
          signame = "Verilog_Result";
-         func->set_type(sigtype);
+         func->set_type(new vhdl_type(*sigtype));
       default:
          func->get_scope()->add_decl
-            (new vhdl_var_decl(signame.c_str(), new vhdl_type(*sigtype)));
+            (new vhdl_var_decl(signame.c_str(), sigtype));
       }
       
       remember_signal(sig, func->get_scope());
       rename_signal(sig, signame);
    }
-      
-
+   
    // Non-blocking assignment not allowed in functions
    func->get_scope()->set_allow_signal_assignment(false);
    
