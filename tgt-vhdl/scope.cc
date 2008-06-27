@@ -426,7 +426,6 @@ int draw_function(ivl_scope_t scope, ivl_scope_t parent)
    
    draw_stmt(func, func->get_container(), ivl_scope_def(scope));
    
-   assert(func); 
    ent->get_arch()->get_scope()->add_decl(func);   
    return 0;
 }
