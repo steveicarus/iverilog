@@ -182,7 +182,7 @@ static void elaborate_scope_funcs(Design*des, NetScope*scope,
 }
 
 bool Module::elaborate_scope(Design*des, NetScope*scope,
-			     const replace_t&replacements) const
+			     const replace_t&replacements)
 {
       if (debug_scopes) {
 	    cerr << get_fileline() << ": debug: Elaborate scope "
@@ -201,8 +201,6 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// place of the elaborated expression.
 
       typedef map<perm_string,param_expr_t>::const_iterator mparm_it_t;
-      typedef map<pform_name_t,PExpr*>::const_iterator pform_parm_it_t;
-
 
 	// This loop scans the parameters in the module, and creates
 	// stub parameter entries in the scope for the parameter name.
@@ -286,15 +284,17 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// here because the parameter receiving the assignment may be
 	// in a scope not discovered by this pass.
 
-      for (pform_parm_it_t cur = defparms.begin()
-		 ; cur != defparms.end() ;  cur ++ ) {
+      while (! defparms.empty()) {
+	    Module::named_expr_t cur = defparms.front();
+	    defparms.pop_front();
 
-	    PExpr*ex = (*cur).second;
+	    PExpr*ex = cur.second;
 	    assert(ex);
 
 	    NetExpr*val = ex->elaborate_pexpr(des, scope);
+	    delete ex;
 	    if (val == 0) continue;
-	    scope->defparams.push_back(make_pair(cur->first, val));
+	    scope->defparams.push_back(make_pair(cur.first, val));
       }
 
 	// Evaluate the attributes. Evaluate them in the scope of the

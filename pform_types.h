@@ -1,7 +1,7 @@
 #ifndef __pform_types_H
 #define __pform_types_H
 /*
- * Copyright (c) 2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_types.h,v 1.2 2007/06/04 02:19:07 steve Exp $"
-#endif
 
 // This for the perm_string type.
 # include  "StringHeap.h"
@@ -50,7 +47,6 @@ struct name_component_t {
       std::list<index_component_t>index;
 };
 
-extern bool operator < (const name_component_t&lef, const name_component_t&rig);
 
 /*
  * The pform_name_t is the general form for a hierarchical

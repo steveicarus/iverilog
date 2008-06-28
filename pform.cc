@@ -1760,7 +1760,7 @@ void pform_set_specparam(perm_string name, PExpr*expr)
 void pform_set_defparam(const pform_name_t&name, PExpr*expr)
 {
       assert(expr);
-      pform_cur_module->defparms[name] = expr;
+      pform_cur_module->defparms.push_back(make_pair(name,expr));
 }
 
 /*

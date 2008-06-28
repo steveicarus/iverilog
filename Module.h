@@ -22,6 +22,7 @@
 
 # include  <list>
 # include  <map>
+# include  <utility>
 # include  "svector.h"
 # include  "StringHeap.h"
 # include  "HName.h"
@@ -118,7 +119,8 @@ class Module : public PScope, public LineInfo {
 	   new parameters within the module, but may be used to set
 	   values within this module (when instantiated) or in other
 	   instantiated modules. */
-      map<pform_name_t,PExpr*>defparms;
+      typedef pair<pform_name_t,PExpr*> named_expr_t;
+      list<named_expr_t>defparms;
 
         /* Parameters may be overridden at instantiation time;
            the overrides do not contain explicit parameter names,
@@ -169,7 +171,7 @@ class Module : public PScope, public LineInfo {
       bool elaborate(Design*, NetScope*scope) const;
 
       typedef map<perm_string,NetExpr*> replace_t;
-      bool elaborate_scope(Design*, NetScope*scope, const replace_t&rep) const;
+      bool elaborate_scope(Design*, NetScope*scope, const replace_t&rep);
 
       bool elaborate_sig(Design*, NetScope*scope) const;
 

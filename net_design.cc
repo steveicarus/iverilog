@@ -240,8 +240,6 @@ void NetScope::run_defparams(Design*des)
 		 is the current scope. */
 	    NetScope*targ_scope = des->find_scope(this, eval_path);
 	    if (targ_scope == 0) {
-		  cerr << val->get_fileline() << ": warning: scope of " <<
-			path << "." << perm_name << " not found." << endl;
 
 		    // Push the defparam onto a list for retry
 		    // later. It is possible for the scope lookup to

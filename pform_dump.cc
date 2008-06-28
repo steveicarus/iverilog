@@ -991,7 +991,6 @@ void Module::dump(ostream&out) const
       }
 
       typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
-      typedef map<pform_name_t,PExpr*>::const_iterator parm_hiter_t;
       for (parm_iter_t cur = parameters.begin()
 		 ; cur != parameters.end() ; cur ++) {
 	    out << "    parameter " << (*cur).second.type << " ";
@@ -1068,6 +1067,7 @@ void Module::dump(ostream&out) const
 		<< *(*cur).second << ";" << endl;
       }
 
+      typedef list<Module::named_expr_t>::const_iterator parm_hiter_t;
       for (parm_hiter_t cur = defparms.begin()
 		 ; cur != defparms.end() ;  cur ++) {
 	    out << "    defparam " << (*cur).first << " = ";
