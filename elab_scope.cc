@@ -181,6 +181,38 @@ static void elaborate_scope_funcs(Design*des, NetScope*scope,
 
 }
 
+class generate_schemes_work_item_t : public elaborator_work_item_t {
+    public:
+      generate_schemes_work_item_t(Design*des, NetScope*scope, Module*mod)
+      : elaborator_work_item_t(des), scope_(scope), mod_(mod)
+      { }
+
+      void elaborate_runrun()
+      {
+	    if (debug_scopes)
+		  cerr << mod_->get_fileline() << ": debug: "
+		       << "Processing generate schemes for "
+		       << scope_path(scope_) << endl;
+
+	      // Generate schemes can create new scopes in the form of
+	      // generated code. Scan the generate schemes, and *generate*
+	      // new scopes, which is slightly different from simple
+	      // elaboration.
+	    typedef list<PGenerate*>::const_iterator generate_it_t;
+	    for (generate_it_t cur = mod_->generate_schemes.begin()
+		       ; cur != mod_->generate_schemes.end() ; cur ++ ) {
+		  (*cur) -> generate_scope(des, scope_);
+	    }
+      }
+
+    private:
+	// The scope_ is the scope that contains the generate scheme
+	// we are to work on. the mod_ is the Module definition for
+	// that scope, and contains the parsed generate schemes.
+      NetScope*scope_;
+      Module*mod_;
+};
+
 bool Module::elaborate_scope(Design*des, NetScope*scope,
 			     const replace_t&replacements)
 {
@@ -307,17 +339,15 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
       delete[]attr;
 
-	// Generate schemes can create new scopes in the form of
-	// generated code. Scan the generate schemes, and *generate*
-	// new scopes, which is slightly different from simple
-	// elaboration.
+	// Generate schemes need to have their scopes elaborated, but
+	// we cannot do that until defparams are run, so push it off
+	// into an elaborate work item.
+      if (debug_scopes)
+	    cerr << get_fileline() << ": debug: "
+		 << "Schedule generates within " << scope_path(scope)
+		 << " for elaboration after defparams." << endl;
 
-      typedef list<PGenerate*>::const_iterator generate_it_t;
-      for (generate_it_t cur = generate_schemes.begin()
-		 ; cur != generate_schemes.end() ; cur ++ ) {
-	    (*cur) -> generate_scope(des, scope);
-      }
-
+      des->elaboration_work_list.push_back(new generate_schemes_work_item_t(des, scope, this));
 
 	// Tasks introduce new scopes, so scan the tasks in this
 	// module. Create a scope for the task and pass that to the
