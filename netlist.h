@@ -29,6 +29,7 @@
 # include  <map>
 # include  <list>
 # include  <vector>
+# include  <set>
 # include  <utility>
 # include  "ivl_target.h"
 # include  "pform_types.h"
@@ -722,6 +723,9 @@ class NetScope : public Attrib {
       void run_defparams_later(class Design*);
 
       void evaluate_parameters(class Design*);
+
+      	// Look for defparams that never matched, and print warnings.
+      void residual_defparams(class Design*);
 
 	/* This method generates a non-hierarchical name that is
 	   guaranteed to be unique within this scope. */
@@ -3672,10 +3676,14 @@ class Design {
       list<elaborator_work_item_t*>elaboration_work_list;
       void run_elaboration_work(void);
 
+      set<NetScope*> defparams_later;
+
 	// PARAMETERS
 
       void run_defparams();
       void evaluate_parameters();
+	// Look for defparams that never matched, and print warnings.
+      void residual_defparams();
 
 	/* This method locates a signal, starting at a given
 	   scope. The name parameter may be partially hierarchical, so

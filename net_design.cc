@@ -20,6 +20,7 @@
 # include "config.h"
 
 # include  <iostream>
+# include  <set>
 # include  <cstdlib>
 
 /*
@@ -199,22 +200,6 @@ void Design::run_defparams()
 	    (*scope)->run_defparams(this);
 }
 
-class run_defparams_later_t : public elaborator_work_item_t {
-    public:
-      run_defparams_later_t(Design*des, NetScope*scope)
-      : elaborator_work_item_t(des), scope_(scope)
-      { }
-
-      void elaborate_runrun();
-    private:
-      NetScope*scope_;
-};
-
-void run_defparams_later_t::elaborate_runrun()
-{
-      scope_->run_defparams_later(des);
-}
-
 void NetScope::run_defparams(Design*des)
 {
       { NetScope*cur = sub_;
@@ -262,13 +247,19 @@ void NetScope::run_defparams(Design*des)
 	    }
 
       }
-      if (! defparams_later.empty()) {
-	    des->elaboration_work_list.push_back(new run_defparams_later_t(des, this));
-      }
+
+	// If some of the defparams didn't find a scope in the name,
+	// then try again later. It may be that the target scope is
+	// created later by generate scheme or instance array.
+      if (! defparams_later.empty())
+	    des->defparams_later.insert(this);
 }
 
 void NetScope::run_defparams_later(Design*des)
 {
+      set<NetScope*> target_scopes;
+      list<pair<list<hname_t>,NetExpr*> > defparams_even_later;
+
       while (! defparams_later.empty()) {
 	    pair<list<hname_t>,NetExpr*> cur = defparams_later.front();
 	    defparams_later.pop_front();
@@ -281,8 +272,11 @@ void NetScope::run_defparams_later(Design*des)
 
 	    NetScope*targ_scope = des->find_scope(this, eval_path);
 	    if (targ_scope == 0) {
-		  cerr << val->get_fileline() << ": warning: scope of " <<
-			eval_path << "." << name << " not found." << endl;
+		    // If a scope in the target path is not found,
+		    // then push this defparam for handling even
+		    // later. Maybe a later generate scheme or
+		    // instance array will create the scope.
+		  defparams_even_later.push_back(cur);
 		  continue;
 	    }
 
@@ -296,7 +290,23 @@ void NetScope::run_defparams_later(Design*des)
 		       << name << " not found in "
 		       << scope_path(targ_scope) << "." << endl;
 	    }
+
+	      // We'll need to re-evaluate parameters in this scope
+	    target_scopes.insert(targ_scope);
       }
+
+	// All the scopes that this defparam set touched should have
+	// their parameters re-evaluated.
+      for (set<NetScope*>::iterator cur = target_scopes.begin()
+		 ; cur != target_scopes.end() ; cur ++ )
+	    (*cur)->evaluate_parameters(des);
+
+	// If there are some scopes that still have missing scopes,
+	// then sav them back into the defparams_later list for a
+	// later pass.
+      defparams_later = defparams_even_later;
+      if (! defparams_later.empty())
+	    des->defparams_later.insert(this);
 }
 
 void Design::evaluate_parameters()
@@ -576,6 +586,9 @@ void NetScope::evaluate_parameters(Design*des)
 	    cur = cur->sib_;
       }
 
+      if (debug_scopes)
+	    cerr << ":0" << ": debug: "
+		 << "Evaluate parameters in " << scope_path(this) << endl;
 
 	// Evaluate the parameter values. The parameter expressions
 	// have already been elaborated and replaced by the scope
@@ -608,6 +621,32 @@ void NetScope::evaluate_parameters(Design*des)
 	    }
       }
 
+}
+
+void Design::residual_defparams()
+{
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
+	   scope != root_scopes_.end(); scope++)
+	    (*scope)->residual_defparams(this);
+}
+
+void NetScope::residual_defparams(Design*des)
+{
+	// Clean out the list of defparams that never managed to match
+	// a scope. Print a warning for each.
+      while (! defparams_later.empty()) {
+	    pair<list<hname_t>,NetExpr*> cur = defparams_later.front();
+	    defparams_later.pop_front();
+
+	    cerr << cur.second->get_fileline() << ": warning: "
+		 << "Scope of " << cur.first << " not found." << endl;
+      }
+
+      NetScope*cur = sub_;
+      while (cur) {
+	    cur->residual_defparams(des);
+	    cur = cur->sib_;
+      }
 }
 
 const char* Design::get_flag(const string&key) const

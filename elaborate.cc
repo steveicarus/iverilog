@@ -3819,6 +3819,32 @@ class top_defparams : public elaborator_work_item_t {
       }
 };
 
+class later_defparams : public elaborator_work_item_t {
+    public:
+      later_defparams(Design*des)
+      : elaborator_work_item_t(des)
+      { }
+
+      ~later_defparams() { }
+
+      virtual void elaborate_runrun()
+      {
+	    list<NetScope*>tmp_list;
+	    for (set<NetScope*>::iterator cur = des->defparams_later.begin()
+		       ; cur != des->defparams_later.end() ; cur ++ )
+		  tmp_list.push_back(*cur);
+
+	    des->defparams_later.clear();
+
+	    while (! tmp_list.empty()) {
+		  NetScope*cur = tmp_list.front();
+		  tmp_list.pop_front();
+		  cur->run_defparams_later(des);
+	    }
+	    des->evaluate_parameters();
+      }
+};
+
 /*
  * This function is the root of all elaboration. The input is the list
  * of root module names. The function locates the Module definitions
@@ -3890,11 +3916,32 @@ Design* elaborate(list<perm_string>roots)
 	// empty. This list is initially populated above where the
 	// initial root scopes are primed.
       while (! des->elaboration_work_list.empty()) {
-	    elaborator_work_item_t*tmp = des->elaboration_work_list.front();
-	    des->elaboration_work_list.pop_front();
-	    tmp->elaborate_runrun();
-	    delete tmp;
+	      // Transfer the queue to a temporary queue.
+	    list<elaborator_work_item_t*> cur_queue;
+	    while (! des->elaboration_work_list.empty()) {
+		  cur_queue.push_back(des->elaboration_work_list.front());
+		  des->elaboration_work_list.pop_front();
+	    }
+
+	      // Run from the temporary queue. If the temporary queue
+	      // items create new work queue items, they will show up
+	      // in the elaboration_work_list and then we get to run
+	      // through them in the next pass.
+	    while (! cur_queue.empty()) {
+		  elaborator_work_item_t*tmp = cur_queue.front();
+		  cur_queue.pop_front();
+		  tmp->elaborate_runrun();
+		  delete tmp;
+	    }
+
+	    if (! des->elaboration_work_list.empty()) {
+		  des->elaboration_work_list.push_back(new later_defparams(des));
+	    }
       }
+
+	// Look for residual defparams (that point to a non-existent
+	// scope) and clean them out.
+      des->residual_defparams();
 
 	// Errors already? Probably missing root modules. Just give up
 	// now and return nothing.
