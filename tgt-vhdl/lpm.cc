@@ -88,6 +88,27 @@ int draw_part_select_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
    return 0;
 }
 
+int draw_ufunc_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
+{
+   vhdl_fcall *fcall = new vhdl_fcall(ivl_lpm_basename(lpm), NULL);
+
+   for (unsigned i = 0; i < ivl_lpm_size(lpm); i++) {
+      vhdl_var_ref *ref = nexus_to_var_ref(arch->get_scope(), ivl_lpm_data(lpm, i));
+      if (NULL == ref)
+         return 1;
+
+      fcall->add_expr(ref);
+   }
+
+   vhdl_var_ref *out = nexus_to_var_ref(arch->get_scope(), ivl_lpm_q(lpm, 0));
+   if (NULL == out)
+      return 1;
+
+   arch->add_stmt(new vhdl_cassign_stmt(out, fcall));
+   
+   return 0;
+}
+
 int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
 {
    switch (ivl_lpm_type(lpm)) {
@@ -99,6 +120,8 @@ int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
       return draw_binop_lpm(arch, lpm, VHDL_BINOP_MULT);
    case IVL_LPM_PART_VP:
       return draw_part_select_lpm(arch, lpm);
+   case IVL_LPM_UFUNC:
+      return draw_ufunc_lpm(arch, lpm);
    default:
       error("Unsupported LPM type: %d", ivl_lpm_type(lpm));
       return 1;
