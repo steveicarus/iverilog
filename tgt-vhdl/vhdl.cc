@@ -90,12 +90,17 @@ void remember_entity(vhdl_entity* ent)
    g_entities.push_back(ent);
 }
 
+bool seen_signal_before(ivl_signal_t sig)
+{
+   return g_known_signals.find(sig) != g_known_signals.end();
+}
+
 /*
  * Remeber the association of signal to entity.
  */
 void remember_signal(ivl_signal_t sig, const vhdl_scope *scope)
 {
-   assert(g_known_signals.find(sig) == g_known_signals.end());
+   assert(!seen_signal_before(sig));
    
    signal_defn_t defn = { ivl_signal_basename(sig), scope };
    g_known_signals[sig] = defn;
@@ -106,21 +111,21 @@ void remember_signal(ivl_signal_t sig, const vhdl_scope *scope)
  */
 void rename_signal(ivl_signal_t sig, const std::string &renamed)
 {
-   assert(g_known_signals.find(sig) != g_known_signals.end());
+   assert(seen_signal_before(sig));
 
    g_known_signals[sig].renamed = renamed;
 }
 
 const vhdl_scope *find_scope_for_signal(ivl_signal_t sig)
 {
-   assert(g_known_signals.find(sig) != g_known_signals.end());
+   assert(seen_signal_before(sig));
 
    return g_known_signals[sig].scope;
 }
 
 const std::string &get_renamed_signal(ivl_signal_t sig)
 {
-   assert(g_known_signals.find(sig) != g_known_signals.end());
+   assert(seen_signal_before(sig));
 
    return g_known_signals[sig].renamed;
 }

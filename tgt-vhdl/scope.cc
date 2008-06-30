@@ -38,6 +38,9 @@ vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
 
       ivl_signal_t sig;
       if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
+         if (!seen_signal_before(sig))
+            continue;
+         
          const char *signame = get_renamed_signal(sig).c_str();
          
          vhdl_decl *decl = arch_scope->get_decl(signame);
@@ -215,6 +218,8 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
          ent->get_scope()->add_decl
             (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_INOUT));
          break;
+      default:
+         assert(false);
       }
    }
 }
@@ -331,7 +336,9 @@ static void port_map(ivl_scope_t scope, vhdl_entity *parent,
       case IVL_SIP_INOUT:
          map_signal(sig, parent, inst);
          break;         
-      }
+      default:
+         assert(false);
+      }      
    }
 }
 
