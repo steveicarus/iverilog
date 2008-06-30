@@ -216,12 +216,13 @@ vhdl_expr *translate_ufunc(ivl_expr_t e)
    assert(parent_ent);
 
    const char *funcname = ivl_scope_tname(defscope);
+
+   vhdl_type *rettype;
+   if (ivl_expr_signed(e))
+      rettype = vhdl_type::nsigned(ivl_expr_width(e));
+   else
+      rettype = vhdl_type::nunsigned(ivl_expr_width(e));
    
-   vhdl_decl *fdecl =
-      parent_ent->get_arch()->get_scope()->get_decl(funcname);
-   assert(fdecl);
-   
-   vhdl_type *rettype = new vhdl_type(*fdecl->get_type());
    vhdl_fcall *fcall = new vhdl_fcall(funcname, rettype);
 
    int nparams = ivl_expr_parms(e);
