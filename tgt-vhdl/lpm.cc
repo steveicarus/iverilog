@@ -63,8 +63,14 @@ int draw_part_select_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
    vhdl_var_ref *selfrom = nexus_to_var_ref(arch->get_scope(), ivl_lpm_data(lpm, 0));
    if (NULL == selfrom)
       return 1;
+
+   vhdl_expr *off = NULL;
+   ivl_nexus_t base = ivl_lpm_data(lpm, 1);
+   if (base != NULL)
+      off = nexus_to_var_ref(arch->get_scope(), base);
+   else
+      off = new vhdl_const_int(ivl_lpm_base(lpm));
    
-   vhdl_expr *off = nexus_to_var_ref(arch->get_scope(), ivl_lpm_data(lpm, 1));
    if (NULL == off)
       return 1;
 

@@ -112,6 +112,9 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
       case IVL_LO_OR:
          rhs = inputs_to_expr(arch, VHDL_BINOP_OR, log);
          break;
+      case IVL_LO_XOR:
+         rhs = inputs_to_expr(arch, VHDL_BINOP_XOR, log);
+         break;
       default:
          error("Don't know how to translate logic type = %d",
                ivl_logic_type(log));
