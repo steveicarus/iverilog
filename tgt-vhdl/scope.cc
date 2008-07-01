@@ -25,18 +25,21 @@
 #include <sstream>
 #include <cassert>
 
+static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log);
+
 
 /*
  * Given a nexus and an architecture scope, find the first signal
  * that is connected to the nexus, if there is one.
  */
-vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
+static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus)
 {
    int nptrs = ivl_nexus_ptrs(nexus);
    for (int i = 0; i < nptrs; i++) {
       ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
 
       ivl_signal_t sig;
+      ivl_net_logic_t log;
       if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
          if (!seen_signal_before(sig))
             continue;
@@ -49,6 +52,9 @@ vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
          vhdl_type *type = new vhdl_type(*(decl->get_type()));
          return new vhdl_var_ref(signame, type);
       }
+      else if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
+         return translate_logic(arch_scope, log);
+      }
       else {
          // Ignore other types of nexus pointer
       }
@@ -57,10 +63,17 @@ vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
    assert(false);
 }
 
+vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
+{   
+   vhdl_var_ref *ref = dynamic_cast<vhdl_var_ref*>(nexus_to_expr(arch_scope, nexus));
+   assert(ref);
+   return ref;
+}
+
 /*
  * Convert the inputs of a logic gate to a binary expression.
  */
-static vhdl_expr *inputs_to_expr(vhdl_arch *arch, vhdl_binop_t op,
+static vhdl_expr *inputs_to_expr(vhdl_scope *scope, vhdl_binop_t op,
                                  ivl_net_logic_t log)
 {
    // Not always std_logic but this is probably OK since
@@ -71,7 +84,7 @@ static vhdl_expr *inputs_to_expr(vhdl_arch *arch, vhdl_binop_t op,
    int npins = ivl_logic_pins(log);
    for (int i = 1; i < npins; i++) {
       ivl_nexus_t input = ivl_logic_pin(log, i);
-      gate->add_expr(nexus_to_var_ref(arch->get_scope(), input));
+      gate->add_expr(nexus_to_expr(scope, input));
    }
 
    return gate;
@@ -80,14 +93,32 @@ static vhdl_expr *inputs_to_expr(vhdl_arch *arch, vhdl_binop_t op,
 /*
  * Convert a gate intput to an unary expression.
  */
-static vhdl_expr *input_to_expr(vhdl_arch *arch, vhdl_unaryop_t op,
+static vhdl_expr *input_to_expr(vhdl_scope *scope, vhdl_unaryop_t op,
                                 ivl_net_logic_t log)
 {
    ivl_nexus_t input = ivl_logic_pin(log, 1);
    assert(input);
 
-   vhdl_expr *operand = nexus_to_var_ref(arch->get_scope(), input);
+   vhdl_expr *operand = nexus_to_expr(scope, input);
    return new vhdl_unaryop_expr(op, operand, vhdl_type::std_logic()); 
+}
+
+static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log)
+{
+   switch (ivl_logic_type(log)) {
+   case IVL_LO_NOT:
+      return input_to_expr(scope, VHDL_UNARYOP_NOT, log);
+   case IVL_LO_AND:
+      return inputs_to_expr(scope, VHDL_BINOP_AND, log);
+   case IVL_LO_OR:
+      return inputs_to_expr(scope, VHDL_BINOP_OR, log);
+   case IVL_LO_XOR:
+      return inputs_to_expr(scope, VHDL_BINOP_XOR, log);
+   default:
+      error("Don't know how to translate logic type = %d",
+            ivl_logic_type(log));
+      return NULL;
+   }
 }
 
 /*
@@ -100,32 +131,15 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
    for (int i = 0; i < nlogs; i++) {
       ivl_net_logic_t log = ivl_scope_log(scope, i);
 
-      // The output is always pin zero
-      ivl_nexus_t output = ivl_logic_pin(log, 0);
-      vhdl_var_ref *lhs = nexus_to_var_ref(arch->get_scope(), output);
-
-      vhdl_expr *rhs = NULL;
-      switch (ivl_logic_type(log)) {
-      case IVL_LO_NOT:
-         rhs = input_to_expr(arch, VHDL_UNARYOP_NOT, log);
-         break;
-      case IVL_LO_AND:
-         rhs = inputs_to_expr(arch, VHDL_BINOP_AND, log);
-         break;
-      case IVL_LO_OR:
-         rhs = inputs_to_expr(arch, VHDL_BINOP_OR, log);
-         break;
-      case IVL_LO_XOR:
-         rhs = inputs_to_expr(arch, VHDL_BINOP_XOR, log);
-         break;
-      default:
-         error("Don't know how to translate logic type = %d",
-               ivl_logic_type(log));
-         continue;
+      if (ivl_logic_pins(log) > 1) {
+         // The output is always pin zero
+         ivl_nexus_t output = ivl_logic_pin(log, 0);
+         vhdl_var_ref *lhs = nexus_to_var_ref(arch->get_scope(), output);
+         
+         vhdl_expr *rhs = translate_logic(arch->get_scope(), log);
+         
+         arch->add_stmt(new vhdl_cassign_stmt(lhs, rhs));
       }
-      assert(rhs);
-
-      arch->add_stmt(new vhdl_cassign_stmt(lhs, rhs));
    }
 }
 
