@@ -41,13 +41,16 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus)
       ivl_signal_t sig;
       ivl_net_logic_t log;
       if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
+         std::cout << ivl_signal_name(sig) << std::endl;
+         
          if (!seen_signal_before(sig))
             continue;
          
          const char *signame = get_renamed_signal(sig).c_str();
          
          vhdl_decl *decl = arch_scope->get_decl(signame);
-         assert(decl);
+         if (NULL == decl)
+            continue;  // Not in this scope
 
          vhdl_type *type = new vhdl_type(*(decl->get_type()));
          return new vhdl_var_ref(signame, type);
@@ -135,15 +138,18 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
    for (int i = 0; i < nlogs; i++) {
       ivl_net_logic_t log = ivl_scope_log(scope, i);
 
-      if (ivl_logic_pins(log) > 1) {
-         // The output is always pin zero
-         ivl_nexus_t output = ivl_logic_pin(log, 0);
-         vhdl_var_ref *lhs = nexus_to_var_ref(arch->get_scope(), output);
-         
-         vhdl_expr *rhs = translate_logic(arch->get_scope(), log);
-         
-         arch->add_stmt(new vhdl_cassign_stmt(lhs, rhs));
-      }
+      std::cout << ivl_logic_pins(log) << std::endl;
+      
+      // The output is always pin zero
+      ivl_nexus_t output = ivl_logic_pin(log, 0);
+      vhdl_var_ref *lhs =
+         dynamic_cast<vhdl_var_ref*>(nexus_to_expr(arch->get_scope(), output));
+      if (NULL == lhs)
+         continue;  // Not suitable for continuous assignment
+      
+      vhdl_expr *rhs = translate_logic(arch->get_scope(), log);
+      
+      arch->add_stmt(new vhdl_cassign_stmt(lhs, rhs));
    }
 }
 
@@ -303,8 +309,13 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
 {
    // TODO: Work for multiple words
    ivl_nexus_t nexus = ivl_signal_nex(to, 0);
+
+   vhdl_expr *to_e = nexus_to_expr(parent->get_arch()->get_scope(), nexus);
+   inst->map_port(ivl_signal_basename(to), to_e);
+
+   return;
    
-   int nptrs = ivl_nexus_ptrs(nexus);
+   /*   int nptrs = ivl_nexus_ptrs(nexus);
    for (int i = 0; i < nptrs; i++) {
       ivl_signal_t sig;
       vhdl_decl *decl;
@@ -327,7 +338,7 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
             return;
          }
       }
-   }
+      }*/
 
    error("Failed to find signal to connect to port %s",
          ivl_signal_basename(to));
