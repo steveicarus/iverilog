@@ -54,7 +54,7 @@ public:
       : vhdl_expr(type), name_(name), slice_(slice) {}
    ~vhdl_var_ref();
    
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
    const std::string &get_name() const { return name_; }
    void set_slice(vhdl_expr *s) { slice_ = s; }
 private:
@@ -93,7 +93,7 @@ public:
    ~vhdl_binop_expr();
 
    void add_expr(vhdl_expr *e);
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    std::list<vhdl_expr*> operands_;
    vhdl_binop_t op_;
@@ -111,7 +111,7 @@ public:
       : vhdl_expr(type), op_(op), operand_(operand) {}
    ~vhdl_unaryop_expr();
 
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    vhdl_unaryop_t op_;
    vhdl_expr *operand_;
@@ -123,7 +123,7 @@ public:
    vhdl_const_string(const char *value)
       : vhdl_expr(vhdl_type::string(), true), value_(value) {}
 
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    std::string value_;
 };
@@ -131,7 +131,7 @@ private:
 class vhdl_const_bits : public vhdl_expr {
 public:
    vhdl_const_bits(const char *value, int width, bool issigned);
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
    const std::string &get_value() const { return value_; }
    vhdl_expr *cast(const vhdl_type *to);
 private:
@@ -143,7 +143,7 @@ class vhdl_const_bit : public vhdl_expr {
 public:
    vhdl_const_bit(char bit)
       : vhdl_expr(vhdl_type::std_logic(), true), bit_(bit) {}
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    char bit_;
 };
@@ -156,7 +156,7 @@ class vhdl_const_time : public vhdl_expr {
 public:
    vhdl_const_time(int64_t value, time_unit_t units)
       : vhdl_expr(vhdl_type::time(), true), value_(value), units_(units) {}
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    int64_t value_;
    time_unit_t units_;
@@ -166,7 +166,7 @@ class vhdl_const_int : public vhdl_expr {
 public:
    vhdl_const_int(int64_t value)
       : vhdl_expr(vhdl_type::integer(), true), value_(value) {}
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    int64_t value_;
 };
@@ -175,7 +175,7 @@ class vhdl_expr_list : public vhdl_element {
 public:
    ~vhdl_expr_list();
    
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
    bool empty() const { return exprs_.empty(); }
    void add_expr(vhdl_expr *e);
 private:
@@ -193,7 +193,7 @@ public:
    ~vhdl_fcall() {}
 
    void add_expr(vhdl_expr *e) { exprs_.add_expr(e); }
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    std::string name_;
    vhdl_expr_list exprs_;
@@ -219,7 +219,7 @@ public:
       : lhs_(lhs), rhs_(rhs) {}
    ~vhdl_cassign_stmt();
 
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    vhdl_var_ref *lhs_;
    vhdl_expr *rhs_;
@@ -243,7 +243,7 @@ public:
    ~stmt_container();
    
    void add_stmt(vhdl_seq_stmt *stmt);
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
    bool empty() const { return stmts_.empty(); }
 private:
    std::list<vhdl_seq_stmt*> stmts_;
@@ -275,7 +275,7 @@ public:
    vhdl_nbassign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
       : vhdl_abstract_assign_stmt(lhs, rhs) {}
    
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 };
 
 
@@ -284,7 +284,7 @@ public:
    vhdl_assign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
       : vhdl_abstract_assign_stmt(lhs, rhs) {}
 
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 };
 
 
@@ -304,7 +304,7 @@ public:
       : type_(type), expr_(expr) {}
    ~vhdl_wait_stmt();
    
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    vhdl_wait_type_t type_;
    vhdl_expr *expr_;
@@ -313,7 +313,7 @@ private:
 
 class vhdl_null_stmt : public vhdl_seq_stmt {
 public:
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 };
 
 
@@ -322,7 +322,7 @@ public:
    vhdl_assert_stmt(const char *reason)
       : reason_(reason) {}
 
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    std::string reason_;
 };
@@ -335,7 +335,7 @@ public:
 
    stmt_container *get_then_container() { return &then_part_; }
    stmt_container *get_else_container() { return &else_part_; }
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    vhdl_expr *test_;
    stmt_container then_part_, else_part_;
@@ -352,7 +352,7 @@ public:
    ~vhdl_case_branch();
 
    stmt_container *get_container() { return &stmts_; }
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    vhdl_expr *when_;
    stmt_container stmts_;
@@ -366,7 +366,7 @@ public:
    ~vhdl_case_stmt();
 
    void add_branch(vhdl_case_branch *b) { branches_.push_back(b); }
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    vhdl_expr *test_;
    case_branch_list_t branches_;
@@ -379,7 +379,7 @@ public:
    ~vhdl_while_stmt();
 
    stmt_container *get_container() { return &stmts_; }
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    vhdl_expr *test_;
    stmt_container stmts_;
@@ -394,7 +394,7 @@ class vhdl_pcall_stmt : public vhdl_seq_stmt {
 public:
    vhdl_pcall_stmt(const char *name) : name_(name) {}
    
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
    void add_expr(vhdl_expr *e) { exprs_.add_expr(e); }
 private:
    std::string name_;
@@ -438,7 +438,7 @@ class vhdl_component_decl : public vhdl_decl {
 public:
    static vhdl_component_decl *component_decl_for(vhdl_entity *ent);
 
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    vhdl_component_decl(const char *name);
 
@@ -454,7 +454,7 @@ class vhdl_var_decl : public vhdl_decl {
 public:
    vhdl_var_decl(const char *name, vhdl_type *type)
       : vhdl_decl(name, type) {}
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 };
 
 
@@ -465,7 +465,7 @@ class vhdl_signal_decl : public vhdl_decl {
 public:
    vhdl_signal_decl(const char *name, vhdl_type *type)
       : vhdl_decl(name, type) {}
-   virtual void emit(std::ofstream &of, int level) const;
+   virtual void emit(std::ostream &of, int level) const;
 };
 
 
@@ -476,7 +476,7 @@ class vhdl_param_decl : public vhdl_decl {
 public:
    vhdl_param_decl(const char *name, vhdl_type *type)
       : vhdl_decl(name, type) {}
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 };
 
 enum vhdl_port_mode_t {
@@ -496,7 +496,7 @@ public:
                   vhdl_port_mode_t mode)
       : vhdl_decl(name, type), mode_(mode) {}
 
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 private:
    vhdl_port_mode_t mode_;
 };
@@ -520,7 +520,7 @@ public:
    vhdl_comp_inst(const char *inst_name, const char *comp_name);
    ~vhdl_comp_inst();
 
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
    void map_port(const char *name, vhdl_expr *expr);
 private:
    std::string comp_name_, inst_name_;
@@ -580,7 +580,7 @@ class vhdl_function : public vhdl_decl, public vhdl_procedural {
 public:
    vhdl_function(const char *name, vhdl_type *ret_type);
    
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
    vhdl_scope *get_scope() { return &variables_; }
    void add_param(vhdl_param_decl *p) { scope_.add_decl(p); }
 private:
@@ -592,7 +592,7 @@ class vhdl_process : public vhdl_conc_stmt, public vhdl_procedural {
 public:
    vhdl_process(const char *name = "") : name_(name) {}
 
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
    void add_sensitivity(const char *name);
 private:
    std::string name_;
@@ -609,7 +609,7 @@ public:
       : name_(name), entity_(entity) {}
    virtual ~vhdl_arch();
 
-   void emit(std::ofstream &of, int level=0) const;
+   void emit(std::ostream &of, int level=0) const;
    void add_stmt(vhdl_process *proc);
    void add_stmt(vhdl_conc_stmt *stmt);
    vhdl_scope *get_scope() { return &scope_; }
@@ -631,7 +631,7 @@ public:
                vhdl_arch *arch);
    virtual ~vhdl_entity();
 
-   void emit(std::ofstream &of, int level=0) const;
+   void emit(std::ostream &of, int level=0) const;
    void add_port(vhdl_port_decl *decl);
    vhdl_arch *get_arch() const { return arch_; }
    const std::string &get_name() const { return name_; }

@@ -38,14 +38,14 @@ int indent(int level)
 /*
  * Emit a newline and indent to the correct level.
  */
-void newline(std::ofstream &of, int level)
+void newline(std::ostream &of, int level)
 {
    of << std::endl;
    while (level--)
       of << ' ';
 }
 
-void blank_line(std::ofstream &of, int level)
+void blank_line(std::ostream &of, int level)
 {
    of << std::endl;
    newline(of, level);
@@ -61,7 +61,7 @@ void vhdl_element::set_comment(std::string comment)
  * a line before the element (end_of_line is false) or at the
  * end of the line containing the element (end_of_line is true).
  */
-void vhdl_element::emit_comment(std::ofstream &of, int level,
+void vhdl_element::emit_comment(std::ostream &of, int level,
                                 bool end_of_line) const
 {
    if (comment_.size() > 0) {

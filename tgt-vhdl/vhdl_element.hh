@@ -34,11 +34,11 @@ class vhdl_element {
 public:
    virtual ~vhdl_element() {}
    
-   virtual void emit(std::ofstream &of, int level=0) const = 0;
+   virtual void emit(std::ostream &of, int level=0) const = 0;
 
    void set_comment(std::string comment);
 protected:
-   void emit_comment(std::ofstream &of, int level,
+   void emit_comment(std::ostream &of, int level,
                      bool end_of_line=false) const;
 private:
    std::string comment_;
@@ -47,8 +47,8 @@ private:
 typedef std::list<vhdl_element*> element_list_t;
 
 int indent(int level);
-void newline(std::ofstream &of, int level);
-void blank_line(std::ofstream &of, int level);
+void newline(std::ostream &of, int level);
+void blank_line(std::ostream &of, int level);
 
 #endif
 

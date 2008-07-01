@@ -26,7 +26,7 @@
 #include <cassert>
 
 template <class T>
-void emit_children(std::ofstream &of,
+void emit_children(std::ostream &of,
                    const std::list<T*> &children,
                    int level, const char *delim="") 
 {      

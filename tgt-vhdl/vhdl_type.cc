@@ -112,7 +112,7 @@ std::string vhdl_type::get_decl_string() const
    }
 }
 
-void vhdl_type::emit(std::ofstream &of, int level) const
+void vhdl_type::emit(std::ostream &of, int level) const
 {
    of << get_decl_string();
 }

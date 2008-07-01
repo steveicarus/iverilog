@@ -80,7 +80,7 @@ void vhdl_entity::add_port(vhdl_port_decl *decl)
    ports_.add_decl(decl);
 }
 
-void vhdl_entity::emit(std::ofstream &of, int level) const
+void vhdl_entity::emit(std::ostream &of, int level) const
 {
    // Pretty much every design will use std_logic so we
    // might as well include it by default
@@ -122,7 +122,7 @@ void vhdl_arch::add_stmt(vhdl_conc_stmt *stmt)
    stmts_.push_back(stmt);
 }
 
-void vhdl_arch::emit(std::ofstream &of, int level) const
+void vhdl_arch::emit(std::ostream &of, int level) const
 {
    emit_comment(of, level);
    of << "architecture " << name_ << " of " << entity_;
@@ -139,7 +139,7 @@ void vhdl_process::add_sensitivity(const char *name)
    sens_.push_back(name);
 }
 
-void vhdl_process::emit(std::ofstream &of, int level) const
+void vhdl_process::emit(std::ostream &of, int level) const
 {
    // If there are no statements in the body, this process
    // can't possibly do anything, so don't bother to emit it
@@ -184,7 +184,7 @@ void stmt_container::add_stmt(vhdl_seq_stmt *stmt)
    stmts_.push_back(stmt);
 }
 
-void stmt_container::emit(std::ofstream &of, int level) const
+void stmt_container::emit(std::ostream &of, int level) const
 {
    emit_children<vhdl_seq_stmt>(of, stmts_, level);  
 }
@@ -210,7 +210,7 @@ void vhdl_comp_inst::map_port(const char *name, vhdl_expr *expr)
    mapping_.push_back(pmap);
 }
 
-void vhdl_comp_inst::emit(std::ofstream &of, int level) const
+void vhdl_comp_inst::emit(std::ostream &of, int level) const
 {
    emit_comment(of, level);
    of << inst_name_ << ": " << comp_name_;
@@ -258,7 +258,7 @@ vhdl_component_decl *vhdl_component_decl::component_decl_for(vhdl_entity *ent)
    return decl;
 }
 
-void vhdl_component_decl::emit(std::ofstream &of, int level) const
+void vhdl_component_decl::emit(std::ostream &of, int level) const
 {
    emit_comment(of, level);
    of << "component " << name_ << " is";
@@ -280,7 +280,7 @@ vhdl_wait_stmt::~vhdl_wait_stmt()
       delete expr_;
 }
 
-void vhdl_wait_stmt::emit(std::ofstream &of, int level) const
+void vhdl_wait_stmt::emit(std::ostream &of, int level) const
 {
    of << "wait";
 
@@ -318,7 +318,7 @@ void vhdl_decl::set_initial(vhdl_expr *initial)
    initial_ = initial;
 }
 
-void vhdl_port_decl::emit(std::ofstream &of, int level) const
+void vhdl_port_decl::emit(std::ostream &of, int level) const
 {
    of << name_ << " : ";
    
@@ -337,7 +337,7 @@ void vhdl_port_decl::emit(std::ofstream &of, int level) const
    type_->emit(of, level);
 }
 
-void vhdl_var_decl::emit(std::ofstream &of, int level) const
+void vhdl_var_decl::emit(std::ostream &of, int level) const
 {
    of << "variable " << name_ << " : ";
    type_->emit(of, level);
@@ -351,7 +351,7 @@ void vhdl_var_decl::emit(std::ofstream &of, int level) const
    emit_comment(of, level, true);
 }
 
-void vhdl_signal_decl::emit(std::ofstream &of, int level) const
+void vhdl_signal_decl::emit(std::ostream &of, int level) const
 {
    of << "signal " << name_ << " : ";
    type_->emit(of, level);
@@ -435,7 +435,7 @@ vhdl_expr_list::~vhdl_expr_list()
    delete_children<vhdl_expr>(exprs_);
 }
 
-void vhdl_expr_list::emit(std::ofstream &of, int level) const
+void vhdl_expr_list::emit(std::ostream &of, int level) const
 {
    of << "(";
    
@@ -450,7 +450,7 @@ void vhdl_expr_list::emit(std::ofstream &of, int level) const
    of << ")";
 }
 
-void vhdl_pcall_stmt::emit(std::ofstream &of, int level) const
+void vhdl_pcall_stmt::emit(std::ostream &of, int level) const
 {
    of << name_;
    if (!exprs_.empty())
@@ -464,7 +464,7 @@ vhdl_var_ref::~vhdl_var_ref()
       delete slice_;
 }
 
-void vhdl_var_ref::emit(std::ofstream &of, int level) const
+void vhdl_var_ref::emit(std::ostream &of, int level) const
 {
    of << name_;
    if (slice_) {
@@ -474,7 +474,7 @@ void vhdl_var_ref::emit(std::ofstream &of, int level) const
    }
 }
 
-void vhdl_const_string::emit(std::ofstream &of, int level) const
+void vhdl_const_string::emit(std::ostream &of, int level) const
 {
    // In some instances a string literal can be ambiguous between
    // a String type and some other types (e.g. std_logic_vector)
@@ -483,12 +483,12 @@ void vhdl_const_string::emit(std::ofstream &of, int level) const
    of << "String'(\"" << value_ << "\")";
 }
 
-void vhdl_null_stmt::emit(std::ofstream &of, int level) const
+void vhdl_null_stmt::emit(std::ostream &of, int level) const
 {
    of << "null;";
 }
 
-void vhdl_fcall::emit(std::ofstream &of, int level) const
+void vhdl_fcall::emit(std::ostream &of, int level) const
 {
    of << name_;
    exprs_.emit(of, level);
@@ -502,7 +502,7 @@ vhdl_abstract_assign_stmt::~vhdl_abstract_assign_stmt()
       delete after_;
 }
 
-void vhdl_nbassign_stmt::emit(std::ofstream &of, int level) const
+void vhdl_nbassign_stmt::emit(std::ostream &of, int level) const
 {
    lhs_->emit(of, level);
    of << " <= ";
@@ -516,7 +516,7 @@ void vhdl_nbassign_stmt::emit(std::ofstream &of, int level) const
    of << ";";
 }
 
-void vhdl_assign_stmt::emit(std::ofstream &of, int level) const
+void vhdl_assign_stmt::emit(std::ostream &of, int level) const
 {
    lhs_->emit(of, level);
    of << " := ";
@@ -569,7 +569,7 @@ vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
       return vhdl_expr::cast(to);
 }
 
-void vhdl_const_bits::emit(std::ofstream &of, int level) const
+void vhdl_const_bits::emit(std::ostream &of, int level) const
 {
    if (qualified_)
       of << (signed_ ? "signed" : "unsigned") << "'(\"";
@@ -584,17 +584,17 @@ void vhdl_const_bits::emit(std::ofstream &of, int level) const
    of << (qualified_ ? "\")" : "\"");
 }
 
-void vhdl_const_bit::emit(std::ofstream &of, int level) const
+void vhdl_const_bit::emit(std::ostream &of, int level) const
 {
    of << "'" << vl_to_vhdl_bit(bit_) << "'";
 }
 
-void vhdl_const_int::emit(std::ofstream &of, int level) const
+void vhdl_const_int::emit(std::ostream &of, int level) const
 {
    of << value_;
 }
 
-void vhdl_const_time::emit(std::ofstream &of, int level) const
+void vhdl_const_time::emit(std::ostream &of, int level) const
 {
    of << value_;
    switch (units_) {
@@ -609,7 +609,7 @@ vhdl_cassign_stmt::~vhdl_cassign_stmt()
    delete rhs_;
 }
 
-void vhdl_cassign_stmt::emit(std::ofstream &of, int level) const
+void vhdl_cassign_stmt::emit(std::ostream &of, int level) const
 {
    lhs_->emit(of, level);
    of << " <= ";
@@ -617,7 +617,7 @@ void vhdl_cassign_stmt::emit(std::ofstream &of, int level) const
    of << ";";
 }
 
-void vhdl_assert_stmt::emit(std::ofstream &of, int level) const
+void vhdl_assert_stmt::emit(std::ostream &of, int level) const
 {
    of << "assert false";  // TODO: Allow arbitrary expression 
    of << " report \"" << reason_ << "\" severity failure;";
@@ -635,7 +635,7 @@ vhdl_if_stmt::~vhdl_if_stmt()
    delete test_;
 }
 
-void vhdl_if_stmt::emit(std::ofstream &of, int level) const
+void vhdl_if_stmt::emit(std::ostream &of, int level) const
 {
    of << "if ";
    test_->emit(of, level);
@@ -653,7 +653,7 @@ vhdl_unaryop_expr::~vhdl_unaryop_expr()
    delete operand_;
 }
 
-void vhdl_unaryop_expr::emit(std::ofstream &of, int level) const
+void vhdl_unaryop_expr::emit(std::ostream &of, int level) const
 {
    switch (op_) {
    case VHDL_UNARYOP_NOT:
@@ -681,7 +681,7 @@ void vhdl_binop_expr::add_expr(vhdl_expr *e)
    operands_.push_back(e);
 }
 
-void vhdl_binop_expr::emit(std::ofstream &of, int level) const
+void vhdl_binop_expr::emit(std::ostream &of, int level) const
 {
    // Expressions are fully parenthesized to remove any
    // ambiguity in the output
@@ -711,7 +711,7 @@ vhdl_case_branch::~vhdl_case_branch()
    delete when_;
 }
 
-void vhdl_case_branch::emit(std::ofstream &of, int level) const
+void vhdl_case_branch::emit(std::ostream &of, int level) const
 {
    of << "when ";
    when_->emit(of, level);
@@ -724,7 +724,7 @@ vhdl_case_stmt::~vhdl_case_stmt()
    delete test_;
 }
 
-void vhdl_case_stmt::emit(std::ofstream &of, int level) const
+void vhdl_case_stmt::emit(std::ostream &of, int level) const
 {
    of << "case ";
    test_->emit(of, level);
@@ -743,7 +743,7 @@ vhdl_while_stmt::~vhdl_while_stmt()
    delete test_;
 }
 
-void vhdl_while_stmt::emit(std::ofstream &of, int level) const
+void vhdl_while_stmt::emit(std::ostream &of, int level) const
 {
    of << "while ";
    test_->emit(of, level);
@@ -762,7 +762,7 @@ vhdl_function::vhdl_function(const char *name, vhdl_type *ret_type)
    variables_.set_parent(&scope_);
 }
 
-void vhdl_function::emit(std::ofstream &of, int level) const
+void vhdl_function::emit(std::ostream &of, int level) const
 {
    of << "function " << name_ << " (";
    emit_children<vhdl_decl>(of, scope_.get_decls(), level, ";");
@@ -777,7 +777,7 @@ void vhdl_function::emit(std::ofstream &of, int level) const
    of << "end function;";
 }
 
-void vhdl_param_decl::emit(std::ofstream &of, int level) const
+void vhdl_param_decl::emit(std::ostream &of, int level) const
 {
    of << name_ << " : ";
    type_->emit(of, level);

@@ -47,7 +47,7 @@ public:
       : name_(name), msb_(msb), lsb_(lsb) {}
    virtual ~vhdl_type() {}
 
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
    vhdl_type_name_t get_name() const { return name_; }
    std::string get_string() const;
    std::string get_decl_string() const;
