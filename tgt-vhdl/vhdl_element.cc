@@ -72,3 +72,9 @@ void vhdl_element::emit_comment(std::ostream &of, int level,
          newline(of, level);
    }
 }
+
+void vhdl_element::print() const
+{
+   emit(std::cout, 0);
+   std::cout << std::endl;
+}

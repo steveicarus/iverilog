@@ -64,8 +64,12 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus)
 }
 
 vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
-{   
-   vhdl_var_ref *ref = dynamic_cast<vhdl_var_ref*>(nexus_to_expr(arch_scope, nexus));
+{
+   vhdl_expr *e = nexus_to_expr(arch_scope, nexus);
+
+   e->print();   
+   
+   vhdl_var_ref *ref = dynamic_cast<vhdl_var_ref*>(e);
    assert(ref);
    return ref;
 }

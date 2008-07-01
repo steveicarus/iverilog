@@ -35,6 +35,7 @@ public:
    virtual ~vhdl_element() {}
    
    virtual void emit(std::ostream &of, int level=0) const = 0;
+   void print() const;
 
    void set_comment(std::string comment);
 protected:
