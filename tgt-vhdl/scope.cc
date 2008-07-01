@@ -30,9 +30,11 @@ static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log);
 
 /*
  * Given a nexus and an architecture scope, find the first signal
- * that is connected to the nexus, if there is one.
+ * that is connected to the nexus, if there is one. Never return
+ * a reference to 'ignore' if it is found in the nexus.
  */
-static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus)
+static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
+                                ivl_signal_t ignore = NULL)
 {
    int nptrs = ivl_nexus_ptrs(nexus);
    for (int i = 0; i < nptrs; i++) {
@@ -43,7 +45,7 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus)
       if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
          std::cout << ivl_signal_name(sig) << std::endl;
          
-         if (!seen_signal_before(sig))
+         if (!seen_signal_before(sig) || sig == ignore)
             continue;
          
          const char *signame = get_renamed_signal(sig).c_str();
@@ -310,7 +312,8 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    // TODO: Work for multiple words
    ivl_nexus_t nexus = ivl_signal_nex(to, 0);
 
-   vhdl_expr *to_e = nexus_to_expr(parent->get_arch()->get_scope(), nexus);
+   vhdl_expr *to_e = nexus_to_expr(parent->get_arch()->get_scope(), nexus, to);
+   std::cout << "map " << ivl_signal_basename(to) << std::endl;
    inst->map_port(ivl_signal_basename(to), to_e);
 
    return;
