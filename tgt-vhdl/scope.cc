@@ -313,9 +313,37 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    ivl_nexus_t nexus = ivl_signal_nex(to, 0);
 
    vhdl_expr *to_e = nexus_to_expr(parent->get_arch()->get_scope(), nexus, to);
-   std::cout << "map " << ivl_signal_basename(to) << std::endl;
-   inst->map_port(ivl_signal_basename(to), to_e);
 
+   // The expressions in a VHDL port map must be 'globally static'
+   // i.e. they can't be arbitrary expressions
+   // To handle this, only vhdl_var_refs are mapped automatically
+   // Otherwise a temporary variable is created to store the
+   // result of the expression and that is mapped to the port
+   // This is actually a bit stricter than necessary: but turns out
+   // to be much easier to implement
+   const char *basename = ivl_signal_basename(to);
+   vhdl_var_ref *to_ref;
+   if ((to_ref = dynamic_cast<vhdl_var_ref*>(to_e))) {
+      inst->map_port(basename, to_ref);
+   }
+   else {
+      // Not a static expression
+      std::string tmpname(inst->get_inst_name().c_str());
+      tmpname += "_";
+      tmpname += basename;
+      tmpname += "_Expr";
+      
+      vhdl_type *tmptype = new vhdl_type(*to_e->get_type());
+      parent->get_arch()->get_scope()->add_decl
+         (new vhdl_signal_decl(tmpname.c_str(), tmptype));
+
+      vhdl_var_ref *tmp_ref1 = new vhdl_var_ref(tmpname.c_str(), NULL);
+      parent->get_arch()->add_stmt(new vhdl_cassign_stmt(tmp_ref1, to_e));
+
+      vhdl_var_ref *tmp_ref2 = new vhdl_var_ref(*tmp_ref1);
+      inst->map_port(basename, tmp_ref2);
+   }
+   
    return;
    
    /*   int nptrs = ivl_nexus_ptrs(nexus);
