@@ -404,9 +404,14 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
          }
          
          // And an instantiation statement
-         const char *inst_name = ivl_scope_basename(scope);
+         std::string inst_name(ivl_scope_basename(scope));
+         if (inst_name == ent->get_name()) {
+            // Cannot have instance name the same as type in VHDL
+            inst_name += "_Inst";
+         }
+                     
          vhdl_comp_inst *inst =
-            new vhdl_comp_inst(inst_name, ent->get_name().c_str());
+            new vhdl_comp_inst(inst_name.c_str(), ent->get_name().c_str());
          port_map(scope, parent_ent, inst);         
 
          parent_arch->add_stmt(inst);
