@@ -118,6 +118,7 @@ int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
       return draw_binop_lpm(arch, lpm, VHDL_BINOP_SUB);
    case IVL_LPM_MULT:
       return draw_binop_lpm(arch, lpm, VHDL_BINOP_MULT);
+   case IVL_LPM_PART_PV:
    case IVL_LPM_PART_VP:
       return draw_part_select_lpm(arch, lpm);
    case IVL_LPM_UFUNC:
