@@ -43,8 +43,6 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
       ivl_signal_t sig;
       ivl_net_logic_t log;
       if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
-         std::cout << ivl_signal_name(sig) << std::endl;
-         
          if (!seen_signal_before(sig) || sig == ignore)
             continue;
          
@@ -71,9 +69,6 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
 vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
 {
    vhdl_expr *e = nexus_to_expr(arch_scope, nexus);
-
-   e->print();   
-   
    vhdl_var_ref *ref = dynamic_cast<vhdl_var_ref*>(e);
    assert(ref);
    return ref;
@@ -140,8 +135,6 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
    for (int i = 0; i < nlogs; i++) {
       ivl_net_logic_t log = ivl_scope_log(scope, i);
 
-      std::cout << ivl_logic_pins(log) << std::endl;
-      
       // The output is always pin zero
       ivl_nexus_t output = ivl_logic_pin(log, 0);
       vhdl_var_ref *lhs =
@@ -343,36 +336,6 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
       vhdl_var_ref *tmp_ref2 = new vhdl_var_ref(*tmp_ref1);
       inst->map_port(basename, tmp_ref2);
    }
-   
-   return;
-   
-   /*   int nptrs = ivl_nexus_ptrs(nexus);
-   for (int i = 0; i < nptrs; i++) {
-      ivl_signal_t sig;
-      vhdl_decl *decl;
-      
-      ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nexus, i);
-      if ((sig = ivl_nexus_ptr_sig(ptr)) != NULL) {
-         const char *basename = ivl_signal_basename(sig);
-         if (sig == to) {
-            // Don't map a signal to itself!
-            continue;
-         }
-         else if ((decl = parent->get_arch()->get_scope()->get_decl(basename))) {
-            // It's a signal declared in the parent
-            // Pick this one (any one will do as they're all
-            // connected together if there's more than one)
-            vhdl_var_ref *ref =
-               new vhdl_var_ref(basename, vhdl_type::std_logic());
-            inst->map_port(ivl_signal_basename(to), ref);
-
-            return;
-         }
-      }
-      }*/
-
-   error("Failed to find signal to connect to port %s",
-         ivl_signal_basename(to));
 }
 
 /*
