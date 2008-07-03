@@ -354,13 +354,13 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
 
             ivl_signal_t sig;
             if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
-               const char *signame = ivl_signal_basename(sig);
+               std::string signame(get_renamed_signal(sig));
 
                // Only add this signal to the sensitivity if it's part
                // of the containing architecture (i.e. it has already
                // been declared)
                if (proc->get_scope()->get_parent()->have_declared(signame)) {
-                  proc->add_sensitivity(signame);
+                  proc->add_sensitivity(signame.c_str());
                   non_edges.push_back(signame);
                   break;
                }
