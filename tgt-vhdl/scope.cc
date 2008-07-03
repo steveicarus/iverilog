@@ -184,7 +184,8 @@ static std::string make_safe_name(ivl_signal_t sig)
       name.insert(0, "VL");
    
    const char *vhdl_reserved[] = {
-      "in", "out", "entity", "architecture", "inout", // Etc...
+      "in", "out", "entity", "architecture", "inout", "array",
+      "is", "not", "and", "or", "bus", // Etc...
       NULL
    };
    for (const char **p = vhdl_reserved; *p != NULL; p++) {
