@@ -453,6 +453,11 @@ static int draw_case(vhdl_procedural *proc, stmt_container *container,
    
    vhdl_case_stmt *vhdlcase = new vhdl_case_stmt(test);
    container->add_stmt(vhdlcase);
+
+   // VHDL is more strict than Verilog about covering every
+   // possible case. So make sure we add an 'others' branch
+   // if there isn't a default one.
+   bool have_others = false;
    
    int nbranches = ivl_stmt_case_count(stmt);
    for (int i = 0; i < nbranches; i++) {
@@ -463,14 +468,23 @@ static int draw_case(vhdl_procedural *proc, stmt_container *container,
          if (NULL == when)
             return 1;
       }
-      else
-         when = new vhdl_var_ref("others", NULL);      
+      else {
+         when = new vhdl_var_ref("others", NULL);
+         have_others = true;
+      }
       
       vhdl_case_branch *branch = new vhdl_case_branch(when);
       vhdlcase->add_branch(branch);
       
       draw_stmt(proc, branch->get_container(), ivl_stmt_case_stmt(stmt, i));
    }
+
+   if (!have_others) {
+      vhdl_case_branch *others =
+         new vhdl_case_branch(new vhdl_var_ref("others", NULL));
+      others->get_container()->add_stmt(new vhdl_null_stmt());
+      vhdlcase->add_branch(others);
+   }      
    
    return 0;
 }
