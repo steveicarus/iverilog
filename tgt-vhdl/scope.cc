@@ -27,6 +27,32 @@
 
 static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log);
 
+/*
+ * Given a nexus find a constant value in it that can be used
+ * as an initial signal value.
+ */
+static vhdl_expr *nexus_to_const(ivl_nexus_t nexus)
+{
+   int nptrs = ivl_nexus_ptrs(nexus);
+   for (int i = 0; i < nptrs; i++) {
+      ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
+
+      ivl_net_const_t con;
+      if ((con = ivl_nexus_ptr_con(nexus_ptr))) {
+         if (ivl_const_width(con) == 1)
+            return new vhdl_const_bit(ivl_const_bits(con)[0]);
+         else
+            return new vhdl_const_bits
+               (ivl_const_bits(con), ivl_const_width(con),
+                ivl_const_signed(con) != 0);
+      }
+      else {
+         // Ignore other types of nexus pointer
+      }
+   }
+   
+   return NULL;
+}
 
 /*
  * Given a nexus and an architecture scope, find the first signal
@@ -202,7 +228,18 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
       ivl_signal_port_t mode = ivl_signal_port(sig);
       switch (mode) {
       case IVL_SIP_NONE:
-         ent->get_arch()->get_scope()->add_decl(new vhdl_signal_decl(name.c_str(), sig_type));
+         {
+            vhdl_decl *decl = new vhdl_signal_decl(name.c_str(), sig_type);
+
+            // A local signal can have a constant initializer in VHDL
+            // This may be found in the signal's nexus
+            // TODO: Make this work for multiple words
+            vhdl_expr *init = nexus_to_const(ivl_signal_nex(sig, 0));
+            if (init != NULL)
+               decl->set_initial(init);
+            
+            ent->get_arch()->get_scope()->add_decl(decl);
+         }
          break;
       case IVL_SIP_INPUT:
          ent->get_scope()->add_decl
@@ -249,8 +286,10 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
 static void declare_lpm(vhdl_arch *arch, ivl_scope_t scope)
 {
    int nlpms = ivl_scope_lpms(scope);
-   for (int i = 0; i < nlpms; i++)
-      draw_lpm(arch, ivl_scope_lpm(scope, i));
+   for (int i = 0; i < nlpms; i++) {
+      if (draw_lpm(arch, ivl_scope_lpm(scope, i)) != 0)
+         error("Failed to translate LPM");
+   }
 }
 
 /*
