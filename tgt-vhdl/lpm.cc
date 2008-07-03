@@ -58,19 +58,30 @@ static int draw_binop_lpm(vhdl_arch *arch, ivl_lpm_t lpm, vhdl_binop_t op)
    return 0;
 }
 
-int draw_part_select_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
+/*
+ * Return the base of a part select.
+ */
+static vhdl_expr *part_select_base(vhdl_arch *arch, ivl_lpm_t lpm)
 {
-   vhdl_var_ref *selfrom = nexus_to_var_ref(arch->get_scope(), ivl_lpm_data(lpm, 0));
-   if (NULL == selfrom)
-      return 1;
-
-   vhdl_expr *off = NULL;
+   vhdl_expr *off;
    ivl_nexus_t base = ivl_lpm_data(lpm, 1);
    if (base != NULL)
       off = nexus_to_var_ref(arch->get_scope(), base);
    else
       off = new vhdl_const_int(ivl_lpm_base(lpm));
-   
+
+   // Array indexes must be integers
+   vhdl_type integer(VHDL_TYPE_INTEGER);
+   return off->cast(&integer);
+}
+
+static int draw_part_select_vp_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
+{
+   vhdl_var_ref *selfrom = nexus_to_var_ref(arch->get_scope(), ivl_lpm_data(lpm, 0));
+   if (NULL == selfrom)
+      return 1;
+
+   vhdl_expr *off = part_select_base(arch, lpm);;
    if (NULL == off)
       return 1;
 
@@ -78,17 +89,31 @@ int draw_part_select_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
    if (NULL == out)
       return 1;
 
-   // Array indexes must be integers
-   vhdl_type integer(VHDL_TYPE_INTEGER);
-   off = off->cast(&integer);
-
    selfrom->set_slice(off);
    arch->add_stmt(new vhdl_cassign_stmt(out, selfrom));
-   
    return 0;
 }
 
-int draw_ufunc_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
+static int draw_part_select_pv_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
+{
+   vhdl_var_ref *selfrom = nexus_to_var_ref(arch->get_scope(), ivl_lpm_data(lpm, 0));
+   if (NULL == selfrom)
+      return 1;
+
+   vhdl_expr *off = part_select_base(arch, lpm);;
+   if (NULL == off)
+      return 1;
+
+   vhdl_var_ref *out = nexus_to_var_ref(arch->get_scope(), ivl_lpm_q(lpm, 0));
+   if (NULL == out)
+      return 1;
+
+   out->set_slice(off);
+   arch->add_stmt(new vhdl_cassign_stmt(out, selfrom));
+   return 0;
+}
+
+static int draw_ufunc_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
 {
    vhdl_fcall *fcall = new vhdl_fcall(ivl_lpm_basename(lpm), NULL);
 
@@ -119,8 +144,9 @@ int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
    case IVL_LPM_MULT:
       return draw_binop_lpm(arch, lpm, VHDL_BINOP_MULT);
    case IVL_LPM_PART_PV:
+      return draw_part_select_pv_lpm(arch, lpm);
    case IVL_LPM_PART_VP:
-      return draw_part_select_lpm(arch, lpm);
+      return draw_part_select_vp_lpm(arch, lpm);
    case IVL_LPM_UFUNC:
       return draw_ufunc_lpm(arch, lpm);
    default:
