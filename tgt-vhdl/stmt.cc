@@ -439,7 +439,7 @@ static int draw_case(vhdl_procedural *proc, stmt_container *container,
    // VHDL case expressions are required to be quite simple: variable
    // references or slices. So we may need to create a temporary
    // variable to hold the result of the expression evaluation
-   if (typeid(test) != typeid(vhdl_var_ref)) {
+   if (typeid(*test) != typeid(vhdl_var_ref)) {
       // TODO: Check if this is already declared
       const char *tmp_name = "Verilog_Case_Ex";
       vhdl_type *test_type = new vhdl_type(*test->get_type());
