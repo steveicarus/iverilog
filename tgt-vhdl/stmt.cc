@@ -459,7 +459,7 @@ static int draw_case(vhdl_procedural *proc, stmt_container *container,
       vhdl_expr *when;
       ivl_expr_t net = ivl_stmt_case_expr(stmt, i);
       if (net) {
-         when = translate_expr(net);
+         when = translate_expr(net)->cast(test->get_type());
          if (NULL == when)
             return 1;
       }
