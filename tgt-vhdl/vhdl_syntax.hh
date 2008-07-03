@@ -367,9 +367,11 @@ public:
 
    void add_branch(vhdl_case_branch *b) { branches_.push_back(b); }
    void emit(std::ostream &of, int level) const;
+   stmt_container *get_others_container() { return &others_; }
 private:
    vhdl_expr *test_;
    case_branch_list_t branches_;
+   stmt_container others_;
 };
 
 

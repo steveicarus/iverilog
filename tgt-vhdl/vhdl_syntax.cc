@@ -734,6 +734,11 @@ void vhdl_case_stmt::emit(std::ostream &of, int level) const
    case_branch_list_t::const_iterator it;
    for (it = branches_.begin(); it != branches_.end(); ++it)
       (*it)->emit(of, level);
+
+   if (!others_.empty()) {
+      of << "when others =>";
+      others_.emit(of, indent(level));
+   }
    
    of << "end case;";
 }
