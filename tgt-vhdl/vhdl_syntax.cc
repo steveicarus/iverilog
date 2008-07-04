@@ -655,12 +655,14 @@ vhdl_unaryop_expr::~vhdl_unaryop_expr()
 
 void vhdl_unaryop_expr::emit(std::ostream &of, int level) const
 {
+   of << "(";
    switch (op_) {
    case VHDL_UNARYOP_NOT:
       of << "not ";
       break;
    }
    operand_->emit(of, level);
+   of << ")";
 }
 
 vhdl_binop_expr::vhdl_binop_expr(vhdl_expr *left, vhdl_binop_t op,
