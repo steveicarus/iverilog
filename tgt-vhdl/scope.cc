@@ -471,6 +471,13 @@ int draw_function(ivl_scope_t scope, ivl_scope_t parent)
 
    const char *funcname = ivl_scope_tname(scope);
 
+   // Has this function been declared already?
+   // (draw_function will be invoked multiple times for
+   // the same function if it appears multiple times in
+   // the design hierarchy)
+   if (ent->get_arch()->get_scope()->have_declared(funcname))
+      return 0;
+
    // The return type is worked out from the output port
    vhdl_function *func = new vhdl_function(funcname, NULL);
    
