@@ -102,6 +102,89 @@ static int draw_noop(vhdl_procedural *proc, stmt_container *container,
    return 0;
 }
 
+/*
+ * Generate an assignment of VHDL expr rhs to signal sig. This, unlike
+ * the procedure below, is a generic routine used for more than just
+ * Verilog signal assignment (e.g. it is used to expand ternary
+ * expressions).
+ */
+template <class T>
+static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
+                               ivl_signal_t sig, vhdl_expr *rhs, bool blocking)
+{
+   std::string signame(get_renamed_signal(sig));
+
+   vhdl_decl *decl = proc->get_scope()->get_decl(signame);
+   assert(decl);
+
+   rhs = rhs->cast(decl->get_type());
+      
+   bool isvar = strip_var(signame) != signame;
+
+   // Where possible, move constant assignments into the
+   // declaration as initializers. This optimisation is only
+   // performed on assignments of constant values to prevent
+   // ordering problems.
+      
+   // This also has another application: If this is an `inital'
+   // process and we haven't yet generated a `wait' statement then
+   // moving the assignment to the initialization preserves the
+   // expected Verilog behaviour: VHDL does not distinguish
+   // `initial' and `always' processes so an `always' process might
+   // be activatated before an `initial' process at time 0. The
+   // `always' process may then use the uninitialized signal value.
+   // The second test ensures that we only try to initialise
+   // internal signals not ports
+   if (proc->get_scope()->initializing()
+       && ivl_signal_port(sig) == IVL_SIP_NONE
+       && !decl->has_initial() && rhs->constant()
+       && container == proc->get_container() // Top-level container
+       && !isvar) {
+
+      decl->set_initial(rhs);
+         
+      if (blocking && proc->get_scope()->allow_signal_assignment()) {
+         // This signal may be used e.g. in a loop test so we need
+         // to make a variable as well
+         blocking_assign_to(proc, sig);
+            
+         // The signal may have been renamed by the above call
+         const std::string &renamed = get_renamed_signal(sig);
+         
+         vhdl_var_ref *lval_ref = new vhdl_var_ref(renamed.c_str(), NULL);
+         vhdl_var_ref *sig_ref = new vhdl_var_ref(signame.c_str(), NULL);
+
+         T *a = new T(lval_ref, sig_ref);
+         container->add_stmt(a);
+            
+         return a;
+      }
+      else
+         return NULL;   // No statement need be emitted
+   }
+   else {
+      if (blocking && proc->get_scope()->allow_signal_assignment()) {
+         // Remember we need to write the variable back to the
+         // original signal
+         blocking_assign_to(proc, sig);
+
+         // The signal may have been renamed by the above call
+         signame = get_renamed_signal(sig);
+      }
+         
+      // The type here can be null as it is never actually needed
+      vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), NULL);
+         
+      T *a = new T(lval_ref, rhs);
+      container->add_stmt(a);
+         
+      return a;
+   }
+}
+
+/*
+ * Generate an assignment of type T for the Verilog statement stmt.
+ */
 template <class T>
 static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
                           ivl_statement_t stmt, bool blocking)
@@ -115,70 +198,31 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
    ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
    ivl_signal_t sig;
    if ((sig = ivl_lval_sig(lval))) {
-      std::string signame(get_renamed_signal(sig));
+      ivl_expr_t rval = ivl_stmt_rval(stmt);
+      if (ivl_expr_type(rval) == IVL_EX_TERNARY) {
+         // Expand ternary expressions into an if statement
+         vhdl_expr *test = translate_expr(ivl_expr_oper1(rval));
+         vhdl_expr *true_part = translate_expr(ivl_expr_oper2(rval));
+         vhdl_expr *false_part = translate_expr(ivl_expr_oper3(rval));
 
-      vhdl_decl *decl = proc->get_scope()->get_decl(signame);
-      assert(decl);
+         if (!test || !true_part || !false_part)
+            return NULL;
 
-      vhdl_expr *rhs_raw = translate_expr(ivl_stmt_rval(stmt));
-      if (NULL == rhs_raw)
+         vhdl_if_stmt *vhdif = new vhdl_if_stmt(test);
+         make_vhdl_assignment<T>(proc, vhdif->get_then_container(), sig,
+                                 true_part, blocking);
+         make_vhdl_assignment<T>(proc, vhdif->get_else_container(), sig,
+                                 false_part, blocking);
+
+         container->add_stmt(vhdif);         
          return NULL;
-      vhdl_expr *rhs = rhs_raw->cast(decl->get_type());
-      
-      bool isvar = strip_var(signame) != signame;
-
-      // Where possible, move constant assignments into the
-      // declaration as initializers. This optimisation is only
-      // performed on assignments of constant values to prevent
-      // ordering problems.
-      
-      // This also has another application: If this is an `inital'
-      // process and we haven't yet generated a `wait' statement then
-      // moving the assignment to the initialization preserves the
-      // expected Verilog behaviour: VHDL does not distinguish
-      // `initial' and `always' processes so an `always' process might
-      // be activatated before an `initial' process at time 0. The
-      // `always' process may then use the uninitialized signal value.
-      // The second test ensures that we only try to initialise
-      // internal signals not ports
-      if (proc->get_scope()->initializing()
-          && ivl_signal_port(sig) == IVL_SIP_NONE
-          && !decl->has_initial() && rhs->constant()
-          && !isvar) {
-
-         decl->set_initial(rhs);
-         
-         if (blocking && proc->get_scope()->allow_signal_assignment()) {
-            // This signal may be used e.g. in a loop test so we need
-            // to make a variable as well
-            blocking_assign_to(proc, sig);
-            
-            // The signal may have been renamed by the above call
-            const std::string &renamed = get_renamed_signal(sig);
-         
-            vhdl_var_ref *lval_ref = new vhdl_var_ref(renamed.c_str(), NULL);
-            vhdl_var_ref *sig_ref = new vhdl_var_ref(signame.c_str(), NULL);
-            
-            return new T(lval_ref, sig_ref);
-         }
-         else
-            return NULL;   // No statement need be emitted
       }
-      else {
-         if (blocking && proc->get_scope()->allow_signal_assignment()) {
-            // Remember we need to write the variable back to the
-            // original signal
-            blocking_assign_to(proc, sig);
 
-            // The signal may have been renamed by the above call
-            signame = get_renamed_signal(sig);
-         }
-         
-         // The type here can be null as it is never actually needed
-         vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), NULL);
-         
-         return new T(lval_ref, rhs);
-      }
+      vhdl_expr *rhs = translate_expr(rval);
+      if (NULL == rhs)
+         return NULL;
+
+      return make_vhdl_assignment<T>(proc, container, sig, rhs, blocking);
    }
    else {
       error("Only signals as lvals supported at the moment");
@@ -203,7 +247,6 @@ static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
       // Assignment is a statement and not moved into the initialisation
       if (after != NULL)
          a->set_after(after);
-      container->add_stmt(a);   
    }
       
    return 0;
@@ -212,14 +255,7 @@ static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
 static int draw_assign(vhdl_procedural *proc, stmt_container *container,
                        ivl_statement_t stmt)
 {
-   vhdl_assign_stmt *a =
-      make_assignment<vhdl_assign_stmt>(proc, container, stmt, true);
-
-   if (a != NULL) {
-      // Assignment is a statement and not moved into the initialisation
-      container->add_stmt(a);
-   }
-
+   make_assignment<vhdl_assign_stmt>(proc, container, stmt, true);
    return 0;
 }
 
