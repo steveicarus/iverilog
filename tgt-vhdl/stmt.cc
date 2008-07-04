@@ -461,27 +461,30 @@ static int draw_case(vhdl_procedural *proc, stmt_container *container,
    
    int nbranches = ivl_stmt_case_count(stmt);
    for (int i = 0; i < nbranches; i++) {
-      stmt_container *container;
+      vhdl_expr *when;
       ivl_expr_t net = ivl_stmt_case_expr(stmt, i);
       if (net) {
-         vhdl_expr *when = translate_expr(net)->cast(test->get_type());
+         when = translate_expr(net)->cast(test->get_type());
          if (NULL == when)
             return 1;
-
-         vhdl_case_branch *branch = new vhdl_case_branch(when);
-         vhdlcase->add_branch(branch);
-         container = branch->get_container();
       }
       else {
-         container = vhdlcase->get_others_container();
+         when = new vhdl_var_ref("others", NULL);
          have_others = true;
       }
       
-      draw_stmt(proc, container, ivl_stmt_case_stmt(stmt, i));
+      vhdl_case_branch *branch = new vhdl_case_branch(when);
+      vhdlcase->add_branch(branch);
+      
+      draw_stmt(proc, branch->get_container(), ivl_stmt_case_stmt(stmt, i));
    }
 
-   if (!have_others)
-      vhdlcase->get_others_container()->add_stmt(new vhdl_null_stmt());
+   if (!have_others) {
+      vhdl_case_branch *others =
+         new vhdl_case_branch(new vhdl_var_ref("others", NULL));
+      others->get_container()->add_stmt(new vhdl_null_stmt());
+      vhdlcase->add_branch(others);
+   }      
    
    return 0;
 }
