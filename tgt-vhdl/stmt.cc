@@ -335,7 +335,10 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
    assert(proc);   // Catch not process
    
    ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
-   
+
+
+   // TODO: This should really be merged with the
+   // nexus_to_XXX code
    int nevents = ivl_stmt_nevent(stmt);
    for (int i = 0; i < nevents; i++) {
       ivl_event_t event = ivl_stmt_events(stmt, i);
@@ -354,6 +357,9 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
 
             ivl_signal_t sig;
             if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
+               if (!seen_signal_before(sig))
+                  continue;
+               
                std::string signame(get_renamed_signal(sig));
 
                // Only add this signal to the sensitivity if it's part
