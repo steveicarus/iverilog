@@ -440,15 +440,18 @@ static int draw_case(vhdl_procedural *proc, stmt_container *container,
    // references or slices. So we may need to create a temporary
    // variable to hold the result of the expression evaluation
    if (typeid(*test) != typeid(vhdl_var_ref)) {
-      // TODO: Check if this is already declared
       const char *tmp_name = "Verilog_Case_Ex";
       vhdl_type *test_type = new vhdl_type(*test->get_type());
-      proc->get_scope()->add_decl(new vhdl_var_decl(tmp_name, test_type));
+         
+      if (!proc->get_scope()->have_declared(tmp_name)) {
+         proc->get_scope()->add_decl
+            (new vhdl_var_decl(tmp_name, new vhdl_type(*test_type)));
+      }
 
       vhdl_var_ref *tmp_ref = new vhdl_var_ref(tmp_name, NULL);
       container->add_stmt(new vhdl_assign_stmt(tmp_ref, test));
 
-      test = new vhdl_var_ref(tmp_name, new vhdl_type(*test_type));
+      test = new vhdl_var_ref(tmp_name, test_type);
    }
    
    vhdl_case_stmt *vhdlcase = new vhdl_case_stmt(test);
