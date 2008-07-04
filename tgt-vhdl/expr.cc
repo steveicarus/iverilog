@@ -208,7 +208,7 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    }
 }
 
-vhdl_expr *translate_select(ivl_expr_t e)
+static vhdl_expr *translate_select(ivl_expr_t e)
 {
    vhdl_expr *from = translate_expr(ivl_expr_oper1(e));
    if (NULL == from)
@@ -218,7 +218,7 @@ vhdl_expr *translate_select(ivl_expr_t e)
    return from->resize(ivl_expr_width(e));
 }
 
-vhdl_expr *translate_ufunc(ivl_expr_t e)
+static vhdl_expr *translate_ufunc(ivl_expr_t e)
 {
    ivl_scope_t defscope = ivl_expr_def(e);
    ivl_scope_t parentscope = ivl_scope_parent(defscope);
@@ -252,6 +252,13 @@ vhdl_expr *translate_ufunc(ivl_expr_t e)
    return fcall;
 }
 
+static vhdl_expr *translate_ternary(ivl_expr_t e)
+{
+   error("Ternary expression only supported as RHS of assignment");
+   
+   return NULL;
+}
+
 /*
  * Generate a VHDL expression from a Verilog expression.
  */
@@ -275,6 +282,8 @@ vhdl_expr *translate_expr(ivl_expr_t e)
       return translate_select(e);
    case IVL_EX_UFUNC:
       return translate_ufunc(e);
+   case IVL_EX_TERNARY:
+      return translate_ternary(e);
    default:
       error("No VHDL translation for expression at %s:%d (type = %d)",
             ivl_expr_file(e), ivl_expr_lineno(e), type);

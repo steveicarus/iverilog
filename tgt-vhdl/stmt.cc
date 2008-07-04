@@ -102,34 +102,30 @@ static int draw_noop(vhdl_procedural *proc, stmt_container *container,
    return 0;
 }
 
-/*
- * A non-blocking assignment inside a process. The semantics for
- * this are essentially the same as VHDL's non-blocking signal
- * assignment.
- */
-static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
-                         ivl_statement_t stmt, vhdl_expr *after = NULL)
+template <class T>
+static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
+                          ivl_statement_t stmt, bool blocking)
 {
    int nlvals = ivl_stmt_lvals(stmt);
    if (nlvals != 1) {
       error("Can only have 1 lval at the moment (found %d)", nlvals);
-      return 1;
+      return NULL;
    }
-
-   assert(proc->get_scope()->allow_signal_assignment());
 
    ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
    ivl_signal_t sig;
    if ((sig = ivl_lval_sig(lval))) {
-      const char *signame = get_renamed_signal(sig).c_str();
+      std::string signame(get_renamed_signal(sig));
 
       vhdl_decl *decl = proc->get_scope()->get_decl(signame);
       assert(decl);
 
       vhdl_expr *rhs_raw = translate_expr(ivl_stmt_rval(stmt));
       if (NULL == rhs_raw)
-         return 1;
+         return NULL;
       vhdl_expr *rhs = rhs_raw->cast(decl->get_type());
+      
+      bool isvar = strip_var(signame) != signame;
 
       // Where possible, move constant assignments into the
       // declaration as initializers. This optimisation is only
@@ -147,63 +143,12 @@ static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
       // internal signals not ports
       if (proc->get_scope()->initializing()
           && ivl_signal_port(sig) == IVL_SIP_NONE
-          && !decl->has_initial() && rhs->constant()) {
-
-         decl->set_initial(rhs);
-      }
-      else {
-         // The type here can be null as it is never actually needed
-         vhdl_var_ref *lval_ref = new vhdl_var_ref(signame, NULL);
-         
-         vhdl_nbassign_stmt *assign = new vhdl_nbassign_stmt(lval_ref, rhs);
-         if (after != NULL)
-            assign->set_after(after);
-         container->add_stmt(assign);
-      }
-   }
-   else {
-      error("Only signals as lvals supported at the moment");
-      return 1;
-   }
-   
-   return 0;
-}
-
-static int draw_assign(vhdl_procedural *proc, stmt_container *container,
-                       ivl_statement_t stmt)
-{
-   int nlvals = ivl_stmt_lvals(stmt);
-   if (nlvals != 1) {
-      error("Can only have 1 lval at the moment (found %d)", nlvals);
-      return 1;
-   }
-
-   ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
-   ivl_signal_t sig;
-   if ((sig = ivl_lval_sig(lval))) {
-      const std::string signame(get_renamed_signal(sig));
-
-      vhdl_decl *decl = proc->get_scope()->get_decl(signame);
-      assert(decl);
-
-      vhdl_expr *rhs_raw = translate_expr(ivl_stmt_rval(stmt));
-      if (NULL == rhs_raw)
-         return 1;
-      vhdl_expr *rhs = rhs_raw->cast(decl->get_type());
-
-      bool isvar = strip_var(signame) != signame;
-
-      // As with non-blocking assignment, push constant assignments
-      // into the initialisation if we can (but only if this is
-      // the first time we assign to this variable).
-      if (proc->get_scope()->initializing()
-          && ivl_signal_port(sig) == IVL_SIP_NONE
-          && rhs->constant() && !decl->has_initial()
+          && !decl->has_initial() && rhs->constant()
           && !isvar) {
 
          decl->set_initial(rhs);
-
-         if (proc->get_scope()->allow_signal_assignment()) {
+         
+         if (blocking && proc->get_scope()->allow_signal_assignment()) {
             // This signal may be used e.g. in a loop test so we need
             // to make a variable as well
             blocking_assign_to(proc, sig);
@@ -214,32 +159,67 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
             vhdl_var_ref *lval_ref = new vhdl_var_ref(renamed.c_str(), NULL);
             vhdl_var_ref *sig_ref = new vhdl_var_ref(signame.c_str(), NULL);
             
-            vhdl_assign_stmt *assign = new vhdl_assign_stmt(lval_ref, sig_ref);
-            container->add_stmt(assign);
+            return new T(lval_ref, sig_ref);
          }
+         else
+            return NULL;   // No statement need be emitted
       }
       else {
-         if (proc->get_scope()->allow_signal_assignment()) {
+         if (blocking && proc->get_scope()->allow_signal_assignment()) {
             // Remember we need to write the variable back to the
             // original signal
             blocking_assign_to(proc, sig);
-         }
 
-         // The signal may have been renamed by the above call
-         const std::string &renamed = get_renamed_signal(sig);
+            // The signal may have been renamed by the above call
+            signame = get_renamed_signal(sig);
+         }
          
          // The type here can be null as it is never actually needed
-         vhdl_var_ref *lval_ref = new vhdl_var_ref(renamed.c_str(), NULL);
+         vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), NULL);
          
-         vhdl_assign_stmt *assign = new vhdl_assign_stmt(lval_ref, rhs);
-         container->add_stmt(assign);
+         return new T(lval_ref, rhs);
       }
    }
    else {
       error("Only signals as lvals supported at the moment");
-      return 1;
+      return NULL;
    }
+}
+
+/*
+ * A non-blocking assignment inside a process. The semantics for
+ * this are essentially the same as VHDL's non-blocking signal
+ * assignment.
+ */
+static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
+                         ivl_statement_t stmt, vhdl_expr *after = NULL)
+{
+   assert(proc->get_scope()->allow_signal_assignment());
+
+   vhdl_nbassign_stmt *a =
+      make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);
    
+   if (a != NULL) {
+      // Assignment is a statement and not moved into the initialisation
+      if (after != NULL)
+         a->set_after(after);
+      container->add_stmt(a);   
+   }
+      
+   return 0;
+}
+
+static int draw_assign(vhdl_procedural *proc, stmt_container *container,
+                       ivl_statement_t stmt)
+{
+   vhdl_assign_stmt *a =
+      make_assignment<vhdl_assign_stmt>(proc, container, stmt, true);
+
+   if (a != NULL) {
+      // Assignment is a statement and not moved into the initialisation
+      container->add_stmt(a);
+   }
+
    return 0;
 }
 
