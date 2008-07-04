@@ -103,6 +103,17 @@ static vhdl_expr *translate_relation(vhdl_expr *lhs, vhdl_expr *rhs,
    return new vhdl_binop_expr(lhs, op, r_cast, vhdl_type::boolean());
 }
 
+/*
+ * Like translate_relation but both operands must be Boolean.
+ */
+static vhdl_expr *translate_logical(vhdl_expr *lhs, vhdl_expr *rhs,
+                                    vhdl_binop_t op)
+{
+   vhdl_type boolean(VHDL_TYPE_BOOLEAN);
+
+   return translate_relation(lhs->cast(&boolean), rhs->cast(&boolean), op);
+}
+
 static vhdl_expr *translate_shift(vhdl_expr *lhs, vhdl_expr *rhs,
                                   vhdl_binop_t op)
 {
@@ -173,9 +184,9 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    case '&':    // Bitwise AND
       return translate_numeric(lhs, rhs, VHDL_BINOP_AND);
    case 'a':    // Logical AND
-      return translate_relation(lhs, rhs, VHDL_BINOP_AND);
-   case 'o':
-      return translate_relation(lhs, rhs, VHDL_BINOP_OR);
+      return translate_logical(lhs, rhs, VHDL_BINOP_AND);
+   case 'o':    // Logical OR
+      return translate_logical(lhs, rhs, VHDL_BINOP_OR);
    case '<':
       return translate_relation(lhs, rhs, VHDL_BINOP_LT);
    case '>':
