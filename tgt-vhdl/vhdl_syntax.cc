@@ -417,7 +417,15 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
 
 vhdl_expr *vhdl_expr::resize(int newwidth)
 {
-   vhdl_type *rtype = vhdl_type::nsigned(newwidth);     
+   vhdl_type *rtype;
+   assert(type_);
+   if (type_->get_name() == VHDL_TYPE_SIGNED)
+      rtype = vhdl_type::nsigned(newwidth);
+   else if (type_->get_name() == VHDL_TYPE_UNSIGNED)
+      rtype = vhdl_type::nunsigned(newwidth);
+   else
+      assert(false);   // Doesn't make sense to resize non-vector type
+   
    vhdl_fcall *resize = new vhdl_fcall("Resize", rtype);
    resize->add_expr(this);
    resize->add_expr(new vhdl_const_int(newwidth));
