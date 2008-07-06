@@ -217,12 +217,13 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
          container->add_stmt(vhdif);         
          return NULL;
       }
-
-      vhdl_expr *rhs = translate_expr(rval);
-      if (NULL == rhs)
-         return NULL;
-
-      return make_vhdl_assignment<T>(proc, container, sig, rhs, blocking);
+      else {
+         vhdl_expr *rhs = translate_expr(rval);
+         if (NULL == rhs)
+            return NULL;
+         
+         return make_vhdl_assignment<T>(proc, container, sig, rhs, blocking);
+      }
    }
    else {
       error("Only signals as lvals supported at the moment");
