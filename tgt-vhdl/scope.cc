@@ -185,7 +185,7 @@ static std::string make_safe_name(ivl_signal_t sig)
    
    const char *vhdl_reserved[] = {
       "in", "out", "entity", "architecture", "inout", "array",
-      "is", "not", "and", "or", "bus", "bit", // Etc...
+      "is", "not", "and", "or", "bus", "bit", "line", // Etc...
       NULL
    };
    for (const char **p = vhdl_reserved; *p != NULL; p++) {
@@ -354,16 +354,16 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    // result of the expression and that is mapped to the port
    // This is actually a bit stricter than necessary: but turns out
    // to be much easier to implement
-   const char *basename = ivl_signal_basename(to);
+   std::string name = make_safe_name(to);
    vhdl_var_ref *to_ref;
    if ((to_ref = dynamic_cast<vhdl_var_ref*>(to_e))) {
-      inst->map_port(basename, to_ref);
+      inst->map_port(name.c_str(), to_ref);
    }
    else {
       // Not a static expression
       std::string tmpname(inst->get_inst_name().c_str());
       tmpname += "_";
-      tmpname += basename;
+      tmpname += name;
       tmpname += "_Expr";
       
       vhdl_type *tmptype = new vhdl_type(*to_e->get_type());
@@ -374,7 +374,7 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
       parent->get_arch()->add_stmt(new vhdl_cassign_stmt(tmp_ref1, to_e));
 
       vhdl_var_ref *tmp_ref2 = new vhdl_var_ref(*tmp_ref1);
-      inst->map_port(basename, tmp_ref2);
+      inst->map_port(name.c_str(), tmp_ref2);
    }
 }
 

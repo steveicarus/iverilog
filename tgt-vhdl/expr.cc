@@ -218,6 +218,29 @@ static vhdl_expr *translate_select(ivl_expr_t e)
    return from->resize(ivl_expr_width(e));
 }
 
+static vhdl_type *expr_to_vhdl_type(ivl_expr_t e)
+{
+   if (ivl_expr_signed(e))
+      return vhdl_type::nsigned(ivl_expr_width(e));
+   else
+      return vhdl_type::nunsigned(ivl_expr_width(e));
+}
+
+template <class T>
+static T *translate_parms(T *t, ivl_expr_t e)
+{
+   int nparams = ivl_expr_parms(e);
+   for (int i = 0; i < nparams; i++) {
+      vhdl_expr *param = translate_expr(ivl_expr_parm(e, i));
+      if (NULL == param)
+         return NULL;
+
+      t->add_expr(param);
+   }
+
+   return t;
+}
+
 static vhdl_expr *translate_ufunc(ivl_expr_t e)
 {
    ivl_scope_t defscope = ivl_expr_def(e);
@@ -232,24 +255,10 @@ static vhdl_expr *translate_ufunc(ivl_expr_t e)
 
    const char *funcname = ivl_scope_tname(defscope);
 
-   vhdl_type *rettype;
-   if (ivl_expr_signed(e))
-      rettype = vhdl_type::nsigned(ivl_expr_width(e));
-   else
-      rettype = vhdl_type::nunsigned(ivl_expr_width(e));
-   
+   vhdl_type *rettype = expr_to_vhdl_type(e);
    vhdl_fcall *fcall = new vhdl_fcall(funcname, rettype);
 
-   int nparams = ivl_expr_parms(e);
-   for (int i = 0; i < nparams; i++) {
-      vhdl_expr *param = translate_expr(ivl_expr_parm(e, i));
-      if (NULL == param)
-         return NULL;
-
-      fcall->add_expr(param);
-   }
-
-   return fcall;
+   return translate_parms<vhdl_fcall>(fcall, e);
 }
 
 static vhdl_expr *translate_ternary(ivl_expr_t e)
@@ -257,6 +266,14 @@ static vhdl_expr *translate_ternary(ivl_expr_t e)
    error("Ternary expression only supported as RHS of assignment");
    
    return NULL;
+}
+
+static vhdl_expr *translate_concat(ivl_expr_t e)
+{
+   vhdl_type *rtype = expr_to_vhdl_type(e);
+   vhdl_binop_expr *concat = new vhdl_binop_expr(VHDL_BINOP_CONCAT, rtype);
+
+   return translate_parms<vhdl_binop_expr>(concat, e);
 }
 
 /*
@@ -284,6 +301,8 @@ vhdl_expr *translate_expr(ivl_expr_t e)
       return translate_ufunc(e);
    case IVL_EX_TERNARY:
       return translate_ternary(e);
+   case IVL_EX_CONCAT:
+      return translate_concat(e);
    default:
       error("No VHDL translation for expression at %s:%d (type = %d)",
             ivl_expr_file(e), ivl_expr_lineno(e), type);
