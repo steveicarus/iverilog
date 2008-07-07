@@ -100,6 +100,14 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
 static vhdl_expr *translate_numeric(vhdl_expr *lhs, vhdl_expr *rhs,
                                     vhdl_binop_t op)
 {
+   // May need to make either side Boolean for operators
+   // to work
+   vhdl_type boolean(VHDL_TYPE_BOOLEAN);
+   if (lhs->get_type()->get_name() == VHDL_TYPE_BOOLEAN)
+      rhs = rhs->cast(&boolean);
+   else if (rhs->get_type()->get_name() == VHDL_TYPE_BOOLEAN)
+      lhs = lhs->cast(&boolean);
+
    vhdl_type *rtype = new vhdl_type(*lhs->get_type());
    return new vhdl_binop_expr(lhs, op, rhs, rtype);
 }
@@ -145,7 +153,7 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    vhdl_expr *rhs = translate_expr(ivl_expr_oper2(e));
    if (NULL == rhs)
       return NULL;
-   
+
    int lwidth = lhs->get_type()->get_width();
    int rwidth = rhs->get_type()->get_width();
 
