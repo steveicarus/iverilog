@@ -134,6 +134,31 @@ static int draw_ufunc_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
    return 0;
 }
 
+static int draw_reduction_lpm(vhdl_arch *arch, ivl_lpm_t lpm, const char *rfunc,
+                              bool invert)
+{
+   vhdl_fcall *fcall = new vhdl_fcall(rfunc, vhdl_type::std_logic());
+
+   vhdl_var_ref *ref = nexus_to_var_ref(arch->get_scope(), ivl_lpm_data(lpm, 0));
+   if (NULL == ref)
+      return 1;
+   
+   fcall->add_expr(ref);
+
+   vhdl_var_ref *out = nexus_to_var_ref(arch->get_scope(), ivl_lpm_q(lpm, 0));
+   if (NULL == out)
+      return 1;
+
+   if (invert)
+      arch->add_stmt
+         (new vhdl_cassign_stmt
+          (out, new vhdl_unaryop_expr(VHDL_UNARYOP_NOT, fcall, vhdl_type::std_logic())));
+   else
+      arch->add_stmt(new vhdl_cassign_stmt(out, fcall));
+
+   return 0;
+}
+
 int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
 {
    switch (ivl_lpm_type(lpm)) {
@@ -151,6 +176,18 @@ int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
       return draw_part_select_vp_lpm(arch, lpm);
    case IVL_LPM_UFUNC:
       return draw_ufunc_lpm(arch, lpm);
+   case IVL_LPM_RE_AND:
+      return draw_reduction_lpm(arch, lpm, "Reduce_AND", false);
+   case IVL_LPM_RE_NAND:
+      return draw_reduction_lpm(arch, lpm, "Reduce_AND", true);
+   case IVL_LPM_RE_NOR:
+      return draw_reduction_lpm(arch, lpm, "Reduce_OR", true);
+   case IVL_LPM_RE_OR:
+      return draw_reduction_lpm(arch, lpm, "Reduce_OR", false);
+   case IVL_LPM_RE_XOR:
+      return draw_reduction_lpm(arch, lpm, "Reduce_XOR", false);
+   case IVL_LPM_RE_XNOR:
+      return draw_reduction_lpm(arch, lpm, "Reduce_XNOR", false);
    default:
       error("Unsupported LPM type: %d", ivl_lpm_type(lpm));
       return 1;

@@ -31,11 +31,11 @@ package body Verilog_Support is
   function Reduce_OR(X : unsigned) return std_logic is
   begin
     for I in X'range loop
-      if X(I) /= '1' then
-        return '0';
+      if X(I) = '1' then
+        return '1';
       end if;
     end loop;
-    return '1';
+    return '0';
   end function;  
   
 end Verilog_Support;
