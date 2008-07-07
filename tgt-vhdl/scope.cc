@@ -164,7 +164,7 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
    int nlogs = ivl_scope_logs(scope);
    for (int i = 0; i < nlogs; i++) {
       ivl_net_logic_t log = ivl_scope_log(scope, i);
-
+      
       // The output is always pin zero
       ivl_nexus_t output = ivl_logic_pin(log, 0);
       vhdl_var_ref *lhs =

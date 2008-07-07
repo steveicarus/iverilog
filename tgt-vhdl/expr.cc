@@ -68,12 +68,23 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
    vhdl_expr *operand = translate_expr(ivl_expr_oper1(e));
    if (NULL == operand)
       return NULL;
-      
-   switch (ivl_expr_opcode(e)) {
+
+   char opcode = ivl_expr_opcode(e);
+   switch (opcode) {
    case '!':
    case '~':
       return new vhdl_unaryop_expr
          (VHDL_UNARYOP_NOT, operand, new vhdl_type(*operand->get_type()));
+   case 'N':   // NOR
+   case '|':
+      {
+         vhdl_fcall *f = new vhdl_fcall("Reduce_OR", vhdl_type::std_logic());
+         f->add_expr(operand);
+         if ('N' == opcode)
+            return new vhdl_unaryop_expr(VHDL_UNARYOP_NOT, f, vhdl_type::std_logic());
+         else
+            return f;
+      }
    default:
       error("No translation for unary opcode '%c'\n",
             ivl_expr_opcode(e));
