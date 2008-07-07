@@ -159,6 +159,23 @@ static int draw_reduction_lpm(vhdl_arch *arch, ivl_lpm_t lpm, const char *rfunc,
    return 0;
 }
 
+static int draw_sign_extend_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
+{
+   vhdl_expr *ref = nexus_to_var_ref(arch->get_scope(), ivl_lpm_data(lpm, 0));
+   if (NULL == ref)
+      return 1;
+
+   ref = ref->resize(ivl_lpm_width(lpm));
+   
+   vhdl_var_ref *out = nexus_to_var_ref(arch->get_scope(), ivl_lpm_q(lpm, 0));
+   if (NULL == out)
+      return 1;
+
+   arch->add_stmt(new vhdl_cassign_stmt(out, ref));
+   
+   return 0;
+}
+
 int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
 {
    switch (ivl_lpm_type(lpm)) {
@@ -188,6 +205,8 @@ int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
       return draw_reduction_lpm(arch, lpm, "Reduce_XOR", false);
    case IVL_LPM_RE_XNOR:
       return draw_reduction_lpm(arch, lpm, "Reduce_XNOR", false);
+   case IVL_LPM_SIGN_EXT:
+      return draw_sign_extend_lpm(arch, lpm);
    default:
       error("Unsupported LPM type: %d", ivl_lpm_type(lpm));
       return 1;

@@ -101,6 +101,8 @@ bool seen_signal_before(ivl_signal_t sig)
 void remember_signal(ivl_signal_t sig, const vhdl_scope *scope)
 {
    assert(!seen_signal_before(sig));
+
+   std::cout << "remember_signal " << ivl_signal_name(sig) << std::endl;
    
    signal_defn_t defn = { ivl_signal_basename(sig), scope };
    g_known_signals[sig] = defn;

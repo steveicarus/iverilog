@@ -184,6 +184,8 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
       return translate_numeric(lhs, rhs, VHDL_BINOP_ADD);
    case '-':
       return translate_numeric(lhs, rhs, VHDL_BINOP_SUB);
+   case '*':
+      return translate_numeric(lhs, rhs, VHDL_BINOP_MULT);
    case 'e':
       return translate_relation(lhs, rhs, VHDL_BINOP_EQ);
    case 'E':

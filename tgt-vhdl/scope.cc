@@ -26,6 +26,7 @@
 #include <cassert>
 
 static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log);
+static std::string make_safe_name(ivl_signal_t sig);
 
 /*
  * Given a nexus find a constant value in it that can be used
@@ -62,6 +63,8 @@ static vhdl_expr *nexus_to_const(ivl_nexus_t nexus)
 static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
                                 ivl_signal_t ignore = NULL)
 {
+   std::cout << "nexus_to_expr " << ivl_nexus_name(nexus) << std::endl;
+   
    int nptrs = ivl_nexus_ptrs(nexus);
    for (int i = 0; i < nptrs; i++) {
       ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
@@ -86,7 +89,10 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
          return translate_logic(arch_scope, log);
       }
       else if ((lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
-         error("LPM in nexus not implemented yet");
+         std::string basename("VL_");
+         basename += ivl_lpm_basename(lpm);
+         
+         return new vhdl_var_ref(basename.c_str(), vhdl_type::std_logic());
       }
       else {
          // Ignore other types of nexus pointer
