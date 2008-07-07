@@ -15,7 +15,9 @@ package Verilog_Support is
 
   -- Routines to implement Verilog reduction operators
   function Reduce_OR(X : unsigned) return std_logic;
-  
+
+  -- Convert Boolean to std_logic
+  function Active_High(B : Boolean) return std_logic;
   
 end Verilog_Support;
 
@@ -36,6 +38,15 @@ package body Verilog_Support is
       end if;
     end loop;
     return '0';
-  end function;  
+  end function;
+
+  function Active_High(B : Boolean) return std_logic is
+  begin
+    if B then
+      return '1';
+    else
+      return '0';
+    end if;
+  end function;      
   
 end Verilog_Support;

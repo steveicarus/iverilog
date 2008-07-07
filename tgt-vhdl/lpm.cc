@@ -89,7 +89,7 @@ static int draw_part_select_vp_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
    if (NULL == out)
       return 1;
 
-   selfrom->set_slice(off);
+   selfrom->set_slice(off, ivl_lpm_width(lpm) - 1);
    arch->add_stmt(new vhdl_cassign_stmt(out, selfrom));
    return 0;
 }
@@ -108,7 +108,7 @@ static int draw_part_select_pv_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
    if (NULL == out)
       return 1;
 
-   out->set_slice(off);
+   out->set_slice(off, ivl_lpm_width(lpm) - 1);
    arch->add_stmt(new vhdl_cassign_stmt(out, selfrom));
    return 0;
 }

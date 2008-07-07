@@ -400,6 +400,16 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
 
       return conv;
    }
+   else if (to->get_name() == VHDL_TYPE_STD_LOGIC &&
+            type_->get_name() == VHDL_TYPE_BOOLEAN) {
+      // Verilog assumes active-high logic and there
+      // is a special routine in verilog_support.vhd
+      // to do this for us
+      vhdl_fcall *ah = new vhdl_fcall("Active_High", vhdl_type::std_logic());
+      ah->add_expr(this);
+
+      return ah;
+   }
    else {
       // We have to cast the expression before resizing or the
       // wrong sign bit may be extended (i.e. when casting between
