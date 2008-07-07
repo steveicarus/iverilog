@@ -60,13 +60,13 @@ public:
    static vhdl_type *string();
    static vhdl_type *line();
    static vhdl_type *std_logic_vector(int msb, int lsb);
-   static vhdl_type *nunsigned(int width);
-   static vhdl_type *nsigned(int width);
+   static vhdl_type *nunsigned(int width, int lsb=0);
+   static vhdl_type *nsigned(int width, int lsb=0);
    static vhdl_type *integer();
    static vhdl_type *boolean();
    static vhdl_type *time();
 
-   static vhdl_type *type_for(int width, bool issigned);
+   static vhdl_type *type_for(int width, bool issigned, int lsb=0);
 protected:
    vhdl_type_name_t name_;
    int msb_, lsb_;

@@ -48,14 +48,14 @@ vhdl_type *vhdl_type::integer()
    return new vhdl_type(VHDL_TYPE_INTEGER);
 }
 
-vhdl_type *vhdl_type::nunsigned(int width)
+vhdl_type *vhdl_type::nunsigned(int width, int lsb)
 {
-   return new vhdl_type(VHDL_TYPE_UNSIGNED, width-1, 0);
+   return new vhdl_type(VHDL_TYPE_UNSIGNED, width-1+lsb, lsb);
 }
 
-vhdl_type *vhdl_type::nsigned(int width)
+vhdl_type *vhdl_type::nsigned(int width, int lsb)
 {
-   return new vhdl_type(VHDL_TYPE_SIGNED, width-1, 0);
+   return new vhdl_type(VHDL_TYPE_SIGNED, width-1+lsb, lsb);
 }
 
 vhdl_type *vhdl_type::time()
@@ -122,12 +122,12 @@ vhdl_type *vhdl_type::std_logic_vector(int msb, int lsb)
    return new vhdl_type(VHDL_TYPE_STD_LOGIC_VECTOR, msb, lsb);
 }
 
-vhdl_type *vhdl_type::type_for(int width, bool issigned)
+vhdl_type *vhdl_type::type_for(int width, bool issigned, int lsb)
 {
-   if (width == 0)
+   if (width == 1)
       return vhdl_type::std_logic();
    else if (issigned)
-      return vhdl_type::nsigned(width);
+      return vhdl_type::nsigned(width, lsb);
    else
-      return vhdl_type::nunsigned(width);
+      return vhdl_type::nunsigned(width, lsb);
 }

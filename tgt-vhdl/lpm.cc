@@ -90,8 +90,6 @@ static vhdl_expr *part_select_base(vhdl_scope *scope, ivl_lpm_t lpm)
 
 static vhdl_expr *draw_part_select_vp_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
 {
-   std::cout << "Part select vp" << std::endl;
-   
    vhdl_var_ref *selfrom = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
    if (NULL == selfrom)
       return NULL;
@@ -167,8 +165,6 @@ static vhdl_expr *draw_sign_extend_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
 
 vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
-   std::cout << "LPM type " << ivl_lpm_type(lpm) << std::endl;
-   
    switch (ivl_lpm_type(lpm)) {
    case IVL_LPM_ADD:
       return draw_binop_lpm(scope, lpm, VHDL_BINOP_ADD);

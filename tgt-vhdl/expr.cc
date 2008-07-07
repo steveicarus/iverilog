@@ -157,28 +157,29 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    int lwidth = lhs->get_type()->get_width();
    int rwidth = rhs->get_type()->get_width();
 
+   std::cout << "opwidth = " << ivl_expr_width(e)
+             << " lwidth = " << lwidth
+             << " rwidth = " << rwidth << std::endl;
+   
    // May need to resize the left or right hand side
-   int opwidth;
-   if (lwidth < rwidth) {
-      rhs = rhs->cast(lhs->get_type());
-      opwidth = lwidth;
+   /*if (lwidth < rwidth) {
+      lhs = lhs->cast(rhs->get_type());
    }
    else if (rwidth < lwidth) {
-      lhs = lhs->cast(rhs->get_type());
-      opwidth = rwidth;
-   }
-   else
-      opwidth = lwidth;
+      rhs = rhs->cast(lhs->get_type());
+      }*/
 
+   int result_width = ivl_expr_width(e);
+   
    // For === and !== we need to compare std_logic_vectors
    // rather than signeds
-   vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR, opwidth-1, 0);
+   vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR, result_width-1, 0);
    bool vectorop =
       (lhs->get_type()->get_name() == VHDL_TYPE_SIGNED
        || lhs->get_type()->get_name() == VHDL_TYPE_UNSIGNED) &&
       (rhs->get_type()->get_name() == VHDL_TYPE_SIGNED
        || rhs->get_type()->get_name() == VHDL_TYPE_UNSIGNED);
-      
+   
    switch (ivl_expr_opcode(e)) {
    case '+':
       return translate_numeric(lhs, rhs, VHDL_BINOP_ADD);
@@ -244,7 +245,7 @@ static vhdl_expr *translate_select(ivl_expr_t e)
    if (o2) {
       vhdl_expr *base = translate_expr(ivl_expr_oper2(e));
       if (NULL == base)
-         return NULL;   
+         return NULL;
 
       vhdl_type integer(VHDL_TYPE_INTEGER);
       from->set_slice(base->cast(&integer), ivl_expr_width(e) - 1);

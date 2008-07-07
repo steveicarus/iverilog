@@ -434,7 +434,7 @@ vhdl_expr *vhdl_expr::resize(int newwidth)
    else if (type_->get_name() == VHDL_TYPE_UNSIGNED)
       rtype = vhdl_type::nunsigned(newwidth);
    else
-      assert(false);   // Doesn't make sense to resize non-vector type
+      return this;   // Doesn't make sense to resize non-vector type
    
    vhdl_fcall *resize = new vhdl_fcall("Resize", rtype);
    resize->add_expr(this);

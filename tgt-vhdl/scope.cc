@@ -63,8 +63,6 @@ static vhdl_expr *nexus_to_const(ivl_nexus_t nexus)
 static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
                                 ivl_signal_t ignore = NULL)
 {
-   std::cout << "nexus_to_expr " << ivl_nexus_name(nexus) << std::endl;
-   
    int nptrs = ivl_nexus_ptrs(nexus);
    for (int i = 0; i < nptrs; i++) {
       ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
@@ -89,7 +87,6 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
          return translate_logic(arch_scope, log);
       }
       else if ((lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
-         std::cout << "LPM to expr" << std::endl;
          vhdl_expr *e = lpm_to_expr(arch_scope, lpm);
          if (e)
             return e;
@@ -254,7 +251,8 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
       ivl_signal_t sig = ivl_scope_sig(scope, i);      
       remember_signal(sig, ent->get_arch()->get_scope());
 
-      vhdl_type *sig_type = get_signal_type(sig);
+      vhdl_type *sig_type =
+         vhdl_type::type_for(ivl_signal_width(sig), ivl_signal_signed(sig) != 0);
       
       std::string name = make_safe_name(sig);
       rename_signal(sig, name);
