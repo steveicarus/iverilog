@@ -110,14 +110,22 @@ static int draw_noop(vhdl_procedural *proc, stmt_container *container,
  */
 template <class T>
 static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
-                               ivl_signal_t sig, vhdl_expr *rhs, bool blocking)
+                               ivl_signal_t sig, vhdl_expr *rhs, bool blocking,
+                               vhdl_expr *base = NULL)
 {
    std::string signame(get_renamed_signal(sig));
 
    vhdl_decl *decl = proc->get_scope()->get_decl(signame);
    assert(decl);
 
-   rhs = rhs->cast(decl->get_type());
+   // TODO: Fix casting when there is a part select
+   if (base == NULL)
+      rhs = rhs->cast(decl->get_type());
+
+   if (base) {
+      vhdl_type integer(VHDL_TYPE_INTEGER);
+      base = base->cast(&integer);
+   }
       
    bool isvar = strip_var(signame) != signame;
 
@@ -154,6 +162,9 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
          vhdl_var_ref *lval_ref = new vhdl_var_ref(renamed.c_str(), NULL);
          vhdl_var_ref *sig_ref = new vhdl_var_ref(signame.c_str(), NULL);
 
+         if (base)
+            lval_ref->set_slice(base);
+
          T *a = new T(lval_ref, sig_ref);
          container->add_stmt(a);
             
@@ -174,6 +185,8 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
          
       // The type here can be null as it is never actually needed
       vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), NULL);
+      if (base)
+         lval_ref->set_slice(base);
          
       T *a = new T(lval_ref, rhs);
       container->add_stmt(a);
@@ -198,6 +211,14 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
    ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
    ivl_signal_t sig;
    if ((sig = ivl_lval_sig(lval))) {
+
+      vhdl_expr *base = NULL;
+      ivl_expr_t e_off = ivl_lval_part_off(lval);
+      if (e_off) {
+         if ((base = translate_expr(e_off)) == NULL)
+            return NULL;
+      }      
+      
       ivl_expr_t rval = ivl_stmt_rval(stmt);
       if (ivl_expr_type(rval) == IVL_EX_TERNARY) {
          // Expand ternary expressions into an if statement
@@ -210,9 +231,9 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
 
          vhdl_if_stmt *vhdif = new vhdl_if_stmt(test);
          make_vhdl_assignment<T>(proc, vhdif->get_then_container(), sig,
-                                 true_part, blocking);
+                                 true_part, blocking, base);
          make_vhdl_assignment<T>(proc, vhdif->get_else_container(), sig,
-                                 false_part, blocking);
+                                 false_part, blocking, base);
 
          container->add_stmt(vhdif);         
          return NULL;
@@ -222,7 +243,7 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
          if (NULL == rhs)
             return NULL;
          
-         return make_vhdl_assignment<T>(proc, container, sig, rhs, blocking);
+         return make_vhdl_assignment<T>(proc, container, sig, rhs, blocking, base);
       }
    }
    else {

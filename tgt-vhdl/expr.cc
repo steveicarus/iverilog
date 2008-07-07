@@ -212,10 +212,22 @@ static vhdl_expr *translate_select(ivl_expr_t e)
 {
    vhdl_expr *from = translate_expr(ivl_expr_oper1(e));
    if (NULL == from)
-      return NULL;   
-   
-   // Hack: resize it to the correct size
-   return from->resize(ivl_expr_width(e));
+      return NULL;
+
+   ivl_expr_t o2 = ivl_expr_oper2(e);
+   if (o2) {
+      vhdl_expr *off = translate_expr(ivl_expr_oper2(e));
+      if (NULL == off)
+         return NULL;
+      
+      vhdl_var_ref *ref = dynamic_cast<vhdl_var_ref*>(from);
+      assert(ref);
+      
+      ref->set_slice(off);
+      return ref;
+   }
+   else   
+      return from;
 }
 
 static vhdl_type *expr_to_vhdl_type(ivl_expr_t e)
