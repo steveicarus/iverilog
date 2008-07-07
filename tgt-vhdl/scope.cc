@@ -68,6 +68,7 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
 
       ivl_signal_t sig;
       ivl_net_logic_t log;
+      ivl_lpm_t lpm;
       if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
          if (!seen_signal_before(sig) || sig == ignore)
             continue;
@@ -83,6 +84,9 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
       }
       else if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
          return translate_logic(arch_scope, log);
+      }
+      else if ((lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
+         error("LPM in nexus not implemented yet");
       }
       else {
          // Ignore other types of nexus pointer
