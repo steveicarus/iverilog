@@ -89,10 +89,10 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
          return translate_logic(arch_scope, log);
       }
       else if ((lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
-         std::string basename("VL_");
-         basename += ivl_lpm_basename(lpm);
-         
-         return new vhdl_var_ref(basename.c_str(), vhdl_type::std_logic());
+         std::cout << "LPM to expr" << std::endl;
+         vhdl_expr *e = lpm_to_expr(arch_scope, lpm);
+         if (e)
+            return e;
       }
       else {
          // Ignore other types of nexus pointer
@@ -104,10 +104,30 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
 
 vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
 {
-   vhdl_expr *e = nexus_to_expr(arch_scope, nexus);
-   vhdl_var_ref *ref = dynamic_cast<vhdl_var_ref*>(e);
-   assert(ref);
-   return ref;
+   int nptrs = ivl_nexus_ptrs(nexus);
+   for (int i = 0; i < nptrs; i++) {
+      ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
+
+      ivl_signal_t sig;
+      if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
+         if (!seen_signal_before(sig))
+            continue;
+         
+         const char *signame = get_renamed_signal(sig).c_str();
+         
+         vhdl_decl *decl = arch_scope->get_decl(signame);
+         if (NULL == decl)
+            continue;  // Not in this scope
+
+         vhdl_type *type = new vhdl_type(*(decl->get_type()));
+         return new vhdl_var_ref(signame, type);
+      }
+      else {
+         // Ignore other types of nexus pointer
+      }
+   }
+   
+   return NULL;
 }
 
 /*
@@ -359,6 +379,7 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    ivl_nexus_t nexus = ivl_signal_nex(to, 0);
 
    vhdl_expr *to_e = nexus_to_expr(parent->get_arch()->get_scope(), nexus, to);
+   assert(to_e);
 
    // The expressions in a VHDL port map must be 'globally static'
    // i.e. they can't be arbitrary expressions

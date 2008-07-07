@@ -33,10 +33,6 @@ static vhdl_expr *draw_binop_lpm(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t 
    if (NULL == rhs)
       return NULL;
 
-   vhdl_var_ref *out = nexus_to_var_ref(scope, ivl_lpm_q(lpm, 0));
-   if (NULL == out)
-      return NULL;
-
    vhdl_type *result_type = new vhdl_type(*lhs->get_type());
    vhdl_expr *expr = new vhdl_binop_expr(lhs, op, rhs, result_type);
 
@@ -75,6 +71,8 @@ static vhdl_expr *part_select_base(vhdl_scope *scope, ivl_lpm_t lpm)
 
 static vhdl_expr *draw_part_select_vp_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
 {
+   std::cout << "Part select vp" << std::endl;
+   
    vhdl_var_ref *selfrom = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
    if (NULL == selfrom)
       return NULL;
@@ -150,6 +148,8 @@ static vhdl_expr *draw_sign_extend_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
 
 vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
+   std::cout << "LPM type " << ivl_lpm_type(lpm) << std::endl;
+   
    switch (ivl_lpm_type(lpm)) {
    case IVL_LPM_ADD:
       return draw_binop_lpm(scope, lpm, VHDL_BINOP_ADD);
@@ -193,10 +193,9 @@ int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
          return 1;
         
       vhdl_var_ref *out = nexus_to_var_ref(arch->get_scope(), ivl_lpm_q(lpm, 0));
-      if (NULL == out)
-         return 1;
+      if (out)
+         arch->add_stmt(new vhdl_cassign_stmt(out, f));
       
-      arch->add_stmt(new vhdl_cassign_stmt(out, f));
       return 0;
    }
 }
