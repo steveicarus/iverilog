@@ -148,6 +148,9 @@ static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log)
       return inputs_to_expr(scope, VHDL_BINOP_OR, log);
    case IVL_LO_XOR:
       return inputs_to_expr(scope, VHDL_BINOP_XOR, log);
+   case IVL_LO_BUF:
+   case IVL_LO_BUFZ:
+      return nexus_to_expr(scope, ivl_logic_pin(log, 1));
    default:
       error("Don't know how to translate logic type = %d",
             ivl_logic_type(log));
