@@ -477,6 +477,10 @@ void vhdl_var_ref::emit(std::ostream &of, int level) const
    of << name_;
    if (slice_) {
       of << "(";
+      if (slice_width_ > 0) {
+         slice_->emit(of, level);
+         of << " + " << slice_width_ << " downto ";
+      }
       slice_->emit(of, level);
       of << ")";
    }

@@ -56,10 +56,11 @@ public:
    
    void emit(std::ostream &of, int level) const;
    const std::string &get_name() const { return name_; }
-   void set_slice(vhdl_expr *s) { slice_ = s; }
+   void set_slice(vhdl_expr *s, int w=0) { slice_ = s; slice_width_ = w; }
 private:
    std::string name_;
    vhdl_expr *slice_;
+   unsigned slice_width_;
 };
 
 
