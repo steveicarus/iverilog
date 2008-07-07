@@ -118,13 +118,25 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
    vhdl_decl *decl = proc->get_scope()->get_decl(signame);
    assert(decl);
 
-   // TODO: Fix casting when there is a part select
    if (base == NULL)
       rhs = rhs->cast(decl->get_type());
-
-   if (base) {
+   else {
       vhdl_type integer(VHDL_TYPE_INTEGER);
       base = base->cast(&integer);
+
+      // Doesn't make sense to part select on something that's
+      // not a vector
+      vhdl_type_name_t tname = decl->get_type()->get_name();
+      assert(tname == VHDL_TYPE_SIGNED || tname == VHDL_TYPE_UNSIGNED);
+
+      if (lval_width == 1) {
+         vhdl_type t(VHDL_TYPE_STD_LOGIC);
+         rhs = rhs->cast(&t);
+      }
+      else {
+         vhdl_type t(tname, lval_width);
+         rhs = rhs->cast(&t);
+      }  
    }
       
    bool isvar = strip_var(signame) != signame;
