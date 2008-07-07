@@ -23,19 +23,38 @@
 #include <iostream>
 #include <cassert>
 
+static vhdl_expr *draw_concat_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
+{
+   vhdl_type *result_type =
+      vhdl_type::type_for(ivl_lpm_width(lpm), ivl_lpm_signed(lpm) != 0);
+   vhdl_binop_expr *expr =
+      new vhdl_binop_expr(VHDL_BINOP_CONCAT, result_type);
+ 
+   for (int i = ivl_lpm_selects(lpm) - 1; i >= 0; i--) {
+      vhdl_expr *e = nexus_to_var_ref(scope, ivl_lpm_data(lpm, i));
+      if (NULL == e)
+         return NULL;
+
+      expr->add_expr(e);
+   }
+
+   return expr;
+}
+
 static vhdl_expr *draw_binop_lpm(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t op)
 {
-   vhdl_expr *lhs = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
-   if (NULL == lhs)
-      return NULL;
+   vhdl_type *result_type =
+      vhdl_type::type_for(ivl_lpm_width(lpm), ivl_lpm_signed(lpm) != 0);
+   vhdl_binop_expr *expr = new vhdl_binop_expr(op, result_type);
+ 
+   for (int i = 0; i < 2; i++) {
+      vhdl_expr *e = nexus_to_var_ref(scope, ivl_lpm_data(lpm, i));
+      if (NULL == e)
+         return NULL;
 
-   vhdl_expr *rhs = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 1));
-   if (NULL == rhs)
-      return NULL;
-
-   vhdl_type *result_type = new vhdl_type(*lhs->get_type());
-   vhdl_expr *expr = new vhdl_binop_expr(lhs, op, rhs, result_type);
-
+      expr->add_expr(e);
+   }
+   
    if (op == VHDL_BINOP_MULT) {
       // Need to resize the output to the desired size,
       // as this does not happen automatically in VHDL
@@ -46,10 +65,10 @@ static vhdl_expr *draw_binop_lpm(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t 
       resize->add_expr(expr);
       resize->add_expr(new vhdl_const_int(out_width));
       
-      expr = resize;
+      return resize;
    }
-
-   return expr;
+   else
+      return expr;
 }
 
 /*
@@ -158,7 +177,7 @@ vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    case IVL_LPM_MULT:
       return draw_binop_lpm(scope, lpm, VHDL_BINOP_MULT);
    case IVL_LPM_CONCAT:
-      return draw_binop_lpm(scope, lpm, VHDL_BINOP_CONCAT);
+      return draw_concat_lpm(scope, lpm);
    case IVL_LPM_PART_VP:
       return draw_part_select_vp_lpm(scope, lpm);
    case IVL_LPM_UFUNC:

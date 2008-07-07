@@ -65,6 +65,8 @@ public:
    static vhdl_type *integer();
    static vhdl_type *boolean();
    static vhdl_type *time();
+
+   static vhdl_type *type_for(int width, bool issigned);
 protected:
    vhdl_type_name_t name_;
    int msb_, lsb_;

@@ -121,3 +121,13 @@ vhdl_type *vhdl_type::std_logic_vector(int msb, int lsb)
 {
    return new vhdl_type(VHDL_TYPE_STD_LOGIC_VECTOR, msb, lsb);
 }
+
+vhdl_type *vhdl_type::type_for(int width, bool issigned)
+{
+   if (width == 0)
+      return vhdl_type::std_logic();
+   else if (issigned)
+      return vhdl_type::nsigned(width);
+   else
+      return vhdl_type::nunsigned(width);
+}
