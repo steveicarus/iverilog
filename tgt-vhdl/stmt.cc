@@ -194,9 +194,10 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
          // The signal may have been renamed by the above call
          signame = get_renamed_signal(sig);
       }
-         
-      // The type here can be null as it is never actually needed
-      vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), NULL);
+
+      vhdl_type *ltype =
+         new vhdl_type(*proc->get_scope()->get_decl(signame)->get_type());
+      vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), ltype);
       if (base)
          lval_ref->set_slice(base, lval_width-1);
          

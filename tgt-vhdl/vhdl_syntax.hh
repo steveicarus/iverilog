@@ -38,7 +38,7 @@ public:
    bool constant() const { return isconst_; }
    virtual vhdl_expr *cast(const vhdl_type *to);
    virtual vhdl_expr *resize(int newwidth);
-private:
+protected:
    vhdl_type *type_;
    bool isconst_;
 };
@@ -56,7 +56,7 @@ public:
    
    void emit(std::ostream &of, int level) const;
    const std::string &get_name() const { return name_; }
-   void set_slice(vhdl_expr *s, int w=0) { slice_ = s; slice_width_ = w; }
+   void set_slice(vhdl_expr *s, int w=0);
 private:
    std::string name_;
    vhdl_expr *slice_;
@@ -74,6 +74,8 @@ enum vhdl_binop_t {
    VHDL_BINOP_MULT,
    VHDL_BINOP_LT,
    VHDL_BINOP_GT,
+   VHDL_BINOP_LEQ,
+   VHDL_BINOP_GEQ,
    VHDL_BINOP_SL,
    VHDL_BINOP_SR,
    VHDL_BINOP_XOR,

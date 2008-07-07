@@ -212,8 +212,12 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
       return translate_logical(lhs, rhs, VHDL_BINOP_OR);
    case '<':
       return translate_relation(lhs, rhs, VHDL_BINOP_LT);
+   case 'L':
+      return translate_relation(lhs, rhs, VHDL_BINOP_LEQ);
    case '>':
       return translate_relation(lhs, rhs, VHDL_BINOP_GT);
+   case 'G':
+      return translate_relation(lhs, rhs, VHDL_BINOP_GEQ);
    case 'l':
       return translate_shift(lhs, rhs, VHDL_BINOP_SL);
    case 'r':
@@ -231,12 +235,23 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
 
 static vhdl_expr *translate_select(ivl_expr_t e)
 {
-   vhdl_expr *from = translate_expr(ivl_expr_oper1(e));
+   vhdl_var_ref *from =
+      dynamic_cast<vhdl_var_ref*>(translate_expr(ivl_expr_oper1(e)));
    if (NULL == from)
-      return NULL;   
-   
-   // Hack: resize it to the correct size
-   return from->resize(ivl_expr_width(e));
+      return NULL;
+
+   ivl_expr_t o2 = ivl_expr_oper2(e);
+   if (o2) {
+      vhdl_expr *base = translate_expr(ivl_expr_oper2(e));
+      if (NULL == base)
+         return NULL;   
+
+      vhdl_type integer(VHDL_TYPE_INTEGER);
+      from->set_slice(base->cast(&integer), ivl_expr_width(e) - 1);
+      return from;
+   }
+   else
+      return from->resize(ivl_expr_width(e));
 }
 
 static vhdl_type *expr_to_vhdl_type(ivl_expr_t e)

@@ -482,6 +482,25 @@ vhdl_var_ref::~vhdl_var_ref()
       delete slice_;
 }
 
+void vhdl_var_ref::set_slice(vhdl_expr *s, int w)
+{
+   assert(type_);
+   
+   vhdl_type_name_t tname = type_->get_name();
+   assert(tname == VHDL_TYPE_UNSIGNED || tname == VHDL_TYPE_SIGNED);
+   
+   slice_ = s;
+   slice_width_ = w;
+
+   if (type_)
+      delete type_;
+
+   if (w > 0)
+      type_ = new vhdl_type(tname, w);
+   else
+      type_ = vhdl_type::std_logic();   
+}
+
 void vhdl_var_ref::emit(std::ostream &of, int level) const
 {
    of << name_;
@@ -719,7 +738,7 @@ void vhdl_binop_expr::emit(std::ostream &of, int level) const
    while (++it != operands_.end()) {
       const char* ops[] = {
          "and", "or", "=", "/=", "+", "-", "*", "<",
-         ">", "sll", "srl", "xor", "&"
+         ">", "<=", ">=", "sll", "srl", "xor", "&"
       };
 
       of << " " << ops[op_] << " ";
