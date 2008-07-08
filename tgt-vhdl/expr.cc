@@ -69,6 +69,39 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
    if (NULL == operand)
       return NULL;
 
+   bool should_be_signed = ivl_expr_signed(e) != 0;
+   
+   if (operand->get_type()->get_name() == VHDL_TYPE_UNSIGNED && should_be_signed) {
+      //operand->print();
+      //std::cout << "^ should be signed but is not" << std::endl;
+      
+      int msb = operand->get_type()->get_msb();
+      int lsb = operand->get_type()->get_lsb();
+      vhdl_type u(VHDL_TYPE_SIGNED, msb, lsb);
+
+      operand = operand->cast(&u);
+   }
+   else if (operand->get_type()->get_name() == VHDL_TYPE_SIGNED && !should_be_signed) {
+      //operand->print();
+      //std::cout << "^ should be unsigned but is not" << std::endl;
+      
+      int msb = operand->get_type()->get_msb();
+      int lsb = operand->get_type()->get_lsb();
+      vhdl_type u(VHDL_TYPE_UNSIGNED, msb, lsb);
+
+      operand = operand->cast(&u);
+   }
+   
+   // Need to ensure that the operand is interpreted as unsigned to get VHDL
+   // to emulate Verilog behaviour
+   if (operand->get_type()->get_name() == VHDL_TYPE_SIGNED) {
+      int msb = operand->get_type()->get_msb();
+      int lsb = operand->get_type()->get_lsb();
+      vhdl_type u(VHDL_TYPE_UNSIGNED, msb, lsb);
+
+      operand = operand->cast(&u);
+   }
+
    char opcode = ivl_expr_opcode(e);
    switch (opcode) {
    case '!':
@@ -156,75 +189,89 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
 
    int lwidth = lhs->get_type()->get_width();
    int rwidth = rhs->get_type()->get_width();
-
-   std::cout << "opwidth = " << ivl_expr_width(e)
-             << " lwidth = " << lwidth
-             << " rwidth = " << rwidth << std::endl;
-   
-   // May need to resize the left or right hand side
-   /*if (lwidth < rwidth) {
-      lhs = lhs->cast(rhs->get_type());
-   }
-   else if (rwidth < lwidth) {
-      rhs = rhs->cast(lhs->get_type());
-      }*/
-
    int result_width = ivl_expr_width(e);
    
    // For === and !== we need to compare std_logic_vectors
    // rather than signeds
    vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR, result_width-1, 0);
+   vhdl_type_name_t ltype = lhs->get_type()->get_name();
+   vhdl_type_name_t rtype = rhs->get_type()->get_name();
    bool vectorop =
-      (lhs->get_type()->get_name() == VHDL_TYPE_SIGNED
-       || lhs->get_type()->get_name() == VHDL_TYPE_UNSIGNED) &&
-      (rhs->get_type()->get_name() == VHDL_TYPE_SIGNED
-       || rhs->get_type()->get_name() == VHDL_TYPE_UNSIGNED);
+      (ltype == VHDL_TYPE_SIGNED || ltype == VHDL_TYPE_UNSIGNED) &&
+      (rtype == VHDL_TYPE_SIGNED || rtype == VHDL_TYPE_UNSIGNED);
    
+   // May need to resize the left or right hand side
+   if (vectorop) {
+      if (lwidth < rwidth)
+         lhs = lhs->resize(rwidth);
+      else if (rwidth < lwidth)
+         rhs = rhs->resize(lwidth);
+   }
+
+   vhdl_expr *result;
    switch (ivl_expr_opcode(e)) {
    case '+':
-      return translate_numeric(lhs, rhs, VHDL_BINOP_ADD);
+      result = translate_numeric(lhs, rhs, VHDL_BINOP_ADD);
+      break;
    case '-':
-      return translate_numeric(lhs, rhs, VHDL_BINOP_SUB);
+      result = translate_numeric(lhs, rhs, VHDL_BINOP_SUB);
+      break;
    case '*':
-      return translate_numeric(lhs, rhs, VHDL_BINOP_MULT);
+      result = translate_numeric(lhs, rhs, VHDL_BINOP_MULT);
+      break;
    case 'e':
-      return translate_relation(lhs, rhs, VHDL_BINOP_EQ);
+      result = translate_relation(lhs, rhs, VHDL_BINOP_EQ);
+      break;
    case 'E':
       if (vectorop)
-         return translate_relation(lhs->cast(&std_logic_vector),
+         result = translate_relation(lhs->cast(&std_logic_vector),
                                    rhs->cast(&std_logic_vector), VHDL_BINOP_EQ);
       else
-         return translate_relation(lhs, rhs, VHDL_BINOP_EQ);
+         result = translate_relation(lhs, rhs, VHDL_BINOP_EQ);
+      break;
    case 'n':
-      return translate_relation(lhs, rhs, VHDL_BINOP_NEQ);
+      result = translate_relation(lhs, rhs, VHDL_BINOP_NEQ);
+      break;
    case 'N':
       if (vectorop)
-         return translate_relation(lhs->cast(&std_logic_vector),
+         result = translate_relation(lhs->cast(&std_logic_vector),
                                    rhs->cast(&std_logic_vector), VHDL_BINOP_NEQ);
       else
-         return translate_relation(lhs, rhs, VHDL_BINOP_NEQ);
+         result = translate_relation(lhs, rhs, VHDL_BINOP_NEQ);
+      break;
    case '&':    // Bitwise AND
-      return translate_numeric(lhs, rhs, VHDL_BINOP_AND);
+      result = translate_numeric(lhs, rhs, VHDL_BINOP_AND);
+      break;
    case 'a':    // Logical AND
-      return translate_logical(lhs, rhs, VHDL_BINOP_AND);
+      result = translate_logical(lhs, rhs, VHDL_BINOP_AND);
+      break;
    case '|':    // Bitwise OR
-      return translate_numeric(lhs, rhs, VHDL_BINOP_OR);
+      result = translate_numeric(lhs, rhs, VHDL_BINOP_OR);
+      break;
    case 'o':    // Logical OR
-      return translate_logical(lhs, rhs, VHDL_BINOP_OR);
+      result = translate_logical(lhs, rhs, VHDL_BINOP_OR);
+      break;
    case '<':
-      return translate_relation(lhs, rhs, VHDL_BINOP_LT);
+      result = translate_relation(lhs, rhs, VHDL_BINOP_LT);
+      break;
    case 'L':
-      return translate_relation(lhs, rhs, VHDL_BINOP_LEQ);
+      result = translate_relation(lhs, rhs, VHDL_BINOP_LEQ);
+      break;
    case '>':
-      return translate_relation(lhs, rhs, VHDL_BINOP_GT);
+      result = translate_relation(lhs, rhs, VHDL_BINOP_GT);
+      break;
    case 'G':
-      return translate_relation(lhs, rhs, VHDL_BINOP_GEQ);
+      result = translate_relation(lhs, rhs, VHDL_BINOP_GEQ);
+      break;
    case 'l':
-      return translate_shift(lhs, rhs, VHDL_BINOP_SL);
+      result = translate_shift(lhs, rhs, VHDL_BINOP_SL);
+      break;
    case 'r':
-      return translate_shift(lhs, rhs, VHDL_BINOP_SR);
+      result = translate_shift(lhs, rhs, VHDL_BINOP_SR);
+      break;
    case '^':
-      return translate_numeric(lhs, rhs, VHDL_BINOP_XOR);
+      result = translate_numeric(lhs, rhs, VHDL_BINOP_XOR);
+      break;
    default:
       error("No translation for binary opcode '%c'\n",
             ivl_expr_opcode(e));
@@ -232,6 +279,42 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
       delete rhs;
       return NULL;
    }
+
+   if (NULL == result)
+      return NULL;
+
+   if (vectorop) {
+      bool should_be_signed = ivl_expr_signed(e) != 0;
+
+      if (result->get_type()->get_name() == VHDL_TYPE_UNSIGNED && should_be_signed) {
+         //result->print();
+         //std::cout << "^ should be signed but is not" << std::endl;
+
+         int msb = result->get_type()->get_msb();
+         int lsb = result->get_type()->get_lsb();
+         vhdl_type u(VHDL_TYPE_SIGNED, msb, lsb);
+
+         result = result->cast(&u);
+      }
+      else if (result->get_type()->get_name() == VHDL_TYPE_SIGNED && !should_be_signed) {
+         //result->print();
+         //std::cout << "^ should be unsigned but is not" << std::endl;
+
+         int msb = result->get_type()->get_msb();
+         int lsb = result->get_type()->get_lsb();
+         vhdl_type u(VHDL_TYPE_SIGNED, msb, lsb);
+
+         result = result->cast(&u);
+      }
+
+      int actual_width = result->get_type()->get_width();
+      if (actual_width != result_width) {
+         //result->print();
+         //std::cout << "^ should be " << result_width << " but is " << actual_width << std::endl;
+      }
+   }
+
+   return result;
 }
 
 static vhdl_expr *translate_select(ivl_expr_t e)
