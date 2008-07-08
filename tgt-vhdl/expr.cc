@@ -24,6 +24,18 @@
 #include <cassert>
 
 /*
+ * Change the signdness of a vector.
+ */
+static vhdl_expr *change_signdness(vhdl_expr *e, bool issigned)
+{
+   int msb = e->get_type()->get_msb();
+   int lsb = e->get_type()->get_lsb();
+   vhdl_type u(issigned ? VHDL_TYPE_SIGNED : VHDL_TYPE_UNSIGNED, msb, lsb);
+   
+   return e->cast(&u);
+}
+
+/*
  * Convert a constant Verilog string to a constant VHDL string.
  */
 static vhdl_expr *translate_string(ivl_expr_t e)
@@ -74,34 +86,16 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
    if (operand->get_type()->get_name() == VHDL_TYPE_UNSIGNED && should_be_signed) {
       //operand->print();
       //std::cout << "^ should be signed but is not" << std::endl;
-      
-      int msb = operand->get_type()->get_msb();
-      int lsb = operand->get_type()->get_lsb();
-      vhdl_type u(VHDL_TYPE_SIGNED, msb, lsb);
 
-      operand = operand->cast(&u);
+      operand = change_signdness(operand, true);
    }
    else if (operand->get_type()->get_name() == VHDL_TYPE_SIGNED && !should_be_signed) {
       //operand->print();
       //std::cout << "^ should be unsigned but is not" << std::endl;
-      
-      int msb = operand->get_type()->get_msb();
-      int lsb = operand->get_type()->get_lsb();
-      vhdl_type u(VHDL_TYPE_UNSIGNED, msb, lsb);
 
-      operand = operand->cast(&u);
+      operand = change_signdness(operand, false);
    }
    
-   // Need to ensure that the operand is interpreted as unsigned to get VHDL
-   // to emulate Verilog behaviour
-   if (operand->get_type()->get_name() == VHDL_TYPE_SIGNED) {
-      int msb = operand->get_type()->get_msb();
-      int lsb = operand->get_type()->get_lsb();
-      vhdl_type u(VHDL_TYPE_UNSIGNED, msb, lsb);
-
-      operand = operand->cast(&u);
-   }
-
    char opcode = ivl_expr_opcode(e);
    switch (opcode) {
    case '!':
@@ -290,21 +284,13 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
          //result->print();
          //std::cout << "^ should be signed but is not" << std::endl;
 
-         int msb = result->get_type()->get_msb();
-         int lsb = result->get_type()->get_lsb();
-         vhdl_type u(VHDL_TYPE_SIGNED, msb, lsb);
-
-         result = result->cast(&u);
+         result = change_signdness(result, true);
       }
       else if (result->get_type()->get_name() == VHDL_TYPE_SIGNED && !should_be_signed) {
          //result->print();
          //std::cout << "^ should be unsigned but is not" << std::endl;
 
-         int msb = result->get_type()->get_msb();
-         int lsb = result->get_type()->get_lsb();
-         vhdl_type u(VHDL_TYPE_SIGNED, msb, lsb);
-
-         result = result->cast(&u);
+         result = change_signdness(result, false);
       }
 
       int actual_width = result->get_type()->get_width();
