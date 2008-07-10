@@ -24,9 +24,9 @@
 #include <cassert>
 
 /*
- * Change the signdness of a vector.
+ * Change the signedness of a vector.
  */
-static vhdl_expr *change_signdness(vhdl_expr *e, bool issigned)
+static vhdl_expr *change_signedness(vhdl_expr *e, bool issigned)
 {
    int msb = e->get_type()->get_msb();
    int lsb = e->get_type()->get_lsb();
@@ -87,13 +87,13 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
       //operand->print();
       //std::cout << "^ should be signed but is not" << std::endl;
 
-      operand = change_signdness(operand, true);
+      operand = change_signedness(operand, true);
    }
    else if (operand->get_type()->get_name() == VHDL_TYPE_SIGNED && !should_be_signed) {
       //operand->print();
       //std::cout << "^ should be unsigned but is not" << std::endl;
 
-      operand = change_signdness(operand, false);
+      operand = change_signedness(operand, false);
    }
    
    char opcode = ivl_expr_opcode(e);
@@ -284,13 +284,13 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
          //result->print();
          //std::cout << "^ should be signed but is not" << std::endl;
 
-         result = change_signdness(result, true);
+         result = change_signedness(result, true);
       }
       else if (result->get_type()->get_name() == VHDL_TYPE_SIGNED && !should_be_signed) {
          //result->print();
          //std::cout << "^ should be unsigned but is not" << std::endl;
 
-         result = change_signdness(result, false);
+         result = change_signedness(result, false);
       }
 
       int actual_width = result->get_type()->get_width();
