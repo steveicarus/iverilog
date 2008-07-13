@@ -68,9 +68,6 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
          const char *signame = get_renamed_signal(sig).c_str();
          
          vhdl_decl *decl = arch_scope->get_decl(signame);
-         if (NULL == decl)
-            continue;  // Not in this scope
-
          vhdl_type *type = new vhdl_type(*(decl->get_type()));
          return new vhdl_var_ref(signame, type);
       }
