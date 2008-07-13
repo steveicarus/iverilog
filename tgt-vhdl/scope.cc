@@ -29,40 +29,24 @@ static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log);
 static std::string make_safe_name(ivl_signal_t sig);
 
 /*
- * Given a nexus find a constant value in it that can be used
- * as an initial signal value.
+ * The types of VHDL object a nexus can be converted into.
  */
-static vhdl_expr *nexus_to_const(ivl_nexus_t nexus)
-{
-   int nptrs = ivl_nexus_ptrs(nexus);
-   for (int i = 0; i < nptrs; i++) {
-      ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
-
-      ivl_net_const_t con;
-      if ((con = ivl_nexus_ptr_con(nexus_ptr))) {
-         if (ivl_const_width(con) == 1)
-            return new vhdl_const_bit(ivl_const_bits(con)[0]);
-         else
-            return new vhdl_const_bits
-               (ivl_const_bits(con), ivl_const_width(con),
-                ivl_const_signed(con) != 0);
-      }
-      else {
-         // Ignore other types of nexus pointer
-      }
-   }
-   
-   return NULL;
-}
+enum vhdl_nexus_obj_t {
+   NEXUS_TO_VAR_REF = 1<<0,
+   NEXUS_TO_CONST   = 1<<1,
+   NEXUS_TO_OTHER   = 1<<2,
+};
+#define NEXUS_TO_ANY \
+   NEXUS_TO_VAR_REF | NEXUS_TO_CONST | NEXUS_TO_OTHER
 
 /*
- * Given a nexus and an architecture scope, find the first signal
- * that is connected to the nexus, if there is one. Never return
- * a reference to 'ignore' if it is found in the nexus.
+ * Given a nexus, generate a VHDL expression object to represent it.
+ * The allowed VHDL expression types are given by vhdl_nexus_obj_t.
  */
 static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
+                                int allowed = NEXUS_TO_ANY,
                                 ivl_signal_t ignore = NULL)
-{
+{   
    int nptrs = ivl_nexus_ptrs(nexus);
    for (int i = 0; i < nptrs; i++) {
       ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
@@ -70,7 +54,10 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
       ivl_signal_t sig;
       ivl_net_logic_t log;
       ivl_lpm_t lpm;
-      if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
+      ivl_net_const_t con;
+      ivl_switch_t sw;
+      if ((allowed & NEXUS_TO_VAR_REF) &&
+          (sig = ivl_nexus_ptr_sig(nexus_ptr))) {
          if (!seen_signal_before(sig) || sig == ignore)
             continue;
          
@@ -83,41 +70,28 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
          vhdl_type *type = new vhdl_type(*(decl->get_type()));
          return new vhdl_var_ref(signame, type);
       }
-      else if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
+      else if ((allowed & NEXUS_TO_OTHER) &&
+               (log = ivl_nexus_ptr_log(nexus_ptr))) {
          return translate_logic(arch_scope, log);
       }
-      else if ((lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
+      else if ((allowed & NEXUS_TO_OTHER) &&
+               (lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
          vhdl_expr *e = lpm_to_expr(arch_scope, lpm);
          if (e)
             return e;
       }
-      else {
-         // Ignore other types of nexus pointer
+      else if ((allowed & NEXUS_TO_CONST) &&
+               (con = ivl_nexus_ptr_con(nexus_ptr))) {
+         if (ivl_const_width(con) == 1)
+            return new vhdl_const_bit(ivl_const_bits(con)[0]);
+         else
+            return new vhdl_const_bits
+               (ivl_const_bits(con), ivl_const_width(con),
+                ivl_const_signed(con) != 0);
       }
-   }
-   
-   assert(false);
-}
-
-vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
-{
-   int nptrs = ivl_nexus_ptrs(nexus);
-   for (int i = 0; i < nptrs; i++) {
-      ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
-
-      ivl_signal_t sig;
-      if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
-         if (!seen_signal_before(sig))
-            continue;
-         
-         const char *signame = get_renamed_signal(sig).c_str();
-         
-         vhdl_decl *decl = arch_scope->get_decl(signame);
-         if (NULL == decl)
-            continue;  // Not in this scope
-
-         vhdl_type *type = new vhdl_type(*(decl->get_type()));
-         return new vhdl_var_ref(signame, type);
+      else if ((allowed & NEXUS_TO_OTHER) &&
+               (sw = ivl_nexus_ptr_switch(nexus_ptr))) {
+         assert(false);
       }
       else {
          // Ignore other types of nexus pointer
@@ -125,6 +99,17 @@ vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
    }
    
    return NULL;
+}
+
+/*
+ * Guarantees the result will never be NULL.
+ */
+vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
+{
+   vhdl_var_ref *ref = dynamic_cast<vhdl_var_ref*>
+      (nexus_to_expr(arch_scope, nexus, NEXUS_TO_VAR_REF));
+   assert(ref);
+   return ref;
 }
 
 /*
@@ -266,7 +251,9 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
             // A local signal can have a constant initializer in VHDL
             // This may be found in the signal's nexus
             // TODO: Make this work for multiple words
-            vhdl_expr *init = nexus_to_const(ivl_signal_nex(sig, 0));
+            vhdl_expr *init =
+               nexus_to_expr(ent->get_scope(), ivl_signal_nex(sig, 0), 
+                             NEXUS_TO_CONST);
             if (init != NULL)
                decl->set_initial(init);
             
@@ -285,7 +272,9 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
             // Check for constant values
             // For outputs these must be continuous assigns of
             // the constant to the port
-            vhdl_expr *init = nexus_to_const(ivl_signal_nex(sig, 0));
+            vhdl_expr *init =
+               nexus_to_expr(ent->get_scope(), ivl_signal_nex(sig, 0), 
+                             NEXUS_TO_CONST);
             if (init != NULL) {
                vhdl_var_ref *ref = new vhdl_var_ref(name.c_str(), NULL);
                ent->get_arch()->add_stmt(new vhdl_cassign_stmt(ref, init));
@@ -390,7 +379,8 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    // TODO: Work for multiple words
    ivl_nexus_t nexus = ivl_signal_nex(to, 0);
 
-   vhdl_expr *to_e = nexus_to_expr(parent->get_arch()->get_scope(), nexus, to);
+   vhdl_expr *to_e = nexus_to_expr(parent->get_arch()->get_scope(),
+                                   nexus, NEXUS_TO_ANY, to);
    assert(to_e);
 
    // The expressions in a VHDL port map must be 'globally static'
