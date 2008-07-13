@@ -81,8 +81,8 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
       else if ((allowed & NEXUS_TO_OTHER) &&
                (lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
          vhdl_expr *e = lpm_to_expr(arch_scope, lpm);
-         if (e)
-            return e;
+         assert(e);
+         return e;
       }
       else if ((allowed & NEXUS_TO_CONST) &&
                (con = ivl_nexus_ptr_con(nexus_ptr))) {
