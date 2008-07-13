@@ -33,6 +33,7 @@ void remember_signal(ivl_signal_t sig, const vhdl_scope *scope);
 void rename_signal(ivl_signal_t sig, const std::string &renamed);
 const vhdl_scope *find_scope_for_signal(ivl_signal_t sig);
 const std::string &get_renamed_signal(ivl_signal_t sig);
+ivl_signal_t find_signal_named(const std::string &name, const vhdl_scope *scope);
 
 void blocking_assign_to(vhdl_procedural *proc, ivl_signal_t sig);
 std::string strip_var(const std::string &str);

@@ -501,6 +501,7 @@ public:
       : vhdl_decl(name, type), mode_(mode) {}
 
    void emit(std::ostream &of, int level) const;
+   vhdl_port_mode_t get_mode() const { return mode_; }
 private:
    vhdl_port_mode_t mode_;
 };

@@ -130,6 +130,16 @@ const std::string &get_renamed_signal(ivl_signal_t sig)
    return g_known_signals[sig].renamed;
 }
 
+ivl_signal_t find_signal_named(const std::string &name, const vhdl_scope *scope)
+{
+   signal_defn_map_t::const_iterator it;
+   for (it = g_known_signals.begin(); it != g_known_signals.end(); ++it) {
+      if ((*it).second.scope == scope && (*it).second.renamed == name)
+         return (*it).first;
+   }
+   assert(false);
+}
+
 ivl_design_t get_vhdl_design()
 {
    return g_design;
