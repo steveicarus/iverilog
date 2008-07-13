@@ -278,8 +278,21 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
             (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_IN));
          break;
       case IVL_SIP_OUTPUT:
-         ent->get_scope()->add_decl
-            (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_OUT));
+         {
+            vhdl_port_decl *decl =
+               new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_OUT);
+
+            // Check for constant values
+            // For outputs these must be continuous assigns of
+            // the constant to the port
+            vhdl_expr *init = nexus_to_const(ivl_signal_nex(sig, 0));
+            if (init != NULL) {
+               vhdl_var_ref *ref = new vhdl_var_ref(name.c_str(), NULL);
+               ent->get_arch()->add_stmt(new vhdl_cassign_stmt(ref, init));
+            }
+            
+            ent->get_scope()->add_decl(decl);
+         }
 
          if (ivl_signal_type(sig) == IVL_SIT_REG) {
             // A registered output
@@ -292,7 +305,8 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
             rename_signal(sig, newname.c_str());
 
             vhdl_type *reg_type = new vhdl_type(*sig_type);
-            ent->get_arch()->get_scope()->add_decl(new vhdl_signal_decl(newname.c_str(), reg_type));
+            ent->get_arch()->get_scope()->add_decl
+               (new vhdl_signal_decl(newname.c_str(), reg_type));
             
             // Create a concurrent assignment statement to
             // connect the register to the output
