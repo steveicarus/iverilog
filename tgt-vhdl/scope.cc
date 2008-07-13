@@ -42,10 +42,12 @@ enum vhdl_nexus_obj_t {
 /*
  * Given a nexus, generate a VHDL expression object to represent it.
  * The allowed VHDL expression types are given by vhdl_nexus_obj_t.
+ *
+ * If a vhdl_var_ref is returned, the reference is guaranteed to be
+ * to a signal in arch_scope or its parent (the entity's ports).
  */
 static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
-                                int allowed = NEXUS_TO_ANY,
-                                ivl_signal_t ignore = NULL)
+                                int allowed = NEXUS_TO_ANY)
 {   
    int nptrs = ivl_nexus_ptrs(nexus);
    for (int i = 0; i < nptrs; i++) {
@@ -58,7 +60,9 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
       ivl_switch_t sw;
       if ((allowed & NEXUS_TO_VAR_REF) &&
           (sig = ivl_nexus_ptr_sig(nexus_ptr))) {
-         if (!seen_signal_before(sig) || sig == ignore)
+         if (!seen_signal_before(sig) ||
+             (find_scope_for_signal(sig) != arch_scope
+              && find_scope_for_signal(sig) != arch_scope->get_parent()))
             continue;
          
          const char *signame = get_renamed_signal(sig).c_str();
@@ -91,6 +95,7 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
       }
       else if ((allowed & NEXUS_TO_OTHER) &&
                (sw = ivl_nexus_ptr_switch(nexus_ptr))) {
+         std::cout << "SWITCH type=" << ivl_switch_type(sw) << std::endl;
          assert(false);
       }
       else {
@@ -380,7 +385,7 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    ivl_nexus_t nexus = ivl_signal_nex(to, 0);
 
    vhdl_expr *to_e = nexus_to_expr(parent->get_arch()->get_scope(),
-                                   nexus, NEXUS_TO_ANY, to);
+                                   nexus, NEXUS_TO_ANY);
    assert(to_e);
 
    // The expressions in a VHDL port map must be 'globally static'
