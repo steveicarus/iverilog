@@ -106,7 +106,7 @@ static vhdl_expr *translate_assign_rhs(ivl_signal_t sig, vhdl_scope *scope,
                                        ivl_expr_t e, vhdl_expr *base,
                                        int lval_width)
 {
-   std::string signame(get_renamed_signal(sig));
+   string signame(get_renamed_signal(sig));
 
    vhdl_decl *decl = scope->get_decl(signame);
    assert(decl);
@@ -134,76 +134,18 @@ static vhdl_expr *translate_assign_rhs(ivl_signal_t sig, vhdl_scope *scope,
    }
 }
 
-/*
- * Generate an assignment of VHDL expr rhs to signal sig. This, unlike
- * the procedure below, is a generic routine used for more than just
- * Verilog signal assignment (e.g. it is used to expand ternary
- * expressions).
- */
-template <class T>
-static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
-                               ivl_signal_t sig, vhdl_expr *rhs, bool blocking,
-                               vhdl_expr *base = NULL, unsigned lval_width = 0)
+static vhdl_var_ref *make_assign_lhs(ivl_signal_t sig, vhdl_scope *scope,
+                                     vhdl_expr *base, int lval_width)
 {
+   std::string signame(get_renamed_signal(sig));
+   vhdl_decl *decl = scope->get_decl(signame);
    
-      
-   //   bool isvar = strip_var(signame) != signame;
+   vhdl_type *ltype = new vhdl_type(*decl->get_type());
+   vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), ltype);
+   if (base)
+      lval_ref->set_slice(base, lval_width-1);
 
-   // Where possible, move constant assignments into the
-   // declaration as initializers. This optimisation is only
-   // performed on assignments of constant values to prevent
-   // ordering problems.
-      
-   // This also has another application: If this is an `inital'
-   // process and we haven't yet generated a `wait' statement then
-   // moving the assignment to the initialization preserves the
-   // expected Verilog behaviour: VHDL does not distinguish
-   // `initial' and `always' processes so an `always' process might
-   // be activatated before an `initial' process at time 0. The
-   // `always' process may then use the uninitialized signal value.
-   // The second test ensures that we only try to initialise
-   // internal signals not ports
-   /*if (proc->get_scope()->initializing()
-       && ivl_signal_port(sig) == IVL_SIP_NONE
-       && !decl->has_initial() && rhs->constant()
-       && container == proc->get_container() // Top-level container
-   && !isvar) {*/
-
-      //      decl->set_initial(new vhdl_expr(*rhs));
-         
-      /*if (blocking && proc->get_scope()->allow_signal_assignment()) {
-         // This signal may be used e.g. in a loop test so we need
-         // to make a variable as well
-         blocking_assign_to(proc, sig);
-            
-         // The signal may have been renamed by the above call
-         const std::string &renamed = get_renamed_signal(sig);
-         
-         vhdl_var_ref *lval_ref = new vhdl_var_ref(renamed.c_str(), NULL);
-         vhdl_var_ref *sig_ref = new vhdl_var_ref(signame.c_str(), NULL);
-
-         if (base)
-            lval_ref->set_slice(base, lval_width-1);
-
-         T *a = new T(lval_ref, sig_ref);
-         container->add_stmt(a);
-            
-         return a;
-      }
-      else*/
-   // }
-   
-      /*if (blocking && proc->get_scope()->allow_signal_assignment()) {
-         // Remember we need to write the variable back to the
-         // original signal
-         blocking_assign_to(proc, sig);
-
-         // The signal may have been renamed by the above call
-         signame = get_renamed_signal(sig);
-      }*/
-
-      
-   //  return a;
+   return lval_ref;
 }
 
 /*
@@ -239,18 +181,36 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
       if (ivl_expr_type(rval) == IVL_EX_TERNARY) {
          // Expand ternary expressions into an if statement
          vhdl_expr *test = translate_expr(ivl_expr_oper1(rval));
-         vhdl_expr *true_part = translate_expr(ivl_expr_oper2(rval));
-         vhdl_expr *false_part = translate_expr(ivl_expr_oper3(rval));
+         vhdl_expr *true_part =
+            translate_assign_rhs(sig, proc->get_scope(),
+                                 ivl_expr_oper2(rval), base, lval_width);
+         vhdl_expr *false_part =
+            translate_assign_rhs(sig, proc->get_scope(),
+                                 ivl_expr_oper3(rval), base, lval_width);
 
          if (!test || !true_part || !false_part)
             return NULL;
 
          vhdl_if_stmt *vhdif = new vhdl_if_stmt(test);
-         /*make_vhdl_assignment<T>(proc, vhdif->get_then_container(), sig,
-                                 true_part, blocking, base, lval_width);
-         make_vhdl_assignment<T>(proc, vhdif->get_else_container(), sig,
-                                 false_part, blocking, base, lval_width);
-         */
+
+         // True part
+         {
+            vhdl_var_ref *lval_ref =
+                make_assign_lhs(sig, proc->get_scope(), base, lval_width);
+            
+            T *a = new T(lval_ref, true_part);
+            vhdif->get_then_container()->add_stmt(a);
+         }
+
+         // False part
+         {
+            vhdl_var_ref *lval_ref =
+                make_assign_lhs(sig, proc->get_scope(), base, lval_width);
+            
+            T *a = new T(lval_ref, false_part);
+            vhdif->get_else_container()->add_stmt(a);
+         }
+         
          container->add_stmt(vhdif);         
          return NULL;
       }
@@ -262,7 +222,7 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
 
          std::string signame(get_renamed_signal(sig));
          vhdl_decl *decl = proc->get_scope()->get_decl(signame);
-
+   
          // Where possible, move constant assignments into the
          // declaration as initializers. This optimisation is only
          // performed on assignments of constant values to prevent
@@ -282,18 +242,13 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
              && !decl->has_initial() && rhs->constant()
              && container == proc->get_container()) { // Top-level container
 
-            vhdl_expr *rhs_copy =
-               translate_assign_rhs(sig, proc->get_scope(), rval,
-                                    base, lval_width);
-            decl->set_initial(rhs_copy);
+            decl->set_initial(rhs);
 
             return NULL;
          }
          else {
-            vhdl_type *ltype = new vhdl_type(*decl->get_type());
-            vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), ltype);
-            if (base)
-               lval_ref->set_slice(base, lval_width-1);
+            vhdl_var_ref *lval_ref =
+               make_assign_lhs(sig, proc->get_scope(), base, lval_width);
             
             T *a = new T(lval_ref, rhs);
             container->add_stmt(a);
