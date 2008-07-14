@@ -102,24 +102,21 @@ static int draw_noop(vhdl_procedural *proc, stmt_container *container,
    return 0;
 }
 
-/*
- * Generate an assignment of VHDL expr rhs to signal sig. This, unlike
- * the procedure below, is a generic routine used for more than just
- * Verilog signal assignment (e.g. it is used to expand ternary
- * expressions).
- */
-template <class T>
-static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
-                               ivl_signal_t sig, vhdl_expr *rhs, bool blocking,
-                               vhdl_expr *base = NULL, unsigned lval_width = 0)
+static vhdl_expr *translate_assign_rhs(ivl_signal_t sig, vhdl_scope *scope,
+                                       ivl_expr_t e, vhdl_expr *base,
+                                       int lval_width)
 {
    std::string signame(get_renamed_signal(sig));
 
-   vhdl_decl *decl = proc->get_scope()->get_decl(signame);
+   vhdl_decl *decl = scope->get_decl(signame);
    assert(decl);
 
+   vhdl_expr *rhs = translate_expr(e);
+   if (rhs == NULL)
+      return rhs;
+   
    if (base == NULL)
-      rhs = rhs->cast(decl->get_type());
+      return rhs->cast(decl->get_type());
    else {
       vhdl_type integer(VHDL_TYPE_INTEGER);
       base = base->cast(&integer);
@@ -131,15 +128,29 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
 
       if (lval_width == 1) {
          vhdl_type t(VHDL_TYPE_STD_LOGIC);
-         rhs = rhs->cast(&t);
+         return rhs->cast(&t);
       }
       else {
          vhdl_type t(tname, lval_width);
-         rhs = rhs->cast(&t);
+         return rhs->cast(&t);
       }  
    }
+}
+
+/*
+ * Generate an assignment of VHDL expr rhs to signal sig. This, unlike
+ * the procedure below, is a generic routine used for more than just
+ * Verilog signal assignment (e.g. it is used to expand ternary
+ * expressions).
+ */
+template <class T>
+static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
+                               ivl_signal_t sig, vhdl_expr *rhs, bool blocking,
+                               vhdl_expr *base = NULL, unsigned lval_width = 0)
+{
+   
       
-   bool isvar = strip_var(signame) != signame;
+   //   bool isvar = strip_var(signame) != signame;
 
    // Where possible, move constant assignments into the
    // declaration as initializers. This optimisation is only
@@ -155,11 +166,11 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
    // `always' process may then use the uninitialized signal value.
    // The second test ensures that we only try to initialise
    // internal signals not ports
-   if (proc->get_scope()->initializing()
+   /*if (proc->get_scope()->initializing()
        && ivl_signal_port(sig) == IVL_SIP_NONE
        && !decl->has_initial() && rhs->constant()
        && container == proc->get_container() // Top-level container
-       && !isvar) {
+   && !isvar) {*/
 
       //      decl->set_initial(new vhdl_expr(*rhs));
          
@@ -183,7 +194,7 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
          return a;
       }
       else*/
-   }
+   // }
    
       /*if (blocking && proc->get_scope()->allow_signal_assignment()) {
          // Remember we need to write the variable back to the
@@ -194,16 +205,8 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
          signame = get_renamed_signal(sig);
       }*/
 
-      vhdl_type *ltype =
-         new vhdl_type(*proc->get_scope()->get_decl(signame)->get_type());
-      vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), ltype);
-      if (base)
-         lval_ref->set_slice(base, lval_width-1);
-         
-      T *a = new T(lval_ref, rhs);
-      container->add_stmt(a);
-         
-      return a;
+      
+   //  return a;
 }
 
 /*
@@ -243,20 +246,60 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
             return NULL;
 
          vhdl_if_stmt *vhdif = new vhdl_if_stmt(test);
-         make_vhdl_assignment<T>(proc, vhdif->get_then_container(), sig,
+         /*make_vhdl_assignment<T>(proc, vhdif->get_then_container(), sig,
                                  true_part, blocking, base, lval_width);
          make_vhdl_assignment<T>(proc, vhdif->get_else_container(), sig,
                                  false_part, blocking, base, lval_width);
-
+         */
          container->add_stmt(vhdif);         
          return NULL;
       }
       else {
-         vhdl_expr *rhs = translate_expr(rval);
+         vhdl_expr *rhs =
+            translate_assign_rhs(sig, proc->get_scope(), rval, base, lval_width);
          if (NULL == rhs)
             return NULL;
+
+         std::string signame(get_renamed_signal(sig));
+         vhdl_decl *decl = proc->get_scope()->get_decl(signame);
+
+         // Where possible, move constant assignments into the
+         // declaration as initializers. This optimisation is only
+         // performed on assignments of constant values to prevent
+         // ordering problems.
          
-         return make_vhdl_assignment<T>(proc, container, sig, rhs, blocking, base, lval_width);
+         // This also has another application: If this is an `inital'
+         // process and we haven't yet generated a `wait' statement then
+         // moving the assignment to the initialization preserves the
+         // expected Verilog behaviour: VHDL does not distinguish
+         // `initial' and `always' processes so an `always' process might
+         // be activatated before an `initial' process at time 0. The
+         // `always' process may then use the uninitialized signal value.
+         // The second test ensures that we only try to initialise
+         // internal signals not ports
+         if (proc->get_scope()->initializing()
+             && ivl_signal_port(sig) == IVL_SIP_NONE
+             && !decl->has_initial() && rhs->constant()
+             && container == proc->get_container()) { // Top-level container
+
+            vhdl_expr *rhs_copy =
+               translate_assign_rhs(sig, proc->get_scope(), rval,
+                                    base, lval_width);
+            decl->set_initial(rhs_copy);
+
+            return NULL;
+         }
+         else {
+            vhdl_type *ltype = new vhdl_type(*decl->get_type());
+            vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), ltype);
+            if (base)
+               lval_ref->set_slice(base, lval_width-1);
+            
+            T *a = new T(lval_ref, rhs);
+            container->add_stmt(a);
+            
+            return a;
+         }
       }
    }
    else {
@@ -278,8 +321,11 @@ static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
    vhdl_nbassign_stmt *a =
       make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);
 
-   if (after != NULL)
-      a->set_after(after);
+   if (a != NULL) {
+      // Assignment wasn't moved to initialisation
+      if (after != NULL)
+         a->set_after(after);
+   }
       
    return 0;
 }
@@ -293,9 +339,11 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
       vhdl_nbassign_stmt *a =
          make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);
 
-      // Assignment is a statement and not moved into the initialisation
-      //if (after != NULL)
-      //   a->set_after(after);
+      if (a != NULL) {
+         // Assignment is a statement and not moved into the initialisation
+         //if (after != NULL)
+         //   a->set_after(after);
+      }
       
       container->add_stmt
          (new vhdl_wait_stmt(VHDL_WAIT_FOR, new vhdl_const_time(0)));
