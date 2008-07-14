@@ -137,7 +137,7 @@ static vhdl_expr *translate_assign_rhs(ivl_signal_t sig, vhdl_scope *scope,
 static vhdl_var_ref *make_assign_lhs(ivl_signal_t sig, vhdl_scope *scope,
                                      vhdl_expr *base, int lval_width)
 {
-   std::string signame(get_renamed_signal(sig));
+   string signame(get_renamed_signal(sig));
    vhdl_decl *decl = scope->get_decl(signame);
    
    vhdl_type *ltype = new vhdl_type(*decl->get_type());
@@ -371,22 +371,6 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
    proc->get_scope()->set_initializing(false);
    
    return 0;
-}
-
-/*
- * Make edge detectors from the signals in `nexus' and add them
- * to the expression `test'. Also adds the signals to the process
- * sensitivity list. Type should be one of `rising_edge' or
- * `falling_edge'.
- */
-static void edge_detector(ivl_nexus_t nexus, vhdl_process *proc,
-                          vhdl_binop_expr *test, const char *type)
-{
-   vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope()->get_parent(), nexus);
-   vhdl_fcall *detect = new vhdl_fcall(type, vhdl_type::boolean());
-   detect->add_expr(ref);
-   test->add_expr(detect);
-   proc->add_sensitivity(ref->get_name().c_str());
 }
 
 /*
