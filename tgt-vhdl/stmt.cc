@@ -161,7 +161,7 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
        && container == proc->get_container() // Top-level container
        && !isvar) {
 
-      decl->set_initial(rhs);
+      //      decl->set_initial(new vhdl_expr(*rhs));
          
       /*if (blocking && proc->get_scope()->allow_signal_assignment()) {
          // This signal may be used e.g. in a loop test so we need
@@ -183,9 +183,8 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
          return a;
       }
       else*/
-         return NULL;   // No statement need be emitted
    }
-   else {
+   
       /*if (blocking && proc->get_scope()->allow_signal_assignment()) {
          // Remember we need to write the variable back to the
          // original signal
@@ -205,7 +204,6 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
       container->add_stmt(a);
          
       return a;
-   }
 }
 
 /*
@@ -279,12 +277,9 @@ static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
 
    vhdl_nbassign_stmt *a =
       make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);
-   
-   if (a != NULL) {
-      // Assignment is a statement and not moved into the initialisation
-      if (after != NULL)
-         a->set_after(after);
-   }
+
+   if (after != NULL)
+      a->set_after(after);
       
    return 0;
 }
@@ -298,14 +293,12 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
       vhdl_nbassign_stmt *a =
          make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);
 
-      if (a != NULL) {
-         // Assignment is a statement and not moved into the initialisation
-         //if (after != NULL)
-         //   a->set_after(after);
-
-         container->add_stmt
-            (new vhdl_wait_stmt(VHDL_WAIT_FOR, new vhdl_const_time(0)));
-      }
+      // Assignment is a statement and not moved into the initialisation
+      //if (after != NULL)
+      //   a->set_after(after);
+      
+      container->add_stmt
+         (new vhdl_wait_stmt(VHDL_WAIT_FOR, new vhdl_const_time(0)));
    }
    else
       make_assignment<vhdl_assign_stmt>(proc, container, stmt, true);
@@ -403,83 +396,48 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
    // Wait statements only occur in processes
    vhdl_process *proc = dynamic_cast<vhdl_process*>(_proc);
    assert(proc);   // Catch not process
-   
-   ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
 
-
-   // TODO: This should really be merged with the
-   // nexus_to_XXX code
+   vhdl_binop_expr *test =
+      new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
+      
    int nevents = ivl_stmt_nevent(stmt);
    for (int i = 0; i < nevents; i++) {
       ivl_event_t event = ivl_stmt_events(stmt, i);
 
-      // A list of the non-edge triggered signals to they can
-      // be added to the edge-detecting `if' statement later
-      string_list_t non_edges;
-
       int nany = ivl_event_nany(event);
       for (int i = 0; i < nany; i++) {
          ivl_nexus_t nexus = ivl_event_any(event, i);
+         vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
 
-         int nptrs = ivl_nexus_ptrs(nexus);
-         for (int j = 0; j < nptrs; j++) {
-            ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, j);
-
-            ivl_signal_t sig;
-            if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
-               if (!seen_signal_before(sig))
-                  continue;
-               
-               std::string signame(get_renamed_signal(sig));
-
-               // Only add this signal to the sensitivity if it's part
-               // of the containing architecture (i.e. it has already
-               // been declared)
-               if (proc->get_scope()->get_parent()->have_declared(signame)) {
-                  proc->add_sensitivity(signame.c_str());
-                  non_edges.push_back(signame);
-                  break;
-               }
-            }
-            else {
-               // Ignore all other types of nexus pointer
-            }
-         }
+         ref->set_name(ref->get_name() + "'Event");
+         test->add_expr(ref);
       }
 
       int nneg = ivl_event_nneg(event);
-      int npos = ivl_event_npos(event);
-      if (nneg + npos > 0) {
-         vhdl_binop_expr *test =
-            new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
-
-         // Generate falling_edge(..) calls for each negedge event
-         for (int i = 0; i < nneg; i++)
-            edge_detector(ivl_event_neg(event, i), proc, test, "falling_edge");
-        
-         // Generate rising_edge(..) calls for each posedge event
-         for (int i = 0; i < npos; i++)
-            edge_detector(ivl_event_pos(event, i), proc, test, "rising_edge");
-        
-         // Add Name'Event terms for each non-edge-triggered signal
-         string_list_t::iterator it;
-         for (it = non_edges.begin(); it != non_edges.end(); ++it) {
-            test->add_expr
-               (new vhdl_var_ref((*it + "'Event").c_str(),
-                                 vhdl_type::boolean()));
-         }
-
-         vhdl_if_stmt *edge_det = new vhdl_if_stmt(test);
-         container->add_stmt(edge_det);
+      for (int i = 0; i < nneg; i++) {
+         ivl_nexus_t nexus = ivl_event_neg(event, i);
+         vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
+         vhdl_fcall *detect =
+            new vhdl_fcall("falling_edge", vhdl_type::boolean());
+         detect->add_expr(ref);
          
-         draw_stmt(proc, edge_det->get_then_container(), sub_stmt);
+         test->add_expr(detect);
       }
-      else {
-         // Don't bother generating an edge detector if there
-         // are no edge-triggered events
-         draw_stmt(proc, container, sub_stmt);
+
+      int npos = ivl_event_npos(event);
+      for (int i = 0; i < npos; i++) {
+         ivl_nexus_t nexus = ivl_event_pos(event, i);
+         vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
+         vhdl_fcall *detect =
+            new vhdl_fcall("rising_edge", vhdl_type::boolean());
+         detect->add_expr(ref);
+         
+         test->add_expr(detect);
       }
    }
+
+   draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt));
+   container->add_stmt(new vhdl_wait_stmt(VHDL_WAIT_UNTIL, test));
    
    return 0;
 }

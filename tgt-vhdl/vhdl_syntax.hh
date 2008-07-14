@@ -56,6 +56,7 @@ public:
    
    void emit(std::ostream &of, int level) const;
    const std::string &get_name() const { return name_; }
+   void set_name(const std::string &name) { name_ = name; }
    void set_slice(vhdl_expr *s, int w=0);
 private:
    std::string name_;
@@ -303,6 +304,7 @@ public:
 enum vhdl_wait_type_t {
    VHDL_WAIT_INDEF,  // Suspend indefinitely
    VHDL_WAIT_FOR,    // Wait for a constant amount of time
+   VHDL_WAIT_UNTIL,  // Wait on a sensitivity list
 };
 
 /*
