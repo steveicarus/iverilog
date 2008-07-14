@@ -216,6 +216,8 @@ typedef std::list<vhdl_conc_stmt*> conc_stmt_list_t;
 
 /*
  * A concurrent signal assignment (i.e. not part of a process).
+ * Can have any number of `when' clauses, in which case the original
+ * rhs becomes the `else' part.
  */
 class vhdl_cassign_stmt : public vhdl_conc_stmt {
 public:
@@ -224,9 +226,15 @@ public:
    ~vhdl_cassign_stmt();
 
    void emit(std::ostream &of, int level) const;
+   void add_condition(vhdl_expr *value, vhdl_expr *cond);
 private:
    vhdl_var_ref *lhs_;
    vhdl_expr *rhs_;
+
+   struct when_part_t {
+      vhdl_expr *value, *cond;
+   };
+   std::list<when_part_t> whens_;
 };
 
 /*

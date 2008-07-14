@@ -143,6 +143,29 @@ static vhdl_expr *input_to_expr(vhdl_scope *scope, vhdl_unaryop_t op,
    return new vhdl_unaryop_expr(op, operand, vhdl_type::std_logic()); 
 }
 
+static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
+{
+   ivl_nexus_t output = ivl_logic_pin(log, 0);
+   vhdl_var_ref *lhs = nexus_to_var_ref(arch->get_scope(), output);
+   assert(lhs);
+   
+   vhdl_expr *val = nexus_to_expr(arch->get_scope(), ivl_logic_pin(log, 1));
+   assert(val);
+
+   vhdl_expr *sel = nexus_to_expr(arch->get_scope(), ivl_logic_pin(log, 2));
+   assert(val);
+
+   vhdl_expr *on = new vhdl_const_bit(if0 ? '0' : '1');
+   vhdl_expr *cmp = new vhdl_binop_expr(sel, VHDL_BINOP_EQ, on, NULL);
+
+   // TODO: This value needs to depend on the net type
+   vhdl_const_bit *z = new vhdl_const_bit('0');
+   vhdl_cassign_stmt *cass = new vhdl_cassign_stmt(lhs, z);
+   cass->add_condition(val, cmp);
+
+   arch->add_stmt(cass);
+}
+
 static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log)
 {
    switch (ivl_logic_type(log)) {
@@ -162,7 +185,7 @@ static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log)
    case IVL_LO_PULLDOWN:
       return new vhdl_const_bit('0');
    default:
-      error("Don't know how to translate logic type = %d",
+      error("Don't know how to translate logic type = %d to expression",
             ivl_logic_type(log));
       return NULL;
    }
@@ -178,16 +201,26 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
    for (int i = 0; i < nlogs; i++) {
       ivl_net_logic_t log = ivl_scope_log(scope, i);
       
-      // The output is always pin zero
-      ivl_nexus_t output = ivl_logic_pin(log, 0);
-      vhdl_var_ref *lhs =
-         dynamic_cast<vhdl_var_ref*>(nexus_to_expr(arch->get_scope(), output));
-      if (NULL == lhs)
-         continue;  // Not suitable for continuous assignment
-      
-      vhdl_expr *rhs = translate_logic(arch->get_scope(), log);
-      
-      arch->add_stmt(new vhdl_cassign_stmt(lhs, rhs));
+      switch (ivl_logic_type(log)) {
+      case IVL_LO_BUFIF0:
+         bufif_logic(arch, log, true);
+         break;
+      case IVL_LO_BUFIF1:
+         bufif_logic(arch, log, false);
+         break;
+      default:
+         {          
+            // The output is always pin zero
+            ivl_nexus_t output = ivl_logic_pin(log, 0);
+            vhdl_var_ref *lhs =
+               dynamic_cast<vhdl_var_ref*>(nexus_to_expr(arch->get_scope(), output));
+            if (NULL == lhs)
+               continue;  // Not suitable for continuous assignment
+            
+            vhdl_expr *rhs = translate_logic(arch->get_scope(), log);
+            arch->add_stmt(new vhdl_cassign_stmt(lhs, rhs));
+         }
+      }
    }
 }
 

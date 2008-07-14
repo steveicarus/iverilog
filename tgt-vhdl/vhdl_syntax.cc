@@ -649,12 +649,36 @@ vhdl_cassign_stmt::~vhdl_cassign_stmt()
 {
    delete lhs_;
    delete rhs_;
+
+   for (std::list<when_part_t>::const_iterator it = whens_.begin();
+        it != whens_.end();
+        ++it) {
+      delete (*it).value;
+      delete (*it).cond;
+   }
+}
+
+void vhdl_cassign_stmt::add_condition(vhdl_expr *value, vhdl_expr *cond)
+{
+   when_part_t when = { value, cond };
+   whens_.push_back(when);
 }
 
 void vhdl_cassign_stmt::emit(std::ostream &of, int level) const
 {
    lhs_->emit(of, level);
    of << " <= ";
+   if (!whens_.empty()) {
+      for (std::list<when_part_t>::const_iterator it = whens_.begin();
+           it != whens_.end();
+           ++it) {
+         (*it).value->emit(of, level);
+         of << " when ";
+         (*it).cond->emit(of, level);
+         of << " ";
+      }
+      of << "else ";
+   }
    rhs_->emit(of, level);
    of << ";";
 }
