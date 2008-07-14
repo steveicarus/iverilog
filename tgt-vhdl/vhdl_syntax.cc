@@ -57,7 +57,7 @@ bool vhdl_scope::have_declared(const std::string &name) const
    return get_decl(name) != NULL;
 }
 
-vhdl_scope *vhdl_scope::get_parent()
+vhdl_scope *vhdl_scope::get_parent() const
 {
    assert(parent_);
    return parent_;

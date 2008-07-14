@@ -158,8 +158,21 @@ static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
    vhdl_expr *on = new vhdl_const_bit(if0 ? '0' : '1');
    vhdl_expr *cmp = new vhdl_binop_expr(sel, VHDL_BINOP_EQ, on, NULL);
 
-   // TODO: This value needs to depend on the net type
-   vhdl_const_bit *z = new vhdl_const_bit('0');
+   ivl_signal_t sig = find_signal_named(lhs->get_name(), arch->get_scope());
+   char zbit;
+   switch (ivl_signal_type(sig)) {
+   case IVL_SIT_TRI0:
+      zbit = '0';
+      break;
+   case IVL_SIT_TRI1:
+      zbit = '1';
+      break;
+   case IVL_SIT_TRI:
+   default:
+      zbit = 'Z';
+   }
+   
+   vhdl_const_bit *z = new vhdl_const_bit(zbit);
    vhdl_cassign_stmt *cass = new vhdl_cassign_stmt(lhs, z);
    cass->add_condition(val, cmp);
 

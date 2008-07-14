@@ -557,7 +557,7 @@ public:
    void add_decl(vhdl_decl *decl);
    vhdl_decl *get_decl(const std::string &name) const;
    bool have_declared(const std::string &name) const;
-   vhdl_scope *get_parent();
+   vhdl_scope *get_parent() const;
    
    bool empty() const { return decls_.empty(); }
    const decl_list_t &get_decls() const { return decls_; }

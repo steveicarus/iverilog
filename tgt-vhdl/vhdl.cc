@@ -134,7 +134,9 @@ ivl_signal_t find_signal_named(const std::string &name, const vhdl_scope *scope)
 {
    signal_defn_map_t::const_iterator it;
    for (it = g_known_signals.begin(); it != g_known_signals.end(); ++it) {
-      if ((*it).second.scope == scope && (*it).second.renamed == name)
+      if (((*it).second.scope == scope
+           || (*it).second.scope == scope->get_parent())
+          && (*it).second.renamed == name)
          return (*it).first;
    }
    assert(false);
