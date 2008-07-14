@@ -118,9 +118,6 @@ static vhdl_expr *translate_assign_rhs(ivl_signal_t sig, vhdl_scope *scope,
    if (base == NULL)
       return rhs->cast(decl->get_type());
    else {
-      vhdl_type integer(VHDL_TYPE_INTEGER);
-      base = base->cast(&integer);
-
       // Doesn't make sense to part select on something that's
       // not a vector
       vhdl_type_name_t tname = decl->get_type()->get_name();
@@ -231,6 +228,9 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
       if (e_off) {
          if ((base = translate_expr(e_off)) == NULL)
             return NULL;
+         
+         vhdl_type integer(VHDL_TYPE_INTEGER);
+         base = base->cast(&integer);
       }
 
       unsigned lval_width = ivl_lval_width(lval);
