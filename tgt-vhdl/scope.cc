@@ -48,7 +48,7 @@ enum vhdl_nexus_obj_t {
  */
 static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
                                 int allowed = NEXUS_TO_ANY)
-{   
+{
    int nptrs = ivl_nexus_ptrs(nexus);
    for (int i = 0; i < nptrs; i++) {
       ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
@@ -59,12 +59,12 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
       ivl_net_const_t con;
       ivl_switch_t sw;
       if ((allowed & NEXUS_TO_VAR_REF) &&
-          (sig = ivl_nexus_ptr_sig(nexus_ptr))) {
+          (sig = ivl_nexus_ptr_sig(nexus_ptr))) {         
          if (!seen_signal_before(sig) ||
              (find_scope_for_signal(sig) != arch_scope
               && find_scope_for_signal(sig) != arch_scope->get_parent()))
             continue;
-         
+                  
          const char *signame = get_renamed_signal(sig).c_str();
          
          vhdl_decl *decl = arch_scope->get_decl(signame);
@@ -77,9 +77,7 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
       }
       else if ((allowed & NEXUS_TO_OTHER) &&
                (lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
-         vhdl_expr *e = lpm_to_expr(arch_scope, lpm);
-         assert(e);
-         return e;
+         return lpm_to_expr(arch_scope, lpm);
       }
       else if ((allowed & NEXUS_TO_CONST) &&
                (con = ivl_nexus_ptr_con(nexus_ptr))) {
@@ -99,7 +97,7 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
          // Ignore other types of nexus pointer
       }
    }
-   
+
    return NULL;
 }
 
@@ -108,10 +106,8 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
  */
 vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
 {
-   vhdl_var_ref *ref = dynamic_cast<vhdl_var_ref*>
+   return dynamic_cast<vhdl_var_ref*>
       (nexus_to_expr(arch_scope, nexus, NEXUS_TO_VAR_REF));
-   assert(ref);
-   return ref;
 }
 
 /*
@@ -241,9 +237,9 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
       vhdl_type *sig_type =
          vhdl_type::type_for(ivl_signal_width(sig), ivl_signal_signed(sig) != 0);
       
-      std::string name = make_safe_name(sig);
+      string name(make_safe_name(sig));
       rename_signal(sig, name);
-      
+
       ivl_signal_port_t mode = ivl_signal_port(sig);
       switch (mode) {
       case IVL_SIP_NONE:
@@ -254,7 +250,7 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
             // This may be found in the signal's nexus
             // TODO: Make this work for multiple words
             vhdl_expr *init =
-               nexus_to_expr(ent->get_scope(), ivl_signal_nex(sig, 0), 
+               nexus_to_expr(ent->get_scope(), ivl_signal_nex(sig, 0),
                              NEXUS_TO_CONST);
             if (init != NULL)
                decl->set_initial(init);

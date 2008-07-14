@@ -9,6 +9,8 @@
 
 #include <string>
 
+using namespace std;
+
 void error(const char *fmt, ...);
 
 int draw_scope(ivl_scope_t scope, void *_parent);

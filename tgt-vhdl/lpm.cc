@@ -23,7 +23,7 @@
 #include <iostream>
 #include <cassert>
 
-static vhdl_expr *draw_concat_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
+static vhdl_expr *concat_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
    vhdl_type *result_type =
       vhdl_type::type_for(ivl_lpm_width(lpm), ivl_lpm_signed(lpm) != 0);
@@ -41,7 +41,7 @@ static vhdl_expr *draw_concat_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
    return expr;
 }
 
-static vhdl_expr *draw_binop_lpm(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t op)
+static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t op)
 {
    vhdl_type *result_type =
       vhdl_type::type_for(ivl_lpm_width(lpm), ivl_lpm_signed(lpm) != 0);
@@ -88,7 +88,7 @@ static vhdl_expr *part_select_base(vhdl_scope *scope, ivl_lpm_t lpm)
    return off->cast(&integer);
 }
 
-static vhdl_expr *draw_part_select_vp_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
+static vhdl_expr *part_select_vp_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
    vhdl_var_ref *selfrom = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
    if (NULL == selfrom)
@@ -102,18 +102,32 @@ static vhdl_expr *draw_part_select_vp_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
    return selfrom;
 }
 
+static vhdl_expr *part_select_pv_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
+{   
+   vhdl_expr *off = part_select_base(scope, lpm);;
+   if (NULL == off)
+      return NULL;
+   
+   vhdl_var_ref *out = nexus_to_var_ref(scope, ivl_lpm_q(lpm, 0));
+   if (NULL == out)
+      return NULL;
+
+   out->set_slice(off, ivl_lpm_width(lpm) - 1);
+   return out;
+}
+
 static int draw_part_select_pv_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
 {
-   vhdl_var_ref *selfrom = nexus_to_var_ref(arch->get_scope(), ivl_lpm_data(lpm, 0));
-   if (NULL == selfrom)
-      return 1;
+   vhdl_var_ref *out;
+   vhdl_var_ref *selfrom;
+   if (NULL == (out = nexus_to_var_ref(arch->get_scope(), ivl_lpm_q(lpm, 0)))
+       || NULL == (selfrom = nexus_to_var_ref(arch->get_scope(), ivl_lpm_data(lpm, 0)))) {
+      // Not continuous assignment to signal: ignore it
+      return 0;
+   }
 
    vhdl_expr *off = part_select_base(arch->get_scope(), lpm);;
    if (NULL == off)
-      return 1;
-
-   vhdl_var_ref *out = nexus_to_var_ref(arch->get_scope(), ivl_lpm_q(lpm, 0));
-   if (NULL == out)
       return 1;
 
    out->set_slice(off, ivl_lpm_width(lpm) - 1);
@@ -121,7 +135,7 @@ static int draw_part_select_pv_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
    return 0;
 }
 
-static vhdl_expr *draw_ufunc_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
+static vhdl_expr *ufunc_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
    vhdl_fcall *fcall = new vhdl_fcall(ivl_lpm_basename(lpm), NULL);
 
@@ -136,7 +150,7 @@ static vhdl_expr *draw_ufunc_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
    return fcall;
 }
 
-static vhdl_expr *draw_reduction_lpm(vhdl_scope *scope, ivl_lpm_t lpm,
+static vhdl_expr *reduction_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm,
                                      const char *rfunc, bool invert)
 {
    vhdl_fcall *fcall = new vhdl_fcall(rfunc, vhdl_type::std_logic());
@@ -154,7 +168,7 @@ static vhdl_expr *draw_reduction_lpm(vhdl_scope *scope, ivl_lpm_t lpm,
       return fcall;
 }
 
-static vhdl_expr *draw_sign_extend_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
+static vhdl_expr *sign_extend_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
    vhdl_expr *ref = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
    if (ref)
@@ -163,35 +177,62 @@ static vhdl_expr *draw_sign_extend_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
       return NULL;
 }
 
+static vhdl_expr *array_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
+{
+   ivl_signal_t array = ivl_lpm_array(lpm);
+   if (!seen_signal_before(array))
+      return NULL;
+   
+   const char *renamed = get_renamed_signal(array).c_str();
+
+   vhdl_decl *adecl = scope->get_decl(renamed);
+   assert(adecl);
+   
+   vhdl_type *atype = new vhdl_type(*adecl->get_type());
+
+   vhdl_expr *select = nexus_to_var_ref(scope, ivl_lpm_select(lpm));
+   if (NULL == select)
+      return NULL;
+   
+   vhdl_var_ref *ref = new vhdl_var_ref(renamed, atype);
+   ref->set_slice(select);
+   
+   return ref;
+}
+
 vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
    switch (ivl_lpm_type(lpm)) {
    case IVL_LPM_ADD:
-      return draw_binop_lpm(scope, lpm, VHDL_BINOP_ADD);
+      return binop_lpm_to_expr(scope, lpm, VHDL_BINOP_ADD);
    case IVL_LPM_SUB:
-      return draw_binop_lpm(scope, lpm, VHDL_BINOP_SUB);
+      return binop_lpm_to_expr(scope, lpm, VHDL_BINOP_SUB);
    case IVL_LPM_MULT:
-      return draw_binop_lpm(scope, lpm, VHDL_BINOP_MULT);
+      return binop_lpm_to_expr(scope, lpm, VHDL_BINOP_MULT);
    case IVL_LPM_CONCAT:
-      return draw_concat_lpm(scope, lpm);
+      return concat_lpm_to_expr(scope, lpm);
    case IVL_LPM_PART_VP:
-      return draw_part_select_vp_lpm(scope, lpm);
+      return part_select_vp_lpm_to_expr(scope, lpm);
+   case IVL_LPM_PART_PV:
+      return part_select_pv_lpm_to_expr(scope, lpm);
    case IVL_LPM_UFUNC:
-      return draw_ufunc_lpm(scope, lpm);
+      return ufunc_lpm_to_expr(scope, lpm);
    case IVL_LPM_RE_AND:
-      return draw_reduction_lpm(scope, lpm, "Reduce_AND", false);
+      return reduction_lpm_to_expr(scope, lpm, "Reduce_AND", false);
    case IVL_LPM_RE_NAND:
-      return draw_reduction_lpm(scope, lpm, "Reduce_AND", true);
+      return reduction_lpm_to_expr(scope, lpm, "Reduce_AND", true);
    case IVL_LPM_RE_NOR:
-      return draw_reduction_lpm(scope, lpm, "Reduce_OR", true);
+      return reduction_lpm_to_expr(scope, lpm, "Reduce_OR", true);
    case IVL_LPM_RE_OR:
-      return draw_reduction_lpm(scope, lpm, "Reduce_OR", false);
+      return reduction_lpm_to_expr(scope, lpm, "Reduce_OR", false);
    case IVL_LPM_RE_XOR:
-      return draw_reduction_lpm(scope, lpm, "Reduce_XOR", false);
+      return reduction_lpm_to_expr(scope, lpm, "Reduce_XOR", false);
    case IVL_LPM_RE_XNOR:
-      return draw_reduction_lpm(scope, lpm, "Reduce_XNOR", false);
+      return reduction_lpm_to_expr(scope, lpm, "Reduce_XNOR", false);
    case IVL_LPM_SIGN_EXT:
-      return draw_sign_extend_lpm(scope, lpm);
+      return sign_extend_lpm_to_expr(scope, lpm);
+   case IVL_LPM_ARRAY:
+      return array_lpm_to_expr(scope, lpm);
    default:
       error("Unsupported LPM type: %d", ivl_lpm_type(lpm));
       return NULL;
