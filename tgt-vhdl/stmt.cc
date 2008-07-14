@@ -163,7 +163,7 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
 
       decl->set_initial(rhs);
          
-      if (blocking && proc->get_scope()->allow_signal_assignment()) {
+      /*if (blocking && proc->get_scope()->allow_signal_assignment()) {
          // This signal may be used e.g. in a loop test so we need
          // to make a variable as well
          blocking_assign_to(proc, sig);
@@ -182,18 +182,18 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
             
          return a;
       }
-      else
+      else*/
          return NULL;   // No statement need be emitted
    }
    else {
-      if (blocking && proc->get_scope()->allow_signal_assignment()) {
+      /*if (blocking && proc->get_scope()->allow_signal_assignment()) {
          // Remember we need to write the variable back to the
          // original signal
          blocking_assign_to(proc, sig);
 
          // The signal may have been renamed by the above call
          signame = get_renamed_signal(sig);
-      }
+      }*/
 
       vhdl_type *ltype =
          new vhdl_type(*proc->get_scope()->get_decl(signame)->get_type());
@@ -292,7 +292,24 @@ static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
 static int draw_assign(vhdl_procedural *proc, stmt_container *container,
                        ivl_statement_t stmt)
 {
-   make_assignment<vhdl_assign_stmt>(proc, container, stmt, true);
+   if (proc->get_scope()->allow_signal_assignment()) {
+      // TODO: Explain blocking assignment here
+
+      vhdl_nbassign_stmt *a =
+         make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);
+
+      if (a != NULL) {
+         // Assignment is a statement and not moved into the initialisation
+         //if (after != NULL)
+         //   a->set_after(after);
+
+         container->add_stmt
+            (new vhdl_wait_stmt(VHDL_WAIT_FOR, new vhdl_const_time(0)));
+      }
+   }
+   else
+      make_assignment<vhdl_assign_stmt>(proc, container, stmt, true);
+   
    return 0;
 }
 
