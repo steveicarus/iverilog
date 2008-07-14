@@ -157,6 +157,10 @@ static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log)
    case IVL_LO_BUF:
    case IVL_LO_BUFZ:
       return nexus_to_expr(scope, ivl_logic_pin(log, 1));
+   case IVL_LO_PULLUP:
+      return new vhdl_const_bit('1');
+   case IVL_LO_PULLDOWN:
+      return new vhdl_const_bit('0');
    default:
       error("Don't know how to translate logic type = %d",
             ivl_logic_type(log));
