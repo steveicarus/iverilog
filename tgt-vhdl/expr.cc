@@ -58,7 +58,7 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
 
    const char *renamed = get_renamed_signal(sig).c_str();
    
-   const vhdl_decl *decl = scope->get_decl(strip_var(renamed));
+   const vhdl_decl *decl = scope->get_decl(renamed);
    assert(decl);
 
    vhdl_type *type = new vhdl_type(*decl->get_type());

@@ -102,9 +102,9 @@ static int draw_noop(vhdl_procedural *proc, stmt_container *container,
    return 0;
 }
 
-static vhdl_expr *translate_assign_rhs(ivl_signal_t sig, vhdl_scope *scope,
-                                       ivl_expr_t e, vhdl_expr *base,
-                                       int lval_width)
+static vhdl_expr *make_assign_rhs(ivl_signal_t sig, vhdl_scope *scope,
+                                  ivl_expr_t e, vhdl_expr *base,
+                                  int lval_width)
 {
    string signame(get_renamed_signal(sig));
 
@@ -182,11 +182,11 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
          // Expand ternary expressions into an if statement
          vhdl_expr *test = translate_expr(ivl_expr_oper1(rval));
          vhdl_expr *true_part =
-            translate_assign_rhs(sig, proc->get_scope(),
-                                 ivl_expr_oper2(rval), base, lval_width);
+            make_assign_rhs(sig, proc->get_scope(),
+                            ivl_expr_oper2(rval), base, lval_width);
          vhdl_expr *false_part =
-            translate_assign_rhs(sig, proc->get_scope(),
-                                 ivl_expr_oper3(rval), base, lval_width);
+            make_assign_rhs(sig, proc->get_scope(),
+                            ivl_expr_oper3(rval), base, lval_width);
 
          if (!test || !true_part || !false_part)
             return NULL;
@@ -216,11 +216,11 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
       }
       else {
          vhdl_expr *rhs =
-            translate_assign_rhs(sig, proc->get_scope(), rval, base, lval_width);
+            make_assign_rhs(sig, proc->get_scope(), rval, base, lval_width);
          if (NULL == rhs)
             return NULL;
 
-         std::string signame(get_renamed_signal(sig));
+         string signame(get_renamed_signal(sig));
          vhdl_decl *decl = proc->get_scope()->get_decl(signame);
    
          // Where possible, move constant assignments into the
@@ -349,11 +349,7 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
    if (type == IVL_ST_ASSIGN_NB) {
       draw_nbassign(proc, container, sub_stmt, time);
    }
-   else {
-      // All blocking assignments need to be made visible
-      // at this point
-      draw_blocking_assigns(proc, container);
-      
+   else {      
       vhdl_wait_stmt *wait =
          new vhdl_wait_stmt(VHDL_WAIT_FOR, time);
       container->add_stmt(wait);
