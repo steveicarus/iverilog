@@ -436,8 +436,9 @@ static int draw_if(vhdl_procedural *proc, stmt_container *container,
    
    vhdl_if_stmt *vhdif = new vhdl_if_stmt(test);
 
-   draw_stmt(proc, vhdif->get_then_container(),
-             ivl_stmt_cond_true(stmt));
+   ivl_statement_t cond_true_stmt = ivl_stmt_cond_true(stmt);
+   if (cond_true_stmt)
+      draw_stmt(proc, vhdif->get_then_container(), cond_true_stmt);
 
    ivl_statement_t cond_false_stmt = ivl_stmt_cond_false(stmt);
    if (cond_false_stmt)
