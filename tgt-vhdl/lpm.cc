@@ -203,6 +203,22 @@ static vhdl_expr *array_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    return ref;
 }
 
+static vhdl_expr *shift_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm,
+                                    vhdl_binop_t shift_op)
+{
+   vhdl_expr *lhs = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
+   vhdl_expr *rhs = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 1));
+   if (!lhs || !rhs)
+      return NULL;   
+   
+   // The RHS must be an integer
+   vhdl_type integer(VHDL_TYPE_INTEGER);
+   vhdl_expr *r_cast = rhs->cast(&integer);
+
+   vhdl_type *rtype = new vhdl_type(*lhs->get_type());
+   return new vhdl_binop_expr(lhs, shift_op, r_cast, rtype);
+}
+
 static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
    switch (ivl_lpm_type(lpm)) {
@@ -236,6 +252,10 @@ static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
       return sign_extend_lpm_to_expr(scope, lpm);
    case IVL_LPM_ARRAY:
       return array_lpm_to_expr(scope, lpm);
+   case IVL_LPM_SHIFTL:
+      return shift_lpm_to_expr(scope, lpm, VHDL_BINOP_SL);
+   case IVL_LPM_SHIFTR:
+      return shift_lpm_to_expr(scope, lpm, VHDL_BINOP_SR);
    default:
       error("Unsupported LPM type: %d", ivl_lpm_type(lpm));
       return NULL;
