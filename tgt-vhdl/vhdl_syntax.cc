@@ -848,6 +848,7 @@ void vhdl_function::emit(std::ostream &of, int level) const
    of << "  return Verilog_Result;";
    newline(of, level);
    of << "end function;";
+   newline(of, level);
 }
 
 void vhdl_param_decl::emit(std::ostream &of, int level) const
