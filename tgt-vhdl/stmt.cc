@@ -128,7 +128,7 @@ static vhdl_expr *make_assign_rhs(ivl_signal_t sig, vhdl_scope *scope,
          return rhs->cast(&t);
       }
       else {
-         vhdl_type t(tname, lval_width);
+         vhdl_type t(tname, lval_width - 1);
          return rhs->cast(&t);
       }  
    }
@@ -143,7 +143,7 @@ static vhdl_var_ref *make_assign_lhs(ivl_signal_t sig, vhdl_scope *scope,
    vhdl_type *ltype = new vhdl_type(*decl->get_type());
    vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), ltype);
    if (base)
-      lval_ref->set_slice(base, lval_width-1);
+      lval_ref->set_slice(base, lval_width - 1);
 
    return lval_ref;
 }
