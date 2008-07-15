@@ -289,7 +289,9 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
                        ivl_statement_t stmt)
 {
    if (proc->get_scope()->allow_signal_assignment()) {
-      // TODO: Explain blocking assignment here
+      // Blocking assignment is implemented as non-blocking assignment
+      // followed by a zero-time wait
+      // This follows the Verilog semantics fairly closely.
 
       vhdl_nbassign_stmt *a =
          make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);

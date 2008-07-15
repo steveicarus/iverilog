@@ -23,6 +23,53 @@
 #include <iostream>
 #include <cassert>
 
+/*
+ * Return the base of a part select.
+ */
+static vhdl_expr *part_select_base(vhdl_scope *scope, ivl_lpm_t lpm)
+{
+   vhdl_expr *off;
+   ivl_nexus_t base = ivl_lpm_data(lpm, 1);
+   if (base != NULL)
+      off = nexus_to_var_ref(scope, base);
+   else
+      off = new vhdl_const_int(ivl_lpm_base(lpm));
+
+   // Array indexes must be integers
+   vhdl_type integer(VHDL_TYPE_INTEGER);
+   return off->cast(&integer);
+}
+
+vhdl_var_ref *lpm_output(vhdl_scope *scope, ivl_lpm_t lpm)
+{
+   vhdl_var_ref *out = nexus_to_var_ref(scope, ivl_lpm_q(lpm, 0));
+   if (NULL == out) {
+      vhdl_type *type =
+         vhdl_type::type_for(ivl_lpm_width(lpm),
+                             ivl_lpm_signed(lpm) != 0);
+      string name("LPM");
+      name += ivl_lpm_basename(lpm);
+      name += "_Out";
+
+      if (!scope->have_declared(name)) {
+         scope->add_decl
+            (new vhdl_signal_decl(name.c_str(), new vhdl_type(*type)));
+      }
+      
+      out = new vhdl_var_ref(name.c_str(), type);
+   }
+
+   if (ivl_lpm_type(lpm) == IVL_LPM_PART_PV) {
+      vhdl_expr *off = part_select_base(scope, lpm);
+      assert(off);
+
+      out->set_slice(off, ivl_lpm_width(lpm) - 1);
+   }
+   
+   return out;
+}
+
+
 static vhdl_expr *concat_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
    vhdl_type *result_type =
@@ -71,23 +118,6 @@ static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop
       return expr;
 }
 
-/*
- * Return the base of a part select.
- */
-static vhdl_expr *part_select_base(vhdl_scope *scope, ivl_lpm_t lpm)
-{
-   vhdl_expr *off;
-   ivl_nexus_t base = ivl_lpm_data(lpm, 1);
-   if (base != NULL)
-      off = nexus_to_var_ref(scope, base);
-   else
-      off = new vhdl_const_int(ivl_lpm_base(lpm));
-
-   // Array indexes must be integers
-   vhdl_type integer(VHDL_TYPE_INTEGER);
-   return off->cast(&integer);
-}
-
 static vhdl_expr *part_select_vp_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
    vhdl_var_ref *selfrom = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
@@ -102,37 +132,10 @@ static vhdl_expr *part_select_vp_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    return selfrom;
 }
 
+
 static vhdl_expr *part_select_pv_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {   
-   vhdl_expr *off = part_select_base(scope, lpm);;
-   if (NULL == off)
-      return NULL;
-   
-   vhdl_var_ref *out = nexus_to_var_ref(scope, ivl_lpm_q(lpm, 0));
-   if (NULL == out)
-      return NULL;
-
-   out->set_slice(off, ivl_lpm_width(lpm) - 1);
-   return out;
-}
-
-static int draw_part_select_pv_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
-{
-   vhdl_var_ref *out;
-   vhdl_var_ref *selfrom;
-   if (NULL == (out = nexus_to_var_ref(arch->get_scope(), ivl_lpm_q(lpm, 0)))
-       || NULL == (selfrom = nexus_to_var_ref(arch->get_scope(), ivl_lpm_data(lpm, 0)))) {
-      // Not continuous assignment to signal: ignore it
-      return 0;
-   }
-
-   vhdl_expr *off = part_select_base(arch->get_scope(), lpm);;
-   if (NULL == off)
-      return 1;
-
-   out->set_slice(off, ivl_lpm_width(lpm) - 1);
-   arch->add_stmt(new vhdl_cassign_stmt(out, selfrom));
-   return 0;
+   return nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
 }
 
 static vhdl_expr *ufunc_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
@@ -200,7 +203,7 @@ static vhdl_expr *array_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    return ref;
 }
 
-vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
+static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
    switch (ivl_lpm_type(lpm)) {
    case IVL_LPM_ADD:
@@ -241,18 +244,13 @@ vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 
 int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
 {
-   if (ivl_lpm_type(lpm) == IVL_LPM_PART_PV)
-      return draw_part_select_pv_lpm(arch, lpm);
-   else {
-      vhdl_expr *f = lpm_to_expr(arch->get_scope(), lpm);
-      if (NULL == f)
-         return 1;
-        
-      vhdl_var_ref *out = nexus_to_var_ref(arch->get_scope(), ivl_lpm_q(lpm, 0));
-      if (out)
-         arch->add_stmt(new vhdl_cassign_stmt(out, f));
-      
+   vhdl_expr *f = lpm_to_expr(arch->get_scope(), lpm);
+   if (NULL == f)
       return 0;
-   }
+   
+   vhdl_var_ref *out = lpm_output(arch->get_scope(), lpm);
+   arch->add_stmt(new vhdl_cassign_stmt(out, f));
+   
+   return 0;
 }
 

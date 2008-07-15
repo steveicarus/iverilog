@@ -77,7 +77,7 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
       }
       else if ((allowed & NEXUS_TO_OTHER) &&
                (lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
-         return lpm_to_expr(arch_scope, lpm);
+         return lpm_output(arch_scope, lpm);
       }
       else if ((allowed & NEXUS_TO_CONST) &&
                (con = ivl_nexus_ptr_con(nexus_ptr))) {
@@ -370,8 +370,9 @@ static void declare_lpm(vhdl_arch *arch, ivl_scope_t scope)
 {
    int nlpms = ivl_scope_lpms(scope);
    for (int i = 0; i < nlpms; i++) {
-      if (draw_lpm(arch, ivl_scope_lpm(scope, i)) != 0)
-         error("Failed to translate LPM");
+      ivl_lpm_t lpm = ivl_scope_lpm(scope, i);
+      if (draw_lpm(arch, lpm) != 0)
+         error("Failed to translate LPM %s", ivl_lpm_name(lpm));
    }
 }
 
@@ -423,7 +424,7 @@ static vhdl_entity *create_entity_for(ivl_scope_t scope)
  */
 static void map_signal(ivl_signal_t to, vhdl_entity *parent,
                        vhdl_comp_inst *inst)
-{
+{   
    // TODO: Work for multiple words
    ivl_nexus_t nexus = ivl_signal_nex(to, 0);
 
@@ -564,11 +565,21 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
          }
          
          // And an instantiation statement
-         std::string inst_name(ivl_scope_basename(scope));
+         string inst_name(ivl_scope_basename(scope));
          if (inst_name == ent->get_name()) {
             // Cannot have instance name the same as type in VHDL
             inst_name += "_Inst";
          }
+
+         // Need to replace any [ and ] characters that result
+         // from generate statements
+         string::size_type loc = inst_name.find('[', 0);
+         if (loc != string::npos)
+            inst_name.erase(loc, 1);
+
+         loc = inst_name.find(']', 0);
+         if (loc != string::npos)
+            inst_name.erase(loc, 1);         
                      
          vhdl_comp_inst *inst =
             new vhdl_comp_inst(inst_name.c_str(), ent->get_name().c_str());

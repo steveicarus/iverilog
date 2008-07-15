@@ -19,8 +19,8 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
               ivl_statement_t stmt);
 int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm);
 
-vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm);
 vhdl_expr *translate_expr(ivl_expr_t e);
+vhdl_var_ref *lpm_output(vhdl_scope *scope, ivl_lpm_t lpm);
 
 void remember_entity(vhdl_entity *ent);
 vhdl_entity *find_entity(const string &tname);
