@@ -561,6 +561,7 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
    case IVL_ST_CONDIT:
       return draw_if(proc, container, stmt);
    case IVL_ST_CASE:
+   case IVL_ST_CASEX:
       return draw_case(proc, container, stmt);
    case IVL_ST_WHILE:
       return draw_while(proc, container, stmt);
