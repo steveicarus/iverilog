@@ -118,6 +118,21 @@ static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop
       return expr;
 }
 
+static vhdl_expr *rel_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t op)
+{
+   vhdl_binop_expr *expr = new vhdl_binop_expr(op, vhdl_type::boolean());
+  
+   for (int i = 0; i < 2; i++) {
+      vhdl_expr *e = nexus_to_var_ref(scope, ivl_lpm_data(lpm, i));
+      if (NULL == e)
+         return NULL;
+
+      expr->add_expr(e);
+   }
+
+   return expr;
+}
+
 static vhdl_expr *part_select_vp_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
    vhdl_var_ref *selfrom = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
@@ -230,6 +245,8 @@ static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
       return binop_lpm_to_expr(scope, lpm, VHDL_BINOP_MULT);
    case IVL_LPM_CONCAT:
       return concat_lpm_to_expr(scope, lpm);
+   case IVL_LPM_CMP_EEQ:
+      return rel_lpm_to_expr(scope, lpm, VHDL_BINOP_EQ);
    case IVL_LPM_PART_VP:
       return part_select_vp_lpm_to_expr(scope, lpm);
    case IVL_LPM_PART_PV:
