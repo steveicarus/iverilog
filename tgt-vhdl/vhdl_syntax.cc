@@ -28,12 +28,19 @@
 vhdl_scope::vhdl_scope()
    : parent_(NULL), init_(false), sig_assign_(true)
 {
-
+   
 }
 
 vhdl_scope::~vhdl_scope()
 {
    delete_children<vhdl_decl>(decls_);
+}
+
+void vhdl_scope::set_initializing(bool i)
+{
+   init_ = i;
+   if (parent_)
+      parent_->set_initializing(i);
 }
 
 void vhdl_scope::add_decl(vhdl_decl *decl)
@@ -318,10 +325,12 @@ const vhdl_type *vhdl_decl::get_type() const
 }
 
 void vhdl_decl::set_initial(vhdl_expr *initial)
-{
-   if (initial_ != NULL)
-      delete initial_;
-   initial_ = initial;
+{   
+   if (!has_initial_) {
+      assert(initial_ == NULL);
+      initial_ = initial;
+      has_initial_ = true;
+   }
 }
 
 void vhdl_port_decl::emit(std::ostream &of, int level) const

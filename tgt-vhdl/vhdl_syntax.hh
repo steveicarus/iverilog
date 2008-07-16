@@ -425,18 +425,20 @@ class vhdl_decl : public vhdl_element {
 public:
    vhdl_decl(const char *name, vhdl_type *type = NULL,
              vhdl_expr *initial = NULL)
-      : name_(name), type_(type), initial_(initial) {}
+      : name_(name), type_(type), initial_(initial),
+        has_initial_(initial != NULL) {}
    virtual ~vhdl_decl();
 
    const std::string &get_name() const { return name_; }
    const vhdl_type *get_type() const;
    void set_type(vhdl_type *t) { type_ = t; }
    void set_initial(vhdl_expr *initial);
-   bool has_initial() const { return initial_ != NULL; }
+   bool has_initial() const { return has_initial_; }
 protected:
    std::string name_;
    vhdl_type *type_;
    vhdl_expr *initial_;
+   bool has_initial_;
 };
 
 typedef std::list<vhdl_decl*> decl_list_t;
@@ -566,7 +568,7 @@ public:
    void set_parent(vhdl_scope *p) { parent_ = p; }
 
    bool initializing() const { return init_; }
-   void set_initializing(bool i) { init_ = i; }
+   void set_initializing(bool i);
 
    void set_allow_signal_assignment(bool b) { sig_assign_ = b; }
    bool allow_signal_assignment() const { return sig_assign_; }

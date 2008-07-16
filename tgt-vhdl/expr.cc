@@ -58,8 +58,13 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
 
    const char *renamed = get_renamed_signal(sig).c_str();
    
-   const vhdl_decl *decl = scope->get_decl(renamed);
+   vhdl_decl *decl = scope->get_decl(renamed);
    assert(decl);
+
+   // Can't generate a constant initialiser for this signal
+   // later as it has already been read
+   if (scope->initializing())
+      decl->set_initial(NULL);
 
    vhdl_type *type = new vhdl_type(*decl->get_type());
    
