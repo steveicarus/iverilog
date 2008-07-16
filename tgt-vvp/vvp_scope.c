@@ -879,15 +879,15 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		  fprintf(vvp_out, "L_%p .delay  L_%p/d", lptr, lptr);
 
 		  sig = ivl_expr_signal(rise_exp);
-		  assert(ivl_signal_array_count(sig) == 1);
+		  assert(ivl_signal_dimensions(sig) == 0);
 		  fprintf(vvp_out, ", v%p_0", sig);
 
 		  sig = ivl_expr_signal(fall_exp);
-		  assert(ivl_signal_array_count(sig) == 1);
+		  assert(ivl_signal_dimensions(sig) == 0);
 		  fprintf(vvp_out, ", v%p_0", sig);
 
 		  sig = ivl_expr_signal(decay_exp);
-		  assert(ivl_signal_array_count(sig) == 1);
+		  assert(ivl_signal_dimensions(sig) == 0);
 		  fprintf(vvp_out, ", v%p_0;\n", sig);
 	    }
       }
@@ -1564,7 +1564,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 	    else
 		  fprintf(vvp_out, ", ");
 
-	    assert(ivl_signal_array_count(psig) == 1);
+	    assert(ivl_signal_dimensions(psig) == 0);
 	    fprintf(vvp_out, "v%p_0", psig);
       }
 
@@ -1574,7 +1574,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 	   result is collected. */
       { ivl_signal_t psig = ivl_scope_port(def, 0);
         assert(ivl_lpm_width(net) == ivl_signal_width(psig));
-	assert(ivl_signal_array_count(psig) == 1);
+	assert(ivl_signal_dimensions(psig) == 0);
 
 	fprintf(vvp_out, " v%p_0", psig);
       }

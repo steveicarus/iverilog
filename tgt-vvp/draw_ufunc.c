@@ -30,7 +30,7 @@ static void function_argument_logic(ivl_signal_t port, ivl_expr_t exp)
       struct vector_info res;
 
 	/* ports cannot be arrays. */
-      assert(ivl_signal_array_count(port) == 1);
+      assert(ivl_signal_dimensions(port) == 0);
 
       res = draw_eval_expr_wid(exp, ivl_signal_width(port), 0);
         /* We could have extra bits so only select the ones we need. */
@@ -46,7 +46,7 @@ static void function_argument_real(ivl_signal_t port, ivl_expr_t exp)
       int res = draw_eval_real(exp);
 
 	/* ports cannot be arrays. */
-      assert(ivl_signal_array_count(port) == 1);
+      assert(ivl_signal_dimensions(port) == 0);
 
       fprintf(vvp_out, "   %%set/wr v%p_0, %d;\n", port, res);
       clr_word(res);
@@ -126,7 +126,7 @@ struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
       if (load_wid > ivl_signal_width(retval))
 	    load_wid = ivl_signal_width(retval);
 
-      assert(ivl_signal_array_count(retval) == 1);
+      assert(ivl_signal_dimensions(retval) == 0);
       fprintf(vvp_out, "    %%load/v  %u, v%p_0, %u;\n",
 	      res.base, retval, load_wid);
 
@@ -157,7 +157,7 @@ int draw_ufunc_real(ivl_expr_t exp)
       fprintf(vvp_out, "   %%join;\n");
 
 	/* Return value signal cannot be an array. */
-      assert(ivl_signal_array_count(retval) == 1);
+      assert(ivl_signal_dimensions(retval) == 0);
 
 	/* Load the result into a word. */
       res = allocate_word();
