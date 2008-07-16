@@ -90,8 +90,9 @@ static vhdl_expr *concat_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 
 static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t op)
 {
+   unsigned out_width = ivl_lpm_width(lpm);
    vhdl_type *result_type =
-      vhdl_type::type_for(ivl_lpm_width(lpm), ivl_lpm_signed(lpm) != 0);
+      vhdl_type::type_for(out_width, ivl_lpm_signed(lpm) != 0);
    vhdl_binop_expr *expr = new vhdl_binop_expr(op, result_type);
  
    for (int i = 0; i < 2; i++) {
@@ -99,14 +100,13 @@ static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop
       if (NULL == e)
          return NULL;
 
-      expr->add_expr(e);
+      expr->add_expr(e->cast(result_type));
    }
    
    if (op == VHDL_BINOP_MULT) {
       // Need to resize the output to the desired size,
       // as this does not happen automatically in VHDL
       
-      unsigned out_width = ivl_lpm_width(lpm);
       vhdl_fcall *resize =
          new vhdl_fcall("Resize", vhdl_type::nsigned(out_width));
       resize->add_expr(expr);
