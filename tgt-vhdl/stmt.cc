@@ -239,22 +239,26 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
          // internal signals not ports
          if (proc->get_scope()->initializing()
              && ivl_signal_port(sig) == IVL_SIP_NONE
-             && !decl->has_initial() && rhs->constant()
-             && container == proc->get_container()) { // Top-level container
+             && !decl->has_initial() && rhs->constant()) {
 
-            decl->set_initial(rhs);
-
-            return NULL;
+            // If this assignment is not in the top-level container
+            // it will not be made on all paths through the code
+            // This precludes any future extraction of an initialiser
+            if (container != proc->get_container())
+               decl->set_initial(NULL);   // Default initial value
+            else {
+               decl->set_initial(rhs);
+               return NULL;
+            }
          }
-         else {
-            vhdl_var_ref *lval_ref =
-               make_assign_lhs(sig, proc->get_scope(), base, lval_width);
-            
-            T *a = new T(lval_ref, rhs);
-            container->add_stmt(a);
-            
-            return a;
-         }
+         
+         vhdl_var_ref *lval_ref =
+            make_assign_lhs(sig, proc->get_scope(), base, lval_width);
+         
+         T *a = new T(lval_ref, rhs);
+         container->add_stmt(a);
+         
+         return a;
       }
    }
    else {
