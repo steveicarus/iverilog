@@ -307,7 +307,8 @@ public:
 enum vhdl_wait_type_t {
    VHDL_WAIT_INDEF,  // Suspend indefinitely
    VHDL_WAIT_FOR,    // Wait for a constant amount of time
-   VHDL_WAIT_UNTIL,  // Wait on a sensitivity list
+   VHDL_WAIT_UNTIL,  // Wait on an expression
+   VHDL_WAIT_ON,     // Wait on a sensitivity list
 };
 
 /*
@@ -325,6 +326,7 @@ public:
 private:
    vhdl_wait_type_t type_;
    vhdl_expr *expr_;
+   string_list_t sensitivity_;
 };
 
 

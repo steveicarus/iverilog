@@ -435,8 +435,8 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
       }
    }
 
-   draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt));
    container->add_stmt(new vhdl_wait_stmt(VHDL_WAIT_UNTIL, test));
+   draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt));
    
    return 0;
 }
