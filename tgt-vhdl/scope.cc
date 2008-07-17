@@ -284,7 +284,7 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
       ivl_signal_t sig = ivl_scope_sig(scope, i);      
       remember_signal(sig, ent->get_arch()->get_scope());
 
-      if (ivl_signal_array_count(sig) > 1)
+      if (ivl_signal_dimensions(sig) > 0)
          error("Arrays not implemented yet");
 
       vhdl_type *sig_type =
