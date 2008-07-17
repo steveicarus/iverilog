@@ -62,6 +62,7 @@ class vvp_fun_part_pv  : public vvp_net_fun_t {
 
     public:
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
     private:
       unsigned base_;

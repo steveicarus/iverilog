@@ -2123,7 +2123,16 @@ void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bits,
 				 unsigned base, unsigned wid, unsigned vwid)
 {
       cerr << "internal error: " << typeid(*this).name() << ": "
-	   << "recv_vect_pv(" << bits << ", " << base
+	   << "recv_vec4_pv(" << bits << ", " << base
+	   << ", " << wid << ", " << vwid << ") not implemented" << endl;
+      assert(0);
+}
+
+void vvp_net_fun_t::recv_vec8_pv(vvp_net_ptr_t, const vvp_vector8_t&bits,
+				 unsigned base, unsigned wid, unsigned vwid)
+{
+      cerr << "internal error: " << typeid(*this).name() << ": "
+	   << "recv_vec8_pv(" << bits << ", " << base
 	   << ", " << wid << ", " << vwid << ") not implemented" << endl;
       assert(0);
 }
@@ -2400,6 +2409,12 @@ void vvp_fun_signal::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 	    assert(0);
 	    break;
       }
+}
+
+void vvp_fun_signal::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
+				  unsigned base, unsigned wid, unsigned vwid)
+{
+      recv_vec4_pv(ptr, reduce4(bit), base, wid, vwid);
 }
 
 void vvp_fun_signal::calculate_output_(vvp_net_ptr_t ptr)

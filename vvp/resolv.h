@@ -45,6 +45,8 @@ class resolv_functor : public vvp_net_fun_t {
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 			unsigned base, unsigned wid, unsigned vwid);
+      void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
+			unsigned base, unsigned wid, unsigned vwid);
 
     private:
       vvp_vector8_t val_[4];
