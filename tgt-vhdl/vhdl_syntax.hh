@@ -462,6 +462,14 @@ private:
 };
 
 
+class vhdl_type_decl : public vhdl_decl {
+public:
+   vhdl_type_decl(const char *name, vhdl_type *base)
+      : vhdl_decl(name, base) {}
+   void emit(std::ofstream &of, int level) const;
+};
+
+
 /*
  * A variable declaration inside a process (although this isn't
  * enforced here).

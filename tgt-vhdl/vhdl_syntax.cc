@@ -380,6 +380,14 @@ void vhdl_signal_decl::emit(std::ostream &of, int level) const
    emit_comment(of, level, true);
 }
 
+void vhdl_type_decl::emit(std::ofstream &of, int level) const
+{
+   of << "type " << name_ << " is ";
+   type_->emit(of, level);
+   of << ";";
+   emit_comment(of, level, true);
+}
+
 vhdl_expr::~vhdl_expr()
 {
    if (type_ != NULL)
