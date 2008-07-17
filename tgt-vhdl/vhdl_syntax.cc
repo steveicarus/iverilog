@@ -307,6 +307,7 @@ void vhdl_wait_stmt::emit(std::ostream &of, int level) const
       break;
    case VHDL_WAIT_ON:
       {
+         of << " on ";
          string_list_t::const_iterator it = sensitivity_.begin();
          while (it != sensitivity_.end()) {
             of << *it;

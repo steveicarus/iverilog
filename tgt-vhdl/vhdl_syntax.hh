@@ -323,6 +323,7 @@ public:
    ~vhdl_wait_stmt();
    
    void emit(std::ostream &of, int level) const;
+   void add_sensitivity(const std::string &s) { sensitivity_.push_back(s); }
 private:
    vhdl_wait_type_t type_;
    vhdl_expr *expr_;

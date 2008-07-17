@@ -387,7 +387,10 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
 
 /*
  * A wait statement waits for a level change on a @(..) list of
- * signals.
+ * signals. Purely combinatorial processes (i.e. no posedge/negedge
+ * events) produce a `wait on' statement at the end of the process.
+ * Sequential processes produce a `wait until' statement at the
+ * start of the process.
  */
 static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
                      ivl_statement_t stmt)
@@ -398,45 +401,74 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
 
    vhdl_binop_expr *test =
       new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
-      
+   
    int nevents = ivl_stmt_nevent(stmt);
+   
+   bool combinatorial = true;  // True if no negedge/posedge events
    for (int i = 0; i < nevents; i++) {
       ivl_event_t event = ivl_stmt_events(stmt, i);
-
-      int nany = ivl_event_nany(event);
-      for (int i = 0; i < nany; i++) {
-         ivl_nexus_t nexus = ivl_event_any(event, i);
-         vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
-
-         ref->set_name(ref->get_name() + "'Event");
-         test->add_expr(ref);
-      }
-
-      int nneg = ivl_event_nneg(event);
-      for (int i = 0; i < nneg; i++) {
-         ivl_nexus_t nexus = ivl_event_neg(event, i);
-         vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
-         vhdl_fcall *detect =
-            new vhdl_fcall("falling_edge", vhdl_type::boolean());
-         detect->add_expr(ref);
-         
-         test->add_expr(detect);
-      }
-
-      int npos = ivl_event_npos(event);
-      for (int i = 0; i < npos; i++) {
-         ivl_nexus_t nexus = ivl_event_pos(event, i);
-         vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
-         vhdl_fcall *detect =
-            new vhdl_fcall("rising_edge", vhdl_type::boolean());
-         detect->add_expr(ref);
-         
-         test->add_expr(detect);
-      }
+      if (ivl_event_npos(event) > 0 || ivl_event_nneg(event) > 0)
+         combinatorial = false;
    }
 
-   container->add_stmt(new vhdl_wait_stmt(VHDL_WAIT_UNTIL, test));
-   draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt));
+   if (combinatorial) {
+      vhdl_wait_stmt *wait = new vhdl_wait_stmt(VHDL_WAIT_ON); 
+      
+      for (int i = 0; i < nevents; i++) {
+         ivl_event_t event = ivl_stmt_events(stmt, i);
+         
+         int nany = ivl_event_nany(event);
+         for (int i = 0; i < nany; i++) {
+            ivl_nexus_t nexus = ivl_event_any(event, i);
+            vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
+
+            wait->add_sensitivity(ref->get_name());
+            delete ref;
+         }
+      }
+
+      draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt));
+      container->add_stmt(wait);
+   }
+   else {
+      for (int i = 0; i < nevents; i++) {
+         ivl_event_t event = ivl_stmt_events(stmt, i);
+         
+         int nany = ivl_event_nany(event);
+         for (int i = 0; i < nany; i++) {
+            ivl_nexus_t nexus = ivl_event_any(event, i);
+            vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
+            
+            ref->set_name(ref->get_name() + "'Event");
+            test->add_expr(ref);
+         }
+         
+         int nneg = ivl_event_nneg(event);
+         for (int i = 0; i < nneg; i++) {
+            ivl_nexus_t nexus = ivl_event_neg(event, i);
+            vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
+            vhdl_fcall *detect =
+               new vhdl_fcall("falling_edge", vhdl_type::boolean());
+            detect->add_expr(ref);
+            
+            test->add_expr(detect);
+         }
+         
+         int npos = ivl_event_npos(event);
+         for (int i = 0; i < npos; i++) {
+            ivl_nexus_t nexus = ivl_event_pos(event, i);
+            vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
+            vhdl_fcall *detect =
+               new vhdl_fcall("rising_edge", vhdl_type::boolean());
+            detect->add_expr(ref);
+         
+            test->add_expr(detect);
+         }
+      }
+      
+      container->add_stmt(new vhdl_wait_stmt(VHDL_WAIT_UNTIL, test));
+      draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt));
+   }
    
    return 0;
 }
