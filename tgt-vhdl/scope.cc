@@ -288,7 +288,12 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
          string type_name = name + "_Type";
          vhdl_type *base_type =
             vhdl_type::type_for(ivl_signal_width(sig), ivl_signal_signed(sig) != 0);
-         vhdl_type *array_type = vhdl_type::array_of(base_type, type_name, 1, 0);
+
+         int lsb = ivl_signal_array_base(sig);
+         int msb = lsb + ivl_signal_array_count(sig) - 1;
+         
+         vhdl_type *array_type =
+            vhdl_type::array_of(base_type, type_name, msb, lsb);
          vhdl_decl *array_decl = new vhdl_type_decl(type_name.c_str(), array_type);
          ent->get_arch()->get_scope()->add_decl(array_decl);
            
