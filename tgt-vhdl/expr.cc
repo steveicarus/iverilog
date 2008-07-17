@@ -66,9 +66,21 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
    if (scope->initializing())
       decl->set_initial(NULL);
 
-   vhdl_type *type = new vhdl_type(*decl->get_type());
-   
-   return new vhdl_var_ref(renamed, type);
+   vhdl_var_ref *ref =
+      new vhdl_var_ref(renamed, new vhdl_type(*decl->get_type()));
+      
+   ivl_expr_t off;
+   if (ivl_signal_array_count(sig) > 0 && (off = ivl_expr_oper1(e))) {
+      // Select from an array
+      vhdl_expr *vhd_off = translate_expr(off);
+      if (NULL == vhd_off)
+         return NULL;
+
+      vhdl_type integer(VHDL_TYPE_INTEGER);
+      ref->set_slice(vhd_off->cast(&integer));
+   }
+
+   return ref;
 }
 
 /*
