@@ -603,6 +603,21 @@ vhdl_const_bits::vhdl_const_bits(const char *value, int width, bool issigned)
       value_.push_back(*value++);
 }
 
+int vhdl_const_bits::bits_to_int() const
+{   
+   char msb = value_[value_.size() - 1];
+   int result = 0, bit;
+   for (int i = sizeof(int)*8 - 1; i >= 0; i--) {
+      if (i > (int)value_.size() - 1)
+         bit = msb == '1' ? 1 : 0;
+      else
+         bit = value_[i] == '1' ? 1 : 0;
+      result = (result << 1) | bit;
+   }
+
+   return result;
+}
+
 vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
 {  
    if (to->get_name() == VHDL_TYPE_STD_LOGIC) {
@@ -626,13 +641,8 @@ vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
       value_.resize(to->get_width(), value_[0]);  
       return this;
    }
-   else if (to->get_name() == VHDL_TYPE_INTEGER) {
-      // Need to explicitly qualify the type (or the VHDL
-      // compiler gets confused between signed/unsigned)
-      qualified_ = true;
-
-      return vhdl_expr::cast(to);
-   }
+   else if (to->get_name() == VHDL_TYPE_INTEGER)
+      return new vhdl_const_int(bits_to_int());
    else
       return vhdl_expr::cast(to);
 }

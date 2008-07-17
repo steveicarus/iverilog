@@ -140,6 +140,8 @@ public:
    const std::string &get_value() const { return value_; }
    vhdl_expr *cast(const vhdl_type *to);
 private:
+   int bits_to_int() const;
+   
    std::string value_;
    bool qualified_, signed_;
 };
