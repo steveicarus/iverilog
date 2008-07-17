@@ -662,6 +662,14 @@ void vhdl_const_bits::emit(std::ostream &of, int level) const
    of << (qualified_ ? "\")" : "\"");
 }
 
+vhdl_expr *vhdl_const_bit::cast(const vhdl_type *to)
+{
+   if (to->get_name() == VHDL_TYPE_INTEGER)
+      return new vhdl_const_int(bit_ == '1' ? 1 : 0);
+   else
+      return vhdl_expr::cast(to);
+}
+
 void vhdl_const_bit::emit(std::ostream &of, int level) const
 {
    of << "'" << vl_to_vhdl_bit(bit_) << "'";

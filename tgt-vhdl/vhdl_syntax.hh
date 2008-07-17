@@ -151,6 +151,7 @@ public:
    vhdl_const_bit(char bit)
       : vhdl_expr(vhdl_type::std_logic(), true), bit_(bit) {}
    void emit(std::ostream &of, int level) const;
+   vhdl_expr *cast(const vhdl_type *to);
 private:
    char bit_;
 };
