@@ -117,6 +117,8 @@ static vhdl_expr *make_assign_rhs(ivl_signal_t sig, vhdl_scope *scope,
    
    if (base == NULL)
       return rhs->cast(decl->get_type());
+   else if (decl->get_type()->get_name() == VHDL_TYPE_ARRAY)
+      return rhs->cast(decl->get_type()->get_base());
    else {
       // Doesn't make sense to part select on something that's
       // not a vector
@@ -142,8 +144,12 @@ static vhdl_var_ref *make_assign_lhs(ivl_signal_t sig, vhdl_scope *scope,
    
    vhdl_type *ltype = new vhdl_type(*decl->get_type());
    vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), ltype);
-   if (base)
-      lval_ref->set_slice(base, lval_width - 1);
+   if (base) {
+      if (decl->get_type()->get_name() == VHDL_TYPE_ARRAY)
+         lval_ref->set_slice(base, 0);
+      else
+         lval_ref->set_slice(base, lval_width - 1);
+   }
 
    return lval_ref;
 }
@@ -167,6 +173,8 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
 
       vhdl_expr *base = NULL;
       ivl_expr_t e_off = ivl_lval_part_off(lval);
+      if (NULL == e_off)
+         e_off = ivl_lval_idx(lval);
       if (e_off) {
          if ((base = translate_expr(e_off)) == NULL)
             return NULL;
@@ -239,7 +247,9 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
          // internal signals not ports
          if (proc->get_scope()->initializing()
              && ivl_signal_port(sig) == IVL_SIP_NONE
-             && !decl->has_initial() && rhs->constant()) {
+             && !decl->has_initial()
+             && rhs->constant()
+             && decl->get_type()->get_name() != VHDL_TYPE_ARRAY) {
 
             // If this assignment is not in the top-level container
             // it will not be made on all paths through the code
