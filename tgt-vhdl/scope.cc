@@ -261,20 +261,6 @@ static std::string make_safe_name(ivl_signal_t sig)
 }
 
 /*
- * Create a VHDL type for a Verilog signal.
- */
-static vhdl_type *get_signal_type(ivl_signal_t sig)
-{
-   int width = ivl_signal_width(sig);
-   if (width == 1)
-      return vhdl_type::std_logic();
-   else if (ivl_signal_signed(sig))
-      return vhdl_type::nsigned(width);
-   else
-      return vhdl_type::nunsigned(width);
-}
-
-/*
  * Declare all signals and ports for a scope.
  */
 static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
@@ -624,7 +610,9 @@ int draw_function(ivl_scope_t scope, ivl_scope_t parent)
    int nsigs = ivl_scope_sigs(scope);
    for (int i = 0; i < nsigs; i++) {
       ivl_signal_t sig = ivl_scope_sig(scope, i);            
-      vhdl_type *sigtype = get_signal_type(sig);
+      vhdl_type *sigtype =
+         vhdl_type::type_for(ivl_signal_width(sig),
+                             ivl_signal_signed(sig) != 0);
       
       std::string signame = make_safe_name(sig);
 
