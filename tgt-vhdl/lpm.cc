@@ -138,7 +138,7 @@ static vhdl_expr *part_select_vp_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    vhdl_var_ref *selfrom = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
    if (NULL == selfrom)
       return NULL;
-
+   
    vhdl_expr *off = part_select_base(scope, lpm);;
    if (NULL == off)
       return NULL;
@@ -213,7 +213,8 @@ static vhdl_expr *array_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
       return NULL;
    
    vhdl_var_ref *ref = new vhdl_var_ref(renamed, atype);
-   ref->set_slice(select);
+   vhdl_type integer(VHDL_TYPE_INTEGER);
+   ref->set_slice(select->cast(&integer));
    
    return ref;
 }
