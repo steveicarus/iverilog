@@ -20,6 +20,7 @@
 
 #include "vhdl_type.hh"
 
+#include <cassert>
 #include <sstream>
 
 
@@ -63,6 +64,12 @@ vhdl_type *vhdl_type::time()
    return new vhdl_type(VHDL_TYPE_TIME);
 }
 
+vhdl_type *vhdl_type::get_base() const
+{
+   assert(name_ == VHDL_TYPE_ARRAY);
+   return base_;
+}
+
 /*
  * This is just the name of the type, without any parameters.
  */
@@ -87,6 +94,9 @@ std::string vhdl_type::get_string() const
       return std::string("signed");
    case VHDL_TYPE_UNSIGNED:
       return std::string("unsigned");
+   case VHDL_TYPE_ARRAY:
+      // Each array has its own type declaration
+      return array_name_;
    default:
       return std::string("BadType");
    }
@@ -106,6 +116,14 @@ std::string vhdl_type::get_decl_string() const
          ss << get_string() << "(" << msb_;
          ss << " downto " << lsb_ << ")";
          return ss.str();
+      }
+   case VHDL_TYPE_ARRAY:
+      {
+         std::ostringstream ss;
+         ss << "array (" << msb_ << " downto "
+            << lsb_ << ") of "
+            << base_->get_decl_string();
+         return ss.str();         
       }
    default:
       return get_string();
@@ -130,4 +148,9 @@ vhdl_type *vhdl_type::type_for(int width, bool issigned, int lsb)
       return vhdl_type::nsigned(width, lsb);
    else
       return vhdl_type::nunsigned(width, lsb);
+}
+
+vhdl_type *vhdl_type::array_of(vhdl_type *b, std::string &n, int m, int l)
+{
+   return new vhdl_type(b, n, m, l);
 }
