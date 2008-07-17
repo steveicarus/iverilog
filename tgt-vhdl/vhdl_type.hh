@@ -53,13 +53,17 @@ public:
              int msb, int lsb)
       : name_(VHDL_TYPE_ARRAY), msb_(msb), lsb_(lsb), base_(base),
         array_name_(array_name) {}
-             
-   virtual ~vhdl_type() {}
+
+   // Copy constructor
+   vhdl_type(const vhdl_type &other);
+   
+   virtual ~vhdl_type();
 
    void emit(std::ostream &of, int level) const;
    vhdl_type_name_t get_name() const { return name_; }
    std::string get_string() const;
    std::string get_decl_string() const;
+   std::string get_type_decl_string() const;
    vhdl_type *get_base() const;
    int get_width() const { return msb_ - lsb_ + 1; }
    int get_msb() const { return msb_; }

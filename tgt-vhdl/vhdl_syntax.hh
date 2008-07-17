@@ -466,7 +466,7 @@ class vhdl_type_decl : public vhdl_decl {
 public:
    vhdl_type_decl(const char *name, vhdl_type *base)
       : vhdl_decl(name, base) {}
-   void emit(std::ofstream &of, int level) const;
+   void emit(std::ostream &of, int level) const;
 };
 
 

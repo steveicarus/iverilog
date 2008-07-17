@@ -270,14 +270,33 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
       ivl_signal_t sig = ivl_scope_sig(scope, i);      
       remember_signal(sig, ent->get_arch()->get_scope());
 
-      if (ivl_signal_dimensions(sig) > 0)
-         error("Arrays not implemented yet");
-
-      vhdl_type *sig_type =
-         vhdl_type::type_for(ivl_signal_width(sig), ivl_signal_signed(sig) != 0);
-      
       string name(make_safe_name(sig));
       rename_signal(sig, name);
+      
+      vhdl_type *sig_type;
+      unsigned dimensions = ivl_signal_dimensions(sig);
+      if (dimensions > 0) {
+         // Arrays are implemented by generating a separate type
+         // declaration for each array, and then declaring a
+         // signal of that type
+
+         if (dimensions > 1) {
+            error("> 1 dimension arrays not implemented yet");
+            return;
+         }
+
+         string type_name = name + "_Type";
+         vhdl_type *base_type =
+            vhdl_type::type_for(ivl_signal_width(sig), ivl_signal_signed(sig) != 0);
+         vhdl_type *array_type = vhdl_type::array_of(base_type, type_name, 1, 0);
+         vhdl_decl *array_decl = new vhdl_type_decl(type_name.c_str(), array_type);
+         ent->get_arch()->get_scope()->add_decl(array_decl);
+           
+         sig_type = new vhdl_type(*array_type);
+      }
+      else
+         sig_type =
+            vhdl_type::type_for(ivl_signal_width(sig), ivl_signal_signed(sig) != 0);
 
       ivl_signal_port_t mode = ivl_signal_port(sig);
       switch (mode) {
