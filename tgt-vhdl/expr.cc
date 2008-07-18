@@ -22,6 +22,8 @@
 
 #include <iostream>
 #include <cassert>
+#include <cstring>
+
 
 /*
  * Change the signedness of a vector.
@@ -402,6 +404,23 @@ static vhdl_expr *translate_concat(ivl_expr_t e)
    return translate_parms<vhdl_binop_expr>(concat, e);
 }
 
+vhdl_expr *translate_sfunc_time(ivl_expr_t e)
+{
+   cerr << "warning: no translation for time (returning 0)" << endl;
+   return new vhdl_const_int(0);
+}
+
+vhdl_expr *translate_sfunc(ivl_expr_t e)
+{
+   const char *name = ivl_expr_name(e);
+   if (strcmp(name, "$time") == 0)
+      return translate_sfunc_time(e);
+   else {
+      error("No translation for system function %s", name);
+      return NULL;
+   }
+}
+
 /*
  * Generate a VHDL expression from a Verilog expression.
  */
@@ -429,6 +448,8 @@ vhdl_expr *translate_expr(ivl_expr_t e)
       return translate_ternary(e);
    case IVL_EX_CONCAT:
       return translate_concat(e);
+   case IVL_EX_SFUNC:
+      return translate_sfunc(e);
    default:
       error("No VHDL translation for expression at %s:%d (type = %d)",
             ivl_expr_file(e), ivl_expr_lineno(e), type);
