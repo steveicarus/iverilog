@@ -422,10 +422,15 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
          return resize(to->get_width());
    }
    else if (to->get_name() == VHDL_TYPE_BOOLEAN) {
-      // '1' is true all else are false
-      vhdl_const_bit *one = new vhdl_const_bit('1');
-      return new vhdl_binop_expr
-         (this, VHDL_BINOP_EQ, one, vhdl_type::boolean());
+      if (type_->get_name() == VHDL_TYPE_STD_LOGIC) {
+         // '1' is true all else are false
+         vhdl_const_bit *one = new vhdl_const_bit('1');
+         return new vhdl_binop_expr
+            (this, VHDL_BINOP_EQ, one, vhdl_type::boolean());
+      }
+      else {
+         assert(false);
+      }
    }
    else if (to->get_name() == VHDL_TYPE_INTEGER) {
       vhdl_fcall *conv = new vhdl_fcall("To_Integer", new vhdl_type(*to));
