@@ -155,7 +155,8 @@ static vhdl_expr *part_select_pv_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 
 static vhdl_expr *ufunc_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
-   vhdl_fcall *fcall = new vhdl_fcall(ivl_lpm_basename(lpm), NULL);
+   ivl_scope_t f_scope = ivl_lpm_define(lpm);
+   vhdl_fcall *fcall = new vhdl_fcall(ivl_scope_basename(f_scope), NULL);
 
    for (unsigned i = 0; i < ivl_lpm_size(lpm); i++) {
       vhdl_var_ref *ref = nexus_to_var_ref(scope, ivl_lpm_data(lpm, i));
