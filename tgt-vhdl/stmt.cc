@@ -159,7 +159,7 @@ static vhdl_var_ref *make_assign_lhs(ivl_signal_t sig, vhdl_scope *scope,
  */
 template <class T>
 static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
-                          ivl_statement_t stmt, bool blocking)
+                          ivl_statement_t stmt, bool blocking, vhdl_expr *after)
 {
    int nlvals = ivl_stmt_lvals(stmt);
    if (nlvals != 1) {
@@ -268,6 +268,24 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
          T *a = new T(lval_ref, rhs);
          container->add_stmt(a);
          
+         ivl_expr_t i_delay;
+         if (NULL == after && (i_delay = ivl_stmt_delay_expr(stmt))) {
+            if ((after = translate_expr(i_delay)) == NULL)
+               return NULL;
+
+            // Need to make 'after' a time value
+            // we can do this by multiplying by 1ns
+            vhdl_type integer(VHDL_TYPE_INTEGER);
+            after = after->cast(&integer);
+            
+            vhdl_expr *ns1 = new vhdl_const_time(1, TIME_UNIT_NS);
+            after = new vhdl_binop_expr(after, VHDL_BINOP_MULT, ns1,
+                                       vhdl_type::time());
+         }
+         
+         if (after != NULL)
+            a->set_after(after);
+         
          return a;
       }
    }
@@ -287,15 +305,8 @@ static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
 {
    assert(proc->get_scope()->allow_signal_assignment());
 
-   vhdl_nbassign_stmt *a =
-      make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);
+   make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false, after);
 
-   if (a != NULL) {
-      // Assignment wasn't moved to initialisation
-      if (after != NULL)
-         a->set_after(after);
-   }
-      
    return 0;
 }
 
@@ -307,20 +318,13 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
       // followed by a zero-time wait
       // This follows the Verilog semantics fairly closely.
 
-      vhdl_nbassign_stmt *a =
-         make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);
-
-      if (a != NULL) {
-         // Assignment is a statement and not moved into the initialisation
-         //if (after != NULL)
-         //   a->set_after(after);
-      }
+      make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false, NULL);
       
       container->add_stmt
          (new vhdl_wait_stmt(VHDL_WAIT_FOR, new vhdl_const_time(0)));
    }
    else
-      make_assignment<vhdl_assign_stmt>(proc, container, stmt, true);
+      make_assignment<vhdl_assign_stmt>(proc, container, stmt, true, NULL);
    
    return 0;
 }

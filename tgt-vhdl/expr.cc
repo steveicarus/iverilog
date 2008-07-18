@@ -97,6 +97,11 @@ static vhdl_expr *translate_number(ivl_expr_t e)
                                  ivl_expr_signed(e) != 0);
 }
 
+static vhdl_expr *translate_ulong(ivl_expr_t e)
+{
+   return new vhdl_const_int(ivl_expr_uvalue(e));
+}
+
 static vhdl_expr *translate_unary(ivl_expr_t e)
 {
    vhdl_expr *operand = translate_expr(ivl_expr_oper1(e));
@@ -436,6 +441,8 @@ vhdl_expr *translate_expr(ivl_expr_t e)
       return translate_signal(e);
    case IVL_EX_NUMBER:
       return translate_number(e);
+   case IVL_EX_ULONG:
+      return translate_ulong(e);
    case IVL_EX_UNARY:
       return translate_unary(e);
    case IVL_EX_BINARY:
