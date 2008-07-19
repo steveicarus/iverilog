@@ -21,6 +21,9 @@
 #include "vhdl_syntax.hh"
 #include "vhdl_helper.hh"
 
+#include "vhdl_target.h"
+#include "support.hh"
+
 #include <cassert>
 #include <iostream>
 #include <typeinfo>
@@ -427,6 +430,25 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
          vhdl_const_bit *one = new vhdl_const_bit('1');
          return new vhdl_binop_expr
             (this, VHDL_BINOP_EQ, one, vhdl_type::boolean());
+      }
+      else if (type_->get_name() == VHDL_TYPE_UNSIGNED) {
+         // Need to use a support function for this conversion
+         require_support_function<unsigned_to_boolean>();
+
+         vhdl_fcall *conv =
+            new vhdl_fcall(unsigned_to_boolean::function_name(),
+                           vhdl_type::boolean());
+         conv->add_expr(this);
+         return conv;
+      }
+      else if (type_->get_name() == VHDL_TYPE_SIGNED) {
+         require_support_function<signed_to_boolean>();
+
+         vhdl_fcall *conv =
+            new vhdl_fcall(signed_to_boolean::function_name(),
+                           vhdl_type::boolean());
+         conv->add_expr(this);
+         return conv;
       }
       else {
          assert(false);

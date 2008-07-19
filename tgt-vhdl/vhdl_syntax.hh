@@ -614,7 +614,7 @@ class vhdl_function : public vhdl_decl, public vhdl_procedural {
 public:
    vhdl_function(const char *name, vhdl_type *ret_type);
    
-   void emit(std::ostream &of, int level) const;
+   virtual void emit(std::ostream &of, int level) const;
    vhdl_scope *get_scope() { return &variables_; }
    void add_param(vhdl_param_decl *p) { scope_.add_decl(p); }
 private:

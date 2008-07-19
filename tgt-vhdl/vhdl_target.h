@@ -41,5 +41,13 @@ ivl_signal_t find_signal_named(const string &name, const vhdl_scope *scope);
 int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
                        ivl_statement_t stmt, bool newline = true);
 
+template <class T>
+void require_support_function()
+{
+   vhdl_scope *scope = get_active_entity()->get_arch()->get_scope();
+   if (!scope->have_declared(T::function_name()))
+      scope->add_decl(new T);
+}
+
 #endif /* #ifndef INC_VHDL_TARGET_H */
  
