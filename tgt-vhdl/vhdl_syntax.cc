@@ -21,9 +21,6 @@
 #include "vhdl_syntax.hh"
 #include "vhdl_helper.hh"
 
-#include "vhdl_target.h"
-#include "support.hh"
-
 #include <cassert>
 #include <iostream>
 #include <typeinfo>
@@ -407,102 +404,6 @@ vhdl_expr::~vhdl_expr()
       delete type_;
 }
 
-/*
- * The default cast just assumes there's a VHDL cast function to
- * do the job for us.
- */
-vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
-{
-   //std::cout << "Cast: from=" << type_->get_string()
-   //          << " (" << type_->get_width() << ") "
-   //          << " to=" << to->get_string() << " ("
-   //          << to->get_width() << ")" << std::endl;
-   
-   if (to->get_name() == type_->get_name()) {
-      if (to->get_width() == type_->get_width())
-         return this;  // Identical
-      else
-         return resize(to->get_width());
-   }
-   else if (to->get_name() == VHDL_TYPE_BOOLEAN) {
-      if (type_->get_name() == VHDL_TYPE_STD_LOGIC) {
-         // '1' is true all else are false
-         vhdl_const_bit *one = new vhdl_const_bit('1');
-         return new vhdl_binop_expr
-            (this, VHDL_BINOP_EQ, one, vhdl_type::boolean());
-      }
-      else if (type_->get_name() == VHDL_TYPE_UNSIGNED) {
-         // Need to use a support function for this conversion
-         require_support_function<unsigned_to_boolean>();
-
-         vhdl_fcall *conv =
-            new vhdl_fcall(unsigned_to_boolean::function_name(),
-                           vhdl_type::boolean());
-         conv->add_expr(this);
-         return conv;
-      }
-      else if (type_->get_name() == VHDL_TYPE_SIGNED) {
-         require_support_function<signed_to_boolean>();
-
-         vhdl_fcall *conv =
-            new vhdl_fcall(signed_to_boolean::function_name(),
-                           vhdl_type::boolean());
-         conv->add_expr(this);
-         return conv;
-      }
-      else {
-         assert(false);
-      }
-   }
-   else if (to->get_name() == VHDL_TYPE_INTEGER) {
-      vhdl_fcall *conv = new vhdl_fcall("To_Integer", new vhdl_type(*to));
-      conv->add_expr(this);
-
-      return conv;
-   }
-   else if (to->get_name() == VHDL_TYPE_STD_LOGIC &&
-            type_->get_name() == VHDL_TYPE_BOOLEAN) {
-      // Verilog assumes active-high logic and there
-      // is a special routine in verilog_support.vhd
-      // to do this for us
-      vhdl_fcall *ah = new vhdl_fcall("Active_High", vhdl_type::std_logic());
-      ah->add_expr(this);
-
-      return ah;
-   }
-   else {
-      // We have to cast the expression before resizing or the
-      // wrong sign bit may be extended (i.e. when casting between
-      // signed/unsigned *and* resizing)
-      vhdl_fcall *conv =
-         new vhdl_fcall(to->get_string().c_str(), new vhdl_type(*to));
-      conv->add_expr(this);
-
-      if (to->get_width() != type_->get_width())
-         return conv->resize(to->get_width());
-      else
-         return conv;      
-   }
-}
-
-vhdl_expr *vhdl_expr::resize(int newwidth)
-{
-   vhdl_type *rtype;
-   assert(type_);
-   if (type_->get_name() == VHDL_TYPE_SIGNED)
-      rtype = vhdl_type::nsigned(newwidth);
-   else if (type_->get_name() == VHDL_TYPE_UNSIGNED)
-      rtype = vhdl_type::nunsigned(newwidth);
-   else
-      return this;   // Doesn't make sense to resize non-vector type
-   
-   vhdl_fcall *resize = new vhdl_fcall("Resize", rtype);
-   resize->add_expr(this);
-   resize->add_expr(new vhdl_const_int(newwidth));
-   
-   return resize;
-}
-
 void vhdl_expr_list::add_expr(vhdl_expr *e)
 {
    exprs_.push_back(e);
@@ -641,50 +542,6 @@ vhdl_const_bits::vhdl_const_bits(const char *value, int width, bool issigned)
       value_.push_back(*value++);
 }
 
-int vhdl_const_bits::bits_to_int() const
-{   
-   char msb = value_[value_.size() - 1];
-   int result = 0, bit;
-   for (int i = sizeof(int)*8 - 1; i >= 0; i--) {
-      if (i > (int)value_.size() - 1)
-         bit = msb == '1' ? 1 : 0;
-      else
-         bit = value_[i] == '1' ? 1 : 0;
-      result = (result << 1) | bit;
-   }
-
-   return result;
-}
-
-vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
-{  
-   if (to->get_name() == VHDL_TYPE_STD_LOGIC) {
-      // VHDL won't let us cast directly between a vector and
-      // a scalar type
-      // But we don't need to here as we have the bits available
-
-      // Take the least significant bit
-      char lsb = value_[0];
-
-      return new vhdl_const_bit(lsb);
-   }
-   else if (to->get_name() == VHDL_TYPE_STD_LOGIC_VECTOR) {
-      // Don't need to do anything
-      return this;
-   }
-   else if (to->get_name() == VHDL_TYPE_SIGNED
-            || to->get_name() == VHDL_TYPE_UNSIGNED) {
-
-      // Extend with sign bit
-      value_.resize(to->get_width(), value_[0]);  
-      return this;
-   }
-   else if (to->get_name() == VHDL_TYPE_INTEGER)
-      return new vhdl_const_int(bits_to_int());
-   else
-      return vhdl_expr::cast(to);
-}
-
 void vhdl_const_bits::emit(std::ostream &of, int level) const
 {
    if (qualified_)
@@ -698,14 +555,6 @@ void vhdl_const_bits::emit(std::ostream &of, int level) const
       of << vl_to_vhdl_bit(*it);
 
    of << (qualified_ ? "\")" : "\"");
-}
-
-vhdl_expr *vhdl_const_bit::cast(const vhdl_type *to)
-{
-   if (to->get_name() == VHDL_TYPE_INTEGER)
-      return new vhdl_const_int(bit_ == '1' ? 1 : 0);
-   else
-      return vhdl_expr::cast(to);
 }
 
 void vhdl_const_bit::emit(std::ostream &of, int level) const
