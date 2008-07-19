@@ -49,6 +49,7 @@ typedef std::list<vhdl_element*> element_list_t;
 
 int indent(int level);
 void newline(std::ostream &of, int level);
+std::string nl_string(int level);
 void blank_line(std::ostream &of, int level);
 
 #endif

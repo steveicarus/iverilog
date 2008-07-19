@@ -64,41 +64,27 @@ void support_function::emit(std::ostream &of, int level) const
    
    switch (type_) {
    case SF_UNSIGNED_TO_BOOLEAN:
-      of << "(X : unsigned) return Boolean is";
-      newline(of, level);
-      of << "begin";
-      newline(of, indent(level));
-      of << "return X /= To_Unsigned(0, X'Length);";
-      newline(of, level);
+      of << "(X : unsigned) return Boolean is" << nl_string(level)
+         << "begin" << nl_string(indent(level))
+         << "return X /= To_Unsigned(0, X'Length);" << nl_string(level);
       break;
    case SF_SIGNED_TO_BOOLEAN:
-      of << "(X : signed) return Boolean is";
-      newline(of, level);
-      of << "begin";
-      newline(of, indent(level));
-      of << "return X /= To_Signed(0, X'Length);";
-      newline(of, level);
+      of << "(X : signed) return Boolean is" << nl_string(level)
+         << "begin" << nl_string(indent(level))
+         << "return X /= To_Signed(0, X'Length);" << nl_string (level);
       break;
    case SF_BOOLEAN_TO_LOGIC:
-      of << "(B : Boolean) return std_logic is";
-      newline(of, level);
-      of << "begin";
-      newline(of, indent(level));
-      of << "if B then";
-      newline(of, indent(indent(level)));
-      of << "return '1'";
-      newline(of, indent(level));
-      of << "else";
-      newline(of, indent(indent(level)));
-      of << "return '0'";
-      newline(of, indent(level));
-      of << "end if;";
-      newline(of, level);
+      of << "(B : Boolean) return std_logic is" << nl_string(level)
+         << "begin" << nl_string(indent(level))
+         << "if B then" << nl_string(indent(indent(level)))
+         << "return '1'" << nl_string(indent(level))
+         << "else" << nl_string(indent(indent(level)))
+         << "return '0'" << nl_string(indent(level))
+         << "end if;" << nl_string(level);
       break;
    default:
       assert(false);
    }
    
-   of << "end function;";
-   newline(of, level);
+   of << "end function;" << nl_string(level);
 }
