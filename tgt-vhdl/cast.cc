@@ -48,19 +48,19 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
       }
       else if (type_->get_name() == VHDL_TYPE_UNSIGNED) {
          // Need to use a support function for this conversion
-         require_support_function<unsigned_to_boolean>();
+         require_support_function(SF_UNSIGNED_TO_BOOLEAN);
 
          vhdl_fcall *conv =
-            new vhdl_fcall(unsigned_to_boolean::function_name(),
+            new vhdl_fcall(support_function::function_name(SF_UNSIGNED_TO_BOOLEAN),
                            vhdl_type::boolean());
          conv->add_expr(this);
          return conv;
       }
       else if (type_->get_name() == VHDL_TYPE_SIGNED) {
-         require_support_function<signed_to_boolean>();
+         require_support_function(SF_SIGNED_TO_BOOLEAN);
 
          vhdl_fcall *conv =
-            new vhdl_fcall(signed_to_boolean::function_name(),
+            new vhdl_fcall(support_function::function_name(SF_SIGNED_TO_BOOLEAN),
                            vhdl_type::boolean());
          conv->add_expr(this);
          return conv;
@@ -77,10 +77,11 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
    }
    else if (to->get_name() == VHDL_TYPE_STD_LOGIC &&
             type_->get_name() == VHDL_TYPE_BOOLEAN) {
-      // Verilog assumes active-high logic and there
-      // is a special routine in verilog_support.vhd
-      // to do this for us
-      vhdl_fcall *ah = new vhdl_fcall("Active_High", vhdl_type::std_logic());
+      require_support_function(SF_BOOLEAN_TO_LOGIC);
+      
+      vhdl_fcall *ah =
+         new vhdl_fcall(support_function::function_name(SF_BOOLEAN_TO_LOGIC),
+                        vhdl_type::std_logic());
       ah->add_expr(this);
 
       return ah;

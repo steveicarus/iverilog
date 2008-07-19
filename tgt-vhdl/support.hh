@@ -23,23 +23,23 @@
 
 #include "vhdl_syntax.hh"
 
-class unsigned_to_boolean : public vhdl_function {
-public:
-   unsigned_to_boolean()
-      : vhdl_function(function_name(), vhdl_type::boolean()) {}
-   void emit(std::ostream &of, int level) const;
-
-   static const char *function_name() { return "Unsigned_To_Boolean"; }
+enum support_function_t {
+   SF_UNSIGNED_TO_BOOLEAN,
+   SF_SIGNED_TO_BOOLEAN,
+   SF_BOOLEAN_TO_LOGIC,
 };
 
-
-class signed_to_boolean : public vhdl_function {
+class support_function : public vhdl_function {
 public:
-   signed_to_boolean()
-      : vhdl_function(function_name(), vhdl_type::boolean()) {}
+   support_function(support_function_t type)
+      : vhdl_function(function_name(type), function_type(type)),
+        type_(type) {}
    void emit(std::ostream &of, int level) const;
+   static const char *function_name(support_function_t type);
+   static vhdl_type *function_type(support_function_t type);
 
-   static const char *function_name() { return "Signed_To_Boolean"; }
+private:
+   support_function_t type_;
 };
 
 #endif
