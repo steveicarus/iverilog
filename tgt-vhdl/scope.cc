@@ -28,6 +28,19 @@
 static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log);
 static std::string make_safe_name(ivl_signal_t sig);
 
+static vhdl_entity *g_active_entity = NULL;
+
+vhdl_entity *get_active_entity()
+{
+   return g_active_entity;
+}
+
+void set_active_entity(vhdl_entity *ent)
+{
+   g_active_entity = ent;
+}
+
+
 /*
  * The types of VHDL object a nexus can be converted into.
  */
@@ -409,6 +422,8 @@ static vhdl_entity *create_entity_for(ivl_scope_t scope)
    // retain a 1-to-1 mapping of scope to VHDL element)
    vhdl_arch *arch = new vhdl_arch(tname, "FromVerilog");
    vhdl_entity *ent = new vhdl_entity(tname, derived_from, arch);
+
+   set_active_entity(ent);
    
    // Locate all the signals in this module and add them to
    // the architecture
@@ -558,6 +573,7 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
    if (NULL == ent)
       ent = create_entity_for(scope);
    assert(ent);
+   set_active_entity(ent);
 
    // Is this module instantiated inside another?
    if (parent != NULL) {

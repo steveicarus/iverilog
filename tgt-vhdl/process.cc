@@ -31,6 +31,8 @@
  */
 static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
 {
+   set_active_entity(ent);
+   
    // Create a new process and store it in the entity's
    // architecture. This needs to be done first or the
    // parent link won't be valid (and draw_stmt needs this
