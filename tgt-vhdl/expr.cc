@@ -19,6 +19,7 @@
  */
 
 #include "vhdl_target.h"
+#include "support.hh"
 
 #include <iostream>
 #include <cassert>
@@ -132,7 +133,10 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
    case 'N':   // NOR
    case '|':
       {
-         vhdl_fcall *f = new vhdl_fcall("Reduce_OR", vhdl_type::std_logic());
+         require_support_function(SF_REDUCE_OR);
+         vhdl_fcall *f =
+            new vhdl_fcall(support_function::function_name(SF_REDUCE_OR),
+                           vhdl_type::std_logic());
          f->add_expr(operand);
          if ('N' == opcode)
             return new vhdl_unaryop_expr(VHDL_UNARYOP_NOT, f, vhdl_type::std_logic());

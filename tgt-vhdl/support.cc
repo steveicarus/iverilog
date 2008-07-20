@@ -22,6 +22,7 @@
 #include "support.hh"
 
 #include <cassert>
+#include <iostream>
 
 void require_support_function(support_function_t f)
 {
@@ -39,6 +40,8 @@ const char *support_function::function_name(support_function_t type)
       return "Signed_To_Boolean";
    case SF_BOOLEAN_TO_LOGIC:
       return "Boolean_To_Logic";
+   case SF_REDUCE_OR:
+      return "Reduce_OR";
    default:
       assert(false);
    }
@@ -48,10 +51,10 @@ vhdl_type *support_function::function_type(support_function_t type)
 {
    switch (type) {
    case SF_UNSIGNED_TO_BOOLEAN:
-      return vhdl_type::boolean();
    case SF_SIGNED_TO_BOOLEAN:
       return vhdl_type::boolean();
    case SF_BOOLEAN_TO_LOGIC:
+   case SF_REDUCE_OR:
       return vhdl_type::std_logic();
    default:
       assert(false);
@@ -81,6 +84,16 @@ void support_function::emit(std::ostream &of, int level) const
          << "else" << nl_string(indent(indent(level)))
          << "return '0'" << nl_string(indent(level))
          << "end if;" << nl_string(level);
+      break;
+   case SF_REDUCE_OR:
+      of << "(X : std_logic_vector) return std_logic is" << nl_string(level)
+         << "begin" << nl_string(indent(level))
+         << "for I in X'Range loop" << nl_string(indent(indent(level)))
+         << "if X(I) = '1' then" << nl_string(indent(indent(indent(level))))
+         << "return '1';" << nl_string(indent(indent(level)))
+         << "end if;" << nl_string(indent(level))
+         << "end loop;" << nl_string(indent(level))
+         << "return '0';" << nl_string(level);
       break;
    default:
       assert(false);

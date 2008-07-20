@@ -170,15 +170,18 @@ static vhdl_expr *ufunc_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 }
 
 static vhdl_expr *reduction_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm,
-                                     const char *rfunc, bool invert)
+                                        support_function_t f, bool invert)
 {
-   vhdl_fcall *fcall = new vhdl_fcall(rfunc, vhdl_type::std_logic());
+   require_support_function(f);
+   vhdl_fcall *fcall = new vhdl_fcall(support_function::function_name(f),
+                                      vhdl_type::std_logic());
 
    vhdl_var_ref *ref = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
    if (NULL == ref)
       return NULL;
-   
-   fcall->add_expr(ref);
+
+   vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR);   
+   fcall->add_expr(ref->cast(&std_logic_vector));
 
    if (invert)
       return new vhdl_unaryop_expr
@@ -258,18 +261,18 @@ static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
       return part_select_pv_lpm_to_expr(scope, lpm);
    case IVL_LPM_UFUNC:
       return ufunc_lpm_to_expr(scope, lpm);
-   case IVL_LPM_RE_AND:
+      /*case IVL_LPM_RE_AND:
       return reduction_lpm_to_expr(scope, lpm, "Reduce_AND", false);
    case IVL_LPM_RE_NAND:
-      return reduction_lpm_to_expr(scope, lpm, "Reduce_AND", true);
+   return reduction_lpm_to_expr(scope, lpm, "Reduce_AND", true);*/
    case IVL_LPM_RE_NOR:
-      return reduction_lpm_to_expr(scope, lpm, "Reduce_OR", true);
+      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_OR, true);
    case IVL_LPM_RE_OR:
-      return reduction_lpm_to_expr(scope, lpm, "Reduce_OR", false);
-   case IVL_LPM_RE_XOR:
+      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_OR, false);
+      /*case IVL_LPM_RE_XOR:
       return reduction_lpm_to_expr(scope, lpm, "Reduce_XOR", false);
    case IVL_LPM_RE_XNOR:
-      return reduction_lpm_to_expr(scope, lpm, "Reduce_XNOR", false);
+   return reduction_lpm_to_expr(scope, lpm, "Reduce_XNOR", false);*/
    case IVL_LPM_SIGN_EXT:
       return sign_extend_lpm_to_expr(scope, lpm);
    case IVL_LPM_ARRAY:

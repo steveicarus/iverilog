@@ -27,6 +27,7 @@ enum support_function_t {
    SF_UNSIGNED_TO_BOOLEAN,
    SF_SIGNED_TO_BOOLEAN,
    SF_BOOLEAN_TO_LOGIC,
+   SF_REDUCE_OR,
 };
 
 class support_function : public vhdl_function {
