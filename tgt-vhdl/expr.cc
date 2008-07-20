@@ -103,6 +103,23 @@ static vhdl_expr *translate_ulong(ivl_expr_t e)
    return new vhdl_const_int(ivl_expr_uvalue(e));
 }
 
+static vhdl_expr *translate_reduction(support_function_t f, bool neg,
+                                      vhdl_expr *operand)
+{
+   require_support_function(f);
+   vhdl_fcall *fcall =
+      new vhdl_fcall(support_function::function_name(f),
+                     vhdl_type::std_logic());
+   
+   vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR);
+   fcall->add_expr(operand->cast(&std_logic_vector));
+   if (neg)
+      return new vhdl_unaryop_expr(VHDL_UNARYOP_NOT, fcall,
+                                   vhdl_type::std_logic());
+   else
+      return fcall;
+}
+
 static vhdl_expr *translate_unary(ivl_expr_t e)
 {
    vhdl_expr *operand = translate_expr(ivl_expr_oper1(e));
@@ -111,13 +128,15 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
 
    bool should_be_signed = ivl_expr_signed(e) != 0;
    
-   if (operand->get_type()->get_name() == VHDL_TYPE_UNSIGNED && should_be_signed) {
+   if (operand->get_type()->get_name() == VHDL_TYPE_UNSIGNED
+       && should_be_signed) {
       //operand->print();
       //std::cout << "^ should be signed but is not" << std::endl;
 
       operand = change_signedness(operand, true);
    }
-   else if (operand->get_type()->get_name() == VHDL_TYPE_SIGNED && !should_be_signed) {
+   else if (operand->get_type()->get_name() == VHDL_TYPE_SIGNED
+            && !should_be_signed) {
       //operand->print();
       //std::cout << "^ should be unsigned but is not" << std::endl;
 
@@ -131,20 +150,13 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
       return new vhdl_unaryop_expr
          (VHDL_UNARYOP_NOT, operand, new vhdl_type(*operand->get_type()));
    case 'N':   // NOR
+      return translate_reduction(SF_REDUCE_OR, true, operand);
    case '|':
-      {
-         require_support_function(SF_REDUCE_OR);
-         vhdl_fcall *f =
-            new vhdl_fcall(support_function::function_name(SF_REDUCE_OR),
-                           vhdl_type::std_logic());
-
-         vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR);
-         f->add_expr(operand->cast(&std_logic_vector));
-         if ('N' == opcode)
-            return new vhdl_unaryop_expr(VHDL_UNARYOP_NOT, f, vhdl_type::std_logic());
-         else
-            return f;
-      }
+      return translate_reduction(SF_REDUCE_OR, false, operand);
+   case 'A':   // NAND
+      return translate_reduction(SF_REDUCE_AND, true, operand);
+   case '&':
+      return translate_reduction(SF_REDUCE_AND, false, operand);
    default:
       error("No translation for unary opcode '%c'\n",
             ivl_expr_opcode(e));

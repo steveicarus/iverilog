@@ -261,18 +261,18 @@ static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
       return part_select_pv_lpm_to_expr(scope, lpm);
    case IVL_LPM_UFUNC:
       return ufunc_lpm_to_expr(scope, lpm);
-      /*case IVL_LPM_RE_AND:
-      return reduction_lpm_to_expr(scope, lpm, "Reduce_AND", false);
+   case IVL_LPM_RE_AND:
+      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_AND, false);
    case IVL_LPM_RE_NAND:
-   return reduction_lpm_to_expr(scope, lpm, "Reduce_AND", true);*/
+      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_AND, true);
    case IVL_LPM_RE_NOR:
       return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_OR, true);
    case IVL_LPM_RE_OR:
       return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_OR, false);
-      /*case IVL_LPM_RE_XOR:
-      return reduction_lpm_to_expr(scope, lpm, "Reduce_XOR", false);
+   case IVL_LPM_RE_XOR:
+      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_XOR, false);
    case IVL_LPM_RE_XNOR:
-   return reduction_lpm_to_expr(scope, lpm, "Reduce_XNOR", false);*/
+      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_XOR, false);
    case IVL_LPM_SIGN_EXT:
       return sign_extend_lpm_to_expr(scope, lpm);
    case IVL_LPM_ARRAY:

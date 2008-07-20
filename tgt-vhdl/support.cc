@@ -42,6 +42,10 @@ const char *support_function::function_name(support_function_t type)
       return "Boolean_To_Logic";
    case SF_REDUCE_OR:
       return "Reduce_OR";
+   case SF_REDUCE_AND:
+      return "Reduce_AND";
+   case SF_REDUCE_XOR:
+      return "Reduce_XOR";
    default:
       assert(false);
    }
@@ -55,6 +59,8 @@ vhdl_type *support_function::function_type(support_function_t type)
       return vhdl_type::boolean();
    case SF_BOOLEAN_TO_LOGIC:
    case SF_REDUCE_OR:
+   case SF_REDUCE_AND:
+   case SF_REDUCE_XOR:
       return vhdl_type::std_logic();
    default:
       assert(false);
@@ -94,6 +100,26 @@ void support_function::emit(std::ostream &of, int level) const
          << "end if;" << nl_string(indent(level))
          << "end loop;" << nl_string(indent(level))
          << "return '0';" << nl_string(level);
+      break;
+   case SF_REDUCE_AND:
+      of << "(X : std_logic_vector) return std_logic is" << nl_string(level)
+         << "begin" << nl_string(indent(level))
+         << "for I in X'Range loop" << nl_string(indent(indent(level)))
+         << "if X(I) = '0' then" << nl_string(indent(indent(indent(level))))
+         << "return '0';" << nl_string(indent(indent(level)))
+         << "end if;" << nl_string(indent(level))
+         << "end loop;" << nl_string(indent(level))
+         << "return '1';" << nl_string(level);
+      break;
+   case SF_REDUCE_XOR:
+      of << "(X : std_logic_vector) return std_logic is"
+         << nl_string(indent(level))
+         << "variable R : std_logic := '0';" << nl_string(level)
+         << "begin" << nl_string(indent(level))
+         << "for I in X'Range loop" << nl_string(indent(indent(level)))
+         << "R := X(I) xor R;" << nl_string(indent(level))
+         << "end loop;" << nl_string(indent(level))
+         << "return R;" << nl_string(level);
       break;
    default:
       assert(false);
