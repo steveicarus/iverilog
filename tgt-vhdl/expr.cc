@@ -137,7 +137,9 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
          vhdl_fcall *f =
             new vhdl_fcall(support_function::function_name(SF_REDUCE_OR),
                            vhdl_type::std_logic());
-         f->add_expr(operand);
+
+         vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR);
+         f->add_expr(operand->cast(&std_logic_vector));
          if ('N' == opcode)
             return new vhdl_unaryop_expr(VHDL_UNARYOP_NOT, f, vhdl_type::std_logic());
          else
