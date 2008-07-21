@@ -28,40 +28,39 @@
 static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log);
 static std::string make_safe_name(ivl_signal_t sig);
 
-/*
- * Given a nexus find a constant value in it that can be used
- * as an initial signal value.
- */
-static vhdl_expr *nexus_to_const(ivl_nexus_t nexus)
-{
-   int nptrs = ivl_nexus_ptrs(nexus);
-   for (int i = 0; i < nptrs; i++) {
-      ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
+static vhdl_entity *g_active_entity = NULL;
 
-      ivl_net_const_t con;
-      if ((con = ivl_nexus_ptr_con(nexus_ptr))) {
-         if (ivl_const_width(con) == 1)
-            return new vhdl_const_bit(ivl_const_bits(con)[0]);
-         else
-            return new vhdl_const_bits
-               (ivl_const_bits(con), ivl_const_width(con),
-                ivl_const_signed(con) != 0);
-      }
-      else {
-         // Ignore other types of nexus pointer
-      }
-   }
-   
-   return NULL;
+vhdl_entity *get_active_entity()
+{
+   return g_active_entity;
 }
 
+void set_active_entity(vhdl_entity *ent)
+{
+   g_active_entity = ent;
+}
+
+
 /*
- * Given a nexus and an architecture scope, find the first signal
- * that is connected to the nexus, if there is one. Never return
- * a reference to 'ignore' if it is found in the nexus.
+ * The types of VHDL object a nexus can be converted into.
+ */
+enum vhdl_nexus_obj_t {
+   NEXUS_TO_VAR_REF = 1<<0,
+   NEXUS_TO_CONST   = 1<<1,
+   NEXUS_TO_OTHER   = 1<<2,
+};
+#define NEXUS_TO_ANY \
+   NEXUS_TO_VAR_REF | NEXUS_TO_CONST | NEXUS_TO_OTHER
+
+/*
+ * Given a nexus, generate a VHDL expression object to represent it.
+ * The allowed VHDL expression types are given by vhdl_nexus_obj_t.
+ *
+ * If a vhdl_var_ref is returned, the reference is guaranteed to be
+ * to a signal in arch_scope or its parent (the entity's ports).
  */
 static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
-                                ivl_signal_t ignore = NULL)
+                                int allowed = NEXUS_TO_ANY)
 {
    int nptrs = ivl_nexus_ptrs(nexus);
    for (int i = 0; i < nptrs; i++) {
@@ -70,61 +69,58 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
       ivl_signal_t sig;
       ivl_net_logic_t log;
       ivl_lpm_t lpm;
-      if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
-         if (!seen_signal_before(sig) || sig == ignore)
+      ivl_net_const_t con;
+      ivl_switch_t sw;
+      if ((allowed & NEXUS_TO_VAR_REF) &&
+          (sig = ivl_nexus_ptr_sig(nexus_ptr))) {         
+         if (!seen_signal_before(sig) ||
+             (find_scope_for_signal(sig) != arch_scope
+              && find_scope_for_signal(sig) != arch_scope->get_parent()))
             continue;
-         
+                  
          const char *signame = get_renamed_signal(sig).c_str();
          
          vhdl_decl *decl = arch_scope->get_decl(signame);
-         if (NULL == decl)
-            continue;  // Not in this scope
-
          vhdl_type *type = new vhdl_type(*(decl->get_type()));
          return new vhdl_var_ref(signame, type);
       }
-      else if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
+      else if ((allowed & NEXUS_TO_OTHER) &&
+               (log = ivl_nexus_ptr_log(nexus_ptr))) {
          return translate_logic(arch_scope, log);
       }
-      else if ((lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
-         vhdl_expr *e = lpm_to_expr(arch_scope, lpm);
-         if (e)
-            return e;
+      else if ((allowed & NEXUS_TO_OTHER) &&
+               (lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
+         return lpm_output(arch_scope, lpm);
+      }
+      else if ((allowed & NEXUS_TO_CONST) &&
+               (con = ivl_nexus_ptr_con(nexus_ptr))) {
+         if (ivl_const_width(con) == 1)
+            return new vhdl_const_bit(ivl_const_bits(con)[0]);
+         else
+            return new vhdl_const_bits
+               (ivl_const_bits(con), ivl_const_width(con),
+                ivl_const_signed(con) != 0);
+      }
+      else if ((allowed & NEXUS_TO_OTHER) &&
+               (sw = ivl_nexus_ptr_switch(nexus_ptr))) {
+         std::cout << "SWITCH type=" << ivl_switch_type(sw) << std::endl;
+         assert(false);
       }
       else {
          // Ignore other types of nexus pointer
       }
    }
-   
-   assert(false);
+
+   return NULL;
 }
 
+/*
+ * Guarantees the result will never be NULL.
+ */
 vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
 {
-   int nptrs = ivl_nexus_ptrs(nexus);
-   for (int i = 0; i < nptrs; i++) {
-      ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
-
-      ivl_signal_t sig;
-      if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
-         if (!seen_signal_before(sig))
-            continue;
-         
-         const char *signame = get_renamed_signal(sig).c_str();
-         
-         vhdl_decl *decl = arch_scope->get_decl(signame);
-         if (NULL == decl)
-            continue;  // Not in this scope
-
-         vhdl_type *type = new vhdl_type(*(decl->get_type()));
-         return new vhdl_var_ref(signame, type);
-      }
-      else {
-         // Ignore other types of nexus pointer
-      }
-   }
-   
-   return NULL;
+   return dynamic_cast<vhdl_var_ref*>
+      (nexus_to_expr(arch_scope, nexus, NEXUS_TO_VAR_REF));
 }
 
 /*
@@ -160,6 +156,42 @@ static vhdl_expr *input_to_expr(vhdl_scope *scope, vhdl_unaryop_t op,
    return new vhdl_unaryop_expr(op, operand, vhdl_type::std_logic()); 
 }
 
+static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
+{
+   ivl_nexus_t output = ivl_logic_pin(log, 0);
+   vhdl_var_ref *lhs = nexus_to_var_ref(arch->get_scope(), output);
+   assert(lhs);
+   
+   vhdl_expr *val = nexus_to_expr(arch->get_scope(), ivl_logic_pin(log, 1));
+   assert(val);
+
+   vhdl_expr *sel = nexus_to_expr(arch->get_scope(), ivl_logic_pin(log, 2));
+   assert(val);
+
+   vhdl_expr *on = new vhdl_const_bit(if0 ? '0' : '1');
+   vhdl_expr *cmp = new vhdl_binop_expr(sel, VHDL_BINOP_EQ, on, NULL);
+
+   ivl_signal_t sig = find_signal_named(lhs->get_name(), arch->get_scope());
+   char zbit;
+   switch (ivl_signal_type(sig)) {
+   case IVL_SIT_TRI0:
+      zbit = '0';
+      break;
+   case IVL_SIT_TRI1:
+      zbit = '1';
+      break;
+   case IVL_SIT_TRI:
+   default:
+      zbit = 'Z';
+   }
+   
+   vhdl_const_bit *z = new vhdl_const_bit(zbit);
+   vhdl_cassign_stmt *cass = new vhdl_cassign_stmt(lhs, z);
+   cass->add_condition(val, cmp);
+
+   arch->add_stmt(cass);
+}
+
 static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log)
 {
    switch (ivl_logic_type(log)) {
@@ -174,8 +206,12 @@ static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log)
    case IVL_LO_BUF:
    case IVL_LO_BUFZ:
       return nexus_to_expr(scope, ivl_logic_pin(log, 1));
+   case IVL_LO_PULLUP:
+      return new vhdl_const_bit('1');
+   case IVL_LO_PULLDOWN:
+      return new vhdl_const_bit('0');
    default:
-      error("Don't know how to translate logic type = %d",
+      error("Don't know how to translate logic type = %d to expression",
             ivl_logic_type(log));
       return NULL;
    }
@@ -191,16 +227,26 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
    for (int i = 0; i < nlogs; i++) {
       ivl_net_logic_t log = ivl_scope_log(scope, i);
       
-      // The output is always pin zero
-      ivl_nexus_t output = ivl_logic_pin(log, 0);
-      vhdl_var_ref *lhs =
-         dynamic_cast<vhdl_var_ref*>(nexus_to_expr(arch->get_scope(), output));
-      if (NULL == lhs)
-         continue;  // Not suitable for continuous assignment
-      
-      vhdl_expr *rhs = translate_logic(arch->get_scope(), log);
-      
-      arch->add_stmt(new vhdl_cassign_stmt(lhs, rhs));
+      switch (ivl_logic_type(log)) {
+      case IVL_LO_BUFIF0:
+         bufif_logic(arch, log, true);
+         break;
+      case IVL_LO_BUFIF1:
+         bufif_logic(arch, log, false);
+         break;
+      default:
+         {          
+            // The output is always pin zero
+            ivl_nexus_t output = ivl_logic_pin(log, 0);
+            vhdl_var_ref *lhs =
+               dynamic_cast<vhdl_var_ref*>(nexus_to_expr(arch->get_scope(), output));
+            if (NULL == lhs)
+               continue;  // Not suitable for continuous assignment
+            
+            vhdl_expr *rhs = translate_logic(arch->get_scope(), log);
+            arch->add_stmt(new vhdl_cassign_stmt(lhs, rhs));
+         }
+      }
    }
 }
 
@@ -228,20 +274,6 @@ static std::string make_safe_name(ivl_signal_t sig)
 }
 
 /*
- * Create a VHDL type for a Verilog signal.
- */
-static vhdl_type *get_signal_type(ivl_signal_t sig)
-{
-   int width = ivl_signal_width(sig);
-   if (width == 1)
-      return vhdl_type::std_logic();
-   else if (ivl_signal_signed(sig))
-      return vhdl_type::nsigned(width);
-   else
-      return vhdl_type::nunsigned(width);
-}
-
-/*
  * Declare all signals and ports for a scope.
  */
 static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
@@ -251,12 +283,39 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
       ivl_signal_t sig = ivl_scope_sig(scope, i);      
       remember_signal(sig, ent->get_arch()->get_scope());
 
-      vhdl_type *sig_type =
-         vhdl_type::type_for(ivl_signal_width(sig), ivl_signal_signed(sig) != 0);
-      
-      std::string name = make_safe_name(sig);
+      string name(make_safe_name(sig));
       rename_signal(sig, name);
       
+      vhdl_type *sig_type;
+      unsigned dimensions = ivl_signal_dimensions(sig);
+      if (dimensions > 0) {
+         // Arrays are implemented by generating a separate type
+         // declaration for each array, and then declaring a
+         // signal of that type
+
+         if (dimensions > 1) {
+            error("> 1 dimension arrays not implemented yet");
+            return;
+         }
+
+         string type_name = name + "_Type";
+         vhdl_type *base_type =
+            vhdl_type::type_for(ivl_signal_width(sig), ivl_signal_signed(sig) != 0);
+
+         int lsb = ivl_signal_array_base(sig);
+         int msb = lsb + ivl_signal_array_count(sig) - 1;
+         
+         vhdl_type *array_type =
+            vhdl_type::array_of(base_type, type_name, msb, lsb);
+         vhdl_decl *array_decl = new vhdl_type_decl(type_name.c_str(), array_type);
+         ent->get_arch()->get_scope()->add_decl(array_decl);
+           
+         sig_type = new vhdl_type(*array_type);
+      }
+      else
+         sig_type =
+            vhdl_type::type_for(ivl_signal_width(sig), ivl_signal_signed(sig) != 0);
+
       ivl_signal_port_t mode = ivl_signal_port(sig);
       switch (mode) {
       case IVL_SIP_NONE:
@@ -266,7 +325,9 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
             // A local signal can have a constant initializer in VHDL
             // This may be found in the signal's nexus
             // TODO: Make this work for multiple words
-            vhdl_expr *init = nexus_to_const(ivl_signal_nex(sig, 0));
+            vhdl_expr *init =
+               nexus_to_expr(ent->get_scope(), ivl_signal_nex(sig, 0),
+                             NEXUS_TO_CONST);
             if (init != NULL)
                decl->set_initial(init);
             
@@ -278,8 +339,23 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
             (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_IN));
          break;
       case IVL_SIP_OUTPUT:
-         ent->get_scope()->add_decl
-            (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_OUT));
+         {
+            vhdl_port_decl *decl =
+               new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_OUT);
+
+            // Check for constant values
+            // For outputs these must be continuous assigns of
+            // the constant to the port
+            vhdl_expr *init =
+               nexus_to_expr(ent->get_scope(), ivl_signal_nex(sig, 0), 
+                             NEXUS_TO_CONST);
+            if (init != NULL) {
+               vhdl_var_ref *ref = new vhdl_var_ref(name.c_str(), NULL);
+               ent->get_arch()->add_stmt(new vhdl_cassign_stmt(ref, init));
+            }
+            
+            ent->get_scope()->add_decl(decl);
+         }
 
          if (ivl_signal_type(sig) == IVL_SIT_REG) {
             // A registered output
@@ -292,7 +368,8 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
             rename_signal(sig, newname.c_str());
 
             vhdl_type *reg_type = new vhdl_type(*sig_type);
-            ent->get_arch()->get_scope()->add_decl(new vhdl_signal_decl(newname.c_str(), reg_type));
+            ent->get_arch()->get_scope()->add_decl
+               (new vhdl_signal_decl(newname.c_str(), reg_type));
             
             // Create a concurrent assignment statement to
             // connect the register to the output
@@ -319,8 +396,9 @@ static void declare_lpm(vhdl_arch *arch, ivl_scope_t scope)
 {
    int nlpms = ivl_scope_lpms(scope);
    for (int i = 0; i < nlpms; i++) {
-      if (draw_lpm(arch, ivl_scope_lpm(scope, i)) != 0)
-         error("Failed to translate LPM");
+      ivl_lpm_t lpm = ivl_scope_lpm(scope, i);
+      if (draw_lpm(arch, lpm) != 0)
+         error("Failed to translate LPM %s", ivl_lpm_name(lpm));
    }
 }
 
@@ -344,6 +422,8 @@ static vhdl_entity *create_entity_for(ivl_scope_t scope)
    // retain a 1-to-1 mapping of scope to VHDL element)
    vhdl_arch *arch = new vhdl_arch(tname, "FromVerilog");
    vhdl_entity *ent = new vhdl_entity(tname, derived_from, arch);
+
+   set_active_entity(ent);
    
    // Locate all the signals in this module and add them to
    // the architecture
@@ -372,11 +452,12 @@ static vhdl_entity *create_entity_for(ivl_scope_t scope)
  */
 static void map_signal(ivl_signal_t to, vhdl_entity *parent,
                        vhdl_comp_inst *inst)
-{
+{   
    // TODO: Work for multiple words
    ivl_nexus_t nexus = ivl_signal_nex(to, 0);
 
-   vhdl_expr *to_e = nexus_to_expr(parent->get_arch()->get_scope(), nexus, to);
+   vhdl_expr *to_e = nexus_to_expr(parent->get_arch()->get_scope(),
+                                   nexus, NEXUS_TO_ANY);
    assert(to_e);
 
    // The expressions in a VHDL port map must be 'globally static'
@@ -389,7 +470,49 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    std::string name = make_safe_name(to);
    vhdl_var_ref *to_ref;
    if ((to_ref = dynamic_cast<vhdl_var_ref*>(to_e))) {
-      inst->map_port(name.c_str(), to_ref);
+      // If we're mapping an output of this entity to an output of
+      // the child entity, then VHDL will not let us read the value
+      // of the signal (i.e. it must pass straight through).
+      // However, Verilog allows the signal to be read in the parent.
+      // To get around this we create an internal signal name_Sig
+      // that takes the value of the output and can be read.
+      vhdl_decl *decl =
+         parent->get_arch()->get_scope()->get_decl(to_ref->get_name());
+      vhdl_port_decl *pdecl;
+      if ((pdecl = dynamic_cast<vhdl_port_decl*>(decl))
+          && pdecl->get_mode() == VHDL_PORT_OUT) {
+
+         // We need to create a readable signal to shadow this output
+         std::string shadow_name(to_ref->get_name());
+         shadow_name += "_Sig";
+         
+         vhdl_signal_decl *shadow =
+            new vhdl_signal_decl(shadow_name.c_str(),
+                                 new vhdl_type(*decl->get_type()));
+         shadow->set_comment("Needed to make output readable");
+         
+         parent->get_arch()->get_scope()->add_decl(shadow);
+
+         // Make a continuous assignment of the shadow to the output
+         parent->get_arch()->add_stmt
+            (new vhdl_cassign_stmt
+             (to_ref, new vhdl_var_ref(shadow_name.c_str(), NULL)));
+
+         // Make sure any future references to this signal read the
+         // shadow not the output
+         ivl_signal_t sig = find_signal_named(to_ref->get_name(),
+                                              parent->get_arch()->get_scope());
+         rename_signal(sig, shadow_name);
+         
+         // Finally map the child port to the shadow signal
+         inst->map_port(name.c_str(),
+                        new vhdl_var_ref(shadow_name.c_str(), NULL));
+      }
+      else {
+         // Not an output port declaration therefore we can
+         // definitely read it
+         inst->map_port(name.c_str(), to_ref);
+      }
    }
    else {
       // Not a static expression
@@ -450,6 +573,7 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
    if (NULL == ent)
       ent = create_entity_for(scope);
    assert(ent);
+   set_active_entity(ent);
 
    // Is this module instantiated inside another?
    if (parent != NULL) {
@@ -470,11 +594,21 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
          }
          
          // And an instantiation statement
-         std::string inst_name(ivl_scope_basename(scope));
+         string inst_name(ivl_scope_basename(scope));
          if (inst_name == ent->get_name()) {
             // Cannot have instance name the same as type in VHDL
             inst_name += "_Inst";
          }
+
+         // Need to replace any [ and ] characters that result
+         // from generate statements
+         string::size_type loc = inst_name.find('[', 0);
+         if (loc != string::npos)
+            inst_name.erase(loc, 1);
+
+         loc = inst_name.find(']', 0);
+         if (loc != string::npos)
+            inst_name.erase(loc, 1);         
                      
          vhdl_comp_inst *inst =
             new vhdl_comp_inst(inst_name.c_str(), ent->get_name().c_str());
@@ -516,7 +650,9 @@ int draw_function(ivl_scope_t scope, ivl_scope_t parent)
    int nsigs = ivl_scope_sigs(scope);
    for (int i = 0; i < nsigs; i++) {
       ivl_signal_t sig = ivl_scope_sig(scope, i);            
-      vhdl_type *sigtype = get_signal_type(sig);
+      vhdl_type *sigtype =
+         vhdl_type::type_for(ivl_signal_width(sig),
+                             ivl_signal_signed(sig) != 0);
       
       std::string signame = make_safe_name(sig);
 

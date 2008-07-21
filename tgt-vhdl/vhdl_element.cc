@@ -35,6 +35,13 @@ int indent(int level)
    return level + VHDL_INDENT;
 }
 
+std::string nl_string(int level)
+{
+   std::ostringstream ss;
+   newline(ss, level);
+   return ss.str();           
+}
+
 /*
  * Emit a newline and indent to the correct level.
  */

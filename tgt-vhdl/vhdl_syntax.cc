@@ -28,12 +28,19 @@
 vhdl_scope::vhdl_scope()
    : parent_(NULL), init_(false), sig_assign_(true)
 {
-
+   
 }
 
 vhdl_scope::~vhdl_scope()
 {
    delete_children<vhdl_decl>(decls_);
+}
+
+void vhdl_scope::set_initializing(bool i)
+{
+   init_ = i;
+   if (parent_)
+      parent_->set_initializing(i);
 }
 
 void vhdl_scope::add_decl(vhdl_decl *decl)
@@ -57,7 +64,7 @@ bool vhdl_scope::have_declared(const std::string &name) const
    return get_decl(name) != NULL;
 }
 
-vhdl_scope *vhdl_scope::get_parent()
+vhdl_scope *vhdl_scope::get_parent() const
 {
    assert(parent_);
    return parent_;
@@ -88,6 +95,7 @@ void vhdl_entity::emit(std::ostream &of, int level) const
    of << "use ieee.std_logic_1164.all;" << std::endl;
    of << "use ieee.numeric_std.all;" << std::endl;
    of << "use std.textio.all;" << std::endl;
+   //of << "use work.verilog_support.all;" << std::endl;
    of << std::endl;
    
    emit_comment(of, level);
@@ -292,6 +300,22 @@ void vhdl_wait_stmt::emit(std::ostream &of, int level) const
       of << " for ";
       expr_->emit(of, level);
       break;
+   case VHDL_WAIT_UNTIL:
+      assert(expr_);
+      of << " until ";
+      expr_->emit(of, level);
+      break;
+   case VHDL_WAIT_ON:
+      {
+         of << " on ";
+         string_list_t::const_iterator it = sensitivity_.begin();
+         while (it != sensitivity_.end()) {
+            of << *it;
+            if (++it != sensitivity_.end())
+               of << ", ";
+         }
+      }
+      break;
    }
    
    of << ";";
@@ -312,10 +336,12 @@ const vhdl_type *vhdl_decl::get_type() const
 }
 
 void vhdl_decl::set_initial(vhdl_expr *initial)
-{
-   if (initial_ != NULL)
-      delete initial_;
-   initial_ = initial;
+{   
+   if (!has_initial_) {
+      assert(initial_ == NULL);
+      initial_ = initial;
+      has_initial_ = true;
+   }
 }
 
 void vhdl_port_decl::emit(std::ostream &of, int level) const
@@ -365,82 +391,17 @@ void vhdl_signal_decl::emit(std::ostream &of, int level) const
    emit_comment(of, level, true);
 }
 
+void vhdl_type_decl::emit(std::ostream &of, int level) const
+{
+   of << "type " << name_ << " is ";
+   of << type_->get_type_decl_string() << ";";
+   emit_comment(of, level, true);
+}
+
 vhdl_expr::~vhdl_expr()
 {
    if (type_ != NULL)
       delete type_;
-}
-
-/*
- * The default cast just assumes there's a VHDL cast function to
- * do the job for us.
- */
-vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
-{
-   //std::cout << "Cast: from=" << type_->get_string()
-   //          << " (" << type_->get_width() << ") "
-   //          << " to=" << to->get_string() << " ("
-   //          << to->get_width() << ")" << std::endl;
-   
-   if (to->get_name() == type_->get_name()) {
-      if (to->get_width() == type_->get_width())
-         return this;  // Identical
-      else
-         return resize(to->get_width());
-   }
-   else if (to->get_name() == VHDL_TYPE_BOOLEAN) {
-      // '1' is true all else are false
-      vhdl_const_bit *one = new vhdl_const_bit('1');
-      return new vhdl_binop_expr
-         (this, VHDL_BINOP_EQ, one, vhdl_type::boolean());
-   }
-   else if (to->get_name() == VHDL_TYPE_INTEGER) {
-      vhdl_fcall *conv = new vhdl_fcall("To_Integer", new vhdl_type(*to));
-      conv->add_expr(this);
-
-      return conv;
-   }
-   else if (to->get_name() == VHDL_TYPE_STD_LOGIC &&
-            type_->get_name() == VHDL_TYPE_BOOLEAN) {
-      // Verilog assumes active-high logic and there
-      // is a special routine in verilog_support.vhd
-      // to do this for us
-      vhdl_fcall *ah = new vhdl_fcall("Active_High", vhdl_type::std_logic());
-      ah->add_expr(this);
-
-      return ah;
-   }
-   else {
-      // We have to cast the expression before resizing or the
-      // wrong sign bit may be extended (i.e. when casting between
-      // signed/unsigned *and* resizing)
-      vhdl_fcall *conv =
-         new vhdl_fcall(to->get_string().c_str(), new vhdl_type(*to));
-      conv->add_expr(this);
-
-      if (to->get_width() != type_->get_width())
-         return conv->resize(to->get_width());
-      else
-         return conv;      
-   }
-}
-
-vhdl_expr *vhdl_expr::resize(int newwidth)
-{
-   vhdl_type *rtype;
-   assert(type_);
-   if (type_->get_name() == VHDL_TYPE_SIGNED)
-      rtype = vhdl_type::nsigned(newwidth);
-   else if (type_->get_name() == VHDL_TYPE_UNSIGNED)
-      rtype = vhdl_type::nunsigned(newwidth);
-   else
-      return this;   // Doesn't make sense to resize non-vector type
-   
-   vhdl_fcall *resize = new vhdl_fcall("Resize", rtype);
-   resize->add_expr(this);
-   resize->add_expr(new vhdl_const_int(newwidth));
-   
-   return resize;
 }
 
 void vhdl_expr_list::add_expr(vhdl_expr *e)
@@ -485,22 +446,27 @@ vhdl_var_ref::~vhdl_var_ref()
 void vhdl_var_ref::set_slice(vhdl_expr *s, int w)
 {
    assert(type_);
-   
-   vhdl_type_name_t tname = type_->get_name();
-   assert(tname == VHDL_TYPE_UNSIGNED || tname == VHDL_TYPE_SIGNED);
-   
+
    slice_ = s;
    slice_width_ = w;
+      
+   vhdl_type_name_t tname = type_->get_name();
+   if (tname == VHDL_TYPE_ARRAY) {
+      type_ = new vhdl_type(*type_->get_base());
+   }
+   else {
+      assert(tname == VHDL_TYPE_UNSIGNED || tname == VHDL_TYPE_SIGNED);
 
-   if (type_)
-      delete type_;
-
-   if (w > 0)
-      type_ = new vhdl_type(tname, w);
-   else
-      type_ = vhdl_type::std_logic();   
+      if (type_)
+         delete type_;
+      
+      if (w > 0)
+         type_ = new vhdl_type(tname, w);
+      else
+         type_ = vhdl_type::std_logic();   
+   }
 }
-
+   
 void vhdl_var_ref::emit(std::ostream &of, int level) const
 {
    of << name_;
@@ -576,40 +542,6 @@ vhdl_const_bits::vhdl_const_bits(const char *value, int width, bool issigned)
       value_.push_back(*value++);
 }
 
-vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
-{  
-   if (to->get_name() == VHDL_TYPE_STD_LOGIC) {
-      // VHDL won't let us cast directly between a vector and
-      // a scalar type
-      // But we don't need to here as we have the bits available
-
-      // Take the least significant bit
-      char lsb = value_[0];
-
-      return new vhdl_const_bit(lsb);
-   }
-   else if (to->get_name() == VHDL_TYPE_STD_LOGIC_VECTOR) {
-      // Don't need to do anything
-      return this;
-   }
-   else if (to->get_name() == VHDL_TYPE_SIGNED
-            || to->get_name() == VHDL_TYPE_UNSIGNED) {
-
-      // Extend with sign bit
-      value_.resize(to->get_width(), value_[0]);  
-      return this;
-   }
-   else if (to->get_name() == VHDL_TYPE_INTEGER) {
-      // Need to explicitly qualify the type (or the VHDL
-      // compiler gets confused between signed/unsigned)
-      qualified_ = true;
-
-      return vhdl_expr::cast(to);
-   }
-   else
-      return vhdl_expr::cast(to);
-}
-
 void vhdl_const_bits::emit(std::ostream &of, int level) const
 {
    if (qualified_)
@@ -648,12 +580,36 @@ vhdl_cassign_stmt::~vhdl_cassign_stmt()
 {
    delete lhs_;
    delete rhs_;
+
+   for (std::list<when_part_t>::const_iterator it = whens_.begin();
+        it != whens_.end();
+        ++it) {
+      delete (*it).value;
+      delete (*it).cond;
+   }
+}
+
+void vhdl_cassign_stmt::add_condition(vhdl_expr *value, vhdl_expr *cond)
+{
+   when_part_t when = { value, cond };
+   whens_.push_back(when);
 }
 
 void vhdl_cassign_stmt::emit(std::ostream &of, int level) const
 {
    lhs_->emit(of, level);
    of << " <= ";
+   if (!whens_.empty()) {
+      for (std::list<when_part_t>::const_iterator it = whens_.begin();
+           it != whens_.end();
+           ++it) {
+         (*it).value->emit(of, level);
+         of << " when ";
+         (*it).cond->emit(of, level);
+         of << " ";
+      }
+      of << "else ";
+   }
    rhs_->emit(of, level);
    of << ";";
 }
@@ -818,6 +774,7 @@ void vhdl_function::emit(std::ostream &of, int level) const
    of << "  return Verilog_Result;";
    newline(of, level);
    of << "end function;";
+   newline(of, level);
 }
 
 void vhdl_param_decl::emit(std::ostream &of, int level) const

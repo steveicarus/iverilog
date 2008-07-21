@@ -20,7 +20,9 @@
 
 #include "vhdl_type.hh"
 
+#include <cassert>
 #include <sstream>
+#include <iostream>
 
 
 vhdl_type *vhdl_type::std_logic()
@@ -63,6 +65,12 @@ vhdl_type *vhdl_type::time()
    return new vhdl_type(VHDL_TYPE_TIME);
 }
 
+vhdl_type *vhdl_type::get_base() const
+{
+   assert(name_ == VHDL_TYPE_ARRAY);
+   return base_;
+}
+
 /*
  * This is just the name of the type, without any parameters.
  */
@@ -87,6 +95,9 @@ std::string vhdl_type::get_string() const
       return std::string("signed");
    case VHDL_TYPE_UNSIGNED:
       return std::string("unsigned");
+   case VHDL_TYPE_ARRAY:
+      // Each array has its own type declaration
+      return array_name_;
    default:
       return std::string("BadType");
    }
@@ -112,9 +123,44 @@ std::string vhdl_type::get_decl_string() const
    }
 }
 
+/*
+ * Like get_decl_string but completely expands array declarations.
+ */
+std::string vhdl_type::get_type_decl_string() const
+{
+   switch (name_) {
+   case VHDL_TYPE_ARRAY:
+      {
+         std::ostringstream ss;
+         ss << "array (" << msb_ << " downto "
+            << lsb_ << ") of "
+            << base_->get_decl_string();
+         return ss.str();
+      }
+   default:
+      return get_decl_string();
+   }
+}
+
 void vhdl_type::emit(std::ostream &of, int level) const
 {
    of << get_decl_string();
+}
+
+vhdl_type::vhdl_type(const vhdl_type &other)
+   : name_(other.name_), msb_(other.msb_), lsb_(other.lsb_),
+     array_name_(other.array_name_)
+{
+   if (other.base_ != NULL)
+      base_ = new vhdl_type(*other.base_);
+   else
+      base_ = NULL;
+}
+
+vhdl_type::~vhdl_type()
+{
+   if (base_ != NULL)
+      delete base_;
 }
 
 vhdl_type *vhdl_type::std_logic_vector(int msb, int lsb)
@@ -130,4 +176,9 @@ vhdl_type *vhdl_type::type_for(int width, bool issigned, int lsb)
       return vhdl_type::nsigned(width, lsb);
    else
       return vhdl_type::nunsigned(width, lsb);
+}
+
+vhdl_type *vhdl_type::array_of(vhdl_type *b, std::string &n, int m, int l)
+{
+   return new vhdl_type(b, n, m, l);
 }

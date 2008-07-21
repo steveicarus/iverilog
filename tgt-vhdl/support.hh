@@ -1,5 +1,5 @@
 /*
- *  VHDL abstract syntax elements.
+ *  Support functions for VHDL output.
  *
  *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
  *
@@ -18,39 +18,31 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef INC_VHDL_ELEMENT_HH
-#define INC_VHDL_ELEMENT_HH
+#ifndef INC_SUPPORT_HH
+#define INC_SUPPORT_HH
 
-#include <fstream>
-#include <list>
-#include <string>
+#include "vhdl_syntax.hh"
 
-typedef std::list<std::string> string_list_t;
-
-/*
- * Any VHDL syntax element. Each element can also contain a comment.
- */
-class vhdl_element {
-public:
-   virtual ~vhdl_element() {}
-   
-   virtual void emit(std::ostream &of, int level=0) const = 0;
-   void print() const;
-
-   void set_comment(std::string comment);
-protected:
-   void emit_comment(std::ostream &of, int level,
-                     bool end_of_line=false) const;
-private:
-   std::string comment_;
+enum support_function_t {
+   SF_UNSIGNED_TO_BOOLEAN,
+   SF_SIGNED_TO_BOOLEAN,
+   SF_BOOLEAN_TO_LOGIC,
+   SF_REDUCE_OR,
+   SF_REDUCE_AND,
+   SF_REDUCE_XOR,
 };
 
-typedef std::list<vhdl_element*> element_list_t;
+class support_function : public vhdl_function {
+public:
+   support_function(support_function_t type)
+      : vhdl_function(function_name(type), function_type(type)),
+        type_(type) {}
+   void emit(std::ostream &of, int level) const;
+   static const char *function_name(support_function_t type);
+   static vhdl_type *function_type(support_function_t type);
 
-int indent(int level);
-void newline(std::ostream &of, int level);
-std::string nl_string(int level);
-void blank_line(std::ostream &of, int level);
+private:
+   support_function_t type_;
+};
 
 #endif
-

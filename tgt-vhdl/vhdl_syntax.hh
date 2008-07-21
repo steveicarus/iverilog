@@ -56,6 +56,7 @@ public:
    
    void emit(std::ostream &of, int level) const;
    const std::string &get_name() const { return name_; }
+   void set_name(const std::string &name) { name_ = name; }
    void set_slice(vhdl_expr *s, int w=0);
 private:
    std::string name_;
@@ -139,6 +140,8 @@ public:
    const std::string &get_value() const { return value_; }
    vhdl_expr *cast(const vhdl_type *to);
 private:
+   int bits_to_int() const;
+   
    std::string value_;
    bool qualified_, signed_;
 };
@@ -148,6 +151,7 @@ public:
    vhdl_const_bit(char bit)
       : vhdl_expr(vhdl_type::std_logic(), true), bit_(bit) {}
    void emit(std::ostream &of, int level) const;
+   vhdl_expr *cast(const vhdl_type *to);
 private:
    char bit_;
 };
@@ -158,7 +162,7 @@ enum time_unit_t {
 
 class vhdl_const_time : public vhdl_expr {
 public:
-   vhdl_const_time(int64_t value, time_unit_t units)
+   vhdl_const_time(int64_t value, time_unit_t units = TIME_UNIT_NS)
       : vhdl_expr(vhdl_type::time(), true), value_(value), units_(units) {}
    void emit(std::ostream &of, int level) const;
 private:
@@ -216,6 +220,8 @@ typedef std::list<vhdl_conc_stmt*> conc_stmt_list_t;
 
 /*
  * A concurrent signal assignment (i.e. not part of a process).
+ * Can have any number of `when' clauses, in which case the original
+ * rhs becomes the `else' part.
  */
 class vhdl_cassign_stmt : public vhdl_conc_stmt {
 public:
@@ -224,9 +230,15 @@ public:
    ~vhdl_cassign_stmt();
 
    void emit(std::ostream &of, int level) const;
+   void add_condition(vhdl_expr *value, vhdl_expr *cond);
 private:
    vhdl_var_ref *lhs_;
    vhdl_expr *rhs_;
+
+   struct when_part_t {
+      vhdl_expr *value, *cond;
+   };
+   std::list<when_part_t> whens_;
 };
 
 /*
@@ -295,6 +307,8 @@ public:
 enum vhdl_wait_type_t {
    VHDL_WAIT_INDEF,  // Suspend indefinitely
    VHDL_WAIT_FOR,    // Wait for a constant amount of time
+   VHDL_WAIT_UNTIL,  // Wait on an expression
+   VHDL_WAIT_ON,     // Wait on a sensitivity list
 };
 
 /*
@@ -309,9 +323,11 @@ public:
    ~vhdl_wait_stmt();
    
    void emit(std::ostream &of, int level) const;
+   void add_sensitivity(const std::string &s) { sensitivity_.push_back(s); }
 private:
    vhdl_wait_type_t type_;
    vhdl_expr *expr_;
+   string_list_t sensitivity_;
 };
 
 
@@ -415,18 +431,20 @@ class vhdl_decl : public vhdl_element {
 public:
    vhdl_decl(const char *name, vhdl_type *type = NULL,
              vhdl_expr *initial = NULL)
-      : name_(name), type_(type), initial_(initial) {}
+      : name_(name), type_(type), initial_(initial),
+        has_initial_(initial != NULL) {}
    virtual ~vhdl_decl();
 
    const std::string &get_name() const { return name_; }
    const vhdl_type *get_type() const;
    void set_type(vhdl_type *t) { type_ = t; }
    void set_initial(vhdl_expr *initial);
-   bool has_initial() const { return initial_ != NULL; }
+   bool has_initial() const { return has_initial_; }
 protected:
    std::string name_;
    vhdl_type *type_;
    vhdl_expr *initial_;
+   bool has_initial_;
 };
 
 typedef std::list<vhdl_decl*> decl_list_t;
@@ -447,6 +465,14 @@ private:
    vhdl_component_decl(const char *name);
 
    decl_list_t ports_;
+};
+
+
+class vhdl_type_decl : public vhdl_decl {
+public:
+   vhdl_type_decl(const char *name, vhdl_type *base)
+      : vhdl_decl(name, base) {}
+   void emit(std::ostream &of, int level) const;
 };
 
 
@@ -501,6 +527,7 @@ public:
       : vhdl_decl(name, type), mode_(mode) {}
 
    void emit(std::ostream &of, int level) const;
+   vhdl_port_mode_t get_mode() const { return mode_; }
 private:
    vhdl_port_mode_t mode_;
 };
@@ -548,14 +575,14 @@ public:
    void add_decl(vhdl_decl *decl);
    vhdl_decl *get_decl(const std::string &name) const;
    bool have_declared(const std::string &name) const;
-   vhdl_scope *get_parent();
+   vhdl_scope *get_parent() const;
    
    bool empty() const { return decls_.empty(); }
    const decl_list_t &get_decls() const { return decls_; }
    void set_parent(vhdl_scope *p) { parent_ = p; }
 
    bool initializing() const { return init_; }
-   void set_initializing(bool i) { init_ = i; }
+   void set_initializing(bool i);
 
    void set_allow_signal_assignment(bool b) { sig_assign_ = b; }
    bool allow_signal_assignment() const { return sig_assign_; }
@@ -587,7 +614,7 @@ class vhdl_function : public vhdl_decl, public vhdl_procedural {
 public:
    vhdl_function(const char *name, vhdl_type *ret_type);
    
-   void emit(std::ostream &of, int level) const;
+   virtual void emit(std::ostream &of, int level) const;
    vhdl_scope *get_scope() { return &variables_; }
    void add_param(vhdl_param_decl *p) { scope_.add_decl(p); }
 private:

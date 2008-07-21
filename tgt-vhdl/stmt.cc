@@ -102,28 +102,24 @@ static int draw_noop(vhdl_procedural *proc, stmt_container *container,
    return 0;
 }
 
-/*
- * Generate an assignment of VHDL expr rhs to signal sig. This, unlike
- * the procedure below, is a generic routine used for more than just
- * Verilog signal assignment (e.g. it is used to expand ternary
- * expressions).
- */
-template <class T>
-static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
-                               ivl_signal_t sig, vhdl_expr *rhs, bool blocking,
-                               vhdl_expr *base = NULL, unsigned lval_width = 0)
+static vhdl_expr *make_assign_rhs(ivl_signal_t sig, vhdl_scope *scope,
+                                  ivl_expr_t e, vhdl_expr *base,
+                                  int lval_width)
 {
-   std::string signame(get_renamed_signal(sig));
+   string signame(get_renamed_signal(sig));
 
-   vhdl_decl *decl = proc->get_scope()->get_decl(signame);
+   vhdl_decl *decl = scope->get_decl(signame);
    assert(decl);
 
+   vhdl_expr *rhs = translate_expr(e);
+   if (rhs == NULL)
+      return rhs;
+   
    if (base == NULL)
-      rhs = rhs->cast(decl->get_type());
+      return rhs->cast(decl->get_type());
+   else if (decl->get_type()->get_name() == VHDL_TYPE_ARRAY)
+      return rhs->cast(decl->get_type()->get_base());
    else {
-      vhdl_type integer(VHDL_TYPE_INTEGER);
-      base = base->cast(&integer);
-
       // Doesn't make sense to part select on something that's
       // not a vector
       vhdl_type_name_t tname = decl->get_type()->get_name();
@@ -131,81 +127,31 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
 
       if (lval_width == 1) {
          vhdl_type t(VHDL_TYPE_STD_LOGIC);
-         rhs = rhs->cast(&t);
+         return rhs->cast(&t);
       }
       else {
-         vhdl_type t(tname, lval_width);
-         rhs = rhs->cast(&t);
+         vhdl_type t(tname, lval_width - 1);
+         return rhs->cast(&t);
       }  
    }
-      
-   bool isvar = strip_var(signame) != signame;
+}
 
-   // Where possible, move constant assignments into the
-   // declaration as initializers. This optimisation is only
-   // performed on assignments of constant values to prevent
-   // ordering problems.
-      
-   // This also has another application: If this is an `inital'
-   // process and we haven't yet generated a `wait' statement then
-   // moving the assignment to the initialization preserves the
-   // expected Verilog behaviour: VHDL does not distinguish
-   // `initial' and `always' processes so an `always' process might
-   // be activatated before an `initial' process at time 0. The
-   // `always' process may then use the uninitialized signal value.
-   // The second test ensures that we only try to initialise
-   // internal signals not ports
-   if (proc->get_scope()->initializing()
-       && ivl_signal_port(sig) == IVL_SIP_NONE
-       && !decl->has_initial() && rhs->constant()
-       && container == proc->get_container() // Top-level container
-       && !isvar) {
-
-      decl->set_initial(rhs);
-         
-      if (blocking && proc->get_scope()->allow_signal_assignment()) {
-         // This signal may be used e.g. in a loop test so we need
-         // to make a variable as well
-         blocking_assign_to(proc, sig);
-            
-         // The signal may have been renamed by the above call
-         const std::string &renamed = get_renamed_signal(sig);
-         
-         vhdl_var_ref *lval_ref = new vhdl_var_ref(renamed.c_str(), NULL);
-         vhdl_var_ref *sig_ref = new vhdl_var_ref(signame.c_str(), NULL);
-
-         if (base)
-            lval_ref->set_slice(base, lval_width-1);
-
-         T *a = new T(lval_ref, sig_ref);
-         container->add_stmt(a);
-            
-         return a;
-      }
+static vhdl_var_ref *make_assign_lhs(ivl_signal_t sig, vhdl_scope *scope,
+                                     vhdl_expr *base, int lval_width)
+{
+   string signame(get_renamed_signal(sig));
+   vhdl_decl *decl = scope->get_decl(signame);
+   
+   vhdl_type *ltype = new vhdl_type(*decl->get_type());
+   vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), ltype);
+   if (base) {
+      if (decl->get_type()->get_name() == VHDL_TYPE_ARRAY)
+         lval_ref->set_slice(base, 0);
       else
-         return NULL;   // No statement need be emitted
+         lval_ref->set_slice(base, lval_width - 1);
    }
-   else {
-      if (blocking && proc->get_scope()->allow_signal_assignment()) {
-         // Remember we need to write the variable back to the
-         // original signal
-         blocking_assign_to(proc, sig);
 
-         // The signal may have been renamed by the above call
-         signame = get_renamed_signal(sig);
-      }
-
-      vhdl_type *ltype =
-         new vhdl_type(*proc->get_scope()->get_decl(signame)->get_type());
-      vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), ltype);
-      if (base)
-         lval_ref->set_slice(base, lval_width-1);
-         
-      T *a = new T(lval_ref, rhs);
-      container->add_stmt(a);
-         
-      return a;
-   }
+   return lval_ref;
 }
 
 /*
@@ -213,7 +159,7 @@ static T *make_vhdl_assignment(vhdl_procedural *proc, stmt_container *container,
  */
 template <class T>
 static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
-                          ivl_statement_t stmt, bool blocking)
+                          ivl_statement_t stmt, bool blocking, vhdl_expr *after)
 {
    int nlvals = ivl_stmt_lvals(stmt);
    if (nlvals != 1) {
@@ -227,9 +173,14 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
 
       vhdl_expr *base = NULL;
       ivl_expr_t e_off = ivl_lval_part_off(lval);
+      if (NULL == e_off)
+         e_off = ivl_lval_idx(lval);
       if (e_off) {
          if ((base = translate_expr(e_off)) == NULL)
             return NULL;
+         
+         vhdl_type integer(VHDL_TYPE_INTEGER);
+         base = base->cast(&integer);
       }
 
       unsigned lval_width = ivl_lval_width(lval);
@@ -238,27 +189,104 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
       if (ivl_expr_type(rval) == IVL_EX_TERNARY) {
          // Expand ternary expressions into an if statement
          vhdl_expr *test = translate_expr(ivl_expr_oper1(rval));
-         vhdl_expr *true_part = translate_expr(ivl_expr_oper2(rval));
-         vhdl_expr *false_part = translate_expr(ivl_expr_oper3(rval));
+         vhdl_expr *true_part =
+            make_assign_rhs(sig, proc->get_scope(),
+                            ivl_expr_oper2(rval), base, lval_width);
+         vhdl_expr *false_part =
+            make_assign_rhs(sig, proc->get_scope(),
+                            ivl_expr_oper3(rval), base, lval_width);
 
          if (!test || !true_part || !false_part)
             return NULL;
 
          vhdl_if_stmt *vhdif = new vhdl_if_stmt(test);
-         make_vhdl_assignment<T>(proc, vhdif->get_then_container(), sig,
-                                 true_part, blocking, base, lval_width);
-         make_vhdl_assignment<T>(proc, vhdif->get_else_container(), sig,
-                                 false_part, blocking, base, lval_width);
 
+         // True part
+         {
+            vhdl_var_ref *lval_ref =
+                make_assign_lhs(sig, proc->get_scope(), base, lval_width);
+            
+            T *a = new T(lval_ref, true_part);
+            vhdif->get_then_container()->add_stmt(a);
+         }
+
+         // False part
+         {
+            vhdl_var_ref *lval_ref =
+                make_assign_lhs(sig, proc->get_scope(), base, lval_width);
+            
+            T *a = new T(lval_ref, false_part);
+            vhdif->get_else_container()->add_stmt(a);
+         }
+         
          container->add_stmt(vhdif);         
          return NULL;
       }
       else {
-         vhdl_expr *rhs = translate_expr(rval);
+         vhdl_expr *rhs =
+            make_assign_rhs(sig, proc->get_scope(), rval, base, lval_width);
          if (NULL == rhs)
             return NULL;
+
+         string signame(get_renamed_signal(sig));
+         vhdl_decl *decl = proc->get_scope()->get_decl(signame);
+   
+         // Where possible, move constant assignments into the
+         // declaration as initializers. This optimisation is only
+         // performed on assignments of constant values to prevent
+         // ordering problems.
          
-         return make_vhdl_assignment<T>(proc, container, sig, rhs, blocking, base, lval_width);
+         // This also has another application: If this is an `inital'
+         // process and we haven't yet generated a `wait' statement then
+         // moving the assignment to the initialization preserves the
+         // expected Verilog behaviour: VHDL does not distinguish
+         // `initial' and `always' processes so an `always' process might
+         // be activatated before an `initial' process at time 0. The
+         // `always' process may then use the uninitialized signal value.
+         // The second test ensures that we only try to initialise
+         // internal signals not ports
+         if (proc->get_scope()->initializing()
+             && ivl_signal_port(sig) == IVL_SIP_NONE
+             && !decl->has_initial()
+             && rhs->constant()
+             && decl->get_type()->get_name() != VHDL_TYPE_ARRAY) {
+
+            // If this assignment is not in the top-level container
+            // it will not be made on all paths through the code
+            // This precludes any future extraction of an initialiser
+            if (container != proc->get_container())
+               decl->set_initial(NULL);   // Default initial value
+            else {
+               decl->set_initial(rhs);
+               return NULL;
+            }
+         }
+         
+         vhdl_var_ref *lval_ref =
+            make_assign_lhs(sig, proc->get_scope(), base, lval_width);
+         
+         T *a = new T(lval_ref, rhs);
+         container->add_stmt(a);
+         
+         ivl_expr_t i_delay;
+         if (NULL == after && (i_delay = ivl_stmt_delay_expr(stmt))) {
+            if ((after = translate_expr(i_delay)) == NULL)
+               return NULL;
+
+            // Need to make 'after' a time value
+            // we can do this by multiplying by 1ns
+            vhdl_type integer(VHDL_TYPE_INTEGER);
+            after = after->cast(&integer);
+            
+            vhdl_expr *ns1 = new vhdl_const_time(1, TIME_UNIT_NS);
+            after = new vhdl_binop_expr(after, VHDL_BINOP_MULT, ns1,
+                                       vhdl_type::time());
+         }
+         
+         if (after != NULL)
+            a->set_after(after);
+         
+         return a;
       }
    }
    else {
@@ -277,22 +305,27 @@ static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
 {
    assert(proc->get_scope()->allow_signal_assignment());
 
-   vhdl_nbassign_stmt *a =
-      make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);
-   
-   if (a != NULL) {
-      // Assignment is a statement and not moved into the initialisation
-      if (after != NULL)
-         a->set_after(after);
-   }
-      
+   make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false, after);
+
    return 0;
 }
 
 static int draw_assign(vhdl_procedural *proc, stmt_container *container,
                        ivl_statement_t stmt)
 {
-   make_assignment<vhdl_assign_stmt>(proc, container, stmt, true);
+   if (proc->get_scope()->allow_signal_assignment()) {
+      // Blocking assignment is implemented as non-blocking assignment
+      // followed by a zero-time wait
+      // This follows the Verilog semantics fairly closely.
+
+      make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false, NULL);
+      
+      container->add_stmt
+         (new vhdl_wait_stmt(VHDL_WAIT_FOR, new vhdl_const_time(0)));
+   }
+   else
+      make_assignment<vhdl_assign_stmt>(proc, container, stmt, true, NULL);
+   
    return 0;
 }
 
@@ -336,11 +369,7 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
    if (type == IVL_ST_ASSIGN_NB) {
       draw_nbassign(proc, container, sub_stmt, time);
    }
-   else {
-      // All blocking assignments need to be made visible
-      // at this point
-      draw_blocking_assigns(proc, container);
-      
+   else {      
       vhdl_wait_stmt *wait =
          new vhdl_wait_stmt(VHDL_WAIT_FOR, time);
       container->add_stmt(wait);
@@ -361,24 +390,11 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
 }
 
 /*
- * Make edge detectors from the signals in `nexus' and add them
- * to the expression `test'. Also adds the signals to the process
- * sensitivity list. Type should be one of `rising_edge' or
- * `falling_edge'.
- */
-static void edge_detector(ivl_nexus_t nexus, vhdl_process *proc,
-                          vhdl_binop_expr *test, const char *type)
-{
-   vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope()->get_parent(), nexus);
-   vhdl_fcall *detect = new vhdl_fcall(type, vhdl_type::boolean());
-   detect->add_expr(ref);
-   test->add_expr(detect);
-   proc->add_sensitivity(ref->get_name().c_str());
-}
-
-/*
  * A wait statement waits for a level change on a @(..) list of
- * signals.
+ * signals. Purely combinatorial processes (i.e. no posedge/negedge
+ * events) produce a `wait on' statement at the end of the process.
+ * Sequential processes produce a `wait until' statement at the
+ * start of the process.
  */
 static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
                      ivl_statement_t stmt)
@@ -386,82 +402,76 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
    // Wait statements only occur in processes
    vhdl_process *proc = dynamic_cast<vhdl_process*>(_proc);
    assert(proc);   // Catch not process
+
+   vhdl_binop_expr *test =
+      new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
    
-   ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
-
-
-   // TODO: This should really be merged with the
-   // nexus_to_XXX code
    int nevents = ivl_stmt_nevent(stmt);
+   
+   bool combinatorial = true;  // True if no negedge/posedge events
    for (int i = 0; i < nevents; i++) {
       ivl_event_t event = ivl_stmt_events(stmt, i);
+      if (ivl_event_npos(event) > 0 || ivl_event_nneg(event) > 0)
+         combinatorial = false;
+   }
 
-      // A list of the non-edge triggered signals to they can
-      // be added to the edge-detecting `if' statement later
-      string_list_t non_edges;
-
-      int nany = ivl_event_nany(event);
-      for (int i = 0; i < nany; i++) {
-         ivl_nexus_t nexus = ivl_event_any(event, i);
-
-         int nptrs = ivl_nexus_ptrs(nexus);
-         for (int j = 0; j < nptrs; j++) {
-            ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, j);
-
-            ivl_signal_t sig;
-            if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
-               if (!seen_signal_before(sig))
-                  continue;
-               
-               std::string signame(get_renamed_signal(sig));
-
-               // Only add this signal to the sensitivity if it's part
-               // of the containing architecture (i.e. it has already
-               // been declared)
-               if (proc->get_scope()->get_parent()->have_declared(signame)) {
-                  proc->add_sensitivity(signame.c_str());
-                  non_edges.push_back(signame);
-                  break;
-               }
-            }
-            else {
-               // Ignore all other types of nexus pointer
-            }
-         }
-      }
-
-      int nneg = ivl_event_nneg(event);
-      int npos = ivl_event_npos(event);
-      if (nneg + npos > 0) {
-         vhdl_binop_expr *test =
-            new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
-
-         // Generate falling_edge(..) calls for each negedge event
-         for (int i = 0; i < nneg; i++)
-            edge_detector(ivl_event_neg(event, i), proc, test, "falling_edge");
-        
-         // Generate rising_edge(..) calls for each posedge event
-         for (int i = 0; i < npos; i++)
-            edge_detector(ivl_event_pos(event, i), proc, test, "rising_edge");
-        
-         // Add Name'Event terms for each non-edge-triggered signal
-         string_list_t::iterator it;
-         for (it = non_edges.begin(); it != non_edges.end(); ++it) {
-            test->add_expr
-               (new vhdl_var_ref((*it + "'Event").c_str(),
-                                 vhdl_type::boolean()));
-         }
-
-         vhdl_if_stmt *edge_det = new vhdl_if_stmt(test);
-         container->add_stmt(edge_det);
+   if (combinatorial) {
+      vhdl_wait_stmt *wait = new vhdl_wait_stmt(VHDL_WAIT_ON); 
+      
+      for (int i = 0; i < nevents; i++) {
+         ivl_event_t event = ivl_stmt_events(stmt, i);
          
-         draw_stmt(proc, edge_det->get_then_container(), sub_stmt);
+         int nany = ivl_event_nany(event);
+         for (int i = 0; i < nany; i++) {
+            ivl_nexus_t nexus = ivl_event_any(event, i);
+            vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
+
+            wait->add_sensitivity(ref->get_name());
+            delete ref;
+         }
       }
-      else {
-         // Don't bother generating an edge detector if there
-         // are no edge-triggered events
-         draw_stmt(proc, container, sub_stmt);
+
+      draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt));
+      container->add_stmt(wait);
+   }
+   else {
+      for (int i = 0; i < nevents; i++) {
+         ivl_event_t event = ivl_stmt_events(stmt, i);
+         
+         int nany = ivl_event_nany(event);
+         for (int i = 0; i < nany; i++) {
+            ivl_nexus_t nexus = ivl_event_any(event, i);
+            vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
+            
+            ref->set_name(ref->get_name() + "'Event");
+            test->add_expr(ref);
+         }
+         
+         int nneg = ivl_event_nneg(event);
+         for (int i = 0; i < nneg; i++) {
+            ivl_nexus_t nexus = ivl_event_neg(event, i);
+            vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
+            vhdl_fcall *detect =
+               new vhdl_fcall("falling_edge", vhdl_type::boolean());
+            detect->add_expr(ref);
+            
+            test->add_expr(detect);
+         }
+         
+         int npos = ivl_event_npos(event);
+         for (int i = 0; i < npos; i++) {
+            ivl_nexus_t nexus = ivl_event_pos(event, i);
+            vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
+            vhdl_fcall *detect =
+               new vhdl_fcall("rising_edge", vhdl_type::boolean());
+            detect->add_expr(ref);
+         
+            test->add_expr(detect);
+         }
       }
+      
+      container->add_stmt(new vhdl_wait_stmt(VHDL_WAIT_UNTIL, test));
+      draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt));
    }
    
    return 0;
@@ -476,8 +486,9 @@ static int draw_if(vhdl_procedural *proc, stmt_container *container,
    
    vhdl_if_stmt *vhdif = new vhdl_if_stmt(test);
 
-   draw_stmt(proc, vhdif->get_then_container(),
-             ivl_stmt_cond_true(stmt));
+   ivl_statement_t cond_true_stmt = ivl_stmt_cond_true(stmt);
+   if (cond_true_stmt)
+      draw_stmt(proc, vhdif->get_then_container(), cond_true_stmt);
 
    ivl_statement_t cond_false_stmt = ivl_stmt_cond_false(stmt);
    if (cond_false_stmt)
@@ -596,6 +607,7 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
    case IVL_ST_CONDIT:
       return draw_if(proc, container, stmt);
    case IVL_ST_CASE:
+   case IVL_ST_CASEX:
       return draw_case(proc, container, stmt);
    case IVL_ST_WHILE:
       return draw_while(proc, container, stmt);

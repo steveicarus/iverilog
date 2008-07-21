@@ -23,54 +23,6 @@
 #include <iostream>
 #include <cassert>
 
-static vhdl_expr *draw_concat_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
-{
-   vhdl_type *result_type =
-      vhdl_type::type_for(ivl_lpm_width(lpm), ivl_lpm_signed(lpm) != 0);
-   vhdl_binop_expr *expr =
-      new vhdl_binop_expr(VHDL_BINOP_CONCAT, result_type);
- 
-   for (int i = ivl_lpm_selects(lpm) - 1; i >= 0; i--) {
-      vhdl_expr *e = nexus_to_var_ref(scope, ivl_lpm_data(lpm, i));
-      if (NULL == e)
-         return NULL;
-
-      expr->add_expr(e);
-   }
-
-   return expr;
-}
-
-static vhdl_expr *draw_binop_lpm(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t op)
-{
-   vhdl_type *result_type =
-      vhdl_type::type_for(ivl_lpm_width(lpm), ivl_lpm_signed(lpm) != 0);
-   vhdl_binop_expr *expr = new vhdl_binop_expr(op, result_type);
- 
-   for (int i = 0; i < 2; i++) {
-      vhdl_expr *e = nexus_to_var_ref(scope, ivl_lpm_data(lpm, i));
-      if (NULL == e)
-         return NULL;
-
-      expr->add_expr(e);
-   }
-   
-   if (op == VHDL_BINOP_MULT) {
-      // Need to resize the output to the desired size,
-      // as this does not happen automatically in VHDL
-      
-      unsigned out_width = ivl_lpm_width(lpm);
-      vhdl_fcall *resize =
-         new vhdl_fcall("Resize", vhdl_type::nsigned(out_width));
-      resize->add_expr(expr);
-      resize->add_expr(new vhdl_const_int(out_width));
-      
-      return resize;
-   }
-   else
-      return expr;
-}
-
 /*
  * Return the base of a part select.
  */
@@ -88,12 +40,105 @@ static vhdl_expr *part_select_base(vhdl_scope *scope, ivl_lpm_t lpm)
    return off->cast(&integer);
 }
 
-static vhdl_expr *draw_part_select_vp_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
+vhdl_var_ref *lpm_output(vhdl_scope *scope, ivl_lpm_t lpm)
+{
+   vhdl_var_ref *out = nexus_to_var_ref(scope, ivl_lpm_q(lpm, 0));
+   if (NULL == out) {
+      vhdl_type *type =
+         vhdl_type::type_for(ivl_lpm_width(lpm),
+                             ivl_lpm_signed(lpm) != 0);
+      string name("LPM");
+      name += ivl_lpm_basename(lpm);
+      name += "_Out";
+
+      if (!scope->have_declared(name)) {
+         scope->add_decl
+            (new vhdl_signal_decl(name.c_str(), new vhdl_type(*type)));
+      }
+      
+      out = new vhdl_var_ref(name.c_str(), type);
+   }
+
+   if (ivl_lpm_type(lpm) == IVL_LPM_PART_PV) {
+      vhdl_expr *off = part_select_base(scope, lpm);
+      assert(off);
+
+      out->set_slice(off, ivl_lpm_width(lpm) - 1);
+   }
+   
+   return out;
+}
+
+
+static vhdl_expr *concat_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
+{
+   vhdl_type *result_type =
+      vhdl_type::type_for(ivl_lpm_width(lpm), ivl_lpm_signed(lpm) != 0);
+   vhdl_binop_expr *expr =
+      new vhdl_binop_expr(VHDL_BINOP_CONCAT, result_type);
+ 
+   for (int i = ivl_lpm_selects(lpm) - 1; i >= 0; i--) {
+      vhdl_expr *e = nexus_to_var_ref(scope, ivl_lpm_data(lpm, i));
+      if (NULL == e)
+         return NULL;
+
+      expr->add_expr(e);
+   }
+
+   return expr;
+}
+
+static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t op)
+{
+   unsigned out_width = ivl_lpm_width(lpm);
+   vhdl_type *result_type =
+      vhdl_type::type_for(out_width, ivl_lpm_signed(lpm) != 0);
+   vhdl_binop_expr *expr = new vhdl_binop_expr(op, result_type);
+ 
+   for (int i = 0; i < 2; i++) {
+      vhdl_expr *e = nexus_to_var_ref(scope, ivl_lpm_data(lpm, i));
+      if (NULL == e)
+         return NULL;
+
+      expr->add_expr(e->cast(result_type));
+   }
+   
+   if (op == VHDL_BINOP_MULT) {
+      // Need to resize the output to the desired size,
+      // as this does not happen automatically in VHDL
+      
+      vhdl_fcall *resize =
+         new vhdl_fcall("Resize", vhdl_type::nsigned(out_width));
+      resize->add_expr(expr);
+      resize->add_expr(new vhdl_const_int(out_width));
+      
+      return resize;
+   }
+   else
+      return expr;
+}
+
+static vhdl_expr *rel_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t op)
+{
+   vhdl_binop_expr *expr = new vhdl_binop_expr(op, vhdl_type::boolean());
+  
+   for (int i = 0; i < 2; i++) {
+      vhdl_expr *e = nexus_to_var_ref(scope, ivl_lpm_data(lpm, i));
+      if (NULL == e)
+         return NULL;
+
+      expr->add_expr(e);
+   }
+
+   return expr;
+}
+
+static vhdl_expr *part_select_vp_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
    vhdl_var_ref *selfrom = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
    if (NULL == selfrom)
       return NULL;
-
+   
    vhdl_expr *off = part_select_base(scope, lpm);;
    if (NULL == off)
       return NULL;
@@ -102,28 +147,16 @@ static vhdl_expr *draw_part_select_vp_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
    return selfrom;
 }
 
-static int draw_part_select_pv_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
-{
-   vhdl_var_ref *selfrom = nexus_to_var_ref(arch->get_scope(), ivl_lpm_data(lpm, 0));
-   if (NULL == selfrom)
-      return 1;
 
-   vhdl_expr *off = part_select_base(arch->get_scope(), lpm);;
-   if (NULL == off)
-      return 1;
-
-   vhdl_var_ref *out = nexus_to_var_ref(arch->get_scope(), ivl_lpm_q(lpm, 0));
-   if (NULL == out)
-      return 1;
-
-   out->set_slice(off, ivl_lpm_width(lpm) - 1);
-   arch->add_stmt(new vhdl_cassign_stmt(out, selfrom));
-   return 0;
+static vhdl_expr *part_select_pv_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
+{   
+   return nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
 }
 
-static vhdl_expr *draw_ufunc_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
+static vhdl_expr *ufunc_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
-   vhdl_fcall *fcall = new vhdl_fcall(ivl_lpm_basename(lpm), NULL);
+   ivl_scope_t f_scope = ivl_lpm_define(lpm);
+   vhdl_fcall *fcall = new vhdl_fcall(ivl_scope_basename(f_scope), NULL);
 
    for (unsigned i = 0; i < ivl_lpm_size(lpm); i++) {
       vhdl_var_ref *ref = nexus_to_var_ref(scope, ivl_lpm_data(lpm, i));
@@ -136,16 +169,19 @@ static vhdl_expr *draw_ufunc_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
    return fcall;
 }
 
-static vhdl_expr *draw_reduction_lpm(vhdl_scope *scope, ivl_lpm_t lpm,
-                                     const char *rfunc, bool invert)
+static vhdl_expr *reduction_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm,
+                                        support_function_t f, bool invert)
 {
-   vhdl_fcall *fcall = new vhdl_fcall(rfunc, vhdl_type::std_logic());
+   require_support_function(f);
+   vhdl_fcall *fcall = new vhdl_fcall(support_function::function_name(f),
+                                      vhdl_type::std_logic());
 
    vhdl_var_ref *ref = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
    if (NULL == ref)
       return NULL;
-   
-   fcall->add_expr(ref);
+
+   vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR);   
+   fcall->add_expr(ref->cast(&std_logic_vector));
 
    if (invert)
       return new vhdl_unaryop_expr
@@ -154,7 +190,7 @@ static vhdl_expr *draw_reduction_lpm(vhdl_scope *scope, ivl_lpm_t lpm,
       return fcall;
 }
 
-static vhdl_expr *draw_sign_extend_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
+static vhdl_expr *sign_extend_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
    vhdl_expr *ref = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
    if (ref)
@@ -163,35 +199,88 @@ static vhdl_expr *draw_sign_extend_lpm(vhdl_scope *scope, ivl_lpm_t lpm)
       return NULL;
 }
 
-vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
+static vhdl_expr *array_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
+{
+   ivl_signal_t array = ivl_lpm_array(lpm);
+   if (!seen_signal_before(array))
+      return NULL;
+   
+   const char *renamed = get_renamed_signal(array).c_str();
+
+   vhdl_decl *adecl = scope->get_decl(renamed);
+   assert(adecl);
+   
+   vhdl_type *atype = new vhdl_type(*adecl->get_type());
+
+   vhdl_expr *select = nexus_to_var_ref(scope, ivl_lpm_select(lpm));
+   if (NULL == select)
+      return NULL;
+   
+   vhdl_var_ref *ref = new vhdl_var_ref(renamed, atype);
+   vhdl_type integer(VHDL_TYPE_INTEGER);
+   ref->set_slice(select->cast(&integer));
+   
+   return ref;
+}
+
+static vhdl_expr *shift_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm,
+                                    vhdl_binop_t shift_op)
+{
+   vhdl_expr *lhs = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
+   vhdl_expr *rhs = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 1));
+   if (!lhs || !rhs)
+      return NULL;   
+   
+   // The RHS must be an integer
+   vhdl_type integer(VHDL_TYPE_INTEGER);
+   vhdl_expr *r_cast = rhs->cast(&integer);
+
+   vhdl_type *rtype = new vhdl_type(*lhs->get_type());
+   return new vhdl_binop_expr(lhs, shift_op, r_cast, rtype);
+}
+
+static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
    switch (ivl_lpm_type(lpm)) {
    case IVL_LPM_ADD:
-      return draw_binop_lpm(scope, lpm, VHDL_BINOP_ADD);
+      return binop_lpm_to_expr(scope, lpm, VHDL_BINOP_ADD);
    case IVL_LPM_SUB:
-      return draw_binop_lpm(scope, lpm, VHDL_BINOP_SUB);
+      return binop_lpm_to_expr(scope, lpm, VHDL_BINOP_SUB);
    case IVL_LPM_MULT:
-      return draw_binop_lpm(scope, lpm, VHDL_BINOP_MULT);
+      return binop_lpm_to_expr(scope, lpm, VHDL_BINOP_MULT);
    case IVL_LPM_CONCAT:
-      return draw_concat_lpm(scope, lpm);
+      return concat_lpm_to_expr(scope, lpm);
+   case IVL_LPM_CMP_GE:
+      return rel_lpm_to_expr(scope, lpm, VHDL_BINOP_GEQ);
+   case IVL_LPM_CMP_EQ:
+   case IVL_LPM_CMP_EEQ:
+      return rel_lpm_to_expr(scope, lpm, VHDL_BINOP_EQ);
    case IVL_LPM_PART_VP:
-      return draw_part_select_vp_lpm(scope, lpm);
+      return part_select_vp_lpm_to_expr(scope, lpm);
+   case IVL_LPM_PART_PV:
+      return part_select_pv_lpm_to_expr(scope, lpm);
    case IVL_LPM_UFUNC:
-      return draw_ufunc_lpm(scope, lpm);
+      return ufunc_lpm_to_expr(scope, lpm);
    case IVL_LPM_RE_AND:
-      return draw_reduction_lpm(scope, lpm, "Reduce_AND", false);
+      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_AND, false);
    case IVL_LPM_RE_NAND:
-      return draw_reduction_lpm(scope, lpm, "Reduce_AND", true);
+      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_AND, true);
    case IVL_LPM_RE_NOR:
-      return draw_reduction_lpm(scope, lpm, "Reduce_OR", true);
+      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_OR, true);
    case IVL_LPM_RE_OR:
-      return draw_reduction_lpm(scope, lpm, "Reduce_OR", false);
+      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_OR, false);
    case IVL_LPM_RE_XOR:
-      return draw_reduction_lpm(scope, lpm, "Reduce_XOR", false);
+      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_XOR, false);
    case IVL_LPM_RE_XNOR:
-      return draw_reduction_lpm(scope, lpm, "Reduce_XNOR", false);
+      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_XOR, false);
    case IVL_LPM_SIGN_EXT:
-      return draw_sign_extend_lpm(scope, lpm);
+      return sign_extend_lpm_to_expr(scope, lpm);
+   case IVL_LPM_ARRAY:
+      return array_lpm_to_expr(scope, lpm);
+   case IVL_LPM_SHIFTL:
+      return shift_lpm_to_expr(scope, lpm, VHDL_BINOP_SL);
+   case IVL_LPM_SHIFTR:
+      return shift_lpm_to_expr(scope, lpm, VHDL_BINOP_SR);
    default:
       error("Unsupported LPM type: %d", ivl_lpm_type(lpm));
       return NULL;
@@ -200,18 +289,13 @@ vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 
 int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
 {
-   if (ivl_lpm_type(lpm) == IVL_LPM_PART_PV)
-      return draw_part_select_pv_lpm(arch, lpm);
-   else {
-      vhdl_expr *f = lpm_to_expr(arch->get_scope(), lpm);
-      if (NULL == f)
-         return 1;
-        
-      vhdl_var_ref *out = nexus_to_var_ref(arch->get_scope(), ivl_lpm_q(lpm, 0));
-      if (out)
-         arch->add_stmt(new vhdl_cassign_stmt(out, f));
-      
+   vhdl_expr *f = lpm_to_expr(arch->get_scope(), lpm);
+   if (NULL == f)
       return 0;
-   }
+   
+   vhdl_var_ref *out = lpm_output(arch->get_scope(), lpm);
+   arch->add_stmt(new vhdl_cassign_stmt(out, f));
+   
+   return 0;
 }
 

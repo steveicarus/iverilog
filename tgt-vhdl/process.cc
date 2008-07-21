@@ -24,120 +24,6 @@
 #include <iostream>
 #include <cassert>
 #include <sstream>
-#include <map>
-
-/*
- * Implementing blocking assignment is a little tricky since
- * the semantics are a little different to VHDL:
- *
- * In Verilog a blocking assignment (=) can be used anywhere
- * non-blocking assignment (<=) can be. In VHDL blocking
- * assignment (:=) can only be used with variables, and
- * non-blocking assignment (<=) can only be used with signals.
- * All Verilog variables are translated into signals in the
- * VHDL architecture. This means we cannot use the VHDL :=
- * operator directly. Furthermore, VHDL variables can only
- * be declared within processes, so it wouldn't help to
- * make all Verilog variables VHDL variables.
- *
- * The solution is to generate a VHDL variable in a process
- * whenever a blocking assignment is made to a signal. The
- * assignment is made to this variable instead, and
- * g_assign_vars below remembers the temporary variables
- * that have been generated. Any subsequent blocking assignments
- * are made to the same variable. At either the end of the
- * process or a `wait' statement, the temporaries are assigned
- * back to the signals, and the temporaries are forgotten.
- *
- * For example:
- *
- *   initial begin
- *     a = 5;
- *     b = a + 3;
- *   end
- *
- * Is translated to:
- *
- *   process is
- *     variable a_Var : Some_Type;
- *     variable b_Var : Some_Type;
- *   begin
- *     a_Var := 5; 
- *     b_Var := a_Var + 3;
- *     a <= a_Var;
- *     b <= b_Var;
- *   end process;
- */
-typedef std::map<std::string, ivl_signal_t> var_temp_set_t;
-static var_temp_set_t g_assign_vars;
-
-/*
- * Called whenever a blocking assignment is made to sig.
- */
-void blocking_assign_to(vhdl_procedural *proc, ivl_signal_t sig)
-{
-   std::string var(get_renamed_signal(sig));
-   std::string tmpname(var + "_Var");
-      
-   if (g_assign_vars.find(var) == g_assign_vars.end()) {
-      // This is the first time a non-blocking assignment
-      // has been made to this signal: create a variable
-      // to shadow it.
-      if (!proc->get_scope()->have_declared(tmpname)) {
-         vhdl_decl *decl = proc->get_scope()->get_decl(var);
-         assert(decl);
-         vhdl_type *type = new vhdl_type(*decl->get_type());
-         
-         proc->get_scope()->add_decl(new vhdl_var_decl(tmpname.c_str(), type));
-      }
-         
-      rename_signal(sig, tmpname);
-      g_assign_vars[tmpname] = sig;
-   }
-}
-
-/*
- * Assign all _Var variables to the corresponding signals. This makes
- * the new values visible outside the current process. This should be
- * called before any `wait' statement or the end of the process.
- */
-void draw_blocking_assigns(vhdl_procedural *proc, stmt_container *container)
-{
-   var_temp_set_t::const_iterator it;
-   for (it = g_assign_vars.begin(); it != g_assign_vars.end(); ++it) {
-      std::string stripped(strip_var((*it).first));
-
-      vhdl_decl *decl = proc->get_scope()->get_decl(stripped);
-      assert(decl);
-      vhdl_type *type = new vhdl_type(*decl->get_type());
-      
-      vhdl_var_ref *lhs = new vhdl_var_ref(stripped.c_str(), NULL);
-      vhdl_expr *rhs = new vhdl_var_ref((*it).first.c_str(), type);
-
-      container->add_stmt(new vhdl_nbassign_stmt(lhs, rhs));
-
-      // Undo the renaming (since the temporary is no longer needed)
-      rename_signal((*it).second, stripped);
-   }
-
-   // If this this wait is within e.g. an `if' statement then
-   // we cannot correctly clear the variables list here (since
-   // they might not be assigned on another path)
-   if (container == proc->get_container())
-      g_assign_vars.clear();
-}
-
-/*
- * Remove _Var from the end of a string, if it is present.
- */
-std::string strip_var(const std::string &str)
-{
-   std::string result(str);
-   size_t pos = result.find("_Var");
-   if (pos != std::string::npos)
-      result.erase(pos, 4);
-   return result;
-}
 
 /*
  * Convert a Verilog process to VHDL and add it to the architecture
@@ -145,6 +31,8 @@ std::string strip_var(const std::string &str)
  */
 static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
 {
+   set_active_entity(ent);
+   
    // Create a new process and store it in the entity's
    // architecture. This needs to be done first or the
    // parent link won't be valid (and draw_stmt needs this
@@ -154,18 +42,14 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
 
    // If this is an initial process, push signal initialisation
    // into the declarations
-   if (ivl_process_type(proc) == IVL_PR_INITIAL)
-      vhdl_proc->get_scope()->set_initializing(true);
+   vhdl_proc->get_scope()->set_initializing
+      (ivl_process_type(proc) == IVL_PR_INITIAL);
    
    ivl_statement_t stmt = ivl_process_stmt(proc);
    int rc = draw_stmt(vhdl_proc, vhdl_proc->get_container(), stmt);
    if (rc != 0)
       return rc;
 
-   // Output any remaning blocking assignments
-   draw_blocking_assigns(vhdl_proc, vhdl_proc->get_container());
-   g_assign_vars.clear();
-   
    // Initial processes are translated to VHDL processes with
    // no sensitivity list and and indefinite wait statement at
    // the end

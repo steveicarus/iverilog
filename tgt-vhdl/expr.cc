@@ -19,14 +19,17 @@
  */
 
 #include "vhdl_target.h"
+#include "support.hh"
 
 #include <iostream>
 #include <cassert>
+#include <cstring>
+
 
 /*
- * Change the signdness of a vector.
+ * Change the signedness of a vector.
  */
-static vhdl_expr *change_signdness(vhdl_expr *e, bool issigned)
+static vhdl_expr *change_signedness(vhdl_expr *e, bool issigned)
 {
    int msb = e->get_type()->get_msb();
    int lsb = e->get_type()->get_lsb();
@@ -58,12 +61,29 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
 
    const char *renamed = get_renamed_signal(sig).c_str();
    
-   const vhdl_decl *decl = scope->get_decl(strip_var(renamed));
+   vhdl_decl *decl = scope->get_decl(renamed);
    assert(decl);
 
-   vhdl_type *type = new vhdl_type(*decl->get_type());
-   
-   return new vhdl_var_ref(renamed, type);
+   // Can't generate a constant initialiser for this signal
+   // later as it has already been read
+   if (scope->initializing())
+      decl->set_initial(NULL);
+
+   vhdl_var_ref *ref =
+      new vhdl_var_ref(renamed, new vhdl_type(*decl->get_type()));
+      
+   ivl_expr_t off;
+   if (ivl_signal_array_count(sig) > 0 && (off = ivl_expr_oper1(e))) {
+      // Select from an array
+      vhdl_expr *vhd_off = translate_expr(off);
+      if (NULL == vhd_off)
+         return NULL;
+
+      vhdl_type integer(VHDL_TYPE_INTEGER);
+      ref->set_slice(vhd_off->cast(&integer));
+   }
+
+   return ref;
 }
 
 /*
@@ -71,8 +91,33 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
  */
 static vhdl_expr *translate_number(ivl_expr_t e)
 {
-   return new vhdl_const_bits(ivl_expr_bits(e), ivl_expr_width(e),
-                              ivl_expr_signed(e) != 0);
+   if (ivl_expr_width(e) == 1)
+      return new vhdl_const_bit(ivl_expr_bits(e)[0]);
+   else
+      return new vhdl_const_bits(ivl_expr_bits(e), ivl_expr_width(e),
+                                 ivl_expr_signed(e) != 0);
+}
+
+static vhdl_expr *translate_ulong(ivl_expr_t e)
+{
+   return new vhdl_const_int(ivl_expr_uvalue(e));
+}
+
+static vhdl_expr *translate_reduction(support_function_t f, bool neg,
+                                      vhdl_expr *operand)
+{
+   require_support_function(f);
+   vhdl_fcall *fcall =
+      new vhdl_fcall(support_function::function_name(f),
+                     vhdl_type::std_logic());
+   
+   vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR);
+   fcall->add_expr(operand->cast(&std_logic_vector));
+   if (neg)
+      return new vhdl_unaryop_expr(VHDL_UNARYOP_NOT, fcall,
+                                   vhdl_type::std_logic());
+   else
+      return fcall;
 }
 
 static vhdl_expr *translate_unary(ivl_expr_t e)
@@ -83,17 +128,19 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
 
    bool should_be_signed = ivl_expr_signed(e) != 0;
    
-   if (operand->get_type()->get_name() == VHDL_TYPE_UNSIGNED && should_be_signed) {
+   if (operand->get_type()->get_name() == VHDL_TYPE_UNSIGNED
+       && should_be_signed) {
       //operand->print();
       //std::cout << "^ should be signed but is not" << std::endl;
 
-      operand = change_signdness(operand, true);
+      operand = change_signedness(operand, true);
    }
-   else if (operand->get_type()->get_name() == VHDL_TYPE_SIGNED && !should_be_signed) {
+   else if (operand->get_type()->get_name() == VHDL_TYPE_SIGNED
+            && !should_be_signed) {
       //operand->print();
       //std::cout << "^ should be unsigned but is not" << std::endl;
 
-      operand = change_signdness(operand, false);
+      operand = change_signedness(operand, false);
    }
    
    char opcode = ivl_expr_opcode(e);
@@ -103,15 +150,13 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
       return new vhdl_unaryop_expr
          (VHDL_UNARYOP_NOT, operand, new vhdl_type(*operand->get_type()));
    case 'N':   // NOR
+      return translate_reduction(SF_REDUCE_OR, true, operand);
    case '|':
-      {
-         vhdl_fcall *f = new vhdl_fcall("Reduce_OR", vhdl_type::std_logic());
-         f->add_expr(operand);
-         if ('N' == opcode)
-            return new vhdl_unaryop_expr(VHDL_UNARYOP_NOT, f, vhdl_type::std_logic());
-         else
-            return f;
-      }
+      return translate_reduction(SF_REDUCE_OR, false, operand);
+   case 'A':   // NAND
+      return translate_reduction(SF_REDUCE_AND, true, operand);
+   case '&':
+      return translate_reduction(SF_REDUCE_AND, false, operand);
    default:
       error("No translation for unary opcode '%c'\n",
             ivl_expr_opcode(e));
@@ -284,13 +329,13 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
          //result->print();
          //std::cout << "^ should be signed but is not" << std::endl;
 
-         result = change_signdness(result, true);
+         result = change_signedness(result, true);
       }
       else if (result->get_type()->get_name() == VHDL_TYPE_SIGNED && !should_be_signed) {
          //result->print();
          //std::cout << "^ should be unsigned but is not" << std::endl;
 
-         result = change_signdness(result, false);
+         result = change_signedness(result, false);
       }
 
       int actual_width = result->get_type()->get_width();
@@ -382,6 +427,23 @@ static vhdl_expr *translate_concat(ivl_expr_t e)
    return translate_parms<vhdl_binop_expr>(concat, e);
 }
 
+vhdl_expr *translate_sfunc_time(ivl_expr_t e)
+{
+   cerr << "warning: no translation for time (returning 0)" << endl;
+   return new vhdl_const_int(0);
+}
+
+vhdl_expr *translate_sfunc(ivl_expr_t e)
+{
+   const char *name = ivl_expr_name(e);
+   if (strcmp(name, "$time") == 0)
+      return translate_sfunc_time(e);
+   else {
+      error("No translation for system function %s", name);
+      return NULL;
+   }
+}
+
 /*
  * Generate a VHDL expression from a Verilog expression.
  */
@@ -397,6 +459,8 @@ vhdl_expr *translate_expr(ivl_expr_t e)
       return translate_signal(e);
    case IVL_EX_NUMBER:
       return translate_number(e);
+   case IVL_EX_ULONG:
+      return translate_ulong(e);
    case IVL_EX_UNARY:
       return translate_unary(e);
    case IVL_EX_BINARY:
@@ -409,6 +473,8 @@ vhdl_expr *translate_expr(ivl_expr_t e)
       return translate_ternary(e);
    case IVL_EX_CONCAT:
       return translate_concat(e);
+   case IVL_EX_SFUNC:
+      return translate_sfunc(e);
    default:
       error("No VHDL translation for expression at %s:%d (type = %d)",
             ivl_expr_file(e), ivl_expr_lineno(e), type);
