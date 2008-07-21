@@ -31,7 +31,7 @@
 #include <map>
 
 /*
- * Maps a signal to the entity it is defined within. Also
+ * Maps a signal to the scope it is defined within. Also
  * provides a mechanism for renaming signals -- i.e. when
  * an output has the same name as register: valid in Verilog
  * but not in VHDL, so two separate signals need to be
