@@ -657,6 +657,9 @@ void vhdl_unaryop_expr::emit(std::ostream &of, int level) const
    case VHDL_UNARYOP_NOT:
       of << "not ";
       break;
+   case VHDL_UNARYOP_NEG:
+      of << "-";
+      break;
    }
    operand_->emit(of, level);
    of << ")";

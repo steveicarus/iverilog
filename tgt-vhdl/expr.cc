@@ -149,6 +149,9 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
    case '~':
       return new vhdl_unaryop_expr
          (VHDL_UNARYOP_NOT, operand, new vhdl_type(*operand->get_type()));
+   case '-':
+      return new vhdl_unaryop_expr
+         (VHDL_UNARYOP_NEG, operand, new vhdl_type(*operand->get_type()));
    case 'N':   // NOR
       return translate_reduction(SF_REDUCE_OR, true, operand);
    case '|':

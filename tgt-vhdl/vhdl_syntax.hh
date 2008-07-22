@@ -107,6 +107,7 @@ private:
 
 enum vhdl_unaryop_t {
    VHDL_UNARYOP_NOT,
+   VHDL_UNARYOP_NEG,
 };
 
 class vhdl_unaryop_expr : public vhdl_expr {
