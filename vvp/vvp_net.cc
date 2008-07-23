@@ -373,9 +373,10 @@ vvp_vector4_t::vvp_vector4_t(unsigned size, double val)
 	    return;
       }
 
-	/* We return 'b1 for + or - infinity. */
+	/* We return 'b1 for + infinity or 'b0 for - infinity. */
       if (val && (val == 0.5*val)) {
-	    allocate_words_(size, WORD_1_ABITS, WORD_1_BBITS);
+	    if (val > 0) allocate_words_(size, WORD_1_ABITS, WORD_1_BBITS);
+	    else allocate_words_(size, WORD_0_ABITS, WORD_0_BBITS);
 	    return;
       }
 
