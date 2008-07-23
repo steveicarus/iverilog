@@ -247,19 +247,8 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
             vhdl_cassign_stmt *ass = new vhdl_cassign_stmt(lhs, rhs);
             
             ivl_expr_t delay = ivl_logic_delay(log, 1);
-            vhdl_expr *after;
-            if (delay && (after = translate_expr(delay))) {
-               // Need to make 'after' a time value
-               // we can do this by multiplying by 1ns
-               vhdl_type integer(VHDL_TYPE_INTEGER);
-               after = after->cast(&integer);
-               
-               vhdl_expr *ns1 = new vhdl_const_time(1, TIME_UNIT_NS);
-               after = new vhdl_binop_expr(after, VHDL_BINOP_MULT, ns1,
-                                           vhdl_type::time());
-               
-               ass->set_after(after);
-            }
+            if (delay)
+               ass->set_after(translate_time_expr(delay));
             
             arch->add_stmt(ass);
          }

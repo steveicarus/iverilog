@@ -269,19 +269,8 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
          container->add_stmt(a);
          
          ivl_expr_t i_delay;
-         if (NULL == after && (i_delay = ivl_stmt_delay_expr(stmt))) {
-            if ((after = translate_expr(i_delay)) == NULL)
-               return NULL;
-
-            // Need to make 'after' a time value
-            // we can do this by multiplying by 1ns
-            vhdl_type integer(VHDL_TYPE_INTEGER);
-            after = after->cast(&integer);
-            
-            vhdl_expr *ns1 = new vhdl_const_time(1, TIME_UNIT_NS);
-            after = new vhdl_binop_expr(after, VHDL_BINOP_MULT, ns1,
-                                       vhdl_type::time());
-         }
+         if (NULL == after && (i_delay = ivl_stmt_delay_expr(stmt)))
+            after = translate_time_expr(i_delay);
          
          if (after != NULL)
             a->set_after(after);
@@ -349,16 +338,9 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
       time = new vhdl_const_time(value, TIME_UNIT_NS);
    }
    else {
-      time = translate_expr(ivl_stmt_delay_expr(stmt));
+      time = translate_time_expr(ivl_stmt_delay_expr(stmt));
       if (NULL == time)
          return 1;
-
-      vhdl_type integer(VHDL_TYPE_INTEGER);
-      time = time->cast(&integer);
-
-      vhdl_expr *ns1 = new vhdl_const_time(1, TIME_UNIT_NS);
-      time = new vhdl_binop_expr(time, VHDL_BINOP_MULT, ns1,
-                                 vhdl_type::time());
    }
 
    // If the sub-statement is an assignment then VHDL lets

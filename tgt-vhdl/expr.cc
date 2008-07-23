@@ -484,3 +484,21 @@ vhdl_expr *translate_expr(ivl_expr_t e)
       return NULL;
    }
 }
+
+/*
+ * Translate an expression into a time. This is achieved simply
+ * by multiplying the expression by 1ns.
+ */
+vhdl_expr *translate_time_expr(ivl_expr_t e)
+{
+   vhdl_expr *time = translate_expr(e);
+   if (NULL == time)
+      return NULL;
+
+   vhdl_type integer(VHDL_TYPE_INTEGER);
+   time = time->cast(&integer);
+   
+   vhdl_expr *ns1 = new vhdl_const_time(1, TIME_UNIT_NS);
+   return new vhdl_binop_expr(time, VHDL_BINOP_MULT, ns1,
+                              vhdl_type::time());
+}
