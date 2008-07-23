@@ -242,9 +242,26 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
                dynamic_cast<vhdl_var_ref*>(nexus_to_expr(arch->get_scope(), output));
             if (NULL == lhs)
                continue;  // Not suitable for continuous assignment
-            
+
             vhdl_expr *rhs = translate_logic(arch->get_scope(), log);
-            arch->add_stmt(new vhdl_cassign_stmt(lhs, rhs));
+            vhdl_cassign_stmt *ass = new vhdl_cassign_stmt(lhs, rhs);
+            
+            ivl_expr_t delay = ivl_logic_delay(log, 1);
+            vhdl_expr *after;
+            if (delay && (after = translate_expr(delay))) {
+               // Need to make 'after' a time value
+               // we can do this by multiplying by 1ns
+               vhdl_type integer(VHDL_TYPE_INTEGER);
+               after = after->cast(&integer);
+               
+               vhdl_expr *ns1 = new vhdl_const_time(1, TIME_UNIT_NS);
+               after = new vhdl_binop_expr(after, VHDL_BINOP_MULT, ns1,
+                                           vhdl_type::time());
+               
+               ass->set_after(after);
+            }
+            
+            arch->add_stmt(ass);
          }
       }
    }

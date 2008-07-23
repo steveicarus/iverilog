@@ -611,6 +611,12 @@ void vhdl_cassign_stmt::emit(std::ostream &of, int level) const
       of << "else ";
    }
    rhs_->emit(of, level);
+   
+   if (after_) {
+      of << " after ";
+      after_->emit(of, level);
+   }
+      
    of << ";";
 }
 

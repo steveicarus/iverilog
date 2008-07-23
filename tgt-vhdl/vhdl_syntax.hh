@@ -227,14 +227,15 @@ typedef std::list<vhdl_conc_stmt*> conc_stmt_list_t;
 class vhdl_cassign_stmt : public vhdl_conc_stmt {
 public:
    vhdl_cassign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
-      : lhs_(lhs), rhs_(rhs) {}
+      : lhs_(lhs), rhs_(rhs), after_(NULL) {}
    ~vhdl_cassign_stmt();
 
    void emit(std::ostream &of, int level) const;
    void add_condition(vhdl_expr *value, vhdl_expr *cond);
+   void set_after(vhdl_expr *a) { after_ = a; }
 private:
    vhdl_var_ref *lhs_;
-   vhdl_expr *rhs_;
+   vhdl_expr *rhs_, *after_;
 
    struct when_part_t {
       vhdl_expr *value, *cond;
