@@ -261,7 +261,7 @@ public:
    ~stmt_container();
    
    void add_stmt(vhdl_seq_stmt *stmt);
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level, bool newline=true) const;
    bool empty() const { return stmts_.empty(); }
 private:
    std::list<vhdl_seq_stmt*> stmts_;
