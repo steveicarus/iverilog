@@ -761,9 +761,8 @@ void vhdl_while_stmt::emit(std::ostream &of, int level) const
 {
    of << "while ";
    test_->emit(of, level);
-   of << " loop";
-   stmts_.emit(of, level);
-   of << "end loop;";
+   of << " ";
+   vhdl_loop_stmt::emit(of, level);
 }
 
 void vhdl_loop_stmt::emit(std::ostream &of, int level) const
@@ -786,7 +785,7 @@ void vhdl_for_stmt::emit(std::ostream &of, int level) const
    of << " to ";
    to_->emit(of, level);
    of << " ";
-   loop_.emit(of, level);
+   vhdl_loop_stmt::emit(of, level);
 }
 
 vhdl_function::vhdl_function(const char *name, vhdl_type *ret_type)

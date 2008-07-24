@@ -395,38 +395,36 @@ private:
 };
 
 
-class vhdl_while_stmt : public vhdl_seq_stmt {
+class vhdl_loop_stmt : public vhdl_seq_stmt {
+public:
+   virtual ~vhdl_loop_stmt() {}
+   
+   stmt_container *get_container() { return &stmts_; }
+   void emit(std::ostream &of, int level) const;
+private:
+   stmt_container stmts_;
+};
+
+
+class vhdl_while_stmt : public vhdl_loop_stmt {
 public:
    vhdl_while_stmt(vhdl_expr *test) : test_(test) {}
    ~vhdl_while_stmt();
 
-   stmt_container *get_container() { return &stmts_; }
    void emit(std::ostream &of, int level) const;
 private:
    vhdl_expr *test_;
-   stmt_container stmts_;
 };
 
 
-class vhdl_loop_stmt : public vhdl_seq_stmt {
-public:
-   stmt_container *get_container() { return &stmts_; }
-   void emit(std::ostream &of, int level) const;
-private:
-   stmt_container stmts_;
-};
-
-
-class vhdl_for_stmt : public vhdl_seq_stmt {
+class vhdl_for_stmt : public vhdl_loop_stmt {
 public:
    vhdl_for_stmt(const char *lname, vhdl_expr *from, vhdl_expr *to)
       : lname_(lname), from_(from), to_(to) {}
    ~vhdl_for_stmt();
    
-   stmt_container *get_container() { return loop_.get_container(); }
    void emit(std::ostream &of, int level) const;
 private:
-   vhdl_loop_stmt loop_;
    const char *lname_;
    vhdl_expr *from_, *to_;
 };
