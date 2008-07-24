@@ -773,6 +773,22 @@ void vhdl_loop_stmt::emit(std::ostream &of, int level) const
    of << "end loop;";
 }
 
+vhdl_for_stmt::~vhdl_for_stmt()
+{
+   delete from_;
+   delete to_;
+}
+
+void vhdl_for_stmt::emit(std::ostream &of, int level) const
+{
+   of << "for " << lname_ << " in ";
+   from_->emit(of, level);
+   of << " to ";
+   to_->emit(of, level);
+   of << " ";
+   loop_.emit(of, level);
+}
+
 vhdl_function::vhdl_function(const char *name, vhdl_type *ret_type)
    : vhdl_decl(name, ret_type)
 {
