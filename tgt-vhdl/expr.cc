@@ -355,8 +355,10 @@ static vhdl_expr *translate_select(ivl_expr_t e)
 {
    vhdl_var_ref *from =
       dynamic_cast<vhdl_var_ref*>(translate_expr(ivl_expr_oper1(e)));
-   if (NULL == from)
+   if (NULL == from) {
+      error("Can only select from variable reference");
       return NULL;
+   }
 
    ivl_expr_t o2 = ivl_expr_oper2(e);
    if (o2) {
@@ -454,7 +456,7 @@ vhdl_expr *translate_expr(ivl_expr_t e)
 {
    assert(e);
    ivl_expr_type_t type = ivl_expr_type(e);
-
+   
    switch (type) {
    case IVL_EX_STRING:
       return translate_string(e);
