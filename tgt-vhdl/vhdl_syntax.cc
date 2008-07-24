@@ -766,6 +766,13 @@ void vhdl_while_stmt::emit(std::ostream &of, int level) const
    of << "end loop;";
 }
 
+void vhdl_loop_stmt::emit(std::ostream &of, int level) const
+{
+   of << "loop";
+   stmts_.emit(of, level);
+   of << "end loop;";
+}
+
 vhdl_function::vhdl_function(const char *name, vhdl_type *ret_type)
    : vhdl_decl(name, ret_type)
 {

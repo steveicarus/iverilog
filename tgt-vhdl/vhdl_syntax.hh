@@ -408,6 +408,15 @@ private:
 };
 
 
+class vhdl_loop_stmt : public vhdl_seq_stmt {
+public:
+   stmt_container *get_container() { return &stmts_; }
+   void emit(std::ostream &of, int level) const;
+private:
+   stmt_container stmts_;
+};
+
+
 /*
  * A procedure call. Which is a statement, unlike a function
  * call which is an expression.

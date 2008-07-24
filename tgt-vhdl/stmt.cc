@@ -559,6 +559,17 @@ int draw_while(vhdl_procedural *proc, stmt_container *container,
    return 0;
 }
 
+int draw_forever(vhdl_procedural *proc, stmt_container *container,
+                 ivl_statement_t stmt)
+{
+   vhdl_loop_stmt *loop = new vhdl_loop_stmt;
+   container->add_stmt(loop);
+
+   draw_stmt(proc, loop->get_container(), ivl_stmt_sub_stmt(stmt));
+
+   return 0;
+}
+
 /*
  * Generate VHDL statements for the given Verilog statement and
  * add them to the given VHDL process. The container is the
@@ -593,6 +604,8 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
       return draw_case(proc, container, stmt);
    case IVL_ST_WHILE:
       return draw_while(proc, container, stmt);
+   case IVL_ST_FOREVER:
+      return draw_forever(proc, container, stmt);
    default:
       error("No VHDL translation for statement at %s:%d (type = %d)",
             ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
