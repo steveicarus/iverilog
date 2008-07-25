@@ -149,6 +149,9 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
    case '~':
       return new vhdl_unaryop_expr
          (VHDL_UNARYOP_NOT, operand, new vhdl_type(*operand->get_type()));
+   case '-':
+      return new vhdl_unaryop_expr
+         (VHDL_UNARYOP_NEG, operand, new vhdl_type(*operand->get_type()));
    case 'N':   // NOR
       return translate_reduction(SF_REDUCE_OR, true, operand);
    case '|':
@@ -352,8 +355,10 @@ static vhdl_expr *translate_select(ivl_expr_t e)
 {
    vhdl_var_ref *from =
       dynamic_cast<vhdl_var_ref*>(translate_expr(ivl_expr_oper1(e)));
-   if (NULL == from)
+   if (NULL == from) {
+      error("Can only select from variable reference");
       return NULL;
+   }
 
    ivl_expr_t o2 = ivl_expr_oper2(e);
    if (o2) {
@@ -451,7 +456,7 @@ vhdl_expr *translate_expr(ivl_expr_t e)
 {
    assert(e);
    ivl_expr_type_t type = ivl_expr_type(e);
-
+   
    switch (type) {
    case IVL_EX_STRING:
       return translate_string(e);
@@ -480,4 +485,22 @@ vhdl_expr *translate_expr(ivl_expr_t e)
             ivl_expr_file(e), ivl_expr_lineno(e), type);
       return NULL;
    }
+}
+
+/*
+ * Translate an expression into a time. This is achieved simply
+ * by multiplying the expression by 1ns.
+ */
+vhdl_expr *translate_time_expr(ivl_expr_t e)
+{
+   vhdl_expr *time = translate_expr(e);
+   if (NULL == time)
+      return NULL;
+
+   vhdl_type integer(VHDL_TYPE_INTEGER);
+   time = time->cast(&integer);
+   
+   vhdl_expr *ns1 = new vhdl_const_time(1, TIME_UNIT_NS);
+   return new vhdl_binop_expr(time, VHDL_BINOP_MULT, ns1,
+                              vhdl_type::time());
 }

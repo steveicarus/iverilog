@@ -162,7 +162,7 @@ int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
          }
          else {
             vhdl_expr *base = translate_expr(net);
-            if (NULL == base)
+            if (NULL == base) 
                return 1;
             
             display_write(container, base);

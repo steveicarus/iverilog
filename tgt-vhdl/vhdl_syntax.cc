@@ -192,9 +192,9 @@ void stmt_container::add_stmt(vhdl_seq_stmt *stmt)
    stmts_.push_back(stmt);
 }
 
-void stmt_container::emit(std::ostream &of, int level) const
+void stmt_container::emit(std::ostream &of, int level, bool newline) const
 {
-   emit_children<vhdl_seq_stmt>(of, stmts_, level);  
+   emit_children<vhdl_seq_stmt>(of, stmts_, level, "", newline);  
 }
 
 vhdl_comp_inst::vhdl_comp_inst(const char *inst_name, const char *comp_name)
@@ -611,6 +611,12 @@ void vhdl_cassign_stmt::emit(std::ostream &of, int level) const
       of << "else ";
    }
    rhs_->emit(of, level);
+   
+   if (after_) {
+      of << " after ";
+      after_->emit(of, level);
+   }
+      
    of << ";";
 }
 
@@ -656,6 +662,9 @@ void vhdl_unaryop_expr::emit(std::ostream &of, int level) const
    switch (op_) {
    case VHDL_UNARYOP_NOT:
       of << "not ";
+      break;
+   case VHDL_UNARYOP_NEG:
+      of << "-";
       break;
    }
    operand_->emit(of, level);
@@ -715,7 +724,7 @@ void vhdl_case_branch::emit(std::ostream &of, int level) const
    of << "when ";
    when_->emit(of, level);
    of << " =>";
-   stmts_.emit(of, indent(level));
+   stmts_.emit(of, indent(level), false);
 }
 
 vhdl_case_stmt::~vhdl_case_stmt()
@@ -731,8 +740,14 @@ void vhdl_case_stmt::emit(std::ostream &of, int level) const
    newline(of, indent(level));
 
    case_branch_list_t::const_iterator it;
-   for (it = branches_.begin(); it != branches_.end(); ++it)
+   int n = branches_.size();
+   for (it = branches_.begin(); it != branches_.end(); ++it) {
       (*it)->emit(of, level);
+      if (--n > 0)
+         newline(of, indent(level));
+      else
+         newline(of, level);
+   }
    
    of << "end case;";
 }
@@ -746,9 +761,31 @@ void vhdl_while_stmt::emit(std::ostream &of, int level) const
 {
    of << "while ";
    test_->emit(of, level);
-   of << " loop";
+   of << " ";
+   vhdl_loop_stmt::emit(of, level);
+}
+
+void vhdl_loop_stmt::emit(std::ostream &of, int level) const
+{
+   of << "loop";
    stmts_.emit(of, level);
    of << "end loop;";
+}
+
+vhdl_for_stmt::~vhdl_for_stmt()
+{
+   delete from_;
+   delete to_;
+}
+
+void vhdl_for_stmt::emit(std::ostream &of, int level) const
+{
+   of << "for " << lname_ << " in ";
+   from_->emit(of, level);
+   of << " to ";
+   to_->emit(of, level);
+   of << " ";
+   vhdl_loop_stmt::emit(of, level);
 }
 
 vhdl_function::vhdl_function(const char *name, vhdl_type *ret_type)

@@ -107,6 +107,7 @@ private:
 
 enum vhdl_unaryop_t {
    VHDL_UNARYOP_NOT,
+   VHDL_UNARYOP_NEG,
 };
 
 class vhdl_unaryop_expr : public vhdl_expr {
@@ -226,14 +227,15 @@ typedef std::list<vhdl_conc_stmt*> conc_stmt_list_t;
 class vhdl_cassign_stmt : public vhdl_conc_stmt {
 public:
    vhdl_cassign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
-      : lhs_(lhs), rhs_(rhs) {}
+      : lhs_(lhs), rhs_(rhs), after_(NULL) {}
    ~vhdl_cassign_stmt();
 
    void emit(std::ostream &of, int level) const;
    void add_condition(vhdl_expr *value, vhdl_expr *cond);
+   void set_after(vhdl_expr *a) { after_ = a; }
 private:
    vhdl_var_ref *lhs_;
-   vhdl_expr *rhs_;
+   vhdl_expr *rhs_, *after_;
 
    struct when_part_t {
       vhdl_expr *value, *cond;
@@ -259,7 +261,7 @@ public:
    ~stmt_container();
    
    void add_stmt(vhdl_seq_stmt *stmt);
-   void emit(std::ostream &of, int level) const;
+   void emit(std::ostream &of, int level, bool newline=true) const;
    bool empty() const { return stmts_.empty(); }
 private:
    std::list<vhdl_seq_stmt*> stmts_;
@@ -393,16 +395,38 @@ private:
 };
 
 
-class vhdl_while_stmt : public vhdl_seq_stmt {
+class vhdl_loop_stmt : public vhdl_seq_stmt {
+public:
+   virtual ~vhdl_loop_stmt() {}
+   
+   stmt_container *get_container() { return &stmts_; }
+   void emit(std::ostream &of, int level) const;
+private:
+   stmt_container stmts_;
+};
+
+
+class vhdl_while_stmt : public vhdl_loop_stmt {
 public:
    vhdl_while_stmt(vhdl_expr *test) : test_(test) {}
    ~vhdl_while_stmt();
 
-   stmt_container *get_container() { return &stmts_; }
    void emit(std::ostream &of, int level) const;
 private:
    vhdl_expr *test_;
-   stmt_container stmts_;
+};
+
+
+class vhdl_for_stmt : public vhdl_loop_stmt {
+public:
+   vhdl_for_stmt(const char *lname, vhdl_expr *from, vhdl_expr *to)
+      : lname_(lname), from_(from), to_(to) {}
+   ~vhdl_for_stmt();
+   
+   void emit(std::ostream &of, int level) const;
+private:
+   const char *lname_;
+   vhdl_expr *from_, *to_;
 };
 
 

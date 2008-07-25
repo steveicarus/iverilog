@@ -28,7 +28,8 @@
 template <class T>
 void emit_children(std::ostream &of,
                    const std::list<T*> &children,
-                   int level, const char *delim="") 
+                   int level, const char *delim = "",
+                   bool trailing_newline = true) 
 {      
    // Don't indent if there are no children
    if (children.size() == 0)
@@ -42,7 +43,8 @@ void emit_children(std::ostream &of,
          if (--sz > 0)
             of << delim;
       }
-      newline(of, level);
+      if (trailing_newline)
+         newline(of, level);
    }
 }
 

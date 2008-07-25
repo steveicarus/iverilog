@@ -269,19 +269,8 @@ static T *make_assignment(vhdl_procedural *proc, stmt_container *container,
          container->add_stmt(a);
          
          ivl_expr_t i_delay;
-         if (NULL == after && (i_delay = ivl_stmt_delay_expr(stmt))) {
-            if ((after = translate_expr(i_delay)) == NULL)
-               return NULL;
-
-            // Need to make 'after' a time value
-            // we can do this by multiplying by 1ns
-            vhdl_type integer(VHDL_TYPE_INTEGER);
-            after = after->cast(&integer);
-            
-            vhdl_expr *ns1 = new vhdl_const_time(1, TIME_UNIT_NS);
-            after = new vhdl_binop_expr(after, VHDL_BINOP_MULT, ns1,
-                                       vhdl_type::time());
-         }
+         if (NULL == after && (i_delay = ivl_stmt_delay_expr(stmt)))
+            after = translate_time_expr(i_delay);
          
          if (after != NULL)
             a->set_after(after);
@@ -349,16 +338,9 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
       time = new vhdl_const_time(value, TIME_UNIT_NS);
    }
    else {
-      time = translate_expr(ivl_stmt_delay_expr(stmt));
+      time = translate_time_expr(ivl_stmt_delay_expr(stmt));
       if (NULL == time)
          return 1;
-
-      vhdl_type integer(VHDL_TYPE_INTEGER);
-      time = time->cast(&integer);
-
-      vhdl_expr *ns1 = new vhdl_const_time(1, TIME_UNIT_NS);
-      time = new vhdl_binop_expr(time, VHDL_BINOP_MULT, ns1,
-                                 vhdl_type::time());
    }
 
    // If the sub-statement is an assignment then VHDL lets
@@ -577,6 +559,37 @@ int draw_while(vhdl_procedural *proc, stmt_container *container,
    return 0;
 }
 
+int draw_forever(vhdl_procedural *proc, stmt_container *container,
+                 ivl_statement_t stmt)
+{
+   vhdl_loop_stmt *loop = new vhdl_loop_stmt;
+   container->add_stmt(loop);
+
+   draw_stmt(proc, loop->get_container(), ivl_stmt_sub_stmt(stmt));
+
+   return 0;
+}
+
+int draw_repeat(vhdl_procedural *proc, stmt_container *container,
+                ivl_statement_t stmt)
+{
+   vhdl_expr *times = translate_expr(ivl_stmt_cond_expr(stmt));
+   if (NULL == times)
+      return 1;
+
+   vhdl_type integer(VHDL_TYPE_INTEGER);
+   times = times->cast(&integer);
+
+   const char *it_name = "Verilog_Repeat";
+   vhdl_for_stmt *loop =
+      new vhdl_for_stmt(it_name, new vhdl_const_int(1), times);
+   container->add_stmt(loop);
+
+   draw_stmt(proc, loop->get_container(), ivl_stmt_sub_stmt(stmt));
+   
+   return 0;
+}
+
 /*
  * Generate VHDL statements for the given Verilog statement and
  * add them to the given VHDL process. The container is the
@@ -611,6 +624,10 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
       return draw_case(proc, container, stmt);
    case IVL_ST_WHILE:
       return draw_while(proc, container, stmt);
+   case IVL_ST_FOREVER:
+      return draw_forever(proc, container, stmt);
+   case IVL_ST_REPEAT:
+      return draw_repeat(proc, container, stmt);
    default:
       error("No VHDL translation for statement at %s:%d (type = %d)",
             ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
