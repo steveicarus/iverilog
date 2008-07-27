@@ -1466,7 +1466,7 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
 	   forces it to be a signed result. Otherwise, it is as if the
 	   $signed did not exist. */
       if (strcmp(name, "$signed") == 0) {
-	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
 		  cerr << get_fileline() << ": error: The $signed() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
@@ -1482,7 +1482,7 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
 
       /* handle $unsigned like $signed */
       if (strcmp(name, "$unsigned") == 0) {
-	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
 		  cerr << get_fileline() << ": error: The $unsigned() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
@@ -1514,7 +1514,7 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
       }
 
       NetSysFunc*net = new NetSysFunc(scope, scope->local_symbol(),
-				      def, 1+parms_.count());
+				      def, 1+parms_.size());
       net->set_line(*this);
       net->rise_time(rise);
       net->fall_time(fall);
@@ -1531,7 +1531,7 @@ NetNet* PECallFunction::elaborate_net_sfunc_(Design*des, NetScope*scope,
       connect(net->pin(0), osig->pin(0));
 
       unsigned errors = 0;
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
 	    NetNet*tmp = parms_[idx]->elaborate_net(des, scope, 0,
 						    0, 0, 0,
 						    Link::STRONG, Link::STRONG);

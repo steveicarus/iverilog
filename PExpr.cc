@@ -90,7 +90,7 @@ PEBShift::~PEBShift()
 {
 }
 
-PECallFunction::PECallFunction(const pform_name_t&n, const svector<PExpr *> &parms)
+PECallFunction::PECallFunction(const pform_name_t&n, const vector<PExpr *> &parms)
 : path_(n), parms_(parms)
 {
 }
@@ -103,13 +103,24 @@ static pform_name_t pn_from_ps(perm_string n)
       return tmp;
 }
 
-PECallFunction::PECallFunction(perm_string n, const svector<PExpr*>&parms)
+PECallFunction::PECallFunction(perm_string n, const vector<PExpr*>&parms)
 : path_(pn_from_ps(n)), parms_(parms)
 {
 }
 
 PECallFunction::PECallFunction(perm_string n)
 : path_(pn_from_ps(n))
+{
+}
+
+// NOTE: Anachronism. Try to work all use of svector out.
+PECallFunction::PECallFunction(const pform_name_t&n, const svector<PExpr *> &parms)
+: path_(n), parms_(vector_from_svector(parms))
+{
+}
+
+PECallFunction::PECallFunction(perm_string n, const svector<PExpr*>&parms)
+: path_(pn_from_ps(n)), parms_(vector_from_svector(parms))
 {
 }
 

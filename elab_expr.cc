@@ -449,7 +449,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	   and makes it into a signed expression. No bits are changed,
 	   it just changes the interpretation. */
       if (strcmp(peek_tail_name(path_), "$signed") == 0) {
-	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
 		  cerr << get_fileline() << ": error: The $signed() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
@@ -463,7 +463,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
       }
       /* add $unsigned to match $signed */
       if (strcmp(peek_tail_name(path_), "$unsigned") == 0) {
-	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
 		  cerr << get_fileline() << ": error: The $unsigned() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
@@ -486,7 +486,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	   deleted. */
       if ((strcmp(peek_tail_name(path_), "$sizeof") == 0)
 	  || (strcmp(peek_tail_name(path_), "$bits") == 0)) {
-	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
 		  cerr << get_fileline() << ": error: The $bits() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
@@ -522,7 +522,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	   otherwise. The subexpression is elaborated but not
 	   evaluated. */
       if (strcmp(peek_tail_name(path_), "$is_signed") == 0) {
-	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
 		  cerr << get_fileline() << ": error: The $is_signed() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
@@ -558,7 +558,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	   Functions cannot really take empty parameters, but the
 	   case ``func()'' is the same as no parameters at all. So
 	   catch that special case here. */
-      unsigned nparms = parms_.count();
+      unsigned nparms = parms_.size();
       if ((nparms == 1) && (parms_[0] == 0))
 	    nparms = 0;
 
@@ -622,7 +622,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       if (! check_call_matches_definition_(des, dscope))
 	    return 0;
 
-      unsigned parms_count = parms_.count();
+      unsigned parms_count = parms_.size();
       if ((parms_count == 1) && (parms_[0] == 0))
 	    parms_count = 0;
 

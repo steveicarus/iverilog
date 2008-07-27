@@ -38,15 +38,29 @@ class AStatement  : public LineInfo {
       AStatement& operator= (const AStatement&);
 };
 
+/*
+ * A contribution statement is like an assignment: there is an l-value
+ * expression and an r-value expression. The l-value is a branch probe
+ * expression.
+ */
 class AContrib : public AStatement {
 
     public:
-      AContrib();
+      AContrib(PExpr*lval, PExpr*rval);
       ~AContrib();
 
+      virtual void dump(ostream&out, unsigned ind) const;
+
     private:
+      PExpr*lval_;
+      PExpr*rval_;
 };
 
+/*
+ * An analog process is not a statement, but contains an analog
+ * statement. The process is where we attach process characteristics
+ * such as initial vs. always, attributes....
+ */
 class AProcess : public LineInfo {
 
     public:

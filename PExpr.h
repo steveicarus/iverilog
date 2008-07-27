@@ -697,10 +697,15 @@ class PETernary : public PExpr {
  */
 class PECallFunction : public PExpr {
     public:
-      explicit PECallFunction(const pform_name_t&n, const svector<PExpr *> &parms);
+      explicit PECallFunction(const pform_name_t&n, const vector<PExpr *> &parms);
 	// Call of system function (name is not hierarchical)
-      explicit PECallFunction(perm_string n, const svector<PExpr *> &parms);
+      explicit PECallFunction(perm_string n, const vector<PExpr *> &parms);
       explicit PECallFunction(perm_string n);
+
+	// svector versions. Should be removed!
+      explicit PECallFunction(const pform_name_t&n, const svector<PExpr *> &parms);
+      explicit PECallFunction(perm_string n, const svector<PExpr *> &parms);
+
       ~PECallFunction();
 
       virtual void dump(ostream &) const;
@@ -721,7 +726,7 @@ class PECallFunction : public PExpr {
 
     private:
       pform_name_t path_;
-      svector<PExpr *> parms_;
+      vector<PExpr *> parms_;
 
       bool check_call_matches_definition_(Design*des, NetScope*dscope) const;
 

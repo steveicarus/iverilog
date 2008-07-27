@@ -283,6 +283,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %type <pform_name> hierarchy_identifier
 %type <expr>  expression expr_primary expr_mintypmax
 %type <expr>  lpvalue
+%type <expr>  branch_probe_expression
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
 %type <exprs> expression_list_with_nuls expression_list_proper
@@ -854,7 +855,9 @@ event_expression
      function name really is a nature attribute identifier. */
 branch_probe_expression
   : IDENTIFIER '(' IDENTIFIER ',' IDENTIFIER ')'
+      { $$ = pform_make_branch_probe_expression(@1, $1, $3, $5); }
   | IDENTIFIER '(' IDENTIFIER ')'
+      { $$ = pform_make_branch_probe_expression(@1, $1, $3); }
   ;
 
 expression
@@ -3728,7 +3731,7 @@ statement_or_null
 
 analog_statement
   : branch_probe_expression K_CONTRIBUTE expression ';'
-      { $$ = pform_contribution_statement(@2); }
+  { $$ = pform_contribution_statement(@2, $1, $3); }
   ;
 
   /* Task items are, other than the statement, task port items and

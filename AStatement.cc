@@ -25,12 +25,15 @@ AStatement::~AStatement()
 {
 }
 
-AContrib::AContrib()
+AContrib::AContrib(PExpr*lv, PExpr*rv)
+: lval_(lv), rval_(rv)
 {
 }
 
 AContrib::~AContrib()
 {
+      delete lval_;
+      delete rval_;
 }
 
 AProcess::~AProcess()

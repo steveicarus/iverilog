@@ -23,9 +23,10 @@
 # include  "parse_misc.h"
 # include  "AStatement.h"
 
-AStatement* pform_contribution_statement(const struct vlltype&loc)
+AStatement* pform_contribution_statement(const struct vlltype&loc,
+					 PExpr*lval, PExpr*rval)
 {
-      AContrib*tmp = new AContrib;
+      AContrib*tmp = new AContrib(lval, rval);
       FILE_NAME(tmp, loc);
       return tmp;
 }
@@ -37,4 +38,32 @@ void pform_make_analog_behavior(const struct vlltype&loc, AProcess::Type pt,
       FILE_NAME(proc, loc);
 
       pform_put_behavior_in_scope(proc);
+}
+
+PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
+					  char*name, char*n1, char*n2)
+{
+      vector<PExpr*> parms (2);
+      parms[0] = new PEIdent(lex_strings.make(n1));
+      FILE_NAME(parms[0], loc);
+
+      parms[1] = new PEIdent(lex_strings.make(n2));
+      FILE_NAME(parms[1], loc);
+
+      PECallFunction*res = new PECallFunction(lex_strings.make(name), parms);
+      FILE_NAME(res, loc);
+      return res;
+}
+
+PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
+					  char*name, char*branch_name)
+{
+      vector<PExpr*> parms (1);
+      parms[0] = new PEIdent(lex_strings.make(branch_name));
+      FILE_NAME(parms[0], loc);
+
+      PECallFunction*res = new PECallFunction(lex_strings.make(name), parms);
+      FILE_NAME(res, loc);
+
+      return res;
 }

@@ -180,9 +180,9 @@ void PECallFunction::dump(ostream &out) const
 {
       out << path_ << "(";
 
-      if (parms_.count() > 0) {
+      if (parms_.size() > 0) {
 	    if (parms_[0]) parms_[0]->dump(out);
-	    for (unsigned idx = 1; idx < parms_.count(); ++idx) {
+	    for (unsigned idx = 1; idx < parms_.size(); ++idx) {
 		  out << ", ";
 		  if (parms_[idx]) parms_[idx]->dump(out);
 	    }
@@ -539,6 +539,14 @@ void AStatement::dump(ostream&out, unsigned ind) const
       out << setw(ind) << "";
       out << "/* " << get_fileline() << ": " << typeid(*this).name()
 	  << " */ ;" << endl;
+}
+
+void AContrib::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "";
+      out << *lval_ << " <+ " << *rval_
+	  << "; /* " << get_fileline() << " */"
+	  << endl;
 }
 
 void PAssign::dump(ostream&out, unsigned ind) const
