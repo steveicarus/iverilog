@@ -551,6 +551,11 @@ int draw_while(vhdl_procedural *proc, stmt_container *container,
    if (NULL == test)
       return 1;
 
+   // The test must be a Boolean (and std_logic and (un)signed types
+   // must be explicitly cast unlike in Verilog)
+   vhdl_type boolean(VHDL_TYPE_BOOLEAN);
+   test = test->cast(&boolean);
+
    vhdl_while_stmt *loop = new vhdl_while_stmt(test);
    container->add_stmt(loop);
 

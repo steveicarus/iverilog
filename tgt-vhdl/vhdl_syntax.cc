@@ -567,6 +567,11 @@ void vhdl_const_int::emit(std::ostream &of, int level) const
    of << value_;
 }
 
+void vhdl_const_bool::emit(std::ostream &of, int level) const
+{
+   of << (value_ ? "True" : "False");
+}
+
 void vhdl_const_time::emit(std::ostream &of, int level) const
 {
    of << value_;

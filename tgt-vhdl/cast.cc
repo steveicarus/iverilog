@@ -168,6 +168,8 @@ vhdl_expr *vhdl_const_bit::cast(const vhdl_type *to)
 {
    if (to->get_name() == VHDL_TYPE_INTEGER)
       return new vhdl_const_int(bit_ == '1' ? 1 : 0);
+   else if (to->get_name() == VHDL_TYPE_BOOLEAN)
+      return new vhdl_const_bool(bit_ == '1');
    else
       return vhdl_expr::cast(to);
 }

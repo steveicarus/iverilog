@@ -180,6 +180,15 @@ private:
    int64_t value_;
 };
 
+class vhdl_const_bool : public vhdl_expr {
+public:
+   vhdl_const_bool(bool value)
+      : vhdl_expr(vhdl_type::boolean(), true), value_(value) {}
+   void emit(std::ostream &of, int level) const;
+private:
+   bool value_;
+};
+
 class vhdl_expr_list : public vhdl_element {
 public:
    ~vhdl_expr_list();
