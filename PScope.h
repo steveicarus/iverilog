@@ -24,6 +24,7 @@
 # include  <map>
 
 class PEvent;
+class AProcess;
 class PProcess;
 class PWire;
 
@@ -50,6 +51,10 @@ class LexicalScope {
       map<perm_string,PWire*>wires;
       PWire* wires_find(perm_string name);
 
+	// Behaviors (processes) in this scope
+      list<PProcess*> behaviors;
+      list<AProcess*> analog_behaviors;
+
     private:
 };
 
@@ -73,9 +78,6 @@ class PScope : public LexicalScope {
 
 	// Named events in the scope.
       map<perm_string,PEvent*>events;
-
-	// Behaviors (processes) in this scope
-      list<PProcess*> behaviors;
 
     protected:
       void dump_wires_(ostream&out, unsigned indent) const;

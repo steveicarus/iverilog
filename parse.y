@@ -180,6 +180,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       PEventStatement*event_statement;
       Statement*statement;
       svector<Statement*>*statement_list;
+      AStatement*astatement;
 
       PTaskFuncArg function_type;
 
@@ -301,6 +302,8 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %type <event_statement> event_control
 %type <statement> statement statement_or_null
 %type <statement_list> statement_list
+
+%type <astatement> analog_statement
 
 %type <letter> spec_polarity
 %type <perm_strings>  specify_path_identifiers
@@ -2078,6 +2081,7 @@ module_item
       }
 
   | attribute_list_opt K_analog analog_statement
+      { pform_make_analog_behavior(@2, AProcess::PR_ALWAYS, $3); }
 
   /* The task declaration rule matches the task declaration
      header, then pushes the function scope. This causes the
@@ -3724,7 +3728,7 @@ statement_or_null
 
 analog_statement
   : branch_probe_expression K_CONTRIBUTE expression ';'
-      { yyerror(@1, "sorry: Analog contribution statements not supported."); }
+      { $$ = pform_contribution_statement(@2); }
   ;
 
   /* Task items are, other than the statement, task port items and
