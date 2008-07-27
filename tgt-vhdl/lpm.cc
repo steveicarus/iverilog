@@ -130,7 +130,9 @@ static vhdl_expr *rel_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t
       expr->add_expr(e);
    }
 
-   return expr;
+   // Need to make sure output is std_logic rather than Boolean
+   vhdl_type std_logic(VHDL_TYPE_STD_LOGIC);
+   return expr->cast(&std_logic);
 }
 
 static vhdl_expr *part_select_vp_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
