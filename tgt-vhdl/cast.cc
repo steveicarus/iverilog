@@ -70,7 +70,15 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
       }
    }
    else if (to->get_name() == VHDL_TYPE_INTEGER) {
-      vhdl_fcall *conv = new vhdl_fcall("To_Integer", new vhdl_type(*to));
+      vhdl_fcall *conv;
+      if (type_->get_name() == VHDL_TYPE_STD_LOGIC) {
+         require_support_function(SF_LOGIC_TO_INTEGER);
+         conv = new vhdl_fcall(support_function::function_name(SF_LOGIC_TO_INTEGER),
+                               vhdl_type::integer());
+      }
+      else
+         conv = new vhdl_fcall("To_Integer", new vhdl_type(*to));
+      
       conv->add_expr(this);
 
       return conv;

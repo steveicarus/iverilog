@@ -43,6 +43,7 @@ const char *support_function::function_name(support_function_t type)
    case SF_TERNARY_LOGIC:       return "Ternary_Logic";
    case SF_TERNARY_UNSIGNED:    return "Ternary_Unsigned";
    case SF_TERNARY_SIGNED:      return "Ternary_Signed";
+   case SF_LOGIC_TO_INTEGER:    return "Logic_To_Integer";
    default:
       assert(false);
    }
@@ -60,6 +61,8 @@ vhdl_type *support_function::function_type(support_function_t type)
    case SF_REDUCE_XOR:
    case SF_TERNARY_LOGIC:
       return vhdl_type::std_logic();
+   case SF_LOGIC_TO_INTEGER:
+      return vhdl_type::integer();
    default:
       assert(false);
    }
@@ -140,6 +143,12 @@ void support_function::emit(std::ostream &of, int level) const
       of << "(T : Boolean; X, Y : signed) return unsigned is"
          << nl_string(level);
       emit_ternary(of, level);
+      break;
+   case SF_LOGIC_TO_INTEGER:
+      of << "(X : std_logic) return integer is" << nl_string(level)
+         << "begin" << nl_string(indent(level))
+         << "if X = '1' then return 1; else return 0; end if;"
+         << nl_string(level);
       break;
    default:
       assert(false);
