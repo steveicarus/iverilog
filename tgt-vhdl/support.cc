@@ -33,28 +33,12 @@ void require_support_function(support_function_t f)
 
 const char *support_function::function_name(support_function_t type)
 {
-   switch (type) {
-   case SF_UNSIGNED_TO_BOOLEAN:
-      return "Unsigned_To_Boolean";
-   case SF_SIGNED_TO_BOOLEAN:
-      return "Signed_To_Boolean";
-   case SF_BOOLEAN_TO_LOGIC:
-      return "Boolean_To_Logic";
-   case SF_REDUCE_OR:
-      return "Reduce_OR";
-   case SF_REDUCE_AND:
-      return "Reduce_AND";
-   case SF_REDUCE_XOR:
-      return "Reduce_XOR";
-   case SF_TERNARY_LOGIC:
-      return "Ternary_Logic";
-   case SF_TERNARY_UNSIGNED:
-      return "Ternary_Unsigned";
-   case SF_TERNARY_SIGNED:
-      return "Ternary_Signed";
-   default:
-      assert(false);
-   }
+   const char *names[] =
+      { "Unsigned_To_Boolean", "Signed_To_Boolean", "Boolean_To_Logic",
+        "Reduce_OR", "Reduce_AND", "Reduce_XOR", "Ternary_Logic",
+        "Ternary_Unsigned", "Ternary_Signed", NULL };
+
+   return names[type];
 }
 
 vhdl_type *support_function::function_type(support_function_t type)
