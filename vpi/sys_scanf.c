@@ -379,12 +379,14 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			match_fail = 1;
 
 			ch = byte_getc(src);
-			while (isdigit(ch)) {
+			while (isdigit(ch) || ch == '_' || (value == 0 && ch == '-')) {
 			      match_fail = 0;
-			      tmp[value++] = ch;
-			      tmp = realloc(tmp, value+1);
-			      tmp[value] = 0;
-			      ch = byte_getc(src);
+			      if (ch != '_') {
+			            tmp[value++] = ch;
+			            tmp = realloc(tmp, value+1);
+			            tmp[value] = 0;
+			            ch = byte_getc(src);
+			      }
 			}
 			byte_ungetc(src, ch);
 
