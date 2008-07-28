@@ -70,9 +70,8 @@ vhdl_type *support_function::function_type(support_function_t type)
 
 void support_function::emit_ternary(std::ostream &of, int level) const
 {
-   of << "begin" << nl_string(indent(level))
-      << "if T then return X; else return Y; end if;"
-      << nl_string(level);
+   of << nl_string(level) << "begin" << nl_string(indent(level))
+      << "if T then return X; else return Y; end if;";
 }
 
 void support_function::emit(std::ostream &of, int level) const
@@ -83,12 +82,12 @@ void support_function::emit(std::ostream &of, int level) const
    case SF_UNSIGNED_TO_BOOLEAN:
       of << "(X : unsigned) return Boolean is" << nl_string(level)
          << "begin" << nl_string(indent(level))
-         << "return X /= To_Unsigned(0, X'Length);" << nl_string(level);
+         << "return X /= To_Unsigned(0, X'Length);";
       break;
    case SF_SIGNED_TO_BOOLEAN:
       of << "(X : signed) return Boolean is" << nl_string(level)
          << "begin" << nl_string(indent(level))
-         << "return X /= To_Signed(0, X'Length);" << nl_string(level);
+         << "return X /= To_Signed(0, X'Length);";
       break;
    case SF_BOOLEAN_TO_LOGIC:
       of << "(B : Boolean) return std_logic is" << nl_string(level)
@@ -97,7 +96,7 @@ void support_function::emit(std::ostream &of, int level) const
          << "return '1';" << nl_string(indent(level))
          << "else" << nl_string(indent(indent(level)))
          << "return '0';" << nl_string(indent(level))
-         << "end if;" << nl_string(level);
+         << "end if;";
       break;
    case SF_REDUCE_OR:
       of << "(X : std_logic_vector) return std_logic is" << nl_string(level)
@@ -107,7 +106,7 @@ void support_function::emit(std::ostream &of, int level) const
          << "return '1';" << nl_string(indent(indent(level)))
          << "end if;" << nl_string(indent(level))
          << "end loop;" << nl_string(indent(level))
-         << "return '0';" << nl_string(level);
+         << "return '0';";
       break;
    case SF_REDUCE_AND:
       of << "(X : std_logic_vector) return std_logic is" << nl_string(level)
@@ -117,7 +116,7 @@ void support_function::emit(std::ostream &of, int level) const
          << "return '0';" << nl_string(indent(indent(level)))
          << "end if;" << nl_string(indent(level))
          << "end loop;" << nl_string(indent(level))
-         << "return '1';" << nl_string(level);
+         << "return '1';";
       break;
    case SF_REDUCE_XOR:
       of << "(X : std_logic_vector) return std_logic is"
@@ -127,32 +126,28 @@ void support_function::emit(std::ostream &of, int level) const
          << "for I in X'Range loop" << nl_string(indent(indent(level)))
          << "R := X(I) xor R;" << nl_string(indent(level))
          << "end loop;" << nl_string(indent(level))
-         << "return R;" << nl_string(level);
+         << "return R;";
       break;
    case SF_TERNARY_LOGIC:
-      of << "(T : Boolean; X, Y : std_logic) return std_logic is"
-         << nl_string(level);
+      of << "(T : Boolean; X, Y : std_logic) return std_logic is";
       emit_ternary(of, level);
       break;
    case SF_TERNARY_SIGNED:
-      of << "(T : Boolean; X, Y : signed) return signed is"
-         << nl_string(level);
+      of << "(T : Boolean; X, Y : signed) return signed is";
       emit_ternary(of, level);
       break;
    case SF_TERNARY_UNSIGNED:
-      of << "(T : Boolean; X, Y : signed) return unsigned is"
-         << nl_string(level);
+      of << "(T : Boolean; X, Y : signed) return unsigned is";
       emit_ternary(of, level);
       break;
    case SF_LOGIC_TO_INTEGER:
       of << "(X : std_logic) return integer is" << nl_string(level)
          << "begin" << nl_string(indent(level))
-         << "if X = '1' then return 1; else return 0; end if;"
-         << nl_string(level);
+         << "if X = '1' then return 1; else return 0; end if;";
       break;
    default:
       assert(false);
    }
    
-   of << "end function;" << nl_string(level);
+   of << nl_string(level) << "end function;" << nl_string(level);
 }
