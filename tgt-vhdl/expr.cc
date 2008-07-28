@@ -419,9 +419,35 @@ static vhdl_expr *translate_ufunc(ivl_expr_t e)
 
 static vhdl_expr *translate_ternary(ivl_expr_t e)
 {
-   error("Ternary expression only supported as RHS of assignment");
+   support_function_t sf;
+   int width = ivl_expr_width(e);
+   bool issigned = ivl_expr_signed(e) != 0;
+   if (width == 1)
+      sf = SF_TERNARY_LOGIC;
+   else if (issigned)
+      sf = SF_TERNARY_SIGNED;
+   else
+      sf = SF_TERNARY_UNSIGNED;
    
-   return NULL;
+   require_support_function(sf);
+
+   vhdl_expr *test = translate_expr(ivl_expr_oper1(e));
+   vhdl_expr *true_part = translate_expr(ivl_expr_oper2(e));
+   vhdl_expr *false_part = translate_expr(ivl_expr_oper3(e));
+   if (!test || !true_part || !false_part)
+      return NULL;
+
+   vhdl_type boolean(VHDL_TYPE_BOOLEAN);
+   test = test->cast(&boolean);
+   
+   vhdl_fcall *fcall =
+      new vhdl_fcall(support_function::function_name(sf),
+                     vhdl_type::type_for(width, issigned));
+   fcall->add_expr(test);
+   fcall->add_expr(true_part);
+   fcall->add_expr(false_part);
+   
+   return fcall;
 }
 
 static vhdl_expr *translate_concat(ivl_expr_t e)

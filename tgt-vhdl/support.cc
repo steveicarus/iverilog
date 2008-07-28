@@ -46,6 +46,12 @@ const char *support_function::function_name(support_function_t type)
       return "Reduce_AND";
    case SF_REDUCE_XOR:
       return "Reduce_XOR";
+   case SF_TERNARY_LOGIC:
+      return "Ternary_Logic";
+   case SF_TERNARY_UNSIGNED:
+      return "Ternary_Unsigned";
+   case SF_TERNARY_SIGNED:
+      return "Ternary_Signed";
    default:
       assert(false);
    }
@@ -61,10 +67,18 @@ vhdl_type *support_function::function_type(support_function_t type)
    case SF_REDUCE_OR:
    case SF_REDUCE_AND:
    case SF_REDUCE_XOR:
+   case SF_TERNARY_LOGIC:
       return vhdl_type::std_logic();
    default:
       assert(false);
    }
+}
+
+void support_function::emit_ternary(std::ostream &of, int level) const
+{
+   of << "begin" << nl_string(indent(level))
+      << "if T then return X; else return Y; end if;"
+      << nl_string(level);
 }
 
 void support_function::emit(std::ostream &of, int level) const
@@ -80,7 +94,7 @@ void support_function::emit(std::ostream &of, int level) const
    case SF_SIGNED_TO_BOOLEAN:
       of << "(X : signed) return Boolean is" << nl_string(level)
          << "begin" << nl_string(indent(level))
-         << "return X /= To_Signed(0, X'Length);" << nl_string (level);
+         << "return X /= To_Signed(0, X'Length);" << nl_string(level);
       break;
    case SF_BOOLEAN_TO_LOGIC:
       of << "(B : Boolean) return std_logic is" << nl_string(level)
@@ -120,6 +134,21 @@ void support_function::emit(std::ostream &of, int level) const
          << "R := X(I) xor R;" << nl_string(indent(level))
          << "end loop;" << nl_string(indent(level))
          << "return R;" << nl_string(level);
+      break;
+   case SF_TERNARY_LOGIC:
+      of << "(T : Boolean; X, Y : std_logic) return std_logic is"
+         << nl_string(level);
+      emit_ternary(of, level);
+      break;
+   case SF_TERNARY_SIGNED:
+      of << "(T : Boolean; X, Y : signed) return signed is"
+         << nl_string(level);
+      emit_ternary(of, level);
+      break;
+   case SF_TERNARY_UNSIGNED:
+      of << "(T : Boolean; X, Y : signed) return unsigned is"
+         << nl_string(level);
+      emit_ternary(of, level);
       break;
    default:
       assert(false);

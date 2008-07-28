@@ -24,12 +24,15 @@
 #include "vhdl_syntax.hh"
 
 enum support_function_t {
-   SF_UNSIGNED_TO_BOOLEAN,
+   SF_UNSIGNED_TO_BOOLEAN = 0,
    SF_SIGNED_TO_BOOLEAN,
    SF_BOOLEAN_TO_LOGIC,
    SF_REDUCE_OR,
    SF_REDUCE_AND,
    SF_REDUCE_XOR,
+   SF_TERNARY_LOGIC,
+   SF_TERNARY_UNSIGNED,
+   SF_TERNARY_SIGNED,
 };
 
 class support_function : public vhdl_function {
@@ -42,6 +45,8 @@ public:
    static vhdl_type *function_type(support_function_t type);
 
 private:
+   void emit_ternary(std::ostream &of, int level) const;
+   
    support_function_t type_;
 };
 
