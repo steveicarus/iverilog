@@ -233,6 +233,7 @@ void vpip_dec_str_to_vec4(vvp_vector4_t&vec,
       for (unsigned idx = 0 ;  idx < slen ;  idx += 1) {
 	    if (idx == slen-1 && buf[slen-idx-1] == '-') {
 	          is_negative = 1;
+		  slen--;
 		  continue;
 	    }
 	    if (isdigit(buf[slen-idx-1]))
