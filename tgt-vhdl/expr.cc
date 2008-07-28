@@ -455,7 +455,11 @@ static vhdl_expr *translate_concat(ivl_expr_t e)
    vhdl_type *rtype = expr_to_vhdl_type(e);
    vhdl_binop_expr *concat = new vhdl_binop_expr(VHDL_BINOP_CONCAT, rtype);
 
-   return translate_parms<vhdl_binop_expr>(concat, e);
+   int nrepeat = ivl_expr_repeat(e);
+   while (nrepeat--)
+      translate_parms<vhdl_binop_expr>(concat, e);
+
+   return concat;
 }
 
 vhdl_expr *translate_sfunc_time(ivl_expr_t e)
