@@ -202,9 +202,20 @@ void draw_nexus(ivl_nexus_t nexus)
       ivl_lpm_t lpm;
       ivl_net_const_t con;
       if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
-         /*
+         ivl_scope_t log_scope = ivl_logic_scope(log);
+         vhdl_scope *vhdl_scope =
+            find_entity(ivl_scope_tname(log_scope))->get_arch()->get_scope();
+
+         cout << "logic " << ivl_logic_basename(log) << endl;
+         
          ivl_signal_t linked;
-         if ((linked = visible_nexus_signal(*/
+         if ((linked = visible_nexus_signal(priv, vhdl_scope))) {
+            cout << "...linked to signal " << ivl_signal_name(linked) << endl;
+         }
+         else {
+            cout << "...has no signal!" << endl;
+            assert(false);
+         }
       }
       else if ((lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
          assert(false);
