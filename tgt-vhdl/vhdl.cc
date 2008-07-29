@@ -158,7 +158,7 @@ extern "C" int target_design(ivl_design_t des)
    for (unsigned int i = 0; i < nroots; i++)
       draw_scope(roots[i], NULL);
 
-   ivl_design_process(des, draw_process, NULL);
+   //ivl_design_process(des, draw_process, NULL);
 
    // Write the generated elements to the output file
    // only if there are no errors

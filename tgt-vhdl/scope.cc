@@ -409,50 +409,6 @@ static void declare_lpm(vhdl_arch *arch, ivl_scope_t scope)
 }
 
 /*
- * Create a VHDL entity for scopes of type IVL_SCT_MODULE.
- */
-static vhdl_entity *create_entity_for(ivl_scope_t scope)
-{
-   assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
-
-   // The type name will become the entity name
-   const char *tname = ivl_scope_tname(scope);
-
-   // Remember the scope name this entity was derived from so
-   // the correct processes can be added later
-   const char *derived_from = ivl_scope_name(scope);
-   
-   // Verilog does not have the entity/architecture distinction
-   // so we always create a pair and associate the architecture
-   // with the entity for convenience (this also means that we
-   // retain a 1-to-1 mapping of scope to VHDL element)
-   vhdl_arch *arch = new vhdl_arch(tname, "FromVerilog");
-   vhdl_entity *ent = new vhdl_entity(tname, derived_from, arch);
-
-   set_active_entity(ent);
-   
-   // Locate all the signals in this module and add them to
-   // the architecture
-   declare_signals(ent, scope);
-
-   // Similarly, add all the primitive logic gates
-   declare_logic(arch, scope);
-
-   // ...and all the LPM devices
-   declare_lpm(arch, scope);
-   
-   // Build a comment to add to the entity/architecture
-   std::ostringstream ss;
-   ss << "Generated from Verilog module " << ivl_scope_tname(scope);
-   
-   arch->set_comment(ss.str());
-   ent->set_comment(ss.str());
-   
-   remember_entity(ent);
-   return ent;
-}
-
-/*
  * Map two signals together in an instantiation.
  * The signals are joined by a nexus.
  */
@@ -569,6 +525,7 @@ static void port_map(ivl_scope_t scope, vhdl_entity *parent,
 /*
  * Instantiate an entity in the hierarchy, and possibly create
  * that entity if it hasn't been encountered yet.
+ * DEPRECATE
  */
 static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
 {
@@ -576,8 +533,8 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
 
    // Maybe we need to create this entity first?
    vhdl_entity *ent = find_entity(ivl_scope_tname(scope)); 
-   if (NULL == ent)
-      ent = create_entity_for(scope);
+   /*   if (NULL == ent)
+        ent = create_entity_for(scope);*/
    assert(ent);
    set_active_entity(ent);
 
@@ -633,7 +590,7 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
 /*
  * Create a VHDL function from a Verilog function definition.
  */
-int draw_function(ivl_scope_t scope, ivl_scope_t parent)
+static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
 {
    assert(ivl_scope_type(scope) == IVL_SCT_FUNCTION);
 
@@ -688,31 +645,106 @@ int draw_function(ivl_scope_t scope, ivl_scope_t parent)
    return 0;
 }
 
-int draw_scope(ivl_scope_t scope, void *_parent)
+/*
+ * Create an empty VHDL entity for a Verilog module.
+ */
+static void create_skeleton_entity_for(ivl_scope_t scope)
 {
-   ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
+   assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
+
+   // The type name will become the entity name
+   const char *tname = ivl_scope_tname(scope);
+
+   // Remember the scope name this entity was derived from so
+   // the correct processes can be added later
+   const char *derived_from = ivl_scope_name(scope);
+   
+   // Verilog does not have the entity/architecture distinction
+   // so we always create a pair and associate the architecture
+   // with the entity for convenience (this also means that we
+   // retain a 1-to-1 mapping of scope to VHDL element)
+   vhdl_arch *arch = new vhdl_arch(tname, "FromVerilog");
+   vhdl_entity *ent = new vhdl_entity(tname, derived_from, arch);
+
+   // Build a comment to add to the entity/architecture
+   std::ostringstream ss;
+   ss << "Generated from Verilog module " << ivl_scope_tname(scope);
+   
+   arch->set_comment(ss.str());
+   ent->set_comment(ss.str());
+   
+   remember_entity(ent);
+}
+
+/*
+ * A first pass through the hierarchy: create VHDL entities for
+ * each unique Verilog module type.
+ */
+static int draw_skeleton_scope(ivl_scope_t scope, void *_parent)
+{
+   //ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
    
    ivl_scope_type_t type = ivl_scope_type(scope);
-   int rc = 0;
    switch (type) {
    case IVL_SCT_MODULE:
-      rc = draw_module(scope, parent);
+      // Create this entity if it doesn't already exist
+      if (find_entity(ivl_scope_tname(scope)) == NULL) {
+         create_skeleton_entity_for(scope);
+         cout << "Created skeleton entity for " << ivl_scope_tname(scope) << endl;
+      }
       break;
    case IVL_SCT_FUNCTION:
-      rc = draw_function(scope, parent);
-      break;
    default:
       error("No VHDL conversion for %s (at %s)",
             ivl_scope_tname(scope),
             ivl_scope_name(scope));
       break;
    }
-   if (rc != 0)
-      return rc;
    
-   rc = ivl_scope_children(scope, draw_scope, scope);
+   return ivl_scope_children(scope, draw_skeleton_scope, scope);
+}
+
+static int draw_all_signals(ivl_scope_t scope, void *_parent)
+{
+   if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
+      vhdl_entity *ent = find_entity(ivl_scope_tname(scope));
+      assert(ent);
+
+      if (ent->get_derived_from() == ivl_scope_name(scope))
+         declare_signals(ent, scope);
+   }
+
+   return ivl_scope_children(scope, draw_all_signals, scope);
+}
+
+static int draw_all_logic_and_lpm(ivl_scope_t scope, void *_parent)
+{
+   if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
+      vhdl_entity *ent = find_entity(ivl_scope_tname(scope));
+      assert(ent);
+
+      if (ent->get_derived_from() == ivl_scope_name(scope)) {
+         declare_logic(ent->get_arch(), scope);
+         declare_lpm(ent->get_arch(), scope);
+      }
+   }   
+
+   return ivl_scope_children(scope, draw_all_logic_and_lpm, scope);
+}
+
+int draw_scope(ivl_scope_t scope, void *_parent)
+{
+   int rc = draw_skeleton_scope(scope, _parent);
    if (rc != 0)
       return rc;
+
+   rc = draw_all_signals(scope, _parent);
+   if (rc != 0)
+      return rc;
+
+   rc = draw_all_logic_and_lpm(scope, _parent);
+   if (rc != 0)
+      return rc;      
    
    return 0;
 }
