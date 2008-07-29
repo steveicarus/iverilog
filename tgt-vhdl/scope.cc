@@ -136,6 +136,7 @@ struct nexus_private_t {
    };
     
    list<scope_signal_map_t> signals;
+   vhdl_expr *const_driver;
 };
 
 /*
@@ -168,6 +169,7 @@ static ivl_signal_t visible_nexus_signal(nexus_private_t *priv, vhdl_scope *scop
 void draw_nexus(ivl_nexus_t nexus)
 {
    nexus_private_t *priv = new nexus_private_t;
+   priv->const_driver = NULL;
    
    int nptrs = ivl_nexus_ptrs(nexus);
 
@@ -234,32 +236,13 @@ void draw_nexus(ivl_nexus_t nexus)
       }
       else if ((con = ivl_nexus_ptr_con(nexus_ptr))) {
          cout << "CONSTANT" << endl;
-         
-         list<nexus_private_t::scope_signal_map_t>::iterator it;
-         for (it = priv->signals.begin(); it != priv->signals.end(); ++it) {
-            cout << "...linked to signal " << ivl_signal_name((*it).sig) << endl;
-            
-            // Make this the initial value of the signal
-            const string &renamed = get_renamed_signal((*it).sig);
-            vhdl_decl *decl =
-               find_scope_for_signal((*it).sig)->get_decl(renamed);
-            assert(decl);
-            
-            if (!decl->has_initial()) {
-               if (ivl_const_width(con) == 1)
-                  decl->set_initial
-                     (new vhdl_const_bit(ivl_const_bits(con)[0]));
-               else
-                  decl->set_initial
-                     (new vhdl_const_bits(ivl_const_bits(con),
-                                          ivl_const_width(con),
-                                          ivl_const_signed(con) != 0));
-            }
-            else {
-               error("signal %s has two constant drivers!?", renamed.c_str());
-               assert(false);
-            }        
-         }
+
+         if (ivl_const_width(con) == 1)
+            priv->const_driver = new vhdl_const_bit(ivl_const_bits(con)[0]);
+         else
+            priv->const_driver =
+               new vhdl_const_bits(ivl_const_bits(con), ivl_const_width(con),
+                                   ivl_const_signed(con) != 0);
       }
    }
    
@@ -791,6 +774,56 @@ static int draw_all_signals(ivl_scope_t scope, void *_parent)
    return ivl_scope_children(scope, draw_all_signals, scope);
 }
 
+/*
+ * Make concurrent assignments for constants in nets. This works
+ * bottom-up so that the driver is in the lowest instance it can.
+ * This also has the side effect of generating all the necessary
+ * nexus code.
+ */
+static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
+{
+   ivl_scope_children(scope, draw_constant_drivers, scope);
+   
+   if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
+      vhdl_entity *ent = find_entity(ivl_scope_tname(scope));
+      assert(ent);
+
+      if (ent->get_derived_from() == ivl_scope_name(scope)) {
+         int nsigs = ivl_scope_sigs(scope);
+         for (int i = 0; i < nsigs; i++) {
+            ivl_signal_t sig = ivl_scope_sig(scope, i);
+
+            for (unsigned i = ivl_signal_array_base(sig);
+                 i < ivl_signal_array_count(sig);
+                 i++) {
+               // Make sure the nexus code is generated
+               ivl_nexus_t nex = ivl_signal_nex(sig, i);
+               seen_nexus(nex);
+
+               assert(i == 0);   // TODO: Make work for more words
+               nexus_private_t *priv =
+                  static_cast<nexus_private_t*>(ivl_nexus_get_private(nex));
+               assert(priv);
+
+               if (priv->const_driver) {
+                  cout << "NEEDS CONST DRIVER!" << endl;
+                  cout << "(in scope " << ivl_scope_name(scope) << endl;
+
+                  vhdl_var_ref *ref =
+                     nexus_to_var_ref(ent->get_arch()->get_scope(), nex);
+                  
+                  ent->get_arch()->add_stmt
+                     (new vhdl_cassign_stmt(ref, priv->const_driver));                  
+                  priv->const_driver = NULL;
+               }
+            }
+         }           
+      }
+   }
+
+   return 0;
+}
+
 static int draw_all_logic_and_lpm(ivl_scope_t scope, void *_parent)
 {
    if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
@@ -874,6 +907,10 @@ int draw_scope(ivl_scope_t scope, void *_parent)
       return rc;      
 
    rc = draw_hierarchy(scope, _parent);
+   if (rc != 0)
+      return rc;
+
+   rc = draw_constant_drivers(scope, _parent);
    if (rc != 0)
       return rc;
    
