@@ -78,7 +78,6 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
 int draw_process(ivl_process_t proc, void *cd)
 {
    ivl_scope_t scope = ivl_process_scope(proc);
-   const char *scope_name = ivl_scope_name(scope);
 
    // A process should occur in a module scope, therefore it
    // should have already been assigned a VHDL entity
