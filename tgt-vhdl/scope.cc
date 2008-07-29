@@ -59,7 +59,7 @@ enum vhdl_nexus_obj_t {
  * If a vhdl_var_ref is returned, the reference is guaranteed to be
  * to a signal in arch_scope or its parent (the entity's ports).
  */
-static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
+/*static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
                                 int allowed = NEXUS_TO_ANY)
 {
    int nptrs = ivl_nexus_ptrs(nexus);
@@ -112,16 +112,131 @@ static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
    }
 
    return NULL;
-}
+   }*/
 
 /*
  * Guarantees the result will never be NULL.
  */
-vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
+ /*vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
 {
    return dynamic_cast<vhdl_var_ref*>
       (nexus_to_expr(arch_scope, nexus, NEXUS_TO_VAR_REF));
+      }*/
+
+/*
+ * This structure is stored in the private part of each nexus.
+ * It stores a signal for each VHDL scope which is connected to
+ * that nexus. It's stored as a list so we can use contained_within
+ * to allow several nested scopes to reference the same signal.
+ */
+struct nexus_private_t {
+   struct scope_signal_map_t {
+      vhdl_scope *scope;
+      ivl_signal_t sig;
+   };
+    
+   list<scope_signal_map_t> signals;
+};
+
+/*
+ * Remember that sig is the representative of this nexus in scope. 
+ */
+static void link_scope_to_nexus_signal(nexus_private_t *priv, vhdl_scope *scope,
+                                       ivl_signal_t sig)
+{  
+   nexus_private_t::scope_signal_map_t sigmap = { scope, sig };
+   priv->signals.push_back(sigmap);
 }
+
+/*
+ * Find a signal that is connected to this nexus that is visible
+ * in this scope.
+ */
+static ivl_signal_t visible_nexus_signal(nexus_private_t *priv, vhdl_scope *scope)
+{
+   list<nexus_private_t::scope_signal_map_t>::iterator it;
+   for (it = priv->signals.begin(); it != priv->signals.end(); ++it) {
+      if (scope->contained_within((*it).scope))
+         return (*it).sig;
+   }
+   return NULL;
+}
+
+/*
+ * Generates VHDL code to fully represent a nexus.
+ */
+void draw_nexus(ivl_nexus_t nexus)
+{
+   nexus_private_t *priv = new nexus_private_t;
+   
+   int nptrs = ivl_nexus_ptrs(nexus);
+
+   // First pass through connect all the signals up
+   for (int i = 0; i < nptrs; i++) {
+      ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
+      
+      ivl_signal_t sig;
+      if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
+         cout << "signal " << ivl_signal_basename(sig) << endl;
+         
+         vhdl_scope *scope = find_scope_for_signal(sig);
+
+         ivl_signal_t linked;
+         if ((linked = visible_nexus_signal(priv, scope))) {
+            cout << "...should be linked to " << ivl_signal_name(linked) << endl;
+            assert(false);
+         }
+         else {
+            cout << "...represents this nexus in scope " << hex << scope << endl;
+            link_scope_to_nexus_signal(priv, scope, sig);
+         }
+      }
+   }
+
+   // Second pass through make sure logic/LPMs have signal
+   // inputs and outputs
+   for (int i = 0; i < nptrs; i++) {
+      ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
+      
+      ivl_net_logic_t log;
+      ivl_lpm_t lpm;
+      ivl_net_const_t con;
+      if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
+         /*
+         ivl_signal_t linked;
+         if ((linked = visible_nexus_signal(*/
+      }
+      else if ((lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
+         assert(false);
+      }
+   }
+
+   // Save the private data in the nexus
+   ivl_nexus_set_private(nexus, priv);
+}
+ 
+/*
+ * Translate a nexus to a variable reference. Given a nexus and a
+ * scope, this function returns a reference to a signal that is
+ * connected to the nexus and within the given scope. This signal
+ * might not exist in the original Verilog source (even as a
+ * compiler-generated temporary). If this nexus hasn't been
+ * encountered before, the necessary code to connect up the nexus
+ * will be generated.
+ */
+ vhdl_var_ref *nexus_to_var_ref(vhdl_scope *scope, ivl_nexus_t nexus)
+ {
+    cout << "nexus_to_var_ref " << ivl_nexus_name(nexus) << endl;
+
+    if (ivl_nexus_get_private(nexus) == NULL) {
+       cout << "first time we've seen this nexus" << endl;
+
+       draw_nexus(nexus);
+    }
+    
+    assert(false);
+ }
+ 
 
 /*
  * Convert the inputs of a logic gate to a binary expression.
@@ -137,7 +252,7 @@ static vhdl_expr *inputs_to_expr(vhdl_scope *scope, vhdl_binop_t op,
    int npins = ivl_logic_pins(log);
    for (int i = 1; i < npins; i++) {
       ivl_nexus_t input = ivl_logic_pin(log, i);
-      gate->add_expr(nexus_to_expr(scope, input));
+      gate->add_expr(nexus_to_var_ref(scope, input));
    }
 
    return gate;
@@ -152,7 +267,7 @@ static vhdl_expr *input_to_expr(vhdl_scope *scope, vhdl_unaryop_t op,
    ivl_nexus_t input = ivl_logic_pin(log, 1);
    assert(input);
 
-   vhdl_expr *operand = nexus_to_expr(scope, input);
+   vhdl_expr *operand = nexus_to_var_ref(scope, input);
    return new vhdl_unaryop_expr(op, operand, vhdl_type::std_logic()); 
 }
 
@@ -162,10 +277,10 @@ static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
    vhdl_var_ref *lhs = nexus_to_var_ref(arch->get_scope(), output);
    assert(lhs);
    
-   vhdl_expr *val = nexus_to_expr(arch->get_scope(), ivl_logic_pin(log, 1));
+   vhdl_expr *val = nexus_to_var_ref(arch->get_scope(), ivl_logic_pin(log, 1));
    assert(val);
 
-   vhdl_expr *sel = nexus_to_expr(arch->get_scope(), ivl_logic_pin(log, 2));
+   vhdl_expr *sel = nexus_to_var_ref(arch->get_scope(), ivl_logic_pin(log, 2));
    assert(val);
 
    vhdl_expr *on = new vhdl_const_bit(if0 ? '0' : '1');
@@ -205,7 +320,7 @@ static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log)
       return inputs_to_expr(scope, VHDL_BINOP_XOR, log);
    case IVL_LO_BUF:
    case IVL_LO_BUFZ:
-      return nexus_to_expr(scope, ivl_logic_pin(log, 1));
+      return nexus_to_var_ref(scope, ivl_logic_pin(log, 1));
    case IVL_LO_PULLUP:
       return new vhdl_const_bit('1');
    case IVL_LO_PULLDOWN:
@@ -238,10 +353,7 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
          {          
             // The output is always pin zero
             ivl_nexus_t output = ivl_logic_pin(log, 0);
-            vhdl_var_ref *lhs =
-               dynamic_cast<vhdl_var_ref*>(nexus_to_expr(arch->get_scope(), output));
-            if (NULL == lhs)
-               continue;  // Not suitable for continuous assignment
+            vhdl_var_ref *lhs = nexus_to_var_ref(arch->get_scope(), output);
 
             vhdl_expr *rhs = translate_logic(arch->get_scope(), log);
             vhdl_cassign_stmt *ass = new vhdl_cassign_stmt(lhs, rhs);
@@ -331,11 +443,10 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
             // A local signal can have a constant initializer in VHDL
             // This may be found in the signal's nexus
             // TODO: Make this work for multiple words
-            vhdl_expr *init =
-               nexus_to_expr(ent->get_scope(), ivl_signal_nex(sig, 0),
-                             NEXUS_TO_CONST);
+            /*vhdl_expr *init =
+               nexus_to_var_ref(ent->get_scope(), ivl_signal_nex(sig, 0));
             if (init != NULL)
-               decl->set_initial(init);
+            decl->set_initial(init);*/
             
             ent->get_arch()->get_scope()->add_decl(decl);
          }
@@ -352,13 +463,13 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
             // Check for constant values
             // For outputs these must be continuous assigns of
             // the constant to the port
-            vhdl_expr *init =
+            /*vhdl_expr *init =
                nexus_to_expr(ent->get_scope(), ivl_signal_nex(sig, 0), 
                              NEXUS_TO_CONST);
             if (init != NULL) {
                vhdl_var_ref *ref = new vhdl_var_ref(name.c_str(), NULL);
                ent->get_arch()->add_stmt(new vhdl_cassign_stmt(ref, init));
-            }
+               }*/
             
             ent->get_scope()->add_decl(decl);
          }
@@ -418,8 +529,8 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    // TODO: Work for multiple words
    ivl_nexus_t nexus = ivl_signal_nex(to, 0);
 
-   vhdl_expr *to_e = nexus_to_expr(parent->get_arch()->get_scope(),
-                                   nexus, NEXUS_TO_ANY);
+   vhdl_expr *to_e = nexus_to_var_ref(parent->get_arch()->get_scope(),
+                                      nexus);
    assert(to_e);
 
    // The expressions in a VHDL port map must be 'globally static'

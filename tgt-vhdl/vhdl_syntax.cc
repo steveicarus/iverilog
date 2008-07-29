@@ -64,6 +64,16 @@ bool vhdl_scope::have_declared(const std::string &name) const
    return get_decl(name) != NULL;
 }
 
+bool vhdl_scope::contained_within(const vhdl_scope *other) const
+{
+   if (this == other)
+      return true;
+   else if (NULL == parent_)
+      return false;
+   else
+      return parent_->contained_within(other);
+}
+
 vhdl_scope *vhdl_scope::get_parent() const
 {
    assert(parent_);

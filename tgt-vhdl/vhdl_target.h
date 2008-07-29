@@ -35,9 +35,9 @@ void set_active_entity(vhdl_entity *ent);
 vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus);
 
 bool seen_signal_before(ivl_signal_t sig);
-void remember_signal(ivl_signal_t sig, const vhdl_scope *scope);
+void remember_signal(ivl_signal_t sig, vhdl_scope *scope);
 void rename_signal(ivl_signal_t sig, const string &renamed);
-const vhdl_scope *find_scope_for_signal(ivl_signal_t sig);
+vhdl_scope *find_scope_for_signal(ivl_signal_t sig);
 const string &get_renamed_signal(ivl_signal_t sig);
 ivl_signal_t find_signal_named(const string &name, const vhdl_scope *scope);
 
