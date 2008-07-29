@@ -45,12 +45,14 @@ void set_active_entity(vhdl_entity *ent)
  * a VHDL scope. If that nexus portion does not contain a signal,
  * then `tmpname' gives the name of the temporary that will be
  * used when this nexus is used in `scope' (e.g. for LPMs that
- * appear in instantiations).
+ * appear in instantiations). The list `connect' lists all the
+ * signals that should be joined together to re-create the net.
  */
 struct scope_nexus_t {
    vhdl_scope *scope;
-   ivl_signal_t sig;    // A real signal
-   string tmpname;      // A new temporary signal
+   ivl_signal_t sig;            // A real signal
+   string tmpname;              // A new temporary signal
+   list<ivl_signal_t> connect;  // Other signals to wire together
 };
    
 /*
@@ -66,26 +68,6 @@ struct nexus_private_t {
 };
 
 /*
- * Remember that sig is the representative of this nexus in scope. 
- */
-static void link_scope_to_nexus_signal(nexus_private_t *priv, vhdl_scope *scope,
-                                       ivl_signal_t sig)
-{  
-   scope_nexus_t sigmap = { scope, sig, "" };
-   priv->signals.push_back(sigmap);
-}
-
-/*
- * Make a temporary the representative of this nexus in scope.
- */
-static void link_scope_to_nexus_tmp(nexus_private_t *priv, vhdl_scope *scope,
-                                    const string &name)
-{
-   scope_nexus_t sigmap = { scope, NULL, name };
-   priv->signals.push_back(sigmap);
-}
-
-/*
  * Returns the scope_nexus_t of this nexus visible within scope.
  */
 static scope_nexus_t *visible_nexus(nexus_private_t *priv, vhdl_scope *scope)
@@ -96,6 +78,38 @@ static scope_nexus_t *visible_nexus(nexus_private_t *priv, vhdl_scope *scope)
          return &*it;
    }
    return NULL;
+}
+
+/*
+ * Remember that a signal in `scope' is part of this nexus. The
+ * first signal passed to this function for a scope will be used
+ * as the canonical representation of this nexus when we need to
+ * convert it to a variable reference (e.g. in a LPM input/output).
+ */
+static void link_scope_to_nexus_signal(nexus_private_t *priv, vhdl_scope *scope,
+                                       ivl_signal_t sig)
+{
+   scope_nexus_t *sn;
+   if ((sn = visible_nexus(priv, scope))) {
+      assert(sn->tmpname == "");
+
+      cout << "need to tie up " << get_renamed_signal(sig) << endl;
+      sn->connect.push_back(sig);
+   }
+   else {
+      scope_nexus_t new_sn = { scope, sig, "" };
+      priv->signals.push_back(new_sn);
+   }
+}
+
+/*
+ * Make a temporary the representative of this nexus in scope.
+ */
+static void link_scope_to_nexus_tmp(nexus_private_t *priv, vhdl_scope *scope,
+                                    const string &name)
+{
+   scope_nexus_t new_sn = { scope, NULL, name };
+   priv->signals.push_back(new_sn);
 }
 
 /*
@@ -128,16 +142,7 @@ void draw_nexus(ivl_nexus_t nexus)
          cout << "signal " << ivl_signal_basename(sig) << endl;
          
          vhdl_scope *scope = find_scope_for_signal(sig);
-
-         if (visible_nexus(priv, scope)) {
-            cout << "...should be linked to "
-                 << visible_nexus_signal_name(priv, scope) << endl;
-            assert(false);
-         }
-         else {
-            cout << "...represents this nexus in scope " << hex << scope << endl;
-            link_scope_to_nexus_signal(priv, scope, sig);
-         }
+         link_scope_to_nexus_signal(priv, scope, sig);
       }
    }
 
@@ -637,7 +642,7 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
          vhdl_type::type_for(ivl_signal_width(sig),
                              ivl_signal_signed(sig) != 0);
       
-      std::string signame = make_safe_name(sig);
+      string signame(make_safe_name(sig));
 
       switch (ivl_signal_port(sig)) {
       case IVL_SIP_INPUT:
@@ -773,19 +778,32 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
                static_cast<nexus_private_t*>(ivl_nexus_get_private(nex));
             assert(priv);
 
+            vhdl_scope *arch_scope = ent->get_arch()->get_scope();
+
             if (priv->const_driver) {
                assert(i == 0);   // TODO: Make work for more words
                
                cout << "NEEDS CONST DRIVER!" << endl;
                cout << "(in scope " << ivl_scope_name(scope) << endl;
-               
-               vhdl_var_ref *ref =
-                  nexus_to_var_ref(ent->get_arch()->get_scope(), nex);
+
+               vhdl_var_ref *ref = nexus_to_var_ref(arch_scope, nex);
                
                ent->get_arch()->add_stmt
                   (new vhdl_cassign_stmt(ref, priv->const_driver));                  
                priv->const_driver = NULL;
             }
+
+            scope_nexus_t *sn = visible_nexus(priv, arch_scope);
+            for (list<ivl_signal_t>::const_iterator it = sn->connect.begin();
+                 it != sn->connect.end();
+                 ++it) {
+               vhdl_var_ref *rref =
+                  new vhdl_var_ref(get_renamed_signal(sn->sig).c_str(), NULL);
+               vhdl_var_ref *lref =
+                  new vhdl_var_ref(get_renamed_signal(*it).c_str(), NULL);
+               ent->get_arch()->add_stmt(new vhdl_cassign_stmt(lref, rref));
+            }
+            sn->connect.clear();               
          }           
       }
    }
