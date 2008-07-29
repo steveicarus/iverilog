@@ -125,7 +125,11 @@ enum vhdl_nexus_obj_t {
 
 
 /*
- * TODO: COMMENT
+ * This represents the portion of a nexus that is visible within
+ * a VHDL scope. If that nexus portion does not contain a signal,
+ * then `tmpname' gives the name of the temporary that will be
+ * used when this nexus is used in `scope' (e.g. for LPMs that
+ * appear in instantiations).
  */
 struct scope_nexus_t {
    vhdl_scope *scope;
