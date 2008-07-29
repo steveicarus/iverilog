@@ -162,7 +162,16 @@ void draw_nexus(ivl_nexus_t nexus)
          }
          else {
             cout << "...has no signal!" << endl;
-            assert(false);
+
+            // Create a temporary signal to connect it to the nexus
+            vhdl_type *type =
+               vhdl_type::type_for(ivl_logic_width(log), false);
+            
+            ostringstream ss;
+            ss << "LO" << ivl_logic_basename(log);
+            vhdl_scope->add_decl(new vhdl_signal_decl(ss.str().c_str(), type));
+
+            link_scope_to_nexus_tmp(priv, vhdl_scope, ss.str());
          }
       }
       else if ((lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
