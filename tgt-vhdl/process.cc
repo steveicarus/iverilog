@@ -71,6 +71,7 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    ss << ivl_scope_tname(scope);
    vhdl_proc->set_comment(ss.str());
 
+   set_active_entity(NULL);
    return 0;
 }
 

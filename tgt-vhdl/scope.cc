@@ -768,8 +768,12 @@ static int draw_all_logic_and_lpm(ivl_scope_t scope, void *_parent)
       assert(ent);
 
       if (ent->get_derived_from() == ivl_scope_name(scope)) {
-         declare_logic(ent->get_arch(), scope);
-         declare_lpm(ent->get_arch(), scope);
+         set_active_entity(ent);
+         {
+            declare_logic(ent->get_arch(), scope);
+            declare_lpm(ent->get_arch(), scope);
+         }
+         set_active_entity(NULL);
       }
    }   
 
