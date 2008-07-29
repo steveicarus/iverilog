@@ -244,8 +244,23 @@ void draw_nexus(ivl_nexus_t nexus)
 
        draw_nexus(nexus);
     }
+
+    nexus_private_t *priv =
+       static_cast<nexus_private_t*>(ivl_nexus_get_private(nexus));
+    assert(priv);
+
+    ivl_signal_t sig = visible_nexus_signal(priv, scope);
+    assert(sig);
+
+    const string &renamed = get_renamed_signal(sig);
+
+    cout << "--> signal " << renamed << endl;
+
+    vhdl_decl *decl = scope->get_decl(renamed);
+    assert(decl);
     
-    assert(false);
+    vhdl_type *type = new vhdl_type(*(decl->get_type()));
+    return new vhdl_var_ref(renamed.c_str(), type);
  }
  
 
