@@ -211,6 +211,11 @@ void draw_nexus(ivl_nexus_t nexus)
       ivl_signal_t sig;
       if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
          cout << "signal " << ivl_signal_basename(sig) << endl;
+
+         if (!seen_signal_before(sig)) {
+            remember_signal(sig, NULL);
+            continue;
+         }
          
          vhdl_scope *scope = find_scope_for_signal(sig);
 
@@ -601,6 +606,17 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
 {   
    // TODO: Work for multiple words
    ivl_nexus_t nexus = ivl_signal_nex(to, 0);
+   seen_nexus(nexus);
+
+   vhdl_scope *arch_scope = parent->get_arch()->get_scope();
+
+   nexus_private_t *priv =
+      static_cast<nexus_private_t*>(ivl_nexus_get_private(nexus));
+   assert(priv);
+   if (!visible_nexus(priv, arch_scope)) {
+      // This nexus isn't attached to anything in the parent
+      return;
+   }
 
    vhdl_var_ref *ref = nexus_to_var_ref(parent->get_arch()->get_scope(), nexus);
 
