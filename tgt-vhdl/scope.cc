@@ -691,12 +691,7 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
 
    const char *funcname = ivl_scope_tname(scope);
 
-   // Has this function been declared already?
-   // (draw_function will be invoked multiple times for
-   // the same function if it appears multiple times in
-   // the design hierarchy)
-   if (ent->get_arch()->get_scope()->have_declared(funcname))
-      return 0;
+   assert(!ent->get_arch()->get_scope()->have_declared(funcname));
 
    // The return type is worked out from the output port
    vhdl_function *func = new vhdl_function(funcname, NULL);
@@ -729,8 +724,12 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
    
    // Non-blocking assignment not allowed in functions
    func->get_scope()->set_allow_signal_assignment(false);
-   
-   draw_stmt(func, func->get_container(), ivl_scope_def(scope));
+
+   set_active_entity(ent);
+   {
+      draw_stmt(func, func->get_container(), ivl_scope_def(scope));
+   }
+   set_active_entity(NULL);
    
    ent->get_arch()->get_scope()->add_decl(func);   
    return 0;
@@ -773,23 +772,12 @@ static void create_skeleton_entity_for(ivl_scope_t scope)
  */
 static int draw_skeleton_scope(ivl_scope_t scope, void *_parent)
 {
-   //ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
-   
-   ivl_scope_type_t type = ivl_scope_type(scope);
-   switch (type) {
-   case IVL_SCT_MODULE:
+   if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
       // Create this entity if it doesn't already exist
       if (find_entity(ivl_scope_tname(scope)) == NULL) {
          create_skeleton_entity_for(scope);
          cout << "Created skeleton entity for " << ivl_scope_tname(scope) << endl;
       }
-      break;
-   case IVL_SCT_FUNCTION:
-   default:
-      error("No VHDL conversion for %s (at %s)",
-            ivl_scope_tname(scope),
-            ivl_scope_name(scope));
-      break;
    }
    
    return ivl_scope_children(scope, draw_skeleton_scope, scope);
@@ -806,6 +794,24 @@ static int draw_all_signals(ivl_scope_t scope, void *_parent)
    }
 
    return ivl_scope_children(scope, draw_all_signals, scope);
+}
+
+/*
+ * Draw all tasks and functions in the hierarchy.
+ */
+static int draw_functions(ivl_scope_t scope, void *_parent)
+{
+   ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
+   if (ivl_scope_type(scope) == IVL_SCT_FUNCTION) {
+      vhdl_entity *ent = find_entity(ivl_scope_tname(parent));
+      assert(ent);
+
+      if (ent->get_derived_from() == ivl_scope_name(parent))
+         if (draw_function(scope, parent) != 0)
+            return 1;
+   }
+
+   return ivl_scope_children(scope, draw_functions, scope);
 }
 
 /*
@@ -941,6 +947,10 @@ int draw_scope(ivl_scope_t scope, void *_parent)
       return rc;      
 
    rc = draw_hierarchy(scope, _parent);
+   if (rc != 0)
+      return rc;
+
+   rc = draw_functions(scope, _parent);
    if (rc != 0)
       return rc;
 
