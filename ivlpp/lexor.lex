@@ -1472,7 +1472,7 @@ static void do_include()
         fprintf(depend_file, "%s\n", standby->path);
 
     if (line_direct_flag)
-        fprintf(yyout, "\n`line %u \"%s\" 1\n", istack->lineno+1, standby->path);
+        fprintf(yyout, "\n`line 1 \"%s\" 1\n", standby->path);
 
     standby->next = istack;
     standby->stringify_flag = 0;
