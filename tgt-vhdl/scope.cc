@@ -555,80 +555,52 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    // TODO: Work for multiple words
    ivl_nexus_t nexus = ivl_signal_nex(to, 0);
 
-   vhdl_expr *to_e = nexus_to_var_ref(parent->get_arch()->get_scope(),
-                                      nexus);
-   assert(to_e);
+   vhdl_var_ref *ref = nexus_to_var_ref(parent->get_arch()->get_scope(), nexus);
 
-   // The expressions in a VHDL port map must be 'globally static'
-   // i.e. they can't be arbitrary expressions
-   // To handle this, only vhdl_var_refs are mapped automatically
-   // Otherwise a temporary variable is created to store the
-   // result of the expression and that is mapped to the port
-   // This is actually a bit stricter than necessary: but turns out
-   // to be much easier to implement
-   std::string name = make_safe_name(to);
-   vhdl_var_ref *to_ref;
-   if ((to_ref = dynamic_cast<vhdl_var_ref*>(to_e))) {
-      // If we're mapping an output of this entity to an output of
-      // the child entity, then VHDL will not let us read the value
-      // of the signal (i.e. it must pass straight through).
-      // However, Verilog allows the signal to be read in the parent.
-      // To get around this we create an internal signal name_Sig
-      // that takes the value of the output and can be read.
-      vhdl_decl *decl =
-         parent->get_arch()->get_scope()->get_decl(to_ref->get_name());
-      vhdl_port_decl *pdecl;
-      if ((pdecl = dynamic_cast<vhdl_port_decl*>(decl))
-          && pdecl->get_mode() == VHDL_PORT_OUT) {
+   string name = make_safe_name(to);
+  
+   // If we're mapping an output of this entity to an output of
+   // the child entity, then VHDL will not let us read the value
+   // of the signal (i.e. it must pass straight through).
+   // However, Verilog allows the signal to be read in the parent.
+   // To get around this we create an internal signal name_Sig
+   // that takes the value of the output and can be read.
+   vhdl_decl *decl =
+      parent->get_arch()->get_scope()->get_decl(ref->get_name());
+   vhdl_port_decl *pdecl;
+   if ((pdecl = dynamic_cast<vhdl_port_decl*>(decl))
+       && pdecl->get_mode() == VHDL_PORT_OUT) {
+      
+      // We need to create a readable signal to shadow this output
+      string shadow_name(ref->get_name());
+      shadow_name += "_Sig";
+      
+      vhdl_signal_decl *shadow =
+         new vhdl_signal_decl(shadow_name.c_str(),
+                              new vhdl_type(*decl->get_type()));
+      shadow->set_comment("Needed to make output readable");
+      
+      parent->get_arch()->get_scope()->add_decl(shadow);
+      
+      // Make a continuous assignment of the shadow to the output
+      parent->get_arch()->add_stmt
+         (new vhdl_cassign_stmt
+          (ref, new vhdl_var_ref(shadow_name.c_str(), NULL)));
 
-         // We need to create a readable signal to shadow this output
-         std::string shadow_name(to_ref->get_name());
-         shadow_name += "_Sig";
-         
-         vhdl_signal_decl *shadow =
-            new vhdl_signal_decl(shadow_name.c_str(),
-                                 new vhdl_type(*decl->get_type()));
-         shadow->set_comment("Needed to make output readable");
-         
-         parent->get_arch()->get_scope()->add_decl(shadow);
-
-         // Make a continuous assignment of the shadow to the output
-         parent->get_arch()->add_stmt
-            (new vhdl_cassign_stmt
-             (to_ref, new vhdl_var_ref(shadow_name.c_str(), NULL)));
-
-         // Make sure any future references to this signal read the
-         // shadow not the output
-         ivl_signal_t sig = find_signal_named(to_ref->get_name(),
-                                              parent->get_arch()->get_scope());
-         rename_signal(sig, shadow_name);
-         
-         // Finally map the child port to the shadow signal
-         inst->map_port(name.c_str(),
-                        new vhdl_var_ref(shadow_name.c_str(), NULL));
-      }
-      else {
-         // Not an output port declaration therefore we can
-         // definitely read it
-         inst->map_port(name.c_str(), to_ref);
-      }
+      // Make sure any future references to this signal read the
+      // shadow not the output
+      ivl_signal_t sig = find_signal_named(ref->get_name(),
+                                           parent->get_arch()->get_scope());
+      rename_signal(sig, shadow_name);
+      
+      // Finally map the child port to the shadow signal
+      inst->map_port(name.c_str(),
+                     new vhdl_var_ref(shadow_name.c_str(), NULL));
    }
    else {
-      // Not a static expression
-      std::string tmpname(inst->get_inst_name().c_str());
-      tmpname += "_";
-      tmpname += name;
-      tmpname += "_Expr";
-      
-      vhdl_type *tmptype = new vhdl_type(*to_e->get_type());
-      parent->get_arch()->get_scope()->add_decl
-         (new vhdl_signal_decl(tmpname.c_str(), tmptype));
-
-      vhdl_var_ref *tmp_ref1 = new vhdl_var_ref(tmpname.c_str(), NULL);
-      parent->get_arch()->add_stmt(new vhdl_cassign_stmt(tmp_ref1, to_e));
-
-      vhdl_var_ref *tmp_ref2 = new vhdl_var_ref(*tmp_ref1);
-      inst->map_port(name.c_str(), tmp_ref2);
+      // Not an output port declaration therefore we can
+      // definitely read it
+      inst->map_port(name.c_str(), ref);
    }
 }
 
@@ -657,41 +629,6 @@ static void port_map(ivl_scope_t scope, vhdl_entity *parent,
          assert(false);
       }      
    }
-}
-
-/*
- * Instantiate an entity in the hierarchy, and possibly create
- * that entity if it hasn't been encountered yet.
- * DEPRECATE
- */
-static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
-{
-   assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
-
-   // Maybe we need to create this entity first?
-   vhdl_entity *ent = find_entity(ivl_scope_tname(scope)); 
-   /*   if (NULL == ent)
-        ent = create_entity_for(scope);*/
-   assert(ent);
-   set_active_entity(ent);
-
-   // Is this module instantiated inside another?
-   if (parent != NULL) {
-      vhdl_entity *parent_ent = find_entity(ivl_scope_tname(parent));
-      assert(parent_ent != NULL);
-
-      // Make sure we only collect instantiations from *one*
-      // example of this module in the hieararchy
-      if (parent_ent->get_derived_from() == ivl_scope_name(parent)) {
-
-         
-      }
-      else {
-         // Ignore this instantiation (already accounted for)
-      }
-   }
-   
-   return 0;
 }
 
 /*
@@ -879,7 +816,7 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
                      
          vhdl_comp_inst *inst =
             new vhdl_comp_inst(inst_name.c_str(), ent->get_name().c_str());
-         //port_map(scope, parent_ent, inst);         
+         port_map(scope, parent_ent, inst);         
 
          parent_arch->add_stmt(inst);
       }
