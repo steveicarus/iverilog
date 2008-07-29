@@ -26,7 +26,7 @@
 #include <cassert>
 
 static vhdl_expr *translate_logic(vhdl_scope *scope, ivl_net_logic_t log);
-static std::string make_safe_name(ivl_signal_t sig);
+static string make_safe_name(ivl_signal_t sig);
 
 static vhdl_entity *g_active_entity = NULL;
 
@@ -93,7 +93,6 @@ static void link_scope_to_nexus_signal(nexus_private_t *priv, vhdl_scope *scope,
    if ((sn = visible_nexus(priv, scope))) {
       assert(sn->tmpname == "");
 
-      cout << "need to tie up " << get_renamed_signal(sig) << endl;
       sn->connect.push_back(sig);
    }
    else {
@@ -138,9 +137,7 @@ void draw_nexus(ivl_nexus_t nexus)
       ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
       
       ivl_signal_t sig;
-      if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
-         cout << "signal " << ivl_signal_basename(sig) << endl;
-         
+      if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) { 
          vhdl_scope *scope = find_scope_for_signal(sig);
          link_scope_to_nexus_signal(priv, scope, sig);
       }
@@ -159,15 +156,10 @@ void draw_nexus(ivl_nexus_t nexus)
          vhdl_scope *vhdl_scope =
             find_entity(ivl_scope_name(log_scope))->get_arch()->get_scope();
 
-         cout << "logic " << ivl_logic_basename(log) << endl;
-
          if (visible_nexus(priv, vhdl_scope)) {
-            cout << "...linked to signal "
-                 << visible_nexus_signal_name(priv, vhdl_scope) << endl;
+            // Already seen this signal in vhdl_scope
          }
          else {
-            cout << "...has no signal!" << endl;
-
             // Create a temporary signal to connect it to the nexus
             vhdl_type *type =
                vhdl_type::type_for(ivl_logic_width(log), false);
@@ -184,11 +176,8 @@ void draw_nexus(ivl_nexus_t nexus)
          vhdl_scope *vhdl_scope =
             find_entity(ivl_scope_name(lpm_scope))->get_arch()->get_scope();
 
-         cout << "LPM " << ivl_lpm_basename(lpm) << endl;
-         
          if (visible_nexus(priv, vhdl_scope)) {
-            cout << "...linked to signal "
-                 << visible_nexus_signal_name(priv, vhdl_scope) << endl;
+            // Already seen this signal in vhdl_scope
          }
          else {
             // Create a temporary signal to connect the nexus
@@ -203,8 +192,6 @@ void draw_nexus(ivl_nexus_t nexus)
          }
       }
       else if ((con = ivl_nexus_ptr_con(nexus_ptr))) {
-         cout << "CONSTANT" << endl;
-
          if (ivl_const_width(con) == 1)
             priv->const_driver = new vhdl_const_bit(ivl_const_bits(con)[0]);
          else
@@ -224,12 +211,8 @@ void draw_nexus(ivl_nexus_t nexus)
  */
 static void seen_nexus(ivl_nexus_t nexus)
 {
-   if (ivl_nexus_get_private(nexus) == NULL) {
-      cout << "first time we've seen nexus "
-           << ivl_nexus_name(nexus) << endl;
-      
+   if (ivl_nexus_get_private(nexus) == NULL)      
       draw_nexus(nexus);
-   }
 }
  
 /*
@@ -243,15 +226,11 @@ static void seen_nexus(ivl_nexus_t nexus)
  */
 vhdl_var_ref *nexus_to_var_ref(vhdl_scope *scope, ivl_nexus_t nexus)
 {
-   cout << "nexus_to_var_ref " << ivl_nexus_name(nexus) << endl;
-   
    seen_nexus(nexus);
    
    nexus_private_t *priv =
       static_cast<nexus_private_t*>(ivl_nexus_get_private(nexus));
    string renamed(visible_nexus_signal_name(priv, scope));
-   
-   cout << "--> signal " << renamed << endl;
    
    vhdl_decl *decl = scope->get_decl(renamed);
    assert(decl);
@@ -711,12 +690,9 @@ static void create_skeleton_entity_for(ivl_scope_t scope)
  */
 static int draw_skeleton_scope(ivl_scope_t scope, void *_parent)
 {
-   if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
+   if (ivl_scope_type(scope) == IVL_SCT_MODULE)
       create_skeleton_entity_for(scope);
-      cout << "Created skeleton entity for " << ivl_scope_tname(scope)
-           << " from instance " << ivl_scope_name(scope) << endl;
-   }
-   
+      
    return ivl_scope_children(scope, draw_skeleton_scope, scope);
 }
 
@@ -783,9 +759,6 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
             if (priv->const_driver) {
                assert(i == 0);   // TODO: Make work for more words
                
-               cout << "NEEDS CONST DRIVER!" << endl;
-               cout << "(in scope " << ivl_scope_name(scope) << endl;
-
                vhdl_var_ref *ref = nexus_to_var_ref(arch_scope, nex);
                
                ent->get_arch()->add_stmt
