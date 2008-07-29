@@ -254,7 +254,7 @@ void draw_nexus(ivl_nexus_t nexus)
  * Ensure that a nexus has been initialised. I.e. all the necessary
  * statements, declarations, etc. have been generated.
  */
-void seen_nexus(ivl_nexus_t nexus)
+static void seen_nexus(ivl_nexus_t nexus)
 {
    if (ivl_nexus_get_private(nexus) == NULL) {
       cout << "first time we've seen nexus "

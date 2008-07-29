@@ -32,7 +32,6 @@ vhdl_entity *get_active_entity();
 void set_active_entity(vhdl_entity *ent);
 
 vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus);
-void seen_nexus(ivl_nexus_t nexus);
 
 bool seen_signal_before(ivl_signal_t sig);
 void remember_signal(ivl_signal_t sig, vhdl_scope *scope);
