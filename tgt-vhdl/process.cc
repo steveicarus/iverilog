@@ -83,16 +83,8 @@ int draw_process(ivl_process_t proc, void *cd)
    // A process should occur in a module scope, therefore it
    // should have already been assigned a VHDL entity
    assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
-   vhdl_entity *ent = find_entity(ivl_scope_tname(scope));
+   vhdl_entity *ent = find_entity(ivl_scope_name(scope));
    assert(ent != NULL);
    
-   // If the scope this process belongs to is the same as the
-   // VHDL entity was generated from, then create a VHDL process
-   // from this Verilog process. This ensures that each process
-   // is translated at most once, no matter how many times it
-   // appears in the hierarchy.
-   if (ent->get_derived_from() == scope_name)
-      return generate_vhdl_process(ent, proc);
-   else
-      return 0;
+   return generate_vhdl_process(ent, proc);
 }

@@ -40,90 +40,6 @@ void set_active_entity(vhdl_entity *ent)
    g_active_entity = ent;
 }
 
-
-/*
- * The types of VHDL object a nexus can be converted into.
- */
-enum vhdl_nexus_obj_t {
-   NEXUS_TO_VAR_REF = 1<<0,
-   NEXUS_TO_CONST   = 1<<1,
-   NEXUS_TO_OTHER   = 1<<2,
-};
-#define NEXUS_TO_ANY \
-   NEXUS_TO_VAR_REF | NEXUS_TO_CONST | NEXUS_TO_OTHER
-
-/*
- * Given a nexus, generate a VHDL expression object to represent it.
- * The allowed VHDL expression types are given by vhdl_nexus_obj_t.
- *
- * If a vhdl_var_ref is returned, the reference is guaranteed to be
- * to a signal in arch_scope or its parent (the entity's ports).
- */
-/*static vhdl_expr *nexus_to_expr(vhdl_scope *arch_scope, ivl_nexus_t nexus,
-                                int allowed = NEXUS_TO_ANY)
-{
-   int nptrs = ivl_nexus_ptrs(nexus);
-   for (int i = 0; i < nptrs; i++) {
-      ivl_nexus_ptr_t nexus_ptr = ivl_nexus_ptr(nexus, i);
-
-      ivl_signal_t sig;
-      ivl_net_logic_t log;
-      ivl_lpm_t lpm;
-      ivl_net_const_t con;
-      ivl_switch_t sw;
-      if ((allowed & NEXUS_TO_VAR_REF) &&
-          (sig = ivl_nexus_ptr_sig(nexus_ptr))) {         
-         if (!seen_signal_before(sig) ||
-             (find_scope_for_signal(sig) != arch_scope
-              && find_scope_for_signal(sig) != arch_scope->get_parent()))
-            continue;
-                  
-         const char *signame = get_renamed_signal(sig).c_str();
-         
-         vhdl_decl *decl = arch_scope->get_decl(signame);
-         vhdl_type *type = new vhdl_type(*(decl->get_type()));
-         return new vhdl_var_ref(signame, type);
-      }
-      else if ((allowed & NEXUS_TO_OTHER) &&
-               (log = ivl_nexus_ptr_log(nexus_ptr))) {
-         return translate_logic(arch_scope, log);
-      }
-      else if ((allowed & NEXUS_TO_OTHER) &&
-               (lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
-         return lpm_output(arch_scope, lpm);
-      }
-      else if ((allowed & NEXUS_TO_CONST) &&
-               (con = ivl_nexus_ptr_con(nexus_ptr))) {
-         if (ivl_const_width(con) == 1)
-            return new vhdl_const_bit(ivl_const_bits(con)[0]);
-         else
-            return new vhdl_const_bits
-               (ivl_const_bits(con), ivl_const_width(con),
-                ivl_const_signed(con) != 0);
-      }
-      else if ((allowed & NEXUS_TO_OTHER) &&
-               (sw = ivl_nexus_ptr_switch(nexus_ptr))) {
-         std::cout << "SWITCH type=" << ivl_switch_type(sw) << std::endl;
-         assert(false);
-      }
-      else {
-         // Ignore other types of nexus pointer
-      }
-   }
-
-   return NULL;
-   }*/
-
-/*
- * Guarantees the result will never be NULL.
- */
- /*vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus)
-{
-   return dynamic_cast<vhdl_var_ref*>
-      (nexus_to_expr(arch_scope, nexus, NEXUS_TO_VAR_REF));
-      }*/
-
-
 /*
  * This represents the portion of a nexus that is visible within
  * a VHDL scope. If that nexus portion does not contain a signal,
@@ -137,7 +53,6 @@ struct scope_nexus_t {
    string tmpname;      // A new temporary signal
 };
    
- 
 /*
  * This structure is stored in the private part of each nexus.
  * It stores a scope_nexus_t for each VHDL scope which is
@@ -211,11 +126,6 @@ void draw_nexus(ivl_nexus_t nexus)
       ivl_signal_t sig;
       if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) {
          cout << "signal " << ivl_signal_basename(sig) << endl;
-
-         if (!seen_signal_before(sig)) {
-            remember_signal(sig, NULL);
-            continue;
-         }
          
          vhdl_scope *scope = find_scope_for_signal(sig);
 
@@ -242,7 +152,7 @@ void draw_nexus(ivl_nexus_t nexus)
       if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
          ivl_scope_t log_scope = ivl_logic_scope(log);
          vhdl_scope *vhdl_scope =
-            find_entity(ivl_scope_tname(log_scope))->get_arch()->get_scope();
+            find_entity(ivl_scope_name(log_scope))->get_arch()->get_scope();
 
          cout << "logic " << ivl_logic_basename(log) << endl;
 
@@ -258,7 +168,7 @@ void draw_nexus(ivl_nexus_t nexus)
       else if ((lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
          ivl_scope_t lpm_scope = ivl_lpm_scope(lpm);
          vhdl_scope *vhdl_scope =
-            find_entity(ivl_scope_tname(lpm_scope))->get_arch()->get_scope();
+            find_entity(ivl_scope_name(lpm_scope))->get_arch()->get_scope();
 
          cout << "LPM " << ivl_lpm_basename(lpm) << endl;
          
@@ -317,26 +227,25 @@ static void seen_nexus(ivl_nexus_t nexus)
  * encountered before, the necessary code to connect up the nexus
  * will be generated.
  */
- vhdl_var_ref *nexus_to_var_ref(vhdl_scope *scope, ivl_nexus_t nexus)
- {
-    cout << "nexus_to_var_ref " << ivl_nexus_name(nexus) << endl;
-
-    seen_nexus(nexus);
-
-    nexus_private_t *priv =
-       static_cast<nexus_private_t*>(ivl_nexus_get_private(nexus));
-    string renamed(visible_nexus_signal_name(priv, scope));
-    
-    cout << "--> signal " << renamed << endl;
-    
-    vhdl_decl *decl = scope->get_decl(renamed);
-    assert(decl);
-          
-    vhdl_type *type = new vhdl_type(*(decl->get_type()));
-    return new vhdl_var_ref(renamed.c_str(), type);    
- }
+vhdl_var_ref *nexus_to_var_ref(vhdl_scope *scope, ivl_nexus_t nexus)
+{
+   cout << "nexus_to_var_ref " << ivl_nexus_name(nexus) << endl;
+   
+   seen_nexus(nexus);
+   
+   nexus_private_t *priv =
+      static_cast<nexus_private_t*>(ivl_nexus_get_private(nexus));
+   string renamed(visible_nexus_signal_name(priv, scope));
+   
+   cout << "--> signal " << renamed << endl;
+   
+   vhdl_decl *decl = scope->get_decl(renamed);
+   assert(decl);
+   
+   vhdl_type *type = new vhdl_type(*(decl->get_type()));
+   return new vhdl_var_ref(renamed.c_str(), type);    
+}
  
-
 /*
  * Convert the inputs of a logic gate to a binary expression.
  */
@@ -470,9 +379,9 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
 /*
  * Make sure a signal name conforms to VHDL naming rules.
  */
-static std::string make_safe_name(ivl_signal_t sig)
+static string make_safe_name(ivl_signal_t sig)
 {
-   std::string name(ivl_signal_basename(sig));      
+   string name(ivl_signal_basename(sig));      
    if (name[0] == '_')
       name.insert(0, "VL");
    
@@ -702,7 +611,7 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
    assert(ivl_scope_type(scope) == IVL_SCT_FUNCTION);
 
    // Find the containing entity
-   vhdl_entity *ent = find_entity(ivl_scope_tname(parent));
+   vhdl_entity *ent = find_entity(ivl_scope_name(parent));
    assert(ent);
 
    const char *funcname = ivl_scope_tname(scope);
@@ -773,7 +682,7 @@ static void create_skeleton_entity_for(ivl_scope_t scope)
    vhdl_entity *ent = new vhdl_entity(tname, derived_from, arch);
 
    // Build a comment to add to the entity/architecture
-   std::ostringstream ss;
+   ostringstream ss;
    ss << "Generated from Verilog module " << ivl_scope_tname(scope);
    
    arch->set_comment(ss.str());
@@ -789,11 +698,9 @@ static void create_skeleton_entity_for(ivl_scope_t scope)
 static int draw_skeleton_scope(ivl_scope_t scope, void *_parent)
 {
    if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
-      // Create this entity if it doesn't already exist
-      if (find_entity(ivl_scope_tname(scope)) == NULL) {
-         create_skeleton_entity_for(scope);
-         cout << "Created skeleton entity for " << ivl_scope_tname(scope) << endl;
-      }
+      create_skeleton_entity_for(scope);
+      cout << "Created skeleton entity for " << ivl_scope_tname(scope)
+           << " from instance " << ivl_scope_name(scope) << endl;
    }
    
    return ivl_scope_children(scope, draw_skeleton_scope, scope);
@@ -802,11 +709,10 @@ static int draw_skeleton_scope(ivl_scope_t scope, void *_parent)
 static int draw_all_signals(ivl_scope_t scope, void *_parent)
 {
    if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
-      vhdl_entity *ent = find_entity(ivl_scope_tname(scope));
+      vhdl_entity *ent = find_entity(ivl_scope_name(scope));
       assert(ent);
 
-      if (ent->get_derived_from() == ivl_scope_name(scope))
-         declare_signals(ent, scope);
+      declare_signals(ent, scope);
    }
 
    return ivl_scope_children(scope, draw_all_signals, scope);
@@ -819,12 +725,11 @@ static int draw_functions(ivl_scope_t scope, void *_parent)
 {
    ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
    if (ivl_scope_type(scope) == IVL_SCT_FUNCTION) {
-      vhdl_entity *ent = find_entity(ivl_scope_tname(parent));
+      vhdl_entity *ent = find_entity(ivl_scope_name(parent));
       assert(ent);
-
-      if (ent->get_derived_from() == ivl_scope_name(parent))
-         if (draw_function(scope, parent) != 0)
-            return 1;
+      
+      if (draw_function(scope, parent) != 0)
+         return 1;
    }
 
    return ivl_scope_children(scope, draw_functions, scope);
@@ -841,37 +746,35 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
    ivl_scope_children(scope, draw_constant_drivers, scope);
    
    if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
-      vhdl_entity *ent = find_entity(ivl_scope_tname(scope));
+      vhdl_entity *ent = find_entity(ivl_scope_name(scope));
       assert(ent);
 
-      if (ent->get_derived_from() == ivl_scope_name(scope)) {
-         int nsigs = ivl_scope_sigs(scope);
-         for (int i = 0; i < nsigs; i++) {
-            ivl_signal_t sig = ivl_scope_sig(scope, i);
+      int nsigs = ivl_scope_sigs(scope);
+      for (int i = 0; i < nsigs; i++) {
+         ivl_signal_t sig = ivl_scope_sig(scope, i);
+         
+         for (unsigned i = ivl_signal_array_base(sig);
+              i < ivl_signal_array_count(sig);
+              i++) {
+            // Make sure the nexus code is generated
+            ivl_nexus_t nex = ivl_signal_nex(sig, i);
+            seen_nexus(nex);
+            
+            assert(i == 0);   // TODO: Make work for more words
+            nexus_private_t *priv =
+               static_cast<nexus_private_t*>(ivl_nexus_get_private(nex));
+            assert(priv);
 
-            for (unsigned i = ivl_signal_array_base(sig);
-                 i < ivl_signal_array_count(sig);
-                 i++) {
-               // Make sure the nexus code is generated
-               ivl_nexus_t nex = ivl_signal_nex(sig, i);
-               seen_nexus(nex);
-
-               assert(i == 0);   // TODO: Make work for more words
-               nexus_private_t *priv =
-                  static_cast<nexus_private_t*>(ivl_nexus_get_private(nex));
-               assert(priv);
-
-               if (priv->const_driver) {
-                  cout << "NEEDS CONST DRIVER!" << endl;
-                  cout << "(in scope " << ivl_scope_name(scope) << endl;
-
-                  vhdl_var_ref *ref =
-                     nexus_to_var_ref(ent->get_arch()->get_scope(), nex);
-                  
-                  ent->get_arch()->add_stmt
-                     (new vhdl_cassign_stmt(ref, priv->const_driver));                  
-                  priv->const_driver = NULL;
-               }
+            if (priv->const_driver) {
+               cout << "NEEDS CONST DRIVER!" << endl;
+               cout << "(in scope " << ivl_scope_name(scope) << endl;
+               
+               vhdl_var_ref *ref =
+                  nexus_to_var_ref(ent->get_arch()->get_scope(), nex);
+               
+               ent->get_arch()->add_stmt
+                  (new vhdl_cassign_stmt(ref, priv->const_driver));                  
+               priv->const_driver = NULL;
             }
          }           
       }
@@ -883,17 +786,15 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
 static int draw_all_logic_and_lpm(ivl_scope_t scope, void *_parent)
 {
    if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
-      vhdl_entity *ent = find_entity(ivl_scope_tname(scope));
+      vhdl_entity *ent = find_entity(ivl_scope_name(scope));
       assert(ent);
 
-      if (ent->get_derived_from() == ivl_scope_name(scope)) {
-         set_active_entity(ent);
-         {
-            declare_logic(ent->get_arch(), scope);
-            declare_lpm(ent->get_arch(), scope);
-         }
-         set_active_entity(NULL);
+      set_active_entity(ent);
+      {
+         declare_logic(ent->get_arch(), scope);
+         declare_lpm(ent->get_arch(), scope);
       }
+      set_active_entity(NULL);
    }   
 
    return ivl_scope_children(scope, draw_all_logic_and_lpm, scope);
@@ -904,45 +805,43 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
    if (ivl_scope_type(scope) == IVL_SCT_MODULE && _parent) {
       ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
    
-      vhdl_entity *ent = find_entity(ivl_scope_tname(scope));
+      vhdl_entity *ent = find_entity(ivl_scope_name(scope));
       assert(ent);
       
-      vhdl_entity *parent_ent = find_entity(ivl_scope_tname(parent));
+      vhdl_entity *parent_ent = find_entity(ivl_scope_name(parent));
       assert(parent_ent);
 
-      if (parent_ent->get_derived_from() == ivl_scope_name(parent)) {
-         vhdl_arch *parent_arch = parent_ent->get_arch();
-         assert(parent_arch != NULL);
+      vhdl_arch *parent_arch = parent_ent->get_arch();
+      assert(parent_arch != NULL);
          
-         // Create a forward declaration for it
-         if (!parent_arch->get_scope()->have_declared(ent->get_name())) {
-            vhdl_decl *comp_decl = vhdl_component_decl::component_decl_for(ent);
-            parent_arch->get_scope()->add_decl(comp_decl);
-         }
-         
-         // And an instantiation statement
-         string inst_name(ivl_scope_basename(scope));
-         if (inst_name == ent->get_name()) {
-            // Cannot have instance name the same as type in VHDL
-            inst_name += "_Inst";
-         }
-
-         // Need to replace any [ and ] characters that result
-         // from generate statements
-         string::size_type loc = inst_name.find('[', 0);
-         if (loc != string::npos)
-            inst_name.erase(loc, 1);
-
-         loc = inst_name.find(']', 0);
-         if (loc != string::npos)
-            inst_name.erase(loc, 1);         
-                     
-         vhdl_comp_inst *inst =
-            new vhdl_comp_inst(inst_name.c_str(), ent->get_name().c_str());
-         port_map(scope, parent_ent, inst);         
-
-         parent_arch->add_stmt(inst);
+      // Create a forward declaration for it
+      if (!parent_arch->get_scope()->have_declared(ent->get_name())) {
+         vhdl_decl *comp_decl = vhdl_component_decl::component_decl_for(ent);
+         parent_arch->get_scope()->add_decl(comp_decl);
       }
+         
+      // And an instantiation statement
+      string inst_name(ivl_scope_basename(scope));
+      if (inst_name == ent->get_name()) {
+         // Cannot have instance name the same as type in VHDL
+         inst_name += "_Inst";
+      }
+
+      // Need to replace any [ and ] characters that result
+      // from generate statements
+      string::size_type loc = inst_name.find('[', 0);
+      if (loc != string::npos)
+         inst_name.erase(loc, 1);
+      
+      loc = inst_name.find(']', 0);
+      if (loc != string::npos)
+         inst_name.erase(loc, 1);         
+      
+      vhdl_comp_inst *inst =
+         new vhdl_comp_inst(inst_name.c_str(), ent->get_name().c_str());
+      port_map(scope, parent_ent, inst);         
+      
+      parent_arch->add_stmt(inst);
    }   
 
    return ivl_scope_children(scope, draw_hierarchy, scope);

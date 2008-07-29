@@ -29,6 +29,7 @@
 #include <cstring>
 #include <list>
 #include <map>
+#include <set>
 
 /*
  * Maps a signal to the scope it is defined within. Also
@@ -68,13 +69,13 @@ void error(const char *fmt, ...)
 }
 
 /*
- * Find an entity given a type name.
+ * Find an entity given a scope name.
  */
-vhdl_entity *find_entity(const std::string &tname)
+vhdl_entity *find_entity(const std::string &sname)
 {
    entity_list_t::const_iterator it;
    for (it = g_entities.begin(); it != g_entities.end(); ++it) {
-      if ((*it)->get_name() == tname)
+      if ((*it)->get_derived_from() == sname)
          return *it;
    }
    return NULL;
@@ -86,7 +87,7 @@ vhdl_entity *find_entity(const std::string &tname)
  */
 void remember_entity(vhdl_entity* ent)
 {
-   assert(find_entity(ent->get_name()) == NULL);
+   assert(find_entity(ent->get_derived_from()) == NULL);
    g_entities.push_back(ent);
 }
 
@@ -164,12 +165,19 @@ extern "C" int target_design(ivl_design_t des)
    // only if there are no errors
    if (0 == g_errors) {
       const char *ofname = ivl_design_flag(des, "-o");
-      std::ofstream outfile(ofname);
+      ofstream outfile(ofname);
+
+      // Make sure we only emit one example of each type of entity
+      set<string> seen_entities;
       
       for (entity_list_t::iterator it = g_entities.begin();
            it != g_entities.end();
-           ++it)
-         (*it)->emit(outfile);
+           ++it) {
+         if (seen_entities.find((*it)->get_name()) == seen_entities.end()) {
+            (*it)->emit(outfile);
+            seen_entities.insert((*it)->get_name());
+         }
+      }
       
       outfile.close();
    }
