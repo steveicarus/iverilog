@@ -201,6 +201,7 @@ void draw_nexus(ivl_nexus_t nexus)
       ivl_net_logic_t log;
       ivl_lpm_t lpm;
       ivl_net_const_t con;
+      ivl_signal_t linked;
       if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
          ivl_scope_t log_scope = ivl_logic_scope(log);
          vhdl_scope *vhdl_scope =
@@ -208,7 +209,6 @@ void draw_nexus(ivl_nexus_t nexus)
 
          cout << "logic " << ivl_logic_basename(log) << endl;
          
-         ivl_signal_t linked;
          if ((linked = visible_nexus_signal(priv, vhdl_scope))) {
             cout << "...linked to signal " << ivl_signal_name(linked) << endl;
          }
@@ -224,7 +224,6 @@ void draw_nexus(ivl_nexus_t nexus)
 
          cout << "LPM " << ivl_lpm_basename(lpm) << endl;
          
-         ivl_signal_t linked;
          if ((linked = visible_nexus_signal(priv, vhdl_scope))) {
             cout << "...linked to signal " << ivl_signal_name(linked) << endl;
          }
@@ -233,10 +232,53 @@ void draw_nexus(ivl_nexus_t nexus)
             assert(false);
          }
       }
+      else if ((con = ivl_nexus_ptr_con(nexus_ptr))) {
+         cout << "CONSTANT" << endl;
+         
+         list<nexus_private_t::scope_signal_map_t>::iterator it;
+         for (it = priv->signals.begin(); it != priv->signals.end(); ++it) {
+            cout << "...linked to signal " << ivl_signal_name((*it).sig) << endl;
+            
+            // Make this the initial value of the signal
+            const string &renamed = get_renamed_signal((*it).sig);
+            vhdl_decl *decl =
+               find_scope_for_signal((*it).sig)->get_decl(renamed);
+            assert(decl);
+            
+            if (!decl->has_initial()) {
+               if (ivl_const_width(con) == 1)
+                  decl->set_initial
+                     (new vhdl_const_bit(ivl_const_bits(con)[0]));
+               else
+                  decl->set_initial
+                     (new vhdl_const_bits(ivl_const_bits(con),
+                                          ivl_const_width(con),
+                                          ivl_const_signed(con) != 0));
+            }
+            else {
+               error("signal %s has two constant drivers!?", renamed.c_str());
+               assert(false);
+            }        
+         }
+      }
    }
-
+   
    // Save the private data in the nexus
    ivl_nexus_set_private(nexus, priv);
+}
+
+/*
+ * Ensure that a nexus has been initialised. I.e. all the necessary
+ * statements, declarations, etc. have been generated.
+ */
+void seen_nexus(ivl_nexus_t nexus)
+{
+   if (ivl_nexus_get_private(nexus) == NULL) {
+      cout << "first time we've seen nexus "
+           << ivl_nexus_name(nexus) << endl;
+      
+      draw_nexus(nexus);
+   }
 }
  
 /*
@@ -252,12 +294,8 @@ void draw_nexus(ivl_nexus_t nexus)
  {
     cout << "nexus_to_var_ref " << ivl_nexus_name(nexus) << endl;
 
-    if (ivl_nexus_get_private(nexus) == NULL) {
-       cout << "first time we've seen this nexus" << endl;
-
-       draw_nexus(nexus);
-    }
-
+    seen_nexus(nexus);
+    
     nexus_private_t *priv =
        static_cast<nexus_private_t*>(ivl_nexus_get_private(nexus));
     assert(priv);
@@ -478,15 +516,6 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
       case IVL_SIP_NONE:
          {
             vhdl_decl *decl = new vhdl_signal_decl(name.c_str(), sig_type);
-
-            // A local signal can have a constant initializer in VHDL
-            // This may be found in the signal's nexus
-            // TODO: Make this work for multiple words
-            /*vhdl_expr *init =
-               nexus_to_var_ref(ent->get_scope(), ivl_signal_nex(sig, 0));
-            if (init != NULL)
-            decl->set_initial(init);*/
-            
             ent->get_arch()->get_scope()->add_decl(decl);
          }
          break;
@@ -497,19 +526,7 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
       case IVL_SIP_OUTPUT:
          {
             vhdl_port_decl *decl =
-               new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_OUT);
-
-            // Check for constant values
-            // For outputs these must be continuous assigns of
-            // the constant to the port
-            /*vhdl_expr *init =
-               nexus_to_expr(ent->get_scope(), ivl_signal_nex(sig, 0), 
-                             NEXUS_TO_CONST);
-            if (init != NULL) {
-               vhdl_var_ref *ref = new vhdl_var_ref(name.c_str(), NULL);
-               ent->get_arch()->add_stmt(new vhdl_cassign_stmt(ref, init));
-               }*/
-            
+               new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_OUT);            
             ent->get_scope()->add_decl(decl);
          }
 

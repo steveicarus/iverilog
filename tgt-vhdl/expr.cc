@@ -56,6 +56,12 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
 {
    ivl_signal_t sig = ivl_expr_signal(e);
 
+   // Make sure the nexus code is generated
+   for (unsigned i = ivl_signal_array_base(sig);
+        i < ivl_signal_array_count(sig);
+        i++)
+      seen_nexus(ivl_signal_nex(sig, i));
+   
    const vhdl_scope *scope = find_scope_for_signal(sig);
    assert(scope);
 
