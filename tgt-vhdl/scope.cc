@@ -769,12 +769,13 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
             ivl_nexus_t nex = ivl_signal_nex(sig, i);
             seen_nexus(nex);
             
-            assert(i == 0);   // TODO: Make work for more words
             nexus_private_t *priv =
                static_cast<nexus_private_t*>(ivl_nexus_get_private(nex));
             assert(priv);
 
             if (priv->const_driver) {
+               assert(i == 0);   // TODO: Make work for more words
+               
                cout << "NEEDS CONST DRIVER!" << endl;
                cout << "(in scope " << ivl_scope_name(scope) << endl;
                
