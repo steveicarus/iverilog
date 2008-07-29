@@ -684,37 +684,7 @@ static int draw_module(ivl_scope_t scope, ivl_scope_t parent)
       // example of this module in the hieararchy
       if (parent_ent->get_derived_from() == ivl_scope_name(parent)) {
 
-         vhdl_arch *parent_arch = parent_ent->get_arch();
-         assert(parent_arch != NULL);
          
-         // Create a forward declaration for it
-         if (!parent_arch->get_scope()->have_declared(ent->get_name())) {
-            vhdl_decl *comp_decl = vhdl_component_decl::component_decl_for(ent);
-            parent_arch->get_scope()->add_decl(comp_decl);
-         }
-         
-         // And an instantiation statement
-         string inst_name(ivl_scope_basename(scope));
-         if (inst_name == ent->get_name()) {
-            // Cannot have instance name the same as type in VHDL
-            inst_name += "_Inst";
-         }
-
-         // Need to replace any [ and ] characters that result
-         // from generate statements
-         string::size_type loc = inst_name.find('[', 0);
-         if (loc != string::npos)
-            inst_name.erase(loc, 1);
-
-         loc = inst_name.find(']', 0);
-         if (loc != string::npos)
-            inst_name.erase(loc, 1);         
-                     
-         vhdl_comp_inst *inst =
-            new vhdl_comp_inst(inst_name.c_str(), ent->get_name().c_str());
-         port_map(scope, parent_ent, inst);         
-
-         parent_arch->add_stmt(inst);
       }
       else {
          // Ignore this instantiation (already accounted for)
@@ -869,6 +839,55 @@ static int draw_all_logic_and_lpm(ivl_scope_t scope, void *_parent)
    return ivl_scope_children(scope, draw_all_logic_and_lpm, scope);
 }
 
+static int draw_hierarchy(ivl_scope_t scope, void *_parent)
+{
+   if (ivl_scope_type(scope) == IVL_SCT_MODULE && _parent) {
+      ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
+   
+      vhdl_entity *ent = find_entity(ivl_scope_tname(scope));
+      assert(ent);
+      
+      vhdl_entity *parent_ent = find_entity(ivl_scope_tname(parent));
+      assert(parent_ent);
+
+      if (parent_ent->get_derived_from() == ivl_scope_name(parent)) {
+         vhdl_arch *parent_arch = parent_ent->get_arch();
+         assert(parent_arch != NULL);
+         
+         // Create a forward declaration for it
+         if (!parent_arch->get_scope()->have_declared(ent->get_name())) {
+            vhdl_decl *comp_decl = vhdl_component_decl::component_decl_for(ent);
+            parent_arch->get_scope()->add_decl(comp_decl);
+         }
+         
+         // And an instantiation statement
+         string inst_name(ivl_scope_basename(scope));
+         if (inst_name == ent->get_name()) {
+            // Cannot have instance name the same as type in VHDL
+            inst_name += "_Inst";
+         }
+
+         // Need to replace any [ and ] characters that result
+         // from generate statements
+         string::size_type loc = inst_name.find('[', 0);
+         if (loc != string::npos)
+            inst_name.erase(loc, 1);
+
+         loc = inst_name.find(']', 0);
+         if (loc != string::npos)
+            inst_name.erase(loc, 1);         
+                     
+         vhdl_comp_inst *inst =
+            new vhdl_comp_inst(inst_name.c_str(), ent->get_name().c_str());
+         //port_map(scope, parent_ent, inst);         
+
+         parent_arch->add_stmt(inst);
+      }
+   }   
+
+   return ivl_scope_children(scope, draw_hierarchy, scope);
+}
+
 int draw_scope(ivl_scope_t scope, void *_parent)
 {
    int rc = draw_skeleton_scope(scope, _parent);
@@ -882,6 +901,10 @@ int draw_scope(ivl_scope_t scope, void *_parent)
    rc = draw_all_logic_and_lpm(scope, _parent);
    if (rc != 0)
       return rc;      
+
+   rc = draw_hierarchy(scope, _parent);
+   if (rc != 0)
+      return rc;
    
    return 0;
 }
