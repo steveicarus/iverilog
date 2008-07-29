@@ -123,19 +123,26 @@ enum vhdl_nexus_obj_t {
       (nexus_to_expr(arch_scope, nexus, NEXUS_TO_VAR_REF));
       }*/
 
+
+/*
+ * TODO: COMMENT
+ */
+struct scope_nexus_t {
+   vhdl_scope *scope;
+   ivl_signal_t sig;    // A real signal
+   string tmpname;      // A new temporary signal
+};
+   
+ 
 /*
  * This structure is stored in the private part of each nexus.
- * It stores a signal for each VHDL scope which is connected to
- * that nexus. It's stored as a list so we can use contained_within
- * to allow several nested scopes to reference the same signal.
+ * It stores a scope_nexus_t for each VHDL scope which is
+ * connected to that nexus. It's stored as a list so we can use
+ * contained_within to allow several nested scopes to reference
+ * the same signal.
  */
 struct nexus_private_t {
-   struct scope_signal_map_t {
-      vhdl_scope *scope;
-      ivl_signal_t sig;
-   };
-    
-   list<scope_signal_map_t> signals;
+   list<scope_nexus_t> signals;
    vhdl_expr *const_driver;
 };
 
@@ -145,22 +152,42 @@ struct nexus_private_t {
 static void link_scope_to_nexus_signal(nexus_private_t *priv, vhdl_scope *scope,
                                        ivl_signal_t sig)
 {  
-   nexus_private_t::scope_signal_map_t sigmap = { scope, sig };
+   scope_nexus_t sigmap = { scope, sig, "" };
    priv->signals.push_back(sigmap);
 }
 
 /*
- * Find a signal that is connected to this nexus that is visible
- * in this scope.
+ * Make a temporary the representative of this nexus in scope.
  */
-static ivl_signal_t visible_nexus_signal(nexus_private_t *priv, vhdl_scope *scope)
+static void link_scope_to_nexus_tmp(nexus_private_t *priv, vhdl_scope *scope,
+                                    const string &name)
 {
-   list<nexus_private_t::scope_signal_map_t>::iterator it;
+   scope_nexus_t sigmap = { scope, NULL, name };
+   priv->signals.push_back(sigmap);
+}
+
+/*
+ * Returns the scope_nexus_t of this nexus visible within scope.
+ */
+static scope_nexus_t *visible_nexus(nexus_private_t *priv, vhdl_scope *scope)
+{
+   list<scope_nexus_t>::iterator it;
    for (it = priv->signals.begin(); it != priv->signals.end(); ++it) {
       if (scope->contained_within((*it).scope))
-         return (*it).sig;
+         return &*it;
    }
    return NULL;
+}
+
+/*
+ * Finds the name of the nexus signal within this scope.
+ */
+static string visible_nexus_signal_name(nexus_private_t *priv, vhdl_scope *scope)
+{
+   scope_nexus_t *sn = visible_nexus(priv, scope);
+   assert(sn);
+
+   return sn->sig ? get_renamed_signal(sn->sig) : sn->tmpname;
 }
 
 /*
@@ -183,9 +210,9 @@ void draw_nexus(ivl_nexus_t nexus)
          
          vhdl_scope *scope = find_scope_for_signal(sig);
 
-         ivl_signal_t linked;
-         if ((linked = visible_nexus_signal(priv, scope))) {
-            cout << "...should be linked to " << ivl_signal_name(linked) << endl;
+         if (visible_nexus(priv, scope)) {
+            cout << "...should be linked to "
+                 << visible_nexus_signal_name(priv, scope) << endl;
             assert(false);
          }
          else {
@@ -203,16 +230,16 @@ void draw_nexus(ivl_nexus_t nexus)
       ivl_net_logic_t log;
       ivl_lpm_t lpm;
       ivl_net_const_t con;
-      ivl_signal_t linked;
       if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
          ivl_scope_t log_scope = ivl_logic_scope(log);
          vhdl_scope *vhdl_scope =
             find_entity(ivl_scope_tname(log_scope))->get_arch()->get_scope();
 
          cout << "logic " << ivl_logic_basename(log) << endl;
-         
-         if ((linked = visible_nexus_signal(priv, vhdl_scope))) {
-            cout << "...linked to signal " << ivl_signal_name(linked) << endl;
+
+         if (visible_nexus(priv, vhdl_scope)) {
+            cout << "...linked to signal "
+                 << visible_nexus_signal_name(priv, vhdl_scope) << endl;
          }
          else {
             cout << "...has no signal!" << endl;
@@ -226,12 +253,20 @@ void draw_nexus(ivl_nexus_t nexus)
 
          cout << "LPM " << ivl_lpm_basename(lpm) << endl;
          
-         if ((linked = visible_nexus_signal(priv, vhdl_scope))) {
-            cout << "...linked to signal " << ivl_signal_name(linked) << endl;
+         if (visible_nexus(priv, vhdl_scope)) {
+            cout << "...linked to signal "
+                 << visible_nexus_signal_name(priv, vhdl_scope) << endl;
          }
          else {
-            cout << "...has no signal!" << endl;
-            assert(false);
+            // Create a temporary signal to connect the nexus
+            // TODO: we could avoid this for IVL_LPM_PART_PV
+            vhdl_type *type = vhdl_type::type_for(ivl_lpm_width(lpm),
+                                                  ivl_lpm_signed(lpm) != 0);
+            ostringstream ss;
+            ss << "LPM" << ivl_lpm_basename(lpm);
+            vhdl_scope->add_decl(new vhdl_signal_decl(ss.str().c_str(), type));
+            
+            link_scope_to_nexus_tmp(priv, vhdl_scope, ss.str());
          }
       }
       else if ((con = ivl_nexus_ptr_con(nexus_ptr))) {
@@ -278,23 +313,18 @@ static void seen_nexus(ivl_nexus_t nexus)
     cout << "nexus_to_var_ref " << ivl_nexus_name(nexus) << endl;
 
     seen_nexus(nexus);
-    
+
     nexus_private_t *priv =
        static_cast<nexus_private_t*>(ivl_nexus_get_private(nexus));
-    assert(priv);
-
-    ivl_signal_t sig = visible_nexus_signal(priv, scope);
-    assert(sig);
-
-    const string &renamed = get_renamed_signal(sig);
-
+    string renamed(visible_nexus_signal_name(priv, scope));
+    
     cout << "--> signal " << renamed << endl;
-
+    
     vhdl_decl *decl = scope->get_decl(renamed);
     assert(decl);
-    
+          
     vhdl_type *type = new vhdl_type(*(decl->get_type()));
-    return new vhdl_var_ref(renamed.c_str(), type);
+    return new vhdl_var_ref(renamed.c_str(), type);    
  }
  
 
