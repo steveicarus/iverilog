@@ -20,6 +20,7 @@ int draw_process(ivl_process_t net, void *cd);
 int draw_stmt(vhdl_procedural *proc, stmt_container *container,
               ivl_statement_t stmt);
 int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm);
+void draw_logic(vhdl_arch *arch, ivl_net_logic_t log);
 
 vhdl_expr *translate_expr(ivl_expr_t e);
 vhdl_expr *translate_time_expr(ivl_expr_t e);
