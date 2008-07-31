@@ -3442,6 +3442,8 @@ class NetESFunc  : public NetExpr {
       NetExpr* parm(unsigned idx);
       const NetExpr* parm(unsigned idx) const;
 
+      virtual NetExpr* eval_tree(int prune_to_width = -1);
+
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual bool set_width(unsigned, bool last_chance);

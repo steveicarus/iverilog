@@ -267,3 +267,40 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
       return tmp;
 }
+
+/* Reuse the routine from eval_tree.cc. */
+NetExpr* evaluate_clog2(NetExpr*arg);
+
+NetExpr* PECallFunction::elaborate_pexpr(Design*des, NetScope*scope) const
+{
+	/* For now only $clog2 can be a constant system function. */
+      if (peek_tail_name(path_)[0] == '$') {
+	    if (strcmp(peek_tail_name(path_).str(), "$clog2") == 0) {
+		  if (parms_.count() != 1 || parms_[0] == 0) {
+			cerr << get_fileline() << ": error: $clog2 takes a "
+			                          "single argument." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetExpr*arg = parms_[0]->elaborate_pexpr(des, scope);
+		  eval_expr(arg);
+		  NetExpr*rtn = evaluate_clog2(arg);
+		  delete arg;
+		  if (rtn != 0) {
+			rtn->set_line(*this);
+			return rtn;
+		  }
+	    }
+
+	    cerr << get_fileline() << ": error: this is not a constant "
+	            "system function (" << *this << ")." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+	/* Constant user function code goes here. */
+      cerr << get_fileline() << ": sorry: constant user functions are not "
+                                "currently supported." << endl;
+      des->errors += 1;
+      return 0;
+}
