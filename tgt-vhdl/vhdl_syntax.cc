@@ -278,6 +278,7 @@ vhdl_component_decl *vhdl_component_decl::component_decl_for(vhdl_entity *ent)
 
 void vhdl_component_decl::emit(std::ostream &of, int level) const
 {
+   newline(of, level);
    emit_comment(of, level);
    of << "component " << name_ << " is";
 
@@ -815,6 +816,7 @@ vhdl_function::vhdl_function(const char *name, vhdl_type *ret_type)
 
 void vhdl_function::emit(std::ostream &of, int level) const
 {
+   newline(of, level);
    of << "function " << name_ << " (";
    emit_children<vhdl_decl>(of, scope_.get_decls(), level, ";");
    of << ") ";
@@ -826,7 +828,6 @@ void vhdl_function::emit(std::ostream &of, int level) const
    of << "  return Verilog_Result;";
    newline(of, level);
    of << "end function;";
-   newline(of, level);
 }
 
 void vhdl_param_decl::emit(std::ostream &of, int level) const
