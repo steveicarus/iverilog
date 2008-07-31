@@ -858,6 +858,7 @@ static int define_continue_flag = 0;
 static char *find_arg(char*ptr, char*head, char*arg)
 {
     char *cp = ptr;
+    size_t len = strlen(arg);
 
     while (1) {
         /* Look for a candidate match, just return if none is found. */
@@ -868,7 +869,8 @@ static char *find_arg(char*ptr, char*head, char*arg)
          * match is not in the middle of another identifier.
          */
         if (cp != head &&
-            (isalnum(*(cp-1)) || *(cp-1) == '_' || *(cp-1) == '$')) {
+            (isalnum(*(cp-1)) || *(cp-1) == '_' || *(cp-1) == '$' ||
+             isalnum(*(cp+len)) || *(cp+len) == '_' || *(cp+len) == '$')) {
             cp++;
             continue;
         }
@@ -1470,7 +1472,7 @@ static void do_include()
         fprintf(depend_file, "%s\n", standby->path);
 
     if (line_direct_flag)
-        fprintf(yyout, "\n`line %u \"%s\" 1\n", istack->lineno+1, standby->path);
+        fprintf(yyout, "\n`line 1 \"%s\" 1\n", standby->path);
 
     standby->next = istack;
     standby->stringify_flag = 0;

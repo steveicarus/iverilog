@@ -235,7 +235,7 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       if (dexp == 0) {
 	      /* Constant delay... */
 	    if (number_is_immediate(word_ix, 64, 0)) {
-		  fprintf(vvp_out, "   %%ix/load 3, %lu; address\n",
+		  fprintf(vvp_out, "    %%ix/load 3, %lu; address\n",
 			  get_number_immediate(word_ix));
 	    } else {
 		    /* Calculate array word index into index register 3 */
@@ -298,7 +298,7 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
       ivl_expr_t word_ix = ivl_lval_idx(lval);
       const unsigned long use_word = 0;
 
-      if (ivl_signal_array_count(sig) > 1) {
+      if (ivl_signal_dimensions(sig) > 0) {
 	    assert(word_ix);
 	    assign_to_array_word(sig, word_ix, bit, delay, dexp, part_off_ex, width);
 	    return;
@@ -480,7 +480,7 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
       var = ivl_lval_sig(lval);
       assert(var != 0);
 
-      assert(ivl_signal_array_count(var) == 1);
+      assert(ivl_signal_dimensions(var) == 0);
 
       fprintf(vvp_out, "    %%set/wr v%p_0, %d;\n", var, res);
 
@@ -540,7 +540,7 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
       sig = ivl_lval_sig(lval);
       assert(sig);
  
-      if (ivl_signal_array_count(sig) > 1) {
+      if (ivl_signal_dimensions(sig) > 0) {
 	    word_ix = ivl_lval_idx(lval);
 	    assert(word_ix);
 	    assert(number_is_immediate(word_ix, 8*sizeof(use_word), 0));
@@ -1013,7 +1013,7 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 	    use_rword = get_number_immediate(rword_idx);
       }
 
-      assert(ivl_signal_array_count(rsig) == 1);
+      assert(ivl_signal_dimensions(rsig) == 0);
       use_rword = 0;
 
       fprintf(vvp_out, "    %s/link", command_name);
