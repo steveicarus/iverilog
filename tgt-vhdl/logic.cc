@@ -93,6 +93,11 @@ static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
    arch->add_stmt(cass);
 }
 
+static void udp_logic(vhdl_arch *arch, ivl_udp_t udp)
+{
+
+}
+
 static vhdl_expr *translate_logic_inputs(vhdl_scope *scope, ivl_net_logic_t log)
 {
    switch (ivl_logic_type(log)) {
@@ -126,6 +131,9 @@ void draw_logic(vhdl_arch *arch, ivl_net_logic_t log)
       break;
    case IVL_LO_BUFIF1:
       bufif_logic(arch, log, false);
+      break;
+   case IVL_LO_UDP:
+      udp_logic(arch, ivl_logic_udp(log));
       break;
    default:
       {          
