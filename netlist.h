@@ -68,6 +68,7 @@ class NetTaskDef;
 class NetEvTrig;
 class NetEvWait;
 
+class nature_t;
 
 struct target;
 struct functor_t;
@@ -2871,6 +2872,26 @@ class NetEUFunc  : public NetExpr {
     private: // not implemented
       NetEUFunc(const NetEUFunc&);
       NetEUFunc& operator= (const NetEUFunc&);
+};
+
+/*
+ * A call to a nature access function for a branch.
+ */
+class NetEAccess : public NetExpr {
+
+    public:
+      explicit NetEAccess(nature_t*nat);
+      ~NetEAccess();
+
+      virtual ivl_variable_type_t expr_type() const;
+      virtual void dump(ostream&) const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetEAccess*dup_expr() const;
+      virtual NexusSet* nex_input(bool rem_out = true);
+
+    private:
+      nature_t*nature_;
 };
 
 /*

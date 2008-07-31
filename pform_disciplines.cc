@@ -25,6 +25,7 @@
 
 map<perm_string,nature_t*> natures;
 map<perm_string,discipline_t*> disciplines;
+map<perm_string,nature_t*> access_function_nature;
 
 static perm_string nature_name = perm_string::perm_string();
 static perm_string nature_access = perm_string::perm_string();
@@ -62,9 +63,24 @@ void pform_end_nature(const struct vlltype&loc)
       }
 
       nature_t*tmp = new nature_t(nature_name, nature_access);
+      FILE_NAME(tmp, loc);
+
       natures[nature_name] = tmp;
 
-      FILE_NAME(tmp, loc);
+	// Make sure the access function is not used by multiple
+	// different natures.
+      if (nature_t*dup_access_nat = access_function_nature[nature_access]) {
+	    cerr << tmp->get_fileline() << ": error: "
+		 << "Access function name " << nature_access
+		 << " is already used by nature " << dup_access_nat->name()
+		 << " declared at " << dup_access_nat->get_fileline()
+		 << "." << endl;
+	    error_count += 1;
+      }
+
+	// Map the access functio back to the nature so that
+	// expressions that use the access function can find it.
+      access_function_nature[nature_access] = tmp;
 
       nature_name = perm_string::perm_string();
       nature_access = perm_string::perm_string();

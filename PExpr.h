@@ -731,6 +731,7 @@ class PECallFunction : public PExpr {
       bool check_call_matches_definition_(Design*des, NetScope*dscope) const;
 
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope, int expr_wid) const;
+      NetExpr* elaborate_access_func_(Design*des, NetScope*scope, int expr_wid) const;
       NetNet* elaborate_net_sfunc_(Design*des, NetScope*scope,
 				   unsigned width,
 				   const NetExpr* rise,

@@ -25,6 +25,7 @@
 
 # include  "pform.h"
 # include  "netlist.h"
+# include  "discipline.h"
 # include  "netmisc.h"
 # include  "util.h"
 # include  "ivl_assert.h"
@@ -601,6 +602,26 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
       return fun;
 }
 
+NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
+						int expr_wid) const
+{
+	// Hierarchical names cannot be access functions.
+      if (path_.size() != 1)
+	    return 0;
+
+      perm_string access_name = peek_tail_name(path_);
+      nature_t*nature = access_function_nature[access_name];
+
+	// If the name doesn't match any access functions, then give up.
+      if (nature == 0)
+	    return 0;
+
+      NetEAccess*tmp = new NetEAccess(nature);
+      tmp->set_line(*this);
+
+      return tmp;
+}
+
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					int expr_wid, bool) const
 {
@@ -609,15 +630,21 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 
       NetFuncDef*def = des->find_function(scope, path_);
       if (def == 0) {
+	      // Not a user defined function. Maybe it is an access
+	      // function for a nature? If so then elaborate it that way.
+	    NetExpr*tmp = elaborate_access_func_(des, scope, expr_wid);
+	    if (tmp != 0)
+		  return tmp;
+
 	    cerr << get_fileline() << ": error: No function " << path_ <<
 		  " in this context (" << scope_path(scope) << ")." << endl;
 	    des->errors += 1;
 	    return 0;
       }
-      assert(def);
+      ivl_assert(*this, def);
 
       NetScope*dscope = def->scope();
-      assert(dscope);
+      ivl_assert(*this, dscope);
 
       if (! check_call_matches_definition_(des, dscope))
 	    return 0;

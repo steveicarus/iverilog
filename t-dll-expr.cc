@@ -149,6 +149,15 @@ ivl_expr_t dll_target::expr_from_value_(const verinum&val)
       return expr;
 }
 
+void dll_target::expr_access_func(const NetEAccess*net)
+{
+      assert(expr_ == 0);
+
+      cerr << net->get_fileline() << ": internal error: "
+	   << "Nature access functions not implemented yet." << endl;
+
+}
+
 void dll_target::expr_binary(const NetEBinary*net)
 {
       assert(expr_ == 0);

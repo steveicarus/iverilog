@@ -27,6 +27,7 @@
 # include  <iomanip>
 # include  "netlist.h"
 # include  "compiler.h"
+# include  "discipline.h"
 # include  "ivl_assert.h"
 
 static ostream& operator<< (ostream&o, NetBlock::Type t)
@@ -1180,6 +1181,12 @@ void NetProc::dump(ostream&o, unsigned ind) const
 void NetExpr::dump(ostream&o) const
 {
       o << "(?" << typeid(*this).name() << "?)";
+}
+
+void NetEAccess::dump(ostream&o) const
+{
+      o << nature_->name() << "." << nature_->access() << "(";
+      o << ")";
 }
 
 void NetEBinary::dump(ostream&o) const

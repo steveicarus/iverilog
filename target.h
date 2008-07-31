@@ -105,7 +105,7 @@ struct target_t {
       virtual bool process(const NetProcTop*);
 
 	/* Various kinds of process nodes are dispatched through these. */
-      virtual void proc_assign(const NetAssign*);
+      virtual bool proc_assign(const NetAssign*);
       virtual void proc_assign_nb(const NetAssignNB*);
       virtual bool proc_block(const NetBlock*);
       virtual void proc_case(const NetCase*);
@@ -133,6 +133,7 @@ struct target_t {
    of expressions. */
 struct expr_scan_t {
       virtual ~expr_scan_t();
+      virtual void expr_access_func(const NetEAccess*);
       virtual void expr_const(const NetEConst*);
       virtual void expr_param(const NetEConstParam*);
       virtual void expr_rparam(const NetECRealParam*);

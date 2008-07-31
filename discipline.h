@@ -71,5 +71,7 @@ class discipline_t : public LineInfo {
 
 extern map<perm_string,nature_t*> natures;
 extern map<perm_string,discipline_t*> disciplines;
+  // Map access function name to the nature that it accesses.
+extern map<perm_string,nature_t*> access_function_nature;
 
 #endif

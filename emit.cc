@@ -198,8 +198,7 @@ bool NetProc::emit_proc(struct target_t*tgt) const
 
 bool NetAssign::emit_proc(struct target_t*tgt) const
 {
-      tgt->proc_assign(this);
-      return true;
+      return tgt->proc_assign(this);
 }
 
 bool NetAssignNB::emit_proc(struct target_t*tgt) const
@@ -459,6 +458,11 @@ int Design::emit(struct target_t*tgt) const
 	  return -3;
 
       return rc;
+}
+
+void NetEAccess::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_access_func(this);
 }
 
 void NetEBinary::expr_scan(struct expr_scan_t*tgt) const
