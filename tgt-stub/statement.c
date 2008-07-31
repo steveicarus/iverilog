@@ -264,7 +264,12 @@ void show_statement(ivl_statement_t net, unsigned ind)
 		ivl_statement_t f = ivl_stmt_cond_false(net);
 
 		fprintf(out, "%*sif (...)\n", ind, "");
-		show_expression(ex, ind+4);
+		if (ex) {
+		      show_expression(ex, ind+4);
+		} else {
+		      fprintf(out, "%*sERROR: Condition expression is NIL;\n", ind+4, "");
+		      stub_errors += 1;
+		}
 		if (t)
 		      show_statement(t, ind+4);
 		else
