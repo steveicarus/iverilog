@@ -1371,14 +1371,12 @@ bool of_CVT_RI(vthread_t thr, vvp_code_t cp)
 bool of_CVT_VR(vthread_t thr, vvp_code_t cp)
 {
       double r = thr->words[cp->bit_idx[1]].w_real;
-      long rl = lround(r);
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
-
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    thr_put_bit(thr, base+idx, (rl&1)? BIT4_1 : BIT4_0);
-	    rl >>= 1;
-      }
+      vvp_vector4_t tmp(wid, r);
+	/* Make sure there is enough space for the new vector. */
+      thr_check_addr(thr, base+wid-1);
+      thr->bits4.set_vec(base, tmp);
 
       return true;
 }
