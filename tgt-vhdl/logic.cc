@@ -22,6 +22,7 @@
 #include "vhdl_element.hh"
 
 #include <cassert>
+#include <iostream>
 
  
 /*
@@ -93,9 +94,19 @@ static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
    arch->add_stmt(cass);
 }
 
-static void udp_logic(vhdl_arch *arch, ivl_udp_t udp)
+static void udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
 {
+   ivl_udp_t udp = ivl_logic_udp(log);
+   
+   cout << "UDP " << ivl_udp_name(udp) << " nin="
+        << ivl_udp_nin(udp) << " rows="
+        << ivl_udp_rows(udp) << endl;
 
+   if (ivl_udp_sequ(udp)) {
+      error("Sequential UDP devices not supported yet");
+      return;
+   }
+   
 }
 
 static vhdl_expr *translate_logic_inputs(vhdl_scope *scope, ivl_net_logic_t log)
@@ -133,7 +144,7 @@ void draw_logic(vhdl_arch *arch, ivl_net_logic_t log)
       bufif_logic(arch, log, false);
       break;
    case IVL_LO_UDP:
-      udp_logic(arch, ivl_logic_udp(log));
+      udp_logic(arch, log);
       break;
    default:
       {          
