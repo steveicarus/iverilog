@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,9 +17,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: $"
-#endif
 
 # include "config.h"
 
@@ -50,6 +47,7 @@ bool dll_target::process(const NetProcTop*net)
 	  default:
 	    assert(0);
       }
+      FILE_NAME(obj, net);
 
 	/* Save the scope of the process. */
       obj->scope_ = lookup_scope_(net->scope());
@@ -745,4 +743,3 @@ void dll_target::proc_while(const NetWhile*net)
       net->emit_proc_recurse(this);
       stmt_cur_ = save_cur_;
 }
-

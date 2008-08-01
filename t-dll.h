@@ -539,7 +539,7 @@ struct ivl_parameter_s {
       unsigned lineno;
 };
 /*
- * All we know about a process it its type (initial or always) and the
+ * All we know about a process is its type (initial or always) and the
  * single statement that is it. A process also has a scope, although
  * that generally only matters for VPI calls.
  */
@@ -547,6 +547,8 @@ struct ivl_process_s {
       ivl_process_type_t type_;
       ivl_scope_t scope_;
       ivl_statement_t stmt_;
+      perm_string file;
+      unsigned lineno;
 
       struct ivl_attribute_s*attr;
       unsigned nattr;
@@ -758,6 +760,12 @@ static inline void FILE_NAME(ivl_scope_t scope, const NetScope*info)
 }
 
 static inline void FILE_NAME(ivl_switch_t net, const LineInfo*info)
+{
+      net->file = info->get_file();
+      net->lineno = info->get_lineno();
+}
+
+static inline void FILE_NAME(ivl_process_t net, const LineInfo*info)
 {
       net->file = info->get_file();
       net->lineno = info->get_lineno();
