@@ -144,22 +144,29 @@ static vhdl_expr *ufunc_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 static vhdl_expr *reduction_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm,
                                         support_function_t f, bool invert)
 {
-   require_support_function(f);
-   vhdl_fcall *fcall = new vhdl_fcall(support_function::function_name(f),
-                                      vhdl_type::std_logic());
-
    vhdl_var_ref *ref = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
    if (NULL == ref)
       return NULL;
 
-   vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR);   
-   fcall->add_expr(ref->cast(&std_logic_vector));
-
+   vhdl_expr *result;
+   if (ref->get_type()->get_name() == VHDL_TYPE_STD_LOGIC)
+      result = ref;
+   else {
+      require_support_function(f);
+      vhdl_fcall *fcall = new vhdl_fcall(support_function::function_name(f),
+                                         vhdl_type::std_logic());
+      
+      vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR);   
+      fcall->add_expr(ref->cast(&std_logic_vector));
+      
+      result = fcall;
+   } 
+      
    if (invert)
       return new vhdl_unaryop_expr
-         (VHDL_UNARYOP_NOT, fcall, vhdl_type::std_logic());
+         (VHDL_UNARYOP_NOT, result, vhdl_type::std_logic());
    else
-      return fcall;
+      return result;
 }
 
 static vhdl_expr *sign_extend_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)

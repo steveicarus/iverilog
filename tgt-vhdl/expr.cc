@@ -106,18 +106,26 @@ static vhdl_expr *translate_ulong(ivl_expr_t e)
 static vhdl_expr *translate_reduction(support_function_t f, bool neg,
                                       vhdl_expr *operand)
 {
-   require_support_function(f);
-   vhdl_fcall *fcall =
-      new vhdl_fcall(support_function::function_name(f),
-                     vhdl_type::std_logic());
-   
-   vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR);
-   fcall->add_expr(operand->cast(&std_logic_vector));
+   vhdl_expr *result;
+   if (operand->get_type()->get_name() == VHDL_TYPE_STD_LOGIC)
+      result = operand;
+   else {
+      require_support_function(f);
+      vhdl_fcall *fcall =
+         new vhdl_fcall(support_function::function_name(f),
+                        vhdl_type::std_logic());
+      
+      vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR);
+      fcall->add_expr(operand->cast(&std_logic_vector));
+
+      result = fcall;
+   }
+
    if (neg)
-      return new vhdl_unaryop_expr(VHDL_UNARYOP_NOT, fcall,
+      return new vhdl_unaryop_expr(VHDL_UNARYOP_NOT, result,
                                    vhdl_type::std_logic());
    else
-      return fcall;
+      return result;
 }
 
 static vhdl_expr *translate_unary(ivl_expr_t e)
