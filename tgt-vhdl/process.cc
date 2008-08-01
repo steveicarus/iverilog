@@ -67,8 +67,10 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    const char *type = ivl_process_type(proc) == IVL_PR_INITIAL
       ? "initial" : "always";
    std::ostringstream ss;
-   ss << "Generated from " << type << " process in ";
-   ss << ivl_scope_tname(scope);
+   ss << "Generated from " << type << " process in "
+      << ivl_scope_tname(scope) << " ("
+      << ivl_scope_file(scope) << " line "
+      << ivl_scope_lineno(scope) << ")";
    vhdl_proc->set_comment(ss.str());
 
    set_active_entity(NULL);
