@@ -118,6 +118,10 @@ static vhdl_expr *translate_logic_inputs(vhdl_scope *scope, ivl_net_logic_t log)
       return inputs_to_expr(scope, VHDL_BINOP_AND, log);
    case IVL_LO_OR:
       return inputs_to_expr(scope, VHDL_BINOP_OR, log);
+   case IVL_LO_NAND:
+      return inputs_to_expr(scope, VHDL_BINOP_NAND, log);
+   case IVL_LO_NOR:
+      return inputs_to_expr(scope, VHDL_BINOP_NOR, log);
    case IVL_LO_XOR:
       return inputs_to_expr(scope, VHDL_BINOP_XOR, log);
    case IVL_LO_BUF:
