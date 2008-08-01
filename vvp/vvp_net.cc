@@ -56,6 +56,11 @@ void* vvp_net_t::operator new (size_t size)
       return return_this;
 }
 
+void vvp_net_t::operator delete(void*)
+{
+      assert(0);
+}
+
 void* vvp_net_fun_t::operator new(size_t size)
 {
 	// Link in an initial chunk of space for net_fun_t
