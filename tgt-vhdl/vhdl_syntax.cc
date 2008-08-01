@@ -719,7 +719,8 @@ void vhdl_binop_expr::emit(std::ostream &of, int level) const
    while (++it != operands_.end()) {
       const char* ops[] = {
          "and", "or", "=", "/=", "+", "-", "*", "<",
-         ">", "<=", ">=", "sll", "srl", "xor", "&"
+         ">", "<=", ">=", "sll", "srl", "xor", "&",
+         "nand", "nor", NULL
       };
 
       of << " " << ops[op_] << " ";

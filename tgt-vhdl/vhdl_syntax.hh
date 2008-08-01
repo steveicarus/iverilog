@@ -81,6 +81,8 @@ enum vhdl_binop_t {
    VHDL_BINOP_SR,
    VHDL_BINOP_XOR,
    VHDL_BINOP_CONCAT,
+   VHDL_BINOP_NAND,
+   VHDL_BINOP_NOR,
 };
 
 /*

@@ -296,6 +296,12 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    case 'a':    // Logical AND
       result = translate_logical(lhs, rhs, VHDL_BINOP_AND);
       break;
+   case 'A':    // Bitwise NAND
+      result = translate_numeric(lhs, rhs, VHDL_BINOP_NAND);
+      break;
+   case 'O':    // Bitwise NOR
+      result = translate_numeric(lhs, rhs, VHDL_BINOP_NOR);
+      break;
    case '|':    // Bitwise OR
       result = translate_numeric(lhs, rhs, VHDL_BINOP_OR);
       break;
