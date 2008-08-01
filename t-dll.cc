@@ -30,6 +30,7 @@
 # include  <malloc.h>
 #endif
 # include  <stdlib.h>
+# include  "ivl_assert.h"
 
 #if defined(__WIN32__)
 
@@ -537,6 +538,13 @@ void dll_target::make_scope_param_expr(ivl_parameter_t cur_par, NetExpr*etmp)
 	    expr_->u_.real_.parameter = cur_par;
 
       }
+
+      if (expr_ == 0) {
+	    cerr << etmp->get_fileline() << ": internal error: "
+		 << "Parameter expression not reduced to constant? "
+		 << *etmp << endl;
+      }
+      ivl_assert(*etmp, expr_);
 
       cur_par->value = expr_;
       expr_ = 0;
@@ -1946,7 +1954,7 @@ void dll_target::lpm_mux(const NetMux*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_MUX;
-      obj->name  = net->name(); // The NetMux perallocates its name.
+      obj->name  = net->name(); // The NetMux permallocates its name.
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 

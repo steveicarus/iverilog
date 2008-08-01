@@ -1063,11 +1063,20 @@ void NetScope::dump(ostream&o) const
 
 	/* Dump the saved defparam assignments here. */
       {
-	    map<pform_name_t,NetExpr*>::const_iterator pp;
+	    list<pair<pform_name_t,NetExpr*> >::const_iterator pp;
 	    for (pp = defparams.begin()
 		       ; pp != defparams.end() ;  pp ++ ) {
 		  o << "    defparam " << (*pp).first << " = " <<
 			*(*pp).second << ";" << endl;
+	    }
+      }
+
+      {
+	    list<pair<list<hname_t>,NetExpr*> >::const_iterator pp;
+	    for (pp = defparams_later.begin()
+		       ; pp != defparams_later.end() ;  pp ++ ) {
+		  o << "    defparam(later) " << pp->first << " = " <<
+			*(pp->second) << ";" << endl;
 	    }
       }
 

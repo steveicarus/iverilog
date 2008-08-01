@@ -109,6 +109,21 @@ void vvp_fun_part_pv::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
       vvp_send_vec4_pv(port.ptr()->out, bit, base_, wid_, vwid_);
 }
 
+void vvp_fun_part_pv::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
+{
+      assert(port.port() == 0);
+
+      if (bit.size() != wid_) {
+	    cerr << "internal error: part_pv (strength-aware) data mismatch. "
+		 << "base_=" << base_ << ", wid_=" << wid_
+		 << ", vwid_=" << vwid_ << ", bit=" << bit
+		 << endl;
+      }
+      assert(bit.size() == wid_);
+
+      vvp_send_vec8_pv(port.ptr()->out, bit, base_, wid_, vwid_);
+}
+
 vvp_fun_part_var::vvp_fun_part_var(unsigned w)
 : base_(0), wid_(w)
 {

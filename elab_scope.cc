@@ -181,8 +181,40 @@ static void elaborate_scope_funcs(Design*des, NetScope*scope,
 
 }
 
+class generate_schemes_work_item_t : public elaborator_work_item_t {
+    public:
+      generate_schemes_work_item_t(Design*des, NetScope*scope, Module*mod)
+      : elaborator_work_item_t(des), scope_(scope), mod_(mod)
+      { }
+
+      void elaborate_runrun()
+      {
+	    if (debug_scopes)
+		  cerr << mod_->get_fileline() << ": debug: "
+		       << "Processing generate schemes for "
+		       << scope_path(scope_) << endl;
+
+	      // Generate schemes can create new scopes in the form of
+	      // generated code. Scan the generate schemes, and *generate*
+	      // new scopes, which is slightly different from simple
+	      // elaboration.
+	    typedef list<PGenerate*>::const_iterator generate_it_t;
+	    for (generate_it_t cur = mod_->generate_schemes.begin()
+		       ; cur != mod_->generate_schemes.end() ; cur ++ ) {
+		  (*cur) -> generate_scope(des, scope_);
+	    }
+      }
+
+    private:
+	// The scope_ is the scope that contains the generate scheme
+	// we are to work on. the mod_ is the Module definition for
+	// that scope, and contains the parsed generate schemes.
+      NetScope*scope_;
+      Module*mod_;
+};
+
 bool Module::elaborate_scope(Design*des, NetScope*scope,
-			     const replace_t&replacements) const
+			     const replace_t&replacements)
 {
       if (debug_scopes) {
 	    cerr << get_fileline() << ": debug: Elaborate scope "
@@ -201,8 +233,6 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// place of the elaborated expression.
 
       typedef map<perm_string,param_expr_t>::const_iterator mparm_it_t;
-      typedef map<pform_name_t,PExpr*>::const_iterator pform_parm_it_t;
-
 
 	// This loop scans the parameters in the module, and creates
 	// stub parameter entries in the scope for the parameter name.
@@ -286,15 +316,17 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// here because the parameter receiving the assignment may be
 	// in a scope not discovered by this pass.
 
-      for (pform_parm_it_t cur = defparms.begin()
-		 ; cur != defparms.end() ;  cur ++ ) {
+      while (! defparms.empty()) {
+	    Module::named_expr_t cur = defparms.front();
+	    defparms.pop_front();
 
-	    PExpr*ex = (*cur).second;
+	    PExpr*ex = cur.second;
 	    assert(ex);
 
 	    NetExpr*val = ex->elaborate_pexpr(des, scope);
+	    delete ex;
 	    if (val == 0) continue;
-	    scope->defparams[(*cur).first] = val;
+	    scope->defparams.push_back(make_pair(cur.first, val));
       }
 
 	// Evaluate the attributes. Evaluate them in the scope of the
@@ -307,17 +339,15 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
       delete[]attr;
 
-	// Generate schemes can create new scopes in the form of
-	// generated code. Scan the generate schemes, and *generate*
-	// new scopes, which is slightly different from simple
-	// elaboration.
+	// Generate schemes need to have their scopes elaborated, but
+	// we cannot do that until defparams are run, so push it off
+	// into an elaborate work item.
+      if (debug_scopes)
+	    cerr << get_fileline() << ": debug: "
+		 << "Schedule generates within " << scope_path(scope)
+		 << " for elaboration after defparams." << endl;
 
-      typedef list<PGenerate*>::const_iterator generate_it_t;
-      for (generate_it_t cur = generate_schemes.begin()
-		 ; cur != generate_schemes.end() ; cur ++ ) {
-	    (*cur) -> generate_scope(des, scope);
-      }
-
+      des->elaboration_work_list.push_back(new generate_schemes_work_item_t(des, scope, this));
 
 	// Tasks introduce new scopes, so scan the tasks in this
 	// module. Create a scope for the task and pass that to the
@@ -654,6 +684,41 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
       scope_list_.push_back(scope);
 }
 
+class delayed_elaborate_scope_mod_instances : public elaborator_work_item_t {
+
+    public:
+      delayed_elaborate_scope_mod_instances(Design*des,
+					    const PGModule*obj,
+					    Module*mod,
+					    NetScope*sc)
+      : elaborator_work_item_t(des), obj_(obj), mod_(mod), sc_(sc)
+      { }
+      ~delayed_elaborate_scope_mod_instances() { }
+
+      virtual void elaborate_runrun();
+
+    private:
+      const PGModule*obj_;
+      Module*mod_;
+      NetScope*sc_;
+};
+
+void delayed_elaborate_scope_mod_instances::elaborate_runrun()
+{
+      if (debug_scopes)
+	    cerr << obj_->get_fileline() << ": debug: "
+		 << "Resume scope elaboration of instances of "
+		 << mod_->mod_name() << "." << endl;
+
+      obj_->elaborate_scope_mod_instances_(des, mod_, sc_);
+}
+
+/*
+ * Here we handle the elaborate scope of a module instance. The caller
+ * has already figured out that this "gate" is a module, and has found
+ * the module definition. The "sc" argument is the scope that will
+ * contain this instance.
+ */
 void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 {
       if (get_name() == "") {
@@ -700,6 +765,36 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	    return;
       }
 
+      if (msb_ || lsb_) {
+	      // If there are expressions to evaluate in order to know
+	      // the actual number of instances that will be
+	      // instantiated, then we have to delay further scope
+	      // elaboration until after defparams (above me) are
+	      // run. Do that by appending a work item to the
+	      // elaboration work list.
+	    if (debug_scopes)
+		  cerr << get_fileline() << ": debug: delay elaborate_scope"
+		       << " of array of " << get_name()
+		       << " in scope " << scope_path(sc) << "." << endl;
+
+	    elaborator_work_item_t*tmp
+		  = new delayed_elaborate_scope_mod_instances(des, this, mod, sc);
+	    des->elaboration_work_list.push_back(tmp);
+
+      } else {
+	      // If there are no expressions that need to be evaluated
+	      // to elaborate the scope of this next instances, then
+	      // get right to it.
+	    elaborate_scope_mod_instances_(des, mod, sc);
+      }
+}
+
+/*
+ * This method is called to process a module instantiation after basic
+ * sanity testing is already complete.
+ */
+void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*sc) const
+{
       NetExpr*mse = msb_ ? elab_and_eval(des, sc, msb_, -1) : 0;
       NetExpr*lse = lsb_ ? elab_and_eval(des, sc, lsb_, -1) : 0;
       NetEConst*msb = dynamic_cast<NetEConst*> (mse);

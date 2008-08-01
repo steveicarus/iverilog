@@ -1,7 +1,7 @@
 #ifndef __PGate_H
 #define __PGate_H
 /*
- * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: PGate.h,v 1.32 2006/04/10 00:37:42 steve Exp $"
-#endif
 
 # include  "svector.h"
 # include  "StringHeap.h"
@@ -232,9 +229,11 @@ class PGModule  : public PGate {
       PExpr*msb_;
       PExpr*lsb_;
 
+      friend class delayed_elaborate_scope_mod_instances;
       void elaborate_mod_(Design*, Module*mod, NetScope*scope) const;
       void elaborate_udp_(Design*, PUdp  *udp, NetScope*scope) const;
       void elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const;
+      void elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*sc) const;
       bool elaborate_sig_mod_(Design*des, NetScope*scope, Module*mod) const;
       bool elaborate_sig_udp_(Design*des, NetScope*scope, PUdp*udp) const;
 

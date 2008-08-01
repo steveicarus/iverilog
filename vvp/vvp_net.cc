@@ -373,9 +373,10 @@ vvp_vector4_t::vvp_vector4_t(unsigned size, double val)
 	    return;
       }
 
-	/* We return 'b1 for + or - infinity. */
+	/* We return 'b1 for + infinity or 'b0 for - infinity. */
       if (val && (val == 0.5*val)) {
-	    allocate_words_(size, WORD_1_ABITS, WORD_1_BBITS);
+	    if (val > 0) allocate_words_(size, WORD_1_ABITS, WORD_1_BBITS);
+	    else allocate_words_(size, WORD_0_ABITS, WORD_0_BBITS);
 	    return;
       }
 
@@ -1133,10 +1134,12 @@ ostream& operator<< (ostream&out, const vvp_vector4_t&that)
       return out;
 }
 
-bool vector4_to_value(const vvp_vector4_t&vec, long&val, bool is_signed)
+bool vector4_to_value(const vvp_vector4_t&vec, long&val,
+		      bool is_signed, bool is_arithmetic)
 {
       long res = 0;
       long msk = 1;
+      bool rc_flag = true;
 
       for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
 	    switch (vec.value(idx)) {
@@ -1146,7 +1149,10 @@ bool vector4_to_value(const vvp_vector4_t&vec, long&val, bool is_signed)
 		  res |= msk;
 		  break;
 		default:
-		  return false;
+		  if (is_arithmetic)
+			return false;
+		  else
+			rc_flag = false;
 	    }
 
 	    msk <<= 1L;
@@ -1158,7 +1164,7 @@ bool vector4_to_value(const vvp_vector4_t&vec, long&val, bool is_signed)
       }
 
       val = res;
-      return true;
+      return rc_flag;
 }
 
 bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
@@ -2118,7 +2124,16 @@ void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bits,
 				 unsigned base, unsigned wid, unsigned vwid)
 {
       cerr << "internal error: " << typeid(*this).name() << ": "
-	   << "recv_vect_pv(" << bits << ", " << base
+	   << "recv_vec4_pv(" << bits << ", " << base
+	   << ", " << wid << ", " << vwid << ") not implemented" << endl;
+      assert(0);
+}
+
+void vvp_net_fun_t::recv_vec8_pv(vvp_net_ptr_t, const vvp_vector8_t&bits,
+				 unsigned base, unsigned wid, unsigned vwid)
+{
+      cerr << "internal error: " << typeid(*this).name() << ": "
+	   << "recv_vec8_pv(" << bits << ", " << base
 	   << ", " << wid << ", " << vwid << ") not implemented" << endl;
       assert(0);
 }
@@ -2395,6 +2410,12 @@ void vvp_fun_signal::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 	    assert(0);
 	    break;
       }
+}
+
+void vvp_fun_signal::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
+				  unsigned base, unsigned wid, unsigned vwid)
+{
+      recv_vec4_pv(ptr, reduce4(bit), base, wid, vwid);
 }
 
 void vvp_fun_signal::calculate_output_(vvp_net_ptr_t ptr)

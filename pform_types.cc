@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,17 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_types.cc,v 1.1 2007/05/24 04:07:12 steve Exp $"
-#endif
 
 
 # include  "pform_types.h"
-
-bool operator < (const name_component_t&lef, const name_component_t&rig)
-{
-      if (lef.name < rig.name)
-	    return true;
-
-      return false;
-}

@@ -97,6 +97,24 @@ void resolv_functor::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
       vvp_send_vec8(ptr->out, out);
 }
 
+void resolv_functor::recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
+				  unsigned base, unsigned wid, unsigned vwid)
+{
+      assert(bit.size() == wid);
+      vvp_vector8_t res (vwid);
+
+      for (unsigned idx = 0 ;  idx < base ;  idx += 1)
+	    res.set_bit(idx, vvp_scalar_t());
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+	    res.set_bit(idx+base, bit.value(idx));
+
+      for (unsigned idx = base+wid ;  idx < vwid ;  idx += 1)
+	    res.set_bit(idx, vvp_scalar_t());
+
+      recv_vec8(port, res);
+}
+
 resolv_wired_logic::resolv_wired_logic()
 {
 }

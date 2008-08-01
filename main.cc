@@ -54,6 +54,7 @@ const char NOTICE[] =
 #endif
 # include  "pform.h"
 # include  "parse_api.h"
+# include  "PGenerate.h"
 # include  "netlist.h"
 # include  "target.h"
 # include  "compiler.h"
@@ -271,6 +272,9 @@ static void parm_to_flagmap(const string&flag)
 
       flags[key] = value;
 }
+
+static void find_module_mention(map<perm_string,bool>&check_map, Module*m);
+static void find_module_mention(map<perm_string,bool>&check_map, PGenerate*s);
 
 /*
  * Read the contents of a config file. This file is a temporary
@@ -729,15 +733,7 @@ int main(int argc, char*argv[])
 	    for (mod = pform_modules.begin()
 		       ; mod != pform_modules.end()
 		       ; mod++) {
-		  list<PGate*> gates = (*mod).second->get_gates();
-		  list<PGate*>::const_iterator gate;
-		  for (gate = gates.begin(); gate != gates.end(); gate++) {
-			PGModule *mod = dynamic_cast<PGModule*>(*gate);
-			if (mod) {
-			      // Note that this module has been instantiated
-			      mentioned_p[mod->get_type()] = true;
-			}
-		  }
+		  find_module_mention(mentioned_p, mod->second);
 	    }
 
 	    for (mod = pform_modules.begin()
@@ -906,4 +902,41 @@ int main(int argc, char*argv[])
       }
 
       return des? des->errors : 1;
+}
+
+static void find_module_mention(map<perm_string,bool>&check_map, Module*mod)
+{
+      list<PGate*> gates = mod->get_gates();
+      list<PGate*>::const_iterator gate;
+      for (gate = gates.begin(); gate != gates.end(); gate++) {
+	    PGModule*tmp = dynamic_cast<PGModule*>(*gate);
+	    if (tmp) {
+		    // Note that this module has been instantiated
+		  check_map[tmp->get_type()] = true;
+	    }
+      }
+
+      list<PGenerate*>::const_iterator cur;
+      for (cur = mod->generate_schemes.begin()
+		 ; cur != mod->generate_schemes.end() ; cur ++) {
+	    find_module_mention(check_map, *cur);
+      }
+}
+
+static void find_module_mention(map<perm_string,bool>&check_map, PGenerate*schm)
+{
+      list<PGate*>::const_iterator gate;
+      for (gate = schm->gates.begin(); gate != schm->gates.end(); gate++) {
+	    PGModule*tmp = dynamic_cast<PGModule*>(*gate);
+	    if (tmp) {
+		    // Note that this module has been instantiated
+		  check_map[tmp->get_type()] = true;
+	    }
+      }
+
+      list<PGenerate*>::const_iterator cur;
+      for (cur = schm->generate_schemes.begin()
+		 ; cur != schm->generate_schemes.end() ; cur ++) {
+	    find_module_mention(check_map, *cur);
+      }
 }

@@ -1158,7 +1158,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 		    /* Input to module. elaborate the expression to
 		       the desired width. If this in an instance
-		       array, then let the net determine it's own
+		       array, then let the net determine its own
 		       width. We use that, then, to decide how to hook
 		       it up.
 
@@ -2954,7 +2954,7 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
       dev = new NetForce(lval, rexp);
 
       if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: ELaborate force,"
+	    cerr << get_fileline() << ": debug: Elaborate force,"
 		 << " lval width=" << lval->lwidth()
 		 << " rval width=" << rexp->expr_width()
 		 << " rval=" << *rexp
@@ -3775,6 +3775,82 @@ struct root_elem {
       NetScope *scope;
 };
 
+class elaborate_root_scope_t : public elaborator_work_item_t {
+    public:
+      elaborate_root_scope_t(Design*des, NetScope*scope, Module*rmod)
+      : elaborator_work_item_t(des), scope_(scope), rmod_(rmod)
+      { }
+
+      ~elaborate_root_scope_t() { }
+
+      virtual void elaborate_runrun()
+      {
+	    Module::replace_t stub;
+	    if (! rmod_->elaborate_scope(des, scope_, stub))
+		  des->errors += 1;
+      }
+
+    private:
+      NetScope*scope_;
+      Module*rmod_;
+};
+
+class top_defparams : public elaborator_work_item_t {
+    public:
+      top_defparams(Design*des)
+      : elaborator_work_item_t(des)
+      { }
+
+      ~top_defparams() { }
+
+      virtual void elaborate_runrun()
+      {
+	      // This method recurses through the scopes, looking for
+	      // defparam assignments to apply to the parameters in the
+	      // various scopes. This needs to be done after all the scopes
+	      // and basic parameters are taken care of because the defparam
+	      // can assign to a parameter declared *after* it.
+	    des->run_defparams();
+
+	      // At this point, all parameter overrides are done. Scan the
+	      // scopes and evaluate the parameters all the way down to
+	      // constants.
+	    des->evaluate_parameters();
+      }
+};
+
+class later_defparams : public elaborator_work_item_t {
+    public:
+      later_defparams(Design*des)
+      : elaborator_work_item_t(des)
+      { }
+
+      ~later_defparams() { }
+
+      virtual void elaborate_runrun()
+      {
+	    list<NetScope*>tmp_list;
+	    for (set<NetScope*>::iterator cur = des->defparams_later.begin()
+		       ; cur != des->defparams_later.end() ; cur ++ )
+		  tmp_list.push_back(*cur);
+
+	    des->defparams_later.clear();
+
+	    while (! tmp_list.empty()) {
+		  NetScope*cur = tmp_list.front();
+		  tmp_list.pop_front();
+		  cur->run_defparams_later(des);
+	    }
+	    des->evaluate_parameters();
+      }
+};
+
+/*
+ * This function is the root of all elaboration. The input is the list
+ * of root module names. The function locates the Module definitions
+ * for each root, does the whole elaboration sequence, and fills in
+ * the resulting Design.
+ */
 Design* elaborate(list<perm_string>roots)
 {
       svector<root_elem*> root_elems(roots.size());
@@ -3785,7 +3861,7 @@ Design* elaborate(list<perm_string>roots)
 	// module and elaborate what I find.
       Design*des = new Design;
 
-	// Scan the root modules, and elaborate their scopes.
+	// Scan the root modules by name, and elaborate their scopes.
       for (list<perm_string>::const_iterator root = roots.begin()
 		 ; root != roots.end()
 		 ; root++) {
@@ -3804,46 +3880,73 @@ Design* elaborate(list<perm_string>roots)
 	      // Get the module definition for this root instance.
 	    Module *rmod = (*mod).second;
 
-	      // Make the root scope.
+	      // Make the root scope. This makes a NetScoep object and
+	      // pushes it into the list of root scopes in the Design.
 	    NetScope*scope = des->make_root_scope(*root);
+
+	      // Collect some basic properties of this scope from the
+	      // Module definition.
 	    scope->set_line(rmod);
 	    scope->time_unit(rmod->time_unit);
 	    scope->time_precision(rmod->time_precision);
 	    scope->default_nettype(rmod->default_nettype);
 	    des->set_precision(rmod->time_precision);
 
-	    Module::replace_t stub;
 
-	      // Recursively elaborate from this root scope down. This
-	      // does a lot of the grunt work of creating sub-scopes, etc.
-	    if (! rmod->elaborate_scope(des, scope, stub)) {
-		  delete des;
-		  return 0;
-	    }
-
+	      // Save this scope, along with its defintion, in the
+	      // "root_elems" list for later passes.
 	    struct root_elem *r = new struct root_elem;
 	    r->mod = rmod;
 	    r->scope = scope;
 	    root_elems[i++] = r;
+
+	      // Arrange for these scopes to be elaborated as root
+	      // scopes. Create an "elaborate_root_scope" object to
+	      // contain the work item, and append it to the scope
+	      // elaborations work list.
+	    elaborator_work_item_t*es = new elaborate_root_scope_t(des, scope, rmod);
+	    des->elaboration_work_list.push_back(es);
       }
+
+	// After the work items for the root scope elaboration, push a
+	// work item to process the defparams.
+      des->elaboration_work_list.push_back(new top_defparams(des));
+
+	// Run the work list of scope elaborations until the list is
+	// empty. This list is initially populated above where the
+	// initial root scopes are primed.
+      while (! des->elaboration_work_list.empty()) {
+	      // Transfer the queue to a temporary queue.
+	    list<elaborator_work_item_t*> cur_queue;
+	    while (! des->elaboration_work_list.empty()) {
+		  cur_queue.push_back(des->elaboration_work_list.front());
+		  des->elaboration_work_list.pop_front();
+	    }
+
+	      // Run from the temporary queue. If the temporary queue
+	      // items create new work queue items, they will show up
+	      // in the elaboration_work_list and then we get to run
+	      // through them in the next pass.
+	    while (! cur_queue.empty()) {
+		  elaborator_work_item_t*tmp = cur_queue.front();
+		  cur_queue.pop_front();
+		  tmp->elaborate_runrun();
+		  delete tmp;
+	    }
+
+	    if (! des->elaboration_work_list.empty()) {
+		  des->elaboration_work_list.push_back(new later_defparams(des));
+	    }
+      }
+
+	// Look for residual defparams (that point to a non-existent
+	// scope) and clean them out.
+      des->residual_defparams();
 
 	// Errors already? Probably missing root modules. Just give up
 	// now and return nothing.
       if (des->errors > 0)
 	    return des;
-
-	// This method recurses through the scopes, looking for
-	// defparam assignments to apply to the parameters in the
-	// various scopes. This needs to be done after all the scopes
-	// and basic parameters are taken care of because the defparam
-	// can assign to a parameter declared *after* it.
-      des->run_defparams();
-
-
-	// At this point, all parameter overrides are done. Scan the
-	// scopes and evaluate the parameters all the way down to
-	// constants.
-      des->evaluate_parameters();
 
 	// With the parameters evaluated down to constants, we have
 	// what we need to elaborate signals and memories. This pass

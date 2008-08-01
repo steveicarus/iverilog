@@ -326,7 +326,7 @@ static int draw_signal_real_real(ivl_expr_t exp)
       int res = allocate_word();
       unsigned long word = 0;
 
-      if (ivl_signal_array_count(sig) > 1) {
+      if (ivl_signal_dimensions(sig) > 0) {
 	    ivl_expr_t ix = ivl_expr_oper1(exp);
 	    if (!number_is_immediate(ix, 8*sizeof(word), 0)) {
 		    /* XXXX Need to generate a %load/ar instruction. */

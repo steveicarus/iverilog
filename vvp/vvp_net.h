@@ -381,8 +381,15 @@ template <class T> extern T coerce_to_width(const T&that, unsigned width);
  * place (this follows the rules of Verilog conversions from vector4
  * to real and integers) and the return value becomes false to
  * indicate an error.
+ *
+ * The "is_arithmetic" flag true will cause a result to be entirely 0
+ * if any bits are X/Z. That is normally what you want if this value
+ * is in the midst of an arithmetic expression. If is_arithmetic=false
+ * then the X/Z bits will be replaced with 0 bits, and the return
+ * value will be "false", but the other bits will be transferred. This
+ * is what you want if you are doing "vpi_get_value", for example.
  */
-extern bool vector4_to_value(const vvp_vector4_t&a, long&val, bool is_signed);
+extern bool vector4_to_value(const vvp_vector4_t&a, long&val, bool is_signed, bool is_arithmetic =true);
 extern bool vector4_to_value(const vvp_vector4_t&a, unsigned long&val);
 extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
 
@@ -863,6 +870,8 @@ class vvp_net_fun_t {
 	// Part select variants of above
       virtual void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
 				unsigned base, unsigned wid, unsigned vwid);
+      virtual void recv_vec8_pv(vvp_net_ptr_t p, const vvp_vector8_t&bit,
+				unsigned base, unsigned wid, unsigned vwid);
       virtual void recv_long_pv(vvp_net_ptr_t port, long bit,
                                 unsigned base, unsigned wid);
 
@@ -1107,6 +1116,8 @@ class vvp_fun_signal  : public vvp_fun_signal_vec {
 	// Part select variants of above
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 			unsigned base, unsigned wid, unsigned vwid);
+      void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
+			unsigned base, unsigned wid, unsigned vwid);
 
 	// Get information about the vector value.
       unsigned   size() const;
@@ -1308,6 +1319,19 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 
 	    if (cur->fun)
 		  cur->fun->recv_vec4_pv(ptr, val, base, wid, vwid);
+
+	    ptr = next;
+      }
+}
+
+inline void vvp_send_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&val,
+		      unsigned base, unsigned wid, unsigned vwid)
+{
+      while (struct vvp_net_t*cur = ptr.ptr()) {
+	    vvp_net_ptr_t next = cur->port[ptr.port()];
+
+	    if (cur->fun)
+		  cur->fun->recv_vec8_pv(ptr, val, base, wid, vwid);
 
 	    ptr = next;
       }

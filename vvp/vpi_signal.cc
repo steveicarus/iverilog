@@ -298,8 +298,7 @@ static void format_vpiIntVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
 {
       vvp_vector4_t sub = sig->vec4_value().subvalue(base, wid);
       long val = 0;
-      bool flag = vector4_to_value(sub, val, signed_flag);
-      if (! flag) val = 0;
+      vector4_to_value(sub, val, signed_flag, false);
       vp->value.integer = val;
 }
 
