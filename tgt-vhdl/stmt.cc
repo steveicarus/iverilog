@@ -92,48 +92,13 @@ static int draw_block(vhdl_procedural *proc, stmt_container *container,
 }
 
 /*
- * A no-op statement. This corresponds to a `null' statement in
- * VHDL.
+ * A no-op statement. This corresponds to a `null' statement in VHDL.
  */
 static int draw_noop(vhdl_procedural *proc, stmt_container *container,
                      ivl_statement_t stmt)
 {
    container->add_stmt(new vhdl_null_stmt());
    return 0;
-}
-
-static vhdl_expr *make_assign_rhs(ivl_signal_t sig, vhdl_scope *scope,
-                                  ivl_expr_t e, vhdl_expr *base,
-                                  int lval_width)
-{
-   string signame(get_renamed_signal(sig));
-
-   vhdl_decl *decl = scope->get_decl(signame);
-   assert(decl);
-
-   vhdl_expr *rhs = translate_expr(e);
-   if (rhs == NULL)
-      return rhs;
-   
-   if (base == NULL)
-      return rhs->cast(decl->get_type());
-   else if (decl->get_type()->get_name() == VHDL_TYPE_ARRAY)
-      return rhs->cast(decl->get_type()->get_base());
-   else {
-      // Doesn't make sense to part select on something that's
-      // not a vector
-      vhdl_type_name_t tname = decl->get_type()->get_name();
-      assert(tname == VHDL_TYPE_SIGNED || tname == VHDL_TYPE_UNSIGNED);
-
-      if (lval_width == 1) {
-         vhdl_type t(VHDL_TYPE_STD_LOGIC);
-         return rhs->cast(&t);
-      }
-      else {
-         vhdl_type t(tname, lval_width - 1);
-         return rhs->cast(&t);
-      }  
-   }
 }
 
 static vhdl_var_ref *make_assign_lhs(ivl_signal_t sig, vhdl_scope *scope,
@@ -154,6 +119,41 @@ static vhdl_var_ref *make_assign_lhs(ivl_signal_t sig, vhdl_scope *scope,
    return lval_ref;
 }
 
+static bool assignment_lvals(ivl_statement_t stmt, vhdl_procedural *proc,
+                             list<vhdl_var_ref*> &lvals)
+{
+   int nlvals = ivl_stmt_lvals(stmt);
+   for (int i = 0; i < nlvals; i++) {
+      ivl_lval_t lval = ivl_stmt_lval(stmt, i);
+      
+      ivl_signal_t sig = ivl_lval_sig(lval);
+      if (!sig) {
+         error("Only signals as lvals supported at the moment");
+         return false;
+      }
+
+      vhdl_expr *base = NULL;
+      ivl_expr_t e_off = ivl_lval_part_off(lval);
+      if (NULL == e_off)
+         e_off = ivl_lval_idx(lval);
+      if (e_off) {
+         if ((base = translate_expr(e_off)) == NULL)
+            return false;
+         
+         vhdl_type integer(VHDL_TYPE_INTEGER);
+         base = base->cast(&integer);
+      }
+
+      unsigned lval_width = ivl_lval_width(lval);
+      
+      string signame(get_renamed_signal(sig));
+
+      lvals.push_back(make_assign_lhs(sig, proc->get_scope(), base, lval_width));
+   }
+
+   return true;
+}
+
 /*
  * Generate an assignment of type T for the Verilog statement stmt.
  */
@@ -161,90 +161,64 @@ template <class T>
 void make_assignment(vhdl_procedural *proc, stmt_container *container,
                      ivl_statement_t stmt, bool blocking, vhdl_expr *after)
 {
-   int nlvals = ivl_stmt_lvals(stmt);
-   if (nlvals != 1) {
-      error("Can only have 1 lval at the moment (found %d)", nlvals);
-      return;
-   }
-
-   vhdl_expr *rhs = translate_expr(ivl_stmt_rval(stmt));
-   //      make_assign_rhs(sig, proc->get_scope(), rval, base, lval_width);
-   if (NULL == rhs)
+   list<vhdl_var_ref*> lvals;
+   if (!assignment_lvals(stmt, proc, lvals))
       return;
 
-   for (int i = 0; i < nlvals; i++) {
+   vhdl_expr *rhs;
+   if ((rhs = translate_expr(ivl_stmt_rval(stmt))) == NULL)
+      return;
+
+   if (lvals.size() == 1) {
+      vhdl_var_ref *lhs = lvals.front();
+      rhs = rhs->cast(lhs->get_type());
+
+      // Where possible, move constant assignments into the
+      // declaration as initializers. This optimisation is only
+      // performed on assignments of constant values to prevent
+      // ordering problems.
+      
+      // This also has another application: If this is an `inital'
+      // process and we haven't yet generated a `wait' statement then
+      // moving the assignment to the initialization preserves the
+      // expected Verilog behaviour: VHDL does not distinguish
+      // `initial' and `always' processes so an `always' process might
+      // be activatated before an `initial' process at time 0. The
+      // `always' process may then use the uninitialized signal value.
+      // The second test ensures that we only try to initialise
+      // internal signals not ports
       ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
-      ivl_signal_t sig;
-      if ((sig = ivl_lval_sig(lval))) {
-         
-         vhdl_expr *base = NULL;
-         ivl_expr_t e_off = ivl_lval_part_off(lval);
-         if (NULL == e_off)
-            e_off = ivl_lval_idx(lval);
-         if (e_off) {
-            if ((base = translate_expr(e_off)) == NULL)
-               return;
+      vhdl_decl *decl = proc->get_scope()->get_decl(lhs->get_name());
+      if (proc->get_scope()->initializing()
+          && ivl_signal_port(ivl_lval_sig(lval)) == IVL_SIP_NONE
+          && !decl->has_initial()
+          && rhs->constant()
+          && decl->get_type()->get_name() != VHDL_TYPE_ARRAY) {
             
-            vhdl_type integer(VHDL_TYPE_INTEGER);
-            base = base->cast(&integer);
+         // If this assignment is not in the top-level container
+         // it will not be made on all paths through the code
+         // This precludes any future extraction of an initialiser
+         if (container != proc->get_container())
+            decl->set_initial(NULL);   // Default initial value
+         else {
+            decl->set_initial(rhs);
+            delete lhs;
+            return;
          }
-         
-         unsigned lval_width = ivl_lval_width(lval);
-      
-         string signame(get_renamed_signal(sig));
-         vhdl_decl *decl = proc->get_scope()->get_decl(signame);
-         
-         // Where possible, move constant assignments into the
-         // declaration as initializers. This optimisation is only
-         // performed on assignments of constant values to prevent
-         // ordering problems.
-      
-         // This also has another application: If this is an `inital'
-         // process and we haven't yet generated a `wait' statement then
-         // moving the assignment to the initialization preserves the
-         // expected Verilog behaviour: VHDL does not distinguish
-         // `initial' and `always' processes so an `always' process might
-         // be activatated before an `initial' process at time 0. The
-         // `always' process may then use the uninitialized signal value.
-         // The second test ensures that we only try to initialise
-         // internal signals not ports
-         if (proc->get_scope()->initializing()
-             && ivl_signal_port(sig) == IVL_SIP_NONE
-             && !decl->has_initial()
-             && rhs->constant()
-             && decl->get_type()->get_name() != VHDL_TYPE_ARRAY
-             && nlvals == 1) {
-            
-            // If this assignment is not in the top-level container
-            // it will not be made on all paths through the code
-            // This precludes any future extraction of an initialiser
-            if (container != proc->get_container())
-               decl->set_initial(NULL);   // Default initial value
-            else {
-               decl->set_initial(rhs);
-               return;
-            }
-         }
-         
-         vhdl_var_ref *lval_ref =
-            make_assign_lhs(sig, proc->get_scope(), base, lval_width);
-      
-         T *a = new T(lval_ref, rhs);
-         container->add_stmt(a);
-      
-         ivl_expr_t i_delay;
-         if (NULL == after && (i_delay = ivl_stmt_delay_expr(stmt)))
-            after = translate_time_expr(i_delay);
-         
-         if (after != NULL)
-            a->set_after(after);
-         
-         return;
       }
-      else {
-         error("Only signals as lvals supported at the moment");
-         return;
-      }
+
+      T *a = new T(lhs, rhs);
+      container->add_stmt(a);
+      
+      ivl_expr_t i_delay;
+      if (NULL == after && (i_delay = ivl_stmt_delay_expr(stmt)))
+         after = translate_time_expr(i_delay);
+      
+      if (after != NULL)
+         a->set_after(after);
+   }
+   else {
+      assert(false);
    }
 }
 
