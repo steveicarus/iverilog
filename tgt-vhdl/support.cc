@@ -61,6 +61,10 @@ vhdl_type *support_function::function_type(support_function_t type)
    case SF_REDUCE_XOR:
    case SF_TERNARY_LOGIC:
       return vhdl_type::std_logic();
+   case SF_TERNARY_SIGNED:
+      return new vhdl_type(VHDL_TYPE_SIGNED);
+   case SF_TERNARY_UNSIGNED:
+      return new vhdl_type(VHDL_TYPE_UNSIGNED);
    case SF_LOGIC_TO_INTEGER:
       return vhdl_type::integer();
    default:
@@ -76,7 +80,7 @@ void support_function::emit_ternary(std::ostream &of, int level) const
 
 void support_function::emit(std::ostream &of, int level) const
 {
-   of << "function " << function_name(type_);
+   of << nl_string(level) << "function " << function_name(type_);
    
    switch (type_) {
    case SF_UNSIGNED_TO_BOOLEAN:
@@ -137,7 +141,7 @@ void support_function::emit(std::ostream &of, int level) const
       emit_ternary(of, level);
       break;
    case SF_TERNARY_UNSIGNED:
-      of << "(T : Boolean; X, Y : signed) return unsigned is";
+      of << "(T : Boolean; X, Y : unsigned) return unsigned is";
       emit_ternary(of, level);
       break;
    case SF_LOGIC_TO_INTEGER:
@@ -149,5 +153,5 @@ void support_function::emit(std::ostream &of, int level) const
       assert(false);
    }
    
-   of << nl_string(level) << "end function;" << nl_string(level);
+   of << nl_string(level) << "end function;";
 }
