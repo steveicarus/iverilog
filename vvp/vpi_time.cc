@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -168,8 +168,7 @@ static vpiHandle timevar_handle(int code, vpiHandle ref)
       }
 }
 
-
-static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
+static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func)
 {
 	/* Keep a persistent structure for passing time values back to
 	   the caller. */
@@ -210,11 +209,13 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiRealVal:
-	      /* Oops, in this case I want a double power of 10 to do
-		 the scaling, instead of the integer scaling done
-		 everywhere else. */
-	    vp->value.real = vpip_time_to_scaled_real(schedule_simtime(),
-						      rfp->scope);
+	      /* If this is an integer based call (anything but $realtime)
+	       * just return the value as a double. */
+	    if (is_int_func)  vp->value.real = double (simtime);
+	      /* This is a call to $realtime to return a real value so
+	       * scale this using the scaled real rules. */
+	    else vp->value.real = vpip_time_to_scaled_real(schedule_simtime(),
+						           rfp->scope);
 	    break;
 
 	  case vpiBinStrVal:
@@ -251,11 +252,21 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
       }
 }
 
+static void timevar_get_ivalue(vpiHandle ref, s_vpi_value*vp)
+{
+      timevar_get_value(ref, vp, true);
+}
+
+static void timevar_get_rvalue(vpiHandle ref, s_vpi_value*vp)
+{
+      timevar_get_value(ref, vp, false);
+}
+
 static const struct __vpirt vpip_system_time_rt = {
       vpiSysFuncCall,
       timevar_time_get,
       timevar_time_get_str,
-      timevar_get_value,
+      timevar_get_ivalue,
       0,
       timevar_handle,
       0
@@ -265,7 +276,7 @@ static const struct __vpirt vpip_system_simtime_rt = {
       vpiSysFuncCall,
       timevar_time_get,
       timevar_simtime_get_str,
-      timevar_get_value,
+      timevar_get_ivalue,
       0,
       timevar_handle,
       0
@@ -275,7 +286,7 @@ static const struct __vpirt vpip_system_realtime_rt = {
       vpiSysFuncCall,
       timevar_realtime_get,
       timevar_realtime_get_str,
-      timevar_get_value,
+      timevar_get_rvalue,
       0,
       timevar_handle,
       0
@@ -315,4 +326,3 @@ void vpip_set_time_precision(int pre)
 {
       vpi_time_precision = pre;
 }
-
