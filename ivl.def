@@ -191,6 +191,8 @@ ivl_path_source
 
 ivl_process_attr_cnt
 ivl_process_attr_val
+ivl_process_file
+ivl_process_lineno
 ivl_process_scope
 ivl_process_stmt
 ivl_process_type

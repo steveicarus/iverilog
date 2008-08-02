@@ -56,6 +56,11 @@ void* vvp_net_t::operator new (size_t size)
       return return_this;
 }
 
+void vvp_net_t::operator delete(void*)
+{
+      assert(0);
+}
+
 void* vvp_net_fun_t::operator new(size_t size)
 {
 	// Link in an initial chunk of space for net_fun_t
@@ -411,14 +416,14 @@ vvp_vector4_t::vvp_vector4_t(unsigned size, double val)
 
 	/* Skip any leading bits. */
       for (int idx = (signed) nwords; idx > (signed) my_words; idx -=1) {
-	    unsigned bits = (unsigned) fraction;
+	    unsigned long bits = (unsigned long) fraction;
 	    fraction = fraction - (double) bits;
 	    fraction = ldexp(fraction, BITS_PER_WORD);
       }
 
 	/* Convert the remaining bits as appropriate. */
       if (my_words == 0) {
-		  unsigned bits = (unsigned) fraction;
+		  unsigned long bits = (unsigned long) fraction;
 		  abits_val_ = bits;
 		  fraction = fraction - (double) bits;
 		    /* Round any fractional part up. */
@@ -426,7 +431,7 @@ vvp_vector4_t::vvp_vector4_t(unsigned size, double val)
       } else {
 	    if (nwords < my_words) my_words = nwords;
 	    for (int idx = (signed)my_words; idx >= 0; idx -= 1) {
-		  unsigned bits = (unsigned) fraction;
+		  unsigned long bits = (unsigned long) fraction;
 		  abits_ptr_[idx] = bits;
 		  fraction = fraction - (double) bits;
 		  fraction = ldexp(fraction, BITS_PER_WORD);

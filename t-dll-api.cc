@@ -1438,6 +1438,18 @@ extern int ivl_path_source_negedge(ivl_delaypath_t net)
       return net->negedge ? 1 : 0;
 }
 
+extern "C" const char*ivl_process_file(ivl_process_t net)
+{
+      assert(net);
+      return net->file.str();
+}
+
+extern "C" unsigned ivl_process_lineno(ivl_process_t net)
+{
+      assert(net);
+      return net->lineno;
+}
+
 extern "C" ivl_process_type_t ivl_process_type(ivl_process_t net)
 {
       return net->type_;
