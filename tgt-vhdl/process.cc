@@ -69,8 +69,8 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    std::ostringstream ss;
    ss << "Generated from " << type << " process in "
       << ivl_scope_tname(scope) << " ("
-      << ivl_scope_file(scope) << ":"
-      << ivl_scope_lineno(scope) << ")";
+      << ivl_process_file(proc) << ":"
+      << ivl_process_lineno(proc) << ")";
    vhdl_proc->set_comment(ss.str());
 
    set_active_entity(NULL);
