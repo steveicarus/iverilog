@@ -1695,6 +1695,9 @@ extern ivl_statement_t ivl_process_stmt(ivl_process_t net);
 extern unsigned        ivl_process_attr_cnt(ivl_process_t net);
 extern ivl_attribute_t ivl_process_attr_val(ivl_process_t net, unsigned idx);
 
+extern const char* ivl_process_file(ivl_process_t net);
+extern unsigned ivl_process_lineno(ivl_process_t net);
+
 /*
  * These functions manage statements of various type. This includes
  * all the different kinds of statements (as enumerated in
