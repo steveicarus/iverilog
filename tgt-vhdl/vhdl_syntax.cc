@@ -166,7 +166,8 @@ void vhdl_process::emit(std::ostream &of, int level) const
       newline(of, level);
       return;
    }
-   
+
+   newline(of, level);
    emit_comment(of, level);
    if (name_.size() > 0)
       of << name_ << ": ";
@@ -189,7 +190,6 @@ void vhdl_process::emit(std::ostream &of, int level) const
    of << "begin";
    stmts_.emit(of, level);
    of << "end process;";
-   newline(of, level);
 }
 
 stmt_container::~stmt_container()
