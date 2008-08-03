@@ -48,6 +48,11 @@ void vhdl_scope::add_decl(vhdl_decl *decl)
    decls_.push_back(decl);
 }
 
+void vhdl_scope::add_forward_decl(vhdl_decl *decl)
+{
+   decls_.push_front(decl);
+}
+
 vhdl_decl *vhdl_scope::get_decl(const std::string &name) const
 {
    decl_list_t::const_iterator it;
@@ -829,6 +834,16 @@ void vhdl_function::emit(std::ostream &of, int level) const
    of << "  return Verilog_Result;";
    newline(of, level);
    of << "end function;";
+}
+
+void vhdl_forward_fdecl::emit(std::ostream &of, int level) const
+{
+   of << "function " << f_->get_name() << " (";
+   emit_children<vhdl_decl>(of, f_->scope_.get_decls(), level, ";");
+   of << ") ";
+   newline(of, level);
+   of << "return " << f_->type_->get_string() << ";";
+   newline(of, level);
 }
 
 void vhdl_param_decl::emit(std::ostream &of, int level) const

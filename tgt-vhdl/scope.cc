@@ -528,6 +528,11 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
       draw_stmt(func, func->get_container(), ivl_scope_def(scope));
    }
    set_active_entity(NULL);
+
+   // Add a forward declaration too in case it is called by
+   // another function that has already been added
+   ent->get_arch()->get_scope()->add_forward_decl
+      (new vhdl_forward_fdecl(func));
    
    ent->get_arch()->get_scope()->add_decl(func);   
    return 0;

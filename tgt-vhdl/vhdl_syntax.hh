@@ -608,6 +608,7 @@ public:
    ~vhdl_scope();
    
    void add_decl(vhdl_decl *decl);
+   void add_forward_decl(vhdl_decl *decl);
    vhdl_decl *get_decl(const std::string &name) const;
    bool have_declared(const std::string &name) const;
    bool contained_within(const vhdl_scope *other) const;
@@ -647,6 +648,7 @@ protected:
 
 
 class vhdl_function : public vhdl_decl, public vhdl_procedural {
+   friend class vhdl_forward_fdecl;
 public:
    vhdl_function(const char *name, vhdl_type *ret_type);
    
@@ -655,6 +657,16 @@ public:
    void add_param(vhdl_param_decl *p) { scope_.add_decl(p); }
 private:
    vhdl_scope variables_;
+};
+
+class vhdl_forward_fdecl : public vhdl_decl {
+public:
+   vhdl_forward_fdecl(const vhdl_function *f)
+      : vhdl_decl((f->get_name() + "_Forward").c_str()), f_(f) {}
+
+   void emit(std::ostream &of, int level) const;
+private:
+   const vhdl_function *f_;
 };
 
 
