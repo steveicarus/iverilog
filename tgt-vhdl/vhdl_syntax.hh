@@ -246,7 +246,8 @@ public:
    void set_after(vhdl_expr *a) { after_ = a; }
 private:
    vhdl_var_ref *lhs_;
-   vhdl_expr *rhs_, *after_;
+   vhdl_expr *rhs_;
+   vhdl_expr *after_;
 
    struct when_part_t {
       vhdl_expr *value, *cond;

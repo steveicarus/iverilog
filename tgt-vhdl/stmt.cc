@@ -101,9 +101,28 @@ static int draw_noop(vhdl_procedural *proc, stmt_container *container,
    return 0;
 }
 
-static vhdl_var_ref *make_assign_lhs(ivl_signal_t sig, vhdl_scope *scope,
-                                     vhdl_expr *base, int lval_width)
+static vhdl_var_ref *make_assign_lhs(ivl_lval_t lval, vhdl_scope *scope)
 {
+   ivl_signal_t sig = ivl_lval_sig(lval);
+   if (!sig) {
+      error("Only signals as lvals supported at the moment");
+      return NULL;
+   }
+
+   vhdl_expr *base = NULL;
+   ivl_expr_t e_off = ivl_lval_part_off(lval);
+   if (NULL == e_off)
+      e_off = ivl_lval_idx(lval);
+   if (e_off) {
+      if ((base = translate_expr(e_off)) == NULL)
+         return NULL;
+         
+      vhdl_type integer(VHDL_TYPE_INTEGER);
+      base = base->cast(&integer);
+   }
+   
+   unsigned lval_width = ivl_lval_width(lval);
+   
    string signame(get_renamed_signal(sig));
    vhdl_decl *decl = scope->get_decl(signame);
    
@@ -125,31 +144,12 @@ static bool assignment_lvals(ivl_statement_t stmt, vhdl_procedural *proc,
    int nlvals = ivl_stmt_lvals(stmt);
    for (int i = 0; i < nlvals; i++) {
       ivl_lval_t lval = ivl_stmt_lval(stmt, i);
-      
-      ivl_signal_t sig = ivl_lval_sig(lval);
-      if (!sig) {
-         error("Only signals as lvals supported at the moment");
+      vhdl_var_ref *lhs = make_assign_lhs(lval, proc->get_scope());
+      if (NULL == lhs)
          return false;
-      }
 
-      vhdl_expr *base = NULL;
-      ivl_expr_t e_off = ivl_lval_part_off(lval);
-      if (NULL == e_off)
-         e_off = ivl_lval_idx(lval);
-      if (e_off) {
-         if ((base = translate_expr(e_off)) == NULL)
-            return false;
-         
-         vhdl_type integer(VHDL_TYPE_INTEGER);
-         base = base->cast(&integer);
-      }
-
-      unsigned lval_width = ivl_lval_width(lval);
-      
-      string signame(get_renamed_signal(sig));
-
-      lvals.push_back(make_assign_lhs(sig, proc->get_scope(), base, lval_width));
-   }
+      lvals.push_back(lhs);
+   }         
 
    return true;
 }
@@ -159,19 +159,65 @@ static bool assignment_lvals(ivl_statement_t stmt, vhdl_procedural *proc,
  */
 template <class T>
 void make_assignment(vhdl_procedural *proc, stmt_container *container,
-                     ivl_statement_t stmt, bool blocking, vhdl_expr *after)
+                     ivl_statement_t stmt, bool blocking)
 {
    list<vhdl_var_ref*> lvals;
    if (!assignment_lvals(stmt, proc, lvals))
       return;
 
-   vhdl_expr *rhs;
-   if ((rhs = translate_expr(ivl_stmt_rval(stmt))) == NULL)
+   vhdl_expr *rhs, *rhs2 = NULL;
+   ivl_expr_t rval = ivl_stmt_rval(stmt);
+   if (ivl_expr_type(rval) == IVL_EX_TERNARY) {
+      rhs = translate_expr(ivl_expr_oper2(rval));
+      rhs2 = translate_expr(ivl_expr_oper3(rval));
+   }
+   else
+      rhs = translate_expr(rval);
+   if (rhs == NULL)
       return;
 
    if (lvals.size() == 1) {
       vhdl_var_ref *lhs = lvals.front();
       rhs = rhs->cast(lhs->get_type());
+     
+      ivl_expr_t i_delay;
+      vhdl_expr *after = NULL;
+      if ((i_delay = ivl_stmt_delay_expr(stmt)) != NULL)
+         after = translate_time_expr(i_delay);
+      
+      // A small optimisation is to expand ternary RHSs into an
+      // if statement (eliminates a function call and produces
+      // more idiomatic code)
+      if (ivl_expr_type(rval) == IVL_EX_TERNARY) {
+         rhs2 = rhs2->cast(lhs->get_type());
+         vhdl_var_ref *lhs2 =
+            make_assign_lhs(ivl_stmt_lval(stmt, 0), proc->get_scope());
+         
+         vhdl_expr *test = translate_expr(ivl_expr_oper1(rval));
+         if (NULL == test)
+            return;
+
+         vhdl_if_stmt *vhdif = new vhdl_if_stmt(test);
+
+         // True part
+         {
+            T *a = new T(lhs, rhs);
+            if (after)
+               a->set_after(after);
+            vhdif->get_then_container()->add_stmt(a);
+         }
+
+         // False part
+         {
+            T *a = new T(lhs2, rhs2);
+            if (after)
+               a->set_after(translate_time_expr(i_delay));
+            vhdif->get_else_container()->add_stmt(a);
+         }
+
+         container->add_stmt(vhdif);
+         return;
+      }
 
       // Where possible, move constant assignments into the
       // declaration as initializers. This optimisation is only
@@ -209,11 +255,7 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
 
       T *a = new T(lhs, rhs);
       container->add_stmt(a);
-      
-      ivl_expr_t i_delay;
-      if (NULL == after && (i_delay = ivl_stmt_delay_expr(stmt)))
-         after = translate_time_expr(i_delay);
-      
+          
       if (after != NULL)
          a->set_after(after);
    }
@@ -243,8 +285,17 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
          int lval_width = (*it)->get_type()->get_width();
          vhdl_expr *slice_base = new vhdl_const_int(width_so_far);
          tmp_rhs->set_slice(slice_base, lval_width - 1);
+         
+         ivl_expr_t i_delay;
+         vhdl_expr *after = NULL;
+         if ((i_delay = ivl_stmt_delay_expr(stmt)) != NULL)
+            after = translate_time_expr(i_delay);
 
-         container->add_stmt(new T(*it, tmp_rhs));
+         T *a = new T(*it, tmp_rhs);
+         if (after)
+            a->set_after(after);
+
+         container->add_stmt(a);
 
          width_so_far += lval_width;
       }
@@ -257,11 +308,11 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
  * assignment.
  */
 static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
-                         ivl_statement_t stmt, vhdl_expr *after = NULL)
+                         ivl_statement_t stmt)
 {
    assert(proc->get_scope()->allow_signal_assignment());
 
-   make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false, after);
+   make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);
 
    return 0;
 }
@@ -274,13 +325,13 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
       // followed by a zero-time wait
       // This follows the Verilog semantics fairly closely.
 
-      make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false, NULL);
+      make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);
       
       container->add_stmt
          (new vhdl_wait_stmt(VHDL_WAIT_FOR, new vhdl_const_time(0)));
    }
    else
-      make_assignment<vhdl_assign_stmt>(proc, container, stmt, true, NULL);
+      make_assignment<vhdl_assign_stmt>(proc, container, stmt, true);
    
    return 0;
 }
@@ -310,25 +361,16 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
          return 1;
    }
 
-   // If the sub-statement is an assignment then VHDL lets
-   // us put the delay after it, which is more compact and
-   // idiomatic
    ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
-   ivl_statement_type_t type = ivl_statement_type(sub_stmt);
-   if (type == IVL_ST_ASSIGN_NB) {
-      draw_nbassign(proc, container, sub_stmt, time);
-   }
-   else {      
-      vhdl_wait_stmt *wait =
-         new vhdl_wait_stmt(VHDL_WAIT_FOR, time);
-      container->add_stmt(wait);
+   vhdl_wait_stmt *wait =
+      new vhdl_wait_stmt(VHDL_WAIT_FOR, time);
+   container->add_stmt(wait);
 
-      // Expand the sub-statement as well
-      // Often this would result in a useless `null' statement which
-      // is caught here instead
-      if (ivl_statement_type(sub_stmt) != IVL_ST_NOOP)
-         draw_stmt(proc, container, sub_stmt);
-   }
+   // Expand the sub-statement as well
+   // Often this would result in a useless `null' statement which
+   // is caught here instead
+   if (ivl_statement_type(sub_stmt) != IVL_ST_NOOP)
+      draw_stmt(proc, container, sub_stmt);
    
    // Any further assignments occur after simulation time 0
    // so they cannot be used to initialize signal declarations
