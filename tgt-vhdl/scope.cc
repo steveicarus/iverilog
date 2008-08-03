@@ -572,8 +572,8 @@ static void create_skeleton_entity_for(ivl_scope_t scope)
    // Build a comment to add to the entity/architecture
    ostringstream ss;
    ss << "Generated from Verilog module " << ivl_scope_tname(scope)
-      << " (" << ivl_scope_file(scope) << ":"
-      << ivl_scope_lineno(scope) << ")";
+      << " (" << ivl_scope_def_file(scope) << ":"
+      << ivl_scope_def_lineno(scope) << ")";
    
    arch->set_comment(ss.str());
    ent->set_comment(ss.str());
