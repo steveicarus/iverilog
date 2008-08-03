@@ -543,6 +543,11 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
    // another function that has already been added
    ent->get_arch()->get_scope()->add_forward_decl
       (new vhdl_forward_fdecl(func));
+
+   ostringstream ss;
+   ss << "Generated from function " << funcname << " at "
+      << ivl_scope_def_file(scope) << ":" << ivl_scope_def_lineno(scope);
+   func->set_comment(ss.str().c_str());
    
    ent->get_arch()->get_scope()->add_decl(func);   
    return 0;

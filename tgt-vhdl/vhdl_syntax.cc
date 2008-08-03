@@ -823,6 +823,7 @@ vhdl_function::vhdl_function(const char *name, vhdl_type *ret_type)
 void vhdl_function::emit(std::ostream &of, int level) const
 {
    newline(of, level);
+   emit_comment(of, level);
    of << "function " << name_ << " (";
    emit_children<vhdl_decl>(of, scope_.get_decls(), level, ";");
    of << ") ";
