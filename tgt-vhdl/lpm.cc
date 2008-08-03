@@ -185,7 +185,7 @@ static vhdl_expr *array_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
       return NULL;
    
    const char *renamed = get_renamed_signal(array).c_str();
-
+   
    vhdl_decl *adecl = scope->get_decl(renamed);
    assert(adecl);
    

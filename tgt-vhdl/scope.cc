@@ -50,6 +50,7 @@ void set_active_entity(vhdl_entity *ent)
 struct scope_nexus_t {
    vhdl_scope *scope;
    ivl_signal_t sig;            // A real signal
+   unsigned pin;                // The pin this signal is connected to
    string tmpname;              // A new temporary signal
    list<ivl_signal_t> connect;  // Other signals to wire together
 };
@@ -86,8 +87,8 @@ static scope_nexus_t *visible_nexus(nexus_private_t *priv, vhdl_scope *scope)
  * convert it to a variable reference (e.g. in a LPM input/output).
  */
 static void link_scope_to_nexus_signal(nexus_private_t *priv, vhdl_scope *scope,
-                                       ivl_signal_t sig)
-{
+                                       ivl_signal_t sig, unsigned pin)
+{   
    scope_nexus_t *sn;
    if ((sn = visible_nexus(priv, scope))) {
       assert(sn->tmpname == "");
@@ -95,7 +96,7 @@ static void link_scope_to_nexus_signal(nexus_private_t *priv, vhdl_scope *scope,
       sn->connect.push_back(sig);
    }
    else {
-      scope_nexus_t new_sn = { scope, sig, "" };
+      scope_nexus_t new_sn = { scope, sig, pin, "" };
       priv->signals.push_back(new_sn);
    }
 }
@@ -106,18 +107,20 @@ static void link_scope_to_nexus_signal(nexus_private_t *priv, vhdl_scope *scope,
 static void link_scope_to_nexus_tmp(nexus_private_t *priv, vhdl_scope *scope,
                                     const string &name)
 {
-   scope_nexus_t new_sn = { scope, NULL, name };
+   scope_nexus_t new_sn = { scope, NULL, 0, name };
    priv->signals.push_back(new_sn);
 }
 
 /*
  * Finds the name of the nexus signal within this scope.
  */
-static string visible_nexus_signal_name(nexus_private_t *priv, vhdl_scope *scope)
+static string visible_nexus_signal_name(nexus_private_t *priv, vhdl_scope *scope,
+                                        unsigned *pin)
 {
    scope_nexus_t *sn = visible_nexus(priv, scope);
    assert(sn);
 
+   *pin = sn->pin;
    return sn->sig ? get_renamed_signal(sn->sig) : sn->tmpname;
 }
 
@@ -138,7 +141,8 @@ void draw_nexus(ivl_nexus_t nexus)
       ivl_signal_t sig;
       if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) { 
          vhdl_scope *scope = find_scope_for_signal(sig);
-         link_scope_to_nexus_signal(priv, scope, sig);
+         unsigned pin = ivl_nexus_ptr_pin(nexus_ptr);
+         link_scope_to_nexus_signal(priv, scope, sig, pin);
       }
    }
 
@@ -229,13 +233,19 @@ vhdl_var_ref *nexus_to_var_ref(vhdl_scope *scope, ivl_nexus_t nexus)
    
    nexus_private_t *priv =
       static_cast<nexus_private_t*>(ivl_nexus_get_private(nexus));
-   string renamed(visible_nexus_signal_name(priv, scope));
+   unsigned pin;
+   string renamed(visible_nexus_signal_name(priv, scope, &pin));
    
    vhdl_decl *decl = scope->get_decl(renamed);
    assert(decl);
-   
+
    vhdl_type *type = new vhdl_type(*(decl->get_type()));
-   return new vhdl_var_ref(renamed.c_str(), type);    
+   vhdl_var_ref *ref = new vhdl_var_ref(renamed.c_str(), type);
+   
+   if (decl->get_type()->get_name() == VHDL_TYPE_ARRAY)
+      ref->set_slice(new vhdl_const_int(pin), 0);
+
+   return ref;
 }
 
 /*
