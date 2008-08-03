@@ -737,7 +737,12 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
       
       vhdl_comp_inst *inst =
          new vhdl_comp_inst(inst_name.c_str(), ent->get_name().c_str());
-      port_map(scope, parent_ent, inst);         
+      port_map(scope, parent_ent, inst);
+
+      ostringstream ss;
+      ss << "Generated from instantiation at "
+         << ivl_scope_file(scope) << ":" << ivl_scope_lineno(scope);
+      inst->set_comment(ss.str().c_str());
       
       parent_arch->add_stmt(inst);
    }   
