@@ -266,11 +266,42 @@ static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    }
 }
 
+static int draw_mux_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
+{
+   int nselects = ivl_lpm_selects(lpm);
+
+   if (nselects > 1) {
+      error("Only 1 LPM select bit supported at the moment");
+      return 1;
+   }
+
+   vhdl_scope *scope = arch->get_scope();
+   
+   vhdl_expr *s0 = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
+   vhdl_expr *s1 = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 1));
+
+   vhdl_expr *sel = nexus_to_var_ref(scope, ivl_lpm_select(lpm));
+   vhdl_expr *b1 = new vhdl_const_bit('1');
+   vhdl_expr *t1 =
+      new vhdl_binop_expr(sel, VHDL_BINOP_EQ, b1, vhdl_type::boolean());
+   
+   vhdl_var_ref *out = nexus_to_var_ref(scope, ivl_lpm_q(lpm, 0));
+
+   vhdl_cassign_stmt *s = new vhdl_cassign_stmt(out, s0);
+   s->add_condition(s1, t1);
+
+   arch->add_stmt(s);
+   return 0;
+}
+
 int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
 {
+   if (ivl_lpm_type(lpm) == IVL_LPM_MUX)
+      return draw_mux_lpm(arch, lpm);
+   
    vhdl_expr *f = lpm_to_expr(arch->get_scope(), lpm);
    if (NULL == f)
-      return 0;
+      return 1;
    
    vhdl_var_ref *out = nexus_to_var_ref(arch->get_scope(), ivl_lpm_q(lpm, 0));
    if (ivl_lpm_type(lpm) == IVL_LPM_PART_PV) {
