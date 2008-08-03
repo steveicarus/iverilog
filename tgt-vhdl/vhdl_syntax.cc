@@ -235,6 +235,7 @@ void vhdl_comp_inst::map_port(const char *name, vhdl_expr *expr)
 
 void vhdl_comp_inst::emit(std::ostream &of, int level) const
 {
+   newline(of, level);
    emit_comment(of, level);
    of << inst_name_ << ": " << comp_name_;
 
@@ -257,7 +258,6 @@ void vhdl_comp_inst::emit(std::ostream &of, int level) const
    }
    
    of << ";";
-   newline(of, level);
 }
 
 vhdl_component_decl::vhdl_component_decl(const char *name)
