@@ -473,7 +473,7 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
 }
 
 static int draw_if(vhdl_procedural *proc, stmt_container *container,
-                   ivl_statement_t stmt)
+                   ivl_statement_t stmt, bool is_last)
 {
    vhdl_expr *test = translate_expr(ivl_stmt_cond_expr(stmt));
    if (NULL == test)
@@ -483,11 +483,11 @@ static int draw_if(vhdl_procedural *proc, stmt_container *container,
 
    ivl_statement_t cond_true_stmt = ivl_stmt_cond_true(stmt);
    if (cond_true_stmt)
-      draw_stmt(proc, vhdif->get_then_container(), cond_true_stmt);
+      draw_stmt(proc, vhdif->get_then_container(), cond_true_stmt, is_last);
 
    ivl_statement_t cond_false_stmt = ivl_stmt_cond_false(stmt);
    if (cond_false_stmt)
-      draw_stmt(proc, vhdif->get_else_container(), cond_false_stmt);
+      draw_stmt(proc, vhdif->get_else_container(), cond_false_stmt, is_last);
 
    container->add_stmt(vhdif);
    
@@ -495,7 +495,7 @@ static int draw_if(vhdl_procedural *proc, stmt_container *container,
 }
 
 static int draw_case(vhdl_procedural *proc, stmt_container *container,
-                     ivl_statement_t stmt)
+                     ivl_statement_t stmt, bool is_last)
 {
    vhdl_expr *test = translate_expr(ivl_stmt_cond_expr(stmt));
    if (NULL == test)
@@ -543,8 +543,9 @@ static int draw_case(vhdl_procedural *proc, stmt_container *container,
       
       vhdl_case_branch *branch = new vhdl_case_branch(when);
       vhdlcase->add_branch(branch);
-      
-      draw_stmt(proc, branch->get_container(), ivl_stmt_case_stmt(stmt, i));
+
+      ivl_statement_t stmt_i = ivl_stmt_case_stmt(stmt, i);
+      draw_stmt(proc, branch->get_container(), stmt_i, is_last);
    }
 
    if (!have_others) {
@@ -640,10 +641,10 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
    case IVL_ST_WAIT:
       return draw_wait(proc, container, stmt);
    case IVL_ST_CONDIT:
-      return draw_if(proc, container, stmt);
+      return draw_if(proc, container, stmt, is_last);
    case IVL_ST_CASE:
    case IVL_ST_CASEX:
-      return draw_case(proc, container, stmt);
+      return draw_case(proc, container, stmt, is_last);
    case IVL_ST_WHILE:
       return draw_while(proc, container, stmt);
    case IVL_ST_FOREVER:
