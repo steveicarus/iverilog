@@ -124,6 +124,8 @@ static vhdl_expr *translate_logic_inputs(vhdl_scope *scope, ivl_net_logic_t log)
       return inputs_to_expr(scope, VHDL_BINOP_NOR, log);
    case IVL_LO_XOR:
       return inputs_to_expr(scope, VHDL_BINOP_XOR, log);
+   case IVL_LO_XNOR:
+      return inputs_to_expr(scope, VHDL_BINOP_XNOR, log);
    case IVL_LO_BUF:
    case IVL_LO_BUFZ:
       return nexus_to_var_ref(scope, ivl_logic_pin(log, 1));

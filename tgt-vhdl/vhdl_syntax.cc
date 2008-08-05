@@ -725,7 +725,7 @@ void vhdl_binop_expr::emit(std::ostream &of, int level) const
       const char* ops[] = {
          "and", "or", "=", "/=", "+", "-", "*", "<",
          ">", "<=", ">=", "sll", "srl", "xor", "&",
-         "nand", "nor", NULL
+         "nand", "nor", "xnor", NULL
       };
 
       of << " " << ops[op_] << " ";
