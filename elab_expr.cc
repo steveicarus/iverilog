@@ -616,7 +616,36 @@ NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
       if (nature == 0)
 	    return 0;
 
-      NetEAccess*tmp = new NetEAccess(nature);
+	// An access function must have 1 or 2 arguments.
+      ivl_assert(*this, parms_.size()==2 || parms_.size()==1);
+
+      NetBranch*branch = 0;
+
+      if (parms_.size() == 1) {
+	    PExpr*arg1 = parms_[0];
+	    PEIdent*arg_ident = dynamic_cast<PEIdent*> (arg1);
+	    ivl_assert(*this, arg_ident);
+
+	    const pform_name_t&path = arg_ident->path();
+	    ivl_assert(*this, path.size()==1);
+	    perm_string name = peek_tail_name(path);
+
+	    NetNet*sig = scope->find_signal(name);
+	    ivl_assert(*this, sig);
+
+	    discipline_t*dis = sig->get_discipline();
+	    ivl_assert(*this, dis);
+	    ivl_assert(*this, nature == dis->potential() || nature == dis->flow());
+
+	    branch = new NetBranch(dis);
+	    branch->set_line(*this);
+	    connect(branch->pin(0), sig->pin(0));
+
+      } else {
+	    ivl_assert(*this, 0);
+      }
+
+      NetEAccess*tmp = new NetEAccess(branch, nature);
       tmp->set_line(*this);
 
       return tmp;

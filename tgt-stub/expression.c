@@ -43,6 +43,17 @@ static void show_array_expression(ivl_expr_t net, unsigned ind)
 	      ivl_signal_dimensions(sig), width, vt);
 }
 
+static void show_branch_access_expression(ivl_expr_t net, unsigned ind)
+{
+      fprintf(out, "%*s<Branch Access>\n", ind, "");
+
+      if (ivl_expr_value(net) != IVL_VT_REAL) {
+	    fprintf(out, "%*sERROR: Expecting type IVL_VT_REAL, got %s\n",
+		    ind, "", vt_type_string(net));
+	    stub_errors += 1;
+      }
+}
+
 static void show_binary_expression(ivl_expr_t net, unsigned ind)
 {
       unsigned width = ivl_expr_width(net);
@@ -214,6 +225,10 @@ void show_expression(ivl_expr_t net, unsigned ind)
 
 	  case IVL_EX_ARRAY:
 	    show_array_expression(net, ind);
+	    break;
+
+	  case IVL_EX_BACCESS:
+	    show_branch_access_expression(net, ind);
 	    break;
 
 	  case IVL_EX_BINARY:

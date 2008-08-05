@@ -91,7 +91,7 @@ unsigned count_inputs(const Link&pin)
       const Nexus*nex = pin.nexus();
       for (const Link*clnk = nex->first_nlink()
 		 ; clnk ; clnk = clnk->next_nlink()) {
-	    const NetObj*cur;
+	    const NetPins*cur;
 	    unsigned cpin;
 	    clnk->cur_link(cur, cpin);
 	    if (cur->pin(cpin).get_dir() == Link::INPUT)
@@ -108,7 +108,7 @@ unsigned count_outputs(const Link&pin)
       const Nexus*nex = pin.nexus();
       for (const Link*clnk = nex->first_nlink()
 		 ; clnk ; clnk = clnk->next_nlink()) {
-	    const NetObj*cur;
+	    const NetPins*cur;
 	    unsigned cpin;
 	    clnk->cur_link(cur, cpin);
 	    if (cur->pin(cpin).get_dir() == Link::OUTPUT)
@@ -125,7 +125,7 @@ unsigned count_signals(const Link&pin)
       const Nexus*nex = pin.nexus();
       for (const Link*clnk = nex->first_nlink()
 		 ; clnk ; clnk = clnk->next_nlink()) {
-	    const NetObj*cur;
+	    const NetPins*cur;
 	    unsigned cpin;
 	    clnk->cur_link(cur, cpin);
 	    if (dynamic_cast<const NetNet*>(cur))
@@ -142,7 +142,7 @@ const NetNet* find_link_signal(const NetObj*net, unsigned pin, unsigned&bidx)
       for (const Link*clnk = nex->first_nlink()
 		 ; clnk ; clnk = clnk->next_nlink()) {
 
-	    const NetObj*cur;
+	    const NetPins*cur;
 	    unsigned cpin;
 	    clnk->cur_link(cur, cpin);
 
@@ -171,8 +171,8 @@ Link* find_next_output(Link*lnk)
       return 0;
 }
 
-NetObj::NetObj(NetScope*s, perm_string n, unsigned np)
-: scope_(s), name_(n), npins_(np), delay1_(0), delay2_(0), delay3_(0)
+NetPins::NetPins(unsigned npins)
+: npins_(npins)
 {
       pins_ = new Link[npins_];
       for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
@@ -181,22 +181,12 @@ NetObj::NetObj(NetScope*s, perm_string n, unsigned np)
       }
 }
 
-NetObj::~NetObj()
+NetPins::~NetPins()
 {
       delete[]pins_;
 }
 
-NetScope* NetObj::scope()
-{
-      return scope_;
-}
-
-const NetScope* NetObj::scope() const
-{
-      return scope_;
-}
-
-Link& NetObj::pin(unsigned idx)
+Link& NetPins::pin(unsigned idx)
 {
       if (idx >= npins_) {
 	    cerr << get_fileline() << ": internal error: pin("<<idx<<")"
@@ -209,10 +199,29 @@ Link& NetObj::pin(unsigned idx)
       return pins_[idx];
 }
 
-const Link& NetObj::pin(unsigned idx) const
+const Link& NetPins::pin(unsigned idx) const
 {
       assert(idx < npins_);
       return pins_[idx];
+}
+
+NetObj::NetObj(NetScope*s, perm_string n, unsigned np)
+: NetPins(np), scope_(s), name_(n), delay1_(0), delay2_(0), delay3_(0)
+{
+}
+
+NetObj::~NetObj()
+{
+}
+
+NetScope* NetObj::scope()
+{
+      return scope_;
+}
+
+const NetScope* NetObj::scope() const
+{
+      return scope_;
 }
 
 NetNode::NetNode(NetScope*s, perm_string n, unsigned npins)
@@ -224,6 +233,19 @@ NetNode::~NetNode()
 {
       if (design_)
 	    design_->del_node(this);
+}
+
+NetBranch::NetBranch(discipline_t*dis)
+: NetPins(2), discipline_(dis)
+{
+      pin(0).set_name(perm_string::literal("A"), 0);
+      pin(0).set_dir(Link::PASSIVE);
+      pin(1).set_name(perm_string::literal("B"), 0);
+      pin(1).set_dir(Link::PASSIVE);
+}
+
+NetBranch::~NetBranch()
+{
 }
 
 NetBus::NetBus(NetScope*s, unsigned pin_count)
@@ -620,6 +642,17 @@ bool NetNet::get_isint() const
 void NetNet::set_isint(bool flag)
 {
       isint_ = flag;
+}
+
+discipline_t* NetNet::get_discipline() const
+{
+      return discipline_;
+}
+
+void NetNet::set_discipline(discipline_t*dis)
+{
+      ivl_assert(*this, discipline_ == 0);
+      discipline_ = dis;
 }
 
 long NetNet::lsb() const

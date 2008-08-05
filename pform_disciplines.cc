@@ -205,6 +205,7 @@ void pform_attach_discipline(const struct vlltype&loc,
 		  error_count += 1;
 
 	    } else {
+		  cur_net->set_data_type(IVL_VT_REAL);
 		  cur_net->set_discipline(discipline);
 	    }
       }
