@@ -81,11 +81,12 @@ static int draw_stask(vhdl_procedural *proc, stmt_container *container,
  * the stmt_container class behaves like a Verilog block.
  */
 static int draw_block(vhdl_procedural *proc, stmt_container *container,
-                      ivl_statement_t stmt)
+                      ivl_statement_t stmt, bool is_last)
 {
    int count = ivl_stmt_block_count(stmt);
    for (int i = 0; i < count; i++) {
-      if (draw_stmt(proc, container, ivl_stmt_block_stmt(stmt, i)) != 0)
+      ivl_statement_t stmt_i = ivl_stmt_block_stmt(stmt, i);
+      if (draw_stmt(proc, container, stmt_i, is_last && i == count - 1) != 0)
          return 1;
    }
    return 0;
@@ -318,7 +319,7 @@ static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
 }
 
 static int draw_assign(vhdl_procedural *proc, stmt_container *container,
-                       ivl_statement_t stmt)
+                       ivl_statement_t stmt, bool is_last)
 {
    if (proc->get_scope()->allow_signal_assignment()) {
       // Blocking assignment is implemented as non-blocking assignment
@@ -326,9 +327,12 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
       // This follows the Verilog semantics fairly closely.
 
       make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);
-      
-      container->add_stmt
-         (new vhdl_wait_stmt(VHDL_WAIT_FOR, new vhdl_const_time(0)));
+
+      // Don't generate a zero-wait if this is the last statement in
+      // the process
+      if (!is_last)
+         container->add_stmt
+            (new vhdl_wait_stmt(VHDL_WAIT_FOR, new vhdl_const_time(0)));
    }
    else
       make_assignment<vhdl_assign_stmt>(proc, container, stmt, true);
@@ -422,7 +426,7 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
          }
       }
 
-      draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt));
+      draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt), true);
       container->add_stmt(wait);
    }
    else {
@@ -462,7 +466,7 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
       }
       
       container->add_stmt(new vhdl_wait_stmt(VHDL_WAIT_UNTIL, test));
-      draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt));
+      draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt), true);
    }
    
    return 0;
@@ -609,9 +613,13 @@ int draw_repeat(vhdl_procedural *proc, stmt_container *container,
  * add them to the given VHDL process. The container is the
  * location to add statements: e.g. the process body, a branch
  * of an if statement, etc.
+ *
+ * The flag is_last should be set if this is the final statement
+ * in a block or process. It avoids generating useless `wait for 0ns'
+ * statements if the next statement would be a wait anyway.
  */
 int draw_stmt(vhdl_procedural *proc, stmt_container *container,
-              ivl_statement_t stmt)
+              ivl_statement_t stmt, bool is_last)
 {
    assert(stmt);
    
@@ -619,11 +627,11 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
    case IVL_ST_STASK:
       return draw_stask(proc, container, stmt);
    case IVL_ST_BLOCK:
-      return draw_block(proc, container, stmt);
+      return draw_block(proc, container, stmt, is_last);
    case IVL_ST_NOOP:
       return draw_noop(proc, container, stmt);
    case IVL_ST_ASSIGN:
-      return draw_assign(proc, container, stmt);
+      return draw_assign(proc, container, stmt, is_last);
    case IVL_ST_ASSIGN_NB:
       return draw_nbassign(proc, container, stmt);
    case IVL_ST_DELAY:
