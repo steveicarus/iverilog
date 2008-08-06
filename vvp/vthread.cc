@@ -2363,18 +2363,20 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t word = array_get_word(cp->array, adr);
 
-      if (word.size() != wid) {
-	    fprintf(stderr, "internal error: array width=%u, word.size()=%u, wid=%u\n",
-		    0, word.size(), wid);
-	    assert(word.size() == wid);
-      }
-
 	/* Check the address once, before we scan the vector. */
       thr_check_addr(thr, bit+wid-1);
+
+      if (word.size() > wid)
+	    word.resize(wid);
 
 	/* Copy the vector bits into the bits4 vector. Do the copy
 	   directly to skip the excess calls to thr_check_addr. */
       thr->bits4.set_vec(bit, word);
+
+	/* If the source is shorter then the desired width, then pad
+	   with BIT4_X values. */
+      for (unsigned idx = word.size() ; idx < wid ; idx += 1)
+	    thr->bits4.set_bit(bit+idx, BIT4_X);
 
       return true;
 }
