@@ -302,6 +302,9 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    case 'O':    // Bitwise NOR
       result = translate_numeric(lhs, rhs, VHDL_BINOP_NOR);
       break;
+   case 'X':    // Bitwise XNOR
+      result = translate_numeric(lhs, rhs, VHDL_BINOP_XNOR);
+      break;
    case '|':    // Bitwise OR
       result = translate_numeric(lhs, rhs, VHDL_BINOP_OR);
       break;
