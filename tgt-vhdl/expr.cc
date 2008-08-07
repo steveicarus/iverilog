@@ -270,6 +270,12 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    case '*':
       result = translate_numeric(lhs, rhs, VHDL_BINOP_MULT);
       break;
+   case '/':
+      result = translate_numeric(lhs, rhs, VHDL_BINOP_DIV);
+      break;
+   case '%':
+      result = translate_numeric(lhs, rhs, VHDL_BINOP_MOD);
+      break;
    case 'e':
       result = translate_relation(lhs, rhs, VHDL_BINOP_EQ);
       break;

@@ -227,6 +227,10 @@ static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
       return binop_lpm_to_expr(scope, lpm, VHDL_BINOP_SUB);
    case IVL_LPM_MULT:
       return binop_lpm_to_expr(scope, lpm, VHDL_BINOP_MULT);
+   case IVL_LPM_DIVIDE:
+      return binop_lpm_to_expr(scope, lpm, VHDL_BINOP_DIV);
+   case IVL_LPM_MOD:
+      return binop_lpm_to_expr(scope, lpm, VHDL_BINOP_MOD);
    case IVL_LPM_CONCAT:
       return concat_lpm_to_expr(scope, lpm);
    case IVL_LPM_CMP_GE:
