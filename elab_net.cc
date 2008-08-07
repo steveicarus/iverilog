@@ -2327,7 +2327,7 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
       } while (0);
 #else
       if (name_tail.index.size() > sig->array_dimensions())
-	    tmp = process_select_(des, scope, sig);
+	    tmp = process_select_(des, scope, tmp);
 
 #endif
       return tmp;
