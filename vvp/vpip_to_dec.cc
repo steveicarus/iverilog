@@ -229,7 +229,13 @@ void vpip_dec_str_to_vec4(vvp_vector4_t&vec,
 	   input is "1234", str gets "4321". */
       unsigned slen = strlen(buf);
       char*str = new char[slen + 1];
+      int is_negative = 0;
       for (unsigned idx = 0 ;  idx < slen ;  idx += 1) {
+	    if (idx == slen-1 && buf[slen-idx-1] == '-') {
+	          is_negative = 1;
+		  slen--;
+		  continue;
+	    }
 	    if (isdigit(buf[slen-idx-1]))
 		  str[idx] = buf[slen-idx-1];
             else
@@ -264,6 +270,11 @@ void vpip_dec_str_to_vec4(vvp_vector4_t&vec,
 		  cp += 1;
 	    }
 
+      }
+
+      if (is_negative) {
+            vec.invert();
+            vec += 1;
       }
 
       delete[]str;

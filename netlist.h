@@ -290,6 +290,10 @@ class Nexus {
 
       NetNet* pick_any_net();
 
+	/* This method returns true if there are any drivers
+	   (including variables) attached to this nexus. */
+      bool drivers_present() const;
+
 	/* This method returns true if all the possible drivers of
 	   this nexus are constant. It will also return true if there
 	   are no drivers at all. */

@@ -944,6 +944,17 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
       return tmp;
 }
 
+static bool need_bufz_for_input_port(const svector<NetNet*>&prts)
+{
+      if (prts[0]->port_type() != NetNet::PINPUT)
+	    return false;
+
+      if (prts[0]->pin(0).nexus()->drivers_present())
+	    return true;
+
+      return false;
+}
+
 /*
  * Instantiate a module by recursively elaborating it. Set the path of
  * the recursive elaboration so that signal names get properly
@@ -1162,7 +1173,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		       width. We use that, then, to decide how to hook
 		       it up.
 
-		       NOTE that this also handles the case that the
+v		       NOTE that this also handles the case that the
 		       port is actually empty on the inside. We assume
 		       in that case that the port is input. */
 
@@ -1174,6 +1185,21 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << ": internal error: Port expression "
 			     << "too complicated for elaboration." << endl;
 			continue;
+		  }
+
+		  if (need_bufz_for_input_port(prts)) {
+			NetBUFZ*tmp = new NetBUFZ(scope, scope->local_symbol(),
+						  sig->vector_width());
+			des->add_node(tmp);
+			connect(tmp->pin(1), sig->pin(0));
+
+			NetNet*tmp2 = new NetNet(scope, scope->local_symbol(),
+						 NetNet::WIRE, sig->vector_width());
+			tmp2->local_flag(true);
+			tmp2->set_line(*this);
+			tmp2->data_type(sig->data_type());
+			connect(tmp->pin(0), tmp2->pin(0));
+			sig = tmp2;
 		  }
 
 	    } else if (prts[0]->port_type() == NetNet::PINOUT) {

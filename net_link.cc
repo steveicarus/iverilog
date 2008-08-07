@@ -247,6 +247,41 @@ verinum::V Nexus::get_init() const
       return verinum::Vz;
 }
 
+bool Nexus::drivers_present() const
+{
+      assert(list_);
+      for (Link*cur = list_ ;  cur ; cur = cur->next_) {
+	    if (cur->get_dir() == Link::OUTPUT)
+		  return true;
+
+	    if (cur->get_dir() == Link::INPUT)
+		  continue;
+
+	      // Must be PASSIVE, so if it is some kind of net, see if
+	      // it is the sort that might drive the nexus.
+	    const NetObj*obj;
+	    unsigned pin;
+	    cur->cur_link(obj, pin);
+	    if (const NetNet*net = dynamic_cast<const NetNet*>(obj))
+		  switch (net->type()) {
+		      case NetNet::SUPPLY0:
+		      case NetNet::SUPPLY1:
+		      case NetNet::TRI0:
+		      case NetNet::TRI1:
+		      case NetNet::WAND:
+		      case NetNet::WOR:
+		      case NetNet::TRIAND:
+		      case NetNet::TRIOR:
+		      case NetNet::REG:
+			return true;
+		      default:
+			break;
+		  }
+      }
+
+      return false;
+}
+
 void Nexus::drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay)
 {
       for (Link*cur = list_ ; cur ; cur = cur->next_) {

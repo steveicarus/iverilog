@@ -281,7 +281,6 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 		  int suppress_flag = 0;
 		  int length_field = -1;
 		  int code = 0;
-		  int sign_flag = 1;
 		  PLI_INT32 value;
 
 		  char*tmp;
@@ -373,30 +372,38 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			break;
 
 		      case 'd':
-			match_fail = 1;
-			  /* Decimal integer */
-			ch = byte_getc(src);
-			if (ch == '-') {
-			      sign_flag = -1;
-			      ch = byte_getc(src);
-			}
+			  /* decimal integer */
+			tmp = malloc(2);
 			value = 0;
-			while ( isdigit(ch) ) {
+			tmp[0] = 0;
+			match_fail = 1;
+
+			ch = byte_getc(src);
+			while (isdigit(ch) || ch == '_' || (value == 0 && ch == '-')) {
 			      match_fail = 0;
-			      value *= 10;
-			      value += ch - '0';
-			      ch = byte_getc(src);
+			      if (ch != '_') {
+			            tmp[value++] = ch;
+			            tmp = realloc(tmp, value+1);
+			            tmp[value] = 0;
+			            ch = byte_getc(src);
+			      }
+			}
+			byte_ungetc(src, ch);
+
+			if (match_fail) {
+			      free(tmp);
+			      break;
 			}
 
-			if (match_fail)
-			      break;
-
+			  /* Matched a decimal value, put it to an argument. */
 			item = vpi_scan(argv);
 			assert(item);
 
-			val.format = vpiIntVal;
-			val.value.integer = value * sign_flag;
+			val.format = vpiDecStrVal;
+			val.value.str = tmp;
 			vpi_put_value(item, &val, 0, vpiNoDelay);
+
+			free(tmp);
 			rc += 1;
 			break;
 
