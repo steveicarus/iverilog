@@ -610,6 +610,24 @@ int draw_repeat(vhdl_procedural *proc, stmt_container *container,
 }
 
 /*
+ * Tasks are difficult to translate to VHDL since they allow things
+ * not allowed by VHDL's corresponding procedures (e.g. updating
+ * global variables. The solution here is to expand tasks in-line.
+ */
+int draw_utask(vhdl_procedural *proc, stmt_container *container,
+               ivl_statement_t stmt)
+{
+   ivl_scope_t tscope = ivl_stmt_call(stmt);
+
+   // TODO: adding some comments to the output would be helpful
+
+   // TOOD: this completely ignores paremeters!
+   draw_stmt(proc, container, ivl_scope_def(tscope), false);
+   
+   return 0;
+}
+
+/*
  * Generate VHDL statements for the given Verilog statement and
  * add them to the given VHDL process. The container is the
  * location to add statements: e.g. the process body, a branch
@@ -651,6 +669,8 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
       return draw_forever(proc, container, stmt);
    case IVL_ST_REPEAT:
       return draw_repeat(proc, container, stmt);
+   case IVL_ST_UTASK:
+      return draw_utask(proc, container, stmt);
    default:
       error("No VHDL translation for statement at %s:%d (type = %d)",
             ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
