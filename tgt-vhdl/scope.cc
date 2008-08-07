@@ -24,6 +24,7 @@
 #include <iostream>
 #include <sstream>
 #include <cassert>
+#include <cstring>
 
 static string make_safe_name(ivl_signal_t sig);
 
@@ -264,9 +265,9 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
  */
 static string make_safe_name(ivl_signal_t sig)
 {
-   string name(ivl_signal_basename(sig));      
-   if (name[0] == '_')
-      name.insert(0, "VL");
+   const char *base = ivl_signal_basename(sig);      
+   if (base[0] == '_')
+      return string("VL") + base;
    
    const char *vhdl_reserved[] = {
       "in", "out", "entity", "architecture", "inout", "array",
@@ -274,12 +275,12 @@ static string make_safe_name(ivl_signal_t sig)
       NULL
    };
    for (const char **p = vhdl_reserved; *p != NULL; p++) {
-      if (name == *p) {
-         name.insert(0, "VL_");
+      if (strcasecmp(*p, base) == 0) {
+         return string("VL_") + base;
          break;
       }
    }
-   return name;
+   return string(base);
 }
 
 /*
