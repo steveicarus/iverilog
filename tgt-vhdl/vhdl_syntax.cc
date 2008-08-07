@@ -110,7 +110,6 @@ void vhdl_entity::emit(std::ostream &of, int level) const
    of << "use ieee.std_logic_1164.all;" << std::endl;
    of << "use ieee.numeric_std.all;" << std::endl;
    of << "use std.textio.all;" << std::endl;
-   //of << "use work.verilog_support.all;" << std::endl;
    of << std::endl;
    
    emit_comment(of, level);
