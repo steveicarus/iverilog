@@ -589,9 +589,17 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    break;
 
 	  default:
-	    cerr << get_fileline() << ": internal error: I don't know how "
-		 << "to deal with return type of function "
-		 << scope->basename() << "." << endl;
+	    if (ports_) {
+		  cerr << get_fileline() << ": internal error: I don't know "
+		       << "how to deal with return type of function "
+		       << scope->basename() << "." << endl;
+	    } else {
+		    /* If we do not have any ports or a return type this
+		     * is probably a bad function definition. */
+		  cerr << get_fileline() << ": error: Bad definition for "
+		       << "function " << scope->basename() << "?" << endl;
+		  return;
+	    }
       }
 
       svector<NetNet*>ports (ports_? ports_->count() : 0);
