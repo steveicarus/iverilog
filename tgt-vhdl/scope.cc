@@ -554,6 +554,45 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
    return 0;
 }
 
+
+/*
+ * Create the signals necessary to expand this task later.
+ */
+static int draw_task(ivl_scope_t scope, ivl_scope_t parent)
+{
+   assert(ivl_scope_type(scope) == IVL_SCT_TASK);
+
+   // Find the containing entity
+   vhdl_entity *ent = find_entity(ivl_scope_name(parent));
+   assert(ent);
+
+   const char *taskname = ivl_scope_tname(scope);
+   
+   int nsigs = ivl_scope_sigs(scope);
+   for (int i = 0; i < nsigs; i++) {
+      ivl_signal_t sig = ivl_scope_sig(scope, i);            
+      vhdl_type *sigtype =
+         vhdl_type::type_for(ivl_signal_width(sig),
+                             ivl_signal_signed(sig) != 0);
+      
+      string signame(make_safe_name(sig));
+
+      vhdl_signal_decl *decl = new vhdl_signal_decl(signame.c_str(), sigtype);
+
+      ostringstream ss;
+      ss << "Declared at " << ivl_signal_file(sig) << ":"
+         << ivl_signal_lineno(sig) << " (in task " << taskname << ")";
+      decl->set_comment(ss.str().c_str());
+   
+      ent->get_arch()->get_scope()->add_decl(decl);   
+      
+      remember_signal(sig, ent->get_arch()->get_scope());
+      rename_signal(sig, signame);
+   }
+   
+   return 0;
+}
+
 /*
  * Create an empty VHDL entity for a Verilog module.
  */
@@ -618,10 +657,11 @@ static int draw_functions(ivl_scope_t scope, void *_parent)
 {
    ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
    if (ivl_scope_type(scope) == IVL_SCT_FUNCTION) {
-      vhdl_entity *ent = find_entity(ivl_scope_name(parent));
-      assert(ent);
-      
       if (draw_function(scope, parent) != 0)
+         return 1;
+   }
+   else if (ivl_scope_type(scope) == IVL_SCT_TASK) {
+      if (draw_task(scope, parent) != 0)
          return 1;
    }
 
