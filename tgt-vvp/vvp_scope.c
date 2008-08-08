@@ -895,6 +895,10 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
 static void draw_event_in_scope(ivl_event_t obj)
 {
+      char tmp[4][32];
+
+      const unsigned ntmp = sizeof(tmp) / sizeof(tmp[0]);
+
       unsigned nany = ivl_event_nany(obj);
       unsigned nneg = ivl_event_nneg(obj);
       unsigned npos = ivl_event_npos(obj);
@@ -903,13 +907,13 @@ static void draw_event_in_scope(ivl_event_t obj)
 
 	/* Figure out how many probe functors are needed. */
       if (nany > 0)
-	    cnt += (nany+3) / 4;
+	    cnt += (nany+ntmp-1) / ntmp;
 
       if (nneg > 0)
-	    cnt += (nneg+3) / 4;
+	    cnt += (nneg+ntmp-1) / ntmp;
 
       if (npos > 0)
-	    cnt += (npos+3) / 4;
+	    cnt += (npos+ntmp-1) / ntmp;
 
       if (cnt == 0) {
 	      /* If none are needed, then this is a named event. The
@@ -923,48 +927,57 @@ static void draw_event_in_scope(ivl_event_t obj)
 	    unsigned idx;
 	    unsigned ecnt = 0;
 
-	    for (idx = 0 ;  idx < nany ;  idx += 4, ecnt += 1) {
+	    for (idx = 0 ;  idx < nany ;  idx += ntmp, ecnt += 1) {
 		  unsigned sub, top;
 
-		  fprintf(vvp_out, "E_%p/%u .event edge", obj, ecnt);
-
-		  top = idx + 4;
+		  top = idx + ntmp;
 		  if (nany < top)
 			top = nany;
 		  for (sub = idx ;  sub < top ;  sub += 1) {
 			ivl_nexus_t nex = ivl_event_any(obj, sub);
-			fprintf(vvp_out, ", %s", draw_input_from_net(nex));
+			strncpy(tmp[sub-idx], draw_input_from_net(nex), sizeof(tmp[0]));
 		  }
+
+		  fprintf(vvp_out, "E_%p/%u .event edge", obj, ecnt);
+		  for (sub = idx ;  sub < top ;  sub += 1)
+			fprintf(vvp_out, ", %s", tmp[sub-idx]);
+
 		  fprintf(vvp_out, ";\n");
 	    }
 
-	    for (idx = 0 ;  idx < nneg ;  idx += 4, ecnt += 1) {
+	    for (idx = 0 ;  idx < nneg ;  idx += ntmp, ecnt += 1) {
 		  unsigned sub, top;
 
-		  fprintf(vvp_out, "E_%p/%u .event negedge", obj, ecnt);
-
-		  top = idx + 4;
+		  top = idx + ntmp;
 		  if (nneg < top)
 			top = nneg;
 		  for (sub = idx ;  sub < top ;  sub += 1) {
 			ivl_nexus_t nex = ivl_event_neg(obj, sub);
-			fprintf(vvp_out, ", %s", draw_input_from_net(nex));
+			strncpy(tmp[sub-idx], draw_input_from_net(nex), sizeof(tmp[0]));
 		  }
+
+		  fprintf(vvp_out, "E_%p/%u .event negedge", obj, ecnt);
+		  for (sub = idx ;  sub < top ;  sub += 1)
+			fprintf(vvp_out, ", %s", tmp[sub-idx]);
+
 		  fprintf(vvp_out, ";\n");
 	    }
 
-	    for (idx = 0 ;  idx < npos ;  idx += 4, ecnt += 1) {
+	    for (idx = 0 ;  idx < npos ;  idx += ntmp, ecnt += 1) {
 		  unsigned sub, top;
 
-		  fprintf(vvp_out, "E_%p/%u .event posedge", obj, ecnt);
-
-		  top = idx + 4;
+		  top = idx + ntmp;
 		  if (npos < top)
 			top = npos;
 		  for (sub = idx ;  sub < top ;  sub += 1) {
 			ivl_nexus_t nex = ivl_event_pos(obj, sub);
-			fprintf(vvp_out, ", %s", draw_input_from_net(nex));
+			strncpy(tmp[sub-idx], draw_input_from_net(nex), sizeof(tmp[0]));
 		  }
+
+		  fprintf(vvp_out, "E_%p/%u .event posedge", obj, ecnt);
+		  for (sub = idx ;  sub < top ;  sub += 1)
+			fprintf(vvp_out, ", %s", tmp[sub-idx]);
+
 		  fprintf(vvp_out, ";\n");
 	    }
 
@@ -981,20 +994,17 @@ static void draw_event_in_scope(ivl_event_t obj)
       } else {
 	    unsigned num_input_strings = nany + nneg + npos;
 	    unsigned idx;
-	    ivl_nexus_t input_nexa[4];
 	    const char*edge = 0;
 
-	    assert(num_input_strings <= 4);
+	    assert(num_input_strings <= ntmp);
 
 	    if (nany > 0) {
 		  assert((nneg + npos) == 0);
-		  assert(nany <= 4);
-
 		  edge = "edge";
 
 		  for (idx = 0 ;  idx < nany ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_any(obj, idx);
-			input_nexa[idx] = nex;
+			strncpy(tmp[idx], draw_input_from_net(nex), sizeof(tmp[0]));
 		  }
 
 	    } else if (nneg > 0) {
@@ -1003,7 +1013,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 
 		  for (idx = 0 ;  idx < nneg ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_neg(obj, idx);
-			input_nexa[idx] = nex;
+			strncpy(tmp[idx], draw_input_from_net(nex), sizeof(tmp[0]));
 		  }
 
 	    } else {
@@ -1012,14 +1022,14 @@ static void draw_event_in_scope(ivl_event_t obj)
 
 		  for (idx = 0 ;  idx < npos ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_pos(obj, idx);
-			input_nexa[idx] = nex;
+			strncpy(tmp[idx], draw_input_from_net(nex), sizeof(tmp[0]));
 		  }
 	    }
 
 	    fprintf(vvp_out, "E_%p .event %s", obj, edge);
-	    for (idx = 0 ;  idx < num_input_strings ;  idx += 1)
-		  fprintf(vvp_out, ", %s", draw_input_from_net(input_nexa[idx]));
-
+	    for (idx = 0 ;  idx < num_input_strings ;  idx += 1) {
+		  fprintf(vvp_out, ", %s", tmp[idx]);
+	    }
 	    fprintf(vvp_out, ";\n");
       }
 }
