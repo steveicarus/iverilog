@@ -661,7 +661,6 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
    case IVL_ST_CONDIT:
       return draw_if(proc, container, stmt, is_last);
    case IVL_ST_CASE:
-   case IVL_ST_CASEX:
       return draw_case(proc, container, stmt, is_last);
    case IVL_ST_WHILE:
       return draw_while(proc, container, stmt);
@@ -671,6 +670,9 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
       return draw_repeat(proc, container, stmt);
    case IVL_ST_UTASK:
       return draw_utask(proc, container, stmt);
+   case IVL_ST_CASEX:
+      error("casex statement cannot be translated to VHDL");
+      return 1;
    default:
       error("No VHDL translation for statement at %s:%d (type = %d)",
             ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
