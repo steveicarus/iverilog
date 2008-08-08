@@ -577,6 +577,12 @@ static int draw_task(ivl_scope_t scope, ivl_scope_t parent)
       
       string signame(make_safe_name(sig));
 
+      // Check this signal isn't declared in the outer scope
+      if (ent->get_arch()->get_scope()->have_declared(signame)) {
+         signame += "_";
+         signame += taskname;
+      }
+
       vhdl_signal_decl *decl = new vhdl_signal_decl(signame.c_str(), sigtype);
 
       ostringstream ss;
