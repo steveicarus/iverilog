@@ -2374,8 +2374,7 @@ void dll_target::signal(const NetNet*net)
 	   object, or creating the sigs_ array if this is the first
 	   signal. */
       obj->scope_ = find_scope(des_, net->scope());
-      obj->file = perm_string::literal("N/A");
-      obj->lineno = 0;
+      FILE_NAME(obj, net);
       assert(obj->scope_);
 
       if (obj->scope_->nsigs_ == 0) {
