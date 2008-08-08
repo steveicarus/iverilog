@@ -771,4 +771,10 @@ static inline void FILE_NAME(ivl_process_t net, const LineInfo*info)
       net->lineno = info->get_lineno();
 }
 
+static inline void FILE_NAME(ivl_signal_t net, const LineInfo*info)
+{
+      net->file = info->get_file();
+      net->lineno = info->get_lineno();
+}
+
 #endif
