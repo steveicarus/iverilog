@@ -331,6 +331,12 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
       case IVL_SIP_NONE:
          {
             vhdl_decl *decl = new vhdl_signal_decl(name.c_str(), sig_type);
+
+            ostringstream ss;
+            ss << "Declared at " << ivl_signal_file(sig) << ":"
+               << ivl_signal_lineno(sig);
+            decl->set_comment(ss.str().c_str());
+            
             ent->get_arch()->get_scope()->add_decl(decl);
          }
          break;
