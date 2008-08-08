@@ -141,10 +141,15 @@ int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
                      ss << ch;
                   p += 3;
                }
-               else if (*p == '%') {
+               else if (*p == '%' && *(++p) != '%') {
                   flush_string(ss, container);
 
-                  p++;   // Ignore the format (!)
+                  // TODO: This needs to be re-written
+                  // ...it does not handle format codes at all!
+                  // Unfortunately, there is no printf-like
+                  // function in VHDL
+                  
+                  assert(i < count);
                   ivl_expr_t net = ivl_stmt_parm(stmt, i++);
                   assert(net);
 
