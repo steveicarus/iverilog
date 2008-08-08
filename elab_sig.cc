@@ -1003,8 +1003,11 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: Create signal "
-		 << wtype << " ["<<msb<<":"<<lsb<<"] " << name_
-		 << " in scope " << scope_path(scope) << endl;
+		 << wtype << " ["<<msb<<":"<<lsb<<"] " << name_;
+	    if (array_dimensions > 0) {
+		  cerr << " [" << array_s0 << ":" << array_e0 << "]" << endl;
+	    }
+	    cerr << " in scope " << scope_path(scope) << endl;
       }
 
 
