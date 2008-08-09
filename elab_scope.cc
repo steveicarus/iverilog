@@ -316,17 +316,17 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// here because the parameter receiving the assignment may be
 	// in a scope not discovered by this pass.
 
-      while (! defparms.empty()) {
-	    Module::named_expr_t cur = defparms.front();
-	    defparms.pop_front();
+      typedef list<Module::named_expr_t>::const_iterator defparms_iter_t;
+      for (defparms_iter_t cur = defparms.begin()
+		 ; cur != defparms.end() ;  cur ++) {
 
-	    PExpr*ex = cur.second;
+	    PExpr*ex = cur->second;
 	    assert(ex);
 
 	    NetExpr*val = ex->elaborate_pexpr(des, scope);
-	    delete ex;
 	    if (val == 0) continue;
-	    scope->defparams.push_back(make_pair(cur.first, val));
+
+	    scope->defparams.push_back(make_pair(cur->first, val));
       }
 
 	// Evaluate the attributes. Evaluate them in the scope of the
