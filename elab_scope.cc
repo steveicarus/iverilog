@@ -53,7 +53,7 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
       assert(ex);
 
       NetExpr*val = ex->elaborate_pexpr(des, scope);
-      if (val == 0) return;
+
       NetExpr*msb = 0;
       NetExpr*lsb = 0;
       bool signed_flag = cur.signed_flag;
@@ -69,19 +69,6 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
 	    assert(msb);
 	    lsb = cur.lsb ->elaborate_pexpr(des, scope);
 	    assert(lsb);
-      }
-
-      if (signed_flag) {
-	      /* If explicitly signed, then say so. */
-	    val->cast_signed(true);
-      } else if (cur.msb) {
-	      /* If there is a range, then the signedness comes
-		 from the type and not the expression. */
-	    val->cast_signed(signed_flag);
-      } else {
-	      /* otherwise, let the expression describe
-		 itself. */
-	    signed_flag = val->has_sign();
       }
 
       NetScope::range_t*range_list = 0;
@@ -118,8 +105,29 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
 	    range_list = tmp;
       }
 
-      val = scope->set_parameter(name, val, cur.type, msb, lsb, signed_flag, range_list, cur);
-      assert(val);
+	/* Set the parameter expression to 0 if the evaluation failed. */
+      if (val == 0) {
+	    val = scope->set_parameter(name, val, cur.type, msb, lsb,
+	                               signed_flag, range_list, cur);
+	    delete val;
+	    return;
+      }
+
+      if (signed_flag) {
+	      /* If explicitly signed, then say so. */
+	    val->cast_signed(true);
+      } else if (cur.msb) {
+	      /* If there is a range, then the signedness comes
+		 from the type and not the expression. */
+	    val->cast_signed(signed_flag);
+      } else {
+	      /* otherwise, let the expression describe
+		 itself. */
+	    signed_flag = val->has_sign();
+      }
+
+      val = scope->set_parameter(name, val, cur.type, msb, lsb, signed_flag,
+                                 range_list, cur);
       delete val;
 }
 
