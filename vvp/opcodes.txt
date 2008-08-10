@@ -414,8 +414,9 @@ ended, then the %join does not block or yield the thread.
 * %load/av <bit>, <array-label>, <wid>
 
 This instruction loads a word from the specified array. The word
-address is in index register 3. The width should match the width of
-the array word.
+address is in index register 3. Like %load/v below the width does
+not have to match the width of the array word. See the %load/v
+description for more information.
 
 * %load/avp0 <bit>, <array-label>, <wid>
 * %load/avp0/s <bit>, <array-label>, <wid>

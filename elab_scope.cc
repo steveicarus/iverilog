@@ -53,7 +53,7 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
       assert(ex);
 
       NetExpr*val = ex->elaborate_pexpr(des, scope);
-      if (val == 0) return;
+
       NetExpr*msb = 0;
       NetExpr*lsb = 0;
       bool signed_flag = cur.signed_flag;
@@ -69,19 +69,6 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
 	    assert(msb);
 	    lsb = cur.lsb ->elaborate_pexpr(des, scope);
 	    assert(lsb);
-      }
-
-      if (signed_flag) {
-	      /* If explicitly signed, then say so. */
-	    val->cast_signed(true);
-      } else if (cur.msb) {
-	      /* If there is a range, then the signedness comes
-		 from the type and not the expression. */
-	    val->cast_signed(signed_flag);
-      } else {
-	      /* otherwise, let the expression describe
-		 itself. */
-	    signed_flag = val->has_sign();
       }
 
       NetScope::range_t*range_list = 0;
@@ -118,8 +105,29 @@ void Module::elaborate_parm_item_(perm_string name, const param_expr_t&cur,
 	    range_list = tmp;
       }
 
-      val = scope->set_parameter(name, val, cur.type, msb, lsb, signed_flag, range_list, cur);
-      assert(val);
+	/* Set the parameter expression to 0 if the evaluation failed. */
+      if (val == 0) {
+	    val = scope->set_parameter(name, val, cur.type, msb, lsb,
+	                               signed_flag, range_list, cur);
+	    delete val;
+	    return;
+      }
+
+      if (signed_flag) {
+	      /* If explicitly signed, then say so. */
+	    val->cast_signed(true);
+      } else if (cur.msb) {
+	      /* If there is a range, then the signedness comes
+		 from the type and not the expression. */
+	    val->cast_signed(signed_flag);
+      } else {
+	      /* otherwise, let the expression describe
+		 itself. */
+	    signed_flag = val->has_sign();
+      }
+
+      val = scope->set_parameter(name, val, cur.type, msb, lsb, signed_flag,
+                                 range_list, cur);
       delete val;
 }
 
@@ -316,17 +324,17 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// here because the parameter receiving the assignment may be
 	// in a scope not discovered by this pass.
 
-      while (! defparms.empty()) {
-	    Module::named_expr_t cur = defparms.front();
-	    defparms.pop_front();
+      typedef list<Module::named_expr_t>::const_iterator defparms_iter_t;
+      for (defparms_iter_t cur = defparms.begin()
+		 ; cur != defparms.end() ;  cur ++) {
 
-	    PExpr*ex = cur.second;
+	    PExpr*ex = cur->second;
 	    assert(ex);
 
 	    NetExpr*val = ex->elaborate_pexpr(des, scope);
-	    delete ex;
 	    if (val == 0) continue;
-	    scope->defparams.push_back(make_pair(cur.first, val));
+
+	    scope->defparams.push_back(make_pair(cur->first, val));
       }
 
 	// Evaluate the attributes. Evaluate them in the scope of the
@@ -475,7 +483,12 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
       container->genvar_tmp_val = genvar;
       NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1);
       NetEConst*test = dynamic_cast<NetEConst*>(test_ex);
-      assert(test);
+      if (test == 0) {
+	    cerr << get_fileline() << ": error: Cannot evaluate genvar"
+		 << " conditional expression: " << *loop_test << endl;
+	    des->errors += 1;
+	    return false;
+      }
       while (test->value().as_long()) {
 
 	      // The actual name of the scope includes the genvar so
@@ -522,7 +535,12 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	      // Calculate the step for the loop variable.
 	    NetExpr*step_ex = elab_and_eval(des, container, loop_step, -1);
 	    NetEConst*step = dynamic_cast<NetEConst*>(step_ex);
-	    assert(step);
+	    if (step == 0) {
+		  cerr << get_fileline() << ": error: Cannot evaluate genvar"
+		       << " step expression: " << *loop_step << endl;
+		  des->errors += 1;
+		  return false;
+	    }
 	    if (debug_scopes)
 		  cerr << get_fileline() << ": debug: genvar step from "
 		       << genvar << " to " << step->value().as_long() << endl;
@@ -547,7 +565,12 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 {
       NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1);
       NetEConst*test = dynamic_cast<NetEConst*> (test_ex);
-      assert(test);
+      if (test == 0) {
+	    cerr << get_fileline() << ": error: Cannot evaluate genvar"
+		 << " conditional expression: " << *loop_test << endl;
+	    des->errors += 1;
+	    return false;
+      }
 
 	// If the condition evaluates as false, then do not create the
 	// scope.
@@ -589,7 +612,12 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 {
       NetExpr*case_value_ex = elab_and_eval(des, container, loop_test, -1);
       NetEConst*case_value_co = dynamic_cast<NetEConst*>(case_value_ex);
-      assert(case_value_co);
+      if (case_value_co == 0) {
+	    cerr << get_fileline() << ": error: Cannot evaluate genvar case"
+		 << " expression: " << *loop_test << endl;
+	    des->errors += 1;
+	    return false;
+      }
 
 	// The name of the scope to generate, whatever that item is.
       hname_t use_name (scope_name);

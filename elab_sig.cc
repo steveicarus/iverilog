@@ -589,9 +589,17 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    break;
 
 	  default:
-	    cerr << get_fileline() << ": internal error: I don't know how "
-		 << "to deal with return type of function "
-		 << scope->basename() << "." << endl;
+	    if (ports_) {
+		  cerr << get_fileline() << ": internal error: I don't know "
+		       << "how to deal with return type of function "
+		       << scope->basename() << "." << endl;
+	    } else {
+		    /* If we do not have any ports or a return type this
+		     * is probably a bad function definition. */
+		  cerr << get_fileline() << ": error: Bad definition for "
+		       << "function " << scope->basename() << "?" << endl;
+		  return;
+	    }
       }
 
       svector<NetNet*>ports (ports_? ports_->count() : 0);
@@ -1003,8 +1011,11 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: Create signal "
-		 << wtype << " ["<<msb<<":"<<lsb<<"] " << name_
-		 << " in scope " << scope_path(scope) << endl;
+		 << wtype << " ["<<msb<<":"<<lsb<<"] " << name_;
+	    if (array_dimensions > 0) {
+		  cerr << " [" << array_s0 << ":" << array_e0 << "]" << endl;
+	    }
+	    cerr << " in scope " << scope_path(scope) << endl;
       }
 
 
