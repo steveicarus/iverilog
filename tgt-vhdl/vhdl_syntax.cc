@@ -735,6 +735,37 @@ void vhdl_binop_expr::emit(std::ostream &of, int level) const
    of << ")";
 }
 
+vhdl_bit_spec_expr::~vhdl_bit_spec_expr()
+{
+   delete others_;
+
+   std::list<bit_map>::iterator it;
+   for (it = bits_.begin(); it != bits_.end(); ++it)
+      delete (*it).e;
+}
+
+void vhdl_bit_spec_expr::add_bit(int bit, vhdl_expr *e)
+{
+   bit_map bm = { bit, e };
+   bits_.push_back(bm);
+}
+
+void vhdl_bit_spec_expr::emit(std::ostream &of, int level) const
+{
+   of << "(";
+   
+   std::list<bit_map>::const_iterator it;
+   for (it = bits_.begin(); it != bits_.end(); ++it) {
+      of << (*it).bit << " => ";
+      (*it).e->emit(of, level);
+      of << ", ";
+   }
+
+   of << "others => ";
+   others_->emit(of, level);
+   of << ")";
+}
+
 vhdl_case_branch::~vhdl_case_branch()
 {
    delete when_;

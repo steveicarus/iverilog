@@ -129,6 +129,27 @@ private:
 };
 
 
+/*
+ * An expression like (0 => '1', 2 => '0', others => 'Z')
+ */
+class vhdl_bit_spec_expr : public vhdl_expr {
+public:
+   vhdl_bit_spec_expr(vhdl_type *type, vhdl_expr *others)
+      : vhdl_expr(type), others_(others) {}
+   ~vhdl_bit_spec_expr();
+
+   void add_bit(int bit, vhdl_expr *e);
+   void emit(std::ostream &of, int level) const;
+private:
+   vhdl_expr *others_;
+   struct bit_map {
+      int bit;
+      vhdl_expr *e;
+   };
+   std::list<bit_map> bits_;
+};
+
+
 class vhdl_const_string : public vhdl_expr {
 public:
    vhdl_const_string(const char *value)

@@ -83,6 +83,15 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
 
       return conv;
    }
+   else if ((to->get_name() == VHDL_TYPE_UNSIGNED
+             || to->get_name() == VHDL_TYPE_SIGNED) &&
+            type_->get_name() == VHDL_TYPE_STD_LOGIC) {
+      vhdl_bit_spec_expr *bs =
+         new vhdl_bit_spec_expr(new vhdl_type(*to), new vhdl_const_bit('0'));
+      bs->add_bit(0, this);
+
+      return bs;
+   }
    else if (to->get_name() == VHDL_TYPE_STD_LOGIC &&
             type_->get_name() == VHDL_TYPE_BOOLEAN) {
       require_support_function(SF_BOOLEAN_TO_LOGIC);
