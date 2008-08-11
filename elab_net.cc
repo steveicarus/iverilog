@@ -355,7 +355,7 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 				      : verinum::V1,
 				      1);
 			NetEConst*ogate = new NetEConst(oval);
-			NetNet*osig = ogate->synthesize(des);
+			NetNet*osig = ogate->synthesize(des, scope);
 			osig->data_type(lsig->data_type());
 			osig->set_line(*lsig);
 			osig->rise_time(rise);
@@ -484,7 +484,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	   use of the situation, or 0 if it cannot. */
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(rexp)) {
 
-	    lsig = lexp->synthesize(des);
+	    lsig = lexp->synthesize(des, scope);
 	    if (lsig == 0) return 0;
 	    delete lexp;
 	    lexp = 0;
@@ -492,7 +492,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    if (real_arg) {
 		  verireal vrl(tmp->value().as_double());
 		  NetECReal rlval(vrl);
-		  rsig = rlval.synthesize(des);
+		  rsig = rlval.synthesize(des, scope);
 		  delete rexp;
 		  rexp = 0;
 	    } else {
@@ -508,7 +508,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(lexp)) {
 
-	    rsig = rexp->synthesize(des);
+	    rsig = rexp->synthesize(des, scope);
 	    if (rsig == 0) return 0;
 	    delete rexp;
 	    rexp = 0;
@@ -516,7 +516,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    if (real_arg) {
 		  verireal vrl(tmp->value().as_double());
 		  NetECReal rlval(vrl);
-		  lsig = rlval.synthesize(des);
+		  lsig = rlval.synthesize(des, scope);
 		  delete lexp;
 		  lexp = 0;
 	    } else {
@@ -531,13 +531,13 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
       }
 
       if (lsig == 0) {
-	    lsig = lexp->synthesize(des);
+	    lsig = lexp->synthesize(des, scope);
 	    if (lsig == 0) return 0;
 	    delete lexp;
       }
 
       if (rsig == 0) {
-	    rsig = rexp->synthesize(des);
+	    rsig = rexp->synthesize(des, scope);
 	    if (rsig == 0) return 0;
 	    delete rexp;
       }
@@ -1737,14 +1737,14 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 	    sel_expr = make_sub_expr(sig->lsb(), sel_expr);
 	    eval_expr(sel_expr);
 
-	    sel = sel_expr->synthesize(des);
+	    sel = sel_expr->synthesize(des, scope);
 
       } else if (sig->lsb() != 0) {
 	    NetExpr*sel_expr = index_tail.msb->elaborate_expr(des, scope, -1,false);
 	    sel_expr = make_add_expr(sel_expr, - sig->lsb());
 	    eval_expr(sel_expr);
 
-	    sel = sel_expr->synthesize(des);
+	    sel = sel_expr->synthesize(des, scope);
 
       } else {
 	    sel = index_tail.msb->elaborate_net(des, scope, 0, 0, 0, 0);
@@ -2188,7 +2188,7 @@ NetNet* PEIdent::elaborate_net_net_idx_up_(Design*des, NetScope*scope,
 	    base = make_sub_expr(vwid-offset-wid, base);
       }
 
-      NetPartSelect*sel = new NetPartSelect(sig, base->synthesize(des), wid);
+      NetPartSelect*sel = new NetPartSelect(sig, base->synthesize(des, scope), wid);
       sel->set_line(*this);
       des->add_node(sel);
 
@@ -2281,7 +2281,7 @@ NetNet* PEIdent::elaborate_net_array_(Design*des, NetScope*scope,
 	    index_ex = make_add_expr(index_ex, 0-array_base);
       }
 
-      NetNet*index_net = index_ex->synthesize(des);
+      NetNet*index_net = index_ex->synthesize(des, scope);
       connect(mux->pin_Address(), index_net->pin(0));
 
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
@@ -3159,7 +3159,7 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
              * on this for now. */
             break;
       }
-      expr_sig = expr->synthesize(des);
+      expr_sig = expr->synthesize(des, scope);
 
       if (expr_sig == 0 || tru_sig == 0 || fal_sig == 0) return 0;
 
@@ -3355,7 +3355,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 					drive0, drive1);
       }
 
-      NetNet* sub_sig = expr->synthesize(des);
+      NetNet* sub_sig = expr->synthesize(des, scope);
 
       if (sub_sig == 0) return 0;
 
@@ -3621,7 +3621,7 @@ NetNet* PEUnary::elab_net_unary_real_(Design*des, NetScope*scope,
 		 << *this << "."<<endl;
       }
 
-      NetNet* sub_sig = expr->synthesize(des);
+      NetNet* sub_sig = expr->synthesize(des, scope);
 
       if (sub_sig == 0) return 0;
       delete expr;

@@ -3472,7 +3472,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	      // FIXME: Look for constant expressions here?
 
 	      // Get a net form.
-	    condit_sig = tmp->synthesize(des);
+	    condit_sig = tmp->synthesize(des, scope);
 	    ivl_assert(*condition, condit_sig);
       }
 

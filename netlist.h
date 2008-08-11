@@ -1535,8 +1535,21 @@ class NetExpr  : public LineInfo {
       virtual NexusSet* nex_input(bool rem_out = true) =0;
 
 	// Return a version of myself that is structural. This is used
-	// for converting expressions to gates.
-      virtual NetNet*synthesize(Design*);
+	// for converting expressions to gates. The arguments are:
+	//
+	//  des, scope:  The context where this work is done
+	//
+	//  rise/fall/decay: Attach these delays to the driver for the
+	//                   expression output.
+	//
+	//  drive0/drive1: Attach these strengths tp the driver for
+	//                 the expression output.
+      virtual NetNet*synthesize(Design*des, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
 
 
     protected:
@@ -1574,7 +1587,12 @@ class NetEConst  : public NetExpr {
       virtual void dump(ostream&) const;
 
       virtual NetEConst* dup_expr() const;
-      virtual NetNet*synthesize(Design*);
+      virtual NetNet*synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
       virtual NexusSet* nex_input(bool rem_out = true);
 
     private:
@@ -1627,7 +1645,12 @@ class NetECReal  : public NetExpr {
       virtual void dump(ostream&) const;
 
       virtual NetECReal* dup_expr() const;
-      virtual NetNet*synthesize(Design*);
+      virtual NetNet*synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
       virtual NexusSet* nex_input(bool rem_out = true);
 
     private:
@@ -2864,7 +2887,12 @@ class NetEUFunc  : public NetExpr {
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEUFunc*dup_expr() const;
       virtual NexusSet* nex_input(bool rem_out = true);
-      virtual NetNet* synthesize(Design*des);
+      virtual NetNet* synthesize(Design*des, NetScope*scope,
+				 const NetExpr* rise  =0,
+				 const NetExpr* fall  =0,
+				 const NetExpr* decay =0,
+				 Link::strength_t drive0 =Link::STRONG,
+				 Link::strength_t drive1 =Link::STRONG);
 
     private:
       NetScope*scope_;
@@ -3058,7 +3086,12 @@ class NetEBAdd : public NetEBinary {
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBAdd* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
 
     private:
       NetECReal* eval_tree_real_();
@@ -3080,7 +3113,12 @@ class NetEBDiv : public NetEBinary {
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBDiv* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
 };
 
 /*
@@ -3107,7 +3145,12 @@ class NetEBBits : public NetEBinary {
       virtual NetEBBits* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
 
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
 };
 
 /*
@@ -3138,7 +3181,12 @@ class NetEBComp : public NetEBinary {
       virtual NetEBComp* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
 
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
 
     private:
       NetEConst* must_be_leeq_(NetExpr*le, const verinum&rv, bool eq_flag);
@@ -3169,7 +3217,12 @@ class NetEBLogic : public NetEBinary {
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBLogic* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
 
     private:
 };
@@ -3207,7 +3260,12 @@ class NetEBMult : public NetEBinary {
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBMult* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
 
     private:
 
@@ -3229,7 +3287,12 @@ class NetEBPow : public NetEBinary {
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBPow* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
 
     private:
 
@@ -3261,7 +3324,12 @@ class NetEBShift : public NetEBinary {
       virtual NetEBShift* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
 
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
 
     private:
 };
@@ -3295,7 +3363,12 @@ class NetEConcat  : public NetExpr {
       virtual bool set_width(unsigned w, bool last_chance =false);
       virtual NetEConcat* dup_expr() const;
       virtual NetEConst*  eval_tree(int prune_to_width = -1);
-      virtual NetNet*synthesize(Design*);
+      virtual NetNet*synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -3371,7 +3444,12 @@ class NetESelect  : public NetExpr {
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
       virtual NetESelect* dup_expr() const;
-      virtual NetNet*synthesize(Design*des);
+      virtual NetNet*synthesize(Design*des, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
       virtual void dump(ostream&) const;
 
     private:
@@ -3449,7 +3527,12 @@ class NetESFunc  : public NetExpr {
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetESFunc*dup_expr() const;
-      virtual NetNet*synthesize(Design*);
+      virtual NetNet*synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
 
     private:
       const char* name_;
@@ -3486,7 +3569,12 @@ class NetETernary  : public NetExpr {
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
-      virtual NetNet*synthesize(Design*);
+      virtual NetNet*synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
 
     private:
       NetExpr*cond_;
@@ -3543,7 +3631,12 @@ class NetEUBits : public NetEUnary {
       NetEUBits(char op, NetExpr*ex);
       ~NetEUBits();
 
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
 
       virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual ivl_variable_type_t expr_type() const;
@@ -3556,7 +3649,12 @@ class NetEUReduce : public NetEUnary {
       ~NetEUReduce();
 
       virtual bool set_width(unsigned w, bool last_chance);
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope,
+				const NetExpr* rise  =0,
+				const NetExpr* fall  =0,
+				const NetExpr* decay =0,
+				Link::strength_t drive0 =Link::STRONG,
+				Link::strength_t drive1 =Link::STRONG);
       virtual NetEUReduce* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
       virtual ivl_variable_type_t expr_type() const;
@@ -3583,7 +3681,12 @@ class NetESignal  : public NetExpr {
       virtual bool set_width(unsigned, bool last_chance);
 
       virtual NetESignal* dup_expr() const;
-      NetNet* synthesize(Design*des);
+      NetNet* synthesize(Design*des, NetScope*scope,
+			 const NetExpr* rise  =0,
+			 const NetExpr* fall  =0,
+			 const NetExpr* decay =0,
+			 Link::strength_t drive0 =Link::STRONG,
+			 Link::strength_t drive1 =Link::STRONG);
       NexusSet* nex_input(bool rem_out = true);
 
 	// This is the expression for selecting an array word, if this

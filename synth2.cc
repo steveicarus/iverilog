@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -60,7 +60,7 @@ bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 				const NetBus&nex_map, NetBus&nex_out)
 {
-      NetNet*rsig = rval_->synthesize(des);
+      NetNet*rsig = rval_->synthesize(des, scope);
       assert(rsig);
 
       NetNet*lsig = lval_->sig();
@@ -155,7 +155,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 			  const NetBus&nex_map, NetBus&nex_out)
 {
 	/* Synthesize the select expression. */
-      NetNet*esig = expr_->synthesize(des);
+      NetNet*esig = expr_->synthesize(des, scope);
 
       unsigned sel_width = esig->vector_width();
       assert(sel_width > 0);
