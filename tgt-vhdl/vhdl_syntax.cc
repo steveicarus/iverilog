@@ -737,7 +737,8 @@ void vhdl_binop_expr::emit(std::ostream &of, int level) const
 
 vhdl_bit_spec_expr::~vhdl_bit_spec_expr()
 {
-   delete others_;
+   if (others_)
+      delete others_;
 
    std::list<bit_map>::iterator it;
    for (it = bits_.begin(); it != bits_.end(); ++it)
@@ -755,14 +756,19 @@ void vhdl_bit_spec_expr::emit(std::ostream &of, int level) const
    of << "(";
    
    std::list<bit_map>::const_iterator it;
-   for (it = bits_.begin(); it != bits_.end(); ++it) {
+   it = bits_.begin();
+   while (it != bits_.end()) {
       of << (*it).bit << " => ";
       (*it).e->emit(of, level);
-      of << ", ";
+      if (++it != bits_.end())
+         of << ", ";
    }
 
-   of << "others => ";
-   others_->emit(of, level);
+   if (others_) {
+      of << ", others => ";
+      others_->emit(of, level);
+   }
+   
    of << ")";
 }
 

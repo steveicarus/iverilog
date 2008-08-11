@@ -22,6 +22,7 @@
 #include "vhdl_element.hh"
 
 #include <cassert>
+#include <sstream>
 #include <iostream>
 
  
@@ -106,6 +107,36 @@ static void udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
       error("Sequential UDP devices not supported yet");
       return;
    }
+
+   // As with regular case statements, the expression in a
+   // `with .. select' statement must be "locally static".
+   // This is achieved by first combining the inputs into
+   // a temporary
+   
+   ostringstream ss;
+   ss << ivl_logic_basename(log) << "_Tmp";
+   int msb = ivl_udp_nin(udp) - 1;
+   vhdl_type *tmp_type = vhdl_type::std_logic_vector(msb, 0);
+   vhdl_signal_decl *tmp_decl =
+      new vhdl_signal_decl(ss.str().c_str(), tmp_type);
+   arch->get_scope()->add_decl(tmp_decl);
+   
+   vhdl_expr *tmp_rhs;
+   if (ivl_udp_nin(udp) == 1) {
+      tmp_rhs = nexus_to_var_ref(arch->get_scope(), ivl_logic_pin(log, 1));
+      tmp_rhs = tmp_rhs->cast(tmp_type);
+   }
+   else
+      tmp_rhs = inputs_to_expr(arch->get_scope(), VHDL_BINOP_CONCAT, log);
+
+   ss.str("");
+   ss << "Input to " << ivl_logic_basename(log) << " "
+      << ivl_udp_name(udp) << " UDP";
+   tmp_decl->set_comment(ss.str());
+
+   vhdl_var_ref *tmp_ref =
+      new vhdl_var_ref(tmp_decl->get_name().c_str(), NULL);
+   arch->add_stmt(new vhdl_cassign_stmt(tmp_ref, tmp_rhs));
    
 }
 

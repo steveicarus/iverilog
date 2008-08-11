@@ -84,10 +84,13 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
       return conv;
    }
    else if ((to->get_name() == VHDL_TYPE_UNSIGNED
-             || to->get_name() == VHDL_TYPE_SIGNED) &&
+             || to->get_name() == VHDL_TYPE_SIGNED
+             || to->get_name() == VHDL_TYPE_STD_LOGIC_VECTOR) &&
             type_->get_name() == VHDL_TYPE_STD_LOGIC) {
+
+      vhdl_expr *others = to->get_width() == 1 ? NULL : new vhdl_const_bit('0');
       vhdl_bit_spec_expr *bs =
-         new vhdl_bit_spec_expr(new vhdl_type(*to), new vhdl_const_bit('0'));
+         new vhdl_bit_spec_expr(new vhdl_type(*to), others);
       bs->add_bit(0, this);
 
       return bs;
