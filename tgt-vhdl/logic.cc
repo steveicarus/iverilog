@@ -120,9 +120,10 @@ static void udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
    vhdl_signal_decl *tmp_decl =
       new vhdl_signal_decl(ss.str().c_str(), tmp_type);
    arch->get_scope()->add_decl(tmp_decl);
-   
+
+   int nin = ivl_udp_nin(udp);
    vhdl_expr *tmp_rhs;
-   if (ivl_udp_nin(udp) == 1) {
+   if (nin == 1) {
       tmp_rhs = nexus_to_var_ref(arch->get_scope(), ivl_logic_pin(log, 1));
       tmp_rhs = tmp_rhs->cast(tmp_type);
    }
@@ -137,7 +138,29 @@ static void udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
    vhdl_var_ref *tmp_ref =
       new vhdl_var_ref(tmp_decl->get_name().c_str(), NULL);
    arch->add_stmt(new vhdl_cassign_stmt(tmp_ref, tmp_rhs));
+
+   // Now we can implement the UDP as a `with .. select' statement
+   // by reading values out of the table
+   ivl_nexus_t output_nex = ivl_logic_pin(log, 0);
+   vhdl_var_ref *out = nexus_to_var_ref(arch->get_scope(), output_nex);
+   vhdl_with_select_stmt *ws =
+      new vhdl_with_select_stmt(new vhdl_var_ref(*tmp_ref), out);
    
+   int nrows = ivl_udp_rows(udp);
+   for (int i = 0; i < nrows; i++) {
+      const char *row = ivl_udp_row(udp, i);
+      
+      vhdl_expr *value = new vhdl_const_bit(row[nin]);
+      vhdl_expr *cond = new vhdl_const_bits(row, nin, false);
+
+      ws->add_condition(value, cond);
+   }
+
+   ss.str("");
+   ss << "UDP " << ivl_udp_name(udp);
+   ws->set_comment(ss.str());
+
+   arch->add_stmt(ws);
 }
 
 static vhdl_expr *translate_logic_inputs(vhdl_scope *scope, ivl_net_logic_t log)

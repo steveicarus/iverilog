@@ -892,6 +892,7 @@ void vhdl_param_decl::emit(std::ostream &of, int level) const
 vhdl_with_select_stmt::~vhdl_with_select_stmt()
 {
    delete test_;
+   delete out_;
 
    for (when_list_t::const_iterator it = whens_.begin();
         it != whens_.end();
@@ -903,15 +904,21 @@ vhdl_with_select_stmt::~vhdl_with_select_stmt()
 
 void vhdl_with_select_stmt::emit(std::ostream &of, int level) const
 {
-   emit_comment(of, level);
-   
    of << "with ";
    test_->emit(of, level);
    of << " select";
+   emit_comment(of, level, true);   
    newline(of, indent(level));
 
+   out_->emit(of, level);
+   of << " <= ";      
+   
    when_list_t::const_iterator it = whens_.begin();
    while (it != whens_.end()) {
+      (*it).value->emit(of, level);
+      of << " when ";
+      (*it).cond->emit(of, level);
+      
       if (++it != whens_.end()) {
          of << ",";
          newline(of, indent(level));
