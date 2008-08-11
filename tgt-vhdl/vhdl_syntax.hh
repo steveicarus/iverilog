@@ -255,6 +255,16 @@ public:
 typedef std::list<vhdl_conc_stmt*> conc_stmt_list_t;
 
 /*
+ * A '<value> when <cond>' clause that appears in several
+ * statement types.
+ */
+struct when_part_t {
+   vhdl_expr *value, *cond;
+};
+typedef std::list<when_part_t> when_list_t;
+
+
+/*
  * A concurrent signal assignment (i.e. not part of a process).
  * Can have any number of `when' clauses, in which case the original
  * rhs becomes the `else' part.
@@ -272,12 +282,22 @@ private:
    vhdl_var_ref *lhs_;
    vhdl_expr *rhs_;
    vhdl_expr *after_;
-
-   struct when_part_t {
-      vhdl_expr *value, *cond;
-   };
-   std::list<when_part_t> whens_;
+   when_list_t whens_;
 };
+
+
+class vhdl_with_select_stmt : public vhdl_conc_stmt {
+public:
+   vhdl_with_select_stmt(vhdl_expr *test) : test_(test) {}
+   ~vhdl_with_select_stmt();
+   
+   void emit(std::ostream &of, int level) const;
+   void add_condition(vhdl_expr *value, vhdl_expr *cond);
+private:
+   vhdl_expr *test_;
+   when_list_t whens_;
+};
+
 
 /*
  * Any sequential statement in a process.
