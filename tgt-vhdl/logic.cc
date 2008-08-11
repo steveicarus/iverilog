@@ -152,8 +152,9 @@ static void udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
       
       vhdl_expr *value = new vhdl_const_bit(row[nin]);
       vhdl_expr *cond = new vhdl_const_bits(row, nin, false);
+      vhdl_expr *delay = translate_time_expr(ivl_logic_delay(log, 1));
 
-      ws->add_condition(value, cond);
+      ws->add_condition(value, cond, delay);
    }
 
    ss.str("");

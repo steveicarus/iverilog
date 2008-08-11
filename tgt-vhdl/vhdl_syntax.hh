@@ -259,7 +259,7 @@ typedef std::list<vhdl_conc_stmt*> conc_stmt_list_t;
  * statement types.
  */
 struct when_part_t {
-   vhdl_expr *value, *cond;
+   vhdl_expr *value, *cond, *delay;
 };
 typedef std::list<when_part_t> when_list_t;
 
@@ -293,7 +293,7 @@ public:
    ~vhdl_with_select_stmt();
    
    void emit(std::ostream &of, int level) const;
-   void add_condition(vhdl_expr *value, vhdl_expr *cond);
+   void add_condition(vhdl_expr *value, vhdl_expr *cond, vhdl_expr *delay=NULL);
 private:
    vhdl_expr *test_;
    vhdl_var_ref *out_;

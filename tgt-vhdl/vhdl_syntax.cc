@@ -611,7 +611,7 @@ vhdl_cassign_stmt::~vhdl_cassign_stmt()
 
 void vhdl_cassign_stmt::add_condition(vhdl_expr *value, vhdl_expr *cond)
 {
-   when_part_t when = { value, cond };
+   when_part_t when = { value, cond, NULL };
    whens_.push_back(when);
 }
 
@@ -899,6 +899,8 @@ vhdl_with_select_stmt::~vhdl_with_select_stmt()
         ++it) {
       delete (*it).value;
       delete (*it).cond;
+      if ((*it).delay)
+         delete (*it).delay;
    }
 }
 
@@ -916,6 +918,10 @@ void vhdl_with_select_stmt::emit(std::ostream &of, int level) const
    when_list_t::const_iterator it = whens_.begin();
    while (it != whens_.end()) {
       (*it).value->emit(of, level);
+      if ((*it).delay) {
+         of << " after ";
+         (*it).delay->emit(of, level);
+      }
       of << " when ";
       (*it).cond->emit(of, level);
       
@@ -928,8 +934,8 @@ void vhdl_with_select_stmt::emit(std::ostream &of, int level) const
    }
 }
 
-void vhdl_with_select_stmt::add_condition(vhdl_expr *value, vhdl_expr *cond)
+void vhdl_with_select_stmt::add_condition(vhdl_expr *value, vhdl_expr *cond, vhdl_expr *delay)
 {
-   when_part_t when = { value, cond };
+   when_part_t when = { value, cond, delay };
    whens_.push_back(when);
 }
