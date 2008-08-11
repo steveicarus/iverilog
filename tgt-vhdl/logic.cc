@@ -99,10 +99,6 @@ static void udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
 {
    ivl_udp_t udp = ivl_logic_udp(log);
    
-   cout << "UDP " << ivl_udp_name(udp) << " nin="
-        << ivl_udp_nin(udp) << " rows="
-        << ivl_udp_rows(udp) << endl;
-
    if (ivl_udp_sequ(udp)) {
       error("Sequential UDP devices not supported yet");
       return;
