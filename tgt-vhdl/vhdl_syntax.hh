@@ -595,6 +595,7 @@ enum vhdl_port_mode_t {
    VHDL_PORT_IN,
    VHDL_PORT_OUT,
    VHDL_PORT_INOUT,
+   VHDL_PORT_BUFFER,
 };
 
 /*
@@ -610,6 +611,7 @@ public:
 
    void emit(std::ostream &of, int level) const;
    vhdl_port_mode_t get_mode() const { return mode_; }
+   void set_mode(vhdl_port_mode_t m) { mode_ = m; }
 private:
    vhdl_port_mode_t mode_;
 };

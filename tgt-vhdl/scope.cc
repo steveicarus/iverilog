@@ -425,45 +425,25 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    // the child entity, then VHDL will not let us read the value
    // of the signal (i.e. it must pass straight through).
    // However, Verilog allows the signal to be read in the parent.
-   // To get around this we create an internal signal name_Sig
-   // that takes the value of the output and can be read.
+   // The VHDL equivalent of this is to make *both* output ports
+   // a `buffer'.
    vhdl_decl *decl =
       parent->get_arch()->get_scope()->get_decl(ref->get_name());
    vhdl_port_decl *pdecl;
    if ((pdecl = dynamic_cast<vhdl_port_decl*>(decl))
        && pdecl->get_mode() == VHDL_PORT_OUT) {
-      
-      // We need to create a readable signal to shadow this output
-      string shadow_name(ref->get_name());
-      shadow_name += "_Sig";
-      
-      vhdl_signal_decl *shadow =
-         new vhdl_signal_decl(shadow_name.c_str(),
-                              new vhdl_type(*decl->get_type()));
-      shadow->set_comment("Needed to make output readable");
-      
-      parent->get_arch()->get_scope()->add_decl(shadow);
-      
-      // Make a continuous assignment of the shadow to the output
-      parent->get_arch()->add_stmt
-         (new vhdl_cassign_stmt
-          (ref, new vhdl_var_ref(shadow_name.c_str(), NULL)));
 
-      // Make sure any future references to this signal read the
-      // shadow not the output
-      ivl_signal_t sig = find_signal_named(ref->get_name(),
-                                           parent->get_arch()->get_scope());
-      rename_signal(sig, shadow_name);
-      
-      // Finally map the child port to the shadow signal
-      inst->map_port(name.c_str(),
-                     new vhdl_var_ref(shadow_name.c_str(), NULL));
+      // First change the mode in the parent entity
+      pdecl->set_mode(VHDL_PORT_BUFFER);
+
+      // Now change the mode in the child entity
+      vhdl_port_decl *to_pdecl =
+         dynamic_cast<vhdl_port_decl*>(find_scope_for_signal(to)->get_decl(name));
+      assert(to_pdecl);
+      to_pdecl->set_mode(VHDL_PORT_BUFFER);
    }
-   else {
-      // Not an output port declaration therefore we can
-      // definitely read it
-      inst->map_port(name.c_str(), ref);
-   }
+   
+   inst->map_port(name.c_str(), ref);
 }
 
 /*

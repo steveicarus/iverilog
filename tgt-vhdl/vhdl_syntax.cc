@@ -373,6 +373,9 @@ void vhdl_port_decl::emit(std::ostream &of, int level) const
    case VHDL_PORT_INOUT:
       of << "inout ";
       break;
+   case VHDL_PORT_BUFFER:
+      of << "buffer ";
+      break;
    }
    
    type_->emit(of, level);
