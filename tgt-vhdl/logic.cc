@@ -148,7 +148,11 @@ static void udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
       
       vhdl_expr *value = new vhdl_const_bit(row[nin]);
       vhdl_expr *cond = new vhdl_const_bits(row, nin, false);
-      vhdl_expr *delay = translate_time_expr(ivl_logic_delay(log, 1));
+
+      ivl_expr_t delay_ex = ivl_logic_delay(log, 1);
+      vhdl_expr *delay = NULL;
+      if (delay_ex)
+         delay = translate_time_expr(delay_ex);
 
       ws->add_condition(value, cond, delay);
    }
