@@ -69,6 +69,8 @@ static inline char vl_to_vhdl_bit(char bit)
    case 'x':
    case 'X':
       return 'U';
+   case '?':
+      return '-';
    }
    assert(false);
 }
