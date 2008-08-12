@@ -126,6 +126,7 @@ static vhdl_var_ref *make_assign_lhs(ivl_lval_t lval, vhdl_scope *scope)
    
    string signame(get_renamed_signal(sig));
    vhdl_decl *decl = scope->get_decl(signame);
+   assert(decl);
    
    vhdl_type *ltype = new vhdl_type(*decl->get_type());
    vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), ltype);
