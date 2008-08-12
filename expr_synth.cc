@@ -78,12 +78,7 @@ static bool process_binary_args(Design*des, NetScope*scope,
       else return false;
 }
 
-NetNet* NetExpr::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetExpr::synthesize(Design*des, NetScope*scope)
 {
       cerr << get_fileline() << ": internal error: cannot synthesize expression: "
 	   << *this << endl;
@@ -94,12 +89,7 @@ NetNet* NetExpr::synthesize(Design*des, NetScope*scope,
 /*
  * Make an LPM_ADD_SUB device from addition operators.
  */
-NetNet* NetEBAdd::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetEBAdd::synthesize(Design*des, NetScope*scope)
 {
       assert((op()=='+') || (op()=='-'));
 
@@ -149,12 +139,7 @@ NetNet* NetEBAdd::synthesize(Design*des, NetScope*scope,
  * signals, then just connect a single gate to each bit of the vector
  * of the expression.
  */
-NetNet* NetEBBits::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetEBBits::synthesize(Design*des, NetScope*scope)
 {
       NetNet*lsig = left_->synthesize(des, scope);
       NetNet*rsig = right_->synthesize(des, scope);
@@ -218,12 +203,7 @@ NetNet* NetEBBits::synthesize(Design*des, NetScope*scope,
       return osig;
 }
 
-NetNet* NetEBComp::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetEBComp::synthesize(Design*des, NetScope*scope)
 {
 
       NetNet *lsig=0, *rsig=0;
@@ -336,12 +316,7 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope,
       return osig;
 }
 
-NetNet* NetEBPow::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetEBPow::synthesize(Design*des, NetScope*scope)
 {
       NetNet *lsig=0, *rsig=0;
       unsigned width;
@@ -376,12 +351,7 @@ NetNet* NetEBPow::synthesize(Design*des, NetScope*scope,
       return osig;
 }
 
-NetNet* NetEBMult::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetEBMult::synthesize(Design*des, NetScope*scope)
 {
       NetNet *lsig=0, *rsig=0;
       unsigned width;
@@ -417,12 +387,7 @@ NetNet* NetEBMult::synthesize(Design*des, NetScope*scope,
       return osig;
 }
 
-NetNet* NetEBDiv::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetEBDiv::synthesize(Design*des, NetScope*scope)
 {
       NetNet *lsig=0, *rsig=0;
       unsigned width;
@@ -493,12 +458,7 @@ NetNet* NetEBDiv::synthesize(Design*des, NetScope*scope,
       return osig;
 }
 
-NetNet* NetEBLogic::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetEBLogic::synthesize(Design*des, NetScope*scope)
 {
       NetNet*lsig = left_->synthesize(des, scope);
       NetNet*rsig = right_->synthesize(des, scope);
@@ -575,12 +535,7 @@ NetNet* NetEBLogic::synthesize(Design*des, NetScope*scope,
       return osig;
 }
 
-NetNet* NetEBShift::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetEBShift::synthesize(Design*des, NetScope*scope)
 {
       eval_expr(right_);
 
@@ -705,12 +660,7 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope,
       return osig;
 }
 
-NetNet* NetEConcat::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetEConcat::synthesize(Design*des, NetScope*scope)
 {
 	/* First, synthesize the operands. */
       NetNet**tmp = new NetNet*[parms_.count()];
@@ -751,12 +701,7 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope,
       return osig;
 }
 
-NetNet* NetEConst::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetEConst::synthesize(Design*des, NetScope*scope)
 {
       perm_string path = scope->local_symbol();
       unsigned width=expr_width();
@@ -775,12 +720,7 @@ NetNet* NetEConst::synthesize(Design*des, NetScope*scope,
 /*
 * Create a NetLiteral object to represent real valued constants.
 */
-NetNet* NetECReal::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetECReal::synthesize(Design*des, NetScope*scope)
 {
       perm_string path = scope->local_symbol();
 
@@ -802,12 +742,7 @@ NetNet* NetECReal::synthesize(Design*des, NetScope*scope,
  * The bitwise unary logic operator (there is only one) is turned
  * into discrete gates just as easily as the binary ones above.
  */
-NetNet* NetEUBits::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetEUBits::synthesize(Design*des, NetScope*scope)
 {
       NetNet*isig = expr_->synthesize(des, scope);
 
@@ -846,12 +781,25 @@ NetNet* NetEUBits::synthesize(Design*des, NetScope*scope,
       return osig;
 }
 
-NetNet* NetEUReduce::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetEUnary::synthesize(Design*des, NetScope*scope)
+{
+      if (op_ == '+')
+	    return expr_->synthesize(des, scope);
+
+      if (op_ == '-') {
+	    NetExpr*tmp = make_sub_expr(0, expr_);
+	    NetNet*sig = tmp->synthesize(des, scope);
+	    delete tmp;
+	    return sig;
+      }
+
+      cerr << get_fileline() << ": iternal error: "
+	   << "NetEUnary::synthesize cannot handle op_=" << op_ << endl;
+      des->errors += 1;
+      return expr_->synthesize(des, scope);
+}
+
+NetNet* NetEUReduce::synthesize(Design*des, NetScope*scope)
 {
       NetNet*isig = expr_->synthesize(des, scope);
 
@@ -909,12 +857,7 @@ NetNet* NetEUReduce::synthesize(Design*des, NetScope*scope,
       return osig;
 }
 
-NetNet* NetESelect::synthesize(Design *des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetESelect::synthesize(Design *des, NetScope*scope)
 {
 
       NetNet*sub = expr_->synthesize(des, scope);
@@ -1008,12 +951,7 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope,
  * expressions to the B and A inputs. This way, when the select input
  * is one, the B input, which is the true expression, is selected.
  */
-NetNet* NetETernary::synthesize(Design *des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetETernary::synthesize(Design *des, NetScope*scope)
 {
       NetNet*csig = cond_->synthesize(des, scope),
             *tsig = true_val_->synthesize(des, scope),
@@ -1071,12 +1009,7 @@ NetNet* NetETernary::synthesize(Design *des, NetScope*scope,
  * a bit more work needs to be done. Return a temporary that represents
  * the selected word.
  */
-NetNet* NetESignal::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetESignal::synthesize(Design*des, NetScope*scope)
 {
       if (word_ == 0)
 	    return net_;
@@ -1087,13 +1020,14 @@ NetNet* NetESignal::synthesize(Design*des, NetScope*scope,
       tmp->local_flag(true);
       tmp->data_type(net_->data_type());
 
+	// For NetExpr objects, the word index is already converted to
+	// a canonical (lsb==0) address. Just use the index directly.
+
       if (NetEConst*index_co = dynamic_cast<NetEConst*> (word_)) {
+
 	    long index = index_co->value().as_long();
-
-	    assert(net_->array_index_is_valid(index));
-	    index = net_->array_index_to_address(index);
-
 	    connect(tmp->pin(0), net_->pin(index));
+
       } else {
 	    unsigned selwid = word_->expr_width();
 
@@ -1110,25 +1044,61 @@ NetNet* NetESignal::synthesize(Design*des, NetScope*scope,
       return tmp;
 }
 
-NetNet* NetESFunc::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetESFunc::synthesize(Design*des, NetScope*scope)
 {
-      cerr << get_fileline() << ": sorry: cannot synthesize system function: "
-	   << *this << " in this context" << endl;
-      des->errors += 1;
-      return 0;
+
+      const struct sfunc_return_type*def = lookup_sys_func(name_);
+
+        /* We cannot use the default value for system functions in a
+         * continuous assignment since the function name is NULL. */
+      if (def == 0 || def->name == 0) {
+	    cerr << get_fileline() << ": error: System function "
+		 << name_ << " not defined in system "
+		 "table or SFT file(s)." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: Net system function "
+		 << name_ << " returns " << def->type << endl;
+      }
+
+      NetSysFunc*net = new NetSysFunc(scope, scope->local_symbol(),
+				      def, 1+nparms_);
+      net->set_line(*this);
+      des->add_node(net);
+
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::WIRE, def->wid);
+      osig->local_flag(true);
+      osig->set_signed(def->type==IVL_VT_REAL? true : false);
+      osig->data_type(def->type);
+      osig->set_line(*this);
+
+      connect(net->pin(0), osig->pin(0));
+
+      unsigned errors = 0;
+      for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1) {
+	    NetNet*tmp = parms_[idx]->synthesize(des, scope);
+	    if (tmp == 0) {
+		  cerr << get_fileline() << ": error: Unable to elaborate "
+		       << "argument " << idx << " of call to " << name_ <<
+			"." << endl;
+		  errors += 1;
+		  des->errors += 1;
+		  continue;
+	    }
+
+	    connect(net->pin(1+idx), tmp->pin(0));
+      }
+
+      if (errors > 0) return 0;
+
+      return osig;
 }
 
-NetNet* NetEUFunc::synthesize(Design*des, NetScope*scope,
-			      const NetExpr* rise,
-			      const NetExpr* fall,
-			      const NetExpr* decay,
-			      Link::strength_t drive0,
-			      Link::strength_t drive1)
+NetNet* NetEUFunc::synthesize(Design*des, NetScope*scope)
 {
       svector<NetNet*> eparms (parms_.count());
 
