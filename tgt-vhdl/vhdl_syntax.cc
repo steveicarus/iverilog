@@ -156,7 +156,7 @@ void vhdl_arch::emit(std::ostream &of, int level) const
    blank_line(of, level);  // Extra blank line after architectures;
 }
 
-void vhdl_process::add_sensitivity(const char *name)
+void vhdl_process::add_sensitivity(const std::string &name)
 {
    sens_.push_back(name);
 }

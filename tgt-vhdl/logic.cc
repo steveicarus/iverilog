@@ -161,7 +161,51 @@ static void comb_udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
 
 static void seq_udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
 {
-   error("Sequential UDP devices not supported yet");
+   ivl_udp_t udp = ivl_logic_udp(log);
+
+   // These will be translated to a process with a single
+   // case statement
+
+   vhdl_process *proc = new vhdl_process(ivl_logic_basename(log));
+
+   ostringstream ss;
+   ss << "Generated from UDP " << ivl_udp_name(udp);
+   proc->set_comment(ss.str().c_str());
+
+   // Create a variable to hold the concatenation of the inputs
+   int msb = ivl_udp_nin(udp) - 1;
+   vhdl_type *tmp_type = vhdl_type::std_logic_vector(msb, 0);
+   proc->get_scope()->add_decl(new vhdl_var_decl("UDP_Inputs", tmp_type));
+   
+   // Concatenate the inputs into a single expression that can be
+   // used as the test in a case statement (this can't be inserted
+   // directly into the case statement due to the requirement that
+   // the test expression be "locally static")   
+   int nin = ivl_udp_nin(udp);
+   vhdl_expr *tmp_rhs = NULL;
+   if (nin == 1) {
+      vhdl_var_ref *ref =
+         nexus_to_var_ref(arch->get_scope(), ivl_logic_pin(log, 1));
+      tmp_rhs = ref->cast(tmp_type);
+      proc->add_sensitivity(ref->get_name());
+   }
+   else {
+      vhdl_binop_expr *concat = new vhdl_binop_expr(VHDL_BINOP_CONCAT, NULL);
+
+      for (int i = 1; i < nin; i++) {
+         vhdl_var_ref *ref =
+            nexus_to_var_ref(arch->get_scope(), ivl_logic_pin(log, i));
+         concat->add_expr(ref);
+         proc->add_sensitivity(ref->get_name());
+      }
+
+      tmp_rhs = concat;
+   }
+
+   proc->get_container()->add_stmt
+      (new vhdl_assign_stmt(new vhdl_var_ref("UDP_Inputs", NULL), tmp_rhs));
+   
+   arch->add_stmt(proc);
 }
 
 static void udp_logic(vhdl_arch *arch, ivl_net_logic_t log)

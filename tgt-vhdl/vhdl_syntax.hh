@@ -724,7 +724,7 @@ public:
    vhdl_process(const char *name = "") : name_(name) {}
 
    void emit(std::ostream &of, int level) const;
-   void add_sensitivity(const char *name);
+   void add_sensitivity(const std::string &name);
 private:
    std::string name_;
    string_list_t sens_;
