@@ -128,13 +128,22 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       assert(lval && rval);
       assert(rval->pin_count() == 1);
 
+	// Detect the case that the rvalue-expression is a simple
+	// expression. In this case, we will need to create a driver
+	// (later) to carry strengths.
+      bool need_driver_flag = false;
+      if (dynamic_cast<NetESignal*>(rval_expr))
+	    need_driver_flag = true;
+
 	/* Cast the right side when needed. */
       if ((lval->data_type() == IVL_VT_REAL &&
            rval->data_type() != IVL_VT_REAL)) {
 	    rval = cast_to_real(des, scope, rval);
+	    need_driver_flag = false;
       } else if ((lval->data_type() != IVL_VT_REAL &&
                   rval->data_type() == IVL_VT_REAL)) {
 	    rval = cast_to_int(des, scope, rval, lval->vector_width());
+	    need_driver_flag = false;
       }
 
 	/* If the r-value insists on being smaller then the l-value
@@ -158,6 +167,26 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    osig->data_type(rval->data_type());
 	    connect(osig->pin(0), tmp->pin(0));
 	    rval = osig;
+	    need_driver_flag = false;
+      }
+
+      if (need_driver_flag) {
+	    NetBUFZ*driver = new NetBUFZ(scope, scope->local_symbol(),
+					 rval->vector_width());
+	    driver->set_line(*this);
+	    des->add_node(driver);
+
+	    connect(rval->pin(0), driver->pin(1));
+
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, rval->vector_width());
+	    tmp->set_line(*this);
+	    tmp->data_type(rval->data_type());
+	    tmp->local_flag(true);
+
+	    connect(driver->pin(0), tmp->pin(0));
+
+	    rval = tmp;
       }
 
 	/* Set the drive and delays for the r-val. */
