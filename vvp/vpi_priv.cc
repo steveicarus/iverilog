@@ -456,6 +456,9 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 		    vp->format);
 	    assert(0 && "format not implemented");
 
+	  case vpiSuppressVal:
+	    break;
+
 	  case vpiBinStrVal:
 	    rbuf = need_result_buf(width+1, RBUF_VAL);
 	    for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
@@ -504,6 +507,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
                       break;
 	            case BIT4_X:
                       vp->value.scalar = vpiX;
+                      break;
 	            case BIT4_Z:
                       vp->value.scalar = vpiZ;
                       break;
