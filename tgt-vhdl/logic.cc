@@ -95,15 +95,10 @@ static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
    arch->add_stmt(cass);
 }
 
-static void udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
+static void comb_udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
 {
    ivl_udp_t udp = ivl_logic_udp(log);
-   
-   if (ivl_udp_sequ(udp)) {
-      error("Sequential UDP devices not supported yet");
-      return;
-   }
-
+ 
    // As with regular case statements, the expression in a
    // `with .. select' statement must be "locally static".
    // This is achieved by first combining the inputs into
@@ -162,6 +157,19 @@ static void udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
    ws->set_comment(ss.str());
 
    arch->add_stmt(ws);
+}
+
+static void seq_udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
+{
+   error("Sequential UDP devices not supported yet");
+}
+
+static void udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
+{
+   if (ivl_udp_sequ(ivl_logic_udp(log)))
+      seq_udp_logic(arch, log);
+   else
+      comb_udp_logic(arch, log);
 }
 
 static vhdl_expr *translate_logic_inputs(vhdl_scope *scope, ivl_net_logic_t log)
