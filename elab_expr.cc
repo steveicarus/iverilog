@@ -179,6 +179,13 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	    break;
 
 	  case '*':
+	      // Multiply will guess a width that is the sum of the
+	      // widths of the operand. If that sum is too small, then
+	      // pad one of the arguments enough that the sum is the
+	      // desired width.
+	    if (expr_wid > (long)(lp->expr_width() + rp->expr_width()))
+		  lp = pad_to_width(lp, expr_wid - rp->expr_width());
+
 	    tmp = new NetEBMult(op_, lp, rp);
 	    tmp->set_line(*this);
 	    break;
@@ -247,6 +254,8 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	    } else {
 		    // Left side is not constant, so handle it the
 		    // default way.
+		  if (expr_wid >= 0)
+			lp = pad_to_width(lp, expr_wid);
 		  tmp = new NetEBShift(op_, lp, rp);
 	    }
 	    tmp->set_line(*this);
@@ -1931,6 +1940,9 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return 0;
       }
+
+	/* Make sure the condition expression reduces to a single bit. */
+      con = condition_reduce(con);
 
 	/* Whatever the width we choose for the ternary operator, we
 	need to make sure the operands match. */
