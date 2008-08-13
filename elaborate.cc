@@ -164,6 +164,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::TRI, lval->vector_width());
 	    osig->set_line(*this);
+	    osig->local_flag(true);
 	    osig->data_type(rval->data_type());
 	    connect(osig->pin(0), tmp->pin(0));
 	    rval = osig;
