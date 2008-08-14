@@ -1117,13 +1117,7 @@ static bool of_CMPIU_the_hard_way(vthread_t thr, vvp_code_t cp)
 	    thr_check_addr(thr, idx1+wid-1);
 
       vvp_bit4_t lv = thr_get_bit(thr, idx1);
-      if (bit4_is_xz(lv)) {
-	    thr_put_bit(thr, 4, BIT4_X);
-	    thr_put_bit(thr, 5, BIT4_X);
-	    thr_put_bit(thr, 6, BIT4_0);
-      }
-
-      vvp_bit4_t eq  = BIT4_0;
+      vvp_bit4_t eq  = BIT4_1;
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    vvp_bit4_t rv = (imm & 1UL)? BIT4_1 : BIT4_0;
 	    imm >>= 1UL;
@@ -1131,12 +1125,13 @@ static bool of_CMPIU_the_hard_way(vthread_t thr, vvp_code_t cp)
 	    if (bit4_is_xz(lv)) {
 		  eq = BIT4_X;
 	    } else if (lv != rv) {
+		  eq = BIT4_0;
 		  break;
 	    }
 
 	    if (idx1 >= 4) {
 		  idx1 += 1;
-		  if (idx1 < wid)
+		  if ((idx+1) < wid)
 			lv = thr_get_bit(thr, idx1);
 	    }
       }
