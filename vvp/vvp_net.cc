@@ -372,16 +372,9 @@ vvp_vector4_t::vvp_vector4_t(unsigned size, double val)
       double fraction;
       int exponent;
 
-	/* We return 'bx for a NaN. */
-      if (val != val)  {
+	/* We return 'bx for a NaN or +/- infinity. */
+      if (val != val || (val && (val == 0.5*val)))  {
 	    allocate_words_(size, WORD_X_ABITS, WORD_X_BBITS);
-	    return;
-      }
-
-	/* We return 'b1 for + infinity or 'b0 for - infinity. */
-      if (val && (val == 0.5*val)) {
-	    if (val > 0) allocate_words_(size, WORD_1_ABITS, WORD_1_BBITS);
-	    else allocate_words_(size, WORD_0_ABITS, WORD_0_BBITS);
 	    return;
       }
 

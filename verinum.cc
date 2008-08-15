@@ -162,20 +162,11 @@ verinum::verinum(double val, bool dummy)
       int exponent;
       const unsigned BITS_IN_LONG = 8*sizeof(long);
 
-	/* We return `bx for a NaN. */
-      if (val != val) {
+	/* We return `bx for a NaN or +/- infinity. */
+      if (val != val || (val && (val == 0.5*val))) {
 	    nbits_ = 1;
 	    bits_ = new V[nbits_];
 	    bits_[0] = Vx;
-	    return;
-      }
-
-	/* We return 'b1 for + infinity or 'b0 for - infinity. */
-      if (val && (val == 0.5*val)) {
-	    nbits_ = 1;
-	    bits_ = new V[nbits_];
-	    if (val > 0) bits_[0] = V1;
-	    else bits_[0] = V0;
 	    return;
       }
 
