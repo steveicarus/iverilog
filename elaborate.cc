@@ -150,8 +150,12 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	   (perhaps it is explicitly sized) the pad it out to be the
 	   right width so that something is connected to all the bits
 	   of the l-value. */
-      if (lval->vector_width() > rval->vector_width())
-	    rval = pad_to_width(des, rval, lval->vector_width());
+      if (lval->vector_width() > rval->vector_width()) {
+	    if (rval->get_signed())
+		  rval = pad_to_width_signed(des, rval, lval->vector_width());
+	    else
+		  rval = pad_to_width(des, rval, lval->vector_width());
+      }
 
 	/* If, on the other hand, the r-value insists on being
 	   LARGER then the l-value, use a part select to chop it down
