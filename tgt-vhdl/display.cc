@@ -126,55 +126,59 @@ int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
       // the expression will be null
       // The behaviour here seems to be to output a space
       ivl_expr_t net = ivl_stmt_parm(stmt, i++);
-      if (net) {
-         if (ivl_expr_type(net) == IVL_EX_STRING) {
-            std::ostringstream ss;
-            for (const char *p = ivl_expr_string(net); *p; p++) {
-               if (*p == '\\') {
-                  // Octal escape
-                  char ch = parse_octal(p+1);
-                  if (ch == '\n') {
-                     flush_string(ss, container);
-                     display_line(container);
-                  }
-                  else
-                     ss << ch;
-                  p += 3;
-               }
-               else if (*p == '%' && *(++p) != '%') {
+      if (net == NULL) {
+         display_write(container, new vhdl_const_string(" "));
+         continue;
+      }
+         
+      if (ivl_expr_type(net) == IVL_EX_STRING) {
+         ostringstream ss;
+         for (const char *p = ivl_expr_string(net); *p; p++) {
+            if (*p == '\\') {
+               // Octal escape
+               char ch = parse_octal(p+1);
+               if (ch == '\n') {
                   flush_string(ss, container);
-
-                  // TODO: This needs to be re-written
-                  // ...it does not handle format codes at all!
-                  // Unfortunately, there is no printf-like
-                  // function in VHDL
-                  
-                  assert(i < count);
-                  ivl_expr_t net = ivl_stmt_parm(stmt, i++);
-                  assert(net);
-
-                  vhdl_expr *base = translate_expr(net);
-                  if (NULL == base)
-                     return 1;
-                  
-                  display_write(container, base);
+                  display_line(container);
                }
                else
-                  ss << *p;
+                  ss << ch;
+               p += 3;
             }
+            else if (*p == '%' && *(++p) != '%') {
+               flush_string(ss, container);
+               
+               // Skip over width for now
+               while (isdigit(*p)) ++p;
+               
+               // TODO: This needs to be re-written
+               // ...it does not handle format codes at all!
+               // Unfortunately, there is no printf-like
+               // function in VHDL
 
-            display_write(container, new vhdl_const_string(ss.str().c_str()));
+               assert(i < count);
+               ivl_expr_t net = ivl_stmt_parm(stmt, i++);
+               assert(net);
+               
+               vhdl_expr *base = translate_expr(net);
+               if (NULL == base)
+                  return 1;
+               
+               display_write(container, base);
+            }
+            else
+               ss << *p;
          }
-         else {
-            vhdl_expr *base = translate_expr(net);
-            if (NULL == base) 
-               return 1;
-            
-            display_write(container, base);
-         }
+         
+         display_write(container, new vhdl_const_string(ss.str().c_str()));
       }
-      else
-         display_write(container, new vhdl_const_string(" "));
+      else {
+         vhdl_expr *base = translate_expr(net);
+         if (NULL == base) 
+            return 1;
+         
+         display_write(container, base);
+      }
    }
 
    if (newline)
