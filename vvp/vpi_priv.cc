@@ -456,6 +456,10 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 		    vp->format);
 	    assert(0 && "format not implemented");
 
+	  case vpiObjTypeVal:
+	    vp->format = vpiVectorVal;
+	    break;
+
 	  case vpiSuppressVal:
 	    break;
 
@@ -1032,4 +1036,64 @@ extern "C" void vpi_control(PLI_INT32 operation, ...)
       va_start(ap, operation);
       vpi_sim_vcontrol(operation, ap);
       va_end(ap);
+}
+
+/*
+ * This routine calculated the return value for $clog2.
+ * It is easier to do it here vs trying to to use the VPI interface.
+ */
+extern "C" s_vpi_vecval vpip_calc_clog2(vpiHandle arg)
+{
+      s_vpi_vecval rtn;
+      s_vpi_value val;
+      vvp_vector4_t vec4;
+      bool is_neg = false;  // At this point only a real can be negative.
+
+	/* Get the value as a vvp_vector4_t. */
+      val.format = vpiObjTypeVal;
+      vpi_get_value(arg, &val);
+      if (val.format == vpiRealVal) {
+	    vpi_get_value(arg, &val);
+	      /* All double values can be represented in 1024 bits. */
+	    vec4 = vvp_vector4_t(1024, val.value.real);
+	    if (val.value.real < 0) is_neg = true;
+      } else {
+	    val.format = vpiVectorVal;
+	    vpi_get_value(arg, &val);
+	    unsigned wid = vpi_get(vpiSize, arg);
+	    vec4 = vvp_vector4_t(wid, BIT4_0);
+	    for (unsigned idx=0; idx < wid; idx += 1) {
+		PLI_INT32 aval = val.value.vector[idx/32].aval;
+		PLI_INT32 bval = val.value.vector[idx/32].bval;
+		aval >>= idx % 32;
+		bval >>= idx % 32;
+		int bitmask = (aval&1) | ((bval<<1)&2);
+		vvp_bit4_t bit = scalar_to_bit4(bitmask);
+		vec4.set_bit(idx, bit);
+	    }
+      }
+
+      if (vec4.has_xz()) {
+	    rtn.aval = rtn.bval = 0xFFFFFFFFU;  /* Set to 'bx. */
+	    return rtn;
+      }
+
+      vvp_vector2_t vec2(vec4);
+
+      if (is_neg) vec2.trim_neg(); /* This is a special trim! */
+      else vec2.trim(); /* This makes less work shifting. */
+
+	/* Calculate the clog2 result. */
+      PLI_INT32 res = 0;
+      if (!vec2.is_zero()) {
+	    vec2 -= vvp_vector2_t(1, vec2.size());
+	    while(!vec2.is_zero()) {
+		  res += 1;
+		  vec2 >>= 1;
+	    }
+      }
+
+      rtn.aval = res;
+      rtn.bval = 0;
+      return rtn;
 }

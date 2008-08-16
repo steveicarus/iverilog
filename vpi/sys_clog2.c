@@ -76,31 +76,18 @@ static PLI_INT32 sys_clog2_calltf(PLI_BYTE8 *name)
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       vpiHandle arg;
       s_vpi_value val;
+      s_vpi_vecval vec;
       (void) name;  // Not used!/
 
 	/* Get the argument. */
       arg = vpi_scan(argv);
-      val.format = vpiRealVal;
-      vpi_get_value(arg, &val);
       vpi_free_object(argv);
 
-	/* For now we don't support a negative value! */
-      if (val.value.real < 0.0) {
-	    vpi_printf("SORRY: %s line %d: ", vpi_get_str(vpiFile, callh),
-	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("$clog2 does not currently support negative values.\n");
-	    vpi_control(vpiFinish, 1);
-	    return 0;
-      }
+      vec = vpip_calc_clog2(arg);
 
-	/* Return the value to the system. */
-      val.format = vpiIntVal;
-      if (val.value.real == 0.0)
-	    val.value.integer = 0;
-      else
-	    val.value.integer = ceil(log(floor(val.value.real+0.5))/M_LN2);
+      val.format = vpiVectorVal;
+      val.value.vector = &vec;
       vpi_put_value(callh, &val, 0, vpiNoDelay);
-
       return 0;
 }
 

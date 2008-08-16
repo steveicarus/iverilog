@@ -728,23 +728,6 @@ static vvp_vector4_t from_stringval(const char*str, unsigned wid)
       return val;
 }
 
-static vvp_bit4_t scalar_to_bit4(PLI_INT32 scalar)
-{
-      switch(scalar) {
-	  case vpi0:
-	    return BIT4_0;
-	  case vpi1:
-	    return BIT4_1;
-	  case vpiX:
-	    return BIT4_X;
-	  case vpiZ:
-	    return BIT4_Z;
-	  default:
-	    fprintf(stderr, "Unsupported scalar value %d.\n", scalar);
-	    assert(0);
-      }
-}
-
 static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 {
       unsigned wid;

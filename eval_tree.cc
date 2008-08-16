@@ -1621,6 +1621,15 @@ NetExpr* evaluate_clog2(NetExpr*arg)
 	    } else {
 		  arg = verinum(tmpr->value().as_double(), true);
 	    }
+
+	      /* If we have an x in the verinum we return 32'bx. */
+	    if (!arg.is_defined()) {
+		  verinum tmp (verinum::Vx, 32);
+		  tmp.has_sign(true);
+		  NetEConst*rtn = new NetEConst(tmp);
+		  return rtn;
+	    }
+
 	    uint64_t res = 0;
 	    if (arg.is_negative()) is_neg = true;
 	    arg.has_sign(false);  // $unsigned()
@@ -1632,7 +1641,9 @@ NetExpr* evaluate_clog2(NetExpr*arg)
 		  }
 	    }
 	    if (is_neg && res < 32) res = 32;
-	    NetEConst*rtn = new NetEConst(verinum(res, 32));
+	    verinum tmp (res, 32);
+	    tmp.has_sign(true);
+	    NetEConst*rtn = new NetEConst(tmp);
 	    return rtn;
       }
 

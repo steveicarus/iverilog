@@ -130,6 +130,23 @@ vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c)
       }
 }
 
+vvp_bit4_t scalar_to_bit4(PLI_INT32 scalar)
+{
+      switch(scalar) {
+	  case vpi0:
+	    return BIT4_0;
+	  case vpi1:
+	    return BIT4_1;
+	  case vpiX:
+	    return BIT4_X;
+	  case vpiZ:
+	    return BIT4_Z;
+	  default:
+	    fprintf(stderr, "Unsupported scalar value %d.\n", scalar);
+	    assert(0);
+      }
+}
+
 vvp_bit4_t operator ^ (vvp_bit4_t a, vvp_bit4_t b)
 {
       if (bit4_is_xz(a))
@@ -1609,6 +1626,15 @@ vvp_vector2_t::~vvp_vector2_t()
 void vvp_vector2_t::trim()
 {
       while (value(wid_-1) == 0 && wid_ > 1) wid_ -= 1;
+}
+
+/* This is a special trim that is used on numbers we know represent a
+ * negative signed value (they came from a negative real value). */
+void vvp_vector2_t::trim_neg()
+{
+      if (value(wid_-1) == 1 && wid_ > 32) {
+	    while (value(wid_-2) == 1 && wid_ > 32) wid_ -= 1;
+      }
 }
 
 int vvp_vector2_t::value(unsigned idx) const
