@@ -1954,6 +1954,25 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope,
       return res;
 }
 
+unsigned PEUnary::test_width(Design*des, NetScope*scope,
+			    unsigned min, unsigned lval,
+			    bool&unsized_flag) const
+{
+      switch (op_) {
+	  case '!':
+	  case '&':
+	  case '|': // Reduction OR
+	  case '^': // Reduction XOR
+	  case 'A': // Reduction NAND (~&)
+	  case 'N': // Reduction NOR (~|)
+	  case 'X': // Reduction NXOR (~^)
+	    return 1;
+	  default:
+	    return expr_->test_width(des, scope, min, lval, unsized_flag);
+      }
+}
+
+
 NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 				 int expr_wid, bool) const
 {

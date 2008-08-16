@@ -604,7 +604,10 @@ void NetNet::data_type(ivl_variable_type_t t)
 
 bool NetNet::get_signed() const
 {
-      return signed_;
+      if (data_type_ == IVL_VT_REAL)
+	    return true;
+      else
+	    return signed_;
 }
 
 void NetNet::set_signed(bool flag)
