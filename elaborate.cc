@@ -3494,6 +3494,7 @@ static void elaborate_tasks(Design*des, NetScope*scope,
 bool Module::elaborate(Design*des, NetScope*scope) const
 {
       bool result_flag = true;
+      error_implicit = true;
 
       if (gn_specify_blocks_flag) {
 	      // Elaborate specparams
@@ -3558,12 +3559,15 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	// complex.
       const list<PGate*>&gl = get_gates();
 
+      error_implicit = false;
       for (list<PGate*>::const_iterator gt = gl.begin()
 		 ; gt != gl.end()
 		 ; gt ++ ) {
 
 	    (*gt)->elaborate(des, scope);
       }
+
+      error_implicit = true;
 
 	// Elaborate the behaviors, making processes out of them. This
 	// involves scanning the PProcess* list, creating a NetProcTop
