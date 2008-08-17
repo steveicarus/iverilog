@@ -263,6 +263,8 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 
 	  case 'r': // >>
 	  case 'R': // >>>
+	    if (expr_wid > 0)
+		  lp = pad_to_width(lp, expr_wid);
 	    tmp = new NetEBShift(op_, lp, rp);
 	    tmp->set_line(*this);
 	    break;
@@ -2030,6 +2032,8 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 		  delete ip;
 
 	    } else {
+		  if (expr_wid > 0)
+			ip = pad_to_width(ip, expr_wid);
 		  tmp = new NetEUnary(op_, ip);
 		  tmp->set_line(*this);
 	    }
