@@ -602,7 +602,11 @@ void vvp_cmp_ne::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
-      assert(op_a_.size() == op_b_.size());
+      if (op_a_.size() != op_b_.size()) {
+	    cerr << "internal error: vvp_cmp_ne: op_a_=" << op_a_
+		 << ", op_b_=" << op_b_ << endl;
+	    assert(op_a_.size() == op_b_.size());
+      }
 
       vvp_vector4_t res (1);
       res.set_bit(0, BIT4_0);
