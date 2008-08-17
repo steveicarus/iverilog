@@ -76,6 +76,36 @@ NetNet* add_to_net(Design*des, NetNet*sig, long val)
 #endif
 }
 
+NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
+{
+      verinum zero ((uint64_t)0, sig->vector_width());
+      NetConst*zero_obj = new NetConst(scope, scope->local_symbol(), zero);
+      des->add_node(zero_obj);
+
+      NetNet*zero_net = new NetNet(scope, scope->local_symbol(),
+				   NetNet::WIRE, sig->vector_width());
+      zero_net->data_type(sig->data_type());
+      zero_net->local_flag(true);
+
+      connect(zero_net->pin(0), zero_obj->pin(0));
+
+      NetAddSub*adder = new NetAddSub(scope, scope->local_symbol(), sig->vector_width());
+      des->add_node(adder);
+      adder->attribute(perm_string::literal("LPM_Direction"), verinum("SUB"));
+
+      connect(zero_net->pin(0), adder->pin_DataA());
+      connect(adder->pin_DataB(), sig->pin(0));
+
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+			      NetNet::WIRE, sig->vector_width());
+      tmp->data_type(sig->data_type());
+      tmp->local_flag(true);
+
+      connect(adder->pin_Result(), tmp->pin(0));
+
+      return tmp;
+}
+
 NetNet* cast_to_int(Design*des, NetScope*scope, NetNet*src, unsigned wid)
 {
       if (src->data_type() != IVL_VT_REAL)
@@ -168,6 +198,20 @@ NetEConst* make_const_x(unsigned long wid)
       verinum xxx (verinum::Vx, wid);
       NetEConst*resx = new NetEConst(xxx);
       return resx;
+}
+
+NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid)
+{
+      verinum xxx (verinum::Vx, wid);
+      NetConst*res = new NetConst(scope, scope->local_symbol(), xxx);
+      des->add_node(res);
+
+      NetNet*sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, wid);
+      sig->local_flag(true);
+      sig->data_type(IVL_VT_LOGIC);
+
+      connect(sig->pin(0), res->pin(0));
+      return sig;
 }
 
 NetExpr* condition_reduce(NetExpr*expr)

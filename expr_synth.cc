@@ -91,7 +91,7 @@ NetNet* NetExpr::synthesize(Design*des, NetScope*scope)
  */
 NetNet* NetEBAdd::synthesize(Design*des, NetScope*scope)
 {
-      assert((op()=='+') || (op()=='-'));
+      ivl_assert(*this, (op()=='+') || (op()=='-'));
 
       NetNet *lsig=0, *rsig=0;
       bool real_args=false;
@@ -220,8 +220,14 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope)
 	    width = lsig->vector_width();
 	    if (rsig->vector_width() > width) width = rsig->vector_width();
 
-	    lsig = pad_to_width(des, lsig, width);
-	    rsig = pad_to_width(des, rsig, width);
+	    if (lsig->get_signed())
+		  lsig = pad_to_width_signed(des, lsig, width);
+	    else
+		  lsig = pad_to_width(des, lsig, width);
+	    if (rsig->get_signed())
+		  rsig = pad_to_width_signed(des, rsig, width);
+	    else
+		  rsig = pad_to_width(des, rsig, width);
       }
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
@@ -231,10 +237,30 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope)
       osig->data_type(IVL_VT_LOGIC);
 
       bool signed_compare = lsig->get_signed() && rsig->get_signed();
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: Comparison (" << op_ << ")"
+		 << " is " << (signed_compare? "signed"  : "unsigned")
+		 << endl;
+	    cerr << get_fileline() << ":      : lsig is "
+		 << (lsig->get_signed()? "signed" : "unsigned")
+		 << " rsig is " << (rsig->get_signed()? "signed" : "unsigned")
+		 << endl;
+      }
+
+      if (op_ == 'E' || op_ == 'N') {
+	    NetCaseCmp*gate = new NetCaseCmp(scope, scope->local_symbol(),
+					     width, op_=='E'?true:false);
+	    gate->set_line(*this);
+	    connect(gate->pin(0), osig->pin(0));
+	    connect(gate->pin(1), lsig->pin(0));
+	    connect(gate->pin(2), rsig->pin(0));
+	    des->add_node(gate);
+	    return osig;
+      }
 
 	/* Handle the special case of a single bit equality
 	   operation. Make an XNOR gate instead of a comparator. */
-      if ((width == 1) && ((op_ == 'e') || (op_ == 'E')) && !real_args) {
+      if ((width == 1) && (op_ == 'e') && !real_args) {
 	    NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
 					 3, NetLogic::XNOR, 1);
 	    gate->set_line(*this);
@@ -248,7 +274,7 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope)
 	/* Handle the special case of a single bit inequality
 	   operation. This is similar to single bit equality, but uses
 	   an XOR instead of an XNOR gate. */
-      if ((width == 1) && ((op_ == 'n') || (op_ == 'N')) && !real_args) {
+      if ((width == 1) && (op_ == 'n')  && !real_args) {
 	    NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
 					 3, NetLogic::XOR, 1);
 	    gate->set_line(*this);
@@ -404,6 +430,7 @@ NetNet* NetEBDiv::synthesize(Design*des, NetScope*scope)
 			       NetNet::IMPLICIT, width);
       osig->set_line(*this);
       osig->data_type(lsig->data_type());
+      osig->set_signed(has_sign());
       osig->local_flag(true);
 
       switch (op()) {
@@ -414,6 +441,7 @@ NetNet* NetEBDiv::synthesize(Design*des, NetScope*scope)
 					      lsig->vector_width(),
 					      rsig->vector_width());
 		div->set_line(*this);
+		div->set_signed(has_sign());
 		des->add_node(div);
 
 		connect(div->pin_DataA(), lsig->pin(0));
@@ -552,8 +580,8 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope)
 	    return 0;
       }
 
-      bool right_flag  =  op_ == 'r' || op_ == 'R';
-      bool signed_flag =  op_ == 'R';
+      const bool right_flag  =  op_ == 'r' || op_ == 'R';
+      const bool signed_flag =  op_ == 'R';
 
 	/* Detect the special case where the shift amount is
 	   constant. Evaluate the shift amount, and simply reconnect
@@ -562,7 +590,7 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope)
 	    verinum shift_v = rcon->value();
 	    long shift = shift_v.as_long();
 
-	    if (op() == 'r')
+	    if (right_flag)
 		  shift = 0-shift;
 
 	    if (shift == 0)
@@ -575,34 +603,13 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope)
 
 	      // ushift is the amount of pad created by the shift.
 	    unsigned long ushift = shift>=0? shift : -shift;
-	    if (ushift > osig->vector_width())
-		  ushift = osig->vector_width();
+	    ivl_assert(*this, ushift < osig->vector_width());
 
 	      // part_width is the bits of the vector that survive the shift.
 	    unsigned long part_width = osig->vector_width() - ushift;
 
-	    verinum znum (verinum::V0, ushift, true);
-	    NetConst*zcon = new NetConst(scope, scope->local_symbol(),
-					 znum);
-	    des->add_node(zcon);
-
-	      /* Detect the special case that the shift is the size of
-		 the whole expression. Simply connect the pad to the
-		 osig and escape. */
-	    if (ushift >= osig->vector_width()) {
-		  connect(zcon->pin(0), osig->pin(0));
-		  return osig;
-	    }
-
-	    NetNet*zsig = new NetNet(scope, scope->local_symbol(),
-				     NetNet::WIRE, znum.len());
-	    zsig->data_type(osig->data_type());
-	    zsig->local_flag(true);
-	    zsig->set_line(*this);
-	    connect(zcon->pin(0), zsig->pin(0));
-
-	      /* Create a part select to reduce the width of the lsig
-	         to the amount left by the shift. */
+	      // Create a part select to reduce the width of the lsig
+	      // to the amount left by the shift.
 	    NetPartSelect*psel = new NetPartSelect(lsig, shift<0? ushift : 0,
 						   part_width,
 						   NetPartSelect::VP);
@@ -614,6 +621,34 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope)
 	    psig->local_flag(true);
 	    psig->set_line(*this);
 	    connect(psig->pin(0), psel->pin(0));
+
+	      // Handle the special case of a signed right shift. In
+	      // this case, use the NetSignExtend device to pad the
+	      // result to the desired width.
+	    if (signed_flag && right_flag) {
+		  NetSignExtend*pad = new NetSignExtend(scope, scope->local_symbol(),
+							osig->vector_width());
+		  des->add_node(pad);
+		  pad->set_line(*this);
+
+		  connect(pad->pin(1), psig->pin(0));
+		  connect(pad->pin(0), osig->pin(0));
+		  return osig;
+	    }
+
+	      // Other cases are handled by zero-extending on the
+	      // proper end.
+	    verinum znum (verinum::V0, ushift, true);
+	    NetConst*zcon = new NetConst(scope, scope->local_symbol(),
+					 znum);
+	    des->add_node(zcon);
+
+	    NetNet*zsig = new NetNet(scope, scope->local_symbol(),
+				     NetNet::WIRE, znum.len());
+	    zsig->data_type(osig->data_type());
+	    zsig->local_flag(true);
+	    zsig->set_line(*this);
+	    connect(zcon->pin(0), zsig->pin(0));
 
 	    NetConcat*ccat = new NetConcat(scope, scope->local_symbol(),
 					   osig->vector_width(), 2);
@@ -674,7 +709,7 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope)
       if (flag == false)
 	    return 0;
 
-      assert(tmp[0]);
+      ivl_assert(*this, tmp[0]);
 
 	/* Make a NetNet object to carry the output vector. */
       perm_string path = scope->local_symbol();
@@ -692,7 +727,9 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope)
       unsigned cur_pin = 1;
       for (unsigned rpt = 0; rpt < repeat(); rpt += 1) {
 	    for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
-		  connect(concat->pin(cur_pin), tmp[parms_.count()-idx-1]->pin(0));
+		  unsigned concat_item = parms_.count()-idx-1;
+		  ivl_assert(*this, tmp[concat_item]);
+		  connect(concat->pin(cur_pin), tmp[concat_item]->pin(0));
 		  cur_pin += 1;
 	    }
       }
@@ -787,9 +824,28 @@ NetNet* NetEUnary::synthesize(Design*des, NetScope*scope)
 	    return expr_->synthesize(des, scope);
 
       if (op_ == '-') {
-	    NetExpr*tmp = make_sub_expr(0, expr_);
-	    NetNet*sig = tmp->synthesize(des, scope);
-	    delete tmp;
+	    NetNet*sig = expr_->synthesize(des, scope);
+	    sig = sub_net_from(des, scope, 0, sig);
+	    return sig;
+      }
+
+      if (op_ == 'm') {
+	    NetNet*sub = expr_->synthesize(des, scope);
+	    if (expr_->has_sign() == false)
+		  return sub;
+
+	    NetNet*sig = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, sub->vector_width());
+	    sig->set_line(*this);
+	    sig->local_flag(true);
+	    sig->data_type(sub->data_type());
+
+	    NetAbs*tmp = new NetAbs(scope, scope->local_symbol(), sub->vector_width());
+	    des->add_node(tmp);
+	    tmp->set_line(*this);
+
+	    connect(tmp->pin(1), sub->pin(0));
+	    connect(tmp->pin(0), sig->pin(0));
 	    return sig;
       }
 
@@ -835,7 +891,7 @@ NetNet* NetEUReduce::synthesize(Design*des, NetScope*scope)
 	    rtype = NetUReduce::XOR;
 	    break;
 	  case 'A':
-	    rtype = NetUReduce::XNOR;
+	    rtype = NetUReduce::NAND;
 	    break;
 	  case 'X':
 	    rtype = NetUReduce::XNOR;
@@ -857,6 +913,14 @@ NetNet* NetEUReduce::synthesize(Design*des, NetScope*scope)
       return osig;
 }
 
+/*
+ * Turn a part/bit select expression into gates.
+ * We know some things about the expression that elaboration enforces
+ * for us:
+ *
+ * - Expression elaboration already converted the offset expression into
+ * cannonical form, so we don't have to worry about that here.
+ */
 NetNet* NetESelect::synthesize(Design *des, NetScope*scope)
 {
 
@@ -865,6 +929,79 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope)
       if (sub == 0) return 0;
 
       NetNet*off = 0;
+
+	// Detect the special case that there is a base expression and
+	// it is constant. In this case we can generate fixed part selects.
+      if (NetEConst*base_const = dynamic_cast<NetEConst*>(base_)) {
+	    verinum base_tmp = base_const->value();
+	    ivl_assert(*this, base_tmp.is_defined());
+
+	    long base_val = base_tmp.as_long();
+	    unsigned select_width = expr_width();
+
+	      // Any below X bits?
+	    NetNet*below = 0;
+	    if (base_val < 0) {
+		  unsigned below_width = abs(base_val);
+		  base_val = 0;
+		  ivl_assert(*this, below_width < select_width);
+		  select_width -= below_width;
+
+		  below = make_const_x(des, scope, below_width);
+		  below->set_line(*this);
+	    }
+
+	      // Any above bits?.
+	    NetNet*above = 0;
+	    if (base_val+select_width > sub->vector_width()) {
+		  select_width = sub->vector_width() - base_val;
+		  unsigned above_width = expr_width() - select_width;
+
+		  above = make_const_x(des, scope, above_width);
+		  above->set_line(*this);
+	    }
+
+	      // Make the make part select.
+	    NetPartSelect*sel = new NetPartSelect(sub, base_val, select_width,
+						  NetPartSelect::VP);
+	    des->add_node(sel);
+
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, select_width);
+	    tmp->data_type(sub->data_type());
+	    tmp->local_flag(true);
+	    tmp->set_line(*this);
+	    connect(sel->pin(0), tmp->pin(0));
+
+	    unsigned concat_count = 1;
+	    if (above)
+		  concat_count += 1;
+	    if (below)
+		  concat_count += 1;
+	    if (concat_count > 1) {
+		  NetConcat*cat = new NetConcat(scope, scope->local_symbol(),
+						expr_width(), concat_count);
+		  cat->set_line(*this);
+		  des->add_node(cat);
+		  if (below) {
+			connect(cat->pin(1), below->pin(0));
+			connect(cat->pin(2), tmp->pin(0));
+		  } else {
+			connect(cat->pin(1), tmp->pin(0));
+		  }
+		  if (above) {
+			connect(cat->pin(concat_count), above->pin(0));
+		  }
+
+		  tmp = new NetNet(scope, scope->local_symbol(),
+				   NetNet::WIRE, expr_width());
+		  tmp->data_type(sub->data_type());
+		  tmp->local_flag(true);
+		  tmp->set_line(*this);
+		  connect(cat->pin(0), tmp->pin(0));
+	    }
+	    return tmp;
+      }
 
 	// This handles the case that the NetESelect exists to do an
 	// actual part/bit select. Generate a NetPartSelect object to
@@ -977,7 +1114,7 @@ NetNet* NetETernary::synthesize(Design *des, NetScope*scope)
 
       perm_string path = csig->scope()->local_symbol();
 
-      assert(csig->vector_width() == 1);
+      ivl_assert(*this, csig->vector_width() == 1);
 
       unsigned width=expr_width();
       NetNet*osig = new NetNet(csig->scope(), path, NetNet::IMPLICIT, width);
