@@ -218,6 +218,12 @@ static vhdl_expr *shift_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm,
    return new vhdl_binop_expr(lhs, shift_op, r_cast, rtype);
 }
 
+static vhdl_expr *repeat_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
+{
+   vhdl_expr *in = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
+   return new vhdl_bit_spec_expr(NULL, in);
+}
+
 static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
    switch (ivl_lpm_type(lpm)) {
@@ -264,6 +270,8 @@ static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
       return shift_lpm_to_expr(scope, lpm, VHDL_BINOP_SL);
    case IVL_LPM_SHIFTR:
       return shift_lpm_to_expr(scope, lpm, VHDL_BINOP_SR);
+   case IVL_LPM_REPEAT:
+      return repeat_lpm_to_expr(scope, lpm);
    default:
       error("Unsupported LPM type: %d", ivl_lpm_type(lpm));
       return NULL;
