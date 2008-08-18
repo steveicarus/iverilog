@@ -671,6 +671,13 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
       return draw_repeat(proc, container, stmt);
    case IVL_ST_UTASK:
       return draw_utask(proc, container, stmt);
+   case IVL_ST_FORCE:
+   case IVL_ST_RELEASE:
+      error("force/release statements cannot be translated to VHDL");
+      return 1;
+   case IVL_ST_DISABLE:
+      error("disable statement cannot be translated to VHDL");
+      return 1;
    case IVL_ST_CASEX:
       error("casex statement cannot be translated to VHDL");
       return 1;
