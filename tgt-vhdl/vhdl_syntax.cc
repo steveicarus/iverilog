@@ -768,7 +768,7 @@ void vhdl_bit_spec_expr::emit(std::ostream &of, int level) const
    }
 
    if (others_) {
-      of << ", others => ";
+      of << (bits_.empty() ? "" : ", ") << "others => ";
       others_->emit(of, level);
    }
    
