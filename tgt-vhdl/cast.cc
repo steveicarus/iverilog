@@ -139,6 +139,22 @@ vhdl_expr *vhdl_expr::resize(int newwidth)
    return resize;
 }
 
+vhdl_expr *vhdl_const_int::cast(const vhdl_type *to)
+{
+   if (to->get_name() == VHDL_TYPE_SIGNED
+       || to->get_name() == VHDL_TYPE_UNSIGNED) {
+
+      const char *fname = to->get_name() == VHDL_TYPE_SIGNED
+         ? "To_Signed" : "To_Unsigned";
+      vhdl_fcall *conv = new vhdl_fcall(fname, new vhdl_type(*to));
+      conv->add_expr(this);
+      conv->add_expr(new vhdl_const_int(to->get_width()));
+
+      return conv;
+   }
+   else
+      return vhdl_expr::cast(to);
+}
 
 int vhdl_const_bits::bits_to_int() const
 {   

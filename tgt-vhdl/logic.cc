@@ -71,8 +71,17 @@ static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
    vhdl_expr *sel = nexus_to_var_ref(arch->get_scope(), ivl_logic_pin(log, 2));
    assert(val);
 
-   vhdl_expr *on = new vhdl_const_bit(if0 ? '0' : '1');
-   vhdl_expr *cmp = new vhdl_binop_expr(sel, VHDL_BINOP_EQ, on, NULL);
+   vhdl_expr *cmp;
+   if (ivl_logic_width(log) == 1) {
+      vhdl_expr *on = new vhdl_const_bit(if0 ? '0' : '1');
+      cmp = new vhdl_binop_expr(sel, VHDL_BINOP_EQ, on, NULL);
+   }
+   else {
+      vhdl_expr *zero = (new vhdl_const_int(0))->cast(sel->get_type());
+      vhdl_binop_t op = if0 ? VHDL_BINOP_EQ : VHDL_BINOP_NEQ;
+      cmp = new vhdl_binop_expr(sel, op, zero, NULL);
+   }
+   
 
    ivl_signal_t sig = find_signal_named(lhs->get_name(), arch->get_scope());
    char zbit;
@@ -87,8 +96,10 @@ static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
    default:
       zbit = 'Z';
    }
-   
-   vhdl_const_bit *z = new vhdl_const_bit(zbit);
+
+   vhdl_expr *z = new vhdl_const_bit(zbit);
+   if (ivl_logic_width(log) > 1)
+      z = new vhdl_bit_spec_expr(NULL, z);
    vhdl_cassign_stmt *cass = new vhdl_cassign_stmt(lhs, z);
    cass->add_condition(val, cmp);
 

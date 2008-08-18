@@ -202,6 +202,7 @@ public:
    vhdl_const_int(int64_t value)
       : vhdl_expr(vhdl_type::integer(), true), value_(value) {}
    void emit(std::ostream &of, int level) const;
+   vhdl_expr *cast(const vhdl_type *to);
 private:
    int64_t value_;
 };
