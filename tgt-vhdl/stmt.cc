@@ -674,6 +674,13 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
    case IVL_ST_CASEX:
       error("casex statement cannot be translated to VHDL");
       return 1;
+   case IVL_ST_FORK:
+      error("fork statement cannot be translated to VHDL");
+      return 1;
+   case IVL_ST_CASSIGN:
+   case IVL_ST_DEASSIGN:
+      error("continuous procedural assignment cannot be translated to VHDL");
+      return 1;
    default:
       error("No VHDL translation for statement at %s:%d (type = %d)",
             ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
