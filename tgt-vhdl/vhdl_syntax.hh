@@ -245,8 +245,7 @@ private:
 };
 
 /*
- * A concurrent statement appears in architecture bodies but not
- * processes.
+ * A concurrent statement appears in architecture bodies/
  */
 class vhdl_conc_stmt : public vhdl_element {
 public:
