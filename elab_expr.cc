@@ -510,7 +510,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 		  delete tmp;
 	    }
 
-	    verinum val (sub_expr_width, 8*sizeof(unsigned));
+	    verinum val ( (uint64_t)sub_expr_width, 8*sizeof(unsigned));
 	    NetEConst*sub = new NetEConst(val);
 	    sub->set_line(*this);
 
@@ -1494,7 +1494,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 	      // Recalculate the constant address with the adjusted base.
 	    unsigned use_addr = net->array_index_to_address(addr);
 	    if (addr < 0 || use_addr != (unsigned long)addr) {
-		  verinum val (use_addr, 8*sizeof(use_addr));
+		  verinum val ( (uint64_t)use_addr, 8*sizeof(use_addr));
 		  NetEConst*tmp = new NetEConst(val);
 		  tmp->set_line(*this);
 		  delete word_index;
