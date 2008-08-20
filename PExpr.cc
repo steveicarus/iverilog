@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2007 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2008 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -115,6 +115,26 @@ PECallFunction::PECallFunction(perm_string n)
 
 PECallFunction::~PECallFunction()
 {
+}
+
+bool PECallFunction::is_constant(Module*mod) const
+{
+	/* Only $clog2 can be a constant system function. */
+      if (peek_tail_name(path_)[0] == '$') {
+	    if (strcmp(peek_tail_name(path_).str(), "$clog2") == 0) {
+		  if (parms_.count() != 1 || parms_[0] == 0) {
+			cerr << get_fileline() << ": error: $clog2 takes a "
+			                          "single argument." << endl;
+			return false;
+		  }
+		    /* If the argument is constant $clog2 is constant. */
+		  return parms_[0]->is_constant(mod);
+	    }
+	    return false;  /* Most system functions are not constant. */
+      }
+
+	/* Checking for constant user functions goes here. */
+      return false;
 }
 
 PEConcat::PEConcat(const svector<PExpr*>&p, PExpr*r)
@@ -299,4 +319,3 @@ bool PEUnary::is_constant(Module*m) const
 {
       return expr_->is_constant(m);
 }
-

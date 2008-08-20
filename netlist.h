@@ -692,6 +692,9 @@ class NetScope : public Attrib {
       unsigned get_def_lineno() const { return def_lineno_; };
 
       bool in_func();
+	/* Is the task or function automatic. */
+      void is_auto(bool is_auto) { is_auto_ = is_auto; };
+      bool is_auto() const { return is_auto_; }; 
 
       const NetTaskDef* task_def() const;
       const NetFuncDef* func_def() const;
@@ -835,6 +838,7 @@ class NetScope : public Attrib {
       NetScope*sub_;
 
       unsigned lcounter_;
+      bool is_auto_;
 };
 
 /*
@@ -3441,6 +3445,8 @@ class NetESFunc  : public NetExpr {
       void parm(unsigned idx, NetExpr*expr);
       NetExpr* parm(unsigned idx);
       const NetExpr* parm(unsigned idx) const;
+
+      virtual NetExpr* eval_tree(int prune_to_width = -1);
 
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);

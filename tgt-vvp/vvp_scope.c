@@ -1769,6 +1769,13 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
       const char *type;
+	/* For now we do not support automatic tasks or functions. */
+      if (ivl_scope_is_auto(net)) {
+	    fprintf(stderr, "%s:%u: vvp-tgt sorry: automatic tasks/functions "
+	                    "are not supported!\n",
+	                    ivl_scope_def_file(net), ivl_scope_def_lineno(net));
+	    exit(1);
+      }
       switch (ivl_scope_type(net)) {
       case IVL_SCT_MODULE:   type = "module";   break;
       case IVL_SCT_FUNCTION: type = "function"; break;

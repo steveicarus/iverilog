@@ -14,6 +14,7 @@ $dist_poisson      vpiSysFuncInt
 $dist_chi_square   vpiSysFuncInt
 $dist_t            vpiSysFuncInt
 $dist_erlang       vpiSysFuncInt
+$clog2             vpiSysFuncInt
 
 $simparam      vpiSysFuncReal
 $simparam$str  vpiSysFuncSized 1024 unsigned

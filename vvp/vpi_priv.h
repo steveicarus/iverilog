@@ -137,6 +137,7 @@ struct __vpiCallback {
 	// user supplied callback data
       struct t_cb_data cb_data;
       struct t_vpi_time cb_time;
+      struct t_vpi_value cb_value;
 
 	// scheduled event
       struct sync_cb* cb_sync;

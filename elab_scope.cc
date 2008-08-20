@@ -150,6 +150,7 @@ static void elaborate_scope_tasks(Design*des, NetScope*scope,
 	    }
 	    NetScope*task_scope = new NetScope(scope, use_name,
 					       NetScope::TASK);
+	    task_scope->is_auto((*cur).second->is_auto());
 	    task_scope->set_line((*cur).second);
 
 	    if (debug_scopes)
@@ -179,6 +180,7 @@ static void elaborate_scope_funcs(Design*des, NetScope*scope,
 	    }
 	    NetScope*func_scope = new NetScope(scope, use_name,
 					       NetScope::FUNC);
+	    func_scope->is_auto((*cur).second->is_auto());
 	    func_scope->set_line((*cur).second);
 
 	    if (debug_scopes)

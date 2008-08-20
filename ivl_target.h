@@ -1447,6 +1447,9 @@ extern unsigned ivl_parameter_lineno(ivl_parameter_t net);
  * ivl_scope_lineno
  *    Returns the instantiation file and line for this scope.
  *
+ * ivl_scope_is_auto
+ *    Is the task or function declared to be automatic?
+ *
  * ivl_scope_var
  * ivl_scope_vars
  *    REMOVED
@@ -1523,6 +1526,7 @@ extern unsigned ivl_scope_def_lineno(ivl_scope_t net);
 extern unsigned     ivl_scope_events(ivl_scope_t net);
 extern ivl_event_t  ivl_scope_event(ivl_scope_t net, unsigned idx);
 extern const char* ivl_scope_file(ivl_scope_t net);
+extern unsigned ivl_scope_is_auto(ivl_scope_t net);
 extern unsigned ivl_scope_lineno(ivl_scope_t net);
 extern unsigned     ivl_scope_logs(ivl_scope_t net);
 extern ivl_net_logic_t ivl_scope_log(ivl_scope_t net, unsigned idx);

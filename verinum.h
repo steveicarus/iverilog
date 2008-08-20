@@ -46,6 +46,7 @@ class verinum {
       verinum(const V*v, unsigned nbits, bool has_len =true);
       verinum(V, unsigned nbits =1, bool has_len =true);
       verinum(uint64_t val, unsigned bits);
+      verinum(double val, bool dummy);
       verinum(const verinum&);
 
 	// Create a signed number, with an unspecified number of bits.
@@ -93,6 +94,8 @@ class verinum {
       signed long   as_long() const;
       double as_double() const;
       string as_string() const;
+    private:
+      void signed_trim();
 
     private:
       V* bits_;
