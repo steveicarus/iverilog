@@ -715,6 +715,7 @@ void PForStatement::dump(ostream&out, unsigned ind) const
 void PFunction::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "function ";
+      if (is_auto_) cout << "automatic ";
       switch (return_type_.type) {
 	  case PTF_NONE:
 	    out << "?none? ";
@@ -775,6 +776,9 @@ void PRepeat::dump(ostream&out, unsigned ind) const
 
 void PTask::dump(ostream&out, unsigned ind) const
 {
+      out << setw(ind) << "" << "task ";
+      if (is_auto_) cout << "automatic ";
+      out << pscope_name() << ";" << endl;
       if (ports_)
 	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
 		  out << setw(ind) << "";

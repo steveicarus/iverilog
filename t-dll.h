@@ -590,6 +590,7 @@ struct ivl_scope_s {
 
 	/* Scopes that are tasks/functions have a definition. */
       ivl_statement_t def;
+      unsigned is_auto;
 
       unsigned ports;
       ivl_signal_t*port;

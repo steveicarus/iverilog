@@ -239,7 +239,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 
 %type <flag>    from_exclude
 %type <number>  number
-%type <flag>    signed_opt udp_reg_opt edge_operator
+%type <flag>    signed_opt udp_reg_opt edge_operator automatic_opt
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
 %type <text>    udp_input_list udp_sequ_entry udp_comb_entry
@@ -2096,7 +2096,7 @@ module_item
 
   | K_task automatic_opt IDENTIFIER ';'
       { assert(current_task == 0);
-	current_task = pform_push_task_scope($3);
+	current_task = pform_push_task_scope($3, $2);
 	FILE_NAME(current_task, @1);
       }
     task_item_list_opt
@@ -2111,7 +2111,7 @@ module_item
 
   | K_task automatic_opt IDENTIFIER
       { assert(current_task == 0);
-	current_task = pform_push_task_scope($3);
+	current_task = pform_push_task_scope($3, $2);
 	FILE_NAME(current_task, @1);
       }
     '(' task_port_decl_list ')' ';'
@@ -2138,7 +2138,7 @@ module_item
 
   | K_function automatic_opt function_range_or_type_opt IDENTIFIER ';'
       { assert(current_function == 0);
-	current_function = pform_push_function_scope($4);
+	current_function = pform_push_function_scope($4, $2);
 	FILE_NAME(current_function, @1);
       }
     function_item_list statement
@@ -2153,7 +2153,7 @@ module_item
 
   | K_function automatic_opt function_range_or_type_opt IDENTIFIER
       { assert(current_function == 0);
-	current_function = pform_push_function_scope($4);
+	current_function = pform_push_function_scope($4, $2);
 	FILE_NAME(current_function, @1);
       }
     '(' task_port_decl_list ')' ';'
@@ -2279,12 +2279,8 @@ module_item
 	;
 
 automatic_opt
-	: K_automatic
-		{ yyerror(@1, "sorry: automatic tasks/functions are not "
-			  "currently supported.");
-		  yyerrok;
-		}
-	| {}
+	: K_automatic { $$ = true; }
+	| { $$ = false;}
 	;
 
 generate_if : K_if '(' expression ')' { pform_start_generate_if(@1, $3); }
