@@ -22,6 +22,7 @@
 
 # include  <iostream>
 # include  <cstdlib>
+# include  <cstring>
 # include  <math.h>
 
 # include  "netlist.h"
