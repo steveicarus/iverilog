@@ -135,7 +135,7 @@ vhdl_expr *vhdl_expr::resize(int newwidth)
    vhdl_fcall *resize = new vhdl_fcall("Resize", rtype);
    resize->add_expr(this);
    resize->add_expr(new vhdl_const_int(newwidth));
-   
+
    return resize;
 }
 

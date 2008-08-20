@@ -254,7 +254,7 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
             return;
          }
       }
-
+      
       T *a = new T(lhs, rhs);
       container->add_stmt(a);
           

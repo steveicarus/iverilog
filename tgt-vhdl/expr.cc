@@ -60,7 +60,7 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
    assert(scope);
 
    const char *renamed = get_renamed_signal(sig).c_str();
-   
+    
    vhdl_decl *decl = scope->get_decl(renamed);
    assert(decl);
 
@@ -192,7 +192,12 @@ static vhdl_expr *translate_numeric(vhdl_expr *lhs, vhdl_expr *rhs,
    else if (rhs->get_type()->get_name() == VHDL_TYPE_BOOLEAN)
       lhs = lhs->cast(&boolean);
 
-   vhdl_type *rtype = new vhdl_type(*lhs->get_type());
+   vhdl_type *rtype;
+   if (op == VHDL_BINOP_MULT)
+      rtype = new vhdl_type(lhs->get_type()->get_name(),
+                            (lhs->get_type()->get_width()*2) - 1, 0);
+   else
+      rtype = new vhdl_type(*lhs->get_type());
    return new vhdl_binop_expr(lhs, op, rhs, rtype);
 }
 
@@ -282,7 +287,7 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    case 'E':
       if (vectorop)
          result = translate_relation(lhs->cast(&std_logic_vector),
-                                   rhs->cast(&std_logic_vector), VHDL_BINOP_EQ);
+                                     rhs->cast(&std_logic_vector), VHDL_BINOP_EQ);
       else
          result = translate_relation(lhs, rhs, VHDL_BINOP_EQ);
       break;
@@ -292,7 +297,7 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    case 'N':
       if (vectorop)
          result = translate_relation(lhs->cast(&std_logic_vector),
-                                   rhs->cast(&std_logic_vector), VHDL_BINOP_NEQ);
+                                     rhs->cast(&std_logic_vector), VHDL_BINOP_NEQ);
       else
          result = translate_relation(lhs, rhs, VHDL_BINOP_NEQ);
       break;
@@ -438,7 +443,23 @@ static vhdl_expr *translate_ufunc(ivl_expr_t e)
    vhdl_type *rettype = expr_to_vhdl_type(e);
    vhdl_fcall *fcall = new vhdl_fcall(funcname, rettype);
 
-   return translate_parms<vhdl_fcall>(fcall, e);
+   int nparams = ivl_expr_parms(e);
+   for (int i = 0; i < nparams; i++) {
+      vhdl_expr *param = translate_expr(ivl_expr_parm(e, i));
+      if (NULL == param)
+         return NULL;
+      
+      // Ensure the parameter has the correct VHDL type
+      ivl_signal_t param_sig = ivl_scope_sig(defscope, i);  
+      vhdl_type *param_type =
+         vhdl_type::type_for(ivl_signal_width(param_sig),
+                             ivl_signal_signed(param_sig) != 0);
+      
+      fcall->add_expr(param->cast(param_type));
+      delete param_type;
+   }
+   
+   return fcall;
 }
 
 static vhdl_expr *translate_ternary(ivl_expr_t e)
