@@ -505,8 +505,9 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
          func->add_param(new vhdl_param_decl(signame.c_str(), sigtype));
          break;
       case IVL_SIP_OUTPUT:
-         // The magic variable Verilog_Result holds the return value
-         signame = "Verilog_Result";
+         // The magic variable <funcname>_Result holds the return value
+         signame = funcname;
+         signame += "_Result";
          func->set_type(new vhdl_type(*sigtype));
       default:
          func->get_scope()->add_decl
