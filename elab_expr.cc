@@ -147,8 +147,8 @@ NetExpr* PEBinary::elaborate_eval_expr_base_(Design*des,
  * the correct NetEBinary object and connect the parameters.
  */
 NetExpr* PEBinary::elaborate_expr_base_(Design*des,
-					   NetExpr*lp, NetExpr*rp,
-					   int expr_wid) const
+					NetExpr*lp, NetExpr*rp,
+					int expr_wid) const
 {
       bool flag;
 
@@ -209,64 +209,12 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	    break;
 
 	  case 'l': // <<
-	    if (NetEConst*lpc = dynamic_cast<NetEConst*> (lp)) {
-		  if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
-			  // Handle the super-special case that both
-			  // operands are constants. Precalculate the
-			  // entire value here.
-			verinum lpval = lpc->value();
-			unsigned shift = rpc->value().as_ulong();
-			verinum result = lpc->value() << shift;
-			  // If the l-value has explicit size, or
-			  // there is a context determined size, use that.
-			if (lpval.has_len() || expr_wid > 0) {
-			      int use_len = lpval.len();
-			      if (expr_wid < use_len)
-				    use_len = expr_wid;
-			      result = verinum(result, lpval.len());
-			}
-
-			tmp = new NetEConst(result);
-			if (debug_elaborate)
-			      cerr << get_fileline() << ": debug: "
-				   << "Precalculate " << *this
-				   << " to constant " << *tmp << endl;
-
-		  } else {
-			  // Handle the special case that the left
-			  // operand is constant. If it is unsized, we
-			  // may have to expand it to an integer width.
-			verinum lpval = lpc->value();
-			if (lpval.len() < integer_width && !lpval.has_len()) {
-			      lpval = verinum(lpval, integer_width);
-			      lpc = new NetEConst(lpval);
-			      lpc->set_line(*lp);
-			}
-
-			tmp = new NetEBShift(op_, lpc, rp);
-			if (debug_elaborate)
-			      cerr << get_fileline() << ": debug: "
-				   << "Adjust " << *this
-				   << " to this " << *tmp
-				   << " to allow for integer widths." << endl;
-		  }
-
-	    } else {
-		    // Left side is not constant, so handle it the
-		    // default way.
-		  if (expr_wid >= 0)
-			lp = pad_to_width(lp, expr_wid);
-		  tmp = new NetEBShift(op_, lp, rp);
-	    }
-	    tmp->set_line(*this);
+	    tmp = elaborate_expr_base_lshift_(des, lp, rp, expr_wid);
 	    break;
 
 	  case 'r': // >>
 	  case 'R': // >>>
-	    if (expr_wid > 0)
-		  lp = pad_to_width(lp, expr_wid);
-	    tmp = new NetEBShift(op_, lp, rp);
-	    tmp->set_line(*this);
+	    tmp = elaborate_expr_base_rshift_(des, lp, rp, expr_wid);
 	    break;
 
 	  case '^':
@@ -330,6 +278,190 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	    break;
       }
 
+      return tmp;
+}
+
+NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
+					       NetExpr*lp, NetExpr*rp,
+					       int expr_wid) const
+{
+      NetExpr*tmp;
+
+      if (NetEConst*lpc = dynamic_cast<NetEConst*> (lp)) {
+	    if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
+		    // Handle the super-special case that both
+		    // operands are constants. Precalculate the
+		    // entire value here.
+		  verinum lpval = lpc->value();
+		  unsigned shift = rpc->value().as_ulong();
+		  verinum result = lpc->value() << shift;
+		    // If the l-value has explicit size, or
+		    // there is a context determined size, use that.
+		  if (lpval.has_len() || expr_wid > 0) {
+			int use_len = lpval.len();
+			if (expr_wid < use_len)
+			      use_len = expr_wid;
+			result = verinum(result, lpval.len());
+		  }
+
+		  tmp = new NetEConst(result);
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Precalculate " << *this
+			     << " to constant " << *tmp << endl;
+
+	    } else {
+		    // Handle the special case that the left
+		    // operand is constant. If it is unsized, we
+		    // may have to expand it to an integer width.
+		  verinum lpval = lpc->value();
+		  if (lpval.len() < integer_width && !lpval.has_len()) {
+			lpval = verinum(lpval, integer_width);
+			lpc = new NetEConst(lpval);
+			lpc->set_line(*lp);
+		  }
+
+		  tmp = new NetEBShift(op_, lpc, rp);
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Adjust " << *this
+			     << " to this " << *tmp
+			     << " to allow for integer widths." << endl;
+	    }
+
+      } else if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
+	    long shift = rpc->value().as_long();
+	    long use_wid = lp->expr_width();
+	    if (expr_wid > 0)
+		  use_wid = expr_wid;
+
+	    if (shift >= use_wid || (-shift) >= (long)lp->expr_width()) {
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Value left-shifted " << shift
+			     << " beyond width of " << use_wid
+			     << ". Elaborate as constant zero." << endl;
+
+		  tmp = make_const_0(use_wid);
+
+	    } else {
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Left shift expression by constant "
+			     << shift << " bits. (use_wid=" << use_wid << ")" << endl;
+		  lp = pad_to_width(lp, use_wid);
+		  tmp = new NetEBShift(op_, lp, rp);
+	    }
+
+      } else {
+	      // Left side is not constant, so handle it the
+	      // default way.
+	    if (expr_wid >= 0)
+		  lp = pad_to_width(lp, expr_wid);
+	    tmp = new NetEBShift(op_, lp, rp);
+      }
+
+      tmp->set_line(*this);
+      return tmp;
+}
+
+NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
+					       NetExpr*lp, NetExpr*rp,
+					       int expr_wid) const
+{
+      NetExpr*tmp;
+
+      long use_wid = lp->expr_width();
+      if (expr_wid > 0)
+	    use_wid = expr_wid;
+
+      if (use_wid == 0) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "Oops, left expression width is not known, "
+		       << "so expression width is not known. Punt." << endl;
+	    tmp = new NetEBShift(op_, lp, rp);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+      if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
+	    long shift = rpc->value().as_long();
+
+	      // Detect the special cases that the shifted
+	      // unsigned expression is completely shifted away to
+	      // zero.
+	    if ((op_=='r' || (lp->has_sign()==false))
+		&& shift >= (long)lp->expr_width()) {
+		    // Special case that the value is unsigned
+		    // shifted completely away.
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Value right-shifted " << shift
+			     << " beyond width of " << lp->expr_width()
+			     << ". Elaborate as constant zero." << endl;
+
+		  tmp = make_const_0(use_wid);
+		  tmp->set_line(*this);
+		  return tmp;
+
+	    }
+
+	    if (shift >= (long)lp->expr_width()) {
+		    // Signed right shift.
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Value signed-right-shifted " << shift
+			     << " beyond width of " << lp->expr_width()
+			     << ". Elaborate as replicated top bit." << endl;
+
+		  tmp = new NetEConst(verinum(lp->expr_width()-1));
+		  tmp->set_line(*this);
+		  tmp = new NetESelect(lp, tmp, 1);
+		  tmp->cast_signed(true);
+		  tmp->set_line(*this);
+		  tmp = pad_to_width(tmp, use_wid);
+		  tmp->set_line(*this);
+		  return tmp;
+
+	    } else if (shift >= 0) {
+		    // Signed right shift.
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Value signed-right-shifted " << shift
+			     << " beyond width of " << lp->expr_width()
+			     << "." << endl;
+
+		  tmp = new NetEConst(verinum(shift));
+		  tmp->set_line(*this);
+		  long tmp_wid = lp->expr_width() - shift;
+		  if (tmp_wid > use_wid)
+			tmp_wid = use_wid;
+		  tmp = new NetESelect(lp, tmp, tmp_wid);
+		  tmp->set_line(*this);
+		  tmp->cast_signed(lp->has_sign() && op_=='R');
+		  tmp = pad_to_width(tmp, use_wid);
+		  tmp->set_line(*this);
+		  return tmp;
+
+	    } else if ((0-shift) >= use_wid) {
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Value signed-right-shifted " << shift
+			     << " beyond width of " << use_wid
+			     << "." << endl;
+
+		  tmp = make_const_0(use_wid);
+		  tmp->set_line(*this);
+		  return tmp;
+	    }
+      }
+
+	// Falback, handle the general case.
+      if (expr_wid > 0)
+	    lp = pad_to_width(lp, expr_wid);
+      tmp = new NetEBShift(op_, lp, rp);
+      tmp->set_line(*this);
       return tmp;
 }
 

@@ -114,6 +114,7 @@ extern NetExpr*make_sub_expr(long val, NetExpr*expr);
  * Make a NetEConst object that contains only X bits.
  */
 extern NetEConst*make_const_x(unsigned long wid);
+extern NetEConst*make_const_0(unsigned long wid);
 
 /*
  * Make A const net

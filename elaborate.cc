@@ -1584,6 +1584,29 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
       return lval_->elaborate_lval(des, scope, false);
 }
 
+NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
+				   unsigned lv_width) const
+{
+      ivl_assert(*this, rval_);
+
+
+	/* Find out what the r-value width is going to be. We guess it
+	   will be the l-value width, but it may turn out to be
+	   something else based on self-determined widths inside. */
+      unsigned use_width = lv_width;
+      bool unsized_flag = false;
+      unsigned tmp_width = rval()->test_width(des, scope, use_width, use_width, unsized_flag);
+      if (tmp_width > use_width)
+	    use_width = tmp_width;
+
+	/* Now elaborate to the expected width. Pass the lwidth to
+	   prune any constant result to fit with the lvalue at hand. */
+      NetExpr*rv = elab_and_eval(des, scope, rval_, use_width, lv_width);
+      if (rv == 0) return 0;
+
+      return rv;
+}
+
 /*
  * This function elaborates delay expressions. This is a little
  * different from normal elaboration because the result may need to be
@@ -1665,23 +1688,9 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    delay = elaborate_delay_expr(delay_, des, scope);
 
 
-      assert(rval());
-
 	/* Elaborate the r-value expression, then try to evaluate it. */
-
-	/* Find out what the r-value width is going to be. We guess it
-	   will be the l-value width, but it may turn out to be
-	   something else based on self-determined widths inside. */
-      unsigned use_width = lv->lwidth();
-      bool unsized_flag = false;
-      use_width = rval()->test_width(des, scope, use_width, use_width, unsized_flag);
-
-	/* Now elaborate to the expected width. Pass the lwidth to
-	   prune any constant result to fit with the lvalue at hand. */
-      NetExpr*rv = elab_and_eval(des, scope, rval(), use_width, lv->lwidth());
+      NetExpr*rv = elaborate_rval_(des, scope, count_lval_width(lv));
       if (rv == 0) return 0;
-      assert(rv);
-
 
 	/* Rewrite delayed assignments as assignments that are
 	   delayed. For example, a = #<d> b; becomes:
@@ -1802,12 +1811,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
 
-      assert(rval());
-
-	/* Elaborate and precalculate the r-value. */
-      NetExpr*rv = elab_and_eval(des, scope, rval(), count_lval_width(lv));
-      if (rv == 0)
-	    return 0;
+      NetExpr*rv = elaborate_rval_(des, scope, count_lval_width(lv));
 
 	/* Handle the (common) case that the r-value is a vector. This
 	   includes just about everything but reals. In this case, we
