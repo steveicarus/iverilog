@@ -25,6 +25,7 @@
 # include  "netmisc.h"
 
 # include  <cstdlib>
+# include  <cstring>
 # include  <iostream>
 # include  "ivl_assert.h"
 
