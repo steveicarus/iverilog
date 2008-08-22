@@ -403,14 +403,6 @@ static vhdl_expr *translate_select(ivl_expr_t e)
       return from->resize(ivl_expr_width(e));
 }
 
-static vhdl_type *expr_to_vhdl_type(ivl_expr_t e)
-{
-   if (ivl_expr_signed(e))
-      return vhdl_type::nsigned(ivl_expr_width(e));
-   else
-      return vhdl_type::nunsigned(ivl_expr_width(e));
-}
-
 template <class T>
 static T *translate_parms(T *t, ivl_expr_t e)
 {
@@ -440,7 +432,8 @@ static vhdl_expr *translate_ufunc(ivl_expr_t e)
 
    const char *funcname = ivl_scope_tname(defscope);
 
-   vhdl_type *rettype = expr_to_vhdl_type(e);
+   vhdl_type *rettype = 
+      vhdl_type::type_for(ivl_expr_width(e), ivl_expr_signed(e) != 0);
    vhdl_fcall *fcall = new vhdl_fcall(funcname, rettype);
 
    int nparams = ivl_expr_parms(e);
@@ -497,7 +490,8 @@ static vhdl_expr *translate_ternary(ivl_expr_t e)
 
 static vhdl_expr *translate_concat(ivl_expr_t e)
 {
-   vhdl_type *rtype = expr_to_vhdl_type(e);
+   vhdl_type *rtype = 
+      vhdl_type::type_for(ivl_expr_width(e), ivl_expr_signed(e) != 0);
    vhdl_binop_expr *concat = new vhdl_binop_expr(VHDL_BINOP_CONCAT, rtype);
 
    int nrepeat = ivl_expr_repeat(e);
