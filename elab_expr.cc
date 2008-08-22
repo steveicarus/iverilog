@@ -287,6 +287,20 @@ NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
 {
       NetExpr*tmp;
 
+      long use_wid = lp->expr_width();
+      if (expr_wid > 0)
+	    use_wid = expr_wid;
+
+      if (use_wid == 0) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "Oops, left expression width is not known, "
+		       << "so expression width is not known. Punt." << endl;
+	    tmp = new NetEBShift(op_, lp, rp);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
       if (NetEConst*lpc = dynamic_cast<NetEConst*> (lp)) {
 	    if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
 		    // Handle the super-special case that both
