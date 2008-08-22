@@ -22,6 +22,7 @@
 #include "vhdl_helper.hh"
 
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <typeinfo>
 
@@ -57,7 +58,7 @@ vhdl_decl *vhdl_scope::get_decl(const std::string &name) const
 {
    decl_list_t::const_iterator it;
    for (it = decls_.begin(); it != decls_.end(); ++it) {
-      if ((*it)->get_name() == name)
+      if (strcasecmp((*it)->get_name().c_str(), name.c_str()) == 0)
          return *it;
    }
 
