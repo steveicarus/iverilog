@@ -38,6 +38,7 @@ extern void sys_readmem_register();
 extern void sys_time_register();
 extern void sys_vcd_register();
 extern void sys_vcdoff_register();
+extern void sys_missing_register();
 
 #ifdef HAVE_LIBZ
 #ifdef HAVE_LIBBZ2
@@ -156,6 +157,7 @@ void (*vlog_startup_routines[])() = {
       sys_readmem_register,
       sys_time_register,
       sys_lxt_or_vcd_register,
+      sys_missing_register,
       0
 };
 
