@@ -681,6 +681,9 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
    case IVL_ST_CASEX:
       error("casex statement cannot be translated to VHDL");
       return 1;
+   case IVL_ST_CASEZ:
+      error("casez statement cannot be translated to VHDL");
+      return 1;
    case IVL_ST_FORK:
       error("fork statement cannot be translated to VHDL");
       return 1;
