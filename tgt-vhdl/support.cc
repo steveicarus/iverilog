@@ -44,6 +44,8 @@ const char *support_function::function_name(support_function_t type)
    case SF_TERNARY_UNSIGNED:    return "Ternary_Unsigned";
    case SF_TERNARY_SIGNED:      return "Ternary_Signed";
    case SF_LOGIC_TO_INTEGER:    return "Logic_To_Integer";
+   case SF_SIGNED_TO_LOGIC:     return "Signed_To_Logic";
+   case SF_UNSIGNED_TO_LOGIC:   return "Unsigned_To_Logic";
    default:
       assert(false);
    }
@@ -60,6 +62,8 @@ vhdl_type *support_function::function_type(support_function_t type)
    case SF_REDUCE_AND:
    case SF_REDUCE_XOR:
    case SF_TERNARY_LOGIC:
+   case SF_SIGNED_TO_LOGIC:
+   case SF_UNSIGNED_TO_LOGIC:
       return vhdl_type::std_logic();
    case SF_TERNARY_SIGNED:
       return new vhdl_type(VHDL_TYPE_SIGNED);
@@ -101,6 +105,16 @@ void support_function::emit(std::ostream &of, int level) const
          << "else" << nl_string(indent(indent(level)))
          << "return '0';" << nl_string(indent(level))
          << "end if;";
+      break;
+   case SF_UNSIGNED_TO_LOGIC:
+      of << "(X : unsigned) return std_logic is" << nl_string(level)
+         << "begin" << nl_string(indent(level))
+         << "return X(0);";
+      break;
+   case SF_SIGNED_TO_LOGIC:
+      of << "(X : signed) return std_logic is" << nl_string(level)
+         << "begin" << nl_string(indent(level))
+         << "return X(0);";
       break;
    case SF_REDUCE_OR:
       of << "(X : std_logic_vector) return std_logic is" << nl_string(level)

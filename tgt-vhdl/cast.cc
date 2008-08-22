@@ -106,6 +106,28 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
 
       return ah;
    }
+   else if (to->get_name() == VHDL_TYPE_STD_LOGIC
+            && (type_->get_name() == VHDL_TYPE_SIGNED)) {
+      require_support_function(SF_SIGNED_TO_LOGIC);
+
+      vhdl_fcall *ah =
+         new vhdl_fcall(support_function::function_name(SF_SIGNED_TO_LOGIC),
+                        vhdl_type::std_logic());
+      ah->add_expr(this);
+
+      return ah;
+   }
+   else if (to->get_name() == VHDL_TYPE_STD_LOGIC
+            && (type_->get_name() == VHDL_TYPE_UNSIGNED)) {
+      require_support_function(SF_UNSIGNED_TO_LOGIC);
+
+      vhdl_fcall *ah =
+         new vhdl_fcall(support_function::function_name(SF_UNSIGNED_TO_LOGIC),
+                        vhdl_type::std_logic());
+      ah->add_expr(this);
+
+      return ah;
+   }
    else {
       // We have to cast the expression before resizing or the
       // wrong sign bit may be extended (i.e. when casting between

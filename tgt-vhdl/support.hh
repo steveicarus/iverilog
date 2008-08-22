@@ -34,6 +34,8 @@ enum support_function_t {
    SF_TERNARY_UNSIGNED,
    SF_TERNARY_SIGNED,
    SF_LOGIC_TO_INTEGER,
+   SF_SIGNED_TO_LOGIC,
+   SF_UNSIGNED_TO_LOGIC,
 };
 
 class support_function : public vhdl_function {
