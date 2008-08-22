@@ -752,14 +752,15 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
       assert(parent_arch != NULL);
          
       // Create a forward declaration for it
-      if (!parent_arch->get_scope()->have_declared(ent->get_name())) {
+      vhdl_scope *parent_scope = parent_arch->get_scope();
+      if (!parent_scope->have_declared(ent->get_name())) {
          vhdl_decl *comp_decl = vhdl_component_decl::component_decl_for(ent);
          parent_arch->get_scope()->add_decl(comp_decl);
       }
          
       // And an instantiation statement
       string inst_name(ivl_scope_basename(scope));
-      if (inst_name == ent->get_name()) {
+      if (inst_name == ent->get_name() || parent_scope->have_declared(inst_name)) {
          // Cannot have instance name the same as type in VHDL
          inst_name += "_Inst";
       }
