@@ -21,9 +21,10 @@
 
 #include "PTask.h"
 
-PFunction::PFunction(perm_string name, PScope*parent)
+PFunction::PFunction(perm_string name, PScope*parent, bool is_auto)
 : PScope(name, parent), ports_(0), statement_(0)
 {
+      is_auto_ = is_auto;
       return_type_.type = PTF_NONE;
 }
 

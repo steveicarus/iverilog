@@ -127,6 +127,12 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	    obj->cb_time.type = vpiSuppressTime;
       }
       obj->cb_data.time = &obj->cb_time;
+      if (data->value) {
+	    obj->cb_value = *(data->value);
+      } else {
+	    obj->cb_value.format = vpiSuppressVal;
+      }
+      obj->cb_data.value = &obj->cb_value;
 
       assert(data->obj);
       assert(data->obj->vpi_type);
@@ -457,8 +463,25 @@ void callback_execute(struct __vpiCallback*cur)
       vpi_mode_flag = VPI_MODE_RWSYNC;
 
       assert(cur->cb_data.cb_rtn);
-      cur->cb_data.time->type = vpiSimTime;
-      vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
+      switch (cur->cb_data.time->type) {
+	  case vpiSimTime:
+	    vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
+	    break;
+	  case vpiScaledRealTime: {
+	    cur->cb_data.time->real =
+	         vpip_time_to_scaled_real(schedule_simtime(),
+	             (struct __vpiScope *) vpi_handle(vpiScope,
+	                                              cur->cb_data.obj));
+	    break;
+	  }
+	  case vpiSuppressTime:
+	    break;
+	  default:
+	    fprintf(stderr, "Unsupported time format %d.\n",
+	            cur->cb_data.time->type);
+	    assert(0);
+	    break;
+      }
       (cur->cb_data.cb_rtn)(&cur->cb_data);
 
       vpi_mode_flag = save_mode;
@@ -546,10 +569,32 @@ void vvp_fun_signal::get_value(struct t_vpi_value*vp)
 {
       switch (vp->format) {
 	  case vpiScalarVal:
+	    // This works because vvp_bit4_t has the same encoding
+	    // as a scalar value! See vpip_vec4_get_value() for a 
+	    // more robust method.
 	    vp->value.scalar = value(0);
 	    break;
+
+	  case vpiBinStrVal:
+	  case vpiOctStrVal:
+	  case vpiDecStrVal:
+	  case vpiHexStrVal:
+	  case vpiIntVal:
+	  case vpiVectorVal:
+	  case vpiStringVal:
+	  case vpiRealVal: {
+	    unsigned wid = size();
+	    vvp_vector4_t vec4(wid);
+	    for (unsigned idx = 0; idx < wid; idx += 1) {
+		  vec4.set_bit(idx, value(idx));
+	    }
+	    vpip_vec4_get_value(vec4, wid, false, vp);
+	    break;
+	  }
+
 	  case vpiSuppressVal:
 	    break;
+
 	  default:
 	    fprintf(stderr, "vpi_callback: value "
 		    "format %d not supported (fun_signal)\n",
@@ -621,6 +666,9 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 		vp->value.str = rbuf;
 		break;
 	  }
+
+	  case vpiSuppressVal:
+	    break;
 
 	  default:
 	    fprintf(stderr, "vpi_callback: value "

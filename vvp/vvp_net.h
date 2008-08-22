@@ -20,6 +20,7 @@
  */
 
 # include  "config.h"
+# include  "vpi_user.h"
 # include  <stddef.h>
 # include  <string.h>
 # include  <new>
@@ -66,6 +67,8 @@ enum vvp_bit4_t {
 inline char vvp_bit4_to_ascii(vvp_bit4_t a) { return "01zx"[a]; }
 
 extern vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c);
+
+extern vvp_bit4_t scalar_to_bit4(PLI_INT32 scalar);
 
   /* Return TRUE if the bit is BIT4_X or BIT4_Z. The fast
      implementation here relies on the encoding of vvp_bit4_t values. */
@@ -470,6 +473,9 @@ class vvp_vector2_t {
       void set_bit(unsigned idx, int bit);
 	// Make the size just big enough to hold the first 1 bit.
       void trim();
+	// Trim off extra 1 bit since this is representing a negative value.
+	// Always keep at least 32 bits.
+      void trim_neg();
 
     private:
       enum { BITS_PER_WORD = 8 * sizeof(unsigned long) };

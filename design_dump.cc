@@ -998,6 +998,7 @@ void NetScope::dump(ostream&o) const
 	    o << " generate block";
 	    break;
       }
+      if (is_auto()) o << " (automatic)";
       o << endl;
 
       for (unsigned idx = 0 ;  idx < attr_cnt() ;  idx += 1)

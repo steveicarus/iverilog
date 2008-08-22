@@ -175,8 +175,8 @@ extern void pform_make_udp(perm_string name,
  */
 extern void pform_pop_scope();
 
-extern PTask*pform_push_task_scope(char*name);
-extern PFunction*pform_push_function_scope(char*name);
+extern PTask*pform_push_task_scope(char*name, bool is_auto);
+extern PFunction*pform_push_function_scope(char*name, bool is_auto);
 extern PBlock*pform_push_block_scope(char*name, PBlock::BL_TYPE tt);
 
 

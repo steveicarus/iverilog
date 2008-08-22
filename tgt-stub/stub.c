@@ -1448,12 +1448,13 @@ static int show_scope(ivl_scope_t net, void*x)
 	      ivl_scope_name(net), ivl_scope_params(net),
 	      ivl_scope_sigs(net), ivl_scope_logs(net));
 
+      char *is_auto = ivl_scope_is_auto(net) ? "automatic " : "";
       switch (ivl_scope_type(net)) {
 	  case IVL_SCT_MODULE:
 	    fprintf(out, " module %s", ivl_scope_tname(net));
 	    break;
 	  case IVL_SCT_FUNCTION:
-	    fprintf(out, " function %s", ivl_scope_tname(net));
+	    fprintf(out, " function %s%s", is_auto, ivl_scope_tname(net));
 	    break;
 	  case IVL_SCT_BEGIN:
 	    fprintf(out, " begin : %s", ivl_scope_tname(net));
@@ -1462,7 +1463,7 @@ static int show_scope(ivl_scope_t net, void*x)
 	    fprintf(out, " fork : %s", ivl_scope_tname(net));
 	    break;
 	  case IVL_SCT_TASK:
-	    fprintf(out, " task %s", ivl_scope_tname(net));
+	    fprintf(out, " task %s%s", is_auto, ivl_scope_tname(net));
 	    break;
 	  default:
 	    fprintf(out, " type(%u) %s", ivl_scope_type(net),

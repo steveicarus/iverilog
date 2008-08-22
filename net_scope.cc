@@ -41,6 +41,7 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
       signals_ = 0;
       events_ = 0;
       lcounter_ = 0;
+      is_auto_ = false;
 
       if (up) {
 	    default_nettype_ = up->default_nettype();
@@ -261,6 +262,7 @@ NetFuncDef* NetScope::func_def()
       assert( type_ == FUNC );
       return func_;
 }
+
 bool NetScope::in_func()
 {
       return (type_ == FUNC) ? true : false;

@@ -37,3 +37,4 @@ vpi_vprintf
 
 vpip_format_strength
 vpip_set_return_value
+vpip_calc_clog2

@@ -205,7 +205,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_PSTAR K_STARP
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
 %token K_abs K_abstol K_access K_acos K_acosh K_asin K_analog K_asinh
-%token K_atan K_atanh K_atan2
+%token K_atan K_atanh K_atan2 K_automatic
 %token K_always K_and K_assign K_begin K_bool K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_ceil K_cmos K_continuous K_cos K_cosh
 %token K_ddt_nature K_deassign K_default K_defparam K_disable K_discrete
@@ -239,7 +239,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 
 %type <flag>    from_exclude
 %type <number>  number
-%type <flag>    signed_opt udp_reg_opt edge_operator
+%type <flag>    signed_opt udp_reg_opt edge_operator automatic_opt
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
 %type <text>    udp_input_list udp_sequ_entry udp_comb_entry
@@ -2094,41 +2094,41 @@ module_item
      statements in the task body. But we continue to accept it as an
      extension. */
 
-  | K_task IDENTIFIER ';'
+  | K_task automatic_opt IDENTIFIER ';'
       { assert(current_task == 0);
-	current_task = pform_push_task_scope($2);
+	current_task = pform_push_task_scope($3, $2);
 	FILE_NAME(current_task, @1);
       }
     task_item_list_opt
     statement_or_null
     K_endtask
-      { current_task->set_ports($5);
-	current_task->set_statement($6);
+      { current_task->set_ports($6);
+	current_task->set_statement($7);
 	pform_pop_scope();
 	current_task = 0;
-	delete[]$2;
+	delete[]$3;
       }
 
-  | K_task IDENTIFIER
+  | K_task automatic_opt IDENTIFIER
       { assert(current_task == 0);
-	current_task = pform_push_task_scope($2);
+	current_task = pform_push_task_scope($3, $2);
 	FILE_NAME(current_task, @1);
       }
     '(' task_port_decl_list ')' ';'
     block_item_decls_opt
     statement_or_null
     K_endtask
-      { current_task->set_ports($5);
-	current_task->set_statement($9);
+      { current_task->set_ports($6);
+	current_task->set_statement($10);
 	pform_pop_scope();
 	current_task = 0;
-	delete[]$2;
+	delete[]$3;
       }
-  | K_task IDENTIFIER error K_endtask
+  | K_task automatic_opt IDENTIFIER error K_endtask
       {
 	pform_pop_scope();
 	current_task = 0;
-	delete[]$2;
+	delete[]$3;
       }
 
   /* The function declaration rule matches the function declaration
@@ -2136,42 +2136,42 @@ module_item
      definitions in the func_body to take on the scope of the function
      instead of the module. */
 
-  | K_function function_range_or_type_opt IDENTIFIER ';'
+  | K_function automatic_opt function_range_or_type_opt IDENTIFIER ';'
       { assert(current_function == 0);
-	current_function = pform_push_function_scope($3);
+	current_function = pform_push_function_scope($4, $2);
 	FILE_NAME(current_function, @1);
       }
     function_item_list statement
     K_endfunction
-      { current_function->set_ports($6);
-	current_function->set_statement($7);
-	current_function->set_return($2);
+      { current_function->set_ports($7);
+	current_function->set_statement($8);
+	current_function->set_return($3);
 	pform_pop_scope();
 	current_function = 0;
-	delete[]$3;
+	delete[]$4;
       }
 
-  | K_function function_range_or_type_opt IDENTIFIER
+  | K_function automatic_opt function_range_or_type_opt IDENTIFIER
       { assert(current_function == 0);
-	current_function = pform_push_function_scope($3);
+	current_function = pform_push_function_scope($4, $2);
 	FILE_NAME(current_function, @1);
       }
     '(' task_port_decl_list ')' ';'
     block_item_decls_opt
     statement
     K_endfunction
-      { current_function->set_ports($6);
-	current_function->set_statement($10);
-	current_function->set_return($2);
+      { current_function->set_ports($7);
+	current_function->set_statement($11);
+	current_function->set_return($3);
 	pform_pop_scope();
 	current_function = 0;
-	delete[]$3;
+	delete[]$4;
       }
-  | K_function function_range_or_type_opt IDENTIFIER error K_endfunction
+  | K_function automatic_opt function_range_or_type_opt IDENTIFIER error K_endfunction
       {
 	pform_pop_scope();
 	current_task = 0;
-	delete[]$3;
+	delete[]$4;
       }
 
   /* A generate region can contain further module items. Actually, it
@@ -2276,6 +2276,11 @@ module_item
 		}
 	| KK_attribute '(' error ')' ';'
 		{ yyerror(@1, "error: Malformed $attribute parameter list."); }
+	;
+
+automatic_opt
+	: K_automatic { $$ = true; }
+	| { $$ = false;}
 	;
 
 generate_if : K_if '(' expression ')' { pform_start_generate_if(@1, $3); }
