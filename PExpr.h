@@ -686,7 +686,7 @@ class PETernary : public PExpr {
 				    const NetExpr* decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
-      virtual NetETernary*elaborate_expr(Design*des, NetScope*,
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 					 int expr_width, bool sys_task_arg) const;
       virtual NetETernary*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;

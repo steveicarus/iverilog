@@ -2060,7 +2060,7 @@ static bool test_ternary_operand_compat(ivl_variable_type_t l,
  * parsed so I can presume that they exist, and call elaboration
  * methods. If any elaboration fails, then give up and return 0.
  */
-NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope,
+NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 				      int expr_wid, bool) const
 {
       assert(expr_);
@@ -2079,17 +2079,54 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope,
 		       << " and " << fal_wid << endl;
       }
 
-      NetExpr*con = expr_->elaborate_expr(des, scope, -1, false);
+	// Elaborate and evaluate the condition expression. Note that
+	// it is always self-determined.
+      NetExpr*con = elab_and_eval(des, scope, expr_, -1);
       if (con == 0)
 	    return 0;
 
-      NetExpr*tru = tru_->elaborate_expr(des, scope, expr_wid, false);
+	/* Make sure the condition expression reduces to a single bit. */
+      con = condition_reduce(con);
+
+	// Verilog doesn't say that we must do short circuit
+	// evaluation of ternary expressions, but it doesn't disallow
+	// it. The disadvantage of doing this is that semantic errors
+	// in the unused clause will be missed, but people don't seem
+	// to mind, and do apreciate the optimization available here.
+      if (NetEConst*tmp = dynamic_cast<NetEConst*> (con)) {
+	    verinum cval = tmp->value();
+	    ivl_assert(*this, cval.len()==1);
+
+	      // Condition is constant TRUE, so we only need the true claue.
+	    if (cval.get(0) == verinum::V1) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Short-circuit elaborate TRUE clause of ternary."
+		       << endl;
+		  NetExpr*tru = elab_and_eval(des, scope, tru_, expr_wid);
+		  return pad_to_width(tru, expr_wid);
+	    }
+
+	      // Condition is constant FALSE, so we only need the
+	      // false clause.
+	    if (cval.get(0) == verinum::V0) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Short-circuit elaborate FALSE clause of ternary."
+		       << endl;
+		  NetExpr*fal = elab_and_eval(des, scope, fal_, expr_wid);
+		  return pad_to_width(fal, expr_wid);
+	    }
+
+	      // X and Z conditions need to blend both results, so we
+	      // can't short-circuit.
+      }
+
+      NetExpr*tru = elab_and_eval(des, scope, tru_, expr_wid);
       if (tru == 0) {
 	    delete con;
 	    return 0;
       }
 
-      NetExpr*fal = fal_->elaborate_expr(des, scope, expr_wid, false);
+      NetExpr*fal = elab_and_eval(des, scope, fal_, expr_wid);
       if (fal == 0) {
 	    delete con;
 	    delete tru;
@@ -2104,9 +2141,6 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return 0;
       }
-
-	/* Make sure the condition expression reduces to a single bit. */
-      con = condition_reduce(con);
 
 	/* Whatever the width we choose for the ternary operator, we
 	need to make sure the operands match. */
