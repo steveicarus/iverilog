@@ -363,11 +363,15 @@ NetEConst* NetEBComp::eval_leeq_()
 	    cerr << get_line() << ":               : " << *this << endl;
       }
 
-	/* Detect the case where the right side is greater that or
+	/* Detect the case where the right side is greater than or
 	   equal to the largest value the left side can possibly
 	   have. */
       assert(left_->expr_width() > 0);
       verinum lv (verinum::V1, left_->expr_width() + 1);
+      if (left_->has_sign() && rv.has_sign()) {
+	    lv.set(lv.len()-1, verinum::V0);
+	    lv.has_sign(true);
+      }
       lv.set(left_->expr_width(), verinum::V0);
       lv.has_sign( left_->has_sign() );
       if (lv <= rv) {

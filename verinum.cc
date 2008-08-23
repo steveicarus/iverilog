@@ -493,8 +493,7 @@ verinum::V operator <= (const verinum&left, const verinum&right)
 		  return verinum::Vx;
 	    if (!right.is_defined())
 		  return verinum::Vx;
-	    long diff = left.as_long() - right.as_long();
-	    if (diff <= 0)
+	    if (left.as_long() <= right.as_long())
 		  return verinum::V1;
 	    else
 		  return verinum::V0;
@@ -532,8 +531,7 @@ verinum::V operator < (const verinum&left, const verinum&right)
 		  return verinum::Vx;
 	    if (!right.is_defined())
 		  return verinum::Vx;
-	    long diff = left.as_long() - right.as_long();
-	    if (diff < 0)
+	    if (left.as_long() < right.as_long())
 		  return verinum::V1;
 	    else
 		  return verinum::V0;
