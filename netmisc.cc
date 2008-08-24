@@ -78,16 +78,26 @@ NetNet* add_to_net(Design*des, NetNet*sig, long val)
 
 NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 {
-      verinum zero ((uint64_t)0, sig->vector_width());
-      NetConst*zero_obj = new NetConst(scope, scope->local_symbol(), zero);
-      des->add_node(zero_obj);
-
       NetNet*zero_net = new NetNet(scope, scope->local_symbol(),
 				   NetNet::WIRE, sig->vector_width());
       zero_net->data_type(sig->data_type());
       zero_net->local_flag(true);
 
-      connect(zero_net->pin(0), zero_obj->pin(0));
+      if (sig->data_type() == IVL_VT_REAL) {
+	    verireal zero (val);
+	    NetLiteral*zero_obj = new NetLiteral(scope, scope->local_symbol(), zero);
+	    des->add_node(zero_obj);
+
+	    connect(zero_net->pin(0), zero_obj->pin(0));
+
+      } else {
+	    verinum zero ((int64_t)val);
+	    zero = pad_to_width(zero, sig->vector_width());
+	    NetConst*zero_obj = new NetConst(scope, scope->local_symbol(), zero);
+	    des->add_node(zero_obj);
+
+	    connect(zero_net->pin(0), zero_obj->pin(0));
+      }
 
       NetAddSub*adder = new NetAddSub(scope, scope->local_symbol(), sig->vector_width());
       des->add_node(adder);
