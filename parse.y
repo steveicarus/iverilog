@@ -1502,6 +1502,32 @@ gate_instance
 		  delete rng;
 		  $$ = tmp;
 		}
+
+	| IDENTIFIER '(' error ')'
+		{ lgate*tmp = new lgate;
+		  tmp->name = $1;
+		  tmp->parms = 0;
+		  tmp->parms_by_name = 0;
+		  tmp->file  = @1.text;
+		  tmp->lineno = @1.first_line;
+		  yyerror(@2, "error: Syntax error in instance port "
+			  "expression(s).");
+		  delete[]$1;
+		  $$ = tmp;
+		}
+
+	| IDENTIFIER range '(' error ')'
+		{ lgate*tmp = new lgate;
+		  tmp->name = $1;
+		  tmp->parms = 0;
+		  tmp->parms_by_name = 0;
+		  tmp->file  = @1.text;
+		  tmp->lineno = @1.first_line;
+		  yyerror(@3, "error: Syntax error in instance port "
+			  "expression(s).");
+		  delete[]$1;
+		  $$ = tmp;
+		}
 	;
 
 gate_instance_list
