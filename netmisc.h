@@ -137,9 +137,11 @@ extern unsigned count_lval_width(const class NetAssign_*first);
  * The expr_width is the width of the context where the expression is
  * being elaborated, or -1 if the expression is self-determined width.
  *
- * Also, the prune_width is the maximum width of the result, and it
- * passed to the eval_tree method of the expression to limit constant
- * results if possible.
+ * The prune_width is the maximum width of the result, and is passed
+ * to the eval_tree method of the expression to limit constant
+ * results. The evaluation will prune any constant result down to the
+ * prune_width (if >0) so should only be used at the point where it is
+ * bound to the destination.
  */
 class PExpr;
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,

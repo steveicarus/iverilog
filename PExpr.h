@@ -53,7 +53,7 @@ class PExpr : public LineInfo {
 	// be. It is used by elaboration of assignments to figure out
 	// the width of the expression.
 	//
-	// The "min" is the width of the local context, so it the
+	// The "min" is the width of the local context, so is the
 	// minimum width that this function should return. Initially
 	// this is the same as the lval width.
 	//
@@ -581,6 +581,7 @@ class PEBinary : public PExpr {
 
       NetExpr*elaborate_expr_base_lshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_expr_base_rshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
+      NetExpr*elaborate_expr_base_add_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
 
       static void suppress_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp);
 
