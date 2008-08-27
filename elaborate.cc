@@ -91,7 +91,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    return;
       }
 
-      assert(lval->pin_count() == 1);
+      ivl_assert(*this, lval->pin_count() == 1);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: PGAssign: elaborated l-value"
@@ -99,9 +99,20 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		 << ", type=" << lval->data_type() << endl;
       }
 
+      bool unsized_flag = false;
+      unsigned use_width = pin(1)->test_width(des, scope, lval->vector_width(),
+					      lval->vector_width(), unsized_flag);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: PGAssign: r-value tested "
+		 << "width is " << use_width
+		 << ", min=" << lval->vector_width()
+		 << ", unsized_flag=" << (unsized_flag?"true":"false") << endl;
+      }
+
+      int expr_wid = unsized_flag? -1 : use_width;
       NetExpr*rval_expr = elab_and_eval(des, scope, pin(1),
-					lval->vector_width(),
-					lval->vector_width());
+					expr_wid, lval->vector_width());
 
       if (rval_expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate r-value: "

@@ -229,11 +229,7 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 
 	  case '+':
 	  case '-':
-	    tmp = new NetEBAdd(op_, lp, rp, expr_wid==-2? true : false);
-	    if (expr_wid > 0 && (tmp->expr_type() == IVL_VT_BOOL
-				 || tmp->expr_type() == IVL_VT_LOGIC))
-		  tmp->set_width(expr_wid);
-	    tmp->set_line(*this);
+	    tmp = elaborate_expr_base_add_(des, lp, rp, expr_wid);
 	    break;
 
 	  case 'E': /* === */
@@ -301,6 +297,12 @@ NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
 	    return tmp;
       }
 
+	// If the left expression is constant, then there are some
+	// special cases we can work with. If the left expression is
+	// not constant, but the right expression is constant, then
+	// there are some other interesting cases. But if neither are
+	// constant, then there is the general case.
+
       if (NetEConst*lpc = dynamic_cast<NetEConst*> (lp)) {
 	    if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
 		    // Handle the super-special case that both
@@ -313,16 +315,17 @@ NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
 		    // there is a context determined size, use that.
 		  if (lpval.has_len() || expr_wid > 0) {
 			int use_len = lpval.len();
-			if (expr_wid < use_len)
+			if (expr_wid > 0 && expr_wid > use_len)
 			      use_len = expr_wid;
-			result = verinum(result, lpval.len());
+			result = verinum(result, use_len);
 		  }
 
 		  tmp = new NetEConst(result);
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: "
-			     << "Precalculate " << *this
-			     << " to constant " << *tmp << endl;
+			     << "Precalculate " << *lpc << " << " << shift
+			     << " to constant " << *tmp
+			     << " (expr_wid=" << expr_wid << ")" << endl;
 
 	    } else {
 		    // Handle the special case that the left
@@ -479,6 +482,19 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
       return tmp;
 }
 
+NetExpr* PEBinary::elaborate_expr_base_add_(Design*des,
+					    NetExpr*lp, NetExpr*rp,
+					    int expr_wid) const
+{
+      NetExpr*tmp;
+      tmp = new NetEBAdd(op_, lp, rp, expr_wid==-2? true : false);
+      if (expr_wid > 0 && (tmp->expr_type() == IVL_VT_BOOL
+			   || tmp->expr_type() == IVL_VT_LOGIC))
+	    tmp->set_width(expr_wid);
+      tmp->set_line(*this);
+      return tmp;
+}
+
 unsigned PEBComp::test_width(Design*, NetScope*,unsigned, unsigned, bool&) const
 {
       return 1;
@@ -531,6 +547,11 @@ unsigned PEBShift::test_width(Design*des, NetScope*scope,
 
 	// The right expression is self-determined and has no impact
 	// on the expression size that is generated.
+
+      if (wid_left < min)
+	    wid_left = min;
+      if (wid_left < lval)
+	    wid_left = lval;
 
       return wid_left;
 }
@@ -1096,36 +1117,70 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 
       symbol_search(des, scope, path_, net, par, eve, ex1, ex2);
 
-      if (net != 0) {
-	    const name_component_t&name_tail = path_.back();
-	    index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
-	    if (!name_tail.index.empty())
-		  use_sel = name_tail.index.back().sel;
+	// If there is a part/bit select expression, then process it
+	// here. This constrains the results no matter what kind the
+	// name is.
 
-	    unsigned use_width = net->vector_width();
-	    switch (use_sel) {
-		case index_component_t::SEL_NONE:
-		  break;
-		case index_component_t::SEL_PART:
-		    { long msb, lsb;
-		      calculate_parts_(des, scope, msb, lsb);
-		      use_width = 1 + ((msb>lsb)? (msb-lsb) : (lsb-msb));
-		      break;
-		    }
-		case index_component_t::SEL_IDX_UP:
-		case index_component_t::SEL_IDX_DO:
-		    { unsigned long tmp = 0;
-		      calculate_up_do_width_(des, scope, tmp);
-		      use_width = tmp;
-		      break;
-		    }
-		case index_component_t::SEL_BIT:
-		  use_width = 1;
-		  break;
-		default:
-		  ivl_assert(*this, 0);
-	    }
+      const name_component_t&name_tail = path_.back();
+      index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
+      if (!name_tail.index.empty())
+	    use_sel = name_tail.index.back().sel;
+
+      unsigned use_width = UINT_MAX;
+      switch (use_sel) {
+	  case index_component_t::SEL_NONE:
+	    break;
+	  case index_component_t::SEL_PART:
+	      { long msb, lsb;
+		calculate_parts_(des, scope, msb, lsb);
+		use_width = 1 + ((msb>lsb)? (msb-lsb) : (lsb-msb));
+		break;
+	      }
+	  case index_component_t::SEL_IDX_UP:
+	  case index_component_t::SEL_IDX_DO:
+	      { unsigned long tmp = 0;
+		calculate_up_do_width_(des, scope, tmp);
+		use_width = tmp;
+		break;
+	      }
+	  case index_component_t::SEL_BIT:
+	    use_width = 1;
+	    break;
+	  default:
+	    ivl_assert(*this, 0);
+      }
+
+      if (use_width != UINT_MAX)
 	    return use_width;
+
+	// The width of a signal expression is the width of the signal.
+      if (net != 0)
+	    return net->vector_width();
+
+	// The width of a parameter name is the width of the range for
+	// the parameter name, if a range is declared. Otherwise, the
+	// width is undefined.
+      if (par != 0) {
+	    if (ex1) {
+		  ivl_assert(*this, ex2);
+		  const NetEConst*ex1_const = dynamic_cast<const NetEConst*> (ex1);
+		  const NetEConst*ex2_const = dynamic_cast<const NetEConst*> (ex2);
+		  ivl_assert(*this, ex1_const && ex2_const);
+
+		  long msb = ex1_const->value().as_long();
+		  long lsb = ex2_const->value().as_long();
+		  if (msb >= lsb)
+			return msb - lsb + 1;
+		  else
+			return lsb - msb + 1;
+	    }
+
+	      // This is a parameter. If it is sized (meaning it was
+	      // declared with range expresions) then the range
+	      // expressions would have been caught above. So if we
+	      // got there there we know this is an unsized constant.
+	    unsized_flag = true;
+	    return par->expr_width();
       }
 
       return min;
@@ -2165,9 +2220,22 @@ unsigned PEUnary::test_width(Design*des, NetScope*scope,
 	  case 'N': // Reduction NOR (~|)
 	  case 'X': // Reduction NXOR (~^)
 	    return 1;
-	  default:
-	    return expr_->test_width(des, scope, min, lval, unsized_flag);
       }
+
+      unsigned test_wid = expr_->test_width(des, scope, min, lval, unsized_flag);
+      switch (op_) {
+	      // For these operators, the act of padding to the
+	      // minimum width can have an important impact on the
+	      // calculation. So don't let the tested width be less
+	      // then the tested width.
+	  case '-':
+	  case '+':
+	    if (test_wid < min)
+		  test_wid = min;
+	    break;
+      }
+
+      return test_wid;
 }
 
 
