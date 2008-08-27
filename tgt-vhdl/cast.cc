@@ -39,18 +39,22 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
       else
          return resize(to->get_width());
    }
-   else if (to->get_name() == VHDL_TYPE_BOOLEAN)
-      return to_boolean();
-   else if (to->get_name() == VHDL_TYPE_INTEGER)
-      return to_integer();
-   else if (to->get_name() == VHDL_TYPE_UNSIGNED
-            || to->get_name() == VHDL_TYPE_SIGNED
-            || to->get_name() == VHDL_TYPE_STD_LOGIC_VECTOR)
-      return to_vector(to->get_name(), to->get_width());
-   else if (to->get_name() == VHDL_TYPE_STD_LOGIC)
-      return to_std_logic();
-   else
-      assert(false);
+   else {
+      switch (to->get_name()) {
+      case VHDL_TYPE_BOOLEAN:
+         return to_boolean();
+      case VHDL_TYPE_INTEGER:
+         return to_integer();
+      case VHDL_TYPE_UNSIGNED:
+      case VHDL_TYPE_SIGNED:
+      case VHDL_TYPE_STD_LOGIC_VECTOR:
+         return to_vector(to->get_name(), to->get_width());
+      case VHDL_TYPE_STD_LOGIC:
+         return to_std_logic();
+      default:
+         assert(false);
+      }
+   }
 }
 
 /*
