@@ -36,8 +36,13 @@ public:
 
    const vhdl_type *get_type() const { return type_; }
    bool constant() const { return isconst_; }
-   virtual vhdl_expr *cast(const vhdl_type *to);
+   
+   vhdl_expr *cast(const vhdl_type *to);
    virtual vhdl_expr *resize(int newwidth);
+   virtual vhdl_expr *to_boolean();
+   virtual vhdl_expr *to_integer();
+   virtual vhdl_expr *to_std_logic();
+   virtual vhdl_expr *to_vector(vhdl_type_name_t name, int w);
 protected:
    vhdl_type *type_;
    bool isconst_;
@@ -165,7 +170,9 @@ public:
    vhdl_const_bits(const char *value, int width, bool issigned);
    void emit(std::ostream &of, int level) const;
    const std::string &get_value() const { return value_; }
-   vhdl_expr *cast(const vhdl_type *to);
+   vhdl_expr *to_integer();
+   vhdl_expr *to_std_logic();
+   vhdl_expr *to_vector(vhdl_type_name_t name, int w);
 private:
    int bits_to_int() const;
    
@@ -178,7 +185,8 @@ public:
    vhdl_const_bit(char bit)
       : vhdl_expr(vhdl_type::std_logic(), true), bit_(bit) {}
    void emit(std::ostream &of, int level) const;
-   vhdl_expr *cast(const vhdl_type *to);
+   vhdl_expr *to_boolean();
+   vhdl_expr *to_integer();
 private:
    char bit_;
 };
@@ -202,7 +210,7 @@ public:
    vhdl_const_int(int64_t value)
       : vhdl_expr(vhdl_type::integer(), true), value_(value) {}
    void emit(std::ostream &of, int level) const;
-   vhdl_expr *cast(const vhdl_type *to);
+   vhdl_expr *to_vector(vhdl_type_name_t name, int w);
 private:
    int64_t value_;
 };

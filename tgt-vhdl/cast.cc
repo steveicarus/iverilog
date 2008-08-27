@@ -39,75 +39,119 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
       else
          return resize(to->get_width());
    }
-   else if (to->get_name() == VHDL_TYPE_BOOLEAN) {
-      if (type_->get_name() == VHDL_TYPE_STD_LOGIC) {
-         // '1' is true all else are false
-         vhdl_const_bit *one = new vhdl_const_bit('1');
-         return new vhdl_binop_expr
-            (this, VHDL_BINOP_EQ, one, vhdl_type::boolean());
-      }
-      else if (type_->get_name() == VHDL_TYPE_UNSIGNED) {
-         // Need to use a support function for this conversion
-         require_support_function(SF_UNSIGNED_TO_BOOLEAN);
+   else if (to->get_name() == VHDL_TYPE_BOOLEAN)
+      return to_boolean();
+   else if (to->get_name() == VHDL_TYPE_INTEGER)
+      return to_integer();
+   else if (to->get_name() == VHDL_TYPE_UNSIGNED
+            || to->get_name() == VHDL_TYPE_SIGNED
+            || to->get_name() == VHDL_TYPE_STD_LOGIC_VECTOR)
+      return to_vector(to->get_name(), to->get_width());
+   else if (to->get_name() == VHDL_TYPE_STD_LOGIC)
+      return to_std_logic();
+   else
+      assert(false);
+}
 
-         vhdl_fcall *conv =
-            new vhdl_fcall(support_function::function_name(SF_UNSIGNED_TO_BOOLEAN),
-                           vhdl_type::boolean());
-         conv->add_expr(this);
-         return conv;
-      }
-      else if (type_->get_name() == VHDL_TYPE_SIGNED) {
-         require_support_function(SF_SIGNED_TO_BOOLEAN);
-
-         vhdl_fcall *conv =
-            new vhdl_fcall(support_function::function_name(SF_SIGNED_TO_BOOLEAN),
-                           vhdl_type::boolean());
-         conv->add_expr(this);
-         return conv;
-      }
-      else {
-         assert(false);
-      }
-   }
-   else if (to->get_name() == VHDL_TYPE_INTEGER) {
-      vhdl_fcall *conv;
-      if (type_->get_name() == VHDL_TYPE_STD_LOGIC) {
-         require_support_function(SF_LOGIC_TO_INTEGER);
-         conv = new vhdl_fcall(support_function::function_name(SF_LOGIC_TO_INTEGER),
-                               vhdl_type::integer());
-      }
-      else
-         conv = new vhdl_fcall("To_Integer", new vhdl_type(*to));
-      
-      conv->add_expr(this);
-
-      return conv;
-   }
-   else if ((to->get_name() == VHDL_TYPE_UNSIGNED
-             || to->get_name() == VHDL_TYPE_SIGNED
-             || to->get_name() == VHDL_TYPE_STD_LOGIC_VECTOR) &&
-            type_->get_name() == VHDL_TYPE_STD_LOGIC) {
-
-      vhdl_expr *others = to->get_width() == 1 ? NULL : new vhdl_const_bit('0');
+/*
+ * Generate code to cast an expression to a vector type (std_logic_vector,
+ * signed, unsigned).
+ */
+vhdl_expr *vhdl_expr::to_vector(vhdl_type_name_t name, int w)
+{
+   if (type_->get_name() == VHDL_TYPE_STD_LOGIC) {
+      vhdl_expr *others = w == 1 ? NULL : new vhdl_const_bit('0');
       vhdl_bit_spec_expr *bs =
-         new vhdl_bit_spec_expr(new vhdl_type(*to), others);
+         new vhdl_bit_spec_expr(new vhdl_type(name, w - 1, 0), others);
       bs->add_bit(0, this);
-
+      
       return bs;
    }
-   else if (to->get_name() == VHDL_TYPE_STD_LOGIC &&
-            type_->get_name() == VHDL_TYPE_BOOLEAN) {
+   else {
+      // We have to cast the expression before resizing or the
+      // wrong sign bit may be extended (i.e. when casting between
+      // signed/unsigned *and* resizing)
+      vhdl_type *t = new vhdl_type(name, w - 1, 0);
+      vhdl_fcall *conv = new vhdl_fcall(t->get_string().c_str(), t);
+      conv->add_expr(this);
+      
+      if (w != type_->get_width())
+         return conv->resize(w);
+      else
+         return conv;     
+   }
+}
+
+/*
+ * Convert a generic expression to an Integer.
+ */
+vhdl_expr *vhdl_expr::to_integer()
+{
+   vhdl_fcall *conv;
+   if (type_->get_name() == VHDL_TYPE_STD_LOGIC) {
+      require_support_function(SF_LOGIC_TO_INTEGER);
+      conv = new vhdl_fcall(support_function::function_name(SF_LOGIC_TO_INTEGER),
+                            vhdl_type::integer());
+   }
+   else
+      conv = new vhdl_fcall("To_Integer", vhdl_type::integer());
+   
+   conv->add_expr(this);
+   
+   return conv;
+}
+
+/*
+ * Convert a generic expression to a Boolean.
+ */
+vhdl_expr *vhdl_expr::to_boolean()
+{
+   if (type_->get_name() == VHDL_TYPE_STD_LOGIC) {
+      // '1' is true all else are false
+      vhdl_const_bit *one = new vhdl_const_bit('1');
+      return new vhdl_binop_expr
+         (this, VHDL_BINOP_EQ, one, vhdl_type::boolean());
+   }
+   else if (type_->get_name() == VHDL_TYPE_UNSIGNED) {
+      // Need to use a support function for this conversion
+      require_support_function(SF_UNSIGNED_TO_BOOLEAN);
+      
+      vhdl_fcall *conv =
+         new vhdl_fcall(support_function::function_name(SF_UNSIGNED_TO_BOOLEAN),
+                        vhdl_type::boolean());
+      conv->add_expr(this);
+      return conv;
+   }
+   else if (type_->get_name() == VHDL_TYPE_SIGNED) {
+      require_support_function(SF_SIGNED_TO_BOOLEAN);
+      
+      vhdl_fcall *conv =
+         new vhdl_fcall(support_function::function_name(SF_SIGNED_TO_BOOLEAN),
+                        vhdl_type::boolean());
+      conv->add_expr(this);
+      return conv;
+   }
+   else {
+      assert(false);
+   }
+}
+
+/*
+ * Generate code to convert and expression to std_logic.
+ */
+vhdl_expr *vhdl_expr::to_std_logic()
+{
+   if (type_->get_name() == VHDL_TYPE_BOOLEAN) {
       require_support_function(SF_BOOLEAN_TO_LOGIC);
       
       vhdl_fcall *ah =
          new vhdl_fcall(support_function::function_name(SF_BOOLEAN_TO_LOGIC),
                         vhdl_type::std_logic());
       ah->add_expr(this);
-
+      
       return ah;
    }
-   else if (to->get_name() == VHDL_TYPE_STD_LOGIC
-            && (type_->get_name() == VHDL_TYPE_SIGNED)) {
+   else if (type_->get_name() == VHDL_TYPE_SIGNED) {
       require_support_function(SF_SIGNED_TO_LOGIC);
 
       vhdl_fcall *ah =
@@ -117,8 +161,7 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
 
       return ah;
    }
-   else if (to->get_name() == VHDL_TYPE_STD_LOGIC
-            && (type_->get_name() == VHDL_TYPE_UNSIGNED)) {
+   else if (type_->get_name() == VHDL_TYPE_UNSIGNED) {
       require_support_function(SF_UNSIGNED_TO_LOGIC);
 
       vhdl_fcall *ah =
@@ -128,21 +171,13 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
 
       return ah;
    }
-   else {
-      // We have to cast the expression before resizing or the
-      // wrong sign bit may be extended (i.e. when casting between
-      // signed/unsigned *and* resizing)
-      vhdl_fcall *conv =
-         new vhdl_fcall(to->get_string().c_str(), new vhdl_type(*to));
-      conv->add_expr(this);
-
-      if (to->get_width() != type_->get_width())
-         return conv->resize(to->get_width());
-      else
-         return conv;      
-   }
+   else
+      assert(false);
 }
 
+/*
+ * Change the width of a signed/unsigned type.
+ */
 vhdl_expr *vhdl_expr::resize(int newwidth)
 {
    vhdl_type *rtype;
@@ -161,21 +196,20 @@ vhdl_expr *vhdl_expr::resize(int newwidth)
    return resize;
 }
 
-vhdl_expr *vhdl_const_int::cast(const vhdl_type *to)
+vhdl_expr *vhdl_const_int::to_vector(vhdl_type_name_t name, int w)
 {
-   if (to->get_name() == VHDL_TYPE_SIGNED
-       || to->get_name() == VHDL_TYPE_UNSIGNED) {
+   if (name == VHDL_TYPE_SIGNED || name == VHDL_TYPE_UNSIGNED) {
 
-      const char *fname = to->get_name() == VHDL_TYPE_SIGNED
+      const char *fname = name == VHDL_TYPE_SIGNED
          ? "To_Signed" : "To_Unsigned";
-      vhdl_fcall *conv = new vhdl_fcall(fname, new vhdl_type(*to));
+      vhdl_fcall *conv = new vhdl_fcall(fname, new vhdl_type(name, w - 1, 0));
       conv->add_expr(this);
-      conv->add_expr(new vhdl_const_int(to->get_width()));
+      conv->add_expr(new vhdl_const_int(w));
 
       return conv;
    }
    else
-      return vhdl_expr::cast(to);
+      return vhdl_expr::to_vector(name, w);
 }
 
 int vhdl_const_bits::bits_to_int() const
@@ -193,41 +227,44 @@ int vhdl_const_bits::bits_to_int() const
    return result;
 }
 
-vhdl_expr *vhdl_const_bits::cast(const vhdl_type *to)
+vhdl_expr *vhdl_const_bits::to_std_logic()
+{
+   // VHDL won't let us cast directly between a vector and
+   // a scalar type
+   // But we don't need to here as we have the bits available
+   
+   // Take the least significant bit
+   char lsb = value_[0];
+   
+   return new vhdl_const_bit(lsb);
+}
+
+vhdl_expr *vhdl_const_bits::to_vector(vhdl_type_name_t name, int w)
 {  
-   if (to->get_name() == VHDL_TYPE_STD_LOGIC) {
-      // VHDL won't let us cast directly between a vector and
-      // a scalar type
-      // But we don't need to here as we have the bits available
-
-      // Take the least significant bit
-      char lsb = value_[0];
-
-      return new vhdl_const_bit(lsb);
-   }
-   else if (to->get_name() == VHDL_TYPE_STD_LOGIC_VECTOR) {
+   if (name == VHDL_TYPE_STD_LOGIC_VECTOR) {
       // Don't need to do anything
       return this;
    }
-   else if (to->get_name() == VHDL_TYPE_SIGNED
-            || to->get_name() == VHDL_TYPE_UNSIGNED) {
-
+   else if (name == VHDL_TYPE_SIGNED || name == VHDL_TYPE_UNSIGNED) {
       // Extend with sign bit
-      value_.resize(to->get_width(), value_[0]);  
+      value_.resize(w, value_[0]);  
       return this;
    }
-   else if (to->get_name() == VHDL_TYPE_INTEGER)
-      return new vhdl_const_int(bits_to_int());
    else
-      return vhdl_expr::cast(to);
+      assert(false);
 }
 
-vhdl_expr *vhdl_const_bit::cast(const vhdl_type *to)
+vhdl_expr *vhdl_const_bits::to_integer()
 {
-   if (to->get_name() == VHDL_TYPE_INTEGER)
-      return new vhdl_const_int(bit_ == '1' ? 1 : 0);
-   else if (to->get_name() == VHDL_TYPE_BOOLEAN)
-      return new vhdl_const_bool(bit_ == '1');
-   else
-      return vhdl_expr::cast(to);
+   return new vhdl_const_int(bits_to_int());
+}
+
+vhdl_expr *vhdl_const_bit::to_integer()
+{
+   return new vhdl_const_int(bit_ == '1' ? 1 : 0);
+}
+
+vhdl_expr *vhdl_const_bit::to_boolean()
+{
+   return new vhdl_const_bool(bit_ == '1');
 }
