@@ -105,7 +105,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %type <table> udp_table
 
 %type <argv> argument_opt argument_list
-%type <vpi>  argument
+%type <vpi>  argument symbol_access
 %type <cdelay> delay delay_opt
 
 %%
@@ -831,11 +831,18 @@ argument
       { $$ = vpip_make_binary_const($1.idx, $1.text);
 	free($1.text);
       }
-  | K_A '<' T_SYMBOL ',' T_NUMBER '>'
+  | symbol_access 
+      { $$ = $1; }
+  ;
+
+symbol_access
+  : K_A '<' T_SYMBOL ',' T_NUMBER '>'
       { $$ = vpip_make_vthr_A($3, $5); }
   | K_A '<' T_SYMBOL ',' T_NUMBER T_NUMBER '>'
       { $$ = vpip_make_vthr_A($3, $5, $6); }
   | K_A '<' T_SYMBOL ',' T_SYMBOL '>'
+      { $$ = vpip_make_vthr_A($3, $5); }
+  | K_A '<' T_SYMBOL ',' symbol_access '>'
       { $$ = vpip_make_vthr_A($3, $5); }
   | K_PV '<' T_SYMBOL ',' T_NUMBER ',' T_NUMBER '>'
       { $$ = vpip_make_PV($3, $5, $7); }
@@ -843,9 +850,10 @@ argument
       { $$ = vpip_make_PV($3, -$6, $8); }
   | K_PV '<' T_SYMBOL ',' T_SYMBOL ',' T_NUMBER '>'
       { $$ = vpip_make_PV($3, $5, $7); }
+  | K_PV '<' T_SYMBOL ',' symbol_access ',' T_NUMBER '>'
+      { $$ = vpip_make_PV($3, $5, $7); }
   | K_PV '<' T_SYMBOL ',' T_NUMBER T_NUMBER ',' T_NUMBER '>'
       { $$ = vpip_make_PV($3, $5, $6, $8); }
-  ;
 
   /* functor operands can only be a list of symbols. */
 symbols

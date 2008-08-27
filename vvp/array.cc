@@ -1170,6 +1170,23 @@ vpiHandle vpip_make_vthr_A(char*label, char*symbol)
 
       return &(obj->base);
 }
+vpiHandle vpip_make_vthr_A(char*label, vpiHandle handle)
+{
+      struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*)
+	    malloc(sizeof (struct __vpiArrayVthrA));
+
+      obj->base.vpi_type = &vpip_array_vthr_A_rt;
+
+      obj->array = array_find(label);
+      assert(obj->array);
+      free(label);
+
+      obj->address_handle = handle;
+      obj->address = 0;
+      obj->wid = 0;
+
+      return &(obj->base);
+}
 
 void compile_array_cleanup(void)
 {
