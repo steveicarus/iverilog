@@ -75,6 +75,7 @@ struct __vpiArray {
 
       class vvp_fun_arrayport*ports_;
       struct __vpiCallback *vpi_callbacks;
+      bool signed_flag;
 };
 
 struct __vpiArrayIterator {
@@ -452,7 +453,8 @@ static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value value)
       unsigned index = decode_array_word_pointer(obj, parent);
       unsigned width = parent->vals->width();
 
-      vpip_vec4_get_value(parent->vals->get_word(index), width, false, value);
+      vpip_vec4_get_value(parent->vals->get_word(index), width,
+                          parent->signed_flag, value);
 }
 
 static vpiHandle vpi_array_var_word_put_value(vpiHandle ref, p_vpi_value vp, int flags)
@@ -635,7 +637,7 @@ static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value value)
 
       unsigned index = obj->get_address();
       vvp_vector4_t tmp = array_get_word(parent, index);
-      vpip_vec4_get_value(tmp, parent->vals_width, false, value);
+      vpip_vec4_get_value(tmp, parent->vals_width, parent->signed_flag, value);
 }
 
 static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int)
@@ -756,10 +758,13 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 }
 
 static vpiHandle vpip_make_array(char*label, const char*name,
-				 int first_addr, int last_addr)
+				 int first_addr, int last_addr,
+				 bool signed_flag)
 {
       struct __vpiArray*obj = (struct __vpiArray*)
 	    malloc(sizeof(struct __vpiArray));
+
+      obj->signed_flag = signed_flag;
 
 	// Assume increasing addresses.
       assert(last_addr >= first_addr);
@@ -833,7 +838,8 @@ void array_attach_word(vvp_array_t array, unsigned long addr, vpiHandle word)
 void compile_var_array(char*label, char*name, int last, int first,
 		   int msb, int lsb, char signed_flag)
 {
-      vpiHandle obj = vpip_make_array(label, name, first, last);
+      vpiHandle obj = vpip_make_array(label, name, first, last,
+                                      signed_flag != 0);
 
       struct __vpiArray*arr = ARRAY_HANDLE(obj);
 
@@ -853,7 +859,7 @@ void compile_var_array(char*label, char*name, int last, int first,
 void compile_real_array(char*label, char*name, int last, int first,
 			int msb, int lsb)
 {
-      vpiHandle obj = vpip_make_array(label, name, first, last);
+      vpiHandle obj = vpip_make_array(label, name, first, last, true);
 
       struct __vpiArray*arr = ARRAY_HANDLE(obj);
       vvp_array_t array = array_find(label);
@@ -874,7 +880,7 @@ void compile_real_array(char*label, char*name, int last, int first,
 
 void compile_net_array(char*label, char*name, int last, int first)
 {
-      vpiHandle obj = vpip_make_array(label, name, first, last);
+      vpiHandle obj = vpip_make_array(label, name, first, last, false);
 
       struct __vpiArray*arr = ARRAY_HANDLE(obj);
       arr->nets = (vpiHandle*)calloc(arr->array_count, sizeof(vpiHandle));
@@ -981,7 +987,8 @@ void array_word_change(vvp_array_t array, unsigned long addr)
 		  if (cur->cb_data.value)
 			vpip_vec4_get_value(array->vals->get_word(addr),
 					    array->vals_width,
-					    false, cur->cb_data.value);
+					    array->signed_flag,
+					    cur->cb_data.value);
 
 		  callback_execute(cur);
 		  prev = cur;
