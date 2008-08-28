@@ -39,6 +39,32 @@ static vhdl_expr *change_signedness(vhdl_expr *e, bool issigned)
 }
 
 /*
+ * Generate code to ensure that the VHDL expression vhd_e has the
+ * same signedness as the Verilog expression vl_e.
+ */
+static vhdl_expr *correct_signedness(vhdl_expr *vhd_e, ivl_expr_t vl_e)
+{ 
+   bool should_be_signed = ivl_expr_signed(vl_e) != 0;
+   
+   if (vhd_e->get_type()->get_name() == VHDL_TYPE_UNSIGNED
+       && should_be_signed) {
+      //operand->print();
+      //std::cout << "^ should be signed but is not" << std::endl;
+
+      return change_signedness(vhd_e, true);
+   }
+   else if (vhd_e->get_type()->get_name() == VHDL_TYPE_SIGNED
+            && !should_be_signed) {
+      //operand->print();
+      //std::cout << "^ should be unsigned but is not" << std::endl;
+
+      return change_signedness(vhd_e, false);
+   }
+   else
+      return vhd_e;
+}
+
+/*
  * Convert a constant Verilog string to a constant VHDL string.
  */
 static vhdl_expr *translate_string(ivl_expr_t e)
@@ -134,22 +160,7 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
    if (NULL == operand)
       return NULL;
 
-   bool should_be_signed = ivl_expr_signed(e) != 0;
-   
-   if (operand->get_type()->get_name() == VHDL_TYPE_UNSIGNED
-       && should_be_signed) {
-      //operand->print();
-      //std::cout << "^ should be signed but is not" << std::endl;
-
-      operand = change_signedness(operand, true);
-   }
-   else if (operand->get_type()->get_name() == VHDL_TYPE_SIGNED
-            && !should_be_signed) {
-      //operand->print();
-      //std::cout << "^ should be unsigned but is not" << std::endl;
-
-      operand = change_signedness(operand, false);
-   }
+   operand = correct_signedness(operand, e);
    
    char opcode = ivl_expr_opcode(e);
    switch (opcode) {
@@ -256,12 +267,16 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
       (ltype == VHDL_TYPE_SIGNED || ltype == VHDL_TYPE_UNSIGNED) &&
       (rtype == VHDL_TYPE_SIGNED || rtype == VHDL_TYPE_UNSIGNED);
    
-   // May need to resize the left or right hand side
+   // May need to resize the left or right hand side or change the
+   // signedness
    if (vectorop) {
       if (lwidth < rwidth)
          lhs = lhs->resize(rwidth);
       else if (rwidth < lwidth)
          rhs = rhs->resize(lwidth);
+
+      lhs = correct_signedness(lhs, ivl_expr_oper1(e));
+      rhs = correct_signedness(rhs, ivl_expr_oper2(e));
    }
 
    vhdl_expr *result;
@@ -355,20 +370,7 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
       return NULL;
 
    if (vectorop) {
-      bool should_be_signed = ivl_expr_signed(e) != 0;
-
-      if (result->get_type()->get_name() == VHDL_TYPE_UNSIGNED && should_be_signed) {
-         //result->print();
-         //std::cout << "^ should be signed but is not" << std::endl;
-
-         result = change_signedness(result, true);
-      }
-      else if (result->get_type()->get_name() == VHDL_TYPE_SIGNED && !should_be_signed) {
-         //result->print();
-         //std::cout << "^ should be unsigned but is not" << std::endl;
-
-         result = change_signedness(result, false);
-      }
+      result = correct_signedness(result, e);
 
       int actual_width = result->get_type()->get_width();
       if (actual_width != result_width) {
