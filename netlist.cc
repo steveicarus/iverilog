@@ -2649,6 +2649,7 @@ DelayType NetRepeat::delay_type() const
 
 DelayType NetTaskDef::delay_type() const
 {
+      if (proc_ == 0) return NO_DELAY;
       return proc_->delay_type();
 }
 
