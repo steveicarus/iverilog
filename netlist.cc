@@ -2575,6 +2575,7 @@ DelayType NetBlock::delay_type() const
       for (const NetProc*cur = proc_first(); cur; cur = proc_next(cur)) {
 	    DelayType dt = cur->delay_type();
             if (dt > result) result = dt;
+            if (dt == DEFINITE_DELAY) break;
       }
 
       return result;
