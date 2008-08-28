@@ -2610,7 +2610,9 @@ DelayType NetCondit::delay_type() const
       if (else_) {
 	    result = combine_delays(if_->delay_type(), else_->delay_type());
       } else {
-	    result = if_->delay_type();
+	      /* Because of the indeterminate conditional value the
+	       * best we can have for this case is a possible delay. */
+	    result = combine_delays(if_->delay_type(), NO_DELAY);
       }
 
       return result;
@@ -2650,7 +2652,6 @@ DelayType NetRepeat::delay_type() const
 
 DelayType NetTaskDef::delay_type() const
 {
-      if (proc_ == 0) return NO_DELAY;
       return proc_->delay_type();
 }
 
