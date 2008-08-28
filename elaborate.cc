@@ -3906,7 +3906,7 @@ Design* elaborate(list<perm_string>roots)
 	      // Get the module definition for this root instance.
 	    Module *rmod = (*mod).second;
 
-	      // Make the root scope. This makes a NetScoep object and
+	      // Make the root scope. This makes a NetScope object and
 	      // pushes it into the list of root scopes in the Design.
 	    NetScope*scope = des->make_root_scope(*root);
 
@@ -3919,7 +3919,7 @@ Design* elaborate(list<perm_string>roots)
 	    des->set_precision(rmod->time_precision);
 
 
-	      // Save this scope, along with its defintion, in the
+	      // Save this scope, along with its definition, in the
 	      // "root_elems" list for later passes.
 	    struct root_elem *r = new struct root_elem;
 	    r->mod = rmod;
