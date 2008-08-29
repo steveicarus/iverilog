@@ -283,6 +283,9 @@ void PEBinary::dump(ostream&out) const
 	  case 'N':
 	    out << "!==";
 	    break;
+	  case 'p':
+	    out << "**";
+	    break;
 	  case 'R':
 	    out << ">>>";
 	    break;

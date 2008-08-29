@@ -1015,6 +1015,8 @@ void NetScope::dump(ostream&o) const
 		       ; pp != parameters.end() ;  pp ++) {
 		  o << "    parameter ";
 
+		  o << pp->second.type << " ";
+
 		  if ((*pp).second.signed_flag)
 			o << "signed ";
 
