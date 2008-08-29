@@ -1627,7 +1627,6 @@ NetExpr* evaluate_clog2(NetExpr*arg)
 {
       NetEConst*tmpi = dynamic_cast<NetEConst *>(arg);
       NetECReal*tmpr = dynamic_cast<NetECReal *>(arg);
-      bool is_neg = false;
       if (tmpi || tmpr) {
 	    verinum arg;
 	    if (tmpi) {
@@ -1644,9 +1643,17 @@ NetExpr* evaluate_clog2(NetExpr*arg)
 		  return rtn;
 	    }
 
+	    bool is_neg = false;
 	    uint64_t res = 0;
-	    if (arg.is_negative()) is_neg = true;
+	    if (arg.is_negative()) {
+		  is_neg = true;
+		    // If the length is not defined, then work with
+		    // the trimmed version of the number.
+		  if (! arg.has_len())
+			arg = trim_vnum(arg);
+	    }
 	    arg.has_sign(false);  // $unsigned()
+
 	    if (!arg.is_zero()) {
 		  arg = arg - verinum((uint64_t)1, 1);
 		  while (!arg.is_zero()) {
@@ -1654,9 +1661,11 @@ NetExpr* evaluate_clog2(NetExpr*arg)
 			arg = arg >> 1;
 		  }
 	    }
-	    if (is_neg && res < 32) res = 32;
+
+	    if (is_neg && res < integer_width)
+		  res = integer_width;
+
 	    verinum tmp (res, 32);
-	    tmp.has_sign(true);
 	    NetEConst*rtn = new NetEConst(tmp);
 	    return rtn;
       }
