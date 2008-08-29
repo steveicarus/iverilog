@@ -1621,7 +1621,10 @@ static unsigned long* divide_bits(unsigned long*ap, unsigned long*bp, unsigned w
 	    unsigned cur_ptr = cur-1;
 	    unsigned long cur_res;
 	    if (ap[cur_ptr+btop] >= bp[btop]) {
-		  cur_res = ap[cur_ptr+btop] / bp[btop];
+		  unsigned long high = 0;
+		  if (cur_ptr+btop+1 < words)
+			high = ap[cur_ptr+btop+1];
+		  cur_res = divide2words(ap[cur_ptr+btop], bp[btop], high);
 
 	    } else if (cur_ptr+btop+1 >= words) {
 		  continue;
@@ -1744,6 +1747,9 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 
       assert(adra >= 4);
 
+	// Get the values, left in right, in binary form. If there is
+	// a problem with either (caused by an X or Z bit) then we
+	// know right away that the entire result is X.
       unsigned long*ap = vector_to_array(thr, adra, wid);
       if (ap == 0) {
 	    vvp_vector4_t tmp(wid, BIT4_X);
@@ -1759,6 +1765,7 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 	    return true;
       }
 
+	// Sign extend the bits in the array to fill out the array.
       unsigned long sign_mask = 0;
       if (unsigned long sign_bits = (words*CPU_WORD_BITS) - wid) {
 	    sign_mask = -1UL << (CPU_WORD_BITS-sign_bits);
@@ -1768,6 +1775,7 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 		  bp[words-1] |= sign_mask;
       }
 
+	// If the value fits in a single word, then use the native divide.
       if (wid <= CPU_WORD_BITS) {
 	    if (bp[0] == 0) {
 		  vvp_vector4_t tmp(wid, BIT4_X);

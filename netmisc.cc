@@ -306,16 +306,16 @@ bool eval_as_double(double&value, NetExpr*expr)
 }
 
 /*
- * At the parser level, a name component it a name with a collection
+ * At the parser level, a name component is a name with a collection
  * of expressions. For example foo[N] is the name "foo" and the index
  * expression "N". This function takes as input the name component and
- * returns the path component name. It will evaulate the index
+ * returns the path component name. It will evaluate the index
  * expression if it is present.
  */
 hname_t eval_path_component(Design*des, NetScope*scope,
 			    const name_component_t&comp)
 {
-	// No index exression, so the path component is an undecorated
+	// No index expression, so the path component is an undecorated
 	// name, for example "foo".
       if (comp.index.empty())
 	    return hname_t(comp.name);
@@ -345,7 +345,7 @@ hname_t eval_path_component(Design*des, NetScope*scope,
       }
 
 	// Darn, the expression doesn't evaluate to a constant. That's
-	// and error to be reported. And make up a fake index value to
+	// an error to be reported. And make up a fake index value to
 	// return to the caller.
       cerr << index.msb->get_fileline() << ": error: "
 	   << "Scope index expression is not constant: "

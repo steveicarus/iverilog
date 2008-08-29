@@ -2144,22 +2144,19 @@ void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&)
       assert(0);
 }
 
-void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bits,
+void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bit,
 				 unsigned base, unsigned wid, unsigned vwid)
 {
       cerr << "internal error: " << typeid(*this).name() << ": "
-	   << "recv_vec4_pv(" << bits << ", " << base
+	   << "recv_vec4_pv(" << bit << ", " << base
 	   << ", " << wid << ", " << vwid << ") not implemented" << endl;
       assert(0);
 }
 
-void vvp_net_fun_t::recv_vec8_pv(vvp_net_ptr_t, const vvp_vector8_t&bits,
+void vvp_net_fun_t::recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
 				 unsigned base, unsigned wid, unsigned vwid)
 {
-      cerr << "internal error: " << typeid(*this).name() << ": "
-	   << "recv_vec8_pv(" << bits << ", " << base
-	   << ", " << wid << ", " << vwid << ") not implemented" << endl;
-      assert(0);
+      recv_vec4_pv(port, reduce4(bit), base, wid, vwid);
 }
 
 void vvp_net_fun_t::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)

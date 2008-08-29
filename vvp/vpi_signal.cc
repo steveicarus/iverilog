@@ -1171,6 +1171,21 @@ vpiHandle vpip_make_PV(char*var, char*symbol, int width)
       return &obj->base;
 }
 
+vpiHandle vpip_make_PV(char*var, vpiHandle handle, int width)
+{
+      struct __vpiPV*obj = (struct __vpiPV*) malloc(sizeof(struct __vpiPV));
+      obj->base.vpi_type = &vpip_PV_rt;
+      obj->parent = vvp_lookup_handle(var);
+      obj->sbase = handle;
+      obj->tbase = 0;
+      obj->twid = 0;
+      obj->width = (unsigned) width;
+      obj->net = 0;
+      functor_ref_lookup(&obj->net, var);
+
+      return &obj->base;
+}
+
 vpiHandle vpip_make_PV(char*var, int tbase, int twid, int width)
 {
       struct __vpiPV*obj = (struct __vpiPV*) malloc(sizeof(struct __vpiPV));
