@@ -691,11 +691,15 @@ ostream& operator<< (ostream&o, const verinum&v)
       verinum::V trim_left = v.get(v.len()-1);
       unsigned idx;
 
-      for (idx = v.len()-1;  idx > 0;  idx -= 1)
-	    if (trim_left != v.get(idx-1))
-		  break;
+      if (v.has_sign()) {
+	    for (idx = v.len()-1;  idx > 0;  idx -= 1)
+		  if (trim_left != v.get(idx-1))
+			break;
 
-      o << trim_left;
+	    o << trim_left;
+      } else {
+	    idx = v.len();
+      }
 
       while (idx > 0) {
 	    o << v.get(idx-1);
