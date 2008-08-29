@@ -2663,7 +2663,7 @@ bool of_LOADI_WR(vthread_t thr, vvp_code_t cp)
 	    return true;
       }
 	// Detect NaN
-      if (exp==0x3fff && cp->number!=0) {
+      if (exp==0x3fff) {
 	    thr->words[idx].w_real = nan("");
 	    return true;
       }
