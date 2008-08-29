@@ -29,6 +29,13 @@
 #define snprintf _snprintf
 #endif
 
+struct args_info {
+      char*text;
+      int vec_flag; /* True if the vec must be released. */
+      struct vector_info vec;
+      struct args_info *child; /* Arguments can be nested. */
+};
+
 static const char* magic_sfuncs[] = {
       "$time",
       "$stime",
@@ -68,6 +75,153 @@ static int is_fixed_memory_word(ivl_expr_t net)
       return 0;
 }
 
+static int get_vpi_taskfunc_signal_arg(struct args_info *result,
+                                       ivl_expr_t expr)
+{
+      char buffer[4096];
+
+      switch (ivl_expr_type(expr)) {
+	  case IVL_EX_SIGNAL:
+	      /* If the signal node is narrower then the signal itself,
+	         then this is a part select so I'm going to need to
+	         evaluate the expression.
+
+	         Also, if the signedness of the expression is different
+	         from the signedness of the signal. This could be
+	         caused by a $signed or $unsigned system function.
+
+	         If I don't need to do any evaluating, then skip it as
+	         I'll be passing the handle to the signal itself. */
+	    if (ivl_expr_width(expr) !=
+	        ivl_signal_width(ivl_expr_signal(expr))) {
+		    /* This should never happen since we have IVL_EX_SELECT. */
+		  return 0;
+
+	    } else if (ivl_expr_signed(expr) !=
+	               ivl_signal_signed(ivl_expr_signal(expr))) {
+		  return 0;
+	    } else if (is_fixed_memory_word(expr)) {
+		  /* This is a word of a non-array, or a word of a net
+		     array, so we can address the word directly. */
+		  ivl_signal_t sig = ivl_expr_signal(expr);
+		  unsigned use_word = 0;
+		  ivl_expr_t word_ex = ivl_expr_oper1(expr);
+		  if (word_ex) {
+			  /* Some array select have been evaluated. */
+			if (number_is_immediate(word_ex,
+			                        8*sizeof(unsigned), 0)) {
+			      use_word = get_number_immediate(word_ex);
+			      word_ex = 0;
+			}
+		  }
+		  if (word_ex) return 0;
+
+		  assert(word_ex == 0);
+		  snprintf(buffer, sizeof buffer, "v%p_%u", sig, use_word);
+		  result->text = strdup(buffer);
+		  return 1;
+
+	    } else {
+		  /* What's left, this is the work of a var array.
+		     Create the right code to handle it. */
+		  ivl_signal_t sig = ivl_expr_signal(expr);
+		  unsigned use_word = 0;
+		  ivl_expr_t word_ex = ivl_expr_oper1(expr);
+		  if (word_ex) {
+			  /* Some array select have been evaluated. */
+			if (number_is_immediate(word_ex,
+			                        8*sizeof(unsigned), 0)) {
+			      use_word = get_number_immediate(word_ex);
+			      word_ex = 0;
+			}
+		  }
+		  if (word_ex && (ivl_expr_type(word_ex)==IVL_EX_SIGNAL ||
+		                  ivl_expr_type(word_ex)==IVL_EX_SELECT)) {
+			  /* Special case: the index is a signal/select. */
+			result->child = calloc(1, sizeof(struct args_info));
+			if (get_vpi_taskfunc_signal_arg(result->child,
+			                                word_ex)) {
+			      snprintf(buffer, sizeof buffer, "&A<v%p, %s >",
+			               sig, result->child->text);
+			      free(result->child->text);
+			} else {
+			      free(result->child);
+			      result->child = NULL;
+			      return 0;
+			}
+		  } else if (word_ex) {
+			/* Fallback case: evaluate expression. */
+			struct vector_info av;
+			av = draw_eval_expr(word_ex, STUFF_OK_XZ);
+			snprintf(buffer, sizeof buffer, "&A<v%p, %u %u>",
+			         sig, av.base, av.wid);
+			result->vec = av;
+			result->vec_flag = 1;
+		  } else {
+			snprintf(buffer, sizeof buffer, "&A<v%p, %u>",
+			         sig, use_word);
+		  }
+		  result->text = strdup(buffer);
+		  return 1;
+	    }
+
+	  case IVL_EX_SELECT: {
+	    ivl_expr_t vexpr = ivl_expr_oper1(expr);
+	    assert(vexpr);
+
+	      /* This code is only for signals or selects. */
+	    if (ivl_expr_type(vexpr) != IVL_EX_SIGNAL &&
+	        ivl_expr_type(vexpr) != IVL_EX_SELECT) return 0;
+
+	      /* The signal is part of an array. */
+	      /* Add &APV<> code here when it is finished. */
+	    if (ivl_expr_oper1(vexpr)) return 0;
+
+	    ivl_expr_t bexpr = ivl_expr_oper2(expr);
+	    assert(bexpr);
+
+	      /* This is a constant bit/part select. */
+	    if (number_is_immediate(bexpr, 64, 1)) {
+		  snprintf(buffer, sizeof buffer, "&PV<v%p_0, %ld, %u>",
+		           ivl_expr_signal(vexpr),
+		           get_number_immediate(bexpr),
+		           ivl_expr_width(expr));
+	      /* This is an indexed bit/part select. */
+	    } else if (ivl_expr_type(bexpr) == IVL_EX_SIGNAL ||
+	               ivl_expr_type(bexpr) == IVL_EX_SELECT) {
+		    /* Special case: the base is a signal/select. */
+		  result->child = calloc(1, sizeof(struct args_info));
+		  if (get_vpi_taskfunc_signal_arg(result->child, bexpr)) {
+			snprintf(buffer, sizeof buffer, "&PV<v%p_0, %s, %u>",
+			         ivl_expr_signal(vexpr),
+			         result->child->text,
+			         ivl_expr_width(expr));
+			free(result->child->text);
+		  } else {
+			free(result->child);
+			result->child = NULL;
+			return 0;
+		  }
+	    } else {
+		  /* Fallback case: evaluate the expression. */
+		  struct vector_info rv;
+		  rv = draw_eval_expr(bexpr, STUFF_OK_XZ);
+		  snprintf(buffer, sizeof buffer, "&PV<v%p_0, %u %u, %u>",
+		           ivl_expr_signal(vexpr),
+		           rv.base, rv.wid,
+		           ivl_expr_width(expr));
+		  result->vec = rv;
+		  result->vec_flag = 1;
+	    }
+	    result->text = strdup(buffer);
+	    return 1;
+	  }
+
+	  default:
+	    return 0;
+      }
+}
+
 static void draw_vpi_taskfunc_args(const char*call_string,
 				   ivl_statement_t tnet,
 				   ivl_expr_t fnet)
@@ -77,11 +231,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 	    ? ivl_stmt_parm_count(tnet)
 	    : ivl_expr_parms(fnet);
 
-      struct args_info {
-	    char*text;
-	    int vec_flag; /* True if the vec must be released. */
-	    struct vector_info vec;
-      } *args = calloc(parm_count, sizeof(struct args_info));
+      struct args_info *args = calloc(parm_count, sizeof(struct args_info));
 
       char buffer[4096];
 
@@ -154,121 +304,9 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  break;
 
 		case IVL_EX_SIGNAL:
-		    /* If the signal node is narrower then the signal
-		       itself, then this is a part select so I'm going
-		       to need to evaluate the expression.
-
-		       Also, if the signedness of the expression is
-		       different from the signedness of the
-		       signal. This could be caused by a $signed or
-		       $unsigned system function.
-
-		       If I don't need to do any evaluating, then skip
-		       it as I'll be passing the handle to the signal
-		       itself. */
-		  if (ivl_expr_width(expr) !=
-		      ivl_signal_width(ivl_expr_signal(expr))) {
-			break;
-
-		  } else if (ivl_expr_signed(expr) !=
-			     ivl_signal_signed(ivl_expr_signal(expr))) {
-			break;
-		  } else if (is_fixed_memory_word(expr)) {
-			  /* This is a word of a non-array, or a word
-			     of a net array, so we can address the
-			     word directly. */
-			ivl_signal_t sig = ivl_expr_signal(expr);
-			unsigned use_word = 0;
-			ivl_expr_t word_ex = ivl_expr_oper1(expr);
-			if (word_ex) {
-			        /* Some array select have been evaluated. */
-			      if (number_is_immediate(word_ex, 8*sizeof(unsigned), 0)) {
-				    use_word = get_number_immediate(word_ex);
-				    word_ex = 0;
-			      }
-			}
-			if (word_ex)
-			      break;
-
-			assert(word_ex == 0);
-			snprintf(buffer, sizeof buffer, "v%p_%u", sig, use_word);
-			args[idx].text = strdup(buffer);
-			continue;
-
-		  } else {
-			  /* What's left, this is the work of a var
-			     array. Create the right code to handle
-			     it. */
-			ivl_signal_t sig = ivl_expr_signal(expr);
-			unsigned use_word = 0;
-			ivl_expr_t word_ex = ivl_expr_oper1(expr);
-			if (word_ex) {
-			        /* Some array select have been evaluated. */
-			      if (number_is_immediate(word_ex, 8*sizeof(unsigned), 0)) {
-				    use_word = get_number_immediate(word_ex);
-				    word_ex = 0;
-			      }
-			}
-			if (word_ex && ivl_expr_type(word_ex)==IVL_EX_SIGNAL) {
-				/* Special case: the index is a signal. */
-			      snprintf(buffer, sizeof buffer,
-				       "&A<v%p, v%p_0 >", sig,
-				       ivl_expr_signal(word_ex));
-			} else if (word_ex) {
-				/* Fallback case: evaluate expression. */
-			      struct vector_info av;
-			      av = draw_eval_expr(word_ex, STUFF_OK_XZ);
-			      snprintf(buffer, sizeof buffer,
-				       "&A<v%p, %u %u>", sig, av.base, av.wid);
-			      args[idx].vec = av;
-			      args[idx].vec_flag = 1;
-			} else {
-			      snprintf(buffer, sizeof buffer,
-				       "&A<v%p, %u>", sig, use_word);
-			}
-			args[idx].text = strdup(buffer);
-			continue;
-		  }
-
-		case IVL_EX_SELECT: {
-		  ivl_expr_t vexpr = ivl_expr_oper1(expr);
-                  assert(vexpr);
-
-		    /* This code is only for signals. */
-		  if (ivl_expr_type(vexpr) != IVL_EX_SIGNAL) break;
-
-		    /* The signal is part of an array. */
-		    /* Add &APV<> code here when it is finished. */
-		  if (ivl_expr_oper1(vexpr)) break;
-
-                  ivl_expr_t bexpr = ivl_expr_oper2(expr);
-                  assert(bexpr);
-
-		    /* This is a constant bit/part select. */
-                  if (number_is_immediate(bexpr, 64, 1)) {
-			snprintf(buffer, sizeof buffer, "&PV<v%p_0, %ld, %u>",
-			         ivl_expr_signal(vexpr),
-			         get_number_immediate(bexpr),
-			         ivl_expr_width(expr));
-		    /* This is an indexed bit/part select. */
-                  } else if (ivl_expr_type(bexpr) == IVL_EX_SIGNAL) {
-			  /* Sepcial case: the base is a signal. */
-			snprintf(buffer, sizeof buffer, "&PV<v%p_0, v%p_0, %u>",
-			         ivl_expr_signal(vexpr),
-			         ivl_expr_signal(bexpr),
-			         ivl_expr_width(expr));
-                  } else {
-			  /* Fallback case: evaluate the expression. */
-			struct vector_info rv;
-			rv = draw_eval_expr(bexpr, STUFF_OK_XZ);
-			snprintf(buffer, sizeof buffer, "&PV<v%p_0, %u %u, %u>",
-			         ivl_expr_signal(vexpr),
-			         rv.base, rv.wid,
-			         ivl_expr_width(expr));
-                  }
-		  args[idx].text = strdup(buffer);
-		  continue;
-		}
+		case IVL_EX_SELECT:
+		  if (get_vpi_taskfunc_signal_arg(&args[idx], expr)) continue;
+		  else break;
 
 		    /* Everything else will need to be evaluated and
 		       passed as a constant to the vpi task. */
@@ -301,14 +339,22 @@ static void draw_vpi_taskfunc_args(const char*call_string,
       fprintf(vvp_out, "%s", call_string);
 
       for (idx = 0 ;  idx < parm_count ;  idx += 1) {
-
 	    fprintf(vvp_out, ", %s", args[idx].text);
 	    free(args[idx].text);
-	    if (args[idx].vec_flag) {
-		  if (args[idx].vec.wid > 0)
-			clr_vector(args[idx].vec);
-		  else
-			clr_word(args[idx].vec.base);
+	    struct args_info*ptr;
+	      /* Clear the nested children vectors. */
+	    for (ptr = &args[idx]; ptr != NULL; ptr = ptr->child) {
+		  if (ptr->vec_flag) {
+			if (ptr->vec.wid > 0) clr_vector(ptr->vec);
+			else clr_word(ptr->vec.base);
+		  }
+	    }
+	      /* Free the nested children. */
+	    ptr = args[idx].child;
+	    while (ptr != NULL) {
+		struct args_info*tptr = ptr;
+		ptr = ptr->child;
+		free(tptr);
 	    }
       }
 

@@ -3715,6 +3715,7 @@ class Design {
 	// PROCESSES
       void add_process(NetProcTop*);
       void delete_process(NetProcTop*);
+      bool check_always_delay() const;
 
 	// Iterate over the design...
       void dump(ostream&) const;

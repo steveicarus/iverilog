@@ -63,7 +63,7 @@ static PLI_INT32 sys_clog2_compiletf(PLI_BYTE8 *name)
 
             vpi_printf("%s $clog2 takes at most one argument.\n", msg);
             vpi_printf("%*s Found %u extra argument%s.\n",
-	               strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
             vpi_control(vpiFinish, 1);
       }
 

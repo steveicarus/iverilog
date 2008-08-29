@@ -859,8 +859,9 @@ struct vvp_net_t {
  * port. The value is a vvp_vector4_t.
  *
  * Most nodes do not care about the specific strengths of bits, so the
- * default behavior for recv_vec8 is to reduce the operand to a
- * vvp_vector4_t and pass it on to the recv_vec4 method.
+ * default behavior for recv_vec8 and recv_vec8_pv is to reduce the
+ * operand to a vvp_vector4_t and pass it on to the recv_vec4 or
+ * recv_vec4_pv method.
  */
 class vvp_net_fun_t {
 
