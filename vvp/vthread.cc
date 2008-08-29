@@ -2663,8 +2663,9 @@ bool of_LOADI_WR(vthread_t thr, vvp_code_t cp)
 	    return true;
       }
 	// Detect NaN
-      if ( (exp&0x3fff) == 0x3fff ) {
+      if (exp==0x3fff && cp->number!=0) {
 	    thr->words[idx].w_real = nan("");
+	    return true;
       }
 
       double sign = (exp & 0x4000)? -1.0 : 1.0;

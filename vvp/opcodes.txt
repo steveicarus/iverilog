@@ -492,7 +492,7 @@ is removed from the <exp> before calculating the real value.
 
 If <exp>==0x3fff and <mant> == 0, the value is +inf.
 If <exp>==0x7fff and <mant> == 0, the value is -inf.
-If <exp>--0x3fff and <mant> != 0, the value is NaN.
+If <exp>==0x3fff and <mant> != 0, the value is NaN.
 
 * %mod   <bit-l>, <bit-r>, <wid>
 * %mod/s <bit-l>, <bit-r>, <wid>
