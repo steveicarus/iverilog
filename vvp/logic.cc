@@ -109,35 +109,6 @@ void vvp_fun_and::run_run()
       vvp_send_vec4(ptr->out, result);
 }
 
-vvp_fun_eeq::vvp_fun_eeq(unsigned wid, bool invert)
-: vvp_fun_boolean_(wid), invert_(invert)
-{
-      count_functors_logic += 1;
-}
-
-vvp_fun_eeq::~vvp_fun_eeq()
-{
-}
-
-void vvp_fun_eeq::run_run()
-{
-      vvp_net_t*ptr = net_;
-      net_ = 0;
-
-      vvp_vector4_t result (input_[0]);
-
-      for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
-	    vvp_bit4_t bitbit = result.value(idx);
-	    bitbit = (bitbit == input_[1].value(idx))? BIT4_1 : BIT4_0;
-	    if (invert_)
-		  bitbit = ~bitbit;
-
-	    result.set_bit(idx, bitbit);
-      }
-
-      vvp_send_vec4(ptr->out, result);
-}
-
 vvp_fun_buf::vvp_fun_buf()
 {
       net_ = 0;
@@ -578,9 +549,6 @@ void compile_functor(char*label, char*type, unsigned width,
 
       } else if (strcmp(type, "RPMOS") == 0) {
 	    obj = new vvp_fun_rpmos(false);
-
-      } else if (strcmp(type, "EEQ") == 0) {
-	    obj = new vvp_fun_eeq(width, false);
 
       } else if (strcmp(type, "NOT") == 0) {
 	    obj = new vvp_fun_not();
