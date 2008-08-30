@@ -1557,8 +1557,19 @@ vvp_vector2_t& vvp_vector2_t::operator >>= (unsigned shift)
 	    }
 
 	      // Cleanup the tail bits.
-	    unsigned long mask = -1UL >> (BITS_PER_WORD - wid_%BITS_PER_WORD);
-	    vec_[words-1] &= mask;
+	    unsigned use_words = words;
+	    unsigned long mask_shift = BITS_PER_WORD - wid_%BITS_PER_WORD;
+	    mask_shift += oshift;
+	    while (mask_shift >= BITS_PER_WORD) {
+		  vec_[use_words-1] = 0;
+		  use_words -= 1;
+		  mask_shift -= BITS_PER_WORD;
+	    }
+	    if (mask_shift > 0) {
+		  assert(use_words > 0);
+		  unsigned long mask = -1UL >> mask_shift;
+		  vec_[use_words-1] &= mask;
+	    }
       }
 
       return *this;
