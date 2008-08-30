@@ -3219,6 +3219,7 @@ class NetEBComp : public NetEBinary {
       NetEConst* must_be_leeq_(NetExpr*le, const verinum&rv, bool eq_flag);
 
       NetEConst*eval_eqeq_(bool ne_flag);
+      NetEConst*eval_eqeq_real_(NetExpr*le, NetExpr*ri, bool ne_flag);
       NetEConst*eval_less_();
       NetEConst*eval_leeq_();
       NetEConst*eval_leeq_real_(NetExpr*le, NetExpr*ri, bool eq_flag);

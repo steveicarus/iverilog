@@ -217,11 +217,17 @@ static int draw_realnum_real(ivl_expr_t exp)
 	/* Handle the special case that the value is +-inf. */
       if (isinf(value)) {
 	    if (value > 0)
-		  fprintf(vvp_out, "  %%loadi/wr %d, 0, %d; load=+inf\n",
+		  fprintf(vvp_out, "    %%loadi/wr %d, 0, %d; load=+inf\n",
 			  res, 0x3fff);
 	    else
-		  fprintf(vvp_out, "  %%loadi/wr %d, 0, %d; load=-inf\n",
+		  fprintf(vvp_out, "    %%loadi/wr %d, 0, %d; load=-inf\n",
 			  res, 0x7fff);
+	    return res;
+      }
+	/* Handle the special case that the value is NaN. */
+      if (value != value) {
+	    fprintf(vvp_out, "    %%loadi/wr %d, 1, %d; load=NaN\n",
+	            res, 0x3fff);
 	    return res;
       }
 

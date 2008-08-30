@@ -20,7 +20,39 @@
 #include <math.h>
 #include <string.h>
 #include <vpi_user.h>
-#include "sys_priv.h"
+
+/*
+ * This routine returns 1 if the argument supports has a numeric value,
+ * otherwise it returns 0.
+ *
+ * This is copied from sys_priv.c.
+ */
+static unsigned is_numeric_obj(vpiHandle obj)
+{
+    assert(obj);
+    unsigned rtn = 0;
+
+    switch(vpi_get(vpiType, obj)) {
+      case vpiConstant:
+      case vpiParameter:
+	  /* These cannot be a string constant. */
+	if (vpi_get(vpiConstType, obj) != vpiStringConst) rtn = 1;
+	break;
+
+	/* These can have a valid numeric value. */
+      case vpiIntegerVar:
+      case vpiMemoryWord:
+      case vpiNet:
+      case vpiPartSelect:
+      case vpiRealVar:
+      case vpiReg:
+      case vpiTimeVar:
+	rtn = 1;;
+	break;
+    }
+
+    return rtn;
+}
 
 /*
  * Check that the function is called with the correct argument.

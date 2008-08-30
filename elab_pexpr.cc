@@ -25,7 +25,6 @@
 # include  "netmisc.h"
 
 # include  <cstdlib>
-# include  <cstring>
 # include  <iostream>
 # include  "ivl_assert.h"
 
@@ -269,24 +268,124 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
       return tmp;
 }
 
-/* Reuse the routine from eval_tree.cc. */
+/* Reuse these routines from eval_tree.cc. */
 NetExpr* evaluate_clog2(NetExpr*arg);
+NetExpr* evaluate_math_one_arg(NetExpr*arg, const char*name);
+NetExpr* evaluate_math_two_args(NetExpr*arg0, NetExpr*arg1, const char*name);
+NetExpr* evaluate_abs(NetExpr*arg);
+NetExpr* evaluate_min_max(NetExpr*arg0, NetExpr*arg1, const char*name);
 
 NetExpr* PECallFunction::elaborate_pexpr(Design*des, NetScope*scope) const
 {
-	/* For now only $clog2 can be a constant system function. */
-      if (peek_tail_name(path_)[0] == '$') {
-	    if (strcmp(peek_tail_name(path_).str(), "$clog2") == 0) {
+	/* Only $clog2 and the builtin mathematical functions can
+	 * be a constant system function. */
+      perm_string name = peek_tail_name(path_);
+      if (name[0] == '$' && (generation_flag >= GN_VER2005 ||
+                             gn_icarus_misc_flag || gn_verilog_ams_flag)) {
+	    if (name == "$clog2" ||
+	        name == "$ln" ||
+	        name == "$log10" ||
+	        name == "$exp" ||
+	        name == "$sqrt" ||
+	        name == "$floor" ||
+	        name == "$ceil" ||
+	        name == "$sin" ||
+	        name == "$cos" ||
+	        name == "$tan" ||
+	        name == "$asin" ||
+	        name == "$acos" ||
+	        name == "$atan" ||
+	        name == "$sinh" ||
+	        name == "$cosh" ||
+	        name == "$tanh" ||
+	        name == "$asinh" ||
+	        name == "$acosh" ||
+	        name == "$atanh") {
 		  if (parms_.size() != 1 || parms_[0] == 0) {
-			cerr << get_fileline() << ": error: $clog2 takes a "
-			                          "single argument." << endl;
+			cerr << get_fileline() << ": error: " << name
+			     << " takes a single argument." << endl;
 			des->errors += 1;
 			return 0;
 		  }
 		  NetExpr*arg = parms_[0]->elaborate_pexpr(des, scope);
+		  if (arg == 0) return 0;
 		  eval_expr(arg);
-		  NetExpr*rtn = evaluate_clog2(arg);
+		  NetExpr*rtn;
+		  if (peek_tail_name(path_) == "$clog2") {
+			rtn = evaluate_clog2(arg);
+		  } else {
+			rtn = evaluate_math_one_arg(arg, name.str());
+		  }
 		  delete arg;
+		  if (rtn != 0) {
+			rtn->set_line(*this);
+			return rtn;
+		  }
+	    }
+
+	    if (name == "$pow" ||
+	        name == "$atan2" ||
+	        name == "$hypot") {
+		  if (parms_.size() != 2 || parms_[0] == 0 || parms_[1] == 0) {
+			cerr << get_fileline() << ": error: " << name
+			     << " takes two arguments." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetExpr*arg0 = parms_[0]->elaborate_pexpr(des, scope);
+		  NetExpr*arg1 = parms_[1]->elaborate_pexpr(des, scope);
+		  if (arg0 == 0 || arg1 == 0) return 0;
+		  eval_expr(arg0);
+		  eval_expr(arg1);
+		  NetExpr*rtn = evaluate_math_two_args(arg0, arg1, name.str());
+		  delete arg0;
+		  delete arg1;
+		  if (rtn != 0) {
+			rtn->set_line(*this);
+			return rtn;
+		  }
+	    }
+
+	      /* These are only available with verilog-ams or icarus-misc. */
+	    if ((gn_icarus_misc_flag || gn_verilog_ams_flag) &&
+	        (name == "$log" || name == "$abs")) {
+		  if (parms_.size() != 1 || parms_[0] == 0) {
+			cerr << get_fileline() << ": error: " << name
+			     << " takes a single argument." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetExpr*arg = parms_[0]->elaborate_pexpr(des, scope);
+		  if (arg == 0) return 0;
+		  eval_expr(arg);
+		  NetExpr*rtn;
+		  if (peek_tail_name(path_) == "$log") {
+			rtn = evaluate_math_one_arg(arg, name.str());
+		  } else {
+			rtn = evaluate_abs(arg);
+		  }
+		  delete arg;
+		  if (rtn != 0) {
+			rtn->set_line(*this);
+			return rtn;
+		  }
+	    }
+	    if ((gn_icarus_misc_flag || gn_verilog_ams_flag) &&
+	        (name == "$min" || name == "$max")) {
+		  if (parms_.size() != 2 || parms_[0] == 0 || parms_[1] == 0) {
+			cerr << get_fileline() << ": error: " << name
+			     << " takes two arguments." << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  NetExpr*arg0 = parms_[0]->elaborate_pexpr(des, scope);
+		  NetExpr*arg1 = parms_[1]->elaborate_pexpr(des, scope);
+		  if (arg0 == 0 || arg1 == 0) return 0;
+		  eval_expr(arg0);
+		  eval_expr(arg1);
+		  NetExpr*rtn = evaluate_min_max(arg0, arg1, name.str());
+		  delete arg0;
+		  delete arg1;
 		  if (rtn != 0) {
 			rtn->set_line(*this);
 			return rtn;

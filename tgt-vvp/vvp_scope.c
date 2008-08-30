@@ -330,6 +330,10 @@ char* draw_Cr_to_string(double value)
 		  snprintf(tmp, sizeof(tmp), "Cr<m0g7fff>");
 	    return strdup(tmp);
       }
+      if (value != value) {
+	    snprintf(tmp, sizeof(tmp), "Cr<m1g3fff>");
+	    return strdup(tmp);
+      }
 
       int sign = 0;
       if (value < 0) {

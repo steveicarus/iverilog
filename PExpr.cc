@@ -20,8 +20,8 @@
 # include "config.h"
 
 # include  <iostream>
-# include  <cstring>
 
+# include  "compiler.h"
 # include  "PExpr.h"
 # include  "Module.h"
 # include  <typeinfo>
@@ -131,18 +131,76 @@ PECallFunction::~PECallFunction()
 
 bool PECallFunction::is_constant(Module*mod) const
 {
-	/* Only $clog2 can be a constant system function. */
-      if (peek_tail_name(path_)[0] == '$') {
-	    if (strcmp(peek_tail_name(path_).str(), "$clog2") == 0) {
+	/* Only $clog2 and the builtin mathematical functions can
+	 * be a constant system function. */
+      perm_string name = peek_tail_name(path_);
+      if (name[0] == '$' && (generation_flag >= GN_VER2005 ||
+                             gn_icarus_misc_flag || gn_verilog_ams_flag)) {
+	    if (name == "$clog2" ||
+	        name == "$ln" ||
+	        name == "$log10" ||
+	        name == "$exp" ||
+	        name == "$sqrt" ||
+	        name == "$floor" ||
+	        name == "$ceil" ||
+	        name == "$sin" ||
+	        name == "$cos" ||
+	        name == "$tan" ||
+	        name == "$asin" ||
+	        name == "$acos" ||
+	        name == "$atan" ||
+	        name == "$sinh" ||
+	        name == "$cosh" ||
+	        name == "$tanh" ||
+	        name == "$asinh" ||
+	        name == "$acosh" ||
+	        name == "$atanh") {
 		  if (parms_.size() != 1 || parms_[0] == 0) {
-			cerr << get_fileline() << ": error: $clog2 takes a "
-			                          "single argument." << endl;
+			cerr << get_fileline() << ": error: " << name
+			     << " takes a single argument." << endl;
 			return false;
 		  }
-		    /* If the argument is constant $clog2 is constant. */
+		  /* If the argument is constant the function is constant. */
 		  return parms_[0]->is_constant(mod);
 	    }
-	    return false;  /* Most system functions are not constant. */
+
+	    if (name == "$pow" ||
+	        name == "$atan2" ||
+	        name == "$hypot") {
+		  if (parms_.size() != 2 || parms_[0] == 0 || parms_[1] == 0) {
+			cerr << get_fileline() << ": error: " << name
+			     << " takes two arguments." << endl;
+			return false;
+		  /* If the arguments are constant the function is constant. */
+		  return parms_[0]->is_constant(mod) &&
+		         parms_[1]->is_constant(mod);
+		  }
+	    }
+
+	      /* These are only available with verilog-ams or icarus-misc. */
+	    if ((gn_icarus_misc_flag || gn_verilog_ams_flag) &&
+	        (name == "$log" || name == "$abs")) {
+		  if (parms_.size() != 1 || parms_[0] == 0) {
+			cerr << get_fileline() << ": error: " << name
+			     << " takes a single argument." << endl;
+			return false;
+		  }
+		  /* If the argument is constant the function is constant. */
+		  return parms_[0]->is_constant(mod);
+	    }
+	    if ((gn_icarus_misc_flag || gn_verilog_ams_flag) &&
+	        (name == "$min" || name == "$max")) {
+		  if (parms_.size() != 2 || parms_[0] == 0 || parms_[1] == 0) {
+			cerr << get_fileline() << ": error: " << name
+			     << " takes two arguments." << endl;
+			return false;
+		  /* If the arguments are constant the function is constant. */
+		  return parms_[0]->is_constant(mod) &&
+		         parms_[1]->is_constant(mod);
+		  }
+	    }
+
+	    return false;  /* The other system functions are not constant. */
       }
 
 	/* Checking for constant user functions goes here. */

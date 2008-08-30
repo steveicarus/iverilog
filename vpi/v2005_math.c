@@ -1,5 +1,5 @@
 /*
- *  Verilog-A math library for Icarus Verilog
+ *  Verilog-2005 math library for Icarus Verilog
  *  http://www.icarus.com/eda/verilog/
  *
  *  Copyright (C) 2007-2008  Cary R. (cygcary@yahoo.com)
@@ -26,43 +26,6 @@
 #include <string.h>
 #include <vpi_user.h>
 
-/*
- * Compile time options: (set in the Makefile.)
- *
- * The functions fmax() and fmin() may not be available in pre-c99
- * libraries, so if they are not available you need to uncomment the
- * -DUSE_MY_FMAX_AND_FMIN in the Makefile.
- *
- * Most of the math functions have been moved to v2005_math. This
- * allows them to be supported separately from the Verilog-A
- * specific functions.
- */
-
-
-/*
- * These are functionally equivalent fmax() and fmin() implementations
- * that can be used when needed.
- */
-#ifndef HAVE_FMIN
-static double va_fmin(const double x, const double y)
-{
-    if (x != x) {return y;}  /* x is NaN so return y. */
-    if (y != y) {return x;}  /* y is NaN so return x. */
-
-    return (x < y) ? x : y;
-}
-#endif
-#ifndef HAVE_FMAX
-static double va_fmax(const double x, const double y)
-{
-    if (x != x) {return y;}  /* x is NaN so return y. */
-    if (y != y) {return x;}  /* y is NaN so return x. */
-
-    return (x > y) ? x : y;
-}
-#endif
-
-
 /* Single argument functions. */
 typedef struct s_single_data {
     const char *name;
@@ -70,12 +33,24 @@ typedef struct s_single_data {
 } t_single_data;
 
 static t_single_data va_single_data[]= {
-    {"$log",   log10}, /* NOTE: The $log function is replaced by the
-			  $log10 function to eliminate confusion with
-			  the natural log. In C, "log" is ln and log10
-			  is log-base-10. The $log is being left in for
-			  compatibility. */
-    {"$abs",   fabs},
+    {"$sqrt",  sqrt},
+    {"$ln",    log},
+    {"$log10", log10},
+    {"$exp",   exp},
+    {"$ceil",  ceil},
+    {"$floor", floor},
+    {"$sin",   sin},
+    {"$cos",   cos},
+    {"$tan",   tan},
+    {"$asin",  asin},
+    {"$acos",  acos},
+    {"$atan",  atan},
+    {"$sinh",  sinh},
+    {"$cosh",  cosh},
+    {"$tanh",  tanh},
+    {"$asinh", asinh},
+    {"$acosh", acosh},
+    {"$atanh", atanh},
     {0, 0}  /* Must be NULL terminated! */
 };
 
@@ -87,16 +62,9 @@ typedef struct s_double_data {
 } t_double_data;
 
 static t_double_data va_double_data[]= {
-#ifdef HAVE_FMAX
-    {"$max",   fmax},
-#else
-    {"$max",   va_fmax},
-#endif
-#ifdef HAVE_FMIN
-    {"$min",   fmin},
-#else
-    {"$min",   va_fmin},
-#endif
+    {"$pow",   pow},
+    {"$atan2", atan2},
+    {"$hypot", hypot},
     {0, 0}  /* Must be NULL terminated! */
 };
 
@@ -313,7 +281,7 @@ static PLI_INT32 va_double_argument_calltf(PLI_BYTE8 *ud)
 /*
  * Register all the functions with Verilog.
  */
-static void va_math_register(void)
+static void sys_v2005_math_register(void)
 {
     s_vpi_systf_data tf_data;
     unsigned idx;
@@ -349,7 +317,10 @@ static void va_math_register(void)
 /*
  * Hook to get Icarus Verilog to find the registration function.
  */
+extern void sys_clog2_register();
+
 void (*vlog_startup_routines[])(void) = {
-    va_math_register,
+    sys_v2005_math_register,
+    sys_clog2_register,
     0
 };
