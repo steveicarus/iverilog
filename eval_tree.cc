@@ -472,19 +472,6 @@ NetEConst* NetEBComp::eval_gt_()
 	    return tmp;
       }
 
-	/* Compare with a real value. Do it as double precision. */
-      if (right_->expr_type() == IVL_VT_REAL) {
-	    NetECReal*tmp = dynamic_cast<NetECReal*>(right_);
-	    if (tmp == 0)
-		  return 0;
-
-	     double rr = tmp->value().as_double();
-	     double ll = lv.has_sign()? lv.as_long() : lv.as_ulong();
-
-	     verinum result ((ll > rr)? verinum::V1 : verinum::V0, 1, true);
-	     return new NetEConst(result);
-      }
-
 	/* Now go on to the normal test of the values. */
       NetEConst*r = dynamic_cast<NetEConst*>(right_);
       if (r == 0) return 0;
@@ -521,19 +508,6 @@ NetEConst* NetEBComp::eval_gteq_()
 
       if (NetEConst*tmp = must_be_leeq_(right_, lv, true)) {
 	    return tmp;
-      }
-
-	/* Compare with a real value. Do it as double precision. */
-      if (right_->expr_type() == IVL_VT_REAL) {
-	    NetECReal*tmp = dynamic_cast<NetECReal*>(right_);
-	    if (tmp == 0)
-		  return 0;
-
-	     double rr = tmp->value().as_double();
-	     double ll = lv.has_sign()? lv.as_long() : lv.as_ulong();
-
-	     verinum result ((ll >= rr)? verinum::V1 : verinum::V0, 1, true);
-	     return new NetEConst(result);
       }
 
 	/* Now go on to the normal test of the values. */
