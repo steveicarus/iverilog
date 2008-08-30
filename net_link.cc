@@ -139,13 +139,13 @@ verinum::V Link::get_init() const
 }
 
 
-void Link::cur_link(NetObj*&net, unsigned &pin)
+void Link::cur_link(NetPins*&net, unsigned &pin)
 {
       net = node_;
       pin = pin_;
 }
 
-void Link::cur_link(const NetObj*&net, unsigned &pin) const
+void Link::cur_link(const NetPins*&net, unsigned &pin) const
 {
       net = node_;
       pin = pin_;
@@ -191,12 +191,12 @@ const Link* Link::next_nlink() const
       return next_;
 }
 
-const NetObj*Link::get_obj() const
+const NetPins*Link::get_obj() const
 {
       return node_;
 }
 
-NetObj*Link::get_obj()
+NetPins*Link::get_obj()
 {
       return node_;
 }
@@ -264,7 +264,7 @@ bool Nexus::drivers_present() const
 
 	      // Must be PASSIVE, so if it is some kind of net, see if
 	      // it is the sort that might drive the nexus.
-	    const NetObj*obj;
+	    const NetPins*obj;
 	    unsigned pin;
 	    cur->cur_link(obj, pin);
 	    if (const NetNet*net = dynamic_cast<const NetNet*>(obj))
@@ -293,7 +293,10 @@ void Nexus::drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay)
 	    if (cur->get_dir() != Link::OUTPUT)
 		  continue;
 
-	    NetObj*obj = cur->get_obj();
+	    NetObj*obj = dynamic_cast<NetObj*>(cur->get_obj());
+	    if (obj == 0)
+		  continue;
+
 	    obj->rise_time(rise);
 	    obj->fall_time(fall);
 	    obj->decay_time(decay);
@@ -448,7 +451,7 @@ const char* Nexus::name() const
 
       if (sig == 0) {
 	    const Link*lnk = first_nlink();
-	    const NetObj*obj = lnk->get_obj();
+	    const NetObj*obj = dynamic_cast<const NetObj*>(lnk->get_obj());
 	    pin = lnk->get_pin();
 	    cerr << "internal error: No signal for nexus of " <<
 		  obj->name() << " pin " << pin << "(" <<

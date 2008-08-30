@@ -1040,6 +1040,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       sig->set_signed(get_signed());
       sig->set_isint(get_isint());
 
+      if (discipline_t*dis = get_discipline()) {
+	    sig->set_discipline(dis);
+      }
+
       if (pull)
 	    connect(sig->pin(0), pull->pin(0));
 

@@ -34,6 +34,8 @@
 
 bool dll_target::process(const NetProcTop*net)
 {
+      bool rc_flag = true;
+
       ivl_process_t obj = (struct ivl_process_s*)
 	    calloc(1, sizeof(struct ivl_process_s));
 
@@ -68,7 +70,7 @@ bool dll_target::process(const NetProcTop*net)
       assert(stmt_cur_ == 0);
       stmt_cur_ = (struct ivl_statement_s*)calloc(1, sizeof*stmt_cur_);
       assert(stmt_cur_);
-      net->statement()->emit_proc(this);
+      rc_flag = net->statement()->emit_proc(this) && rc_flag;
 
       assert(stmt_cur_);
       obj->stmt_ = stmt_cur_;
@@ -78,7 +80,7 @@ bool dll_target::process(const NetProcTop*net)
       obj->next_ = des_.threads_;
       des_.threads_ = obj;
 
-      return true;
+      return rc_flag;
 }
 
 void dll_target::task_def(const NetScope*net)
@@ -188,7 +190,7 @@ void dll_target::make_assign_lvals_(const NetAssignBase*net)
 
 /*
  */
-void dll_target::proc_assign(const NetAssign*net)
+bool dll_target::proc_assign(const NetAssign*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
@@ -212,6 +214,8 @@ void dll_target::proc_assign(const NetAssign*net)
 	    stmt_cur_->u_.assign_.delay = expr_;
 	    expr_ = 0;
       }
+
+      return true;
 }
 
 
@@ -397,6 +401,8 @@ bool dll_target::proc_cassign(const NetCAssign*net)
 
 bool dll_target::proc_condit(const NetCondit*net)
 {
+      bool rc_flag = true;
+
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
       FILE_NAME(stmt_cur_, net);
@@ -408,18 +414,20 @@ bool dll_target::proc_condit(const NetCondit*net)
       assert(expr_ == 0);
       net->expr()->expr_scan(this);
       stmt_cur_->u_.condit_.cond_ = expr_;
+      if (expr_ == 0)
+	    rc_flag = false;
       expr_ = 0;
 
       ivl_statement_t save_cur_ = stmt_cur_;
 
       stmt_cur_ = save_cur_->u_.condit_.stmt_+0;
-      bool flag = net->emit_recurse_if(this);
+      rc_flag = net->emit_recurse_if(this) && rc_flag;
 
       stmt_cur_ = save_cur_->u_.condit_.stmt_+1;
-      flag = flag && net->emit_recurse_else(this);
+      rc_flag = net->emit_recurse_else(this) && rc_flag;
 
       stmt_cur_ = save_cur_;
-      return flag;
+      return rc_flag;
 }
 
 bool dll_target::proc_deassign(const NetDeassign*net)

@@ -193,6 +193,7 @@ typedef enum ivl_drive_e {
 typedef enum ivl_expr_type_e {
       IVL_EX_NONE = 0,
       IVL_EX_ARRAY = 18,
+      IVL_EX_BACCESS= 19,
       IVL_EX_BINARY = 2,
       IVL_EX_CONCAT = 3,
       IVL_EX_EVENT  = 17,

@@ -25,6 +25,7 @@
 
 # include  "pform.h"
 # include  "netlist.h"
+# include  "discipline.h"
 # include  "netmisc.h"
 # include  "util.h"
 # include  "ivl_assert.h"
@@ -627,7 +628,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	   and makes it into a signed expression. No bits are changed,
 	   it just changes the interpretation. */
       if (strcmp(peek_tail_name(path_), "$signed") == 0) {
-	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
 		  cerr << get_fileline() << ": error: The $signed() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
@@ -641,7 +642,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
       }
       /* add $unsigned to match $signed */
       if (strcmp(peek_tail_name(path_), "$unsigned") == 0) {
-	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
 		  cerr << get_fileline() << ": error: The $unsigned() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
@@ -664,7 +665,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	   deleted. */
       if ((strcmp(peek_tail_name(path_), "$sizeof") == 0)
 	  || (strcmp(peek_tail_name(path_), "$bits") == 0)) {
-	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
 		  cerr << get_fileline() << ": error: The $bits() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
@@ -700,7 +701,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	   otherwise. The subexpression is elaborated but not
 	   evaluated. */
       if (strcmp(peek_tail_name(path_), "$is_signed") == 0) {
-	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
 		  cerr << get_fileline() << ": error: The $is_signed() function "
 		       << "takes exactly one(1) argument." << endl;
 		  des->errors += 1;
@@ -736,7 +737,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	   Functions cannot really take empty parameters, but the
 	   case ``func()'' is the same as no parameters at all. So
 	   catch that special case here. */
-      unsigned nparms = parms_.count();
+      unsigned nparms = parms_.size();
       if ((nparms == 1) && (parms_[0] == 0))
 	    nparms = 0;
 
@@ -779,6 +780,55 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
       return fun;
 }
 
+NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
+						int expr_wid) const
+{
+	// Hierarchical names cannot be access functions.
+      if (path_.size() != 1)
+	    return 0;
+
+      perm_string access_name = peek_tail_name(path_);
+      nature_t*nature = access_function_nature[access_name];
+
+	// If the name doesn't match any access functions, then give up.
+      if (nature == 0)
+	    return 0;
+
+	// An access function must have 1 or 2 arguments.
+      ivl_assert(*this, parms_.size()==2 || parms_.size()==1);
+
+      NetBranch*branch = 0;
+
+      if (parms_.size() == 1) {
+	    PExpr*arg1 = parms_[0];
+	    PEIdent*arg_ident = dynamic_cast<PEIdent*> (arg1);
+	    ivl_assert(*this, arg_ident);
+
+	    const pform_name_t&path = arg_ident->path();
+	    ivl_assert(*this, path.size()==1);
+	    perm_string name = peek_tail_name(path);
+
+	    NetNet*sig = scope->find_signal(name);
+	    ivl_assert(*this, sig);
+
+	    discipline_t*dis = sig->get_discipline();
+	    ivl_assert(*this, dis);
+	    ivl_assert(*this, nature == dis->potential() || nature == dis->flow());
+
+	    branch = new NetBranch(dis);
+	    branch->set_line(*this);
+	    connect(branch->pin(0), sig->pin(0));
+
+      } else {
+	    ivl_assert(*this, 0);
+      }
+
+      NetEAccess*tmp = new NetEAccess(branch, nature);
+      tmp->set_line(*this);
+
+      return tmp;
+}
+
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					int expr_wid, bool) const
 {
@@ -787,20 +837,26 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 
       NetFuncDef*def = des->find_function(scope, path_);
       if (def == 0) {
+	      // Not a user defined function. Maybe it is an access
+	      // function for a nature? If so then elaborate it that way.
+	    NetExpr*tmp = elaborate_access_func_(des, scope, expr_wid);
+	    if (tmp != 0)
+		  return tmp;
+
 	    cerr << get_fileline() << ": error: No function " << path_ <<
 		  " in this context (" << scope_path(scope) << ")." << endl;
 	    des->errors += 1;
 	    return 0;
       }
-      assert(def);
+      ivl_assert(*this, def);
 
       NetScope*dscope = def->scope();
-      assert(dscope);
+      ivl_assert(*this, dscope);
 
       if (! check_call_matches_definition_(des, dscope))
 	    return 0;
 
-      unsigned parms_count = parms_.count();
+      unsigned parms_count = parms_.size();
       if ((parms_count == 1) && (parms_[0] == 0))
 	    parms_count = 0;
 

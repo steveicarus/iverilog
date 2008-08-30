@@ -67,6 +67,11 @@ NexusSet* NetEConcat::nex_input(bool rem_out)
       return result;
 }
 
+NexusSet* NetEAccess::nex_input(bool rem_out)
+{
+      return new NexusSet;
+}
+
 /*
  * A constant has not inputs, so always return an empty set.
  */

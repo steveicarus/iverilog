@@ -149,6 +149,19 @@ ivl_expr_t dll_target::expr_from_value_(const verinum&val)
       return expr;
 }
 
+void dll_target::expr_access_func(const NetEAccess*net)
+{
+      assert(expr_ == 0);
+	// Make a stub Branch Access Function expression node.
+      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_->type_  = IVL_EX_BACCESS;
+      expr_->value_ = IVL_VT_REAL;
+      expr_->file   = net->get_file();
+      expr_->lineno = net->get_lineno();
+      expr_->width_ = 1;
+      expr_->signed_= 1;
+}
+
 void dll_target::expr_binary(const NetEBinary*net)
 {
       assert(expr_ == 0);

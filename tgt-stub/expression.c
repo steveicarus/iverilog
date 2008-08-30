@@ -43,16 +43,40 @@ static void show_array_expression(ivl_expr_t net, unsigned ind)
 	      ivl_signal_dimensions(sig), width, vt);
 }
 
+static void show_branch_access_expression(ivl_expr_t net, unsigned ind)
+{
+      fprintf(out, "%*s<Branch Access>\n", ind, "");
+
+      if (ivl_expr_value(net) != IVL_VT_REAL) {
+	    fprintf(out, "%*sERROR: Expecting type IVL_VT_REAL, got %s\n",
+		    ind, "", vt_type_string(net));
+	    stub_errors += 1;
+      }
+}
+
 static void show_binary_expression(ivl_expr_t net, unsigned ind)
 {
       unsigned width = ivl_expr_width(net);
       const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
       const char*vt   = vt_type_string(net);
 
+      ivl_expr_t oper1 = ivl_expr_oper1(net);
+      ivl_expr_t oper2 = ivl_expr_oper2(net);
+
       fprintf(out, "%*s<\"%c\" width=%u, %s, type=%s>\n", ind, "",
 	      ivl_expr_opcode(net), width, sign, vt);
-      show_expression(ivl_expr_oper1(net), ind+3);
-      show_expression(ivl_expr_oper2(net), ind+3);
+      if (oper1) {
+	    show_expression(oper1, ind+3);
+      } else {
+	    fprintf(out, "%*sERROR: Missing operand 1\n", ind+3, "");
+	    stub_errors += 1;
+      }
+      if (oper2) {
+	    show_expression(oper2, ind+3);
+      } else {
+	    fprintf(out, "%*sERROR: Missing operand 2\n", ind+3, "");
+	    stub_errors += 1;
+      }
 
       switch (ivl_expr_opcode(net)) {
 
@@ -201,6 +225,10 @@ void show_expression(ivl_expr_t net, unsigned ind)
 
 	  case IVL_EX_ARRAY:
 	    show_array_expression(net, ind);
+	    break;
+
+	  case IVL_EX_BACCESS:
+	    show_branch_access_expression(net, ind);
 	    break;
 
 	  case IVL_EX_BINARY:

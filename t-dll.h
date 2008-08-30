@@ -111,7 +111,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 	/* These methods and members are used for forming the
 	   statements of a thread. */
       struct ivl_statement_s*stmt_cur_;
-      void proc_assign(const NetAssign*);
+      bool proc_assign(const NetAssign*);
       void proc_assign_nb(const NetAssignNB*);
       bool proc_block(const NetBlock*);
       void proc_case(const NetCase*);
@@ -134,6 +134,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void task_def(const NetScope*);
 
       struct ivl_expr_s*expr_;
+      void expr_access_func(const NetEAccess*);
       void expr_binary(const NetEBinary*);
       void expr_concat(const NetEConcat*);
       void expr_const(const NetEConst*);

@@ -100,8 +100,12 @@ void join_island(NetObj*obj)
 	    Nexus*nex = obj->pin(idx).nexus();
 	    for (Link*cur = nex->first_nlink() ; cur ; cur = cur->next_nlink()) {
 		  unsigned pin;
-		  NetObj*tmp;
-		  cur->cur_link(tmp, pin);
+		  NetPins*tmp_pins;
+		  cur->cur_link(tmp_pins, pin);
+
+		  NetObj*tmp = dynamic_cast<NetObj*> (tmp_pins);
+		  if (tmp == 0)
+			continue;
 
 		    // Skip self.
 		  if (tmp == obj)

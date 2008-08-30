@@ -277,7 +277,7 @@ NetExpr* PECallFunction::elaborate_pexpr(Design*des, NetScope*scope) const
 	/* For now only $clog2 can be a constant system function. */
       if (peek_tail_name(path_)[0] == '$') {
 	    if (strcmp(peek_tail_name(path_).str(), "$clog2") == 0) {
-		  if (parms_.count() != 1 || parms_[0] == 0) {
+		  if (parms_.size() != 1 || parms_[0] == 0) {
 			cerr << get_fileline() << ": error: $clog2 takes a "
 			                          "single argument." << endl;
 			des->errors += 1;

@@ -897,7 +897,7 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 	    for (Link*clnk = nex->first_nlink()
 		       ; clnk ; clnk = clnk->next_nlink()) {
 
-		  NetObj*cur;
+		  NetPins*cur;
 		  unsigned pin;
 		  clnk->cur_link(cur, pin);
 
@@ -923,7 +923,7 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 	    for (Link*clnk = nex->first_nlink()
 		       ; clnk ; clnk = clnk->next_nlink()) {
 
-		  NetObj*cur;
+		  NetPins*cur;
 		  unsigned pin;
 		  clnk->cur_link(cur, pin);
 

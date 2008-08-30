@@ -104,7 +104,7 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 	   1 nil pointer. This is how the parser tells me of no
 	   parameter. In other words, ``func()'' is 1 nil parameter. */
 
-      unsigned parms_count = parms_.count();
+      unsigned parms_count = parms_.size();
       if ((parms_count == 1) && (parms_[0] == 0))
 	    parms_count = 0;
 

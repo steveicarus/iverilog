@@ -60,8 +60,9 @@ bool Nexus::drivers_constant() const
 
 	    if (cur_dir == Link::PASSIVE) {
 
-		  const NetObj*obj = cur->get_obj();
-		  if (obj->scope()->parent() != 0)
+		  const NetPins*obj = cur->get_obj();
+		  const NetObj*as_obj = dynamic_cast<const NetObj*>(obj);
+		  if (as_obj == 0 || as_obj->scope()->parent() != 0)
 			continue;
 
 		  sig = dynamic_cast<const NetNet*>(cur->get_obj());

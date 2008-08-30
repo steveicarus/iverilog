@@ -1,7 +1,7 @@
 #ifndef __svector_H
 #define __svector_H
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,12 +20,10 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: svector.h,v 1.11 2007/03/22 16:08:17 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  <string>
+# include  <vector>
 # include  <assert.h>
 
 /*
@@ -106,41 +104,18 @@ template <> inline svector<std::string>::svector(unsigned size)
 {
 }
 
-
 /*
- * $Log: svector.h,v $
- * Revision 1.11  2007/03/22 16:08:17  steve
- *  Spelling fixes from Larry
- *
- * Revision 1.10  2005/06/14 19:13:43  steve
- *  gcc3/4 compile errors.
- *
- * Revision 1.9  2003/07/23 02:35:44  steve
- *  Inline the svector<string> constructor.
- *
- * Revision 1.8  2003/07/16 00:54:07  steve
- *  Needs the config.h header.
- *
- * Revision 1.7  2003/07/15 05:07:13  steve
- *  Move PUdp constructor into compiled file.
- *
- * Revision 1.6  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.5  2000/02/23 02:56:55  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.4  1999/06/15 03:44:53  steve
- *  Get rid of the STL vector template.
- *
- * Revision 1.3  1999/05/06 04:37:17  steve
- *  Get rid of list<lgate> types.
- *
- * Revision 1.2  1999/05/01 02:57:53  steve
- *  Handle much more complex event expressions.
- *
- * Revision 1.1  1999/04/29 02:16:26  steve
- *  Parse OR of event expressions.
- *
- */
+* This is a convenience function that converts an svector to a
+* vector. This is to ease the transition from svector to vector so
+* that the svector class can be gradually removed.
+*/
+template <class T> inline std::vector<T> vector_from_svector(const svector<T>&that)
+{
+      std::vector<T> res (that.count());
+      for (unsigned idx = 0 ; idx < that.count() ; idx += 1)
+	    res[idx] = that[idx];
+
+      return res;
+}
+
 #endif

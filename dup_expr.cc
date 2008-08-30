@@ -21,6 +21,15 @@
 
 # include  "netlist.h"
 # include  <cassert>
+# include  "ivl_assert.h"
+
+NetEAccess* NetEAccess::dup_expr() const
+{
+      NetEAccess*tmp = new NetEAccess(branch_, nature_);
+      ivl_assert(*this, tmp);
+      tmp->set_line(*this);
+      return tmp;
+}
 
 NetEBComp* NetEBComp::dup_expr() const
 {

@@ -354,6 +354,7 @@ extern "C" ivl_expr_t ivl_expr_oper3(ivl_expr_t net)
 
 extern "C" ivl_parameter_t ivl_expr_parameter(ivl_expr_t net)
 {
+      assert(net);
       switch (net->type_) {
 	  case IVL_EX_NUMBER:
 	    return net->u_.number_.parameter;

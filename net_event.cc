@@ -299,7 +299,7 @@ void NetEvProbe::find_similar_probes(list<NetEvProbe*>&plist)
       Nexus*nex = pin(0).nexus();
 
       for (Link*lcur = nex->first_nlink(); lcur; lcur = lcur->next_nlink()) {
-	    NetObj*obj = lcur->get_obj();
+	    NetPins*obj = lcur->get_obj();
 	    if (obj->pin_count() != pin_count())
 		  continue;
 

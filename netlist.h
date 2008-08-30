@@ -68,6 +68,8 @@ class NetTaskDef;
 class NetEvTrig;
 class NetEvWait;
 
+class nature_t;
+class discipline_t;
 
 struct target;
 struct functor_t;
@@ -75,6 +77,24 @@ struct functor_t;
 ostream& operator << (ostream&o, ivl_variable_type_t val);
 
 extern void join_island(NetObj*obj);
+
+class NetPins : public LineInfo {
+
+    public:
+      explicit NetPins(unsigned npins);
+      virtual ~NetPins();
+
+      unsigned pin_count() const { return npins_; }
+
+      Link&pin(unsigned idx);
+      const Link&pin(unsigned idx) const;
+
+      void dump_node_pins(ostream&, unsigned) const;
+
+    private:
+      Link*pins_;
+      const unsigned npins_;
+};
 
 /* =========
  * A NetObj is anything that has any kind of behavior in the
@@ -96,7 +116,7 @@ extern void join_island(NetObj*obj);
  * interpretation of the rise/fall/decay times is typically left to
  * the target to properly interpret.
  */
-class NetObj  : public Attrib, public virtual LineInfo {
+class NetObj  : public NetPins, public Attrib {
 
     public:
     public:
@@ -110,8 +130,6 @@ class NetObj  : public Attrib, public virtual LineInfo {
 
       perm_string name() const { return name_; }
 
-      unsigned pin_count() const { return npins_; }
-
       const NetExpr* rise_time() const { return delay1_; }
       const NetExpr* fall_time() const { return delay2_; }
       const NetExpr* decay_time() const { return delay3_; }
@@ -120,17 +138,11 @@ class NetObj  : public Attrib, public virtual LineInfo {
       void fall_time(const NetExpr* d) { delay2_ = d; }
       void decay_time(const NetExpr* d) { delay3_ = d; }
 
-      Link&pin(unsigned idx);
-      const Link&pin(unsigned idx) const;
-
-      void dump_node_pins(ostream&, unsigned) const;
       void dump_obj_attr(ostream&, unsigned) const;
 
     private:
       NetScope*scope_;
       perm_string name_;
-      Link*pins_;
-      const unsigned npins_;
       const NetExpr* delay1_;
       const NetExpr* delay2_;
       const NetExpr* delay3_;
@@ -150,11 +162,31 @@ class IslandBranch {
       struct ivl_island_s* island;
 };
 
+/*
+ * A NetBranch is a construct of Verilog-A that is a branch between
+ * two nodes. The branch has exactly 2 pins and a discipline.
+ *
+ * pin(0) is the source of flow through a branch and the plus side of
+ * potential. Pin(1) is the sink of flow and the minus (or ground) of
+ * potential.
+ */
+class NetBranch  : public NetPins {
+
+    public:
+      explicit NetBranch(discipline_t*dis);
+      explicit NetBranch(discipline_t*dis, perm_string name);
+      ~NetBranch();
+
+    private:
+      discipline_t*discipline_;
+      perm_string name_;
+};
+
 class Link {
 
       friend void connect(Link&, Link&);
       friend void connect(Nexus*, Link&);
-      friend class NetObj;
+      friend class NetPins;
       friend class Nexus;
 
     public:
@@ -192,8 +224,8 @@ class Link {
       void set_init(verinum::V val);
       verinum::V get_init() const;
 
-      void cur_link(NetObj*&net, unsigned &pin);
-      void cur_link(const NetObj*&net, unsigned &pin) const;
+      void cur_link(NetPins*&net, unsigned &pin);
+      void cur_link(const NetPins*&net, unsigned &pin) const;
 
 	// Get a pointer to the nexus that represents all the links
 	// connected to me.
@@ -220,8 +252,8 @@ class Link {
 
 	// Return information about the object that this link is
 	// a part of.
-      const NetObj*get_obj() const;
-      NetObj*get_obj();
+      const NetPins*get_obj() const;
+      NetPins*get_obj();
       unsigned get_pin() const;
 
 	// A link of an object (sometimes called a "pin") has a
@@ -234,7 +266,7 @@ class Link {
     private:
 	// The NetNode manages these. They point back to the
 	// NetNode so that following the links can get me here.
-      NetObj *node_;
+      NetPins *node_;
       unsigned pin_;
 
       DIR dir_;
@@ -529,6 +561,10 @@ class NetNet  : public NetObj {
       bool get_isint() const;
       void set_isint(bool);
 
+	/* Attach a discipline to the net. */
+      discipline_t* get_discipline() const;
+      void set_discipline(discipline_t*dis);
+
 	/* These methods return the msb and lsb indices for the most
 	   significant and least significant bits. These are signed
 	   longs, and may be different from pin numbers. For example,
@@ -596,6 +632,7 @@ class NetNet  : public NetObj {
       ivl_variable_type_t data_type_;
       bool signed_;
       bool isint_;		// original type of integer
+      discipline_t*discipline_;
 
       long msb_, lsb_;
       const unsigned dimensions_;
@@ -2892,6 +2929,27 @@ class NetEUFunc  : public NetExpr {
     private: // not implemented
       NetEUFunc(const NetEUFunc&);
       NetEUFunc& operator= (const NetEUFunc&);
+};
+
+/*
+ * A call to a nature access function for a branch.
+ */
+class NetEAccess : public NetExpr {
+
+    public:
+      explicit NetEAccess(NetBranch*br, nature_t*nat);
+      ~NetEAccess();
+
+      virtual ivl_variable_type_t expr_type() const;
+      virtual void dump(ostream&) const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetEAccess*dup_expr() const;
+      virtual NexusSet* nex_input(bool rem_out = true);
+
+    private:
+      NetBranch*branch_;
+      nature_t*nature_;
 };
 
 /*

@@ -27,6 +27,7 @@
 # include  <iomanip>
 # include  "netlist.h"
 # include  "compiler.h"
+# include  "discipline.h"
 # include  "ivl_assert.h"
 
 static ostream& operator<< (ostream&o, NetBlock::Type t)
@@ -187,6 +188,10 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    o << " inout";
 	    break;
       }
+
+      if (discipline_t*dis = get_discipline())
+	    o << " discipline=" << dis->name();
+
       o << " (eref=" << peek_eref() << ", lref=" << peek_lref() << ")";
       if (scope())
 	    o << " scope=" << scope_path(scope());
@@ -236,7 +241,7 @@ void NetNode::dump_node(ostream&o, unsigned ind) const
 /* This is the generic dumping of all the signals connected to each
    pin of the object. The "this" object is not printed, only the
    signals connected to this. */
-void NetObj::dump_node_pins(ostream&o, unsigned ind) const
+void NetPins::dump_node_pins(ostream&o, unsigned ind) const
 {
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    o << setw(ind) << "" << idx << " " << pin(idx).get_name()
@@ -1183,6 +1188,18 @@ void NetProc::dump(ostream&o, unsigned ind) const
 void NetExpr::dump(ostream&o) const
 {
       o << "(?" << typeid(*this).name() << "?)";
+}
+
+void NetEAccess::dump(ostream&o) const
+{
+      o << nature_->name() << "." << nature_->access() << "(";
+      assert(branch_);
+      if (branch_->pin(0).is_linked())
+	    o << branch_->pin(0).nexus()->name();
+      o << ", ";
+      if (branch_->pin(1).is_linked())
+	    o << branch_->pin(1).nexus()->name();
+      o << ")";
 }
 
 void NetEBinary::dump(ostream&o) const

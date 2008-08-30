@@ -243,10 +243,11 @@ bool target_t::process(const NetProcTop*top)
       return top->statement()->emit_proc(this);
 }
 
-void target_t::proc_assign(const NetAssign*)
+bool target_t::proc_assign(const NetAssign*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled procedural assignment." << endl;
+      return false;
 }
 
 void target_t::proc_assign_nb(const NetAssignNB*)
@@ -375,6 +376,12 @@ int target_t::end_design(const Design*)
 
 expr_scan_t::~expr_scan_t()
 {
+}
+
+void expr_scan_t::expr_access_func(const NetEAccess*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_access_func." << endl;
 }
 
 void expr_scan_t::expr_const(const NetEConst*)

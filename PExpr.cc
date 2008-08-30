@@ -91,7 +91,7 @@ PEBShift::~PEBShift()
 {
 }
 
-PECallFunction::PECallFunction(const pform_name_t&n, const svector<PExpr *> &parms)
+PECallFunction::PECallFunction(const pform_name_t&n, const vector<PExpr *> &parms)
 : path_(n), parms_(parms)
 {
 }
@@ -104,13 +104,24 @@ static pform_name_t pn_from_ps(perm_string n)
       return tmp;
 }
 
-PECallFunction::PECallFunction(perm_string n, const svector<PExpr*>&parms)
+PECallFunction::PECallFunction(perm_string n, const vector<PExpr*>&parms)
 : path_(pn_from_ps(n)), parms_(parms)
 {
 }
 
 PECallFunction::PECallFunction(perm_string n)
 : path_(pn_from_ps(n))
+{
+}
+
+// NOTE: Anachronism. Try to work all use of svector out.
+PECallFunction::PECallFunction(const pform_name_t&n, const svector<PExpr *> &parms)
+: path_(n), parms_(vector_from_svector(parms))
+{
+}
+
+PECallFunction::PECallFunction(perm_string n, const svector<PExpr*>&parms)
+: path_(pn_from_ps(n)), parms_(vector_from_svector(parms))
 {
 }
 
@@ -123,7 +134,7 @@ bool PECallFunction::is_constant(Module*mod) const
 	/* Only $clog2 can be a constant system function. */
       if (peek_tail_name(path_)[0] == '$') {
 	    if (strcmp(peek_tail_name(path_).str(), "$clog2") == 0) {
-		  if (parms_.count() != 1 || parms_[0] == 0) {
+		  if (parms_.size() != 1 || parms_[0] == 0) {
 			cerr << get_fileline() << ": error: $clog2 takes a "
 			                          "single argument." << endl;
 			return false;

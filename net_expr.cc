@@ -584,3 +584,17 @@ ivl_variable_type_t NetESFunc::expr_type() const
 {
       return type_;
 }
+
+NetEAccess::NetEAccess(NetBranch*br, nature_t*nat)
+: branch_(br), nature_(nat)
+{
+}
+
+NetEAccess::~NetEAccess()
+{
+}
+
+ivl_variable_type_t NetEAccess::expr_type() const
+{
+      return IVL_VT_REAL;
+}

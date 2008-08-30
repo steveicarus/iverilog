@@ -194,6 +194,17 @@ static void pform_put_behavior_in_scope(PProcess*pp)
 	    lexical_scope->behaviors.push_back(pp);
 }
 
+void pform_put_behavior_in_scope(AProcess*pp)
+{
+      if (pform_cur_generate)
+	    if (pform_cur_generate->lexical_scope)
+		  pform_cur_generate->lexical_scope->analog_behaviors.push_back(pp);
+	    else
+		  pform_cur_generate->analog_behaviors.push_back(pp);
+      else
+	    lexical_scope->analog_behaviors.push_back(pp);
+}
+
 void pform_set_default_nettype(NetNet::Type type,
 			       const char*file, unsigned lineno)
 {

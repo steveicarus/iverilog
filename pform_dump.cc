@@ -180,9 +180,9 @@ void PECallFunction::dump(ostream &out) const
 {
       out << path_ << "(";
 
-      if (parms_.count() > 0) {
+      if (parms_.size() > 0) {
 	    if (parms_[0]) parms_[0]->dump(out);
-	    for (unsigned idx = 1; idx < parms_.count(); ++idx) {
+	    for (unsigned idx = 1; idx < parms_.size(); ++idx) {
 		  out << ", ";
 		  if (parms_[idx]) parms_[idx]->dump(out);
 	    }
@@ -537,6 +537,24 @@ void Statement::dump(ostream&out, unsigned ind) const
 	  << " */ ;" << endl;
 }
 
+void AStatement::dump(ostream&out, unsigned ind) const
+{
+	/* I give up. I don't know what type this statement is,
+	   so just print the C++ typeid and let the user figure
+	   it out. */
+      out << setw(ind) << "";
+      out << "/* " << get_fileline() << ": " << typeid(*this).name()
+	  << " */ ;" << endl;
+}
+
+void AContrib::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "";
+      out << *lval_ << " <+ " << *rval_
+	  << "; /* " << get_fileline() << " */"
+	  << endl;
+}
+
 void PAssign::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";
@@ -850,6 +868,32 @@ void PProcess::dump(ostream&out, unsigned ind) const
       statement_->dump(out, ind+2);
 }
 
+void AProcess::dump(ostream&out, unsigned ind) const
+{
+      switch (type_) {
+	  case AProcess::PR_INITIAL:
+	    out << setw(ind) << "" << "analog initial";
+	    break;
+	  case AProcess::PR_ALWAYS:
+	    out << setw(ind) << "" << "analog";
+	    break;
+      }
+
+      out << " /* " << get_fileline() << " */" << endl;
+
+      for (map<perm_string,PExpr*>::const_iterator idx = attributes.begin()
+		 ; idx != attributes.end() ; idx++ ) {
+
+	    out << setw(ind+2) << "" << "(* " << (*idx).first;
+	    if ((*idx).second) {
+		  out << " = " << *(*idx).second;
+	    }
+	    out << " *)" << endl;
+      }
+
+      statement_->dump(out, ind+2);
+}
+
 void PSpecPath::dump(std::ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "specify path ";
@@ -944,6 +988,11 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 
       for (list<PProcess*>::const_iterator idx = behaviors.begin()
 		 ; idx != behaviors.end() ;  idx++) {
+	    (*idx)->dump(out, indent+2);
+      }
+
+      for (list<AProcess*>::const_iterator idx = analog_behaviors.begin()
+		 ; idx != analog_behaviors.end() ;  idx++) {
 	    (*idx)->dump(out, indent+2);
       }
 
@@ -1130,6 +1179,11 @@ void Module::dump(ostream&out) const
 		 ; behav ++ ) {
 
 	    (*behav)->dump(out, 4);
+      }
+
+      for (list<AProcess*>::const_iterator idx = analog_behaviors.begin()
+		 ; idx != analog_behaviors.end() ;  idx++) {
+	    (*idx)->dump(out, 4);
       }
 
       for (list<PSpecPath*>::const_iterator spec = specify_paths.begin()

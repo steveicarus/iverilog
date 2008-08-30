@@ -24,6 +24,7 @@
 # include  "named.h"
 # include  "Module.h"
 # include  "Statement.h"
+# include  "AStatement.h"
 # include  "PGate.h"
 # include  "PExpr.h"
 # include  "PTask.h"
@@ -179,6 +180,7 @@ extern PTask*pform_push_task_scope(char*name, bool is_auto);
 extern PFunction*pform_push_function_scope(char*name, bool is_auto);
 extern PBlock*pform_push_block_scope(char*name, PBlock::BL_TYPE tt);
 
+extern void pform_put_behavior_in_scope(AProcess*proc);
 
 extern verinum* pform_verinum_with_size(verinum*s, verinum*val,
 					const char*file, unsigned lineno);
@@ -389,4 +391,17 @@ extern void pform_attach_discipline(const struct vlltype&loc,
 extern void pform_dump(ostream&out, const nature_t*);
 extern void pform_dump(ostream&out, const discipline_t*);
 
+/* ** pform_analog.cc
+*/
+extern void pform_make_analog_behavior(const struct vlltype&loc,
+				       AProcess::Type type, AStatement*st);
+
+extern AStatement*pform_contribution_statement(const struct vlltype&loc,
+					       PExpr*lval, PExpr*rval);
+
+extern PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
+						 char*name, char*n1, char*n2);
+
+extern PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
+						 char*name, char*branch);
 #endif
