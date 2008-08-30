@@ -35,6 +35,9 @@ PLI_UINT64 timerec_to_time64(const struct t_vpi_time*time)
 /*
  * This routine returns 1 if the argument is a constant value,
  * otherwise it returns 0.
+ *
+ * This routine was also copied to sys_clog2.c since it is not
+ * part of the standard system functions.
  */
 unsigned is_constant_obj(vpiHandle obj)
 {

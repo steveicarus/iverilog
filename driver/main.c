@@ -106,7 +106,7 @@ const char*npath = 0;
 const char*targ  = "vvp";
 const char*depfile = 0;
 
-const char*generation = "2x";
+const char*generation = "2005";
 const char*gen_specify = "specify";
 const char*gen_xtypes = "xtypes";
 const char*gen_icarus = "icarus-misc";
@@ -765,9 +765,18 @@ int main(int argc, char **argv)
 	   how to handle them. */
       fprintf(iconfig_file, "sys_func:%s%csystem.sft\n", base, sep);
 
-	/* If verilog-ams is enabled, then include the va_math module
-	   as well. */
-      if (strcmp(gen_verilog_ams,"verilog-ams") == 0) {
+	/* If verilog-2005 is enabled or icarus-misc or verilog-ams,
+	 * then include the v2005_math library. */
+      if (strcmp(generation, "2005") == 0 ||
+          strcmp(gen_icarus, "icarus-misc") == 0 ||
+          strcmp(gen_verilog_ams, "verilog-ams") == 0) {
+	    fprintf(iconfig_file, "sys_func:%s%cv2005_math.sft\n", base, sep);
+	    fprintf(iconfig_file, "module:v2005_math\n");
+      }
+	/* If verilog-ams or icarus_misc is enabled, then include the
+	 * va_math module as well. */
+      if (strcmp(gen_verilog_ams,"verilog-ams") == 0 ||
+          strcmp(gen_icarus, "icarus-misc") == 0) {
 	    fprintf(iconfig_file, "sys_func:%s%cva_math.sft\n", base, sep);
 	    fprintf(iconfig_file, "module:va_math\n");
       }

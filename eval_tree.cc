@@ -1709,25 +1709,238 @@ NetExpr* evaluate_clog2(NetExpr*arg)
       return 0;
 }
 
-NetExpr* NetESFunc::eval_tree(int prune_to_width)
+NetExpr* evaluate_math_one_arg(NetExpr*arg, const char*name)
 {
-	/* For now only $clog2 can be a constant system function. */
-      if (strcmp(name(), "$clog2") == 0) {
-	    if (nparms() != 1 || parm(0) == 0) {
-		  cerr << get_fileline() << ": error: $clog2 takes a single "
-		                            "argument." << endl;
-		  return 0;
+      NetEConst*tmpi = dynamic_cast<NetEConst *>(arg);
+      NetECReal*tmpr = dynamic_cast<NetECReal *>(arg);
+      if (tmpi || tmpr) {
+	    double arg;
+	    if (tmpi) {
+		  arg = tmpi->value().as_double();
+	    } else {
+		  arg = tmpr->value().as_double();
 	    }
-	    NetExpr*rtn = evaluate_clog2(parm(0));
-	    if (rtn != 0) {
-		  rtn->set_line(*this);
-		  if (debug_eval_tree) {
-			cerr << get_fileline() << ": debug: Evaluate "
-			        "constant $clog2()." << endl;
-		  }
-		  return rtn;
+
+	    if (strcmp(name, "$ln") == 0) {
+		  return new NetECReal(verireal(log(arg)));
+	    } else if (strcmp(name, "$log") == 0) {
+		  return new NetECReal(verireal(log10(arg)));
+	    } else if (strcmp(name, "$log10") == 0) {
+		  return new NetECReal(verireal(log10(arg)));
+	    } else if (strcmp(name, "$exp") == 0) {
+		  return new NetECReal(verireal(exp(arg)));
+	    } else if (strcmp(name, "$sqrt") == 0) {
+		  return new NetECReal(verireal(sqrt(arg)));
+	    } else if (strcmp(name, "$floor") == 0) {
+		  return new NetECReal(verireal(floor(arg)));
+	    } else if (strcmp(name, "$ceil") == 0) {
+		  return new NetECReal(verireal(ceil(arg)));
+	    } else if (strcmp(name, "$sin") == 0) {
+		  return new NetECReal(verireal(sin(arg)));
+	    } else if (strcmp(name, "$cos") == 0) {
+		  return new NetECReal(verireal(cos(arg)));
+	    } else if (strcmp(name, "$tan") == 0) {
+		  return new NetECReal(verireal(tan(arg)));
+	    } else if (strcmp(name, "$asin") == 0) {
+		  return new NetECReal(verireal(asin(arg)));
+	    } else if (strcmp(name, "$acos") == 0) {
+		  return new NetECReal(verireal(acos(arg)));
+	    } else if (strcmp(name, "$atan") == 0) {
+		  return new NetECReal(verireal(atan(arg)));
+	    } else if (strcmp(name, "$sinh") == 0) {
+		  return new NetECReal(verireal(sinh(arg)));
+	    } else if (strcmp(name, "$cosh") == 0) {
+		  return new NetECReal(verireal(cosh(arg)));
+	    } else if (strcmp(name, "$tanh") == 0) {
+		  return new NetECReal(verireal(tanh(arg)));
+	    } else if (strcmp(name, "$asinh") == 0) {
+		  return new NetECReal(verireal(asinh(arg)));
+	    } else if (strcmp(name, "$acosh") == 0) {
+		  return new NetECReal(verireal(acosh(arg)));
+	    } else if (strcmp(name, "$atanh") == 0) {
+		  return new NetECReal(verireal(atanh(arg)));
 	    }
       }
 
       return 0;
+}
+
+NetExpr* evaluate_math_two_args(NetExpr*arg0, NetExpr*arg1, const char*name)
+{
+      NetEConst*tmpi0 = dynamic_cast<NetEConst *>(arg0);
+      NetECReal*tmpr0 = dynamic_cast<NetECReal *>(arg0);
+      NetEConst*tmpi1 = dynamic_cast<NetEConst *>(arg1);
+      NetECReal*tmpr1 = dynamic_cast<NetECReal *>(arg1);
+      if ((tmpi0 || tmpr0) && (tmpi1 || tmpr1)) {
+	    double arg0, arg1;
+	    if (tmpi0) {
+		  arg0 = tmpi0->value().as_double();
+	    } else {
+		  arg0 = tmpr0->value().as_double();
+	    }
+	    if (tmpi1) {
+		  arg1 = tmpi1->value().as_double();
+	    } else {
+		  arg1 = tmpr1->value().as_double();
+	    }
+
+	    if (strcmp(name, "$pow") == 0) {
+		  return new NetECReal(verireal(pow(arg0, arg1)));
+	    } else if (strcmp(name, "$atan2") == 0) {
+		  return new NetECReal(verireal(atan2(arg0, arg1)));
+	    } else if (strcmp(name, "$hypot") == 0) {
+		  return new NetECReal(verireal(hypot(arg0, arg1)));
+	    }
+      }
+
+      return 0;
+}
+
+NetExpr* evaluate_abs(NetExpr*arg)
+{
+      NetEConst*tmpi = dynamic_cast<NetEConst *>(arg);
+      if (tmpi) {
+	    verinum arg = tmpi->value();
+	    if (arg.has_sign()) {
+		  arg = v_not(arg) + verinum(1);
+	    }
+	    return new NetEConst(arg);
+      }
+
+      NetECReal*tmpr = dynamic_cast<NetECReal *>(arg);
+      if (tmpr) {
+	    double arg = tmpr->value().as_double();
+	    return new NetECReal(verireal(fabs(arg)));
+      }
+
+      return 0;
+}
+
+NetExpr* evaluate_min_max(NetExpr*arg0, NetExpr*arg1, const char*name)
+{
+      NetEConst*tmpi0 = dynamic_cast<NetEConst *>(arg0);
+      NetECReal*tmpr0 = dynamic_cast<NetECReal *>(arg0);
+      NetEConst*tmpi1 = dynamic_cast<NetEConst *>(arg1);
+      NetECReal*tmpr1 = dynamic_cast<NetECReal *>(arg1);
+      if (tmpi0 && tmpi1) {
+	    verinum arg0 = tmpi0->value();
+	    verinum arg1 = tmpi1->value();
+	    if (strcmp(name, "$min") == 0) {
+		  return new NetEConst( arg0 < arg1 ? arg0 : arg1);
+	    } else if (strcmp(name, "$max") == 0) {
+		  return new NetEConst( arg0 < arg1 ? arg1 : arg0);
+	    }
+      }
+
+      if ((tmpi0 || tmpr0) && (tmpi1 || tmpr1)) {
+	    double arg0, arg1;
+	    if (tmpi0) {
+		  arg0 = tmpi0->value().as_double();
+	    } else {
+		  arg0 = tmpr0->value().as_double();
+	    }
+	    if (tmpi1) {
+		  arg1 = tmpi1->value().as_double();
+	    } else {
+		  arg1 = tmpr1->value().as_double();
+	    }
+	    if (strcmp(name, "$min") == 0) {
+		  return new NetECReal(verireal(arg0 < arg1 ? arg0 : arg1));
+	    } else if (strcmp(name, "$max") == 0) {
+		  return new NetECReal(verireal(arg0 < arg1 ? arg1 : arg0));
+	    }
+      }
+
+      return 0;
+}
+
+NetExpr* NetESFunc::eval_tree(int prune_to_width)
+{
+	/* If we are not targeting at least Verilog-2005, Verilog-AMS
+	 * or using the Icarus misc flag then we do not support these
+	 * functions as constant. */
+      if (generation_flag < GN_VER2005 &&
+          !gn_icarus_misc_flag && !gn_verilog_ams_flag) {
+	    return 0;
+      }
+
+      const char*nm = name();
+      NetExpr*rtn = 0;
+	/* Only $clog2 and the builtin mathematical functions can
+	 * be a constant system function. */
+      if (strcmp(nm, "$clog2") == 0 ||
+          strcmp(nm, "$ln") == 0 ||
+          strcmp(nm, "$log10") == 0 ||
+          strcmp(nm, "$exp") == 0 ||
+          strcmp(nm, "$sqrt") == 0 ||
+          strcmp(nm, "$floor") == 0 ||
+          strcmp(nm, "$ceil") == 0 ||
+          strcmp(nm, "$sin") == 0 ||
+          strcmp(nm, "$cos") == 0 ||
+          strcmp(nm, "$tan") == 0 ||
+          strcmp(nm, "$asin") == 0 ||
+          strcmp(nm, "$acos") == 0 ||
+          strcmp(nm, "$atan") == 0 ||
+          strcmp(nm, "$sinh") == 0 ||
+          strcmp(nm, "$cosh") == 0 ||
+          strcmp(nm, "$tanh") == 0 ||
+          strcmp(nm, "$asinh") == 0 ||
+          strcmp(nm, "$acosh") == 0 ||
+          strcmp(nm, "$atanh") == 0) {
+	    if (nparms() != 1 || parm(0) == 0) {
+		  cerr << get_fileline() << ": error: " << nm
+		       << " takes a single argument." << endl;
+		  return 0;
+	    }
+	    if (strcmp(nm, "$clog2") == 0) {
+		  rtn = evaluate_clog2(parm(0));
+	    } else {
+		  rtn = evaluate_math_one_arg(parm(0), nm);
+	    }
+      }
+
+      if (strcmp(nm, "$pow") == 0 ||
+          strcmp(nm, "$atan2") == 0 ||
+          strcmp(nm, "$hypot") == 0) {
+	    if (nparms() != 2 || parm(0) == 0 || parm(1) == 0) {
+		  cerr << get_fileline() << ": error: " << nm
+		       << " takes two arguments." << endl;
+		  return 0;
+	    }
+	    rtn = evaluate_math_two_args(parm(0), parm(1), nm);
+      }
+
+      if ((gn_icarus_misc_flag || gn_verilog_ams_flag) &&
+          (strcmp(nm, "$log") == 0 || strcmp(nm, "$abs") == 0)) {
+	    if (nparms() != 1 || parm(0) == 0) {
+		  cerr << get_fileline() << ": error: " << nm
+		       << " takes a single argument." << endl;
+		  return 0;
+	    }
+	    if (strcmp(nm, "$log") == 0) {
+		  rtn = evaluate_math_one_arg(parm(0), nm);
+	    } else {
+		  rtn = evaluate_abs(parm(0));
+	    }
+      }
+
+      if ((gn_icarus_misc_flag || gn_verilog_ams_flag) &&
+          (strcmp(nm, "$min") == 0 || strcmp(nm, "$max") == 0)) {
+	    if (nparms() != 2 || parm(0) == 0 || parm(1) == 0) {
+		  cerr << get_fileline() << ": error: " << nm
+		       << " takes two arguments." << endl;
+		  return 0;
+	    }
+	    rtn = evaluate_min_max(parm(0), parm(1), nm);
+      }
+
+      if (rtn != 0) {
+	    rtn->set_line(*this);
+	    if (debug_eval_tree) {
+		  cerr << get_fileline() << ": debug: Evaluate constant "
+		       << nm << "." << endl;
+	    }
+      }
+
+      return rtn;
 }

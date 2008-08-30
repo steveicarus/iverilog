@@ -4,29 +4,8 @@
 #
 
 # Single argument functions.
-$sqrt   vpiSysFuncReal
-$ln     vpiSysFuncReal
 $log    vpiSysFuncReal
-$log10  vpiSysFuncReal
-$exp    vpiSysFuncReal
 $abs    vpiSysFuncReal
-$ceil   vpiSysFuncReal
-$floor  vpiSysFuncReal
-$sin    vpiSysFuncReal
-$cos    vpiSysFuncReal
-$tan    vpiSysFuncReal
-$asin   vpiSysFuncReal
-$acos   vpiSysFuncReal
-$atan   vpiSysFuncReal
-$sinh   vpiSysFuncReal
-$cosh   vpiSysFuncReal
-$tanh   vpiSysFuncReal
-$asinh  vpiSysFuncReal
-$acosh  vpiSysFuncReal
-$atanh  vpiSysFuncReal
 # Double argument functions.
 $min    vpiSysFuncReal
 $max    vpiSysFuncReal
-$pow    vpiSysFuncReal
-$atan2  vpiSysFuncReal
-$hypot  vpiSysFuncReal

@@ -1,0 +1,28 @@
+#
+# This is the system function descriptor table for the
+# Verilog-2005 math functions.
+#
+
+# Single argument functions.
+$sqrt   vpiSysFuncReal
+$ln     vpiSysFuncReal
+$log10  vpiSysFuncReal
+$exp    vpiSysFuncReal
+$ceil   vpiSysFuncReal
+$floor  vpiSysFuncReal
+$sin    vpiSysFuncReal
+$cos    vpiSysFuncReal
+$tan    vpiSysFuncReal
+$asin   vpiSysFuncReal
+$acos   vpiSysFuncReal
+$atan   vpiSysFuncReal
+$sinh   vpiSysFuncReal
+$cosh   vpiSysFuncReal
+$tanh   vpiSysFuncReal
+$asinh  vpiSysFuncReal
+$acosh  vpiSysFuncReal
+$atanh  vpiSysFuncReal
+# Double argument functions.
+$pow    vpiSysFuncReal
+$atan2  vpiSysFuncReal
+$hypot  vpiSysFuncReal

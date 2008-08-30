@@ -43,7 +43,7 @@ CPPFLAGS = @ident_support@ -I. -I$(srcdir)/.. -I$(srcdir) -I.. @file64_support@ 
 CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-all: dep system.vpi va_math.vpi $(ALL32)
+all: dep system.vpi va_math.vpi v2005_math.vpi $(ALL32)
 
 check: all
 
@@ -60,7 +60,7 @@ sys_finish.o sys_icarus.o sys_plusargs.o sys_random.o sys_random_mti.o \
 sys_readmem.o sys_readmem_lex.o sys_scanf.o sys_sdf.o \
 sys_time.o sys_vcd.o sys_vcdoff.o vcd_priv.o \
 mt19937int.o sys_priv.o sdf_lexor.o sdf_parse.o stringheap.o \
-sys_clog2.o vams_simparam.o
+vams_simparam.o
 
 ifeq (@HAVE_LIBZ@,yes)
 ifeq (@HAVE_LIBBZ2@,yes)
@@ -68,6 +68,9 @@ O += sys_lxt.o lxt_write.o
 endif
 O += sys_lxt2.o lxt2_write.o
 endif
+
+# Object files for v2005_math.vpi
+M = sys_clog2.o v2005_math.o
 
 # Object files for va_math.vpi
 V = va_math.o
@@ -94,12 +97,16 @@ sdf_lexor.c: sdf_lexor.lex
 sdf_parse.c sdf_parse.h: $(srcdir)/sdf_parse.y
 	$(YACC) --verbose -d -p sdf -o sdf_parse.c $(srcdir)/sdf_parse.y
 
+v2005_math.vpi: $M ../vvp/libvpi.a
+	$(CC) @shared@ -o $@ $M -L../vvp $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
+
 va_math.vpi: $V ../vvp/libvpi.a
 	$(CC) @shared@ -o $@ $V -L../vvp $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
 
 clean:
-	rm -rf *.o sys_readmem_lex.c dep system.vpi va_math.vpi bin32
+	rm -rf *.o sys_readmem_lex.c dep system.vpi bin32
 	rm -f sdf_lexor.c sdf_parse.c sdf_parse.output sdf_parse.h
+	rm -f va_math.vpi v2005_math.vpi
 
 distclean: clean
 	rm -f Makefile config.status config.log vpi_config.h
@@ -109,6 +116,7 @@ check: all
 install: all installdirs \
     $(vpidir)/system.vpi $(libdir)/ivl/system.sft \
     $(vpidir)/va_math.vpi $(libdir)/ivl/va_math.sft \
+    $(vpidir)/v2005_math.vpi $(libdir)/ivl/v2005_math.sft \
     $(vpidir)/include/
 
 $(vpidir)/system.vpi: ./system.vpi
@@ -123,6 +131,12 @@ $(vpidir)/va_math.vpi: ./va_math.vpi
 $(libdir)/ivl/va_math.sft: va_math.sft
 	$(INSTALL_DATA) $< $@
 
+$(vpidir)/v2005_math.vpi: ./v2005_math.vpi
+	$(INSTALL_PROGRAM) ./v2005_math.vpi $(vpidir)/v2005_math.vpi
+
+$(libdir)/ivl/v2005_math.sft: v2005_math.sft
+	$(INSTALL_DATA) $< $@
+
 installdirs: ../mkinstalldirs
 	$(srcdir)/../mkinstalldirs $(vpidir)
 
@@ -131,6 +145,7 @@ uninstall:
 	rm -f $(libdir)/ivl/system.sft
 	rm -f $(vpidir)/va_math.vpi
 	rm -f $(libdir)/ivl/va_math.sft
-
+	rm -f $(vpidir)/v2005_math.vpi
+	rm -f $(libdir)/ivl/v2005_math.sft
 
 -include $(patsubst %.o, dep/%.d, $O)
