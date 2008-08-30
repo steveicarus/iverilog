@@ -51,7 +51,7 @@ struct PTaskFuncArg {
 class PTask  : public PScope, public LineInfo {
 
     public:
-      explicit PTask(perm_string name, PScope*parent);
+      explicit PTask(perm_string name, PScope*parent, bool is_auto);
       ~PTask();
 
       void set_ports(svector<PWire *>*p);
@@ -69,11 +69,14 @@ class PTask  : public PScope, public LineInfo {
 	// Elaborate the statement to finish off the task definition.
       void elaborate(Design*des, NetScope*scope) const;
 
+      bool is_auto() const { return is_auto_; };
+
       void dump(ostream&, unsigned) const;
 
     private:
       svector<PWire*>*ports_;
       Statement*statement_;
+      bool is_auto_;
 
     private: // Not implemented
       PTask(const PTask&);
@@ -90,7 +93,7 @@ class PTask  : public PScope, public LineInfo {
 class PFunction : public PScope, public LineInfo {
 
     public:
-      explicit PFunction(perm_string name, PScope*parent);
+      explicit PFunction(perm_string name, PScope*parent, bool is_auto);
       ~PFunction();
 
       void set_ports(svector<PWire *>*p);
@@ -105,12 +108,15 @@ class PFunction : public PScope, public LineInfo {
 	/* Elaborate the behavioral statement. */
       void elaborate(Design *des, NetScope*) const;
 
+      bool is_auto() const { return is_auto_; };
+
       void dump(ostream&, unsigned) const;
 
     private:
       PTaskFuncArg return_type_;
       svector<PWire *> *ports_;
       Statement *statement_;
+      bool is_auto_;
 };
 
 #endif

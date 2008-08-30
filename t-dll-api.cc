@@ -1548,6 +1548,12 @@ extern "C" const char*ivl_scope_file(ivl_scope_t net)
       return net->file.str();
 }
 
+extern "C" unsigned ivl_scope_is_auto(ivl_scope_t net)
+{
+      assert(net);
+      return net->is_auto;
+}
+
 extern "C" unsigned ivl_scope_lineno(ivl_scope_t net)
 {
       assert(net);

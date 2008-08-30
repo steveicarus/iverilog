@@ -25,6 +25,7 @@ assign,		GN_KEYWORDS_1364_1995,	K_assign
 atan,		GN_KEYWORDS_VAMS_2_3,	K_atan
 atan2,		GN_KEYWORDS_VAMS_2_3,	K_atan2
 atanh,		GN_KEYWORDS_VAMS_2_3,	K_atanh
+automatic,	GN_KEYWORDS_1364_2001,	K_automatic
 begin,		GN_KEYWORDS_1364_1995,	K_begin
 bool,		GN_KEYWORDS_ICARUS,	K_bool
 buf,		GN_KEYWORDS_1364_1995,	K_buf

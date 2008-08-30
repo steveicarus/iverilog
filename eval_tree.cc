@@ -22,6 +22,8 @@
 
 # include  <iostream>
 # include  <cstdlib>
+# include  <cstring>
+# include  <math.h>
 
 # include  "netlist.h"
 # include  "ivl_assert.h"
@@ -1606,4 +1608,77 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
       }
 
       return new NetEConst(verinum(res, 1));
+}
+
+NetExpr* evaluate_clog2(NetExpr*arg)
+{
+      NetEConst*tmpi = dynamic_cast<NetEConst *>(arg);
+      NetECReal*tmpr = dynamic_cast<NetECReal *>(arg);
+      if (tmpi || tmpr) {
+	    verinum arg;
+	    if (tmpi) {
+		  arg = tmpi->value();
+	    } else {
+		  arg = verinum(tmpr->value().as_double(), true);
+	    }
+
+	      /* If we have an x in the verinum we return 32'bx. */
+	    if (!arg.is_defined()) {
+		  verinum tmp (verinum::Vx, 32);
+		  tmp.has_sign(true);
+		  NetEConst*rtn = new NetEConst(tmp);
+		  return rtn;
+	    }
+
+	    bool is_neg = false;
+	    uint64_t res = 0;
+	    if (arg.is_negative()) {
+		  is_neg = true;
+		    // If the length is not defined, then work with
+		    // the trimmed version of the number.
+		  if (! arg.has_len())
+			arg = trim_vnum(arg);
+	    }
+	    arg.has_sign(false);  // $unsigned()
+
+	    if (!arg.is_zero()) {
+		  arg = arg - verinum((uint64_t)1, 1);
+		  while (!arg.is_zero()) {
+			res += 1;
+			arg = arg >> 1;
+		  }
+	    }
+
+	    if (is_neg && res < integer_width)
+		  res = integer_width;
+
+	    verinum tmp (res, 32);
+	    NetEConst*rtn = new NetEConst(tmp);
+	    return rtn;
+      }
+
+      return 0;
+}
+
+NetExpr* NetESFunc::eval_tree(int prune_to_width)
+{
+	/* For now only $clog2 can be a constant system function. */
+      if (strcmp(name(), "$clog2") == 0) {
+	    if (nparms() != 1 || parm(0) == 0) {
+		  cerr << get_fileline() << ": error: $clog2 takes a single "
+		                            "argument." << endl;
+		  return 0;
+	    }
+	    NetExpr*rtn = evaluate_clog2(parm(0));
+	    if (rtn != 0) {
+		  rtn->set_line(*this);
+		  if (debug_eval_tree) {
+			cerr << get_fileline() << ": debug: Evaluate "
+			        "constant $clog2()." << endl;
+		  }
+		  return rtn;
+	    }
+      }
+
+      return 0;
 }

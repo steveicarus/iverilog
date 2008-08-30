@@ -1588,6 +1588,12 @@ static int load_next_input()
         if(depend_file)
             fprintf(depend_file, "%s\n", istack->path);
 
+          /* This works around an issue in flex yyrestart() where it
+           * uses yyin to create a new buffer when one does not exist.
+           * I would have assumed that it would use the file argument.
+           * The problem is that we have deleted the buffer and freed
+           * yyin (isp->file) above. */
+        yyin = 0;
         yyrestart(istack->file);
         return 1;
     }

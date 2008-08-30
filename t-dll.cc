@@ -575,6 +575,7 @@ void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
       root_->time_units = s->time_unit();
       root_->nattr = s->attr_cnt();
       root_->attr  = fill_in_attributes(s);
+      root_->is_auto = 0;
 
       des_.nroots_++;
       if (des_.roots_)
@@ -2319,7 +2320,8 @@ void dll_target::scope(const NetScope*net)
 	    scope->time_precision = net->time_precision();
 	    scope->time_units = net->time_unit();
 	    scope->nattr = net->attr_cnt();
-	    scope->attr  = fill_in_attributes(net);
+	    scope->attr = fill_in_attributes(net);
+	    scope->is_auto = net->is_auto();
 
 	    switch (net->type()) {
 		case NetScope::MODULE:
@@ -2374,8 +2376,7 @@ void dll_target::signal(const NetNet*net)
 	   object, or creating the sigs_ array if this is the first
 	   signal. */
       obj->scope_ = find_scope(des_, net->scope());
-      obj->file = perm_string::literal("N/A");
-      obj->lineno = 0;
+      FILE_NAME(obj, net);
       assert(obj->scope_);
 
       if (obj->scope_->nsigs_ == 0) {

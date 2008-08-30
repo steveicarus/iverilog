@@ -52,17 +52,6 @@ class vvp_fun_and  : public vvp_fun_boolean_ {
       bool invert_;
 };
 
-class vvp_fun_eeq  : public vvp_fun_boolean_ {
-
-    public:
-      explicit vvp_fun_eeq(unsigned wid, bool invert);
-      ~vvp_fun_eeq();
-
-    private:
-      void run_run();
-      bool invert_;
-};
-
 /*
  * The buffer functor is a very primitive functor that takes the input
  * from port-0 (and only port-0) and retransmits it as a vvp_vector4_t.

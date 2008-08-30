@@ -591,6 +591,7 @@ struct ivl_scope_s {
 
 	/* Scopes that are tasks/functions have a definition. */
       ivl_statement_t def;
+      unsigned is_auto;
 
       unsigned ports;
       ivl_signal_t*port;
@@ -767,6 +768,12 @@ static inline void FILE_NAME(ivl_switch_t net, const LineInfo*info)
 }
 
 static inline void FILE_NAME(ivl_process_t net, const LineInfo*info)
+{
+      net->file = info->get_file();
+      net->lineno = info->get_lineno();
+}
+
+static inline void FILE_NAME(ivl_signal_t net, const LineInfo*info)
 {
       net->file = info->get_file();
       net->lineno = info->get_lineno();

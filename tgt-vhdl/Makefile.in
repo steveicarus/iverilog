@@ -1,0 +1,92 @@
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    Library General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Library General Public License for more details.
+#
+#    You should have received a copy of the GNU Library General Public
+#    License along with this program; if not, write to the Free
+#    Software Foundation, Inc.,
+#    59 Temple Place - Suite 330
+#    Boston, MA 02111-1307, USA
+#
+SHELL = /bin/sh
+
+VERSION = 0.0
+
+prefix = @prefix@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+srcdir = @srcdir@
+
+VPATH = $(srcdir)
+
+bindir = @bindir@
+libdir = @libdir@
+includedir = $(prefix)/include
+
+CXX = @CXX@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+CPPFLAGS = @ident_support@ -I. -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
+CXXFLAGS = -Wall @CXXFLAGS@
+LDFLAGS = @LDFLAGS@
+
+all: dep vhdl.tgt vhdl.conf
+
+dep:
+	mkdir dep
+
+%.o: %.cc
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
+	mv $*.d dep
+
+O = vhdl.o vhdl_element.o vhdl_type.o vhdl_syntax.o scope.o process.o \
+	stmt.o expr.o lpm.o display.o support.o cast.o logic.o
+
+ifeq (@WIN32@,yes)
+  TGTLDFLAGS=-L.. -livl
+  TGTDEPLIBS=../libivl.a
+else
+  TGTLDFLAGS=
+  TGTDEPLIBS=
+endif
+
+vhdl.tgt: $O $(TGTDEPLIBS)
+	$(CXX) @shared@ -o $@ $O $(TGTLDFLAGS)
+
+Makefile: Makefile.in config.status
+	./config.status
+
+clean:
+	rm -rf $(O) dep vhdl.tgt 
+
+distclean: clean
+	rm -f Makefile config.status config.log config.cache vhdl_config.h
+
+check: all
+
+install: all installdirs $(libdir)/ivl/vhdl.tgt $(libdir)/ivl/vhdl.conf
+
+$(libdir)/ivl/vhdl.tgt: ./vhdl.tgt
+	$(INSTALL_PROGRAM) ./vhdl.tgt $(libdir)/ivl/vhdl.tgt
+
+$(libdir)/ivl/vhdl.conf: vhdl.conf
+	$(INSTALL_DATA) $< $(libdir)/ivl/vhdl.conf
+
+installdirs: ../mkinstalldirs
+	$(srcdir)/../mkinstalldirs $(libdir)/ivl
+
+uninstall:
+	rm -f $(libdir)/ivl/vhdl.tgt $(libdir)/ivl/vhdl.conf
+
+
+-include $(patsubst %.o, dep/%.d, $O)

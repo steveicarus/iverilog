@@ -20,6 +20,7 @@
  */
 
 # include  "config.h"
+# include  "vpi_user.h"
 # include  <stddef.h>
 # include  <string.h>
 # include  <new>
@@ -66,6 +67,8 @@ enum vvp_bit4_t {
 inline char vvp_bit4_to_ascii(vvp_bit4_t a) { return "01zx"[a]; }
 
 extern vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c);
+
+extern vvp_bit4_t scalar_to_bit4(PLI_INT32 scalar);
 
   /* Return TRUE if the bit is BIT4_X or BIT4_Z. The fast
      implementation here relies on the encoding of vvp_bit4_t values. */
@@ -470,6 +473,9 @@ class vvp_vector2_t {
       void set_bit(unsigned idx, int bit);
 	// Make the size just big enough to hold the first 1 bit.
       void trim();
+	// Trim off extra 1 bit since this is representing a negative value.
+	// Always keep at least 32 bits.
+      void trim_neg();
 
     private:
       enum { BITS_PER_WORD = 8 * sizeof(unsigned long) };
@@ -853,8 +859,9 @@ struct vvp_net_t {
  * port. The value is a vvp_vector4_t.
  *
  * Most nodes do not care about the specific strengths of bits, so the
- * default behavior for recv_vec8 is to reduce the operand to a
- * vvp_vector4_t and pass it on to the recv_vec4 method.
+ * default behavior for recv_vec8 and recv_vec8_pv is to reduce the
+ * operand to a vvp_vector4_t and pass it on to the recv_vec4 or
+ * recv_vec4_pv method.
  */
 class vvp_net_fun_t {
 

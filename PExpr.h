@@ -708,6 +708,8 @@ class PECallFunction : public PExpr {
 
       ~PECallFunction();
 
+      virtual bool is_constant(Module*) const;
+
       virtual void dump(ostream &) const;
 
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
@@ -719,6 +721,7 @@ class PECallFunction : public PExpr {
 				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     int expr_wid, bool sys_task_arg) const;
+      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,

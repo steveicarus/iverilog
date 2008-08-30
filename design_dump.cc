@@ -1003,6 +1003,7 @@ void NetScope::dump(ostream&o) const
 	    o << " generate block";
 	    break;
       }
+      if (is_auto()) o << " (automatic)";
       o << endl;
 
       for (unsigned idx = 0 ;  idx < attr_cnt() ;  idx += 1)
@@ -1018,6 +1019,8 @@ void NetScope::dump(ostream&o) const
 	    for (pp = parameters.begin()
 		       ; pp != parameters.end() ;  pp ++) {
 		  o << "    parameter ";
+
+		  o << pp->second.type << " ";
 
 		  if ((*pp).second.signed_flag)
 			o << "signed ";

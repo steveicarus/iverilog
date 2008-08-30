@@ -206,7 +206,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_PSTAR K_STARP
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
 %token K_abs K_abstol K_access K_acos K_acosh K_asin K_analog K_asinh
-%token K_atan K_atanh K_atan2
+%token K_atan K_atanh K_atan2 K_automatic
 %token K_always K_and K_assign K_begin K_bool K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_ceil K_cmos K_continuous K_cos K_cosh
 %token K_ddt_nature K_deassign K_default K_defparam K_disable K_discrete
@@ -240,7 +240,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 
 %type <flag>    from_exclude
 %type <number>  number
-%type <flag>    signed_opt udp_reg_opt edge_operator
+%type <flag>    signed_opt udp_reg_opt edge_operator automatic_opt
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
 %type <text>    udp_input_list udp_sequ_entry udp_comb_entry
@@ -353,6 +353,13 @@ number  : BASED_NUMBER
         | DEC_NUMBER BASED_NUMBER
 	     { $$ = pform_verinum_with_size($1,$2, @2.text, @2.first_line);
 	       based_size = 0; }
+	;
+
+  /* real and realtime are exactly the same so save some code 
+   * with a common matching rule. */
+real_or_realtime
+	: K_real
+	| K_realtime
 	;
 
   /* Verilog-2001 supports attribute lists, which can be attached to a
@@ -1501,6 +1508,32 @@ gate_instance
 		  delete rng;
 		  $$ = tmp;
 		}
+
+	| IDENTIFIER '(' error ')'
+		{ lgate*tmp = new lgate;
+		  tmp->name = $1;
+		  tmp->parms = 0;
+		  tmp->parms_by_name = 0;
+		  tmp->file  = @1.text;
+		  tmp->lineno = @1.first_line;
+		  yyerror(@2, "error: Syntax error in instance port "
+			  "expression(s).");
+		  delete[]$1;
+		  $$ = tmp;
+		}
+
+	| IDENTIFIER range '(' error ')'
+		{ lgate*tmp = new lgate;
+		  tmp->name = $1;
+		  tmp->parms = 0;
+		  tmp->parms_by_name = 0;
+		  tmp->file  = @1.text;
+		  tmp->lineno = @1.first_line;
+		  yyerror(@3, "error: Syntax error in instance port "
+			  "expression(s).");
+		  delete[]$1;
+		  $$ = tmp;
+		}
 	;
 
 gate_instance_list
@@ -2094,41 +2127,41 @@ module_item
      statements in the task body. But we continue to accept it as an
      extension. */
 
-  | K_task IDENTIFIER ';'
+  | K_task automatic_opt IDENTIFIER ';'
       { assert(current_task == 0);
-	current_task = pform_push_task_scope($2);
+	current_task = pform_push_task_scope($3, $2);
 	FILE_NAME(current_task, @1);
       }
     task_item_list_opt
     statement_or_null
     K_endtask
-      { current_task->set_ports($5);
-	current_task->set_statement($6);
+      { current_task->set_ports($6);
+	current_task->set_statement($7);
 	pform_pop_scope();
 	current_task = 0;
-	delete[]$2;
+	delete[]$3;
       }
 
-  | K_task IDENTIFIER
+  | K_task automatic_opt IDENTIFIER
       { assert(current_task == 0);
-	current_task = pform_push_task_scope($2);
+	current_task = pform_push_task_scope($3, $2);
 	FILE_NAME(current_task, @1);
       }
     '(' task_port_decl_list ')' ';'
     block_item_decls_opt
     statement_or_null
     K_endtask
-      { current_task->set_ports($5);
-	current_task->set_statement($9);
+      { current_task->set_ports($6);
+	current_task->set_statement($10);
 	pform_pop_scope();
 	current_task = 0;
-	delete[]$2;
+	delete[]$3;
       }
-  | K_task IDENTIFIER error K_endtask
+  | K_task automatic_opt IDENTIFIER error K_endtask
       {
 	pform_pop_scope();
 	current_task = 0;
-	delete[]$2;
+	delete[]$3;
       }
 
   /* The function declaration rule matches the function declaration
@@ -2136,42 +2169,42 @@ module_item
      definitions in the func_body to take on the scope of the function
      instead of the module. */
 
-  | K_function function_range_or_type_opt IDENTIFIER ';'
+  | K_function automatic_opt function_range_or_type_opt IDENTIFIER ';'
       { assert(current_function == 0);
-	current_function = pform_push_function_scope($3);
+	current_function = pform_push_function_scope($4, $2);
 	FILE_NAME(current_function, @1);
       }
     function_item_list statement
     K_endfunction
-      { current_function->set_ports($6);
-	current_function->set_statement($7);
-	current_function->set_return($2);
+      { current_function->set_ports($7);
+	current_function->set_statement($8);
+	current_function->set_return($3);
 	pform_pop_scope();
 	current_function = 0;
-	delete[]$3;
+	delete[]$4;
       }
 
-  | K_function function_range_or_type_opt IDENTIFIER
+  | K_function automatic_opt function_range_or_type_opt IDENTIFIER
       { assert(current_function == 0);
-	current_function = pform_push_function_scope($3);
+	current_function = pform_push_function_scope($4, $2);
 	FILE_NAME(current_function, @1);
       }
     '(' task_port_decl_list ')' ';'
     block_item_decls_opt
     statement
     K_endfunction
-      { current_function->set_ports($6);
-	current_function->set_statement($10);
-	current_function->set_return($2);
+      { current_function->set_ports($7);
+	current_function->set_statement($11);
+	current_function->set_return($3);
 	pform_pop_scope();
 	current_function = 0;
-	delete[]$3;
+	delete[]$4;
       }
-  | K_function function_range_or_type_opt IDENTIFIER error K_endfunction
+  | K_function automatic_opt function_range_or_type_opt IDENTIFIER error K_endfunction
       {
 	pform_pop_scope();
 	current_task = 0;
-	delete[]$3;
+	delete[]$4;
       }
 
   /* A generate region can contain further module items. Actually, it
@@ -2276,6 +2309,11 @@ module_item
 		}
 	| KK_attribute '(' error ')' ';'
 		{ yyerror(@1, "error: Malformed $attribute parameter list."); }
+	;
+
+automatic_opt
+	: K_automatic { $$ = true; }
+	| { $$ = false;}
 	;
 
 generate_if : K_if '(' expression ')' { pform_start_generate_if(@1, $3); }
@@ -2433,17 +2471,7 @@ parameter_assign_decl
 	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
-  | K_real
-      { param_active_range = 0;
-	param_active_signed = true;
-	param_active_type = IVL_VT_REAL;
-      }
-    parameter_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | K_realtime
+  | real_or_realtime
       { param_active_range = 0;
 	param_active_signed = true;
 	param_active_type = IVL_VT_REAL;
@@ -2572,17 +2600,7 @@ localparam_assign_decl
 	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
-  | K_real
-      { param_active_range = 0;
-	param_active_signed = true;
-	param_active_type = IVL_VT_REAL;
-      }
-    localparam_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | K_realtime
+  | real_or_realtime
       { param_active_range = 0;
 	param_active_signed = true;
 	param_active_type = IVL_VT_REAL;
@@ -3741,39 +3759,43 @@ task_item
         | task_port_item   { $$ = $1; }
         ;
 
+reg_opt
+	: K_reg
+	|
+	;
+
 task_port_item
 
-	: K_input signed_opt range_opt list_of_identifiers ';'
+	: K_input reg_opt signed_opt range_opt list_of_identifiers ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_NO_TYPE, $2,
-						$3, $4,
+						IVL_VT_NO_TYPE, $3,
+						$4, $5,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_output signed_opt range_opt list_of_identifiers ';'
+	| K_output reg_opt signed_opt range_opt list_of_identifiers ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::POUTPUT,
-						IVL_VT_LOGIC, $2,
-						$3, $4,
+						IVL_VT_LOGIC, $3,
+						$4, $5,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_inout signed_opt range_opt list_of_identifiers ';'
+	| K_inout reg_opt signed_opt range_opt list_of_identifiers ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINOUT,
-						IVL_VT_LOGIC, $2,
-						$3, $4,
+						IVL_VT_LOGIC, $3,
+						$4, $5,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
 
   /* When the port is an integer, infer a signed vector of the integer
-     shape. Generate a range to make it work. */
+     shape. Generate a range ([31:0]) to make it work. */
 
 	| K_input K_integer list_of_identifiers ';'
-                { svector<PExpr*>*range_stub
-			= new svector<PExpr*>(2);
+                { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
 		  PExpr*re;
 		  re = new PENumber(new verinum(integer_width-1,
 						integer_width));
@@ -3788,8 +3810,7 @@ task_port_item
 		  $$ = tmp;
 		}
 	| K_output K_integer list_of_identifiers ';'
-		{ svector<PExpr*>*range_stub
-			= new svector<PExpr*>(2);
+		{ svector<PExpr*>*range_stub = new svector<PExpr*>(2);
 		  PExpr*re;
 		  re = new PENumber(new verinum(integer_width-1,
 						integer_width));
@@ -3804,8 +3825,7 @@ task_port_item
 		  $$ = tmp;
 		}
 	| K_inout K_integer list_of_identifiers ';'
-		{ svector<PExpr*>*range_stub
-			= new svector<PExpr*>(2);
+		{ svector<PExpr*>*range_stub = new svector<PExpr*>(2);
 		  PExpr*re;
 		  re = new PENumber(new verinum(integer_width-1,
 						integer_width));
@@ -3820,9 +3840,54 @@ task_port_item
 		  $$ = tmp;
 		}
 
-  /* Ports can be real. */
+  /* Ports can be time with a width of [63:0] (unsigned). */
 
-	| K_input K_real list_of_identifiers ';'
+	| K_input K_time list_of_identifiers ';'
+                { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
+		  PExpr*re;
+		  re = new PENumber(new verinum((uint64_t)63, integer_width));
+		  (*range_stub)[0] = re;
+		  re = new PENumber(new verinum((uint64_t)0, integer_width));
+		  (*range_stub)[1] = re;
+		  svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT,
+						IVL_VT_LOGIC, false,
+						range_stub, $3,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+	| K_output K_time list_of_identifiers ';'
+		{ svector<PExpr*>*range_stub = new svector<PExpr*>(2);
+		  PExpr*re;
+		  re = new PENumber(new verinum((uint64_t)63, integer_width));
+		  (*range_stub)[0] = re;
+		  re = new PENumber(new verinum((uint64_t)0, integer_width));
+		  (*range_stub)[1] = re;
+		  svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::POUTPUT,
+						IVL_VT_LOGIC, false,
+						range_stub, $3,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+	| K_inout K_time list_of_identifiers ';'
+		{ svector<PExpr*>*range_stub = new svector<PExpr*>(2);
+		  PExpr*re;
+		  re = new PENumber(new verinum((uint64_t)63, integer_width));
+		  (*range_stub)[0] = re;
+		  re = new PENumber(new verinum((uint64_t)0, integer_width));
+		  (*range_stub)[1] = re;
+		  svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINOUT,
+						IVL_VT_LOGIC, false,
+						range_stub, $3,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+
+  /* Ports can be real or realtime. */
+
+	| K_input real_or_realtime list_of_identifiers ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT,
 						IVL_VT_REAL, false,
@@ -3830,7 +3895,7 @@ task_port_item
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_output K_real list_of_identifiers ';'
+	| K_output real_or_realtime list_of_identifiers ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::POUTPUT,
 						IVL_VT_REAL, true,
@@ -3838,7 +3903,7 @@ task_port_item
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_inout K_real list_of_identifiers ';'
+	| K_inout real_or_realtime list_of_identifiers ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINOUT,
 						IVL_VT_REAL, true,
@@ -3868,50 +3933,51 @@ task_item_list_opt
 
 task_port_decl
 
-	: K_input signed_opt range_opt IDENTIFIER
+	: K_input reg_opt signed_opt range_opt IDENTIFIER
 		{ port_declaration_context.port_type = NetNet::PINPUT;
 		  port_declaration_context.var_type = IVL_VT_LOGIC;
-		  port_declaration_context.sign_flag = $2;
+		  port_declaration_context.sign_flag = $3;
 		  delete port_declaration_context.range;
-		  port_declaration_context.range = copy_range($3);
+		  port_declaration_context.range = copy_range($4);
 		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_LOGIC, $2,
-						$3, list_from_identifier($4),
+						IVL_VT_LOGIC, $3,
+						$4, list_from_identifier($5),
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
 
-	| K_output signed_opt range_opt IDENTIFIER
+	| K_output reg_opt signed_opt range_opt IDENTIFIER
 		{ port_declaration_context.port_type = NetNet::POUTPUT;
 		  port_declaration_context.var_type = IVL_VT_LOGIC;
-		  port_declaration_context.sign_flag = $2;
+		  port_declaration_context.sign_flag = $3;
 		  delete port_declaration_context.range;
-		  port_declaration_context.range = copy_range($3);
+		  port_declaration_context.range = copy_range($4);
 		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::POUTPUT,
-						IVL_VT_LOGIC, $2,
-						$3, list_from_identifier($4),
+						IVL_VT_LOGIC, $3,
+						$4, list_from_identifier($5),
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_inout signed_opt range_opt IDENTIFIER
+	| K_inout reg_opt signed_opt range_opt IDENTIFIER
 		{ port_declaration_context.port_type = NetNet::PINOUT;
 		  port_declaration_context.var_type = IVL_VT_LOGIC;
-		  port_declaration_context.sign_flag = $2;
+		  port_declaration_context.sign_flag = $3;
 		  delete port_declaration_context.range;
-		  port_declaration_context.range = copy_range($3);
+		  port_declaration_context.range = copy_range($4);
 		  svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINOUT,
-						IVL_VT_LOGIC, $2,
-						$3, list_from_identifier($4),
+						IVL_VT_LOGIC, $3,
+						$4, list_from_identifier($5),
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
 
+  /* Ports can be integer with a width of [31:0]. */
+ 
 	| K_input K_integer IDENTIFIER
-                { svector<PExpr*>*range_stub
-			= new svector<PExpr*>(2);
+                { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
 		  PExpr*re;
 		  re = new PENumber(new verinum(integer_width-1,
 						integer_width));
@@ -3932,8 +3998,7 @@ task_port_decl
 		  $$ = tmp;
 		}
 	| K_output K_integer IDENTIFIER
-                { svector<PExpr*>*range_stub
-			= new svector<PExpr*>(2);
+                { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
 		  PExpr*re;
 		  re = new PENumber(new verinum(integer_width-1,
 						integer_width));
@@ -3954,8 +4019,7 @@ task_port_decl
 		  $$ = tmp;
 		}
 	| K_inout K_integer IDENTIFIER
-                { svector<PExpr*>*range_stub
-			= new svector<PExpr*>(2);
+                { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
 		  PExpr*re;
 		  re = new PENumber(new verinum(integer_width-1,
 						integer_width));
@@ -3976,9 +4040,72 @@ task_port_decl
 		  $$ = tmp;
 		}
 
-  /* Ports can be real. */
+  /* Ports can be time with a width of [63:0] (unsigned). */
+ 
+	| K_input K_time IDENTIFIER
+                { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
+		  PExpr*re;
+		  re = new PENumber(new verinum((uint64_t)63, integer_width));
+		  (*range_stub)[0] = re;
+		  re = new PENumber(new verinum((uint64_t)0, integer_width));
+		  (*range_stub)[1] = re;
+		  port_declaration_context.port_type = NetNet::PINPUT;
+		  port_declaration_context.var_type = IVL_VT_LOGIC;
+		  port_declaration_context.sign_flag = false;
+		  delete port_declaration_context.range;
+		  port_declaration_context.range = copy_range(range_stub);
+		  svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT,
+						IVL_VT_LOGIC, false,
+						range_stub,
+						list_from_identifier($3),
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+	| K_output K_time IDENTIFIER
+                { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
+		  PExpr*re;
+		  re = new PENumber(new verinum((uint64_t)63, integer_width));
+		  (*range_stub)[0] = re;
+		  re = new PENumber(new verinum((uint64_t)0, integer_width));
+		  (*range_stub)[1] = re;
+		  port_declaration_context.port_type = NetNet::POUTPUT;
+		  port_declaration_context.var_type = IVL_VT_LOGIC;
+		  port_declaration_context.sign_flag = false;
+		  delete port_declaration_context.range;
+		  port_declaration_context.range = copy_range(range_stub);
+		  svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::POUTPUT,
+						IVL_VT_LOGIC, false,
+						range_stub,
+						list_from_identifier($3),
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
+	| K_inout K_time IDENTIFIER
+                { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
+		  PExpr*re;
+		  re = new PENumber(new verinum((uint64_t)63, integer_width));
+		  (*range_stub)[0] = re;
+		  re = new PENumber(new verinum((uint64_t)0, integer_width));
+		  (*range_stub)[1] = re;
+		  port_declaration_context.port_type = NetNet::PINOUT;
+		  port_declaration_context.var_type = IVL_VT_LOGIC;
+		  port_declaration_context.sign_flag = false;
+		  delete port_declaration_context.range;
+		  port_declaration_context.range = copy_range(range_stub);
+		  svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINOUT,
+						IVL_VT_LOGIC, false,
+						range_stub,
+						list_from_identifier($3),
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		}
 
-	| K_input K_real IDENTIFIER
+  /* Ports can be real or realtime. */
+
+	| K_input real_or_realtime IDENTIFIER
 		{ port_declaration_context.port_type = NetNet::PINPUT;
 		  port_declaration_context.var_type = IVL_VT_REAL;
 		  port_declaration_context.sign_flag = false;
@@ -3991,7 +4118,7 @@ task_port_decl
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_output K_real IDENTIFIER
+	| K_output real_or_realtime IDENTIFIER
 		{ port_declaration_context.port_type = NetNet::POUTPUT;
 		  port_declaration_context.var_type = IVL_VT_REAL;
 		  port_declaration_context.sign_flag = false;
@@ -4004,7 +4131,7 @@ task_port_decl
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_inout K_real IDENTIFIER
+	| K_inout real_or_realtime IDENTIFIER
 		{ port_declaration_context.port_type = NetNet::PINOUT;
 		  port_declaration_context.var_type = IVL_VT_REAL;
 		  port_declaration_context.sign_flag = false;

@@ -728,23 +728,6 @@ static vvp_vector4_t from_stringval(const char*str, unsigned wid)
       return val;
 }
 
-static vvp_bit4_t scalar_to_bit4(PLI_INT32 scalar)
-{
-      switch(scalar) {
-	  case vpi0:
-	    return BIT4_0;
-	  case vpi1:
-	    return BIT4_1;
-	  case vpiX:
-	    return BIT4_X;
-	  case vpiZ:
-	    return BIT4_Z;
-	  default:
-	    fprintf(stderr, "Unsupported scalar value %d.\n", scalar);
-	    assert(0);
-      }
-}
-
 static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 {
       unsigned wid;
@@ -1179,6 +1162,21 @@ vpiHandle vpip_make_PV(char*var, char*symbol, int width)
       obj->base.vpi_type = &vpip_PV_rt;
       obj->parent = vvp_lookup_handle(var);
       compile_vpi_lookup(&obj->sbase, symbol);
+      obj->tbase = 0;
+      obj->twid = 0;
+      obj->width = (unsigned) width;
+      obj->net = 0;
+      functor_ref_lookup(&obj->net, var);
+
+      return &obj->base;
+}
+
+vpiHandle vpip_make_PV(char*var, vpiHandle handle, int width)
+{
+      struct __vpiPV*obj = (struct __vpiPV*) malloc(sizeof(struct __vpiPV));
+      obj->base.vpi_type = &vpip_PV_rt;
+      obj->parent = vvp_lookup_handle(var);
+      obj->sbase = handle;
       obj->tbase = 0;
       obj->twid = 0;
       obj->width = (unsigned) width;

@@ -1626,7 +1626,10 @@ static unsigned long* divide_bits(unsigned long*ap, unsigned long*bp, unsigned w
 	    unsigned cur_ptr = cur-1;
 	    unsigned long cur_res;
 	    if (ap[cur_ptr+btop] >= bp[btop]) {
-		  cur_res = ap[cur_ptr+btop] / bp[btop];
+		  unsigned long high = 0;
+		  if (cur_ptr+btop+1 < words)
+			high = ap[cur_ptr+btop+1];
+		  cur_res = divide2words(ap[cur_ptr+btop], bp[btop], high);
 
 	    } else if (cur_ptr+btop+1 >= words) {
 		  continue;
@@ -1749,6 +1752,9 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 
       assert(adra >= 4);
 
+	// Get the values, left in right, in binary form. If there is
+	// a problem with either (caused by an X or Z bit) then we
+	// know right away that the entire result is X.
       unsigned long*ap = vector_to_array(thr, adra, wid);
       if (ap == 0) {
 	    vvp_vector4_t tmp(wid, BIT4_X);
@@ -1764,6 +1770,7 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 	    return true;
       }
 
+	// Sign extend the bits in the array to fill out the array.
       unsigned long sign_mask = 0;
       if (unsigned long sign_bits = (words*CPU_WORD_BITS) - wid) {
 	    sign_mask = -1UL << (CPU_WORD_BITS-sign_bits);
@@ -1773,6 +1780,7 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 		  bp[words-1] |= sign_mask;
       }
 
+	// If the value fits in a single word, then use the native divide.
       if (wid <= CPU_WORD_BITS) {
 	    if (bp[0] == 0) {
 		  vvp_vector4_t tmp(wid, BIT4_X);
@@ -2076,7 +2084,14 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
 
       thr->fork_count += 1;
 
-      schedule_vthread(child, 0, true);
+	/* If the new child was created to evaluate a function,
+	   run it immediately, then return to this thread. */
+      if (cp->scope->base.vpi_type->type_code == vpiFunction) {
+	    child->is_scheduled = 1;
+	    vthread_run(child);
+      } else {
+	    schedule_vthread(child, 0, true);
+      }
       return true;
 }
 
@@ -2363,18 +2378,20 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t word = array_get_word(cp->array, adr);
 
-      if (word.size() != wid) {
-	    fprintf(stderr, "internal error: array width=%u, word.size()=%u, wid=%u\n",
-		    0, word.size(), wid);
-	    assert(word.size() == wid);
-      }
-
 	/* Check the address once, before we scan the vector. */
       thr_check_addr(thr, bit+wid-1);
+
+      if (word.size() > wid)
+	    word.resize(wid);
 
 	/* Copy the vector bits into the bits4 vector. Do the copy
 	   directly to skip the excess calls to thr_check_addr. */
       thr->bits4.set_vec(bit, word);
+
+	/* If the source is shorter then the desired width, then pad
+	   with BIT4_X values. */
+      for (unsigned idx = word.size() ; idx < wid ; idx += 1)
+	    thr->bits4.set_bit(bit+idx, BIT4_X);
 
       return true;
 }

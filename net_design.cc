@@ -357,11 +357,11 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 
 	/* Evaluate the parameter expression, if necessary. */
       NetExpr*expr = (*cur).second.expr;
-      assert(expr);
+      if (expr == NULL) return;  // This is an invalid parameter so return.
 
       eval_expr(expr);
 
-      /* The eval_expr may delete any replace the expr pointer, so the
+      /* The eval_expr may delete and replace the expr pointer, so the
          second.expr value cannot be relied on. Might as well replace
          it now with the expression that we evaluated. */
       (*cur).second.expr = expr;

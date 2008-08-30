@@ -1670,22 +1670,31 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 	    vvp_errors += 1;
       }
 
+	/* Detect the special case that the entire number fits in an
+	   immediate. In this case we generate a single %movi
+	  instruction. */
       if ((!number_is_unknown(exp)) && number_is_immediate(exp, IMM_WID,0)) {
 	    unsigned long val = get_number_immediate(exp);
 	    fprintf(vvp_out, "   %%movi %u, %lu, %u;\n", res.base, val, wid);
 	    return res;
       }
 
+	/* Use %movi as much as possible to build the value into the
+	   destination. Use the %mov to handle the remaining general
+	   bits. */
       idx = 0;
+      unsigned long val = 0;
+      unsigned val_bits = 0;
+      unsigned val_addr = res.base;
       while (idx < nwid) {
-	    unsigned cnt;
-	    char src = '?';
+	    char src = 0;
 	    switch (bits[idx]) {
 		case '0':
-		  src = '0';
+		  val_bits += 1;
 		  break;
 		case '1':
-		  src = '1';
+		  val |= 1UL << val_bits;
+		  val_bits += 1;
 		  break;
 		case 'x':
 		  src = '2';
@@ -1695,14 +1704,29 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 		  break;
 	    }
 
-	    for (cnt = 1 ;  idx+cnt < nwid ;  cnt += 1)
-		  if (bits[idx+cnt] != bits[idx])
-			break;
+	    if (val_bits >= IMM_WID
+		|| (val_bits>0 && src != 0)
+		|| (val_bits>0 && idx+1==nwid)) {
+		  fprintf(vvp_out, "   %%movi %u, %lu, %u;\n",
+			  val_addr, val, val_bits);
+		  val_addr += val_bits;
+		  val_bits = 0;
+		  val = 0;
+	    }
 
-	    fprintf(vvp_out, "    %%mov %u, %c, %u;\n",
-		    res.base+idx, src, cnt);
+	    if (src != 0) {
+		  assert(val_bits == 0);
+		  unsigned cnt;
+		  for (cnt = 1 ; idx+cnt < nwid ; cnt += 1)
+			if (bits[idx+cnt] != bits[idx])
+			      break;
 
-	    idx += cnt;
+		  fprintf(vvp_out, "   %%mov %u, %c, %u;\n", val_addr, src, cnt);
+		  val_addr += cnt;
+		  idx += cnt-1;
+	    }
+
+	    idx += 1;
       }
 
 	/* Pad the number up to the expression width. */

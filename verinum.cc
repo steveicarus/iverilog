@@ -152,6 +152,112 @@ verinum::verinum(uint64_t val, unsigned n)
       }
 }
 
+/* The second argument is not used! It is there to make this
+ * constructor unique. */
+verinum::verinum(double val, bool dummy)
+: has_len_(false), has_sign_(true), string_flag_(false)
+{
+      bool is_neg = false;
+      double fraction;
+      int exponent;
+      const unsigned BITS_IN_LONG = 8*sizeof(long);
+
+	/* We return `bx for a NaN or +/- infinity. */
+      if (val != val || (val && (val == 0.5*val))) {
+	    nbits_ = 1;
+	    bits_ = new V[nbits_];
+	    bits_[0] = Vx;
+	    return;
+      }
+
+	/* Convert to a positive result. */
+      if (val < 0.0) {
+	    is_neg = true;
+	    val = -val;
+      }
+
+	/* Get the exponent and fractional part of the number. */
+      fraction = frexp(val, &exponent);
+      nbits_ = exponent+1;
+      bits_ = new V[nbits_];
+      const verinum const_one(1);
+
+	/* If the value is small enough just use lround(). */
+      if (nbits_ <= BITS_IN_LONG) {
+	    long sval = lround(val);
+	    if (is_neg) sval = -sval;
+	    for (unsigned idx = 0; idx < nbits_; idx += 1) {
+		  bits_[idx] = (sval&1) ? V1 : V0;
+		  sval >>= 1;
+	    }
+	      /* Trim the result. */
+	    signed_trim();
+	    return;
+      }
+
+      unsigned nwords = (exponent-1)/BITS_IN_LONG;
+
+      fraction = ldexp(fraction, (exponent-1) % BITS_IN_LONG + 1);
+
+      if (nwords == 0) {
+	    unsigned long bits = (unsigned long) fraction;
+	    fraction = fraction - (double) bits;
+	    for (unsigned idx = 0; idx < nbits_; idx += 1) {
+		  bits_[idx] = (bits&1) ? V1 : V0;
+		  bits >>= 1;
+	    }
+	    if (fraction >= 0.5) *this = *this + const_one;
+      } else {
+	    for (int wd = nwords; wd >= 0; wd -= 1) {
+		  unsigned long bits = (unsigned long) fraction;
+		  fraction = fraction - (double) bits;
+		  unsigned max = (wd+1)*BITS_IN_LONG;
+		  if (max > nbits_) max = nbits_;
+		  for (unsigned idx = wd*BITS_IN_LONG; idx < max; idx += 1) {
+			bits_[idx] = (bits&1) ? V1 : V0;
+			bits >>= 1;
+		  }
+		  fraction = ldexp(fraction, BITS_IN_LONG);
+	    }
+	    if (fraction >= ldexp(0.5, BITS_IN_LONG)) *this = *this + const_one;
+      }
+
+	/* Convert a negative number if needed. */
+      if (is_neg) {
+	    *this = v_not(*this) + const_one;
+      }
+
+	/* Trim the result. */
+      signed_trim();
+}
+
+
+/* This is used by the double constructor above. It is needed to remove
+ * extra sign bits that can occur when calculating a negative value. */
+void verinum::signed_trim()
+{
+	/* Do we have any extra digits? */
+      unsigned tlen = nbits_-1;
+      verinum::V sign = bits_[tlen];
+      while ((tlen > 0) && (bits_[tlen] == sign)) tlen -= 1;
+
+	/* tlen now points to the first digit that is not the sign.
+	 * or bit 0. Set the length to include this bit and one proper
+	 * sign bit if needed. */
+      if (bits_[tlen] != sign) tlen += 1;
+      tlen += 1;
+
+	/* Trim the bits if needed. */
+      if (tlen < nbits_) {
+	    V* tbits = new V[tlen];
+	    for (unsigned idx = 0; idx < tlen; idx += 1)
+		  tbits[idx] = bits_[idx];
+	    delete[] bits_;
+	    bits_ = tbits;
+	    nbits_ = tlen;
+      }
+}
+
 verinum::verinum(const verinum&that)
 {
       string_flag_ = that.string_flag_;
@@ -336,14 +442,9 @@ double verinum::as_double() const
 {
       if (nbits_ == 0) return 0.0;
 
-        /* Do we have a signed value? */
-      bool signed_flag = false;
-      if (bits_[nbits_-1] == V1) {
-	    signed_flag = true;
-      }
-
       double val = 0.0;
-      if (signed_flag) {
+        /* Do we have/want a signed value? */
+      if (has_sign_ && bits_[nbits_-1] == V1) {
 	    V carry = V1;
 	    for (unsigned idx = 0; idx < nbits_; idx += 1) {
 		  V sum = add_with_carry(~bits_[idx], V0, carry);
@@ -351,7 +452,6 @@ double verinum::as_double() const
 			val += pow(2.0, (double)idx);
 	    }
 	    val *= -1.0;
-//	    val = (double) as_long();
       } else {
 	    for (unsigned idx = 0; idx < nbits_; idx += 1) {
 		  if (bits_[idx] == V1)
@@ -591,11 +691,15 @@ ostream& operator<< (ostream&o, const verinum&v)
       verinum::V trim_left = v.get(v.len()-1);
       unsigned idx;
 
-      for (idx = v.len()-1;  idx > 0;  idx -= 1)
-	    if (trim_left != v.get(idx-1))
-		  break;
+      if (v.has_sign()) {
+	    for (idx = v.len()-1;  idx > 0;  idx -= 1)
+		  if (trim_left != v.get(idx-1))
+			break;
 
-      o << trim_left;
+	    o << trim_left;
+      } else {
+	    idx = v.len();
+      }
 
       while (idx > 0) {
 	    o << v.get(idx-1);

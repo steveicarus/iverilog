@@ -21,9 +21,10 @@
 
 # include  "PTask.h"
 
-PTask::PTask(perm_string name, PScope*parent)
+PTask::PTask(perm_string name, PScope*parent, bool is_auto)
 : PScope(name, parent), ports_(0), statement_(0)
 {
+      is_auto_ = is_auto;
 }
 
 PTask::~PTask()
@@ -41,31 +42,3 @@ void PTask::set_statement(Statement*s)
       assert(statement_ == 0);
       statement_ = s;
 }
-
-
-/*
- * $Log: PTask.cc,v $
- * Revision 1.7  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.6  2001/07/25 03:10:48  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.5  2001/04/19 03:04:47  steve
- *  Spurious assert of empty statemnt.
- *
- * Revision 1.4  2001/01/13 22:20:08  steve
- *  Parse parameters within nested scopes.
- *
- * Revision 1.3  2000/02/23 02:56:53  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.2  1999/07/24 02:11:19  steve
- *  Elaborate task input ports.
- *
- * Revision 1.1  1999/07/03 02:12:51  steve
- *  Elaborate user defined tasks.
- *
- */
-

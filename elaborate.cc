@@ -944,6 +944,17 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
       return tmp;
 }
 
+static bool need_bufz_for_input_port(const svector<NetNet*>&prts)
+{
+      if (prts[0]->port_type() != NetNet::PINPUT)
+	    return false;
+
+      if (prts[0]->pin(0).nexus()->drivers_present())
+	    return true;
+
+      return false;
+}
+
 /*
  * Instantiate a module by recursively elaborating it. Set the path of
  * the recursive elaboration so that signal names get properly
@@ -1162,7 +1173,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		       width. We use that, then, to decide how to hook
 		       it up.
 
-		       NOTE that this also handles the case that the
+v		       NOTE that this also handles the case that the
 		       port is actually empty on the inside. We assume
 		       in that case that the port is input. */
 
@@ -1174,6 +1185,21 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << ": internal error: Port expression "
 			     << "too complicated for elaboration." << endl;
 			continue;
+		  }
+
+		  if (need_bufz_for_input_port(prts)) {
+			NetBUFZ*tmp = new NetBUFZ(scope, scope->local_symbol(),
+						  sig->vector_width());
+			des->add_node(tmp);
+			connect(tmp->pin(1), sig->pin(0));
+
+			NetNet*tmp2 = new NetNet(scope, scope->local_symbol(),
+						 NetNet::WIRE, sig->vector_width());
+			tmp2->local_flag(true);
+			tmp2->set_line(*this);
+			tmp2->data_type(sig->data_type());
+			connect(tmp->pin(0), tmp2->pin(0));
+			sig = tmp2;
 		  }
 
 	    } else if (prts[0]->port_type() == NetNet::PINOUT) {
@@ -2623,8 +2649,8 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    }
 	    NexusSet*nset = enet->nex_input(rem_out);
 	    if (nset == 0) {
-		  cerr << get_fileline() << ": internal error: No NexusSet"
-		       << " from statement." << endl;
+		  cerr << get_fileline() << ": error: Unable to elaborate:"
+		       << endl;
 		  enet->dump(cerr, 6);
 		  des->errors += 1;
 		  return enet;
@@ -3355,29 +3381,6 @@ bool PProcess::elaborate(Design*des, NetScope*scope) const
 			   verinum(1));
       } while (0);
 
-	/* If this is an always block and we have no or zero delay then
-	 * a runtime infinite loop will happen. If we possible have some
-	 * delay then print a warning that an infinite loop is possible.
-	 */
-      if (type() == PProcess::PR_ALWAYS) {
-	    DelayType dly_type = top->statement()->delay_type();
-
-	    if (dly_type == NO_DELAY || dly_type == ZERO_DELAY) {
-		  cerr << get_fileline() << ": error: always statement"
-		       << " does not have any delay." << endl;
-		  cerr << get_fileline() << ":      : A runtime infinite"
-		       << " loop will occur." << endl;
-		  des->errors += 1;
-		  return false;
-
-	    } else if (dly_type == POSSIBLE_DELAY && warn_inf_loop) {
-		  cerr << get_fileline() << ": warning: always statement"
-		       << " may not have any delay." << endl;
-		  cerr << get_fileline() << ":        : A runtime infinite"
-		       << " loop may be possible." << endl;
-	    }
-      }
-
       return true;
 }
 
@@ -3845,6 +3848,37 @@ class later_defparams : public elaborator_work_item_t {
       }
 };
 
+bool Design::check_always_delay() const
+{
+      bool result_flag = true;
+
+      for (const NetProcTop*pr = procs_ ;  pr ;  pr = pr->next_) {
+	      /* If this is an always block and we have no or zero delay then
+	       * a runtime infinite loop will happen. If we possible have some
+	       * delay then print a warning that an infinite loop is possible.
+	       */
+	    if (pr->type() == NetProcTop::KALWAYS) {
+		  DelayType dly_type = pr->statement()->delay_type();
+
+		  if (dly_type == NO_DELAY || dly_type == ZERO_DELAY) {
+			cerr << pr->get_fileline() << ": error: always"
+			     << " statement does not have any delay." << endl;
+			cerr << pr->get_fileline() << ":      : A runtime"
+			     << " infinite loop will occur." << endl;
+			result_flag = false;
+
+		  } else if (dly_type == POSSIBLE_DELAY && warn_inf_loop) {
+			cerr << pr->get_fileline() << ": warning: always"
+			     << " statement may not have any delay." << endl;
+			cerr << pr->get_fileline() << ":        : A runtime"
+			     << " infinite loop may be possible." << endl;
+		  }
+	    }
+      }
+
+      return result_flag;
+}
+
 /*
  * This function is the root of all elaboration. The input is the list
  * of root module names. The function locates the Module definitions
@@ -3880,7 +3914,7 @@ Design* elaborate(list<perm_string>roots)
 	      // Get the module definition for this root instance.
 	    Module *rmod = (*mod).second;
 
-	      // Make the root scope. This makes a NetScoep object and
+	      // Make the root scope. This makes a NetScope object and
 	      // pushes it into the list of root scopes in the Design.
 	    NetScope*scope = des->make_root_scope(*root);
 
@@ -3893,7 +3927,7 @@ Design* elaborate(list<perm_string>roots)
 	    des->set_precision(rmod->time_precision);
 
 
-	      // Save this scope, along with its defintion, in the
+	      // Save this scope, along with its definition, in the
 	      // "root_elems" list for later passes.
 	    struct root_elem *r = new struct root_elem;
 	    r->mod = rmod;
@@ -3971,8 +4005,14 @@ Design* elaborate(list<perm_string>roots)
 	    rc &= rmod->elaborate(des, scope);
       }
 
-
       if (rc == false) {
+	    delete des;
+	    return 0;
+      }
+
+	// Now that everything is fully elaborated verify that we do
+	// not have an always block with no delay (an infinite loop).
+      if (des->check_always_delay() == false) {
 	    delete des;
 	    des = 0;
       }

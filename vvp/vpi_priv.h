@@ -137,6 +137,7 @@ struct __vpiCallback {
 	// user supplied callback data
       struct t_cb_data cb_data;
       struct t_vpi_time cb_time;
+      struct t_vpi_value cb_value;
 
 	// scheduled event
       struct sync_cb* cb_sync;
@@ -238,6 +239,7 @@ struct __vpiPV {
 };
 extern vpiHandle vpip_make_PV(char*name, int base, int width);
 extern vpiHandle vpip_make_PV(char*name, char*symbol, int width);
+extern vpiHandle vpip_make_PV(char*name, vpiHandle handle, int width);
 extern vpiHandle vpip_make_PV(char*name, int tbase, int twid, int width);
 
 extern struct __vpiPV* vpip_PV_from_handle(vpiHandle obj);
@@ -455,9 +457,10 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag);
 
 vpiHandle vpip_make_vthr_word(unsigned base, const char*type);
 
-vpiHandle vpip_make_vthr_A(char*symbol, unsigned index);
+vpiHandle vpip_make_vthr_A(char*label, unsigned index);
 vpiHandle vpip_make_vthr_A(char*label, char*symbol);
-vpiHandle vpip_make_vthr_A(char*symbol, unsigned tbase, unsigned twid);
+vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid);
+vpiHandle vpip_make_vthr_A(char*label, vpiHandle handle);
 
 /*
  * This function is called before any compilation to load VPI
