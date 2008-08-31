@@ -244,10 +244,10 @@ $(libdir)/ivl/ivl@EXEEXT@: ./ivl@EXEEXT@
 	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ $(DESTDIR)$(libdir)/ivl/ivl@EXEEXT@
 
 $(libdir)/ivl/include/constants.vams: $(srcdir)/constants.vams
-	$(INSTALL_DATA) $(srcdir)/constants.vams $@
+	$(INSTALL_DATA) $(srcdir)/constants.vams $(DESTDIR)$(libdir)/ivl/include/constants.vams
 
 $(libdir)/ivl/include/disciplines.vams: $(srcdir)/disciplines.vams
-	$(INSTALL_DATA) $(srcdir)/disciplines.vams $@
+	$(INSTALL_DATA) $(srcdir)/disciplines.vams $(DESTDIR)$(libdir)/ivl/include/disciplines.vams
 
 $(libdir)/ivl/xnf-s.conf: $(srcdir)/xnf-s.conf
 	$(INSTALL_DATA) $(srcdir)/xnf-s.conf $(DESTDIR)$(libdir)/ivl/xnf-s.conf

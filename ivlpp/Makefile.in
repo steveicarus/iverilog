@@ -63,13 +63,13 @@ lexor.c: lexor.lex
 install: all installdirs $(libdir)/ivl/ivlpp@EXEEXT@
 
 $(libdir)/ivl/ivlpp@EXEEXT@: ivlpp@EXEEXT@
-	$(INSTALL_PROGRAM) ./ivlpp@EXEEXT@ $(libdir)/ivl/ivlpp@EXEEXT@
+	$(INSTALL_PROGRAM) ./ivlpp@EXEEXT@ $(DESTDIR)$(libdir)/ivl/ivlpp@EXEEXT@
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(libdir)/ivl
+	$(srcdir)/../mkinstalldirs $(DESTDIR)$(libdir)/ivl
 
 uninstall:
-	rm -f $(libdir)/ivl/ivlpp@EXEEXT@
+	rm -f $(DESTDIR)$(libdir)/ivl/ivlpp@EXEEXT@
 
 lexor.o: lexor.c globals.h
 main.o: main.c globals.h

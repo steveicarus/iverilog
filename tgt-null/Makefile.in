@@ -75,22 +75,22 @@ check: all
 install: all installdirs $(libdir)/ivl/null.tgt $(INSTALL_DOC) $(libdir)/ivl/null.conf $(libdir)/ivl/null-s.conf
 
 $(libdir)/ivl/null.tgt: ./null.tgt
-	$(INSTALL_PROGRAM) ./null.tgt $(libdir)/ivl/null.tgt
+	$(INSTALL_PROGRAM) ./null.tgt $(DESTDIR)$(libdir)/ivl/null.tgt
 
 $(libdir)/ivl/null.conf: $(srcdir)/null.conf
-	$(INSTALL_DATA) $(srcdir)/null.conf $(libdir)/ivl/null.conf
+	$(INSTALL_DATA) $(srcdir)/null.conf $(DESTDIR)$(libdir)/ivl/null.conf
 
 $(libdir)/ivl/null-s.conf: $(srcdir)/null-s.conf
-	$(INSTALL_DATA) $(srcdir)/null-s.conf $(libdir)/ivl/null-s.conf
+	$(INSTALL_DATA) $(srcdir)/null-s.conf $(DESTDIR)$(libdir)/ivl/null-s.conf
 
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(includedir) $(bindir) $(libdir)/ivl
+	$(srcdir)/../mkinstalldirs $(DESTDIR)$(includedir) $(DESTDIR)$(bindir) $(DESTDIR)$(libdir)/ivl
 
 uninstall:
-	rm -f $(libdir)/ivl/null.tgt
-	rm -f $(libdir)/ivl/null.conf
-	rm -f $(libdir)/ivl/null-s.conf
+	rm -f $(DESTDIR)$(libdir)/ivl/null.tgt
+	rm -f $(DESTDIR)$(libdir)/ivl/null.conf
+	rm -f $(DESTDIR)$(libdir)/ivl/null-s.conf
 
 
 -include $(patsubst %.o, dep/%.d, $O)

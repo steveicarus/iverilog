@@ -1,6 +1,6 @@
 #norootforbuild
 #
-%define rev_date 20080429
+%define rev_date 20080830
 #
 #
 Summary: Icarus Verilog
@@ -41,11 +41,10 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 
-%attr(-,root,root) %doc COPYING README.txt BUGS.txt QUICK_START.txt ieee1364-notes.txt mingw.txt swift.txt netlist.txt t-dll.txt vpi.txt xnf.txt tgt-fpga/fpga.txt cadpli/cadpli.txt xilinx-hint.txt
+%attr(-,root,root) %doc COPYING README.txt BUGS.txt QUICK_START.txt ieee1364-notes.txt mingw.txt swift.txt netlist.txt t-dll.txt vpi.txt tgt-fpga/fpga.txt cadpli/cadpli.txt
 %attr(-,root,root) %doc examples/*
 
 %attr(-,root,root) %{_mandir}/man1/iverilog.1.gz
-#%attr(-,root,root) /usr/man/man1/iverilog-fpga.1.gz
 %attr(-,root,root) %{_mandir}/man1/iverilog-vpi.1.gz
 %attr(-,root,root) %{_mandir}/man1/vvp.1.gz
 
@@ -63,16 +62,19 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) %{_libdir}/ivl/vvp.tgt
 %attr(-,root,root) %{_libdir}/ivl/vvp.conf
 %attr(-,root,root) %{_libdir}/ivl/vvp-s.conf
-#%attr(-,root,root) %{_libdir}/ivl/fpga.tgt
-#%attr(-,root,root) %{_libdir}/ivl/fpga.conf
-#%attr(-,root,root) %{_libdir}/ivl/fpga-s.conf
-#%attr(-,root,root) %{_libdir}/ivl/xnf.conf
-#%attr(-,root,root) %{_libdir}/ivl/xnf-s.conf
+%attr(-,root,root) %{_libdir}/ivl/vhdl.tgt
+%attr(-,root,root) %{_libdir}/ivl/vhdl.conf
 %attr(-,root,root) %{_libdir}/ivl/system.sft
 %attr(-,root,root) %{_libdir}/ivl/system.vpi
+%attr(-,root,root) %{_libdir}/ivl/va_math.sft
+%attr(-,root,root) %{_libdir}/ivl/va_math.vpi
+%attr(-,root,root) %{_libdir}/ivl/v2005_math.sft
+%attr(-,root,root) %{_libdir}/ivl/v2005_math.vpi
 %attr(-,root,root) %{_libdir}/ivl/cadpli.vpl
 %attr(-,root,root) %{_libdir}/libvpi.a
 %attr(-,root,root) %{_libdir}/libveriuser.a
+%attr(-,root,root) %{_libdir}/ivl/include/constants.vams
+%attr(-,root,root) %{_libdir}/ivl/include/disciplines.vams
 %attr(-,root,root) /usr/include/ivl_target.h
 %attr(-,root,root) /usr/include/vpi_user.h
 %attr(-,root,root) /usr/include/acc_user.h
@@ -80,6 +82,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) /usr/include/_pli_types.h
 
 %changelog -n verilog
+* Sat Aug 30 2008 - steve@icarus.com
+- Add vhdl target files
+- Add V/AMS header files.
+
 * Fri Jan 25 2008 - steve@icarus.com
 - Removed vvp32 support for x86_64 build.
 
