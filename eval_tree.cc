@@ -1775,7 +1775,7 @@ NetExpr* evaluate_abs(NetExpr*arg)
       NetEConst*tmpi = dynamic_cast<NetEConst *>(arg);
       if (tmpi) {
 	    verinum arg = tmpi->value();
-	    if (arg.has_sign()) {
+	    if (arg.is_negative()) {
 		  arg = v_not(arg) + verinum(1);
 	    }
 	    return new NetEConst(arg);
