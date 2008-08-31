@@ -574,7 +574,7 @@ NetEConst* NetEBComp::eval_eqeq_real_(NetExpr*le, NetExpr*ri, bool ne_flag)
 	    assert(0);
       }
 
-      verinum result((lv == rv ^ ne_flag) ? verinum::V1 : verinum::V0, 1);
+      verinum result(((lv == rv) ^ ne_flag) ? verinum::V1 : verinum::V0, 1);
       vtmp = new NetEConst(result);
       vtmp->set_line(*this);
 

@@ -22,6 +22,7 @@
 # include  <map>
 # include  "StringHeap.h"
 # include  "LineInfo.h"
+# include  "PExpr.h"
 
 class PExpr;
 
