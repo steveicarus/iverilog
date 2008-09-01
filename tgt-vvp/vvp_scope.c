@@ -1193,13 +1193,10 @@ static void draw_lpm_array(ivl_lpm_t net)
 {
       ivl_nexus_t nex;
       ivl_signal_t mem = ivl_lpm_array(net);
-
-      fprintf(vvp_out, "L_%p .array/port v%p, ", net, mem);
-
       nex = ivl_lpm_select(net);
-      fprintf(vvp_out, "%s", draw_net_input(nex));
+      const char*tmp = draw_net_input(nex);
 
-      fprintf(vvp_out, ";\n");
+      fprintf(vvp_out, "L_%p .array/port v%p, %s;\n", net, mem, tmp);
 }
 
 static void draw_lpm_cmp(ivl_lpm_t net)
