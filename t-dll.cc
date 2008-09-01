@@ -1921,6 +1921,7 @@ void dll_target::lpm_mult(const NetMult*net)
       unsigned wid = net->width_r();
 
       obj->width = wid;
+      obj->u_.arith.signed_flag = 0;
 
       const Nexus*nex;
 
@@ -2204,6 +2205,7 @@ bool dll_target::net_const(const NetConst*net)
       assert(net->pin_count() == 1);
 
       obj->width_ = net->width();
+      obj->signed_ = 0;
       if (obj->width_ <= sizeof(obj->b.bit_)) {
 	    bits = obj->b.bit_;
 
