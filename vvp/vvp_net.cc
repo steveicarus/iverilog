@@ -1557,8 +1557,15 @@ vvp_vector2_t& vvp_vector2_t::operator >>= (unsigned shift)
 	    }
 
 	      // Cleanup the tail bits.
+
 	    unsigned use_words = words;
+	      // Mask_shift is the number of high bits of the top word
+	      // that are to be masked off. We start with the number
+	      // of bits that are not included even in the original,
+	      // then we include the bits of the shift, that are to be
+	      // masked to zero.
 	    unsigned long mask_shift = BITS_PER_WORD - wid_%BITS_PER_WORD;
+	    mask_shift %= BITS_PER_WORD;
 	    mask_shift += oshift;
 	    while (mask_shift >= BITS_PER_WORD) {
 		  vec_[use_words-1] = 0;
