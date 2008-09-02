@@ -323,7 +323,7 @@ int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
       out->set_slice(off, ivl_lpm_width(lpm) - 1);
    }
    
-   arch->add_stmt(new vhdl_cassign_stmt(out, f));
+   arch->add_stmt(new vhdl_cassign_stmt(out, f->cast(out->get_type())));
    
    return 0;
 }
