@@ -14,7 +14,7 @@ iverilog - Icarus Verilog compiler
 \fIiverilog\fP is a compiler that translates Verilog source code into
 executable programs for simulation, or other netlist formats for
 further processing. The currently supported targets are \fIvvp\fP for
-simulation, and \fIxnf\fP and \fIfpga\fP for synthesis. Other target
+simulation, and \fIfpga\fP for synthesis. Other target
 types are added as code generators are implemented.
 
 .SH OPTIONS
@@ -211,11 +211,6 @@ checking the syntax of the Verilog source.
 This is the default. The vvp target generates code for the vvp
 runtime. The output is a complete program that simulates the design
 but must be run by the \fBvvp\fP command.
-.TP 8
-.B xnf
-This is the Xilinx Netlist Format used by many tools for placing
-devices in FPGAs or other programmable devices. This target is
-obsolete, use the \fBfpga\fP target instead.
 .TP 8
 .B fpga
 This is a synthesis target that supports a variety of fpga devices,
@@ -417,11 +412,6 @@ To compile hello.v to an executable file called hello:
 To compile and run explicitly using the vvp runtime:
 
 	iverilog -ohello.vvp -tvvp hello.v
-
-To compile hello.v to a file in XNF-format called hello.xnf
-
-	iverilog -txnf -ohello.xnf hello.v
-
 
 .SH "AUTHOR"
 .nf

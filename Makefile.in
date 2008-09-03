@@ -230,8 +230,6 @@ else
 WIN32_INSTALL = $(bindir)/iverilog-vpi
 endif
 
-XNF_INSTALL = $(libdir)/ivl/xnf.conf $(libdir)/ivl/xnf-s.conf
-
 install: all installdirs $(libdir)/ivl/ivl@EXEEXT@  $(libdir)/ivl/include/constants.vams $(libdir)/ivl/include/disciplines.vams $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for dir in vpi ivlpp driver; \
@@ -248,12 +246,6 @@ $(libdir)/ivl/include/constants.vams: $(srcdir)/constants.vams
 
 $(libdir)/ivl/include/disciplines.vams: $(srcdir)/disciplines.vams
 	$(INSTALL_DATA) $(srcdir)/disciplines.vams $(DESTDIR)$(libdir)/ivl/include/disciplines.vams
-
-$(libdir)/ivl/xnf-s.conf: $(srcdir)/xnf-s.conf
-	$(INSTALL_DATA) $(srcdir)/xnf-s.conf $(DESTDIR)$(libdir)/ivl/xnf-s.conf
-
-$(libdir)/ivl/xnf.conf: $(srcdir)/xnf.conf
-	$(INSTALL_DATA) $(srcdir)/xnf.conf $(DESTDIR)$(libdir)/ivl/xnf.conf
 
 $(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
 	$(INSTALL_DATA) $(srcdir)/ivl_target.h $(DESTDIR)$(includedir)/ivl_target.h
@@ -304,7 +296,7 @@ uninstall:
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for dir in vpi ivlpp driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
-	for f in xnf.conf xnf-s.conf ivl@EXEEXT@ include/constants.vams include/disciplines.vams; \
+	for f in ivl@EXEEXT@ include/constants.vams include/disciplines.vams; \
 	    do rm -f $(DESTDIR)$(libdir)/ivl/$$f; done
 	-rmdir $(DESTDIR)$(libdir)/ivl/include
 	-rmdir $(DESTDIR)$(libdir)/ivl
