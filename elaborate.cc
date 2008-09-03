@@ -1803,6 +1803,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
       if (rv == 0) return 0;
       assert(rv);
 
+      if (count_) assert(event_);
 
 	/* Rewrite delayed assignments as assignments that are
 	   delayed. For example, a = #<d> b; becomes:
@@ -1855,19 +1856,58 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	      /* Generate the delay statement with the final
 		 assignment attached to it. If this is an event delay,
 		 elaborate the PEventStatement. Otherwise, create the
-		 right NetPDelay object. */
+		 right NetPDelay object. For a repeat event control
+		 repeat the event and then do the final assignment.  */
 	    NetProc*st;
 	    if (event_) {
-		  st = event_->elaborate_st(des, scope, a2);
-		  if (st == 0) {
-			cerr << event_->get_fileline() << ": error: "
-			      "unable to elaborate event expression."
-			     << endl;
-			des->errors += 1;
-			return 0;
-		  }
-		  assert(st);
+		  if (count_) {
+			NetExpr*count = elab_and_eval(des, scope, count_, -1);
+			if (count == 0) {
+			      cerr << get_fileline() << ": Unable to "
+			              "elaborate repeat expression." << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+			st = event_->elaborate(des, scope);
+			if (st == 0) {
+			      cerr << event_->get_fileline() << ": error: "
+			              "unable to elaborate event expression."
+			      << endl;
+			      des->errors += 1;
+			      return 0;
+			}
 
+			  // If the expression is a constant, handle
+			  // certain special iteration counts.
+			if (NetEConst*ce = dynamic_cast<NetEConst*>(count)) {
+			      long val = ce->value().as_long();
+				// We only need the real statement.
+			      if (val <= 0) {
+				    delete count;
+				    delete st;
+				    st = 0;
+
+				// We don't need the repeat statement.
+			      } else if (val == 1) {
+				    delete count;
+
+				// We need a repeat statement.
+			      } else {
+				    st = new NetRepeat(count, st);
+			      }
+			} else {
+			      st = new NetRepeat(count, st);
+			}
+		  } else {
+			st = event_->elaborate_st(des, scope, a2);
+			if (st == 0) {
+			      cerr << event_->get_fileline() << ": error: "
+			              "unable to elaborate event expression."
+			      << endl;
+			      des->errors += 1;
+			      return 0;
+			}
+		  }
 	    } else {
 		  NetPDelay*de = new NetPDelay(delay, a2);
 		  de->set_line(*this);
@@ -1877,7 +1917,8 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	      /* And build up the complex statement. */
 	    NetBlock*bl = new NetBlock(NetBlock::SEQU, 0);
 	    bl->append(a1);
-	    bl->append(st);
+	    if (st) bl->append(st);
+	    if (count_) bl->append(a2);
 
 	    return bl;
       }
@@ -1947,6 +1988,34 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       NetExpr*delay = 0;
       if (delay_ != 0)
 	    delay = elaborate_delay_expr(delay_, des, scope);
+
+      if (count_ != 0 || event_ != 0) {
+	    NetExpr*count = 0;
+	    if (count_ != 0) {
+		  assert(event_ != 0);
+		  count = elab_and_eval(des, scope, count_, -1);
+		  if (count == 0) {
+			cerr << get_fileline() << ": Unable to elaborate "
+			        "repeat expression." << endl;
+			des->errors += 1;
+//			return 0;
+		  }
+	    }
+
+	    NetProc* event = event_->elaborate(des, scope);
+	    if (event == 0) {
+		  cerr << get_fileline() << ": unable to elaborate "
+		          "event expression." << endl;
+		  des->errors += 1;
+//		  return 0;
+	    }
+
+	    cerr << get_fileline() << ": sorry: non blocking ";
+	    if (count_) cerr << "repeat ";
+	    cerr  << "event controls are not supported." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
 	/* All done with this node. Mark its line number and check it in. */
       NetAssignNB*cur = new NetAssignNB(lv, rv);
@@ -3195,17 +3264,14 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 	// If the expression is a constant, handle certain special
 	// iteration counts.
       if (NetEConst*ce = dynamic_cast<NetEConst*>(expr)) {
-	    verinum val = ce->value();
-	    switch (val.as_ulong()) {
-		case 0:
+	    long val = ce->value().as_long();
+	    if (val <= 0) {
 		  delete expr;
 		  delete stat;
 		  return new NetBlock(NetBlock::SEQU, 0);
-		case 1:
+	    } else if (val == 1) {
 		  delete expr;
 		  return stat;
-		default:
-		  break;
 	    }
       }
 

@@ -1402,10 +1402,11 @@ static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
       unsigned lab_top = local_count++, lab_out = local_count++;
       ivl_expr_t exp = ivl_stmt_cond_expr(net);
       struct vector_info cnt = draw_eval_expr(exp, 0);
+      char *sign = ivl_expr_signed(exp) ? "s" : "u";
 
 	/* Test that 0 < expr */
-      fprintf(vvp_out, "T_%u.%u %%cmp/u 0, %u, %u;\n", thread_count,
-	      lab_top, cnt.base, cnt.wid);
+      fprintf(vvp_out, "T_%u.%u %%cmp/%s 0, %u, %u;\n", thread_count,
+	      lab_top, sign, cnt.base, cnt.wid);
       clear_expression_lookaside();
       fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 5;\n", thread_count, lab_out);
 	/* This adds -1 (all ones in 2's complement) to the count. */

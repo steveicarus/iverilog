@@ -40,6 +40,12 @@ ostream& operator << (ostream&out, const PExpr&obj)
       return out;
 }
 
+ostream& operator << (ostream&out, const PEventStatement&obj)
+{
+      obj.dump_inline(out);
+      return out;
+}
+
 ostream& operator << (ostream&o, const PDelays&d)
 {
       d.dump_delays(o);
@@ -554,16 +560,20 @@ void AContrib::dump(ostream&out, unsigned ind) const
 
 void PAssign::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "";
-      out << *lval() << " = " << delay_ << " " << *rval() << ";";
-      out << "  /* " << get_fileline() << " */" << endl;
+      out << setw(ind) << "" << *lval() << " = ";
+      if (delay_) out << "#" << *delay_ << " ";
+      if (count_) out << "repeat(" << *count_ << ") ";
+      if (event_) out << *event_ << " ";
+      out << *rval() << ";" << "  /* " << get_fileline() << " */" << endl;
 }
 
 void PAssignNB::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "";
-      out << *lval() << " <= " << delay_ << " " << *rval() << ";";
-      out << "  /* " << get_fileline() << " */" << endl;
+      out << setw(ind) << "" << *lval() << " <= ";
+      if (delay_) out << "#" << *delay_ << " ";
+      if (count_) out << "repeat(" << *count_ << ") ";
+      if (event_) out << *event_ << " ";
+      out << *rval() << ";" << "  /* " << get_fileline() << " */" << endl;
 }
 
 void PBlock::dump(ostream&out, unsigned ind) const
@@ -710,6 +720,23 @@ void PEventStatement::dump(ostream&out, unsigned ind) const
 	    statement_->dump(out, ind+2);
       } else {
 	    out << " ;" << endl;
+      }
+}
+
+void PEventStatement::dump_inline(ostream&out) const
+{
+      assert(statement_ == 0);
+
+      if (expr_.count() == 0) {
+	    out << "@* ";
+
+      } else {
+	    out << "@(" << *(expr_[0]);
+	    if (expr_.count() > 1)
+		  for (unsigned idx = 1 ;  idx < expr_.count() ;  idx += 1)
+			out << " or " << *(expr_[idx]);
+
+	    out << ")";
       }
 }
 
