@@ -76,21 +76,21 @@ install: all installdirs $(libdir)/ivl/stub.tgt \
 	$(libdir)/ivl/stub.conf $(libdir)/ivl/stub-s.conf
 
 $(libdir)/ivl/stub.tgt: ./stub.tgt
-	$(INSTALL_PROGRAM) ./stub.tgt $(libdir)/ivl/stub.tgt
+	$(INSTALL_PROGRAM) ./stub.tgt $(DESTDIR)$(libdir)/ivl/stub.tgt
 
 $(libdir)/ivl/stub.conf: stub.conf
-	$(INSTALL_DATA) $< $(libdir)/ivl/stub.conf
+	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl/stub.conf
 
 $(libdir)/ivl/stub-s.conf: stub-s.conf
-	$(INSTALL_DATA) $< $(libdir)/ivl/stub-s.conf
+	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl/stub-s.conf
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(includedir) $(bindir) $(libdir)/ivl
+	$(srcdir)/../mkinstalldirs $(DESTDIR)$(includedir) $(DESTDIR)$(bindir) $(DESTDIR)$(libdir)/ivl
 
 uninstall:
-	rm -f $(libdir)/ivl/stub.tgt
-	rm -f $(libdir)/ivl/stub.conf
-	rm -f $(libdir)/ivl/stub-s.conf
+	rm -f $(DESTDIR)$(libdir)/ivl/stub.tgt
+	rm -f $(DESTDIR)$(libdir)/ivl/stub.conf
+	rm -f $(DESTDIR)$(libdir)/ivl/stub-s.conf
 
 
 -include $(patsubst %.o, dep/%.d, $O)

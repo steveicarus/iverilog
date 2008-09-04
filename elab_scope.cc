@@ -621,9 +621,6 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 	    return false;
       }
 
-	// The name of the scope to generate, whatever that item is.
-      hname_t use_name (scope_name);
-
       if (debug_scopes)
 	    cerr << get_fileline() << ": debug: Generate case "
 		 << "switch value=" << case_value_co->value() << endl;
@@ -672,6 +669,9 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 	    cerr << get_fileline() << ": debug: "
 		 << "Generate case matches item at "
 		 << item->get_fileline() << endl;
+
+ 	// The name of the scope to generate, whatever that item is.
+      hname_t use_name (item->scope_name);
 
       NetScope*scope = new NetScope(container, use_name,
 				    NetScope::GENBLOCK);

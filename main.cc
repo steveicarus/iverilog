@@ -161,9 +161,6 @@ extern void synth(Design*des);
 extern void synth2(Design*des);
 extern void syn_rules(Design*des);
 extern void nodangle(Design*des);
-#ifdef WITH_T_XNF
-extern void xnfio(Design*des);
-#endif
 
 typedef void (*net_func)(Design*);
 static struct net_func_map {
@@ -175,9 +172,6 @@ static struct net_func_map {
       { "synth",   &synth },
       { "synth2",  &synth2 },
       { "syn-rules",   &syn_rules },
-#ifdef WITH_T_XNF
-      { "xnfio",   &xnfio },
-#endif
       { 0, 0 }
 };
 

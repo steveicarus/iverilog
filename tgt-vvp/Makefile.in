@@ -88,20 +88,20 @@ check: all
 install: all installdirs $(libdir)/ivl/vvp.tgt $(libdir)/ivl/vvp.conf $(libdir)/ivl/vvp-s.conf
 
 $(libdir)/ivl/vvp.tgt: ./vvp.tgt
-	$(INSTALL_PROGRAM) ./vvp.tgt $(libdir)/ivl/vvp.tgt
+	$(INSTALL_PROGRAM) ./vvp.tgt $(DESTDIR)$(libdir)/ivl/vvp.tgt
 
 $(libdir)/ivl/vvp.conf: vvp.conf
-	$(INSTALL_DATA) $< $(libdir)/ivl/vvp.conf
+	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl/vvp.conf
 
 $(libdir)/ivl/vvp-s.conf: vvp-s.conf
-	$(INSTALL_DATA) $< $(libdir)/ivl/vvp-s.conf
+	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl/vvp-s.conf
 
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(libdir)/ivl
+	$(srcdir)/../mkinstalldirs $(DESTDIR)$(libdir)/ivl
 
 uninstall:
-	rm -f $(libdir)/ivl/vvp.tgt $(libdir)/ivl/vvp.conf $(libdir)/ivl/vvp-s.conf
+	rm -f $(DESTDIR)$(libdir)/ivl/vvp.tgt $(DESTDIR)$(libdir)/ivl/vvp.conf $(DESTDIR)$(libdir)/ivl/vvp-s.conf
 
 
 -include $(patsubst %.o, dep/%.d, $O)

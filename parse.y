@@ -3648,28 +3648,23 @@ statement
 		  $$ = tmp;
 		}
 	| lpvalue '=' event_control expression ';'
-		{ PAssign*tmp = new PAssign($1,$3,$4);
+		{ PAssign*tmp = new PAssign($1,0,$3,$4);
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| lpvalue '=' K_repeat '(' expression ')' event_control expression ';'
-		{ PAssign*tmp = new PAssign($1,$7,$8);
+		{ PAssign*tmp = new PAssign($1,$5,$7,$8);
 		  FILE_NAME(tmp,@1);
 		  tmp->set_lineno(@1.first_line);
-		  yyerror(@3, "sorry: repeat event control not supported.");
-		  delete $5;
 		  $$ = tmp;
 		}
 	| lpvalue K_LE event_control expression ';'
-		{ yyerror(@1, "sorry: Event controls not supported here.");
-		  PAssignNB*tmp = new PAssignNB($1,$4);
+		{ PAssignNB*tmp = new PAssignNB($1,0,$3,$4);
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| lpvalue K_LE K_repeat '(' expression ')' event_control expression ';'
-		{ yyerror(@1, "sorry: Event controls not supported here.");
-		  delete $5;
-		  PAssignNB*tmp = new PAssignNB($1,$8);
+		{ PAssignNB*tmp = new PAssignNB($1,$5,$7,$8);
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}

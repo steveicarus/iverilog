@@ -77,16 +77,16 @@ check: all
 install: all installdirs $(libdir)/ivl/vhdl.tgt $(libdir)/ivl/vhdl.conf
 
 $(libdir)/ivl/vhdl.tgt: ./vhdl.tgt
-	$(INSTALL_PROGRAM) ./vhdl.tgt $(libdir)/ivl/vhdl.tgt
+	$(INSTALL_PROGRAM) ./vhdl.tgt $(DESTDIR)$(libdir)/ivl/vhdl.tgt
 
 $(libdir)/ivl/vhdl.conf: vhdl.conf
-	$(INSTALL_DATA) $< $(libdir)/ivl/vhdl.conf
+	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl/vhdl.conf
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(libdir)/ivl
+	$(srcdir)/../mkinstalldirs $(DESTDIR)$(libdir)/ivl
 
 uninstall:
-	rm -f $(libdir)/ivl/vhdl.tgt $(libdir)/ivl/vhdl.conf
+	rm -f $(DESTDIR)$(libdir)/ivl/vhdl.tgt $(DESTDIR)$(libdir)/ivl/vhdl.conf
 
 
 -include $(patsubst %.o, dep/%.d, $O)

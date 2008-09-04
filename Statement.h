@@ -93,7 +93,7 @@ class PAssign_  : public Statement {
     public:
       explicit PAssign_(PExpr*lval, PExpr*ex);
       explicit PAssign_(PExpr*lval, PExpr*de, PExpr*ex);
-      explicit PAssign_(PExpr*lval, PEventStatement*de, PExpr*ex);
+      explicit PAssign_(PExpr*lval, PExpr*cnt, PEventStatement*de, PExpr*ex);
       virtual ~PAssign_() =0;
 
       const PExpr* lval() const  { return lval_; }
@@ -105,6 +105,7 @@ class PAssign_  : public Statement {
 
       PExpr* delay_;
       PEventStatement*event_;
+      PExpr* count_;
 
     private:
       PExpr* lval_;
@@ -116,7 +117,7 @@ class PAssign  : public PAssign_ {
     public:
       explicit PAssign(PExpr*lval, PExpr*ex);
       explicit PAssign(PExpr*lval, PExpr*de, PExpr*ex);
-      explicit PAssign(PExpr*lval, PEventStatement*de, PExpr*ex);
+      explicit PAssign(PExpr*lval, PExpr*cnt, PEventStatement*de, PExpr*ex);
       ~PAssign();
 
       virtual void dump(ostream&out, unsigned ind) const;
@@ -130,6 +131,7 @@ class PAssignNB  : public PAssign_ {
     public:
       explicit PAssignNB(PExpr*lval, PExpr*ex);
       explicit PAssignNB(PExpr*lval, PExpr*de, PExpr*ex);
+      explicit PAssignNB(PExpr*lval, PExpr*cnt, PEventStatement*de, PExpr*ex);
       ~PAssignNB();
 
       virtual void dump(ostream&out, unsigned ind) const;
@@ -334,6 +336,9 @@ class PEventStatement  : public Statement {
       void set_statement(Statement*st);
 
       virtual void dump(ostream&out, unsigned ind) const;
+	// Call this with a NULL statement only. It is used to print
+	// the event expression for inter-assignment event controls.
+      virtual void dump_inline(ostream&out) const;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void elaborate_sig(Design*des, NetScope*scope) const;
@@ -348,6 +353,8 @@ class PEventStatement  : public Statement {
       svector<PEEvent*>expr_;
       Statement*statement_;
 };
+
+ostream& operator << (ostream&o, const PEventStatement&obj);
 
 class PForce  : public Statement {
 

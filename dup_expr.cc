@@ -21,6 +21,7 @@
 
 # include  "netlist.h"
 # include  <cassert>
+# include  <stdlib.h>
 # include  "ivl_assert.h"
 
 NetEAccess* NetEAccess::dup_expr() const

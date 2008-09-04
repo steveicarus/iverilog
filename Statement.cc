@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: Statement.cc,v 1.30 2007/05/24 04:07:11 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -30,19 +27,19 @@ Statement::~Statement()
 }
 
 PAssign_::PAssign_(PExpr*lval, PExpr*ex)
-: event_(0), lval_(lval), rval_(ex)
+: event_(0), count_(0), lval_(lval), rval_(ex)
 {
       delay_ = 0;
 }
 
 PAssign_::PAssign_(PExpr*lval, PExpr*de, PExpr*ex)
-: event_(0), lval_(lval), rval_(ex)
+: event_(0), count_(0), lval_(lval), rval_(ex)
 {
       delay_ = de;
 }
 
-PAssign_::PAssign_(PExpr*lval, PEventStatement*ev, PExpr*ex)
-: event_(ev), lval_(lval), rval_(ex)
+PAssign_::PAssign_(PExpr*lval, PExpr*cnt, PEventStatement*ev, PExpr*ex)
+: event_(ev), count_(cnt), lval_(lval), rval_(ex)
 {
       delay_ = 0;
 }
@@ -63,8 +60,8 @@ PAssign::PAssign(PExpr*lval, PExpr*d, PExpr*ex)
 {
 }
 
-PAssign::PAssign(PExpr*lval, PEventStatement*d, PExpr*ex)
-: PAssign_(lval, d, ex)
+PAssign::PAssign(PExpr*lval, PExpr*cnt, PEventStatement*d, PExpr*ex)
+: PAssign_(lval, cnt, d, ex)
 {
 }
 
@@ -79,6 +76,11 @@ PAssignNB::PAssignNB(PExpr*lval, PExpr*ex)
 
 PAssignNB::PAssignNB(PExpr*lval, PExpr*d, PExpr*ex)
 : PAssign_(lval, d, ex)
+{
+}
+
+PAssignNB::PAssignNB(PExpr*lval, PExpr*cnt, PEventStatement*d, PExpr*ex)
+: PAssign_(lval, cnt, d, ex)
 {
 }
 
@@ -298,38 +300,3 @@ PWhile::~PWhile()
       delete cond_;
       delete statement_;
 }
-
-/*
- * $Log: Statement.cc,v $
- * Revision 1.30  2007/05/24 04:07:11  steve
- *  Rework the heirarchical identifier parse syntax and pform
- *  to handle more general combinations of heirarch and bit selects.
- *
- * Revision 1.29  2004/02/18 17:11:54  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.28  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.27  2002/04/21 22:31:02  steve
- *  Redo handling of assignment internal delays.
- *  Leave it possible for them to be calculated
- *  at run time.
- *
- * Revision 1.26  2002/04/21 04:59:07  steve
- *  Add support for conbinational events by finding
- *  the inputs to expressions and some statements.
- *  Get case and assignment statements working.
- *
- * Revision 1.25  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.24  2001/11/22 06:20:59  steve
- *  Use NetScope instead of string for scope path.
- *
- * Revision 1.23  2001/07/25 03:10:48  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- */
-

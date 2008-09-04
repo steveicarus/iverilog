@@ -104,7 +104,7 @@ elab_lval.o elab_net.o elab_pexpr.o elab_scope.o \
 elab_sig.o emit.o eval.o eval_attrib.o \
 eval_tree.o expr_synth.o functor.o lexor.o lexor_keyword.o link_const.o \
 load_module.o netlist.o netmisc.o net_assign.o \
-net_design.o net_event.o net_expr.o net_force.o net_func.o \
+net_design.o net_event.o net_expr.o net_func.o \
 net_link.o net_modulo.o net_nex_input.o net_nex_output.o \
 net_proc.o net_scope.o net_tran.o net_udp.o pad_to_width.o \
 parse.o parse_misc.o pform.o pform_analog.o pform_disciplines.o \
@@ -230,8 +230,6 @@ else
 WIN32_INSTALL = $(bindir)/iverilog-vpi
 endif
 
-XNF_INSTALL = $(libdir)/ivl/xnf.conf $(libdir)/ivl/xnf-s.conf
-
 install: all installdirs $(libdir)/ivl/ivl@EXEEXT@  $(libdir)/ivl/include/constants.vams $(libdir)/ivl/include/disciplines.vams $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for dir in vpi ivlpp driver; \
@@ -244,16 +242,10 @@ $(libdir)/ivl/ivl@EXEEXT@: ./ivl@EXEEXT@
 	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ $(DESTDIR)$(libdir)/ivl/ivl@EXEEXT@
 
 $(libdir)/ivl/include/constants.vams: $(srcdir)/constants.vams
-	$(INSTALL_DATA) $(srcdir)/constants.vams $@
+	$(INSTALL_DATA) $(srcdir)/constants.vams $(DESTDIR)$(libdir)/ivl/include/constants.vams
 
 $(libdir)/ivl/include/disciplines.vams: $(srcdir)/disciplines.vams
-	$(INSTALL_DATA) $(srcdir)/disciplines.vams $@
-
-$(libdir)/ivl/xnf-s.conf: $(srcdir)/xnf-s.conf
-	$(INSTALL_DATA) $(srcdir)/xnf-s.conf $(DESTDIR)$(libdir)/ivl/xnf-s.conf
-
-$(libdir)/ivl/xnf.conf: $(srcdir)/xnf.conf
-	$(INSTALL_DATA) $(srcdir)/xnf.conf $(DESTDIR)$(libdir)/ivl/xnf.conf
+	$(INSTALL_DATA) $(srcdir)/disciplines.vams $(DESTDIR)$(libdir)/ivl/include/disciplines.vams
 
 $(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
 	$(INSTALL_DATA) $(srcdir)/ivl_target.h $(DESTDIR)$(includedir)/ivl_target.h
@@ -304,7 +296,7 @@ uninstall:
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for dir in vpi ivlpp driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
-	for f in xnf.conf xnf-s.conf ivl@EXEEXT@ include/constants.vams include/disciplines.vams; \
+	for f in ivl@EXEEXT@ include/constants.vams include/disciplines.vams; \
 	    do rm -f $(DESTDIR)$(libdir)/ivl/$$f; done
 	-rmdir $(DESTDIR)$(libdir)/ivl/include
 	-rmdir $(DESTDIR)$(libdir)/ivl
