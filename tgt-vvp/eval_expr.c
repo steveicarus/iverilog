@@ -2169,7 +2169,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	    assert(res.base);
 	    fprintf(vvp_out, "   %%load/v %u, v%p_%u, %u; Only need %u of %u bits\n",
 		    res.base, sig, use_word, bit_wid, bit_wid, ivl_expr_width(sube));
- 
+
 	    save_signal_lookaside(res.base, sig, use_word, bit_wid);
 	      /* Pad the part select to the desired width. Note that
 	         this *should* always turn into an unsigned pad

@@ -394,7 +394,7 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 	    if (zeros > 0) {
 		  type = op_code == 'e'? NetUReduce::NOR : NetUReduce::OR;
 
-		  if (debug_elaborate) 
+		  if (debug_elaborate)
 			cerr << lsig->get_fileline() << ": debug: "
 			     << "Replace net==" << val << " equality with "
 			     << zeros << "-input reduction [N]OR gate." << endl;
@@ -402,7 +402,7 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 	    } else {
 		  type = op_code == 'e'? NetUReduce::AND : NetUReduce::NAND;
 
-		  if (debug_elaborate) 
+		  if (debug_elaborate)
 			cerr << lsig->get_fileline() << ": debug: "
 			     << "Replace net==" << val << " equality with "
 			     << ones << "-input reduction AND gate." << endl;
@@ -1227,8 +1227,8 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	    }
 
 	    /* If all data bits get shifted away, connect the zero or
- 	     * padding bits directly to output, and stop before building the
- 	     * concatenation. */
+	     * padding bits directly to output, and stop before building the
+	     * concatenation. */
 	    if (dist >= lwidth) {
 		  connect(osig->pin(0), zero->pin(0));
 		  return osig;
@@ -1829,7 +1829,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	    if (id_msb || id_lsb) {
 		  assert(id_msb && id_lsb);
 		  const NetEConst*tmp = dynamic_cast<const NetEConst*>(id_msb);
-		  ivl_assert(*this, tmp);		  
+		  ivl_assert(*this, tmp);
 		  msb = tmp->value().as_long();
 
 		  tmp = dynamic_cast<const NetEConst*>(id_lsb);
@@ -2997,7 +2997,7 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 			if (value_->get(width-1) != verinum::V0)
 			      break;
 			width -= 1;
-		  
+
 	    }
 
 	    } else if (value_->has_sign() == false) {
@@ -3406,7 +3406,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	      tmp->decay_time(decay);
 
 	      connect(tmp->pin(1), sub_sig->pin(0));
-	      connect(tmp->pin(0), sig->pin(0));	    
+	      connect(tmp->pin(0), sig->pin(0));
 	    }
 	    break;
 
@@ -3662,7 +3662,7 @@ NetNet* PEUnary::elab_net_unary_real_(Design*des, NetScope*scope,
 		    " for real values." << endl;
 	    des->errors += 1;
 	    break;
- 
+
 	  case 'm': { // abs()
 		NetAbs*tmp = new NetAbs(scope, scope->local_symbol(), 1);
 		tmp->set_line(*this);

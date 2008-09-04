@@ -188,19 +188,19 @@ statement
 
         | T_LABEL K_ARRAY T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
                 { compile_var_array($1, $3, $5, $6, $8, $9, 0); }
- 
+
         | T_LABEL K_ARRAY_I T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
                 { compile_var_array($1, $3, $5, $6, $8, $9, 2); }
- 
+
         | T_LABEL K_ARRAY_R T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
                 { compile_real_array($1, $3, $5, $6, $8, $9); }
- 
+
         | T_LABEL K_ARRAY_S T_STRING ',' signed_t_number signed_t_number ',' signed_t_number signed_t_number ';'
                 { compile_var_array($1, $3, $5, $6, $8, $9, 1); }
- 
+
         | T_LABEL K_ARRAY T_STRING ',' signed_t_number signed_t_number ';'
                 { compile_net_array($1, $3, $5, $6); }
- 
+
         | T_LABEL K_ARRAY_PORT T_SYMBOL ',' T_SYMBOL ';'
 		{ compile_array_port($1, $3, $5); }
 
@@ -831,7 +831,7 @@ argument
       { $$ = vpip_make_binary_const($1.idx, $1.text);
 	free($1.text);
       }
-  | symbol_access 
+  | symbol_access
       { $$ = $1; }
   ;
 

@@ -570,7 +570,7 @@ void vvp_fun_signal::get_value(struct t_vpi_value*vp)
       switch (vp->format) {
 	  case vpiScalarVal:
 	    // This works because vvp_bit4_t has the same encoding
-	    // as a scalar value! See vpip_vec4_get_value() for a 
+	    // as a scalar value! See vpip_vec4_get_value() for a
 	    // more robust method.
 	    vp->value.scalar = value(0);
 	    break;

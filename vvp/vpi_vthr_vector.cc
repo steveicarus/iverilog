@@ -296,7 +296,7 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	  case vpiRealVal:
 	    vp->value.real = 0;
 	    for (unsigned idx = wid ;  idx > 0 ;  idx -= 1) {
-	    	  vp->value.real *= 2.0;
+		  vp->value.real *= 2.0;
 		  switch (get_bit(rfp, idx-1)) {
 		      case BIT4_0:
 			break;

@@ -149,7 +149,7 @@ int cmdfile_stack_ptr = 0;
       cflval.text = trim_trailing_white(yytext, 0);
       BEGIN(0);
       return TOK_STRING; }
-       
+
   /* Fallback match. */
 . { return yytext[0]; }
 

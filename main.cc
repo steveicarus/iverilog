@@ -230,16 +230,16 @@ static void process_generation_flag(const char*gen)
 
       } else if (strcmp(gen,"specify") == 0) {
 	    gn_specify_blocks_flag = true;
- 
+
       } else if (strcmp(gen,"no-specify") == 0) {
 	    gn_specify_blocks_flag = false;
- 
+
       } else if (strcmp(gen,"verilog-ams") == 0) {
 	    gn_verilog_ams_flag = true;
- 
+
       } else if (strcmp(gen,"no-verilog-ams") == 0) {
 	    gn_verilog_ams_flag = false;
- 
+
       } else if (strcmp(gen,"io-range-error") == 0) {
 	    gn_io_range_error_flag = true;
 

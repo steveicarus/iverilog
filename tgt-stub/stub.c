@@ -1042,7 +1042,7 @@ static void signal_nexus_const(ivl_signal_t sig,
       switch (ivl_const_type(con)) {
 	  case IVL_VT_LOGIC:
 	    bits = ivl_const_bits(con);
- 	    for (idx = 0 ;  idx < width ;  idx += 1) {
+	    for (idx = 0 ;  idx < width ;  idx += 1) {
 		  fprintf(out, "%c", bits[width-idx-1]);
 	    }
 	    break;

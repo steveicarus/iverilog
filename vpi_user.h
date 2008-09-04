@@ -76,7 +76,7 @@ typedef struct t_vpi_vlog_info
 
 
 typedef struct t_vpi_time {
-  
+
       /*
 	Type can be :
 
@@ -124,52 +124,52 @@ typedef struct t_vpi_value {
 
 
 /*
-  
-  Conform the IEEE 1364, We add the 
-  Standard vpi_delay structure to 
+
+  Conform the IEEE 1364, We add the
+  Standard vpi_delay structure to
   enable the modpath delay values
 
-  
+
   Conform IEEE 1364, Pg 670 :
-  
+
   The "da" field of the s_vpi_delay
   structure shall be a user allocated
   array of "s_vpi_time" structure
-  
+
   The array shall store delay values returned
   by vpi_get_delay(). The number of elements in
   the array shall be determined by
-  
+
   (1) The number of delays to be retrieved
       ( normally this is used in vpi_get_delays (..) )
-  { 
+  {
     (1.1) Set by "no_of_delays" field
-   
+
     (1.2) For the primitive_object, the no_of_delays
         shall be 2 or 3
-   
+
     (1.3) For path_delay object the no_of_delays shall
         be 1,2,3,6, 12
-    
+
     (1.4) For timing_check_object, the no_of_delays shall
-        be match the number of limits existing in the 
+        be match the number of limits existing in the
 	Time Check
-    
+
     (1.5) For intermodule_path object, the no_of_delays shall
         be 2 or 3
   }
 
-  
-  
-  
+
+
+
   (2) The "mtm_flag" && "pulsere_flag"
 
-  
+
   Normally, if you set mtm = X, pulsere = Y
   then, you will need allocate (num * no_of_delay)
   s_vpi_time elements for 'da' array before calling
   the vpi_get/put_delays (..)
-  
+
   ---------------------------------------------------------------------------
   |                |                         |                              |
   | mtm_flag       | No of s_vpi_time array  |   order in which delay       |
@@ -197,7 +197,7 @@ typedef struct t_vpi_value {
   |                |                         |           ....               |
   |----------------|-------------------------|------------------------------|
   |                |                         | 1o delay da[0]--> min delay  |
-  | mtm = true     |                         |          da[1]--> typ delay  | 
+  | mtm = true     |                         |          da[1]--> typ delay  |
   | pulere = true  | 9*no_of_delay           |          da[2]--> max delay  |
   |                |                         |          da[3]--> min delay  |
   |                |                         |          da[4]--> typ delay  |
@@ -206,14 +206,14 @@ typedef struct t_vpi_value {
   |                |                         |          da[7]--> typ delay  |
   |                |                         |          da[8]--> max delay  |
   |                |                         | 2o delay da[9]--> min delay  |
-  |                |                         |          ....                | 
+  |                |                         |          ....                |
    -------------------------------------------------------------------------
-   
+
    IMPORTANT :
-   
-   The delay Structure has to be allocated before passing a pointer to 
-   "vpi_get_delays ( )". 
-   
+
+   The delay Structure has to be allocated before passing a pointer to
+   "vpi_get_delays ( )".
+
 */
 
 
@@ -296,7 +296,7 @@ typedef struct t_vpi_delay  {
 #define vpiArgument    89
 #define vpiInternalScope 92
 #define vpiModPathIn     95
-#define vpiModPathOut    96 
+#define vpiModPathOut    96
 #define vpiVariables   100
 #define vpiExpr        102
 
@@ -500,7 +500,7 @@ extern vpiHandle vpi_put_value(vpiHandle obj, p_vpi_value value,
 extern PLI_INT32 vpi_free_object(vpiHandle ref);
 extern PLI_INT32 vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p);
 
-/*  
+/*
   These Routines will enable the modpath vpiHandle
   to read/write delay values
 */

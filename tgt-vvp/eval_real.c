@@ -176,7 +176,7 @@ static int draw_number_real(ivl_expr_t exp)
 
 	/* If this is actually a negative number, then get the
 	   positive equivalent, and set the sign bit in the exponent
-	   field. 
+	   field.
 
 	   To get the positive equivalent of mant we need to take the
 	   negative of the mantissa (0-mant) but also be aware that

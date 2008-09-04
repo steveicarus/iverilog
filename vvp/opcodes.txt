@@ -468,7 +468,7 @@ register.
 * %load/x1p <bit>, <functor-label>, <wid>
 
 This is an indexed load. It uses the contents of index register 1 to
-select a part from a vector functor at <functor-label>. The 
+select a part from a vector functor at <functor-label>. The
 part is pulled from the indexed bit of the addressed functor and loaded
 into the destination thread bit. The <wid> is the width of the
 part. If any bit of the desired value is outside the vector, then that

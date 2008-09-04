@@ -355,7 +355,7 @@ number  : BASED_NUMBER
 	       based_size = 0; }
 	;
 
-  /* real and realtime are exactly the same so save some code 
+  /* real and realtime are exactly the same so save some code
    * with a common matching rule. */
 real_or_realtime
 	: K_real
@@ -3974,7 +3974,7 @@ task_port_decl
 		}
 
   /* Ports can be integer with a width of [31:0]. */
- 
+
 	| K_input K_integer IDENTIFIER
                 { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
 		  PExpr*re;
@@ -4040,7 +4040,7 @@ task_port_decl
 		}
 
   /* Ports can be time with a width of [63:0] (unsigned). */
- 
+
 	| K_input K_time IDENTIFIER
                 { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
 		  PExpr*re;

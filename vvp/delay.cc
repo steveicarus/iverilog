@@ -719,7 +719,7 @@ static void modpath_src_put_delays (vpiHandle ref, p_vpi_delay delays)
 /*
  * This routine will retrieve the delay[12] values
  * of a vpiHandle. In this case, he will get an
- * specific delays values from a vpiModPathIn 
+ * specific delays values from a vpiModPathIn
  * object
  *
  */
@@ -841,7 +841,7 @@ struct __vpiModPath* vpip_make_modpath(vvp_net_t *net)
 
 
 /*
- * This function will construct a vpiModPathIn 
+ * This function will construct a vpiModPathIn
  * ( struct __vpiModPathSrc ) Object. will give
  * a delays[12] values, and point to the specified functor
  *
@@ -883,6 +883,6 @@ struct __vpiModPathSrc* vpip_modpath_src_from_handle(vpiHandle ref)
 {
       if (ref->vpi_type->type_code != vpiModPath)
             return 0;
-      
+
       return (struct __vpiModPathSrc *) ref;
 }

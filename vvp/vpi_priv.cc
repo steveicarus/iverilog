@@ -330,7 +330,7 @@ int vpip_time_units_from_handle(vpiHandle obj)
 	  case vpiReg:
 	    signal = vpip_signal_from_handle(obj);
 	    scope = vpip_scope(signal);
- 	    return scope->time_units;
+	    return scope->time_units;
 
 	  default:
 	    fprintf(stderr, "ERROR: vpip_time_units_from_handle called with "
@@ -686,20 +686,20 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 
 	    assert(when != 0);
 
- 	    switch (when->type) {
- 		case vpiScaledRealTime:
- 		  dly = (vvp_time64_t)(when->real *
+	    switch (when->type) {
+		case vpiScaledRealTime:
+		  dly = (vvp_time64_t)(when->real *
 				       (pow(10.0L,
 					    vpip_time_units_from_handle(obj) -
 					    vpip_get_time_precision())));
- 		  break;
- 		case vpiSimTime:
+		  break;
+		case vpiSimTime:
 		  dly = vpip_timestruct_to_time(when);
- 		  break;
- 		default:
+		  break;
+		default:
 		  dly = 0;
 		  break;
- 	    }
+	    }
 
 	    vpip_put_value_event*put = new vpip_put_value_event;
 	    put->handle = obj;
@@ -919,22 +919,22 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
 
 
 /*
-  We increment the two vpi methods to enable the 
+  We increment the two vpi methods to enable the
   read/write of SDF delay values from/into
   the modpath vpiHandle
-  
+
 
   basically, they will redirect the generic vpi_interface
-  
-  vpi_get_delay ( .. )  
+
+  vpi_get_delay ( .. )
   vpi_put_delay ( .. )
-  
-  
+
+
   to the
-  
-  modpath_get_delay ( .. ) ; 
+
+  modpath_get_delay ( .. ) ;
   modpath_put_delay ( .. ) ;
-  
+
 */
 
 
@@ -943,17 +943,17 @@ void vpi_get_delays(vpiHandle expr, p_vpi_delay delays)
 {
       assert(expr);
       assert(delays);
-      
-      if (expr->vpi_type->vpi_get_delays_) 
+
+      if (expr->vpi_type->vpi_get_delays_)
 	{
 	  (expr->vpi_type->vpi_get_delays_)(expr, delays);
-	  
-	  if (vpi_trace) 
+
+	  if (vpi_trace)
 	    {
-	      fprintf(vpi_trace, 
+	      fprintf(vpi_trace,
 		      "vpi_get_delays(%p, %p) -->\n", expr, delays);
 	    }
-	} 
+	}
 }
 
 
@@ -961,17 +961,17 @@ void vpi_put_delays(vpiHandle expr, p_vpi_delay delays)
 {
       assert(expr  );
       assert(delays );
-      
-      if (expr->vpi_type->vpi_put_delays_) 
+
+      if (expr->vpi_type->vpi_put_delays_)
 	{
 	  (expr->vpi_type->vpi_put_delays_)(expr, delays);
-	  
-	  if (vpi_trace) 
+
+	  if (vpi_trace)
 	    {
-	      fprintf(vpi_trace, 
+	      fprintf(vpi_trace,
 		      "vpi_put_delays(%p, %p) -->\n", expr, delays);
 	    }
-	} 
+	}
 }
 
 

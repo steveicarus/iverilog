@@ -204,7 +204,7 @@ static unsigned long* vector_to_array(struct vthread_s*thr,
 static vvp_vector4_t vthread_bits_to_vector(struct vthread_s*thr,
 					    unsigned bit, unsigned wid)
 {
-      	/* Make a vector of the desired width. */
+	/* Make a vector of the desired width. */
 
       if (bit >= 4) {
 	    return vvp_vector4_t(thr->bits4, bit, wid);

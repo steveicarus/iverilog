@@ -282,7 +282,7 @@ int main(int argc, char*argv[])
 		fclose(src);
 		break;
 	  }
-		
+
 	  case 'v':
 	    fprintf(stderr, "Icarus Verilog Preprocessor version %s\n",
 		    VERSION);

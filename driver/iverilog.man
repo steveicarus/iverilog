@@ -221,7 +221,7 @@ implies the synthesis \fB-S\fP flag.
 .TP 8
 .B vhdl
 This target produces a VHDL translation of the Verilog netlist. The
-output is a single file containing VHDL entities corresponding to 
+output is a single file containing VHDL entities corresponding to
 the modules in the Verilog source code. Note that only a subset of
 the Verilog language is supported.  See the wiki for more information.
 

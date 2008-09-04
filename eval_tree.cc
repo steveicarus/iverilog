@@ -1364,7 +1364,7 @@ NetExpr* NetETernary::eval_tree(int prune_to_width)
 	  case C_0:
 	    eval_expr(false_val_);
 	    if (debug_eval_tree) {
-		  
+
 		  cerr << get_fileline() << ": debug: Evaluate ternary with "
 		       << "constant condition value: ";
 		  print_ternary_cond(cond_);

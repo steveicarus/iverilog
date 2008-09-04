@@ -1688,7 +1688,7 @@ extern "C" ivl_switch_t ivl_scope_switch(ivl_scope_t net, unsigned idx)
       assert(idx < net->switches.size());
       return net->switches[idx];
 }
-      
+
 extern "C" int ivl_scope_time_precision(ivl_scope_t net)
 {
       assert(net);
