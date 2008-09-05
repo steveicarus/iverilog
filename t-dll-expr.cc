@@ -219,6 +219,7 @@ void dll_target::expr_const(const NetEConst*net)
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       assert(expr_);
       expr_->value_= net->expr_type();
+      FILE_NAME(expr_, net);
 
       if (net->value().is_string()) {
 	    expr_->type_ = IVL_EX_STRING;
@@ -276,6 +277,7 @@ void dll_target::expr_creal(const NetECReal*net)
       expr_->width_  = net->expr_width();
       expr_->signed_ = 1;
       expr_->type_ = IVL_EX_REALNUM;
+      FILE_NAME(expr_, net);
       expr_->value_= IVL_VT_REAL;
       expr_->u_.real_.value = net->value().as_double();
 }
