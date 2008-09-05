@@ -170,6 +170,10 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	    vpip_array_word_change(obj, data->obj);
 	    break;
 
+	  case vpiMemory:
+	    vpip_array_change(obj, data->obj);
+	    break;
+
 	  case vpiPartSelect:
 	    vpip_part_select_value_change(obj, data->obj);
 	    break;

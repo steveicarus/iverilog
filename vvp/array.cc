@@ -977,10 +977,16 @@ void array_word_change(vvp_array_t array, unsigned long addr)
 	    struct __vpiCallback*cur = next;
 	    next = cur->next;
 
-	      // Skip callbacks for callbacks not for me.
-	    if (cur->extra_data != (long)addr) {
+	      // Skip callbacks that are not for me. -1 is for every element.
+	    if (cur->extra_data != (long)addr && cur->extra_data != -1) {
 		  prev = cur;
 		  continue;
+	    }
+
+	      // For whole array callbacks we need to set the index.
+	    if (cur->extra_data == -1) {
+		  cur->cb_data.index = (PLI_INT32) ((int)addr +
+		                       array->first_addr.value);
 	    }
 
 	    if (cur->cb_data.cb_rtn != 0) {
@@ -1056,6 +1062,15 @@ void vpip_array_word_change(struct __vpiCallback*cb, vpiHandle obj)
       assert(parent);
       cb->next = parent->vpi_callbacks;
       parent->vpi_callbacks = cb;
+}
+
+void vpip_array_change(struct __vpiCallback*cb, vpiHandle obj)
+{
+      
+      struct __vpiArray*arr = ARRAY_HANDLE(obj);
+      cb->extra_data = -1; // This is a callback for every element.
+      cb->next = arr->vpi_callbacks;
+      arr->vpi_callbacks = cb;
 }
 
 void compile_array_port(char*label, char*array, char*addr)
