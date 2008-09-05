@@ -241,6 +241,8 @@ static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
       return concat_lpm_to_expr(scope, lpm);
    case IVL_LPM_CMP_GE:
       return rel_lpm_to_expr(scope, lpm, VHDL_BINOP_GEQ);
+   case IVL_LPM_CMP_GT:
+      return rel_lpm_to_expr(scope, lpm, VHDL_BINOP_GT);
    case IVL_LPM_CMP_EQ:
    case IVL_LPM_CMP_EEQ:
       return rel_lpm_to_expr(scope, lpm, VHDL_BINOP_EQ);
@@ -323,7 +325,7 @@ int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
       out->set_slice(off, ivl_lpm_width(lpm) - 1);
    }
    
-   arch->add_stmt(new vhdl_cassign_stmt(out, f));
+   arch->add_stmt(new vhdl_cassign_stmt(out, f->cast(out->get_type())));
    
    return 0;
 }
