@@ -82,6 +82,8 @@ class Statement : public LineInfo {
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void elaborate_sig(Design*des, NetScope*scope) const;
+
+      map<perm_string,PExpr*> attributes;
 };
 
 /*

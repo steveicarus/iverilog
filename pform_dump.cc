@@ -155,6 +155,21 @@ std::ostream& operator << (std::ostream&out, ddomain_t dom)
       return out;
 }
 
+static void dump_attributes_map(ostream&out,
+				const map<perm_string,PExpr*>&attributes,
+				int ind)
+{
+      for (map<perm_string,PExpr*>::const_iterator idx = attributes.begin()
+		 ; idx != attributes.end() ; idx++ ) {
+
+	    out << setw(ind) << "" << "(* " << (*idx).first;
+	    if ((*idx).second) {
+		  out << " = " << *(*idx).second;
+	    }
+	    out << " *)" << endl;
+      }
+}
+
 void PExpr::dump(ostream&out) const
 {
       out << typeid(*this).name();
@@ -360,14 +375,7 @@ void PWire::dump(ostream&out, unsigned ind) const
       }
 
       out << ";" << endl;
-      for (map<perm_string,PExpr*>::const_iterator idx = attributes.begin()
-		 ; idx != attributes.end()
-		 ; idx ++) {
-	    out << "        " << (*idx).first;
-	    if ((*idx).second)
-		  out << " = " << *(*idx).second;
-	    out << endl;
-      }
+      dump_attributes_map(out, attributes, 8);
 }
 
 void PGate::dump_pins(ostream&out) const
@@ -538,6 +546,7 @@ void Statement::dump(ostream&out, unsigned ind) const
       out << setw(ind) << "";
       out << "/* " << get_fileline() << ": " << typeid(*this).name()
 	  << " */ ;" << endl;
+      dump_attributes_map(out, attributes, ind+2);
 }
 
 void AStatement::dump(ostream&out, unsigned ind) const
@@ -631,6 +640,7 @@ void PCase::dump(ostream&out, unsigned ind) const
 	    break;
       }
       out << " (" << *expr_ << ") /* " << get_fileline() << " */" << endl;
+      dump_attributes_map(out, attributes, ind+2);
 
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
 	    PCase::Item*cur = (*items_)[idx];
@@ -879,15 +889,7 @@ void PProcess::dump(ostream&out, unsigned ind) const
 
       out << " /* " << get_fileline() << " */" << endl;
 
-      for (map<perm_string,PExpr*>::const_iterator idx = attributes.begin()
-		 ; idx != attributes.end() ; idx++ ) {
-
-	    out << setw(ind+2) << "" << "(* " << (*idx).first;
-	    if ((*idx).second) {
-		  out << " = " << *(*idx).second;
-	    }
-	    out << " *)" << endl;
-      }
+      dump_attributes_map(out, attributes, ind+2);
 
       statement_->dump(out, ind+2);
 }
@@ -905,15 +907,7 @@ void AProcess::dump(ostream&out, unsigned ind) const
 
       out << " /* " << get_fileline() << " */" << endl;
 
-      for (map<perm_string,PExpr*>::const_iterator idx = attributes.begin()
-		 ; idx != attributes.end() ; idx++ ) {
-
-	    out << setw(ind+2) << "" << "(* " << (*idx).first;
-	    if ((*idx).second) {
-		  out << " = " << *(*idx).second;
-	    }
-	    out << " *)" << endl;
-      }
+      dump_attributes_map(out, attributes, ind+2);
 
       statement_->dump(out, ind+2);
 }
