@@ -505,8 +505,42 @@ static vhdl_expr *translate_concat(ivl_expr_t e)
 
 vhdl_expr *translate_sfunc_time(ivl_expr_t e)
 {
-   cerr << "warning: no translation for time (returning 0)" << endl;
-   return new vhdl_const_int(0);
+   cerr << "warning: no translation for $time (returning 0)" << endl;
+   vhdl_expr *result = new vhdl_const_int(0);
+   result->set_comment("$time not supported, returned 0 instead!");
+   return result;
+}
+
+vhdl_expr *translate_sfunc_stime(ivl_expr_t e)
+{
+   cerr << "warning: no translation for $stime (returning 0)" << endl;
+   vhdl_expr *result = new vhdl_const_int(0);
+   result->set_comment("$stime not supported, returned 0 instead!");
+   return result;
+}
+
+vhdl_expr *translate_sfunc_simtime(ivl_expr_t e)
+{
+   cerr << "warning: no translation for $simtime (returning 0)" << endl;
+   vhdl_expr *result = new vhdl_const_int(0);
+   result->set_comment("$simtime not supported, returned 0 instead!");
+   return result;
+}
+
+vhdl_expr *translate_sfunc_random(ivl_expr_t e)
+{
+   cerr << "warning: no translation for $random (returning 0)" << endl;
+   vhdl_expr *result = new vhdl_const_int(0);
+   result->set_comment("$random not supported, returned 0 instead!");
+   return result;
+}
+
+vhdl_expr *translate_sfunc_fopen(ivl_expr_t e)
+{
+   cerr << "warning: no translation for $fopen (returning 0)" << endl;
+   vhdl_expr *result = new vhdl_const_int(0);
+   result->set_comment("$fopen not supported, returned 0 instead!");
+   return result;
 }
 
 vhdl_expr *translate_sfunc(ivl_expr_t e)
@@ -514,6 +548,14 @@ vhdl_expr *translate_sfunc(ivl_expr_t e)
    const char *name = ivl_expr_name(e);
    if (strcmp(name, "$time") == 0)
       return translate_sfunc_time(e);
+   else if (strcmp(name, "$stime") == 0)
+      return translate_sfunc_stime(e);
+   else if (strcmp(name, "$simtime") == 0)
+      return translate_sfunc_simtime(e);
+   else if (strcmp(name, "$random") == 0)
+      return translate_sfunc_random(e);
+   else if (strcmp(name, "$fopen") == 0)
+      return translate_sfunc_random(e);
    else {
       error("No translation for system function %s", name);
       return NULL;
@@ -551,6 +593,10 @@ vhdl_expr *translate_expr(ivl_expr_t e)
       return translate_concat(e);
    case IVL_EX_SFUNC:
       return translate_sfunc(e);
+   case IVL_EX_REALNUM:
+      error("No VHDL translation for real expression at %s:%d",
+            ivl_expr_file(e), ivl_expr_lineno(e));
+      return NULL;
    default:
       error("No VHDL translation for expression at %s:%d (type = %d)",
             ivl_expr_file(e), ivl_expr_lineno(e), type);

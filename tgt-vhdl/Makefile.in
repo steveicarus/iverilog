@@ -40,7 +40,7 @@ CPPFLAGS = @ident_support@ -I. -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
 CXXFLAGS = -Wall @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
-all: dep vhdl.tgt vhdl.conf
+all: dep vhdl.tgt vhdl.conf vhdl-s.conf
 
 dep:
 	mkdir dep
@@ -74,13 +74,17 @@ distclean: clean
 
 check: all
 
-install: all installdirs $(libdir)/ivl/vhdl.tgt $(libdir)/ivl/vhdl.conf
+install: all installdirs $(libdir)/ivl/vhdl.tgt $(libdir)/ivl/vhdl.conf \
+	$(libdir)/ivl/vhdl-s.conf
 
 $(libdir)/ivl/vhdl.tgt: ./vhdl.tgt
 	$(INSTALL_PROGRAM) ./vhdl.tgt $(DESTDIR)$(libdir)/ivl/vhdl.tgt
 
 $(libdir)/ivl/vhdl.conf: vhdl.conf
 	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl/vhdl.conf
+
+$(libdir)/ivl/vhdl-s.conf: vhdl-s.conf
+	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl/vhdl-s.conf
 
 installdirs: ../mkinstalldirs
 	$(srcdir)/../mkinstalldirs $(DESTDIR)$(libdir)/ivl

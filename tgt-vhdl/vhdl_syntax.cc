@@ -512,6 +512,7 @@ void vhdl_const_string::emit(std::ostream &of, int level) const
 void vhdl_null_stmt::emit(std::ostream &of, int level) const
 {
    of << "null;";
+   emit_comment(of, level, true);
 }
 
 void vhdl_fcall::emit(std::ostream &of, int level) const
@@ -584,6 +585,7 @@ void vhdl_const_bit::emit(std::ostream &of, int level) const
 void vhdl_const_int::emit(std::ostream &of, int level) const
 {
    of << value_;
+   // We need to find a way to display a comment, since $time, etc. add one.
 }
 
 void vhdl_const_bool::emit(std::ostream &of, int level) const

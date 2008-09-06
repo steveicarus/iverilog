@@ -157,9 +157,10 @@ void draw_nexus(ivl_nexus_t nexus)
       ivl_net_const_t con;
       if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
          ivl_scope_t log_scope = ivl_logic_scope(log);
-         vhdl_scope *vhdl_scope =
-            find_entity(ivl_scope_name(log_scope))->get_arch()->get_scope();
-
+         vhdl_entity *ent = find_entity(ivl_scope_name(log_scope));
+         assert(ent);
+         
+         vhdl_scope *vhdl_scope = ent->get_arch()->get_scope();
          if (visible_nexus(priv, vhdl_scope)) {
             // Already seen this signal in vhdl_scope
          }
@@ -177,9 +178,10 @@ void draw_nexus(ivl_nexus_t nexus)
       }
       else if ((lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
          ivl_scope_t lpm_scope = ivl_lpm_scope(lpm);
-         vhdl_scope *vhdl_scope =
-            find_entity(ivl_scope_name(lpm_scope))->get_arch()->get_scope();
-
+         vhdl_entity *ent = find_entity(ivl_scope_name(lpm_scope));
+         assert(ent);
+         
+         vhdl_scope *vhdl_scope = ent->get_arch()->get_scope();
          if (visible_nexus(priv, vhdl_scope)) {
             // Already seen this signal in vhdl_scope
          }
@@ -196,6 +198,11 @@ void draw_nexus(ivl_nexus_t nexus)
          }
       }
       else if ((con = ivl_nexus_ptr_con(nexus_ptr))) {
+         if (ivl_const_type(con) == IVL_VT_REAL) {
+            error("No VHDL translation for real constant (%g)",
+                  ivl_const_real(con));
+            continue;
+         }
          if (ivl_const_width(con) == 1)
             priv->const_driver = new vhdl_const_bit(ivl_const_bits(con)[0]);
          else

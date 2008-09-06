@@ -69,7 +69,13 @@ static int draw_stask(vhdl_procedural *proc, stmt_container *container,
    else if (strcmp(name, "$finish") == 0)
       return draw_stask_finish(proc, container, stmt);
    else {
-      error("No VHDL translation for system task %s", name);
+      vhdl_seq_stmt *result = new vhdl_null_stmt();
+      ostringstream ss;
+      ss << "Unsupported system task " << name << " omitted here ("
+         << ivl_stmt_file(stmt) << ":" << ivl_stmt_lineno(stmt) << ")";
+      result->set_comment(ss.str());
+      container->add_stmt(result);
+      cerr << "Warning: no VHDL translation for system task " << name << endl;
       return 0;
    }
 }
