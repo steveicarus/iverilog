@@ -1,6 +1,6 @@
 #norootforbuild
 #
-%define rev_date 20080830
+%define rev_date 20080905
 #
 #
 Summary: Icarus Verilog
@@ -82,6 +82,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) /usr/include/_pli_types.h
 
 %changelog -n verilog
+* Fri Sep 03 2008 - steve@icarus.com
+- New snapshot 20080905
+
 * Sat Aug 30 2008 - steve@icarus.com
 - Add vhdl target files
 - Add V/AMS header files.
