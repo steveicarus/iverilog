@@ -625,8 +625,20 @@ static void create_skeleton_entity_for(ivl_scope_t scope)
  */
 static int draw_skeleton_scope(ivl_scope_t scope, void *_parent)
 {
-   if (ivl_scope_type(scope) == IVL_SCT_MODULE)
+   switch (ivl_scope_type(scope)) {
+   case IVL_SCT_MODULE:
       create_skeleton_entity_for(scope);
+      break;
+   case IVL_SCT_GENERATE:
+      error("No translation for generate statements yet");
+      return 1;
+   case IVL_SCT_FORK:
+      error("No translation for fork statements yet");
+      return 1;
+   default:
+      // The other scope types are expanded later on
+      break;
+   }
       
    return ivl_scope_children(scope, draw_skeleton_scope, scope);
 }

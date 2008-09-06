@@ -159,10 +159,13 @@ extern "C" int target_design(ivl_design_t des)
    for (unsigned int i = 0; i < nroots; i++)
       draw_scope(roots[i], NULL);
 
-   ivl_design_process(des, draw_process, NULL);
+   // Only generate processes if there were no errors generating entities
+   // (otherwise the necessary information won't be present)
+   if (0 == g_errors)
+      ivl_design_process(des, draw_process, NULL);
 
    // Write the generated elements to the output file
-   // only if there are no errors
+   // only if there were no errors generating entities or processes
    if (0 == g_errors) {
       const char *ofname = ivl_design_flag(des, "-o");
       ofstream outfile(ofname);
