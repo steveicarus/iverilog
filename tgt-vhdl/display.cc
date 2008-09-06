@@ -169,8 +169,10 @@ int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
             else
                ss << *p;
          }
-         
-         display_write(container, new vhdl_const_string(ss.str().c_str()));
+
+         // Call Write on any non-empty string data left in the buffer
+         if (!ss.str().empty())  
+            display_write(container, new vhdl_const_string(ss.str().c_str()));
       }
       else {
          vhdl_expr *base = translate_expr(net);
