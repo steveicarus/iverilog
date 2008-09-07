@@ -151,11 +151,6 @@ struct expr_scan_t {
 };
 
 
-/* The emit functions take a design and emit it to the output stream
-   using the specified target. If the target is given by name, it is
-   located in the target_table and used. */
-extern int emit(const Design*des, const char*type);
-
 /* This function takes a fully qualified Verilog name (which may have,
    for example, dots in it) and produces a mangled version that can be
    used by most any language. */
@@ -164,9 +159,5 @@ extern string mangle(const string&str);
 /* This function takes a string and produces an escaped version that can be
    used inside a string constant for a C++ compiler. */
 extern string stresc(const string&str);
-
-/* This is the table of supported output targets. It is a null
-   terminated array of pointers to targets. */
-extern const struct target *target_table[];
 
 #endif

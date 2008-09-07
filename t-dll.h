@@ -178,6 +178,8 @@ struct dll_target  : public target_t, public expr_scan_t {
       static ivl_expr_t expr_from_value_(const verinum&that);
 };
 
+extern struct dll_target dll_target_obj;
+
 /*
  * These are various private declarations used by the t-dll target.
  */

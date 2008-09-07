@@ -32,6 +32,8 @@
 # include  <stdlib.h>
 # include  "ivl_assert.h"
 
+struct dll_target dll_target_obj;
+
 #if defined(__WIN32__)
 
 inline ivl_dll_t ivl_dlopen(const char *name)
@@ -143,8 +145,6 @@ static perm_string make_scope_name(const hname_t&name)
 	       name.peek_name().str(), name.peek_number());
       return lex_strings.make(buf);
 }
-
-static struct dll_target dll_target_obj;
 
 static void drive_from_link(const Link&lnk, ivl_drive_t&drv0, ivl_drive_t&drv1)
 {
@@ -2578,5 +2578,3 @@ bool dll_target::signal_paths(const NetNet*net)
 
       return true;
 }
-
-extern const struct target tgt_dll = { "dll", &dll_target_obj };

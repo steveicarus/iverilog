@@ -59,6 +59,7 @@ const char NOTICE[] =
 # include  "target.h"
 # include  "compiler.h"
 # include  "discipline.h"
+# include  "t-dll.h"
 
 #if defined(__MINGW32__) && !defined(HAVE_GETOPT_H)
 extern "C" int getopt(int argc, char*argv[], const char*fmt);
@@ -78,8 +79,6 @@ unsigned flag_errors = 0;
 const char VERSION[] = "$Name:  $";
 
 const char*basedir = ".";
-
-const char*target = "null";
 
 /*
  * These are the language support control flags. These support which
@@ -293,7 +292,7 @@ static void find_module_mention(map<perm_string,bool>&check_map, PGenerate*s);
  *    -T:<min/typ/max>
  *        Select which expression to use.
  *
- *    -t:<target>
+ *    -t:<target>    (obsolete)
  *        Usually, "-t:dll"
  *
  *    basedir:<path>
@@ -483,7 +482,7 @@ static void read_iconfig_file(const char*ipath)
 		  library_suff.push_back(strdup(cp));
 
 	    } else if (strcmp(buf,"-t") == 0) {
-		  target = strdup(cp);
+		    // NO LONGER USED
 
 	    } else if (strcmp(buf,"-T") == 0) {
 		  if (strcmp(cp,"min") == 0) {
@@ -844,20 +843,21 @@ int main(int argc, char*argv[])
       }
 
       if (verbose_flag) {
-	    cout << "CODE GENERATION -t "<<target<< endl;
+	    cout << "CODE GENERATION" << endl;
       }
 
-      int emit_rc;
-      emit_rc = emit(des, target);
-      if (emit_rc > 0) {
-	    cerr << "error: Code generation had "
-		 << emit_rc << " errors."
-		 << endl;
-	    return 1;
-      }
-      if (emit_rc < 0) {
-	    cerr << "error: Code generator failure: " << emit_rc << endl;
-	    return -1;
+      if (int emit_rc = des->emit(&dll_target_obj)) {
+	    if (emit_rc > 0) {
+		  cerr << "error: Code generation had "
+		       << emit_rc << " errors."
+		       << endl;
+		  return 1;
+	    }
+	    if (emit_rc < 0) {
+		  cerr << "error: Code generator failure: " << emit_rc << endl;
+		  return -1;
+	    }
+	    assert(emit_rc);
       }
 
       if (verbose_flag) {
