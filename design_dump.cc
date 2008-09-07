@@ -567,8 +567,14 @@ void NetReplicate::dump_node(ostream&o, unsigned ind) const
 
 void NetSignExtend::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "NetSignExtend: "
-	<< name() << " output width=" << width_ << endl;
+      o << setw(ind) << "" << "NetSignExtend: " << name();
+      if (rise_time())
+	    o << " #(" << *rise_time()
+	      << "," << *fall_time()
+	      << "," << *decay_time() << ")";
+      else
+	    o << " #(.,.,.)";
+      o << " output width=" << width_ << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
