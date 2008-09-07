@@ -670,7 +670,7 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 		 << "Generate case matches item at "
 		 << item->get_fileline() << endl;
 
- 	// The name of the scope to generate, whatever that item is.
+	// The name of the scope to generate, whatever that item is.
       hname_t use_name (item->scope_name);
 
       NetScope*scope = new NetScope(container, use_name,

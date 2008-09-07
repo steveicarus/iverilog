@@ -157,6 +157,19 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
       return block;
 }
 
+void pform_bind_attributes(map<perm_string,PExpr*>&attributes,
+			   svector<named_pexpr_t*>*attr)
+{
+      if (attr == 0)
+	    return;
+
+      for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
+	    named_pexpr_t*tmp = (*attr)[idx];
+	    attributes[tmp->name] = tmp->parm;
+      }
+      delete attr;
+}
+
 PWire*pform_get_wire_in_scope(perm_string name)
 {
 	/* Note that if we are processing a generate, then the
@@ -1951,13 +1964,7 @@ PProcess* pform_make_behavior(PProcess::Type type, Statement*st,
 {
       PProcess*pp = new PProcess(type, st);
 
-      if (attr) {
-	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
-		  named_pexpr_t*tmp = (*attr)[idx];
-		  pp->attributes[tmp->name] = tmp->parm;
-	    }
-	    delete attr;
-      }
+      pform_bind_attributes(pp->attributes, attr);
 
       pform_put_behavior_in_scope(pp);
       return pp;

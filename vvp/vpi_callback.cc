@@ -170,6 +170,10 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	    vpip_array_word_change(obj, data->obj);
 	    break;
 
+	  case vpiMemory:
+	    vpip_array_change(obj, data->obj);
+	    break;
+
 	  case vpiPartSelect:
 	    vpip_part_select_value_change(obj, data->obj);
 	    break;
@@ -570,7 +574,7 @@ void vvp_fun_signal::get_value(struct t_vpi_value*vp)
       switch (vp->format) {
 	  case vpiScalarVal:
 	    // This works because vvp_bit4_t has the same encoding
-	    // as a scalar value! See vpip_vec4_get_value() for a 
+	    // as a scalar value! See vpip_vec4_get_value() for a
 	    // more robust method.
 	    vp->value.scalar = value(0);
 	    break;

@@ -341,7 +341,7 @@ static int t_default(char*cmd, unsigned ncmd)
 	    } else {
 		  fprintf(stderr, "Command signaled: %s\n", cmd);
 		  rtn = -1;
-	    } 
+	    }
       }
 
       free(cmd);
@@ -523,7 +523,7 @@ int process_generation(const char*name)
 void add_sft_file(const char *module)
 {
       char *file;
-   
+
       file = (char *) malloc(strlen(base)+1+strlen(module)+4+1);
       sprintf(file, "%s%c%s.sft", base, sep, module);
       if (access(file, R_OK) == 0)
@@ -654,7 +654,7 @@ int main(int argc, char **argv)
 		case 'c':
 		case 'f':
 		  add_cmd_file(optarg);
- 		  break;
+		  break;
 		case 'D':
 		  process_define(optarg);
 		  break;
@@ -673,9 +673,9 @@ int main(int argc, char **argv)
 		  if (rc != 0)
 			return -1;
 		  break;
- 		case 'h':
- 		  fprintf(stderr, "%s\n", HELP);
- 		  return 1;
+		case 'h':
+		  fprintf(stderr, "%s\n", HELP);
+		  return 1;
 
 		case 'I':
 		  process_include_dir(optarg);

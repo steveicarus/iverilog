@@ -736,7 +736,7 @@ class NetScope : public Attrib {
       bool in_func();
 	/* Is the task or function automatic. */
       void is_auto(bool is_auto) { is_auto_ = is_auto; };
-      bool is_auto() const { return is_auto_; }; 
+      bool is_auto() const { return is_auto_; };
 
       const NetTaskDef* task_def() const;
       const NetFuncDef* func_def() const;
@@ -773,7 +773,7 @@ class NetScope : public Attrib {
 
       void evaluate_parameters(class Design*);
 
-      	// Look for defparams that never matched, and print warnings.
+	// Look for defparams that never matched, and print warnings.
       void residual_defparams(class Design*);
 
 	/* This method generates a non-hierarchical name that is

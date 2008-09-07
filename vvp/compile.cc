@@ -64,7 +64,7 @@ enum operand_e {
       OA_CODE_PTR,
 	/* The operand is a variable or net pointer */
       OA_FUNC_PTR,
- 	/* The operand is a second functor pointer */
+	/* The operand is a second functor pointer */
       OA_FUNC_PTR2,
 	/* The operand is a VPI handle */
       OA_VPI_PTR,
@@ -700,7 +700,7 @@ void compile_vpi_time_precision(long pre)
 
 /*
  * Convert a Cr string value to double.
- * 
+ *
  * The format is broken into mantissa and exponent.
  * The exponent in turn includes a sign bit.
  *
@@ -1369,7 +1369,7 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
       srcobj->path_term_in.edge = vpi_edge;
       input_connect(net, 0, src.text);
       dst->add_modpath_src(obj, ifnone);
-      
+
       return srcobj;
 }
 
@@ -1543,7 +1543,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		case OA_NONE:
 		  break;
 
-        	case OA_ARR_PTR:
+		case OA_ARR_PTR:
 		  if (opa->argv[idx].ltype != L_SYMB) {
 			yyerror("operand format");
 			break;

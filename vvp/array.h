@@ -48,6 +48,7 @@ extern vvp_vector4_t array_get_word(vvp_array_t array, unsigned address);
 /* VPI hooks */
 
 extern void vpip_array_word_change(struct __vpiCallback*cb, vpiHandle word);
+extern void vpip_array_change(struct __vpiCallback*cb, vpiHandle word);
 
 /* Compile hooks */
 extern void compile_variablew(char*label, vvp_array_t array,

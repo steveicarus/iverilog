@@ -351,7 +351,7 @@ static void format_vpiStringVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
       vp->value.str = rbuf;
 }
 
-static void format_vpiScalarVal(vvp_fun_signal_vec*sig, int base, 
+static void format_vpiScalarVal(vvp_fun_signal_vec*sig, int base,
                                 s_vpi_value*vp)
 {
       if (base >= 0 && base < (signed)sig->size()) {

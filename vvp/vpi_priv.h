@@ -267,7 +267,7 @@ struct __vpiModPathSrc {
 
 	/* This is the input expression for this modpath. */
       struct __vpiModPathTerm path_term_in;
-  
+
 	/* This is the input net for the modpath. signals on this net
 	   are used to determine the modpath. They are *not* propagated
 	   anywhere. */
@@ -277,7 +277,7 @@ struct __vpiModPathSrc {
 
 /*
  *
- * The vpiMoaPath vpiHandle will define 
+ * The vpiMoaPath vpiHandle will define
  * a vpiModPath of record .modpath as defined
  * in the IEEE 1364
  *
@@ -285,7 +285,7 @@ struct __vpiModPathSrc {
 
 struct __vpiModPath {
       struct __vpiScope   *scope ;
-  
+
       class vvp_fun_modpath*modpath;
 
       struct __vpiModPathTerm path_term_out;
@@ -297,12 +297,12 @@ extern struct __vpiModPathSrc* vpip_modpath_src_from_handle(vpiHandle ref);
 
 
 /*
- * The Function is used to create the vpiHandle 
+ * The Function is used to create the vpiHandle
  * for vpiModPath && vpiModPathIn objects
  */
 
-extern struct __vpiModPathSrc* vpip_make_modpath_src  (struct __vpiModPath*path_dest, 
-					 vvp_time64_t use_delay[12] , 
+extern struct __vpiModPathSrc* vpip_make_modpath_src  (struct __vpiModPath*path_dest,
+					 vvp_time64_t use_delay[12] ,
 					 vvp_net_t *net ) ;
 
 extern struct __vpiModPath* vpip_make_modpath(vvp_net_t *net) ;

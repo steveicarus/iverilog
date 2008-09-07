@@ -32,6 +32,11 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
    //          << " (" << type_->get_width() << ") "
    //          << " to=" << to->get_string() << " ("
    //          << to->get_width() << ")" << std::endl;
+
+   // If this expression hasn't been given a type then
+   // we can't generate any type conversion code
+   if (NULL == type_)
+      return this;
    
    if (to->get_name() == type_->get_name()) {
       if (to->get_width() == type_->get_width())

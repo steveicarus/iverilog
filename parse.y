@@ -355,7 +355,7 @@ number  : BASED_NUMBER
 	       based_size = 0; }
 	;
 
-  /* real and realtime are exactly the same so save some code 
+  /* real and realtime are exactly the same so save some code
    * with a common matching rule. */
 real_or_realtime
 	: K_real
@@ -3591,28 +3591,31 @@ statement
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
-	| event_control statement_or_null
-		{ PEventStatement*tmp = $1;
-		  if (tmp == 0) {
-			yyerror(@1, "error: Invalid event control.");
-			$$ = 0;
-		  } else {
-			tmp->set_statement($2);
-			$$ = tmp;
-		  }
-		}
-	| '@' '*' statement_or_null
-		{ PEventStatement*tmp = new PEventStatement;
-		  FILE_NAME(tmp, @1);
-		  tmp->set_statement($3);
-		  $$ = tmp;
-		}
-	| '@' '(' '*' ')' statement_or_null
-		{ PEventStatement*tmp = new PEventStatement;
-		  FILE_NAME(tmp, @1);
-		  tmp->set_statement($5);
-		  $$ = tmp;
-		}
+  | event_control attribute_list_opt statement_or_null
+      { PEventStatement*tmp = $1;
+	if (tmp == 0) {
+	      yyerror(@1, "error: Invalid event control.");
+	      $$ = 0;
+	} else {
+	      if ($3) pform_bind_attributes($3->attributes,$2);
+	      tmp->set_statement($3);
+	      $$ = tmp;
+	}
+      }
+  | '@' '*' attribute_list_opt statement_or_null
+      { PEventStatement*tmp = new PEventStatement;
+	FILE_NAME(tmp, @1);
+	if ($4) pform_bind_attributes($4->attributes,$3);
+	tmp->set_statement($4);
+	$$ = tmp;
+      }
+  | '@' '(' '*' ')' attribute_list_opt statement_or_null
+      { PEventStatement*tmp = new PEventStatement;
+	FILE_NAME(tmp, @1);
+	if ($6) pform_bind_attributes($6->attributes,$5);
+	tmp->set_statement($6);
+	$$ = tmp;
+      }
 	| lpvalue '=' expression ';'
 		{ PAssign*tmp = new PAssign($1,$3);
 		  FILE_NAME(tmp, @1);
@@ -3737,14 +3740,15 @@ statement_list
 	;
 
 statement_or_null
-	: statement
-	| ';' { $$ = 0; }
-	;
-
+  : statement
+      { $$ = $1; }
+  | ';'
+      { $$ = 0; }
+  ;
 
 analog_statement
   : branch_probe_expression K_CONTRIBUTE expression ';'
-  { $$ = pform_contribution_statement(@2, $1, $3); }
+      { $$ = pform_contribution_statement(@2, $1, $3); }
   ;
 
   /* Task items are, other than the statement, task port items and
@@ -3970,7 +3974,7 @@ task_port_decl
 		}
 
   /* Ports can be integer with a width of [31:0]. */
- 
+
 	| K_input K_integer IDENTIFIER
                 { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
 		  PExpr*re;
@@ -4036,7 +4040,7 @@ task_port_decl
 		}
 
   /* Ports can be time with a width of [63:0] (unsigned). */
- 
+
 	| K_input K_time IDENTIFIER
                 { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
 		  PExpr*re;

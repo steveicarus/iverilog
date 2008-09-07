@@ -857,7 +857,7 @@ bool dll_target::bufz(const NetBUFZ*net)
       logic_attributes(obj, net);
 
       make_logic_delays_(obj, net);
-	    
+
       scope_add_logic(scope, obj);
 
       return true;

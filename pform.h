@@ -117,6 +117,10 @@ struct lgate {
       unsigned lineno;
 };
 
+  /* Use this function to transform the parted form of the attribute
+     list to the attribute map that is used later. */
+extern void pform_bind_attributes(map<perm_string,PExpr*>&attributes,
+				  svector<named_pexpr_t*>*attr);
 
   /* The lexor calls this function to change the default nettype. */
 extern void pform_set_default_nettype(NetNet::Type net,

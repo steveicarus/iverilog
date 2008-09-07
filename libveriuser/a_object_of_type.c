@@ -35,7 +35,7 @@ int acc_object_of_type(handle object, PLI_INT32 type)
 
       if (pli_trace) {
 	    fprintf(pli_trace, "acc_object_of_type(%p \"%s\", %d)",
-	    	object, vpi_get_str(vpiName, object), type);
+		object, vpi_get_str(vpiName, object), type);
 	    fflush(pli_trace);
       }
 

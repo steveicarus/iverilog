@@ -143,7 +143,7 @@ static void elaborate_sig_tasks(Design*des, NetScope*scope,
       }
 }
 
-				
+
 bool Module::elaborate_sig(Design*des, NetScope*scope) const
 {
       bool flag = true;
@@ -361,7 +361,7 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 			continue;
 		  flag = tmp->elaborate_sig(des, scope) && flag;
 	    }
-	    
+
 
       NetScope::scope_vec_t instance = scope->instance_arrays[get_name()];
 

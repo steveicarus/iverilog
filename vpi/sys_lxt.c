@@ -252,8 +252,8 @@ static PLI_INT32 variable_cb_1(p_cb_data cause)
       struct t_cb_data cb;
       struct vcd_info*info = (struct vcd_info*)cause->user_data;
 
-      if (dump_is_full) 	 return 0;
-      if (dump_is_off) 		 return 0;
+      if (dump_is_full)          return 0;
+      if (dump_is_off)           return 0;
       if (dump_header_pending()) return 0;
       if (info->scheduled)       return 0;
 

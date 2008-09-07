@@ -682,7 +682,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	      /* Elaborate the sub-expression to get its
 		 self-determined width, and save that width. Then
 		 delete the expression because we don't really want
-		 the expression itself. */ 
+		 the expression itself. */
 	    long sub_expr_width = 0;
 	    if (NetExpr*tmp = expr->elaborate_expr(des, scope, -1, true)) {
 		  sub_expr_width = tmp->expr_width();

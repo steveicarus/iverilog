@@ -223,7 +223,7 @@ unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
 void vpip_dec_str_to_vec4(vvp_vector4_t&vec,
 			  const char*buf, bool signed_flag)
 {
- 	/* The str string is the decimal value with the least
+	/* The str string is the decimal value with the least
 	   significant digit first. This loop creates that string by
 	   reversing the order of the buf string. For example, if the
 	   input is "1234", str gets "4321". */

@@ -721,7 +721,7 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
       for ( ; item; item = vpi_scan(argv)) {
 	    const char *scname;
 	    int add_var = 0;
-   
+
 	    vcd_names_sort(&vcd_tab);
 
 	      /* If this is a signal make sure it has not already

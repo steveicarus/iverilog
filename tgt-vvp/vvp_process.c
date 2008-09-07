@@ -539,7 +539,7 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
       lval = ivl_stmt_lval(net, 0);
       sig = ivl_lval_sig(lval);
       assert(sig);
- 
+
       if (ivl_signal_dimensions(sig) > 0) {
 	    word_ix = ivl_lval_idx(lval);
 	    assert(word_ix);

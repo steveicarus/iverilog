@@ -1269,7 +1269,7 @@ NetNet* NetEUFunc::synthesize(Design*des, NetScope*scope)
         /* Connect the pins to the arguments. */
       NetFuncDef*def = func_->func_def();
       for (unsigned idx = 0; idx < eparms.count(); idx += 1) {
-	    NetNet*tmp = pad_to_width(des, eparms[idx], 
+	    NetNet*tmp = pad_to_width(des, eparms[idx],
 	                              def->port(idx)->vector_width());
 	    connect(net->pin(idx+1), tmp->pin(0));
       }
