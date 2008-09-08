@@ -1927,7 +1927,7 @@ extern unsigned ivl_switch_lineno(ivl_switch_t net);
 #endif
 
 extern DLLEXPORT int target_design(ivl_design_t des);
-
+extern DLLEXPORT const char* target_query(const char*key);
 
 /* target_design
 
@@ -1945,6 +1945,7 @@ extern DLLEXPORT int target_design(ivl_design_t des);
    ivl core. This function is how the target module is invoked. */
 
 typedef int  (*target_design_f)(ivl_design_t des);
+typedef const char* (*target_query_f) (const char*key);
 
 
 _END_DECL

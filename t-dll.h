@@ -63,6 +63,10 @@ struct ivl_design_s {
  */
 struct dll_target  : public target_t, public expr_scan_t {
 
+	// This is a special function for loading and testing the
+	// version of a loadable target code generator.
+      void test_version(const char*target_name);
+
       bool start_design(const Design*);
       int  end_design(const Design*);
 

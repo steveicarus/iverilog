@@ -28,7 +28,25 @@
 # include "priv.h"
 # include <stdlib.h>
 # include <inttypes.h>
+# include <string.h>
 # include <assert.h>
+
+static const char*version_string =
+"Icarus Verilog Stub Target " VERSION "\n"
+"  This program is free software; you can redistribute it and/or modify\n"
+"  it under the terms of the GNU General Public License as published by\n"
+"  the Free Software Foundation; either version 2 of the License, or\n"
+"  (at your option) any later version.\n"
+"\n"
+"  This program is distributed in the hope that it will be useful,\n"
+"  but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"  GNU General Public License for more details.\n"
+"\n"
+"  You should have received a copy of the GNU General Public License\n"
+"  along with this program; if not, write to the Free Software\n"
+"  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA\n"
+;
 
 FILE*out;
 int stub_errors = 0;
@@ -1607,4 +1625,12 @@ int target_design(ivl_design_t des)
       fclose(out);
 
       return stub_errors;
+}
+
+const char* target_query(const char*key)
+{
+      if (strcmp(key,"version") == 0)
+	    return version_string;
+
+      return 0;
 }

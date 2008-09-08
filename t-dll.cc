@@ -2578,3 +2578,39 @@ bool dll_target::signal_paths(const NetNet*net)
 
       return true;
 }
+
+
+void dll_target::test_version(const char*target_name)
+{
+      dll_ = ivl_dlopen(target_name);
+
+      if ((dll_ == 0) && (target_name[0] != '/')) {
+	    size_t len = strlen(basedir) + 1 + strlen(target_name) + 1;
+	    char*tmp = new char[len];
+	    sprintf(tmp, "%s/%s", basedir, target_name);
+	    dll_ = ivl_dlopen(tmp);
+	    delete[]tmp;
+      }
+
+      if (dll_ == 0) {
+	    cout << "\n\nUnable to load " << target_name
+		 << " for version details." << endl;
+	    return;
+      }
+
+      target_query_f target_query = (target_query_f)ivl_dlsym(dll_, LU "target_query" TU);
+      if (target_query == 0) {
+	    cerr << "Target " << target_name
+		 << " has no version hooks." << endl;
+	    return;
+      }
+
+      const char*version_string = (*target_query) ("version");
+      if (version_string == 0) {
+	    cerr << "Target " << target_name
+		 << " has no version string" << endl;
+	    return;
+      }
+
+      cout << target_name << ": " << version_string << endl;
+}

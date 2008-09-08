@@ -51,6 +51,7 @@ const char HELP[] =
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <assert.h>
 
 #include <sys/types.h>
@@ -259,18 +260,102 @@ static const char*my_tempfile(const char*str, FILE**fout)
       return pathbuf;
 }
 
+static int t_version_only(void)
+{
+      remove(source_path);
+
+      fflush(0);
+      snprintf(tmp, sizeof tmp, "%s%civlpp -V", pbase, sep);
+      system(tmp);
+
+      fflush(0);
+      snprintf(tmp, sizeof tmp, "%s%civl -V -C%s -C%s", pbase, sep,
+	       iconfig_path, iconfig_common_path);
+      system(tmp);
+
+      if ( ! getenv("IVERILOG_ICONFIG")) {
+	    remove(iconfig_path);
+	    remove(defines_path);
+	    remove(compiled_defines_path);
+      }
+
+      return 0;
+}
+
+static void build_preprocess_command(int e_flag)
+{
+      snprintf(tmp, sizeof tmp, "%s%civlpp %s%s -F%s -f%s -p%s ",
+	       pbase,sep, verbose_flag?" -v":"",
+	       e_flag?"":" -L", defines_path, source_path,
+	       compiled_defines_path);
+}
+
+static int t_preprocess_only(void)
+{
+      int rc;
+      char*cmd;
+      unsigned ncmd;
+
+      build_preprocess_command(1);
+
+      ncmd = strlen(tmp);
+      cmd = malloc(ncmd+1);
+      strcpy(cmd, tmp);
+
+      if (strcmp(opath,"-") != 0) {
+	    snprintf(tmp, sizeof tmp, " > %s", opath);
+	    cmd = realloc(cmd, ncmd+strlen(tmp)+1);
+	    strcpy(cmd+ncmd, tmp);
+	    ncmd += strlen(tmp);
+      }
+
+      if (verbose_flag)
+	    printf("preprocess: %s\n", cmd);
+
+      rc = system(cmd);
+      remove(source_path);
+
+      if ( ! getenv("IVERILOG_ICONFIG")) {
+	    remove(iconfig_path);
+	    remove(defines_path);
+	    remove(compiled_defines_path);
+      }
+
+      if (rc != 0) {
+	    if (WIFEXITED(rc)) {
+		  fprintf(stderr, "errors preprocessing Verilog program.\n");
+		  return WEXITSTATUS(rc);
+	    }
+
+	    fprintf(stderr, "Command signaled: %s\n", cmd);
+	    free(cmd);
+	    return -1;
+      }
+
+      return 0;
+}
+
 /*
  * This is the default target type. It looks up the bits that are
  * needed to run the command from the configuration file (which is
  * already parsed for us) so we can handle must of the generic cases.
  */
-static int t_default(char*cmd, unsigned ncmd)
+static int t_compile()
 {
       unsigned rc;
+
+	/* Start by building the preprocess command line. */
+      build_preprocess_command(0);
+
+      size_t ncmd = strlen(tmp);
+      char*cmd = malloc(ncmd + 1);
+      strcpy(cmd, tmp);
+
 #ifdef __MINGW32__
       unsigned ncmd_start = ncmd;
 #endif
 
+	/* Build the ivl command and pipe it to the preprocessor. */
       snprintf(tmp, sizeof tmp, " | %s/ivl", base);
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
@@ -533,8 +618,6 @@ void add_sft_file(const char *module)
 
 int main(int argc, char **argv)
 {
-      char*cmd;
-      unsigned ncmd;
       int e_flag = 0;
       int version_flag = 0;
       int opt, idx, rc;
@@ -748,9 +831,6 @@ int main(int argc, char **argv)
 	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
 	    printf("Copyright 1998-2008 Stephen Williams\n");
 	    puts(NOTICE);
-
-	    if (version_flag)
-		  return 0;
       }
 
 	/* Make a common conf file path to reflect the target. */
@@ -833,59 +913,9 @@ int main(int argc, char **argv)
       fclose(defines_file);
       defines_file = 0;
 
-      if (source_count == 0) {
+      if (source_count == 0 && !version_flag) {
 	    fprintf(stderr, "%s: no source files.\n\n%s\n", argv[0], HELP);
 	    return 1;
-      }
-
-
-	/* Start building the preprocess command line. */
-
-      sprintf(tmp, "%s%civlpp %s%s -F%s -f%s -p%s ", pbase,sep,
-	      verbose_flag?" -v":"",
-	      e_flag?"":" -L", defines_path, source_path,
-	      compiled_defines_path);
-
-      ncmd = strlen(tmp);
-      cmd = malloc(ncmd + 1);
-      strcpy(cmd, tmp);
-
-	/* If the -E flag was given on the command line, then all we
-	   do is run the preprocessor and put the output where the
-	   user wants it. */
-      if (e_flag) {
-	    int rc;
-	    if (strcmp(opath,"-") != 0) {
-		  sprintf(tmp, " > %s", opath);
-		  cmd = realloc(cmd, ncmd+strlen(tmp)+1);
-		  strcpy(cmd+ncmd, tmp);
-		  ncmd += strlen(tmp);
-	    }
-
-	    if (verbose_flag)
-		  printf("preprocess: %s\n", cmd);
-
-	    rc = system(cmd);
-	    remove(source_path);
-	    fclose(iconfig_file);
-	    if ( ! getenv("IVERILOG_ICONFIG")) {
-		  remove(iconfig_path);
-		  remove(defines_path);
-		  remove(compiled_defines_path);
-	    }
-
-	    if (rc != 0) {
-		  if (WIFEXITED(rc)) {
-			fprintf(stderr, "errors preprocessing Verilog program.\n");
-			return WEXITSTATUS(rc);
-		  }
-
-		  fprintf(stderr, "Command signaled: %s\n", cmd);
-		  free(cmd);
-		  return -1;
-	    }
-
-	    return 0;
       }
 
       fprintf(iconfig_file, "iwidth:%u\n", integer_width);
@@ -899,5 +929,16 @@ int main(int argc, char **argv)
 	/* Done writing to the iconfig file. Close it now. */
       fclose(iconfig_file);
 
-      return t_default(cmd, ncmd);
+	/* If we're only here for th verion output, then we're done. */
+      if (version_flag)
+	    return t_version_only();
+
+	/* If the -E flag was given on the command line, then all we
+	   do is run the preprocessor and put the output where the
+	   user wants it. */
+      if (e_flag)
+	    return t_preprocess_only();
+
+	/* Otherwise, this is a full compile. */
+      return t_compile();
 }

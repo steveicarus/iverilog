@@ -20,6 +20,7 @@ const char COPYRIGHT[] =
  */
 
 # include "config.h"
+# include "version.h"
 
 const char NOTICE[] =
 "  This program is free software; you can redistribute it and/or modify\n"
@@ -75,8 +76,6 @@ extern "C" const char*optarg;
 
 /* Count errors detected in flag processing. */
 unsigned flag_errors = 0;
-
-const char VERSION[] = "$Name:  $";
 
 const char*basedir = ".";
 
@@ -532,6 +531,7 @@ int main(int argc, char*argv[])
 {
       bool help_flag = false;
       bool times_flag = false;
+      bool version_flag = false;
 
       const char* net_path = 0;
       const char* pf_path = 0;
@@ -575,10 +575,8 @@ int main(int argc, char*argv[])
 #          endif
 	    break;
 	  case 'V':
-	    cout << "Icarus Verilog version " << VERSION << endl;
-	    cout << COPYRIGHT << endl;
-	    cout << endl << NOTICE << endl;
-	    return 0;
+	    version_flag = true;
+	    break;
 	  default:
 	    flag_errors += 1;
 	    break;
@@ -587,8 +585,20 @@ int main(int argc, char*argv[])
       if (flag_errors)
 	    return flag_errors;
 
+      if (version_flag) {
+	    cout << "\n\nIcarus Verilog Parser/Elaborator version "
+		 << VERSION << " (" << VERSION_TAG << ")" << endl;
+	    cout << COPYRIGHT << endl;
+	    cout << endl << NOTICE << endl;
+
+	    dll_target_obj.test_version(flags["DLL"]);
+
+	    return 0;
+      }
+
       if (help_flag) {
-	    cout << "Icarus Verilog version " << VERSION << endl <<
+	    cout << "Icarus Verilog Parser/Elaborator version "
+		 << VERSION << " (" << VERSION_TAG << ")"  << endl <<
 "usage: ivl <options> <file>\n"
 "options:\n"
 "\t-C <name>        Config file from driver.\n"
