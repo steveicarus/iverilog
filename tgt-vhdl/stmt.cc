@@ -34,7 +34,7 @@
  * successfully.
  *
  * An alternative is to use the VHPI interface supported by
- * some VHDL simulators and implement the $finish funcitonality
+ * some VHDL simulators and implement the $finish functionality
  * in C. This function can be enabled with the flag
  * -puse-vhpi-finish=1. 
  */
@@ -226,12 +226,12 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
       // performed on assignments of constant values to prevent
       // ordering problems.
       
-      // This also has another application: If this is an `inital'
+      // This also has another application: If this is an `initial'
       // process and we haven't yet generated a `wait' statement then
       // moving the assignment to the initialization preserves the
       // expected Verilog behaviour: VHDL does not distinguish
       // `initial' and `always' processes so an `always' process might
-      // be activatated before an `initial' process at time 0. The
+      // be activated before an `initial' process at time 0. The
       // `always' process may then use the uninitialized signal value.
       // The second test ensures that we only try to initialise
       // internal signals not ports
@@ -622,7 +622,7 @@ int draw_utask(vhdl_procedural *proc, stmt_container *container,
 
    // TODO: adding some comments to the output would be helpful
 
-   // TOOD: this completely ignores paremeters!
+   // TOOD: this completely ignores parameters!
    draw_stmt(proc, container, ivl_scope_def(tscope), false);
    
    return 0;

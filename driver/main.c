@@ -929,7 +929,7 @@ int main(int argc, char **argv)
 	/* Done writing to the iconfig file. Close it now. */
       fclose(iconfig_file);
 
-	/* If we're only here for th verion output, then we're done. */
+	/* If we're only here for the version output, then we're done. */
       if (version_flag)
 	    return t_version_only();
 

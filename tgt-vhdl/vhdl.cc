@@ -97,7 +97,7 @@ bool seen_signal_before(ivl_signal_t sig)
 }
 
 /*
- * Remeber the association of signal to entity.
+ * Remember the association of signal to entity.
  */
 void remember_signal(ivl_signal_t sig, vhdl_scope *scope)
 {
