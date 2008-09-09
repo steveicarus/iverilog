@@ -717,7 +717,7 @@ void vhdl_binop_expr::add_expr(vhdl_expr *e)
 
 void vhdl_binop_expr::emit(std::ostream &of, int level) const
 {
-   // Expressions are fully parenthesized to remove any
+   // Expressions are fully parenthesised to remove any
    // ambiguity in the output
 
    of << "(";

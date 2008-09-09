@@ -228,7 +228,7 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
       }
 
       // Where possible, move constant assignments into the
-      // declaration as initializers. This optimisation is only
+      // declaration as initialisers. This optimisation is only
       // performed on assignments of constant values to prevent
       // ordering problems.
       
@@ -237,8 +237,8 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
       // moving the assignment to the initialization preserves the
       // expected Verilog behaviour: VHDL does not distinguish
       // `initial' and `always' processes so an `always' process might
-      // be activatated before an `initial' process at time 0. The
-      // `always' process may then use the uninitialized signal value.
+      // be activated before an `initial' process at time 0. The
+      // `always' process may then use the uninitialised signal value.
       // The second test ensures that we only try to initialise
       // internal signals not ports
       ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
@@ -384,7 +384,7 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
       draw_stmt(proc, container, sub_stmt);
    
    // Any further assignments occur after simulation time 0
-   // so they cannot be used to initialize signal declarations
+   // so they cannot be used to initialise signal declarations
    // (if this scope is an initial process)
    proc->get_scope()->set_initializing(false);
    
