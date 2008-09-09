@@ -93,6 +93,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%assign/v0/x1",of_ASSIGN_V0X1,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%assign/v0/x1/d",of_ASSIGN_V0X1D,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%assign/wr",of_ASSIGN_WR,3,{OA_VPI_PTR,OA_BIT1,     OA_BIT2} },
+      { "%assign/wr/d",of_ASSIGN_WRD,3,{OA_VPI_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/x0",of_ASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%blend",    of_BLEND,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%blend/wr", of_BLEND_WR,2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },

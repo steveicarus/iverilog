@@ -531,7 +531,7 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
       unsigned long use_word = 0;
 	/* thread address for a word value. */
       int word;
-      unsigned long delay;
+      unsigned long delay = 0;
 
 	/* Must be exactly 1 l-value. */
       assert(ivl_stmt_lvals(net) == 1);
@@ -547,20 +547,25 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 	    use_word = get_number_immediate(word_ix);
       }
 
-      delay = 0;
       if (del && (ivl_expr_type(del) == IVL_EX_ULONG)) {
 	    delay = ivl_expr_uvalue(del);
 	    del = 0;
       }
 
-	/* XXXX For now, presume delays are constant. */
-      assert(del == 0);
-
 	/* Evaluate the r-value */
       word = draw_eval_real(rval);
 
-      fprintf(vvp_out, "   %%assign/wr v%p_%lu, %lu, %u;\n",
-	      sig, use_word, delay, word);
+	/* We need to calculate the delay expression. */
+      if (del) {
+	    int delay_index = allocate_word();
+	    draw_eval_expr_into_integer(del, delay_index);
+	    fprintf(vvp_out, "   %%assign/wr/d v%p_%lu, %d, %u;\n",
+	            sig, use_word, delay_index, word);
+	    clr_word(delay_index);
+      } else {
+	    fprintf(vvp_out, "   %%assign/wr v%p_%lu, %lu, %u;\n",
+	            sig, use_word, delay, word);
+      }
 
       clr_word(word);
 

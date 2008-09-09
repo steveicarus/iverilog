@@ -89,7 +89,7 @@ where the assignment should be schedule, and the <bit> is the base of
 the vector to be assigned to the destination. The vector width is in
 index register 0.
 
-The %assign/v0/d variation puts the delay instead into an integer
+The %assign/v0/d variation gets the delay instead from an integer
 register that is given by the <delayx> value. This should not be 0, of
 course, because integer 0 is taken with the vector width.
 
@@ -104,9 +104,14 @@ index register with the canonical index of the destination where the
 vector is to be written. This allows for part writes into the vector.
 
 * %assign/wr <vpi-label>, <delay>, <index>
+* %assign/wr/d <vpi-label>, <delayx>, <index>
 
-This instruction causes a non-blocking assign of the indexed value to
-the real object addressed by the <vpi-label> label.
+This instruction provides a non-blocking assign of the real value
+given in <index> to the real object addressed by the <vpi-label>
+label after the given <delay>.
+
+The %assign/wr/d variation gets the delay from integer register
+<delayx>.
 
 * %assign/x0 <var-label>, <delay>, <bit> (OBSOLETE -- See %assign/v0x)
 

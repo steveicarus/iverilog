@@ -820,6 +820,25 @@ bool of_ASSIGN_WR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_ASSIGN_WRD(vthread_t thr, vvp_code_t cp)
+{
+      unsigned delay = thr->words[cp->bit_idx[0]].w_int;
+      unsigned index = cp->bit_idx[1];
+      s_vpi_time del;
+
+      del.type = vpiSimTime;
+      vpip_time_to_timestruct(&del, delay);
+
+      struct __vpiHandle*tmp = cp->handle;
+
+      t_vpi_value val;
+      val.format = vpiRealVal;
+      val.value.real = thr->words[index].w_real;
+      vpi_put_value(tmp, &val, &del, vpiInertialDelay);
+
+      return true;
+}
+
 bool of_ASSIGN_X0(vthread_t thr, vvp_code_t cp)
 {
 #if 0
