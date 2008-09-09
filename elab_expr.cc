@@ -21,6 +21,7 @@
 # include  <typeinfo>
 # include  <cstdlib>
 # include  <cstring>
+# include  <limits.h>
 # include "compiler.h"
 
 # include  "pform.h"

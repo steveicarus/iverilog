@@ -18,6 +18,7 @@
  */
 
 # include "config.h"
+# include  <string.h>
 
 /*
  * This is a null target module. It does nothing.
