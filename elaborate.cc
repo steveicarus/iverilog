@@ -110,7 +110,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		 << ", unsized_flag=" << (unsized_flag?"true":"false") << endl;
       }
 
-      int expr_wid = unsized_flag? -1 : use_width;
+      int expr_wid = unsized_flag? -1 : (int) use_width;
       NetExpr*rval_expr = elab_and_eval(des, scope, pin(1),
 					expr_wid, lval->vector_width());
 
