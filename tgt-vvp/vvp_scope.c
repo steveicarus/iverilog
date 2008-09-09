@@ -1650,15 +1650,19 @@ static void draw_lpm_re(ivl_lpm_t net, const char*type)
 
 static void draw_lpm_repeat(ivl_lpm_t net)
 {
-      fprintf(vvp_out, "L_%p .repeat %u, %u, %s;\n", net,
+      const char*dly = draw_lpm_output_delay(net);
+
+      fprintf(vvp_out, "L_%p%s .repeat %u, %u, %s;\n", net, dly,
 	      ivl_lpm_width(net), ivl_lpm_size(net),
 	      draw_net_input(ivl_lpm_data(net,0)));
 }
 
 static void draw_lpm_sign_ext(ivl_lpm_t net)
 {
-      fprintf(vvp_out, "L_%p .extend/s %u, %s;\n",
-	      net, ivl_lpm_width(net),
+      const char*dly = draw_lpm_output_delay(net);
+
+      fprintf(vvp_out, "L_%p%s .extend/s %u, %s;\n",
+	      net, dly, ivl_lpm_width(net),
 	      draw_net_input(ivl_lpm_data(net,0)));
 }
 

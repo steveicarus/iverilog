@@ -168,10 +168,21 @@ static int draw_number_real(ivl_expr_t exp)
       unsigned long mant = 0, mask = -1UL;
       int vexp = 0x1000;
 
-      for (idx = 0 ;  idx < wid ;  idx += 1) {
+      for (idx = 0 ;  idx < wid && idx < 8*sizeof(mant) ;  idx += 1) {
 	    mask <<= 1;
 	    if (bits[idx] == '1')
 		  mant |= 1 << idx;
+      }
+
+      for ( ; idx < wid ; idx += 1) {
+	    if (ivl_expr_signed(exp) && (bits[idx] == bits[8*sizeof(mant)-1]))
+		  continue;
+
+	    if (bits[idx] == '0')
+		  continue;
+
+	    fprintf(stderr, "internal error: mantissa doesn't fit!\n");
+	    assert(0);
       }
 
 	/* If this is actually a negative number, then get the
@@ -188,8 +199,8 @@ static int draw_number_real(ivl_expr_t exp)
 	    vexp |= 0x4000;
       }
 
-      fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load(num)= %c%lu\n",
-	      res, mant, vexp, (vexp&0x4000)? '-' : '+', mant);
+      fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load(num)= %c%lu (wid=%u)\n",
+	      res, mant, vexp, (vexp&0x4000)? '-' : '+', mant, wid);
       return res;
 }
 

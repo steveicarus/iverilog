@@ -148,8 +148,8 @@ NetExpr* PEBinary::elaborate_eval_expr_base_(Design*des,
  * the correct NetEBinary object and connect the parameters.
  */
 NetExpr* PEBinary::elaborate_expr_base_(Design*des,
-					   NetExpr*lp, NetExpr*rp,
-					   int expr_wid) const
+					NetExpr*lp, NetExpr*rp,
+					int expr_wid) const
 {
       bool flag;
 
@@ -180,6 +180,13 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	    break;
 
 	  case '*':
+	      // Multiply will guess a width that is the sum of the
+	      // widths of the operand. If that sum is too small, then
+	      // pad one of the arguments enough that the sum is the
+	      // desired width.
+	    if (expr_wid > (long)(lp->expr_width() + rp->expr_width()))
+		  lp = pad_to_width(lp, expr_wid - rp->expr_width());
+
 	    tmp = new NetEBMult(op_, lp, rp);
 	    tmp->set_line(*this);
 	    break;
@@ -203,60 +210,12 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	    break;
 
 	  case 'l': // <<
-	    if (NetEConst*lpc = dynamic_cast<NetEConst*> (lp)) {
-		  if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
-			  // Handle the super-special case that both
-			  // operands are constants. Precalculate the
-			  // entire value here.
-			verinum lpval = lpc->value();
-			unsigned shift = rpc->value().as_ulong();
-			verinum result = lpc->value() << shift;
-			  // If the l-value has explicit size, or
-			  // there is a context determined size, use that.
-			if (lpval.has_len() || expr_wid > 0) {
-			      int use_len = lpval.len();
-			      if (expr_wid < use_len)
-				    use_len = expr_wid;
-			      result = verinum(result, lpval.len());
-			}
-
-			tmp = new NetEConst(result);
-			if (debug_elaborate)
-			      cerr << get_fileline() << ": debug: "
-				   << "Precalculate " << *this
-				   << " to constant " << *tmp << endl;
-
-		  } else {
-			  // Handle the special case that the left
-			  // operand is constant. If it is unsized, we
-			  // may have to expand it to an integer width.
-			verinum lpval = lpc->value();
-			if (lpval.len() < integer_width && !lpval.has_len()) {
-			      lpval = verinum(lpval, integer_width);
-			      lpc = new NetEConst(lpval);
-			      lpc->set_line(*lp);
-			}
-
-			tmp = new NetEBShift(op_, lpc, rp);
-			if (debug_elaborate)
-			      cerr << get_fileline() << ": debug: "
-				   << "Adjust " << *this
-				   << " to this " << *tmp
-				   << " to allow for integer widths." << endl;
-		  }
-
-	    } else {
-		    // Left side is not constant, so handle it the
-		    // default way.
-		  tmp = new NetEBShift(op_, lp, rp);
-	    }
-	    tmp->set_line(*this);
+	    tmp = elaborate_expr_base_lshift_(des, lp, rp, expr_wid);
 	    break;
 
 	  case 'r': // >>
 	  case 'R': // >>>
-	    tmp = new NetEBShift(op_, lp, rp);
-	    tmp->set_line(*this);
+	    tmp = elaborate_expr_base_rshift_(des, lp, rp, expr_wid);
 	    break;
 
 	  case '^':
@@ -271,11 +230,7 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 
 	  case '+':
 	  case '-':
-	    tmp = new NetEBAdd(op_, lp, rp, expr_wid==-2? true : false);
-	    if (expr_wid > 0 && (tmp->expr_type() == IVL_VT_BOOL
-				 || tmp->expr_type() == IVL_VT_LOGIC))
-		  tmp->set_width(expr_wid);
-	    tmp->set_line(*this);
+	    tmp = elaborate_expr_base_add_(des, lp, rp, expr_wid);
 	    break;
 
 	  case 'E': /* === */
@@ -320,6 +275,224 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	    break;
       }
 
+      return tmp;
+}
+
+NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
+					       NetExpr*lp, NetExpr*rp,
+					       int expr_wid) const
+{
+      NetExpr*tmp;
+
+      long use_wid = lp->expr_width();
+      if (expr_wid > 0)
+	    use_wid = expr_wid;
+
+      if (use_wid == 0) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "Oops, left expression width is not known, "
+		       << "so expression width is not known. Punt." << endl;
+	    tmp = new NetEBShift(op_, lp, rp);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+	// If the left expression is constant, then there are some
+	// special cases we can work with. If the left expression is
+	// not constant, but the right expression is constant, then
+	// there are some other interesting cases. But if neither are
+	// constant, then there is the general case.
+
+      if (NetEConst*lpc = dynamic_cast<NetEConst*> (lp)) {
+	    if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
+		    // Handle the super-special case that both
+		    // operands are constants. Precalculate the
+		    // entire value here.
+		  verinum lpval = lpc->value();
+		  unsigned shift = rpc->value().as_ulong();
+		  verinum result = lpc->value() << shift;
+		    // If the l-value has explicit size, or
+		    // there is a context determined size, use that.
+		  if (lpval.has_len() || expr_wid > 0) {
+			int use_len = lpval.len();
+			if (expr_wid > 0 && expr_wid > use_len)
+			      use_len = expr_wid;
+			result = verinum(result, use_len);
+		  }
+
+		  tmp = new NetEConst(result);
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Precalculate " << *lpc << " << " << shift
+			     << " to constant " << *tmp
+			     << " (expr_wid=" << expr_wid << ")" << endl;
+
+	    } else {
+		    // Handle the special case that the left
+		    // operand is constant. If it is unsized, we
+		    // may have to expand it to an integer width.
+		  verinum lpval = lpc->value();
+		  if (lpval.len() < integer_width && !lpval.has_len()) {
+			lpval = verinum(lpval, integer_width);
+			lpc = new NetEConst(lpval);
+			lpc->set_line(*lp);
+		  }
+
+		  tmp = new NetEBShift(op_, lpc, rp);
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Adjust " << *this
+			     << " to this " << *tmp
+			     << " to allow for integer widths." << endl;
+	    }
+
+      } else if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
+	    long shift = rpc->value().as_long();
+	    long use_wid = lp->expr_width();
+	    if (expr_wid > 0)
+		  use_wid = expr_wid;
+
+	    if (shift >= use_wid || (-shift) >= (long)lp->expr_width()) {
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Value left-shifted " << shift
+			     << " beyond width of " << use_wid
+			     << ". Elaborate as constant zero." << endl;
+
+		  tmp = make_const_0(use_wid);
+
+	    } else {
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Left shift expression by constant "
+			     << shift << " bits. (use_wid=" << use_wid << ")" << endl;
+		  lp = pad_to_width(lp, use_wid);
+		  tmp = new NetEBShift(op_, lp, rp);
+	    }
+
+      } else {
+	      // Left side is not constant, so handle it the
+	      // default way.
+	    if (expr_wid >= 0)
+		  lp = pad_to_width(lp, expr_wid);
+	    tmp = new NetEBShift(op_, lp, rp);
+      }
+
+      tmp->set_line(*this);
+      return tmp;
+}
+
+NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
+					       NetExpr*lp, NetExpr*rp,
+					       int expr_wid) const
+{
+      NetExpr*tmp;
+
+      long use_wid = lp->expr_width();
+      if (expr_wid > 0)
+	    use_wid = expr_wid;
+
+      if (use_wid == 0) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "Oops, left expression width is not known, "
+		       << "so expression width is not known. Punt." << endl;
+	    tmp = new NetEBShift(op_, lp, rp);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+      if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
+	    long shift = rpc->value().as_long();
+
+	      // Detect the special cases that the shifted
+	      // unsigned expression is completely shifted away to
+	      // zero.
+	    if ((op_=='r' || (lp->has_sign()==false))
+		&& shift >= (long)lp->expr_width()) {
+		    // Special case that the value is unsigned
+		    // shifted completely away.
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Value right-shifted " << shift
+			     << " beyond width of " << lp->expr_width()
+			     << ". Elaborate as constant zero." << endl;
+
+		  tmp = make_const_0(use_wid);
+		  tmp->set_line(*this);
+		  return tmp;
+
+	    }
+
+	    if (shift >= (long)lp->expr_width()) {
+		    // Signed right shift.
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Value signed-right-shifted " << shift
+			     << " beyond width of " << lp->expr_width()
+			     << ". Elaborate as replicated top bit." << endl;
+
+		  tmp = new NetEConst(verinum(lp->expr_width()-1));
+		  tmp->set_line(*this);
+		  tmp = new NetESelect(lp, tmp, 1);
+		  tmp->cast_signed(true);
+		  tmp->set_line(*this);
+		  tmp = pad_to_width(tmp, use_wid);
+		  tmp->set_line(*this);
+		  return tmp;
+
+	    } else if (shift >= 0) {
+		    // Signed right shift.
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Value signed-right-shifted " << shift
+			     << " beyond width of " << lp->expr_width()
+			     << "." << endl;
+
+		  tmp = new NetEConst(verinum(shift));
+		  tmp->set_line(*this);
+		  long tmp_wid = lp->expr_width() - shift;
+		  if (tmp_wid > use_wid)
+			tmp_wid = use_wid;
+		  tmp = new NetESelect(lp, tmp, tmp_wid);
+		  tmp->set_line(*this);
+		  tmp->cast_signed(lp->has_sign() && op_=='R');
+		  tmp = pad_to_width(tmp, use_wid);
+		  tmp->set_line(*this);
+		  return tmp;
+
+	    } else if ((0-shift) >= use_wid) {
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Value signed-right-shifted " << shift
+			     << " beyond width of " << use_wid
+			     << "." << endl;
+
+		  tmp = make_const_0(use_wid);
+		  tmp->set_line(*this);
+		  return tmp;
+	    }
+      }
+
+	// Falback, handle the general case.
+      if (expr_wid > 0)
+	    lp = pad_to_width(lp, expr_wid);
+      tmp = new NetEBShift(op_, lp, rp);
+      tmp->set_line(*this);
+      return tmp;
+}
+
+NetExpr* PEBinary::elaborate_expr_base_add_(Design*des,
+					    NetExpr*lp, NetExpr*rp,
+					    int expr_wid) const
+{
+      NetExpr*tmp;
+      tmp = new NetEBAdd(op_, lp, rp, expr_wid==-2? true : false);
+      if (expr_wid > 0 && (tmp->expr_type() == IVL_VT_BOOL
+			   || tmp->expr_type() == IVL_VT_LOGIC))
+	    tmp->set_width(expr_wid);
+      tmp->set_line(*this);
       return tmp;
 }
 
@@ -375,6 +548,11 @@ unsigned PEBShift::test_width(Design*des, NetScope*scope,
 
 	// The right expression is self-determined and has no impact
 	// on the expression size that is generated.
+
+      if (wid_left < min)
+	    wid_left = min;
+      if (wid_left < lval)
+	    wid_left = lval;
 
       return wid_left;
 }
@@ -995,36 +1173,70 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 
       symbol_search(des, scope, path_, net, par, eve, ex1, ex2);
 
-      if (net != 0) {
-	    const name_component_t&name_tail = path_.back();
-	    index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
-	    if (!name_tail.index.empty())
-		  use_sel = name_tail.index.back().sel;
+	// If there is a part/bit select expression, then process it
+	// here. This constrains the results no matter what kind the
+	// name is.
 
-	    unsigned use_width = net->vector_width();
-	    switch (use_sel) {
-		case index_component_t::SEL_NONE:
-		  break;
-		case index_component_t::SEL_PART:
-		    { long msb, lsb;
-		      calculate_parts_(des, scope, msb, lsb);
-		      use_width = 1 + ((msb>lsb)? (msb-lsb) : (lsb-msb));
-		      break;
-		    }
-		case index_component_t::SEL_IDX_UP:
-		case index_component_t::SEL_IDX_DO:
-		    { unsigned long tmp = 0;
-		      calculate_up_do_width_(des, scope, tmp);
-		      use_width = tmp;
-		      break;
-		    }
-		case index_component_t::SEL_BIT:
-		  use_width = 1;
-		  break;
-		default:
-		  ivl_assert(*this, 0);
-	    }
+      const name_component_t&name_tail = path_.back();
+      index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
+      if (!name_tail.index.empty())
+	    use_sel = name_tail.index.back().sel;
+
+      unsigned use_width = UINT_MAX;
+      switch (use_sel) {
+	  case index_component_t::SEL_NONE:
+	    break;
+	  case index_component_t::SEL_PART:
+	      { long msb, lsb;
+		calculate_parts_(des, scope, msb, lsb);
+		use_width = 1 + ((msb>lsb)? (msb-lsb) : (lsb-msb));
+		break;
+	      }
+	  case index_component_t::SEL_IDX_UP:
+	  case index_component_t::SEL_IDX_DO:
+	      { unsigned long tmp = 0;
+		calculate_up_do_width_(des, scope, tmp);
+		use_width = tmp;
+		break;
+	      }
+	  case index_component_t::SEL_BIT:
+	    use_width = 1;
+	    break;
+	  default:
+	    ivl_assert(*this, 0);
+      }
+
+      if (use_width != UINT_MAX)
 	    return use_width;
+
+	// The width of a signal expression is the width of the signal.
+      if (net != 0)
+	    return net->vector_width();
+
+	// The width of a parameter name is the width of the range for
+	// the parameter name, if a range is declared. Otherwise, the
+	// width is undefined.
+      if (par != 0) {
+	    if (ex1) {
+		  ivl_assert(*this, ex2);
+		  const NetEConst*ex1_const = dynamic_cast<const NetEConst*> (ex1);
+		  const NetEConst*ex2_const = dynamic_cast<const NetEConst*> (ex2);
+		  ivl_assert(*this, ex1_const && ex2_const);
+
+		  long msb = ex1_const->value().as_long();
+		  long lsb = ex2_const->value().as_long();
+		  if (msb >= lsb)
+			return msb - lsb + 1;
+		  else
+			return lsb - msb + 1;
+	    }
+
+	      // This is a parameter. If it is sized (meaning it was
+	      // declared with range expresions) then the range
+	      // expressions would have been caught above. So if we
+	      // got there there we know this is an unsized constant.
+	    unsized_flag = true;
+	    return par->expr_width();
       }
 
       return min;
@@ -1121,6 +1333,22 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			     << " is a specparam" << endl;
 		  return tmp;
 	    }
+      }
+
+      if (error_implicit==false
+	  && sys_task_arg==false
+	  && path_.size()==1
+	  && scope->default_nettype() != NetNet::NONE) {
+	    NetNet::Type nettype = scope->default_nettype();
+	    net = new NetNet(scope, peek_tail_name(path_), nettype, 1);
+	    net->data_type(IVL_VT_LOGIC);
+	    net->set_line(*this);
+	    if (warn_implicit) {
+		  cerr << get_fileline() << ": warning: implicit "
+			"definition of wire " << scope_path(scope)
+		       << "." << peek_tail_name(path_) << "." << endl;
+	    }
+	    return elaborate_expr_net(des, scope, net, scope, sys_task_arg);
       }
 
 	// At this point we've exhausted all the possibilities that
@@ -1943,7 +2171,7 @@ static bool test_ternary_operand_compat(ivl_variable_type_t l,
  * parsed so I can presume that they exist, and call elaboration
  * methods. If any elaboration fails, then give up and return 0.
  */
-NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope,
+NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 				      int expr_wid, bool) const
 {
       assert(expr_);
@@ -1962,17 +2190,54 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope,
 		       << " and " << fal_wid << endl;
       }
 
-      NetExpr*con = expr_->elaborate_expr(des, scope, -1, false);
+	// Elaborate and evaluate the condition expression. Note that
+	// it is always self-determined.
+      NetExpr*con = elab_and_eval(des, scope, expr_, -1);
       if (con == 0)
 	    return 0;
 
-      NetExpr*tru = tru_->elaborate_expr(des, scope, expr_wid, false);
+	/* Make sure the condition expression reduces to a single bit. */
+      con = condition_reduce(con);
+
+	// Verilog doesn't say that we must do short circuit
+	// evaluation of ternary expressions, but it doesn't disallow
+	// it. The disadvantage of doing this is that semantic errors
+	// in the unused clause will be missed, but people don't seem
+	// to mind, and do apreciate the optimization available here.
+      if (NetEConst*tmp = dynamic_cast<NetEConst*> (con)) {
+	    verinum cval = tmp->value();
+	    ivl_assert(*this, cval.len()==1);
+
+	      // Condition is constant TRUE, so we only need the true claue.
+	    if (cval.get(0) == verinum::V1) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Short-circuit elaborate TRUE clause of ternary."
+		       << endl;
+		  NetExpr*tru = elab_and_eval(des, scope, tru_, expr_wid);
+		  return pad_to_width(tru, expr_wid);
+	    }
+
+	      // Condition is constant FALSE, so we only need the
+	      // false clause.
+	    if (cval.get(0) == verinum::V0) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Short-circuit elaborate FALSE clause of ternary."
+		       << endl;
+		  NetExpr*fal = elab_and_eval(des, scope, fal_, expr_wid);
+		  return pad_to_width(fal, expr_wid);
+	    }
+
+	      // X and Z conditions need to blend both results, so we
+	      // can't short-circuit.
+      }
+
+      NetExpr*tru = elab_and_eval(des, scope, tru_, expr_wid);
       if (tru == 0) {
 	    delete con;
 	    return 0;
       }
 
-      NetExpr*fal = fal_->elaborate_expr(des, scope, expr_wid, false);
+      NetExpr*fal = elab_and_eval(des, scope, fal_, expr_wid);
       if (fal == 0) {
 	    delete con;
 	    delete tru;
@@ -1997,6 +2262,38 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope,
       res->set_line(*this);
       return res;
 }
+
+unsigned PEUnary::test_width(Design*des, NetScope*scope,
+			    unsigned min, unsigned lval,
+			    bool&unsized_flag) const
+{
+      switch (op_) {
+	  case '!':
+	  case '&':
+	  case '|': // Reduction OR
+	  case '^': // Reduction XOR
+	  case 'A': // Reduction NAND (~&)
+	  case 'N': // Reduction NOR (~|)
+	  case 'X': // Reduction NXOR (~^)
+	    return 1;
+      }
+
+      unsigned test_wid = expr_->test_width(des, scope, min, lval, unsized_flag);
+      switch (op_) {
+	      // For these operators, the act of padding to the
+	      // minimum width can have an important impact on the
+	      // calculation. So don't let the tested width be less
+	      // then the tested width.
+	  case '-':
+	  case '+':
+	    if (test_wid < min)
+		  test_wid = min;
+	    break;
+      }
+
+      return test_wid;
+}
+
 
 NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 				 int expr_wid, bool) const
@@ -2055,6 +2352,8 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 		  delete ip;
 
 	    } else {
+		  if (expr_wid > 0)
+			ip = pad_to_width(ip, expr_wid);
 		  tmp = new NetEUnary(op_, ip);
 		  tmp->set_line(*this);
 	    }

@@ -627,7 +627,10 @@ void NetNet::data_type(ivl_variable_type_t t)
 
 bool NetNet::get_signed() const
 {
-      return signed_;
+      if (data_type_ == IVL_VT_REAL)
+	    return true;
+      else
+	    return signed_;
 }
 
 void NetNet::set_signed(bool flag)
@@ -2329,6 +2332,8 @@ const NetExpr* NetETernary::false_expr() const
 
 ivl_variable_type_t NetETernary::expr_type() const
 {
+      ivl_assert(*this, true_val_);
+      ivl_assert(*this, false_val_);
       ivl_variable_type_t tru = true_val_->expr_type();
       ivl_variable_type_t fal = false_val_->expr_type();
       if (tru == IVL_VT_LOGIC && fal == IVL_VT_BOOL)

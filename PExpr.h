@@ -53,7 +53,7 @@ class PExpr : public LineInfo {
 	// be. It is used by elaboration of assignments to figure out
 	// the width of the expression.
 	//
-	// The "min" is the width of the local context, so it the
+	// The "min" is the width of the local context, so is the
 	// minimum width that this function should return. Initially
 	// this is the same as the lval width.
 	//
@@ -492,6 +492,10 @@ class PEUnary : public PExpr {
 
       virtual void dump(ostream&out) const;
 
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  unsigned min, unsigned lval,
+				  bool&unsized_flag) const;
+
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
@@ -574,6 +578,10 @@ class PEBinary : public PExpr {
 
       NetExpr*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_eval_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
+
+      NetExpr*elaborate_expr_base_lshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
+      NetExpr*elaborate_expr_base_rshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
+      NetExpr*elaborate_expr_base_add_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
 
       static void suppress_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp);
 
@@ -679,7 +687,7 @@ class PETernary : public PExpr {
 				    const NetExpr* decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
-      virtual NetETernary*elaborate_expr(Design*des, NetScope*,
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 					 int expr_width, bool sys_task_arg) const;
       virtual NetETernary*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;

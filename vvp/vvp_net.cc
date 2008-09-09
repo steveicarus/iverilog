@@ -1849,7 +1849,7 @@ static void div_mod (vvp_vector2_t dividend, vvp_vector2_t divisor,
 	    mask >>= 1;
       }
 
-      remainder = dividend;
+      remainder = vvp_vector2_t(dividend, mask.size());
 }
 
 vvp_vector2_t operator / (const vvp_vector2_t&dividend,

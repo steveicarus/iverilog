@@ -210,6 +210,10 @@ class Link {
       void drive0(strength_t);
       void drive1(strength_t);
 
+	// This sets the drives for all drivers of this link, and not
+	// just the current link.
+      void drivers_drive(strength_t d0, strength_t d1);
+
       strength_t drive0() const;
       strength_t drive1() const;
 
@@ -312,6 +316,7 @@ class Nexus {
       verinum::V get_init() const;
 
       void drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay);
+      void drivers_drive(Link::strength_t d0, Link::strength_t d1);
 
       Link*first_nlink();
       const Link* first_nlink()const;
@@ -1576,8 +1581,16 @@ class NetExpr  : public LineInfo {
       virtual NexusSet* nex_input(bool rem_out = true) =0;
 
 	// Return a version of myself that is structural. This is used
-	// for converting expressions to gates.
-      virtual NetNet*synthesize(Design*);
+	// for converting expressions to gates. The arguments are:
+	//
+	//  des, scope:  The context where this work is done
+	//
+	//  rise/fall/decay: Attach these delays to the driver for the
+	//                   expression output.
+	//
+	//  drive0/drive1: Attach these strengths tp the driver for
+	//                 the expression output.
+      virtual NetNet*synthesize(Design*des, NetScope*scope);
 
 
     protected:
@@ -1615,7 +1628,7 @@ class NetEConst  : public NetExpr {
       virtual void dump(ostream&) const;
 
       virtual NetEConst* dup_expr() const;
-      virtual NetNet*synthesize(Design*);
+      virtual NetNet*synthesize(Design*, NetScope*scope);
       virtual NexusSet* nex_input(bool rem_out = true);
 
     private:
@@ -1668,7 +1681,7 @@ class NetECReal  : public NetExpr {
       virtual void dump(ostream&) const;
 
       virtual NetECReal* dup_expr() const;
-      virtual NetNet*synthesize(Design*);
+      virtual NetNet*synthesize(Design*, NetScope*scope);
       virtual NexusSet* nex_input(bool rem_out = true);
 
     private:
@@ -2905,7 +2918,7 @@ class NetEUFunc  : public NetExpr {
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEUFunc*dup_expr() const;
       virtual NexusSet* nex_input(bool rem_out = true);
-      virtual NetNet* synthesize(Design*des);
+      virtual NetNet* synthesize(Design*des, NetScope*scope);
 
     private:
       NetScope*scope_;
@@ -3120,7 +3133,7 @@ class NetEBAdd : public NetEBinary {
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBAdd* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope);
 
     private:
       NetECReal* eval_tree_real_();
@@ -3142,7 +3155,7 @@ class NetEBDiv : public NetEBinary {
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBDiv* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope);
 };
 
 /*
@@ -3169,7 +3182,7 @@ class NetEBBits : public NetEBinary {
       virtual NetEBBits* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
 
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope);
 };
 
 /*
@@ -3200,7 +3213,7 @@ class NetEBComp : public NetEBinary {
       virtual NetEBComp* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
 
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope);
 
     private:
       NetEConst* must_be_leeq_(NetExpr*le, const verinum&rv, bool eq_flag);
@@ -3232,7 +3245,7 @@ class NetEBLogic : public NetEBinary {
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBLogic* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope);
 
     private:
 };
@@ -3270,7 +3283,7 @@ class NetEBMult : public NetEBinary {
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBMult* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope);
 
     private:
 
@@ -3292,7 +3305,7 @@ class NetEBPow : public NetEBinary {
       virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBPow* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope);
 
     private:
 
@@ -3324,7 +3337,7 @@ class NetEBShift : public NetEBinary {
       virtual NetEBShift* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
 
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope);
 
     private:
 };
@@ -3358,7 +3371,7 @@ class NetEConcat  : public NetExpr {
       virtual bool set_width(unsigned w, bool last_chance =false);
       virtual NetEConcat* dup_expr() const;
       virtual NetEConst*  eval_tree(int prune_to_width = -1);
-      virtual NetNet*synthesize(Design*);
+      virtual NetNet*synthesize(Design*, NetScope*scope);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -3434,7 +3447,7 @@ class NetESelect  : public NetExpr {
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
       virtual NetESelect* dup_expr() const;
-      virtual NetNet*synthesize(Design*des);
+      virtual NetNet*synthesize(Design*des, NetScope*scope);
       virtual void dump(ostream&) const;
 
     private:
@@ -3514,7 +3527,7 @@ class NetESFunc  : public NetExpr {
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetESFunc*dup_expr() const;
-      virtual NetNet*synthesize(Design*);
+      virtual NetNet*synthesize(Design*, NetScope*scope);
 
     private:
       const char* name_;
@@ -3551,7 +3564,7 @@ class NetETernary  : public NetExpr {
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
-      virtual NetNet*synthesize(Design*);
+      virtual NetNet*synthesize(Design*, NetScope*scope);
 
     private:
       NetExpr*cond_;
@@ -3588,6 +3601,7 @@ class NetEUnary  : public NetExpr {
 
       virtual NetEUnary* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
+      virtual NetNet* synthesize(Design*, NetScope*scope);
 
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
@@ -3608,7 +3622,7 @@ class NetEUBits : public NetEUnary {
       NetEUBits(char op, NetExpr*ex);
       ~NetEUBits();
 
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope);
 
       virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual ivl_variable_type_t expr_type() const;
@@ -3621,7 +3635,7 @@ class NetEUReduce : public NetEUnary {
       ~NetEUReduce();
 
       virtual bool set_width(unsigned w, bool last_chance);
-      virtual NetNet* synthesize(Design*);
+      virtual NetNet* synthesize(Design*, NetScope*scope);
       virtual NetEUReduce* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
       virtual ivl_variable_type_t expr_type() const;
@@ -3648,7 +3662,7 @@ class NetESignal  : public NetExpr {
       virtual bool set_width(unsigned, bool last_chance);
 
       virtual NetESignal* dup_expr() const;
-      NetNet* synthesize(Design*des);
+      NetNet* synthesize(Design*des, NetScope*scope);
       NexusSet* nex_input(bool rem_out = true);
 
 	// This is the expression for selecting an array word, if this

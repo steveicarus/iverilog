@@ -91,7 +91,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    return;
       }
 
-      assert(lval->pin_count() == 1);
+      ivl_assert(*this, lval->pin_count() == 1);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: PGAssign: elaborated l-value"
@@ -99,208 +99,75 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		 << ", type=" << lval->data_type() << endl;
       }
 
-	/* Handle the special case that the rval is simply an
-	   identifier. Get the rval as a NetNet, then use NetBUFZ
-	   objects to connect it to the l-value. This is necessary to
-	   direct drivers. This is how I attach strengths to the
-	   assignment operation. */
-      if (const PEIdent*id = dynamic_cast<const PEIdent*>(pin(1))) {
-	    NetNet*rid = id->elaborate_net(des, scope, lval->vector_width(),
-					   0, 0, 0, Link::STRONG,
-					   Link::STRONG);
-	    if (rid == 0) {
-		  des->errors += 1;
-		  return;
-	    }
+      bool unsized_flag = false;
+      unsigned use_width = pin(1)->test_width(des, scope, lval->vector_width(),
+					      lval->vector_width(), unsized_flag);
 
-	      /* Cast the right side when needed. */
-	    if ((lval->data_type() == IVL_VT_REAL &&
-	         rid->data_type() != IVL_VT_REAL)) {
-		  rid = cast_to_real(des, scope, rid);
-	    } else if ((lval->data_type() != IVL_VT_REAL &&
-	                rid->data_type() == IVL_VT_REAL)) {
-		  rid = cast_to_int(des, scope, rid, lval->vector_width());
-	    }
-
-	    ivl_assert(*this, rid);
-	    if (rid->pin_count() != 1) {
-		  cerr << get_fileline() << ": internal error: "
-		       << "Invalid elaborate_net results here:" << endl;
-		  rid->dump_net(cerr, 4);
-		  des->errors += 1;
-		  return;
-	    }
-	    ivl_assert(*this, rid->pin_count() == 1);
-
-	      /* If the right hand net is the same type as the left
-		 side net (i.e., WIRE/WIRE) then it is enough to just
-		 connect them together. Otherwise, put a bufz between
-		 them to carry strengths from the rval.
-
-		 While we are at it, handle the case where the r-value
-		 is not as wide as the l-value by padding with a
-		 constant-0. */
-
-	    unsigned cnt = lval->vector_width();
-	    if (rid->vector_width() < cnt)
-		  cnt = rid->vector_width();
-
-	    bool need_driver_flag = false;
-
-	      /* If the device is linked to itself, a driver is
-		 needed. Should I print a warning here? */
-	    if (lval->pin(0) .is_linked (rid->pin(0)))
-		  need_driver_flag = true;
-
-	      /* If the nets are different type (i.e., reg vs. tri) then
-		 a driver is needed. */
-	    if (rid->type() != lval->type())
-		  need_driver_flag = true;
-
-	      /* If there is a delay, then I need a driver to carry
-		 it. */
-	    if (rise_time || fall_time || decay_time)
-		  need_driver_flag = true;
-
-	      /* If there is a strength to be carried, then I need a
-		 driver to carry that strength. */
-	    if (rid->pin(0).drive0() != drive0)
-		  need_driver_flag = true;
-
-	    if (rid->pin(0).drive1() != drive1)
-		  need_driver_flag = true;
-
-	      /* If the r-value is more narrow then the l-value, pad
-		 it to the desired width. */
-	    if (cnt < lval->vector_width()) {
-		  if (lval->get_signed() && rid->get_signed()) {
-
-			unsigned use_width = lval->vector_width();
-
-			if (debug_elaborate)
-			      cerr << get_fileline() << ": debug: PGassign "
-				   << "Generate sign-extend node." << endl;
-
-			rid = pad_to_width_signed(des, rid, use_width);
-
-		  } else {
-
-			if (debug_elaborate)
-			      cerr << get_fileline() << ": debug: PGAssign "
-				   << "Unsigned pad r-value from "
-				   << cnt << " bits to "
-				   << lval->vector_width() << " bits." << endl;
-
-			NetNet*tmp = pad_to_width(des, rid,
-						  lval->vector_width());
-			rid = tmp;
-		  }
-
-	    } else if (cnt < rid->vector_width()) {
-
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug: PGAssign "
-			     << "Truncate r-value from "
-			     << cnt << " bits to "
-			     << lval->vector_width() << " bits." << endl;
-
-		  NetNet*tmp = crop_to_width(des, rid, lval->vector_width());
-		  rid = tmp;
-	    }
-
-	    if (! need_driver_flag) {
-
-		    /* Don't need a driver, presumably because the
-		       r-value already has the needed drivers. Just
-		       hook things up. If the r-value is too narrow
-		       for the l-value, then sign extend it or zero
-		       extend it, whichever makes sense. */
-
-		  if (debug_elaborate) {
-			cerr << get_fileline() << ": debug: PGAssign: "
-			     << "Connect lval directly to "
-			     << id->path() << endl;
-		  }
-
-		  connect(lval->pin(0), rid->pin(0));
-
-	    } else {
-		    /* Do need a driver. Use BUFZ objects to carry the
-		       strength and delays. */
-
-		  if (debug_elaborate) {
-			cerr << get_fileline() << ": debug: PGAssign: "
-			     << "Connect lval to " << id->path()
-			     << " through bufz. delay=(";
-			if (rise_time)
-			      cerr << *rise_time << ":";
-			else
-			      cerr << "<none>:";
-			if (fall_time)
-			      cerr << *fall_time << ":";
-			else
-			      cerr << "<none>:";
-			if (decay_time)
-			      cerr << *decay_time;
-			else
-			      cerr << "<none>";
-			cerr << ")" << endl;
-		  }
-
-		  NetBUFZ*dev = new NetBUFZ(scope, scope->local_symbol(),
-					    rid->vector_width());
-		  connect(lval->pin(0), dev->pin(0));
-		  connect(rid->pin(0),  dev->pin(1));
-		  dev->rise_time(rise_time);
-		  dev->fall_time(fall_time);
-		  dev->decay_time(decay_time);
-		  dev->pin(0).drive0(drive0);
-		  dev->pin(0).drive1(drive1);
-		  des->add_node(dev);
-
-	    }
-
-	    return;
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: PGAssign: r-value tested "
+		 << "width is " << use_width
+		 << ", min=" << lval->vector_width()
+		 << ", unsized_flag=" << (unsized_flag?"true":"false") << endl;
       }
 
-	/* Elaborate the r-value. Account for the initial decays,
-	   which are going to be attached to the last gate before the
-	   generated NetNet. */
-      NetNet*rval = pin(1)->elaborate_net(des, scope,
-					  lval->vector_width(),
-					  0, 0, 0,
-					  drive0, drive1);
-      if (rval == 0) {
+      int expr_wid = unsized_flag? -1 : use_width;
+      NetExpr*rval_expr = elab_and_eval(des, scope, pin(1),
+					expr_wid, lval->vector_width());
+
+      if (rval_expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate r-value: "
 		 << *pin(1) << endl;
 	    des->errors += 1;
 	    return;
       }
 
+      NetNet*rval = rval_expr->synthesize(des, scope);
+
+      if (rval == 0) {
+	    cerr << get_fileline() << ": internal error: "
+		 << "Failed to synthesize expression: " << *rval_expr << endl;
+	    des->errors += 1;
+	    return;
+      }
+
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: PGAssign: elaborated r-value"
-		 << " width="<<rval->vector_width()
-		 << ", type="<< rval->data_type() << endl;
+		 << " width="<< rval->vector_width()
+		 << ", type="<< rval->data_type()
+		 << ", expr=" << *rval_expr << endl;
       }
 
       assert(lval && rval);
       assert(rval->pin_count() == 1);
 
+	// Detect the case that the rvalue-expression is a simple
+	// expression. In this case, we will need to create a driver
+	// (later) to carry strengths.
+      bool need_driver_flag = false;
+      if (dynamic_cast<NetESignal*>(rval_expr))
+	    need_driver_flag = true;
+
 	/* Cast the right side when needed. */
       if ((lval->data_type() == IVL_VT_REAL &&
            rval->data_type() != IVL_VT_REAL)) {
 	    rval = cast_to_real(des, scope, rval);
+	    need_driver_flag = false;
       } else if ((lval->data_type() != IVL_VT_REAL &&
                   rval->data_type() == IVL_VT_REAL)) {
 	    rval = cast_to_int(des, scope, rval, lval->vector_width());
+	    need_driver_flag = false;
       }
 
 	/* If the r-value insists on being smaller then the l-value
 	   (perhaps it is explicitly sized) the pad it out to be the
 	   right width so that something is connected to all the bits
 	   of the l-value. */
-      if (lval->vector_width() > rval->vector_width())
-	    rval = pad_to_width(des, rval, lval->vector_width());
+      if (lval->vector_width() > rval->vector_width()) {
+	    if (rval->get_signed())
+		  rval = pad_to_width_signed(des, rval, lval->vector_width());
+	    else
+		  rval = pad_to_width(des, rval, lval->vector_width());
+      }
 
 	/* If, on the other hand, the r-value insists on being
 	   LARGER then the l-value, use a part select to chop it down
@@ -313,16 +180,39 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::TRI, lval->vector_width());
 	    osig->set_line(*this);
+	    osig->local_flag(true);
 	    osig->data_type(rval->data_type());
 	    connect(osig->pin(0), tmp->pin(0));
 	    rval = osig;
+	    need_driver_flag = false;
       }
 
-	/* If there is a rise/fall/decay time, then attach that delay
-	   to the drivers for this net. */
-      if (rise_time || fall_time || decay_time) {
-	    rval->pin(0).drivers_delays(rise_time, fall_time, decay_time);
+      if (need_driver_flag) {
+	    NetBUFZ*driver = new NetBUFZ(scope, scope->local_symbol(),
+					 rval->vector_width());
+	    driver->set_line(*this);
+	    des->add_node(driver);
+
+	    connect(rval->pin(0), driver->pin(1));
+
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, rval->vector_width());
+	    tmp->set_line(*this);
+	    tmp->data_type(rval->data_type());
+	    tmp->local_flag(true);
+
+	    connect(driver->pin(0), tmp->pin(0));
+
+	    rval = tmp;
       }
+
+	/* Set the drive and delays for the r-val. */
+
+      if (drive0 != Link::STRONG || drive1 != Link::STRONG)
+	    rval->pin(0).drivers_drive(drive0, drive1);
+
+      if (rise_time || fall_time || decay_time)
+	    rval->pin(0).drivers_delays(rise_time, fall_time, decay_time);
 
       connect(lval->pin(0), rval->pin(0));
 
@@ -1705,6 +1595,29 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
       return lval_->elaborate_lval(des, scope, false);
 }
 
+NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
+				   unsigned lv_width) const
+{
+      ivl_assert(*this, rval_);
+
+
+	/* Find out what the r-value width is going to be. We guess it
+	   will be the l-value width, but it may turn out to be
+	   something else based on self-determined widths inside. */
+      unsigned use_width = lv_width;
+      bool unsized_flag = false;
+      unsigned tmp_width = rval()->test_width(des, scope, use_width, use_width, unsized_flag);
+      if (tmp_width > use_width)
+	    use_width = tmp_width;
+
+	/* Now elaborate to the expected width. Pass the lwidth to
+	   prune any constant result to fit with the lvalue at hand. */
+      NetExpr*rv = elab_and_eval(des, scope, rval_, use_width, lv_width);
+      if (rv == 0) return 0;
+
+      return rv;
+}
+
 /*
  * This function elaborates delay expressions. This is a little
  * different from normal elaboration because the result may need to be
@@ -1786,20 +1699,8 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    delay = elaborate_delay_expr(delay_, des, scope);
 
 
-      assert(rval());
-
 	/* Elaborate the r-value expression, then try to evaluate it. */
-
-	/* Find out what the r-value width is going to be. We guess it
-	   will be the l-value width, but it may turn out to be
-	   something else based on self-determined widths inside. */
-      unsigned use_width = lv->lwidth();
-      bool unsized_flag = false;
-      use_width = rval()->test_width(des, scope, use_width, use_width, unsized_flag);
-
-	/* Now elaborate to the expected width. Pass the lwidth to
-	   prune any constant result to fit with the lvalue at hand. */
-      NetExpr*rv = elab_and_eval(des, scope, rval(), use_width, lv->lwidth());
+      NetExpr*rv = elaborate_rval_(des, scope, count_lval_width(lv));
       if (rv == 0) return 0;
       assert(rv);
 
@@ -1964,12 +1865,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
 
-      assert(rval());
-
-	/* Elaborate and precalculate the r-value. */
-      NetExpr*rv = elab_and_eval(des, scope, rval(), count_lval_width(lv));
-      if (rv == 0)
-	    return 0;
+      NetExpr*rv = elaborate_rval_(des, scope, count_lval_width(lv));
 
 	/* Handle the (common) case that the r-value is a vector. This
 	   includes just about everything but reals. In this case, we
@@ -3515,7 +3411,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	      // FIXME: Look for constant expressions here?
 
 	      // Get a net form.
-	    condit_sig = tmp->synthesize(des);
+	    condit_sig = tmp->synthesize(des, scope);
 	    ivl_assert(*condition, condit_sig);
       }
 
@@ -3658,6 +3554,7 @@ static void elaborate_tasks(Design*des, NetScope*scope,
 bool Module::elaborate(Design*des, NetScope*scope) const
 {
       bool result_flag = true;
+      error_implicit = true;
 
       if (gn_specify_blocks_flag) {
 	      // Elaborate specparams
@@ -3722,12 +3619,15 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	// complex.
       const list<PGate*>&gl = get_gates();
 
+      error_implicit = false;
       for (list<PGate*>::const_iterator gt = gl.begin()
 		 ; gt != gl.end()
 		 ; gt ++ ) {
 
 	    (*gt)->elaborate(des, scope);
       }
+
+      error_implicit = true;
 
 	// Elaborate the behaviors, making processes out of them. This
 	// involves scanning the PProcess* list, creating a NetProcTop

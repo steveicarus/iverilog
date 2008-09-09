@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2000-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -141,7 +141,7 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 
       NetEvProbe*pclk = eclk->probe(0);
       NetESignal*d = dynamic_cast<NetESignal*> (asn->rval());
-      NetNet*ce = cexp? cexp->synthesize(des) : 0;
+      NetNet*ce = cexp? cexp->synthesize(des, top->scope()) : 0;
 
       if (d == 0) {
 	    cerr << asn->get_fileline() << ": internal error: "

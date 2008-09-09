@@ -295,6 +295,9 @@ void PEBinary::dump(ostream&out) const
 	  case 'l':
 	    out << "<<";
 	    break;
+	  case 'L':
+	    out << "<=";
+	    break;
 	  case 'n':
 	    out << "!=";
 	    break;

@@ -302,10 +302,6 @@ ivl_variable_type_t NetEBPow::expr_type() const
 	    return IVL_VT_REAL;
       if (left_->expr_type() == IVL_VT_REAL)
 	    return IVL_VT_REAL;
-      if (left_->has_sign())
-	    return IVL_VT_REAL;
-      if (right_->has_sign())
-	    return IVL_VT_REAL;
 
       return IVL_VT_LOGIC;
 }

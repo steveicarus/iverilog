@@ -91,6 +91,7 @@ extern NetNet*crop_to_width(Design*des, NetNet*n, unsigned w);
  * return a new NetNet value that is the output of an addition.
  */
 extern NetNet*add_to_net(Design*des, NetNet*sig, long val);
+extern NetNet*sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig);
 
 /*
  * These functions make various sorts of expressions, given operands
@@ -113,6 +114,12 @@ extern NetExpr*make_sub_expr(long val, NetExpr*expr);
  * Make a NetEConst object that contains only X bits.
  */
 extern NetEConst*make_const_x(unsigned long wid);
+extern NetEConst*make_const_0(unsigned long wid);
+
+/*
+ * Make A const net
+ */
+extern NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid);
 
 /*
  * In some cases the lval is accessible as a pointer to the head of
@@ -130,9 +137,11 @@ extern unsigned count_lval_width(const class NetAssign_*first);
  * The expr_width is the width of the context where the expression is
  * being elaborated, or -1 if the expression is self-determined width.
  *
- * Also, the prune_width is the maximum width of the result, and it
- * passed to the eval_tree method of the expression to limit constant
- * results if possible.
+ * The prune_width is the maximum width of the result, and is passed
+ * to the eval_tree method of the expression to limit constant
+ * results. The evaluation will prune any constant result down to the
+ * prune_width (if >0) so should only be used at the point where it is
+ * bound to the destination.
  */
 class PExpr;
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,

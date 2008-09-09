@@ -528,6 +528,13 @@ NetEConst* NetEBComp::eval_gteq_()
       }
 }
 
+/*
+ * Evaluate <A>==<B> or <A>!=<B>. The equality operator checks all the
+ * bits and returns true(false) if there are any bits in the vector
+ * that are defined (0 or 1) and different. If all the defined bits
+ * are equal, but there are are x/z bits, then the situation is
+ * ambiguous so the result is x.
+ */
 NetEConst* NetEBComp::eval_eqeq_real_(NetExpr*le, NetExpr*ri, bool ne_flag)
 {
       NetEConst*vtmp;
@@ -606,11 +613,14 @@ NetEConst* NetEBComp::eval_eqeq_(bool ne_flag)
 
       for (unsigned idx = 0 ;  idx < top ;  idx += 1) {
 
+	    bool x_bit_present = false;
+
 	    switch (lv.get(idx)) {
 
 		case verinum::Vx:
 		case verinum::Vz:
 		  res = verinum::Vx;
+		  x_bit_present = true;
 		  break;
 
 		default:
@@ -622,17 +632,20 @@ NetEConst* NetEBComp::eval_eqeq_(bool ne_flag)
 		case verinum::Vx:
 		case verinum::Vz:
 		  res = verinum::Vx;
+		  x_bit_present = true;
 		  break;
 
 		default:
 		  break;
 	    }
 
-	    if (res == verinum::Vx)
-		  break;
+	    if (x_bit_present)
+		  continue;
 
-	    if (rv.get(idx) != lv.get(idx))
+	    if (rv.get(idx) != lv.get(idx)) {
 		  res = ne_res;
+		  break;
+	    }
       }
 
       if (res != verinum::Vx) {
