@@ -648,9 +648,18 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  return;
 	    }
-	    NetNet*sig = (idx == 0)
-		  ? lval_sig
-		  : ex->elaborate_net(des, scope, 0, 0, 0, 0);
+	    NetNet*sig = 0;
+	    if (idx == 0) {
+		  sig = lval_sig;
+
+	    } else {
+		  unsigned use_width = count * instance_width;
+		  NetExpr*tmp = elab_and_eval(des, scope, ex,
+					      use_width, use_width);
+		  sig = tmp->synthesize(des, scope);
+		  delete tmp;
+	    }
+
 	    if (sig == 0)
 		  continue;
 
@@ -1067,15 +1076,25 @@ v		       NOTE that this also handles the case that the
 		       port is actually empty on the inside. We assume
 		       in that case that the port is input. */
 
-		  sig = pins[idx]->elaborate_net(des, scope,
-						 desired_vector_width,
-						 0, 0, 0);
+		  NetExpr*tmp_expr = elab_and_eval(des, scope, pins[idx],
+						   desired_vector_width,
+						   desired_vector_width);
+		  if (tmp_expr == 0) {
+			cerr << pins[idx]->get_fileline()
+			     << ": internal error: Port expression "
+			     << "too complicated for elaboration." << endl;
+			continue;
+		  }
+		  sig = tmp_expr->synthesize(des, scope);
 		  if (sig == 0) {
 			cerr << pins[idx]->get_fileline()
 			     << ": internal error: Port expression "
 			     << "too complicated for elaboration." << endl;
 			continue;
 		  }
+
+		  delete tmp_expr;
+		  sig->set_line(*this);
 
 		  if (need_bufz_for_input_port(prts)) {
 			NetBUFZ*tmp = new NetBUFZ(scope, scope->local_symbol(),
@@ -1487,12 +1506,17 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    if (pins[idx] == 0)
 		  continue;
 
-	    NetNet*sig = pins[idx]->elaborate_net(des, scope, 1, 0, 0, 0);
-	    if (sig == 0) {
+	    NetExpr*expr_tmp = elab_and_eval(des, scope, pins[idx], 1, 1);
+	    if (expr_tmp == 0) {
 		  cerr << "internal error: Expression too complicated "
 			"for elaboration:" << pins[idx] << endl;
 		  continue;
 	    }
+	    NetNet*sig = expr_tmp->synthesize(des, scope);
+	    ivl_assert(*this, sig);
+	    sig->set_line(*this);
+
+	    delete expr_tmp;
 
 	    connect(sig->pin(0), net->pin(idx));
       }
@@ -2668,17 +2692,29 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
 	    bool save_flag = error_implicit;
 	    error_implicit = true;
-	    NetNet*expr = expr_[idx]->expr()->elaborate_net(des, scope,
-							    0, 0, 0, 0);
-	    error_implicit = save_flag;
+	    NetExpr*tmp = elab_and_eval(des, scope, expr_[idx]->expr(), 0);
+	    if (tmp == 0) {
+		  expr_[idx]->dump(cerr);
+		  cerr << endl;
+		  des->errors += 1;
+		  error_implicit = save_flag;
+		  continue;
+	    }
+
+	    NetNet*expr = tmp->synthesize(des, scope);
+	    expr->set_line(*this);
 	    if (expr == 0) {
 		  expr_[idx]->dump(cerr);
 		  cerr << endl;
 		  des->errors += 1;
+		  error_implicit = save_flag;
 		  continue;
 	    }
 	    assert(expr);
 
+	    delete tmp;
+
+	    error_implicit = save_flag;
 	    unsigned pins = (expr_[idx]->type() == PEEvent::ANYEDGE)
 		  ? expr->pin_count() : 1;
 
