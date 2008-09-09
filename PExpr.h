@@ -36,9 +36,6 @@ class NetScope;
  * The PExpr class hierarchy supports the description of
  * expressions. The parser can generate expression objects from the
  * source, possibly reducing things that it knows how to reduce.
- *
- * The elaborate_net method is used by structural elaboration to build
- * up a netlist interpretation of the expression.
  */
 
 class PExpr : public LineInfo {
@@ -98,17 +95,6 @@ class PExpr : public LineInfo {
 	// evaluation of parameters.
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
-	// This method elaborate the expression as gates, for use in a
-	// continuous assign or other wholly structural context.
-      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
-				    unsigned lwidth,
-				    const NetExpr* rise,
-				    const NetExpr* fall,
-				    const NetExpr* decay,
-				    Link::strength_t drive0 =Link::STRONG,
-				    Link::strength_t drive1 =Link::STRONG)
-	    const;
-
 	// This method elaborates the expression as gates, but
 	// restricted for use as l-values of continuous assignments.
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
@@ -163,13 +149,6 @@ class PEConcat : public PExpr {
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
       virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
-      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
-				    unsigned width,
-				    const NetExpr* rise,
-				    const NetExpr* fall,
-				    const NetExpr* decay,
-				    Link::strength_t drive0,
-				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     int expr_width, bool sys_task_arg) const;
       virtual NetEConcat*elaborate_pexpr(Design*des, NetScope*) const;
@@ -236,14 +215,6 @@ class PEFNumber : public PExpr {
 				     int expr_width, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
-      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
-				    unsigned lwidth,
-				    const NetExpr* rise,
-				    const NetExpr* fall,
-				    const NetExpr* decay,
-				    Link::strength_t drive0,
-				    Link::strength_t drive1) const;
-
       virtual void dump(ostream&) const;
 
     private:
@@ -277,15 +248,6 @@ class PEIdent : public PExpr {
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
 					 bool is_force) const;
-
-	// Structural r-values are OK.
-      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
-				    unsigned lwidth,
-				    const NetExpr* rise,
-				    const NetExpr* fall,
-				    const NetExpr* decay,
-				    Link::strength_t drive0,
-				    Link::strength_t drive1) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     int expr_width, bool sys_task_arg) const;
@@ -366,38 +328,6 @@ class PEIdent : public PExpr {
 				   NetESignal*net,
 				   NetScope*found) const;
 
-    public:
-
-      NetNet* elaborate_net_array_(Design*des, NetScope*scope,
-				   NetNet*sig, unsigned lwidth,
-				   const NetExpr* rise,
-				   const NetExpr* fall,
-				   const NetExpr* decay,
-				   Link::strength_t drive0,
-				   Link::strength_t drive1) const;
-
-      NetNet* elaborate_net_net_(Design*des, NetScope*scope,
-				 NetNet*sig, unsigned lwidth,
-				 const NetExpr* rise,
-				 const NetExpr* fall,
-				 const NetExpr* decay,
-				 Link::strength_t drive0,
-				 Link::strength_t drive1) const;
-      NetNet* elaborate_net_net_idx_up_(Design*des, NetScope*scope,
-					NetNet*sig, unsigned lwidth,
-					const NetExpr* rise,
-					const NetExpr* fall,
-					const NetExpr* decay,
-					Link::strength_t drive0,
-					Link::strength_t drive1) const;
-      NetNet* elaborate_net_bitmux_(Design*des, NetScope*scope,
-				    NetNet*sig,
-				    const NetExpr* rise,
-				    const NetExpr* fall,
-				    const NetExpr* decay,
-				    Link::strength_t drive0,
-				    Link::strength_t drive1) const;
-
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
 				     bool bidirectional_flag) const;
@@ -406,8 +336,6 @@ class PEIdent : public PExpr {
 
       bool eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 			     long&midx, long&lidx) const;
-      NetNet*process_select_(Design*des, NetScope*scope, NetNet*sig) const;
-
 };
 
 class PENumber : public PExpr {
@@ -423,13 +351,6 @@ class PENumber : public PExpr {
 				  unsigned min, unsigned lval,
 				  bool&unsized_flag) const;
 
-      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
-				    unsigned lwidth,
-				    const NetExpr* rise,
-				    const NetExpr* fall,
-				    const NetExpr* decay,
-				    Link::strength_t drive0,
-				    Link::strength_t drive1) const;
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				       int expr_width, bool) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
@@ -466,13 +387,6 @@ class PEString : public PExpr {
 				  unsigned min, unsigned lval,
 				  bool&unsized_flag) const;
 
-      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
-				    unsigned width,
-				    const NetExpr* rise,
-				    const NetExpr* fall,
-				    const NetExpr* decay,
-				    Link::strength_t drive0,
-				    Link::strength_t drive1) const;
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				       int expr_width, bool) const;
       virtual NetEConst*elaborate_pexpr(Design*des, NetScope*sc) const;
@@ -498,45 +412,12 @@ class PEUnary : public PExpr {
 
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
-      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
-				    unsigned width,
-				    const NetExpr* rise,
-				    const NetExpr* fall,
-				    const NetExpr* decay,
-				    Link::strength_t drive0,
-				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     int expr_width, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
       virtual bool is_constant(Module*) const;
-
-    private:
-      NetNet* elab_net_uminus_const_logic_(Design*des, NetScope*scope,
-					   NetEConst*expr,
-					   unsigned width,
-					   const NetExpr* rise,
-					   const NetExpr* fall,
-					   const NetExpr* decay,
-					   Link::strength_t drive0,
-					   Link::strength_t drive1) const;
-      NetNet* elab_net_uminus_const_real_(Design*des, NetScope*scope,
-					   NetECReal*expr,
-					   unsigned width,
-					   const NetExpr* rise,
-					   const NetExpr* fall,
-					   const NetExpr* decay,
-					   Link::strength_t drive0,
-					   Link::strength_t drive1) const;
-      NetNet* elab_net_unary_real_(Design*des, NetScope*scope,
-				   NetExpr*expr,
-				   unsigned width,
-				   const NetExpr* rise,
-				   const NetExpr* fall,
-				   const NetExpr* decay,
-				   Link::strength_t drive0,
-				   Link::strength_t drive1) const;
 
     private:
       char op_;
@@ -559,13 +440,6 @@ class PEBinary : public PExpr {
 
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
-      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
-				    unsigned width,
-				    const NetExpr* rise,
-				    const NetExpr* fall,
-				    const NetExpr* decay,
-				    Link::strength_t drive0,
-				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 					int expr_width, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
@@ -585,52 +459,6 @@ class PEBinary : public PExpr {
 
       static void suppress_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp);
 
-    private:
-      NetNet* elaborate_net_add_(Design*des, NetScope*scope,
-				 unsigned lwidth,
-				 const NetExpr* rise,
-				 const NetExpr* fall,
-				 const NetExpr* decay) const;
-      NetNet* elaborate_net_bit_(Design*des, NetScope*scope,
-				 unsigned lwidth,
-				 const NetExpr* rise,
-				 const NetExpr* fall,
-				 const NetExpr* decay) const;
-      NetNet* elaborate_net_cmp_(Design*des, NetScope*scope,
-				 unsigned lwidth,
-				 const NetExpr* rise,
-				 const NetExpr* fall,
-				 const NetExpr* decay) const;
-      NetNet* elaborate_net_div_(Design*des, NetScope*scope,
-				 unsigned lwidth,
-				 const NetExpr* rise,
-				 const NetExpr* fall,
-				 const NetExpr* decay) const;
-      NetNet* elaborate_net_mod_(Design*des, NetScope*scope,
-				 unsigned lwidth,
-				 const NetExpr* rise,
-				 const NetExpr* fall,
-				 const NetExpr* decay) const;
-      NetNet* elaborate_net_log_(Design*des, NetScope*scope,
-				 unsigned lwidth,
-				 const NetExpr* rise,
-				 const NetExpr* fall,
-				 const NetExpr* decay) const;
-      NetNet* elaborate_net_mul_(Design*des, NetScope*scope,
-				 unsigned lwidth,
-				 const NetExpr* rise,
-				 const NetExpr* fall,
-				 const NetExpr* decay) const;
-      NetNet* elaborate_net_pow_(Design*des, NetScope*scope,
-				 unsigned lwidth,
-				 const NetExpr* rise,
-				 const NetExpr* fall,
-				 const NetExpr* decay) const;
-      NetNet* elaborate_net_shift_(Design*des, NetScope*scope,
-				   unsigned lwidth,
-				   const NetExpr* rise,
-				   const NetExpr* fall,
-				   const NetExpr* decay) const;
 };
 
 /*
@@ -680,13 +508,6 @@ class PETernary : public PExpr {
 
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
-      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
-				    unsigned width,
-				    const NetExpr* rise,
-				    const NetExpr* fall,
-				    const NetExpr* decay,
-				    Link::strength_t drive0,
-				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 					 int expr_width, bool sys_task_arg) const;
       virtual NetETernary*elaborate_pexpr(Design*des, NetScope*sc) const;
@@ -720,14 +541,7 @@ class PECallFunction : public PExpr {
 
       virtual void dump(ostream &) const;
 
-      virtual NetNet* elaborate_net(Design*des, NetScope*scope,
-				    unsigned width,
-				    const NetExpr* rise,
-				    const NetExpr* fall,
-				    const NetExpr* decay,
-				    Link::strength_t drive0,
-				    Link::strength_t drive1) const;
-      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+     virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     int expr_wid, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
@@ -743,13 +557,6 @@ class PECallFunction : public PExpr {
 
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope, int expr_wid) const;
       NetExpr* elaborate_access_func_(Design*des, NetScope*scope, int expr_wid) const;
-      NetNet* elaborate_net_sfunc_(Design*des, NetScope*scope,
-				   unsigned width,
-				   const NetExpr* rise,
-				   const NetExpr* fall,
-				   const NetExpr* decay,
-				   Link::strength_t drive0,
-				   Link::strength_t drive1) const;
       unsigned test_width_sfunc_(Design*des, NetScope*scope,
 				 unsigned min, unsigned lval,
 				 bool&unsized_flag) const;
