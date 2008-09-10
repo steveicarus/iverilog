@@ -952,9 +952,9 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope)
 		  below->set_line(*this);
 	    }
 
-	      // Any above bits?.
+	      // Any above bits?
 	    NetNet*above = 0;
-	    if (base_val+select_width > sub->vector_width()) {
+	    if ((unsigned)base_val+select_width > sub->vector_width()) {
 		  select_width = sub->vector_width() - base_val;
 		  unsigned above_width = expr_width() - select_width;
 
