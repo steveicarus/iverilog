@@ -244,8 +244,7 @@ void NetNode::dump_node(ostream&o, unsigned ind) const
 void NetPins::dump_node_pins(ostream&o, unsigned ind) const
 {
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    o << setw(ind) << "" << idx << " " << pin(idx).get_name()
-	      << "<" << pin(idx).get_inst() << ">";
+	    o << setw(ind) << "" << idx << " " << pin(idx).get_name();
 
 	    switch (pin(idx).get_dir()) {
 		case Link::PASSIVE:

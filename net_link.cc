@@ -64,7 +64,7 @@ void connect(Link&l, Link&r)
 
 Link::Link()
 : dir_(PASSIVE), drive0_(STRONG), drive1_(STRONG), init_(verinum::Vx),
-  inst_(0), next_(0), nexus_(0)
+  next_(0), nexus_(0)
 {
       (new Nexus()) -> relink(this);
 }
@@ -206,20 +206,14 @@ unsigned Link::get_pin() const
       return pin_;
 }
 
-void Link::set_name(perm_string n, unsigned i)
+void Link::set_name(perm_string n)
 {
       name_ = n;
-      inst_ = i;
 }
 
 perm_string Link::get_name() const
 {
       return name_;
-}
-
-unsigned Link::get_inst() const
-{
-      return inst_;
 }
 
 Nexus::Nexus()
@@ -455,7 +449,7 @@ const char* Nexus::name() const
 	    pin = lnk->get_pin();
 	    cerr << "internal error: No signal for nexus of " <<
 		  obj->name() << " pin " << pin << "(" <<
-		  lnk->get_name() << "<" << lnk->get_inst() << ">)"
+		  lnk->get_name() << ")"
 		  " type=" << typeid(*obj).name() << "?" << endl;
 
       }

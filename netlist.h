@@ -259,9 +259,8 @@ class Link {
 	// A link of an object (sometimes called a "pin") has a
 	// name. It is convenient for the name to have a string and an
 	// integer part.
-      void set_name(perm_string, unsigned inst =0);
+      void set_name(perm_string);
       perm_string get_name() const;
-      unsigned get_inst() const;
 
     private:
 	// The NetNode manages these. They point back to the
@@ -277,7 +276,6 @@ class Link {
 	// has width, then the inst_ member is the index of the
 	// pin.
       perm_string name_;
-      unsigned    inst_;
 
     private:
       Link *next_;

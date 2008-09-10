@@ -34,12 +34,12 @@ NetUserFunc::NetUserFunc(NetScope*s, perm_string n, NetScope*d)
   def_(d)
 {
       pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(def_->basename(), 0);
+      pin(0).set_name(def_->basename());
 
       for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1) {
 
 	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).set_name(perm_string::literal("D"), idx-1);
+	    pin(idx).set_name(perm_string::literal("D"));
 	    pin(idx).drive0(Link::HIGHZ);
 	    pin(idx).drive1(Link::HIGHZ);
       }
@@ -136,12 +136,12 @@ NetSysFunc::NetSysFunc(NetScope*s, perm_string n,
       def_ = def;
 
       pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("Q"), 0);
+      pin(0).set_name(perm_string::literal("Q"));
 
       for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1) {
 
 	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).set_name(perm_string::literal("D"), idx-1);
+	    pin(idx).set_name(perm_string::literal("D"));
 	    pin(idx).drive0(Link::HIGHZ);
 	    pin(idx).drive1(Link::HIGHZ);
       }
