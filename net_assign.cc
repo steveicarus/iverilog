@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_assign.cc,v 1.22 2007/01/16 05:44:15 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -212,13 +209,32 @@ NetAssign::~NetAssign()
 {
 }
 
-NetAssignNB::NetAssignNB(NetAssign_*lv, NetExpr*rv)
+NetAssignNB::NetAssignNB(NetAssign_*lv, NetExpr*rv, NetEvWait*ev, NetExpr*cnt)
 : NetAssignBase(lv, rv)
 {
+      event_ = ev;
+      count_ = cnt;
 }
 
 NetAssignNB::~NetAssignNB()
 {
+}
+
+unsigned NetAssignNB::nevents() const
+{
+      if (event_) return event_->nevents();
+      return 0;
+}
+
+const NetEvent*NetAssignNB::event(unsigned idx) const
+{
+      if (event_) return event_->event(idx);
+      return 0;
+}
+
+const NetExpr*NetAssignNB::get_count() const
+{
+      return count_;
 }
 
 NetCAssign::NetCAssign(NetAssign_*lv, NetExpr*rv)
@@ -256,34 +272,3 @@ NetRelease::NetRelease(NetAssign_*l)
 NetRelease::~NetRelease()
 {
 }
-
-/*
- * $Log: net_assign.cc,v $
- * Revision 1.22  2007/01/16 05:44:15  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.21  2006/02/02 02:43:58  steve
- *  Allow part selects of memory words in l-values.
- *
- * Revision 1.20  2005/07/11 16:56:50  steve
- *  Remove NetVariable and ivl_variable_t structures.
- *
- * Revision 1.19  2004/12/11 02:31:26  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- * Revision 1.18  2004/08/28 15:08:31  steve
- *  Do not change reg to wire in NetAssign_ unless synthesizing.
- *
- * Revision 1.17  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.16  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- */
-

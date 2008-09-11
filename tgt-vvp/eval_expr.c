@@ -162,7 +162,9 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		            break;
 		      }
 		}
-		fprintf(vvp_out, "    %%ix/getv %u, v%p_%u;\n", ix, sig, word);
+		char*type = ivl_signal_signed(sig) ? "/s" : "";
+		fprintf(vvp_out, "    %%ix/getv%s %u, v%p_%u;\n", type, ix,
+		                 sig, word);
 		break;
 	  }
 

@@ -59,7 +59,7 @@ bool dll_target::process(const NetProcTop*net)
 
 	/* This little bit causes the process to be completely
 	   generated so that it can be passed to the DLL. The
-	   stmt_cur_ member us used to hold a pointer to the current
+	   stmt_cur_ member is used to hold a pointer to the current
 	   statement in progress, and the emit_proc() method fills in
 	   that object.
 
@@ -222,6 +222,7 @@ bool dll_target::proc_assign(const NetAssign*net)
 void dll_target::proc_assign_nb(const NetAssignNB*net)
 {
       const NetExpr* delay_exp = net->get_delay();
+      const NetExpr* cnt_exp = net->get_count();
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
@@ -229,6 +230,8 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
       FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->u_.assign_.delay  = 0;
+      stmt_cur_->u_.assign_.count  = 0;
+      stmt_cur_->u_.assign_.nevent  = 0;
 
 	/* Make the lval fields. */
       make_assign_lvals_(net);
@@ -239,6 +242,7 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
       stmt_cur_->u_.assign_.rval_ = expr_;
       expr_ = 0;
 
+	/* Process a delay if it exists. */
       if (const NetEConst*delay_num = dynamic_cast<const NetEConst*>(delay_exp)) {
 	    verinum val = delay_num->value();
 	    ivl_expr_t de = new struct ivl_expr_s;
@@ -252,6 +256,96 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 	    delay_exp->expr_scan(this);
 	    stmt_cur_->u_.assign_.delay = expr_;
 	    expr_ = 0;
+      }
+
+	/* Process a count if it exists. */
+      if (const NetEConst*cnt_num = dynamic_cast<const NetEConst*>(cnt_exp)) {
+	    verinum val = cnt_num->value();
+	    ivl_expr_t cnt = new struct ivl_expr_s;
+	    cnt->type_ = IVL_EX_ULONG;
+	    cnt->width_  = 8 * sizeof(unsigned long);
+	    cnt->signed_ = 0;
+	    cnt->u_.ulong_.value = val.as_ulong();
+	    stmt_cur_->u_.assign_.count = cnt;
+
+      } else if (cnt_exp != 0) {
+	    cnt_exp->expr_scan(this);
+	    stmt_cur_->u_.assign_.count = expr_;
+	    expr_ = 0;
+      }
+
+	/* Process the events if they exist. This is a copy of code
+	 * from NetEvWait below. */
+      if (net->nevents() > 0) {
+	    stmt_cur_->u_.assign_.nevent = net->nevents();
+	    if (net->nevents() > 1) {
+		  stmt_cur_->u_.assign_.events = (ivl_event_t*)
+		        calloc(net->nevents(), sizeof(ivl_event_t*));
+	    }
+
+	    for (unsigned edx = 0 ;  edx < net->nevents() ;  edx += 1) {
+
+		    /* Locate the event by name. Save the ivl_event_t in the
+		       statement so that the generator can find it easily. */
+		  const NetEvent*ev = net->event(edx);
+		  ivl_scope_t ev_scope = lookup_scope_(ev->scope());
+		  ivl_event_t ev_tmp=0;
+
+		  assert(ev_scope);
+		  assert(ev_scope->nevent_ > 0);
+		  for (unsigned idx = 0;  idx < ev_scope->nevent_; idx += 1) {
+			const char*ename =
+			      ivl_event_basename(ev_scope->event_[idx]);
+			if (strcmp(ev->name(), ename) == 0) {
+			      ev_tmp = ev_scope->event_[idx];
+			      break;
+			}
+		  }
+		  // XXX should we assert(ev_tmp)?
+
+		  if (net->nevents() == 1)
+			stmt_cur_->u_.assign_.event = ev_tmp;
+		  else
+			stmt_cur_->u_.assign_.events[edx] = ev_tmp;
+
+		    /* If this is an event with a probe, then connect up the
+		       pins. This wasn't done during the ::event method because
+		       the signals weren't scanned yet. */
+
+		  if (ev->nprobe() >= 1) {
+			unsigned iany = 0;
+			unsigned ineg = ev_tmp->nany;
+			unsigned ipos = ineg + ev_tmp->nneg;
+
+			for (unsigned idx = 0;  idx < ev->nprobe();  idx += 1) {
+			      const NetEvProbe*pr = ev->probe(idx);
+			      unsigned base = 0;
+
+			      switch (pr->edge()) {
+				  case NetEvProbe::ANYEDGE:
+				    base = iany;
+				    iany += pr->pin_count();
+				    break;
+				  case NetEvProbe::NEGEDGE:
+				    base = ineg;
+				    ineg += pr->pin_count();
+				    break;
+				  case NetEvProbe::POSEDGE:
+				    base = ipos;
+				    ipos += pr->pin_count();
+				    break;
+			      }
+
+			      for (unsigned bit = 0; bit < pr->pin_count();
+				   bit += 1) {
+				    ivl_nexus_t nex = (ivl_nexus_t)
+				          pr->pin(bit).nexus()->t_cookie();
+				    assert(nex);
+				    ev_tmp->pins[base+bit] = nex;
+			      }
+			}
+		  }
+	    }
       }
 }
 
@@ -643,6 +737,7 @@ bool dll_target::proc_wait(const NetEvWait*net)
       stmt_cur_->u_.wait_.stmt_ = (struct ivl_statement_s*)
 	    calloc(1, sizeof(struct ivl_statement_s));
 
+	// This event processing code is also in the NB assign above.
       stmt_cur_->u_.wait_.nevent = net->nevents();
       if (net->nevents() > 1) {
 	    stmt_cur_->u_.wait_.events = (ivl_event_t*)

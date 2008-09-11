@@ -1972,6 +1972,9 @@ extern "C" ivl_statement_t ivl_stmt_case_stmt(ivl_statement_t net, unsigned idx)
 extern "C" ivl_expr_t ivl_stmt_cond_expr(ivl_statement_t net)
 {
       switch (net->type_) {
+	  case IVL_ST_ASSIGN_NB:
+	    return net->u_.assign_.count;
+
 	  case IVL_ST_CONDIT:
 	    return net->u_.condit_.cond_;
 
@@ -2034,6 +2037,9 @@ extern "C" uint64_t ivl_stmt_delay_val(ivl_statement_t net)
 extern "C" unsigned ivl_stmt_nevent(ivl_statement_t net)
 {
       switch (net->type_) {
+	  case IVL_ST_ASSIGN_NB:
+	    return net->u_.assign_.nevent;
+
 	  case IVL_ST_WAIT:
 	    return net->u_.wait_.nevent;
 
@@ -2049,6 +2055,13 @@ extern "C" unsigned ivl_stmt_nevent(ivl_statement_t net)
 extern "C" ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx)
 {
       switch (net->type_) {
+	  case IVL_ST_ASSIGN_NB:
+	    assert(idx < net->u_.assign_.nevent);
+	    if (net->u_.assign_.nevent == 1)
+		  return net->u_.assign_.event;
+	    else
+		  return net->u_.assign_.events[idx];
+
 	  case IVL_ST_WAIT:
 	    assert(idx < net->u_.wait_.nevent);
 	    if (net->u_.wait_.nevent == 1)
@@ -2059,6 +2072,7 @@ extern "C" ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx)
 	  case IVL_ST_TRIGGER:
 	    assert(idx == 0);
 	    return net->u_.wait_.event;
+
 	  default:
 	    assert(0);
       }

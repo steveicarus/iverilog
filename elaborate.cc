@@ -1906,11 +1906,14 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       }
 
       NetExpr*delay = 0;
-      if (delay_ != 0)
+      if (delay_ != 0) {
+	    assert(count_ == 0 && event_ == 0);
 	    delay = elaborate_delay_expr(delay_, des, scope);
+      }
 
+      NetExpr*count = 0;
+      NetEvWait*event = 0;
       if (count_ != 0 || event_ != 0) {
-	    NetExpr*count = 0;
 	    if (count_ != 0) {
 		  assert(event_ != 0);
 		  count = elab_and_eval(des, scope, count_, -1);
@@ -1918,27 +1921,39 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 			cerr << get_fileline() << ": Unable to elaborate "
 			        "repeat expression." << endl;
 			des->errors += 1;
-//			return 0;
+			return 0;
 		  }
 	    }
 
-	    NetProc* event = event_->elaborate(des, scope);
-	    if (event == 0) {
+	    NetProc*st = event_->elaborate(des, scope);
+	    if (st == 0) {
 		  cerr << get_fileline() << ": unable to elaborate "
 		          "event expression." << endl;
 		  des->errors += 1;
-//		  return 0;
+		  return 0;
 	    }
+	    event = dynamic_cast<NetEvWait*>(st) ;
+	    assert(event);
 
-	    cerr << get_fileline() << ": sorry: non blocking ";
-	    if (count_) cerr << "repeat ";
-	    cerr  << "event controls are not supported." << endl;
-	    des->errors += 1;
-	    return 0;
+	      // Some constant values are special.
+	    if (NetEConst*ce = dynamic_cast<NetEConst*>(count)) {
+		  long val = ce->value().as_long();
+		    // We only need the assignment statement.
+		  if (val <= 0) {
+			delete count;
+			delete event;
+			count = 0;
+			event = 0;
+		    // We only need the event.
+		  } else if (val == 1) {
+			delete count;
+			count = 0;
+		  }
+	    }
       }
 
 	/* All done with this node. Mark its line number and check it in. */
-      NetAssignNB*cur = new NetAssignNB(lv, rv);
+      NetAssignNB*cur = new NetAssignNB(lv, rv, event, count);
       cur->set_delay(delay);
       cur->set_line(*this);
       return cur;

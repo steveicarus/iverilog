@@ -671,6 +671,13 @@ struct ivl_statement_s {
 		  struct ivl_lval_s*lval_;
 		  ivl_expr_t rval_;
 		  ivl_expr_t delay;
+		    // The following are only for NB event control.
+		  ivl_expr_t count;
+		  unsigned nevent;
+		  union {
+			ivl_event_t event;
+			ivl_event_t*events;
+		  };
 	    } assign_;
 
 	    struct { /* IVL_ST_BLOCK, IVL_ST_FORK */

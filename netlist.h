@@ -2230,7 +2230,8 @@ class NetAssign : public NetAssignBase {
 
 class NetAssignNB  : public NetAssignBase {
     public:
-      explicit NetAssignNB(NetAssign_*lv, NetExpr*rv);
+      explicit NetAssignNB(NetAssign_*lv, NetExpr*rv, NetEvWait*ev,
+                           NetExpr*cnt);
       ~NetAssignNB();
 
 
@@ -2238,7 +2239,13 @@ class NetAssignNB  : public NetAssignBase {
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
 
+      unsigned nevents() const;
+      const NetEvent*event(unsigned) const;
+      const NetExpr* get_count() const;
+
     private:
+      NetEvWait*event_;
+      NetExpr*count_;
 };
 
 /*
@@ -2620,6 +2627,8 @@ class NetEvWait  : public NetProc {
 			      const svector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
+	// This will ignore any statement.
+      virtual void dump_inline(ostream&) const;
       virtual DelayType delay_type() const;
 
     private:
@@ -2628,6 +2637,8 @@ class NetEvWait  : public NetProc {
       unsigned nevents_;
       NetEvent**events_;
 };
+
+ostream& operator << (ostream&out, const NetEvWait&obj);
 
 class NetEvProbe  : public NetNode {
 

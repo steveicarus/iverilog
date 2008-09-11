@@ -117,6 +117,10 @@ struct vthread_s {
       struct vthread_s*wait_next;
 	/* These are used to keep the thread in a scope. */
       struct vthread_s*scope_next, *scope_prev;
+
+	/* These are used to pass non-blocking event control information. */
+      vvp_net_t*event;
+      uint64_t ecount;
 };
 
 // this table maps the thread special index bit addresses to
@@ -332,6 +336,8 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       thr->waiting_for_event = 0;
       thr->is_scheduled = 0;
       thr->fork_count   = 0;
+      thr->event  = 0;
+      thr->ecount = 0;
 
       thr_put_bit(thr, 0, BIT4_0);
       thr_put_bit(thr, 1, BIT4_1);
@@ -815,7 +821,7 @@ bool of_ASSIGN_WR(vthread_t thr, vvp_code_t cp)
       t_vpi_value val;
       val.format = vpiRealVal;
       val.value.real = thr->words[index].w_real;
-      vpi_put_value(tmp, &val, &del, vpiInertialDelay);
+      vpi_put_value(tmp, &val, &del, vpiTransportDelay);
 
       return true;
 }
@@ -834,7 +840,31 @@ bool of_ASSIGN_WRD(vthread_t thr, vvp_code_t cp)
       t_vpi_value val;
       val.format = vpiRealVal;
       val.value.real = thr->words[index].w_real;
-      vpi_put_value(tmp, &val, &del, vpiInertialDelay);
+      vpi_put_value(tmp, &val, &del, vpiTransportDelay);
+
+      return true;
+}
+
+bool of_ASSIGN_WRE(vthread_t thr, vvp_code_t cp)
+{
+      assert(thr->event != 0);
+      unsigned index = cp->bit_idx[0];
+      struct __vpiHandle*tmp = cp->handle;
+
+	// If the count is zero then just put the value.
+      if (thr->ecount == 0) {
+	    t_vpi_value val;
+
+	    val.format = vpiRealVal;
+	    val.value.real = thr->words[index].w_real;
+	    vpi_put_value(tmp, &val, 0, vpiNoDelay);
+      } else {
+	    schedule_evctl(tmp, thr->words[index].w_real, thr->event,
+	                   thr->ecount);
+      }
+
+      thr->event = 0;
+      thr->ecount = 0;
 
       return true;
 }
@@ -1931,6 +1961,32 @@ bool of_END(vthread_t thr, vvp_code_t)
       return false;
 }
 
+bool of_EVCTL(vthread_t thr, vvp_code_t cp)
+{
+      assert(thr->event == 0 && thr->ecount == 0);
+      thr->event = cp->net;
+      thr->ecount = thr->words[cp->bit_idx[0]].w_uint;
+      return true;
+}
+
+bool of_EVCTLI(vthread_t thr, vvp_code_t cp)
+{
+      assert(thr->event == 0 && thr->ecount == 0);
+      thr->event = cp->net;
+      thr->ecount = cp->bit_idx[0];
+      return true;
+}
+
+bool of_EVCTLS(vthread_t thr, vvp_code_t cp)
+{
+      assert(thr->event == 0 && thr->ecount == 0);
+      thr->event = cp->net;
+      int64_t val = thr->words[cp->bit_idx[0]].w_int;
+      if (val < 0) val = 0;
+      thr->ecount = val;
+      return true;
+}
+
 static void unlink_force(vvp_net_t*net)
 {
       vvp_fun_signal_base*sig
@@ -2265,6 +2321,33 @@ bool of_IX_GETV(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t vec = sig->vec4_value();
       unsigned long val;
       bool known_flag = vector4_to_value(vec, val);
+
+      if (known_flag)
+	    thr->words[index].w_int = val;
+      else
+	    thr->words[index].w_int = 0;
+
+	/* Set bit 4 as a flag if the input is unknown. */
+      thr_put_bit(thr, 4, known_flag? BIT4_0 : BIT4_1);
+
+      return true;
+}
+
+bool of_IX_GETVS(vthread_t thr, vvp_code_t cp)
+{
+      unsigned index = cp->bit_idx[0];
+      vvp_net_t*net = cp->net;
+
+      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(net->fun);
+      if (sig == 0) {
+	    cerr << "%%ix/getv/s error: Net arg not a vector signal? "
+		 << typeid(*net->fun).name() << endl;
+      }
+      assert(sig);
+
+      vvp_vector4_t vec = sig->vec4_value();
+      long val;
+      bool known_flag = vector4_to_value(vec, val, true, true);
 
       if (known_flag)
 	    thr->words[index].w_int = val;

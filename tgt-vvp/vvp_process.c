@@ -532,6 +532,7 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 	/* thread address for a word value. */
       int word;
       unsigned long delay = 0;
+      unsigned nevents = ivl_stmt_nevent(net);
 
 	/* Must be exactly 1 l-value. */
       assert(ivl_stmt_lvals(net) == 1);
@@ -557,13 +558,17 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 
 	/* We need to calculate the delay expression. */
       if (del) {
+	    assert(nevents == 0 && ivl_stmt_cond_expr(net) == 0);
 	    int delay_index = allocate_word();
 	    draw_eval_expr_into_integer(del, delay_index);
-	    fprintf(vvp_out, "   %%assign/wr/d v%p_%lu, %d, %u;\n",
+	    fprintf(vvp_out, "    %%assign/wr/d v%p_%lu, %d, %u;\n",
 	            sig, use_word, delay_index, word);
 	    clr_word(delay_index);
+      } else if (nevents) {
+	    fprintf(vvp_out, "    %%assign/wr/e v%p_%lu, %u;\n",
+	            sig, use_word, word);
       } else {
-	    fprintf(vvp_out, "   %%assign/wr v%p_%lu, %lu, %u;\n",
+	    fprintf(vvp_out, "    %%assign/wr v%p_%lu, %lu, %u;\n",
 	            sig, use_word, delay, word);
       }
 
@@ -578,6 +583,49 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_expr_t del  = ivl_stmt_delay_expr(net);
       ivl_signal_t sig;
+      unsigned nevents = ivl_stmt_nevent(net);
+
+	// If we have an event control build the control structure.
+      if (nevents) {
+	    assert(del == 0);
+
+	    ivl_expr_t cnt = ivl_stmt_cond_expr(net);
+	    unsigned long count = 1;
+	    if (cnt && (ivl_expr_type(cnt) == IVL_EX_ULONG)) {
+		  count = ivl_expr_uvalue(cnt);
+		  cnt = 0;
+	    }
+
+	    char name[256];
+	    if (nevents == 1) {
+		  ivl_event_t ev = ivl_stmt_events(net, 0);
+		  snprintf(name, sizeof(name), "E_%p", ev);
+	    } else {
+		  unsigned idx;
+		  static unsigned int cascade_counter = 0;
+		  ivl_event_t ev = ivl_stmt_events(net, 0);
+		  fprintf(vvp_out, "Eassign_%u .event/or E_%p",
+		                   cascade_counter, ev);
+
+		  for (idx = 1;  idx < nevents;  idx += 1) {
+			ev = ivl_stmt_events(net, idx);
+			fprintf(vvp_out, ", E_%p", ev);
+		  }
+		  snprintf(name, sizeof(name), "Eassign_%u", cascade_counter);
+		  cascade_counter += 1;
+	    }
+
+	    if (cnt) {
+		  int count_index = allocate_word();
+		  char*type = ivl_expr_signed(cnt) ? "/s" : "";
+		  draw_eval_expr_into_integer(cnt, count_index);
+		  fprintf(vvp_out, "    %%evctl%s %s, %d;\n", type, name,
+		                   count_index);
+		  clr_word(count_index);
+	    } else { 
+		  fprintf(vvp_out, "    %%evctl/i %s, %lu;\n", name, count);
+	    }
+      }
 
       unsigned long delay = 0;
 
@@ -590,6 +638,16 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		default:
 		  break;
 	    }
+      }
+
+      if (nevents) {
+	    fprintf(stderr, "%s:%u: vvp-tgt sorry: non-blocking ",
+	                    ivl_stmt_file(net), ivl_stmt_lineno(net));
+	    if (ivl_stmt_cond_expr(net)) {
+		  fprintf(stderr, "repeat ");
+	    }
+	    fprintf(stderr, "event controls are not supported!\n");
+	    exit(1);
       }
 
       if (del && (ivl_expr_type(del) == IVL_EX_ULONG)) {

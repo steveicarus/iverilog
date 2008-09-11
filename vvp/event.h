@@ -1,7 +1,7 @@
 #ifndef __event_H
 #define __event_H
 /*
- * Copyright (c) 2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,12 +18,37 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: event.h,v 1.13 2006/12/09 19:06:53 steve Exp $"
-#endif
 
 # include  "vvp_net.h"
 # include  "pointers.h"
+
+class evctl {
+
+    public:
+      explicit evctl(unsigned long ecount);
+      virtual bool dec_and_run() = 0;
+      virtual ~evctl() {}
+      evctl*next;
+
+    protected:
+      unsigned long ecount_;
+};
+
+class evctl_real : public evctl {
+
+    public:
+      explicit evctl_real(struct __vpiHandle*handle, double value,
+                          unsigned long ecount);
+      virtual ~evctl_real() {}
+      bool dec_and_run();
+
+    private:
+      __vpiHandle*handle_;
+      double value_;
+};
+
+extern void schedule_evctl(struct __vpiHandle*handle, double value,
+                           vvp_net_t*event, unsigned long ecount);
 
 /*
  *  Event / edge detection functors
@@ -36,8 +61,10 @@
 struct waitable_hooks_s {
 
     public:
-      waitable_hooks_s() : threads(0) { }
+      waitable_hooks_s() : threads(0), event_ctls(0) { last = &event_ctls; }
       vthread_t threads;
+      evctl*event_ctls;
+      evctl**last;
 
     protected:
       void run_waiting_threads_();
@@ -126,40 +153,4 @@ class vvp_named_event : public vvp_net_fun_t, public waitable_hooks_s {
       struct __vpiHandle*handle_;
 };
 
-
-/*
- * $Log: event.h,v $
- * Revision 1.13  2006/12/09 19:06:53  steve
- *  Handle vpiRealVal reads of signals, and real anyedge events.
- *
- * Revision 1.12  2006/11/22 06:10:05  steve
- *  Fix spurious event from net8 that is forced.
- *
- * Revision 1.11  2005/06/22 00:04:49  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.10  2005/06/17 23:47:02  steve
- *  threads member for waitable_hook_s needs initailizing.
- *
- * Revision 1.9  2005/05/25 05:44:51  steve
- *  Handle event/or with specific, efficient nodes.
- *
- * Revision 1.8  2004/12/29 23:45:13  steve
- *  Add the part concatenation node (.concat).
- *
- *  Add a vvp_event_anyedge class to handle the special
- *  case of .event statements of edge type. This also
- *  frees the posedge/negedge types to handle all 4 inputs.
- *
- *  Implement table functor recv_vec4 method to receive
- *  and process vectors.
- *
- * Revision 1.7  2004/12/18 18:52:44  steve
- *  Rework named events and event/or.
- *
- * Revision 1.6  2004/12/11 02:31:29  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- */
 #endif // __event_H

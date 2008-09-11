@@ -758,6 +758,11 @@ void NetAssignNB::dump(ostream&o, unsigned ind) const
 
       if (const NetExpr*de = get_delay())
 	    o << "#(" << *de << ") ";
+      if (count_)
+	    o << "repeat(" << *count_ << ") ";
+      if (event_) {
+	    o << *event_;
+      }
 
       o << *rval() << ";" << endl;
 
@@ -900,6 +905,25 @@ void NetEvWait::dump(ostream&o, unsigned ind) const
 	    statement_->dump(o, ind+2);
       else
 	    o << setw(ind+2) << "" << "/* noop */ ;" << endl;
+}
+
+ostream& operator << (ostream&out, const NetEvWait&obj)
+{
+      obj.dump_inline(out);
+      return out;
+}
+
+void NetEvWait::dump_inline(ostream&o) const
+{
+      o << "@(";
+
+      if (nevents() > 0)
+	    o << event(0)->name();
+
+      for (unsigned idx = 1 ;  idx < nevents() ;  idx += 1)
+	    o << " or " << event(idx)->name();
+
+      o << ") ";
 }
 
 void NetForce::dump(ostream&o, unsigned ind) const
