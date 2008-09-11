@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_mux.c,v 1.14 2007/01/16 05:44:16 steve Exp $"
-#endif
 
 # include  "vvp_priv.h"
 # include  <assert.h>
@@ -47,14 +44,34 @@ static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
 
       const char*dly = "";
       if (d_rise != 0) {
-	    assert(number_is_immediate(d_rise, 64, 0));
-	    assert(number_is_immediate(d_fall, 64, 0));
-	    assert(number_is_immediate(d_decay, 64, 0));
 	    dly = "/d";
-	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
-	            net, get_number_immediate(d_rise),
-	            get_number_immediate(d_rise),
-	            get_number_immediate(d_rise), net);
+	    if (number_is_immediate(d_rise, 64, 0) &&
+	        number_is_immediate(d_fall, 64, 0) &&
+	        number_is_immediate(d_decay, 64, 0)) {
+		  fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
+		                   net, get_number_immediate(d_rise),
+		                   get_number_immediate(d_rise),
+		                   get_number_immediate(d_rise), net);
+	    } else {
+		  ivl_signal_t sig;
+		  assert(ivl_expr_type(d_rise) == IVL_EX_SIGNAL);
+		  assert(ivl_expr_type(d_fall) == IVL_EX_SIGNAL);
+		  assert(ivl_expr_type(d_decay) == IVL_EX_SIGNAL);
+
+		  fprintf(vvp_out, "L_%p .delay L_%p/d", net, net);
+
+		  sig = ivl_expr_signal(d_rise);
+		  assert(ivl_signal_dimensions(sig) == 0);
+		  fprintf(vvp_out, ", v%p_0", sig);
+
+		  sig = ivl_expr_signal(d_fall);
+		  assert(ivl_signal_dimensions(sig) == 0);
+		  fprintf(vvp_out, ", v%p_0", sig);
+
+		  sig = ivl_expr_signal(d_decay);
+		  assert(ivl_signal_dimensions(sig) == 0);
+		  fprintf(vvp_out, ", v%p_0;\n", sig);
+	    }
       }
 
       const char* input[3];
@@ -144,48 +161,3 @@ void draw_lpm_mux(ivl_lpm_t net)
 	   devices to handle the arbitrary size. */
       draw_lpm_mux_nest(net, muxz);
 }
-
-/*
- * $Log: draw_mux.c,v $
- * Revision 1.14  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.13  2005/10/12 17:26:17  steve
- *  MUX nodes get inputs from nets, not from net inputs,
- *  Detect and draw alias nodes to reduce net size and
- *  handle force confusion.
- *
- * Revision 1.12  2005/09/01 04:11:37  steve
- *  Generate code to handle real valued muxes.
- *
- * Revision 1.11  2005/08/27 04:32:08  steve
- *  Handle synthesis of fully packed case statements.
- *
- * Revision 1.10  2005/06/17 03:46:52  steve
- *  Make functors know their own width.
- *
- * Revision 1.9  2005/04/06 05:29:09  steve
- *  Rework NetRamDq and IVL_LPM_RAM nodes.
- *
- * Revision 1.8  2005/02/12 22:54:29  steve
- *  Implement a-b muxes as vector devices
- *
- * Revision 1.7  2003/12/19 01:27:10  steve
- *  Fix various unsigned compare warnings.
- *
- * Revision 1.6  2003/02/25 03:40:45  steve
- *  Eliminate use of ivl_lpm_name function.
- *
- * Revision 1.5  2002/08/29 03:04:01  steve
- *  Generate x out for x select on wide muxes.
- *
- * Revision 1.4  2002/08/12 01:35:03  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.3  2002/08/11 23:47:04  steve
- *  Add missing Log and Ident strings.
- *
- */

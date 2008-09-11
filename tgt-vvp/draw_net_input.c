@@ -359,19 +359,41 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
 	      /* We have a delayed constant, so we need to build some code. */
 	    if (d_rise != 0) {
-		  assert(number_is_immediate(d_rise, 64, 0));
-		  assert(number_is_immediate(d_fall, 64, 0));
-		  assert(number_is_immediate(d_decay, 64, 0));
-
 		  fprintf(vvp_out, "L_%p/d .functor BUFZ 1, %s, "
-		          "C4<0>, C4<0>, C4<0>;\n", cptr, result);
-
-		  fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
-	                  cptr, get_number_immediate(d_rise),
-	                  get_number_immediate(d_rise),
-	                  get_number_immediate(d_rise), cptr);
-
+		                   "C4<0>, C4<0>, C4<0>;\n", cptr, result);
 		  free(result);
+
+		    // Is this a fixed or variable delay?
+		  if (number_is_immediate(d_rise, 64, 0) &&
+		      number_is_immediate(d_fall, 64, 0) &&
+		      number_is_immediate(d_decay, 64, 0)) {
+
+			fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
+			                 cptr, get_number_immediate(d_rise),
+			                 get_number_immediate(d_rise),
+			                 get_number_immediate(d_rise), cptr);
+
+		  } else {
+			ivl_signal_t sig;
+			assert(ivl_expr_type(d_rise) == IVL_EX_SIGNAL);
+			assert(ivl_expr_type(d_fall) == IVL_EX_SIGNAL);
+			assert(ivl_expr_type(d_decay) == IVL_EX_SIGNAL);
+
+			fprintf(vvp_out, "L_%p .delay L_%p/d", cptr, cptr);
+
+			sig = ivl_expr_signal(d_rise);
+			assert(ivl_signal_dimensions(sig) == 0);
+			fprintf(vvp_out, ", v%p_0", sig);
+
+			sig = ivl_expr_signal(d_fall);
+			assert(ivl_signal_dimensions(sig) == 0);
+			fprintf(vvp_out, ", v%p_0", sig);
+
+			sig = ivl_expr_signal(d_decay);
+			assert(ivl_signal_dimensions(sig) == 0);
+			fprintf(vvp_out, ", v%p_0;\n", sig);
+		  }
+
 		  char tmp[128];
 		  snprintf(tmp, sizeof tmp, "L_%p", cptr);
 		  result = strdup(tmp);
@@ -686,4 +708,3 @@ const char*draw_net_input(ivl_nexus_t nex)
 
       return nex_data->net_input;
 }
-
