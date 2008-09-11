@@ -106,6 +106,7 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
       vvp_vector4_t cur_vec4_;
       vvp_vector8_t cur_vec8_;
       double cur_real_;
+      vvp_time64_t round_, scale_; // Needed to scale variable time values.
 
       struct event_ *list_;
       void enqueue_(struct event_*cur)

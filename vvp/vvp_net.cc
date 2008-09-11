@@ -1156,7 +1156,9 @@ bool vector4_to_value(const vvp_vector4_t&vec, long&val,
       long msk = 1;
       bool rc_flag = true;
 
-      for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
+      unsigned size = vec.size();
+      if (size > 8*sizeof(val)) size = 8*sizeof(val);
+      for (unsigned idx = 0 ;  idx < size ;  idx += 1) {
 	    switch (vec.value(idx)) {
 		case BIT4_0:
 		  break;
@@ -1187,7 +1189,34 @@ bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
       unsigned long res = 0;
       unsigned long msk = 1;
 
-      for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
+      unsigned size = vec.size();
+      if (size > 8*sizeof(val)) size = 8*sizeof(val);
+      for (unsigned idx = 0 ;  idx < size ;  idx += 1) {
+	    switch (vec.value(idx)) {
+		case BIT4_0:
+		  break;
+		case BIT4_1:
+		  res |= msk;
+		  break;
+		default:
+		  return false;
+	    }
+
+	    msk <<= 1UL;
+      }
+
+      val = res;
+      return true;
+}
+
+bool vector4_to_value(const vvp_vector4_t&vec, vvp_time64_t&val)
+{
+      vvp_time64_t res = 0;
+      vvp_time64_t msk = 1;
+
+      unsigned size = vec.size();
+      if (size > 8*sizeof(val)) size = 8*sizeof(val);
+      for (unsigned idx = 0 ;  idx < size ;  idx += 1) {
 	    switch (vec.value(idx)) {
 		case BIT4_0:
 		  break;

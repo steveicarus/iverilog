@@ -394,6 +394,7 @@ template <class T> extern T coerce_to_width(const T&that, unsigned width);
  */
 extern bool vector4_to_value(const vvp_vector4_t&a, long&val, bool is_signed, bool is_arithmetic =true);
 extern bool vector4_to_value(const vvp_vector4_t&a, unsigned long&val);
+extern bool vector4_to_value(const vvp_vector4_t&a, vvp_time64_t&val);
 extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
 
 /*
