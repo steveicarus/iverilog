@@ -251,7 +251,6 @@ NetEvProbe::NetEvProbe(NetScope*s, perm_string n, NetEvent*tgt,
 {
       for (unsigned idx = 0 ;  idx < p ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).set_name(perm_string::literal("P"));
       }
 
       enext_ = event_->probes_;

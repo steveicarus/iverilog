@@ -256,12 +256,6 @@ class Link {
       NetPins*get_obj();
       unsigned get_pin() const;
 
-	// A link of an object (sometimes called a "pin") has a
-	// name. It is convenient for the name to have a string and an
-	// integer part.
-      void set_name(perm_string);
-      perm_string get_name() const;
-
     private:
 	// The NetNode manages these. They point back to the
 	// NetNode so that following the links can get me here.
@@ -271,11 +265,6 @@ class Link {
       DIR dir_;
       strength_t drive0_, drive1_;
       verinum::V init_;
-
-	// These members name the pin of the link. If the name
-	// has width, then the inst_ member is the index of the
-	// pin.
-      perm_string name_;
 
     private:
       Link *next_;

@@ -238,9 +238,7 @@ NetNode::~NetNode()
 NetBranch::NetBranch(discipline_t*dis)
 : NetPins(2), discipline_(dis)
 {
-      pin(0).set_name(perm_string::literal("A"));
       pin(0).set_dir(Link::PASSIVE);
-      pin(1).set_name(perm_string::literal("B"));
       pin(1).set_dir(Link::PASSIVE);
 }
 
@@ -266,13 +264,11 @@ NetDelaySrc::NetDelaySrc(NetScope*s, perm_string n, unsigned npins,
       posedge_ = false;
       negedge_ = false;
       for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
-	    pin(idx).set_name(perm_string::literal("I"));
 	    pin(idx).set_dir(Link::INPUT);
       }
 
       if (condit_src) {
 	    condit_flag_ = true;
-	    pin(npins).set_name(perm_string::literal("COND"));
 	    pin(npins).set_dir(Link::INPUT);
       }
 }
@@ -455,7 +451,6 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 	    break;
       }
 
-      pin(0).set_name(perm_string::literal("P"));
       pin(0).set_dir(dir);
       pin(0).set_init(init_value);
 
@@ -494,7 +489,6 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
       }
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_name(perm_string::literal("P"));
 	    pin(idx).set_dir(dir);
 	    pin(idx).set_init(init_value);
       }
@@ -542,7 +536,6 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
       }
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_name(perm_string::literal("P"));
 	    pin(idx).set_dir(dir);
 	    pin(idx).set_init(init_value);
       }
@@ -799,8 +792,6 @@ NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
 	    pin(1).set_dir(Link::OUTPUT);
 	    break;
       }
-      pin(0).set_name(perm_string::literal("Part"));
-      pin(1).set_name(perm_string::literal("Vect"));
 }
 
 NetPartSelect::NetPartSelect(NetNet*sig, NetNet*sel,
@@ -822,10 +813,6 @@ NetPartSelect::NetPartSelect(NetNet*sig, NetNet*sel,
 	    break;
       }
       pin(2).set_dir(Link::INPUT);
-
-      pin(0).set_name(perm_string::literal("Part"));
-      pin(1).set_name(perm_string::literal("Vect"));
-      pin(2).set_name(perm_string::literal("Select"));
 }
 
 NetPartSelect::~NetPartSelect()
@@ -890,28 +877,22 @@ NetCastInt::NetCastInt(NetScope*scope, perm_string n, unsigned width)
 : NetNode(scope, n, 2), width_(width)
 {
       pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("O"));
       pin(1).set_dir(Link::INPUT);
-      pin(1).set_name(perm_string::literal("I"));
 }
 
 NetCastReal::NetCastReal(NetScope*scope, perm_string n, bool signed_flag)
 : NetNode(scope, n, 2), signed_flag_(signed_flag)
 {
       pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("O"));
       pin(1).set_dir(Link::INPUT);
-      pin(1).set_name(perm_string::literal("I"));
 }
 
 NetConcat::NetConcat(NetScope*scope, perm_string n, unsigned wid, unsigned cnt)
 : NetNode(scope, n, cnt+1), width_(wid)
 {
       pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("O"));
       for (unsigned idx = 1 ;  idx < cnt+1 ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).set_name(perm_string::literal("I"));
       }
 }
 
@@ -929,9 +910,7 @@ NetReplicate::NetReplicate(NetScope*scope, perm_string n,
 : NetNode(scope, n, 2), width_(wid), repeat_(rpt)
 {
       pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("O"));
       pin(1).set_dir(Link::INPUT);
-      pin(1).set_name(perm_string::literal("I"));
 }
 
 NetReplicate::~NetReplicate()
@@ -966,21 +945,13 @@ NetFF::NetFF(NetScope*s, perm_string n, unsigned width)
 : NetNode(s, n, 8), width_(width)
 {
       pin_Clock().set_dir(Link::INPUT);
-      pin_Clock().set_name(perm_string::literal("Clock"));
       pin_Enable().set_dir(Link::INPUT);
-      pin_Enable().set_name(perm_string::literal("Enable"));
       pin_Aset().set_dir(Link::INPUT);
-      pin_Aset().set_name(perm_string::literal("Aset"));
       pin_Aclr().set_dir(Link::INPUT);
-      pin_Aclr().set_name(perm_string::literal("Aclr"));
       pin_Sset().set_dir(Link::INPUT);
-      pin_Sset().set_name(perm_string::literal("Sset"));
       pin_Sclr().set_dir(Link::INPUT);
-      pin_Sclr().set_name(perm_string::literal("Sclr"));
       pin_Data().set_dir(Link::INPUT);
-      pin_Data().set_name(perm_string::literal("Data"));
       pin_Q().set_dir(Link::OUTPUT);
-      pin_Q().set_name(perm_string::literal("Q"));
 }
 
 NetFF::~NetFF()
@@ -1097,9 +1068,7 @@ NetAbs::NetAbs(NetScope*s, perm_string n, unsigned w)
 : NetNode(s, n, 2), width_(w)
 {
       pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("Result"));
       pin(1).set_dir(Link::INPUT);
-      pin(1).set_name(perm_string::literal("DataA"));
 }
 
 NetAbs::~NetAbs()
@@ -1128,23 +1097,14 @@ NetAddSub::NetAddSub(NetScope*s, perm_string n, unsigned w)
 : NetNode(s, n, 9), width_(w)
 {
       pin(0).set_dir(Link::INPUT);
-      pin(0).set_name(perm_string::literal("Add_Sub"));
       pin(1).set_dir(Link::INPUT);
-      pin(1).set_name(perm_string::literal("Aclr"));
       pin(2).set_dir(Link::INPUT);
-      pin(2).set_name(perm_string::literal("Clock"));
       pin(3).set_dir(Link::INPUT);
-      pin(3).set_name(perm_string::literal("Cin"));
       pin(4).set_dir(Link::OUTPUT);
-      pin(4).set_name(perm_string::literal("Cout"));
       pin(5).set_dir(Link::OUTPUT);
-      pin(5).set_name(perm_string::literal("Overflow"));
       pin(6).set_dir(Link::INPUT);
-      pin(6).set_name(perm_string::literal("DataA"));
       pin(7).set_dir(Link::INPUT);
-      pin(7).set_name(perm_string::literal("DataB"));
       pin(8).set_dir(Link::OUTPUT);
-      pin(8).set_name(perm_string::literal("Result"));
 }
 
 NetAddSub::~NetAddSub()
@@ -1200,10 +1160,8 @@ NetArrayDq::NetArrayDq(NetScope*s, perm_string n, NetNet*mem, unsigned awid)
 : NetNode(s, n, 2),
   mem_(mem), awidth_(awid)
 {
-      pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("Result"));
-      pin(1).set_dir(Link::INPUT);
-      pin(1).set_name(perm_string::literal("Address"));
+      pin(0).set_dir(Link::OUTPUT); // Result
+      pin(1).set_dir(Link::INPUT);  // Address
 	// Increment the expression reference count for the target
 	// memory so that it is not deleted underneath me.
       mem->incr_eref();
@@ -1261,12 +1219,9 @@ NetCLShift::NetCLShift(NetScope*s, perm_string n,
   width_(width), width_dist_(width_dist),
     right_flag_(right_flag), signed_flag_(signed_flag)
 {
-      pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("Result"));
-      pin(1).set_dir(Link::INPUT);
-      pin(1).set_name(perm_string::literal("Data"));
-      pin(2).set_dir(Link::INPUT);
-      pin(2).set_name(perm_string::literal("Distance"));
+      pin(0).set_dir(Link::OUTPUT); // Result
+      pin(1).set_dir(Link::INPUT);  // Data
+      pin(2).set_dir(Link::INPUT);  // Distance
 }
 
 NetCLShift::~NetCLShift()
@@ -1327,26 +1282,16 @@ NetCompare::NetCompare(NetScope*s, perm_string n, unsigned wi)
 : NetNode(s, n, 10), width_(wi)
 {
       signed_flag_ = false;
-      pin(0).set_dir(Link::INPUT); pin(0).set_name(
-				perm_string::literal("Aclr"));
-      pin(1).set_dir(Link::INPUT); pin(1).set_name(
-				perm_string::literal("Clock"));
-      pin(2).set_dir(Link::OUTPUT); pin(2).set_name(
-				perm_string::literal("AGB"));
-      pin(3).set_dir(Link::OUTPUT); pin(3).set_name(
-				perm_string::literal("AGEB"));
-      pin(4).set_dir(Link::OUTPUT); pin(4).set_name(
-				perm_string::literal("AEB"));
-      pin(5).set_dir(Link::OUTPUT); pin(5).set_name(
-				perm_string::literal("ANEB"));
-      pin(6).set_dir(Link::OUTPUT); pin(6).set_name(
-				perm_string::literal("ALB"));
-      pin(7).set_dir(Link::OUTPUT); pin(7).set_name(
-				perm_string::literal("ALEB"));
-      pin(8).set_dir(Link::INPUT);
-      pin(8).set_name(perm_string::literal("DataA"));
-      pin(9).set_dir(Link::INPUT);
-      pin(9).set_name(perm_string::literal("DataB"));
+      pin(0).set_dir(Link::INPUT); // Aclr
+      pin(1).set_dir(Link::INPUT); // Clock
+      pin(2).set_dir(Link::OUTPUT); // AGB
+      pin(3).set_dir(Link::OUTPUT); // AGEB
+      pin(4).set_dir(Link::OUTPUT); // AEB
+      pin(5).set_dir(Link::OUTPUT); // ANEB
+      pin(6).set_dir(Link::OUTPUT); // ALB
+      pin(7).set_dir(Link::OUTPUT); // ALEB
+      pin(8).set_dir(Link::INPUT);  // DataA
+      pin(9).set_dir(Link::INPUT);  // DataB
 }
 
 NetCompare::~NetCompare()
@@ -1473,12 +1418,9 @@ NetDivide::NetDivide(NetScope*sc, perm_string n, unsigned wr,
 : NetNode(sc, n, 3),
     width_r_(wr), width_a_(wa), width_b_(wb), signed_flag_(false)
 {
-      pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("Result"));
-      pin(1).set_dir(Link::INPUT);
-      pin(1).set_name(perm_string::literal("DataA"));
-      pin(2).set_dir(Link::INPUT);
-      pin(2).set_name(perm_string::literal("DataB"));
+      pin(0).set_dir(Link::OUTPUT); // Result
+      pin(1).set_dir(Link::INPUT);  // DataA
+      pin(2).set_dir(Link::INPUT);  // DataB
 }
 
 NetDivide::~NetDivide()
@@ -1544,7 +1486,6 @@ NetLiteral::NetLiteral(NetScope*sc, perm_string n, const verireal&val)
 : NetNode(sc, n, 1), real_(val)
 {
       pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("O"));
 }
 
 NetLiteral::~NetLiteral()
@@ -1566,12 +1507,9 @@ NetMult::NetMult(NetScope*sc, perm_string n, unsigned wr,
 : NetNode(sc, n, 3),
   signed_(false), width_r_(wr), width_a_(wa), width_b_(wb)
 {
-      pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("Result"));
-      pin(1).set_dir(Link::INPUT);
-      pin(1).set_name(perm_string::literal("DataA"));
-      pin(2).set_dir(Link::INPUT);
-      pin(2).set_name(perm_string::literal("DataB"));
+      pin(0).set_dir(Link::OUTPUT); // Result
+      pin(1).set_dir(Link::INPUT);  // DataA
+      pin(2).set_dir(Link::INPUT);  // DataB
 }
 
 NetMult::~NetMult()
@@ -1638,12 +1576,9 @@ NetPow::NetPow(NetScope*sc, perm_string n, unsigned wr,
 : NetNode(sc, n, 3),
   signed_(false), width_r_(wr), width_a_(wa), width_b_(wb)
 {
-      pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("Result"));
-      pin(1).set_dir(Link::INPUT);
-      pin(1).set_name(perm_string::literal("DataA"));
-      pin(2).set_dir(Link::INPUT);
-      pin(2).set_name(perm_string::literal("DataB"));
+      pin(0).set_dir(Link::OUTPUT); // Result
+      pin(1).set_dir(Link::INPUT);  // DataA
+      pin(2).set_dir(Link::INPUT);  // DataB
 }
 
 NetPow::~NetPow()
@@ -1718,14 +1653,11 @@ NetMux::NetMux(NetScope*s, perm_string n,
 : NetNode(s, n, 2+si),
   width_(wi), size_(si), swidth_(sw)
 {
-      pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("Q"));
-      pin(1).set_dir(Link::INPUT);
-      pin(1).set_name(perm_string::literal("Sel"));
+      pin(0).set_dir(Link::OUTPUT); // Q
+      pin(1).set_dir(Link::INPUT);  // Sel
 
       for (unsigned idx = 0 ;  idx < size_ ;  idx += 1) {
-	    pin_Data(idx).set_dir(Link::INPUT);
-	    pin_Data(idx).set_name(perm_string::literal("D"));
+	    pin_Data(idx).set_dir(Link::INPUT); // Data[idx]
       }
 }
 
@@ -1785,8 +1717,6 @@ NetSignExtend::NetSignExtend(NetScope*s, perm_string n, unsigned w)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(1).set_dir(Link::INPUT);
-      pin(0).set_name(perm_string::literal("O"));
-      pin(1).set_name(perm_string::literal("I"));
 }
 
 NetSignExtend::~NetSignExtend()
@@ -1803,8 +1733,6 @@ NetBUFZ::NetBUFZ(NetScope*s, perm_string n, unsigned w)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(1).set_dir(Link::INPUT);
-      pin(0).set_name(perm_string::literal("O"));
-      pin(1).set_name(perm_string::literal("I"));
 }
 
 NetBUFZ::~NetBUFZ()
@@ -1819,9 +1747,9 @@ unsigned NetBUFZ::width() const
 NetCaseCmp::NetCaseCmp(NetScope*s, perm_string n, unsigned wid, bool eeq)
 : NetNode(s, n, 3), width_(wid), eeq_(eeq)
 {
-      pin(0).set_dir(Link::OUTPUT); pin(0).set_name(perm_string::literal("O"));
-      pin(1).set_dir(Link::INPUT); pin(1).set_name(perm_string::literal("I0"));
-      pin(2).set_dir(Link::INPUT); pin(2).set_name(perm_string::literal("I1"));
+      pin(0).set_dir(Link::OUTPUT);
+      pin(1).set_dir(Link::INPUT);
+      pin(2).set_dir(Link::INPUT);
 }
 
 NetCaseCmp::~NetCaseCmp()
@@ -1880,7 +1808,6 @@ NetConst::NetConst(NetScope*s, perm_string n, verinum::V v)
 : NetNode(s, n, 1), width_(1)
 {
       pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("O"));
       value_ = new verinum::V[1];
       value_[0] = v;
 }
@@ -1889,7 +1816,6 @@ NetConst::NetConst(NetScope*s, perm_string n, const verinum&val)
 : NetNode(s, n, 1), width_(val.len())
 {
       pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("O"));
       value_ = new verinum::V[width_];
       for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
 	    value_[idx] = val.get(idx);
@@ -1920,12 +1846,7 @@ NetFuncDef::NetFuncDef(NetScope*s, NetNet*result, const svector<NetNet*>&po)
 NetFuncDef::~NetFuncDef()
 {
 }
-#if 0
-const string NetFuncDef::name() const
-{
-      return scope_->name();
-}
-#endif
+
 const NetScope* NetFuncDef::scope() const
 {
       return scope_;
@@ -2049,12 +1970,7 @@ NetUTask::NetUTask(NetScope*def)
 NetUTask::~NetUTask()
 {
 }
-#if 0
-const string NetUTask::name() const
-{
-      return task_->name();
-}
-#endif
+
 const NetScope* NetUTask::task() const
 {
       return task_;
@@ -2418,10 +2334,8 @@ NetLogic::NetLogic(NetScope*s, perm_string n, unsigned pins,
 : NetNode(s, n, pins), type_(t), width_(wid)
 {
       pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("O"));
       for (unsigned idx = 1 ;  idx < pins ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).set_name(perm_string::literal("I"));
       }
 }
 
@@ -2440,9 +2354,7 @@ NetUReduce::NetUReduce(NetScope*scope, perm_string n,
 : NetNode(scope, n, 2), type_(t), width_(wid)
 {
       pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("O"));
       pin(1).set_dir(Link::INPUT);
-      pin(1).set_name(perm_string::literal("I"));
 }
 
 NetUReduce::TYPE NetUReduce::type() const

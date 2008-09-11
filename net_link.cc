@@ -206,16 +206,6 @@ unsigned Link::get_pin() const
       return pin_;
 }
 
-void Link::set_name(perm_string n)
-{
-      name_ = n;
-}
-
-perm_string Link::get_name() const
-{
-      return name_;
-}
-
 Nexus::Nexus()
 {
       name_ = 0;
@@ -447,10 +437,9 @@ const char* Nexus::name() const
 	    const Link*lnk = first_nlink();
 	    const NetObj*obj = dynamic_cast<const NetObj*>(lnk->get_obj());
 	    pin = lnk->get_pin();
-	    cerr << "internal error: No signal for nexus of " <<
-		  obj->name() << " pin " << pin << "(" <<
-		  lnk->get_name() << ")"
-		  " type=" << typeid(*obj).name() << "?" << endl;
+	    cerr << "internal error: No signal for nexus of "
+		 << obj->name() << " pin " << pin
+		 << " type=" << typeid(*obj).name() << "?" << endl;
 
       }
       assert(sig);
