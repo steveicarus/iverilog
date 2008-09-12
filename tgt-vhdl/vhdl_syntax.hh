@@ -91,6 +91,7 @@ enum vhdl_binop_t {
    VHDL_BINOP_XNOR,
    VHDL_BINOP_DIV,
    VHDL_BINOP_MOD,
+   VHDL_BINOP_POWER,
 };
 
 /*

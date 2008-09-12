@@ -244,6 +244,39 @@ static vhdl_expr *translate_shift(vhdl_expr *lhs, vhdl_expr *rhs,
    return new vhdl_binop_expr(lhs, op, r_cast, rtype);
 }
 
+/*
+ * The exponentiation operator in VHDL is not defined for numeric_std
+ * types. We can get around this by converting the operands to integers,
+ * performing the operation, then converting the result back to the
+ * original type. This will work OK in simulation but certainly will not
+ * synthesise unless the operands are constant.
+ *
+ * However, even this does not work quite correctly. The Integer type in
+ * VHDL is signed and usually only 32 bits, therefore any result larger
+ * than this will overflow and raise an exception. I can't see a way
+ * around this at the moment.
+ */
+static vhdl_expr *translate_power(ivl_expr_t e, vhdl_expr *lhs, vhdl_expr *rhs)
+{
+   vhdl_type integer(VHDL_TYPE_INTEGER);
+   vhdl_expr *lhs_int = lhs->cast(&integer);
+   vhdl_expr *rhs_int = rhs->cast(&integer);
+
+   vhdl_expr *result = new vhdl_binop_expr(lhs_int, VHDL_BINOP_POWER, rhs_int,
+                                           vhdl_type::integer());
+
+   int width = ivl_expr_width(e);
+   const char *func = ivl_expr_signed(e) ? "To_Signed" : "To_Unsigned";
+   vhdl_type *type = ivl_expr_signed(e)
+      ? vhdl_type::nsigned(width) : vhdl_type::nunsigned(width);
+
+   vhdl_fcall *conv = new vhdl_fcall(func, type);
+   conv->add_expr(result);
+   conv->add_expr(new vhdl_const_int(width));
+
+   return conv;
+}
+
 static vhdl_expr *translate_binary(ivl_expr_t e)
 {
    vhdl_expr *lhs = translate_expr(ivl_expr_oper1(e));
@@ -357,6 +390,9 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
       break;
    case '^':
       result = translate_numeric(lhs, rhs, VHDL_BINOP_XOR);
+      break;
+   case 'p':    // Power
+      result = translate_power(e, lhs, rhs);
       break;
    default:
       error("No translation for binary opcode '%c'\n",
