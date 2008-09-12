@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <list>
 #include <assert.h>
+#include <math.h>
 
 void vvp_delay_t::calculate_min_delay_()
 {
@@ -289,14 +290,13 @@ void vvp_fun_delay::recv_real(vvp_net_ptr_t port, double bit)
 	    should be rounded and converted to an integer delay. */
 	    vvp_time64_t val = 0;
 	    if (bit > -0.5) {
-		  val = (vvp_time64_t) (bit * round_ +0.5) * scale_;
+		  val = (vvp_time64_t) (bit * round_ + 0.5) * scale_;
 	    } else if (bit != bit) {
 		    // For a NaN we use the default (0).
 	    } else {
-		  vvp_vector4_t vec4(8*sizeof(vvp_time64_t), bit);
-		  vvp_time64_t bval = 0;
-		  vector4_to_value(vec4, bval);
-		  val = bval * round_ * scale_;
+		  vvp_vector4_t vec4(8*sizeof(vvp_time64_t),
+		                     floor(-bit * round_ + 0.5) * -1 * scale_);
+		  vector4_to_value(vec4, val);
 	    }
 
 	    switch (port.port()) {
