@@ -241,7 +241,20 @@ static vhdl_expr *translate_shift(vhdl_expr *lhs, vhdl_expr *rhs,
    vhdl_expr *r_cast = rhs->cast(&integer);
 
    vhdl_type *rtype = new vhdl_type(*lhs->get_type());
-   return new vhdl_binop_expr(lhs, op, r_cast, rtype);
+
+   // The sra operator is not defined on numeric_std types until
+   // VHDL-2006 which is not well supported. Instead we can use
+   // the shift_right function which does the same thing and
+   // exists in earlier versions of numeric_std.
+   if (op == VHDL_BINOP_SRA) {
+      vhdl_fcall *sra = new vhdl_fcall("shift_right", rtype);
+      sra->add_expr(lhs);
+      sra->add_expr(r_cast);
+
+      return sra;
+   }
+   else
+      return new vhdl_binop_expr(lhs, op, r_cast, rtype);
 }
 
 /*
@@ -388,6 +401,15 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    case 'r':
       result = translate_shift(lhs, rhs, VHDL_BINOP_SR);
       break;
+   case 'R':    // Arithmetic right shift
+      // Verilog only actually performs a signed shift if the
+      // argument being shifted is signed, otherwise it defaults
+      // to a normal shift
+      if (ivl_expr_signed(ivl_expr_oper1(e)))
+         result = translate_shift(lhs, rhs, VHDL_BINOP_SRA);
+      else
+         result = translate_shift(lhs, rhs, VHDL_BINOP_SR);
+      break;         
    case '^':
       result = translate_numeric(lhs, rhs, VHDL_BINOP_XOR);
       break;
