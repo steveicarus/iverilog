@@ -2199,7 +2199,7 @@ bool dll_target::net_const(const NetConst*net)
 
       struct ivl_net_const_s *obj = new struct ivl_net_const_s;
 
-      obj->type = IVL_VT_LOGIC;
+      obj->type = IVL_VT_BOOL;
 
 	/* constants have a single vector output. */
       assert(net->pin_count() == 1);
@@ -2223,9 +2223,13 @@ bool dll_target::net_const(const NetConst*net)
 		  bits[idx] = '1';
 		  break;
 		case verinum::Vx:
+		  if (obj->type == IVL_VT_BOOL)
+			obj->type = IVL_VT_LOGIC;
 		  bits[idx] = 'x';
 		  break;
 		case verinum::Vz:
+		  if (obj->type == IVL_VT_BOOL)
+			obj->type = IVL_VT_LOGIC;
 		  bits[idx] = 'z';
 		  break;
 	    }

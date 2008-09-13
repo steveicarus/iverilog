@@ -746,7 +746,7 @@ NetNet* NetEConst::synthesize(Design*des, NetScope*scope)
 
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, width-1,0);
       osig->local_flag(true);
-      osig->data_type(IVL_VT_LOGIC);
+      osig->data_type(expr_type());
       osig->set_signed(has_sign());
       NetConst*con = new NetConst(scope, scope->local_symbol(), value());
       connect(osig->pin(0), con->pin(0));
@@ -1097,13 +1097,18 @@ NetNet* NetETernary::synthesize(Design *des, NetScope*scope)
 
       if (csig == 0 || tsig == 0 || fsig == 0) return 0;
 
-      if (tsig->data_type() != fsig->data_type()) {
-	    cerr << get_fileline() << ": error: True and False clauses of "
-	            "ternary expression have different types." << endl;
+      if (! NetETernary::test_operand_compat(tsig->data_type(),fsig->data_type())) {
+	    cerr << get_fileline() << ": internal error: "
+		 << " True and False clauses of ternary expression "
+		 << " have incompatible types." << endl;
 	    cerr << get_fileline() << ":      : True  clause is: "
-	         << tsig->data_type() << endl;
+	         << tsig->data_type()
+		 << " (" << true_val_->expr_type() << "): "
+		 << *true_val_ << endl;
 	    cerr << get_fileline() << ":      : False clause is: "
-	         << fsig->data_type() << endl;
+	         << fsig->data_type()
+		 << " (" << false_val_->expr_type() << "): "
+		 << *false_val_ << endl;
 	    des->errors += 1;
 	    return 0;
       } else if (tsig->data_type() == IVL_VT_NO_TYPE) {

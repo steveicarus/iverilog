@@ -118,6 +118,7 @@ extern "C" const char*ivl_const_bits(ivl_net_const_t net)
       assert(net);
       switch (net->type) {
 
+	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
 	    if (net->width_ <= sizeof(net->b.bit_))
 		  return net->b.bit_;

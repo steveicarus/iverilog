@@ -3565,6 +3565,9 @@ class NetETernary  : public NetExpr {
       virtual void dump(ostream&) const;
       virtual NetNet*synthesize(Design*, NetScope*scope);
 
+    public:
+      static bool test_operand_compat(ivl_variable_type_t tru, ivl_variable_type_t fal);
+
     private:
       NetExpr*cond_;
       NetExpr*true_val_;

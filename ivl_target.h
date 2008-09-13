@@ -502,7 +502,8 @@ extern ivl_net_const_t ivl_design_const(ivl_design_t, unsigned idx);
  * ivl_const_bits
  *    This returns a pointer to an array of constant characters,
  *    each byte a '0', '1', 'x' or 'z'. The array is *not* nul
- *    terminated.
+ *    terminated. This value is only value if ivl_const_type is
+ *    IVL_VT_LOGIC or IVL_VT_BOOL. It returns nil otherwise.
  *
  * ivl_const_nex
  *    Return the ivl_nexus_t of the output for the constant.

@@ -2148,8 +2148,8 @@ unsigned PETernary::test_width(Design*des, NetScope*scope,
       return max(tru_wid,fal_wid);
 }
 
-static bool test_ternary_operand_compat(ivl_variable_type_t l,
-					ivl_variable_type_t r)
+bool NetETernary::test_operand_compat(ivl_variable_type_t l,
+				      ivl_variable_type_t r)
 {
       if (l == IVL_VT_LOGIC && r == IVL_VT_BOOL)
 	    return true;
@@ -2245,7 +2245,7 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      if (! test_ternary_operand_compat(tru->expr_type(), fal->expr_type())) {
+      if (! NetETernary::test_operand_compat(tru->expr_type(), fal->expr_type())) {
 	    cerr << get_fileline() << ": error: Data types "
 		 << tru->expr_type() << " and "
 		 << fal->expr_type() << " of ternary"

@@ -1058,8 +1058,10 @@ static void signal_nexus_const(ivl_signal_t sig,
       fprintf(out, "      const-");
 
       switch (ivl_const_type(con)) {
+	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
 	    bits = ivl_const_bits(con);
+	    assert(bits);
 	    for (idx = 0 ;  idx < width ;  idx += 1) {
 		  fprintf(out, "%c", bits[width-idx-1]);
 	    }
