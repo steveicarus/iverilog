@@ -262,9 +262,10 @@ class Link {
       NetPins *node_;
       unsigned pin_;
 
-      DIR dir_;
-      strength_t drive0_, drive1_;
-      verinum::V init_;
+      DIR dir_           : 2;
+      strength_t drive0_ : 3;
+      strength_t drive1_ : 3;
+      verinum::V init_   : 2;
 
     private:
       Link *next_;
