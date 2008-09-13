@@ -50,6 +50,8 @@ public:
 
 private:
    void emit_ternary(std::ostream &of, int level) const;
+   void emit_reduction(std::ostream &of, int level, const char *op,
+                       char unit) const;
    
    support_function_t type_;
 };

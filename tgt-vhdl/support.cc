@@ -84,6 +84,23 @@ void support_function::emit_ternary(std::ostream &of, int level) const
       << "if T then return X; else return Y; end if;";
 }
 
+void support_function::emit_reduction(std::ostream &of, int level,
+                                      const char *op, char unit) const
+{
+   // Emit a VHDL function emulating a Verilog reduction operator
+   // Where op is the corresponding VHDL operator and unit is the
+   // right-unit of the operator
+   
+   of << "(X : std_logic_vector) return std_logic is"
+      << nl_string(indent(level))
+      << "variable R : std_logic := '" << unit << "';" << nl_string(level)
+      << "begin" << nl_string(indent(level))
+      << "for I in X'Range loop" << nl_string(indent(indent(level)))
+      << "R := X(I) " << op << " R;" << nl_string(indent(level))
+      << "end loop;" << nl_string(indent(level))
+      << "return R;";
+}
+
 void support_function::emit(std::ostream &of, int level) const
 {
    of << nl_string(level) << "function " << function_name(type_);
@@ -119,44 +136,16 @@ void support_function::emit(std::ostream &of, int level) const
          << "return X(0);";
       break;
    case SF_REDUCE_OR:
-      of << "(X : std_logic_vector) return std_logic is" << nl_string(level)
-         << "begin" << nl_string(indent(level))
-         << "for I in X'Range loop" << nl_string(indent(indent(level)))
-         << "if X(I) = '1' then" << nl_string(indent(indent(indent(level))))
-         << "return '1';" << nl_string(indent(indent(level)))
-         << "end if;" << nl_string(indent(level))
-         << "end loop;" << nl_string(indent(level))
-         << "return '0';";
+      emit_reduction(of, level, "or", '0');
       break;
    case SF_REDUCE_AND:
-      of << "(X : std_logic_vector) return std_logic is" << nl_string(level)
-         << "begin" << nl_string(indent(level))
-         << "for I in X'Range loop" << nl_string(indent(indent(level)))
-         << "if X(I) = '0' then" << nl_string(indent(indent(indent(level))))
-         << "return '0';" << nl_string(indent(indent(level)))
-         << "end if;" << nl_string(indent(level))
-         << "end loop;" << nl_string(indent(level))
-         << "return '1';";
+      emit_reduction(of, level, "and", '1');
       break;
    case SF_REDUCE_XOR:
-      of << "(X : std_logic_vector) return std_logic is"
-         << nl_string(indent(level))
-         << "variable R : std_logic := '0';" << nl_string(level)
-         << "begin" << nl_string(indent(level))
-         << "for I in X'Range loop" << nl_string(indent(indent(level)))
-         << "R := X(I) xor R;" << nl_string(indent(level))
-         << "end loop;" << nl_string(indent(level))
-         << "return R;";
+      emit_reduction(of, level, "xnor", '0');
       break;
    case SF_REDUCE_XNOR:
-      of << "(X : std_logic_vector) return std_logic is"
-         << nl_string(indent(level))
-         << "variable R : std_logic := '0';" << nl_string(level)
-         << "begin" << nl_string(indent(level))
-         << "for I in X'Range loop" << nl_string(indent(indent(level)))
-         << "R := X(I) xnor R;" << nl_string(indent(level))
-         << "end loop;" << nl_string(indent(level))
-         << "return R;";
+      emit_reduction(of, level, "xnor", '0');
       break;
    case SF_TERNARY_LOGIC:
       of << "(T : Boolean; X, Y : std_logic) return std_logic is";
