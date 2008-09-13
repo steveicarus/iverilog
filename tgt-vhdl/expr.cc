@@ -180,6 +180,10 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
       return translate_reduction(SF_REDUCE_AND, true, operand);
    case '&':
       return translate_reduction(SF_REDUCE_AND, false, operand);
+   case '^':   // XOR
+      return translate_reduction(SF_REDUCE_XOR, false, operand);
+   case 'X':   // XNOR
+      return translate_reduction(SF_REDUCE_XNOR, false, operand);
    default:
       error("No translation for unary opcode '%c'\n",
             ivl_expr_opcode(e));

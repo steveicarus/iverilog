@@ -40,6 +40,7 @@ const char *support_function::function_name(support_function_t type)
    case SF_REDUCE_OR:           return "Reduce_OR";
    case SF_REDUCE_AND:          return "Reduce_AND";
    case SF_REDUCE_XOR:          return "Reduce_XOR";
+   case SF_REDUCE_XNOR:         return "Reduce_XNOR";
    case SF_TERNARY_LOGIC:       return "Ternary_Logic";
    case SF_TERNARY_UNSIGNED:    return "Ternary_Unsigned";
    case SF_TERNARY_SIGNED:      return "Ternary_Signed";
@@ -61,6 +62,7 @@ vhdl_type *support_function::function_type(support_function_t type)
    case SF_REDUCE_OR:
    case SF_REDUCE_AND:
    case SF_REDUCE_XOR:
+   case SF_REDUCE_XNOR:
    case SF_TERNARY_LOGIC:
    case SF_SIGNED_TO_LOGIC:
    case SF_UNSIGNED_TO_LOGIC:
@@ -143,6 +145,16 @@ void support_function::emit(std::ostream &of, int level) const
          << "begin" << nl_string(indent(level))
          << "for I in X'Range loop" << nl_string(indent(indent(level)))
          << "R := X(I) xor R;" << nl_string(indent(level))
+         << "end loop;" << nl_string(indent(level))
+         << "return R;";
+      break;
+   case SF_REDUCE_XNOR:
+      of << "(X : std_logic_vector) return std_logic is"
+         << nl_string(indent(level))
+         << "variable R : std_logic := '0';" << nl_string(level)
+         << "begin" << nl_string(indent(level))
+         << "for I in X'Range loop" << nl_string(indent(indent(level)))
+         << "R := X(I) xnor R;" << nl_string(indent(level))
          << "end loop;" << nl_string(indent(level))
          << "return R;";
       break;
