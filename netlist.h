@@ -89,7 +89,7 @@ class NetPins : public LineInfo {
       Link&pin(unsigned idx);
       const Link&pin(unsigned idx) const;
 
-      void dump_node_pins(ostream&, unsigned) const;
+      void dump_node_pins(ostream&, unsigned, const char**pin_names =0) const;
 
     private:
       Link*pins_;
@@ -907,13 +907,7 @@ class NetAddSub  : public NetNode {
 	// operands and results).
       unsigned width() const;
 
-      Link& pin_Aclr();
-      Link& pin_Add_Sub();
-      Link& pin_Clock();
-      Link& pin_Cin();
       Link& pin_Cout();
-      Link& pin_Overflow();
-
       Link& pin_DataA();
       Link& pin_DataB();
       Link& pin_Result();

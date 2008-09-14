@@ -241,10 +241,14 @@ void NetNode::dump_node(ostream&o, unsigned ind) const
 /* This is the generic dumping of all the signals connected to each
    pin of the object. The "this" object is not printed, only the
    signals connected to this. */
-void NetPins::dump_node_pins(ostream&o, unsigned ind) const
+void NetPins::dump_node_pins(ostream&o, unsigned ind, const char**pin_names) const
 {
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    o << setw(ind) << "" << idx << " pin" << idx;
+	    o << setw(ind) << "" << idx;
+	    if (pin_names && pin_names[idx])
+		  o << " " << pin_names[idx];
+	    else
+		  o << " pin" << idx;
 
 	    switch (pin(idx).get_dir()) {
 		case Link::PASSIVE:
@@ -293,7 +297,14 @@ void NetAddSub::dump_node(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "Adder (NetAddSub): " << name()
 	<< " width=" << width() << " pin_count=" << pin_count()
 	<< endl;
-      dump_node_pins(o, ind+4);
+      static const char* pin_names[] = {
+	    "Cout  ",
+	    "DataA ",
+	    "DataB ",
+	    "Result"
+      };
+
+      dump_node_pins(o, ind+4, pin_names);
       dump_obj_attr(o, ind+4);
 }
 

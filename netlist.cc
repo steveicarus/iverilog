@@ -1083,28 +1083,18 @@ unsigned NetAbs::width() const
 /*
  * The NetAddSub class represents an LPM_ADD_SUB device. The pinout is
  * assigned like so:
- *    0  -- Add_Sub
- *    1  -- Aclr
- *    2  -- Clock
- *    3  -- Cin
- *    4  -- Cout
- *    5  -- Overflow
- *    6  -- DataA (normally a vector)
- *    7  -- DataB (normally a vector)
- *    8  -- Result (normally a vector)
+ *    0  -- Cout
+ *    1  -- DataA (normally a vector)
+ *    2  -- DataB (normally a vector)
+ *    3  -- Result (normally a vector)
  */
 NetAddSub::NetAddSub(NetScope*s, perm_string n, unsigned w)
-: NetNode(s, n, 9), width_(w)
+: NetNode(s, n, 4), width_(w)
 {
-      pin(0).set_dir(Link::INPUT);
-      pin(1).set_dir(Link::INPUT);
-      pin(2).set_dir(Link::INPUT);
-      pin(3).set_dir(Link::INPUT);
-      pin(4).set_dir(Link::OUTPUT);
-      pin(5).set_dir(Link::OUTPUT);
-      pin(6).set_dir(Link::INPUT);
-      pin(7).set_dir(Link::INPUT);
-      pin(8).set_dir(Link::OUTPUT);
+      pin(0).set_dir(Link::OUTPUT); // Cout
+      pin(1).set_dir(Link::INPUT);  // DataA
+      pin(2).set_dir(Link::INPUT);  // DataB
+      pin(3).set_dir(Link::OUTPUT); // Result
 }
 
 NetAddSub::~NetAddSub()
@@ -1118,42 +1108,42 @@ unsigned NetAddSub::width()const
 
 Link& NetAddSub::pin_Cout()
 {
-      return pin(4);
+      return pin(0);
 }
 
 const Link& NetAddSub::pin_Cout() const
 {
-      return pin(4);
+      return pin(0);
 }
 
 Link& NetAddSub::pin_DataA()
 {
-      return pin(6);
+      return pin(1);
 }
 
 const Link& NetAddSub::pin_DataA() const
 {
-      return pin(6);
+      return pin(1);
 }
 
 Link& NetAddSub::pin_DataB()
 {
-      return pin(7);
+      return pin(2);
 }
 
 const Link& NetAddSub::pin_DataB() const
 {
-      return pin(7);
+      return pin(2);
 }
 
 Link& NetAddSub::pin_Result()
 {
-      return pin(8);
+      return pin(3);
 }
 
 const Link& NetAddSub::pin_Result() const
 {
-      return pin(8);
+      return pin(3);
 }
 
 NetArrayDq::NetArrayDq(NetScope*s, perm_string n, NetNet*mem, unsigned awid)
@@ -1312,6 +1302,7 @@ void NetCompare::set_signed(bool flag)
 {
       signed_flag_ = flag;
 }
+
 
 Link& NetCompare::pin_Aclr()
 {
