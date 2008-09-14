@@ -150,6 +150,26 @@ const char*data_type_string(ivl_variable_type_t vtype)
 }
 
 /*
+ * The compiler will check the types of drivers to signals and will
+ * only connect outputs to signals that are compatible. This function
+ * shows the type compatibility that the compiler enforces at the
+ * ivl_target.h level.
+ */
+static int check_signal_drive_type(ivl_variable_type_t sig_type,
+				    ivl_variable_type_t driver_type)
+{
+      if (sig_type == IVL_VT_LOGIC && driver_type == IVL_VT_BOOL)
+	    return !0;
+      if (sig_type == IVL_VT_LOGIC && driver_type == IVL_VT_LOGIC)
+	    return !0;
+      if (sig_type == IVL_VT_BOOL && driver_type == IVL_VT_BOOL)
+	    return !0;
+      if (sig_type == driver_type)
+	    return !0;
+      return 0;
+}
+
+/*
  * The compare-like LPM nodes have input widths that match the
  * ivl_lpm_width() value, and an output width of 1. This function
  * checks that that is so, and indicates errors otherwise.
@@ -1084,7 +1104,10 @@ static void signal_nexus_const(ivl_signal_t sig,
 	    stub_errors += 1;
       }
 
-      if (ivl_signal_data_type(sig) != ivl_const_type(con)) {
+      int drive_type_ok = check_signal_drive_type(ivl_signal_data_type(sig),
+						  ivl_const_type(con));
+
+      if (! drive_type_ok) {
 	    fprintf(out, "ERROR: Signal data type does not match"
 		    " literal type.\n");
 	    stub_errors += 1;
