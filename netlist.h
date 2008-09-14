@@ -194,9 +194,11 @@ class Link {
 
       enum strength_t { HIGHZ, WEAK, PULL, STRONG, SUPPLY };
 
+    private: // Only NetPins can create/delete Link objects
       Link();
       ~Link();
 
+    public:
 	// Manipulate the link direction.
       void set_dir(DIR d);
       DIR get_dir() const;
@@ -259,9 +261,12 @@ class Link {
     private:
 	// The NetNode manages these. They point back to the
 	// NetNode so that following the links can get me here.
-      NetPins *node_;
-      unsigned pin_;
+      union {
+	    NetPins *node_;
+	    unsigned pin_;
+      };
 
+      bool pin_zero_     : 1;
       DIR dir_           : 2;
       strength_t drive0_ : 3;
       strength_t drive1_ : 3;

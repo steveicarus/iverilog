@@ -141,14 +141,14 @@ verinum::V Link::get_init() const
 
 void Link::cur_link(NetPins*&net, unsigned &pin)
 {
-      net = node_;
-      pin = pin_;
+      net = get_obj();
+      pin = get_pin();
 }
 
 void Link::cur_link(const NetPins*&net, unsigned &pin) const
 {
-      net = node_;
-      pin = pin_;
+      net = get_obj();
+      pin = get_pin();
 }
 
 void Link::unlink()
@@ -193,17 +193,28 @@ const Link* Link::next_nlink() const
 
 const NetPins*Link::get_obj() const
 {
-      return node_;
+      if (pin_zero_)
+	    return node_;
+      const Link*tmp = this - pin_;
+      assert(tmp->pin_zero_);
+      return tmp->node_;
 }
 
 NetPins*Link::get_obj()
 {
-      return node_;
+      if (pin_zero_)
+	    return node_;
+      Link*tmp = this - pin_;
+      assert(tmp->pin_zero_);
+      return tmp->node_;
 }
 
 unsigned Link::get_pin() const
 {
-      return pin_;
+      if (pin_zero_)
+	    return 0;
+      else
+	    return pin_;
 }
 
 Nexus::Nexus()

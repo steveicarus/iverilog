@@ -175,9 +175,12 @@ NetPins::NetPins(unsigned npins)
 : npins_(npins)
 {
       pins_ = new Link[npins_];
-      for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
-	    pins_[idx].node_ = this;
-	    pins_[idx].pin_  = idx;
+      pins_[0].pin_zero_ = true;
+      pins_[0].node_ = this;
+
+      for (unsigned idx = 1 ;  idx < npins_ ;  idx += 1) {
+	    pins_[idx].pin_zero_ = false;
+	    pins_[idx].pin_      = idx;
       }
 }
 
@@ -196,12 +199,15 @@ Link& NetPins::pin(unsigned idx)
       }
 
       assert(idx < npins_);
+      assert(idx == 0? pins_[0].pin_zero_ : pins_[idx].pin_==idx);
+
       return pins_[idx];
 }
 
 const Link& NetPins::pin(unsigned idx) const
 {
       assert(idx < npins_);
+      assert(idx == 0? pins_[0].pin_zero_ : pins_[idx].pin_==idx);
       return pins_[idx];
 }
 
