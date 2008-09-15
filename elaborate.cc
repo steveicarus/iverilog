@@ -221,19 +221,12 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 }
 
-/*
- * Elaborate a Builtin gate. These normally get translated into
- * NetLogic nodes that reflect the particular logic function.
- */
-void PGBuiltin::elaborate(Design*des, NetScope*scope) const
+unsigned PGBuiltin::calculate_array_count_(Design*des, NetScope*scope,
+					   long&high, long&low) const
 {
       unsigned count = 1;
-      unsigned instance_width = 1;
-      long low = 0, high = 0;
-      string name = string(get_name());
-
-      if (name == "")
-	    name = scope->local_symbol();
+      high = 0;
+      low = 0;
 
 	/* If the Verilog source has a range specification for the
 	   gates, then I am expected to make more than one
@@ -249,14 +242,14 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  cerr << get_fileline() << ": error: Unable to evaluate "
 			"expression " << *msb_ << endl;
 		  des->errors += 1;
-		  return;
+		  return 0;
 	    }
 
 	    if (lsb_con == 0) {
 		  cerr << get_fileline() << ": error: Unable to evaluate "
 			"expression " << *lsb_ << endl;
 		  des->errors += 1;
-		  return;
+		  return 0;
 	    }
 
 	    verinum msb = msb_con->value();
@@ -276,39 +269,366 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: PGBuiltin: Make array "
 		       << "[" << high << ":" << low << "]"
-		       << " of " << count << " gates for " << name << endl;
+		       << " of " << count << " gates for " << get_name() << endl;
 	    }
       }
 
-	/* Now we have a gate count. Elaborate the output expression
-	   only. We do it early so that we can see if we can make a
-	   wide gate instead of an array of gates. */
+      return count;
+}
 
-      if (pin(0) == 0) {
-	    cerr << get_fileline() << ": error: Logic gate port "
-	            "expressions are not optional." << endl;
-	    des->errors += 1;
-	    return;
+unsigned PGBuiltin::calculate_output_count_(void) const
+{
+      unsigned output_count;
+
+      switch (type()) {
+	  case BUF:
+	  case NOT:
+	    output_count = pin_count() - 1;
+	    break;
+	  case PULLDOWN:
+	  case PULLUP:
+	    output_count = pin_count();
+	    break;
+	  default:
+	    output_count = 1;
+	    break;
       }
-      NetNet*lval_sig = pin(0)->elaborate_lnet(des, scope);
-      assert(lval_sig);
+
+      return output_count;
+}
+
+NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
+					    perm_string gate_name,
+					    unsigned instance_width) const
+{
+      NetNode*gate = 0;
+
+      switch (type()) {
+
+	  case AND:
+	    if (pin_count() < 2) {
+		  cerr << get_fileline() << ": error: the AND "
+			"primitive must have an input." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+				      NetLogic::AND, instance_width);
+	    }
+	    break;
+
+	  case BUF:
+	    gate = new NetLogic(scope, gate_name, 2,
+				NetLogic::BUF, instance_width);
+	    break;
+
+	  case BUFIF0:
+	    if (pin_count() != 3) {
+		  cerr << get_fileline() << ": error: the BUFIF0 "
+			"primitive must have three arguments." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+					  NetLogic::BUFIF0, instance_width);
+	    }
+	    break;
+
+	  case BUFIF1:
+	    if (pin_count() != 3) {
+		  cerr << get_fileline() << ": error: the BUFIF1 "
+			"primitive must have three arguments." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+					  NetLogic::BUFIF1, instance_width);
+	    }
+	    break;
+
+	  case CMOS:
+	    if (pin_count() != 4) {
+		  cerr << get_fileline() << ": error: the CMOS "
+			"primitive must have four arguments." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+				      NetLogic::CMOS, instance_width);
+	    }
+	    break;
+
+	  case NAND:
+	    if (pin_count() < 2) {
+		  cerr << get_fileline() << ": error: the NAND "
+			"primitive must have an input." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+				      NetLogic::NAND, instance_width);
+	    }
+	    break;
+
+	  case NMOS:
+	    if (pin_count() != 3) {
+		  cerr << get_fileline() << ": error: the NMOS "
+			"primitive must have three arguments." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+				      NetLogic::NMOS, instance_width);
+	    }
+	    break;
+
+	  case NOR:
+	    if (pin_count() < 2) {
+		  cerr << get_fileline() << ": error: the NOR "
+			"primitive must have an input." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+				      NetLogic::NOR, instance_width);
+	    }
+	    break;
+
+	  case NOT:
+	    gate = new NetLogic(scope, gate_name, 2,
+				NetLogic::NOT, instance_width);
+	    break;
+
+	  case NOTIF0:
+	    if (pin_count() != 3) {
+		  cerr << get_fileline() << ": error: the NOTIF0 "
+			"primitive must have three arguments." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+				      NetLogic::NOTIF0, instance_width);
+	    }
+	    break;
+
+	  case NOTIF1:
+	    if (pin_count() != 3) {
+		  cerr << get_fileline() << ": error: the NOTIF1 "
+			"primitive must have three arguments." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+				      NetLogic::NOTIF1, instance_width);
+	    }
+	    break;
+
+	  case OR:
+	    if (pin_count() < 2) {
+		  cerr << get_fileline() << ": error: the OR "
+			"primitive must have an input." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+				      NetLogic::OR, instance_width);
+	    }
+	    break;
+
+	  case RCMOS:
+	    if (pin_count() != 4) {
+		  cerr << get_fileline() << ": error: the RCMOS "
+			"primitive must have four arguments." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+				      NetLogic::RCMOS, instance_width);
+	    }
+	    break;
+
+	  case RNMOS:
+	    if (pin_count() != 3) {
+		  cerr << get_fileline() << ": error: the RNMOS "
+			"primitive must have three arguments." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+				      NetLogic::RNMOS, instance_width);
+	    }
+	    break;
+
+	  case RPMOS:
+	    if (pin_count() != 3) {
+		  cerr << get_fileline() << ": error: the RPMOS "
+			"primitive must have three arguments." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+				      NetLogic::RPMOS, instance_width);
+	    }
+	    break;
+
+	  case PMOS:
+	    if (pin_count() != 3) {
+		  cerr << get_fileline() << ": error: the PMOS "
+			"primitive must have three arguments." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+				      NetLogic::PMOS, instance_width);
+	    }
+	    break;
+
+	  case PULLDOWN:
+	    gate = new NetLogic(scope, gate_name, 1,
+				NetLogic::PULLDOWN, instance_width);
+	    break;
+
+	  case PULLUP:
+	    gate = new NetLogic(scope, gate_name, 1,
+				NetLogic::PULLUP, instance_width);
+	    break;
+
+	  case XNOR:
+	    if (pin_count() < 2) {
+		  cerr << get_fileline() << ": error: the XNOR "
+			"primitive must have an input." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+				      NetLogic::XNOR, instance_width);
+	    }
+	    break;
+
+	  case XOR:
+	    if (pin_count() < 2) {
+		  cerr << get_fileline() << ": error: the XOR "
+			"primitive must have an input." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, pin_count(),
+				      NetLogic::XOR, instance_width);
+	    }
+	    break;
+
+	  case TRAN:
+	    if (pin_count() != 2) {
+		  cerr << get_fileline() << ": error: Pin count for "
+		       << "tran device." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetTran(scope, gate_name, IVL_SW_TRAN);
+	    }
+	    break;
+
+	  case RTRAN:
+	    if (pin_count() != 2) {
+		  cerr << get_fileline() << ": error: Pin count for "
+		       << "rtran device." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetTran(scope, gate_name, IVL_SW_RTRAN);
+	    }
+	    break;
+
+	  case TRANIF0:
+	    if (pin_count() != 3) {
+		  cerr << get_fileline() << ": error: Pin count for "
+		       << "tranif0 device." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetTran(scope, gate_name, IVL_SW_TRANIF0);
+	    }
+	    break;
+
+	  case RTRANIF0:
+	    if (pin_count() != 3) {
+		  cerr << get_fileline() << ": error: Pin count for "
+		       << "rtranif0 device." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetTran(scope, gate_name, IVL_SW_RTRANIF0);
+	    }
+	    break;
+
+	  case TRANIF1:
+	    if (pin_count() != 3) {
+		  cerr << get_fileline() << ": error: Pin count for "
+		       << "tranif1 device." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetTran(scope, gate_name, IVL_SW_TRANIF1);
+	    }
+	    break;
+
+	  case RTRANIF1:
+	    if (pin_count() != 3) {
+		  cerr << get_fileline() << ": error: Pin count for "
+		       << "rtranif1 device." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetTran(scope, gate_name, IVL_SW_RTRANIF1);
+	    }
+	    break;
+
+	  default:
+	    cerr << get_fileline() << ": internal error: unhandled "
+		  "gate type." << endl;
+	    des->errors += 1;
+	    break;
+      }
+
+      return gate;
+}
+
+/*
+ * Elaborate a Builtin gate. These normally get translated into
+ * NetLogic nodes that reflect the particular logic function.
+ */
+void PGBuiltin::elaborate(Design*des, NetScope*scope) const
+{
+      unsigned instance_width = 1;
+      perm_string name = get_name();
+
+      if (name == "")
+	    name = scope->local_symbol();
+
+	/* Calculate the array bounds and instance count for the gate,
+	   as described in the Verilog source. If there is none, then
+	   the count is 1, and high==low==0. */
+
+      long low=0, high=0;
+      unsigned array_count = calculate_array_count_(des, scope, high, low);
+      if (array_count == 0)
+	    return;
+
+      unsigned output_count = calculate_output_count_();
+
+	/* Now we have a gate count. Elaborate the output expressions
+	   only. We do it early so that we can see if we can make
+	   wide gates instead of an array of gates. */
+
+      vector<NetNet*>lval_sigs (output_count);
+
+      for (unsigned idx = 0 ; idx < output_count ; idx += 1) {
+	    if (pin(idx) == 0) {
+		  cerr << get_fileline() << ": error: Logic gate port "
+			"expressions are not optional." << endl;
+		  des->errors += 1;
+		  return;
+	    }
+	    lval_sigs[idx] = pin(idx)->elaborate_lnet(des, scope);
+	    ivl_assert(*this, lval_sigs[idx]);
+
+	      // For now, assume all the outputs are the same width.
+	    ivl_assert(*this, idx == 0 || lval_sigs[idx]->vector_width() == lval_sigs[0]->vector_width());
+      }
 
 	/* Detect the special case that the l-value width exactly
 	   matches the gate count. In this case, we will make a single
-	   gate that has the desired vector width. */
-      if (lval_sig->vector_width() == count) {
-	    instance_width = count;
-	    count = 1;
+	   gate that has the desired vector width.
+
+	   NOTE: This assumes that all the outputs have the same
+	   width. For gates with 1 output, this is trivially true. */
+      if (lval_sigs[0]->vector_width() == array_count) {
+	    instance_width = array_count;
+	    array_count = 1;
 
 	    if (debug_elaborate && instance_width != 1)
 		  cerr << get_fileline() << ": debug: PGBuiltin: "
 			"Collapsed gate array into single wide "
 			"(" << instance_width << ") instance." << endl;
       }
-
-	/* Allocate all the netlist nodes for the gates. */
-      NetNode**cur = new NetNode*[count];
-      assert(cur);
 
 	/* Calculate the gate delays from the delay expressions
 	   given in the source. For logic gates, the decay time
@@ -331,289 +651,25 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
       attrib_list = evaluate_attributes(attributes, attrib_list_n,
 					des, scope);
 
+	/* Allocate all the netlist nodes for the gates. */
+      vector<NetNode*>cur (array_count*output_count);
+
 	/* Now make as many gates as the bit count dictates. Give each
 	   a unique name, and set the delay times. */
 
-      for (unsigned idx = 0 ;  idx < count ;  idx += 1) {
-	    ostringstream tmp;
-	    unsigned index;
-	    if (low < high)
-		  index = low + idx;
-	    else
-		  index = low - idx;
+      for (unsigned idx = 0 ;  idx < array_count*output_count ;  idx += 1) {
+	    unsigned array_idx = idx/output_count;
+	    unsigned output_idx = idx%output_count;
 
-	    tmp << name << "<" << index << ">";
+	    ostringstream tmp;
+	    unsigned index = (low < high)? (low+array_idx) : (low-array_idx);
+
+	    tmp << name << "<" << index << "." << output_idx << ">";
 	    perm_string inm = lex_strings.make(tmp.str());
 
-	    switch (type()) {
-		case AND:
-		  if (pin_count() < 2) {
-		      cerr << get_fileline() << ": error: the AND "
-		              "primitive must have an input." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::AND, instance_width);
-		  break;
-		case BUF:
-		  if (pin_count() > 2) {
-		      cerr << get_fileline() << ": sorry: multiple output BUF "
-		              "primitives are not supported." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::BUF, instance_width);
-		  break;
-		case BUFIF0:
-		  if (pin_count() != 3) {
-		      cerr << get_fileline() << ": error: the BUFIF0 "
-		              "primitive must have three arguments." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::BUFIF0, instance_width);
-		  break;
-		case BUFIF1:
-		  if (pin_count() != 3) {
-		      cerr << get_fileline() << ": error: the BUFIF1 "
-		              "primitive must have three arguments." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::BUFIF1, instance_width);
-		  break;
-		case CMOS:
-		  if (pin_count() != 4) {
-		      cerr << get_fileline() << ": error: the CMOS "
-		              "primitive must have four arguments." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::CMOS, instance_width);
-		  break;
-		case NAND:
-		  if (pin_count() < 2) {
-		      cerr << get_fileline() << ": error: the NAND "
-		              "primitive must have an input." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::NAND, instance_width);
-		  break;
-		case NMOS:
-		  if (pin_count() != 3) {
-		      cerr << get_fileline() << ": error: the NMOS "
-		              "primitive must have three arguments." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::NMOS, instance_width);
-		  break;
-		case NOR:
-		  if (pin_count() < 2) {
-		      cerr << get_fileline() << ": error: the NOR "
-		              "primitive must have an input." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::NOR, instance_width);
-		  break;
-		case NOT:
-		  if (pin_count() > 2) {
-		      cerr << get_fileline() << ": sorry: multiple output NOT "
-		              "primitives are not supported." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::NOT, instance_width);
-		  break;
-		case NOTIF0:
-		  if (pin_count() != 3) {
-		      cerr << get_fileline() << ": error: the NOTIF0 "
-		              "primitive must have three arguments." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::NOTIF0, instance_width);
-		  break;
-		case NOTIF1:
-		  if (pin_count() != 3) {
-		      cerr << get_fileline() << ": error: the NOTIF1 "
-		              "primitive must have three arguments." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::NOTIF1, instance_width);
-		  break;
-		case OR:
-		  if (pin_count() < 2) {
-		      cerr << get_fileline() << ": error: the OR "
-		              "primitive must have an input." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::OR, instance_width);
-		  break;
-		case RCMOS:
-		  if (pin_count() != 4) {
-		      cerr << get_fileline() << ": error: the RCMOS "
-		              "primitive must have four arguments." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::RCMOS, instance_width);
-		  break;
-		case RNMOS:
-		  if (pin_count() != 3) {
-		      cerr << get_fileline() << ": error: the RNMOS "
-		              "primitive must have three arguments." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::RNMOS, instance_width);
-		  break;
-		case RPMOS:
-		  if (pin_count() != 3) {
-		      cerr << get_fileline() << ": error: the RPMOS "
-		              "primitive must have three arguments." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::RPMOS, instance_width);
-		  break;
-		case PMOS:
-		  if (pin_count() != 3) {
-		      cerr << get_fileline() << ": error: the PMOS "
-		              "primitive must have three arguments." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::PMOS, instance_width);
-		  break;
-		case PULLDOWN:
-		  if (pin_count() > 1) {
-		      cerr << get_fileline() << ": sorry: multiple output PULLDOWN "
-		              "primitives are not supported." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::PULLDOWN,
-					      instance_width);
-		  break;
-		case PULLUP:
-		  if (pin_count() > 1) {
-		      cerr << get_fileline() << ": sorry: multiple output PULLUP "
-		              "primitives are not supported." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::PULLUP, instance_width);
-		  break;
-		case XNOR:
-		  if (pin_count() < 2) {
-		      cerr << get_fileline() << ": error: the XNOR "
-		              "primitive must have an input." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::XNOR, instance_width);
-		  break;
-		case XOR:
-		  if (pin_count() < 2) {
-		      cerr << get_fileline() << ": error: the XOR "
-		              "primitive must have an input." << endl;
-		      des->errors += 1;
-		      return;
-		  } else
-		      cur[idx] = new NetLogic(scope, inm, pin_count(),
-					      NetLogic::XOR, instance_width);
-		  break;
-		case TRAN:
-		  if (pin_count() != 2) {
-			cerr << get_fileline() << ": error: Pin count for "
-			     << "tran device." << endl;
-			des->errors += 1;
-			return;
-		  } else {
-			cur[idx] = new NetTran(scope, inm, IVL_SW_TRAN);
-		  }
-		  break;
-		case RTRAN:
-		  if (pin_count() != 2) {
-			cerr << get_fileline() << ": error: Pin count for "
-			     << "rtran device." << endl;
-			des->errors += 1;
-			return;
-		  } else {
-			cur[idx] = new NetTran(scope, inm, IVL_SW_RTRAN);
-			return;
-		  }
-		  break;
-		case TRANIF0:
-		  if (pin_count() != 3) {
-			cerr << get_fileline() << ": error: Pin count for "
-			     << "tranif0 device." << endl;
-			des->errors += 1;
-			return;
-		  } else {
-			cur[idx] = new NetTran(scope, inm, IVL_SW_TRANIF0);
-		  }
-		  break;
-		case RTRANIF0:
-		  if (pin_count() != 3) {
-			cerr << get_fileline() << ": error: Pin count for "
-			     << "rtranif0 device." << endl;
-			des->errors += 1;
-			return;
-		  } else {
-			cur[idx] = new NetTran(scope, inm, IVL_SW_RTRANIF0);
-		  }
-		  break;
-		case TRANIF1:
-		  if (pin_count() != 3) {
-			cerr << get_fileline() << ": error: Pin count for "
-			     << "tranif1 device." << endl;
-			des->errors += 1;
-			return;
-		  } else {
-			cur[idx] = new NetTran(scope, inm, IVL_SW_TRANIF1);
-		  }
-		  break;
-		case RTRANIF1:
-		  if (pin_count() != 3) {
-			cerr << get_fileline() << ": error: Pin count for "
-			     << "rtranif1 device." << endl;
-			des->errors += 1;
-			return;
-		  } else {
-			cur[idx] = new NetTran(scope, inm, IVL_SW_RTRANIF1);
-		  }
-		  break;
-		default:
-		  cerr << get_fileline() << ": internal error: unhandled "
-			"gate type." << endl;
-		  des->errors += 1;
+	    cur[idx] = create_gate_for_output_(des, scope, inm, instance_width);
+	    if (cur[idx] == 0)
 		  return;
-	    }
 
 	    for (unsigned adx = 0 ;  adx < attrib_list_n ;  adx += 1)
 		  cur[idx]->attribute(attrib_list[adx].key,
@@ -641,6 +697,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	   the parameters and attaches the ports of the objects. */
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+
 	    const PExpr*ex = pin(idx);
 	    if (ex == 0) {
 		  cerr << get_fileline() << ": error: Logic gate port "
@@ -649,11 +706,11 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  return;
 	    }
 	    NetNet*sig = 0;
-	    if (idx == 0) {
-		  sig = lval_sig;
+	    if (idx < output_count) {
+		  sig = lval_sigs[idx];
 
 	    } else {
-		  unsigned use_width = count * instance_width;
+		  unsigned use_width = array_count * instance_width;
 		  NetExpr*tmp = elab_and_eval(des, scope, ex,
 					      use_width, use_width);
 		  sig = tmp->synthesize(des, scope);
@@ -663,9 +720,9 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    if (sig == 0)
 		  continue;
 
-	    assert(sig);
+	    ivl_assert(*this, sig);
 
-	    if (count == 1) {
+	    if (array_count == 1) {
 		    /* Handle the case where there is one gate that
 		       carries the whole vector width. */
 
@@ -700,15 +757,29 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			des->errors += 1;
 		  }
 
-		  connect(cur[0]->pin(idx), sig->pin(0));
+		    // There is only 1 instance, but there may be
+		    // multiple outputs to that gate. That would
+		    // potentially mean multiple actual gates.
+		    // Although in Verilog proper a multiple
+		    // output gate has only 1 input, this conditional
+		    // handles gates with N outputs and M inputs.
+		  if (idx < output_count) {
+			connect(cur[idx]->pin(0), sig->pin(0));
+		  } else {
+			for (unsigned dev = 0 ; dev < output_count; dev += 1)
+			      connect(cur[dev]->pin(idx-output_count+1), sig->pin(0));
+		  }
 
 	    } else if (sig->vector_width() == 1) {
+		  ivl_assert(*this, output_count == 1);
+
 		    /* Handle the case where a single bit is connected
 		       repetitively to all the instances. */
-		  for (unsigned gdx = 0 ;  gdx < count ;  gdx += 1)
+		  for (unsigned gdx = 0 ;  gdx < array_count ;  gdx += 1)
 			connect(cur[gdx]->pin(idx), sig->pin(0));
 
-	    } else if (sig->vector_width() == count) {
+	    } else if (sig->vector_width() == array_count) {
+		  ivl_assert(*this, output_count == 1);
 
 		    /* Handle the general case that each bit of the
 		       value is connected to a different instance. In
@@ -718,14 +789,14 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			NetConcat*cc = new NetConcat(scope,
 						     scope->local_symbol(),
 						     sig->vector_width(),
-						     count);
+						     array_count);
 			des->add_node(cc);
 
 			  /* Connect the concat to the signal. */
 			connect(cc->pin(0), sig->pin(0));
 
 			  /* Connect the outputs of the gates to the concat. */
-			for (unsigned gdx = 0 ;  gdx < count ;  gdx += 1) {
+			for (unsigned gdx = 0 ;  gdx < array_count;  gdx += 1) {
 			      connect(cur[gdx]->pin(0), cc->pin(gdx+1));
 
 			      NetNet*tmp2 = new NetNet(scope,
@@ -736,7 +807,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			      connect(cc->pin(gdx+1), tmp2->pin(0));
 			}
 
-		  } else for (unsigned gdx = 0 ;  gdx < count ;  gdx += 1) {
+		  } else for (unsigned gdx = 0 ;  gdx < array_count ;  gdx += 1) {
 			  /* Use part selects to get the bits
 			     connected to the inputs of out gate. */
 			NetPartSelect*tmp1 = new NetPartSelect(sig, gdx, 1,
@@ -754,7 +825,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
 	    } else {
 		  cerr << get_fileline() << ": error: Gate count of " <<
-			count << " does not match net width of " <<
+			array_count << " does not match net width of " <<
 			sig->vector_width() << " at pin " << idx << "."
 		       << endl;
 		  des->errors += 1;
@@ -762,8 +833,6 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
       }
 
-	// "cur" is an array of pointers, and we don't need it any more.
-      delete[]cur;
 }
 
 NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
