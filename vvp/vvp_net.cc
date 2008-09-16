@@ -1209,6 +1209,7 @@ bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
       return true;
 }
 
+#if UL_AND_TIME64_DIFF
 bool vector4_to_value(const vvp_vector4_t&vec, vvp_time64_t&val)
 {
       vvp_time64_t res = 0;
@@ -1233,6 +1234,7 @@ bool vector4_to_value(const vvp_vector4_t&vec, vvp_time64_t&val)
       val = res;
       return true;
 }
+#endif
 
 bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
 {
