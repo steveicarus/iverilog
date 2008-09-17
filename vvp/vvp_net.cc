@@ -1209,7 +1209,7 @@ bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
       return true;
 }
 
-#if UL_AND_TIME64_DIFF
+#ifndef UL_AND_TIME64_SAME
 bool vector4_to_value(const vvp_vector4_t&vec, vvp_time64_t&val)
 {
       vvp_time64_t res = 0;

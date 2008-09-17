@@ -65,14 +65,13 @@
 # include  <inttypes.h>
 #endif
 
-# define UL_AND_TIME64_DIFF 1
 #if SIZEOF_UNSIGNED >= 8
 typedef unsigned vvp_time64_t;
 # define TIME_FMT ""
 #else
 # if SIZEOF_UNSIGNED_LONG >= 8
 typedef unsigned long vvp_time64_t;
-#  define UL_AND_TIME64_DIFF 0
+#  define UL_AND_TIME64_SAME
 #  define TIME_FMT "l"
 # else
 #  if SIZEOF_UNSIGNED_LONG_LONG > SIZEOF_UNSIGNED_LONG
@@ -80,7 +79,7 @@ typedef unsigned long long vvp_time64_t;
 #   define TIME_FMT "ll"
 #  else
 typedef unsigned long vvp_time64_t;
-#   define UL_AND_TIME64_DIFF 0
+#   define UL_AND_TIME64_SAME
 #   define TIME_FMT "l"
 #  endif
 # endif
