@@ -771,21 +771,32 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  }
 
 	    } else if (sig->vector_width() == 1) {
-		  ivl_assert(*this, output_count == 1);
 
 		    /* Handle the case where a single bit is connected
-		       repetitively to all the instances. */
-		  for (unsigned gdx = 0 ;  gdx < array_count ;  gdx += 1)
-			connect(cur[gdx]->pin(idx), sig->pin(0));
+		       repetitively to all the instances. If idx is an
+		       output port, connect it to all array_count
+		       devices that have outputs at this
+		       position. Otherwise, idx is an input to all
+		       array_count*output_count devices. */
+
+		  if (idx < output_count) {
+			for (unsigned gdx = 0 ; gdx < array_count ; gdx += 1) {
+			      unsigned dev = gdx*output_count;
+			      connect(cur[dev+idx]->pin(0), sig->pin(0));
+			}
+		  } else {
+			unsigned use_idx = idx - output_count + 1;
+			for (unsigned gdx = 0 ;  gdx < cur.size() ;  gdx += 1)
+			      connect(cur[gdx]->pin(use_idx), sig->pin(0));
+		  }
 
 	    } else if (sig->vector_width() == array_count) {
-		  ivl_assert(*this, output_count == 1);
 
 		    /* Handle the general case that each bit of the
 		       value is connected to a different instance. In
 		       this case, the output is handled slightly
 		       different from the inputs. */
-		  if (idx == 0) {
+		  if (idx < output_count) {
 			NetConcat*cc = new NetConcat(scope,
 						     scope->local_symbol(),
 						     sig->vector_width(),
@@ -797,7 +808,8 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
 			  /* Connect the outputs of the gates to the concat. */
 			for (unsigned gdx = 0 ;  gdx < array_count;  gdx += 1) {
-			      connect(cur[gdx]->pin(0), cc->pin(gdx+1));
+			      unsigned dev = gdx*output_count;
+			      connect(cur[dev+idx]->pin(0), cc->pin(gdx+1));
 
 			      NetNet*tmp2 = new NetNet(scope,
 						       scope->local_symbol(),
@@ -820,7 +832,10 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			tmp2->local_flag(true);
 			tmp2->data_type(sig->data_type());
 			connect(tmp1->pin(0), tmp2->pin(0));
-			connect(cur[gdx]->pin(idx), tmp1->pin(0));
+			unsigned use_idx = idx - output_count + 1;
+			unsigned dev = gdx*output_count;
+			for (unsigned gdx2 = 0 ; gdx2 < output_count ; gdx2 += 1)
+			      connect(cur[dev+gdx2]->pin(use_idx), tmp1->pin(0));
 		  }
 
 	    } else {
