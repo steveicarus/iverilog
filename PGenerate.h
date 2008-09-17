@@ -78,8 +78,6 @@ class PGenerate : public LineInfo, public LexicalScope {
       list<PGate*> gates;
       void add_gate(PGate*);
 
-      list<PProcess*> behaviors;
-
 	// Tasks instantiated within this scheme.
       map<perm_string,PTask*> tasks;
       map<perm_string,PFunction*>funcs;

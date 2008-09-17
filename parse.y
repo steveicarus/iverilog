@@ -157,7 +157,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       svector<lgate>*gates;
 
       Module::port_t *mport;
-      Module::range_t* value_range;
+      LexicalScope::range_t* value_range;
       svector<Module::port_t*>*mports;
 
       named_pexpr_t*named_pexpr;
@@ -463,6 +463,10 @@ block_item_decl
       { delete $3; }
   | attribute_list_opt K_realtime real_variable_list ';'
       { delete $3; }
+
+	| K_event list_of_identifiers ';'
+		{ pform_make_events($2, @1.text, @1.first_line);
+		}
 
 	| K_parameter parameter_assign_decl ';'
 	| K_localparam localparam_assign_decl ';'
@@ -2036,9 +2040,6 @@ module_item
   /* */
 
 	| K_defparam defparam_assign_list ';'
-	| K_event list_of_identifiers ';'
-		{ pform_make_events($2, @1.text, @1.first_line);
-		}
 
   /* Most gate types have an optional drive strength and optional
      three-value delay. These rules handle the different cases. */

@@ -595,8 +595,15 @@ void PBlock::dump(ostream&out, unsigned ind) const
 	    out << " : " << pscope_name();
       out << endl;
 
-      if (pscope_name() != 0)
+      if (pscope_name() != 0) {
+            dump_parameters_(out, ind+2);
+
+            dump_localparams_(out, ind+2);
+
+            dump_events_(out, ind+2);
+
 	    dump_wires_(out, ind+2);
+      }
 
       for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1) {
 	    if (list_[idx])
@@ -815,6 +822,12 @@ void PFunction::dump(ostream&out, unsigned ind) const
 		  out << (*ports_)[idx]->basename() << ";" << endl;
 	    }
 
+      dump_parameters_(out, ind);
+
+      dump_localparams_(out, ind);
+
+      dump_events_(out, ind);
+
       dump_wires_(out, ind);
 
       if (statement_)
@@ -859,6 +872,12 @@ void PTask::dump(ostream&out, unsigned ind) const
 		  }
 		  out << (*ports_)[idx]->basename() << ";" << endl;
 	    }
+
+      dump_parameters_(out, ind);
+
+      dump_localparams_(out, ind);
+
+      dump_events_(out, ind);
 
       dump_wires_(out, ind);
 
@@ -996,11 +1015,11 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 
       out << endl;
 
-      for (map<perm_string,PWire*>::const_iterator idx = wires.begin()
-		 ; idx != wires.end() ;  idx++) {
+      dump_localparams_(out, indent+2);
 
-	    (*idx).second->dump(out, indent+2);
-      }
+      dump_events_(out, indent+2);
+
+      dump_wires_(out, indent+2);
 
       for (list<PGate*>::const_iterator idx = gates.begin()
 		 ; idx != gates.end() ;  idx++) {
@@ -1025,7 +1044,83 @@ void PGenerate::dump(ostream&out, unsigned indent) const
       out << setw(indent) << "" << "endgenerate" << endl;
 }
 
-void PScope::dump_wires_(ostream&out, unsigned indent) const
+void LexicalScope::dump_parameters_(ostream&out, unsigned indent) const
+{
+      typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
+      for (parm_iter_t cur = parameters.begin()
+		 ; cur != parameters.end() ; cur ++) {
+	    out << setw(indent) << "" << "parameter "
+                << (*cur).second.type << " ";
+	    if ((*cur).second.signed_flag)
+		  out << "signed ";
+	    if ((*cur).second.msb)
+		  out << "[" << *(*cur).second.msb << ":"
+		      << *(*cur).second.lsb << "] ";
+	    out << (*cur).first << " = ";
+	    if ((*cur).second.expr)
+		  out << *(*cur).second.expr;
+	    else
+		  out << "/* ERROR */";
+	    for (LexicalScope::range_t*tmp = (*cur).second.range
+		       ; tmp ; tmp = tmp->next) {
+		  if (tmp->exclude_flag)
+			out << " exclude ";
+		  else
+			out << " from ";
+		  if (tmp->low_open_flag)
+			out << "(";
+		  else
+			out << "[";
+		  if (tmp->low_expr)
+			out << *(tmp->low_expr);
+		  else if (tmp->low_open_flag==false)
+			out << "-inf";
+		  else
+			out << "<nil>";
+		  out << ":";
+		  if (tmp->high_expr)
+			out << *(tmp->high_expr);
+		  else if (tmp->high_open_flag==false)
+			out << "inf";
+		  else
+			out << "<nil>";
+		  if (tmp->high_open_flag)
+			out << ")";
+		  else
+			out << "]";
+	    }
+	    out << ";" << endl;
+      }
+}
+
+void LexicalScope::dump_localparams_(ostream&out, unsigned indent) const
+{
+      typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
+      for (parm_iter_t cur = localparams.begin()
+		 ; cur != localparams.end() ; cur ++) {
+	    out << setw(indent) << "" << "localparam ";
+	    if ((*cur).second.msb)
+		  out << "[" << *(*cur).second.msb << ":"
+		      << *(*cur).second.lsb << "] ";
+	    out << (*cur).first << " = ";
+	    if ((*cur).second.expr)
+		  out << *(*cur).second.expr << ";" << endl;
+	    else
+		  out << "/* ERROR */;" << endl;
+      }
+}
+
+void LexicalScope::dump_events_(ostream&out, unsigned indent) const
+{
+      for (map<perm_string,PEvent*>::const_iterator cur = events.begin()
+		 ; cur != events.end() ;  cur ++ ) {
+	    PEvent*ev = (*cur).second;
+	    out << setw(indent) << "" << "event " << ev->name() << "; // "
+		<< ev->get_fileline() << endl;
+      }
+}
+
+void LexicalScope::dump_wires_(ostream&out, unsigned indent) const
 {
 	// Iterate through and display all the wires.
       for (map<perm_string,PWire*>::const_iterator wire = wires.begin()
@@ -1070,63 +1165,9 @@ void Module::dump(ostream&out) const
 	    out << ")" << endl;
       }
 
-      typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
-      for (parm_iter_t cur = parameters.begin()
-		 ; cur != parameters.end() ; cur ++) {
-	    out << "    parameter " << (*cur).second.type << " ";
-	    if ((*cur).second.signed_flag)
-		  out << "signed ";
-	    if ((*cur).second.msb)
-		  out << "[" << *(*cur).second.msb << ":"
-		      << *(*cur).second.lsb << "] ";
-	    out << (*cur).first << " = ";
-	    if ((*cur).second.expr)
-		  out << *(*cur).second.expr;
-	    else
-		  out << "/* ERROR */";
-	    for (Module::range_t*tmp = (*cur).second.range
-		       ; tmp ; tmp = tmp->next) {
-		  if (tmp->exclude_flag)
-			out << " exclude ";
-		  else
-			out << " from ";
-		  if (tmp->low_open_flag)
-			out << "(";
-		  else
-			out << "[";
-		  if (tmp->low_expr)
-			out << *(tmp->low_expr);
-		  else if (tmp->low_open_flag==false)
-			out << "-inf";
-		  else
-			out << "<nil>";
-		  out << ":";
-		  if (tmp->high_expr)
-			out << *(tmp->high_expr);
-		  else if (tmp->high_open_flag==false)
-			out << "inf";
-		  else
-			out << "<nil>";
-		  if (tmp->high_open_flag)
-			out << ")";
-		  else
-			out << "]";
-	    }
-	    out << ";" << endl;
-      }
+      dump_parameters_(out, 4);
 
-      for (parm_iter_t cur = localparams.begin()
-		 ; cur != localparams.end() ; cur ++) {
-	    out << "    localparam ";
-	    if ((*cur).second.msb)
-		  out << "[" << *(*cur).second.msb << ":"
-		      << *(*cur).second.lsb << "] ";
-	    out << (*cur).first << " = ";
-	    if ((*cur).second.expr)
-		  out << *(*cur).second.expr << ";" << endl;
-	    else
-		  out << "/* ERROR */;" << endl;
-      }
+      dump_localparams_(out, 4);
 
       typedef map<perm_string,LineInfo*>::const_iterator genvar_iter_t;
       for (genvar_iter_t cur = genvars.begin()
@@ -1157,12 +1198,7 @@ void Module::dump(ostream&out) const
 		  out << "/* ERROR */;" << endl;
       }
 
-      for (map<perm_string,PEvent*>::const_iterator cur = events.begin()
-		 ; cur != events.end() ;  cur ++ ) {
-	    PEvent*ev = (*cur).second;
-	    out << "    event " << ev->name() << "; // "
-		<< ev->get_fileline() << endl;
-      }
+      dump_events_(out, 4);
 
 	// Iterate through and display all the wires.
       dump_wires_(out, 4);

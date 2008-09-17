@@ -76,40 +76,6 @@ class Module : public PScope, public LineInfo {
 
       NetNet::Type default_nettype;
 
-      struct range_t {
-	      // True if this is an exclude
-	    bool exclude_flag;
-	      // lower bound
-	      // If low_open_flag is false and low_expr=0, then use -inf
-	    bool low_open_flag;
-	    PExpr*low_expr;
-	      // upper bound
-	      // If high_open_flag is false and high_expr=0, then use +inf
-	    bool high_open_flag;
-	    PExpr*high_expr;
-	      // Next range description in list
-	    struct range_t*next;
-      };
-
-	/* The module has parameters that are evaluated when the
-	   module is elaborated. During parsing, I put the parameters
-	   into this map. */
-      struct param_expr_t : public LineInfo {
-	    param_expr_t() : type(IVL_VT_NO_TYPE), msb(0), lsb(0), signed_flag(false), expr(0), range(0) { }
-	      // Type information
-	    ivl_variable_type_t type;
-	    PExpr*msb;
-	    PExpr*lsb;
-	    bool signed_flag;
-	      // Value expression
-	    PExpr*expr;
-	      // If there are range constraints, list them here
-	    range_t*range;
-      };
-      map<perm_string,param_expr_t>parameters;
-      map<perm_string,param_expr_t>localparams;
-
-
 	/* specparams are simpler then other params, in that they have
 	   no type information. They are merely constant
 	   expressions. */

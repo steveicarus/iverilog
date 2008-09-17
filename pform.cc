@@ -170,52 +170,39 @@ void pform_bind_attributes(map<perm_string,PExpr*>&attributes,
       delete attr;
 }
 
+static LexicalScope*pform_get_cur_scope()
+{
+      if (pform_cur_generate)
+	    if (pform_cur_generate->lexical_scope)
+		  return pform_cur_generate->lexical_scope;
+	    else
+		  return pform_cur_generate;
+      else
+	    return lexical_scope;
+}
+
 PWire*pform_get_wire_in_scope(perm_string name)
 {
 	/* Note that if we are processing a generate, then the
 	   scope depth will be empty because generate schemes
 	   cannot be within sub-scopes. Only directly in
 	   modules. */
-      if (pform_cur_generate)
-	    if (pform_cur_generate->lexical_scope)
-		  return pform_cur_generate->lexical_scope->wires_find(name);
-	    else
-		  return pform_cur_generate->wires_find(name);
-      else
-	    return lexical_scope->wires_find(name);
+      return pform_get_cur_scope()->wires_find(name);
 }
 
 static void pform_put_wire_in_scope(perm_string name, PWire*net)
 {
-      if (pform_cur_generate)
-	    if (pform_cur_generate->lexical_scope)
-		  pform_cur_generate->lexical_scope->wires[name] = net;
-	    else
-		  pform_cur_generate->wires[name] = net;
-      else
-	    lexical_scope->wires[name] = net;
+      pform_get_cur_scope()->wires[name] = net;
 }
 
 static void pform_put_behavior_in_scope(PProcess*pp)
 {
-      if (pform_cur_generate)
-	    if (pform_cur_generate->lexical_scope)
-		  pform_cur_generate->lexical_scope->behaviors.push_back(pp);
-	    else
-		  pform_cur_generate->behaviors.push_back(pp);
-      else
-	    lexical_scope->behaviors.push_back(pp);
+      pform_get_cur_scope()->behaviors.push_back(pp);
 }
 
 void pform_put_behavior_in_scope(AProcess*pp)
 {
-      if (pform_cur_generate)
-	    if (pform_cur_generate->lexical_scope)
-		  pform_cur_generate->lexical_scope->analog_behaviors.push_back(pp);
-	    else
-		  pform_cur_generate->analog_behaviors.push_back(pp);
-      else
-	    lexical_scope->analog_behaviors.push_back(pp);
+      pform_get_cur_scope()->analog_behaviors.push_back(pp);
 }
 
 void pform_set_default_nettype(NetNet::Type type,
@@ -1045,7 +1032,7 @@ static void pform_make_event(perm_string name, const char*fn, unsigned ln)
 {
       PEvent*event = new PEvent(name);
       FILE_NAME(event, fn, ln);
-      pform_cur_module->events[name] = event;
+      pform_get_cur_scope()->events[name] = event;
 }
 
 void pform_make_events(list<perm_string>*names, const char*fn, unsigned ln)
@@ -1705,7 +1692,7 @@ void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r)
       cur->set_memory_idx(l, r);
 }
 
-Module::range_t* pform_parameter_value_range(bool exclude_flag,
+LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 					     bool low_open, PExpr*low_expr,
 					     bool hig_open, PExpr*hig_expr)
 {
@@ -1714,7 +1701,7 @@ Module::range_t* pform_parameter_value_range(bool exclude_flag,
       if (low_expr == 0) low_open = false;
       if (hig_expr == 0) hig_open = false;
 
-      Module::range_t*tmp = new Module::range_t;
+      LexicalScope::range_t*tmp = new LexicalScope::range_t;
       tmp->exclude_flag = exclude_flag;
       tmp->low_open_flag = low_open;
       tmp->low_expr = low_expr;
@@ -1727,10 +1714,15 @@ Module::range_t* pform_parameter_value_range(bool exclude_flag,
 void pform_set_parameter(const struct vlltype&loc,
 			 perm_string name, ivl_variable_type_t type,
 			 bool signed_flag, svector<PExpr*>*range, PExpr*expr,
-			 Module::range_t*value_range)
+			 LexicalScope::range_t*value_range)
 {
+      if (pform_get_cur_scope() == pform_cur_generate) {
+            VLerror("parameter declarations are not permitted in generate blocks");
+            return;
+      }
+
       assert(expr);
-      Module::param_expr_t&parm = pform_cur_module->parameters[name];
+      Module::param_expr_t&parm = pform_get_cur_scope()->parameters[name];
       FILE_NAME(&parm, loc);
 
       parm.expr = expr;
@@ -1749,7 +1741,8 @@ void pform_set_parameter(const struct vlltype&loc,
       parm.signed_flag = signed_flag;
       parm.range = value_range;
 
-      pform_cur_module->param_names.push_back(name);
+      if (pform_get_cur_scope() == pform_cur_module)
+            pform_cur_module->param_names.push_back(name);
 }
 
 void pform_set_localparam(const struct vlltype&loc,
@@ -1757,7 +1750,7 @@ void pform_set_localparam(const struct vlltype&loc,
 			  bool signed_flag, svector<PExpr*>*range, PExpr*expr)
 {
       assert(expr);
-      Module::param_expr_t&parm = pform_cur_module->localparams[name];
+      Module::param_expr_t&parm = pform_get_cur_scope()->localparams[name];
       FILE_NAME(&parm, loc);
 
       parm.expr = expr;
