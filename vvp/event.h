@@ -26,7 +26,8 @@ class evctl {
 
     public:
       explicit evctl(unsigned long ecount);
-      virtual bool dec_and_run() = 0;
+      bool dec_and_run();
+      virtual void run_run() = 0;
       virtual ~evctl() {}
       evctl*next;
 
@@ -40,14 +41,33 @@ class evctl_real : public evctl {
       explicit evctl_real(struct __vpiHandle*handle, double value,
                           unsigned long ecount);
       virtual ~evctl_real() {}
-      bool dec_and_run();
+      void run_run();
 
     private:
       __vpiHandle*handle_;
       double value_;
 };
 
+class evctl_vector : public evctl {
+
+    public:
+      explicit evctl_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
+                            unsigned off, unsigned wid, unsigned long ecount);
+      virtual ~evctl_vector() {}
+      void run_run();
+
+    private:
+      vvp_net_ptr_t ptr_;
+      vvp_vector4_t value_;
+      unsigned off_;
+      unsigned wid_;
+};
+
 extern void schedule_evctl(struct __vpiHandle*handle, double value,
+                           vvp_net_t*event, unsigned long ecount);
+
+extern void schedule_evctl(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
+                           unsigned offset, unsigned wid,
                            vvp_net_t*event, unsigned long ecount);
 
 /*

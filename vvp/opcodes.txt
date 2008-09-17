@@ -82,6 +82,7 @@ word address.
 
 * %assign/v0 <var-label>, <delay>, <bit>
 * %assign/v0/d <var-label>, <delayx>, <bit>
+* %assign/v0/e <var-label>, <bit>
 
 The %assign/v0 instruction is a vector version of non-blocking
 assignment. The <delay> is the number of clock ticks in the future
@@ -93,11 +94,16 @@ The %assign/v0/d variation gets the delay instead from an integer
 register that is given by the <delayx> value. This should not be 0, of
 course, because integer 0 is taken with the vector width.
 
+The %assign/v0/e variation uses the information in the thread
+event control registers to determine when to perform the assign.
+%evctl is used to set the event control information.
+
 The <var-label> references a .var object that can receive non-blocking
 assignments. For blocking assignments, see %set/v.
 
 * %assign/v0/x1 <var-label>, <delay>, <bit>
 * %assign/v0/x1/d <var-label>, <delayx>, <bit>
+* %assign/v0/x1/e <var-label>, <bit>
 
 This is similar to the %assign/v0 instruction, but adds the index-1
 index register with the canonical index of the destination where the

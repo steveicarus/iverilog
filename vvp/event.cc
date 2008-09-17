@@ -62,6 +62,16 @@ evctl::evctl(unsigned long ecount)
       next = 0;
 }
 
+bool evctl::dec_and_run()
+{
+      assert(ecount_ != 0);
+
+      ecount_ -= 1;
+      if (ecount_ == 0) run_run();
+
+      return ecount_ == 0;
+}
+
 evctl_real::evctl_real(struct __vpiHandle*handle, double value,
                        unsigned long ecount)
 :evctl(ecount)
@@ -70,21 +80,13 @@ evctl_real::evctl_real(struct __vpiHandle*handle, double value,
       value_ = value;
 }
 
-bool evctl_real::dec_and_run()
+void evctl_real::run_run()
 {
-      assert(ecount_ != 0);
+      t_vpi_value val;
 
-      ecount_ -= 1;
-
-      if (ecount_ == 0) {
-	    t_vpi_value val;
-
-	    val.format = vpiRealVal;
-	    val.value.real = value_;
-	    vpi_put_value(handle_, &val, 0, vpiNoDelay);
-      }
-
-      return ecount_ == 0;
+      val.format = vpiRealVal;
+      val.value.real = value_;
+      vpi_put_value(handle_, &val, 0, vpiNoDelay);
 }
 
 void schedule_evctl(struct __vpiHandle*handle, double value,
@@ -97,6 +99,37 @@ void schedule_evctl(struct __vpiHandle*handle, double value,
       *(ep->last) = new evctl_real(handle, value, ecount);
       ep->last = &((*(ep->last))->next);
 }
+
+evctl_vector::evctl_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
+                           unsigned off, unsigned wid, unsigned long ecount)
+:evctl(ecount), value_(value)
+{
+      ptr_ = ptr;
+      off_ = off;
+      wid_ = wid;
+}
+
+void evctl_vector::run_run()
+{
+      if (wid_ != 0) {
+	    vvp_send_vec4_pv(ptr_, value_, off_, value_.size(), wid_);
+      } else {
+	    vvp_send_vec4(ptr_, value_);
+      }
+}
+
+void schedule_evctl(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
+                    unsigned offset, unsigned wid,
+                    vvp_net_t*event, unsigned long ecount)
+{
+	// Get the functor we are going to wait on.
+      waitable_hooks_s*ep = dynamic_cast<waitable_hooks_s*> (event->fun);
+      assert(ep);
+	// Now add this call to the end of the event list.
+      *(ep->last) = new evctl_vector(ptr, value, offset, wid, ecount);
+      ep->last = &((*(ep->last))->next);
+}
+
 
 inline vvp_fun_edge::edge_t VVP_EDGE(vvp_bit4_t from, vvp_bit4_t to)
 {

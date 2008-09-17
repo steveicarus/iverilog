@@ -293,7 +293,7 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 
 static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 			      unsigned delay, ivl_expr_t dexp,
-			      unsigned width)
+			      unsigned width, unsigned nevents)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
       ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
@@ -303,6 +303,14 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
       const unsigned long use_word = 0;
 
       if (ivl_signal_dimensions(sig) > 0) {
+
+	    if (nevents) {
+		  fprintf(stderr, "vvp-tgt sorry: non-blocking event "
+		                  "controls are not supported on arrays!\n");
+		  exit(1);
+	    }
+	    assert(nevents == 0);
+
 	    assert(word_ix);
 	    assign_to_array_word(sig, word_ix, bit, delay, dexp, part_off_ex, width);
 	    return;
@@ -320,16 +328,7 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 
       if (part_off_ex) {
 	    unsigned skip_assign = transient_id++;
-	    if (dexp == 0) {
-		    /* Constant delay... */
-		  draw_eval_expr_into_integer(part_off_ex, 1);
-		    /* If the index expression has XZ bits, skip the assign. */
-		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
-		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
-		  fprintf(vvp_out, "    %%assign/v0/x1 v%p_%lu, %u, %u;\n",
-		          sig, use_word, delay, bit);
-		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
-	    } else {
+	    if (dexp != 0) {
 		    /* Calculated delay... */
 		  int delay_index = allocate_word();
 		  draw_eval_expr_into_integer(dexp, delay_index);
@@ -341,6 +340,24 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 		          sig, use_word, delay_index, bit);
 		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
 		  clr_word(delay_index);
+	    } else if (nevents != 0) {
+		    /* Event control delay... */
+		  draw_eval_expr_into_integer(part_off_ex, 1);
+		    /* If the index expression has XZ bits, skip the assign. */
+		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+		  fprintf(vvp_out, "    %%assign/v0/x1/e v%p_%lu, %u;\n",
+		          sig, use_word, bit);
+		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
+	    } else {
+		    /* Constant delay... */
+		  draw_eval_expr_into_integer(part_off_ex, 1);
+		    /* If the index expression has XZ bits, skip the assign. */
+		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+		  fprintf(vvp_out, "    %%assign/v0/x1 v%p_%lu, %u, %u;\n",
+		          sig, use_word, delay, bit);
+		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
 	    }
 
       } else if (part_off>0 || ivl_lval_width(lval)!=ivl_signal_width(sig)) {
@@ -349,14 +366,7 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 		 single-bit set instruction. */
 	    assert(ivl_lval_width(lval) == width);
 
-	    if (dexp == 0) {
-		    /* Constant delay... */
-		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
-		  fprintf(vvp_out, "    %%ix/load 1, %u;\n", part_off);
-		  fprintf(vvp_out, "    %%assign/v0/x1 v%p_%lu, %u, %u;\n",
-			  sig, use_word, delay, bit);
-
-	    } else {
+	    if (dexp != 0) {
 		    /* Calculated delay... */
 		  int delay_index = allocate_word();
 		  draw_eval_expr_into_integer(dexp, delay_index);
@@ -365,14 +375,33 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 		  fprintf(vvp_out, "    %%assign/v0/x1/d v%p_%lu, %d, %u;\n",
 			  sig, use_word, delay_index, bit);
 		  clr_word(delay_index);
+	    } else if (nevents != 0) {
+		    /* Event control delay... */
+		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+		  fprintf(vvp_out, "    %%ix/load 1, %u;\n", part_off);
+		  fprintf(vvp_out, "    %%assign/v0/x1/e v%p_%lu, %u;\n",
+			  sig, use_word, bit);
+	    } else {
+		    /* Constant delay... */
+		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+		  fprintf(vvp_out, "    %%ix/load 1, %u;\n", part_off);
+		  fprintf(vvp_out, "    %%assign/v0/x1 v%p_%lu, %u, %u;\n",
+			  sig, use_word, delay, bit);
 	    }
 
       } else if (dexp != 0) {
+	      /* Calculated delay... */
 	    draw_eval_expr_into_integer(dexp, 1);
 	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
 	    fprintf(vvp_out, "    %%assign/v0/d v%p_%lu, 1, %u;\n",
 		    sig, use_word, bit);
+      } else if (nevents != 0) {
+	      /* Event control delay... */
+	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+	    fprintf(vvp_out, "    %%assign/v0/e v%p_%lu, %u;\n",
+		    sig, use_word, bit);
       } else {
+	      /* Constant delay... */
 	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
 	    fprintf(vvp_out, "    %%assign/v0 v%p_%lu, %u, %u;\n",
 		    sig, use_word, delay, bit);
@@ -562,7 +591,7 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 
 	/* We need to calculate the delay expression. */
       if (del) {
-	    assert(nevents == 0 && ivl_stmt_cond_expr(net) == 0);
+	    assert(nevents == 0);
 	    int delay_index = allocate_word();
 	    draw_eval_expr_into_integer(del, delay_index);
 	    fprintf(vvp_out, "    %%assign/wr/d v%p_%lu, %d, %u;\n",
@@ -629,6 +658,8 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	    } else { 
 		  fprintf(vvp_out, "    %%evctl/i %s, %lu;\n", name, count);
 	    }
+      } else {
+	    assert(ivl_stmt_cond_expr(net) == 0);
       }
 
       unsigned long delay = 0;
@@ -642,16 +673,6 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		default:
 		  break;
 	    }
-      }
-
-      if (nevents) {
-	    fprintf(stderr, "%s:%u: vvp-tgt sorry: non-blocking ",
-	                    ivl_stmt_file(net), ivl_stmt_lineno(net));
-	    if (ivl_stmt_cond_expr(net)) {
-		  fprintf(stderr, "repeat ");
-	    }
-	    fprintf(stderr, "event controls are not supported!\n");
-	    exit(1);
       }
 
       if (del && (ivl_expr_type(del) == IVL_EX_ULONG)) {
@@ -675,7 +696,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	      unsigned bidx;
 
 	      bidx = res.base < 4? res.base : (res.base+cur_rbit);
-	      assign_to_lvector(lval, bidx, delay, del, bit_limit);
+	      assign_to_lvector(lval, bidx, delay, del, bit_limit, nevents);
 
 	      cur_rbit += bit_limit;
 

@@ -745,6 +745,33 @@ bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * This is %assign/v0/e <label>, <bit>
+ * Index register 0 contains a vector width.
+ */
+bool of_ASSIGN_V0E(vthread_t thr, vvp_code_t cp)
+{
+      assert(thr->event != 0);
+      unsigned wid = thr->words[0].w_int;
+      assert(wid > 0);
+      unsigned bit = cp->bit_idx[0];
+
+      vvp_net_ptr_t ptr (cp->net, 0);
+
+	// If the count is zero then just put the value.
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+      if (thr->ecount == 0) {
+	    schedule_assign_plucked_vector(ptr, 0, value, 0, wid);
+      } else {
+	    schedule_evctl(ptr, value, 0, 0, thr->event, thr->ecount);
+      }
+
+      thr->event = 0;
+      thr->ecount = 0;
+
+      return true;
+}
+
+/*
  * This is %assign/v0/x1 <label>, <delay>, <bit>
  * Index register 0 contains a vector part width.
  * Index register 1 contains the offset into the destination vector.
@@ -752,7 +779,7 @@ bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
-      unsigned off = thr->words[1].w_int;
+      long off = thr->words[1].w_int;
       unsigned delay = cp->bit_idx[0];
       unsigned bit = cp->bit_idx[1];
 
@@ -761,8 +788,16 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
       assert(sig);
       assert(wid > 0);
 
-      if (off >= sig->size())
-	    return true;
+	// We fell off the MSB end.
+      if (off >= (long)sig->size()) return true;
+      else if (off < 0 ) {
+	      // We fell off the LSB end.
+	    if ((unsigned)-off > wid ) return true;
+	      // Trim the bits before the LSB
+	    wid += off;
+	    bit -= off;
+	    off = 0;
+      }
 
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
@@ -773,14 +808,14 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * This is %assign/v0/x1 <label>, <delayx>, <bit>
+ * This is %assign/v0/x1/d <label>, <delayx>, <bit>
  * Index register 0 contains a vector part width.
  * Index register 1 contains the offset into the destination vector.
  */
 bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
-      unsigned off = thr->words[1].w_int;
+      long off = thr->words[1].w_int;
       unsigned delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
 
@@ -789,13 +824,71 @@ bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
       assert(sig);
       assert(wid > 0);
 
-      if (off >= sig->size())
-	    return true;
+	// We fell off the MSB end.
+      if (off >= (long)sig->size()) return true;
+      else if (off < 0 ) {
+	      // We fell off the LSB end.
+	    if ((unsigned)-off > wid ) return true;
+	      // Trim the bits before the LSB
+	    wid += off;
+	    bit -= off;
+	    off = 0;
+      }
 
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
       vvp_net_ptr_t ptr (cp->net, 0);
       schedule_assign_vector(ptr, off, sig->size(), value, delay);
+
+      return true;
+}
+
+/*
+ * This is %assign/v0/x1/e <label>, <bit>
+ * Index register 0 contains a vector part width.
+ * Index register 1 contains the offset into the destination vector.
+ */
+bool of_ASSIGN_V0X1E(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = thr->words[0].w_int;
+      long off = thr->words[1].w_int;
+      unsigned bit = cp->bit_idx[0];
+
+      vvp_fun_signal_vec*sig
+	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
+      assert(sig);
+      assert(wid > 0);
+
+	// We fell off the MSB end.
+      if (off >= (long)sig->size()) {
+	    thr->event = 0;
+	    thr->ecount = 0;
+	    return true;
+      } else if (off < 0 ) {
+	      // We fell off the LSB end.
+	    if ((unsigned)-off > wid ) {
+		  thr->event = 0;
+		  thr->ecount = 0;
+		  return true;
+	    }
+	      // Trim the bits before the LSB
+	    wid += off;
+	    bit -= off;
+	    off = 0;
+      }
+
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      vvp_net_ptr_t ptr (cp->net, 0);
+      if (thr->ecount == 0) {
+	    schedule_assign_vector(ptr, off, sig->size(), value, 0);
+      } else {
+	    schedule_evctl(ptr, value, off, sig->size(), thr->event,
+	                   thr->ecount);
+      }
+
+      thr->event = 0;
+      thr->ecount = 0;
 
       return true;
 }
