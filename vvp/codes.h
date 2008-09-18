@@ -41,6 +41,7 @@ extern bool of_ANDI(vthread_t thr, vvp_code_t code);
 extern bool of_ANDR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_AV(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_AVD(vthread_t thr, vvp_code_t code);
+extern bool of_ASSIGN_AVE(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_D(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_MV(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_V0(vthread_t thr, vvp_code_t code);

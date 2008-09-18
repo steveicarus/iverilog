@@ -658,13 +658,27 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_AV(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
-      unsigned off = thr->words[1].w_int;
+      long off = thr->words[1].w_int;
       unsigned adr = thr->words[3].w_int;
-
-      assert(wid > 0);
-
       unsigned delay = cp->bit_idx[0];
       unsigned bit = cp->bit_idx[1];
+
+      long vwidth = get_array_word_size(cp->array);
+	// We fell off the MSB end.
+      if (off >= vwidth) return true;
+	// Trim the bits after the MSB
+      if (off + (long)wid > vwidth) {
+	    wid += vwidth - off - wid;
+      } else if (off < 0 ) {
+	      // We fell off the LSB end.
+	    if ((unsigned)-off > wid ) return true;
+	      // Trim the bits before the LSB
+	    wid += off;
+	    bit -= off;
+	    off = 0;
+      }
+
+      assert(wid > 0);
 
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
@@ -681,17 +695,65 @@ bool of_ASSIGN_AV(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_AVD(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
-      unsigned off = thr->words[1].w_int;
+      long off = thr->words[1].w_int;
       unsigned adr = thr->words[3].w_int;
-
-      assert(wid > 0);
-
       unsigned long delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
+
+      long vwidth = get_array_word_size(cp->array);
+	// We fell off the MSB end.
+      if (off >= vwidth) return true;
+	// Trim the bits after the MSB
+      if (off + (long)wid > vwidth) {
+	    wid += vwidth - off - wid;
+      } else if (off < 0 ) {
+	      // We fell off the LSB end.
+	    if ((unsigned)-off > wid ) return true;
+	      // Trim the bits before the LSB
+	    wid += off;
+	    bit -= off;
+	    off = 0;
+      }
+
+      assert(wid > 0);
 
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
       schedule_assign_array_word(cp->array, adr, off, value, delay);
+      return true;
+}
+
+bool of_ASSIGN_AVE(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = thr->words[0].w_int;
+      long off = thr->words[1].w_int;
+      unsigned adr = thr->words[3].w_int;
+      unsigned bit = cp->bit_idx[0];
+
+      long vwidth = get_array_word_size(cp->array);
+	// We fell off the MSB end.
+      if (off >= vwidth) return true;
+	// Trim the bits after the MSB
+      if (off + (long)wid > vwidth) {
+	    wid += vwidth - off - wid;
+      } else if (off < 0 ) {
+	      // We fell off the LSB end.
+	    if ((unsigned)-off > wid ) return true;
+	      // Trim the bits before the LSB
+	    wid += off;
+	    bit -= off;
+	    off = 0;
+      }
+
+      assert(wid > 0);
+
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+	// If the count is zero then just put the value.
+      if (thr->ecount == 0) {
+	    schedule_assign_array_word(cp->array, adr, off, value, 0);
+      } else {
+	    schedule_evctl(cp->array, adr, value, off, thr->event, thr->ecount);
+      }
       return true;
 }
 
@@ -757,8 +819,8 @@ bool of_ASSIGN_V0E(vthread_t thr, vvp_code_t cp)
 
       vvp_net_ptr_t ptr (cp->net, 0);
 
-	// If the count is zero then just put the value.
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+	// If the count is zero then just put the value.
       if (thr->ecount == 0) {
 	    schedule_assign_plucked_vector(ptr, 0, value, 0, wid);
       } else {
@@ -786,7 +848,6 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_vec*sig
 	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
       assert(sig);
-      assert(wid > 0);
 
 	// We fell off the MSB end.
       if (off >= (long)sig->size()) return true;
@@ -798,6 +859,8 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
 	    bit -= off;
 	    off = 0;
       }
+
+      assert(wid > 0);
 
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
@@ -822,7 +885,6 @@ bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_vec*sig
 	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
       assert(sig);
-      assert(wid > 0);
 
 	// We fell off the MSB end.
       if (off >= (long)sig->size()) return true;
@@ -834,6 +896,8 @@ bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
 	    bit -= off;
 	    off = 0;
       }
+
+      assert(wid > 0);
 
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
@@ -857,7 +921,6 @@ bool of_ASSIGN_V0X1E(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_vec*sig
 	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
       assert(sig);
-      assert(wid > 0);
 
 	// We fell off the MSB end.
       if (off >= (long)sig->size()) {
@@ -877,9 +940,12 @@ bool of_ASSIGN_V0X1E(vthread_t thr, vvp_code_t cp)
 	    off = 0;
       }
 
+      assert(wid > 0);
+
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
       vvp_net_ptr_t ptr (cp->net, 0);
+	// If the count is zero then just put the value.
       if (thr->ecount == 0) {
 	    schedule_assign_vector(ptr, off, sig->size(), value, 0);
       } else {

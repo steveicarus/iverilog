@@ -21,6 +21,7 @@
 
 # include  "vvp_net.h"
 # include  "pointers.h"
+# include  "array.h"
 
 class evctl {
 
@@ -31,7 +32,7 @@ class evctl {
       virtual ~evctl() {}
       evctl*next;
 
-    protected:
+    private:
       unsigned long ecount_;
 };
 
@@ -63,11 +64,31 @@ class evctl_vector : public evctl {
       unsigned wid_;
 };
 
+class evctl_array : public evctl {
+
+    public:
+      explicit evctl_array(vvp_array_t memory, unsigned index,
+                           const vvp_vector4_t&value, unsigned off,
+                           unsigned long ecount);
+      virtual ~evctl_array() {}
+      virtual void run_run();
+
+    private:
+      vvp_array_t mem_;
+      unsigned idx_;
+      vvp_vector4_t value_;
+      unsigned off_;
+};
+
 extern void schedule_evctl(struct __vpiHandle*handle, double value,
                            vvp_net_t*event, unsigned long ecount);
 
 extern void schedule_evctl(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
                            unsigned offset, unsigned wid,
+                           vvp_net_t*event, unsigned long ecount);
+
+extern void schedule_evctl(vvp_array_t memory, unsigned index,
+                           const vvp_vector4_t&value, unsigned offset,
                            vvp_net_t*event, unsigned long ecount);
 
 /*

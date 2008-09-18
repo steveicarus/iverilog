@@ -124,6 +124,13 @@ struct __vpiArrayVthrA {
       }
 };
 
+/* Get the array word size. This has only been checked for reg arrays. */
+unsigned get_array_word_size(vvp_array_t array)
+{
+      assert(array->vals);
+      return  array->vals_width;
+}
+
 /*
  * The vpiArrayWord is magic. It is used as the handle to return when
  * vpi code tries to index or scan an array of variable words. The
