@@ -2211,9 +2211,10 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 
 	      // Condition is constant TRUE, so we only need the true claue.
 	    if (cval.get(0) == verinum::V1) {
-		  cerr << get_fileline() << ": debug: "
-		       << "Short-circuit elaborate TRUE clause of ternary."
-		       << endl;
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: Short-circuit "
+			        "elaborate TRUE clause of ternary."
+			     << endl;
 		  NetExpr*tru = elab_and_eval(des, scope, tru_, expr_wid);
 		  return pad_to_width(tru, expr_wid);
 	    }
@@ -2221,9 +2222,10 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 	      // Condition is constant FALSE, so we only need the
 	      // false clause.
 	    if (cval.get(0) == verinum::V0) {
-		  cerr << get_fileline() << ": debug: "
-		       << "Short-circuit elaborate FALSE clause of ternary."
-		       << endl;
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: Short-circuit "
+			        "elaborate FALSE clause of ternary."
+			<< endl;
 		  NetExpr*fal = elab_and_eval(des, scope, fal_, expr_wid);
 		  return pad_to_width(fal, expr_wid);
 	    }
