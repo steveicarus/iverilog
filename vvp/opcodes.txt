@@ -62,13 +62,14 @@ means the following:
 
 * %assign/av <array-label>, <delay>, <bit>
 * %assign/av/d <array-label>, <delayx>, <bit>
+* %assign/av/e <array-label>, <bit>
 
 The %assign/av instruction assigns a vector value to a word in the
 labeled array. The <delay> is the delay in simulation time to the
 assignment (0 for non-blocking assignment) and the <bit> is the base
 of the vector to write.
 
-The width of the word is retrieved from index register 0.
+The width of the vector is retrieved from index register 0.
 
 The base of a part select is retrieved from index register 1.
 
@@ -79,6 +80,10 @@ The %assign/av/d variation reads the delay from an integer register that
 is given by the <delayx> value. This should not be 0, 1 or 3, of course,
 since these registers contain the vector width, base part select and
 word address.
+
+The %assign/av/e variation uses the information in the thread
+event control registers to determine when to perform the assign.
+%evctl is used to set the event control information.
 
 * %assign/v0 <var-label>, <delay>, <bit>
 * %assign/v0/d <var-label>, <delayx>, <bit>
