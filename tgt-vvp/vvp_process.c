@@ -349,6 +349,7 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 		  fprintf(vvp_out, "    %%assign/v0/x1/e v%p_%lu, %u;\n",
 		          sig, use_word, bit);
 		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
+		  fprintf(vvp_out, "    %%evctl/c;\n");
 	    } else {
 		    /* Constant delay... */
 		  draw_eval_expr_into_integer(part_off_ex, 1);

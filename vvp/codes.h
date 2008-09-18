@@ -82,6 +82,7 @@ extern bool of_DIV_S(vthread_t thr, vvp_code_t code);
 extern bool of_DIV_WR(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
 extern bool of_EVCTL(vthread_t thr, vvp_code_t code);
+extern bool of_EVCTLC(vthread_t thr, vvp_code_t code);
 extern bool of_EVCTLI(vthread_t thr, vvp_code_t code);
 extern bool of_EVCTLS(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE_LINK(vthread_t thr, vvp_code_t code);

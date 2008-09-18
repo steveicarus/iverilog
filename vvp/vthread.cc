@@ -2061,6 +2061,12 @@ bool of_EVCTL(vthread_t thr, vvp_code_t cp)
       thr->ecount = thr->words[cp->bit_idx[0]].w_uint;
       return true;
 }
+bool of_EVCTLC(vthread_t thr, vvp_code_t)
+{
+      thr->event = 0;
+      thr->ecount = 0;
+      return true;
+}
 
 bool of_EVCTLI(vthread_t thr, vvp_code_t cp)
 {
