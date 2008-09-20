@@ -455,6 +455,7 @@ class PEBinary : public PExpr {
 
       NetExpr*elaborate_expr_base_lshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_expr_base_rshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
+      NetExpr*elaborate_expr_base_mult_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_expr_base_add_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
 
       static void suppress_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp);

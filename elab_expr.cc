@@ -181,15 +181,7 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	    break;
 
 	  case '*':
-	      // Multiply will guess a width that is the sum of the
-	      // widths of the operand. If that sum is too small, then
-	      // pad one of the arguments enough that the sum is the
-	      // desired width.
-	    if (expr_wid > (long)(lp->expr_width() + rp->expr_width()))
-		  lp = pad_to_width(lp, expr_wid - rp->expr_width());
-
-	    tmp = new NetEBMult(op_, lp, rp);
-	    tmp->set_line(*this);
+	    tmp = elaborate_expr_base_mult_(des, lp, rp, expr_wid);
 	    break;
 
 	  case '%':
@@ -481,6 +473,36 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 	    lp = pad_to_width(lp, expr_wid);
       tmp = new NetEBShift(op_, lp, rp);
       tmp->set_line(*this);
+      return tmp;
+}
+
+NetExpr* PEBinary::elaborate_expr_base_mult_(Design*des,
+					     NetExpr*lp, NetExpr*rp,
+					     int expr_wid) const
+{
+	// First, Make sure that signed arguments are padded to the
+	// width of the output. This is necessary for 2s complement
+	// multiplication to come out right.
+      if (expr_wid > 0) {
+	    if (lp->has_sign() && lp->expr_type() != IVL_VT_REAL)
+		  lp = pad_to_width(lp, expr_wid);
+	    if (rp->has_sign() && rp->expr_type() != IVL_VT_REAL)
+		  rp = pad_to_width(rp, expr_wid);
+      }
+
+	// Multiply will guess a width that is the sum of the
+	// widths of the operand. If that sum is too small, then
+	// pad one of the arguments enough that the sum is the
+	// desired width.
+      if (expr_wid > (long)(lp->expr_width() + rp->expr_width()))
+	    lp = pad_to_width(lp, expr_wid - rp->expr_width());
+
+      NetEBMult*tmp = new NetEBMult(op_, lp, rp);
+      tmp->set_line(*this);
+
+      if (expr_wid > 0)
+	    tmp->set_width(expr_wid, false);
+
       return tmp;
 }
 
