@@ -168,10 +168,30 @@ static int draw_number_real(ivl_expr_t exp)
       unsigned long mant = 0, mask = -1UL;
       int vexp = 0x1000;
 
+	/* If this is a negative number, then arrange for the 2's
+	   complement to be calculated as we scan through the
+	   value. Real values are sign-magnitude, and this negation
+	   gets us a magnitide. */
+
+      int negate = 0;
+      int carry = 0;
+      if (ivl_expr_signed(exp) && (bits[wid-1] == '1')) {
+	    negate = 1;
+	    carry = 1;
+      }
+
       for (idx = 0 ;  idx < wid && idx < 8*sizeof(mant) ;  idx += 1) {
 	    mask <<= 1;
-	    if (bits[idx] == '1')
-		  mant |= 1 << idx;
+	    int cur_bit = bits[idx] == '1'? 1 : 0;
+
+	    if (negate) {
+		  cur_bit ^= 1;
+		  cur_bit += carry;
+		  carry = (cur_bit >> 1) & 1;
+		  cur_bit &= 1;
+	    }
+
+	    if (cur_bit) mant |= 1 << idx;
       }
 
       for ( ; idx < wid ; idx += 1) {
@@ -185,19 +205,9 @@ static int draw_number_real(ivl_expr_t exp)
 	    assert(0);
       }
 
-	/* If this is actually a negative number, then get the
-	   positive equivalent, and set the sign bit in the exponent
-	   field.
-
-	   To get the positive equivalent of mant we need to take the
-	   negative of the mantissa (0-mant) but also be aware that
-	   the bits may not have been as many bits as the width of the
-	   mant variable. This would lead to spurious '1' bits in the
-	   high bits of mant that are masked by ~((-1UL)<<wid). */
-      if (ivl_expr_signed(exp) && (bits[wid-1] == '1')) {
-	    mant = (0-mant) & ~(mask);
+	/* If required, add in a sign bit. */
+      if (negate)
 	    vexp |= 0x4000;
-      }
 
       fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load(num)= %c%lu (wid=%u)\n",
 	      res, mant, vexp, (vexp&0x4000)? '-' : '+', mant, wid);
