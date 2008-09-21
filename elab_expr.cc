@@ -82,6 +82,8 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope,
 		  min = lval;
 	    break;
 
+	  case 'l':
+	    ivl_assert(*this, 0); // Should be handled bin PEBShift
 	  default:
 	    if (wid_left > min)
 		  min = wid_left;
@@ -577,7 +579,35 @@ unsigned PEBShift::test_width(Design*des, NetScope*scope,
       if (wid_left < lval)
 	    wid_left = lval;
 
+      if (unsized_flag && wid_left < integer_width) {
+	    wid_left = integer_width;
+		  
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "Test width of unsized left shift"
+		       << " is padded to compiler integer width=" << wid_left
+		       << endl;
+      }
+
       return wid_left;
+}
+
+NetExpr*PEBShift::elaborate_expr(Design*des, NetScope*scope,
+				 int expr_wid, bool sys_task_arg) const
+{
+      assert(left_);
+      assert(right_);
+
+      NetExpr*lp = left_->elaborate_expr(des, scope, expr_wid, false);
+      NetExpr*rp = right_->elaborate_expr(des, scope, -1, false);
+      if ((lp == 0) || (rp == 0)) {
+	    delete lp;
+	    delete rp;
+	    return 0;
+      }
+
+      NetExpr*tmp = elaborate_eval_expr_base_(des, lp, rp, expr_wid);
+      return tmp;
 }
 
 unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
@@ -1294,7 +1324,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	// If the identifier name is a parameter name, then return
 	// a reference to the parameter expression.
       if (par != 0)
-	    return elaborate_expr_param(des, scope, par, found_in, ex1, ex2);
+	    return elaborate_expr_param_(des, scope, par, found_in, ex1, ex2, expr_wid);
 
 
 	// If the identifier names a signal (a register or wire)
@@ -1576,12 +1606,13 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
  * parameter expression has already been located for us (as the par
  * argument) so we just need to process the sub-expression.
  */
-NetExpr* PEIdent::elaborate_expr_param(Design*des,
-				       NetScope*scope,
-				       const NetExpr*par,
-				       NetScope*found_in,
-				       const NetExpr*par_msb,
-				       const NetExpr*par_lsb) const
+NetExpr* PEIdent::elaborate_expr_param_(Design*des,
+					NetScope*scope,
+					const NetExpr*par,
+					NetScope*found_in,
+					const NetExpr*par_msb,
+					const NetExpr*par_lsb,
+					int expr_wid) const
 {
       const name_component_t&name_tail = path_.back();
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
@@ -1736,6 +1767,9 @@ NetExpr* PEIdent::elaborate_expr_param(Design*des,
 		  perm_string name = peek_tail_name(path_);
 		  NetEConstParam*ptmp
 			= new NetEConstParam(found_in, name, ctmp->value());
+
+		  if (expr_wid > 0)
+			ptmp->set_width((unsigned)expr_wid);
 
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: "

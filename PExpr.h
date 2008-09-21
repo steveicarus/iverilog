@@ -283,12 +283,13 @@ class PEIdent : public PExpr {
                                    index_component_t::ctype_t) const;
 
     private:
-      NetExpr*elaborate_expr_param(Design*des,
-				   NetScope*scope,
-				   const NetExpr*par,
-				   NetScope*found,
-				   const NetExpr*par_msb,
-				   const NetExpr*par_lsb) const;
+      NetExpr*elaborate_expr_param_(Design*des,
+				    NetScope*scope,
+				    const NetExpr*par,
+				    NetScope*found,
+				    const NetExpr*par_msb,
+				    const NetExpr*par_lsb,
+				    int expr_wid) const;
       NetExpr*elaborate_expr_param_part_(Design*des,
 					 NetScope*scope,
 					 const NetExpr*par,
@@ -488,6 +489,8 @@ class PEBShift  : public PEBinary {
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval, bool&flag) const;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
+				     int expr_width, bool sys_task_arg) const;
 };
 
 /*

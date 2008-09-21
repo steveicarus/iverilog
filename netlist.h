@@ -1632,7 +1632,7 @@ class NetEConstParam  : public NetEConst {
       perm_string name() const;
       const NetScope*scope() const;
 
-      virtual bool set_width(unsigned w, bool last_chance);
+      virtual bool set_width(unsigned w, bool last_chance =false);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
