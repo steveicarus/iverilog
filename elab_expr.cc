@@ -2166,7 +2166,20 @@ unsigned PETernary::test_width(Design*des, NetScope*scope,
 			       bool&flag) const
 {
       unsigned tru_wid = tru_->test_width(des, scope, min, lval, flag);
+      bool initial_flag = flag;
       unsigned fal_wid = fal_->test_width(des, scope, min, lval, flag);
+
+	// If the false clause is unsized, then try again with the
+	// true clause, because it might choose a different width if
+	// it is in an unsized context.
+      if (initial_flag == false && flag == true) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "False clause is unsized, so retest width of true clause."
+		       << endl;
+	    tru_wid = tru_->test_width(des, scope, max(min,fal_wid), lval, flag);
+      }
+
       return max(tru_wid,fal_wid);
 }
 
@@ -2201,16 +2214,16 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
       assert(tru_);
       assert(fal_);
 
+      int use_wid = expr_wid >= 0? expr_wid : 0;
+
       if (expr_wid < 0) {
-	    bool flag = false;
-	    unsigned tru_wid = tru_->test_width(des, scope, 0, 0, flag);
-	    unsigned fal_wid = fal_->test_width(des, scope, 0, 0, flag);
-	    expr_wid = max(tru_wid, fal_wid);
+	    bool flag = expr_wid == -2;
+	    use_wid = this->test_width(des, scope, 0, 0, flag);
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: "
-		       << "Self-sized ternary chooses wid="<< expr_wid
-		       << " from " <<tru_wid
-		       << " and " << fal_wid << endl;
+		       << "Self-sized ternary chooses wid="<< use_wid
+		       << endl;
+	    ivl_assert(*this, use_wid > 0);
       }
 
 	// Elaborate and evaluate the condition expression. Note that
@@ -2237,8 +2250,8 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			cerr << get_fileline() << ": debug: Short-circuit "
 			        "elaborate TRUE clause of ternary."
 			     << endl;
-		  NetExpr*tru = elab_and_eval(des, scope, tru_, expr_wid);
-		  return pad_to_width(tru, expr_wid);
+		  NetExpr*tru = elab_and_eval(des, scope, tru_, use_wid);
+		  return pad_to_width(tru, use_wid);
 	    }
 
 	      // Condition is constant FALSE, so we only need the
@@ -2248,7 +2261,7 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			cerr << get_fileline() << ": debug: Short-circuit "
 			        "elaborate FALSE clause of ternary."
 			<< endl;
-		  NetExpr*fal = elab_and_eval(des, scope, fal_, expr_wid);
+		  NetExpr*fal = elab_and_eval(des, scope, fal_, use_wid);
 		  return pad_to_width(fal, expr_wid);
 	    }
 
@@ -2256,13 +2269,13 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 	      // can't short-circuit.
       }
 
-      NetExpr*tru = elab_and_eval(des, scope, tru_, expr_wid);
+      NetExpr*tru = elab_and_eval(des, scope, tru_, use_wid);
       if (tru == 0) {
 	    delete con;
 	    return 0;
       }
 
-      NetExpr*fal = elab_and_eval(des, scope, fal_, expr_wid);
+      NetExpr*fal = elab_and_eval(des, scope, fal_, use_wid);
       if (fal == 0) {
 	    delete con;
 	    delete tru;
@@ -2280,8 +2293,8 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 
 	/* Whatever the width we choose for the ternary operator, we
 	need to make sure the operands match. */
-      tru = pad_to_width(tru, expr_wid);
-      fal = pad_to_width(fal, expr_wid);
+      tru = pad_to_width(tru, use_wid);
+      fal = pad_to_width(fal, use_wid);
 
       NetETernary*res = new NetETernary(con, tru, fal);
       res->set_line(*this);
