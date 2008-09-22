@@ -2154,6 +2154,9 @@ unsigned PENumber::test_width(Design*, NetScope*,
       if (! value_->has_len())
 	    unsized_flag = true;
 
+      if (lval > 0 && lval < use_wid)
+	    use_wid = lval;
+
       return use_wid;
 }
 
@@ -2169,6 +2172,11 @@ NetEConst* PENumber::elaborate_expr(Design*des, NetScope*,
 	// the self-determined size.
       if (expr_width > 0) {
 	    tvalue = pad_to_width(tvalue, expr_width);
+	    if (tvalue.len() > (unsigned)expr_width) {
+		  verinum tmp (tvalue, expr_width);
+		  tmp.has_sign(tvalue.has_sign());
+		  tvalue = tmp;
+	    }
       }
 
       NetEConst*tmp = new NetEConst(tvalue);
@@ -2402,8 +2410,20 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 			val = pad_to_width(val, expr_wid);
 
 		    /* When taking the - of a number, extend it one
-		       bit to accommodate a possible sign bit. */
-		  verinum zero (verinum::V0, val.len()+1, val.has_len());
+		       bit to accommodate a possible sign bit.
+
+		       NOTE: This may not be correct! The test_width
+		       is supposed to detect the special case that we
+		       want to do lossless self-determined
+		       expressions, and the function that calls
+		       elaborate_expr should account for that in the
+		       expr_wid argument. */
+		  unsigned use_len = val.len();
+		  if (expr_wid < 0)
+			use_len += 1;
+
+		    /* Calculate unary minus as 0-val */
+		  verinum zero (verinum::V0, use_len, val.has_len());
 		  zero.has_sign(val.has_sign());
 		  verinum nval = zero - val;
 
