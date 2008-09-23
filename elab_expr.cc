@@ -31,6 +31,17 @@
 # include  "util.h"
 # include  "ivl_assert.h"
 
+static bool type_is_vectorable(ivl_variable_type_t type)
+{
+      switch (type) {
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    return true;
+	  default:
+	    return false;
+      }
+}
+
 /*
  * The default behavior for the test_width method is to just return the
  * minimum width that is passed in.
@@ -61,8 +72,8 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope,
 {
       bool flag_left = false;
       bool flag_right = false;
-      unsigned wid_left = left_->test_width(des,scope, min, lval, flag_left);
-      unsigned wid_right = right_->test_width(des,scope, min, lval, flag_right);
+      unsigned wid_left = left_->test_width(des,scope, min, 0, flag_left);
+      unsigned wid_right = right_->test_width(des,scope, min, 0, flag_right);
 
       if (flag_left || flag_right)
 	    unsized_flag = true;
@@ -82,8 +93,16 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope,
 		  min = lval;
 	    break;
 
-	  case 'l':
-	    ivl_assert(*this, 0); // Should be handled bin PEBShift
+	  case 'l': // <<  Should be handled by PEBShift
+	  case '<': // <   Should be handled by PEBComp
+	  case '>': // >   Should be handled by PEBComp
+	  case 'e': // ==  Should be handled by PEBComp
+	  case 'E': // === Should be handled by PEBComp
+	  case 'L': // <=  Should be handled by PEBComp
+	  case 'G': // >=  Should be handled by PEBComp
+	  case 'n': // !=  Should be handled by PEBComp
+	  case 'N': // !== Should be handled by PEBComp
+	    ivl_assert(*this, 0);
 	  default:
 	    if (wid_left > min)
 		  min = wid_left;
@@ -112,6 +131,24 @@ NetExpr* PEBinary::elaborate_expr(Design*des, NetScope*scope,
 	    delete lp;
 	    delete rp;
 	    return 0;
+      }
+
+	// Handle the special case that one of the operands is a real
+	// value and the other is a vector type. In that case,
+	// re-elaborate the vectorable argument as self-determined
+	// lossless.
+      if (lp->expr_type()==IVL_VT_REAL
+	  && type_is_vectorable(rp->expr_type())
+	  && expr_wid != -2) {
+	    delete rp;
+	    rp = right_->elaborate_expr(des, scope, -2, false);
+      }
+
+      if (rp->expr_type()==IVL_VT_REAL
+	  && type_is_vectorable(lp->expr_type())
+	  && expr_wid != -2) {
+	    delete lp;
+	    lp = left_->elaborate_expr(des, scope, -2, false);
       }
 
       NetExpr*tmp = elaborate_eval_expr_base_(des, lp, rp, expr_wid);
@@ -513,7 +550,17 @@ NetExpr* PEBinary::elaborate_expr_base_add_(Design*des,
 					    int expr_wid) const
 {
       NetExpr*tmp;
-      tmp = new NetEBAdd(op_, lp, rp, expr_wid==-2? true : false);
+      bool use_lossless_flag = expr_wid == -2;
+
+	// If this expression is not vectorable, then do NOT pass the
+	// lossless flag to the NetEBAdd constructor. For non-
+	// vectorable, lossless is implicit.
+      if (! type_is_vectorable(lp->expr_type()))
+	    use_lossless_flag = false;
+      if (! type_is_vectorable(rp->expr_type()))
+	    use_lossless_flag = false;
+
+      tmp = new NetEBAdd(op_, lp, rp, use_lossless_flag);
       if (expr_wid > 0 && (tmp->expr_type() == IVL_VT_BOOL
 			   || tmp->expr_type() == IVL_VT_LOGIC))
 	    tmp->set_width(expr_wid);

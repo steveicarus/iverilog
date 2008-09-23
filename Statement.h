@@ -103,7 +103,8 @@ class PAssign_  : public Statement {
 
     protected:
       NetAssign_* elaborate_lval(Design*, NetScope*scope) const;
-      NetExpr* elaborate_rval_(Design*, NetScope*, unsigned lv_width) const;
+      NetExpr* elaborate_rval_(Design*, NetScope*, unsigned lv_width,
+			       ivl_variable_type_t type) const;
 
       PExpr* delay_;
       PEventStatement*event_;

@@ -81,6 +81,11 @@ unsigned NetAssign_::lwidth() const
       return lwid_;
 }
 
+ivl_variable_type_t NetAssign_::expr_type() const
+{
+      return sig_->data_type();
+}
+
 perm_string NetAssign_::name() const
 {
       if (sig_) {

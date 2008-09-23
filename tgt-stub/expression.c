@@ -81,16 +81,24 @@ static void show_binary_expression(ivl_expr_t net, unsigned ind)
       switch (ivl_expr_opcode(net)) {
 
 	  case '*':
-	      /* The width of multiply expressions is the sum of the
-		 widths of the operands. This is slightly different
-		 from the way the Verilog standard does it, but allows
-		 us to keep operands smaller. */
-	    width = ivl_expr_width(ivl_expr_oper1(net));
-	    width += ivl_expr_width(ivl_expr_oper2(net));
-	    if (ivl_expr_width(net) != width) {
-		  fprintf(out, "%*sERROR: Result width incorrect. Expecting %u, got %u\n",
-			  ind+3, "", width, ivl_expr_width(net));
-		  stub_errors += 1;
+	    if (ivl_expr_value(net) == IVL_VT_REAL) {
+		  if (ivl_expr_width(net) != 1) {
+			fprintf(out, "%*sERROR: Result width incorrect. Expecting 1, got %u\n",
+				ind+3, "", ivl_expr_width(net));
+			stub_errors += 1;
+		  }
+	    } else {
+		    /* The width of multiply expressions is the sum of the
+		    widths of the operands. This is slightly different
+		    from the way the Verilog standard does it, but allows
+		    us to keep operands smaller. */
+		  width = ivl_expr_width(ivl_expr_oper1(net));
+		  width += ivl_expr_width(ivl_expr_oper2(net));
+		  if (ivl_expr_width(net) != width) {
+			fprintf(out, "%*sERROR: Result width incorrect. Expecting %u, got %u\n",
+				ind+3, "", width, ivl_expr_width(net));
+			stub_errors += 1;
+		  }
 	    }
 	    break;
 

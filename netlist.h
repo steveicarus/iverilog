@@ -2139,6 +2139,7 @@ class NetAssign_ {
 	// method accounts for the presence of the mux, so it is not
 	// necessarily the same as the pin_count().
       unsigned lwidth() const;
+      ivl_variable_type_t expr_type() const;
 
 	// Get the name of the underlying object.
       perm_string name() const;
