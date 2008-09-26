@@ -42,6 +42,34 @@ static bool type_is_vectorable(ivl_variable_type_t type)
       }
 }
 
+NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
+			     ivl_variable_type_t data_type_lv, int expr_wid_lv,
+			     PExpr*expr)
+{
+      int expr_wid = 0;
+      bool unsized_flag = false;
+
+      switch (data_type_lv) {
+	  case IVL_VT_REAL:
+	    expr_wid = -2;
+	    expr_wid_lv = -1;
+	    break;
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    expr_wid = expr->test_width(des, scope, expr_wid_lv, expr_wid_lv, unsized_flag);
+	    break;
+	  case IVL_VT_VOID:
+	  case IVL_VT_NO_TYPE:
+	    ivl_assert(*expr, 0);
+	    expr_wid = -2;
+	    expr_wid_lv = -1;
+	    break;
+      }
+
+      NetExpr*result = elab_and_eval(des, scope, expr, expr_wid, expr_wid_lv);
+      return result;
+}
+
 /*
  * The default behavior for the test_width method is to just return the
  * minimum width that is passed in.
@@ -224,21 +252,8 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	    break;
 
 	  case '%':
-	      /* The % operator does not support real arguments in
-		 baseline Verilog. But we allow it in our extended
-		 form of Verilog. */
-	    if (! gn_icarus_misc_flag) {
-		  if (lp->expr_type()==IVL_VT_REAL ||
-		      rp->expr_type()==IVL_VT_REAL) {
-			cerr << get_fileline() << ": error: Modulus operator "
-			      "may not have REAL operands." << endl;
-			des->errors += 1;
-		  }
-	    }
-	      /* Fall through to handle the % with the / operator. */
 	  case '/':
-	    tmp = new NetEBDiv(op_, lp, rp);
-	    tmp->set_line(*this);
+	    tmp = elaborate_expr_base_div_(des, lp, rp, expr_wid);
 	    break;
 
 	  case 'l': // <<
@@ -306,6 +321,28 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	    tmp->set_line(*this);
 	    break;
       }
+
+      return tmp;
+}
+
+NetExpr* PEBinary::elaborate_expr_base_div_(Design*des,
+					    NetExpr*lp, NetExpr*rp,
+					    int expr_wid) const
+{
+	/* The % operator does not support real arguments in
+	   baseline Verilog. But we allow it in our extended
+	   form of Verilog. */
+      if (op_ == '%' && ! gn_icarus_misc_flag) {
+	    if (lp->expr_type()==IVL_VT_REAL ||
+		rp->expr_type()==IVL_VT_REAL) {
+		  cerr << get_fileline() << ": error: Modulus operator "
+			"may not have REAL operands." << endl;
+		  des->errors += 1;
+	    }
+      }
+
+      NetEBDiv*tmp = new NetEBDiv(op_, lp, rp);
+      tmp->set_line(*this);
 
       return tmp;
 }
@@ -689,6 +726,9 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
       if (peek_tail_name(path_)[0] == '$')
 	    return test_width_sfunc_(des, scope, min, lval, unsized_flag);
 
+	// The width of user defined functions depends only on the
+	// width of the return value. The arguments are entirely
+	// self-determined.
       NetFuncDef*def = des->find_function(scope, path_);
       if (def == 0) {
 	    if (debug_elaborate)
@@ -706,6 +746,10 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": debug: test_width "
 		       << "of function returns width " << res->vector_width()
 		       << "." << endl;
+
+	    if (! type_is_vectorable(res->data_type()))
+		  unsized_flag = true;
+
 	    return res->vector_width();
       }
 
@@ -973,13 +1017,15 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       for (unsigned idx = 0 ;  idx < parms.count() ;  idx += 1) {
 	    PExpr*tmp = parms_[idx];
 	    if (tmp) {
-		  int argwid = def->port(idx)->vector_width();
-		  parms[idx] = elab_and_eval(des, scope, tmp, argwid);
+		  parms[idx] = elaborate_rval_expr(des, scope,
+						   def->port(idx)->data_type(),
+						   def->port(idx)->vector_width(),
+						   tmp);
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug:"
 			     << " function " << path_
 			     << " arg " << (idx+1)
-			     << " argwid=" << argwid
+			     << " argwid=" << parms[idx]->expr_width()
 			     << ": " << *parms[idx] << endl;
 
 	    } else {
@@ -1123,6 +1169,21 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 
       concat_depth -= 1;
       return tmp;
+}
+
+/*
+ * Floating point literals are not vectorable. It's not particularly
+ * clear what to do about an actual width to return, but whatever the
+ * width, it is unsigned.
+ *
+ * Absent any better idea, we call all real valued results a width of 1.
+ */
+unsigned PEFNumber::test_width(Design*des, NetScope*scope,
+			       unsigned min, unsigned lval,
+			       bool&unsized_flag) const
+{
+      unsized_flag = true;
+      return 1;
 }
 
 NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope, int, bool) const

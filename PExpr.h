@@ -211,6 +211,9 @@ class PEFNumber : public PExpr {
 	/* A PEFNumber is a constant, so this returns true. */
       virtual bool is_constant(Module*) const;
 
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  unsigned min, unsigned lval,
+				  bool&unsized_flag) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     int expr_width, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
@@ -454,6 +457,7 @@ class PEBinary : public PExpr {
       NetExpr*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_eval_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
 
+      NetExpr*elaborate_expr_base_div_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_expr_base_lshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_expr_base_rshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_expr_base_mult_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
