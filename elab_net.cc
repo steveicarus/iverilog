@@ -451,6 +451,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 				    sig->type(), sig->vector_width());
 	    tmp->set_line(*this);
 	    tmp->local_flag(true);
+	    tmp->data_type( sig->data_type() );
 	    connect(sig->pin(widx), tmp->pin(0));
 	    sig = tmp;
       }
