@@ -147,6 +147,17 @@ class PExpr;
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 			      const PExpr*pe, int expr_wid,
 			      int prune_width =-1);
+
+/*
+ * This function elaborates an expression as if it is for the r-value
+ * of an assignment, The data_type_lv and expr_wid_lv are the type and
+ * with of the l-value, and the expr is the expression to
+ * elaborate. The result is the NetExpr elaborated and evaluated.
+ * (See elab_expr.cc)
+ */
+extern NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
+				    ivl_variable_type_t data_type_lv,
+				    int expr_wid_lv, const PExpr*expr);
 /*
  * This procedure elaborates an expression and if the elaboration is
  * successful the original expression is replaced with the new one.

@@ -99,31 +99,8 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		 << ", type=" << lval->data_type() << endl;
       }
 
-      bool unsized_flag = false;
-      unsigned use_width = 0;
-      if (lval->data_type() == IVL_VT_REAL) {
-	    unsized_flag = true;
-	    use_width = pin(1)->test_width(des, scope, 0, 0, unsized_flag);
-      } else {
-	    use_width = pin(1)->test_width(des, scope, lval->vector_width(),
-					   lval->vector_width(), unsized_flag);
-      }
-
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: PGAssign: r-value tested "
-		 << "width is " << use_width
-		 << ", min=" << lval->vector_width()
-		 << ", unsized_flag=" << (unsized_flag?"true":"false") << endl;
-      }
-
-      int expr_wid = lval->vector_width();
-      if (use_width > (unsigned)expr_wid)
-	    expr_wid = (int)use_width;
-      if (lval->data_type() == IVL_VT_REAL)
-	    expr_wid = -2;
-
-      NetExpr*rval_expr = elab_and_eval(des, scope, pin(1),
-					expr_wid, lval->vector_width());
+      NetExpr*rval_expr = elaborate_rval_expr(des, scope, lval->data_type(),
+					      lval->vector_width(), pin(1));
 
       if (rval_expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate r-value: "
@@ -1720,33 +1697,7 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 {
       ivl_assert(*this, rval_);
 
-
-	/* Find out what the r-value width is going to be. We guess it
-	   will be the l-value width, but it may turn out to be
-	   something else based on self-determined widths inside. */
-      unsigned use_width = lv_width;
-      bool unsized_flag = false;
-      unsigned tmp_width = 0;
-
-      if (lv_type == IVL_VT_REAL) {
-	    unsized_flag = true;
-	    tmp_width = rval()->test_width(des, scope, 0, 0, unsized_flag);
-      } else {
-	    tmp_width = rval()->test_width(des, scope, use_width, use_width, unsized_flag);
-	    if (tmp_width > use_width)
-		  use_width = tmp_width;
-      }
-
-      int expr_wid = use_width;
-      if (lv_type == IVL_VT_REAL) {
-	    expr_wid = -2;
-	    lv_width = 0;
-      }
-
-	/* Now elaborate to the expected width. Pass the lwidth to
-	   prune any constant result to fit with the lvalue at hand. */
-      NetExpr*rv = elab_and_eval(des, scope, rval_, expr_wid, lv_width);
-      if (rv == 0) return 0;
+      NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, lv_width, rval());
 
       return rv;
 }

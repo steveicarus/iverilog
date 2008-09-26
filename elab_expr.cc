@@ -44,19 +44,32 @@ static bool type_is_vectorable(ivl_variable_type_t type)
 
 NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 			     ivl_variable_type_t data_type_lv, int expr_wid_lv,
-			     PExpr*expr)
+			     const PExpr*expr)
 {
       int expr_wid = 0;
       bool unsized_flag = false;
 
       switch (data_type_lv) {
 	  case IVL_VT_REAL:
+	    unsized_flag = true;
 	    expr_wid = -2;
 	    expr_wid_lv = -1;
 	    break;
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
+	      /* Find out what the r-value width is going to be. We
+	         guess it will be the l-value width, but it may turn
+	         out to be something else based on self-determined
+	         widths inside. */
 	    expr_wid = expr->test_width(des, scope, expr_wid_lv, expr_wid_lv, unsized_flag);
+
+	    if (debug_elaborate) {
+		  cerr << expr->get_fileline() << ": debug: r-value tested "
+		       << "width is " << expr_wid
+		       << ", min=" << expr_wid_lv
+		       << ", unsized_flag=" << (unsized_flag?"true":"false") << endl;
+	    }
+
 	    break;
 	  case IVL_VT_VOID:
 	  case IVL_VT_NO_TYPE:
