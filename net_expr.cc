@@ -242,7 +242,11 @@ ivl_variable_type_t NetEBMinMax::expr_type() const
 NetEBMult::NetEBMult(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
-      expr_width(l->expr_width() + r->expr_width());
+      if (expr_type() == IVL_VT_REAL)
+	    expr_width(1);
+      else
+	    expr_width(l->expr_width() + r->expr_width());
+
       cast_signed(l->has_sign() && r->has_sign());
 
 	/* If it turns out that this is not a signed expression, then
