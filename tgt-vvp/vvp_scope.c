@@ -1581,7 +1581,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 
       fprintf(vvp_out, ")");
 
-	/* Finally, print the reference to the signal from which the
+	/* Now print the reference to the signal from which the
 	   result is collected. */
       { ivl_signal_t psig = ivl_scope_port(def, 0);
         assert(ivl_lpm_width(net) == ivl_signal_width(psig));
@@ -1590,7 +1590,8 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 	fprintf(vvp_out, " v%p_0", psig);
       }
 
-      fprintf(vvp_out, ";\n");
+        /* Finally, print the scope identifier. */
+      fprintf(vvp_out, " S_%p;\n", def);
 }
 
 /*
@@ -1774,13 +1775,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
       const char *type;
-	/* For now we do not support automatic tasks or functions. */
-      if (ivl_scope_is_auto(net)) {
-	    fprintf(stderr, "%s:%u: vvp-tgt sorry: automatic tasks/functions "
-	                    "are not supported!\n",
-	                    ivl_scope_def_file(net), ivl_scope_def_lineno(net));
-	    exit(1);
-      }
+
+      const char*prefix = ivl_scope_is_auto(net) ? "auto" : "";
+
       switch (ivl_scope_type(net)) {
       case IVL_SCT_MODULE:   type = "module";   break;
       case IVL_SCT_FUNCTION: type = "function"; break;
@@ -1791,8 +1788,8 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       default:               type = "?";        assert(0);
       }
 
-      fprintf(vvp_out, "S_%p .scope %s, \"%s\" \"%s\" %d %d",
-	      net, type, vvp_mangle_name(ivl_scope_basename(net)),
+      fprintf(vvp_out, "S_%p .scope %s%s, \"%s\" \"%s\" %d %d",
+	      net, prefix, type, vvp_mangle_name(ivl_scope_basename(net)),
               ivl_scope_tname(net), ivl_file_table_index(ivl_scope_file(net)),
               ivl_scope_lineno(net));
 

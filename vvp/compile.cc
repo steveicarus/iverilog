@@ -1687,6 +1687,34 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
       compile_vpi_lookup(&code->handle, scope.text);
 }
 
+void compile_alloc(char*label, struct symb_s scope)
+{
+      if (label)
+	    compile_codelabel(label);
+
+
+	/* Fill in the basics of the %alloc in the instruction. */
+      vvp_code_t code = codespace_allocate();
+      code->opcode = of_ALLOC;
+
+	/* Figure out the target SCOPE. */
+      compile_vpi_lookup(&code->handle, scope.text);
+}
+
+void compile_free(char*label, struct symb_s scope)
+{
+      if (label)
+	    compile_codelabel(label);
+
+
+	/* Fill in the basics of the %free in the instruction. */
+      vvp_code_t code = codespace_allocate();
+      code->opcode = of_FREE;
+
+	/* Figure out the target SCOPE. */
+      compile_vpi_lookup(&code->handle, scope.text);
+}
+
 void compile_vpi_call(char*label, char*name,
                       long file_idx, long lineno,
                       unsigned argc, vpiHandle*argv)

@@ -188,6 +188,16 @@ void dll_target::make_assign_lvals_(const NetAssignBase*net)
       }
 }
 
+void dll_target::proc_alloc(const NetAlloc*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
+
+      stmt_cur_->type_ = IVL_ST_ALLOC;
+      stmt_cur_->u_.alloc_.scope = lookup_scope_(net->scope());
+}
+
 /*
  */
 bool dll_target::proc_assign(const NetAssign*net)
@@ -627,6 +637,16 @@ void dll_target::proc_forever(const NetForever*net)
 
       save_cur_->u_.forever_.stmt_ = stmt_cur_;
       stmt_cur_ = save_cur_;
+}
+
+void dll_target::proc_free(const NetFree*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
+
+      stmt_cur_->type_ = IVL_ST_FREE;
+      stmt_cur_->u_.free_.scope = lookup_scope_(net->scope());
 }
 
 bool dll_target::proc_release(const NetRelease*net)

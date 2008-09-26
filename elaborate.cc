@@ -2408,6 +2408,13 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 		  return block;
       }
 
+        /* If this is an automatic task, generate a statement to
+           allocate the local storage. */
+      if (task->is_auto()) {
+	    NetAlloc*ap = new NetAlloc(task);
+	    block->append(ap);
+      }
+
 	/* Generate assignment statement statements for the input and
 	   INOUT ports of the task. These are managed by writing
 	   assignments with the task port the l-value and the passed
@@ -2485,6 +2492,13 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    NetAssign*ass = new NetAssign(lv, rv);
 
 	    block->append(ass);
+      }
+
+        /* If this is an automatic task, generate a statement to free
+           the local storage. */
+      if (task->is_auto()) {
+	    NetFree*fp = new NetFree(task);
+	    block->append(fp);
       }
 
       return block;

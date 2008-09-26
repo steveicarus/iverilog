@@ -852,7 +852,9 @@ void compile_var_array(char*label, char*name, int last, int first,
 
 	/* Make the words. */
       arr->vals_width = labs(msb-lsb) + 1;
-      arr->vals = new vvp_vector4array_t(arr->vals_width, arr->array_count);
+      arr->vals = new vvp_vector4array_t(arr->vals_width, arr->array_count,
+                                         vpip_peek_current_scope()->is_automatic);
+      vpip_add_item_to_current_scope(arr->vals);
       vpip_make_dec_const(&arr->msb, msb);
       vpip_make_dec_const(&arr->lsb, lsb);
 

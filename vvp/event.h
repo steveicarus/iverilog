@@ -108,7 +108,17 @@ struct waitable_hooks_s {
       evctl**last;
 
     protected:
-      void run_waiting_threads_();
+      void run_waiting_threads_(unsigned context_idx);
+};
+
+/*
+ * This is the base object for storing state information for each instance
+ * of an automatically allocated event. In the general case, all that is
+ * needed is the list of threads waiting on that instance.
+ */
+struct waitable_state_s {
+      waitable_state_s() : threads(0) { }
+      vthread_t threads;
 };
 
 /*
@@ -121,8 +131,10 @@ class vvp_fun_edge : public vvp_net_fun_t, public waitable_hooks_s {
     public:
       typedef unsigned short edge_t;
       explicit vvp_fun_edge(edge_t e, bool debug_flag);
-
       virtual ~vvp_fun_edge();
+
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
@@ -143,14 +155,17 @@ extern const vvp_fun_edge::edge_t vvp_edge_none;
  * functor looks at the entire input vector for any change.
  *
  * The anyedge is also different in that it can receive real
- * values. in this case, any detectable change in the real value leads
- * to an even trigger.
+ * values. In this case, any detectable change in the real value leads
+ * to an event trigger.
  */
 class vvp_fun_anyedge : public vvp_net_fun_t, public waitable_hooks_s {
 
     public:
       explicit vvp_fun_anyedge(bool debug_flag);
       virtual ~vvp_fun_anyedge();
+
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
       void recv_real(vvp_net_ptr_t port, double bit);
@@ -172,6 +187,9 @@ class vvp_fun_event_or : public vvp_net_fun_t, public waitable_hooks_s {
       explicit vvp_fun_event_or();
       ~vvp_fun_event_or();
 
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
+
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 
     private:
@@ -187,6 +205,9 @@ class vvp_named_event : public vvp_net_fun_t, public waitable_hooks_s {
     public:
       explicit vvp_named_event(struct __vpiHandle*eh);
       ~vvp_named_event();
+
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
 

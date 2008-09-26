@@ -173,12 +173,18 @@ struct __vpiScope {
       unsigned lineno;
       unsigned def_file_idx;
       unsigned def_lineno;
+      bool is_automatic;
 	/* The scope has a system time of its own. */
       struct __vpiSystemTime scoped_time;
       struct __vpiSystemTime scoped_realtime;
 	/* Keep an array of internal scope items. */
       struct __vpiHandle**intern;
       unsigned nintern;
+        /* Keep an array of items to be automatically allocated */
+      struct automatic_hooks_s**item;
+      unsigned nitem;
+        /* Keep a list of freed contexts. */
+      vvp_context_t free_context;
 	/* Keep a list of threads in the scope. */
       vthread_t threads;
       signed int time_units :8;
@@ -187,6 +193,7 @@ struct __vpiScope {
 
 extern struct __vpiScope* vpip_peek_current_scope(void);
 extern void vpip_attach_to_current_scope(vpiHandle obj);
+extern void vpip_add_item_to_current_scope(automatic_hooks_s*item);
 extern vpiHandle vpip_make_root_iterator(void);
 extern void vpip_make_root_iterator(struct __vpiHandle**&table,
 				    unsigned&ntable);

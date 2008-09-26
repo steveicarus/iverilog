@@ -49,6 +49,11 @@ This instruction adds the immediate value (no x or z bits) into the
 left vector. The imm value is limited to 16 significant bits, but it
 is zero extended to match any width.
 
+* %alloc <scope-label>
+
+This instruction allocates the storage for a new instance of an
+automatically allocated scope.
+
 * %and <bit-l>, <bit-r>, <wid>
 
 Perform the bitwise AND of the two vectors, and store the result in
@@ -361,6 +366,11 @@ but is not necessarily started until the current thread yields.
 The %fork instruction has no effect other than to push a child thread.
 
 See also %join.
+
+* %free <scope-label>
+
+This instruction de-allocates the storage for a previously allocated
+instance of as automatically allocated scope.
 
 
 * %inv <bit>, <wid>

@@ -243,6 +243,12 @@ bool target_t::process(const NetProcTop*top)
       return top->statement()->emit_proc(this);
 }
 
+void target_t::proc_alloc(const NetAlloc*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled proc_alloc." << endl;
+}
+
 bool target_t::proc_assign(const NetAssign*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
@@ -320,6 +326,12 @@ void target_t::proc_forever(const NetForever*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_forever." << endl;
+}
+
+void target_t::proc_free(const NetFree*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled proc_free." << endl;
 }
 
 bool target_t::proc_release(const NetRelease*dev)

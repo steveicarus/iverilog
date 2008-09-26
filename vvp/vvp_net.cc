@@ -990,6 +990,20 @@ void vvp_vector4_t::change_z2x()
       }
 }
 
+void vvp_vector4_t::set_to_x()
+{
+      if (size_ <= BITS_PER_WORD) {
+	    abits_val_ = vvp_vector4_t::WORD_X_ABITS;
+            bbits_val_ = vvp_vector4_t::WORD_X_BBITS;
+      } else {
+	    unsigned words = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
+	    for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
+		  abits_ptr_[idx] = vvp_vector4_t::WORD_X_ABITS;
+                  bbits_ptr_[idx] = vvp_vector4_t::WORD_X_BBITS;
+            }
+      }
+}
+
 char* vvp_vector4_t::as_string(char*buf, size_t buf_len)
 {
       char*res = buf;
@@ -1284,9 +1298,12 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
       return flag;
 }
 
-vvp_vector4array_t::vvp_vector4array_t(unsigned width, unsigned words)
-: width_(width), words_(words)
+vvp_vector4array_t::vvp_vector4array_t(unsigned width, unsigned words,
+                                       bool is_automatic)
+: width_(width), words_(words), array_(0)
 {
+      if (is_automatic) return;
+
       array_ = new v4cell[words_];
 
       if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
@@ -1314,30 +1331,79 @@ vvp_vector4array_t::~vvp_vector4array_t()
       }
 }
 
+void vvp_vector4array_t::alloc_instance(vvp_context_t context)
+{
+      v4cell*array = new v4cell[words_];
+
+      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
+	    for (unsigned idx = 0 ; idx < words_ ; idx += 1) {
+		  array[idx].abits_val_ = vvp_vector4_t::WORD_X_ABITS;
+		  array[idx].bbits_val_ = vvp_vector4_t::WORD_X_BBITS;
+	    }
+      } else {
+	    for (unsigned idx = 0 ; idx < words_ ; idx += 1) {
+		  array[idx].abits_ptr_ = 0;
+		  array[idx].bbits_ptr_ = 0;
+	    }
+      }
+
+      vvp_set_context_item(context, context_idx, array);
+}
+
+void vvp_vector4array_t::reset_instance(vvp_context_t context)
+{
+      v4cell*cell = static_cast<v4cell*>
+            (vvp_get_context_item(context, context_idx));
+
+      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
+	    for (unsigned idx = 0 ; idx < words_ ; idx += 1) {
+		  cell->abits_val_ = vvp_vector4_t::WORD_X_ABITS;
+		  cell->bbits_val_ = vvp_vector4_t::WORD_X_BBITS;
+                  cell++;
+	    }
+      } else {
+            unsigned cnt = (width_ + vvp_vector4_t::BITS_PER_WORD-1)/vvp_vector4_t::BITS_PER_WORD;
+	    for (unsigned idx = 0 ; idx < words_ ; idx += 1) {
+		  if (cell->abits_ptr_) {
+                        for (unsigned n = 0 ; n < cnt ; n += 1) {
+                  	    cell->abits_ptr_[n] = vvp_vector4_t::WORD_X_ABITS;
+                  	    cell->bbits_ptr_[n] = vvp_vector4_t::WORD_X_BBITS;
+                        }
+                  }
+                  cell++;
+	    }
+      }
+}
+
 void vvp_vector4array_t::set_word(unsigned index, const vvp_vector4_t&that)
 {
       assert(index < words_);
       assert(that.size_ == width_);
 
-      v4cell&cell = array_[index];
+      v4cell*cell;
+      if (context_idx)
+            cell = static_cast<v4cell*>
+               (vthread_get_wt_context_item(context_idx)) + index;
+      else
+            cell = &(array_[index]);
 
       if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
-	    cell.abits_val_ = that.abits_val_;
-	    cell.bbits_val_ = that.bbits_val_;
+	    cell->abits_val_ = that.abits_val_;
+	    cell->bbits_val_ = that.bbits_val_;
 	    return;
       }
 
       unsigned cnt = (width_ + vvp_vector4_t::BITS_PER_WORD-1)/vvp_vector4_t::BITS_PER_WORD;
 
-      if (cell.abits_ptr_ == 0) {
-	    cell.abits_ptr_ = new unsigned long[2*cnt];
-	    cell.bbits_ptr_ = cell.abits_ptr_ + cnt;
+      if (cell->abits_ptr_ == 0) {
+	    cell->abits_ptr_ = new unsigned long[2*cnt];
+	    cell->bbits_ptr_ = cell->abits_ptr_ + cnt;
       }
 
       for (unsigned idx = 0 ; idx < cnt ; idx += 1)
-	    cell.abits_ptr_[idx] = that.abits_ptr_[idx];
+	    cell->abits_ptr_[idx] = that.abits_ptr_[idx];
       for (unsigned idx = 0 ; idx < cnt ; idx += 1)
-	    cell.bbits_ptr_[idx] = that.bbits_ptr_[idx];
+	    cell->bbits_ptr_[idx] = that.bbits_ptr_[idx];
 }
 
 vvp_vector4_t vvp_vector4array_t::get_word(unsigned index) const
@@ -1347,26 +1413,31 @@ vvp_vector4_t vvp_vector4array_t::get_word(unsigned index) const
 
       assert(index < words_);
 
-      v4cell&cell = array_[index];
+      v4cell*cell;
+      if (context_idx)
+            cell = static_cast<v4cell*>
+               (vthread_get_rd_context_item(context_idx)) + index;
+      else
+            cell = &(array_[index]);
 
       if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
 	    vvp_vector4_t res;
 	    res.size_ = width_;
-	    res.abits_val_ = cell.abits_val_;
-	    res.bbits_val_ = cell.bbits_val_;
+	    res.abits_val_ = cell->abits_val_;
+	    res.bbits_val_ = cell->bbits_val_;
 	    return res;
       }
 
       vvp_vector4_t res (width_, BIT4_X);
-      if (cell.abits_ptr_ == 0)
+      if (cell->abits_ptr_ == 0)
 	    return res;
 
       unsigned cnt = (width_ + vvp_vector4_t::BITS_PER_WORD-1)/vvp_vector4_t::BITS_PER_WORD;
 
       for (unsigned idx = 0 ; idx < cnt ; idx += 1)
-	    res.abits_ptr_[idx] = cell.abits_ptr_[idx];
+	    res.abits_ptr_[idx] = cell->abits_ptr_[idx];
       for (unsigned idx = 0 ; idx < cnt ; idx += 1)
-	    res.bbits_ptr_[idx] = cell.bbits_ptr_[idx];
+	    res.bbits_ptr_[idx] = cell->bbits_ptr_[idx];
 
       return res;
 
@@ -2350,6 +2421,21 @@ vvp_fun_signal::vvp_fun_signal(unsigned wid, vvp_bit4_t init)
 {
 }
 
+void vvp_fun_signal::alloc_instance(vvp_context_t context)
+{
+      unsigned wid = bits4_.size();
+
+      vvp_set_context_item(context, context_idx, new vvp_vector4_t(wid));
+}
+
+void vvp_fun_signal::reset_instance(vvp_context_t context)
+{
+      vvp_vector4_t*bits = static_cast<vvp_vector4_t*>
+            (vvp_get_context_item(context, context_idx));
+
+      bits->set_to_x();
+}
+
 /*
  * Nets simply reflect their input to their output.
  *
@@ -2361,6 +2447,10 @@ vvp_fun_signal::vvp_fun_signal(unsigned wid, vvp_bit4_t init)
  * herein is to keep a "needs_init_" flag that is turned false after
  * the first propagation, and forces the first propagation to happen
  * even if it matches the initial value.
+ *
+ * Continuous and forced assignments are not permitted on automatic
+ * variables. So we only need incur the overhead of checking for an
+ * automatic variable when we are doing a normal unmasked assign.
  */
 void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
@@ -2370,8 +2460,15 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 		 copy the bits, otherwise we need to see if there are
 		 any holes in the mask so we can set those bits. */
 	    if (assign_mask_.size() == 0) {
-		  if (needs_init_ || !bits4_.eeq(bit)) {
-			bits4_ = bit;
+                  vvp_vector4_t*bits4;
+                  if (context_idx) {
+                        bits4 = static_cast<vvp_vector4_t*>
+                              (vthread_get_wt_context_item(context_idx));
+                  } else {
+                        bits4 = &bits4_;
+                  }
+		  if (needs_init_ || !bits4->eeq(bit)) {
+			*bits4 = bit;
 			needs_init_ = false;
 			calculate_output_(ptr);
 		  }
@@ -2426,9 +2523,16 @@ void vvp_fun_signal::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       switch (ptr.port()) {
 	  case 0: // Normal input
 	    if (assign_mask_.size() == 0) {
+                  vvp_vector4_t*bits4;
+                  if (context_idx) {
+                        bits4 = static_cast<vvp_vector4_t*>
+                              (vthread_get_wt_context_item(context_idx));
+                  } else {
+                        bits4 = &bits4_;
+                  }
 		  for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-			if (base+idx >= bits4_.size()) break;
-			bits4_.set_bit(base+idx, bit.value(idx));
+			if (base+idx >= bits4->size()) break;
+			bits4->set_bit(base+idx, bit.value(idx));
 		  }
 		  needs_init_ = false;
 		  calculate_output_(ptr);
@@ -2499,9 +2603,12 @@ void vvp_fun_signal::calculate_output_(vvp_net_ptr_t ptr)
 			bits.set_bit(idx, force_.value(idx));
 	    }
 	    vvp_send_vec4(ptr.ptr()->out, bits);
-
+      } else if (context_idx) {
+            vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+                  (vthread_get_wt_context_item(context_idx));
+            vvp_send_vec4(ptr.ptr()->out, *bits4);
       } else {
-	    vvp_send_vec4(ptr.ptr()->out, bits4_);
+            vvp_send_vec4(ptr.ptr()->out, bits4_);
       }
 
       run_vpi_callbacks();
@@ -2548,18 +2655,28 @@ unsigned vvp_fun_signal::size() const
 
 vvp_bit4_t vvp_fun_signal::value(unsigned idx) const
 {
-      if (force_mask_.size() && force_mask_.value(idx))
+      if (force_mask_.size() && force_mask_.value(idx)) {
 	    return force_.value(idx);
-      else
-	    return bits4_.value(idx);
+      } else if (context_idx) {
+            vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+                  (vthread_get_rd_context_item(context_idx));
+            return bits4->value(idx);
+      } else {
+            return bits4_.value(idx);
+      }
 }
 
 vvp_scalar_t vvp_fun_signal::scalar_value(unsigned idx) const
 {
-      if (force_mask_.size() && force_mask_.value(idx))
+      if (force_mask_.size() && force_mask_.value(idx)) {
 	    return vvp_scalar_t(force_.value(idx), 6, 6);
-      else
-	    return vvp_scalar_t(bits4_.value(idx), 6, 6);
+      } else if (context_idx) {
+            vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+                  (vthread_get_rd_context_item(context_idx));
+            return vvp_scalar_t(bits4->value(idx), 6, 6);
+      } else {
+            return vvp_scalar_t(bits4_.value(idx), 6, 6);
+      }
 }
 
 vvp_vector4_t vvp_fun_signal::vec4_value() const
@@ -2573,9 +2690,12 @@ vvp_vector4_t vvp_fun_signal::vec4_value() const
 			bits.set_bit(idx, force_.value(idx));
 	    }
 	    return bits;
-
+      } else if (context_idx) {
+            vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+                  (vthread_get_rd_context_item(context_idx));
+            return *bits4;
       } else {
-	    return bits4_;
+            return bits4_;
       }
 }
 
@@ -2764,12 +2884,30 @@ vvp_fun_signal_real::vvp_fun_signal_real()
       bits_ = 0.0;
 }
 
+void vvp_fun_signal_real::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, context_idx, new double);
+}
+
+void vvp_fun_signal_real::reset_instance(vvp_context_t context)
+{
+      double*bits = static_cast<double*>
+            (vvp_get_context_item(context, context_idx));
+
+      *bits = 0.0;
+}
+
 double vvp_fun_signal_real::real_value() const
 {
-      if (force_mask_.size())
+      if (force_mask_.size()) {
 	    return force_;
-      else
+      } else if (context_idx) {
+            double*bits = static_cast<double*>
+                  (vthread_get_rd_context_item(context_idx));
+            return *bits;
+      } else {
 	    return bits_;
+      }
 }
 
 /*
@@ -2787,8 +2925,15 @@ void vvp_fun_signal_real::recv_real(vvp_net_ptr_t ptr, double bit)
       switch (ptr.port()) {
 	  case 0:
 	    if (!continuous_assign_active_) {
-		  if (needs_init_ || !bits_equal(bits_,bit)) {
-			bits_ = bit;
+                  double*bits;
+                  if (context_idx) {
+                        bits = static_cast<double*>
+                              (vthread_get_wt_context_item(context_idx));
+                  } else {
+                        bits = &bits_;
+                  }
+		  if (needs_init_ || !bits_equal(*bits,bit)) {
+			*bits = bit;
 			needs_init_ = false;
 			vvp_send_real(ptr.ptr()->out, bit);
 			run_vpi_callbacks();

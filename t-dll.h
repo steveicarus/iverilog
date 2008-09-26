@@ -115,6 +115,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 	/* These methods and members are used for forming the
 	   statements of a thread. */
       struct ivl_statement_s*stmt_cur_;
+      void proc_alloc(const NetAlloc*);
       bool proc_assign(const NetAssign*);
       void proc_assign_nb(const NetAssignNB*);
       bool proc_block(const NetBlock*);
@@ -126,6 +127,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool proc_disable(const NetDisable*);
       bool proc_force(const NetForce*);
       void proc_forever(const NetForever*);
+      void proc_free(const NetFree*);
       bool proc_release(const NetRelease*);
       void proc_repeat(const NetRepeat*);
       void proc_stask(const NetSTask*);
@@ -665,6 +667,10 @@ struct ivl_statement_s {
       unsigned lineno;
 
       union {
+	    struct { /* IVL_ST_ALLOC */
+		  ivl_scope_t scope;
+	    } alloc_;
+
 	    struct { /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB
 			IVL_ST_CASSIGN, IVL_ST_DEASSIGN */
 		  unsigned lvals_;
@@ -717,6 +723,10 @@ struct ivl_statement_s {
 	    struct { /* IVL_ST_FOREVER */
 		  ivl_statement_t stmt_;
 	    } forever_;
+
+	    struct { /* IVL_ST_FREE */
+		  ivl_scope_t scope;
+	    } free_;
 
 	    struct { /* IVL_ST_STASK */
 		  const char*name_;

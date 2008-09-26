@@ -88,6 +88,11 @@ struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
       ivl_signal_t retval = ivl_scope_port(def, 0);
       struct vector_info res;
 
+        /* If this is an automatic function, allocate the local storage. */
+      if (ivl_scope_is_auto(def)) {
+            fprintf(vvp_out, "    %%alloc S_%p;\n", def);
+      }
+
 	/* evaluate the expressions and send the results to the
 	   function ports. */
 
@@ -134,6 +139,11 @@ struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
       if (load_wid < wid)
 	    pad_expr_in_place(exp, res, swid);
 
+        /* If this is an automatic function, free the local storage. */
+      if (ivl_scope_is_auto(def)) {
+            fprintf(vvp_out, "    %%free S_%p;\n", def);
+      }
+
       return res;
 }
 
@@ -143,6 +153,11 @@ int draw_ufunc_real(ivl_expr_t exp)
       ivl_signal_t retval = ivl_scope_port(def, 0);
       int res = 0;
       int idx;
+
+        /* If this is an automatic function, allocate the local storage. */
+      if (ivl_scope_is_auto(def)) {
+            fprintf(vvp_out, "    %%alloc S_%p;\n", def);
+      }
 
       assert(ivl_expr_parms(exp) == (ivl_scope_ports(def)-1));
       for (idx = 0 ;  idx < ivl_expr_parms(exp) ;  idx += 1) {
@@ -163,6 +178,10 @@ int draw_ufunc_real(ivl_expr_t exp)
       res = allocate_word();
       fprintf(vvp_out, "  %%load/wr %d, v%p_0;\n", res, retval);
 
+        /* If this is an automatic function, free the local storage. */
+      if (ivl_scope_is_auto(def)) {
+            fprintf(vvp_out, "    %%free S_%p;\n", def);
+      }
+
       return res;
 }
-

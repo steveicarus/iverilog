@@ -343,6 +343,7 @@ typedef enum ivl_signal_type_e {
 typedef enum ivl_statement_type_e {
       IVL_ST_NONE    = 0,
       IVL_ST_NOOP    = 1,
+      IVL_ST_ALLOC   = 25,
       IVL_ST_ASSIGN    = 2,
       IVL_ST_ASSIGN_NB = 3,
       IVL_ST_BLOCK   = 4,
@@ -359,6 +360,7 @@ typedef enum ivl_statement_type_e {
       IVL_ST_FORCE   = 14,
       IVL_ST_FOREVER = 15,
       IVL_ST_FORK    = 16,
+      IVL_ST_FREE    = 26,
       IVL_ST_RELEASE = 17,
       IVL_ST_REPEAT  = 18,
       IVL_ST_STASK   = 19,

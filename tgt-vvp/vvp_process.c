@@ -428,6 +428,14 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
       }
 }
 
+static int show_stmt_alloc(ivl_statement_t net)
+{
+      ivl_scope_t scope = ivl_stmt_call(net);
+
+      fprintf(vvp_out, "    %%alloc S_%p;\n", scope);
+      return 0;
+}
+
 static int show_stmt_assign_vector(ivl_statement_t net)
 {
       ivl_expr_t rval = ivl_stmt_rval(net);
@@ -1398,6 +1406,14 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
       return rc;
 }
 
+static int show_stmt_free(ivl_statement_t net)
+{
+      ivl_scope_t scope = ivl_stmt_call(net);
+
+      fprintf(vvp_out, "    %%free S_%p;\n", scope);
+      return 0;
+}
+
 /*
  * noop statements are implemented by doing nothing.
  */
@@ -1645,6 +1661,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 
       switch (code) {
 
+	  case IVL_ST_ALLOC:
+	    rc += show_stmt_alloc(net);
+	    break;
+
 	  case IVL_ST_ASSIGN:
 	    rc += show_stmt_assign(net);
 	    break;
@@ -1704,6 +1724,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 
 	  case IVL_ST_FORK:
 	    rc += show_stmt_fork(net, sscope);
+	    break;
+
+	  case IVL_ST_FREE:
+	    rc += show_stmt_free(net);
 	    break;
 
 	  case IVL_ST_NOOP:

@@ -347,7 +347,7 @@ extern void compile_array_cleanup(void);
 extern void compile_ufunc(char*label, char*code, unsigned wid,
 			  unsigned argc, struct symb_s*argv,
 			  unsigned portc, struct symb_s*portv,
-			  struct symb_s retv);
+			  struct symb_s retv, struct symb_s scope);
 
 /*
  * The compile_event function takes the parts of the event statement
@@ -405,6 +405,9 @@ extern void compile_vpi_func_call(char*label, char*name,
 extern void compile_fork(char*label, struct symb_s targ_s,
 			 struct symb_s scope_s);
 extern void compile_codelabel(char*label);
+
+extern void compile_alloc(char*label, struct symb_s scope_s);
+extern void compile_free(char*label, struct symb_s scope_s);
 
 /*
  * The parser uses these functions to compile .scope statements.
