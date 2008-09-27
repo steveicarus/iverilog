@@ -48,6 +48,7 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 {
       int expr_wid = 0;
       bool unsized_flag = false;
+      ivl_variable_type_t rval_type = IVL_VT_NO_TYPE;
 
       switch (data_type_lv) {
 	  case IVL_VT_REAL:
@@ -61,7 +62,7 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 	         guess it will be the l-value width, but it may turn
 	         out to be something else based on self-determined
 	         widths inside. */
-	    expr_wid = expr->test_width(des, scope, expr_wid_lv, expr_wid_lv, unsized_flag);
+	    expr_wid = expr->test_width(des, scope, expr_wid_lv, expr_wid_lv, rval_type, unsized_flag);
 
 	    if (debug_elaborate) {
 		  cerr << expr->get_fileline() << ": debug: r-value tested "
@@ -88,7 +89,8 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
  * minimum width that is passed in.
  */
 unsigned PExpr::test_width(Design*des, NetScope*scope,
-			   unsigned min, unsigned lval, bool&) const
+			   unsigned min, unsigned lval,
+			   ivl_variable_type_t&, bool&) const
 {
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: test_width defaults to "
@@ -109,20 +111,32 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, int, bool) const
 }
 
 unsigned PEBinary::test_width(Design*des, NetScope*scope,
-			      unsigned min, unsigned lval, bool&unsized_flag) const
+			      unsigned min, unsigned lval,
+			      ivl_variable_type_t&expr_type,
+			      bool&unsized_flag) const
 {
       bool flag_left = false;
       bool flag_right = false;
-      unsigned wid_left = left_->test_width(des,scope, min, 0, flag_left);
-      unsigned wid_right = right_->test_width(des,scope, min, 0, flag_right);
+      ivl_variable_type_t expr_type_left = IVL_VT_NO_TYPE;
+      ivl_variable_type_t expr_type_right= IVL_VT_NO_TYPE;
+
+      unsigned wid_left = left_->test_width(des,scope, min, 0, expr_type_left, flag_left);
+      unsigned wid_right = right_->test_width(des,scope, min, 0, expr_type_right, flag_right);
 
       if (flag_left || flag_right)
 	    unsized_flag = true;
 
+      if (expr_type_left == IVL_VT_REAL || expr_type_right == IVL_VT_REAL)
+	    expr_type = IVL_VT_REAL;
+      else if (expr_type_left==IVL_VT_LOGIC || expr_type_right==IVL_VT_LOGIC)
+	    expr_type = IVL_VT_LOGIC;
+      else
+	    expr_type = IVL_VT_BOOL;
+
       switch (op_) {
 	  case '+':
 	  case '-':
-	    if (unsized_flag) {
+	    if (unsized_flag && type_is_vectorable(expr_type)) {
 		  wid_left += 1;
 		  wid_right += 1;
 	    }
@@ -618,8 +632,11 @@ NetExpr* PEBinary::elaborate_expr_base_add_(Design*des,
       return tmp;
 }
 
-unsigned PEBComp::test_width(Design*, NetScope*,unsigned, unsigned, bool&) const
+unsigned PEBComp::test_width(Design*, NetScope*,unsigned, unsigned,
+			     ivl_variable_type_t&expr_type,
+			     bool&) const
 {
+      expr_type = IVL_VT_LOGIC;
       return 1;
 }
 
@@ -630,12 +647,14 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
       assert(right_);
 
       bool unsized_flag = false;
-      unsigned left_width = left_->test_width(des, scope, 0, 0, unsized_flag);
+      ivl_variable_type_t left_type = IVL_VT_NO_TYPE;
+      unsigned left_width = left_->test_width(des, scope, 0, 0, left_type, unsized_flag);
       bool save_flag = unsized_flag;
-      unsigned right_width = right_->test_width(des, scope, 0, 0, unsized_flag);
+      ivl_variable_type_t right_type = IVL_VT_NO_TYPE;
+      unsigned right_width = right_->test_width(des, scope, 0, 0, right_type, unsized_flag);
 
       if (save_flag != unsized_flag)
-	    left_width = left_->test_width(des, scope, 0, 0, unsized_flag);
+	    left_width = left_->test_width(des, scope, 0, 0, left_type, unsized_flag);
 
 	/* Width of operands is self-determined. */
       int use_wid = left_width;
@@ -664,9 +683,11 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 }
 
 unsigned PEBShift::test_width(Design*des, NetScope*scope,
-			      unsigned min, unsigned lval, bool&unsized_flag) const
+			      unsigned min, unsigned lval,
+			      ivl_variable_type_t&expr_type,
+			      bool&unsized_flag) const
 {
-      unsigned wid_left = left_->test_width(des,scope,min, 0, unsized_flag);
+      unsigned wid_left = left_->test_width(des,scope,min, 0, expr_type, unsized_flag);
 
 	// The right expression is self-determined and has no impact
 	// on the expression size that is generated.
@@ -709,6 +730,7 @@ NetExpr*PEBShift::elaborate_expr(Design*des, NetScope*scope,
 
 unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 					   unsigned min, unsigned lval,
+					   ivl_variable_type_t&expr_type,
 					   bool&unsized_flag) const
 {
       perm_string name = peek_tail_name(path_);
@@ -717,7 +739,7 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	    PExpr*expr = parms_[0];
 	    if (expr == 0)
 		  return 0;
-	    unsigned wid = expr->test_width(des, scope, min, lval, unsized_flag);
+	    unsigned wid = expr->test_width(des, scope, min, lval, expr_type, unsized_flag);
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: test_width"
 		       << " of $signed/$unsigned returns test_width"
@@ -725,19 +747,50 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	    return wid;
       }
 
+      if (name=="$sizeof" || name=="$bits") {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: test_width"
+		       << " of $sizeof/$bits returns test_width"
+		       << " of compiler integer." << endl;
+
+	    expr_type = IVL_VT_BOOL;
+	    return integer_width;
+      }
+
+      if (name=="$is_signed") {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: test_width"
+		       << " of $is_signed returns test_width"
+		       << " of 1." << endl;
+
+	    expr_type = IVL_VT_BOOL;
+	    return 1;
+      }
+
+	/* Get the return type of the system function by looking it up
+	   in the sfunc_table. */
+      const struct sfunc_return_type*sfunc_info
+	    = lookup_sys_func(peek_tail_name(path_));
+
+      ivl_variable_type_t sfunc_type = sfunc_info->type;
+      unsigned wid = sfunc_info->wid;
+
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: test_width "
 		 << "of system function " << name
-		 << " returns 32 always?" << endl;
-      return 32;
+		 << " returns wid=" << wid
+		 << ", type=" << sfunc_type << "." << endl;
+
+      return wid;
 }
 
 unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 				    unsigned min, unsigned lval,
+				    ivl_variable_type_t&expr_type,
 				    bool&unsized_flag) const
 {
       if (peek_tail_name(path_)[0] == '$')
-	    return test_width_sfunc_(des, scope, min, lval, unsized_flag);
+	    return test_width_sfunc_(des, scope, min, lval, expr_type, unsized_flag);
 
 	// The width of user defined functions depends only on the
 	// width of the return value. The arguments are entirely
@@ -755,12 +808,14 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
       assert(dscope);
 
       if (NetNet*res = dscope->find_signal(dscope->basename())) {
+	    expr_type = res->data_type();
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: test_width "
 		       << "of function returns width " << res->vector_width()
+		       << ", type=" << expr_type
 		       << "." << endl;
 
-	    if (! type_is_vectorable(res->data_type()))
+	    if (! type_is_vectorable(expr_type))
 		  unsized_flag = true;
 
 	    return res->vector_width();
@@ -1193,8 +1248,10 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
  */
 unsigned PEFNumber::test_width(Design*des, NetScope*scope,
 			       unsigned min, unsigned lval,
+			       ivl_variable_type_t&expr_type,
 			       bool&unsized_flag) const
 {
+      expr_type = IVL_VT_REAL;
       unsized_flag = true;
       return 1;
 }
@@ -1337,6 +1394,7 @@ bool PEIdent::calculate_param_range_(Design*des, NetScope*scope,
 
 unsigned PEIdent::test_width(Design*des, NetScope*scope,
 			     unsigned min, unsigned lval,
+			     ivl_variable_type_t&expr_type,
 			     bool&unsized_flag) const
 {
       NetNet*       net = 0;
@@ -1384,13 +1442,16 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 	    return use_width;
 
 	// The width of a signal expression is the width of the signal.
-      if (net != 0)
+      if (net != 0) {
+	    expr_type = net->data_type();
 	    return net->vector_width();
+      }
 
 	// The width of a parameter name is the width of the range for
 	// the parameter name, if a range is declared. Otherwise, the
 	// width is undefined.
       if (par != 0) {
+	    expr_type = par->expr_type();
 	    if (ex1) {
 		  ivl_assert(*this, ex2);
 		  const NetEConst*ex1_const = dynamic_cast<const NetEConst*> (ex1);
@@ -2266,8 +2327,11 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
 }
 
 unsigned PENumber::test_width(Design*, NetScope*,
-			      unsigned min, unsigned lval, bool&unsized_flag) const
+			      unsigned min, unsigned lval,
+			      ivl_variable_type_t&expr_type,
+			      bool&unsized_flag) const
 {
+      expr_type = IVL_VT_LOGIC;
       unsigned use_wid = value_->len();
       if (min > use_wid)
 	    use_wid = min;
@@ -2307,8 +2371,10 @@ NetEConst* PENumber::elaborate_expr(Design*des, NetScope*,
 
 unsigned PEString::test_width(Design*des, NetScope*scope,
 			      unsigned min, unsigned lval,
+			      ivl_variable_type_t&expr_type,
 			      bool&unsized_flag) const
 {
+      expr_type = IVL_VT_BOOL;
       unsigned use_wid = text_? 8*strlen(text_) : 0;
       if (min > use_wid)
 	    use_wid = min;
@@ -2326,11 +2392,15 @@ NetEConst* PEString::elaborate_expr(Design*des, NetScope*,
 
 unsigned PETernary::test_width(Design*des, NetScope*scope,
 			       unsigned min, unsigned lval,
+			       ivl_variable_type_t&expr_type,
 			       bool&flag) const
 {
-      unsigned tru_wid = tru_->test_width(des, scope, min, lval, flag);
+      ivl_variable_type_t tru_type = IVL_VT_NO_TYPE;
+      unsigned tru_wid = tru_->test_width(des, scope, min, lval, tru_type,flag);
+
       bool initial_flag = flag;
-      unsigned fal_wid = fal_->test_width(des, scope, min, lval, flag);
+      ivl_variable_type_t fal_type = IVL_VT_NO_TYPE;
+      unsigned fal_wid = fal_->test_width(des, scope, min, lval, fal_type,flag);
 
 	// If the false clause is unsized, then try again with the
 	// true clause, because it might choose a different width if
@@ -2340,9 +2410,16 @@ unsigned PETernary::test_width(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": debug: "
 		       << "False clause is unsized, so retest width of true clause."
 		       << endl;
-	    tru_wid = tru_->test_width(des, scope, max(min,fal_wid), lval, flag);
+	    tru_wid = tru_->test_width(des, scope, max(min,fal_wid), lval, tru_type, flag);
       }
 
+      if (tru_type == IVL_VT_REAL || fal_type == IVL_VT_REAL)
+	    expr_type = IVL_VT_REAL;
+      else if (tru_type == IVL_VT_LOGIC || fal_type == IVL_VT_LOGIC)
+	    expr_type = IVL_VT_LOGIC;
+      else
+	    expr_type = tru_type;
+	    
       return max(tru_wid,fal_wid);
 }
 
@@ -2381,10 +2458,12 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 
       if (expr_wid < 0) {
 	    bool flag = expr_wid == -2;
-	    use_wid = this->test_width(des, scope, 0, 0, flag);
+	    ivl_variable_type_t expr_type = IVL_VT_NO_TYPE;
+	    use_wid = this->test_width(des, scope, 0, 0, expr_type, flag);
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: "
 		       << "Self-sized ternary chooses wid="<< use_wid
+		       << ", type=" << expr_type
 		       << endl;
 	    ivl_assert(*this, use_wid > 0);
       }
@@ -2465,8 +2544,9 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 }
 
 unsigned PEUnary::test_width(Design*des, NetScope*scope,
-			    unsigned min, unsigned lval,
-			    bool&unsized_flag) const
+			     unsigned min, unsigned lval,
+			     ivl_variable_type_t&expr_type,
+			     bool&unsized_flag) const
 {
       switch (op_) {
 	  case '!':
@@ -2476,10 +2556,11 @@ unsigned PEUnary::test_width(Design*des, NetScope*scope,
 	  case 'A': // Reduction NAND (~&)
 	  case 'N': // Reduction NOR (~|)
 	  case 'X': // Reduction NXOR (~^)
+	    expr_type = IVL_VT_LOGIC;
 	    return 1;
       }
 
-      unsigned test_wid = expr_->test_width(des, scope, min, lval, unsized_flag);
+      unsigned test_wid = expr_->test_width(des, scope, min, lval, expr_type, unsized_flag);
       switch (op_) {
 	      // For these operators, the act of padding to the
 	      // minimum width can have an important impact on the

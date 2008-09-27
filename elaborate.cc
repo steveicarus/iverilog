@@ -3109,7 +3109,8 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	   any other assignment statement. */
       unsigned use_width = lv->lwidth();
       bool unsized_flag = false;
-      use_width = expr1_->test_width(des, scope, use_width, use_width, unsized_flag);
+      ivl_variable_type_t expr1_type = IVL_VT_NO_TYPE;
+      use_width = expr1_->test_width(des, scope, use_width, use_width, expr1_type, unsized_flag);
 
 	/* Make the r-value of the initial assignment, and size it
 	   properly. Then use it to build the assignment statement. */

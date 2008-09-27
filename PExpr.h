@@ -63,12 +63,16 @@ class PExpr : public LineInfo {
 	// the subexpression should not make l-value related
 	// optimizations.
 	//
+	// The expr_type is an output argument that gives the
+	// calculated type for the expression.
+	//
 	// The unsigned_flag is set to true if the expression is
 	// unsized and therefore expandable. This happens if a
 	// sub-expression is an unsized literal. Some expressions make
 	// special use of that.
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
 				  bool&unsized_flag) const;
 
 	// During the elaborate_sig phase, we may need to scan
@@ -213,6 +217,7 @@ class PEFNumber : public PExpr {
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
 				  bool&unsized_flag) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     int expr_width, bool sys_task_arg) const;
@@ -238,6 +243,7 @@ class PEIdent : public PExpr {
       virtual void dump(ostream&) const;
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
 				  bool&unsized_flag) const;
 
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
@@ -353,6 +359,7 @@ class PENumber : public PExpr {
       virtual void dump(ostream&) const;
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
 				  bool&unsized_flag) const;
 
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
@@ -389,6 +396,7 @@ class PEString : public PExpr {
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
 				  bool&unsized_flag) const;
 
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
@@ -412,6 +420,7 @@ class PEUnary : public PExpr {
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
 				  bool&unsized_flag) const;
 
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
@@ -440,6 +449,7 @@ class PEBinary : public PExpr {
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
 				  bool&unsized_flag) const;
 
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
@@ -479,6 +489,7 @@ class PEBComp  : public PEBinary {
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
 				  bool&flag) const;
 
       NetExpr* elaborate_expr(Design*des, NetScope*scope,
@@ -492,7 +503,9 @@ class PEBShift  : public PEBinary {
       ~PEBShift();
 
       virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval, bool&flag) const;
+				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
+				  bool&flag) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     int expr_width, bool sys_task_arg) const;
 };
@@ -512,6 +525,7 @@ class PETernary : public PExpr {
       virtual void dump(ostream&out) const;
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
 				  bool&unsized_flag) const;
 
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
@@ -555,6 +569,7 @@ class PECallFunction : public PExpr {
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
 				  bool&unsized_flag) const;
 
     private:
@@ -567,6 +582,7 @@ class PECallFunction : public PExpr {
       NetExpr* elaborate_access_func_(Design*des, NetScope*scope, int expr_wid) const;
       unsigned test_width_sfunc_(Design*des, NetScope*scope,
 				 unsigned min, unsigned lval,
+				 ivl_variable_type_t&expr_type,
 				 bool&unsized_flag) const;
 };
 
