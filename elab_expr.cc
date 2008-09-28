@@ -529,6 +529,9 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 			     << " beyond width of " << lp->expr_width()
 			     << ". Elaborate as replicated top bit." << endl;
 
+		  ivl_assert(*this, lp->expr_width() > 0);
+		  ivl_assert(*this, use_wid > 0);
+
 		  tmp = new NetEConst(verinum(lp->expr_width()-1));
 		  tmp->set_line(*this);
 		  tmp = new NetESelect(lp, tmp, 1);
@@ -551,6 +554,10 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 		  long tmp_wid = lp->expr_width() - shift;
 		  if (tmp_wid > use_wid)
 			tmp_wid = use_wid;
+
+		  ivl_assert(*this, tmp_wid > 0);
+		  ivl_assert(*this, use_wid > 0);
+
 		  tmp = new NetESelect(lp, tmp, tmp_wid);
 		  tmp->set_line(*this);
 		  tmp->cast_signed(lp->has_sign() && op_=='R');
@@ -772,14 +779,14 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
       const struct sfunc_return_type*sfunc_info
 	    = lookup_sys_func(peek_tail_name(path_));
 
-      ivl_variable_type_t sfunc_type = sfunc_info->type;
+      expr_type = sfunc_info->type;
       unsigned wid = sfunc_info->wid;
 
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: test_width "
 		 << "of system function " << name
 		 << " returns wid=" << wid
-		 << ", type=" << sfunc_type << "." << endl;
+		 << ", type=" << expr_type << "." << endl;
 
       return wid;
 }
@@ -2492,6 +2499,7 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			cerr << get_fileline() << ": debug: Short-circuit "
 			        "elaborate TRUE clause of ternary."
 			     << endl;
+		  ivl_assert(*this, use_wid > 0);
 		  NetExpr*tru = elab_and_eval(des, scope, tru_, use_wid);
 		  return pad_to_width(tru, use_wid);
 	    }
@@ -2503,8 +2511,9 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			cerr << get_fileline() << ": debug: Short-circuit "
 			        "elaborate FALSE clause of ternary."
 			<< endl;
+		  ivl_assert(*this, use_wid > 0);
 		  NetExpr*fal = elab_and_eval(des, scope, fal_, use_wid);
-		  return pad_to_width(fal, expr_wid);
+		  return pad_to_width(fal, use_wid);
 	    }
 
 	      // X and Z conditions need to blend both results, so we
