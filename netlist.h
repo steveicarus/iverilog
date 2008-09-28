@@ -1581,7 +1581,7 @@ class NetExpr  : public LineInfo {
 
 
     protected:
-      void expr_width(unsigned w) { width_ = w; }
+      void expr_width(unsigned w);
       void cast_signed_base_(bool flag) {signed_flag_ = flag; }
 
     private:

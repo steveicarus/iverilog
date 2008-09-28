@@ -1992,6 +1992,13 @@ void NetExpr::cast_signed(bool flag)
       signed_flag_ = flag;
 }
 
+void NetExpr::expr_width(unsigned w)
+{
+	// Catch underflow wrap errors.
+      ivl_assert(*this, w < (UINT_MAX - 256));
+      width_ = w;
+}
+
 bool NetExpr::has_width() const
 {
       return true;
