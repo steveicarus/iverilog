@@ -43,7 +43,7 @@
 # define TOP_BIT (1UL << (CPU_WORD_BITS-1))
 
 /*
- * This vhtread_s structure describes all there is to know about a
+ * This vthread_s structure describes all there is to know about a
  * thread, including its program counter, all the private bits it
  * holds, and its place in other lists.
  *
@@ -117,11 +117,14 @@ struct vthread_s {
       struct vthread_s*wait_next;
 	/* These are used to keep the thread in a scope. */
       struct vthread_s*scope_next, *scope_prev;
-
+	/* These are used to access automatically allocated items. */
+      vvp_context_t wt_context, rd_context;
 	/* These are used to pass non-blocking event control information. */
       vvp_net_t*event;
       uint64_t ecount;
 };
+
+struct vthread_s*running_thread = 0;
 
 // this table maps the thread special index bit addresses to
 // vvp_bit4_t bit values.
@@ -299,6 +302,43 @@ static void multiply_array_imm(unsigned long*res, unsigned long*val,
 }
 
 /*
+ * Allocate a context for use by a child thread. By preference, use
+ * the last freed context. If none available, create a new one.
+ */
+static vvp_context_t vthread_alloc_context(__vpiScope*scope)
+{
+      assert(scope->is_automatic);
+
+      vvp_context_t context = scope->free_context;
+      if (context) {
+            scope->free_context = vvp_get_next_context(context);
+            for (unsigned idx = 0 ; idx < scope->nitem ; idx += 1) {
+                  scope->item[idx]->reset_instance(context);
+            }
+      } else {
+            context = vvp_allocate_context(scope->nitem);
+            for (unsigned idx = 0 ; idx < scope->nitem ; idx += 1) {
+                  scope->item[idx]->alloc_instance(context);
+            }
+      }
+
+      return context;
+}
+
+/*
+ * Free a context previously allocated to a child thread by pushing it
+ * onto the freed context stack.
+ */
+static void vthread_free_context(vvp_context_t context, __vpiScope*scope)
+{
+      assert(scope->is_automatic);
+      assert(context);
+
+      vvp_set_next_context(context, scope->free_context);
+      scope->free_context = context;
+}
+
+/*
  * Create a new thread with the given start address.
  */
 vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
@@ -309,6 +349,8 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       thr->child  = 0;
       thr->parent = 0;
       thr->wait_next = 0;
+      thr->wt_context = 0;
+      thr->rd_context = 0;
 
 	/* If the target scope never held a thread, then create a
 	   header cell for it. This is a stub to make circular lists
@@ -334,7 +376,6 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       thr->is_scheduled = 0;
       thr->i_have_ended = 0;
       thr->waiting_for_event = 0;
-      thr->is_scheduled = 0;
       thr->fork_count   = 0;
       thr->event  = 0;
       thr->ecount = 0;
@@ -409,6 +450,8 @@ void vthread_run(vthread_t thr)
 	    assert(thr->is_scheduled);
 	    thr->is_scheduled = 0;
 
+            running_thread = thr;
+
 	    for (;;) {
 		  vvp_code_t cp = thr->pc;
 		  thr->pc += 1;
@@ -423,6 +466,7 @@ void vthread_run(vthread_t thr)
 
 	    thr = tmp;
       }
+      running_thread = 0;
 }
 
 /*
@@ -486,12 +530,36 @@ void vthread_schedule_list(vthread_t thr)
       schedule_vthread(thr, 0);
 }
 
+vvp_context_item_t vthread_get_wt_context_item(unsigned context_idx)
+{
+      assert(running_thread && running_thread->wt_context);
+      return vvp_get_context_item(running_thread->wt_context, context_idx);
+}
+
+vvp_context_item_t vthread_get_rd_context_item(unsigned context_idx)
+{
+      assert(running_thread && running_thread->rd_context);
+      return vvp_get_context_item(running_thread->rd_context, context_idx);
+}
+
 bool of_ABS_WR(vthread_t thr, vvp_code_t cp)
 {
       unsigned dst = cp->bit_idx[0];
       unsigned src = cp->bit_idx[1];
 
       thr->words[dst].w_real = fabs(thr->words[src].w_real);
+      return true;
+}
+
+bool of_ALLOC(vthread_t thr, vvp_code_t cp)
+{
+        /* Allocate a context. */
+      vvp_context_t child_context = vthread_alloc_context(cp->scope);
+
+        /* Push the allocated context onto the write context stack. */
+      vvp_set_next_context(child_context, thr->wt_context);
+      thr->wt_context = child_context;
+
       return true;
 }
 
@@ -2308,6 +2376,12 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
 bool of_FORK(vthread_t thr, vvp_code_t cp)
 {
       vthread_t child = vthread_new(cp->cptr2, cp->scope);
+      if (cp->scope->is_automatic) {
+              /* The context allocated for this child is the top entry
+                 on the write context stack. */
+            child->wt_context = thr->wt_context;
+            child->rd_context = thr->wt_context;
+      }
 
       child->child  = thr->child;
       child->parent = thr;
@@ -2324,9 +2398,23 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
       if (cp->scope->base.vpi_type->type_code == vpiFunction) {
 	    child->is_scheduled = 1;
 	    vthread_run(child);
+            running_thread = thr;
       } else {
 	    schedule_vthread(child, 0, true);
       }
+
+      return true;
+}
+
+bool of_FREE(vthread_t thr, vvp_code_t cp)
+{
+        /* Pop the child context from the read context stack. */
+      vvp_context_t child_context = thr->rd_context;
+      thr->rd_context = vvp_get_next_context(child_context);
+
+        /* Free the context. */
+      vthread_free_context(child_context, cp->scope);
+
       return true;
 }
 
@@ -2610,6 +2698,15 @@ bool of_JOIN(vthread_t thr, vvp_code_t cp)
 
       assert(thr->fork_count > 0);
 
+      if (thr->wt_context != thr->rd_context) {
+              /* Pop the child context from the write context stack. */
+            vvp_context_t child_context = thr->wt_context;
+            thr->wt_context = vvp_get_next_context(child_context);
+
+              /* Push the child context onto the read context stack */
+            vvp_set_next_context(child_context, thr->rd_context);
+            thr->rd_context = child_context;
+      }
 
 	/* If the child has already ended, reap it now. */
       if (thr->child->i_have_ended) {
@@ -4080,7 +4177,6 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
 
 bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
 {
-	// printf("thread %p: %%vpi_call\n", thr);
       vpip_execute_vpi_call(thr, cp->handle);
 
       if (schedule_stopped()) {
@@ -4104,13 +4200,19 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
       assert(! thr->waiting_for_event);
       thr->waiting_for_event = 1;
 
-      vvp_net_t*net = cp->net;
-	/* Get the functor as a waitable_hooks_s object. */
-      waitable_hooks_s*ep = dynamic_cast<waitable_hooks_s*> (net->fun);
-      assert(ep);
 	/* Add this thread to the list in the event. */
-      thr->wait_next = ep->threads;
-      ep->threads = thr;
+      vvp_net_fun_t*fun = cp->net->fun;
+      if (fun->context_idx) {
+            waitable_state_s*es = static_cast<waitable_state_s*>
+                  (vthread_get_wt_context_item(fun->context_idx));
+            thr->wait_next = es->threads;
+            es->threads = thr;
+      } else {
+            waitable_hooks_s*ep = dynamic_cast<waitable_hooks_s*> (fun);
+            assert(ep);
+            thr->wait_next = ep->threads;
+            ep->threads = thr;
+      }
 	/* Return false to suspend this thread. */
       return false;
 }
@@ -4185,46 +4287,57 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 }
 
 /*
- * These are phantom opcode used to call user defined functions.
- * They are used in code generated by the .ufunc statement. They
- * contain a pointer to executable code of the function, and to a
- * ufunc_core object that has all the port information about the
+ * This is a phantom opcode used to call user defined functions. It
+ * is used in code generated by the .ufunc statement. It contains a
+ * pointer to the executable code of the function and a pointer to
+ * a ufunc_core object that has all the port information about the
  * function.
  */
-bool of_FORK_UFUNC(vthread_t thr, vvp_code_t cp)
+bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
 {
+      struct __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
+      assert(child_scope);
+
+      assert(thr->child == 0);
+      assert(thr->fork_count == 0);
+
+        /* We can take a number of shortcuts because we know that a
+           continuous assignment can only occur in a static scope. */
+      assert(thr->wt_context == 0);
+      assert(thr->rd_context == 0);
+
+        /* If an automatic function, allocate a context for this call. */
+      vvp_context_t child_context = 0;
+      if (child_scope->is_automatic) {
+            child_context = vthread_alloc_context(child_scope);
+            thr->wt_context = child_context;
+            thr->rd_context = child_context;
+      }
 	/* Copy all the inputs to the ufunc object to the port
 	   variables of the function. This copies all the values
 	   atomically. */
       cp->ufunc_core_ptr->assign_bits_to_ports();
 
-      assert(thr->child == 0);
-      assert(thr->fork_count == 0);
+	/* Create a temporary thread and run it immediately. A function
+           may not contain any blocking statements, so vthread_run() can
+           only return when the %end opcode is reached. */
+      vthread_t child = vthread_new(cp->cptr, child_scope);
+      child->wt_context = child_context;
+      child->rd_context = child_context;
+      child->is_scheduled = 1;
+      vthread_run(child);
+      running_thread = thr;
 
-	/* Create a temporary thread, and push its execution. This is
-	   done so that the assign_bits_to_ports above is atomic with
-	   this startup. */
-      vthread_t child = vthread_new(cp->cptr, cp->ufunc_core_ptr->scope());
-
-      child->child = 0;
-      child->parent = thr;
-      thr->child = child;
-
-      thr->fork_count += 1;
-      schedule_vthread(child, 0, true);
-
-	/* After this function, the .ufunc code has placed an of_JOIN
-	   to pause this thread. Since the child was pushed by the
-	   flag to schedule_vthread, the called function starts up
-	   immediately. */
-      return true;
-}
-
-bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
-{
 	/* Now copy the output from the result variable to the output
 	   ports of the .ufunc device. */
       cp->ufunc_core_ptr->finish_thread(thr);
+
+        /* If an automatic function, free the context for this call. */
+      if (child_scope->is_automatic) {
+            vthread_free_context(child_context, child_scope);
+            thr->wt_context = 0;
+            thr->rd_context = 0;
+      }
 
       return true;
 }

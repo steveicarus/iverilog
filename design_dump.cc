@@ -718,6 +718,11 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
       statement_->dump(o, ind+2);
 }
 
+void NetAlloc::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "// allocate storage : " << scope_path(scope_) << endl;
+}
+
 void NetAssign_::dump_lval(ostream&o) const
 {
       if (sig_) {
@@ -948,6 +953,11 @@ void NetForever::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "forever" << endl;
       statement_->dump(o, ind+2);
+}
+
+void NetFree::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "// free storage : " << scope_path(scope_) << endl;
 }
 
 void NetFuncDef::dump(ostream&o, unsigned ind) const

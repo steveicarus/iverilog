@@ -105,6 +105,7 @@ struct target_t {
       virtual bool process(const NetProcTop*);
 
 	/* Various kinds of process nodes are dispatched through these. */
+      virtual void proc_alloc(const NetAlloc*);
       virtual bool proc_assign(const NetAssign*);
       virtual void proc_assign_nb(const NetAssignNB*);
       virtual bool proc_block(const NetBlock*);
@@ -116,6 +117,7 @@ struct target_t {
       virtual bool proc_disable(const NetDisable*);
       virtual bool proc_force(const NetForce*);
       virtual void proc_forever(const NetForever*);
+      virtual void proc_free(const NetFree*);
       virtual bool proc_release(const NetRelease*);
       virtual void proc_repeat(const NetRepeat*);
       virtual bool proc_trigger(const NetEvTrig*);

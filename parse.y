@@ -459,10 +459,10 @@ block_item_decl
      with real value. Note that real and realtime are interchangeable
      in this context. */
 
-  | attribute_list_opt K_real real_variable_list ';'
-      { delete $3; }
-  | attribute_list_opt K_realtime real_variable_list ';'
-      { delete $3; }
+        | attribute_list_opt K_real real_variable_list ';'
+                { delete $3; }
+        | attribute_list_opt K_realtime real_variable_list ';'
+                { delete $3; }
 
 	| K_event list_of_identifiers ';'
 		{ pform_make_events($2, @1.text, @1.first_line);

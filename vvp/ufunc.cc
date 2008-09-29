@@ -37,17 +37,19 @@
 
 ufunc_core::ufunc_core(unsigned owid, vvp_net_t*ptr,
 		       unsigned nports, vvp_net_t**ports,
-		       vvp_code_t sa, struct __vpiScope*run_scope,
-		       char*result_label)
+		       vvp_code_t sa, struct __vpiScope*call_scope,
+		       char*result_label, char*scope_label)
 : vvp_wide_fun_core(ptr, nports)
 {
       owid_ = owid;
       ports_ = ports;
       code_ = sa;
       thread_ = 0;
-      scope_ = run_scope;
+      call_scope_ = call_scope;
 
       functor_ref_lookup(&result_, result_label);
+
+      compile_vpi_lookup((vpiHandle*)(&func_scope_), scope_label);
 }
 
 ufunc_core::~ufunc_core()
@@ -55,7 +57,7 @@ ufunc_core::~ufunc_core()
 }
 
 /*
- * This method is called by the %fork_ufunc function to prepare the
+ * This method is called by the %exec_ufunc function to prepare the
  * input variables of the function for execution. The method copies
  * the input values collected by the core to the variables.
  */
@@ -72,7 +74,7 @@ void ufunc_core::assign_bits_to_ports(void)
 }
 
 /*
- * This method is called by the %join_ufunc instruction to copy the
+ * This method is called by the %exec_ufunc instruction to copy the
  * result from the return code variable and deliver it to the output
  * of the functor, back into the netlist.
  */
@@ -105,7 +107,7 @@ void ufunc_core::recv_real_from_inputs(unsigned port)
 void ufunc_core::invoke_thread_()
 {
       if (thread_ == 0) {
-	    thread_ = vthread_new(code_, scope_);
+	    thread_ = vthread_new(code_, call_scope_);
 	    schedule_vthread(thread_, 0);
       }
 }
@@ -123,15 +125,15 @@ void ufunc_core::invoke_thread_()
 void compile_ufunc(char*label, char*code, unsigned wid,
 		   unsigned argc,  struct symb_s*argv,
 		   unsigned portc, struct symb_s*portv,
-		   struct symb_s retv)
+		   struct symb_s retv, struct symb_s scope)
 {
 	/* The input argument list and port list must have the same
 	   sizes, since internally we will be mapping the inputs list
 	   to the ports list. */
       assert(argc == portc);
 
-      struct __vpiScope*run_scope = vpip_peek_current_scope();
-      assert(run_scope);
+      struct __vpiScope*call_scope = vpip_peek_current_scope();
+      assert(call_scope);
 
 	/* Construct some phantom code that is the thread of the
 	   function call. The first instruction, at the start_address
@@ -139,32 +141,19 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 	   The last instruction is the usual %end. So the thread looks
 	   like this:
 
-	      %fork_ufunc <core>;
-	      %join;
-	      %join_ufunc;
+	      %exec_ufunc <core>;
 	      %end;
 
-	   The %fork_ufunc starts the user defined function by copying
-	   the input values into local regs, forking a thread and
-	   pushing that thread. The %join waits on that thread. The
-	   $join_ufunc then copies the output values to the
-	   destination net functors. */
+	   The %exec_ufunc copies the input values into local regs,
+           runs the function code, then copies the output values to
+           the destination net functors. */
 
       vvp_code_t start_code = codespace_allocate();
-      start_code->opcode = of_FORK_UFUNC;
+      start_code->opcode = of_EXEC_UFUNC;
       code_label_lookup(start_code, code);
 
-      { vvp_code_t codep = codespace_allocate();
-	codep->opcode = &of_JOIN;
-      }
-
-      vvp_code_t ujoin_code;
-      ujoin_code = codespace_allocate();
-      ujoin_code->opcode = &of_JOIN_UFUNC;
-
-      { vvp_code_t codep = codespace_allocate();
-	codep->opcode = &of_END;
-      }
+      vvp_code_t end_code = codespace_allocate();
+      end_code->opcode = &of_END;
 
 	/* Run through the function ports (which are related to but
 	   not the same as the input ports) and arrange for their
@@ -179,14 +168,13 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 	   that will contain the execution. */
       vvp_net_t*ptr = new vvp_net_t;
       ufunc_core*fcore = new ufunc_core(wid, ptr, portc, ports,
-					start_code, run_scope,
-					retv.text);
+					start_code, call_scope,
+					retv.text, scope.text);
       ptr->fun = fcore;
       define_functor_symbol(label, ptr);
       free(label);
 
       start_code->ufunc_core_ptr = fcore;
-      ujoin_code->ufunc_core_ptr = fcore;
 
       wide_inputs_connect(fcore, argc, argv);
 

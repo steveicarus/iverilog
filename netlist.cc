@@ -1973,6 +1973,44 @@ const NetScope* NetUTask::task() const
       return task_;
 }
 
+NetAlloc::NetAlloc(NetScope*scope)
+: scope_(scope)
+{
+}
+
+NetAlloc::~NetAlloc()
+{
+}
+#if 0
+const string NetAlloc::name() const
+{
+      return scope_->name();
+}
+#endif
+const NetScope* NetAlloc::scope() const
+{
+      return scope_;
+}
+
+NetFree::NetFree(NetScope*scope)
+: scope_(scope)
+{
+}
+
+NetFree::~NetFree()
+{
+}
+#if 0
+const string NetFree::name() const
+{
+      return scope_->name();
+}
+#endif
+const NetScope* NetFree::scope() const
+{
+      return scope_;
+}
+
 NetExpr::NetExpr(unsigned w)
 : width_(w), signed_flag_(false)
 {

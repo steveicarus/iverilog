@@ -32,7 +32,7 @@
 
 # include <iostream>
 
-void waitable_hooks_s::run_waiting_threads_()
+void waitable_hooks_s::run_waiting_threads_(unsigned context_idx)
 {
 	// Run the non-blocking event controls.
       last = &event_ctls;
@@ -48,12 +48,17 @@ void waitable_hooks_s::run_waiting_threads_()
 	    }
       }
 
-      if (threads == 0)
-	    return;
-
-      vthread_t tmp = threads;
-      threads = 0;
-      vthread_schedule_list(tmp);
+      vthread_t tmp;
+      if (context_idx) {
+            waitable_state_s*state = static_cast<waitable_state_s*>
+                  (vthread_get_wt_context_item(context_idx));
+            tmp = state->threads;
+            state->threads = 0;
+      } else {
+            tmp = threads;
+            threads = 0;
+      }
+      if (tmp) vthread_schedule_list(tmp);
 }
 
 evctl::evctl(unsigned long ecount)
@@ -180,6 +185,12 @@ const vvp_fun_edge::edge_t vvp_edge_negedge
 
 const vvp_fun_edge::edge_t vvp_edge_none    = 0;
 
+struct vvp_fun_edge_state_s : public waitable_state_s {
+      vvp_fun_edge_state_s() : bit(BIT4_X) {}
+
+      vvp_bit4_t bit;
+};
+
 vvp_fun_edge::vvp_fun_edge(edge_t e, bool debug_flag)
 : edge_(e), debug_(debug_flag)
 {
@@ -193,22 +204,51 @@ vvp_fun_edge::~vvp_fun_edge()
 {
 }
 
+void vvp_fun_edge::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, context_idx, new vvp_fun_edge_state_s);
+}
+
+void vvp_fun_edge::reset_instance(vvp_context_t context)
+{
+      vvp_fun_edge_state_s*state = static_cast<vvp_fun_edge_state_s*>
+            (vvp_get_context_item(context, context_idx));
+      state->threads = 0;
+      state->bit = BIT4_X;
+}
+
 void vvp_fun_edge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
+      vvp_bit4_t*old_bit;
+      if (context_idx) {
+            vvp_fun_edge_state_s*state = static_cast<vvp_fun_edge_state_s*>
+                  (vthread_get_wt_context_item(context_idx));
+            old_bit = &state->bit;
+      } else {
+            old_bit = &bits_[port.port()];
+      }
+
 	/* See what kind of edge this represents. */
-      edge_t mask = VVP_EDGE(bits_[port.port()], bit.value(0));
+      edge_t mask = VVP_EDGE(*old_bit, bit.value(0));
 
 	/* Save the current input for the next time around. */
-      bits_[port.port()] = bit.value(0);
+      *old_bit = bit.value(0);
 
       if ((edge_ == vvp_edge_none) || (edge_ & mask)) {
-	    run_waiting_threads_();
+	    run_waiting_threads_(context_idx);
 
 	    vvp_net_t*net = port.ptr();
 	    vvp_send_vec4(net->out, bit);
       }
 }
 
+
+struct vvp_fun_anyedge_state_s : public waitable_state_s {
+      vvp_fun_anyedge_state_s() : bitsr(0.0) {}
+
+      vvp_vector4_t bits;
+      double bitsr;
+};
 
 vvp_fun_anyedge::vvp_fun_anyedge(bool debug_flag)
 : debug_(debug_flag)
@@ -221,17 +261,39 @@ vvp_fun_anyedge::~vvp_fun_anyedge()
 {
 }
 
+void vvp_fun_anyedge::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, context_idx, new vvp_fun_anyedge_state_s);
+}
+
+void vvp_fun_anyedge::reset_instance(vvp_context_t context)
+{
+      vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
+            (vvp_get_context_item(context, context_idx));
+      state->threads = 0;
+      state->bits.set_to_x();
+      state->bitsr = 0.0;
+}
+
 void vvp_fun_anyedge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
-      unsigned pdx = port.port();
       bool flag = false;
 
-      if (bits_[pdx].size() != bit.size()) {
+      vvp_vector4_t*old_bits;
+      if (context_idx) {
+            vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
+                  (vthread_get_wt_context_item(context_idx));
+            old_bits = &state->bits;
+      } else {
+            old_bits = &bits_[port.port()];
+      }
+
+      if (old_bits->size() != bit.size()) {
 	    flag = true;
 
       } else {
 	    for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1) {
-		  if (bits_[pdx].value(idx) != bit.value(idx)) {
+		  if (old_bits->value(idx) != bit.value(idx)) {
 			flag = true;
 			break;
 		  }
@@ -239,8 +301,8 @@ void vvp_fun_anyedge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
       }
 
       if (flag) {
-	    bits_[pdx] = bit;
-	    run_waiting_threads_();
+	    *old_bits = bit;
+	    run_waiting_threads_(context_idx);
 	    vvp_net_t*net = port.ptr();
 	    vvp_send_vec4(net->out, bit);
       }
@@ -248,16 +310,18 @@ void vvp_fun_anyedge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 
 void vvp_fun_anyedge::recv_real(vvp_net_ptr_t port, double bit)
 {
-      unsigned pdx = port.port();
-      bool flag = false;
-
-      if (bitsr_[pdx] != bit) {
-	    flag = true;
-	    bitsr_[pdx] = bit;
+      double*old_bits;
+      if (context_idx) {
+            vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
+                  (vthread_get_wt_context_item(context_idx));
+            old_bits = &state->bitsr;
+      } else {
+            old_bits = &bitsr_[port.port()];
       }
 
-      if (flag) {
-	    run_waiting_threads_();
+      if (*old_bits != bit) {
+	    *old_bits = bit;
+	    run_waiting_threads_(context_idx);
 	    vvp_net_t*net = port.ptr();
 	    vvp_send_vec4(net->out, vvp_vector4_t());
       }
@@ -271,9 +335,21 @@ vvp_fun_event_or::~vvp_fun_event_or()
 {
 }
 
+void vvp_fun_event_or::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, context_idx, new waitable_state_s);
+}
+
+void vvp_fun_event_or::reset_instance(vvp_context_t context)
+{
+      waitable_state_s*state = static_cast<waitable_state_s*>
+            (vvp_get_context_item(context, context_idx));
+      state->threads = 0;
+}
+
 void vvp_fun_event_or::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
-      run_waiting_threads_();
+      run_waiting_threads_(context_idx);
       vvp_net_t*net = port.ptr();
       vvp_send_vec4(net->out, bit);
 }
@@ -287,9 +363,21 @@ vvp_named_event::~vvp_named_event()
 {
 }
 
+void vvp_named_event::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, context_idx, new waitable_state_s);
+}
+
+void vvp_named_event::reset_instance(vvp_context_t context)
+{
+      waitable_state_s*state = static_cast<waitable_state_s*>
+            (vvp_get_context_item(context, context_idx));
+      state->threads = 0;
+}
+
 void vvp_named_event::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
-      run_waiting_threads_();
+      run_waiting_threads_(context_idx);
       vvp_net_t*net = port.ptr();
       vvp_send_vec4(net->out, bit);
 
@@ -320,7 +408,9 @@ void compile_event(char*label, char*type,
       if (strcmp(type,"edge") == 0) {
 
 	    free(type);
-	    fun = new vvp_fun_anyedge(debug_flag);
+	    vvp_fun_anyedge*event_fun = new vvp_fun_anyedge(debug_flag);
+            vpip_add_item_to_current_scope(event_fun);
+            fun = event_fun;
 
       } else {
 
@@ -334,7 +424,9 @@ void compile_event(char*label, char*type,
 	    assert(argc <= 4);
 	    free(type);
 
-	    fun = new vvp_fun_edge(edge, debug_flag);
+	    vvp_fun_edge*event_fun = new vvp_fun_edge(edge, debug_flag);
+            vpip_add_item_to_current_scope(event_fun);
+            fun = event_fun;
       }
 
       vvp_net_t* ptr = new vvp_net_t;
@@ -348,10 +440,11 @@ void compile_event(char*label, char*type,
 
 static void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
 {
-      vvp_net_fun_t*fun = new vvp_fun_event_or;
+      vvp_fun_event_or*fun = new vvp_fun_event_or;
       vvp_net_t* ptr = new vvp_net_t;
       ptr->fun = fun;
 
+      vpip_add_item_to_current_scope(fun);
       define_functor_symbol(label, ptr);
       free(label);
 
@@ -373,8 +466,10 @@ void compile_named_event(char*label, char*name)
       vvp_net_t*ptr = new vvp_net_t;
 
       vpiHandle obj = vpip_make_named_event(name, ptr);
-      ptr->fun = new vvp_named_event(obj);
+      vvp_named_event*fun = new vvp_named_event(obj);
+      ptr->fun = fun;
 
+      vpip_add_item_to_current_scope(fun);
       define_functor_symbol(label, ptr);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);

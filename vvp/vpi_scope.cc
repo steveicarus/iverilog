@@ -316,6 +316,26 @@ static void attach_to_scope_(struct __vpiScope*scope, vpiHandle obj)
       scope->intern[idx] = obj;
 }
 
+static void add_item_to_scope_(struct __vpiScope*scope, automatic_hooks_s*item)
+{
+      assert(scope);
+
+        // there is no need to record items for static scopes
+      if (!scope->is_automatic) return;
+
+      unsigned idx = scope->nitem++;
+      item->context_idx = 1 + idx;
+
+      if (scope->item == 0)
+	    scope->item = (automatic_hooks_s**)
+		  malloc(sizeof(automatic_hooks_s*));
+      else
+	    scope->item = (automatic_hooks_s**)
+		  realloc(scope->item, sizeof(automatic_hooks_s*)*scope->nitem);
+
+      scope->item[idx] = item;
+}
+
 /*
  * When the compiler encounters a scope declaration, this function
  * creates and initializes a __vpiScope object with the requested name
@@ -330,20 +350,33 @@ compile_scope_decl(char*label, char*type, char*name, const char*tname,
       struct __vpiScope*scope = new struct __vpiScope;
       count_vpi_scopes += 1;
 
-      if (strcmp(type,"module") == 0)
+      if (strcmp(type,"module") == 0) {
 	    scope->base.vpi_type = &vpip_scope_module_rt;
-      else if (strcmp(type,"function") == 0)
+	    scope->is_automatic = false;
+      } else if (strcmp(type,"autofunction") == 0) {
 	    scope->base.vpi_type = &vpip_scope_function_rt;
-      else if (strcmp(type,"task") == 0)
+	    scope->is_automatic = true;
+      } else if (strcmp(type,"function") == 0) {
+	    scope->base.vpi_type = &vpip_scope_function_rt;
+	    scope->is_automatic = false;
+      } else if (strcmp(type,"autotask") == 0) {
 	    scope->base.vpi_type = &vpip_scope_task_rt;
-      else if (strcmp(type,"fork") == 0)
+	    scope->is_automatic = true;
+      } else if (strcmp(type,"task") == 0) {
+	    scope->base.vpi_type = &vpip_scope_task_rt;
+	    scope->is_automatic = false;
+      } else if (strcmp(type,"fork") == 0) {
 	    scope->base.vpi_type = &vpip_scope_fork_rt;
-      else if (strcmp(type,"begin") == 0)
+	    scope->is_automatic = false;
+      } else if (strcmp(type,"begin") == 0) {
 	    scope->base.vpi_type = &vpip_scope_begin_rt;
-      else if (strcmp(type,"generate") == 0)
+	    scope->is_automatic = false;
+      } else if (strcmp(type,"generate") == 0) {
 	    scope->base.vpi_type = &vpip_scope_begin_rt;
-      else {
+	    scope->is_automatic = false;
+      } else {
 	    scope->base.vpi_type = &vpip_scope_module_rt;
+	    scope->is_automatic = false;
 	    assert(0);
       }
 
@@ -357,6 +390,9 @@ compile_scope_decl(char*label, char*type, char*name, const char*tname,
       scope->def_lineno  = (unsigned) def_lineno;
       scope->intern = 0;
       scope->nintern = 0;
+      scope->item = 0;
+      scope->nitem = 0;
+      scope->free_context = 0;
       scope->threads = 0;
 
       current_scope = scope;
@@ -420,4 +456,9 @@ struct __vpiScope* vpip_peek_current_scope(void)
 void vpip_attach_to_current_scope(vpiHandle obj)
 {
       attach_to_scope_(current_scope, obj);
+}
+
+void vpip_add_item_to_current_scope(automatic_hooks_s*item)
+{
+      add_item_to_scope_(current_scope, item);
 }

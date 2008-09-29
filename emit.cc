@@ -196,6 +196,12 @@ bool NetProc::emit_proc(struct target_t*tgt) const
       return false;
 }
 
+bool NetAlloc::emit_proc(struct target_t*tgt) const
+{
+      tgt->proc_alloc(this);
+      return true;
+}
+
 bool NetAssign::emit_proc(struct target_t*tgt) const
 {
       return tgt->proc_assign(this);
@@ -246,6 +252,12 @@ bool NetForce::emit_proc(struct target_t*tgt) const
 bool NetForever::emit_proc(struct target_t*tgt) const
 {
       tgt->proc_forever(this);
+      return true;
+}
+
+bool NetFree::emit_proc(struct target_t*tgt) const
+{
+      tgt->proc_free(this);
       return true;
 }
 

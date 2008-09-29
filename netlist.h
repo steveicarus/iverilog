@@ -2086,6 +2086,23 @@ class NetProc : public virtual LineInfo {
       NetProc& operator= (const NetProc&);
 };
 
+class NetAlloc  : public NetProc {
+
+    public:
+      NetAlloc(NetScope*);
+      ~NetAlloc();
+
+      const string name() const;
+
+      const NetScope* scope() const;
+
+      virtual bool emit_proc(struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetScope*scope_;
+};
+
 /*
  * Procedural assignment is broken into a suite of classes. These
  * classes represent the various aspects of the assignment statement
@@ -2704,6 +2721,23 @@ class NetForever : public NetProc {
 
     private:
       NetProc*statement_;
+};
+
+class NetFree   : public NetProc {
+
+    public:
+      NetFree(NetScope*);
+      ~NetFree();
+
+      const string name() const;
+
+      const NetScope* scope() const;
+
+      virtual bool emit_proc(struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetScope*scope_;
 };
 
 /*

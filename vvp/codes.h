@@ -36,6 +36,7 @@ extern bool of_ABS_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ADD(vthread_t thr, vvp_code_t code);
 extern bool of_ADD_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ADDI(vthread_t thr, vvp_code_t code);
+extern bool of_ALLOC(vthread_t thr, vvp_code_t code);
 extern bool of_AND(vthread_t thr, vvp_code_t code);
 extern bool of_ANDI(vthread_t thr, vvp_code_t code);
 extern bool of_ANDR(vthread_t thr, vvp_code_t code);
@@ -91,6 +92,7 @@ extern bool of_FORCE_V(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE_WR(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE_X0(vthread_t thr, vvp_code_t code);
 extern bool of_FORK(vthread_t thr, vvp_code_t code);
+extern bool of_FREE(vthread_t thr, vvp_code_t code);
 extern bool of_INV(vthread_t thr, vvp_code_t code);
 extern bool of_IX_ADD(vthread_t thr, vvp_code_t code);
 extern bool of_IX_GET(vthread_t thr, vvp_code_t code);
@@ -156,8 +158,7 @@ extern bool of_XORR(vthread_t thr, vvp_code_t code);
 
 extern bool of_ZOMBIE(vthread_t thr, vvp_code_t code);
 
-extern bool of_FORK_UFUNC(vthread_t thr, vvp_code_t code);
-extern bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t code);
+extern bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t code);
 
 extern bool of_CHUNK_LINK(vthread_t thr, vvp_code_t code);
 

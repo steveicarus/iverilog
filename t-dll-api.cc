@@ -1913,8 +1913,14 @@ extern "C" ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net,
 extern "C" ivl_scope_t ivl_stmt_call(ivl_statement_t net)
 {
       switch (net->type_) {
+	  case IVL_ST_ALLOC:
+	    return net->u_.alloc_.scope;
+
 	  case IVL_ST_DISABLE:
 	    return net->u_.disable_.scope;
+
+	  case IVL_ST_FREE:
+	    return net->u_.free_.scope;
 
 	  case IVL_ST_UTASK:
 	    return net->u_.utask_.def;
