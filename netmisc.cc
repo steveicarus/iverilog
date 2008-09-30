@@ -378,26 +378,28 @@ const char *human_readable_op(const char op)
 {
 	const char *type;
 	switch (op) {
-	        case '~': type = "~";  break;  // Negation
+	    case '~': type = "~";  break;  // Negation
 
-	        case '^': type = "^";  break;  // XOR
-	        case 'X': type = "~^"; break;  // XNOR
-	        case '&': type = "&";  break;  // Bitwise AND
-	        case 'A': type = "~&"; break;  // NAND (~&)
-	        case '|': type = "|";  break;  // Bitwise OR
-	        case 'O': type = "~|"; break;  // NOR
+	    case '^': type = "^";  break;  // XOR
+	    case 'X': type = "~^"; break;  // XNOR
+	    case '&': type = "&";  break;  // Bitwise AND
+	    case 'A': type = "~&"; break;  // NAND (~&)
+	    case '|': type = "|";  break;  // Bitwise OR
+	    case 'O': type = "~|"; break;  // NOR
 
-	        case 'a': type = "&&"; break;  // Logical AND
-	        case 'o': type = "||"; break;  // Logical OR
+	    case '!': type = "!"; break;   // Logical NOT
+	    case 'a': type = "&&"; break;  // Logical AND
+	    case 'o': type = "||"; break;  // Logical OR
 
-	        case 'E': type = "==="; break;  // Case equality
-	        case 'N': type = "!=="; break;  // Case inequality
+	    case 'E': type = "==="; break;  // Case equality
+	    case 'N': type = "!=="; break;  // Case inequality
 
-	        case 'l': type = "<<(<)"; break;  // Left shifts
-	        case 'r': type = ">>";    break;  // Logical right shift
-	        case 'R': type = ">>>";   break;  // Arithmetic right shift
+	    case 'l': type = "<<(<)"; break;  // Left shifts
+	    case 'r': type = ">>";    break;  // Logical right shift
+	    case 'R': type = ">>>";   break;  // Arithmetic right shift
 
-		default: assert(0);
+	    default:
+	      assert(0);
 	}
 	return type;
 }

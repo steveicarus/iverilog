@@ -871,6 +871,12 @@ NetNet* NetEUReduce::synthesize(Design*des, NetScope*scope)
       if (isig == 0) return 0;
 
       if (isig->data_type() == IVL_VT_REAL) {
+	    if (op() == '!') {
+		  cerr << get_fileline() << ": sorry: ! is currently "
+		          "unsupported for real values." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
 	    cerr << get_fileline() << ": error: reduction operator ("
 	         << human_readable_op(op_)
 	         << ") may not have a REAL operand." << endl;
