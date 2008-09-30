@@ -2886,7 +2886,9 @@ vvp_fun_signal_real::vvp_fun_signal_real()
 
 void vvp_fun_signal_real::alloc_instance(vvp_context_t context)
 {
-      vvp_set_context_item(context, context_idx, new double);
+      double*bits = new double;
+      *bits = 0.0;
+      vvp_set_context_item(context, context_idx, bits);
 }
 
 void vvp_fun_signal_real::reset_instance(vvp_context_t context)
