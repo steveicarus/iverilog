@@ -1446,12 +1446,12 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
       }
 
       if (use_width != UINT_MAX)
-	    return use_width;
+	    return max(use_width, min);
 
 	// The width of a signal expression is the width of the signal.
       if (net != 0) {
 	    expr_type = net->data_type();
-	    return net->vector_width();
+	    return max(net->vector_width(), (unsigned long)min);
       }
 
 	// The width of a parameter name is the width of the range for
