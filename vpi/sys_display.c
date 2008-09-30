@@ -60,29 +60,30 @@ struct strobe_cb_info {
       unsigned mcd;
 };
 
-// The number of decimal digits needed to represent a
-// nr_bits binary number is floor(nr_bits*log_10(2))+1,
-// where log_10(2) = 0.30102999566398....  and I approximate
-// this transcendental number as 146/485, to avoid the vagaries
-// of floating-point.  The smallest nr_bits for which this
-// approximation fails is 2621,
-// 2621*log_10(2)=789.9996, but (2621*146+484)/485=790 (exactly).
-// In cases like this, all that happens is we allocate one
-// unneeded char for the output.  I add a "L" suffix to 146
-// to make sure the computation is done as long ints, otherwise
-// on a 16-bit int machine (allowed by ISO C) we would mangle
-// this computation for bit-length of 224.  I'd like to put
-// in a test for nr_bits < LONG_MAX/146, but don't know how
-// to fail, other than crashing.
-//
-// In an April 2000 thread in comp.unix.programmer, with subject
-// "integer -> string", I <LRDoolittle@lbl.gov> give the 28/93
-// approximation, but overstate its accuracy: that version first
-// fails when the number of bits is 289, not 671.
-//
-// This result does not include space for a trailing '\0', if any.
-//
-inline static int calc_dec_size(int nr_bits, int is_signed)
+/*
+ * The number of decimal digits needed to represent a
+ * nr_bits binary number is floor(nr_bits*log_10(2))+1,
+ * where log_10(2) = 0.30102999566398....  and I approximate
+ * this transcendental number as 146/485, to avoid the vagaries
+ * of floating-point.  The smallest nr_bits for which this
+ * approximation fails is 2621,
+ * 2621*log_10(2)=789.9996, but (2621*146+484)/485=790 (exactly).
+ * In cases like this, all that happens is we allocate one
+ * unneeded char for the output.  I add a "L" suffix to 146
+ * to make sure the computation is done as long ints, otherwise
+ * on a 16-bit int machine (allowed by ISO C) we would mangle
+ * this computation for bit-length of 224.  I'd like to put
+ * in a test for nr_bits < LONG_MAX/146, but don't know how
+ * to fail, other than crashing.
+ *
+ * In an April 2000 thread in comp.unix.programmer, with subject
+ * "integer -> string", I <LRDoolittle@lbl.gov> give the 28/93
+ * approximation, but overstate its accuracy: that version first
+ * fails when the number of bits is 289, not 671.
+ *
+ * This result does not include space for a trailing '\0', if any.
+*/
+__inline__ static int calc_dec_size(int nr_bits, int is_signed)
 {
 	int r;
 	if (is_signed) --nr_bits;
@@ -378,7 +379,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 	    use_count = 0;
 	    break;
 
-	      // new Verilog 2001 format specifiers...
+	      /* new Verilog 2001 format specifiers... */
 	  case 'l':
 	  case 'L':
 	  case 'u':
@@ -445,7 +446,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 
 	    { char* value_str = value.value.str;
 	      if (leading_zero==1){
-		      // Strip away all leading zeros from string
+		      /* Strip away all leading zeros from string */
 		    unsigned int i=0;
 		    while(i< (strlen(value_str)-1) && value_str[i]=='0')
 			  i++;
@@ -511,11 +512,12 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 	    }
 
 	    if (fsize==-1){
-		    // simple %d parameter, or %0d parameter.
-		    // Size is now determined by the width
-		    // of the vector or integer. If %0d, then
-		    // set the size to 0 so that the minimum
-		    // size is used.
+		    /* simple %d parameter, or %0d parameter.
+		     * Size is now determined by the width
+		     * of the vector or integer. If %0d, then
+		     * set the size to 0 so that the minimum
+		     * size is used.
+		     */
 		  fsize = (leading_zero==1)
 			? 0
 			: vpi_get_dec_size(argv[idx]);
@@ -871,7 +873,7 @@ static int get_default_format(char *name)
     int default_format;
 
     switch(name[ strlen(name)-1 ]){
-	//  writE/strobE or monitoR or displaY/fdisplaY or sformaT
+	/*  writE/strobE or monitoR or displaY/fdisplaY or sformaT */
     case 'e':
     case 'r':
     case 't':
@@ -1938,7 +1940,7 @@ static PLI_INT32 sys_swrite_compiletf(PLI_BYTE8 *name)
   }
 
   /* The first argument must be a register. */
-  reg = vpi_scan(argv);  //* This should never be zero. */
+  reg = vpi_scan(argv);  /* This should never be zero. */
   if (vpi_get(vpiType, reg) != vpiReg) {
     vpi_printf("ERROR: %s's first argument must be a register.\n", name);
     vpi_control(vpiFinish, 1);
@@ -1998,7 +2000,7 @@ static PLI_INT32 sys_sformat_compiletf(PLI_BYTE8 *name)
   }
 
   /* The first argument must be a register. */
-  arg = vpi_scan(argv);  //* This should never be zero. */
+  arg = vpi_scan(argv);  /* This should never be zero. */
   if (vpi_get(vpiType, arg) != vpiReg) {
     vpi_printf("ERROR: %s's first argument must be a register.\n", name);
     vpi_control(vpiFinish, 1);
@@ -2201,7 +2203,7 @@ void sys_display_register()
       s_cb_data cb_data;
       s_vpi_systf_data tf_data;
 
-      //============================== display
+      /*============================== display */
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$display";
       tf_data.calltf    = sys_display_calltf;
@@ -2234,7 +2236,7 @@ void sys_display_register()
       tf_data.user_data = "$displayb";
       vpi_register_systf(&tf_data);
 
-      //============================== write
+      /*============================== write */
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$write";
       tf_data.calltf    = sys_display_calltf;
@@ -2267,7 +2269,7 @@ void sys_display_register()
       tf_data.user_data = "$writeb";
       vpi_register_systf(&tf_data);
 
-      //============================== strobe
+      /*============================== strobe */
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$strobe";
       tf_data.calltf    = sys_strobe_calltf;
@@ -2300,7 +2302,7 @@ void sys_display_register()
       tf_data.user_data = "$strobeb";
       vpi_register_systf(&tf_data);
 
-      //============================== fstrobe
+      /*============================== fstrobe */
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fstrobe";
       tf_data.calltf    = sys_strobe_calltf;
@@ -2333,7 +2335,7 @@ void sys_display_register()
       tf_data.user_data = "$fstrobeb";
       vpi_register_systf(&tf_data);
 
-      //============================== monitor
+      /*============================== monitor */
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$monitor";
       tf_data.calltf    = sys_monitor_calltf;
@@ -2382,7 +2384,7 @@ void sys_display_register()
       tf_data.user_data = "$monitoroff";
       vpi_register_systf(&tf_data);
 
-      //============================== fdisplay
+      /*============================== fdisplay */
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fdisplay";
       tf_data.calltf    = sys_fdisplay_calltf;
@@ -2415,7 +2417,7 @@ void sys_display_register()
       tf_data.user_data = "$fdisplayb";
       vpi_register_systf(&tf_data);
 
-      //============================== fwrite
+      /*============================== fwrite */
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fwrite";
       tf_data.calltf    = sys_fdisplay_calltf;
@@ -2448,7 +2450,7 @@ void sys_display_register()
       tf_data.user_data = "$fwriteb";
       vpi_register_systf(&tf_data);
 
-      //============================== swrite
+      /*============================== swrite */
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$swrite";
       tf_data.calltf    = sys_swrite_calltf;
@@ -2489,7 +2491,7 @@ void sys_display_register()
       tf_data.user_data = "$sformat";
       vpi_register_systf(&tf_data);
 
-      //============================ timeformat
+      /*============================ timeformat */
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$timeformat";
       tf_data.calltf    = sys_timeformat_calltf;

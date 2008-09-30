@@ -34,9 +34,10 @@
 static PLI_INT32 sys_fopen_compiletf(PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-      assert(callh != 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle argv;
       vpiHandle arg;
+      assert(callh != 0);
+      argv = vpi_iterate(vpiArgument, callh);
 
 	/* Check that there is a file name argument and that it is a string. */
       if (argv == 0) {
@@ -68,11 +69,13 @@ static PLI_INT32 sys_fopen_compiletf(PLI_BYTE8 *name)
 	/* Make sure there are no extra arguments. */
       if (vpi_scan(argv) != 0) {
 	    char msg [64];
+	    unsigned argc;
+
 	    snprintf(msg, 64, "ERROR: %s line %d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
-	    unsigned argc = 1;
+	    argc = 1;
 	    while (vpi_scan(argv)) argc += 1;
 
 	    vpi_printf("%s %s takes at most two string arguments.\n",
@@ -95,6 +98,7 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
       unsigned idx;
       vpiHandle item = vpi_scan(argv);
       vpiHandle mode = vpi_scan(argv);
+      unsigned len;
 
 	/* Get the mode handle if it exists. */
       if (mode) {
@@ -177,7 +181,7 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
 	 * Verify that the file name is composed of only printable
 	 * characters.
 	 */
-      unsigned len = strlen(val.value.str);
+      len = strlen(val.value.str);
       for (idx = 0; idx < len; idx++) {
 	    if (! isprint(val.value.str[idx])) {
 		  char msg [64];
@@ -217,10 +221,11 @@ static PLI_INT32 sys_fopenrwa_calltf(PLI_BYTE8*name)
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       vpiHandle file = vpi_scan(argv);
-      vpi_free_object(argv);
-
       s_vpi_value val;
       char *mode;
+      unsigned idx, len;
+
+      vpi_free_object(argv);
 
 	/* Get the mode. */
       mode = name + strlen(name) - 1;
@@ -242,7 +247,7 @@ static PLI_INT32 sys_fopenrwa_calltf(PLI_BYTE8*name)
 	 * Verify that the file name is composed of only printable
 	 * characters.
 	 */
-      unsigned idx, len = strlen(val.value.str);
+      len = strlen(val.value.str);
       for (idx = 0; idx < len; idx++) {
 	    if (! isprint(val.value.str[idx])) {
 		  char msg [64];
@@ -272,11 +277,11 @@ static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       vpiHandle fd = vpi_scan(argv);
-      vpi_free_object(argv);
-      (void) name;  /* Not used! */
-
       s_vpi_value val;
       PLI_UINT32 fd_mcd;
+
+      vpi_free_object(argv);
+      (void) name;  /* Not used! */
 
       val.format = vpiIntVal;
       vpi_get_value(fd, &val);
@@ -406,11 +411,13 @@ static PLI_INT32 sys_fgets_compiletf(PLI_BYTE8*name)
 	/* Make sure there are no extra arguments. */
       if (vpi_scan(argv) != 0) {
 	    char msg [64];
+	    unsigned argc;
+
 	    snprintf(msg, 64, "ERROR: %s line %d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
-	    unsigned argc = 1;
+	    argc = 1;
 	    while (vpi_scan(argv)) argc += 1;
 
 	    vpi_printf("%s %s takes two arguments.\n", msg, name);
@@ -590,11 +597,13 @@ static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8*name)
 	/* Make sure there are no extra arguments. */
       if (vpi_scan(argv) != 0) {
 	    char msg [64];
+	    unsigned argc;
+
 	    snprintf(msg, 64, "ERROR: %s line %d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
-	    unsigned argc = 1;
+	    argc = 1;
 	    while (vpi_scan(argv)) argc += 1;
 
 	    vpi_printf("%s %s takes three arguments.\n", msg, name);
@@ -727,7 +736,7 @@ void sys_fileio_register()
 {
       s_vpi_systf_data tf_data;
 
-      //============================== fopen
+      /*============================== fopen */
       tf_data.type        = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname      = "$fopen";
@@ -737,7 +746,7 @@ void sys_fileio_register()
       tf_data.user_data   = "$fopen";
       vpi_register_systf(&tf_data);
 
-      //============================== fopenr
+      /*============================== fopenr */
       tf_data.type        = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname      = "$fopenr";
@@ -747,17 +756,17 @@ void sys_fileio_register()
       tf_data.user_data   = "$fopenr";
       vpi_register_systf(&tf_data);
 
-      //============================== fopenw
+      /*============================== fopenw */
       tf_data.tfname      = "$fopenw";
       tf_data.user_data   = "$fopenw";
       vpi_register_systf(&tf_data);
 
-      //============================== fopena
+      /*============================== fopena */
       tf_data.tfname      = "$fopena";
       tf_data.user_data   = "$fopena";
       vpi_register_systf(&tf_data);
 
-      //============================== fclose
+      /*============================== fclose */
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fclose";
       tf_data.calltf    = sys_fclose_calltf;
@@ -766,7 +775,7 @@ void sys_fileio_register()
       tf_data.user_data = "$fclose";
       vpi_register_systf(&tf_data);
 
-      //============================== fflush
+      /*============================== fflush */
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fflush";
       tf_data.calltf    = sys_fflush_calltf;
@@ -775,7 +784,7 @@ void sys_fileio_register()
       tf_data.user_data = "$fflush";
       vpi_register_systf(&tf_data);
 
-      //============================== fputc
+      /*============================== fputc */
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fputc";
       tf_data.calltf    = sys_fputc_calltf;
@@ -784,7 +793,7 @@ void sys_fileio_register()
       tf_data.user_data = "$fputc";
       vpi_register_systf(&tf_data);
 
-      //============================== fgetc
+      /*============================== fgetc */
       tf_data.type      = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$fgetc";
@@ -794,7 +803,7 @@ void sys_fileio_register()
       tf_data.user_data = "$fgetc";
       vpi_register_systf(&tf_data);
 
-      //============================== fgets
+      /*============================== fgets */
       tf_data.type      = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$fgets";
@@ -804,7 +813,7 @@ void sys_fileio_register()
       tf_data.user_data = "$fgets";
       vpi_register_systf(&tf_data);
 
-      //============================== ungetc
+      /*============================== ungetc */
       tf_data.type      = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$ungetc";
@@ -814,7 +823,7 @@ void sys_fileio_register()
       tf_data.user_data = "$ungetc";
       vpi_register_systf(&tf_data);
 
-      //============================== ftell
+      /*============================== ftell */
       tf_data.type      = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$ftell";
@@ -824,7 +833,7 @@ void sys_fileio_register()
       tf_data.user_data = "$ftell";
       vpi_register_systf(&tf_data);
 
-      //============================== fseek
+      /*============================== fseek */
       tf_data.type      = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$fseek";
@@ -834,7 +843,7 @@ void sys_fileio_register()
       tf_data.user_data = "$fseek";
       vpi_register_systf(&tf_data);
 
-      //============================== rewind
+      /*============================== rewind */
       tf_data.type      = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$rewind";
@@ -845,7 +854,7 @@ void sys_fileio_register()
       vpi_register_systf(&tf_data);
 
 /* $feof() is from 1364-2005. */
-      //============================== feof
+      /*============================== feof */
       tf_data.type      = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
       tf_data.tfname    = "$feof";

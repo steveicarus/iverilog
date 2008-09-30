@@ -216,11 +216,11 @@ static void show_lpm_arithmetic_pins(ivl_lpm_t net)
 static void show_lpm_abs(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
+      ivl_nexus_t nex;
 
       fprintf(out, "  LPM_ABS %s: <width=%u>\n",
 	      ivl_lpm_basename(net), width);
 
-      ivl_nexus_t nex;
       nex = ivl_lpm_q(net, 0);
       fprintf(out, "    Q: %s\n", ivl_nexus_name(ivl_lpm_q(net, 0)));
 
@@ -281,12 +281,13 @@ static void show_lpm_array(ivl_lpm_t net)
 static void show_lpm_cast_int(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
+      ivl_nexus_t q, a;
 
       fprintf(out, "  LPM_CAST_INT %s: <width=%u>\n",
 	      ivl_lpm_basename(net), width);
 
-      ivl_nexus_t q = ivl_lpm_q(net,0);
-      ivl_nexus_t a = ivl_lpm_data(net,0);
+      q = ivl_lpm_q(net,0);
+      a = ivl_lpm_data(net,0);
       fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
       fprintf(out, "    A: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
 
@@ -306,12 +307,13 @@ static void show_lpm_cast_int(ivl_lpm_t net)
 static void show_lpm_cast_real(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
+      ivl_nexus_t q, a;
 
       fprintf(out, "  LPM_CAST_REAL %s: <width=%u>\n",
 	      ivl_lpm_basename(net), width);
 
-      ivl_nexus_t q = ivl_lpm_q(net,0);
-      ivl_nexus_t a = ivl_lpm_data(net,0);
+      q = ivl_lpm_q(net,0);
+      a = ivl_lpm_data(net,0);
       fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
       fprintf(out, "    A: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
 
@@ -1088,7 +1090,7 @@ static void signal_nexus_const(ivl_signal_t sig,
 	    break;
 
 	  case IVL_VT_REAL:
-	    fprintf(out, "%lf", ivl_const_real(con));
+	    fprintf(out, "%f", ivl_const_real(con));
 	    break;
 
 	  default:
@@ -1486,12 +1488,13 @@ static void show_logic(ivl_net_logic_t net)
 static int show_scope(ivl_scope_t net, void*x)
 {
       unsigned idx;
+      char *is_auto;
 
       fprintf(out, "scope: %s (%u parameters, %u signals, %u logic)",
 	      ivl_scope_name(net), ivl_scope_params(net),
 	      ivl_scope_sigs(net), ivl_scope_logs(net));
 
-      char *is_auto = ivl_scope_is_auto(net) ? "automatic " : "";
+      is_auto = ivl_scope_is_auto(net) ? "automatic " : "";
       switch (ivl_scope_type(net)) {
 	  case IVL_SCT_MODULE:
 	    fprintf(out, " module %s", ivl_scope_tname(net));

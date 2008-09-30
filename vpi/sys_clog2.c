@@ -29,8 +29,9 @@
  */
 static unsigned is_numeric_obj(vpiHandle obj)
 {
-    assert(obj);
     unsigned rtn = 0;
+
+    assert(obj);
 
     switch(vpi_get(vpiType, obj)) {
       case vpiConstant:
@@ -60,10 +61,11 @@ static unsigned is_numeric_obj(vpiHandle obj)
 static PLI_INT32 sys_clog2_compiletf(PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv, arg;
+
       assert(callh != 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle arg;
-      (void) name;  // Not used!
+      argv = vpi_iterate(vpiArgument, callh);
+      (void) name;  /* Not used! */
 
 	/* We must have an argument. */
       if (argv == 0) {
@@ -86,11 +88,13 @@ static PLI_INT32 sys_clog2_compiletf(PLI_BYTE8 *name)
 	/* We can have a maximum of one argument. */
       if (vpi_scan(argv) != 0) {
 	    char msg [64];
+	    unsigned argc;
+
 	    snprintf(msg, 64, "ERROR: %s line %d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
-	    unsigned argc = 1;
+	    argc = 1;
 	    while (vpi_scan(argv)) argc += 1;
 
             vpi_printf("%s $clog2 takes at most one argument.\n", msg);
@@ -109,7 +113,7 @@ static PLI_INT32 sys_clog2_calltf(PLI_BYTE8 *name)
       vpiHandle arg;
       s_vpi_value val;
       s_vpi_vecval vec;
-      (void) name;  // Not used!/
+      (void) name;  /* Not used! */
 
 	/* Get the argument. */
       arg = vpi_scan(argv);

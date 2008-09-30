@@ -36,10 +36,11 @@
  */
 static PLI_INT32 simparam_compiletf(PLI_BYTE8 *name_ext)
 {
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle callh, argv, arg;
+
+      callh = vpi_handle(vpiSysTfCall, 0);
       assert(callh != 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle arg;
+      argv = vpi_iterate(vpiArgument, callh);
 
 	/* We must have at least one argument. */
       if (argv == 0) {
@@ -87,11 +88,13 @@ static PLI_INT32 simparam_compiletf(PLI_BYTE8 *name_ext)
 	/* We can have a maximum of two arguments. */
       if (vpi_scan(argv) != 0) {
 	    char msg [64];
+	    unsigned argc;
+
 	    snprintf(msg, 64, "ERROR: %s line %d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
-	    unsigned argc = 1;
+	    argc = 1;
 	    while (vpi_scan(argv)) argc += 1;
 
             vpi_printf("%s $simparam%s takes at most two arguments.\n",
@@ -250,7 +253,7 @@ static PLI_INT32 simparam_str_sizetf(PLI_BYTE8 *name_ext)
 {
       (void) name_ext;  /* Not used! */
 
-      return MAX_STRING_RESULT;  // 128 characters max!
+      return MAX_STRING_RESULT;  /* 128 characters max! */
 }
 
 /*

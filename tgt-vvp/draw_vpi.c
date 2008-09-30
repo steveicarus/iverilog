@@ -167,6 +167,8 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 
 	  case IVL_EX_SELECT: {
 	    ivl_expr_t vexpr = ivl_expr_oper1(expr);
+	    ivl_expr_t bexpr;
+
 	    assert(vexpr);
 
 	      /* This code is only for signals or selects. */
@@ -177,7 +179,7 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 	      /* Add &APV<> code here when it is finished. */
 	    if (ivl_expr_oper1(vexpr)) return 0;
 
-	    ivl_expr_t bexpr = ivl_expr_oper2(expr);
+	    bexpr = ivl_expr_oper2(expr);
 	    assert(bexpr);
 
 	      /* This is a constant bit/part select. */
@@ -339,9 +341,10 @@ static void draw_vpi_taskfunc_args(const char*call_string,
       fprintf(vvp_out, "%s", call_string);
 
       for (idx = 0 ;  idx < parm_count ;  idx += 1) {
+	    struct args_info*ptr;
+
 	    fprintf(vvp_out, ", %s", args[idx].text);
 	    free(args[idx].text);
-	    struct args_info*ptr;
 	      /* Clear the nested children vectors. */
 	    for (ptr = &args[idx]; ptr != NULL; ptr = ptr->child) {
 		  if (ptr->vec_flag) {

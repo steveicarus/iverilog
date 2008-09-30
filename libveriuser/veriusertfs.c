@@ -366,7 +366,7 @@ PLI_INT32 tf_isetrealdelay(double dly, void*obj)
       s_cb_data cb;
       s_vpi_time ti = {vpiSimTime};
 
-      // Scale delay to SimTime
+      /* Scale delay to SimTime */
       ivl_u64_t delay = ((dly
 			 * pow(10, tf_gettimeprecision() - tf_gettimeunit()))
 			 + 0.5);

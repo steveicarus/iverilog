@@ -46,7 +46,7 @@ static const char*version_string =
 FILE*vvp_out = 0;
 int vvp_errors = 0;
 
-inline static void draw_execute_header(ivl_design_t des)
+__inline__ static void draw_execute_header(ivl_design_t des)
 {
 #if !defined(__MINGW32__)
       const char*cp = ivl_design_flag(des, "VVP_EXECUTABLE");
@@ -57,7 +57,7 @@ inline static void draw_execute_header(ivl_design_t des)
 #endif
 }
 
-inline static void draw_module_declarations(ivl_design_t des)
+__inline__ static void draw_module_declarations(ivl_design_t des)
 {
       const char*cp = ivl_design_flag(des, "VPI_MODULE_LIST");
 
@@ -84,6 +84,8 @@ int target_design(ivl_design_t des)
       int rc;
       ivl_scope_t *roots;
       unsigned nroots, i;
+      unsigned size;
+      unsigned idx;
       const char*path = ivl_design_flag(des, "-o");
       assert(path);
 
@@ -123,10 +125,9 @@ int target_design(ivl_design_t des)
       rc = ivl_design_process(des, draw_process, 0);
 
         /* Dump the file name table. */
-      unsigned size = ivl_file_table_size();
+      size = ivl_file_table_size();
       fprintf(vvp_out, "# The file index is used to find the file name in "
                        "the following table.\n:file_names %u;\n", size);
-      unsigned idx;
       for (idx = 0; idx < size; idx++) {
 	    fprintf(vvp_out, "    \"%s\";\n", ivl_file_table_item(idx));
       }

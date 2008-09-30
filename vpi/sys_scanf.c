@@ -46,7 +46,7 @@ static int byte_getc(struct byte_source*byte)
       }
 
       ch = fgetc(byte->fd);
-//      fprintf(stderr, "byte_getc --> '%c' (%d)\n", ch, ch);
+/*      fprintf(stderr, "byte_getc --> '%c' (%d)\n", ch, ch); */
       return ch;
 }
 
@@ -594,7 +594,7 @@ void sys_scanf_register()
 {
       s_vpi_systf_data tf_data;
 
-      //============================== fscanf
+      /*============================== fscanf */
       tf_data.type      = vpiSysFunc;
       tf_data.tfname    = "$fscanf";
       tf_data.calltf    = sys_fscanf_calltf;
@@ -603,7 +603,7 @@ void sys_scanf_register()
       tf_data.user_data = "$fscanf";
       vpi_register_systf(&tf_data);
 
-      //============================== sscanf
+      /*============================== sscanf */
       tf_data.type      = vpiSysFunc;
       tf_data.tfname    = "$sscanf";
       tf_data.calltf    = sys_sscanf_calltf;

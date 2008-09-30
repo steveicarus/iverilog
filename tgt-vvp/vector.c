@@ -41,23 +41,23 @@ static struct allocation_score_s {
 /* This is the largest bit to have lookaside values. */
 static unsigned lookaside_top = 0;
 
-static inline ivl_expr_t peek_exp(unsigned addr)
+static __inline__ ivl_expr_t peek_exp(unsigned addr)
 {
       return allocation_map[addr].exp;
 }
 
-static inline unsigned peek_exp_bit(unsigned addr)
+static __inline__ unsigned peek_exp_bit(unsigned addr)
 {
       return allocation_map[addr].exp_bit;
 }
 
-static inline void set_exp(unsigned addr, ivl_expr_t exp, unsigned ebit)
+static __inline__ void set_exp(unsigned addr, ivl_expr_t exp, unsigned ebit)
 {
       allocation_map[addr].exp = exp;
       allocation_map[addr].exp_bit = ebit;
 }
 
-static inline void set_sig(unsigned addr, ivl_signal_t exp, unsigned sig_word, unsigned ebit)
+static __inline__ void set_sig(unsigned addr, ivl_signal_t exp, unsigned sig_word, unsigned ebit)
 {
       allocation_map[addr].sig = exp;
       allocation_map[addr].sig_word = sig_word;

@@ -146,12 +146,14 @@ static struct vvp_nexus_data*new_nexus_data()
 
 static int nexus_drive_is_strength_aware(ivl_nexus_ptr_t nptr)
 {
+      ivl_net_logic_t log;
+
       if (ivl_nexus_ptr_drive0(nptr) != IVL_DR_STRONG)
 	    return 1;
       if (ivl_nexus_ptr_drive1(nptr) != IVL_DR_STRONG)
 	    return 1;
 
-      ivl_net_logic_t log = ivl_nexus_ptr_log(nptr);
+      log = ivl_nexus_ptr_log(nptr);
       if (log != 0) {
 	      /* These logic gates are able to generate unusual
 	         strength values and so their outputs are considered
@@ -325,9 +327,11 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
       cptr = ivl_nexus_ptr_con(nptr);
       if (cptr) {
+	    char *result = 0;
+	    ivl_expr_t d_rise, d_fall, d_decay;
+
 	      /* Constants should have exactly 1 pin, with a literal value. */
 	    assert(nptr_pin == 0);
-	    char *result = 0;
 
 	    switch (ivl_const_type(cptr)) {
 		case IVL_VT_LOGIC:
@@ -353,17 +357,18 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  break;
 	    }
 
-	    ivl_expr_t d_rise = ivl_const_delay(cptr, 0);
-	    ivl_expr_t d_fall = ivl_const_delay(cptr, 1);
-	    ivl_expr_t d_decay = ivl_const_delay(cptr, 2);
+	    d_rise = ivl_const_delay(cptr, 0);
+	    d_fall = ivl_const_delay(cptr, 1);
+	    d_decay = ivl_const_delay(cptr, 2);
 
 	      /* We have a delayed constant, so we need to build some code. */
 	    if (d_rise != 0) {
+		  char tmp[128];
 		  fprintf(vvp_out, "L_%p/d .functor BUFZ 1, %s, "
 		                   "C4<0>, C4<0>, C4<0>;\n", cptr, result);
 		  free(result);
 
-		    // Is this a fixed or variable delay?
+		    /* Is this a fixed or variable delay? */
 		  if (number_is_immediate(d_rise, 64, 0) &&
 		      number_is_immediate(d_fall, 64, 0) &&
 		      number_is_immediate(d_decay, 64, 0)) {
@@ -394,7 +399,6 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 			fprintf(vvp_out, ", v%p_0;\n", sig);
 		  }
 
-		  char tmp[128];
 		  snprintf(tmp, sizeof tmp, "L_%p", cptr);
 		  result = strdup(tmp);
 	    }

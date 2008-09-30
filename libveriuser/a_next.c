@@ -55,7 +55,7 @@ handle acc_next(PLI_INT32 *type, handle scope, handle prev)
        * rescan all the items up to the previous one, then return
        * the next one.
       */
-      iter = vpi_iterate(vpiScope, scope);	// ICARUS extension
+      iter = vpi_iterate(vpiScope, scope);	/* ICARUS extension */
       if (prev) {
 	    while ((hand = vpi_scan(iter))) {
 		  if (hand == prev) break;

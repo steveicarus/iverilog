@@ -28,13 +28,14 @@
 static void function_argument_logic(ivl_signal_t port, ivl_expr_t exp)
 {
       struct vector_info res;
+      unsigned pwidth;
 
 	/* ports cannot be arrays. */
       assert(ivl_signal_dimensions(port) == 0);
 
       res = draw_eval_expr_wid(exp, ivl_signal_width(port), 0);
         /* We could have extra bits so only select the ones we need. */
-      unsigned pwidth = ivl_signal_width(port);
+      pwidth = ivl_signal_width(port);
       fprintf(vvp_out, "    %%set/v v%p_0, %u, %u;\n", port, res.base,
               (res.wid > pwidth) ? pwidth : res.wid);
 
@@ -87,6 +88,7 @@ struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
       ivl_scope_t def = ivl_expr_def(exp);
       ivl_signal_t retval = ivl_scope_port(def, 0);
       struct vector_info res;
+      unsigned load_wid;
 
         /* If this is an automatic function, allocate the local storage. */
       if (ivl_scope_is_auto(def)) {
@@ -127,7 +129,7 @@ struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
 
       assert(res.base != 0);
 
-      unsigned load_wid = swid;
+      load_wid = swid;
       if (load_wid > ivl_signal_width(retval))
 	    load_wid = ivl_signal_width(retval);
 

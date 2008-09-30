@@ -353,6 +353,8 @@ static int t_compile()
 
 #ifdef __MINGW32__
       unsigned ncmd_start = ncmd;
+#else
+      int rtn;
 #endif
 
 	/* Build the ivl command and pipe it to the preprocessor. */
@@ -416,7 +418,7 @@ static int t_compile()
       free(cmd);
       return rc;
 #else
-      int rtn = 0;
+      rtn = 0;
       if (rc != 0) {
 	    if (rc == 127) {
 		  fprintf(stderr, "Failed to execute: %s\n", cmd);

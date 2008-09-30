@@ -33,16 +33,19 @@
 static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
 {
       unsigned width = ivl_lpm_width(net);
+      ivl_expr_t d_rise, d_fall, d_decay;
+      const char*dly;
+      const char* input[3];
 
 	/* Only support A-B muxes in this function. */
       assert(ivl_lpm_size(net) == 2);
       assert(ivl_lpm_selects(net) == 1);
 
-      ivl_expr_t d_rise = ivl_lpm_delay(net, 0);
-      ivl_expr_t d_fall = ivl_lpm_delay(net, 1);
-      ivl_expr_t d_decay = ivl_lpm_delay(net, 2);
+      d_rise = ivl_lpm_delay(net, 0);
+      d_fall = ivl_lpm_delay(net, 1);
+      d_decay = ivl_lpm_delay(net, 2);
 
-      const char*dly = "";
+      dly = "";
       if (d_rise != 0) {
 	    dly = "/d";
 	    if (number_is_immediate(d_rise, 64, 0) &&
@@ -74,7 +77,6 @@ static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
 	    }
       }
 
-      const char* input[3];
       input[0] = draw_net_input(ivl_lpm_data(net,0));
       input[1] = draw_net_input(ivl_lpm_data(net,1));
       input[2] = draw_net_input(ivl_lpm_select(net));

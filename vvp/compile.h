@@ -275,8 +275,8 @@ class resolv_list_s {
       const char*label() const { return label_; }
 
     private:
-      friend void ::resolv_submit(struct resolv_list_s*cur);
-      friend void ::compile_cleanup(void);
+      friend void resolv_submit(struct resolv_list_s*cur);
+      friend void compile_cleanup(void);
 
       char*label_;
       struct resolv_list_s*next;

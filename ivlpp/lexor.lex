@@ -698,7 +698,7 @@ static int is_defined(const char*name)
  * These variables are also used for storing the actual arguments when
  * a macro is instantiated.
  */
-#define MAX_DEF_ARG 256 // allows argument IDs to be stored in a single char
+#define MAX_DEF_ARG 256 /* allows argument IDs to be stored in a single char */
 
 #define DEF_BUF_CHUNK 256
 
@@ -707,14 +707,14 @@ static int   def_buf_size = 0;
 static int   def_buf_free = 0;
 
 static int   def_argc = 0;
-static int   def_argo[MAX_DEF_ARG];  // offset of first character in arg
-static int   def_argl[MAX_DEF_ARG];  // length of arg string.
+static int   def_argo[MAX_DEF_ARG];  /* offset of first character in arg */
+static int   def_argl[MAX_DEF_ARG];  /* length of arg string. */
 
 /*
  * Return a pointer to the start of argument 'arg'. Returned pointers
  * may go stale after a call to def_buf_grow_to_fit.
  */
-static inline char* def_argv(int arg)
+static /* inline */ char* def_argv(int arg)
 {
     return def_buf + def_argo[arg];
 }

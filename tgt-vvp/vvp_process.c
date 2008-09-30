@@ -609,7 +609,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       ivl_signal_t sig;
       unsigned nevents = ivl_stmt_nevent(net);
 
-	// If we have an event control build the control structure.
+	/* If we have an event control build the control structure. */
       if (nevents) {
 	    assert(del == 0);
 
@@ -679,12 +679,12 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 
 	for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
 	      unsigned bit_limit = wid - cur_rbit;
+	      unsigned bidx;
+
 	      lval = ivl_stmt_lval(net, lidx);
 
 	      if (bit_limit > ivl_lval_width(lval))
 		    bit_limit = ivl_lval_width(lval);
-
-	      unsigned bidx;
 
 	      bidx = res.base < 4? res.base : (res.base+cur_rbit);
 	      assign_to_lvector(lval, bidx, delay, del, bit_limit, nevents);
@@ -940,6 +940,8 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 static void force_real_to_lval(ivl_statement_t net, int res)
 {
       const char*command_name;
+      ivl_lval_t lval;
+      ivl_signal_t lsig;
 
       switch (ivl_statement_type(net)) {
 	  case IVL_ST_CASSIGN:
@@ -955,8 +957,8 @@ static void force_real_to_lval(ivl_statement_t net, int res)
       }
 
       assert(ivl_stmt_lvals(net) == 1);
-      ivl_lval_t lval = ivl_stmt_lval(net, 0);
-      ivl_signal_t lsig = ivl_lval_sig(lval);
+      lval = ivl_stmt_lval(net, 0);
+      lsig = ivl_lval_sig(lval);
 
       assert(ivl_lval_width(lval) == 1);
       assert(ivl_lval_part_off(lval) == 0);
@@ -1041,10 +1043,11 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 
 static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 {
-      ivl_signal_t rsig;;
+      ivl_signal_t rsig;
       ivl_lval_t lval;
       ivl_signal_t lsig;
       const char*command_name;
+      ivl_expr_t part_off_ex;
 
       ivl_expr_t lword_idx, rword_idx;
       unsigned long use_lword = 0, use_rword = 0;
@@ -1072,7 +1075,7 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 
 	/* We do not currently support driving a signal to a bit or
 	 * part select (this could give us multiple drivers). */
-      ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
+      part_off_ex = ivl_lval_part_off(lval);
       if (ivl_signal_width(lsig) > ivl_signal_width(rsig) ||
           (part_off_ex && get_number_immediate(part_off_ex) != 0)) {
 	    fprintf(stderr, "%s:%u: vvp-tgt sorry: cannot %s signal to "
@@ -1139,9 +1142,13 @@ static int show_stmt_cassign(ivl_statement_t net)
 static int show_stmt_deassign(ivl_statement_t net)
 {
       ivl_signal_t sig = ivl_lval_sig(ivl_stmt_lval(net, 0));
+      unsigned lidx;
+
       if (sig && ivl_signal_data_type(sig) == IVL_VT_REAL) {
+	    ivl_lval_t lval;
+
 	    assert(ivl_stmt_lvals(net) == 1);
-	    ivl_lval_t lval = ivl_stmt_lval(net, 0);
+	    lval = ivl_stmt_lval(net, 0);
 	    assert(ivl_lval_width(lval) == 1);
 	    assert(ivl_lval_part_off(lval) == 0);
 	    assert(ivl_lval_idx(lval) == 0);
@@ -1150,21 +1157,22 @@ static int show_stmt_deassign(ivl_statement_t net)
 	    return 0;
       }
 
-      unsigned lidx;
-
       for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
 	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
 	    ivl_signal_t lsig = ivl_lval_sig(lval);
 
 	    ivl_expr_t word_idx = ivl_lval_idx(lval);
 	    unsigned long use_word = 0;
+	    unsigned use_wid;
+	    ivl_expr_t part_off_ex;
+	    unsigned part_off;
 
 	    assert(lsig != 0);
 	    assert(ivl_lval_mux(lval) == 0);
 
-	    unsigned use_wid = ivl_lval_width(lval);
-	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
-	    unsigned part_off = 0;
+	    use_wid = ivl_lval_width(lval);
+	    part_off_ex = ivl_lval_part_off(lval);
+	    part_off = 0;
 	    if (part_off_ex != 0) {
 		  assert(number_is_immediate(part_off_ex, 64, 0));
 		  part_off = get_number_immediate(part_off_ex);
@@ -1425,11 +1433,14 @@ static int show_stmt_noop(ivl_statement_t net)
 static int show_stmt_release(ivl_statement_t net)
 {
       ivl_signal_t sig = ivl_lval_sig(ivl_stmt_lval(net, 0));
+      unsigned lidx;
+
       if (sig && ivl_signal_data_type(sig) == IVL_VT_REAL) {
 	    unsigned type = 0;
+	    ivl_lval_t lval;
 
 	    assert(ivl_stmt_lvals(net) == 1);
-	    ivl_lval_t lval = ivl_stmt_lval(net, 0);
+	    lval = ivl_stmt_lval(net, 0);
 	    assert(ivl_lval_width(lval) == 1);
 	    assert(ivl_lval_part_off(lval) == 0);
 	    assert(ivl_lval_idx(lval) == 0);
@@ -1440,8 +1451,6 @@ static int show_stmt_release(ivl_statement_t net)
 	    return 0;
       }
 
-      unsigned lidx;
-
       for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
 	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
 	    ivl_signal_t lsig = ivl_lval_sig(lval);
@@ -1449,12 +1458,16 @@ static int show_stmt_release(ivl_statement_t net)
 
 	    ivl_expr_t word_idx = ivl_lval_idx(lval);
 	    unsigned long use_word = 0;
+	    unsigned use_wid;
+	    ivl_expr_t part_off_ex;
+	    unsigned part_off;
+
 	    assert(lsig != 0);
 	    assert(ivl_lval_mux(lval) == 0);
 
-	    unsigned use_wid = ivl_lval_width(lval);
-	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
-	    unsigned part_off = 0;
+	    use_wid = ivl_lval_width(lval);
+	    part_off_ex = ivl_lval_part_off(lval);
+	    part_off = 0;
 	    if (part_off_ex != 0) {
 		  assert(number_is_immediate(part_off_ex, 64, 0));
 		  part_off = get_number_immediate(part_off_ex);

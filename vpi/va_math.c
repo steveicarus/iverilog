@@ -163,15 +163,19 @@ vpiHandle va_process_argument(vpiHandle callh, const char *name,
  */
 static PLI_INT32 va_single_argument_compiletf(PLI_BYTE8 *ud)
 {
-    assert(ud != 0);
-    vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-    assert(callh != 0);
-    vpiHandle argv = vpi_iterate(vpiArgument, callh);
-    vpiHandle arg;
-    t_single_data *data = (t_single_data *) ud;
-    const char *name = data->name;
+    vpiHandle callh, argv, arg;
+    t_single_data *data;
+    const char *name;
+    va_single_t* fun_data;
 
-    va_single_t* fun_data = malloc(sizeof(va_single_t));
+    assert(ud != 0);
+    callh = vpi_handle(vpiSysTfCall, 0);
+    assert(callh != 0);
+    argv = vpi_iterate(vpiArgument, callh);
+    data = (t_single_data *) ud;
+    name = data->name;
+
+    fun_data = malloc(sizeof(va_single_t));
 
     /* Check that malloc gave use some memory. */
     if (fun_data == 0) {
@@ -212,10 +216,12 @@ static PLI_INT32 va_single_argument_calltf(PLI_BYTE8 *ud)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     s_vpi_value val;
+    va_single_t* fun_data;
+
     (void) ud;  /* Not used! */
 
     /* Retrieve the function and argument data. */
-    va_single_t* fun_data = vpi_get_userdata(callh);
+    fun_data = vpi_get_userdata(callh);
 
     /* Calculate the result */
     val.format = vpiRealVal;
@@ -234,15 +240,19 @@ static PLI_INT32 va_single_argument_calltf(PLI_BYTE8 *ud)
  */
 static PLI_INT32 va_double_argument_compiletf(PLI_BYTE8 *ud)
 {
-    assert(ud != 0);
-    vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-    assert(callh != 0);
-    vpiHandle argv = vpi_iterate(vpiArgument, callh);
-    vpiHandle arg;
-    t_double_data *data = (t_double_data *) ud;
-    const char *name = data->name;
+    vpiHandle callh, argv, arg;
+    t_double_data *data;
+    const char *name;
+    va_double_t* fun_data;
 
-    va_double_t* fun_data = malloc(sizeof(va_double_t));
+    assert(ud != 0);
+    callh = vpi_handle(vpiSysTfCall, 0);
+    assert(callh != 0);
+    argv = vpi_iterate(vpiArgument, callh);
+    data = (t_double_data *) ud;
+    name = data->name;
+
+    fun_data = malloc(sizeof(va_double_t));
 
     /* Check that malloc gave use some memory. */
     if (fun_data == 0) {
@@ -291,10 +301,12 @@ static PLI_INT32 va_double_argument_calltf(PLI_BYTE8 *ud)
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     s_vpi_value val;
     double first_arg;
+    va_double_t* fun_data;
+
     (void) ud;  /* Not used! */
 
     /* Retrieve the function and argument data. */
-    va_double_t* fun_data = vpi_get_userdata(callh);
+    fun_data = vpi_get_userdata(callh);
 
     /* Calculate the result */
     val.format = vpiRealVal;

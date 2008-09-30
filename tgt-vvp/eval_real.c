@@ -72,9 +72,12 @@ static int draw_binary_real(ivl_expr_t exp)
 	  case 'X':
 	    {
 	    struct vector_info vi;
+	    int res;
+	    const char*sign_flag;
+
 	    vi = draw_eval_expr(exp, STUFF_OK_XZ);
-	    int res = allocate_word();
-	    const char*sign_flag = ivl_expr_signed(exp)? "/s" : "";
+	    res = allocate_word();
+	    sign_flag = ivl_expr_signed(exp)? "/s" : "";
 	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 		    sign_flag, res, vi.base, vi.wid);
 
@@ -113,7 +116,7 @@ static int draw_binary_real(ivl_expr_t exp)
 	    fprintf(vvp_out, "    %%pow/wr %d, %d;\n", l, r);
 	    break;
 
-	  case 'm': { // min(l,r)
+	  case 'm': { /* min(l,r) */
 		int lab_out = local_count++;
 		int lab_r = local_count++;
 		  /* If r is NaN, the go out and accept l as result. */
@@ -131,7 +134,7 @@ static int draw_binary_real(ivl_expr_t exp)
 		break;
 	  }
 
-	  case 'M': { // max(l,r)
+	  case 'M': { /* max(l,r) */
 		int lab_out = local_count++;
 		int lab_r = local_count++;
 		  /* If r is NaN, the go out and accept l as result. */
@@ -451,14 +454,20 @@ static int draw_ternary_real(ivl_expr_t exp)
 
 static int draw_unary_real(ivl_expr_t exp)
 {
+      ivl_expr_t sube;
+      int sub;
+
 	/* If the opcode is a ~ then the sub expression must not be a
 	 * real expression, so use vector evaluation and then convert
 	 * that result to a real value. */
       if (ivl_expr_opcode(exp) == '~') {
 	    struct vector_info vi;
+	    int res;
+	    const char*sign_flag;
+
 	    vi = draw_eval_expr(exp, STUFF_OK_XZ);
-	    int res = allocate_word();
-	    const char*sign_flag = ivl_expr_signed(exp)? "/s" : "";
+	    res = allocate_word();
+	    sign_flag = ivl_expr_signed(exp)? "/s" : "";
 	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 		    sign_flag, res, vi.base, vi.wid);
 
@@ -470,9 +479,12 @@ static int draw_unary_real(ivl_expr_t exp)
 
       if (ivl_expr_opcode(exp) == '!') {
 	    struct vector_info vi;
+	    int res;
+	    const char*sign_flag;
+
 	    vi = draw_eval_expr(exp, STUFF_OK_XZ);
-	    int res = allocate_word();
-	    const char*sign_flag = ivl_expr_signed(exp)? "/s" : "";
+	    res = allocate_word();
+	    sign_flag = ivl_expr_signed(exp)? "/s" : "";
 	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 		    sign_flag, res, vi.base, vi.wid);
 
@@ -482,9 +494,8 @@ static int draw_unary_real(ivl_expr_t exp)
 	    return res;
       }
 
-      ivl_expr_t sube = ivl_expr_oper1(exp);
-
-      int sub = draw_eval_real(sube);
+      sube = ivl_expr_oper1(exp);
+      sub = draw_eval_real(sube);
 
       if (ivl_expr_opcode(exp) == '+')
 	    return sub;

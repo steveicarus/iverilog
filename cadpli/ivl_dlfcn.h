@@ -35,16 +35,16 @@ typedef shl_t ivl_dll_t;
 #endif
 
 #if defined(__MINGW32__)
-static inline ivl_dll_t ivl_dlopen(const char *name)
+static __inline__ ivl_dll_t ivl_dlopen(const char *name)
 { return (void *)LoadLibrary(name); }
 
-static inline void *ivl_dlsym(ivl_dll_t dll, const char *nm)
+static __inline__ void *ivl_dlsym(ivl_dll_t dll, const char *nm)
 { return (void *)GetProcAddress((HINSTANCE)dll,nm);}
 
-static inline void ivl_dlclose(ivl_dll_t dll)
+static __inline__ void ivl_dlclose(ivl_dll_t dll)
 { (void)FreeLibrary((HINSTANCE)dll);}
 
-static inline const char *dlerror(void)
+static __inline__ const char *dlerror(void)
 {
   static char msg[256];
   unsigned long err = GetLastError();
@@ -61,10 +61,10 @@ static inline const char *dlerror(void)
 }
 
 #elif defined(HAVE_DLFCN_H)
-static inline ivl_dll_t ivl_dlopen(const char*name)
+static __inline__ ivl_dll_t ivl_dlopen(const char*name)
 { return dlopen(name,RTLD_LAZY); }
 
-static inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
+static __inline__ void* ivl_dlsym(ivl_dll_t dll, const char*nm)
 {
       void*sym = dlsym(dll, nm);
 	/* Not found? try without the leading _ */
@@ -73,24 +73,24 @@ static inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
       return sym;
 }
 
-static inline void ivl_dlclose(ivl_dll_t dll)
+static __inline__ void ivl_dlclose(ivl_dll_t dll)
 { dlclose(dll); }
 
 #elif defined(HAVE_DL_H)
-static inline ivl_dll_t ivl_dlopen(const char*name)
+static __inline__ ivl_dll_t ivl_dlopen(const char*name)
 { return shl_load(name, BIND_IMMEDIATE, 0); }
 
-static inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
+static __inline__ void* ivl_dlsym(ivl_dll_t dll, const char*nm)
 {
       void*sym;
       int rc = shl_findsym(&dll, nm, TYPE_PROCEDURE, &sym);
       return (rc == 0) ? sym : 0;
 }
 
-static inline void ivl_dlclose(ivl_dll_t dll)
+static __inline__ void ivl_dlclose(ivl_dll_t dll)
 { shl_unload(dll); }
 
-static inline const char*dlerror(void)
+static __inline__ const char*dlerror(void)
 { return strerror( errno ); }
 #endif
 

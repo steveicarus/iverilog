@@ -139,6 +139,7 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 
 		unsigned word = 0;
 		if (ivl_signal_dimensions(sig) > 0) {
+		      ivl_expr_t ixe;
 
 			/* Detect the special case that this is a
 			   variable array. In this case, the ix/getv
@@ -152,7 +153,7 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 			    break;
 		      }
 
-		      ivl_expr_t ixe = ivl_expr_oper1(expr);
+		      ixe = ivl_expr_oper1(expr);
 		      if (number_is_immediate(ixe, 8*sizeof(unsigned long), 0))
 		            word = get_number_immediate(ixe);
 		      else {
@@ -938,6 +939,8 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
       ivl_expr_t re = ivl_expr_oper2(exp);
+      struct vector_info lv;
+      struct vector_info rv;
 
       if (ivl_expr_opcode(exp) == '&') {
 	    if (number_is_immediate(re, IMM_WID, 0) && !number_is_unknown(re))
@@ -945,9 +948,6 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
 	    if (number_is_immediate(le, IMM_WID, 0) && !number_is_unknown(le))
 		  return draw_logic_immediate(exp, re, le, wid);
       }
-
-      struct vector_info lv;
-      struct vector_info rv;
 
       lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
       rv = draw_eval_expr_wid(re, wid, STUFF_OK_XZ);
@@ -1625,6 +1625,9 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
       unsigned nwid;
       struct vector_info res;
       const char*bits = ivl_expr_bits(exp);
+      unsigned long val;
+      unsigned val_bits;
+      unsigned val_addr;
 
       res.wid  = wid;
 
@@ -1687,9 +1690,9 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 	   destination. Use the %mov to handle the remaining general
 	   bits. */
       idx = 0;
-      unsigned long val = 0;
-      unsigned val_bits = 0;
-      unsigned val_addr = res.base;
+      val = 0;
+      val_bits = 0;
+      val_addr = res.base;
       while (idx < nwid) {
 	    char src = 0;
 	    switch (bits[idx]) {
@@ -1719,8 +1722,9 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 	    }
 
 	    if (src != 0) {
-		  assert(val_bits == 0);
 		  unsigned cnt;
+
+		  assert(val_bits == 0);
 		  for (cnt = 1 ; idx+cnt < nwid ; cnt += 1)
 			if (bits[idx+cnt] != bits[idx])
 			      break;
@@ -2031,9 +2035,10 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 
 
       if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
+	    int tmp;
 
 	    assert(add_index < 0);
-	    int tmp = allocate_word();
+	    tmp = allocate_word();
 	    fprintf(vvp_out, "    %%load/wr %d, v%p_%u;\n", tmp, sig, word);
 	    fprintf(vvp_out, "    %%cvt/vr %u, %d, %u;\n", res.base, tmp, res.wid);
 	    clr_word(tmp);
@@ -2142,6 +2147,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 
 	/* Use this word of the signal. */
       unsigned use_word = 0;
+      unsigned use_wid;
 
 	/* If this is an access to an array, try to get the index as a
 	   constant. If it is (and the array is not a reg array then
@@ -2190,7 +2196,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
       res.wid = wid;
       assert(res.base);
 
-      unsigned use_wid = res.wid;
+      use_wid = res.wid;
       if (use_wid > bit_wid)
 	    use_wid = bit_wid;
 

@@ -1257,7 +1257,7 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  */
 
 extern unsigned    ivl_lval_width(ivl_lval_t net);
-extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net); // XXXX Obsolete?
+extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net); /* XXXX Obsolete? */
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_part_off(ivl_lval_t net);
 extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);

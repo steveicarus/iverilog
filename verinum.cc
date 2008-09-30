@@ -23,6 +23,22 @@
 # include  <iostream>
 # include  <cassert>
 # include  <math.h> // Needed to get pow for as_double().
+# include  <stdio.h> // Needed to get snprintf for as_string().
+
+#if !defined(HAVE_LROUND)
+/*
+ * If the system doesn't provide the lround function, then we provide
+ * it ourselves here. It is simply the nearest integer, rounded away
+ * from zero.
+ */
+extern "C" long int lround(double x)
+{
+      if (x >= 0.0)
+	    return (long)floor(x+0.5);
+      else
+	    return (long)ceil(x-0.5);
+}
+#endif
 
 static verinum::V add_with_carry(verinum::V l, verinum::V r, verinum::V&c);
 

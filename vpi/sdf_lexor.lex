@@ -143,8 +143,10 @@ static int lookup_keyword(const char*text)
  */
 static void process_quoted_string(void)
 {
+      char*endp;
+
       yylval.string_val = strdup(yytext+1);
-      char*endp = yylval.string_val+strlen(yylval.string_val);
+      endp = yylval.string_val+strlen(yylval.string_val);
       assert(endp[-1] == '"');
       endp[-1] = 0;
 }

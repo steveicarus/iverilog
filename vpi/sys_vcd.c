@@ -144,7 +144,7 @@ struct vcd_names_list_s vcd_var = { 0 };
 
 static int dumpvars_status = 0; /* 0:fresh 1:cb installed, 2:callback done */
 static PLI_UINT64 dumpvars_time;
-inline static int dump_header_pending(void)
+__inline__ static int dump_header_pending(void)
 {
       return dumpvars_status != 2;
 }
@@ -258,7 +258,7 @@ static PLI_INT32 finish_cb(p_cb_data cause)
       return 0;
 }
 
-inline static int install_dumpvars_callback(void)
+__inline__ static int install_dumpvars_callback(void)
 {
       struct t_cb_data cb;
       static struct t_vpi_time time;
@@ -714,13 +714,14 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
         /* This dumps all the modules in the design if none are given. */
       if (!argv || !(item = vpi_scan(argv))) {
 	    argv = vpi_iterate(vpiModule, 0x0);
-	    assert(argv);  // There must be at least one top level module.
+	    assert(argv);  /* There must be at least one top level module. */
 	    item = vpi_scan(argv);
       }
 
       for ( ; item; item = vpi_scan(argv)) {
 	    const char *scname;
 	    int add_var = 0;
+	    int dep;
 
 	    vcd_names_sort(&vcd_tab);
 
@@ -744,7 +745,7 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 		  }
 	    }
 
-	    int dep = draw_scope(item, callh);
+	    dep = draw_scope(item, callh);
 
 	    scan_item(depth, item, 0);
 

@@ -102,6 +102,8 @@ static int flist_read_flags(const char*path)
 	    char*cp = line_buf + strspn(line_buf, " \t\r\b\f");
 	      /* Remove trailing white space. */
 	    char*tail = cp + strlen(cp);
+	    char*arg;
+
 	    while (tail > cp) {
 		  if (! isspace(tail[-1]))
 			break;
@@ -117,7 +119,7 @@ static int flist_read_flags(const char*path)
 		  continue;
 
 	      /* The arg points to the argument to the keyword. */
-	    char*arg = strchr(cp, ':');
+	    arg = strchr(cp, ':');
 	    if (arg) *arg++ = 0;
 
 	    if (strcmp(cp,"D") == 0) {
