@@ -27,20 +27,11 @@
 # include  "netmisc.h"
 # include  "ivl_assert.h"
 
-static NetNet* convert_to_real_const(Design*des, NetScope*scope, NetExpr*expr, NetExpr*obj)
+static NetNet* convert_to_real_const(Design*des, NetScope*scope, NetEConst*expr)
 {
-      NetNet* sig;
-
-      if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
-	    verireal vrl(tmp->value().as_double());
-	    NetECReal rlval(vrl);
-	    sig = rlval.synthesize(des, scope);
-      } else {
-	    cerr << obj->get_fileline() << ": sorry: Cannot convert "
-	    "bit based value (" << *expr << ") to real." << endl;
-	    des->errors += 1;
-	    sig = 0;
-      }
+      verireal vrl(expr->value().as_double());
+      NetECReal rlval(vrl);
+      NetNet* sig = rlval.synthesize(des, scope);
 
       return sig;
 }
@@ -55,19 +46,26 @@ static bool process_binary_args(Design*des, NetScope*scope,
           right->expr_type() == IVL_VT_REAL) {
 	    real_args = true;
 
-	      /* Currently we will have a runtime assert if both expressions
-	         are not real, though we can convert constants. */
+	      /* Convert the arguments to real. Handle the special
+	         cases of constants, which can be converted more directly. */
 	    if (left->expr_type() == IVL_VT_REAL) {
 		  lsig = left->synthesize(des, scope);
+	    } else if (NetEConst*tmp = dynamic_cast<NetEConst*> (left)) {
+		  lsig = convert_to_real_const(des, scope, tmp);
 	    } else {
-		  lsig = convert_to_real_const(des, scope, left, obj);
+		  NetNet*tmp = left->synthesize(des, scope);
+		  lsig = cast_to_real(des, scope, tmp);
 	    }
 
 	    if (right->expr_type() == IVL_VT_REAL) {
 		  rsig = right->synthesize(des, scope);
+	    } else if (NetEConst*tmp = dynamic_cast<NetEConst*> (right)) {
+		  rsig = convert_to_real_const(des, scope, tmp);
 	    } else {
-		  rsig = convert_to_real_const(des, scope, right, obj);
+		  NetNet*tmp = right->synthesize(des, scope);
+		  rsig = cast_to_real(des, scope, tmp);
 	    }
+
       } else {
             real_args = false;
 	    lsig = left->synthesize(des, scope);
@@ -104,11 +102,21 @@ NetNet* NetEBAdd::synthesize(Design*des, NetScope*scope)
       assert(expr_width() >= lsig->vector_width());
       assert(expr_width() >= rsig->vector_width());
 
-      lsig = pad_to_width(des, lsig, expr_width());
-      rsig = pad_to_width(des, rsig, expr_width());
+      unsigned width;
+      if (expr_type() == IVL_VT_REAL) {
+	    width = 1;
+	    if (lsig->data_type() != IVL_VT_REAL)
+		  lsig = cast_to_real(des, scope, lsig);
+	    if (rsig->data_type() != IVL_VT_REAL)
+		  rsig = cast_to_real(des, scope, rsig);
 
-      assert(lsig->vector_width() == rsig->vector_width());
-      unsigned width=lsig->vector_width();
+      } else {
+	    lsig = pad_to_width(des, lsig, expr_width());
+	    rsig = pad_to_width(des, rsig, expr_width());
+
+	    assert(lsig->vector_width() == rsig->vector_width());
+	    width=lsig->vector_width();
+      }
 
       perm_string path = lsig->scope()->local_symbol();
       NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, width);

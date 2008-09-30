@@ -632,9 +632,9 @@ NetExpr* PEBinary::elaborate_expr_base_add_(Design*des,
 	    use_lossless_flag = false;
 
       tmp = new NetEBAdd(op_, lp, rp, use_lossless_flag);
-      if (expr_wid > 0 && (tmp->expr_type() == IVL_VT_BOOL
-			   || tmp->expr_type() == IVL_VT_LOGIC))
+      if (expr_wid > 0 && type_is_vectorable(tmp->expr_type()))
 	    tmp->set_width(expr_wid);
+
       tmp->set_line(*this);
       return tmp;
 }
