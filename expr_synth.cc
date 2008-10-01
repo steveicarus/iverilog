@@ -164,7 +164,7 @@ NetNet* NetEBBits::synthesize(Design*des, NetScope*scope)
 	    return 0;
       }
 
-      unsigned width = lsig->vector_width();
+      unsigned width = expr_width();
       if (rsig->vector_width() > width) width = rsig->vector_width();
 
       lsig = pad_to_width(des, lsig, width);

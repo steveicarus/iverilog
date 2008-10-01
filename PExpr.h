@@ -467,6 +467,7 @@ class PEBinary : public PExpr {
       NetExpr*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_eval_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
 
+      NetExpr*elaborate_expr_base_bits_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_expr_base_div_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_expr_base_lshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_expr_base_rshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;

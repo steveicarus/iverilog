@@ -298,8 +298,7 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	  case 'O': // NOR (~|)
 	  case 'A': // NAND (~&)
 	  case 'X':
-	    tmp = new NetEBBits(op_, lp, rp);
-	    tmp->set_line(*this);
+	    tmp = elaborate_expr_base_bits_(des, lp, rp, expr_wid);
 	    break;
 
 	  case '+':
@@ -348,6 +347,23 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	    tmp->set_line(*this);
 	    break;
       }
+
+      return tmp;
+}
+
+NetExpr* PEBinary::elaborate_expr_base_bits_(Design*des,
+					     NetExpr*lp, NetExpr*rp,
+					     int expr_wid) const
+{
+      if (expr_wid > 0) {
+	    if (type_is_vectorable(lp->expr_type()))
+		  lp = pad_to_width(lp, expr_wid);
+	    if (type_is_vectorable(rp->expr_type()))
+		  rp = pad_to_width(rp, expr_wid);
+      }
+
+      NetEBBits*tmp = new NetEBBits(op_, lp, rp);
+      tmp->set_line(*this);
 
       return tmp;
 }
