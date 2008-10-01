@@ -20,7 +20,7 @@
 # include "config.h"
 # include "compiler.h"
 
-# include  <stdlib.h>
+# include  <cstdlib>
 # include  <iostream>
 
 # include  "netlist.h"

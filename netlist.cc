@@ -23,6 +23,7 @@
 
 # include  <typeinfo>
 # include  <cstdlib>
+# include  <climits>
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
