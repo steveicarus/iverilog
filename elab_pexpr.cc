@@ -268,66 +268,57 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
       return tmp;
 }
 
-/* Reuse these routines from eval_tree.cc. */
-NetExpr* evaluate_clog2(NetExpr*arg);
-NetExpr* evaluate_math_one_arg(NetExpr*arg, const char*name);
-NetExpr* evaluate_math_two_args(NetExpr*arg0, NetExpr*arg1, const char*name);
-NetExpr* evaluate_abs(NetExpr*arg);
-NetExpr* evaluate_min_max(NetExpr*arg0, NetExpr*arg1, const char*name);
-
 NetExpr* PECallFunction::elaborate_pexpr(Design*des, NetScope*scope) const
 {
 	/* Only $clog2 and the builtin mathematical functions can
 	 * be a constant system function. */
-      perm_string name = peek_tail_name(path_);
-      if (name[0] == '$' && (generation_flag >= GN_VER2005 ||
-                             gn_icarus_misc_flag || gn_verilog_ams_flag)) {
-	    if (name == "$clog2" ||
-	        name == "$ln" ||
-	        name == "$log10" ||
-	        name == "$exp" ||
-	        name == "$sqrt" ||
-	        name == "$floor" ||
-	        name == "$ceil" ||
-	        name == "$sin" ||
-	        name == "$cos" ||
-	        name == "$tan" ||
-	        name == "$asin" ||
-	        name == "$acos" ||
-	        name == "$atan" ||
-	        name == "$sinh" ||
-	        name == "$cosh" ||
-	        name == "$tanh" ||
-	        name == "$asinh" ||
-	        name == "$acosh" ||
-	        name == "$atanh") {
+      perm_string nm = peek_tail_name(path_);
+      if (nm[0] == '$' && (generation_flag >= GN_VER2005 ||
+                           gn_icarus_misc_flag || gn_verilog_ams_flag)) {
+	    if (nm == "$clog2" ||
+	        nm == "$ln" ||
+	        nm == "$log10" ||
+	        nm == "$exp" ||
+	        nm == "$sqrt" ||
+	        nm == "$floor" ||
+	        nm == "$ceil" ||
+	        nm == "$sin" ||
+	        nm == "$cos" ||
+	        nm == "$tan" ||
+	        nm == "$asin" ||
+	        nm == "$acos" ||
+	        nm == "$atan" ||
+	        nm == "$sinh" ||
+	        nm == "$cosh" ||
+	        nm == "$tanh" ||
+	        nm == "$asinh" ||
+	        nm == "$acosh" ||
+	        nm == "$atanh") {
 		  if (parms_.size() != 1 || parms_[0] == 0) {
-			cerr << get_fileline() << ": error: " << name
+			cerr << get_fileline() << ": error: " << nm
 			     << " takes a single argument." << endl;
 			des->errors += 1;
 			return 0;
 		  }
 		  NetExpr*arg = parms_[0]->elaborate_pexpr(des, scope);
 		  if (arg == 0) return 0;
-		  eval_expr(arg);
-		  NetExpr*rtn;
-		  if (peek_tail_name(path_) == "$clog2") {
-			rtn = evaluate_clog2(arg);
+		  NetESFunc*rtn;
+		  if (nm == "$clog2") {
+			rtn = new NetESFunc(nm, IVL_VT_BOOL, integer_width, 1);
 		  } else {
-			rtn = evaluate_math_one_arg(arg, name.str());
+			rtn = new NetESFunc(nm, IVL_VT_REAL, 1, 1);
 		  }
-		  delete arg;
-		  if (rtn != 0) {
-			rtn->set_line(*this);
-			return rtn;
-		  }
+		  rtn->set_line(*this);
+		  rtn->cast_signed(true);
+		  rtn->parm(0, arg);
+		  return rtn;
 	    }
 
-	    if (name == "$pow" ||
-	        name == "$atan2" ||
-	        name == "$hypot") {
+	    if (nm == "$pow" ||
+	        nm == "$atan2" ||
+	        nm == "$hypot") {
 		  if (parms_.size() != 2 || parms_[0] == 0 || parms_[1] == 0) {
-			cerr << get_fileline() << ": error: " << name
+			cerr << get_fileline() << ": error: " << nm
 			     << " takes two arguments." << endl;
 			des->errors += 1;
 			return 0;
@@ -335,45 +326,44 @@ NetExpr* PECallFunction::elaborate_pexpr(Design*des, NetScope*scope) const
 		  NetExpr*arg0 = parms_[0]->elaborate_pexpr(des, scope);
 		  NetExpr*arg1 = parms_[1]->elaborate_pexpr(des, scope);
 		  if (arg0 == 0 || arg1 == 0) return 0;
-		  eval_expr(arg0);
-		  eval_expr(arg1);
-		  NetExpr*rtn = evaluate_math_two_args(arg0, arg1, name.str());
-		  delete arg0;
-		  delete arg1;
-		  if (rtn != 0) {
-			rtn->set_line(*this);
-			return rtn;
-		  }
+		  NetESFunc*rtn = new NetESFunc(nm, IVL_VT_REAL, 1, 2);
+		  rtn->set_line(*this);
+		  rtn->cast_signed(true);
+		  rtn->parm(0, arg0);
+		  rtn->parm(1, arg1);
+		  return rtn;
 	    }
 
 	      /* These are only available with verilog-ams or icarus-misc. */
 	    if ((gn_icarus_misc_flag || gn_verilog_ams_flag) &&
-	        (name == "$log" || name == "$abs")) {
+	        (nm == "$log" || nm == "$abs")) {
 		  if (parms_.size() != 1 || parms_[0] == 0) {
-			cerr << get_fileline() << ": error: " << name
+			cerr << get_fileline() << ": error: " << nm
 			     << " takes a single argument." << endl;
 			des->errors += 1;
 			return 0;
 		  }
 		  NetExpr*arg = parms_[0]->elaborate_pexpr(des, scope);
 		  if (arg == 0) return 0;
-		  eval_expr(arg);
-		  NetExpr*rtn;
-		  if (peek_tail_name(path_) == "$log") {
-			rtn = evaluate_math_one_arg(arg, name.str());
+		  NetESFunc*rtn;
+		  if (nm == "$log") {
+			rtn = new NetESFunc(nm, IVL_VT_REAL, 1, 1);
 		  } else {
-			rtn = evaluate_abs(arg);
+			  /* This can return either a real or an arbitrary
+			   * width vector, so set things to fail if this
+			   * does not get replaced with a constant during
+			   * elaboration. */
+			rtn = new NetESFunc(nm, IVL_VT_NO_TYPE, 0, 1);
 		  }
-		  delete arg;
-		  if (rtn != 0) {
-			rtn->set_line(*this);
-			return rtn;
-		  }
+		  rtn->set_line(*this);
+		  rtn->cast_signed(true);
+		  rtn->parm(0, arg);
+		  return rtn;
 	    }
 	    if ((gn_icarus_misc_flag || gn_verilog_ams_flag) &&
-	        (name == "$min" || name == "$max")) {
+	        (nm == "$min" || nm == "$max")) {
 		  if (parms_.size() != 2 || parms_[0] == 0 || parms_[1] == 0) {
-			cerr << get_fileline() << ": error: " << name
+			cerr << get_fileline() << ": error: " << nm
 			     << " takes two arguments." << endl;
 			des->errors += 1;
 			return 0;
@@ -381,15 +371,13 @@ NetExpr* PECallFunction::elaborate_pexpr(Design*des, NetScope*scope) const
 		  NetExpr*arg0 = parms_[0]->elaborate_pexpr(des, scope);
 		  NetExpr*arg1 = parms_[1]->elaborate_pexpr(des, scope);
 		  if (arg0 == 0 || arg1 == 0) return 0;
-		  eval_expr(arg0);
-		  eval_expr(arg1);
-		  NetExpr*rtn = evaluate_min_max(arg0, arg1, name.str());
-		  delete arg0;
-		  delete arg1;
-		  if (rtn != 0) {
-			rtn->set_line(*this);
-			return rtn;
-		  }
+		    /* See $log above for why this has no type or width. */
+		  NetESFunc*rtn = new NetESFunc(nm, IVL_VT_NO_TYPE, 0, 2);
+		  rtn->set_line(*this);
+		  rtn->cast_signed(true);
+		  rtn->parm(0, arg0);
+		  rtn->parm(1, arg1);
+		  return rtn;
 	    }
 
 	    cerr << get_fileline() << ": error: this is not a constant "
