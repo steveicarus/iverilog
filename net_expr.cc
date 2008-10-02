@@ -127,6 +127,9 @@ ivl_variable_type_t NetEBAdd::expr_type() const
 NetEBComp::NetEBComp(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
+	// The output of compare is always unsigned.
+      cast_signed_base_(false);
+
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(r)) do {
 
 	    if (tmp->has_width())

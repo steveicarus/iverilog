@@ -355,6 +355,14 @@ NetExpr* PEBinary::elaborate_expr_base_bits_(Design*des,
 					     NetExpr*lp, NetExpr*rp,
 					     int expr_wid) const
 {
+	// If either of the arguments is unsigned, then process both
+	// of them as unsigned. This only impacts the padding that is
+	// done to get the operands to the expr_wid.
+      if (! lp->has_sign())
+	    rp->cast_signed(false);
+      if (! rp->has_sign())
+	    lp->cast_signed(false);
+
       if (expr_wid > 0) {
 	    if (type_is_vectorable(lp->expr_type()))
 		  lp = pad_to_width(lp, expr_wid);

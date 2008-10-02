@@ -2073,6 +2073,9 @@ NetEBBits* NetEBBits::dup_expr() const
 NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
 : op_(op), left_(l), right_(r)
 {
+	// Binary expressions of all sorts are signed if both the
+	// arguments are signed.
+      cast_signed_base_( left_->has_sign() && right_->has_sign());
 }
 
 NetEBinary::~NetEBinary()
