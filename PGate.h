@@ -247,7 +247,7 @@ class PGModule  : public PGate {
 
       NetNet*resize_net_to_port_(Design*des, NetScope*scope,
 				 NetNet*sig, unsigned port_wid,
-				 NetNet::PortType dir) const;
+				 NetNet::PortType dir, bool as_signed) const;
 };
 
 #endif

@@ -853,7 +853,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
 NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
 				     NetNet*sig, unsigned port_wid,
-				     NetNet::PortType dir) const
+				     NetNet::PortType dir, bool as_signed) const
 {
       ivl_assert(*this, dir != NetNet::NOT_A_PORT);
       ivl_assert(*this, dir != NetNet::PIMPLICIT);
@@ -870,6 +870,9 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
 	    unsigned wida = sig->vector_width();
 	    unsigned widb = tmp->vector_width();
 	    bool part_b = widb < wida;
+	      // This needs to pad the value!
+	      // Also delete the inout specific warning when this is fixed.
+	      // It is located just before this routine is called.
 	    NetTran*node = new NetTran(scope, scope->local_symbol(),
 				       part_b? wida : widb,
 				       part_b? widb : wida,
@@ -888,30 +891,39 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
 	    return tmp;
       }
 
-      NetPartSelect*node = 0;
-
+      unsigned pwidth = tmp->vector_width();
+      unsigned swidth = sig->vector_width();
       switch (dir) {
 	  case NetNet::POUTPUT:
-	    if (tmp->vector_width() > sig->vector_width()) {
-		  node = new NetPartSelect(tmp, 0, sig->vector_width(),
+	    if (pwidth > swidth) {
+		  NetPartSelect*node = new NetPartSelect(tmp, 0, swidth,
 					   NetPartSelect::VP);
 		  connect(node->pin(0), sig->pin(0));
+		  des->add_node(node);
 	    } else {
-		  node = new NetPartSelect(sig, 0, tmp->vector_width(),
-					  NetPartSelect::PV);
-		  connect(node->pin(0), tmp->pin(0));
+		  NetNet*osig;
+		  if (as_signed) {
+			osig = pad_to_width_signed(des, tmp, swidth);
+		  } else {
+			osig = pad_to_width(des, tmp, swidth);
+		  }
+		  connect(osig->pin(0), sig->pin(0));
 	    }
 	    break;
 
 	  case NetNet::PINPUT:
-	    if (tmp->vector_width() > sig->vector_width()) {
-		  node = new NetPartSelect(tmp, 0, sig->vector_width(),
-					   NetPartSelect::PV);
-		  connect(node->pin(0), sig->pin(0));
+	    if (pwidth > swidth) {
+		  delete tmp;
+		  if (as_signed) {
+			tmp = pad_to_width_signed(des, sig, pwidth);
+		  } else {
+			tmp = pad_to_width(des, sig, pwidth);
+		  }
 	    } else {
-		  node = new NetPartSelect(sig, 0, tmp->vector_width(),
+		  NetPartSelect*node = new NetPartSelect(sig, 0, pwidth,
 					   NetPartSelect::VP);
 		  connect(node->pin(0), tmp->pin(0));
+		  des->add_node(node);
 	    }
 	    break;
 
@@ -922,8 +934,6 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
 	  default:
 	    ivl_assert(*this, 0);
       }
-
-      des->add_node(node);
 
       return tmp;
 }
@@ -1291,22 +1301,36 @@ v		       NOTE that this also handles the case that the
 		       << type_ << " expects " << prts_vector_width <<
 			" bits, got " << sig->vector_width() << "." << endl;
 
-		  if (prts_vector_width > sig->vector_width()) {
+		    // Delete this when inout ports pad correctly.
+		  if (prts[0]->port_type() == NetNet::PINOUT) {
+		     if (prts_vector_width > sig->vector_width()) {
 			cerr << get_fileline() << ":        : Leaving "
 			     << (prts_vector_width-sig->vector_width())
 			     << " high bits of the port unconnected."
 			     << endl;
-
-
-		  } else {
+		     } else {
 			cerr << get_fileline() << ":        : Leaving "
 			     << (sig->vector_width()-prts_vector_width)
 			     << " high bits of the expression dangling."
 			     << endl;
+		     }
+		    // Keep the if, but delete the "} else" when fixed.
+		  } else if (prts_vector_width > sig->vector_width()) {
+			cerr << get_fileline() << ":        : Padding "
+			     << (prts_vector_width-sig->vector_width())
+			     << " high bits of the port."
+			     << endl;
+		  } else {
+			cerr << get_fileline() << ":        : Padding "
+			     << (sig->vector_width()-prts_vector_width)
+			     << " high bits of the expression."
+			     << endl;
 		  }
 
 		  sig = resize_net_to_port_(des, scope, sig, prts_vector_width,
-					    prts[0]->port_type());
+					    prts[0]->port_type(),
+					    prts[0]->get_signed() &&
+					    sig->get_signed());
 	    }
 
 	      // Connect the sig expression that is the context of the

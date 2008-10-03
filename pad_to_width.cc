@@ -88,6 +88,7 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
       tmp = new NetNet(scope, scope->local_symbol(),
 		       NetNet::WIRE, wid);
       tmp->data_type( net->data_type() );
+      tmp->set_line(*net);
       tmp->local_flag(true);
       connect(cc->pin(0), tmp->pin(0));
 
