@@ -109,6 +109,19 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    return;
       }
 
+      if (type_is_vectorable(rval_expr->expr_type())
+	  && type_is_vectorable(lval->data_type())
+	  && rval_expr->expr_width() < lval->vector_width()) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: "
+		       << "r-value expressions width "<<rval_expr->expr_width()
+		       << " of " << (rval_expr->has_sign()? "signed":"unsigned")
+		       << " expression is to small for l-value width "
+		       << lval->vector_width() << "." << endl;
+	    }
+	    rval_expr = pad_to_width(rval_expr, lval->vector_width());
+      }
+
       NetNet*rval = rval_expr->synthesize(des, scope);
 
       if (rval == 0) {

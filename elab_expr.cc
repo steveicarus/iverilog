@@ -31,7 +31,7 @@
 # include  "util.h"
 # include  "ivl_assert.h"
 
-static bool type_is_vectorable(ivl_variable_type_t type)
+bool type_is_vectorable(ivl_variable_type_t type)
 {
       switch (type) {
 	  case IVL_VT_BOOL:

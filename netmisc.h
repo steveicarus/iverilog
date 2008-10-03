@@ -186,6 +186,13 @@ extern std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 					  const pform_name_t&path);
 
 /*
+ * Return true if the data type is a type that is normally available
+ * in vector for. IVL_VT_BOOL and IVL_VT_LOGIC are vectorable,
+ * IVL_VT_REAL is not.
+ */
+extern bool type_is_vectorable(ivl_variable_type_t type);
+
+/*
  * Return a human readable version of the operator.
  */
 const char *human_readable_op(const char op);
