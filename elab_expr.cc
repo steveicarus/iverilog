@@ -1356,7 +1356,10 @@ bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
 		  "This lsb expression violates the rule: "
 		 << *index_tail.lsb << endl;
 	    des->errors += 1;
-	    return false;
+              /* Attempt to recover from error. */
+            lsb = 0;
+      } else {
+            lsb = lsb_c->value().as_long();
       }
 
       NetExpr*msb_ex = elab_and_eval(des, scope, index_tail.msb, -1);
@@ -1365,14 +1368,15 @@ bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
 	    cerr << index_tail.msb->get_fileline() << ": error: "
 		  "Part select expressions must be constant."
 		 << endl;
-	    cerr << index_tail.msb->get_fileline() << ":      : This msb expression "
-		  "violates the rule: " << *index_tail.msb << endl;
+	    cerr << index_tail.msb->get_fileline() << ":      : "
+                  "This msb expression violates the rule: "
+                 << *index_tail.msb << endl;
 	    des->errors += 1;
-	    return false;
+              /* Attempt to recover from error. */
+            msb = lsb;
+      } else {
+            msb = msb_c->value().as_long();
       }
-
-      msb = msb_c->value().as_long();
-      lsb = lsb_c->value().as_long();
 
       delete msb_ex;
       delete lsb_ex;

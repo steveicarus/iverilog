@@ -577,11 +577,6 @@ void pform_endgenerate()
       }
 }
 
-bool pform_expression_is_constant(const PExpr*ex)
-{
-      return ex->is_constant(pform_cur_module);
-}
-
 MIN_TYP_MAX min_typ_max_flag = TYP;
 unsigned min_typ_max_warn = 10;
 
@@ -1307,7 +1302,7 @@ void pform_make_reginit(const struct vlltype&li,
 
       PEIdent*lval = new PEIdent(name);
       FILE_NAME(lval, li);
-      PAssign*ass = new PAssign(lval, expr);
+      PAssign*ass = new PAssign(lval, expr, true);
       FILE_NAME(ass, li);
       PProcess*top = new PProcess(PProcess::PR_INITIAL, ass);
       FILE_NAME(top, li);

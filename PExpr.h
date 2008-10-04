@@ -128,12 +128,6 @@ class PExpr : public LineInfo {
 	// expressions that must be structurally "identical".
       virtual bool is_the_same(const PExpr*that) const;
 
-	// Return true if this expression is a valid constant
-	// expression. the Module pointer is needed to find parameter
-	// identifiers and any other module specific interpretations
-	// of expressions.
-      virtual bool is_constant(Module*) const;
-
     private: // not implemented
       PExpr(const PExpr&);
       PExpr& operator= (const PExpr&);
@@ -159,8 +153,6 @@ class PEConcat : public PExpr {
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
 					 bool is_force) const;
-      virtual bool is_constant(Module*) const;
-
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
 				     bool bidirectional_flag) const;
@@ -211,9 +203,6 @@ class PEFNumber : public PExpr {
 	   gets the *integer* value of the number. This accounts for
 	   any rounding that is needed to get the value. */
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
-
-	/* A PEFNumber is a constant, so this returns true. */
-      virtual bool is_constant(Module*) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
@@ -266,7 +255,6 @@ class PEIdent : public PExpr {
 	// only applies to Ident expressions.
       NetNet* elaborate_port(Design*des, NetScope*sc) const;
 
-      virtual bool is_constant(Module*) const;
       verinum* eval_const(Design*des, NetScope*sc) const;
 
       const pform_name_t& path() const { return path_; }
@@ -372,7 +360,6 @@ class PENumber : public PExpr {
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
       virtual bool is_the_same(const PExpr*that) const;
-      virtual bool is_constant(Module*) const;
 
     private:
       verinum*const value_;
@@ -404,8 +391,6 @@ class PEString : public PExpr {
       virtual NetEConst*elaborate_pexpr(Design*des, NetScope*sc) const;
       verinum* eval_const(Design*, NetScope*) const;
 
-      virtual bool is_constant(Module*) const;
-
     private:
       char*text_;
 };
@@ -430,8 +415,6 @@ class PEUnary : public PExpr {
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
-      virtual bool is_constant(Module*) const;
-
     private:
       char op_;
       PExpr*expr_;
@@ -442,8 +425,6 @@ class PEBinary : public PExpr {
     public:
       explicit PEBinary(char op, PExpr*l, PExpr*r);
       ~PEBinary();
-
-      virtual bool is_constant(Module*) const;
 
       virtual void dump(ostream&out) const;
 
@@ -521,8 +502,6 @@ class PETernary : public PExpr {
       explicit PETernary(PExpr*e, PExpr*t, PExpr*f);
       ~PETernary();
 
-      virtual bool is_constant(Module*) const;
-
       virtual void dump(ostream&out) const;
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
@@ -559,8 +538,6 @@ class PECallFunction : public PExpr {
       explicit PECallFunction(perm_string n, const svector<PExpr *> &parms);
 
       ~PECallFunction();
-
-      virtual bool is_constant(Module*) const;
 
       virtual void dump(ostream &) const;
 

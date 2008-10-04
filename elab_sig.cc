@@ -813,16 +813,19 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       if (port_set_ || net_set_) {
 	    long pmsb = 0, plsb = 0, nmsb = 0, nlsb = 0;
+            bool bad_lsb = false, bad_msb = false;
 	    /* If they exist get the port definition MSB and LSB */
 	    if (port_set_ && port_msb_ != 0) {
 		  NetExpr*texpr = elab_and_eval(des, scope, port_msb_, -1);
 
 		  if (! eval_as_long(pmsb, texpr)) {
 			cerr << port_msb_->get_fileline() << ": error: "
-			      "Unable to evaluate MSB constant expression ``"
-			     << *port_msb_ << "''." << endl;
+			      "Range expressions must be constant." << endl;
+			cerr << port_msb_->get_fileline() << "       : "
+			      "This MSB expression violates the rule: "
+                             << *port_msb_ << endl;
 			des->errors += 1;
-			return 0;
+                        bad_msb = true;
 		  }
 
 		  delete texpr;
@@ -831,10 +834,12 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 		  if (! eval_as_long(plsb, texpr)) {
 			cerr << port_lsb_->get_fileline() << ": error: "
-			      "Unable to evaluate LSB constant expression ``"
-			     << *port_lsb_ << "''." << endl;
+			      "Range expressions must be constant." << endl;
+			cerr << port_lsb_->get_fileline() << "       : "
+			      "This LSB expression violates the rule: "
+                             << *port_lsb_ << endl;
 			des->errors += 1;
-			return 0;
+                        bad_lsb = true;
 		  }
 
 		  delete texpr;
@@ -846,15 +851,17 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
             if (port_lsb_ == 0) assert(port_msb_ == 0);
 
 	    /* If they exist get the net/etc. definition MSB and LSB */
-	    if (net_set_ && net_msb_ != 0) {
+	    if (net_set_ && net_msb_ != 0 && !bad_msb && !bad_lsb) {
 		  NetExpr*texpr = elab_and_eval(des, scope, net_msb_, -1);
 
 		  if (! eval_as_long(nmsb, texpr)) {
 			cerr << net_msb_->get_fileline() << ": error: "
-			      "Unable to evaluate MSB constant expression ``"
-			     << *net_msb_ << "''." << endl;
+			      "Range expressions must be constant." << endl;
+			cerr << net_msb_->get_fileline() << "       : "
+			      "This MSB expression violates the rule: "
+                             << *net_msb_ << endl;
 			des->errors += 1;
-			return 0;
+                        bad_msb = true;
 		  }
 
 		  delete texpr;
@@ -863,10 +870,12 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 		  if (! eval_as_long(nlsb, texpr)) {
 			cerr << net_lsb_->get_fileline() << ": error: "
-			      "Unable to evaluate LSB constant expression ``"
-			     << *net_lsb_ << "''." << endl;
+			      "Range expressions must be constant." << endl;
+			cerr << net_lsb_->get_fileline() << "       : "
+			      "This LSB expression violates the rule: "
+                             << *net_lsb_ << endl;
 			des->errors += 1;
-			return 0;
+                        bad_lsb = true;
 		  }
 
 		  delete texpr;
@@ -919,6 +928,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  }
             }
 
+              /* Attempt to recover from errors. */
+            if (bad_lsb) nlsb = 0;
+            if (bad_msb) nmsb = nlsb;
+
 	    lsb = nlsb;
 	    msb = nmsb;
 	    if (nmsb > nlsb)
@@ -963,16 +976,18 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    delete lexp;
 
 	    if (!const_flag) {
-		  cerr << get_fileline() << ": internal error: The indices "
+		  cerr << get_fileline() << ": error: The indices "
 		       << "are not constant for array ``"
 		       << name_ << "''." << endl;
 		  des->errors += 1;
-		  return 0;
-	    }
-
+                    /* Attempt to recover from error, */
+	          array_s0 = 0;
+	          array_e0 = 0;
+	    } else {
+	          array_s0 = lval.as_long();
+	          array_e0 = rval.as_long();
+            }
 	    array_dimensions = 1;
-	    array_s0 = lval.as_long();
-	    array_e0 = rval.as_long();
       }
 
 	/* If the net type is supply0 or supply1, replace it

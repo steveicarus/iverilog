@@ -53,14 +53,19 @@ attrib_list_t* evaluate_attributes(const map<perm_string,PExpr*>&att,
 	      /* If the attribute value is given in the source, then
 		 evaluate it as a constant. If the value is not
 		 given, then assume the value is 1. */
-	    verinum*tmp;
-	    if (exp)
+	    verinum*tmp = 0;
+	    if (exp) {
 		  tmp = exp->eval_const(des, scope);
-	    else
+                  if (tmp == 0) {
+			cerr << exp->get_fileline() << ": error: ``"
+			     << *exp << "'' is not a constant expression."
+			     << endl;
+			des->errors += 1;
+                  }
+            }
+	    if (tmp == 0)
 		  tmp = new verinum(1);
 
-	    if (tmp == 0)
-		  cerr << "internal error: no result for " << *exp << endl;
 	    assert(tmp);
 
 	    table[idx].val = *tmp;
@@ -106,4 +111,3 @@ attrib_list_t* evaluate_attributes(const map<perm_string,PExpr*>&att,
  *  of complex attributes attached to gates.
  *
  */
-
