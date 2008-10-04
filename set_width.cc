@@ -122,7 +122,10 @@ bool NetEBBits::set_width(unsigned w, bool)
 	/*  */
 
       unsigned use_width = w;
-
+      if (left_->expr_width() > use_width)
+	    use_width = left_->expr_width();
+      if (right_->expr_width() > use_width)
+	    use_width = right_->expr_width();
 
 	/* If the operands end up too small, then pad them to suit. */
 
