@@ -99,8 +99,8 @@ NetNet* NetEBAdd::synthesize(Design*des, NetScope*scope)
 	    return 0;
       }
 
-      assert(expr_width() >= lsig->vector_width());
-      assert(expr_width() >= rsig->vector_width());
+      ivl_assert(*this, expr_width() >= lsig->vector_width());
+      ivl_assert(*this, expr_width() >= rsig->vector_width());
 
       unsigned width;
       if (expr_type() == IVL_VT_REAL) {
@@ -752,7 +752,7 @@ NetNet* NetEConst::synthesize(Design*des, NetScope*scope)
       perm_string path = scope->local_symbol();
       unsigned width=expr_width();
 
-      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, width-1,0);
+      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
       osig->data_type(expr_type());
       osig->set_signed(has_sign());

@@ -133,6 +133,8 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 	    verinum lval = lc->value();
 	    verinum rval = rc->value();
 
+	    ivl_assert(*this, se->expr_width() == this->expr_width());
+
 	    verinum val;
 	    if (op_ == se->op_) {
 		    /* (a + lval) + rval  --> a + (rval+lval) */
@@ -142,6 +144,13 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 		    /* (a - lval) + rval  -->  a + (rval-lval) */
 		    /* (a + lval) - rval  -->  a - (rval-lval) */
 		  val = rval - lval;
+	    }
+
+	    val = pad_to_width(val, expr_width());
+	    if (val.len() > expr_width()) {
+		  verinum tmp (val, expr_width());
+		  tmp.has_sign(val.has_sign());
+		  val = tmp;
 	    }
 
 	    NetEConst*tmp = new NetEConst(val);
