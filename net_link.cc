@@ -64,7 +64,7 @@ void connect(Link&l, Link&r)
 
 Link::Link()
 : dir_(PASSIVE), drive0_(STRONG), drive1_(STRONG), init_(verinum::Vx),
-  inst_(0), next_(0), nexus_(0)
+  next_(0), nexus_(0)
 {
       (new Nexus()) -> relink(this);
 }
@@ -103,6 +103,11 @@ void Link::drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay)
       nexus_->drivers_delays(rise, fall, decay);
 }
 
+void Link::drivers_drive(strength_t drive0, strength_t drive1)
+{
+      nexus_->drivers_drive(drive0, drive1);
+}
+
 void Link::drive0(Link::strength_t str)
 {
       drive0_ = str;
@@ -136,14 +141,14 @@ verinum::V Link::get_init() const
 
 void Link::cur_link(NetPins*&net, unsigned &pin)
 {
-      net = node_;
-      pin = pin_;
+      net = get_obj();
+      pin = get_pin();
 }
 
 void Link::cur_link(const NetPins*&net, unsigned &pin) const
 {
-      net = node_;
-      pin = pin_;
+      net = get_obj();
+      pin = get_pin();
 }
 
 void Link::unlink()
@@ -188,33 +193,28 @@ const Link* Link::next_nlink() const
 
 const NetPins*Link::get_obj() const
 {
-      return node_;
+      if (pin_zero_)
+	    return node_;
+      const Link*tmp = this - pin_;
+      assert(tmp->pin_zero_);
+      return tmp->node_;
 }
 
 NetPins*Link::get_obj()
 {
-      return node_;
+      if (pin_zero_)
+	    return node_;
+      Link*tmp = this - pin_;
+      assert(tmp->pin_zero_);
+      return tmp->node_;
 }
 
 unsigned Link::get_pin() const
 {
-      return pin_;
-}
-
-void Link::set_name(perm_string n, unsigned i)
-{
-      name_ = n;
-      inst_ = i;
-}
-
-perm_string Link::get_name() const
-{
-      return name_;
-}
-
-unsigned Link::get_inst() const
-{
-      return inst_;
+      if (pin_zero_)
+	    return 0;
+      else
+	    return pin_;
 }
 
 Nexus::Nexus()
@@ -295,6 +295,17 @@ void Nexus::drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay)
 	    obj->rise_time(rise);
 	    obj->fall_time(fall);
 	    obj->decay_time(decay);
+      }
+}
+
+void Nexus::drivers_drive(Link::strength_t drive0, Link::strength_t drive1)
+{
+      for (Link*cur = list_ ; cur ; cur = cur->next_) {
+	    if (cur->get_dir() != Link::OUTPUT)
+		  continue;
+
+	    cur->drive0(drive0);
+	    cur->drive1(drive1);
       }
 }
 
@@ -437,10 +448,9 @@ const char* Nexus::name() const
 	    const Link*lnk = first_nlink();
 	    const NetObj*obj = dynamic_cast<const NetObj*>(lnk->get_obj());
 	    pin = lnk->get_pin();
-	    cerr << "internal error: No signal for nexus of " <<
-		  obj->name() << " pin " << pin << "(" <<
-		  lnk->get_name() << "<" << lnk->get_inst() << ">)"
-		  " type=" << typeid(*obj).name() << "?" << endl;
+	    cerr << "internal error: No signal for nexus of "
+		 << obj->name() << " pin " << pin
+		 << " type=" << typeid(*obj).name() << "?" << endl;
 
       }
       assert(sig);

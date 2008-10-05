@@ -78,7 +78,7 @@ void pform_end_nature(const struct vlltype&loc)
 	    error_count += 1;
       }
 
-	// Map the access functio back to the nature so that
+	// Map the access function back to the nature so that
 	// expressions that use the access function can find it.
       access_function_nature[nature_access] = tmp;
 

@@ -196,6 +196,12 @@ bool NetProc::emit_proc(struct target_t*tgt) const
       return false;
 }
 
+bool NetAlloc::emit_proc(struct target_t*tgt) const
+{
+      tgt->proc_alloc(this);
+      return true;
+}
+
 bool NetAssign::emit_proc(struct target_t*tgt) const
 {
       return tgt->proc_assign(this);
@@ -246,6 +252,12 @@ bool NetForce::emit_proc(struct target_t*tgt) const
 bool NetForever::emit_proc(struct target_t*tgt) const
 {
       tgt->proc_forever(this);
+      return true;
+}
+
+bool NetFree::emit_proc(struct target_t*tgt) const
+{
+      tgt->proc_free(this);
       return true;
 }
 
@@ -539,18 +551,4 @@ void NetETernary::expr_scan(struct expr_scan_t*tgt) const
 void NetEUnary::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_unary(this);
-}
-
-int emit(const Design*des, const char*type)
-{
-      for (unsigned idx = 0 ;  target_table[idx] ;  idx += 1) {
-	    const struct target*tgt = target_table[idx];
-	    if (strcmp(tgt->name, type) == 0)
-		  return des->emit(tgt->meth);
-
-      }
-
-      cerr << "error: Code generator type " << type
-	   << " not found." << endl;
-      return -1;
 }

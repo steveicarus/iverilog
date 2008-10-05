@@ -32,4 +32,4 @@
 # define _FILE_OFFSET_BITS 64
 #endif
 
-#endif // __config_H
+#endif /* __config_H */

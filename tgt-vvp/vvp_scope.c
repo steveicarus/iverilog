@@ -36,7 +36,7 @@
  *  Escape non-symbol characters in ids, and quotes in strings.
  */
 
-inline static char hex_digit(unsigned i)
+__inline__ static char hex_digit(unsigned i)
 {
       i &= 0xf;
       return i>=10 ? i-10+'A' : i+'0';
@@ -322,6 +322,8 @@ char* draw_Cr_to_string(double value)
       char tmp[256];
 
       uint64_t mant = 0;
+      int sign, expo, vexp;
+      double fract;
 
       if (isinf(value)) {
 	    if (value > 0)
@@ -335,19 +337,18 @@ char* draw_Cr_to_string(double value)
 	    return strdup(tmp);
       }
 
-      int sign = 0;
+      sign = 0;
       if (value < 0) {
 	    sign = 0x4000;
 	    value *= -1;
       }
 
-      int expo;
-      double fract = frexp(value, &expo);
+      fract = frexp(value, &expo);
       fract = ldexp(fract, 63);
       mant = fract;
       expo -= 63;
 
-      int vexp = expo + 0x1000;
+      vexp = expo + 0x1000;
       assert(vexp >= 0);
       assert(vexp < 0x2000);
       vexp += sign;
@@ -1085,9 +1086,11 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net)
 static void draw_lpm_abs(ivl_lpm_t net)
 {
       const char*src_table[1];
+      const char*dly;
+
       draw_lpm_data_inputs(net, 0, 1, src_table);
 
-      const char*dly = draw_lpm_output_delay(net);
+      dly = draw_lpm_output_delay(net);
 
       fprintf(vvp_out, "L_%p%s .abs %s;\n",
 	      net, dly, src_table[0]);
@@ -1096,9 +1099,11 @@ static void draw_lpm_abs(ivl_lpm_t net)
 static void draw_lpm_cast_int(ivl_lpm_t net)
 {
       const char*src_table[1];
+      const char*dly;
+
       draw_lpm_data_inputs(net, 0, 1, src_table);
 
-      const char*dly = draw_lpm_output_delay(net);
+      dly = draw_lpm_output_delay(net);
 
       fprintf(vvp_out, "L_%p%s .cast/int %u, %s;\n",
 	      net, dly, ivl_lpm_width(net), src_table[0]);
@@ -1107,11 +1112,13 @@ static void draw_lpm_cast_int(ivl_lpm_t net)
 static void draw_lpm_cast_real(ivl_lpm_t net)
 {
       const char*src_table[1];
+      const char*dly;
+      const char*is_signed = "";
+
       draw_lpm_data_inputs(net, 0, 1, src_table);
 
-      const char*dly = draw_lpm_output_delay(net);
+      dly = draw_lpm_output_delay(net);
 
-      const char*is_signed = "";
       if (ivl_lpm_signed(net)) is_signed = ".s";
 
       fprintf(vvp_out, "L_%p%s .cast/real%s %s;\n",
@@ -1126,6 +1133,7 @@ static void draw_lpm_add(ivl_lpm_t net)
       ivl_variable_type_t dta = data_type_of_nexus(ivl_lpm_data(net,0));
       ivl_variable_type_t dtb = data_type_of_nexus(ivl_lpm_data(net,1));
       ivl_variable_type_t dto = IVL_VT_LOGIC;
+      const char*dly;
 
       if (dta == IVL_VT_REAL || dtb == IVL_VT_REAL)
 	    dto = IVL_VT_REAL;
@@ -1179,7 +1187,7 @@ static void draw_lpm_add(ivl_lpm_t net)
 
       draw_lpm_data_inputs(net, 0, 2, src_table);
 
-      const char*dly = draw_lpm_output_delay(net);
+      dly = draw_lpm_output_delay(net);
 
       fprintf(vvp_out, "L_%p%s .arith/%s %u, %s, %s;\n",
 	      net, dly, type, width, src_table[0], src_table[1]);
@@ -1193,8 +1201,10 @@ static void draw_lpm_array(ivl_lpm_t net)
 {
       ivl_nexus_t nex;
       ivl_signal_t mem = ivl_lpm_array(net);
+      const char*tmp;
+
       nex = ivl_lpm_select(net);
-      const char*tmp = draw_net_input(nex);
+      tmp = draw_net_input(nex);
 
       fprintf(vvp_out, "L_%p .array/port v%p, %s;\n", net, mem, tmp);
 }
@@ -1208,6 +1218,7 @@ static void draw_lpm_cmp(ivl_lpm_t net)
       ivl_variable_type_t dta = data_type_of_nexus(ivl_lpm_data(net,0));
       ivl_variable_type_t dtb = data_type_of_nexus(ivl_lpm_data(net,1));
       ivl_variable_type_t dtc = IVL_VT_LOGIC;
+      const char*dly;
 
       if (dta == IVL_VT_REAL || dtb == IVL_VT_REAL)
 	    dtc = IVL_VT_REAL;
@@ -1259,7 +1270,7 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 
       draw_lpm_data_inputs(net, 0, 2, src_table);
 
-      const char*dly = draw_lpm_output_delay(net);
+      dly = draw_lpm_output_delay(net);
 
       fprintf(vvp_out, "L_%p%s .cmp/%s%s %u, %s, %s;\n",
 	      net, dly, type, signed_string, width,
@@ -1581,7 +1592,7 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 
       fprintf(vvp_out, ")");
 
-	/* Finally, print the reference to the signal from which the
+	/* Now print the reference to the signal from which the
 	   result is collected. */
       { ivl_signal_t psig = ivl_scope_port(def, 0);
         assert(ivl_lpm_width(net) == ivl_signal_width(psig));
@@ -1590,7 +1601,8 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 	fprintf(vvp_out, " v%p_0", psig);
       }
 
-      fprintf(vvp_out, ";\n");
+        /* Finally, print the scope identifier. */
+      fprintf(vvp_out, " S_%p;\n", def);
 }
 
 /*
@@ -1650,15 +1662,19 @@ static void draw_lpm_re(ivl_lpm_t net, const char*type)
 
 static void draw_lpm_repeat(ivl_lpm_t net)
 {
-      fprintf(vvp_out, "L_%p .repeat %u, %u, %s;\n", net,
+      const char*dly = draw_lpm_output_delay(net);
+
+      fprintf(vvp_out, "L_%p%s .repeat %u, %u, %s;\n", net, dly,
 	      ivl_lpm_width(net), ivl_lpm_size(net),
 	      draw_net_input(ivl_lpm_data(net,0)));
 }
 
 static void draw_lpm_sign_ext(ivl_lpm_t net)
 {
-      fprintf(vvp_out, "L_%p .extend/s %u, %s;\n",
-	      net, ivl_lpm_width(net),
+      const char*dly = draw_lpm_output_delay(net);
+
+      fprintf(vvp_out, "L_%p%s .extend/s %u, %s;\n",
+	      net, dly, ivl_lpm_width(net),
 	      draw_net_input(ivl_lpm_data(net,0)));
 }
 
@@ -1770,13 +1786,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
       const char *type;
-	/* For now we do not support automatic tasks or functions. */
-      if (ivl_scope_is_auto(net)) {
-	    fprintf(stderr, "%s:%u: vvp-tgt sorry: automatic tasks/functions "
-	                    "are not supported!\n",
-	                    ivl_scope_def_file(net), ivl_scope_def_lineno(net));
-	    exit(1);
-      }
+
+      const char*prefix = ivl_scope_is_auto(net) ? "auto" : "";
+
       switch (ivl_scope_type(net)) {
       case IVL_SCT_MODULE:   type = "module";   break;
       case IVL_SCT_FUNCTION: type = "function"; break;
@@ -1787,8 +1799,8 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       default:               type = "?";        assert(0);
       }
 
-      fprintf(vvp_out, "S_%p .scope %s, \"%s\" \"%s\" %d %d",
-	      net, type, vvp_mangle_name(ivl_scope_basename(net)),
+      fprintf(vvp_out, "S_%p .scope %s%s, \"%s\" \"%s\" %d %d",
+	      net, prefix, type, vvp_mangle_name(ivl_scope_basename(net)),
               ivl_scope_tname(net), ivl_file_table_index(ivl_scope_file(net)),
               ivl_scope_lineno(net));
 

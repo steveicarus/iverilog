@@ -88,11 +88,16 @@ const static struct opcode_table_s opcode_table[] = {
       { "%andi",   of_ANDI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%assign/av",of_ASSIGN_AV,3,{OA_ARR_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/av/d",of_ASSIGN_AVD,3,{OA_ARR_PTR,OA_BIT1,  OA_BIT2} },
+      { "%assign/av/e",of_ASSIGN_AVE,2,{OA_ARR_PTR,OA_BIT1,  OA_NONE} },
       { "%assign/v0",of_ASSIGN_V0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%assign/v0/d",of_ASSIGN_V0D,3,{OA_FUNC_PTR,OA_BIT1, OA_BIT2} },
+      { "%assign/v0/e",of_ASSIGN_V0E,2,{OA_FUNC_PTR,OA_BIT1, OA_NONE} },
       { "%assign/v0/x1",of_ASSIGN_V0X1,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%assign/v0/x1/d",of_ASSIGN_V0X1D,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
-      { "%assign/wr",of_ASSIGN_WR,3,{OA_VPI_PTR,OA_BIT1,     OA_BIT2} },
+      { "%assign/v0/x1/e",of_ASSIGN_V0X1E,2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
+      { "%assign/wr",  of_ASSIGN_WR, 3,{OA_VPI_PTR, OA_BIT1, OA_BIT2} },
+      { "%assign/wr/d",of_ASSIGN_WRD,3,{OA_VPI_PTR, OA_BIT1, OA_BIT2} },
+      { "%assign/wr/e",of_ASSIGN_WRE,2,{OA_VPI_PTR, OA_BIT1, OA_NONE} },
       { "%assign/x0",of_ASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%blend",    of_BLEND,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%blend/wr", of_BLEND_WR,2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
@@ -121,6 +126,10 @@ const static struct opcode_table_s opcode_table[] = {
       { "%div/s",  of_DIV_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%div/wr", of_DIV_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%evctl",  of_EVCTL,  2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
+      { "%evctl/c",of_EVCTLC, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%evctl/i",of_EVCTLI, 2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
+      { "%evctl/s",of_EVCTLS, 2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%force/link",of_FORCE_LINK,2,{OA_FUNC_PTR,OA_FUNC_PTR2,OA_NONE} },
       { "%force/v",of_FORCE_V,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%force/wr",of_FORCE_WR,2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
@@ -130,6 +139,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%ix/get", of_IX_GET, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%ix/get/s",of_IX_GET_S,3,{OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%ix/getv",of_IX_GETV,2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
+      { "%ix/getv/s",of_IX_GETVS,2, {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
       { "%ix/load",of_IX_LOAD,2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/mul", of_IX_MUL, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/sub", of_IX_SUB, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
@@ -1672,6 +1682,34 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
 
 	/* Figure out the target PC. */
       code_label_lookup(code, dest.text);
+
+	/* Figure out the target SCOPE. */
+      compile_vpi_lookup(&code->handle, scope.text);
+}
+
+void compile_alloc(char*label, struct symb_s scope)
+{
+      if (label)
+	    compile_codelabel(label);
+
+
+	/* Fill in the basics of the %alloc in the instruction. */
+      vvp_code_t code = codespace_allocate();
+      code->opcode = of_ALLOC;
+
+	/* Figure out the target SCOPE. */
+      compile_vpi_lookup(&code->handle, scope.text);
+}
+
+void compile_free(char*label, struct symb_s scope)
+{
+      if (label)
+	    compile_codelabel(label);
+
+
+	/* Fill in the basics of the %free in the instruction. */
+      vvp_code_t code = codespace_allocate();
+      code->opcode = of_FREE;
 
 	/* Figure out the target SCOPE. */
       compile_vpi_lookup(&code->handle, scope.text);

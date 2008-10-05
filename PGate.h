@@ -167,8 +167,16 @@ class PGBuiltin  : public PGate {
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
     private:
-      Type type_;
+      unsigned calculate_array_count_(Design*, NetScope*,
+				      long&high, long&low) const;
 
+      unsigned calculate_output_count_(void) const;
+
+      NetNode* create_gate_for_output_(Design*, NetScope*,
+				       perm_string gate_name,
+				       unsigned instance_width) const;
+
+      Type type_;
       PExpr*msb_;
       PExpr*lsb_;
 };
@@ -239,7 +247,7 @@ class PGModule  : public PGate {
 
       NetNet*resize_net_to_port_(Design*des, NetScope*scope,
 				 NetNet*sig, unsigned port_wid,
-				 NetNet::PortType dir) const;
+				 NetNet::PortType dir, bool as_signed) const;
 };
 
 #endif

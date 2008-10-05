@@ -219,7 +219,7 @@ int main(int argc, char*argv[])
 	   to the vvp debug file. Open it for output. */
 
       if (char*path = getenv("VVP_DEBUG")) {
-	    debug_file.open(path, ios_base::out);
+	    debug_file.open(path, ios::out);
       }
 
       design_path = argv[optind];

@@ -47,7 +47,7 @@ static vhdl_expr *inputs_to_expr(vhdl_scope *scope, vhdl_binop_t op,
 }
 
 /*
- * Convert a gate intput to an unary expression.
+ * Convert a gate input to an unary expression.
  */
 static vhdl_expr *input_to_expr(vhdl_scope *scope, vhdl_unaryop_t op,
                                 ivl_net_logic_t log)

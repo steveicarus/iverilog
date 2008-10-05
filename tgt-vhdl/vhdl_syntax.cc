@@ -856,7 +856,7 @@ vhdl_function::vhdl_function(const char *name, vhdl_type *ret_type)
    : vhdl_decl(name, ret_type)
 {
    // A function contains two scopes:
-   //  scope_ = The paramters
+   //  scope_ = The parameters
    //  variables_ = Local variables
    // A call to get_scope returns variables_ whose parent is scope_
    variables_.set_parent(&scope_);

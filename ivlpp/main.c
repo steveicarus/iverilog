@@ -17,7 +17,8 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include "config.h"
+# include  "config.h"
+# include  "version.h"
 
 const char NOTICE[] =
 "  This program is free software; you can redistribute it and/or modify\n"
@@ -34,8 +35,6 @@ const char NOTICE[] =
 "  along with this program; if not, write to the Free Software\n"
 "  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA\n"
 ;
-
-const char VERSION[] = "$Name:  $ $State: Exp $";
 
 # include  <stdio.h>
 # include  <stdlib.h>
@@ -103,6 +102,8 @@ static int flist_read_flags(const char*path)
 	    char*cp = line_buf + strspn(line_buf, " \t\r\b\f");
 	      /* Remove trailing white space. */
 	    char*tail = cp + strlen(cp);
+	    char*arg;
+
 	    while (tail > cp) {
 		  if (! isspace(tail[-1]))
 			break;
@@ -118,7 +119,7 @@ static int flist_read_flags(const char*path)
 		  continue;
 
 	      /* The arg points to the argument to the keyword. */
-	    char*arg = strchr(cp, ':');
+	    arg = strchr(cp, ':');
 	    if (arg) *arg++ = 0;
 
 	    if (strcmp(cp,"D") == 0) {
@@ -229,7 +230,7 @@ int main(int argc, char*argv[])
       include_dir[0] = 0;  /* 0 is reserved for the current files path. */
       include_dir[1] = strdup(".");
 
-      while ((opt=getopt(argc, argv, "F:f:K:Lo:p:P:v")) != EOF) switch (opt) {
+      while ((opt=getopt(argc, argv, "F:f:K:Lo:p:P:vV")) != EOF) switch (opt) {
 
 	  case 'F':
 	    flist_read_flags(optarg);
@@ -284,11 +285,18 @@ int main(int argc, char*argv[])
 	  }
 
 	  case 'v':
-	    fprintf(stderr, "Icarus Verilog Preprocessor version %s\n",
-		    VERSION);
+	    fprintf(stderr, "Icarus Verilog Preprocessor version "
+		    VERSION " (" VERSION_TAG ")\n\n");
 	    fprintf(stderr, "%s\n", COPYRIGHT);
 	    fputs(NOTICE, stderr);
 	    break;
+
+	  case 'V':
+	    fprintf(stdout, "Icarus Verilog Preprocessor version "
+		    VERSION " (" VERSION_TAG ")\n\n");
+	    fprintf(stdout, "%s\n", COPYRIGHT);
+	    fputs(NOTICE, stdout);
+	    return 0;
 
 	  default:
 	    flag_errors += 1;
@@ -304,7 +312,8 @@ int main(int argc, char*argv[])
 		    "    -o<fil> - Send the output to <fil>\n"
 		    "    -p<fil> - Write precompiled defines to <fil>\n"
 		    "    -P<fil> - Read precompiled defines from <fil>\n"
-		    "    -v      - Print version information\n",
+		    "    -v      - Verbose\n"
+		    "    -V      - Print version information and quit\n",
 		    argv[0]);
 	    return flag_errors;
       }

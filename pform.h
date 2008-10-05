@@ -272,7 +272,7 @@ extern void pform_set_attrib(perm_string name, perm_string key,
 extern void pform_set_type_attrib(perm_string name, const string&key,
 				  char*value);
 
-extern Module::range_t* pform_parameter_value_range(bool exclude_flag,
+extern LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 						    bool low_open, PExpr*low_expr,
 						    bool hig_open, PExpr*hig_expr);
 
@@ -281,7 +281,7 @@ extern void pform_set_parameter(const struct vlltype&loc,
 				ivl_variable_type_t type,
 				bool signed_flag,
 				svector<PExpr*>*range,
-				PExpr*expr, Module::range_t*value_range);
+				PExpr*expr, LexicalScope::range_t*value_range);
 extern void pform_set_localparam(const struct vlltype&loc,
 				 perm_string name,
 				 ivl_variable_type_t type,

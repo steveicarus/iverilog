@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_modules.cc,v 1.18 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "vpi_priv.h"
@@ -133,7 +130,12 @@ void vpip_load_module(const char*name)
       }
 
 
+#ifdef __MINGW32__
+	/* For this check MinGW does not want the leading underscore! */
+      void*table = ivl_dlsym(dll, "vlog_startup_routines");
+#else
       void*table = ivl_dlsym(dll, LU "vlog_startup_routines" TU);
+#endif
       if (table == 0) {
 	    fprintf(stderr, "%s: no vlog_startup_routines\n", name);
 	    ivl_dlclose(dll);
@@ -146,49 +148,3 @@ void vpip_load_module(const char*name)
 	    (routines[tmp])();
       vpi_mode_flag = VPI_MODE_NONE;
 }
-
-/*
- * $Log: vpi_modules.cc,v $
- * Revision 1.18  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.17  2003/10/08 23:09:09  steve
- *  Completely support vvp32 when enabled.
- *
- * Revision 1.16  2003/10/02 21:30:40  steve
- *  Configure control for the vpi subdirectory.
- *
- * Revision 1.15  2003/02/16 02:21:20  steve
- *  Support .vpl files as loadable LIBRARIES.
- *
- * Revision 1.14  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.13  2003/01/10 03:06:32  steve
- *  Remove vpithunk, and move libvpi to vvp directory.
- *
- * Revision 1.12  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.11  2002/05/18 02:34:11  steve
- *  Add vpi support for named events.
- *
- *  Add vpi_mode_flag to track the mode of the
- *  vpi engine. This is for error checking.
- *
- * Revision 1.10  2002/03/05 05:31:52  steve
- *  Better linker error messages.
- *
- * Revision 1.9  2001/10/14 18:42:46  steve
- *  Try appending .vpi to module names with directories.
- *
- * Revision 1.8  2001/07/30 02:44:05  steve
- *  Cleanup defines and types for mingw compile.
- *
- * Revision 1.7  2001/07/28 03:29:42  steve
- *  If module name has a /, skip the path search.
- *
- * Revision 1.6  2001/07/26 03:13:51  steve
- *  Make the -M flag add module search paths.
- */
-

@@ -20,6 +20,7 @@ const char COPYRIGHT[] =
  */
 
 # include "config.h"
+# include "version.h"
 
 const char NOTICE[] =
 "  This program is free software; you can redistribute it and/or modify\n"
@@ -59,6 +60,7 @@ const char NOTICE[] =
 # include  "target.h"
 # include  "compiler.h"
 # include  "discipline.h"
+# include  "t-dll.h"
 
 #if defined(__MINGW32__) && !defined(HAVE_GETOPT_H)
 extern "C" int getopt(int argc, char*argv[], const char*fmt);
@@ -75,11 +77,7 @@ extern "C" const char*optarg;
 /* Count errors detected in flag processing. */
 unsigned flag_errors = 0;
 
-const char VERSION[] = "$Name:  $";
-
 const char*basedir = ".";
-
-const char*target = "null";
 
 /*
  * These are the language support control flags. These support which
@@ -293,7 +291,7 @@ static void find_module_mention(map<perm_string,bool>&check_map, PGenerate*s);
  *    -T:<min/typ/max>
  *        Select which expression to use.
  *
- *    -t:<target>
+ *    -t:<target>    (obsolete)
  *        Usually, "-t:dll"
  *
  *    basedir:<path>
@@ -483,7 +481,7 @@ static void read_iconfig_file(const char*ipath)
 		  library_suff.push_back(strdup(cp));
 
 	    } else if (strcmp(buf,"-t") == 0) {
-		  target = strdup(cp);
+		    // NO LONGER USED
 
 	    } else if (strcmp(buf,"-T") == 0) {
 		  if (strcmp(cp,"min") == 0) {
@@ -533,6 +531,7 @@ int main(int argc, char*argv[])
 {
       bool help_flag = false;
       bool times_flag = false;
+      bool version_flag = false;
 
       const char* net_path = 0;
       const char* pf_path = 0;
@@ -576,10 +575,8 @@ int main(int argc, char*argv[])
 #          endif
 	    break;
 	  case 'V':
-	    cout << "Icarus Verilog version " << VERSION << endl;
-	    cout << COPYRIGHT << endl;
-	    cout << endl << NOTICE << endl;
-	    return 0;
+	    version_flag = true;
+	    break;
 	  default:
 	    flag_errors += 1;
 	    break;
@@ -588,8 +585,20 @@ int main(int argc, char*argv[])
       if (flag_errors)
 	    return flag_errors;
 
+      if (version_flag) {
+	    cout << "\n\nIcarus Verilog Parser/Elaborator version "
+		 << VERSION << " (" << VERSION_TAG << ")" << endl;
+	    cout << COPYRIGHT << endl;
+	    cout << endl << NOTICE << endl;
+
+	    dll_target_obj.test_version(flags["DLL"]);
+
+	    return 0;
+      }
+
       if (help_flag) {
-	    cout << "Icarus Verilog version " << VERSION << endl <<
+	    cout << "Icarus Verilog Parser/Elaborator version "
+		 << VERSION << " (" << VERSION_TAG << ")"  << endl <<
 "usage: ivl <options> <file>\n"
 "options:\n"
 "\t-C <name>        Config file from driver.\n"
@@ -844,20 +853,21 @@ int main(int argc, char*argv[])
       }
 
       if (verbose_flag) {
-	    cout << "CODE GENERATION -t "<<target<< endl;
+	    cout << "CODE GENERATION" << endl;
       }
 
-      int emit_rc;
-      emit_rc = emit(des, target);
-      if (emit_rc > 0) {
-	    cerr << "error: Code generation had "
-		 << emit_rc << " errors."
-		 << endl;
-	    return 1;
-      }
-      if (emit_rc < 0) {
-	    cerr << "error: Code generator failure: " << emit_rc << endl;
-	    return -1;
+      if (int emit_rc = des->emit(&dll_target_obj)) {
+	    if (emit_rc > 0) {
+		  cerr << "error: Code generation had "
+		       << emit_rc << " errors."
+		       << endl;
+		  return 1;
+	    }
+	    if (emit_rc < 0) {
+		  cerr << "error: Code generator failure: " << emit_rc << endl;
+		  return -1;
+	    }
+	    assert(emit_rc);
       }
 
       if (verbose_flag) {

@@ -241,11 +241,14 @@ void NetNode::dump_node(ostream&o, unsigned ind) const
 /* This is the generic dumping of all the signals connected to each
    pin of the object. The "this" object is not printed, only the
    signals connected to this. */
-void NetPins::dump_node_pins(ostream&o, unsigned ind) const
+void NetPins::dump_node_pins(ostream&o, unsigned ind, const char**pin_names) const
 {
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    o << setw(ind) << "" << idx << " " << pin(idx).get_name()
-	      << "<" << pin(idx).get_inst() << ">";
+	    o << setw(ind) << "" << idx;
+	    if (pin_names && pin_names[idx])
+		  o << " " << pin_names[idx];
+	    else
+		  o << " pin" << idx;
 
 	    switch (pin(idx).get_dir()) {
 		case Link::PASSIVE:
@@ -294,7 +297,14 @@ void NetAddSub::dump_node(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "Adder (NetAddSub): " << name()
 	<< " width=" << width() << " pin_count=" << pin_count()
 	<< endl;
-      dump_node_pins(o, ind+4);
+      static const char* pin_names[] = {
+	    "Cout  ",
+	    "DataA ",
+	    "DataB ",
+	    "Result"
+      };
+
+      dump_node_pins(o, ind+4, pin_names);
       dump_obj_attr(o, ind+4);
 }
 
@@ -567,8 +577,14 @@ void NetReplicate::dump_node(ostream&o, unsigned ind) const
 
 void NetSignExtend::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "NetSignExtend: "
-	<< name() << " output width=" << width_ << endl;
+      o << setw(ind) << "" << "NetSignExtend: " << name();
+      if (rise_time())
+	    o << " #(" << *rise_time()
+	      << "," << *fall_time()
+	      << "," << *decay_time() << ")";
+      else
+	    o << " #(.,.,.)";
+      o << " output width=" << width_ << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -702,6 +718,11 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
       statement_->dump(o, ind+2);
 }
 
+void NetAlloc::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "// allocate storage : " << scope_path(scope_) << endl;
+}
+
 void NetAssign_::dump_lval(ostream&o) const
 {
       if (sig_) {
@@ -753,6 +774,11 @@ void NetAssignNB::dump(ostream&o, unsigned ind) const
 
       if (const NetExpr*de = get_delay())
 	    o << "#(" << *de << ") ";
+      if (count_)
+	    o << "repeat(" << *count_ << ") ";
+      if (event_) {
+	    o << *event_;
+      }
 
       o << *rval() << ";" << endl;
 
@@ -897,6 +923,25 @@ void NetEvWait::dump(ostream&o, unsigned ind) const
 	    o << setw(ind+2) << "" << "/* noop */ ;" << endl;
 }
 
+ostream& operator << (ostream&out, const NetEvWait&obj)
+{
+      obj.dump_inline(out);
+      return out;
+}
+
+void NetEvWait::dump_inline(ostream&o) const
+{
+      o << "@(";
+
+      if (nevents() > 0)
+	    o << event(0)->name();
+
+      for (unsigned idx = 1 ;  idx < nevents() ;  idx += 1)
+	    o << " or " << event(idx)->name();
+
+      o << ") ";
+}
+
 void NetForce::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "force ";
@@ -908,6 +953,11 @@ void NetForever::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "forever" << endl;
       statement_->dump(o, ind+2);
+}
+
+void NetFree::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "// free storage : " << scope_path(scope_) << endl;
 }
 
 void NetFuncDef::dump(ostream&o, unsigned ind) const

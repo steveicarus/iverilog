@@ -63,6 +63,10 @@ struct ivl_design_s {
  */
 struct dll_target  : public target_t, public expr_scan_t {
 
+	// This is a special function for loading and testing the
+	// version of a loadable target code generator.
+      void test_version(const char*target_name);
+
       bool start_design(const Design*);
       int  end_design(const Design*);
 
@@ -111,6 +115,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 	/* These methods and members are used for forming the
 	   statements of a thread. */
       struct ivl_statement_s*stmt_cur_;
+      void proc_alloc(const NetAlloc*);
       bool proc_assign(const NetAssign*);
       void proc_assign_nb(const NetAssignNB*);
       bool proc_block(const NetBlock*);
@@ -122,6 +127,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool proc_disable(const NetDisable*);
       bool proc_force(const NetForce*);
       void proc_forever(const NetForever*);
+      void proc_free(const NetFree*);
       bool proc_release(const NetRelease*);
       void proc_repeat(const NetRepeat*);
       void proc_stask(const NetSTask*);
@@ -177,6 +183,8 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       static ivl_expr_t expr_from_value_(const verinum&that);
 };
+
+extern struct dll_target dll_target_obj;
 
 /*
  * These are various private declarations used by the t-dll target.
@@ -659,12 +667,23 @@ struct ivl_statement_s {
       unsigned lineno;
 
       union {
+	    struct { /* IVL_ST_ALLOC */
+		  ivl_scope_t scope;
+	    } alloc_;
+
 	    struct { /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB
 			IVL_ST_CASSIGN, IVL_ST_DEASSIGN */
 		  unsigned lvals_;
 		  struct ivl_lval_s*lval_;
 		  ivl_expr_t rval_;
 		  ivl_expr_t delay;
+		    // The following are only for NB event control.
+		  ivl_expr_t count;
+		  unsigned nevent;
+		  union {
+			ivl_event_t event;
+			ivl_event_t*events;
+		  };
 	    } assign_;
 
 	    struct { /* IVL_ST_BLOCK, IVL_ST_FORK */
@@ -704,6 +723,10 @@ struct ivl_statement_s {
 	    struct { /* IVL_ST_FOREVER */
 		  ivl_statement_t stmt_;
 	    } forever_;
+
+	    struct { /* IVL_ST_FREE */
+		  ivl_scope_t scope;
+	    } free_;
 
 	    struct { /* IVL_ST_STASK */
 		  const char*name_;

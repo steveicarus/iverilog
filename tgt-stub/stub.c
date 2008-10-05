@@ -28,7 +28,25 @@
 # include "priv.h"
 # include <stdlib.h>
 # include <inttypes.h>
+# include <string.h>
 # include <assert.h>
+
+static const char*version_string =
+"Icarus Verilog Stub Target " VERSION "\n"
+"  This program is free software; you can redistribute it and/or modify\n"
+"  it under the terms of the GNU General Public License as published by\n"
+"  the Free Software Foundation; either version 2 of the License, or\n"
+"  (at your option) any later version.\n"
+"\n"
+"  This program is distributed in the hope that it will be useful,\n"
+"  but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"  GNU General Public License for more details.\n"
+"\n"
+"  You should have received a copy of the GNU General Public License\n"
+"  along with this program; if not, write to the Free Software\n"
+"  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA\n"
+;
 
 FILE*out;
 int stub_errors = 0;
@@ -132,6 +150,26 @@ const char*data_type_string(ivl_variable_type_t vtype)
 }
 
 /*
+ * The compiler will check the types of drivers to signals and will
+ * only connect outputs to signals that are compatible. This function
+ * shows the type compatibility that the compiler enforces at the
+ * ivl_target.h level.
+ */
+static int check_signal_drive_type(ivl_variable_type_t sig_type,
+				    ivl_variable_type_t driver_type)
+{
+      if (sig_type == IVL_VT_LOGIC && driver_type == IVL_VT_BOOL)
+	    return !0;
+      if (sig_type == IVL_VT_LOGIC && driver_type == IVL_VT_LOGIC)
+	    return !0;
+      if (sig_type == IVL_VT_BOOL && driver_type == IVL_VT_BOOL)
+	    return !0;
+      if (sig_type == driver_type)
+	    return !0;
+      return 0;
+}
+
+/*
  * The compare-like LPM nodes have input widths that match the
  * ivl_lpm_width() value, and an output width of 1. This function
  * checks that that is so, and indicates errors otherwise.
@@ -178,11 +216,11 @@ static void show_lpm_arithmetic_pins(ivl_lpm_t net)
 static void show_lpm_abs(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
+      ivl_nexus_t nex;
 
       fprintf(out, "  LPM_ABS %s: <width=%u>\n",
 	      ivl_lpm_basename(net), width);
 
-      ivl_nexus_t nex;
       nex = ivl_lpm_q(net, 0);
       fprintf(out, "    Q: %s\n", ivl_nexus_name(ivl_lpm_q(net, 0)));
 
@@ -243,12 +281,13 @@ static void show_lpm_array(ivl_lpm_t net)
 static void show_lpm_cast_int(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
+      ivl_nexus_t q, a;
 
       fprintf(out, "  LPM_CAST_INT %s: <width=%u>\n",
 	      ivl_lpm_basename(net), width);
 
-      ivl_nexus_t q = ivl_lpm_q(net,0);
-      ivl_nexus_t a = ivl_lpm_data(net,0);
+      q = ivl_lpm_q(net,0);
+      a = ivl_lpm_data(net,0);
       fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
       fprintf(out, "    A: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
 
@@ -268,12 +307,13 @@ static void show_lpm_cast_int(ivl_lpm_t net)
 static void show_lpm_cast_real(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
+      ivl_nexus_t q, a;
 
       fprintf(out, "  LPM_CAST_REAL %s: <width=%u>\n",
 	      ivl_lpm_basename(net), width);
 
-      ivl_nexus_t q = ivl_lpm_q(net,0);
-      ivl_nexus_t a = ivl_lpm_data(net,0);
+      q = ivl_lpm_q(net,0);
+      a = ivl_lpm_data(net,0);
       fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
       fprintf(out, "    A: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
 
@@ -1040,15 +1080,17 @@ static void signal_nexus_const(ivl_signal_t sig,
       fprintf(out, "      const-");
 
       switch (ivl_const_type(con)) {
+	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
 	    bits = ivl_const_bits(con);
+	    assert(bits);
 	    for (idx = 0 ;  idx < width ;  idx += 1) {
 		  fprintf(out, "%c", bits[width-idx-1]);
 	    }
 	    break;
 
 	  case IVL_VT_REAL:
-	    fprintf(out, "%lf", ivl_const_real(con));
+	    fprintf(out, "%f", ivl_const_real(con));
 	    break;
 
 	  default:
@@ -1064,7 +1106,10 @@ static void signal_nexus_const(ivl_signal_t sig,
 	    stub_errors += 1;
       }
 
-      if (ivl_signal_data_type(sig) != ivl_const_type(con)) {
+      int drive_type_ok = check_signal_drive_type(ivl_signal_data_type(sig),
+						  ivl_const_type(con));
+
+      if (! drive_type_ok) {
 	    fprintf(out, "ERROR: Signal data type does not match"
 		    " literal type.\n");
 	    stub_errors += 1;
@@ -1443,12 +1488,13 @@ static void show_logic(ivl_net_logic_t net)
 static int show_scope(ivl_scope_t net, void*x)
 {
       unsigned idx;
+      char *is_auto;
 
       fprintf(out, "scope: %s (%u parameters, %u signals, %u logic)",
 	      ivl_scope_name(net), ivl_scope_params(net),
 	      ivl_scope_sigs(net), ivl_scope_logs(net));
 
-      char *is_auto = ivl_scope_is_auto(net) ? "automatic " : "";
+      is_auto = ivl_scope_is_auto(net) ? "automatic " : "";
       switch (ivl_scope_type(net)) {
 	  case IVL_SCT_MODULE:
 	    fprintf(out, " module %s", ivl_scope_tname(net));
@@ -1607,4 +1653,12 @@ int target_design(ivl_design_t des)
       fclose(out);
 
       return stub_errors;
+}
+
+const char* target_query(const char*key)
+{
+      if (strcmp(key,"version") == 0)
+	    return version_string;
+
+      return 0;
 }

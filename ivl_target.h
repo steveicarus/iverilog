@@ -343,6 +343,7 @@ typedef enum ivl_signal_type_e {
 typedef enum ivl_statement_type_e {
       IVL_ST_NONE    = 0,
       IVL_ST_NOOP    = 1,
+      IVL_ST_ALLOC   = 25,
       IVL_ST_ASSIGN    = 2,
       IVL_ST_ASSIGN_NB = 3,
       IVL_ST_BLOCK   = 4,
@@ -359,6 +360,7 @@ typedef enum ivl_statement_type_e {
       IVL_ST_FORCE   = 14,
       IVL_ST_FOREVER = 15,
       IVL_ST_FORK    = 16,
+      IVL_ST_FREE    = 26,
       IVL_ST_RELEASE = 17,
       IVL_ST_REPEAT  = 18,
       IVL_ST_STASK   = 19,
@@ -502,7 +504,8 @@ extern ivl_net_const_t ivl_design_const(ivl_design_t, unsigned idx);
  * ivl_const_bits
  *    This returns a pointer to an array of constant characters,
  *    each byte a '0', '1', 'x' or 'z'. The array is *not* nul
- *    terminated.
+ *    terminated. This value is only value if ivl_const_type is
+ *    IVL_VT_LOGIC or IVL_VT_BOOL. It returns nil otherwise.
  *
  * ivl_const_nex
  *    Return the ivl_nexus_t of the output for the constant.
@@ -1254,7 +1257,7 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  */
 
 extern unsigned    ivl_lval_width(ivl_lval_t net);
-extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net); // XXXX Obsolete?
+extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net); /* XXXX Obsolete? */
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_part_off(ivl_lval_t net);
 extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
@@ -1927,7 +1930,7 @@ extern unsigned ivl_switch_lineno(ivl_switch_t net);
 #endif
 
 extern DLLEXPORT int target_design(ivl_design_t des);
-
+extern DLLEXPORT const char* target_query(const char*key);
 
 /* target_design
 
@@ -1945,6 +1948,7 @@ extern DLLEXPORT int target_design(ivl_design_t des);
    ivl core. This function is how the target module is invoked. */
 
 typedef int  (*target_design_f)(ivl_design_t des);
+typedef const char* (*target_query_f) (const char*key);
 
 
 _END_DECL

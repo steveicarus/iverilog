@@ -2,6 +2,19 @@ AC_INIT(Makefile.in)
 AC_CONFIG_HEADER(config.h)
 
 AC_PROG_CC
+
+#######################
+## test for underscores. The vpi module loader in vvm needs to know this
+## in order to know the name of the start symbol for the .vpi module.
+#######################
+
+AX_C_UNDERSCORES_LEADING
+AX_C_UNDERSCORES_TRAILING
+
+#######################
+## end of test for underscores
+#######################
+
 AC_PROG_CXX
 AC_PROG_RANLIB
 AC_CHECK_TOOL(STRIP, strip, true)
@@ -89,18 +102,6 @@ case "${host}" in *linux*) AC_DEFINE([LINUX], [1], [Host operating system is Lin
 AX_LD_RDYNAMIC
 
 AX_LD_EXTRALIBS
-
-#######################
-## test for underscores. The vpi module loader in vvm needs to know this
-## in order to know the name of the start symbol for the .vpi module.
-#######################
-
-AX_C_UNDERSCORES_LEADING
-AX_C_UNDERSCORES_TRAILING
-
-#######################
-## end of test for underscores
-#######################
 
 AX_CPP_IDENT
 

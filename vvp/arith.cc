@@ -330,24 +330,24 @@ void vvp_arith_mult::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
-      if (wid_ > 8 * sizeof(unsigned long)) {
+      if (wid_ > 8 * sizeof(long)) {
 	    wide_(ptr);
 	    return ;
       }
 
-      unsigned long a;
-      if (! vector4_to_value(op_a_, a)) {
+      long a;
+      if (! vector4_to_value(op_a_, a, true, true)) {
 	    vvp_send_vec4(ptr.ptr()->out, x_val_);
 	    return;
       }
 
-      unsigned long b;
-      if (! vector4_to_value(op_b_, b)) {
+      long b;
+      if (! vector4_to_value(op_b_, b, true, true)) {
 	    vvp_send_vec4(ptr.ptr()->out, x_val_);
 	    return;
       }
 
-      unsigned long val = a * b;
+      long val = a * b;
       assert(wid_ <= 8*sizeof(val));
 
       vvp_vector4_t vval (wid_);
@@ -362,105 +362,6 @@ void vvp_arith_mult::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 
       vvp_send_vec4(ptr.ptr()->out, vval);
 }
-
-
-#if 0
-void vvp_arith_mult::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
-{
-      put(i, val);
-      vvp_ipoint_t base = ipoint_make(i,0);
-
-      if(wid_ > 8*sizeof(unsigned long)) {
-	    wide(base, push);
-	    return;
-      }
-
-      unsigned long a = 0, b = 0;
-
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base,idx);
-	    functor_t obj = functor_index(ptr);
-
-	    unsigned val = obj->ival;
-	    if (val & 0xaa) {
-		  output_x_(base, push);
-		  return;
-	    }
-
-	    if (val & 0x01)
-		  a += 1UL << idx;
-	    if (val & 0x04)
-		  b += 1UL << idx;
-      }
-
-      output_val_(base, push, a*b);
-}
-#endif
-
-#if 0
-void vvp_arith_mult::wide(vvp_ipoint_t base, bool push)
-{
-      unsigned char *a, *b, *sum;
-      a = new unsigned char[wid_];
-      b = new unsigned char[wid_];
-      sum = new unsigned char[wid_];
-
-      unsigned mxa = 0;
-      unsigned mxb = 0;
-
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base, idx);
-	    functor_t obj = functor_index(ptr);
-
-	    unsigned ival = obj->ival;
-	    if (ival & 0xaa) {
-		  output_x_(base, push);
-		  delete[]sum;
-		  delete[]b;
-		  delete[]a;
-		  return;
-	    }
-
-	    if((a[idx] = ((ival & 0x01) != 0))) mxa=idx+1;
-	    if((b[idx] = ((ival & 0x04) != 0))) mxb=idx;
-            sum[idx] = 0;
-      }
-
-	/* do the a*b multiply using the long method we learned in
-	   grade school. We know at this point that there are no X or
-	   Z values in the a or b vectors. */
-
-      for(unsigned i=0 ;  i<=mxb ;  i += 1) {
-	    if(b[i]) {
-		  unsigned char carry=0;
-		  unsigned char temp;
-
-		  for(unsigned j=0 ;  j<=mxa ;  j += 1) {
-
-			if((i+j) >= wid_)
-			      break;
-
-			temp=sum[i+j] + a[j] + carry;
-			sum[i+j]=(temp&1);
-			carry=(temp>>1);
-		  }
-	    }
-      }
-
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base,idx);
-	    functor_t obj = functor_index(ptr);
-
-	    unsigned val = sum[idx];
-
-	    obj->put_oval(val, push);
-      }
-
-      delete[]sum;
-      delete[]b;
-      delete[]a;
-}
-#endif
 
 
 // Power
@@ -701,7 +602,11 @@ void vvp_cmp_ne::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       dispatch_operand_(ptr, bit);
 
-      assert(op_a_.size() == op_b_.size());
+      if (op_a_.size() != op_b_.size()) {
+	    cerr << "internal error: vvp_cmp_ne: op_a_=" << op_a_
+		 << ", op_b_=" << op_b_ << endl;
+	    assert(op_a_.size() == op_b_.size());
+      }
 
       vvp_vector4_t res (1);
       res.set_bit(0, BIT4_0);

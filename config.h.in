@@ -93,4 +93,4 @@
  *  junk, and support gcc 3.0. (Stephan Boettcher)
  *
  */
-#endif // __config_H
+#endif /* __config_H */

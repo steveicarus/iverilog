@@ -118,6 +118,7 @@ extern "C" const char*ivl_const_bits(ivl_net_const_t net)
       assert(net);
       switch (net->type) {
 
+	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
 	    if (net->width_ <= sizeof(net->b.bit_))
 		  return net->b.bit_;
@@ -1912,8 +1913,14 @@ extern "C" ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net,
 extern "C" ivl_scope_t ivl_stmt_call(ivl_statement_t net)
 {
       switch (net->type_) {
+	  case IVL_ST_ALLOC:
+	    return net->u_.alloc_.scope;
+
 	  case IVL_ST_DISABLE:
 	    return net->u_.disable_.scope;
+
+	  case IVL_ST_FREE:
+	    return net->u_.free_.scope;
 
 	  case IVL_ST_UTASK:
 	    return net->u_.utask_.def;
@@ -1972,6 +1979,9 @@ extern "C" ivl_statement_t ivl_stmt_case_stmt(ivl_statement_t net, unsigned idx)
 extern "C" ivl_expr_t ivl_stmt_cond_expr(ivl_statement_t net)
 {
       switch (net->type_) {
+	  case IVL_ST_ASSIGN_NB:
+	    return net->u_.assign_.count;
+
 	  case IVL_ST_CONDIT:
 	    return net->u_.condit_.cond_;
 
@@ -2034,6 +2044,9 @@ extern "C" uint64_t ivl_stmt_delay_val(ivl_statement_t net)
 extern "C" unsigned ivl_stmt_nevent(ivl_statement_t net)
 {
       switch (net->type_) {
+	  case IVL_ST_ASSIGN_NB:
+	    return net->u_.assign_.nevent;
+
 	  case IVL_ST_WAIT:
 	    return net->u_.wait_.nevent;
 
@@ -2049,6 +2062,13 @@ extern "C" unsigned ivl_stmt_nevent(ivl_statement_t net)
 extern "C" ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx)
 {
       switch (net->type_) {
+	  case IVL_ST_ASSIGN_NB:
+	    assert(idx < net->u_.assign_.nevent);
+	    if (net->u_.assign_.nevent == 1)
+		  return net->u_.assign_.event;
+	    else
+		  return net->u_.assign_.events[idx];
+
 	  case IVL_ST_WAIT:
 	    assert(idx < net->u_.wait_.nevent);
 	    if (net->u_.wait_.nevent == 1)
@@ -2059,6 +2079,7 @@ extern "C" ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx)
 	  case IVL_ST_TRIGGER:
 	    assert(idx == 0);
 	    return net->u_.wait_.event;
+
 	  default:
 	    assert(0);
       }

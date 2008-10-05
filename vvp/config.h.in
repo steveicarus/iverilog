@@ -1,7 +1,7 @@
 #ifndef __config_H
 #define __config_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: config.h.in,v 1.24 2007/06/13 01:03:57 steve Exp $"
-#endif
 
 #if defined(__cplusplus)
 #  if !defined(__GNUC__)
@@ -74,6 +71,7 @@ typedef unsigned vvp_time64_t;
 #else
 # if SIZEOF_UNSIGNED_LONG >= 8
 typedef unsigned long vvp_time64_t;
+#  define UL_AND_TIME64_SAME
 #  define TIME_FMT "l"
 # else
 #  if SIZEOF_UNSIGNED_LONG_LONG > SIZEOF_UNSIGNED_LONG
@@ -81,6 +79,7 @@ typedef unsigned long long vvp_time64_t;
 #   define TIME_FMT "ll"
 #  else
 typedef unsigned long vvp_time64_t;
+#   define UL_AND_TIME64_SAME
 #   define TIME_FMT "l"
 #  endif
 # endif
@@ -127,85 +126,4 @@ extern long lround(double x);
 #define TU ""
 #endif
 
-/*
- * $Log: config.h.in,v $
- * Revision 1.24  2007/06/13 01:03:57  steve
- *  Detect and use the nan function.
- *
- * Revision 1.23  2007/02/02 04:33:01  steve
- *  Use inttypes.h instead of stdint.h for portability.
- *
- * Revision 1.22  2006/04/27 05:04:59  steve
- *  Detect missing lround function.
- *
- * Revision 1.21  2006/04/25 22:41:10  steve
- *  Detect the presence of stdint.h
- *
- * Revision 1.20  2005/09/14 02:50:07  steve
- *  Add word integer compares.
- *
- * Revision 1.19  2005/04/13 06:34:20  steve
- *  Add vvp driver functor for logic outputs,
- *  Add ostream output operators for debugging.
- *
- * Revision 1.18  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.17  2004/05/18 18:45:11  steve
- *  Handle explicit set of unsigned long width. For -m32
- *
- * Revision 1.16  2003/08/26 16:26:02  steve
- *  ifdef idents correctly.
- *
- * Revision 1.15  2003/05/20 03:48:23  steve
- *  Fix spelling of HAVE_LIBREADLINE
- *
- * Revision 1.14  2003/05/16 03:50:28  steve
- *  Fallback functionality if readline is not present.
- *
- * Revision 1.13  2003/03/13 20:31:40  steve
- *  Warnings about long long time.
- *
- * Revision 1.12  2003/03/13 04:36:57  steve
- *  Remove the obsolete functor delete functions.
- *
- * Revision 1.11  2002/05/24 00:43:16  steve
- *  Define SIZEOF_UNSIGNED_LONG_LONG
- *
- * Revision 1.10  2002/04/20 04:33:23  steve
- *  Support specified times in cbReadOnlySync, and
- *  add support for cbReadWriteSync.
- *  Keep simulation time in a 64bit number.
- *
- * Revision 1.9  2001/10/20 01:03:42  steve
- *  Print memory usage information if requested (Stephan Boettcher)
- *
- * Revision 1.8  2001/09/17 22:26:33  steve
- *  Detect C name mangling for dlsym.
- *
- * Revision 1.7  2001/09/15 18:27:05  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.6  2001/07/16 18:40:19  steve
- *  Add a stdlog output for vvp, and vvp options
- *  to direct them around. (Stephan Boettcher.)
- *
- * Revision 1.5  2001/05/11 02:06:14  steve
- *  Add the --enable-vvp-debug option to the configure
- *  script of vvp, and detect getopt.h.
- *
- * Revision 1.4  2001/05/05 23:55:46  steve
- *  Add the beginnings of an interactive debugger.
- *
- * Revision 1.3  2001/03/22 21:26:53  steve
- *  Compile in a default VPI module dir.
- *
- * Revision 1.2  2001/03/16 01:44:34  steve
- *  Add structures for VPI support, and all the %vpi_call
- *  instruction. Get linking of VPI modules to work.
- *
- * Revision 1.1  2001/03/11 00:29:38  steve
- *  Add the vvp engine to cvs.
- *
- */
 #endif

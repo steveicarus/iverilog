@@ -25,6 +25,10 @@
 #endif
 # include  <stdlib.h>
 
+#ifdef __MINGW32__ /* MinGW has inconsistent %p output. */
+#define snprintf _snprintf
+#endif
+
 static int show_statement(ivl_statement_t net, ivl_scope_t sscope);
 
 unsigned local_count = 0;
@@ -220,7 +224,8 @@ static void set_to_lvariable(ivl_lval_t lval,
 
 static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 				 unsigned bit, unsigned delay, ivl_expr_t dexp,
-				 ivl_expr_t part_off_ex, unsigned width)
+				 ivl_expr_t part_off_ex, unsigned width,
+				 unsigned nevents)
 {
       unsigned skip_assign = transient_id++;
 
@@ -232,64 +237,52 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	    part_off_ex = 0;
       }
 
-      if (dexp == 0) {
-	      /* Constant delay... */
-	    if (number_is_immediate(word_ix, 64, 0)) {
-		  fprintf(vvp_out, "    %%ix/load 3, %lu; address\n",
-			  get_number_immediate(word_ix));
-	    } else {
-		    /* Calculate array word index into index register 3 */
-		  draw_eval_expr_into_integer(word_ix, 3);
-		    /* Skip assignment if word expression is not defined. */
-		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
-	    }
-	      /* Store expression width into index word 0 */
-	    fprintf(vvp_out, "    %%ix/load 0, %u; word width\n", width);
-	    if (part_off_ex) {
-		  draw_eval_expr_into_integer(part_off_ex, 1);
-		    /* If the index expression has XZ bits, skip the assign. */
-		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
-	    } else {
-		    /* Store word part select base into index 1 */
-		  fprintf(vvp_out, "    %%ix/load 1, %u; part base\n", part_off);
-	    }
-	    fprintf(vvp_out, "    %%assign/av v%p, %u, %u;\n", lsig,
-	            delay, bit);
+	/* This code is common to all the different types of array delays. */
+      if (number_is_immediate(word_ix, 64, 0)) {
+	    fprintf(vvp_out, "    %%ix/load 3, %lu; address\n",
+	                     get_number_immediate(word_ix));
       } else {
+	      /* Calculate array word index into index register 3 */
+	    draw_eval_expr_into_integer(word_ix, 3);
+	      /* Skip assignment if word expression is not defined. */
+	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+      }
+	/* Store expression width into index word 0 */
+      fprintf(vvp_out, "    %%ix/load 0, %u; word width\n", width);
+      if (part_off_ex) {
+	    draw_eval_expr_into_integer(part_off_ex, 1);
+	      /* If the index expression has XZ bits, skip the assign. */
+	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+      } else {
+	      /* Store word part select into index 1 */
+	    fprintf(vvp_out, "    %%ix/load 1, %u; part off\n", part_off);
+      }
+
+      if (dexp != 0) {
 	      /* Calculated delay... */
 	    int delay_index = allocate_word();
 	    draw_eval_expr_into_integer(dexp, delay_index);
-	    if (number_is_immediate(word_ix, 64, 0)) {
-		  fprintf(vvp_out, "   %%ix/load 3, %lu; address\n",
-			  get_number_immediate(word_ix));
-	    } else {
-		    /* Calculate array word index into index register 3 */
-		  draw_eval_expr_into_integer(word_ix, 3);
-		    /* Skip assignment if word expression is not defined. */
-		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
-	    }
-	      /* Store expression width into index word 0 */
-	    fprintf(vvp_out, "    %%ix/load 0, %u; word width\n", width);
-	    if (part_off_ex) {
-		  draw_eval_expr_into_integer(part_off_ex, 1);
-		    /* If the index expression has XZ bits, skip the assign. */
-		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
-	    } else {
-		    /* Store word part select into index 1 */
-		  fprintf(vvp_out, "    %%ix/load 1, %u; part off\n", part_off);
-	    }
 	    fprintf(vvp_out, "    %%assign/av/d v%p, %d, %u;\n", lsig,
-	            delay_index, bit);
+	                     delay_index, bit);
+	    clr_word(delay_index);
+      } else if (nevents != 0) {
+	      /* Event control delay... */
+	    fprintf(vvp_out, "    %%assign/av/e v%p, %u;\n", lsig, bit);
+      } else {
+	      /* Constant delay... */
+	    fprintf(vvp_out, "    %%assign/av v%p, %u, %u;\n", lsig,
+	                     delay, bit);
       }
 
       fprintf(vvp_out, "t_%u ;\n", skip_assign);
+      if (nevents != 0) fprintf(vvp_out, "    %%evctl/c;\n");
 
       clear_expression_lookaside();
 }
 
 static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 			      unsigned delay, ivl_expr_t dexp,
-			      unsigned width)
+			      unsigned width, unsigned nevents)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
       ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
@@ -300,7 +293,8 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 
       if (ivl_signal_dimensions(sig) > 0) {
 	    assert(word_ix);
-	    assign_to_array_word(sig, word_ix, bit, delay, dexp, part_off_ex, width);
+	    assign_to_array_word(sig, word_ix, bit, delay, dexp, part_off_ex,
+	                         width, nevents);
 	    return;
       }
 
@@ -316,16 +310,7 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 
       if (part_off_ex) {
 	    unsigned skip_assign = transient_id++;
-	    if (dexp == 0) {
-		    /* Constant delay... */
-		  draw_eval_expr_into_integer(part_off_ex, 1);
-		    /* If the index expression has XZ bits, skip the assign. */
-		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
-		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
-		  fprintf(vvp_out, "    %%assign/v0/x1 v%p_%lu, %u, %u;\n",
-		          sig, use_word, delay, bit);
-		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
-	    } else {
+	    if (dexp != 0) {
 		    /* Calculated delay... */
 		  int delay_index = allocate_word();
 		  draw_eval_expr_into_integer(dexp, delay_index);
@@ -337,6 +322,25 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 		          sig, use_word, delay_index, bit);
 		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
 		  clr_word(delay_index);
+	    } else if (nevents != 0) {
+		    /* Event control delay... */
+		  draw_eval_expr_into_integer(part_off_ex, 1);
+		    /* If the index expression has XZ bits, skip the assign. */
+		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+		  fprintf(vvp_out, "    %%assign/v0/x1/e v%p_%lu, %u;\n",
+		          sig, use_word, bit);
+		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
+		  fprintf(vvp_out, "    %%evctl/c;\n");
+	    } else {
+		    /* Constant delay... */
+		  draw_eval_expr_into_integer(part_off_ex, 1);
+		    /* If the index expression has XZ bits, skip the assign. */
+		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+		  fprintf(vvp_out, "    %%assign/v0/x1 v%p_%lu, %u, %u;\n",
+		          sig, use_word, delay, bit);
+		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
 	    }
 
       } else if (part_off>0 || ivl_lval_width(lval)!=ivl_signal_width(sig)) {
@@ -345,14 +349,7 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 		 single-bit set instruction. */
 	    assert(ivl_lval_width(lval) == width);
 
-	    if (dexp == 0) {
-		    /* Constant delay... */
-		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
-		  fprintf(vvp_out, "    %%ix/load 1, %u;\n", part_off);
-		  fprintf(vvp_out, "    %%assign/v0/x1 v%p_%lu, %u, %u;\n",
-			  sig, use_word, delay, bit);
-
-	    } else {
+	    if (dexp != 0) {
 		    /* Calculated delay... */
 		  int delay_index = allocate_word();
 		  draw_eval_expr_into_integer(dexp, delay_index);
@@ -361,14 +358,33 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 		  fprintf(vvp_out, "    %%assign/v0/x1/d v%p_%lu, %d, %u;\n",
 			  sig, use_word, delay_index, bit);
 		  clr_word(delay_index);
+	    } else if (nevents != 0) {
+		    /* Event control delay... */
+		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+		  fprintf(vvp_out, "    %%ix/load 1, %u;\n", part_off);
+		  fprintf(vvp_out, "    %%assign/v0/x1/e v%p_%lu, %u;\n",
+			  sig, use_word, bit);
+	    } else {
+		    /* Constant delay... */
+		  fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+		  fprintf(vvp_out, "    %%ix/load 1, %u;\n", part_off);
+		  fprintf(vvp_out, "    %%assign/v0/x1 v%p_%lu, %u, %u;\n",
+			  sig, use_word, delay, bit);
 	    }
 
       } else if (dexp != 0) {
+	      /* Calculated delay... */
 	    draw_eval_expr_into_integer(dexp, 1);
 	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
 	    fprintf(vvp_out, "    %%assign/v0/d v%p_%lu, 1, %u;\n",
 		    sig, use_word, bit);
+      } else if (nevents != 0) {
+	      /* Event control delay... */
+	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
+	    fprintf(vvp_out, "    %%assign/v0/e v%p_%lu, %u;\n",
+		    sig, use_word, bit);
       } else {
+	      /* Constant delay... */
 	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
 	    fprintf(vvp_out, "    %%assign/v0 v%p_%lu, %u, %u;\n",
 		    sig, use_word, delay, bit);
@@ -410,6 +426,14 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 		 current l-value. */
 	    cur_rbit += bit_limit;
       }
+}
+
+static int show_stmt_alloc(ivl_statement_t net)
+{
+      ivl_scope_t scope = ivl_stmt_call(net);
+
+      fprintf(vvp_out, "    %%alloc S_%p;\n", scope);
+      return 0;
 }
 
 static int show_stmt_assign_vector(ivl_statement_t net)
@@ -531,7 +555,8 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
       unsigned long use_word = 0;
 	/* thread address for a word value. */
       int word;
-      unsigned long delay;
+      unsigned long delay = 0;
+      unsigned nevents = ivl_stmt_nevent(net);
 
 	/* Must be exactly 1 l-value. */
       assert(ivl_stmt_lvals(net) == 1);
@@ -547,20 +572,29 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 	    use_word = get_number_immediate(word_ix);
       }
 
-      delay = 0;
       if (del && (ivl_expr_type(del) == IVL_EX_ULONG)) {
 	    delay = ivl_expr_uvalue(del);
 	    del = 0;
       }
 
-	/* XXXX For now, presume delays are constant. */
-      assert(del == 0);
-
 	/* Evaluate the r-value */
       word = draw_eval_real(rval);
 
-      fprintf(vvp_out, "   %%assign/wr v%p_%lu, %lu, %u;\n",
-	      sig, use_word, delay, word);
+	/* We need to calculate the delay expression. */
+      if (del) {
+	    assert(nevents == 0);
+	    int delay_index = allocate_word();
+	    draw_eval_expr_into_integer(del, delay_index);
+	    fprintf(vvp_out, "    %%assign/wr/d v%p_%lu, %d, %u;\n",
+	            sig, use_word, delay_index, word);
+	    clr_word(delay_index);
+      } else if (nevents) {
+	    fprintf(vvp_out, "    %%assign/wr/e v%p_%lu, %u;\n",
+	            sig, use_word, word);
+      } else {
+	    fprintf(vvp_out, "    %%assign/wr v%p_%lu, %lu, %u;\n",
+	            sig, use_word, delay, word);
+      }
 
       clr_word(word);
 
@@ -573,6 +607,51 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_expr_t del  = ivl_stmt_delay_expr(net);
       ivl_signal_t sig;
+      unsigned nevents = ivl_stmt_nevent(net);
+
+	/* If we have an event control build the control structure. */
+      if (nevents) {
+	    assert(del == 0);
+
+	    ivl_expr_t cnt = ivl_stmt_cond_expr(net);
+	    unsigned long count = 1;
+	    if (cnt && (ivl_expr_type(cnt) == IVL_EX_ULONG)) {
+		  count = ivl_expr_uvalue(cnt);
+		  cnt = 0;
+	    }
+
+	    char name[256];
+	    if (nevents == 1) {
+		  ivl_event_t ev = ivl_stmt_events(net, 0);
+		  snprintf(name, sizeof(name), "E_%p", ev);
+	    } else {
+		  unsigned idx;
+		  static unsigned int cascade_counter = 0;
+		  ivl_event_t ev = ivl_stmt_events(net, 0);
+		  fprintf(vvp_out, "Eassign_%u .event/or E_%p",
+		                   cascade_counter, ev);
+
+		  for (idx = 1;  idx < nevents;  idx += 1) {
+			ev = ivl_stmt_events(net, idx);
+			fprintf(vvp_out, ", E_%p", ev);
+		  }
+		  snprintf(name, sizeof(name), "Eassign_%u", cascade_counter);
+		  cascade_counter += 1;
+	    }
+
+	    if (cnt) {
+		  int count_index = allocate_word();
+		  char*type = ivl_expr_signed(cnt) ? "/s" : "";
+		  draw_eval_expr_into_integer(cnt, count_index);
+		  fprintf(vvp_out, "    %%evctl%s %s, %d;\n", type, name,
+		                   count_index);
+		  clr_word(count_index);
+	    } else { 
+		  fprintf(vvp_out, "    %%evctl/i %s, %lu;\n", name, count);
+	    }
+      } else {
+	    assert(ivl_stmt_cond_expr(net) == 0);
+      }
 
       unsigned long delay = 0;
 
@@ -600,15 +679,15 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 
 	for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
 	      unsigned bit_limit = wid - cur_rbit;
+	      unsigned bidx;
+
 	      lval = ivl_stmt_lval(net, lidx);
 
 	      if (bit_limit > ivl_lval_width(lval))
 		    bit_limit = ivl_lval_width(lval);
 
-	      unsigned bidx;
-
 	      bidx = res.base < 4? res.base : (res.base+cur_rbit);
-	      assign_to_lvector(lval, bidx, delay, del, bit_limit);
+	      assign_to_lvector(lval, bidx, delay, del, bit_limit, nevents);
 
 	      cur_rbit += bit_limit;
 
@@ -861,6 +940,8 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 static void force_real_to_lval(ivl_statement_t net, int res)
 {
       const char*command_name;
+      ivl_lval_t lval;
+      ivl_signal_t lsig;
 
       switch (ivl_statement_type(net)) {
 	  case IVL_ST_CASSIGN:
@@ -876,8 +957,8 @@ static void force_real_to_lval(ivl_statement_t net, int res)
       }
 
       assert(ivl_stmt_lvals(net) == 1);
-      ivl_lval_t lval = ivl_stmt_lval(net, 0);
-      ivl_signal_t lsig = ivl_lval_sig(lval);
+      lval = ivl_stmt_lval(net, 0);
+      lsig = ivl_lval_sig(lval);
 
       assert(ivl_lval_width(lval) == 1);
       assert(ivl_lval_part_off(lval) == 0);
@@ -962,10 +1043,11 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 
 static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 {
-      ivl_signal_t rsig;;
+      ivl_signal_t rsig;
       ivl_lval_t lval;
       ivl_signal_t lsig;
       const char*command_name;
+      ivl_expr_t part_off_ex;
 
       ivl_expr_t lword_idx, rword_idx;
       unsigned long use_lword = 0, use_rword = 0;
@@ -993,7 +1075,7 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 
 	/* We do not currently support driving a signal to a bit or
 	 * part select (this could give us multiple drivers). */
-      ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
+      part_off_ex = ivl_lval_part_off(lval);
       if (ivl_signal_width(lsig) > ivl_signal_width(rsig) ||
           (part_off_ex && get_number_immediate(part_off_ex) != 0)) {
 	    fprintf(stderr, "%s:%u: vvp-tgt sorry: cannot %s signal to "
@@ -1060,9 +1142,13 @@ static int show_stmt_cassign(ivl_statement_t net)
 static int show_stmt_deassign(ivl_statement_t net)
 {
       ivl_signal_t sig = ivl_lval_sig(ivl_stmt_lval(net, 0));
+      unsigned lidx;
+
       if (sig && ivl_signal_data_type(sig) == IVL_VT_REAL) {
+	    ivl_lval_t lval;
+
 	    assert(ivl_stmt_lvals(net) == 1);
-	    ivl_lval_t lval = ivl_stmt_lval(net, 0);
+	    lval = ivl_stmt_lval(net, 0);
 	    assert(ivl_lval_width(lval) == 1);
 	    assert(ivl_lval_part_off(lval) == 0);
 	    assert(ivl_lval_idx(lval) == 0);
@@ -1071,21 +1157,22 @@ static int show_stmt_deassign(ivl_statement_t net)
 	    return 0;
       }
 
-      unsigned lidx;
-
       for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
 	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
 	    ivl_signal_t lsig = ivl_lval_sig(lval);
 
 	    ivl_expr_t word_idx = ivl_lval_idx(lval);
 	    unsigned long use_word = 0;
+	    unsigned use_wid;
+	    ivl_expr_t part_off_ex;
+	    unsigned part_off;
 
 	    assert(lsig != 0);
 	    assert(ivl_lval_mux(lval) == 0);
 
-	    unsigned use_wid = ivl_lval_width(lval);
-	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
-	    unsigned part_off = 0;
+	    use_wid = ivl_lval_width(lval);
+	    part_off_ex = ivl_lval_part_off(lval);
+	    part_off = 0;
 	    if (part_off_ex != 0) {
 		  assert(number_is_immediate(part_off_ex, 64, 0));
 		  part_off = get_number_immediate(part_off_ex);
@@ -1327,6 +1414,14 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
       return rc;
 }
 
+static int show_stmt_free(ivl_statement_t net)
+{
+      ivl_scope_t scope = ivl_stmt_call(net);
+
+      fprintf(vvp_out, "    %%free S_%p;\n", scope);
+      return 0;
+}
+
 /*
  * noop statements are implemented by doing nothing.
  */
@@ -1338,11 +1433,14 @@ static int show_stmt_noop(ivl_statement_t net)
 static int show_stmt_release(ivl_statement_t net)
 {
       ivl_signal_t sig = ivl_lval_sig(ivl_stmt_lval(net, 0));
+      unsigned lidx;
+
       if (sig && ivl_signal_data_type(sig) == IVL_VT_REAL) {
 	    unsigned type = 0;
+	    ivl_lval_t lval;
 
 	    assert(ivl_stmt_lvals(net) == 1);
-	    ivl_lval_t lval = ivl_stmt_lval(net, 0);
+	    lval = ivl_stmt_lval(net, 0);
 	    assert(ivl_lval_width(lval) == 1);
 	    assert(ivl_lval_part_off(lval) == 0);
 	    assert(ivl_lval_idx(lval) == 0);
@@ -1353,8 +1451,6 @@ static int show_stmt_release(ivl_statement_t net)
 	    return 0;
       }
 
-      unsigned lidx;
-
       for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
 	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
 	    ivl_signal_t lsig = ivl_lval_sig(lval);
@@ -1362,12 +1458,16 @@ static int show_stmt_release(ivl_statement_t net)
 
 	    ivl_expr_t word_idx = ivl_lval_idx(lval);
 	    unsigned long use_word = 0;
+	    unsigned use_wid;
+	    ivl_expr_t part_off_ex;
+	    unsigned part_off;
+
 	    assert(lsig != 0);
 	    assert(ivl_lval_mux(lval) == 0);
 
-	    unsigned use_wid = ivl_lval_width(lval);
-	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
-	    unsigned part_off = 0;
+	    use_wid = ivl_lval_width(lval);
+	    part_off_ex = ivl_lval_part_off(lval);
+	    part_off = 0;
 	    if (part_off_ex != 0) {
 		  assert(number_is_immediate(part_off_ex, 64, 0));
 		  part_off = get_number_immediate(part_off_ex);
@@ -1574,6 +1674,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 
       switch (code) {
 
+	  case IVL_ST_ALLOC:
+	    rc += show_stmt_alloc(net);
+	    break;
+
 	  case IVL_ST_ASSIGN:
 	    rc += show_stmt_assign(net);
 	    break;
@@ -1633,6 +1737,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 
 	  case IVL_ST_FORK:
 	    rc += show_stmt_fork(net, sscope);
+	    break;
+
+	  case IVL_ST_FREE:
+	    rc += show_stmt_free(net);
 	    break;
 
 	  case IVL_ST_NOOP:

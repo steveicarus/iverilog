@@ -28,6 +28,9 @@ void show_switch(ivl_switch_t net)
 {
       const char*name = ivl_switch_basename(net);
       int has_enable = 0;
+      ivl_nexus_t nexa, nexb;
+      ivl_variable_type_t nex_type_a, nex_type_b;
+      const char*nex_name;
 
       switch (ivl_switch_type(net)) {
 	  case IVL_SW_TRAN:
@@ -61,14 +64,14 @@ void show_switch(ivl_switch_t net)
 
       fprintf(out, " island=%p\n", ivl_switch_island(net));
 
-      ivl_nexus_t nexa = ivl_switch_a(net);
-      const char*nex_name = nexa? ivl_nexus_name(nexa) : "";
-      ivl_variable_type_t nex_type_a = nexa? type_of_nexus(nexa) : IVL_VT_NO_TYPE;
+      nexa = ivl_switch_a(net);
+      nex_name = nexa? ivl_nexus_name(nexa) : "";
+      nex_type_a = nexa? type_of_nexus(nexa) : IVL_VT_NO_TYPE;
       fprintf(out, "    A: %s <type=%s>\n", nex_name, data_type_string(nex_type_a));
 
-      ivl_nexus_t nexb = ivl_switch_b(net);
+      nexb = ivl_switch_b(net);
       nex_name = nexb? ivl_nexus_name(nexb) : "";
-      ivl_variable_type_t nex_type_b = nexb? type_of_nexus(nexb) : IVL_VT_NO_TYPE;
+      nex_type_b = nexb? type_of_nexus(nexb) : IVL_VT_NO_TYPE;
       fprintf(out, "    B: %s <type=%s>\n", nex_name, data_type_string(nex_type_b));
 
 	/* The A/B pins of the switch must be present, and must match. */

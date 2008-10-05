@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: event.cc,v 1.23 2006/12/09 19:06:53 steve Exp $"
-#endif
 
 # include  "event.h"
 # include  "compile.h"
@@ -35,14 +32,134 @@
 
 # include <iostream>
 
-void waitable_hooks_s::run_waiting_threads_()
+void waitable_hooks_s::run_waiting_threads_(unsigned context_idx)
 {
-      if (threads == 0)
-	    return;
+	// Run the non-blocking event controls.
+      last = &event_ctls;
+      for (evctl*cur = event_ctls; cur != 0;) {
+	    if (cur->dec_and_run()) {
+		  evctl*nxt = cur->next;
+		  delete cur;
+		  cur = nxt;
+		  *last = cur;
+	    } else {
+		  last = &(cur->next);
+		  cur = cur->next;
+	    }
+      }
 
-      vthread_t tmp = threads;
-      threads = 0;
-      vthread_schedule_list(tmp);
+      vthread_t tmp;
+      if (context_idx) {
+            waitable_state_s*state = static_cast<waitable_state_s*>
+                  (vthread_get_wt_context_item(context_idx));
+            tmp = state->threads;
+            state->threads = 0;
+      } else {
+            tmp = threads;
+            threads = 0;
+      }
+      if (tmp) vthread_schedule_list(tmp);
+}
+
+evctl::evctl(unsigned long ecount)
+{
+      ecount_ = ecount;
+      next = 0;
+}
+
+bool evctl::dec_and_run()
+{
+      assert(ecount_ != 0);
+
+      ecount_ -= 1;
+      if (ecount_ == 0) run_run();
+
+      return ecount_ == 0;
+}
+
+evctl_real::evctl_real(struct __vpiHandle*handle, double value,
+                       unsigned long ecount)
+:evctl(ecount)
+{
+      handle_ = handle;
+      value_ = value;
+}
+
+void evctl_real::run_run()
+{
+      t_vpi_value val;
+
+      val.format = vpiRealVal;
+      val.value.real = value_;
+      vpi_put_value(handle_, &val, 0, vpiNoDelay);
+}
+
+void schedule_evctl(struct __vpiHandle*handle, double value,
+                    vvp_net_t*event, unsigned long ecount)
+{
+	// Get the functor we are going to wait on.
+      waitable_hooks_s*ep = dynamic_cast<waitable_hooks_s*> (event->fun);
+      assert(ep);
+	// Now add this call to the end of the event list.
+      *(ep->last) = new evctl_real(handle, value, ecount);
+      ep->last = &((*(ep->last))->next);
+}
+
+evctl_vector::evctl_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
+                           unsigned off, unsigned wid, unsigned long ecount)
+:evctl(ecount), value_(value)
+{
+      ptr_ = ptr;
+      off_ = off;
+      wid_ = wid;
+}
+
+void evctl_vector::run_run()
+{
+      if (wid_ != 0) {
+	    vvp_send_vec4_pv(ptr_, value_, off_, value_.size(), wid_);
+      } else {
+	    vvp_send_vec4(ptr_, value_);
+      }
+}
+
+void schedule_evctl(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
+                    unsigned offset, unsigned wid,
+                    vvp_net_t*event, unsigned long ecount)
+{
+	// Get the functor we are going to wait on.
+      waitable_hooks_s*ep = dynamic_cast<waitable_hooks_s*> (event->fun);
+      assert(ep);
+	// Now add this call to the end of the event list.
+      *(ep->last) = new evctl_vector(ptr, value, offset, wid, ecount);
+      ep->last = &((*(ep->last))->next);
+}
+
+evctl_array::evctl_array(vvp_array_t memory, unsigned index,
+                         const vvp_vector4_t&value, unsigned off,
+                         unsigned long ecount)
+:evctl(ecount), value_(value)
+{
+      mem_ = memory;
+      idx_ = index;
+      off_ = off;
+}
+
+void evctl_array::run_run()
+{
+      array_set_word(mem_, idx_, off_, value_);
+}
+
+void schedule_evctl(vvp_array_t memory, unsigned index,
+                    const vvp_vector4_t&value, unsigned offset,
+                    vvp_net_t*event, unsigned long ecount)
+{
+	// Get the functor we are going to wait on.
+      waitable_hooks_s*ep = dynamic_cast<waitable_hooks_s*> (event->fun);
+      assert(ep);
+	// Now add this call to the end of the event list.
+      *(ep->last) = new evctl_array(memory, index, value, offset, ecount);
+      ep->last = &((*(ep->last))->next);
 }
 
 inline vvp_fun_edge::edge_t VVP_EDGE(vvp_bit4_t from, vvp_bit4_t to)
@@ -68,6 +185,12 @@ const vvp_fun_edge::edge_t vvp_edge_negedge
 
 const vvp_fun_edge::edge_t vvp_edge_none    = 0;
 
+struct vvp_fun_edge_state_s : public waitable_state_s {
+      vvp_fun_edge_state_s() : bit(BIT4_X) {}
+
+      vvp_bit4_t bit;
+};
+
 vvp_fun_edge::vvp_fun_edge(edge_t e, bool debug_flag)
 : edge_(e), debug_(debug_flag)
 {
@@ -81,22 +204,51 @@ vvp_fun_edge::~vvp_fun_edge()
 {
 }
 
+void vvp_fun_edge::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, context_idx, new vvp_fun_edge_state_s);
+}
+
+void vvp_fun_edge::reset_instance(vvp_context_t context)
+{
+      vvp_fun_edge_state_s*state = static_cast<vvp_fun_edge_state_s*>
+            (vvp_get_context_item(context, context_idx));
+      state->threads = 0;
+      state->bit = BIT4_X;
+}
+
 void vvp_fun_edge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
+      vvp_bit4_t*old_bit;
+      if (context_idx) {
+            vvp_fun_edge_state_s*state = static_cast<vvp_fun_edge_state_s*>
+                  (vthread_get_wt_context_item(context_idx));
+            old_bit = &state->bit;
+      } else {
+            old_bit = &bits_[port.port()];
+      }
+
 	/* See what kind of edge this represents. */
-      edge_t mask = VVP_EDGE(bits_[port.port()], bit.value(0));
+      edge_t mask = VVP_EDGE(*old_bit, bit.value(0));
 
 	/* Save the current input for the next time around. */
-      bits_[port.port()] = bit.value(0);
+      *old_bit = bit.value(0);
 
       if ((edge_ == vvp_edge_none) || (edge_ & mask)) {
-	    run_waiting_threads_();
+	    run_waiting_threads_(context_idx);
 
 	    vvp_net_t*net = port.ptr();
 	    vvp_send_vec4(net->out, bit);
       }
 }
 
+
+struct vvp_fun_anyedge_state_s : public waitable_state_s {
+      vvp_fun_anyedge_state_s() : bitsr(0.0) {}
+
+      vvp_vector4_t bits;
+      double bitsr;
+};
 
 vvp_fun_anyedge::vvp_fun_anyedge(bool debug_flag)
 : debug_(debug_flag)
@@ -109,17 +261,39 @@ vvp_fun_anyedge::~vvp_fun_anyedge()
 {
 }
 
+void vvp_fun_anyedge::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, context_idx, new vvp_fun_anyedge_state_s);
+}
+
+void vvp_fun_anyedge::reset_instance(vvp_context_t context)
+{
+      vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
+            (vvp_get_context_item(context, context_idx));
+      state->threads = 0;
+      state->bits.set_to_x();
+      state->bitsr = 0.0;
+}
+
 void vvp_fun_anyedge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
-      unsigned pdx = port.port();
       bool flag = false;
 
-      if (bits_[pdx].size() != bit.size()) {
+      vvp_vector4_t*old_bits;
+      if (context_idx) {
+            vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
+                  (vthread_get_wt_context_item(context_idx));
+            old_bits = &state->bits;
+      } else {
+            old_bits = &bits_[port.port()];
+      }
+
+      if (old_bits->size() != bit.size()) {
 	    flag = true;
 
       } else {
 	    for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1) {
-		  if (bits_[pdx].value(idx) != bit.value(idx)) {
+		  if (old_bits->value(idx) != bit.value(idx)) {
 			flag = true;
 			break;
 		  }
@@ -127,8 +301,8 @@ void vvp_fun_anyedge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
       }
 
       if (flag) {
-	    bits_[pdx] = bit;
-	    run_waiting_threads_();
+	    *old_bits = bit;
+	    run_waiting_threads_(context_idx);
 	    vvp_net_t*net = port.ptr();
 	    vvp_send_vec4(net->out, bit);
       }
@@ -136,16 +310,18 @@ void vvp_fun_anyedge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 
 void vvp_fun_anyedge::recv_real(vvp_net_ptr_t port, double bit)
 {
-      unsigned pdx = port.port();
-      bool flag = false;
-
-      if (bitsr_[pdx] != bit) {
-	    flag = true;
-	    bitsr_[pdx] = bit;
+      double*old_bits;
+      if (context_idx) {
+            vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
+                  (vthread_get_wt_context_item(context_idx));
+            old_bits = &state->bitsr;
+      } else {
+            old_bits = &bitsr_[port.port()];
       }
 
-      if (flag) {
-	    run_waiting_threads_();
+      if (*old_bits != bit) {
+	    *old_bits = bit;
+	    run_waiting_threads_(context_idx);
 	    vvp_net_t*net = port.ptr();
 	    vvp_send_vec4(net->out, vvp_vector4_t());
       }
@@ -159,9 +335,21 @@ vvp_fun_event_or::~vvp_fun_event_or()
 {
 }
 
+void vvp_fun_event_or::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, context_idx, new waitable_state_s);
+}
+
+void vvp_fun_event_or::reset_instance(vvp_context_t context)
+{
+      waitable_state_s*state = static_cast<waitable_state_s*>
+            (vvp_get_context_item(context, context_idx));
+      state->threads = 0;
+}
+
 void vvp_fun_event_or::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
-      run_waiting_threads_();
+      run_waiting_threads_(context_idx);
       vvp_net_t*net = port.ptr();
       vvp_send_vec4(net->out, bit);
 }
@@ -175,9 +363,21 @@ vvp_named_event::~vvp_named_event()
 {
 }
 
+void vvp_named_event::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, context_idx, new waitable_state_s);
+}
+
+void vvp_named_event::reset_instance(vvp_context_t context)
+{
+      waitable_state_s*state = static_cast<waitable_state_s*>
+            (vvp_get_context_item(context, context_idx));
+      state->threads = 0;
+}
+
 void vvp_named_event::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 {
-      run_waiting_threads_();
+      run_waiting_threads_(context_idx);
       vvp_net_t*net = port.ptr();
       vvp_send_vec4(net->out, bit);
 
@@ -208,7 +408,9 @@ void compile_event(char*label, char*type,
       if (strcmp(type,"edge") == 0) {
 
 	    free(type);
-	    fun = new vvp_fun_anyedge(debug_flag);
+	    vvp_fun_anyedge*event_fun = new vvp_fun_anyedge(debug_flag);
+            vpip_add_item_to_current_scope(event_fun);
+            fun = event_fun;
 
       } else {
 
@@ -222,7 +424,9 @@ void compile_event(char*label, char*type,
 	    assert(argc <= 4);
 	    free(type);
 
-	    fun = new vvp_fun_edge(edge, debug_flag);
+	    vvp_fun_edge*event_fun = new vvp_fun_edge(edge, debug_flag);
+            vpip_add_item_to_current_scope(event_fun);
+            fun = event_fun;
       }
 
       vvp_net_t* ptr = new vvp_net_t;
@@ -236,10 +440,11 @@ void compile_event(char*label, char*type,
 
 static void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
 {
-      vvp_net_fun_t*fun = new vvp_fun_event_or;
+      vvp_fun_event_or*fun = new vvp_fun_event_or;
       vvp_net_t* ptr = new vvp_net_t;
       ptr->fun = fun;
 
+      vpip_add_item_to_current_scope(fun);
       define_functor_symbol(label, ptr);
       free(label);
 
@@ -261,8 +466,10 @@ void compile_named_event(char*label, char*name)
       vvp_net_t*ptr = new vvp_net_t;
 
       vpiHandle obj = vpip_make_named_event(name, ptr);
-      ptr->fun = new vvp_named_event(obj);
+      vvp_named_event*fun = new vvp_named_event(obj);
+      ptr->fun = fun;
 
+      vpip_add_item_to_current_scope(fun);
       define_functor_symbol(label, ptr);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
@@ -270,43 +477,3 @@ void compile_named_event(char*label, char*name)
       free(label);
       free(name);
 }
-
-/*
- * $Log: event.cc,v $
- * Revision 1.23  2006/12/09 19:06:53  steve
- *  Handle vpiRealVal reads of signals, and real anyedge events.
- *
- * Revision 1.22  2006/11/22 06:10:05  steve
- *  Fix spurious event from net8 that is forced.
- *
- * Revision 1.21  2006/02/21 04:57:26  steve
- *  Callbacks for named event triggers.
- *
- * Revision 1.20  2005/06/22 00:04:49  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.19  2005/06/17 23:47:02  steve
- *  threads member for waitable_hook_s needs initailizing.
- *
- * Revision 1.18  2005/05/25 05:44:51  steve
- *  Handle event/or with specific, efficient nodes.
- *
- * Revision 1.17  2004/12/29 23:45:13  steve
- *  Add the part concatenation node (.concat).
- *
- *  Add a vvp_event_anyedge class to handle the special
- *  case of .event statements of edge type. This also
- *  frees the posedge/negedge types to handle all 4 inputs.
- *
- *  Implement table functor recv_vec4 method to receive
- *  and process vectors.
- *
- * Revision 1.16  2004/12/18 18:52:44  steve
- *  Rework named events and event/or.
- *
- * Revision 1.15  2004/12/11 02:31:29  steve
- *  Rework of internals to carry vectors through nexus instead
- *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
- *  down this path.
- *
- */

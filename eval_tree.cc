@@ -133,6 +133,8 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 	    verinum lval = lc->value();
 	    verinum rval = rc->value();
 
+	    ivl_assert(*this, se->expr_width() == this->expr_width());
+
 	    verinum val;
 	    if (op_ == se->op_) {
 		    /* (a + lval) + rval  --> a + (rval+lval) */
@@ -142,6 +144,13 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 		    /* (a - lval) + rval  -->  a + (rval-lval) */
 		    /* (a + lval) - rval  -->  a - (rval-lval) */
 		  val = rval - lval;
+	    }
+
+	    val = pad_to_width(val, expr_width());
+	    if (val.len() > expr_width()) {
+		  verinum tmp (val, expr_width());
+		  tmp.has_sign(val.has_sign());
+		  val = tmp;
 	    }
 
 	    NetEConst*tmp = new NetEConst(val);
@@ -528,6 +537,13 @@ NetEConst* NetEBComp::eval_gteq_()
       }
 }
 
+/*
+ * Evaluate <A>==<B> or <A>!=<B>. The equality operator checks all the
+ * bits and returns true(false) if there are any bits in the vector
+ * that are defined (0 or 1) and different. If all the defined bits
+ * are equal, but there are are x/z bits, then the situation is
+ * ambiguous so the result is x.
+ */
 NetEConst* NetEBComp::eval_eqeq_real_(NetExpr*le, NetExpr*ri, bool ne_flag)
 {
       NetEConst*vtmp;
@@ -606,11 +622,14 @@ NetEConst* NetEBComp::eval_eqeq_(bool ne_flag)
 
       for (unsigned idx = 0 ;  idx < top ;  idx += 1) {
 
+	    bool x_bit_present = false;
+
 	    switch (lv.get(idx)) {
 
 		case verinum::Vx:
 		case verinum::Vz:
 		  res = verinum::Vx;
+		  x_bit_present = true;
 		  break;
 
 		default:
@@ -622,17 +641,20 @@ NetEConst* NetEBComp::eval_eqeq_(bool ne_flag)
 		case verinum::Vx:
 		case verinum::Vz:
 		  res = verinum::Vx;
+		  x_bit_present = true;
 		  break;
 
 		default:
 		  break;
 	    }
 
-	    if (res == verinum::Vx)
-		  break;
+	    if (x_bit_present)
+		  continue;
 
-	    if (rv.get(idx) != lv.get(idx))
+	    if (rv.get(idx) != lv.get(idx)) {
 		  res = ne_res;
+		  break;
+	    }
       }
 
       if (res != verinum::Vx) {
@@ -1633,8 +1655,9 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
       return new NetEConst(verinum(res, 1));
 }
 
-NetExpr* evaluate_clog2(NetExpr*arg)
+NetExpr* evaluate_clog2(NetExpr*&arg)
 {
+      eval_expr(arg);
       NetEConst*tmpi = dynamic_cast<NetEConst *>(arg);
       NetECReal*tmpr = dynamic_cast<NetECReal *>(arg);
       if (tmpi || tmpr) {
@@ -1645,9 +1668,9 @@ NetExpr* evaluate_clog2(NetExpr*arg)
 		  arg = verinum(tmpr->value().as_double(), true);
 	    }
 
-	      /* If we have an x in the verinum we return 32'bx. */
+	      /* If we have an x in the verinum we return 'bx. */
 	    if (!arg.is_defined()) {
-		  verinum tmp (verinum::Vx, 32);
+		  verinum tmp (verinum::Vx, integer_width);
 		  tmp.has_sign(true);
 		  NetEConst*rtn = new NetEConst(tmp);
 		  return rtn;
@@ -1675,7 +1698,7 @@ NetExpr* evaluate_clog2(NetExpr*arg)
 	    if (is_neg && res < integer_width)
 		  res = integer_width;
 
-	    verinum tmp (res, 32);
+	    verinum tmp (res, integer_width);
 	    NetEConst*rtn = new NetEConst(tmp);
 	    return rtn;
       }
@@ -1683,8 +1706,9 @@ NetExpr* evaluate_clog2(NetExpr*arg)
       return 0;
 }
 
-NetExpr* evaluate_math_one_arg(NetExpr*arg, const char*name)
+NetExpr* evaluate_math_one_arg(NetExpr*&arg, const char*name)
 {
+      eval_expr(arg);
       NetEConst*tmpi = dynamic_cast<NetEConst *>(arg);
       NetECReal*tmpr = dynamic_cast<NetECReal *>(arg);
       if (tmpi || tmpr) {
@@ -1739,8 +1763,10 @@ NetExpr* evaluate_math_one_arg(NetExpr*arg, const char*name)
       return 0;
 }
 
-NetExpr* evaluate_math_two_args(NetExpr*arg0, NetExpr*arg1, const char*name)
+NetExpr* evaluate_math_two_args(NetExpr*&arg0, NetExpr*&arg1, const char*name)
 {
+      eval_expr(arg0);
+      eval_expr(arg1);
       NetEConst*tmpi0 = dynamic_cast<NetEConst *>(arg0);
       NetECReal*tmpr0 = dynamic_cast<NetECReal *>(arg0);
       NetEConst*tmpi1 = dynamic_cast<NetEConst *>(arg1);
@@ -1770,8 +1796,9 @@ NetExpr* evaluate_math_two_args(NetExpr*arg0, NetExpr*arg1, const char*name)
       return 0;
 }
 
-NetExpr* evaluate_abs(NetExpr*arg)
+NetExpr* evaluate_abs(NetExpr*&arg)
 {
+      eval_expr(arg);
       NetEConst*tmpi = dynamic_cast<NetEConst *>(arg);
       if (tmpi) {
 	    verinum arg = tmpi->value();
@@ -1790,8 +1817,10 @@ NetExpr* evaluate_abs(NetExpr*arg)
       return 0;
 }
 
-NetExpr* evaluate_min_max(NetExpr*arg0, NetExpr*arg1, const char*name)
+NetExpr* evaluate_min_max(NetExpr*&arg0, NetExpr*&arg1, const char*name)
 {
+      eval_expr(arg0);
+      eval_expr(arg1);
       NetEConst*tmpi0 = dynamic_cast<NetEConst *>(arg0);
       NetECReal*tmpr0 = dynamic_cast<NetECReal *>(arg0);
       NetEConst*tmpi1 = dynamic_cast<NetEConst *>(arg1);
@@ -1866,11 +1895,13 @@ NetExpr* NetESFunc::eval_tree(int prune_to_width)
 		       << " takes a single argument." << endl;
 		  return 0;
 	    }
+	    NetExpr*arg = parm(0)->dup_expr();
 	    if (strcmp(nm, "$clog2") == 0) {
-		  rtn = evaluate_clog2(parm(0));
+		  rtn = evaluate_clog2(arg);
 	    } else {
-		  rtn = evaluate_math_one_arg(parm(0), nm);
+		  rtn = evaluate_math_one_arg(arg, nm);
 	    }
+	    delete arg;
       }
 
       if (strcmp(nm, "$pow") == 0 ||
@@ -1881,7 +1912,11 @@ NetExpr* NetESFunc::eval_tree(int prune_to_width)
 		       << " takes two arguments." << endl;
 		  return 0;
 	    }
-	    rtn = evaluate_math_two_args(parm(0), parm(1), nm);
+	    NetExpr*arg0 = parm(0)->dup_expr();
+	    NetExpr*arg1 = parm(1)->dup_expr();
+	    rtn = evaluate_math_two_args(arg0, arg1, nm);
+	    delete arg0;
+	    delete arg1;
       }
 
       if ((gn_icarus_misc_flag || gn_verilog_ams_flag) &&
@@ -1891,11 +1926,13 @@ NetExpr* NetESFunc::eval_tree(int prune_to_width)
 		       << " takes a single argument." << endl;
 		  return 0;
 	    }
+	    NetExpr*arg = parm(0)->dup_expr();
 	    if (strcmp(nm, "$log") == 0) {
-		  rtn = evaluate_math_one_arg(parm(0), nm);
+		  rtn = evaluate_math_one_arg(arg, nm);
 	    } else {
-		  rtn = evaluate_abs(parm(0));
+		  rtn = evaluate_abs(arg);
 	    }
+	    delete arg;
       }
 
       if ((gn_icarus_misc_flag || gn_verilog_ams_flag) &&
@@ -1905,7 +1942,11 @@ NetExpr* NetESFunc::eval_tree(int prune_to_width)
 		       << " takes two arguments." << endl;
 		  return 0;
 	    }
-	    rtn = evaluate_min_max(parm(0), parm(1), nm);
+	    NetExpr*arg0 = parm(0)->dup_expr();
+	    NetExpr*arg1 = parm(1)->dup_expr();
+	    rtn = evaluate_min_max(arg0, arg1, nm);
+	    delete arg0;
+	    delete arg1;
       }
 
       if (rtn != 0) {

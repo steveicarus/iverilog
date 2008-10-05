@@ -18,6 +18,23 @@
 #
 SHELL = /bin/sh
 
+# Normally, the "make" will build all the files only by dependencies.
+# The MODE, however, can control your rebuild intentions. The proper way
+# to use the MODE is on the make command like, this this:
+#
+#    make MODE=XXXX all
+#
+# The possible MODE= values are:
+#
+# regular
+#    Build as normal
+#
+# full
+#    Do some extra builds. in particular:
+#    Build version.h again, even if it already exists.
+#
+MODE=regular
+
 # This version string is only used in the version message printed
 # by the compiler. It reflects the assigned version number for the
 # product as a whole. Most components also print the CVS Name: token
@@ -52,15 +69,15 @@ MAN = @MAN@
 PS2PDF = @PS2PDF@
 GIT = @GIT@
 
-CPPFLAGS = @ident_support@ @DEFS@ -I. -I$(srcdir) @CPPFLAGS@
+CPPFLAGS = @ident_support@ @DEFS@ -I. -I$(srcdir) -DVERSION='"$(VERSION)"' @CPPFLAGS@
 CXXFLAGS = -Wall @CXXFLAGS@
 PICFLAGS = @PICFLAG@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 
 all: dep version.h ivl@EXEEXT@
-	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
+	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) VERSION=$(VERSION) $@); done
 	for dir in ivlpp ; \
-	    do (cd $$dir ; $(MAKE) $@); done
+	    do (cd $$dir ; $(MAKE) VERSION=$(VERSION) $@); done
 	cd driver ; $(MAKE) VERSION=$(VERSION) $@
 
 # In the windows world, the installer will need a dosify program to
@@ -110,7 +127,7 @@ net_proc.o net_scope.o net_tran.o net_udp.o pad_to_width.o \
 parse.o parse_misc.o pform.o pform_analog.o pform_disciplines.o \
 pform_dump.o pform_types.o \
 set_width.o symbol_search.o sync.o sys_funcs.o \
-verinum.o verireal.o target.o targets.o \
+verinum.o verireal.o target.o \
 Attrib.o HName.o LineInfo.o Module.o PDelays.o PEvent.o \
 PExpr.o PGate.o PGenerate.o PScope.o PSpec.o \
 PTask.o PUdp.o PFunction.o PWire.o Statement.o AStatement.o StringHeap.o \
@@ -186,7 +203,9 @@ iverilog-vpi.pdf: iverilog-vpi.ps
 # For VERSION_TAG in driver/main.c, first try git-describe, then look for a
 # version.h file in the source tree (included in snapshots and releases), and
 # finally use nothing.
+ifeq ($(MODE),full)
 .PHONY: version.h
+endif
 # "true" and "false" in the next few lines are Unix shell command names
 ifeq ($(GIT),none)
 GIT_PRESENT = false

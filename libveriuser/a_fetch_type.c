@@ -99,7 +99,7 @@ PLI_INT32 acc_fetch_fulltype(handle obj)
 		return accTopModule;
 	    else
 		return accModuleInstance;
-	    // FIXME accCellInstance
+	    /* FIXME accCellInstance */
 
 	  case vpiNamedEvent: return accNamedEvent;
 

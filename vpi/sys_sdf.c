@@ -127,6 +127,7 @@ static const char*edge_str(int vpi_edge)
 void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 		       const struct sdf_delval_list_s*delval_list)
 {
+      s_vpi_delay delays;
       if (sdf_cur_cell == 0)
 	    return;
 
@@ -140,7 +141,6 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 	    delay_vals[idx].real = delval_list->val[idx];
       }
 
-      s_vpi_delay delays;
       delays.da = delay_vals;
       delays.no_of_delays = delval_list->count;
       delays.time_type = vpiScaledRealTime;

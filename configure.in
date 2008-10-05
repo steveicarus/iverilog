@@ -124,4 +124,4 @@ AX_CPP_IDENT
 # XXX disable tgt-fpga for the moment
 AC_CONFIG_SUBDIRS(vvp vpi tgt-stub tgt-null tgt-vvp tgt-vhdl libveriuser cadpli)
 
-AC_OUTPUT(Makefile ivlpp/Makefile driver/Makefile driver-vpi/Makefile tgt-null/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vhdl/Makefile)
+AC_OUTPUT(Makefile ivlpp/Makefile driver/Makefile driver-vpi/Makefile tgt-null/Makefile tgt-verilog/Makefile tgt-pal/Makefile)

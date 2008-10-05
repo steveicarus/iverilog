@@ -76,6 +76,46 @@ NetNet* add_to_net(Design*des, NetNet*sig, long val)
 #endif
 }
 
+NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
+{
+      NetNet*zero_net = new NetNet(scope, scope->local_symbol(),
+				   NetNet::WIRE, sig->vector_width());
+      zero_net->data_type(sig->data_type());
+      zero_net->local_flag(true);
+
+      if (sig->data_type() == IVL_VT_REAL) {
+	    verireal zero (val);
+	    NetLiteral*zero_obj = new NetLiteral(scope, scope->local_symbol(), zero);
+	    des->add_node(zero_obj);
+
+	    connect(zero_net->pin(0), zero_obj->pin(0));
+
+      } else {
+	    verinum zero ((int64_t)val);
+	    zero = pad_to_width(zero, sig->vector_width());
+	    NetConst*zero_obj = new NetConst(scope, scope->local_symbol(), zero);
+	    des->add_node(zero_obj);
+
+	    connect(zero_net->pin(0), zero_obj->pin(0));
+      }
+
+      NetAddSub*adder = new NetAddSub(scope, scope->local_symbol(), sig->vector_width());
+      des->add_node(adder);
+      adder->attribute(perm_string::literal("LPM_Direction"), verinum("SUB"));
+
+      connect(zero_net->pin(0), adder->pin_DataA());
+      connect(adder->pin_DataB(), sig->pin(0));
+
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+			      NetNet::WIRE, sig->vector_width());
+      tmp->data_type(sig->data_type());
+      tmp->local_flag(true);
+
+      connect(adder->pin_Result(), tmp->pin(0));
+
+      return tmp;
+}
+
 NetNet* cast_to_int(Design*des, NetScope*scope, NetNet*src, unsigned wid)
 {
       if (src->data_type() != IVL_VT_REAL)
@@ -168,6 +208,27 @@ NetEConst* make_const_x(unsigned long wid)
       verinum xxx (verinum::Vx, wid);
       NetEConst*resx = new NetEConst(xxx);
       return resx;
+}
+
+NetEConst* make_const_0(unsigned long wid)
+{
+      verinum xxx (verinum::V0, wid);
+      NetEConst*resx = new NetEConst(xxx);
+      return resx;
+}
+
+NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid)
+{
+      verinum xxx (verinum::Vx, wid);
+      NetConst*res = new NetConst(scope, scope->local_symbol(), xxx);
+      des->add_node(res);
+
+      NetNet*sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, wid);
+      sig->local_flag(true);
+      sig->data_type(IVL_VT_LOGIC);
+
+      connect(sig->pin(0), res->pin(0));
+      return sig;
 }
 
 NetExpr* condition_reduce(NetExpr*expr)
@@ -317,26 +378,28 @@ const char *human_readable_op(const char op)
 {
 	const char *type;
 	switch (op) {
-	        case '~': type = "~";  break;  // Negation
+	    case '~': type = "~";  break;  // Negation
 
-	        case '^': type = "^";  break;  // XOR
-	        case 'X': type = "~^"; break;  // XNOR
-	        case '&': type = "&";  break;  // Bitwise AND
-	        case 'A': type = "~&"; break;  // NAND (~&)
-	        case '|': type = "|";  break;  // Bitwise OR
-	        case 'O': type = "~|"; break;  // NOR
+	    case '^': type = "^";  break;  // XOR
+	    case 'X': type = "~^"; break;  // XNOR
+	    case '&': type = "&";  break;  // Bitwise AND
+	    case 'A': type = "~&"; break;  // NAND (~&)
+	    case '|': type = "|";  break;  // Bitwise OR
+	    case 'O': type = "~|"; break;  // NOR
 
-	        case 'a': type = "&&"; break;  // Logical AND
-	        case 'o': type = "||"; break;  // Logical OR
+	    case '!': type = "!"; break;   // Logical NOT
+	    case 'a': type = "&&"; break;  // Logical AND
+	    case 'o': type = "||"; break;  // Logical OR
 
-	        case 'E': type = "==="; break;  // Case equality
-	        case 'N': type = "!=="; break;  // Case inequality
+	    case 'E': type = "==="; break;  // Case equality
+	    case 'N': type = "!=="; break;  // Case inequality
 
-	        case 'l': type = "<<(<)"; break;  // Left shifts
-	        case 'r': type = ">>";    break;  // Logical right shift
-	        case 'R': type = ">>>";   break;  // Arithmetic right shift
+	    case 'l': type = "<<(<)"; break;  // Left shifts
+	    case 'r': type = ">>";    break;  // Logical right shift
+	    case 'R': type = ">>>";   break;  // Arithmetic right shift
 
-		default: assert(0);
+	    default:
+	      assert(0);
 	}
 	return type;
 }

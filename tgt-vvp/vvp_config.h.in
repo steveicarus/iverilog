@@ -46,4 +46,4 @@
  *  Isolate configure from containing config.h
  *
  */
-#endif // __vvp_config_H
+#endif /* __vvp_config_H */

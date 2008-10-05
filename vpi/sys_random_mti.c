@@ -43,7 +43,7 @@ static struct context_s global_context = {
 #if defined(__GCC__)
     .mti =
 #else
-    // For MSVC simply use the fact that mti is located first
+    /* For MSVC simply use the fact that mti is located first */
 #endif
         NP1 };
 

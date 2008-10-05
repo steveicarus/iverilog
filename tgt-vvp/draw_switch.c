@@ -33,20 +33,24 @@ static void draw_tran_island(ivl_island_t island)
 
 void draw_switch_in_scope(ivl_switch_t sw)
 {
-      ivl_island_t island = ivl_switch_island(sw);
+      ivl_island_t island;
+      ivl_nexus_t nex_a, nex_b, enable;
+      const char*str_a, *str_b, *str_e;
+
+      island = ivl_switch_island(sw);
       if (ivl_island_flag_test(island, 0) == 0)
 	    draw_tran_island(island);
 
-      ivl_nexus_t nex_a = ivl_switch_a(sw);
+      nex_a = ivl_switch_a(sw);
       assert(nex_a);
-      const char*str_a = draw_net_input(nex_a);
+      str_a = draw_net_input(nex_a);
 
-      ivl_nexus_t nex_b = ivl_switch_b(sw);
+      nex_b = ivl_switch_b(sw);
       assert(nex_b);
-      const char*str_b = draw_net_input(nex_b);
+      str_b = draw_net_input(nex_b);
 
-      ivl_nexus_t enable = ivl_switch_enable(sw);
-      const char*str_e = 0;
+      enable = ivl_switch_enable(sw);
+      str_e = 0;
       if (enable)
 	    str_e = draw_net_input(enable);
 

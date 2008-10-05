@@ -62,6 +62,29 @@ extern void vthread_run(vthread_t thr);
  */
 extern void vthread_schedule_list(vthread_t thr);
 
+/*
+ * This function returns a handle to an item in the writable context
+ * of the currently running thread. Normally the writable context is
+ * the context allocated to the scope associated with that thread.
+ * However, between executing a %alloc instruction and executing the
+ * associated %fork instruction, the writable context changes to the
+ * newly allocated context, thus allowing the input parameters of an
+ * automatic task or function to be written to the task/function local
+ * variables.
+ */
+extern vvp_context_item_t vthread_get_wt_context_item(unsigned context_idx);
+
+/*
+ * This function returns a handle to an item in the readable context
+ * of the currently running thread. Normally the readable context is
+ * the context allocated to the scope associated with that thread.
+ * However, between executing a %join instruction and executing the
+ * associated %free instruction, the readable context changes to the
+ * context allocated to the newly joined thread, thus allowing the
+ * output parameters of an automatic task or function to be read from
+ * the task/function local variables.
+ */
+extern vvp_context_item_t vthread_get_rd_context_item(unsigned context_idx);
 
 /*
  * Return a bit from the thread's bit space. These are used, for

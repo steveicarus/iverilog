@@ -43,7 +43,7 @@
 # define TOP_BIT (1UL << (CPU_WORD_BITS-1))
 
 /*
- * This vhtread_s structure describes all there is to know about a
+ * This vthread_s structure describes all there is to know about a
  * thread, including its program counter, all the private bits it
  * holds, and its place in other lists.
  *
@@ -117,7 +117,14 @@ struct vthread_s {
       struct vthread_s*wait_next;
 	/* These are used to keep the thread in a scope. */
       struct vthread_s*scope_next, *scope_prev;
+	/* These are used to access automatically allocated items. */
+      vvp_context_t wt_context, rd_context;
+	/* These are used to pass non-blocking event control information. */
+      vvp_net_t*event;
+      uint64_t ecount;
 };
+
+struct vthread_s*running_thread = 0;
 
 // this table maps the thread special index bit addresses to
 // vvp_bit4_t bit values.
@@ -295,6 +302,43 @@ static void multiply_array_imm(unsigned long*res, unsigned long*val,
 }
 
 /*
+ * Allocate a context for use by a child thread. By preference, use
+ * the last freed context. If none available, create a new one.
+ */
+static vvp_context_t vthread_alloc_context(__vpiScope*scope)
+{
+      assert(scope->is_automatic);
+
+      vvp_context_t context = scope->free_context;
+      if (context) {
+            scope->free_context = vvp_get_next_context(context);
+            for (unsigned idx = 0 ; idx < scope->nitem ; idx += 1) {
+                  scope->item[idx]->reset_instance(context);
+            }
+      } else {
+            context = vvp_allocate_context(scope->nitem);
+            for (unsigned idx = 0 ; idx < scope->nitem ; idx += 1) {
+                  scope->item[idx]->alloc_instance(context);
+            }
+      }
+
+      return context;
+}
+
+/*
+ * Free a context previously allocated to a child thread by pushing it
+ * onto the freed context stack.
+ */
+static void vthread_free_context(vvp_context_t context, __vpiScope*scope)
+{
+      assert(scope->is_automatic);
+      assert(context);
+
+      vvp_set_next_context(context, scope->free_context);
+      scope->free_context = context;
+}
+
+/*
  * Create a new thread with the given start address.
  */
 vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
@@ -305,6 +349,8 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       thr->child  = 0;
       thr->parent = 0;
       thr->wait_next = 0;
+      thr->wt_context = 0;
+      thr->rd_context = 0;
 
 	/* If the target scope never held a thread, then create a
 	   header cell for it. This is a stub to make circular lists
@@ -330,8 +376,9 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       thr->is_scheduled = 0;
       thr->i_have_ended = 0;
       thr->waiting_for_event = 0;
-      thr->is_scheduled = 0;
       thr->fork_count   = 0;
+      thr->event  = 0;
+      thr->ecount = 0;
 
       thr_put_bit(thr, 0, BIT4_0);
       thr_put_bit(thr, 1, BIT4_1);
@@ -403,6 +450,8 @@ void vthread_run(vthread_t thr)
 	    assert(thr->is_scheduled);
 	    thr->is_scheduled = 0;
 
+            running_thread = thr;
+
 	    for (;;) {
 		  vvp_code_t cp = thr->pc;
 		  thr->pc += 1;
@@ -417,6 +466,7 @@ void vthread_run(vthread_t thr)
 
 	    thr = tmp;
       }
+      running_thread = 0;
 }
 
 /*
@@ -480,12 +530,36 @@ void vthread_schedule_list(vthread_t thr)
       schedule_vthread(thr, 0);
 }
 
+vvp_context_item_t vthread_get_wt_context_item(unsigned context_idx)
+{
+      assert(running_thread && running_thread->wt_context);
+      return vvp_get_context_item(running_thread->wt_context, context_idx);
+}
+
+vvp_context_item_t vthread_get_rd_context_item(unsigned context_idx)
+{
+      assert(running_thread && running_thread->rd_context);
+      return vvp_get_context_item(running_thread->rd_context, context_idx);
+}
+
 bool of_ABS_WR(vthread_t thr, vvp_code_t cp)
 {
       unsigned dst = cp->bit_idx[0];
       unsigned src = cp->bit_idx[1];
 
       thr->words[dst].w_real = fabs(thr->words[src].w_real);
+      return true;
+}
+
+bool of_ALLOC(vthread_t thr, vvp_code_t cp)
+{
+        /* Allocate a context. */
+      vvp_context_t child_context = vthread_alloc_context(cp->scope);
+
+        /* Push the allocated context onto the write context stack. */
+      vvp_set_next_context(child_context, thr->wt_context);
+      thr->wt_context = child_context;
+
       return true;
 }
 
@@ -652,13 +726,27 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_AV(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
-      unsigned off = thr->words[1].w_int;
+      long off = thr->words[1].w_int;
       unsigned adr = thr->words[3].w_int;
-
-      assert(wid > 0);
-
       unsigned delay = cp->bit_idx[0];
       unsigned bit = cp->bit_idx[1];
+
+      long vwidth = get_array_word_size(cp->array);
+	// We fell off the MSB end.
+      if (off >= vwidth) return true;
+	// Trim the bits after the MSB
+      if (off + (long)wid > vwidth) {
+	    wid += vwidth - off - wid;
+      } else if (off < 0 ) {
+	      // We fell off the LSB end.
+	    if ((unsigned)-off > wid ) return true;
+	      // Trim the bits before the LSB
+	    wid += off;
+	    bit -= off;
+	    off = 0;
+      }
+
+      assert(wid > 0);
 
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
@@ -675,17 +763,65 @@ bool of_ASSIGN_AV(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_AVD(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
-      unsigned off = thr->words[1].w_int;
+      long off = thr->words[1].w_int;
       unsigned adr = thr->words[3].w_int;
-
-      assert(wid > 0);
-
       unsigned long delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
+
+      long vwidth = get_array_word_size(cp->array);
+	// We fell off the MSB end.
+      if (off >= vwidth) return true;
+	// Trim the bits after the MSB
+      if (off + (long)wid > vwidth) {
+	    wid += vwidth - off - wid;
+      } else if (off < 0 ) {
+	      // We fell off the LSB end.
+	    if ((unsigned)-off > wid ) return true;
+	      // Trim the bits before the LSB
+	    wid += off;
+	    bit -= off;
+	    off = 0;
+      }
+
+      assert(wid > 0);
 
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
       schedule_assign_array_word(cp->array, adr, off, value, delay);
+      return true;
+}
+
+bool of_ASSIGN_AVE(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = thr->words[0].w_int;
+      long off = thr->words[1].w_int;
+      unsigned adr = thr->words[3].w_int;
+      unsigned bit = cp->bit_idx[0];
+
+      long vwidth = get_array_word_size(cp->array);
+	// We fell off the MSB end.
+      if (off >= vwidth) return true;
+	// Trim the bits after the MSB
+      if (off + (long)wid > vwidth) {
+	    wid += vwidth - off - wid;
+      } else if (off < 0 ) {
+	      // We fell off the LSB end.
+	    if ((unsigned)-off > wid ) return true;
+	      // Trim the bits before the LSB
+	    wid += off;
+	    bit -= off;
+	    off = 0;
+      }
+
+      assert(wid > 0);
+
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+	// If the count is zero then just put the value.
+      if (thr->ecount == 0) {
+	    schedule_assign_array_word(cp->array, adr, off, value, 0);
+      } else {
+	    schedule_evctl(cp->array, adr, value, off, thr->event, thr->ecount);
+      }
       return true;
 }
 
@@ -739,6 +875,33 @@ bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * This is %assign/v0/e <label>, <bit>
+ * Index register 0 contains a vector width.
+ */
+bool of_ASSIGN_V0E(vthread_t thr, vvp_code_t cp)
+{
+      assert(thr->event != 0);
+      unsigned wid = thr->words[0].w_int;
+      assert(wid > 0);
+      unsigned bit = cp->bit_idx[0];
+
+      vvp_net_ptr_t ptr (cp->net, 0);
+
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+	// If the count is zero then just put the value.
+      if (thr->ecount == 0) {
+	    schedule_assign_plucked_vector(ptr, 0, value, 0, wid);
+      } else {
+	    schedule_evctl(ptr, value, 0, 0, thr->event, thr->ecount);
+      }
+
+      thr->event = 0;
+      thr->ecount = 0;
+
+      return true;
+}
+
+/*
  * This is %assign/v0/x1 <label>, <delay>, <bit>
  * Index register 0 contains a vector part width.
  * Index register 1 contains the offset into the destination vector.
@@ -746,17 +909,26 @@ bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
-      unsigned off = thr->words[1].w_int;
+      long off = thr->words[1].w_int;
       unsigned delay = cp->bit_idx[0];
       unsigned bit = cp->bit_idx[1];
 
       vvp_fun_signal_vec*sig
 	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
       assert(sig);
-      assert(wid > 0);
 
-      if (off >= sig->size())
-	    return true;
+	// We fell off the MSB end.
+      if (off >= (long)sig->size()) return true;
+      else if (off < 0 ) {
+	      // We fell off the LSB end.
+	    if ((unsigned)-off > wid ) return true;
+	      // Trim the bits before the LSB
+	    wid += off;
+	    bit -= off;
+	    off = 0;
+      }
+
+      assert(wid > 0);
 
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
@@ -767,29 +939,90 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * This is %assign/v0/x1 <label>, <delayx>, <bit>
+ * This is %assign/v0/x1/d <label>, <delayx>, <bit>
  * Index register 0 contains a vector part width.
  * Index register 1 contains the offset into the destination vector.
  */
 bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
-      unsigned off = thr->words[1].w_int;
+      long off = thr->words[1].w_int;
       unsigned delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
 
       vvp_fun_signal_vec*sig
 	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
       assert(sig);
-      assert(wid > 0);
 
-      if (off >= sig->size())
-	    return true;
+	// We fell off the MSB end.
+      if (off >= (long)sig->size()) return true;
+      else if (off < 0 ) {
+	      // We fell off the LSB end.
+	    if ((unsigned)-off > wid ) return true;
+	      // Trim the bits before the LSB
+	    wid += off;
+	    bit -= off;
+	    off = 0;
+      }
+
+      assert(wid > 0);
 
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
       vvp_net_ptr_t ptr (cp->net, 0);
       schedule_assign_vector(ptr, off, sig->size(), value, delay);
+
+      return true;
+}
+
+/*
+ * This is %assign/v0/x1/e <label>, <bit>
+ * Index register 0 contains a vector part width.
+ * Index register 1 contains the offset into the destination vector.
+ */
+bool of_ASSIGN_V0X1E(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = thr->words[0].w_int;
+      long off = thr->words[1].w_int;
+      unsigned bit = cp->bit_idx[0];
+
+      vvp_fun_signal_vec*sig
+	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
+      assert(sig);
+
+	// We fell off the MSB end.
+      if (off >= (long)sig->size()) {
+	    thr->event = 0;
+	    thr->ecount = 0;
+	    return true;
+      } else if (off < 0 ) {
+	      // We fell off the LSB end.
+	    if ((unsigned)-off > wid ) {
+		  thr->event = 0;
+		  thr->ecount = 0;
+		  return true;
+	    }
+	      // Trim the bits before the LSB
+	    wid += off;
+	    bit -= off;
+	    off = 0;
+      }
+
+      assert(wid > 0);
+
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      vvp_net_ptr_t ptr (cp->net, 0);
+	// If the count is zero then just put the value.
+      if (thr->ecount == 0) {
+	    schedule_assign_vector(ptr, off, sig->size(), value, 0);
+      } else {
+	    schedule_evctl(ptr, value, off, sig->size(), thr->event,
+	                   thr->ecount);
+      }
+
+      thr->event = 0;
+      thr->ecount = 0;
 
       return true;
 }
@@ -815,7 +1048,50 @@ bool of_ASSIGN_WR(vthread_t thr, vvp_code_t cp)
       t_vpi_value val;
       val.format = vpiRealVal;
       val.value.real = thr->words[index].w_real;
-      vpi_put_value(tmp, &val, &del, vpiInertialDelay);
+      vpi_put_value(tmp, &val, &del, vpiTransportDelay);
+
+      return true;
+}
+
+bool of_ASSIGN_WRD(vthread_t thr, vvp_code_t cp)
+{
+      unsigned delay = thr->words[cp->bit_idx[0]].w_int;
+      unsigned index = cp->bit_idx[1];
+      s_vpi_time del;
+
+      del.type = vpiSimTime;
+      vpip_time_to_timestruct(&del, delay);
+
+      struct __vpiHandle*tmp = cp->handle;
+
+      t_vpi_value val;
+      val.format = vpiRealVal;
+      val.value.real = thr->words[index].w_real;
+      vpi_put_value(tmp, &val, &del, vpiTransportDelay);
+
+      return true;
+}
+
+bool of_ASSIGN_WRE(vthread_t thr, vvp_code_t cp)
+{
+      assert(thr->event != 0);
+      unsigned index = cp->bit_idx[0];
+      struct __vpiHandle*tmp = cp->handle;
+
+	// If the count is zero then just put the value.
+      if (thr->ecount == 0) {
+	    t_vpi_value val;
+
+	    val.format = vpiRealVal;
+	    val.value.real = thr->words[index].w_real;
+	    vpi_put_value(tmp, &val, 0, vpiNoDelay);
+      } else {
+	    schedule_evctl(tmp, thr->words[index].w_real, thr->event,
+	                   thr->ecount);
+      }
+
+      thr->event = 0;
+      thr->ecount = 0;
 
       return true;
 }
@@ -1117,13 +1393,7 @@ static bool of_CMPIU_the_hard_way(vthread_t thr, vvp_code_t cp)
 	    thr_check_addr(thr, idx1+wid-1);
 
       vvp_bit4_t lv = thr_get_bit(thr, idx1);
-      if (bit4_is_xz(lv)) {
-	    thr_put_bit(thr, 4, BIT4_X);
-	    thr_put_bit(thr, 5, BIT4_X);
-	    thr_put_bit(thr, 6, BIT4_0);
-      }
-
-      vvp_bit4_t eq  = BIT4_0;
+      vvp_bit4_t eq  = BIT4_1;
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    vvp_bit4_t rv = (imm & 1UL)? BIT4_1 : BIT4_0;
 	    imm >>= 1UL;
@@ -1131,12 +1401,13 @@ static bool of_CMPIU_the_hard_way(vthread_t thr, vvp_code_t cp)
 	    if (bit4_is_xz(lv)) {
 		  eq = BIT4_X;
 	    } else if (lv != rv) {
+		  eq = BIT4_0;
 		  break;
 	    }
 
 	    if (idx1 >= 4) {
 		  idx1 += 1;
-		  if (idx1 < wid)
+		  if ((idx+1) < wid)
 			lv = thr_get_bit(thr, idx1);
 	    }
       }
@@ -1917,6 +2188,38 @@ bool of_END(vthread_t thr, vvp_code_t)
       return false;
 }
 
+bool of_EVCTL(vthread_t thr, vvp_code_t cp)
+{
+      assert(thr->event == 0 && thr->ecount == 0);
+      thr->event = cp->net;
+      thr->ecount = thr->words[cp->bit_idx[0]].w_uint;
+      return true;
+}
+bool of_EVCTLC(vthread_t thr, vvp_code_t)
+{
+      thr->event = 0;
+      thr->ecount = 0;
+      return true;
+}
+
+bool of_EVCTLI(vthread_t thr, vvp_code_t cp)
+{
+      assert(thr->event == 0 && thr->ecount == 0);
+      thr->event = cp->net;
+      thr->ecount = cp->bit_idx[0];
+      return true;
+}
+
+bool of_EVCTLS(vthread_t thr, vvp_code_t cp)
+{
+      assert(thr->event == 0 && thr->ecount == 0);
+      thr->event = cp->net;
+      int64_t val = thr->words[cp->bit_idx[0]].w_int;
+      if (val < 0) val = 0;
+      thr->ecount = val;
+      return true;
+}
+
 static void unlink_force(vvp_net_t*net)
 {
       vvp_fun_signal_base*sig
@@ -2073,6 +2376,12 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
 bool of_FORK(vthread_t thr, vvp_code_t cp)
 {
       vthread_t child = vthread_new(cp->cptr2, cp->scope);
+      if (cp->scope->is_automatic) {
+              /* The context allocated for this child is the top entry
+                 on the write context stack. */
+            child->wt_context = thr->wt_context;
+            child->rd_context = thr->wt_context;
+      }
 
       child->child  = thr->child;
       child->parent = thr;
@@ -2089,9 +2398,23 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
       if (cp->scope->base.vpi_type->type_code == vpiFunction) {
 	    child->is_scheduled = 1;
 	    vthread_run(child);
+            running_thread = thr;
       } else {
 	    schedule_vthread(child, 0, true);
       }
+
+      return true;
+}
+
+bool of_FREE(vthread_t thr, vvp_code_t cp)
+{
+        /* Pop the child context from the read context stack. */
+      vvp_context_t child_context = thr->rd_context;
+      thr->rd_context = vvp_get_next_context(child_context);
+
+        /* Free the context. */
+      vthread_free_context(child_context, cp->scope);
+
       return true;
 }
 
@@ -2263,6 +2586,33 @@ bool of_IX_GETV(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_IX_GETVS(vthread_t thr, vvp_code_t cp)
+{
+      unsigned index = cp->bit_idx[0];
+      vvp_net_t*net = cp->net;
+
+      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(net->fun);
+      if (sig == 0) {
+	    cerr << "%%ix/getv/s error: Net arg not a vector signal? "
+		 << typeid(*net->fun).name() << endl;
+      }
+      assert(sig);
+
+      vvp_vector4_t vec = sig->vec4_value();
+      long val;
+      bool known_flag = vector4_to_value(vec, val, true, true);
+
+      if (known_flag)
+	    thr->words[index].w_int = val;
+      else
+	    thr->words[index].w_int = 0;
+
+	/* Set bit 4 as a flag if the input is unknown. */
+      thr_put_bit(thr, 4, known_flag? BIT4_0 : BIT4_1);
+
+      return true;
+}
+
 /*
  * The various JMP instruction work simply by pulling the new program
  * counter from the instruction and resuming. If the jump is
@@ -2348,6 +2698,15 @@ bool of_JOIN(vthread_t thr, vvp_code_t cp)
 
       assert(thr->fork_count > 0);
 
+      if (thr->wt_context != thr->rd_context) {
+              /* Pop the child context from the write context stack. */
+            vvp_context_t child_context = thr->wt_context;
+            thr->wt_context = vvp_get_next_context(child_context);
+
+              /* Push the child context onto the read context stack */
+            vvp_set_next_context(child_context, thr->rd_context);
+            thr->rd_context = child_context;
+      }
 
 	/* If the child has already ended, reap it now. */
       if (thr->child->i_have_ended) {
@@ -3818,7 +4177,6 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
 
 bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
 {
-	// printf("thread %p: %%vpi_call\n", thr);
       vpip_execute_vpi_call(thr, cp->handle);
 
       if (schedule_stopped()) {
@@ -3842,13 +4200,19 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
       assert(! thr->waiting_for_event);
       thr->waiting_for_event = 1;
 
-      vvp_net_t*net = cp->net;
-	/* Get the functor as a waitable_hooks_s object. */
-      waitable_hooks_s*ep = dynamic_cast<waitable_hooks_s*> (net->fun);
-      assert(ep);
 	/* Add this thread to the list in the event. */
-      thr->wait_next = ep->threads;
-      ep->threads = thr;
+      vvp_net_fun_t*fun = cp->net->fun;
+      if (fun->context_idx) {
+            waitable_state_s*es = static_cast<waitable_state_s*>
+                  (vthread_get_wt_context_item(fun->context_idx));
+            thr->wait_next = es->threads;
+            es->threads = thr;
+      } else {
+            waitable_hooks_s*ep = dynamic_cast<waitable_hooks_s*> (fun);
+            assert(ep);
+            thr->wait_next = ep->threads;
+            ep->threads = thr;
+      }
 	/* Return false to suspend this thread. */
       return false;
 }
@@ -3923,46 +4287,57 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 }
 
 /*
- * These are phantom opcode used to call user defined functions.
- * They are used in code generated by the .ufunc statement. They
- * contain a pointer to executable code of the function, and to a
- * ufunc_core object that has all the port information about the
+ * This is a phantom opcode used to call user defined functions. It
+ * is used in code generated by the .ufunc statement. It contains a
+ * pointer to the executable code of the function and a pointer to
+ * a ufunc_core object that has all the port information about the
  * function.
  */
-bool of_FORK_UFUNC(vthread_t thr, vvp_code_t cp)
+bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
 {
+      struct __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
+      assert(child_scope);
+
+      assert(thr->child == 0);
+      assert(thr->fork_count == 0);
+
+        /* We can take a number of shortcuts because we know that a
+           continuous assignment can only occur in a static scope. */
+      assert(thr->wt_context == 0);
+      assert(thr->rd_context == 0);
+
+        /* If an automatic function, allocate a context for this call. */
+      vvp_context_t child_context = 0;
+      if (child_scope->is_automatic) {
+            child_context = vthread_alloc_context(child_scope);
+            thr->wt_context = child_context;
+            thr->rd_context = child_context;
+      }
 	/* Copy all the inputs to the ufunc object to the port
 	   variables of the function. This copies all the values
 	   atomically. */
       cp->ufunc_core_ptr->assign_bits_to_ports();
 
-      assert(thr->child == 0);
-      assert(thr->fork_count == 0);
+	/* Create a temporary thread and run it immediately. A function
+           may not contain any blocking statements, so vthread_run() can
+           only return when the %end opcode is reached. */
+      vthread_t child = vthread_new(cp->cptr, child_scope);
+      child->wt_context = child_context;
+      child->rd_context = child_context;
+      child->is_scheduled = 1;
+      vthread_run(child);
+      running_thread = thr;
 
-	/* Create a temporary thread, and push its execution. This is
-	   done so that the assign_bits_to_ports above is atomic with
-	   this startup. */
-      vthread_t child = vthread_new(cp->cptr, cp->ufunc_core_ptr->scope());
-
-      child->child = 0;
-      child->parent = thr;
-      thr->child = child;
-
-      thr->fork_count += 1;
-      schedule_vthread(child, 0, true);
-
-	/* After this function, the .ufunc code has placed an of_JOIN
-	   to pause this thread. Since the child was pushed by the
-	   flag to schedule_vthread, the called function starts up
-	   immediately. */
-      return true;
-}
-
-bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
-{
 	/* Now copy the output from the result variable to the output
 	   ports of the .ufunc device. */
       cp->ufunc_core_ptr->finish_thread(thr);
+
+        /* If an automatic function, free the context for this call. */
+      if (child_scope->is_automatic) {
+            vthread_free_context(child_context, child_scope);
+            thr->wt_context = 0;
+            thr->rd_context = 0;
+      }
 
       return true;
 }

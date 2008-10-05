@@ -32,6 +32,8 @@
 # include  <stdlib.h>
 # include  "ivl_assert.h"
 
+struct dll_target dll_target_obj;
+
 #if defined(__WIN32__)
 
 inline ivl_dll_t ivl_dlopen(const char *name)
@@ -143,8 +145,6 @@ static perm_string make_scope_name(const hname_t&name)
 	       name.peek_name().str(), name.peek_number());
       return lex_strings.make(buf);
 }
-
-static struct dll_target dll_target_obj;
 
 static void drive_from_link(const Link&lnk, ivl_drive_t&drv0, ivl_drive_t&drv1)
 {
@@ -2199,7 +2199,7 @@ bool dll_target::net_const(const NetConst*net)
 
       struct ivl_net_const_s *obj = new struct ivl_net_const_s;
 
-      obj->type = IVL_VT_LOGIC;
+      obj->type = IVL_VT_BOOL;
 
 	/* constants have a single vector output. */
       assert(net->pin_count() == 1);
@@ -2223,9 +2223,13 @@ bool dll_target::net_const(const NetConst*net)
 		  bits[idx] = '1';
 		  break;
 		case verinum::Vx:
+		  if (obj->type == IVL_VT_BOOL)
+			obj->type = IVL_VT_LOGIC;
 		  bits[idx] = 'x';
 		  break;
 		case verinum::Vz:
+		  if (obj->type == IVL_VT_BOOL)
+			obj->type = IVL_VT_LOGIC;
 		  bits[idx] = 'z';
 		  break;
 	    }
@@ -2579,4 +2583,38 @@ bool dll_target::signal_paths(const NetNet*net)
       return true;
 }
 
-extern const struct target tgt_dll = { "dll", &dll_target_obj };
+
+void dll_target::test_version(const char*target_name)
+{
+      dll_ = ivl_dlopen(target_name);
+
+      if ((dll_ == 0) && (target_name[0] != '/')) {
+	    size_t len = strlen(basedir) + 1 + strlen(target_name) + 1;
+	    char*tmp = new char[len];
+	    sprintf(tmp, "%s/%s", basedir, target_name);
+	    dll_ = ivl_dlopen(tmp);
+	    delete[]tmp;
+      }
+
+      if (dll_ == 0) {
+	    cout << "\n\nUnable to load " << target_name
+		 << " for version details." << endl;
+	    return;
+      }
+
+      target_query_f target_query = (target_query_f)ivl_dlsym(dll_, LU "target_query" TU);
+      if (target_query == 0) {
+	    cerr << "Target " << target_name
+		 << " has no version hooks." << endl;
+	    return;
+      }
+
+      const char*version_string = (*target_query) ("version");
+      if (version_string == 0) {
+	    cerr << "Target " << target_name
+		 << " has no version string" << endl;
+	    return;
+      }
+
+      cout << target_name << ": " << version_string << endl;
+}

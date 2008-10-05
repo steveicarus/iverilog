@@ -22,6 +22,7 @@
 # include  "config.h"
 # include  "vpi_user.h"
 # include  <stddef.h>
+# include  <stdlib.h>
 # include  <string.h>
 # include  <new>
 # include  <assert.h>
@@ -48,6 +49,58 @@ class  vvp_fun_drive;
 class  vvp_fun_part;
 
 class  vvp_delay_t;
+
+/*
+ * Storage for items declared in automatically allocated scopes (i.e. automatic
+ * tasks and functions).
+ */
+typedef void**vvp_context_t;
+
+typedef void*vvp_context_item_t;
+
+inline vvp_context_t vvp_allocate_context(unsigned nitem)
+{
+      return (vvp_context_t)malloc((1 + nitem) * sizeof(void*));
+}
+
+inline vvp_context_t vvp_get_next_context(vvp_context_t context)
+{
+      return (vvp_context_t)context[0];
+}
+
+inline void vvp_set_next_context(vvp_context_t context, vvp_context_t next)
+{
+      context[0] = next;
+}
+
+inline vvp_context_item_t vvp_get_context_item(vvp_context_t context,
+                                               unsigned item_idx)
+{
+      return (vvp_context_item_t)context[item_idx];
+}
+
+inline void vvp_set_context_item(vvp_context_t context, unsigned item_idx,
+                                 vvp_context_item_t item)
+{
+      context[item_idx] = item;
+}
+
+/*
+ * An "automatic" functor is one which may be associated with an automatically
+ * allocated scope item. This provides the infrastructure needed to allocate
+ * and access the state information for individual instances of the item. A
+ * context_idx value of 0 indicates a statically allocated item.
+ */
+struct automatic_hooks_s {
+
+      automatic_hooks_s() : context_idx(0) {}
+      virtual ~automatic_hooks_s() {}
+
+      virtual void alloc_instance(vvp_context_t context) {}
+      virtual void reset_instance(vvp_context_t context) {}
+
+      unsigned context_idx;
+};
 
 /*
  * This is the set of Verilog 4-value bit values. Scalars have this
@@ -168,6 +221,9 @@ class vvp_vector4_t {
 
 	// Change all Z bits to X bits.
       void change_z2x();
+
+	// Change all bits to X bits.
+      void set_to_x();
 
 	// Display the value into the buf as a string.
       char*as_string(char*buf, size_t buf_len);
@@ -394,16 +450,22 @@ template <class T> extern T coerce_to_width(const T&that, unsigned width);
  */
 extern bool vector4_to_value(const vvp_vector4_t&a, long&val, bool is_signed, bool is_arithmetic =true);
 extern bool vector4_to_value(const vvp_vector4_t&a, unsigned long&val);
+#ifndef UL_AND_TIME64_SAME
+extern bool vector4_to_value(const vvp_vector4_t&a, vvp_time64_t&val);
+#endif
 extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
 
 /*
  * vvp_vector4array_t
  */
-class vvp_vector4array_t {
+class vvp_vector4array_t : public automatic_hooks_s {
 
     public:
-      vvp_vector4array_t(unsigned width, unsigned words);
+      vvp_vector4array_t(unsigned width, unsigned words, bool is_automatic);
       ~vvp_vector4array_t();
+
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
 
       unsigned width() const { return width_; }
       unsigned words() const { return words_; }
@@ -863,7 +925,7 @@ struct vvp_net_t {
  * operand to a vvp_vector4_t and pass it on to the recv_vec4 or
  * recv_vec4_pv method.
  */
-class vvp_net_fun_t {
+class vvp_net_fun_t : public automatic_hooks_s {
 
     public:
       vvp_net_fun_t();
@@ -1117,6 +1179,9 @@ class vvp_fun_signal  : public vvp_fun_signal_vec {
     public:
       explicit vvp_fun_signal(unsigned wid, vvp_bit4_t init=BIT4_X);
 
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
+
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
       void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
@@ -1184,6 +1249,9 @@ class vvp_fun_signal_real  : public vvp_fun_signal_base {
 
     public:
       explicit vvp_fun_signal_real();
+
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
 
 	//void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
       void recv_real(vvp_net_ptr_t port, double bit);

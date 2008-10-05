@@ -41,8 +41,9 @@ PLI_UINT64 timerec_to_time64(const struct t_vpi_time*time)
  */
 unsigned is_constant_obj(vpiHandle obj)
 {
-      assert(obj);
       unsigned rtn = 0;
+
+      assert(obj);
 
       switch(vpi_get(vpiType, obj)) {
 	case vpiConstant:
@@ -60,8 +61,9 @@ unsigned is_constant_obj(vpiHandle obj)
  */
 unsigned is_numeric_obj(vpiHandle obj)
 {
-    assert(obj);
     unsigned rtn = 0;
+
+    assert(obj);
 
     switch(vpi_get(vpiType, obj)) {
       case vpiConstant:
@@ -92,8 +94,9 @@ unsigned is_numeric_obj(vpiHandle obj)
  */
 unsigned is_string_obj(vpiHandle obj)
 {
-    assert(obj);
     unsigned rtn = 0;
+
+    assert(obj);
 
     switch(vpi_get(vpiType, obj)) {
       case vpiConstant:
@@ -147,11 +150,13 @@ PLI_INT32 sys_no_arg_compiletf(PLI_BYTE8 *name)
       /* Make sure there are no arguments. */
       if (argv != 0) {
 	    char msg [64];
+	    unsigned argc;
+
 	    snprintf(msg, 64, "ERROR: %s line %d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
-	    unsigned argc = 0;
+	    argc = 0;
 	    while (vpi_scan(argv)) argc += 1;
 
             vpi_printf("%s %s does not take an argument.\n", msg, name);
@@ -188,11 +193,13 @@ PLI_INT32 sys_one_numeric_arg_compiletf(PLI_BYTE8 *name)
       /* Make sure there are no extra arguments. */
       if (vpi_scan(argv) != 0) {
 	    char msg [64];
+	    unsigned argc;
+
 	    snprintf(msg, 64, "ERROR: %s line %d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
-	    unsigned argc = 1;
+	    argc = 1;
 	    while (vpi_scan(argv)) argc += 1;
 
             vpi_printf("%s %s takes a single numeric argument.\n", msg, name);
@@ -223,11 +230,13 @@ PLI_INT32 sys_one_opt_numeric_arg_compiletf(PLI_BYTE8 *name)
       /* Make sure there are no extra arguments. */
       if (vpi_scan(argv) != 0) {
 	    char msg [64];
+	    unsigned argc;
+
 	    snprintf(msg, 64, "ERROR: %s line %d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
-	    unsigned argc = 1;
+	    argc = 1;
 	    while (vpi_scan(argv)) argc += 1;
 
             vpi_printf("%s %s takes at most one numeric argument.\n",
@@ -282,11 +291,13 @@ PLI_INT32 sys_two_numeric_args_compiletf(PLI_BYTE8 *name)
       /* Make sure there are no extra arguments. */
       if (vpi_scan(argv) != 0) {
 	    char msg [64];
+	    unsigned argc;
+
 	    snprintf(msg, 64, "ERROR: %s line %d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
-	    unsigned argc = 1;
+	    argc = 1;
 	    while (vpi_scan(argv)) argc += 1;
 
             vpi_printf("%s %s takes two numeric arguments.\n", msg, name);
@@ -322,11 +333,13 @@ PLI_INT32 sys_one_string_arg_compiletf(PLI_BYTE8 *name)
       /* Make sure there are no extra arguments. */
       if (vpi_scan(argv) != 0) {
 	    char msg [64];
+	    unsigned argc;
+
 	    snprintf(msg, 64, "ERROR: %s line %d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
-	    unsigned argc = 1;
+	    argc = 1;
 	    while (vpi_scan(argv)) argc += 1;
 
             vpi_printf("%s %s takes a single string argument.\n", msg, name);

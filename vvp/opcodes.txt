@@ -49,6 +49,11 @@ This instruction adds the immediate value (no x or z bits) into the
 left vector. The imm value is limited to 16 significant bits, but it
 is zero extended to match any width.
 
+* %alloc <scope-label>
+
+This instruction allocates the storage for a new instance of an
+automatically allocated scope.
+
 * %and <bit-l>, <bit-r>, <wid>
 
 Perform the bitwise AND of the two vectors, and store the result in
@@ -62,13 +67,14 @@ means the following:
 
 * %assign/av <array-label>, <delay>, <bit>
 * %assign/av/d <array-label>, <delayx>, <bit>
+* %assign/av/e <array-label>, <bit>
 
 The %assign/av instruction assigns a vector value to a word in the
 labeled array. The <delay> is the delay in simulation time to the
 assignment (0 for non-blocking assignment) and the <bit> is the base
 of the vector to write.
 
-The width of the word is retrieved from index register 0.
+The width of the vector is retrieved from index register 0.
 
 The base of a part select is retrieved from index register 1.
 
@@ -80,8 +86,13 @@ is given by the <delayx> value. This should not be 0, 1 or 3, of course,
 since these registers contain the vector width, base part select and
 word address.
 
+The %assign/av/e variation uses the information in the thread
+event control registers to determine when to perform the assign.
+%evctl is used to set the event control information.
+
 * %assign/v0 <var-label>, <delay>, <bit>
 * %assign/v0/d <var-label>, <delayx>, <bit>
+* %assign/v0/e <var-label>, <bit>
 
 The %assign/v0 instruction is a vector version of non-blocking
 assignment. The <delay> is the number of clock ticks in the future
@@ -89,24 +100,39 @@ where the assignment should be schedule, and the <bit> is the base of
 the vector to be assigned to the destination. The vector width is in
 index register 0.
 
-The %assign/v0/d variation puts the delay instead into an integer
+The %assign/v0/d variation gets the delay instead from an integer
 register that is given by the <delayx> value. This should not be 0, of
 course, because integer 0 is taken with the vector width.
+
+The %assign/v0/e variation uses the information in the thread
+event control registers to determine when to perform the assign.
+%evctl is used to set the event control information.
 
 The <var-label> references a .var object that can receive non-blocking
 assignments. For blocking assignments, see %set/v.
 
 * %assign/v0/x1 <var-label>, <delay>, <bit>
 * %assign/v0/x1/d <var-label>, <delayx>, <bit>
+* %assign/v0/x1/e <var-label>, <bit>
 
 This is similar to the %assign/v0 instruction, but adds the index-1
 index register with the canonical index of the destination where the
 vector is to be written. This allows for part writes into the vector.
 
 * %assign/wr <vpi-label>, <delay>, <index>
+* %assign/wr/d <vpi-label>, <delayx>, <index>
+* %assign/wr/e <vpi-label>, <index>
 
-This instruction causes a non-blocking assign of the indexed value to
-the real object addressed by the <vpi-label> label.
+This instruction provides a non-blocking assign of the real value
+given in <index> to the real object addressed by the <vpi-label>
+label after the given <delay>.
+
+The %assign/wr/d variation gets the delay from integer register
+<delayx>.
+
+The %assign/wr/e variation uses the information in the thread
+event control registers to determine when to perform the assign.
+%evctl is used to set the event control information.
 
 * %assign/x0 <var-label>, <delay>, <bit> (OBSOLETE -- See %assign/v0x)
 
@@ -291,6 +317,25 @@ This opcode divides the left operand by the right operand. If the
 right operand is 0, then the result is NaN.
 
 
+* %evctl <functor-label> <idx>
+* %evctl/c
+* %evctl/s <functor-label> <idx>
+* %evctl/i <functor-label> <value>
+
+These instructions are used to put event and repetition information
+into the thread event control registers. These values are then used
+by the %assign/e instructions to do not blocking event control. The
+<functor-label> is the event to trigger on and the <idx> is an index
+register to read the repetition count from (signed or unsigned).
+%evctl/i sets the repetition to an immediate unsigned value.
+
+%evctl/c clears the event control information. This is needed if a
+%assign/e may be skiped since the %assign/e statements clear the
+event control information and the other %evctl statements assert
+that this information has been cleared. You can get an assert if
+this information is not managed correctly.
+
+
 * %force/v <label>, <bit>, <wid>
 
 Force a constant value to the target variable. This is similar to %set
@@ -321,6 +366,11 @@ but is not necessarily started until the current thread yields.
 The %fork instruction has no effect other than to push a child thread.
 
 See also %join.
+
+* %free <scope-label>
+
+This instruction de-allocates the storage for a previously allocated
+instance of as automatically allocated scope.
 
 
 * %inv <bit>, <wid>
@@ -358,10 +408,11 @@ bits.
 	6: (reserved)
 
 * %ix/getv <functor-label>, <bit>
+* %ix/getv/s <functor-label>, <bit>
 
-This instruction is like the %ix/get instruction, except that is reads
-directly from a functor label instead of from thread bits. It sets
-bits 4/5/6 just line %ix/get.
+These instructions are like the %ix/get instructions, except that they
+read directly from a functor label instead of from thread bits. They
+set bit 4 just like %ix/get.
 
 * %ix/load <idx>, <value>
 

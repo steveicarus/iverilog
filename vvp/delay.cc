@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <list>
 #include <assert.h>
+#include <math.h>
 
 void vvp_delay_t::calculate_min_delay_()
 {
@@ -135,6 +136,17 @@ vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, vvp_bit4_t init, const vvp_delay_t&d)
       cur_real_ = 0.0;
       list_ = 0;
       initial_ = true;
+	// Calculate the values used when converting variable delays
+	// to simulation time units.
+      struct __vpiScope*scope = vpip_peek_current_scope();
+
+      int pow = scope->time_units - scope->time_precision;
+      round_ = 1;
+      for (int lp = 0; lp < pow; lp += 1) round_ *= 10;
+
+      pow = scope->time_precision - vpip_get_time_precision();
+      scale_ = 1;
+      for (int lp = 0; lp < pow; lp += 1) scale_ *= 10;
 }
 
 vvp_fun_delay::~vvp_fun_delay()
@@ -176,8 +188,12 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
       if (port.port() > 0) {
 	      // Get the integer value of the bit vector, or 0 if
 	      // there are X or Z bits.
-	    unsigned long val = 0;
-	    vector4_to_value(bit, val);
+	    vvp_time64_t bval = 0;
+	      // The following does not work correctly for negative values.
+	      // They should be sign extended to 64 bits (1364-2001 9.7.1).
+	    vector4_to_value(bit, bval);
+	      // Integer values do not need to be rounded so just scale them.
+	    vvp_time64_t val = bval * round_ * scale_;
 
 	    switch (port.port()) {
 		case 1:
@@ -272,9 +288,16 @@ void vvp_fun_delay::recv_real(vvp_net_ptr_t port, double bit)
       if (port.port() > 0) {
 	    /* If the port is not 0, then this is a delay value that
 	    should be rounded and converted to an integer delay. */
-	    unsigned long long val = 0;
-	    if (bit > 0)
-		  val = (unsigned long long) (bit+0.5);
+	    vvp_time64_t val = 0;
+	    if (bit > -0.5) {
+		  val = (vvp_time64_t) (bit * round_ + 0.5) * scale_;
+	    } else if (bit != bit) {
+		    // For a NaN we use the default (0).
+	    } else {
+		  vvp_vector4_t vec4(8*sizeof(vvp_time64_t),
+		                     floor(-bit * round_ + 0.5) * -1 * scale_);
+		  vector4_to_value(vec4, val);
+	    }
 
 	    switch (port.port()) {
 		case 1:

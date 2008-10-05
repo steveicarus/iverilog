@@ -183,6 +183,10 @@ void show_statement(ivl_statement_t net, unsigned ind)
 
       switch (code) {
 
+	  case IVL_ST_ALLOC:
+	    fprintf(out, "%*sallocate automatic storage ...\n", ind, "");
+            break;
+
 	  case IVL_ST_ASSIGN:
 	    fprintf(out, "%*sASSIGN <lwidth=%u>\n", ind, "",
 		    ivl_stmt_lwidth(net));
@@ -316,6 +320,10 @@ void show_statement(ivl_statement_t net, unsigned ind)
 		break;
 	  }
 
+	  case IVL_ST_FREE:
+	    fprintf(out, "%*sfree automatic storage ...\n", ind, "");
+            break;
+
 	  case IVL_ST_NOOP:
 	    fprintf(out, "%*s/* noop */;\n", ind, "");
 	    break;
@@ -356,4 +364,3 @@ void show_statement(ivl_statement_t net, unsigned ind)
 	    fprintf(out, "%*sunknown statement type (%u)\n", ind, "", code);
       }
 }
-

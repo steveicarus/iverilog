@@ -26,10 +26,27 @@
 # include  <sys/types.h>
 # include  <sys/stat.h>
 
+static const char*version_string =
+"Icarus Verilog VVP Code Generator " VERSION "\n"
+"  This program is free software; you can redistribute it and/or modify\n"
+"  it under the terms of the GNU General Public License as published by\n"
+"  the Free Software Foundation; either version 2 of the License, or\n"
+"  (at your option) any later version.\n"
+"\n"
+"  This program is distributed in the hope that it will be useful,\n"
+"  but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"  GNU General Public License for more details.\n"
+"\n"
+"  You should have received a copy of the GNU General Public License\n"
+"  along with this program; if not, write to the Free Software\n"
+"  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA\n"
+;
+
 FILE*vvp_out = 0;
 int vvp_errors = 0;
 
-inline static void draw_execute_header(ivl_design_t des)
+__inline__ static void draw_execute_header(ivl_design_t des)
 {
 #if !defined(__MINGW32__)
       const char*cp = ivl_design_flag(des, "VVP_EXECUTABLE");
@@ -40,7 +57,7 @@ inline static void draw_execute_header(ivl_design_t des)
 #endif
 }
 
-inline static void draw_module_declarations(ivl_design_t des)
+__inline__ static void draw_module_declarations(ivl_design_t des)
 {
       const char*cp = ivl_design_flag(des, "VPI_MODULE_LIST");
 
@@ -67,6 +84,8 @@ int target_design(ivl_design_t des)
       int rc;
       ivl_scope_t *roots;
       unsigned nroots, i;
+      unsigned size;
+      unsigned idx;
       const char*path = ivl_design_flag(des, "-o");
       assert(path);
 
@@ -106,10 +125,9 @@ int target_design(ivl_design_t des)
       rc = ivl_design_process(des, draw_process, 0);
 
         /* Dump the file name table. */
-      unsigned size = ivl_file_table_size();
+      size = ivl_file_table_size();
       fprintf(vvp_out, "# The file index is used to find the file name in "
                        "the following table.\n:file_names %u;\n", size);
-      unsigned idx;
       for (idx = 0; idx < size; idx++) {
 	    fprintf(vvp_out, "    \"%s\";\n", ivl_file_table_item(idx));
       }
@@ -119,3 +137,11 @@ int target_design(ivl_design_t des)
       return rc + vvp_errors;
 }
 
+
+const char* target_query(const char*key)
+{
+      if (strcmp(key,"version") == 0)
+	    return version_string;
+
+      return 0;
+}

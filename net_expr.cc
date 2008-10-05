@@ -127,6 +127,9 @@ ivl_variable_type_t NetEBAdd::expr_type() const
 NetEBComp::NetEBComp(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
+	// The output of compare is always unsigned.
+      cast_signed_base_(false);
+
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(r)) do {
 
 	    if (tmp->has_width())
@@ -242,7 +245,11 @@ ivl_variable_type_t NetEBMinMax::expr_type() const
 NetEBMult::NetEBMult(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
-      expr_width(l->expr_width() + r->expr_width());
+      if (expr_type() == IVL_VT_REAL)
+	    expr_width(1);
+      else
+	    expr_width(l->expr_width() + r->expr_width());
+
       cast_signed(l->has_sign() && r->has_sign());
 
 	/* If it turns out that this is not a signed expression, then
@@ -301,10 +308,6 @@ ivl_variable_type_t NetEBPow::expr_type() const
       if (right_->expr_type() == IVL_VT_REAL)
 	    return IVL_VT_REAL;
       if (left_->expr_type() == IVL_VT_REAL)
-	    return IVL_VT_REAL;
-      if (left_->has_sign())
-	    return IVL_VT_REAL;
-      if (right_->has_sign())
 	    return IVL_VT_REAL;
 
       return IVL_VT_LOGIC;

@@ -72,9 +72,12 @@ static int draw_binary_real(ivl_expr_t exp)
 	  case 'X':
 	    {
 	    struct vector_info vi;
+	    int res;
+	    const char*sign_flag;
+
 	    vi = draw_eval_expr(exp, STUFF_OK_XZ);
-	    int res = allocate_word();
-	    const char*sign_flag = ivl_expr_signed(exp)? "/s" : "";
+	    res = allocate_word();
+	    sign_flag = ivl_expr_signed(exp)? "/s" : "";
 	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 		    sign_flag, res, vi.base, vi.wid);
 
@@ -113,7 +116,7 @@ static int draw_binary_real(ivl_expr_t exp)
 	    fprintf(vvp_out, "    %%pow/wr %d, %d;\n", l, r);
 	    break;
 
-	  case 'm': { // min(l,r)
+	  case 'm': { /* min(l,r) */
 		int lab_out = local_count++;
 		int lab_r = local_count++;
 		  /* If r is NaN, the go out and accept l as result. */
@@ -131,7 +134,7 @@ static int draw_binary_real(ivl_expr_t exp)
 		break;
 	  }
 
-	  case 'M': { // max(l,r)
+	  case 'M': { /* max(l,r) */
 		int lab_out = local_count++;
 		int lab_r = local_count++;
 		  /* If r is NaN, the go out and accept l as result. */
@@ -168,28 +171,49 @@ static int draw_number_real(ivl_expr_t exp)
       unsigned long mant = 0, mask = -1UL;
       int vexp = 0x1000;
 
-      for (idx = 0 ;  idx < wid ;  idx += 1) {
-	    mask <<= 1;
-	    if (bits[idx] == '1')
-		  mant |= 1 << idx;
-      }
+	/* If this is a negative number, then arrange for the 2's
+	   complement to be calculated as we scan through the
+	   value. Real values are sign-magnitude, and this negation
+	   gets us a magnitide. */
 
-	/* If this is actually a negative number, then get the
-	   positive equivalent, and set the sign bit in the exponent
-	   field.
-
-	   To get the positive equivalent of mant we need to take the
-	   negative of the mantissa (0-mant) but also be aware that
-	   the bits may not have been as many bits as the width of the
-	   mant variable. This would lead to spurious '1' bits in the
-	   high bits of mant that are masked by ~((-1UL)<<wid). */
+      int negate = 0;
+      int carry = 0;
       if (ivl_expr_signed(exp) && (bits[wid-1] == '1')) {
-	    mant = (0-mant) & ~(mask);
-	    vexp |= 0x4000;
+	    negate = 1;
+	    carry = 1;
       }
 
-      fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load(num)= %c%lu\n",
-	      res, mant, vexp, (vexp&0x4000)? '-' : '+', mant);
+      for (idx = 0 ;  idx < wid && idx < 8*sizeof(mant) ;  idx += 1) {
+	    mask <<= 1;
+	    int cur_bit = bits[idx] == '1'? 1 : 0;
+
+	    if (negate) {
+		  cur_bit ^= 1;
+		  cur_bit += carry;
+		  carry = (cur_bit >> 1) & 1;
+		  cur_bit &= 1;
+	    }
+
+	    if (cur_bit) mant |= 1 << idx;
+      }
+
+      for ( ; idx < wid ; idx += 1) {
+	    if (ivl_expr_signed(exp) && (bits[idx] == bits[8*sizeof(mant)-1]))
+		  continue;
+
+	    if (bits[idx] == '0')
+		  continue;
+
+	    fprintf(stderr, "internal error: mantissa doesn't fit!\n");
+	    assert(0);
+      }
+
+	/* If required, add in a sign bit. */
+      if (negate)
+	    vexp |= 0x4000;
+
+      fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load(num)= %c%lu (wid=%u)\n",
+	      res, mant, vexp, (vexp&0x4000)? '-' : '+', mant, wid);
       return res;
 }
 
@@ -430,14 +454,20 @@ static int draw_ternary_real(ivl_expr_t exp)
 
 static int draw_unary_real(ivl_expr_t exp)
 {
+      ivl_expr_t sube;
+      int sub;
+
 	/* If the opcode is a ~ then the sub expression must not be a
 	 * real expression, so use vector evaluation and then convert
 	 * that result to a real value. */
       if (ivl_expr_opcode(exp) == '~') {
 	    struct vector_info vi;
+	    int res;
+	    const char*sign_flag;
+
 	    vi = draw_eval_expr(exp, STUFF_OK_XZ);
-	    int res = allocate_word();
-	    const char*sign_flag = ivl_expr_signed(exp)? "/s" : "";
+	    res = allocate_word();
+	    sign_flag = ivl_expr_signed(exp)? "/s" : "";
 	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 		    sign_flag, res, vi.base, vi.wid);
 
@@ -449,9 +479,12 @@ static int draw_unary_real(ivl_expr_t exp)
 
       if (ivl_expr_opcode(exp) == '!') {
 	    struct vector_info vi;
+	    int res;
+	    const char*sign_flag;
+
 	    vi = draw_eval_expr(exp, STUFF_OK_XZ);
-	    int res = allocate_word();
-	    const char*sign_flag = ivl_expr_signed(exp)? "/s" : "";
+	    res = allocate_word();
+	    sign_flag = ivl_expr_signed(exp)? "/s" : "";
 	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 		    sign_flag, res, vi.base, vi.wid);
 
@@ -461,9 +494,8 @@ static int draw_unary_real(ivl_expr_t exp)
 	    return res;
       }
 
-      ivl_expr_t sube = ivl_expr_oper1(exp);
-
-      int sub = draw_eval_real(sube);
+      sube = ivl_expr_oper1(exp);
+      sub = draw_eval_real(sube);
 
       if (ivl_expr_opcode(exp) == '+')
 	    return sub;

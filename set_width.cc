@@ -180,7 +180,13 @@ bool NetEBLogic::set_width(unsigned w, bool)
  */
 bool NetEBMult::set_width(unsigned w, bool)
 {
-      return w == expr_width();
+      if (w < left_->expr_width())
+	    left_->set_width(w);
+      if (w < right_->expr_width())
+	    right_->expr_width();
+
+      expr_width(w);
+      return true;
 }
 
 bool NetEBPow::set_width(unsigned w, bool last_chance)

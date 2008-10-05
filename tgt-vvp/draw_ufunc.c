@@ -28,13 +28,14 @@
 static void function_argument_logic(ivl_signal_t port, ivl_expr_t exp)
 {
       struct vector_info res;
+      unsigned pwidth;
 
 	/* ports cannot be arrays. */
       assert(ivl_signal_dimensions(port) == 0);
 
       res = draw_eval_expr_wid(exp, ivl_signal_width(port), 0);
         /* We could have extra bits so only select the ones we need. */
-      unsigned pwidth = ivl_signal_width(port);
+      pwidth = ivl_signal_width(port);
       fprintf(vvp_out, "    %%set/v v%p_0, %u, %u;\n", port, res.base,
               (res.wid > pwidth) ? pwidth : res.wid);
 
@@ -87,6 +88,12 @@ struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
       ivl_scope_t def = ivl_expr_def(exp);
       ivl_signal_t retval = ivl_scope_port(def, 0);
       struct vector_info res;
+      unsigned load_wid;
+
+        /* If this is an automatic function, allocate the local storage. */
+      if (ivl_scope_is_auto(def)) {
+            fprintf(vvp_out, "    %%alloc S_%p;\n", def);
+      }
 
 	/* evaluate the expressions and send the results to the
 	   function ports. */
@@ -122,7 +129,7 @@ struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
 
       assert(res.base != 0);
 
-      unsigned load_wid = swid;
+      load_wid = swid;
       if (load_wid > ivl_signal_width(retval))
 	    load_wid = ivl_signal_width(retval);
 
@@ -134,6 +141,11 @@ struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
       if (load_wid < wid)
 	    pad_expr_in_place(exp, res, swid);
 
+        /* If this is an automatic function, free the local storage. */
+      if (ivl_scope_is_auto(def)) {
+            fprintf(vvp_out, "    %%free S_%p;\n", def);
+      }
+
       return res;
 }
 
@@ -143,6 +155,11 @@ int draw_ufunc_real(ivl_expr_t exp)
       ivl_signal_t retval = ivl_scope_port(def, 0);
       int res = 0;
       int idx;
+
+        /* If this is an automatic function, allocate the local storage. */
+      if (ivl_scope_is_auto(def)) {
+            fprintf(vvp_out, "    %%alloc S_%p;\n", def);
+      }
 
       assert(ivl_expr_parms(exp) == (ivl_scope_ports(def)-1));
       for (idx = 0 ;  idx < ivl_expr_parms(exp) ;  idx += 1) {
@@ -163,6 +180,10 @@ int draw_ufunc_real(ivl_expr_t exp)
       res = allocate_word();
       fprintf(vvp_out, "  %%load/wr %d, v%p_0;\n", res, retval);
 
+        /* If this is an automatic function, free the local storage. */
+      if (ivl_scope_is_auto(def)) {
+            fprintf(vvp_out, "    %%free S_%p;\n", def);
+      }
+
       return res;
 }
-

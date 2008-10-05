@@ -40,12 +40,9 @@ NetModulo::NetModulo(NetScope*s, perm_string n, unsigned wr,
 : NetNode(s, n, 3),
   width_r_(wr), width_a_(wa), width_b_(wb)
 {
-      pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("Result"), 0);
-      pin(1).set_dir(Link::INPUT);
-      pin(1).set_name(perm_string::literal("DataA"), 0);
-      pin(2).set_dir(Link::INPUT);
-      pin(2).set_name(perm_string::literal("DataB"), 0);
+      pin(0).set_dir(Link::OUTPUT); // Result
+      pin(1).set_dir(Link::INPUT);  // DataA
+      pin(2).set_dir(Link::INPUT);  // DataB
 }
 
 NetModulo::~NetModulo()

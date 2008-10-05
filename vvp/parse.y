@@ -85,7 +85,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_func K_vpi_func_r
-%token K_disable K_fork
+%token K_disable K_fork K_alloc K_free
 %token K_vpi_module K_vpi_time_precision K_file_names
 
 %token <text> T_INSTR
@@ -130,7 +130,7 @@ header_line
 	;
 
 footer_lines
-	: K_file_names T_NUMBER ';' { file_names.reserve($2) }
+	: K_file_names T_NUMBER ';' { file_names.reserve($2); }
 	  name_strings
 
 name_strings
@@ -215,11 +215,11 @@ statement
      bits in the symbols list change. */
 
 	| T_LABEL K_UFUNC T_SYMBOL ',' T_NUMBER ',' symbols
-	  '(' symbols ')' symbol ';'
+	  '(' symbols ')' symbol symbol ';'
 		{ compile_ufunc($1, $3, $5,
 				$7.cnt, $7.vect,
 				$9.cnt, $9.vect,
-				$11); }
+				$11, $12); }
 
   /* Resolver statements are very much like functors. They are
      compiled to functors of a different mode. */
@@ -533,6 +533,11 @@ statement
 	| label_opt K_fork symbol ',' symbol ';'
 		{ compile_fork($1, $3, $5); }
 
+	| label_opt K_alloc symbol ';'
+		{ compile_alloc($1, $3); }
+
+	| label_opt K_free symbol ';'
+		{ compile_free($1, $3); }
 
   /* Scope statements come in two forms. There are the scope
      declaration and the scope recall. The declarations create the

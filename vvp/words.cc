@@ -37,6 +37,7 @@ static void __compile_var_real(char*label, char*name,
       vvp_fun_signal_real*fun = new vvp_fun_signal_real;
       vvp_net_t*net = new vvp_net_t;
       net->fun = fun;
+      vpip_add_item_to_current_scope(fun);
       define_functor_symbol(label, net);
 
       vpiHandle obj = vpip_make_real_var(name, net);
@@ -45,7 +46,8 @@ static void __compile_var_real(char*label, char*name,
       if (name) {
 	    assert(!array);
 	    vpip_attach_to_current_scope(obj);
-	    schedule_init_vector(vvp_net_ptr_t(net,0), fun->real_value());
+            if (!vpip_peek_current_scope()->is_automatic)
+                  schedule_init_vector(vvp_net_ptr_t(net,0), fun->real_value());
       }
       if (array) {
 	    assert(!name);
@@ -81,6 +83,7 @@ static void __compile_var(char*label, char*name,
       vvp_net_t*node = new vvp_net_t;
 
       node->fun = vsig;
+      vpip_add_item_to_current_scope(vsig);
       define_functor_symbol(label, node);
 
       vpiHandle obj = 0;
@@ -96,7 +99,8 @@ static void __compile_var(char*label, char*name,
       if (name) {
 	    assert(!array);
 	    if (obj) vpip_attach_to_current_scope(obj);
-	    schedule_init_vector(vvp_net_ptr_t(node,0), vsig->vec4_value());
+            if (!vpip_peek_current_scope()->is_automatic)
+	          schedule_init_vector(vvp_net_ptr_t(node,0), vsig->vec4_value());
       }
 	// If this is an array word, then it does not have a name, and
 	// it is attached to the addressed array.

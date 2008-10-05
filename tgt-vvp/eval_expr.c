@@ -124,11 +124,13 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 	      {
 		    long imm = get_number_immediate(expr);
 		    if (imm >= 0) {
-			  fprintf(vvp_out, "   %%ix/load %u, %ld;\n", ix, imm);
+			  fprintf(vvp_out, "    %%ix/load %u, %ld;\n", ix, imm);
 		    } else {
-			  fprintf(vvp_out, "   %%ix/load %u, 0; loading %ld\n", ix, imm);
-			  fprintf(vvp_out, "   %%ix/sub %u, %ld;\n", ix, -imm);
+			  fprintf(vvp_out, "    %%ix/load %u, 0; loading %ld\n", ix, imm);
+			  fprintf(vvp_out, "    %%ix/sub %u, %ld;\n", ix, -imm);
 		    }
+		      /* This can not have have a X/Z value so clear bit 4. */
+		    fprintf(vvp_out, "    %%mov 4, 0, 1;\n");
 	      }
 	      break;
 
@@ -137,6 +139,7 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 
 		unsigned word = 0;
 		if (ivl_signal_dimensions(sig) > 0) {
+		      ivl_expr_t ixe;
 
 			/* Detect the special case that this is a
 			   variable array. In this case, the ix/getv
@@ -144,13 +147,13 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		      if (ivl_signal_type(sig) == IVL_SIT_REG) {
 			    struct vector_info rv;
 			    rv = draw_eval_expr(expr, 0);
-			    fprintf(vvp_out, "   %%ix/get %u, %u, %u;\n",
+			    fprintf(vvp_out, "    %%ix/get %u, %u, %u;\n",
 				    ix, rv.base, rv.wid);
 			    clr_vector(rv);
 			    break;
 		      }
 
-		      ivl_expr_t ixe = ivl_expr_oper1(expr);
+		      ixe = ivl_expr_oper1(expr);
 		      if (number_is_immediate(ixe, 8*sizeof(unsigned long), 0))
 		            word = get_number_immediate(ixe);
 		      else {
@@ -162,7 +165,9 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		            break;
 		      }
 		}
-		fprintf(vvp_out, "    %%ix/getv %u, v%p_%u;\n", ix, sig, word);
+		char*type = ivl_signal_signed(sig) ? "/s" : "";
+		fprintf(vvp_out, "    %%ix/getv%s %u, v%p_%u;\n", type, ix,
+		                 sig, word);
 		break;
 	  }
 
@@ -934,6 +939,8 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
       ivl_expr_t re = ivl_expr_oper2(exp);
+      struct vector_info lv;
+      struct vector_info rv;
 
       if (ivl_expr_opcode(exp) == '&') {
 	    if (number_is_immediate(re, IMM_WID, 0) && !number_is_unknown(re))
@@ -941,9 +948,6 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
 	    if (number_is_immediate(le, IMM_WID, 0) && !number_is_unknown(le))
 		  return draw_logic_immediate(exp, re, le, wid);
       }
-
-      struct vector_info lv;
-      struct vector_info rv;
 
       lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
       rv = draw_eval_expr_wid(re, wid, STUFF_OK_XZ);
@@ -1271,9 +1275,9 @@ static struct vector_info draw_sub_immediate(ivl_expr_t le,
 		  vvp_errors += 1;
 	    }
 
-	    fprintf(vvp_out, "   %%mov %u, %u, %u;\n", tmp, lv.base, wid);
+	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", tmp, lv.base, wid);
 	    lv.base = tmp;
-	    fprintf(vvp_out, "   %%subi %u, %lu, %u;\n", lv.base, imm, wid);
+	    fprintf(vvp_out, "    %%subi %u, %lu, %u;\n", lv.base, imm, wid);
 	    break;
 
 	  case 2:
@@ -1282,7 +1286,7 @@ static struct vector_info draw_sub_immediate(ivl_expr_t le,
 	    break;
 
 	  default:
-	    fprintf(vvp_out, "   %%subi %u, %lu, %u;\n", lv.base, imm, wid);
+	    fprintf(vvp_out, "    %%subi %u, %lu, %u;\n", lv.base, imm, wid);
 	    break;
       }
 
@@ -1303,7 +1307,7 @@ static struct vector_info draw_mul_immediate(ivl_expr_t le,
       if (imm == 0)
 	    return lv;
 
-      fprintf(vvp_out, "   %%muli %u, %lu, %u;\n", lv.base, imm, lv.wid);
+      fprintf(vvp_out, "    %%muli %u, %lu, %u;\n", lv.base, imm, lv.wid);
 
       return lv;
 }
@@ -1621,6 +1625,9 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
       unsigned nwid;
       struct vector_info res;
       const char*bits = ivl_expr_bits(exp);
+      unsigned long val;
+      unsigned val_bits;
+      unsigned val_addr;
 
       res.wid  = wid;
 
@@ -1675,7 +1682,7 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 	  instruction. */
       if ((!number_is_unknown(exp)) && number_is_immediate(exp, IMM_WID,0)) {
 	    unsigned long val = get_number_immediate(exp);
-	    fprintf(vvp_out, "   %%movi %u, %lu, %u;\n", res.base, val, wid);
+	    fprintf(vvp_out, "    %%movi %u, %lu, %u;\n", res.base, val, wid);
 	    return res;
       }
 
@@ -1683,9 +1690,9 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 	   destination. Use the %mov to handle the remaining general
 	   bits. */
       idx = 0;
-      unsigned long val = 0;
-      unsigned val_bits = 0;
-      unsigned val_addr = res.base;
+      val = 0;
+      val_bits = 0;
+      val_addr = res.base;
       while (idx < nwid) {
 	    char src = 0;
 	    switch (bits[idx]) {
@@ -1707,7 +1714,7 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 	    if (val_bits >= IMM_WID
 		|| (val_bits>0 && src != 0)
 		|| (val_bits>0 && idx+1==nwid)) {
-		  fprintf(vvp_out, "   %%movi %u, %lu, %u;\n",
+		  fprintf(vvp_out, "    %%movi %u, %lu, %u;\n",
 			  val_addr, val, val_bits);
 		  val_addr += val_bits;
 		  val_bits = 0;
@@ -1715,13 +1722,14 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 	    }
 
 	    if (src != 0) {
-		  assert(val_bits == 0);
 		  unsigned cnt;
+
+		  assert(val_bits == 0);
 		  for (cnt = 1 ; idx+cnt < nwid ; cnt += 1)
 			if (bits[idx+cnt] != bits[idx])
 			      break;
 
-		  fprintf(vvp_out, "   %%mov %u, %c, %u;\n", val_addr, src, cnt);
+		  fprintf(vvp_out, "    %%mov %u, %c, %u;\n", val_addr, src, cnt);
 		  val_addr += cnt;
 		  idx += cnt-1;
 	    }
@@ -1832,13 +1840,13 @@ static struct vector_info draw_realnum_expr(ivl_expr_t exp, unsigned wid)
 		  continue;
 	    }
 
-	    fprintf(vvp_out, "  %%mov %u, %d, %u;\n", addr, bit, run);
+	    fprintf(vvp_out, "    %%mov %u, %d, %u;\n", addr, bit, run);
 	    addr += run;
 	    run = 1;
 	    bit = next_bit;
       }
 
-      fprintf(vvp_out, "  %%mov %u, %d, %u;\n", addr, bit, run);
+      fprintf(vvp_out, "    %%mov %u, %d, %u;\n", addr, bit, run);
 
 
       return res;
@@ -1936,14 +1944,14 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
 			}
 		  }
 	    }
-	    fprintf(vvp_out, "  %%movi %u, %u, %u;\n", res.base+idx,bits,trans);
+	    fprintf(vvp_out, "    %%movi %u, %u, %u;\n", res.base+idx,bits,trans);
 
 	    idx += trans;
       }
 
 	/* Pad the number up to the expression width. */
       if (idx < wid)
-	    fprintf(vvp_out, "  %%mov %u, 0, %u;\n", res.base+idx, wid-idx);
+	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n", res.base+idx, wid-idx);
 
       if (res.base >= 8)
 	    save_expression_lookaside(res.base, exp, wid);
@@ -1976,9 +1984,9 @@ void pad_expr_in_place(ivl_expr_t exp, struct vector_info res, unsigned swid)
 	      /* The %movi is faster for larger widths, but for very
 		 small counts, the %mov is faster. */
 	    if (count > 4)
-		  fprintf(vvp_out, "   %%movi %u, 0, %u;\n", base, count);
+		  fprintf(vvp_out, "    %%movi %u, 0, %u;\n", base, count);
 	    else
-		  fprintf(vvp_out, "   %%mov %u, 0, %u;\n", base, count);
+		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base, count);
       }
 }
 
@@ -2011,15 +2019,15 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 
 	    draw_eval_expr_into_integer(ix, 3);
 	    if (add_index < 0) {
-		  fprintf(vvp_out, "   %%load/av %u, v%p, %u;\n",
+		  fprintf(vvp_out, "    %%load/av %u, v%p, %u;\n",
 			  res.base, sig, swid);
 		  pad_expr_in_place(exp, res, swid);
 	    } else {
 		  const char*sign_flag = (add_index>0)? "/s" : "";
 
 		    /* Add an immediate value to an array value. */
-		  fprintf(vvp_out, "   %%ix/load 0, %lu;\n", immediate);
-		  fprintf(vvp_out, "   %%load/avp0%s %u, v%p, %u;\n",
+		  fprintf(vvp_out, "    %%ix/load 0, %lu;\n", immediate);
+		  fprintf(vvp_out, "    %%load/avp0%s %u, v%p, %u;\n",
 			  sign_flag, res.base, sig, res.wid);
 	    }
 	    return;
@@ -2027,11 +2035,12 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 
 
       if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
+	    int tmp;
 
 	    assert(add_index < 0);
-	    int tmp = allocate_word();
-	    fprintf(vvp_out, " %%load/wr %d, v%p_%u;\n", tmp, sig, word);
-	    fprintf(vvp_out, " %%cvt/vr %u, %d, %u;\n", res.base, tmp, res.wid);
+	    tmp = allocate_word();
+	    fprintf(vvp_out, "    %%load/wr %d, v%p_%u;\n", tmp, sig, word);
+	    fprintf(vvp_out, "    %%cvt/vr %u, %d, %u;\n", res.base, tmp, res.wid);
 	    clr_word(tmp);
 
       } else if (add_index >= 0) {
@@ -2042,8 +2051,8 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 	    if (immediate >= 0) {
 		  fprintf(vvp_out, "    %%ix/load 0, %lu;\n", immediate);
 	    } else {
-		  fprintf(vvp_out, "   %%ix/load 0, 0; immediate=%ld\n", immediate);
-		  fprintf(vvp_out, "   %%ix/sub 0, %ld;\n", -immediate);
+		  fprintf(vvp_out, "    %%ix/load 0, 0; immediate=%ld\n", immediate);
+		  fprintf(vvp_out, "    %%ix/sub 0, %ld;\n", -immediate);
 	    }
 	    fprintf(vvp_out, "    %%load/vp0%s %u, v%p_%u, %u;\n", sign_flag,
 		    res.base, sig,word, res.wid);
@@ -2107,7 +2116,7 @@ static struct vector_info draw_select_array(ivl_expr_t sube,
 
       shiv = draw_eval_expr(bit_idx, STUFF_OK_XZ|STUFF_OK_RO);
       draw_eval_expr_into_integer(ix, 3);
-      fprintf(vvp_out, "   %%ix/get 0, %u, %u;\n", shiv.base, shiv.wid);
+      fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", shiv.base, shiv.wid);
       if (shiv.base >= 8)
 	    clr_vector(shiv);
 
@@ -2122,7 +2131,7 @@ static struct vector_info draw_select_array(ivl_expr_t sube,
       }
 
       for (idx = 0 ;  idx < wid ;  idx += 1) {
-	    fprintf(vvp_out, "  %%load/avx.p %u, v%p, 0;\n", res.base+idx, sig);
+	    fprintf(vvp_out, "    %%load/avx.p %u, v%p, 0;\n", res.base+idx, sig);
       }
 
       return res;
@@ -2138,6 +2147,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 
 	/* Use this word of the signal. */
       unsigned use_word = 0;
+      unsigned use_wid;
 
 	/* If this is an access to an array, try to get the index as a
 	   constant. If it is (and the array is not a reg array then
@@ -2167,7 +2177,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	    res.base = allocate_vector(wid);
 	    res.wid = wid;
 	    assert(res.base);
-	    fprintf(vvp_out, "   %%load/v %u, v%p_%u, %u; Only need %u of %u bits\n",
+	    fprintf(vvp_out, "    %%load/v %u, v%p_%u, %u; Only need %u of %u bits\n",
 		    res.base, sig, use_word, bit_wid, bit_wid, ivl_expr_width(sube));
 
 	    save_signal_lookaside(res.base, sig, use_word, bit_wid);
@@ -2186,14 +2196,14 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
       res.wid = wid;
       assert(res.base);
 
-      unsigned use_wid = res.wid;
+      use_wid = res.wid;
       if (use_wid > bit_wid)
 	    use_wid = bit_wid;
 
-      fprintf(vvp_out, "   %%load/x1p %u, v%p_%u, %u;\n",
+      fprintf(vvp_out, "    %%load/x1p %u, v%p_%u, %u;\n",
 	      res.base, sig, use_word, use_wid);
       if (use_wid < res.wid)
-	    fprintf(vvp_out, "   %%movi %u, 0, %u;\n",
+	    fprintf(vvp_out, "    %%movi %u, 0, %u;\n",
 		    res.base + use_wid, res.wid - use_wid);
 
       return res;
@@ -2581,15 +2591,15 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 	         result a 1. */
 	    if (res.base == 1) {
 		  res.base = allocate_vector(wid);
-		  fprintf(vvp_out, "   %%movi %d, 1, %u;\n",
+		  fprintf(vvp_out, "    %%movi %d, 1, %u;\n",
 			  res.base, res.wid);
 		  break;
 	    }
 
-	    fprintf(vvp_out, "   %%cmpi/s %d, 0, %u;\n", res.base, res.wid);
-	    fprintf(vvp_out, "   %%jmp/0xz T_%u.%u, 5;\n", thread_count, local_count);
-	    fprintf(vvp_out, "   %%inv %d, %u;\n", res.base, res.wid);
-	    fprintf(vvp_out, "   %%addi %d, 1, %u;\n", res.base, res.wid);
+	    fprintf(vvp_out, "    %%cmpi/s %d, 0, %u;\n", res.base, res.wid);
+	    fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 5;\n", thread_count, local_count);
+	    fprintf(vvp_out, "    %%inv %d, %u;\n", res.base, res.wid);
+	    fprintf(vvp_out, "    %%addi %d, 1, %u;\n", res.base, res.wid);
 	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_count);
 	    local_count += 1;
 	    break;

@@ -143,7 +143,7 @@ struct vcd_id_s
       int nex;
 };
 
-static inline unsigned ihash(int nex)
+static __inline__ unsigned ihash(int nex)
 {
       unsigned a = nex;
       a ^= a>>16;

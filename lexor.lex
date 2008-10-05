@@ -87,6 +87,7 @@ static void process_timescale(const char*txt);
 static list<int> keyword_mask_stack;
 
 static int comment_enter;
+static bool in_module = false;
 %}
 
 %x CCOMMENT
@@ -123,8 +124,8 @@ S [afpnumkKMGT]
   /* The contents of C-style comments are ignored, like white space. */
 
 "/*" { comment_enter = YY_START; BEGIN(CCOMMENT); }
-<CCOMMENT>.    { yymore(); }
-<CCOMMENT>\n   { yylloc.first_line += 1; yymore(); }
+<CCOMMENT>.    { ; }
+<CCOMMENT>\n   { yylloc.first_line += 1; }
 <CCOMMENT>"*/" { BEGIN(comment_enter); }
 
 
@@ -225,6 +226,15 @@ S [afpnumkKMGT]
 
 	  case K_edge:
 	    BEGIN(EDGES);
+	    break;
+
+	  case K_module:
+	  case K_macromodule:
+	    in_module = true;
+	    break;
+
+	  case K_endmodule:
+	    in_module = false;
 	    break;
 
 	  default:
@@ -343,6 +353,12 @@ S [afpnumkKMGT]
 ^{W}?`timescale { BEGIN(PPTIMESCALE); }
 <PPTIMESCALE>.* { process_timescale(yytext); }
 <PPTIMESCALE>\n {
+      if (in_module) {
+	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
+		    "`timescale directive can not be inside a module "
+		    "definition." << endl;
+	    error_count += 1;
+      }
       yylloc.first_line += 1;
       BEGIN(0); }
 
@@ -439,7 +455,7 @@ S [afpnumkKMGT]
 
       } else {
 	    cerr << yylloc.text << ":" << yylloc.first_line
-		 << " error: Net type " << yytext
+		 << ": error: Net type " << yytext
 		 << " is not a valid (and supported)"
 		 << " default net type." << endl;
 	    net_type = NetNet::WIRE;
@@ -457,37 +473,37 @@ S [afpnumkKMGT]
 
 ^{W}?`define{W}?.* {
       cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": `define not supported. Use an external preprocessor."
+	    ": warning: `define not supported. Use an external preprocessor."
 	   << endl;
   }
 
 ^{W}?`else{W}?.* {
       cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": `else not supported. Use an external preprocessor."
+	    ": warning: `else not supported. Use an external preprocessor."
 	   << endl;
   }
 
 ^{W}?`endif{W}?.* {
       cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": `endif not supported. Use an external preprocessor."
+	    ": warning: `endif not supported. Use an external preprocessor."
 	   << endl;
   }
 
 ^{W}?`ifdef{W}?.* {
       cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": `ifdef not supported. Use an external preprocessor."
+	    ": warning: `ifdef not supported. Use an external preprocessor."
 	   << endl;
   }
 
 ^`include{W}?.* {
       cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": `include not supported. Use an external preprocessor."
+	    ": warning: `include not supported. Use an external preprocessor."
 	   << endl;
   }
 
 ^`undef{W}?.* {
       cerr << yylloc.text << ":" << yylloc.first_line <<
-	    ": `undef not supported. Use an external preprocessor."
+	    ": warning: `undef not supported. Use an external preprocessor."
 	   << endl;
   }
 

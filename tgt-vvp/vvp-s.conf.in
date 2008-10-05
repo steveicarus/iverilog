@@ -3,5 +3,4 @@ functor:synth
 functor:syn-rules
 functor:cprop
 functor:nodangle
--t:dll
 flag:DLL=vvp.tgt

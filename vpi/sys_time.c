@@ -86,22 +86,17 @@ static PLI_INT32 sys_realtime_calltf(PLI_BYTE8*name)
       s_vpi_time  now;
       vpiHandle call_handle;
       vpiHandle mod;
-      int units, prec;
 
       call_handle = vpi_handle(vpiSysTfCall, 0);
       assert(call_handle);
 
       mod = sys_func_module(call_handle);
 
-      now.type = vpiSimTime;
-      vpi_get_time(0, &now);
-
-      units = vpi_get(vpiTimeUnit, mod);
-      prec  = vpi_get(vpiTimePrecision, 0);
+      now.type = vpiScaledRealTime;
+      vpi_get_time(mod, &now);
 
       val.format = vpiRealVal;
-      val.value.real = pow(10.0, prec-units) * now.low;
-      assert(now.high == 0);
+      val.value.real = now.real;
 
       vpi_put_value(call_handle, &val, 0, vpiNoDelay);
 

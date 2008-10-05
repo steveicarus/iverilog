@@ -105,6 +105,7 @@ struct target_t {
       virtual bool process(const NetProcTop*);
 
 	/* Various kinds of process nodes are dispatched through these. */
+      virtual void proc_alloc(const NetAlloc*);
       virtual bool proc_assign(const NetAssign*);
       virtual void proc_assign_nb(const NetAssignNB*);
       virtual bool proc_block(const NetBlock*);
@@ -116,6 +117,7 @@ struct target_t {
       virtual bool proc_disable(const NetDisable*);
       virtual bool proc_force(const NetForce*);
       virtual void proc_forever(const NetForever*);
+      virtual void proc_free(const NetFree*);
       virtual bool proc_release(const NetRelease*);
       virtual void proc_repeat(const NetRepeat*);
       virtual bool proc_trigger(const NetEvTrig*);
@@ -151,11 +153,6 @@ struct expr_scan_t {
 };
 
 
-/* The emit functions take a design and emit it to the output stream
-   using the specified target. If the target is given by name, it is
-   located in the target_table and used. */
-extern int emit(const Design*des, const char*type);
-
 /* This function takes a fully qualified Verilog name (which may have,
    for example, dots in it) and produces a mangled version that can be
    used by most any language. */
@@ -164,9 +161,5 @@ extern string mangle(const string&str);
 /* This function takes a string and produces an escaped version that can be
    used inside a string constant for a C++ compiler. */
 extern string stresc(const string&str);
-
-/* This is the table of supported output targets. It is a null
-   terminated array of pointers to targets. */
-extern const struct target *target_table[];
 
 #endif

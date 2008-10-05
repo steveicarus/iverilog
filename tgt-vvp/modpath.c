@@ -84,6 +84,8 @@ static void draw_modpath_record(const char*label, const char*driver,
 	    int ppos = ivl_path_source_posedge(path);
 	    int pneg = ivl_path_source_negedge(path);
 	    const char*edge = ppos? " +" : pneg ? " -" : "";
+	    ivl_signal_t src_sig;
+
 	    fprintf(vvp_out, ",\n   %s%s", src_drivers[idx], edge);
 	    fprintf(vvp_out,
 		    " (%"PRIu64",%"PRIu64",%"PRIu64
@@ -109,7 +111,7 @@ static void draw_modpath_record(const char*label, const char*driver,
 
 	    fprintf(vvp_out, ")");
 
-	    ivl_signal_t src_sig = find_path_source_port(path);
+	    src_sig = find_path_source_port(path);
 	    fprintf(vvp_out, " v%p_0", src_sig);
       }
 
@@ -140,9 +142,10 @@ void cleanup_modpath(void)
 {
       while (modpath_list) {
 	    struct modpath_item*cur = modpath_list;
+	    char modpath_label[64];
+
 	    modpath_list = cur->next;
 
-	    char modpath_label[64];
 	    snprintf(modpath_label, sizeof modpath_label, "V_%p/m", cur->path_sig);
 	    draw_modpath_record(modpath_label, cur->drive_label, cur->path_sig);
 	    free(cur->drive_label);

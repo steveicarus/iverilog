@@ -30,10 +30,8 @@ NetUDP::NetUDP(NetScope*s, perm_string n, unsigned pins, PUdp *u)
   : NetNode(s, n, pins), udp(u)
 {
       pin(0).set_dir(Link::OUTPUT);
-      pin(0).set_name(perm_string::literal("O"), 0);
       for (unsigned idx = 1 ;  idx < pins ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).set_name(perm_string::literal("I"), idx-1);
       }
 }
 
