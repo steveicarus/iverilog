@@ -304,6 +304,10 @@ static int draw_mux_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
    
    vhdl_var_ref *out = nexus_to_var_ref(scope, ivl_lpm_q(lpm, 0));
 
+   // Make sure s0 and s1 have the same type as the output
+   s0 = s0->cast(out->get_type());
+   s1 = s1->cast(out->get_type());
+
    vhdl_cassign_stmt *s = new vhdl_cassign_stmt(out, s0);
    s->add_condition(s1, t1);
 
