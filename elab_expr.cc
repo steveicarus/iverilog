@@ -154,6 +154,20 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope,
 		  min = lval;
 	    break;
 
+	  case '*':
+	    if (unsized_flag && type_is_vectorable(expr_type)) {
+		  unsigned use_wid = wid_left + wid_right;
+                  if (use_wid > integer_width)
+                        use_wid = integer_width;
+                  if (use_wid > min)
+                        min = use_wid;
+	    }
+	    if (wid_left > min)
+		  min = wid_left;
+	    if (wid_right > min)
+		  min = wid_right;
+	    break;
+
 	  case 'l': // <<  Should be handled by PEBShift
 	  case '<': // <   Should be handled by PEBComp
 	  case '>': // >   Should be handled by PEBComp
