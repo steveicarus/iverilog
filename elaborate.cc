@@ -1954,9 +1954,11 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 
       } else {
 	    unsigned wid = count_lval_width(lv);
-	    rv->set_width(wid);
-	    rv = pad_to_width(rv, wid);
-	    assert(rv->expr_width() >= wid);
+	    if (wid > rv->expr_width()) {
+		  rv->set_width(wid);
+		  rv = pad_to_width(rv, wid);
+	    }
+	    ivl_assert(*this, rv->expr_width() >= wid);
       }
 
       NetAssign*cur = new NetAssign(lv, rv);
