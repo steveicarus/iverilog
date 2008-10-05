@@ -243,6 +243,9 @@ static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
       return rel_lpm_to_expr(scope, lpm, VHDL_BINOP_GEQ);
    case IVL_LPM_CMP_GT:
       return rel_lpm_to_expr(scope, lpm, VHDL_BINOP_GT);
+   case IVL_LPM_CMP_NE:
+   case IVL_LPM_CMP_NEE:
+      return rel_lpm_to_expr(scope, lpm, VHDL_BINOP_NEQ);
    case IVL_LPM_CMP_EQ:
    case IVL_LPM_CMP_EEQ:
       return rel_lpm_to_expr(scope, lpm, VHDL_BINOP_EQ);
