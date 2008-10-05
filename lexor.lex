@@ -124,8 +124,8 @@ S [afpnumkKMGT]
   /* The contents of C-style comments are ignored, like white space. */
 
 "/*" { comment_enter = YY_START; BEGIN(CCOMMENT); }
-<CCOMMENT>.    { yymore(); }
-<CCOMMENT>\n   { yylloc.first_line += 1; yymore(); }
+<CCOMMENT>.    { ; }
+<CCOMMENT>\n   { yylloc.first_line += 1; }
 <CCOMMENT>"*/" { BEGIN(comment_enter); }
 
 
