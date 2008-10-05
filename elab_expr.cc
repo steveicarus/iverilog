@@ -115,13 +115,19 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope,
 			      ivl_variable_type_t&expr_type,
 			      bool&unsized_flag) const
 {
-      bool flag_left = false;
-      bool flag_right = false;
       ivl_variable_type_t expr_type_left = IVL_VT_NO_TYPE;
       ivl_variable_type_t expr_type_right= IVL_VT_NO_TYPE;
 
+      bool flag_left = unsized_flag;
       unsigned wid_left = left_->test_width(des,scope, min, 0, expr_type_left, flag_left);
+
+      bool flag_right = flag_left;
       unsigned wid_right = right_->test_width(des,scope, min, 0, expr_type_right, flag_right);
+
+      if (flag_right && !flag_left) {
+	    flag_left = flag_right;
+	    wid_left = left_->test_width(des, scope, min, 0, expr_type_right, flag_right);
+      }
 
       if (flag_left || flag_right)
 	    unsized_flag = true;
@@ -622,6 +628,32 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*des,
 		  lp = pad_to_width(lp, expr_wid);
 	    if (rp->has_sign() && rp->expr_type() != IVL_VT_REAL)
 		  rp = pad_to_width(rp, expr_wid);
+      }
+
+	// Keep constants on the right side.
+      if (dynamic_cast<NetEConst*>(lp)) {
+	    NetExpr*tmp = lp;
+	    lp = rp;
+	    rp = tmp;
+      }
+
+	// Handle a few special case multiplies against constants.
+      if (NetEConst*rp_const = dynamic_cast<NetEConst*> (rp)) {
+	    verinum rp_val = rp_const->value();
+
+	    int use_wid = expr_wid;
+	    if (use_wid < 0)
+		  use_wid = max(rp->expr_width(), lp->expr_width());
+
+	    if (! rp_val.is_defined()) {
+		  NetEConst*tmp = make_const_x(use_wid);
+		  return tmp;
+	    }
+
+	    if (rp_val.is_zero()) {
+		  NetEConst*tmp = make_const_0(use_wid);
+		  return tmp;
+	    }
       }
 
 	// Multiply will guess a width that is the sum of the
