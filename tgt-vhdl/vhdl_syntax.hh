@@ -175,8 +175,10 @@ public:
    vhdl_expr *to_integer();
    vhdl_expr *to_std_logic();
    vhdl_expr *to_vector(vhdl_type_name_t name, int w);
+   vhdl_expr *resize(int w);
 private:
    int bits_to_int() const;
+   char sign_bit() const;
    
    std::string value_;
    bool qualified_, signed_;

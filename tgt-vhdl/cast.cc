@@ -222,7 +222,7 @@ vhdl_expr *vhdl_const_int::to_vector(vhdl_type_name_t name, int w)
 }
 
 int vhdl_const_bits::bits_to_int() const
-{   
+{
    char msb = value_[value_.size() - 1];
    int result = 0, bit;
    for (int i = sizeof(int)*8 - 1; i >= 0; i--) {
@@ -248,6 +248,11 @@ vhdl_expr *vhdl_const_bits::to_std_logic()
    return new vhdl_const_bit(lsb);
 }
 
+char vhdl_const_bits::sign_bit() const
+{
+   return signed_ ? value_[value_.length()-1] : '0';
+}
+
 vhdl_expr *vhdl_const_bits::to_vector(vhdl_type_name_t name, int w)
 {  
    if (name == VHDL_TYPE_STD_LOGIC_VECTOR) {
@@ -256,7 +261,7 @@ vhdl_expr *vhdl_const_bits::to_vector(vhdl_type_name_t name, int w)
    }
    else if (name == VHDL_TYPE_SIGNED || name == VHDL_TYPE_UNSIGNED) {
       // Extend with sign bit
-      value_.resize(w, value_[0]);  
+      value_.resize(w, sign_bit());  
       return this;
    }
    else
@@ -266,6 +271,16 @@ vhdl_expr *vhdl_const_bits::to_vector(vhdl_type_name_t name, int w)
 vhdl_expr *vhdl_const_bits::to_integer()
 {
    return new vhdl_const_int(bits_to_int());
+}
+
+vhdl_expr *vhdl_const_bits::resize(int w)
+{
+   // Rather than generating a call to Resize, when can just sign-extend
+   // the bits here. As well as looking better, this avoids any ambiguity
+   // between which of the signed/unsigned versions of Resize to use.
+   
+   value_.resize(w, sign_bit());  
+   return this;
 }
 
 vhdl_expr *vhdl_const_bit::to_integer()
