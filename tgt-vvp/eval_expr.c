@@ -65,6 +65,15 @@ int number_is_immediate(ivl_expr_t ex, unsigned lim_wid, int negative_ok_flag)
 	  && ivl_expr_type(ex) != IVL_EX_ULONG)
 	    return 0;
 
+      if (ivl_expr_type(ex) == IVL_EX_ULONG) {
+	    long imm;
+	    if (lim_wid >= 8*sizeof(long)) return 1;
+	      /* At this point we know that lim_wid is smaller than a long. */
+	    imm = labs(ivl_expr_uvalue(ex));
+	    if (imm < (1L<<lim_wid)) return 1;
+	    else return 0;
+      }
+
       bits = ivl_expr_bits(ex);
 
       if (ivl_expr_signed(ex) && bits[nbits-1]=='1')
@@ -97,13 +106,13 @@ long get_number_immediate(ivl_expr_t ex)
 		    case '0':
 		      break;
 		    case '1':
-		      assert(idx < 8*sizeof(imm));
+		      assert(idx < IMM_WID);
 		      imm |= 1L << idx;
 		      break;
 		    default:
 		      assert(0);
 		}
-		if (ivl_expr_signed(ex) && bits[nbits-1]=='1' && nbits < 8*sizeof(imm))
+		if (ivl_expr_signed(ex) && bits[nbits-1]=='1' && nbits < IMM_WID)
 		      imm |= -1L << nbits;
 		break;
 	  }
@@ -122,6 +131,7 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 	  case IVL_EX_NUMBER:
 	  case IVL_EX_ULONG:
 	      {
+		    assert(number_is_immediate(expr, IMM_WID, 1));
 		    long imm = get_number_immediate(expr);
 		    if (imm >= 0) {
 			  fprintf(vvp_out, "    %%ix/load %u, %ld;\n", ix, imm);
@@ -154,7 +164,7 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		      }
 
 		      ixe = ivl_expr_oper1(expr);
-		      if (number_is_immediate(ixe, 8*sizeof(unsigned long), 0))
+		      if (number_is_immediate(ixe, IMM_WID, 0))
 		            word = get_number_immediate(ixe);
 		      else {
 		            struct vector_info rv;
@@ -1326,36 +1336,44 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 
       if ((ivl_expr_opcode(exp) == '+')
 	  && (ivl_expr_type(le) == IVL_EX_SIGNAL)
-	  && (ivl_expr_type(re) == IVL_EX_ULONG))
+	  && (ivl_expr_type(re) == IVL_EX_ULONG)
+	  && number_is_immediate(re, IMM_WID, 1))
 	    return draw_load_add_immediate(le, re, wid, signed_flag);
 
       if ((ivl_expr_opcode(exp) == '+')
 	  && (ivl_expr_type(le) == IVL_EX_SIGNAL)
-	  && (ivl_expr_type(re) == IVL_EX_NUMBER))
+	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
+	  && (! number_is_unknown(re))
+	  && number_is_immediate(re, IMM_WID, 1))
 	    return draw_load_add_immediate(le, re, wid, signed_flag);
 
       if ((ivl_expr_opcode(exp) == '+')
 	  && (ivl_expr_type(re) == IVL_EX_SIGNAL)
-	  && (ivl_expr_type(le) == IVL_EX_ULONG))
+	  && (ivl_expr_type(le) == IVL_EX_ULONG)
+	  && number_is_immediate(re, IMM_WID, 1))
 	    return draw_load_add_immediate(re, le, wid, signed_flag);
 
       if ((ivl_expr_opcode(exp) == '+')
 	  && (ivl_expr_type(re) == IVL_EX_SIGNAL)
-	  && (ivl_expr_type(le) == IVL_EX_NUMBER))
+	  && (ivl_expr_type(le) == IVL_EX_NUMBER)
+	  && (! number_is_unknown(le))
+	  && number_is_immediate(le, IMM_WID, 1))
 	    return draw_load_add_immediate(re, le, wid, signed_flag);
 
       if ((ivl_expr_opcode(exp) == '+')
-	  && (ivl_expr_type(re) == IVL_EX_ULONG))
+	  && (ivl_expr_type(re) == IVL_EX_ULONG)
+	  && number_is_immediate(re, IMM_WID, 0))
 	    return draw_add_immediate(le, re, wid);
 
       if ((ivl_expr_opcode(exp) == '+')
 	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
 	  && (! number_is_unknown(re))
-	  && number_is_immediate(re, 8*sizeof(unsigned long), 0))
+	  && number_is_immediate(re, IMM_WID, 0))
 	    return draw_add_immediate(le, re, wid);
 
       if ((ivl_expr_opcode(exp) == '-')
-	  && (ivl_expr_type(re) == IVL_EX_ULONG))
+	  && (ivl_expr_type(re) == IVL_EX_ULONG)
+	  && number_is_immediate(re, IMM_WID, 0))
 	    return draw_sub_immediate(le, re, wid);
 
       if ((ivl_expr_opcode(exp) == '-')
@@ -2159,7 +2177,7 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 	    ivl_expr_t ix = ivl_expr_oper1(sube);
 
 	    if (ivl_signal_type(sig)==IVL_SIT_REG
-		|| !number_is_immediate(ix, 8*sizeof(unsigned long),0))
+		|| !number_is_immediate(ix, IMM_WID, 0))
 		  return draw_select_array(sube, bit_idx, bit_wid, wid);
 
 	      /* The index is constant, so we can return to direct

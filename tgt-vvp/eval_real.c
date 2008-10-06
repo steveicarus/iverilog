@@ -34,7 +34,7 @@ static unsigned long word_alloc_mask = 0x0f;
 int allocate_word()
 {
       int res = 4;
-      int max = 8*sizeof(word_alloc_mask);
+      int max = IMM_WID;
 
       while (res < max && (1U << res) & word_alloc_mask)
 	    res += 1;
@@ -46,7 +46,7 @@ int allocate_word()
 
 void clr_word(int res)
 {
-      int max = 8*sizeof(word_alloc_mask);
+      int max = IMM_WID;
       assert(res < max);
       word_alloc_mask &= ~ (1U << res);
 }
@@ -183,7 +183,7 @@ static int draw_number_real(ivl_expr_t exp)
 	    carry = 1;
       }
 
-      for (idx = 0 ;  idx < wid && idx < 8*sizeof(mant) ;  idx += 1) {
+      for (idx = 0 ;  idx < wid && idx < IMM_WID ;  idx += 1) {
 	    mask <<= 1;
 	    int cur_bit = bits[idx] == '1'? 1 : 0;
 
@@ -198,7 +198,7 @@ static int draw_number_real(ivl_expr_t exp)
       }
 
       for ( ; idx < wid ; idx += 1) {
-	    if (ivl_expr_signed(exp) && (bits[idx] == bits[8*sizeof(mant)-1]))
+	    if (ivl_expr_signed(exp) && (bits[idx] == bits[IMM_WID-1]))
 		  continue;
 
 	    if (bits[idx] == '0')
@@ -358,7 +358,7 @@ static int draw_signal_real_real(ivl_expr_t exp)
 
       if (ivl_signal_dimensions(sig) > 0) {
 	    ivl_expr_t ix = ivl_expr_oper1(exp);
-	    if (!number_is_immediate(ix, 8*sizeof(word), 0)) {
+	    if (!number_is_immediate(ix, IMM_WID, 0)) {
 		    /* XXXX Need to generate a %load/ar instruction. */
 		  assert(0);
 		  return res;

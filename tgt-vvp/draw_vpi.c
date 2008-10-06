@@ -69,7 +69,7 @@ static int is_fixed_memory_word(ivl_expr_t net)
       if (ivl_signal_type(sig) == IVL_SIT_REG)
 	    return 0;
 
-      if (number_is_immediate(ivl_expr_oper1(net), 8*sizeof(unsigned), 0))
+      if (number_is_immediate(ivl_expr_oper1(net), IMM_WID, 0))
 	    return 1;
 
       return 0;
@@ -108,8 +108,7 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 		  ivl_expr_t word_ex = ivl_expr_oper1(expr);
 		  if (word_ex) {
 			  /* Some array select have been evaluated. */
-			if (number_is_immediate(word_ex,
-			                        8*sizeof(unsigned), 0)) {
+			if (number_is_immediate(word_ex,IMM_WID, 0)) {
 			      use_word = get_number_immediate(word_ex);
 			      word_ex = 0;
 			}
@@ -129,8 +128,7 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 		  ivl_expr_t word_ex = ivl_expr_oper1(expr);
 		  if (word_ex) {
 			  /* Some array select have been evaluated. */
-			if (number_is_immediate(word_ex,
-			                        8*sizeof(unsigned), 0)) {
+			if (number_is_immediate(word_ex, IMM_WID, 0)) {
 			      use_word = get_number_immediate(word_ex);
 			      word_ex = 0;
 			}
