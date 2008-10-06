@@ -237,6 +237,7 @@ void vvp_island::add_port(const char*key, vvp_net_t*net)
 
 void vvp_island::add_branch(vvp_island_branch*branch, const char*pa, const char*pb)
 {
+      vvp_island_branch*cur;
       assert(ports_);
       branch->a = ports_->sym_get_value(pa);
       branch->b = ports_->sym_get_value(pb);
@@ -249,10 +250,10 @@ void vvp_island::add_branch(vvp_island_branch*branch, const char*pa, const char*
       if (bnodes_ == 0)
 	    bnodes_ = new symbol_map_s<vvp_island_branch>;
 
-      if (vvp_island_branch*cur = anodes_->sym_get_value(pa)) {
+      if ((cur = anodes_->sym_get_value(pa))) {
 	    branch->link[0] = cur->link[0];
 	    cur->link[0] = ptra;
-      } else if (vvp_island_branch*cur = bnodes_->sym_get_value(pa)) {
+      } else if ((cur = bnodes_->sym_get_value(pa))) {
 	    branch->link[0] = cur->link[1];
 	    cur->link[1] = ptra;
       } else {
@@ -260,10 +261,10 @@ void vvp_island::add_branch(vvp_island_branch*branch, const char*pa, const char*
 	    anodes_->sym_set_value(pa, branch);
       }
 
-      if (vvp_island_branch*cur = anodes_->sym_get_value(pb)) {
+      if ((cur = anodes_->sym_get_value(pb))) {
 	    branch->link[1] = cur->link[0];
 	    cur->link[0] = ptrb;
-      } else if (vvp_island_branch*cur = bnodes_->sym_get_value(pb)) {
+      } else if ((cur = bnodes_->sym_get_value(pb))) {
 	    branch->link[1] = cur->link[1];
 	    cur->link[1] = ptrb;
       } else {

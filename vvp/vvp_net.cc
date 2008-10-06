@@ -382,8 +382,8 @@ void vvp_vector4_t::allocate_words_(unsigned wid, unsigned long inita, unsigned 
       }
 }
 
-vvp_vector4_t::vvp_vector4_t(unsigned size, double val)
-: size_(size)
+vvp_vector4_t::vvp_vector4_t(unsigned size__, double val)
+: size_(size__)
 {
       bool is_neg = false;
       double fraction;
@@ -391,7 +391,7 @@ vvp_vector4_t::vvp_vector4_t(unsigned size, double val)
 
 	/* We return 'bx for a NaN or +/- infinity. */
       if (val != val || (val && (val == 0.5*val)))  {
-	    allocate_words_(size, WORD_X_ABITS, WORD_X_BBITS);
+	    allocate_words_(size_, WORD_X_ABITS, WORD_X_BBITS);
 	    return;
       }
 
@@ -400,7 +400,7 @@ vvp_vector4_t::vvp_vector4_t(unsigned size, double val)
 	    is_neg = true;
 	    val = -val;
       }
-      allocate_words_(size, WORD_0_ABITS, WORD_0_BBITS);
+      allocate_words_(size_, WORD_0_ABITS, WORD_0_BBITS);
 
 	/* Get the exponent and fractional part of the number. */
       fraction = frexp(val, &exponent);
@@ -1298,9 +1298,9 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
       return flag;
 }
 
-vvp_vector4array_t::vvp_vector4array_t(unsigned width, unsigned words,
+vvp_vector4array_t::vvp_vector4array_t(unsigned width__, unsigned words__,
                                        bool is_automatic)
-: width_(width), words_(words), array_(0)
+: width_(width__), words_(words__), array_(0)
 {
       if (is_automatic) return;
 

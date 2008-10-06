@@ -253,8 +253,8 @@ NetBranch::~NetBranch()
 {
 }
 
-NetBus::NetBus(NetScope*s, unsigned pin_count)
-: NetObj(s, perm_string::literal(""), pin_count)
+NetBus::NetBus(NetScope*s, unsigned pin_count__)
+: NetObj(s, perm_string::literal(""), pin_count__)
 {
 }
 
@@ -782,9 +782,9 @@ const NetDelaySrc* NetNet::delay_path(unsigned idx) const
 }
 
 NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
-			     NetPartSelect::dir_t dir)
+			     NetPartSelect::dir_t dir__)
 : NetNode(sig->scope(), sig->scope()->local_symbol(), 2),
-    off_(off), wid_(wid), dir_(dir)
+    off_(off), wid_(wid), dir_(dir__)
 {
       connect(pin(1), sig->pin(0));
       set_line(*sig);
@@ -880,22 +880,22 @@ const NetScope* NetProcTop::scope() const
       return scope_;
 }
 
-NetCastInt::NetCastInt(NetScope*scope, perm_string n, unsigned width)
-: NetNode(scope, n, 2), width_(width)
+NetCastInt::NetCastInt(NetScope*scope__, perm_string n, unsigned width__)
+: NetNode(scope__, n, 2), width_(width__)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(1).set_dir(Link::INPUT);
 }
 
-NetCastReal::NetCastReal(NetScope*scope, perm_string n, bool signed_flag)
-: NetNode(scope, n, 2), signed_flag_(signed_flag)
+NetCastReal::NetCastReal(NetScope*scope__, perm_string n, bool signed_flag__)
+: NetNode(scope__, n, 2), signed_flag_(signed_flag__)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(1).set_dir(Link::INPUT);
 }
 
-NetConcat::NetConcat(NetScope*scope, perm_string n, unsigned wid, unsigned cnt)
-: NetNode(scope, n, cnt+1), width_(wid)
+NetConcat::NetConcat(NetScope*scope__, perm_string n, unsigned wid, unsigned cnt)
+: NetNode(scope__, n, cnt+1), width_(wid)
 {
       pin(0).set_dir(Link::OUTPUT);
       for (unsigned idx = 1 ;  idx < cnt+1 ;  idx += 1) {
@@ -912,9 +912,9 @@ unsigned NetConcat::width() const
       return width_;
 }
 
-NetReplicate::NetReplicate(NetScope*scope, perm_string n,
+NetReplicate::NetReplicate(NetScope*scope__, perm_string n,
 			   unsigned wid, unsigned rpt)
-: NetNode(scope, n, 2), width_(wid), repeat_(rpt)
+: NetNode(scope__, n, 2), width_(wid), repeat_(rpt)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(1).set_dir(Link::INPUT);
@@ -948,8 +948,8 @@ unsigned NetReplicate::repeat() const
  *     ...
  */
 
-NetFF::NetFF(NetScope*s, perm_string n, unsigned width)
-: NetNode(s, n, 8), width_(width)
+NetFF::NetFF(NetScope*s, perm_string n, unsigned width__)
+: NetNode(s, n, 8), width_(width__)
 {
       pin_Clock().set_dir(Link::INPUT);
       pin_Enable().set_dir(Link::INPUT);
@@ -1153,15 +1153,15 @@ const Link& NetAddSub::pin_Result() const
       return pin(3);
 }
 
-NetArrayDq::NetArrayDq(NetScope*s, perm_string n, NetNet*mem, unsigned awid)
+NetArrayDq::NetArrayDq(NetScope*s, perm_string n, NetNet*mem__, unsigned awid)
 : NetNode(s, n, 2),
-  mem_(mem), awidth_(awid)
+  mem_(mem__), awidth_(awid)
 {
       pin(0).set_dir(Link::OUTPUT); // Result
       pin(1).set_dir(Link::INPUT);  // Address
 	// Increment the expression reference count for the target
 	// memory so that it is not deleted underneath me.
-      mem->incr_eref();
+      mem_->incr_eref();
 }
 
 NetArrayDq::~NetArrayDq()
@@ -1210,11 +1210,11 @@ const Link& NetArrayDq::pin_Address() const
  *    2  -- Distance
  */
 NetCLShift::NetCLShift(NetScope*s, perm_string n,
-		       unsigned width, unsigned width_dist,
-		       bool right_flag, bool signed_flag)
+		       unsigned width__, unsigned width_dist__,
+		       bool right_flag__, bool signed_flag__)
 : NetNode(s, n, 3),
-  width_(width), width_dist_(width_dist),
-    right_flag_(right_flag), signed_flag_(signed_flag)
+  width_(width__), width_dist_(width_dist__),
+    right_flag_(right_flag__), signed_flag_(signed_flag__)
 {
       pin(0).set_dir(Link::OUTPUT); // Result
       pin(1).set_dir(Link::INPUT);  // Data
@@ -1742,8 +1742,8 @@ unsigned NetBUFZ::width() const
       return width_;
 }
 
-NetCaseCmp::NetCaseCmp(NetScope*s, perm_string n, unsigned wid, bool eeq)
-: NetNode(s, n, 3), width_(wid), eeq_(eeq)
+NetCaseCmp::NetCaseCmp(NetScope*s, perm_string n, unsigned wid, bool eeq__)
+: NetNode(s, n, 3), width_(wid), eeq_(eeq__)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(1).set_dir(Link::INPUT);
@@ -1974,8 +1974,8 @@ const NetScope* NetUTask::task() const
       return task_;
 }
 
-NetAlloc::NetAlloc(NetScope*scope)
-: scope_(scope)
+NetAlloc::NetAlloc(NetScope*scope__)
+: scope_(scope__)
 {
 }
 
@@ -1993,8 +1993,8 @@ const NetScope* NetAlloc::scope() const
       return scope_;
 }
 
-NetFree::NetFree(NetScope*scope)
-: scope_(scope)
+NetFree::NetFree(NetScope*scope__)
+: scope_(scope__)
 {
 }
 
@@ -2050,8 +2050,8 @@ bool NetExpr::has_width() const
  * be. However, if we don't, our default will be the width of the
  * largest operand.
  */
-NetEBBits::NetEBBits(char op, NetExpr*l, NetExpr*r)
-: NetEBinary(op, l, r)
+NetEBBits::NetEBBits(char op__, NetExpr*l, NetExpr*r)
+: NetEBinary(op__, l, r)
 {
       if (r->expr_width() > l->expr_width())
 	    expr_width(r->expr_width());
@@ -2070,8 +2070,8 @@ NetEBBits* NetEBBits::dup_expr() const
       return result;
 }
 
-NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
-: op_(op), left_(l), right_(r)
+NetEBinary::NetEBinary(char op__, NetExpr*l, NetExpr*r)
+: op_(op__), left_(l), right_(r)
 {
 	// Binary expressions of all sorts are signed if both the
 	// arguments are signed.
@@ -2095,8 +2095,8 @@ NetEBinary* NetEBinary::dup_expr() const
       return 0;
 }
 
-NetEBLogic::NetEBLogic(char op, NetExpr*l, NetExpr*r)
-: NetEBinary(op, l, r)
+NetEBLogic::NetEBLogic(char op__, NetExpr*l, NetExpr*r)
+: NetEBinary(op__, l, r)
 {
       expr_width(1);
 }
@@ -2317,8 +2317,8 @@ ivl_variable_type_t NetETernary::expr_type() const
       return tru;
 }
 
-NetEUnary::NetEUnary(char op, NetExpr*ex)
-: NetExpr(ex->expr_width()), op_(op), expr_(ex)
+NetEUnary::NetEUnary(char op__, NetExpr*ex)
+: NetExpr(ex->expr_width()), op_(op__), expr_(ex)
 {
       switch (op_) {
 	  case '!':
@@ -2346,8 +2346,8 @@ ivl_variable_type_t NetEUnary::expr_type() const
       return expr_->expr_type();
 }
 
-NetEUBits::NetEUBits(char op, NetExpr*ex)
-: NetEUnary(op, ex)
+NetEUBits::NetEUBits(char op__, NetExpr*ex)
+: NetEUnary(op__, ex)
 {
 }
 
@@ -2360,8 +2360,8 @@ ivl_variable_type_t NetEUBits::expr_type() const
       return expr_->expr_type();
 }
 
-NetEUReduce::NetEUReduce(char op, NetExpr*ex)
-: NetEUnary(op, ex)
+NetEUReduce::NetEUReduce(char op__, NetExpr*ex)
+: NetEUnary(op__, ex)
 {
       expr_width(1);
 }
@@ -2395,9 +2395,9 @@ unsigned NetLogic::width() const
       return width_;
 }
 
-NetUReduce::NetUReduce(NetScope*scope, perm_string n,
+NetUReduce::NetUReduce(NetScope*scope__, perm_string n,
 		       NetUReduce::TYPE t, unsigned wid)
-: NetNode(scope, n, 2), type_(t), width_(wid)
+: NetNode(scope__, n, 2), type_(t), width_(wid)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(1).set_dir(Link::INPUT);

@@ -37,7 +37,7 @@
 
 ufunc_core::ufunc_core(unsigned owid, vvp_net_t*ptr,
 		       unsigned nports, vvp_net_t**ports,
-		       vvp_code_t sa, struct __vpiScope*call_scope,
+		       vvp_code_t sa, struct __vpiScope*call_scope__,
 		       char*result_label, char*scope_label)
 : vvp_wide_fun_core(ptr, nports)
 {
@@ -45,7 +45,7 @@ ufunc_core::ufunc_core(unsigned owid, vvp_net_t*ptr,
       ports_ = ports;
       code_ = sa;
       thread_ = 0;
-      call_scope_ = call_scope;
+      call_scope_ = call_scope__;
 
       functor_ref_lookup(&result_, result_label);
 
