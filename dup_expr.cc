@@ -94,8 +94,8 @@ NetESFunc* NetESFunc::dup_expr() const
 
       tmp->cast_signed(has_sign());
       for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
-	    assert(tmp->parm(idx));
-	    tmp->parm(idx, tmp->parm(idx)->dup_expr());
+	    assert(parm(idx));
+	    tmp->parm(idx, parm(idx)->dup_expr());
       }
 
       tmp->set_line(*this);
