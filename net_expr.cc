@@ -262,14 +262,10 @@ NetEBMult::NetEBMult(char op, NetExpr*l, NetExpr*r)
       else
 	    expr_width(l->expr_width() + r->expr_width());
 
-      cast_signed(l->has_sign() && r->has_sign());
-
-	/* If it turns out that this is not a signed expression, then
-	   cast the signedness out of the operands as well. */
-      if (! has_sign()) {
-	    l->cast_signed(false);
-	    r->cast_signed(false);
-      }
+      if (expr_type() == IVL_VT_REAL)
+	    cast_signed(true);
+      else
+	    cast_signed(l->has_sign() && r->has_sign());
 }
 
 NetEBMult::~NetEBMult()
