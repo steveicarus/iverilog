@@ -56,42 +56,54 @@ NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r, bool lossless_flag)
 	   && (! tmp->has_width())
 	   && (tmp->expr_width() > l->expr_width() || integer_width > l->expr_width()) ) {
 
-	    unsigned target_width = l->expr_width() + 1;
+	    verinum tmp_v = trim_vnum(tmp->value());
+	    unsigned target_width = l->expr_width();
+	    if (target_width < tmp_v.len())
+		  target_width = tmp_v.len();
+	    if (lossless_flag)
+		  target_width += 1;
 	    if (target_width < integer_width)
 		  target_width = integer_width;
+
 	    r->set_width(target_width);
 
 	      /* Note: This constant value will not gain a defined
 		 width from this. Make sure. */
 	    assert(! r->has_width() );
 
+	    expr_width(target_width);
+
       } else if ( (tmp = dynamic_cast<NetEConst*>(l))
 	   && (! tmp->has_width())
 		  && (tmp->expr_width() > r->expr_width() || integer_width > r->expr_width()) ) {
 
-	    unsigned target_width = r->expr_width() + 1;
+	    verinum tmp_v = trim_vnum(tmp->value());
+	    unsigned target_width = r->expr_width();
+	    if (target_width < tmp_v.len())
+		  target_width = tmp_v.len();
+	    if (lossless_flag)
+		  target_width += 1;
 	    if (target_width < integer_width)
 		  target_width = integer_width;
+
 	    l->set_width(target_width);
 
 	      /* Note: This constant value will not gain a defined
 		 width from this. Make sure. */
 	    assert(! l->has_width() );
 
-      }
+	    expr_width(target_width);
 
-      unsigned pad_width = lossless_flag? 1 : 0;
-      cast_signed(l->has_sign() && r->has_sign());
-
-	/* Now that we have the operand sizes the way we like, or as
-	   good as we are going to get them, set the size of myself. */
-      if (r->expr_width() > l->expr_width()) {
-
-	    expr_width(r->expr_width() + pad_width);
+      } else if (r->expr_width() > l->expr_width()) {
+	    unsigned loss_pad = lossless_flag? 1 : 0;
+	    expr_width(r->expr_width() + loss_pad);
 
       } else {
-	    expr_width(l->expr_width() + pad_width);
+	    unsigned loss_pad = lossless_flag? 1 : 0;
+	    expr_width(l->expr_width() + loss_pad);
       }
+
+      cast_signed(l->has_sign() && r->has_sign());
 }
 
 NetEBAdd::~NetEBAdd()
