@@ -2321,12 +2321,30 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 
       for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
 	    PExpr*ex = parm(idx);
-	    eparms[idx] = ex? ex->elaborate_expr(des, scope, -1, true) : 0;
+	    if (ex != 0) {
+		  ivl_variable_type_t use_type;
+		  bool flag = false;
+		  int use_wid = ex->test_width(des,scope,0,0, use_type, flag);
+		  if (debug_elaborate)
+			cerr << ex->get_fileline() << ": debug: "
+			     << "Argument " << (idx+1)
+			     << " of system task tests its width as " << use_wid
+			     << ", type=" << use_type
+			     << ", unsized_flag=" << flag << endl;
 
-	      /* Attempt to pre-evaluate the parameters. It may be
-		 possible to at least partially reduce the
-		 expression. */
-	    if (eparms[idx]) eval_expr(eparms[idx]);
+		    // If the argument expression is unsized, then
+		    // elaborate as self-determined *lossless* instead
+		    // of sized.
+		  if (flag==true)
+			use_wid = -2;
+
+		  eparms[idx] = ex->elaborate_expr(des, scope, use_wid, true);
+		  if (eparms[idx])
+			eval_expr(eparms[idx]);
+
+	    } else {
+		  eparms[idx] = 0;
+	    }
       }
 
       NetSTask*cur = new NetSTask(peek_tail_name(path_), eparms);

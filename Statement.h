@@ -99,7 +99,7 @@ class PAssign_  : public Statement {
       virtual ~PAssign_() =0;
 
       const PExpr* lval() const  { return lval_; }
-      const PExpr* rval() const  { return rval_; }
+      PExpr* rval() const  { return rval_; }
 
     protected:
       NetAssign_* elaborate_lval(Design*, NetScope*scope) const;

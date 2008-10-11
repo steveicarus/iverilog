@@ -28,6 +28,8 @@
 
 PExpr::PExpr()
 {
+      expr_type_ = IVL_VT_NO_TYPE;
+      has_sign_ = false;
 }
 
 PExpr::~PExpr()
