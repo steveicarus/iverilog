@@ -79,7 +79,6 @@ class PExpr : public LineInfo {
 	// return valid results.
       ivl_variable_type_t expr_type() const { return expr_type_; }
       unsigned expr_width() const           { return expr_width_; }
-      bool has_sign() const                 { return has_sign_; }
 
 	// During the elaborate_sig phase, we may need to scan
 	// expressions to find implicit net declarations.
@@ -144,7 +143,6 @@ class PExpr : public LineInfo {
 	// The derived class test_width methods should fill these in.
       ivl_variable_type_t expr_type_;
       unsigned expr_width_;
-      bool has_sign_;
 
     private: // not implemented
       PExpr(const PExpr&);

@@ -662,6 +662,12 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*des,
 	    }
       }
 
+	// If this expression is unsigned, then make sure the
+	// arguments are unsigned so that the padding below doesn't
+	// cause any sign extension to happen.
+      suppress_operand_sign_if_needed_(lp, rp);
+
+
 	// Multiply will guess a width that is the sum of the
 	// widths of the operand. If that sum is too small, then
 	// pad one of the arguments enough that the sum is the
@@ -692,6 +698,11 @@ NetExpr* PEBinary::elaborate_expr_base_add_(Design*des,
 	    use_lossless_flag = false;
       if (! type_is_vectorable(rp->expr_type()))
 	    use_lossless_flag = false;
+
+	// If the expression is unsigned, then force the operands to
+	// unsigned so taht the set_width below doesn't cause them to
+	// be sign-extended.
+      suppress_operand_sign_if_needed_(lp, rp);
 
       tmp = new NetEBAdd(op_, lp, rp, use_lossless_flag);
       if (expr_wid > 0 && type_is_vectorable(tmp->expr_type()))
@@ -839,7 +850,6 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 
 	    expr_type_ = IVL_VT_BOOL;
 	    expr_width_= integer_width;
-	    has_sign_  = false;
 
 	    expr_type = expr_type_;
 	    return expr_width_;
@@ -1345,7 +1355,6 @@ unsigned PEFNumber::test_width(Design*des, NetScope*scope,
 {
       expr_type_  = IVL_VT_REAL;
       expr_width_ = 1;
-      has_sign_   = true;
       unsized_flag = true;
 
       expr_type = expr_type_;
