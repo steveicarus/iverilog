@@ -224,6 +224,13 @@ NetExpr* PEBinary::elaborate_expr(Design*des, NetScope*scope,
 
 void PEBinary::suppress_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp)
 {
+	// If an argument is a non-vector type, then this type
+	// suppression does not apply.
+      if (! type_is_vectorable(lp->expr_type()))
+	    return;
+      if (! type_is_vectorable(rp->expr_type()))
+	    return;
+
 	// If either operand is unsigned, then treat the whole
 	// expression as unsigned. This test needs to be done here
 	// instead of in *_expr_base_ because it needs to be done
@@ -758,6 +765,14 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
       }
 
       suppress_operand_sign_if_needed_(lp, rp);
+
+	// The arguments of a compare need to have matching widths, so
+	// pad the width here. This matters because if the arguments
+	// are signed, then this padding will do sign extension.
+      if (type_is_vectorable(lp->expr_type()))
+	    lp = pad_to_width(lp, use_wid);
+      if (type_is_vectorable(rp->expr_type()))
+	    rp = pad_to_width(rp, use_wid);
 
       return elaborate_eval_expr_base_(des, lp, rp, use_wid);
 }
