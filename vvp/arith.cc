@@ -336,13 +336,13 @@ void vvp_arith_mult::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       }
 
       long a;
-      if (! vector4_to_value(op_a_, a, true, true)) {
+      if (! vector4_to_value(op_a_, a, false, true)) {
 	    vvp_send_vec4(ptr.ptr()->out, x_val_);
 	    return;
       }
 
       long b;
-      if (! vector4_to_value(op_b_, b, true, true)) {
+      if (! vector4_to_value(op_b_, b, false, true)) {
 	    vvp_send_vec4(ptr.ptr()->out, x_val_);
 	    return;
       }

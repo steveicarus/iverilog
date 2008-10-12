@@ -992,8 +992,9 @@ extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
  * more than the width of the output, although the possibility of
  * overflow exists at run time.
  *
- * Multiply may be signed. If so, the output should be sign extended
- * to fill in its result.
+ * The inputs are always treated as unsigned. If the expression is
+ * supposed to be signed, elaboration will generate the necessary sign
+ * extension, so the target need not (must not) consider signedness.
  *
  * - Power (IVL_LPM_POW)
  * The power takes two inputs and generates an output. Unlike other
