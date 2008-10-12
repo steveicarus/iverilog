@@ -222,7 +222,7 @@ NetExpr* PEBinary::elaborate_expr(Design*des, NetScope*scope,
       return tmp;
 }
 
-void PEBinary::suppress_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp)
+void PExpr::suppress_binary_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp)
 {
 	// If an argument is a non-vector type, then this type
 	// suppression does not apply.
@@ -672,7 +672,7 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*des,
 	// If this expression is unsigned, then make sure the
 	// arguments are unsigned so that the padding below doesn't
 	// cause any sign extension to happen.
-      suppress_operand_sign_if_needed_(lp, rp);
+      suppress_binary_operand_sign_if_needed_(lp, rp);
 
 
 	// Multiply will guess a width that is the sum of the
@@ -709,7 +709,7 @@ NetExpr* PEBinary::elaborate_expr_base_add_(Design*des,
 	// If the expression is unsigned, then force the operands to
 	// unsigned so taht the set_width below doesn't cause them to
 	// be sign-extended.
-      suppress_operand_sign_if_needed_(lp, rp);
+      suppress_binary_operand_sign_if_needed_(lp, rp);
 
       tmp = new NetEBAdd(op_, lp, rp, use_lossless_flag);
       if (expr_wid > 0 && type_is_vectorable(tmp->expr_type()))
@@ -764,7 +764,7 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      suppress_operand_sign_if_needed_(lp, rp);
+      suppress_binary_operand_sign_if_needed_(lp, rp);
 
 	// The arguments of a compare need to have matching widths, so
 	// pad the width here. This matters because if the arguments
@@ -2678,6 +2678,8 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return 0;
       }
+
+      suppress_binary_operand_sign_if_needed_(tru, fal);
 
 	/* Whatever the width we choose for the ternary operator, we
 	need to make sure the operands match. */

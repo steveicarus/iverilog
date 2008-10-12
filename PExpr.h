@@ -144,6 +144,8 @@ class PExpr : public LineInfo {
       ivl_variable_type_t expr_type_;
       unsigned expr_width_;
 
+      static void suppress_binary_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp);
+
     private: // not implemented
       PExpr(const PExpr&);
       PExpr& operator= (const PExpr&);
@@ -483,8 +485,6 @@ class PEBinary : public PExpr {
       NetExpr*elaborate_expr_base_rshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_expr_base_mult_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_expr_base_add_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
-
-      static void suppress_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp);
 
 };
 
