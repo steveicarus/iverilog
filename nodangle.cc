@@ -37,14 +37,18 @@ class nodangle_f  : public functor_t {
       void event(Design*des, NetEvent*ev);
       void signal(Design*des, NetNet*sig);
 
-      unsigned count_;
+      unsigned iteration;
       unsigned stotal, etotal;
+      bool scontinue, econtinue;
+      bool scomplete, ecomplete;
 };
 
 void nodangle_f::event(Design*des, NetEvent*ev)
 {
+      if (ecomplete) return;
+
 	/* If there are no references to this event, then go right
-	   ahead and delete in. There is no use looking further at
+	   ahead and delete it. There is no use looking further at
 	   it. */
       if ((ev->nwait() + ev->ntrig() + ev->nexpr()) == 0) {
 	    delete ev;
@@ -52,58 +56,79 @@ void nodangle_f::event(Design*des, NetEvent*ev)
 	    return;
       }
 
-	/* Try to remove duplicate probes from the event. */
-      for (unsigned idx = 0 ;  idx < ev->nprobe() ;  idx += 1) {
-	    unsigned jdx = idx + 1;
-	    while (jdx < ev->nprobe()) {
-		  NetEvProbe*ip = ev->probe(idx);
-		  NetEvProbe*jp = ev->probe(jdx);
+      if (iteration == 0) {
+              /* Try to remove duplicate probes from the event. This
+                 is done as a separate initial pass to ensure similar
+                 events are detected as soon as possible in subsequent
+                 iterations. */
+            for (unsigned idx = 0 ;  idx < ev->nprobe() ;  idx += 1) {
+                  unsigned jdx = idx + 1;
+                  while (jdx < ev->nprobe()) {
+                        NetEvProbe*ip = ev->probe(idx);
+                        NetEvProbe*jp = ev->probe(jdx);
 
-		  if (ip->edge() != jp->edge()) {
-			jdx += 1;
-			continue;
-		  }
+                        if (ip->edge() != jp->edge()) {
+                              jdx += 1;
+                              continue;
+                        }
 
-		  bool fully_connected = true;
-		  for (unsigned jpin = 0; jpin < jp->pin_count(); jpin += 1) {
-			unsigned ipin = 0;
-			bool connected_flag = false;
-			for (ipin = 0 ; ipin < ip->pin_count(); ipin += 1)
-			      if (connected(ip->pin(ipin), jp->pin(jpin))) {
-				    connected_flag = true;
-				    break;
-			      }
+                        bool fully_connected = true;
+                        for (unsigned jpin = 0; jpin < jp->pin_count(); jpin += 1) {
+                              unsigned ipin = 0;
+                              bool connected_flag = false;
+                              for (ipin = 0 ; ipin < ip->pin_count(); ipin += 1)
+                                    if (connected(ip->pin(ipin), jp->pin(jpin))) {
+                                          connected_flag = true;
+                                          break;
+                                    }
 
-			if (!connected_flag) {
-			      fully_connected = false;
-			      break;
-			}
-		  }
+                              if (!connected_flag) {
+                                    fully_connected = false;
+                                    break;
+                              }
+                        }
 
-		  if (fully_connected) {
-			delete jp;
-		  } else {
-			jdx += 1;
-		  }
-	    }
+                        if (fully_connected) {
+                              delete jp;
+                        } else {
+                              jdx += 1;
+                        }
+                  }
+            }
+            econtinue = true;
+      } else {
+              /* Postpone examining events in an automatic scope until the
+                 third (optional) pass. This will mean similar events are
+                 biased towards being stored in static scopes. */
+            if (ev->scope()->is_auto()) {
+                  if (iteration == 1) {
+                        econtinue = true;
+                        return;
+                  }
+            } else {
+                  if (iteration == 2) {
+                        return;
+                  }
+            }
+
+              /* Try to find all the events that are similar to me, and
+                 replace their references with references to me. */
+            list<NetEvent*> match;
+            ev->find_similar_event(match);
+            for (list<NetEvent*>::iterator idx = match.begin()
+                       ; idx != match.end() ;  idx ++) {
+
+                  NetEvent*tmp = *idx;
+                  assert(tmp != ev);
+                  tmp ->replace_event(ev);
+            }
       }
-
-	/* Try to find all the events that are similar to me, and
-	   replace their references with references to me. */
-      list<NetEvent*> match;
-      ev->find_similar_event(match);
-      for (list<NetEvent*>::iterator idx = match.begin()
-		 ; idx != match.end() ;  idx ++) {
-
-	    NetEvent*tmp = *idx;
-	    assert(tmp != ev);
-	    tmp ->replace_event(ev);
-      }
-
 }
 
 void nodangle_f::signal(Design*des, NetNet*sig)
 {
+      if (scomplete) return;
+
 	/* Cannot delete signals referenced in an expression
 	   or an l-value. */
       if (sig->get_refs() > 0)
@@ -174,7 +199,7 @@ void nodangle_f::signal(Design*des, NetNet*sig)
 	/* If every pin is connected to another significant signal,
 	   then I can delete this one. */
       if (significant_flags == sig->pin_count()) {
-	    count_ += 1;
+	    scontinue = true;
 	    delete sig;
 	    stotal += 1;
       }
@@ -183,23 +208,26 @@ void nodangle_f::signal(Design*des, NetNet*sig)
 void nodangle(Design*des)
 {
       nodangle_f fun;
-      unsigned count_iterations = 0;
+      fun.iteration = 0;
       fun.stotal = 0;
       fun.etotal = 0;
-
+      fun.scomplete = false;
+      fun.ecomplete = false;
       do {
-	    fun.count_ = 0;
+            fun.scontinue = false;
+            fun.econtinue = false;
 	    des->functor(&fun);
-	    count_iterations += 1;
+	    fun.iteration += 1;
+            fun.scomplete = !fun.scontinue;
+            fun.ecomplete = !fun.econtinue;
 
 	    if (verbose_flag) {
-		  cout << " ... " << count_iterations << " iterations"
+		  cout << " ... " << fun.iteration << " iterations"
 		       << " deleted " << fun.stotal << " dangling signals"
-		       << " and " << fun.etotal << " events."
-		       << " (count=" << fun.count_ << ")" << endl;
+		       << " and " << fun.etotal << " events." << endl;
 	    }
 
-      } while (fun.count_ > 0);
+      } while (fun.scontinue || fun.econtinue);
 
 }
 
@@ -285,4 +313,3 @@ void nodangle(Design*des)
  *  symbols generated by elaboration and other steps.
  *
  */
-
