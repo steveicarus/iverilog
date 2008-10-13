@@ -47,8 +47,8 @@ verinum::verinum()
 {
 }
 
-verinum::verinum(const V*bits, unsigned nbits, bool has_len)
-: has_len_(has_len), has_sign_(false), string_flag_(false)
+verinum::verinum(const V*bits, unsigned nbits, bool has_len__)
+: has_len_(has_len__), has_sign_(false), string_flag_(false)
 {
       nbits_ = nbits;
       bits_ = new V [nbits];

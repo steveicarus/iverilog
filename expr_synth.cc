@@ -50,8 +50,8 @@ static bool process_binary_args(Design*des, NetScope*scope,
 	         cases of constants, which can be converted more directly. */
 	    if (left->expr_type() == IVL_VT_REAL) {
 		  lsig = left->synthesize(des, scope);
-	    } else if (NetEConst*tmp = dynamic_cast<NetEConst*> (left)) {
-		  lsig = convert_to_real_const(des, scope, tmp);
+	    } else if (NetEConst*tmpc = dynamic_cast<NetEConst*> (left)) {
+		  lsig = convert_to_real_const(des, scope, tmpc);
 	    } else {
 		  NetNet*tmp = left->synthesize(des, scope);
 		  lsig = cast_to_real(des, scope, tmp);
@@ -59,8 +59,8 @@ static bool process_binary_args(Design*des, NetScope*scope,
 
 	    if (right->expr_type() == IVL_VT_REAL) {
 		  rsig = right->synthesize(des, scope);
-	    } else if (NetEConst*tmp = dynamic_cast<NetEConst*> (right)) {
-		  rsig = convert_to_real_const(des, scope, tmp);
+	    } else if (NetEConst*tmpc = dynamic_cast<NetEConst*> (right)) {
+		  rsig = convert_to_real_const(des, scope, tmpc);
 	    } else {
 		  NetNet*tmp = right->synthesize(des, scope);
 		  rsig = cast_to_real(des, scope, tmp);

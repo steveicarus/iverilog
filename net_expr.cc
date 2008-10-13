@@ -35,8 +35,8 @@ ivl_variable_type_t NetExpr::expr_type() const
  * Create an add/sub node from the two operands. Make a best guess of
  * the
  */
-NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r, bool lossless_flag)
-: NetEBinary(op, l, r)
+NetEBAdd::NetEBAdd(char op__, NetExpr*l, NetExpr*r, bool lossless_flag)
+: NetEBinary(op__, l, r)
 {
       NetEConst* tmp;
 
@@ -124,8 +124,8 @@ ivl_variable_type_t NetEBAdd::expr_type() const
  * expression. Otherwise, the netlist will have to allow the
  * expressions to have different widths.
  */
-NetEBComp::NetEBComp(char op, NetExpr*l, NetExpr*r)
-: NetEBinary(op, l, r)
+NetEBComp::NetEBComp(char op__, NetExpr*l, NetExpr*r)
+: NetEBinary(op__, l, r)
 {
 	// The output of compare is always unsigned.
       cast_signed_base_(false);
@@ -188,8 +188,8 @@ ivl_variable_type_t NetEBComp::expr_type() const
       return IVL_VT_BOOL;
 }
 
-NetEBDiv::NetEBDiv(char op, NetExpr*l, NetExpr*r)
-: NetEBinary(op, l, r)
+NetEBDiv::NetEBDiv(char op__, NetExpr*l, NetExpr*r)
+: NetEBinary(op__, l, r)
 {
       unsigned w = l->expr_width();
       if (r->expr_width() > w)
@@ -221,8 +221,8 @@ ivl_variable_type_t NetEBDiv::expr_type() const
       return IVL_VT_LOGIC;
 }
 
-NetEBMinMax::NetEBMinMax(char op, NetExpr*l, NetExpr*r)
-: NetEBinary(op, l, r)
+NetEBMinMax::NetEBMinMax(char op__, NetExpr*l, NetExpr*r)
+: NetEBinary(op__, l, r)
 {
       expr_width( max(l->expr_width(), r->expr_width()) );
       cast_signed(l->has_sign() || r->has_sign());
@@ -242,8 +242,8 @@ ivl_variable_type_t NetEBMinMax::expr_type() const
       return IVL_VT_LOGIC;
 }
 
-NetEBMult::NetEBMult(char op, NetExpr*l, NetExpr*r)
-: NetEBinary(op, l, r)
+NetEBMult::NetEBMult(char op__, NetExpr*l, NetExpr*r)
+: NetEBinary(op__, l, r)
 {
       if (expr_type() == IVL_VT_REAL)
 	    expr_width(1);
@@ -282,10 +282,10 @@ ivl_variable_type_t NetEBMult::expr_type() const
       return IVL_VT_LOGIC;
 }
 
-NetEBPow::NetEBPow(char op, NetExpr*l, NetExpr*r)
-: NetEBinary(op, l, r)
+NetEBPow::NetEBPow(char op__, NetExpr*l, NetExpr*r)
+: NetEBinary(op__, l, r)
 {
-      assert(op == 'p');
+      assert(op__ == 'p');
       /* This is incorrect! a * (2^b - 1) is close. */
       expr_width(l->expr_width()+r->expr_width());
       cast_signed(l->has_sign() || r->has_sign());
@@ -313,13 +313,13 @@ ivl_variable_type_t NetEBPow::expr_type() const
       return IVL_VT_LOGIC;
 }
 
-NetEBShift::NetEBShift(char op, NetExpr*l, NetExpr*r)
-: NetEBinary(op, l, r)
+NetEBShift::NetEBShift(char op__, NetExpr*l, NetExpr*r)
+: NetEBinary(op__, l, r)
 {
       expr_width(l->expr_width());
 
 	// The >>> is signed if the left operand is signed.
-      if (op == 'R') cast_signed(l->has_sign());
+      if (op__ == 'R') cast_signed(l->has_sign());
 }
 
 NetEBShift::~NetEBShift()

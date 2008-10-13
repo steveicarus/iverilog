@@ -19,8 +19,8 @@
 
 # include  "discipline.h"
 
-nature_t::nature_t(perm_string name, perm_string access)
-: name_(name), access_(access)
+nature_t::nature_t(perm_string name__, perm_string access__)
+: name_(name__), access_(access__)
 {
 }
 
@@ -28,9 +28,9 @@ nature_t::~nature_t()
 {
 }
 
-discipline_t::discipline_t(perm_string name, ddomain_t domain,
-			   nature_t*pot, nature_t*flow)
-: name_(name), domain_(domain), potential_(pot), flow_(flow)
+discipline_t::discipline_t(perm_string name__, ddomain_t domain__,
+			   nature_t*pot, nature_t*flow__)
+: name_(name__), domain_(domain__), potential_(pot), flow_(flow__)
 {
 }
 

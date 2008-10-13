@@ -3741,10 +3741,10 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 		  NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1);
 		  NetScope::spec_val_t value;
 
-		  if (NetECReal*val_c = dynamic_cast<NetECReal*> (val)) {
+		  if (NetECReal*val_cr = dynamic_cast<NetECReal*> (val)) {
 
 			value.type     = IVL_VT_REAL;
-			value.real_val = val_c->value().as_double();
+			value.real_val = val_cr->value().as_double();
 
 			if (debug_elaborate)
 			      cerr << get_fileline() << ": debug: Elaborate "
@@ -3922,8 +3922,8 @@ struct root_elem {
 
 class elaborate_root_scope_t : public elaborator_work_item_t {
     public:
-      elaborate_root_scope_t(Design*des, NetScope*scope, Module*rmod)
-      : elaborator_work_item_t(des), scope_(scope), rmod_(rmod)
+      elaborate_root_scope_t(Design*des__, NetScope*scope, Module*rmod)
+      : elaborator_work_item_t(des__), scope_(scope), rmod_(rmod)
       { }
 
       ~elaborate_root_scope_t() { }
@@ -3942,8 +3942,8 @@ class elaborate_root_scope_t : public elaborator_work_item_t {
 
 class top_defparams : public elaborator_work_item_t {
     public:
-      top_defparams(Design*des)
-      : elaborator_work_item_t(des)
+      top_defparams(Design*des__)
+      : elaborator_work_item_t(des__)
       { }
 
       ~top_defparams() { }
@@ -3966,8 +3966,8 @@ class top_defparams : public elaborator_work_item_t {
 
 class later_defparams : public elaborator_work_item_t {
     public:
-      later_defparams(Design*des)
-      : elaborator_work_item_t(des)
+      later_defparams(Design*des__)
+      : elaborator_work_item_t(des__)
       { }
 
       ~later_defparams() { }

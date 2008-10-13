@@ -287,8 +287,8 @@ static void elaborate_scope_funcs(Design*des, NetScope*scope,
 
 class generate_schemes_work_item_t : public elaborator_work_item_t {
     public:
-      generate_schemes_work_item_t(Design*des, NetScope*scope, Module*mod)
-      : elaborator_work_item_t(des), scope_(scope), mod_(mod)
+      generate_schemes_work_item_t(Design*des__, NetScope*scope, Module*mod)
+      : elaborator_work_item_t(des__), scope_(scope), mod_(mod)
       { }
 
       void elaborate_runrun()
@@ -766,11 +766,11 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 class delayed_elaborate_scope_mod_instances : public elaborator_work_item_t {
 
     public:
-      delayed_elaborate_scope_mod_instances(Design*des,
+      delayed_elaborate_scope_mod_instances(Design*des__,
 					    const PGModule*obj,
 					    Module*mod,
 					    NetScope*sc)
-      : elaborator_work_item_t(des), obj_(obj), mod_(mod), sc_(sc)
+      : elaborator_work_item_t(des__), obj_(obj), mod_(mod), sc_(sc)
       { }
       ~delayed_elaborate_scope_mod_instances() { }
 
@@ -961,16 +961,16 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 		  assert(parms_ == 0);
 		  list<perm_string>::const_iterator cur
 			= mod->param_names.begin();
-		  unsigned idx = 0;
+		  unsigned jdx = 0;
 		  for (;;) {
-			if (idx >= overrides_->count())
+			if (jdx >= overrides_->count())
 			      break;
 			if (cur == mod->param_names.end())
 			      break;
 
-			replace[*cur] = (*overrides_)[idx];
+			replace[*cur] = (*overrides_)[jdx];
 
-			idx += 1;
+			jdx += 1;
 			cur ++;
 		  }
 	    }
@@ -979,8 +979,8 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // so the mapping into the replace list is much easier.
 	    if (parms_) {
 		  assert(overrides_ == 0);
-		  for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1)
-			replace[parms_[idx].name] = parms_[idx].parm;
+		  for (unsigned jdx = 0 ;  jdx < nparms_ ;  jdx += 1)
+			replace[parms_[jdx].name] = parms_[jdx].parm;
 
 	    }
 

@@ -107,7 +107,7 @@ void NetScope::set_line(perm_string file, perm_string def_file,
 }
 
 NetExpr* NetScope::set_parameter(perm_string key, NetExpr*expr,
-				 ivl_variable_type_t type,
+				 ivl_variable_type_t type__,
 				 NetExpr*msb, NetExpr*lsb, bool signed_flag,
 				 NetScope::range_t*range_list,
 				 const LineInfo&file_line)
@@ -115,7 +115,7 @@ NetExpr* NetScope::set_parameter(perm_string key, NetExpr*expr,
       param_expr_t&ref = parameters[key];
       NetExpr* res = ref.expr;
       ref.expr = expr;
-      ref.type = type;
+      ref.type = type__;
       ref.msb = msb;
       ref.lsb = lsb;
       ref.signed_flag = signed_flag;
@@ -123,7 +123,7 @@ NetExpr* NetScope::set_parameter(perm_string key, NetExpr*expr,
       ref.range = range_list;
       ref.set_line(file_line);
 
-      ivl_assert(file_line, type != IVL_VT_NO_TYPE);
+      ivl_assert(file_line, type__ != IVL_VT_NO_TYPE);
 
       return res;
 }

@@ -49,36 +49,36 @@ NetUserFunc::~NetUserFunc()
 
 ivl_variable_type_t NetUserFunc::data_type(unsigned port) const
 {
-      NetFuncDef*def = def_->func_def();
+      NetFuncDef*fdef = def_->func_def();
 
 	/* Port 0 is the return port. */
       if (port == 0) {
-	    const NetNet*sig = def->return_sig();
+	    const NetNet*sig = fdef->return_sig();
 	    assert(sig);
 	    return sig->data_type();
       }
 
       port -= 1;
-      assert(port < def->port_count());
-      const NetNet*port_sig = def->port(port);
+      assert(port < fdef->port_count());
+      const NetNet*port_sig = fdef->port(port);
 
       return port_sig->data_type();
 }
 
 unsigned NetUserFunc::port_width(unsigned port) const
 {
-      NetFuncDef*def = def_->func_def();
+      NetFuncDef*fdef = def_->func_def();
 
 	/* Port 0 is the return port. */
       if (port == 0) {
-	    const NetNet*sig = def->return_sig();
+	    const NetNet*sig = fdef->return_sig();
 	    assert(sig);
 	    return sig->vector_width();
       }
 
       port -= 1;
-      assert(port < def->port_count());
-      const NetNet*port_sig = def->port(port);
+      assert(port < fdef->port_count());
+      const NetNet*port_sig = fdef->port(port);
 
       return port_sig->vector_width();
 }

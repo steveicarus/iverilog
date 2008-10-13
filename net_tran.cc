@@ -42,8 +42,8 @@ static bool has_enable(ivl_switch_type_t tt)
       }
 }
 
-NetTran::NetTran(NetScope*scope, perm_string n, ivl_switch_type_t tt)
-: NetNode(scope, n, has_enable(tt)? 3 : 2), type_(tt)
+NetTran::NetTran(NetScope*scope__, perm_string n, ivl_switch_type_t tt)
+: NetNode(scope__, n, has_enable(tt)? 3 : 2), type_(tt)
 {
       pin(0).set_dir(Link::PASSIVE);
       pin(1).set_dir(Link::PASSIVE);
@@ -52,8 +52,8 @@ NetTran::NetTran(NetScope*scope, perm_string n, ivl_switch_type_t tt)
       }
 }
 
-NetTran::NetTran(NetScope*scope, perm_string n, unsigned wid, unsigned part, unsigned off)
-: NetNode(scope, n, 2), type_(IVL_SW_TRAN_VP), wid_(wid), part_(part), off_(off)
+NetTran::NetTran(NetScope*scope__, perm_string n, unsigned wid, unsigned part, unsigned off)
+: NetNode(scope__, n, 2), type_(IVL_SW_TRAN_VP), wid_(wid), part_(part), off_(off)
 {
       pin(0).set_dir(Link::PASSIVE);
       pin(1).set_dir(Link::PASSIVE);

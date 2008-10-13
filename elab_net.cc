@@ -246,9 +246,9 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		      lidx = sig->sb_to_idx(midx_val-wid+1);
 
 		if (midx < lidx) {
-		      long tmp = midx;
+		      long tmpx = midx;
 		      midx = lidx;
-		      lidx = tmp;
+		      lidx = tmpx;
 		}
 
 		break;

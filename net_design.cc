@@ -580,10 +580,10 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
 
 void NetScope::evaluate_parameters(Design*des)
 {
-      NetScope*cur = sub_;
-      while (cur) {
-	    cur->evaluate_parameters(des);
-	    cur = cur->sib_;
+      NetScope*curs = sub_;
+      while (curs) {
+	    curs->evaluate_parameters(des);
+	    curs = curs->sib_;
       }
 
       if (debug_scopes)

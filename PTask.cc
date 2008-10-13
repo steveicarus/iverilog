@@ -21,10 +21,10 @@
 
 # include  "PTask.h"
 
-PTask::PTask(perm_string name, PScope*parent, bool is_auto)
+PTask::PTask(perm_string name, PScope*parent, bool is_auto__)
 : PScope(name, parent), ports_(0), statement_(0)
 {
-      is_auto_ = is_auto;
+      is_auto_ = is_auto__;
 }
 
 PTask::~PTask()

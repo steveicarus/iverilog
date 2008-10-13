@@ -813,9 +813,9 @@ NetExpr* NetEBDiv::eval_tree(int prune_to_width)
 
 	    verireal lval = lc->value();
 
-	    if (NetECReal*rc = dynamic_cast<NetECReal*>(right_)) {
+	    if (NetECReal*rcr = dynamic_cast<NetECReal*>(right_)) {
 		  NetECReal*tmp = 0;
-		  verireal rval = rc->value();
+		  verireal rval = rcr->value();
 
 		  switch (op_) {
 		      case '/':
@@ -1655,11 +1655,11 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
       return new NetEConst(verinum(res, 1));
 }
 
-NetExpr* evaluate_clog2(NetExpr*&arg)
+NetExpr* evaluate_clog2(NetExpr*&arg_)
 {
-      eval_expr(arg);
-      NetEConst*tmpi = dynamic_cast<NetEConst *>(arg);
-      NetECReal*tmpr = dynamic_cast<NetECReal *>(arg);
+      eval_expr(arg_);
+      NetEConst*tmpi = dynamic_cast<NetEConst *>(arg_);
+      NetECReal*tmpr = dynamic_cast<NetECReal *>(arg_);
       if (tmpi || tmpr) {
 	    verinum arg;
 	    if (tmpi) {
@@ -1706,11 +1706,11 @@ NetExpr* evaluate_clog2(NetExpr*&arg)
       return 0;
 }
 
-NetExpr* evaluate_math_one_arg(NetExpr*&arg, const char*name)
+NetExpr* evaluate_math_one_arg(NetExpr*&arg_, const char*name)
 {
-      eval_expr(arg);
-      NetEConst*tmpi = dynamic_cast<NetEConst *>(arg);
-      NetECReal*tmpr = dynamic_cast<NetECReal *>(arg);
+      eval_expr(arg_);
+      NetEConst*tmpi = dynamic_cast<NetEConst *>(arg_);
+      NetECReal*tmpr = dynamic_cast<NetECReal *>(arg_);
       if (tmpi || tmpr) {
 	    double arg;
 	    if (tmpi) {
@@ -1763,14 +1763,14 @@ NetExpr* evaluate_math_one_arg(NetExpr*&arg, const char*name)
       return 0;
 }
 
-NetExpr* evaluate_math_two_args(NetExpr*&arg0, NetExpr*&arg1, const char*name)
+NetExpr* evaluate_math_two_args(NetExpr*&arg0_, NetExpr*&arg1_, const char*name)
 {
-      eval_expr(arg0);
-      eval_expr(arg1);
-      NetEConst*tmpi0 = dynamic_cast<NetEConst *>(arg0);
-      NetECReal*tmpr0 = dynamic_cast<NetECReal *>(arg0);
-      NetEConst*tmpi1 = dynamic_cast<NetEConst *>(arg1);
-      NetECReal*tmpr1 = dynamic_cast<NetECReal *>(arg1);
+      eval_expr(arg0_);
+      eval_expr(arg1_);
+      NetEConst*tmpi0 = dynamic_cast<NetEConst *>(arg0_);
+      NetECReal*tmpr0 = dynamic_cast<NetECReal *>(arg0_);
+      NetEConst*tmpi1 = dynamic_cast<NetEConst *>(arg1_);
+      NetECReal*tmpr1 = dynamic_cast<NetECReal *>(arg1_);
       if ((tmpi0 || tmpr0) && (tmpi1 || tmpr1)) {
 	    double arg0, arg1;
 	    if (tmpi0) {
@@ -1796,10 +1796,10 @@ NetExpr* evaluate_math_two_args(NetExpr*&arg0, NetExpr*&arg1, const char*name)
       return 0;
 }
 
-NetExpr* evaluate_abs(NetExpr*&arg)
+NetExpr* evaluate_abs(NetExpr*&arg_)
 {
-      eval_expr(arg);
-      NetEConst*tmpi = dynamic_cast<NetEConst *>(arg);
+      eval_expr(arg_);
+      NetEConst*tmpi = dynamic_cast<NetEConst *>(arg_);
       if (tmpi) {
 	    verinum arg = tmpi->value();
 	    if (arg.is_negative()) {
@@ -1808,7 +1808,7 @@ NetExpr* evaluate_abs(NetExpr*&arg)
 	    return new NetEConst(arg);
       }
 
-      NetECReal*tmpr = dynamic_cast<NetECReal *>(arg);
+      NetECReal*tmpr = dynamic_cast<NetECReal *>(arg_);
       if (tmpr) {
 	    double arg = tmpr->value().as_double();
 	    return new NetECReal(verireal(fabs(arg)));
@@ -1817,14 +1817,14 @@ NetExpr* evaluate_abs(NetExpr*&arg)
       return 0;
 }
 
-NetExpr* evaluate_min_max(NetExpr*&arg0, NetExpr*&arg1, const char*name)
+NetExpr* evaluate_min_max(NetExpr*&arg0_, NetExpr*&arg1_, const char*name)
 {
-      eval_expr(arg0);
-      eval_expr(arg1);
-      NetEConst*tmpi0 = dynamic_cast<NetEConst *>(arg0);
-      NetECReal*tmpr0 = dynamic_cast<NetECReal *>(arg0);
-      NetEConst*tmpi1 = dynamic_cast<NetEConst *>(arg1);
-      NetECReal*tmpr1 = dynamic_cast<NetECReal *>(arg1);
+      eval_expr(arg0_);
+      eval_expr(arg1_);
+      NetEConst*tmpi0 = dynamic_cast<NetEConst *>(arg0_);
+      NetECReal*tmpr0 = dynamic_cast<NetECReal *>(arg0_);
+      NetEConst*tmpi1 = dynamic_cast<NetEConst *>(arg1_);
+      NetECReal*tmpr1 = dynamic_cast<NetECReal *>(arg1_);
       if (tmpi0 && tmpi1) {
 	    verinum arg0 = tmpi0->value();
 	    verinum arg1 = tmpi1->value();

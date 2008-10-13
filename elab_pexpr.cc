@@ -132,13 +132,13 @@ NetExpr*PEFNumber::elaborate_pexpr(Design*des, NetScope*scope) const
  */
 NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
 {
-      pform_name_t path = path_;
+      pform_name_t oldpath = path_;
       name_component_t name_tail = path_.back();
-      path.pop_back();
+      oldpath.pop_back();
 
       NetScope*pscope = scope;
       if (path_.size() > 0) {
-	    list<hname_t> tmp = eval_scope_path(des, scope, path);
+	    list<hname_t> tmp = eval_scope_path(des, scope, oldpath);
 	    pscope = des->find_scope(scope, tmp);
       }
 

@@ -81,8 +81,8 @@ bool Nexus::drivers_constant() const
 
 	      /* If there is a supply net, then this nexus will have a
 		 constant value independent of any drivers. */
-	    if (const NetNet*sig = dynamic_cast<const NetNet*>(cur->get_obj()))
-		  switch (sig->type()) {
+	    if (const NetNet*s = dynamic_cast<const NetNet*>(cur->get_obj()))
+		  switch (s->type()) {
 		      case NetNet::SUPPLY0:
 			driven_ = V0;
 			return true;

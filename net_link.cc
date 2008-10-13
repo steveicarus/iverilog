@@ -103,9 +103,9 @@ void Link::drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay)
       nexus_->drivers_delays(rise, fall, decay);
 }
 
-void Link::drivers_drive(strength_t drive0, strength_t drive1)
+void Link::drivers_drive(strength_t drive0__, strength_t drive1__)
 {
-      nexus_->drivers_drive(drive0, drive1);
+      nexus_->drivers_drive(drive0__, drive1__);
 }
 
 void Link::drive0(Link::strength_t str)
