@@ -445,6 +445,9 @@ class PEUnary : public PExpr {
       virtual bool is_constant(Module*) const;
 
     private:
+      NetExpr* elaborate_expr_bits_(NetExpr*operand, int expr_wid) const;
+
+    private:
       char op_;
       PExpr*expr_;
 };

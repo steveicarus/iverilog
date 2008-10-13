@@ -2716,6 +2716,7 @@ unsigned PEUnary::test_width(Design*des, NetScope*scope,
 	      // then the tested width.
 	  case '-':
 	  case '+':
+	  case '~':
 	    if (test_wid < min)
 		  test_wid = min;
 	    break;
@@ -2854,10 +2855,38 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 	    break;
 
 	  case '~':
-	    tmp = new NetEUBits(op_, ip);
-	    tmp->set_line(*this);
+	    tmp = elaborate_expr_bits_(ip, expr_wid);
 	    break;
       }
 
+      return tmp;
+}
+
+NetExpr* PEUnary::elaborate_expr_bits_(NetExpr*operand, int expr_wid) const
+{
+	// Handle the special case that the operand is a
+	// constant. Simply calculate the constant results of the
+	// expression and return that.
+      if (NetEConst*ctmp = dynamic_cast<NetEConst*> (operand)) {
+	    verinum value = ctmp->value();
+	    if (expr_wid > (int)value.len())
+		  value = pad_to_width(value, expr_wid);
+
+	      // The only operand that I know can get here is the
+	      // unary not (~).
+	    ivl_assert(*this, op_ == '~');
+	    value = v_not(value);
+
+	    ctmp = new NetEConst(value);
+	    ctmp->set_line(*this);
+	    delete operand;
+	    return ctmp;
+      }
+
+      if (expr_wid > (int)operand->expr_width())
+	    operand = pad_to_width(operand, expr_wid);
+
+      NetEUBits*tmp = new NetEUBits(op_, operand);
+      tmp->set_line(*this);
       return tmp;
 }
