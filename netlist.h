@@ -728,7 +728,7 @@ class NetScope : public Attrib {
 
       bool in_func();
 	/* Is the task or function automatic. */
-      void is_auto(bool is_auto) { is_auto_ = is_auto; };
+      void is_auto(bool is_auto__) { is_auto_ = is_auto__; };
       bool is_auto() const { return is_auto_; };
 
       const NetTaskDef* task_def() const;

@@ -3762,8 +3762,8 @@ bool of_POW(vthread_t thr, vvp_code_t cp)
 
         /* If we have an X or Z in the arguments return X. */
       if (xv2.is_NaN() || yv2.is_NaN()) {
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
+	    for (unsigned jdx = 0 ;  jdx < wid ;  jdx += 1)
+		  thr_put_bit(thr, cp->bit_idx[0]+jdx, BIT4_X);
 	    return true;
       }
 
@@ -3775,15 +3775,15 @@ bool of_POW(vthread_t thr, vvp_code_t cp)
 
         /* If the result is too small zero pad it. */
       if (result.size() < wid) {
-	    for (unsigned idx = wid-1;  idx >= result.size();  idx -= 1)
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_0);
+	    for (unsigned jdx = wid-1;  jdx >= result.size();  jdx -= 1)
+		  thr_put_bit(thr, cp->bit_idx[0]+jdx, BIT4_0);
 	    wid = result.size();
       }
 
         /* Copy only what we need of the result. */
-      for (unsigned idx = 0;  idx < wid;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx,
-	                result.value(idx) ? BIT4_1 : BIT4_0);
+      for (unsigned jdx = 0;  jdx < wid;  jdx += 1)
+	    thr_put_bit(thr, cp->bit_idx[0]+jdx,
+	                result.value(jdx) ? BIT4_1 : BIT4_0);
 
       return true;
 }

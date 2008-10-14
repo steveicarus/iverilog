@@ -316,8 +316,6 @@ extern PProcess*  pform_make_behavior(PProcess::Type, Statement*,
 
 extern svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*);
 
-extern bool pform_expression_is_constant(const PExpr*);
-
 extern void pform_make_events(list<perm_string>*names,
 			      const char*file, unsigned lineno);
 /*

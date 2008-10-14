@@ -1736,7 +1736,18 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 
       NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, lv_width, rval());
 
-      return rv;
+      if (!is_constant_ || !rv) return rv;
+
+      if (dynamic_cast<NetEConst*>(rv)) return rv;
+      if (dynamic_cast<NetECReal*>(rv)) return rv;
+
+      cerr << get_fileline() << ": error: "
+            "The RHS expression must be constant." << endl;
+      cerr << get_fileline() << "       : "
+            "This expression violates the rule: " << *rv << endl;
+      des->errors += 1;
+      delete rv;
+      return 0;
 }
 
 /*

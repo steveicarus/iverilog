@@ -396,12 +396,6 @@ attribute
 		}
 	| IDENTIFIER '=' expression
 		{ PExpr*tmp = $3;
-		  if (!pform_expression_is_constant(tmp)) {
-			yyerror(@3, "error: attribute value "
-			            "expression must be constant.");
-			delete tmp;
-			tmp = 0;
-		  }
 		  named_pexpr_t*tmp2 = new named_pexpr_t;
 		  tmp2->name = lex_strings.make($1);
 		  tmp2->parm = tmp;
@@ -567,14 +561,7 @@ charge_strength_opt
 
 defparam_assign
 	: hierarchy_identifier '=' expression
-		{ PExpr*tmp = $3;
-		  if (!pform_expression_is_constant(tmp)) {
-			yyerror(@3, "error: parameter value "
-			            "must be constant.");
-			delete tmp;
-			tmp = 0;
-		  }
-		  pform_set_defparam(*$1, $3);
+		{ pform_set_defparam(*$1, $3);
 		  delete $1;
 		}
 	;
@@ -1813,9 +1800,6 @@ port_declaration
 	delete port_declaration_context.range;
 	port_declaration_context.range = $5;
 
-	if (! pform_expression_is_constant($8))
-	      yyerror(@8, "error: register declaration assignment"
-		      " value must be a constant expression.");
 	pform_make_reginit(@6, name, $8);
 
 	delete $1;
@@ -2777,15 +2761,7 @@ port_reference
 	}
 
     | IDENTIFIER '[' expression ':' expression ']'
-        { if (!pform_expression_is_constant($3)) {
-		yyerror(@3, "error: msb expression of "
-			"port part select must be constant.");
-	  }
-	  if (!pform_expression_is_constant($5)) {
-		yyerror(@5, "error: lsb expression of "
-			"port part select must be constant.");
-	  }
-	  index_component_t itmp;
+	{ index_component_t itmp;
 	  itmp.sel = index_component_t::SEL_PART;
 	  itmp.msb = $3;
 	  itmp.lsb = $5;
@@ -2809,11 +2785,7 @@ port_reference
 	}
 
     | IDENTIFIER '[' expression ']'
-        { if (!pform_expression_is_constant($3)) {
-		    yyerror(@3, "error: port bit select "
-			    "must be constant.");
-	  }
-	  index_component_t itmp;
+	{ index_component_t itmp;
 	  itmp.sel = index_component_t::SEL_BIT;
 	  itmp.msb = $3;
 	  itmp.lsb = 0;
@@ -2912,16 +2884,8 @@ port_type
 range
 	: '[' expression ':' expression ']'
 		{ svector<PExpr*>*tmp = new svector<PExpr*> (2);
-		  if (!pform_expression_is_constant($2))
-			yyerror(@2, "error: msb of range must be constant.");
-
 		  (*tmp)[0] = $2;
-
-		  if (!pform_expression_is_constant($4))
-			yyerror(@4, "error: lsb of range must be constant.");
-
 		  (*tmp)[1] = $4;
-
 		  $$ = tmp;
 		}
 	;
@@ -2938,13 +2902,7 @@ dimensions
 	: '[' expression ':' expression ']'
 		{ list<index_component_t> *tmp = new list<index_component_t>;
 		  index_component_t index;
-		  if (!pform_expression_is_constant($2))
-			yyerror(@2, "error: left array address must be "
-			            "constant.");
 		  index.msb = $2;
-		  if (!pform_expression_is_constant($4))
-			yyerror(@4, "error: right array address must be "
-			            "constant.");
 		  index.lsb = $4;
 		  tmp->push_back(index);
 		  $$ = tmp;
@@ -2952,13 +2910,7 @@ dimensions
 	| dimensions '[' expression ':' expression ']'
 		{ list<index_component_t> *tmp = $1;
 		  index_component_t index;
-		  if (!pform_expression_is_constant($3))
-			yyerror(@3, "error: left array address must be "
-			            "constant.");
 		  index.msb = $3;
-		  if (!pform_expression_is_constant($5))
-			yyerror(@5, "error: right array address must be "
-			            "constant.");
 		  index.lsb = $5;
 		  tmp->push_back(index);
 		  $$ = tmp;
@@ -3001,9 +2953,6 @@ register_variable
       { perm_string ident_name = lex_strings.make($1);
 	pform_makewire(@1, ident_name, NetNet::REG,
 		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-	if (! pform_expression_is_constant($3))
-	      yyerror(@3, "error: register declaration assignment"
-		      " value must be a constant expression.");
 	pform_make_reginit(@1, ident_name, $3);
 	$$ = $1;
       }

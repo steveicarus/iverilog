@@ -154,6 +154,20 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope,
 		  min = lval;
 	    break;
 
+	  case '*':
+	    if (unsized_flag && type_is_vectorable(expr_type)) {
+		  unsigned use_wid = wid_left + wid_right;
+                  if (use_wid > integer_width)
+                        use_wid = integer_width;
+                  if (use_wid > min)
+                        min = use_wid;
+	    }
+	    if (wid_left > min)
+		  min = wid_left;
+	    if (wid_right > min)
+		  min = wid_right;
+	    break;
+
 	  case 'l': // <<  Should be handled by PEBShift
 	  case '<': // <   Should be handled by PEBComp
 	  case '>': // >   Should be handled by PEBComp
@@ -1356,7 +1370,10 @@ bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
 		  "This lsb expression violates the rule: "
 		 << *index_tail.lsb << endl;
 	    des->errors += 1;
-	    return false;
+              /* Attempt to recover from error. */
+            lsb = 0;
+      } else {
+            lsb = lsb_c->value().as_long();
       }
 
       NetExpr*msb_ex = elab_and_eval(des, scope, index_tail.msb, -1);
@@ -1365,14 +1382,15 @@ bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
 	    cerr << index_tail.msb->get_fileline() << ": error: "
 		  "Part select expressions must be constant."
 		 << endl;
-	    cerr << index_tail.msb->get_fileline() << ":      : This msb expression "
-		  "violates the rule: " << *index_tail.msb << endl;
+	    cerr << index_tail.msb->get_fileline() << ":      : "
+                  "This msb expression violates the rule: "
+                 << *index_tail.msb << endl;
 	    des->errors += 1;
-	    return false;
+              /* Attempt to recover from error. */
+            msb = lsb;
+      } else {
+            msb = msb_c->value().as_long();
       }
-
-      msb = msb_c->value().as_long();
-      lsb = lsb_c->value().as_long();
 
       delete msb_ex;
       delete lsb_ex;

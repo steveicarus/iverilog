@@ -289,8 +289,8 @@ inline vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that)
       copy_from_(that);
 }
 
-inline vvp_vector4_t::vvp_vector4_t(unsigned size, vvp_bit4_t val)
-: size_(size)
+inline vvp_vector4_t::vvp_vector4_t(unsigned size__, vvp_bit4_t val)
+: size_(size__)
 {
 	/* note: this relies on the bit encoding for the vvp_bit4_t. */
       const static unsigned long init_atable[4] = {
@@ -304,7 +304,7 @@ inline vvp_vector4_t::vvp_vector4_t(unsigned size, vvp_bit4_t val)
 	    WORD_Z_BBITS,
 	    WORD_X_BBITS };
 
-      allocate_words_(size, init_atable[val], init_btable[val]);
+      allocate_words_(size_, init_atable[val], init_btable[val]);
 }
 
 inline vvp_vector4_t::~vvp_vector4_t()
@@ -750,8 +750,8 @@ extern vvp_vector8_t part_expand(const vvp_vector8_t&a, unsigned wid, unsigned o
   /* Print a vector8 value to a stream. */
 extern ostream& operator<< (ostream&, const vvp_vector8_t&);
 
-inline vvp_vector8_t::vvp_vector8_t(unsigned size)
-: size_(size)
+inline vvp_vector8_t::vvp_vector8_t(unsigned size__)
+: size_(size__)
 {
       if (size_ <= PTR_THRESH) {
 	    new (val_) vvp_scalar_t[PTR_THRESH];
@@ -822,12 +822,12 @@ template <class T> class vvp_sub_pointer_t {
     public:
       vvp_sub_pointer_t() : bits_(0) { }
 
-      vvp_sub_pointer_t(T*ptr, unsigned port)
+      vvp_sub_pointer_t(T*ptr__, unsigned port__)
       {
-	    bits_ = reinterpret_cast<unsigned long> (ptr);
-	    assert( (bits_ & 3) == 0 );
-	    assert( (port & ~3) == 0 );
-	    bits_ |= port;
+	    bits_ = reinterpret_cast<unsigned long> (ptr__);
+	    assert( (bits_  &  3) == 0 );
+	    assert( (port__ & ~3) == 0 );
+	    bits_ |= port__;
       }
 
       ~vvp_sub_pointer_t() { }

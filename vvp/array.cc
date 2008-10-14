@@ -1026,7 +1026,7 @@ void array_word_change(vvp_array_t array, unsigned long addr)
 class array_port_resolv_list_t : public resolv_list_s {
 
     public:
-      explicit array_port_resolv_list_t(char*label) : resolv_list_s(label) { }
+      explicit array_port_resolv_list_t(char*lab) : resolv_list_s(lab) { }
 
       vvp_net_t*ptr;
       bool use_addr;
@@ -1063,9 +1063,9 @@ void vpip_array_word_change(struct __vpiCallback*cb, vpiHandle obj)
 	    unsigned addr = decode_array_word_pointer(word, parent);
 	    cb->extra_data = addr;
 
-      } else if (struct __vpiArrayVthrA*word = array_vthr_a_from_handle(obj)) {
-	    parent = word->array;
-	    cb->extra_data = word->address;
+      } else if (struct __vpiArrayVthrA*tword = array_vthr_a_from_handle(obj)) {
+	    parent = tword->array;
+	    cb->extra_data = tword->address;
       }
 
       assert(parent);
