@@ -46,7 +46,7 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 			     ivl_variable_type_t data_type_lv, int expr_wid_lv,
 			     PExpr*expr)
 {
-      bool unsized_flag = type_is_vectorable(data_type_lv)? true : false;
+      bool unsized_flag = type_is_vectorable(data_type_lv)? false : true;
       ivl_variable_type_t rval_type = IVL_VT_NO_TYPE;
 
 	/* Find out what the r-value width is going to be. We
@@ -118,19 +118,23 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope,
       ivl_variable_type_t expr_type_left = IVL_VT_NO_TYPE;
       ivl_variable_type_t expr_type_right= IVL_VT_NO_TYPE;
 
-      bool flag_left = unsized_flag;
+      bool flag = unsized_flag;
+
+      bool flag_left = flag;
       unsigned wid_left = left_->test_width(des,scope, min, 0, expr_type_left, flag_left);
 
-      bool flag_right = flag_left;
+      bool flag_right = flag;
       unsigned wid_right = right_->test_width(des,scope, min, 0, expr_type_right, flag_right);
 
-      if (flag_right && !flag_left) {
-	    flag_left = flag_right;
-	    wid_left = left_->test_width(des, scope, min, 0, expr_type_left, flag_right);
+      if (flag_right && !flag) {
+	    unsized_flag = true;
+	    wid_left = left_->test_width(des, scope, min, 0, expr_type_left, unsized_flag);
       }
 
-      if (flag_left || flag_right)
+      if (flag_left && !flag) {
 	    unsized_flag = true;
+	    wid_right = right_->test_width(des, scope, min, 0, expr_type_right, unsized_flag);
+      }
 
       if (expr_type_left == IVL_VT_REAL || expr_type_right == IVL_VT_REAL)
 	    expr_type_ = IVL_VT_REAL;
@@ -142,16 +146,12 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope,
       switch (op_) {
 	  case '+':
 	  case '-':
-	    if (unsized_flag && type_is_vectorable(expr_type_)) {
-		  wid_left += 1;
-		  wid_right += 1;
-	    }
 	    if (wid_left > min)
 		  min = wid_left;
 	    if (wid_right > min)
 		  min = wid_right;
-	    if (lval > 0 && min > lval)
-		  min = lval;
+	    if (unsized_flag && type_is_vectorable(expr_type_))
+		  min += 1;
 	    break;
 
 	  case '*':
