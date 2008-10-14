@@ -653,6 +653,14 @@ int draw_casezx(vhdl_procedural *proc, stmt_container *container,
       draw_stmt(proc, where, ivl_stmt_case_stmt(stmt, i), is_last);
    }
 
+   // Add a comment to say that this corresponds to a casex/z statement
+   // as this may not be obvious
+   ostringstream ss;
+   ss << "Generated from case"
+      << (ivl_statement_type(stmt) == IVL_ST_CASEX ? 'x' : 'z')
+      << " statement at " << ivl_stmt_file(stmt) << ":" << ivl_stmt_lineno(stmt);
+   result->set_comment(ss.str());
+
    container->add_stmt(result);
 
    // We don't actually use the generated `test' expression
