@@ -343,7 +343,9 @@ void NetCLShift::dump_node(ostream&o, unsigned ind) const
 
 void NetCompare::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "LPM_COMPARE (NetCompare): " << name() << endl;
+      o << setw(ind) << "" << "LPM_COMPARE (NetCompare "
+	<< (get_signed()? "signed" : "unsigned") << "): "
+	<< name() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }

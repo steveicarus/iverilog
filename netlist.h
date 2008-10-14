@@ -1040,6 +1040,9 @@ class NetCLShift  : public NetNode {
  * inputs is narrower then the other, it is up to the generator to
  * make sure all the data pins are properly driven.
  *
+ * The signed() property is true if the comparison is to be done to
+ * signed arguments. The result is always UNsigned.
+ *
  * NOTE: This is not the same as the device used to support case
  * compare. Case comparisons handle Vx and Vz values, whereas this
  * device need not.
@@ -1055,8 +1058,6 @@ class NetCompare  : public NetNode {
       bool get_signed() const;
       void set_signed(bool);
 
-      Link& pin_Aclr();
-      Link& pin_Clock();
       Link& pin_AGB();
       Link& pin_AGEB();
       Link& pin_AEB();
@@ -1067,8 +1068,6 @@ class NetCompare  : public NetNode {
       Link& pin_DataA();
       Link& pin_DataB();
 
-      const Link& pin_Aclr() const;
-      const Link& pin_Clock() const;
       const Link& pin_AGB() const;
       const Link& pin_AGEB() const;
       const Link& pin_AEB() const;

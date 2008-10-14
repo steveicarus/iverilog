@@ -1276,19 +1276,17 @@ const Link& NetCLShift::pin_Distance() const
 }
 
 NetCompare::NetCompare(NetScope*s, perm_string n, unsigned wi)
-: NetNode(s, n, 10), width_(wi)
+: NetNode(s, n, 8), width_(wi)
 {
       signed_flag_ = false;
-      pin(0).set_dir(Link::INPUT); // Aclr
-      pin(1).set_dir(Link::INPUT); // Clock
-      pin(2).set_dir(Link::OUTPUT); // AGB
-      pin(3).set_dir(Link::OUTPUT); // AGEB
-      pin(4).set_dir(Link::OUTPUT); // AEB
-      pin(5).set_dir(Link::OUTPUT); // ANEB
-      pin(6).set_dir(Link::OUTPUT); // ALB
-      pin(7).set_dir(Link::OUTPUT); // ALEB
-      pin(8).set_dir(Link::INPUT);  // DataA
-      pin(9).set_dir(Link::INPUT);  // DataB
+      pin(0).set_dir(Link::OUTPUT); // AGB
+      pin(1).set_dir(Link::OUTPUT); // AGEB
+      pin(2).set_dir(Link::OUTPUT); // AEB
+      pin(3).set_dir(Link::OUTPUT); // ANEB
+      pin(4).set_dir(Link::OUTPUT); // ALB
+      pin(5).set_dir(Link::OUTPUT); // ALEB
+      pin(6).set_dir(Link::INPUT);  // DataA
+      pin(7).set_dir(Link::INPUT);  // DataB
 }
 
 NetCompare::~NetCompare()
@@ -1311,104 +1309,84 @@ void NetCompare::set_signed(bool flag)
 }
 
 
-Link& NetCompare::pin_Aclr()
-{
-      return pin(0);
-}
-
-const Link& NetCompare::pin_Aclr() const
-{
-      return pin(0);
-}
-
-Link& NetCompare::pin_Clock()
-{
-      return pin(1);
-}
-
-const Link& NetCompare::pin_Clock() const
-{
-      return pin(1);
-}
-
 Link& NetCompare::pin_AGB()
 {
-      return pin(2);
+      return pin(0);
 }
 
 const Link& NetCompare::pin_AGB() const
 {
-      return pin(2);
+      return pin(0);
 }
 
 Link& NetCompare::pin_AGEB()
 {
-      return pin(3);
+      return pin(1);
 }
 
 const Link& NetCompare::pin_AGEB() const
 {
-      return pin(3);
+      return pin(1);
 }
 
 Link& NetCompare::pin_AEB()
 {
-      return pin(4);
+      return pin(2);
 }
 
 const Link& NetCompare::pin_AEB() const
 {
-      return pin(4);
+      return pin(2);
 }
 
 Link& NetCompare::pin_ANEB()
 {
-      return pin(5);
+      return pin(3);
 }
 
 const Link& NetCompare::pin_ANEB() const
 {
-      return pin(5);
+      return pin(3);
 }
 
 Link& NetCompare::pin_ALB()
 {
-      return pin(6);
+      return pin(4);
 }
 
 const Link& NetCompare::pin_ALB() const
 {
-      return pin(6);
+      return pin(4);
 }
 
 Link& NetCompare::pin_ALEB()
 {
-      return pin(7);
+      return pin(5);
 }
 
 const Link& NetCompare::pin_ALEB() const
 {
-      return pin(7);
+      return pin(5);
 }
 
 Link& NetCompare::pin_DataA()
 {
-      return pin(8);
+      return pin(6);
 }
 
 const Link& NetCompare::pin_DataA() const
 {
-      return pin(8);
+      return pin(6);
 }
 
 Link& NetCompare::pin_DataB()
 {
-      return pin(9);
+      return pin(7);
 }
 
 const Link& NetCompare::pin_DataB() const
 {
-      return pin(9);
+      return pin(7);
 }
 
 NetDivide::NetDivide(NetScope*sc, perm_string n, unsigned wr,
