@@ -73,7 +73,12 @@ class PExpr : public LineInfo {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag) const;
+				  bool&unsized_flag);
+
+	// After the test_width method is complete, these methods
+	// return valid results.
+      ivl_variable_type_t expr_type() const { return expr_type_; }
+      unsigned expr_width() const           { return expr_width_; }
 
 	// During the elaborate_sig phase, we may need to scan
 	// expressions to find implicit net declarations.
@@ -127,6 +132,13 @@ class PExpr : public LineInfo {
 	// this expression. This method is used for comparing
 	// expressions that must be structurally "identical".
       virtual bool is_the_same(const PExpr*that) const;
+
+    protected:
+	// The derived class test_width methods should fill these in.
+      ivl_variable_type_t expr_type_;
+      unsigned expr_width_;
+
+      static void suppress_binary_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp);
 
     private: // not implemented
       PExpr(const PExpr&);
@@ -207,7 +219,7 @@ class PEFNumber : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag) const;
+				  bool&unsized_flag);
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     int expr_width, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
@@ -233,7 +245,7 @@ class PEIdent : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag) const;
+				  bool&unsized_flag);
 
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
@@ -348,7 +360,7 @@ class PENumber : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag) const;
+				  bool&unsized_flag);
 
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				       int expr_width, bool) const;
@@ -384,7 +396,7 @@ class PEString : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag) const;
+				  bool&unsized_flag);
 
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				       int expr_width, bool) const;
@@ -406,7 +418,7 @@ class PEUnary : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag) const;
+				  bool&unsized_flag);
 
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
@@ -414,6 +426,9 @@ class PEUnary : public PExpr {
 				     int expr_width, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
+
+    private:
+      NetExpr* elaborate_expr_bits_(NetExpr*operand, int expr_wid) const;
 
     private:
       char op_;
@@ -431,7 +446,7 @@ class PEBinary : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag) const;
+				  bool&unsized_flag);
 
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
@@ -455,8 +470,6 @@ class PEBinary : public PExpr {
       NetExpr*elaborate_expr_base_mult_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_expr_base_add_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
 
-      static void suppress_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp);
-
 };
 
 /*
@@ -472,7 +485,7 @@ class PEBComp  : public PEBinary {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
-				  bool&flag) const;
+				  bool&flag);
 
       NetExpr* elaborate_expr(Design*des, NetScope*scope,
 			      int expr_width, bool sys_task_arg) const;
@@ -487,7 +500,7 @@ class PEBShift  : public PEBinary {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
-				  bool&flag) const;
+				  bool&flag);
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     int expr_width, bool sys_task_arg) const;
 };
@@ -506,7 +519,7 @@ class PETernary : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag) const;
+				  bool&unsized_flag);
 
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
@@ -548,7 +561,7 @@ class PECallFunction : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag) const;
+				  bool&unsized_flag);
 
     private:
       pform_name_t path_;
@@ -561,7 +574,7 @@ class PECallFunction : public PExpr {
       unsigned test_width_sfunc_(Design*des, NetScope*scope,
 				 unsigned min, unsigned lval,
 				 ivl_variable_type_t&expr_type,
-				 bool&unsized_flag) const;
+				 bool&unsized_flag);
 };
 
 #endif

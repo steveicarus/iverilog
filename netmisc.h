@@ -157,7 +157,7 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
  */
 extern NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 				    ivl_variable_type_t data_type_lv,
-				    int expr_wid_lv, const PExpr*expr);
+				    int expr_wid_lv, PExpr*expr);
 /*
  * This procedure elaborates an expression and if the elaboration is
  * successful the original expression is replaced with the new one.

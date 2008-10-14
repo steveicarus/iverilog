@@ -245,7 +245,18 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope)
       osig->local_flag(true);
       osig->data_type(IVL_VT_LOGIC);
 
-      bool signed_compare = lsig->get_signed() && rsig->get_signed();
+	// Test if the comparison is signed.
+	//
+	// Note 1: This is not the same as asking if the result is
+	// signed. In fact, the result will typically be UNsigned. The
+	// decision to make the comparison signed depends on the
+	// operand expressions.
+	//
+	// Note 2: The operand expressions may be signed even if the
+	// sig that comes out of synthesis is unsigned. The $signed()
+	// function markes the expression but doesn't change the
+	// underlying signals.
+      bool signed_compare = left_->has_sign() && right_->has_sign();
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: Comparison (" << op_ << ")"
 		 << " is " << (signed_compare? "signed"  : "unsigned")

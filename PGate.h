@@ -80,7 +80,7 @@ class PGate : public LineInfo {
 		       bool as_net_flag =false) const;
 
       unsigned pin_count() const { return pins_? pins_->count() : 0; }
-      const PExpr*pin(unsigned idx) const { return (*pins_)[idx]; }
+      PExpr*pin(unsigned idx) const { return (*pins_)[idx]; }
 
       strength_t strength0() const;
       strength_t strength1() const;
