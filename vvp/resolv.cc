@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -49,7 +49,7 @@ void resolv_functor::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       for (unsigned idx = 0 ;  idx < base ;  idx += 1)
 	    res.set_bit(idx, BIT4_Z);
 
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < wid  && idx+base < vwid;  idx += 1)
 	    res.set_bit(idx+base, bit.value(idx));
 
       for (unsigned idx = base+wid ;  idx < vwid ;  idx += 1)
@@ -106,7 +106,7 @@ void resolv_functor::recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
       for (unsigned idx = 0 ;  idx < base ;  idx += 1)
 	    res.set_bit(idx, vvp_scalar_t());
 
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < wid && idx+base < vwid;  idx += 1)
 	    res.set_bit(idx+base, bit.value(idx));
 
       for (unsigned idx = base+wid ;  idx < vwid ;  idx += 1)
