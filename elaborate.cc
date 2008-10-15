@@ -1295,7 +1295,25 @@ v		       NOTE that this also handles the case that the
 	    if ((instance.count() == 1)
 		&& (prts_vector_width != sig->vector_width())) {
 		  const char *tmp3 = rmod->ports[idx]->name.str();
+		  bool as_signed = false;
+
 		  if (tmp3 == 0) tmp3 = "???";
+
+		  switch (prts[0]->port_type()) {
+		    case NetNet::POUTPUT:
+			as_signed = prts[0]->get_signed();
+			break;
+		    case NetNet::PINPUT:
+			as_signed = sig->get_signed();
+			break;
+		    case NetNet::PINOUT:
+			  /* This may not be correct! */
+			as_signed = prts[0]->get_signed() && sig->get_signed();
+			break;
+		    default:
+			ivl_assert(*this, 0);
+		  }
+
 		  cerr << get_fileline() << ": warning: Port " << (idx+1)
 		       << " (" << tmp3 << ") of "
 		       << type_ << " expects " << prts_vector_width <<
@@ -1316,21 +1334,21 @@ v		       NOTE that this also handles the case that the
 		     }
 		    // Keep the if, but delete the "} else" when fixed.
 		  } else if (prts_vector_width > sig->vector_width()) {
-			cerr << get_fileline() << ":        : Padding "
-			     << (prts_vector_width-sig->vector_width())
+			cerr << get_fileline() << ":        : Padding ";
+			if (as_signed) cerr << "(signed) ";
+			cerr << (prts_vector_width-sig->vector_width())
 			     << " high bits of the port."
 			     << endl;
 		  } else {
-			cerr << get_fileline() << ":        : Padding "
-			     << (sig->vector_width()-prts_vector_width)
+			cerr << get_fileline() << ":        : Padding ";
+			if (as_signed) cerr << "(signed) ";
+			cerr << (sig->vector_width()-prts_vector_width)
 			     << " high bits of the expression."
 			     << endl;
 		  }
 
 		  sig = resize_net_to_port_(des, scope, sig, prts_vector_width,
-					    prts[0]->port_type(),
-					    prts[0]->get_signed() &&
-					    sig->get_signed());
+					    prts[0]->port_type(), as_signed);
 	    }
 
 	      // Connect the sig expression that is the context of the
