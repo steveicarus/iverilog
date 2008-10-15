@@ -816,6 +816,18 @@ unsigned PEBShift::test_width(Design*des, NetScope*scope,
 		       << endl;
       }
 
+	// Run a test-width on the shift amount so that its types are
+	// worked out for elaboration later on. We don't need the
+	// value now.
+      ivl_variable_type_t rtype = IVL_VT_NO_TYPE;
+      bool rflag = false;
+      unsigned wid_right = right_->test_width(des, scope, 0, 0, rtype, rflag);
+      if (debug_elaborate)
+	    cerr << get_fileline() << ": debug: "
+		 << "Test width of shift amount of shift expression "
+		 << "returns wid=" << wid_right << ", type=" << rtype
+		 << ", flag=" << rflag << endl;
+
       return wid_left;
 }
 
