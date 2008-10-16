@@ -2460,9 +2460,9 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
       NetUTask*cur;
 
-	/* Handle tasks with no parameters specially. There is no need
-	   to make a sequential block to hold the generated code. */
-      if (nparms() == 0) {
+	/* Handle non-automatic tasks with no parameters specially. There is
+           no need to make a sequential block to hold the generated code. */
+      if ((nparms() == 0) && !task->is_auto()) {
 	    cur = new NetUTask(task);
 	    cur->set_line(*this);
 	    return cur;
