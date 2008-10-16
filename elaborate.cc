@@ -2238,6 +2238,16 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 	    cerr << get_fileline() << ": debug: Elaborate condition statement"
 		 << " with conditional: " << *expr_ << endl;
 
+      // Run a test-width on the shift amount so that its types are
+      // worked out for elaboration later on.
+      ivl_variable_type_t rtype = IVL_VT_NO_TYPE;
+      bool rflag = false;
+      unsigned expr_wid = expr_->test_width(des, scope, 0, 0, rtype, rflag);
+      if (debug_elaborate)
+	   cerr << get_fileline() << ": debug: Test width of condition expression"
+	        << " returns wid=" << expr_wid << ", type=" << rtype
+		<< ", flag=" << rflag << endl;
+
 	// Elaborate and try to evaluate the conditional expression.
       NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
