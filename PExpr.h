@@ -156,6 +156,11 @@ class PEConcat : public PExpr {
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
       virtual void dump(ostream&) const;
 
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
+				  bool&unsized_flag);
+
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
       virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
