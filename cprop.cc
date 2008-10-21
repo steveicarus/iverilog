@@ -739,6 +739,7 @@ v		}
       }
 }
 
+#if 0
 static void replace_with_mos(Design*des, NetMux*obj, NetLogic::TYPE type)
 {
       NetScope*scope = obj->scope();
@@ -780,10 +781,11 @@ static void replace_with_mos(Design*des, NetMux*obj, NetLogic::TYPE type)
 
       delete obj;
 }
+#endif
 
 /*
  * This detects the case where the mux selects between a value and
- * Vz. In this case, replace the device with a bufif with the sel
+ * Vz. In this case, replace the device with a mos with the sel
  * input used to enable the output.
  */
 void cprop_functor::lpm_mux(Design*des, NetMux*obj)
@@ -793,6 +795,12 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
       if (obj->sel_width() != 1)
 	    return;
 
+#if 0
+/*
+ * This is slower than the actual MUXZ so we are skipping this for now.
+ * If we had a half mux functor this could be faster and more compact
+ * so I'm leaving the code for future reference.
+ */
 	/* If the first input is all constant Vz, then replace the
 	   NetMux with an array of NMOS devices, with the enable
 	   connected to the select input. */
@@ -811,6 +819,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	    count += 1;
 	    return;
       }
+#endif
 
 	/* If the select input is constant, then replace with a BUFZ */
       bool flag = obj->pin_Sel().nexus()->drivers_constant();
