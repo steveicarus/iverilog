@@ -2238,7 +2238,7 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 	    cerr << get_fileline() << ": debug: Elaborate condition statement"
 		 << " with conditional: " << *expr_ << endl;
 
-      // Run a test-width on the shift amount so that its types are
+      // Run a test-width on the condition so that its types are
       // worked out for elaboration later on.
       ivl_variable_type_t rtype = IVL_VT_NO_TYPE;
       bool rflag = false;
@@ -2260,7 +2260,7 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 	// If the condition of the conditional statement is constant,
 	// then look at the value and elaborate either the if statement
 	// or the else statement. I don't need both. If there is no
-	// else_ statement, the use an empty block as a noop.
+	// else_ statement, then use an empty block as a noop.
       if (NetEConst*ce = dynamic_cast<NetEConst*>(expr)) {
 	    verinum val = ce->value();
 	    if (debug_elaborate) {
@@ -2853,7 +2853,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    assert(expr_[idx]->expr());
 
 	      /* If the expression is an identifier that matches a
-		 named event, then handle this case all at once at
+		 named event, then handle this case all at once and
 		 skip the rest of the expression handling. */
 
 	    if (PEIdent*id = dynamic_cast<PEIdent*>(expr_[idx]->expr())) {

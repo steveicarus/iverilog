@@ -254,7 +254,7 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope)
 	//
 	// Note 2: The operand expressions may be signed even if the
 	// sig that comes out of synthesis is unsigned. The $signed()
-	// function markes the expression but doesn't change the
+	// function marks the expression but doesn't change the
 	// underlying signals.
       bool signed_compare = left_->has_sign() && right_->has_sign();
       if (debug_elaborate) {
@@ -945,7 +945,7 @@ NetNet* NetEUReduce::synthesize(Design*des, NetScope*scope)
  * for us:
  *
  * - Expression elaboration already converted the offset expression into
- * cannonical form, so we don't have to worry about that here.
+ * canonical form, so we don't have to worry about that here.
  */
 NetNet* NetESelect::synthesize(Design *des, NetScope*scope)
 {

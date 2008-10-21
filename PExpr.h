@@ -66,7 +66,7 @@ class PExpr : public LineInfo {
 	// The expr_type is an output argument that gives the
 	// calculated type for the expression.
 	//
-	// The unsigned_flag is set to true if the expression is
+	// The unsized_flag is set to true if the expression is
 	// unsized and therefore expandable. This happens if a
 	// sub-expression is an unsized literal. Some expressions make
 	// special use of that.

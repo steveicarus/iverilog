@@ -1660,7 +1660,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 	    }
 
 	      // This is a parameter. If it is sized (meaning it was
-	      // declared with range expresions) then the range
+	      // declared with range expressions) then the range
 	      // expressions would have been caught above. So if we
 	      // got there there we know this is an unsized constant.
 	    expr_width_ = par->expr_width();
@@ -2766,7 +2766,7 @@ unsigned PEUnary::test_width(Design*des, NetScope*scope,
 {
       switch (op_) {
 	  case '!':
-	  case '&': // Reductin AND
+	  case '&': // Reduction AND
 	  case '|': // Reduction OR
 	  case '^': // Reduction XOR
 	  case 'A': // Reduction NAND (~&)
