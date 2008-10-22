@@ -850,7 +850,7 @@ NetProc::~NetProc()
 {
 }
 
-NetProcTop::NetProcTop(NetScope*s, Type t, NetProc*st)
+NetProcTop::NetProcTop(NetScope*s, ivl_process_type_t t, NetProc*st)
 : type_(t), statement_(st), scope_(s)
 {
 }
@@ -873,6 +873,16 @@ const NetProc* NetProcTop::statement() const
 NetScope* NetProcTop::scope()
 {
       return scope_;
+}
+
+NetAnalogTop::NetAnalogTop(NetScope*scope, ivl_process_type_t t, NetAnalog*st)
+: type_(t), statement_(st), scope_(scope)
+{
+      next_ = 0;
+}
+
+NetAnalogTop::~NetAnalogTop()
+{
 }
 
 const NetScope* NetProcTop::scope() const

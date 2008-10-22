@@ -311,7 +311,7 @@ extern void pform_module_specify_path(PSpecPath*obj);
  * pform_make_behavior creates processes that are declared with always
  * or initial items.
  */
-extern PProcess*  pform_make_behavior(PProcess::Type, Statement*,
+extern PProcess*  pform_make_behavior(ivl_process_type_t, Statement*,
 				      svector<named_pexpr_t*>*attr);
 
 extern svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*);
@@ -396,7 +396,7 @@ extern void pform_dump(ostream&out, const discipline_t*);
 /* ** pform_analog.cc
 */
 extern void pform_make_analog_behavior(const struct vlltype&loc,
-				       AProcess::Type type, AStatement*st);
+				       ivl_process_type_t type, AStatement*st);
 
 extern AStatement*pform_contribution_statement(const struct vlltype&loc,
 					       PExpr*lval, PExpr*rval);

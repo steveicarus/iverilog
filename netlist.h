@@ -3044,12 +3044,10 @@ class NetWhile  : public NetProc {
 class NetProcTop  : public LineInfo, public Attrib {
 
     public:
-      enum Type { KINITIAL, KALWAYS };
-
-      NetProcTop(NetScope*s, Type t, class NetProc*st);
+      NetProcTop(NetScope*s, ivl_process_type_t t, class NetProc*st);
       ~NetProcTop();
 
-      Type type() const { return type_; }
+      ivl_process_type_t type() const { return type_; }
       NetProc*statement();
       const NetProc*statement() const;
 
@@ -3074,12 +3072,41 @@ class NetProcTop  : public LineInfo, public Attrib {
       bool emit(struct target_t*tgt) const;
 
     private:
-      const Type type_;
+      const ivl_process_type_t type_;
       NetProc*const statement_;
 
       NetScope*scope_;
       friend class Design;
       NetProcTop*next_;
+};
+
+class NetAnalog  : public LineInfo, public Attrib {
+};
+
+class NetAnalogTop  : public LineInfo, public Attrib {
+
+    public:
+      NetAnalogTop(NetScope*scope, ivl_process_type_t t, NetAnalog*st);
+      ~NetAnalogTop();
+
+      ivl_process_type_t type() const { return type_; }
+
+      NetAnalog*statement();
+      const NetAnalog*statement() const;
+
+      NetScope*scope();
+      const NetScope*scope() const;
+
+      void dump(ostream&, unsigned ind) const;
+      bool emit(struct target_t*tgt) const;
+
+    private:
+      const ivl_process_type_t type_;
+      NetAnalog* statement_;
+
+      NetScope*scope_;
+      friend class Design;
+      NetAnalogTop*next_;
 };
 
 /*
@@ -3822,6 +3849,7 @@ class Design {
 
 	// PROCESSES
       void add_process(NetProcTop*);
+      void add_process(NetAnalogTop*);
       void delete_process(NetProcTop*);
       bool check_always_delay() const;
 
@@ -3852,6 +3880,8 @@ class Design {
 	// List the processes in the design.
       NetProcTop*procs_;
       NetProcTop*procs_idx_;
+
+      NetAnalogTop*aprocs_;
 
       map<string,const char*> flags_;
 

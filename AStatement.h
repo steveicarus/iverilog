@@ -20,11 +20,15 @@
  */
 
 # include  <map>
+# include  "ivl_target.h"
 # include  "StringHeap.h"
 # include  "LineInfo.h"
 # include  "PExpr.h"
 
 class PExpr;
+class NetAnalog;
+class NetScope;
+class Design;
 
 class AStatement  : public LineInfo {
 
@@ -33,6 +37,11 @@ class AStatement  : public LineInfo {
       virtual ~AStatement() =0;
 
       virtual void dump(ostream&out, unsigned ind) const;
+      virtual NetAnalog* elaborate(Design*des, NetScope*scope) const;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const;
+
+      map<perm_string,PExpr*> attributes;
 
     private: // not implemented
       AStatement(const AStatement&);
@@ -65,12 +74,15 @@ class AContrib : public AStatement {
 class AProcess : public LineInfo {
 
     public:
-      enum Type { PR_INITIAL, PR_ALWAYS };
-
-      AProcess(Type t, AStatement*st)
+      AProcess(ivl_process_type_t t, AStatement*st)
       : type_(t), statement_(st) { }
 
       ~AProcess();
+
+      bool elaborate(Design*des, NetScope*scope) const;
+
+      ivl_process_type_t type() const { return type_; }
+      AStatement*statement() { return statement_; }
 
       map<perm_string,PExpr*> attributes;
 
@@ -78,7 +90,7 @@ class AProcess : public LineInfo {
       void dump(ostream&out, unsigned ind) const;
 
     private:
-      Type type_;
+      ivl_process_type_t type_;
       AStatement*statement_;
 
     private: // not implemented

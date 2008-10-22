@@ -31,7 +31,7 @@ AStatement* pform_contribution_statement(const struct vlltype&loc,
       return tmp;
 }
 
-void pform_make_analog_behavior(const struct vlltype&loc, AProcess::Type pt,
+void pform_make_analog_behavior(const struct vlltype&loc, ivl_process_type_t pt,
 				AStatement*statement)
 {
       AProcess*proc = new AProcess(pt, statement);

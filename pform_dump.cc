@@ -135,6 +135,18 @@ ostream& operator<< (ostream&o, const pform_name_t&that)
       return o;
 }
 
+std::ostream& operator << (std::ostream&out, ivl_process_type_t pt)
+{
+      switch (pt) {
+	  case IVL_PR_INITIAL:
+	    out << "initial";
+	    break;
+	  case IVL_PR_ALWAYS:
+	    out << "always";
+	    break;
+      }
+      return out;
+}
 
 std::ostream& operator << (std::ostream&out, ddomain_t dom)
 {
@@ -900,16 +912,8 @@ void PWhile::dump(ostream&out, unsigned ind) const
 
 void PProcess::dump(ostream&out, unsigned ind) const
 {
-      switch (type_) {
-	  case PProcess::PR_INITIAL:
-	    out << setw(ind) << "" << "initial";
-	    break;
-	  case PProcess::PR_ALWAYS:
-	    out << setw(ind) << "" << "always";
-	    break;
-      }
-
-      out << " /* " << get_fileline() << " */" << endl;
+      out << setw(ind) << "" << type_
+	  << " /* " << get_fileline() << " */" << endl;
 
       dump_attributes_map(out, attributes, ind+2);
 
@@ -919,10 +923,10 @@ void PProcess::dump(ostream&out, unsigned ind) const
 void AProcess::dump(ostream&out, unsigned ind) const
 {
       switch (type_) {
-	  case AProcess::PR_INITIAL:
+	  case IVL_PR_INITIAL:
 	    out << setw(ind) << "" << "analog initial";
 	    break;
-	  case AProcess::PR_ALWAYS:
+	  case IVL_PR_ALWAYS:
 	    out << setw(ind) << "" << "analog";
 	    break;
       }

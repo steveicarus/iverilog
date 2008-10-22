@@ -2093,16 +2093,16 @@ module_item
   /* Always and initial items are behavioral processes. */
 
   | attribute_list_opt K_always statement
-      { PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS, $3, $1);
+      { PProcess*tmp = pform_make_behavior(IVL_PR_ALWAYS, $3, $1);
 	FILE_NAME(tmp, @2);
       }
   | attribute_list_opt K_initial statement
-      { PProcess*tmp = pform_make_behavior(PProcess::PR_INITIAL, $3, $1);
+      { PProcess*tmp = pform_make_behavior(IVL_PR_INITIAL, $3, $1);
 	FILE_NAME(tmp, @2);
       }
 
   | attribute_list_opt K_analog analog_statement
-      { pform_make_analog_behavior(@2, AProcess::PR_ALWAYS, $3); }
+      { pform_make_analog_behavior(@2, IVL_PR_ALWAYS, $3); }
 
   /* The task declaration rule matches the task declaration
      header, then pushes the function scope. This causes the

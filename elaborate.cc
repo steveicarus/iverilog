@@ -3502,15 +3502,7 @@ bool PProcess::elaborate(Design*des, NetScope*scope) const
 	    return false;
       }
 
-      NetProcTop*top=0;
-      switch (type()) {
-	  case PProcess::PR_INITIAL:
-	    top = new NetProcTop(scope, NetProcTop::KINITIAL, cur);
-	    break;
-	  case PProcess::PR_ALWAYS:
-	    top = new NetProcTop(scope, NetProcTop::KALWAYS, cur);
-	    break;
-      }
+      NetProcTop*top=new NetProcTop(scope, type(), cur);
       ivl_assert(*this, top);
 
 	// Evaluate the attributes for this process, if there
@@ -3535,7 +3527,7 @@ bool PProcess::elaborate(Design*des, NetScope*scope) const
 	gets into its wait statement before non-combinational
 	code is executed. */
       do {
-	    if (top->type() != NetProcTop::KALWAYS)
+	    if (top->type() != IVL_PR_ALWAYS)
 		  break;
 
 	    NetEvWait*st = dynamic_cast<NetEvWait*>(top->statement());
@@ -3958,6 +3950,12 @@ bool PScope::elaborate_behaviors_(Design*des, NetScope*scope) const
 	    result_flag &= (*st)->elaborate(des, scope);
       }
 
+      for (list<AProcess*>::const_iterator st = analog_behaviors.begin()
+		 ; st != analog_behaviors.end() ; st ++ ) {
+
+	    result_flag &= (*st)->elaborate(des, scope);
+      }
+
       return result_flag;
 }
 
@@ -4045,7 +4043,7 @@ bool Design::check_always_delay() const
 	       * a runtime infinite loop will happen. If we possible have some
 	       * delay then print a warning that an infinite loop is possible.
 	       */
-	    if (pr->type() == NetProcTop::KALWAYS) {
+	    if (pr->type() == IVL_PR_ALWAYS) {
 		  DelayType dly_type = pr->statement()->delay_type();
 
 		  if (dly_type == NO_DELAY || dly_type == ZERO_DELAY) {

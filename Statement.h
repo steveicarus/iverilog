@@ -20,6 +20,7 @@
  */
 
 # include  <string>
+# include  "ivl_target.h"
 # include  "svector.h"
 # include  "StringHeap.h"
 # include  "PDelays.h"
@@ -46,16 +47,14 @@ class NetScope;
 class PProcess : public LineInfo {
 
     public:
-      enum Type { PR_INITIAL, PR_ALWAYS };
-
-      PProcess(Type t, Statement*st)
+      PProcess(ivl_process_type_t t, Statement*st)
       : type_(t), statement_(st) { }
 
       virtual ~PProcess();
 
       bool elaborate(Design*des, NetScope*scope) const;
 
-      Type type() const { return type_; }
+      ivl_process_type_t type() const { return type_; }
       Statement*statement() { return statement_; }
 
       map<perm_string,PExpr*> attributes;
@@ -63,7 +62,7 @@ class PProcess : public LineInfo {
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
-      Type type_;
+      ivl_process_type_t type_;
       Statement*statement_;
 };
 

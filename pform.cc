@@ -1304,7 +1304,7 @@ void pform_make_reginit(const struct vlltype&li,
       FILE_NAME(lval, li);
       PAssign*ass = new PAssign(lval, expr, true);
       FILE_NAME(ass, li);
-      PProcess*top = new PProcess(PProcess::PR_INITIAL, ass);
+      PProcess*top = new PProcess(IVL_PR_INITIAL, ass);
       FILE_NAME(top, li);
 
       pform_put_behavior_in_scope(top);
@@ -1947,7 +1947,7 @@ svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
       return out;
 }
 
-PProcess* pform_make_behavior(PProcess::Type type, Statement*st,
+PProcess* pform_make_behavior(ivl_process_type_t type, Statement*st,
 			      svector<named_pexpr_t*>*attr)
 {
       PProcess*pp = new PProcess(type, st);

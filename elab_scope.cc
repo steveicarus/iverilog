@@ -40,6 +40,7 @@
 # include  "PTask.h"
 # include  "PWire.h"
 # include  "Statement.h"
+# include  "AStatement.h"
 # include  "netlist.h"
 # include  "util.h"
 # include  <typeinfo>
@@ -1242,3 +1243,12 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
       if (statement_)
 	    statement_ -> elaborate_scope(des, scope);
 }
+
+/*
+ * The base statement does not have sub-statements and does not
+ * introduce any scope, so this is a no-op.
+ */
+void AStatement::elaborate_scope(Design*, NetScope*) const
+{
+}
+

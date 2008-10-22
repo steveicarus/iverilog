@@ -702,11 +702,11 @@ void NetUDP::dump_node(ostream&o, unsigned ind) const
 void NetProcTop::dump(ostream&o, unsigned ind) const
 {
       switch (type_) {
-	  case NetProcTop::KINITIAL:
+	  case IVL_PR_INITIAL:
 	    o << "initial  /* " << get_fileline() << " in "
 	      << scope_path(scope_) << " */" << endl;
 	    break;
-	  case NetProcTop::KALWAYS:
+	  case IVL_PR_ALWAYS:
 	    o << "always  /* " << get_fileline() << " in "
 	      << scope_path(scope_) << " */" << endl;
 	    break;

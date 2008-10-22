@@ -335,7 +335,7 @@ static void syn_start_process(NetProcTop*t)
       last_ = first_;
       ptr_ = first_;
 
-      first_->token = (t->type() == NetProcTop::KALWAYS)? S_ALWAYS : S_INITIAL;
+      first_->token = (t->type() == IVL_PR_ALWAYS)? S_ALWAYS : S_INITIAL;
       first_->top = t;
       first_->next_ = 0;
 
