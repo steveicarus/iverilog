@@ -24,7 +24,3 @@
 # include  <cstdlib>
 # include  <iostream>
 
-void AStatement::elaborate_sig(Design*des, NetScope*scope) const
-{
-}
-

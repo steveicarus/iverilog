@@ -20,21 +20,25 @@
 # include "config.h"
 
 # include  "AStatement.h"
+# include  "netlist.h"
+# include  "netmisc.h"
 # include  "util.h"
 
 # include  <typeinfo>
 
-NetAnalog* AStatement::elaborate(Design*des, NetScope*scope) const
+NetProc* AContrib::elaborate(Design*des, NetScope*scope) const
 {
-      cerr << get_fileline() << ": sorry: I don't yet know how to elaborate"
-	   << " his kind of analog statement." << endl;
-      cerr << get_fileline() << ":      : typeid = " << typeid(*this).name() << endl;
-      return 0;
+      NetExpr*lval = elab_and_eval(des, scope, lval_, -1);
+      NetExpr*rval = elab_and_eval(des, scope, rval_, -1);
+
+      NetContribution*st = new NetContribution(lval, rval);
+      st->set_line(*this);
+      return st;
 }
 
 bool AProcess::elaborate(Design*des, NetScope*scope) const
 {
-      NetAnalog*statement = statement_->elaborate(des, scope);
+      NetProc*statement = statement_->elaborate(des, scope);
       if (statement == 0)
 	    return false;
 

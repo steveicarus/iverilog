@@ -1243,12 +1243,3 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
       if (statement_)
 	    statement_ -> elaborate_scope(des, scope);
 }
-
-/*
- * The base statement does not have sub-statements and does not
- * introduce any scope, so this is a no-op.
- */
-void AStatement::elaborate_scope(Design*, NetScope*) const
-{
-}
-

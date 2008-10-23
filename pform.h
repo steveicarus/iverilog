@@ -396,10 +396,10 @@ extern void pform_dump(ostream&out, const discipline_t*);
 /* ** pform_analog.cc
 */
 extern void pform_make_analog_behavior(const struct vlltype&loc,
-				       ivl_process_type_t type, AStatement*st);
+				       ivl_process_type_t type, Statement*st);
 
-extern AStatement*pform_contribution_statement(const struct vlltype&loc,
-					       PExpr*lval, PExpr*rval);
+extern AContrib*pform_contribution_statement(const struct vlltype&loc,
+					     PExpr*lval, PExpr*rval);
 
 extern PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
 						 char*name, char*n1, char*n2);

@@ -2435,6 +2435,24 @@ class NetCondit  : public NetProc {
 };
 
 /*
+ * This represents the analog contribution statement. The l-val is a
+ * branch expression, and the r-value is an arbitrary expression that
+ * may include branches and real values.
+ */
+class NetContribution : public NetProc {
+
+    public:
+      explicit NetContribution(NetExpr*lval, NetExpr*rval);
+      ~NetContribution();
+
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetExpr*lval_;
+      NetExpr*rval_;
+};
+
+/*
  * The procedural deassign statement (the opposite of assign) releases
  * any assign expressions attached to the bits of the reg. The
  * lval is the expression of the "deassign <expr>;" statement with the
@@ -3080,19 +3098,16 @@ class NetProcTop  : public LineInfo, public Attrib {
       NetProcTop*next_;
 };
 
-class NetAnalog  : public LineInfo, public Attrib {
-};
-
 class NetAnalogTop  : public LineInfo, public Attrib {
 
     public:
-      NetAnalogTop(NetScope*scope, ivl_process_type_t t, NetAnalog*st);
+      NetAnalogTop(NetScope*scope, ivl_process_type_t t, NetProc*st);
       ~NetAnalogTop();
 
       ivl_process_type_t type() const { return type_; }
 
-      NetAnalog*statement();
-      const NetAnalog*statement() const;
+      NetProc*statement();
+      const NetProc*statement() const;
 
       NetScope*scope();
       const NetScope*scope() const;
@@ -3102,7 +3117,7 @@ class NetAnalogTop  : public LineInfo, public Attrib {
 
     private:
       const ivl_process_type_t type_;
-      NetAnalog* statement_;
+      NetProc* statement_;
 
       NetScope*scope_;
       friend class Design;

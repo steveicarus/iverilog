@@ -23,6 +23,7 @@
 # include  "ivl_target.h"
 # include  "StringHeap.h"
 # include  "LineInfo.h"
+# include  "Statement.h"
 # include  "PExpr.h"
 
 class PExpr;
@@ -30,36 +31,19 @@ class NetAnalog;
 class NetScope;
 class Design;
 
-class AStatement  : public LineInfo {
-
-    public:
-      AStatement() { }
-      virtual ~AStatement() =0;
-
-      virtual void dump(ostream&out, unsigned ind) const;
-      virtual NetAnalog* elaborate(Design*des, NetScope*scope) const;
-      virtual void elaborate_scope(Design*des, NetScope*scope) const;
-      virtual void elaborate_sig(Design*des, NetScope*scope) const;
-
-      map<perm_string,PExpr*> attributes;
-
-    private: // not implemented
-      AStatement(const AStatement&);
-      AStatement& operator= (const AStatement&);
-};
-
 /*
  * A contribution statement is like an assignment: there is an l-value
  * expression and an r-value expression. The l-value is a branch probe
  * expression.
  */
-class AContrib : public AStatement {
+class AContrib : public Statement {
 
     public:
       AContrib(PExpr*lval, PExpr*rval);
       ~AContrib();
 
       virtual void dump(ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
 
     private:
       PExpr*lval_;
@@ -74,7 +58,7 @@ class AContrib : public AStatement {
 class AProcess : public LineInfo {
 
     public:
-      AProcess(ivl_process_type_t t, AStatement*st)
+      AProcess(ivl_process_type_t t, Statement*st)
       : type_(t), statement_(st) { }
 
       ~AProcess();
@@ -82,7 +66,7 @@ class AProcess : public LineInfo {
       bool elaborate(Design*des, NetScope*scope) const;
 
       ivl_process_type_t type() const { return type_; }
-      AStatement*statement() { return statement_; }
+      Statement*statement() { return statement_; }
 
       map<perm_string,PExpr*> attributes;
 
@@ -91,7 +75,7 @@ class AProcess : public LineInfo {
 
     private:
       ivl_process_type_t type_;
-      AStatement*statement_;
+      Statement*statement_;
 
     private: // not implemented
       AProcess(const AProcess&);

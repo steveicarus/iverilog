@@ -564,16 +564,6 @@ void Statement::dump(ostream&out, unsigned ind) const
       dump_attributes_map(out, attributes, ind+2);
 }
 
-void AStatement::dump(ostream&out, unsigned ind) const
-{
-	/* I give up. I don't know what type this statement is,
-	   so just print the C++ typeid and let the user figure
-	   it out. */
-      out << setw(ind) << "";
-      out << "/* " << get_fileline() << ": " << typeid(*this).name()
-	  << " */ ;" << endl;
-}
-
 void AContrib::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";

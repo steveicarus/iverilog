@@ -720,6 +720,23 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
       statement_->dump(o, ind+2);
 }
 
+void NetAnalogTop::dump(ostream&o, unsigned ind) const
+{
+      switch (type_) {
+	  case IVL_PR_INITIAL:
+	    o << "analog initial /* " << get_fileline() << " in "
+	      << scope_path(scope_) << " */" << endl;
+	    break;
+
+	  case IVL_PR_ALWAYS:
+	    o << "analog /* " << get_fileline() << " in "
+	      << scope_path(scope_) << " */" << endl;
+	    break;
+      }
+
+      statement_->dump(o, ind+2);
+}
+
 void NetAlloc::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "// allocate storage : " << scope_path(scope_) << endl;
@@ -866,6 +883,15 @@ void NetCondit::dump(ostream&o, unsigned ind) const
 	    o << setw(ind) << "" << "else" << endl;
 	    else_->dump(o, ind+4);
       }
+}
+
+void NetContribution::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "";
+      lval_->dump(o);
+      o << " <+ ";
+      rval_->dump(o);
+      o << ";" << endl;
 }
 
 void NetDeassign::dump(ostream&o, unsigned ind) const
@@ -1494,4 +1520,6 @@ void Design::dump(ostream&o) const
       for (const NetProcTop*idx = procs_ ;  idx ;  idx = idx->next_)
 	    idx->dump(o, 0);
 
+      for (const NetAnalogTop*idx = aprocs_ ; idx ; idx = idx->next_)
+	    idx->dump(o, 0);
 }

@@ -180,7 +180,6 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       PEventStatement*event_statement;
       Statement*statement;
       svector<Statement*>*statement_list;
-      AStatement*astatement;
 
       PTaskFuncArg function_type;
 
@@ -304,7 +303,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %type <statement> statement statement_or_null
 %type <statement_list> statement_list
 
-%type <astatement> analog_statement
+%type <statement> analog_statement
 
 %type <letter> spec_polarity
 %type <perm_strings>  specify_path_identifiers
