@@ -861,6 +861,7 @@ class NetScope : public Attrib {
       NetNet::Type default_nettype_;
 
       NetEvent *events_;
+      std::map <perm_string,NetNet*> signals_map_;
       NetNet   *signals_;
       perm_string module_name_;
       union {

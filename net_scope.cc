@@ -370,11 +370,13 @@ void NetScope::add_signal(NetNet*net)
 	    net->sig_prev_->sig_next_ = net;
       }
       signals_ = net;
+      signals_map_[net->name()]=net;
 }
 
 void NetScope::rem_signal(NetNet*net)
 {
       assert(net->scope() == this);
+      signals_map_.erase(net->name());
       if (signals_ == net)
 	    signals_ = net->sig_prev_;
 
@@ -395,6 +397,11 @@ NetNet* NetScope::find_signal(perm_string key)
 {
       if (signals_ == 0)
 	    return 0;
+
+      if (signals_map_.find(key)!=signals_map_.end())
+        return signals_map_[key];
+      else
+        return 0;
 
       NetNet*cur = signals_;
       do {
