@@ -1295,7 +1295,25 @@ v		       NOTE that this also handles the case that the
 	    if ((instance.count() == 1)
 		&& (prts_vector_width != sig->vector_width())) {
 		  const char *tmp3 = rmod->ports[idx]->name.str();
+		  bool as_signed = false;
+
 		  if (tmp3 == 0) tmp3 = "???";
+
+		  switch (prts[0]->port_type()) {
+		    case NetNet::POUTPUT:
+			as_signed = prts[0]->get_signed();
+			break;
+		    case NetNet::PINPUT:
+			as_signed = sig->get_signed();
+			break;
+		    case NetNet::PINOUT:
+			  /* This may not be correct! */
+			as_signed = prts[0]->get_signed() && sig->get_signed();
+			break;
+		    default:
+			ivl_assert(*this, 0);
+		  }
+
 		  cerr << get_fileline() << ": warning: Port " << (idx+1)
 		       << " (" << tmp3 << ") of "
 		       << type_ << " expects " << prts_vector_width <<
@@ -1316,21 +1334,21 @@ v		       NOTE that this also handles the case that the
 		     }
 		    // Keep the if, but delete the "} else" when fixed.
 		  } else if (prts_vector_width > sig->vector_width()) {
-			cerr << get_fileline() << ":        : Padding "
-			     << (prts_vector_width-sig->vector_width())
+			cerr << get_fileline() << ":        : Padding ";
+			if (as_signed) cerr << "(signed) ";
+			cerr << (prts_vector_width-sig->vector_width())
 			     << " high bits of the port."
 			     << endl;
 		  } else {
-			cerr << get_fileline() << ":        : Padding "
-			     << (sig->vector_width()-prts_vector_width)
+			cerr << get_fileline() << ":        : Padding ";
+			if (as_signed) cerr << "(signed) ";
+			cerr << (sig->vector_width()-prts_vector_width)
 			     << " high bits of the expression."
 			     << endl;
 		  }
 
 		  sig = resize_net_to_port_(des, scope, sig, prts_vector_width,
-					    prts[0]->port_type(),
-					    prts[0]->get_signed() &&
-					    sig->get_signed());
+					    prts[0]->port_type(), as_signed);
 	    }
 
 	      // Connect the sig expression that is the context of the
@@ -2220,6 +2238,16 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 	    cerr << get_fileline() << ": debug: Elaborate condition statement"
 		 << " with conditional: " << *expr_ << endl;
 
+      // Run a test-width on the condition so that its types are
+      // worked out for elaboration later on.
+      ivl_variable_type_t rtype = IVL_VT_NO_TYPE;
+      bool rflag = false;
+      unsigned expr_wid = expr_->test_width(des, scope, 0, 0, rtype, rflag);
+      if (debug_elaborate)
+	   cerr << get_fileline() << ": debug: Test width of condition expression"
+	        << " returns wid=" << expr_wid << ", type=" << rtype
+		<< ", flag=" << rflag << endl;
+
 	// Elaborate and try to evaluate the conditional expression.
       NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
@@ -2232,7 +2260,7 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 	// If the condition of the conditional statement is constant,
 	// then look at the value and elaborate either the if statement
 	// or the else statement. I don't need both. If there is no
-	// else_ statement, the use an empty block as a noop.
+	// else_ statement, then use an empty block as a noop.
       if (NetEConst*ce = dynamic_cast<NetEConst*>(expr)) {
 	    verinum val = ce->value();
 	    if (debug_elaborate) {
@@ -2432,9 +2460,9 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
       NetUTask*cur;
 
-	/* Handle tasks with no parameters specially. There is no need
-	   to make a sequential block to hold the generated code. */
-      if (nparms() == 0) {
+	/* Handle non-automatic tasks with no parameters specially. There is
+           no need to make a sequential block to hold the generated code. */
+      if ((nparms() == 0) && !task->is_auto()) {
 	    cur = new NetUTask(task);
 	    cur->set_line(*this);
 	    return cur;
@@ -2825,7 +2853,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    assert(expr_[idx]->expr());
 
 	      /* If the expression is an identifier that matches a
-		 named event, then handle this case all at once at
+		 named event, then handle this case all at once and
 		 skip the rest of the expression handling. */
 
 	    if (PEIdent*id = dynamic_cast<PEIdent*>(expr_[idx]->expr())) {

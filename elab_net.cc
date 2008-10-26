@@ -251,6 +251,27 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		      lidx = tmpx;
 		}
 
+		  /* Warn about an indexed part select that is out of range. */
+		if (midx >= (long)sig->vector_width() || lidx < 0) {
+		      cerr << get_fileline() << ": warning: Indexed part "
+                              "select " << sig->name();
+		      if (sig->array_dimensions() > 0) {
+			    cerr << "[]";
+		      }
+		      cerr << "[" << midx_val;
+		      if (index_tail.sel == index_component_t::SEL_IDX_UP) {
+			    cerr << "+:";
+		      } else {
+			    cerr << "-:";
+		      }
+		      cerr << wid << "] is out of range." << endl;
+		}
+
+		  /* This is completely out side the signal so just skip it. */
+		if (lidx >= (long)sig->vector_width() || midx < 0) {
+		      return false;
+		}
+
 		break;
 	  }
 
@@ -275,16 +296,24 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		      des->errors += 1;
 		}
 
-		  /* Detect a part select out of range. */
+		  /* Warn about a part select that is out of range. */
 		if (midx_tmp >= (long)sig->vector_width() || lidx_tmp < 0) {
 		      cerr << get_fileline() << ": warning: Part select "
-			   << sig->name() << "[" << msb << ":"
-			   << lsb << "] out of range." << endl;
+			   << sig->name();
+		      if (sig->array_dimensions() > 0) {
+			    cerr << "[]";
+		      }
+		      cerr << "[" << msb << ":" << lsb
+			   << "] is out of range." << endl;
 #if 0
 		      midx_tmp = sig->vector_width() - 1;
 		      lidx_tmp = 0;
 		      des->errors += 1;
 #endif
+		}
+		  /* This is completely out side the signal so just skip it. */
+		if (lidx_tmp >= (long)sig->vector_width() || midx_tmp < 0) {
+		      return false;
 		}
 
 		midx = midx_tmp;
@@ -311,7 +340,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		  midx = sig->sb_to_idx(mval->as_long());
 		  if (midx >= (long)sig->vector_width()) {
 			cerr << get_fileline() << ": error: Index " << sig->name()
-			     << "[" << mval->as_long() << "] out of range."
+			     << "[" << mval->as_long() << "] is out of range."
 			     << endl;
 			des->errors += 1;
 			midx = 0;
@@ -428,7 +457,14 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  long midx_tmp, lidx_tmp;
 		  if (! eval_part_select_(des, scope, sig, midx_tmp, lidx_tmp))
 		        return 0;
-		  ivl_assert(*this, lidx_tmp >= 0);
+
+		  if (lidx_tmp < 0) {
+		        cerr << get_fileline() << ": sorry: part selects " 
+		                "straddling the start of signal (" << path_
+		             << ") are not currently supported." << endl;
+		        des->errors += 1;
+		        return 0;
+		  }
 		  midx = midx_tmp;
 		  lidx = lidx_tmp;
 	    }
@@ -437,7 +473,13 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    if (! eval_part_select_(des, scope, sig, midx_tmp, lidx_tmp))
 		  return 0;
 
-	    ivl_assert(*this, lidx_tmp >= 0);
+	    if (lidx_tmp < 0) {
+		  cerr << get_fileline() << ": sorry: part selects " 
+		          "straddling the start of signal (" << path_
+                       << ") are not currently supported." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
 	    midx = midx_tmp;
 	    lidx = lidx_tmp;
       }

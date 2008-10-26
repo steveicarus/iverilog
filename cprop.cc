@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -739,7 +739,8 @@ v		}
       }
 }
 
-static void replace_with_bufif(Design*des, NetMux*obj, NetLogic::TYPE type)
+#if 0
+static void replace_with_mos(Design*des, NetMux*obj, NetLogic::TYPE type)
 {
       NetScope*scope = obj->scope();
       NetLogic*tmp = new NetLogic(obj->scope(),
@@ -749,7 +750,7 @@ static void replace_with_bufif(Design*des, NetMux*obj, NetLogic::TYPE type)
       des->add_node(tmp);
 
       connect(obj->pin_Result(), tmp->pin(0));
-      connect(obj->pin_Data(type==NetLogic::BUFIF0? 0 : 1),  tmp->pin(1));
+      connect(obj->pin_Data(type==NetLogic::PMOS? 0 : 1),  tmp->pin(1));
 
       if (obj->width() == 1) {
 	      /* Special case that the expression is 1 bit
@@ -780,10 +781,11 @@ static void replace_with_bufif(Design*des, NetMux*obj, NetLogic::TYPE type)
 
       delete obj;
 }
+#endif
 
 /*
  * This detects the case where the mux selects between a value and
- * Vz. In this case, replace the device with a bufif with the sel
+ * Vz. In this case, replace the device with a mos with the sel
  * input used to enable the output.
  */
 void cprop_functor::lpm_mux(Design*des, NetMux*obj)
@@ -793,45 +795,34 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
       if (obj->sel_width() != 1)
 	    return;
 
+#if 0
+/*
+ * This is slower than the actual MUXZ so we are skipping this for now.
+ * If we had a half mux functor this could be faster and more compact
+ * so I'm leaving the code for future reference.
+ */
 	/* If the first input is all constant Vz, then replace the
-	   NetMux with an array of BUFIF1 devices, with the enable
+	   NetMux with an array of NMOS devices, with the enable
 	   connected to the select input. */
-      bool flag = true;
-
-      if (! obj->pin_Data(0).nexus()->drivers_constant()) {
-	    flag = false;
-      }
-
-      if (flag && obj->pin_Data(0).nexus()->driven_value() != verinum::Vz) {
-	    flag = false;
-      }
-
-      if (flag) {
-	    replace_with_bufif(des, obj, NetLogic::BUFIF1);
+      if (obj->pin_Data(0).nexus()->drivers_constant() &&
+          obj->pin_Data(0).nexus()->driven_value() == verinum::Vz) {
+	    replace_with_mos(des, obj, NetLogic::NMOS);
 	    count += 1;
 	    return;
       }
-
 
 	/* If instead the second input is all constant Vz, replace the
-	   NetMux with an array of BUFIF0 devices. */
-      flag = true;
-      if (! obj->pin_Data(1).nexus()->drivers_constant()) {
-	    flag = false;
-      }
-
-      if (flag && obj->pin_Data(1).nexus()->driven_value() != verinum::Vz) {
-	    flag = false;
-      }
-
-      if (flag) {
-	    replace_with_bufif(des, obj, NetLogic::BUFIF0);
+	   NetMux with an array of PMOS devices. */
+      if (obj->pin_Data(1).nexus()->drivers_constant() &&
+          obj->pin_Data(1).nexus()->driven_value() == verinum::Vz) {
+	    replace_with_mos(des, obj, NetLogic::PMOS);
 	    count += 1;
 	    return;
       }
+#endif
 
 	/* If the select input is constant, then replace with a BUFZ */
-      flag = obj->pin_Sel().nexus()->drivers_constant();
+      bool flag = obj->pin_Sel().nexus()->drivers_constant();
       verinum::V sel_val = flag? obj->pin_Sel().nexus()->driven_value() : verinum::Vx;
       if ((sel_val != verinum::Vz) && (sel_val != verinum::Vx)) {
 	    NetBUFZ*tmp = new NetBUFZ(obj->scope(), obj->name(), obj->width());
@@ -974,4 +965,3 @@ void cprop(Design*des)
       cprop_dc_functor dc;
       des->functor(&dc);
 }
-

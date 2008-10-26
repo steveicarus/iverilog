@@ -66,7 +66,7 @@ class PExpr : public LineInfo {
 	// The expr_type is an output argument that gives the
 	// calculated type for the expression.
 	//
-	// The unsigned_flag is set to true if the expression is
+	// The unsized_flag is set to true if the expression is
 	// unsized and therefore expandable. This happens if a
 	// sub-expression is an unsized literal. Some expressions make
 	// special use of that.
@@ -155,6 +155,11 @@ class PEConcat : public PExpr {
 
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
       virtual void dump(ostream&) const;
+
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
+				  bool&unsized_flag);
 
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;

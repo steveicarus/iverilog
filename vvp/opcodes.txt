@@ -407,8 +407,8 @@ bits.
 	5: (reserved)
 	6: (reserved)
 
-* %ix/getv <functor-label>, <bit>
-* %ix/getv/s <functor-label>, <bit>
+* %ix/getv <idx>, <functor-label>
+* %ix/getv/s <idx>, <functor-label>
 
 These instructions are like the %ix/get instructions, except that they
 read directly from a functor label instead of from thread bits. They

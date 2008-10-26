@@ -257,13 +257,13 @@ void dll_target::expr_const(const NetEConst*net)
 
 void dll_target::expr_param(const NetEConstParam*net)
 {
-      ivl_scope_t scope = find_scope(des_, net->scope());
-      ivl_parameter_t par = scope_find_param(scope, net->name());
+      ivl_scope_t scop = find_scope(des_, net->scope());
+      ivl_parameter_t par = scope_find_param(scop, net->name());
 
       if (par == 0) {
 	    cerr << net->get_fileline() << ": internal error: "
 		 << "Parameter " << net->name() << " missing from "
-		 << ivl_scope_name(scope) << endl;
+		 << ivl_scope_name(scop) << endl;
       }
       assert(par);
       assert(par->value);

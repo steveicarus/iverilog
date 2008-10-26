@@ -85,7 +85,7 @@ bool dll_target::process(const NetProcTop*net)
 
 void dll_target::task_def(const NetScope*net)
 {
-      ivl_scope_t scope = lookup_scope_(net);
+      ivl_scope_t scop = lookup_scope_(net);
       const NetTaskDef*def = net->task_def();
 
       assert(stmt_cur_ == 0);
@@ -94,14 +94,14 @@ void dll_target::task_def(const NetScope*net)
       def->proc()->emit_proc(this);
 
       assert(stmt_cur_);
-      scope->def = stmt_cur_;
+      scop->def = stmt_cur_;
       stmt_cur_ = 0;
 
 }
 
 bool dll_target::func_def(const NetScope*net)
 {
-      ivl_scope_t scope = lookup_scope_(net);
+      ivl_scope_t scop = lookup_scope_(net);
       const NetFuncDef*def = net->func_def();
 
       assert(stmt_cur_ == 0);
@@ -110,14 +110,14 @@ bool dll_target::func_def(const NetScope*net)
       def->proc()->emit_proc(this);
 
       assert(stmt_cur_);
-      scope->def = stmt_cur_;
+      scop->def = stmt_cur_;
       stmt_cur_ = 0;
 
-      scope->ports = def->port_count() + 1;
-      if (scope->ports > 0) {
-	    scope->port = new ivl_signal_t[scope->ports];
-	    for (unsigned idx = 1 ;  idx < scope->ports ;  idx += 1)
-		  scope->port[idx] = find_signal(des_, def->port(idx-1));
+      scop->ports = def->port_count() + 1;
+      if (scop->ports > 0) {
+	    scop->port = new ivl_signal_t[scop->ports];
+	    for (unsigned idx = 1 ;  idx < scop->ports ;  idx += 1)
+		  scop->port[idx] = find_signal(des_, def->port(idx-1));
       }
 
 	/* FIXME: the ivl_target API expects port-0 to be the output
@@ -126,7 +126,7 @@ bool dll_target::func_def(const NetScope*net)
 	   this, but that will break code generators that use this
 	   result. */
       if (const NetNet*ret_sig = def->return_sig()) {
-	    scope->port[0] = find_signal(des_, ret_sig);
+	    scop->port[0] = find_signal(des_, ret_sig);
 	    return true;
       }
 

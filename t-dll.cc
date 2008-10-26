@@ -469,15 +469,15 @@ ivl_parameter_t dll_target::scope_find_param(ivl_scope_t scope,
  * ivl_parameter_t objects. This involves saving the name and scanning
  * the expression value.
  */
-void dll_target::make_scope_parameters(ivl_scope_t scope, const NetScope*net)
+void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 {
-      scope->nparam_ = net->parameters.size() + net->localparams.size();
-      if (scope->nparam_ == 0) {
-	    scope->param_ = 0;
+      scop->nparam_ = net->parameters.size() + net->localparams.size();
+      if (scop->nparam_ == 0) {
+	    scop->param_ = 0;
 	    return;
       }
 
-      scope->param_ = new struct ivl_parameter_s [scope->nparam_];
+      scop->param_ = new struct ivl_parameter_s [scop->nparam_];
 
       unsigned idx = 0;
       typedef map<perm_string,NetScope::param_expr_t>::const_iterator pit_t;
@@ -485,10 +485,10 @@ void dll_target::make_scope_parameters(ivl_scope_t scope, const NetScope*net)
       for (pit_t cur_pit = net->parameters.begin()
 		 ; cur_pit != net->parameters.end() ;  cur_pit ++) {
 
-	    assert(idx < scope->nparam_);
-	    ivl_parameter_t cur_par = scope->param_ + idx;
+	    assert(idx < scop->nparam_);
+	    ivl_parameter_t cur_par = scop->param_ + idx;
 	    cur_par->basename = (*cur_pit).first;
-	    cur_par->scope = scope;
+	    cur_par->scope = scop;
 	    cur_par->file = (*cur_pit).second.get_file();
 	    cur_par->lineno = (*cur_pit).second.get_lineno();
 
@@ -499,10 +499,10 @@ void dll_target::make_scope_parameters(ivl_scope_t scope, const NetScope*net)
       for (pit_t cur_pit = net->localparams.begin()
 		 ; cur_pit != net->localparams.end() ;  cur_pit ++) {
 
-	    assert(idx < scope->nparam_);
-	    ivl_parameter_t cur_par = scope->param_ + idx;
+	    assert(idx < scop->nparam_);
+	    ivl_parameter_t cur_par = scop->param_ + idx;
 	    cur_par->basename = (*cur_pit).first;
-	    cur_par->scope = scope;
+	    cur_par->scope = scop;
 	    cur_par->file = (*cur_pit).second.get_file();
 	    cur_par->lineno = (*cur_pit).second.get_lineno();
 
@@ -530,9 +530,9 @@ void dll_target::make_scope_param_expr(ivl_parameter_t cur_par, NetExpr*etmp)
 		  assert(0);
 	    }
 
-      } else if (const NetECReal*e = dynamic_cast<const NetECReal*>(etmp)) {
+      } else if (const NetECReal*er = dynamic_cast<const NetECReal*>(etmp)) {
 
-	    expr_creal(e);
+	    expr_creal(er);
 	    assert(expr_);
 	    assert(expr_->type_ == IVL_EX_REALNUM);
 	    expr_->u_.real_.parameter = cur_par;
@@ -550,7 +550,7 @@ void dll_target::make_scope_param_expr(ivl_parameter_t cur_par, NetExpr*etmp)
       expr_ = 0;
 }
 
-void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
+void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
 {
       ivl_scope_t root_ = new struct ivl_scope_s;
       perm_string name = s->basename();
@@ -577,12 +577,12 @@ void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
       root_->attr  = fill_in_attributes(s);
       root_->is_auto = 0;
 
-      des_.nroots_++;
-      if (des_.roots_)
-	    des_.roots_ = (ivl_scope_t *)realloc(des_.roots_, des_.nroots_ * sizeof(ivl_scope_t));
+      des__.nroots_++;
+      if (des__.roots_)
+	    des__.roots_ = (ivl_scope_t *)realloc(des__.roots_, des__.nroots_ * sizeof(ivl_scope_t));
       else
-	    des_.roots_ = (ivl_scope_t *)malloc(des_.nroots_ * sizeof(ivl_scope_t));
-      des_.roots_[des_.nroots_ - 1] = root_;
+	    des__.roots_ = (ivl_scope_t *)malloc(des__.nroots_ * sizeof(ivl_scope_t));
+      des__.roots_[des__.nroots_ - 1] = root_;
 }
 
 bool dll_target::start_design(const Design*des)
@@ -615,9 +615,9 @@ bool dll_target::start_design(const Design*des)
       des_.roots_ = NULL;
 
       root_scopes = des->find_root_scopes();
-      for (list<NetScope*>::const_iterator scope = root_scopes.begin();
-	   scope != root_scopes.end(); scope++)
-	    add_root(des_, *scope);
+      for (list<NetScope*>::const_iterator scop = root_scopes.begin();
+	   scop != root_scopes.end(); scop++)
+	    add_root(des_, *scop);
 
       des_.consts  = (ivl_net_const_t*)
 	    malloc(sizeof(ivl_net_const_t));
@@ -848,17 +848,17 @@ bool dll_target::bufz(const NetBUFZ*net)
 	/* Attach the logic device to the scope that contains it. */
 
       assert(net->scope());
-      ivl_scope_t scope = find_scope(des_, net->scope());
-      assert(scope);
+      ivl_scope_t scop = find_scope(des_, net->scope());
+      assert(scop);
 
-      obj->scope_ = scope;
+      obj->scope_ = scop;
 
       obj->name_ = net->name();
       logic_attributes(obj, net);
 
       make_logic_delays_(obj, net);
 
-      scope_add_logic(scope, obj);
+      scope_add_logic(scop, obj);
 
       return true;
 }
@@ -867,10 +867,10 @@ void dll_target::event(const NetEvent*net)
 {
       struct ivl_event_s *obj = new struct ivl_event_s;
 
-      ivl_scope_t scope = find_scope(des_, net->scope());
+      ivl_scope_t scop = find_scope(des_, net->scope());
       obj->name = net->name();
-      obj->scope = scope;
-      scope_add_event(scope, obj);
+      obj->scope = scop;
+      scope_add_event(scop, obj);
 
       obj->nany = 0;
       obj->nneg = 0;
@@ -1029,17 +1029,17 @@ void dll_target::logic(const NetLogic*net)
       }
 
       assert(net->scope());
-      ivl_scope_t scope = find_scope(des_, net->scope());
-      assert(scope);
+      ivl_scope_t scop = find_scope(des_, net->scope());
+      assert(scop);
 
-      obj->scope_= scope;
+      obj->scope_= scop;
       obj->name_ = net->name();
 
       logic_attributes(obj, net);
 
       make_logic_delays_(obj, net);
 
-      scope_add_logic(scope, obj);
+      scope_add_logic(scop, obj);
 }
 
 bool dll_target::tran(const NetTran*net)
@@ -1377,10 +1377,10 @@ void dll_target::udp(const NetUDP*net)
       }
 
       assert(net->scope());
-      ivl_scope_t scope = find_scope(des_, net->scope());
-      assert(scope);
+      ivl_scope_t scop = find_scope(des_, net->scope());
+      assert(scop);
 
-      obj->scope_= scope;
+      obj->scope_= scop;
       obj->name_ = net->name();
 
       make_logic_delays_(obj, net);
@@ -1388,7 +1388,7 @@ void dll_target::udp(const NetUDP*net)
       obj->nattr = 0;
       obj->attr = 0;
 
-      scope_add_logic(scope, obj);
+      scope_add_logic(scop, obj);
 }
 
 void dll_target::lpm_abs(const NetAbs*net)
@@ -2293,81 +2293,81 @@ void dll_target::net_probe(const NetEvProbe*net)
 
 void dll_target::scope(const NetScope*net)
 {
-      ivl_scope_t scope;
+      ivl_scope_t scop;
 
       if (net->parent() == 0) {
 	    unsigned i;
-	    scope = NULL;
-	    for (i = 0; i < des_.nroots_ && scope == NULL; i++) {
+	    scop = NULL;
+	    for (i = 0; i < des_.nroots_ && scop == NULL; i++) {
 		  if (strcmp(des_.roots_[i]->name_, net->basename()) == 0)
-			scope = des_.roots_[i];
+			scop = des_.roots_[i];
 	    }
-	    assert(scope);
+	    assert(scop);
 
       } else {
 	    perm_string sname = make_scope_name(net->fullname());
-	    scope = new struct ivl_scope_s;
-	    scope->name_ = sname;
-	    FILE_NAME(scope, net);
-	    scope->child_ = 0;
-	    scope->sibling_ = 0;
-	    scope->parent = find_scope(des_, net->parent());
-	    assert(scope->parent);
-	    scope->nsigs_ = 0;
-	    scope->sigs_ = 0;
-	    scope->nlog_ = 0;
-	    scope->log_ = 0;
-	    scope->nevent_ = 0;
-	    scope->event_ = 0;
-	    scope->nlpm_ = 0;
-	    scope->lpm_ = 0;
-	    scope->def = 0;
-	    make_scope_parameters(scope, net);
-	    scope->time_precision = net->time_precision();
-	    scope->time_units = net->time_unit();
-	    scope->nattr = net->attr_cnt();
-	    scope->attr = fill_in_attributes(net);
-	    scope->is_auto = net->is_auto();
+	    scop = new struct ivl_scope_s;
+	    scop->name_ = sname;
+	    FILE_NAME(scop, net);
+	    scop->child_ = 0;
+	    scop->sibling_ = 0;
+	    scop->parent = find_scope(des_, net->parent());
+	    assert(scop->parent);
+	    scop->nsigs_ = 0;
+	    scop->sigs_ = 0;
+	    scop->nlog_ = 0;
+	    scop->log_ = 0;
+	    scop->nevent_ = 0;
+	    scop->event_ = 0;
+	    scop->nlpm_ = 0;
+	    scop->lpm_ = 0;
+	    scop->def = 0;
+	    make_scope_parameters(scop, net);
+	    scop->time_precision = net->time_precision();
+	    scop->time_units = net->time_unit();
+	    scop->nattr = net->attr_cnt();
+	    scop->attr = fill_in_attributes(net);
+	    scop->is_auto = net->is_auto();
 
 	    switch (net->type()) {
 		case NetScope::MODULE:
-		  scope->type_ = IVL_SCT_MODULE;
-		  scope->tname_ = net->module_name();
+		  scop->type_ = IVL_SCT_MODULE;
+		  scop->tname_ = net->module_name();
 		  break;
 		case NetScope::TASK: {
 		      const NetTaskDef*def = net->task_def();
 		      if (def == 0) {
 			    cerr <<  "?:?" << ": internal error: "
-				 << "task " << scope->name_
+				 << "task " << scop->name_
 				 << " has no definition." << endl;
 		      }
 		      assert(def);
-		      scope->type_ = IVL_SCT_TASK;
-		      scope->tname_ = def->scope()->basename();
+		      scop->type_ = IVL_SCT_TASK;
+		      scop->tname_ = def->scope()->basename();
 		      break;
 		}
 		case NetScope::FUNC:
-		  scope->type_ = IVL_SCT_FUNCTION;
-		  scope->tname_ = net->func_def()->scope()->basename();
+		  scop->type_ = IVL_SCT_FUNCTION;
+		  scop->tname_ = net->func_def()->scope()->basename();
 		  break;
 		case NetScope::BEGIN_END:
-		  scope->type_ = IVL_SCT_BEGIN;
-		  scope->tname_ = scope->name_;
+		  scop->type_ = IVL_SCT_BEGIN;
+		  scop->tname_ = scop->name_;
 		  break;
 		case NetScope::FORK_JOIN:
-		  scope->type_ = IVL_SCT_FORK;
-		  scope->tname_ = scope->name_;
+		  scop->type_ = IVL_SCT_FORK;
+		  scop->tname_ = scop->name_;
 		  break;
 		case NetScope::GENBLOCK:
-		  scope->type_ = IVL_SCT_GENERATE;
-		  scope->tname_ = scope->name_;
+		  scop->type_ = IVL_SCT_GENERATE;
+		  scop->tname_ = scop->name_;
 		  break;
 	    }
 
-	    assert(scope->parent != 0);
+	    assert(scop->parent != 0);
 
-	    scope->sibling_= scope->parent->child_;
-	    scope->parent->child_ = scope;
+	    scop->sibling_= scop->parent->child_;
+	    scop->parent->child_ = scop;
       }
 }
 
