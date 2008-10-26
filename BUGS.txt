@@ -4,23 +4,24 @@ HOW TO REPORT BUGS
 Before I can fix an error, I need to understand what the problem
 is. Try to explain what is wrong and why you think it is wrong. Please
 try to include sample code that demonstrates the problem. Include a
-description of what ivl does that is wrong, and what you expect should
-happen. And include the command line flags passed to the compiler to make
-the error happen. (This is often overlooked, and sometimes important.)
+description of what Icarus Verilog does that is wrong, and what you
+expect should happen. And include the command line flags passed to the
+compiler to make the error happen. (This is often overlooked, and
+sometimes important.)
 
 * The Compiler Doesn't Compile
 
-If the Icarus Verilog don't compile, I need to know about the
+If Icarus Verilog doesn't compile, I need to know about the
 compilation tools you are using. Specifically, I need to know:
 
 	- Operating system and processor type,
 	- Compiler w/ version,
-	- Library version, and
+	- Versions of any libraries being linked, and
 	- anything else you think relevant.
 
 Be aware that I do not have at my disposal a porting lab. I have the
-alpha on my desk, and the Linux/Intel box with a logic analyzer and
-'scope hanging off it.
+workstation on my desk, a Mac laptop, and the Linux/Intel box with a
+logic analyzer and 'scope hanging off it.
 
 * The Compiler Crashes
 
@@ -28,26 +29,26 @@ No compiler should crash, no matter what kind of garbage is fed to
 it. If the compiler crashes, you definitely found a bug and I need to
 know about it.
 
-Ivl internally checks its state while it works, and if it detects
-something wrong that it cannot recover from, it will abort
+Icarus Verilog internally checks its state while it works, and if it
+detects something wrong that it cannot recover from, it will abort
 intentionally. The "assertion failure" message that the program
 prints in the process of dying is very important. It tells me where in
 the source the bad thing happened. Include that message in the bug
 report.
 
-If there are not assertion messages, I need to know that as well.
+If there are no assertion messages, I need to know that as well.
 
 I also need a complete test program that demonstrates the crash.
 
 * It Doesn't Like My Perfectly Valid Program(tm)
 
-I need to know what you think is right that ivl gets wrong. Does it
-reject your "Perfectly Valid Program(tm)" or does it compile it but
-give incorrect results? The latter is the most insidious as it doesn't
-scream out to be fixed unless someone is watching closely. However, if
-I get a sample program from you, and I can compile it, and I run it
-and nuclear junk doesn't fall from the sky, I'm moving on to the next
-problem.
+I need to know what you think is right that Icarus Verilog gets
+wrong. Does it reject your "Perfectly Valid Program(tm)" or does it
+compile it but give incorrect results? The latter is the most
+insidious as it doesn't scream out to be fixed unless someone is
+watching closely. However, if I get a sample program from you, and I
+can compile it, and I run it and nuclear junk doesn't fall from the
+sky, I'm moving on to the next problem.
 
 So, if your program doesn't compile, tell me so, tell me where the
 error occurs, and include a complete Perfectly Valid Test Program(tm).
@@ -57,24 +58,25 @@ know. What's on my disk is more recent then the latest snapshot.
 
 If your program does compile, but generates incorrect output, I need
 to know what it says and what you think it should say. From this I can
-take your sample program and work on ivl until it gets the proper
-results. For this to work, of course, I first need to know what is
-wrong with the output. Spell it out, because I've been known to miss
-the obvious. Compiler writers often get buried in the details of the
-wrong problem.
+take your sample program and work on Icarus Verilog until it gets the
+proper results. For this to work, of course, I first need to know what
+is wrong with the output. Spell it out, because I've been known to
+miss the obvious. Compiler writers often get buried in the details of
+the wrong problem.
 
-* It Generates Incorrect Target Code (XNF, EDIF/LPM, etc.)
+* It Generates Incorrect Target Code
 
-As ivl adds target code generators, there will be cases where errors
-in the output netlist format occur. This is a tough nut because I
-might not have all the tools to test the target format you are
-reporting problems with. However, if you clearly explain what is right
-and wrong about the generated netlist, I will probably be able to fix
-the problem. It may take a few iterations.
+As Icarus Verilog adds target code generators, there will be cases
+where errors in the output netlist format occur. This is a tough nut
+because I might not have all the tools to test the target format you
+are reporting problems with. However, if you clearly explain what is
+right and wrong about the generated output, I will probably be able
+to fix the problem. It may take a few iterations.
 
 In this case, if possible include not only the sample Verilog program,
 but the generated netlist file(s) and a clear indication of what went
-wrong. If it is not clear to me, I will ask for clarification.
+wrong or what is expected. If it is not clear to me, I will ask for
+clarification.
 
 * The Output is Correct, But Less Than Ideal
 
@@ -91,13 +93,13 @@ demonstrates the problem. If the error occurs after elaboration,
 please include a top level module in the program that is suitable for
 the target format. If I have to write the module myself, I might not
 write it in a way that tickles the bug. So please, send all the
-Verilog source (after preprocessing) that I need to invoke the error.
+Verilog source that I need to invoke the error.
 
 Also, include the command line you use to invoke the compiler. For
 example:
 
-	ivl foo.vl -o foo.cc -tvvm
-	ivl foo.vl -s starthere
+	iverilog -o foo.out -tvvp foo.v
+	iverilog foo.vl -s starthere
 
 If the error occurs with the null target (``-tnull'') then a top level
 module may not be needed as long as the ``-s <name>'' switch is
@@ -108,15 +110,19 @@ invoke the error without any Verilog other than what is included?" And
 while we are at it, please place a copyright notice in your test
 program and include a GPL license statement if you can. Your test
 program may find its way into the test suite, and the notices will
-make it all nice and legal.
+make it all nice and legal. Please look at the existing tests in the
+test suite <http://sourceforge.net/ivtest> for examples of good test
+programs.
 
 RESEARCHING EXISTING/PAST BUGS, AND FILING REPORTS
 
-The URL <http://www.icarus.com/cgi-bin/ivl-bugs> is the main bug
-tracking system. Once you believe you have found a bug, you may browse
-the bugs database for existing bugs that may be related to yours. You
-might find that your bug has already been fixed in a later release or
-snapshot. If that's the case, then you are set.
+The URL <http://sourceforge.net/tracker/?group_id=149850> is the main
+bug tracking system. Once you believe you have found a bug, you may
+browse the bugs database for existing bugs that may be related to
+yours. You might find that your bug has already been fixed in a later
+release or snapshot. If that's the case, then you are set. Also,
+consider if you are reporting a bug or really asking for a new
+feature, and use the appropriate tracker.
 
 The bug database supports basic keyword searches, and you can
 optionally limit your search to active bugs, or fixed bugs. You may
@@ -125,8 +131,7 @@ broken. You may for example find a related bug that explains your
 symptom.
 
 The root page of the bug report database describes how to submit your
-completed bug report. You may submit it via the web form, or via
-e-mail.
+completed bug report.
 
 HOW TO SEND PATCHES
 
@@ -134,21 +139,26 @@ Bug reports with patches are very welcome, especially if they are
 formatted such that I can inspect them, decide that they are obviously
 correct, and apply them without worry.
 
-I prefer context diffs as emitted by diff from GNU diffutils.  Human
-beings can read such things, and they are resilient to changing
-originals. A good set of flags to diff are ``diff -cNB''.  With such
-diffs, I can look at the changes you are offering and probably tell at
-a glance that they are plausible. Then I can use patch(1) to apply
-them. Or I can apply them by hand.
+I prefer patches generated by the git source code tracking system. If
+you are editing the source, you really should be using the latest
+version from git. Please see the developer documentation for more
+detailed instructions -- <http://iverilog.wikia.com/wiki/>.
 
-However, if you send patches, *please* tell me what this patch is
-supposed to accomplish, and if appropriate include a test program that
-demonstrates the efficacy of the patch. (If I have no idea what the
-patch is for, I will ask for clarification before applying it.)
+When you make a patch, submit it to the "Patches" tracker at
+<http://sourceforge.net/tracker/?group_id=149850>. Patches added to
+the "Patches" tracker enter the developer workflow, are checked,
+applied to the appropriate git branch, and are pushed. Then the
+tracker item is closed.
+
+If you send patches, *please* tell me what this patch is supposed to
+accomplish, which branch you intended to be patched, and if
+appropriate include a test program that demonstrates the efficacy of
+the patch. (If I have no idea what the patch is for, I will ask for
+clarification before applying it.)
 
 COPYRIGHT ISSUES
 
-Icarus Verilog is Copyright (c) 1998-2003 Stephen Williams except
+Icarus Verilog is Copyright (c) 1998-2008 Stephen Williams except
 where otherwise noted. Minor patches are covered as derivative works
 (or editorial comment or whatever the appropriate legal term is) and
 folded into the rest of ivl. However, if a submission can reasonably
@@ -158,19 +168,3 @@ then falls under the "otherwise noted" category.
 
 I must insist that any copyright material submitted for inclusion
 include the GPL license notice as shown in the rest of the source.
-
-
-$Id: BUGS.txt,v 1.5 2007/03/22 16:08:14 steve Exp $
-$Log: BUGS.txt,v $
-Revision 1.5  2007/03/22 16:08:14  steve
- Spelling fixes from Larry
-
-Revision 1.4  2003/02/19 04:36:31  steve
- Notes on hte bug database.
-
-Revision 1.3  2003/01/30 16:23:07  steve
- Spelling fixes.
-
-Revision 1.2  1999/08/06 04:05:28  steve
- Handle scope of parameters.
-
