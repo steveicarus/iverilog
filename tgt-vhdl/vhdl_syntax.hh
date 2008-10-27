@@ -427,10 +427,17 @@ public:
 
    stmt_container *get_then_container() { return &then_part_; }
    stmt_container *get_else_container() { return &else_part_; }
+   stmt_container *add_elsif(vhdl_expr *test);
    void emit(std::ostream &of, int level) const;
 private:
+   struct elsif {
+      vhdl_expr *test;
+      stmt_container *container;
+   };
+   
    vhdl_expr *test_;
    stmt_container then_part_, else_part_;
+   std::list<elsif> elsif_parts_;
 };
 
 

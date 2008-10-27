@@ -664,12 +664,30 @@ vhdl_if_stmt::~vhdl_if_stmt()
    delete test_;
 }
 
+stmt_container *vhdl_if_stmt::add_elsif(vhdl_expr *test)
+{
+   elsif ef = { test, new stmt_container };
+   elsif_parts_.push_back(ef);
+   return ef.container;
+}
+
 void vhdl_if_stmt::emit(std::ostream &of, int level) const
 {
+   emit_comment(of, level);
+   
    of << "if ";
    test_->emit(of, level);
    of << " then";
    then_part_.emit(of, level);
+
+   std::list<elsif>::const_iterator it;
+   for (it = elsif_parts_.begin(); it != elsif_parts_.end(); ++it) {
+      of << "elsif ";
+      (*it).test->emit(of, level);
+      of << " then";
+      (*it).container->emit(of, level);
+   }
+   
    if (!else_part_.empty()) {
       of << "else";
       else_part_.emit(of, level);
