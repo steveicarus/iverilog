@@ -1174,12 +1174,9 @@ void NetScope::dump(ostream&o) const
       }
 
 	// Dump the signals,
-      if (signals_) {
-	    NetNet*cur = signals_->sig_next_;
-	    do {
-		  cur->dump_net(o, 4);
-		  cur = cur->sig_next_;
-	    } while (cur != signals_->sig_next_);
+      for (signals_map_iter_t cur = signals_map_.begin()
+		 ; cur != signals_map_.end() ; cur ++) {
+	    cur->second->dump_net(o, 4);
       }
 
 	// Dump specparams
