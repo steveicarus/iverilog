@@ -38,7 +38,6 @@
 NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
 : type_(t), up_(up), sib_(0), sub_(0)
 {
-      signals_ = 0;
       events_ = 0;
       lcounter_ = 0;
       is_auto_ = false;
@@ -360,16 +359,6 @@ NetEvent* NetScope::find_event(perm_string name)
 
 void NetScope::add_signal(NetNet*net)
 {
-      if (signals_ == 0) {
-	    net->sig_next_ = net;
-	    net->sig_prev_ = net;
-      } else {
-	    net->sig_next_ = signals_->sig_next_;
-	    net->sig_prev_ = signals_;
-	    net->sig_next_->sig_prev_ = net;
-	    net->sig_prev_->sig_next_ = net;
-      }
-      signals_ = net;
       signals_map_[net->name()]=net;
 }
 
@@ -377,15 +366,6 @@ void NetScope::rem_signal(NetNet*net)
 {
       assert(net->scope() == this);
       signals_map_.erase(net->name());
-      if (signals_ == net)
-	    signals_ = net->sig_prev_;
-
-      if (signals_ == net) {
-	    signals_ = 0;
-      } else {
-	    net->sig_prev_->sig_next_ = net->sig_next_;
-	    net->sig_next_->sig_prev_ = net->sig_prev_;
-      }
 }
 
 /*
@@ -395,21 +375,10 @@ void NetScope::rem_signal(NetNet*net)
  */
 NetNet* NetScope::find_signal(perm_string key)
 {
-      if (signals_ == 0)
-	    return 0;
-
       if (signals_map_.find(key)!=signals_map_.end())
-        return signals_map_[key];
+	    return signals_map_[key];
       else
-        return 0;
-
-      NetNet*cur = signals_;
-      do {
-	    if (cur->name() == key)
-		  return cur;
-	    cur = cur->sig_prev_;
-      } while (cur != signals_);
-      return 0;
+	    return 0;
 }
 
 /*

@@ -615,11 +615,6 @@ class NetNet  : public NetObj {
       virtual void dump_net(ostream&, unsigned) const;
 
     private:
-	// The NetScope class uses this for listing signals.
-      friend class NetScope;
-      NetNet*sig_next_, *sig_prev_;
-
-    private:
       Type   type_;
       PortType port_type_;
       ivl_variable_type_t data_type_;
@@ -861,8 +856,8 @@ class NetScope : public Attrib {
       NetNet::Type default_nettype_;
 
       NetEvent *events_;
+      typedef std::map<perm_string,NetNet*>::const_iterator signals_map_iter_t;
       std::map <perm_string,NetNet*> signals_map_;
-      NetNet   *signals_;
       perm_string module_name_;
       union {
 	    NetTaskDef*task_;
