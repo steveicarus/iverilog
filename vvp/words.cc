@@ -34,10 +34,15 @@ static void __compile_var_real(char*label, char*name,
 			       vvp_array_t array, unsigned long array_addr,
 			       int msb, int lsb)
 {
-      vvp_fun_signal_real*fun = new vvp_fun_signal_real;
+      vvp_fun_signal_real*fun;
+      if (vpip_peek_current_scope()->is_automatic) {
+            fun = new vvp_fun_signal_real_aa;
+      } else {
+            fun = new vvp_fun_signal_real_sa;
+      }
       vvp_net_t*net = new vvp_net_t;
       net->fun = fun;
-      vpip_add_item_to_current_scope(fun);
+
       define_functor_symbol(label, net);
 
       vpiHandle obj = vpip_make_real_var(name, net);
@@ -79,11 +84,15 @@ static void __compile_var(char*label, char*name,
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
-      vvp_fun_signal*vsig = new vvp_fun_signal(wid);
+      vvp_fun_signal_vec*vsig;
+      if (vpip_peek_current_scope()->is_automatic) {
+            vsig = new vvp_fun_signal4_aa(wid);
+      } else {
+            vsig = new vvp_fun_signal4_sa(wid);
+      }
       vvp_net_t*node = new vvp_net_t;
-
       node->fun = vsig;
-      vpip_add_item_to_current_scope(vsig);
+
       define_functor_symbol(label, node);
 
       vpiHandle obj = 0;
@@ -159,7 +168,7 @@ static void __compile_net(char*label, char*name,
 
       vvp_fun_signal_base*vsig = net8_flag
 	    ? dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal8(wid))
-	    : dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal(wid,BIT4_Z));
+	    : dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal4_sa(wid,BIT4_Z));
       node->fun = vsig;
 
 	/* Add the label into the functor symbol table. */
@@ -220,7 +229,7 @@ static void __compile_real(char*label, char*name,
       vvp_array_t array = array_label ? array_find(array_label) : 0;
       assert(array_label ? array!=0 : true);
    
-      vvp_fun_signal_real*fun = new vvp_fun_signal_real;
+      vvp_fun_signal_real*fun = new vvp_fun_signal_real_sa;
       net->fun = fun;
 
 	/* Add the label into the functor symbol table. */

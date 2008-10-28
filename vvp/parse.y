@@ -85,7 +85,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_func K_vpi_func_r
-%token K_disable K_fork K_alloc K_free
+%token K_disable K_fork
 %token K_vpi_module K_vpi_time_precision K_file_names
 
 %token <text> T_INSTR
@@ -483,16 +483,16 @@ statement
      named event instead. */
 
 	| T_LABEL K_EVENT T_SYMBOL ',' symbols ';'
-                { compile_event($1, $3, $5.cnt, $5.vect, false); }
+                { compile_event($1, $3, $5.cnt, $5.vect); }
 
 	| T_LABEL K_EVENT K_DEBUG T_SYMBOL ',' symbols ';'
-                { compile_event($1, $4, $6.cnt, $6.vect, true); }
+                { compile_event($1, $4, $6.cnt, $6.vect); }
 
 	| T_LABEL K_EVENT T_STRING ';'
 		{ compile_named_event($1, $3); }
 
 	| T_LABEL K_EVENT_OR symbols ';'
-                { compile_event($1, 0, $3.cnt, $3.vect, false); }
+                { compile_event($1, 0, $3.cnt, $3.vect); }
 
 
   /* Instructions may have a label, and have zero or more
@@ -532,12 +532,6 @@ statement
 
 	| label_opt K_fork symbol ',' symbol ';'
 		{ compile_fork($1, $3, $5); }
-
-	| label_opt K_alloc symbol ';'
-		{ compile_alloc($1, $3); }
-
-	| label_opt K_free symbol ';'
-		{ compile_free($1, $3); }
 
   /* Scope statements come in two forms. There are the scope
      declaration and the scope recall. The declarations create the

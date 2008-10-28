@@ -27,32 +27,73 @@
  * select starts. Input 2, which is typically constant, is the width
  * of the result.
  */
-class vvp_fun_part  : public vvp_net_fun_t, private vvp_gen_event_s {
+class vvp_fun_part  : public vvp_net_fun_t {
 
     public:
       vvp_fun_part(unsigned base, unsigned wid);
       ~vvp_fun_part();
 
+    protected:
+      unsigned base_;
+      unsigned wid_;
+};
+
+/*
+ * Statically allocated vvp_fun_part.
+ */
+class vvp_fun_part_sa  : public vvp_fun_part, public vvp_gen_event_s {
+
     public:
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      vvp_fun_part_sa(unsigned base, unsigned wid);
+      ~vvp_fun_part_sa();
+
+    public:
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned, unsigned, unsigned);
+			unsigned, unsigned, unsigned,
+                        vvp_context_t);
 
     private:
       void run_run();
 
     private:
-      unsigned base_;
-      unsigned wid_;
       vvp_vector4_t val_;
       vvp_net_t*net_;
+};
+
+/*
+ * Automatically allocated vvp_fun_part.
+ */
+class vvp_fun_part_aa  : public vvp_fun_part, public automatic_hooks_s {
+
+    public:
+      vvp_fun_part_aa(unsigned base, unsigned wid);
+      ~vvp_fun_part_aa();
+
+    public:
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
+
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+			unsigned, unsigned, unsigned,
+                        vvp_context_t context);
+
+    private:
+      struct __vpiScope*context_scope_;
+      unsigned context_idx_;
 };
 
 /* vvp_fun_part_pv
  * This node takes a vector input and turns it into the part select of
  * a wider output network. It used the recv_vec4_pv methods of the
- * destination nodes to propagate the part select.
+ * destination nodes to propagate the part select. It can be used in
+ * both statically and automatically allocated scopes, as it has no
+ * dynamic state.
  */
 class vvp_fun_part_pv  : public vvp_net_fun_t {
 
@@ -61,7 +102,9 @@ class vvp_fun_part_pv  : public vvp_net_fun_t {
       ~vvp_fun_part_pv();
 
     public:
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
+
       void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
     private:
@@ -81,18 +124,61 @@ class vvp_fun_part_var  : public vvp_net_fun_t {
       explicit vvp_fun_part_var(unsigned wid);
       ~vvp_fun_part_var();
 
+    protected:
+      bool recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                      unsigned&base, vvp_vector4_t&source,
+                      vvp_vector4_t&ref);
+
+      unsigned wid_;
+};
+
+/*
+ * Statically allocated vvp_fun_part_var.
+ */
+class vvp_fun_part_var_sa  : public vvp_fun_part_var {
+
     public:
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      explicit vvp_fun_part_var_sa(unsigned wid);
+      ~vvp_fun_part_var_sa();
+
+    public:
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned, unsigned, unsigned);
+			unsigned, unsigned, unsigned,
+                        vvp_context_t);
 
     private:
       unsigned base_;
-      unsigned wid_;
       vvp_vector4_t source_;
 	// Save the last output, for detecting change.
       vvp_vector4_t ref_;
+};
+
+/*
+ * Automatically allocated vvp_fun_part_var.
+ */
+class vvp_fun_part_var_aa  : public vvp_fun_part_var, public automatic_hooks_s {
+
+    public:
+      explicit vvp_fun_part_var_aa(unsigned wid);
+      ~vvp_fun_part_var_aa();
+
+    public:
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
+
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+			unsigned, unsigned, unsigned,
+                        vvp_context_t context);
+
+    private:
+      struct __vpiScope*context_scope_;
+      unsigned context_idx_;
 };
 
 #endif

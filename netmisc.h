@@ -36,21 +36,25 @@
  * ex2 is the lsb expression for the range. If there is no range, then
  * these values are set to 0.
  */
-extern NetScope* symbol_search(Design*des,
-			       NetScope*start, pform_name_t path,
+extern NetScope* symbol_search(const LineInfo*li,
+                               Design*des,
+			       NetScope*start,
+                               pform_name_t path,
 			       NetNet*&net,       /* net/reg */
 			       const NetExpr*&par,/* parameter */
 			       NetEvent*&eve,     /* named event */
 			       const NetExpr*&ex1, const NetExpr*&ex2);
 
-inline NetScope* symbol_search(Design*des,
-			       NetScope*start, const pform_name_t&path,
+inline NetScope* symbol_search(const LineInfo*li,
+                               Design*des,
+			       NetScope*start,
+                               const pform_name_t&path,
 			       NetNet*&net,       /* net/reg */
 			       const NetExpr*&par,/* parameter */
 			       NetEvent*&eve      /* named event */)
 {
       const NetExpr*ex1, *ex2;
-      return symbol_search(des, start, path, net, par, eve, ex1, ex2);
+      return symbol_search(li, des, start, path, net, par, eve, ex1, ex2);
 }
 
 /*

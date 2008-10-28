@@ -124,9 +124,11 @@ class vvp_island_port  : public vvp_net_fun_t {
       explicit vvp_island_port(vvp_island*ip);
       ~vvp_island_port();
 
-      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                             vvp_context_t);
       virtual void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-				unsigned base, unsigned wid, unsigned vwid);
+				unsigned base, unsigned wid, unsigned vwid,
+                                vvp_context_t);
       virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
       vvp_vector8_t invalue;
@@ -309,13 +311,15 @@ vvp_island_port::~vvp_island_port()
 {
 }
 
-void vvp_island_port::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
+void vvp_island_port::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                vvp_context_t)
 {
       recv_vec8(port, vvp_vector8_t(bit, 6, 6));
 }
 
 void vvp_island_port::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-				   unsigned base, unsigned wid, unsigned vwid)
+				   unsigned base, unsigned wid, unsigned vwid,
+                                   vvp_context_t)
 {
       vvp_vector8_t tmp(bit, 6, 6);
       if (invalue.size()==0) {

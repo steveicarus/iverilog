@@ -28,7 +28,8 @@ vvp_fun_pmos_::vvp_fun_pmos_(bool enable_invert)
 }
 
 
-void vvp_fun_pmos_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_fun_pmos_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                              vvp_context_t)
 {
 	/* Data input is processed through eh recv_vec8 method,
 	   because the strength must be preserved. */
@@ -89,7 +90,7 @@ vvp_fun_pmos::vvp_fun_pmos(bool enable_invert)
 void vvp_fun_pmos::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 {
       if (ptr.port() == 1) {
-	    recv_vec4(ptr, reduce4(bit));
+	    recv_vec4(ptr, reduce4(bit), 0);
 	    return;
       }
 
@@ -108,7 +109,7 @@ vvp_fun_rpmos::vvp_fun_rpmos(bool enable_invert)
 void vvp_fun_rpmos::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 {
       if (ptr.port() == 1) {
-	    recv_vec4(ptr, reduce4(bit));
+	    recv_vec4(ptr, reduce4(bit), 0);
 	    return;
       }
 
@@ -128,7 +129,8 @@ vvp_fun_cmos_::vvp_fun_cmos_()
 {
 }
 
-void vvp_fun_cmos_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t &bit)
+void vvp_fun_cmos_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t &bit,
+                              vvp_context_t)
 {
 	/* Data input is processed through the recv_vec8 method,
 	   because the strength must be preserved. */
@@ -190,7 +192,7 @@ vvp_fun_cmos::vvp_fun_cmos()
 void vvp_fun_cmos::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 {
       if (ptr.port() == 1 || ptr.port() == 2) {
-	    recv_vec4(ptr, reduce4(bit));
+	    recv_vec4(ptr, reduce4(bit), 0);
 	    return;
       }
 
@@ -209,7 +211,7 @@ vvp_fun_rcmos::vvp_fun_rcmos()
 void vvp_fun_rcmos::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 {
       if (ptr.port() == 1) {
-	    recv_vec4(ptr, reduce4(bit));
+	    recv_vec4(ptr, reduce4(bit), 0);
 	    return;
       }
 
@@ -219,4 +221,3 @@ void vvp_fun_rcmos::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
       bit_ = resistive_reduction(bit);
       generate_output_(ptr);
 }
-

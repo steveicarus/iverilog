@@ -303,15 +303,16 @@ static void multiply_array_imm(unsigned long*res, unsigned long*val,
 
 /*
  * Allocate a context for use by a child thread. By preference, use
- * the last freed context. If none available, create a new one.
+ * the last freed context. If none available, create a new one. Add
+ * it to the list of live contexts in that scope.
  */
-static vvp_context_t vthread_alloc_context(__vpiScope*scope)
+static vvp_context_t vthread_alloc_context(struct __vpiScope*scope)
 {
       assert(scope->is_automatic);
 
-      vvp_context_t context = scope->free_context;
+      vvp_context_t context = scope->free_contexts;
       if (context) {
-            scope->free_context = vvp_get_next_context(context);
+            scope->free_contexts = vvp_get_next_context(context);
             for (unsigned idx = 0 ; idx < scope->nitem ; idx += 1) {
                   scope->item[idx]->reset_instance(context);
             }
@@ -322,20 +323,35 @@ static vvp_context_t vthread_alloc_context(__vpiScope*scope)
             }
       }
 
+      vvp_set_next_context(context, scope->live_contexts);
+      scope->live_contexts = context;
+
       return context;
 }
 
 /*
  * Free a context previously allocated to a child thread by pushing it
- * onto the freed context stack.
+ * onto the freed context stack. Remove it from the list of live contexts
+ * in that scope.
  */
-static void vthread_free_context(vvp_context_t context, __vpiScope*scope)
+static void vthread_free_context(vvp_context_t context, struct __vpiScope*scope)
 {
       assert(scope->is_automatic);
       assert(context);
 
-      vvp_set_next_context(context, scope->free_context);
-      scope->free_context = context;
+      if (context == scope->live_contexts) {
+            scope->live_contexts = vvp_get_next_context(context);
+      } else {
+            vvp_context_t tmp = scope->live_contexts;
+            while (context != vvp_get_next_context(tmp)) {
+                  assert(tmp);
+                  tmp = vvp_get_next_context(tmp);
+            }
+            vvp_set_next_context(tmp, vvp_get_next_context(context));
+      }
+
+      vvp_set_next_context(context, scope->free_contexts);
+      scope->free_contexts = context;
 }
 
 /*
@@ -530,6 +546,22 @@ void vthread_schedule_list(vthread_t thr)
       schedule_vthread(thr, 0);
 }
 
+vvp_context_t vthread_get_wt_context()
+{
+      if (running_thread)
+            return running_thread->wt_context;
+      else
+            return 0;
+}
+
+vvp_context_t vthread_get_rd_context()
+{
+      if (running_thread)
+            return running_thread->rd_context;
+      else
+            return 0;
+}
+
 vvp_context_item_t vthread_get_wt_context_item(unsigned context_idx)
 {
       assert(running_thread && running_thread->wt_context);
@@ -557,7 +589,7 @@ bool of_ALLOC(vthread_t thr, vvp_code_t cp)
       vvp_context_t child_context = vthread_alloc_context(cp->scope);
 
         /* Push the allocated context onto the write context stack. */
-      vvp_set_next_context(child_context, thr->wt_context);
+      vvp_set_stacked_context(child_context, thr->wt_context);
       thr->wt_context = child_context;
 
       return true;
@@ -1205,7 +1237,7 @@ bool of_CASSIGN_V(vthread_t thr, vvp_code_t cp)
 
 	/* set the value into port 1 of the destination. */
       vvp_net_ptr_t ptr (net, 1);
-      vvp_send_vec4(ptr, value);
+      vvp_send_vec4(ptr, value, 0);
 
       return true;
 }
@@ -1217,7 +1249,7 @@ bool of_CASSIGN_WR(vthread_t thr, vvp_code_t cp)
 
 	/* Set the value into port 1 of the destination. */
       vvp_net_ptr_t ptr (net, 1);
-      vvp_send_real(ptr, value);
+      vvp_send_real(ptr, value, 0);
 
       return true;
 }
@@ -1251,7 +1283,7 @@ bool of_CASSIGN_X0(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
 
       vvp_net_ptr_t ptr (net, 1);
-      vvp_send_vec4_pv(ptr, vector, index, wid, sig->size());
+      vvp_send_vec4_pv(ptr, vector, index, wid, sig->size(), 0);
 
       return true;
 }
@@ -2315,7 +2347,7 @@ bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
 
 	/* Set the value into port 2 of the destination. */
       vvp_net_ptr_t ptr (net, 2);
-      vvp_send_vec4(ptr, value);
+      vvp_send_vec4(ptr, value, 0);
 
       return true;
 }
@@ -2327,7 +2359,7 @@ bool of_FORCE_WR(vthread_t thr, vvp_code_t cp)
 
 	/* Set the value into port 2 of the destination. */
       vvp_net_ptr_t ptr (net, 2);
-      vvp_send_real(ptr, value);
+      vvp_send_real(ptr, value, 0);
 
       return true;
 }
@@ -2362,7 +2394,7 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
 
       vvp_net_ptr_t ptr (net, 2);
-      vvp_send_vec4_pv(ptr, vector, index, wid, sig->size());
+      vvp_send_vec4_pv(ptr, vector, index, wid, sig->size(), 0);
 
       return true;
 }
@@ -2410,7 +2442,7 @@ bool of_FREE(vthread_t thr, vvp_code_t cp)
 {
         /* Pop the child context from the read context stack. */
       vvp_context_t child_context = thr->rd_context;
-      thr->rd_context = vvp_get_next_context(child_context);
+      thr->rd_context = vvp_get_stacked_context(child_context);
 
         /* Free the context. */
       vthread_free_context(child_context, cp->scope);
@@ -2701,10 +2733,10 @@ bool of_JOIN(vthread_t thr, vvp_code_t cp)
       if (thr->wt_context != thr->rd_context) {
               /* Pop the child context from the write context stack. */
             vvp_context_t child_context = thr->wt_context;
-            thr->wt_context = vvp_get_next_context(child_context);
+            thr->wt_context = vvp_get_stacked_context(child_context);
 
               /* Push the child context onto the read context stack */
-            vvp_set_next_context(child_context, thr->rd_context);
+            vvp_set_stacked_context(child_context, thr->rd_context);
             thr->rd_context = child_context;
       }
 
@@ -3944,19 +3976,18 @@ bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
 	/* set the value into port 0 of the destination. */
       vvp_net_ptr_t ptr (cp->net, 0);
 
-      vvp_send_vec4(ptr, vthread_bits_to_vector(thr, bit, wid));
+      vvp_send_vec4(ptr, vthread_bits_to_vector(thr, bit, wid),
+                    thr->wt_context);
 
       return true;
 }
 
 bool of_SET_WORDR(vthread_t thr, vvp_code_t cp)
 {
-      struct __vpiHandle*tmp = cp->handle;
-      t_vpi_value val;
+	/* set the value into port 0 of the destination. */
+      vvp_net_ptr_t ptr (cp->net, 0);
 
-      val.format = vpiRealVal;
-      val.value.real = thr->words[cp->bit_idx[0]].w_real;
-      vpi_put_value(tmp, &val, 0, vpiNoDelay);
+      vvp_send_real(ptr, thr->words[cp->bit_idx[0]].w_real, thr->wt_context);
 
       return true;
 }
@@ -4015,7 +4046,7 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
       }
 
       vvp_net_ptr_t ptr (net, 0);
-      vvp_send_vec4_pv(ptr, bit_vec, index, wid, sig->size());
+      vvp_send_vec4_pv(ptr, bit_vec, index, wid, sig->size(), thr->wt_context);
 
       return true;
 }
@@ -4201,18 +4232,10 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
       thr->waiting_for_event = 1;
 
 	/* Add this thread to the list in the event. */
-      vvp_net_fun_t*fun = cp->net->fun;
-      if (fun->context_idx) {
-            waitable_state_s*es = static_cast<waitable_state_s*>
-                  (vthread_get_wt_context_item(fun->context_idx));
-            thr->wait_next = es->threads;
-            es->threads = thr;
-      } else {
-            waitable_hooks_s*ep = dynamic_cast<waitable_hooks_s*> (fun);
-            assert(ep);
-            thr->wait_next = ep->threads;
-            ep->threads = thr;
-      }
+      waitable_hooks_s*ep = dynamic_cast<waitable_hooks_s*> (cp->net->fun);
+      assert(ep);
+      thr->wait_next = ep->add_waiting_thread(thr);
+
 	/* Return false to suspend this thread. */
       return false;
 }
@@ -4316,7 +4339,7 @@ bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
 	/* Copy all the inputs to the ufunc object to the port
 	   variables of the function. This copies all the values
 	   atomically. */
-      cp->ufunc_core_ptr->assign_bits_to_ports();
+      cp->ufunc_core_ptr->assign_bits_to_ports(child_context);
 
 	/* Create a temporary thread and run it immediately. A function
            may not contain any blocking statements, so vthread_run() can

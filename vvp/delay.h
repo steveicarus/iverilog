@@ -85,9 +85,11 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
       vvp_fun_delay(vvp_net_t*net, vvp_bit4_t init, const vvp_delay_t&d);
       ~vvp_fun_delay();
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
       void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
-      void recv_real(vvp_net_ptr_t port, double bit);
+      void recv_real(vvp_net_ptr_t port, double bit,
+                     vvp_context_t);
 	//void recv_long(vvp_net_ptr_t port, long bit);
 
     private:
@@ -153,7 +155,8 @@ class vvp_fun_modpath  : public vvp_net_fun_t, private vvp_gen_event_s {
 
       void add_modpath_src(vvp_fun_modpath_src*that, bool ifnone);
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
 
     private:
       virtual void run_run();
@@ -181,7 +184,8 @@ class vvp_fun_modpath_src  : public vvp_net_fun_t {
       ~vvp_fun_modpath_src();
 
     public:
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
       virtual bool test_vec4(const vvp_vector4_t&bit);
 
       void get_delay12(vvp_time64_t out[12]) const;

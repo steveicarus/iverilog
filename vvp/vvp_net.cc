@@ -19,6 +19,7 @@
 
 # include  "config.h"
 # include  "vvp_net.h"
+# include  "vpi_priv.h"
 # include  "schedule.h"
 # include  "statistics.h"
 # include  <stdio.h>
@@ -227,13 +228,13 @@ void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val)
       }
 }
 
-void vvp_send_real(vvp_net_ptr_t ptr, double val)
+void vvp_send_real(vvp_net_ptr_t ptr, double val, vvp_context_t context)
 {
       while (struct vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
 	    if (cur->fun)
-		  cur->fun->recv_real(ptr, val);
+		  cur->fun->recv_real(ptr, val, context);
 
 	    ptr = next;
       }
@@ -1298,12 +1299,65 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
       return flag;
 }
 
-vvp_vector4array_t::vvp_vector4array_t(unsigned width__, unsigned words__,
-                                       bool is_automatic)
-: width_(width__), words_(words__), array_(0)
+vvp_vector4array_t::vvp_vector4array_t(unsigned width__, unsigned words__)
+: width_(width__), words_(words__)
 {
-      if (is_automatic) return;
+}
 
+vvp_vector4array_t::~vvp_vector4array_t()
+{
+}
+
+void vvp_vector4array_t::set_word_(v4cell*cell, const vvp_vector4_t&that)
+{
+      assert(that.size_ == width_);
+
+      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
+	    cell->abits_val_ = that.abits_val_;
+	    cell->bbits_val_ = that.bbits_val_;
+	    return;
+      }
+
+      unsigned cnt = (width_ + vvp_vector4_t::BITS_PER_WORD-1)/vvp_vector4_t::BITS_PER_WORD;
+
+      if (cell->abits_ptr_ == 0) {
+	    cell->abits_ptr_ = new unsigned long[2*cnt];
+	    cell->bbits_ptr_ = cell->abits_ptr_ + cnt;
+      }
+
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    cell->abits_ptr_[idx] = that.abits_ptr_[idx];
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    cell->bbits_ptr_[idx] = that.bbits_ptr_[idx];
+}
+
+vvp_vector4_t vvp_vector4array_t::get_word_(v4cell*cell) const
+{
+      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
+	    vvp_vector4_t res;
+	    res.size_ = width_;
+	    res.abits_val_ = cell->abits_val_;
+	    res.bbits_val_ = cell->bbits_val_;
+	    return res;
+      }
+
+      vvp_vector4_t res (width_, BIT4_X);
+      if (cell->abits_ptr_ == 0)
+	    return res;
+
+      unsigned cnt = (width_ + vvp_vector4_t::BITS_PER_WORD-1)/vvp_vector4_t::BITS_PER_WORD;
+
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    res.abits_ptr_[idx] = cell->abits_ptr_[idx];
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
+	    res.bbits_ptr_[idx] = cell->bbits_ptr_[idx];
+
+      return res;
+}
+
+vvp_vector4array_sa::vvp_vector4array_sa(unsigned width__, unsigned words__)
+: vvp_vector4array_t(width__, words__)
+{
       array_ = new v4cell[words_];
 
       if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
@@ -1319,7 +1373,7 @@ vvp_vector4array_t::vvp_vector4array_t(unsigned width__, unsigned words__,
       }
 }
 
-vvp_vector4array_t::~vvp_vector4array_t()
+vvp_vector4array_sa::~vvp_vector4array_sa()
 {
       if (array_) {
 	    if (width_ > vvp_vector4_t::BITS_PER_WORD) {
@@ -1331,7 +1385,38 @@ vvp_vector4array_t::~vvp_vector4array_t()
       }
 }
 
-void vvp_vector4array_t::alloc_instance(vvp_context_t context)
+void vvp_vector4array_sa::set_word(unsigned index, const vvp_vector4_t&that)
+{
+      assert(index < words_);
+
+      v4cell*cell = &array_[index];
+
+      set_word_(cell, that);
+}
+
+vvp_vector4_t vvp_vector4array_sa::get_word(unsigned index) const
+{
+      if (index >= words_)
+	    return vvp_vector4_t(width_, BIT4_X);
+
+      assert(index < words_);
+
+      v4cell*cell = &array_[index];
+
+      return get_word_(cell);
+}
+
+vvp_vector4array_aa::vvp_vector4array_aa(unsigned width__, unsigned words__)
+: vvp_vector4array_t(width__, words__)
+{
+      context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
+}
+
+vvp_vector4array_aa::~vvp_vector4array_aa()
+{
+}
+
+void vvp_vector4array_aa::alloc_instance(vvp_context_t context)
 {
       v4cell*array = new v4cell[words_];
 
@@ -1347,13 +1432,13 @@ void vvp_vector4array_t::alloc_instance(vvp_context_t context)
 	    }
       }
 
-      vvp_set_context_item(context, context_idx, array);
+      vvp_set_context_item(context, context_idx_, array);
 }
 
-void vvp_vector4array_t::reset_instance(vvp_context_t context)
+void vvp_vector4array_aa::reset_instance(vvp_context_t context)
 {
       v4cell*cell = static_cast<v4cell*>
-            (vvp_get_context_item(context, context_idx));
+            (vvp_get_context_item(context, context_idx_));
 
       if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
 	    for (unsigned idx = 0 ; idx < words_ ; idx += 1) {
@@ -1375,72 +1460,27 @@ void vvp_vector4array_t::reset_instance(vvp_context_t context)
       }
 }
 
-void vvp_vector4array_t::set_word(unsigned index, const vvp_vector4_t&that)
+void vvp_vector4array_aa::set_word(unsigned index, const vvp_vector4_t&that)
 {
       assert(index < words_);
-      assert(that.size_ == width_);
 
-      v4cell*cell;
-      if (context_idx)
-            cell = static_cast<v4cell*>
-               (vthread_get_wt_context_item(context_idx)) + index;
-      else
-            cell = &(array_[index]);
+      v4cell*cell = static_cast<v4cell*>
+            (vthread_get_wt_context_item(context_idx_)) + index;
 
-      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
-	    cell->abits_val_ = that.abits_val_;
-	    cell->bbits_val_ = that.bbits_val_;
-	    return;
-      }
-
-      unsigned cnt = (width_ + vvp_vector4_t::BITS_PER_WORD-1)/vvp_vector4_t::BITS_PER_WORD;
-
-      if (cell->abits_ptr_ == 0) {
-	    cell->abits_ptr_ = new unsigned long[2*cnt];
-	    cell->bbits_ptr_ = cell->abits_ptr_ + cnt;
-      }
-
-      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
-	    cell->abits_ptr_[idx] = that.abits_ptr_[idx];
-      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
-	    cell->bbits_ptr_[idx] = that.bbits_ptr_[idx];
+      set_word_(cell, that);
 }
 
-vvp_vector4_t vvp_vector4array_t::get_word(unsigned index) const
+vvp_vector4_t vvp_vector4array_aa::get_word(unsigned index) const
 {
       if (index >= words_)
 	    return vvp_vector4_t(width_, BIT4_X);
 
       assert(index < words_);
 
-      v4cell*cell;
-      if (context_idx)
-            cell = static_cast<v4cell*>
-               (vthread_get_rd_context_item(context_idx)) + index;
-      else
-            cell = &(array_[index]);
+      v4cell*cell = static_cast<v4cell*>
+            (vthread_get_rd_context_item(context_idx_)) + index;
 
-      if (width_ <= vvp_vector4_t::BITS_PER_WORD) {
-	    vvp_vector4_t res;
-	    res.size_ = width_;
-	    res.abits_val_ = cell->abits_val_;
-	    res.bbits_val_ = cell->bbits_val_;
-	    return res;
-      }
-
-      vvp_vector4_t res (width_, BIT4_X);
-      if (cell->abits_ptr_ == 0)
-	    return res;
-
-      unsigned cnt = (width_ + vvp_vector4_t::BITS_PER_WORD-1)/vvp_vector4_t::BITS_PER_WORD;
-
-      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
-	    res.abits_ptr_[idx] = cell->abits_ptr_[idx];
-      for (unsigned idx = 0 ; idx < cnt ; idx += 1)
-	    res.bbits_ptr_[idx] = cell->bbits_ptr_[idx];
-
-      return res;
-
+      return get_word_(cell);
 }
 
 template <class T> T coerce_to_width(const T&that, unsigned width)
@@ -2257,15 +2297,17 @@ vvp_net_fun_t::~vvp_net_fun_t()
 {
 }
 
-void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&)
+void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                              vvp_context_t)
 {
       fprintf(stderr, "internal error: %s: recv_vec4 not implemented\n",
 	      typeid(*this).name());
       assert(0);
 }
 
-void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bit,
-				 unsigned base, unsigned wid, unsigned vwid)
+void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+				 unsigned base, unsigned wid, unsigned vwid,
+                                 vvp_context_t)
 {
       cerr << "internal error: " << typeid(*this).name() << ": "
 	   << "recv_vec4_pv(" << bit << ", " << base
@@ -2273,18 +2315,18 @@ void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bit,
       assert(0);
 }
 
+void vvp_net_fun_t::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
+{
+      recv_vec4(port, reduce4(bit), 0);
+}
+
 void vvp_net_fun_t::recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
 				 unsigned base, unsigned wid, unsigned vwid)
 {
-      recv_vec4_pv(port, reduce4(bit), base, wid, vwid);
+      recv_vec4_pv(port, reduce4(bit), base, wid, vwid, 0);
 }
 
-void vvp_net_fun_t::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
-{
-      recv_vec4(port, reduce4(bit));
-}
-
-void vvp_net_fun_t::recv_real(vvp_net_ptr_t, double bit)
+void vvp_net_fun_t::recv_real(vvp_net_ptr_t port, double bit, vvp_context_t)
 {
       fprintf(stderr, "internal error: %s: recv_real(%f) not implemented\n",
 	      typeid(*this).name(), bit);
@@ -2320,7 +2362,8 @@ vvp_fun_drive::~vvp_fun_drive()
 {
 }
 
-void vvp_fun_drive::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
+void vvp_fun_drive::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                              vvp_context_t)
 {
       assert(port.port() == 0);
       vvp_send_vec8(port.ptr()->out, vvp_vector8_t(bit, drive0_, drive1_));
@@ -2416,24 +2459,9 @@ void vvp_fun_signal_base::recv_long_pv(vvp_net_ptr_t ptr, long bit,
       }
 }
 
-vvp_fun_signal::vvp_fun_signal(unsigned wid, vvp_bit4_t init)
+vvp_fun_signal4_sa::vvp_fun_signal4_sa(unsigned wid, vvp_bit4_t init)
 : bits4_(wid, init)
 {
-}
-
-void vvp_fun_signal::alloc_instance(vvp_context_t context)
-{
-      unsigned wid = bits4_.size();
-
-      vvp_set_context_item(context, context_idx, new vvp_vector4_t(wid));
-}
-
-void vvp_fun_signal::reset_instance(vvp_context_t context)
-{
-      vvp_vector4_t*bits = static_cast<vvp_vector4_t*>
-            (vvp_get_context_item(context, context_idx));
-
-      bits->set_to_x();
 }
 
 /*
@@ -2447,12 +2475,9 @@ void vvp_fun_signal::reset_instance(vvp_context_t context)
  * herein is to keep a "needs_init_" flag that is turned false after
  * the first propagation, and forces the first propagation to happen
  * even if it matches the initial value.
- *
- * Continuous and forced assignments are not permitted on automatic
- * variables. So we only need incur the overhead of checking for an
- * automatic variable when we are doing a normal unmasked assign.
  */
-void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                                   vvp_context_t)
 {
       switch (ptr.port()) {
 	  case 0: // Normal input (feed from net, or set from process)
@@ -2460,15 +2485,8 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 		 copy the bits, otherwise we need to see if there are
 		 any holes in the mask so we can set those bits. */
 	    if (assign_mask_.size() == 0) {
-                  vvp_vector4_t*bits4;
-                  if (context_idx) {
-                        bits4 = static_cast<vvp_vector4_t*>
-                              (vthread_get_wt_context_item(context_idx));
-                  } else {
-                        bits4 = &bits4_;
-                  }
-		  if (needs_init_ || !bits4->eeq(bit)) {
-			*bits4 = bit;
+                  if (needs_init_ || !bits4_.eeq(bit)) {
+			bits4_ = bit;
 			needs_init_ = false;
 			calculate_output_(ptr);
 		  }
@@ -2514,8 +2532,14 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       }
 }
 
-void vvp_fun_signal::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-				  unsigned base, unsigned wid, unsigned vwid)
+void vvp_fun_signal4_sa::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
+{
+      recv_vec4(ptr, reduce4(bit), 0);
+}
+
+void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+				      unsigned base, unsigned wid, unsigned vwid,
+                                      vvp_context_t)
 {
       assert(bit.size() == wid);
       assert(bits4_.size() == vwid);
@@ -2523,16 +2547,9 @@ void vvp_fun_signal::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       switch (ptr.port()) {
 	  case 0: // Normal input
 	    if (assign_mask_.size() == 0) {
-                  vvp_vector4_t*bits4;
-                  if (context_idx) {
-                        bits4 = static_cast<vvp_vector4_t*>
-                              (vthread_get_wt_context_item(context_idx));
-                  } else {
-                        bits4 = &bits4_;
-                  }
-		  for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-			if (base+idx >= bits4->size()) break;
-			bits4->set_bit(base+idx, bit.value(idx));
+                  for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+			if (base+idx >= bits4_.size()) break;
+			bits4_.set_bit(base+idx, bit.value(idx));
 		  }
 		  needs_init_ = false;
 		  calculate_output_(ptr);
@@ -2586,13 +2603,13 @@ void vvp_fun_signal::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       }
 }
 
-void vvp_fun_signal::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
-				  unsigned base, unsigned wid, unsigned vwid)
+void vvp_fun_signal4_sa::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
+				      unsigned base, unsigned wid, unsigned vwid)
 {
-      recv_vec4_pv(ptr, reduce4(bit), base, wid, vwid);
+      recv_vec4_pv(ptr, reduce4(bit), base, wid, vwid, 0);
 }
 
-void vvp_fun_signal::calculate_output_(vvp_net_ptr_t ptr)
+void vvp_fun_signal4_sa::calculate_output_(vvp_net_ptr_t ptr)
 {
       if (force_mask_.size()) {
 	    assert(bits4_.size() == force_mask_.size());
@@ -2602,37 +2619,27 @@ void vvp_fun_signal::calculate_output_(vvp_net_ptr_t ptr)
 		  if (force_mask_.value(idx))
 			bits.set_bit(idx, force_.value(idx));
 	    }
-	    vvp_send_vec4(ptr.ptr()->out, bits);
-      } else if (context_idx) {
-            vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
-                  (vthread_get_wt_context_item(context_idx));
-            vvp_send_vec4(ptr.ptr()->out, *bits4);
+	    vvp_send_vec4(ptr.ptr()->out, bits, 0);
       } else {
-            vvp_send_vec4(ptr.ptr()->out, bits4_);
+            vvp_send_vec4(ptr.ptr()->out, bits4_, 0);
       }
 
       run_vpi_callbacks();
 }
 
-void vvp_fun_signal::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
-{
-      recv_vec4(ptr, reduce4(bit));
-}
-
-
-void vvp_fun_signal::release(vvp_net_ptr_t ptr, bool net)
+void vvp_fun_signal4_sa::release(vvp_net_ptr_t ptr, bool net)
 {
       force_mask_ = vvp_vector2_t();
       if (net) {
-	    vvp_send_vec4(ptr.ptr()->out, bits4_);
+	    vvp_send_vec4(ptr.ptr()->out, bits4_, 0);
 	    run_vpi_callbacks();
       } else {
 	    bits4_ = force_;
       }
 }
 
-void vvp_fun_signal::release_pv(vvp_net_ptr_t ptr, bool net,
-                                unsigned base, unsigned wid)
+void vvp_fun_signal4_sa::release_pv(vvp_net_ptr_t ptr, bool net,
+                                    unsigned base, unsigned wid)
 {
       assert(bits4_.size() >= base + wid);
 
@@ -2645,7 +2652,7 @@ void vvp_fun_signal::release_pv(vvp_net_ptr_t ptr, bool net,
       if (net) calculate_output_(ptr);
 }
 
-unsigned vvp_fun_signal::size() const
+unsigned vvp_fun_signal4_sa::size() const
 {
       if (force_mask_.size())
 	    return force_.size();
@@ -2653,33 +2660,25 @@ unsigned vvp_fun_signal::size() const
 	    return bits4_.size();
 }
 
-vvp_bit4_t vvp_fun_signal::value(unsigned idx) const
+vvp_bit4_t vvp_fun_signal4_sa::value(unsigned idx) const
 {
       if (force_mask_.size() && force_mask_.value(idx)) {
 	    return force_.value(idx);
-      } else if (context_idx) {
-            vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
-                  (vthread_get_rd_context_item(context_idx));
-            return bits4->value(idx);
       } else {
             return bits4_.value(idx);
       }
 }
 
-vvp_scalar_t vvp_fun_signal::scalar_value(unsigned idx) const
+vvp_scalar_t vvp_fun_signal4_sa::scalar_value(unsigned idx) const
 {
       if (force_mask_.size() && force_mask_.value(idx)) {
 	    return vvp_scalar_t(force_.value(idx), 6, 6);
-      } else if (context_idx) {
-            vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
-                  (vthread_get_rd_context_item(context_idx));
-            return vvp_scalar_t(bits4->value(idx), 6, 6);
       } else {
             return vvp_scalar_t(bits4_.value(idx), 6, 6);
       }
 }
 
-vvp_vector4_t vvp_fun_signal::vec4_value() const
+vvp_vector4_t vvp_fun_signal4_sa::vec4_value() const
 {
       if (force_mask_.size()) {
 	    assert(bits4_.size() == force_mask_.size());
@@ -2690,13 +2689,108 @@ vvp_vector4_t vvp_fun_signal::vec4_value() const
 			bits.set_bit(idx, force_.value(idx));
 	    }
 	    return bits;
-      } else if (context_idx) {
-            vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
-                  (vthread_get_rd_context_item(context_idx));
-            return *bits4;
       } else {
             return bits4_;
       }
+}
+
+vvp_fun_signal4_aa::vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init)
+{
+      context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
+      size_ = wid;
+}
+
+void vvp_fun_signal4_aa::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, context_idx_, new vvp_vector4_t(size_));
+}
+
+void vvp_fun_signal4_aa::reset_instance(vvp_context_t context)
+{
+      vvp_vector4_t*bits = static_cast<vvp_vector4_t*>
+            (vvp_get_context_item(context, context_idx_));
+
+      bits->set_to_x();
+}
+
+/*
+ * Continuous and forced assignments are not permitted on automatic
+ * variables. So we only expect to receive on port 0.
+ */
+void vvp_fun_signal4_aa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                                   vvp_context_t context)
+{
+      assert(ptr.port() == 0);
+      assert(context);
+
+      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+            (vvp_get_context_item(context, context_idx_));
+
+      if (!bits4->eeq(bit)) {
+            *bits4 = bit;
+            vvp_send_vec4(ptr.ptr()->out, *bits4, context);
+      }
+}
+
+void vvp_fun_signal4_aa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+				      unsigned base, unsigned wid, unsigned vwid,
+                                      vvp_context_t context)
+{
+      assert(ptr.port() == 0);
+      assert(bit.size() == wid);
+      assert(size_ == vwid);
+      assert(context);
+
+      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+            (vvp_get_context_item(context, context_idx_));
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+            if (base+idx >= bits4->size()) break;
+            bits4->set_bit(base+idx, bit.value(idx));
+      }
+      vvp_send_vec4(ptr.ptr()->out, *bits4, context);
+}
+
+void vvp_fun_signal4_aa::release(vvp_net_ptr_t ptr, bool net)
+{
+        /* Automatic variables can't be forced. */
+      assert(0);
+}
+
+void vvp_fun_signal4_aa::release_pv(vvp_net_ptr_t ptr, bool net,
+                                    unsigned base, unsigned wid)
+{
+        /* Automatic variables can't be forced. */
+      assert(0);
+}
+
+unsigned vvp_fun_signal4_aa::size() const
+{
+      return size_;
+}
+
+vvp_bit4_t vvp_fun_signal4_aa::value(unsigned idx) const
+{
+      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+            (vthread_get_rd_context_item(context_idx_));
+
+      return bits4->value(idx);
+}
+
+vvp_scalar_t vvp_fun_signal4_aa::scalar_value(unsigned idx) const
+{
+      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+            (vthread_get_rd_context_item(context_idx_));
+
+      return vvp_scalar_t(bits4->value(idx), 6, 6);
+}
+
+vvp_vector4_t vvp_fun_signal4_aa::vec4_value() const
+{
+      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+            (vthread_get_rd_context_item(context_idx_));
+
+      return *bits4;
 }
 
 vvp_fun_signal8::vvp_fun_signal8(unsigned wid)
@@ -2704,7 +2798,8 @@ vvp_fun_signal8::vvp_fun_signal8(unsigned wid)
 {
 }
 
-void vvp_fun_signal8::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_fun_signal8::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                                vvp_context_t)
 {
       recv_vec8(ptr, vvp_vector8_t(bit,6,6));
 }
@@ -2748,7 +2843,8 @@ void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 }
 
 void vvp_fun_signal8::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-                                   unsigned base, unsigned wid, unsigned vwid)
+                                   unsigned base, unsigned wid, unsigned vwid,
+                                   vvp_context_t)
 {
       recv_vec8_pv(ptr, vvp_vector8_t(bit,6,6), base, wid, vwid);
 }
@@ -2879,39 +2975,6 @@ vvp_scalar_t vvp_fun_signal8::scalar_value(unsigned idx) const
 	    return bits8_.value(idx);
 }
 
-vvp_fun_signal_real::vvp_fun_signal_real()
-{
-      bits_ = 0.0;
-}
-
-void vvp_fun_signal_real::alloc_instance(vvp_context_t context)
-{
-      double*bits = new double;
-      *bits = 0.0;
-      vvp_set_context_item(context, context_idx, bits);
-}
-
-void vvp_fun_signal_real::reset_instance(vvp_context_t context)
-{
-      double*bits = static_cast<double*>
-            (vvp_get_context_item(context, context_idx));
-
-      *bits = 0.0;
-}
-
-double vvp_fun_signal_real::real_value() const
-{
-      if (force_mask_.size()) {
-	    return force_;
-      } else if (context_idx) {
-            double*bits = static_cast<double*>
-                  (vthread_get_rd_context_item(context_idx));
-            return *bits;
-      } else {
-	    return bits_;
-      }
-}
-
 /*
  * Testing for equality, we want a bitwise test instead of an
  * arithmetic test because we want to treat for example -0 different
@@ -2922,22 +2985,29 @@ bool bits_equal(double a, double b)
       return memcmp(&a, &b, sizeof a) == 0;
 }
 
-void vvp_fun_signal_real::recv_real(vvp_net_ptr_t ptr, double bit)
+vvp_fun_signal_real_sa::vvp_fun_signal_real_sa()
+{
+      bits_ = 0.0;
+}
+
+double vvp_fun_signal_real_sa::real_value() const
+{
+      if (force_mask_.size())
+	    return force_;
+      else
+	    return bits_;
+}
+
+void vvp_fun_signal_real_sa::recv_real(vvp_net_ptr_t ptr, double bit,
+                                       vvp_context_t)
 {
       switch (ptr.port()) {
 	  case 0:
 	    if (!continuous_assign_active_) {
-                  double*bits;
-                  if (context_idx) {
-                        bits = static_cast<double*>
-                              (vthread_get_wt_context_item(context_idx));
-                  } else {
-                        bits = &bits_;
-                  }
-		  if (needs_init_ || !bits_equal(*bits,bit)) {
-			*bits = bit;
+                  if (needs_init_ || !bits_equal(bits_, bit)) {
+			bits_ = bit;
 			needs_init_ = false;
-			vvp_send_real(ptr.ptr()->out, bit);
+			vvp_send_real(ptr.ptr()->out, bit, 0);
 			run_vpi_callbacks();
 		  }
 	    }
@@ -2946,14 +3016,14 @@ void vvp_fun_signal_real::recv_real(vvp_net_ptr_t ptr, double bit)
 	  case 1: // Continuous assign value
 	    continuous_assign_active_ = true;
 	    bits_ = bit;
-	    vvp_send_real(ptr.ptr()->out, bit);
+	    vvp_send_real(ptr.ptr()->out, bit, 0);
 	    run_vpi_callbacks();
 	    break;
 
 	  case 2: // Force value
 	    force_mask_ = vvp_vector2_t(1, 1);
 	    force_ = bit;
-	    vvp_send_real(ptr.ptr()->out, bit);
+	    vvp_send_real(ptr.ptr()->out, bit, 0);
 	    run_vpi_callbacks();
 	    break;
 
@@ -2964,21 +3034,78 @@ void vvp_fun_signal_real::recv_real(vvp_net_ptr_t ptr, double bit)
       }
 }
 
-void vvp_fun_signal_real::release(vvp_net_ptr_t ptr, bool net)
+void vvp_fun_signal_real_sa::release(vvp_net_ptr_t ptr, bool net)
 {
       force_mask_ = vvp_vector2_t();
       if (net) {
-	    vvp_send_real(ptr.ptr()->out, bits_);
+	    vvp_send_real(ptr.ptr()->out, bits_, 0);
 	    run_vpi_callbacks();
       } else {
 	    bits_ = force_;
       }
 }
 
-void vvp_fun_signal_real::release_pv(vvp_net_ptr_t ptr, bool net,
-                                     unsigned base, unsigned wid)
+void vvp_fun_signal_real_sa::release_pv(vvp_net_ptr_t ptr, bool net,
+                                        unsigned base, unsigned wid)
 {
       fprintf(stderr, "Error: cannot take bit/part select of a real value!\n");
+      assert(0);
+}
+
+vvp_fun_signal_real_aa::vvp_fun_signal_real_aa()
+{
+      context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
+}
+
+void vvp_fun_signal_real_aa::alloc_instance(vvp_context_t context)
+{
+      double*bits = new double;
+      vvp_set_context_item(context, context_idx_, bits);
+
+      *bits = 0.0;
+}
+
+void vvp_fun_signal_real_aa::reset_instance(vvp_context_t context)
+{
+      double*bits = static_cast<double*>
+            (vvp_get_context_item(context, context_idx_));
+
+      *bits = 0.0;
+}
+
+double vvp_fun_signal_real_aa::real_value() const
+{
+      double*bits = static_cast<double*>
+            (vthread_get_rd_context_item(context_idx_));
+
+      return *bits;
+}
+
+void vvp_fun_signal_real_aa::recv_real(vvp_net_ptr_t ptr, double bit,
+                                       vvp_context_t context)
+{
+      assert(ptr.port() == 0);
+      assert(context);
+
+      double*bits = static_cast<double*>
+            (vvp_get_context_item(context, context_idx_));
+
+      if (!bits_equal(*bits,bit)) {
+            *bits = bit;
+            vvp_send_real(ptr.ptr()->out, bit, context);
+      }
+}
+
+void vvp_fun_signal_real_aa::release(vvp_net_ptr_t ptr, bool net)
+{
+        /* Automatic variables can't be forced. */
+      assert(0);
+}
+
+void vvp_fun_signal_real_aa::release_pv(vvp_net_ptr_t ptr, bool net,
+                                        unsigned base, unsigned wid)
+{
+        /* Automatic variables can't be forced. */
       assert(0);
 }
 
@@ -3004,7 +3131,7 @@ void vvp_wide_fun_core::propagate_vec4(const vvp_vector4_t&bit,
       if (delay)
 	    schedule_assign_plucked_vector(ptr_->out, delay, bit, 0, bit.size());
       else
-	    vvp_send_vec4(ptr_->out, bit);
+	    vvp_send_vec4(ptr_->out, bit, 0);
 }
 
 void vvp_wide_fun_core::propagate_real(double bit,
@@ -3014,7 +3141,7 @@ void vvp_wide_fun_core::propagate_real(double bit,
 	      // schedule_assign_vector(ptr_->out, bit, delay);
 	    assert(0); // Need a real-value version of assign_vector.
       } else {
-	    vvp_send_real(ptr_->out, bit);
+	    vvp_send_real(ptr_->out, bit, 0);
       }
 }
 
@@ -3069,18 +3196,19 @@ vvp_wide_fun_t::~vvp_wide_fun_t()
 {
 }
 
-void vvp_wide_fun_t::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
+void vvp_wide_fun_t::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                               vvp_context_t)
 {
       unsigned pidx = port_base_ + port.port();
       core_->dispatch_vec4_from_input_(pidx, bit);
 }
 
-void vvp_wide_fun_t::recv_real(vvp_net_ptr_t port, double bit)
+void vvp_wide_fun_t::recv_real(vvp_net_ptr_t port, double bit,
+                               vvp_context_t)
 {
       unsigned pidx = port_base_ + port.port();
       core_->dispatch_real_from_input_(pidx, bit);
 }
-
 
 /* **** vvp_scalar_t methods **** */
 

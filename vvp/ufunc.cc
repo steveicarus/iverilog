@@ -17,6 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# include  "vvp_net.h"
 # include  "compile.h"
 # include  "symbols.h"
 # include  "codes.h"
@@ -61,15 +62,15 @@ ufunc_core::~ufunc_core()
  * input variables of the function for execution. The method copies
  * the input values collected by the core to the variables.
  */
-void ufunc_core::assign_bits_to_ports(void)
+void ufunc_core::assign_bits_to_ports(vvp_context_t context)
 {
       for (unsigned idx = 0 ; idx < port_count() ;  idx += 1) {
 	    vvp_net_t*net = ports_[idx];
 	    vvp_net_ptr_t pp (net, 0);
 	    if (vvp_fun_signal_real*tmp = dynamic_cast<vvp_fun_signal_real*>(net->fun))
-		  tmp->recv_real(pp, value_r(idx));
+		  tmp->recv_real(pp, value_r(idx), context);
 	    if (vvp_fun_signal_vec*tmp = dynamic_cast<vvp_fun_signal_vec*>(net->fun))
-		  tmp->recv_vec4(pp, value(idx));
+		  tmp->recv_vec4(pp, value(idx), context);
       }
 }
 

@@ -61,7 +61,7 @@ class ufunc_core : public vvp_wide_fun_core {
       struct __vpiScope*call_scope() { return call_scope_; }
       struct __vpiScope*func_scope() { return func_scope_; }
 
-      void assign_bits_to_ports(void);
+      void assign_bits_to_ports(vvp_context_t context);
       void finish_thread(vthread_t thr);
 
     private:

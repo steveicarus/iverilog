@@ -173,6 +173,12 @@ void NetEvent::find_similar_event(list<NetEvent*>&event_list)
 	    if (tmp == this)
 		  continue;
 
+              /* For automatic tasks, the VVP runtime holds state for events
+                 in the automatically allocated context. This means we can't
+                 merge similar events in different automatic tasks. */
+            if (scope()->is_auto() && (tmp->scope() != scope()))
+                  continue;
+
 	    if ((*idx).second != probe_count)
 		  continue;
 
@@ -553,4 +559,3 @@ NetProc* NetEvWait::statement()
  *  Simulate named event trigger and waits.
  *
  */
-

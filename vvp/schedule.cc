@@ -141,9 +141,9 @@ void assign_vector4_event_s::run_run(void)
 {
       count_assign_events += 1;
       if (vwid > 0)
-	    vvp_send_vec4_pv(ptr, val, base, val.size(), vwid);
+	    vvp_send_vec4_pv(ptr, val, base, val.size(), vwid, 0);
       else
-	    vvp_send_vec4(ptr, val);
+	    vvp_send_vec4(ptr, val, 0);
 }
 
 static const size_t ASSIGN4_CHUNK_COUNT = 524288 / sizeof(struct assign_vector4_event_s);
@@ -205,7 +205,7 @@ struct assign_real_event_s  : public event_s {
 void assign_real_event_s::run_run(void)
 {
       count_assign_events += 1;
-      vvp_send_real(ptr, val);
+      vvp_send_real(ptr, val, 0);
 }
 
 static const size_t ASSIGNR_CHUNK_COUNT = 8192 / sizeof(struct assign_real_event_s);

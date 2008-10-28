@@ -266,7 +266,7 @@ bool PEIdent::elaborate_sig(Design*des, NetScope*scope) const
       if (error_implicit)
 	    return true;
 
-      symbol_search(des, scope, path_, sig, par, eve);
+      symbol_search(this, des, scope, path_, sig, par, eve);
 
       if (eve != 0)
 	    return false;
