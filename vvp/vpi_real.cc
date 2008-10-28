@@ -186,7 +186,7 @@ vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
 
       obj->base.vpi_type = &vpip_real_var_rt;
       obj->parent = 0;
-      obj->id.name = vpip_name_string(name);
+      obj->id.name = name ? vpip_name_string(name) : 0;
       obj->net = net;
 
       obj->scope = vpip_peek_current_scope();

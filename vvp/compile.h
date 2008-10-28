@@ -443,12 +443,13 @@ extern void compile_net_real(char*label, char*name,
 
 extern void compile_netw(char*label, char*array_symbol,
 			 unsigned long array_addr,
-			int msb, int lsb, bool signed_flag,
-			bool net8_flag,
-			unsigned argc, struct symb_s*argv);
+			 int msb, int lsb, bool signed_flag,
+			 bool net8_flag,
+			 unsigned argc, struct symb_s*argv);
 extern void compile_netw_real(char*label, char*array_symbol,
-			     int msb, int lsb,
-			     unsigned argc, struct symb_s*argv);
+			      unsigned long array_addr,
+			      int msb, int lsb,
+			      unsigned argc, struct symb_s*argv);
 
 extern void compile_alias(char*label, char*name,
 			  int msb, int lsb, bool signed_flag,
