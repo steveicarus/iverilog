@@ -198,11 +198,11 @@ vhdl_expr *vhdl_expr::resize(int newwidth)
    else
       return this;   // Doesn't make sense to resize non-vector type
    
-   vhdl_fcall *resize = new vhdl_fcall("Resize", rtype);
-   resize->add_expr(this);
-   resize->add_expr(new vhdl_const_int(newwidth));
+   vhdl_fcall *resizef = new vhdl_fcall("Resize", rtype);
+   resizef->add_expr(this);
+   resizef->add_expr(new vhdl_const_int(newwidth));
 
-   return resize;
+   return resizef;
 }
 
 vhdl_expr *vhdl_const_int::to_vector(vhdl_type_name_t name, int w)

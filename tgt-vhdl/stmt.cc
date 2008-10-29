@@ -424,8 +424,8 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
          ivl_event_t event = ivl_stmt_events(stmt, i);
          
          int nany = ivl_event_nany(event);
-         for (int i = 0; i < nany; i++) {
-            ivl_nexus_t nexus = ivl_event_any(event, i);
+         for (int j = 0; j < nany; j++) {
+            ivl_nexus_t nexus = ivl_event_any(event, j);
             vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
 
             wait->add_sensitivity(ref->get_name());
@@ -441,8 +441,8 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
          ivl_event_t event = ivl_stmt_events(stmt, i);
          
          int nany = ivl_event_nany(event);
-         for (int i = 0; i < nany; i++) {
-            ivl_nexus_t nexus = ivl_event_any(event, i);
+         for (int j = 0; j < nany; j++) {
+            ivl_nexus_t nexus = ivl_event_any(event, j);
             vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
             
             ref->set_name(ref->get_name() + "'Event");
@@ -450,8 +450,8 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
          }
          
          int nneg = ivl_event_nneg(event);
-         for (int i = 0; i < nneg; i++) {
-            ivl_nexus_t nexus = ivl_event_neg(event, i);
+         for (int j = 0; j < nneg; j++) {
+            ivl_nexus_t nexus = ivl_event_neg(event, j);
             vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
             vhdl_fcall *detect =
                new vhdl_fcall("falling_edge", vhdl_type::boolean());
@@ -461,8 +461,8 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
          }
          
          int npos = ivl_event_npos(event);
-         for (int i = 0; i < npos; i++) {
-            ivl_nexus_t nexus = ivl_event_pos(event, i);
+         for (int j = 0; j < npos; j++) {
+            ivl_nexus_t nexus = ivl_event_pos(event, j);
             vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
             vhdl_fcall *detect =
                new vhdl_fcall("rising_edge", vhdl_type::boolean());

@@ -698,11 +698,11 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
       for (int i = 0; i < nsigs; i++) {
          ivl_signal_t sig = ivl_scope_sig(scope, i);
          
-         for (unsigned i = ivl_signal_array_base(sig);
-              i < ivl_signal_array_count(sig);
-              i++) {
+         for (unsigned j = ivl_signal_array_base(sig);
+              j < ivl_signal_array_count(sig);
+              j++) {
             // Make sure the nexus code is generated
-            ivl_nexus_t nex = ivl_signal_nex(sig, i);
+            ivl_nexus_t nex = ivl_signal_nex(sig, j);
             seen_nexus(nex);
             
             nexus_private_t *priv =
@@ -712,7 +712,7 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
             vhdl_scope *arch_scope = ent->get_arch()->get_scope();
 
             if (priv->const_driver) {
-               assert(i == 0);   // TODO: Make work for more words
+               assert(j == 0);   // TODO: Make work for more words
                
                vhdl_var_ref *ref = nexus_to_var_ref(arch_scope, nex);
                
