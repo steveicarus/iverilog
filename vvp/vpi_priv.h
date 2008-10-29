@@ -354,16 +354,20 @@ extern void vpip_real_value_change(struct __vpiCallback*cbh,
  */
 struct __vpiRealVar {
       struct __vpiHandle base;
-      vpiHandle parent;
-      struct __vpiScope* scope;
+      union { // The scope or parent array that contains me.
+	    vpiHandle parent;
+	    struct __vpiScope* scope;
+      } within;
 	/* The name of this variable, or the index for array words. */
       union {
             const char*name;
             vpiHandle index;
       } id;
+      unsigned is_netarray  : 1; // This is word of a net array
       vvp_net_t*net;
 };
 
+extern struct __vpiScope* vpip_scope(__vpiRealVar*sig);
 extern vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net);
 
 /*
