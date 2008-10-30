@@ -115,7 +115,7 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      symbol_search(des, scope, path_, sig, mem, par, eve);
+      symbol_search(this, des, scope, path_, sig, mem, par, eve);
 
 
       if (mem != 0) {
@@ -211,4 +211,3 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
  *  Check lvalue of procedural continuous assign (PR#29)
  *
  */
-

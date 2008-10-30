@@ -43,6 +43,9 @@ static int real_var_get(int code, vpiHandle ref)
 
 	case vpiLineNo:
 	    return 0; // Not implemented for now!
+
+	case vpiAutomatic:
+	    return (int) rfp->scope->is_automatic;
       }
 
       return 0;
@@ -131,11 +134,13 @@ static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp, int)
       switch (vp->format) {
 
 	  case vpiRealVal:
-	    vvp_send_real(destination, vp->value.real);
+	    vvp_send_real(destination, vp->value.real,
+                          vthread_get_wt_context());
 	    break;
 
 	  case vpiIntVal:
-	    vvp_send_real(destination, (double)vp->value.integer);
+	    vvp_send_real(destination, (double)vp->value.integer,
+                          vthread_get_wt_context());
 	    break;
 
 	  default:
@@ -186,7 +191,7 @@ vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
 
       obj->base.vpi_type = &vpip_real_var_rt;
       obj->parent = 0;
-      obj->id.name = vpip_name_string(name);
+      obj->id.name = name ? vpip_name_string(name) : 0;
       obj->net = net;
 
       obj->scope = vpip_peek_current_scope();

@@ -27,6 +27,21 @@
 # include  <string.h>
 # include  <assert.h>
 
+static int named_event_get(int code, vpiHandle ref)
+{
+      assert((ref->vpi_type->type_code==vpiNamedEvent));
+
+      struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)ref;
+
+      switch (code) {
+
+	  case vpiAutomatic:
+	    return (int) obj->scope->is_automatic;
+      }
+
+      return 0;
+}
+
 static char* named_event_get_str(int code, vpiHandle ref)
 {
       assert((ref->vpi_type->type_code==vpiNamedEvent));
@@ -57,7 +72,7 @@ static vpiHandle named_event_get_handle(int code, vpiHandle ref)
 static const struct __vpirt vpip_named_event_rt = {
       vpiNamedEvent,
 
-      0,
+      named_event_get,
       named_event_get_str,
       0,
       0,
@@ -122,4 +137,3 @@ void vpip_run_named_event_callbacks(vpiHandle ref)
 	    }
       }
 }
-

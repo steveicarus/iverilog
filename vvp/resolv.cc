@@ -35,13 +35,15 @@ resolv_functor::~resolv_functor()
 {
 }
 
-void resolv_functor::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
+void resolv_functor::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                               vvp_context_t)
 {
       recv_vec8(port, vvp_vector8_t(bit, 6,6 /* STRONG */));
 }
 
 void resolv_functor::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-				  unsigned base, unsigned wid, unsigned vwid)
+				  unsigned base, unsigned wid, unsigned vwid,
+                                  vvp_context_t)
 {
       assert(bit.size() == wid);
       vvp_vector4_t res (vwid);
@@ -55,7 +57,7 @@ void resolv_functor::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       for (unsigned idx = base+wid ;  idx < vwid ;  idx += 1)
 	    res.set_bit(idx, BIT4_Z);
 
-      recv_vec4(port, res);
+      recv_vec4(port, res, 0);
 }
 
 void resolv_functor::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
@@ -123,7 +125,8 @@ resolv_wired_logic::~resolv_wired_logic()
 {
 }
 
-void resolv_wired_logic::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
+void resolv_wired_logic::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                   vvp_context_t)
 {
       unsigned pdx = port.port();
       vvp_net_t*ptr = port.ptr();
@@ -143,7 +146,7 @@ void resolv_wired_logic::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	    out = wired_logic_math_(out, val_[idx]);
       }
 
-      vvp_send_vec4(ptr->out, out);
+      vvp_send_vec4(ptr->out, out, 0);
 }
 
 vvp_vector4_t resolv_triand::wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b)

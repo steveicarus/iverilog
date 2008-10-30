@@ -63,7 +63,8 @@ vvp_arith_abs::~vvp_arith_abs()
 {
 }
 
-void vvp_arith_abs::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_arith_abs::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                              vvp_context_t)
 {
       vvp_vector4_t out (bit.size(), BIT4_0);;
 
@@ -81,13 +82,14 @@ void vvp_arith_abs::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    break;
       }
 
-      vvp_send_vec4(ptr.ptr()->out, out);
+      vvp_send_vec4(ptr.ptr()->out, out, 0);
 }
 
-void vvp_arith_abs::recv_real(vvp_net_ptr_t ptr, double bit)
+void vvp_arith_abs::recv_real(vvp_net_ptr_t ptr, double bit,
+                              vvp_context_t)
 {
       double out = fabs(bit);
-      vvp_send_real(ptr.ptr()->out, out);
+      vvp_send_real(ptr.ptr()->out, out, 0);
 }
 
 vvp_arith_cast_int::vvp_arith_cast_int(unsigned wid)
@@ -99,9 +101,10 @@ vvp_arith_cast_int::~vvp_arith_cast_int()
 {
 }
 
-void vvp_arith_cast_int::recv_real(vvp_net_ptr_t ptr, double bit)
+void vvp_arith_cast_int::recv_real(vvp_net_ptr_t ptr, double bit,
+                                   vvp_context_t)
 {
-      vvp_send_vec4(ptr.ptr()->out, vvp_vector4_t(wid_, bit));
+      vvp_send_vec4(ptr.ptr()->out, vvp_vector4_t(wid_, bit), 0);
 }
 
 vvp_arith_cast_real::vvp_arith_cast_real(bool signed_flag)
@@ -113,11 +116,12 @@ vvp_arith_cast_real::~vvp_arith_cast_real()
 {
 }
 
-void vvp_arith_cast_real::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_arith_cast_real::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                                    vvp_context_t)
 {
       double val;
       vector4_to_value(bit, val, signed_);
-      vvp_send_real(ptr.ptr()->out, val);
+      vvp_send_real(ptr.ptr()->out, val, 0);
 }
 
 // Division
@@ -135,21 +139,22 @@ void vvp_arith_div::wide4_(vvp_net_ptr_t ptr)
 {
       vvp_vector2_t a2 (op_a_);
       if (a2.is_NaN()) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
       vvp_vector2_t b2 (op_b_);
       if (b2.is_NaN()) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
       vvp_vector2_t res2 = a2 / b2;
-      vvp_send_vec4(ptr.ptr()->out, vector2_to_vector4(res2, wid_));
+      vvp_send_vec4(ptr.ptr()->out, vector2_to_vector4(res2, wid_), 0);
 }
 
-void vvp_arith_div::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_arith_div::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                              vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -160,13 +165,13 @@ void vvp_arith_div::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 
       unsigned long a;
       if (! vector4_to_value(op_a_, a)) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
       unsigned long b;
       if (! vector4_to_value(op_b_, b)) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
@@ -202,7 +207,7 @@ void vvp_arith_div::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    val >>= 1;
       }
 
-      vvp_send_vec4(ptr.ptr()->out, vval);
+      vvp_send_vec4(ptr.ptr()->out, vval, 0);
 }
 
 
@@ -219,21 +224,22 @@ void vvp_arith_mod::wide_(vvp_net_ptr_t ptr)
 {
       vvp_vector2_t a2 (op_a_);
       if (a2.is_NaN()) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
       vvp_vector2_t b2 (op_b_);
       if (b2.is_NaN()) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
       vvp_vector2_t res = a2 % b2;
-      vvp_send_vec4(ptr.ptr()->out, vector2_to_vector4(res, res.size()));
+      vvp_send_vec4(ptr.ptr()->out, vector2_to_vector4(res, res.size()), 0);
 }
 
-void vvp_arith_mod::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_arith_mod::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                              vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -244,13 +250,13 @@ void vvp_arith_mod::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 
       unsigned long a;
       if (! vector4_to_value(op_a_, a)) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
       unsigned long b;
       if (! vector4_to_value(op_b_, b)) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
@@ -275,7 +281,7 @@ void vvp_arith_mod::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1)
 		  xval.set_bit(idx, BIT4_X);
 
-	    vvp_send_vec4(ptr.ptr()->out, xval);
+	    vvp_send_vec4(ptr.ptr()->out, xval, 0);
 	    return;
       }
 
@@ -295,7 +301,7 @@ void vvp_arith_mod::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    val >>= 1;
       }
 
-      vvp_send_vec4(ptr.ptr()->out, vval);
+      vvp_send_vec4(ptr.ptr()->out, vval, 0);
 }
 
 
@@ -316,17 +322,18 @@ void vvp_arith_mult::wide_(vvp_net_ptr_t ptr)
       vvp_vector2_t b2 (op_b_);
 
       if (a2.is_NaN() || b2.is_NaN()) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
       vvp_vector2_t result = a2 * b2;
 
       vvp_vector4_t res4 = vector2_to_vector4(result, wid_);
-      vvp_send_vec4(ptr.ptr()->out, res4);
+      vvp_send_vec4(ptr.ptr()->out, res4, 0);
 }
 
-void vvp_arith_mult::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_arith_mult::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                               vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -337,13 +344,13 @@ void vvp_arith_mult::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 
       long a;
       if (! vector4_to_value(op_a_, a, false, true)) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
       long b;
       if (! vector4_to_value(op_b_, b, false, true)) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
@@ -360,7 +367,7 @@ void vvp_arith_mult::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    val >>= 1;
       }
 
-      vvp_send_vec4(ptr.ptr()->out, vval);
+      vvp_send_vec4(ptr.ptr()->out, vval, 0);
 }
 
 
@@ -375,14 +382,15 @@ vvp_arith_pow::~vvp_arith_pow()
 {
 }
 
-void vvp_arith_pow::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_arith_pow::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                              vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
       vvp_vector4_t res4;
       if (signed_flag_) {
 	    if (op_a_.has_xz() || op_b_.has_xz()) {
-		  vvp_send_vec4(ptr.ptr()->out, x_val_);
+		  vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 		  return;
 	    }
 
@@ -396,7 +404,7 @@ void vvp_arith_pow::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    vvp_vector2_t b2 (op_b_);
 
 	    if (a2.is_NaN() || b2.is_NaN()) {
-		  vvp_send_vec4(ptr.ptr()->out, x_val_);
+		  vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 		  return;
 	    }
 
@@ -404,7 +412,7 @@ void vvp_arith_pow::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    res4 = vector2_to_vector4(result, wid_);
       }
 
-      vvp_send_vec4(ptr.ptr()->out, res4);
+      vvp_send_vec4(ptr.ptr()->out, res4, 0);
 }
 
 
@@ -419,7 +427,8 @@ vvp_arith_sum::~vvp_arith_sum()
 {
 }
 
-void vvp_arith_sum::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_arith_sum::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                              vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -438,14 +447,14 @@ void vvp_arith_sum::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    vvp_bit4_t cur = add_with_carry(a, b, carry);
 
 	    if (cur == BIT4_X) {
-		  vvp_send_vec4(net->out, x_val_);
+		  vvp_send_vec4(net->out, x_val_, 0);
 		  return;
 	    }
 
 	    value.set_bit(idx, cur);
       }
 
-      vvp_send_vec4(net->out, value);
+      vvp_send_vec4(net->out, value, 0);
 }
 
 vvp_arith_sub::vvp_arith_sub(unsigned wid)
@@ -463,7 +472,8 @@ vvp_arith_sub::~vvp_arith_sub()
  * further reduce the operation to adding in the inverted value and
  * adding a correction.
  */
-void vvp_arith_sub::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_arith_sub::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                              vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -482,14 +492,14 @@ void vvp_arith_sub::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 	    vvp_bit4_t cur = add_with_carry(a, b, carry);
 
 	    if (cur == BIT4_X) {
-		  vvp_send_vec4(net->out, x_val_);
+		  vvp_send_vec4(net->out, x_val_, 0);
 		  return;
 	    }
 
 	    value.set_bit(idx, cur);
       }
 
-      vvp_send_vec4(net->out, value);
+      vvp_send_vec4(net->out, value, 0);
 }
 
 vvp_cmp_eeq::vvp_cmp_eeq(unsigned wid)
@@ -497,7 +507,8 @@ vvp_cmp_eeq::vvp_cmp_eeq(unsigned wid)
 {
 }
 
-void vvp_cmp_eeq::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_cmp_eeq::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                            vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -513,7 +524,7 @@ void vvp_cmp_eeq::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 
 
       vvp_net_t*net = ptr.ptr();
-      vvp_send_vec4(net->out, eeq);
+      vvp_send_vec4(net->out, eeq, 0);
 }
 
 vvp_cmp_nee::vvp_cmp_nee(unsigned wid)
@@ -521,7 +532,8 @@ vvp_cmp_nee::vvp_cmp_nee(unsigned wid)
 {
 }
 
-void vvp_cmp_nee::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_cmp_nee::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                            vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -537,7 +549,7 @@ void vvp_cmp_nee::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 
 
       vvp_net_t*net = ptr.ptr();
-      vvp_send_vec4(net->out, eeq);
+      vvp_send_vec4(net->out, eeq, 0);
 }
 
 vvp_cmp_eq::vvp_cmp_eq(unsigned wid)
@@ -551,7 +563,8 @@ vvp_cmp_eq::vvp_cmp_eq(unsigned wid)
  * there are X/Z bits anywhere in A or B, the result is X. Finally,
  * the result is 1.
  */
-void vvp_cmp_eq::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_cmp_eq::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                           vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -583,7 +596,7 @@ void vvp_cmp_eq::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       }
 
       vvp_net_t*net = ptr.ptr();
-      vvp_send_vec4(net->out, res);
+      vvp_send_vec4(net->out, res, 0);
 }
 
 
@@ -598,7 +611,8 @@ vvp_cmp_ne::vvp_cmp_ne(unsigned wid)
  * there are X/Z bits anywhere in A or B, the result is X. Finally,
  * the result is 0.
  */
-void vvp_cmp_ne::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_cmp_ne::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                           vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -630,7 +644,7 @@ void vvp_cmp_ne::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       }
 
       vvp_net_t*net = ptr.ptr();
-      vvp_send_vec4(net->out, res);
+      vvp_send_vec4(net->out, res, 0);
 }
 
 
@@ -651,7 +665,7 @@ void vvp_cmp_gtge_base_::recv_vec4_base_(vvp_net_ptr_t ptr,
 	    : compare_gtge(op_a_, op_b_, out_if_equal);
       vvp_vector4_t val (1);
       val.set_bit(0, out);
-      vvp_send_vec4(ptr.ptr()->out, val);
+      vvp_send_vec4(ptr.ptr()->out, val, 0);
 
       return;
 }
@@ -662,7 +676,8 @@ vvp_cmp_ge::vvp_cmp_ge(unsigned wid, bool flag)
 {
 }
 
-void vvp_cmp_ge::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_cmp_ge::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                           vvp_context_t)
 {
       recv_vec4_base_(ptr, bit, BIT4_1);
 }
@@ -672,7 +687,8 @@ vvp_cmp_gt::vvp_cmp_gt(unsigned wid, bool flag)
 {
 }
 
-void vvp_cmp_gt::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_cmp_gt::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                           vvp_context_t)
 {
       recv_vec4_base_(ptr, bit, BIT4_0);
 }
@@ -687,7 +703,8 @@ vvp_shiftl::~vvp_shiftl()
 {
 }
 
-void vvp_shiftl::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_shiftl::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                           vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -695,7 +712,7 @@ void vvp_shiftl::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 
       unsigned long shift;
       if (! vector4_to_value(op_b_, shift)) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
@@ -708,7 +725,7 @@ void vvp_shiftl::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       for (unsigned idx = shift ;  idx < out.size() ;  idx += 1)
 	    out.set_bit(idx, op_a_.value(idx-shift));
 
-      vvp_send_vec4(ptr.ptr()->out, out);
+      vvp_send_vec4(ptr.ptr()->out, out, 0);
 }
 
 vvp_shiftr::vvp_shiftr(unsigned wid, bool signed_flag)
@@ -720,7 +737,8 @@ vvp_shiftr::~vvp_shiftr()
 {
 }
 
-void vvp_shiftr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_shiftr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                           vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -728,7 +746,7 @@ void vvp_shiftr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 
       unsigned long shift;
       if (! vector4_to_value(op_b_, shift)) {
-	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
@@ -745,7 +763,7 @@ void vvp_shiftr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       for (unsigned idx = 0 ;  idx < shift ;  idx += 1)
 	    out.set_bit(idx+out.size()-shift, pad);
 
-      vvp_send_vec4(ptr.ptr()->out, out);
+      vvp_send_vec4(ptr.ptr()->out, out, 0);
 }
 
 
@@ -780,12 +798,13 @@ vvp_arith_mult_real::~vvp_arith_mult_real()
 {
 }
 
-void vvp_arith_mult_real::recv_real(vvp_net_ptr_t ptr, double bit)
+void vvp_arith_mult_real::recv_real(vvp_net_ptr_t ptr, double bit,
+                                    vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
       double val = op_a_ * op_b_;
-      vvp_send_real(ptr.ptr()->out, val);
+      vvp_send_real(ptr.ptr()->out, val, 0);
 }
 
 /* Real power. */
@@ -797,12 +816,13 @@ vvp_arith_pow_real::~vvp_arith_pow_real()
 {
 }
 
-void vvp_arith_pow_real::recv_real(vvp_net_ptr_t ptr, double bit)
+void vvp_arith_pow_real::recv_real(vvp_net_ptr_t ptr, double bit,
+                                   vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
       double val = pow(op_a_, op_b_);
-      vvp_send_real(ptr.ptr()->out, val);
+      vvp_send_real(ptr.ptr()->out, val, 0);
 }
 
 /* Real division. */
@@ -814,12 +834,13 @@ vvp_arith_div_real::~vvp_arith_div_real()
 {
 }
 
-void vvp_arith_div_real::recv_real(vvp_net_ptr_t ptr, double bit)
+void vvp_arith_div_real::recv_real(vvp_net_ptr_t ptr, double bit,
+                                   vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
       double val = op_a_ / op_b_;
-      vvp_send_real(ptr.ptr()->out, val);
+      vvp_send_real(ptr.ptr()->out, val, 0);
 }
 
 /* Real modulus. */
@@ -831,12 +852,13 @@ vvp_arith_mod_real::~vvp_arith_mod_real()
 {
 }
 
-void vvp_arith_mod_real::recv_real(vvp_net_ptr_t ptr, double bit)
+void vvp_arith_mod_real::recv_real(vvp_net_ptr_t ptr, double bit,
+                                   vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
       double val = fmod(op_a_, op_b_);
-      vvp_send_real(ptr.ptr()->out, val);
+      vvp_send_real(ptr.ptr()->out, val, 0);
 }
 
 /* Real summation. */
@@ -848,12 +870,13 @@ vvp_arith_sum_real::~vvp_arith_sum_real()
 {
 }
 
-void vvp_arith_sum_real::recv_real(vvp_net_ptr_t ptr, double bit)
+void vvp_arith_sum_real::recv_real(vvp_net_ptr_t ptr, double bit,
+                                   vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
       double val = op_a_ + op_b_;
-      vvp_send_real(ptr.ptr()->out, val);
+      vvp_send_real(ptr.ptr()->out, val, 0);
 }
 
 /* Real subtraction. */
@@ -865,12 +888,13 @@ vvp_arith_sub_real::~vvp_arith_sub_real()
 {
 }
 
-void vvp_arith_sub_real::recv_real(vvp_net_ptr_t ptr, double bit)
+void vvp_arith_sub_real::recv_real(vvp_net_ptr_t ptr, double bit,
+                                   vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
       double val = op_a_ - op_b_;
-      vvp_send_real(ptr.ptr()->out, val);
+      vvp_send_real(ptr.ptr()->out, val, 0);
 }
 
 /* Real compare equal. */
@@ -878,7 +902,8 @@ vvp_cmp_eq_real::vvp_cmp_eq_real()
 {
 }
 
-void vvp_cmp_eq_real::recv_real(vvp_net_ptr_t ptr, const double bit)
+void vvp_cmp_eq_real::recv_real(vvp_net_ptr_t ptr, const double bit,
+                                vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -886,7 +911,7 @@ void vvp_cmp_eq_real::recv_real(vvp_net_ptr_t ptr, const double bit)
       if (op_a_ == op_b_) res.set_bit(0, BIT4_1);
       else res.set_bit(0, BIT4_0);
 
-      vvp_send_vec4(ptr.ptr()->out, res);
+      vvp_send_vec4(ptr.ptr()->out, res, 0);
 }
 
 /* Real compare not equal. */
@@ -894,7 +919,8 @@ vvp_cmp_ne_real::vvp_cmp_ne_real()
 {
 }
 
-void vvp_cmp_ne_real::recv_real(vvp_net_ptr_t ptr, const double bit)
+void vvp_cmp_ne_real::recv_real(vvp_net_ptr_t ptr, const double bit,
+                                vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -902,7 +928,7 @@ void vvp_cmp_ne_real::recv_real(vvp_net_ptr_t ptr, const double bit)
       if (op_a_ != op_b_) res.set_bit(0, BIT4_1);
       else res.set_bit(0, BIT4_0);
 
-      vvp_send_vec4(ptr.ptr()->out, res);
+      vvp_send_vec4(ptr.ptr()->out, res, 0);
 }
 
 /* Real compare greater than or equal. */
@@ -910,7 +936,8 @@ vvp_cmp_ge_real::vvp_cmp_ge_real()
 {
 }
 
-void vvp_cmp_ge_real::recv_real(vvp_net_ptr_t ptr, const double bit)
+void vvp_cmp_ge_real::recv_real(vvp_net_ptr_t ptr, const double bit,
+                                vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -918,7 +945,7 @@ void vvp_cmp_ge_real::recv_real(vvp_net_ptr_t ptr, const double bit)
       if (op_a_ >= op_b_) res.set_bit(0, BIT4_1);
       else res.set_bit(0, BIT4_0);
 
-      vvp_send_vec4(ptr.ptr()->out, res);
+      vvp_send_vec4(ptr.ptr()->out, res, 0);
 }
 
 /* Real compare greater than. */
@@ -926,7 +953,8 @@ vvp_cmp_gt_real::vvp_cmp_gt_real()
 {
 }
 
-void vvp_cmp_gt_real::recv_real(vvp_net_ptr_t ptr, const double bit)
+void vvp_cmp_gt_real::recv_real(vvp_net_ptr_t ptr, const double bit,
+                                vvp_context_t)
 {
       dispatch_operand_(ptr, bit);
 
@@ -934,5 +962,5 @@ void vvp_cmp_gt_real::recv_real(vvp_net_ptr_t ptr, const double bit)
       if (op_a_ > op_b_) res.set_bit(0, BIT4_1);
       else res.set_bit(0, BIT4_0);
 
-      vvp_send_vec4(ptr.ptr()->out, res);
+      vvp_send_vec4(ptr.ptr()->out, res, 0);
 }

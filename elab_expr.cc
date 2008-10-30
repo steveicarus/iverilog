@@ -279,8 +279,6 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 					NetExpr*lp, NetExpr*rp,
 					int expr_wid) const
 {
-      bool flag;
-
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: elaborate expression "
 		 << *this << " expr_wid=" << expr_wid << endl;
@@ -296,11 +294,12 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 
 	  case 'a':
 	  case 'o':
-	    lp = condition_reduce(lp);
-	    rp = condition_reduce(rp);
-	    tmp = new NetEBLogic(op_, lp, rp);
-	    tmp->set_line(*this);
-	    break;
+	    cerr << get_fileline() << ": internal error: "
+		 << "Elaboration of " << human_readable_op(op_)
+		 << " Should have been handled in NetEBLogic::elaborate."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
 
 	  case 'p':
 	    tmp = new NetEBPow(op_, lp, rp);
@@ -341,38 +340,18 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 
 	  case 'E': /* === */
 	  case 'N': /* !== */
-	    if (lp->expr_type() == IVL_VT_REAL ||
-		rp->expr_type() == IVL_VT_REAL) {
-		  cerr << get_fileline() << ": error: "
-		       << human_readable_op(op_)
-		       << "may not have real operands." << endl;
-		  return 0;
-	    }
-	      /* Fall through... */
 	  case 'e': /* == */
 	  case 'n': /* != */
-	    if (dynamic_cast<NetEConst*>(rp)
-		&& (lp->expr_width() > rp->expr_width()))
-		  rp->set_width(lp->expr_width());
-
-	    if (dynamic_cast<NetEConst*>(lp)
-		&& (lp->expr_width() < rp->expr_width()))
-		  lp->set_width(rp->expr_width());
-
-	      /* from here, handle this like other compares. */
 	  case 'L': /* <= */
 	  case 'G': /* >= */
 	  case '<':
 	  case '>':
-	    tmp = new NetEBComp(op_, lp, rp);
-	    tmp->set_line(*this);
-	    flag = tmp->set_width(1);
-	    if (flag == false) {
-		  cerr << get_fileline() << ": internal error: "
-			"expression bit width of comparison != 1." << endl;
-		  des->errors += 1;
-	    }
-	    break;
+	    cerr << get_fileline() << ": internal error: "
+		 << "Elaboration of " << human_readable_op(op_)
+		 << " Should have been handled in NetEBComp::elaborate."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
 
 	  case 'm': // min(l,r)
 	  case 'M': // max(l,r)
@@ -790,7 +769,83 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
       if (type_is_vectorable(rp->expr_type()))
 	    rp = pad_to_width(rp, use_wid);
 
-      return elaborate_eval_expr_base_(des, lp, rp, use_wid);
+      eval_expr(lp, use_wid);
+      eval_expr(rp, use_wid);
+
+	// Handle some operand-specific special cases...
+      switch (op_) {
+	  case 'E': /* === */
+	  case 'N': /* !== */
+	    if (lp->expr_type() == IVL_VT_REAL ||
+		rp->expr_type() == IVL_VT_REAL) {
+		  cerr << get_fileline() << ": error: "
+		       << human_readable_op(op_)
+		       << "may not have real operands." << endl;
+		  return 0;
+	    }
+	    break;
+	  default:
+	    break;
+      }
+
+      NetEBComp*tmp = new NetEBComp(op_, lp, rp);
+      tmp->set_line(*this);
+      bool flag = tmp->set_width(1);
+      if (flag == false) {
+	    cerr << get_fileline() << ": internal error: "
+		  "expression bit width of comparison != 1." << endl;
+	    des->errors += 1;
+      }
+
+      return tmp;
+}
+
+unsigned PEBLogic::test_width(Design*des, NetScope*scope,
+			      unsigned min, unsigned lval,
+			      ivl_variable_type_t&expr_type_out,
+			      bool&unsized_flag)
+{
+      expr_type_ = IVL_VT_LOGIC;
+      expr_width_ = 1;
+      expr_type_out = expr_type_;
+      return expr_width_;
+}
+
+NetExpr*PEBLogic::elaborate_expr(Design*des, NetScope*scope,
+				 int expr_width_dummp, bool sys_task_arg) const
+{
+      assert(left_);
+      assert(right_);
+
+	// The left and right expressions are self-determined and
+	// independent. Run their test_width methods independently. We
+	// don't need the widths here, but we do need the expressions
+	// to calculate their self-determined width and type.
+
+      bool left_flag = false;
+      ivl_variable_type_t left_type = IVL_VT_NO_TYPE;
+      left_->test_width(des, scope, 0, 0, left_type, left_flag);
+
+      bool right_flag = false;
+      ivl_variable_type_t right_type = IVL_VT_NO_TYPE;
+      right_->test_width(des, scope, 0, 0, right_type, right_flag);
+
+      NetExpr*lp = elab_and_eval(des, scope, left_, -1);
+      NetExpr*rp = elab_and_eval(des, scope, right_, -1);
+      if ((lp == 0) || (rp == 0)) {
+	    delete lp;
+	    delete rp;
+	    return 0;
+      }
+
+      lp = condition_reduce(lp);
+      rp = condition_reduce(rp);
+
+      NetEBLogic*tmp = new NetEBLogic(op_, lp, rp);
+      tmp->set_line(*this);
+      tmp->set_width(1);
+
+      return tmp;
 }
 
 unsigned PEBShift::test_width(Design*des, NetScope*scope,
@@ -1586,7 +1641,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 
       const NetExpr*ex1, *ex2;
 
-      symbol_search(des, scope, path_, net, par, eve, ex1, ex2);
+      symbol_search(0, des, scope, path_, net, par, eve, ex1, ex2);
 
 	// If there is a part/bit select expression, then process it
 	// here. This constrains the results no matter what kind the
@@ -1699,7 +1754,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       const NetExpr*ex1, *ex2;
 
-      NetScope*found_in = symbol_search(des, scope, path_,
+      NetScope*found_in = symbol_search(this, des, scope, path_,
 					net, par, eve,
 					ex1, ex2);
 

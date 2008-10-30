@@ -374,7 +374,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      symbol_search(des, scope, path_, sig, par, eve);
+      symbol_search(this, des, scope, path_, sig, par, eve);
 
       if (eve != 0) {
 	    cerr << get_fileline() << ": error: named events (" << path_
@@ -631,4 +631,3 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 
       return sig;
 }
-

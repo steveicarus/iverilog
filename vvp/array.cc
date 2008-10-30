@@ -332,6 +332,9 @@ static int vpi_array_get(int code, vpiHandle ref)
 	  case vpiSize:
 	    return (int) obj->array_count;
 
+	  case vpiAutomatic:
+	    return (int) obj->scope->is_automatic;
+
 	  default:
 	    return 0;
       }
@@ -727,7 +730,7 @@ void array_set_word(vvp_array_t arr,
       assert(vsig);
 
       vvp_net_ptr_t ptr (vsig->node, 0);
-      vvp_send_vec4_pv(ptr, val, part_off, val.size(), vpip_size(vsig));
+      vvp_send_vec4_pv(ptr, val, part_off, val.size(), vpip_size(vsig), 0);
       array_word_change(arr, address);
 }
 
@@ -852,9 +855,13 @@ void compile_var_array(char*label, char*name, int last, int first,
 
 	/* Make the words. */
       arr->vals_width = labs(msb-lsb) + 1;
-      arr->vals = new vvp_vector4array_t(arr->vals_width, arr->array_count,
-                                         vpip_peek_current_scope()->is_automatic);
-      vpip_add_item_to_current_scope(arr->vals);
+      if (vpip_peek_current_scope()->is_automatic) {
+            arr->vals = new vvp_vector4array_aa(arr->vals_width,
+                                                arr->array_count);
+      } else {
+            arr->vals = new vvp_vector4array_sa(arr->vals_width,
+                                                arr->array_count);
+      }
       vpip_make_dec_const(&arr->msb, msb);
       vpip_make_dec_const(&arr->lsb, lsb);
 
@@ -908,11 +915,9 @@ class vvp_fun_arrayport  : public vvp_net_fun_t {
       explicit vvp_fun_arrayport(vvp_array_t mem, vvp_net_t*net, long addr);
       ~vvp_fun_arrayport();
 
-      void check_word_change(unsigned long addr);
+      virtual void check_word_change(unsigned long addr) = 0;
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-
-    private:
+    protected:
       vvp_array_t arr_;
       vvp_net_t  *net_;
       unsigned long addr_;
@@ -938,7 +943,37 @@ vvp_fun_arrayport::~vvp_fun_arrayport()
 {
 }
 
-void vvp_fun_arrayport::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
+class vvp_fun_arrayport_sa  : public vvp_fun_arrayport {
+
+    public:
+      explicit vvp_fun_arrayport_sa(vvp_array_t mem, vvp_net_t*net);
+      explicit vvp_fun_arrayport_sa(vvp_array_t mem, vvp_net_t*net, long addr);
+      ~vvp_fun_arrayport_sa();
+
+      void check_word_change(unsigned long addr);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
+
+    private:
+};
+
+vvp_fun_arrayport_sa::vvp_fun_arrayport_sa(vvp_array_t mem, vvp_net_t*net)
+: vvp_fun_arrayport(mem, net)
+{
+}
+
+vvp_fun_arrayport_sa::vvp_fun_arrayport_sa(vvp_array_t mem, vvp_net_t*net, long addr)
+: vvp_fun_arrayport(mem, net, addr)
+{
+}
+
+vvp_fun_arrayport_sa::~vvp_fun_arrayport_sa()
+{
+}
+
+void vvp_fun_arrayport_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                     vvp_context_t)
 {
       bool addr_valid_flag;
 
@@ -948,7 +983,7 @@ void vvp_fun_arrayport::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	    addr_valid_flag = vector4_to_value(bit, addr_);
 	    if (! addr_valid_flag)
 		  addr_ = arr_->array_count;
-	    vvp_send_vec4(port.ptr()->out, array_get_word(arr_,addr_));
+	    vvp_send_vec4(port.ptr()->out, array_get_word(arr_,addr_), 0);
 	    break;
 
 	  default:
@@ -957,13 +992,111 @@ void vvp_fun_arrayport::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
       }
 }
 
-void vvp_fun_arrayport::check_word_change(unsigned long addr)
+void vvp_fun_arrayport_sa::check_word_change(unsigned long addr)
 {
       if (addr != addr_)
 	    return;
 
       vvp_vector4_t bit = array_get_word(arr_, addr_);
-      vvp_send_vec4(net_->out, bit);
+      vvp_send_vec4(net_->out, bit, 0);
+}
+
+class vvp_fun_arrayport_aa  : public vvp_fun_arrayport, public automatic_hooks_s {
+
+    public:
+      explicit vvp_fun_arrayport_aa(vvp_array_t mem, vvp_net_t*net);
+      explicit vvp_fun_arrayport_aa(vvp_array_t mem, vvp_net_t*net, long addr);
+      ~vvp_fun_arrayport_aa();
+
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
+
+      void check_word_change(unsigned long addr);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
+
+    private:
+      struct __vpiScope*context_scope_;
+      unsigned context_idx_;
+};
+
+vvp_fun_arrayport_aa::vvp_fun_arrayport_aa(vvp_array_t mem, vvp_net_t*net)
+: vvp_fun_arrayport(mem, net)
+{
+      context_scope_ = vpip_peek_context_scope();
+      context_idx_ = vpip_add_item_to_context(this, context_scope_);
+}
+
+vvp_fun_arrayport_aa::vvp_fun_arrayport_aa(vvp_array_t mem, vvp_net_t*net, long addr)
+: vvp_fun_arrayport(mem, net, addr)
+{
+      context_scope_ = vpip_peek_context_scope();
+      context_idx_ = vpip_add_item_to_context(this, context_scope_);
+}
+
+vvp_fun_arrayport_aa::~vvp_fun_arrayport_aa()
+{
+}
+
+void vvp_fun_arrayport_aa::alloc_instance(vvp_context_t context)
+{
+      unsigned long*addr = new unsigned long;
+      vvp_set_context_item(context, context_idx_, addr);
+
+      *addr = addr_;
+}
+
+void vvp_fun_arrayport_aa::reset_instance(vvp_context_t context)
+{
+      unsigned long*addr = static_cast<unsigned long*>
+            (vvp_get_context_item(context, context_idx_));
+
+      *addr = addr_;
+}
+
+void vvp_fun_arrayport_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                     vvp_context_t context)
+{
+      if (context) {
+            unsigned long*addr = static_cast<unsigned long*>
+                  (vvp_get_context_item(context, context_idx_));
+
+            bool addr_valid_flag;
+
+            switch (port.port()) {
+
+                case 0: // Address input
+                  addr_valid_flag = vector4_to_value(bit, *addr);
+                  if (! addr_valid_flag)
+                        *addr = arr_->array_count;
+                  vvp_send_vec4(port.ptr()->out, array_get_word(arr_,*addr),
+                                context);
+                  break;
+
+                default:
+                  fprintf(stdout, "XXXX write ports not implemented.\n");
+                  assert(0);
+            }
+      } else {
+            context = context_scope_->live_contexts;
+            while (context) {
+                  recv_vec4(port, bit, context);
+                  context = vvp_get_next_context(context);
+            }
+      }
+}
+
+void vvp_fun_arrayport_aa::check_word_change(unsigned long addr)
+{
+      unsigned long*port_addr = static_cast<unsigned long*>
+            (vthread_get_wt_context_item(context_idx_));
+
+      if (addr != *port_addr)
+	    return;
+
+      vvp_vector4_t bit = array_get_word(arr_, addr);
+      vvp_send_vec4(net_->out, bit, vthread_get_wt_context());
 }
 
 static void array_attach_port(vvp_array_t array, vvp_fun_arrayport*fun)
@@ -1046,9 +1179,15 @@ bool array_port_resolv_list_t::resolve(bool mes)
 
       vvp_fun_arrayport*fun;
       if (use_addr)
-	    fun = new vvp_fun_arrayport(mem, ptr, addr);
+            if (vpip_peek_current_scope()->is_automatic)
+                  fun = new vvp_fun_arrayport_aa(mem, ptr, addr);
+            else
+                  fun = new vvp_fun_arrayport_sa(mem, ptr, addr);
       else
-	    fun = new vvp_fun_arrayport(mem, ptr);
+            if (vpip_peek_current_scope()->is_automatic)
+                  fun = new vvp_fun_arrayport_aa(mem, ptr);
+            else
+                  fun = new vvp_fun_arrayport_sa(mem, ptr);
       ptr->fun = fun;
 
       array_attach_port(mem, fun);

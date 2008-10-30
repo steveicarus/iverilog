@@ -858,8 +858,10 @@ NetExpr* NetEBDiv::eval_tree(int prune_to_width)
 	    NetEConst*rc = dynamic_cast<NetEConst*>(right_);
 	    if (rc == 0) return 0;
 
-	    verinum lval = lc->value();
-	    verinum rval = rc->value();
+	      // Make sure the expression is evaluated at the
+	      // expression width.
+	    verinum lval = pad_to_width(lc->value(), expr_width());
+	    verinum rval = pad_to_width(rc->value(), expr_width());
 
 	    NetExpr*tmp = 0;
 	    switch (op_) {

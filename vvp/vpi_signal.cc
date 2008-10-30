@@ -531,6 +531,8 @@ static int signal_get(int code, vpiHandle ref)
 	  case vpiLeftRange: return rfp->msb;
 	  case vpiRightRange: return rfp->lsb;
 
+          case vpiAutomatic: return rfp->is_automatic;
+
 	  case _vpiNexusId:
 	    if (rfp->msb == rfp->lsb)
 		  return (int) (unsigned long) rfp->node;
@@ -765,7 +767,7 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 	   port-0. This is the port where signals receive input. */
       vvp_net_ptr_t destination (rfp->node, dest_port);
 
-      vvp_send_vec4(destination, val);
+      vvp_send_vec4(destination, val, vthread_get_wt_context());
 
       return ref;
 }
@@ -861,6 +863,7 @@ vpiHandle vpip_make_int(const char*name, int msb, int lsb, vvp_net_t*vec)
       struct __vpiSignal*rfp = (struct __vpiSignal*)obj;
       obj->vpi_type = &vpip_reg_rt;
       rfp->isint_ = true;
+      rfp->is_automatic = vpip_peek_current_scope()->is_automatic;
       return obj;
 }
 
@@ -871,7 +874,9 @@ vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
 			bool signed_flag, vvp_net_t*vec)
 {
       vpiHandle obj = vpip_make_net(name, msb,lsb, signed_flag, vec);
+      struct __vpiSignal*rfp = (struct __vpiSignal*)obj;
       obj->vpi_type = &vpip_reg_rt;
+      rfp->is_automatic = vpip_peek_current_scope()->is_automatic;
       return obj;
 }
 
@@ -910,6 +915,7 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
       obj->signed_flag = signed_flag? 1 : 0;
       obj->isint_ = 0;
       obj->is_netarray = 0;
+      obj->is_automatic = vpip_peek_current_scope()->is_automatic;
       obj->node = node;
 
 	// Place this object within a scope. If this object is
@@ -1100,9 +1106,10 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
       vvp_net_ptr_t dest(rfp->net, 0);
 
       if (full_sig) {
-	    vvp_send_vec4(dest, val);
+	    vvp_send_vec4(dest, val, vthread_get_wt_context());
       } else {
-	    vvp_send_vec4_pv(dest, val, base, width, sig_size);
+	    vvp_send_vec4_pv(dest, val, base, width, sig_size,
+                             vthread_get_wt_context());
       }
 
       return 0;

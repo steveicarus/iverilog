@@ -183,8 +183,6 @@
 "%vpi_func/r" { return K_vpi_func_r; }
 "%disable"  { return K_disable; }
 "%fork"     { return K_fork; }
-"%alloc"    { return K_alloc; }
-"%free"     { return K_free; }
 
   /* Handle the specialized variable access functions. */
 

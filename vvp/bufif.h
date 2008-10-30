@@ -40,7 +40,8 @@ class vvp_fun_bufif  : public vvp_net_fun_t {
       vvp_fun_bufif(bool en_invert, bool out_invert,
 		    unsigned str0, unsigned str1);
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
 
     private:
       vvp_vector4_t bit_;

@@ -9,7 +9,7 @@
 echo "Autoconf in root..."
 autoconf -f
 
-for dir in vpip vpi vvp tgt-vvp tgt-fpga tgt-stub tgt-vhdl libveriuser cadpli
+for dir in vpi vvp tgt-vvp tgt-fpga tgt-stub tgt-vhdl libveriuser cadpli
 do
     echo "Autoconf in $dir..."
     ( cd ./$dir ; autoconf -f --include=.. )

@@ -615,11 +615,6 @@ class NetNet  : public NetObj {
       virtual void dump_net(ostream&, unsigned) const;
 
     private:
-	// The NetScope class uses this for listing signals.
-      friend class NetScope;
-      NetNet*sig_next_, *sig_prev_;
-
-    private:
       Type   type_;
       PortType port_type_;
       ivl_variable_type_t data_type_;
@@ -861,7 +856,8 @@ class NetScope : public Attrib {
       NetNet::Type default_nettype_;
 
       NetEvent *events_;
-      NetNet   *signals_;
+      typedef std::map<perm_string,NetNet*>::const_iterator signals_map_iter_t;
+      std::map <perm_string,NetNet*> signals_map_;
       perm_string module_name_;
       union {
 	    NetTaskDef*task_;
@@ -3237,7 +3233,7 @@ class NetEBComp : public NetEBinary {
       NetEBComp(char op, NetExpr*l, NetExpr*r);
       ~NetEBComp();
 
-      virtual bool set_width(unsigned w, bool last_chance);
+      virtual bool set_width(unsigned w, bool last_chance =false);
 
 	/* A compare expression has a definite width. */
       virtual bool has_width() const;
@@ -3274,7 +3270,7 @@ class NetEBLogic : public NetEBinary {
       NetEBLogic(char op, NetExpr*l, NetExpr*r);
       ~NetEBLogic();
 
-      virtual bool set_width(unsigned w, bool last_chance);
+      virtual bool set_width(unsigned w, bool last_chance =false);
       virtual NetEBLogic* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
       virtual NetNet* synthesize(Design*, NetScope*scope);

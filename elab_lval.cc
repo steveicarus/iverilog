@@ -152,7 +152,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      symbol_search(des, scope, path_, reg, par, eve);
+      symbol_search(this, des, scope, path_, reg, par, eve);
       if (reg == 0) {
 	    cerr << get_fileline() << ": error: Could not find variable ``"
 		 << path_ << "'' in ``" << scope_path(scope) <<

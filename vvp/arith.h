@@ -54,8 +54,10 @@ class vvp_arith_abs : public vvp_net_fun_t {
       explicit vvp_arith_abs();
       ~vvp_arith_abs();
 
-      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
-      void recv_real(vvp_net_ptr_t ptr, double bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
+      void recv_real(vvp_net_ptr_t ptr, double bit,
+                     vvp_context_t);
 
     private:
 };
@@ -65,7 +67,8 @@ class vvp_arith_cast_int : public vvp_net_fun_t {
       explicit vvp_arith_cast_int(unsigned wid);
       ~vvp_arith_cast_int();
 
-      void recv_real(vvp_net_ptr_t ptr, double bit);
+      void recv_real(vvp_net_ptr_t ptr, double bit,
+                     vvp_context_t);
 
     private:
       unsigned wid_;
@@ -76,7 +79,8 @@ class vvp_arith_cast_real : public vvp_net_fun_t {
       explicit vvp_arith_cast_real(bool signed_flag);
       ~vvp_arith_cast_real();
 
-      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
 
     private:
       bool signed_;
@@ -87,7 +91,8 @@ class vvp_arith_div : public vvp_arith_ {
     public:
       explicit vvp_arith_div(unsigned wid, bool signed_flag);
       ~vvp_arith_div();
-      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
     private:
       void wide4_(vvp_net_ptr_t ptr);
       bool signed_flag_;
@@ -98,7 +103,8 @@ class vvp_arith_mod : public vvp_arith_ {
     public:
       explicit vvp_arith_mod(unsigned wid, bool signed_flag);
       ~vvp_arith_mod();
-      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
     private:
       void wide_(vvp_net_ptr_t ptr);
       bool signed_flag_;
@@ -114,7 +120,8 @@ class vvp_cmp_eeq  : public vvp_arith_ {
 
     public:
       explicit vvp_cmp_eeq(unsigned wid);
-      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
 
 };
 
@@ -122,7 +129,8 @@ class vvp_cmp_nee  : public vvp_arith_ {
 
     public:
       explicit vvp_cmp_nee(unsigned wid);
-      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
 
 };
 
@@ -130,7 +138,8 @@ class vvp_cmp_eq  : public vvp_arith_ {
 
     public:
       explicit vvp_cmp_eq(unsigned wid);
-      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
 
 };
 
@@ -138,7 +147,8 @@ class vvp_cmp_ne  : public vvp_arith_ {
 
     public:
       explicit vvp_cmp_ne(unsigned wid);
-      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
 
 };
 
@@ -165,7 +175,8 @@ class vvp_cmp_ge  : public vvp_cmp_gtge_base_ {
     public:
       explicit vvp_cmp_ge(unsigned wid, bool signed_flag);
 
-      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
 
 };
 
@@ -174,7 +185,8 @@ class vvp_cmp_gt  : public vvp_cmp_gtge_base_ {
     public:
       explicit vvp_cmp_gt(unsigned wid, bool signed_flag);
 
-      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
 };
 
 /*
@@ -187,7 +199,8 @@ class vvp_arith_mult  : public vvp_arith_ {
     public:
       explicit vvp_arith_mult(unsigned wid);
       ~vvp_arith_mult();
-      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
     private:
       void wide_(vvp_net_ptr_t ptr);
 };
@@ -197,7 +210,8 @@ class vvp_arith_pow  : public vvp_arith_ {
     public:
       explicit vvp_arith_pow(unsigned wid, bool signed_flag);
       ~vvp_arith_pow();
-      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
     private:
       bool signed_flag_;
 };
@@ -207,7 +221,8 @@ class vvp_arith_sub  : public vvp_arith_ {
     public:
       explicit vvp_arith_sub(unsigned wid);
       ~vvp_arith_sub();
-      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                             vvp_context_t);
 
 };
 
@@ -216,7 +231,8 @@ class vvp_arith_sum  : public vvp_arith_ {
     public:
       explicit vvp_arith_sum(unsigned wid);
       ~vvp_arith_sum();
-      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                             vvp_context_t);
 
 };
 
@@ -225,7 +241,8 @@ class vvp_shiftl  : public vvp_arith_ {
     public:
       explicit vvp_shiftl(unsigned wid);
       ~vvp_shiftl();
-      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                             vvp_context_t);
 };
 
 class vvp_shiftr  : public vvp_arith_ {
@@ -233,7 +250,8 @@ class vvp_shiftr  : public vvp_arith_ {
     public:
       explicit vvp_shiftr(unsigned wid, bool signed_flag);
       ~vvp_shiftr();
-      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                             vvp_context_t);
 
     private:
       bool signed_flag_;
@@ -263,7 +281,8 @@ class vvp_arith_sum_real : public vvp_arith_real_ {
     public:
       explicit vvp_arith_sum_real();
       ~vvp_arith_sum_real();
-      void recv_real(vvp_net_ptr_t ptr, double bit);
+      void recv_real(vvp_net_ptr_t ptr, double bit,
+                     vvp_context_t);
 };
 
 class vvp_arith_div_real : public vvp_arith_real_ {
@@ -271,7 +290,8 @@ class vvp_arith_div_real : public vvp_arith_real_ {
     public:
       explicit vvp_arith_div_real();
       ~vvp_arith_div_real();
-      void recv_real(vvp_net_ptr_t ptr, double bit);
+      void recv_real(vvp_net_ptr_t ptr, double bit,
+                     vvp_context_t);
 };
 
 class vvp_arith_mod_real : public vvp_arith_real_ {
@@ -279,7 +299,8 @@ class vvp_arith_mod_real : public vvp_arith_real_ {
     public:
       explicit vvp_arith_mod_real();
       ~vvp_arith_mod_real();
-      void recv_real(vvp_net_ptr_t ptr, double bit);
+      void recv_real(vvp_net_ptr_t ptr, double bit,
+                     vvp_context_t);
 };
 
 class vvp_arith_mult_real : public vvp_arith_real_ {
@@ -287,7 +308,8 @@ class vvp_arith_mult_real : public vvp_arith_real_ {
     public:
       explicit vvp_arith_mult_real();
       ~vvp_arith_mult_real();
-      void recv_real(vvp_net_ptr_t ptr, double bit);
+      void recv_real(vvp_net_ptr_t ptr, double bit,
+                     vvp_context_t);
 };
 
 class vvp_arith_pow_real : public vvp_arith_real_ {
@@ -295,7 +317,8 @@ class vvp_arith_pow_real : public vvp_arith_real_ {
     public:
       explicit vvp_arith_pow_real();
       ~vvp_arith_pow_real();
-      void recv_real(vvp_net_ptr_t ptr, double bit);
+      void recv_real(vvp_net_ptr_t ptr, double bit,
+                     vvp_context_t);
 };
 
 class vvp_arith_sub_real : public vvp_arith_real_ {
@@ -303,35 +326,40 @@ class vvp_arith_sub_real : public vvp_arith_real_ {
     public:
       explicit vvp_arith_sub_real();
       ~vvp_arith_sub_real();
-      void recv_real(vvp_net_ptr_t ptr, double bit);
+      void recv_real(vvp_net_ptr_t ptr, double bit,
+                     vvp_context_t);
 };
 
 class vvp_cmp_eq_real  : public vvp_arith_real_ {
 
     public:
       explicit vvp_cmp_eq_real();
-      void recv_real(vvp_net_ptr_t ptr, const double bit);
+      void recv_real(vvp_net_ptr_t ptr, const double bit,
+                     vvp_context_t);
 };
 
 class vvp_cmp_ne_real  : public vvp_arith_real_ {
 
     public:
       explicit vvp_cmp_ne_real();
-      void recv_real(vvp_net_ptr_t ptr, const double bit);
+      void recv_real(vvp_net_ptr_t ptr, const double bit,
+                     vvp_context_t);
 };
 
 class vvp_cmp_ge_real  : public vvp_arith_real_ {
 
     public:
       explicit vvp_cmp_ge_real();
-      void recv_real(vvp_net_ptr_t ptr, const double bit);
+      void recv_real(vvp_net_ptr_t ptr, const double bit,
+                     vvp_context_t);
 };
 
 class vvp_cmp_gt_real  : public vvp_arith_real_ {
 
     public:
       explicit vvp_cmp_gt_real();
-      void recv_real(vvp_net_ptr_t ptr, const double bit);
+      void recv_real(vvp_net_ptr_t ptr, const double bit,
+                     vvp_context_t);
 };
 
 #endif

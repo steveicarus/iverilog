@@ -373,23 +373,20 @@ void NetScope::emit_scope(struct target_t*tgt) const
       for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
 	    cur->emit_scope(tgt);
 
-      if (signals_) {
-	    NetNet*cur = signals_->sig_next_;
-	    do {
-		  tgt->signal(cur);
-		  cur = cur->sig_next_;
-	    } while (cur != signals_->sig_next_);
+      for (signals_map_iter_t cur = signals_map_.begin()
+		 ; cur != signals_map_.end() ; cur ++) {
+	    tgt->signal(cur->second);
+      }
 
-	      /* Run the signals again, but this time to connect the
-	         delay paths. This is done as a second pass because
-	         the paths reference other signals that may be later
-	         in the list. We can do it here because delay paths are
-	         always connected within the scope. */
-	    cur = signals_->sig_next_;
-	    do {
-		  tgt->signal_paths(cur);
-		  cur = cur->sig_next_;
-	    } while (cur != signals_->sig_next_);
+	// Run the signals again, but this time to connect the
+	// delay paths. This is done as a second pass because
+	// the paths reference other signals that may be later
+	// in the list. We can do it here because delay paths are
+	// always connected within the scope.
+      for (signals_map_iter_t cur = signals_map_.begin()
+		 ; cur != signals_map_.end() ; cur ++) {
+
+	    tgt->signal_paths(cur->second);
       }
 
 }
