@@ -57,6 +57,30 @@ NetExpr*PEBinary::elaborate_pexpr (Design*des, NetScope*scope) const
       return tmp;
 }
 
+NetExpr*PEBComp::elaborate_pexpr(Design*des, NetScope*scope) const
+{
+      NetExpr*lp = left_->elaborate_pexpr(des, scope);
+      NetExpr*rp = right_->elaborate_pexpr(des, scope);
+      if ((lp == 0) || (rp == 0)) {
+	    delete lp;
+	    delete rp;
+	    return 0;
+      }
+
+      suppress_binary_operand_sign_if_needed_(lp, rp);
+
+      NetEBComp*tmp = new NetEBComp(op_, lp, rp);
+      tmp->set_line(*this);
+      bool flag = tmp->set_width(1);
+      if (flag == false) {
+	    cerr << get_fileline() << ": internal error: "
+		  "expression bit width of comparison != 1." << endl;
+	    des->errors += 1;
+      }
+
+      return tmp;
+}
+
 /*
  * Event though parameters are not generally sized, parameter
  * expressions can include concatenation expressions. This requires

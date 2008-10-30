@@ -279,8 +279,6 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 					NetExpr*lp, NetExpr*rp,
 					int expr_wid) const
 {
-      bool flag;
-
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: elaborate expression "
 		 << *this << " expr_wid=" << expr_wid << endl;
@@ -341,38 +339,18 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 
 	  case 'E': /* === */
 	  case 'N': /* !== */
-	    if (lp->expr_type() == IVL_VT_REAL ||
-		rp->expr_type() == IVL_VT_REAL) {
-		  cerr << get_fileline() << ": error: "
-		       << human_readable_op(op_)
-		       << "may not have real operands." << endl;
-		  return 0;
-	    }
-	      /* Fall through... */
 	  case 'e': /* == */
 	  case 'n': /* != */
-	    if (dynamic_cast<NetEConst*>(rp)
-		&& (lp->expr_width() > rp->expr_width()))
-		  rp->set_width(lp->expr_width());
-
-	    if (dynamic_cast<NetEConst*>(lp)
-		&& (lp->expr_width() < rp->expr_width()))
-		  lp->set_width(rp->expr_width());
-
-	      /* from here, handle this like other compares. */
 	  case 'L': /* <= */
 	  case 'G': /* >= */
 	  case '<':
 	  case '>':
-	    tmp = new NetEBComp(op_, lp, rp);
-	    tmp->set_line(*this);
-	    flag = tmp->set_width(1);
-	    if (flag == false) {
-		  cerr << get_fileline() << ": internal error: "
-			"expression bit width of comparison != 1." << endl;
-		  des->errors += 1;
-	    }
-	    break;
+	    cerr << get_fileline() << ": internal error: "
+		 << "Elaboration of " << human_readable_op(op_)
+		 << " Should have been handled in NetEBComp::elaborate."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
 
 	  case 'm': // min(l,r)
 	  case 'M': // max(l,r)
@@ -790,7 +768,35 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
       if (type_is_vectorable(rp->expr_type()))
 	    rp = pad_to_width(rp, use_wid);
 
-      return elaborate_eval_expr_base_(des, lp, rp, use_wid);
+      eval_expr(lp, use_wid);
+      eval_expr(rp, use_wid);
+
+	// Handle some operand-specific special cases...
+      switch (op_) {
+	  case 'E': /* === */
+	  case 'N': /* !== */
+	    if (lp->expr_type() == IVL_VT_REAL ||
+		rp->expr_type() == IVL_VT_REAL) {
+		  cerr << get_fileline() << ": error: "
+		       << human_readable_op(op_)
+		       << "may not have real operands." << endl;
+		  return 0;
+	    }
+	    break;
+	  default:
+	    break;
+      }
+
+      NetEBComp*tmp = new NetEBComp(op_, lp, rp);
+      tmp->set_line(*this);
+      bool flag = tmp->set_width(1);
+      if (flag == false) {
+	    cerr << get_fileline() << ": internal error: "
+		  "expression bit width of comparison != 1." << endl;
+	    des->errors += 1;
+      }
+
+      return tmp;
 }
 
 unsigned PEBShift::test_width(Design*des, NetScope*scope,

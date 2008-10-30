@@ -3233,7 +3233,7 @@ class NetEBComp : public NetEBinary {
       NetEBComp(char op, NetExpr*l, NetExpr*r);
       ~NetEBComp();
 
-      virtual bool set_width(unsigned w, bool last_chance);
+      virtual bool set_width(unsigned w, bool last_chance =false);
 
 	/* A compare expression has a definite width. */
       virtual bool has_width() const;
