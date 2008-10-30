@@ -474,7 +474,7 @@ class vvp_vector4array_t {
 
     public:
       vvp_vector4array_t(unsigned width, unsigned words);
-      ~vvp_vector4array_t();
+      virtual ~vvp_vector4array_t();
 
       unsigned width() const { return width_; }
       unsigned words() const { return words_; }
