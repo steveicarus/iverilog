@@ -294,11 +294,12 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 
 	  case 'a':
 	  case 'o':
-	    lp = condition_reduce(lp);
-	    rp = condition_reduce(rp);
-	    tmp = new NetEBLogic(op_, lp, rp);
-	    tmp->set_line(*this);
-	    break;
+	    cerr << get_fileline() << ": internal error: "
+		 << "Elaboration of " << human_readable_op(op_)
+		 << " Should have been handled in NetEBLogic::elaborate."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
 
 	  case 'p':
 	    tmp = new NetEBPow(op_, lp, rp);
@@ -795,6 +796,54 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 		  "expression bit width of comparison != 1." << endl;
 	    des->errors += 1;
       }
+
+      return tmp;
+}
+
+unsigned PEBLogic::test_width(Design*des, NetScope*scope,
+			      unsigned min, unsigned lval,
+			      ivl_variable_type_t&expr_type_out,
+			      bool&unsized_flag)
+{
+      expr_type_ = IVL_VT_LOGIC;
+      expr_width_ = 1;
+      expr_type_out = expr_type_;
+      return expr_width_;
+}
+
+NetExpr*PEBLogic::elaborate_expr(Design*des, NetScope*scope,
+				 int expr_width_dummp, bool sys_task_arg) const
+{
+      assert(left_);
+      assert(right_);
+
+	// The left and right expressions are self-determined and
+	// independent. Run their test_width methods independently. We
+	// don't need the widths here, but we do need the expressions
+	// to calculate their self-determined width and type.
+
+      bool left_flag = false;
+      ivl_variable_type_t left_type = IVL_VT_NO_TYPE;
+      left_->test_width(des, scope, 0, 0, left_type, left_flag);
+
+      bool right_flag = false;
+      ivl_variable_type_t right_type = IVL_VT_NO_TYPE;
+      right_->test_width(des, scope, 0, 0, right_type, right_flag);
+
+      NetExpr*lp = elab_and_eval(des, scope, left_, -1);
+      NetExpr*rp = elab_and_eval(des, scope, right_, -1);
+      if ((lp == 0) || (rp == 0)) {
+	    delete lp;
+	    delete rp;
+	    return 0;
+      }
+
+      lp = condition_reduce(lp);
+      rp = condition_reduce(rp);
+
+      NetEBLogic*tmp = new NetEBLogic(op_, lp, rp);
+      tmp->set_line(*this);
+      tmp->set_width(1);
 
       return tmp;
 }

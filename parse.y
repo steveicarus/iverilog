@@ -1034,12 +1034,12 @@ expression
 		  $$ = tmp;
 		}
 	| expression K_LOR expression
-		{ PEBinary*tmp = new PEBinary('o', $1, $3);
+		{ PEBinary*tmp = new PEBLogic('o', $1, $3);
 		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_LAND expression
-		{ PEBinary*tmp = new PEBinary('a', $1, $3);
+		{ PEBinary*tmp = new PEBLogic('a', $1, $3);
 		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}

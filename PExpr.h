@@ -497,6 +497,25 @@ class PEBComp  : public PEBinary {
       NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 };
 
+/*
+ * This derived class is for handling logical expressions: && and ||.
+*/
+class PEBLogic  : public PEBinary {
+
+    public:
+      explicit PEBLogic(char op, PExpr*l, PExpr*r);
+      ~PEBLogic();
+
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
+				  bool&flag);
+
+      NetExpr* elaborate_expr(Design*des, NetScope*scope,
+			      int expr_width, bool sys_task_arg) const;
+      NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
+};
+
 class PEBShift  : public PEBinary {
 
     public:

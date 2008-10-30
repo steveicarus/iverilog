@@ -73,6 +73,16 @@ PEBComp::~PEBComp()
 {
 }
 
+PEBLogic::PEBLogic(char op, PExpr*l, PExpr*r)
+: PEBinary(op, l, r)
+{
+      assert(op == 'a' || op == 'o');
+}
+
+PEBLogic::~PEBLogic()
+{
+}
+
 PEBShift::PEBShift(char op, PExpr*l, PExpr*r)
 : PEBinary(op, l, r)
 {

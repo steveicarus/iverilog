@@ -3270,7 +3270,7 @@ class NetEBLogic : public NetEBinary {
       NetEBLogic(char op, NetExpr*l, NetExpr*r);
       ~NetEBLogic();
 
-      virtual bool set_width(unsigned w, bool last_chance);
+      virtual bool set_width(unsigned w, bool last_chance =false);
       virtual NetEBLogic* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
       virtual NetNet* synthesize(Design*, NetScope*scope);
