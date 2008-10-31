@@ -404,6 +404,16 @@ NetExpr* PEBinary::elaborate_expr_base_div_(Design*des,
 	    }
       }
 
+	/* The original elaboration of the left and right expressions
+	   already tried to elaborate to the expr_wid. If the
+	   expressions are not that width by now, then they need to be
+	   padded. The divide expression operands must be the width
+	   of the output. */
+      if (expr_wid > 0) {
+	    lp = pad_to_width(lp, expr_wid);
+	    rp = pad_to_width(rp, expr_wid);
+      }
+
       NetEBDiv*tmp = new NetEBDiv(op_, lp, rp);
       tmp->set_line(*this);
 
