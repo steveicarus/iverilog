@@ -3655,6 +3655,7 @@ class NetEUBits : public NetEUnary {
 
       virtual NetNet* synthesize(Design*, NetScope*scope);
 
+      virtual NetEUBits* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual ivl_variable_type_t expr_type() const;
 };
