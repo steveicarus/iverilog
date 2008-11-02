@@ -189,7 +189,7 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    break;
       }
 
-      if (discipline_t*dis = get_discipline())
+      if (ivl_discipline_t dis = get_discipline())
 	    o << " discipline=" << dis->name();
 
       o << " (eref=" << peek_eref() << ", lref=" << peek_lref() << ")";

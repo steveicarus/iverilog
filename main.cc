@@ -705,7 +705,7 @@ int main(int argc, char*argv[])
 		  pform_dump(out, (*cur).second);
 	    }
 	    out << "PFORM DUMP DISCIPLINES:" << endl;
-	    for (map<perm_string,discipline_t*>::iterator cur = disciplines.begin()
+	    for (map<perm_string,ivl_discipline_t>::iterator cur = disciplines.begin()
 		       ; cur != disciplines.end() ; cur ++ ) {
 		  pform_dump(out, (*cur).second);
 	    }

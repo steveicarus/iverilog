@@ -20,6 +20,7 @@
 # include "config.h"
 # include  "StringHeap.h"
 # include  "t-dll.h"
+# include  "discipline.h"
 # include  <stdlib.h>
 # include  <string.h>
 #ifdef HAVE_MALLOC_H
@@ -79,6 +80,16 @@ extern "C" ivl_net_const_t ivl_design_const(ivl_design_t des, unsigned idx)
 {
       assert(idx < des->nconsts);
       return des->consts[idx];
+}
+
+extern "C" ivl_dis_domain_t ivl_discipline_domain(ivl_discipline_t net)
+{
+      return net->domain();
+}
+
+extern "C" const char* ivl_discipline_name(ivl_discipline_t net)
+{
+      return net->name();
 }
 
 extern "C" ivl_expr_type_t ivl_expr_type(ivl_expr_t net)
@@ -1727,6 +1738,11 @@ extern "C" unsigned ivl_signal_array_count(ivl_signal_t net)
 extern "C" unsigned ivl_signal_dimensions(ivl_signal_t net)
 {
       return net->array_dimensions_;
+}
+
+extern "C" ivl_discipline_t ivl_signal_discipline(ivl_signal_t net)
+{
+      return net->discipline;
 }
 
 extern "C" const char* ivl_signal_attr(ivl_signal_t net, const char*key)

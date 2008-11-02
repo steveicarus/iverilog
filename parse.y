@@ -142,7 +142,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       list<perm_string>*perm_strings;
       pform_name_t*pform_name;
 
-      discipline_t*discipline;
+      ivl_discipline_t discipline;
 
       hname_t*hier;
 
@@ -704,9 +704,9 @@ discipline_items
 
 discipline_item
   : K_domain K_discrete ';'
-      { pform_discipline_domain(@1, DD_DISCRETE); }
+      { pform_discipline_domain(@1, IVL_DIS_DISCRETE); }
   | K_domain K_continuous ';'
-      { pform_discipline_domain(@1, DD_CONTINUOUS); }
+      { pform_discipline_domain(@1, IVL_DIS_CONTINUOUS); }
   | K_potential IDENTIFIER ';'
       { pform_discipline_potential(@1, $2); delete[] $2; }
   | K_flow IDENTIFIER ';'

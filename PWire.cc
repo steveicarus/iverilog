@@ -198,13 +198,13 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
       }
 }
 
-void PWire::set_discipline(discipline_t*d)
+void PWire::set_discipline(ivl_discipline_t d)
 {
       assert(discipline_ == 0);
       discipline_ = d;
 }
 
-discipline_t* PWire::get_discipline(void) const
+ivl_discipline_t PWire::get_discipline(void) const
 {
       return discipline_;
 }

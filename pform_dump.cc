@@ -148,16 +148,16 @@ std::ostream& operator << (std::ostream&out, ivl_process_type_t pt)
       return out;
 }
 
-std::ostream& operator << (std::ostream&out, ddomain_t dom)
+std::ostream& operator << (std::ostream&out, ivl_dis_domain_t dom)
 {
       switch (dom) {
-	  case DD_NONE:
+	  case IVL_DIS_NONE:
 	    out << "no-domain";
 	    break;
-	  case DD_DISCRETE:
+	  case IVL_DIS_DISCRETE:
 	    out << "discrete";
 	    break;
-	  case DD_CONTINUOUS:
+	  case IVL_DIS_CONTINUOUS:
 	    out << "continuous";
 	    break;
 	  default:
@@ -1300,7 +1300,7 @@ void pform_dump(std::ostream&out, const nature_t*nat)
       out << "endnature" << endl;
 }
 
-void pform_dump(std::ostream&out, const discipline_t*dis)
+void pform_dump(std::ostream&out, const ivl_discipline_s*dis)
 {
       out << "discipline " << dis->name() << endl;
       out << "    domain " << dis->domain() << ";" << endl;

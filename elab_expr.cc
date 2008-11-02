@@ -1241,7 +1241,7 @@ NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
 	    NetNet*sig = scope->find_signal(name);
 	    ivl_assert(*this, sig);
 
-	    discipline_t*dis = sig->get_discipline();
+	    ivl_discipline_t dis = sig->get_discipline();
 	    ivl_assert(*this, dis);
 	    ivl_assert(*this, nature == dis->potential() || nature == dis->flow());
 

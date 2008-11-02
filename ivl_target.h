@@ -151,6 +151,7 @@ _BEGIN_DECL
 typedef struct ivl_array_s    *ivl_array_t;
 typedef struct ivl_delaypath_s*ivl_delaypath_t;
 typedef struct ivl_design_s   *ivl_design_t;
+typedef struct ivl_discipline_s*ivl_discipline_t;
 typedef struct ivl_event_s    *ivl_event_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
 typedef struct ivl_island_s   *ivl_island_t;
@@ -159,6 +160,7 @@ typedef struct ivl_lval_s     *ivl_lval_t;
 typedef struct ivl_net_const_s*ivl_net_const_t;
 typedef struct ivl_net_logic_s*ivl_net_logic_t;
 typedef struct ivl_udp_s      *ivl_udp_t;
+typedef struct ivl_nature_s   *ivl_nature_t;
 typedef struct ivl_net_probe_s*ivl_net_probe_t;
 typedef struct ivl_nexus_s    *ivl_nexus_t;
 typedef struct ivl_nexus_ptr_s*ivl_nexus_ptr_t;
@@ -175,6 +177,12 @@ typedef struct ivl_statement_s*ivl_statement_t;
  * explicit values so that the binary API is a bit more resilient to
  * changes and additions to the enumerations.
  */
+
+typedef enum ivl_dis_domain_e {
+      IVL_DIS_NONE       = 0,
+      IVL_DIS_DISCRETE   = 1,
+      IVL_DIS_CONTINUOUS = 2
+} ivl_dis_domain_t;
 
 typedef enum ivl_drive_e {
       IVL_DR_HiZ    = 0,
@@ -542,6 +550,13 @@ extern double      ivl_const_real(ivl_net_const_t net);
 
 /* extern ivl_nexus_t ivl_const_pin(ivl_net_const_t net, unsigned idx); */
 /* extern unsigned    ivl_const_pins(ivl_net_const_t net); */
+
+/* DISCIPLINES
+ *
+ * Disciplines are a Verilog-AMS construct.
+ */
+extern const char*ivl_discipline_name(ivl_discipline_t net);
+extern ivl_dis_domain_t ivl_discipline_domain(ivl_discipline_t net);
 
 /* EVENTS
  *
@@ -1584,6 +1599,8 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  *    The signal may be an array (of vectors) in which case this
  *    function returns >0, the number of dimensions of the array.
  *
+ * ivl_signal_discipline
+ *
  * ivl_signal_msb
  * ivl_signal_lsb
  * ivl_signal_width
@@ -1651,6 +1668,7 @@ extern ivl_nexus_t ivl_signal_nex(ivl_signal_t net, unsigned word);
 extern int         ivl_signal_array_base(ivl_signal_t net);
 extern unsigned    ivl_signal_array_count(ivl_signal_t net);
 extern unsigned    ivl_signal_dimensions(ivl_signal_t net);
+extern ivl_discipline_t ivl_signal_discipline(ivl_signal_t net);
 extern int         ivl_signal_msb(ivl_signal_t net);
 extern int         ivl_signal_lsb(ivl_signal_t net);
 extern unsigned    ivl_signal_width(ivl_signal_t net);

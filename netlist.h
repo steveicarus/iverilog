@@ -69,7 +69,6 @@ class NetEvTrig;
 class NetEvWait;
 
 class nature_t;
-class discipline_t;
 
 struct target;
 struct functor_t;
@@ -173,12 +172,12 @@ class IslandBranch {
 class NetBranch  : public NetPins {
 
     public:
-      explicit NetBranch(discipline_t*dis);
-      explicit NetBranch(discipline_t*dis, perm_string name);
+      explicit NetBranch(ivl_discipline_t dis);
+      explicit NetBranch(ivl_discipline_t dis, perm_string name);
       ~NetBranch();
 
     private:
-      discipline_t*discipline_;
+      ivl_discipline_t discipline_;
       perm_string name_;
 };
 
@@ -555,8 +554,8 @@ class NetNet  : public NetObj {
       void set_isint(bool);
 
 	/* Attach a discipline to the net. */
-      discipline_t* get_discipline() const;
-      void set_discipline(discipline_t*dis);
+      ivl_discipline_t get_discipline() const;
+      void set_discipline(ivl_discipline_t dis);
 
 	/* These methods return the msb and lsb indices for the most
 	   significant and least significant bits. These are signed
@@ -620,7 +619,7 @@ class NetNet  : public NetObj {
       ivl_variable_type_t data_type_;
       bool signed_;
       bool isint_;		// original type of integer
-      discipline_t*discipline_;
+      ivl_discipline_t discipline_;
 
       long msb_, lsb_;
       const unsigned dimensions_;

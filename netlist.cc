@@ -242,7 +242,7 @@ NetNode::~NetNode()
 	    design_->del_node(this);
 }
 
-NetBranch::NetBranch(discipline_t*dis)
+NetBranch::NetBranch(ivl_discipline_t dis)
 : NetPins(2), discipline_(dis)
 {
       pin(0).set_dir(Link::PASSIVE);
@@ -647,12 +647,12 @@ void NetNet::set_isint(bool flag)
       isint_ = flag;
 }
 
-discipline_t* NetNet::get_discipline() const
+ivl_discipline_t NetNet::get_discipline() const
 {
       return discipline_;
 }
 
-void NetNet::set_discipline(discipline_t*dis)
+void NetNet::set_discipline(ivl_discipline_t dis)
 {
       ivl_assert(*this, discipline_ == 0);
       discipline_ = dis;

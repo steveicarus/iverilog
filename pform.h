@@ -373,7 +373,6 @@ extern void pform_error_nested_modules();
  * Functions for handling the parse of natures and disciplines. These
  * functions are in pform_disciplines.cc
  */
-class discipline_t;
 
 extern void pform_start_nature(const char*name);
 extern void pform_end_nature(const struct vlltype&loc);
@@ -383,15 +382,15 @@ extern void pform_nature_access(const struct vlltype&loc, const char*name);
 extern void pform_start_discipline(const char*name);
 extern void pform_end_discipline(const struct vlltype&loc);
 
-extern void pform_discipline_domain(const struct vlltype&loc, ddomain_t use_domain);
+extern void pform_discipline_domain(const struct vlltype&loc, ivl_dis_domain_t use_domain);
 extern void pform_discipline_potential(const struct vlltype&loc, const char*name);
 extern void pform_discipline_flow(const struct vlltype&loc, const char*name);
 
 extern void pform_attach_discipline(const struct vlltype&loc,
-				    discipline_t*discipline, list<perm_string>*names);
+				    ivl_discipline_t discipline, list<perm_string>*names);
 
 extern void pform_dump(ostream&out, const nature_t*);
-extern void pform_dump(ostream&out, const discipline_t*);
+extern void pform_dump(ostream&out, const ivl_discipline_s*);
 
 /* ** pform_analog.cc
 */

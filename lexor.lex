@@ -247,7 +247,7 @@ S [afpnumkKMGT]
 	   value instead. */
       if (rc == IDENTIFIER && gn_verilog_ams_flag) {
 	    perm_string tmp = lex_strings.make(yylval.text);
-	    map<perm_string,discipline_t*>::iterator cur = disciplines.find(tmp);
+	    map<perm_string,ivl_discipline_t>::iterator cur = disciplines.find(tmp);
 	    if (cur != disciplines.end()) {
 		  yylval.discipline = (*cur).second;
 		  rc = DISCIPLINE_IDENTIFIER;

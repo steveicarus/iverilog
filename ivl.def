@@ -15,6 +15,9 @@ ivl_const_signed
 ivl_const_type
 ivl_const_width
 
+ivl_discipline_domain
+ivl_discipline_name
+
 ivl_event_any
 ivl_event_basename
 ivl_event_name
@@ -172,6 +175,7 @@ ivl_signal_attr_val
 ivl_signal_basename
 ivl_signal_data_type
 ivl_signal_dimensions
+ivl_signal_discipline
 ivl_signal_file
 ivl_signal_integer
 ivl_signal_lineno
