@@ -546,7 +546,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiTimeVar:
 	  case vpiReg:  type = "reg";    }
 
-	    if (skip) break;
+            if (skip || vpi_get(vpiAutomatic, item)) break;
 
 	    name = vpi_get_str(vpiName, item);
 	    nexus_id = vpi_get(_vpiNexusId, item);
@@ -593,7 +593,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	  case vpiRealVar:
 
-	    if (skip) break;
+            if (skip || vpi_get(vpiAutomatic, item)) break;
 
 	    name = vpi_get_str(vpiName, item);
 	    { char*tmp = create_full_name(name);

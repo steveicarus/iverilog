@@ -34,7 +34,8 @@
  * All the reduction operations take a single vector input and produce
  * a scalar result. The vvp_reduce_base class codifies these general
  * characteristics, leaving only the calculation of the result for the
- * base class.
+ * base class. This can be used in both statically and automatically
+ * allocated scopes, as bits_ is only used for temporary storage.
  */
 class vvp_reduce_base : public vvp_net_fun_t {
 
@@ -42,9 +43,11 @@ class vvp_reduce_base : public vvp_net_fun_t {
       vvp_reduce_base();
       virtual ~vvp_reduce_base();
 
-      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit,
+                     vvp_context_t context);
       void recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid);
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t context);
 
       virtual vvp_bit4_t calculate_result() const =0;
 
@@ -60,16 +63,18 @@ vvp_reduce_base::~vvp_reduce_base()
 {
 }
 
-void vvp_reduce_base::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit)
+void vvp_reduce_base::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit,
+                                vvp_context_t context)
 {
       bits_ = bit;
       vvp_bit4_t res =  calculate_result();
       vvp_vector4_t rv (1, res);
-      vvp_send_vec4(prt.ptr()->out, rv);
+      vvp_send_vec4(prt.ptr()->out, rv, context);
 }
 
 void vvp_reduce_base::recv_vec4_pv(vvp_net_ptr_t prt, const vvp_vector4_t&bit,
-				   unsigned base, unsigned wid, unsigned vwid)
+				   unsigned base, unsigned wid, unsigned vwid,
+                                   vvp_context_t context)
 {
       if (bits_.size() == 0) {
 	    bits_ = vvp_vector4_t(vwid);
@@ -80,7 +85,7 @@ void vvp_reduce_base::recv_vec4_pv(vvp_net_ptr_t prt, const vvp_vector4_t&bit,
       bits_.set_vec(base, bit);
       vvp_bit4_t res = calculate_result();
       vvp_vector4_t rv (1, res);
-      vvp_send_vec4(prt.ptr()->out, rv);
+      vvp_send_vec4(prt.ptr()->out, rv, context);
 }
 
 class vvp_reduce_and  : public vvp_reduce_base {

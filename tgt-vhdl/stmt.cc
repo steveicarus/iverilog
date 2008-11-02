@@ -424,8 +424,8 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
          ivl_event_t event = ivl_stmt_events(stmt, i);
          
          int nany = ivl_event_nany(event);
-         for (int i = 0; i < nany; i++) {
-            ivl_nexus_t nexus = ivl_event_any(event, i);
+         for (int j = 0; j < nany; j++) {
+            ivl_nexus_t nexus = ivl_event_any(event, j);
             vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
 
             wait->add_sensitivity(ref->get_name());
@@ -441,8 +441,8 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
          ivl_event_t event = ivl_stmt_events(stmt, i);
          
          int nany = ivl_event_nany(event);
-         for (int i = 0; i < nany; i++) {
-            ivl_nexus_t nexus = ivl_event_any(event, i);
+         for (int j = 0; j < nany; j++) {
+            ivl_nexus_t nexus = ivl_event_any(event, j);
             vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
             
             ref->set_name(ref->get_name() + "'Event");
@@ -450,8 +450,8 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
          }
          
          int nneg = ivl_event_nneg(event);
-         for (int i = 0; i < nneg; i++) {
-            ivl_nexus_t nexus = ivl_event_neg(event, i);
+         for (int j = 0; j < nneg; j++) {
+            ivl_nexus_t nexus = ivl_event_neg(event, j);
             vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
             vhdl_fcall *detect =
                new vhdl_fcall("falling_edge", vhdl_type::boolean());
@@ -461,8 +461,8 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
          }
          
          int npos = ivl_event_npos(event);
-         for (int i = 0; i < npos; i++) {
-            ivl_nexus_t nexus = ivl_event_pos(event, i);
+         for (int j = 0; j < npos; j++) {
+            ivl_nexus_t nexus = ivl_event_pos(event, j);
             vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
             vhdl_fcall *detect =
                new vhdl_fcall("rising_edge", vhdl_type::boolean());
@@ -501,12 +501,12 @@ static int draw_if(vhdl_procedural *proc, stmt_container *container,
    return 0;
 }
 
-static int draw_case(vhdl_procedural *proc, stmt_container *container,
-                     ivl_statement_t stmt, bool is_last)
+static vhdl_var_ref *draw_case_test(vhdl_procedural *proc, stmt_container *container,
+                                    ivl_statement_t stmt)
 {
    vhdl_expr *test = translate_expr(ivl_stmt_cond_expr(stmt));
    if (NULL == test)
-      return 1;
+      return NULL;
 
    // VHDL case expressions are required to be quite simple: variable
    // references or slices. So we may need to create a temporary
@@ -523,8 +523,18 @@ static int draw_case(vhdl_procedural *proc, stmt_container *container,
       vhdl_var_ref *tmp_ref = new vhdl_var_ref(tmp_name, NULL);
       container->add_stmt(new vhdl_assign_stmt(tmp_ref, test));
 
-      test = new vhdl_var_ref(tmp_name, test_type);
+      return new vhdl_var_ref(tmp_name, test_type);
    }
+   else
+      return dynamic_cast<vhdl_var_ref*>(test);
+}
+
+static int draw_case(vhdl_procedural *proc, stmt_container *container,
+                     ivl_statement_t stmt, bool is_last)
+{
+   vhdl_var_ref *test = draw_case_test(proc, container, stmt);
+   if (NULL == test)
+      return 1;
    
    vhdl_case_stmt *vhdlcase = new vhdl_case_stmt(test);
    container->add_stmt(vhdlcase);
@@ -561,6 +571,100 @@ static int draw_case(vhdl_procedural *proc, stmt_container *container,
       others->get_container()->add_stmt(new vhdl_null_stmt());
       vhdlcase->add_branch(others);
    }      
+   
+   return 0;
+}
+
+/*
+ * A casex statement cannot be directly translated to a VHDL case
+ * statement as VHDL does not treat the don't-care bit as special.
+ * The solution here is to generate an if statement from the casex
+ * which compares only the non-don't-care bit positions.
+ */
+int draw_casezx(vhdl_procedural *proc, stmt_container *container,
+                ivl_statement_t stmt, bool is_last)
+{
+   vhdl_var_ref *test = draw_case_test(proc, container, stmt);
+   if (NULL == test)
+      return 1;
+
+   vhdl_if_stmt *result = NULL;
+   
+   int nbranches = ivl_stmt_case_count(stmt);
+   for (int i = 0; i < nbranches; i++) {
+      stmt_container *where = NULL;
+      
+      ivl_expr_t net = ivl_stmt_case_expr(stmt, i);
+      if (net) {
+         // The net must be a constant value otherwise we can't
+         // generate the terms for the comparison expression
+         if (ivl_expr_type(net) != IVL_EX_NUMBER) {
+            error("Sorry, only casex statements with constant labels can "
+                  "be translated to VHDL");
+            return 1;
+         }
+
+         const char *bits = ivl_expr_bits(net);
+
+         vhdl_binop_expr *all =
+            new vhdl_binop_expr(VHDL_BINOP_AND, vhdl_type::boolean());
+         for (unsigned i = 0; i < ivl_expr_width(net); i++) {
+            switch (bits[i]) {
+            case '?':
+            case 'z':
+            case 'x':
+               // Ignore it
+               break;
+            default:
+               {
+                  // Generate a comparison for this bit position
+                  vhdl_binop_expr *cmp =
+                     new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
+
+                  vhdl_type *type = vhdl_type::nunsigned(ivl_expr_width(net));
+                  vhdl_var_ref *lhs =
+                     new vhdl_var_ref(test->get_name().c_str(), type);
+                  lhs->set_slice(new vhdl_const_int(i));
+
+                  cmp->add_expr(lhs);
+                  cmp->add_expr(new vhdl_const_bit(bits[i]));
+
+                  all->add_expr(cmp);
+               }
+            }
+         }
+
+         if (result)
+            where = result->add_elsif(all);
+         else {
+            result = new vhdl_if_stmt(all);
+            where = result->get_then_container();
+         }
+      }
+      else {
+         // This the default case and therefore the `else' branch
+         assert(result);
+         where = result->get_else_container();
+      }
+
+      // `where' now points to a branch of an if statement which
+      // corresponds to this casex/z branch
+      assert(where);
+      draw_stmt(proc, where, ivl_stmt_case_stmt(stmt, i), is_last);
+   }
+
+   // Add a comment to say that this corresponds to a casex/z statement
+   // as this may not be obvious
+   ostringstream ss;
+   ss << "Generated from case"
+      << (ivl_statement_type(stmt) == IVL_ST_CASEX ? 'x' : 'z')
+      << " statement at " << ivl_stmt_file(stmt) << ":" << ivl_stmt_lineno(stmt);
+   result->set_comment(ss.str());
+
+   container->add_stmt(result);
+
+   // We don't actually use the generated `test' expression
+   delete test;
    
    return 0;
 }
@@ -685,11 +789,8 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
       error("disable statement cannot be translated to VHDL");
       return 1;
    case IVL_ST_CASEX:
-      error("casex statement cannot be translated to VHDL");
-      return 1;
    case IVL_ST_CASEZ:
-      error("casez statement cannot be translated to VHDL");
-      return 1;
+      return draw_casezx(proc, container, stmt, is_last);
    case IVL_ST_FORK:
       error("fork statement cannot be translated to VHDL");
       return 1;

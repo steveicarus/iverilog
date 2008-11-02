@@ -403,7 +403,7 @@ static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp, int)
 	    assert(0);
       }
 
-      vvp_send_vec4(rfp->fnet->out, val);
+      vvp_send_vec4(rfp->fnet->out, val, vthread_get_wt_context());
       return 0;
 }
 
@@ -427,7 +427,7 @@ static vpiHandle sysfunc_put_rnet_value(vpiHandle ref, p_vpi_value vp, int)
 	    assert(0);
       }
 
-      vvp_send_real(rfp->fnet->out, val);
+      vvp_send_real(rfp->fnet->out, val, vthread_get_wt_context());
 
       return 0;
 }

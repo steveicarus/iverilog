@@ -34,10 +34,15 @@ static void __compile_var_real(char*label, char*name,
 			       vvp_array_t array, unsigned long array_addr,
 			       int msb, int lsb)
 {
-      vvp_fun_signal_real*fun = new vvp_fun_signal_real;
+      vvp_fun_signal_real*fun;
+      if (vpip_peek_current_scope()->is_automatic) {
+            fun = new vvp_fun_signal_real_aa;
+      } else {
+            fun = new vvp_fun_signal_real_sa;
+      }
       vvp_net_t*net = new vvp_net_t;
       net->fun = fun;
-      vpip_add_item_to_current_scope(fun);
+
       define_functor_symbol(label, net);
 
       vpiHandle obj = vpip_make_real_var(name, net);
@@ -79,11 +84,15 @@ static void __compile_var(char*label, char*name,
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
-      vvp_fun_signal*vsig = new vvp_fun_signal(wid);
+      vvp_fun_signal_vec*vsig;
+      if (vpip_peek_current_scope()->is_automatic) {
+            vsig = new vvp_fun_signal4_aa(wid);
+      } else {
+            vsig = new vvp_fun_signal4_sa(wid);
+      }
       vvp_net_t*node = new vvp_net_t;
-
       node->fun = vsig;
-      vpip_add_item_to_current_scope(vsig);
+
       define_functor_symbol(label, node);
 
       vpiHandle obj = 0;
@@ -154,12 +163,12 @@ static void __compile_net(char*label, char*name,
 
       vvp_net_t*node = new vvp_net_t;
 
-      vvp_array_t array = array_label? array_find(array_label) : 0;
-      assert(array_label? array!=0 : true);
+      vvp_array_t array = array_label ? array_find(array_label) : 0;
+      assert(array_label ? array!=0 : true);
 
       vvp_fun_signal_base*vsig = net8_flag
 	    ? dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal8(wid))
-	    : dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal(wid,BIT4_Z));
+	    : dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal4_sa(wid,BIT4_Z));
       node->fun = vsig;
 
 	/* Add the label into the functor symbol table. */
@@ -210,12 +219,17 @@ void compile_netw(char*label, char*array_label, unsigned long array_addr,
 		    argc, argv);
 }
 
-void compile_net_real(char*label, char*name, int msb, int lsb, bool local_flag,
-		      unsigned argc, struct symb_s*argv)
+static void __compile_real(char*label, char*name,
+                           char*array_label, unsigned long array_addr,
+                           int msb, int lsb, bool local_flag,
+                           unsigned argc, struct symb_s*argv)
 {
       vvp_net_t*net = new vvp_net_t;
 
-      vvp_fun_signal_real*fun = new vvp_fun_signal_real;
+      vvp_array_t array = array_label ? array_find(array_label) : 0;
+      assert(array_label ? array!=0 : true);
+   
+      vvp_fun_signal_real*fun = new vvp_fun_signal_real_sa;
       net->fun = fun;
 
 	/* Add the label into the functor symbol table. */
@@ -226,16 +240,40 @@ void compile_net_real(char*label, char*name, int msb, int lsb, bool local_flag,
 	/* Connect the source to my input. */
       inputs_connect(net, 1, argv);
 
+      vpiHandle obj = 0;
       if (! local_flag) {
 	      /* Make the vpiHandle for the reg. */
-	    vpiHandle obj = vpip_make_real_var(name, net);
+	    obj = vpip_make_real_var(name, net);
+	      /* This attaches the label to the vpiHandle */
 	    compile_vpi_symbol(label, obj);
-	    vpip_attach_to_current_scope(obj);
       }
-
+        /* If this is an array word, then attach it to the
+	   array. Otherwise, attach it to the current scope. */
+      if (array)
+	    array_attach_word(array, array_addr, obj);
+      else if (obj)
+	    vpip_attach_to_current_scope(obj);
       free(label);
-      free(name);
+      if (name) free(name);
+      if (array_label) free(array_label);
       free(argv);
+}
+
+void compile_net_real(char*label, char*name, int msb, int lsb, bool local_flag,
+		      unsigned argc, struct symb_s*argv)
+{
+      __compile_real(label, name, 0, 0,
+                     msb, lsb, local_flag, argc, argv);
+}
+
+void compile_netw_real(char*label, char*array_label, unsigned long array_addr,
+                       int msb, int lsb,
+                       unsigned argc, struct symb_s*argv)
+{
+      cerr << "XXXX compile_netw_real: label=" << label
+	   << ", array_label=" << array_label << endl;
+      __compile_real(label, 0, array_label, array_addr,
+                     msb, lsb, false, argc, argv);
 }
 
 void compile_aliasw(char*label, char*array_label, unsigned long array_addr,

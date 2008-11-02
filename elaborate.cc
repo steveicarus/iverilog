@@ -2861,7 +2861,8 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 		  const NetExpr*par = 0;
 		  NetEvent*     eve = 0;
 
-		  NetScope*found_in = symbol_search(des, scope, id->path(),
+		  NetScope*found_in = symbol_search(this, des, scope,
+                                                    id->path(),
 						    sig, par, eve);
 
 		  if (found_in && eve) {
@@ -3463,7 +3464,7 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
 
-      NetScope*found_in = symbol_search(des, scope, event_,
+      NetScope*found_in = symbol_search(this, des, scope, event_,
 					sig, par, eve);
 
       if (found_in == 0) {

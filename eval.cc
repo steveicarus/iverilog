@@ -185,7 +185,7 @@ verinum* PEIdent::eval_const(Design*des, NetScope*scope) const
 	    return new verinum(scope->genvar_tmp_val);
       }
 
-      symbol_search(des, scope, path_, net, expr, eve);
+      symbol_search(this, des, scope, path_, net, expr, eve);
 
       if (expr == 0)
 	    return 0;

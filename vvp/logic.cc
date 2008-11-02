@@ -42,7 +42,8 @@ vvp_fun_boolean_::~vvp_fun_boolean_()
 {
 }
 
-void vvp_fun_boolean_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_fun_boolean_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                                 vvp_context_t)
 {
       unsigned port = ptr.port();
       if (input_[port] .eeq( bit ))
@@ -56,7 +57,8 @@ void vvp_fun_boolean_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 }
 
 void vvp_fun_boolean_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-				    unsigned base, unsigned wid, unsigned vwid)
+				    unsigned base, unsigned wid, unsigned vwid,
+                                    vvp_context_t)
 {
       unsigned port = ptr.port();
 
@@ -106,7 +108,7 @@ void vvp_fun_and::run_run()
 	    result.set_bit(idx, bitbit);
       }
 
-      vvp_send_vec4(ptr->out, result);
+      vvp_send_vec4(ptr->out, result, 0);
 }
 
 vvp_fun_buf::vvp_fun_buf()
@@ -123,7 +125,8 @@ vvp_fun_buf::~vvp_fun_buf()
  * The buf functor is very simple--change the z bits to x bits in the
  * vector it passes, and propagate the result.
  */
-void vvp_fun_buf::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_fun_buf::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                            vvp_context_t)
 {
       if (ptr.port() != 0)
 	    return;
@@ -146,7 +149,7 @@ void vvp_fun_buf::run_run()
 
       vvp_vector4_t tmp (input_);
       tmp.change_z2x();
-      vvp_send_vec4(ptr->out, tmp);
+      vvp_send_vec4(ptr->out, tmp, 0);
 }
 
 vvp_fun_bufz::vvp_fun_bufz()
@@ -162,20 +165,22 @@ vvp_fun_bufz::~vvp_fun_bufz()
  * The bufz is similar to the buf device, except that it does not
  * bother translating z bits to x.
  */
-void vvp_fun_bufz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_fun_bufz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                             vvp_context_t)
 {
       if (ptr.port() != 0)
 	    return;
 
-      vvp_send_vec4(ptr.ptr()->out, bit);
+      vvp_send_vec4(ptr.ptr()->out, bit, 0);
 }
 
-void vvp_fun_bufz::recv_real(vvp_net_ptr_t ptr, double bit)
+void vvp_fun_bufz::recv_real(vvp_net_ptr_t ptr, double bit,
+                             vvp_context_t)
 {
       if (ptr.port() != 0)
 	    return;
 
-      vvp_send_real(ptr.ptr()->out, bit);
+      vvp_send_real(ptr.ptr()->out, bit, 0);
 }
 
 vvp_fun_muxr::vvp_fun_muxr()
@@ -190,7 +195,8 @@ vvp_fun_muxr::~vvp_fun_muxr()
 {
 }
 
-void vvp_fun_muxr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_fun_muxr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                             vvp_context_t)
 {
 	/* The real valued mux can only take in the select as a
 	   vector4_t. The muxed data is real. */
@@ -219,7 +225,8 @@ void vvp_fun_muxr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       }
 }
 
-void vvp_fun_muxr::recv_real(vvp_net_ptr_t ptr, double bit)
+void vvp_fun_muxr::recv_real(vvp_net_ptr_t ptr, double bit,
+                             vvp_context_t)
 {
       switch (ptr.port()) {
 	  case 0:
@@ -252,16 +259,16 @@ void vvp_fun_muxr::run_run()
 
       switch (select_) {
 	  case SEL_PORT0:
-	    vvp_send_real(ptr->out, a_);
+	    vvp_send_real(ptr->out, a_, 0);
 	    break;
 	  case SEL_PORT1:
-	    vvp_send_real(ptr->out, b_);
+	    vvp_send_real(ptr->out, b_, 0);
 	    break;
 	  default:
 	    if (a_ == b_) {
-		  vvp_send_real(ptr->out, a_);
+		  vvp_send_real(ptr->out, a_, 0);
 	    } else {
-		  vvp_send_real(ptr->out, 0.0); // Should this be NaN?
+		  vvp_send_real(ptr->out, 0.0, 0); // Should this be NaN?
 	    }
 	    break;
       }
@@ -284,7 +291,8 @@ vvp_fun_muxz::~vvp_fun_muxz()
 {
 }
 
-void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                             vvp_context_t)
 {
       switch (ptr.port()) {
 	  case 0:
@@ -331,10 +339,10 @@ void vvp_fun_muxz::run_run()
 
       switch (select_) {
 	  case SEL_PORT0:
-	    vvp_send_vec4(ptr->out, a_);
+	    vvp_send_vec4(ptr->out, a_, 0);
 	    break;
 	  case SEL_PORT1:
-	    vvp_send_vec4(ptr->out, b_);
+	    vvp_send_vec4(ptr->out, b_, 0);
 	    break;
 	  default:
 	      {
@@ -357,7 +365,7 @@ void vvp_fun_muxz::run_run()
 		    for (unsigned idx = min_size ;  idx < max_size ;  idx += 1)
 			  res.set_bit(idx, BIT4_X);
 
-		    vvp_send_vec4(ptr->out, res);
+		    vvp_send_vec4(ptr->out, res, 0);
 	      }
 	    break;
       }
@@ -377,7 +385,8 @@ vvp_fun_not::~vvp_fun_not()
  * The buf functor is very simple--change the z bits to x bits in the
  * vector it passes, and propagate the result.
  */
-void vvp_fun_not::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_fun_not::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                            vvp_context_t)
 {
       if (ptr.port() != 0)
 	    return;
@@ -404,7 +413,7 @@ void vvp_fun_not::run_run()
 	    result.set_bit(idx, bitbit);
       }
 
-      vvp_send_vec4(ptr->out, result);
+      vvp_send_vec4(ptr->out, result, 0);
 }
 
 vvp_fun_or::vvp_fun_or(unsigned wid, bool invert)
@@ -440,7 +449,7 @@ void vvp_fun_or::run_run()
 	    result.set_bit(idx, bitbit);
       }
 
-      vvp_send_vec4(ptr->out, result);
+      vvp_send_vec4(ptr->out, result, 0);
 }
 
 vvp_fun_xor::vvp_fun_xor(unsigned wid, bool invert)
@@ -476,7 +485,7 @@ void vvp_fun_xor::run_run()
 	    result.set_bit(idx, bitbit);
       }
 
-      vvp_send_vec4(ptr->out, result);
+      vvp_send_vec4(ptr->out, result, 0);
 }
 
 /*

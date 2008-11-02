@@ -110,11 +110,12 @@ PTask* pform_push_task_scope(char*name, bool is_auto)
       PTask*task;
       if (pform_cur_generate) {
 	    task = new PTask(task_name, pform_cur_generate->lexical_scope,
-	                     is_auto);
+	                     is_auto || debug_automatic);
 	    pform_cur_generate->tasks[task->pscope_name()] = task;
 	    pform_cur_generate->lexical_scope = task;
       } else {
-	    task = new PTask(task_name, lexical_scope, is_auto);
+	    task = new PTask(task_name, lexical_scope,
+                             is_auto || debug_automatic);
 	    pform_cur_module->tasks[task->pscope_name()] = task;
 	    lexical_scope = task;
       }
@@ -129,11 +130,12 @@ PFunction* pform_push_function_scope(char*name, bool is_auto)
       PFunction*func;
       if (pform_cur_generate) {
 	    func = new PFunction(func_name, pform_cur_generate->lexical_scope,
-	                         is_auto);
+                                 is_auto || debug_automatic);
 	    pform_cur_generate->funcs[func->pscope_name()] = func;
 	    pform_cur_generate->lexical_scope = func;
       } else {
-	    func = new PFunction(func_name, lexical_scope, is_auto);
+	    func = new PFunction(func_name, lexical_scope,
+                                 is_auto || debug_automatic);
 	    pform_cur_module->funcs[func->pscope_name()] = func;
 	    lexical_scope = func;
       }
@@ -179,6 +181,20 @@ static LexicalScope*pform_get_cur_scope()
 		  return pform_cur_generate;
       else
 	    return lexical_scope;
+}
+
+static bool pform_at_module_level()
+{
+      if (pform_cur_generate)
+	    if (pform_cur_generate->lexical_scope)
+		  return false;
+	    else
+		  return true;
+      else
+	    if (lexical_scope->pscope_parent())
+		  return false;
+	    else
+		  return true;
 }
 
 PWire*pform_get_wire_in_scope(perm_string name)
@@ -1293,6 +1309,13 @@ void pform_make_pgassign_list(svector<PExpr*>*alist,
 void pform_make_reginit(const struct vlltype&li,
 			perm_string name, PExpr*expr)
 {
+      if (! pform_at_module_level()) {
+	    VLerror(li, "variable declaration assignments are only "
+                        "allowed at the module level.");
+	    delete expr;
+	    return;
+      }
+
       PWire*cur = pform_get_wire_in_scope(name);
       if (cur == 0) {
 	    VLerror(li, "internal error: reginit to non-register?");

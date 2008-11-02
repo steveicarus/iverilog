@@ -51,7 +51,8 @@ class vvp_fun_pmos_ : public vvp_net_fun_t {
     public:
       explicit vvp_fun_pmos_(bool enable_invert);
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
 
     protected:
       void generate_output_(vvp_net_ptr_t port);
@@ -107,7 +108,8 @@ class vvp_fun_cmos_ : public vvp_net_fun_t {
     public:
       explicit vvp_fun_cmos_();
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t &bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t &bit,
+                     vvp_context_t);
 
     protected:
       void generate_output_(vvp_net_ptr_t port);

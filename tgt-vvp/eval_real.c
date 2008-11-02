@@ -354,23 +354,17 @@ static int draw_signal_real_real(ivl_expr_t exp)
 {
       ivl_signal_t sig = ivl_expr_signal(exp);
       int res = allocate_word();
-      unsigned long word = 0;
 
-      if (ivl_signal_dimensions(sig) > 0) {
-	    ivl_expr_t ix = ivl_expr_oper1(exp);
-	    if (!number_is_immediate(ix, IMM_WID, 0)) {
-		    /* XXXX Need to generate a %load/ar instruction. */
-		  assert(0);
-		  return res;
-	    }
-
-	      /* The index is constant, so we can return to direct
-	         readout with the specific word selected. */
-	    word = get_number_immediate(ix);
+      if (ivl_signal_dimensions(sig) == 0) {
+	    fprintf(vvp_out, "    %%load/wr %d, v%p_0;\n", res, sig);
+	    return res;
       }
 
-      fprintf(vvp_out, "    %%load/wr %d, v%p_%lu;\n", res, sig, word);
-
+      ivl_expr_t word_ex = ivl_expr_oper1(exp);
+      int word_ix = allocate_word();
+      draw_eval_expr_into_integer(word_ex, word_ix);
+      fprintf(vvp_out, "    %%load/ar %d, v%p, %d;\n", res, sig, word_ix);
+      clr_word(word_ix);
       return res;
 }
 

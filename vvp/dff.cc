@@ -39,7 +39,8 @@ vvp_dff::~vvp_dff()
 {
 }
 
-void vvp_dff::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
+void vvp_dff::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                        vvp_context_t)
 {
       vvp_bit4_t tmp;
 
@@ -57,7 +58,7 @@ void vvp_dff::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 	    tmp = clk_cur_;
 	    clk_cur_ = bit.value(0);
 	    if (clk_cur_ == BIT4_1 && tmp != BIT4_1)
-		  vvp_send_vec4(port.ptr()->out, d_);
+		  vvp_send_vec4(port.ptr()->out, d_, 0);
 	    break;
 
 	  case 2: // CE
@@ -67,7 +68,7 @@ void vvp_dff::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 
 	  case 3: // Asynch-D
 	    d_ = bit;
-	    vvp_send_vec4(port.ptr()->out, d_);
+	    vvp_send_vec4(port.ptr()->out, d_, 0);
 	    break;
       }
 }

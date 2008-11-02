@@ -28,7 +28,8 @@
 /*
  * Search for the hierarchical name.
  */
-NetScope*symbol_search(Design*des, NetScope*scope, pform_name_t path,
+NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
+                       pform_name_t path,
 		       NetNet*&net,
 		       const NetExpr*&par,
 		       NetEvent*&eve,
@@ -57,6 +58,13 @@ NetScope*symbol_search(Design*des, NetScope*scope, pform_name_t path,
 		  return 0;
 
 	    scope = des->find_scope(scope, path_list);
+
+            if (scope->is_auto() && li) {
+                  cerr << li->get_fileline() << ": error: Hierarchical "
+                        "reference to automatically allocated item "
+                        "`" << key << "' in path `" << path << "'" << endl;
+            	  des->errors += 1;
+            }
       }
 
       while (scope) {

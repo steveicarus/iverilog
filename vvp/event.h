@@ -102,13 +102,15 @@ extern void schedule_evctl(vvp_array_t memory, unsigned index,
 struct waitable_hooks_s {
 
     public:
-      waitable_hooks_s() : threads(0), event_ctls(0) { last = &event_ctls; }
-      vthread_t threads;
+      waitable_hooks_s() : event_ctls(0) { last = &event_ctls; }
+
+      virtual vthread_t add_waiting_thread(vthread_t thread) = 0;
+
       evctl*event_ctls;
       evctl**last;
 
     protected:
-      void run_waiting_threads_(unsigned context_idx);
+      void run_waiting_threads_(vthread_t&threads);
 };
 
 /*
@@ -118,6 +120,7 @@ struct waitable_hooks_s {
  */
 struct waitable_state_s {
       waitable_state_s() : threads(0) { }
+
       vthread_t threads;
 };
 
@@ -130,23 +133,61 @@ class vvp_fun_edge : public vvp_net_fun_t, public waitable_hooks_s {
 
     public:
       typedef unsigned short edge_t;
-      explicit vvp_fun_edge(edge_t e, bool debug_flag);
+      explicit vvp_fun_edge(edge_t e);
       virtual ~vvp_fun_edge();
 
-      void alloc_instance(vvp_context_t context);
-      void reset_instance(vvp_context_t context);
-
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+    protected:
+      bool recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                      vvp_bit4_t&old_bit, vthread_t&threads);
 
     private:
-      vvp_bit4_t bits_[4];
       edge_t edge_;
-      bool debug_;
 };
 
 extern const vvp_fun_edge::edge_t vvp_edge_posedge;
 extern const vvp_fun_edge::edge_t vvp_edge_negedge;
 extern const vvp_fun_edge::edge_t vvp_edge_none;
+
+/*
+ * Statically allocated vvp_fun_edge.
+ */
+class vvp_fun_edge_sa : public vvp_fun_edge {
+
+    public:
+      explicit vvp_fun_edge_sa(edge_t e);
+      virtual ~vvp_fun_edge_sa();
+
+      vthread_t add_waiting_thread(vthread_t thread);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
+
+    private:
+      vthread_t threads_;
+      vvp_bit4_t bits_[4];
+};
+
+/*
+ * Automatically allocated vvp_fun_edge.
+ */
+class vvp_fun_edge_aa : public vvp_fun_edge, public automatic_hooks_s {
+
+    public:
+      explicit vvp_fun_edge_aa(edge_t e);
+      virtual ~vvp_fun_edge_aa();
+
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
+
+      vthread_t add_waiting_thread(vthread_t thread);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
+
+    private:
+      struct __vpiScope*context_scope_;
+      unsigned context_idx_;
+};
 
 /*
  * The vvp_fun_anyedge functor checks to see if any value in an input
@@ -161,20 +202,63 @@ extern const vvp_fun_edge::edge_t vvp_edge_none;
 class vvp_fun_anyedge : public vvp_net_fun_t, public waitable_hooks_s {
 
     public:
-      explicit vvp_fun_anyedge(bool debug_flag);
+      explicit vvp_fun_anyedge();
       virtual ~vvp_fun_anyedge();
+
+    protected:
+      bool recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                      vvp_vector4_t&old_bits, vthread_t&threads);
+      bool recv_real_(vvp_net_ptr_t port, double bit,
+                      double&old_bits, vthread_t&threads);
+};
+
+/*
+ * Statically allocated vvp_fun_anyedge.
+ */
+class vvp_fun_anyedge_sa : public vvp_fun_anyedge {
+
+    public:
+      explicit vvp_fun_anyedge_sa();
+      virtual ~vvp_fun_anyedge_sa();
+
+      vthread_t add_waiting_thread(vthread_t thread);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
+
+      void recv_real(vvp_net_ptr_t port, double bit,
+                     vvp_context_t context);
+
+    private:
+      vthread_t threads_;
+      vvp_vector4_t bits_[4];
+	// In case I'm a real-valued event.
+      double bitsr_[4];
+};
+
+/*
+ * Automatically allocated vvp_fun_anyedge.
+ */
+class vvp_fun_anyedge_aa : public vvp_fun_anyedge, public automatic_hooks_s {
+
+    public:
+      explicit vvp_fun_anyedge_aa();
+      virtual ~vvp_fun_anyedge_aa();
 
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-      void recv_real(vvp_net_ptr_t port, double bit);
+      vthread_t add_waiting_thread(vthread_t thread);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
+
+      void recv_real(vvp_net_ptr_t port, double bit,
+                     vvp_context_t context);
 
     private:
-      bool debug_;
-      vvp_vector4_t bits_[4];
-	// In case I'm a real-valued event.
-      double bitsr_[4];
+      struct __vpiScope*context_scope_;
+      unsigned context_idx_;
 };
 
 /*
@@ -186,13 +270,46 @@ class vvp_fun_event_or : public vvp_net_fun_t, public waitable_hooks_s {
     public:
       explicit vvp_fun_event_or();
       ~vvp_fun_event_or();
+};
+
+/*
+ * Statically allocated vvp_fun_event_or.
+ */
+class vvp_fun_event_or_sa : public vvp_fun_event_or {
+
+    public:
+      explicit vvp_fun_event_or_sa();
+      ~vvp_fun_event_or_sa();
+
+      vthread_t add_waiting_thread(vthread_t thread);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
+
+    private:
+      vthread_t threads_;
+};
+
+/*
+ * Automatically allocated vvp_fun_event_or.
+ */
+class vvp_fun_event_or_aa : public vvp_fun_event_or, public automatic_hooks_s {
+
+    public:
+      explicit vvp_fun_event_or_aa();
+      ~vvp_fun_event_or_aa();
 
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      vthread_t add_waiting_thread(vthread_t thread);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
 
     private:
+      struct __vpiScope*context_scope_;
+      unsigned context_idx_;
 };
 
 /*
@@ -206,13 +323,47 @@ class vvp_named_event : public vvp_net_fun_t, public waitable_hooks_s {
       explicit vvp_named_event(struct __vpiHandle*eh);
       ~vvp_named_event();
 
+    protected:
+      struct __vpiHandle*handle_;
+};
+
+/*
+ * Statically allocated vvp_named_event.
+ */
+class vvp_named_event_sa : public vvp_named_event {
+
+    public:
+      explicit vvp_named_event_sa(struct __vpiHandle*eh);
+      ~vvp_named_event_sa();
+
+      vthread_t add_waiting_thread(vthread_t thread);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
+
+    private:
+      vthread_t threads_;
+};
+
+/*
+ * Automatically allocated vvp_named_event.
+ */
+class vvp_named_event_aa : public vvp_named_event, public automatic_hooks_s {
+
+    public:
+      explicit vvp_named_event_aa(struct __vpiHandle*eh);
+      ~vvp_named_event_aa();
+
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      vthread_t add_waiting_thread(vthread_t thread);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
 
     private:
-      struct __vpiHandle*handle_;
+      unsigned context_idx_;
 };
 
 #endif // __event_H

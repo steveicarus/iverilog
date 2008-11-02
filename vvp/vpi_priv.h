@@ -183,8 +183,10 @@ struct __vpiScope {
         /* Keep an array of items to be automatically allocated */
       struct automatic_hooks_s**item;
       unsigned nitem;
+        /* Keep a list of live contexts. */
+      vvp_context_t live_contexts;
         /* Keep a list of freed contexts. */
-      vvp_context_t free_context;
+      vvp_context_t free_contexts;
 	/* Keep a list of threads in the scope. */
       vthread_t threads;
       signed int time_units :8;
@@ -193,7 +195,9 @@ struct __vpiScope {
 
 extern struct __vpiScope* vpip_peek_current_scope(void);
 extern void vpip_attach_to_current_scope(vpiHandle obj);
-extern void vpip_add_item_to_current_scope(automatic_hooks_s*item);
+extern struct __vpiScope* vpip_peek_context_scope(void);
+extern unsigned vpip_add_item_to_context(automatic_hooks_s*item,
+                                         struct __vpiScope*scope);
 extern vpiHandle vpip_make_root_iterator(void);
 extern void vpip_make_root_iterator(struct __vpiHandle**&table,
 				    unsigned&ntable);
@@ -219,6 +223,7 @@ struct __vpiSignal {
       unsigned signed_flag  : 1;
       unsigned isint_       : 1; // original type was integer
       unsigned is_netarray  : 1; // This is word of a net array
+      unsigned is_automatic : 1;
 	/* The represented value is here. */
       vvp_net_t*node;
 };
@@ -349,17 +354,22 @@ extern void vpip_real_value_change(struct __vpiCallback*cbh,
  */
 struct __vpiRealVar {
       struct __vpiHandle base;
-      vpiHandle parent;
-      struct __vpiScope* scope;
+      union { // The scope or parent array that contains me.
+	    vpiHandle parent;
+	    struct __vpiScope* scope;
+      } within;
 	/* The name of this variable, or the index for array words. */
       union {
             const char*name;
             vpiHandle index;
       } id;
+      unsigned is_netarray  : 1; // This is word of a net array
       vvp_net_t*net;
 };
 
+extern struct __vpiScope* vpip_scope(__vpiRealVar*sig);
 extern vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net);
+extern struct __vpiRealVar* vpip_realvar_from_handle(vpiHandle obj);
 
 /*
  * When a loaded VPI module announces a system task/function, one

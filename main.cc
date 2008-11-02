@@ -124,6 +124,7 @@ bool debug_eval_tree = false;
 bool debug_elaborate = false;
 bool debug_synth2 = false;
 bool debug_optimizer = false;
+bool debug_automatic = false;
 
 /*
  * Verbose messages enabled.
@@ -392,6 +393,8 @@ static void read_iconfig_file(const char*ipath)
 		  } else if (strcmp(cp,"optimizer") == 0) {
 			debug_optimizer = true;
 			cerr << "debug: Enable optimizer debug" << endl;
+		  } else if (strcmp(cp,"automatic") == 0) {
+			debug_automatic = true;
 		  } else {
 		  }
 

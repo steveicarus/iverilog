@@ -40,7 +40,8 @@ class vvp_dff  : public vvp_net_fun_t {
       explicit vvp_dff(bool invert_clk =false, bool invert_ce =false);
       ~vvp_dff();
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
 
     private:
       bool iclk_, ice_;

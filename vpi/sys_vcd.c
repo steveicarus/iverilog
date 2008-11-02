@@ -513,7 +513,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  break;
 	    }
 
-	    if (skip) break;
+            if (skip || vpi_get(vpiAutomatic, item)) break;
 
 	    name = vpi_get_str(vpiName, item);
 	    prefix = is_escaped_id(name) ? "\\" : "";
@@ -578,7 +578,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  break;
 	    }
 
-	    if (skip) break;
+            if (skip || vpi_get(vpiAutomatic, item)) break;
 
 	      /* Declare the variable in the VCD file. */
 	    name = vpi_get_str(vpiName, item);

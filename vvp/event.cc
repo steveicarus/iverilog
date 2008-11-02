@@ -32,7 +32,7 @@
 
 # include <iostream>
 
-void waitable_hooks_s::run_waiting_threads_(unsigned context_idx)
+void waitable_hooks_s::run_waiting_threads_(vthread_t&threads)
 {
 	// Run the non-blocking event controls.
       last = &event_ctls;
@@ -48,17 +48,11 @@ void waitable_hooks_s::run_waiting_threads_(unsigned context_idx)
 	    }
       }
 
-      vthread_t tmp;
-      if (context_idx) {
-            waitable_state_s*state = static_cast<waitable_state_s*>
-                  (vthread_get_wt_context_item(context_idx));
-            tmp = state->threads;
-            state->threads = 0;
-      } else {
-            tmp = threads;
-            threads = 0;
-      }
-      if (tmp) vthread_schedule_list(tmp);
+      vthread_t tmp = threads;
+      if (tmp == 0) return;
+      threads = 0;
+      
+      vthread_schedule_list(tmp);
 }
 
 evctl::evctl(unsigned long ecount)
@@ -117,9 +111,9 @@ evctl_vector::evctl_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
 void evctl_vector::run_run()
 {
       if (wid_ != 0) {
-	    vvp_send_vec4_pv(ptr_, value_, off_, value_.size(), wid_);
+	    vvp_send_vec4_pv(ptr_, value_, off_, value_.size(), wid_, 0);
       } else {
-	    vvp_send_vec4(ptr_, value_);
+	    vvp_send_vec4(ptr_, value_, 0);
       }
 }
 
@@ -186,114 +180,156 @@ const vvp_fun_edge::edge_t vvp_edge_negedge
 const vvp_fun_edge::edge_t vvp_edge_none    = 0;
 
 struct vvp_fun_edge_state_s : public waitable_state_s {
-      vvp_fun_edge_state_s() : bit(BIT4_X) {}
+      vvp_fun_edge_state_s()
+      {
+            for (unsigned idx = 0 ;  idx < 4 ;  idx += 1)
+                  bits[idx] = BIT4_X;
+      }
 
-      vvp_bit4_t bit;
+      vvp_bit4_t bits[4];
 };
 
-vvp_fun_edge::vvp_fun_edge(edge_t e, bool debug_flag)
-: edge_(e), debug_(debug_flag)
+vvp_fun_edge::vvp_fun_edge(edge_t e)
+: edge_(e)
 {
-      bits_[0] = BIT4_X;
-      bits_[1] = BIT4_X;
-      bits_[2] = BIT4_X;
-      bits_[3] = BIT4_X;
 }
 
 vvp_fun_edge::~vvp_fun_edge()
 {
 }
 
-void vvp_fun_edge::alloc_instance(vvp_context_t context)
+bool vvp_fun_edge::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                              vvp_bit4_t&old_bit, vthread_t&threads)
 {
-      vvp_set_context_item(context, context_idx, new vvp_fun_edge_state_s);
-}
-
-void vvp_fun_edge::reset_instance(vvp_context_t context)
-{
-      vvp_fun_edge_state_s*state = static_cast<vvp_fun_edge_state_s*>
-            (vvp_get_context_item(context, context_idx));
-      state->threads = 0;
-      state->bit = BIT4_X;
-}
-
-void vvp_fun_edge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
-{
-      vvp_bit4_t*old_bit;
-      if (context_idx) {
-            vvp_fun_edge_state_s*state = static_cast<vvp_fun_edge_state_s*>
-                  (vthread_get_wt_context_item(context_idx));
-            old_bit = &state->bit;
-      } else {
-            old_bit = &bits_[port.port()];
-      }
-
 	/* See what kind of edge this represents. */
-      edge_t mask = VVP_EDGE(*old_bit, bit.value(0));
+      edge_t mask = VVP_EDGE(old_bit, bit.value(0));
 
 	/* Save the current input for the next time around. */
-      *old_bit = bit.value(0);
+      old_bit = bit.value(0);
 
       if ((edge_ == vvp_edge_none) || (edge_ & mask)) {
-	    run_waiting_threads_(context_idx);
+	    run_waiting_threads_(threads);
+            return true;
+      }
+      return false;
+}
 
+vvp_fun_edge_sa::vvp_fun_edge_sa(edge_t e)
+: vvp_fun_edge(e), threads_(0)
+{
+      for (unsigned idx = 0 ;  idx < 4 ;  idx += 1)
+            bits_[idx] = BIT4_X;
+}
+
+vvp_fun_edge_sa::~vvp_fun_edge_sa()
+{
+}
+
+vthread_t vvp_fun_edge_sa::add_waiting_thread(vthread_t thread)
+{
+      vthread_t tmp = threads_;
+      threads_ = thread;
+
+      return tmp;
+}
+
+void vvp_fun_edge_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                vvp_context_t)
+{
+      if (recv_vec4_(port, bit, bits_[port.port()], threads_)) {
 	    vvp_net_t*net = port.ptr();
-	    vvp_send_vec4(net->out, bit);
+	    vvp_send_vec4(net->out, bit, 0);
       }
 }
 
+vvp_fun_edge_aa::vvp_fun_edge_aa(edge_t e)
+: vvp_fun_edge(e)
+{
+      context_scope_ = vpip_peek_context_scope();
+      context_idx_ = vpip_add_item_to_context(this, context_scope_);
+}
+
+vvp_fun_edge_aa::~vvp_fun_edge_aa()
+{
+}
+
+void vvp_fun_edge_aa::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, context_idx_, new vvp_fun_edge_state_s);
+}
+
+void vvp_fun_edge_aa::reset_instance(vvp_context_t context)
+{
+      vvp_fun_edge_state_s*state = static_cast<vvp_fun_edge_state_s*>
+            (vvp_get_context_item(context, context_idx_));
+
+      state->threads = 0;
+      for (unsigned idx = 0 ;  idx < 4 ;  idx += 1)
+            state->bits[idx] = BIT4_X;
+}
+
+
+vthread_t vvp_fun_edge_aa::add_waiting_thread(vthread_t thread)
+{
+      vvp_fun_edge_state_s*state = static_cast<vvp_fun_edge_state_s*>
+            (vthread_get_wt_context_item(context_idx_));
+
+      vthread_t tmp = state->threads;
+      state->threads = thread;
+
+      return tmp;
+}
+
+void vvp_fun_edge_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                vvp_context_t context)
+{
+      if (context) {
+            vvp_fun_edge_state_s*state = static_cast<vvp_fun_edge_state_s*>
+                  (vvp_get_context_item(context, context_idx_));
+
+            if (recv_vec4_(port, bit, state->bits[port.port()], state->threads)) {
+                  vvp_net_t*net = port.ptr();
+                  vvp_send_vec4(net->out, bit, context);
+            }
+      } else {
+            context = context_scope_->live_contexts;
+            while (context) {
+                  recv_vec4(port, bit, context);
+                  context = vvp_get_next_context(context);
+            }
+      }
+}
 
 struct vvp_fun_anyedge_state_s : public waitable_state_s {
-      vvp_fun_anyedge_state_s() : bitsr(0.0) {}
+      vvp_fun_anyedge_state_s()
+      {
+            for (unsigned idx = 0 ;  idx < 4 ;  idx += 1)
+                  bitsr[idx] = 0.0;
+      }
 
-      vvp_vector4_t bits;
-      double bitsr;
+      vvp_vector4_t bits[4];
+      double bitsr[4];
 };
 
-vvp_fun_anyedge::vvp_fun_anyedge(bool debug_flag)
-: debug_(debug_flag)
+vvp_fun_anyedge::vvp_fun_anyedge()
 {
-      for (unsigned idx = 0 ;  idx < 4 ;  idx += 1)
-	    bitsr_[idx] = 0.0;
 }
 
 vvp_fun_anyedge::~vvp_fun_anyedge()
 {
 }
 
-void vvp_fun_anyedge::alloc_instance(vvp_context_t context)
-{
-      vvp_set_context_item(context, context_idx, new vvp_fun_anyedge_state_s);
-}
-
-void vvp_fun_anyedge::reset_instance(vvp_context_t context)
-{
-      vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
-            (vvp_get_context_item(context, context_idx));
-      state->threads = 0;
-      state->bits.set_to_x();
-      state->bitsr = 0.0;
-}
-
-void vvp_fun_anyedge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
+bool vvp_fun_anyedge::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                 vvp_vector4_t&old_bits, vthread_t&threads)
 {
       bool flag = false;
 
-      vvp_vector4_t*old_bits;
-      if (context_idx) {
-            vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
-                  (vthread_get_wt_context_item(context_idx));
-            old_bits = &state->bits;
-      } else {
-            old_bits = &bits_[port.port()];
-      }
-
-      if (old_bits->size() != bit.size()) {
+      if (old_bits.size() != bit.size()) {
 	    flag = true;
 
       } else {
 	    for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1) {
-		  if (old_bits->value(idx) != bit.value(idx)) {
+		  if (old_bits.value(idx) != bit.value(idx)) {
 			flag = true;
 			break;
 		  }
@@ -301,29 +337,136 @@ void vvp_fun_anyedge::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
       }
 
       if (flag) {
-	    *old_bits = bit;
-	    run_waiting_threads_(context_idx);
+	    old_bits = bit;
+	    run_waiting_threads_(threads);
+      }
+
+      return flag;
+}
+
+bool vvp_fun_anyedge::recv_real_(vvp_net_ptr_t port, double bit,
+                                 double&old_bits, vthread_t&threads)
+{
+      if (old_bits != bit) {
+	    old_bits = bit;
+	    run_waiting_threads_(threads);
+            return true;
+      }
+      return false;
+}
+
+vvp_fun_anyedge_sa::vvp_fun_anyedge_sa()
+: threads_(0)
+{
+      for (unsigned idx = 0 ;  idx < 4 ;  idx += 1)
+	    bitsr_[idx] = 0.0;
+}
+
+vvp_fun_anyedge_sa::~vvp_fun_anyedge_sa()
+{
+}
+
+vthread_t vvp_fun_anyedge_sa::add_waiting_thread(vthread_t thread)
+{
+      vthread_t tmp = threads_;
+      threads_ = thread;
+
+      return tmp;
+}
+
+void vvp_fun_anyedge_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                   vvp_context_t)
+{
+      if (recv_vec4_(port, bit, bits_[port.port()], threads_)) {
 	    vvp_net_t*net = port.ptr();
-	    vvp_send_vec4(net->out, bit);
+	    vvp_send_vec4(net->out, bit, 0);
       }
 }
 
-void vvp_fun_anyedge::recv_real(vvp_net_ptr_t port, double bit)
+void vvp_fun_anyedge_sa::recv_real(vvp_net_ptr_t port, double bit,
+                                   vvp_context_t)
 {
-      double*old_bits;
-      if (context_idx) {
-            vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
-                  (vthread_get_wt_context_item(context_idx));
-            old_bits = &state->bitsr;
-      } else {
-            old_bits = &bitsr_[port.port()];
-      }
-
-      if (*old_bits != bit) {
-	    *old_bits = bit;
-	    run_waiting_threads_(context_idx);
+      if (recv_real_(port, bit, bitsr_[port.port()], threads_)) {
 	    vvp_net_t*net = port.ptr();
-	    vvp_send_vec4(net->out, vvp_vector4_t());
+	    vvp_send_vec4(net->out, vvp_vector4_t(), 0);
+      }
+}
+
+vvp_fun_anyedge_aa::vvp_fun_anyedge_aa()
+{
+      context_scope_ = vpip_peek_context_scope();
+      context_idx_ = vpip_add_item_to_context(this, context_scope_);
+}
+
+vvp_fun_anyedge_aa::~vvp_fun_anyedge_aa()
+{
+}
+
+void vvp_fun_anyedge_aa::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, context_idx_, new vvp_fun_anyedge_state_s);
+}
+
+void vvp_fun_anyedge_aa::reset_instance(vvp_context_t context)
+{
+      vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
+            (vvp_get_context_item(context, context_idx_));
+
+      state->threads = 0;
+      for (unsigned idx = 0 ;  idx < 4 ;  idx += 1) {
+            state->bits[idx].set_to_x();
+	    state->bitsr[idx] = 0.0;
+      }
+}
+
+vthread_t vvp_fun_anyedge_aa::add_waiting_thread(vthread_t thread)
+{
+      vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
+            (vthread_get_wt_context_item(context_idx_));
+
+      vthread_t tmp = state->threads;
+      state->threads = thread;
+
+      return tmp;
+}
+
+void vvp_fun_anyedge_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                   vvp_context_t context)
+{
+      if (context) {
+            vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
+                  (vvp_get_context_item(context, context_idx_));
+
+            if (recv_vec4_(port, bit, state->bits[port.port()], state->threads)) {
+                  vvp_net_t*net = port.ptr();
+                  vvp_send_vec4(net->out, bit, context);
+            }
+      } else {
+            context = context_scope_->live_contexts;
+            while (context) {
+                  recv_vec4(port, bit, context);
+                  context = vvp_get_next_context(context);
+            }
+      }
+}
+
+void vvp_fun_anyedge_aa::recv_real(vvp_net_ptr_t port, double bit,
+                                   vvp_context_t context)
+{
+      if (context) {
+            vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
+                  (vvp_get_context_item(context, context_idx_));
+
+            if (recv_real_(port, bit, state->bitsr[port.port()], state->threads)) {
+                  vvp_net_t*net = port.ptr();
+                  vvp_send_vec4(net->out, vvp_vector4_t(), context);
+            }
+      } else {
+            context = context_scope_->live_contexts;
+            while (context) {
+                  recv_real(port, bit, context);
+                  context = vvp_get_next_context(context);
+            }
       }
 }
 
@@ -335,23 +478,82 @@ vvp_fun_event_or::~vvp_fun_event_or()
 {
 }
 
-void vvp_fun_event_or::alloc_instance(vvp_context_t context)
+vvp_fun_event_or_sa::vvp_fun_event_or_sa()
+: threads_(0)
 {
-      vvp_set_context_item(context, context_idx, new waitable_state_s);
 }
 
-void vvp_fun_event_or::reset_instance(vvp_context_t context)
+vvp_fun_event_or_sa::~vvp_fun_event_or_sa()
+{
+}
+
+vthread_t vvp_fun_event_or_sa::add_waiting_thread(vthread_t thread)
+{
+      vthread_t tmp = threads_;
+      threads_ = thread;
+
+      return tmp;
+}
+
+void vvp_fun_event_or_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                    vvp_context_t)
+{
+      run_waiting_threads_(threads_);
+      vvp_net_t*net = port.ptr();
+      vvp_send_vec4(net->out, bit, 0);
+}
+
+vvp_fun_event_or_aa::vvp_fun_event_or_aa()
+{
+      context_scope_ = vpip_peek_context_scope();
+      context_idx_ = vpip_add_item_to_context(this, context_scope_);
+}
+
+vvp_fun_event_or_aa::~vvp_fun_event_or_aa()
+{
+}
+
+void vvp_fun_event_or_aa::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, context_idx_, new waitable_state_s);
+}
+
+void vvp_fun_event_or_aa::reset_instance(vvp_context_t context)
 {
       waitable_state_s*state = static_cast<waitable_state_s*>
-            (vvp_get_context_item(context, context_idx));
+            (vvp_get_context_item(context, context_idx_));
+
       state->threads = 0;
 }
 
-void vvp_fun_event_or::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
+vthread_t vvp_fun_event_or_aa::add_waiting_thread(vthread_t thread)
 {
-      run_waiting_threads_(context_idx);
-      vvp_net_t*net = port.ptr();
-      vvp_send_vec4(net->out, bit);
+      waitable_state_s*state = static_cast<waitable_state_s*>
+            (vthread_get_wt_context_item(context_idx_));
+
+      vthread_t tmp = state->threads;
+      state->threads = thread;
+
+      return tmp;
+}
+
+void vvp_fun_event_or_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                    vvp_context_t context)
+{
+      if (context) {
+            waitable_state_s*state = static_cast<waitable_state_s*>
+                  (vvp_get_context_item(context, context_idx_));
+
+            run_waiting_threads_(state->threads);
+            vvp_net_t*net = port.ptr();
+            vvp_send_vec4(net->out, bit, context);
+      } else {
+            context = context_scope_->live_contexts;
+            while (context) {
+                  recv_vec4(port, bit, context);
+                  context = vvp_get_next_context(context);
+            }
+      }
 }
 
 vvp_named_event::vvp_named_event(struct __vpiHandle*h)
@@ -363,25 +565,78 @@ vvp_named_event::~vvp_named_event()
 {
 }
 
-void vvp_named_event::alloc_instance(vvp_context_t context)
+vvp_named_event_sa::vvp_named_event_sa(struct __vpiHandle*h)
+: vvp_named_event(h), threads_(0)
 {
-      vvp_set_context_item(context, context_idx, new waitable_state_s);
 }
 
-void vvp_named_event::reset_instance(vvp_context_t context)
+vvp_named_event_sa::~vvp_named_event_sa()
+{
+}
+
+vthread_t vvp_named_event_sa::add_waiting_thread(vthread_t thread)
+{
+      vthread_t tmp = threads_;
+      threads_ = thread;
+
+      return tmp;
+}
+
+void vvp_named_event_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                   vvp_context_t)
+{
+      run_waiting_threads_(threads_);
+      vvp_net_t*net = port.ptr();
+      vvp_send_vec4(net->out, bit, 0);
+
+      vpip_run_named_event_callbacks(handle_);
+}
+
+vvp_named_event_aa::vvp_named_event_aa(struct __vpiHandle*h)
+: vvp_named_event(h)
+{
+      context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
+}
+
+vvp_named_event_aa::~vvp_named_event_aa()
+{
+}
+
+void vvp_named_event_aa::alloc_instance(vvp_context_t context)
+{
+      vvp_set_context_item(context, context_idx_, new waitable_state_s);
+}
+
+void vvp_named_event_aa::reset_instance(vvp_context_t context)
 {
       waitable_state_s*state = static_cast<waitable_state_s*>
-            (vvp_get_context_item(context, context_idx));
+            (vvp_get_context_item(context, context_idx_));
+
       state->threads = 0;
 }
 
-void vvp_named_event::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
+vthread_t vvp_named_event_aa::add_waiting_thread(vthread_t thread)
 {
-      run_waiting_threads_(context_idx);
-      vvp_net_t*net = port.ptr();
-      vvp_send_vec4(net->out, bit);
+      waitable_state_s*state = static_cast<waitable_state_s*>
+            (vthread_get_wt_context_item(context_idx_));
 
-      vpip_run_named_event_callbacks(handle_);
+      vthread_t tmp = state->threads;
+      state->threads = thread;
+
+      return tmp;
+}
+
+void vvp_named_event_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                   vvp_context_t context)
+{
+      assert(context);
+
+      waitable_state_s*state = static_cast<waitable_state_s*>
+            (vvp_get_context_item(context, context_idx_));
+
+      run_waiting_threads_(state->threads);
+      vvp_net_t*net = port.ptr();
+      vvp_send_vec4(net->out, bit, context);
 }
 
 /*
@@ -394,9 +649,7 @@ void vvp_named_event::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit)
 
 static void compile_event_or(char*label, unsigned argc, struct symb_s*argv);
 
-void compile_event(char*label, char*type,
-		   unsigned argc, struct symb_s*argv,
-		   bool debug_flag)
+void compile_event(char*label, char*type, unsigned argc, struct symb_s*argv)
 {
       vvp_net_fun_t*fun = 0;
 
@@ -408,9 +661,12 @@ void compile_event(char*label, char*type,
       if (strcmp(type,"edge") == 0) {
 
 	    free(type);
-	    vvp_fun_anyedge*event_fun = new vvp_fun_anyedge(debug_flag);
-            vpip_add_item_to_current_scope(event_fun);
-            fun = event_fun;
+
+            if (vpip_peek_current_scope()->is_automatic) {
+                  fun = new vvp_fun_anyedge_aa;
+            } else {
+                  fun = new vvp_fun_anyedge_sa;
+            }
 
       } else {
 
@@ -424,9 +680,12 @@ void compile_event(char*label, char*type,
 	    assert(argc <= 4);
 	    free(type);
 
-	    vvp_fun_edge*event_fun = new vvp_fun_edge(edge, debug_flag);
-            vpip_add_item_to_current_scope(event_fun);
-            fun = event_fun;
+            if (vpip_peek_current_scope()->is_automatic) {
+                  fun = new vvp_fun_edge_aa(edge);
+            } else {
+                  fun = new vvp_fun_edge_sa(edge);
+            }
+
       }
 
       vvp_net_t* ptr = new vvp_net_t;
@@ -440,11 +699,12 @@ void compile_event(char*label, char*type,
 
 static void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
 {
-      vvp_fun_event_or*fun = new vvp_fun_event_or;
       vvp_net_t* ptr = new vvp_net_t;
-      ptr->fun = fun;
-
-      vpip_add_item_to_current_scope(fun);
+      if (vpip_peek_current_scope()->is_automatic) {
+            ptr->fun = new vvp_fun_event_or_aa;
+      } else {
+            ptr->fun = new vvp_fun_event_or_sa;
+      }
       define_functor_symbol(label, ptr);
       free(label);
 
@@ -466,10 +726,12 @@ void compile_named_event(char*label, char*name)
       vvp_net_t*ptr = new vvp_net_t;
 
       vpiHandle obj = vpip_make_named_event(name, ptr);
-      vvp_named_event*fun = new vvp_named_event(obj);
-      ptr->fun = fun;
 
-      vpip_add_item_to_current_scope(fun);
+      if (vpip_peek_current_scope()->is_automatic) {
+            ptr->fun = new vvp_named_event_aa(obj);
+      } else {
+            ptr->fun = new vvp_named_event_sa(obj);
+      }
       define_functor_symbol(label, ptr);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);

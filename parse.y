@@ -1033,12 +1033,12 @@ expression
 		  $$ = tmp;
 		}
 	| expression K_LOR expression
-		{ PEBinary*tmp = new PEBinary('o', $1, $3);
+		{ PEBinary*tmp = new PEBLogic('o', $1, $3);
 		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
 	| expression K_LAND expression
-		{ PEBinary*tmp = new PEBinary('a', $1, $3);
+		{ PEBinary*tmp = new PEBLogic('a', $1, $3);
 		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
@@ -2977,7 +2977,13 @@ real_variable
       { perm_string name = lex_strings.make($1);
         pform_makewire(@1, name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_REAL, 0);
         if ($2 != 0) {
-	      yyerror(@2, "sorry: real variables do not currently support arrays.");
+	      index_component_t index;
+	      if ($2->size() > 1) {
+		    yyerror(@2, "sorry: only 1 dimensional arrays "
+			    "are currently supported.");
+	      }
+	      index = $2->front();
+	      pform_set_reg_idx(name, index.msb, index.lsb);
 	      delete $2;
         }
 	$$ = $1;

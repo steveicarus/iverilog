@@ -40,11 +40,13 @@ class resolv_functor : public vvp_net_fun_t {
       explicit resolv_functor(vvp_scalar_t hiz_value, const char* debug =0);
       ~resolv_functor();
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
       void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid);
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t);
       void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
 			unsigned base, unsigned wid, unsigned vwid);
 
@@ -62,7 +64,8 @@ class resolv_wired_logic : public vvp_net_fun_t {
       explicit resolv_wired_logic(void);
       ~resolv_wired_logic();
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
 
     protected:
       virtual vvp_vector4_t wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b) =0;

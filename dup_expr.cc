@@ -138,6 +138,14 @@ NetEUFunc* NetEUFunc::dup_expr() const
       return tmp;
 }
 
+NetEUBits* NetEUBits::dup_expr() const
+{
+      NetEUBits*tmp = new NetEUBits(op_, expr_->dup_expr());
+      assert(tmp);
+      tmp->set_line(*this);
+      return tmp;
+}
+
 NetEUnary* NetEUnary::dup_expr() const
 {
       NetEUnary*tmp = new NetEUnary(op_, expr_->dup_expr());

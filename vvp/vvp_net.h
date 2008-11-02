@@ -52,7 +52,9 @@ class  vvp_delay_t;
 
 /*
  * Storage for items declared in automatically allocated scopes (i.e. automatic
- * tasks and functions).
+ * tasks and functions). The first two slots in each context are reserved for
+ * linking to other contexts. The function that adds items to a context knows
+ * this, and allocates context indices accordingly.
  */
 typedef void**vvp_context_t;
 
@@ -60,7 +62,8 @@ typedef void*vvp_context_item_t;
 
 inline vvp_context_t vvp_allocate_context(unsigned nitem)
 {
-      return (vvp_context_t)malloc((1 + nitem) * sizeof(void*));
+      
+      return (vvp_context_t)malloc((2 + nitem) * sizeof(void*));
 }
 
 inline vvp_context_t vvp_get_next_context(vvp_context_t context)
@@ -71,6 +74,16 @@ inline vvp_context_t vvp_get_next_context(vvp_context_t context)
 inline void vvp_set_next_context(vvp_context_t context, vvp_context_t next)
 {
       context[0] = next;
+}
+
+inline vvp_context_t vvp_get_stacked_context(vvp_context_t context)
+{
+      return (vvp_context_t)context[1];
+}
+
+inline void vvp_set_stacked_context(vvp_context_t context, vvp_context_t stack)
+{
+      context[1] = stack;
 }
 
 inline vvp_context_item_t vvp_get_context_item(vvp_context_t context,
@@ -88,18 +101,15 @@ inline void vvp_set_context_item(vvp_context_t context, unsigned item_idx,
 /*
  * An "automatic" functor is one which may be associated with an automatically
  * allocated scope item. This provides the infrastructure needed to allocate
- * and access the state information for individual instances of the item. A
- * context_idx value of 0 indicates a statically allocated item.
+ * the state information for individual instances of the item.
  */
 struct automatic_hooks_s {
 
-      automatic_hooks_s() : context_idx(0) {}
+      automatic_hooks_s() {}
       virtual ~automatic_hooks_s() {}
 
-      virtual void alloc_instance(vvp_context_t context) {}
-      virtual void reset_instance(vvp_context_t context) {}
-
-      unsigned context_idx;
+      virtual void alloc_instance(vvp_context_t context) = 0;
+      virtual void reset_instance(vvp_context_t context) = 0;
 };
 
 /*
@@ -179,6 +189,8 @@ class vvp_vector4_t {
 
       friend vvp_vector4_t operator ~(const vvp_vector4_t&that);
       friend class vvp_vector4array_t;
+      friend class vvp_vector4array_sa;
+      friend class vvp_vector4array_aa;
 
     public:
       explicit vvp_vector4_t(unsigned size =0, vvp_bit4_t bits =BIT4_X);
@@ -456,24 +468,41 @@ extern bool vector4_to_value(const vvp_vector4_t&a, vvp_time64_t&val);
 extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
 
 /*
- * vvp_vector4array_t
+ * The __vpiArray handle uses instances of this to keep an array of
+ * real valued variables.
  */
-class vvp_vector4array_t : public automatic_hooks_s {
+class vvp_realarray_t {
 
     public:
-      vvp_vector4array_t(unsigned width, unsigned words, bool is_automatic);
-      ~vvp_vector4array_t();
+      vvp_realarray_t(unsigned words);
+      ~vvp_realarray_t();
 
-      void alloc_instance(vvp_context_t context);
-      void reset_instance(vvp_context_t context);
+      unsigned words() const { return words_; }
+
+      double get_word(unsigned idx) const;
+      void set_word(unsigned idx, double val);
+
+    private:
+      unsigned words_;
+      double*array_;
+};
+
+/*
+ * vvp_vector4array_t
+ */
+class vvp_vector4array_t {
+
+    public:
+      vvp_vector4array_t(unsigned width, unsigned words);
+      virtual ~vvp_vector4array_t();
 
       unsigned width() const { return width_; }
       unsigned words() const { return words_; }
 
-      vvp_vector4_t get_word(unsigned idx) const;
-      void set_word(unsigned idx, const vvp_vector4_t&that);
+      virtual vvp_vector4_t get_word(unsigned idx) const = 0;
+      virtual void set_word(unsigned idx, const vvp_vector4_t&that) = 0;
 
-    private:
+    protected:
       struct v4cell {
 	    union {
 		  unsigned long abits_val_;
@@ -485,13 +514,50 @@ class vvp_vector4array_t : public automatic_hooks_s {
 	    };
       };
 
+      vvp_vector4_t get_word_(v4cell*cell) const;
+      void set_word_(v4cell*cell, const vvp_vector4_t&that);
+
       unsigned width_;
       unsigned words_;
-      v4cell* array_;
 
     private: // Not implemented
       vvp_vector4array_t(const vvp_vector4array_t&);
       vvp_vector4array_t& operator = (const vvp_vector4array_t&);
+};
+
+/*
+ * Statically allocated vvp_vector4array_t
+ */
+class vvp_vector4array_sa : public vvp_vector4array_t {
+
+    public:
+      vvp_vector4array_sa(unsigned width, unsigned words);
+      ~vvp_vector4array_sa();
+
+      vvp_vector4_t get_word(unsigned idx) const;
+      void set_word(unsigned idx, const vvp_vector4_t&that);
+
+    private:
+      v4cell* array_;
+};
+
+/*
+ * Automatically allocated vvp_vector4array_t
+ */
+class vvp_vector4array_aa : public vvp_vector4array_t, public automatic_hooks_s {
+
+    public:
+      vvp_vector4array_aa(unsigned width, unsigned words);
+      ~vvp_vector4array_aa();
+
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
+
+      vvp_vector4_t get_word(unsigned idx) const;
+      void set_word(unsigned idx, const vvp_vector4_t&that);
+
+    private:
+      unsigned context_idx_;
 };
 
 /* vvp_vector2_t
@@ -924,21 +990,34 @@ struct vvp_net_t {
  * default behavior for recv_vec8 and recv_vec8_pv is to reduce the
  * operand to a vvp_vector4_t and pass it on to the recv_vec4 or
  * recv_vec4_pv method.
+ *
+ * The recv_vec4, recv_vec4_pv, and recv_real methods are also
+ * passed a context pointer. When the received bit has propagated
+ * from a statically allocated node, this will be a null pointer.
+ * When the received bit has propagated from an automatically
+ * allocated node, this will be a pointer to the context that
+ * contains the instance of that bit that has just been modified.
+ * When the received bit was from a procedural assignment or from
+ * a VPI set_value() operation, this will be a pointer to the
+ * writable context associated with the currently running thread.
  */
-class vvp_net_fun_t : public automatic_hooks_s {
+class vvp_net_fun_t {
 
     public:
       vvp_net_fun_t();
       virtual ~vvp_net_fun_t();
 
-      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      virtual void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                             vvp_context_t context);
       virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
-      virtual void recv_real(vvp_net_ptr_t port, double bit);
+      virtual void recv_real(vvp_net_ptr_t port, double bit,
+                             vvp_context_t context);
       virtual void recv_long(vvp_net_ptr_t port, long bit);
 
 	// Part select variants of above
       virtual void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
-				unsigned base, unsigned wid, unsigned vwid);
+				unsigned base, unsigned wid, unsigned vwid,
+                                vvp_context_t context);
       virtual void recv_vec8_pv(vvp_net_ptr_t p, const vvp_vector8_t&bit,
 				unsigned base, unsigned wid, unsigned vwid);
       virtual void recv_long_pv(vvp_net_ptr_t port, long bit,
@@ -974,7 +1053,8 @@ class vvp_fun_concat  : public vvp_net_fun_t {
 		     unsigned w2, unsigned w3);
       ~vvp_fun_concat();
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
 
     private:
       unsigned wid_[4];
@@ -993,7 +1073,8 @@ class vvp_fun_repeat  : public vvp_net_fun_t {
       vvp_fun_repeat(unsigned width, unsigned repeat);
       ~vvp_fun_repeat();
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
 
     private:
       unsigned wid_;
@@ -1017,7 +1098,8 @@ class vvp_fun_drive  : public vvp_net_fun_t {
       vvp_fun_drive(vvp_bit4_t init, unsigned str0 =6, unsigned str1 =6);
       ~vvp_fun_drive();
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
 	//void recv_long(vvp_net_ptr_t port, long bit);
 
     private:
@@ -1037,7 +1119,8 @@ class vvp_fun_extend_signed  : public vvp_net_fun_t {
       explicit vvp_fun_extend_signed(unsigned wid);
       ~vvp_fun_extend_signed();
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
 
     private:
       unsigned width_;
@@ -1174,20 +1257,31 @@ class vvp_fun_signal_vec : public vvp_fun_signal_base {
       virtual vvp_vector4_t vec4_value() const =0;
 };
 
-class vvp_fun_signal  : public vvp_fun_signal_vec {
+class vvp_fun_signal4 : public vvp_fun_signal_vec {
 
     public:
-      explicit vvp_fun_signal(unsigned wid, vvp_bit4_t init=BIT4_X);
+      explicit vvp_fun_signal4() {};
 
-      void alloc_instance(vvp_context_t context);
-      void reset_instance(vvp_context_t context);
+      void get_value(struct t_vpi_value*value);
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+};
+
+/*
+ * Statically allocated vvp_fun_signal4.
+ */
+class vvp_fun_signal4_sa : public vvp_fun_signal4 {
+
+    public:
+      explicit vvp_fun_signal4_sa(unsigned wid, vvp_bit4_t init=BIT4_X);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
       void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
 	// Part select variants of above
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid);
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t);
       void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
 			unsigned base, unsigned wid, unsigned vwid);
 
@@ -1202,8 +1296,6 @@ class vvp_fun_signal  : public vvp_fun_signal_vec {
       void release_pv(vvp_net_ptr_t port, bool net,
                       unsigned base, unsigned wid);
 
-      void get_value(struct t_vpi_value*value);
-
     private:
       void calculate_output_(vvp_net_ptr_t ptr);
 
@@ -1211,17 +1303,54 @@ class vvp_fun_signal  : public vvp_fun_signal_vec {
       vvp_vector4_t force_;
 };
 
+/*
+ * Automatically allocated vvp_fun_signal4.
+ */
+class vvp_fun_signal4_aa : public vvp_fun_signal4, public automatic_hooks_s {
+
+    public:
+      explicit vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init=BIT4_X);
+
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
+
+	// Part select variants of above
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t);
+
+	// Get information about the vector value.
+      unsigned   size() const;
+      vvp_bit4_t value(unsigned idx) const;
+      vvp_scalar_t scalar_value(unsigned idx) const;
+      vvp_vector4_t vec4_value() const;
+
+	// Commands
+      void release(vvp_net_ptr_t port, bool net);
+      void release_pv(vvp_net_ptr_t port, bool net,
+                      unsigned base, unsigned wid);
+
+    private:
+      unsigned context_idx_;
+      unsigned size_;
+};
+
 class vvp_fun_signal8  : public vvp_fun_signal_vec {
 
     public:
       explicit vvp_fun_signal8(unsigned wid);
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
       void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
 
 	// Part select variants of above
       void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                        unsigned base, unsigned wid, unsigned vwid);
+                        unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t context);
       void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
                         unsigned base, unsigned wid, unsigned vwid);
 
@@ -1245,16 +1374,27 @@ class vvp_fun_signal8  : public vvp_fun_signal_vec {
       vvp_vector8_t force_;
 };
 
-class vvp_fun_signal_real  : public vvp_fun_signal_base {
+class vvp_fun_signal_real : public vvp_fun_signal_base {
 
     public:
-      explicit vvp_fun_signal_real();
+      explicit vvp_fun_signal_real() {};
 
-      void alloc_instance(vvp_context_t context);
-      void reset_instance(vvp_context_t context);
+	// Get information about the vector value.
+      virtual double real_value() const = 0;
 
-	//void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-      void recv_real(vvp_net_ptr_t port, double bit);
+      void get_value(struct t_vpi_value*value);
+};
+
+/*
+ * Statically allocated vvp_fun_signal_real.
+ */
+class vvp_fun_signal_real_sa : public vvp_fun_signal_real {
+
+    public:
+      explicit vvp_fun_signal_real_sa();
+
+      void recv_real(vvp_net_ptr_t port, double bit,
+                     vvp_context_t);
 
 	// Get information about the vector value.
       double real_value() const;
@@ -1264,11 +1404,35 @@ class vvp_fun_signal_real  : public vvp_fun_signal_base {
       void release_pv(vvp_net_ptr_t port, bool net,
                       unsigned base, unsigned wid);
 
-      void get_value(struct t_vpi_value*value);
-
     private:
       double bits_;
       double force_;
+};
+
+/*
+ * Automatically allocated vvp_fun_signal_real.
+ */
+class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_hooks_s {
+
+    public:
+      explicit vvp_fun_signal_real_aa();
+
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
+
+      void recv_real(vvp_net_ptr_t port, double bit,
+                     vvp_context_t context);
+
+	// Get information about the vector value.
+      double real_value() const;
+
+	// Commands
+      void release(vvp_net_ptr_t port, bool net);
+      void release_pv(vvp_net_ptr_t port, bool net,
+                      unsigned base, unsigned wid);
+
+    private:
+      unsigned context_idx_;
 };
 
 /*
@@ -1340,8 +1504,10 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
       vvp_wide_fun_t(vvp_wide_fun_core*c, unsigned base);
       ~vvp_wide_fun_t();
 
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit);
-      void recv_real(vvp_net_ptr_t port, double bit);
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
+      void recv_real(vvp_net_ptr_t port, double bit,
+                     vvp_context_t context);
 
     private:
       vvp_wide_fun_core*core_;
@@ -1349,20 +1515,22 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 };
 
 
-inline void vvp_send_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val)
+inline void vvp_send_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
+                          vvp_context_t context)
 {
       while (struct vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
 	    if (cur->fun)
-		  cur->fun->recv_vec4(ptr, val);
+		  cur->fun->recv_vec4(ptr, val, context);
 
 	    ptr = next;
       }
 }
 
 extern void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val);
-extern void vvp_send_real(vvp_net_ptr_t ptr, double val);
+extern void vvp_send_real(vvp_net_ptr_t ptr, double val,
+                          vvp_context_t context);
 extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
 extern void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
                              unsigned base, unsigned width);
@@ -1387,20 +1555,21 @@ extern void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
  * mirror of the destination vector.
  */
 inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
-		      unsigned base, unsigned wid, unsigned vwid)
+		             unsigned base, unsigned wid, unsigned vwid,
+                             vvp_context_t context)
 {
       while (struct vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
 	    if (cur->fun)
-		  cur->fun->recv_vec4_pv(ptr, val, base, wid, vwid);
+		  cur->fun->recv_vec4_pv(ptr, val, base, wid, vwid, context);
 
 	    ptr = next;
       }
 }
 
 inline void vvp_send_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&val,
-		      unsigned base, unsigned wid, unsigned vwid)
+		             unsigned base, unsigned wid, unsigned vwid)
 {
       while (struct vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];

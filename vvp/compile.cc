@@ -83,6 +83,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%add",    of_ADD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%add/wr", of_ADD_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%addi",   of_ADDI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%alloc",  of_ALLOC,  1,  {OA_VPI_PTR,  OA_NONE,     OA_NONE} },
       { "%and",    of_AND,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and/r",  of_ANDR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%andi",   of_ANDI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -134,6 +135,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%force/v",of_FORCE_V,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%force/wr",of_FORCE_WR,2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%force/x0",of_FORCE_X0,3,{OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
+      { "%free",   of_FREE,   1,  {OA_VPI_PTR,  OA_NONE,     OA_NONE} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%ix/add", of_IX_ADD, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/get", of_IX_GET, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -148,6 +150,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%jmp/0xz",of_JMP0XZ, 2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%jmp/1",  of_JMP1,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%load/ar",of_LOAD_AR,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
       { "%load/av",of_LOAD_AV,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
       { "%load/avp0",of_LOAD_AVP0,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
       { "%load/avp0/s",of_LOAD_AVP0_S,3,{OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
@@ -179,11 +182,11 @@ const static struct opcode_table_s opcode_table[] = {
       { "%release/net",of_RELEASE_NET,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/reg",of_RELEASE_REG,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/wr",of_RELEASE_WR,2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
+      { "%set/ar", of_SET_AR, 3,  {OA_ARR_PTR,  OA_BIT1,     OA_BIT2} },
       { "%set/av", of_SET_AV, 3,  {OA_ARR_PTR,  OA_BIT1,     OA_BIT2} },
       { "%set/v",  of_SET_VEC,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
-      { "%set/wr", of_SET_WORDR,2,{OA_VPI_PTR,  OA_BIT1,     OA_NONE} },
+      { "%set/wr", of_SET_WORDR,2,{OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%set/x0", of_SET_X0, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
-//    { "%set/x0/x",of_SET_X0_X,3,{OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%shiftl/i0", of_SHIFTL_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%shiftr/i0", of_SHIFTR_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%shiftr/s/i0", of_SHIFTR_S_I0,2,{OA_BIT1,OA_NUMBER, OA_NONE} },
@@ -1682,34 +1685,6 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
 
 	/* Figure out the target PC. */
       code_label_lookup(code, dest.text);
-
-	/* Figure out the target SCOPE. */
-      compile_vpi_lookup(&code->handle, scope.text);
-}
-
-void compile_alloc(char*label, struct symb_s scope)
-{
-      if (label)
-	    compile_codelabel(label);
-
-
-	/* Fill in the basics of the %alloc in the instruction. */
-      vvp_code_t code = codespace_allocate();
-      code->opcode = of_ALLOC;
-
-	/* Figure out the target SCOPE. */
-      compile_vpi_lookup(&code->handle, scope.text);
-}
-
-void compile_free(char*label, struct symb_s scope)
-{
-      if (label)
-	    compile_codelabel(label);
-
-
-	/* Fill in the basics of the %free in the instruction. */
-      vvp_code_t code = codespace_allocate();
-      code->opcode = of_FREE;
 
 	/* Figure out the target SCOPE. */
       compile_vpi_lookup(&code->handle, scope.text);

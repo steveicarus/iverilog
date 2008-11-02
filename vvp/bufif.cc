@@ -35,7 +35,8 @@ vvp_fun_bufif::vvp_fun_bufif(bool en_invert, bool out_invert,
       count_functors_bufif += 1;
 }
 
-void vvp_fun_bufif::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
+void vvp_fun_bufif::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                              vvp_context_t)
 {
       switch (ptr.port()) {
 	  case 0:
@@ -115,4 +116,3 @@ void vvp_fun_bufif::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
  * Revision 1.8  2002/08/12 01:35:07  steve
  *  conditional ident string using autoconfig.
  */
-

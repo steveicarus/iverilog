@@ -316,26 +316,6 @@ static void attach_to_scope_(struct __vpiScope*scope, vpiHandle obj)
       scope->intern[idx] = obj;
 }
 
-static void add_item_to_scope_(struct __vpiScope*scope, automatic_hooks_s*item)
-{
-      assert(scope);
-
-        // there is no need to record items for static scopes
-      if (!scope->is_automatic) return;
-
-      unsigned idx = scope->nitem++;
-      item->context_idx = 1 + idx;
-
-      if (scope->item == 0)
-	    scope->item = (automatic_hooks_s**)
-		  malloc(sizeof(automatic_hooks_s*));
-      else
-	    scope->item = (automatic_hooks_s**)
-		  realloc(scope->item, sizeof(automatic_hooks_s*)*scope->nitem);
-
-      scope->item[idx] = item;
-}
-
 /*
  * When the compiler encounters a scope declaration, this function
  * creates and initializes a __vpiScope object with the requested name
@@ -392,7 +372,8 @@ compile_scope_decl(char*label, char*type, char*name, const char*tname,
       scope->nintern = 0;
       scope->item = 0;
       scope->nitem = 0;
-      scope->free_context = 0;
+      scope->live_contexts = 0;
+      scope->free_contexts = 0;
       scope->threads = 0;
 
       current_scope = scope;
@@ -414,6 +395,10 @@ compile_scope_decl(char*label, char*type, char*name, const char*tname,
 	      /* Inherit time units and precision from the parent scope. */
 	    scope->time_units = sp->time_units;
 	    scope->time_precision = sp->time_precision;
+
+              /* Scopes within automatic scopes are themselves automatic. */
+            if (sp->is_automatic)
+                  scope->is_automatic = true;
 
       } else {
 	    scope->scope = 0x0;
@@ -458,7 +443,38 @@ void vpip_attach_to_current_scope(vpiHandle obj)
       attach_to_scope_(current_scope, obj);
 }
 
-void vpip_add_item_to_current_scope(automatic_hooks_s*item)
+struct __vpiScope* vpip_peek_context_scope(void)
 {
-      add_item_to_scope_(current_scope, item);
+      struct __vpiScope*scope = current_scope;
+
+        /* A context is allocated for each automatic task or function.
+           Storage for nested scopes (named blocks) is allocated in
+           the parent context. */
+      while (scope->scope && scope->scope->is_automatic)
+            scope = scope->scope;
+
+      return scope;
 }
+
+unsigned vpip_add_item_to_context(automatic_hooks_s*item,
+                                  struct __vpiScope*scope)
+{
+      assert(scope);
+      assert(scope->is_automatic);
+
+      unsigned idx = scope->nitem++;
+
+      if (scope->item == 0)
+	    scope->item = (automatic_hooks_s**)
+		  malloc(sizeof(automatic_hooks_s*));
+      else
+	    scope->item = (automatic_hooks_s**)
+		  realloc(scope->item, sizeof(automatic_hooks_s*)*scope->nitem);
+
+      scope->item[idx] = item;
+
+        /* Offset the context index by 2 to leave space for the list links. */
+      return 2 + idx;
+}
+
+

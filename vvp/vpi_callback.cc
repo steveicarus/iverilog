@@ -569,7 +569,7 @@ void vvp_vpi_callback_wordable::attach_as_word(vvp_array_t arr, unsigned long ad
       array_word_ = addr;
 }
 
-void vvp_fun_signal::get_value(struct t_vpi_value*vp)
+void vvp_fun_signal4::get_value(struct t_vpi_value*vp)
 {
       switch (vp->format) {
 	  case vpiScalarVal:
