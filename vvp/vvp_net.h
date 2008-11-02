@@ -468,6 +468,26 @@ extern bool vector4_to_value(const vvp_vector4_t&a, vvp_time64_t&val);
 extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
 
 /*
+ * The __vpiArray handle uses instances of this to keep an array of
+ * real valued variables.
+ */
+class vvp_realarray_t {
+
+    public:
+      vvp_realarray_t(unsigned words);
+      ~vvp_realarray_t();
+
+      unsigned words() const { return words_; }
+
+      double get_word(unsigned idx) const;
+      void set_word(unsigned idx, double val);
+
+    private:
+      unsigned words_;
+      double*array_;
+};
+
+/*
  * vvp_vector4array_t
  */
 class vvp_vector4array_t {

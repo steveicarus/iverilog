@@ -28,11 +28,20 @@
 #endif
 # include  <assert.h>
 
+struct __vpiRealVar* vpip_realvar_from_handle(vpiHandle obj)
+{
+      assert(obj);
+      if (obj->vpi_type->type_code == vpiRealVar)
+	    return (struct __vpiRealVar*)obj;
+      else
+	    return 0;
+}
+
 static int real_var_get(int code, vpiHandle ref)
 {
       assert(ref->vpi_type->type_code == vpiRealVar);
 
-      struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+      struct __vpiRealVar*rfp = vpip_realvar_from_handle(ref);
 
       switch (code) {
 	case vpiArray:

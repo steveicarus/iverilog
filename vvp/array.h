@@ -39,12 +39,13 @@ extern void array_attach_word(vvp_array_t array, unsigned long addr,
 extern void array_alias_word(vvp_array_t array, unsigned long addr,
                              vpiHandle word);
 
-extern void array_set_word(vvp_array_t arr,
-			    unsigned idx,
-			    unsigned off,
-			    vvp_vector4_t val);
+extern void array_set_word(vvp_array_t arr, unsigned idx,
+			    unsigned off, vvp_vector4_t val);
+extern void array_set_word(vvp_array_t arr, unsigned idx,
+			   double val);
 
 extern vvp_vector4_t array_get_word(vvp_array_t array, unsigned address);
+extern double array_get_word_r(vvp_array_t array, unsigned address);
 
 /* VPI hooks */
 

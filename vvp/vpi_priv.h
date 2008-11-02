@@ -369,6 +369,7 @@ struct __vpiRealVar {
 
 extern struct __vpiScope* vpip_scope(__vpiRealVar*sig);
 extern vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net);
+extern struct __vpiRealVar* vpip_realvar_from_handle(vpiHandle obj);
 
 /*
  * When a loaded VPI module announces a system task/function, one
