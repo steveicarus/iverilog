@@ -553,7 +553,22 @@ extern double      ivl_const_real(ivl_net_const_t net);
 
 /* DISCIPLINES
  *
- * Disciplines are a Verilog-AMS construct.
+ * Disciplines are Verilog-AMS construct. A discipline is a collection
+ * of attributes that can be attached to a signal.
+ *
+ * FUNCTION SUMMARY
+ *
+ * ivl_discipline_name
+ *    This is the name of the discipline in the Verilog-AMS source.
+ *
+ * ivl_discipline_domain
+ *    This is the domain: continuous or discrete.
+ *
+ * SEMANTIC NOTES
+ *
+ * The discipline domain will not be IVL_DIS_NONE. The "none" domain
+ * is a place-holder internally for incomplete parsing, and is also
+ * available for code generaters to use.
  */
 extern const char*ivl_discipline_name(ivl_discipline_t net);
 extern ivl_dis_domain_t ivl_discipline_domain(ivl_discipline_t net);
@@ -1600,6 +1615,8 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  *    function returns >0, the number of dimensions of the array.
  *
  * ivl_signal_discipline
+ *    If the signal has been declared with a domain (Verilog-AMS) then
+ *    this function wil return a non-nil ivl_discipline_t.
  *
  * ivl_signal_msb
  * ivl_signal_lsb
