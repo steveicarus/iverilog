@@ -384,20 +384,19 @@ Module::port_t* pform_module_port_reference(perm_string name,
       PEIdent*tmp = new PEIdent(name);
       FILE_NAME(tmp, file, lineno);
       ptmp->name = name;
-      ptmp->expr = svector<PEIdent*>(1);
-      ptmp->expr[0] = tmp;
+      ptmp->expr.push_back(tmp);
 
       return ptmp;
 }
 
-void pform_module_set_ports(svector<Module::port_t*>*ports)
+void pform_module_set_ports(vector<Module::port_t*>*ports)
 {
       assert(pform_cur_module);
 
 	/* The parser parses ``module foo()'' as having one
 	   unconnected port, but it is really a module with no
 	   ports. Fix it up here. */
-      if (ports && (ports->count() == 1) && ((*ports)[0] == 0)) {
+      if (ports && (ports->size() == 1) && ((*ports)[0] == 0)) {
 	    delete ports;
 	    ports = 0;
       }

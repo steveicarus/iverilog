@@ -829,7 +829,7 @@ class NetScope : public Attrib {
 
 	/* Module instance arrays are collected here for access during
 	   the multiple elaboration passes. */
-      typedef svector<NetScope*> scope_vec_t;
+      typedef vector<NetScope*> scope_vec_t;
       map<perm_string, scope_vec_t>instance_arrays;
 
 	/* Loop generate uses this as scratch space during

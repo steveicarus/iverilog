@@ -938,7 +938,7 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
       return tmp;
 }
 
-static bool need_bufz_for_input_port(const svector<NetNet*>&prts)
+static bool need_bufz_for_input_port(const vector<NetNet*>&prts)
 {
       if (prts[0]->port_type() != NetNet::PINPUT)
 	    return false;
@@ -1051,7 +1051,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	// later.
 
       NetScope::scope_vec_t&instance = scope->instance_arrays[get_name()];
-      for (unsigned inst = 0 ;  inst < instance.count() ;  inst += 1) {
+      for (unsigned inst = 0 ;  inst < instance.size() ;  inst += 1) {
 	    rmod->elaborate(des, instance[inst]);
       }
 
@@ -1079,8 +1079,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // input. If so, consider printing a port binding
 		    // warning.
 		  if (warn_portbinding) {
-			svector<PEIdent*> mport = rmod->get_port(idx);
-			if (mport.count() == 0)
+			vector<PEIdent*> mport = rmod->get_port(idx);
+			if (mport.size() == 0)
 			      continue;
 
 			perm_string pname = peek_tail_name(mport[0]->path());
@@ -1105,26 +1105,26 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // Inside the module, the port is zero or more signals
 	      // that were already elaborated. List all those signals
 	      // and the NetNet equivalents, for all the instances.
-	    svector<PEIdent*> mport = rmod->get_port(idx);
-	    svector<NetNet*>prts (mport.count() * instance.count());
+	    vector<PEIdent*> mport = rmod->get_port(idx);
+	    vector<NetNet*>  prts (mport.size() * instance.size());
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: " << get_name()
-		       << ": Port " << idx << " has " << prts.count()
+		       << ": Port " << idx << " has " << prts.size()
 		       << " sub-ports." << endl;
 	    }
 
 	      // Count the internal vector bits of the port.
 	    unsigned prts_vector_width = 0;
 
-	    for (unsigned inst = 0 ;  inst < instance.count() ;  inst += 1) {
+	    for (unsigned inst = 0 ;  inst < instance.size() ;  inst += 1) {
 		    // Scan the instances from MSB to LSB. The port
 		    // will be assembled in that order as well.
-		  NetScope*inst_scope = instance[instance.count()-inst-1];
+		  NetScope*inst_scope = instance[instance.size()-inst-1];
 
 		    // Scan the module sub-ports for this instance...
-		  for (unsigned ldx = 0 ;  ldx < mport.count() ;  ldx += 1) {
-			unsigned lbase = inst * mport.count();
+		  for (unsigned ldx = 0 ;  ldx < mport.size() ;  ldx += 1) {
+			unsigned lbase = inst * mport.size();
 			PEIdent*pport = mport[ldx];
 			assert(pport);
 			prts[lbase + ldx]
@@ -1147,10 +1147,10 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // We know by design that each instance has the same
 	      // width port. Therefore, the prts_pin_count must be an
 	      // even multiple of the instance count.
-	    assert(prts_vector_width % instance.count() == 0);
+	    assert(prts_vector_width % instance.size() == 0);
 
 	    unsigned desired_vector_width = prts_vector_width;
-	    if (instance.count() != 1)
+	    if (instance.size() != 1)
 		  desired_vector_width = 0;
 
 	      // Elaborate the expression that connects to the
@@ -1158,7 +1158,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // that connects to the port.
 
 	    NetNet*sig;
-	    if ((prts.count() == 0)
+	    if ((prts.size() == 0)
 		|| (prts[0]->port_type() == NetNet::PINPUT)) {
 
 		    /* Input to module. elaborate the expression to
@@ -1263,7 +1263,7 @@ v		       NOTE that this also handles the case that the
 	    assert(sig);
 
 #ifndef NDEBUG
-	    if ((prts.count() >= 1)
+	    if ((prts.size() >= 1)
 		&& (prts[0]->port_type() != NetNet::PINPUT)) {
 		  assert(sig->type() != NetNet::REG);
 	    }
@@ -1271,13 +1271,13 @@ v		       NOTE that this also handles the case that the
 
 	      /* If we are working with an instance array, then the
 		 signal width must match the port width exactly. */
-	    if ((instance.count() != 1)
+	    if ((instance.size() != 1)
 		&& (sig->vector_width() != prts_vector_width)
-		&& (sig->vector_width() != prts_vector_width/instance.count())) {
+		&& (sig->vector_width() != prts_vector_width/instance.size())) {
 		  cerr << pins[idx]->get_fileline() << ": error: "
 		       << "Port expression width " << sig->vector_width()
 		       << " does not match expected width "<< prts_vector_width
-		       << " or " << (prts_vector_width/instance.count())
+		       << " or " << (prts_vector_width/instance.size())
 		       << "." << endl;
 		  des->errors += 1;
 		  continue;
@@ -1292,7 +1292,7 @@ v		       NOTE that this also handles the case that the
 	      // Check that the parts have matching pin counts. If
 	      // not, they are different widths. Note that idx is 0
 	      // based, but users count parameter positions from 1.
-	    if ((instance.count() == 1)
+	    if ((instance.size() == 1)
 		&& (prts_vector_width != sig->vector_width())) {
 		  const char *tmp3 = rmod->ports[idx]->name.str();
 		  bool as_signed = false;
@@ -1363,7 +1363,7 @@ v		       NOTE that this also handles the case that the
 	      // Connect this many of the port pins. If the expression
 	      // is too small, then reduce the number of connects.
 	    unsigned ccount = prts_vector_width;
-	    if (instance.count() == 1 && sig->vector_width() < ccount)
+	    if (instance.size() == 1 && sig->vector_width() < ccount)
 		  ccount = sig->vector_width();
 
 	      // The spin_modulus is the width of the signal (not the
@@ -1371,7 +1371,7 @@ v		       NOTE that this also handles the case that the
 	      // signals wide enough for a single instance to be
 	      // connected to all the instances.
 	    unsigned spin_modulus = prts_vector_width;
-	    if (instance.count() != 1)
+	    if (instance.size() != 1)
 		  spin_modulus = sig->vector_width();
 
 	      // Now scan the concatenation that makes up the port,
@@ -1383,7 +1383,7 @@ v		       NOTE that this also handles the case that the
 	    NetConcat*ctmp;
 	    unsigned spin = 0;
 
-	    if (prts.count() == 1) {
+	    if (prts.size() == 1) {
 
 		    // The simplest case, there are no
 		    // parts/concatenations on the inside of the
@@ -1391,33 +1391,32 @@ v		       NOTE that this also handles the case that the
 		    // connected directly.
 		  connect(prts[0]->pin(0), sig->pin(0));
 
-	    } else if (sig->vector_width()==prts_vector_width/instance.count()
-		       && prts.count()/instance.count() == 1) {
+	    } else if (sig->vector_width()==prts_vector_width/instance.size()
+		       && prts.size()/instance.size() == 1) {
 
 		  if (debug_elaborate){
 			cerr << get_fileline() << ": debug: " << get_name()
 			     << ": Replicating " << prts_vector_width
 			     << " bits across all "
-			     << prts_vector_width/instance.count()
+			     << prts_vector_width/instance.size()
 			     << " sub-ports." << endl;
 		  }
 
 		    // The signal width is exactly the width of a
 		    // single instance of the port. In this case,
 		    // connect the sig to all the ports identically.
-		  for (unsigned ldx = 0 ;  ldx < prts.count() ;  ldx += 1)
+		  for (unsigned ldx = 0 ;  ldx < prts.size() ;  ldx += 1)
 			connect(prts[ldx]->pin(0), sig->pin(0));
 
 	    } else switch (prts[0]->port_type()) {
 		case NetNet::POUTPUT:
 		  ctmp = new NetConcat(scope, scope->local_symbol(),
-				       prts_vector_width,
-				       prts.count());
+				       prts_vector_width, prts.size());
 		  des->add_node(ctmp);
 		  connect(ctmp->pin(0), sig->pin(0));
-		  for (unsigned ldx = 0 ;  ldx < prts.count() ;  ldx += 1) {
+		  for (unsigned ldx = 0 ;  ldx < prts.size() ;  ldx += 1) {
 			connect(ctmp->pin(ldx+1),
-				prts[prts.count()-ldx-1]->pin(0));
+				prts[prts.size()-ldx-1]->pin(0));
 		  }
 		  break;
 
@@ -1426,13 +1425,13 @@ v		       NOTE that this also handles the case that the
 			cerr << get_fileline() << ": debug: " << get_name()
 			     << ": Dividing " << prts_vector_width
 			     << " bits across all "
-			     << prts_vector_width/instance.count()
+			     << prts_vector_width/instance.size()
 			     << " input sub-ports of port "
 			     << idx << "." << endl;
 		  }
 
-		  for (unsigned ldx = 0 ;  ldx < prts.count() ;  ldx += 1) {
-			NetNet*sp = prts[prts.count()-ldx-1];
+		  for (unsigned ldx = 0 ;  ldx < prts.size() ;  ldx += 1) {
+			NetNet*sp = prts[prts.size()-ldx-1];
 			NetPartSelect*ptmp = new NetPartSelect(sig, spin,
 							   sp->vector_width(),
 							   NetPartSelect::VP);

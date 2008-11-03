@@ -43,7 +43,7 @@ void Module::add_gate(PGate*gate)
 
 unsigned Module::port_count() const
 {
-      return ports.count();
+      return ports.size();
 }
 
 /*
@@ -51,10 +51,10 @@ unsigned Module::port_count() const
  * module. If the port is internally unconnected, return an empty
  * array.
  */
-const svector<PEIdent*>& Module::get_port(unsigned idx) const
+const vector<PEIdent*>& Module::get_port(unsigned idx) const
 {
-      assert(idx < ports.count());
-      static svector<PEIdent*> zero;
+      assert(idx < ports.size());
+      static const vector<PEIdent*> zero;
 
       if (ports[idx])
 	    return ports[idx]->expr;
@@ -65,7 +65,7 @@ const svector<PEIdent*>& Module::get_port(unsigned idx) const
 unsigned Module::find_port(const char*name) const
 {
       assert(name != 0);
-      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < ports.size() ;  idx += 1) {
 	    if (ports[idx] == 0) {
 		    /* It is possible to have undeclared ports. These
 		       are ports that are skipped in the declaration,
@@ -79,7 +79,7 @@ unsigned Module::find_port(const char*name) const
 		  return idx;
       }
 
-      return ports.count();
+      return ports.size();
 }
 
 

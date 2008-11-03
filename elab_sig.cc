@@ -150,7 +150,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 
 	// Scan all the ports of the module, and make sure that each
 	// is connected to wires that have port declarations.
-      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < ports.size() ;  idx += 1) {
 	    Module::port_t*pp = ports[idx];
 	    if (pp == 0)
 		  continue;
@@ -159,7 +159,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 	      // expression are all identifiers that should reference
 	      // wires within the scope.
 	    map<perm_string,PWire*>::const_iterator wt;
-	    for (unsigned cc = 0 ;  cc < pp->expr.count() ;  cc += 1) {
+	    for (unsigned cc = 0 ;  cc < pp->expr.size() ;  cc += 1) {
 		  pform_name_t port_path (pp->expr[cc]->path());
 		    // A concatenated wire of a port really should not
 		    // have any hierarchy.
@@ -365,7 +365,7 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 
       NetScope::scope_vec_t instance = scope->instance_arrays[get_name()];
 
-      for (unsigned idx = 0 ;  idx < instance.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < instance.size() ;  idx += 1) {
 	      // I know a priori that the elaborate_scope created the scope
 	      // already, so just look it up as a child of the current scope.
 	    NetScope*my_scope = instance[idx];

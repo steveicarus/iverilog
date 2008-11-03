@@ -143,7 +143,7 @@ extern PWire* pform_get_wire_in_scope(perm_string name);
  */
 extern void pform_startmodule(const char*, const char*file, unsigned lineno,
 			      svector<named_pexpr_t*>*attr);
-extern void pform_module_set_ports(svector<Module::port_t*>*);
+extern void pform_module_set_ports(vector<Module::port_t*>*);
 
 /* This function is used to support the port definition in a
    port_definition_list. In this case, we have everything needed to

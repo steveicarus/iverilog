@@ -22,8 +22,8 @@
 
 # include  <list>
 # include  <map>
+# include  <vector>
 # include  <utility>
-# include  "svector.h"
 # include  "StringHeap.h"
 # include  "HName.h"
 # include  "named.h"
@@ -59,7 +59,7 @@ class Module : public PScope, public LineInfo {
     public:
       struct port_t {
 	    perm_string name;
-	    svector<PEIdent*> expr;
+	    vector<PEIdent*> expr;
       };
 
     public:
@@ -98,7 +98,7 @@ class Module : public PScope, public LineInfo {
 
 	/* This is an array of port descriptors, which is in turn a
 	   named array of PEident pointers. */
-      svector<port_t*> ports;
+      vector<port_t*> ports;
 
       map<perm_string,PExpr*> attributes;
 
@@ -126,7 +126,7 @@ class Module : public PScope, public LineInfo {
       void add_gate(PGate*gate);
 
       unsigned port_count() const;
-      const svector<PEIdent*>& get_port(unsigned idx) const;
+      const vector<PEIdent*>& get_port(unsigned idx) const;
       unsigned find_port(const char*name) const;
 
       PGate* get_gate(perm_string name);

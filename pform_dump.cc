@@ -1143,7 +1143,7 @@ void Module::dump(ostream&out) const
 
       out << "module " << mod_name() << ";" << endl;
 
-      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < ports.size() ;  idx += 1) {
 	    port_t*cur = ports[idx];
 
 	    if (cur == 0) {
@@ -1152,7 +1152,7 @@ void Module::dump(ostream&out) const
 	    }
 
 	    out << "    ." << cur->name << "(" << *cur->expr[0];
-	    for (unsigned wdx = 1 ;  wdx < cur->expr.count() ;  wdx += 1) {
+	    for (unsigned wdx = 1 ;  wdx < cur->expr.size() ;  wdx += 1) {
 		  out << ", " << *cur->expr[wdx];
 	    }
 
