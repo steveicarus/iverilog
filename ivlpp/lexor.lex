@@ -78,6 +78,9 @@ struct include_stack_t
     YY_BUFFER_STATE yybs;
 
     struct include_stack_t* next;
+
+    /* A single line comment can be associated with this include. */
+    char* comment;
 };
 
 static void emit_pathline(struct include_stack_t* isp);
@@ -295,9 +298,10 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
   /* Catch single-line comments that share the line with an include
    * directive. And while I'm at it, I might as well preserve the
-   * comment in the output stream.
+   * comment in the output stream. This will be printed after the
+   * file has been included.
    */
-<PPINCLUDE>"//"[^\r\n]* { ECHO; }
+<PPINCLUDE>"//"[^\r\n]* { standby->comment = strdup(yytext); }
 
  /* These finish the include directive (EOF or EOL) so I revert the
   * lexor state and execute the inclusion.
@@ -1418,6 +1422,7 @@ static void include_filename()
     standby->path = strdup(yytext+1);
     standby->path[strlen(standby->path)-1] = 0;
     standby->lineno = 0;
+    standby->comment = NULL;
 }
 
 static void do_include()
@@ -1529,6 +1534,17 @@ static int load_next_input()
 
     /* Delete the current input buffers, and free the cell. */
     yy_delete_buffer(YY_CURRENT_BUFFER);
+
+    /* If there was a comment for this include print it before we
+     * return to the previous input stream. This technically belongs
+     * to the previous stream, but it should not create any problems
+     * since it is only a comment.
+     */
+    if (isp->comment) {
+        fprintf(yyout, "%s\n", isp->comment);
+        free(isp->comment);
+        isp->comment = NULL;
+    }
 
     if (isp->file)
     {
@@ -1726,6 +1742,7 @@ void reset_lexor(FILE* out, char* paths[])
     isp->ebs = 0;
     isp->lineno = 0;
     isp->stringify_flag = 0;
+    isp->comment = NULL;
 
     if (isp->file == 0)
     {
@@ -1756,6 +1773,7 @@ void reset_lexor(FILE* out, char* paths[])
         isp->next = 0;
         isp->lineno = 0;
         isp->stringify_flag = 0;
+        isp->comment = NULL;
 
         if (tail)
             tail->next = isp;
