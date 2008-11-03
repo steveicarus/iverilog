@@ -42,6 +42,14 @@ bool type_is_vectorable(ivl_variable_type_t type)
       }
 }
 
+static nature_t* find_access_function(const pform_name_t&path)
+{
+      if (path.size() != 1)
+	    return 0;
+      else
+	    return access_function_nature[peek_tail_name(path)];
+}
+
 NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 			     ivl_variable_type_t data_type_lv, int expr_wid_lv,
 			     PExpr*expr)
@@ -1013,6 +1021,15 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 	// self-determined.
       NetFuncDef*def = des->find_function(scope, path_);
       if (def == 0) {
+	      // If this is an access function, then the width and
+	      // type are known by definition.
+	    if (find_access_function(path_)) {
+		  expr_type_ = IVL_VT_REAL;
+		  expr_width_ = 1;
+		  expr_type__ = expr_type_;
+		  return expr_width_;
+	    }
+
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: test_width "
 		       << "cannot find definition of " << path_
@@ -1211,19 +1228,8 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 }
 
 NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
-						int expr_wid) const
+						nature_t*nature) const
 {
-	// Hierarchical names cannot be access functions.
-      if (path_.size() != 1)
-	    return 0;
-
-      perm_string access_name = peek_tail_name(path_);
-      nature_t*nature = access_function_nature[access_name];
-
-	// If the name doesn't match any access functions, then give up.
-      if (nature == 0)
-	    return 0;
-
 	// An access function must have 1 or 2 arguments.
       ivl_assert(*this, parms_.size()==2 || parms_.size()==1);
 
@@ -1268,10 +1274,11 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       NetFuncDef*def = des->find_function(scope, path_);
       if (def == 0) {
 	      // Not a user defined function. Maybe it is an access
-	      // function for a nature? If so then elaborate it that way.
-	    NetExpr*tmp = elaborate_access_func_(des, scope, expr_wid);
-	    if (tmp != 0)
-		  return tmp;
+	      // function for a nature? If so then elaborate it that
+	      // way.
+	    nature_t*access_nature = find_access_function(path_);
+	    if (access_nature)
+		  return elaborate_access_func_(des, scope, access_nature);
 
 	    cerr << get_fileline() << ": error: No function " << path_ <<
 		  " in this context (" << scope_path(scope) << ")." << endl;
