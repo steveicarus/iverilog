@@ -1293,7 +1293,7 @@ void PUdp::dump(ostream&out) const
       out << "endprimitive" << endl;
 }
 
-void pform_dump(std::ostream&out, const nature_t*nat)
+void pform_dump(std::ostream&out, const ivl_nature_s*nat)
 {
       out << "nature " << nat->name() << endl;
       out << "    access " << nat->access() << ";" << endl;
@@ -1304,9 +1304,9 @@ void pform_dump(std::ostream&out, const ivl_discipline_s*dis)
 {
       out << "discipline " << dis->name() << endl;
       out << "    domain " << dis->domain() << ";" << endl;
-      if (const nature_t*tmp = dis->potential())
+      if (const ivl_nature_s*tmp = dis->potential())
 	    out << "    potential " << tmp->name() << ";" << endl;
-      if (const nature_t*tmp = dis->flow())
+      if (const ivl_nature_s*tmp = dis->flow())
 	    out << "    flow " << tmp->name() << ";" << endl;
       out << "enddiscipline" << endl;
 }

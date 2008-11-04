@@ -87,9 +87,19 @@ extern "C" ivl_dis_domain_t ivl_discipline_domain(ivl_discipline_t net)
       return net->domain();
 }
 
+extern "C" ivl_nature_t ivl_discipline_flow(ivl_discipline_t net)
+{
+      return net->flow();
+}
+
 extern "C" const char* ivl_discipline_name(ivl_discipline_t net)
 {
       return net->name();
+}
+
+extern "C" ivl_nature_t ivl_discipline_potential(ivl_discipline_t net)
+{
+      return net->potential();
 }
 
 extern "C" ivl_expr_type_t ivl_expr_type(ivl_expr_t net)

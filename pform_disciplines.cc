@@ -23,9 +23,9 @@
 # include  "parse_misc.h"
 # include  "discipline.h"
 
-map<perm_string,nature_t*> natures;
+map<perm_string,ivl_nature_t> natures;
 map<perm_string,ivl_discipline_t> disciplines;
-map<perm_string,nature_t*> access_function_nature;
+map<perm_string,ivl_nature_t> access_function_nature;
 
 static perm_string nature_name = perm_string::perm_string();
 static perm_string nature_access = perm_string::perm_string();
@@ -62,14 +62,14 @@ void pform_end_nature(const struct vlltype&loc)
 	    nature_access = nature_name;
       }
 
-      nature_t*tmp = new nature_t(nature_name, nature_access);
+      ivl_nature_s*tmp = new ivl_nature_s(nature_name, nature_access);
       FILE_NAME(tmp, loc);
 
       natures[nature_name] = tmp;
 
 	// Make sure the access function is not used by multiple
 	// different natures.
-      if (nature_t*dup_access_nat = access_function_nature[nature_access]) {
+      if (ivl_nature_t dup_access_nat = access_function_nature[nature_access]) {
 	    cerr << tmp->get_fileline() << ": error: "
 		 << "Access function name " << nature_access
 		 << " is already used by nature " << dup_access_nat->name()
@@ -89,8 +89,8 @@ void pform_end_nature(const struct vlltype&loc)
 
 static perm_string discipline_name;
 static ivl_dis_domain_t discipline_domain = IVL_DIS_NONE;
-static nature_t* discipline_potential = 0;
-static nature_t* discipline_flow = 0;
+static ivl_nature_t discipline_potential = 0;
+static ivl_nature_t discipline_flow = 0;
 
 void pform_start_discipline(const char*name)
 {

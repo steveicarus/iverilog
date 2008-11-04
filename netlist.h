@@ -68,8 +68,6 @@ class NetTaskDef;
 class NetEvTrig;
 class NetEvWait;
 
-class nature_t;
-
 struct target;
 struct functor_t;
 
@@ -2982,7 +2980,7 @@ class NetEUFunc  : public NetExpr {
 class NetEAccess : public NetExpr {
 
     public:
-      explicit NetEAccess(NetBranch*br, nature_t*nat);
+      explicit NetEAccess(NetBranch*br, ivl_nature_t nat);
       ~NetEAccess();
 
       virtual ivl_variable_type_t expr_type() const;
@@ -2994,7 +2992,7 @@ class NetEAccess : public NetExpr {
 
     private:
       NetBranch*branch_;
-      nature_t*nature_;
+      ivl_nature_t nature_;
 };
 
 /*

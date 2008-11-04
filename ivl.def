@@ -16,7 +16,9 @@ ivl_const_type
 ivl_const_width
 
 ivl_discipline_domain
+ivl_discipline_flow
 ivl_discipline_name
+ivl_discipline_potential
 
 ivl_event_any
 ivl_event_basename

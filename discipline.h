@@ -33,10 +33,10 @@
 
 extern std::ostream& operator << (std::ostream&, ivl_dis_domain_t);
 
-class nature_t : public LineInfo {
+class ivl_nature_s : public LineInfo {
     public:
-      explicit nature_t(perm_string name, perm_string access);
-      ~nature_t();
+      explicit ivl_nature_s(perm_string name, perm_string access);
+      ~ivl_nature_s();
 
       perm_string name() const   { return name_; }
 	// Identifier for the access function for this nature
@@ -50,28 +50,28 @@ class nature_t : public LineInfo {
 class ivl_discipline_s : public LineInfo {
     public:
       explicit ivl_discipline_s (perm_string name, ivl_dis_domain_t dom,
-				 nature_t*pot, nature_t*flow);
+				 ivl_nature_t pot, ivl_nature_t flow);
       ~ivl_discipline_s();
 
       perm_string name() const         { return name_; }
       ivl_dis_domain_t domain() const  { return domain_; }
-      const nature_t*potential() const { return potential_; }
-      const nature_t*flow() const      { return flow_; }
+      const ivl_nature_t potential() const { return potential_; }
+      const ivl_nature_t flow() const      { return flow_; }
 
     private:
       perm_string name_;
       ivl_dis_domain_t domain_;
-      nature_t*potential_;
-      nature_t*flow_;
+      ivl_nature_t potential_;
+      ivl_nature_t flow_;
 
     private: // not implemented
       ivl_discipline_s(const ivl_discipline_s&);
       ivl_discipline_s& operator = (const ivl_discipline_s&);
 };
 
-extern map<perm_string,nature_t*> natures;
+extern map<perm_string,ivl_nature_t> natures;
 extern map<perm_string,ivl_discipline_t> disciplines;
   // Map access function name to the nature that it accesses.
-extern map<perm_string,nature_t*> access_function_nature;
+extern map<perm_string,ivl_nature_t> access_function_nature;
 
 #endif

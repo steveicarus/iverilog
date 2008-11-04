@@ -42,7 +42,7 @@ bool type_is_vectorable(ivl_variable_type_t type)
       }
 }
 
-static nature_t* find_access_function(const pform_name_t&path)
+static ivl_nature_t find_access_function(const pform_name_t&path)
 {
       if (path.size() != 1)
 	    return 0;
@@ -1228,7 +1228,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 }
 
 NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
-						nature_t*nature) const
+						ivl_nature_t nature) const
 {
 	// An access function must have 1 or 2 arguments.
       ivl_assert(*this, parms_.size()==2 || parms_.size()==1);
@@ -1276,7 +1276,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	      // Not a user defined function. Maybe it is an access
 	      // function for a nature? If so then elaborate it that
 	      // way.
-	    nature_t*access_nature = find_access_function(path_);
+	    ivl_nature_t access_nature = find_access_function(path_);
 	    if (access_nature)
 		  return elaborate_access_func_(des, scope, access_nature);
 

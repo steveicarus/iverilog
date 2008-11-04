@@ -700,7 +700,7 @@ int main(int argc, char*argv[])
       if (pf_path) {
 	    ofstream out (pf_path);
 	    out << "PFORM DUMP NATURES:" << endl;
-	    for (map<perm_string,nature_t*>::iterator cur = natures.begin()
+	    for (map<perm_string,ivl_nature_t>::iterator cur = natures.begin()
 		       ; cur != natures.end() ; cur ++ ) {
 		  pform_dump(out, (*cur).second);
 	    }

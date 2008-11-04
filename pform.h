@@ -389,7 +389,7 @@ extern void pform_discipline_flow(const struct vlltype&loc, const char*name);
 extern void pform_attach_discipline(const struct vlltype&loc,
 				    ivl_discipline_t discipline, list<perm_string>*names);
 
-extern void pform_dump(ostream&out, const nature_t*);
+extern void pform_dump(ostream&out, const ivl_nature_s*);
 extern void pform_dump(ostream&out, const ivl_discipline_s*);
 
 /* ** pform_analog.cc

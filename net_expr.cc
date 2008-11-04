@@ -600,7 +600,7 @@ ivl_variable_type_t NetESFunc::expr_type() const
       return type_;
 }
 
-NetEAccess::NetEAccess(NetBranch*br, nature_t*nat)
+NetEAccess::NetEAccess(NetBranch*br, ivl_nature_t nat)
 : branch_(br), nature_(nat)
 {
 }

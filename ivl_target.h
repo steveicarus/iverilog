@@ -572,6 +572,8 @@ extern double      ivl_const_real(ivl_net_const_t net);
  */
 extern const char*ivl_discipline_name(ivl_discipline_t net);
 extern ivl_dis_domain_t ivl_discipline_domain(ivl_discipline_t net);
+extern ivl_nature_t ivl_discipline_potential(ivl_discipline_t net);
+extern ivl_nature_t ivl_discipline_flow(ivl_discipline_t net);
 
 /* EVENTS
  *
