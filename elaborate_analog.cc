@@ -31,7 +31,15 @@ NetProc* AContrib::elaborate(Design*des, NetScope*scope) const
       NetExpr*lval = elab_and_eval(des, scope, lval_, -1);
       NetExpr*rval = elab_and_eval(des, scope, rval_, -1);
 
-      NetContribution*st = new NetContribution(lval, rval);
+      NetEAccess*lacc = dynamic_cast<NetEAccess*> (lval);
+      if (lacc == 0) {
+	    cerr << get_fileline() << ": error: The l-value of a contribution"
+		 << " statement must be a branch probe access function." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetContribution*st = new NetContribution(lacc, rval);
       st->set_line(*this);
       return st;
 }

@@ -61,6 +61,7 @@ class NetRelease;
 class NetScope;
 class NetEvProbe;
 class NetExpr;
+class NetEAccess;
 class NetESignal;
 class NetFuncDef;
 class NetRamDq;
@@ -2435,13 +2436,13 @@ class NetCondit  : public NetProc {
 class NetContribution : public NetProc {
 
     public:
-      explicit NetContribution(NetExpr*lval, NetExpr*rval);
+      explicit NetContribution(NetEAccess*lval, NetExpr*rval);
       ~NetContribution();
 
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
-      NetExpr*lval_;
+      NetEAccess*lval_;
       NetExpr*rval_;
 };
 

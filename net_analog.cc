@@ -27,7 +27,7 @@
 # include  "netmisc.h"
 # include  "ivl_assert.h"
 
-NetContribution::NetContribution(NetExpr*l, NetExpr*r)
+NetContribution::NetContribution(NetEAccess*l, NetExpr*r)
 : lval_(l), rval_(r)
 {
 }
