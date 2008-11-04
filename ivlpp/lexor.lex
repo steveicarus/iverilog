@@ -833,6 +833,21 @@ void define_macro(const char* name, const char* value, int keyword, int argc)
     }
 }
 
+static void free_macro(struct define_t* def)
+{
+    if (def == 0) return;
+    free_macro(def->left);
+    free_macro(def->right);
+    free(def->name);
+    free(def->value);
+    free(def);
+}
+
+void free_macros()
+{
+    free_macro(def_table);
+}
+
 /*
  * The do_define function accumulates the defined value in these
  * variables. When the define is over, the def_finish() function
@@ -1462,6 +1477,8 @@ static void do_include()
 
             if ((standby->file = fopen(path, "r")))
             {
+                /* Free the original path before we overwrite it. */
+                free(standby->path);
                 standby->path = strdup(path);
                 goto code_that_switches_buffers;
             }
@@ -1472,6 +1489,9 @@ static void do_include()
     exit(1);
 
                                     code_that_switches_buffers:
+
+    /* Clear the current files path from the search list. */
+    include_dir[0] = 0;
 
     if(depend_file)
         fprintf(depend_file, "%s\n", standby->path);
