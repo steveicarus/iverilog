@@ -22,6 +22,7 @@
 # include  <stdio.h>
 
 extern void reset_lexor(FILE*out, char*paths[]);
+extern void destroy_lexor();
 extern void load_precompiled_defines(FILE*src);
 extern void define_macro(const char*name, const char*value, int keyword,
                          int argc);

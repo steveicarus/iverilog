@@ -1803,3 +1803,17 @@ void reset_lexor(FILE* out, char* paths[])
         tail = isp;
     }
 }
+
+/*
+ * Modern version of flex (>=2.5.9) can clean up the scanner data.
+ */
+void destroy_lexor()
+{
+# ifdef FLEX_SCANNER
+#   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5
+#     if defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
+    yylex_destroy();
+#     endif
+#   endif
+# endif
+}

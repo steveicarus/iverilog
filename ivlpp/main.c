@@ -370,6 +370,7 @@ int main(int argc, char*argv[])
 	   start scanning. */
       reset_lexor(out, source_list);
       if (yylex()) return -1;
+      destroy_lexor();
 
       if(depend_file) {
 	      fclose(depend_file);
