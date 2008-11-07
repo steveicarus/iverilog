@@ -35,3 +35,13 @@ NetContribution::NetContribution(NetEAccess*l, NetExpr*r)
 NetContribution::~NetContribution()
 {
 }
+
+const NetEAccess* NetContribution::lval() const
+{
+      return lval_;
+}
+
+const NetExpr* NetContribution::rval() const
+{
+      return rval_;
+}

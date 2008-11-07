@@ -1478,6 +1478,11 @@ extern "C" ivl_process_type_t ivl_process_type(ivl_process_t net)
       return net->type_;
 }
 
+extern "C" int ivl_process_analog(ivl_process_t net)
+{
+      return net->analog_flag != 0;
+}
+
 extern "C" ivl_scope_t ivl_process_scope(ivl_process_t net)
 {
       return net->scope_;
@@ -2112,6 +2117,17 @@ extern "C" ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx)
       return 0;
 }
 
+extern "C" ivl_expr_t ivl_stmt_lexp(ivl_statement_t net)
+{
+      switch (net->type_) {
+	  case IVL_ST_CONTRIB:
+	    return net->u_.contrib_.lval;
+	  default:
+	    assert(0);
+      }
+      return 0;
+}
+
 extern "C" ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx)
 {
       switch (net->type_) {
@@ -2225,6 +2241,8 @@ extern "C" ivl_expr_t ivl_stmt_rval(ivl_statement_t net)
 	  case IVL_ST_CASSIGN:
 	  case IVL_ST_FORCE:
 	    return net->u_.assign_.rval_;
+	  case IVL_ST_CONTRIB:
+	    return net->u_.contrib_.rval;
 	  default:
 	    assert(0);
       }

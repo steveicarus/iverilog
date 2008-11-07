@@ -103,6 +103,7 @@ struct target_t {
 	/* Output a process (called for each process). It is up to the
 	   target to recurse if desired. */
       virtual bool process(const NetProcTop*);
+      virtual bool process(const NetAnalogTop*);
 
 	/* Various kinds of process nodes are dispatched through these. */
       virtual void proc_alloc(const NetAlloc*);
@@ -112,6 +113,7 @@ struct target_t {
       virtual void proc_case(const NetCase*);
       virtual bool proc_cassign(const NetCAssign*);
       virtual bool proc_condit(const NetCondit*);
+      virtual bool proc_contribution(const NetContribution*);
       virtual bool proc_deassign(const NetDeassign*);
       virtual bool proc_delay(const NetPDelay*);
       virtual bool proc_disable(const NetDisable*);

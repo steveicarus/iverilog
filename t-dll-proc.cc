@@ -40,6 +40,7 @@ bool dll_target::process(const NetProcTop*net)
 	    calloc(1, sizeof(struct ivl_process_s));
 
       obj->type_ = net->type();
+      obj->analog_flag = 0;
 
       FILE_NAME(obj, net);
 

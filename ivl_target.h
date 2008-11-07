@@ -361,6 +361,7 @@ typedef enum ivl_statement_type_e {
       IVL_ST_CASEZ   = 7,
       IVL_ST_CASSIGN = 8,
       IVL_ST_CONDIT  = 9,
+      IVL_ST_CONTRIB = 27,
       IVL_ST_DEASSIGN = 10,
       IVL_ST_DELAY   = 11,
       IVL_ST_DELAYX  = 12,
@@ -1718,12 +1719,16 @@ extern ivl_attribute_t ivl_signal_attr_val(ivl_signal_t net, unsigned idx);
  * is translated into a type and a single statement. (The statement
  * may be a compound statement.)
  *
- * The ivl_process_type function gets the type of the process,
- * an "initial" or "always" statement.
+ * ivl_process_type
+ * ivl_process_analog
+ *    The ivl_process_type function returns the type of the process,
+ *    an "initial" or "always" statement. The ivl_process_analog
+ *    returns true if the process is analog.
  *
- * A process is placed in a scope. The statement within the process
- * operates within the scope of the process unless there are calls
- * outside the scope.
+ * ivl_process_scope
+ *    A process is placed in a scope. The statement within the process
+ *    operates within the scope of the process unless there are calls
+ *    outside the scope.
  *
  * The ivl_process_stmt function gets the statement that forms the
  * process. See the statement related functions for how to manipulate
@@ -1733,6 +1738,7 @@ extern ivl_attribute_t ivl_signal_attr_val(ivl_signal_t net, unsigned idx);
  * attr_val methods return those attributes.
  */
 extern ivl_process_type_t ivl_process_type(ivl_process_t net);
+extern int ivl_process_analog(ivl_process_t net);
 
 extern ivl_scope_t ivl_process_scope(ivl_process_t net);
 
@@ -1828,6 +1834,12 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  * that constant value. If the expression is non-constant, the code
  * generator is supposed to know what to do about that, too.
  *
+ * - IVL_ST_CONTRIB
+ * This is an analog contribution statement. The ivl_stmt_lexp
+ * function returns the l-value expression which is guaranteed to be a
+ * branch access expression. The ivl_stmt_rval returns the r-value
+ * expression for the assignment.
+ *
  * - IVL_ST_DELAY, IVL_ST_DELAYX
  * These statement types are delay statements. They are a way to
  * attach a delay to a statement. The ivl_stmt_sub_stmt() function
@@ -1893,6 +1905,8 @@ extern uint64_t ivl_stmt_delay_val(ivl_statement_t net);
   /* IVL_ST_WAIT IVL_ST_TRIGGER */
 extern unsigned    ivl_stmt_nevent(ivl_statement_t net);
 extern ivl_event_t ivl_stmt_events(ivl_statement_t net, unsigned idx);
+  /* IVL_ST_CONTRIB */
+extern ivl_expr_t ivl_stmt_lexp(ivl_statement_t net);
   /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_DEASSIGN
      IVL_ST_FORCE IVL_ST_RELEASE */
 extern ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx);
@@ -1907,7 +1921,8 @@ extern const char* ivl_stmt_name(ivl_statement_t net);
 extern ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx);
   /* IVL_ST_STASK */
 extern unsigned ivl_stmt_parm_count(ivl_statement_t net);
-  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_FORCE */
+  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_CONTRIB
+     IVL_ST_FORCE */
 extern ivl_expr_t ivl_stmt_rval(ivl_statement_t net);
   /* IVL_ST_DELAY, IVL_ST_DELAYX, IVL_ST_FOREVER, IVL_ST_REPEAT
      IVL_ST_WAIT, IVL_ST_WHILE */

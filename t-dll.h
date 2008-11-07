@@ -102,6 +102,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool sign_extend(const NetSignExtend*);
 
       bool process(const NetProcTop*);
+      bool process(const NetAnalogTop*);
       void scope(const NetScope*);
       void signal(const NetNet*);
       bool signal_paths(const NetNet*);
@@ -122,6 +123,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void proc_case(const NetCase*);
       bool proc_cassign(const NetCAssign*);
       bool proc_condit(const NetCondit*);
+      bool proc_contribution(const NetContribution*);
       bool proc_deassign(const NetDeassign*);
       bool proc_delay(const NetPDelay*);
       bool proc_disable(const NetDisable*);
@@ -553,7 +555,8 @@ struct ivl_parameter_s {
  * that generally only matters for VPI calls.
  */
 struct ivl_process_s {
-      ivl_process_type_t type_;
+      ivl_process_type_t type_ : 2;
+      int analog_flag          : 1;
       ivl_scope_t scope_;
       ivl_statement_t stmt_;
       perm_string file;
@@ -706,6 +709,11 @@ struct ivl_statement_s {
 		    /* This is two statements, the true and false. */
 		  struct ivl_statement_s*stmt_;
 	    } condit_;
+
+	    struct { /* IVL_ST_CONTRIB */
+		  ivl_expr_t lval;
+		  ivl_expr_t rval;
+	    } contrib_;
 
 	    struct { /* IVL_ST_DELAY */
 		  uint64_t delay_;

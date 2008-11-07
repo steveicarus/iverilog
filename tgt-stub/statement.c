@@ -287,6 +287,12 @@ void show_statement(ivl_statement_t net, unsigned ind)
 		break;
 	  }
 
+	  case IVL_ST_CONTRIB:
+	    fprintf(out, "%*sCONTRIBUTION ( <+ )\n", ind, "");
+	    show_expression(ivl_stmt_lexp(net), ind+4);
+	    show_expression(ivl_stmt_rval(net), ind+4);
+	    break;
+
 	  case IVL_ST_DEASSIGN:
 	    fprintf(out, "%*sDEASSIGN <lwidth=%u>\n", ind, "",
 		    ivl_stmt_lwidth(net));

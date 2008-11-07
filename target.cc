@@ -240,7 +240,16 @@ bool target_t::sign_extend(const NetSignExtend*net)
 
 bool target_t::process(const NetProcTop*top)
 {
-      return top->statement()->emit_proc(this);
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled process(NetProcTop)." << endl;
+      return false;
+}
+
+bool target_t::process(const NetAnalogTop*top)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled process(NetAnalogTop)." << endl;
+      return false;
 }
 
 void target_t::proc_alloc(const NetAlloc*)
@@ -289,6 +298,14 @@ bool target_t::proc_condit(const NetCondit*condit)
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled conditional:" << endl;
       condit->dump(cerr, 6);
+      return false;
+}
+
+bool target_t::proc_contribution(const NetContribution*net)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled contribution:" << endl;
+      net->dump(cerr, 6);
       return false;
 }
 

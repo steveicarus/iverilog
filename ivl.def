@@ -196,6 +196,7 @@ ivl_signal_width
 ivl_path_delay
 ivl_path_source
 
+ivl_process_analog
 ivl_process_attr_cnt
 ivl_process_attr_val
 ivl_process_file
@@ -221,6 +222,7 @@ ivl_stmt_delay_val
 ivl_stmt_events
 ivl_stmt_file
 ivl_stmt_lineno
+ivl_stmt_lexp
 ivl_stmt_lval
 ivl_stmt_lvals
 ivl_stmt_lwidth

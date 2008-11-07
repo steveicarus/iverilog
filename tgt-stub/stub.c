@@ -999,10 +999,16 @@ static int show_process(ivl_process_t net, void*x)
 
       switch (ivl_process_type(net)) {
 	  case IVL_PR_INITIAL:
-	    fprintf(out, "initial\n");
+	    if (ivl_process_analog(net))
+		  fprintf(out, "analog initial\n");
+	    else
+		  fprintf(out, "initial\n");
 	    break;
 	  case IVL_PR_ALWAYS:
-	    fprintf(out, "always\n");
+	    if (ivl_process_analog(net))
+		  fprintf(out, "analog\n");
+	    else
+		  fprintf(out, "always\n");
 	    break;
       }
 

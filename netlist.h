@@ -2439,6 +2439,10 @@ class NetContribution : public NetProc {
       explicit NetContribution(NetEAccess*lval, NetExpr*rval);
       ~NetContribution();
 
+      const NetEAccess* lval() const;
+      const NetExpr* rval() const;
+
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:

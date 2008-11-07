@@ -192,9 +192,7 @@ bool NetProcTop::emit(struct target_t*tgt) const
 
 bool NetAnalogTop::emit(struct target_t*tgt) const
 {
-      cerr << get_fileline() << ": sorry: "
-	   << "I don't know how to emit for analog processes." << endl;
-      return false;
+      return tgt->process(this);
 }
 
 bool NetProc::emit_proc(struct target_t*tgt) const
@@ -239,6 +237,11 @@ bool NetCAssign::emit_proc(struct target_t*tgt) const
 bool NetCondit::emit_proc(struct target_t*tgt) const
 {
       return tgt->proc_condit(this);
+}
+
+bool NetContribution::emit_proc(struct target_t*tgt) const
+{
+      return tgt->proc_contribution(this);
 }
 
 bool NetDeassign::emit_proc(struct target_t*tgt) const
