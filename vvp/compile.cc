@@ -979,7 +979,7 @@ void compile_arith_div_r(char*label, unsigned argc, struct symb_s*argv)
       make_arith(arith, label, argc, argv);
 }
 
-void compile_arith_mod(char*label, long wid,
+void compile_arith_mod(char*label, long wid, bool signed_flag,
 		       unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
@@ -990,7 +990,7 @@ void compile_arith_mod(char*label, long wid,
 	    return;
       }
 
-      vvp_arith_ *arith = new vvp_arith_mod(wid, false);
+      vvp_arith_ *arith = new vvp_arith_mod(wid, signed_flag);
 
       make_arith(arith, label, argc, argv);
 }

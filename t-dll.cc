@@ -1782,7 +1782,7 @@ void dll_target::lpm_modulo(const NetModulo*net)
       unsigned wid = net->width_r();
 
       obj->width = wid;
-      obj->u_.arith.signed_flag = 0;
+      obj->u_.arith.signed_flag = net->get_signed()? 1 : 0;
 
       const Nexus*nex;
 

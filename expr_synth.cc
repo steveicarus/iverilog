@@ -484,6 +484,7 @@ NetNet* NetEBDiv::synthesize(Design*des, NetScope*scope)
 					      lsig->vector_width(),
 					      rsig->vector_width());
 		div->set_line(*this);
+		div->set_signed(has_sign());
 		des->add_node(div);
 
 		connect(div->pin_DataA(), lsig->pin(0));

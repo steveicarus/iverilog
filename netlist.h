@@ -1177,6 +1177,9 @@ class NetModulo  : public NetNode {
       unsigned width_a() const;
       unsigned width_b() const;
 
+      void set_signed(bool);
+      bool get_signed() const;
+
       Link& pin_DataA();
       Link& pin_DataB();
       Link& pin_Result();
@@ -1193,6 +1196,8 @@ class NetModulo  : public NetNode {
       unsigned width_r_;
       unsigned width_a_;
       unsigned width_b_;
+
+      bool signed_flag_;
 };
 
 /*

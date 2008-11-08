@@ -144,13 +144,25 @@ void vvp_arith_div::wide4_(vvp_net_ptr_t ptr)
       }
 
       vvp_vector2_t b2 (op_b_);
-      if (b2.is_NaN()) {
+      if (b2.is_NaN() || b2.is_zero()) {
 	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
-      vvp_vector2_t res2 = a2 / b2;
-      vvp_send_vec4(ptr.ptr()->out, vector2_to_vector4(res2, wid_), 0);
+      bool negate = false;
+      if (signed_flag_) {
+	    if (a2.value(a2.size()-1)) {
+		  a2 = -a2;
+		  negate = true;
+            }
+	    if (b2.value(b2.size()-1)) {
+		  b2 = -b2;
+		  negate = !negate;
+            }
+      }
+      vvp_vector2_t res = a2 / b2;
+      if (negate) res = -res;
+      vvp_send_vec4(ptr.ptr()->out, vector2_to_vector4(res, wid_), 0);
 }
 
 void vvp_arith_div::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
@@ -180,15 +192,32 @@ void vvp_arith_div::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 	   the operands for now, and remember to put the sign back
 	   later. */
       if (signed_flag_) {
+	    unsigned long sign_mask = 0;
+	    if (op_a_.size() != 8 * sizeof(unsigned long)) {
+		  sign_mask = -1UL << op_a_.size();
+	    }
 	    if (op_a_.value(op_a_.size()-1)) {
-		  a = (-a) & ~ (-1UL << op_a_.size());
+		  a = (-a) & ~sign_mask;
 		  negate = !negate;
 	    }
 
+	    sign_mask = 0;
+	    if (op_b_.size() != 8 * sizeof(unsigned long)) {
+		  sign_mask = -1UL << op_b_.size();
+	    }
 	    if (op_b_.value(op_b_.size()-1)) {
-		  b = (-b) & ~ (-1UL << op_b_.size());
+		  b = (-b) & ~sign_mask;
 		  negate = ! negate;
 	    }
+      }
+
+      if (b == 0) {
+	    vvp_vector4_t xval (wid_);
+	    for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1)
+		  xval.set_bit(idx, BIT4_X);
+
+	    vvp_send_vec4(ptr.ptr()->out, xval, 0);
+	    return;
       }
 
       unsigned long val = a / b;
@@ -229,12 +258,23 @@ void vvp_arith_mod::wide_(vvp_net_ptr_t ptr)
       }
 
       vvp_vector2_t b2 (op_b_);
-      if (b2.is_NaN()) {
+      if (b2.is_NaN() || b2.is_zero()) {
 	    vvp_send_vec4(ptr.ptr()->out, x_val_, 0);
 	    return;
       }
 
+      bool negate = false;
+      if (signed_flag_) {
+	    if (a2.value(a2.size()-1)) {
+		  a2 = -a2;
+		  negate = true;
+            }
+	    if (b2.value(b2.size()-1)) {
+		  b2 = -b2;
+            }
+      }
       vvp_vector2_t res = a2 % b2;
+      if (negate) res = -res;
       vvp_send_vec4(ptr.ptr()->out, vector2_to_vector4(res, res.size()), 0);
 }
 
@@ -265,14 +305,21 @@ void vvp_arith_mod::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 	   the operands for now, and remember to put the sign back
 	   later. */
       if (signed_flag_) {
+	    unsigned long sign_mask = 0;
+	    if (op_a_.size() != 8 * sizeof(unsigned long)) {
+		  sign_mask = -1UL << op_a_.size();
+	    }
 	    if (op_a_.value(op_a_.size()-1)) {
-		  a = (-a) & ~ (-1UL << op_a_.size());
+		  a = (-a) & ~sign_mask;
 		  negate = !negate;
 	    }
 
+	    sign_mask = 0;
+	    if (op_b_.size() != 8 * sizeof(unsigned long)) {
+		  sign_mask = -1UL << op_b_.size();
+	    }
 	    if (op_b_.value(op_b_.size()-1)) {
-		  b = (-b) & ~ (-1UL << op_b_.size());
-		  negate = ! negate;
+		  b = (-b) & ~sign_mask;
 	    }
       }
 

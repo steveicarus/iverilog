@@ -2020,6 +2020,21 @@ static void div_mod (vvp_vector2_t dividend, vvp_vector2_t divisor,
       remainder = vvp_vector2_t(dividend, mask.size());
 }
 
+vvp_vector2_t operator - (const vvp_vector2_t&that)
+{
+      vvp_vector2_t neg(that);
+      if (neg.wid_ == 0) return neg;
+
+      const unsigned words = (neg.wid_ + neg.BITS_PER_WORD-1) /
+                                         neg.BITS_PER_WORD;
+      for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
+	    neg.vec_[idx] = ~neg.vec_[idx];
+      }
+      neg += vvp_vector2_t(1, neg.wid_);
+
+      return neg;
+}
+
 vvp_vector2_t operator / (const vvp_vector2_t&dividend,
 			  const vvp_vector2_t&divisor)
 {

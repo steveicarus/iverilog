@@ -564,6 +564,7 @@ class vvp_vector4array_aa : public vvp_vector4array_t, public automatic_hooks_s 
  */
 class vvp_vector2_t {
 
+      friend vvp_vector2_t operator - (const vvp_vector2_t&);
       friend vvp_vector2_t operator + (const vvp_vector2_t&,
 				       const vvp_vector2_t&);
       friend vvp_vector2_t operator * (const vvp_vector2_t&,
@@ -619,6 +620,7 @@ extern bool operator >= (const vvp_vector2_t&, const vvp_vector2_t&);
 extern bool operator <  (const vvp_vector2_t&, const vvp_vector2_t&);
 extern bool operator <= (const vvp_vector2_t&, const vvp_vector2_t&);
 extern bool operator == (const vvp_vector2_t&, const vvp_vector2_t&);
+extern vvp_vector2_t operator - (const vvp_vector2_t&);
 extern vvp_vector2_t operator + (const vvp_vector2_t&, const vvp_vector2_t&);
 extern vvp_vector2_t operator * (const vvp_vector2_t&, const vvp_vector2_t&);
 extern vvp_vector2_t operator / (const vvp_vector2_t&, const vvp_vector2_t&);
