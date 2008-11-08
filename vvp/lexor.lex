@@ -93,6 +93,7 @@
 ".arith/div.s"  { return K_ARITH_DIV_S; }
 ".arith/mod"  { return K_ARITH_MOD; }
 ".arith/mod.r"  { return K_ARITH_MOD_R; }
+".arith/mod.s"  { return K_ARITH_MOD_S; }
 ".arith/mult" { return K_ARITH_MULT; }
 ".arith/mult.r" { return K_ARITH_MULT_R; }
 ".arith/pow" { return K_ARITH_POW; }

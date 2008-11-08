@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_modulo.cc,v 1.9 2005/09/15 22:54:47 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -69,6 +66,16 @@ Link& NetModulo::pin_Result()
       return pin(0);
 }
 
+void NetModulo::set_signed(bool flag)
+{
+      signed_flag_ = flag;
+}
+
+bool NetModulo::get_signed() const
+{
+      return signed_flag_;
+}
+
 const Link& NetModulo::pin_Result() const
 {
       return pin(0);
@@ -93,25 +100,3 @@ const Link& NetModulo::pin_DataB() const
 {
       return pin(2);
 }
-
-/*
- * $Log: net_modulo.cc,v $
- * Revision 1.9  2005/09/15 22:54:47  steve
- *  Fix bug configuring NetModulo pins.
- *
- * Revision 1.8  2005/03/12 06:43:35  steve
- *  Update support for LPM_MOD.
- *
- * Revision 1.7  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.6  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.5  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2002/08/11 23:47:04  steve
- *  Add missing Log and Ident strings.
- *
- */

@@ -3085,7 +3085,7 @@ bool of_LOADI_WR(vthread_t thr, vvp_code_t cp)
 static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
 			    bool left_is_neg, bool right_is_neg)
 {
-      bool out_is_neg = left_is_neg != right_is_neg;
+      bool out_is_neg = left_is_neg;
       int len=cp->number;
       unsigned char *a, *z, *t;
       a = new unsigned char[len+1];
