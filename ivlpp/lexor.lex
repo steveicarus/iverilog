@@ -78,6 +78,9 @@ struct include_stack_t
     YY_BUFFER_STATE yybs;
 
     struct include_stack_t* next;
+
+    /* A single line comment can be associated with this include. */
+    char* comment;
 };
 
 static void emit_pathline(struct include_stack_t* isp);
@@ -295,9 +298,10 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
   /* Catch single-line comments that share the line with an include
    * directive. And while I'm at it, I might as well preserve the
-   * comment in the output stream.
+   * comment in the output stream. This will be printed after the
+   * file has been included.
    */
-<PPINCLUDE>"//"[^\r\n]* { ECHO; }
+<PPINCLUDE>"//"[^\r\n]* { standby->comment = strdup(yytext); }
 
  /* These finish the include directive (EOF or EOL) so I revert the
   * lexor state and execute the inclusion.
@@ -827,6 +831,21 @@ void define_macro(const char* name, const char* value, int keyword, int argc)
             }
         }
     }
+}
+
+static void free_macro(struct define_t* def)
+{
+    if (def == 0) return;
+    free_macro(def->left);
+    free_macro(def->right);
+    free(def->name);
+    free(def->value);
+    free(def);
+}
+
+void free_macros()
+{
+    free_macro(def_table);
 }
 
 /*
@@ -1418,6 +1437,7 @@ static void include_filename()
     standby->path = strdup(yytext+1);
     standby->path[strlen(standby->path)-1] = 0;
     standby->lineno = 0;
+    standby->comment = NULL;
 }
 
 static void do_include()
@@ -1457,6 +1477,8 @@ static void do_include()
 
             if ((standby->file = fopen(path, "r")))
             {
+                /* Free the original path before we overwrite it. */
+                free(standby->path);
                 standby->path = strdup(path);
                 goto code_that_switches_buffers;
             }
@@ -1467,6 +1489,9 @@ static void do_include()
     exit(1);
 
                                     code_that_switches_buffers:
+
+    /* Clear the current files path from the search list. */
+    include_dir[0] = 0;
 
     if(depend_file)
         fprintf(depend_file, "%s\n", standby->path);
@@ -1529,6 +1554,17 @@ static int load_next_input()
 
     /* Delete the current input buffers, and free the cell. */
     yy_delete_buffer(YY_CURRENT_BUFFER);
+
+    /* If there was a comment for this include print it before we
+     * return to the previous input stream. This technically belongs
+     * to the previous stream, but it should not create any problems
+     * since it is only a comment.
+     */
+    if (isp->comment) {
+        fprintf(yyout, "%s\n", isp->comment);
+        free(isp->comment);
+        isp->comment = NULL;
+    }
 
     if (isp->file)
     {
@@ -1726,6 +1762,7 @@ void reset_lexor(FILE* out, char* paths[])
     isp->ebs = 0;
     isp->lineno = 0;
     isp->stringify_flag = 0;
+    isp->comment = NULL;
 
     if (isp->file == 0)
     {
@@ -1756,6 +1793,7 @@ void reset_lexor(FILE* out, char* paths[])
         isp->next = 0;
         isp->lineno = 0;
         isp->stringify_flag = 0;
+        isp->comment = NULL;
 
         if (tail)
             tail->next = isp;
@@ -1764,4 +1802,18 @@ void reset_lexor(FILE* out, char* paths[])
 
         tail = isp;
     }
+}
+
+/*
+ * Modern version of flex (>=2.5.9) can clean up the scanner data.
+ */
+void destroy_lexor()
+{
+# ifdef FLEX_SCANNER
+#   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5
+#     if defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
+    yylex_destroy();
+#     endif
+#   endif
+# endif
 }

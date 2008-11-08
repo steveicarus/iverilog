@@ -263,6 +263,7 @@ static const char*my_tempfile(const char*str, FILE**fout)
 static int t_version_only(void)
 {
       remove(source_path);
+      free(source_path);
 
       fflush(0);
       snprintf(tmp, sizeof tmp, "%s%civlpp -V", pbase, sep);
@@ -275,8 +276,11 @@ static int t_version_only(void)
 
       if ( ! getenv("IVERILOG_ICONFIG")) {
 	    remove(iconfig_path);
+	    free(iconfig_path);
 	    remove(defines_path);
+	    free(defines_path);
 	    remove(compiled_defines_path);
+	    free(compiled_defines_path);
       }
 
       return 0;
@@ -314,11 +318,15 @@ static int t_preprocess_only(void)
 
       rc = system(cmd);
       remove(source_path);
+      free(source_path);
 
       if ( ! getenv("IVERILOG_ICONFIG")) {
 	    remove(iconfig_path);
+	    free(iconfig_path);
 	    remove(defines_path);
+	    free(defines_path);
 	    remove(compiled_defines_path);
+	    free(compiled_defines_path);
       }
 
       if (rc != 0) {
@@ -332,6 +340,7 @@ static int t_preprocess_only(void)
 	    return -1;
       }
 
+      free(cmd);
       return 0;
 }
 
@@ -410,9 +419,13 @@ static int t_compile()
       rc = system(cmd);
       if ( ! getenv("IVERILOG_ICONFIG")) {
 	    remove(source_path);
+	    free(source_path);
 	    remove(iconfig_path);
+	    free(iconfig_path);
 	    remove(defines_path);
+	    free(defines_path);
 	    remove(compiled_defines_path);
+	    free(compiled_defines_path);
       }
 #ifdef __MINGW32__  /* MinGW just returns the exit status, so return it! */
       free(cmd);
