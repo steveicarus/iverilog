@@ -243,7 +243,7 @@ NetNode::~NetNode()
 }
 
 NetBranch::NetBranch(ivl_discipline_t dis)
-: NetPins(2), discipline_(dis)
+: NetPins(2), IslandBranch(dis)
 {
       pin(0).set_dir(Link::PASSIVE);
       pin(1).set_dir(Link::PASSIVE);

@@ -678,7 +678,7 @@ void NetTaskDef::dump(ostream&o, unsigned ind) const
 void NetTran::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << type_ << " " << name()
-	<< " island " << island;
+	<< " island " << get_island();
       if (type_ == IVL_SW_TRAN_VP) {
 	    o << " width=" << vector_width()
 	      << " part=" << part_width()

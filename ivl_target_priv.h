@@ -1,5 +1,5 @@
 #ifndef __ivl_target_priv_H
-#define __ivl_target_H
+#define __ivl_target_priv_H
 /*
  * Copyright (c) 2008 Stephen Williams (steve@icarus.com)
  *
@@ -33,10 +33,10 @@
 * have disciplines and do not belong to islands.
 */
 
-class discipline_t;
+class ivl_discipline_s;
 
 struct ivl_island_s {
-      discipline_t*discipline;
+      ivl_discipline_s*discipline;
 	// user accessible flags. They are initially false, always.
       vector<bool> flags;
 };

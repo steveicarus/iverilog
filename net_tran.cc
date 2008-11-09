@@ -78,7 +78,7 @@ unsigned NetTran::part_offset() const
       return off_;
 }
 
-void join_island(NetObj*obj)
+void join_island(NetPins*obj)
 {
       IslandBranch*branch = dynamic_cast<IslandBranch*> (obj);
 
@@ -88,7 +88,7 @@ void join_island(NetObj*obj)
 
 	// If this is a branch, but already given to an island, then
 	// stop.
-      if (branch->island)
+      if (branch->island_)
 	    return;
 
       list<NetObj*> uncommitted_neighbors;
@@ -110,31 +110,32 @@ void join_island(NetObj*obj)
 		  if (tmp == obj)
 			continue;
 
-		    // If tmb is not a branch, then skip it.
+		    // If tmp is not a branch, then skip it.
 		  IslandBranch*tmp_branch = dynamic_cast<IslandBranch*> (tmp);
 		  if (tmp_branch == 0)
 			continue;
 
-		    // If that is an uncommitted branch, then save
+		    // If tmp is an uncommitted branch, then save
 		    // it. When I finally choose an island for self,
 		    // these branches will be scanned so that they join
 		    // this island as well.
-		  if (tmp_branch->island == 0) {
+		  if (tmp_branch->island_ == 0) {
 			uncommitted_neighbors.push_back(tmp);
 			continue;
 		  }
 
-		  ivl_assert(*obj, branch->island==0 || branch->island==tmp_branch->island);
+		  ivl_assert(*obj, branch->island_==0 || branch->island_==tmp_branch->island_);
 
 		    // We found an existing island to join. Join it
 		    // now. Keep scanning in order to find more neighbors.
-		  if (branch->island == 0) {
+		  if (branch->island_ == 0) {
 			if (debug_elaborate)
 			      cerr << obj->get_fileline() << ": debug: "
 				   << "Join branch to existing island." << endl;
-			branch->island = tmp_branch->island;
+			branch->island_ = tmp_branch->island_;
+			ivl_assert(*obj, branch->island_->discipline == tmp_branch->island_->discipline);
 
-		  } else if (branch->island != tmp_branch->island) {
+		  } else if (branch->island_ != tmp_branch->island_) {
 			cerr << obj->get_fileline() << ": internal error: "
 			     << "Oops, Found 2 neighboring islands." << endl;
 			ivl_assert(*obj, 0);
@@ -144,9 +145,9 @@ void join_island(NetObj*obj)
 
 	// If after all that we did not find an island to join, then
 	// start the island not and join it.
-      if (branch->island == 0) {
-	    branch->island = new ivl_island_s;
-	    branch->island->discipline = 0;
+      if (branch->island_ == 0) {
+	    branch->island_ = new ivl_island_s;
+	    branch->island_->discipline = branch->discipline_;
 	    if (debug_elaborate)
 		  cerr << obj->get_fileline() << ": debug: "
 		       << "Create new island for this branch" << endl;

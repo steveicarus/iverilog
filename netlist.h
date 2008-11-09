@@ -55,6 +55,7 @@ class NetEvent;
 class NetNet;
 class NetNode;
 class NetObj;
+class NetPins;
 class NetProc;
 class NetProcTop;
 class NetRelease;
@@ -74,7 +75,7 @@ struct functor_t;
 
 ostream& operator << (ostream&o, ivl_variable_type_t val);
 
-extern void join_island(NetObj*obj);
+extern void join_island(NetPins*obj);
 
 class NetPins : public LineInfo {
 
@@ -154,10 +155,15 @@ class NetObj  : public NetPins, public Attrib {
 
 class IslandBranch {
     public:
-      IslandBranch() : island(0) { }
+      IslandBranch(ivl_discipline_t dis =0) : island_(0), discipline_(dis) { }
 
-    public:
-      struct ivl_island_s* island;
+      ivl_island_t get_island() const { return island_; }
+
+      friend void join_island(NetPins*);
+
+    private:
+      ivl_island_t island_;
+      ivl_discipline_t discipline_;
 };
 
 /*
@@ -168,7 +174,7 @@ class IslandBranch {
  * potential. Pin(1) is the sink of flow and the minus (or ground) of
  * potential.
  */
-class NetBranch  : public NetPins {
+class NetBranch  : public NetPins, public IslandBranch {
 
     public:
       explicit NetBranch(ivl_discipline_t dis);
@@ -176,7 +182,6 @@ class NetBranch  : public NetPins {
       ~NetBranch();
 
     private:
-      ivl_discipline_t discipline_;
       perm_string name_;
 };
 

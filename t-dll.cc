@@ -1051,7 +1051,7 @@ bool dll_target::tran(const NetTran*net)
       obj->offset = 0;
       obj->name = net->name();
       obj->scope = find_scope(des_, net->scope());
-      obj->island = net->island;
+      obj->island = net->get_island();
       assert(obj->scope);
       assert(obj->island);
 
