@@ -528,10 +528,14 @@ static int signal_get(int code, vpiHandle ref)
 	    else
 		  return 0;
 
-	  case vpiLeftRange: return rfp->msb;
-	  case vpiRightRange: return rfp->lsb;
+	  case vpiLeftRange:
+            return rfp->msb;
 
-          case vpiAutomatic: return rfp->is_automatic;
+	  case vpiRightRange:
+            return rfp->lsb;
+
+          case vpiAutomatic:
+            return (int) vpip_scope(rfp)->is_automatic;
 
 	  case _vpiNexusId:
 	    if (rfp->msb == rfp->lsb)
@@ -863,7 +867,6 @@ vpiHandle vpip_make_int(const char*name, int msb, int lsb, vvp_net_t*vec)
       struct __vpiSignal*rfp = (struct __vpiSignal*)obj;
       obj->vpi_type = &vpip_reg_rt;
       rfp->isint_ = true;
-      rfp->is_automatic = vpip_peek_current_scope()->is_automatic;
       return obj;
 }
 
@@ -876,7 +879,6 @@ vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
       vpiHandle obj = vpip_make_net(name, msb,lsb, signed_flag, vec);
       struct __vpiSignal*rfp = (struct __vpiSignal*)obj;
       obj->vpi_type = &vpip_reg_rt;
-      rfp->is_automatic = vpip_peek_current_scope()->is_automatic;
       return obj;
 }
 
@@ -915,7 +917,6 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
       obj->signed_flag = signed_flag? 1 : 0;
       obj->isint_ = 0;
       obj->is_netarray = 0;
-      obj->is_automatic = vpip_peek_current_scope()->is_automatic;
       obj->node = node;
 
 	// Place this object within a scope. If this object is
@@ -972,10 +973,14 @@ static int PV_get(int code, vpiHandle ref)
 	case vpiConstantSelect:
 	    return rfp->twid == 0;
 
-	case vpiLeftRange: rval += rfp->width;
+	case vpiLeftRange:
+            rval += rfp->width;
 	case vpiRightRange:
 	    rval += vpi_get(vpiRightRange, rfp->parent) + PV_get_base(rfp);
 	    return rval;
+
+        case vpiAutomatic:
+            return vpi_get(vpiAutomatic, rfp->parent);
 
 	default:
 	    fprintf(stderr, "PV_get: property %d is unknown\n", code);

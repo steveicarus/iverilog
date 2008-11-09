@@ -2012,6 +2012,14 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
+      if (scope->is_auto() && lval()->has_aa_term(des, scope)) {
+	    cerr << get_fileline() << ": error: automatically allocated "
+                    "variables may not be assigned values using non-blocking "
+	            "assignments." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
 	/* Elaborate the l-value. */
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
@@ -2042,6 +2050,15 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       NetEvWait*event = 0;
       if (count_ != 0 || event_ != 0) {
 	    if (count_ != 0) {
+                  if (scope->is_auto() && count_->has_aa_term(des, scope)) {
+                        cerr << get_fileline() << ": error: automatically "
+                                "allocated variables may not be referenced "
+                                "in intra-assignment event controls of "
+                                "non-blocking assignments." << endl;
+                        des->errors += 1;
+                        return 0;
+                  }
+
 		  assert(event_ != 0);
 		  count = elab_and_eval(des, scope, count_, -1);
 		  if (count == 0) {
@@ -2051,6 +2068,15 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 			return 0;
 		  }
 	    }
+
+            if (scope->is_auto() && event_->has_aa_term(des, scope)) {
+                  cerr << get_fileline() << ": error: automatically "
+                          "allocated variables may not be referenced "
+                          "in intra-assignment event controls of "
+                          "non-blocking assignments." << endl;
+                  des->errors += 1;
+                  return 0;
+            }
 
 	    NetProc*st = event_->elaborate(des, scope);
 	    if (st == 0) {
@@ -2586,6 +2612,22 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
       NetCAssign*dev = 0;
       assert(scope);
 
+      if (scope->is_auto() && lval_->has_aa_term(des, scope)) {
+	    cerr << get_fileline() << ": error: automatically allocated "
+                    "variables may not be assigned values using procedural "
+	            "continuous assignments." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (scope->is_auto() && expr_->has_aa_term(des, scope)) {
+	    cerr << get_fileline() << ": error: automatically allocated "
+                    "variables may not be referenced in procedural "
+	            "continuous assignments." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       NetAssign_*lval = lval_->elaborate_lval(des, scope, false);
       if (lval == 0)
 	    return 0;
@@ -2616,6 +2658,14 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
 NetDeassign* PDeassign::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
+
+      if (scope->is_auto() && lval_->has_aa_term(des, scope)) {
+	    cerr << get_fileline() << ": error: automatically allocated "
+                    "variables may not be assigned values using procedural "
+	            "continuous assignments." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       NetAssign_*lval = lval_->elaborate_lval(des, scope, false);
       if (lval == 0)
@@ -2874,6 +2924,16 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	      /* So now we have a normal event expression. Elaborate
 		 the sub-expression as a net and decide how to handle
 		 the edge. */
+
+            if (scope->is_auto()) {
+                  if (! dynamic_cast<PEIdent*>(expr_[idx]->expr())) {
+                        cerr << get_fileline() << ": sorry, complex event "
+                                "expressions are not yet supported in "
+                                "automatic tasks." << endl;
+                        des->errors += 1;
+                        return 0;
+                  }
+            }
 
 	    bool save_flag = error_implicit;
 	    error_implicit = true;
@@ -3150,6 +3210,22 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
       NetForce*dev = 0;
       assert(scope);
 
+      if (scope->is_auto() && lval_->has_aa_term(des, scope)) {
+	    cerr << get_fileline() << ": error: automatically allocated "
+                    "variables may not be assigned values using procedural "
+	            "force statements." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (scope->is_auto() && expr_->has_aa_term(des, scope)) {
+	    cerr << get_fileline() << ": error: automatically allocated "
+                    "variables may not be referenced in procedural force "
+	            "statements." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       NetAssign_*lval = lval_->elaborate_lval(des, scope, true);
       if (lval == 0)
 	    return 0;
@@ -3354,6 +3430,14 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
 NetProc* PRelease::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
+
+      if (scope->is_auto() && lval_->has_aa_term(des, scope)) {
+	    cerr << get_fileline() << ": error: automatically allocated "
+                    "variables may not be assigned values using procedural "
+	            "force statements." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       NetAssign_*lval = lval_->elaborate_lval(des, scope, true);
       if (lval == 0)

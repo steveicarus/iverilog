@@ -75,6 +75,9 @@ static int scope_get(int code, vpiHandle obj)
 
 	  case vpiTopModule:
 	    return 0x0 == ref->scope;
+
+          case vpiAutomatic:
+	    return (int) ref->is_automatic;
       }
 
       return 0;
@@ -330,33 +333,29 @@ compile_scope_decl(char*label, char*type, char*name, const char*tname,
       struct __vpiScope*scope = new struct __vpiScope;
       count_vpi_scopes += 1;
 
-      if (strcmp(type,"module") == 0) {
+      char*base_type = 0;
+      if (strncmp(type,"auto",4) == 0) {
+	    scope->is_automatic = true;
+            base_type = &type[4];
+      } else {
+	    scope->is_automatic = false;
+            base_type = &type[0];
+      }
+
+      if (strcmp(base_type,"module") == 0) {
 	    scope->base.vpi_type = &vpip_scope_module_rt;
-	    scope->is_automatic = false;
-      } else if (strcmp(type,"autofunction") == 0) {
+      } else if (strcmp(base_type,"function") == 0) {
 	    scope->base.vpi_type = &vpip_scope_function_rt;
-	    scope->is_automatic = true;
-      } else if (strcmp(type,"function") == 0) {
-	    scope->base.vpi_type = &vpip_scope_function_rt;
-	    scope->is_automatic = false;
-      } else if (strcmp(type,"autotask") == 0) {
+      } else if (strcmp(base_type,"task") == 0) {
 	    scope->base.vpi_type = &vpip_scope_task_rt;
-	    scope->is_automatic = true;
-      } else if (strcmp(type,"task") == 0) {
-	    scope->base.vpi_type = &vpip_scope_task_rt;
-	    scope->is_automatic = false;
-      } else if (strcmp(type,"fork") == 0) {
+      } else if (strcmp(base_type,"fork") == 0) {
 	    scope->base.vpi_type = &vpip_scope_fork_rt;
-	    scope->is_automatic = false;
-      } else if (strcmp(type,"begin") == 0) {
+      } else if (strcmp(base_type,"begin") == 0) {
 	    scope->base.vpi_type = &vpip_scope_begin_rt;
-	    scope->is_automatic = false;
-      } else if (strcmp(type,"generate") == 0) {
+      } else if (strcmp(base_type,"generate") == 0) {
 	    scope->base.vpi_type = &vpip_scope_begin_rt;
-	    scope->is_automatic = false;
       } else {
 	    scope->base.vpi_type = &vpip_scope_module_rt;
-	    scope->is_automatic = false;
 	    assert(0);
       }
 
@@ -395,10 +394,6 @@ compile_scope_decl(char*label, char*type, char*name, const char*tname,
 	      /* Inherit time units and precision from the parent scope. */
 	    scope->time_units = sp->time_units;
 	    scope->time_precision = sp->time_precision;
-
-              /* Scopes within automatic scopes are themselves automatic. */
-            if (sp->is_automatic)
-                  scope->is_automatic = true;
 
       } else {
 	    scope->scope = 0x0;
@@ -476,5 +471,3 @@ unsigned vpip_add_item_to_context(automatic_hooks_s*item,
         /* Offset the context index by 2 to leave space for the list links. */
       return 2 + idx;
 }
-
-

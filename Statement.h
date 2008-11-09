@@ -347,6 +347,8 @@ class PEventStatement  : public Statement {
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void elaborate_sig(Design*des, NetScope*scope) const;
 
+      bool has_aa_term(Design*des, NetScope*scope);
+
 	// This method is used to elaborate, but attach a previously
 	// elaborated statement to the event.
       NetProc* elaborate_st(Design*des, NetScope*scope, NetProc*st) const;

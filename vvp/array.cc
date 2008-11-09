@@ -454,6 +454,9 @@ static int vpi_array_var_word_get(int code, vpiHandle ref)
 	  case vpiRightRange:
 	    return parent->lsb.value;
 
+	  case vpiAutomatic:
+	    return (int) parent->scope->is_automatic;
+
 	  default:
 	    return 0;
       }
@@ -633,6 +636,9 @@ static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 
 	  case vpiRightRange:
 	    return parent->lsb.value;
+
+	  case vpiAutomatic:
+	    return (int) parent->scope->is_automatic;
 
 	  // For now &A<> is only a constant select. This will need
 	  // to be changed when it supports variable selection.
