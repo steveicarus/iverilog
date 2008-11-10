@@ -136,6 +136,13 @@ ostream& operator <<(ostream&o, struct __ScopePathManip marg)
       return o;
 }
 
+void NetBranch::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "branch ...";
+      o << " island=" << get_island();
+      o << " // " << get_fileline() << endl;
+}
+
 void NetDelaySrc::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "specify delay";
@@ -1509,6 +1516,13 @@ void Design::dump(ostream&o) const
 		  cur->dump_node(o, 0);
 		  cur = cur->node_next_;
 	    } while (cur != nodes_->node_next_);
+      }
+
+      o << "ELABORATED BRANCHES:" << endl;
+
+      if (branches_) {
+	    for (NetBranch*cur = branches_ ; cur ; cur = cur->next_)
+		  cur->dump(o, 0);
       }
 
       o << "ELABORATED PROCESSES:" << endl;

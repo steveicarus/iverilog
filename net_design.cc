@@ -38,6 +38,7 @@
 Design:: Design()
     : errors(0), nodes_(0), procs_(0), aprocs_(0), lcounter_(0)
 {
+      branches_ = 0;
       procs_idx_ = 0;
       des_precision_ = 0;
       nodes_functor_cur_ = 0;
@@ -756,6 +757,12 @@ void Design::del_node(NetNode*net)
       }
 
       net->design_ = 0;
+}
+
+void Design::add_branch(NetBranch*bra)
+{
+      bra->next_ = branches_;
+      branches_ = bra;
 }
 
 void Design::add_process(NetProcTop*pro)

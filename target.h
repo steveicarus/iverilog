@@ -63,6 +63,9 @@ struct target_t {
       virtual void signal(const NetNet*) =0;
       virtual bool signal_paths(const NetNet*);
 
+        /* Analog branches */
+      virtual bool branch(const NetBranch*);
+
 	/* Output a defined task. */
       virtual void task_def(const NetScope*);
       virtual bool func_def(const NetScope*);

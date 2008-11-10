@@ -455,6 +455,11 @@ int Design::emit(struct target_t*tgt) const
       }
 
 
+      bool branches_rc = true;
+      for (NetBranch*cur = branches_ ; cur ; cur = cur->next_) {
+	    branches_rc = tgt->branch(cur) && branches_rc;
+      }
+
 	// emit task and function definitions
       bool tasks_rc = true;
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
@@ -477,6 +482,8 @@ int Design::emit(struct target_t*tgt) const
 	    return -2;
       if (proc_rc == false)
 	  return -3;
+      if (branches_rc == false)
+	    return -4;
 
       return rc;
 }

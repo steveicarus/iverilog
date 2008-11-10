@@ -1253,6 +1253,7 @@ NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
 
 	    branch = new NetBranch(dis);
 	    branch->set_line(*this);
+	    des->add_branch(branch);
 	    connect(branch->pin(0), sig->pin(0));
 	    join_island(branch);
 

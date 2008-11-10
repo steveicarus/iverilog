@@ -32,6 +32,13 @@ void target_t::scope(const NetScope*)
 {
 }
 
+bool target_t::branch(const NetBranch*obj)
+{
+      cerr << obj->get_fileline() << ": error: target (" << typeid(*this).name()
+	   <<  "): Unhandled branch." << endl;
+      return false;
+}
+
 void target_t::event(const NetEvent*ev)
 {
       cerr << ev->get_fileline() << ": error: target (" << typeid(*this).name()

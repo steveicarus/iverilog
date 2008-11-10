@@ -181,8 +181,13 @@ class NetBranch  : public NetPins, public IslandBranch {
       explicit NetBranch(ivl_discipline_t dis, perm_string name);
       ~NetBranch();
 
+      void dump(ostream&, unsigned) const;
+
     private:
       perm_string name_;
+	// The design class uses this member to list the branches.
+      friend class Design;
+      NetBranch*next_;
 };
 
 class Link {
@@ -859,6 +864,7 @@ class NetScope : public Attrib {
       NetNet::Type default_nettype_;
 
       NetEvent *events_;
+
       typedef std::map<perm_string,NetNet*>::const_iterator signals_map_iter_t;
       std::map <perm_string,NetNet*> signals_map_;
       perm_string module_name_;
@@ -3871,6 +3877,9 @@ class Design {
       void add_node(NetNode*);
       void del_node(NetNode*);
 
+	// BRANCHES
+      void add_branch(NetBranch*);
+
 	// PROCESSES
       void add_process(NetProcTop*);
       void add_process(NetAnalogTop*);
@@ -3900,6 +3909,9 @@ class Design {
 	// These are in support of the node functor iterator.
       NetNode*nodes_functor_cur_;
       NetNode*nodes_functor_nxt_;
+
+	// List the branches in the design.
+      NetBranch*branches_;
 
 	// List the processes in the design.
       NetProcTop*procs_;
