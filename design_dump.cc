@@ -138,9 +138,13 @@ ostream& operator <<(ostream&o, struct __ScopePathManip marg)
 
 void NetBranch::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "branch ...";
-      o << " island=" << get_island();
+      static const char*pin_names[2] = {
+	    "terminal0",
+	    "terminal1" };
+
+      o << setw(ind) << "" << "branch island=" << get_island();
       o << " // " << get_fileline() << endl;
+      dump_node_pins(o, ind+4, pin_names);
 }
 
 void NetDelaySrc::dump(ostream&o, unsigned ind) const

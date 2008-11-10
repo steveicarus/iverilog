@@ -71,6 +71,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       int  end_design(const Design*);
 
       bool bufz(const NetBUFZ*);
+      bool branch(const NetBranch*);
       void event(const NetEvent*);
       void logic(const NetLogic*);
       bool tran(const NetTran*);
@@ -516,6 +517,7 @@ struct ivl_nexus_ptr_s {
 	    ivl_net_const_t con; /* type 2 */
 	    ivl_lpm_t       lpm; /* type 3 */
 	    ivl_switch_t    swi; /* type 4 */
+	    ivl_branch_t    bra; /* type 5 */
       } l;
 };
 # define __NEXUS_PTR_SIG 0
@@ -523,13 +525,14 @@ struct ivl_nexus_ptr_s {
 # define __NEXUS_PTR_CON 2
 # define __NEXUS_PTR_LPM 3
 # define __NEXUS_PTR_SWI 4
+# define __NEXUS_PTR_BRA 5
 
 /*
  * NOTE: ONLY allocate ivl_nexus_s objects with the included "new" operator.
  */
 struct ivl_nexus_s {
-      unsigned nptr_;
-      struct ivl_nexus_ptr_s*ptrs_;
+      ivl_nexus_s() : ptrs_(1), nexus_(0), name_(0), private_data(0) { }
+      vector<ivl_nexus_ptr_s>ptrs_;
       const Nexus*nexus_;
       const char*name_;
       void*private_data;

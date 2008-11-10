@@ -60,6 +60,9 @@ _BEGIN_DECL
  *    This object represent an array that can be a memory or a net
  *    array. (They are the same from the perspective of ivl_target.h.)
  *
+ * ivl_branch_t
+ *    this object represents an analog branch.
+ *
  * ivl_design_t
  *    This object represents the entire elaborated design. Various
  *    global properties and methods are available from this.
@@ -149,6 +152,7 @@ _BEGIN_DECL
  * throughout the design.
  */
 typedef struct ivl_array_s    *ivl_array_t;
+typedef struct ivl_branch_s   *ivl_branch_t;
 typedef struct ivl_delaypath_s*ivl_delaypath_t;
 typedef struct ivl_design_s   *ivl_design_t;
 typedef struct ivl_discipline_s*ivl_discipline_t;
@@ -415,6 +419,12 @@ struct ivl_attribute_s {
       } val;
 };
 typedef const struct ivl_attribute_s*ivl_attribute_t;
+
+/* BRANCH
+*/
+extern ivl_discipline_t ivl_branch_discipline(ivl_branch_t obj);
+extern ivl_scope_t ivl_branch_scope(ivl_branch_t obj);
+extern ivl_nexus_t ivl_branch_terminal(ivl_branch_t obj, int idx);
 
 /* DELAYPATH
  * Delaypath objects represent delay paths called out by a specify
@@ -1383,6 +1393,7 @@ extern void* ivl_nexus_get_private(ivl_nexus_t net);
 extern ivl_drive_t  ivl_nexus_ptr_drive0(ivl_nexus_ptr_t net);
 extern ivl_drive_t  ivl_nexus_ptr_drive1(ivl_nexus_ptr_t net);
 extern unsigned     ivl_nexus_ptr_pin(ivl_nexus_ptr_t net);
+extern ivl_branch_t ivl_nexus_ptr_branch(ivl_nexus_ptr_t net);
 extern ivl_net_const_t ivl_nexus_ptr_con(ivl_nexus_ptr_t net);
 extern ivl_net_logic_t ivl_nexus_ptr_log(ivl_nexus_ptr_t net);
 extern ivl_lpm_t    ivl_nexus_ptr_lpm(ivl_nexus_ptr_t net);

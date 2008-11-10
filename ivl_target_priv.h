@@ -22,10 +22,19 @@
 # include  <inttypes.h>
 
 /*
-* This deader has declarations related to the ivl_target.h API that
+* This header has declarations related to the ivl_target.h API that
 * are not to be exported outside of the core via the ivl_target.h
 * interface.
+*
+* (NOTE: A lot of similar definitions exist in the t-dll.h header
+* file. That is a legacy from an earlier time before the
+* ivl_target_priv.h header file was started, and those definitions
+* should gradually be moved over to this header file.)
 */
+
+struct ivl_branch_s {
+      ivl_nexus_t pins[2];
+};
 
 /*
 * Information about islands. Connected branches within a net are

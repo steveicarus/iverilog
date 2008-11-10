@@ -1132,6 +1132,7 @@ static void show_nexus_details(ivl_signal_t net, ivl_nexus_t nex)
 	    ivl_lpm_t lpm;
 	    ivl_signal_t sig;
 	    ivl_switch_t swt;
+	    ivl_branch_t bra;
 	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
 
 	    const char*dr0 = str_tab[ivl_nexus_ptr_drive0(ptr)];
@@ -1172,6 +1173,10 @@ static void show_nexus_details(ivl_signal_t net, ivl_nexus_t nex)
 
 	    } else if ((con = ivl_nexus_ptr_con(ptr))) {
 		  signal_nexus_const(net, ptr, con);
+
+	    } else if ((bra = ivl_nexus_ptr_branch(ptr))) {
+		  fprintf(out, "      BRANCH %p terminal %u\n",
+			  bra, ivl_nexus_ptr_pin(ptr));
 
 	    } else {
 		  fprintf(out, "      ?[%u] (%s0, %s1)\n",

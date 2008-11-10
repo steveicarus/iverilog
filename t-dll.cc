@@ -128,6 +128,11 @@ void* ivl_nexus_s::operator new(size_t s)
       return tmp;
 }
 
+void ivl_nexus_s::operator delete(void*, size_t)
+{
+      assert(0);
+}
+
 inline static const char *basename(ivl_scope_t scope, const char *inst)
 {
       inst += strlen(ivl_scope_name(scope));
@@ -281,10 +286,7 @@ ivl_signal_t dll_target::find_signal(ivl_design_s &des, const NetNet*net)
 static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
 {
       ivl_nexus_t tmp = new struct ivl_nexus_s;
-      tmp->private_data = 0;
-      tmp->nptr_ = 1;
-      tmp->ptrs_ = (struct ivl_nexus_ptr_s*)
-	    malloc(sizeof(struct ivl_nexus_ptr_s));
+      tmp->ptrs_.resize(1);
       tmp->ptrs_[0].pin_   = pin;
       tmp->ptrs_[0].type_  = __NEXUS_PTR_SIG;
       tmp->ptrs_[0].l.sig  = net;
@@ -305,11 +307,8 @@ static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
 
 static void nexus_sig_add(ivl_nexus_t nex, ivl_signal_t net, unsigned pin)
 {
-      unsigned top = nex->nptr_ + 1;
-      nex->ptrs_ = (struct ivl_nexus_ptr_s*)
-	    realloc(nex->ptrs_, top * sizeof(struct ivl_nexus_ptr_s));
-      nex->nptr_ = top;
-
+      unsigned top = nex->ptrs_.size();
+      nex->ptrs_.resize(top+1);
       ivl_drive_t drive = IVL_DR_HiZ;
       switch (ivl_signal_type(net)) {
 	  case IVL_SIT_REG:
@@ -319,11 +318,22 @@ static void nexus_sig_add(ivl_nexus_t nex, ivl_signal_t net, unsigned pin)
 	    break;
       }
 
-      nex->ptrs_[top-1].type_= __NEXUS_PTR_SIG;
-      nex->ptrs_[top-1].drive0 = drive;
-      nex->ptrs_[top-1].drive1 = drive;
-      nex->ptrs_[top-1].pin_ = pin;
-      nex->ptrs_[top-1].l.sig= net;
+      nex->ptrs_[top].type_= __NEXUS_PTR_SIG;
+      nex->ptrs_[top].drive0 = drive;
+      nex->ptrs_[top].drive1 = drive;
+      nex->ptrs_[top].pin_ = pin;
+      nex->ptrs_[top].l.sig= net;
+}
+
+static void nexus_bra_add(ivl_nexus_t nex, ivl_branch_t net, unsigned pin)
+{
+      unsigned top = nex->ptrs_.size();
+      nex->ptrs_.resize(top+1);
+      nex->ptrs_[top].type_= __NEXUS_PTR_BRA;
+      nex->ptrs_[top].drive0 = 0;
+      nex->ptrs_[top].drive1 = 0;
+      nex->ptrs_[top].pin_ = pin;
+      nex->ptrs_[top].l.bra= net;
 }
 
 /*
@@ -337,62 +347,54 @@ static ivl_nexus_ptr_t nexus_log_add(ivl_nexus_t nex,
 				     ivl_net_logic_t net,
 				     unsigned pin)
 {
-      unsigned top = nex->nptr_ + 1;
-      nex->ptrs_ = (struct ivl_nexus_ptr_s*)
-	    realloc(nex->ptrs_, top * sizeof(struct ivl_nexus_ptr_s));
-      nex->nptr_ = top;
+      unsigned top = nex->ptrs_.size();
+      nex->ptrs_.resize(top+1);
 
-      nex->ptrs_[top-1].type_= __NEXUS_PTR_LOG;
-      nex->ptrs_[top-1].drive0 = (pin == 0)? IVL_DR_STRONG : IVL_DR_HiZ;
-      nex->ptrs_[top-1].drive1 = (pin == 0)? IVL_DR_STRONG : IVL_DR_HiZ;
-      nex->ptrs_[top-1].pin_ = pin;
-      nex->ptrs_[top-1].l.log= net;
+      nex->ptrs_[top].type_= __NEXUS_PTR_LOG;
+      nex->ptrs_[top].drive0 = (pin == 0)? IVL_DR_STRONG : IVL_DR_HiZ;
+      nex->ptrs_[top].drive1 = (pin == 0)? IVL_DR_STRONG : IVL_DR_HiZ;
+      nex->ptrs_[top].pin_ = pin;
+      nex->ptrs_[top].l.log= net;
 
-      return nex->ptrs_ + top - 1;
+      return & (nex->ptrs_[top]);
 }
 
 static void nexus_con_add(ivl_nexus_t nex, ivl_net_const_t net, unsigned pin,
 			  ivl_drive_t drive0, ivl_drive_t drive1)
 {
-      unsigned top = nex->nptr_ + 1;
-      nex->ptrs_ = (struct ivl_nexus_ptr_s*)
-	    realloc(nex->ptrs_, top * sizeof(struct ivl_nexus_ptr_s));
-      nex->nptr_ = top;
+      unsigned top = nex->ptrs_.size();
+      nex->ptrs_.resize(top+1);
 
-      nex->ptrs_[top-1].type_= __NEXUS_PTR_CON;
-      nex->ptrs_[top-1].drive0 = drive0;
-      nex->ptrs_[top-1].drive1 = drive1;
-      nex->ptrs_[top-1].pin_ = pin;
-      nex->ptrs_[top-1].l.con= net;
+      nex->ptrs_[top].type_= __NEXUS_PTR_CON;
+      nex->ptrs_[top].drive0 = drive0;
+      nex->ptrs_[top].drive1 = drive1;
+      nex->ptrs_[top].pin_ = pin;
+      nex->ptrs_[top].l.con= net;
 }
 
 static void nexus_lpm_add(ivl_nexus_t nex, ivl_lpm_t net, unsigned pin,
 			  ivl_drive_t drive0, ivl_drive_t drive1)
 {
-      unsigned top = nex->nptr_ + 1;
-      nex->ptrs_ = (struct ivl_nexus_ptr_s*)
-	    realloc(nex->ptrs_, top * sizeof(struct ivl_nexus_ptr_s));
-      nex->nptr_ = top;
+      unsigned top = nex->ptrs_.size();
+      nex->ptrs_.resize(top+1);
 
-      nex->ptrs_[top-1].type_= __NEXUS_PTR_LPM;
-      nex->ptrs_[top-1].drive0 = drive0;
-      nex->ptrs_[top-1].drive1 = drive0;
-      nex->ptrs_[top-1].pin_ = pin;
-      nex->ptrs_[top-1].l.lpm= net;
+      nex->ptrs_[top].type_= __NEXUS_PTR_LPM;
+      nex->ptrs_[top].drive0 = drive0;
+      nex->ptrs_[top].drive1 = drive0;
+      nex->ptrs_[top].pin_ = pin;
+      nex->ptrs_[top].l.lpm= net;
 }
 
 static void nexus_switch_add(ivl_nexus_t nex, ivl_switch_t net, unsigned pin)
 {
-      unsigned top = nex->nptr_ + 1;
-      nex->ptrs_ = (struct ivl_nexus_ptr_s*)
-	    realloc(nex->ptrs_, top*sizeof(struct ivl_nexus_ptr_s));
-      nex->nptr_ = top;
+      unsigned top = nex->ptrs_.size();
+      nex->ptrs_.resize(top+1);
 
-      nex->ptrs_[top-1].type_= __NEXUS_PTR_SWI;
-      nex->ptrs_[top-1].drive0 = IVL_DR_HiZ;
-      nex->ptrs_[top-1].drive1 = IVL_DR_HiZ;
-      nex->ptrs_[top-1].pin_ = pin;
-      nex->ptrs_[top-1].l.swi= net;
+      nex->ptrs_[top].type_= __NEXUS_PTR_SWI;
+      nex->ptrs_[top].drive0 = IVL_DR_HiZ;
+      nex->ptrs_[top].drive1 = IVL_DR_HiZ;
+      nex->ptrs_[top].pin_ = pin;
+      nex->ptrs_[top].l.swi= net;
 }
 
 void scope_add_logic(ivl_scope_t scope, ivl_net_logic_t net)
@@ -774,6 +776,22 @@ void dll_target::make_const_delays_(struct ivl_net_const_s*obj,
 		  expr_ = 0;
 	    }
       }
+}
+
+bool dll_target::branch(const NetBranch*net)
+{
+      struct ivl_branch_s*obj = new struct ivl_branch_s;
+      ivl_assert(*net, net->pin_count() == 2);
+
+      assert(net->pin(0).nexus()->t_cookie());
+      obj->pins[0] = net->pin(0).nexus()->t_cookie();
+      nexus_bra_add(obj->pins[0], obj, 0);
+
+      assert(net->pin(1).nexus()->t_cookie());
+      obj->pins[1] = net->pin(1).nexus()->t_cookie();
+      nexus_bra_add(obj->pins[1], obj, 1);
+
+      return true;
 }
 
 /*
@@ -2504,6 +2522,7 @@ void dll_target::signal(const NetNet*net)
       for (unsigned idx = 0 ;  idx < obj->array_words ;  idx += 1) {
 
 	    const Nexus*nex = net->pin(idx).nexus();
+	    ivl_assert(*net, nex);
 	    if (nex->t_cookie()) {
 		  if (obj->array_words > 1) {
 			obj->pins[idx] = nex->t_cookie();
@@ -2522,6 +2541,7 @@ void dll_target::signal(const NetNet*net)
 		  else
 			obj->pin = tmp;
 	    }
+	    ivl_assert(*net, net->pin(idx).nexus()->t_cookie());
       }
 }
 

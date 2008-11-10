@@ -36,7 +36,7 @@
 # include  "ivl_assert.h"
 
 Design:: Design()
-    : errors(0), nodes_(0), procs_(0), aprocs_(0), lcounter_(0)
+    : errors(0), nodes_(0), procs_(0), aprocs_(0)
 {
       branches_ = 0;
       procs_idx_ = 0;
@@ -47,15 +47,6 @@ Design:: Design()
 
 Design::~Design()
 {
-}
-
-string Design::local_symbol(const string&path)
-{
-      ostringstream res;
-      res << path << "." << "_L" << lcounter_;
-      lcounter_ += 1;
-
-      return res.str();
 }
 
 void Design::set_precision(int val)

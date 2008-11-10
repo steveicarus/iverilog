@@ -3886,6 +3886,8 @@ class Design {
       void delete_process(NetProcTop*);
       bool check_always_delay() const;
 
+      NetNet* find_discipline_reference(ivl_discipline_t dis, NetScope*scope);
+
 	// Iterate over the design...
       void dump(ostream&) const;
       void functor(struct functor_t*);
@@ -3895,9 +3897,6 @@ class Design {
 	// This is incremented by elaboration when an error is
 	// detected. It prevents code being emitted.
       unsigned errors;
-
-    public:
-      string local_symbol(const string&path);
 
     private:
 	// Keep a tree of scopes. The NetScope class handles the wide
@@ -3917,13 +3916,16 @@ class Design {
       NetProcTop*procs_;
       NetProcTop*procs_idx_;
 
+	// List the ANALOG processes in the design.
       NetAnalogTop*aprocs_;
 
+	// Map of discipline take to NetNet for the reference node.
+      map<perm_string,NetNet*>discipline_references_;
+
+	// Map the design arguments to values.
       map<string,const char*> flags_;
 
       int des_precision_;
-
-      unsigned lcounter_;
 
     private: // not implemented
       Design(const Design&);

@@ -1253,8 +1253,12 @@ NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
 
 	    branch = new NetBranch(dis);
 	    branch->set_line(*this);
-	    des->add_branch(branch);
 	    connect(branch->pin(0), sig->pin(0));
+
+	    NetNet*gnd = des->find_discipline_reference(dis, scope);
+	    connect(branch->pin(1), gnd->pin(0));
+
+	    des->add_branch(branch);
 	    join_island(branch);
 
       } else {
@@ -3042,4 +3046,25 @@ NetExpr* PEUnary::elaborate_expr_bits_(NetExpr*operand, int expr_wid) const
       NetEUBits*tmp = new NetEUBits(op_, operand);
       tmp->set_line(*this);
       return tmp;
+}
+
+NetNet* Design::find_discipline_reference(ivl_discipline_t dis, NetScope*scope)
+{
+      NetNet*gnd = discipline_references_[dis->name()];
+
+      if (gnd) return gnd;
+
+      string name = string(dis->name()) + "$gnd";
+      gnd = new NetNet(scope, lex_strings.make(name), NetNet::WIRE, 1);
+      gnd->set_discipline(dis);
+      gnd->data_type(IVL_VT_REAL);
+      discipline_references_[dis->name()] = gnd;
+
+      if (debug_elaborate)
+	    cerr << gnd->get_fileline() << ": debug: "
+		 << "Create an implicit reference terminal"
+		 << " for discipline=" << dis->name()
+		 << " in scope=" << scope_path(scope) << endl;
+
+      return gnd;
 }

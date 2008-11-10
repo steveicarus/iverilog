@@ -1318,14 +1318,14 @@ extern "C" void ivl_nexus_set_private(ivl_nexus_t net, void*data)
 extern "C" unsigned ivl_nexus_ptrs(ivl_nexus_t net)
 {
       assert(net);
-      return net->nptr_;
+      return net->ptrs_.size();
 }
 
 extern "C" ivl_nexus_ptr_t ivl_nexus_ptr(ivl_nexus_t net, unsigned idx)
 {
       assert(net);
-      assert(idx < net->nptr_);
-      return net->ptrs_ + idx;
+      assert(idx < net->ptrs_.size());
+      return & net->ptrs_[idx];
 }
 
 extern "C" ivl_drive_t ivl_nexus_ptr_drive0(ivl_nexus_ptr_t net)
@@ -1344,6 +1344,15 @@ extern "C" unsigned ivl_nexus_ptr_pin(ivl_nexus_ptr_t net)
 {
       assert(net);
       return net->pin_;
+}
+
+extern "C" ivl_branch_t ivl_nexus_ptr_branch(ivl_nexus_ptr_t net)
+{
+      if (net == 0)
+	    return 0;
+      if (net->type_ != __NEXUS_PTR_BRA)
+	    return 0;
+      return net->l.bra;
 }
 
 extern "C" ivl_net_const_t ivl_nexus_ptr_con(ivl_nexus_ptr_t net)

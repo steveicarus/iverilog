@@ -116,6 +116,7 @@ ivl_nexus_ptrs
 ivl_nexus_ptr
 ivl_nexus_set_private
 
+ivl_nexus_ptr_branch
 ivl_nexus_ptr_con
 ivl_nexus_ptr_drive0
 ivl_nexus_ptr_drive1
