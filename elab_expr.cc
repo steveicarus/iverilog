@@ -50,6 +50,35 @@ static ivl_nature_t find_access_function(const pform_name_t&path)
 	    return access_function_nature[peek_tail_name(path)];
 }
 
+/*
+ * Look at the signal to see if there is already a branch that
+ * connects the sig to the gnd. If there is, then return it. If not,
+ * return 0.
+ */
+static NetBranch* find_existing_implicit_branch(NetNet*sig, NetNet*gnd)
+{
+      Nexus*nex = sig->pin(0).nexus();
+      for (Link*cur = nex->first_nlink() ; cur ; cur = cur->next_nlink()) {
+	    if (cur->is_equal(sig->pin(0)))
+		  continue;
+
+	    if (cur->get_pin() != 0)
+		  continue;
+
+	    NetBranch*tmp = dynamic_cast<NetBranch*> (cur->get_obj());
+	    if (tmp == 0)
+		  continue;
+
+	    if (tmp->name())
+		  continue;
+
+	    if (tmp->pin(1).is_linked(gnd->pin(0)))
+		  return tmp;
+      }
+
+      return 0;
+}
+
 NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 			     ivl_variable_type_t data_type_lv, int expr_wid_lv,
 			     PExpr*expr)
@@ -1251,15 +1280,27 @@ NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
 	    ivl_assert(*this, dis);
 	    ivl_assert(*this, nature == dis->potential() || nature == dis->flow());
 
-	    branch = new NetBranch(dis);
-	    branch->set_line(*this);
-	    connect(branch->pin(0), sig->pin(0));
-
 	    NetNet*gnd = des->find_discipline_reference(dis, scope);
-	    connect(branch->pin(1), gnd->pin(0));
 
-	    des->add_branch(branch);
-	    join_island(branch);
+	    if ( (branch = find_existing_implicit_branch(sig, gnd)) ) {
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Re-use implicit branch from "
+			     << branch->get_fileline() << endl;
+	    } else {
+		  branch = new NetBranch(dis);
+		  branch->set_line(*this);
+		  connect(branch->pin(0), sig->pin(0));
+		  connect(branch->pin(1), gnd->pin(0));
+
+		  des->add_branch(branch);
+		  join_island(branch);
+
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Create implicit branch." << endl;
+
+	    }
 
       } else {
 	    ivl_assert(*this, 0);

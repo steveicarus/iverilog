@@ -181,6 +181,9 @@ class NetBranch  : public NetPins, public IslandBranch {
       explicit NetBranch(ivl_discipline_t dis, perm_string name);
       ~NetBranch();
 
+	// If the branch is named, this returns the name.
+      perm_string name() const { return name_; }
+
       void dump(ostream&, unsigned) const;
 
     private:
