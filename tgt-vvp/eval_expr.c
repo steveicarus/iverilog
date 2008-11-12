@@ -1823,6 +1823,8 @@ static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
 	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
 		    res.base+subv.wid, res.wid - subv.wid);
       }
+      if (subv.base >= 8)
+            clr_vector(subv);
 
       save_expression_lookaside(res.base, exp, wid);
       return res;
