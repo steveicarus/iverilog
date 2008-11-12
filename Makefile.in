@@ -116,11 +116,12 @@ distclean: clean
 TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o
 FF = cprop.o nodangle.o synth.o synth2.o syn-rules.o
 
-O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o elab_expr.o \
+O = main.o async.o design_dump.o discipline.o dup_expr.o \
+elaborate.o elab_expr.o elaborate_analog.o \
 elab_lval.o elab_net.o elab_pexpr.o elab_scope.o \
-elab_sig.o emit.o eval.o eval_attrib.o \
+elab_sig.o elab_sig_analog.o emit.o eval.o eval_attrib.o \
 eval_tree.o expr_synth.o functor.o lexor.o lexor_keyword.o link_const.o \
-load_module.o netlist.o netmisc.o net_assign.o \
+load_module.o netlist.o netmisc.o net_analog.o net_assign.o \
 net_design.o net_event.o net_expr.o net_func.o \
 net_link.o net_modulo.o net_nex_input.o net_nex_output.o \
 net_proc.o net_scope.o net_tran.o net_udp.o pad_to_width.o \

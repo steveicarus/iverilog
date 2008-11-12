@@ -497,16 +497,30 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
       ivl_signal_t var;
 
       res = draw_eval_real(ivl_stmt_rval(net));
-      clr_word(res);
 
       assert(ivl_stmt_lvals(net) == 1);
       lval = ivl_stmt_lval(net, 0);
       var = ivl_lval_sig(lval);
       assert(var != 0);
 
-      assert(ivl_signal_dimensions(var) == 0);
+      if (ivl_signal_dimensions(var) == 0) {
+	    clr_word(res);
+	    fprintf(vvp_out, "    %%set/wr v%p_0, %d;\n", var, res);
+	    return 0;
+      }
 
-      fprintf(vvp_out, "    %%set/wr v%p_0, %d;\n", var, res);
+	// For now, only support 1-dimensional arrays.
+      assert(ivl_signal_dimensions(var) == 1);
+ 
+	// Calculate the word index into an index register
+      ivl_expr_t word_ex = ivl_lval_idx(lval);
+      int word_ix = allocate_word();
+      draw_eval_expr_into_integer(word_ex, word_ix);
+	// Generate an assignment to write to the array.
+      fprintf(vvp_out, "    %%set/ar v%p, %d, %d;\n", var, word_ix, res);
+
+      clr_word(res);
+      clr_word(word_ix);
 
       return 0;
 }

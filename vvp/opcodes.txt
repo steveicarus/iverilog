@@ -512,9 +512,14 @@ The <wid> is, line the %load/v, the result width. But unlike the
 (%load/vp0/s) to the desired width.
 
 * %load/wr <bit>, <vpi-label>
+* %load/ar <bit>, <array-label>, <index>
 
-This instruction reads a real value from the vpi-like object to a word
-register.
+The %load/wr instruction reads a real value from the vpi-like object
+to a word register <bit>.
+
+The %load/ar instruction reads a real value from an array. The <index>
+is the index register that contains the canonical word address into
+the array.
 
 * %load/x1p <bit>, <functor-label>, <wid>
 
@@ -708,8 +713,17 @@ The address (in canonical form) is precalculated and loaded into index
 register 3. This is the address of the word within the array.
 
 * %set/wr <vpi-label>, <bit>
+* %set/ar <array-label>, <index>, <bit>
 
-This instruction writes a real word to the specified VPI-like object.
+The %set/wr instruction writes a real word to the specified VPI-like
+object.
+
+The %set/ar instruction writes a real work to the specified array
+word. The <array-label> addresses the array, and the <index> is the
+name of the index register to address into the word. The index
+register must contain an integer value that is the canonical address
+of the array word. The <bit> is the index register that contains the
+real value word to write.
 
 * %set/x0 <var-label>, <bit>, <wid>
 

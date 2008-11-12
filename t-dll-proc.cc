@@ -39,16 +39,8 @@ bool dll_target::process(const NetProcTop*net)
       ivl_process_t obj = (struct ivl_process_s*)
 	    calloc(1, sizeof(struct ivl_process_s));
 
-      switch (net->type()) {
-	  case NetProcTop::KINITIAL:
-	    obj->type_ = IVL_PR_INITIAL;
-	    break;
-	  case NetProcTop::KALWAYS:
-	    obj->type_ = IVL_PR_ALWAYS;
-	    break;
-	  default:
-	    assert(0);
-      }
+      obj->type_ = net->type();
+
       FILE_NAME(obj, net);
 
 	/* Save the scope of the process. */

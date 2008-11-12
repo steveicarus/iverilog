@@ -28,15 +28,24 @@
 #endif
 # include  <assert.h>
 
+struct __vpiRealVar* vpip_realvar_from_handle(vpiHandle obj)
+{
+      assert(obj);
+      if (obj->vpi_type->type_code == vpiRealVar)
+	    return (struct __vpiRealVar*)obj;
+      else
+	    return 0;
+}
+
 static int real_var_get(int code, vpiHandle ref)
 {
       assert(ref->vpi_type->type_code == vpiRealVar);
 
-      struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+      struct __vpiRealVar*rfp = vpip_realvar_from_handle(ref);
 
       switch (code) {
 	case vpiArray:
-	    return rfp->parent != 0;
+	    return rfp->is_netarray != 0;
 
 	case vpiSize:
 	    return 1;
@@ -45,7 +54,7 @@ static int real_var_get(int code, vpiHandle ref)
 	    return 0; // Not implemented for now!
 
 	case vpiAutomatic:
-	    return (int) rfp->scope->is_automatic;
+	    return (int) vpip_scope(rfp)->is_automatic;
       }
 
       return 0;
@@ -62,8 +71,8 @@ static char* real_var_get_str(int code, vpiHandle ref)
       }
 
       char *nm, *ixs;
-      if (rfp->parent) {
-	    nm = strdup(vpi_get_str(vpiName, rfp->parent));
+      if (rfp->is_netarray) {
+	    nm = strdup(vpi_get_str(vpiName, rfp->within.parent));
 	    s_vpi_value vp;
 	    vp.format = vpiDecStrVal;
 	    vpi_get_value(rfp->id.index, &vp);
@@ -73,7 +82,7 @@ static char* real_var_get_str(int code, vpiHandle ref)
 	    ixs = NULL;
       }
 
-      char *rbuf = generic_get_str(code, &rfp->scope->base, nm, ixs);
+      char *rbuf = generic_get_str(code, &(vpip_scope(rfp)->base), nm, ixs);
       free(nm);
       return rbuf;
 }
@@ -87,10 +96,13 @@ static vpiHandle real_var_get_handle(int code, vpiHandle ref)
       switch (code) {
 
 	  case vpiParent:
-	    return rfp->parent;
+	    return rfp->is_netarray ? rfp->within.parent : 0;
 
 	  case vpiIndex:
-	    return rfp->parent ? rfp->id.index : 0;
+	    return rfp->is_netarray ? rfp->id.index : 0;
+
+	  case vpiScope:
+	    return &(vpip_scope(rfp)->base);
       }
 
       return 0;
@@ -103,8 +115,8 @@ static vpiHandle real_var_iterate(int code, vpiHandle ref)
       struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
 
       if (code == vpiIndex) {
-	    return rfp->parent ? (rfp->id.index->vpi_type->iterate_)
-	                           (code, rfp->id.index) : 0;
+	    return rfp->is_netarray ? (rfp->id.index->vpi_type->iterate_)
+	                              (code, rfp->id.index) : 0;
       }
 
       return 0;
@@ -179,22 +191,17 @@ void vpip_real_value_change(struct __vpiCallback*cbh,
       fun->add_vpi_callback(cbh);
 }
 
-/*
- * Since reals do not currently support arrays none of the array code
- * has been tested! Though it should work since it is a copy of the
- * signal code.
- */
 vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
 {
       struct __vpiRealVar*obj = (struct __vpiRealVar*)
 	    malloc(sizeof(struct __vpiRealVar));
 
       obj->base.vpi_type = &vpip_real_var_rt;
-      obj->parent = 0;
       obj->id.name = name ? vpip_name_string(name) : 0;
+      obj->is_netarray = 0;
       obj->net = net;
 
-      obj->scope = vpip_peek_current_scope();
+      obj->within.scope = vpip_peek_current_scope();
 
       return &obj->base;
 }

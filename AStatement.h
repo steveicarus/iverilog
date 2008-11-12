@@ -20,37 +20,30 @@
  */
 
 # include  <map>
+# include  "ivl_target.h"
 # include  "StringHeap.h"
 # include  "LineInfo.h"
+# include  "Statement.h"
 # include  "PExpr.h"
 
 class PExpr;
-
-class AStatement  : public LineInfo {
-
-    public:
-      AStatement() { }
-      virtual ~AStatement() =0;
-
-      virtual void dump(ostream&out, unsigned ind) const;
-
-    private: // not implemented
-      AStatement(const AStatement&);
-      AStatement& operator= (const AStatement&);
-};
+class NetAnalog;
+class NetScope;
+class Design;
 
 /*
  * A contribution statement is like an assignment: there is an l-value
  * expression and an r-value expression. The l-value is a branch probe
  * expression.
  */
-class AContrib : public AStatement {
+class AContrib : public Statement {
 
     public:
       AContrib(PExpr*lval, PExpr*rval);
       ~AContrib();
 
       virtual void dump(ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
 
     private:
       PExpr*lval_;
@@ -65,12 +58,15 @@ class AContrib : public AStatement {
 class AProcess : public LineInfo {
 
     public:
-      enum Type { PR_INITIAL, PR_ALWAYS };
-
-      AProcess(Type t, AStatement*st)
+      AProcess(ivl_process_type_t t, Statement*st)
       : type_(t), statement_(st) { }
 
       ~AProcess();
+
+      bool elaborate(Design*des, NetScope*scope) const;
+
+      ivl_process_type_t type() const { return type_; }
+      Statement*statement() { return statement_; }
 
       map<perm_string,PExpr*> attributes;
 
@@ -78,8 +74,8 @@ class AProcess : public LineInfo {
       void dump(ostream&out, unsigned ind) const;
 
     private:
-      Type type_;
-      AStatement*statement_;
+      ivl_process_type_t type_;
+      Statement*statement_;
 
     private: // not implemented
       AProcess(const AProcess&);

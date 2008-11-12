@@ -69,7 +69,6 @@ class NetEvTrig;
 class NetEvWait;
 
 class nature_t;
-class discipline_t;
 
 struct target;
 struct functor_t;
@@ -173,12 +172,12 @@ class IslandBranch {
 class NetBranch  : public NetPins {
 
     public:
-      explicit NetBranch(discipline_t*dis);
-      explicit NetBranch(discipline_t*dis, perm_string name);
+      explicit NetBranch(ivl_discipline_t dis);
+      explicit NetBranch(ivl_discipline_t dis, perm_string name);
       ~NetBranch();
 
     private:
-      discipline_t*discipline_;
+      ivl_discipline_t discipline_;
       perm_string name_;
 };
 
@@ -555,8 +554,8 @@ class NetNet  : public NetObj {
       void set_isint(bool);
 
 	/* Attach a discipline to the net. */
-      discipline_t* get_discipline() const;
-      void set_discipline(discipline_t*dis);
+      ivl_discipline_t get_discipline() const;
+      void set_discipline(ivl_discipline_t dis);
 
 	/* These methods return the msb and lsb indices for the most
 	   significant and least significant bits. These are signed
@@ -620,7 +619,7 @@ class NetNet  : public NetObj {
       ivl_variable_type_t data_type_;
       bool signed_;
       bool isint_;		// original type of integer
-      discipline_t*discipline_;
+      ivl_discipline_t discipline_;
 
       long msb_, lsb_;
       const unsigned dimensions_;
@@ -830,7 +829,7 @@ class NetScope : public Attrib {
 
 	/* Module instance arrays are collected here for access during
 	   the multiple elaboration passes. */
-      typedef svector<NetScope*> scope_vec_t;
+      typedef vector<NetScope*> scope_vec_t;
       map<perm_string, scope_vec_t>instance_arrays;
 
 	/* Loop generate uses this as scratch space during
@@ -1178,6 +1177,9 @@ class NetModulo  : public NetNode {
       unsigned width_a() const;
       unsigned width_b() const;
 
+      void set_signed(bool);
+      bool get_signed() const;
+
       Link& pin_DataA();
       Link& pin_DataB();
       Link& pin_Result();
@@ -1194,6 +1196,8 @@ class NetModulo  : public NetNode {
       unsigned width_r_;
       unsigned width_a_;
       unsigned width_b_;
+
+      bool signed_flag_;
 };
 
 /*
@@ -2431,6 +2435,24 @@ class NetCondit  : public NetProc {
 };
 
 /*
+ * This represents the analog contribution statement. The l-val is a
+ * branch expression, and the r-value is an arbitrary expression that
+ * may include branches and real values.
+ */
+class NetContribution : public NetProc {
+
+    public:
+      explicit NetContribution(NetExpr*lval, NetExpr*rval);
+      ~NetContribution();
+
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetExpr*lval_;
+      NetExpr*rval_;
+};
+
+/*
  * The procedural deassign statement (the opposite of assign) releases
  * any assign expressions attached to the bits of the reg. The
  * lval is the expression of the "deassign <expr>;" statement with the
@@ -3040,12 +3062,10 @@ class NetWhile  : public NetProc {
 class NetProcTop  : public LineInfo, public Attrib {
 
     public:
-      enum Type { KINITIAL, KALWAYS };
-
-      NetProcTop(NetScope*s, Type t, class NetProc*st);
+      NetProcTop(NetScope*s, ivl_process_type_t t, class NetProc*st);
       ~NetProcTop();
 
-      Type type() const { return type_; }
+      ivl_process_type_t type() const { return type_; }
       NetProc*statement();
       const NetProc*statement() const;
 
@@ -3070,12 +3090,38 @@ class NetProcTop  : public LineInfo, public Attrib {
       bool emit(struct target_t*tgt) const;
 
     private:
-      const Type type_;
+      const ivl_process_type_t type_;
       NetProc*const statement_;
 
       NetScope*scope_;
       friend class Design;
       NetProcTop*next_;
+};
+
+class NetAnalogTop  : public LineInfo, public Attrib {
+
+    public:
+      NetAnalogTop(NetScope*scope, ivl_process_type_t t, NetProc*st);
+      ~NetAnalogTop();
+
+      ivl_process_type_t type() const { return type_; }
+
+      NetProc*statement();
+      const NetProc*statement() const;
+
+      NetScope*scope();
+      const NetScope*scope() const;
+
+      void dump(ostream&, unsigned ind) const;
+      bool emit(struct target_t*tgt) const;
+
+    private:
+      const ivl_process_type_t type_;
+      NetProc* statement_;
+
+      NetScope*scope_;
+      friend class Design;
+      NetAnalogTop*next_;
 };
 
 /*
@@ -3655,6 +3701,7 @@ class NetEUBits : public NetEUnary {
 
       virtual NetNet* synthesize(Design*, NetScope*scope);
 
+      virtual NetEUBits* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual ivl_variable_type_t expr_type() const;
 };
@@ -3818,6 +3865,7 @@ class Design {
 
 	// PROCESSES
       void add_process(NetProcTop*);
+      void add_process(NetAnalogTop*);
       void delete_process(NetProcTop*);
       bool check_always_delay() const;
 
@@ -3848,6 +3896,8 @@ class Design {
 	// List the processes in the design.
       NetProcTop*procs_;
       NetProcTop*procs_idx_;
+
+      NetAnalogTop*aprocs_;
 
       map<string,const char*> flags_;
 

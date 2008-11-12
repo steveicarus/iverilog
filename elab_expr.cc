@@ -404,6 +404,16 @@ NetExpr* PEBinary::elaborate_expr_base_div_(Design*des,
 	    }
       }
 
+	/* The original elaboration of the left and right expressions
+	   already tried to elaborate to the expr_wid. If the
+	   expressions are not that width by now, then they need to be
+	   padded. The divide expression operands must be the width
+	   of the output. */
+      if (expr_wid > 0) {
+	    lp = pad_to_width(lp, expr_wid);
+	    rp = pad_to_width(rp, expr_wid);
+      }
+
       NetEBDiv*tmp = new NetEBDiv(op_, lp, rp);
       tmp->set_line(*this);
 
@@ -1231,7 +1241,7 @@ NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
 	    NetNet*sig = scope->find_signal(name);
 	    ivl_assert(*this, sig);
 
-	    discipline_t*dis = sig->get_discipline();
+	    ivl_discipline_t dis = sig->get_discipline();
 	    ivl_assert(*this, dis);
 	    ivl_assert(*this, nature == dis->potential() || nature == dis->flow());
 
@@ -1349,12 +1359,26 @@ unsigned PEConcat::test_width(Design*des, NetScope*scope,
 {
       expr_type_ = IVL_VT_LOGIC;
 
-      if (debug_elaborate)
-	    cerr << get_fileline() << ": debug: CONCAT MISSING TEST_WIDTH!" << endl;
+      unsigned count_width = 0;
+      for (unsigned idx = 0 ; idx < parms_.count() ; idx += 1)
+	    count_width += parms_[idx]->test_width(des, scope, 0, 0, expr_type__, unsized_flag);
+
+      if (repeat_) {
+	      // The repeat expression is self-determined and its own type.
+	    ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
+	    bool tmp_flag = false;
+	    repeat_->test_width(des, scope, 0, 0, tmp_type, tmp_flag);
+
+	    count_width = 0;
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "CONCAT MISSING TEST_WIDTH WHEN REPEAT IS PRESENT!"
+		       << endl;
+      }
 
       expr_type__ = expr_type_;
       unsized_flag = false;
-      return 0;
+      return count_width;
 }
 
 // Keep track of the concatenation/repeat depth.

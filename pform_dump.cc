@@ -135,17 +135,29 @@ ostream& operator<< (ostream&o, const pform_name_t&that)
       return o;
 }
 
+std::ostream& operator << (std::ostream&out, ivl_process_type_t pt)
+{
+      switch (pt) {
+	  case IVL_PR_INITIAL:
+	    out << "initial";
+	    break;
+	  case IVL_PR_ALWAYS:
+	    out << "always";
+	    break;
+      }
+      return out;
+}
 
-std::ostream& operator << (std::ostream&out, ddomain_t dom)
+std::ostream& operator << (std::ostream&out, ivl_dis_domain_t dom)
 {
       switch (dom) {
-	  case DD_NONE:
+	  case IVL_DIS_NONE:
 	    out << "no-domain";
 	    break;
-	  case DD_DISCRETE:
+	  case IVL_DIS_DISCRETE:
 	    out << "discrete";
 	    break;
-	  case DD_CONTINUOUS:
+	  case IVL_DIS_CONTINUOUS:
 	    out << "continuous";
 	    break;
 	  default:
@@ -552,16 +564,6 @@ void Statement::dump(ostream&out, unsigned ind) const
       dump_attributes_map(out, attributes, ind+2);
 }
 
-void AStatement::dump(ostream&out, unsigned ind) const
-{
-	/* I give up. I don't know what type this statement is,
-	   so just print the C++ typeid and let the user figure
-	   it out. */
-      out << setw(ind) << "";
-      out << "/* " << get_fileline() << ": " << typeid(*this).name()
-	  << " */ ;" << endl;
-}
-
 void AContrib::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";
@@ -900,16 +902,8 @@ void PWhile::dump(ostream&out, unsigned ind) const
 
 void PProcess::dump(ostream&out, unsigned ind) const
 {
-      switch (type_) {
-	  case PProcess::PR_INITIAL:
-	    out << setw(ind) << "" << "initial";
-	    break;
-	  case PProcess::PR_ALWAYS:
-	    out << setw(ind) << "" << "always";
-	    break;
-      }
-
-      out << " /* " << get_fileline() << " */" << endl;
+      out << setw(ind) << "" << type_
+	  << " /* " << get_fileline() << " */" << endl;
 
       dump_attributes_map(out, attributes, ind+2);
 
@@ -919,10 +913,10 @@ void PProcess::dump(ostream&out, unsigned ind) const
 void AProcess::dump(ostream&out, unsigned ind) const
 {
       switch (type_) {
-	  case AProcess::PR_INITIAL:
+	  case IVL_PR_INITIAL:
 	    out << setw(ind) << "" << "analog initial";
 	    break;
-	  case AProcess::PR_ALWAYS:
+	  case IVL_PR_ALWAYS:
 	    out << setw(ind) << "" << "analog";
 	    break;
       }
@@ -1149,7 +1143,7 @@ void Module::dump(ostream&out) const
 
       out << "module " << mod_name() << ";" << endl;
 
-      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < ports.size() ;  idx += 1) {
 	    port_t*cur = ports[idx];
 
 	    if (cur == 0) {
@@ -1158,7 +1152,7 @@ void Module::dump(ostream&out) const
 	    }
 
 	    out << "    ." << cur->name << "(" << *cur->expr[0];
-	    for (unsigned wdx = 1 ;  wdx < cur->expr.count() ;  wdx += 1) {
+	    for (unsigned wdx = 1 ;  wdx < cur->expr.size() ;  wdx += 1) {
 		  out << ", " << *cur->expr[wdx];
 	    }
 
@@ -1306,7 +1300,7 @@ void pform_dump(std::ostream&out, const nature_t*nat)
       out << "endnature" << endl;
 }
 
-void pform_dump(std::ostream&out, const discipline_t*dis)
+void pform_dump(std::ostream&out, const ivl_discipline_s*dis)
 {
       out << "discipline " << dis->name() << endl;
       out << "    domain " << dis->domain() << ";" << endl;

@@ -2753,6 +2753,20 @@ bool of_JOIN(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %load/ar <bit>, <array-label>, <index>;
+*/
+bool of_LOAD_AR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned idx = cp->bit_idx[1];
+      unsigned adr = thr->words[idx].w_int;
+
+      double word = array_get_word_r(cp->array, adr);
+      thr->words[bit].w_real = word;
+      return true;
+}
+
+/*
  * %load/av <bit>, <array-label>, <wid> ;
  *
  * <bit> is the thread bit address for the result
@@ -3071,7 +3085,7 @@ bool of_LOADI_WR(vthread_t thr, vvp_code_t cp)
 static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
 			    bool left_is_neg, bool right_is_neg)
 {
-      bool out_is_neg = left_is_neg != right_is_neg;
+      bool out_is_neg = left_is_neg;
       int len=cp->number;
       unsigned char *a, *z, *t;
       a = new unsigned char[len+1];
@@ -3932,6 +3946,24 @@ bool of_RELEASE_WR(vthread_t thr, vvp_code_t cp)
 	// Send a command to this signal to unforce itself.
       vvp_net_ptr_t ptr (net, 3);
       vvp_send_long(ptr, 2 + type);
+
+      return true;
+}
+
+/*
+ * %set/av <label>, <index>, <bit>
+ *
+ * Write the real value in register <bit> to the array indexed by the
+ * integer value addressed bin index register <index>.
+ */
+bool of_SET_AR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->bit_idx[0];
+      unsigned bit = cp->bit_idx[1];
+      unsigned adr = thr->words[idx].w_int;
+
+      double value = thr->words[bit].w_real;
+      array_set_word(cp->array, adr, value);
 
       return true;
 }

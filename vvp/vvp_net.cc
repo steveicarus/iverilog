@@ -1299,6 +1299,32 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
       return flag;
 }
 
+vvp_realarray_t::vvp_realarray_t(unsigned wor)
+: words_(wor)
+{
+      array_ = new double[words_];
+}
+
+vvp_realarray_t::~vvp_realarray_t()
+{
+      delete[]array_;
+}
+
+void vvp_realarray_t::set_word(unsigned word, double value)
+{
+      if (word >= words_)
+	    return;
+      array_[word] = value;
+}
+
+double vvp_realarray_t::get_word(unsigned word) const
+{
+      if (word >= words_)
+	    return 0.0;
+      else
+	    return array_[word];
+}
+
 vvp_vector4array_t::vvp_vector4array_t(unsigned width__, unsigned words__)
 : width_(width__), words_(words__)
 {
@@ -1992,6 +2018,21 @@ static void div_mod (vvp_vector2_t dividend, vvp_vector2_t divisor,
       }
 
       remainder = vvp_vector2_t(dividend, mask.size());
+}
+
+vvp_vector2_t operator - (const vvp_vector2_t&that)
+{
+      vvp_vector2_t neg(that);
+      if (neg.wid_ == 0) return neg;
+
+      const unsigned words = (neg.wid_ + neg.BITS_PER_WORD-1) /
+                                         neg.BITS_PER_WORD;
+      for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
+	    neg.vec_[idx] = ~neg.vec_[idx];
+      }
+      neg += vvp_vector2_t(1, neg.wid_);
+
+      return neg;
 }
 
 vvp_vector2_t operator / (const vvp_vector2_t&dividend,

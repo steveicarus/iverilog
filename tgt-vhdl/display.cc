@@ -157,10 +157,10 @@ int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
                // function in VHDL
 
                assert(i < count);
-               ivl_expr_t net = ivl_stmt_parm(stmt, i++);
-               assert(net);
+               ivl_expr_t netp = ivl_stmt_parm(stmt, i++);
+               assert(netp);
                
-               vhdl_expr *base = translate_expr(net);
+               vhdl_expr *base = translate_expr(netp);
                if (NULL == base)
                   return 1;
                

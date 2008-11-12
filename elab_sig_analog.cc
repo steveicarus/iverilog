@@ -21,17 +21,6 @@
 
 # include  "AStatement.h"
 
-AContrib::AContrib(PExpr*lv, PExpr*rv)
-: lval_(lv), rval_(rv)
-{
-}
+# include  <cstdlib>
+# include  <iostream>
 
-AContrib::~AContrib()
-{
-      delete lval_;
-      delete rval_;
-}
-
-AProcess::~AProcess()
-{
-}

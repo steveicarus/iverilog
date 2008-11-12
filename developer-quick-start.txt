@@ -10,7 +10,7 @@ participating in the Icarus Verilog development process. That
 information will not be repeated here.
 
 What this documentation *will* cover is the gross structure of the
-Icarus Verilog core compiler source. This will help orient you to the
+Icarus Verilog compiler source. This will help orient you to the
 source code itself, so that you can find the global parts where you
 can look for even better detail.
 
@@ -40,7 +40,7 @@ on the core itself.
 - The loadable code generators (tgt-*/)
 
 This core compiler, after it is finished with parsing and semantic
-analysis, uses loadable code generators to emit code for suppoted
+analysis, uses loadable code generators to emit code for supported
 targets. The tgt-*/ directories contains the source for the target
 code generators that are bundled with Icarus Verilog. The tgt-vvp/
 directory in particular contains the code generator for the vvp
@@ -65,20 +65,20 @@ and the source is in this subdirectory.
 
 The Icarus Verilog support for the deprecated PLI-1 is in this
 subdirectory. The vvp runtime does not directly support the
-PLI-1. Insead, the libveriuser library emulates it using the builtin
+PLI-1. Instead, the libveriuser library emulates it using the builtin
 PLI-2 support.
 
 - The Cadence PLI module compatibility module (cadpli/)
 
 It is possible in some specialized situations to load and execute
-PLI-1 code writen for Verilog-XL. This directory contains the source
+PLI-1 code written for Verilog-XL. This directory contains the source
 for the module that provides the Cadence PLI interface.
 
 
 * The Core Compiler
 
 The "ivl" binary is the core compiler that does the heavy lifting of
-compiling the Veriog source (including libraries) and generating the
+compiling the Verilog source (including libraries) and generating the
 output. This is the most complex component of the Icarus Verilog
 compilation system.
 
@@ -86,8 +86,8 @@ The process in the abstract starts with the Verilog lexical analysis
 and parsing to generate an internal "pform". The pform is then
 translated by elaboration into the "netlist" form. The netlist is
 processed by some functors (which include some optimizations and
-optional synthesys) then is translated into the ivl_target internal
-form. And finallly, the ivl_target form is passed via the ivl_target.h
+optional synthesis) then is translated into the ivl_target internal
+form. And finally, the ivl_target form is passed via the ivl_target.h
 API to the code generators.
 
 - Lexical Analysis
@@ -105,9 +105,9 @@ large set of potential keywords.
 - Parsing
 
 The parser input file "parse.y" is passed to the "bison" program to
-generate the parser. The parser uses the functions in parse*.,
-parse*.cc, pform*.h and pform*.cc to generate the pform from the
-stream of input tokens. The pfrom is what compiler writers call a
+generate the parser. The parser uses the functions in parse*.h,
+parse*.cc, pform.h, and pform*.cc to generate the pform from the
+stream of input tokens. The pform is what compiler writers call a
 "decorated parse tree".
 
 The pform itself is described by the classes in the header files

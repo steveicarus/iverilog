@@ -143,7 +143,7 @@ extern PWire* pform_get_wire_in_scope(perm_string name);
  */
 extern void pform_startmodule(const char*, const char*file, unsigned lineno,
 			      svector<named_pexpr_t*>*attr);
-extern void pform_module_set_ports(svector<Module::port_t*>*);
+extern void pform_module_set_ports(vector<Module::port_t*>*);
 
 /* This function is used to support the port definition in a
    port_definition_list. In this case, we have everything needed to
@@ -311,7 +311,7 @@ extern void pform_module_specify_path(PSpecPath*obj);
  * pform_make_behavior creates processes that are declared with always
  * or initial items.
  */
-extern PProcess*  pform_make_behavior(PProcess::Type, Statement*,
+extern PProcess*  pform_make_behavior(ivl_process_type_t, Statement*,
 				      svector<named_pexpr_t*>*attr);
 
 extern svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*);
@@ -373,7 +373,6 @@ extern void pform_error_nested_modules();
  * Functions for handling the parse of natures and disciplines. These
  * functions are in pform_disciplines.cc
  */
-class discipline_t;
 
 extern void pform_start_nature(const char*name);
 extern void pform_end_nature(const struct vlltype&loc);
@@ -383,23 +382,23 @@ extern void pform_nature_access(const struct vlltype&loc, const char*name);
 extern void pform_start_discipline(const char*name);
 extern void pform_end_discipline(const struct vlltype&loc);
 
-extern void pform_discipline_domain(const struct vlltype&loc, ddomain_t use_domain);
+extern void pform_discipline_domain(const struct vlltype&loc, ivl_dis_domain_t use_domain);
 extern void pform_discipline_potential(const struct vlltype&loc, const char*name);
 extern void pform_discipline_flow(const struct vlltype&loc, const char*name);
 
 extern void pform_attach_discipline(const struct vlltype&loc,
-				    discipline_t*discipline, list<perm_string>*names);
+				    ivl_discipline_t discipline, list<perm_string>*names);
 
 extern void pform_dump(ostream&out, const nature_t*);
-extern void pform_dump(ostream&out, const discipline_t*);
+extern void pform_dump(ostream&out, const ivl_discipline_s*);
 
 /* ** pform_analog.cc
 */
 extern void pform_make_analog_behavior(const struct vlltype&loc,
-				       AProcess::Type type, AStatement*st);
+				       ivl_process_type_t type, Statement*st);
 
-extern AStatement*pform_contribution_statement(const struct vlltype&loc,
-					       PExpr*lval, PExpr*rval);
+extern AContrib*pform_contribution_statement(const struct vlltype&loc,
+					     PExpr*lval, PExpr*rval);
 
 extern PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
 						 char*name, char*n1, char*n2);

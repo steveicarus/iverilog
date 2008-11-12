@@ -190,6 +190,13 @@ bool NetProcTop::emit(struct target_t*tgt) const
       return tgt->process(this);
 }
 
+bool NetAnalogTop::emit(struct target_t*tgt) const
+{
+      cerr << get_fileline() << ": sorry: "
+	   << "I don't know how to emit for analog processes." << endl;
+      return false;
+}
+
 bool NetProc::emit_proc(struct target_t*tgt) const
 {
       cerr << "EMIT: Proc type? " << typeid(*this).name() << endl;
@@ -455,6 +462,8 @@ int Design::emit(struct target_t*tgt) const
 	// emit the processes
       bool proc_rc = true;
       for (const NetProcTop*idx = procs_ ;  idx ;  idx = idx->next_)
+	    proc_rc &= idx->emit(tgt);
+      for (const NetAnalogTop*idx = aprocs_ ;  idx ;  idx = idx->next_)
 	    proc_rc &= idx->emit(tgt);
 
       rc = tgt->end_design(this);

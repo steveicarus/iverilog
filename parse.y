@@ -108,6 +108,12 @@ static svector<PExpr*>* copy_range(svector<PExpr*>* orig)
       return copy;
 }
 
+template <class T> void append(vector<T>&out, const vector<T>&in)
+{
+      for (size_t idx = 0 ; idx < in.size() ; idx += 1)
+	    out.push_back(in[idx]);
+}
+
 /*
  * This is a shorthand for making a PECallFunction that takes a single
  * arg. This is used by some of the code that detects built-ins.
@@ -142,7 +148,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       list<perm_string>*perm_strings;
       pform_name_t*pform_name;
 
-      discipline_t*discipline;
+      ivl_discipline_t discipline;
 
       hname_t*hier;
 
@@ -158,7 +164,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 
       Module::port_t *mport;
       LexicalScope::range_t* value_range;
-      svector<Module::port_t*>*mports;
+      vector<Module::port_t*>*mports;
 
       named_pexpr_t*named_pexpr;
       svector<named_pexpr_t*>*named_pexprs;
@@ -180,7 +186,6 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       PEventStatement*event_statement;
       Statement*statement;
       svector<Statement*>*statement_list;
-      AStatement*astatement;
 
       PTaskFuncArg function_type;
 
@@ -304,7 +309,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %type <statement> statement statement_or_null
 %type <statement_list> statement_list
 
-%type <astatement> analog_statement
+%type <statement> analog_statement
 
 %type <letter> spec_polarity
 %type <perm_strings>  specify_path_identifiers
@@ -705,9 +710,9 @@ discipline_items
 
 discipline_item
   : K_domain K_discrete ';'
-      { pform_discipline_domain(@1, DD_DISCRETE); }
+      { pform_discipline_domain(@1, IVL_DIS_DISCRETE); }
   | K_domain K_continuous ';'
-      { pform_discipline_domain(@1, DD_CONTINUOUS); }
+      { pform_discipline_domain(@1, IVL_DIS_CONTINUOUS); }
   | K_potential IDENTIFIER ';'
       { pform_discipline_potential(@1, $2); delete[] $2; }
   | K_flow IDENTIFIER ';'
@@ -1659,30 +1664,28 @@ list_of_identifiers
 
 list_of_ports
 	: port_opt
-		{ svector<Module::port_t*>*tmp
-			  = new svector<Module::port_t*>(1);
+		{ vector<Module::port_t*>*tmp
+			  = new vector<Module::port_t*>(1);
 		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
 	| list_of_ports ',' port_opt
-		{ svector<Module::port_t*>*tmp
-			= new svector<Module::port_t*>(*$1, $3);
-		  delete $1;
+	        { vector<Module::port_t*>*tmp = $1;
+		  tmp->push_back($3);
 		  $$ = tmp;
 		}
 	;
 
 list_of_port_declarations
 	: port_declaration
-		{ svector<Module::port_t*>*tmp
-			  = new svector<Module::port_t*>(1);
+		{ vector<Module::port_t*>*tmp
+			  = new vector<Module::port_t*>(1);
 		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
 	| list_of_port_declarations ',' port_declaration
-		{ svector<Module::port_t*>*tmp
-			= new svector<Module::port_t*>(*$1, $3);
-		  delete $1;
+	        { vector<Module::port_t*>*tmp = $1;
+		  tmp->push_back($3);
 		  $$ = tmp;
 		}
 	| list_of_port_declarations ',' IDENTIFIER
@@ -1690,8 +1693,8 @@ list_of_port_declarations
 		  perm_string name = lex_strings.make($3);
 		  ptmp = pform_module_port_reference(name, @3.text,
 						     @3.first_line);
-		  svector<Module::port_t*>*tmp
-			= new svector<Module::port_t*>(*$1, ptmp);
+		  vector<Module::port_t*>*tmp = $1;
+		  tmp->push_back(ptmp);
 
 		    /* Get the port declaration details, the port type
 		       and what not, from context data stored by the
@@ -1701,7 +1704,6 @@ list_of_port_declarations
 					port_declaration_context.port_net_type,
 					port_declaration_context.sign_flag,
 					port_declaration_context.range, 0);
-		  delete $1;
 		  delete[]$3;
 		  $$ = tmp;
 		}
@@ -2093,16 +2095,16 @@ module_item
   /* Always and initial items are behavioral processes. */
 
   | attribute_list_opt K_always statement
-      { PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS, $3, $1);
+      { PProcess*tmp = pform_make_behavior(IVL_PR_ALWAYS, $3, $1);
 	FILE_NAME(tmp, @2);
       }
   | attribute_list_opt K_initial statement
-      { PProcess*tmp = pform_make_behavior(PProcess::PR_INITIAL, $3, $1);
+      { PProcess*tmp = pform_make_behavior(IVL_PR_INITIAL, $3, $1);
 	FILE_NAME(tmp, @2);
       }
 
   | attribute_list_opt K_analog analog_statement
-      { pform_make_analog_behavior(@2, AProcess::PR_ALWAYS, $3); }
+      { pform_make_analog_behavior(@2, IVL_PR_ALWAYS, $3); }
 
   /* The task declaration rule matches the task declaration
      header, then pushes the function scope. This causes the
@@ -2777,8 +2779,7 @@ port_reference
 
 	  Module::port_t*ptmp = new Module::port_t;
 	  ptmp->name = perm_string();
-	  ptmp->expr = svector<PEIdent*>(1);
-	  ptmp->expr[0] = wtmp;
+	  ptmp->expr.push_back(wtmp);
 
 	  delete[]$1;
 	  $$ = ptmp;
@@ -2801,8 +2802,7 @@ port_reference
 
 	  Module::port_t*ptmp = new Module::port_t;
 	  ptmp->name = perm_string();
-	  ptmp->expr = svector<PEIdent*>(1);
-	  ptmp->expr[0] = tmp;
+	  ptmp->expr.push_back(tmp);
 	  delete[]$1;
 	  $$ = ptmp;
 	}
@@ -2813,8 +2813,7 @@ port_reference
 	  PEIdent*wtmp = new PEIdent(lex_strings.make($1));
 	  FILE_NAME(wtmp, @1);
 	  ptmp->name = lex_strings.make($1);
-	  ptmp->expr = svector<PEIdent*>(1);
-	  ptmp->expr[0] = wtmp;
+	  ptmp->expr.push_back(wtmp);
 	  delete[]$1;
 	  $$ = ptmp;
 	}
@@ -2826,7 +2825,7 @@ port_reference_list
 		{ $$ = $1; }
 	| port_reference_list ',' port_reference
 		{ Module::port_t*tmp = $1;
-		  tmp->expr = svector<PEIdent*>(tmp->expr, $3->expr);
+		  append(tmp->expr, $3->expr);
 		  delete $3;
 		  $$ = tmp;
 		}
@@ -2978,7 +2977,13 @@ real_variable
       { perm_string name = lex_strings.make($1);
         pform_makewire(@1, name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_REAL, 0);
         if ($2 != 0) {
-	      yyerror(@2, "sorry: real variables do not currently support arrays.");
+	      index_component_t index;
+	      if ($2->size() > 1) {
+		    yyerror(@2, "sorry: only 1 dimensional arrays "
+			    "are currently supported.");
+	      }
+	      index = $2->front();
+	      pform_set_reg_idx(name, index.msb, index.lsb);
 	      delete $2;
         }
 	$$ = $1;

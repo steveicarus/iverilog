@@ -19,19 +19,19 @@
 
 # include "config.h"
 
-# include  "AStatement.h"
+# include  <typeinfo>
+# include  <cstdlib>
+# include  <climits>
+# include  "compiler.h"
+# include  "netlist.h"
+# include  "netmisc.h"
+# include  "ivl_assert.h"
 
-AContrib::AContrib(PExpr*lv, PExpr*rv)
-: lval_(lv), rval_(rv)
+NetContribution::NetContribution(NetExpr*l, NetExpr*r)
+: lval_(l), rval_(r)
 {
 }
 
-AContrib::~AContrib()
-{
-      delete lval_;
-      delete rval_;
-}
-
-AProcess::~AProcess()
+NetContribution::~NetContribution()
 {
 }

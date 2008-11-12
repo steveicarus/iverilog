@@ -242,7 +242,7 @@ NetNode::~NetNode()
 	    design_->del_node(this);
 }
 
-NetBranch::NetBranch(discipline_t*dis)
+NetBranch::NetBranch(ivl_discipline_t dis)
 : NetPins(2), discipline_(dis)
 {
       pin(0).set_dir(Link::PASSIVE);
@@ -647,12 +647,12 @@ void NetNet::set_isint(bool flag)
       isint_ = flag;
 }
 
-discipline_t* NetNet::get_discipline() const
+ivl_discipline_t NetNet::get_discipline() const
 {
       return discipline_;
 }
 
-void NetNet::set_discipline(discipline_t*dis)
+void NetNet::set_discipline(ivl_discipline_t dis)
 {
       ivl_assert(*this, discipline_ == 0);
       discipline_ = dis;
@@ -849,7 +849,7 @@ NetProc::~NetProc()
 {
 }
 
-NetProcTop::NetProcTop(NetScope*s, Type t, NetProc*st)
+NetProcTop::NetProcTop(NetScope*s, ivl_process_type_t t, NetProc*st)
 : type_(t), statement_(st), scope_(s)
 {
 }
@@ -872,6 +872,16 @@ const NetProc* NetProcTop::statement() const
 NetScope* NetProcTop::scope()
 {
       return scope_;
+}
+
+NetAnalogTop::NetAnalogTop(NetScope*scope, ivl_process_type_t t, NetProc*st)
+: type_(t), statement_(st), scope_(scope)
+{
+      next_ = 0;
+}
+
+NetAnalogTop::~NetAnalogTop()
+{
 }
 
 const NetScope* NetProcTop::scope() const

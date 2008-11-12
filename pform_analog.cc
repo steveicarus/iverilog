@@ -23,7 +23,7 @@
 # include  "parse_misc.h"
 # include  "AStatement.h"
 
-AStatement* pform_contribution_statement(const struct vlltype&loc,
+AContrib* pform_contribution_statement(const struct vlltype&loc,
 					 PExpr*lval, PExpr*rval)
 {
       AContrib*tmp = new AContrib(lval, rval);
@@ -31,8 +31,8 @@ AStatement* pform_contribution_statement(const struct vlltype&loc,
       return tmp;
 }
 
-void pform_make_analog_behavior(const struct vlltype&loc, AProcess::Type pt,
-				AStatement*statement)
+void pform_make_analog_behavior(const struct vlltype&loc, ivl_process_type_t pt,
+				Statement*statement)
 {
       AProcess*proc = new AProcess(pt, statement);
       FILE_NAME(proc, loc);

@@ -36,7 +36,7 @@
 # include  "ivl_assert.h"
 
 Design:: Design()
-: errors(0), nodes_(0), procs_(0), lcounter_(0)
+    : errors(0), nodes_(0), procs_(0), aprocs_(0), lcounter_(0)
 {
       procs_idx_ = 0;
       des_precision_ = 0;
@@ -764,6 +764,11 @@ void Design::add_process(NetProcTop*pro)
       procs_ = pro;
 }
 
+void Design::add_process(NetAnalogTop*pro)
+{
+      pro->next_ = aprocs_;
+      aprocs_ = pro;
+}
 void Design::delete_process(NetProcTop*top)
 {
       assert(top);

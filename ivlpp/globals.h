@@ -1,7 +1,7 @@
 #ifndef __globals_H
 #define __globals_H
 /*
- * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,9 +22,11 @@
 # include  <stdio.h>
 
 extern void reset_lexor(FILE*out, char*paths[]);
+extern void destroy_lexor();
 extern void load_precompiled_defines(FILE*src);
 extern void define_macro(const char*name, const char*value, int keyword,
                          int argc);
+extern void free_macros();
 extern void dump_precompiled_defines(FILE*out);
 
 /* These variables contain the include directories to be searched when

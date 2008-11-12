@@ -189,7 +189,7 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    break;
       }
 
-      if (discipline_t*dis = get_discipline())
+      if (ivl_discipline_t dis = get_discipline())
 	    o << " discipline=" << dis->name();
 
       o << " (eref=" << peek_eref() << ", lref=" << peek_lref() << ")";
@@ -702,11 +702,11 @@ void NetUDP::dump_node(ostream&o, unsigned ind) const
 void NetProcTop::dump(ostream&o, unsigned ind) const
 {
       switch (type_) {
-	  case NetProcTop::KINITIAL:
+	  case IVL_PR_INITIAL:
 	    o << "initial  /* " << get_fileline() << " in "
 	      << scope_path(scope_) << " */" << endl;
 	    break;
-	  case NetProcTop::KALWAYS:
+	  case IVL_PR_ALWAYS:
 	    o << "always  /* " << get_fileline() << " in "
 	      << scope_path(scope_) << " */" << endl;
 	    break;
@@ -715,6 +715,23 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
       for (unsigned idx = 0 ;  idx < attr_cnt() ;  idx += 1) {
 	    o << setw(ind+2) << "" << "(* " << attr_key(idx) << " = "
 	      << attr_value(idx) << " *)" << endl;
+      }
+
+      statement_->dump(o, ind+2);
+}
+
+void NetAnalogTop::dump(ostream&o, unsigned ind) const
+{
+      switch (type_) {
+	  case IVL_PR_INITIAL:
+	    o << "analog initial /* " << get_fileline() << " in "
+	      << scope_path(scope_) << " */" << endl;
+	    break;
+
+	  case IVL_PR_ALWAYS:
+	    o << "analog /* " << get_fileline() << " in "
+	      << scope_path(scope_) << " */" << endl;
+	    break;
       }
 
       statement_->dump(o, ind+2);
@@ -866,6 +883,15 @@ void NetCondit::dump(ostream&o, unsigned ind) const
 	    o << setw(ind) << "" << "else" << endl;
 	    else_->dump(o, ind+4);
       }
+}
+
+void NetContribution::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "";
+      lval_->dump(o);
+      o << " <+ ";
+      rval_->dump(o);
+      o << ";" << endl;
 }
 
 void NetDeassign::dump(ostream&o, unsigned ind) const
@@ -1491,4 +1517,6 @@ void Design::dump(ostream&o) const
       for (const NetProcTop*idx = procs_ ;  idx ;  idx = idx->next_)
 	    idx->dump(o, 0);
 
+      for (const NetAnalogTop*idx = aprocs_ ; idx ; idx = idx->next_)
+	    idx->dump(o, 0);
 }

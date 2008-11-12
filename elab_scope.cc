@@ -40,6 +40,7 @@
 # include  "PTask.h"
 # include  "PWire.h"
 # include  "Statement.h"
+# include  "AStatement.h"
 # include  "netlist.h"
 # include  "util.h"
 # include  <typeinfo>
@@ -1122,8 +1123,9 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 				    ? NetScope::FORK_JOIN
 				    : NetScope::BEGIN_END);
 	    my_scope->set_line(get_file(), get_lineno());
+            my_scope->is_auto(scope->is_auto());
 
-	      // Scan the parameters in the module, and create stub parameter
+	      // Scan the parameters in the scope, and create stub parameter
               // entries in the scope for the parameter names.
 
             collect_scope_parameters_(my_scope, parameters);

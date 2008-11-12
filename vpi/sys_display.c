@@ -100,7 +100,8 @@ static int vpi_get_dec_size(vpiHandle item)
 	);
 }
 
-static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
+static int array_from_iterator(struct strobe_cb_info*info, vpiHandle argv,
+                               int check_no_aa_vars)
 {
       if (argv) {
 	    vpiHandle item;
@@ -111,13 +112,17 @@ static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
 		  free(items);
 		  info->nitems = 0;
 		  info->items  = 0;
-		  return;
+		  return check_no_aa_vars;
 	    }
+            if (check_no_aa_vars && vpi_get(vpiAutomatic, items[0]))
+                  check_no_aa_vars = 0;
 
 	    for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
 		  items = realloc(items, (nitems+1)*sizeof(vpiHandle));
 		  items[nitems] = item;
 		  nitems += 1;
+                  if (check_no_aa_vars && vpi_get(vpiAutomatic, item))
+                        check_no_aa_vars = 0;
 	    }
 
 	    info->nitems = nitems;
@@ -127,6 +132,7 @@ static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
 	    info->nitems = 0;
 	    info->items = 0;
       }
+      return check_no_aa_vars;
 }
 
 /*
@@ -902,7 +908,7 @@ static PLI_INT32 sys_display_calltf(PLI_BYTE8*name)
 	    info = malloc(sizeof (struct strobe_cb_info));
 	    info->default_format = get_default_format(name);
 	    info->scope = scope;
-	    array_from_iterator(info, argv);
+	    array_from_iterator(info, argv, 0);
 
 	    vpi_put_userdata(sys, info);
       }
@@ -995,7 +1001,13 @@ static PLI_INT32 sys_strobe_calltf(PLI_BYTE8*name)
 	      info->mcd = 1;
       }
 
-      array_from_iterator(info, argv);
+      if (!array_from_iterator(info, argv, 1)) {
+            vpi_printf("ERROR: %s parameters may not include automatically "
+                       "allocated variables\n", name);
+            free(info->items);
+            free(info);
+            return 0;
+      }
       info->name = strdup(name);
       info->default_format = get_default_format(name);
       info->scope= scope;
@@ -1095,7 +1107,13 @@ static PLI_INT32 sys_monitor_calltf(PLI_BYTE8*name)
       }
 
 	/* Make an array of handles from the argument list. */
-      array_from_iterator(&monitor_info, argv);
+      if (!array_from_iterator(&monitor_info, argv, 1)) {
+            vpi_printf("ERROR: $monitor parameters may not include "
+                       "automatically allocated variables\n");
+            free(monitor_info.items);
+	    monitor_info.nitems = 0;
+            return 0;
+      }
       monitor_info.name = strdup(name);
       monitor_info.default_format = get_default_format(name);
       monitor_info.scope = scope;
@@ -1211,7 +1229,7 @@ static PLI_INT32 sys_fdisplay_calltf(PLI_BYTE8*name)
       assert(scope);
       info.default_format = get_default_format(name);
       info.scope = scope;
-      array_from_iterator(&info, argv);
+      array_from_iterator(&info, argv, 0);
       do_display(mcd, &info);
       free(info.items);
 
@@ -1969,7 +1987,7 @@ static PLI_INT32 sys_swrite_calltf(PLI_BYTE8 *name)
   info.name = name;
   info.default_format = get_default_format(name);
   info.scope = scope;
-  array_from_iterator(&info, argv);
+  array_from_iterator(&info, argv, 0);
 
   /* Because %u and %z may put embedded NULL characters into the returned
    * string strlen() may not match the real size! */
@@ -2049,7 +2067,7 @@ static PLI_INT32 sys_sformat_calltf(PLI_BYTE8 *name)
   info.name = name;
   info.default_format = get_default_format(name);
   info.scope = scope;
-  array_from_iterator(&info, argv);
+  array_from_iterator(&info, argv, 0);
   idx = -1;
   size = get_format(&result, fmt, &info, &idx);
   free(fmt);

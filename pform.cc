@@ -384,20 +384,19 @@ Module::port_t* pform_module_port_reference(perm_string name,
       PEIdent*tmp = new PEIdent(name);
       FILE_NAME(tmp, file, lineno);
       ptmp->name = name;
-      ptmp->expr = svector<PEIdent*>(1);
-      ptmp->expr[0] = tmp;
+      ptmp->expr.push_back(tmp);
 
       return ptmp;
 }
 
-void pform_module_set_ports(svector<Module::port_t*>*ports)
+void pform_module_set_ports(vector<Module::port_t*>*ports)
 {
       assert(pform_cur_module);
 
 	/* The parser parses ``module foo()'' as having one
 	   unconnected port, but it is really a module with no
 	   ports. Fix it up here. */
-      if (ports && (ports->count() == 1) && ((*ports)[0] == 0)) {
+      if (ports && (ports->size() == 1) && ((*ports)[0] == 0)) {
 	    delete ports;
 	    ports = 0;
       }
@@ -1327,7 +1326,7 @@ void pform_make_reginit(const struct vlltype&li,
       FILE_NAME(lval, li);
       PAssign*ass = new PAssign(lval, expr, true);
       FILE_NAME(ass, li);
-      PProcess*top = new PProcess(PProcess::PR_INITIAL, ass);
+      PProcess*top = new PProcess(IVL_PR_INITIAL, ass);
       FILE_NAME(top, li);
 
       pform_put_behavior_in_scope(top);
@@ -1970,7 +1969,7 @@ svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
       return out;
 }
 
-PProcess* pform_make_behavior(PProcess::Type type, Statement*st,
+PProcess* pform_make_behavior(ivl_process_type_t type, Statement*st,
 			      svector<named_pexpr_t*>*attr)
 {
       PProcess*pp = new PProcess(type, st);

@@ -623,6 +623,7 @@ struct ivl_signal_s {
       ivl_signal_type_t type_;
       ivl_signal_port_t port_;
       ivl_variable_type_t data_type;
+      ivl_discipline_t discipline;
       perm_string file;
       unsigned lineno;
 

@@ -1170,6 +1170,8 @@ static void draw_lpm_add(ivl_lpm_t net)
 	  case IVL_LPM_MOD:
 	    if (dto == IVL_VT_REAL)
 		  type = "mod.r";
+	    else if (ivl_lpm_signed(net))
+		  type = "mod.s";
 	    else
 		  type = "mod";
 	    break;

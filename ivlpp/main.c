@@ -189,12 +189,14 @@ static int flist_read_names(const char*path)
 		  add_source_file(cp);
       }
 
+      fclose(fd);
       return 0;
 }
 
 int main(int argc, char*argv[])
 {
       int opt, idx;
+      unsigned lp;
       const char*flist_path = 0;
       unsigned flag_errors = 0;
       char*out_path = 0;
@@ -368,6 +370,7 @@ int main(int argc, char*argv[])
 	   start scanning. */
       reset_lexor(out, source_list);
       if (yylex()) return -1;
+      destroy_lexor();
 
       if(depend_file) {
 	      fclose(depend_file);
@@ -377,6 +380,18 @@ int main(int argc, char*argv[])
 	    dump_precompiled_defines(precomp_out);
 	    fclose(precomp_out);
       }
+
+	/* Free the source and include directory lists. */
+      for (lp = 0; lp < source_cnt; lp += 1) {
+	    free(source_list[lp]);
+      }
+      free(source_list);
+      for (lp = 0; lp < include_cnt; lp += 1) {
+	    free(include_dir[lp]);
+      }
+      free(include_dir);
+
+      free_macros();
 
       return error_count;
 }

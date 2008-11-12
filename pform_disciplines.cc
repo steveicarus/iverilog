@@ -24,7 +24,7 @@
 # include  "discipline.h"
 
 map<perm_string,nature_t*> natures;
-map<perm_string,discipline_t*> disciplines;
+map<perm_string,ivl_discipline_t> disciplines;
 map<perm_string,nature_t*> access_function_nature;
 
 static perm_string nature_name = perm_string::perm_string();
@@ -88,21 +88,21 @@ void pform_end_nature(const struct vlltype&loc)
 
 
 static perm_string discipline_name;
-static ddomain_t discipline_domain = DD_NONE;
+static ivl_dis_domain_t discipline_domain = IVL_DIS_NONE;
 static nature_t* discipline_potential = 0;
 static nature_t* discipline_flow = 0;
 
 void pform_start_discipline(const char*name)
 {
       discipline_name = lex_strings.make(name);
-      discipline_domain = DD_NONE;
+      discipline_domain = IVL_DIS_NONE;
 }
 
-void pform_discipline_domain(const struct vlltype&loc, ddomain_t use_domain)
+void pform_discipline_domain(const struct vlltype&loc, ivl_dis_domain_t use_domain)
 {
-      assert(use_domain != DD_NONE);
+      assert(use_domain != IVL_DIS_NONE);
 
-      if (discipline_domain != DD_NONE) {
+      if (discipline_domain != IVL_DIS_NONE) {
 	    cerr << loc.text << ":" << loc.first_line << ": error: "
 		 << "Too many domain attributes for discipline "
 		 << discipline_name << "." << endl;
@@ -159,18 +159,20 @@ void pform_end_discipline(const struct vlltype&loc)
 {
 	// If the domain is not otherwise specified, then take it to
 	// be continuous if potential or flow natures are given.
-      if (discipline_domain == DD_NONE && (discipline_potential||discipline_flow))
-	    discipline_domain = DD_CONTINUOUS;
+      if (discipline_domain == IVL_DIS_NONE && (discipline_potential||discipline_flow))
+	    discipline_domain = IVL_DIS_CONTINUOUS;
 
-      discipline_t*tmp = new discipline_t(discipline_name, discipline_domain,
-					  discipline_potential, discipline_flow);
+      ivl_discipline_t tmp = new ivl_discipline_s(discipline_name,
+						  discipline_domain,
+						  discipline_potential,
+						  discipline_flow);
       disciplines[discipline_name] = tmp;
 
       FILE_NAME(tmp, loc);
 
 	/* Clear the static variables for the next item. */
       discipline_name = perm_string::perm_string();
-      discipline_domain = DD_NONE;
+      discipline_domain = IVL_DIS_NONE;
       discipline_potential = 0;
       discipline_flow = 0;
 }
@@ -183,7 +185,7 @@ void pform_end_discipline(const struct vlltype&loc)
  * in the current lexical scope.
  */
 void pform_attach_discipline(const struct vlltype&loc,
-			     discipline_t*discipline, list<perm_string>*names)
+			     ivl_discipline_t discipline, list<perm_string>*names)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; cur ++ ) {
@@ -197,7 +199,7 @@ void pform_attach_discipline(const struct vlltype&loc,
 		  assert(cur_net);
 	    }
 
-	    if (discipline_t*tmp = cur_net->get_discipline()) {
+	    if (ivl_discipline_t tmp = cur_net->get_discipline()) {
 		  cerr << loc.text << ":" << loc.first_line << ": error: "
 		       << "discipline " << discipline->name()
 		       << " cannot override existing discipline " << tmp->name()

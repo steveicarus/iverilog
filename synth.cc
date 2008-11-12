@@ -131,10 +131,10 @@ void synth_f::process(class Design*des, class NetProcTop*top)
 {
       top_ = top;
       switch (top->type()) {
-	  case NetProcTop::KALWAYS:
+	  case IVL_PR_ALWAYS:
 	    proc_always_(des);
 	    break;
-	  case NetProcTop::KINITIAL:
+	  case IVL_PR_INITIAL:
 	    proc_initial_(des);
 	    break;
       }

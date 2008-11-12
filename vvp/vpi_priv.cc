@@ -58,6 +58,14 @@ struct __vpiScope* vpip_scope(__vpiSignal*sig)
 	    return sig->within.scope;
 }
 
+struct __vpiScope* vpip_scope(__vpiRealVar*sig)
+{
+      if (sig->is_netarray)
+	    return  (struct __vpiScope*) vpi_handle(vpiScope, sig->within.parent);
+      else
+	    return sig->within.scope;
+}
+
 const char *vpip_string(const char*str)
 {
       static vpip_string_chunk first_chunk = {0, {0}};
@@ -683,6 +691,14 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 
       if (flags!=vpiNoDelay && flags!=vpiForceFlag && flags!=vpiReleaseFlag) {
 	    vvp_time64_t dly;
+
+            if (vpi_get(vpiAutomatic, obj)) {
+                  fprintf(stderr, "vpi error: cannot put a value with "
+                                  "a delay on automatically allocated "
+                                  "variable '%s'\n",
+                                  vpi_get_str(vpiName, obj));
+                  return 0;
+            }
 
 	    assert(when != 0);
 
