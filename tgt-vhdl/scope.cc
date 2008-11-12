@@ -275,7 +275,7 @@ static string make_safe_name(ivl_signal_t sig)
    const char *base = ivl_signal_basename(sig);      
    if (base[0] == '_')
       return string("VL") + base;
-   
+
    const char *vhdl_reserved[] = {
       "in", "out", "entity", "architecture", "inout", "array",
       "is", "not", "and", "or", "bus", "bit", "line", // Etc...
