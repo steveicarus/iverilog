@@ -32,6 +32,7 @@
 # include  <set>
 # include  <utility>
 # include  "ivl_target.h"
+# include  "ivl_target_priv.h"
 # include  "pform_types.h"
 # include  "config.h"
 # include  "verinum.h"
@@ -184,10 +185,15 @@ class NetBranch  : public NetPins, public IslandBranch {
 	// If the branch is named, this returns the name.
       perm_string name() const { return name_; }
 
+      ivl_branch_s* target_obj() const { return &target_obj_; }
+
       void dump(ostream&, unsigned) const;
 
     private:
       perm_string name_;
+
+      mutable ivl_branch_s target_obj_;
+
 	// The design class uses this member to list the branches.
       friend class Design;
       NetBranch*next_;
@@ -3006,6 +3012,9 @@ class NetEAccess : public NetExpr {
     public:
       explicit NetEAccess(NetBranch*br, ivl_nature_t nat);
       ~NetEAccess();
+
+      ivl_nature_t get_nature() const { return nature_; }
+      NetBranch*   get_branch() const { return branch_; }
 
       virtual ivl_variable_type_t expr_type() const;
       virtual void dump(ostream&) const;

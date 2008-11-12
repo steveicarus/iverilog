@@ -261,6 +261,12 @@ extern "C" const char* ivl_expr_bits(ivl_expr_t net)
       return net->u_.number_.bits_;
 }
 
+extern "C" ivl_branch_t ivl_expr_branch(ivl_expr_t net)
+{
+      assert(net && (net->type_ == IVL_EX_BACCESS));
+      return net->u_.branch_.branch;
+}
+
 extern "C" ivl_scope_t ivl_expr_def(ivl_expr_t net)
 {
       assert(net);
@@ -297,6 +303,12 @@ extern "C" const char* ivl_expr_name(ivl_expr_t net)
 	    assert(0);
       }
       return 0;
+}
+
+extern "C" ivl_nature_t ivl_expr_nature(ivl_expr_t net)
+{
+      assert(net && (net->type_ == IVL_EX_BACCESS));
+      return net->u_.branch_.nature;
 }
 
 extern "C" char ivl_expr_opcode(ivl_expr_t net)

@@ -20,6 +20,7 @@
  */
 
 # include  <inttypes.h>
+# include  <vector>
 
 /*
 * This header has declarations related to the ivl_target.h API that
@@ -47,7 +48,7 @@ class ivl_discipline_s;
 struct ivl_island_s {
       ivl_discipline_s*discipline;
 	// user accessible flags. They are initially false, always.
-      vector<bool> flags;
+      std::vector<bool> flags;
 };
 
 #endif

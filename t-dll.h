@@ -233,6 +233,11 @@ struct ivl_expr_s {
 	    } binary_;
 
 	    struct {
+		  ivl_branch_t branch;
+		  ivl_nature_t nature;
+	    } branch_;
+
+	    struct {
 		  unsigned   rept;
 		  unsigned   parms;
 		  ivl_expr_t*parm;

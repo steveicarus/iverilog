@@ -160,6 +160,9 @@ void dll_target::expr_access_func(const NetEAccess*net)
       expr_->lineno = net->get_lineno();
       expr_->width_ = 1;
       expr_->signed_= 1;
+
+      expr_->u_.branch_.branch = net->get_branch()->target_obj();
+      expr_->u_.branch_.nature = net->get_nature();
 }
 
 void dll_target::expr_binary(const NetEBinary*net)

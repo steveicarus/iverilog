@@ -780,7 +780,7 @@ void dll_target::make_const_delays_(struct ivl_net_const_s*obj,
 
 bool dll_target::branch(const NetBranch*net)
 {
-      struct ivl_branch_s*obj = new struct ivl_branch_s;
+      struct ivl_branch_s*obj = net->target_obj();
       ivl_assert(*net, net->pin_count() == 2);
 
       assert(net->pin(0).nexus()->t_cookie());

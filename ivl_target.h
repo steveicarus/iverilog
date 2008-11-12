@@ -729,12 +729,16 @@ extern unsigned ivl_expr_lineno(ivl_expr_t net);
 
   /* IVL_EX_NUMBER */
 extern const char* ivl_expr_bits(ivl_expr_t net);
+  /* IVL_EX_BACCESS */
+extern ivl_branch_t ivl_expr_branch(ivl_expr_t net);
   /* IVL_EX_UFUNC */
 extern ivl_scope_t ivl_expr_def(ivl_expr_t net);
   /* IVL_EX_REALNUM */
 extern double ivl_expr_dvalue(ivl_expr_t net);
   /* IVL_EX_SIGNAL, IVL_EX_SFUNC, IVL_EX_VARIABLE */
 extern const char* ivl_expr_name(ivl_expr_t net);
+  /* IVL_EX_BACCESS */
+extern ivl_nature_t ivl_expr_nature(ivl_expr_t net);
   /* IVL_EX_BINARY IVL_EX_UNARY */
 extern char        ivl_expr_opcode(ivl_expr_t net);
   /* IVL_EX_BINARY  IVL_EX_UNARY, IVL_EX_MEMORY IVL_EX_TERNARY */
