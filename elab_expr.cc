@@ -1359,12 +1359,26 @@ unsigned PEConcat::test_width(Design*des, NetScope*scope,
 {
       expr_type_ = IVL_VT_LOGIC;
 
-      if (debug_elaborate)
-	    cerr << get_fileline() << ": debug: CONCAT MISSING TEST_WIDTH!" << endl;
+      unsigned count_width = 0;
+      for (unsigned idx = 0 ; idx < parms_.count() ; idx += 1)
+	    count_width += parms_[idx]->test_width(des, scope, 0, 0, expr_type__, unsized_flag);
+
+      if (repeat_) {
+	      // The repeat expression is self-determined and its own type.
+	    ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
+	    bool tmp_flag = false;
+	    repeat_->test_width(des, scope, 0, 0, tmp_type, tmp_flag);
+
+	    count_width = 0;
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "CONCAT MISSING TEST_WIDTH WHEN REPEAT IS PRESENT!"
+		       << endl;
+      }
 
       expr_type__ = expr_type_;
       unsized_flag = false;
-      return 0;
+      return count_width;
 }
 
 // Keep track of the concatenation/repeat depth.
