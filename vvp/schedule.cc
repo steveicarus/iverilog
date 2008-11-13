@@ -20,12 +20,14 @@
 # include  "schedule.h"
 # include  "vthread.h"
 # include  "slab.h"
+# include  "vpi_priv.h"
 # include  <new>
 # include  <signal.h>
 # include  <stdlib.h>
 # include  <assert.h>
 
 # include  <stdio.h>
+# include  "extpwl.h"
 
 unsigned long count_assign_events = 0;
 unsigned long count_gen_events = 0;
@@ -722,8 +724,243 @@ static void run_rosync(struct event_time_s*ctim)
       }
 }
 
-void schedule_simulate(void)
+inline double getdtime(struct event_time_s *et)
 {
+  return et->delay * pow(10.0,vpip_get_time_precision());
+}
+
+double SimTimeD     = 0.0;
+double SimTimeA     = 0.0;
+double SimTimeDlast = 0.0;
+
+void schedule_assign_pv_sync(vvp_net_t *node,int lgc, double time)
+{
+  double        d_dly = time - SimTimeD;
+  int           i_dly = d_dly / pow(10.0,vpip_get_time_precision());
+  vvp_time64_t  dly(i_dly);
+  vvp_vector4_t val(1,lgc);
+  vvp_sub_pointer_t<vvp_net_t> ptr(node,0);
+  
+  schedule_assign_plucked_vector(ptr,dly,val,0,1);
+}
+
+static SpcIvlCB *reattach(SpcIvlCB **nodes,vvp_net_t *primary,
+			  vvp_net_ptr_t ptr)
+{
+  vvp_net_t     *cur;
+  vvp_net_ptr_t  next;
+
+  for (; cur = ptr.ptr(); ptr = next) {
+    int port = ptr.port();
+    next     = cur->port[port];
+    SpcIvlCB  *scn_n;
+    for (int l = BL_NET; l <= BL_REG ; l++) {
+      SpcIvlCB **scn_p  = &nodes[l];
+      for (; scn_n = *scn_p ; scn_p = &scn_n->next) {
+	if (scn_n->sig->node == cur) {
+	  scn_n->others  = 1;
+	  SpcIvlCB  *sub = new SpcIvlCB;
+	  sub->next      = scn_n;
+	  sub->mode      = scn_n->mode;
+	  sub->sig       = new __vpiSignal();
+	  sub->sig->node = primary;
+	  sub->non_local = 1;
+	  return sub;
+	}
+      }
+    }
+    if (scn_n = reattach(nodes,primary,ptr.ptr()->out)) {
+      return scn_n;
+    }
+  }
+
+  return 0;
+}
+
+static PLI_INT32 extMarker(struct t_cb_data *cb)
+{
+  return 0;
+}
+
+static void doExtPwl(struct event_s *nbas,struct event_time_s *et)
+{
+  struct event_s  *scan  = nbas;
+  SpcIvlCB       **nodes = spicenets();
+
+  static t_vpi_time never = {vpiSuppressTime};
+
+  while (scan) {
+    assign_vector4_event_s *v4 = dynamic_cast<assign_vector4_event_s *>(scan);
+    while (v4) {
+      SpcIvlCB            *scn_n;
+      vvp_net_t           *node    = v4->ptr.ptr();
+      vvp_fun_signal_base *sig_fun = dynamic_cast<vvp_fun_signal_base*>(node->fun);
+      __vpiCallback       *cb      = sig_fun->has_vpi_callback(extMarker);
+      if (cb) {
+	if (scn_n = (SpcIvlCB *)cb->cb_data.user_data) goto propagate;
+        goto next_nba;
+      }
+      for (scn_n = nodes[2]; scn_n ; scn_n = scn_n->next) {
+	if (scn_n->sig->node == node) {
+	 setup:
+          cb                     = new_vpi_callback();
+	  cb->cb_data.cb_rtn     = extMarker;
+	  cb->cb_data.user_data  = (char *)scn_n;
+	  cb->cb_data.value      = 0;
+	  cb->cb_data.time       = &never;
+	  sig_fun->add_vpi_callback(cb);          
+	 propagate:
+	  static vvp_vector4_t lgc1(1,true),lgc0(1,false),lgcx(1);
+          switch (scn_n->mode) {
+            case 1: {
+	      scn_n->coeffs[0] = SimTimeD;
+	   // scn_n->coeffs[1] = as is 
+	      scn_n->coeffs[2] = SimTimeD + getdtime(et);
+	      scn_n->coeffs[3] = scn_n->lo  
+	                          +  v4->val.eeq(lgc1)
+	                           * (scn_n->hi - scn_n->lo);
+	    } break;
+            case 3:
+	      scn_n->lo = scn_n->Pwr(0,"BSgetPWR")->last_value;
+	      scn_n->hi = scn_n->Pwr(1,"BSgetPWR")->last_value;
+            case 2: {
+	      int go2;
+	      if (v4->val.has_xz()) {
+		if (0 == SimTimeD) goto next_nba;
+		go2 = v4->val.eeq(lgcx) - 2;
+	      } else {
+		go2 = v4->val.eeq(lgc1);
+	      }
+	      double dt_abs = SimTimeD + getdtime(et);
+              double rft;
+              switch (go2) {
+	      case  1: rft = scn_n->Rise(); break;
+	      case  0: rft = scn_n->Fall(); break;
+     /* z */  case -2: scn_n->set       = -1;
+		       scn_n->coeffs[6] = dt_abs; // for checks
+     /* x */  case -1: goto next_nba;
+	      }
+	      double rstart = dt_abs - (rft/2);
+              if (rstart < SimTimeA) {
+		  rstart = SimTimeA;
+	      }
+	      double rend  = rstart + rft;
+	      scn_n->set   = 1;
+              double lv    = scn_n->LastValue(),
+                     gv    = go2 ? scn_n->hi
+                                 : scn_n->lo,
+	  	     fv,
+		     split;
+	      int    s     = 0;
+	      while (scn_n->last_time > scn_n->coeffs[2+s]) {
+		s += 2;
+	      }
+	      if (s) {
+		int i = 0;
+		for (; i + s < scn_n->Slots(); i++) {
+		  scn_n->coeffs[i] = scn_n->coeffs[i+s];
+		}
+		scn_n->fillEoT(i,scn_n->coeffs[i-1]);
+	      }
+	      int    off  = 0;
+	      double slew = nan(""),
+                     t2;
+              if (rstart >= scn_n->coeffs[0]) {
+		while (rstart > (t2 = scn_n->coeffs[2+off])) off += 2;
+		slew = (fv = scn_n->coeffs[3+off]) - scn_n->coeffs[1+off];
+		if (fv == gv) { // destination matches current 
+		  if (t2 < rend || 0.0 == slew) { // current arrives faster
+		    goto next_nba; // no change
+		  }
+		} else if (0.0 == slew) { // starting on flat
+		  goto tail;
+		}
+	       split:
+		split = (rstart - scn_n->coeffs[off])
+		                /((t2 = scn_n->coeffs[2+off]) - scn_n->coeffs[off]);
+		if (split >= 1.0) {
+		  if (1.0 == split) {
+		    lv = scn_n->coeffs[3+off];
+		  } else {
+		    assert(0);
+		  }
+		} else {
+		  lv = scn_n->coeffs[1+off] 
+		            + (split * (scn_n->coeffs[3+off] - scn_n->coeffs[1+off]));
+		  if (gv == fv && rend > t2) {
+		    goto next_nba; // no change
+		  }
+		}
+	      } else {
+		if (gv == lv) {
+		  if (gv == scn_n->coeffs[1]) {
+		    scn_n->fillEoT(2,gv);
+		    goto check;
+		  }
+		  fv = scn_n->coeffs[3];
+		  goto split;
+		}
+		off = -2;
+		goto tail;
+	      }
+            knee:
+	      scn_n->coeffs[3+off] = lv;
+            tail:
+	      scn_n->fillEoT(6+off,gv);
+	      scn_n->coeffs[5+off] = gv;
+	      assert(scn_n->coeffs[5+off] != scn_n->coeffs[3+off]);
+	      scn_n->coeffs[4+off] = rend;
+	      scn_n->coeffs[2+off] = rstart;
+	    check:
+	      scn_n->checkPWL();
+	      if (scn_n->non_local) {
+		SpcIvlCB **p_act  = &scn_n->next->active,
+		          *active = *p_act;
+                if (active != scn_n) {
+		  if (active && active->set > 0) {
+		    active->set = 0;
+		  }            
+		  *p_act = scn_n;
+		}
+                scn_n->next->setCoeffs(scn_n->coeffs);
+	      } 
+	    } break;
+	  }
+          goto next_nba;
+	}
+      }
+      if (scn_n = reattach(nodes,node,v4->ptr)) {
+	goto setup;
+      }
+      cb                     = new_vpi_callback();
+      cb->cb_data.cb_rtn     = extMarker;
+      cb->cb_data.user_data  = 0;
+      cb->cb_data.value      = 0;
+      cb->cb_data.time       = &never;
+      sig_fun->add_vpi_callback(cb);
+      break;
+    }
+   next_nba:
+    scan = scan->next;
+    if (scan == nbas) break;
+  }
+}
+
+static double   SimDelayD = -1.0;
+static sim_mode SimState  = SIM_ALL;
+
+inline static sim_mode schedule_simulate_m(sim_mode mode)
+{
+      struct event_s      *cur  = 0;
+      struct event_time_s *ctim = 0;
+      double               d_dly;
+
+      switch (mode) {
+      case SIM_CONT0: if (ctim = sched_list) goto sim_cont0;
+	              goto done;
+      case SIM_CONT1: goto sim_cont1;
+      }
+
       schedule_time = 0;
 
       // Execute end of compile callbacks
@@ -750,15 +987,32 @@ void schedule_simulate(void)
 		  stop_handler(0);
 		  // You can finish from the debugger without a time change.
 		  if (!schedule_runnable) break;
-		  continue;
+		  goto cycle_done;
 	    }
 
 	      /* ctim is the current time step. */
-	    struct event_time_s* ctim = sched_list;
+            ctim = sched_list;
 
 	      /* If the time is advancing, then first run the
 		 postponed sync events. Run them all. */
 	    if (ctim->delay > 0) {
+	          switch (mode) {
+	          case SIM_CONT0:
+	          case SIM_CONT1:
+	          case SIM_INIT: d_dly = getdtime(ctim);
+			         if (d_dly > 0) {
+                                   doExtPwl(sched_list->nbassign,ctim);
+				   SimDelayD = d_dly; return SIM_CONT0; 
+		                  sim_cont0:
+				   double dly = getdtime(ctim),
+                                          te  = SimTimeDlast + dly;
+				   if (te > SimTimeA) {
+				     SimDelayD = te - SimTimeA;
+				     return SIM_PREM; 
+				   }
+ 				   SimTimeD  = SimTimeDlast + dly;
+			         }
+	          }
 
 		  if (!schedule_runnable) break;
 		  schedule_time += ctim->delay;
@@ -785,8 +1039,24 @@ void schedule_simulate(void)
 			if (ctim->active == 0) {
 			      run_rosync(ctim);
 			      sched_list = ctim->next;
+			      switch (mode) {
+			      case SIM_CONT0:
+			      case SIM_CONT1:
+			      case SIM_INIT: 
+				
+				d_dly = getdtime(ctim);
+				if (d_dly > 0) {
+				  doExtPwl(sched_list->nbassign,ctim);
+				  SimDelayD = d_dly;
+				  delete ctim;
+				  return SIM_CONT1;
+		                 sim_cont1:
+                                  // SimTimeD += ???;
+				  goto cycle_done;
+				}
+			      }
 			      delete ctim;
-			      continue;
+			      goto cycle_done;
 			}
 		  }
 	    }
@@ -794,7 +1064,7 @@ void schedule_simulate(void)
 	      /* Pull the first item off the list. If this is the last
 		 cell in the list, then clear the list. Execute that
 		 event type, and delete it. */
-	    struct event_s*cur = ctim->active->next;
+            cur = ctim->active->next;
 	    if (cur->next == cur) {
 		  ctim->active = 0;
 	    } else {
@@ -804,11 +1074,62 @@ void schedule_simulate(void)
 	    cur->run_run();
 
 	    delete (cur);
+
+          cycle_done:;
       }
 
+      if (SIM_ALL == mode) {
 
-      signals_revert();
+	signals_revert();
 
-      // Execute post-simulation callbacks
-      vpiPostsim();
+	// Execute post-simulation callbacks
+	vpiPostsim();
+      }
+
+   done:
+      return SIM_DONE;
 }
+
+void schedule_simulate()
+{
+  schedule_simulate_m(SIM_ALL);
+}
+
+static SpcDllData *SpcControl;
+
+void ActivateCB(double when,SpcIvlCB *cb)
+{
+  (*SpcControl->activate)(SpcControl,cb,when);
+}
+
+extern "C" double startsim(char *analysis,SpcDllData *control)
+{
+  SimDelayD  = -1;
+  SpcControl = control;
+
+  if (0 == strcmp("TRAN",analysis)) {
+      SimState = schedule_simulate_m(SIM_INIT);
+  }
+
+  SimTimeDlast = SimTimeD;
+
+  return SimDelayD;
+} 
+
+extern "C" double contsim(char *analysis,double time)
+{
+  SimTimeA  = time;
+  SimDelayD = -1;
+
+  if (0 == strcmp("TRAN",analysis)) {
+    SimState = SIM_CONT0;
+    while (SimTimeDlast < time) {
+      SimState = schedule_simulate_m(SimState);
+      SimTimeDlast = SimTimeD;
+      if (SIM_PREM <= SimState) break;
+    }
+  }
+
+  return SimDelayD;
+} 
+

@@ -223,6 +223,7 @@ struct __vpiSignal {
       unsigned signed_flag  : 1;
       unsigned isint_       : 1; // original type was integer
       unsigned is_netarray  : 1; // This is word of a net array
+      unsigned ext_bound    : 2; // Bound to an external signal
 	/* The represented value is here. */
       vvp_net_t*node;
 };

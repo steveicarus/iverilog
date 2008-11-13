@@ -52,6 +52,10 @@ extern void schedule_assign_plucked_vector(vvp_net_ptr_t ptr,
 					   const vvp_vector4_t&val,
 					   unsigned adr, unsigned wid);
 
+extern void schedule_assign_pv_sync(vvp_net_t *node,
+				    int lgc,
+                                    double time);
+
 extern void schedule_assign_array_word(vvp_array_t mem,
 				       unsigned word_address,
 				       unsigned off,
@@ -115,6 +119,11 @@ struct vvp_gen_event_s
  * This runs the simulator. It runs until all the functors run out or
  * the simulation is otherwise finished.
  */
+enum sim_mode {SIM_ALL,
+               SIM_INIT,SIM_CONT0,SIM_CONT1,
+               SIM_PREM,SIM_DONE};
+extern double SimTimeD, // time in digital
+              SimTimeA; // time in analog
 extern void schedule_simulate(void);
 
 /*

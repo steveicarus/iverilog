@@ -138,7 +138,13 @@ const char*module_tab[64];
 extern void vpi_mcd_init(FILE *log);
 extern void vvp_vpi_init(void);
 
+#ifdef VVP_SHARED
+int vvp_master = 0;
+int vvp_main(int argc, char*argv[])
+#else
+int vvp_master = 1;
 int main(int argc, char*argv[])
+#endif
 {
       int opt;
       unsigned flag_errors = 0;
@@ -303,6 +309,8 @@ int main(int argc, char*argv[])
       }
 
 
+#ifndef VVP_SHARED
+
       schedule_simulate();
 
       if (verbose_flag) {
@@ -327,6 +335,8 @@ int main(int argc, char*argv[])
 	    vpi_mcd_printf(1, "    %8lu other events (pool=%lu)\n",
 			   count_gen_events, count_gen_pool());
       }
+
+#endif
 
       return vvp_return_value;
 }

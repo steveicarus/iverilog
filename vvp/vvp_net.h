@@ -1197,6 +1197,8 @@ class vvp_vpi_callback {
 
       virtual void get_value(struct t_vpi_value*value) =0;
 
+      __vpiCallback *has_vpi_callback(PLI_INT32(* cb_rtn)(struct t_cb_data *cb));
+
     private:
       struct __vpiCallback*vpi_callbacks_;
 };

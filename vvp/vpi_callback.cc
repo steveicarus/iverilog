@@ -515,6 +515,16 @@ void vvp_vpi_callback::add_vpi_callback(__vpiCallback*cb)
       vpi_callbacks_ = cb;
 }
 
+__vpiCallback *vvp_vpi_callback::has_vpi_callback(PLI_INT32(* cb_rtn)(struct t_cb_data *cb))
+{
+  struct __vpiCallback *cur = vpi_callbacks_;
+  
+  for (; cur ; cur = cur->next) {
+    if (cb_rtn == cur->cb_data.cb_rtn) return cur;
+  }
+  return 0;
+}
+
 /*
  * A vvp_fun_signal uses this method to run its callbacks whenever it
  * has a value change. If the cb_rtn is non-nil, then call the
