@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,87 +16,32 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_plusargs.c,v 1.7 2007/03/14 04:05:51 steve Exp $"
-#endif
 
+# include  "sys_priv.h"
 # include  <vpi_user.h>
 # include  <string.h>
 # include  <stdlib.h>
 # include  <assert.h>
-
-static PLI_INT32 sys_plusargs_sizetf(PLI_BYTE8*x)
-{
-      return 32;
-}
-
-/*
- * The compiletf for $test$plusargs checks that there is one argument
- * to the function call, and that argument is a constant string.
- */
-static PLI_INT32 sys_test_plusargs_compiletf(PLI_BYTE8*xx)
-{
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle arg;
-
-      if (argv == 0) {
-	    vpi_printf("ERROR: $test$plusargs requires one argument\n");
-	    vpi_control(vpiFinish, 1);
-	    return 0;
-      }
-
-      arg = vpi_scan(argv);
-      assert(arg != 0);
-
-      switch (vpi_get(vpiType, arg)) {
-	  case vpiConstant:
-	    if (vpi_get(vpiConstType, arg) != vpiStringConst) {
-		  vpi_printf("ERROR: Argument of $test$plusargs "
-			     " must be a constant string.\n");
-		  vpi_control(vpiFinish, 1);
-		  return 0;
-	    }
-	    break;
-
-	  default:
-	    vpi_printf("ERROR: Argument of $test$plusargs "
-		       " must be a constant string.\n");
-	    vpi_control(vpiFinish, 1);
-	    return 0;
-      }
-
-
-      arg = vpi_scan(argv);
-      if (arg != 0) {
-	    vpi_printf("ERROR: too many arguments to $test$plusargs\n");
-	    vpi_control(vpiFinish, 1);
-      }
-
-      return 0;
-}
 
 /*
  * Compare the +arguments passed to the simulator with the argument
  * passed to the $test$plusargs. If there is a simulator argument that
  * is like this argument, then return true. Otherwise return false.
  */
-static PLI_INT32 sys_test_plusargs_calltf(PLI_BYTE8*xx)
+static PLI_INT32 sys_test_plusargs_calltf(PLI_BYTE8*name)
 {
+      s_vpi_value val;
+      s_vpi_vlog_info info;
       int idx;
       int flag = 0;
       size_t slen, len;
-      s_vpi_vlog_info info;
-      s_vpi_value value;
-      s_vpi_value result;
 
-      vpiHandle sys  = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle arg  = vpi_scan(argv);
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
 
-      value.format = vpiStringVal;
-      vpi_get_value(arg, &value);
-      slen = strlen(value.value.str);
+      val.format = vpiStringVal;
+      vpi_get_value(vpi_scan(argv), &val);
+      slen = strlen(val.value.str);
 
       vpi_get_vlog_info(&info);
 
@@ -111,97 +56,52 @@ static PLI_INT32 sys_test_plusargs_calltf(PLI_BYTE8*xx)
 	    if (len < slen)
 		  continue;
 
-	    if (strncmp(value.value.str, info.argv[idx]+1, slen) != 0)
+	    if (strncmp(val.value.str, info.argv[idx]+1, slen) != 0)
 		  continue;
 
 	    flag = 1;
 	    break;
       }
 
-      result.format = vpiIntVal;
-      result.value.integer = flag;
-      vpi_put_value(sys, &result, 0, vpiNoDelay);
+      val.format = vpiIntVal;
+      val.value.integer = flag;
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
 
+      vpi_free_object(argv);
       return 0;
 }
 
-static PLI_INT32 sys_value_plusargs_compiletf(PLI_BYTE8*xx)
+static PLI_INT32 sys_value_plusargs_compiletf(PLI_BYTE8*name)
 {
-      s_vpi_value value;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
       vpiHandle arg;
 
+	/* Check that there are arguments. */
       if (argv == 0) {
-	    vpi_printf("ERROR: $value$plusargs requires two arguments\n");
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires two arguments.\n", name);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
+	/* Check that the first argument is a string. */
       arg = vpi_scan(argv);
       assert(arg != 0);
-
-      switch (vpi_get(vpiType, arg)) {
-	  case vpiConstant:
-	    if (vpi_get(vpiConstType, arg) != vpiStringConst) {
-		  vpi_printf("ERROR: First argument of $value$plusargs "
-			     " must be a constant string.\n");
-		  vpi_control(vpiFinish, 1);
-		  return 0;
-	    }
-	    break;
-
-	  default:
-	    vpi_printf("ERROR: First argument of $value$plusargs "
-		       " must be a constant string.\n");
+      if ( ! is_string_obj(arg)) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's first argument must be a string.\n", name);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
-	    break;
-      }
-
-	/* Check that the format string has a reasonable format. */
-      value.format = vpiStringVal;
-      vpi_get_value(arg, &value);
-      { char*fmt = value.value.str;
-        char*cp = strchr(fmt, '%');
-
-	if (cp == 0) {
-	      vpi_printf("ERROR: Invalid argument format string"
-			 ": %s\n", fmt);
-	      vpi_control(vpiFinish, 1);
-	      return 0;
-	}
-
-	cp += 1;
-	if (*cp == '0')
-	      cp += 1;
-
-	switch (*cp) {
-	    case 'd':
-	    case 'o':
-	    case 'b':
-	    case 'h':
-	    case 's':
-	      cp += 1;
-	      break;
-	    default:
-	      vpi_printf("ERROR: Invalid argument format string"
-			 ": %s\n", fmt);
-	      vpi_control(vpiFinish, 1);
-	      return 0;
-	}
-
-	if (*cp != 0) {
-	      vpi_printf("ERROR: Trailing junk after value format"
-			 ": %s\n", fmt);
-	      vpi_control(vpiFinish, 1);
-	      return 0;
-	}
       }
 
       arg = vpi_scan(argv);
-      if (argv == 0) {
-	    vpi_printf("ERROR: $value$plusargs requires two arguments\n");
+      if (! arg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's requires a second variable argument.\n", name);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -210,55 +110,129 @@ static PLI_INT32 sys_value_plusargs_compiletf(PLI_BYTE8*xx)
 
 	  case vpiReg:
 	  case vpiIntegerVar:
+	  case vpiRealVar:
+	  case vpiTimeVar:
 	    break;
 
 	  default:
-	    vpi_printf("ERROR: value field doesn\'t match format: %s\n",
-		       value.value.str);
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's second argument must be a variable, found a %s.\n",
+		       name, vpi_get_str(vpiType, arg));
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
-      arg = vpi_scan(argv);
-      if (arg != 0) {
-	    vpi_printf("ERROR: too many arguments to $value$plusargs\n");
+	/* Make sure there are no extra arguments. */
+      if (vpi_scan(argv) != 0) {
+	    char msg [64];
+	    unsigned argc;
+
+	    snprintf(msg, 64, "ERROR: %s:%d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+
+	    argc = 1;
+	    while (vpi_scan(argv)) argc += 1;
+
+	    vpi_printf("%s %s takes two arguments.\n", msg, name);
+	    vpi_printf("%*s Found %u extra argument%s.\n",
+	               (int)strlen(msg), " ", argc, argc == 1 ? "" : "s");
 	    vpi_control(vpiFinish, 1);
-	    return 0;
       }
 
       return 0;
 }
 
-static PLI_INT32 sys_value_plusargs_calltf(PLI_BYTE8*xx)
+static PLI_INT32 sys_value_plusargs_calltf(PLI_BYTE8*name)
 {
+      s_vpi_vlog_info info;
+      s_vpi_value fmt;
+      s_vpi_value res;
+      char msg [64];
       char*cp;
       int idx;
       int flag = 0;
       size_t slen, len;
-      s_vpi_vlog_info info;
-      s_vpi_value format;
-      s_vpi_value result;
 
-      vpiHandle sys  = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle arg1  = vpi_scan(argv);
-      vpiHandle arg2  = vpi_scan(argv);
+      vpiHandle callh  = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
 
-      format.format = vpiStringVal;
-      vpi_get_value(arg1, &format);
+      fmt.format = vpiStringVal;
+      vpi_get_value(vpi_scan(argv), &fmt);
+
+	/* Check for the start of a format string. */
+      cp = strchr(fmt.value.str, '%');
+      if (cp == 0) {
+	    snprintf(msg, 64, "ERROR: %s:%d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+
+	    vpi_printf("%s %s is missing a format code.\n", msg, name);
+	    vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", fmt.value.str);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+	/* This is the length of string we will look for. */
+      slen = cp - fmt.value.str;
+
+	/* Skip a zero. */
+      cp += 1;
+      if (*cp == '0') cp += 1;
+
+	/* Check the format code. */
+      switch (*cp) {
+	  case 'd':
+	  case 'D':
+	  case 'o':
+	  case 'O':
+	  case 'h':
+	  case 'H':
+	  case 'x':
+	  case 'X':
+	  case 'b':
+	  case 'B':
+	  case 'e':
+	  case 'E':
+	  case 'f':
+	  case 'F':
+	  case 'g':
+	  case 'G':
+	  case 's':
+	  case 'S':
+	    break;
+	  default:
+	    snprintf(msg, 64, "ERROR: %s:%d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+
+	    vpi_printf("%s %s has an invalid format string:\n", msg, name);
+	    vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", fmt.value.str);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+	/* Warn if there is any trailing garbage. */
+      if (*(cp+1) != '\0') {
+	    snprintf(msg, 64, "WARNING: %s:%d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+
+	    vpi_printf("%s Skipping trailing garbage in %s's format string:\n",
+	               msg, name);
+	    vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", fmt.value.str);
+	    *(cp+1) = '\0';
+      }
 
       vpi_get_vlog_info(&info);
 
-      cp = strchr(format.value.str, '%');
-      assert(cp);
-      slen = cp - format.value.str;
-
-      cp += 1;
-      if (*cp == '0')
-	    cp += 1;
-
+	/* Look for a +arg that matches the prefix supplied. */
       for (idx = 0 ;  idx < info.argc ;  idx += 1) {
+	    char*sp, *tp, *end;
+            size_t sp_len;
 
+	      /* Skip arguments that are not +args. */
 	    if (info.argv[idx][0] != '+')
 		  continue;
 
@@ -266,43 +240,146 @@ static PLI_INT32 sys_value_plusargs_calltf(PLI_BYTE8*xx)
 	    if (len < slen)
 		  continue;
 
-	    if (strncmp(format.value.str, info.argv[idx]+1, slen) != 0)
+	    if (strncmp(fmt.value.str, info.argv[idx]+1, slen) != 0)
 		  continue;
 
+	    sp = info.argv[idx]+1+slen;
+            sp_len = strlen(sp);
 	    switch (*cp) {
 		case 'd':
-		  result.format = vpiIntVal;
-		  result.value.integer = strtoul(info.argv[idx]+1+slen,0,10);
+		case 'D':
+		  res.format = vpiDecStrVal;
+		    /* A decimal string can set the value to "x" or "z". */
+		  if (sp_len == strspn(sp, "xX_") ||
+		      sp_len == strspn(sp, "zZ_")) {
+			res.value.str = sp;
+		    /* A decimal string must contain only these characters.
+		     * A decimal string can not start with an "_" character.
+		     * A "-" can only be at the start of the string. */
+		  } else if (sp_len != strspn(sp, "-0123456789_") ||
+		             *sp == '_' ||
+		             ((tp = strrchr(sp, '-')) && tp != sp)) {
+			res.value.str = "x";
+			snprintf(msg, 64, "WARNING: %s:%d:",
+			         vpi_get_str(vpiFile, callh),
+			         (int)vpi_get(vpiLineNo, callh));
+			vpi_printf("%s Invalid decimal value passed to %s:\n",
+			           msg, name);
+			vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", sp);
+		  } else {
+			res.value.str = sp;
+		  }
 		  break;
 		case 'o':
-		  result.format = vpiIntVal;
-		  result.value.integer = strtoul(info.argv[idx]+1+slen,0,8);
+		case 'O':
+		  res.format = vpiOctStrVal;
+		    /* An octal string must contain only these characters.
+		     * An octal string can not start with an "_" character.
+		     * A "-" can only be at the start of the string. */
+		  if (sp_len != strspn(sp, "-01234567_xXzZ") ||
+		      *sp == '_' || ((tp = strrchr(sp, '-')) && tp != sp)) {
+			res.value.str = "x";
+			snprintf(msg, 64, "WARNING: %s:%d:",
+			         vpi_get_str(vpiFile, callh),
+			         (int)vpi_get(vpiLineNo, callh));
+			vpi_printf("%s Invalid octal value passed to %s:\n",
+			           msg, name);
+			vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", sp);
+		  } else {
+			res.value.str = sp;
+		  }
 		  break;
 		case 'h':
-		  result.format = vpiIntVal;
-		  result.value.integer = strtoul(info.argv[idx]+1+slen,0,16);
+		case 'H':
+		case 'x':
+		case 'X':
+		  res.format = vpiHexStrVal;
+		    /* A hex. string must contain only these characters.
+		     * A hex. string can not start with an "_" character.
+		     * A "-" can only be at the start of the string. */
+		  if (sp_len != strspn(sp, "-0123456789aAbBcCdDeEfF_xXzZ") ||
+		      *sp == '_' || ((tp = strrchr(sp, '-')) && tp != sp)) {
+			res.value.str = "x";
+			snprintf(msg, 64, "WARNING: %s:%d:",
+			         vpi_get_str(vpiFile, callh),
+			         (int)vpi_get(vpiLineNo, callh));
+			vpi_printf("%s Invalid hex value passed to %s:\n",
+			           msg, name);
+			vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", sp);
+		  } else {
+			res.value.str = sp;
+		  }
 		  break;
 		case 'b':
-		  result.format = vpiIntVal;
-		  result.value.integer = strtoul(info.argv[idx]+1+slen,0,12);
+		case 'B':
+		  res.format = vpiBinStrVal;
+		    /* A binary string must contain only these characters.
+		     * A binary string can not start with an "_" character.
+		     * A "-" can only be at the start of the string. */
+		  if (sp_len != strspn(sp, "-01_xXzZ") ||
+		      *sp == '_' || ((tp = strrchr(sp, '-')) && tp != sp)) {
+			res.value.str = "x";
+			snprintf(msg, 64, "WARNING: %s:%d:",
+			         vpi_get_str(vpiFile, callh),
+			         (int)vpi_get(vpiLineNo, callh));
+			vpi_printf("%s Invalid binary value passed to %s:\n",
+			           msg, name);
+			vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", sp);
+		  } else {
+			res.value.str = sp;
+		  }
+		  break;
+		case 'e':
+		case 'E':
+		case 'f':
+		case 'F':
+		case 'g':
+		case 'G':
+		  res.format = vpiRealVal;
+		  res.value.real = strtod(sp, &end);
+		    /* If we didn't get a full conversion print a warning. */
+		  if (*end) {
+			  /* We had an invalid value passed. */
+			if (end == sp) {
+			      snprintf(msg, 64, "WARNING: %s:%d:",
+			               vpi_get_str(vpiFile, callh),
+			               (int)vpi_get(vpiLineNo, callh));
+			      vpi_printf("%s Invalid real value passed to "
+			                 "%s:\n", msg, name);
+			      vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ",
+			                 sp);
+			  /* We have extra garbage at the end. */
+			} else {
+			      snprintf(msg, 64, "WARNING: %s:%d:",
+			               vpi_get_str(vpiFile, callh),
+			               (int)vpi_get(vpiLineNo, callh));
+			      vpi_printf("%s Extra character(s) \"%s\" found "
+			                 "in %s's real string:\n",
+			                 msg, end, name);
+			      vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ",
+			                 sp);
+			}
+		  }
 		  break;
 		case 's':
-		  result.format = vpiStringVal;
-		  result.value.str = info.argv[idx]+1+slen;
+		case 'S':
+		  res.format = vpiStringVal;
+		  res.value.str = sp;
 		  break;
 		default:
 		  assert(0);
 	    }
 
-	    vpi_put_value(arg2, &result, 0, vpiNoDelay);
+	    vpi_put_value(vpi_scan(argv), &res, 0, vpiNoDelay);
 	    flag = 1;
 	    break;
       }
 
-      result.format = vpiIntVal;
-      result.value.integer = flag;
-      vpi_put_value(sys, &result, 0, vpiNoDelay);
+      res.format = vpiIntVal;
+      res.value.integer = flag;
+      vpi_put_value(callh, &res, 0, vpiNoDelay);
 
+      vpi_free_object(argv);
       return 0;
 }
 
@@ -311,44 +388,22 @@ void sys_plusargs_register()
       s_vpi_systf_data tf_data;
 
 
-      tf_data.type      = vpiSysFunc;
-      tf_data.tfname    = "$test$plusargs";
-      tf_data.calltf    = sys_test_plusargs_calltf;
-      tf_data.compiletf = sys_test_plusargs_compiletf;
-      tf_data.sizetf    = sys_plusargs_sizetf;
+      tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.tfname      = "$test$plusargs";
+      tf_data.calltf      = sys_test_plusargs_calltf;
+      tf_data.compiletf   = sys_one_string_arg_compiletf;
+      tf_data.sizetf      = 0;
+      tf_data.user_data   = "$test$plusargs";
       vpi_register_systf(&tf_data);
 
-      tf_data.type      = vpiSysFunc;
-      tf_data.tfname    = "$value$plusargs";
-      tf_data.calltf    = sys_value_plusargs_calltf;
-      tf_data.compiletf = sys_value_plusargs_compiletf;
-      tf_data.sizetf    = sys_plusargs_sizetf;
+      tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.tfname      = "$value$plusargs";
+      tf_data.calltf      = sys_value_plusargs_calltf;
+      tf_data.compiletf   = sys_value_plusargs_compiletf;
+      tf_data.sizetf      = 0;
+      tf_data.user_data   = "$value$plusargs";
       vpi_register_systf(&tf_data);
 
 }
-
-/*
- * $Log: sys_plusargs.c,v $
- * Revision 1.7  2007/03/14 04:05:51  steve
- *  VPI tasks take PLI_BYTE* by the standard.
- *
- * Revision 1.6  2006/10/30 22:45:37  steve
- *  Updates for Cygwin portability (pr1585922)
- *
- * Revision 1.5  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.4  2002/08/12 01:35:05  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.3  2002/08/11 23:47:04  steve
- *  Add missing Log and Ident strings.
- *
- * Revision 1.2  2002/08/10 17:00:31  steve
- *  Allow vpiIntegerVar as parameter to $value$plusarg
- *
- * Revision 1.1  2002/04/07 04:37:53  steve
- *  Add $plusargs system functions.
- *
- */
-

@@ -80,7 +80,7 @@ unsigned is_numeric_obj(vpiHandle obj)
       case vpiRealVar:
       case vpiReg:
       case vpiTimeVar:
-	rtn = 1;;
+	rtn = 1;
 	break;
     }
 
@@ -114,7 +114,7 @@ unsigned is_string_obj(vpiHandle obj)
       case vpiPartSelect:
       case vpiReg:
       case vpiTimeVar:
-	rtn = 1;;
+	rtn = 1;
 	break;
     }
 
@@ -152,7 +152,7 @@ PLI_INT32 sys_no_arg_compiletf(PLI_BYTE8 *name)
 	    char msg [64];
 	    unsigned argc;
 
-	    snprintf(msg, 64, "ERROR: %s line %d:",
+	    snprintf(msg, 64, "ERROR: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
@@ -176,7 +176,7 @@ PLI_INT32 sys_one_numeric_arg_compiletf(PLI_BYTE8 *name)
 
       /* Check that there is an argument and that it is numeric. */
       if (argv == 0) {
-            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s requires a single numeric argument.\n", name);
             vpi_control(vpiFinish, 1);
@@ -184,7 +184,7 @@ PLI_INT32 sys_one_numeric_arg_compiletf(PLI_BYTE8 *name)
       }
 
       if (! is_numeric_obj(vpi_scan(argv))) {
-            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s's argument must be numeric.\n", name);
             vpi_control(vpiFinish, 1);
@@ -195,7 +195,7 @@ PLI_INT32 sys_one_numeric_arg_compiletf(PLI_BYTE8 *name)
 	    char msg [64];
 	    unsigned argc;
 
-	    snprintf(msg, 64, "ERROR: %s line %d:",
+	    snprintf(msg, 64, "ERROR: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
@@ -221,7 +221,7 @@ PLI_INT32 sys_one_opt_numeric_arg_compiletf(PLI_BYTE8 *name)
       if (argv == 0) return 0;
 
       if (! is_numeric_obj(vpi_scan(argv))) {
-            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s's argument must be numeric.\n", name);
             vpi_control(vpiFinish, 1);
@@ -232,7 +232,7 @@ PLI_INT32 sys_one_opt_numeric_arg_compiletf(PLI_BYTE8 *name)
 	    char msg [64];
 	    unsigned argc;
 
-	    snprintf(msg, 64, "ERROR: %s line %d:",
+	    snprintf(msg, 64, "ERROR: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
@@ -258,7 +258,7 @@ PLI_INT32 sys_two_numeric_args_compiletf(PLI_BYTE8 *name)
 
       /* Check that there are two argument and that they are numeric. */
       if (argv == 0) {
-            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s requires two numeric arguments.\n", name);
             vpi_control(vpiFinish, 1);
@@ -266,7 +266,7 @@ PLI_INT32 sys_two_numeric_args_compiletf(PLI_BYTE8 *name)
       }
 
       if (! is_numeric_obj(vpi_scan(argv))) {
-            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s's first argument must be numeric.\n", name);
             vpi_control(vpiFinish, 1);
@@ -274,7 +274,7 @@ PLI_INT32 sys_two_numeric_args_compiletf(PLI_BYTE8 *name)
 
       arg = vpi_scan(argv);
       if (! arg) {
-            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s requires a second (numeric) argument.\n", name);
             vpi_control(vpiFinish, 1);
@@ -282,7 +282,7 @@ PLI_INT32 sys_two_numeric_args_compiletf(PLI_BYTE8 *name)
       }
 
       if (! is_numeric_obj(arg)) {
-            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s's second argument must be numeric.\n", name);
             vpi_control(vpiFinish, 1);
@@ -293,7 +293,7 @@ PLI_INT32 sys_two_numeric_args_compiletf(PLI_BYTE8 *name)
 	    char msg [64];
 	    unsigned argc;
 
-	    snprintf(msg, 64, "ERROR: %s line %d:",
+	    snprintf(msg, 64, "ERROR: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
@@ -317,14 +317,14 @@ PLI_INT32 sys_one_string_arg_compiletf(PLI_BYTE8 *name)
 
       /* Check that there is an argument and that it is a string. */
       if (argv == 0) {
-            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s requires a single string argument.\n", name);
             vpi_control(vpiFinish, 1);
             return 0;
       }
       if (! is_string_obj(vpi_scan(argv))) {
-            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s's argument must be a string.\n", name);
             vpi_control(vpiFinish, 1);
@@ -335,7 +335,7 @@ PLI_INT32 sys_one_string_arg_compiletf(PLI_BYTE8 *name)
 	    char msg [64];
 	    unsigned argc;
 
-	    snprintf(msg, 64, "ERROR: %s line %d:",
+	    snprintf(msg, 64, "ERROR: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 

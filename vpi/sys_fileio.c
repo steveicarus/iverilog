@@ -41,14 +41,14 @@ static PLI_INT32 sys_fopen_compiletf(PLI_BYTE8 *name)
 
 	/* Check that there is a file name argument and that it is a string. */
       if (argv == 0) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a string file name argument.\n", name);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
       if (! is_string_obj(vpi_scan(argv))) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's file name argument must be a string.\n", name);
 	    vpi_control(vpiFinish, 1);
@@ -60,7 +60,7 @@ static PLI_INT32 sys_fopen_compiletf(PLI_BYTE8 *name)
 
 	/* When provided, the type argument must be a string. */
       if (! is_string_obj(arg)) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's type argument must be a string.\n", name);
 	    vpi_control(vpiFinish, 1);
@@ -71,7 +71,7 @@ static PLI_INT32 sys_fopen_compiletf(PLI_BYTE8 *name)
 	    char msg [64];
 	    unsigned argc;
 
-	    snprintf(msg, 64, "ERROR: %s line %d:",
+	    snprintf(msg, 64, "ERROR: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
@@ -106,7 +106,7 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
             vpi_get_value(mode, &val);
 	      /* Verify that we have a string and that it is not NULL. */
             if (val.format != vpiStringVal || !*(val.value.str)) {
-		  vpi_printf("WARNING: %s line %d: ",
+		  vpi_printf("WARNING: %s:%d: ",
 		             vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s's mode argument is not a valid string.\n",
@@ -116,7 +116,7 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
 
 	      /* Make sure the mode string is correct. */
 	    if (strlen(val.value.str) > 3) {
-		  vpi_printf("WARNING: %s line %d: ",
+		  vpi_printf("WARNING: %s:%d: ",
 		             vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s's mode argument (%s) is too long.\n",
@@ -147,7 +147,7 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
 			if (! fail) break;
 
 		      default:
-			vpi_printf("WARNING: %s line %d: ",
+			vpi_printf("WARNING: %s:%d: ",
 			           vpi_get_str(vpiFile, callh),
 			           (int)vpi_get(vpiLineNo, callh));
 			vpi_printf("%s's mode argument (%s) is invalid.\n",
@@ -169,7 +169,7 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
 
 	/* Verify that we have a string and that it is not NULL. */
       if (val.format != vpiStringVal || !*(val.value.str)) {
-	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's file name argument is not a valid string.\n",
 	                name);
@@ -185,7 +185,7 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
       for (idx = 0; idx < len; idx++) {
 	    if (! isprint(val.value.str[idx])) {
 		  char msg [64];
-		  snprintf(msg, 64, "WARNING: %s line %d:",
+		  snprintf(msg, 64, "WARNING: %s:%d:",
 		           vpi_get_str(vpiFile, callh),
 		           (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s %s's file name argument contains non-"
@@ -236,7 +236,7 @@ static PLI_INT32 sys_fopenrwa_calltf(PLI_BYTE8*name)
 
 	/* Verify that we have a string and that it is not NULL. */
       if (val.format != vpiStringVal || !*(val.value.str)) {
-	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's file name argument is not a valid string.\n",
 	                name);
@@ -251,7 +251,7 @@ static PLI_INT32 sys_fopenrwa_calltf(PLI_BYTE8*name)
       for (idx = 0; idx < len; idx++) {
 	    if (! isprint(val.value.str[idx])) {
 		  char msg [64];
-		  snprintf(msg, 64, "WARNING: %s line %d:",
+		  snprintf(msg, 64, "WARNING: %s:%d:",
 		           vpi_get_str(vpiFile, callh),
 		           (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s %s's file name argument contains non-"
@@ -355,7 +355,7 @@ static PLI_INT32 sys_fputc_calltf(PLI_BYTE8*name)
       fp = vpi_get_file(fd_mcd);
       val.format = vpiIntVal;
       if (!fp || IS_MCD(fd_mcd)) {
-	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
 	               name);
@@ -378,7 +378,7 @@ static PLI_INT32 sys_fgets_compiletf(PLI_BYTE8*name)
 	 * register and that the second is numeric.
 	 */
       if (argv == 0) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires two arguments.\n", name);
 	    vpi_control(vpiFinish, 1);
@@ -386,7 +386,7 @@ static PLI_INT32 sys_fgets_compiletf(PLI_BYTE8*name)
       }
 
       if (vpi_get(vpiType, vpi_scan(argv)) != vpiReg) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's first argument must be a reg.\n", name);
 	    vpi_control(vpiFinish, 1);
@@ -394,7 +394,7 @@ static PLI_INT32 sys_fgets_compiletf(PLI_BYTE8*name)
 
       arg = vpi_scan(argv);
       if (! arg) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a second (numeric) argument.\n", name);
 	    vpi_control(vpiFinish, 1);
@@ -402,7 +402,7 @@ static PLI_INT32 sys_fgets_compiletf(PLI_BYTE8*name)
       }
 
       if (! is_numeric_obj(arg)) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's second argument must be numeric.\n", name);
 	    vpi_control(vpiFinish, 1);
@@ -413,7 +413,7 @@ static PLI_INT32 sys_fgets_compiletf(PLI_BYTE8*name)
 	    char msg [64];
 	    unsigned argc;
 
-	    snprintf(msg, 64, "ERROR: %s line %d:",
+	    snprintf(msg, 64, "ERROR: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
@@ -455,7 +455,7 @@ static PLI_INT32 sys_fgets_calltf(PLI_BYTE8*name)
 	/* Return zero if this is not a valid fd. */
       fp = vpi_get_file(fd_mcd);
       if (!fp || IS_MCD(fd_mcd)) {
-	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
 	               name);
@@ -519,7 +519,7 @@ static PLI_INT32 sys_ungetc_calltf(PLI_BYTE8*name)
 	/* Return EOF if this is not a valid fd. */
       fp = vpi_get_file(fd_mcd);
       if (!fp || IS_MCD(fd_mcd)) {
-	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
 	               name);
@@ -545,7 +545,7 @@ static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8*name)
 
 	/* Check that there are three numeric arguments. */
       if (argv == 0) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires three arguments.\n", name);
 	    vpi_control(vpiFinish, 1);
@@ -554,7 +554,7 @@ static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8*name)
 
 	/* Check that the first argument is numeric. */
       if (! is_numeric_obj(vpi_scan(argv))) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's first argument must be numeric.\n", name);
 	    vpi_control(vpiFinish, 1);
@@ -563,7 +563,7 @@ static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8*name)
 	/* Check that the second argument exists and is numeric. */
       arg = vpi_scan(argv);
       if (! arg) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a second (numeric) argument.\n", name);
 	    vpi_control(vpiFinish, 1);
@@ -571,7 +571,7 @@ static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8*name)
       }
 
       if (!arg || !is_numeric_obj(arg)) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's second argument must be numeric.\n", name);
 	    vpi_control(vpiFinish, 1);
@@ -580,7 +580,7 @@ static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8*name)
 	/* Check that the third argument exists and is numeric. */
       arg = vpi_scan(argv);
       if (! arg) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s requires a third (numeric) argument.\n", name);
 	    vpi_control(vpiFinish, 1);
@@ -588,7 +588,7 @@ static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8*name)
       }
 
       if (!arg || !is_numeric_obj(arg)) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's third argument must be numeric.\n", name);
 	    vpi_control(vpiFinish, 1);
@@ -599,7 +599,7 @@ static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8*name)
 	    char msg [64];
 	    unsigned argc;
 
-	    snprintf(msg, 64, "ERROR: %s line %d:",
+	    snprintf(msg, 64, "ERROR: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 
@@ -647,7 +647,7 @@ static PLI_INT32 sys_fseek_calltf(PLI_BYTE8*name)
 
 	/* Check that the operation is in the valid range. */
       if ((oper < 0) || (oper > 2)) {
-	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's operation must be 0, 1 or 2 given %d.\n",
 	               name, oper);
@@ -660,7 +660,7 @@ static PLI_INT32 sys_fseek_calltf(PLI_BYTE8*name)
 	/* Return EOF if this is not a valid fd. */
       fp = vpi_get_file(fd_mcd);
       if (!fp || IS_MCD(fd_mcd)) {
-	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
 	               name);
@@ -696,7 +696,7 @@ static PLI_INT32 sys_common_fd_calltf(PLI_BYTE8*name)
 	/* Return EOF if this is not a valid fd. */
       fp = vpi_get_file(fd_mcd);
       if (!fp || IS_MCD(fd_mcd)) {
-	    vpi_printf("WARNING: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
 	               name);
@@ -721,7 +721,7 @@ static PLI_INT32 sys_common_fd_calltf(PLI_BYTE8*name)
 	    val.value.integer = fgetc(fp);
 	    break;
 	  default:
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s cannot be processed with this routine.\n", name);
 	    assert(0);
