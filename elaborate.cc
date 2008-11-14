@@ -2037,6 +2037,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       if (lv == 0) return 0;
 
       NetExpr*rv = elaborate_rval_(des, scope, count_lval_width(lv), lv->expr_type());
+      if (rv == 0) return 0;
 
 	/* Handle the (common) case that the r-value is a vector. This
 	   includes just about everything but reals. In this case, we
