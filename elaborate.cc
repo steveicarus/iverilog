@@ -1440,11 +1440,23 @@ v		       NOTE that this also handles the case that the
 			spin += sp->vector_width();
 		  }
 		  break;
+
 		case NetNet::PINOUT:
-		  cerr << get_fileline() << ": XXXX: "
-		       << "Forgot how to bind inout ports!" << endl;
-		  des->errors += 1;
+		  for (unsigned ldx = 0 ;  ldx < prts.size() ;  ldx += 1) {
+			NetNet*sp = prts[prts.size()-ldx-1];
+			NetTran*ttmp = new NetTran(scope,
+			                           scope->local_symbol(),
+			                           sig->vector_width(),
+			                           sp->vector_width(),
+			                           spin);
+			des->add_node(ttmp);
+			ttmp->set_line(*this);
+			connect(ttmp->pin(0), sig->pin(0));
+			connect(ttmp->pin(1), sp->pin(0));
+			spin += sp->vector_width();
+		  }
 		  break;
+
 		case NetNet::PIMPLICIT:
 		  cerr << get_fileline() << ": internal error: "
 		       << "Unexpected IMPLICIT port" << endl;
