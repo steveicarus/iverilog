@@ -124,14 +124,18 @@ void vvp_arith_div::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
       unsigned sign_flip = 0;
       if (signed_flag_) {
+	    unsigned long sign_mask = 0;
+	    if (wid_ != 8*sizeof(unsigned long)) {
+		  sign_mask = -1UL << wid_;
+	    }
 	    if (a & (1UL << (wid_ - 1))) {
-		  a ^=  ~(-1UL << wid_);
+		  a ^=  ~sign_mask;
 		  a += 1;
 		  sign_flip += 1;
 	    }
 
 	    if (b & (1UL << (wid_ - 1))) {
-		  b ^= ~(-1UL << wid_);
+		  b ^= ~sign_mask;
 		  b += 1;
 		  sign_flip += 1;
 	    }
