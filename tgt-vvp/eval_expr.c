@@ -733,7 +733,7 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 
 	      /* shifting 0 gets 0. */
 	    if (lv.base == 0)
-		  break;
+		  return lv;
 
 	    if (lv.base < 4) {
 		  struct vector_info tmp;
@@ -760,7 +760,7 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 
 	      /* shifting 0 gets 0. */
 	    if (lv.base == 0)
-		  break;
+		  return lv;
 
 	    if (lv.base < 4) {
 		  struct vector_info tmp;
@@ -787,12 +787,12 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 
 	      /* shifting 0 gets 0. */
 	    if (lv.base == 0)
-		  break;
+		  return lv;
 
 	      /* Sign extend any constant begets itself, if this
 		 expression is signed. */
 	    if ((lv.base < 4) && (ivl_expr_signed(exp)))
-		  break;
+		  return lv;
 
 	    if (lv.base < 4) {
 		  struct vector_info tmp;
