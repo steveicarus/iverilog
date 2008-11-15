@@ -461,7 +461,9 @@ bool PGenerate::generate_scope(Design*des, NetScope*container)
 
 	  case GS_CASE:
 	    return generate_scope_case_(des, container);
-	    return true;
+
+	  case GS_NBLOCK:
+	    return generate_scope_nblock_(des, container);
 
 	  case GS_CASE_ITEM:
 	    cerr << get_fileline() << ": internal error: "
@@ -714,6 +716,29 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 				    NetScope::GENBLOCK);
       scope->set_line(get_file(), get_lineno());
       item->elaborate_subscope_(des, scope);
+
+      return true;
+}
+
+bool PGenerate::generate_scope_nblock_(Design*des, NetScope*container)
+{
+      hname_t use_name (scope_name);
+      if (container->child(use_name)) {
+	    cerr << get_fileline() << ": error: block/scope name "
+		 << scope_name << " already used in this context."
+		 << endl;
+	    des->errors += 1;
+	    return false;
+      }
+      if (debug_scopes)
+	    cerr << get_fileline() << ": debug: Generate named block "
+		 << ": Generate scope=" << use_name << endl;
+
+      NetScope*scope = new NetScope(container, use_name,
+				    NetScope::GENBLOCK);
+      scope->set_line(get_file(), get_lineno());
+
+      elaborate_subscope_(des, scope);
 
       return true;
 }
