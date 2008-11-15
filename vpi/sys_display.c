@@ -100,8 +100,7 @@ static int vpi_get_dec_size(vpiHandle item)
 	);
 }
 
-static int array_from_iterator(struct strobe_cb_info*info, vpiHandle argv,
-                               int check_no_aa_vars)
+static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
 {
       if (argv) {
 	    vpiHandle item;
@@ -112,17 +111,13 @@ static int array_from_iterator(struct strobe_cb_info*info, vpiHandle argv,
 		  free(items);
 		  info->nitems = 0;
 		  info->items  = 0;
-		  return check_no_aa_vars;
+		  return;
 	    }
-            if (check_no_aa_vars && vpi_get(vpiAutomatic, items[0]))
-                  check_no_aa_vars = 0;
 
 	    for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
 		  items = realloc(items, (nitems+1)*sizeof(vpiHandle));
 		  items[nitems] = item;
 		  nitems += 1;
-                  if (check_no_aa_vars && vpi_get(vpiAutomatic, item))
-                        check_no_aa_vars = 0;
 	    }
 
 	    info->nitems = nitems;
@@ -132,7 +127,6 @@ static int array_from_iterator(struct strobe_cb_info*info, vpiHandle argv,
 	    info->nitems = 0;
 	    info->items = 0;
       }
-      return check_no_aa_vars;
 }
 
 /*
@@ -908,7 +902,7 @@ static PLI_INT32 sys_display_calltf(PLI_BYTE8*name)
 	    info = malloc(sizeof (struct strobe_cb_info));
 	    info->default_format = get_default_format(name);
 	    info->scope = scope;
-	    array_from_iterator(info, argv, 0);
+	    array_from_iterator(info, argv);
 
 	    vpi_put_userdata(sys, info);
       }
@@ -1001,13 +995,7 @@ static PLI_INT32 sys_strobe_calltf(PLI_BYTE8*name)
 	      info->mcd = 1;
       }
 
-      if (!array_from_iterator(info, argv, 1)) {
-            vpi_printf("ERROR: %s parameters may not include automatically "
-                       "allocated variables\n", name);
-            free(info->items);
-            free(info);
-            return 0;
-      }
+      array_from_iterator(info, argv);
       info->name = strdup(name);
       info->default_format = get_default_format(name);
       info->scope= scope;
@@ -1107,13 +1095,7 @@ static PLI_INT32 sys_monitor_calltf(PLI_BYTE8*name)
       }
 
 	/* Make an array of handles from the argument list. */
-      if (!array_from_iterator(&monitor_info, argv, 1)) {
-            vpi_printf("ERROR: $monitor parameters may not include "
-                       "automatically allocated variables\n");
-            free(monitor_info.items);
-	    monitor_info.nitems = 0;
-            return 0;
-      }
+      array_from_iterator(&monitor_info, argv);
       monitor_info.name = strdup(name);
       monitor_info.default_format = get_default_format(name);
       monitor_info.scope = scope;
@@ -1229,7 +1211,7 @@ static PLI_INT32 sys_fdisplay_calltf(PLI_BYTE8*name)
       assert(scope);
       info.default_format = get_default_format(name);
       info.scope = scope;
-      array_from_iterator(&info, argv, 0);
+      array_from_iterator(&info, argv);
       do_display(mcd, &info);
       free(info.items);
 
@@ -1987,7 +1969,7 @@ static PLI_INT32 sys_swrite_calltf(PLI_BYTE8 *name)
   info.name = name;
   info.default_format = get_default_format(name);
   info.scope = scope;
-  array_from_iterator(&info, argv, 0);
+  array_from_iterator(&info, argv);
 
   /* Because %u and %z may put embedded NULL characters into the returned
    * string strlen() may not match the real size! */
@@ -2067,7 +2049,7 @@ static PLI_INT32 sys_sformat_calltf(PLI_BYTE8 *name)
   info.name = name;
   info.default_format = get_default_format(name);
   info.scope = scope;
-  array_from_iterator(&info, argv, 0);
+  array_from_iterator(&info, argv);
   idx = -1;
   size = get_format(&result, fmt, &info, &idx);
   free(fmt);
@@ -2216,6 +2198,27 @@ static PLI_INT32 sys_printtimescale_calltf(PLI_BYTE8*xx)
       return 0;
 }
 
+static PLI_INT32 sys_no_aa_compiletf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle arg;
+        /* If there are no arguments, just return. */
+      if (argv == 0) return 0;
+
+      for (arg = vpi_scan(argv) ;  arg ;  arg = vpi_scan(argv)) {
+            if (vpi_get(vpiAutomatic, arg)) {
+                  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+                             (int)vpi_get(vpiLineNo, callh));
+                  vpi_printf("%s arguments may not be automatically "
+                             "allocated variables.\n", name);
+                  vpi_control(vpiFinish, 1);
+                  return 0;
+	    }
+      }
+      return 0;
+}
+
 void sys_display_register()
 {
       s_cb_data cb_data;
@@ -2291,7 +2294,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$strobe";
       tf_data.calltf    = sys_strobe_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$strobe";
       vpi_register_systf(&tf_data);
@@ -2299,7 +2302,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$strobeh";
       tf_data.calltf    = sys_strobe_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$strobeh";
       vpi_register_systf(&tf_data);
@@ -2307,7 +2310,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$strobeo";
       tf_data.calltf    = sys_strobe_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$strobeo";
       vpi_register_systf(&tf_data);
@@ -2315,7 +2318,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$strobeb";
       tf_data.calltf    = sys_strobe_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$strobeb";
       vpi_register_systf(&tf_data);
@@ -2324,7 +2327,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fstrobe";
       tf_data.calltf    = sys_strobe_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fstrobe";
       vpi_register_systf(&tf_data);
@@ -2332,7 +2335,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fstrobeh";
       tf_data.calltf    = sys_strobe_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fstrobeh";
       vpi_register_systf(&tf_data);
@@ -2340,7 +2343,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fstrobeo";
       tf_data.calltf    = sys_strobe_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fstrobeo";
       vpi_register_systf(&tf_data);
@@ -2348,7 +2351,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fstrobeb";
       tf_data.calltf    = sys_strobe_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fstrobeb";
       vpi_register_systf(&tf_data);
@@ -2357,7 +2360,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$monitor";
       tf_data.calltf    = sys_monitor_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$monitor";
       vpi_register_systf(&tf_data);
@@ -2365,7 +2368,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$monitorh";
       tf_data.calltf    = sys_monitor_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$monitorh";
       vpi_register_systf(&tf_data);
@@ -2373,7 +2376,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$monitoro";
       tf_data.calltf    = sys_monitor_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$monitoro";
       vpi_register_systf(&tf_data);
@@ -2381,7 +2384,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$monitorb";
       tf_data.calltf    = sys_monitor_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$monitorb";
       vpi_register_systf(&tf_data);
