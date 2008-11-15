@@ -69,7 +69,7 @@ static PLI_INT32 sys_clog2_compiletf(PLI_BYTE8 *name)
 
 	/* We must have an argument. */
       if (argv == 0) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("$clog2 requires one numeric argument.\n");
 	    vpi_control(vpiFinish, 1);
@@ -79,7 +79,7 @@ static PLI_INT32 sys_clog2_compiletf(PLI_BYTE8 *name)
 	/* The argument must be numeric. */
       arg = vpi_scan(argv);
       if (! is_numeric_obj(arg)) {
-	    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("The first argument to $clog2 must be numeric.\n");
 	    vpi_control(vpiFinish, 1);
@@ -90,7 +90,7 @@ static PLI_INT32 sys_clog2_compiletf(PLI_BYTE8 *name)
 	    char msg [64];
 	    unsigned argc;
 
-	    snprintf(msg, 64, "ERROR: %s line %d:",
+	    snprintf(msg, 64, "ERROR: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
 

@@ -804,13 +804,13 @@ vvp_vector4_t vec4_from_vpi_value(s_vpi_value*vp, unsigned wid)
 	    }
 	    break;
 	  case vpiBinStrVal:
-	    vpip_bin_str_to_vec4(val, vp->value.str, false);
+	    vpip_bin_str_to_vec4(val, vp->value.str);
 	    break;
 	  case vpiOctStrVal:
 	    vpip_oct_str_to_vec4(val, vp->value.str);
 	    break;
 	  case vpiDecStrVal:
-	    vpip_dec_str_to_vec4(val, vp->value.str, false);
+	    vpip_dec_str_to_vec4(val, vp->value.str);
 	    break;
 	  case vpiHexStrVal:
 	    vpip_hex_str_to_vec4(val, vp->value.str);
@@ -820,6 +820,9 @@ vvp_vector4_t vec4_from_vpi_value(s_vpi_value*vp, unsigned wid)
 	    break;
 	  case vpiStringVal:
 	    val = from_stringval(vp->value.str, wid);
+	    break;
+	  case vpiRealVal:
+	    val = vvp_vector4_t(wid, vp->value.real);
 	    break;
 
 	  default:
@@ -877,7 +880,6 @@ vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
 			bool signed_flag, vvp_net_t*vec)
 {
       vpiHandle obj = vpip_make_net(name, msb,lsb, signed_flag, vec);
-      struct __vpiSignal*rfp = (struct __vpiSignal*)obj;
       obj->vpi_type = &vpip_reg_rt;
       return obj;
 }

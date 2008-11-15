@@ -85,7 +85,7 @@ static void double2bits(double real, PLI_UINT32 bits[2])
 
 static void error_message(vpiHandle callh, const char* msg)
 {
-    vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
     vpi_printf(msg, vpi_get_str(vpiName, callh));
     vpi_control(vpiFinish, 1);

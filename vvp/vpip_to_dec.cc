@@ -220,26 +220,74 @@ unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
 	return 0;
 }
 
-void vpip_dec_str_to_vec4(vvp_vector4_t&vec,
-			  const char*buf, bool signed_flag)
+void vpip_dec_str_to_vec4(vvp_vector4_t&vec, const char*buf)
 {
+	/* Support for [xX]_*. */
+      if (buf[0] == 'x' || buf[0] == 'X') {
+	    for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
+		  vec.set_bit(idx, BIT4_X);
+	    }
+	    const char*tbuf = buf+1;
+	      /* See if this is a valid constant. */
+	    while (*tbuf) {
+		  if (*tbuf != '_') {
+			fprintf(stderr, "Warning: Invalid decimal \"x\" "
+			                "value \"%s\".\n", buf);
+			return;
+		  }
+		  tbuf += 1;
+	    }
+	    return;
+      }
+
+	/* Support for [zZ]_*. */
+      if (buf[0] == 'z' || buf[0] == 'Z') {
+	    const char*tbuf = buf+1;
+	      /* See if this is a valid constant, if not return "x". */
+	    while (*tbuf) {
+		  if (*tbuf != '_') {
+			fprintf(stderr, "Warning: Invalid decimal \"z\" "
+			                "value \"%s\".\n", buf);
+			for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
+			      vec.set_bit(idx, BIT4_X);
+			}
+			return;
+		  }
+		  tbuf += 1;
+	    }
+	    for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
+		  vec.set_bit(idx, BIT4_Z);
+	    }
+	    return;
+      }
+
 	/* The str string is the decimal value with the least
 	   significant digit first. This loop creates that string by
 	   reversing the order of the buf string. For example, if the
 	   input is "1234", str gets "4321". */
       unsigned slen = strlen(buf);
       char*str = new char[slen + 1];
-      int is_negative = 0;
+      bool is_negative = false;
       for (unsigned idx = 0 ;  idx < slen ;  idx += 1) {
 	    if (idx == slen-1 && buf[slen-idx-1] == '-') {
-	          is_negative = 1;
+	          is_negative = true;
 		  slen--;
 		  continue;
 	    }
+	    while (buf[slen-idx-1] == '_') {
+		  slen--;
+	    }
 	    if (isdigit(buf[slen-idx-1]))
 		  str[idx] = buf[slen-idx-1];
-            else
-		  str[idx] = '0';
+            else {
+		    /* Return "x" if there are invalid digits in the string. */
+		  fprintf(stderr, "Warning: Invalid decimal digit %c(%d) in "
+		          "\"%s.\"\n", buf[slen-idx-1], buf[slen-idx-1], buf);
+		  for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
+			vec.set_bit(idx, BIT4_X);
+		  }
+		  return;
+            }
       }
 
       str[slen] = 0;
@@ -274,7 +322,7 @@ void vpip_dec_str_to_vec4(vvp_vector4_t&vec,
 
       if (is_negative) {
             vec.invert();
-            vec += 1;
+            vec += (int64_t) 1;
       }
 
       delete[]str;
