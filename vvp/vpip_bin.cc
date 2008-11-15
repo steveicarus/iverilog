@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpip_bin.cc,v 1.4 2006/08/03 05:05:06 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "vpi_priv.h"
@@ -31,69 +28,89 @@
 #endif
 # include  <assert.h>
 
-void vpip_bin_str_to_vec4(vvp_vector4_t&vec4,
-			  const char*buf, bool signed_flag)
+void vpip_bin_str_to_vec4(vvp_vector4_t&vec4, const char*buf)
 {
       const char*ebuf = buf + strlen(buf);
-      vvp_bit4_t last = BIT4_0;
-
       unsigned idx = 0;
+      unsigned skip_chars = 0;
+      const char*tbuf = buf;
+	/* Find the number of non-numeric characters. */
+      while (tbuf = strpbrk(tbuf, "-_")) {
+	    skip_chars += 1;
+	    tbuf += 1;
+      }
+      vvp_vector4_t tval(strlen(buf)-skip_chars);
       while (ebuf > buf) {
-	    vvp_bit4_t val;
-
-	    if (idx == vec4.size())
-		  break;
-
 	    ebuf -= 1;
-	    switch (*ebuf) {
-		case '0': val = BIT4_0; break;
-		case '1': val = BIT4_1; break;
-		case 'x':
-		case 'X': val = BIT4_X; break;
-		case 'z':
-		case 'Z': val = BIT4_Z; break;
-		default:  val = BIT4_0; break;
+	      /* Skip any "_" characters in the string. */
+	    while (*ebuf == '_') {
+		  ebuf -= 1;
+		  assert(ebuf > buf);
 	    }
 
-	    last = val;
-	    vec4.set_bit(idx, val);
+	      /*  If we find a "-" it must be at the head of the string. */
+	    if (*ebuf == '-') {
+		  if (ebuf != buf) assert(0);
+		  break;
+	    }
+
+	    assert(idx < tval.size());
+	    switch (*ebuf) {
+		case '0':
+		  tval.set_bit(idx, BIT4_0);
+		  break;
+		case '1':
+		  tval.set_bit(idx, BIT4_1);
+		  break;
+		case 'x':
+		case 'X':
+		  tval.set_bit(idx, BIT4_X);
+		  break;
+		case 'z':
+		case 'Z':
+		  tval.set_bit(idx, BIT4_Z);
+		  break;
+		default:
+		    /* Return "x" if there are invalid digits in the string. */
+		  fprintf(stderr, "Warning: Invalid binary digit %c(%d) in "
+		          "\"%s\".\n", *ebuf, *ebuf, buf);
+		  for (unsigned idx = 0 ;  idx < vec4.size() ;  idx += 1) {
+			vec4.set_bit(idx, BIT4_X);
+		  }
+		  return;
+		  break;
+	    }
+
 	    idx += 1;
       }
 
-	/* Calculate the pad value based on the top bit and the signed
-	   flag. We may sign extend or zero extend. */
-      switch (last) {
-	  case BIT4_0:
-	    last = BIT4_0;
+	/* Make a negative value when needed. */
+      if (buf[0] == '-') {
+	    tval.invert();
+	    tval += (int64_t) 1;
+      }
+
+	/* Find the correct padding value. */
+      vvp_bit4_t pad;
+      switch (tval.value(tval.size()-1)) {
+	  case BIT4_X:  // Pad MSB 'x' with 'x'
+	    pad = BIT4_X;
 	    break;
-	  case BIT4_1:
-	    last = signed_flag? BIT4_1 : BIT4_0;
+	  case BIT4_Z:  // Pad MSB 'z' with 'z'
+	    pad = BIT4_Z;
 	    break;
-	  case BIT4_X:
-	    last = BIT4_X;
-	    break;
-	  case BIT4_Z:
-	    last = BIT4_Z;
+	  case BIT4_1:  // If negative pad MSB '1' with '1'
+	    if (buf[0] == '-') {
+		  pad = BIT4_1;
+		  break;
+	    }
+	  default:  // Everything else gets '0' padded/
+	    pad = BIT4_0;
 	    break;
       }
 
-      while (idx < vec4.size())
-	    vec4.set_bit(idx++, last);
+      for (unsigned idx = 0 ;  idx < vec4.size() ; idx += 1) {
+	    if (idx < tval.size()) vec4.set_bit(idx, tval.value(idx));
+	    else vec4.set_bit(idx, pad);
+      }
 }
-
-/*
- * $Log: vpip_bin.cc,v $
- * Revision 1.4  2006/08/03 05:05:06  steve
- *  Fix infinite loop padding binary string to result.
- *
- * Revision 1.3  2006/02/21 05:31:54  steve
- *  Put strings for reg objects.
- *
- * Revision 1.2  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.1  2002/05/11 04:39:35  steve
- *  Set and get memory words by string value.
- *
- */
-
