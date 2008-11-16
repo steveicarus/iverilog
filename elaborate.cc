@@ -969,7 +969,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	// This is the array of pin expressions, shuffled to match the
 	// order of the declaration. If the source instantiation uses
-	// bind by order, this is the same as the source list.Otherwise,
+	// bind by order, this is the same as the source list. Otherwise,
 	// the source list is rearranged by name binding into this list.
       svector<PExpr*>pins (rmod->port_count());
 
@@ -1051,10 +1051,13 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	// later.
 
       NetScope::scope_vec_t&instance = scope->instance_arrays[get_name()];
+      if (debug_elaborate) cerr << get_fileline() << ": debug: start "
+	    "recursive elaboration of " << instance.size() << " instance(s) of " <<
+	    get_name() << "..." << endl;
       for (unsigned inst = 0 ;  inst < instance.size() ;  inst += 1) {
 	    rmod->elaborate(des, instance[inst]);
       }
-
+      if (debug_elaborate) cerr << get_fileline() << ": debug: ...done." << endl;
 
 
 	// Now connect the ports of the newly elaborated designs to
@@ -1110,7 +1113,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: " << get_name()
-		       << ": Port " << idx << " has " << prts.size()
+		       << ": Port " << (idx+1) << " has " << prts.size()
 		       << " sub-ports." << endl;
 	    }
 
@@ -1427,7 +1430,7 @@ v		       NOTE that this also handles the case that the
 			     << " bits across all "
 			     << prts_vector_width/instance.size()
 			     << " input sub-ports of port "
-			     << idx << "." << endl;
+			     << (idx+1) << "." << endl;
 		  }
 
 		  for (unsigned ldx = 0 ;  ldx < prts.size() ;  ldx += 1) {
@@ -2043,7 +2046,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	   includes just about everything but reals. In this case, we
 	   need to pad the r-value to match the width of the l-value.
 
-	   If in this case the l-val is a variable (i.e. real) then
+	   If in this case the l-val is a variable (i.e., real) then
 	   the width to pad to will be 0, so this code is harmless. */
       if (rv->expr_type() == IVL_VT_REAL) {
 
