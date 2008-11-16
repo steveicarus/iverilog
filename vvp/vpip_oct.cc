@@ -36,7 +36,7 @@ void vpip_oct_str_to_vec4(vvp_vector4_t&val, const char*str)
       unsigned skip_chars = 0;
       const char*tstr = str;
 	/* Find the number of non-numeric characters. */
-      while (tstr = strpbrk(tstr, "-_")) {
+      while ((tstr = strpbrk(tstr, "-_"))) {
 	    skip_chars += 1;
 	    tstr += 1;
       }
