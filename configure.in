@@ -92,6 +92,8 @@ AC_C_BIGENDIAN
 
 # $host
 
+AX_ENABLE_SUFFIX
+
 AX_LD_EXTRALIBS
 
 # Compiler option for position independent code, needed when making shared objects.

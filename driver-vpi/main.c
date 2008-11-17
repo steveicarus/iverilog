@@ -87,9 +87,9 @@ static void myExit(int exitVal)
 
 static void usage()
 {
-	fprintf(stderr,"usage: iverilog-vpi [src and obj files]...\n");
-	fprintf(stderr,"   or  iverilog-vpi -mingw=dir\n");
-	fprintf(stderr,"   or  iverilog-vpi -ivl=dir\n");
+	fprintf(stderr,"usage: iverilog-vpi" IVERILOG_SUFFIX " [src and obj files]...\n");
+	fprintf(stderr,"   or  iverilog-vpi" IVERILOG_SUFFIX " -mingw=dir\n");
+	fprintf(stderr,"   or  iverilog-vpi" IVERILOG_SUFFIX " -ivl=dir\n");
 	myExit(1);
 }
 
@@ -384,7 +384,7 @@ static int parse(int argc, char *argv[])
 		  /* Check for the --install-dir option */
 		else if (stricmp("--install-dir", argv[idx]) == 0) {
 			setup_ivl_environment();
-			printf("%s\\\\lib\\\\ivl\\\\.\n", gstr.pIVL);
+			printf("%s\\\\lib\\\\ivl" IVERILOG_SUFFIX "\\\\.\n", gstr.pIVL);
 			myExit(0);
 		}
 		  /* This is different than iverilog-vpi.sh, we don't
@@ -444,14 +444,14 @@ static void checkIvlDir(char *root)
 	initDynString(&path);
 	assign(&path,gstr.pIVL);
 	appendBackSlash(&path);
-	append(&path,"bin\\vvp.exe");
+	append(&path,"bin\\vvp" IVERILOG_SUFFIX ".exe");
 
 	irv = _stat(path,&stat_buf);
 	deInitDynString(path);
 
 	if (irv) {
 		fprintf(stderr,"error: %s does not appear to be the valid root directory of\n",root);
-		fprintf(stderr,"       Icarus Verilog.  Use the -ivl option of iverilog-vpi.exe to\n");
+		fprintf(stderr,"       Icarus Verilog.  Use the -ivl option of iverilog-vpi" IVERILOG_SUFFIX " to\n");
 		fprintf(stderr,"       point to the Icarus Verilog root directory.  For a Windows\n");
 		fprintf(stderr,"       command shell the option would be something like -ivl=c:\\iverilog\n");
 		fprintf(stderr,"       For a Cygwin shell the option would be something like\n");
@@ -503,7 +503,7 @@ static void setup_ivl_environment()
 		SetRegistryKey(IVL_REGKEY_IVL,gstr.pIVL);
 	} else if (!GetRegistryKey(IVL_REGKEY_IVL,&gstr.pIVL)) {
 			fprintf(stderr,"error: can not locate the Icarus Verilog root directory, use the -ivl option\n");
-			fprintf(stderr,"       of iverilog-vpi.exe to point to the Icarus Verilog root directory.\n");
+			fprintf(stderr,"       of iverilog-vpi" IVERILOG_SUFFIX " to point to the Icarus Verilog root directory.\n");
 			fprintf(stderr,"       For a Windows command shell the option would be something like\n");
 			fprintf(stderr,"       -ivl=c:\\iverilog  For a Cygwin shell the option would be something\n");
 			fprintf(stderr,"       like -ivl=c:\\\\iverilog\n");
@@ -516,7 +516,7 @@ static void setup_ivl_environment()
 	append(&gstr.pCFLAGS,gstr.pIVL);
 	appendBackSlash(&gstr.pCFLAGS);
 	append(&gstr.pCFLAGS, "\\");
-	append(&gstr.pCFLAGS,"include");
+	append(&gstr.pCFLAGS,"include" IVERILOG_SUFFIX);
 
 	  /* Build up the LDFLAGS option string */
 	assign(&gstr.pLDLIBS,"-L");

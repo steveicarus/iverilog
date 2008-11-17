@@ -9,6 +9,8 @@ AC_PROG_INSTALL
 AC_CANONICAL_HOST
 # $host
 
+AX_ENABLE_SUFFIX
+
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
 

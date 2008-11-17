@@ -10,6 +10,8 @@ AC_SUBST(EXEEXT)
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
 
+AX_ENABLE_SUFFIX
+
 AC_PROG_INSTALL
 
 AC_CHECK_HEADERS(malloc.h)

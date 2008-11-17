@@ -85,10 +85,6 @@ Normally, this command automatically figures out everything it needs
 to know. It generally works pretty well. There are a few flags to the
 configure script that modify its behavior:
 
-	--without-ipal
-	    This turns off support for Icarus PAL, whether ipal
-	    libraries are installed or not.
-
 	--prefix=<root>
 	    The default is /usr/local, which causes the tool suite to
 	    be compiled for install in /usr/local/bin,
@@ -99,27 +95,16 @@ configure script that modify its behavior:
 	    common to use --prefix=/opt.  You can configure for a non-root
 	    install with --prefix=$HOME.
 
-	--enable-vvp32 (experimental)
-	    If compiling on AMD64 systems, this enables the
-	    compilation of 32bit compatible vvp (vvp32) and the vpi
-	    modules that match.
-
-2.2.1 Special AMD64 Instructions
-
-(The Icarus Verilog RPM for x86_64 is build using these instructions.)
-
-If you are building for Linux/AMD64 (a.k.a x86_64) then to get the
-most out of your install, first make sure you have both 64bit and
-32bit development libraries installed. Then configure with this
-somewhat more complicated command:
-
-  ./configure libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir2=. --enable-vvp32
-
-This reflects the convention on AMD64 systems that 64bit libraries go
-into lib64 directories. The "--enable-vvp32" also turns on 32bit
-compatibility files. A 32bit version of vvp (vvp32) will be created,
-as well as 32bit versions of the development libraries and bundled VPI
-libraries.
+	--enable-suffix
+	--enable-suffix=<your-suffix>
+	--disable-suffix
+	    Enable/disable changing the names of install files to use
+	    a suffix string so that this version or install can co-
+	    exist with other versions. This renames the installed
+	    commands (iverilog, iverilog-vpi, vvp) and the installed
+	    library files and include directory so that installations
+	    with the same prefix but different suffix are guaranteed
+	    to not interfere with each other.
 
 2.3 (Optional) Testing
 

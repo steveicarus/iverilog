@@ -20,6 +20,8 @@ SHELL = /bin/sh
 
 VERSION = 0.9.devel
 
+suffix = @install_suffix@
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
@@ -68,7 +70,7 @@ cfparse.h cfparse.c: cfparse.y
 
 
 main.o: main.c globals.h ../version.h
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c -DIVL_ROOT='"@libdir@/ivl"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DDLLIB='"@DLLIB@"' $(srcdir)/main.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c -DIVL_ROOT='"@libdir@/ivl$(suffix)"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DDLLIB='"@DLLIB@"' $(srcdir)/main.c
 
 build_string.o: build_string.c globals.h
 cflexor.o: cflexor.c cfparse.h cfparse_misc.h globals.h
@@ -82,35 +84,35 @@ iverilog.pdf: iverilog.ps
 
 ifeq (@MINGW32@,yes)
 ifeq ($(MAN),none)
-INSTALL_DOC = $(mandir)/man1/iverilog.1
+INSTALL_DOC = $(mandir)/man1/iverilog$(suffix).1
 else
 ifeq ($(PS2PDF),none)
-INSTALL_DOC = $(mandir)/man1/iverilog.1
+INSTALL_DOC = $(mandir)/man1/iverilog$(suffix).1
 else
-INSTALL_DOC = $(prefix)/iverilog.pdf $(mandir)/man1/iverilog.1
+INSTALL_DOC = $(prefix)/iverilog$(suffix).pdf $(mandir)/man1/iverilog$(suffix).1
 all: iverilog.pdf
 endif
 endif
 INSTALL_DOCDIR = $(mandir)/man1
 else
-INSTALL_DOC = $(mandir)/man1/iverilog.1
+INSTALL_DOC = $(mandir)/man1/iverilog$(suffix).1
 INSTALL_DOCDIR = $(mandir)/man1
 endif
 
-install: all installdirs $(bindir)/iverilog@EXEEXT@ $(INSTALL_DOC)
+install: all installdirs $(bindir)/iverilog$(suffix)@EXEEXT@ $(INSTALL_DOC)
 
-$(bindir)/iverilog@EXEEXT@: ./iverilog@EXEEXT@
-	$(INSTALL_PROGRAM) ./iverilog@EXEEXT@ $(DESTDIR)$(bindir)/iverilog@EXEEXT@
+$(bindir)/iverilog$(suffix)@EXEEXT@: ./iverilog@EXEEXT@
+	$(INSTALL_PROGRAM) ./iverilog@EXEEXT@ $(DESTDIR)$(bindir)/iverilog$(suffix)@EXEEXT@
 
-$(mandir)/man1/iverilog.1: $(srcdir)/iverilog.man
-	$(INSTALL_DATA) $(srcdir)/iverilog.man $(DESTDIR)$(mandir)/man1/iverilog.1
+$(mandir)/man1/iverilog$(suffix).1: $(srcdir)/iverilog.man
+	$(INSTALL_DATA) $(srcdir)/iverilog.man $(DESTDIR)$(mandir)/man1/iverilog$(suffix).1
 
-$(prefix)/iverilog.pdf: iverilog.pdf
-	$(INSTALL_DATA) iverilog.pdf $(prefix)/iverilog.pdf
+$(prefix)/iverilog$(suffix).pdf: iverilog.pdf
+	$(INSTALL_DATA) iverilog.pdf $(prefix)/iverilog$(suffix).pdf
 
 installdirs: ../mkinstalldirs
 	$(srcdir)/../mkinstalldirs $(DESTDIR)$(bindir) $(DESTDIR)$(INSTALL_DOCDIR)
 
 uninstall:
-	rm -f $(DESTDIR)$(bindir)/iverilog@EXEEXT@
-	rm -f $(DESTDIR)$(mandir)/man1/iverilog.1 $(DESTDIR)$(prefix)/iverilog.pdf
+	rm -f $(DESTDIR)$(bindir)/iverilog$(suffix)@EXEEXT@
+	rm -f $(DESTDIR)$(mandir)/man1/iverilog$(suffix).1 $(DESTDIR)$(prefix)/iverilog$(suffix).pdf

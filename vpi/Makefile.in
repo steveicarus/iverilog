@@ -20,6 +20,8 @@ SHELL = /bin/sh
 
 VERSION = 0.9.devel
 
+suffix = @install_suffix@
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
@@ -30,7 +32,7 @@ bindir = @bindir@
 libdir = @libdir@
 includedir = $(prefix)/include
 
-vpidir = $(libdir)/ivl
+vpidir = $(libdir)/ivl$(suffix)
 
 CC = @CC@
 INSTALL = @INSTALL@
@@ -114,26 +116,26 @@ distclean: clean
 check: all
 
 install: all installdirs \
-    $(vpidir)/system.vpi $(libdir)/ivl/system.sft \
-    $(vpidir)/va_math.vpi $(libdir)/ivl/va_math.sft \
-    $(vpidir)/v2005_math.vpi $(libdir)/ivl/v2005_math.sft
+    $(vpidir)/system.vpi $(vpidir)/system.sft \
+    $(vpidir)/va_math.vpi $(vpidir)/va_math.sft \
+    $(vpidir)/v2005_math.vpi $(vpidir)/v2005_math.sft
 
 $(vpidir)/system.vpi: ./system.vpi
 	$(INSTALL_PROGRAM) ./system.vpi $(DESTDIR)$(vpidir)/system.vpi
 
-$(libdir)/ivl/system.sft: system.sft
+$(vpidir)/system.sft: system.sft
 	$(INSTALL_DATA) $< $(DESTDIR)$@
 
 $(vpidir)/va_math.vpi: ./va_math.vpi
 	$(INSTALL_PROGRAM) ./va_math.vpi $(DESTDIR)$(vpidir)/va_math.vpi
 
-$(libdir)/ivl/va_math.sft: va_math.sft
+$(vpidir)/va_math.sft: va_math.sft
 	$(INSTALL_DATA) $< $(DESTDIR)$@
 
 $(vpidir)/v2005_math.vpi: ./v2005_math.vpi
 	$(INSTALL_PROGRAM) ./v2005_math.vpi $(DESTDIR)$(vpidir)/v2005_math.vpi
 
-$(libdir)/ivl/v2005_math.sft: v2005_math.sft
+$(vpidir)/v2005_math.sft: v2005_math.sft
 	$(INSTALL_DATA) $< $(DESTDIR)$@
 
 installdirs: ../mkinstalldirs
@@ -141,10 +143,10 @@ installdirs: ../mkinstalldirs
 
 uninstall:
 	rm -f $(DESTDIR)$(vpidir)/system.vpi
-	rm -f $(DESTDIR)$(libdir)/ivl/system.sft
+	rm -f $(DESTDIR)$(vpidir)/system.sft
 	rm -f $(DESTDIR)$(vpidir)/va_math.vpi
-	rm -f $(DESTDIR)$(libdir)/ivl/va_math.sft
+	rm -f $(DESTDIR)$(vpidir)/va_math.sft
 	rm -f $(DESTDIR)$(vpidir)/v2005_math.vpi
-	rm -f $(DESTDIR)$(libdir)/ivl/v2005_math.sft
+	rm -f $(DESTDIR)$(vpidir)/v2005_math.sft
 
 -include $(patsubst %.o, dep/%.d, $O)

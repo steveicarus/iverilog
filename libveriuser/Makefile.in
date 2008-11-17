@@ -21,6 +21,7 @@
 #
 SHELL = /bin/sh
 
+suffix = @install_suffix@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -86,15 +87,15 @@ clean:
 distclean: clean
 	rm -f Makefile config.status config.log config.cache config.h
 
-install:: all installdirs $(libdir)/libveriuser.a $(INSTALL32)
+install:: all installdirs $(libdir)/libveriuser$(suffix).a $(INSTALL32)
 
-$(libdir)/libveriuser.a: ./libveriuser.a
-	$(INSTALL_DATA) ./libveriuser.a $(DESTDIR)$(libdir)/libveriuser.a
+$(libdir)/libveriuser$(suffix).a: ./libveriuser.a
+	$(INSTALL_DATA) ./libveriuser.a $(DESTDIR)$(libdir)/libveriuser$(suffix).a
 
 installdirs: mkinstalldirs
 	$(srcdir)/mkinstalldirs $(DESTDIR)$(includedir) $(DESTDIR)$(libdir)
 
 uninstall::
-	rm -f $(DESTDIR)$(libdir)/libveriuser.a
+	rm -f $(DESTDIR)$(libdir)/libveriuser$(suffix).a
 
 -include $(patsubst %.o, dep/%.d, $O)

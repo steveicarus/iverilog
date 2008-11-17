@@ -25,6 +25,8 @@ SHELL = /bin/sh
 
 VERSION = 0.0
 
+suffix = @install_suffix@
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
@@ -60,16 +62,16 @@ ivlpp@EXEEXT@: $O
 lexor.c: lexor.lex
 	flex -olexor.c $(srcdir)/lexor.lex
 
-install: all installdirs $(libdir)/ivl/ivlpp@EXEEXT@
+install: all installdirs $(libdir)/ivl$(suffix)/ivlpp@EXEEXT@
 
-$(libdir)/ivl/ivlpp@EXEEXT@: ivlpp@EXEEXT@
-	$(INSTALL_PROGRAM) ./ivlpp@EXEEXT@ $(DESTDIR)$(libdir)/ivl/ivlpp@EXEEXT@
+$(libdir)/ivl$(suffix)/ivlpp@EXEEXT@: ivlpp@EXEEXT@
+	$(INSTALL_PROGRAM) ./ivlpp@EXEEXT@ $(DESTDIR)$(libdir)/ivl$(suffix)/ivlpp@EXEEXT@
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(DESTDIR)$(libdir)/ivl
+	$(srcdir)/../mkinstalldirs $(DESTDIR)$(libdir)/ivl$(suffix)
 
 uninstall:
-	rm -f $(DESTDIR)$(libdir)/ivl/ivlpp@EXEEXT@
+	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/ivlpp@EXEEXT@
 
 lexor.o: lexor.c globals.h
 main.o: main.c globals.h

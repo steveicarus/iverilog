@@ -24,6 +24,23 @@ fi
 AC_SUBST(ident_support)
 ])# AC_CPP_IDENT
 
+# AX_ENABLE_SUFFIX
+# ----------------
+#  Create the configure option --enable-suffix[=suffix] to generate suffix
+# strings for the installed commands. This allows for shared installs of
+# different builds. Remember to change the default suffix string to some
+# value appropriate for the current version.
+AC_DEFUN([AX_ENABLE_SUFFIX],
+[AC_ARG_ENABLE([suffix],[Set the installation command suffix],[true],[enable_suffix=no])
+if test X$enable_suffix = Xyes; then
+  install_suffix='-0.9'
+elif test X$enable_suffix = Xno; then
+  install_suffix=''
+else
+  install_suffix="$enable_suffix"
+fi
+AC_SUBST(install_suffix)
+])# AX_ENABLE_SUFFIX
 
 # _AX_C_UNDERSCORES_MATCH_IFELSE(PATTERN, ACTION-IF-MATCH, ACTION-IF-NOMATCH)
 # ------------------------------

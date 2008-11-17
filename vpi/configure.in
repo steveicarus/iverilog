@@ -71,6 +71,8 @@ AC_SUBST(file64_support)
 
 # $host
 
+AX_ENABLE_SUFFIX
+
 # Compiler option for position independent code, needed when making shared objects.
 AX_C_PICFLAG
 

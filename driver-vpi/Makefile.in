@@ -20,12 +20,16 @@ SHELL = /bin/sh
 
 VERSION = 0.9.devel
 
+suffix = @install_suffix@
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
 datarootdir = @datarootdir@
 
 VPATH = $(srcdir)
+
+suffix = @install_suffix@
 
 bindir = $(exec_prefix)/bin
 libdir = $(exec_prefix)/lib
@@ -65,6 +69,7 @@ main.o: main.c config.h
 
 config.h: config.h.in
 	sed -e 's;@IVLCC@;@CC@;' -e 's;@IVLCXX@;@CXX@;' \
+	    -e 's;@SUFFIX@;$(suffix);' \
 	    -e 's;@IVLCFLAGS@;@CXXFLAGS@;' \
 	    -e 's;@SHARED@;@shared@;' $< > $@
 
@@ -73,13 +78,13 @@ res.o: res.rc
 	windres -i res.rc -o res.o
 #
 
-install: all installdirs $(bindir)/iverilog-vpi@EXEEXT@
+install: all installdirs $(bindir)/iverilog-vpi$(suffix)@EXEEXT@
 
-$(bindir)/iverilog-vpi@EXEEXT@: ./iverilog-vpi@EXEEXT@
-	$(INSTALL_PROGRAM) ./iverilog-vpi@EXEEXT@ $(bindir)/iverilog-vpi@EXEEXT@
+$(bindir)/iverilog-vpi$(suffix)@EXEEXT@: ./iverilog-vpi@EXEEXT@
+	$(INSTALL_PROGRAM) ./iverilog-vpi@EXEEXT@ $(bindir)/iverilog-vpi$(suffix)@EXEEXT@
 
 installdirs: ../mkinstalldirs
 	$(srcdir)/../mkinstalldirs $(bindir)
 
 uninstall:
-	rm -f $(bindir)/iverilog-vpi@EXEEXT@
+	rm -f $(bindir)/iverilog-vpi$(suffix)@EXEEXT@

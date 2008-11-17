@@ -21,6 +21,8 @@
 #
 SHELL = /bin/sh
 
+suffix = @install_suffix@
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
@@ -53,9 +55,9 @@ LIBS = @LIBS@ @EXTRALIBS@
 
 dllib=@DLLIB@
 
-MDIR1 = -DMODULE_DIR1=\"$(libdir)/ivl/@vpidir1@\"
+MDIR1 = -DMODULE_DIR1=\"$(libdir)/ivl$(suffix)/@vpidir1@\"
 ifneq (x@vpidir2@,x)
-MDIR2 = -DMODULE_DIR2=\"$(libdir)/ivl/@vpidir2@\"
+MDIR2 = -DMODULE_DIR2=\"$(libdir)/ivl$(suffix)/@vpidir2@\"
 endif
 
 all: dep vvp@EXEEXT@ libvpi.a
@@ -139,18 +141,18 @@ vvp.pdf: $(srcdir)/vvp.man
 
 ifeq (@MINGW32@,yes)
 ifeq ($(MAN),none)
-INSTALL_DOC = $(mandir)/man1/vvp.1
+INSTALL_DOC = $(mandir)/man1/vvp$(suffix).1
 else
 ifeq ($(PS2PDF),none)
-INSTALL_DOC = $(mandir)/man1/vvp.1
+INSTALL_DOC = $(mandir)/man1/vvp$(suffix).1
 else
-INSTALL_DOC = $(prefix)/vvp.pdf $(mandir)/man1/vvp.1
+INSTALL_DOC = $(prefix)/vvp$(suffix).pdf $(mandir)/man1/vvp$(suffix).1
 all: vvp.pdf
 endif
 endif
 INSTALL_DOCDIR = $(mandir)/man1
 else
-INSTALL_DOC = $(mandir)/man1/vvp.1
+INSTALL_DOC = $(mandir)/man1/vvp$(suffix).1
 INSTALL_DOCDIR = $(mandir)/man1
 endif
 
@@ -158,27 +160,27 @@ Makefile: Makefile.in config.status
 	./config.status
 
 
-install: all installdirs $(bindir)/vvp@EXEEXT@ $(libdir)/libvpi.a $(INSTALL_DOC)
+install: all installdirs $(bindir)/vvp$(suffix)@EXEEXT@ $(libdir)/libvpi$(suffix).a $(INSTALL_DOC)
 
-$(bindir)/vvp@EXEEXT@: ./vvp@EXEEXT@
-	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ $(DESTDIR)$(bindir)/vvp@EXEEXT@
+$(bindir)/vvp$(suffix)@EXEEXT@: ./vvp@EXEEXT@
+	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ $(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@
 
-$(libdir)/libvpi.a : ./libvpi.a
-	$(INSTALL_DATA) libvpi.a $(DESTDIR)$(libdir)/libvpi.a
+$(libdir)/libvpi$(suffix).a : ./libvpi.a
+	$(INSTALL_DATA) libvpi.a $(DESTDIR)$(libdir)/libvpi$(suffix).a
 
-$(mandir)/man1/vvp.1: $(srcdir)/vvp.man
-	$(INSTALL_DATA) $(srcdir)/vvp.man $(DESTDIR)$(mandir)/man1/vvp.1
+$(mandir)/man1/vvp$(suffix).1: $(srcdir)/vvp.man
+	$(INSTALL_DATA) $(srcdir)/vvp.man $(DESTDIR)$(mandir)/man1/vvp$(suffix).1
 
-$(prefix)/vvp.pdf: vvp.pdf
-	$(INSTALL_DATA) vvp.pdf $(DESTDIR)$(prefix)/vvp.pdf
+$(prefix)/vvp$(suffix).pdf: vvp.pdf
+	$(INSTALL_DATA) vvp.pdf $(DESTDIR)$(prefix)/vvp$(suffix).pdf
 
 installdirs: $(srcdir)/mkinstalldirs
 	$(srcdir)/mkinstalldirs $(DESTDIR)$(bindir) $(DESTDIR)$(libdir) $(DESTDIR)$(INSTALL_DOCDIR)
 
 
 uninstall: $(UNINSTALL32)
-	rm -f $(DESTDIR)$(bindir)/vvp@EXEEXT@
-	rm -f $(DESTDIR)$(libdir)/libvpi.a
-	rm -f $(DESTDIR)$(mandir)/man1/vvp.1 $(DESTDIR)$(prefix)/vvp.pdf
+	rm -f $(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@
+	rm -f $(DESTDIR)$(libdir)/libvpi$(suffix).a
+	rm -f $(DESTDIR)$(mandir)/man1/vvp$(suffix).1 $(DESTDIR)$(prefix)/vvp$(suffix).pdf
 
 -include $(patsubst %.o, dep/%.d, $O)

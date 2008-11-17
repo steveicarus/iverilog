@@ -20,6 +20,8 @@ SHELL = /bin/sh
 
 VERSION = 0.9.devel
 
+suffix = @install_suffix@
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
@@ -30,7 +32,7 @@ bindir = @bindir@
 libdir = @libdir@
 includedir = $(prefix)/include
 
-vpidir = @libdir@/ivl
+vpidir = @libdir@/ivl$(suffix)
 
 CC = @CC@
 INSTALL = @INSTALL@
