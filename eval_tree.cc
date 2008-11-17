@@ -1604,6 +1604,7 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
 
       verinum val = rval->value();
       verinum::V res;
+      bool invert = false;
 
       switch (op_) {
 
@@ -1632,6 +1633,8 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
 		break;
 	  }
 
+	  case 'A':
+		invert = true;
 	  case '&': {
 		res = verinum::V1;
 		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
@@ -1639,6 +1642,8 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
 		break;
 	  }
 
+	  case 'N':
+		invert = true;
 	  case '|': {
 		res = verinum::V0;
 		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
@@ -1646,6 +1651,8 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
 		break;
 	  }
 
+	  case 'X':
+		invert = true;
 	  case '^': {
 		  /* Reduction XOR. */
 		unsigned ones = 0, unknown = 0;
@@ -1661,17 +1668,17 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
 			    break;
 		      }
 
-		if (unknown)
-		      return new NetEConst(verinum(verinum::Vx,1,true));
-		if (ones%2)
-		      return new NetEConst(verinum(verinum::V1,1,true));
-		return new NetEConst(verinum(verinum::V0,1,true));
+		if (unknown) res = verinum::Vx;
+		else if (ones%2) res = verinum::V1;
+		else res = verinum::V0;
+		break;
 	  }
 
 	  default:
 	    return 0;
       }
 
+      if (invert) res = ~res;
       return new NetEConst(verinum(res, 1));
 }
 
