@@ -59,7 +59,7 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 
 	    scope = des->find_scope(scope, path_list);
 
-            if (scope->is_auto() && li) {
+            if (scope && scope->is_auto() && li) {
                   cerr << li->get_fileline() << ": error: Hierarchical "
                         "reference to automatically allocated item "
                         "`" << key << "' in path `" << path << "'" << endl;

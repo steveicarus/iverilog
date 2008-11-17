@@ -2235,6 +2235,16 @@ module_item
 	      cerr << @2 << ": warning: Anachronistic use of begin/end to surround generate schemes." << endl;
 	}
       }
+  | K_generate K_begin ':' IDENTIFIER {
+	pform_start_generate_nblock(@1, $4);
+      } module_item_list_opt K_end K_endgenerate
+      { /* Detect and warn about anachronistic named begin/end use */
+	if (generation_flag > GN_VER2001) {
+	      warn_count += 1;
+	      cerr << @2 << ": warning: Anachronistic use of named begin/end to surround generate schemes." << endl;
+	}
+	pform_endgenerate();
+      }
 
   /* specify blocks are parsed but ignored. */
 

@@ -204,7 +204,7 @@ PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name)
 
       /* The first argument is the numeric level. */
       if (! is_numeric_obj(vpi_scan(argv))) {
-            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s's argument must be numeric.\n", name);
             vpi_control(vpiFinish, 1);
@@ -215,7 +215,7 @@ PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name)
         switch(vpi_get(vpiType, arg)) {
           case vpiMemoryWord:
             if (vpi_get(vpiConstantSelect, arg) == 0) {
-		  vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s cannot dump a non-constant select %s.\n", name,
 		             vpi_get_str(vpiType, arg));
@@ -235,7 +235,7 @@ PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name)
           case vpiRealVar:
             break;
           default:
-            vpi_printf("ERROR: %s line %d: ", vpi_get_str(vpiFile, callh),
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
             vpi_printf("%s cannot dump a %s.\n", name,
                        vpi_get_str(vpiType, arg));

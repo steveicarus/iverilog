@@ -528,10 +528,14 @@ static int signal_get(int code, vpiHandle ref)
 	    else
 		  return 0;
 
-	  case vpiLeftRange: return rfp->msb;
-	  case vpiRightRange: return rfp->lsb;
+	  case vpiLeftRange:
+            return rfp->msb;
 
-          case vpiAutomatic: return rfp->is_automatic;
+	  case vpiRightRange:
+            return rfp->lsb;
+
+          case vpiAutomatic:
+            return (int) vpip_scope(rfp)->is_automatic;
 
 	  case _vpiNexusId:
 	    if (rfp->msb == rfp->lsb)
@@ -800,13 +804,13 @@ vvp_vector4_t vec4_from_vpi_value(s_vpi_value*vp, unsigned wid)
 	    }
 	    break;
 	  case vpiBinStrVal:
-	    vpip_bin_str_to_vec4(val, vp->value.str, false);
+	    vpip_bin_str_to_vec4(val, vp->value.str);
 	    break;
 	  case vpiOctStrVal:
 	    vpip_oct_str_to_vec4(val, vp->value.str);
 	    break;
 	  case vpiDecStrVal:
-	    vpip_dec_str_to_vec4(val, vp->value.str, false);
+	    vpip_dec_str_to_vec4(val, vp->value.str);
 	    break;
 	  case vpiHexStrVal:
 	    vpip_hex_str_to_vec4(val, vp->value.str);
@@ -816,6 +820,9 @@ vvp_vector4_t vec4_from_vpi_value(s_vpi_value*vp, unsigned wid)
 	    break;
 	  case vpiStringVal:
 	    val = from_stringval(vp->value.str, wid);
+	    break;
+	  case vpiRealVal:
+	    val = vvp_vector4_t(wid, vp->value.real);
 	    break;
 
 	  default:
@@ -863,7 +870,6 @@ vpiHandle vpip_make_int(const char*name, int msb, int lsb, vvp_net_t*vec)
       struct __vpiSignal*rfp = (struct __vpiSignal*)obj;
       obj->vpi_type = &vpip_reg_rt;
       rfp->isint_ = true;
-      rfp->is_automatic = vpip_peek_current_scope()->is_automatic;
       return obj;
 }
 
@@ -874,9 +880,7 @@ vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
 			bool signed_flag, vvp_net_t*vec)
 {
       vpiHandle obj = vpip_make_net(name, msb,lsb, signed_flag, vec);
-      struct __vpiSignal*rfp = (struct __vpiSignal*)obj;
       obj->vpi_type = &vpip_reg_rt;
-      rfp->is_automatic = vpip_peek_current_scope()->is_automatic;
       return obj;
 }
 
@@ -915,7 +919,6 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
       obj->signed_flag = signed_flag? 1 : 0;
       obj->isint_ = 0;
       obj->is_netarray = 0;
-      obj->is_automatic = vpip_peek_current_scope()->is_automatic;
       obj->node = node;
 
 	// Place this object within a scope. If this object is
@@ -972,10 +975,14 @@ static int PV_get(int code, vpiHandle ref)
 	case vpiConstantSelect:
 	    return rfp->twid == 0;
 
-	case vpiLeftRange: rval += rfp->width;
+	case vpiLeftRange:
+            rval += rfp->width;
 	case vpiRightRange:
 	    rval += vpi_get(vpiRightRange, rfp->parent) + PV_get_base(rfp);
 	    return rval;
+
+        case vpiAutomatic:
+            return vpi_get(vpiAutomatic, rfp->parent);
 
 	default:
 	    fprintf(stderr, "PV_get: property %d is unknown\n", code);

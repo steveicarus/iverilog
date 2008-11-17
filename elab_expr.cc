@@ -786,20 +786,26 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 	    left_width = left_->test_width(des, scope, 0, 0, left_type, unsized_flag);
 
 	/* Width of operands is self-determined. */
-      int use_wid = left_width;
-      if (right_width > left_width)
-	    use_wid = right_width;
+
+      int use_wid_l = left_width;
+      if (type_is_vectorable(left_type) && (right_width > left_width))
+	    use_wid_l = right_width;
+
+      int use_wid_r = right_width;
+      if (type_is_vectorable(right_type) && (left_width > right_width))
+	    use_wid_r = left_width;
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: "
 		 << "Comparison expression operands are "
 		 << left_width << " bits and "
 		 << right_width << " bits. Resorting to "
-		 << use_wid << " bits." << endl;
+		 << use_wid_l << " bits and "
+		 << use_wid_r << " bits." << endl;
       }
 
-      NetExpr*lp = left_->elaborate_expr(des, scope, use_wid, false);
-      NetExpr*rp = right_->elaborate_expr(des, scope, use_wid, false);
+      NetExpr*lp = left_->elaborate_expr(des, scope, use_wid_l, false);
+      NetExpr*rp = right_->elaborate_expr(des, scope, use_wid_r, false);
       if ((lp == 0) || (rp == 0)) {
 	    delete lp;
 	    delete rp;
@@ -812,12 +818,12 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 	// pad the width here. This matters because if the arguments
 	// are signed, then this padding will do sign extension.
       if (type_is_vectorable(lp->expr_type()))
-	    lp = pad_to_width(lp, use_wid);
+	    lp = pad_to_width(lp, use_wid_l);
       if (type_is_vectorable(rp->expr_type()))
-	    rp = pad_to_width(rp, use_wid);
+	    rp = pad_to_width(rp, use_wid_r);
 
-      eval_expr(lp, use_wid);
-      eval_expr(rp, use_wid);
+      eval_expr(lp, use_wid_l);
+      eval_expr(rp, use_wid_r);
 
 	// Handle some operand-specific special cases...
       switch (op_) {
@@ -1413,12 +1419,26 @@ unsigned PEConcat::test_width(Design*des, NetScope*scope,
 {
       expr_type_ = IVL_VT_LOGIC;
 
-      if (debug_elaborate)
-	    cerr << get_fileline() << ": debug: CONCAT MISSING TEST_WIDTH!" << endl;
+      unsigned count_width = 0;
+      for (unsigned idx = 0 ; idx < parms_.count() ; idx += 1)
+	    count_width += parms_[idx]->test_width(des, scope, 0, 0, expr_type__, unsized_flag);
+
+      if (repeat_) {
+	      // The repeat expression is self-determined and its own type.
+	    ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
+	    bool tmp_flag = false;
+	    repeat_->test_width(des, scope, 0, 0, tmp_type, tmp_flag);
+
+	    count_width = 0;
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "CONCAT MISSING TEST_WIDTH WHEN REPEAT IS PRESENT!"
+		       << endl;
+      }
 
       expr_type__ = expr_type_;
       unsized_flag = false;
-      return 0;
+      return count_width;
 }
 
 // Keep track of the concatenation/repeat depth.

@@ -46,6 +46,10 @@ class PExpr : public LineInfo {
 
       virtual void dump(ostream&) const;
 
+        // This method tests whether the expression contains any
+        // references to automatically allocated variables.
+      virtual bool has_aa_term(Design*des, NetScope*scope) const;
+
 	// This method tests the width that the expression wants to
 	// be. It is used by elaboration of assignments to figure out
 	// the width of the expression.
@@ -156,6 +160,8 @@ class PEConcat : public PExpr {
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
       virtual void dump(ostream&) const;
 
+      virtual bool has_aa_term(Design*des, NetScope*scope) const;
+
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
@@ -199,6 +205,8 @@ class PEEvent : public PExpr {
       PExpr* expr() const;
 
       virtual void dump(ostream&) const;
+
+      virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
     private:
       edge_t type_;
@@ -247,6 +255,9 @@ class PEIdent : public PExpr {
       void append_name(perm_string);
 
       virtual void dump(ostream&) const;
+
+      virtual bool has_aa_term(Design*des, NetScope*scope) const;
+
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
@@ -420,6 +431,8 @@ class PEUnary : public PExpr {
 
       virtual void dump(ostream&out) const;
 
+      virtual bool has_aa_term(Design*des, NetScope*scope) const;
+
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
@@ -447,6 +460,8 @@ class PEBinary : public PExpr {
       ~PEBinary();
 
       virtual void dump(ostream&out) const;
+
+      virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
@@ -541,6 +556,9 @@ class PETernary : public PExpr {
       ~PETernary();
 
       virtual void dump(ostream&out) const;
+
+      virtual bool has_aa_term(Design*des, NetScope*scope) const;
+
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
@@ -579,7 +597,9 @@ class PECallFunction : public PExpr {
 
       virtual void dump(ostream &) const;
 
-     virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+      virtual bool has_aa_term(Design*des, NetScope*scope) const;
+
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     int expr_wid, bool sys_task_arg) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 

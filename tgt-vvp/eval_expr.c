@@ -1053,7 +1053,7 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 
 	      /* shifting 0 gets 0. */
 	    if (lv.base == 0)
-		  break;
+		  return lv;
 
 	    if (lv.base < 4) {
 		  struct vector_info tmp;
@@ -1088,7 +1088,7 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 
 	      /* shifting 0 gets 0. */
 	    if (lv.base == 0)
-		  break;
+		  return lv;
 
 	    if (lv.base < 4) {
 		  struct vector_info tmp;
@@ -1123,12 +1123,12 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 
 	      /* shifting 0 gets 0. */
 	    if (lv.base == 0)
-		  break;
+		  return lv;
 
 	      /* Sign extend any constant begets itself, if this
 		 expression is signed. */
 	    if ((lv.base < 4) && (ivl_expr_signed(exp)))
-		  break;
+		  return lv;
 
 	    if (lv.base < 4) {
 		  struct vector_info tmp;
@@ -1823,6 +1823,8 @@ static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
 	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
 		    res.base+subv.wid, res.wid - subv.wid);
       }
+      if (subv.base >= 8)
+            clr_vector(subv);
 
       save_expression_lookaside(res.base, exp, wid);
       return res;

@@ -433,7 +433,7 @@ static void open_dumpfile(vpiHandle callh)
       dump_file = lxt2_wr_init(dump_path);
 
       if (dump_file == 0) {
-	    vpi_printf("LXT2 Error: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("LXT2 Error: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("Unable to open %s for output.\n", dump_path);
 	    vpi_control(vpiFinish, 1);

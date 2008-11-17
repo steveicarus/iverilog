@@ -1002,6 +1002,8 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 	    else
 		  out << " default:";
 	    break;
+	  case GS_NBLOCK:
+	    out << " begin";
       }
 
       if (scope_name)
@@ -1035,7 +1037,11 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 	    (*idx)->dump(out, indent+2);
       }
 
-      out << setw(indent) << "" << "endgenerate" << endl;
+      if (scheme_type == GS_NBLOCK) {
+	    out << setw(indent) << "" << "end endgenerate" << endl;
+      } else {
+	    out << setw(indent) << "" << "endgenerate" << endl;
+      }
 }
 
 void LexicalScope::dump_parameters_(ostream&out, unsigned indent) const

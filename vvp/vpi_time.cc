@@ -93,6 +93,9 @@ static int timevar_time_get(int code, vpiHandle ref)
 	  case vpiFuncType:
 	    return vpiTimeFunc;
 
+          case vpiAutomatic:
+	    return 0;
+
 	  default:
 	    fprintf(stderr, "Code: %d\n", code);
 	    assert(0);
@@ -147,6 +150,9 @@ static int timevar_realtime_get(int code, vpiHandle ref)
 
 	  case vpiFuncType:
 	    return vpiRealFunc;
+
+          case vpiAutomatic:
+	    return 0;
 
 	  default:
 	    fprintf(stderr, "Code: %d\n", code);

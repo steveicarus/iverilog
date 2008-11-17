@@ -33,29 +33,30 @@ extern const char oct_digits[64];
 void vpip_oct_str_to_vec4(vvp_vector4_t&val, const char*str)
 {
       unsigned str_len = strlen(str);
-
-      char pad = '0';
-      switch (str[0]) {
-	  case 'x':
-	  case 'X':
-	    pad = 'x';
-	    break;
-	  case 'z':
-	  case 'Z':
-	    pad = 'z';
-	    break;
+      unsigned skip_chars = 0;
+      const char*tstr = str;
+	/* Find the number of non-numeric characters. */
+      while ((tstr = strpbrk(tstr, "-_"))) {
+	    skip_chars += 1;
+	    tstr += 1;
       }
-
-      for (unsigned idx = 0 ;  idx < val.size() ;  idx += 1) {
+      vvp_vector4_t tval(3*(str_len-skip_chars));
+      skip_chars = 0;
+      for (unsigned idx = 0 ;  idx < tval.size() ;  idx += 1) {
 	    unsigned tmp;
 	    unsigned bit_off = idx%3;
 	    unsigned str_off = idx/3;
-
 	    char ch;
-	    if (str_off >= str_len)
-		  ch = pad;
-	    else
-		  ch = str[str_len-str_off-1];
+
+	    assert(str_off+skip_chars < str_len);
+	      /* Skip any "_" characters in the string. */
+	    while ((ch = str[str_len-str_off-1-skip_chars]) == '_') {
+		  skip_chars += 1;
+		  assert(str_off+skip_chars < str_len);
+	    }
+
+	      /* If we find a "-" it must be at the head of the string. */
+	    if (ch == '-') assert(0);
 
 	    switch (ch) {
 		case '0':
@@ -67,22 +68,59 @@ void vpip_oct_str_to_vec4(vvp_vector4_t&val, const char*str)
 		case '6':
 		case '7':
 		  tmp = ch - '0';
-		  val.set_bit(idx, ((tmp>>bit_off)&1)? BIT4_1 : BIT4_0);
+		  tval.set_bit(idx, ((tmp>>bit_off)&1)? BIT4_1 : BIT4_0);
 		  break;
 		case 'x':
 		case 'X':
-		  val.set_bit(idx, BIT4_X);
+		  tval.set_bit(idx, BIT4_X);
 		  break;
 		case 'z':
 		case 'Z':
-		  val.set_bit(idx, BIT4_Z);
+		  tval.set_bit(idx, BIT4_Z);
 		  break;
 		default:
-		  fprintf(stderr, "Unsupported digit %c(%d).\n", ch, ch);
-		  assert(0);
+		    /* Return "x" if there are invalid digits in the string. */
+		  fprintf(stderr, "Warning: Invalid octal digit %c(%d) in "
+		          "\"%s\".\n", ch, ch, str);
+		  for (unsigned idx = 0 ;  idx < val.size() ;  idx += 1) {
+			val.set_bit(idx, BIT4_X);
+		  }
+		  return;
 		  break;
 	    }
       }
+
+	/* Make a negative value when needed. */
+      if (str[0] == '-') {
+	    tval.invert();
+	    tval += (int64_t) 1;
+      }
+
+	/* Find the correct padding value. */
+      vvp_bit4_t pad;
+      switch (tval.value(tval.size()-1)) {
+	  case BIT4_X:  // Pad MSB 'x' with 'x'
+	    pad = BIT4_X;
+	    break;
+	  case BIT4_Z:  // Pad MSB 'z' with 'z'
+	    pad = BIT4_Z;
+	    break;
+	  case BIT4_1:  // If negative pad MSB '1' with '1'
+	    if (str[0] == '-') {
+		  pad = BIT4_1;
+		  break;
+	    }
+	  default:  // Everything else gets '0' padded.
+	    pad = BIT4_0;
+	    break;
+      }
+
+	/* Copy the temporary value to the real value, padding if needed. */
+      for (unsigned idx = 0 ;  idx < val.size() ;  idx += 1) {
+	    if (idx < tval.size()) val.set_bit(idx, tval.value(idx));
+	    else val.set_bit(idx, pad);
+      }
+
 }
 
 void vpip_vec4_to_oct_str(const vvp_vector4_t&bits, char*buf, unsigned nbuf,

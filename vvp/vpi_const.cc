@@ -47,6 +47,9 @@ static int string_get(int code, vpiHandle ref)
 	  case vpiConstType:
 	      return vpiStringConst;
 
+          case vpiAutomatic:
+	      return 0;
+
 	  default:
 	      fprintf(stderr, "vvp error: get %d not supported "
 		      "by vpiStringConst\n", code);
@@ -343,6 +346,9 @@ static int binary_get(int code, vpiHandle ref)
 	  case vpiSize:
 	    return rfp->bits.size();
 
+          case vpiAutomatic:
+	    return 0;
+
 	  default:
 	    fprintf(stderr, "vvp error: get %d not supported "
 		    "by vpiBinaryConst\n", code);
@@ -533,6 +539,9 @@ static int dec_get(int code, vpiHandle ref)
 	  case vpiSize:
 	    return 32;
 
+          case vpiAutomatic:
+	    return 0;
+
 	  default:
 	    fprintf(stderr, "vvp error: get %d not supported "
 		    "by vpiDecConst\n", code);
@@ -635,6 +644,9 @@ static int real_get(int code, vpiHandle ref)
 
 	  case vpiSigned:
 	    return 1;
+
+          case vpiAutomatic:
+	    return 0;
 
 	  default:
 	    fprintf(stderr, "vvp error: get %d not supported "

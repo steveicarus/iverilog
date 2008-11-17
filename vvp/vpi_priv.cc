@@ -692,6 +692,14 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
       if (flags!=vpiNoDelay && flags!=vpiForceFlag && flags!=vpiReleaseFlag) {
 	    vvp_time64_t dly;
 
+            if (vpi_get(vpiAutomatic, obj)) {
+                  fprintf(stderr, "vpi error: cannot put a value with "
+                                  "a delay on automatically allocated "
+                                  "variable '%s'\n",
+                                  vpi_get_str(vpiName, obj));
+                  return 0;
+            }
+
 	    assert(when != 0);
 
 	    switch (when->type) {

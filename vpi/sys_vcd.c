@@ -378,7 +378,7 @@ static void open_dumpfile(vpiHandle callh)
       dump_file = fopen(dump_path, "w");
 
       if (dump_file == 0) {
-	    vpi_printf("VCD Error: %s line %d: ", vpi_get_str(vpiFile, callh),
+	    vpi_printf("VCD Error: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("Unable to open %s for output.\n", dump_path);
 	    vpi_control(vpiFinish, 1);
@@ -677,7 +677,7 @@ static int draw_scope(vpiHandle item, vpiHandle callh)
 	  case vpiNamedFork:   type = "fork";       break;
 	  case vpiModule:      type = "module";     break;
 	  default:
-	    vpi_printf("VCD Error: %s line %d: $dumpvars: Unsupported scope "
+	    vpi_printf("VCD Error: %s:%d: $dumpvars: Unsupported scope "
 	               "type (%d)\n", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh), vpi_get(vpiType, item));
             assert(0);

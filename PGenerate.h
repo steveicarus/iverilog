@@ -65,7 +65,7 @@ class PGenerate : public LineInfo, public LexicalScope {
       PScope*lexical_scope;
 
       enum scheme_t {GS_NONE, GS_LOOP, GS_CONDIT, GS_ELSE,
-		     GS_CASE, GS_CASE_ITEM};
+		     GS_CASE, GS_CASE_ITEM, GS_NBLOCK};
       scheme_t scheme_type;
 
 	// generate loops have an index variable and three
@@ -102,6 +102,7 @@ class PGenerate : public LineInfo, public LexicalScope {
       bool generate_scope_loop_(Design*des, NetScope*container);
       bool generate_scope_condit_(Design*des, NetScope*container, bool else_flag);
       bool generate_scope_case_(Design*des, NetScope*container);
+      bool generate_scope_nblock_(Design*des, NetScope*container);
 
 	// Elaborate_scope within a generated scope.
       void elaborate_subscope_(Design*des, NetScope*scope);

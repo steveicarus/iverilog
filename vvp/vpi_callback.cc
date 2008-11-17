@@ -119,6 +119,14 @@ void delete_vpi_callback(struct __vpiCallback* ref)
  */
 static struct __vpiCallback* make_value_change(p_cb_data data)
 {
+      if (vpi_get(vpiAutomatic, data->obj)) {
+            fprintf(stderr, "vpi error: cannot place value change "
+                            "callback on automatically allocated "
+                            "variable '%s'\n",
+                            vpi_get_str(vpiName, data->obj));
+            return 0;
+      }
+
       struct __vpiCallback*obj = new_vpi_callback();
       obj->cb_data = *data;
       if (data->time) {

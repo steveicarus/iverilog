@@ -133,7 +133,18 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 	    verinum lval = lc->value();
 	    verinum rval = rc->value();
 
-	    ivl_assert(*this, se->expr_width() == this->expr_width());
+	    if (lval.len() < expr_width())
+		  lval = pad_to_width(lval, expr_width());
+	    if (rval.len() < expr_width())
+		  rval = pad_to_width(rval, expr_width());
+
+	    if (se->expr_width() > this->expr_width()) {
+		  cerr << get_fileline() << ": internal error: "
+		       << "expr_width()=" << expr_width()
+		       << ", sub expr_width()=" << se->expr_width()
+		       << ", sub expression=" << *se << endl;
+	    }
+	    ivl_assert(*this, se->expr_width() <= this->expr_width());
 
 	    verinum val;
 	    if (op_ == se->op_) {
@@ -146,7 +157,9 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 		  val = rval - lval;
 	    }
 
-	    val = pad_to_width(val, expr_width());
+	      // Since we padded the operands above to be the minimum
+	      // width, the val should also be at least expr_width().
+	    ivl_assert(*this, val.len() >= expr_width());
 	    if (val.len() > expr_width()) {
 		  verinum tmp (val, expr_width());
 		  tmp.has_sign(val.has_sign());

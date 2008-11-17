@@ -223,7 +223,6 @@ struct __vpiSignal {
       unsigned signed_flag  : 1;
       unsigned isint_       : 1; // original type was integer
       unsigned is_netarray  : 1; // This is word of a net array
-      unsigned is_automatic : 1;
 	/* The represented value is here. */
       vvp_net_t*node;
 };
@@ -563,8 +562,6 @@ extern unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
 				     char *buf, unsigned int nbuf,
 				     int signed_flag);
 
-extern void vpip_bin_str_to_vec4(vvp_vector4_t&val,
-				 const char*buf, bool signed_flag);
 
 extern void vpip_vec4_to_hex_str(const vvp_vector4_t&bits, char*buf,
 				 unsigned nbuf, bool signed_flag);
@@ -572,8 +569,9 @@ extern void vpip_vec4_to_hex_str(const vvp_vector4_t&bits, char*buf,
 extern void vpip_vec4_to_oct_str(const vvp_vector4_t&bits, char*buf,
 				 unsigned nbuf, bool signed_flag);
 
+extern void vpip_bin_str_to_vec4(vvp_vector4_t&val, const char*buf);
 extern void vpip_oct_str_to_vec4(vvp_vector4_t&val, const char*str);
-extern void vpip_dec_str_to_vec4(vvp_vector4_t&val, const char*str, bool sign);
+extern void vpip_dec_str_to_vec4(vvp_vector4_t&val, const char*str);
 extern void vpip_hex_str_to_vec4(vvp_vector4_t&val, const char*str);
 
 extern vvp_vector4_t vec4_from_vpi_value(s_vpi_value*vp, unsigned wid);

@@ -2730,14 +2730,18 @@ bool of_JOIN(vthread_t thr, vvp_code_t cp)
 
       assert(thr->fork_count > 0);
 
-      if (thr->wt_context != thr->rd_context) {
-              /* Pop the child context from the write context stack. */
-            vvp_context_t child_context = thr->wt_context;
-            thr->wt_context = vvp_get_stacked_context(child_context);
+        /* If the child thread is in an automatic scope... */
+      if (thr->child->wt_context) {
+              /* and is the top level task/function thread... */
+            if (thr->wt_context != thr->rd_context) {
+                    /* Pop the child context from the write context stack. */
+                  vvp_context_t child_context = thr->wt_context;
+                  thr->wt_context = vvp_get_stacked_context(child_context);
 
-              /* Push the child context onto the read context stack */
-            vvp_set_stacked_context(child_context, thr->rd_context);
-            thr->rd_context = child_context;
+                    /* Push the child context onto the read context stack */
+                  vvp_set_stacked_context(child_context, thr->rd_context);
+                  thr->rd_context = child_context;
+            }
       }
 
 	/* If the child has already ended, reap it now. */
