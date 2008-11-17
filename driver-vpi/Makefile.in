@@ -69,7 +69,7 @@ main.o: main.c config.h
 
 config.h: config.h.in
 	sed -e 's;@IVLCC@;@CC@;' -e 's;@IVLCXX@;@CXX@;' \
-	    -e 's;@SUFFIX@;$(suffix);' \
+	    -e 's;@SUFFIX@;$(suffix);g' \
 	    -e 's;@IVLCFLAGS@;@CXXFLAGS@;' \
 	    -e 's;@SHARED@;@shared@;' $< > $@
 
