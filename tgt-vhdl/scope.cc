@@ -131,6 +131,7 @@ static string visible_nexus_signal_name(nexus_private_t *priv, vhdl_scope *scope
 void draw_nexus(ivl_nexus_t nexus)
 {
    nexus_private_t *priv = new nexus_private_t;
+   int nexus_signal_width = -1;
    priv->const_driver = NULL;
    
    int nptrs = ivl_nexus_ptrs(nexus);
@@ -144,6 +145,8 @@ void draw_nexus(ivl_nexus_t nexus)
          vhdl_scope *scope = find_scope_for_signal(sig);
          unsigned pin = ivl_nexus_ptr_pin(nexus_ptr);
          link_scope_to_nexus_signal(priv, scope, sig, pin);
+
+         nexus_signal_width = ivl_signal_width(sig);
       }
    }
 
@@ -188,7 +191,17 @@ void draw_nexus(ivl_nexus_t nexus)
          else {
             // Create a temporary signal to connect the nexus
             // TODO: we could avoid this for IVL_LPM_PART_PV
-            vhdl_type *type = vhdl_type::type_for(ivl_lpm_width(lpm),
+
+            // If we already know how wide the temporary should be
+            // (i.e. because we've seen a signal it's connected to)
+            // then use that, otherwise use the width of the LPM
+            int lpm_temp_width;
+            if (nexus_signal_width != -1)
+               lpm_temp_width = nexus_signal_width;
+            else
+               lpm_temp_width = ivl_lpm_width(lpm);
+            
+            vhdl_type *type = vhdl_type::type_for(lpm_temp_width,
                                                   ivl_lpm_signed(lpm) != 0);
             ostringstream ss;
             ss << "LPM" << ivl_lpm_basename(lpm);
