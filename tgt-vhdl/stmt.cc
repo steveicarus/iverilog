@@ -608,30 +608,36 @@ int draw_casezx(vhdl_procedural *proc, stmt_container *container,
 
          vhdl_binop_expr *all =
             new vhdl_binop_expr(VHDL_BINOP_AND, vhdl_type::boolean());
+         bool just_dont_care = true;
          for (unsigned i = 0; i < ivl_expr_width(net); i++) {
             switch (bits[i]) {
+            case 'x':
+               if (ivl_statement_type(stmt) == IVL_ST_CASEZ) break;
             case '?':
             case 'z':
-            case 'x':
                // Ignore it
-               break;
-            default:
-               {
-                  // Generate a comparison for this bit position
-                  vhdl_binop_expr *cmp =
-                     new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
-
-                  vhdl_type *type = vhdl_type::nunsigned(ivl_expr_width(net));
-                  vhdl_var_ref *lhs =
-                     new vhdl_var_ref(test->get_name().c_str(), type);
-                  lhs->set_slice(new vhdl_const_int(i));
-
-                  cmp->add_expr(lhs);
-                  cmp->add_expr(new vhdl_const_bit(bits[i]));
-
-                  all->add_expr(cmp);
-               }
+               continue;
             }
+
+            // Generate a comparison for this bit position
+            vhdl_binop_expr *cmp =
+               new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
+
+            vhdl_type *type = vhdl_type::nunsigned(ivl_expr_width(net));
+            vhdl_var_ref *lhs =
+               new vhdl_var_ref(test->get_name().c_str(), type);
+            lhs->set_slice(new vhdl_const_int(i));
+
+            cmp->add_expr(lhs);
+            cmp->add_expr(new vhdl_const_bit(bits[i]));
+
+            all->add_expr(cmp);
+            just_dont_care = false;
+         }
+
+         // If there are no bits comparisons then just put a True
+         if (just_dont_care) {
+            all->add_expr(new vhdl_const_bool(true));
          }
 
          if (result)
