@@ -401,6 +401,22 @@ static void vpip_put_value_callback(vvp_gen_event_t eobj, unsigned char)
       vpip_put_value_event*put = (vpip_put_value_event*)eobj;
 
       put->handle->vpi_type->vpi_put_value_ (put->handle, &put->value);
+      switch (put->value.format) {
+	    /* Free the copied string. */
+	  case vpiBinStrVal:
+	  case vpiOctStrVal:
+	  case vpiDecStrVal:
+	  case vpiHexStrVal:
+	  case vpiStringVal:
+	    free(put->value.value.str);
+	    break;
+	    /* If these are every copied then free them too. */
+	  case vpiTimeVal:
+	  case vpiVectorVal:
+	  case vpiStrengthVal:
+	  default:
+	    break;
+      }
 }
 
 vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
@@ -432,6 +448,22 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 	    vpip_put_value_event*put = new vpip_put_value_event;
 	    put->handle = obj;
 	    put->value = *vp;
+ 	    switch (put->value.format) {
+		  /* If this is scheduled make a copy of the string. */
+ 		case vpiBinStrVal:
+ 		case vpiOctStrVal:
+ 		case vpiDecStrVal:
+ 		case vpiHexStrVal:
+ 		case vpiStringVal:
+		  put->value.value.str = strdup(put->value.value.str);
+		  break;
+		  /* Do these also need to be copied? */
+ 		case vpiTimeVal:
+ 		case vpiVectorVal:
+ 		case vpiStrengthVal:
+ 		default:
+		  break;
+ 	    }
 	    put->run = &vpip_put_value_callback;
 	    schedule_generic(put, 0, dly, false);
 	    return 0;
