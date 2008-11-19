@@ -745,6 +745,7 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope)
       des->add_node(concat);
       connect(concat->pin(0), osig->pin(0));
 
+      unsigned count_input_width = 0;
       unsigned cur_pin = 1;
       for (unsigned rpt = 0; rpt < repeat(); rpt += 1) {
 	    for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
@@ -752,7 +753,16 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope)
 		  ivl_assert(*this, tmp[concat_item]);
 		  connect(concat->pin(cur_pin), tmp[concat_item]->pin(0));
 		  cur_pin += 1;
+		  count_input_width += tmp[concat_item]->vector_width();
 	    }
+      }
+
+      if (count_input_width != osig->vector_width()) {
+	    cerr << get_fileline() << ": internal error: "
+		 << "NetEConcat input width = " << count_input_width
+		 << ", expecting " << osig->vector_width()
+		 << " (repeat=" << repeat() << ")" << endl;
+	    des->errors += 1;
       }
 
       delete[]tmp;

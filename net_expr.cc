@@ -380,7 +380,8 @@ void NetEConcat::set(unsigned idx, NetExpr*e)
 
 NetEConcat* NetEConcat::dup_expr() const
 {
-      NetEConcat*dup = new NetEConcat(parms_.count(), repeat_);
+      NetEConcat*dup = new NetEConcat(parms_.count(), 0);
+      dup->set_line(*this);
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
 	    if (parms_[idx]) {
 		  NetExpr*tmp = parms_[idx]->dup_expr();
@@ -389,7 +390,11 @@ NetEConcat* NetEConcat::dup_expr() const
 	    }
 
 
+      dup->repeat_ = repeat_? repeat_->dup_expr() : 0;
+      dup->repeat_value_ = repeat_value_;
+      dup->repeat_calculated_ = repeat_calculated_;
       dup->expr_width(expr_width());
+
       return dup;
 }
 
