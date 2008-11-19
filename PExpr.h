@@ -21,6 +21,7 @@
 
 # include  <string>
 # include  <vector>
+# include  <valarray>
 # include  "netlist.h"
 # include  "verinum.h"
 # include  "LineInfo.h"
@@ -181,7 +182,10 @@ class PEConcat : public PExpr {
 				     bool bidirectional_flag) const;
     private:
       svector<PExpr*>parms_;
+      std::valarray<unsigned>tested_widths_;
+
       PExpr*repeat_;
+
 };
 
 /*

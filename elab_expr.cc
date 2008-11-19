@@ -1366,8 +1366,10 @@ unsigned PEConcat::test_width(Design*des, NetScope*scope,
       expr_type_ = IVL_VT_LOGIC;
 
       unsigned count_width = 0;
-      for (unsigned idx = 0 ; idx < parms_.count() ; idx += 1)
-	    count_width += parms_[idx]->test_width(des, scope, 0, 0, expr_type__, unsized_flag);
+      for (unsigned idx = 0 ; idx < parms_.count() ; idx += 1) {
+	    tested_widths_[idx] = parms_[idx]->test_width(des, scope, 0, 0, expr_type__, unsized_flag);
+	    count_width += tested_widths_[idx];
+      }
 
       if (repeat_) {
 	      // The repeat expression is self-determined and its own type.
@@ -1462,7 +1464,8 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	    }
 
 	    assert(parms_[idx]);
-	    NetExpr*ex = elab_and_eval(des, scope, parms_[idx], 0, 0);
+	    NetExpr*ex = elab_and_eval(des, scope, parms_[idx],
+				       tested_widths_[idx], 0);
 	    if (ex == 0) continue;
 
 	    ex->set_line(*parms_[idx]);
@@ -2789,6 +2792,12 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			cerr << get_fileline() << ": debug: Short-circuit "
 			        "elaborate TRUE clause of ternary."
 			     << endl;
+		  if (use_wid <= 0) {
+			cerr << get_fileline() << ": internal error: "
+			     << "Unexpected use_wid=" << use_wid
+			     << " processing short-circuit TRUE clause"
+			     << " of expression: " << *this << endl;
+		  }
 		  ivl_assert(*this, use_wid > 0);
 		  NetExpr*tru = elab_and_eval(des, scope, tru_, use_wid);
 		  return pad_to_width(tru, use_wid);
@@ -2801,6 +2810,12 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			cerr << get_fileline() << ": debug: Short-circuit "
 			        "elaborate FALSE clause of ternary."
 			<< endl;
+		  if (use_wid <= 0) {
+			cerr << get_fileline() << ": internal error: "
+			     << "Unexpected use_wid=" << use_wid
+			     << " processing short-circuit FALSE clause"
+			     << " of expression: " << *this << endl;
+		  }
 		  ivl_assert(*this, use_wid > 0);
 		  NetExpr*fal = elab_and_eval(des, scope, fal_, use_wid);
 		  return pad_to_width(fal, use_wid);
