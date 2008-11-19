@@ -31,9 +31,9 @@ const char NOTICE[] =
 "  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
 "  GNU General Public License for more details.\n"
 "\n"
-"  You should have received a copy of the GNU General Public License\n"
-"  along with this program; if not, write to the Free Software\n"
-"  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA\n"
+"  You should have received a copy of the GNU General Public License along\n"
+"  with this program; if not, write to the Free Software Foundation, Inc.,\n"
+"  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.\n"
 ;
 
 const char HELP[] =
@@ -844,7 +844,7 @@ int main(int argc, char **argv)
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
-	    printf("Copyright 1998-2008 Stephen Williams\n");
+	    printf("Copyright 1998-2008 Stephen Williams\n\n");
 	    puts(NOTICE);
       }
 
