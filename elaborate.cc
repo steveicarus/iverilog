@@ -119,7 +119,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		       << " expression is to small for l-value width "
 		       << lval->vector_width() << "." << endl;
 	    }
-	    rval_expr = pad_to_width(rval_expr, lval->vector_width());
+	    rval_expr = pad_to_width(rval_expr, lval->vector_width(), *this);
       }
 
       NetNet*rval = rval_expr->synthesize(des, scope);
@@ -165,9 +165,10 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	   of the l-value. */
       if (lval->vector_width() > rval->vector_width()) {
 	    if (rval->get_signed())
-		  rval = pad_to_width_signed(des, rval, lval->vector_width());
+		  rval = pad_to_width_signed(des, rval, lval->vector_width(),
+		                             *this);
 	    else
-		  rval = pad_to_width(des, rval, lval->vector_width());
+		  rval = pad_to_width(des, rval, lval->vector_width(), *this);
       }
 
 	/* If, on the other hand, the r-value insists on being
@@ -861,7 +862,7 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 			      NetNet::WIRE, port_wid);
       tmp->local_flag(true);
-      tmp->set_line(*sig);
+      tmp->set_line(*this);
 
 	// Handle the special case of a bi-directional part
 	// select. Create a NetTran(VP) instead of a uni-directional
@@ -903,9 +904,9 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
 	    } else {
 		  NetNet*osig;
 		  if (as_signed) {
-			osig = pad_to_width_signed(des, tmp, swidth);
+			osig = pad_to_width_signed(des, tmp, swidth, *this);
 		  } else {
-			osig = pad_to_width(des, tmp, swidth);
+			osig = pad_to_width(des, tmp, swidth, *this);
 		  }
 		  connect(osig->pin(0), sig->pin(0));
 	    }
@@ -915,9 +916,9 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
 	    if (pwidth > swidth) {
 		  delete tmp;
 		  if (as_signed) {
-			tmp = pad_to_width_signed(des, sig, pwidth);
+			tmp = pad_to_width_signed(des, sig, pwidth, *this);
 		  } else {
-			tmp = pad_to_width(des, sig, pwidth);
+			tmp = pad_to_width(des, sig, pwidth, *this);
 		  }
 	    } else {
 		  NetPartSelect*node = new NetPartSelect(sig, 0, pwidth,
@@ -1192,7 +1193,7 @@ v		       NOTE that this also handles the case that the
 		  }
 
 		  delete tmp_expr;
-		  sig->set_line(*this);
+		  if (!sig->get_lineno()) sig->set_line(*this);
 
 		  if (need_bufz_for_input_port(prts)) {
 			NetBUFZ*tmp = new NetBUFZ(scope, scope->local_symbol(),
@@ -1890,7 +1891,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    unsigned wid = count_lval_width(lv);
 
 	    rv->set_width(wid);
-	    rv = pad_to_width(rv, wid);
+	    rv = pad_to_width(rv, wid, *this);
 
 	    if (wid > rv->expr_width()) {
 		  cerr << get_fileline() << ": error: Unable to match "
@@ -1999,7 +2000,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    unsigned wid = count_lval_width(lv);
 	    if (wid > rv->expr_width()) {
 		  rv->set_width(wid);
-		  rv = pad_to_width(rv, wid);
+		  rv = pad_to_width(rv, wid, *this);
 	    }
 	    ivl_assert(*this, rv->expr_width() >= wid);
       }
@@ -2053,7 +2054,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       } else {
 	    unsigned wid = count_lval_width(lv);
 	    rv->set_width(wid);
-	    rv = pad_to_width(rv, wid);
+	    rv = pad_to_width(rv, wid, *this);
       }
 
       NetExpr*delay = 0;
@@ -2546,7 +2547,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
 	    NetExpr*rv = elab_and_eval(des, scope, parms_[idx], wid);
 	    rv->set_width(wid);
-	    rv = pad_to_width(rv, wid);
+	    rv = pad_to_width(rv, wid, *this);
 	    NetAssign*pr = new NetAssign(lv, rv);
 	    block->append(pr);
       }
@@ -2599,7 +2600,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 		  continue;
 
 	    NetESignal*sig = new NetESignal(port);
-	    NetExpr*rv = pad_to_width(sig, count_lval_width(lv));
+	    NetExpr*rv = pad_to_width(sig, count_lval_width(lv), *this);
 
 	      /* Generate the assignment statement. */
 	    NetAssign*ass = new NetAssign(lv, rv);
@@ -2655,7 +2656,7 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
 	    return 0;
 
       rexp->set_width(lwid);
-      rexp = pad_to_width(rexp, lwid);
+      rexp = pad_to_width(rexp, lwid, *this);
 
       dev = new NetCAssign(lval, rexp);
 
@@ -3253,7 +3254,7 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
 	    return 0;
 
       rexp->set_width(lwid, true);
-      rexp = pad_to_width(rexp, lwid);
+      rexp = pad_to_width(rexp, lwid, *this);
 
       dev = new NetForce(lval, rexp);
 
@@ -3318,7 +3319,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	   properly. Then use it to build the assignment statement. */
       etmp = elab_and_eval(des, scope, expr1_, use_width);
       etmp->set_width(use_width);
-      etmp = pad_to_width(etmp, use_width);
+      etmp = pad_to_width(etmp, use_width, *this);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: FOR initial assign: "
@@ -3331,7 +3332,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       if (etmp->expr_type() != IVL_VT_REAL) {
 	    unsigned wid = count_lval_width(lv);
 	    etmp->set_width(wid);
-	    etmp = pad_to_width(etmp, wid);
+	    etmp = pad_to_width(etmp, wid, *this);
 	    assert(etmp->expr_width() >= wid);
       }
 

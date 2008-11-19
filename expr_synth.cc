@@ -111,8 +111,8 @@ NetNet* NetEBAdd::synthesize(Design*des, NetScope*scope)
 		  rsig = cast_to_real(des, scope, rsig);
 
       } else {
-	    lsig = pad_to_width(des, lsig, expr_width());
-	    rsig = pad_to_width(des, rsig, expr_width());
+	    lsig = pad_to_width(des, lsig, expr_width(), *this);
+	    rsig = pad_to_width(des, rsig, expr_width(), *this);
 
 	    assert(lsig->vector_width() == rsig->vector_width());
 	    width=lsig->vector_width();
@@ -167,8 +167,8 @@ NetNet* NetEBBits::synthesize(Design*des, NetScope*scope)
       unsigned width = expr_width();
       if (rsig->vector_width() > width) width = rsig->vector_width();
 
-      lsig = pad_to_width(des, lsig, width);
-      rsig = pad_to_width(des, rsig, width);
+      lsig = pad_to_width(des, lsig, width, *this);
+      rsig = pad_to_width(des, rsig, width, *this);
 
       assert(lsig->vector_width() == rsig->vector_width());
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
@@ -230,13 +230,13 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope)
 	    if (rsig->vector_width() > width) width = rsig->vector_width();
 
 	    if (lsig->get_signed())
-		  lsig = pad_to_width_signed(des, lsig, width);
+		  lsig = pad_to_width_signed(des, lsig, width, *this);
 	    else
-		  lsig = pad_to_width(des, lsig, width);
+		  lsig = pad_to_width(des, lsig, width, *this);
 	    if (rsig->get_signed())
-		  rsig = pad_to_width_signed(des, rsig, width);
+		  rsig = pad_to_width_signed(des, rsig, width, *this);
 	    else
-		  rsig = pad_to_width(des, rsig, width);
+		  rsig = pad_to_width(des, rsig, width, *this);
       }
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
@@ -768,10 +768,13 @@ NetNet* NetEConst::synthesize(Design*des, NetScope*scope)
       osig->local_flag(true);
       osig->data_type(expr_type());
       osig->set_signed(has_sign());
-      NetConst*con = new NetConst(scope, scope->local_symbol(), value());
-      connect(osig->pin(0), con->pin(0));
+      osig->set_line(*this);
 
+      NetConst*con = new NetConst(scope, scope->local_symbol(), value());
       des->add_node(con);
+      con->set_line(*this);
+
+      connect(osig->pin(0), con->pin(0));
       return osig;
 }
 
@@ -1154,8 +1157,8 @@ NetNet* NetETernary::synthesize(Design *des, NetScope*scope)
       osig->local_flag(true);
 
 	/* Make sure both value operands are the right width. */
-      tsig = crop_to_width(des, pad_to_width(des, tsig, width), width);
-      fsig = crop_to_width(des, pad_to_width(des, fsig, width), width);
+      tsig = crop_to_width(des, pad_to_width(des, tsig, width, *this), width);
+      fsig = crop_to_width(des, pad_to_width(des, fsig, width, *this), width);
 
       assert(width == tsig->vector_width());
       assert(width == fsig->vector_width());
@@ -1302,7 +1305,7 @@ NetNet* NetEUFunc::synthesize(Design*des, NetScope*scope)
       NetFuncDef*def = func_->func_def();
       for (unsigned idx = 0; idx < eparms.count(); idx += 1) {
 	    NetNet*tmp = pad_to_width(des, eparms[idx],
-	                              def->port(idx)->vector_width());
+	                              def->port(idx)->vector_width(), *this);
 	    connect(net->pin(idx+1), tmp->pin(0));
       }
 

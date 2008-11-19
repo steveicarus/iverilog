@@ -377,9 +377,9 @@ NetExpr* PEBinary::elaborate_expr_base_bits_(Design*des,
 
       if (expr_wid > 0) {
 	    if (type_is_vectorable(lp->expr_type()))
-		  lp = pad_to_width(lp, expr_wid);
+		  lp = pad_to_width(lp, expr_wid, *this);
 	    if (type_is_vectorable(rp->expr_type()))
-		  rp = pad_to_width(rp, expr_wid);
+		  rp = pad_to_width(rp, expr_wid, *this);
       }
 
       NetEBBits*tmp = new NetEBBits(op_, lp, rp);
@@ -410,8 +410,8 @@ NetExpr* PEBinary::elaborate_expr_base_div_(Design*des,
 	   padded. The divide expression operands must be the width
 	   of the output. */
       if (expr_wid > 0) {
-	    lp = pad_to_width(lp, expr_wid);
-	    rp = pad_to_width(rp, expr_wid);
+	    lp = pad_to_width(lp, expr_wid, *this);
+	    rp = pad_to_width(rp, expr_wid, *this);
       }
 
       NetEBDiv*tmp = new NetEBDiv(op_, lp, rp);
@@ -509,7 +509,7 @@ NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
 			cerr << get_fileline() << ": debug: "
 			     << "Left shift expression by constant "
 			     << shift << " bits. (use_wid=" << use_wid << ")" << endl;
-		  lp = pad_to_width(lp, use_wid);
+		  lp = pad_to_width(lp, use_wid, *this);
 		  tmp = new NetEBShift(op_, lp, rp);
 	    }
 
@@ -517,7 +517,7 @@ NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
 	      // Left side is not constant, so handle it the
 	      // default way.
 	    if (expr_wid >= 0)
-		  lp = pad_to_width(lp, expr_wid);
+		  lp = pad_to_width(lp, expr_wid, *this);
 	    tmp = new NetEBShift(op_, lp, rp);
       }
 
@@ -582,9 +582,7 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 		  tmp->set_line(*this);
 		  tmp = new NetESelect(lp, tmp, 1);
 		  tmp->cast_signed(true);
-		  tmp->set_line(*this);
-		  tmp = pad_to_width(tmp, use_wid);
-		  tmp->set_line(*this);
+		  tmp = pad_to_width(tmp, use_wid, *this);
 		  return tmp;
 
 	    } else if (shift >= 0) {
@@ -607,8 +605,7 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 		  tmp = new NetESelect(lp, tmp, tmp_wid);
 		  tmp->set_line(*this);
 		  tmp->cast_signed(lp->has_sign() && op_=='R');
-		  tmp = pad_to_width(tmp, use_wid);
-		  tmp->set_line(*this);
+		  tmp = pad_to_width(tmp, use_wid, *this);
 		  return tmp;
 
 	    } else if ((0-shift) >= use_wid) {
@@ -626,7 +623,7 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 
 	// Falback, handle the general case.
       if (expr_wid > 0)
-	    lp = pad_to_width(lp, expr_wid);
+	    lp = pad_to_width(lp, expr_wid, *this);
       tmp = new NetEBShift(op_, lp, rp);
       tmp->set_line(*this);
       return tmp;
@@ -641,9 +638,9 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*des,
 	// multiplication to come out right.
       if (expr_wid > 0) {
 	    if (lp->has_sign() && lp->expr_type() != IVL_VT_REAL)
-		  lp = pad_to_width(lp, expr_wid);
+		  lp = pad_to_width(lp, expr_wid, *this);
 	    if (rp->has_sign() && rp->expr_type() != IVL_VT_REAL)
-		  rp = pad_to_width(rp, expr_wid);
+		  rp = pad_to_width(rp, expr_wid, *this);
       }
 
 	// Keep constants on the right side.
@@ -683,7 +680,7 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*des,
 	// pad one of the arguments enough that the sum is the
 	// desired width.
       if (expr_wid > (long)(lp->expr_width() + rp->expr_width()))
-	    lp = pad_to_width(lp, expr_wid - rp->expr_width());
+	    lp = pad_to_width(lp, expr_wid - rp->expr_width(), *this);
 
       NetEBMult*tmp = new NetEBMult(op_, lp, rp);
       tmp->set_line(*this);
@@ -781,9 +778,9 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 	// pad the width here. This matters because if the arguments
 	// are signed, then this padding will do sign extension.
       if (type_is_vectorable(lp->expr_type()))
-	    lp = pad_to_width(lp, use_wid_l);
+	    lp = pad_to_width(lp, use_wid_l, *this);
       if (type_is_vectorable(rp->expr_type()))
-	    rp = pad_to_width(rp, use_wid_r);
+	    rp = pad_to_width(rp, use_wid_r, *this);
 
       eval_expr(lp, use_wid_l);
       eval_expr(rp, use_wid_r);
@@ -1090,7 +1087,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	    sub->cast_signed(false);
 
 	    if (expr_wid > 0 && (unsigned)expr_wid > sub->expr_width())
-		  sub = pad_to_width(sub, expr_wid);
+		  sub = pad_to_width(sub, expr_wid, *this);
 
 	    return sub;
       }
@@ -2800,7 +2797,7 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 		  }
 		  ivl_assert(*this, use_wid > 0);
 		  NetExpr*tru = elab_and_eval(des, scope, tru_, use_wid);
-		  return pad_to_width(tru, use_wid);
+		  return pad_to_width(tru, use_wid, *this);
 	    }
 
 	      // Condition is constant FALSE, so we only need the
@@ -2818,7 +2815,7 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 		  }
 		  ivl_assert(*this, use_wid > 0);
 		  NetExpr*fal = elab_and_eval(des, scope, fal_, use_wid);
-		  return pad_to_width(fal, use_wid);
+		  return pad_to_width(fal, use_wid, *this);
 	    }
 
 	      // X and Z conditions need to blend both results, so we
@@ -2851,8 +2848,8 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 
 	/* Whatever the width we choose for the ternary operator, we
 	need to make sure the operands match. */
-      tru = pad_to_width(tru, use_wid);
-      fal = pad_to_width(fal, use_wid);
+      tru = pad_to_width(tru, use_wid, *this);
+      fal = pad_to_width(fal, use_wid, *this);
 
       NetETernary*res = new NetETernary(con, tru, fal);
       res->set_line(*this);
@@ -2975,7 +2972,7 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 	    } else {
 		  if (expr_wid > 0)
-			ip = pad_to_width(ip, expr_wid);
+			ip = pad_to_width(ip, expr_wid, *this);
 		  tmp = new NetEUnary(op_, ip);
 		  tmp->set_line(*this);
 	    }
@@ -3063,7 +3060,7 @@ NetExpr* PEUnary::elaborate_expr_bits_(NetExpr*operand, int expr_wid) const
       }
 
       if (expr_wid > (int)operand->expr_width())
-	    operand = pad_to_width(operand, expr_wid);
+	    operand = pad_to_width(operand, expr_wid, *this);
 
       NetEUBits*tmp = new NetEUBits(op_, operand);
       tmp->set_line(*this);
