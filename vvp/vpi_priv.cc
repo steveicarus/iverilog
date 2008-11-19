@@ -677,6 +677,22 @@ struct vpip_put_value_event : vvp_gen_event_s {
 void vpip_put_value_event::run_run()
 {
       handle->vpi_type->vpi_put_value_ (handle, &value, flags);
+      switch (value.format) {
+	    /* Free the copied string. */
+	  case vpiBinStrVal:
+	  case vpiOctStrVal:
+	  case vpiDecStrVal:
+	  case vpiHexStrVal:
+	  case vpiStringVal:
+	    free(value.value.str);
+	    break;
+	    /* If these are every copied then free them too. */
+	  case vpiTimeVal:
+	  case vpiVectorVal:
+	  case vpiStrengthVal:
+	  default:
+	    break;
+      }
 }
 
 vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
@@ -720,6 +736,22 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 	    vpip_put_value_event*put = new vpip_put_value_event;
 	    put->handle = obj;
 	    put->value = *vp;
+	    switch (put->value.format) {
+		  /* If this is scheduled make a copy of the string. */
+		case vpiBinStrVal:
+		case vpiOctStrVal:
+		case vpiDecStrVal:
+		case vpiHexStrVal:
+		case vpiStringVal:
+		  put->value.value.str = strdup(put->value.value.str);
+		  break;
+		  /* Do these also need to be copied? */
+		case vpiTimeVal:
+		case vpiVectorVal:
+		case vpiStrengthVal:
+		default:
+		  break;
+	    }
 	    put->flags = flags;
 	    schedule_generic(put, dly, false);
 	    return 0;
