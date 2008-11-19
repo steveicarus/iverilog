@@ -486,6 +486,13 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
 	    (*cur) ->elaborate_sig(des, scope);
       }
 
+      typedef list<PProcess*>::const_iterator proc_it_t;
+      for (proc_it_t cur = behaviors.begin()
+		 ; cur != behaviors.end() ;  cur ++ ) {
+	    (*cur) -> statement() -> elaborate_sig(des, scope);
+      }
+
+
       return true;
 }
 

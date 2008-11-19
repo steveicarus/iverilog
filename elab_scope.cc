@@ -1144,6 +1144,11 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  return;
 	    }
+	    if (debug_scopes)
+		  cerr << get_fileline() << ": debug: "
+		       << "Elaborate block scope " << use_name
+		       << " within " << scope_path(scope) << endl;
+
 	    my_scope = new NetScope(scope, use_name, bl_type_==BL_PAR
 				    ? NetScope::FORK_JOIN
 				    : NetScope::BEGIN_END);
