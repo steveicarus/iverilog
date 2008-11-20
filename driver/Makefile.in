@@ -43,7 +43,7 @@ INSTALL_DATA = @INSTALL_DATA@
 MAN = @MAN@
 PS2PDF = @PS2PDF@
 
-CPPFLAGS = @ident_support@ -I. -I.. -I$(srcdir)/.. -I$(srcdir) -DVERSION='"$(VERSION)"' @CPPFLAGS@ @DEFS@
+CPPFLAGS = -I. -I.. -I$(srcdir)/.. -I$(srcdir) -DVERSION='"$(VERSION)"' @CPPFLAGS@ @DEFS@
 CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 

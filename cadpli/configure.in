@@ -58,6 +58,4 @@ AX_C_UNDERSCORES_TRAILING
 ## end of test for underscores
 #######################
 
-AX_CPP_IDENT
-
 AC_OUTPUT(Makefile)

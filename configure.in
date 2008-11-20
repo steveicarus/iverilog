@@ -121,8 +121,6 @@ AX_C_UNDERSCORES_TRAILING
 ## end of test for underscores
 #######################
 
-AX_CPP_IDENT
-
 # XXX disable tgt-fpga for the moment
 AC_CONFIG_SUBDIRS(vvp vpi tgt-stub tgt-null tgt-vvp tgt-vhdl libveriuser cadpli)
 

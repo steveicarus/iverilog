@@ -77,7 +77,7 @@ MAN = @MAN@
 PS2PDF = @PS2PDF@
 GIT = @GIT@
 
-CPPFLAGS = @ident_support@ @DEFS@ -I. -I$(srcdir) -DVERSION='"$(VERSION)"' @CPPFLAGS@
+CPPFLAGS = @DEFS@ -I. -I$(srcdir) -DVERSION='"$(VERSION)"' @CPPFLAGS@
 CXXFLAGS = -Wall @CXXFLAGS@
 PICFLAGS = @PICFLAG@
 LDFLAGS = @rdynamic@ @LDFLAGS@

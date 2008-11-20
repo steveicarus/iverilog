@@ -84,6 +84,4 @@ AX_LD_RDYNAMIC
 # linker options when building a shared library
 AX_LD_SHAREDLIB_OPTS
 
-AX_CPP_IDENT
-
 AC_OUTPUT(Makefile)
