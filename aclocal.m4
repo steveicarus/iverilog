@@ -31,7 +31,7 @@ AC_SUBST(ident_support)
 # different builds. Remember to change the default suffix string to some
 # value appropriate for the current version.
 AC_DEFUN([AX_ENABLE_SUFFIX],
-[AC_ARG_ENABLE([suffix],[Set the installation command suffix],[true],[enable_suffix=no])
+[AC_ARG_ENABLE([suffix],[Set the installation command suffix],[true],[enable_suffix=yes])
 if test X$enable_suffix = Xyes; then
   install_suffix='-0.8'
 elif test X$enable_suffix = Xno; then

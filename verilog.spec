@@ -1,5 +1,5 @@
-Summary: Icarus Verilog
-Name: verilog
+Summary: Icarus Verilog 0.8
+Name: verilog08
 Version: 0.8.6
 Release: 0
 License: GPL
@@ -33,9 +33,9 @@ to the IEEE-1364 standard.
 
 %build
 %ifarch x86_64
-./configure --prefix=/usr --mandir='$(prefix)/share/man' libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir2=. --enable-vvp32
+./configure --prefix=/usr --mandir='$(prefix)/share/man' libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir2=. --enable-vvp32 --enable-suffix
 %else
-./configure --prefix=/usr --mandir='$(prefix)/share/man'
+./configure --prefix=/usr --mandir='$(prefix)/share/man' --enable-suffix
 %endif
 make CXXFLAGS=-O
 
@@ -44,47 +44,44 @@ make prefix=$RPM_BUILD_ROOT/usr install
 
 %files
 
-%attr(-,root,root) %doc COPYING README.txt BUGS.txt QUICK_START.txt ieee1364-notes.txt mingw.txt swift.txt netlist.txt t-dll.txt vpi.txt xnf.txt tgt-fpga/fpga.txt cadpli/cadpli.txt xilinx-hint.txt
-%attr(-,root,root) %doc examples/*
+%attr(-,root,root) /usr/share/man/man1/iverilog-0.8.1.gz
+%attr(-,root,root) /usr/share/man/man1/iverilog-fpga-0.8.1.gz
+%attr(-,root,root) /usr/share/man/man1/iverilog-vpi-0.8.1.gz
+%attr(-,root,root) /usr/share/man/man1/vvp-0.8.1.gz
 
-%attr(-,root,root) /usr/share/man/man1/iverilog.1.gz
-%attr(-,root,root) /usr/share/man/man1/iverilog-fpga.1.gz
-%attr(-,root,root) /usr/share/man/man1/iverilog-vpi.1.gz
-%attr(-,root,root) /usr/share/man/man1/vvp.1.gz
-
-%attr(-,root,root) /usr/bin/iverilog
-%attr(-,root,root) /usr/bin/iverilog-vpi
-%attr(-,root,root) /usr/bin/vvp
-%attr(-,root,root) /usr/lib/ivl/ivl
-%attr(-,root,root) /usr/lib/ivl/ivlpp
-%attr(-,root,root) /usr/lib/ivl/null.tgt
-%attr(-,root,root) /usr/lib/ivl/null.conf
-%attr(-,root,root) /usr/lib/ivl/null-s.conf
-%attr(-,root,root) /usr/lib/ivl/vvp.tgt
-%attr(-,root,root) /usr/lib/ivl/vvp.conf
-%attr(-,root,root) /usr/lib/ivl/vvp-s.conf
-%attr(-,root,root) /usr/lib/ivl/fpga.tgt
-%attr(-,root,root) /usr/lib/ivl/fpga.conf
-%attr(-,root,root) /usr/lib/ivl/fpga-s.conf
-%attr(-,root,root) /usr/lib/ivl/edif.tgt
-%attr(-,root,root) /usr/lib/ivl/edif.conf
-%attr(-,root,root) /usr/lib/ivl/edif-s.conf
-%attr(-,root,root) /usr/lib/ivl/xnf.conf
-%attr(-,root,root) /usr/lib/ivl/xnf-s.conf
+%attr(-,root,root) /usr/bin/iverilog-0.8
+%attr(-,root,root) /usr/bin/iverilog-vpi-0.8
+%attr(-,root,root) /usr/bin/vvp-0.8
+%attr(-,root,root) /usr/lib/ivl-0.8/ivl
+%attr(-,root,root) /usr/lib/ivl-0.8/ivlpp
+%attr(-,root,root) /usr/lib/ivl-0.8/null.tgt
+%attr(-,root,root) /usr/lib/ivl-0.8/null.conf
+%attr(-,root,root) /usr/lib/ivl-0.8/null-s.conf
+%attr(-,root,root) /usr/lib/ivl-0.8/vvp.tgt
+%attr(-,root,root) /usr/lib/ivl-0.8/vvp.conf
+%attr(-,root,root) /usr/lib/ivl-0.8/vvp-s.conf
+%attr(-,root,root) /usr/lib/ivl-0.8/fpga.tgt
+%attr(-,root,root) /usr/lib/ivl-0.8/fpga.conf
+%attr(-,root,root) /usr/lib/ivl-0.8/fpga-s.conf
+%attr(-,root,root) /usr/lib/ivl-0.8/edif.tgt
+%attr(-,root,root) /usr/lib/ivl-0.8/edif.conf
+%attr(-,root,root) /usr/lib/ivl-0.8/edif-s.conf
+%attr(-,root,root) /usr/lib/ivl-0.8/xnf.conf
+%attr(-,root,root) /usr/lib/ivl-0.8/xnf-s.conf
 %ifarch x86_64
-%attr(-,root,root) /usr/bin/vvp32
-%attr(-,root,root) /usr/lib/ivl/vpi64/system.vpi
-%attr(-,root,root) /usr/lib/ivl/vpi64/cadpli.vpl
-%attr(-,root,root) /usr/lib64/libvpi.a
-%attr(-,root,root) /usr/lib64/libveriuser.a
+%attr(-,root,root) /usr/bin/vvp32-0.8
+%attr(-,root,root) /usr/lib/ivl-0.8/vpi64/system.vpi
+%attr(-,root,root) /usr/lib/ivl-0.8/vpi64/cadpli.vpl
+%attr(-,root,root) /usr/lib64/libvpi-0.8.a
+%attr(-,root,root) /usr/lib64/libveriuser-0.8.a
 %endif
-%attr(-,root,root) /usr/lib/ivl/system.sft
-%attr(-,root,root) /usr/lib/ivl/system.vpi
-%attr(-,root,root) /usr/lib/ivl/cadpli.vpl
-%attr(-,root,root) /usr/lib/libvpi.a
-%attr(-,root,root) /usr/lib/libveriuser.a
-%attr(-,root,root) /usr/include/ivl_target.h
-%attr(-,root,root) /usr/include/vpi_user.h
-%attr(-,root,root) /usr/include/acc_user.h
-%attr(-,root,root) /usr/include/veriuser.h
-%attr(-,root,root) /usr/include/_pli_types.h
+%attr(-,root,root) /usr/lib/ivl-0.8/system.sft
+%attr(-,root,root) /usr/lib/ivl-0.8/system.vpi
+%attr(-,root,root) /usr/lib/ivl-0.8/cadpli.vpl
+%attr(-,root,root) /usr/lib/libvpi-0.8.a
+%attr(-,root,root) /usr/lib/libveriuser-0.8.a
+%attr(-,root,root) /usr/include/verilog-0.0/ivl_target.h
+%attr(-,root,root) /usr/include/verilog-0.0/vpi_user.h
+%attr(-,root,root) /usr/include/verilog-0.0/acc_user.h
+%attr(-,root,root) /usr/include/verilog-0.0/veriuser.h
+%attr(-,root,root) /usr/include/verilog-0.0/_pli_types.h
