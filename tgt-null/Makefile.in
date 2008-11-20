@@ -23,6 +23,8 @@ SHELL = /bin/sh
 
 VERSION = 0.0
 
+suffix = @install_suffix@
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
@@ -31,7 +33,6 @@ VPATH = $(srcdir)
 
 bindir = @bindir@
 libdir = @libdir@
-includedir = $(prefix)/include
 
 CC = @CC@
 INSTALL = @INSTALL@
@@ -73,25 +74,25 @@ distclean: clean
 
 check: all
 
-install: all installdirs $(libdir)/ivl/null.tgt $(INSTALL_DOC) $(libdir)/ivl/null.conf $(libdir)/ivl/null-s.conf
+install: all installdirs $(libdir)/ivl$(suffix)/null.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/null.conf $(libdir)/ivl$(suffix)/null-s.conf
 
-$(libdir)/ivl/null.tgt: ./null.tgt
-	$(INSTALL_PROGRAM) ./null.tgt $(libdir)/ivl/null.tgt
+$(libdir)/ivl$(suffix)/null.tgt: ./null.tgt
+	$(INSTALL_PROGRAM) ./null.tgt $(libdir)/ivl$(suffix)/null.tgt
 
-$(libdir)/ivl/null.conf: $(srcdir)/null.conf
-	$(INSTALL_DATA) $(srcdir)/null.conf $(libdir)/ivl/null.conf
+$(libdir)/ivl$(suffix)/null.conf: $(srcdir)/null.conf
+	$(INSTALL_DATA) $(srcdir)/null.conf $(libdir)/ivl$(suffix)/null.conf
 
-$(libdir)/ivl/null-s.conf: $(srcdir)/null-s.conf
-	$(INSTALL_DATA) $(srcdir)/null-s.conf $(libdir)/ivl/null-s.conf
+$(libdir)/ivl$(suffix)/null-s.conf: $(srcdir)/null-s.conf
+	$(INSTALL_DATA) $(srcdir)/null-s.conf $(libdir)/ivl$(suffix)/null-s.conf
 
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(includedir) $(bindir) $(libdir)/ivl
+	$(srcdir)/../mkinstalldirs $(includedir) $(bindir) $(libdir)/ivl$(suffix)
 
 uninstall:
-	rm -f $(libdir)/ivl/null.tgt
-	rm -f $(libdir)/ivl/null.conf
-	rm -f $(libdir)/ivl/null-s.conf
+	rm -f $(libdir)/ivl$(suffix)/null.tgt
+	rm -f $(libdir)/ivl$(suffix)/null.conf
+	rm -f $(libdir)/ivl$(suffix)/null-s.conf
 
 
 -include $(patsubst %.o, dep/%.d, $O)

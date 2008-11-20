@@ -88,10 +88,6 @@ Normally, this command automatically figures out everything it needs
 to know. It generally works pretty well. There are a few flags to the
 configure script that modify its behavior:
 
-	--without-ipal
-	    This turns off support for Icarus PAL, whether ipal
-	    libraries are installed or not.
-
 	--prefix=<root>
 	    The default is /usr/local, which causes the tool suite to
 	    be compiled for install in /usr/local/bin,
@@ -106,6 +102,17 @@ configure script that modify its behavior:
 	    If compiling on AMD64 systems, this enables the
 	    compilation of 32bit compatible vvp (vvp32) and the vpi
 	    modules that match.
+
+	--enable-suffix
+	--enable-suffix=<your-suffix>
+	--disable-suffix
+	    Enable/disable changing the names of install files to use
+	    a suffix string so that this version or install can co-
+	    exist with other versions. This renames the installed
+	    commands (iverilog, iverilog-vpi, vvp) and the installed
+	    library files and include directory so that installations
+	    with the same prefix but different suffix are guaranteed
+	    to not interfere with each other.
 
 2.2.1 Special AMD64 Instructions
 

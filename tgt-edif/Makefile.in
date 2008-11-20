@@ -31,6 +31,8 @@ SHELL = /bin/sh
 
 VERSION = 0.0
 
+suffix = @install_suffix@
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
@@ -118,31 +120,31 @@ else
 #INSTALL_DOCDIR = $(mandir)/man1
 endif
 
-install: all installdirs $(libdir)/ivl/edif.tgt $(INSTALL_DOC) $(libdir)/ivl/edif.conf $(libdir)/ivl/edif-s.conf
+install: all installdirs $(libdir)/ivl$(suffix)/edif.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/edif.conf $(libdir)/ivl$(suffix)/edif-s.conf
 
-$(libdir)/ivl/edif.tgt: ./edif.tgt
-	$(INSTALL_PROGRAM) ./edif.tgt $(libdir)/ivl/edif.tgt
+$(libdir)/ivl$(suffix)/edif.tgt: ./edif.tgt
+	$(INSTALL_PROGRAM) ./edif.tgt $(libdir)/ivl$(suffix)/edif.tgt
 
-$(libdir)/ivl/edif.conf: $(srcdir)/edif.conf
-	$(INSTALL_DATA) $(srcdir)/edif.conf $(libdir)/ivl/edif.conf
+$(libdir)/ivl$(suffix)/edif.conf: $(srcdir)/edif.conf
+	$(INSTALL_DATA) $(srcdir)/edif.conf $(libdir)/ivl$(suffix)/edif.conf
 
-$(libdir)/ivl/edif-s.conf: $(srcdir)/edif-s.conf
-	$(INSTALL_DATA) $(srcdir)/edif-s.conf $(libdir)/ivl/edif-s.conf
+$(libdir)/ivl$(suffix)/edif-s.conf: $(srcdir)/edif-s.conf
+	$(INSTALL_DATA) $(srcdir)/edif-s.conf $(libdir)/ivl$(suffix)/edif-s.conf
 
 
-$(mandir)/man1/iverilog-edif.1: $(srcdir)/iverilog-edif.man
-	$(INSTALL_DATA) $(srcdir)/iverilog-edif.man $(mandir)/man1/iverilog-edif.1
+$(mandir)/man1/iverilog-edif$(suffix).1: $(srcdir)/iverilog-edif.man
+	$(INSTALL_DATA) $(srcdir)/iverilog-edif.man $(mandir)/man1/iverilog-edif$(suffix).1
 
-$(prefix)/iverilog-edif.pdf: iverilog-edif.pdf
-	$(INSTALL_DATA) iverilog-edif.pdf $(prefix)/iverilog-edif.pdf
+$(prefix)/iverilog-edif$(suffix).pdf: iverilog-edif.pdf
+	$(INSTALL_DATA) iverilog-edif.pdf $(prefix)/iverilog-edif$(suffix).pdf
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(libdir)/ivl
+	$(srcdir)/../mkinstalldirs $(libdir)/ivl$(suffix)
 
 uninstall:
-	rm -f $(libdir)/ivl/edif.tgt
+	rm -f $(libdir)/ivl$(suffix)/edif.tgt
 	rm -f $(INSTALL_DOC)
-	rm -f $(libdir)/ivl/edif-s.conf
-	rm -f $(libdir)/ivl/edif.conf
+	rm -f $(libdir)/ivl$(suffix)/edif-s.conf
+	rm -f $(libdir)/ivl$(suffix)/edif.conf
 
 -include $(patsubst %.o, dep/%.d, $O)

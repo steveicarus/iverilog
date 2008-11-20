@@ -17,19 +17,20 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: iverilog-vpi.sh,v 1.14 2004/05/20 00:40:34 steve Exp $"
 
 # These are the variables used for compiling files
 CC=@IVCC@
 CXX=@IVCXX@
 CFLAGS="@PIC@ @IVCFLAGS@ -I@INCLUDEDIR@"
 
+SUFFIX=@SUFFIX@
+
 # These are used for linking...
 LD=$CC
 LDFLAGS32="@SHARED@ -L@LIBDIR@"
 LDFLAGS64="@SHARED@ -L@LIBDIR64@"
 LDFLAGS="$LDFLAGS64"
-LDLIBS="-lveriuser -lvpi"
+LDLIBS="-lveriuser$SUFFIX -lvpi$SUFFIX"
 
 INSTDIR64="@VPIDIR1@"
 INSTDIR32="@VPIDIR2@"
@@ -117,7 +118,7 @@ do
 	 ;;
 
     --install-dir)
-	 echo "@LIBDIR@/ivl/$INSTDIR"
+	 echo "@LIBDIR@/ivl$SUFFIX/$INSTDIR"
 	 exit
 	 ;;
     esac

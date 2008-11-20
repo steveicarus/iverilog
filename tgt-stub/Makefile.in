@@ -23,6 +23,8 @@ SHELL = /bin/sh
 
 VERSION = 0.0
 
+suffix = @install_suffix@
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
@@ -74,26 +76,28 @@ distclean: clean
 
 check: all
 
-install: all installdirs $(libdir)/ivl/stub.tgt \
-	$(libdir)/ivl/stub.conf \
-	$(libdir)/ivl/stub-s.conf \
+install: all installdirs $(libdir)/ivl$(suffix)/stub.tgt \
+	$(libdir)/ivl$(suffix)/stub.conf \
+	$(libdir)/ivl$(suffix)/stub-s.conf \
 	$(includedir)/vpi_user.h
 
-$(libdir)/ivl/stub.tgt: ./stub.tgt
-	$(INSTALL_PROGRAM) ./stub.tgt $(libdir)/ivl/stub.tgt
+$(libdir)/ivl$(suffix)/stub.tgt: ./stub.tgt
+	$(INSTALL_PROGRAM) ./stub.tgt $(libdir)/ivl$(suffix)/stub.tgt
 
-$(libdir)/ivl/stub.conf: stub.conf
-	$(INSTALL_DATA) $< $(libdir)/ivl/stub.conf
+$(libdir)/ivl$(suffix)/stub.conf: stub.conf
+	$(INSTALL_DATA) $< $(libdir)/ivl$(suffix)/stub.conf
 
-$(libdir)/ivl/stub-s.conf: stub-s.conf
-	$(INSTALL_DATA) $< $(libdir)/ivl/stub-s.conf
+$(libdir)/ivl$(suffix)/stub-s.conf: stub-s.conf
+	$(INSTALL_DATA) $< $(libdir)/ivl$(suffix)/stub-s.conf
 
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(includedir) $(bindir) $(libdir)/ivl
+	$(srcdir)/../mkinstalldirs $(includedir) $(bindir) $(libdir)/ivl$(suffix)
 
 uninstall:
-	rm -f $(libdir)/ivl/stub.tgt
+	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/stub.tgt
+	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/stub.conf
+	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/stub-s.conf
 
 
 -include $(patsubst %.o, dep/%.d, $O)

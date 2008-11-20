@@ -25,6 +25,8 @@ SHELL = /bin/sh
 
 VERSION = 0.0
 
+suffix = @install_suffix@
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
@@ -63,16 +65,16 @@ lexor.c: lexor.lex
 parse.h parse.c: parse.y
 	bison --verbose -t -d -o parse.c $(srcdir)/parse.y
 
-install: all installdirs $(libdir)/ivl/ivlpp
+install: all installdirs $(libdir)/ivl$(suffix)/ivlpp
 
-$(libdir)/ivl/ivlpp: ivlpp
-	$(INSTALL_PROGRAM) ./ivlpp $(libdir)/ivl/ivlpp
+$(libdir)/ivl$(suffix)/ivlpp@EXEEXT@: ivlpp@EXEEXT@
+	$(INSTALL_PROGRAM) ./ivlpp@EXEEXT@ $(libdir)/ivl$(suffix)/ivlpp@EXEEXT@
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(libdir)/ivl
+	$(srcdir)/../mkinstalldirs $(libdir)/ivl$(suffix)
 
 uninstall:
-	rm -f $(libdir)/ivl/ivlpp
+	rm -f $(libdir)/ivl$(suffix)/ivlpp@EXEEXT@
 
 lexor.o: lexor.c parse.h globals.h
 main.o: main.c globals.h

@@ -14,6 +14,8 @@ AX_CPP_IDENT
 #enable_vvp32=no
 AC_SUBST(enable_vvp32)
 
+AX_ENABLE_SUFFIX
+
 AC_CHECK_HEADERS(malloc.h)
 
 AC_CHECK_SIZEOF(unsigned long long)

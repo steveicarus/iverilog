@@ -23,6 +23,8 @@ SHELL = /bin/sh
 
 VERSION = 0.0
 
+suffix = @install_suffix@
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
@@ -33,7 +35,7 @@ bindir = @bindir@
 libdir = @libdir@
 includedir = $(prefix)/include
 
-vpidir = @libdir@/ivl/@vpidir1@
+vpidir = @libdir@/ivl$(suffix)/@vpidir1@
 
 strip_dynamic=@strip_dynamic@
 
