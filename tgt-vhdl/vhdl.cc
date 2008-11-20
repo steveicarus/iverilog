@@ -188,6 +188,9 @@ extern "C" int target_design(ivl_design_t des)
    if (0 == g_errors) {
       const char *ofname = ivl_design_flag(des, "-o");
       ofstream outfile(ofname);
+      outfile << "-- This VHDL was converted from Verilog using the" << endl
+              << "-- Icarus Verilog VHDL Code Generator " VERSION
+                 " (" VERSION_TAG ")" << endl << endl;
 
       // Make sure we only emit one example of each type of entity
       set<string> seen_entities;
