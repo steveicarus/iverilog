@@ -1,4 +1,4 @@
-.TH iverilog 1 "April 22nd, 2008" Version "0.9.devel"
+.TH iverilog 1 "April 22nd, 2008" "" "Version 0.9.devel"
 .SH NAME
 iverilog - Icarus Verilog compiler
 

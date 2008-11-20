@@ -1,4 +1,4 @@
-.TH iverilog-vpi 1 "$Date: 2004/10/04 01:10:53 $" Version "$Date: 2004/10/04 01:10:53 $"
+.TH iverilog-vpi 1 "November 19th, 2008" "" "Version 0.9.devel"
 .SH NAME
 iverilog-vpi - Compile front end for VPI modules
 
@@ -129,7 +129,7 @@ iverilog(1), vvp(1),
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002 Stephen Williams
+Copyright \(co  2002-2008 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

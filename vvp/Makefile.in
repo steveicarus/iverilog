@@ -21,6 +21,8 @@
 #
 SHELL = /bin/sh
 
+VERSION = 0.0
+
 suffix = @install_suffix@
 
 prefix = @prefix@
@@ -48,7 +50,7 @@ YACC = @YACC@
 MAN = @MAN@
 PS2PDF = @PS2PDF@
 
-CPPFLAGS = @ident_support@ -I. -I.. -I $(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@
+CPPFLAGS = @ident_support@ -I. -I.. -I $(srcdir) -I$(srcdir)/.. -DVERSION='"$(VERSION)"' @CPPFLAGS@ @DEFS@
 CXXFLAGS = -Wall @CXXFLAGS@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@
