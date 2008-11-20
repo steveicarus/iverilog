@@ -511,20 +511,16 @@ static void setup_ivl_environment()
 		}
 
 	  /* Build up the CFLAGS option string */
-	assign(&gstr.pCFLAGS,IVERILOG_VPI_CFLAGS);
-	append(&gstr.pCFLAGS," -I");
+	assign(&gstr.pCFLAGS,IVERILOG_VPI_CFLAGS " -I");
 	append(&gstr.pCFLAGS,gstr.pIVL);
 	appendBackSlash(&gstr.pCFLAGS);
-	append(&gstr.pCFLAGS, "\\");
-	append(&gstr.pCFLAGS,"include" IVERILOG_SUFFIX);
+	append(&gstr.pCFLAGS,"\\include\\\\verilog" IVERILOG_SUFFIX);
 
 	  /* Build up the LDFLAGS option string */
 	assign(&gstr.pLDLIBS,"-L");
 	append(&gstr.pLDLIBS,gstr.pIVL);
 	appendBackSlash(&gstr.pLDLIBS);
-	append(&gstr.pLDLIBS, "\\");
-	append(&gstr.pLDLIBS,"lib ");
-	append(&gstr.pLDLIBS,IVERILOG_VPI_LDLIBS);
+	append(&gstr.pLDLIBS,"\\lib " IVERILOG_VPI_LDLIBS);
 }
 
 /* compile source modules */
