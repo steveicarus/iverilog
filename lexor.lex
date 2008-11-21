@@ -92,6 +92,7 @@ static int dec_buf_div2(char *buf);
 static void process_timescale(const char*txt);
 
 static int comment_enter;
+static bool in_module = false;
 %}
 
 %x CCOMMENT
@@ -215,14 +216,29 @@ W [ \t\b\f\r]+
 
 [a-zA-Z_][a-zA-Z0-9$_]* {
       int rc = lexor_keyword_code(yytext, yyleng);
-      if (rc == IDENTIFIER) {
+      switch (rc) {
+	  case IDENTIFIER:
 	    yylval.text = strdup(yytext);
 	    if (strncmp(yylval.text,"PATHPULSE$", 10) == 0)
 		  rc = PATHPULSE_IDENTIFIER;
-      } else if (rc == K_edge) {
+	    break;
+
+	  case K_edge:
 	    BEGIN(EDGES);
-      } else {
+	    break;
+
+	  case K_module:
+	  case K_macromodule:
+	    in_module = true;
+	    break;
+
+	  case K_endmodule:
+	    in_module = false;
+	    break;
+
+	  default:
 	    yylval.text = 0;
+	    break;
       }
 
       return rc;
@@ -281,6 +297,12 @@ W [ \t\b\f\r]+
 ^{W}?`timescale { BEGIN(PPTIMESCALE); }
 <PPTIMESCALE>.* { process_timescale(yytext); }
 <PPTIMESCALE>\n {
+      if (in_module) {
+	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
+	            "`timescale directive can not be inside a module "
+	            "definition." << endl;
+	    error_count += 1;
+      }
       yylloc.first_line += 1;
       BEGIN(0); }
 
