@@ -2012,6 +2012,11 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 	    } else if (inv) {
 		  assert(res.base >= 4);
 		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+	    } else {
+		    /* We need to convert a 1'bz to 1'bx. */
+		  assert(res.base >= 4);
+		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
 	    }
 
 	      /* If the result needs to be bigger then the calculated

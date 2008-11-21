@@ -113,6 +113,7 @@ extern verinum trim_vnum(const verinum&);
 extern std::ostream& operator<< (std::ostream&, const verinum&);
 extern std::ostream& operator<< (std::ostream&, verinum::V);
 
+extern verinum::V operator ~ (verinum::V l);
 extern verinum::V operator | (verinum::V l, verinum::V r);
 extern verinum::V operator & (verinum::V l, verinum::V r);
 extern verinum::V operator ^ (verinum::V l, verinum::V r);

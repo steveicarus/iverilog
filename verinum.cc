@@ -956,6 +956,18 @@ verinum concat(const verinum&left, const verinum&right)
       return res;
 }
 
+verinum::V operator ~ (verinum::V l)
+{
+      switch(l) {
+	  case verinum::V0:
+	    return verinum::V1;
+	  case verinum::V1:
+	    return verinum::V0;
+	  default:
+	    return verinum::Vx;
+      }
+}
+
 verinum::V operator | (verinum::V l, verinum::V r)
 {
       if (l == verinum::V1)
