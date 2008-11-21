@@ -65,9 +65,14 @@ NexusSet* NetEBitSel::nex_input(bool rem_out)
 
 NexusSet* NetEConcat::nex_input(bool rem_out)
 {
+      if (parms_[0] == NULL) return NULL;
       NexusSet*result = parms_[0]->nex_input(rem_out);
       for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
 	    NexusSet*tmp = parms_[idx]->nex_input(rem_out);
+	    if (tmp == NULL) {
+		  delete result;
+		  return NULL;
+	    }
 	    result->add(*tmp);
 	    delete tmp;
       }
@@ -116,6 +121,10 @@ NexusSet* NetESelect::nex_input(bool rem_out)
 {
       NexusSet*result = base_? base_->nex_input(rem_out) : new NexusSet();
       NexusSet*tmp = expr_->nex_input(rem_out);
+      if (tmp == NULL) {
+	    delete result;
+	    return NULL;
+      }
       result->add(*tmp);
       delete tmp;
       return result;

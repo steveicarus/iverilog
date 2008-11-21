@@ -1977,8 +1977,8 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    if (synthesis) rem_out = true;
 	    NexusSet*nset = enet->nex_input(rem_out);
 	    if (nset == 0) {
-		  cerr << get_line() << ": internal error: No NexusSet"
-		       << " from statement." << endl;
+		  cerr << get_line() << ": error: Unable to elaborate:"
+		       << endl;
 		  enet->dump(cerr, 6);
 		  des->errors += 1;
 		  return enet;
