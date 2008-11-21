@@ -108,7 +108,7 @@ const char*targ  = "vvp";
 const char*depfile = 0;
 
 const char*generation = "2005";
-const char*gen_specify = "specify";
+const char*gen_specify = "no-specify";
 const char*gen_xtypes = "xtypes";
 const char*gen_icarus = "icarus-misc";
 const char*gen_io_range_error = "io-range-error";

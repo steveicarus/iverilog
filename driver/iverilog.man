@@ -68,7 +68,7 @@ other tools.
 Enable or disable (default) support for Verilog-AMS.
 .TP 8
 .B -gspecify\fI|\fP-gno-specify
-Enable (default) or disable specify block support. When enabled,
+Enable or disable (default) specify block support. When enabled,
 specify block code is elaborated. When disabled, specify blocks are
 parsed but ignored. Specify blocks are commonly not needed for RTL
 simulation, and in fact can hurt performance of the
