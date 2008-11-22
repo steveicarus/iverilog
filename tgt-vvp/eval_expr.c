@@ -475,7 +475,7 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 	    assert(0);
       }
 
-      if ((stuff_ok_flag&STUFF_OK_47) && (wid == 1)) {
+      if ((stuff_ok_flag&STUFF_OK_47) && (ewid == 1)) {
 	    return lv;
       }
 
@@ -584,7 +584,8 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
       return lv;
 }
 
-static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid,
+					       int stuff_ok_flag)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
       ivl_expr_t re = ivl_expr_oper2(exp);
@@ -607,7 +608,9 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
 	    lv = tmp;
       }
 
-      rv = draw_eval_expr(re, STUFF_OK_XZ);
+	/* The right expression may be left in registers 4-7 because
+	   I'll be using it immediately. */
+      rv = draw_eval_expr(re, STUFF_OK_XZ|STUFF_OK_47);
 
 	/* if the right operand has width, then evaluate the single-bit
 	   logical equivalent. */
@@ -637,20 +640,40 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
 			lv.base = 2;
 		  }
 
+	    } else if (lv.base==0) {
+		  lv = rv;
 	    } else {
 		  fprintf(vvp_out, "    %%or %u, %u, 1;\n", rv.base, lv.base);
 		  lv = rv;
 	    }
 
+      } else if (rv.base == 0) {
+	    ; /* Just return lv. */
       } else {
+	    if (rv.base >= 8 && lv.base < 8 && !(stuff_ok_flag&STUFF_OK_47)) {
+		    /* If STUFF_OK_47 is false, and rv is not in the
+		       47 area (and lv is) then plan to or the result
+		       into the rv instead. This can case a %mov later. */
+		  struct vector_info tmp = lv;
+		  lv = rv;
+		  rv = tmp;
+	    }
 	    fprintf(vvp_out, "    %%or %u, %u, 1;\n", lv.base, rv.base);
-	    clr_vector(rv);
+	    if (rv.base >= 8) clr_vector(rv);
       }
 
+      if (wid==1 && (lv.base<4 || lv.base>=8 || (stuff_ok_flag&STUFF_OK_47)))
+	    return lv;
 
 	/* If we only want the single bit result, then we are done. */
-      if (wid == 1)
+      if (wid == 1) {
+	    if (lv.base >= 4 && lv.base < 8) {
+		  unsigned tmp = allocate_vector(1);
+		  fprintf(vvp_out, "   %%mov %u, %u, 1;\n", tmp, lv.base);
+		  lv.base = tmp;
+	    }
 	    return lv;
+      }
 
 	/* Write the result into a zero-padded result. */
       { unsigned base = allocate_vector(wid);
@@ -663,7 +686,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
 	}
 
         fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
-	clr_vector(lv);
+	if (lv.base >= 8) clr_vector(lv);
 	lv.base = base;
 	lv.wid = wid;
 	fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, wid-1);
@@ -1503,7 +1526,8 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 	    break;
 
 	  case 'o': /* || (logical or) */
-	    rv = draw_binary_expr_lor(exp, wid);
+	    rv = draw_binary_expr_lor(exp, wid, stuff_ok_flag);
+	    stuff_ok_used_flag = 1;
 	    break;
 
 	  case '&':
@@ -1562,7 +1586,6 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
 		    ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
 	    vvp_errors += 1;
       }
-
 
 	/* Get the repeat count. This must be a constant that has been
 	   evaluated at compile time. The operands will be repeated to
