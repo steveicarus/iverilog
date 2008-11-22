@@ -997,9 +997,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 verinum::V operator ^ (verinum::V l, verinum::V r)
 {
       if (l == verinum::V0)
-	    return r;
+	    return bit4_z2x(r);
       if (r == verinum::V0)
-	    return l;
+	    return bit4_z2x(l);
       if ((l == verinum::V1) && (r == verinum::V1))
 	    return verinum::V0;
 
