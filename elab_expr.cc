@@ -444,6 +444,13 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope, bool) const
 		  return 0;
 	    }
 
+	    if (rep->value().is_zero()) {
+		  cerr << get_line() << ": error: Concatenation repeat "
+		       << "may not be zero." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
 	    repeat = rep;
       }
 

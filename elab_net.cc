@@ -1357,6 +1357,13 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 		  des->errors += 1;
 		  return 0;
 	    }
+
+	    if (erep->value().is_zero()) {
+		  cerr << get_line() << ": error: Concatenation repeat "
+		       << "may not be zero." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
       }
 
 	/* The operands of the concatenation must contain all
