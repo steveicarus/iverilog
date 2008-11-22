@@ -433,6 +433,15 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope, bool) const
 		       << "may not be undefined (" << rep->value()
 		       << ")." << endl;
 		  des->errors += 1;
+		  return 0;
+	    }
+
+	    if (rep->value().is_negative()) {
+		  cerr << get_line() << ": error: Concatenation repeat "
+		       << "may not be negative (" << rep->value().as_long()
+		       << ")." << endl;
+		  des->errors += 1;
+		  return 0;
 	    }
 
 	    repeat = rep;
