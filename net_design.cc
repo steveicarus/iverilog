@@ -424,10 +424,6 @@ void NetScope::evaluate_parameters(Design*des)
 			assert(nexpr);
 			delete expr;
 			(*cur).second.expr = nexpr;
-
-			  // Set the signedness flag.
-			(*cur).second.expr
-			      ->cast_signed( (*cur).second.signed_flag );
 		  }
 		  break;
 
@@ -440,7 +436,9 @@ void NetScope::evaluate_parameters(Design*des)
 	    }
 
 	      /* If the parameter has range information, then make
-		 sure the value is set right. */
+		 sure the value is set right. Note that if the
+		 parameter doesn't have an explicit range, then it
+		 will get the signedness from the expression itself. */
 	    if (range_flag) {
 		  unsigned long wid = (msb >= lsb)? msb - lsb : lsb - msb;
 		  wid += 1;

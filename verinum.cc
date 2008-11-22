@@ -734,14 +734,18 @@ verinum operator * (const verinum&left, const verinum&right)
       verinum result(verinum::V0, left.len() + right.len(), has_len_flag);
       result.has_sign(left.has_sign() || right.has_sign());
 
-      for (unsigned rdx = 0 ;  rdx < right.len() ;  rdx += 1) {
+      verinum::V r_sign = sign_bit(right);
+      for (unsigned rdx = 0 ;  rdx < result.len() ;  rdx += 1) {
 
-	    if (right.get(rdx) == verinum::V0)
+	    verinum::V r_bit = rdx < right.len()? right.get(rdx) : r_sign;
+	    if (r_bit == verinum::V0)
 		  continue;
 
+	    verinum::V l_sign = sign_bit(left);
 	    verinum::V carry = verinum::V0;
-	    for (unsigned ldx = 0 ;  ldx < left.len() ;  ldx += 1) {
-		  result.set(ldx+rdx, add_with_carry(left[ldx],
+	    for (unsigned ldx = 0 ;  ldx < result.len()-rdx ;  ldx += 1) {
+		  verinum::V l_bit = ldx < left.len()? left[ldx] : l_sign;
+		  result.set(ldx+rdx, add_with_carry(l_bit,
 						     result[rdx+ldx],
 						     carry));
 	    }
