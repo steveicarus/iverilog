@@ -1599,7 +1599,7 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
 		  if (avec.base != 0) {
 			assert(awid == avec.wid);
 
-			fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+			fprintf(vvp_out, "    %%mov %u, %u, %u; Reuse calculated expression\n",
 				res.base+off,
 				avec.base, trans);
 			clr_vector(avec);
@@ -1790,17 +1790,27 @@ static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
       struct vector_info subv;
       struct vector_info res;
 
-      subv = draw_eval_expr(ivl_expr_oper1(exp), 0);
-      if (wid <= subv.wid) {
-	    if (subv.base >= 8)
-		  save_expression_lookaside(subv.base, exp, subv.wid);
+      ivl_expr_t subexpr = ivl_expr_oper1(exp);
+
+	/* If the sub-expression is at least as wide as the target
+	   width, then instead of pad, we truncate. Evaluate the
+	   expression and return that expression with the width
+	   reduced to what we want. */
+      if (wid <= ivl_expr_width(subexpr)) {
+	    subv = draw_eval_expr(subexpr, 0);
+	    assert(subv.wid >= wid);
 	    res.base = subv.base;
 	    res.wid = wid;
+	    if (subv.base >= 8)
+		  save_expression_lookaside(subv.base, exp, subv.wid);
 	    return res;
       }
 
+	/* So now we know that the subexpression is smaller then the
+	   desired result (the usual case) so we build the
+	   result. Evaluate the subexpression into the target buffer,
+	   then pad it as appropriate. */
       res.base = allocate_vector(wid);
-      res.wid = wid;
       if (res.base == 0) {
 	    fprintf(stderr, "%s:%u: vvp.tgt error: "
 		    "Unable to allocate %u thread bits "
@@ -1809,10 +1819,11 @@ static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
 	    vvp_errors += 1;
       }
 
-      fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
-	      res.base, subv.base, subv.wid);
+      res.wid = wid;
 
-      assert(wid > subv.wid);
+      subv.base = res.base;
+      subv.wid = ivl_expr_width(subexpr);
+      draw_eval_expr_dest(subexpr, subv, 0);
 
       if (ivl_expr_signed(exp)) {
 	    unsigned idx;
@@ -1823,9 +1834,7 @@ static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
 	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
 		    res.base+subv.wid, res.wid - subv.wid);
       }
-      if (subv.base >= 8)
-            clr_vector(subv);
-
+ 
       save_expression_lookaside(res.base, exp, wid);
       return res;
 }
