@@ -334,10 +334,24 @@ static PLI_INT32 sys_ungetc_compiletf(char*name)
       vpiHandle item = vpi_scan(argv);
 
       if (item == 0) {
-	    vpi_printf("%s: mcd parameter missing.\n", name);
+	    vpi_printf("%s: charater parameter missing.\n", name);
 	    return 0;
       }
 
+      type = vpi_get(vpiType, item);
+      switch (type) {
+	    case vpiReg:
+	    case vpiRealVal:
+	    case vpiIntegerVar:
+	      break;
+	    default:
+	      vpi_printf("ERROR: %s mcd parameter must be of integral", name);
+	      vpi_printf(", got vpiType=%d\n", type);
+	      vpi_free_object(argv);
+	      return 0;
+      }
+
+      item = vpi_scan(argv);
       type = vpi_get(vpiType, item);
       switch (type) {
 	    case vpiReg:
@@ -357,16 +371,18 @@ static PLI_INT32 sys_ungetc_compiletf(char*name)
 static PLI_INT32 sys_ungetc_calltf(char *name)
 {
       unsigned int mcd;
-      unsigned char x;
-      s_vpi_value value, xvalue, rval;
+      unsigned char chr;
+      s_vpi_value value, rval;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
       vpiHandle item = vpi_scan(argv);
       FILE *fp;
 
-      rval.format = vpiIntVal;
+      value.format = vpiIntVal;
+      vpi_get_value(item, &value);
+      chr = value.value.integer;
 
-      assert(item);
+      item = vpi_scan(argv);
 
       value.format = vpiIntVal;
       vpi_get_value(item, &value);
@@ -378,12 +394,6 @@ static PLI_INT32 sys_ungetc_calltf(char *name)
 	    return 0;
       }
 
-      item = vpi_scan(argv);
-
-      xvalue.format = vpiIntVal;
-      vpi_get_value(item, &xvalue);
-      x = xvalue.value.integer;
-
       fp = vpi_get_file(mcd);
       if ( !fp ) {
 	    rval.value.integer = EOF;
@@ -391,9 +401,8 @@ static PLI_INT32 sys_ungetc_calltf(char *name)
 	    return 0;
       }
 
-      ungetc(x, fp);
-
-      rval.value.integer = 0;
+      rval.format = vpiIntVal;
+      rval.value.integer = ungetc(chr, fp);
       vpi_put_value(sys, &rval, 0, vpiNoDelay);
       return 0;
 }
