@@ -17,6 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# include  "version.h"
 # include  "config.h"
 # include  "parse_misc.h"
 # include  "compile.h"
@@ -66,6 +67,7 @@ extern "C" long int lround(double x)
 #endif
 
 bool verbose_flag = false;
+bool version_flag = false;
 static int vvp_return_value = 0;
 
 void vpip_set_return_value(int value)
@@ -166,7 +168,7 @@ int main(int argc, char*argv[])
         /* For non-interactive runs we do not want to run the interactive
          * debugger, so make $stop just execute a $finish. */
       stop_is_finish = false;
-      while ((opt = getopt(argc, argv, "+hl:M:m:nsv")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "+hl:M:m:nsvV")) != EOF) switch (opt) {
          case 'h':
            fprintf(stderr,
                    "Usage: vvp [options] input-file [+plusargs...]\n"
@@ -178,7 +180,8 @@ int main(int argc, char*argv[])
                    " -m module      Load vpi module.\n"
 		   " -n             Non-interactive ($stop = $finish).\n"
 		   " -s             $stop right away.\n"
-                   " -v             Verbose progress messages.\n" );
+                   " -v             Verbose progress messages.\n"
+                   " -V             Print the version information.\n" );
            exit(0);
 	  case 'l':
 	    logfile_name = optarg;
@@ -203,12 +206,37 @@ int main(int argc, char*argv[])
 	  case 'v':
 	    verbose_flag = true;
 	    break;
+	  case 'V':
+	    version_flag = true;
+	    break;
 	  default:
 	    flag_errors += 1;
       }
 
       if (flag_errors)
 	    return flag_errors;
+
+      if (version_flag) {
+	    fprintf(stderr, "Icarus Verilog runtime version " VERSION " ("
+	                    VERSION_TAG ")\n\n");
+	    fprintf(stderr, "Copyright 1998-2008 Stephen Williams\n\n");
+	    fprintf(stderr,
+"  This program is free software; you can redistribute it and/or modify\n"
+"  it under the terms of the GNU General Public License as published by\n"
+"  the Free Software Foundation; either version 2 of the License, or\n"
+"  (at your option) any later version.\n"
+"\n"
+"  This program is distributed in the hope that it will be useful,\n"
+"  but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"  GNU General Public License for more details.\n"
+"\n"
+"  You should have received a copy of the GNU General Public License along\n"
+"  with this program; if not, write to the Free Software Foundation, Inc.,\n"
+"  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.\n\n"
+);
+	    return 0;
+      }
 
       if (optind == argc) {
 	    fprintf(stderr, "%s: no input file.\n", argv[0]);

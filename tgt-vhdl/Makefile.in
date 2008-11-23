@@ -20,6 +20,8 @@ SHELL = /bin/sh
 
 VERSION = 0.0
 
+suffix = @install_suffix@
+
 prefix = @prefix@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -36,7 +38,7 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = @ident_support@ -I. -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
+CPPFLAGS = -I. -I$(srcdir)/.. -DVERSION='"$(VERSION)"' @CPPFLAGS@ @DEFS@ @PICFLAG@
 CXXFLAGS = -Wall @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
@@ -74,23 +76,23 @@ distclean: clean
 
 check: all
 
-install: all installdirs $(libdir)/ivl/vhdl.tgt $(libdir)/ivl/vhdl.conf \
-	$(libdir)/ivl/vhdl-s.conf
+install: all installdirs $(libdir)/ivl$(suffix)/vhdl.tgt $(libdir)/ivl$(suffix)/vhdl.conf \
+	$(libdir)/ivl$(suffix)/vhdl-s.conf
 
-$(libdir)/ivl/vhdl.tgt: ./vhdl.tgt
-	$(INSTALL_PROGRAM) ./vhdl.tgt $(DESTDIR)$(libdir)/ivl/vhdl.tgt
+$(libdir)/ivl$(suffix)/vhdl.tgt: ./vhdl.tgt
+	$(INSTALL_PROGRAM) ./vhdl.tgt $(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.tgt
 
-$(libdir)/ivl/vhdl.conf: vhdl.conf
-	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl/vhdl.conf
+$(libdir)/ivl$(suffix)/vhdl.conf: vhdl.conf
+	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.conf
 
-$(libdir)/ivl/vhdl-s.conf: vhdl-s.conf
-	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl/vhdl-s.conf
+$(libdir)/ivl$(suffix)/vhdl-s.conf: vhdl-s.conf
+	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl$(suffix)/vhdl-s.conf
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(DESTDIR)$(libdir)/ivl
+	$(srcdir)/../mkinstalldirs $(DESTDIR)$(libdir)/ivl$(suffix)
 
 uninstall:
-	rm -f $(DESTDIR)$(libdir)/ivl/vhdl.tgt $(DESTDIR)$(libdir)/ivl/vhdl.conf
+	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.tgt $(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.conf $(DESTDIR)$(libdir)/ivl$(suffix)/vhdl-s.conf
 
 
 -include $(patsubst %.o, dep/%.d, $O)

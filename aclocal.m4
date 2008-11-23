@@ -1,29 +1,21 @@
-# AX_CPP_IDENT
-# ------------
-# Check if the C compiler supports #ident
-# Define and substitute ident_support if so.
-#
-# It would be simpler and more consistent with the rest of the autoconf
-# structure to AC_DEFINE(HAVE_CPP_IDENT) instead of
-# ident_support='-DHAVE_CVS_IDENT=1' and AC_SUBST(ident_support), but that
-# change would require all C files in the icarus top level directory to
-# put #include <config.h> before the #ifdef HAVE_CVS_IDENT (and change
-# HAVE_CVS_IDENT to HAVE_CPP_IDENT).   That would also remove all special
-# ident_support handling from the Makefile.  Manyana.
-#
-AC_DEFUN([AX_CPP_IDENT],
-[AC_CACHE_CHECK([for ident support in C compiler], ax_cv_cpp_ident,
-[AC_TRY_COMPILE([
-#ident "$Id: aclocal.m4,v 1.7 2007/05/16 23:59:12 steve Exp $"
-],[while (0) {}],
-[AS_VAR_SET(ax_cv_cpp_ident, yes)],
-[AS_VAR_SET(ax_cv_cpp_ident, no)])])
-if test $ax_cv_cpp_ident = yes; then
-  ident_support='-DHAVE_CVS_IDENT=1'
-fi
-AC_SUBST(ident_support)
-])# AC_CPP_IDENT
 
+# AX_ENABLE_SUFFIX
+# ----------------
+#  Create the configure option --enable-suffix[=suffix] to generate suffix
+# strings for the installed commands. This allows for shared installs of
+# different builds. Remember to change the default suffix string to some
+# value appropriate for the current version.
+AC_DEFUN([AX_ENABLE_SUFFIX],
+[AC_ARG_ENABLE([suffix],[Set the installation command suffix],[true],[enable_suffix=no])
+if test X$enable_suffix = Xyes; then
+  install_suffix='-0.9'
+elif test X$enable_suffix = Xno; then
+  install_suffix=''
+else
+  install_suffix="$enable_suffix"
+fi
+AC_SUBST(install_suffix)
+])# AX_ENABLE_SUFFIX
 
 # _AX_C_UNDERSCORES_MATCH_IFELSE(PATTERN, ACTION-IF-MATCH, ACTION-IF-NOMATCH)
 # ------------------------------

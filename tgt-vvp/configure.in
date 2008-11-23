@@ -10,6 +10,8 @@ AC_PROG_INSTALL
 AC_CANONICAL_HOST
 # $host
 
+AX_ENABLE_SUFFIX
+
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
 
@@ -33,7 +35,5 @@ AX_C_PICFLAG
 
 # linker options when building a shared library
 AX_LD_SHAREDLIB_OPTS
-
-AX_CPP_IDENT
 
 AC_OUTPUT(Makefile)

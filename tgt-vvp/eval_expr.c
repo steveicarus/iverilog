@@ -475,7 +475,7 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 	    assert(0);
       }
 
-      if ((stuff_ok_flag&STUFF_OK_47) && (wid == 1)) {
+      if ((stuff_ok_flag&STUFF_OK_47) && (ewid == 1)) {
 	    return lv;
       }
 
@@ -584,7 +584,8 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
       return lv;
 }
 
-static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid,
+					       int stuff_ok_flag)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
       ivl_expr_t re = ivl_expr_oper2(exp);
@@ -607,7 +608,9 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
 	    lv = tmp;
       }
 
-      rv = draw_eval_expr(re, STUFF_OK_XZ);
+	/* The right expression may be left in registers 4-7 because
+	   I'll be using it immediately. */
+      rv = draw_eval_expr(re, STUFF_OK_XZ|STUFF_OK_47);
 
 	/* if the right operand has width, then evaluate the single-bit
 	   logical equivalent. */
@@ -637,20 +640,40 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
 			lv.base = 2;
 		  }
 
+	    } else if (lv.base==0) {
+		  lv = rv;
 	    } else {
 		  fprintf(vvp_out, "    %%or %u, %u, 1;\n", rv.base, lv.base);
 		  lv = rv;
 	    }
 
+      } else if (rv.base == 0) {
+	    ; /* Just return lv. */
       } else {
+	    if (rv.base >= 8 && lv.base < 8 && !(stuff_ok_flag&STUFF_OK_47)) {
+		    /* If STUFF_OK_47 is false, and rv is not in the
+		       47 area (and lv is) then plan to or the result
+		       into the rv instead. This can case a %mov later. */
+		  struct vector_info tmp = lv;
+		  lv = rv;
+		  rv = tmp;
+	    }
 	    fprintf(vvp_out, "    %%or %u, %u, 1;\n", lv.base, rv.base);
-	    clr_vector(rv);
+	    if (rv.base >= 8) clr_vector(rv);
       }
 
+      if (wid==1 && (lv.base<4 || lv.base>=8 || (stuff_ok_flag&STUFF_OK_47)))
+	    return lv;
 
 	/* If we only want the single bit result, then we are done. */
-      if (wid == 1)
+      if (wid == 1) {
+	    if (lv.base >= 4 && lv.base < 8) {
+		  unsigned tmp = allocate_vector(1);
+		  fprintf(vvp_out, "   %%mov %u, %u, 1;\n", tmp, lv.base);
+		  lv.base = tmp;
+	    }
 	    return lv;
+      }
 
 	/* Write the result into a zero-padded result. */
       { unsigned base = allocate_vector(wid);
@@ -663,7 +686,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
 	}
 
         fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
-	clr_vector(lv);
+	if (lv.base >= 8) clr_vector(lv);
 	lv.base = base;
 	lv.wid = wid;
 	fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, wid-1);
@@ -1503,7 +1526,8 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 	    break;
 
 	  case 'o': /* || (logical or) */
-	    rv = draw_binary_expr_lor(exp, wid);
+	    rv = draw_binary_expr_lor(exp, wid, stuff_ok_flag);
+	    stuff_ok_used_flag = 1;
 	    break;
 
 	  case '&':
@@ -1563,7 +1587,6 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
 	    vvp_errors += 1;
       }
 
-
 	/* Get the repeat count. This must be a constant that has been
 	   evaluated at compile time. The operands will be repeated to
 	   form the result. */
@@ -1599,7 +1622,7 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
 		  if (avec.base != 0) {
 			assert(awid == avec.wid);
 
-			fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+			fprintf(vvp_out, "    %%mov %u, %u, %u; Reuse calculated expression\n",
 				res.base+off,
 				avec.base, trans);
 			clr_vector(avec);
@@ -1781,6 +1804,25 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 }
 
 /*
+ * This little helper function generates the instructions to pad a
+ * vector in place. It is assumed that the calling functio has set up
+ * the first sub_sidth bits of the dest vector, and the signed_flag is
+ * true if the extension is to be signed.
+ */
+static void pad_in_place(struct vector_info dest, unsigned sub_width, int signed_flag)
+{
+      if (signed_flag) {
+	    unsigned idx;
+	    for (idx = sub_width ;  idx < dest.wid ;  idx += 1)
+			fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
+				dest.base+idx, dest.base+sub_width-1);
+      } else {
+	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+		    dest.base+sub_width, dest.wid - sub_width);
+      }
+}
+
+/*
  * The PAD expression takes a smaller node and pads it out to a larger
  * value. It will zero extend or sign extend depending on the
  * signedness of the expression.
@@ -1790,17 +1832,27 @@ static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
       struct vector_info subv;
       struct vector_info res;
 
-      subv = draw_eval_expr(ivl_expr_oper1(exp), 0);
-      if (wid <= subv.wid) {
-	    if (subv.base >= 8)
-		  save_expression_lookaside(subv.base, exp, subv.wid);
+      ivl_expr_t subexpr = ivl_expr_oper1(exp);
+
+	/* If the sub-expression is at least as wide as the target
+	   width, then instead of pad, we truncate. Evaluate the
+	   expression and return that expression with the width
+	   reduced to what we want. */
+      if (wid <= ivl_expr_width(subexpr)) {
+	    subv = draw_eval_expr(subexpr, 0);
+	    assert(subv.wid >= wid);
 	    res.base = subv.base;
 	    res.wid = wid;
+	    if (subv.base >= 8)
+		  save_expression_lookaside(subv.base, exp, subv.wid);
 	    return res;
       }
 
+	/* So now we know that the subexpression is smaller then the
+	   desired result (the usual case) so we build the
+	   result. Evaluate the subexpression into the target buffer,
+	   then pad it as appropriate. */
       res.base = allocate_vector(wid);
-      res.wid = wid;
       if (res.base == 0) {
 	    fprintf(stderr, "%s:%u: vvp.tgt error: "
 		    "Unable to allocate %u thread bits "
@@ -1809,22 +1861,13 @@ static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
 	    vvp_errors += 1;
       }
 
-      fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
-	      res.base, subv.base, subv.wid);
+      res.wid = wid;
 
-      assert(wid > subv.wid);
+      subv.base = res.base;
+      subv.wid = ivl_expr_width(subexpr);
+      draw_eval_expr_dest(subexpr, subv, 0);
 
-      if (ivl_expr_signed(exp)) {
-	    unsigned idx;
-	    for (idx = subv.wid ;  idx < res.wid ;  idx += 1)
-		  fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
-			  res.base+idx, subv.base+subv.wid-1);
-      } else {
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-		    res.base+subv.wid, res.wid - subv.wid);
-      }
-      if (subv.base >= 8)
-            clr_vector(subv);
+      pad_in_place(res, subv.wid, ivl_expr_signed(exp));
 
       save_expression_lookaside(res.base, exp, wid);
       return res;
@@ -2229,6 +2272,43 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
       return res;
 }
 
+static void draw_select_signal_dest(ivl_expr_t sube,
+				    ivl_expr_t bit_idx,
+				    struct vector_info dest,
+				    int stuff_ok_flag)
+{
+      struct vector_info tmp;
+      ivl_signal_t sig = ivl_expr_signal(sube);
+
+	/* Special case: If the operand is a signal (not an array) and
+	   the part select is coming from the LSB, and the part select
+	   is no larger then the signal itself, then we can load the
+	   value in place, directly. */
+      if ((ivl_signal_dimensions(sig) == 0)
+	  && (ivl_expr_width(sube) >= dest.wid)
+	  && number_is_immediate(bit_idx, 32, 0)
+	  && get_number_immediate(bit_idx) == 0) {
+	    unsigned use_word = 0;
+	    fprintf(vvp_out, "    %%load/v %u, v%p_%u, %u; Select %u out of %u bits\n",
+		    dest.base, sig, use_word, dest.wid,
+		    dest.wid, ivl_expr_width(sube));
+	    return;
+      }
+
+	/* Fallback, just draw the expression and copy the result into
+	   the destination. */
+      tmp = draw_select_signal(sube, bit_idx, dest.wid, dest.wid);
+      assert(tmp.wid == dest.wid);
+
+      fprintf(vvp_out, "    %%mov %u, %u, %u; Move signal select into place\n",
+	      dest.base, tmp.base, dest.wid);
+
+      if (tmp.base >= 8) {
+	    save_expression_lookaside(tmp.base, sube, tmp.wid);
+	    clr_vector(tmp);
+      }
+}
+
 static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
 					   int stuff_ok_flag)
 {
@@ -2316,6 +2396,50 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
       }
 
       return res;
+}
+
+static void draw_select_expr_dest(ivl_expr_t exp, struct vector_info dest,
+				  int stuff_ok_flag)
+{
+      struct vector_info tmp;
+
+      ivl_expr_t sube = ivl_expr_oper1(exp);
+      ivl_expr_t shift= ivl_expr_oper2(exp);
+
+	/* If the shift expression is not present, then this is really
+	   a pad expression, and that can be handled pretty
+	   easily. Evalutate the subexpression into the destination,
+	   then pad in place. */
+      if (shift == 0) {
+	    struct vector_info subv;
+	    subv.base = dest.base;
+	    subv.wid = ivl_expr_width(sube);
+	    if (subv.wid > dest.wid)
+		  subv.wid = dest.wid;
+
+	    draw_eval_expr_dest(sube, subv, stuff_ok_flag);
+
+	    pad_in_place(dest, subv.wid, ivl_expr_signed(exp));
+	    return;
+      }
+
+      if (ivl_expr_type(sube) == IVL_EX_SIGNAL) {
+	    draw_select_signal_dest(sube, shift, dest, stuff_ok_flag);
+	    return;
+      }
+
+	/* Fallback, is to draw the expression by width, and mov it to
+	   the required dest. */
+      tmp = draw_select_expr(exp, dest.wid, stuff_ok_flag);
+      assert(tmp.wid == dest.wid);
+
+      fprintf(vvp_out, "    %%mov %u, %u, %u; Move select into place\n",
+	      dest.base, tmp.base, dest.wid);
+
+      if (tmp.base >= 8) {
+	    save_expression_lookaside(tmp.base, exp, tmp.wid);
+	    clr_vector(tmp);
+      }
 }
 
 static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
@@ -2580,6 +2704,11 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 	    } else if (inv) {
 		  assert(res.base >= 4);
 		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+	    } else {
+		    /* We need to convert a 1'bz to 1'bx. */
+		  assert(res.base >= 4);
+		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
 	    }
 
 	      /* If the result needs to be bigger then the calculated
@@ -2651,6 +2780,10 @@ static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
 
 	  case IVL_EX_SIGNAL:
 	    draw_signal_dest(exp, dest, -1, 0L);
+	    return;
+
+	  case IVL_EX_SELECT:
+	    draw_select_expr_dest(exp, dest, stuff_ok_flag);
 	    return;
 
 	  default:

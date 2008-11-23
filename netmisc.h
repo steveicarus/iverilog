@@ -63,10 +63,12 @@ inline NetScope* symbol_search(const LineInfo*li,
  * not transforming the expression at all, if it is already wide
  * enough.
  */
-extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid);
-extern NetNet*pad_to_width(Design*des, NetNet*n, unsigned w);
+extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid, const LineInfo&info);
+extern NetNet*pad_to_width(Design*des, NetNet*n, unsigned w,
+                           const LineInfo&info);
 
-extern NetNet*pad_to_width_signed(Design*des, NetNet*n, unsigned w);
+extern NetNet*pad_to_width_signed(Design*des, NetNet*n, unsigned w,
+                                  const LineInfo&info);
 
 /*
  * Generate the nodes necessary to cast an expression (a net) to a

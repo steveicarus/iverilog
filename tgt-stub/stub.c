@@ -24,6 +24,7 @@
  * understand the behavior of the core as it uses a target module.
  */
 
+# include "version.h"
 # include "config.h"
 # include "priv.h"
 # include <stdlib.h>
@@ -32,7 +33,8 @@
 # include <assert.h>
 
 static const char*version_string =
-"Icarus Verilog Stub Target " VERSION "\n"
+"Icarus Verilog STUB Code Generator " VERSION " (" VERSION_TAG ")\n\n"
+"Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)\n\n"
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"
 "  the Free Software Foundation; either version 2 of the License, or\n"
@@ -43,9 +45,9 @@ static const char*version_string =
 "  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
 "  GNU General Public License for more details.\n"
 "\n"
-"  You should have received a copy of the GNU General Public License\n"
-"  along with this program; if not, write to the Free Software\n"
-"  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA\n"
+"  You should have received a copy of the GNU General Public License along\n"
+"  with this program; if not, write to the Free Software Foundation, Inc.,\n"
+"  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.\n"
 ;
 
 FILE*out;

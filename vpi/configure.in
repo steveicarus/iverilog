@@ -71,6 +71,8 @@ AC_SUBST(file64_support)
 
 # $host
 
+AX_ENABLE_SUFFIX
+
 # Compiler option for position independent code, needed when making shared objects.
 AX_C_PICFLAG
 
@@ -81,7 +83,5 @@ AX_LD_RDYNAMIC
 
 # linker options when building a shared library
 AX_LD_SHAREDLIB_OPTS
-
-AX_CPP_IDENT
 
 AC_OUTPUT(Makefile)

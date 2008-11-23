@@ -1447,11 +1447,11 @@ void pform_makewire(const vlltype&li, perm_string name,
 	    bool rc = cur->set_wire_type(type);
 	    if (rc == false) {
 		  ostringstream msg;
-		  msg << name << " definition conflicts with "
-		      << "definition at " << cur->get_fileline()
+		  msg << name << " " << type
+		      << " definition conflicts with " << cur->get_wire_type()
+		      << " definition at " << cur->get_fileline()
 		      << ".";
 		  VLerror(msg.str().c_str());
-		  cerr << "XXXX type=" << type <<", curtype=" << cur->get_wire_type() << endl;
 	    }
 
       }
@@ -1460,9 +1460,11 @@ void pform_makewire(const vlltype&li, perm_string name,
       if (! cur) {
 	    new_wire_flag = true;
 	    cur = new PWire(name, type, pt, dt);
+	    FILE_NAME(cur, li.text, li.first_line);
       }
 
-      FILE_NAME(cur, li.text, li.first_line);
+      if (type != NetNet::IMPLICIT)
+	    FILE_NAME(cur, li.text, li.first_line);
 
       bool flag;
       switch (dt) {

@@ -33,9 +33,9 @@ const char NOTICE[] =
 "  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
 "  GNU General Public License for more details.\n"
 "\n"
-"  You should have received a copy of the GNU General Public License\n"
-"  along with this program; if not, write to the Free Software\n"
-"  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA\n"
+"  You should have received a copy of the GNU General Public License along\n"
+"  with this program; if not, write to the Free Software Foundation, Inc.,\n"
+"  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.\n"
 ;
 
 # include  <stdio.h>
@@ -589,10 +589,10 @@ int main(int argc, char*argv[])
 	    return flag_errors;
 
       if (version_flag) {
-	    cout << "\n\nIcarus Verilog Parser/Elaborator version "
-		 << VERSION << " (" << VERSION_TAG << ")" << endl;
-	    cout << COPYRIGHT << endl;
-	    cout << endl << NOTICE << endl;
+	    cout << "\nIcarus Verilog Parser/Elaborator version "
+		 << VERSION << " (" << VERSION_TAG << ")" << endl << endl;
+	    cout << COPYRIGHT << endl << endl;
+	    cout << NOTICE << endl;
 
 	    dll_target_obj.test_version(flags["DLL"]);
 

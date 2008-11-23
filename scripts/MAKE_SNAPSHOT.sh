@@ -45,7 +45,7 @@ if [ -e $destdir/$prefix ]; then
 fi
 
 echo "Exporting $tag to $destdir/$prefix..."
-git-archive --prefix="$prefix/" $tag | ( cd "$destdir" && tar xf - )
+git archive --prefix="$prefix/" $tag | ( cd "$destdir" && tar xf - )
 
 versionh="$destdir/$prefix/version.h"
 echo "Create $versionh ..."

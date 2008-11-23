@@ -3,6 +3,8 @@ AC_CONFIG_HEADER(config.h)
 
 AC_PROG_CC
 
+AX_ENABLE_SUFFIX
+
 #######################
 ## test for underscores. The vpi module loader in vvm needs to know this
 ## in order to know the name of the start symbol for the .vpi module.
@@ -98,12 +100,11 @@ AC_CHECK_FUNCS(lround nan)
 AC_CHECK_HEADERS(sys/resource.h)
 case "${host}" in *linux*) AC_DEFINE([LINUX], [1], [Host operating system is Linux.]) ;; esac
 
+
 # Linker option used when compiling the target
 AX_LD_RDYNAMIC
 
 AX_LD_EXTRALIBS
-
-AX_CPP_IDENT
 
 # If not otherwise specified, set the libdir64 variable
 # to the same as libdir.

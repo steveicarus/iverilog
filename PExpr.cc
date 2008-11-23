@@ -152,7 +152,7 @@ bool PECallFunction::has_aa_term(Design*des, NetScope*scope) const
 }
 
 PEConcat::PEConcat(const svector<PExpr*>&p, PExpr*r)
-: parms_(p), repeat_(r)
+: parms_(p), tested_widths_(p.count()), repeat_(r)
 {
 }
 

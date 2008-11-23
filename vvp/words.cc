@@ -270,8 +270,6 @@ void compile_netw_real(char*label, char*array_label, unsigned long array_addr,
                        int msb, int lsb,
                        unsigned argc, struct symb_s*argv)
 {
-      cerr << "XXXX compile_netw_real: label=" << label
-	   << ", array_label=" << array_label << endl;
       __compile_real(label, 0, array_label, array_addr,
                      msb, lsb, false, argc, argv);
 }

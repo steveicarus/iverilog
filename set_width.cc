@@ -130,13 +130,13 @@ bool NetEBBits::set_width(unsigned w, bool)
 	/* If the operands end up too small, then pad them to suit. */
 
       if (left_->expr_width() < use_width) {
-	    NetExpr*tmp = pad_to_width(left_, use_width);
+	    NetExpr*tmp = pad_to_width(left_, use_width, *this);
 	    assert(tmp);
 	    left_ = tmp;
       }
 
       if (right_->expr_width() < w) {
-	    NetExpr*tmp = pad_to_width(right_, use_width);
+	    NetExpr*tmp = pad_to_width(right_, use_width, *this);
 	    assert(tmp);
 	    right_ = tmp;
       }
@@ -211,13 +211,13 @@ bool NetEBShift::set_width(unsigned w, bool)
 	  case 'l':
 	    left_->set_width(w);
 	    if (left_->expr_width() < w)
-		  left_ = pad_to_width(left_, w);
+		  left_ = pad_to_width(left_, w, *this);
 	    break;
 
 	  case 'r':
 	  case 'R':
 	    if (left_->expr_width() < w)
-		  left_ = pad_to_width(left_, w);
+		  left_ = pad_to_width(left_, w, *this);
 	    break;
 
 	  default:
@@ -407,9 +407,11 @@ bool NetETernary::set_width(unsigned w, bool last_chance)
 	   the user requests, at least pad the smaller width to suit
 	   the larger. */
       if (true_val_->expr_width() < false_val_->expr_width())
-	    true_val_ = pad_to_width(true_val_, false_val_->expr_width());
+	    true_val_ = pad_to_width(true_val_, false_val_->expr_width(),
+	                             *this);
       if (false_val_->expr_width() < true_val_->expr_width())
-	    false_val_ = pad_to_width(false_val_, true_val_->expr_width());
+	    false_val_ = pad_to_width(false_val_, true_val_->expr_width(),
+	                             *this);
 
       expr_width(true_val_->expr_width());
       return flag;
