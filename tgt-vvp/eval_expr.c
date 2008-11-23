@@ -1804,6 +1804,25 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 }
 
 /*
+ * This little helper function generates the instructions to pad a
+ * vector in place. It is assumed that the calling functio has set up
+ * the first sub_sidth bits of the dest vector, and the signed_flag is
+ * true if the extension is to be signed.
+ */
+static void pad_in_place(struct vector_info dest, unsigned sub_width, int signed_flag)
+{
+      if (signed_flag) {
+	    unsigned idx;
+	    for (idx = sub_width ;  idx < dest.wid ;  idx += 1)
+			fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
+				dest.base+idx, dest.base+sub_width-1);
+      } else {
+	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+		    dest.base+sub_width, dest.wid - sub_width);
+      }
+}
+
+/*
  * The PAD expression takes a smaller node and pads it out to a larger
  * value. It will zero extend or sign extend depending on the
  * signedness of the expression.
@@ -1848,16 +1867,8 @@ static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
       subv.wid = ivl_expr_width(subexpr);
       draw_eval_expr_dest(subexpr, subv, 0);
 
-      if (ivl_expr_signed(exp)) {
-	    unsigned idx;
-	    for (idx = subv.wid ;  idx < res.wid ;  idx += 1)
-		  fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
-			  res.base+idx, subv.base+subv.wid-1);
-      } else {
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-		    res.base+subv.wid, res.wid - subv.wid);
-      }
- 
+      pad_in_place(res, subv.wid, ivl_expr_signed(exp));
+
       save_expression_lookaside(res.base, exp, wid);
       return res;
 }
@@ -2261,6 +2272,43 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
       return res;
 }
 
+static void draw_select_signal_dest(ivl_expr_t sube,
+				    ivl_expr_t bit_idx,
+				    struct vector_info dest,
+				    int stuff_ok_flag)
+{
+      struct vector_info tmp;
+      ivl_signal_t sig = ivl_expr_signal(sube);
+
+	/* Special case: If the operand is a signal (not an array) and
+	   the part select is coming from the LSB, and the part select
+	   is no larger then the signal itself, then we can load the
+	   value in place, directly. */
+      if ((ivl_signal_dimensions(sig) == 0)
+	  && (ivl_expr_width(sube) >= dest.wid)
+	  && number_is_immediate(bit_idx, 32, 0)
+	  && get_number_immediate(bit_idx) == 0) {
+	    unsigned use_word = 0;
+	    fprintf(vvp_out, "    %%load/v %u, v%p_%u, %u; Select %u out of %u bits\n",
+		    dest.base, sig, use_word, dest.wid,
+		    dest.wid, ivl_expr_width(sube));
+	    return;
+      }
+
+	/* Fallback, just draw the expression and copy the result into
+	   the destination. */
+      tmp = draw_select_signal(sube, bit_idx, dest.wid, dest.wid);
+      assert(tmp.wid == dest.wid);
+
+      fprintf(vvp_out, "    %%mov %u, %u, %u; Move signal select into place\n",
+	      dest.base, tmp.base, dest.wid);
+
+      if (tmp.base >= 8) {
+	    save_expression_lookaside(tmp.base, sube, tmp.wid);
+	    clr_vector(tmp);
+      }
+}
+
 static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
 					   int stuff_ok_flag)
 {
@@ -2348,6 +2396,50 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
       }
 
       return res;
+}
+
+static void draw_select_expr_dest(ivl_expr_t exp, struct vector_info dest,
+				  int stuff_ok_flag)
+{
+      struct vector_info tmp;
+
+      ivl_expr_t sube = ivl_expr_oper1(exp);
+      ivl_expr_t shift= ivl_expr_oper2(exp);
+
+	/* If the shift expression is not present, then this is really
+	   a pad expression, and that can be handled pretty
+	   easily. Evalutate the subexpression into the destination,
+	   then pad in place. */
+      if (shift == 0) {
+	    struct vector_info subv;
+	    subv.base = dest.base;
+	    subv.wid = ivl_expr_width(sube);
+	    if (subv.wid > dest.wid)
+		  subv.wid = dest.wid;
+
+	    draw_eval_expr_dest(sube, subv, stuff_ok_flag);
+
+	    pad_in_place(dest, subv.wid, ivl_expr_signed(exp));
+	    return;
+      }
+
+      if (ivl_expr_type(sube) == IVL_EX_SIGNAL) {
+	    draw_select_signal_dest(sube, shift, dest, stuff_ok_flag);
+	    return;
+      }
+
+	/* Fallback, is to draw the expression by width, and mov it to
+	   the required dest. */
+      tmp = draw_select_expr(exp, dest.wid, stuff_ok_flag);
+      assert(tmp.wid == dest.wid);
+
+      fprintf(vvp_out, "    %%mov %u, %u, %u; Move select into place\n",
+	      dest.base, tmp.base, dest.wid);
+
+      if (tmp.base >= 8) {
+	    save_expression_lookaside(tmp.base, exp, tmp.wid);
+	    clr_vector(tmp);
+      }
 }
 
 static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
@@ -2688,6 +2780,10 @@ static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
 
 	  case IVL_EX_SIGNAL:
 	    draw_signal_dest(exp, dest, -1, 0L);
+	    return;
+
+	  case IVL_EX_SELECT:
+	    draw_select_expr_dest(exp, dest, stuff_ok_flag);
 	    return;
 
 	  default:
