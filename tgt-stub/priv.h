@@ -44,6 +44,8 @@ extern unsigned width_of_nexus(ivl_nexus_t nex);
 
 extern ivl_variable_type_t type_of_nexus(ivl_nexus_t nex);
 
+extern ivl_discipline_t discipline_of_nexus(ivl_nexus_t nex);
+
 /*
  * Show the details of the expression.
  */

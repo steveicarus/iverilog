@@ -421,9 +421,11 @@ struct ivl_attribute_s {
 typedef const struct ivl_attribute_s*ivl_attribute_t;
 
 /* BRANCH
-*/
-extern ivl_discipline_t ivl_branch_discipline(ivl_branch_t obj);
-extern ivl_scope_t ivl_branch_scope(ivl_branch_t obj);
+ * Branches are analog constructs, a pair of terminals that is used in
+ * branch access functions. Terminal-1 is the reference node for the
+ * purposes of the access function that accesses it.
+ */
+  /* extern ivl_scope_t ivl_branch_scope(ivl_branch_t obj); */
 extern ivl_nexus_t ivl_branch_terminal(ivl_branch_t obj, int idx);
 
 /* DELAYPATH
@@ -588,6 +590,8 @@ extern const char*ivl_discipline_name(ivl_discipline_t net);
 extern ivl_dis_domain_t ivl_discipline_domain(ivl_discipline_t net);
 extern ivl_nature_t ivl_discipline_potential(ivl_discipline_t net);
 extern ivl_nature_t ivl_discipline_flow(ivl_discipline_t net);
+
+extern const char* ivl_nature_name(ivl_nature_t net);
 
 /* EVENTS
  *

@@ -58,6 +58,10 @@ struct ivl_design_s {
       const class Design*self;
 };
 
+/*
+ * A branch is a pair of terminals. The elaborator assures that the
+ * terminals have compatible disciplines.
+ */
 struct ivl_branch_s {
       ivl_nexus_t pins[2];
 };

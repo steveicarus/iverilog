@@ -108,6 +108,24 @@ unsigned width_of_nexus(ivl_nexus_t nex)
       return 0;
 }
 
+ivl_discipline_t discipline_of_nexus(ivl_nexus_t nex)
+{
+      unsigned idx;
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex); idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+
+	    if (sig != 0) {
+		  return ivl_signal_discipline(sig);
+	    }
+      }
+
+	/* ERROR: A nexus should have at least one signal to carry
+	   properties like the data type. */
+      return 0;
+}
+
 ivl_variable_type_t type_of_nexus(ivl_nexus_t net)
 {
       unsigned idx;

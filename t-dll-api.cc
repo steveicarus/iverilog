@@ -31,6 +31,13 @@ static StringHeap api_strings;
 
 /* THE FOLLOWING ARE FUNCTIONS THAT ARE CALLED FROM THE TARGET. */
 
+extern "C" ivl_nexus_t ivl_branch_terminal(ivl_branch_t net, int idx)
+{
+      assert(idx >= 0);
+      assert( idx < 2);
+      return net->pins[idx];
+}
+
 extern "C" const char*ivl_design_flag(ivl_design_t des, const char*key)
 {
       return des->self->get_flag(key);
@@ -1313,6 +1320,11 @@ extern "C" ivl_signal_t ivl_lval_sig(ivl_lval_t net)
 	  default:
 	    return 0;
       }
+}
+
+extern "C" const char* ivl_nature_name(ivl_nature_t net)
+{
+      return net->name();
 }
 
 /*

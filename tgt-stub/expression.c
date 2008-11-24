@@ -45,11 +45,40 @@ static void show_array_expression(ivl_expr_t net, unsigned ind)
 
 static void show_branch_access_expression(ivl_expr_t net, unsigned ind)
 {
-      fprintf(out, "%*s<Branch Access>\n", ind, "");
+      ivl_branch_t bra = ivl_expr_branch(net);
+      ivl_nature_t nature = ivl_expr_nature(net);
+      fprintf(out, "%*s<Access branch %p with nature %s>\n",
+	      ind, "", bra, ivl_nature_name(nature));
 
       if (ivl_expr_value(net) != IVL_VT_REAL) {
 	    fprintf(out, "%*sERROR: Expecting type IVL_VT_REAL, got %s\n",
 		    ind, "", vt_type_string(net));
+	    stub_errors += 1;
+      }
+
+      ivl_nexus_t ta = ivl_branch_terminal(bra, 0);
+      ivl_nexus_t tb = ivl_branch_terminal(bra, 1);
+
+      ivl_discipline_t ta_disc = discipline_of_nexus(ta);
+      if (ta_disc == 0) {
+	    fprintf(out, "%*sERROR: Source terminal of branch has no discipline\n",
+		    ind, "");
+	    stub_errors += 1;
+	    return;
+      }
+
+      ivl_discipline_t tb_disc = discipline_of_nexus(tb);
+      if (ta_disc == 0) {
+	    fprintf(out, "%*sERROR: Reference terminal of branch has no discipline\n",
+		    ind, "");
+	    stub_errors += 1;
+	    return;
+      }
+
+      if (ta_disc != tb_disc) {
+	    fprintf(out, "%*sERROR: Branch terminal disciplines mismatch: %s != %s\n",
+		    ind, "", ivl_discipline_name(ta_disc),
+		    ivl_discipline_name(tb_disc));
 	    stub_errors += 1;
       }
 }

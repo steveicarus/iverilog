@@ -1,5 +1,7 @@
 EXPORTS
 
+ivl_branch_terminal
+
 ivl_design_const
 ivl_design_consts
 ivl_design_discipline
@@ -111,6 +113,8 @@ ivl_lval_mux
 ivl_lval_part_off
 ivl_lval_sig
 ivl_lval_width
+
+ivl_nature_name
 
 ivl_nexus_get_private
 ivl_nexus_name
