@@ -510,6 +510,9 @@ extern int         ivl_design_time_precision(ivl_design_t des);
 extern unsigned        ivl_design_consts(ivl_design_t des);
 extern ivl_net_const_t ivl_design_const(ivl_design_t, unsigned idx);
 
+extern unsigned         ivl_design_disciplines(ivl_design_t des);
+extern ivl_discipline_t ivl_design_discipline(ivl_design_t des, unsigned idx);
+
 /* LITERAL CONSTANTS
  * Literal constants are nodes with no input and a single constant
  * output. The form of the output depends on the type of the node.

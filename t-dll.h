@@ -39,21 +39,6 @@ typedef shl_t ivl_dll_t;
 # error No DLL stub support for this target.
 #endif
 
-struct ivl_design_s {
-
-      int time_precision;
-
-      ivl_scope_t *roots_;
-      unsigned nroots_;
-
-      ivl_process_t threads_;
-
-      ivl_net_const_t*consts;
-      unsigned nconsts;
-
-      const Design*self;
-};
-
 /*
  * The DLL target type loads a named object file to handle the process
  * of scanning the netlist. When it is time to start the design, I

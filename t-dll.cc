@@ -26,6 +26,7 @@
 # include  "compiler.h"
 # include  "t-dll.h"
 # include  "netmisc.h"
+# include  "discipline.h"
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -616,14 +617,20 @@ bool dll_target::start_design(const Design*des)
       des_.nroots_ = 0;
       des_.roots_ = NULL;
 
+      des_.disciplines.resize(disciplines.size());
+      unsigned idx = 0;
+      for (map<perm_string,ivl_discipline_t>::const_iterator cur = disciplines.begin()
+		 ; cur != disciplines.end() ; cur ++) {
+	    des_.disciplines[idx] = cur->second;
+	    idx += 1;
+      }
+      assert(idx == des_.disciplines.size());
+
       root_scopes = des->find_root_scopes();
       for (list<NetScope*>::const_iterator scop = root_scopes.begin();
 	   scop != root_scopes.end(); scop++)
 	    add_root(des_, *scop);
 
-      des_.consts  = (ivl_net_const_t*)
-	    malloc(sizeof(ivl_net_const_t));
-      des_.nconsts = 0;
 
       target_ = (target_design_f)ivl_dlsym(dll_, LU "target_design" TU);
       if (target_ == 0) {
@@ -2263,11 +2270,8 @@ bool dll_target::net_const(const NetConst*net)
       obj->pin_ = nex->t_cookie();
       nexus_con_add(obj->pin_, obj, 0, drv0, drv1);
 
-
-      des_.nconsts += 1;
-      des_.consts = (ivl_net_const_t*)
-	    realloc(des_.consts, des_.nconsts * sizeof(ivl_net_const_t));
-      des_.consts[des_.nconsts-1] = obj;
+      des_.consts.resize( des_.consts.size() + 1 );
+      des_.consts[des_.consts.size()-1] = obj;
 
       make_const_delays_(obj, net);
 
@@ -2295,10 +2299,8 @@ bool dll_target::net_literal(const NetLiteral*net)
       obj->pin_ = nex->t_cookie();
       nexus_con_add(obj->pin_, obj, 0, drv0, drv1);
 
-      des_.nconsts += 1;
-      des_.consts = (ivl_net_const_t*)
-	    realloc(des_.consts, des_.nconsts * sizeof(ivl_net_const_t));
-      des_.consts[des_.nconsts-1] = obj;
+      des_.consts.resize( des_.consts.size() + 1 );
+      des_.consts[des_.consts.size()-1] = obj;
 
       make_const_delays_(obj, net);
 

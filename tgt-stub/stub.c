@@ -1654,6 +1654,11 @@ int target_design(ivl_design_t des)
 	    return -2;
       }
 
+      for (idx = 0 ; idx < ivl_design_disciplines(des) ; idx += 1) {
+	    ivl_discipline_t dis = ivl_design_discipline(des,idx);
+	    fprintf(out, "discipline %s\n", ivl_discipline_name(dis));
+      }
+
       ivl_design_roots(des, &root_scopes, &nroot);
       for (idx = 0 ;  idx < nroot ;  idx += 1) {
 

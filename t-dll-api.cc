@@ -73,13 +73,26 @@ extern "C" int ivl_design_time_precision(ivl_design_t des)
 
 extern "C" unsigned ivl_design_consts(ivl_design_t des)
 {
-      return des->nconsts;
+      return des->consts.size();
 }
 
 extern "C" ivl_net_const_t ivl_design_const(ivl_design_t des, unsigned idx)
 {
-      assert(idx < des->nconsts);
+      assert(idx < des->consts.size());
       return des->consts[idx];
+}
+
+extern "C" unsigned ivl_design_disciplines(ivl_design_t des)
+{
+      assert(des);
+      return des->disciplines.size();
+}
+
+extern "C" ivl_discipline_t ivl_design_discipline(ivl_design_t des, unsigned idx)
+{
+      assert(des);
+      assert(idx < des->disciplines.size());
+      return des->disciplines[idx];
 }
 
 extern "C" ivl_dis_domain_t ivl_discipline_domain(ivl_discipline_t net)
