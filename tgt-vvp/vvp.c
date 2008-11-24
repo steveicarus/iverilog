@@ -53,7 +53,15 @@ __inline__ static void draw_execute_header(ivl_design_t des)
 	    fprintf(vvp_out, "#! %s\n", cp);
 	    fchmod(fileno(vvp_out), 0755);
       }
+#else
+      fprintf(vvp_out, "# MinGW does not support an executable header.\n");
 #endif
+      fprintf(vvp_out, ":ivl_version \"" VERSION "\"");
+	/* I am assuming that a base release will have a blank tag. */
+      if (strcmp(VERSION_TAG, "") != 0) {
+	    fprintf(vvp_out, " \"(" VERSION_TAG ")\"");
+      }
+      fprintf(vvp_out, ";\n");
 }
 
 __inline__ static void draw_module_declarations(ivl_design_t des)

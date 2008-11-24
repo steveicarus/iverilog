@@ -133,6 +133,62 @@ inline static void print_rusage(struct rusage *, struct rusage *){};
 
 #endif // ! defined(HAVE_SYS_RESOURCE_H)
 
+static bool have_ivl_version = false;
+/*
+ * Verify that the input file has a compatible version.
+ */
+void verify_version(char*ivl_ver, char*commit)
+{
+      have_ivl_version = true;
+
+      if (verbose_flag) {
+	    vpi_mcd_printf(1, " ... VVP file version %s", ivl_ver);
+	    if (commit) vpi_mcd_printf(1, " %s", commit);
+	    vpi_mcd_printf(1, "\n");
+      }
+      free(commit);
+
+      char*vvp_ver = strdup(VERSION);
+      char *vp, *ip;
+
+	/* Check the major/minor version. */
+      ip = strrchr(ivl_ver, '.');
+      *ip = '\0';
+      vp = strrchr(vvp_ver, '.');
+      *vp = '\0';
+      if (strcmp(ivl_ver, vvp_ver) != 0) {
+	    vpi_mcd_printf(1, "Error: VVP input file version %s can not "
+	                      "be run with run time version %s!\n",
+	                      ivl_ver, vvp_ver);
+	    exit(1);
+      }
+
+	/* Check that the sub-version is compatible. */
+      ip += 1;
+      vp += 1;
+      int ivl_sv, vvp_sv;
+      if (strcmp(ip, "devel") == 0) {
+	    ivl_sv = -1;
+      } else {
+	    int res = sscanf(ip, "%d", &ivl_sv);
+	    assert(res == 1);
+      }
+      if (strcmp(vp, "devel") == 0) {
+	    vvp_sv = -1;
+      } else {
+	    int res = sscanf(vp, "%d", &vvp_sv);
+	    assert(res == 1);
+      }
+      if (ivl_sv > vvp_sv) {
+	    if (verbose_flag) vpi_mcd_printf(1, " ... ");
+	    vpi_mcd_printf(1, "Warning: VVP input file sub-version %s is "
+	                      "greater than the run time sub-version %s!\n",
+	                      ip, vp);
+      }
+
+      free(ivl_ver);
+      free(vvp_ver);
+}
 
 unsigned module_cnt = 0;
 const char*module_tab[64];
@@ -288,6 +344,12 @@ int main(int argc, char*argv[])
 
       if (int rc = compile_design(design_path))
 	    return rc;
+
+      if (!have_ivl_version) {
+	    if (verbose_flag) vpi_mcd_printf(1, "... ");
+	    vpi_mcd_printf(1, "Warning: vvp input file may not be correct "
+	                      "version!\n");
+      }
 
       if (verbose_flag) {
 	    vpi_mcd_printf(1, "Compile cleanup...\n");
