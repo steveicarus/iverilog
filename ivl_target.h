@@ -422,11 +422,17 @@ typedef const struct ivl_attribute_s*ivl_attribute_t;
 
 /* BRANCH
  * Branches are analog constructs, a pair of terminals that is used in
- * branch access functions. Terminal-1 is the reference node for the
- * purposes of the access function that accesses it.
+ * branch access functions. Terminal-1 is the reference node (The
+ * "ground") for the purposes of the access function that accesses it.
+ *
+ * SEMANTIC NOTES
+ * All the branches in an island are connected by terminals or by
+ * expressions. The island is the connection of branches that must be
+ * solved together.
  */
   /* extern ivl_scope_t ivl_branch_scope(ivl_branch_t obj); */
 extern ivl_nexus_t ivl_branch_terminal(ivl_branch_t obj, int idx);
+extern ivl_island_t ivl_branch_island(ivl_branch_t obj);
 
 /* DELAYPATH
  * Delaypath objects represent delay paths called out by a specify

@@ -798,6 +798,8 @@ bool dll_target::branch(const NetBranch*net)
       obj->pins[1] = net->pin(1).nexus()->t_cookie();
       nexus_bra_add(obj->pins[1], obj, 1);
 
+      obj->island = net->get_island();
+
       return true;
 }
 

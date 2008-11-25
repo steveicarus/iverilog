@@ -1,5 +1,6 @@
 EXPORTS
 
+ivl_branch_island
 ivl_branch_terminal
 
 ivl_design_const

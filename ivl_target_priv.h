@@ -64,6 +64,7 @@ struct ivl_design_s {
  */
 struct ivl_branch_s {
       ivl_nexus_t pins[2];
+      ivl_island_t island;
 };
 
 /*

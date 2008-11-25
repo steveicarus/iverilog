@@ -31,6 +31,11 @@ static StringHeap api_strings;
 
 /* THE FOLLOWING ARE FUNCTIONS THAT ARE CALLED FROM THE TARGET. */
 
+extern "C" ivl_island_t ivl_branch_island(ivl_branch_t net)
+{
+      return net->island;
+}
+
 extern "C" ivl_nexus_t ivl_branch_terminal(ivl_branch_t net, int idx)
 {
       assert(idx >= 0);
