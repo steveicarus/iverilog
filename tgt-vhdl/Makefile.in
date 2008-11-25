@@ -18,7 +18,7 @@
 #
 SHELL = /bin/sh
 
-VERSION = 0.0
+VERSION = 0.9.devel
 
 suffix = @install_suffix@
 
