@@ -166,7 +166,7 @@ SUBDIRS += driver-vpi
 else
 all: dep iverilog-vpi
 
-iverilog-vpi: iverilog-vpi.sh
+iverilog-vpi: iverilog-vpi.sh Makefile
 	sed -e 's;@SHARED@;@shared@;' -e 's;@PIC@;@PICFLAG@;' \
 	    -e 's;@SUFFIX@;$(suffix);' \
 	    -e 's;@IVCC@;$(CC);' \
