@@ -114,6 +114,7 @@ static void elaborate_parm_item_(perm_string name,
 	    tmp->high_open_flag = range->high_open_flag;
 
 	    if (range->low_expr) {
+		  probe_expr_width(des, scope, range->low_expr);
 		  tmp->low_expr = elab_and_eval(des, scope, range->low_expr, -1);
 		  ivl_assert(*range->low_expr, tmp->low_expr);
 	    } else {
@@ -130,6 +131,7 @@ static void elaborate_parm_item_(perm_string name,
 		  tmp->high_expr = tmp->low_expr;
 
 	    } else if (range->high_expr) {
+		  probe_expr_width(des, scope, range->high_expr);
 		  tmp->high_expr = elab_and_eval(des, scope, range->high_expr, -1);
 		  ivl_assert(*range->high_expr, tmp->high_expr);
 	    } else {

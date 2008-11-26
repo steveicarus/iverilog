@@ -1628,6 +1628,7 @@ NetExpr* PEIdent::calculate_up_do_base_(Design*des, NetScope*scope) const
       ivl_assert(*this, index_tail.lsb != 0);
       ivl_assert(*this, index_tail.msb != 0);
 
+      probe_expr_width(des, scope, index_tail.msb);
       NetExpr*tmp = elab_and_eval(des, scope, index_tail.msb, -1);
       return tmp;
 }
@@ -1702,8 +1703,13 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 		break;
 	      }
 	  case index_component_t::SEL_BIT:
-	    use_width = 1;
-	    break;
+	      { ivl_assert(*this, !name_tail.index.empty());
+		const index_component_t&index_tail = name_tail.index.back();
+		ivl_assert(*this, index_tail.msb);
+		probe_expr_width(des, scope, index_tail.msb);
+	      }
+	      use_width = 1;
+	      break;
 	  default:
 	    ivl_assert(*this, 0);
       }
@@ -2874,7 +2880,6 @@ unsigned PEUnary::test_width(Design*des, NetScope*scope,
 		    bool flag = false;
 		    expr_->test_width(des, scope, 0, 0, sub_type, flag);
 		    expr_type_ = sub_type;
-		    ivl_assert(*expr_, expr_type_ != IVL_VT_NO_TYPE);
 	      }
 	      expr_width_ = 1;
 
@@ -2921,6 +2926,8 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
       NetExpr*ip = expr_->elaborate_expr(des, scope, expr_wid, false);
       if (ip == 0) return 0;
+
+      ivl_assert(*expr_, expr_type_ != IVL_VT_NO_TYPE);
 
       NetExpr*tmp;
       switch (op_) {

@@ -530,6 +530,9 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	  case PTF_REG:
 	  case PTF_REG_S:
 	    if (return_type_.range) {
+		  probe_expr_width(des, scope, (*return_type_.range)[0]);
+		  probe_expr_width(des, scope, (*return_type_.range)[1]);
+
 		  NetExpr*me = elab_and_eval(des, scope,
 					     (*return_type_.range)[0], -1);
 		  assert(me);
@@ -823,6 +826,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
             bool bad_lsb = false, bad_msb = false;
 	    /* If they exist get the port definition MSB and LSB */
 	    if (port_set_ && port_msb_ != 0) {
+		  probe_expr_width(des, scope, port_msb_);
 		  NetExpr*texpr = elab_and_eval(des, scope, port_msb_, -1);
 
 		  if (! eval_as_long(pmsb, texpr)) {
@@ -837,6 +841,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 		  delete texpr;
 
+		  probe_expr_width(des, scope, port_lsb_);
 		  texpr = elab_and_eval(des, scope, port_lsb_, -1);
 
 		  if (! eval_as_long(plsb, texpr)) {
@@ -859,6 +864,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    /* If they exist get the net/etc. definition MSB and LSB */
 	    if (net_set_ && net_msb_ != 0 && !bad_msb && !bad_lsb) {
+		  probe_expr_width(des, scope, net_msb_);
 		  NetExpr*texpr = elab_and_eval(des, scope, net_msb_, -1);
 
 		  if (! eval_as_long(nmsb, texpr)) {
@@ -873,6 +879,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 		  delete texpr;
 
+		  probe_expr_width(des, scope, net_lsb_);
 		  texpr = elab_and_eval(des, scope, net_lsb_, -1);
 
 		  if (! eval_as_long(nlsb, texpr)) {
@@ -963,6 +970,9 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	   it has both. */
       if (lidx_ || ridx_) {
 	    assert(lidx_ && ridx_);
+
+	    probe_expr_width(des, scope, lidx_);
+	    probe_expr_width(des, scope, ridx_);
 
 	    NetExpr*lexp = elab_and_eval(des, scope, lidx_, -1);
 	    NetExpr*rexp = elab_and_eval(des, scope, ridx_, -1);

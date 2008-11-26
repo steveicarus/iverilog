@@ -250,6 +250,13 @@ NetExpr* condition_reduce(NetExpr*expr)
       return cmp;
 }
 
+void probe_expr_width(Design*des, NetScope*scope, PExpr*pe)
+{
+      ivl_variable_type_t expr_type = IVL_VT_NO_TYPE;
+      bool flag = false;
+      pe->test_width(des, scope, 0, 0, expr_type, flag);
+}
+
 NetExpr* elab_and_eval(Design*des, NetScope*scope,
 		       const PExpr*pe, int expr_wid, int prune_width)
 {

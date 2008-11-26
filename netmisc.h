@@ -154,6 +154,8 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 			      const PExpr*pe, int expr_wid,
 			      int prune_width =-1);
 
+void probe_expr_width(Design*des, NetScope*scope, PExpr*pe);
+
 /*
  * This function elaborates an expression as if it is for the r-value
  * of an assignment, The data_type_lv and expr_wid_lv are the type and
