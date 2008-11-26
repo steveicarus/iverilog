@@ -514,7 +514,7 @@ static void setup_ivl_environment()
 	assign(&gstr.pCFLAGS,IVERILOG_VPI_CFLAGS " -I");
 	append(&gstr.pCFLAGS,gstr.pIVL);
 	appendBackSlash(&gstr.pCFLAGS);
-	append(&gstr.pCFLAGS,"\\include\\\\verilog" IVERILOG_SUFFIX);
+	append(&gstr.pCFLAGS,"\\include\\\\iverilog" IVERILOG_SUFFIX);
 
 	  /* Build up the LDFLAGS option string */
 	assign(&gstr.pLDLIBS,"-L");

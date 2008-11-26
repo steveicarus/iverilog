@@ -80,8 +80,8 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/lib/ivl-0.8/cadpli.vpl
 %attr(-,root,root) /usr/lib/libvpi-0.8.a
 %attr(-,root,root) /usr/lib/libveriuser-0.8.a
-%attr(-,root,root) /usr/include/verilog-0.0/ivl_target.h
-%attr(-,root,root) /usr/include/verilog-0.0/vpi_user.h
-%attr(-,root,root) /usr/include/verilog-0.0/acc_user.h
-%attr(-,root,root) /usr/include/verilog-0.0/veriuser.h
-%attr(-,root,root) /usr/include/verilog-0.0/_pli_types.h
+%attr(-,root,root) /usr/include/iverilog-0.0/ivl_target.h
+%attr(-,root,root) /usr/include/iverilog-0.0/vpi_user.h
+%attr(-,root,root) /usr/include/iverilog-0.0/acc_user.h
+%attr(-,root,root) /usr/include/iverilog-0.0/veriuser.h
+%attr(-,root,root) /usr/include/iverilog-0.0/_pli_types.h
