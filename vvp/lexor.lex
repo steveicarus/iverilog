@@ -32,6 +32,7 @@
 %%
 
   /* These are some special header/footer keywords. */
+^":ivl_version" { return K_ivl_version; }
 ^":vpi_module" { return K_vpi_module; }
 ^":vpi_time_precision" { return K_vpi_time_precision; }
 ^":file_names" { return K_file_names; }
