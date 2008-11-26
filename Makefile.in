@@ -60,7 +60,7 @@ bindir = @bindir@
 libdir = @libdir@
 # This is actually the directory where we install our own header files.
 # It is a little different from the generic includedir.
-includedir = @includedir@/verilog$(suffix)
+includedir = @includedir@/iverilog$(suffix)
 mandir = @mandir@
 
 dllib=@DLLIB@

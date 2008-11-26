@@ -76,13 +76,16 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) %{_libdir}/libveriuser.a
 %attr(-,root,root) %{_libdir}/ivl/include/constants.vams
 %attr(-,root,root) %{_libdir}/ivl/include/disciplines.vams
-%attr(-,root,root) /usr/include/verilog/ivl_target.h
-%attr(-,root,root) /usr/include/verilog/vpi_user.h
-%attr(-,root,root) /usr/include/verilog/acc_user.h
-%attr(-,root,root) /usr/include/verilog/veriuser.h
-%attr(-,root,root) /usr/include/verilog/_pli_types.h
+%attr(-,root,root) /usr/include/iverilog/ivl_target.h
+%attr(-,root,root) /usr/include/iverilog/vpi_user.h
+%attr(-,root,root) /usr/include/iverilog/acc_user.h
+%attr(-,root,root) /usr/include/iverilog/veriuser.h
+%attr(-,root,root) /usr/include/iverilog/_pli_types.h
 
 %changelog -n verilog
+* Tue Nov 25 2008 - steve@icarus.com
+- Move header files frim /verilog/ to /iverilog/
+
 * Tue Nov 18 2008 - steve@icarus.com
 - New snapshot 20080905
 
