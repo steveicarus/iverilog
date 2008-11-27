@@ -846,7 +846,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 
 /*
  * This detects the case where the mux selects between a value and
- * Vz. In this case, replace the device with a bufif with the sel
+ * Vz. In this case, replace the device with a MOS with the sel
  * input used to enable the output.
  */
 void cprop_functor::lpm_mux(Design*des, NetMux*obj)
@@ -880,7 +880,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		  : verinum::Vx;
 
 	      /* If only one Data input is constant, but a constant
-		 HiZ, then we will be able to to a bufif
+		 HiZ, then we will be able to do a MOS
 		 substitution. */
 	    if (cflag_a && va==verinum::Vz)
 		  continue;
@@ -913,13 +913,13 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 
       for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
 
-	      /* If the Sel==0 input is constant Z, make a bufif1. */
+	      /* If the Sel==0 input is constant Z, make a NMOS. */
 	    if (obj->pin_Data(idx, 0).nexus()->drivers_constant()
 		&& obj->pin_Data(idx, 0).nexus()->driven_value()==verinum::Vz) {
 
 		  NetLogic*tmp = new NetLogic(scope,
 					      scope->local_symbol(),
-					      3, NetLogic::BUFIF1);
+					      3, NetLogic::NMOS);
 		  connect(result_tmp.pin(idx), tmp->pin(0));
 		  connect(obj->pin_Data(idx,1), tmp->pin(1));
 		  connect(obj->pin_Sel(0), tmp->pin(2));
@@ -927,13 +927,13 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		  continue;
 	    }
 
-	      /* If the Sel==1 input is constant Z, make a bufif0. */
+	      /* If the Sel==1 input is constant Z, make a PMOS. */
 	    if (obj->pin_Data(idx, 1).nexus()->drivers_constant()
 		&& obj->pin_Data(idx, 1).nexus()->driven_value()==verinum::Vz) {
 
 		  NetLogic*tmp = new NetLogic(scope,
 					      scope->local_symbol(),
-					      3, NetLogic::BUFIF0);
+					      3, NetLogic::PMOS);
 		  connect(result_tmp.pin(idx), tmp->pin(0));
 		  connect(obj->pin_Data(idx,0), tmp->pin(1));
 		  connect(obj->pin_Sel(0), tmp->pin(2));
