@@ -3838,6 +3838,36 @@ bool of_POW(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_POW_S(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+      unsigned idx = cp->bit_idx[0];
+      unsigned idy = cp->bit_idx[1];
+      unsigned wid = cp->number;
+      vvp_vector4_t xv = vthread_bits_to_vector(thr, idx, wid);
+      vvp_vector4_t yv = vthread_bits_to_vector(thr, idy, wid);
+
+        /* If we have an X or Z in the arguments return X. */
+      if (xv.has_xz() || yv.has_xz()) {
+	    for (unsigned jdx = 0 ;  jdx < wid ;  jdx += 1)
+		  thr_put_bit(thr, cp->bit_idx[0]+jdx, BIT4_X);
+	    return true;
+      }
+
+        /* Calculate the result using the double pow() function. */
+      double xd, yd;
+      vector4_to_value(xv, xd, true);
+      vector4_to_value(yv, yd, true);
+      vvp_vector4_t res = vvp_vector4_t(wid, pow(xd, yd));
+
+        /* Copy the result. */
+      for (unsigned jdx = 0;  jdx < wid;  jdx += 1)
+	    thr_put_bit(thr, cp->bit_idx[0]+jdx, res.value(jdx));
+
+      return true;
+}
+
 bool of_POW_WR(vthread_t thr, vvp_code_t cp)
 {
       double l = thr->words[cp->bit_idx[0]].w_real;

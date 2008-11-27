@@ -135,6 +135,7 @@ extern bool of_NORR(vthread_t thr, vvp_code_t code);
 extern bool of_OR(vthread_t thr, vvp_code_t code);
 extern bool of_ORR(vthread_t thr, vvp_code_t code);
 extern bool of_POW(vthread_t thr, vvp_code_t code);
+extern bool of_POW_S(vthread_t thr, vvp_code_t code);
 extern bool of_POW_WR(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_NET(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_REG(vthread_t thr, vvp_code_t code);
