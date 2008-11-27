@@ -1075,6 +1075,12 @@ NetEConst* NetEConcat::eval_tree()
 	    val = verinum(val.as_string());
       }
 
+	// Normally, concatenations are unsigned. However, the
+	// $signed() function works by marking the expression as
+	// signed, so we really have to check.
+      val.has_sign( this->has_sign() );
+
+
       NetEConst*res = new NetEConst(val);
       res->set_width(val.len());
       return res;
