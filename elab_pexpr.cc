@@ -81,6 +81,20 @@ NetExpr*PEBComp::elaborate_pexpr(Design*des, NetScope*scope) const
       return tmp;
 }
 
+NetExpr*PEBLeftWidth::elaborate_pexpr (Design*des, NetScope*scope) const
+{
+      NetExpr*lp = left_->elaborate_pexpr(des, scope);
+      NetExpr*rp = right_->elaborate_pexpr(des, scope);
+      if ((lp == 0) || (rp == 0)) {
+	    delete lp;
+	    delete rp;
+	    return 0;
+      }
+
+      NetExpr*tmp = elaborate_expr_leaf(des, lp, rp, -2);
+      return tmp;
+}
+
 NetExpr*PEBLogic::elaborate_pexpr(Design*des, NetScope*scope) const
 {
       NetExpr*lp = left_->elaborate_pexpr(des, scope);

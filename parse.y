@@ -929,7 +929,7 @@ expression
 		  $$ = tmp;
 		}
 	| expression K_POW expression
-		{ PEBinary*tmp = new PEBinary('p', $1, $3);
+		{ PEBinary*tmp = new PEBPower('p', $1, $3);
 		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}

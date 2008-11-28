@@ -95,8 +95,26 @@ PEBLogic::~PEBLogic()
 {
 }
 
-PEBShift::PEBShift(char op, PExpr*l, PExpr*r)
+PEBLeftWidth::PEBLeftWidth(char op, PExpr*l, PExpr*r)
 : PEBinary(op, l, r)
+{
+}
+
+PEBLeftWidth::~PEBLeftWidth()
+{
+}
+
+PEBPower::PEBPower(char op, PExpr*l, PExpr*r)
+: PEBLeftWidth(op, l, r)
+{
+}
+
+PEBPower::~PEBPower()
+{
+}
+
+PEBShift::PEBShift(char op, PExpr*l, PExpr*r)
+: PEBLeftWidth(op, l, r)
 {
 }
 

@@ -405,6 +405,7 @@ const char *human_readable_op(const char op)
 	    case 'r': type = ">>";    break;  // Logical right shift
 	    case 'R': type = ">>>";   break;  // Arithmetic right shift
 
+	    case 'p': type = "**"; break; // Power
 	    default:
 	      assert(0);
 	}
