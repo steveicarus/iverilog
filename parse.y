@@ -2321,7 +2321,7 @@ generate_case_items
   ;
 
 generate_case_item
-  : expression ':' { pform_generate_case_item(@1, $1); } generate_block_opt
+  : expression_list_proper ':' { pform_generate_case_item(@1, $1); } generate_block_opt
       { pform_endgenerate(); }
   | K_default ':' { pform_generate_case_item(@1, 0); } generate_block_opt
       { pform_endgenerate(); }

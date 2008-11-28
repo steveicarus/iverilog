@@ -3972,6 +3972,9 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 
 bool PGenerate::elaborate(Design*des, NetScope*container) const
 {
+      if (direct_nested_)
+	    return elaborate_direct_(des, container);
+
       bool flag = true;
 
 	// Handle the special case that this is a CASE scheme. In this
@@ -3988,7 +3991,7 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 	    for (generate_it_t cur = generate_schemes.begin()
 		       ; cur != generate_schemes.end() ; cur ++) {
 		  PGenerate*item = *cur;
-		  if (! item->scope_list_.empty()) {
+		  if (item->direct_nested_ || !item->scope_list_.empty()) {
 			flag &= item->elaborate(des, container);
 		  }
 	    }
@@ -4023,6 +4026,30 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 	    flag = elaborate_(des, scope) & flag;
       }
 
+      return flag;
+}
+
+bool PGenerate::elaborate_direct_(Design*des, NetScope*container) const
+{
+      if (debug_elaborate)
+	    cerr << get_fileline() << ": debug: "
+		 << "Direct nesting elaborate in scope "
+		 << scope_path(container) << "." << endl;
+
+	// Elaborate for a direct nested generated scheme knows
+	// that there are only sub_schemes to be elaborated.  There
+	// should be exactly 1 active generate scheme, search for it
+	// using this loop.
+      bool flag = true;
+      typedef list<PGenerate*>::const_iterator generate_it_t;
+      for (generate_it_t cur = generate_schemes.begin()
+		 ; cur != generate_schemes.end() ; cur ++) {
+	    PGenerate*item = *cur;
+	    if (item->direct_nested_ || !item->scope_list_.empty()) {
+		    // Found the item, and it is direct nested.
+		  flag &= item->elaborate(des, container);
+	    }
+      }
       return flag;
 }
 

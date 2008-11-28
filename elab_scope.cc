@@ -636,14 +636,26 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 	    des->errors += 1;
 	    return false;
       }
+
       if (debug_scopes)
 	    cerr << get_fileline() << ": debug: Generate condition "
 		 << (else_flag? "(else)" : "(if)")
 		 << " value=" << test->value() << ": Generate scope="
 		 << use_name << endl;
 
-      NetScope*scope = new NetScope(container, use_name,
-				    NetScope::GENBLOCK);
+      probe_for_direct_nesting_();
+      if (direct_nested_) {
+	    if (debug_scopes)
+		  cerr << get_fileline() << ": debug: Generate condition "
+		       << (else_flag? "(else)" : "(if)")
+		       << " detected direct nesting." << endl;
+	    elaborate_subscope_direct_(des, container);
+	    return true;
+      }
+
+	// If this is not directly nested, then generate a scope
+	// for myself. That is what I will pass to the subscope.
+      NetScope*scope = new NetScope(container, use_name, NetScope::GENBLOCK);
       scope->set_line(get_file(), get_lineno());
 
       elaborate_subscope_(des, scope);
@@ -675,24 +687,27 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 	    assert( item->scheme_type == PGenerate::GS_CASE_ITEM );
 
 	      // Detect that the item is a default.
-	    if (item->loop_test == 0) {
+	    if (item->item_test.size() == 0) {
 		  default_item = item;
 		  cur ++;
 		  continue;
 	    }
 
-	    NetExpr*item_value_ex = elab_and_eval(des, container, item->loop_test, -1);
-	    NetEConst*item_value_co = dynamic_cast<NetEConst*>(item_value_ex);
-	    assert(item_value_co);
+	    bool match_flag = false;
+	    for (unsigned idx = 0 ; idx < item->item_test.size() && !match_flag ; idx +=1 ) {
+		  NetExpr*item_value_ex = elab_and_eval(des, container, item->item_test[idx], -1);
+		  NetEConst*item_value_co = dynamic_cast<NetEConst*>(item_value_ex);
+		  assert(item_value_co);
 
-	      // If we stumble on the item that matches, then break
-	      // out now.
-	    if (case_value_co->value() == item_value_co->value()) {
+		  if (case_value_co->value() == item_value_co->value())
+			match_flag = true;
 		  delete item_value_co;
-		  break;
 	    }
 
-	    delete item_value_co;
+	      // If we stumble on the item that matches, then break out now.
+	    if (match_flag)
+		  break;
+
 	    cur ++;
       }
 
@@ -713,6 +728,15 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 
 	// The name of the scope to generate, whatever that item is.
       hname_t use_name (item->scope_name);
+
+      item->probe_for_direct_nesting_();
+      if (item->direct_nested_) {
+	    if (debug_scopes)
+		  cerr << get_fileline() << ": debug: Generate case item " << scope_name
+		       << " detected direct nesting." << endl;
+	    item->elaborate_subscope_direct_(des, container);
+	    return true;
+      }
 
       NetScope*scope = new NetScope(container, use_name,
 				    NetScope::GENBLOCK);
@@ -743,6 +767,15 @@ bool PGenerate::generate_scope_nblock_(Design*des, NetScope*container)
       elaborate_subscope_(des, scope);
 
       return true;
+}
+
+void PGenerate::elaborate_subscope_direct_(Design*des, NetScope*scope)
+{
+      typedef list<PGenerate*>::const_iterator generate_it_t;
+      for (generate_it_t cur = generate_schemes.begin()
+		 ; cur != generate_schemes.end() ; cur ++ ) {
+	    (*cur) -> generate_scope(des, scope);
+      }
 }
 
 void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
@@ -786,6 +819,10 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 
 	// Scan through all the named events in this scope.
       elaborate_scope_events_(des, scope, events);
+
+      if (debug_scopes)
+	    cerr << get_fileline() << ": debug: Generated scope " << scope_path(scope)
+		 << " by generate block " << scope_name << endl;
 
 	// Save the scope that we created, for future use.
       scope_list_.push_back(scope);
