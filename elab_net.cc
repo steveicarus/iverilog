@@ -1320,9 +1320,9 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
       unsigned repeat = 1;
 
       if (repeat_) {
-	    NetExpr*etmp = elab_and_eval(des, scope, repeat_);
-	    assert(etmp);
-	    NetEConst*erep = dynamic_cast<NetEConst*>(etmp);
+	    auto_ptr<NetExpr> etmp (elab_and_eval(des, scope, repeat_));
+	    assert(etmp.get());
+	    NetEConst*erep = dynamic_cast<NetEConst*>(etmp.get());
 
 	    if (erep == 0) {
 		  cerr << get_line() << ": internal error: Unable to "
@@ -1332,7 +1332,6 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	    }
 
 	    repeat = erep->value().as_ulong();
-	    delete etmp;
 
 	    if (repeat == 0) {
 		  cerr << get_line() << ": error: Concatenation repeat "
