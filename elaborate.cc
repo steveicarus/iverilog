@@ -2958,6 +2958,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
 	    bool save_flag = error_implicit;
 	    error_implicit = true;
+	    probe_expr_width(des, scope, expr_[idx]->expr());
 	    NetExpr*tmp = elab_and_eval(des, scope, expr_[idx]->expr(), 0);
 	    if (tmp == 0) {
 		  expr_[idx]->dump(cerr);
@@ -3386,6 +3387,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	/* Elaborate the condition expression. Try to evaluate it too,
 	   in case it is a constant. This is an interesting case
 	   worthy of a warning. */
+      probe_expr_width(des, scope, cond_);
       NetExpr*ce = elab_and_eval(des, scope, cond_, -1);
       if (ce == 0) {
 	    delete top;
