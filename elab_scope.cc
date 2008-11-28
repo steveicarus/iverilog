@@ -699,6 +699,10 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 		  NetEConst*item_value_co = dynamic_cast<NetEConst*>(item_value_ex);
 		  assert(item_value_co);
 
+		  if (debug_scopes)
+			cerr << get_fileline() << ": debug: Generate case "
+			     << "item value=" << item_value_co->value() << endl;
+
 		  if (case_value_co->value() == item_value_co->value())
 			match_flag = true;
 		  delete item_value_co;
