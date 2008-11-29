@@ -28,6 +28,8 @@
 
 NetProc* AContrib::elaborate(Design*des, NetScope*scope) const
 {
+      probe_expr_width(des, scope, lval_);
+      probe_expr_width(des, scope, rval_);
       NetExpr*lval = elab_and_eval(des, scope, lval_, -1);
       NetExpr*rval = elab_and_eval(des, scope, rval_, -1);
 
