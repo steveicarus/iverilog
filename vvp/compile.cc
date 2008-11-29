@@ -1797,3 +1797,13 @@ void compile_param_real(char*label, char*name, char*value,
       free(label);
       free(value);
 }
+
+void compile_island(char*label, char*type)
+{
+      if (strcmp(type,"tran") == 0)
+	    compile_island_tran(label);
+      else
+	    assert(0);
+
+      free(type);
+}
