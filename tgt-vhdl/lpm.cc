@@ -115,7 +115,9 @@ static vhdl_expr *part_select_vp_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    if (NULL == off)
       return NULL;
 
-   selfrom->set_slice(off, ivl_lpm_width(lpm) - 1);
+   if (selfrom->get_type()->get_width() > 1)
+      selfrom->set_slice(off, ivl_lpm_width(lpm) - 1);
+   
    return selfrom;
 }
 

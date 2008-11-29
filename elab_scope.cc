@@ -114,6 +114,7 @@ static void elaborate_parm_item_(perm_string name,
 	    tmp->high_open_flag = range->high_open_flag;
 
 	    if (range->low_expr) {
+		  probe_expr_width(des, scope, range->low_expr);
 		  tmp->low_expr = elab_and_eval(des, scope, range->low_expr, -1);
 		  ivl_assert(*range->low_expr, tmp->low_expr);
 	    } else {
@@ -130,6 +131,7 @@ static void elaborate_parm_item_(perm_string name,
 		  tmp->high_expr = tmp->low_expr;
 
 	    } else if (range->high_expr) {
+		  probe_expr_width(des, scope, range->high_expr);
 		  tmp->high_expr = elab_and_eval(des, scope, range->high_expr, -1);
 		  ivl_assert(*range->high_expr, tmp->high_expr);
 	    } else {
@@ -493,6 +495,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	// The initial value for the genvar does not need (nor can it
 	// use) the genvar itself, so we can evaluate this expression
 	// the same way any other parameter value is evaluated.
+      probe_expr_width(des, container, loop_init);
       NetExpr*init_ex = elab_and_eval(des, container, loop_init, -1);
       NetEConst*init = dynamic_cast<NetEConst*> (init_ex);
       if (init == 0) {
@@ -522,6 +525,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    cerr << get_fileline() << ": debug: genvar init = " << genvar << endl;
       container->genvar_tmp = loop_index;
       container->genvar_tmp_val = genvar;
+      probe_expr_width(des, container, loop_test);
       NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1);
       NetEConst*test = dynamic_cast<NetEConst*>(test_ex);
       if (test == 0) {
@@ -574,6 +578,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    elaborate_subscope_(des, scope);
 
 	      // Calculate the step for the loop variable.
+	    probe_expr_width(des, container, loop_step);
 	    NetExpr*step_ex = elab_and_eval(des, container, loop_step, -1);
 	    NetEConst*step = dynamic_cast<NetEConst*>(step_ex);
 	    if (step == 0) {
@@ -590,6 +595,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    container->genvar_tmp_val = genvar;
 	    delete step;
 	    delete test_ex;
+	    probe_expr_width(des, container, loop_test);
 	    test_ex = elab_and_eval(des, container, loop_test, -1);
 	    test = dynamic_cast<NetEConst*>(test_ex);
 	    assert(test);
@@ -604,6 +610,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 
 bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else_flag)
 {
+      probe_expr_width(des, container, loop_test);
       NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1);
       NetEConst*test = dynamic_cast<NetEConst*> (test_ex);
       if (test == 0) {
@@ -634,14 +641,26 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 	    des->errors += 1;
 	    return false;
       }
+
       if (debug_scopes)
 	    cerr << get_fileline() << ": debug: Generate condition "
 		 << (else_flag? "(else)" : "(if)")
 		 << " value=" << test->value() << ": Generate scope="
 		 << use_name << endl;
 
-      NetScope*scope = new NetScope(container, use_name,
-				    NetScope::GENBLOCK);
+      probe_for_direct_nesting_();
+      if (direct_nested_) {
+	    if (debug_scopes)
+		  cerr << get_fileline() << ": debug: Generate condition "
+		       << (else_flag? "(else)" : "(if)")
+		       << " detected direct nesting." << endl;
+	    elaborate_subscope_direct_(des, container);
+	    return true;
+      }
+
+	// If this is not directly nested, then generate a scope
+	// for myself. That is what I will pass to the subscope.
+      NetScope*scope = new NetScope(container, use_name, NetScope::GENBLOCK);
       scope->set_line(get_file(), get_lineno());
 
       elaborate_subscope_(des, scope);
@@ -651,6 +670,7 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 
 bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 {
+      probe_expr_width(des, container, loop_test);
       NetExpr*case_value_ex = elab_and_eval(des, container, loop_test, -1);
       NetEConst*case_value_co = dynamic_cast<NetEConst*>(case_value_ex);
       if (case_value_co == 0) {
@@ -673,24 +693,32 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 	    assert( item->scheme_type == PGenerate::GS_CASE_ITEM );
 
 	      // Detect that the item is a default.
-	    if (item->loop_test == 0) {
+	    if (item->item_test.size() == 0) {
 		  default_item = item;
 		  cur ++;
 		  continue;
 	    }
 
-	    NetExpr*item_value_ex = elab_and_eval(des, container, item->loop_test, -1);
-	    NetEConst*item_value_co = dynamic_cast<NetEConst*>(item_value_ex);
-	    assert(item_value_co);
+	    bool match_flag = false;
+	    for (unsigned idx = 0 ; idx < item->item_test.size() && !match_flag ; idx +=1 ) {
+		  probe_expr_width(des, container, item->item_test[idx]);
+		  NetExpr*item_value_ex = elab_and_eval(des, container, item->item_test[idx], -1);
+		  NetEConst*item_value_co = dynamic_cast<NetEConst*>(item_value_ex);
+		  assert(item_value_co);
 
-	      // If we stumble on the item that matches, then break
-	      // out now.
-	    if (case_value_co->value() == item_value_co->value()) {
+		  if (debug_scopes)
+			cerr << get_fileline() << ": debug: Generate case "
+			     << "item value=" << item_value_co->value() << endl;
+
+		  if (case_value_co->value() == item_value_co->value())
+			match_flag = true;
 		  delete item_value_co;
-		  break;
 	    }
 
-	    delete item_value_co;
+	      // If we stumble on the item that matches, then break out now.
+	    if (match_flag)
+		  break;
+
 	    cur ++;
       }
 
@@ -711,6 +739,15 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 
 	// The name of the scope to generate, whatever that item is.
       hname_t use_name (item->scope_name);
+
+      item->probe_for_direct_nesting_();
+      if (item->direct_nested_) {
+	    if (debug_scopes)
+		  cerr << get_fileline() << ": debug: Generate case item " << scope_name
+		       << " detected direct nesting." << endl;
+	    item->elaborate_subscope_direct_(des, container);
+	    return true;
+      }
 
       NetScope*scope = new NetScope(container, use_name,
 				    NetScope::GENBLOCK);
@@ -741,6 +778,15 @@ bool PGenerate::generate_scope_nblock_(Design*des, NetScope*container)
       elaborate_subscope_(des, scope);
 
       return true;
+}
+
+void PGenerate::elaborate_subscope_direct_(Design*des, NetScope*scope)
+{
+      typedef list<PGenerate*>::const_iterator generate_it_t;
+      for (generate_it_t cur = generate_schemes.begin()
+		 ; cur != generate_schemes.end() ; cur ++ ) {
+	    (*cur) -> generate_scope(des, scope);
+      }
 }
 
 void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
@@ -784,6 +830,10 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 
 	// Scan through all the named events in this scope.
       elaborate_scope_events_(des, scope, events);
+
+      if (debug_scopes)
+	    cerr << get_fileline() << ": debug: Generated scope " << scope_path(scope)
+		 << " by generate block " << scope_name << endl;
 
 	// Save the scope that we created, for future use.
       scope_list_.push_back(scope);
@@ -900,6 +950,8 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
  */
 void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*sc) const
 {
+      if (msb_) probe_expr_width(des, sc, msb_);
+      if (lsb_) probe_expr_width(des, sc, lsb_);
       NetExpr*mse = msb_ ? elab_and_eval(des, sc, msb_, -1) : 0;
       NetExpr*lse = lsb_ ? elab_and_eval(des, sc, lsb_, -1) : 0;
       NetEConst*msb = dynamic_cast<NetEConst*> (mse);

@@ -1469,8 +1469,13 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 	    break;
 
 	  case 'p':
-	    fprintf(vvp_out, "    %%pow%s %u, %u, %u;\n", sign_string,
-		    lv.base, rv.base, wid);
+	    if (ivl_expr_signed(le) || ivl_expr_signed(re)) {
+		  fprintf(vvp_out, "    %%pow/s %u, %u, %u;\n", 
+		          lv.base, rv.base, wid);
+	    } else {
+		  fprintf(vvp_out, "    %%pow %u, %u, %u;\n", 
+		          lv.base, rv.base, wid);
+	    }
 	    break;
 
 	  default:

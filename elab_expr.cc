@@ -214,6 +214,7 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope,
 	  case 'G': // >=  Should be handled by PEBComp
 	  case 'n': // !=  Should be handled by PEBComp
 	  case 'N': // !== Should be handled by PEBComp
+	  case 'p': // **  should be handled by PEBPower
 	    ivl_assert(*this, 0);
 	  default:
 	    if (wid_left > min)
@@ -352,14 +353,15 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	    tmp = elaborate_expr_base_div_(des, lp, rp, expr_wid);
 	    break;
 
-	  case 'l': // <<
-	    tmp = elaborate_expr_base_lshift_(des, lp, rp, expr_wid);
-	    break;
-
-	  case 'r': // >>
-	  case 'R': // >>>
-	    tmp = elaborate_expr_base_rshift_(des, lp, rp, expr_wid);
-	    break;
+	  case 'l':
+	  case 'r':
+	  case 'R':
+	    cerr << get_fileline() << ": internal error: "
+		 << "Elaboration of " << human_readable_op(op_)
+		 << " Should have been handled in NetEBShift::elaborate."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
 
 	  case '^':
 	  case '&':
@@ -898,12 +900,12 @@ NetExpr*PEBLogic::elaborate_expr(Design*des, NetScope*scope,
       return tmp;
 }
 
-unsigned PEBShift::test_width(Design*des, NetScope*scope,
+unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope,
 			      unsigned min, unsigned lval,
 			      ivl_variable_type_t&expr_type__,
 			      bool&unsized_flag)
 {
-      unsigned wid_left = left_->test_width(des,scope,min, 0, expr_type__, unsized_flag);
+      unsigned wid_left = left_->test_width(des,scope,min, lval, expr_type__, unsized_flag);
 
 	// The right expression is self-determined and has no impact
 	// on the expression size that is generated.
@@ -913,12 +915,15 @@ unsigned PEBShift::test_width(Design*des, NetScope*scope,
       if (wid_left < lval)
 	    wid_left = lval;
 
-      if (unsized_flag && wid_left < integer_width) {
+      if (unsized_flag
+	  && type_is_vectorable(expr_type__)
+	  && wid_left > 0
+	  && wid_left < integer_width) {
 	    wid_left = integer_width;
 		  
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: "
-		       << "Test width of unsized left shift"
+		       << "Test width of unsized " << human_readable_op(op_)
 		       << " is padded to compiler integer width=" << wid_left
 		       << endl;
       }
@@ -934,20 +939,28 @@ unsigned PEBShift::test_width(Design*des, NetScope*scope,
       unsigned wid_right = right_->test_width(des, scope, 0, 0, rtype, rflag);
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: "
-		 << "Test width of shift amount of shift expression "
+		 << "Test width of exponent of " << op_ << " expression "
 		 << "returns wid=" << wid_right << ", type=" << rtype
 		 << ", flag=" << rflag << endl;
 
       return expr_width_;
 }
 
-NetExpr*PEBShift::elaborate_expr(Design*des, NetScope*scope,
-				 int expr_wid, bool sys_task_arg) const
+NetExpr*PEBLeftWidth::elaborate_expr(Design*des, NetScope*scope,
+				     int expr_wid, bool sys_task_arg) const
 {
       assert(left_);
       assert(right_);
 
       NetExpr*lp = left_->elaborate_expr(des, scope, expr_wid, false);
+      if (expr_wid > 0 && lp->expr_width() < (unsigned)expr_wid) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "Pad left operand of " << human_readable_op(op_)
+		       << " to " << expr_wid << "." << endl;
+	    lp = pad_to_width(lp, expr_wid, *this);
+      }
+
       NetExpr*rp = right_->elaborate_expr(des, scope, -1, false);
       if ((lp == 0) || (rp == 0)) {
 	    delete lp;
@@ -955,7 +968,48 @@ NetExpr*PEBShift::elaborate_expr(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      NetExpr*tmp = elaborate_eval_expr_base_(des, lp, rp, expr_wid);
+      eval_expr(lp);
+      eval_expr(rp);
+
+      return elaborate_expr_leaf(des, lp, rp, expr_wid);
+}
+
+NetExpr*PEBPower::elaborate_expr_leaf(Design*des, NetExpr*lp, NetExpr*rp,
+				      int expr_wid) const
+{
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: elaborate expression "
+		 << *this << " expr_wid=" << expr_wid << endl;
+      }
+
+      NetExpr*tmp = new NetEBPow(op_, lp, rp);
+      tmp->set_line(*this);
+
+      return tmp;
+}
+
+NetExpr*PEBShift::elaborate_expr_leaf(Design*des, NetExpr*lp, NetExpr*rp,
+				      int expr_wid) const
+{
+      NetExpr*tmp = 0;
+
+      switch (op_) {
+	  case 'l':
+	    tmp = elaborate_expr_base_lshift_(des, lp, rp, expr_wid);
+	    break;
+
+	  case 'r': // >>
+	  case 'R': // >>>
+	    tmp = elaborate_expr_base_rshift_(des, lp, rp, expr_wid);
+	    break;
+
+	  default:
+	    cerr << get_fileline() << ": internal error: "
+		 << "Unexpected opcode " << human_readable_op(op_)
+		 << " in PEBShift::elaborate_expr_leaf." << endl;
+	    des->errors += 1;
+      }
+
       return tmp;
 }
 
@@ -1682,6 +1736,7 @@ NetExpr* PEIdent::calculate_up_do_base_(Design*des, NetScope*scope) const
       ivl_assert(*this, index_tail.lsb != 0);
       ivl_assert(*this, index_tail.msb != 0);
 
+      probe_expr_width(des, scope, index_tail.msb);
       NetExpr*tmp = elab_and_eval(des, scope, index_tail.msb, -1);
       return tmp;
 }
@@ -1756,8 +1811,13 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 		break;
 	      }
 	  case index_component_t::SEL_BIT:
-	    use_width = 1;
-	    break;
+	      { ivl_assert(*this, !name_tail.index.empty());
+		const index_component_t&index_tail = name_tail.index.back();
+		ivl_assert(*this, index_tail.msb);
+		probe_expr_width(des, scope, index_tail.msb);
+	      }
+	      use_width = 1;
+	      break;
 	  default:
 	    ivl_assert(*this, 0);
       }
@@ -2928,7 +2988,6 @@ unsigned PEUnary::test_width(Design*des, NetScope*scope,
 		    bool flag = false;
 		    expr_->test_width(des, scope, 0, 0, sub_type, flag);
 		    expr_type_ = sub_type;
-		    ivl_assert(*expr_, expr_type_ != IVL_VT_NO_TYPE);
 	      }
 	      expr_width_ = 1;
 
@@ -2975,6 +3034,8 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
       NetExpr*ip = expr_->elaborate_expr(des, scope, expr_wid, false);
       if (ip == 0) return 0;
+
+      ivl_assert(*expr_, expr_type_ != IVL_VT_NO_TYPE);
 
       NetExpr*tmp;
       switch (op_) {

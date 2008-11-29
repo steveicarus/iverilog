@@ -700,7 +700,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 
-	    const PExpr*ex = pin(idx);
+	    PExpr*ex = pin(idx);
 	    if (ex == 0) {
 		  cerr << get_fileline() << ": error: Logic gate port "
 		          "expressions are not optional." << endl;
@@ -713,6 +713,9 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
 	    } else {
 		  unsigned use_width = array_count * instance_width;
+		  ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
+		  bool flag = false;
+		  ex->test_width(des, scope, 0, use_width, tmp_type, flag);
 		  NetExpr*tmp = elab_and_eval(des, scope, ex,
 					      use_width, use_width);
 		  sig = tmp->synthesize(des, scope);
@@ -1171,10 +1174,14 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		       width. We use that, then, to decide how to hook
 		       it up.
 
-v		       NOTE that this also handles the case that the
+		       NOTE that this also handles the case that the
 		       port is actually empty on the inside. We assume
 		       in that case that the port is input. */
 
+		  ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
+		  bool flag = false;
+		  pins[idx]->test_width(des, scope, 0, desired_vector_width,
+					tmp_type, flag);
 		  NetExpr*tmp_expr = elab_and_eval(des, scope, pins[idx],
 						   desired_vector_width,
 						   desired_vector_width);
@@ -1790,6 +1797,7 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
  */
 static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 {
+      probe_expr_width(des, scope, expr);
       NetExpr*dex = elab_and_eval(des, scope, expr, -1);
 
 	/* If the delay expression is a real constant or vector
@@ -2280,17 +2288,8 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 	    cerr << get_fileline() << ": debug: Elaborate condition statement"
 		 << " with conditional: " << *expr_ << endl;
 
-      // Run a test-width on the condition so that its types are
-      // worked out for elaboration later on.
-      ivl_variable_type_t rtype = IVL_VT_NO_TYPE;
-      bool rflag = false;
-      unsigned expr_wid = expr_->test_width(des, scope, 0, 0, rtype, rflag);
-      if (debug_elaborate)
-	   cerr << get_fileline() << ": debug: Test width of condition expression"
-	        << " returns wid=" << expr_wid << ", type=" << rtype
-		<< ", flag=" << rflag << endl;
-
 	// Elaborate and try to evaluate the conditional expression.
+      probe_expr_width(des, scope, expr_);
       NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate"
@@ -2545,6 +2544,10 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    NetAssign_*lv = new NetAssign_(port);
 	    unsigned wid = count_lval_width(lv);
 
+	    ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
+	    bool flag = false;
+	    parms_[idx]->test_width(des, scope, 0, wid, tmp_type, flag);
+
 	    NetExpr*rv = elab_and_eval(des, scope, parms_[idx], wid);
 	    rv->set_width(wid);
 	    rv = pad_to_width(rv, wid, *this);
@@ -2650,8 +2653,9 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
 	    return 0;
 
       unsigned lwid = count_lval_width(lval);
+      ivl_variable_type_t ltype = lval->expr_type();
 
-      NetExpr*rexp = elab_and_eval(des, scope, expr_, lwid);
+      NetExpr*rexp = elaborate_rval_expr(des, scope, ltype, lwid, expr_);
       if (rexp == 0)
 	    return 0;
 
@@ -2954,6 +2958,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
 	    bool save_flag = error_implicit;
 	    error_implicit = true;
+	    probe_expr_width(des, scope, expr_[idx]->expr());
 	    NetExpr*tmp = elab_and_eval(des, scope, expr_[idx]->expr(), 0);
 	    if (tmp == 0) {
 		  expr_[idx]->dump(cerr);
@@ -3054,10 +3059,12 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      const PExpr *pe = expr_[0]->expr();
+      PExpr *pe = expr_[0]->expr();
 
 	/* Elaborate wait expression. Don't eval yet, we will do that
 	   shortly, after we apply a reduction or. */
+
+      probe_expr_width(des, scope, pe);
       NetExpr*expr = pe->elaborate_expr(des, scope, -1, false);
       if (expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate"
@@ -3248,8 +3255,9 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
 	    return 0;
 
       unsigned lwid = count_lval_width(lval);
+      ivl_variable_type_t ltype = lval->expr_type();
 
-      NetExpr*rexp = elab_and_eval(des, scope, expr_, lwid);
+      NetExpr*rexp = elaborate_rval_expr(des, scope, ltype, lwid, expr_);
       if (rexp == 0)
 	    return 0;
 
@@ -3379,6 +3387,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	/* Elaborate the condition expression. Try to evaluate it too,
 	   in case it is a constant. This is an interesting case
 	   worthy of a warning. */
+      probe_expr_width(des, scope, cond_);
       NetExpr*ce = elab_and_eval(des, scope, cond_, -1);
       if (ce == 0) {
 	    delete top;
@@ -3591,8 +3600,9 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PWhile::elaborate(Design*des, NetScope*scope) const
 {
-      NetWhile*loop = new NetWhile(elab_and_eval(des, scope, cond_, -1),
-				   statement_->elaborate(des, scope));
+      probe_expr_width(des, scope, cond_);
+      NetExpr*tmp = elab_and_eval(des, scope, cond_, -1);
+      NetWhile*loop = new NetWhile(tmp, statement_->elaborate(des, scope));
       return loop;
 }
 
@@ -3683,6 +3693,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	   them for the timescale/precision of the scope. */
       for (unsigned idx = 0 ;  idx < ndelays ;  idx += 1) {
 	    PExpr*exp = delays[idx];
+	    probe_expr_width(des, scope, exp);
 	    NetExpr*cur = elab_and_eval(des, scope, exp, 0);
 
 	    if (NetEConst*cur_con = dynamic_cast<NetEConst*> (cur)) {
@@ -3720,6 +3731,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       NetNet*condit_sig = 0;
       if (conditional && condition) {
 
+	    probe_expr_width(des, scope, condition);
 	    NetExpr*tmp = elab_and_eval(des, scope, condition, -1);
 	    ivl_assert(*condition, tmp);
 
@@ -3962,6 +3974,9 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 
 bool PGenerate::elaborate(Design*des, NetScope*container) const
 {
+      if (direct_nested_)
+	    return elaborate_direct_(des, container);
+
       bool flag = true;
 
 	// Handle the special case that this is a CASE scheme. In this
@@ -3978,7 +3993,7 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 	    for (generate_it_t cur = generate_schemes.begin()
 		       ; cur != generate_schemes.end() ; cur ++) {
 		  PGenerate*item = *cur;
-		  if (! item->scope_list_.empty()) {
+		  if (item->direct_nested_ || !item->scope_list_.empty()) {
 			flag &= item->elaborate(des, container);
 		  }
 	    }
@@ -4013,6 +4028,30 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 	    flag = elaborate_(des, scope) & flag;
       }
 
+      return flag;
+}
+
+bool PGenerate::elaborate_direct_(Design*des, NetScope*container) const
+{
+      if (debug_elaborate)
+	    cerr << get_fileline() << ": debug: "
+		 << "Direct nesting elaborate in scope "
+		 << scope_path(container) << "." << endl;
+
+	// Elaborate for a direct nested generated scheme knows
+	// that there are only sub_schemes to be elaborated.  There
+	// should be exactly 1 active generate scheme, search for it
+	// using this loop.
+      bool flag = true;
+      typedef list<PGenerate*>::const_iterator generate_it_t;
+      for (generate_it_t cur = generate_schemes.begin()
+		 ; cur != generate_schemes.end() ; cur ++) {
+	    PGenerate*item = *cur;
+	    if (item->direct_nested_ || !item->scope_list_.empty()) {
+		    // Found the item, and it is direct nested.
+		  flag &= item->elaborate(des, container);
+	    }
+      }
       return flag;
 }
 

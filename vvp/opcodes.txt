@@ -653,10 +653,14 @@ and the <dst> is a writable scalar. The <dst> gets the value of the
 or of all the bits of the src vector.
 
 
-* %pow <bit-l>, <bit-r>
+* %pow <bit-l>, <bit-r>, <wid>
+* %pow/s <bit-l>, <bit-r>, <wid>
 
-This opcode raises <bit-l> (unsigned) to the power of <bit-r> (unsigned).
-The result replaces the left operand.
+The %pow opcode raises <bit-l> (unsigned) to the power of <bit-r>
+(unsigned) giving an exact integer result. The %pow/s opcode does
+the same for signed values, except it uses the double pow() function
+to calculate the result so may not produce exact results. The result
+replaces the left operand.
 
 
 * %pow/wr <bit-l>, <bit-r>

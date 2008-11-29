@@ -16,12 +16,9 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.12 2004/02/10 19:25:01 steve Exp $"
-#
-#
 SHELL = /bin/sh
 
-VERSION = 0.0
+VERSION = 0.9.devel
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@

@@ -22,10 +22,12 @@
 
 # include  "PGenerate.h"
 # include  "PWire.h"
+# include  "ivl_assert.h"
 
 PGenerate::PGenerate(unsigned id)
 : id_number(id)
 {
+      direct_nested_ = false;
       parent = 0;
       lexical_scope = 0;
 }
@@ -37,4 +39,76 @@ PGenerate::~PGenerate()
 void PGenerate::add_gate(PGate*gate)
 {
       gates.push_back(gate);
+}
+
+void PGenerate::probe_for_direct_nesting_(void)
+{
+      direct_nested_ = false;
+
+      ivl_assert(*this, scheme_type==GS_CASE_ITEM || scheme_type==GS_CONDIT || scheme_type==GS_ELSE);
+
+	// If this scheme has received an explicit name, then it
+	// cannot be direct nested.
+      if (scope_name[0] != '$') return;
+
+      if (tasks.size() > 0) return;
+      if (funcs.size() > 0) return;
+      if (gates.size() > 0) return;
+      if (parameters.size() > 0) return;
+      if (localparams.size() > 0) return;
+      if (events.size() > 0) return;
+      if (wires.size() > 0) return;
+      if (behaviors.size() > 0) return;
+      if (analog_behaviors.size() > 0) return;
+
+      if (generate_schemes.size() == 0) return;
+
+      switch (generate_schemes.size()) {
+	  case 1: {
+		PGenerate*child = generate_schemes.front();
+		if (child->scheme_type == GS_CONDIT)
+		      direct_nested_ = true;
+		if (child->scheme_type == GS_CASE)
+		      direct_nested_ = true;
+		break;
+	  }
+
+	  case 2: {
+		PGenerate*child1 = generate_schemes.front();
+		PGenerate*child2 = generate_schemes.back();
+		if (child1->scheme_type==GS_CONDIT && child2->scheme_type==GS_ELSE)
+		      direct_nested_ = true;
+		if (child2->scheme_type==GS_CONDIT && child1->scheme_type==GS_ELSE)
+		      direct_nested_ = true;
+		break;
+	  }
+      }
+}
+
+ostream& operator << (ostream&out, PGenerate::scheme_t type)
+{
+      switch (type) {
+	  case PGenerate::GS_NONE:
+	    out << "GS_NONE";
+	    break;
+	  case PGenerate::GS_LOOP:
+	    out << "GS_LOOP";
+	    break;
+	  case PGenerate::GS_CONDIT:
+	    out << "GS_CONDIT";
+	    break;
+	  case PGenerate::GS_ELSE:
+	    out << "GS_ELSE";
+	    break;
+	  case PGenerate::GS_CASE:
+	    out << "GS_CASE";
+	    break;
+	  case PGenerate::GS_CASE_ITEM:
+	    out << "GS_CASE_ITEM";
+	    break;
+	  case PGenerate::GS_NBLOCK:
+	    out << "GS_NBLOCK";
+	    break;
+      }
+      return out;
 }

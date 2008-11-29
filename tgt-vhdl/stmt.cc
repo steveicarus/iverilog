@@ -139,7 +139,7 @@ static vhdl_var_ref *make_assign_lhs(ivl_lval_t lval, vhdl_scope *scope)
    if (base) {
       if (decl->get_type()->get_name() == VHDL_TYPE_ARRAY)
          lval_ref->set_slice(base, 0);
-      else
+      else if (ivl_signal_width(sig) > 1)
          lval_ref->set_slice(base, lval_width - 1);
    }
 

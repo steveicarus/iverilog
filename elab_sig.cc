@@ -412,6 +412,9 @@ bool PGModule::elaborate_sig_udp_(Design*des, NetScope*scope, PUdp*udp) const
 
 bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 {
+      if (direct_nested_)
+	    return elaborate_sig_direct_(des, container);
+
       bool flag = true;
 
 	// Handle the special case that this is a CASE scheme. In this
@@ -428,7 +431,7 @@ bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 	    for (generate_it_t cur = generate_schemes.begin()
 		       ; cur != generate_schemes.end() ; cur ++) {
 		  PGenerate*item = *cur;
-		  if (! item->scope_list_.empty()) {
+		  if (item->direct_nested_ || !item->scope_list_.empty()) {
 			flag &= item->elaborate_sig(des, container);
 		  }
 	    }
@@ -451,6 +454,32 @@ bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 	    flag = elaborate_sig_(des, *cur) & flag;
       }
 
+      return flag;
+}
+
+bool PGenerate::elaborate_sig_direct_(Design*des, NetScope*container) const
+{
+      if (debug_elaborate)
+	    cerr << get_fileline() << ": debug: "
+		 << "Direct nesting " << scope_name
+		 << " (scheme_type=" << scheme_type << ")"
+		 << " elaborate_sig in scope "
+		 << scope_path(container) << "." << endl;
+
+	// Elaborate_sig for a direct nested generated scheme knows
+	// that there are only sub_schemes to be elaborated.  There
+	// should be exactly 1 active generate scheme, search for it
+	// using this loop.
+      bool flag = true;
+      typedef list<PGenerate*>::const_iterator generate_it_t;
+      for (generate_it_t cur = generate_schemes.begin()
+		 ; cur != generate_schemes.end() ; cur ++) {
+	    PGenerate*item = *cur;
+	    if (item->direct_nested_ || !item->scope_list_.empty()) {
+		    // Found the item, and it is direct nested.
+		  flag &= item->elaborate_sig(des, container);
+	    }
+      }
       return flag;
 }
 
@@ -530,6 +559,9 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	  case PTF_REG:
 	  case PTF_REG_S:
 	    if (return_type_.range) {
+		  probe_expr_width(des, scope, (*return_type_.range)[0]);
+		  probe_expr_width(des, scope, (*return_type_.range)[1]);
+
 		  NetExpr*me = elab_and_eval(des, scope,
 					     (*return_type_.range)[0], -1);
 		  assert(me);
@@ -823,6 +855,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
             bool bad_lsb = false, bad_msb = false;
 	    /* If they exist get the port definition MSB and LSB */
 	    if (port_set_ && port_msb_ != 0) {
+		  probe_expr_width(des, scope, port_msb_);
 		  NetExpr*texpr = elab_and_eval(des, scope, port_msb_, -1);
 
 		  if (! eval_as_long(pmsb, texpr)) {
@@ -837,6 +870,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 		  delete texpr;
 
+		  probe_expr_width(des, scope, port_lsb_);
 		  texpr = elab_and_eval(des, scope, port_lsb_, -1);
 
 		  if (! eval_as_long(plsb, texpr)) {
@@ -859,6 +893,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    /* If they exist get the net/etc. definition MSB and LSB */
 	    if (net_set_ && net_msb_ != 0 && !bad_msb && !bad_lsb) {
+		  probe_expr_width(des, scope, net_msb_);
 		  NetExpr*texpr = elab_and_eval(des, scope, net_msb_, -1);
 
 		  if (! eval_as_long(nmsb, texpr)) {
@@ -873,6 +908,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 		  delete texpr;
 
+		  probe_expr_width(des, scope, net_lsb_);
 		  texpr = elab_and_eval(des, scope, net_lsb_, -1);
 
 		  if (! eval_as_long(nlsb, texpr)) {
@@ -963,6 +999,9 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	   it has both. */
       if (lidx_ || ridx_) {
 	    assert(lidx_ && ridx_);
+
+	    probe_expr_width(des, scope, lidx_);
+	    probe_expr_width(des, scope, ridx_);
 
 	    NetExpr*lexp = elab_and_eval(des, scope, lidx_, -1);
 	    NetExpr*rexp = elab_and_eval(des, scope, ridx_, -1);

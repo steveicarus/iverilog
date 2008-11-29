@@ -16,9 +16,6 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.36 2007/02/06 05:07:32 steve Exp $"
-#
-#
 SHELL = /bin/sh
 
 suffix = @install_suffix@

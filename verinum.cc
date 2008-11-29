@@ -727,12 +727,28 @@ ostream& operator<< (ostream&o, const verinum&v)
 
 verinum::V operator == (const verinum&left, const verinum&right)
 {
-      if (left.len() != right.len())
-	    return verinum::V0;
+      verinum::V left_pad = verinum::V0;
+      verinum::V right_pad = verinum::V0;
+      if (left.has_sign() && right.has_sign()) {
+	    left_pad = left.get(left.len()-1);
+	    right_pad = right.get(right.len()-1);
 
-      for (unsigned idx = 0 ;  idx < left.len() ;  idx += 1)
-	    if (left[idx] != right[idx])
+	    if (left_pad == verinum::V1 && right_pad == verinum::V0)
+		  return verinum::V1;
+	    if (left_pad == verinum::V0 && right_pad == verinum::V1)
 		  return verinum::V0;
+      }
+
+      unsigned max_len = left.len();
+      if (right.len() > max_len)
+	    max_len = right.len();
+
+      for (unsigned idx = 0 ;  idx < max_len ;  idx += 1) {
+	    verinum::V left_bit  = idx < left.len() ? left[idx]  : left_pad;
+	    verinum::V right_bit = idx < right.len()? right[idx] : right_pad;
+	    if (left_bit != right_bit)
+		  return verinum::V0;
+      }
 
       return verinum::V1;
 }

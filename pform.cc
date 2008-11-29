@@ -558,7 +558,7 @@ void pform_start_generate_nblock(const struct vlltype&li, char*name)
  * case schema can only instantiate exactly one item, so the items
  * need not have a unique number.
  */
-void pform_generate_case_item(const struct vlltype&li, PExpr*expr)
+void pform_generate_case_item(const struct vlltype&li, svector<PExpr*>*expr_list)
 {
       assert(pform_cur_generate);
       assert(pform_cur_generate->scheme_type == PGenerate::GS_CASE);
@@ -573,8 +573,14 @@ void pform_generate_case_item(const struct vlltype&li, PExpr*expr)
       pform_cur_generate->scheme_type = PGenerate::GS_CASE_ITEM;
 
       pform_cur_generate->loop_init = 0;
-      pform_cur_generate->loop_test = expr;
+      pform_cur_generate->loop_test = 0;
       pform_cur_generate->loop_step = 0;
+
+      if (expr_list != 0) {
+	    pform_cur_generate->item_test.resize(expr_list->count());
+	    for (unsigned idx = 0 ; idx < expr_list->count() ; idx += 1)
+		  pform_cur_generate->item_test[idx] = expr_list[0][idx];
+      }
 }
 
 void pform_generate_block_name(char*name)

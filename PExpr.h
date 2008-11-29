@@ -535,18 +535,51 @@ class PEBLogic  : public PEBinary {
       NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 };
 
-class PEBShift  : public PEBinary {
+/*
+ * A couple of the binary operands have a special sub-expression rule
+ * where the expression width is carried entirely by the left
+ * expression, and the right operand is self-determined.
+ */
+class PEBLeftWidth  : public PEBinary {
+
+    public:
+      explicit PEBLeftWidth(char op, PExpr*l, PExpr*r);
+      ~PEBLeftWidth() =0;
+
+      virtual NetExpr*elaborate_expr_leaf(Design*des, NetExpr*lp, NetExpr*rp,
+					  int expr_wid) const =0;
+
+    protected:
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  unsigned min, unsigned lval,
+				  ivl_variable_type_t&expr_type,
+				  bool&flag);
+
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     int expr_width, bool sys_task_arg) const;
+
+      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*scope) const;
+
+};
+
+class PEBPower  : public PEBLeftWidth {
+
+    public:
+      explicit PEBPower(char op, PExpr*l, PExpr*r);
+      ~PEBPower();
+
+      NetExpr*elaborate_expr_leaf(Design*des, NetExpr*lp, NetExpr*rp,
+				  int expr_wid) const;
+};
+
+class PEBShift  : public PEBLeftWidth {
 
     public:
       explicit PEBShift(char op, PExpr*l, PExpr*r);
       ~PEBShift();
 
-      virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval,
-				  ivl_variable_type_t&expr_type,
-				  bool&flag);
-      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
-				     int expr_width, bool sys_task_arg) const;
+      NetExpr*elaborate_expr_leaf(Design*des, NetExpr*lp, NetExpr*rp,
+				  int expr_wid) const;
 };
 
 /*
