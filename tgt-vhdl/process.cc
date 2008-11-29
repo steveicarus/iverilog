@@ -81,6 +81,10 @@ int draw_process(ivl_process_t proc, void *cd)
 {
    ivl_scope_t scope = ivl_process_scope(proc);
 
+   debug_msg("Translating process in %s (%s:%d)",
+             ivl_scope_name(scope), ivl_process_file(proc),
+             ivl_process_lineno(proc));
+   
    // A process should occur in a module scope, therefore it
    // should have already been assigned a VHDL entity
    assert(ivl_scope_type(scope) == IVL_SCT_MODULE);

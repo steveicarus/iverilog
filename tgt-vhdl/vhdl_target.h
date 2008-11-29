@@ -14,6 +14,7 @@
 using namespace std;
 
 void error(const char *fmt, ...);
+void debug_msg(const char *fmt, ...);
 
 int draw_scope(ivl_scope_t scope, void *_parent);
 int draw_process(ivl_process_t net, void *cd);

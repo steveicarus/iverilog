@@ -129,7 +129,7 @@ static string visible_nexus_signal_name(nexus_private_t *priv, vhdl_scope *scope
  * Generates VHDL code to fully represent a nexus.
  */
 void draw_nexus(ivl_nexus_t nexus)
-{
+{   
    nexus_private_t *priv = new nexus_private_t;
    int nexus_signal_width = -1;
    priv->const_driver = NULL;
@@ -275,6 +275,8 @@ vhdl_var_ref *nexus_to_var_ref(vhdl_scope *scope, ivl_nexus_t nexus)
  */
 static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
 {
+   debug_msg("Declaring logic in scope %s", ivl_scope_name(scope));
+   
    int nlogs = ivl_scope_logs(scope);
    for (int i = 0; i < nlogs; i++)
       draw_logic(arch, ivl_scope_log(scope, i)); 
@@ -321,6 +323,8 @@ static string make_safe_name(ivl_signal_t sig)
  */
 static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
 {
+   debug_msg("Declaring signals in scope %s", ivl_scope_name(scope));
+   
    int nsigs = ivl_scope_sigs(scope);
    for (int i = 0; i < nsigs; i++) {
       ivl_signal_t sig = ivl_scope_sig(scope, i);      
@@ -518,6 +522,9 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
 {
    assert(ivl_scope_type(scope) == IVL_SCT_FUNCTION);
 
+   debug_msg("Generating function %s (%s)", ivl_scope_tname(scope),
+             ivl_scope_name(scope));
+
    // Find the containing entity
    vhdl_entity *ent = find_entity(ivl_scope_name(parent));
    assert(ent);
@@ -663,6 +670,8 @@ static void create_skeleton_entity_for(ivl_scope_t scope)
  */
 static int draw_skeleton_scope(ivl_scope_t scope, void *_parent)
 {
+   debug_msg("Initial visit to scope %s", ivl_scope_name(scope));
+   
    switch (ivl_scope_type(scope)) {
    case IVL_SCT_MODULE:
       create_skeleton_entity_for(scope);
