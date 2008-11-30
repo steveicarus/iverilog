@@ -2215,6 +2215,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
+      probe_expr_width(des, scope, expr_);
       NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate this case"
@@ -2267,6 +2268,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 		  NetExpr*gu = 0;
 		  NetProc*st = 0;
 		  assert(cur->expr[e]);
+		  probe_expr_width(des, scope, cur->expr[e]);
 		  gu = elab_and_eval(des, scope, cur->expr[e], -1);
 
 		  if (cur->stat)
