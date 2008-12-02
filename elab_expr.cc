@@ -2526,16 +2526,26 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 	// well. In this case it can be converted to a conventional
 	// part select.
       if (NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
-	    long lsv = base_c->value().as_long();
+	    NetExpr*ex;
+	    if (base_c->value().is_defined()) {
+		  long lsv = base_c->value().as_long();
 
-	      // If the part select covers exactly the entire
-	      // vector, then do not bother with it. Return the
-	      // signal itself.
-	    if (net->sig()->sb_to_idx(lsv) == 0 && wid == net->vector_width())
-		  return net;
+		    // If the part select covers exactly the entire
+		    // vector, then do not bother with it. Return the
+		    // signal itself.
+		  if (net->sig()->sb_to_idx(lsv) == 0 &&
+		      wid == net->vector_width()) {
+			delete base;
+			return net;
+		  }
 
-	      // Otherwise, make a part select that covers the right range.
-	    NetExpr*ex = new NetEConst(verinum(net->sig()->sb_to_idx(lsv)));
+		    // Otherwise, make a part select that covers the right
+		    // range.
+		  ex = new NetEConst(verinum(net->sig()->sb_to_idx(lsv)));
+	    } else {
+		    // Return 'bx for an undefined base.
+		  ex = new NetEConst(verinum(verinum::Vx, 1, false));
+	    }
 	    NetESelect*ss = new NetESelect(net, ex, wid);
 	    ss->set_line(*this);
 
@@ -2569,14 +2579,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 					   NetESignal*net, NetScope*found_in)const
 {
-      const name_component_t&name_tail = path_.back();
-      ivl_assert(*this, ! name_tail.index.empty());
-
-      const index_component_t&index_tail = name_tail.index.back();
-      ivl_assert(*this, index_tail.lsb != 0);
-      ivl_assert(*this, index_tail.msb != 0);
-
-      NetExpr*base = elab_and_eval(des, scope, index_tail.msb, -1);
+      NetExpr*base = calculate_up_do_base_(des, scope);
 
       unsigned long wid = 0;
       calculate_up_do_width_(des, scope, wid);
@@ -2585,17 +2588,26 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 	// well. In this case it can be converted to a conventional
 	// part select.
       if (NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
-	    long lsv = base_c->value().as_long();
+	    NetExpr*ex;
+	    if (base_c->value().is_defined()) {
+		  long lsv = base_c->value().as_long();
 
-	      // If the part select covers exactly the entire
-	      // vector, then do not bother with it. Return the
-	      // signal itself.
-	    if (net->sig()->sb_to_idx(lsv) == (signed) (wid-1) &&
-	        wid == net->vector_width())
-		  return net;
+		    // If the part select covers exactly the entire
+		    // vector, then do not bother with it. Return the
+		    // signal itself.
+		  if (net->sig()->sb_to_idx(lsv) == (signed) (wid-1) &&
+		      wid == net->vector_width()) {
+			delete base;
+			return net;
+		  }
 
-	      // Otherwise, make a part select that covers the right range.
-	    NetExpr*ex = new NetEConst(verinum(net->sig()->sb_to_idx(lsv)-wid+1));
+		    // Otherwise, make a part select that covers the right
+		    // range.
+		  ex = new NetEConst(verinum(net->sig()->sb_to_idx(lsv)-wid+1));
+	    } else {
+		    // Return 'bx for an undefined base.
+		  ex = new NetEConst(verinum(verinum::Vx, 1, false));
+	    }
 	    NetESelect*ss = new NetESelect(net, ex, wid);
 	    ss->set_line(*this);
 
