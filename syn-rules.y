@@ -356,7 +356,7 @@ static int yylex()
 {
       if (ptr_ == 0) {
 	    yylval = 0;
-	    return EOF;
+	    return 0;
       }
 
       yylval = ptr_;

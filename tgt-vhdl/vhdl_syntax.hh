@@ -21,6 +21,7 @@
 #ifndef INC_VHDL_SYNTAX_HH
 #define INC_VHDL_SYNTAX_HH
 
+#include <inttypes.h>
 #include "vhdl_element.hh"
 #include "vhdl_type.hh"
 
