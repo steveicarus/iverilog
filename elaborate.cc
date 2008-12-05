@@ -663,7 +663,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    unsigned prts_pin_count = 0;
 
 	    for (unsigned inst = 0 ;  inst < instance.count() ;  inst += 1) {
-		  NetScope*inst_scope = instance[inst];
+		    // Scan the instances from MSB to LSB. The port
+		    // will be assembled in that order as well.
+		  NetScope*inst_scope = instance[instance.count()-inst-1];
 
 		    // Scan the module sub-ports for this instance...
 		  for (unsigned ldx = 0 ;  ldx < mport.count() ;  ldx += 1) {

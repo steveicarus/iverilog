@@ -448,7 +448,11 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 
 	/* Stash the instance array of scopes into the parent
 	   scope. Later elaboration passes will use this vector to
-	   further elaborate the array. */
+	   further elaborate the array.
+
+	   Note that the array is ordered from LSB to MSB. We will use
+	   that fact in the main elaborate to connect things in the
+	   correct order. */
       sc->instance_arrays[get_name()] = instances;
 }
 
