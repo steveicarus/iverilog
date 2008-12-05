@@ -376,7 +376,7 @@ class PEBinary : public PExpr {
 				    unsigned long decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
-      virtual NetEBinary*elaborate_expr(Design*des, NetScope*,
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 					bool sys_task_arg =false) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
@@ -386,7 +386,7 @@ class PEBinary : public PExpr {
       PExpr*left_;
       PExpr*right_;
 
-      NetEBinary*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp) const;
+      NetExpr*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp) const;
 
       NetNet* elaborate_net_add_(Design*des, NetScope*scope,
 				 unsigned lwidth,

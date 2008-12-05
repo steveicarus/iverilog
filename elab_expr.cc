@@ -43,7 +43,7 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, bool) const
  * and right sides, and creating one of a variety of different NetExpr
  * types.
  */
-NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope, bool) const
+NetExpr* PEBinary::elaborate_expr(Design*des, NetScope*scope, bool) const
 {
       assert(left_);
       assert(right_);
@@ -73,7 +73,7 @@ NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope, bool) const
 	}
       }
 
-      NetEBinary*tmp = elaborate_expr_base_(des, lp, rp);
+      NetExpr*tmp = elaborate_expr_base_(des, lp, rp);
       return tmp;
 }
 
@@ -82,11 +82,11 @@ NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope, bool) const
  * operands are elaborated as necessary, and all I need to do is make
  * the correct NetEBinary object and connect the parameters.
  */
-NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
-					   NetExpr*lp, NetExpr*rp) const
+NetExpr* PEBinary::elaborate_expr_base_(Design*des,
+					NetExpr*lp, NetExpr*rp) const
 {
       bool flag;
-      NetEBinary*tmp;
+      NetExpr*tmp;
 
       switch (op_) {
 	  default:
@@ -112,6 +112,51 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 	    break;
 
 	  case 'l': // <<
+	    if (NetEConst*lpc = dynamic_cast<NetEConst*> (lp)) {
+		  if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
+			  // Handle the super-special case that both
+			  // operands are constants. Precalculate the
+			  // entire value here.
+			verinum lpval = lpc->value();
+			unsigned shift = rpc->value().as_ulong();
+			verinum result = lpc->value() << shift;
+			  // If the l-value has explicit size, use that.
+			if (lpval.has_len()) {
+			      result = verinum(result, lpval.len());
+			}
+
+			tmp = new NetEConst(result);
+			if (debug_elaborate)
+			      cerr << get_line() << ": debug: "
+				   << "Precalculate " << *this
+				   << " to constant " << *tmp << endl;
+
+		  } else {
+			  // Handle the special case that the left
+			  // operand is constant. If it is unsized, we
+			  // may have to expand it to an integer width.
+			verinum lpval = lpc->value();
+			if (lpval.len() < 32 && !lpval.has_len()) {
+			      lpval = verinum(lpval, 32);
+			      lpc = new NetEConst(lpval);
+			      lpc->set_line(*lp);
+			}
+
+			tmp = new NetEBShift(op_, lpc, rp);
+			if (debug_elaborate)
+			      cerr << get_line() << ": debug: "
+				   << "Adjust " << *this
+				   << " to this " << *tmp
+				   << " to allow for integer widths." << endl;
+		  }
+
+	    } else {
+		    // Left side is not constant, so handle it the
+		    // default way.
+		  tmp = new NetEBShift(op_, lp, rp);
+	    }
+	    tmp->set_line(*this);
+	    break;
 	  case 'r': // >>
 	  case 'R': // >>>
 	    tmp = new NetEBShift(op_, lp, rp);
