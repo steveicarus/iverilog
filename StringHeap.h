@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: StringHeap.h,v 1.6 2005/06/14 19:13:43 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  <string>
@@ -120,28 +117,4 @@ class StringHeapLex  : private StringHeap {
       StringHeapLex& operator= (const StringHeapLex&);
 };
 
-/*
- * $Log: StringHeap.h,v $
- * Revision 1.6  2005/06/14 19:13:43  steve
- *  gcc3/4 compile errors.
- *
- * Revision 1.5  2004/02/18 17:11:54  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.4  2003/03/01 06:25:30  steve
- *  Add the lex_strings string handler, and put
- *  scope names and system task/function names
- *  into this table. Also, permallocate event
- *  names from the beginning.
- *
- * Revision 1.3  2003/01/16 21:44:46  steve
- *  Keep some debugging status.
- *
- * Revision 1.2  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.1  2002/08/04 19:13:16  steve
- *  dll uses StringHeap for named items.
- *
- */
 #endif

@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: expression.c,v 1.6 2007/04/21 03:20:47 steve Exp $"
-#endif
 
 # include "config.h"
 # include "priv.h"

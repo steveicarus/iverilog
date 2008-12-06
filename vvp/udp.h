@@ -21,9 +21,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.h,v 1.20 2006/05/18 05:13:45 steve Exp $"
-#endif
 
 # include  <vvp_net.h>
 # include  <delay.h>
@@ -242,27 +239,4 @@ class vvp_udp_fun_core  : public vvp_wide_fun_core, private vvp_gen_event_s {
       udp_levels_table current_;
 };
 
-
-
-/*
- * $Log: udp.h,v $
- * Revision 1.20  2006/05/18 05:13:45  steve
- *  Synchronous primitives only follow edges.
- *
- * Revision 1.19  2005/06/11 16:21:08  steve
- *  UD delays use delay node.
- *
- * Revision 1.18  2005/06/09 05:04:45  steve
- *  Support UDP initial values.
- *
- * Revision 1.17  2005/06/09 04:12:30  steve
- *  Support sequential UDP devices.
- *
- * Revision 1.16  2005/04/03 05:45:51  steve
- *  Rework the vvp_delay_t class.
- *
- * Revision 1.15  2005/04/01 06:02:45  steve
- *  Reimplement combinational UDPs.
- *
- */
 #endif

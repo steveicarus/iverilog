@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.34 2003/10/10 02:57:45 steve Exp $"
-#endif
 
 /*
  * This header file contains the definitions and declarations needed

@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: PSpec.cc,v 1.2 2007/02/12 01:52:21 steve Exp $"
-#endif
 
 # include  "PSpec.h"
 

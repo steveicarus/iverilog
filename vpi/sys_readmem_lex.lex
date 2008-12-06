@@ -21,9 +21,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_readmem_lex.lex,v 1.8 2003/08/26 16:26:02 steve Exp $"
-#endif
+
 # include "sys_readmem_lex.h"
 # include  <string.h>
 static void make_addr();

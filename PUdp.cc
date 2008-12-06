@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: PUdp.cc,v 1.3 2004/03/08 00:47:44 steve Exp $"
-#endif
 
 # include  "PUdp.h"
 
@@ -37,17 +34,4 @@ unsigned PUdp::find_port(const char*name)
 
       return ports.count();
 }
-
-/*
- * $Log: PUdp.cc,v $
- * Revision 1.3  2004/03/08 00:47:44  steve
- *  primitive ports can bind bi name.
- *
- * Revision 1.2  2004/02/18 17:11:54  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.1  2003/07/15 05:07:13  steve
- *  Move PUdp constructor into compiled file.
- *
- */
 

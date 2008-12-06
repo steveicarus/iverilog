@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: npmos.h,v 1.8 2005/06/22 00:04:49 steve Exp $"
-#endif
 
 # include  "vvp_net.h"
 

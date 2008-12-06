@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: PDelays.h,v 1.9 2006/01/03 05:22:14 steve Exp $"
-#endif
 
 # include  "svector.h"
 # include  <string>
@@ -72,34 +69,4 @@ class PDelays {
 
 ostream& operator << (ostream&o, const PDelays&);
 
-/*
- * $Log: PDelays.h,v $
- * Revision 1.9  2006/01/03 05:22:14  steve
- *  Handle complex net node delays.
- *
- * Revision 1.8  2006/01/02 05:33:19  steve
- *  Node delays can be more general expressions in structural contexts.
- *
- * Revision 1.7  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.6  2002/06/14 03:25:51  steve
- *  Compiler portability.
- *
- * Revision 1.5  2001/12/29 20:19:31  steve
- *  Do not delete delay expressions of UDP instances.
- *
- * Revision 1.4  2001/11/22 06:20:59  steve
- *  Use NetScope instead of string for scope path.
- *
- * Revision 1.3  2001/01/16 02:44:17  steve
- *  Use the iosfwd header if available.
- *
- * Revision 1.2  2000/02/23 02:56:53  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.1  1999/09/04 19:11:46  steve
- *  Add support for delayed non-blocking assignments.
- *
- */
 #endif

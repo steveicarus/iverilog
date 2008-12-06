@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.h,v 1.16 2007/04/07 04:46:19 steve Exp $"
-#endif
 
 # include  "config.h"
 #ifdef HAVE_IOSFWD
@@ -85,56 +82,4 @@ extern verireal operator% (const verireal&, const verinum&);
 extern verireal pow(const verireal&, const verireal&);
 extern verireal operator- (const verireal&);
 
-/*
- * $Log: verireal.h,v $
- * Revision 1.16  2007/04/07 04:46:19  steve
- *  Handle evaluate of addition of real valued constants.
- *
- * Revision 1.15  2007/02/02 04:33:01  steve
- *  Use inttypes.h instead of stdint.h for portability.
- *
- * Revision 1.14  2006/10/03 05:06:00  steve
- *  Support real valued specify delays, properly scaled.
- *
- * Revision 1.13  2006/08/08 05:11:37  steve
- *  Handle 64bit delay constants.
- *
- * Revision 1.12  2006/07/31 03:50:18  steve
- *  Add support for power in constant expressions.
- *
- * Revision 1.11  2005/06/14 19:13:43  steve
- *  gcc3/4 compile errors.
- *
- * Revision 1.10  2004/06/04 23:33:51  steve
- *  Add unary minus as operator supported by verireal.
- *
- * Revision 1.9  2003/02/07 06:13:44  steve
- *  Store real values as native double.
- *
- * Revision 1.8  2003/02/07 02:48:43  steve
- *  NetEBDiv handles real value constant expressions.
- *
- * Revision 1.7  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.6  2002/08/12 01:35:01  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.5  2001/11/06 06:11:55  steve
- *  Support more real arithmetic in delay constants.
- *
- * Revision 1.4  2001/01/16 02:44:18  steve
- *  Use the iosfwd header if available.
- *
- * Revision 1.3  2000/12/10 22:01:36  steve
- *  Support decimal constants in behavioral delays.
- *
- * Revision 1.2  2000/02/23 02:56:56  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.1  1999/06/15 02:50:02  steve
- *  Add lexical support for real numbers.
- *
- */
 #endif

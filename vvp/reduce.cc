@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: reduce.cc,v 1.4 2006/05/01 20:47:03 steve Exp $"
-#endif
 
 # include  "compile.h"
 # include  "schedule.h"
