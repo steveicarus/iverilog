@@ -21,6 +21,7 @@ const char COPYRIGHT[] =
 #endif
 
 # include "config.h"
+# include "version.h"
 
 const char NOTICE[] =
 "  This program is free software; you can redistribute it and/or modify\n"
@@ -37,8 +38,6 @@ const char NOTICE[] =
 "  along with this program; if not, write to the Free Software\n"
 "  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA\n"
 ;
-
-const char VERSION[] = "$Name:  $ $State: Exp $";
 
 # include  <stdio.h>
 # include  <stdlib.h>
@@ -213,7 +212,7 @@ int main(int argc, char*argv[])
 	    break;
 
 	  case 'v':
-	    fprintf(stderr, "Icarus Verilog Preprocessor version %s\n",
+	    fprintf(stderr, "Icarus Verilog Preprocessor version %s\n\n",
 		    VERSION);
 	    fprintf(stderr, "%s\n", COPYRIGHT);
 	    fputs(NOTICE, stderr);

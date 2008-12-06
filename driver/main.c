@@ -21,6 +21,7 @@
 #endif
 
 # include "config.h"
+# include "version.h"
 
 const char NOTICE[] =
 "  This program is free software; you can redistribute it and/or modify\n"
@@ -704,7 +705,7 @@ int main(int argc, char **argv)
 	    pbase = base;
 
       if (version_flag || verbose_flag) {
-	    printf("Icarus Verilog version " VERSION " ($Name:  $)\n");
+	    printf("Icarus Verilog version " VERSION "\n\n");
 	    printf("Copyright 1998-2003 Stephen Williams\n");
 	    puts(NOTICE);
 

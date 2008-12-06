@@ -24,6 +24,7 @@
  */
 
 # include  "vvp_priv.h"
+# include  "version.h"
 # include  <string.h>
 # include  <assert.h>
 # include  <sys/types.h>
@@ -39,7 +40,10 @@ inline static void draw_execute_header(ivl_design_t des)
 	    fprintf(vvp_out, "#! %s\n", cp);
 	    fchmod(fileno(vvp_out), 0755);
       }
+#else
+      fprintf(vvp_out, "# MinGW does not support an executable header.\n");
 #endif
+      fprintf(vvp_out, ":ivl_version \"" VERSION "\";\n");
 }
 
 inline static void draw_module_declarations(ivl_design_t des)

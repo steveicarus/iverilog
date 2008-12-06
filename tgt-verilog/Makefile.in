@@ -21,8 +21,6 @@
 #
 SHELL = /bin/sh
 
-VERSION = 0.0
-
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@

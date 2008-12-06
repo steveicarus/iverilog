@@ -21,6 +21,7 @@
 #endif
 
 # include  "config.h"
+# include  "version.h"
 # include  "parse_misc.h"
 # include  "compile.h"
 # include  "schedule.h"
@@ -51,6 +52,7 @@ extern "C" const char*optarg;
 #endif
 
 bool verbose_flag = false;
+bool version_flag = false;
 
 static char log_buffer[4096];
 
@@ -110,6 +112,62 @@ inline static void print_rusage(struct rusage *, struct rusage *){};
 
 #endif // ! defined(HAVE_SYS_RESOURCE_H)
 
+static bool have_ivl_version = false;
+/*
+ * Verify that the input file has a compatible version.
+ */
+void verify_version(char*ivl_ver, char*commit)
+{
+      have_ivl_version = true;
+
+      if (verbose_flag) {
+	    vpi_mcd_printf(1, " ... VVP file version %s", ivl_ver);
+	    if (commit) vpi_mcd_printf(1, " %s", commit);
+	    vpi_mcd_printf(1, "\n");
+      }
+      free(commit);
+
+      char*vvp_ver = strdup(VERSION);
+      char *vp, *ip;
+
+	/* Check the major/minor version. */
+      ip = strrchr(ivl_ver, '.');
+      *ip = '\0';
+      vp = strrchr(vvp_ver, '.');
+      *vp = '\0';
+      if (strcmp(ivl_ver, vvp_ver) != 0) {
+	    vpi_mcd_printf(1, "Error: VVP input file version %s can not "
+	                      "be run with run time version %s!\n",
+	                      ivl_ver, vvp_ver);
+	    exit(1);
+      }
+
+	/* Check that the sub-version is compatible. */
+      ip += 1;
+      vp += 1;
+      int ivl_sv, vvp_sv;
+      if (strcmp(ip, "devel") == 0) {
+	    ivl_sv = -1;
+      } else {
+	    int res = sscanf(ip, "%d", &ivl_sv);
+	    assert(res == 1);
+      }
+      if (strcmp(vp, "devel") == 0) {
+	    vvp_sv = -1;
+      } else {
+	    int res = sscanf(vp, "%d", &vvp_sv);
+	    assert(res == 1);
+      }
+      if (ivl_sv > vvp_sv) {
+	    if (verbose_flag) vpi_mcd_printf(1, " ... ");
+	    vpi_mcd_printf(1, "Warning: VVP input file sub-version %s is "
+	                      "greater than the run time sub-version %s!\n",
+	                      ip, vp);
+      }
+
+      free(ivl_ver);
+      free(vvp_ver);
+}
 
 unsigned module_cnt = 0;
 const char*module_tab[64];
@@ -145,7 +203,7 @@ int main(int argc, char*argv[])
         /* For non-interactive runs we do not want to run the interactive
          * debugger, so make $stop just execute a $finish. */
       stop_is_finish = false;
-      while ((opt = getopt(argc, argv, "+dhl:M:m:nv")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "+dhl:M:m:nvV")) != EOF) switch (opt) {
          case 'h':
            fprintf(stderr,
                    "Usage: vvp [options] input-file [+plusargs...]\n"
@@ -156,7 +214,8 @@ int main(int argc, char*argv[])
 		   " -M -           Clear VPI module path\n"
                    " -m module      Load vpi module.\n"
                    " -n             Non-interactive ($stop = $finish).\n"
-                   " -v             Verbose progress messages.\n" );
+                   " -v             Verbose progress messages.\n"
+                   " -V             Print the version information.\n" );
            exit(0);
 	  case 'l':
 	    logfile_name = optarg;
@@ -178,12 +237,36 @@ int main(int argc, char*argv[])
 	  case 'v':
 	    verbose_flag = true;
 	    break;
+	  case 'V':
+	    version_flag = true;
+	    break;
 	  default:
 	    flag_errors += 1;
       }
 
       if (flag_errors)
 	    return flag_errors;
+
+      if (version_flag) {
+            fprintf(stderr, "Icarus Verilog runtime version " VERSION "\n\n");
+            fprintf(stderr, "Copyright 2001-2006 Stephen Williams\n\n");
+            fprintf(stderr,
+"  This program is free software; you can redistribute it and/or modify\n"
+"  it under the terms of the GNU General Public License as published by\n"
+"  the Free Software Foundation; either version 2 of the License, or\n"
+"  (at your option) any later version.\n"
+"\n"
+"  This program is distributed in the hope that it will be useful,\n"
+"  but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"  GNU General Public License for more details.\n"
+"\n"
+"  You should have received a copy of the GNU General Public License along\n"
+"  with this program; if not, write to the Free Software Foundation, Inc.,\n"
+"  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.\n\n"
+);
+            return 0;
+      }
 
       if (optind == argc) {
 	    fprintf(stderr, "%s: no input file.\n", argv[0]);
@@ -228,6 +311,12 @@ int main(int argc, char*argv[])
 
       if (int rc = compile_design(design_path))
 	    return rc;
+
+      if (!have_ivl_version) {
+            if (verbose_flag) vpi_mcd_printf(1, "... ");
+            vpi_mcd_printf(1, "Warning: vvp input file may not be correct "
+                              "version!\n");
+      }
 
       if (verbose_flag) {
 	    vpi_mcd_printf(1, "Compile cleanup...\n");

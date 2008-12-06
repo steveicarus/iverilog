@@ -59,6 +59,7 @@ const char NOTICE[] =
 # include  "netlist.h"
 # include  "target.h"
 # include  "compiler.h"
+# include  "version.h"
 
 #if defined(__MINGW32__) && !defined(HAVE_GETOPT_H)
 extern "C" int getopt(int argc, char*argv[], const char*fmt);
@@ -74,8 +75,6 @@ extern "C" const char*optarg;
 
 /* Count errors detected in flag processing. */
 unsigned flag_errors = 0;
-
-const char VERSION[] = "$Name:  $";
 
 const char*basedir = ".";
 
@@ -504,7 +503,7 @@ int main(int argc, char*argv[])
 #          endif
 	    break;
 	  case 'V':
-	    cout << "Icarus Verilog version " << VERSION << endl;
+	    cout << "Icarus Verilog version " << VERSION << endl << endl;
 	    cout << COPYRIGHT << endl;
 	    cout << endl << NOTICE << endl;
 	    return 0;
@@ -517,8 +516,8 @@ int main(int argc, char*argv[])
 	    return flag_errors;
 
       if (help_flag) {
-	    cout << "Icarus Verilog version " << VERSION << endl <<
-"usage: ivl <options> <file>\n"
+	    cout << "Icarus Verilog version " << VERSION << endl << endl <<
+"Usage: ivl <options> <file>\n"
 "options:\n"
 "\t-C <name>        Config file from driver.\n"
 "\t-h               Print usage information, and exit.\n"

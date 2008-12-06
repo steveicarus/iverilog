@@ -32,6 +32,12 @@
 extern int compile_design(const char*path);
 
 /*
+ * This routine is called to check that the input file has a compatible
+ * version.
+ */
+extern void verify_version(char *ivl_ver, char* commit);
+
+/*
  * various functions shared by the lexor and the parser.
  */
 extern int yylex(void);

@@ -22,8 +22,6 @@
 #
 SHELL = /bin/sh
 
-VERSION = 0.0
-
 suffix = @install_suffix@
 
 prefix = @prefix@

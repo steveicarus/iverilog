@@ -68,7 +68,7 @@ extern FILE*yyin;
 %token K_FORCE  K_WORD
 %token K_VAR K_VAR_S K_VAR_I K_vpi_call K_vpi_func K_vpi_func_r
 %token K_disable K_fork
-%token K_vpi_module K_vpi_time_precision
+%token K_ivl_version K_vpi_module K_vpi_time_precision
 
 %token <text> T_INSTR
 %token <text> T_LABEL
@@ -101,7 +101,11 @@ header_lines
 	;
 
 header_line
-	: K_vpi_module T_STRING ';'
+	: K_ivl_version T_STRING ';'
+		{ verify_version($2, NULL); }
+	| K_ivl_version T_STRING T_STRING';'
+		{ verify_version($2, $3); }
+	| K_vpi_module T_STRING ';'
 		{ compile_load_vpi_module($2); }
 	| K_vpi_time_precision '+' T_NUMBER ';'
 		{ compile_vpi_time_precision($3); }

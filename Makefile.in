@@ -21,12 +21,6 @@
 #
 SHELL = /bin/sh
 
-# This version string is only used in the version message printed
-# by the compiler. It reflects the assigned version number for the
-# product as a whole. Most components also print the CVS Name: token
-# in order to get a more automatic version stamp as well.
-VERSION = 0.8.6
-
 # This string is used as an installation suffix. It modifies certain
 # key install paths/files such that a build and install of Icarus Verilog
 # with the same $(prefix) but a different $(suffix) will not interfere.
@@ -80,7 +74,7 @@ all: dep ivl@EXEEXT@
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) $@); done
 	for dir in ivlpp tgt-verilog tgt-stub; \
 	    do (cd $$dir ; $(MAKE) $@); done
-	cd driver ; $(MAKE) VERSION=$(VERSION) $@
+	cd driver ; $(MAKE) $@
 
 # In the windows world, the installer will need a dosify program to
 # dosify text files.
