@@ -751,7 +751,8 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
 
             vhdl_scope *arch_scope = ent->get_arch()->get_scope();
 
-            if (priv->const_driver) {
+            if (priv->const_driver
+                && ivl_signal_port(sig) != IVL_SIP_INPUT) { // Don't drive inputs
                assert(j == 0);   // TODO: Make work for more words
                
                vhdl_var_ref *ref = nexus_to_var_ref(arch_scope, nex);
