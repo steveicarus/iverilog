@@ -180,6 +180,25 @@ assign_for(vhdl_decl::assign_type_t atype, vhdl_var_ref *lhs, vhdl_expr *rhs)
 }
 
 /*
+ * Check that this assignment type is valid within the context of `proc'.
+ * For example, a <= assignment is not valid within a function.
+ */
+bool check_valid_assignment(vhdl_decl::assign_type_t atype, vhdl_procedural *proc,
+                            ivl_statement_t stmt)
+{
+   if (atype == vhdl_decl::ASSIGN_NONBLOCK &&
+       !proc->get_scope()->allow_signal_assignment()) {
+      error("Unable to translate assignment at %s:%d\n"
+            "  Translating this would require generating a non-blocking (<=)\n"
+            "  assignment in a VHDL context where this is disallowed (e.g.\n"
+            "  a function).", ivl_stmt_file(stmt), ivl_stmt_lineno(stmt));
+      return false;
+   }
+   else
+      return true;
+}
+
+/*
  * Generate an assignment of type T for the Verilog statement stmt.
  */
 void make_assignment(vhdl_procedural *proc, stmt_container *container,
@@ -227,6 +246,9 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
             return;
 
          vhdl_if_stmt *vhdif = new vhdl_if_stmt(test);
+
+         if (!check_valid_assignment(decl->assignment_type(), proc, stmt))
+            return;
 
          // True part
          {
@@ -283,6 +305,9 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
          }
       }
 
+      if (!check_valid_assignment(decl->assignment_type(), proc, stmt))
+            return;
+
       vhdl_abstract_assign_stmt *a =
          assign_for(decl->assignment_type(), lhs, rhs);
       container->add_stmt(a);
@@ -327,6 +352,9 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
          // a variable, etc?)
          vhdl_decl *decl = proc->get_scope()->get_decl((*it)->get_name());
 
+         if (!check_valid_assignment(decl->assignment_type(), proc, stmt))
+            return;
+         
          vhdl_abstract_assign_stmt *a =
             assign_for(decl->assignment_type(), *it, tmp_rhs);
          if (after)

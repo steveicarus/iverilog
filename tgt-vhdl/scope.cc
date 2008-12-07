@@ -535,6 +535,14 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
 
    // The return type is worked out from the output port
    vhdl_function *func = new vhdl_function(funcname, NULL);
+
+   // Set the parent scope of this function to be the containing
+   // architecture. This allows us to look up non-local variables
+   // referenced in the body, but if we do the `impure' flag must
+   // be set on the function
+   // (There are actually two VHDL scopes in a function: the local
+   // variables and the formal parameters hence the call to get_parent)
+   func->get_scope()->get_parent()->set_parent(ent->get_arch()->get_scope());
    
    int nsigs = ivl_scope_sigs(scope);
    for (int i = 0; i < nsigs; i++) {
