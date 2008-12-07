@@ -163,9 +163,25 @@ static bool assignment_lvals(ivl_statement_t stmt, vhdl_procedural *proc,
 }
 
 /*
+ * Generate the right sort of assignment statement for assigning
+ * `lhs' to `rhs'.
+ */
+static vhdl_abstract_assign_stmt *
+assign_for(vhdl_decl::assign_type_t atype, vhdl_var_ref *lhs, vhdl_expr *rhs)
+{
+   switch (atype) {
+   case vhdl_decl::ASSIGN_BLOCK:
+      return new vhdl_assign_stmt(lhs, rhs);
+   case vhdl_decl::ASSIGN_NONBLOCK:
+      return new vhdl_nbassign_stmt(lhs, rhs);
+   default:
+      assert(false);
+   }   
+}
+
+/*
  * Generate an assignment of type T for the Verilog statement stmt.
  */
-template <class T>
 void make_assignment(vhdl_procedural *proc, stmt_container *container,
                      ivl_statement_t stmt, bool blocking)
 {
@@ -192,6 +208,11 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
       vhdl_expr *after = NULL;
       if ((i_delay = ivl_stmt_delay_expr(stmt)) != NULL)
          after = translate_time_expr(i_delay);
+
+      // Find the declaration of the LHS so we know what type
+      // of assignment statement to generate (is it a signal,
+      // a variable, etc?)
+      vhdl_decl *decl = proc->get_scope()->get_decl(lhs->get_name());
       
       // A small optimisation is to expand ternary RHSs into an
       // if statement (eliminates a function call and produces
@@ -209,7 +230,8 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
 
          // True part
          {
-            T *a = new T(lhs, rhs);
+            vhdl_abstract_assign_stmt *a =
+               assign_for(decl->assignment_type(), lhs, rhs);
             if (after)
                a->set_after(after);
             vhdif->get_then_container()->add_stmt(a);
@@ -217,7 +239,8 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
 
          // False part
          {
-            T *a = new T(lhs2, rhs2);
+            vhdl_abstract_assign_stmt *a =
+               assign_for(decl->assignment_type(), lhs2, rhs2);
             if (after)
                a->set_after(translate_time_expr(i_delay));
             vhdif->get_else_container()->add_stmt(a);
@@ -242,7 +265,6 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
       // The second test ensures that we only try to initialise
       // internal signals not ports
       ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
-      vhdl_decl *decl = proc->get_scope()->get_decl(lhs->get_name());
       if (proc->get_scope()->initializing()
           && ivl_signal_port(ivl_lval_sig(lval)) == IVL_SIP_NONE
           && !decl->has_initial()
@@ -260,8 +282,9 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
             return;
          }
       }
-      
-      T *a = new T(lhs, rhs);
+
+      vhdl_abstract_assign_stmt *a =
+         assign_for(decl->assignment_type(), lhs, rhs);
       container->add_stmt(a);
           
       if (after != NULL)
@@ -276,7 +299,7 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
       ostringstream ss;
       ss << "Verilog_Assign_Tmp_" << tmp_count++;
       string tmpname = ss.str();
-      
+
       proc->get_scope()->add_decl
          (new vhdl_var_decl(tmpname.c_str(), new vhdl_type(*rhs->get_type())));
 
@@ -299,7 +322,13 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
          if ((i_delay = ivl_stmt_delay_expr(stmt)) != NULL)
             after = translate_time_expr(i_delay);
 
-         T *a = new T(*it, tmp_rhs);
+         // Find the declaration of the LHS so we know what type
+         // of assignment statement to generate (is it a signal,
+         // a variable, etc?)
+         vhdl_decl *decl = proc->get_scope()->get_decl((*it)->get_name());
+
+         vhdl_abstract_assign_stmt *a =
+            assign_for(decl->assignment_type(), *it, tmp_rhs);
          if (after)
             a->set_after(after);
 
@@ -320,7 +349,7 @@ static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
 {
    assert(proc->get_scope()->allow_signal_assignment());
 
-   make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);
+   make_assignment(proc, container, stmt, false);
 
    return 0;
 }
@@ -333,7 +362,7 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
       // followed by a zero-time wait
       // This follows the Verilog semantics fairly closely.
 
-      make_assignment<vhdl_nbassign_stmt>(proc, container, stmt, false);
+      make_assignment(proc, container, stmt, false);
 
       // Don't generate a zero-wait if this is the last statement in
       // the process
@@ -342,7 +371,7 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
             (new vhdl_wait_stmt(VHDL_WAIT_FOR, new vhdl_const_time(0)));
    }
    else
-      make_assignment<vhdl_assign_stmt>(proc, container, stmt, true);
+      make_assignment(proc, container, stmt, true);
    
    return 0;
 }
