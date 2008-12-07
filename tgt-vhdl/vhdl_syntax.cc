@@ -316,6 +316,9 @@ void vhdl_wait_stmt::emit(std::ostream &of, int level) const
       of << " for ";
       expr_->emit(of, level);
       break;
+   case VHDL_WAIT_FOR0:
+      of << " for 0 ns";
+      break;
    case VHDL_WAIT_UNTIL:
       assert(expr_);
       of << " until ";

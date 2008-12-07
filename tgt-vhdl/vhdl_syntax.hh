@@ -335,8 +335,11 @@ public:
    void add_stmt(vhdl_seq_stmt *stmt);
    void emit(std::ostream &of, int level, bool newline=true) const;
    bool empty() const { return stmts_.empty(); }
+
+   typedef std::list<vhdl_seq_stmt*> stmt_list_t;
+   stmt_list_t &get_stmts() { return stmts_; }
 private:
-   std::list<vhdl_seq_stmt*> stmts_;
+   stmt_list_t stmts_;
 };
 
 
@@ -381,6 +384,7 @@ public:
 enum vhdl_wait_type_t {
    VHDL_WAIT_INDEF,  // Suspend indefinitely
    VHDL_WAIT_FOR,    // Wait for a constant amount of time
+   VHDL_WAIT_FOR0,   // Special wait for zero time
    VHDL_WAIT_UNTIL,  // Wait on an expression
    VHDL_WAIT_ON,     // Wait on a sensitivity list
 };
@@ -398,6 +402,7 @@ public:
    
    void emit(std::ostream &of, int level) const;
    void add_sensitivity(const std::string &s) { sensitivity_.push_back(s); }
+   vhdl_wait_type_t get_type() const { return type_; }
 private:
    vhdl_wait_type_t type_;
    vhdl_expr *expr_;

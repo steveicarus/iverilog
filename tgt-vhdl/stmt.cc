@@ -396,12 +396,33 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
       // the process
       if (!is_last)
          container->add_stmt
-            (new vhdl_wait_stmt(VHDL_WAIT_FOR, new vhdl_const_time(0)));
+            (new vhdl_wait_stmt(VHDL_WAIT_FOR0));
    }
    else
       make_assignment(proc, container, stmt, true);
    
    return 0;
+}
+
+/*
+ * The VHDL code generator inserts `wait for 0 ns' after each
+ * not-last-in-block blocking assignment.
+ * If this is immediately followed by another `wait for ...' then
+ * we might as well not emit the first zero-time wait.
+ */
+void prune_wait_for_0(stmt_container *container)
+{   
+   vhdl_wait_stmt *wait0;
+   stmt_container::stmt_list_t &stmts = container->get_stmts();
+   while (stmts.size() > 0
+          && (wait0 = dynamic_cast<vhdl_wait_stmt*>(stmts.back()))) {
+      if (wait0->get_type() == VHDL_WAIT_FOR0) {
+         delete wait0;
+         stmts.pop_back();
+      }
+      else
+         break;
+   }
 }
 
 /*
@@ -428,6 +449,8 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
       if (NULL == time)
          return 1;
    }
+
+   prune_wait_for_0(container);
 
    ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
    vhdl_wait_stmt *wait =
