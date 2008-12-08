@@ -285,7 +285,8 @@ unsigned PGBuiltin::calculate_output_count_(void) const
       switch (type()) {
 	  case BUF:
 	  case NOT:
-	    output_count = pin_count() - 1;
+	    if (pin_count() > 2) output_count = pin_count() - 1;
+	    else output_count = 1;
 	    break;
 	  case PULLDOWN:
 	  case PULLUP:
@@ -319,8 +320,14 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 	    break;
 
 	  case BUF:
-	    gate = new NetLogic(scope, gate_name, 2,
-				NetLogic::BUF, instance_width);
+	    if (pin_count() < 2) {
+		  cerr << get_fileline() << ": error: the BUF "
+			"primitive must have an input." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, 2,
+		                      NetLogic::BUF, instance_width);
+	    }
 	    break;
 
 	  case BUFIF0:
@@ -390,8 +397,14 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 	    break;
 
 	  case NOT:
-	    gate = new NetLogic(scope, gate_name, 2,
-				NetLogic::NOT, instance_width);
+	    if (pin_count() < 2) {
+		  cerr << get_fileline() << ": error: the NOT "
+			"primitive must have an input." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, 2,
+		                      NetLogic::NOT, instance_width);
+	    }
 	    break;
 
 	  case NOTIF0:
