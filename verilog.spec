@@ -1,22 +1,20 @@
 Summary: Icarus Verilog 0.8
 Name: verilog08
-Version: 0.8.6
+Version: 0.8.7
 Release: 0
 License: GPL
 Group: Applications/Engineering
-Source: ftp://icarus.com/pub/eda/verilog/v0.8/verilog-0.8.6.tar.gz
+Source: ftp://icarus.com/pub/eda/verilog/v0.8/verilog-0.8.7.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
-
-BuildRequires: zlib-devel, bison, flex, gperf, readline-devel
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
 BuildRequires: 	gcc-c++, zlib-devel, bison, flex, gperf, termcap
-BuildRequires:	bzip2 readline-devel
+BuildRequires:	libbz2-devel, bzip2, readline-devel
 %ifarch x86_64
-BuildRequires:	glibc-devel-32bit, bzip2-32bit, zlib-devel-32bit, glibc-32bit
-BuildRequires:	termcap-32bit readline-devel-32bit readline-32bit
+BuildRequires:	glibc-devel-32bit, libbz2-1-32bit, zlib-devel-32bit, glibc-32bit
+BuildRequires:	termcap-32bit readline-devel-32bit
 %endif
 
 # This provides tag allows me to use a more specific name for things
@@ -29,7 +27,7 @@ engineering formats, including simulation. It strives to be true
 to the IEEE-1364 standard.
 
 %prep
-%setup -n verilog-0.8.6
+%setup -n verilog-0.8.7
 
 %build
 %ifarch x86_64

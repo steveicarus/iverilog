@@ -52,7 +52,7 @@ SHARED = @shared@
 all:
 
 ifeq (@enable_vvp32@,yes)
-vpidir32 = $(libdir)/ivl/@vpidir2@
+vpidir32 = $(libdir)/ivl$(suffix)/@vpidir2@
 ALL32 = all32
 INSTALL32 = install32
 UNINSTALL32 = uninistall32
