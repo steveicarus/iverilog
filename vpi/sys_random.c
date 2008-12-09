@@ -79,7 +79,7 @@ long rtl_dist_uniform(long*seed, long start, long end)
 		}
 		else
 		{
-			i = (unsigned long) (r-1);
+			i = - ( (unsigned long) (-(r - 1)) );
 		}
 		if (i<start) i = start;
 		if (i>=end) i = end-1;
@@ -94,7 +94,7 @@ long rtl_dist_uniform(long*seed, long start, long end)
 		}
 		else
 		{
-			i = (unsigned long) (r-1);
+			i = - ( (unsigned long) (-(r - 1)) );
 		}
 		if (i<=start) i = start+1;
 		if (i>end) i = end;
@@ -110,7 +110,13 @@ long rtl_dist_uniform(long*seed, long start, long end)
 		}
 		else
 		{
-			i = (unsigned long) (r-1);
+			  /* At least some compilers will notice that (r-1)
+			     is <0 when castling to unsigned long and
+			     replace the result with a zero. This causes
+			     much wrongness, so do the casting to the
+			     positive version and invert it back. */
+			i = - ( (unsigned long) (-(r - 1)) );
+
 		}
 	}
 
