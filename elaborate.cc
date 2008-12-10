@@ -2558,14 +2558,15 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
 	    NetAssign_*lv = new NetAssign_(port);
 	    unsigned wid = count_lval_width(lv);
+	    ivl_variable_type_t lv_type = lv->expr_type();
 
-	    ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
-	    bool flag = false;
-	    parms_[idx]->test_width(des, scope, 0, wid, tmp_type, flag);
+	    NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, wid, parms_[idx]);
+	    if (wid > rv->expr_width()) {
+		  rv->set_width(wid);
+		  rv = pad_to_width(rv, wid, *this);
+	    }
+	    ivl_assert(*this, rv->expr_width() >= wid);
 
-	    NetExpr*rv = elab_and_eval(des, scope, parms_[idx], wid);
-	    rv->set_width(wid);
-	    rv = pad_to_width(rv, wid, *this);
 	    NetAssign*pr = new NetAssign(lv, rv);
 	    block->append(pr);
       }
