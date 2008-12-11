@@ -1463,12 +1463,7 @@ static void do_include()
         else
         {
             *cp = '\0';
-
-            /* We do not need a strdup here since the path is read before
-             * it is overridden. If the search order is changed add a
-             * strdup here and a free below.
-             */
-            include_dir[0] = path;
+            include_dir[0] = strdup(path);
         }
 
         for (idx = start ;  idx < include_cnt ;  idx += 1)
@@ -1491,6 +1486,7 @@ static void do_include()
                                     code_that_switches_buffers:
 
     /* Clear the current files path from the search list. */
+    free(include_dir[0]);
     include_dir[0] = 0;
 
     if(depend_file)
