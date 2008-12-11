@@ -37,12 +37,14 @@ ivl_event_scope
 
 ivl_expr_type
 ivl_expr_bits
+ivl_expr_branch
 ivl_expr_def
 ivl_expr_dvalue
 ivl_expr_event
 ivl_expr_file
 ivl_expr_lineno
 ivl_expr_name
+ivl_expr_nature
 ivl_expr_opcode
 ivl_expr_oper1
 ivl_expr_oper2

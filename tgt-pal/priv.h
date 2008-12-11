@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: priv.h,v 1.8 2007/02/26 19:49:50 steve Exp $"
-#endif
 
 # include  <ivl_target.h>
 # include  <ipal.h>
@@ -100,31 +97,4 @@ extern int fit_logic(void);
 
 extern int emit_jedec(const char*path);
 
-/*
- * $Log: priv.h,v $
- * Revision 1.8  2007/02/26 19:49:50  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.7  2002/08/12 01:35:03  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.6  2001/05/16 03:55:30  steve
- *  Update to new LPM API for flip-flops.
- *
- * Revision 1.5  2001/01/15 00:05:39  steve
- *  Add client data pointer for scope and process scanners.
- *
- * Revision 1.4  2001/01/09 03:10:48  steve
- *  Generate the jedec to configure the macrocells.
- *
- * Revision 1.3  2000/12/14 23:37:47  steve
- *  Start support for fitting the logic.
- *
- * Revision 1.2  2000/12/09 03:42:52  steve
- *  Stuff registers into macrocells.
- *
- * Revision 1.1  2000/12/09 01:17:38  steve
- *  Add the pal loadable target.
- *
- */
 #endif

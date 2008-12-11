@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.20 2003/12/17 15:45:07 steve Exp $"
-#endif
 
 /*
  * This header file contains the definitions and declarations needed
@@ -272,83 +269,5 @@ extern  void acc_vcl_delete(handle obj, PLI_INT32(*consumer)(p_vc_record),
 extern char* acc_version(void);
 
 EXTERN_C_END
-
-/*
- * $Log: acc_user.h,v $
- * Revision 1.20  2003/12/17 15:45:07  steve
- *  Add acc_set_scope function.
- *
- * Revision 1.19  2003/10/10 02:57:45  steve
- *  Some PLI1 stubs.
- *
- * Revision 1.18  2003/06/13 19:23:41  steve
- *  Add a bunch more PLI1 routines.
- *
- * Revision 1.17  2003/06/04 01:56:20  steve
- * 1) Adds configure logic to clean up compiler warnings
- * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
- *    tf_isetrealdelay, acc_handle_scope
- * 3) makes acc_next reentrant
- * 4) adds basic vpiWire type support
- * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
- * 6) add vpiLeftRange/RigthRange to signals
- *
- * Revision 1.16  2003/05/30 04:18:31  steve
- *  Add acc_next function.
- *
- * Revision 1.15  2003/05/29 02:35:41  steve
- *  acc_fetch_type supports module.
- *
- * Revision 1.14  2003/05/29 02:21:45  steve
- *  Implement acc_fetch_defname and its infrastructure in vvp.
- *
- * Revision 1.13  2003/05/24 03:02:04  steve
- *  Add implementation of acc_handle_by_name.
- *
- * Revision 1.12  2003/05/18 00:16:35  steve
- *  Add PLI_TRACE tracing of PLI1 modules.
- *
- *  Add tf_isetdelay and friends, and add
- *  callback return values for acc_vcl support.
- *
- * Revision 1.11  2003/04/24 18:57:05  steve
- *  Add acc_fetch_fulltype function.
- *
- * Revision 1.10  2003/04/20 02:48:39  steve
- *  Support value change callbacks.
- *
- * Revision 1.9  2003/04/12 18:57:13  steve
- *  More acc_ function stubs.
- *
- * Revision 1.8  2003/03/13 04:35:09  steve
- *  Add a bunch of new acc_ and tf_ functions.
- *
- * Revision 1.7  2003/02/17 06:39:47  steve
- *  Add at least minimal implementations for several
- *  acc_ functions. Add support for standard ACC
- *  string handling.
- *
- *  Add the _pli_types.h header file to carry the
- *  IEEE1364-2001 standard PLI type declarations.
- *
- * Revision 1.6  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.5  2002/06/11 15:19:12  steve
- *  Add acc_fetch_argc/argv/version (mruff)
- *
- * Revision 1.4  2002/06/07 02:58:58  steve
- *  Add a bunch of acc/tf functions. (mruff)
- *
- * Revision 1.3  2002/06/02 19:03:29  steve
- *  Add acc_handle_tfarg and acc_next_topmode
- *
- * Revision 1.2  2002/05/30 02:06:05  steve
- *  Implement acc_product_version.
- *
- * Revision 1.1  2002/05/23 03:46:42  steve
- *  Add the acc_user.h header file.
- *
- */
 
 #endif

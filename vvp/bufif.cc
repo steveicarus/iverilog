@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: bufif.cc,v 1.14 2005/06/22 00:04:48 steve Exp $"
-#endif
 
 # include  "bufif.h"
 # include  "schedule.h"
@@ -84,35 +81,3 @@ void vvp_fun_bufif::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 
       vvp_send_vec8(ptr.ptr()->out, out);
 }
-
-
-/*
- * $Log: bufif.cc,v $
- * Revision 1.14  2005/06/22 00:04:48  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.13  2005/06/02 16:02:11  steve
- *  Add support for notif0/1 gates.
- *  Make delay nodes support inertial delay.
- *  Add the %force/link instruction.
- *
- * Revision 1.12  2005/04/13 06:34:20  steve
- *  Add vvp driver functor for logic outputs,
- *  Add ostream output operators for debugging.
- *
- * Revision 1.11  2005/03/12 04:27:42  steve
- *  Implement VPI access to signal strengths,
- *  Fix resolution of ambiguous drive pairs,
- *  Fix spelling of scalar.
- *
- * Revision 1.10  2005/02/07 22:42:42  steve
- *  Add .repeat functor and BIFIF functors.
- *
- * Revision 1.9  2002/09/06 04:56:28  steve
- *  Add support for %v is the display system task.
- *  Change the encoding of H and L outputs from
- *  the bufif devices so that they are logic x.
- *
- * Revision 1.8  2002/08/12 01:35:07  steve
- *  conditional ident string using autoconfig.
- */

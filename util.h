@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: util.h,v 1.9 2007/06/04 19:14:06 steve Exp $"
-#endif
 
 # include  <map>
 # include  "StringHeap.h"
@@ -48,33 +45,4 @@ extern attrib_list_t* evaluate_attributes(const map<perm_string,PExpr*>&att,
 					  unsigned&natt,
 					  Design*des, NetScope*scope);
 
-/*
- * $Log: util.h,v $
- * Revision 1.9  2007/06/04 19:14:06  steve
- *  Build errors in picky GCC compilers.
- *
- * Revision 1.8  2005/11/27 17:01:57  steve
- *  Fix for stubborn compiler.
- *
- * Revision 1.7  2004/02/20 18:53:36  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.6  2002/08/12 01:35:01  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.5  2002/05/23 03:08:52  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.4  2001/12/03 04:47:15  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.3  2001/10/20 23:02:40  steve
- *  Add automatic module libraries.
- */
 #endif

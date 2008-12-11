@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: Attrib.h,v 1.5 2004/02/20 18:53:33 steve Exp $"
-#endif
 
 # include  "StringHeap.h"
 # include  "verinum.h"
@@ -60,31 +57,4 @@ class Attrib {
       Attrib& operator= (const Attrib&);
 };
 
-/*
- * $Log: Attrib.h,v $
- * Revision 1.5  2004/02/20 18:53:33  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.4  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.3  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- *
- * Revision 1.2  2002/05/23 03:08:50  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.1  2000/12/04 17:37:03  steve
- *  Add Attrib class for holding NetObj attributes.
- *
- */
 #endif

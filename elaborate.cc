@@ -285,7 +285,8 @@ unsigned PGBuiltin::calculate_output_count_(void) const
       switch (type()) {
 	  case BUF:
 	  case NOT:
-	    output_count = pin_count() - 1;
+	    if (pin_count() > 2) output_count = pin_count() - 1;
+	    else output_count = 1;
 	    break;
 	  case PULLDOWN:
 	  case PULLUP:
@@ -319,8 +320,14 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 	    break;
 
 	  case BUF:
-	    gate = new NetLogic(scope, gate_name, 2,
-				NetLogic::BUF, instance_width);
+	    if (pin_count() < 2) {
+		  cerr << get_fileline() << ": error: the BUF "
+			"primitive must have an input." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, 2,
+		                      NetLogic::BUF, instance_width);
+	    }
 	    break;
 
 	  case BUFIF0:
@@ -390,8 +397,14 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 	    break;
 
 	  case NOT:
-	    gate = new NetLogic(scope, gate_name, 2,
-				NetLogic::NOT, instance_width);
+	    if (pin_count() < 2) {
+		  cerr << get_fileline() << ": error: the NOT "
+			"primitive must have an input." << endl;
+		  des->errors += 1;
+	    } else {
+		  gate = new NetLogic(scope, gate_name, 2,
+		                      NetLogic::NOT, instance_width);
+	    }
 	    break;
 
 	  case NOTIF0:
@@ -2215,6 +2228,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
+      probe_expr_width(des, scope, expr_);
       NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate this case"
@@ -2267,6 +2281,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 		  NetExpr*gu = 0;
 		  NetProc*st = 0;
 		  assert(cur->expr[e]);
+		  probe_expr_width(des, scope, cur->expr[e]);
 		  gu = elab_and_eval(des, scope, cur->expr[e], -1);
 
 		  if (cur->stat)
@@ -2543,14 +2558,15 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
 	    NetAssign_*lv = new NetAssign_(port);
 	    unsigned wid = count_lval_width(lv);
+	    ivl_variable_type_t lv_type = lv->expr_type();
 
-	    ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
-	    bool flag = false;
-	    parms_[idx]->test_width(des, scope, 0, wid, tmp_type, flag);
+	    NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, wid, parms_[idx]);
+	    if (wid > rv->expr_width()) {
+		  rv->set_width(wid);
+		  rv = pad_to_width(rv, wid, *this);
+	    }
+	    ivl_assert(*this, rv->expr_width() >= wid);
 
-	    NetExpr*rv = elab_and_eval(des, scope, parms_[idx], wid);
-	    rv->set_width(wid);
-	    rv = pad_to_width(rv, wid, *this);
 	    NetAssign*pr = new NetAssign(lv, rv);
 	    block->append(pr);
       }

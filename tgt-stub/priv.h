@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: priv.h,v 1.5 2007/01/17 05:00:12 steve Exp $"
-#endif
 
 # include  <ivl_target.h>
 # include  <stdio.h>

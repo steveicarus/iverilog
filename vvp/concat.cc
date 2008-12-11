@@ -16,7 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: concat.cc,v 1.5 2005/06/22 00:04:48 steve Exp $"
 
 # include  "compile.h"
 # include  "vvp_net.h"

@@ -315,9 +315,10 @@ verinum::verinum(int64_t that)
 {
       int64_t tmp;
 
-      tmp = that/2;
+      if (that < 0) tmp = (that+1)/2;
+      else tmp = that/2;
       nbits_ = 1;
-      while ((tmp != 0) && (tmp != -1)) {
+      while (tmp != 0) {
 	    nbits_ += 1;
 	    tmp /= 2;
       }

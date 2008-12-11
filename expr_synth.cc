@@ -974,31 +974,49 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope)
 	// it is constant. In this case we can generate fixed part selects.
       if (NetEConst*base_const = dynamic_cast<NetEConst*>(base_)) {
 	    verinum base_tmp = base_const->value();
-	    ivl_assert(*this, base_tmp.is_defined());
+	    unsigned select_width = expr_width();
+
+	      // Return 'bx for a constant undefined selections.
+	    if (!base_tmp.is_defined()) {
+		  NetNet*result = make_const_x(des, scope, select_width);
+		  result->set_line(*this);
+		  return result;
+	    }
 
 	    long base_val = base_tmp.as_long();
-	    unsigned select_width = expr_width();
 
 	      // Any below X bits?
 	    NetNet*below = 0;
 	    if (base_val < 0) {
 		  unsigned below_width = abs(base_val);
 		  base_val = 0;
-		  ivl_assert(*this, below_width < select_width);
-		  select_width -= below_width;
+		  if (below_width > select_width) {
+			below_width = select_width;
+			select_width = 0;
+		  } else {
+			select_width -= below_width;
+		  }
 
 		  below = make_const_x(des, scope, below_width);
 		  below->set_line(*this);
+		    // All the selected bits are below the signal.
+		  if (select_width == 0) return below;
 	    }
 
 	      // Any above bits?
 	    NetNet*above = 0;
 	    if ((unsigned)base_val+select_width > sub->vector_width()) {
-		  select_width = sub->vector_width() - base_val;
+		  if (base_val > (long)sub->vector_width()) {
+			select_width = 0;
+		  } else {
+			select_width = sub->vector_width() - base_val;
+		  }
 		  unsigned above_width = expr_width() - select_width;
 
 		  above = make_const_x(des, scope, above_width);
 		  above->set_line(*this);
+		    // All the selected bits are above the signal.
+		  if (select_width == 0) return above;
 	    }
 
 	      // Make the make part select.

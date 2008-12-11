@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random.c,v 1.16 2007/03/14 04:05:51 steve Exp $"
-#endif
 
 # include "sys_priv.h"
 

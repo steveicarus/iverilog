@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_dlfcn.h,v 1.10 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 #if defined(__MINGW32__)
 # include <windows.h>
@@ -94,41 +91,4 @@ inline const char*dlerror(void)
 { return strerror( errno ); }
 #endif
 
-/*
- * $Log: ivl_dlfcn.h,v $
- * Revision 1.10  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.9  2003/12/12 05:43:08  steve
- *  Some systems dlsym requires leading _ or not on whim.
- *
- * Revision 1.8  2003/02/16 05:42:06  steve
- *  Take the global_flag to ivl_dlopen.
- *
- * Revision 1.7  2003/02/16 02:21:20  steve
- *  Support .vpl files as loadable LIBRARIES.
- *
- * Revision 1.6  2002/11/05 02:11:56  steve
- *  Better error message for load failure on Windows.
- *
- * Revision 1.5  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2002/01/23 04:54:38  steve
- *  Load modules with RTLD_LAZY
- *
- * Revision 1.3  2001/05/22 02:14:47  steve
- *  Update the mingw build to not require cygwin files.
- *
- * Revision 1.2  2001/05/20 15:09:40  steve
- *  Mingw32 support (Venkat Iyer)
- *
- * Revision 1.1  2001/03/16 01:44:34  steve
- *  Add structures for VPI support, and all the %vpi_call
- *  instruction. Get linking of VPI modules to work.
- *
- * Revision 1.1  2001/01/14 17:12:59  steve
- *  possible HP/UX portability support.
- *
- */
 #endif

@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random_mti.c,v 1.5 2007/03/14 04:05:51 steve Exp $"
-#endif
 
 # include "sys_priv.h"
 
@@ -199,24 +196,4 @@ void sys_random_mti_register()
       tf_data.user_data = "$mti_dist_uniform";
       vpi_register_systf(&tf_data);
 }
-
-/*
- * $Log: sys_random_mti.c,v $
- * Revision 1.5  2007/03/14 04:05:51  steve
- *  VPI tasks take PLI_BYTE* by the standard.
- *
- * Revision 1.4  2006/10/30 22:45:37  steve
- *  Updates for Cygwin portability (pr1585922)
- *
- * Revision 1.3  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.2  2004/10/04 00:14:08  steve
- *  MTI functions only user Mersene Twister
- *
- * Revision 1.1  2004/06/09 22:14:10  steve
- *  Move Mersenne Twister to $mti_random, and make
- *  the standard $random standard. Also, add $dist_poisson.
- *
- */
 

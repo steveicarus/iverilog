@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_proc.cc,v 1.7 2006/08/08 05:11:37 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -172,36 +169,4 @@ const NetExpr* NetRepeat::expr() const
 {
       return expr_;
 }
-
-
-
-/*
- * $Log: net_proc.cc,v $
- * Revision 1.7  2006/08/08 05:11:37  steve
- *  Handle 64bit delay constants.
- *
- * Revision 1.6  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.5  2002/07/28 23:58:45  steve
- *  Fix NetBlock destructor to delete substatements.
- *
- * Revision 1.4  2002/04/21 04:59:08  steve
- *  Add support for conbinational events by finding
- *  the inputs to expressions and some statements.
- *  Get case and assignment statements working.
- *
- * Revision 1.3  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.2  2000/07/27 05:13:44  steve
- *  Support elaboration of disable statements.
- *
- * Revision 1.1  2000/07/07 04:53:54  steve
- *  Add support for non-constant delays in delay statements,
- *  Support evaluating ! in constant expressions, and
- *  move some code from netlist.cc to net_proc.cc.
- *
- */
 

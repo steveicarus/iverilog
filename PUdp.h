@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: PUdp.h,v 1.12 2004/03/08 00:47:44 steve Exp $"
-#endif
 
 # include  <map>
 # include  "StringHeap.h"
@@ -78,53 +75,4 @@ class PUdp {
       PUdp& operator= (const PUdp&);
 };
 
-/*
- * $Log: PUdp.h,v $
- * Revision 1.12  2004/03/08 00:47:44  steve
- *  primitive ports can bind bi name.
- *
- * Revision 1.11  2004/02/18 17:11:54  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.10  2003/07/15 05:07:13  steve
- *  Move PUdp constructor into compiled file.
- *
- * Revision 1.9  2003/07/15 03:49:22  steve
- *  Spelling fixes.
- *
- * Revision 1.8  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.7  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.6  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.5  2001/04/22 23:09:45  steve
- *  More UDP consolidation from Stephan Boettcher.
- *
- * Revision 1.4  2000/02/23 02:56:53  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.3  1999/06/15 03:44:53  steve
- *  Get rid of the STL vector template.
- *
- * Revision 1.2  1998/12/01 00:42:13  steve
- *  Elaborate UDP devices,
- *  Support UDP type attributes, and
- *  pass those attributes to nodes that
- *  are instantiated by elaboration,
- *  Put modules into a map instead of
- *  a simple list.
- *
- * Revision 1.1  1998/11/25 02:35:53  steve
- *  Parse UDP primitives all the way to pform.
- *
- */
 #endif

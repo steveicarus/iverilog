@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: globals.h,v 1.21 2007/04/19 02:52:53 steve Exp $"
-#endif
 
 # include  <stddef.h>
 
@@ -78,36 +75,4 @@ extern char warning_flags[];
 extern char* library_flags;
 extern char* library_flags2;
 
-/*
- * $Log: globals.h,v $
- * Revision 1.21  2007/04/19 02:52:53  steve
- *  Add support for -v flag in command file.
- *
- * Revision 1.20  2007/03/07 04:24:59  steve
- *  Make integer width controllable.
- *
- * Revision 1.19  2003/11/18 06:31:46  steve
- *  Remove the iverilog.conf file.
- *
- * Revision 1.18  2003/11/13 04:09:49  steve
- *  Pass flags through the temporary config file.
- *
- * Revision 1.17  2003/11/01 04:21:57  steve
- *  Add support for a target static config file.
- *
- * Revision 1.16  2002/08/12 01:35:01  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.15  2002/06/23 20:10:51  steve
- *  Variable substitution in command files.
- *
- * Revision 1.14  2002/05/28 20:40:37  steve
- *  ivl indexes the search path for libraries, and
- *  supports case insensitive module-to-file lookup.
- *
- * Revision 1.13  2002/05/28 00:50:40  steve
- *  Add the ivl -C flag for bulk configuration
- *  from the driver, and use that to run library
- *  modules through the preprocessor.
- */
 #endif

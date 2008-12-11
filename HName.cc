@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: HName.cc,v 1.8 2007/06/02 03:42:12 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "HName.h"
@@ -119,34 +116,4 @@ ostream& operator<< (ostream&out, const hname_t&that)
 
       return out;
 }
-
-/*
- * $Log: HName.cc,v $
- * Revision 1.8  2007/06/02 03:42:12  steve
- *  Properly evaluate scope path expressions.
- *
- * Revision 1.7  2007/05/16 19:12:33  steve
- *  Fix hname_t use of space for 1 perm_string.
- *
- * Revision 1.6  2007/04/26 03:06:21  steve
- *  Rework hname_t to use perm_strings.
- *
- * Revision 1.5  2002/11/02 03:27:52  steve
- *  Allow named events to be referenced by
- *  hierarchical names.
- *
- * Revision 1.4  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.3  2002/01/05 04:36:06  steve
- *  include malloc.h only when available.
- *
- * Revision 1.2  2001/12/18 04:52:45  steve
- *  Include config.h for namespace declaration.
- *
- * Revision 1.1  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- */
 

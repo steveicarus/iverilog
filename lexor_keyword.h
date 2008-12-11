@@ -18,19 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor_keyword.h,v 1.2 2002/08/12 01:34:59 steve Exp $"
-#endif
 
 extern int lexor_keyword_code (const char*str, unsigned len);
 
-/*
- * $Log: lexor_keyword.h,v $
- * Revision 1.2  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.1  2000/03/12 17:09:41  steve
- *  Support localparam.
- *
- */
 #endif

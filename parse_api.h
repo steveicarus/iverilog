@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: parse_api.h,v 1.3 2004/02/18 17:11:57 steve Exp $"
-#endif
 
 # include  <stdio.h>
 # include  "StringHeap.h"
@@ -49,16 +46,4 @@ extern int  pform_parse(const char*path, FILE*file =0);
 
 extern string vl_file;
 
-/*
- * $Log: parse_api.h,v $
- * Revision 1.3  2004/02/18 17:11:57  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.2  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.1  2001/10/21 20:18:56  steve
- *  clean up API for restarting parser.
- *
- */
 #endif

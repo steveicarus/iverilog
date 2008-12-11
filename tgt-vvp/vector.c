@@ -15,9 +15,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.15 2007/04/01 05:26:17 steve Exp $"
-#endif
 
 # include  "vvp_priv.h"
 # include  <assert.h>
@@ -377,58 +374,4 @@ unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
 
       return la;
 }
-
-/*
- * $Log: vector.c,v $
- * Revision 1.15  2007/04/01 05:26:17  steve
- *  Fix that save expression lookaside always clears cached variable values.
- *
- * Revision 1.14  2007/03/22 16:08:18  steve
- *  Spelling fixes from Larry
- *
- * Revision 1.13  2007/03/20 04:26:56  steve
- *  Clear lookaside even if source bit is a constant.
- *
- * Revision 1.12  2007/02/26 19:49:50  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.11  2007/02/06 04:43:53  steve
- *  Expression lookaside cannot hold complex expressions
- *
- * Revision 1.10  2007/01/19 02:30:19  steve
- *  Fix bad lookaside references in vvp thread code generator.
- *
- * Revision 1.9  2007/01/18 00:59:48  steve
- *  Do not match array words in expression lookaside.
- *
- * Revision 1.8  2007/01/16 05:44:16  steve
- *  Major rework of array handling. Memories are replaced with the
- *  more general concept of arrays. The NetMemory and NetEMemory
- *  classes are removed from the ivl core program, and the IVL_LPM_RAM
- *  lpm type is removed from the ivl_target API.
- *
- * Revision 1.7  2005/09/17 01:01:00  steve
- *  More robust use of precalculated expressions, and
- *  Separate lookaside for written variables that can
- *  also be reused.
- *
- * Revision 1.6  2005/09/15 02:50:13  steve
- *  Preserve precalculated expressions when possible.
- *
- * Revision 1.5  2005/01/24 05:08:02  steve
- *  Part selects are done in the compiler, not here.
- *
- * Revision 1.4  2003/07/03 17:44:10  steve
- *  Wider thread vector limit.
- *
- * Revision 1.3  2003/06/17 19:17:42  steve
- *  Remove short int restrictions from vvp opcodes.
- *
- * Revision 1.2  2003/06/05 04:18:50  steve
- *  Better width testing for thread vector allocation.
- *
- * Revision 1.1  2002/09/27 16:33:34  steve
- *  Add thread expression lookaside map.
- *
- */
 

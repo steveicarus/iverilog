@@ -21,6 +21,8 @@
 #ifndef INC_VHDL_SYNTAX_HH
 #define INC_VHDL_SYNTAX_HH
 
+#include <inttypes.h>
+#include <cassert>
 #include "vhdl_element.hh"
 #include "vhdl_type.hh"
 
@@ -333,8 +335,11 @@ public:
    void add_stmt(vhdl_seq_stmt *stmt);
    void emit(std::ostream &of, int level, bool newline=true) const;
    bool empty() const { return stmts_.empty(); }
+
+   typedef std::list<vhdl_seq_stmt*> stmt_list_t;
+   stmt_list_t &get_stmts() { return stmts_; }
 private:
-   std::list<vhdl_seq_stmt*> stmts_;
+   stmt_list_t stmts_;
 };
 
 
@@ -379,6 +384,7 @@ public:
 enum vhdl_wait_type_t {
    VHDL_WAIT_INDEF,  // Suspend indefinitely
    VHDL_WAIT_FOR,    // Wait for a constant amount of time
+   VHDL_WAIT_FOR0,   // Special wait for zero time
    VHDL_WAIT_UNTIL,  // Wait on an expression
    VHDL_WAIT_ON,     // Wait on a sensitivity list
 };
@@ -396,6 +402,7 @@ public:
    
    void emit(std::ostream &of, int level) const;
    void add_sensitivity(const std::string &s) { sensitivity_.push_back(s); }
+   vhdl_wait_type_t get_type() const { return type_; }
 private:
    vhdl_wait_type_t type_;
    vhdl_expr *expr_;
@@ -541,6 +548,16 @@ public:
    void set_type(vhdl_type *t) { type_ = t; }
    void set_initial(vhdl_expr *initial);
    bool has_initial() const { return has_initial_; }
+
+   // The different sorts of assignment statement
+   enum assign_type_t { ASSIGN_BLOCK, ASSIGN_NONBLOCK };
+   
+   // Get the sort of assignment statement to generate for
+   // assignemnts to this declaration
+   // For some sorts of declarations it doesn't make sense
+   // to assign to it so calling assignment_type just raises
+   // an assertion failure
+   virtual assign_type_t assignment_type() const { assert(false); }
 protected:
    std::string name_;
    vhdl_type *type_;
@@ -576,7 +593,6 @@ public:
    void emit(std::ostream &of, int level) const;
 };
 
-
 /*
  * A variable declaration inside a process (although this isn't
  * enforced here).
@@ -586,6 +602,7 @@ public:
    vhdl_var_decl(const char *name, vhdl_type *type)
       : vhdl_decl(name, type) {}
    void emit(std::ostream &of, int level) const;
+   assign_type_t assignment_type() const { return ASSIGN_BLOCK; }
 };
 
 
@@ -597,6 +614,7 @@ public:
    vhdl_signal_decl(const char *name, vhdl_type *type)
       : vhdl_decl(name, type) {}
    virtual void emit(std::ostream &of, int level) const;
+   assign_type_t assignment_type() const { return ASSIGN_NONBLOCK; }
 };
 
 
@@ -631,6 +649,7 @@ public:
    void emit(std::ostream &of, int level) const;
    vhdl_port_mode_t get_mode() const { return mode_; }
    void set_mode(vhdl_port_mode_t m) { mode_ = m; }
+   assign_type_t assignment_type() const { return ASSIGN_NONBLOCK; }
 private:
    vhdl_port_mode_t mode_;
 };

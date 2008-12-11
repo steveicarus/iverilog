@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.cc,v 1.19 2007/04/07 04:46:18 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -173,64 +170,4 @@ ostream& operator<< (ostream&out, const verireal&v)
       out << v.value_;
       return out;
 }
-
-/*
- * $Log: verireal.cc,v $
- * Revision 1.19  2007/04/07 04:46:18  steve
- *  Handle evaluate of addition of real valued constants.
- *
- * Revision 1.18  2006/10/03 05:06:00  steve
- *  Support real valued specify delays, properly scaled.
- *
- * Revision 1.17  2006/08/08 05:11:37  steve
- *  Handle 64bit delay constants.
- *
- * Revision 1.16  2006/07/31 03:50:18  steve
- *  Add support for power in constant expressions.
- *
- * Revision 1.15  2004/06/04 23:33:51  steve
- *  Add unary minus as operator supported by verireal.
- *
- * Revision 1.14  2003/03/07 06:10:13  steve
- *  Use strtod to convert text to doubles.
- *
- * Revision 1.13  2003/03/05 03:45:01  steve
- *  Restore verireal constructor to match vvp processing of reals.
- *
- * Revision 1.11  2003/02/07 06:13:44  steve
- *  Store real values as native double.
- *
- * Revision 1.10  2003/02/07 02:48:43  steve
- *  NetEBDiv handles real value constant expressions.
- *
- * Revision 1.9  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.8  2002/08/12 01:35:01  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.7  2002/06/15 02:35:49  steve
- *  Rounding error.
- *
- * Revision 1.6  2001/11/06 06:11:55  steve
- *  Support more real arithmetic in delay constants.
- *
- * Revision 1.5  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.4  2001/07/07 20:20:10  steve
- *  Pass parameters to system functions.
- *
- * Revision 1.3  2000/12/10 22:01:36  steve
- *  Support decimal constants in behavioral delays.
- *
- * Revision 1.2  2000/02/23 02:56:56  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.1  1999/06/15 02:50:02  steve
- *  Add lexical support for real numbers.
- *
- */
 

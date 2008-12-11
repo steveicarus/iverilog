@@ -88,6 +88,24 @@ void error(const char *fmt, ...)
 }
 
 /*
+ * Print a message only if -pdebug was specified.
+ */
+void debug_msg(const char *fmt, ...)
+{
+   std::va_list args;
+
+   va_start(args, fmt);
+
+   if (std::strcmp(ivl_design_flag(g_design, "debug"), "")) {
+      std::fputs("[DEBUG] ", stdout);  
+      std::vprintf(fmt, args);
+      std::putchar('\n');
+   }
+
+   va_end(args);
+}
+
+/*
  * Find an entity given a scope name.
  */
 vhdl_entity *find_entity(const std::string &sname)

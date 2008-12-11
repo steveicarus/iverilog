@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: stringheap.h,v 1.1 2003/02/13 18:13:28 steve Exp $"
-#endif
 
 struct stringheap_cell;
 
@@ -34,10 +31,4 @@ struct stringheap_s {
  */
 const char*strdup_sh(struct stringheap_s*hp, const char*str);
 
-/*
- * $Log: stringheap.h,v $
- * Revision 1.1  2003/02/13 18:13:28  steve
- *  Make lxt use stringheap to perm-allocate strings.
- *
- */
 #endif
