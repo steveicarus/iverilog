@@ -262,17 +262,24 @@ static const char*my_tempfile(const char*str, FILE**fout)
 
 static int t_version_only(void)
 {
+      int rc;
       remove(source_path);
       free(source_path);
 
       fflush(0);
       snprintf(tmp, sizeof tmp, "%s%civlpp -V", pbase, sep);
-      system(tmp);
+      rc = system(tmp);
+      if (rc != 0) {
+	    fprintf(stderr, "Unable to get version from \"%s\"\n", tmp);
+      }
 
       fflush(0);
       snprintf(tmp, sizeof tmp, "%s%civl -V -C%s -C%s", pbase, sep,
 	       iconfig_path, iconfig_common_path);
-      system(tmp);
+      rc = system(tmp);
+      if (rc != 0) {
+	    fprintf(stderr, "Unable to get version from \"%s\"\n", tmp);
+      }
 
       if ( ! getenv("IVERILOG_ICONFIG")) {
 	    remove(iconfig_path);
