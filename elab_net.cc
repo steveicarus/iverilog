@@ -621,13 +621,51 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
       if (! eval_part_select_(des, scope, sig, midx, lidx))
 	    return 0;
 
+	/* If this is a part select of the entire signal (or no part
+	   select at all) then we're done. */
+      if ((lidx == 0) && (midx == (long)sig->vector_width()-1))
+	    return sig;
 
-      unsigned swid = midx - lidx + 1;
+      unsigned swid = abs(midx - lidx) + 1;
+      ivl_assert(*this, swid > 0 && swid < sig->vector_width());
 
-      if (swid < sig->vector_width()) {
-	    cerr << get_fileline() << ": XXXX: Forgot to implement part select"
-		 << " of signal port." << endl;
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+			      NetNet::WIRE, swid);
+      tmp->port_type(sig->port_type());
+      tmp->data_type(sig->data_type());
+      tmp->set_line(*this);
+      NetNode*ps = 0;
+      switch (sig->port_type()) {
+
+	  case NetNet::PINPUT:
+	    ps = new NetPartSelect(sig, sig->sb_to_idx(lidx), swid,
+				   NetPartSelect::PV);
+	    connect(tmp->pin(0), ps->pin(0));
+	    sig = tmp;
+	    break;
+
+	  case NetNet::POUTPUT:
+	    ps = new NetPartSelect(sig, sig->sb_to_idx(lidx), swid,
+				   NetPartSelect::VP);
+	    connect(tmp->pin(0), ps->pin(0));
+	    sig = tmp;
+	    break;
+
+	  case NetNet::PINOUT:
+	    ps = new NetTran(scope, scope->local_symbol(), sig->vector_width(),
+			     swid, sig->sb_to_idx(lidx));
+	    connect(sig->pin(0), ps->pin(0));
+	    connect(tmp->pin(0), ps->pin(1));
+	    sig = tmp;
+	    break;
+
+	  default:
+	    ivl_assert(*this, 0);
+	    break;
       }
+
+      ps->set_line(*this);
+      des->add_node(ps);
 
       return sig;
 }
