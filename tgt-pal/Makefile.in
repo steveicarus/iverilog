@@ -68,6 +68,9 @@ clean:
 distclean: clean
 	rm -f Makefile
 
+Makefile: $(srcdir)/Makefile.in ../config.status
+	../config.status --file=$@
+
 install: all installdirs $(libdir)/ivl/pal.tgt
 
 $(libdir)/ivl/pal.tgt: ./pal.tgt

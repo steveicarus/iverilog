@@ -82,7 +82,7 @@ CXXFLAGS = -Wall @CXXFLAGS@
 PICFLAGS = @PICFLAG@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 
-all: dep version.h ivl@EXEEXT@
+all: dep config.h _pli_types.h version.h ivl@EXEEXT@
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) VERSION=$(VERSION) $@); done
 	for dir in ivlpp ; \
 	    do (cd $$dir ; $(MAKE) VERSION=$(VERSION) $@); done
@@ -106,8 +106,11 @@ check: all
 
 clean:
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
-	for dir in vpi ivlpp tgt-verilog tgt-pal driver driver-vpi; \
+	for dir in ivlpp tgt-verilog tgt-pal driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
+ifeq (@MINGW32@,no)
+	(cd driver-vpi ; $(MAKE) $@)
+endif
 	rm -f *.o parse.cc parse.cc.output parse.h lexor.cc
 	rm -f ivl.exp iverilog-vpi.pdf iverilog-vpi.ps parse.output
 	rm -f syn-rules.output dosify.exe ivl@EXEEXT@ check.vvp
@@ -116,8 +119,11 @@ clean:
 
 distclean: clean
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
-	for dir in vpi ivlpp tgt-verilog tgt-pal driver driver-vpi; \
+	for dir in ivlpp tgt-verilog tgt-pal driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
+ifeq (@MINGW32@,no)
+	(cd driver-vpi ; $(MAKE) $@)
+endif
 	rm -f Makefile config.status config.log config.cache config.h
 	rm -f _pli_types.h
 
@@ -142,8 +148,14 @@ PExpr.o PGate.o PGenerate.o PScope.o PSpec.o \
 PTask.o PUdp.o PFunction.o PWire.o Statement.o AStatement.o StringHeap.o \
 $(FF) $(TT)
 
-Makefile: Makefile.in config.h.in config.status
-	./config.status
+Makefile: $(srcdir)/Makefile.in config.status
+	./config.status --file=$@
+
+config.h: $(srcdir)/config.h.in config.status
+	./config.status --header=$@
+
+_pli_types.h: $(srcdir)/_pli_types.h.in config.status
+	./config.status --header=$@
 
 
 ifeq (@WIN32@,yes)

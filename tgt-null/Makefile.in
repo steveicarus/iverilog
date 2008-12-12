@@ -71,6 +71,9 @@ clean:
 distclean: clean
 	rm -f Makefile config.status config.log config.cache
 
+Makefile: $(srcdir)/Makefile.in ../config.status
+	../config.status --file=$@
+
 check: all
 
 install: all installdirs $(libdir)/ivl$(suffix)/null.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/null.conf $(libdir)/ivl$(suffix)/null-s.conf

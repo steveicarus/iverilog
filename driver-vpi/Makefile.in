@@ -58,6 +58,9 @@ clean:
 distclean: clean
 	rm -f Makefile
 
+Makefile: $(srcdir)/Makefile.in ../config.status
+	../config.status --file=$@
+
 O = main.o res.o
 
 iverilog-vpi@EXEEXT@: $O

@@ -57,6 +57,9 @@ clean:
 distclean: clean
 	rm -f Makefile
 
+Makefile: $(srcdir)/Makefile.in ../config.status
+	../config.status --file=$@
+
 O = main.o substit.o cflexor.o cfparse.o
 
 iverilog@EXEEXT@: $O

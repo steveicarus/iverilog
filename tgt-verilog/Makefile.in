@@ -67,6 +67,9 @@ clean:
 distclean: clean
 	rm -f Makefile
 
+Makefile: $(srcdir)/Makefile.in ../config.status
+	../config.status --file=$@
+
 check: all
 
 install: all installdirs $(libdir)/ivl/verilog.tgt \
