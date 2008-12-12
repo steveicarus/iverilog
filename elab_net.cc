@@ -29,6 +29,7 @@
 
 # include  <iostream>
 # include  <cstring>
+# include  <memory>
 
 /*
  * This is a state flag that determines whether an elaborate_net must
