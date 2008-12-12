@@ -464,12 +464,23 @@ static vhdl_expr *translate_select(ivl_expr_t e)
          return new vhdl_binop_expr(from, VHDL_BINOP_SR, base->to_integer(),
                                     new vhdl_type(*from->get_type()));
       }
-      else {
+      else if (from_var_ref->get_type()->get_name() != VHDL_TYPE_STD_LOGIC) {
          // We can use the more idomatic VHDL slice notation on a
          // single variable reference
          vhdl_type integer(VHDL_TYPE_INTEGER);
          from_var_ref->set_slice(base->cast(&integer), ivl_expr_width(e) - 1);
          return from_var_ref;
+      }
+      else {
+         // Make sure we're not trying to select more than one bit
+         // from a std_logic (this shouldn't actually happen)
+         if (ivl_expr_width(e) > 1) {
+            error("%s:%d: trying to select more than one bit from a std_logic",
+                  ivl_expr_file(e), ivl_expr_lineno(e));
+            return NULL;
+         }
+         else
+            return from_var_ref;
       }
    }
    else
