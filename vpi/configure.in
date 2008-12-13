@@ -29,8 +29,6 @@ AC_SUBST(EXEEXT)
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
 
-AX_CPP_IDENT
-
 AC_CHECK_HEADERS(malloc.h inttypes.h)
 
 AC_CHECK_LIB(z, gzwrite)
