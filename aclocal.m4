@@ -105,6 +105,10 @@ case "${host}" in
         shared="-shared -Wl,--enable-auto-image-base"
         ;;
 
+     *-*-mingw*)
+        shared="-shared -Wl,--enable-auto-image-base"
+        ;;
+
      *-*-hpux*)
         shared="-b"
         ;;
@@ -131,6 +135,10 @@ PICFLAG=-fPIC
 case "${host}" in
 
      *-*-cygwin*)
+        PICFLAG=
+        ;;
+
+     *-*-mingw*)
         PICFLAG=
         ;;
 
@@ -166,6 +174,10 @@ case "${host}" in
         ;;
 
     *-*-cygwin*)
+        rdynamic=""
+        ;;
+
+    *-*-mingw*)
         rdynamic=""
         ;;
 
