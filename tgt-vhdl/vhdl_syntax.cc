@@ -87,8 +87,8 @@ vhdl_scope *vhdl_scope::get_parent() const
 }
 
 vhdl_entity::vhdl_entity(const char *name, const char *derived_from,
-                         vhdl_arch *arch)
-   : name_(name), arch_(arch), derived_from_(derived_from)
+                         vhdl_arch *arch, int depth)
+   :  depth(depth), name_(name), arch_(arch), derived_from_(derived_from)
 {
    arch->get_scope()->set_parent(&ports_);
 }

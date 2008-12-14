@@ -28,6 +28,7 @@
 #include <cstdio>
 #include <cassert>
 #include <cstring>
+#include <cstdlib>
 #include <list>
 #include <map>
 #include <set>
@@ -210,13 +211,21 @@ extern "C" int target_design(ivl_design_t des)
               << "-- Icarus Verilog VHDL Code Generator " VERSION
                  " (" VERSION_TAG ")" << endl << endl;
 
+      // If the user passed -pdepth=N then only emit entities with
+      // depth < N
+      // I.e. -pdepth=1 emits only the top-level entity
+      // If max_depth is zero then all entities will be emitted
+      // (This is handy since it means we can use atoi ;-)
+      int max_depth = std::atoi(ivl_design_flag(des, "depth"));
+
       // Make sure we only emit one example of each type of entity
       set<string> seen_entities;
       
       for (entity_list_t::iterator it = g_entities.begin();
            it != g_entities.end();
            ++it) {
-         if (seen_entities.find((*it)->get_name()) == seen_entities.end()) {
+         if (seen_entities.find((*it)->get_name()) == seen_entities.end()
+             && (max_depth == 0 || (*it)->depth < max_depth)) {
             (*it)->emit(outfile);
             seen_entities.insert((*it)->get_name());
          }

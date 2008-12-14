@@ -642,7 +642,7 @@ static int draw_task(ivl_scope_t scope, ivl_scope_t parent)
 /*
  * Create an empty VHDL entity for a Verilog module.
  */
-static void create_skeleton_entity_for(ivl_scope_t scope)
+static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
 {
    assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
 
@@ -658,7 +658,7 @@ static void create_skeleton_entity_for(ivl_scope_t scope)
    // with the entity for convenience (this also means that we
    // retain a 1-to-1 mapping of scope to VHDL element)
    vhdl_arch *arch = new vhdl_arch(tname, "FromVerilog");
-   vhdl_entity *ent = new vhdl_entity(tname, derived_from, arch);
+   vhdl_entity *ent = new vhdl_entity(tname, derived_from, arch, depth);
 
    // Build a comment to add to the entity/architecture
    ostringstream ss;
@@ -676,13 +676,16 @@ static void create_skeleton_entity_for(ivl_scope_t scope)
  * A first pass through the hierarchy: create VHDL entities for
  * each unique Verilog module type.
  */
-static int draw_skeleton_scope(ivl_scope_t scope, void *_parent)
+static int draw_skeleton_scope(ivl_scope_t scope, void *_unused)
 {
-   debug_msg("Initial visit to scope %s", ivl_scope_name(scope));
+   static int depth = 0;
+   
+   debug_msg("Initial visit to scope %s at depth %d",
+             ivl_scope_name(scope), depth);
    
    switch (ivl_scope_type(scope)) {
    case IVL_SCT_MODULE:
-      create_skeleton_entity_for(scope);
+      create_skeleton_entity_for(scope, depth);
       break;
    case IVL_SCT_GENERATE:
       error("No translation for generate statements yet");
@@ -694,8 +697,11 @@ static int draw_skeleton_scope(ivl_scope_t scope, void *_parent)
       // The other scope types are expanded later on
       break;
    }
-      
-   return ivl_scope_children(scope, draw_skeleton_scope, scope);
+
+   ++depth;
+   int rc = ivl_scope_children(scope, draw_skeleton_scope, NULL);
+   --depth;
+   return rc;
 }
 
 static int draw_all_signals(ivl_scope_t scope, void *_parent)

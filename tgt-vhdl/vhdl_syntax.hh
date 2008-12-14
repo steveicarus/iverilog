@@ -797,7 +797,7 @@ private:
 class vhdl_entity : public vhdl_element {
 public:
    vhdl_entity(const char *name, const char *derived_from,
-               vhdl_arch *arch);
+               vhdl_arch *arch, int depth=0);
    virtual ~vhdl_entity();
 
    void emit(std::ostream &of, int level=0) const;
@@ -807,6 +807,11 @@ public:
    const std::string &get_derived_from() const { return derived_from_; }
 
    vhdl_scope *get_scope() { return &ports_; }
+   
+   // Each entity has an associated depth which is how deep in
+   // the Verilog module hierarchy it was found
+   // This is used to limit the maximum depth of modules emitted
+   const int depth;
 private:
    std::string name_;
    vhdl_arch *arch_;  // Entity may only have a single architecture
