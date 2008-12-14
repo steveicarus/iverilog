@@ -65,8 +65,11 @@ endif
 vhdl.tgt: $O $(TGTDEPLIBS)
 	$(CXX) @shared@ -o $@ $O $(TGTLDFLAGS)
 
-Makefile: Makefile.in config.status
-	./config.status
+Makefile: Makefile.in ../config.status
+	../config.status --file=$@
+
+vhdl_config.h: vhdl_config.h.in ../config.status
+	../config.status --header=$@
 
 clean:
 	rm -rf $(O) dep vhdl.tgt 

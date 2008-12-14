@@ -113,6 +113,12 @@ clean:
 distclean: clean
 	rm -f Makefile config.status config.log vpi_config.h
 
+Makefile: Makefile.in ../config.status
+	../config.status --file=$@
+
+vpi_config.h: vpi_config.h.in ../config.status
+	../config.status --header=$@
+
 check: all
 
 install: all installdirs \

@@ -59,8 +59,11 @@ all: dep libveriuser.a $(ALL32)
 
 check: all
 
-Makefile: Makefile.in config.status
-	./config.status
+Makefile: Makefile.in ../config.status
+	../config.status --file=$@
+
+config.h: config.h.in ../config.status
+	../config.status --header=$@
 
 libveriuser.o: $O
 	$(LD) -r -o $@ $O

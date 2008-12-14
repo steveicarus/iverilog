@@ -70,14 +70,17 @@ endif
 vvp.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
 
-vvp.conf: $(srcdir)/vvp.conf.in
+vvp.conf: $(srcdir)/vvp.conf.in Makefile
 	echo 'flag:VVP_EXECUTABLE=$(bindir)/vvp$(suffix)' | cat $(srcdir)/vvp.conf.in - > vvp.conf
 
-vvp-s.conf: $(srcdir)/vvp-s.conf.in
+vvp-s.conf: $(srcdir)/vvp-s.conf.in Makefile
 	echo 'flag:VVP_EXECUTABLE=$(bindir)/vvp$(suffix)' | cat $(srcdir)/vvp-s.conf.in - > vvp-s.conf
 
-Makefile: Makefile.in config.status
-	./config.status
+Makefile: Makefile.in ../config.status
+	../config.status --file=$@
+
+vvp_config.h: vvp_config.h.in ../config.status
+	../config.status --header=$@
 
 clean:
 	rm -rf *.o dep vvp.tgt vvp.conf vvp-s.conf

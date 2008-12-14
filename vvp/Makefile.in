@@ -54,10 +54,7 @@ LIBS = @LIBS@ @EXTRALIBS@
 
 dllib=@DLLIB@
 
-MDIR1 = -DMODULE_DIR1=\"$(libdir)/ivl$(suffix)/@vpidir1@\"
-ifneq (x@vpidir2@,x)
-MDIR2 = -DMODULE_DIR2=\"$(libdir)/ivl$(suffix)/@vpidir2@\"
-endif
+MDIR1 = -DMODULE_DIR1=\"$(libdir)/ivl$(suffix)/.\"
 
 all: dep vvp@EXEEXT@ libvpi.a
 
@@ -155,9 +152,11 @@ INSTALL_DOC = $(mandir)/man1/vvp$(suffix).1
 INSTALL_DOCDIR = $(mandir)/man1
 endif
 
-Makefile: Makefile.in config.status
-	./config.status
+Makefile: Makefile.in ../config.status
+	../config.status --file=$@
 
+config.h: config.h.in ../config.status
+	../config.status --header=$@
 
 install: all installdirs $(bindir)/vvp$(suffix)@EXEEXT@ $(libdir)/libvpi$(suffix).a $(INSTALL_DOC)
 

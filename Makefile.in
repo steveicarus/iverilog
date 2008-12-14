@@ -52,7 +52,7 @@ exec_prefix = @exec_prefix@
 srcdir = @srcdir@
 datarootdir = @datarootdir@
 
-SUBDIRS = @subdirs@
+SUBDIRS = ivlpp vvp vpi libveriuser cadpli tgt-null tgt-stub tgt-vvp tgt-vhdl driver
 
 VPATH = $(srcdir)
 
@@ -84,9 +84,6 @@ LDFLAGS = @rdynamic@ @LDFLAGS@
 
 all: dep config.h _pli_types.h version.h ivl@EXEEXT@
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) VERSION=$(VERSION) $@); done
-	for dir in ivlpp ; \
-	    do (cd $$dir ; $(MAKE) VERSION=$(VERSION) $@); done
-	cd driver ; $(MAKE) VERSION=$(VERSION) $@
 
 # In the windows world, the installer will need a dosify program to
 # dosify text files.
@@ -106,8 +103,6 @@ check: all
 
 clean:
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
-	for dir in ivlpp tgt-verilog tgt-pal driver; \
-	    do (cd $$dir ; $(MAKE) $@); done
 ifeq (@MINGW32@,no)
 	(cd driver-vpi ; $(MAKE) $@)
 endif
@@ -119,8 +114,6 @@ endif
 
 distclean: clean
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
-	for dir in ivlpp tgt-verilog tgt-pal driver; \
-	    do (cd $$dir ; $(MAKE) $@); done
 ifeq (@MINGW32@,no)
 	(cd driver-vpi ; $(MAKE) $@)
 endif
@@ -151,10 +144,10 @@ $(FF) $(TT)
 Makefile: $(srcdir)/Makefile.in config.status
 	./config.status --file=$@
 
-config.h: $(srcdir)/config.h.in config.status
+config.h: $(srcdir)/config.h.in
 	./config.status --header=$@
 
-_pli_types.h: $(srcdir)/_pli_types.h.in config.status
+_pli_types.h: $(srcdir)/_pli_types.h.in
 	./config.status --header=$@
 
 
@@ -273,8 +266,6 @@ endif
 
 install: all installdirs $(libdir)/ivl$(suffix)/ivl@EXEEXT@  $(libdir)/ivl$(suffix)/include/constants.vams $(libdir)/ivl$(suffix)/include/disciplines.vams $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
-	for dir in vpi ivlpp driver; \
-	    do (cd $$dir ; $(MAKE) $@); done
 
 $(bindir)/iverilog-vpi$(suffix): ./iverilog-vpi
 	$(INSTALL_SCRIPT) ./iverilog-vpi $(DESTDIR)$(bindir)/iverilog-vpi$(suffix)
@@ -316,8 +307,6 @@ installdirs: mkinstalldirs
 
 uninstall:
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
-	for dir in vpi ivlpp driver; \
-	    do (cd $$dir ; $(MAKE) $@); done
 	for f in ivl@EXEEXT@ include/constants.vams include/disciplines.vams; \
 	    do rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/$$f; done
 	-rmdir $(DESTDIR)$(libdir)/ivl$(suffix)/include
