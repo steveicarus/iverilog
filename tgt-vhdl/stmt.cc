@@ -25,6 +25,7 @@
 #include <cassert>
 #include <sstream>
 #include <typeinfo>
+#include <limits>
 
 /*
  * VHDL has no real equivalent of Verilog's $finish task. The
@@ -656,9 +657,294 @@ static int draw_case(vhdl_procedural *proc, stmt_container *container,
 }
 
 /*
- * A casex statement cannot be directly translated to a VHDL case
+ * Check to see if the given number (expression) can be represented
+ * accurately in a long value.
+ */
+static bool number_is_long(ivl_expr_t expr)
+{
+   ivl_expr_type_t type = ivl_expr_type(expr);
+
+   assert(type == IVL_EX_NUMBER || type == IVL_EX_ULONG);
+
+   // Make sure the ULONG can be represented correctly in a long.
+   if (type == IVL_EX_ULONG) {
+      unsigned long val = ivl_expr_uvalue(expr);
+      if (val > numeric_limits<long>::max()) return false;
+      return true;
+   }
+
+   // Check to see if the number actually fits in a long.
+   unsigned nbits = ivl_expr_width(expr);
+   if (nbits >= 8*sizeof(long)) {
+      const char*bits = ivl_expr_bits(expr);
+      char pad_bit = bits[nbits-1];
+      for (unsigned idx = 8*sizeof(long); idx < nbits; idx++) {
+         if (bits[idx] != pad_bit) return false;
+      }
+   }
+
+   return true;
+}
+
+/*
+ * Return the given number (expression) as a signed long value.
+ *
+ * Make sure to call number_is_long() first to verify that the number
+ * can be represented accurately in a long value.
+ */
+static long get_number_as_long(ivl_expr_t expr)
+{
+   long imm = 0;
+   switch (ivl_expr_type(expr)) {
+   case IVL_EX_ULONG:
+      imm = ivl_expr_uvalue(expr);
+      break;
+
+   case IVL_EX_NUMBER: {
+      const char*bits = ivl_expr_bits(expr);
+      unsigned nbits = ivl_expr_width(expr);
+      if (nbits > 8*sizeof(long)) nbits = 8*sizeof(long);
+      for (unsigned idx = 0; idx < nbits; idx++) {
+         switch (bits[idx]) {
+         case '0':
+            break;
+         case '1':
+            imm |= 1L << idx;
+            break;
+         default:
+            assert(0);
+         }
+
+         if (ivl_expr_signed(expr) && bits[nbits-1] == '1' &&
+             nbits < 8*sizeof(long)) imm |= -1L << nbits;
+      }
+      break;
+   }
+
+   default:
+      assert(0);
+   }
+   return imm;
+}
+
+/*
+ * Build a check against a constant 'x'. This is for an out of range
+ * or undefined select.
+ */
+static void check_against_x(vhdl_binop_expr *all, vhdl_var_ref *test,
+                            ivl_expr_t expr, unsigned width, unsigned base,
+                            bool is_casez)
+{
+   if (is_casez) {
+      // For a casez we need to check the 'x'.
+      for (unsigned i = 0; i < ivl_expr_width(expr); i++) {
+         // Get the current test bit.
+         vhdl_type *type = vhdl_type::nunsigned(width);
+         vhdl_var_ref *ref = new vhdl_var_ref(test->get_name().c_str(), type);
+         ref->set_slice(new vhdl_const_int(i+base));
+
+         // Compare the bit against 'x'.
+         vhdl_binop_expr *cmp =
+            new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
+         cmp->add_expr(ref);
+         cmp->add_expr(new vhdl_const_bit('x'));
+         all->add_expr(cmp);
+      }
+   } else {
+      // For a casex 'x' is a don't care, so just put 'true'.
+      all->add_expr(new vhdl_const_bool(true));
+   }
+}
+
+/*
+ * Build the test signal to constant bits check.
+ */
+static void process_number(vhdl_binop_expr *all, vhdl_var_ref *test,
+                           ivl_expr_t expr, unsigned width, unsigned base,
+                           bool is_casez)
+{
+   const char *bits = ivl_expr_bits(expr);
+
+   bool just_dont_care = true;
+   for (unsigned i = 0; i < ivl_expr_width(expr); i++) {
+      switch (bits[i]) {
+      case 'x':
+         if (is_casez) break;
+      case '?':
+      case 'z':
+         continue;  // Ignore these.
+      }
+
+      // Get the current test bit.
+      vhdl_type *type = vhdl_type::nunsigned(width);
+      vhdl_var_ref *ref = new vhdl_var_ref(test->get_name().c_str(), type);
+      ref->set_slice(new vhdl_const_int(i+base));
+
+      // Compare the bit against the value.
+      vhdl_binop_expr *cmp =
+         new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
+      cmp->add_expr(ref);
+      cmp->add_expr(new vhdl_const_bit(bits[i]));
+      all->add_expr(cmp);
+      just_dont_care = false;
+   }
+
+   // If there are no bits comparisons then just put a True
+   if (just_dont_care) {
+      all->add_expr(new vhdl_const_bool(true));
+   }
+}
+
+/*
+ * Build the test signal to label signal check.
+ */
+static bool process_signal(vhdl_binop_expr *all, vhdl_var_ref *test,
+                           ivl_expr_t expr, unsigned width, unsigned base,
+                           bool is_casez, unsigned swid, long sbase)
+{
+   // If the word or dimensions are not zero then we have an array.
+   if (ivl_expr_oper1(expr) != 0 ||
+       ivl_signal_dimensions(ivl_expr_signal(expr)) != 0) {
+      error("Sorry, array selects are not currently allowed in this "
+            "context.");
+      return true;
+   }
+
+   unsigned ewid = ivl_expr_width(expr);
+   for (unsigned i = 0; i < swid; i++) {
+      // Generate a comparison for this bit position
+      vhdl_binop_expr *cmp;
+      vhdl_type *type;
+
+      // Check if this is an out of bounds access. If this is a casez
+      // then check against a constant 'x' for the out of bound bits
+      // otherwise skip the check (casex).
+      if (i + sbase >= ewid || i + sbase < 0) {
+         if (is_casez) {
+            // Get the current test bit.
+            type = vhdl_type::nunsigned(width);
+            vhdl_var_ref *ref = new vhdl_var_ref(test->get_name().c_str(),
+                                                 type);
+            ref->set_slice(new vhdl_const_int(i+base));
+
+            // Compare the bit against 'x'.
+            cmp = new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
+            cmp->add_expr(ref);
+            cmp->add_expr(new vhdl_const_bit('x'));
+            all->add_expr(cmp);
+            continue;
+         } else {
+            // The compiler replaces a completely out of range select
+            // with a constant so we know there will be at least one
+            // valid bit here. We don't need a just_font_care test.
+            continue;
+         }
+      }
+
+      vhdl_binop_expr *sub_expr =
+         new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
+
+      // Get the current expression bit.
+      type = vhdl_type::nunsigned(ivl_expr_width(expr));
+      vhdl_var_ref *bit = new vhdl_var_ref(ivl_expr_name(expr), type);
+      bit->set_slice(new vhdl_const_int(i+sbase));
+
+      // Check if the expression bit is 'z'.
+      cmp = new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
+      cmp->add_expr(bit);
+      cmp->add_expr(new vhdl_const_bit('z'));
+      sub_expr->add_expr(cmp);
+
+      // If this is a casex statement check if the expression bit is 'x'.
+      if (!is_casez) {
+         cmp = new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
+         cmp->add_expr(bit);
+         cmp->add_expr(new vhdl_const_bit('x'));
+         sub_expr->add_expr(cmp);
+      }
+
+      // Get the current test bit.
+      type = vhdl_type::nunsigned(width);
+      vhdl_var_ref *ref = new vhdl_var_ref(test->get_name().c_str(), type);
+      ref->set_slice(new vhdl_const_int(i+base));
+
+      // Next check if the test and expression bits are equal.
+      cmp = new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
+      cmp->add_expr(ref);
+      cmp->add_expr(bit);
+      sub_expr->add_expr(cmp);
+
+      all->add_expr(sub_expr);
+   }
+
+   return false;
+}
+
+/*
+ * These are the constructs that we allow in a casex/z label
+ * expression. Returns true on failure.
+ */
+static bool process_expr_bits(vhdl_binop_expr *all, vhdl_var_ref *test,
+                             ivl_expr_t expr, unsigned width, unsigned base,
+                             bool is_casez)
+{
+   assert(ivl_expr_width(expr)+base <= width);
+
+   switch (ivl_expr_type(expr)) {
+   case IVL_EX_CONCAT:
+      // Loop repeat number of times processing each sub element.
+      for (unsigned repeat = 0; repeat < ivl_expr_repeat(expr); repeat++) {
+         unsigned nparms = ivl_expr_parms(expr) - 1;
+         for (unsigned parm = 0; parm <= nparms; parm++) {
+            ivl_expr_t pexpr = ivl_expr_parm(expr, nparms-parm);
+            if (process_expr_bits(all, test, pexpr, width, base, is_casez))
+               return true;
+            base += ivl_expr_width(pexpr);
+         }
+      }
+      break;
+
+   case IVL_EX_NUMBER:
+      process_number(all, test, expr, width, base, is_casez);
+      break;
+
+   case IVL_EX_SIGNAL:
+      if (process_signal(all, test, expr, width, base, is_casez,
+                         ivl_expr_width(expr), 0)) return true;
+      break;
+
+   case IVL_EX_SELECT: {
+      ivl_expr_t bexpr = ivl_expr_oper2(expr);
+      if (ivl_expr_type(bexpr) != IVL_EX_NUMBER &&
+          ivl_expr_type(bexpr) != IVL_EX_ULONG) {
+         error("Sorry, only constant bit/part selects are currently allowed "
+               "in this context.");
+         return true;
+      }
+      // If the number is out of bounds or an 'x' then check against 'x'.
+      if (!number_is_long(bexpr)) {
+         check_against_x(all, test, expr, width, base, is_casez);
+      } else if (process_signal(all, test, ivl_expr_oper1(expr), width, base,
+                                is_casez, ivl_expr_width(expr),
+                                get_number_as_long(bexpr))) return true;
+      break;
+      }
+
+   default:
+      error("Sorry, expression type %d is not currently supported.",
+            ivl_expr_type(expr));
+      return true;
+      break;
+   }
+
+   return false;
+}
+
+
+/*
+ * A casex/z statement cannot be directly translated to a VHDL case
  * statement as VHDL does not treat the don't-care bit as special.
- * The solution here is to generate an if statement from the casex
+ * The solution here is to generate an if statement from the casex/z
  * which compares only the non-don't-care bit positions.
  */
 int draw_casezx(vhdl_procedural *proc, stmt_container *container,
@@ -671,53 +957,22 @@ int draw_casezx(vhdl_procedural *proc, stmt_container *container,
    vhdl_if_stmt *result = NULL;
    
    int nbranches = ivl_stmt_case_count(stmt);
+   bool is_casez = ivl_statement_type(stmt) == IVL_ST_CASEZ;
    for (int i = 0; i < nbranches; i++) {
       stmt_container *where = NULL;
       
       ivl_expr_t net = ivl_stmt_case_expr(stmt, i);
       if (net) {
-         // The net must be a constant value otherwise we can't
-         // generate the terms for the comparison expression
-         if (ivl_expr_type(net) != IVL_EX_NUMBER) {
-            error("Sorry, only casex statements with constant labels can "
-                  "be translated to VHDL");
-            return 1;
-         }
-
-         const char *bits = ivl_expr_bits(net);
-
          vhdl_binop_expr *all =
             new vhdl_binop_expr(VHDL_BINOP_AND, vhdl_type::boolean());
-         bool just_dont_care = true;
-         for (unsigned i = 0; i < ivl_expr_width(net); i++) {
-            switch (bits[i]) {
-            case 'x':
-               if (ivl_statement_type(stmt) == IVL_ST_CASEZ) break;
-            case '?':
-            case 'z':
-               // Ignore it
-               continue;
-            }
-
-            // Generate a comparison for this bit position
-            vhdl_binop_expr *cmp =
-               new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
-
-            vhdl_type *type = vhdl_type::nunsigned(ivl_expr_width(net));
-            vhdl_var_ref *lhs =
-               new vhdl_var_ref(test->get_name().c_str(), type);
-            lhs->set_slice(new vhdl_const_int(i));
-
-            cmp->add_expr(lhs);
-            cmp->add_expr(new vhdl_const_bit(bits[i]));
-
-            all->add_expr(cmp);
-            just_dont_care = false;
-         }
-
-         // If there are no bits comparisons then just put a True
-         if (just_dont_care) {
-            all->add_expr(new vhdl_const_bool(true));
+         // The net must be something we can generate a comparison for.
+         if (process_expr_bits(all, test, net, ivl_expr_width(net), 0,
+                               is_casez)) {
+            error("%s:%d: Sorry, only case%s statements with simple "
+                  "expression labels can be translated to VHDL",
+                  ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
+                  (is_casez ? "z" : "x"));
+            return 1;
          }
 
          if (result)
@@ -743,7 +998,7 @@ int draw_casezx(vhdl_procedural *proc, stmt_container *container,
    // as this may not be obvious
    ostringstream ss;
    ss << "Generated from case"
-      << (ivl_statement_type(stmt) == IVL_ST_CASEX ? 'x' : 'z')
+      << (is_casez ? 'z' : 'x')
       << " statement at " << ivl_stmt_file(stmt) << ":" << ivl_stmt_lineno(stmt);
    result->set_comment(ss.str());
 
