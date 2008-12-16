@@ -61,6 +61,9 @@ dep:
 
 O = cadpli.o
 
+Makefile: $(srcdir)/Makefile.in ../config.status
+	../config.status --file=$@
+
 SYSTEM_VPI_LDFLAGS = -L../vvp -lvpi
 ifeq (@MINGW32@,yes)
     SYSTEM_VPI_LDFLAGS += @EXTRALIBS@
@@ -73,7 +76,7 @@ clean:
 	rm -rf *.o dep cadpli.vpl bin32
 
 distclean: clean
-	rm -f Makefile config.status config.log config.cache
+	rm -f Makefile
 
 install: all installdirs $(vpidir)/cadpli.vpl $(INSTALL32)
 

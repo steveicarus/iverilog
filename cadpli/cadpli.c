@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: cadpli.c,v 1.7 2004/09/10 00:15:45 steve Exp $"
-#endif
 
 # include  <vpi_user.h>
 # include  <veriuser.h>
@@ -28,6 +25,7 @@
 #endif
 # include  <string.h>
 # include  <assert.h>
+# include  "config.h"
 # include  "ivl_dlfcn.h"
 
 typedef void* (*funcvp)(void);
@@ -87,34 +85,3 @@ void (*vlog_startup_routines[])() = {
       thunker_register,
       0
 };
-
-
-/*
- * $Log: cadpli.c,v $
- * Revision 1.7  2004/09/10 00:15:45  steve
- *  Remove bad casts.
- *
- * Revision 1.6  2004/09/05 21:19:51  steve
- *  Better type safety.
- *
- * Revision 1.5  2003/08/26 16:26:02  steve
- *  ifdef idents correctly.
- *
- * Revision 1.4  2003/04/30 01:28:06  steve
- *  Remove veriusertfs stuf.
- *
- * Revision 1.3  2003/02/22 04:04:38  steve
- *  Only include malloc.h if it is present.
- *
- * Revision 1.2  2003/02/17 00:01:25  steve
- *  Use a variant of ivl_dlfcn to do dynamic loading
- *  from within the cadpli module.
- *
- *  Change the +cadpli flag to -cadpli, to keep the
- *  plusargs namespace clear.
- *
- * Revision 1.1  2003/02/16 02:23:54  steve
- *  Add the cadpli interface module.
- *
- */
-
