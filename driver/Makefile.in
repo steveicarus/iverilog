@@ -80,6 +80,7 @@ dep:
 
 main.o: main.c globals.h ../version.h Makefile
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c -DIVL_ROOT='"@libdir@/ivl$(suffix)"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DDLLIB='"@DLLIB@"' $(srcdir)/main.c
+	mv $*.d dep
 
 cflexor.o: cflexor.c cfparse.h
 
