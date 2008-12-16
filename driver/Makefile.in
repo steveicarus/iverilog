@@ -47,7 +47,7 @@ CPPFLAGS = -I. -I.. -I$(srcdir)/.. -I$(srcdir) -DVERSION='"$(VERSION)"' @CPPFLAG
 CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-all: iverilog@EXEEXT@
+all: dep iverilog@EXEEXT@
 
 clean:
 	rm -f *.o lexor.c parse.c parse.h parse.output
@@ -71,13 +71,17 @@ cflexor.c: cflexor.lex
 cfparse.h cfparse.c: cfparse.y
 	bison --verbose -t -d -o cfparse.c --name-prefix=cf $(srcdir)/cfparse.y
 
+dep:
+	mkdir dep
 
-main.o: main.c globals.h ../version.h
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c -DIVL_ROOT='"@libdir@/ivl$(suffix)"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DDLLIB='"@DLLIB@"' $(srcdir)/main.c
+%.o: %.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	mv $*.d dep
 
-build_string.o: build_string.c globals.h
-cflexor.o: cflexor.c cfparse.h cfparse_misc.h globals.h
-cfparse.o: cfparse.c globals.h cfparse_misc.h
+main.o: main.c globals.h ../version.h Makefile
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c -DIVL_ROOT='"@libdir@/ivl$(suffix)"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DDLLIB='"@DLLIB@"' $(srcdir)/main.c
+
+cflexor.o: cflexor.c cfparse.h
 
 iverilog.ps: $(srcdir)/iverilog.man
 	$(MAN) -t $(srcdir)/iverilog.man > iverilog.ps
@@ -119,3 +123,5 @@ installdirs: ../mkinstalldirs
 uninstall:
 	rm -f $(DESTDIR)$(bindir)/iverilog$(suffix)@EXEEXT@
 	rm -f $(DESTDIR)$(mandir)/man1/iverilog$(suffix).1 $(DESTDIR)$(prefix)/iverilog$(suffix).pdf
+
+-include $(patsubst %.o, dep/%.d, $O)
