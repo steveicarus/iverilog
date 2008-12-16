@@ -27,6 +27,7 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
 mandir = @mandir@
+datarootdir = @datarootdir@
 
 VPATH = $(srcdir)
 
@@ -74,14 +75,14 @@ iverilog-fpga.pdf: iverilog-fpga.ps
 	ps2pdf iverilog-fpga.ps iverilog-fpga.pdf
 
 
-Makefile: Makefile.in config.status
-	./config.status
+Makefile: $(srcdir)/Makefile.in ../config.status
+	../config.status --file=$@
 
 clean:
 	rm -rf *.o dep fpga.tgt
 
 distclean: clean
-	rm -f Makefile config.status config.log config.cache
+	rm -f Makefile
 
 check: all
 
