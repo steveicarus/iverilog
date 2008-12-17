@@ -72,8 +72,6 @@ clean:
 distclean: clean
 	rm -f Makefile config.log
 
-check: all
-
 Makefile: $(srcdir)/Makefile.in ../config.status
 	../config.status --file=$@
 

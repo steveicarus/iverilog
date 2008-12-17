@@ -49,6 +49,8 @@ LDFLAGS = @LDFLAGS@
 
 all: dep iverilog@EXEEXT@
 
+check: all
+
 clean:
 	rm -f *.o lexor.c parse.c parse.h parse.output
 	rm -f cflexor.c cfparse.c cfparse.h cfparse.output

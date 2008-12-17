@@ -45,6 +45,8 @@ LDFLAGS = @LDFLAGS@
 
 all: ivlpp@EXEEXT@
 
+check: all
+
 clean:
 	rm -f *.o lexor.c ivlpp@EXEEXT@
 

@@ -74,8 +74,6 @@ distclean: clean
 Makefile: $(srcdir)/Makefile.in ../config.status
 	../config.status --file=$@
 
-check: all
-
 install: all installdirs $(libdir)/ivl$(suffix)/null.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/null.conf $(libdir)/ivl$(suffix)/null-s.conf
 
 $(libdir)/ivl$(suffix)/null.tgt: ./null.tgt
