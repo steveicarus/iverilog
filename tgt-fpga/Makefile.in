@@ -82,7 +82,7 @@ clean:
 	rm -rf *.o dep fpga.tgt
 
 distclean: clean
-	rm -f Makefile
+	rm -f Makefile config.log
 
 check: all
 

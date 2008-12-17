@@ -69,7 +69,7 @@ clean:
 	rm -rf *.o dep null.tgt
 
 distclean: clean
-	rm -f Makefile config.status config.log config.cache
+	rm -f Makefile config.log
 
 Makefile: $(srcdir)/Makefile.in ../config.status
 	../config.status --file=$@

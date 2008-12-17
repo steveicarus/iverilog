@@ -65,7 +65,7 @@ clean:
 	rm -rf *.o dep verilog.tgt
 
 distclean: clean
-	rm -f Makefile
+	rm -f Makefile config.log
 
 Makefile: $(srcdir)/Makefile.in ../config.status
 	../config.status --file=$@

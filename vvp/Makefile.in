@@ -63,7 +63,7 @@ clean:
 	rm -rf dep vvp@EXEEXT@ libvpi.a bin32 parse.output vvp.pdf vvp.exp
 
 distclean: clean
-	rm -f Makefile config.status config.log config.cache config.h
+	rm -f Makefile config.log config.h
 
 check: all
 	./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
@@ -152,10 +152,10 @@ INSTALL_DOC = $(mandir)/man1/vvp$(suffix).1
 INSTALL_DOCDIR = $(mandir)/man1
 endif
 
-Makefile: Makefile.in ../config.status
+Makefile: $(srcdir)/Makefile.in ../config.status
 	../config.status --file=$@
 
-config.h: config.h.in ../config.status
+config.h: $(srcdir)/config.h.in ../config.status
 	../config.status --header=$@
 
 install: all installdirs $(bindir)/vvp$(suffix)@EXEEXT@ $(libdir)/libvpi$(suffix).a $(INSTALL_DOC)

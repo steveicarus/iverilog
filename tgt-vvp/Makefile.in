@@ -76,17 +76,17 @@ vvp.conf: $(srcdir)/vvp.conf.in Makefile
 vvp-s.conf: $(srcdir)/vvp-s.conf.in Makefile
 	echo 'flag:VVP_EXECUTABLE=$(bindir)/vvp$(suffix)' | cat $(srcdir)/vvp-s.conf.in - > vvp-s.conf
 
-Makefile: Makefile.in ../config.status
+Makefile: $(srcdir)/Makefile.in ../config.status
 	../config.status --file=$@
 
-vvp_config.h: vvp_config.h.in ../config.status
+vvp_config.h: $(srcdir)/vvp_config.h.in ../config.status
 	../config.status --header=$@
 
 clean:
 	rm -rf *.o dep vvp.tgt vvp.conf vvp-s.conf
 
 distclean: clean
-	rm -f Makefile config.status config.log config.cache vvp_config.h
+	rm -f Makefile config.log vvp_config.h
 
 check: all
 

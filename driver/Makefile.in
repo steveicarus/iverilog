@@ -53,9 +53,10 @@ clean:
 	rm -f *.o lexor.c parse.c parse.h parse.output
 	rm -f cflexor.c cfparse.c cfparse.h cfparse.output
 	rm -f iverilog@EXEEXT@ iverilog.pdf iverilog.ps
+	rm -rf dep
 
 distclean: clean
-	rm -f Makefile
+	rm -f Makefile config.log
 
 Makefile: $(srcdir)/Makefile.in ../config.status
 	../config.status --file=$@

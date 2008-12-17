@@ -52,11 +52,11 @@ all: dep iverilog-vpi@EXEEXT@
 check: all
 
 clean:
-	rm -f *.o config.h
-	rm -f iverilog-vpi@EXEEXT@
+	rm -f *.o config.h iverilog-vpi@EXEEXT@
+	rm -rf dep
 
 distclean: clean
-	rm -f Makefile
+	rm -f Makefile config.log
 
 Makefile: $(srcdir)/Makefile.in ../config.status
 	../config.status --file=$@

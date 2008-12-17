@@ -65,17 +65,17 @@ endif
 vhdl.tgt: $O $(TGTDEPLIBS)
 	$(CXX) @shared@ -o $@ $O $(TGTLDFLAGS)
 
-Makefile: Makefile.in ../config.status
+Makefile: $(srcdir)/Makefile.in ../config.status
 	../config.status --file=$@
 
-vhdl_config.h: vhdl_config.h.in ../config.status
+vhdl_config.h: $(srcdir)/vhdl_config.h.in ../config.status
 	../config.status --header=$@
 
 clean:
 	rm -rf $(O) dep vhdl.tgt 
 
 distclean: clean
-	rm -f Makefile config.status config.log config.cache vhdl_config.h
+	rm -f Makefile config.log vhdl_config.h
 
 check: all
 

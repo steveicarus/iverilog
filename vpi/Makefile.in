@@ -111,12 +111,12 @@ clean:
 	rm -f va_math.vpi v2005_math.vpi
 
 distclean: clean
-	rm -f Makefile config.status config.log vpi_config.h
+	rm -f Makefile config.log vpi_config.h
 
-Makefile: Makefile.in ../config.status
+Makefile: $(srcdir)/Makefile.in ../config.status
 	../config.status --file=$@
 
-vpi_config.h: vpi_config.h.in ../config.status
+vpi_config.h: $(srcdir)/vpi_config.h.in ../config.status
 	../config.status --header=$@
 
 check: all

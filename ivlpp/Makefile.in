@@ -49,7 +49,7 @@ clean:
 	rm -f *.o lexor.c ivlpp@EXEEXT@
 
 distclean: clean
-	rm -f Makefile
+	rm -f Makefile config.log
 
 Makefile: $(srcdir)/Makefile.in ../config.status
 	../config.status --file=$@
