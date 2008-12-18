@@ -642,7 +642,7 @@ int main(int argc, char **argv)
 {
       int e_flag = 0;
       int version_flag = 0;
-      int opt, idx, rc;
+      int opt, idx;
 
 #ifdef __MINGW32__
       { char * s;
@@ -774,8 +774,7 @@ int main(int argc, char **argv)
 		  break;
 
 		case 'g':
-		  rc = process_generation(optarg);
-		  if (rc != 0)
+		  if (process_generation(optarg) != 0)
 			return -1;
 		  break;
 		case 'h':

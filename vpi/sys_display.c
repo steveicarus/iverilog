@@ -1759,7 +1759,7 @@ static unsigned int get_format(char **rtn, char *fmt,
       size += cnt;
       cp += cnt;
     } else {
-      int cnt, ljust = 0, plus = 0, ld_zero = 0, width = -1, prec = -1;
+      int ljust = 0, plus = 0, ld_zero = 0, width = -1, prec = -1;
       char *result;
 
       cp += 1;

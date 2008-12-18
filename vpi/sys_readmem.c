@@ -229,20 +229,20 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
 	  addr_incr = 1;
       }
       else{
-	  s_vpi_value value;
-	  value.format = vpiIntVal;
-	  vpi_get_value(start_item, &value);
-	  start_addr = value.value.integer;
+	  s_vpi_value value2;
+	  value2.format = vpiIntVal;
+	  vpi_get_value(start_item, &value2);
+	  start_addr = value2.value.integer;
 
 	  if (stop_item==0){
 	      stop_addr = left_addr<right_addr ? right_addr : left_addr;
 	      addr_incr = 1;
 	  }
 	  else{
-	      s_vpi_value value;
-	      value.format = vpiIntVal;
-	      vpi_get_value(stop_item, &value);
-	      stop_addr = value.value.integer;
+	      s_vpi_value value3;
+	      value3.format = vpiIntVal;
+	      vpi_get_value(stop_item, &value3);
+	      stop_addr = value3.value.integer;
 
 	      addr_incr = start_addr<stop_addr ? 1 : -1;
 	  }
@@ -466,20 +466,20 @@ static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
 	  addr_incr = 1;
       }
       else{
-	  s_vpi_value value;
-	  value.format = vpiIntVal;
-	  vpi_get_value(start_item, &value);
-	  start_addr = value.value.integer;
+	  s_vpi_value value2;
+	  value2.format = vpiIntVal;
+	  vpi_get_value(start_item, &value2);
+	  start_addr = value2.value.integer;
 
 	  if (stop_item==0){
 	      stop_addr = left_addr<right_addr ? right_addr : left_addr;
 	      addr_incr = 1;
 	  }
 	  else{
-	      s_vpi_value value;
-	      value.format = vpiIntVal;
-	      vpi_get_value(stop_item, &value);
-	      stop_addr = value.value.integer;
+	      s_vpi_value value3;
+	      value3.format = vpiIntVal;
+	      vpi_get_value(stop_item, &value3);
+	      stop_addr = value3.value.integer;
 
 	      addr_incr = start_addr<stop_addr ? 1 : -1;
 	  }

@@ -1727,8 +1727,8 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 	   immediate. In this case we generate a single %movi
 	  instruction. */
       if ((!number_is_unknown(exp)) && number_is_immediate(exp, IMM_WID,0)) {
-	    unsigned long val = get_number_immediate(exp);
-	    fprintf(vvp_out, "    %%movi %u, %lu, %u;\n", res.base, val, wid);
+	    unsigned long val2 = get_number_immediate(exp);
+	    fprintf(vvp_out, "    %%movi %u, %lu, %u;\n", res.base, val2, wid);
 	    return res;
       }
 
