@@ -1,0 +1,75 @@
+# Lines that start with '#' are comments.
+#
+# This file is for the development branch of Icarus Verilog.
+#
+# The following files will be ignored by git.
+
+# Object files and libraries
+*.[oa]
+
+# From autoconf
+configure
+config.log
+config.status
+Makefile
+
+/_pli_types.h
+config.h
+/tgt-vvp/vvp_config.h
+/tgt-vhdl/vhdl_config.h
+/vpi/vpi_config.h
+/version.h
+
+# Directories
+autom4te.cache
+dep
+
+# Compiler back end and library files
+/tgt-vvp/*.conf
+*.tgt
+*.vpi
+/cadpli/cadpli.vpl
+
+# lex, yacc and gperf output
+/driver/cflexor.c
+/driver/cfparse.c
+/driver/cfparse.h
+/driver/cfparse.output
+
+/ivlpp/lexor.c
+
+/lexor.cc
+/lexor_keyword.cc
+/parse.cc
+/parse.h
+/parse.output
+/syn-rules.cc
+/syn-rules.output
+
+/vpi/sdf_lexor.c
+/vpi/sdf_parse.c
+/vpi/sdf_parse.h
+/vpi/sdf_parse.output
+/vpi/sys_readmem_lex.c
+
+/vvp/lexor.cc
+/vvp/parse.cc
+/vvp/parse.h
+/vvp/parse.output
+
+# Program created files
+/vvp/tables.cc
+
+# The executables.
+*.exe
+/driver/iverilog
+/iverilog-vpi
+/ivl
+/ivlpp/ivlpp
+/vvp/vvp
+
+/ivl.exp
+/vvp/vvp.exp
+
+# Check output
+/check.vvp
