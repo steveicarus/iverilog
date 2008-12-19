@@ -129,7 +129,14 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
       lc = se? dynamic_cast<NetEConst*>(se->right_) : 0;
 
       if (lc != 0 && rc != 0) {
-	    assert(se != 0);
+	    ivl_assert(*this, se != 0);
+
+	    if (debug_eval_tree) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Partially evalutate " << *this
+		       << " using (a+2)-1 --> (a+1) transform." << endl;
+	    }
+
 	    verinum lval = lc->value();
 	    verinum rval = rc->value();
 

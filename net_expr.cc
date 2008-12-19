@@ -494,11 +494,13 @@ NetEParam::NetEParam()
 NetEParam::NetEParam(Design*d, NetScope*s, perm_string n)
     : des_(d), scope_(s), reference_(scope_->find_parameter(n))
 {
+      cast_signed_base_(reference_->second.signed_flag);
 }
 
 NetEParam::NetEParam(Design*d, NetScope*s, ref_t ref)
     : des_(d), scope_(s), reference_(ref)
 {
+      cast_signed_base_(reference_->second.signed_flag);
 }
 
 NetEParam::~NetEParam()

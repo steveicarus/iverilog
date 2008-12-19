@@ -817,7 +817,7 @@ class NetScope : public Attrib {
 	/* After everything is all set up, the code generators like
 	   access to these things to make up the parameter lists. */
       struct param_expr_t : public LineInfo {
-	    param_expr_t() : type(IVL_VT_NO_TYPE), range(0) { }
+	    param_expr_t() : type(IVL_VT_NO_TYPE), signed_flag(false), msb(0), lsb(0), range(0), expr(0) { }
 	      // Type information
 	    ivl_variable_type_t type;
 	    bool signed_flag;
@@ -1562,6 +1562,14 @@ class NetExpr  : public LineInfo {
 	// expressions to check validity.
       virtual bool has_width() const;
 
+	// Expressions in parameter declarations may have encountered
+	// arguments that are themselves untyped parameters. These
+	// cannot be fully resolved for type when elaborated (they are
+	// elaborated before all parameter overrides are complete) so
+	// this virtual method needs to be called right before
+	// evaluating the expression. This wraps up the evaluation of
+	// the type.
+      virtual void resolve_pexpr_type();
 
 	// This method evaluates the expression and returns an
 	// equivalent expression that is reduced as far as compile
@@ -3201,6 +3209,7 @@ class NetEBinary  : public NetExpr {
 	// widths.
       virtual bool has_width() const;
 
+      virtual void resolve_pexpr_type();
       virtual NetEBinary* dup_expr() const;
       virtual NexusSet* nex_input(bool rem_out = true);
 
@@ -3499,6 +3508,7 @@ class NetEParam  : public NetExpr {
       ~NetEParam();
 
       virtual NexusSet* nex_input(bool rem_out = true);
+      virtual void resolve_pexpr_type();
       virtual bool set_width(unsigned w, bool last_chance);
       virtual bool has_width() const;
       virtual void expr_scan(struct expr_scan_t*) const;

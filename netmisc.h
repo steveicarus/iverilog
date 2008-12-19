@@ -166,6 +166,13 @@ void probe_expr_width(Design*des, NetScope*scope, PExpr*pe);
 extern NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 				    ivl_variable_type_t data_type_lv,
 				    int expr_wid_lv, PExpr*expr);
+
+/*
+ * Used by elaboration to suppress the sign of an operand if the other
+ * is unsigned.
+ */
+extern void suppress_binary_operand_sign_if_needed(NetExpr*lp, NetExpr*rp);
+
 /*
  * This procedure elaborates an expression and if the elaboration is
  * successful the original expression is replaced with the new one.

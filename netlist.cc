@@ -2154,6 +2154,7 @@ ivl_variable_type_t NetEConst::expr_type() const
 NetEConstParam::NetEConstParam(NetScope*s, perm_string n, const verinum&v)
 : NetEConst(v), scope_(s), name_(n)
 {
+      cast_signed_base_(v.has_sign());
 }
 
 NetEConstParam::~NetEConstParam()

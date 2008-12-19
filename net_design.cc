@@ -590,6 +590,8 @@ void NetScope::evaluate_parameters(Design*des)
       for (param_ref_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  cur ++) {
 
+	    cur->second.expr->resolve_pexpr_type();
+
 	    switch ((*cur).second.type) {
 		case IVL_VT_BOOL:
 		case IVL_VT_LOGIC:

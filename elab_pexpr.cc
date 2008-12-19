@@ -53,7 +53,7 @@ NetExpr*PEBinary::elaborate_pexpr (Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      NetExpr*tmp = elaborate_expr_base_(des, lp, rp, -2);
+      NetExpr*tmp = elaborate_expr_base_(des, lp, rp, -2, true);
       return tmp;
 }
 
@@ -66,8 +66,6 @@ NetExpr*PEBComp::elaborate_pexpr(Design*des, NetScope*scope) const
 	    delete rp;
 	    return 0;
       }
-
-      suppress_binary_operand_sign_if_needed_(lp, rp);
 
       NetEBComp*tmp = new NetEBComp(op_, lp, rp);
       tmp->set_line(*this);
@@ -451,4 +449,48 @@ NetExpr* PECallFunction::elaborate_pexpr(Design*des, NetScope*scope) const
                                 "currently supported." << endl;
       des->errors += 1;
       return 0;
+}
+
+void NetExpr::resolve_pexpr_type(void)
+{
+}
+
+void NetEBinary::resolve_pexpr_type(void)
+{
+      if (debug_elab_pexpr) {
+	    cerr << get_fileline() << ": debug: "
+		 << "Resolve_pexpr_type for binary " << human_readable_op(op_)
+		 << "." << endl;
+      }
+
+      left_->resolve_pexpr_type();
+      right_->resolve_pexpr_type();
+
+      switch (op_) {
+	  case '+':
+	  case '-':
+	  case '*':
+	  case '/':
+	    suppress_binary_operand_sign_if_needed(left_, right_);
+	    cast_signed_base_(left_->has_sign() && right_->has_sign());
+	    break;
+	  default:
+	    break;
+      }
+}
+
+void NetEParam::resolve_pexpr_type(void)
+{
+      if (debug_elab_pexpr) {
+	    cerr << get_fileline() << ": debug: "
+		 << "Resolve_pexpr_type for parameter " << reference_->first
+		 << "." << endl;
+      }
+
+      if (reference_->second.signed_flag) {
+	    cast_signed_base_(true);
+
+      } else {
+	    cast_signed_base_( reference_->second.expr->has_sign() );
+      }
 }

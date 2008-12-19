@@ -387,6 +387,9 @@ const char *human_readable_op(const char op)
 	switch (op) {
 	    case '~': type = "~";  break;  // Negation
 
+	    case '+': type = "+";  break;
+	    case '-': type = "-";  break;
+
 	    case '^': type = "^";  break;  // XOR
 	    case 'X': type = "~^"; break;  // XNOR
 	    case '&': type = "&";  break;  // Bitwise AND

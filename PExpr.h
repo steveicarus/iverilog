@@ -143,8 +143,6 @@ class PExpr : public LineInfo {
       ivl_variable_type_t expr_type_;
       unsigned expr_width_;
 
-      static void suppress_binary_operand_sign_if_needed_(NetExpr*lp, NetExpr*rp);
-
     private: // not implemented
       PExpr(const PExpr&);
       PExpr& operator= (const PExpr&);
@@ -484,15 +482,20 @@ class PEBinary : public PExpr {
       PExpr*left_;
       PExpr*right_;
 
-      NetExpr*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
-      NetExpr*elaborate_eval_expr_base_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
+      NetExpr*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp,
+				   int use_wid, bool is_pexpr =false) const;
+      NetExpr*elaborate_eval_expr_base_(Design*, NetExpr*lp, NetExpr*rp,
+					int use_wid) const;
 
       NetExpr*elaborate_expr_base_bits_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
-      NetExpr*elaborate_expr_base_div_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
+      NetExpr*elaborate_expr_base_div_(Design*, NetExpr*lp, NetExpr*rp,
+				       int use_wid, bool is_pexpr) const;
       NetExpr*elaborate_expr_base_lshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
       NetExpr*elaborate_expr_base_rshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
-      NetExpr*elaborate_expr_base_mult_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
-      NetExpr*elaborate_expr_base_add_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
+      NetExpr*elaborate_expr_base_mult_(Design*, NetExpr*lp, NetExpr*rp,
+					int use_wid, bool is_pexpr) const;
+      NetExpr*elaborate_expr_base_add_(Design*, NetExpr*lp, NetExpr*rp,
+				       int use_wid, bool is_pexpr) const;
 
 };
 
