@@ -47,13 +47,12 @@ CPPFLAGS = -I. -I$(srcdir)/.. -DVERSION='"$(VERSION)"' @CPPFLAGS@ @DEFS@
 CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-all: dep iverilog-vpi@EXEEXT@
+all: iverilog-vpi@EXEEXT@
 
 check: all
 
 clean:
 	rm -f *.o config.h iverilog-vpi@EXEEXT@
-	rm -rf dep
 
 distclean: clean
 	rm -f Makefile config.log
@@ -66,19 +65,15 @@ O = main.o res.o
 iverilog-vpi@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o iverilog-vpi@EXEEXT@ @EXTRALIBS@
 
+main.o: main.c config.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/main.c
 
-config.h: config.h.in Makefile
+
+config.h: $(srcdir)/config.h.in Makefile
 	sed -e 's;@IVLCC@;@CC@;' -e 's;@IVLCXX@;@CXX@;' \
 	    -e 's;@SUFFIX@;$(suffix);g' \
 	    -e 's;@IVLCFLAGS@;@CXXFLAGS@;' \
 	    -e 's;@SHARED@;@shared@;' $< > $@
-
-dep:
-	mkdir dep
-
-%.o: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
-	mv $*.d dep
 
 # Windows specific...
 res.o: res.rc
@@ -95,5 +90,3 @@ installdirs: ../mkinstalldirs
 
 uninstall:
 	rm -f $(bindir)/iverilog-vpi$(suffix)@EXEEXT@
-
--include $(patsubst %.o, dep/%.d, $O)
