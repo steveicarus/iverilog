@@ -1118,7 +1118,11 @@ void NetScope::dump(ostream&o) const
 			o << "[" << *(*pp).second.msb
 			  << ":" << *(*pp).second.lsb << "] ";
 
-		  o << (*pp).first << " = "  << *(*pp).second.expr;
+		  o << (*pp).first << " = ";
+		  if (pp->second.expr)
+			o << *(*pp).second.expr;
+		  else
+			o << "<nil>";
 
 		  for (range_t*ran = (*pp).second.range ; ran ; ran = ran->next) {
 			if (ran->exclude_flag)

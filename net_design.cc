@@ -590,7 +590,11 @@ void NetScope::evaluate_parameters(Design*des)
       for (param_ref_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  cur ++) {
 
-	    cur->second.expr->resolve_pexpr_type();
+	      // Resolve the expression type (signed/unsigned) if the
+	      // expression is present. It is possible to not be
+	      // present if there are earlier errors en elaboration.
+	    if (cur->second.expr)
+		  cur->second.expr->resolve_pexpr_type();
 
 	    switch ((*cur).second.type) {
 		case IVL_VT_BOOL:
