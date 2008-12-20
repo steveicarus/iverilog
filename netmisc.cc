@@ -389,7 +389,14 @@ const char *human_readable_op(const char op)
 
 	    case '+': type = "+";  break;
 	    case '-': type = "-";  break;
+	    case '*': type = "*";  break;
+	    case '/': type = "/";  break;
 
+	    case '<': type = "<";  break;
+	    case '>': type = ">";  break;
+	    case 'L': type = "<="; break;
+	    case 'G': type = ">="; break;
+	      
 	    case '^': type = "^";  break;  // XOR
 	    case 'X': type = "~^"; break;  // XNOR
 	    case '&': type = "&";  break;  // Bitwise AND
@@ -401,6 +408,8 @@ const char *human_readable_op(const char op)
 	    case 'a': type = "&&"; break;  // Logical AND
 	    case 'o': type = "||"; break;  // Logical OR
 
+	    case 'e': type = "==";  break;
+	    case 'n': type = "!=";  break;
 	    case 'E': type = "==="; break;  // Case equality
 	    case 'N': type = "!=="; break;  // Case inequality
 
