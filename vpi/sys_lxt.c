@@ -315,7 +315,7 @@ static PLI_INT32 finish_cb(p_cb_data cause)
 __inline__ static int install_dumpvars_callback(void)
 {
       struct t_cb_data cb;
-      static struct t_vpi_time time;
+      static struct t_vpi_time now;
 
       if (dumpvars_status == 1)
 	    return 0;
@@ -327,8 +327,8 @@ __inline__ static int install_dumpvars_callback(void)
 	    return 1;
       }
 
-      time.type = vpiSimTime;
-      cb.time = &time;
+      now.type = vpiSimTime;
+      cb.time = &now;
       cb.reason = cbReadOnlySynch;
       cb.cb_rtn = dumpvars_cb;
       cb.user_data = 0x0;

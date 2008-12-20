@@ -239,7 +239,6 @@ void show_statement(ivl_statement_t net, unsigned ind)
 	  case IVL_ST_CASER:
 	  case IVL_ST_CASE: {
 		unsigned cnt = ivl_stmt_case_count(net);
-		unsigned idx;
 		fprintf(out, "%*scase (...) <%u cases>\n", ind, "", cnt);
 		show_expression(ivl_stmt_cond_expr(net), ind+4);
 

@@ -46,12 +46,12 @@
  * Evaluate the bool64 the hard way, by evaluating the logic vector
  * and converting it to a bool64.
  */
-static int eval_bool64_logic(ivl_expr_t exp)
+static int eval_bool64_logic(ivl_expr_t expr)
 {
       int res;
       struct vector_info tmp;
 
-      tmp = draw_eval_expr(exp, STUFF_OK_XZ);
+      tmp = draw_eval_expr(expr, STUFF_OK_XZ);
       res = allocate_word();
       fprintf(vvp_out, "   %%ix/get %d, %u, %u;\n", res, tmp.base, tmp.wid);
       clr_vector(tmp);
@@ -59,14 +59,14 @@ static int eval_bool64_logic(ivl_expr_t exp)
       return res;
 }
 
-static int draw_number_bool64(ivl_expr_t exp)
+static int draw_number_bool64(ivl_expr_t expr)
 {
       int res;
-      const char*bits = ivl_expr_bits(exp);
+      const char*bits = ivl_expr_bits(expr);
       uint64_t val = 0;
       unsigned long idx;
 
-      for (idx = 0 ;  idx < ivl_expr_width(exp) ;  idx += 1) {
+      for (idx = 0 ;  idx < ivl_expr_width(expr) ;  idx += 1) {
 	    if (bits[idx] == '1')
 		  val |= 1UL << idx;
       }
@@ -76,16 +76,16 @@ static int draw_number_bool64(ivl_expr_t exp)
       return res;
 }
 
-int draw_eval_bool64(ivl_expr_t exp)
+int draw_eval_bool64(ivl_expr_t expr)
 {
       int res;
 
-      switch (ivl_expr_type(exp)) {
+      switch (ivl_expr_type(expr)) {
 	  case IVL_EX_NUMBER:
-	    res = draw_number_bool64(exp);
+	    res = draw_number_bool64(expr);
 	    break;
 	  default:
-	    res = eval_bool64_logic(exp);
+	    res = eval_bool64_logic(expr);
 	    break;
       }
 

@@ -669,7 +669,9 @@ static bool number_is_long(ivl_expr_t expr)
    // Make sure the ULONG can be represented correctly in a long.
    if (type == IVL_EX_ULONG) {
       unsigned long val = ivl_expr_uvalue(expr);
-      if (val > numeric_limits<long>::max()) return false;
+      if (val > static_cast<unsigned>(numeric_limits<long>::max())) {
+         return false;
+      }
       return true;
    }
 
@@ -736,19 +738,33 @@ static void check_against_x(vhdl_binop_expr *all, vhdl_var_ref *test,
                             bool is_casez)
 {
    if (is_casez) {
-      // For a casez we need to check the 'x'.
+      // For a casez we need to check against 'x'.
       for (unsigned i = 0; i < ivl_expr_width(expr); i++) {
-         // Get the current test bit.
-         vhdl_type *type = vhdl_type::nunsigned(width);
-         vhdl_var_ref *ref = new vhdl_var_ref(test->get_name().c_str(), type);
-         ref->set_slice(new vhdl_const_int(i+base));
+         vhdl_binop_expr *sub_expr =
+            new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
+         vhdl_type *type;
+         vhdl_var_ref *ref;
 
-         // Compare the bit against 'x'.
+         // Check if the test bit is 'z'.
+         type = vhdl_type::nunsigned(width);
+         ref = new vhdl_var_ref(test->get_name().c_str(), type);
+         ref->set_slice(new vhdl_const_int(i+base));
          vhdl_binop_expr *cmp =
             new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
          cmp->add_expr(ref);
+         cmp->add_expr(new vhdl_const_bit('z'));
+         sub_expr->add_expr(cmp);
+
+         // Compare the test bit against a constant 'x'.
+         type = vhdl_type::nunsigned(width);
+         ref = new vhdl_var_ref(test->get_name().c_str(), type);
+         ref->set_slice(new vhdl_const_int(i+base));
+         cmp = new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
+         cmp->add_expr(ref);
          cmp->add_expr(new vhdl_const_bit('x'));
-         all->add_expr(cmp);
+         sub_expr->add_expr(cmp);
+
+         all->add_expr(sub_expr);
       }
    } else {
       // For a casex 'x' is a don't care, so just put 'true'.
@@ -775,17 +791,42 @@ static void process_number(vhdl_binop_expr *all, vhdl_var_ref *test,
          continue;  // Ignore these.
       }
 
-      // Get the current test bit.
-      vhdl_type *type = vhdl_type::nunsigned(width);
-      vhdl_var_ref *ref = new vhdl_var_ref(test->get_name().c_str(), type);
-      ref->set_slice(new vhdl_const_int(i+base));
+      vhdl_binop_expr *sub_expr =
+         new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
+      vhdl_type *type;
+      vhdl_var_ref *ref;
 
-      // Compare the bit against the value.
+      // Check if the test bit is 'z'.
+      type = vhdl_type::nunsigned(width);
+      ref = new vhdl_var_ref(test->get_name().c_str(), type);
+      ref->set_slice(new vhdl_const_int(i+base));
       vhdl_binop_expr *cmp =
          new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
       cmp->add_expr(ref);
+      cmp->add_expr(new vhdl_const_bit('z'));
+      sub_expr->add_expr(cmp);
+
+      // If this is a casex statement check if the test bit is 'x'.
+      if (!is_casez) {
+         type = vhdl_type::nunsigned(width);
+         ref = new vhdl_var_ref(test->get_name().c_str(), type);
+         ref->set_slice(new vhdl_const_int(i+base));
+         cmp = new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
+         cmp->add_expr(ref);
+         cmp->add_expr(new vhdl_const_bit('x'));
+         sub_expr->add_expr(cmp);
+      }
+
+      // Compare the bit against the constant value.
+      type = vhdl_type::nunsigned(width);
+      ref = new vhdl_var_ref(test->get_name().c_str(), type);
+      ref->set_slice(new vhdl_const_int(i+base));
+      cmp = new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
+      cmp->add_expr(ref);
       cmp->add_expr(new vhdl_const_bit(bits[i]));
-      all->add_expr(cmp);
+      sub_expr->add_expr(cmp);
+
+      all->add_expr(sub_expr);
       just_dont_care = false;
    }
 
@@ -815,6 +856,7 @@ static bool process_signal(vhdl_binop_expr *all, vhdl_var_ref *test,
       // Generate a comparison for this bit position
       vhdl_binop_expr *cmp;
       vhdl_type *type;
+      vhdl_var_ref *ref;
 
       // Check if this is an out of bounds access. If this is a casez
       // then check against a constant 'x' for the out of bound bits
@@ -823,8 +865,7 @@ static bool process_signal(vhdl_binop_expr *all, vhdl_var_ref *test,
          if (is_casez) {
             // Get the current test bit.
             type = vhdl_type::nunsigned(width);
-            vhdl_var_ref *ref = new vhdl_var_ref(test->get_name().c_str(),
-                                                 type);
+            ref = new vhdl_var_ref(test->get_name().c_str(), type);
             ref->set_slice(new vhdl_const_int(i+base));
 
             // Compare the bit against 'x'.
@@ -836,17 +877,19 @@ static bool process_signal(vhdl_binop_expr *all, vhdl_var_ref *test,
          } else {
             // The compiler replaces a completely out of range select
             // with a constant so we know there will be at least one
-            // valid bit here. We don't need a just_font_care test.
+            // valid bit here. We don't need a just_dont_care test.
             continue;
          }
       }
 
       vhdl_binop_expr *sub_expr =
          new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
+      vhdl_var_ref *bit;
 
       // Get the current expression bit.
+      // Why can we reuse the expression bit, but not the condition bit?
       type = vhdl_type::nunsigned(ivl_expr_width(expr));
-      vhdl_var_ref *bit = new vhdl_var_ref(ivl_expr_name(expr), type);
+      bit = new vhdl_var_ref(ivl_expr_name(expr), type);
       bit->set_slice(new vhdl_const_int(i+sbase));
 
       // Check if the expression bit is 'z'.
@@ -863,12 +906,30 @@ static bool process_signal(vhdl_binop_expr *all, vhdl_var_ref *test,
          sub_expr->add_expr(cmp);
       }
 
-      // Get the current test bit.
+      // Check if the test bit is 'z'.
       type = vhdl_type::nunsigned(width);
-      vhdl_var_ref *ref = new vhdl_var_ref(test->get_name().c_str(), type);
+      ref = new vhdl_var_ref(test->get_name().c_str(), type);
       ref->set_slice(new vhdl_const_int(i+base));
+      cmp = new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
+      cmp->add_expr(ref);
+      cmp->add_expr(new vhdl_const_bit('z'));
+      sub_expr->add_expr(cmp);
+
+      // If this is a casex statement check if the test bit is 'x'.
+      if (!is_casez) {
+        type = vhdl_type::nunsigned(width);
+         ref = new vhdl_var_ref(test->get_name().c_str(), type);
+         ref->set_slice(new vhdl_const_int(i+base));
+         cmp = new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
+         cmp->add_expr(ref);
+         cmp->add_expr(new vhdl_const_bit('x'));
+         sub_expr->add_expr(cmp);
+      }
 
       // Next check if the test and expression bits are equal.
+      type = vhdl_type::nunsigned(width);
+      ref = new vhdl_var_ref(test->get_name().c_str(), type);
+      ref->set_slice(new vhdl_const_int(i+base));
       cmp = new vhdl_binop_expr(VHDL_BINOP_EQ, vhdl_type::boolean());
       cmp->add_expr(ref);
       cmp->add_expr(bit);

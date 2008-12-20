@@ -338,11 +338,11 @@ static double chi_square(long *seed, long deg_of_free)
 
 static double t( long *seed, long deg_of_free)
 {
-      double x, chi2, div, root;
+      double x, chi2, dv, root;
 
       chi2 = chi_square(seed, deg_of_free);
-      div = chi2 / (double) deg_of_free;
-      root = sqrt(div);
+      dv = chi2 / (double) deg_of_free;
+      root = sqrt(dv);
       x = normal(seed, 0, 1) / root;
 
       return x;

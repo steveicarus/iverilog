@@ -146,27 +146,27 @@ static struct vvp_nexus_data*new_nexus_data()
 
 static int nexus_drive_is_strength_aware(ivl_nexus_ptr_t nptr)
 {
-      ivl_net_logic_t log;
+      ivl_net_logic_t logic;
 
       if (ivl_nexus_ptr_drive0(nptr) != IVL_DR_STRONG)
 	    return 1;
       if (ivl_nexus_ptr_drive1(nptr) != IVL_DR_STRONG)
 	    return 1;
 
-      log = ivl_nexus_ptr_log(nptr);
-      if (log != 0) {
+      logic = ivl_nexus_ptr_log(nptr);
+      if (logic != 0) {
 	      /* These logic gates are able to generate unusual
 	         strength values and so their outputs are considered
 	         strength aware. */
-	    if (ivl_logic_type(log) == IVL_LO_BUFIF0)
+	    if (ivl_logic_type(logic) == IVL_LO_BUFIF0)
 		  return 1;
-	    if (ivl_logic_type(log) == IVL_LO_BUFIF1)
+	    if (ivl_logic_type(logic) == IVL_LO_BUFIF1)
 		  return 1;
-	    if (ivl_logic_type(log) == IVL_LO_PMOS)
+	    if (ivl_logic_type(logic) == IVL_LO_PMOS)
 		  return 1;
-	    if (ivl_logic_type(log) == IVL_LO_NMOS)
+	    if (ivl_logic_type(logic) == IVL_LO_NMOS)
 		  return 1;
-	    if (ivl_logic_type(log) == IVL_LO_CMOS)
+	    if (ivl_logic_type(logic) == IVL_LO_CMOS)
 		  return 1;
       }
 
@@ -586,22 +586,22 @@ char* draw_net_input_x(ivl_nexus_t nex,
 	/* If the nexus has no drivers, then send a constant HiZ into
 	   the net. */
       if (ndrivers == 0) {
-	    unsigned idx, wid = width_of_nexus(nex);
+	    unsigned jdx, wid = width_of_nexus(nex);
 	    char*tmp = malloc(wid + 5);
 	    nex_private = tmp;
 	    strcpy(tmp, "C4<");
 	    tmp += strlen(tmp);
 	    switch (res) {
 		case IVL_SIT_TRI:
-		  for (idx = 0 ;  idx < wid ;  idx += 1)
+		  for (jdx = 0 ;  jdx < wid ;  jdx += 1)
 			*tmp++ = 'z';
 		  break;
 		case IVL_SIT_TRI0:
-		  for (idx = 0 ;  idx < wid ;  idx += 1)
+		  for (jdx = 0 ;  jdx < wid ;  jdx += 1)
 			*tmp++ = '0';
 		  break;
 		case IVL_SIT_TRI1:
-		  for (idx = 0 ;  idx < wid ;  idx += 1)
+		  for (jdx = 0 ;  jdx < wid ;  jdx += 1)
 			*tmp++ = '1';
 		  break;
 		default:
@@ -610,9 +610,9 @@ char* draw_net_input_x(ivl_nexus_t nex,
 	    *tmp++ = '>';
 	    *tmp = 0;
 	    if (island) {
-		  char*tmp = draw_island_port(island, nex, nex_private);
+		  char*tmp2 = draw_island_port(island, nex, nex_private);
 		  free(nex_private);
-		  nex_private = tmp;
+		  nex_private = tmp2;
 	    }
 	    return nex_private;
       }

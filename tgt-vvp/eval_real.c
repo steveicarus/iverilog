@@ -51,14 +51,14 @@ void clr_word(int res)
       word_alloc_mask &= ~ (1U << res);
 }
 
-static int draw_binary_real(ivl_expr_t exp)
+static int draw_binary_real(ivl_expr_t expr)
 {
       int l, r = -1;
 
 	/* If the opcode is a vector only opcode then the sub expression
 	 * must not be a real expression, so use vector evaluation and
 	 * then convert that result to a real value. */
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 	  case 'E':
 	  case 'N':
 	  case 'l':
@@ -75,9 +75,9 @@ static int draw_binary_real(ivl_expr_t exp)
 	    int res;
 	    const char*sign_flag;
 
-	    vi = draw_eval_expr(exp, STUFF_OK_XZ);
+	    vi = draw_eval_expr(expr, STUFF_OK_XZ);
 	    res = allocate_word();
-	    sign_flag = ivl_expr_signed(exp)? "/s" : "";
+	    sign_flag = ivl_expr_signed(expr)? "/s" : "";
 	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 		    sign_flag, res, vi.base, vi.wid);
 
@@ -88,10 +88,10 @@ static int draw_binary_real(ivl_expr_t exp)
 	    }
       }
 
-      l = draw_eval_real(ivl_expr_oper1(exp));
-      r = draw_eval_real(ivl_expr_oper2(exp));
+      l = draw_eval_real(ivl_expr_oper1(expr));
+      r = draw_eval_real(ivl_expr_oper2(expr));
 
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 
 	  case '+':
 	    fprintf(vvp_out, "    %%add/wr %d, %d;\n", l, r);
@@ -153,7 +153,7 @@ static int draw_binary_real(ivl_expr_t exp)
 	  }
 	  default:
 	    fprintf(stderr, "XXXX draw_binary_real(%c)\n",
-		    ivl_expr_opcode(exp));
+		    ivl_expr_opcode(expr));
 	    assert(0);
       }
 
@@ -162,12 +162,12 @@ static int draw_binary_real(ivl_expr_t exp)
       return l;
 }
 
-static int draw_number_real(ivl_expr_t exp)
+static int draw_number_real(ivl_expr_t expr)
 {
       unsigned int idx;
       int res = allocate_word();
-      const char*bits = ivl_expr_bits(exp);
-      unsigned wid = ivl_expr_width(exp);
+      const char*bits = ivl_expr_bits(expr);
+      unsigned wid = ivl_expr_width(expr);
       unsigned long mant = 0, mask = -1UL;
       int vexp = 0x1000;
 
@@ -178,7 +178,7 @@ static int draw_number_real(ivl_expr_t exp)
 
       int negate = 0;
       int carry = 0;
-      if (ivl_expr_signed(exp) && (bits[wid-1] == '1')) {
+      if (ivl_expr_signed(expr) && (bits[wid-1] == '1')) {
 	    negate = 1;
 	    carry = 1;
       }
@@ -198,7 +198,7 @@ static int draw_number_real(ivl_expr_t exp)
       }
 
       for ( ; idx < wid ; idx += 1) {
-	    if (ivl_expr_signed(exp) && (bits[idx] == bits[IMM_WID-1]))
+	    if (ivl_expr_signed(expr) && (bits[idx] == bits[IMM_WID-1]))
 		  continue;
 
 	    if (bits[idx] == '0')
@@ -217,10 +217,10 @@ static int draw_number_real(ivl_expr_t exp)
       return res;
 }
 
-static int draw_realnum_real(ivl_expr_t exp)
+static int draw_realnum_real(ivl_expr_t expr)
 {
       int res = allocate_word();
-      double value = ivl_expr_dvalue(exp);
+      double value = ivl_expr_dvalue(expr);
 
       double fract;
       int expo, vexp;
@@ -260,7 +260,7 @@ static int draw_realnum_real(ivl_expr_t exp)
       vexp += sign;
 
       fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load=%g\n",
-	      res, mant, vexp, ivl_expr_dvalue(exp));
+	      res, mant, vexp, ivl_expr_dvalue(expr));
 
 	/* Capture the residual bits, if there are any. Note that an
 	   IEEE754 mantissa has 52 bits, 31 of which were accounted
@@ -278,7 +278,7 @@ static int draw_realnum_real(ivl_expr_t exp)
       if (mant != 0) {
 	    int tmp_word = allocate_word();
 	    fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load=%g\n",
-		    tmp_word, mant, vexp, ivl_expr_dvalue(exp));
+		    tmp_word, mant, vexp, ivl_expr_dvalue(expr));
 	    fprintf(vvp_out, "    %%add/wr %d, %d;\n", res, tmp_word);
 	    clr_word(tmp_word);
       }
@@ -286,23 +286,23 @@ static int draw_realnum_real(ivl_expr_t exp)
       return res;
 }
 
-static int draw_sfunc_real(ivl_expr_t exp)
+static int draw_sfunc_real(ivl_expr_t expr)
 {
       struct vector_info sv;
       int res;
       const char*sign_flag = "";
 
-      switch (ivl_expr_value(exp)) {
+      switch (ivl_expr_value(expr)) {
 
 	  case IVL_VT_REAL:
-	    if (ivl_expr_parms(exp) == 0) {
+	    if (ivl_expr_parms(expr) == 0) {
 		  res = allocate_word();
 		  fprintf(vvp_out, "    %%vpi_func/r %u %u \"%s\", %d;\n",
-			  ivl_file_table_index(ivl_expr_file(exp)),
-			  ivl_expr_lineno(exp), ivl_expr_name(exp), res);
+			  ivl_file_table_index(ivl_expr_file(expr)),
+			  ivl_expr_lineno(expr), ivl_expr_name(expr), res);
 
 	    } else {
-		  res = draw_vpi_rfunc_call(exp);
+		  res = draw_vpi_rfunc_call(expr);
 	    }
 	    break;
 
@@ -310,10 +310,10 @@ static int draw_sfunc_real(ivl_expr_t exp)
 	      /* If the value of the sfunc is a vector, then evaluate
 		 it as a vector, then convert the result to a real
 		 (via an index register) for the result. */
-	    sv = draw_eval_expr(exp, 0);
+	    sv = draw_eval_expr(expr, 0);
 	    clr_vector(sv);
 
-	    if (ivl_expr_signed(exp))
+	    if (ivl_expr_signed(expr))
 		  sign_flag = "/s";
 
 	    res = allocate_word();
@@ -335,11 +335,11 @@ static int draw_sfunc_real(ivl_expr_t exp)
  * The real value of a signal is the integer value of a signal
  * converted to real.
  */
-static int draw_signal_real_logic(ivl_expr_t exp)
+static int draw_signal_real_logic(ivl_expr_t expr)
 {
       int res = allocate_word();
-      struct vector_info sv = draw_eval_expr(exp, 0);
-      const char*sign_flag = ivl_expr_signed(exp)? "/s" : "";
+      struct vector_info sv = draw_eval_expr(expr, 0);
+      const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
 
       fprintf(vvp_out, "    %%ix/get%s %d, %u, %u; logic signal as real\n",
 	      sign_flag, res, sv.base, sv.wid);
@@ -350,9 +350,9 @@ static int draw_signal_real_logic(ivl_expr_t exp)
       return res;
 }
 
-static int draw_signal_real_real(ivl_expr_t exp)
+static int draw_signal_real_real(ivl_expr_t expr)
 {
-      ivl_signal_t sig = ivl_expr_signal(exp);
+      ivl_signal_t sig = ivl_expr_signal(expr);
       int res = allocate_word();
 
       if (ivl_signal_dimensions(sig) == 0) {
@@ -360,7 +360,7 @@ static int draw_signal_real_real(ivl_expr_t exp)
 	    return res;
       }
 
-      ivl_expr_t word_ex = ivl_expr_oper1(exp);
+      ivl_expr_t word_ex = ivl_expr_oper1(expr);
       int word_ix = allocate_word();
       draw_eval_expr_into_integer(word_ex, word_ix);
       fprintf(vvp_out, "    %%load/ar %d, v%p, %d;\n", res, sig, word_ix);
@@ -368,14 +368,14 @@ static int draw_signal_real_real(ivl_expr_t exp)
       return res;
 }
 
-static int draw_signal_real(ivl_expr_t exp)
+static int draw_signal_real(ivl_expr_t expr)
 {
-      ivl_signal_t sig = ivl_expr_signal(exp);
+      ivl_signal_t sig = ivl_expr_signal(expr);
       switch (ivl_signal_data_type(sig)) {
 	  case IVL_VT_LOGIC:
-	    return draw_signal_real_logic(exp);
+	    return draw_signal_real_logic(expr);
 	  case IVL_VT_REAL:
-	    return draw_signal_real_real(exp);
+	    return draw_signal_real_real(expr);
 	  default:
 	    fprintf(stderr, "internal error: signal_data_type=%d\n",
 		    ivl_signal_data_type(sig));
@@ -384,11 +384,11 @@ static int draw_signal_real(ivl_expr_t exp)
       }
 }
 
-static int draw_ternary_real(ivl_expr_t exp)
+static int draw_ternary_real(ivl_expr_t expr)
 {
-      ivl_expr_t cond = ivl_expr_oper1(exp);
-      ivl_expr_t true_ex = ivl_expr_oper2(exp);
-      ivl_expr_t false_ex = ivl_expr_oper3(exp);
+      ivl_expr_t cond = ivl_expr_oper1(expr);
+      ivl_expr_t true_ex = ivl_expr_oper2(expr);
+      ivl_expr_t false_ex = ivl_expr_oper3(expr);
 
       struct vector_info tst;
 
@@ -446,7 +446,7 @@ static int draw_ternary_real(ivl_expr_t exp)
       return res;
 }
 
-static int draw_unary_real(ivl_expr_t exp)
+static int draw_unary_real(ivl_expr_t expr)
 {
       ivl_expr_t sube;
       int sub;
@@ -454,14 +454,14 @@ static int draw_unary_real(ivl_expr_t exp)
 	/* If the opcode is a ~ then the sub expression must not be a
 	 * real expression, so use vector evaluation and then convert
 	 * that result to a real value. */
-      if (ivl_expr_opcode(exp) == '~') {
+      if (ivl_expr_opcode(expr) == '~') {
 	    struct vector_info vi;
 	    int res;
 	    const char*sign_flag;
 
-	    vi = draw_eval_expr(exp, STUFF_OK_XZ);
+	    vi = draw_eval_expr(expr, STUFF_OK_XZ);
 	    res = allocate_word();
-	    sign_flag = ivl_expr_signed(exp)? "/s" : "";
+	    sign_flag = ivl_expr_signed(expr)? "/s" : "";
 	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 		    sign_flag, res, vi.base, vi.wid);
 
@@ -471,14 +471,14 @@ static int draw_unary_real(ivl_expr_t exp)
 	    return res;
       }
 
-      if (ivl_expr_opcode(exp) == '!') {
+      if (ivl_expr_opcode(expr) == '!') {
 	    struct vector_info vi;
 	    int res;
 	    const char*sign_flag;
 
-	    vi = draw_eval_expr(exp, STUFF_OK_XZ);
+	    vi = draw_eval_expr(expr, STUFF_OK_XZ);
 	    res = allocate_word();
-	    sign_flag = ivl_expr_signed(exp)? "/s" : "";
+	    sign_flag = ivl_expr_signed(expr)? "/s" : "";
 	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 		    sign_flag, res, vi.base, vi.wid);
 
@@ -488,13 +488,13 @@ static int draw_unary_real(ivl_expr_t exp)
 	    return res;
       }
 
-      sube = ivl_expr_oper1(exp);
+      sube = ivl_expr_oper1(expr);
       sub = draw_eval_real(sube);
 
-      if (ivl_expr_opcode(exp) == '+')
+      if (ivl_expr_opcode(expr) == '+')
 	    return sub;
 
-      if (ivl_expr_opcode(exp) == '-') {
+      if (ivl_expr_opcode(expr) == '-') {
 	    int res = allocate_word();
 	    fprintf(vvp_out, "    %%loadi/wr %d, 0, 0; load 0.0\n", res);
 	    fprintf(vvp_out, "    %%sub/wr %d, %d;\n", res, sub);
@@ -503,58 +503,58 @@ static int draw_unary_real(ivl_expr_t exp)
 	    return res;
       }
 
-      if (ivl_expr_opcode(exp) == 'm') { /* abs(sube) */
+      if (ivl_expr_opcode(expr) == 'm') { /* abs(sube) */
 	    fprintf(vvp_out, "    %%abs/wr %d, %d;\n", sub, sub);
 	    return sub;
       }
 
-      fprintf(vvp_out, "; XXXX unary (%c) on sube in %d\n", ivl_expr_opcode(exp), sub);
-      fprintf(stderr, "XXXX evaluate unary (%c) on sube in %d\n", ivl_expr_opcode(exp), sub);
+      fprintf(vvp_out, "; XXXX unary (%c) on sube in %d\n", ivl_expr_opcode(expr), sub);
+      fprintf(stderr, "XXXX evaluate unary (%c) on sube in %d\n", ivl_expr_opcode(expr), sub);
       return 0;
 }
 
-int draw_eval_real(ivl_expr_t exp)
+int draw_eval_real(ivl_expr_t expr)
 {
       int res = 0;
 
-      switch (ivl_expr_type(exp)) {
+      switch (ivl_expr_type(expr)) {
 
 	  case IVL_EX_BINARY:
-	    res = draw_binary_real(exp);
+	    res = draw_binary_real(expr);
 	    break;
 
 	  case IVL_EX_NUMBER:
-	    res = draw_number_real(exp);
+	    res = draw_number_real(expr);
 	    break;
 
 	  case IVL_EX_REALNUM:
-	    res = draw_realnum_real(exp);
+	    res = draw_realnum_real(expr);
 	    break;
 
 	  case IVL_EX_SFUNC:
-	    res = draw_sfunc_real(exp);
+	    res = draw_sfunc_real(expr);
 	    break;
 
 	  case IVL_EX_SIGNAL:
-	    res = draw_signal_real(exp);
+	    res = draw_signal_real(expr);
 	    break;
 
 	  case IVL_EX_TERNARY:
-	    res = draw_ternary_real(exp);
+	    res = draw_ternary_real(expr);
 	    break;
 
 	  case IVL_EX_UFUNC:
-	    res = draw_ufunc_real(exp);
+	    res = draw_ufunc_real(expr);
 	    break;
 
 	  case IVL_EX_UNARY:
-	    res = draw_unary_real(exp);
+	    res = draw_unary_real(expr);
 	    break;
 
 	  default:
-	    if (ivl_expr_value(exp) == IVL_VT_VECTOR) {
-		  struct vector_info sv = draw_eval_expr(exp, 0);
-		  const char*sign_flag = ivl_expr_signed(exp)? "/s" : "";
+	    if (ivl_expr_value(expr) == IVL_VT_VECTOR) {
+		  struct vector_info sv = draw_eval_expr(expr, 0);
+		  const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
 
 		  clr_vector(sv);
 		  res = allocate_word();
@@ -566,9 +566,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 	    } else {
 		  fprintf(stderr, "XXXX Evaluate real expression (%d)\n",
-			  ivl_expr_type(exp));
+			  ivl_expr_type(expr));
 		  fprintf(vvp_out, " ; XXXX Evaluate real expression (%d)\n",
-			  ivl_expr_type(exp));
+			  ivl_expr_type(expr));
 		  return 0;
 	    }
 	    break;

@@ -2175,7 +2175,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 	    return result_ex;
       }
 
-      if ((par_msb < par_lsb) && (wid>1))
+      if ((par_msv < par_lsv) && (wid>1))
 	    base = make_add_expr(base, 1-(long)wid);
 
       NetExpr*tmp = par->dup_expr();

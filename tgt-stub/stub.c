@@ -1208,7 +1208,6 @@ static void show_nexus_details(ivl_signal_t net, ivl_nexus_t nex)
 static void show_signal(ivl_signal_t net)
 {
       unsigned idx;
-      ivl_nexus_t nex;
 
       const char*type = "?";
       const char*port = "";
@@ -1277,7 +1276,7 @@ static void show_signal(ivl_signal_t net)
 
       for (idx = 0 ;  idx < ivl_signal_array_count(net) ; idx += 1) {
 
-	    nex = ivl_signal_nex(net, idx);
+	    ivl_nexus_t nex = ivl_signal_nex(net, idx);
 
 	    fprintf(out, "  %s %s %s%s[%d:%d] %s[word=%u, adr=%d]  <width=%u%s> <discipline=%s> nexus=%s\n",
 		    type, sign, port, data_type,

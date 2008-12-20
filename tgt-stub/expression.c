@@ -331,9 +331,9 @@ void show_expression(ivl_expr_t net, unsigned ind)
 		    ind, "", ivl_expr_name(net), width, sign, vt,
 		    ivl_expr_file(net), ivl_expr_lineno(net));
 	    { unsigned cnt = ivl_expr_parms(net);
-	      unsigned idx;
-	      for (idx = 0 ;  idx < cnt ;  idx += 1)
-		    show_expression(ivl_expr_parm(net, idx), ind+3);
+	      unsigned jdx;
+	      for (jdx = 0 ;  jdx < cnt ;  jdx += 1)
+		    show_expression(ivl_expr_parm(net, jdx), ind+3);
 	    }
 	    break;
 
@@ -355,15 +355,15 @@ void show_expression(ivl_expr_t net, unsigned ind)
 
 	  case IVL_EX_REALNUM:
 	      {
-		    int idx;
+		    int jdx;
 		    union foo {
 			  double rv;
 			  unsigned char bv[sizeof(double)];
 		    } tmp;
 		    tmp.rv = ivl_expr_dvalue(net);
 		    fprintf(out, "%*s<realnum=%f (", ind, "", tmp.rv);
-		    for (idx = sizeof(double) ;  idx > 0 ;  idx -= 1)
-			  fprintf(out, "%02x", tmp.bv[idx-1]);
+		    for (jdx = sizeof(double) ;  jdx > 0 ;  jdx -= 1)
+			  fprintf(out, "%02x", tmp.bv[jdx-1]);
 		    fprintf(out, ")");
 		    if (par != 0)
 			  fprintf(out, ", parameter=%s",
