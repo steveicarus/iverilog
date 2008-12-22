@@ -42,7 +42,7 @@ LEX = @LEX@
 YACC = @YACC@
 
 CPPFLAGS = -I. -I$(srcdir)/.. -I$(srcdir) -I.. @file64_support@ @CPPFLAGS@ @DEFS@ @PICFLAG@
-CFLAGS = -Wall @CFLAGS@
+CFLAGS = -Wall -Wshadow @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
 all: dep system.vpi va_math.vpi v2005_math.vpi $(ALL32)

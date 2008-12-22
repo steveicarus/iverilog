@@ -44,7 +44,7 @@ MAN = @MAN@
 PS2PDF = @PS2PDF@
 
 CPPFLAGS = -I. -I.. -I$(srcdir)/.. -I$(srcdir) -DVERSION='"$(VERSION)"' @CPPFLAGS@ @DEFS@
-CFLAGS = -Wall @CFLAGS@
+CFLAGS = -Wall -Wshadow @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
 all: dep iverilog@EXEEXT@

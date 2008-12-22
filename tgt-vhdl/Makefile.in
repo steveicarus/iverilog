@@ -39,7 +39,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 CPPFLAGS = -I. -I.. -I$(srcdir)/.. -DVERSION='"$(VERSION)"' @CPPFLAGS@ @DEFS@ @PICFLAG@
-CXXFLAGS = -Wall @CXXFLAGS@
+CXXFLAGS = -Wall -Wshadow @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
 all: dep vhdl.tgt vhdl.conf vhdl-s.conf

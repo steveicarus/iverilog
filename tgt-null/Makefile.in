@@ -37,7 +37,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 CPPFLAGS = -I.. -I$(srcdir)/.. -I$(srcdir) -DVERSION='"$(VERSION)"' @CPPFLAGS@ @DEFS@ @PICFLAG@
-CFLAGS = -Wall @CFLAGS@
+CFLAGS = -Wall -Wshadow @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
 all: dep null.tgt
