@@ -283,8 +283,8 @@ void vpip_dec_str_to_vec4(vvp_vector4_t&vec, const char*buf)
 		    /* Return "x" if there are invalid digits in the string. */
 		  fprintf(stderr, "Warning: Invalid decimal digit %c(%d) in "
 		          "\"%s.\"\n", buf[slen-idx-1], buf[slen-idx-1], buf);
-		  for (unsigned idx = 0 ;  idx < vec.size() ;  idx += 1) {
-			vec.set_bit(idx, BIT4_X);
+		  for (unsigned jdx = 0 ;  jdx < vec.size() ;  jdx += 1) {
+			vec.set_bit(jdx, BIT4_X);
 		  }
 		  return;
             }

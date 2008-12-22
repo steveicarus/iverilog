@@ -48,11 +48,11 @@ NetProc* AContrib::elaborate(Design*des, NetScope*scope) const
 
 bool AProcess::elaborate(Design*des, NetScope*scope) const
 {
-      NetProc*statement = statement_->elaborate(des, scope);
-      if (statement == 0)
+      NetProc*estatement = statement_->elaborate(des, scope);
+      if (estatement == 0)
 	    return false;
 
-      NetAnalogTop*top = new NetAnalogTop(scope, type_, statement);
+      NetAnalogTop*top = new NetAnalogTop(scope, type_, estatement);
 
 	// Evaluate the attributes for this process, if there
 	// are any. These attributes are to be attached to the

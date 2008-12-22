@@ -727,7 +727,7 @@ inline vvp_bit4_t vvp_scalar_t::value() const
 
 inline vvp_scalar_t resolve(vvp_scalar_t a, vvp_scalar_t b)
 {
-      extern vvp_scalar_t fully_featured_resolv_(vvp_scalar_t a, vvp_scalar_t b);
+      extern vvp_scalar_t fully_featured_resolv_(vvp_scalar_t, vvp_scalar_t);
 
 	// If the value is HiZ, resolution is simply a matter of
 	// returning the *other* value.

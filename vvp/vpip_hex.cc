@@ -102,8 +102,8 @@ void vpip_hex_str_to_vec4(vvp_vector4_t&val, const char*str)
 		    /* Return "x" if there are invalid digits in the string. */
 		  fprintf(stderr, "Warning: Invalid hex digit %c(%d) in "
 		          "\"%s\".\n", ch, ch, str);
-		  for (unsigned idx = 0 ;  idx < val.size() ;  idx += 1) {
-			val.set_bit(idx, BIT4_X);
+		  for (unsigned jdx = 0 ;  jdx < val.size() ;  jdx += 1) {
+			val.set_bit(jdx, BIT4_X);
 		  }
 		  return;
 		  break;

@@ -74,8 +74,8 @@ void vpip_bin_str_to_vec4(vvp_vector4_t&vec4, const char*buf)
 		    /* Return "x" if there are invalid digits in the string. */
 		  fprintf(stderr, "Warning: Invalid binary digit %c(%d) in "
 		          "\"%s\".\n", *ebuf, *ebuf, buf);
-		  for (unsigned idx = 0 ;  idx < vec4.size() ;  idx += 1) {
-			vec4.set_bit(idx, BIT4_X);
+		  for (unsigned jdx = 0 ;  jdx < vec4.size() ;  jdx += 1) {
+			vec4.set_bit(jdx, BIT4_X);
 		  }
 		  return;
 		  break;
@@ -109,8 +109,8 @@ void vpip_bin_str_to_vec4(vvp_vector4_t&vec4, const char*buf)
 	    break;
       }
 
-      for (unsigned idx = 0 ;  idx < vec4.size() ; idx += 1) {
-	    if (idx < tval.size()) vec4.set_bit(idx, tval.value(idx));
-	    else vec4.set_bit(idx, pad);
+      for (unsigned jdx = 0 ;  jdx < vec4.size() ; jdx += 1) {
+	    if (jdx < tval.size()) vec4.set_bit(jdx, tval.value(jdx));
+	    else vec4.set_bit(jdx, pad);
       }
 }
