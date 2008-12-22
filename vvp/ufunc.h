@@ -64,6 +64,9 @@ class ufunc_core : public vvp_wide_fun_core {
       void assign_bits_to_ports(vvp_context_t context);
       void finish_thread(vthread_t thr);
 
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
+
     private:
       void recv_vec4_from_inputs(unsigned port);
       void recv_real_from_inputs(unsigned port);

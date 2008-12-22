@@ -60,7 +60,7 @@ bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 				const NetBus&nex_map, NetBus&nex_out)
 {
-      NetNet*rsig = rval_->synthesize(des, scope);
+      NetNet*rsig = rval_->synthesize(des, scope, rval_);
       assert(rsig);
 
       NetNet*lsig = lval_->sig();
@@ -155,7 +155,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 			  const NetBus&nex_map, NetBus&nex_out)
 {
 	/* Synthesize the select expression. */
-      NetNet*esig = expr_->synthesize(des, scope);
+      NetNet*esig = expr_->synthesize(des, scope, expr_);
 
       unsigned sel_width = esig->vector_width();
       assert(sel_width > 0);
@@ -978,4 +978,3 @@ void synth2(Design*des)
       synth2_f synth_obj;
       des->functor(&synth_obj);
 }
-

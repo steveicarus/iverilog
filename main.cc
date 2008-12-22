@@ -89,6 +89,7 @@ bool gn_icarus_misc_flag = true;
 bool gn_cadence_types_flag = true;
 bool gn_specify_blocks_flag = true;
 bool gn_io_range_error_flag = true;
+bool gn_strict_ca_eval_flag = false;
 bool gn_verilog_ams_flag = false;
 
 map<string,const char*> flags;
@@ -125,7 +126,6 @@ bool debug_elaborate = false;
 bool debug_elab_pexpr = false;
 bool debug_synth2 = false;
 bool debug_optimizer = false;
-bool debug_automatic = false;
 
 /*
  * Verbose messages enabled.
@@ -245,6 +245,12 @@ static void process_generation_flag(const char*gen)
 
       } else if (strcmp(gen,"no-io-range-error") == 0) {
 	    gn_io_range_error_flag = false;
+
+      } else if (strcmp(gen,"strict-ca-eval") == 0) {
+	    gn_strict_ca_eval_flag = true;
+
+      } else if (strcmp(gen,"no-strict-ca-eval") == 0) {
+	    gn_strict_ca_eval_flag = false;
 
       } else {
       }
@@ -397,8 +403,6 @@ static void read_iconfig_file(const char*ipath)
 		  } else if (strcmp(cp,"optimizer") == 0) {
 			debug_optimizer = true;
 			cerr << "debug: Enable optimizer debug" << endl;
-		  } else if (strcmp(cp,"automatic") == 0) {
-			debug_automatic = true;
 		  } else {
 		  }
 

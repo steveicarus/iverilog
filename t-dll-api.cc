@@ -1284,6 +1284,20 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
       return net->width;
 }
 
+extern "C" ivl_event_t ivl_lpm_trigger(ivl_lpm_t net)
+{
+      assert(net);
+      switch (net->type) {
+	  case IVL_LPM_SFUNC:
+	    return net->u_.sfunc.trigger;
+	  case IVL_LPM_UFUNC:
+	    return net->u_.ufunc.trigger;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
 extern "C" ivl_expr_t ivl_lval_mux(ivl_lval_t net)
 {
       assert(net);

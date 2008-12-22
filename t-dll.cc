@@ -1239,6 +1239,40 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
       scope_add_lpm(obj->scope, obj);
 }
 
+ivl_event_t dll_target::make_lpm_trigger(const NetEvWait*net)
+{
+      ivl_event_t trigger = 0;
+      if (net) {
+            const NetEvent*ev = net->event(0);
+
+              /* Locate the event by name. */
+            ivl_scope_t ev_scope = lookup_scope_(ev->scope());
+
+            assert(ev_scope);
+            assert(ev_scope->nevent_ > 0);
+            for (unsigned idx = 0;  idx < ev_scope->nevent_; idx += 1) {
+                  const char*ename =
+                        ivl_event_basename(ev_scope->event_[idx]);
+                  if (strcmp(ev->name(), ename) == 0) {
+                        trigger = ev_scope->event_[idx];
+                        break;
+                  }
+            }
+
+              /* Connect up the probe pins. This wasn't done during the
+                 ::event method because the signals weren't scanned yet. */
+            assert(ev->nprobe() == 1);
+            const NetEvProbe*pr = ev->probe(0);
+            for (unsigned bit = 0; bit < pr->pin_count(); bit += 1) {
+                  ivl_nexus_t nex = (ivl_nexus_t)
+                        pr->pin(bit).nexus()->t_cookie();
+                  assert(nex);
+                  trigger->pins[bit] = nex;
+            }
+      }
+      return trigger;
+}
+
 bool dll_target::net_sysfunction(const NetSysFunc*net)
 {
       unsigned idx;
@@ -1275,6 +1309,9 @@ bool dll_target::net_sysfunction(const NetSysFunc*net)
 	    nexus_lpm_add(obj->u_.sfunc.pins[idx], obj, 0,
 			  IVL_DR_HiZ, IVL_DR_HiZ);
       }
+
+	/* Save information about the trigger event if it exists. */
+      obj->u_.sfunc.trigger = make_lpm_trigger(net->trigger());
 
       make_lpm_delays_(obj, net);
 
@@ -1325,6 +1362,9 @@ bool dll_target::net_function(const NetUserFunc*net)
 	    ivl_drive_t drive = idx == 0 ? IVL_DR_STRONG : IVL_DR_HiZ;
 	    nexus_lpm_add(obj->u_.ufunc.pins[idx], obj, idx, drive, drive);
       }
+
+	/* Save information about the trigger event if it exists. */
+      obj->u_.ufunc.trigger = make_lpm_trigger(net->trigger());
 
       make_lpm_delays_(obj, net);
 

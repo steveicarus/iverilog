@@ -141,7 +141,7 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 
       NetEvProbe*pclk = eclk->probe(0);
       NetESignal*d = dynamic_cast<NetESignal*> (asn->rval());
-      NetNet*ce = cexp? cexp->synthesize(des, top->scope()) : 0;
+      NetNet*ce = cexp? cexp->synthesize(des, top->scope(), cexp) : 0;
 
       if (d == 0) {
 	    cerr << asn->get_fileline() << ": internal error: "

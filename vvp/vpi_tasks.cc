@@ -360,6 +360,19 @@ static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp, int)
 		break;
 	  }
 
+          case vpiTimeVal: {
+                unsigned long tmp = vp->value.time->low;
+                for (unsigned idx = 0 ;  idx < vwid ;  idx += 1) {
+                      val.set_bit(idx, (tmp&1)? BIT4_1 : BIT4_0);
+
+                      if (idx == 31)
+                            tmp = vp->value.time->high;
+                      else
+                            tmp >>= 1;
+                }
+                break;
+          }
+
 	  case vpiVectorVal:
 
 	    for (unsigned wdx = 0 ;  wdx < vwid ;  wdx += 32) {

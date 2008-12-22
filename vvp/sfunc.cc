@@ -41,6 +41,16 @@ sfunc_core::~sfunc_core()
 {
 }
 
+/*
+ * This method is only called when a trigger event occurs. Just arrange for
+ * the function to be called.
+ */
+void sfunc_core::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                           vvp_context_t)
+{
+      schedule_generic(this, 0, false);
+}
+
 void sfunc_core::recv_vec4_from_inputs(unsigned port)
 {
       vpiHandle vpi = argv_[port];
@@ -130,7 +140,8 @@ static int make_vpi_argv(unsigned argc, vpiHandle*vpi_argv,
 
 void compile_sfunc(char*label, char*name,  char*format_string,
 		   long file_idx, long lineno,
-		   unsigned argc, struct symb_s*argv)
+		   unsigned argc, struct symb_s*argv,
+                   char*trigger_label)
 {
       vpiHandle*vpi_argv = new vpiHandle[argc];
       int width_code = make_vpi_argv(argc, vpi_argv, format_string);
@@ -151,4 +162,9 @@ void compile_sfunc(char*label, char*name,  char*format_string,
 	/* Link the inputs to the functor. */
       wide_inputs_connect(score, argc, argv);
       free(argv);
+
+        /* If this function has a trigger event, connect the functor to
+           that event. */
+      if (trigger_label)
+            input_connect(ptr, 0, trigger_label);
 }

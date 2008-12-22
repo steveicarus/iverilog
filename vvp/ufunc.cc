@@ -91,6 +91,16 @@ void ufunc_core::finish_thread(vthread_t thr)
 }
 
 /*
+ * This method is only called when a trigger event occurs. Just arrange for
+ * the function to be called.
+ */
+void ufunc_core::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                           vvp_context_t)
+{
+      invoke_thread_();
+}
+
+/*
  * The recv_vec4 methods of the input functors call this to assign the
  * input value to the port of the functor. I save the input value and
  * arrange for the function to be called.
@@ -126,7 +136,8 @@ void ufunc_core::invoke_thread_()
 void compile_ufunc(char*label, char*code, unsigned wid,
 		   unsigned argc,  struct symb_s*argv,
 		   unsigned portc, struct symb_s*portv,
-		   struct symb_s retv, struct symb_s scope)
+		   struct symb_s retv, char*scope_label,
+                   char*trigger_label)
 {
 	/* The input argument list and port list must have the same
 	   sizes, since internally we will be mapping the inputs list
@@ -170,7 +181,7 @@ void compile_ufunc(char*label, char*code, unsigned wid,
       vvp_net_t*ptr = new vvp_net_t;
       ufunc_core*fcore = new ufunc_core(wid, ptr, portc, ports,
 					start_code, call_scope,
-					retv.text, scope.text);
+					retv.text, scope_label);
       ptr->fun = fcore;
       define_functor_symbol(label, ptr);
       free(label);
@@ -178,6 +189,11 @@ void compile_ufunc(char*label, char*code, unsigned wid,
       start_code->ufunc_core_ptr = fcore;
 
       wide_inputs_connect(fcore, argc, argv);
+
+        /* If this function has a trigger event, connect the functor to
+           that event. */
+      if (trigger_label)
+            input_connect(ptr, 0, trigger_label);
 
       free(argv);
       free(portv);

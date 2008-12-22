@@ -225,7 +225,9 @@ extern void compile_extend_signed(char*label, long width, struct symb_s arg);
 
 extern void compile_sfunc(char*label, char*name, char*format_string,
 			  long file_idx, long lineno,
-			  unsigned argc, struct symb_s*argv);
+			  unsigned argc, struct symb_s*argv,
+                          char*trigger_label);
+
 extern void compile_repeat(char*label, long width, long repeat,
 			   struct symb_s arg);
 
@@ -347,7 +349,8 @@ extern void compile_array_cleanup(void);
 extern void compile_ufunc(char*label, char*code, unsigned wid,
 			  unsigned argc, struct symb_s*argv,
 			  unsigned portc, struct symb_s*portv,
-			  struct symb_s retv, struct symb_s scope);
+			  struct symb_s retv, char*scope_label,
+                          char*trigger_label);
 
 /*
  * The compile_event function takes the parts of the event statement

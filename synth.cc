@@ -53,7 +53,7 @@ int do_expr::assign(NetAssign*stmt)
       if (dynamic_cast<NetESignal*>(stmt->rval()))
 	    return 0;
 
-      NetNet*tmp = stmt->rval()->synthesize(des_, scope_);
+      NetNet*tmp = stmt->rval()->synthesize(des_, scope_, stmt->rval());
       if (tmp == 0)
 	    return 0;
 
@@ -68,7 +68,7 @@ int do_expr::assign_nb(NetAssignNB*stmt)
       if (dynamic_cast<NetESignal*>(stmt->rval()))
 	    return 0;
 
-      NetNet*tmp = stmt->rval()->synthesize(des_, scope_);
+      NetNet*tmp = stmt->rval()->synthesize(des_, scope_, stmt->rval());
       if (tmp == 0)
 	    return 0;
 
@@ -82,7 +82,7 @@ int do_expr::condit(NetCondit*stmt)
 {
 	/* synthesize the condition expression, if necessary. */
       if (! dynamic_cast<NetESignal*>(stmt->expr())) {
-	    NetNet*tmp = stmt->expr()->synthesize(des_, scope_);
+	    NetNet*tmp = stmt->expr()->synthesize(des_, scope_, stmt->expr());
 
 	    if (tmp) {
 		  NetESignal*tmpe = new NetESignal(tmp);

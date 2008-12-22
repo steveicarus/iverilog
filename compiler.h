@@ -88,7 +88,6 @@ extern bool debug_elaborate;
 extern bool debug_elab_pexpr;
 extern bool debug_synth2;
 extern bool debug_optimizer;
-extern bool debug_automatic;
 
 /* Path to a directory useful for finding subcomponents. */
 extern const char*basedir;
@@ -125,6 +124,11 @@ extern bool gn_verilog_ams_flag;
 /* If this flag is false a warning is printed when the port declaration
    is scalar and the net/register definition is vectored. */
 extern bool gn_io_range_error_flag;
+
+/* If this flag is true, then force re-evaluation of user functions
+   in a continuous assignment when any part of the expression is
+   re-evaluated. */
+extern bool gn_strict_ca_eval_flag;
 
 /* The bits of these GN_KEYWORDS_* constants define non-intersecting
    sets of keywords. The compiler enables groups of keywords by setting

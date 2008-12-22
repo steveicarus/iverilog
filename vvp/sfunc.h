@@ -27,6 +27,9 @@ class sfunc_core : public vvp_wide_fun_core, protected vvp_gen_event_s {
       sfunc_core(vvp_net_t*ptr, vpiHandle sys, unsigned argc, vpiHandle*argv);
       ~sfunc_core();
 
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
+
     private:
       void recv_vec4_from_inputs(unsigned port);
       void recv_real_from_inputs(unsigned port);

@@ -37,7 +37,8 @@ const char NOTICE[] =
 ;
 
 const char HELP[] =
-"Usage: iverilog [-ESvV] [-B base] [-c cmdfile|-f cmdfile] [-g1|-g2|-g2x]\n"
+"Usage: iverilog [-ESvV] [-B base] [-c cmdfile|-f cmdfile]\n"
+"                [-g1995|-g2001|-g2005] [-g<feature>]\n"
 "                [-D macro[=defn]] [-I includedir] [-M depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
 "                [-s topmodule] [-t target] [-T min|typ|max]\n"
@@ -112,6 +113,7 @@ const char*gen_specify = "no-specify";
 const char*gen_xtypes = "xtypes";
 const char*gen_icarus = "icarus-misc";
 const char*gen_io_range_error = "io-range-error";
+const char*gen_strict_ca_eval = "no-strict-ca-eval";
 const char*gen_verilog_ams = "no-verilog-ams";
 
 /* Boolean: true means use a default include dir, false means don't */
@@ -598,6 +600,12 @@ int process_generation(const char*name)
       else if (strcmp(name,"no-io-range-error") == 0)
 	    gen_io_range_error = "no-io-range-error";
 
+      else if (strcmp(name,"strict-ca-eval") == 0)
+	    gen_strict_ca_eval = "strict-ca-eval";
+
+      else if (strcmp(name,"no-strict-ca-eval") == 0)
+	    gen_strict_ca_eval = "no-strict-ca-eval";
+
       else if (strcmp(name,"verilog-ams") == 0)
 	    gen_verilog_ams = "verilog-ams";
 
@@ -617,7 +625,8 @@ int process_generation(const char*name)
 		            "    std-include | no-std-include\n"
 		            "    xtypes | no-xtypes\n"
 		            "    icarus-misc | no-icarus-misc\n"
-		            "    io-range-error | no-io-range-error\n");
+		            "    io-range-error | no-io-range-error\n"
+                            "    strict-ca-eval | no-strict-ca-eval\n");
 	    return 1;
       }
 
@@ -887,6 +896,7 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "generation:%s\n", gen_specify);
       fprintf(iconfig_file, "generation:%s\n", gen_xtypes);
       fprintf(iconfig_file, "generation:%s\n", gen_io_range_error);
+      fprintf(iconfig_file, "generation:%s\n", gen_strict_ca_eval);
       fprintf(iconfig_file, "generation:%s\n", gen_verilog_ams);
       fprintf(iconfig_file, "generation:%s\n", gen_icarus);
       fprintf(iconfig_file, "warnings:%s\n", warning_flags);

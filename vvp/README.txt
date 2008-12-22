@@ -654,15 +654,25 @@ input to port 1 is the amount to shift.
 
 STRUCTURAL FUNCTION CALLS:
 
-The .ufunc statement defines a call to a user defined function.
+The .ufunc statements define a call to a user defined function.
 
-	<label> .ufunc <flabel>, <wid>, <isymbols> ( <psymbols> ) <rsymbol> <ssymbol>;
+	<label> .ufunc   <flabel>, <wid>,
+            <isymbols> ( <psymbols> ) <rsymbol> <ssymbol>;
+
+	<label> .ufunc/e <flabel>, <wid>, <trigger>,
+            <isymbols> ( <psymbols> ) <rsymbol> <ssymbol>;
+
+The first variant is used for functions that only need to be called
+when one of their inputs changes value. The second variant is used
+for functions that also need to be called when a trigger event occurs.
 
 The <flabel> is the code label for the first instruction of the
 function implementation. This is code that the simulator will branch
 to.
 
 The <wid> is the width of the output vector in bits.
+
+The <trigger> is the label for the trigger event.
 
 The <isymbols> is a list of net symbols for each of the inputs to the
 function. These are points in the net, and the ufunc device watches

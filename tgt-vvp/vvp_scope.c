@@ -1537,9 +1537,15 @@ static void draw_lpm_sfunc(ivl_lpm_t net)
 
       const char*dly = draw_lpm_output_delay(net);
 
-      fprintf(vvp_out, "L_%p%s .sfunc %u %u \"%s\"", net, dly,
-              ivl_file_table_index(ivl_lpm_file(net)), ivl_lpm_lineno(net),
-              ivl_lpm_string(net));
+      if (ivl_lpm_trigger(net))
+            fprintf(vvp_out, "L_%p%s .sfunc/e %u %u \"%s\", E_%p", net, dly,
+                    ivl_file_table_index(ivl_lpm_file(net)),
+                    ivl_lpm_lineno(net), ivl_lpm_string(net),
+                    ivl_lpm_trigger(net));
+      else
+            fprintf(vvp_out, "L_%p%s .sfunc %u %u \"%s\"", net, dly,
+                    ivl_file_table_index(ivl_lpm_file(net)),
+                    ivl_lpm_lineno(net), ivl_lpm_string(net));
 
 	/* Print the function type descriptor string. */
       fprintf(vvp_out, ", \"");
@@ -1565,9 +1571,14 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 
       const char*dly = draw_lpm_output_delay(net);
 
-      fprintf(vvp_out, "L_%p%s .ufunc TD_%s, %u", net, dly,
-	      vvp_mangle_id(ivl_scope_name(def)),
-	      ivl_lpm_width(net));
+      if (ivl_lpm_trigger(net))
+            fprintf(vvp_out, "L_%p%s .ufunc/e TD_%s, %u, E_%p", net, dly,
+                    vvp_mangle_id(ivl_scope_name(def)),
+                    ivl_lpm_width(net), ivl_lpm_trigger(net));
+      else
+            fprintf(vvp_out, "L_%p%s .ufunc TD_%s, %u", net, dly,
+                    vvp_mangle_id(ivl_scope_name(def)),
+                    ivl_lpm_width(net));
 
 	/* Print all the net signals that connect to the input of the
 	   function. */

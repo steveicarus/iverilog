@@ -157,6 +157,7 @@
 ".resolv"   { return K_RESOLV; }
 ".scope"    { return K_SCOPE; }
 ".sfunc"    { return K_SFUNC; }
+".sfunc/e"  { return K_SFUNC_E; }
 ".shift/l"  { return K_SHIFTL; }
 ".shift/r"  { return K_SHIFTR; }
 ".shift/rs" { return K_SHIFTRS; }
@@ -167,6 +168,7 @@
 ".tranif1"  { return K_TRANIF1; }
 ".tranvp"   { return K_TRANVP; }
 ".ufunc"    { return K_UFUNC; }
+".ufunc/e"  { return K_UFUNC_E; }
 ".var"      { return K_VAR; }
 ".var/real" { return K_VAR_R; }
 ".var/s"    { return K_VAR_S; }

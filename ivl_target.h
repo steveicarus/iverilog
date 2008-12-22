@@ -1024,6 +1024,10 @@ extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
  *    often the number of inputs per out, i.e., the number of inputs
  *    per bit for a MUX.
  *
+ * ivl_lpm_trigger
+ *    SFUNC and UFUNC devices may have a trigger that forces the
+ *    function output to be re-evaluated.
+ *
  * SEMANTIC NOTES
  *
  * - Concatenation (IVL_LPM_CONCAT)
@@ -1186,6 +1190,11 @@ extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
  * function (i.e. "$display") that was found in the source code. The
  * compiler does little checking of that name.
  *
+ * The ivl_lpm_trigger function retrieves the trigger event that
+ * indicates when the system function needs to be re-evaluated. If
+ * there is no trigger event, the system function only needs to be
+ * re-evaluated when a change is detected on its input ports.
+ *
  * - User Function Call (IVL_LPM_UFUNC)
  * This device is special as it represents a call to a user defined
  * function (behavioral code) within a netlist. The inputs to the
@@ -1204,6 +1213,11 @@ extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
  * ports. The ivl_lpm_size function returns the number of inputs for
  * the device, and the ivl_lpm_data() function index argument selects
  * the port to retrieve. Each port is sized independently.
+ *
+ * The ivl_lpm_trigger function retrieves the trigger event that
+ * indicates when the user function needs to be re-evaluated. If
+ * there is no trigger event, the user function only needs to be
+ * re-evaluated when a change is detected on its input ports.
  */
 
 extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
@@ -1213,6 +1227,7 @@ extern ivl_scope_t    ivl_lpm_scope(ivl_lpm_t net);
 extern int            ivl_lpm_signed(ivl_lpm_t net);
 extern ivl_lpm_type_t ivl_lpm_type(ivl_lpm_t net);
 extern unsigned       ivl_lpm_width(ivl_lpm_t net);
+extern ivl_event_t    ivl_lpm_trigger(ivl_lpm_t net);
 
   /* IVL_LPM_FF */
 extern ivl_nexus_t ivl_lpm_async_clr(ivl_lpm_t net);

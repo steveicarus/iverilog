@@ -29,9 +29,9 @@
  * which accounts for all the inputs, plus one for the phantom output
  * that is the result.
  */
-NetUserFunc::NetUserFunc(NetScope*s, perm_string n, NetScope*d)
+NetUserFunc::NetUserFunc(NetScope*s, perm_string n, NetScope*d, NetEvWait*trigger)
 : NetNode(s, n, d->func_def()->port_count()+1),
-  def_(d)
+  def_(d), trigger_(trigger)
 {
       pin(0).set_dir(Link::OUTPUT);
 
@@ -128,11 +128,9 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 
 NetSysFunc::NetSysFunc(NetScope*s, perm_string n,
 		       const struct sfunc_return_type*def,
-		       unsigned ports)
-: NetNode(s, n, ports)
+		       unsigned ports, NetEvWait*trigger)
+: NetNode(s, n, ports), def_(def), trigger_(trigger)
 {
-      def_ = def;
-
       pin(0).set_dir(Link::OUTPUT); // Q
 
       for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1) {
@@ -161,4 +159,3 @@ unsigned NetSysFunc::vector_width() const
 {
       return def_->wid;
 }
-

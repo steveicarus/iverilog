@@ -97,6 +97,16 @@ reported as a error. Using \fI-gno-io-range-error\fP will produce a
 warning instead of a fatal error for the case of a vectored net/register
 and a scalar port declaration.
 .TP 8
+.B -gstrict-ca-eval\fI|\fP-gno-strict-ca-eval
+The standard requires that if any input to a continuous assignment
+expression changes value, the entire expression is re-evaluated. By
+default, parts of the expression that do not depend on the changed
+input value(s) are not re-evaluated. If an expression contains a call
+to a function that doesn't depend solely on its input values or that
+has side effects, the resulting behaviour will differ from that
+required by the standard. Using \fI-gstrict-ca-eval\fP will force
+standard compliant behaviour (with some loss in performance).
+.TP 8
 .B -I\fIincludedir\fP
 Append directory \fIincludedir\fP to list of directories searched
 for Verilog include files. The \fB-I\fP switch may be used many times

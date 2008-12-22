@@ -169,6 +169,8 @@ struct dll_target  : public target_t, public expr_scan_t {
       void make_scope_parameters(ivl_scope_t scope, const NetScope*net);
       void make_scope_param_expr(ivl_parameter_t cur_par, NetExpr*etmp);
 
+      ivl_event_t make_lpm_trigger(const NetEvWait*ev);
+
       static ivl_expr_t expr_from_value_(const verinum&that);
 };
 
@@ -377,12 +379,14 @@ struct ivl_lpm_s {
 		  const char* fun_name;
 		  unsigned ports;
 		  ivl_nexus_t*pins;
+		  ivl_event_t trigger;
 	    } sfunc;
 
 	    struct ivl_lpm_ufunc_s {
 		  ivl_scope_t def;
 		  unsigned ports;
 		  ivl_nexus_t*pins;
+		  ivl_event_t trigger;
 	    } ufunc;
       } u_;
 };

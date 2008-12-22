@@ -81,9 +81,9 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
 %token K_PART_V K_PORT K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
-%token K_RESOLV K_SCOPE K_SFUNC K_SHIFTL K_SHIFTR K_SHIFTRS
-%token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP K_UFUNC
-%token K_UDP K_UDP_C K_UDP_S
+%token K_RESOLV K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
+%token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
+%token K_UFUNC K_UFUNC_E K_UDP K_UDP_C K_UDP_S
 %token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_func K_vpi_func_r
 %token K_disable K_fork
 %token K_ivl_version K_vpi_module K_vpi_time_precision K_file_names
@@ -218,12 +218,19 @@ statement
      other thread code that is automatically invoked if any of the
      bits in the symbols list change. */
 
-	| T_LABEL K_UFUNC T_SYMBOL ',' T_NUMBER ',' symbols
-	  '(' symbols ')' symbol symbol ';'
+	| T_LABEL K_UFUNC T_SYMBOL ',' T_NUMBER ','
+	  symbols '(' symbols ')' symbol T_SYMBOL ';'
 		{ compile_ufunc($1, $3, $5,
 				$7.cnt, $7.vect,
 				$9.cnt, $9.vect,
-				$11, $12); }
+				$11, $12, 0); }
+
+	| T_LABEL K_UFUNC_E T_SYMBOL ',' T_NUMBER ',' T_SYMBOL ','
+	  symbols '(' symbols ')' symbol T_SYMBOL ';'
+		{ compile_ufunc($1, $3, $5,
+				$9.cnt, $9.vect,
+				$11.cnt, $11.vect,
+				$13, $14, $7); }
 
   /* Resolver statements are very much like functors. They are
      compiled to functors of a different mode. */
@@ -460,13 +467,22 @@ statement
                 { compile_extend_signed($1, $3, $5); }
 
   /* System function call */
-        | T_LABEL K_SFUNC T_NUMBER T_NUMBER T_STRING ',' T_STRING ','
-          symbols ';'
-                { compile_sfunc($1, $5, $7, $3, $4, $9.cnt, $9.vect); }
+        | T_LABEL K_SFUNC T_NUMBER T_NUMBER T_STRING ','
+          T_STRING ',' symbols ';'
+                { compile_sfunc($1, $5, $7, $3, $4, $9.cnt, $9.vect, 0); }
+
+        | T_LABEL K_SFUNC_E T_NUMBER T_NUMBER T_STRING ',' T_SYMBOL ','
+          T_STRING ',' symbols ';'
+                { compile_sfunc($1, $5, $9, $3, $4, $11.cnt, $11.vect, $7); }
 
   /* System function call - no arguments */
-        | T_LABEL K_SFUNC T_NUMBER T_NUMBER T_STRING ',' T_STRING ';'
-                { compile_sfunc($1, $5, $7, $3, $4, 0, NULL); }
+        | T_LABEL K_SFUNC T_NUMBER T_NUMBER T_STRING ','
+          T_STRING ';'
+                { compile_sfunc($1, $5, $7, $3, $4, 0, 0, 0); }
+
+        | T_LABEL K_SFUNC_E T_NUMBER T_NUMBER T_STRING ',' T_SYMBOL ','
+          T_STRING ';'
+                { compile_sfunc($1, $5, $9, $3, $4, 0, 0, $7); }
 
   /* Shift nodes. */
 

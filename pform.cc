@@ -110,12 +110,12 @@ PTask* pform_push_task_scope(char*name, bool is_auto)
       PTask*task;
       if (pform_cur_generate) {
 	    task = new PTask(task_name, pform_cur_generate->lexical_scope,
-	                     is_auto || debug_automatic);
+	                     is_auto);
 	    pform_cur_generate->tasks[task->pscope_name()] = task;
 	    pform_cur_generate->lexical_scope = task;
       } else {
 	    task = new PTask(task_name, lexical_scope,
-                             is_auto || debug_automatic);
+                             is_auto);
 	    pform_cur_module->tasks[task->pscope_name()] = task;
 	    lexical_scope = task;
       }
@@ -130,12 +130,12 @@ PFunction* pform_push_function_scope(char*name, bool is_auto)
       PFunction*func;
       if (pform_cur_generate) {
 	    func = new PFunction(func_name, pform_cur_generate->lexical_scope,
-                                 is_auto || debug_automatic);
+                                 is_auto);
 	    pform_cur_generate->funcs[func->pscope_name()] = func;
 	    pform_cur_generate->lexical_scope = func;
       } else {
 	    func = new PFunction(func_name, lexical_scope,
-                                 is_auto || debug_automatic);
+                                 is_auto);
 	    pform_cur_module->funcs[func->pscope_name()] = func;
 	    lexical_scope = func;
       }

@@ -109,7 +109,7 @@ static NetExpr* make_delay_nets(Design*des, NetScope*scope, NetExpr*expr)
       if (dynamic_cast<NetEConst*> (expr))
 	    return expr;
 
-      NetNet*sig = expr->synthesize(des, scope);
+      NetNet*sig = expr->synthesize(des, scope, expr);
       if (sig == 0) {
 	    cerr << expr->get_fileline() << ": error: Expression " << *expr
 		 << " is not suitable for delay expression." << endl;
