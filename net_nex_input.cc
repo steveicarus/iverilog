@@ -246,7 +246,7 @@ NexusSet* NetBlock::nex_input(bool rem_out)
 	    NexusSet*tmp = cur->nex_input(rem_out);
 
 	      /* Add the current input set to the accumulated input set. */
-	    result->add(*tmp);
+	    if (tmp != 0) result->add(*tmp);
 	    delete tmp;
 
 	      /* Add the current outputs to the accumulated output set,
@@ -345,10 +345,11 @@ NexusSet* NetForever::nex_input(bool rem_out)
  *
  * The nex_input set is the input set of the <statement>. Do *not*
  * include the input set of the <expr> because it does not affect the
- * result.
+ * result. The statement can be omitted.
  */
 NexusSet* NetPDelay::nex_input(bool rem_out)
 {
+      if (statement_ == 0) return 0;
       NexusSet*result = statement_->nex_input(rem_out);
       return result;
 }
