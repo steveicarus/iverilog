@@ -108,6 +108,7 @@ ivl_lpm_sset_value
 ivl_lpm_string
 ivl_lpm_sync_clr
 ivl_lpm_sync_set
+ivl_lpm_trigger
 ivl_lpm_type
 ivl_lpm_width
 
