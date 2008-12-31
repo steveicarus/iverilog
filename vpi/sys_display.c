@@ -511,6 +511,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 		  return 1;
 	    }
 
+        char *res_val_str;
 	    if (fsize==-1){
 		    /* simple %d parameter, or %0d parameter.
 		     * Size is now determined by the width
@@ -521,9 +522,34 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 		  fsize = (leading_zero==1)
 			? 0
 			: vpi_get_dec_size(argv[idx]);
-	    }
+          res_val_str = strdup(value.value.str);
+	    } else {
+            if(leading_zero == 1){
+                // case of '%04d' - padding with zeros
+                int abs_fsize = abs(fsize);
+                int res_val_str_len, res_val_str_indx=0, val_indx=0;
+                res_val_str_len = (strlen(value.value.str) > abs_fsize ? strlen(value.value.str) : abs_fsize) + 2;
+                res_val_str = malloc(sizeof(char)*res_val_str_len);
+                assert(res_val_str);
+                if(value.value.str[0] == '-'){
+                    res_val_str[res_val_str_indx++] = '-';
+                    val_indx++;
+                }
+                // padding with zeros (if required)
+                if(abs_fsize > strlen(value.value.str)) {
+                    memset(&res_val_str[res_val_str_indx], '0', abs_fsize-strlen(value.value.str));
+                    res_val_str_indx += abs_fsize-strlen(value.value.str);
+                }
+                // copy rest of the value
+                strcpy(&res_val_str[res_val_str_indx], &value.value.str[val_indx]);
+            } else {
+                // case of '%4d'
+                res_val_str = strdup(value.value.str);
+            }
+        }
 
-	    my_mcd_printf(mcd, "%*s", fsize, value.value.str);
+	    my_mcd_printf(mcd, "%*s", fsize, res_val_str);
+        free(res_val_str);
 
 	    use_count = 1;
 	    break;
