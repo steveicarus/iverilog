@@ -48,7 +48,7 @@ MAN = @MAN@
 PS2PDF = @PS2PDF@
 
 CPPFLAGS = -I. -I.. -I $(srcdir) -I$(srcdir)/.. -DVERSION='"$(VERSION)"' @CPPFLAGS@ @DEFS@
-CXXFLAGS = -Wall -Wshadow @CXXFLAGS@
+CXXFLAGS = -Wall @CXXFLAGS@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@
 
