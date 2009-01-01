@@ -72,7 +72,7 @@ main.o: main.c config.h
 config.h: $(srcdir)/config.h.in Makefile
 	sed -e 's;@IVLCC@;@CC@;' -e 's;@IVLCXX@;@CXX@;' \
 	    -e 's;@SUFFIX@;$(suffix);g' \
-	    -e 's;@IVLCFLAGS@;@CXXFLAGS@;' \
+	    -e 's;@IVLCFLAGS@;$(CFLAGS);' \
 	    -e 's;@SHARED@;@shared@;' $< > $@
 
 # Windows specific...
