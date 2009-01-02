@@ -1,8 +1,0 @@
-libvpip.a
-vpip.dll
-Makefile
-configure
-config.log
-config.status
-autom4te.cache
-dep
