@@ -66,13 +66,13 @@ parse.h parse.c: parse.y
 install: all installdirs $(libdir)/ivl$(suffix)/ivlpp
 
 $(libdir)/ivl$(suffix)/ivlpp@EXEEXT@: ivlpp@EXEEXT@
-	$(INSTALL_PROGRAM) ./ivlpp@EXEEXT@ $(libdir)/ivl$(suffix)/ivlpp@EXEEXT@
+	$(INSTALL_PROGRAM) ./ivlpp@EXEEXT@ $(DESTDIR)/$(libdir)/ivl$(suffix)/ivlpp@EXEEXT@
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(libdir)/ivl$(suffix)
+	$(srcdir)/../mkinstalldirs $(DESTDIR)/$(libdir)/ivl$(suffix)
 
 uninstall:
-	rm -f $(libdir)/ivl$(suffix)/ivlpp@EXEEXT@
+	rm -f $(DESTDIR)/$(libdir)/ivl$(suffix)/ivlpp@EXEEXT@
 
 lexor.o: lexor.c parse.h globals.h
 main.o: main.c globals.h

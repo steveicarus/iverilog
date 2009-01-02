@@ -75,22 +75,22 @@ check: all
 install: all installdirs $(libdir)/ivl$(suffix)/null.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/null.conf $(libdir)/ivl$(suffix)/null-s.conf
 
 $(libdir)/ivl$(suffix)/null.tgt: ./null.tgt
-	$(INSTALL_PROGRAM) ./null.tgt $(libdir)/ivl$(suffix)/null.tgt
+	$(INSTALL_PROGRAM) ./null.tgt $(DESTDIR)/$(libdir)/ivl$(suffix)/null.tgt
 
 $(libdir)/ivl$(suffix)/null.conf: $(srcdir)/null.conf
-	$(INSTALL_DATA) $(srcdir)/null.conf $(libdir)/ivl$(suffix)/null.conf
+	$(INSTALL_DATA) $(srcdir)/null.conf $(DESTDIR)/$(libdir)/ivl$(suffix)/null.conf
 
 $(libdir)/ivl$(suffix)/null-s.conf: $(srcdir)/null-s.conf
-	$(INSTALL_DATA) $(srcdir)/null-s.conf $(libdir)/ivl$(suffix)/null-s.conf
+	$(INSTALL_DATA) $(srcdir)/null-s.conf $(DESTDIR)/$(libdir)/ivl$(suffix)/null-s.conf
 
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(includedir) $(bindir) $(libdir)/ivl$(suffix)
+	$(srcdir)/../mkinstalldirs $(DESTDIR)/$(includedir) $(DESTDIR)/$(bindir) $(DESTDIR)/$(libdir)/ivl$(suffix)
 
 uninstall:
-	rm -f $(libdir)/ivl$(suffix)/null.tgt
-	rm -f $(libdir)/ivl$(suffix)/null.conf
-	rm -f $(libdir)/ivl$(suffix)/null-s.conf
+	rm -f $(DESTDIR)/$(libdir)/ivl$(suffix)/null.tgt
+	rm -f $(DESTDIR)/$(libdir)/ivl$(suffix)/null.conf
+	rm -f $(DESTDIR)/$(libdir)/ivl$(suffix)/null-s.conf
 
 
 -include $(patsubst %.o, dep/%.d, $O)

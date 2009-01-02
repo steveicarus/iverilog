@@ -100,7 +100,9 @@ installdirs: ../mkinstalldirs
 	$(srcdir)/../mkinstalldirs $(DESTDIR)$(libdir)/ivl$(suffix)
 
 uninstall:
-	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/vvp.tgt $(DESTDIR)$(libdir)/ivl$(suffix)/vvp.conf $(DESTDIR)$(libdir)/ivl$(suffix)/vvp-s.conf
+	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/vvp.tgt 
+	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/vvp.conf 
+	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/vvp-s.conf
 
 
 -include $(patsubst %.o, dep/%.d, $O)

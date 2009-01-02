@@ -91,13 +91,13 @@ distclean: clean
 install: all installdirs $(vpidir)/cadpli.vpl $(INSTALL32)
 
 $(vpidir)/cadpli.vpl: ./cadpli.vpl
-	$(INSTALL_PROGRAM) ./cadpli.vpl $(vpidir)/cadpli.vpl
+	$(INSTALL_PROGRAM) ./cadpli.vpl $(DESTDIR)/$(vpidir)/cadpli.vpl
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(vpidir)
+	$(srcdir)/../mkinstalldirs $(DESTDIR)/$(vpidir)
 
 uninstall: $(UNINSTALL32)
-	rm -f $(vpidir)/cadpli.vpl
+	rm -f $(DESTDIR)/$(vpidir)/cadpli.vpl
 
 ifeq (@enable_vvp32@,yes)
 include $(srcdir)/enable_vvp32.mk

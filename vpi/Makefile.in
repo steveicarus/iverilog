@@ -103,11 +103,11 @@ bin32/system.vpi: $(addprefix bin32/,$O)
 install32: all32 $(vpidir32)/system.vpi
 
 $(vpidir32)/system.vpi: bin32/system.vpi
-	$(INSTALL_PROGRAM) bin32/system.vpi $(vpidir32)/system.vpi
-	$(STRIP) $(strip_dynamic) $(vpidir32)/system.vpi
+	$(INSTALL_PROGRAM) bin32/system.vpi $(DESTDIR)/$(vpidir32)/system.vpi
+	$(STRIP) $(strip_dynamic) $(DESTDIR)/$(vpidir32)/system.vpi
 
 uninstall32:
-	rm -f $(vpidir32)/system.vpi
+	rm -f $(DESTDIR)/$(vpidir32)/system.vpi
 endif
 
 clean:
@@ -122,18 +122,18 @@ check: all
 install: all installdirs $(vpidir)/system.vpi $(libdir)/ivl$(suffix)/system.sft $(INSTALL32)
 
 $(vpidir)/system.vpi: ./system.vpi
-	$(INSTALL_PROGRAM) ./system.vpi $(vpidir)/system.vpi
-	$(STRIP) $(strip_dynamic) $(vpidir)/system.vpi
+	$(INSTALL_PROGRAM) ./system.vpi $(DESTDIR)/$(vpidir)/system.vpi
+	$(STRIP) $(strip_dynamic) $(DESTDIR)/$(vpidir)/system.vpi
 
 $(libdir)/ivl$(suffix)/system.sft: system.sft
-	$(INSTALL_DATA) $< $@
+	$(INSTALL_DATA) $< $(DESTDIR)/$@
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(vpidir)
+	$(srcdir)/../mkinstalldirs $(DESTDIR)/$(vpidir)
 
 uninstall: $(UNINSTALL32)
-	rm -f $(vpidir)/system.vpi
-	rm -f $(libdir)/ivl$(suffix)/system.sft
+	rm -f $(DESTDIR)/$(vpidir)/system.vpi
+	rm -f $(DESTDIR)/$(libdir)/ivl$(suffix)/system.sft
 
 
 -include $(patsubst %.o, dep/%.d, $O)

@@ -197,38 +197,39 @@ Makefile: Makefile.in config.status
 install: all installdirs $(bindir)/vvp$(suffix)@EXEEXT@ $(libdir64)/libvpi$(suffix).a $(INSTALL_DOC) $(INSTALL32)
 
 $(bindir)/vvp$(suffix)@EXEEXT@: ./vvp@EXEEXT@
-	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ $(bindir)/vvp$(suffix)@EXEEXT@
+	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ $(DESTDIR)/$(bindir)/vvp$(suffix)@EXEEXT@
 
 $(libdir64)/libvpi$(suffix).a : ./libvpi.a
-	$(INSTALL_DATA) libvpi.a $(libdir64)/libvpi$(suffix).a
+	$(INSTALL_DATA) libvpi.a $(DESTDIR)/$(libdir64)/libvpi$(suffix).a
 
 $(mandir)/man1/vvp$(suffix).1: $(srcdir)/vvp.man
-	$(INSTALL_DATA) $(srcdir)/vvp.man $(mandir)/man1/vvp$(suffix).1
+	$(INSTALL_DATA) $(srcdir)/vvp.man $(DESTDIR)/$(mandir)/man1/vvp$(suffix).1
 
 $(prefix)/vvp.pdf: vvp.pdf
-	$(INSTALL_DATA) vvp.pdf $(prefix)/vvp$(suffix).pdf
+	$(INSTALL_DATA) vvp.pdf $(DESTDIR)/$(prefix)/vvp$(suffix).pdf
 
 installdirs: $(srcdir)/mkinstalldirs
-	$(srcdir)/mkinstalldirs $(bindir) $(libdir) $(libdir64) $(INSTALL_DOCDIR)
+	$(srcdir)/mkinstalldirs $(DESTDIR)/$(bindir) $(DESTDIR)/$(libdir) \
+		$(DESTDIR)/$(libdir64) $(DESTDIR)/$(INSTALL_DOCDIR)
 
 
 ifeq (@enable_vvp32@,yes)
 install32: all32 $(libdir)/libvpi$(suffix).a $(bindir)/vvp32$(suffix)
 
 $(libdir)/libvpi$(suffix).a: bin32/libvpi.a
-	$(INSTALL_DATA) bin32/libvpi.a $(libdir)/libvpi$(suffix).a
+	$(INSTALL_DATA) bin32/libvpi.a $(DESTDIR)/$(libdir)/libvpi$(suffix).a
 
 $(bindir)/vvp32$(suffix): ./vvp32
-	$(INSTALL_PROGRAM) ./vvp32 $(bindir)/vvp32$(suffix)
+	$(INSTALL_PROGRAM) ./vvp32 $(DESTDIR)/$(bindir)/vvp32$(suffix)
 
 uninstall32:
-	rm -f $(libdir)/libvpi$(suffix).a
-	rm -f $(bindir)/vvp32$(suffix)
+	rm -f $(DESTDIR)/$(libdir)/libvpi$(suffix).a
+	rm -f $(DESTDIR)/$(bindir)/vvp32$(suffix)
 endif
 
 uninstall: $(UNINSTALL32)
-	rm -f $(bindir)/vvp$(suffix)@EXEEXT@
-	rm -f $(libdir64)/libvpi$(suffix).a
-	rm -f $(mandir)/man1/vvp$(suffix).1
+	rm -f $(DESTDIR)/$(bindir)/vvp$(suffix)@EXEEXT@
+	rm -f $(DESTDIR)/$(libdir64)/libvpi$(suffix).a
+	rm -f $(DESTDIR)/$(mandir)/man1/vvp$(suffix).1
 
 -include $(patsubst %.o, dep/%.d, $O)

@@ -239,25 +239,25 @@ $(libdir)/ivl$(suffix)/ivl@EXEEXT@: ./ivl@EXEEXT@
 	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ $(DESTDIR)$(libdir)/ivl$(suffix)/ivl@EXEEXT@
 
 $(libdir)/ivl$(suffix)/xnf-s.conf: $(srcdir)/xnf-s.conf
-	$(INSTALL_DATA) $(srcdir)/xnf-s.conf $(libdir)/ivl$(suffix)/xnf-s.conf
+	$(INSTALL_DATA) $(srcdir)/xnf-s.conf $(DESTDIR)$(libdir)/ivl$(suffix)/xnf-s.conf
 
 $(libdir)/ivl$(suffix)/xnf.conf: $(srcdir)/xnf.conf
-	$(INSTALL_DATA) $(srcdir)/xnf.conf $(libdir)/ivl$(suffix)/xnf.conf
+	$(INSTALL_DATA) $(srcdir)/xnf.conf $(DESTDIR)$(libdir)/ivl$(suffix)/xnf.conf
 
 $(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
-	$(INSTALL_DATA) $(srcdir)/ivl_target.h $(includedir)/ivl_target.h
+	$(INSTALL_DATA) $(srcdir)/ivl_target.h $(DESTDIR)$(includedir)/ivl_target.h
 
 $(includedir)/_pli_types.h: _pli_types.h
-	$(INSTALL_DATA) $< $(includedir)/_pli_types.h
+	$(INSTALL_DATA) $< $(DESTDIR)$(includedir)/_pli_types.h
 
 $(includedir)/vpi_user.h: $(srcdir)/vpi_user.h
-	$(INSTALL_DATA) $(srcdir)/vpi_user.h $(includedir)/vpi_user.h
+	$(INSTALL_DATA) $(srcdir)/vpi_user.h $(DESTDIR)$(includedir)/vpi_user.h
 
 $(includedir)/acc_user.h: $(srcdir)/acc_user.h
-	$(INSTALL_DATA) $(srcdir)/acc_user.h $(includedir)/acc_user.h
+	$(INSTALL_DATA) $(srcdir)/acc_user.h $(DESTDIR)$(includedir)/acc_user.h
 
 $(includedir)/veriuser.h: $(srcdir)/veriuser.h
-	$(INSTALL_DATA) $(srcdir)/veriuser.h $(includedir)/veriuser.h
+	$(INSTALL_DATA) $(srcdir)/veriuser.h $(DESTDIR)$(includedir)/veriuser.h
 
 $(mandir)/man1/iverilog-vpi$(suffix).1: $(srcdir)/iverilog-vpi.man
 	$(INSTALL_DATA) $(srcdir)/iverilog-vpi.man $(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1

@@ -103,17 +103,17 @@ endif
 install: all installdirs $(bindir)/iverilog$(suffix)@EXEEXT@ $(INSTALL_DOC)
 
 $(bindir)/iverilog$(suffix)@EXEEXT@: ./iverilog@EXEEXT@
-	$(INSTALL_PROGRAM) ./iverilog@EXEEXT@ $(bindir)/iverilog$(suffix)@EXEEXT@
+	$(INSTALL_PROGRAM) ./iverilog@EXEEXT@ $(DESTDIR)/$(bindir)/iverilog$(suffix)@EXEEXT@
 
 $(mandir)/man1/iverilog$(suffix).1: $(srcdir)/iverilog.man
-	$(INSTALL_DATA) $(srcdir)/iverilog.man $(mandir)/man1/iverilog$(suffix).1
+	$(INSTALL_DATA) $(srcdir)/iverilog.man $(DESTDIR)/$(mandir)/man1/iverilog$(suffix).1
 
 $(prefix)/iverilog$(suffix).pdf: iverilog.pdf
-	$(INSTALL_DATA) iverilog.pdf $(prefix)/iverilog$(suffix).pdf
+	$(INSTALL_DATA) iverilog.pdf $(DESTDIR)/$(prefix)/iverilog$(suffix).pdf
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(bindir) $(INSTALL_DOCDIR)
+	$(srcdir)/../mkinstalldirs $(DESTDIR)/$(bindir) $(DESTDIR)/$(INSTALL_DOCDIR)
 
 uninstall:
-	rm -f $(bindir)/iverilog$(suffix)@EXEEXT@
-	rm -f $(mandir)/man1/iverilog$(suffix).1
+	rm -f $(DESTDIR)/$(bindir)/iverilog$(suffix)@EXEEXT@
+	rm -f $(DESTDIR)/$(mandir)/man1/iverilog$(suffix).1
