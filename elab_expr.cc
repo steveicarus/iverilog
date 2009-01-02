@@ -1636,8 +1636,9 @@ NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope, int, bool) const
  * convert the values to canonical form.
  */
 bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
-			       long&msb, long&lsb) const
+			       long&msb, long&lsb, bool&defined) const
 {
+      defined = true;
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
 
@@ -1670,6 +1671,8 @@ bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
               /* Attempt to recover from error. */
             lsb = 0;
       } else {
+	    if (! lsb_c->value().is_defined())
+		  defined = false;
             lsb = lsb_c->value().as_long();
       }
 
@@ -1686,6 +1689,8 @@ bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
               /* Attempt to recover from error. */
             msb = lsb;
       } else {
+	    if (! msb_c->value().is_defined())
+		  defined = false;
             msb = msb_c->value().as_long();
       }
 
@@ -1801,8 +1806,12 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 	    break;
 	  case index_component_t::SEL_PART:
 	      { long msb, lsb;
-		calculate_parts_(des, scope, msb, lsb);
-		use_width = 1 + ((msb>lsb)? (msb-lsb) : (lsb-msb));
+		bool parts_defined;
+		calculate_parts_(des, scope, msb, lsb, parts_defined);
+		if (parts_defined)
+		      use_width = 1 + ((msb>lsb)? (msb-lsb) : (lsb-msb));
+		else
+		      use_width = UINT_MAX;
 		break;
 	      }
 	  case index_component_t::SEL_IDX_UP:
@@ -2093,7 +2102,8 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 					     const NetExpr*par_lsb) const
 {
       long msv, lsv;
-      bool flag = calculate_parts_(des, scope, msv, lsv);
+      bool parts_defined_flag;
+      bool flag = calculate_parts_(des, scope, msv, lsv, parts_defined_flag);
       if (!flag)
 	    return 0;
 
@@ -2101,6 +2111,17 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
       flag = calculate_param_range_(des, scope, par_msb, par_msv, par_lsb, par_lsv);
       if (!flag)
 	    return 0;
+
+      if (! parts_defined_flag) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: Part select of paramter "
+		       << "has x/z bits, so resorting to 'bx result." << endl;
+
+	    long wid = 1 + labs(par_msv-par_lsv);
+	    NetEConst*tmp = make_const_x(wid);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
 
 	// Notice that the par_msv is not used in this function other
 	// than for this test. It is used to tell the direction that
@@ -2281,6 +2302,20 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	    NetEConst*le = dynamic_cast<NetEConst*>(tmp);
 	    NetEConst*re = dynamic_cast<NetEConst*>(mtmp);
 	    if (le && re) {
+
+		    // Special case: If the bit select is constant and
+		    // not fully defined, then we know that the result
+		    // must be 1'bx.
+		  if (! re->value().is_defined()) {
+			if (debug_elaborate)
+			      cerr << get_fileline() << ": debug: "
+				   << "Constant bit select of parameter is "
+				   << "not defined. Return constant X value."
+				   << endl;
+			NetEConst*res = make_const_x(1);
+			res->set_line(*this);
+			return res;
+		  }
 
 		    /* Argument and bit select are constant. Calculate
 		       the final result. */
@@ -2467,7 +2502,8 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 				      NetESignal*net, NetScope*found_in) const
 {
       long msv, lsv;
-      bool flag = calculate_parts_(des, scope, msv, lsv);
+      bool parts_defined_flag;
+      bool flag = calculate_parts_(des, scope, msv, lsv, parts_defined_flag);
       if (!flag)
 	    return 0;
 
@@ -2476,6 +2512,18 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	   unsigned. Remember that any order is possible,
 	   i.e., [1:0], [-4:6], etc. */
       unsigned long wid = 1 + labs(msv-lsv);
+	/* But wait... if the part select expressions are not fully
+	   defined, then fall back on the tested width. */
+      if (!parts_defined_flag) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: Part select is not fully "
+		       << "defined. Falling back on width of " << expr_width_
+		       << " and generating constant 'bx vector." << endl;
+
+	    NetEConst*tmp = make_const_x(expr_width_);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
 
       if (net->sig()->sb_to_idx(msv) < net->sig()->sb_to_idx(lsv)) {
 	    cerr << get_fileline() << ": error: part select ["
@@ -2648,6 +2696,16 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	// to the part select, so that I save the effort of
 	// making a mux part in the netlist.
       if (NetEConst*msc = dynamic_cast<NetEConst*> (ex)) {
+
+	      // Special case: The bit select expresion is constant
+	      // x/z. The result of the expression is 1'bx.
+	    if (! msc->value().is_defined()) {
+		  NetEConst*tmp = make_const_x(1);
+		  tmp->set_line(*this);
+		  delete ex;
+		  return tmp;
+	    }
+
 	    long msv = msc->value().as_long();
 	    unsigned idx = net->sig()->sb_to_idx(msv);
 

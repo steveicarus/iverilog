@@ -278,7 +278,9 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 	  case index_component_t::SEL_PART: {
 
 		long msb, lsb;
-		/* bool flag = */ calculate_parts_(des, scope, msb, lsb);
+		bool part_defined_flag;
+		/* bool flag = */ calculate_parts_(des, scope, msb, lsb, part_defined_flag);
+		ivl_assert(*this, part_defined_flag);
 
 		long lidx_tmp = sig->sb_to_idx(lsb);
 		long midx_tmp = sig->sb_to_idx(msb);

@@ -353,9 +353,12 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 	// constant. The calculate_parts_ function calculates the
 	// values into msb and lsb.
       long msb, lsb;
-      bool flag = calculate_parts_(des, scope, msb, lsb);
+      bool parts_defined_flag;
+      bool flag = calculate_parts_(des, scope, msb, lsb, parts_defined_flag);
       if (!flag)
 	    return false;
+
+      ivl_assert(*this, parts_defined_flag);
 
       NetNet*reg = lv->sig();
       assert(reg);

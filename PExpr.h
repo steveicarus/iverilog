@@ -293,8 +293,18 @@ class PEIdent : public PExpr {
       pform_name_t path_;
 
     private:
-	// Common functions to calculate parts of part/bit selects.
-      bool calculate_parts_(Design*, NetScope*, long&msb, long&lsb) const;
+	// Common functions to calculate parts of part/bit
+	// selects. These methods return true if the expressions
+	// elaborate/calculate, or false if there is some sort of
+	// source error.
+
+	// The calculate_parts_ method calculates the range
+	// expressions of a part select for the current object. The
+	// part select expressions are elaborated and evaluated, and
+	// the values written to the msb/lsb arguments. If there are
+	// invalid bits (xz) in either expression, then the defined
+	// flag is set to *false*.
+      bool calculate_parts_(Design*, NetScope*, long&msb, long&lsb, bool&defined) const;
       NetExpr* calculate_up_do_base_(Design*, NetScope*) const;
       bool calculate_param_range_(Design*, NetScope*,
 				  const NetExpr*msb_ex, long&msb,
