@@ -56,6 +56,21 @@ static ivl_signal_type_t signal_type_of_nexus(ivl_nexus_t nex)
       return out;
 }
 
+static ivl_variable_type_t signal_data_type_of_nexus(ivl_nexus_t nex)
+{
+      unsigned idx;
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+	    if (sig == 0) continue;
+
+	    return ivl_signal_data_type(sig);
+      }
+
+      return IVL_VT_NO_TYPE;
+}
+
 static void draw_C4_repeated_constant(char bit_char, unsigned width)
 {
       unsigned idx;
@@ -583,32 +598,38 @@ char* draw_net_input_x(ivl_nexus_t nex,
 	    nex_data->flags |= nex_flags;
       }
 
-	/* If the nexus has no drivers, then send a constant HiZ into
-	   the net. */
+	/* If the nexus has no drivers, then send a constant HiZ or
+	   0.0 into the net. */
       if (ndrivers == 0) {
-	    unsigned jdx, wid = width_of_nexus(nex);
-	    char*tmp = malloc(wid + 5);
-	    nex_private = tmp;
-	    strcpy(tmp, "C4<");
-	    tmp += strlen(tmp);
-	    switch (res) {
-		case IVL_SIT_TRI:
-		  for (jdx = 0 ;  jdx < wid ;  jdx += 1)
-			*tmp++ = 'z';
-		  break;
-		case IVL_SIT_TRI0:
-		  for (jdx = 0 ;  jdx < wid ;  jdx += 1)
-			*tmp++ = '0';
-		  break;
-		case IVL_SIT_TRI1:
-		  for (jdx = 0 ;  jdx < wid ;  jdx += 1)
-			*tmp++ = '1';
-		  break;
-		default:
-		  assert(0);
+	      /* For real nets put 0.0. */
+	    if (signal_data_type_of_nexus(nex) == IVL_VT_REAL) {
+		  nex_private = draw_Cr_to_string(0.0);
+	    } else {
+		  unsigned jdx, wid = width_of_nexus(nex);
+		  char*tmp = malloc(wid + 5);
+		  nex_private = tmp;
+		  strcpy(tmp, "C4<");
+		  tmp += strlen(tmp);
+		  switch (res) {
+		      case IVL_SIT_TRI:
+			for (jdx = 0 ;  jdx < wid ;  jdx += 1)
+			      *tmp++ = 'z';
+			break;
+		      case IVL_SIT_TRI0:
+			for (jdx = 0 ;  jdx < wid ;  jdx += 1)
+			      *tmp++ = '0';
+			break;
+		      case IVL_SIT_TRI1:
+			for (jdx = 0 ;  jdx < wid ;  jdx += 1)
+			      *tmp++ = '1';
+			break;
+		      default:
+			assert(0);
+		  }
+		  *tmp++ = '>';
+		  *tmp = 0;
 	    }
-	    *tmp++ = '>';
-	    *tmp = 0;
+
 	    if (island) {
 		  char*tmp2 = draw_island_port(island, nex, nex_private);
 		  free(nex_private);
