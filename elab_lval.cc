@@ -243,6 +243,13 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       ivl_assert(*this, index_head.msb != 0);
       ivl_assert(*this, index_head.lsb == 0);
 
+      ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
+      bool unsized_flag_tmp;
+      index_head.msb->test_width(des, scope,
+			     reg->vector_width(), reg->vector_width(),
+			     expr_type_tmp,
+			     unsized_flag_tmp);
+
       NetExpr*word = elab_and_eval(des, scope, index_head.msb, -1);
 
 	// If there is a non-zero base to the memory, then build an
@@ -302,7 +309,15 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 
       NetNet*reg = lv->sig();
 
-	// Bit selects have a single select expression. Evaluate the
+      ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
+      bool unsized_flag_tmp;
+      index_tail.msb->test_width(des, scope,
+			     lv->lwidth(), lv->lwidth(),
+			     expr_type_tmp,
+			     unsized_flag_tmp);
+
+    
+    // Bit selects have a single select expression. Evaluate the
 	// constant value and treat it as a part select with a bit
 	// width of 1.
       NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1);
@@ -426,6 +441,13 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 
       unsigned long wid;
       calculate_up_do_width_(des, scope, wid);
+
+      ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
+      bool unsized_flag_tmp;
+      index_tail.msb->test_width(des, scope,
+			     wid, wid,
+			     expr_type_tmp,
+			     unsized_flag_tmp);
 
       NetExpr*base = elab_and_eval(des, scope, index_tail.msb, -1);
 
