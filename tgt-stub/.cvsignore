@@ -1,7 +1,0 @@
-*.cache
-stub.tgt
-configure
-config.log
-config.status
-Makefile
-dep

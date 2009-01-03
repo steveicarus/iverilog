@@ -1,8 +1,0 @@
-configure
-config.cache
-config.log
-config.status
-autom4te.cache
-Makefile
-fpga.tgt
-dep
