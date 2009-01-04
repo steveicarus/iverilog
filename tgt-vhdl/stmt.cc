@@ -26,6 +26,8 @@
 #include <sstream>
 #include <typeinfo>
 #include <limits>
+#include <set>
+#include <algorithm>
 
 /*
  * VHDL has no real equivalent of Verilog's $finish task. The
@@ -473,6 +475,194 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
 }
 
 /*
+ * Build a set of all the nexuses referenced by signals in `expr'.
+ */
+static void get_nexuses_from_expr(ivl_expr_t expr, set<ivl_nexus_t> &out)
+{
+   switch (ivl_expr_type(expr)) {
+   case IVL_EX_SIGNAL:
+      out.insert(ivl_signal_nex(ivl_expr_signal(expr), 0));
+      break;
+   case IVL_EX_TERNARY:
+      get_nexuses_from_expr(ivl_expr_oper3(expr), out);
+   case IVL_EX_BINARY:
+      get_nexuses_from_expr(ivl_expr_oper2(expr), out);
+   case IVL_EX_UNARY:
+      get_nexuses_from_expr(ivl_expr_oper1(expr), out);
+      break;
+   default:
+      break;
+   }
+}
+
+/*
+ * Attempt to identify common forms of wait statements and produce
+ * more idiomatic VHDL than would be produced by the generic
+ * draw_wait funciton. The main application of this is a input to
+ * synthesis tools that don't synthesise the full VHDL language.
+ * If none of these patterns are matched, the function returns false
+ * and the default draw_wait is used.
+ *
+ * Current patterns:
+ *   always @(posedge A or posedge B)
+ *     if (A)
+ *        ...
+ *     else
+ *        ...
+ *
+ *   This is assumed to be the template for a FF with asynchronous
+ *   reset. A is assumed to be the reset as it is dominant. This will
+ *   produce the following VHDL:
+ *
+ *   process (A, B) is
+ *   begin
+ *     if A = '1' then
+ *       ...
+ *     else if rising_edge(B) then
+ *       ...
+ *     end if;
+ *   end process;
+ *
+ *   ----
+ *   
+ *   always @(posedge A)
+ *     if (...)
+ *       ...
+ *     else
+ *       ...
+ *
+ *   This is assumed to be a template for a FF with synchronous reset,
+ *   if A does not appear in the `if' test expression. This should produce
+ *   the following VHDL:
+ *
+ *   process (A) is
+ *   begin
+ *     if rising_edge(A) then
+ *       ...
+ *     end if;
+ *   end process;
+ */
+static bool draw_synthesisable_wait(vhdl_process *proc, stmt_container *container,
+                                    ivl_statement_t stmt)
+{
+   enum ff_type_t { SYNC_RESET, ASYNC_RESET };
+   
+   // Store a set of the edge triggered signals
+   // The second item is true if this is positive-edge
+   set<ivl_nexus_t> edge_triggered;
+   
+   const int nevents = ivl_stmt_nevent(stmt);
+   
+   for (int i = 0; i < nevents; i++) {
+      ivl_event_t event = ivl_stmt_events(stmt, i);
+
+      if (ivl_event_nany(event) > 0)
+         return false;
+      
+      int npos = ivl_event_npos(event);
+      for (int j = 0; j < npos; j++)
+         edge_triggered.insert(ivl_event_pos(event, j));
+
+      int nneg = ivl_event_nneg(event);
+      for (int j = 0; j < nneg; j++)
+         edge_triggered.insert(ivl_event_neg(event, j));
+   }
+
+   // If we're sensitive to a single signal edge that should be a clock
+   // (but we try to make sure), if there are two signals one might be
+   // an asynchronous reset
+   ff_type_t ff_type;
+   if (edge_triggered.size() == 2)
+      ff_type = ASYNC_RESET;
+   else if (edge_triggered.size() == 1)
+      ff_type = SYNC_RESET;
+   else
+      return false;
+
+   // Now check to see if the immediately embedded statement is an `if'
+   ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
+   if (ivl_statement_type(sub_stmt) != IVL_ST_CONDIT)
+      return false;
+
+   // Check the first branch of the if statement
+   // If it matches exactly one of the edge-triggered signals then assume
+   // this is the (dominant) reset branch
+   set<ivl_nexus_t> test_nexuses;
+   get_nexuses_from_expr(ivl_stmt_cond_expr(sub_stmt), test_nexuses);
+
+   // Now subtracting this set from the set of edge triggered events
+   // should leave just one nexus, which is hopefully the clock.
+   // If not, then we fall back on the default draw_wait
+   set<ivl_nexus_t> clock_net;
+   set_difference(edge_triggered.begin(), edge_triggered.end(),
+                  test_nexuses.begin(), test_nexuses.end(),
+                  inserter(clock_net, clock_net.begin()));
+
+   if (clock_net.size() != 1)
+      return false;
+
+   // Build a VHDL `if' statement to model this
+   vhdl_expr *reset_test = translate_expr(ivl_stmt_cond_expr(sub_stmt));
+   vhdl_if_stmt *body = new vhdl_if_stmt(reset_test);
+
+   // Draw the reset branch
+   draw_stmt(proc, body->get_then_container(), ivl_stmt_cond_true(sub_stmt));
+
+   // Build a test for the clock event
+   vhdl_fcall *edge = NULL;
+   ivl_nexus_t the_clock_net = *clock_net.begin();
+   for (int i = 0; i < nevents; i++) {
+      ivl_event_t event = ivl_stmt_events(stmt, i);
+
+      const unsigned npos = ivl_event_npos(event);
+      for (unsigned j = 0; j < npos; j++) {
+         if (ivl_event_pos(event, j) == the_clock_net)
+            edge = new vhdl_fcall("rising_edge", vhdl_type::boolean());
+      }
+
+      const unsigned nneg = ivl_event_nneg(event);
+      for (unsigned j = 0; j < nneg; j++)
+         if (ivl_event_neg(event, j) == the_clock_net)
+            edge = new vhdl_fcall("falling_edge", vhdl_type::boolean());
+   }
+   assert(edge);
+   
+   edge->add_expr(nexus_to_var_ref(proc->get_scope(), *clock_net.begin()));
+
+   // Draw the clocked branch
+   // For an asynchronous reset we just want this around the else branch,
+   // for a synchronous reset we want this to contain both branches
+   stmt_container *else_container = NULL;
+   if (ff_type == SYNC_RESET) {
+      vhdl_if_stmt *clocked = new vhdl_if_stmt(edge);
+      clocked->get_then_container()->add_stmt(body);
+      container->add_stmt(clocked);
+      else_container = body->get_else_container();
+   }
+   else {
+      else_container = body->add_elsif(edge);
+      container->add_stmt(body);
+   }
+   
+   draw_stmt(proc, else_container, ivl_stmt_cond_false(sub_stmt));
+
+   // Add all the edge triggered signals to the sensitivity list
+   for (set<ivl_nexus_t>::const_iterator it = edge_triggered.begin();
+        it != edge_triggered.end(); ++it) {
+      // Get the signal that represents this nexus in this scope
+      vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), *it);
+
+      proc->add_sensitivity(ref->get_name());
+
+      // Don't need the reference any more
+      delete ref;
+   }
+
+   // Don't bother with the default draw_wait
+   return true;
+}
+
+/*
  * A wait statement waits for a level change on a @(..) list of
  * signals. Purely combinatorial processes (i.e. no posedge/negedge
  * events) produce a `wait on' statement at the end of the process.
@@ -485,6 +675,12 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
    // Wait statements only occur in processes
    vhdl_process *proc = dynamic_cast<vhdl_process*>(_proc);
    assert(proc);   // Catch not process
+
+   // See if this can be implemented in a more idomatic way before we
+   // fall back on the generic translation
+   // TODO: put a flag here to enable this!
+   if (draw_synthesisable_wait(proc, container, stmt))
+      return 0;
 
    vhdl_binop_expr *test =
       new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
