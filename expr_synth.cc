@@ -1184,12 +1184,21 @@ NetNet* NetETernary::synthesize(Design *des, NetScope*scope, NetExpr*root)
       osig->data_type(expr_type());
       osig->local_flag(true);
 
-	/* Make sure both value operands are the right width. */
-      tsig = crop_to_width(des, pad_to_width(des, tsig, width, *this), width);
-      fsig = crop_to_width(des, pad_to_width(des, fsig, width, *this), width);
+	/* Make sure the types match. */
+      if (expr_type() == IVL_VT_REAL) {
+	    tsig = cast_to_real(des, scope, tsig);
+	    fsig = cast_to_real(des, scope, fsig);
 
-      assert(width == tsig->vector_width());
-      assert(width == fsig->vector_width());
+      }
+
+	/* Make sure both value operands are the right width. */
+      if (type_is_vectorable(expr_type())) {
+	    tsig = crop_to_width(des, pad_to_width(des, tsig, width, *this), width);
+	    fsig = crop_to_width(des, pad_to_width(des, fsig, width, *this), width);
+	    ivl_assert(*this, width == tsig->vector_width());
+	    ivl_assert(*this, width == fsig->vector_width());
+      }
+
 
       perm_string oname = csig->scope()->local_symbol();
       NetMux *mux = new NetMux(csig->scope(), oname, width,

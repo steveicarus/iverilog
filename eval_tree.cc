@@ -1484,7 +1484,9 @@ NetExpr* NetETernary::eval_tree(int prune_to_width)
 		       << "constant condition value: ";
 		  print_ternary_cond(cond_);
 		  cerr << get_fileline() << ":      : Blending real cases "
-		       << "to get " << val << endl;
+		       << "true=" << tv.as_double()
+		       << ", false=" << fv.as_double()
+		       << ", to get " << val << endl;
 	    }
 
 	    NetECReal*rc = new NetECReal(val);

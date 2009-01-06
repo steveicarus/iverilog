@@ -2270,11 +2270,16 @@ ivl_variable_type_t NetESignal::expr_type() const
 NetETernary::NetETernary(NetExpr*c, NetExpr*t, NetExpr*f)
 : cond_(c), true_val_(t), false_val_(f)
 {
-	// use widest result
-      if (true_val_->expr_width() > false_val_->expr_width())
-            expr_width(true_val_->expr_width());
-      else
-            expr_width(false_val_->expr_width());
+      if (type_is_vectorable(expr_type())) {
+	      // use widest result
+	    if (true_val_->expr_width() > false_val_->expr_width())
+		  expr_width(true_val_->expr_width());
+	    else
+		  expr_width(false_val_->expr_width());
+      } else {
+	    expr_width(1);
+      }
+
       cast_signed(c->has_sign() && t->has_sign() && f->has_sign());
 }
 

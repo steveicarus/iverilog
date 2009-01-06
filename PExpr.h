@@ -622,6 +622,10 @@ class PETernary : public PExpr {
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     private:
+      NetExpr* elab_and_eval_alternative_(Design*des, NetScope*scope,
+					  PExpr*expr, int use_wid) const;
+
+    private:
       PExpr*expr_;
       PExpr*tru_;
       PExpr*fal_;

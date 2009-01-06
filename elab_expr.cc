@@ -83,20 +83,22 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 			     ivl_variable_type_t data_type_lv, int expr_wid_lv,
 			     PExpr*expr)
 {
-      bool unsized_flag = type_is_vectorable(data_type_lv)? false : true;
-      ivl_variable_type_t rval_type = IVL_VT_NO_TYPE;
+      bool unsized_flag     = type_is_vectorable(data_type_lv)? false : true;
+      unsigned use_lval_wid = type_is_vectorable(data_type_lv)? expr_wid_lv : 0;
+      unsigned use_min_wid  = expr_wid_lv;
 
 	/* Find out what the r-value width is going to be. We
 	guess it will be the l-value width, but it may turn
 	out to be something else based on self-determined
 	widths inside. */
-      int expr_wid = expr->test_width(des, scope, expr_wid_lv, expr_wid_lv, rval_type, unsized_flag);
+      ivl_variable_type_t rval_type = IVL_VT_NO_TYPE;
+      int expr_wid = expr->test_width(des, scope, use_min_wid, use_lval_wid, rval_type, unsized_flag);
 
       if (debug_elaborate) {
 	    cerr << expr->get_fileline() << ": debug: r-value tested "
 		 << "type=" << rval_type
 		 << ", width=" << expr_wid
-		 << ", min=" << expr_wid_lv
+		 << ", min=" << use_min_wid
 		 << ", unsized_flag=" << (unsized_flag?"true":"false") << endl;
       }
 
@@ -2799,7 +2801,7 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
 
 unsigned PENumber::test_width(Design*, NetScope*,
 			      unsigned min, unsigned lval,
-			      ivl_variable_type_t&expr_type__,
+			      ivl_variable_type_t&use_expr_type,
 			      bool&unsized_flag)
 {
       expr_type_ = IVL_VT_LOGIC;
@@ -2813,7 +2815,7 @@ unsigned PENumber::test_width(Design*, NetScope*,
       if (lval > 0 && lval < use_wid)
 	    use_wid = lval;
 
-      expr_type__ = expr_type_;
+      use_expr_type = expr_type_;
       expr_width_ = use_wid;
       return use_wid;
 }
@@ -2866,7 +2868,7 @@ NetEConst* PEString::elaborate_expr(Design*des, NetScope*,
 
 unsigned PETernary::test_width(Design*des, NetScope*scope,
 			       unsigned min, unsigned lval,
-			       ivl_variable_type_t&expr_type__,
+			       ivl_variable_type_t&use_expr_type,
 			       bool&flag)
 {
 	// The condition of the ternary is self-determined, but we
@@ -2893,16 +2895,32 @@ unsigned PETernary::test_width(Design*des, NetScope*scope,
 	    tru_wid = tru_->test_width(des, scope, max(min,fal_wid), lval, tru_type, flag);
       }
 
-      if (tru_type == IVL_VT_REAL || fal_type == IVL_VT_REAL)
+	// If either of the alternatives is IVL_VT_REAL, then the
+	// expression as a whole is IVL_VT_REAL. Otherwise, if either
+	// of the alternatives is IVL_VT_LOGIC, then the expression as
+	// a whole is IVL_VT_LOGIC. The fallback assumes that the
+	// types are the same and we take that.
+      if (tru_type == IVL_VT_REAL || fal_type == IVL_VT_REAL) {
 	    expr_type_ = IVL_VT_REAL;
-      else if (tru_type == IVL_VT_LOGIC || fal_type == IVL_VT_LOGIC)
+	    expr_width_ = 1;
+      } else if (tru_type == IVL_VT_LOGIC || fal_type == IVL_VT_LOGIC) {
 	    expr_type_ = IVL_VT_LOGIC;
-      else
+	    expr_width_ = max(tru_wid,fal_wid);
+      } else {
+	    ivl_assert(*this, tru_type == fal_type);
 	    expr_type_ = tru_type;
+	    expr_width_ = max(tru_wid,fal_wid);
+      }
 
-      expr_width_ = max(tru_wid,fal_wid);
+      if (debug_elaborate)
+	    cerr << get_fileline() << ": debug: "
+		 << "Ternary expression type=" << expr_type_
+		 << ", width=" << expr_width_
+		 << ", unsized_flag=" << flag
+		 << " (tru_type=" << tru_type
+		 << ", fal_type=" << fal_type << ")" << endl;
 
-      expr_type__ = expr_type_;
+      use_expr_type = expr_type_;
       return expr_width_;
 }
 
@@ -2982,8 +3000,8 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			     << " of expression: " << *this << endl;
 		  }
 		  ivl_assert(*this, use_wid > 0);
-		  NetExpr*tru = elab_and_eval(des, scope, tru_, use_wid);
-		  return pad_to_width(tru, use_wid, *this);
+		  NetExpr*tmp = elab_and_eval_alternative_(des, scope, tru_, use_wid);
+		  return pad_to_width(tmp, use_wid, *this);
 	    }
 
 	      // Condition is constant FALSE, so we only need the
@@ -3000,21 +3018,21 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			     << " of expression: " << *this << endl;
 		  }
 		  ivl_assert(*this, use_wid > 0);
-		  NetExpr*fal = elab_and_eval(des, scope, fal_, use_wid);
-		  return pad_to_width(fal, use_wid, *this);
+		  NetExpr*tmp = elab_and_eval_alternative_(des, scope, fal_, use_wid);
+		  return pad_to_width(tmp, use_wid, *this);
 	    }
 
 	      // X and Z conditions need to blend both results, so we
 	      // can't short-circuit.
       }
 
-      NetExpr*tru = elab_and_eval(des, scope, tru_, use_wid);
+      NetExpr*tru = elab_and_eval_alternative_(des, scope, tru_, use_wid);
       if (tru == 0) {
 	    delete con;
 	    return 0;
       }
 
-      NetExpr*fal = elab_and_eval(des, scope, fal_, use_wid);
+      NetExpr*fal = elab_and_eval_alternative_(des, scope, fal_, use_wid);
       if (fal == 0) {
 	    delete con;
 	    delete tru;
@@ -3040,6 +3058,22 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
       NetETernary*res = new NetETernary(con, tru, fal);
       res->set_line(*this);
       return res;
+}
+
+/*
+ * When elaborating the true or false alternative expression of a
+ * ternary, take into account the overall expression type. If the type
+ * is not vectorable, then the alternative expression is evaluated as
+ * self-determined.
+ */
+NetExpr* PETernary::elab_and_eval_alternative_(Design*des, NetScope*scope,
+					       PExpr*expr, int use_wid) const
+{
+      if (type_is_vectorable(expr->expr_type()) && !type_is_vectorable(expr_type_)) {
+	    return elab_and_eval(des, scope, expr, -1);
+      }
+
+      return elab_and_eval(des, scope, expr, use_wid);
 }
 
 unsigned PEUnary::test_width(Design*des, NetScope*scope,
