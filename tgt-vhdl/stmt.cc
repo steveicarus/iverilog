@@ -671,10 +671,41 @@ static bool draw_synthesisable_wait(vhdl_process *proc, stmt_container *containe
 
 /*
  * A wait statement waits for a level change on a @(..) list of
- * signals. Purely combinatorial processes (i.e. no posedge/negedge
- * events) produce a `wait on' statement at the end of the process.
- * Sequential processes produce a `wait until' statement at the
- * start of the process.
+ * signals. The logic here might seem a little bit convoluted,
+ * it attempts to always produce something that will simulate
+ * correctly, and tries to produce something that will also
+ * synthesise correctly (although not at the expense of simulation
+ * accuracy).
+ *
+ * The difficulty stems from VHDL's restriction that a process with
+ * a sensitivity list may not contain any `wait' statements: we need
+ * to generate these to accurately model some Verilog statements.
+ * 
+ * The steps followed are:
+ *  1) Determine whether this is the top-level statement in the process
+ *  2) If this is top-level, call draw_synthesisable_wait to see if the
+ *     process and wait statement match any templates for which we know
+ *     how to produce good, idiomatic synthesisable VHDL (e.g. FF with
+ *     async reset)
+ *  3) Determine whether the process is combinatorial (purely level
+ *     sensitive), or sequential (edge sensitive)
+ *  4) Draw all of the statements in the body
+ *  5) One of the following will be true:
+ *     A) The process is combinatorial, top-level, and there are
+ *        no `wait' statements in the body: add all the level-sensitive
+ *        signals to the VHDL sensitivity list
+ *     B) The process is combinatorial, and there *are* `wait'
+ *        statements in the body or it is not top-level: generate
+ *        a VHDL `wait-on' statement at the end of the body containing
+ *        the level-sensitive signals
+ *     C) The process is sequential, top-level, and there are
+ *        no `wait' statements in the body: build an `if' statement
+ *        with the edge-detecting expression and wrap the process
+ *        in it.
+ *     D) The process is sequential, there *are* `wait' statements
+ *        in the body, or it is not top-level: generate a VHDL
+ *        `wait-until' with the edge-detecting expression and add
+ *        it before the body of the wait event.
  */
 static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
                      ivl_statement_t stmt)
@@ -683,15 +714,16 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
    vhdl_process *proc = dynamic_cast<vhdl_process*>(_proc);
    assert(proc);   // Catch not process
 
+   // If this container is the top-level statement (i.e. it is the
+   // first thing inside a process) then we can extract these
+   // events out into the sensitivity list
+   bool is_top_level = proc->get_container()->empty();
+
    // See if this can be implemented in a more idomatic way before we
    // fall back on the generic translation
-   // TODO: put a flag here to enable this!
-   //if (draw_synthesisable_wait(proc, container, stmt))
-   //   return 0;
+   if (is_top_level && draw_synthesisable_wait(proc, container, stmt))
+      return 0;
 
-   vhdl_binop_expr *test =
-      new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
-   
    int nevents = ivl_stmt_nevent(stmt);
    
    bool combinatorial = true;  // True if no negedge/posedge events
@@ -709,7 +741,7 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
       draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt), true);
 
       vhdl_wait_stmt *wait = NULL;
-      if (proc->contains_wait_stmt())
+      if (proc->contains_wait_stmt() || !is_top_level)
          wait = new vhdl_wait_stmt(VHDL_WAIT_ON); 
       
       for (int i = 0; i < nevents; i++) {
@@ -728,10 +760,22 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
          }
       }
 
-      if (proc->contains_wait_stmt())
+      if (wait)
          container->add_stmt(wait);
    }
    else {
+      // Build a test expression to represent the edge event
+      // If this process contains no `wait' statements and this
+      // is the top-level container then we
+      // wrap it in an `if' statement with this test and add the
+      // edge triggered signals to the sensitivity, otherwise
+      // build a `wait until' statement at the top of the process
+      vhdl_binop_expr *test =
+         new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
+
+      stmt_container tmp_container;
+      draw_stmt(proc, &tmp_container, ivl_stmt_sub_stmt(stmt), true);
+      
       for (int i = 0; i < nevents; i++) {
          ivl_event_t event = ivl_stmt_events(stmt, i);
          
@@ -742,6 +786,9 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
             
             ref->set_name(ref->get_name() + "'Event");
             test->add_expr(ref);
+
+            if (!proc->contains_wait_stmt() && is_top_level)
+               proc->add_sensitivity(ref->get_name());
          }
          
          int nneg = ivl_event_nneg(event);
@@ -753,6 +800,9 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
             detect->add_expr(ref);
             
             test->add_expr(detect);
+
+            if (!proc->contains_wait_stmt() && is_top_level)
+               proc->add_sensitivity(ref->get_name());
          }
          
          int npos = ivl_event_npos(event);
@@ -764,11 +814,28 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
             detect->add_expr(ref);
          
             test->add_expr(detect);
+
+            if (!proc->contains_wait_stmt() && is_top_level)
+               proc->add_sensitivity(ref->get_name());
          }
       }
       
-      container->add_stmt(new vhdl_wait_stmt(VHDL_WAIT_UNTIL, test));
-      draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt), true);
+      if (proc->contains_wait_stmt() || !is_top_level) {
+         container->add_stmt(new vhdl_wait_stmt(VHDL_WAIT_UNTIL, test));
+         container->move_stmts_from(&tmp_container);
+      }
+      else {
+         // Wrap the whole process body in an `if' statement to detect
+         // the edge event
+         vhdl_if_stmt *edge_detect = new vhdl_if_stmt(test);
+
+         // Move all the statements from the process body into the `if'
+         // statement
+         edge_detect->get_then_container()->move_stmts_from(&tmp_container);
+
+         container->add_stmt(edge_detect);
+      }
+         
    }
    
    return 0;

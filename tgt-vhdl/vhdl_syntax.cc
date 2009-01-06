@@ -25,6 +25,7 @@
 #include <cstring>
 #include <iostream>
 #include <typeinfo>
+#include <algorithm>
 
 vhdl_scope::vhdl_scope()
    : parent_(NULL), init_(false), sig_assign_(true)
@@ -204,7 +205,19 @@ stmt_container::~stmt_container()
 
 void stmt_container::add_stmt(vhdl_seq_stmt *stmt)
 {
+   // Add a statement at the end of the block
    stmts_.push_back(stmt);
+}
+
+/*
+ * Move all the statements from one container into another.
+ * This is useful, for example, if we want to wrap a container
+ * in an `if' statement.
+ */
+void stmt_container::move_stmts_from(stmt_container *other)
+{
+   copy(other->stmts_.begin(), other->stmts_.end(), back_inserter(stmts_));
+   other->stmts_.clear();
 }
 
 void stmt_container::emit(std::ostream &of, int level, bool newline) const

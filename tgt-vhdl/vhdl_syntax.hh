@@ -333,6 +333,7 @@ public:
    ~stmt_container();
    
    void add_stmt(vhdl_seq_stmt *stmt);
+   void move_stmts_from(stmt_container *other);
    void emit(std::ostream &of, int level, bool newline=true) const;
    bool empty() const { return stmts_.empty(); }
 
