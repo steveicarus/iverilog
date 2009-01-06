@@ -2741,7 +2741,7 @@ NetProc* PDelayStatement::elaborate(Design*des, NetScope*scope) const
 		  return new NetPDelay(tmp->value().as_ulong64(),
 				       statement_->elaborate(des, scope));
 	    else
-		  return new NetPDelay(tmp->value().as_ulong(), 0);
+		  return new NetPDelay(tmp->value().as_ulong64(), 0);
 
 	    delete dex;
 

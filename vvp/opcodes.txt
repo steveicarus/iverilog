@@ -280,13 +280,16 @@ will be deactivated. For a full deactivation the <base> is 0 and
 
 The same as %deassign above except this is used for real variables.
 
-* %delay <delay>
+* %delay <low>, <high>
 
 This opcode pauses the thread, and causes it to be rescheduled for a
-time in the future. The <amount> is the number of the ticks in the
+time in the future. The amount is the number of the ticks in the
 future to reschedule, and is >= 0. If the %delay is zero, then the
 thread yields the processor for another thread, but will be resumed in
 the current time step.
+
+The delay amount is given as 2 32bit numbers, so that 64bit times may
+be represented.
 
 * %delayx <idx>
 
