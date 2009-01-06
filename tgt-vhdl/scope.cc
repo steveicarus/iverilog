@@ -126,6 +126,36 @@ static string visible_nexus_signal_name(nexus_private_t *priv, vhdl_scope *scope
 }
 
 /*
+ * Calculate the signal type of a nexus. This is modified from
+ * draw_net_input in tgt-vvp. This also returns the width of
+ * the signal(s) connected to the nexus.
+ */
+static ivl_signal_type_t signal_type_of_nexus(ivl_nexus_t nex, int &width)
+{
+   ivl_signal_type_t out = IVL_SIT_TRI;
+   width = 0;
+   
+   for (unsigned idx = 0; idx < ivl_nexus_ptrs(nex); idx += 1) {
+	    ivl_signal_type_t stype;
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+	    if (sig == 0)
+         continue;
+      
+      width = ivl_signal_width(sig);
+      
+	    stype = ivl_signal_type(sig);
+	    if (stype == IVL_SIT_TRI)
+         continue;
+	    if (stype == IVL_SIT_NONE)
+         continue;
+	    out = stype;
+   }
+   
+   return out;
+}
+
+/*
  * Generates VHDL code to fully represent a nexus.
  */
 void draw_nexus(ivl_nexus_t nexus)
@@ -135,6 +165,9 @@ void draw_nexus(ivl_nexus_t nexus)
    priv->const_driver = NULL;
    
    int nptrs = ivl_nexus_ptrs(nexus);
+
+   // Number of drivers for this nexus
+   int ndrivers = 0;
 
    // First pass through connect all the signals up
    for (int i = 0; i < nptrs; i++) {
@@ -178,6 +211,11 @@ void draw_nexus(ivl_nexus_t nexus)
 
             link_scope_to_nexus_tmp(priv, vhdl_scope, ss.str());
          }
+
+         // If this is connected to pin-0 then this nexus is driven
+         // by this logic gate
+         if (ivl_logic_pin(log, 0) == nexus)
+            ndrivers++;
       }
       else if ((lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
          ivl_scope_t lpm_scope = ivl_lpm_scope(lpm);
@@ -209,6 +247,11 @@ void draw_nexus(ivl_nexus_t nexus)
             
             link_scope_to_nexus_tmp(priv, vhdl_scope, ss.str());
          }
+
+         // If this is connected to the LPM output then this nexus
+         // is driven by the LPM
+         if (ivl_lpm_q(lpm, 0) == nexus)
+            ndrivers++;
       }
       else if ((con = ivl_nexus_ptr_con(nexus_ptr))) {
          if (ivl_const_type(con) == IVL_VT_REAL) {
@@ -222,6 +265,44 @@ void draw_nexus(ivl_nexus_t nexus)
             priv->const_driver =
                new vhdl_const_bits(ivl_const_bits(con), ivl_const_width(con),
                                    ivl_const_signed(con) != 0);
+
+         // A constant is a sort of driver
+         ndrivers++;
+      }
+   }
+
+   // Drive undriven nets with a constant
+   if (ndrivers == 0) {
+      char def = 0;
+      int width;
+      
+      switch (signal_type_of_nexus(nexus, width)) {
+      case IVL_SIT_TRI:
+         def = 'Z';
+         break;
+      case IVL_SIT_TRI0:
+         def = '0';
+         break;
+      case IVL_SIT_TRI1:
+         def = '1';
+         break;
+      case IVL_SIT_TRIAND:
+         error("No VHDL translation for triand nets");
+         break;
+      case IVL_SIT_TRIOR:
+         error("No VHDL translation for trior nets");
+         break;
+      default:
+         ;
+      }
+
+      if (def) {
+         if (width > 1)
+            priv->const_driver =
+               new vhdl_bit_spec_expr(vhdl_type::std_logic(),
+                                      new vhdl_const_bit(def));
+         else
+            priv->const_driver = new vhdl_const_bit(def);
       }
    }
    
