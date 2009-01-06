@@ -724,13 +724,23 @@ private:
  */
 class vhdl_procedural {
 public:
+   vhdl_procedural() : contains_wait_stmt_(false) {}
    virtual ~vhdl_procedural() {}
    
    virtual stmt_container *get_container() { return &stmts_; }
    virtual vhdl_scope *get_scope() { return &scope_; }
+
+   void added_wait_stmt() { contains_wait_stmt_ = true; }
+   bool contains_wait_stmt() const { return contains_wait_stmt_; }
 protected:
    stmt_container stmts_;
    vhdl_scope scope_;
+
+   // If this is true then the body contains a `wait' statement
+   // embedded in it somewhere
+   // If this is the case then we can't use a sensitvity list for
+   // the process
+   bool contains_wait_stmt_;
 };
 
 

@@ -397,9 +397,11 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
 
       // Don't generate a zero-wait if this is the last statement in
       // the process
-      if (!is_last)
+      if (!is_last) {
          container->add_stmt
             (new vhdl_wait_stmt(VHDL_WAIT_FOR0));
+         proc->added_wait_stmt();
+      }
    }
    else
       make_assignment(proc, container, stmt, true);
@@ -458,6 +460,11 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
    ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
    vhdl_wait_stmt *wait =
       new vhdl_wait_stmt(VHDL_WAIT_FOR, time);
+
+   // Remember that we needed a wait statement so if this is
+   // a process it cannot have a sensitivity list
+   proc->added_wait_stmt();
+   
    container->add_stmt(wait);
 
    // Expand the sub-statement as well
@@ -679,8 +686,8 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
    // See if this can be implemented in a more idomatic way before we
    // fall back on the generic translation
    // TODO: put a flag here to enable this!
-   if (draw_synthesisable_wait(proc, container, stmt))
-      return 0;
+   //if (draw_synthesisable_wait(proc, container, stmt))
+   //   return 0;
 
    vhdl_binop_expr *test =
       new vhdl_binop_expr(VHDL_BINOP_OR, vhdl_type::boolean());
@@ -695,7 +702,15 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
    }
 
    if (combinatorial) {
-      vhdl_wait_stmt *wait = new vhdl_wait_stmt(VHDL_WAIT_ON); 
+      // If the process has no wait statement in its body then
+      // add all the events to the sensitivity list, otherwise
+      // build a wait-on statement at the end of the process
+
+      draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt), true);
+
+      vhdl_wait_stmt *wait = NULL;
+      if (proc->contains_wait_stmt())
+         wait = new vhdl_wait_stmt(VHDL_WAIT_ON); 
       
       for (int i = 0; i < nevents; i++) {
          ivl_event_t event = ivl_stmt_events(stmt, i);
@@ -705,13 +720,16 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
             ivl_nexus_t nexus = ivl_event_any(event, j);
             vhdl_var_ref *ref = nexus_to_var_ref(proc->get_scope(), nexus);
 
-            wait->add_sensitivity(ref->get_name());
+            if (wait)
+               wait->add_sensitivity(ref->get_name());
+            else
+               proc->add_sensitivity(ref->get_name());
             delete ref;
          }
       }
 
-      draw_stmt(proc, container, ivl_stmt_sub_stmt(stmt), true);
-      container->add_stmt(wait);
+      if (proc->contains_wait_stmt())
+         container->add_stmt(wait);
    }
    else {
       for (int i = 0; i < nevents; i++) {
