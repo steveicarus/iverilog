@@ -18,8 +18,6 @@
 #
 SHELL = /bin/sh
 
-VERSION = 0.9.devel
-
 suffix = @install_suffix@
 
 prefix = @prefix@
@@ -36,7 +34,7 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = -I.. -I$(srcdir)/.. -I$(srcdir) -DVERSION='"$(VERSION)"' @CPPFLAGS@ @DEFS@ @PICFLAG@
+CPPFLAGS = -I.. -I$(srcdir)/.. -I$(srcdir) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 

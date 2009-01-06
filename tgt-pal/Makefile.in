@@ -18,8 +18,6 @@
 #
 SHELL = /bin/sh
 
-VERSION = 0.9.devel
-
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
