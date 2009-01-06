@@ -529,30 +529,12 @@ static void get_nexuses_from_expr(ivl_expr_t expr, set<ivl_nexus_t> &out)
  *       ...
  *     end if;
  *   end process;
- *
- *   ----
- *   
- *   always @(posedge A)
- *     if (...)
- *       ...
- *     else
- *       ...
- *
- *   This is assumed to be a template for a FF with synchronous reset,
- *   if A does not appear in the `if' test expression. This should produce
- *   the following VHDL:
- *
- *   process (A) is
- *   begin
- *     if rising_edge(A) then
- *       ...
- *     end if;
- *   end process;
  */
 static bool draw_synthesisable_wait(vhdl_process *proc, stmt_container *container,
                                     ivl_statement_t stmt)
 {
-   enum ff_type_t { SYNC_RESET, ASYNC_RESET };
+   // At the moment this only detects FFs with an asynchronous reset
+   // All other code will fall back on the default draw_wait
    
    // Store a set of the edge triggered signals
    // The second item is true if this is positive-edge
@@ -575,20 +557,19 @@ static bool draw_synthesisable_wait(vhdl_process *proc, stmt_container *containe
          edge_triggered.insert(ivl_event_neg(event, j));
    }
 
-   // If we're sensitive to a single signal edge that should be a clock
-   // (but we try to make sure), if there are two signals one might be
-   // an asynchronous reset
-   ff_type_t ff_type;
-   if (edge_triggered.size() == 2)
-      ff_type = ASYNC_RESET;
-   else if (edge_triggered.size() == 1)
-      ff_type = SYNC_RESET;
-   else
+   // If we're edge-sensitive to less than two signals this doesn't
+   // match the expected template, so use the default draw_wait
+   if (edge_triggered.size() < 2)
       return false;
 
    // Now check to see if the immediately embedded statement is an `if'
    ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
    if (ivl_statement_type(sub_stmt) != IVL_ST_CONDIT)
+      return false;
+
+   // The if should have two branches: one is the reset branch and
+   // one is the clocked branch
+   if (ivl_stmt_cond_false(sub_stmt) == NULL)
       return false;
 
    // Check the first branch of the if statement
@@ -638,20 +619,19 @@ static bool draw_synthesisable_wait(vhdl_process *proc, stmt_container *containe
 
    // Draw the clocked branch
    // For an asynchronous reset we just want this around the else branch,
-   // for a synchronous reset we want this to contain both branches
-   stmt_container *else_container = NULL;
-   if (ff_type == SYNC_RESET) {
-      vhdl_if_stmt *clocked = new vhdl_if_stmt(edge);
-      clocked->get_then_container()->add_stmt(body);
-      container->add_stmt(clocked);
-      else_container = body->get_else_container();
-   }
-   else {
-      else_container = body->add_elsif(edge);
-      container->add_stmt(body);
-   }
+   stmt_container *else_container = body->add_elsif(edge);
    
    draw_stmt(proc, else_container, ivl_stmt_cond_false(sub_stmt));
+
+   if (proc->contains_wait_stmt()) {
+      // Expanding the body produced a `wait' statement which can't
+      // be included in a sensitised process so undo all this work
+      // and fall back on the default draw_wait
+      delete body;
+      return false;
+   }
+   else
+      container->add_stmt(body);
 
    // Add all the edge triggered signals to the sensitivity list
    for (set<ivl_nexus_t>::const_iterator it = edge_triggered.begin();
