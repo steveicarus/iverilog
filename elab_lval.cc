@@ -244,7 +244,8 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       ivl_assert(*this, index_head.lsb == 0);
 
       ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
-      bool unsized_flag_tmp;
+	// This not used, but it needs to have a default value.
+      bool unsized_flag_tmp = false;
       index_head.msb->test_width(des, scope,
 			     reg->vector_width(), reg->vector_width(),
 			     expr_type_tmp,
@@ -310,7 +311,8 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
       NetNet*reg = lv->sig();
 
       ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
-      bool unsized_flag_tmp;
+	// This not used, but it needs to have a default value.
+      bool unsized_flag_tmp = false;
       index_tail.msb->test_width(des, scope,
 			     lv->lwidth(), lv->lwidth(),
 			     expr_type_tmp,
@@ -443,7 +445,8 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       calculate_up_do_width_(des, scope, wid);
 
       ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
-      bool unsized_flag_tmp;
+	// This not used, but it needs to have a default value.
+      bool unsized_flag_tmp = false;
       index_tail.msb->test_width(des, scope,
 			     wid, wid,
 			     expr_type_tmp,

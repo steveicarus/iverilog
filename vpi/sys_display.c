@@ -1992,6 +1992,12 @@ static char *get_display(unsigned int *rtnsz, struct strobe_cb_info *info)
           fmt = strdup(value.value.str);
           width = get_format(&result, fmt, info, &idx);
           free(fmt);
+        } else if (vpi_get(vpiConstType, item) == vpiRealConst) {
+          value.format = vpiRealVal;
+          vpi_get_value(item, &value);
+          sprintf(buf, "%#g", value.value.real);
+          result = strdup(buf);
+          width = strlen(result);
         } else {
           width = get_numeric(&result, info, item);
         }
