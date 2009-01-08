@@ -466,8 +466,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
       }
 
-      fprintf(stderr, "internal error: no input to nexus %s\n",
-	      ivl_nexus_name(nex));
+      fprintf(stderr, "internal error: no input to nexus.\n");
       assert(0);
       return strdup("C<z>");
 }

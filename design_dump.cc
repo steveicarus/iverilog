@@ -215,7 +215,10 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 
       o << " (";
       for (unsigned idx = pin_count() ;  idx > 0 ;  idx -= 1)
-	    o << pin(idx-1).nexus()->get_init();
+	    if (const Nexus*tmp = pin(idx-1).nexus())
+		  o << tmp->get_init();
+	    else
+		  o << ".";
       o << ")" << endl;
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {

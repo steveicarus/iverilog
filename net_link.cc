@@ -33,11 +33,16 @@
 void connect(Nexus*l, Link&r)
 {
       assert(l);
-      assert(r.nexus_);
 
       if (l == r.nexus_)
 	    return;
 
+	// Special case: The "r" link is connected to nothing. The
+	// connect becomes trivially easy.
+      if (r.nexus_ == 0) {
+	    l->relink(&r);
+	    return;
+      }
 
       Nexus*tmp = r.nexus_;
       while (Link*cur = tmp->list_) {
@@ -56,30 +61,36 @@ void connect(Nexus*l, Link&r)
 void connect(Link&l, Link&r)
 {
       assert(&l != &r);
-      if (r.is_linked() && !l.is_linked())
-	    connect(r.nexus_, l);
-      else
+      if (l.nexus_ != 0) {
 	    connect(l.nexus_, r);
+      } else if (r.nexus_ != 0) {
+	    connect(r.nexus_, l);
+      } else {
+	    Nexus*tmp = new Nexus;
+	    connect(tmp, l);
+	    connect(tmp, r);
+      }
 }
 
 Link::Link()
 : dir_(PASSIVE), drive0_(STRONG), drive1_(STRONG), init_(verinum::Vx),
   next_(0), nexus_(0)
 {
-      (new Nexus()) -> relink(this);
 }
 
 Link::~Link()
 {
-      assert(nexus_);
-      Nexus*tmp = nexus_;
-      nexus_->unlink(this);
-      if (tmp->list_ == 0)
-	    delete tmp;
+      if (Nexus*tmp = nexus_) {
+	    nexus_->unlink(this);
+	    if (tmp->list_ == 0)
+		  delete tmp;
+      }
 }
 
 Nexus* Link::nexus()
 {
+      if (nexus_ == 0)
+	    (new Nexus()) ->relink(this);
       return nexus_;
 }
 
@@ -158,7 +169,6 @@ void Link::unlink()
 	    return;
 
       nexus_->unlink(this);
-      (new Nexus()) -> relink(this);
 }
 
 bool Link::is_equal(const Link&that) const
@@ -168,6 +178,8 @@ bool Link::is_equal(const Link&that) const
 
 bool Link::is_linked() const
 {
+      if (nexus_ == 0)
+	    return false;
       if (next_)
 	    return true;
       if (nexus_->first_nlink() != this)
@@ -178,6 +190,8 @@ bool Link::is_linked() const
 
 bool Link::is_linked(const Link&that) const
 {
+      if (nexus_ == 0)
+	    return false;
       return nexus_ == that.nexus_;
 }
 
@@ -489,6 +503,7 @@ unsigned NexusSet::count() const
 
 void NexusSet::add(Nexus*that)
 {
+      assert(that);
       if (nitems_ == 0) {
 	    assert(items_ == 0);
 	    items_ = (Nexus**)malloc(sizeof(Nexus*));
@@ -518,6 +533,7 @@ void NexusSet::add(const NexusSet&that)
 
 void NexusSet::rem(Nexus*that)
 {
+      assert(that);
       if (nitems_ == 0)
 	    return;
 

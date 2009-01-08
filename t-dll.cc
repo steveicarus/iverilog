@@ -1429,16 +1429,15 @@ void dll_target::udp(const NetUDP*net)
       obj->npins_ = net->pin_count();
       obj->pins_ = new ivl_nexus_t[obj->npins_];
       for (unsigned idx = 0 ;  idx < obj->npins_ ;  idx += 1) {
-	    const Nexus*nex = net->pin(idx).nexus();
-
 	      /* Skip unconnected input pins. These will take on HiZ
 		 values by the code generators. */
-	    if (nex->t_cookie() == 0) {
+	    if (! net->pin(idx).is_linked()) {
 		  obj->pins_[idx] = 0;
 		  continue;
 	    }
 
-	    assert(nex->t_cookie());
+	    const Nexus*nex = net->pin(idx).nexus();
+	    ivl_assert(*net, nex && nex->t_cookie());
 	    obj->pins_[idx] = nex->t_cookie();
 	    nexus_log_add(obj->pins_[idx], obj, idx);
       }
@@ -2566,8 +2565,19 @@ void dll_target::signal(const NetNet*net)
       for (unsigned idx = 0 ;  idx < obj->array_words ;  idx += 1) {
 
 	    const Nexus*nex = net->pin(idx).nexus();
-	    ivl_assert(*net, nex);
-	    if (nex->t_cookie()) {
+	    if (nex == 0) {
+		    // Special case: This pin is connected to
+		    // nothing. This can happen, for example, if the
+		    // variable is only used in behavioral
+		    // code. Create a stub nexus.
+		  ivl_nexus_t tmp = nexus_sig_make(obj, idx);
+		  tmp->nexus_ = nex;
+		  tmp->name_ = 0;
+		  if (obj->array_words > 1)
+			obj->pins[idx] = tmp;
+		  else
+			obj->pin = tmp;
+	    } else if (nex->t_cookie()) {
 		  if (obj->array_words > 1) {
 			obj->pins[idx] = nex->t_cookie();
 			nexus_sig_add(obj->pins[idx], obj, idx);
@@ -2585,7 +2595,6 @@ void dll_target::signal(const NetNet*net)
 		  else
 			obj->pin = tmp;
 	    }
-	    ivl_assert(*net, net->pin(idx).nexus()->t_cookie());
       }
 }
 

@@ -29,6 +29,9 @@
 #define _END_DECL
 #endif
 
+#ifndef __GNUC__
+# define __attribute__(x)
+#endif
 
 _BEGIN_DECL
 
@@ -173,7 +176,7 @@ typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
 typedef struct ivl_switch_s   *ivl_switch_t;
-typedef struct ivl_memory_s   *ivl_memory_t; /* DEPRECATED */
+typedef struct ivl_memory_s   *ivl_memory_t; //XXXX __attribute__((deprecated));
 typedef struct ivl_statement_s*ivl_statement_t;
 
 /*
@@ -1414,7 +1417,7 @@ extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
  * width. The compiler will insure this is so.
  */
 
-extern const char*     ivl_nexus_name(ivl_nexus_t net);
+extern const char*     ivl_nexus_name(ivl_nexus_t net) __attribute__((deprecated));
 extern unsigned        ivl_nexus_ptrs(ivl_nexus_t net);
 extern ivl_nexus_ptr_t ivl_nexus_ptr(ivl_nexus_t net, unsigned idx);
 

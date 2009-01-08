@@ -290,6 +290,9 @@ class Link {
       verinum::V init_   : 2;
 
     private:
+	// The Nexus uses these to maintain a single linked list of
+	// Link objects. If this link is not connected to anything,
+	// then these pointers are nil.
       Link *next_;
       Nexus*nexus_;
 
