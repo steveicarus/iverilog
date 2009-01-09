@@ -1,6 +1,6 @@
 
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it

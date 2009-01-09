@@ -833,7 +833,8 @@ NetExpr* NetEBDiv::eval_tree_real_()
 	    break;
 
 	  case '%':
-	      // Since this could be called early we don't want this to leak functionality.
+	      // Since this could/may be called early we don't want to
+	      // leak functionality.
 	    if (!gn_icarus_misc_flag) return 0;
 	    res = new NetECReal(verireal(fmod(lval.as_double(), rval.as_double())));
 	    break;
