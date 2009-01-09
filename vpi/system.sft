@@ -16,5 +16,6 @@ $dist_t            vpiSysFuncInt
 $dist_erlang       vpiSysFuncInt
 $clog2             vpiSysFuncInt
 
+$abstime       vpiSysFuncReal
 $simparam      vpiSysFuncReal
 $simparam$str  vpiSysFuncSized 1024 unsigned

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -80,25 +80,30 @@ static PLI_INT32 sys_time_calltf(PLI_BYTE8*name)
       return 0;
 }
 
+/* This also supports $abstime() from VAMS-2.3. */
 static PLI_INT32 sys_realtime_calltf(PLI_BYTE8*name)
 {
       s_vpi_value val;
       s_vpi_time  now;
-      vpiHandle call_handle;
+      vpiHandle callh;
       vpiHandle mod;
 
-      call_handle = vpi_handle(vpiSysTfCall, 0);
-      assert(call_handle);
+      callh = vpi_handle(vpiSysTfCall, 0);
+      assert(callh);
 
-      mod = sys_func_module(call_handle);
+      mod = sys_func_module(callh);
 
       now.type = vpiScaledRealTime;
       vpi_get_time(mod, &now);
 
+	/* For $abstime() we return the time in second. */ 
+      if (strcmp(name, "$abstime") == 0) {
+	    now.real *= pow(10.0, vpi_get(vpiTimeUnit, mod));
+      }
+
       val.format = vpiRealVal;
       val.value.real = now.real;
-
-      vpi_put_value(call_handle, &val, 0, vpiNoDelay);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
 
       return 0;
 }
@@ -141,5 +146,14 @@ void sys_time_register()
       tf_data.compiletf   = sys_no_arg_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$simtime";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type        = vpiSysFunc;
+      tf_data.tfname      = "$abstime";
+      tf_data.sysfunctype = vpiRealFunc;
+      tf_data.calltf      = sys_realtime_calltf;
+      tf_data.compiletf   = sys_no_arg_compiletf;
+      tf_data.sizetf      = 0;
+      tf_data.user_data   = "$abstime";
       vpi_register_systf(&tf_data);
 }
