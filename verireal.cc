@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,6 +18,7 @@
  */
 
 # include "config.h"
+# include "compiler.h"
 
 # include  "verireal.h"
 # include  "verinum.h"
@@ -140,14 +141,20 @@ verireal operator/ (const verireal&l, const verinum&r)
 verireal operator% (const verireal&l, const verireal&r)
 {
       verireal res;
-      assert(0);
+	// Modulus of a real value is not supported by the standard,
+	// but we support it as an extension. Assert that we are in
+	// the correct state before doing the operation.
+      assert(gn_icarus_misc_flag);
+      res.value_ = fmod(l.value_, r.value_);
       return res;
 }
 
 verireal operator% (const verireal&l, const verinum&r)
 {
       verireal res;
-      assert(0);
+	// See above.
+      assert(gn_icarus_misc_flag);
+      res.value_ = fmod(l.value_, (double)r.as_long());
       return res;
 }
 
@@ -170,4 +177,3 @@ ostream& operator<< (ostream&out, const verireal&v)
       out << v.value_;
       return out;
 }
-
