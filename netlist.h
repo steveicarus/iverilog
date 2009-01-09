@@ -1,7 +1,7 @@
 #ifndef __netlist_H
 #define __netlist_H
 /*
- * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3276,6 +3276,9 @@ class NetEBDiv : public NetEBinary {
       virtual NetEBDiv* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+
+    private:
+      NetExpr* eval_tree_real_();
 };
 
 /*
@@ -3386,7 +3389,6 @@ class NetEBMinMax : public NetEBinary {
       virtual ivl_variable_type_t expr_type() const;
 
     private:
-
 };
 
 /*
@@ -3406,9 +3408,7 @@ class NetEBMult : public NetEBinary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-
       NetExpr* eval_tree_real_();
-
 };
 
 /*
@@ -3428,9 +3428,7 @@ class NetEBPow : public NetEBinary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-
       NetExpr* eval_tree_real_();
-
 };
 
 

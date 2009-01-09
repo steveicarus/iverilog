@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -818,6 +818,31 @@ NetEConst* NetEBComp::eval_tree(int prune_to_width)
       }
 }
 
+NetExpr* NetEBDiv::eval_tree_real_()
+{
+      verireal lval;
+      verireal rval;
+
+      bool flag = get_real_arguments_(lval, rval);
+      if (! flag) return 0;
+
+      NetECReal*res = 0;
+      switch (op_) {
+	  case '/':
+	    res = new NetECReal(lval / rval);
+	    break;
+
+	  case '%':
+	      // Since this could be called early we don't want this to leak functionality.
+	    if (!gn_icarus_misc_flag) return 0;
+	    res = new NetECReal(verireal(fmod(lval.as_double(), rval.as_double())));
+	    break;
+      }
+      ivl_assert(*this, res);
+      res->set_line(*this);
+      return res;
+}
+
 /*
  * The NetEBDiv operator includes the / and % operators. First evaluate
  * the sub-expressions, then perform the required operation.
@@ -827,77 +852,31 @@ NetExpr* NetEBDiv::eval_tree(int prune_to_width)
       eval_expr(left_);
       eval_expr(right_);
 
-      if (expr_type() == IVL_VT_REAL) {
-	    NetECReal*lc = dynamic_cast<NetECReal*>(left_);
-	    if (lc == 0) return 0;
+      if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
+      
+      assert(expr_type() == IVL_VT_LOGIC);
 
-	    verireal lval = lc->value();
+      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
+      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      if (lc == 0 || rc == 0) return 0;
 
-	    if (NetECReal*rcr = dynamic_cast<NetECReal*>(right_)) {
-		  NetECReal*tmp = 0;
-		  verireal rval = rcr->value();
+	// Make sure the expression is evaluated at the
+	// expression width.
+      verinum lval = pad_to_width(lc->value(), expr_width());
+      verinum rval = pad_to_width(rc->value(), expr_width());
 
-		  switch (op_) {
-		      case '/':
-			tmp = new NetECReal(lval / rval);
-			break;
-
-		      case '%':
-			tmp = new NetECReal(lval % rval);
-		  }
-
-		  assert(tmp);
-		  tmp->set_line(*this);
-		  return tmp;
-
-	    } else if (NetEConst*rc = dynamic_cast<NetEConst*>(right_)) {
-
-		  NetECReal*tmp = 0;
-		  verinum rval = rc->value();
-
-		  switch (op_) {
-		      case '/':
-			tmp = new NetECReal(lval / rval);
-			break;
-
-		      case '%':
-			tmp = new NetECReal(lval % rval);
-		  }
-
-		  assert(tmp);
-		  tmp->set_line(*this);
-		  return tmp;
-
-	    }
-
-
-      } else {
-	    assert(expr_type() == IVL_VT_LOGIC);
-	    NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-	    if (lc == 0) return 0;
-	    NetEConst*rc = dynamic_cast<NetEConst*>(right_);
-	    if (rc == 0) return 0;
-
-	      // Make sure the expression is evaluated at the
-	      // expression width.
-	    verinum lval = pad_to_width(lc->value(), expr_width());
-	    verinum rval = pad_to_width(rc->value(), expr_width());
-
-	    NetExpr*tmp = 0;
-	    switch (op_) {
-		case '/':
-		  tmp = new NetEConst(lval / rval);
-		  break;
-		case '%':
-		  tmp = new NetEConst(lval % rval);
-		  break;
-	    }
-	    ivl_assert(*this, tmp);
-	    tmp->set_line(*this);
-	    return tmp;
+      NetExpr*tmp = 0;
+      switch (op_) {
+	  case '/':
+	    tmp = new NetEConst(lval / rval);
+	    break;
+	  case '%':
+	    tmp = new NetEConst(lval % rval);
+	    break;
       }
-
-      return 0;
+      ivl_assert(*this, tmp);
+      tmp->set_line(*this);
+      return tmp;
 }
 
 NetEConst* NetEBLogic::eval_tree(int prune_to_width)
@@ -976,7 +955,6 @@ NetExpr* NetEBMult::eval_tree_real_()
       bool flag = get_real_arguments_(lval, rval);
       if (! flag) return 0;
 
-
       NetECReal*res = new NetECReal(lval * rval);
       res->set_line(*this);
       return res;
@@ -987,8 +965,7 @@ NetExpr* NetEBMult::eval_tree(int prune_to_width)
       eval_expr(left_);
       eval_expr(right_);
 
-      if (expr_type() == IVL_VT_REAL)
-	    return eval_tree_real_();
+      if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
 
       assert(expr_type() == IVL_VT_LOGIC);
 
