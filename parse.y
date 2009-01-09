@@ -685,8 +685,8 @@ description
   | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
       { perm_string tmp3 = lex_strings.make($3);
 	pform_set_type_attrib(tmp3, $5, $7);
-	delete[]$3;
-	delete $5;
+	delete[] $3;
+	delete[] $5;
       }
   ;
 
@@ -2301,8 +2301,8 @@ module_item
 		{ perm_string tmp3 = lex_strings.make($3);
 		  perm_string tmp5 = lex_strings.make($5);
 		  pform_set_attrib(tmp3, tmp5, $7);
-		  delete[]$3;
-		  delete $5;
+		  delete[] $3;
+		  delete[] $5;
 		}
 	| KK_attribute '(' error ')' ';'
 		{ yyerror(@1, "error: Malformed $attribute parameter list."); }

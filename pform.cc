@@ -1696,7 +1696,7 @@ void pform_set_attrib(perm_string name, perm_string key, char*value)
 	    curg->attributes[key] = new PEString(value);
 
       } else {
-	    free(value);
+	    delete[] value;
 	    VLerror("Unable to match name for setting attribute.");
 
       }
@@ -1712,7 +1712,7 @@ void pform_set_type_attrib(perm_string name, const string&key,
       map<perm_string,PUdp*>::const_iterator udp = pform_primitives.find(name);
       if (udp == pform_primitives.end()) {
 	    VLerror("type name is not (yet) defined.");
-	    free(value);
+	    delete[] value;
 	    return;
       }
 

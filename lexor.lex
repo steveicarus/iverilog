@@ -168,12 +168,12 @@ S [afpnumkKMGT]
 <CSTRING>\\\\ { yymore(); /* Catch \\, which is a \ escaping itself */ }
 <CSTRING>\\\" { yymore(); /* Catch \", which is an escaped quote */ }
 <CSTRING>\n   { BEGIN(0);
-                yylval.text = strdup(yytext);
+                yylval.text = strdupnew(yytext);
 		VLerror(yylloc, "Missing close quote of string.");
 		yylloc.first_line += 1;
 		return STRING; }
 <CSTRING>\"   { BEGIN(0);
-                yylval.text = strdup(yytext);
+                yylval.text = strdupnew(yytext);
 		yylval.text[strlen(yytext)-1] = 0;
 		return STRING; }
 <CSTRING>.    { yymore(); }
