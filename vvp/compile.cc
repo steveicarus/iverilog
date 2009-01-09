@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -493,13 +493,13 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 void compile_vpi_lookup(vpiHandle *handle, char*label)
 {
       if (strcmp(label, "$time") == 0) {
-	    *handle = vpip_sim_time(vpip_peek_current_scope());
+	    *handle = vpip_sim_time(vpip_peek_current_scope(), false);
 	    free(label);
 	    return;
       }
 
       if (strcmp(label, "$stime") == 0) {
-	    *handle = vpip_sim_time(vpip_peek_current_scope());
+	    *handle = vpip_sim_time(vpip_peek_current_scope(), true);
 	    free(label);
 	    return;
       }
@@ -511,7 +511,7 @@ void compile_vpi_lookup(vpiHandle *handle, char*label)
       }
 
       if (strcmp(label, "$simtime") == 0) {
-	    *handle = vpip_sim_time(0);
+	    *handle = vpip_sim_time(0, false);
 	    free(label);
 	    return;
       }

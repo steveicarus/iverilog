@@ -867,7 +867,10 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		      char*tmp = vpi_get_str(vpiName, item);
 		      vpiHandle scope = vpi_handle(vpiScope, item);
 
+			/* This is wrong, but will be replaced with the
+			 * the string formatting below soon. */
 		      if (strcmp(tmp,"$time") == 0 ||
+		          strcmp(tmp,"$stime") == 0 ||
 		          strcmp(tmp,"$simtime") == 0) {
 			    value.format = vpiTimeVal;
 			    vpi_get_value(item, &value);
@@ -2043,12 +2046,19 @@ static char *get_display(unsigned int *rtnsz, struct strobe_cb_info *info)
 
       case vpiSysFuncCall:
         func_name = vpi_get_str(vpiName, item);
-        /* For now this also handles $stime */
         if (strcmp(func_name, "$time") == 0) {
           value.format = vpiDecStrVal;
           vpi_get_value(item, &value);
           width = strlen(value.value.str);
           if (width  < 20) width = 20;
+          rtn = realloc(rtn, (size+width)*sizeof(char));
+          sprintf(rtn+size-1, "%*s", width, value.value.str);
+
+        } else if (strcmp(func_name, "$stime") == 0) {
+          value.format = vpiDecStrVal;
+          vpi_get_value(item, &value);
+          width = strlen(value.value.str);
+          if (width  < 10) width = 10;
           rtn = realloc(rtn, (size+width)*sizeof(char));
           sprintf(rtn+size-1, "%*s", width, value.value.str);
 

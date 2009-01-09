@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -103,11 +103,34 @@ static int timevar_time_get(int code, vpiHandle ref)
       }
 }
 
+static int timevar_stime_get(int code, vpiHandle ref)
+{
+      switch (code) {
+          case vpiSize:
+	    return 32;
+
+	  default:
+	    return timevar_time_get(code, ref);
+      }
+}
+
 static char* timevar_time_get_str(int code, vpiHandle ref)
 {
       switch (code) {
 	  case vpiName:
 	    return simple_set_rbuf_str("$time");
+	  default:
+	    fprintf(stderr, "Code: %d\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
+static char* timevar_stime_get_str(int code, vpiHandle ref)
+{
+      switch (code) {
+	  case vpiName:
+	    return simple_set_rbuf_str("$stime");
 	  default:
 	    fprintf(stderr, "Code: %d\n", code);
 	    assert(0);
@@ -143,7 +166,7 @@ static int timevar_realtime_get(int code, vpiHandle ref)
 {
       switch (code) {
           case vpiSize:
-	    return 64;
+	    return 1;
 
           case vpiSigned:
 	    return 0;
@@ -174,7 +197,8 @@ static vpiHandle timevar_handle(int code, vpiHandle ref)
       }
 }
 
-static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func)
+static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func,
+                              bool is_stime)
 {
 	/* Keep a persistent structure for passing time values back to
 	   the caller. */
@@ -203,6 +227,9 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func)
 
       if ((divisor >= 10) && (simtime_fraction >= (divisor/2)))
 	    simtime += 1;
+
+	/* If this is a call to $stime only return the lower 32 bits. */
+      if (is_stime) simtime &= 0xffffffff;
 
       switch (vp->format) {
 	  case vpiObjTypeVal:
@@ -260,12 +287,17 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func)
 
 static void timevar_get_ivalue(vpiHandle ref, s_vpi_value*vp)
 {
-      timevar_get_value(ref, vp, true);
+      timevar_get_value(ref, vp, true, false);
+}
+
+static void timevar_get_svalue(vpiHandle ref, s_vpi_value*vp)
+{
+      timevar_get_value(ref, vp, true, true);
 }
 
 static void timevar_get_rvalue(vpiHandle ref, s_vpi_value*vp)
 {
-      timevar_get_value(ref, vp, false);
+      timevar_get_value(ref, vp, false, false);
 }
 
 static const struct __vpirt vpip_system_time_rt = {
@@ -273,6 +305,16 @@ static const struct __vpirt vpip_system_time_rt = {
       timevar_time_get,
       timevar_time_get_str,
       timevar_get_ivalue,
+      0,
+      timevar_handle,
+      0
+};
+
+static const struct __vpirt vpip_system_stime_rt = {
+      vpiSysFuncCall,
+      timevar_stime_get,
+      timevar_stime_get_str,
+      timevar_get_svalue,
       0,
       timevar_handle,
       0
@@ -303,12 +345,18 @@ static const struct __vpirt vpip_system_realtime_rt = {
  * $time and $stime system functions return a value scaled to a scope,
  * and the $simtime returns the unscaled time.
  */
-vpiHandle vpip_sim_time(struct __vpiScope*scope)
+vpiHandle vpip_sim_time(struct __vpiScope*scope, bool is_stime)
 {
       if (scope) {
-	    scope->scoped_time.base.vpi_type = &vpip_system_time_rt;
-	    scope->scoped_time.scope = scope;
-	    return &scope->scoped_time.base;
+	    if (is_stime) {
+		  scope->scoped_stime.base.vpi_type = &vpip_system_stime_rt;
+		  scope->scoped_stime.scope = scope;
+		  return &scope->scoped_stime.base;
+	    } else {
+		  scope->scoped_time.base.vpi_type = &vpip_system_time_rt;
+		  scope->scoped_time.scope = scope;
+		  return &scope->scoped_time.base;
+	    }
       } else {
 	    global_simtime.base.vpi_type = &vpip_system_simtime_rt;
 	    global_simtime.scope = 0;

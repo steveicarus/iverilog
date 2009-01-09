@@ -1,7 +1,7 @@
 #ifndef __vpi_priv_H
 #define __vpi_priv_H
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -176,6 +176,7 @@ struct __vpiScope {
       bool is_automatic;
 	/* The scope has a system time of its own. */
       struct __vpiSystemTime scoped_time;
+      struct __vpiSystemTime scoped_stime;
       struct __vpiSystemTime scoped_realtime;
 	/* Keep an array of internal scope items. */
       struct __vpiHandle**intern;
@@ -526,7 +527,7 @@ extern void vpip_execute_vpi_call(vthread_t thr, vpiHandle obj);
  * and to finish compilation in preparation for execution.
  */
 
-vpiHandle vpip_sim_time(struct __vpiScope*scope);
+vpiHandle vpip_sim_time(struct __vpiScope*scope, bool is_stime);
 vpiHandle vpip_sim_realtime(struct __vpiScope*scope);
 
 extern int vpip_get_time_precision(void);
