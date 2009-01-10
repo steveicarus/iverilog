@@ -1190,6 +1190,12 @@ static PLI_INT32 sys_monitoroff_calltf(PLI_BYTE8*name)
 /* Implement $fdisplay and $fwrite.
  * Perhaps this could be merged into sys_display_calltf.
  */
+#ifdef USE_OLD_DISPLAY
+static PLI_INT32 sys_fdisplay_compiletf(PLI_BYTE8*name)
+{
+      return 0;
+}
+
 static PLI_INT32 sys_fdisplay_calltf(PLI_BYTE8*name)
 {
       struct strobe_cb_info info;
@@ -1253,6 +1259,7 @@ static PLI_INT32 sys_fdisplay_calltf(PLI_BYTE8*name)
 
       return 0;
 }
+#endif
 
 /* Build the format using the variables that control how the item will
  * be printed. This is used in error messages and directly by the e/f/g
@@ -1896,6 +1903,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
    * characters into the stream. */
   *rtn = malloc(size*sizeof(char));
   memcpy(*rtn, result, size);
+  free(result);
   return size - 1;
 }
 
@@ -2110,44 +2118,133 @@ static char *get_display(unsigned int *rtnsz, struct strobe_cb_info *info)
 }
 
 #ifndef USE_OLD_DISPLAY
+/* This implements both the $display and the $write based tasks. */
 static PLI_INT32 sys_display_calltf(PLI_BYTE8 *name)
 {
-  vpiHandle callh, argv, scope;
-  struct strobe_cb_info info;
-  char* result;
-  unsigned int size, location=0;
+      vpiHandle callh, argv, scope;
+      struct strobe_cb_info info;
+      char* result;
+      unsigned int size, location=0;
 
-  callh = vpi_handle(vpiSysTfCall, 0);
-  argv = vpi_iterate(vpiArgument, callh);
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
 
-  scope = vpi_handle(vpiScope, callh);
-  assert(scope);
-  /* We could use vpi_get_str(vpiName, callh) to get the task name, but
-   * name is already defined. */
-  info.name = name;
-  info.filename = strdup(vpi_get_str(vpiFile, callh));
-  info.lineno = (int)vpi_get(vpiLineNo, callh);
-  info.default_format = get_default_format(name);
-  info.scope = scope;
-  array_from_iterator(&info, argv);
+      scope = vpi_handle(vpiScope, callh);
+      assert(scope);
+	/* We could use vpi_get_str(vpiName, callh) to get the task name,
+	 * but name is already defined. */
+      info.name = name;
+      info.filename = strdup(vpi_get_str(vpiFile, callh));
+      info.lineno = (int)vpi_get(vpiLineNo, callh);
+      info.default_format = get_default_format(name);
+      info.scope = scope;
+      array_from_iterator(&info, argv);
 
-  /* Because %u and %z may put embedded NULL characters into the returned
-   * string strlen() may not match the real size! */
-  result = get_display(&size, &info);
-  while (location < size) {
-    if (result[location] == '\0') {
-      my_mcd_printf(1, "\0");
-      location += 1;
-    } else {
-      my_mcd_printf(1, "%s", &result[location]);
-      location += strlen(&result[location]);
-    }
-  }
-  if (strncmp(name,"$display",8) == 0) my_mcd_printf(1, "\n");
+	/* Because %u and %z may put embedded NULL characters into the
+	 * returned string strlen() may not match the real size! */
+      result = get_display(&size, &info);
+      while (location < size) {
+	    if (result[location] == '\0') {
+		  my_mcd_printf(1, "\0");
+		  location += 1;
+	    } else {
+		  my_mcd_printf(1, "%s", &result[location]);
+		  location += strlen(&result[location]);
+	    }
+      }
+      if (strncmp(name,"$display",8) == 0) my_mcd_printf(1, "\n");
 
-  free(info.filename);
-  free(info.items);
-  return 0;
+      free(info.filename);
+      free(info.items);
+      free(result);
+      return 0;
+}
+
+/* This checks both the $fdisplay and the $fwrite based tasks. */
+static PLI_INT32 sys_fdisplay_compiletf(PLI_BYTE8*name)
+{
+      vpiHandle callh, argv;
+
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
+
+	/* Check that there is a fd/mcd and that it is numeric. */
+      if (argv == 0) {
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+                       (int)vpi_get(vpiLineNo, callh));
+            vpi_printf("%s requires at least a file descriptor/MCD.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      if (! is_numeric_obj(vpi_scan(argv))) {
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+                       (int)vpi_get(vpiLineNo, callh));
+            vpi_printf("%s's file descriptor/MCD must be numeric.\n", name);
+            vpi_control(vpiFinish, 1);
+      }
+
+      vpi_free_object(argv);
+      return 0;
+}
+
+/* This implements both the $fdisplay and the $fwrite based tasks. */
+static PLI_INT32 sys_fdisplay_calltf(PLI_BYTE8*name)
+{
+      vpiHandle callh, argv, scope, arg;
+      struct strobe_cb_info info;
+      s_vpi_value val;
+      PLI_UINT32 fd_mcd;
+      char* result;
+      unsigned int size, location=0;
+
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
+
+	/* Get the file/MC descriptor and verify it is valid. */
+      arg = vpi_scan(argv);
+      val.format = vpiIntVal;
+      vpi_get_value(arg, &val);
+      fd_mcd = val.value.integer;
+      if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
+          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF)) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
+	               fd_mcd, name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      scope = vpi_handle(vpiScope, callh);
+      assert(scope);
+	/* We could use vpi_get_str(vpiName, callh) to get the task name,
+	 * but name is already defined. */
+      info.name = name;
+      info.filename = strdup(vpi_get_str(vpiFile, callh));
+      info.lineno = (int)vpi_get(vpiLineNo, callh);
+      info.default_format = get_default_format(name);
+      info.scope = scope;
+      array_from_iterator(&info, argv);
+
+	/* Because %u and %z may put embedded NULL characters into the
+	 * returned string strlen() may not match the real size! */
+      result = get_display(&size, &info);
+      while (location < size) {
+	    if (result[location] == '\0') {
+		  my_mcd_printf(fd_mcd, "\0");
+		  location += 1;
+	    } else {
+		  my_mcd_printf(fd_mcd, "%s", &result[location]);
+		  location += strlen(&result[location]);
+	    }
+      }
+      if (strncmp(name,"$fdisplay",9) == 0) my_mcd_printf(fd_mcd, "\n");
+
+      free(info.filename);
+      free(info.items);
+      free(result);
+      return 0;
 }
 #endif
 
@@ -2635,7 +2732,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$monitoron";
       tf_data.calltf    = sys_monitoron_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_no_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$monitoron";
       vpi_register_systf(&tf_data);
@@ -2643,7 +2740,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$monitoroff";
       tf_data.calltf    = sys_monitoroff_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_no_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$monitoroff";
       vpi_register_systf(&tf_data);
@@ -2652,7 +2749,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fdisplay";
       tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_fdisplay_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fdisplay";
       vpi_register_systf(&tf_data);
@@ -2660,7 +2757,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fdisplayh";
       tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_fdisplay_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fdisplayh";
       vpi_register_systf(&tf_data);
@@ -2668,7 +2765,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fdisplayo";
       tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_fdisplay_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fdisplayo";
       vpi_register_systf(&tf_data);
@@ -2676,7 +2773,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fdisplayb";
       tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_fdisplay_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fdisplayb";
       vpi_register_systf(&tf_data);
@@ -2685,7 +2782,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fwrite";
       tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_fdisplay_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fwrite";
       vpi_register_systf(&tf_data);
@@ -2693,7 +2790,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fwriteh";
       tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_fdisplay_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fwriteh";
       vpi_register_systf(&tf_data);
@@ -2701,7 +2798,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fwriteo";
       tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_fdisplay_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fwriteo";
       vpi_register_systf(&tf_data);
@@ -2709,7 +2806,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fwriteb";
       tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_fdisplay_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fwriteb";
       vpi_register_systf(&tf_data);
