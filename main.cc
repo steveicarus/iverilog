@@ -91,6 +91,7 @@ bool gn_specify_blocks_flag = true;
 bool gn_io_range_error_flag = true;
 bool gn_strict_ca_eval_flag = false;
 bool gn_verilog_ams_flag = false;
+bool gn_system_verilog_flag = false;
 
 map<string,const char*> flags;
 char*vpi_module_list = 0;
@@ -252,7 +253,10 @@ static void process_generation_flag(const char*gen)
       } else if (strcmp(gen,"no-strict-ca-eval") == 0) {
 	    gn_strict_ca_eval_flag = false;
 
-      } else {
+      } else if (strcmp(gen,"system-verilog") == 0) {
+        gn_system_verilog_flag = true;
+
+	  } else {
       }
 }
 
@@ -660,6 +664,9 @@ int main(int argc, char*argv[])
 
       if (gn_cadence_types_flag)
 	    lexor_keyword_mask |= GN_KEYWORDS_ICARUS;
+      
+	  if (gn_system_verilog_flag)
+	    lexor_keyword_mask |= GN_KEYWORDS_1800_2005;
 
       if (gn_verilog_ams_flag)
 	    lexor_keyword_mask |= GN_KEYWORDS_VAMS_2_3;

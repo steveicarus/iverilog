@@ -241,6 +241,8 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_wone K_wor K_xnor K_xor
 %token K_Shold K_Speriod K_Srecovery K_Srecrem K_Ssetup K_Swidth K_Ssetuphold
 
+%token K_always_comb K_always_ff K_always_latch K_assert 
+
 %token KK_attribute
 
 %type <flag>    from_exclude

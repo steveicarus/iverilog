@@ -139,6 +139,7 @@ enum { GN_KEYWORDS_1364_1995        = 0x0001,
        GN_KEYWORDS_1364_2001_CONFIG = 0x0004,
        GN_KEYWORDS_1364_2005        = 0x0008,
        GN_KEYWORDS_VAMS_2_3         = 0x0010,
+       GN_KEYWORDS_1800_2005        = 0x0020,
        GN_KEYWORDS_ICARUS           = 0x8000
 };
 extern int lexor_keyword_mask;

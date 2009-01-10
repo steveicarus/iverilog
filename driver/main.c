@@ -115,6 +115,7 @@ const char*gen_icarus = "icarus-misc";
 const char*gen_io_range_error = "io-range-error";
 const char*gen_strict_ca_eval = "no-strict-ca-eval";
 const char*gen_verilog_ams = "no-verilog-ams";
+const char*gen_system_verilog = "no-system-verilog";
 
 /* Boolean: true means use a default include dir, false means don't */
 int gen_std_include = 1;
@@ -611,6 +612,9 @@ int process_generation(const char*name)
 
       else if (strcmp(name,"no-verilog-ams") == 0)
 	    gen_verilog_ams = "no-verilog-ams";
+      
+	  else if (strcmp(name,"system-verilog") == 0)
+	    gen_system_verilog = "system-verilog";
 
       else {
 	    fprintf(stderr, "Unknown/Unsupported Language generation "
@@ -626,7 +630,8 @@ int process_generation(const char*name)
 		            "    xtypes | no-xtypes\n"
 		            "    icarus-misc | no-icarus-misc\n"
 		            "    io-range-error | no-io-range-error\n"
-                            "    strict-ca-eval | no-strict-ca-eval\n");
+                    "    strict-ca-eval | no-strict-ca-eval\n"
+					"    system-verilog\n");
 	    return 1;
       }
 
@@ -899,6 +904,7 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "generation:%s\n", gen_strict_ca_eval);
       fprintf(iconfig_file, "generation:%s\n", gen_verilog_ams);
       fprintf(iconfig_file, "generation:%s\n", gen_icarus);
+      fprintf(iconfig_file, "generation:%s\n", gen_system_verilog);
       fprintf(iconfig_file, "warnings:%s\n", warning_flags);
       fprintf(iconfig_file, "out:%s\n", opath);
       if (depfile) fprintf(iconfig_file, "depfile:%s\n", depfile);

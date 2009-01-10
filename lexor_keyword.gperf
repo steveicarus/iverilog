@@ -17,10 +17,14 @@ access,		GN_KEYWORDS_VAMS_2_3,	K_access
 acos,		GN_KEYWORDS_VAMS_2_3,	K_acos
 acosh,		GN_KEYWORDS_VAMS_2_3,	K_acosh
 always,		GN_KEYWORDS_1364_1995,	K_always
+always_comb,	GN_KEYWORDS_1800_2005,	K_always_comb
+always_ff,		GN_KEYWORDS_1800_2005,	K_always_ff
+always_latch,	GN_KEYWORDS_1800_2005,	K_always_latch
 analog,		GN_KEYWORDS_VAMS_2_3,	K_analog
 and,		GN_KEYWORDS_1364_1995,	K_and
 asin,		GN_KEYWORDS_VAMS_2_3,	K_asin
 asinh,		GN_KEYWORDS_VAMS_2_3,	K_asinh
+assert,		GN_KEYWORDS_1800_2005,	K_assert
 assign,		GN_KEYWORDS_1364_1995,	K_assign
 atan,		GN_KEYWORDS_VAMS_2_3,	K_atan
 atan2,		GN_KEYWORDS_VAMS_2_3,	K_atan2
