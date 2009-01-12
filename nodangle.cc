@@ -148,14 +148,7 @@ void nodangle_f::signal(Design*des, NetNet*sig)
 
 	/* Check to see if the signal is completely unconnected. If
 	   all the bits are unlinked, then delete it. */
-      bool linked_flag = false;
-      for (unsigned idx =  0 ;  idx < sig->pin_count() ;  idx += 1)
-	    if (sig->pin(idx).is_linked()) {
-		  linked_flag = true;
-		  break;
-	    }
-
-      if (! linked_flag) {
+      if (! sig->is_linked()) {
 	    delete sig;
 	    stotal += 1;
 	    return;

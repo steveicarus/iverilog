@@ -212,6 +212,19 @@ const Link& NetPins::pin(unsigned idx) const
       return pins_[idx];
 }
 
+bool NetPins::is_linked(void)
+{
+      bool linked_flag = false;
+      if (pins_ == NULL) return false;
+      for (unsigned u = 0; u < npins_; u++) {
+	    if (pins_[u].is_linked()) {
+		  linked_flag = true;
+		  break;
+	    }
+      }
+      return linked_flag;
+}
+
 NetObj::NetObj(NetScope*s, perm_string n, unsigned np)
 : NetPins(np), scope_(s), name_(n), delay1_(0), delay2_(0), delay3_(0)
 {
@@ -464,6 +477,16 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
       s->add_signal(this);
 }
 
+void NetNet::initialize_value_and_dir(verinum::V init_value, Link::DIR dir)
+{
+      if (1) {
+	    for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+		  pin(idx).set_dir(dir);
+		  pin(idx).set_init(init_value);
+	    }
+      }
+}
+
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	       long ms, long ls)
 : NetObj(s, n, 1), type_(t),
@@ -494,10 +517,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	    break;
       }
 
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_dir(dir);
-	    pin(idx).set_init(init_value);
-      }
+      initialize_value_and_dir(init_value, dir);
 
       s->add_signal(this);
 }
@@ -541,10 +561,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	    break;
       }
 
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_dir(dir);
-	    pin(idx).set_init(init_value);
-      }
+      initialize_value_and_dir(init_value, dir);
 
       s->add_signal(this);
 }

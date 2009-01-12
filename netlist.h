@@ -78,6 +78,109 @@ ostream& operator << (ostream&o, ivl_variable_type_t val);
 
 extern void join_island(NetPins*obj);
 
+class Link {
+
+      friend void connect(Link&, Link&);
+      friend void connect(Nexus*, Link&);
+      friend class NetPins;
+      friend class Nexus;
+
+    public:
+      enum DIR { PASSIVE, INPUT, OUTPUT };
+
+      enum strength_t { HIGHZ, WEAK, PULL, STRONG, SUPPLY };
+
+    private: // Only NetPins can create/delete Link objects
+      Link();
+      ~Link();
+
+    public:
+	// Manipulate the link direction.
+      void set_dir(DIR d);
+      DIR get_dir() const;
+
+	// Set the delay for all the drivers to this nexus.
+      void drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay);
+
+	// A link has a drive strength for 0 and 1 values. The drive0
+	// strength is for when the link has the value 0, and drive1
+	// strength is for when the link has a value 1.
+      void drive0(strength_t);
+      void drive1(strength_t);
+
+	// This sets the drives for all drivers of this link, and not
+	// just the current link.
+      void drivers_drive(strength_t d0, strength_t d1);
+
+      strength_t drive0() const;
+      strength_t drive1() const;
+
+	// A link has an initial value that is used by the nexus to
+	// figure out its initial value. Normally, only the object
+	// that contains the link sets the initial value, and only the
+	// attached Nexus gets it. The default link value is Vx.
+      void set_init(verinum::V val);
+      verinum::V get_init() const;
+
+      void cur_link(NetPins*&net, unsigned &pin);
+      void cur_link(const NetPins*&net, unsigned &pin) const;
+
+	// Get a pointer to the nexus that represents all the links
+	// connected to me.
+      Nexus* nexus();
+      const Nexus* nexus()const;
+
+	// Return a pointer to the next link in the nexus.
+      Link* next_nlink();
+      const Link* next_nlink() const;
+
+	// Remove this link from the set of connected pins. The
+	// destructor will automatically do this if needed.
+      void unlink();
+
+	// Return true if this link is connected to anything else.
+      bool is_linked() const;
+
+	// Return true if these pins are connected.
+      bool is_linked(const Link&that) const;
+
+	// Return true if this is the same pin of the same object of
+	// that link.
+      bool is_equal(const Link&that) const;
+
+	// Return information about the object that this link is
+	// a part of.
+      const NetPins*get_obj() const;
+      NetPins*get_obj();
+      unsigned get_pin() const;
+
+    private:
+	// The NetNode manages these. They point back to the
+	// NetNode so that following the links can get me here.
+      union {
+	    NetPins *node_;
+	    unsigned pin_;
+      };
+
+      bool pin_zero_     : 1;
+      DIR dir_           : 2;
+      strength_t drive0_ : 3;
+      strength_t drive1_ : 3;
+      verinum::V init_   : 2;
+
+    private:
+	// The Nexus uses these to maintain a single linked list of
+	// Link objects. If this link is not connected to anything,
+	// then these pointers are nil.
+      Link *next_;
+      Nexus*nexus_;
+
+    private: // not implemented
+      Link(const Link&);
+      Link& operator= (const Link&);
+};
+
+
 class NetPins : public LineInfo {
 
     public:
@@ -90,6 +193,7 @@ class NetPins : public LineInfo {
       const Link&pin(unsigned idx) const;
 
       void dump_node_pins(ostream&, unsigned, const char**pin_names =0) const;
+      bool is_linked();
 
     private:
       Link*pins_;
@@ -198,109 +302,6 @@ class NetBranch  : public NetPins, public IslandBranch {
       friend class Design;
       NetBranch*next_;
 };
-
-class Link {
-
-      friend void connect(Link&, Link&);
-      friend void connect(Nexus*, Link&);
-      friend class NetPins;
-      friend class Nexus;
-
-    public:
-      enum DIR { PASSIVE, INPUT, OUTPUT };
-
-      enum strength_t { HIGHZ, WEAK, PULL, STRONG, SUPPLY };
-
-    private: // Only NetPins can create/delete Link objects
-      Link();
-      ~Link();
-
-    public:
-	// Manipulate the link direction.
-      void set_dir(DIR d);
-      DIR get_dir() const;
-
-	// Set the delay for all the drivers to this nexus.
-      void drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay);
-
-	// A link has a drive strength for 0 and 1 values. The drive0
-	// strength is for when the link has the value 0, and drive1
-	// strength is for when the link has a value 1.
-      void drive0(strength_t);
-      void drive1(strength_t);
-
-	// This sets the drives for all drivers of this link, and not
-	// just the current link.
-      void drivers_drive(strength_t d0, strength_t d1);
-
-      strength_t drive0() const;
-      strength_t drive1() const;
-
-	// A link has an initial value that is used by the nexus to
-	// figure out its initial value. Normally, only the object
-	// that contains the link sets the initial value, and only the
-	// attached Nexus gets it. The default link value is Vx.
-      void set_init(verinum::V val);
-      verinum::V get_init() const;
-
-      void cur_link(NetPins*&net, unsigned &pin);
-      void cur_link(const NetPins*&net, unsigned &pin) const;
-
-	// Get a pointer to the nexus that represents all the links
-	// connected to me.
-      Nexus* nexus();
-      const Nexus* nexus()const;
-
-	// Return a pointer to the next link in the nexus.
-      Link* next_nlink();
-      const Link* next_nlink() const;
-
-	// Remove this link from the set of connected pins. The
-	// destructor will automatically do this if needed.
-      void unlink();
-
-	// Return true if this link is connected to anything else.
-      bool is_linked() const;
-
-	// Return true if these pins are connected.
-      bool is_linked(const Link&that) const;
-
-	// Return true if this is the same pin of the same object of
-	// that link.
-      bool is_equal(const Link&that) const;
-
-	// Return information about the object that this link is
-	// a part of.
-      const NetPins*get_obj() const;
-      NetPins*get_obj();
-      unsigned get_pin() const;
-
-    private:
-	// The NetNode manages these. They point back to the
-	// NetNode so that following the links can get me here.
-      union {
-	    NetPins *node_;
-	    unsigned pin_;
-      };
-
-      bool pin_zero_     : 1;
-      DIR dir_           : 2;
-      strength_t drive0_ : 3;
-      strength_t drive1_ : 3;
-      verinum::V init_   : 2;
-
-    private:
-	// The Nexus uses these to maintain a single linked list of
-	// Link objects. If this link is not connected to anything,
-	// then these pointers are nil.
-      Link *next_;
-      Nexus*nexus_;
-
-    private: // not implemented
-      Link(const Link&);
-      Link& operator= (const Link&);
-};
-
 
 /*
  * The Nexus represents a collection of links that are joined
@@ -633,6 +634,8 @@ class NetNet  : public NetObj {
       const class NetDelaySrc*delay_path(unsigned idx) const;
 
       virtual void dump_net(ostream&, unsigned) const;
+
+      void initialize_value_and_dir(verinum::V init_value, Link::DIR dir);
 
     private:
       Type   type_;
