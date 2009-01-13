@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2009 Stephen Williams (steve@icarus.com)
  *
  * (This is a rewrite of code that was ...
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
@@ -247,7 +247,9 @@ void vvp_udp_comb_s::compile_table(char**tab)
 		default:
 		  break;
 	    }
+	    delete[] tab[idx];
       }
+      free(tab);
 
       assert(nrows0 == nlevels0_);
       assert(nrows1 == nlevels1_);
@@ -623,7 +625,9 @@ void vvp_udp_seq_s::compile_table(char**tab)
 		  }
 
 	    }
+	    delete[] tab[idx];
       }
+      free(tab);
 
       assert(idx_edg0 == nedges0_);
       assert(idx_edg1 == nedges1_);
@@ -942,6 +946,7 @@ void compile_udp_functor(char*label, char*type,
       if (delay != 0) {
 	    vvp_net_t*net_drv = new vvp_net_t;
 	    vvp_fun_delay*obj_drv = new vvp_fun_delay(net_drv, BIT4_X, *delay);
+	    delete delay;
 	    net_drv->fun = obj_drv;
 
 	    ptr->out = vvp_net_ptr_t(net_drv,0);

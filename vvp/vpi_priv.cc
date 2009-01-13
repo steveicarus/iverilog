@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -908,7 +908,10 @@ static vpiHandle find_scope(const char *name, vpiHandle handle, int depth)
 		  rtn = find_scope(cp+1, hand, depth + 1);
 
 	    /* found it yet ? */
-	    if (rtn) break;
+	    if (rtn) {
+		  vpi_free_object(iter);
+		  break;
+	    }
       }
 
       /* matched up to here */

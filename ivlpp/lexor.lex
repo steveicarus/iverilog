@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1812,4 +1812,5 @@ void destroy_lexor()
 #     endif
 #   endif
 # endif
+    free(def_buf);
 }
