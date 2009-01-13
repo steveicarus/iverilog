@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -695,6 +695,7 @@ void compile_event(char*label, char*type, unsigned argc, struct symb_s*argv)
       free(label);
 
       inputs_connect(ptr, argc, argv);
+      free(argv);
 }
 
 static void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
@@ -714,6 +715,7 @@ static void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
       for (unsigned idx = 0 ;  idx < argc ;  idx += 1) {
 	    input_connect(ptr, 0, argv[idx].text);
       }
+      free(argv);
 }
 
 /*
@@ -737,5 +739,5 @@ void compile_named_event(char*label, char*name)
       vpip_attach_to_current_scope(obj);
 
       free(label);
-      free(name);
+      delete[] name;
 }

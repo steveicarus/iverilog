@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -59,7 +59,7 @@ static void __compile_var_real(char*label, char*name,
 	    array_attach_word(array, array_addr, obj);
       }
       free(label);
-      if (name) free(name);
+      if (name) delete[] name;
 }
 
 void compile_var_real(char*label, char*name, int msb, int lsb)
@@ -118,7 +118,7 @@ static void __compile_var(char*label, char*name,
 	    if (obj) array_attach_word(array, array_addr, obj);
       }
       free(label);
-      if (name) free(name);
+      if (name) delete[] name;
 }
 
 void compile_variable(char*label, char*name,
@@ -194,7 +194,7 @@ static void __compile_net(char*label, char*name,
 	    vpip_attach_to_current_scope(obj);
 
       free(label);
-      if (name) free(name);
+      if (name) delete[] name;
       if (array_label) free(array_label);
       free(argv);
 }
@@ -254,7 +254,7 @@ static void __compile_real(char*label, char*name,
       else if (obj)
 	    vpip_attach_to_current_scope(obj);
       free(label);
-      if (name) free(name);
+      if (name) delete[] name;
       if (array_label) free(array_label);
       free(argv);
 }
@@ -313,7 +313,7 @@ void compile_alias(char*label, char*name, int msb, int lsb, bool signed_flag,
       vpip_attach_to_current_scope(obj);
 
       free(label);
-      free(name);
+      delete[] name;
       free(argv[0].text);
       free(argv);
 }
@@ -335,7 +335,7 @@ void compile_alias_real(char*label, char*name, int msb, int lsb,
       vpip_attach_to_current_scope(obj);
 
       free(label);
-      free(name);
+      delete[] name;
       free(argv[0].text);
       free(argv);
 }

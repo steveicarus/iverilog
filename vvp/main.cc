@@ -146,7 +146,7 @@ void verify_version(char*ivl_ver, char*commit)
 	    if (commit) vpi_mcd_printf(1, " %s", commit);
 	    vpi_mcd_printf(1, "\n");
       }
-      free(commit);
+      delete[] commit;
 
       char*vvp_ver = strdup(VERSION);
       char *vp, *ip;
@@ -186,7 +186,7 @@ void verify_version(char*ivl_ver, char*commit)
 	                      ip, vp);
       }
 
-      free(ivl_ver);
+      delete[] ivl_ver;
       free(vvp_ver);
 }
 
@@ -416,6 +416,12 @@ int main(int argc, char*argv[])
 			   count_assign_aword_pool());
 	    vpi_mcd_printf(1, "    %8lu other events (pool=%lu)\n",
 			   count_gen_events, count_gen_pool());
+      }
+
+	/* Clean up the memory. */
+      for (vector<const char*>::iterator cur = file_names.begin();
+           cur != file_names.end() ; cur++) {
+	    delete[] *cur;
       }
 
       return vvp_return_value;

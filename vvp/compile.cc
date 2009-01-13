@@ -704,7 +704,7 @@ void compile_init(void)
 void compile_load_vpi_module(char*name)
 {
       vpip_load_module(name);
-      free(name);
+      delete[] name;
 }
 
 void compile_vpi_time_precision(long pre)
@@ -1710,7 +1710,7 @@ void compile_vpi_call(char*label, char*name,
 	    compile_errors += 1;
 
 	/* Done with the lexor-allocated name string. */
-      free(name);
+      delete[] name;
 }
 
 void compile_vpi_func_call(char*label, char*name,
@@ -1733,7 +1733,7 @@ void compile_vpi_func_call(char*label, char*name,
 	    compile_errors += 1;
 
 	/* Done with the lexor-allocated name string. */
-      free(name);
+      delete[] name;
 }
 
 /*

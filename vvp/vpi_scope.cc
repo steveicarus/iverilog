@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -326,7 +326,7 @@ static void attach_to_scope_(struct __vpiScope*scope, vpiHandle obj)
  * symbol table and the name is used to construct the actual object.
  */
 void
-compile_scope_decl(char*label, char*type, char*name, const char*tname,
+compile_scope_decl(char*label, char*type, char*name, char*tname,
                    char*parent, long file_idx, long lineno,
                    long def_file_idx, long def_lineno)
 {
@@ -381,7 +381,8 @@ compile_scope_decl(char*label, char*type, char*name, const char*tname,
 
       free(label);
       free(type);
-      free(name);
+      delete[] name;
+      delete[] tname;
 
       if (parent) {
 	    static vpiHandle obj;

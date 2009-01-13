@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -645,6 +645,7 @@ static PLI_INT32 sys_urandom_range_calltf(PLI_BYTE8 *name)
       /* Calculate and return the result. */
       val.value.integer = urandom(0, i_maxval, i_minval);
       vpi_put_value(callh, &val, 0, vpiNoDelay);
+      vpi_free_object(argv);
       return 0;
 }
 
@@ -978,4 +979,3 @@ void sys_random_register()
       tf_data.user_data = "$dist_erlang";
       vpi_register_systf(&tf_data);
 }
-

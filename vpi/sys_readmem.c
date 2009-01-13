@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -412,6 +412,7 @@ static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
       start_item = vpi_scan(argv);
       if (start_item!=0){
 	  if (check_integer_constant(name, start_item) == 0){
+	      free(path);
 	      vpi_free_object(argv);
 	      return 0;
 	  }
@@ -420,6 +421,7 @@ static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
 	  stop_item = vpi_scan(argv);
 	  if (stop_item!=0){
 	      if (check_integer_constant(name, stop_item) == 0){
+		  free(path);
 		  vpi_free_object(argv);
 		  return 0;
 	      }
@@ -427,6 +429,7 @@ static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
 	      /* Check that there is no 5th parameter */
 	      if (vpi_scan(argv) != 0){
 		  vpi_printf("ERROR: %s accepts maximum 4 parameters!\n", name );
+		  free(path);
 		  vpi_free_object(argv);
 		  return 0;
 	      }
@@ -519,6 +522,7 @@ static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
 
       item = vpi_scan(words);
       wwid = vpi_get(vpiSize, item);
+      vpi_free_object(words);
 
       if (strcmp(name,"$writememb")==0){
 	  value.format = vpiBinStrVal;
@@ -541,6 +545,7 @@ static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
       }
 
       fclose(file);
+      free(path);
       return 0;
 }
 
@@ -580,4 +585,3 @@ void sys_readmem_register()
       tf_data.user_data = "$writememb";
       vpi_register_systf(&tf_data);
 }
-

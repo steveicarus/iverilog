@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -938,7 +938,7 @@ void compile_var_array(char*label, char*name, int last, int first,
       count_var_array_words += arr->array_count;
 
       free(label);
-      free(name);
+      delete[] name;
 }
 
 void compile_real_array(char*label, char*name, int last, int first,
@@ -962,7 +962,7 @@ void compile_real_array(char*label, char*name, int last, int first,
       count_real_array_words += arr->array_count;
 
       free(label);
-      free(name);
+      delete[] name;
 }
 
 void compile_net_array(char*label, char*name, int last, int first)
@@ -976,7 +976,7 @@ void compile_net_array(char*label, char*name, int last, int first)
       count_net_array_words += arr->array_count;
 
       free(label);
-      free(name);
+      delete[] name;
 }
 
 class vvp_fun_arrayport  : public vvp_net_fun_t {

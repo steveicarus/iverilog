@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -428,6 +428,7 @@ static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
 	    vpi_printf("VCD warning: %s called after $dumpvars started,\n"
 	               "             using existing file (%s).\n",
 	               name, dump_path);
+	    vpi_free_object(argv);
 	    return 0;
       }
 
@@ -698,10 +699,16 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 
       if (dump_file == 0) {
 	    open_dumpfile(callh);
-	    if (dump_file == 0) return 0;
+	    if (dump_file == 0) {
+		  vpi_free_object(argv);
+		  return 0;
+	    }
       }
 
-      if (install_dumpvars_callback()) return 0;
+      if (install_dumpvars_callback()) {
+	    vpi_free_object(argv);
+	    return 0;
+      }
 
         /* Get the depth if it exists. */
       if (argv) {
