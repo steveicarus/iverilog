@@ -589,13 +589,12 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
       if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
 	    long shift = rpc->value().as_long();
 
-	      // Detect the special cases that the shifted
-	      // unsigned expression is completely shifted away to
-	      // zero.
+	      // Special case: The shift is the size of the entire
+	      // left operand, and the shift is unsigned. Elaborate as
+	      // a constant-0.
 	    if ((op_=='r' || (lp->has_sign()==false))
 		&& shift >= (long)lp->expr_width()) {
-		    // Special case that the value is unsigned
-		    // shifted completely away.
+
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: "
 			     << "Value right-shifted " << shift
@@ -608,8 +607,11 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 
 	    }
 
+	      // Special case: the shift is the size of the entire
+	      // left operand, and the shift is signed. Elaborate as a
+	      // replication of the top bit of the left expression.
 	    if (shift >= (long)lp->expr_width()) {
-		    // Signed right shift.
+
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: "
 			     << "Value signed-right-shifted " << shift
@@ -625,31 +627,12 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 		  tmp->cast_signed(true);
 		  tmp = pad_to_width(tmp, use_wid, *this);
 		  return tmp;
+	    }
 
-	    } else if (shift >= 0) {
-		    // Signed right shift.
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug: "
-			     << "Value signed-right-shifted " << shift
-			     << " beyond width of " << lp->expr_width()
-			     << "." << endl;
-
-		  tmp = new NetEConst(verinum(shift));
-		  tmp->set_line(*this);
-		  long tmp_wid = lp->expr_width() - shift;
-		  if (tmp_wid > use_wid)
-			tmp_wid = use_wid;
-
-		  ivl_assert(*this, tmp_wid > 0);
-		  ivl_assert(*this, use_wid > 0);
-
-		  tmp = new NetESelect(lp, tmp, tmp_wid);
-		  tmp->set_line(*this);
-		  tmp->cast_signed(lp->has_sign() && op_=='R');
-		  tmp = pad_to_width(tmp, use_wid, *this);
-		  return tmp;
-
-	    } else if ((0-shift) >= use_wid) {
+	      // Special case: shift is negative (so do a left shift)
+	      // and is greater then the output width. Replace the
+	      // expression with a constant-0.
+	    if (shift < 0 && (0-shift) >= use_wid) {
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: "
 			     << "Value signed-right-shifted " << shift
@@ -660,6 +643,40 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 		  tmp->set_line(*this);
 		  return tmp;
 	    }
+
+	    ivl_assert(*this, shift >= 0);
+
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "Value signed-right-shifted " << shift
+		       << " beyond width of " << lp->expr_width()
+		       << ". shift=" << shift
+		       << ", expr_wid=" << expr_wid
+		       << ", expr=" << *lp << endl;
+
+	      // If this is lossless, then pad the left expression
+	      // enough to cover the right shift.
+	    if (expr_wid == -2 && use_wid+shift > lp->expr_width()) {
+		  lp = pad_to_width(lp, use_wid + shift, *this);
+	    }
+
+	    tmp = new NetEConst(verinum(shift));
+	    tmp->set_line(*this);
+	    long tmp_wid = lp->expr_width() - shift;
+	    if (tmp_wid > use_wid)
+		  tmp_wid = use_wid;
+
+	    ivl_assert(*this, tmp_wid > 0);
+	    ivl_assert(*this, use_wid > 0);
+
+	      // Implement the right-shift by part-selecting the low
+	      // bits out. Pad the result of the part select back out
+	      // to the desired size.
+	    tmp = new NetESelect(lp, tmp, tmp_wid);
+	    tmp->set_line(*this);
+	    tmp->cast_signed(lp->has_sign() && op_=='R');
+	    tmp = pad_to_width(tmp, use_wid, *this);
+	    return tmp;
       }
 
 	// Falback, handle the general case.
