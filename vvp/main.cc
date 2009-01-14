@@ -342,8 +342,9 @@ int main(int argc, char*argv[])
       for (unsigned idx = 0 ;  idx < module_cnt ;  idx += 1)
 	    vpip_load_module(module_tab[idx]);
 
-      if (int rc = compile_design(design_path))
-	    return rc;
+      int ret_cd = compile_design(design_path);
+      destroy_lexor();
+      if (ret_cd) return ret_cd;
 
       if (!have_ivl_version) {
 	    if (verbose_flag) vpi_mcd_printf(1, "... ");

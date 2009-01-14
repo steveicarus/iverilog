@@ -1,7 +1,7 @@
 #ifndef __parse_misc_H
 #define __parse_misc_H
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -38,6 +38,8 @@ extern void verify_version(char *ivl_ver, char* commit);
  */
 extern int yylex(void);
 extern void yyerror(const char*msg);
+
+extern void destroy_lexor();
 
 /*
  * This is the path of the current source file.
