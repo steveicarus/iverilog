@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -220,4 +220,3 @@ void nodangle(Design*des)
       } while (fun.scontinue || fun.econtinue);
 
 }
-
