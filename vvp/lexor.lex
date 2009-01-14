@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -27,6 +27,11 @@
 # include  "parse.h"
 # include  <string.h>
 # include  <assert.h>
+
+static char* strdupnew(char const *str)
+{
+      return str ? strcpy(new char [strlen(str)+1], str) : 0;
+}
 %}
 
 %%
@@ -48,7 +53,7 @@
      contents of the string without the enclosing quotes. */
 \"([^\"\\]|\\.)*\" {
       yytext[strlen(yytext)-1] = 0;
-      yylval.text = strdup(yytext+1);
+      yylval.text = strdupnew(yytext+1);
       assert(yylval.text);
       return T_STRING; }
 

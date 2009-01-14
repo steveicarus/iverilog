@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -80,6 +80,7 @@ void compile_concat(char*label, unsigned w0, unsigned w1,
       free(label);
 
       inputs_connect(net, argc, argv);
+      free(argv);
 }
 
 vvp_fun_repeat::vvp_fun_repeat(unsigned width, unsigned repeat)
@@ -121,23 +122,3 @@ void compile_repeat(char*label, long width, long repeat, struct symb_s arg)
 
       input_connect(net, 0, arg.text);
 }
-
-
-/*
- * $Log: concat.cc,v $
- * Revision 1.5  2005/06/22 00:04:48  steve
- *  Reduce vvp_vector4 copies by using const references.
- *
- * Revision 1.4  2005/06/17 03:46:52  steve
- *  Make functors know their own width.
- *
- * Revision 1.3  2005/04/09 05:30:38  steve
- *  Default behavior for recv_vec8 methods.
- *
- * Revision 1.2  2005/02/07 22:42:42  steve
- *  Add .repeat functor and BIFIF functors.
- *
- * Revision 1.1  2005/01/22 00:01:09  steve
- *  Add missing concat.cc to cvs
- *
- */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -145,7 +145,7 @@ void compile_sfunc(char*label, char*name,  char*format_string,
 {
       vpiHandle*vpi_argv = new vpiHandle[argc];
       int width_code = make_vpi_argv(argc, vpi_argv, format_string);
-      free(format_string);
+      delete[] format_string;
 
       vvp_net_t*ptr = new vvp_net_t;
 
@@ -167,4 +167,5 @@ void compile_sfunc(char*label, char*name,  char*format_string,
            that event. */
       if (trigger_label)
             input_connect(ptr, 0, trigger_label);
+      delete[] name;
 }

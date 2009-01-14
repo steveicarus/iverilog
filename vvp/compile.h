@@ -1,7 +1,7 @@
 #ifndef __compile_H
 #define __compile_H
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -412,7 +412,7 @@ extern void compile_codelabel(char*label);
  * The parser uses these functions to compile .scope statements.
  * The implementations of these live in the vpi_scope.cc file.
  */
-extern void compile_scope_decl(char*typ, char*lab, char*nam,const char*tnam,
+extern void compile_scope_decl(char*typ, char*lab, char*nam, char*tnam,
                                char*par, long file_idx, long lineno,
                                long def_file_idx, long def_lineno);
 extern void compile_scope_recall(char*sym);
@@ -471,6 +471,5 @@ extern void compile_island_tranif(int sense, char*island,
 				  char*ba, char*bb, char*src);
 extern void compile_island_tranvp(char*island, char*ba, char*bb,
 				  unsigned width, unsigned part, unsigned off);
-
 
 #endif

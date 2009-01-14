@@ -2213,6 +2213,7 @@ static PLI_INT32 sys_fdisplay_calltf(PLI_BYTE8*name)
 	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
 	               fd_mcd, name);
             vpi_control(vpiFinish, 1);
+            vpi_free_object(argv);
             return 0;
       }
 
@@ -2309,6 +2310,7 @@ static PLI_INT32 sys_swrite_calltf(PLI_BYTE8 *name)
                "(see %%u/%%z).\n", info.filename, info.lineno, name);
   }
 
+  free(val.value.str);
   free(info.filename);
   free(info.items);
   return 0;
@@ -2406,6 +2408,7 @@ static PLI_INT32 sys_sformat_calltf(PLI_BYTE8 *name)
                "(see %%u/%%z).\n", info.filename, info.lineno, name);
   }
 
+  free(val.value.str);
   free(info.filename);
   free(info.items);
   return 0;
@@ -2415,6 +2418,7 @@ static PLI_INT32 sys_end_of_compile(p_cb_data cb_data)
 {
 	/* The default timeformat prints times in unit of simulation
 	   precision. */
+      free(timeformat_info.suff);
       timeformat_info.suff  = strdup("");
       timeformat_info.units = vpi_get(vpiTimePrecision, 0);
       timeformat_info.prec  = 0;
@@ -2481,6 +2485,7 @@ static PLI_INT32 sys_timeformat_calltf(PLI_BYTE8*xx)
 
             value.format = vpiStringVal;
             vpi_get_value(suff, &value);
+            free(timeformat_info.suff);
             timeformat_info.suff = strdup(value.value.str);
 
             value.format = vpiIntVal;
@@ -2553,6 +2558,7 @@ static PLI_INT32 sys_no_aa_compiletf(PLI_BYTE8 *name)
                   vpi_printf("%s arguments may not be automatically "
                              "allocated variables.\n", name);
                   vpi_control(vpiFinish, 1);
+                  vpi_free_object(argv);
                   return 0;
 	    }
       }
