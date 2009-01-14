@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -138,16 +138,20 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
 	      break;
 
           case vpiVectorVal:
-	      vp->value.vector = (p_vpi_vecval) calloc((size+3)/4,
-	                                               sizeof(s_vpi_vecval));
+              vp->value.vector = (p_vpi_vecval)
+                                 need_result_buf((size+3)/4*
+                                                  sizeof(s_vpi_vecval),
+                                                 RBUF_VAL);
               uint_value = 0;
               vecp = vp->value.vector;
+              vecp->aval = vecp->bval = 0;
 	      for(int i=0; i<size;i ++){
 		  vecp->aval |= rfp->value[i] << uint_value*8;
 		  uint_value += 1;
 		  if (uint_value > 3) {
 		      uint_value = 0;
 		      vecp += 1;
+		      vecp->aval = vecp->bval = 0;
 		  }
 	      }
 	      break;
