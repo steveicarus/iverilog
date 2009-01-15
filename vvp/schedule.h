@@ -100,7 +100,8 @@ extern void schedule_init_vector(vvp_net_ptr_t ptr, double val);
 typedef struct vvp_gen_event_s *vvp_gen_event_t;
 
 extern void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay,
-			     bool sync_flag, bool ro_flag =true);
+			     bool sync_flag, bool ro_flag =true,
+			     bool delete_obj_when_done =false);
 
 /* Use this is schedule thread deletion (after rosync). */
 extern void schedule_del_thr(vthread_t thr);

@@ -259,7 +259,7 @@ unsigned long count_assign_aword_pool(void) { return array_w_heap.pool; }
 
 struct generic_event_s : public event_s {
       vvp_gen_event_t obj;
-      unsigned char val;
+      bool delete_obj_when_done;
       void run_run(void);
 
       static void* operator new(size_t);
@@ -269,8 +269,11 @@ struct generic_event_s : public event_s {
 void generic_event_s::run_run(void)
 {
       count_gen_events += 1;
-      if (obj)
+      if (obj) {
 	    obj->run_run();
+	    if (delete_obj_when_done)
+		  delete obj;
+      }
 }
 
 static const size_t GENERIC_CHUNK_COUNT = 131072 / sizeof(struct generic_event_s);
@@ -660,13 +663,12 @@ void schedule_del_thr(vthread_t thr)
 }
 
 void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay,
-		      bool sync_flag, bool ro_flag)
+		      bool sync_flag, bool ro_flag, bool delete_when_done)
 {
       struct generic_event_s*cur = new generic_event_s;
 
       cur->obj = obj;
-      cur->val = 0;
-
+      cur->delete_obj_when_done = delete_when_done;
       schedule_event_(cur, delay,
 		      sync_flag? (ro_flag?SEQ_ROSYNC:SEQ_RWSYNC) : SEQ_ACTIVE);
 }

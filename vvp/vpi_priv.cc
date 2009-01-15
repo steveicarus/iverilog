@@ -753,7 +753,7 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 		  break;
 	    }
 	    put->flags = flags;
-	    schedule_generic(put, dly, false);
+	    schedule_generic(put, dly, false, true, true);
 	    return 0;
       }
 
