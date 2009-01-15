@@ -640,10 +640,13 @@ static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 	  case vpiAutomatic:
 	    return (int) parent->scope->is_automatic;
 
-	  // For now &A<> is only a constant select. This will need
-	  // to be changed when it supports variable selection.
+	  // If address_handle is not zero we definitely have a
+	  // variable. If the wid is not zero we have a calculation
+	  // from thread space which probably includes a variable.
+	  // This assumes that the compiler is squashing all the
+	  // constant expressions down to a single value.
 	  case vpiConstantSelect:
-	    return 1;
+	    return obj->address_handle == 0 && obj->wid == 0;
 
 	  default:
 	    return 0;

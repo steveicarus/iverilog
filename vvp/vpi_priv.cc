@@ -228,6 +228,10 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiRealVar";
 	  case vpiReg:
 	    return "vpiReg";
+	  case vpiSysFuncCall:
+	    return "vpiSysFuncCall";
+	  case vpiSysTaskCall:
+	    return "vpiSysTaskCall";
 	  case vpiTask:
 	    return "vpiTask";
 	  case vpiTimeVar:
