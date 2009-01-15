@@ -362,7 +362,8 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
       assert(scope->base.vpi_type);
 
       scope->name = vpip_name_string(name);
-      scope->tname = vpip_name_string(tname);
+      if (tname) scope->tname = vpip_name_string(tname);
+      else scope->tname = vpip_name_string("");
       scope->file_idx = (unsigned) file_idx;
       scope->lineno  = (unsigned) lineno;
       scope->def_file_idx = (unsigned) def_file_idx;
