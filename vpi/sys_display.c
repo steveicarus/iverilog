@@ -59,7 +59,7 @@ struct strobe_cb_info {
       vpiHandle scope;
       vpiHandle*items;
       unsigned nitems;
-      unsigned mcd;
+      unsigned fd_mcd;
 };
 
 /*
@@ -919,134 +919,6 @@ static int get_default_format(char *name)
     return default_format;
 }
 
-#ifdef USE_OLD_DISPLAY
-static PLI_INT32 sys_display_calltf(PLI_BYTE8*name)
-{
-      struct strobe_cb_info*info;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-
-      info = vpi_get_userdata(sys);
-      if (info == 0) {
-	    vpiHandle scope = vpi_handle(vpiScope, sys);
-	    vpiHandle argv = vpi_iterate(vpiArgument, sys);
-
-	    assert(scope);
-	    info = malloc(sizeof (struct strobe_cb_info));
-	    info->default_format = get_default_format(name);
-	    info->scope = scope;
-	    array_from_iterator(info, argv);
-
-	    vpi_put_userdata(sys, info);
-      }
-
-      do_display(1, info);
-
-      if (strncmp(name,"$display",8) == 0)
-	    my_mcd_printf(1, "\n");
-
-      return 0;
-}
-#endif
-
-/*
- * The strobe implementation takes the parameter handles that are
- * passed to the calltf and puts them in to an array for safe
- * keeping. That array (and other bookkeeping) is passed, via the
- * struct_cb_info object, to the REadOnlySych function strobe_cb,
- * where it is used to perform the actual formatting and printing.
- */
-
-static PLI_INT32 strobe_cb(p_cb_data cb)
-{
-      struct strobe_cb_info*info = (struct strobe_cb_info*)cb->user_data;
-
-      do_display(info->mcd, info);
-      my_mcd_printf(info->mcd, "\n");
-
-      free(info->name);
-      free(info->items);
-      free(info);
-
-      return 0;
-}
-
-static PLI_INT32 sys_strobe_calltf(PLI_BYTE8*name)
-{
-      struct t_cb_data cb;
-      struct t_vpi_time time;
-
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle scope = vpi_handle(vpiScope, sys);
-
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-
-      struct strobe_cb_info*info = calloc(1, sizeof(struct strobe_cb_info));
-      if(name[1] == 'f') {
-	      vpiHandle item = vpi_scan(argv);
-	      int type;
-	      s_vpi_value value;
-
-	      if (item == 0) {
-		      vpi_printf("%s: mcd parameter missing.\n", name);
-		      return 0;
-	      }
-
-	      type = vpi_get(vpiType, item);
-	      switch (type) {
-	      case vpiReg:
-	      case vpiRealVar:
-	      case vpiIntegerVar:
-	      case vpiNet:
-		      break;
-
-	      case vpiConstant:
-		      switch (vpi_get(vpiConstType, item)) {
-		      case vpiDecConst:
-		      case vpiBinaryConst:
-		      case vpiOctConst:
-		      case vpiHexConst:
-			      break;
-		      default:
-			      vpi_printf("ERROR: %s mcd parameter must be integral", name);
-			      vpi_printf(", got vpiType=vpiConstant, vpiConstType=%d\n",
-					 vpi_get(vpiConstType, item));
-			      vpi_free_object(argv);
-			      return 0;
-		      }
-		      break;
-
-	      default:
-		      vpi_printf("ERROR: %s mcd parameter must be integral", name);
-		      vpi_printf(", got vpiType=%d\n", type);
-		      vpi_free_object(argv);
-		      return 0;
-	      }
-	      value.format = vpiIntVal;
-	      vpi_get_value(item, &value);
-	      info->mcd = value.value.integer;
-      } else {
-	      info->mcd = 1;
-      }
-
-      array_from_iterator(info, argv);
-      info->name = strdup(name);
-      info->default_format = get_default_format(name);
-      info->scope= scope;
-
-      time.type = vpiSimTime;
-      time.low = 0;
-      time.high = 0;
-
-      cb.reason = cbReadOnlySynch;
-      cb.cb_rtn = strobe_cb;
-      cb.time = &time;
-      cb.obj = 0;
-      cb.value = 0;
-      cb.user_data = (char*)info;
-      vpi_register_cb(&cb);
-      return 0;
-}
-
 /*
  * The $monitor system task works by managing these static variables,
  * and the cbValueChange callbacks associated with registers and
@@ -1186,80 +1058,6 @@ static PLI_INT32 sys_monitoroff_calltf(PLI_BYTE8*name)
       monitor_enabled = 0;
       return 0;
 }
-
-/* Implement $fdisplay and $fwrite.
- * Perhaps this could be merged into sys_display_calltf.
- */
-#ifdef USE_OLD_DISPLAY
-static PLI_INT32 sys_fdisplay_compiletf(PLI_BYTE8*name)
-{
-      return 0;
-}
-
-static PLI_INT32 sys_fdisplay_calltf(PLI_BYTE8*name)
-{
-      struct strobe_cb_info info;
-      unsigned int mcd;
-      int type;
-      s_vpi_value value;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle scope = vpi_handle(vpiScope, sys);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item = vpi_scan(argv);
-
-      if (item == 0) {
-	    vpi_printf("%s: mcd parameter missing.\n", name);
-	    return 0;
-      }
-
-      type = vpi_get(vpiType, item);
-      switch (type) {
-	    case vpiReg:
-	    case vpiRealVar:
-	    case vpiIntegerVar:
-	    case vpiNet:
-	      break;
-
-	  case vpiConstant:
-	    switch (vpi_get(vpiConstType, item)) {
-		case vpiDecConst:
-		case vpiBinaryConst:
-		case vpiOctConst:
-		case vpiHexConst:
-		  break;
-		default:
-		  vpi_printf("ERROR: %s mcd parameter must be integral", name);
-		  vpi_printf(", got vpiType=vpiConstant, vpiConstType=%d\n",
-			     vpi_get(vpiConstType, item));
-		  vpi_free_object(argv);
-		  return 0;
-	    }
-	    break;
-
-	    default:
-	      vpi_printf("ERROR: %s mcd parameter must be integral", name);
-	      vpi_printf(", got vpiType=%d\n", type);
-	      vpi_free_object(argv);
-	      return 0;
-      }
-
-      value.format = vpiIntVal;
-      vpi_get_value(item, &value);
-      mcd = value.value.integer;
-
-      assert(scope);
-      info.default_format = get_default_format(name);
-      info.scope = scope;
-      array_from_iterator(&info, argv);
-      do_display(mcd, &info);
-      free(info.items);
-
-      if (strncmp(name,"$fdisplay",9) == 0)
-	    my_mcd_printf(mcd, "\n");
-
-      return 0;
-}
-#endif
 
 /* Build the format using the variables that control how the item will
  * be printed. This is used in error messages and directly by the e/f/g
@@ -2117,51 +1915,11 @@ static char *get_display(unsigned int *rtnsz, struct strobe_cb_info *info)
   return rtn;
 }
 
-#ifndef USE_OLD_DISPLAY
-/* This implements both the $display and the $write based tasks. */
-static PLI_INT32 sys_display_calltf(PLI_BYTE8 *name)
-{
-      vpiHandle callh, argv, scope;
-      struct strobe_cb_info info;
-      char* result;
-      unsigned int size, location=0;
-
-      callh = vpi_handle(vpiSysTfCall, 0);
-      argv = vpi_iterate(vpiArgument, callh);
-
-      scope = vpi_handle(vpiScope, callh);
-      assert(scope);
-	/* We could use vpi_get_str(vpiName, callh) to get the task name,
-	 * but name is already defined. */
-      info.name = name;
-      info.filename = strdup(vpi_get_str(vpiFile, callh));
-      info.lineno = (int)vpi_get(vpiLineNo, callh);
-      info.default_format = get_default_format(name);
-      info.scope = scope;
-      array_from_iterator(&info, argv);
-
-	/* Because %u and %z may put embedded NULL characters into the
-	 * returned string strlen() may not match the real size! */
-      result = get_display(&size, &info);
-      while (location < size) {
-	    if (result[location] == '\0') {
-		  my_mcd_printf(1, "\0");
-		  location += 1;
-	    } else {
-		  my_mcd_printf(1, "%s", &result[location]);
-		  location += strlen(&result[location]);
-	    }
-      }
-      if (strncmp(name,"$display",8) == 0) my_mcd_printf(1, "\n");
-
-      free(info.filename);
-      free(info.items);
-      free(result);
-      return 0;
-}
-
-/* This checks both the $fdisplay and the $fwrite based tasks. */
-static PLI_INT32 sys_fdisplay_compiletf(PLI_BYTE8*name)
+/*
+ * This routine checks the file descriptor/MCD for the $fdisplay and
+ * $fwrite based tasks.
+ */
+static PLI_INT32 sys_file_compiletf(PLI_BYTE8*name)
 {
       vpiHandle callh, argv;
 
@@ -2188,33 +1946,37 @@ static PLI_INT32 sys_fdisplay_compiletf(PLI_BYTE8*name)
       return 0;
 }
 
-/* This implements both the $fdisplay and the $fwrite based tasks. */
-static PLI_INT32 sys_fdisplay_calltf(PLI_BYTE8*name)
+/* This implements the $display/$fdisplay and the $write/$fwrite based tasks. */
+static PLI_INT32 sys_display_calltf(PLI_BYTE8 *name)
 {
-      vpiHandle callh, argv, scope, arg;
+      vpiHandle callh, argv, scope;
       struct strobe_cb_info info;
-      s_vpi_value val;
-      PLI_UINT32 fd_mcd;
       char* result;
       unsigned int size, location=0;
+      PLI_UINT32 fd_mcd;
 
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
 
 	/* Get the file/MC descriptor and verify it is valid. */
-      arg = vpi_scan(argv);
-      val.format = vpiIntVal;
-      vpi_get_value(arg, &val);
-      fd_mcd = val.value.integer;
-      if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF)) {
-	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
-	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
-	               fd_mcd, name);
-            vpi_control(vpiFinish, 1);
-            vpi_free_object(argv);
-            return 0;
+      if(name[1] == 'f') {
+	      vpiHandle arg = vpi_scan(argv);
+	      s_vpi_value val;
+	      val.format = vpiIntVal;
+	      vpi_get_value(arg, &val);
+	      fd_mcd = val.value.integer;
+	      if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
+	          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF)) {
+		    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		               (int)vpi_get(vpiLineNo, callh));
+		    vpi_printf("invalid file descriptor/MCD (0x%x) given "
+		               "to %s.\n", fd_mcd, name);
+		    vpi_control(vpiFinish, 1);
+		    vpi_free_object(argv);
+		    return 0;
+	      }
+      } else {
+	      fd_mcd = 1;
       }
 
       scope = vpi_handle(vpiScope, callh);
@@ -2240,14 +2002,149 @@ static PLI_INT32 sys_fdisplay_calltf(PLI_BYTE8*name)
 		  location += strlen(&result[location]);
 	    }
       }
-      if (strncmp(name,"$fdisplay",9) == 0) my_mcd_printf(fd_mcd, "\n");
+      if ((strncmp(name,"$display",8) == 0) ||
+          (strncmp(name,"$fdisplay",9) == 0)) my_mcd_printf(fd_mcd, "\n");
 
       free(info.filename);
       free(info.items);
       free(result);
       return 0;
 }
-#endif
+
+/*
+ * The strobe implementation takes the parameter handles that are
+ * passed to the calltf and puts them in to an array for safe
+ * keeping. That array (and other bookkeeping) is passed, via the
+ * struct_cb_info object, to the REadOnlySych function strobe_cb,
+ * where it is used to perform the actual formatting and printing.
+ */
+static PLI_INT32 strobe_cb(p_cb_data cb)
+{
+      char* result;
+      unsigned int size, location=0;
+      struct strobe_cb_info*info = (struct strobe_cb_info*)cb->user_data;
+
+	/* Because %u and %z may put embedded NULL characters into the
+	 * returned string strlen() may not match the real size! */
+      result = get_display(&size, info);
+      while (location < size) {
+	    if (result[location] == '\0') {
+		  my_mcd_printf(info->fd_mcd, "%c", '\0');
+		  location += 1;
+	    } else {
+		  my_mcd_printf(info->fd_mcd, "%s", &result[location]);
+		  location += strlen(&result[location]);
+	    }
+      }
+      my_mcd_printf(info->fd_mcd, "\n");
+
+      free(info->filename);
+      free(info->items);
+      free(info);
+      free(result);
+      return 0;
+}
+
+/* Used by $fstrobe. */
+static PLI_INT32 sys_file_no_aa_compiletf(PLI_BYTE8 *name)
+{
+      vpiHandle callh, argv, arg;
+
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
+
+	/* Check that there is a fd/mcd and that it is numeric. */
+      if (argv == 0) {
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+                       (int)vpi_get(vpiLineNo, callh));
+            vpi_printf("%s requires at least a file descriptor/MCD.\n", name);
+            vpi_control(vpiFinish, 1);
+            return 0;
+      }
+
+      arg = vpi_scan(argv);
+      if (! is_numeric_obj(arg)) {
+            vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+                       (int)vpi_get(vpiLineNo, callh));
+            vpi_printf("%s's file descriptor/MCD must be numeric.\n", name);
+            vpi_control(vpiFinish, 1);
+      }
+
+	/* Verify that $fstrobe is not passed any automatic variables. */
+      for ( ;  arg ;  arg = vpi_scan(argv)) {
+            if (vpi_get(vpiAutomatic, arg)) {
+                  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+                             (int)vpi_get(vpiLineNo, callh));
+                  vpi_printf("%s arguments may not be automatically "
+                             "allocated variables.\n", name);
+                  vpi_control(vpiFinish, 1);
+                  vpi_free_object(argv);
+                  return 0;
+	    }
+      }
+      return 0;
+}
+
+/* This implements both the $strobe and $fstrobe based tasks. */
+static PLI_INT32 sys_strobe_calltf(PLI_BYTE8*name)
+{
+      vpiHandle callh, argv, scope;
+      struct t_cb_data cb;
+      struct t_vpi_time time;
+      struct strobe_cb_info*info;
+      PLI_UINT32 fd_mcd;
+
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
+
+	/* Get the file/MC descriptor and verify it is valid. */
+      if(name[1] == 'f') {
+	      vpiHandle arg = vpi_scan(argv);
+	      s_vpi_value val;
+	      val.format = vpiIntVal;
+	      vpi_get_value(arg, &val);
+	      fd_mcd = val.value.integer;
+	      if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
+	          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF)) {
+		    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		               (int)vpi_get(vpiLineNo, callh));
+		    vpi_printf("invalid file descriptor/MCD (0x%x) given "
+		               "to %s.\n", fd_mcd, name);
+		    vpi_control(vpiFinish, 1);
+		    vpi_free_object(argv);
+		    return 0;
+	      }
+      } else {
+	      fd_mcd = 1;
+      }
+
+      scope = vpi_handle(vpiScope, callh);
+      assert(scope);
+
+      info = calloc(1, sizeof(struct strobe_cb_info));
+      info->fd_mcd = fd_mcd;
+	/* We could use vpi_get_str(vpiName, callh) to get the task name,
+	 * but name is already defined. */
+      info->name = name;
+      info->filename = strdup(vpi_get_str(vpiFile, callh));
+      info->lineno = (int)vpi_get(vpiLineNo, callh);
+      info->default_format = get_default_format(name);
+      info->scope= scope;
+      array_from_iterator(info, argv);
+
+      time.type = vpiSimTime;
+      time.low = 0;
+      time.high = 0;
+
+      cb.reason = cbReadOnlySynch;
+      cb.cb_rtn = strobe_cb;
+      cb.time = &time;
+      cb.obj = 0;
+      cb.value = 0;
+      cb.user_data = (char*)info;
+      vpi_register_cb(&cb);
+      return 0;
+}
 
 static PLI_INT32 sys_swrite_compiletf(PLI_BYTE8 *name)
 {
@@ -2543,6 +2440,7 @@ static PLI_INT32 sys_printtimescale_calltf(PLI_BYTE8*xx)
       return 0;
 }
 
+/* Used by $strobe and $monitor. */
 static PLI_INT32 sys_no_aa_compiletf(PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
@@ -2673,7 +2571,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fstrobe";
       tf_data.calltf    = sys_strobe_calltf;
-      tf_data.compiletf = sys_no_aa_compiletf;
+      tf_data.compiletf = sys_file_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fstrobe";
       vpi_register_systf(&tf_data);
@@ -2681,7 +2579,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fstrobeh";
       tf_data.calltf    = sys_strobe_calltf;
-      tf_data.compiletf = sys_no_aa_compiletf;
+      tf_data.compiletf = sys_file_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fstrobeh";
       vpi_register_systf(&tf_data);
@@ -2689,7 +2587,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fstrobeo";
       tf_data.calltf    = sys_strobe_calltf;
-      tf_data.compiletf = sys_no_aa_compiletf;
+      tf_data.compiletf = sys_file_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fstrobeo";
       vpi_register_systf(&tf_data);
@@ -2697,7 +2595,7 @@ void sys_display_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fstrobeb";
       tf_data.calltf    = sys_strobe_calltf;
-      tf_data.compiletf = sys_no_aa_compiletf;
+      tf_data.compiletf = sys_file_no_aa_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fstrobeb";
       vpi_register_systf(&tf_data);
@@ -2754,32 +2652,32 @@ void sys_display_register()
       /*============================== fdisplay */
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fdisplay";
-      tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = sys_fdisplay_compiletf;
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = sys_file_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fdisplay";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fdisplayh";
-      tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = sys_fdisplay_compiletf;
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = sys_file_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fdisplayh";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fdisplayo";
-      tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = sys_fdisplay_compiletf;
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = sys_file_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fdisplayo";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fdisplayb";
-      tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = sys_fdisplay_compiletf;
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = sys_file_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fdisplayb";
       vpi_register_systf(&tf_data);
@@ -2787,32 +2685,32 @@ void sys_display_register()
       /*============================== fwrite */
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fwrite";
-      tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = sys_fdisplay_compiletf;
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = sys_file_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fwrite";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fwriteh";
-      tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = sys_fdisplay_compiletf;
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = sys_file_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fwriteh";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fwriteo";
-      tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = sys_fdisplay_compiletf;
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = sys_file_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fwriteo";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fwriteb";
-      tf_data.calltf    = sys_fdisplay_calltf;
-      tf_data.compiletf = sys_fdisplay_compiletf;
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = sys_file_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fwriteb";
       vpi_register_systf(&tf_data);
