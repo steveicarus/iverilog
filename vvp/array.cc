@@ -387,6 +387,9 @@ static vpiHandle vpi_array_get_handle(int code, vpiHandle ref)
 
 	  case vpiScope:
 	    return &obj->scope->base;
+
+	  case vpiModule:
+	    return vpip_module(obj->scope);
       }
 
       return 0;
@@ -529,6 +532,9 @@ static vpiHandle vpi_array_var_word_get_handle(int code, vpiHandle ref)
 
 	  case vpiScope:
 	    return &parent->scope->base;
+
+	  case vpiModule:
+	    return vpip_module(parent->scope);
       }
 
       return 0;
@@ -720,6 +726,9 @@ static vpiHandle vpi_array_vthr_A_get_handle(int code, vpiHandle ref)
 
 	  case vpiScope:
 	    return &parent->scope->base;
+
+	  case vpiModule:
+	    return vpip_module(parent->scope);
       }
 
       return 0;

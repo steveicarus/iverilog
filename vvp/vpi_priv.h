@@ -595,4 +595,7 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 extern char *simple_set_rbuf_str(const char *s1);
 extern char *generic_get_str(int code, vpiHandle ref, const char *name, const char *index);
 
+/* A routine to find the enclosing module. */
+extern vpiHandle vpip_module(struct __vpiScope*scope);
+
 #endif

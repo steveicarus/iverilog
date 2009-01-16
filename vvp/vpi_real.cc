@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -103,6 +103,9 @@ static vpiHandle real_var_get_handle(int code, vpiHandle ref)
 
 	  case vpiScope:
 	    return &(vpip_scope(rfp)->base);
+
+	  case vpiModule:
+	    return vpip_module(vpip_scope(rfp));
       }
 
       return 0;

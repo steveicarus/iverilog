@@ -291,6 +291,9 @@ static vpiHandle string_param_handle(int code, vpiHandle obj)
 	  case vpiScope:
 	    return &rfp->scope->base;
 
+	  case vpiModule:
+	    return vpip_module(rfp->scope);
+
 	  default:
 	    return 0;
       }
@@ -491,6 +494,9 @@ static vpiHandle binary_param_handle(int code, vpiHandle obj)
       switch (code) {
 	  case vpiScope:
 	    return &rfp->scope->base;
+
+	  case vpiModule:
+	    return vpip_module(rfp->scope);
 
 	  default:
 	    return 0;
@@ -744,6 +750,9 @@ static vpiHandle real_param_handle(int code, vpiHandle obj)
       switch (code) {
           case vpiScope:
             return &rfp->scope->base;
+
+	  case vpiModule:
+	    return vpip_module(rfp->scope);
 
           default:
             return 0;

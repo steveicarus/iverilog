@@ -596,13 +596,7 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
 	    return &(vpip_scope(rfp)->base);
 
 	  case vpiModule:
-	      { struct __vpiScope*scope = vpip_scope(rfp);
-	        while (scope && scope->base.vpi_type->type_code != vpiModule)
-		      scope = scope->scope;
-
-		assert(scope);
-		return &scope->base;
-	      }
+	    return vpip_module(vpip_scope(rfp));
       }
 
       return 0;
@@ -977,7 +971,7 @@ static int PV_get(int code, vpiHandle ref)
 	    return rfp->sbase == 0 && rfp->twid == 0;
 
 	case vpiLeftRange:
-            rval += rfp->width;
+            rval += rfp->width - 1;
 	case vpiRightRange:
 	    rval += vpi_get(vpiRightRange, rfp->parent) + PV_get_base(rfp);
 	    return rval;
@@ -1129,10 +1123,11 @@ static vpiHandle PV_get_handle(int code, vpiHandle ref)
       struct __vpiPV*rfp = (struct __vpiPV*)ref;
 
       switch (code) {
-
 	  case vpiParent:
 	    return rfp->parent;
-	    break;
+
+	  case vpiModule:
+	    return vpi_handle(vpiModule, rfp->parent);
       }
 
       return 0;

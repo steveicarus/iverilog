@@ -66,6 +66,15 @@ struct __vpiScope* vpip_scope(__vpiRealVar*sig)
 	    return sig->within.scope;
 }
 
+vpiHandle vpip_module(struct __vpiScope*scope)
+{
+      while(scope && scope->base.vpi_type->type_code != vpiModule) {
+	    scope = scope->scope;
+      }
+      assert(scope);
+      return &scope->base;
+}
+
 const char *vpip_string(const char*str)
 {
       static vpip_string_chunk first_chunk = {0, {0}};
@@ -218,6 +227,12 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiMemoryWord";
 	  case vpiModule:
 	    return "vpiModule";
+	  case vpiNamedBegin:
+	    return "vpiNamedBegin";
+	  case vpiNamedEvent:
+	    return "vpiNamedEvent";
+	  case vpiNamedFork:
+	    return "vpiNamedFork";
 	  case vpiNet:
 	    return "vpiNet";
 	  case vpiParameter:

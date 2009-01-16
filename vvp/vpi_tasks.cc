@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -62,6 +62,7 @@ static vpiHandle systask_handle(int type, vpiHandle ref)
       switch (type) {
 	  case vpiScope:
 	    return &rfp->scope->base;
+
 	  default:
 	    return 0;
       };
@@ -75,8 +76,13 @@ static int systask_get(int type, vpiHandle ref)
 	     || (ref->vpi_type->type_code == vpiSysFuncCall));
 
       switch (type) {
+	    /* This is not the correct way to get this information, but
+	     * some of the code that implements the acc and tf routines
+	     * use this method so we will keep it in for now. */
 	  case vpiTimeUnit:
 	    return rfp->scope->time_units;
+	  case vpiTimePrecision:
+	    return rfp->scope->time_precision;
 
 	  case vpiLineNo:
 	    return rfp->lineno;
