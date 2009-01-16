@@ -1631,36 +1631,94 @@ static PLI_INT32 sys_end_of_compile(p_cb_data cb_data)
       return 0;
 }
 
-static PLI_INT32 sys_timeformat_compiletf(PLI_BYTE8*xx)
+static PLI_INT32 sys_timeformat_compiletf(PLI_BYTE8*name)
 {
       vpiHandle callh   = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv  = vpi_iterate(vpiArgument, callh);
-      vpiHandle tmp;
-      int lp;
 
       if (argv) {
-            for (lp=0; lp<4; lp++) {
-                  tmp = vpi_scan(argv);
-                  if (tmp) {
-                        if (vpi_get(vpiType, tmp) != vpiConstant) {
-                              vpi_printf("$timeformat's arguments must be");
-                              vpi_printf(" constant.\n");
-                              vpi_control(vpiFinish, 1);
-                        }
-                  } else {
-                        vpi_printf("$timeformat requires zero or four");
-                        vpi_printf(" arguments!\n");
-                        vpi_control(vpiFinish, 1);
-                        return 0;
-                  }
-            }
-            tmp = vpi_scan(argv);
-            if (tmp != 0) {
-                  vpi_printf("ERROR: $timeformat takes at most four"
-                             " arguments.\n");
-                  vpi_control(vpiFinish, 1);
-                  return 0;
-            }
+	    vpiHandle arg;
+
+	      /* Check that the unit argument is numeric. */
+	    if (! is_numeric_obj(vpi_scan(argv))) {
+		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s's units argument must be numeric.\n", name);
+		  vpi_control(vpiFinish, 1);
+	    }
+
+	      /* Check that the precision argument is given and is numeric. */
+	    arg = vpi_scan(argv);
+	    if (! arg) {
+		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+       		  vpi_printf("%s requires zero or four arguments.\n", name);
+		  vpi_control(vpiFinish, 1);
+		  return 0;
+	    }
+
+	    if (! is_numeric_obj(arg)) {
+		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s's precision argument must be numeric.\n",
+		             name);
+		  vpi_control(vpiFinish, 1);
+	    }
+
+	      /* Check that the suffix argument is given and is a string. */
+	    arg = vpi_scan(argv);
+	    if (! arg) {
+		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+       		  vpi_printf("%s requires zero or four arguments.\n", name);
+		  vpi_control(vpiFinish, 1);
+		  return 0;
+	    }
+
+	    if (! is_string_obj(arg)) {
+		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s's suffix argument must be a string.\n", name);
+		  vpi_control(vpiFinish, 1);
+	    }
+
+	      /* Check that the min. width argument is given and is numeric. */
+	    arg = vpi_scan(argv);
+	    if (! arg) {
+		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+       		  vpi_printf("%s requires zero or four arguments.\n", name);
+		  vpi_control(vpiFinish, 1);
+		  return 0;
+	    }
+
+	    if (! is_numeric_obj(arg)) {
+		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s's minimum width argument must be numeric.\n",
+		             name);
+		  vpi_control(vpiFinish, 1);
+	    }
+
+	      /* Make sure there are no extra arguments. */
+	    if (vpi_scan(argv) != 0) {
+		  char msg [64];
+		  unsigned argc;
+
+		  snprintf(msg, 64, "ERROR: %s:%d:",
+		           vpi_get_str(vpiFile, callh),
+		           (int)vpi_get(vpiLineNo, callh));
+
+		  argc = 1;
+		  while (vpi_scan(argv)) argc += 1;
+
+		  vpi_printf("%s %s takes a single numeric argument.\n", msg,
+		             name);
+		  vpi_printf("%*s Found %u extra argument%s.\n",
+		             (int) strlen(msg), " ", argc,
+		             argc == 1 ? "" : "s");
+		  vpi_control(vpiFinish, 1);
+	    }
       }
 
       return 0;
@@ -1729,19 +1787,84 @@ static char *pts_convert(int value)
       return string;
 }
 
+static PLI_INT32 sys_printtimescale_compiletf(PLI_BYTE8*name)
+{
+      vpiHandle callh   = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv  = vpi_iterate(vpiArgument, callh);
+
+      if (argv) {
+	    vpiHandle arg = vpi_scan(argv);
+	    switch (vpi_get(vpiType, arg)) {
+		case vpiFunction:
+		case vpiIntegerVar:
+		case vpiMemory:
+		case vpiMemoryWord:
+		case vpiModule:
+		case vpiNamedBegin:
+		case vpiNamedEvent:
+		case vpiNamedFork:
+		case vpiNet:
+//		case vpiNetBit: // Unused and unavailable in Icarus
+		case vpiParameter:
+		case vpiPartSelect:
+		case vpiRealVar:
+		case vpiReg:
+//		case vpiRegBit: // Unused and unavailable in Icarus
+		case vpiTask:
+		case vpiTimeVar: // Unused in Icarus
+		  break;
+
+		default:
+		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s's argument must have a module, given a %s.\n",
+		             name, vpi_get_str(vpiType, arg));
+		  vpi_control(vpiFinish, 1);
+	    }
+
+	      /* Make sure there are no extra arguments. */
+	    if (vpi_scan(argv) != 0) {
+		  char msg [64];
+		  unsigned argc;
+
+		  snprintf(msg, 64, "ERROR: %s:%d:",
+		           vpi_get_str(vpiFile, callh),
+		           (int)vpi_get(vpiLineNo, callh));
+
+		  argc = 1;
+		  while (vpi_scan(argv)) argc += 1;
+
+		  vpi_printf("%s %s takes a single argument with a module.\n",
+		             msg, name);
+		  vpi_printf("%*s Found %u extra argument%s.\n",
+		             (int) strlen(msg), " ", argc,
+		             argc == 1 ? "" : "s");
+		  vpi_control(vpiFinish, 1);
+	    }
+      }
+
+      return 0;
+}
+
 static PLI_INT32 sys_printtimescale_calltf(PLI_BYTE8*xx)
 {
-      vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv  = vpi_iterate(vpiArgument, sys);
-      vpiHandle scope;
+      vpiHandle callh   = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv  = vpi_iterate(vpiArgument, callh);
+      vpiHandle item, scope;
       if (!argv) {
-            scope = sys_func_module(sys);
+            item = sys_func_module(callh);
       } else {
-            scope = vpi_scan(argv);
+            item = vpi_scan(argv);
             vpi_free_object(argv);
       }
 
-      vpi_printf("Time scale of (%s) is ", vpi_get_str(vpiFullName, scope));
+      if (vpi_get(vpiType, item) != vpiModule) {
+	    scope = vpi_handle(vpiModule, item);
+      } else {
+	    scope = item;
+      }
+
+      vpi_printf("Time scale of (%s) is ", vpi_get_str(vpiFullName, item));
       vpi_printf("%s / ", pts_convert(vpi_get(vpiTimeUnit, scope)));
       vpi_printf("%s\n", pts_convert(vpi_get(vpiTimePrecision, scope)));
 
@@ -2047,13 +2170,15 @@ void sys_display_register()
       tf_data.calltf    = sys_timeformat_calltf;
       tf_data.compiletf = sys_timeformat_compiletf;
       tf_data.sizetf    = 0;
+      tf_data.user_data = "$timeformat";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$printtimescale";
       tf_data.calltf    = sys_printtimescale_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_printtimescale_compiletf;
       tf_data.sizetf    = 0;
+      tf_data.user_data = "$printtimescale";
       vpi_register_systf(&tf_data);
 
       cb_data.reason = cbEndOfCompile;
