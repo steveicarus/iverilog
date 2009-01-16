@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -259,6 +259,21 @@ void dll_target::expr_const(const NetEConst*net)
 }
 
 void dll_target::expr_param(const NetEConstParam*net)
+{
+      ivl_scope_t scop = find_scope(des_, net->scope());
+      ivl_parameter_t par = scope_find_param(scop, net->name());
+
+      if (par == 0) {
+	    cerr << net->get_fileline() << ": internal error: "
+		 << "Parameter " << net->name() << " missing from "
+		 << ivl_scope_name(scop) << endl;
+      }
+      assert(par);
+      assert(par->value);
+      expr_ = par->value;
+}
+
+void dll_target::expr_rparam(const NetECRealParam*net)
 {
       ivl_scope_t scop = find_scope(des_, net->scope());
       ivl_parameter_t par = scope_find_param(scop, net->name());

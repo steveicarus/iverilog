@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1855,7 +1855,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 		  fprintf(vvp_out, ">;\n");
 		  break;
 		case IVL_EX_REALNUM:
-		  fprintf(vvp_out, "P_%p .param/real \"%s\" %d %d, %s; value=%g\n",
+		  fprintf(vvp_out, "P_%p .param/real \"%s\" %d %d, %s; value=%#g\n",
 			  par, ivl_parameter_basename(par),
 			  ivl_file_table_index(ivl_parameter_file(par)),
 			  ivl_parameter_lineno(par),

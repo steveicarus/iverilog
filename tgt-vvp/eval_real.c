@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -259,7 +259,7 @@ static int draw_realnum_real(ivl_expr_t expr)
       assert(vexp < 0x2000);
       vexp += sign;
 
-      fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load=%g\n",
+      fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load=%#g\n",
 	      res, mant, vexp, ivl_expr_dvalue(expr));
 
 	/* Capture the residual bits, if there are any. Note that an
@@ -277,7 +277,7 @@ static int draw_realnum_real(ivl_expr_t expr)
 
       if (mant != 0) {
 	    int tmp_word = allocate_word();
-	    fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load=%g\n",
+	    fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load=%#g\n",
 		    tmp_word, mant, vexp, ivl_expr_dvalue(expr));
 	    fprintf(vvp_out, "    %%add/wr %d, %d;\n", res, tmp_word);
 	    clr_word(tmp_word);

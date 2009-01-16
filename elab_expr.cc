@@ -656,7 +656,7 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 
 	      // If this is lossless, then pad the left expression
 	      // enough to cover the right shift.
-	    if (expr_wid == -2 && use_wid+shift > lp->expr_width()) {
+	    if (expr_wid == -2 && use_wid+shift > (long)lp->expr_width()) {
 		  lp = pad_to_width(lp, use_wid + shift, *this);
 	    }
 
@@ -2407,6 +2407,20 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 
 		  if (expr_wid > 0)
 			ptmp->set_width((unsigned)expr_wid);
+
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Elaborate parameter <" << name
+			     << "> as constant " << *ptmp << endl;
+		  delete tmp;
+		  tmp = ptmp;
+	    }
+
+	    NetECReal*rtmp = dynamic_cast<NetECReal*>(tmp);
+	    if (rtmp != 0) {
+		  perm_string name = peek_tail_name(path_);
+		  NetECRealParam*ptmp
+			= new NetECRealParam(found_in, name, rtmp->value());
 
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: "

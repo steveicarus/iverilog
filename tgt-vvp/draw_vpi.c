@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -261,19 +261,23 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  continue;
 
 		case IVL_EX_NUMBER: {
-		      unsigned bit, wid = ivl_expr_width(expr);
-		      const char*bits = ivl_expr_bits(expr);
-		      char*dp;
+		  if (( par = ivl_expr_parameter(expr) )) {
+			snprintf(buffer, sizeof buffer, "P_%p", par);
+		  } else {
+			unsigned bit, wid = ivl_expr_width(expr);
+			const char*bits = ivl_expr_bits(expr);
+			char*dp;
 
-		      snprintf(buffer, sizeof buffer,
-			       "%u'%sb", wid, ivl_expr_signed(expr)? "s" : "");
-		      dp = buffer + strlen(buffer);
-		      for (bit = wid ;  bit > 0 ;  bit -= 1)
-			    *dp++ = bits[bit-1];
-		      *dp++ = 0;
-		      assert(dp - buffer <= sizeof buffer);
-		      args[idx].text = strdup(buffer);
-		      continue;
+			snprintf(buffer, sizeof buffer, "%u'%sb",
+			         wid, ivl_expr_signed(expr)? "s" : "");
+			dp = buffer + strlen(buffer);
+			for (bit = wid ;  bit > 0 ;  bit -= 1)
+			      *dp++ = bits[bit-1];
+			*dp++ = 0;
+			assert(dp - buffer <= sizeof buffer);
+		  }
+		  args[idx].text = strdup(buffer);
+		  continue;
 		}
 
 		case IVL_EX_STRING:
@@ -285,6 +289,14 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  }
 		  args[idx].text = strdup(buffer);
 		  continue;
+
+		case IVL_EX_REALNUM:
+		  if (( par = ivl_expr_parameter(expr) )) {
+			snprintf(buffer, sizeof buffer, "P_%p", par);
+			args[idx].text = strdup(buffer);
+			continue;
+		  }
+		  break;
 
 		case IVL_EX_EVENT:
 		  snprintf(buffer, sizeof buffer, "E_%p", ivl_expr_event(expr));
@@ -328,7 +340,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  args[idx].vec.base = draw_eval_real(expr);
 		  args[idx].vec.wid  = 0;
 		  snprintf(buffer, sizeof buffer,
-			   "W<%u,r>", args[idx].vec.base);
+		           "W<%u,r>", args[idx].vec.base);
 		  break;
 		default:
 		  assert(0);
@@ -409,4 +421,3 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
       return res;
 }
-

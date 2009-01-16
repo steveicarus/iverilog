@@ -1,7 +1,7 @@
 #ifndef __t_dll_H
 #define __t_dll_H
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -134,6 +134,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_const(const NetEConst*);
       void expr_creal(const NetECReal*);
       void expr_param(const NetEConstParam*);
+      void expr_rparam(const NetECRealParam*);
       void expr_event(const NetEEvent*);
       void expr_scope(const NetEScope*);
       void expr_select(const NetESelect*);
