@@ -1060,8 +1060,9 @@ static int sys_check_args(vpiHandle callh, vpiHandle argv, PLI_BYTE8*name,
       return ret;
 }
 
-/* Check the $display, $write, $fdisplay and $fwrite based tasks. */
-static PLI_INT32 sys_display_compiletf(PLI_BYTE8*name)
+/* Common compiletf routine. */
+static PLI_INT32 sys_common_compiletf(PLI_BYTE8*name, int no_auto,
+                                      int is_monitor)
 {
       vpiHandle callh, argv;
 
@@ -1088,8 +1089,17 @@ static PLI_INT32 sys_display_compiletf(PLI_BYTE8*name)
 	    }
       }
 
-      if (sys_check_args(callh, argv, name, 0, 0)) vpi_control(vpiFinish, 1);
+      if (sys_check_args(callh, argv, name, no_auto, is_monitor)) {
+	    vpi_control(vpiFinish, 1);
+      }
       return 0;
+}
+
+/* Check the $display, $write, $fdisplay and $fwrite based tasks. */
+static PLI_INT32 sys_display_compiletf(PLI_BYTE8*name)
+{
+	/* These tasks can have automatic variables and are not monitor. */
+      return sys_common_compiletf(name, 0, 0);
 }
 
 /* This implements the $display/$fdisplay and the $write/$fwrite based tasks. */
@@ -1194,34 +1204,8 @@ static PLI_INT32 strobe_cb(p_cb_data cb)
 /* Check both the $strobe and $fstrobe based tasks. */
 static PLI_INT32 sys_strobe_compiletf(PLI_BYTE8 *name)
 {
-      vpiHandle callh, argv, arg;
-
-      callh = vpi_handle(vpiSysTfCall, 0);
-      argv = vpi_iterate(vpiArgument, callh);
-
-      if(name[1] == 'f') {
-	      /* Check that there is a fd/mcd and that it is numeric. */
-	    if (argv == 0) {
-		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
-		             (int)vpi_get(vpiLineNo, callh));
-		  vpi_printf("%s requires at least a file descriptor/MCD.\n",
-		             name);
-		  vpi_control(vpiFinish, 1);
-		  return 0;
-	    }
-
-	    arg = vpi_scan(argv);
-	    if (! is_numeric_obj(arg)) {
-		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
-		  (int)vpi_get(vpiLineNo, callh));
-		  vpi_printf("%s's file descriptor/MCD must be numeric.\n",
-		             name);
-		  vpi_control(vpiFinish, 1);
-	    }
-      }
-
-      if (sys_check_args(callh, argv, name, 1, 0)) vpi_control(vpiFinish, 1);
-      return 0;
+	/* These tasks can not have automatic variables and are not monitor. */
+      return sys_common_compiletf(name, 1, 0);
 }
 
 /* This implements both the $strobe and $fstrobe based tasks. */
