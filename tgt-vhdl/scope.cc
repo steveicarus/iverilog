@@ -607,7 +607,7 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
        && pdecl->get_mode() == VHDL_PORT_OUT) {
 
       // First change the mode in the parent entity
-      pdecl->set_mode(VHDL_PORT_BUFFER);
+      //pdecl->set_mode(VHDL_PORT_BUFFER);
 
       // Now change the mode in the child entity
       /*      vhdl_port_decl *to_pdecl =
@@ -924,15 +924,28 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
                priv->const_driver = NULL;
             }
 
+            // Connect up any signals which are wired together in the
+            // same nexus
             scope_nexus_t *sn = visible_nexus(priv, arch_scope);
             for (list<ivl_signal_t>::const_iterator it = sn->connect.begin();
                  it != sn->connect.end();
                  ++it) {
+               vhdl_type* rtype =
+                  vhdl_type::type_for(ivl_signal_width(sn->sig),
+                                      ivl_signal_signed(sn->sig));
+               vhdl_type* ltype =
+                  vhdl_type::type_for(ivl_signal_width(*it),
+                                      ivl_signal_signed(*it));
+               
                vhdl_var_ref *rref =
-                  new vhdl_var_ref(get_renamed_signal(sn->sig).c_str(), NULL);
+                  new vhdl_var_ref(get_renamed_signal(sn->sig).c_str(), rtype);
                vhdl_var_ref *lref =
-                  new vhdl_var_ref(get_renamed_signal(*it).c_str(), NULL);
-               ent->get_arch()->add_stmt(new vhdl_cassign_stmt(lref, rref));
+                  new vhdl_var_ref(get_renamed_signal(*it).c_str(), ltype);
+
+               // Make sure the LHS and RHS have the same type
+               vhdl_expr* rhs = rref->cast(lref->get_type());
+               
+               ent->get_arch()->add_stmt(new vhdl_cassign_stmt(lref, rhs));
             }
             sn->connect.clear();               
          }           
