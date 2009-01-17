@@ -511,7 +511,7 @@ static vhdl_expr *translate_ufunc(ivl_expr_t e)
    // A function is always declared in a module, which should have
    // a corresponding entity by this point: so we can get type
    // information, etc. from the declaration
-   vhdl_entity *parent_ent = find_entity(ivl_scope_name(parentscope));
+   vhdl_entity *parent_ent = find_entity(parentscope);
    assert(parent_ent);
 
    const char *funcname = ivl_scope_tname(defscope);

@@ -807,15 +807,13 @@ private:
  */
 class vhdl_entity : public vhdl_element {
 public:
-   vhdl_entity(const char *name, const char *derived_from,
-               vhdl_arch *arch, int depth=0);
+   vhdl_entity(const char *name, vhdl_arch *arch, int depth=0);
    virtual ~vhdl_entity();
 
    void emit(std::ostream &of, int level=0) const;
    void add_port(vhdl_port_decl *decl);
    vhdl_arch *get_arch() const { return arch_; }
    const std::string &get_name() const { return name_; }
-   const std::string &get_derived_from() const { return derived_from_; }
 
    vhdl_scope *get_scope() { return &ports_; }
    
@@ -826,7 +824,6 @@ public:
 private:
    std::string name_;
    vhdl_arch *arch_;  // Entity may only have a single architecture
-   std::string derived_from_;
    vhdl_scope ports_;
 };
 

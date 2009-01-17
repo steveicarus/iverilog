@@ -27,7 +27,7 @@ vhdl_expr *translate_expr(ivl_expr_t e);
 vhdl_expr *translate_time_expr(ivl_expr_t e);
 
 void remember_entity(vhdl_entity *ent);
-vhdl_entity *find_entity(const string &sname);
+vhdl_entity *find_entity(const ivl_scope_t scope);
 
 ivl_design_t get_vhdl_design();
 vhdl_entity *get_active_entity();

@@ -243,7 +243,7 @@ void draw_nexus(ivl_nexus_t nexus)
          if (!is_default_scope_instance(log_scope))
             continue;
          
-         vhdl_entity *ent = find_entity(ivl_scope_name(log_scope));
+         vhdl_entity *ent = find_entity(log_scope);
          assert(ent);
          
          vhdl_scope *vhdl_scope = ent->get_arch()->get_scope();
@@ -269,7 +269,7 @@ void draw_nexus(ivl_nexus_t nexus)
       }
       else if ((lpm = ivl_nexus_ptr_lpm(nexus_ptr))) {
          ivl_scope_t lpm_scope = ivl_lpm_scope(lpm);
-         vhdl_entity *ent = find_entity(ivl_scope_name(lpm_scope));
+         vhdl_entity *ent = find_entity(lpm_scope);
          assert(ent);
          
          vhdl_scope *vhdl_scope = ent->get_arch()->get_scope();
@@ -610,10 +610,10 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
       pdecl->set_mode(VHDL_PORT_BUFFER);
 
       // Now change the mode in the child entity
-      vhdl_port_decl *to_pdecl =
+      /*      vhdl_port_decl *to_pdecl =
          dynamic_cast<vhdl_port_decl*>(find_scope_for_signal(to)->get_decl(name));
       assert(to_pdecl);
-      to_pdecl->set_mode(VHDL_PORT_BUFFER);
+      to_pdecl->set_mode(VHDL_PORT_BUFFER);*/
    }
    
    inst->map_port(name.c_str(), ref);
@@ -657,7 +657,7 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
              ivl_scope_name(scope));
 
    // Find the containing entity
-   vhdl_entity *ent = find_entity(ivl_scope_name(parent));
+   vhdl_entity *ent = find_entity(parent);
    assert(ent);
 
    const char *funcname = ivl_scope_tname(scope);
@@ -734,7 +734,7 @@ static int draw_task(ivl_scope_t scope, ivl_scope_t parent)
    assert(ivl_scope_type(scope) == IVL_SCT_TASK);
 
    // Find the containing entity
-   vhdl_entity *ent = find_entity(ivl_scope_name(parent));
+   vhdl_entity *ent = find_entity(parent);
    assert(ent);
 
    const char *taskname = ivl_scope_tname(scope);
@@ -778,18 +778,14 @@ static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
    assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
 
    // The type name will become the entity name
-   const char *tname = ivl_scope_tname(scope);
-
-   // Remember the scope name this entity was derived from so
-   // the correct processes can be added later
-   const char *derived_from = ivl_scope_name(scope);
+   const char *tname = ivl_scope_tname(scope);;
    
    // Verilog does not have the entity/architecture distinction
    // so we always create a pair and associate the architecture
    // with the entity for convenience (this also means that we
    // retain a 1-to-1 mapping of scope to VHDL element)
    vhdl_arch *arch = new vhdl_arch(tname, "FromVerilog");
-   vhdl_entity *ent = new vhdl_entity(tname, derived_from, arch, depth);
+   vhdl_entity *ent = new vhdl_entity(tname, arch, depth);
 
    // Build a comment to add to the entity/architecture
    ostringstream ss;
@@ -812,7 +808,7 @@ static int draw_skeleton_scope(ivl_scope_t scope, void *_unused)
    static int depth = 0;
    
    if (seen_this_scope_type(scope)) {
-      debug_msg("Ignoring scope: %s\n", ivl_scope_name(scope));
+      debug_msg("Ignoring scope: %s", ivl_scope_name(scope));
       return 0;
    }
    
@@ -848,7 +844,7 @@ static int draw_all_signals(ivl_scope_t scope, void *_parent)
    }
    
    if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
-      vhdl_entity *ent = find_entity(ivl_scope_name(scope));
+      vhdl_entity *ent = find_entity(scope);
       assert(ent);
 
       declare_signals(ent, scope);
@@ -897,7 +893,7 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
    ivl_scope_children(scope, draw_constant_drivers, scope);
    
    if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
-      vhdl_entity *ent = find_entity(ivl_scope_name(scope));
+      vhdl_entity *ent = find_entity(scope);
       assert(ent);
 
       int nsigs = ivl_scope_sigs(scope);
@@ -956,7 +952,7 @@ static int draw_all_logic_and_lpm(ivl_scope_t scope, void *_parent)
    
    
    if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
-      vhdl_entity *ent = find_entity(ivl_scope_name(scope));
+      vhdl_entity *ent = find_entity(scope);
       assert(ent);
 
       set_active_entity(ent);
@@ -980,10 +976,10 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
          return 0;
       }   
    
-      vhdl_entity *ent = find_entity(ivl_scope_name(scope));
+      vhdl_entity *ent = find_entity(scope);
       assert(ent);
       
-      vhdl_entity *parent_ent = find_entity(ivl_scope_name(parent));
+      vhdl_entity *parent_ent = find_entity(parent);
       assert(parent_ent);
 
       vhdl_arch *parent_arch = parent_ent->get_arch();

@@ -32,6 +32,7 @@
 #include <list>
 #include <map>
 #include <set>
+#include <algorithm>
 
 static const char*version_string =
 "Icarus Verilog VHDL Code Generator " VERSION " (" VERSION_TAG ")\n\n"
@@ -106,26 +107,42 @@ void debug_msg(const char *fmt, ...)
    va_end(args);
 }
 
-/*
- * Find an entity given a scope name.
- */
-vhdl_entity *find_entity(const std::string &sname)
-{
-   entity_list_t::const_iterator it;
-   for (it = g_entities.begin(); it != g_entities.end(); ++it) {
-      if ((*it)->get_derived_from() == sname)
-         return *it;
+// Compare the name of an entity against a string
+struct cmp_ent_name {
+   cmp_ent_name(const string& n) : name_(n) {}
+   
+   bool operator()(const vhdl_entity* ent) const
+   {
+      return ent->get_name() == name_;
    }
-   return NULL;
+
+   const string& name_;
+};
+
+/*
+ * Find a VHDL entity given a Verilog module scope. The VHDL entity
+ * name should be the same the Verilog module type name.
+ */
+vhdl_entity *find_entity(const ivl_scope_t scope)
+{
+   debug_msg("find_entity %s", ivl_scope_tname(scope));
+   assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
+
+   entity_list_t::const_iterator it
+      = find_if(g_entities.begin(), g_entities.end(),
+                cmp_ent_name(ivl_scope_tname(scope)));
+
+   if (it != g_entities.end())
+      return *it;
+   else
+      return NULL;
 }
 
 /*
- * Add an entity/architecture pair to the list of entities
- * to emit.
+ * Add an entity/architecture pair to the list of entities to emit.
  */
 void remember_entity(vhdl_entity* ent)
 {
-   assert(find_entity(ent->get_derived_from()) == NULL);
    g_entities.push_back(ent);
 }
 
