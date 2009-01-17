@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -281,17 +281,31 @@ static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
       PLI_UINT32 fd_mcd;
 
       vpi_free_object(argv);
-      (void) name;  /* Not used! */
 
+	/* Get the file/MC descriptor and verify that it is valid. */
       val.format = vpiIntVal;
       vpi_get_value(fd, &val);
       fd_mcd = val.value.integer;
 
+      if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
+          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF)) {
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
+	               fd_mcd, name);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+	/* We need to cancel any active $fstrobe()'s for this FD/MCD. */
       vpi_mcd_close(fd_mcd);
 
       return 0;
 }
 
+/*
+ * Implement $fflush system function
+ */
 static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
@@ -300,7 +314,6 @@ static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
       s_vpi_value val;
       PLI_UINT32 fd_mcd;
       FILE *fp;
-      (void) name;  /* Not used! */
 
 	/* If we have no argument then flush all the streams. */
       if (argv == 0) {
@@ -308,12 +321,22 @@ static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
 	    return 0;
       }
 
-	/* Get the file/MC descriptor. */
+	/* Get the file/MC descriptor and verify that it is valid. */
       arg = vpi_scan(argv);
       vpi_free_object(argv);
       val.format = vpiIntVal;
       vpi_get_value(arg, &val);
       fd_mcd = val.value.integer;
+
+      if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
+          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF)) {
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
+	               fd_mcd, name);
+	    vpi_free_object(argv);
+	    return 0;
+      }
 
       if (IS_MCD(fd_mcd)) {
 	    vpi_mcd_flush(fd_mcd);
