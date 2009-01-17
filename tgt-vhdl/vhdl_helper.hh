@@ -48,15 +48,6 @@ void emit_children(std::ostream &of,
    }
 }
 
-template <class T>
-void delete_children(std::list<T*> &children)
-{
-   typename std::list<T*>::iterator it;
-   for (it = children.begin(); it != children.end(); ++it)
-      delete *it;
-   children.clear();
-}
-
 static inline char vl_to_vhdl_bit(char bit)
 {
    switch (bit) {

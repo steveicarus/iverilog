@@ -20,6 +20,7 @@
 
 #include "state.hh"
 #include "vhdl_syntax.hh"
+#include "vhdl_target.h"
 
 #include <algorithm>
 #include <string>
@@ -187,10 +188,12 @@ void emit_all_entities(std::ostream& os, int max_depth)
 // will be valid after this call.
 void free_all_vhdl_objects()
 {
-   for (entity_list_t::iterator it = g_entities.begin();
-        it != g_entities.end();
-        ++it)
-      delete (*it);
+   int freed = vhdl_element::free_all_objects();
+   debug_msg("Deallocated %d VHDL syntax objects", freed);
+
+   size_t total = vhdl_element::total_allocated();
+   debug_msg("%d total bytes used for VHDL syntax objects", total);
+   
    g_entities.clear();
 }
 

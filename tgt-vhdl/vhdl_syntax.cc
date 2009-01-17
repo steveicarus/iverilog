@@ -35,7 +35,7 @@ vhdl_scope::vhdl_scope()
 
 vhdl_scope::~vhdl_scope()
 {
-   delete_children<vhdl_decl>(decls_);
+   
 }
 
 void vhdl_scope::set_initializing(bool i)
@@ -94,8 +94,8 @@ vhdl_entity::vhdl_entity(const char *name, vhdl_arch *arch, int depth__)
 }
 
 vhdl_entity::~vhdl_entity()
-{   
-   delete arch_;
+{
+   
 }
 
 void vhdl_entity::add_port(vhdl_port_decl *decl)
@@ -131,7 +131,7 @@ void vhdl_entity::emit(std::ostream &of, int level) const
 
 vhdl_arch::~vhdl_arch()
 {
-   delete_children<vhdl_conc_stmt>(stmts_);
+   
 }
 
 void vhdl_arch::add_stmt(vhdl_process *proc)
@@ -199,7 +199,7 @@ void vhdl_process::emit(std::ostream &of, int level) const
 
 stmt_container::~stmt_container()
 {
-   delete_children<vhdl_seq_stmt>(stmts_);
+   
 }
 
 void stmt_container::add_stmt(vhdl_seq_stmt *stmt)
@@ -232,11 +232,7 @@ vhdl_comp_inst::vhdl_comp_inst(const char *inst_name, const char *comp_name)
 
 vhdl_comp_inst::~vhdl_comp_inst()
 {
-   port_map_list_t::iterator it;
-   for (it = mapping_.begin(); it != mapping_.end(); ++it) {
-      delete (*it).expr;
-   }
-   mapping_.clear();
+   
 }
 
 void vhdl_comp_inst::map_port(const char *name, vhdl_expr *expr)
@@ -312,8 +308,7 @@ void vhdl_component_decl::emit(std::ostream &of, int level) const
 
 vhdl_wait_stmt::~vhdl_wait_stmt()
 {
-   if (expr_ != NULL)
-      delete expr_;
+   
 }
 
 void vhdl_wait_stmt::emit(std::ostream &of, int level) const
@@ -354,10 +349,7 @@ void vhdl_wait_stmt::emit(std::ostream &of, int level) const
 
 vhdl_decl::~vhdl_decl()
 {
-   if (type_ != NULL)
-      delete type_;
-   if (initial_ != NULL)
-      delete initial_;
+   
 }
 
 const vhdl_type *vhdl_decl::get_type() const
@@ -434,8 +426,7 @@ void vhdl_type_decl::emit(std::ostream &of, int level) const
 
 vhdl_expr::~vhdl_expr()
 {
-   if (type_ != NULL)
-      delete type_;
+   
 }
 
 void vhdl_expr_list::add_expr(vhdl_expr *e)
@@ -445,7 +436,7 @@ void vhdl_expr_list::add_expr(vhdl_expr *e)
 
 vhdl_expr_list::~vhdl_expr_list()
 {
-   delete_children<vhdl_expr>(exprs_);
+   
 }
 
 void vhdl_expr_list::emit(std::ostream &of, int level) const
@@ -473,8 +464,7 @@ void vhdl_pcall_stmt::emit(std::ostream &of, int level) const
 
 vhdl_var_ref::~vhdl_var_ref()
 {
-   if (slice_)
-      delete slice_;
+   
 }
 
 void vhdl_var_ref::set_slice(vhdl_expr *s, int w)
@@ -538,10 +528,7 @@ void vhdl_fcall::emit(std::ostream &of, int level) const
 
 vhdl_abstract_assign_stmt::~vhdl_abstract_assign_stmt()
 {
-   delete lhs_;
-   delete rhs_;
-   if (after_)
-      delete after_;
+   
 }
 
 void vhdl_nbassign_stmt::emit(std::ostream &of, int level) const
@@ -619,15 +606,7 @@ void vhdl_const_time::emit(std::ostream &of, int level) const
 
 vhdl_cassign_stmt::~vhdl_cassign_stmt()
 {
-   delete lhs_;
-   delete rhs_;
-
-   for (std::list<when_part_t>::const_iterator it = whens_.begin();
-        it != whens_.end();
-        ++it) {
-      delete (*it).value;
-      delete (*it).cond;
-   }
+   
 }
 
 void vhdl_cassign_stmt::add_condition(vhdl_expr *value, vhdl_expr *cond)
@@ -676,7 +655,7 @@ vhdl_if_stmt::vhdl_if_stmt(vhdl_expr *test)
 
 vhdl_if_stmt::~vhdl_if_stmt()
 {
-   delete test_;
+   
 }
 
 stmt_container *vhdl_if_stmt::add_elsif(vhdl_expr *test)
@@ -712,7 +691,7 @@ void vhdl_if_stmt::emit(std::ostream &of, int level) const
 
 vhdl_unaryop_expr::~vhdl_unaryop_expr()
 {
-   delete operand_;
+   
 }
 
 void vhdl_unaryop_expr::emit(std::ostream &of, int level) const
@@ -740,7 +719,7 @@ vhdl_binop_expr::vhdl_binop_expr(vhdl_expr *left, vhdl_binop_t op,
 
 vhdl_binop_expr::~vhdl_binop_expr()
 {
-   delete_children<vhdl_expr>(operands_);
+   
 }
 
 void vhdl_binop_expr::add_expr(vhdl_expr *e)
@@ -776,12 +755,7 @@ void vhdl_binop_expr::emit(std::ostream &of, int level) const
 
 vhdl_bit_spec_expr::~vhdl_bit_spec_expr()
 {
-   if (others_)
-      delete others_;
-
-   std::list<bit_map>::iterator it;
-   for (it = bits_.begin(); it != bits_.end(); ++it)
-      delete (*it).e;
+   
 }
 
 void vhdl_bit_spec_expr::add_bit(int bit, vhdl_expr *e)
@@ -813,7 +787,7 @@ void vhdl_bit_spec_expr::emit(std::ostream &of, int level) const
 
 vhdl_case_branch::~vhdl_case_branch()
 {
-   delete when_;
+   
 }
 
 void vhdl_case_branch::emit(std::ostream &of, int level) const
@@ -826,7 +800,7 @@ void vhdl_case_branch::emit(std::ostream &of, int level) const
 
 vhdl_case_stmt::~vhdl_case_stmt()
 {
-   delete test_;
+   
 }
 
 void vhdl_case_stmt::emit(std::ostream &of, int level) const
@@ -851,7 +825,7 @@ void vhdl_case_stmt::emit(std::ostream &of, int level) const
 
 vhdl_while_stmt::~vhdl_while_stmt()
 {
-   delete test_;
+   
 }
 
 void vhdl_while_stmt::emit(std::ostream &of, int level) const
@@ -871,8 +845,7 @@ void vhdl_loop_stmt::emit(std::ostream &of, int level) const
 
 vhdl_for_stmt::~vhdl_for_stmt()
 {
-   delete from_;
-   delete to_;
+   
 }
 
 void vhdl_for_stmt::emit(std::ostream &of, int level) const
@@ -930,17 +903,7 @@ void vhdl_param_decl::emit(std::ostream &of, int level) const
 
 vhdl_with_select_stmt::~vhdl_with_select_stmt()
 {
-   delete test_;
-   delete out_;
-
-   for (when_list_t::const_iterator it = whens_.begin();
-        it != whens_.end();
-        ++it) {
-      delete (*it).value;
-      delete (*it).cond;
-      if ((*it).delay)
-         delete (*it).delay;
-   }
+   
 }
 
 void vhdl_with_select_stmt::emit(std::ostream &of, int level) const

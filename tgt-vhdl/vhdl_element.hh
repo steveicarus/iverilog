@@ -21,28 +21,49 @@
 #ifndef INC_VHDL_ELEMENT_HH
 #define INC_VHDL_ELEMENT_HH
 
-#include <fstream>
+#include <iosfwd>
 #include <list>
 #include <string>
+#include <new>
+#include <vector>
 
 typedef std::list<std::string> string_list_t;
 
-/*
- * Any VHDL syntax element. Each element can also contain a comment.
- */
+// Any VHDL syntax element. Each element can also contain a comment.
+//
+// Memory management is handled specially for vhdl_element subclasses:
+// The vast majority of vhdl_elements will be created during code generation
+// and persist until after they have been printed, at which point *all*
+// vhdl_element objects should be destroyed. To support this all allocations
+// of vhdl_element subclasses call a special operator new which records
+// the pointer allocated so we can ensure that it is disposed of when
+// the code generator completes -- by free_all_objects.
+//
+// The two big advantages of this are that we don't have to worry about
+// memory leaks of vhdl_element objects, and we can freely share pointers
+// between different parts of the AST.
 class vhdl_element {
 public:
    virtual ~vhdl_element() {}
+
+   void* operator new(size_t size) throw (std::bad_alloc);
+   void operator delete(void* ptr);
    
    virtual void emit(std::ostream &of, int level=0) const = 0;
    void print() const;
 
    void set_comment(std::string comment);
+
+   static int free_all_objects();
+   static size_t total_allocated();
 protected:
    void emit_comment(std::ostream &of, int level,
                      bool end_of_line=false) const;
 private:
    std::string comment_;
+
+   static std::vector<vhdl_element*> allocated_;
+   static size_t total_alloc_;
 };
 
 typedef std::list<vhdl_element*> element_list_t;
