@@ -87,13 +87,12 @@ int draw_process(ivl_process_t proc, void *cd)
 {
    ivl_scope_t scope = ivl_process_scope(proc);
 
-   if (!is_default_scope_instance(scope)) {
-      debug_msg("Ignoring process in %s", ivl_scope_name(scope));
-      return 0;
-   }
-   
-   debug_msg("Translating process in %s (%s:%d)",
-             ivl_scope_name(scope), ivl_process_file(proc),
+   if (!is_default_scope_instance(scope))
+      return 0;  // Ignore this process at it's not in a scope that
+                 // we're using to generate code
+      
+   debug_msg("Translating process in scope type %s (%s:%d)",
+             ivl_scope_tname(scope), ivl_process_file(proc),
              ivl_process_lineno(proc));
    
    // A process should occur in a module scope, therefore it

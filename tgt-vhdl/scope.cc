@@ -351,7 +351,7 @@ vhdl_var_ref *nexus_to_var_ref(vhdl_scope *scope, ivl_nexus_t nexus)
  */
 static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
 {
-   debug_msg("Declaring logic in scope %s", ivl_scope_name(scope));
+   debug_msg("Declaring logic in scope type %s", ivl_scope_tname(scope));
    
    int nlogs = ivl_scope_logs(scope);
    for (int i = 0; i < nlogs; i++)
@@ -399,7 +399,7 @@ static string make_safe_name(ivl_signal_t sig)
  */
 static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
 {
-   debug_msg("Declaring signals in scope %s", ivl_scope_name(scope));
+   debug_msg("Declaring signals in scope type %s", ivl_scope_tname(scope));
    
    int nsigs = ivl_scope_sigs(scope);
    for (int i = 0; i < nsigs; i++) {
@@ -752,13 +752,11 @@ static int draw_skeleton_scope(ivl_scope_t scope, void *_unused)
 {
    static int depth = 0;
    
-   if (seen_this_scope_type(scope)) {
-      debug_msg("Ignoring scope: %s", ivl_scope_name(scope));
-      return 0;
-   }
+   if (seen_this_scope_type(scope))
+      return 0;  // Already generated a skeleton for this scope type
    
-   debug_msg("Initial visit to scope %s at depth %d",
-             ivl_scope_name(scope), depth);
+   debug_msg("Initial visit to scope type %s at depth %d",
+             ivl_scope_tname(scope), depth);
    
    switch (ivl_scope_type(scope)) {
    case IVL_SCT_MODULE:
@@ -783,11 +781,9 @@ static int draw_skeleton_scope(ivl_scope_t scope, void *_unused)
 
 static int draw_all_signals(ivl_scope_t scope, void *_parent)
 {
-   if (!is_default_scope_instance(scope)) {
-      debug_msg("Ignoring scope: %s\n", ivl_scope_name(scope));
-      return 0;
-   }
-   
+   if (!is_default_scope_instance(scope))
+      return 0;  // Not interested in this instance
+     
    if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
       vhdl_entity *ent = find_entity(scope);
       assert(ent);
@@ -803,11 +799,8 @@ static int draw_all_signals(ivl_scope_t scope, void *_parent)
  */
 static int draw_functions(ivl_scope_t scope, void *_parent)
 {
-   
-   if (!is_default_scope_instance(scope)) {
-      debug_msg("Ignoring scope: %s\n", ivl_scope_name(scope));
-      return 0;
-   }
+   if (!is_default_scope_instance(scope))
+      return 0;  // Not interested in this instance
    
    ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
    if (ivl_scope_type(scope) == IVL_SCT_FUNCTION) {
@@ -830,10 +823,8 @@ static int draw_functions(ivl_scope_t scope, void *_parent)
  */
 static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
 {
-   if (!is_default_scope_instance(scope)) {
-      debug_msg("Ignoring scope: %s\n", ivl_scope_name(scope));
-      return 0;
-   }
+   if (!is_default_scope_instance(scope))
+      return 0;  // Not interested in this instance
    
    ivl_scope_children(scope, draw_constant_drivers, scope);
    
@@ -902,12 +893,8 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
 
 static int draw_all_logic_and_lpm(ivl_scope_t scope, void *_parent)
 {
-   
-   if (!is_default_scope_instance(scope)) {
-      debug_msg("Ignoring scope: %s\n", ivl_scope_name(scope));
-      return 0;
-   }
-   
+   if (!is_default_scope_instance(scope))
+      return 0;  // Not interested in this instance
    
    if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
       vhdl_entity *ent = find_entity(scope);
@@ -929,10 +916,9 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
    if (ivl_scope_type(scope) == IVL_SCT_MODULE && _parent) {
       ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
 
-      if (!is_default_scope_instance(parent)) {
-         debug_msg("Ignoring scope: %s\n", ivl_scope_name(scope));
-         return 0;
-      }   
+      if (!is_default_scope_instance(parent))
+         return 0;  // Not generating code for the parent instance so
+                    // don't generate for the child
    
       vhdl_entity *ent = find_entity(scope);
       assert(ent);
