@@ -157,9 +157,10 @@ void rename_signal(ivl_signal_t sig, const std::string &renamed)
 
 vhdl_scope *find_scope_for_signal(ivl_signal_t sig)
 {
-   assert(seen_signal_before(sig));
-
-   return g_known_signals[sig].scope;
+   if (seen_signal_before(sig))
+      return g_known_signals[sig].scope;
+   else
+      return NULL;
 }
 
 const std::string &get_renamed_signal(ivl_signal_t sig)

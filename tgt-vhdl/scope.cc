@@ -25,6 +25,8 @@
 #include <sstream>
 #include <cassert>
 #include <cstring>
+#include <set>
+#include <algorithm>
 
 static string make_safe_name(ivl_signal_t sig);
 
@@ -38,6 +40,49 @@ vhdl_entity *get_active_entity()
 void set_active_entity(vhdl_entity *ent)
 {
    g_active_entity = ent;
+}
+
+/*
+ * Set of scopes that are treated as the default examples of
+ * that type. Any other scopes of the same type are ignored.
+ */
+typedef set<ivl_scope_t> default_scopes_t;
+static default_scopes_t g_default_scopes;
+
+/*
+ * True if two scopes have the same type name.
+ */
+static bool same_scope_type_name(ivl_scope_t a, ivl_scope_t b)
+{
+   return strcmp(ivl_scope_tname(a), ivl_scope_tname(b)) == 0;
+}
+
+/*
+ * True if we have already seen a scope with this type before.
+ * If the result is `false' then s is stored in the set of seen
+ * scopes.
+ */
+static bool seen_this_scope_type(ivl_scope_t s)
+{
+   debug_msg("Seen scope type? %s", ivl_scope_tname(s));
+   if (find_if(g_default_scopes.begin(), g_default_scopes.end(),
+               bind1st(ptr_fun(same_scope_type_name), s))
+       == g_default_scopes.end()) {
+      g_default_scopes.insert(s);
+      return false;
+   }
+   else
+      return true;
+}
+
+/*
+ * True if this scope is the default example of this scope type.
+ * All other instances of this scope type are ignored.
+ */
+bool is_default_scope_instance(ivl_scope_t s)
+{
+   return find(g_default_scopes.begin(), g_default_scopes.end(), s)
+      != g_default_scopes.end();
 }
 
 /*
@@ -176,8 +221,10 @@ void draw_nexus(ivl_nexus_t nexus)
       ivl_signal_t sig;
       if ((sig = ivl_nexus_ptr_sig(nexus_ptr))) { 
          vhdl_scope *scope = find_scope_for_signal(sig);
-         unsigned pin = ivl_nexus_ptr_pin(nexus_ptr);
-         link_scope_to_nexus_signal(priv, scope, sig, pin);
+         if (scope) {
+            unsigned pin = ivl_nexus_ptr_pin(nexus_ptr);
+            link_scope_to_nexus_signal(priv, scope, sig, pin);
+         }
 
          nexus_signal_width = ivl_signal_width(sig);
       }
@@ -193,6 +240,9 @@ void draw_nexus(ivl_nexus_t nexus)
       ivl_net_const_t con;
       if ((log = ivl_nexus_ptr_log(nexus_ptr))) {
          ivl_scope_t log_scope = ivl_logic_scope(log);
+         if (!is_default_scope_instance(log_scope))
+            continue;
+         
          vhdl_entity *ent = find_entity(ivl_scope_name(log_scope));
          assert(ent);
          
@@ -761,6 +811,11 @@ static int draw_skeleton_scope(ivl_scope_t scope, void *_unused)
 {
    static int depth = 0;
    
+   if (seen_this_scope_type(scope)) {
+      debug_msg("Ignoring scope: %s\n", ivl_scope_name(scope));
+      return 0;
+   }
+   
    debug_msg("Initial visit to scope %s at depth %d",
              ivl_scope_name(scope), depth);
    
@@ -787,6 +842,11 @@ static int draw_skeleton_scope(ivl_scope_t scope, void *_unused)
 
 static int draw_all_signals(ivl_scope_t scope, void *_parent)
 {
+   if (!is_default_scope_instance(scope)) {
+      debug_msg("Ignoring scope: %s\n", ivl_scope_name(scope));
+      return 0;
+   }
+   
    if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
       vhdl_entity *ent = find_entity(ivl_scope_name(scope));
       assert(ent);
@@ -802,6 +862,12 @@ static int draw_all_signals(ivl_scope_t scope, void *_parent)
  */
 static int draw_functions(ivl_scope_t scope, void *_parent)
 {
+   
+   if (!is_default_scope_instance(scope)) {
+      debug_msg("Ignoring scope: %s\n", ivl_scope_name(scope));
+      return 0;
+   }
+   
    ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
    if (ivl_scope_type(scope) == IVL_SCT_FUNCTION) {
       if (draw_function(scope, parent) != 0)
@@ -823,6 +889,11 @@ static int draw_functions(ivl_scope_t scope, void *_parent)
  */
 static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
 {
+   if (!is_default_scope_instance(scope)) {
+      debug_msg("Ignoring scope: %s\n", ivl_scope_name(scope));
+      return 0;
+   }
+   
    ivl_scope_children(scope, draw_constant_drivers, scope);
    
    if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
@@ -877,6 +948,13 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
 
 static int draw_all_logic_and_lpm(ivl_scope_t scope, void *_parent)
 {
+   
+   if (!is_default_scope_instance(scope)) {
+      debug_msg("Ignoring scope: %s\n", ivl_scope_name(scope));
+      return 0;
+   }
+   
+   
    if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
       vhdl_entity *ent = find_entity(ivl_scope_name(scope));
       assert(ent);
@@ -893,9 +971,14 @@ static int draw_all_logic_and_lpm(ivl_scope_t scope, void *_parent)
 }
 
 static int draw_hierarchy(ivl_scope_t scope, void *_parent)
-{
+{   
    if (ivl_scope_type(scope) == IVL_SCT_MODULE && _parent) {
       ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
+
+      if (!is_default_scope_instance(parent)) {
+         debug_msg("Ignoring scope: %s\n", ivl_scope_name(scope));
+         return 0;
+      }   
    
       vhdl_entity *ent = find_entity(ivl_scope_name(scope));
       assert(ent);
@@ -946,7 +1029,7 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
 }
 
 int draw_scope(ivl_scope_t scope, void *_parent)
-{
+{   
    int rc = draw_skeleton_scope(scope, _parent);
    if (rc != 0)
       return rc;

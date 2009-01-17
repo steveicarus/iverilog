@@ -32,6 +32,7 @@ vhdl_entity *find_entity(const string &sname);
 ivl_design_t get_vhdl_design();
 vhdl_entity *get_active_entity();
 void set_active_entity(vhdl_entity *ent);
+bool is_default_scope_instance(ivl_scope_t s);
 
 vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus);
 
