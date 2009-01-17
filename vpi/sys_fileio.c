@@ -279,6 +279,7 @@ static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
       vpiHandle fd = vpi_scan(argv);
       s_vpi_value val;
       PLI_UINT32 fd_mcd;
+      char *str = "";  /* This prevents the compiler from complaining. */
 
       vpi_free_object(argv);
 
@@ -288,12 +289,11 @@ static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
       fd_mcd = val.value.integer;
 
       if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF)) {
+          ( IS_MCD(fd_mcd) && vpi_mcd_printf(fd_mcd, str) == EOF)) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
 	               fd_mcd, name);
-	    vpi_free_object(argv);
 	    return 0;
       }
 
@@ -314,6 +314,7 @@ static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
       s_vpi_value val;
       PLI_UINT32 fd_mcd;
       FILE *fp;
+      char *str = "";  /* This prevents the compiler from complaining. */
 
 	/* If we have no argument then flush all the streams. */
       if (argv == 0) {
@@ -329,12 +330,11 @@ static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
       fd_mcd = val.value.integer;
 
       if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF)) {
+          ( IS_MCD(fd_mcd) && vpi_mcd_printf(fd_mcd, str) == EOF)) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
 	               fd_mcd, name);
-	    vpi_free_object(argv);
 	    return 0;
       }
 
