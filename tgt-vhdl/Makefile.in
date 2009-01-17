@@ -49,7 +49,7 @@ dep:
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
-O = vhdl.o vhdl_element.o vhdl_type.o vhdl_syntax.o scope.o process.o \
+O = vhdl.o state.o vhdl_element.o vhdl_type.o vhdl_syntax.o scope.o process.o \
 	stmt.o expr.o lpm.o display.o support.o cast.o logic.o
 
 ifeq (@WIN32@,yes)

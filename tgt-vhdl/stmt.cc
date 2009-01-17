@@ -19,6 +19,7 @@
  */
 
 #include "vhdl_target.h"
+#include "state.hh"
 
 #include <iostream>
 #include <cstring>

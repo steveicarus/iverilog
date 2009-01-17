@@ -20,6 +20,7 @@
 
 #include "vhdl_target.h"
 #include "vhdl_element.hh"
+#include "state.hh"
 
 #include <cassert>
 #include <sstream>
@@ -82,7 +83,6 @@ static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
       cmp = new vhdl_binop_expr(sel, op, zero, NULL);
    }
    
-
    ivl_signal_t sig = find_signal_named(lhs->get_name(), arch->get_scope());
    char zbit;
    switch (ivl_signal_type(sig)) {

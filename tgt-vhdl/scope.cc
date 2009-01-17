@@ -20,70 +20,15 @@
 
 #include "vhdl_target.h"
 #include "vhdl_element.hh"
+#include "state.hh"
 
 #include <iostream>
 #include <sstream>
 #include <cassert>
 #include <cstring>
-#include <set>
-#include <algorithm>
 
 static string make_safe_name(ivl_signal_t sig);
 
-static vhdl_entity *g_active_entity = NULL;
-
-vhdl_entity *get_active_entity()
-{
-   return g_active_entity;
-}
-
-void set_active_entity(vhdl_entity *ent)
-{
-   g_active_entity = ent;
-}
-
-/*
- * Set of scopes that are treated as the default examples of
- * that type. Any other scopes of the same type are ignored.
- */
-typedef set<ivl_scope_t> default_scopes_t;
-static default_scopes_t g_default_scopes;
-
-/*
- * True if two scopes have the same type name.
- */
-static bool same_scope_type_name(ivl_scope_t a, ivl_scope_t b)
-{
-   return strcmp(ivl_scope_tname(a), ivl_scope_tname(b)) == 0;
-}
-
-/*
- * True if we have already seen a scope with this type before.
- * If the result is `false' then s is stored in the set of seen
- * scopes.
- */
-static bool seen_this_scope_type(ivl_scope_t s)
-{
-   debug_msg("Seen scope type? %s", ivl_scope_tname(s));
-   if (find_if(g_default_scopes.begin(), g_default_scopes.end(),
-               bind1st(ptr_fun(same_scope_type_name), s))
-       == g_default_scopes.end()) {
-      g_default_scopes.insert(s);
-      return false;
-   }
-   else
-      return true;
-}
-
-/*
- * True if this scope is the default example of this scope type.
- * All other instances of this scope type are ignored.
- */
-bool is_default_scope_instance(ivl_scope_t s)
-{
-   return find(g_default_scopes.begin(), g_default_scopes.end(), s)
-      != g_default_scopes.end();
-}
 
 /*
  * This represents the portion of a nexus that is visible within

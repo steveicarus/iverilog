@@ -20,6 +20,7 @@
 
 #include "vhdl_target.h"
 #include "support.hh"
+#include "state.hh"
 
 #include <iostream>
 #include <cassert>
