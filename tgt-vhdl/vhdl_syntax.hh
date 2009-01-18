@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,13 +26,15 @@
 #include "vhdl_element.hh"
 #include "vhdl_type.hh"
 
+using namespace std;
+
 class vhdl_scope;
 class vhdl_entity;
 class vhdl_arch;
 
 class vhdl_expr : public vhdl_element {
 public:
-   vhdl_expr(vhdl_type* type, bool isconst=false)
+   vhdl_expr(const vhdl_type* type, bool isconst=false)
       : type_(type), isconst_(isconst) {}
    virtual ~vhdl_expr();
 
@@ -46,7 +48,7 @@ public:
    virtual vhdl_expr *to_std_logic();
    virtual vhdl_expr *to_vector(vhdl_type_name_t name, int w);
 protected:
-   vhdl_type *type_;
+   const vhdl_type *type_;
    bool isconst_;
 };
 
@@ -56,7 +58,7 @@ protected:
  */
 class vhdl_var_ref : public vhdl_expr {
 public:
-   vhdl_var_ref(const char *name, vhdl_type *type,
+   vhdl_var_ref(const string& name, const vhdl_type *type,
                 vhdl_expr *slice = NULL)
       : vhdl_expr(type), name_(name), slice_(slice) {}
    ~vhdl_var_ref();
@@ -538,7 +540,7 @@ private:
  */
 class vhdl_decl : public vhdl_element {
 public:
-   vhdl_decl(const char *name, vhdl_type *type = NULL,
+   vhdl_decl(const string& name, const vhdl_type *type = NULL,
              vhdl_expr *initial = NULL)
       : name_(name), type_(type), initial_(initial),
         has_initial_(initial != NULL) {}
@@ -551,7 +553,9 @@ public:
    bool has_initial() const { return has_initial_; }
 
    // The different sorts of assignment statement
-   enum assign_type_t { ASSIGN_BLOCK, ASSIGN_NONBLOCK };
+   // ASSIGN_CONST is used to generate a variable to shadow a
+   // constant that cannot be assigned to (e.g. a function parameter)
+   enum assign_type_t { ASSIGN_BLOCK, ASSIGN_NONBLOCK, ASSIGN_CONST };
    
    // Get the sort of assignment statement to generate for
    // assignemnts to this declaration
@@ -561,7 +565,7 @@ public:
    virtual assign_type_t assignment_type() const { assert(false); }
 protected:
    std::string name_;
-   vhdl_type *type_;
+   const vhdl_type *type_;
    vhdl_expr *initial_;
    bool has_initial_;
 };
@@ -589,7 +593,7 @@ private:
 
 class vhdl_type_decl : public vhdl_decl {
 public:
-   vhdl_type_decl(const char *name, vhdl_type *base)
+   vhdl_type_decl(const string& name, const vhdl_type *base)
       : vhdl_decl(name, base) {}
    void emit(std::ostream &of, int level) const;
 };
@@ -600,7 +604,7 @@ public:
  */
 class vhdl_var_decl : public vhdl_decl {
 public:
-   vhdl_var_decl(const char *name, vhdl_type *type)
+   vhdl_var_decl(const string& name, const vhdl_type *type)
       : vhdl_decl(name, type) {}
    void emit(std::ostream &of, int level) const;
    assign_type_t assignment_type() const { return ASSIGN_BLOCK; }
@@ -627,6 +631,7 @@ public:
    vhdl_param_decl(const char *name, vhdl_type *type)
       : vhdl_decl(name, type) {}
    void emit(std::ostream &of, int level) const;
+   assign_type_t assignment_type() const { return ASSIGN_CONST; }
 };
 
 enum vhdl_port_mode_t {

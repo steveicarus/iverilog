@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for statements.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -137,9 +137,29 @@ static vhdl_var_ref *make_assign_lhs(ivl_lval_t lval, vhdl_scope *scope)
    string signame(get_renamed_signal(sig));
    vhdl_decl *decl = scope->get_decl(signame);
    assert(decl);
+
+   // Verilog allows assignments to elements that are constant in VHDL:
+   // function parameters, for example
+   // To work around this we generate a local variable to shadow the
+   // constant and assign to that
+   if (decl->assignment_type() == vhdl_decl::ASSIGN_CONST) {
+      const string shadow_name = signame + "_Shadow";
+      vhdl_var_decl* shadow_decl =
+         new vhdl_var_decl(shadow_name, decl->get_type());
+      shadow_decl->set_initial
+         (new vhdl_var_ref(signame, decl->get_type()));
+      scope->add_decl(shadow_decl);
+
+      // Make sure all future references to this signal use the
+      // shadow variable
+      rename_signal(sig, shadow_name);
+
+      // ...and use this new variable as the assignment LHS
+      decl = shadow_decl;
+   }
    
    vhdl_type *ltype = new vhdl_type(*decl->get_type());
-   vhdl_var_ref *lval_ref = new vhdl_var_ref(signame.c_str(), ltype);
+   vhdl_var_ref *lval_ref = new vhdl_var_ref(decl->get_name(), ltype);
    if (base) {
       if (decl->get_type()->get_name() == VHDL_TYPE_ARRAY)
          lval_ref->set_slice(base, 0);
@@ -175,6 +195,7 @@ assign_for(vhdl_decl::assign_type_t atype, vhdl_var_ref *lhs, vhdl_expr *rhs)
 {
    switch (atype) {
    case vhdl_decl::ASSIGN_BLOCK:
+   case vhdl_decl::ASSIGN_CONST:
       return new vhdl_assign_stmt(lhs, rhs);
    case vhdl_decl::ASSIGN_NONBLOCK:
       return new vhdl_nbassign_stmt(lhs, rhs);
@@ -1336,6 +1357,16 @@ int draw_casezx(vhdl_procedural *proc, stmt_container *container,
 int draw_while(vhdl_procedural *proc, stmt_container *container,
                ivl_statement_t stmt)
 {
+   // Generate the body inside a temporary container before
+   // generating the test
+   // The reason for this is that some of the signals in the
+   // test might be renamed while expanding the body (e.g. if
+   // we need to generate an assignment to a constant signal)
+   stmt_container tmp_container;
+   int rc = draw_stmt(proc, &tmp_container, ivl_stmt_sub_stmt(stmt));
+   if (rc != 0)
+      return 1;
+   
    vhdl_expr *test = translate_expr(ivl_stmt_cond_expr(stmt));
    if (NULL == test)
       return 1;
@@ -1346,10 +1377,9 @@ int draw_while(vhdl_procedural *proc, stmt_container *container,
    test = test->cast(&boolean);
 
    vhdl_while_stmt *loop = new vhdl_while_stmt(test);
-   container->add_stmt(loop);
-
    draw_stmt(proc, loop->get_container(), ivl_stmt_sub_stmt(stmt));
    
+   container->add_stmt(loop);
    return 0;
 }
 
