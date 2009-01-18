@@ -719,7 +719,8 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
    // If this container is the top-level statement (i.e. it is the
    // first thing inside a process) then we can extract these
    // events out into the sensitivity list
-   bool is_top_level = proc->get_container()->empty();
+   bool is_top_level = container == proc->get_container()
+      && container->empty();
 
    // See if this can be implemented in a more idomatic way before we
    // fall back on the generic translation
