@@ -1615,6 +1615,12 @@ static PLI_INT32 sys_end_of_compile(p_cb_data cb_data)
       return 0;
 }
 
+static PLI_INT32 sys_end_of_simulation(p_cb_data cb_data)
+{
+      free(timeformat_info.suff);
+      return 0;
+}
+
 static PLI_INT32 sys_timeformat_compiletf(PLI_BYTE8*name)
 {
       vpiHandle callh   = vpi_handle(vpiSysTfCall, 0);
@@ -2166,7 +2172,13 @@ void sys_display_register()
       vpi_register_systf(&tf_data);
 
       cb_data.reason = cbEndOfCompile;
+      cb_data.time = 0;
       cb_data.cb_rtn = sys_end_of_compile;
+      cb_data.user_data = "system";
+      vpi_register_cb(&cb_data);
+
+      cb_data.reason = cbEndOfSimulation;
+      cb_data.cb_rtn = sys_end_of_simulation;
       cb_data.user_data = "system";
       vpi_register_cb(&cb_data);
 }

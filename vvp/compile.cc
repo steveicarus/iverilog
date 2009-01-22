@@ -660,6 +660,7 @@ void compile_cleanup(void)
       sym_functors = 0;
 
       compile_island_cleanup();
+      compile_array_cleanup();
 
       if (verbose_flag) {
 	    fprintf(stderr, " ... Compiletf functions\n");

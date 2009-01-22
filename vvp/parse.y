@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1015,5 +1015,6 @@ int compile_design(const char*path)
       }
 
       int rc = yyparse();
+      fclose(yyin);
       return rc;
 }
