@@ -196,6 +196,7 @@ public:
    void emit(std::ostream &of, int level) const;
    vhdl_expr *to_boolean();
    vhdl_expr *to_integer();
+   vhdl_expr *to_vector(vhdl_type_name_t name, int w);
 private:
    char bit_;
 };

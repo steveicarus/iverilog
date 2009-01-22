@@ -522,13 +522,17 @@ static vhdl_expr *translate_ufunc(ivl_expr_t e)
    vhdl_fcall *fcall = new vhdl_fcall(funcname, rettype);
 
    int nparams = ivl_expr_parms(e);
+   int func_scope_sig = 0;
    for (int i = 0; i < nparams; i++) {
       vhdl_expr *param = translate_expr(ivl_expr_parm(e, i));
       if (NULL == param)
          return NULL;
       
       // Ensure the parameter has the correct VHDL type
-      ivl_signal_t param_sig = ivl_scope_sig(defscope, i);  
+      ivl_signal_t param_sig;
+      do {
+          param_sig = ivl_scope_sig(defscope, func_scope_sig++);
+      } while (ivl_signal_port(param_sig) != IVL_SIP_INPUT);
       vhdl_type *param_type =
          vhdl_type::type_for(ivl_signal_width(param_sig),
                              ivl_signal_signed(param_sig) != 0);

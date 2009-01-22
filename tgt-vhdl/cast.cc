@@ -292,3 +292,9 @@ vhdl_expr *vhdl_const_bit::to_boolean()
 {
    return new vhdl_const_bool(bit_ == '1');
 }
+
+vhdl_expr *vhdl_const_bit::to_vector(vhdl_type_name_t name, int w)
+{
+   // Zero-extend this bit to the correct width
+   return (new vhdl_const_bits(&bit_, 1, name == VHDL_TYPE_SIGNED))->resize(w);
+}
