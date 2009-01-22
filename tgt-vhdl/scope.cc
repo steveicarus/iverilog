@@ -84,7 +84,14 @@ static void link_scope_to_nexus_signal(nexus_private_t *priv, vhdl_scope *scope,
    if ((sn = visible_nexus(priv, scope))) {
       assert(sn->tmpname == "");
 
-      sn->connect.push_back(sig);
+      // Remember to connect this signal up later
+      // If one of the signals is a input, make sure the input is not being driven
+      if (ivl_signal_port(sn->sig) == IVL_SIP_INPUT) {
+         sn->connect.push_back(sn->sig);
+         sn->sig = sig;
+      }
+      else
+         sn->connect.push_back(sig);
    }
    else {
       scope_nexus_t new_sn = { scope, sig, pin, "" };
@@ -863,25 +870,29 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
             // Connect up any signals which are wired together in the
             // same nexus
             scope_nexus_t *sn = visible_nexus(priv, arch_scope);
-            for (list<ivl_signal_t>::const_iterator it = sn->connect.begin();
-                 it != sn->connect.end();
-                 ++it) {
-               vhdl_type* rtype =
-                  vhdl_type::type_for(ivl_signal_width(sn->sig),
-                                      ivl_signal_signed(sn->sig));
-               vhdl_type* ltype =
-                  vhdl_type::type_for(ivl_signal_width(*it),
-                                      ivl_signal_signed(*it));
-               
-               vhdl_var_ref *rref =
-                  new vhdl_var_ref(get_renamed_signal(sn->sig).c_str(), rtype);
-               vhdl_var_ref *lref =
-                  new vhdl_var_ref(get_renamed_signal(*it).c_str(), ltype);
 
-               // Make sure the LHS and RHS have the same type
-               vhdl_expr* rhs = rref->cast(lref->get_type());
-               
-               ent->get_arch()->add_stmt(new vhdl_cassign_stmt(lref, rhs));
+            // Make sure we don't drive inputs
+            if (ivl_signal_port(sn->sig) != IVL_SIP_INPUT) { 
+               for (list<ivl_signal_t>::const_iterator it = sn->connect.begin();
+                    it != sn->connect.end();
+                    ++it) {
+                  vhdl_type* rtype =
+                     vhdl_type::type_for(ivl_signal_width(sn->sig),
+                                         ivl_signal_signed(sn->sig));
+                  vhdl_type* ltype =
+                     vhdl_type::type_for(ivl_signal_width(*it),
+                                         ivl_signal_signed(*it));
+                  
+                  vhdl_var_ref *rref =
+                     new vhdl_var_ref(get_renamed_signal(sn->sig).c_str(), rtype);
+                  vhdl_var_ref *lref =
+                     new vhdl_var_ref(get_renamed_signal(*it).c_str(), ltype);
+                  
+                  // Make sure the LHS and RHS have the same type
+                  vhdl_expr* rhs = rref->cast(lref->get_type());
+                  
+                  ent->get_arch()->add_stmt(new vhdl_cassign_stmt(lref, rhs));
+               }
             }
             sn->connect.clear();               
          }           
