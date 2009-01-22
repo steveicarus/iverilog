@@ -181,8 +181,9 @@ public:
    vhdl_expr *to_vector(vhdl_type_name_t name, int w);
    vhdl_expr *resize(int w);
 private:
-   int bits_to_int() const;
+   int64_t bits_to_int() const;
    char sign_bit() const;
+   bool has_meta_bits() const;
    
    std::string value_;
    bool qualified_, signed_;

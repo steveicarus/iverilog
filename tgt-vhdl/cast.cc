@@ -221,13 +221,13 @@ vhdl_expr *vhdl_const_int::to_vector(vhdl_type_name_t name, int w)
       return vhdl_expr::to_vector(name, w);
 }
 
-int vhdl_const_bits::bits_to_int() const
+int64_t vhdl_const_bits::bits_to_int() const
 {
    char msb = value_[value_.size() - 1];
-   int result = 0, bit;
-   for (int i = sizeof(int)*8 - 1; i >= 0; i--) {
+   int64_t result = 0, bit;
+   for (int i = sizeof(int64_t)*8 - 1; i >= 0; i--) {
       if (i > (int)value_.size() - 1)
-         bit = msb == '1' ? 1 : 0;
+         bit = (msb == '1' && signed_) ? 1 : 0;
       else
          bit = value_[i] == '1' ? 1 : 0;
       result = (result << 1) | bit;

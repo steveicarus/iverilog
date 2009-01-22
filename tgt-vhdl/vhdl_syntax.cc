@@ -26,6 +26,9 @@
 #include <iostream>
 #include <typeinfo>
 #include <algorithm>
+#include <iomanip>
+
+using namespace std;
 
 vhdl_scope::vhdl_scope()
    : parent_(NULL), init_(false), sig_assign_(true)
@@ -564,17 +567,36 @@ vhdl_const_bits::vhdl_const_bits(const char *value, int width, bool issigned)
       value_.push_back(*value++);
 }
 
+// True if char is not '1' or '0'
+static bool is_meta_bit(char c)
+{
+   return c != '1' && c != '0';
+}
+
+// True if the bit strings contains characters other than '1' and '0'
+bool vhdl_const_bits::has_meta_bits() const
+{
+   return find_if(value_.begin(), value_.end(), is_meta_bit) != value_.end();
+}
+
 void vhdl_const_bits::emit(std::ostream &of, int level) const
 {
    if (qualified_)
-      of << (signed_ ? "signed" : "unsigned") << "'(\"";
-   else
-      of << "\"";
+      of << (signed_ ? "signed" : "unsigned") << "'(";
 
-   // The bits appear to be in reverse order
-   std::string::const_reverse_iterator it;
-   for (it = value_.rbegin(); it != value_.rend(); ++it)
-      of << vl_to_vhdl_bit(*it);
+   // If it's a width we can write in hex, prefer that over binary
+   size_t bits = value_.size();
+   if (!signed_ && !has_meta_bits() && bits <= 64 && bits % 4 == 0) {
+      int64_t ival = bits_to_int();
+      of << "X\"" << hex << setfill('0') << setw(bits / 4) << ival;
+   }
+   else { 
+      of << "\"";
+      
+      std::string::const_reverse_iterator it;
+      for (it = value_.rbegin(); it != value_.rend(); ++it)
+         of << vl_to_vhdl_bit(*it);
+   }
 
    of << (qualified_ ? "\")" : "\"");
 }
@@ -586,7 +608,7 @@ void vhdl_const_bit::emit(std::ostream &of, int level) const
 
 void vhdl_const_int::emit(std::ostream &of, int level) const
 {
-   of << value_;
+   of << dec << value_;
    // We need to find a way to display a comment, since $time, etc. add one.
 }
 
@@ -597,7 +619,7 @@ void vhdl_const_bool::emit(std::ostream &of, int level) const
 
 void vhdl_const_time::emit(std::ostream &of, int level) const
 {
-   of << value_;
+   of << dec << value_;
    switch (units_) {
    case TIME_UNIT_NS:
       of << " ns";
