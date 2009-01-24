@@ -1239,6 +1239,27 @@ void array_word_change(vvp_array_t array, unsigned long addr)
       }
 }
 
+class array_resolv_list_t : public resolv_list_s {
+
+    public:
+      explicit array_resolv_list_t(char*lab) : resolv_list_s(lab) { }
+
+      vvp_array_t*array;
+      bool resolve(bool mes);
+
+    private:
+};
+
+bool array_resolv_list_t::resolve(bool mes)
+{
+      *array = array_find(label());
+      if (*array == 0) {
+	    assert(!mes);
+	    return false;
+      }
+      return true;
+}
+
 class array_port_resolv_list_t : public resolv_list_s {
 
     public:
@@ -1375,14 +1396,15 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned addr)
 
       obj->base.vpi_type = &vpip_array_vthr_A_rt;
 
-      obj->array = array_find(label);
-      assert(obj->array);
-      free(label);
+      array_resolv_list_t*resolv_mem
+	    = new array_resolv_list_t(label);
+
+      resolv_mem->array = &obj->array;
+      resolv_submit(resolv_mem);
 
       obj->address_handle = 0;
       obj->address = addr;
       obj->wid = 0;
-      assert(addr < obj->array->array_count);
 
       return &(obj->base);
 }
@@ -1394,9 +1416,11 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid)
 
       obj->base.vpi_type = &vpip_array_vthr_A_rt;
 
-      obj->array = array_find(label);
-      assert(obj->array);
-      free(label);
+      array_resolv_list_t*resolv_mem
+	    = new array_resolv_list_t(label);
+
+      resolv_mem->array = &obj->array;
+      resolv_submit(resolv_mem);
 
       obj->address_handle = 0;
       obj->address = tbase;
@@ -1412,9 +1436,11 @@ vpiHandle vpip_make_vthr_A(char*label, char*symbol)
 
       obj->base.vpi_type = &vpip_array_vthr_A_rt;
 
-      obj->array = array_find(label);
-      assert(obj->array);
-      free(label);
+      array_resolv_list_t*resolv_mem
+	    = new array_resolv_list_t(label);
+
+      resolv_mem->array = &obj->array;
+      resolv_submit(resolv_mem);
 
       obj->address_handle = 0;
       compile_vpi_lookup(&obj->address_handle, symbol);
@@ -1430,9 +1456,11 @@ vpiHandle vpip_make_vthr_A(char*label, vpiHandle handle)
 
       obj->base.vpi_type = &vpip_array_vthr_A_rt;
 
-      obj->array = array_find(label);
-      assert(obj->array);
-      free(label);
+      array_resolv_list_t*resolv_mem
+	    = new array_resolv_list_t(label);
+
+      resolv_mem->array = &obj->array;
+      resolv_submit(resolv_mem);
 
       obj->address_handle = handle;
       obj->address = 0;
