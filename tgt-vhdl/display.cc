@@ -1,7 +1,7 @@
 /*
  *  VHDL implementation of $display.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -97,6 +97,13 @@ static void flush_string(std::ostringstream &ss, stmt_container *container)
    ss.str("");
 }
 
+// This should display the hierarchical module name, but we don't support
+// this in VHDL. So just emit a warning.
+static void display_m(stmt_container* container)
+{
+   cerr << "Warning: no VHDL translation for %m format code" << endl;
+}
+
 /*
  * Generate VHDL for the $display system task.
  * This is implemented using the functions in std.textio. Each
@@ -150,21 +157,24 @@ int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
                
                // Skip over width for now
                while (isdigit(*p)) ++p;
-               
-               // TODO: This needs to be re-written
-               // ...it does not handle format codes at all!
-               // Unfortunately, there is no printf-like
-               // function in VHDL
 
-               assert(i < count);
-               ivl_expr_t netp = ivl_stmt_parm(stmt, i++);
-               assert(netp);
-               
-               vhdl_expr *base = translate_expr(netp);
-               if (NULL == base)
-                  return 1;
-               
-               display_write(container, base);
+               switch (*p) {
+               case 'm':
+                  display_m(container);
+                  break;
+               default:
+                  {
+                     assert(i < count);
+                     ivl_expr_t netp = ivl_stmt_parm(stmt, i++);
+                     assert(netp);
+                     
+                     vhdl_expr *base = translate_expr(netp);
+                     if (NULL == base)
+                        return 1;
+                     
+                     display_write(container, base);
+                  }
+               }
             }
             else
                ss << *p;
