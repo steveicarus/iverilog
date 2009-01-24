@@ -195,6 +195,16 @@ vhdl_expr *vhdl_expr::resize(int newwidth)
       rtype = vhdl_type::nsigned(newwidth);
    else if (type_->get_name() == VHDL_TYPE_UNSIGNED)
       rtype = vhdl_type::nunsigned(newwidth);
+   else if (type_->get_name() == VHDL_TYPE_STD_LOGIC) {
+      // Pad it with zeros
+      vhdl_expr* zeros = new vhdl_const_bits(string(newwidth - 1, '0').c_str(),
+                                             newwidth - 1, false, true);
+
+      vhdl_binop_expr* concat =
+         new vhdl_binop_expr(zeros, VHDL_BINOP_CONCAT, this,
+                             vhdl_type::nunsigned(newwidth));
+      return concat;      
+   }
    else
       return this;   // Doesn't make sense to resize non-vector type
    

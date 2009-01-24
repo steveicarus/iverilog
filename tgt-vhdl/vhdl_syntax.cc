@@ -501,13 +501,10 @@ void vhdl_var_ref::set_slice(vhdl_expr *s, int w)
       
    vhdl_type_name_t tname = type_->get_name();
    if (tname == VHDL_TYPE_ARRAY) {
-      type_ = new vhdl_type(*type_->get_base());
+      type_ = type_->get_base();
    }
    else {
       assert(tname == VHDL_TYPE_UNSIGNED || tname == VHDL_TYPE_SIGNED);
-
-      if (type_)
-         delete type_;
       
       if (w > 0)
          type_ = new vhdl_type(tname, w);
@@ -578,10 +575,11 @@ void vhdl_assign_stmt::emit(std::ostream &of, int level) const
    of << ";";
 }
 
-vhdl_const_bits::vhdl_const_bits(const char *value, int width, bool issigned)   
+vhdl_const_bits::vhdl_const_bits(const char *value, int width, bool issigned,
+                                 bool qualify)   
    : vhdl_expr(issigned ? vhdl_type::nsigned(width)
                : vhdl_type::nunsigned(width), true),
-     qualified_(false),
+     qualified_(qualify),
      signed_(issigned)
 {   
    // Can't rely on value being NULL-terminated
@@ -608,8 +606,9 @@ void vhdl_const_bits::emit(std::ostream &of, int level) const
 
    // If it's a width we can write in hex, prefer that over binary
    size_t bits = value_.size();
-   if (!signed_ && !has_meta_bits() && bits <= 64 && bits % 4 == 0) {
-      int64_t ival = bits_to_int();
+   int64_t ival = bits_to_int();
+   if ((!signed_ || ival >= 0)
+       && !has_meta_bits() && bits <= 64 && bits % 4 == 0) {
       of << "X\"" << hex << setfill('0') << setw(bits / 4) << ival;
    }
    else { 

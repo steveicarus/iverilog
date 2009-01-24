@@ -173,7 +173,8 @@ private:
 
 class vhdl_const_bits : public vhdl_expr {
 public:
-   vhdl_const_bits(const char *value, int width, bool issigned);
+   vhdl_const_bits(const char *value, int width, bool issigned,
+                   bool qualify=false);
    void emit(std::ostream &of, int level) const;
    const std::string &get_value() const { return value_; }
    vhdl_expr *to_integer();

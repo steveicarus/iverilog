@@ -348,20 +348,16 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
       static int tmp_count = 0;
       ostringstream ss;
       ss << "Verilog_Assign_Tmp_" << tmp_count++;
-      string tmpname = ss.str();
 
-      proc->get_scope()->add_decl
-         (new vhdl_var_decl(tmpname.c_str(), new vhdl_type(*rhs->get_type())));
+      vhdl_decl* tmp_decl = new vhdl_var_decl(ss.str(), rhs->get_type());
+      proc->get_scope()->add_decl(tmp_decl);
 
-      vhdl_var_ref *tmp_ref =
-         new vhdl_var_ref(tmpname.c_str(), new vhdl_type(*rhs->get_type()));
-      container->add_stmt(new vhdl_assign_stmt(tmp_ref, rhs));
+      container->add_stmt(new vhdl_assign_stmt(tmp_decl->make_ref(), rhs));
       
       list<vhdl_var_ref*>::iterator it;
       int width_so_far = 0;
       for (it = lvals.begin(); it != lvals.end(); ++it) {
-         vhdl_var_ref *tmp_rhs =
-            new vhdl_var_ref(tmpname.c_str(), new vhdl_type(*rhs->get_type()));
+         vhdl_var_ref *tmp_rhs = tmp_decl->make_ref();
          
          int lval_width = (*it)->get_type()->get_width();
          vhdl_expr *slice_base = new vhdl_const_int(width_so_far);
