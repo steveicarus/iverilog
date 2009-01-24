@@ -1,7 +1,7 @@
-#ifndef __stringheap_H
-#define __stringheap_H
+#ifndef __vvp_cleanup_H
+#define __vvp_cleanup_H
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2009 Cary R. (cygcary@yahoo.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,18 +19,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-struct stringheap_cell;
+# include "pointers.h"
+# include "vpi_priv.h"
+# include "vvp_net.h"
 
-struct stringheap_s {
-      struct stringheap_cell*cell_lst;
-      unsigned cell_off;
-};
+/* Routines used to cleanup the runtime memory when it is all finished. */
 
-/*
- * Allocate the string from the heap.
- */
-const char*strdup_sh(struct stringheap_s*hp, const char*str);
-
-void string_heap_delete(struct stringheap_s*hp);
+extern void def_table_delete(void);
+extern void vpi_mcd_delete(void);
+extern void dec_str_delete(void);
+extern void load_module_delete(void);
 
 #endif

@@ -587,8 +587,10 @@ extern void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 enum vpi_rbuf_t {
       RBUF_VAL =0,
 	/* Storage for *_get_value() */
-      RBUF_STR
+      RBUF_STR,
 	/* Storage for *_get_str() */
+      RBUF_DEL
+	/* Delete the storage for both buffers. */
 };
 extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 /* following two routines use need_result_buf(, RBUF_STR) */

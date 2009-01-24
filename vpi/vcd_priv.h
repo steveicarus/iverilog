@@ -1,7 +1,7 @@
 #ifndef __vcd_priv_H
 #define __vcd_priv_H
 /*
- * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,9 +39,12 @@ extern const char *vcd_names_search(struct vcd_names_list_s*tab,
 
 extern void vcd_names_sort(struct vcd_names_list_s*tab);
 
+extern void vcd_names_delete();
 
 extern const char*find_nexus_ident(int nex);
 extern void       set_nexus_ident(int nex, const char *id);
+
+extern void nexus_ident_delete();
 
 /* The compiletf routines are common for the VCD, LXT and LXT2 dumpers. */
 extern PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name);

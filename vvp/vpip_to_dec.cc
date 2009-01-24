@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2008-2009 Stephen Williams <steve@icarus.com>
  * Copyright (c) 2002 Larry Doolittle (larry@doolittle.boa.org)
  *
  *    This source code is free software; you can redistribute it
@@ -20,6 +20,7 @@
 
 # include  "config.h"
 # include  "vpi_priv.h"
+# include  "vvp_cleanup.h"
 # include  <stdio.h>
 # include  <string.h>
 # include  <limits.h>     /* for CHAR_BIT */
@@ -102,6 +103,17 @@ static inline int write_digits(unsigned long v, char **buf,
 	return zero_suppress;
 }
 
+/* Jump through some hoops so we don't have to malloc/free valv
+ * on every call, and implement an optional malloc-less version. */
+static unsigned long *valv=NULL;
+static unsigned int vlen_alloc=0;
+
+void dec_str_delete(void)
+{
+      free(valv);
+      valv = 0;
+      vlen_alloc = 0;
+}
 
 unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
 			      char *buf, unsigned int nbuf,
@@ -110,10 +122,6 @@ unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
       unsigned int idx, len, vlen;
       unsigned int mbits=vec4.size();   /* number of non-sign bits */
       unsigned count_x = 0, count_z = 0;
-	/* Jump through some hoops so we don't have to malloc/free valv
-	 * on every call, and implement an optional malloc-less version. */
-      static unsigned long *valv=NULL;
-      static unsigned int vlen_alloc=0;
 
       unsigned long val=0;
       int comp=0;
@@ -215,8 +223,6 @@ unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
 		/* printf("\n"); */
 	      *buf='\0';
 	}
-	/* hold on to the memory, since we expect to be called again. */
-	/* free(valv); */
 	return 0;
 }
 

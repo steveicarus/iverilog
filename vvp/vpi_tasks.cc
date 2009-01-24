@@ -25,6 +25,7 @@
 # include  "vpi_priv.h"
 # include  "vthread.h"
 # include  "compile.h"
+# include  "vvp_cleanup.h"
 # include  <stdio.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -519,6 +520,16 @@ static struct __vpiUserSystf* allocate_def(void)
       return def_table[def_count++];
 }
 
+void def_table_delete(void)
+{
+      for (unsigned idx = 0; idx < def_count; idx += 1) {
+	    free(const_cast<char *>(def_table[idx]->info.tfname));
+	    free(def_table[idx]);
+      }
+      free(def_table);
+      def_table = 0;
+      def_count = 0;
+}
 
 struct __vpiUserSystf* vpip_find_systf(const char*name)
 {

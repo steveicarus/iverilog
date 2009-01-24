@@ -341,6 +341,7 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
       free(value.value.vector);
       free(path);
       fclose(file);
+      destroy_readmem_lexor(file);
       return 0;
 }
 

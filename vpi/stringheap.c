@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -60,3 +60,14 @@ const char*strdup_sh(struct stringheap_s*hp, const char*txt)
       return res;
 }
 
+void string_heap_delete(struct stringheap_s*hp)
+{
+      struct stringheap_cell *cur, *tmp;
+
+      for (cur = hp->cell_lst; cur ; cur = tmp) {
+	    tmp = cur->next;
+	    free((char *)cur);
+      }
+      hp->cell_lst = 0;
+      hp->cell_off = 0;
+}

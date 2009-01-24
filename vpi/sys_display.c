@@ -1615,12 +1615,6 @@ static PLI_INT32 sys_end_of_compile(p_cb_data cb_data)
       return 0;
 }
 
-static PLI_INT32 sys_end_of_simulation(p_cb_data cb_data)
-{
-      free(timeformat_info.suff);
-      return 0;
-}
-
 static PLI_INT32 sys_timeformat_compiletf(PLI_BYTE8*name)
 {
       vpiHandle callh   = vpi_handle(vpiSysTfCall, 0);
@@ -1858,6 +1852,21 @@ static PLI_INT32 sys_printtimescale_calltf(PLI_BYTE8*xx)
       vpi_printf("%s / ", pts_convert(vpi_get(vpiTimeUnit, scope)));
       vpi_printf("%s\n", pts_convert(vpi_get(vpiTimePrecision, scope)));
 
+      return 0;
+}
+
+static PLI_INT32 sys_end_of_simulation(p_cb_data cb_data)
+{
+      free(monitor_callbacks);
+      monitor_callbacks = 0;
+      free(monitor_info.filename);
+      free(monitor_info.items);
+      monitor_info.items = 0;
+      monitor_info.nitems = 0;
+      monitor_info.name = 0;
+
+      free(timeformat_info.suff);
+      timeformat_info.suff = 0;
       return 0;
 }
 

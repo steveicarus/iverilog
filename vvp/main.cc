@@ -24,6 +24,7 @@
 # include  "schedule.h"
 # include  "vpi_priv.h"
 # include  "statistics.h"
+# include  "vvp_cleanup.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
@@ -424,6 +425,14 @@ int main(int argc, char*argv[])
            cur != file_names.end() ; cur++) {
 	    delete[] *cur;
       }
+      (void)need_result_buf(0, RBUF_DEL);
+// These are not finished.
+//      codespace_delete();
+//      root_table_delete();
+      def_table_delete();
+      vpi_mcd_delete();
+      dec_str_delete();
+      load_module_delete();
 
       return vvp_return_value;
 }

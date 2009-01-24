@@ -5,7 +5,7 @@
 
 %{
 /*
- * Copyright (c) 2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -151,6 +151,20 @@ static void process_quoted_string(void)
       endp[-1] = 0;
 }
 
+/*
+ * Modern version of flex (>=2.5.9) can clean up the scanner data.
+ */
+static void destroy_sdf_lexor()
+{
+# ifdef FLEX_SCANNER
+#   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5
+#     if defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
+    yylex_destroy();
+#     endif
+#   endif
+# endif
+}
+
 extern int sdfparse(void);
 void sdf_process_file(FILE*fd, const char*path)
 {
@@ -158,5 +172,6 @@ void sdf_process_file(FILE*fd, const char*path)
 
       sdf_parse_path = path;
       sdfparse();
+      destroy_sdf_lexor();
       sdf_parse_path = 0;
 }

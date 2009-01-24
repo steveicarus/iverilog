@@ -57,10 +57,22 @@ extern const char oct_digits[64];
  */
 char *need_result_buf(unsigned cnt, vpi_rbuf_t type)
 {
-      cnt = (cnt + 0x0fff) & ~0x0fff;
-
       static char*result_buf[2] = {0, 0};
       static size_t result_buf_size[2] = {0, 0};
+
+      if (type == RBUF_DEL) {
+	    free(result_buf[RBUF_VAL]);
+	    result_buf[RBUF_VAL] = 0;
+	    result_buf_size[RBUF_VAL] = 0;
+
+	    free(result_buf[RBUF_STR]);
+	    result_buf[RBUF_STR] = 0;
+	    result_buf_size[RBUF_STR] = 0;
+
+	    return 0;
+      }
+
+      cnt = (cnt + 0x0fff) & ~0x0fff;
 
       if (result_buf_size[type] == 0) {
 	    result_buf[type] = (char*)malloc(cnt);

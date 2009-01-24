@@ -68,6 +68,21 @@ void vcd_names_add(struct vcd_names_list_s*tab, const char *name)
       tab->listed_names ++;
 }
 
+void vcd_names_delete(struct vcd_names_list_s*tab)
+{
+      struct vcd_names_s *cur, *tmp;
+      for (cur = tab->vcd_names_list; cur; cur = tmp) {
+	    tmp = cur->next;
+	    free(cur);
+      }
+      tab->vcd_names_list = 0;
+      tab->listed_names = 0;
+      free(tab->vcd_names_sorted);
+      tab->vcd_names_sorted = 0;
+      tab->sorted_names = 0;
+      string_heap_delete(&name_heap);
+}
+
 static int vcd_names_compare(const void *s1, const void *s2)
 {
       const char *v1 = *(const char **) s1;
@@ -184,6 +199,23 @@ void set_nexus_ident(int nex, const char *id)
       bucket->id = id;
       bucket->nex = nex;
       vcd_ids[ihash(nex)] = bucket;
+}
+
+void nexus_ident_delete()
+{
+      unsigned idx;
+
+      if (vcd_ids == 0) return;
+
+      for (idx = 0 ; idx < 256; idx = idx += 1) {
+	    struct vcd_id_s *cur, *tmp;
+	    for (cur = vcd_ids[idx]; cur; cur = tmp) {
+		  tmp = cur->next;
+		  free(cur);
+	    }
+      }
+      free(vcd_ids);
+      vcd_ids = 0;
 }
 
 /*

@@ -245,6 +245,7 @@ static PLI_INT32 dumpvars_cb(p_cb_data cause)
 
 static PLI_INT32 finish_cb(p_cb_data cause)
 {
+
       if (finish_status != 0) return 0;
 
       finish_status = 1;
@@ -254,6 +255,12 @@ static PLI_INT32 finish_cb(p_cb_data cause)
       if (!dump_is_off && !dump_is_full && dumpvars_time != vcd_cur_time) {
 	    fprintf(dump_file, "#%" PLI_UINT64_FMT "\n", dumpvars_time);
       }
+
+      vcd_names_delete(&vcd_tab);
+      vcd_names_delete(&vcd_var);
+      nexus_ident_delete();
+      free(dump_path);
+      dump_path = 0;
 
       return 0;
 }

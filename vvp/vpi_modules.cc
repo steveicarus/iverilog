@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,10 +20,14 @@
 # include  "config.h"
 # include  "vpi_priv.h"
 # include  "ivl_dlfcn.h"
+# include  "vvp_cleanup.h"
 # include  <stdio.h>
 # include  <string.h>
 # include  <sys/types.h>
 # include  <sys/stat.h>
+
+static ivl_dll_t*dll_list = 0;
+static unsigned dll_list_cnt = 0;
 
 typedef void (*vlog_startup_routines_t)(void);
 
@@ -46,6 +50,16 @@ unsigned vpip_module_path_cnt = 0
          + 1
 #endif
 ;
+
+void load_module_delete(void)
+{
+      for (unsigned idx = 0; idx < dll_list_cnt; idx += 1) {
+	    ivl_dlclose(dll_list[idx]);
+      }
+      free(dll_list);
+      dll_list = 0;
+      dll_list_cnt = 0;
+}
 
 void vpip_load_module(const char*name)
 {
@@ -141,6 +155,11 @@ void vpip_load_module(const char*name)
 	    ivl_dlclose(dll);
 	    return;
       }
+
+	/* Add the dll to the list so it can be closed when we are done. */
+      dll_list_cnt += 1;
+      dll_list = (ivl_dll_t*)realloc(dll_list, dll_list_cnt*sizeof(ivl_dll_t));
+      dll_list[dll_list_cnt-1] = dll;
 
       vpi_mode_flag = VPI_MODE_REGISTER;
       vlog_startup_routines_t*routines = (vlog_startup_routines_t*)table;

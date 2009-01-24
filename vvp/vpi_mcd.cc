@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen G. Tell <steve@telltronics.org>
+ * Copyright (c) 2000-2009 Stephen G. Tell <steve@telltronics.org>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,6 +18,7 @@
  */
 
 # include  "vpi_priv.h"
+# include  "vvp_cleanup.h"
 # include  <assert.h>
 # include  <stdarg.h>
 # include  <stdio.h>
@@ -65,6 +66,25 @@ void vpi_mcd_init(FILE *log)
 	fd_table[2].filename = strdup("stderr");
 
 	logfile = log;
+}
+
+void vpi_mcd_delete(void)
+{
+      free(mcd_table[0].filename);
+      mcd_table[0].filename = 0;
+      mcd_table[0].fp = 0;
+
+      free(fd_table[0].filename);
+      fd_table[0].filename = 0;
+      fd_table[0].fp = 0;
+
+      free(fd_table[1].filename);
+      fd_table[1].filename = 0;
+      fd_table[1].fp = 0;
+
+      free(fd_table[2].filename);
+      fd_table[2].filename = 0;
+      fd_table[2].fp = 0;
 }
 
 /*
