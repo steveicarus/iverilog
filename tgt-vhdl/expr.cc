@@ -91,6 +91,10 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
    vhdl_decl *decl = scope->get_decl(renamed);
    assert(decl);
 
+   // Make sure we can read from this declaration
+   // E.g. if this is an `out' port then we need to make it a buffer
+   decl->ensure_readable();
+
    // Can't generate a constant initialiser for this signal
    // later as it has already been read
    if (scope->initializing())

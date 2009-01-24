@@ -554,6 +554,9 @@ public:
    void set_initial(vhdl_expr *initial);
    bool has_initial() const { return has_initial_; }
 
+   // Return a new reference to this declaration
+   vhdl_var_ref* make_ref() const;
+   
    // The different sorts of assignment statement
    // ASSIGN_CONST is used to generate a variable to shadow a
    // constant that cannot be assigned to (e.g. a function parameter)
@@ -565,6 +568,13 @@ public:
    // to assign to it so calling assignment_type just raises
    // an assertion failure
    virtual assign_type_t assignment_type() const { assert(false); }
+
+   // True if this declaration can be read from
+   virtual bool is_readable() const { return true; }
+   
+   // Modify this declaration so it can be read from
+   // This does nothing for most declaration types
+   virtual void ensure_readable() {}
 protected:
    std::string name_;
    const vhdl_type *type_;
@@ -618,7 +628,7 @@ public:
  */
 class vhdl_signal_decl : public vhdl_decl {
 public:
-   vhdl_signal_decl(const char *name, vhdl_type *type)
+   vhdl_signal_decl(const string& name, const vhdl_type* type)
       : vhdl_decl(name, type) {}
    virtual void emit(std::ostream &of, int level) const;
    assign_type_t assignment_type() const { return ASSIGN_NONBLOCK; }
@@ -658,6 +668,8 @@ public:
    vhdl_port_mode_t get_mode() const { return mode_; }
    void set_mode(vhdl_port_mode_t m) { mode_ = m; }
    assign_type_t assignment_type() const { return ASSIGN_NONBLOCK; }
+   void ensure_readable();
+   bool is_readable() const;
 private:
    vhdl_port_mode_t mode_;
 };

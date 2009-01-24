@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for scopes.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -550,24 +550,25 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    // the child entity, then VHDL will not let us read the value
    // of the signal (i.e. it must pass straight through).
    // However, Verilog allows the signal to be read in the parent.
-   // The VHDL equivalent of this is to make *both* output ports
-   // a `buffer'.
-   vhdl_decl *decl =
-      parent->get_arch()->get_scope()->get_decl(ref->get_name());
-   vhdl_port_decl *pdecl;
-   if ((pdecl = dynamic_cast<vhdl_port_decl*>(decl))
-       && pdecl->get_mode() == VHDL_PORT_OUT) {
+   // The solution used here is to create an intermediate signal
+   // and connect it to both ports.
+   vhdl_decl* from_decl =
+      parent->get_arch()->get_scope()->get_decl(ref->get_name());   
+   if (!from_decl->is_readable()
+       && !arch_scope->have_declared(name + "_Readable")) {
+      vhdl_decl* tmp_decl =
+         new vhdl_signal_decl(name + "_Readable", ref->get_type());
 
-      // First change the mode in the parent entity
-      //pdecl->set_mode(VHDL_PORT_BUFFER);
+      // Add a comment to explain what this is for
+      tmp_decl->set_comment("Needed to connect outputs");
 
-      // Now change the mode in the child entity
-      /*      vhdl_port_decl *to_pdecl =
-         dynamic_cast<vhdl_port_decl*>(find_scope_for_signal(to)->get_decl(name));
-      assert(to_pdecl);
-      to_pdecl->set_mode(VHDL_PORT_BUFFER);*/
+      arch_scope->add_decl(tmp_decl);
+      parent->get_arch()->add_stmt
+         (new vhdl_cassign_stmt(from_decl->make_ref(), tmp_decl->make_ref()));
+
+      ref = tmp_decl->make_ref();
    }
-   
+      
    inst->map_port(name.c_str(), ref);
 }
 

@@ -355,6 +355,12 @@ vhdl_decl::~vhdl_decl()
    
 }
 
+// Make a reference object to this declaration
+vhdl_var_ref* vhdl_decl::make_ref() const
+{
+   return new vhdl_var_ref(name_, type_);
+}
+
 const vhdl_type *vhdl_decl::get_type() const
 {
    assert(type_);
@@ -390,6 +396,19 @@ void vhdl_port_decl::emit(std::ostream &of, int level) const
    }
    
    type_->emit(of, level);
+}
+
+// If this is an `out' port make it a `buffer' so we can read from it
+void vhdl_port_decl::ensure_readable()
+{
+   if (mode_ == VHDL_PORT_OUT)
+      mode_ = VHDL_PORT_BUFFER;
+}
+
+// A port is readable if it is not `out'.
+bool vhdl_port_decl::is_readable() const
+{
+   return mode_ != VHDL_PORT_OUT;
 }
 
 void vhdl_var_decl::emit(std::ostream &of, int level) const

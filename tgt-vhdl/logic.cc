@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for logic devices.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,7 +26,18 @@
 #include <sstream>
 #include <iostream>
 
- 
+// Return a variable reference for a nexus that is guaranteed to
+// be readable.
+static vhdl_var_ref *readable_ref(vhdl_scope* scope, ivl_nexus_t nex)
+{
+   vhdl_var_ref* ref = nexus_to_var_ref(scope, nex);
+   
+   vhdl_decl* decl = scope->get_decl(ref->get_name());
+   decl->ensure_readable();
+
+   return ref;
+}
+
 /*
  * Convert the inputs of a logic gate to a binary expression.
  */
@@ -41,7 +52,8 @@ static vhdl_expr *inputs_to_expr(vhdl_scope *scope, vhdl_binop_t op,
    int npins = ivl_logic_pins(log);
    for (int i = 1; i < npins; i++) {
       ivl_nexus_t input = ivl_logic_pin(log, i);
-      gate->add_expr(nexus_to_var_ref(scope, input));
+      
+      gate->add_expr(readable_ref(scope, input));
    }
 
    return gate;
@@ -56,7 +68,7 @@ static vhdl_expr *input_to_expr(vhdl_scope *scope, vhdl_unaryop_t op,
    ivl_nexus_t input = ivl_logic_pin(log, 1);
    assert(input);
 
-   vhdl_expr *operand = nexus_to_var_ref(scope, input);
+   vhdl_expr *operand = readable_ref(scope, input);
    return new vhdl_unaryop_expr(op, operand, vhdl_type::std_logic()); 
 }
 
@@ -66,11 +78,9 @@ static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
    vhdl_var_ref *lhs = nexus_to_var_ref(arch->get_scope(), output);
    assert(lhs);
    
-   vhdl_expr *val = nexus_to_var_ref(arch->get_scope(), ivl_logic_pin(log, 1));
-   assert(val);
+   vhdl_expr *val = readable_ref(arch->get_scope(), ivl_logic_pin(log, 1));
 
-   vhdl_expr *sel = nexus_to_var_ref(arch->get_scope(), ivl_logic_pin(log, 2));
-   assert(val);
+   vhdl_expr *sel = readable_ref(arch->get_scope(), ivl_logic_pin(log, 2));
 
    vhdl_expr *cmp;
    if (ivl_logic_width(log) == 1) {
