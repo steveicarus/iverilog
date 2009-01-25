@@ -406,9 +406,12 @@ void vhdl_port_decl::ensure_readable()
 }
 
 // A port is readable if it is not `out'.
+// We also make `buffer' ports not readable for these purposes since
+// buffers cannot be directly mapped to outputs without an intermediate
+// signal.
 bool vhdl_port_decl::is_readable() const
 {
-   return mode_ != VHDL_PORT_OUT;
+   return mode_ != VHDL_PORT_OUT && mode_ != VHDL_PORT_BUFFER;
 }
 
 void vhdl_var_decl::emit(std::ostream &of, int level) const

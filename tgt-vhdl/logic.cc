@@ -26,18 +26,6 @@
 #include <sstream>
 #include <iostream>
 
-// Return a variable reference for a nexus that is guaranteed to
-// be readable.
-static vhdl_var_ref *readable_ref(vhdl_scope* scope, ivl_nexus_t nex)
-{
-   vhdl_var_ref* ref = nexus_to_var_ref(scope, nex);
-   
-   vhdl_decl* decl = scope->get_decl(ref->get_name());
-   decl->ensure_readable();
-
-   return ref;
-}
-
 /*
  * Convert the inputs of a logic gate to a binary expression.
  */

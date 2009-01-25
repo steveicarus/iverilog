@@ -28,6 +28,7 @@ vhdl_expr *translate_time_expr(ivl_expr_t e);
 
 ivl_design_t get_vhdl_design();
 vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus);
+vhdl_var_ref* readable_ref(vhdl_scope* scope, ivl_nexus_t nex);
 
 int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
                        ivl_statement_t stmt, bool newline = true);

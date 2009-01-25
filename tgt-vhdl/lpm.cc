@@ -32,7 +32,7 @@ static vhdl_expr *part_select_base(vhdl_scope *scope, ivl_lpm_t lpm)
    vhdl_expr *off;
    ivl_nexus_t base = ivl_lpm_data(lpm, 1);
    if (base != NULL)
-      off = nexus_to_var_ref(scope, base);
+      off = readable_ref(scope, base);
    else
       off = new vhdl_const_int(ivl_lpm_base(lpm));
 
@@ -49,7 +49,7 @@ static vhdl_expr *concat_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
       new vhdl_binop_expr(VHDL_BINOP_CONCAT, result_type);
  
    for (int i = ivl_lpm_selects(lpm) - 1; i >= 0; i--) {
-      vhdl_expr *e = nexus_to_var_ref(scope, ivl_lpm_data(lpm, i));
+      vhdl_expr *e = readable_ref(scope, ivl_lpm_data(lpm, i));
       if (NULL == e)
          return NULL;
 
@@ -67,7 +67,7 @@ static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop
    vhdl_binop_expr *expr = new vhdl_binop_expr(op, result_type);
  
    for (int i = 0; i < 2; i++) {
-      vhdl_expr *e = nexus_to_var_ref(scope, ivl_lpm_data(lpm, i));
+      vhdl_expr *e = readable_ref(scope, ivl_lpm_data(lpm, i));
       if (NULL == e)
          return NULL;
 
@@ -94,7 +94,7 @@ static vhdl_expr *rel_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t
    vhdl_binop_expr *expr = new vhdl_binop_expr(op, vhdl_type::boolean());
   
    for (int i = 0; i < 2; i++) {
-      vhdl_expr *e = nexus_to_var_ref(scope, ivl_lpm_data(lpm, i));
+      vhdl_expr *e = readable_ref(scope, ivl_lpm_data(lpm, i));
       if (NULL == e)
          return NULL;
 
@@ -108,7 +108,7 @@ static vhdl_expr *rel_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t
 
 static vhdl_expr *part_select_vp_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
-   vhdl_var_ref *selfrom = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
+   vhdl_var_ref *selfrom = readable_ref(scope, ivl_lpm_data(lpm, 0));
    if (NULL == selfrom)
       return NULL;
    
@@ -125,7 +125,7 @@ static vhdl_expr *part_select_vp_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 
 static vhdl_expr *part_select_pv_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {   
-   return nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
+   return readable_ref(scope, ivl_lpm_data(lpm, 0));
 }
 
 static vhdl_expr *ufunc_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
@@ -134,7 +134,7 @@ static vhdl_expr *ufunc_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    vhdl_fcall *fcall = new vhdl_fcall(ivl_scope_basename(f_scope), NULL);
 
    for (unsigned i = 0; i < ivl_lpm_size(lpm); i++) {
-      vhdl_var_ref *ref = nexus_to_var_ref(scope, ivl_lpm_data(lpm, i));
+      vhdl_var_ref *ref = readable_ref(scope, ivl_lpm_data(lpm, i));
       if (NULL == ref)
          return NULL;
 
@@ -147,7 +147,7 @@ static vhdl_expr *ufunc_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 static vhdl_expr *reduction_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm,
                                         support_function_t f, bool invert)
 {
-   vhdl_var_ref *ref = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
+   vhdl_var_ref *ref = readable_ref(scope, ivl_lpm_data(lpm, 0));
    if (NULL == ref)
       return NULL;
 
@@ -174,7 +174,7 @@ static vhdl_expr *reduction_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm,
 
 static vhdl_expr *sign_extend_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
-   vhdl_expr *ref = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
+   vhdl_expr *ref = readable_ref(scope, ivl_lpm_data(lpm, 0));
    if (ref)
       return ref->resize(ivl_lpm_width(lpm));
    else
@@ -194,7 +194,7 @@ static vhdl_expr *array_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    
    vhdl_type *atype = new vhdl_type(*adecl->get_type());
 
-   vhdl_expr *select = nexus_to_var_ref(scope, ivl_lpm_select(lpm));
+   vhdl_expr *select = readable_ref(scope, ivl_lpm_select(lpm));
    if (NULL == select)
       return NULL;
    
@@ -208,8 +208,8 @@ static vhdl_expr *array_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 static vhdl_expr *shift_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm,
                                     vhdl_binop_t shift_op)
 {
-   vhdl_expr *lhs = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
-   vhdl_expr *rhs = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 1));
+   vhdl_expr *lhs = readable_ref(scope, ivl_lpm_data(lpm, 0));
+   vhdl_expr *rhs = readable_ref(scope, ivl_lpm_data(lpm, 1));
    if (!lhs || !rhs)
       return NULL;   
    
@@ -223,7 +223,7 @@ static vhdl_expr *shift_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm,
 
 static vhdl_expr *repeat_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 {
-   vhdl_expr *in = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
+   vhdl_expr *in = readable_ref(scope, ivl_lpm_data(lpm, 0));
    return new vhdl_bit_spec_expr(NULL, in);
 }
 
@@ -297,10 +297,10 @@ static int draw_mux_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
 
    vhdl_scope *scope = arch->get_scope();
    
-   vhdl_expr *s0 = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 0));
-   vhdl_expr *s1 = nexus_to_var_ref(scope, ivl_lpm_data(lpm, 1));
+   vhdl_expr *s0 = readable_ref(scope, ivl_lpm_data(lpm, 0));
+   vhdl_expr *s1 = readable_ref(scope, ivl_lpm_data(lpm, 1));
 
-   vhdl_expr *sel = nexus_to_var_ref(scope, ivl_lpm_select(lpm));
+   vhdl_expr *sel = readable_ref(scope, ivl_lpm_select(lpm));
    vhdl_expr *b1 = new vhdl_const_bit('1');
    vhdl_expr *t1 =
       new vhdl_binop_expr(sel, VHDL_BINOP_EQ, b1, vhdl_type::boolean());

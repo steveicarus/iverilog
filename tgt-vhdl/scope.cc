@@ -352,6 +352,18 @@ vhdl_var_ref *nexus_to_var_ref(vhdl_scope *scope, ivl_nexus_t nexus)
    return ref;
 }
 
+// Return a variable reference for a nexus that is guaranteed to
+// be readable.
+vhdl_var_ref* readable_ref(vhdl_scope* scope, ivl_nexus_t nex)
+{
+   vhdl_var_ref* ref = nexus_to_var_ref(scope, nex);
+   
+   vhdl_decl* decl = scope->get_decl(ref->get_name());
+   decl->ensure_readable();
+
+   return ref;
+}
+
 /*
  * Translate all the primitive logic gates into concurrent
  * signal assignments.
@@ -553,7 +565,8 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    // The solution used here is to create an intermediate signal
    // and connect it to both ports.
    vhdl_decl* from_decl =
-      parent->get_arch()->get_scope()->get_decl(ref->get_name());   
+      parent->get_arch()->get_scope()->get_decl(ref->get_name());
+   from_decl->print();
    if (!from_decl->is_readable()
        && !arch_scope->have_declared(name + "_Readable")) {
       vhdl_decl* tmp_decl =
