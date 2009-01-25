@@ -245,7 +245,9 @@ void draw_nexus(ivl_nexus_t nexus)
                                                   ivl_lpm_signed(lpm) != 0);
             ostringstream ss;
             ss << "LPM" << ivl_lpm_basename(lpm);
-            vhdl_scope->add_decl(new vhdl_signal_decl(ss.str().c_str(), type));
+
+            if (!vhdl_scope->have_declared(ss.str()))
+               vhdl_scope->add_decl(new vhdl_signal_decl(ss.str().c_str(), type));
             
             link_scope_to_nexus_tmp(priv, vhdl_scope, ss.str());
          }
@@ -566,7 +568,6 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    // and connect it to both ports.
    vhdl_decl* from_decl =
       parent->get_arch()->get_scope()->get_decl(ref->get_name());
-   from_decl->print();
    if (!from_decl->is_readable()
        && !arch_scope->have_declared(name + "_Readable")) {
       vhdl_decl* tmp_decl =
