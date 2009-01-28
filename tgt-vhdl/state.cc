@@ -149,6 +149,19 @@ struct cmp_ent_name {
    const string& name_;
 };
 
+// Find an entity given its name.
+vhdl_entity* find_entity(const string& name)
+{
+   entity_list_t::const_iterator it
+      = find_if(g_entities.begin(), g_entities.end(),
+                cmp_ent_name(name));
+
+   if (it != g_entities.end())
+      return *it;
+   else
+      return NULL;
+}
+
 // Find a VHDL entity given a Verilog module scope. The VHDL entity
 // name should be the same as the Verilog module type name.
 // Note that this will return NULL if no entity has been recorded
@@ -157,14 +170,7 @@ vhdl_entity* find_entity(const ivl_scope_t scope)
 {
    assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
 
-   entity_list_t::const_iterator it
-      = find_if(g_entities.begin(), g_entities.end(),
-                cmp_ent_name(ivl_scope_tname(scope)));
-
-   if (it != g_entities.end())
-      return *it;
-   else
-      return NULL;
+   return find_entity(ivl_scope_tname(scope));
 }
 
 // Add an entity/architecture pair to the list of entities to emit.

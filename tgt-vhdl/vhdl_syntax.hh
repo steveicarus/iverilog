@@ -719,6 +719,7 @@ public:
    void add_forward_decl(vhdl_decl *decl);
    vhdl_decl *get_decl(const std::string &name) const;
    bool have_declared(const std::string &name) const;
+   bool name_collides(const string& name) const;
    bool contained_within(const vhdl_scope *other) const;
    vhdl_scope *get_parent() const;
    

@@ -74,6 +74,16 @@ bool vhdl_scope::have_declared(const std::string &name) const
    return get_decl(name) != NULL;
 }
 
+// True if `name' differs in all but case from another declaration
+bool vhdl_scope::name_collides(const string& name) const
+{
+   const vhdl_decl* decl = get_decl(name);
+   if (decl)
+      return decl->get_name() != name;
+   else
+      return false;
+}
+
 bool vhdl_scope::contained_within(const vhdl_scope *other) const
 {
    if (this == other)

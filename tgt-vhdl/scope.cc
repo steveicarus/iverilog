@@ -384,10 +384,28 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
  */
 static string make_safe_name(ivl_signal_t sig)
 {
-   const char *base = ivl_signal_basename(sig);      
-   if (base[0] == '_')
-      return string("VL") + base;
+   string base(ivl_signal_basename(sig));
 
+   if (ivl_signal_local(sig))
+      base = "Tmp" + base;
+   
+   if (base[0] == '_')
+      base = "Sig" + base;
+
+   if (*base.rbegin() == '_')
+      base += "Sig";
+
+   // Can't have two consecutive underscores
+   size_t pos = base.find("__");
+   while (pos != string::npos) {
+      base.replace(pos, 2, "_");
+      pos = base.find("__");
+   }
+   
+   // A signal name may not be the same as a component name
+   if (find_entity(base) != NULL)
+      base += "_Sig";
+   
    // This is the complete list of VHDL reserved words
    const char *vhdl_reserved[] = {
       "abs", "access", "after", "alias", "all", "and", "architecture",
@@ -407,12 +425,30 @@ static string make_safe_name(ivl_signal_t sig)
    };
 
    for (const char **p = vhdl_reserved; *p != NULL; p++) {
-      if (strcasecmp(*p, base) == 0) {
-         return string("VL_") + base;
+      if (strcasecmp(*p, base.c_str()) == 0) {
+         return "Sig_" + base;
          break;
       }
    }
    return string(base);
+}
+
+// Check if `name' differs from an existing name only in case and
+// make it unique if it does.
+static void avoid_name_collision(string& name, vhdl_scope* scope)
+{
+   if (scope->name_collides(name)) {
+      name += "_";
+      ostringstream ss;
+      int i = 1;
+      do {
+         // Keep adding an extra number until we get a unique name
+         ss.str("");
+         ss << name << i++;
+      } while (scope->name_collides(ss.str()));
+      
+      name = ss.str();
+   }
 }
 
 /*
@@ -428,6 +464,8 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
       remember_signal(sig, ent->get_arch()->get_scope());
 
       string name(make_safe_name(sig));
+      avoid_name_collision(name, ent->get_arch()->get_scope());
+      
       rename_signal(sig, name);
       
       vhdl_type *sig_type;
@@ -977,7 +1015,11 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
       
       loc = inst_name.find(']', 0);
       if (loc != string::npos)
-         inst_name.erase(loc, 1);         
+         inst_name.erase(loc, 1);
+
+      // Make sure the name doesn't collide with anything we've
+      // already declared
+      avoid_name_collision(inst_name, parent_arch->get_scope());
       
       vhdl_comp_inst *inst =
          new vhdl_comp_inst(inst_name.c_str(), ent->get_name().c_str());
