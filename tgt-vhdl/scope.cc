@@ -589,39 +589,49 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    nexus_private_t *priv =
       static_cast<nexus_private_t*>(ivl_nexus_get_private(nexus));
    assert(priv);
-   if (!visible_nexus(priv, arch_scope)) {
+
+   vhdl_expr *map_to = NULL;
+   const string name(make_safe_name(to));
+
+   // We can only map ports to signals or constants
+   if (visible_nexus(priv, arch_scope)) {
+      vhdl_var_ref *ref = nexus_to_var_ref(parent->get_arch()->get_scope(), nexus);
+
+      // If we're mapping an output of this entity to an output of
+      // the child entity, then VHDL will not let us read the value
+      // of the signal (i.e. it must pass straight through).
+      // However, Verilog allows the signal to be read in the parent.
+      // The solution used here is to create an intermediate signal
+      // and connect it to both ports.
+      vhdl_decl* from_decl =
+         parent->get_arch()->get_scope()->get_decl(ref->get_name());
+      if (!from_decl->is_readable()
+          && !arch_scope->have_declared(name + "_Readable")) {
+         vhdl_decl* tmp_decl =
+            new vhdl_signal_decl(name + "_Readable", ref->get_type());
+         
+         // Add a comment to explain what this is for
+         tmp_decl->set_comment("Needed to connect outputs");
+         
+         arch_scope->add_decl(tmp_decl);
+         parent->get_arch()->add_stmt
+            (new vhdl_cassign_stmt(from_decl->make_ref(), tmp_decl->make_ref()));
+         
+         map_to = tmp_decl->make_ref();
+      }
+      else
+         map_to = ref;
+   }
+   else if (priv->const_driver && ivl_signal_port(to) == IVL_SIP_INPUT) {
+      map_to = priv->const_driver;
+      priv->const_driver = NULL;
+   }
+   else {
       // This nexus isn't attached to anything in the parent
       return;
-   }
+   } 
 
-   vhdl_var_ref *ref = nexus_to_var_ref(parent->get_arch()->get_scope(), nexus);
-
-   string name = make_safe_name(to);
-  
-   // If we're mapping an output of this entity to an output of
-   // the child entity, then VHDL will not let us read the value
-   // of the signal (i.e. it must pass straight through).
-   // However, Verilog allows the signal to be read in the parent.
-   // The solution used here is to create an intermediate signal
-   // and connect it to both ports.
-   vhdl_decl* from_decl =
-      parent->get_arch()->get_scope()->get_decl(ref->get_name());
-   if (!from_decl->is_readable()
-       && !arch_scope->have_declared(name + "_Readable")) {
-      vhdl_decl* tmp_decl =
-         new vhdl_signal_decl(name + "_Readable", ref->get_type());
-
-      // Add a comment to explain what this is for
-      tmp_decl->set_comment("Needed to connect outputs");
-
-      arch_scope->add_decl(tmp_decl);
-      parent->get_arch()->add_stmt
-         (new vhdl_cassign_stmt(from_decl->make_ref(), tmp_decl->make_ref()));
-
-      ref = tmp_decl->make_ref();
-   }
-      
-   inst->map_port(name.c_str(), ref);
+   inst->map_port(name, map_to);
 }
 
 /*

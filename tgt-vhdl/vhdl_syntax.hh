@@ -695,7 +695,7 @@ public:
    ~vhdl_comp_inst();
 
    void emit(std::ostream &of, int level) const;
-   void map_port(const char *name, vhdl_expr *expr);
+   void map_port(const string& name, vhdl_expr *expr);
 
    const std::string &get_comp_name() const { return comp_name_; }
    const std::string &get_inst_name() const { return inst_name_; }

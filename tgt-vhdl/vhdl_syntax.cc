@@ -248,7 +248,7 @@ vhdl_comp_inst::~vhdl_comp_inst()
    
 }
 
-void vhdl_comp_inst::map_port(const char *name, vhdl_expr *expr)
+void vhdl_comp_inst::map_port(const string& name, vhdl_expr *expr)
 {
    port_map_t pmap = { name, expr };
    mapping_.push_back(pmap);
