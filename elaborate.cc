@@ -2404,6 +2404,12 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 {
       assert(scope);
 
+      if (path_.size() > 1) {
+	    cerr << get_fileline() << ": error: Hierarchical system task names"
+		 << " make no sense: " << path_ << endl;
+	    des->errors += 1;
+      }
+
       unsigned parm_count = nparms();
 
 	/* Catch the special case that the system task has no
@@ -2440,6 +2446,18 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 	    } else {
 		  eparms[idx] = 0;
 	    }
+      }
+
+	// Special case: Specify blocks are turned off, and this is an
+	// $sdf_annotate system task. There will be nothing for $sdf
+	// to annotate, and the user is intending to turn the behavior
+	// off anyhow, so replace the system task invocation with a no-op.
+      if (gn_specify_blocks_flag == false
+	  & peek_tail_name(path_) == "$sdf_annotate") {
+
+	    NetBlock*noop = new NetBlock(NetBlock::SEQU, scope);
+	    noop->set_line(*this);
+	    return noop;
       }
 
       NetSTask*cur = new NetSTask(peek_tail_name(path_), eparms);
