@@ -2453,7 +2453,7 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 	// to annotate, and the user is intending to turn the behavior
 	// off anyhow, so replace the system task invocation with a no-op.
       if (gn_specify_blocks_flag == false
-	  & peek_tail_name(path_) == "$sdf_annotate") {
+	 && peek_tail_name(path_) == "$sdf_annotate") {
 
 	    NetBlock*noop = new NetBlock(NetBlock::SEQU, scope);
 	    noop->set_line(*this);

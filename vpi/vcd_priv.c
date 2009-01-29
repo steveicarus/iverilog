@@ -207,7 +207,7 @@ void nexus_ident_delete()
 
       if (vcd_ids == 0) return;
 
-      for (idx = 0 ; idx < 256; idx = idx += 1) {
+      for (idx = 0 ; idx < 256; idx++) {
 	    struct vcd_id_s *cur, *tmp;
 	    for (cur = vcd_ids[idx]; cur; cur = tmp) {
 		  tmp = cur->next;
