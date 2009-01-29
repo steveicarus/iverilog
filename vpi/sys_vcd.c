@@ -256,6 +256,7 @@ static PLI_INT32 finish_cb(p_cb_data cause)
 	    fprintf(dump_file, "#%" PLI_UINT64_FMT "\n", dumpvars_time);
       }
 
+      fclose(dump_file);
       vcd_names_delete(&vcd_tab);
       vcd_names_delete(&vcd_var);
       nexus_ident_delete();

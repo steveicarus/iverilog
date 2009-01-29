@@ -2,7 +2,7 @@
  *  Verilog-A math library for Icarus Verilog
  *  http://www.icarus.com/eda/verilog/
  *
- *  Copyright (C) 2007-2008  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2007-2009  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -121,6 +121,36 @@ typedef struct {
 
 
 /*
+ * Cleanup the allocated memory at the end of simulation.
+ */
+static va_single_t** single_funcs = 0;
+static unsigned single_funcs_count = 0;
+static va_double_t** double_funcs = 0;
+static unsigned double_funcs_count = 0;
+
+static PLI_INT32 sys_end_of_simulation(p_cb_data cb_data)
+{
+    unsigned idx;
+
+    for (idx = 0; idx < single_funcs_count; idx += 1) {
+        free(single_funcs[idx]);
+    }
+    free(single_funcs);
+    single_funcs = 0;
+    single_funcs_count = 0;
+
+    for (idx = 0; idx < double_funcs_count; idx += 1) {
+        free(double_funcs[idx]);
+    }
+    free(double_funcs);
+    double_funcs = 0;
+    double_funcs_count = 0;
+
+    return 0;
+}
+
+
+/*
  * Standard error message routine. The format string must take one
  * string argument (the name of the function).
  */
@@ -203,6 +233,10 @@ static PLI_INT32 va_single_argument_compiletf(PLI_BYTE8 *ud)
     fun_data->func = data->func;
 
     vpi_put_userdata(callh, fun_data);
+    single_funcs_count += 1;
+    single_funcs = (va_single_t **)realloc(single_funcs,
+                   single_funcs_count*sizeof(va_single_t **));
+    single_funcs[single_funcs_count-1] = fun_data;
 
     /* vpi_scan() returning 0 (NULL) has already freed argv. */
     return 0;
@@ -287,6 +321,10 @@ static PLI_INT32 va_double_argument_compiletf(PLI_BYTE8 *ud)
     fun_data->func = data->func;
 
     vpi_put_userdata(callh, fun_data);
+    double_funcs_count += 1;
+    double_funcs = (va_double_t **)realloc(double_funcs,
+                   double_funcs_count*sizeof(va_double_t **));
+    double_funcs[double_funcs_count-1] = fun_data;
 
     /* vpi_scan() returning 0 (NULL) has already freed argv. */
     return 0;
@@ -327,6 +365,7 @@ static PLI_INT32 va_double_argument_calltf(PLI_BYTE8 *ud)
  */
 static void va_math_register(void)
 {
+    s_cb_data cb_data;
     s_vpi_systf_data tf_data;
     unsigned idx;
 
@@ -355,6 +394,13 @@ static void va_math_register(void)
         tf_data.user_data = (PLI_BYTE8 *) &va_double_data[idx];
         vpi_register_systf(&tf_data);
     }
+
+    /* We need to clean up the userdata. */
+    cb_data.reason = cbEndOfSimulation;
+    cb_data.time = 0;
+    cb_data.cb_rtn = sys_end_of_simulation;
+    cb_data.user_data = "system";
+    vpi_register_cb(&cb_data);
 }
 
 

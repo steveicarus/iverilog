@@ -1,6 +1,6 @@
 /* vi:sw=6
- * Copyright (c) 2002 Michael Ruff (mruff at chiaro.com)
- *                    Michael Runyan (mrunyan at chiaro.com)
+ * Copyright (c) 2002-2009 Michael Ruff (mruff at chiaro.com)
+ *                         Michael Runyan (mrunyan at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,9 +17,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: veriusertfs.c,v 1.17 2007/05/08 22:01:26 steve Exp $"
-#endif
 
 /*
  * Contains the routines required to implement veriusertfs routines
@@ -49,11 +46,33 @@ static PLI_INT32 calltf(char *);
 static PLI_INT32 callback(p_cb_data);
 
 /*
+ * Keep a pointer to the user data so that it can be freed when the
+ * simulation is finished.
+ */
+static p_pli_data* udata_store = 0;
+static unsigned udata_count = 0;
+
+static PLI_INT32 sys_end_of_simulation(p_cb_data cb_data)
+{
+      unsigned idx;
+
+      for (idx = 0; idx < udata_count; idx += 1) {
+        free(udata_store[idx]);
+      }
+      free(udata_store);
+      udata_store = 0;
+      udata_count = 0;
+
+      return 0;
+}
+
+/*
  * Register veriusertfs routines/wrappers. Iterate over the tfcell
  * array, registering each function.
  */
 void veriusertfs_register_table(p_tfcell vtable)
 {
+      static int need_EOS_cb = 1;
       const char*path;
       p_tfcell tf;
       s_vpi_systf_data tf_data;
@@ -86,6 +105,21 @@ void veriusertfs_register_table(p_tfcell vtable)
 	    /* squirrel away veriusertfs in persistent user_data */
 	    data = calloc(1, sizeof(s_pli_data));
 	    assert(data != NULL);
+	    udata_count += 1;
+	    udata_store = (p_pli_data*)realloc(udata_store,
+	                  udata_count*sizeof(p_pli_data*));
+	    udata_store[udata_count-1] = data;
+	    if (need_EOS_cb) {
+		  s_cb_data cb_data;
+
+		  cb_data.reason = cbEndOfSimulation;
+		  cb_data.time = 0;
+		  cb_data.cb_rtn = sys_end_of_simulation;
+		  cb_data.user_data = "system";
+		  vpi_register_cb(&cb_data);
+
+		  need_EOS_cb = 0;
+	    }
 	    data->tf = tf;
 
 	      /* Build a VPI system task/function structure, and point
@@ -392,4 +426,3 @@ PLI_INT32 tf_setrealdelay(double dly)
 {
       return tf_isetrealdelay(dly, tf_getinstance());
 }
-
