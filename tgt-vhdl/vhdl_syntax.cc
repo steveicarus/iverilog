@@ -74,6 +74,16 @@ bool vhdl_scope::have_declared(const std::string &name) const
    return get_decl(name) != NULL;
 }
 
+// True if `name' differs in all but case from another declaration
+bool vhdl_scope::name_collides(const string& name) const
+{
+   const vhdl_decl* decl = get_decl(name);
+   if (decl)
+      return decl->get_name() != name;
+   else
+      return false;
+}
+
 bool vhdl_scope::contained_within(const vhdl_scope *other) const
 {
    if (this == other)
@@ -238,7 +248,7 @@ vhdl_comp_inst::~vhdl_comp_inst()
    
 }
 
-void vhdl_comp_inst::map_port(const char *name, vhdl_expr *expr)
+void vhdl_comp_inst::map_port(const string& name, vhdl_expr *expr)
 {
    port_map_t pmap = { name, expr };
    mapping_.push_back(pmap);

@@ -245,7 +245,9 @@ void draw_nexus(ivl_nexus_t nexus)
                                                   ivl_lpm_signed(lpm) != 0);
             ostringstream ss;
             ss << "LPM" << ivl_lpm_basename(lpm);
-            vhdl_scope->add_decl(new vhdl_signal_decl(ss.str().c_str(), type));
+
+            if (!vhdl_scope->have_declared(ss.str()))
+               vhdl_scope->add_decl(new vhdl_signal_decl(ss.str().c_str(), type));
             
             link_scope_to_nexus_tmp(priv, vhdl_scope, ss.str());
          }
@@ -382,10 +384,28 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
  */
 static string make_safe_name(ivl_signal_t sig)
 {
-   const char *base = ivl_signal_basename(sig);      
-   if (base[0] == '_')
-      return string("VL") + base;
+   string base(ivl_signal_basename(sig));
 
+   if (ivl_signal_local(sig))
+      base = "Tmp" + base;
+   
+   if (base[0] == '_')
+      base = "Sig" + base;
+
+   if (*base.rbegin() == '_')
+      base += "Sig";
+
+   // Can't have two consecutive underscores
+   size_t pos = base.find("__");
+   while (pos != string::npos) {
+      base.replace(pos, 2, "_");
+      pos = base.find("__");
+   }
+   
+   // A signal name may not be the same as a component name
+   if (find_entity(base) != NULL)
+      base += "_Sig";
+   
    // This is the complete list of VHDL reserved words
    const char *vhdl_reserved[] = {
       "abs", "access", "after", "alias", "all", "and", "architecture",
@@ -405,12 +425,30 @@ static string make_safe_name(ivl_signal_t sig)
    };
 
    for (const char **p = vhdl_reserved; *p != NULL; p++) {
-      if (strcasecmp(*p, base) == 0) {
-         return string("VL_") + base;
+      if (strcasecmp(*p, base.c_str()) == 0) {
+         return "Sig_" + base;
          break;
       }
    }
    return string(base);
+}
+
+// Check if `name' differs from an existing name only in case and
+// make it unique if it does.
+static void avoid_name_collision(string& name, vhdl_scope* scope)
+{
+   if (scope->name_collides(name)) {
+      name += "_";
+      ostringstream ss;
+      int i = 1;
+      do {
+         // Keep adding an extra number until we get a unique name
+         ss.str("");
+         ss << name << i++;
+      } while (scope->name_collides(ss.str()));
+      
+      name = ss.str();
+   }
 }
 
 /*
@@ -426,6 +464,8 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
       remember_signal(sig, ent->get_arch()->get_scope());
 
       string name(make_safe_name(sig));
+      avoid_name_collision(name, ent->get_arch()->get_scope());
+      
       rename_signal(sig, name);
       
       vhdl_type *sig_type;
@@ -549,40 +589,49 @@ static void map_signal(ivl_signal_t to, vhdl_entity *parent,
    nexus_private_t *priv =
       static_cast<nexus_private_t*>(ivl_nexus_get_private(nexus));
    assert(priv);
-   if (!visible_nexus(priv, arch_scope)) {
+
+   vhdl_expr *map_to = NULL;
+   const string name(make_safe_name(to));
+
+   // We can only map ports to signals or constants
+   if (visible_nexus(priv, arch_scope)) {
+      vhdl_var_ref *ref = nexus_to_var_ref(parent->get_arch()->get_scope(), nexus);
+
+      // If we're mapping an output of this entity to an output of
+      // the child entity, then VHDL will not let us read the value
+      // of the signal (i.e. it must pass straight through).
+      // However, Verilog allows the signal to be read in the parent.
+      // The solution used here is to create an intermediate signal
+      // and connect it to both ports.
+      vhdl_decl* from_decl =
+         parent->get_arch()->get_scope()->get_decl(ref->get_name());
+      if (!from_decl->is_readable()
+          && !arch_scope->have_declared(name + "_Readable")) {
+         vhdl_decl* tmp_decl =
+            new vhdl_signal_decl(name + "_Readable", ref->get_type());
+         
+         // Add a comment to explain what this is for
+         tmp_decl->set_comment("Needed to connect outputs");
+         
+         arch_scope->add_decl(tmp_decl);
+         parent->get_arch()->add_stmt
+            (new vhdl_cassign_stmt(from_decl->make_ref(), tmp_decl->make_ref()));
+         
+         map_to = tmp_decl->make_ref();
+      }
+      else
+         map_to = ref;
+   }
+   else if (priv->const_driver && ivl_signal_port(to) == IVL_SIP_INPUT) {
+      map_to = priv->const_driver;
+      priv->const_driver = NULL;
+   }
+   else {
       // This nexus isn't attached to anything in the parent
       return;
-   }
+   } 
 
-   vhdl_var_ref *ref = nexus_to_var_ref(parent->get_arch()->get_scope(), nexus);
-
-   string name = make_safe_name(to);
-  
-   // If we're mapping an output of this entity to an output of
-   // the child entity, then VHDL will not let us read the value
-   // of the signal (i.e. it must pass straight through).
-   // However, Verilog allows the signal to be read in the parent.
-   // The solution used here is to create an intermediate signal
-   // and connect it to both ports.
-   vhdl_decl* from_decl =
-      parent->get_arch()->get_scope()->get_decl(ref->get_name());
-   from_decl->print();
-   if (!from_decl->is_readable()
-       && !arch_scope->have_declared(name + "_Readable")) {
-      vhdl_decl* tmp_decl =
-         new vhdl_signal_decl(name + "_Readable", ref->get_type());
-
-      // Add a comment to explain what this is for
-      tmp_decl->set_comment("Needed to connect outputs");
-
-      arch_scope->add_decl(tmp_decl);
-      parent->get_arch()->add_stmt
-         (new vhdl_cassign_stmt(from_decl->make_ref(), tmp_decl->make_ref()));
-
-      ref = tmp_decl->make_ref();
-   }
-      
-   inst->map_port(name.c_str(), ref);
+   inst->map_port(name, map_to);
 }
 
 /*
@@ -976,7 +1025,11 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
       
       loc = inst_name.find(']', 0);
       if (loc != string::npos)
-         inst_name.erase(loc, 1);         
+         inst_name.erase(loc, 1);
+
+      // Make sure the name doesn't collide with anything we've
+      // already declared
+      avoid_name_collision(inst_name, parent_arch->get_scope());
       
       vhdl_comp_inst *inst =
          new vhdl_comp_inst(inst_name.c_str(), ent->get_name().c_str());

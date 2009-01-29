@@ -695,7 +695,7 @@ public:
    ~vhdl_comp_inst();
 
    void emit(std::ostream &of, int level) const;
-   void map_port(const char *name, vhdl_expr *expr);
+   void map_port(const string& name, vhdl_expr *expr);
 
    const std::string &get_comp_name() const { return comp_name_; }
    const std::string &get_inst_name() const { return inst_name_; }
@@ -719,6 +719,7 @@ public:
    void add_forward_decl(vhdl_decl *decl);
    vhdl_decl *get_decl(const std::string &name) const;
    bool have_declared(const std::string &name) const;
+   bool name_collides(const string& name) const;
    bool contained_within(const vhdl_scope *other) const;
    vhdl_scope *get_parent() const;
    
