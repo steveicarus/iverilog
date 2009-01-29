@@ -333,6 +333,13 @@ hname_t eval_path_component(Design*des, NetScope*scope,
 
       const index_component_t&index = comp.index.front();
 
+      if (index.sel != index_component_t::SEL_BIT) {
+	    cerr << index.msb->get_fileline() << ": error: "
+		 << "Part select is not valid for this kind of object." << endl;
+	    des->errors += 1;
+	    return hname_t(comp.name, 0);
+      }
+
 	// The parser will assure that path components will have only
 	// bit select index expressions. For example, "foo[n]" is OK,
 	// but "foo[n:m]" is not.
