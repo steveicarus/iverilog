@@ -132,7 +132,6 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 	    return;
 
       vpiHandle iter = vpi_iterate(vpiModPath, sdf_cur_cell);
-      assert(iter);
 
       struct t_vpi_time delay_vals[12];
       int idx;
@@ -154,7 +153,7 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 	   the parser has found. */
       vpiHandle path;
       int match_count = 0;
-      while ( (path = vpi_scan(iter)) ) {
+      if (iter) while ( (path = vpi_scan(iter)) ) {
 	    vpiHandle path_t_in = vpi_handle(vpiModPathIn,path);
 	    vpiHandle path_t_out = vpi_handle(vpiModPathOut,path);
 
