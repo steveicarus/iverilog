@@ -19,6 +19,10 @@
 
 # include  "vpi_priv.h"
 # include  "compile.h"
+# include  "config.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+#endif
 # include  <stdio.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -49,6 +53,11 @@ static int string_get(int code, vpiHandle ref)
 
           case vpiAutomatic:
 	      return 0;
+
+#ifdef CHECK_WITH_VALGRIND
+          case _vpiFromThr:
+	      return _vpiNoThr;
+#endif
 
 	  default:
 	      fprintf(stderr, "vvp error: get %d not supported "
@@ -181,7 +190,7 @@ static int free_temp_string(vpiHandle obj)
       struct __vpiStringConst*rfp = (struct __vpiStringConst*)obj;
       assert(obj->vpi_type->type_code == vpiConstant);
 
-      free(rfp->value);
+      delete [] rfp->value;
       free(rfp);
       return 1;
 }
@@ -355,6 +364,11 @@ static int binary_get(int code, vpiHandle ref)
 
           case vpiAutomatic:
 	    return 0;
+
+#ifdef CHECK_WITH_VALGRIND
+          case _vpiFromThr:
+	      return _vpiNoThr;
+#endif
 
 	  default:
 	    fprintf(stderr, "vvp error: get %d not supported "
@@ -552,6 +566,11 @@ static int dec_get(int code, vpiHandle ref)
           case vpiAutomatic:
 	    return 0;
 
+#ifdef CHECK_WITH_VALGRIND
+          case _vpiFromThr:
+	      return _vpiNoThr;
+#endif
+
 	  default:
 	    fprintf(stderr, "vvp error: get %d not supported "
 		    "by vpiDecConst\n", code);
@@ -657,6 +676,11 @@ static int real_get(int code, vpiHandle ref)
 
           case vpiAutomatic:
 	    return 0;
+
+#ifdef CHECK_WITH_VALGRIND
+          case _vpiFromThr:
+	      return _vpiNoThr;
+#endif
 
 	  default:
 	    fprintf(stderr, "vvp error: get %d not supported "
@@ -789,3 +813,55 @@ vpiHandle vpip_make_real_param(char*name, double value,
 
       return &obj->base;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void constant_delete(vpiHandle item)
+{
+      assert(item->vpi_type->type_code == vpiConstant);
+      switch(vpi_get(vpiConstType, item)) {
+	  case vpiStringConst: {
+	    struct __vpiStringConst*rfp = (struct __vpiStringConst*)item;
+	    delete [] rfp->value;
+	    free(rfp);
+	    break; }
+	  case vpiDecConst: {
+	    struct __vpiDecConst*rfp = (struct __vpiDecConst*)item;
+	    free(rfp);
+	    break; }
+	  case vpiBinaryConst: {
+	    struct __vpiBinaryConst*rfp = (struct __vpiBinaryConst*)item;
+	    delete rfp;
+	    break; }
+	  case vpiRealConst: {
+	    struct __vpiRealConst*rfp = (struct __vpiRealConst*)item;
+	    free(rfp);
+	    break; }
+	  default:
+	    assert(0);
+      }
+}
+
+void parameter_delete(vpiHandle item)
+{
+      switch(vpi_get(vpiConstType, item)) {
+	  case vpiStringConst: {
+	    struct __vpiStringParam*rfp = (struct __vpiStringParam*)item;
+	    delete [] rfp->basename;
+	    delete [] rfp->value;
+	    free(rfp);
+	    break; }
+	  case vpiBinaryConst: {
+	    struct __vpiBinaryParam*rfp = (struct __vpiBinaryParam*)item;
+	    delete [] rfp->basename;
+	    delete rfp;
+	    break; }
+	  case vpiRealConst: {
+	    struct __vpiRealParam*rfp = (struct __vpiRealParam*)item;
+	    delete [] rfp->basename;
+	    free(rfp);
+	    break; }
+	  default:
+	    assert(0);
+      }
+}
+#endif

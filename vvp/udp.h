@@ -1,7 +1,7 @@
 #ifndef __udp_H
 #define __udp_H
 /*
- * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2009 Stephen Williams (steve@icarus.com)
  *
  * (This is a rewrite of code that was ...
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
@@ -31,13 +31,15 @@ struct udp_levels_table;
 struct vvp_udp_s {
 
     public:
-      explicit vvp_udp_s(char*label, unsigned ports, vvp_bit4_t init);
+      explicit vvp_udp_s(char*label, unsigned ports, vvp_bit4_t init,
+                         bool type);
       virtual ~vvp_udp_s();
 
 	// Return the number of input ports for the defined UDP. This
 	// does *not* include the current output value for a
 	// sequential UDP.
       unsigned port_count() const;
+      bool is_sequential() const {return seq_;};
 
 	// Return the initial output value.
       vvp_bit4_t get_init() const;
@@ -49,6 +51,7 @@ struct vvp_udp_s {
     private:
       unsigned ports_;
       vvp_bit4_t init_;
+      bool seq_;
 };
 
 /*

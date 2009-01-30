@@ -25,9 +25,30 @@
 
 /* Routines used to cleanup the runtime memory when it is all finished. */
 
+extern void codespace_delete(void);
+extern void root_table_delete(void);
 extern void def_table_delete(void);
 extern void vpi_mcd_delete(void);
 extern void dec_str_delete(void);
 extern void load_module_delete(void);
+extern void modpath_delete(void);
+extern void signal_pool_delete(void);
+extern void udp_defns_delete(void);
+extern void vpi_handle_delete(void);
+extern void vvp_net_pool_delete(void);
+
+extern void A_delete(struct __vpiHandle *item);
+extern void PV_delete(struct __vpiHandle *item);
+extern void constant_delete(struct __vpiHandle *item);
+extern void contexts_delete(struct __vpiScope *scope);
+extern void memory_delete(struct __vpiHandle *item);
+extern void named_event_delete(struct __vpiHandle *item);
+extern void parameter_delete(struct __vpiHandle *item);
+extern void signal_delete(struct __vpiHandle *item);
+extern void thread_vthr_delete(struct __vpiHandle *item);
+extern void thread_word_delete(struct __vpiHandle *item);
+extern void vpi_call_delete(struct __vpiHandle *item);
+extern void vthreads_delete(vthread_t base);
+extern void vvp_net_delete(vvp_net_t *item);
 
 #endif

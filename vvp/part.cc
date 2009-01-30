@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -126,6 +126,15 @@ void vvp_fun_part_aa::reset_instance(vvp_context_t context)
 
       val->set_to_x();
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void vvp_fun_part_aa::free_instance(vvp_context_t context)
+{
+      vvp_vector4_t*val = static_cast<vvp_vector4_t*>
+            (vvp_get_context_item(context, context_idx_));
+      delete val;
+}
+#endif
 
 void vvp_fun_part_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                                 vvp_context_t context)
@@ -338,6 +347,15 @@ void vvp_fun_part_var_aa::reset_instance(vvp_context_t context)
       state->source.set_to_x();
       state->ref.set_to_x();
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void vvp_fun_part_var_aa::free_instance(vvp_context_t context)
+{
+      vvp_fun_part_var_state_s*state = static_cast<vvp_fun_part_var_state_s*>
+            (vvp_get_context_item(context, context_idx_));
+      delete state;
+}
+#endif
 
 void vvp_fun_part_var_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                                     vvp_context_t context)

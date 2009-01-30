@@ -1,7 +1,7 @@
 #ifndef __part_H
 #define __part_H
 /*
- * Copyright (c) 2005-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,7 @@
  */
 
 # include  "schedule.h"
+# include  "config.h"
 
 /* vvp_fun_part
  * This node takes a part select of the input vector. Input 0 is the
@@ -75,6 +76,9 @@ class vvp_fun_part_aa  : public vvp_fun_part, public automatic_hooks_s {
     public:
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
+#ifdef CHECK_WITH_VALGRIND
+      void free_instance(vvp_context_t context);
+#endif
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context);
@@ -168,6 +172,9 @@ class vvp_fun_part_var_aa  : public vvp_fun_part_var, public automatic_hooks_s {
     public:
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
+#ifdef CHECK_WITH_VALGRIND
+      void free_instance(vvp_context_t context);
+#endif
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context);

@@ -20,7 +20,9 @@
 
 # include  "config.h"
 # include  "vpi_priv.h"
+#ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
+#endif
 # include  <stdio.h>
 # include  <string.h>
 # include  <limits.h>     /* for CHAR_BIT */
@@ -108,12 +110,14 @@ static inline int write_digits(unsigned long v, char **buf,
 static unsigned long *valv=NULL;
 static unsigned int vlen_alloc=0;
 
+#ifdef CHECK_WITH_VALGRIND
 void dec_str_delete(void)
 {
       free(valv);
       valv = 0;
       vlen_alloc = 0;
 }
+#endif
 
 unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
 			      char *buf, unsigned int nbuf,

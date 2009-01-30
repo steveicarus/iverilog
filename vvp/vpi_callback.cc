@@ -29,6 +29,7 @@
 # include  "vvp_net.h"
 # include  "schedule.h"
 # include  "event.h"
+# include  "config.h"
 # include  <stdio.h>
 # include  <assert.h>
 #ifdef HAVE_MALLOC_H
@@ -514,6 +515,17 @@ void vvp_vpi_callback::add_vpi_callback(__vpiCallback*cb)
       cb->next = vpi_callbacks_;
       vpi_callbacks_ = cb;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void vvp_vpi_callback::clear_all_callbacks()
+{
+      while (vpi_callbacks_) {
+	    __vpiCallback*tmp = vpi_callbacks_->next;
+	    delete_vpi_callback(vpi_callbacks_);
+	    vpi_callbacks_ = tmp;
+      }
+}
+#endif
 
 /*
  * A vvp_fun_signal uses this method to run its callbacks whenever it

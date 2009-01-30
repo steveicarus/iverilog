@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,6 +19,10 @@
 
 # include  "codes.h"
 # include  "statistics.h"
+# include  "config.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+#endif
 # include  <string.h>
 # include  <assert.h>
 
@@ -92,3 +96,24 @@ vvp_code_t codespace_null(void)
       return first_chunk + 0;
 }
 
+#ifdef CHECK_WITH_VALGRIND
+void codespace_delete(void)
+{
+      vvp_code_t cur = first_chunk;
+
+      do {
+	    vvp_code_t next = cur[code_chunk_size-1].cptr;
+	    for (unsigned idx = 0 ; idx < code_chunk_size; idx += 1) {
+		  count_opcodes -= 1;
+		  if ((cur+idx)->opcode == &of_VPI_CALL) {
+			vpi_call_delete((cur+idx)->handle);
+		  }
+		  if (count_opcodes == 0) break;
+	    }
+	      /* Don't count the &of_CHUNK_LINK opcode. */
+	    if (count_opcodes != 0) count_opcodes += 1;
+	    delete [] cur;
+	    cur = next;
+      } while (cur != 0);
+}
+#endif

@@ -25,7 +25,10 @@
 # include  "vpi_priv.h"
 # include  "vthread.h"
 # include  "compile.h"
+# include  "config.h"
+#ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
+#endif
 # include  <stdio.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -520,6 +523,7 @@ static struct __vpiUserSystf* allocate_def(void)
       return def_table[def_count++];
 }
 
+#ifdef CHECK_WITH_VALGRIND
 void def_table_delete(void)
 {
       for (unsigned idx = 0; idx < def_count; idx += 1) {
@@ -530,6 +534,7 @@ void def_table_delete(void)
       def_table = 0;
       def_count = 0;
 }
+#endif
 
 struct __vpiUserSystf* vpip_find_systf(const char*name)
 {
@@ -630,6 +635,42 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
       return &obj->base;
 }
 
+#ifdef CHECK_WITH_VALGRIND
+void vpi_call_delete(vpiHandle item)
+{
+      struct __vpiSysTaskCall*obj = (struct __vpiSysTaskCall *) item;
+      for (unsigned arg = 0; arg < obj->nargs; arg += 1) {
+	    switch (obj->args[arg]->vpi_type->type_code) {
+		case vpiConstant:
+		  switch (vpi_get(_vpiFromThr, obj->args[arg])) {
+		      case _vpiNoThr:
+			constant_delete(obj->args[arg]);
+			break;
+		      case _vpiVThr:
+			thread_vthr_delete(obj->args[arg]);
+			break;
+		      case _vpiWord:
+			thread_word_delete(obj->args[arg]);
+			break;
+		      default:
+			assert(0);;
+		  }
+		  break;
+		case vpiMemoryWord:
+		  if (vpi_get(_vpiFromThr, obj->args[arg]) == _vpi_at_A) {
+			A_delete(obj->args[arg]);
+		  }
+		  break;
+		case vpiPartSelect:
+		  assert(vpi_get(_vpiFromThr, obj->args[arg]) == _vpi_at_PV);
+		  PV_delete(obj->args[arg]);
+		  break;
+	    }
+      }
+      free(obj->args);
+      delete obj;
+}
+#endif
 
 /*
  * This function is used by the %vpi_call instruction to actually

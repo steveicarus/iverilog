@@ -659,6 +659,8 @@ void compile_cleanup(void)
       delete_symbol_table(sym_functors);
       sym_functors = 0;
 
+      delete_udp_symbols();
+
       compile_island_cleanup();
       compile_array_cleanup();
 

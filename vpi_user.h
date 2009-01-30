@@ -1,7 +1,7 @@
 #ifndef __vpi_user_H
 #define __vpi_user_H
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -353,6 +353,12 @@ typedef struct t_vpi_delay  {
 #define vpiSigned         65
 /* IVL private properties */
 #define _vpiNexusId 0x1000000
+#define _vpiFromThr 0x1000001
+#   define _vpiNoThr  0
+#   define _vpiVThr   1
+#   define _vpiWord   2
+#   define _vpi_at_PV 3
+#   define _vpi_at_A  4
 
 /* DELAY MODES */
 #define vpiNoDelay            1

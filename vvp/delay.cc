@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2008 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2005-2009 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,10 @@
 #include "delay.h"
 #include "schedule.h"
 #include "vpi_priv.h"
+#include "config.h"
+#ifdef CHECK_WITH_VALGRIND
+#include "vvp_cleanup.h"
+#endif
 #include <iostream>
 #include <cstdlib>
 #include <list>
@@ -855,6 +859,11 @@ static void initialize_path_term(struct __vpiModPathTerm&obj)
  * respective functor
  */
 
+#ifdef CHECK_WITH_VALGRIND
+static struct __vpiModPath**mp_list = 0;
+static unsigned mp_count = 0;
+#endif
+
 struct __vpiModPath* vpip_make_modpath(vvp_net_t *net)
 {
       struct __vpiModPath*obj = (struct __vpiModPath *)calloc(1, sizeof ( struct __vpiModPath ) );
@@ -863,9 +872,26 @@ struct __vpiModPath* vpip_make_modpath(vvp_net_t *net)
       initialize_path_term(obj->path_term_out);
       obj->input_net = net ;
 
+#ifdef CHECK_WITH_VALGRIND
+      mp_count += 1;
+      mp_list = (struct __vpiModPath **) realloc(mp_list,
+                mp_count*sizeof(struct __vpiModPath **));
+      mp_list[mp_count-1] = obj;
+#endif
       return obj;
 }
 
+#ifdef CHECK_WITH_VALGRIND
+void modpath_delete()
+{
+      for (unsigned idx = 0; idx < mp_count; idx += 1) {
+	    free(mp_list[idx]);
+      }
+      free(mp_list);
+      mp_list = 0;
+      mp_count = 0;
+}
+#endif
 
 /*
  * This function will construct a vpiModPathIn

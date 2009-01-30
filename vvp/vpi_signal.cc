@@ -26,6 +26,10 @@
 # include  "vpi_priv.h"
 # include  "schedule.h"
 # include  "statistics.h"
+# include  "config.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+#endif
 # include  <math.h>
 # include  <iostream>
 # include  <stdio.h>
@@ -35,6 +39,9 @@
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
+#ifdef CHECK_WITH_VALGRIND
+# include  <valgrind/memcheck.h>
+#endif
 
 /*
  * Hex digits that represent 4-value bits of Verilog are not as
@@ -889,6 +896,10 @@ vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
       obj->vpi_type = &vpip_reg_rt;
       return obj;
 }
+#ifdef CHECK_WITH_VALGRIND
+static struct __vpiSignal **signal_pool = 0;
+static unsigned signal_pool_count = 0;
+#endif
 
 static struct __vpiSignal* allocate_vpiSignal(void)
 {
@@ -900,12 +911,48 @@ static struct __vpiSignal* allocate_vpiSignal(void)
 	    alloc_array = (struct __vpiSignal*)
 		  calloc(alloc_count, sizeof(struct __vpiSignal));
 	    alloc_index = 0;
+#ifdef CHECK_WITH_VALGRIND
+	    VALGRIND_MAKE_MEM_NOACCESS(alloc_array, alloc_count *
+	                                            sizeof(struct __vpiSignal));
+	    VALGRIND_CREATE_MEMPOOL(alloc_array, 0, 1);
+	    signal_pool_count += 1;
+	    signal_pool = (__vpiSignal **) realloc(signal_pool,
+	                  signal_pool_count*sizeof(__vpiSignal **));
+	    signal_pool[signal_pool_count-1] = alloc_array;
+#endif
       }
 
       struct __vpiSignal*cur = alloc_array + alloc_index;
+#ifdef CHECK_WITH_VALGRIND
+      VALGRIND_MEMPOOL_ALLOC(alloc_array, cur, sizeof(struct __vpiSignal));
+      cur->pool = alloc_array;
+#endif
       alloc_index += 1;
       return cur;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void signal_delete(vpiHandle item)
+{
+      struct __vpiSignal *obj = (__vpiSignal *) item;
+      vvp_fun_signal_base*sig_fun;
+      sig_fun = (vvp_fun_signal_base*) obj->node->fun;
+      sig_fun->clear_all_callbacks();
+      vvp_net_delete(obj->node);
+      VALGRIND_MEMPOOL_FREE(obj->pool, obj);
+}
+
+void signal_pool_delete()
+{
+      for (unsigned idx = 0; idx < signal_pool_count; idx += 1) {
+	    VALGRIND_DESTROY_MEMPOOL(signal_pool[idx]);
+	    free(signal_pool[idx]);
+      }
+      free(signal_pool);
+      signal_pool = 0;
+      signal_pool_count = 0;
+}
+#endif
 
 /*
  * Construct a vpiNet object. Give the object specified dimensions,
@@ -990,6 +1037,11 @@ static int PV_get(int code, vpiHandle ref)
 
         case vpiAutomatic:
             return vpi_get(vpiAutomatic, rfp->parent);
+
+#ifdef CHECK_WITH_VALGRIND
+        case _vpiFromThr:
+            return _vpi_at_PV;
+#endif
 
 	default:
 	    fprintf(stderr, "PV_get: property %d is unknown\n", code);
@@ -1235,3 +1287,14 @@ void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle ref)
 	/* Attach the __vpiCallback object to the signal. */
       sig_fun->add_vpi_callback(cbh);
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void PV_delete(vpiHandle item)
+{
+      struct __vpiPV *obj = (__vpiPV *) item;
+      vvp_fun_signal_base*sig_fun;
+      sig_fun = (vvp_fun_signal_base*) obj->net->fun;
+      sig_fun->clear_all_callbacks();
+      free(obj);
+}
+#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,10 +30,18 @@
 # include  <limits.h>
 # include  <math.h>
 # include  <assert.h>
+#ifdef CHECK_WITH_VALGRIND
+# include  <valgrind/memcheck.h>
+# include  <map>
+#endif
 
 // Allocate around 1Megbytes/chunk.
 static const size_t VVP_NET_CHUNK = 1024*1024/sizeof(vvp_net_t);
 static vvp_net_t*vvp_net_alloc_table = 0;
+#ifdef CHECK_WITH_VALGRIND
+static vvp_net_t **vvp_net_pool = 0;
+static unsigned vvp_net_pool_count = 0;
+#endif
 static size_t vvp_net_alloc_remaining = 0;
 // For statistics, count the vvp_nets allocated and the bytes of alloc
 // chunks allocated.
@@ -48,14 +56,52 @@ void* vvp_net_t::operator new (size_t size)
 	    vvp_net_alloc_table = ::new vvp_net_t[VVP_NET_CHUNK];
 	    vvp_net_alloc_remaining = VVP_NET_CHUNK;
 	    size_vvp_nets += size*VVP_NET_CHUNK;
+#ifdef CHECK_WITH_VALGRIND
+	    VALGRIND_MAKE_MEM_NOACCESS(vvp_net_alloc_table, size*VVP_NET_CHUNK);
+	    VALGRIND_CREATE_MEMPOOL(vvp_net_alloc_table, 0, 0);
+	    vvp_net_pool_count += 1;
+	    vvp_net_pool = (vvp_net_t **) realloc(vvp_net_pool,
+	                   vvp_net_pool_count*sizeof(vvp_net_t **));
+	    vvp_net_pool[vvp_net_pool_count-1] = vvp_net_alloc_table;
+#endif
       }
 
       vvp_net_t*return_this = vvp_net_alloc_table;
+#ifdef CHECK_WITH_VALGRIND
+      VALGRIND_MEMPOOL_ALLOC(vvp_net_pool[vvp_net_pool_count-1],
+                             return_this, size);
+      return_this->pool = vvp_net_pool[vvp_net_pool_count-1];
+#endif
       vvp_net_alloc_table += 1;
       vvp_net_alloc_remaining -= 1;
       count_vvp_nets += 1;
       return return_this;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+static map<vvp_net_t*, bool> vvp_net_map;
+
+void vvp_net_delete(vvp_net_t *item)
+{
+       vvp_net_map[item] = true;
+}
+
+void vvp_net_pool_delete()
+{
+      map<vvp_net_t*, bool>::iterator iter;
+      for (iter = vvp_net_map.begin(); iter != vvp_net_map.end(); iter++) {
+	    VALGRIND_MEMPOOL_FREE(iter->first->pool, iter->first);
+      }
+
+      for (unsigned idx = 0; idx < vvp_net_pool_count; idx += 1) {
+	    VALGRIND_DESTROY_MEMPOOL(vvp_net_pool[idx])
+	    ::delete [] vvp_net_pool[idx];
+      }
+      free(vvp_net_pool);
+      vvp_net_pool = 0;
+      vvp_net_pool_count = 0;
+}
+#endif
 
 void vvp_net_t::operator delete(void*)
 {
@@ -1486,6 +1532,15 @@ void vvp_vector4array_aa::reset_instance(vvp_context_t context)
       }
 }
 
+#ifdef CHECK_WITH_VALGRIND
+void vvp_vector4array_aa::free_instance(vvp_context_t context)
+{
+      v4cell*cell = static_cast<v4cell*>
+            (vvp_get_context_item(context, context_idx_));
+      delete [] cell;
+}
+#endif
+
 void vvp_vector4array_aa::set_word(unsigned index, const vvp_vector4_t&that)
 {
       assert(index < words_);
@@ -2754,6 +2809,15 @@ void vvp_fun_signal4_aa::reset_instance(vvp_context_t context)
       bits->set_to_x();
 }
 
+#ifdef CHECK_WITH_VALGRIND
+void vvp_fun_signal4_aa::free_instance(vvp_context_t context)
+{
+      vvp_vector4_t*bits = static_cast<vvp_vector4_t*>
+            (vvp_get_context_item(context, context_idx_));
+      delete bits;
+}
+#endif
+
 /*
  * Continuous and forced assignments are not permitted on automatic
  * variables. So we only expect to receive on port 0.
@@ -3113,6 +3177,15 @@ void vvp_fun_signal_real_aa::reset_instance(vvp_context_t context)
 
       *bits = 0.0;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void vvp_fun_signal_real_aa::free_instance(vvp_context_t context)
+{
+      double*bits = static_cast<double*>
+            (vvp_get_context_item(context, context_idx_));
+      delete bits;
+}
+#endif
 
 double vvp_fun_signal_real_aa::real_value() const
 {

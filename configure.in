@@ -79,6 +79,18 @@ AC_CHECK_LIB(bz2, BZ2_bzdopen, HAVE_LIBBZ2=yes, HAVE_LIBBZ2=no)
 fi
 AC_SUBST(HAVE_LIBBZ2)
 
+# valgrind checks
+AC_ARG_WITH([valgrind], [AS_HELP_STRING([--with-valgrind],
+                                        [Add valgrind hooks])],
+            [], [check_valgrind=yes])
+
+AS_IF([test "x$check_valgrind" == xyes],
+      [AC_MSG_NOTICE([Not using valgrind hooks])],
+      [AC_CHECK_HEADER([valgrind/memcheck.h],
+                       [AC_DEFINE([CHECK_WITH_VALGRIND], [1],
+                                  [Define to one to use the valgrind hooks])],
+                       [AC_MSG_ERROR([Could not find <valgrind/memcheck.h>])])])
+
 AC_MSG_CHECKING(for sys/times)
 AC_TRY_LINK(
 #include <unistd.h>

@@ -472,4 +472,6 @@ extern void compile_island_tranif(int sense, char*island,
 extern void compile_island_tranvp(char*island, char*ba, char*bb,
 				  unsigned width, unsigned part, unsigned off);
 
+extern void delete_udp_symbols(void);
+
 #endif

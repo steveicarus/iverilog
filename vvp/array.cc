@@ -21,6 +21,10 @@
 #include  "symbols.h"
 #include  "schedule.h"
 #include  "vpi_priv.h"
+#include  "config.h"
+#ifdef CHECK_WITH_VALGRIND
+#include  "vvp_cleanup.h"
+#endif
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -448,6 +452,9 @@ static int vpi_array_var_word_get(int code, vpiHandle ref)
       decode_array_word_pointer(obj, parent);
 
       switch (code) {
+	  case vpiLineNo:
+	    return 0; // Not implemented for now!
+
 	  case vpiSize:
 	    return (int) parent->vals4->width();
 
@@ -459,6 +466,11 @@ static int vpi_array_var_word_get(int code, vpiHandle ref)
 
 	  case vpiAutomatic:
 	    return (int) parent->scope->is_automatic;
+
+#ifdef CHECK_WITH_VALGRIND
+	  case _vpiFromThr:
+	    return _vpiNoThr;
+#endif
 
 	  default:
 	    return 0;
@@ -645,6 +657,11 @@ static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 
 	  case vpiAutomatic:
 	    return (int) parent->scope->is_automatic;
+
+#ifdef CHECK_WITH_VALGRIND
+	  case _vpiFromThr:
+	    return _vpi_at_A;
+#endif
 
 	  // If address_handle is not zero we definitely have a
 	  // variable. If the wid is not zero we have a calculation
@@ -1093,6 +1110,9 @@ class vvp_fun_arrayport_aa  : public vvp_fun_arrayport, public automatic_hooks_s
 
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
+#ifdef CHECK_WITH_VALGRIND
+      void free_instance(vvp_context_t context);
+#endif
 
       void check_word_change(unsigned long addr);
 
@@ -1137,6 +1157,15 @@ void vvp_fun_arrayport_aa::reset_instance(vvp_context_t context)
 
       *addr = addr_;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void vvp_fun_arrayport_aa::free_instance(vvp_context_t context)
+{
+      unsigned long*addr = static_cast<unsigned long*>
+            (vvp_get_context_item(context, context_idx_));
+      delete addr;
+}
+#endif
 
 void vvp_fun_arrayport_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                                      vvp_context_t context)
@@ -1476,3 +1505,39 @@ void compile_array_cleanup(void)
 	    array_table = 0;
       }
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void memory_delete(vpiHandle item)
+{
+      struct __vpiArray*arr = ARRAY_HANDLE(item);
+      if (arr->vals_words) delete [] (arr->vals_words-1);
+
+      if (arr->vals4) {
+	    delete arr->vals4;
+// Delete the individual words.
+// constant_delete(handle)
+      }
+
+      if (arr->valsr) {
+	    delete arr->valsr;
+// Delete the individual words.
+// constant_delete(handle)
+      }
+
+      if (arr->nets) {
+	    for (unsigned idx = 0; idx < arr->array_count; idx += 1) {
+// Why are only the real words still here?
+// Delete the individual words.
+// constant_delete(handle)
+	    }
+	    free(arr->nets);
+      }
+      free(arr);
+}
+
+void A_delete(vpiHandle item)
+{
+      struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*) item;
+      free(obj);
+}
+#endif

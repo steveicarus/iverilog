@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -25,6 +25,11 @@
 
 # include  "vpi_priv.h"
 # include  "vthread.h"
+# include  "config.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+# include <map>
+#endif
 # include  <stdio.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -90,6 +95,11 @@ static int vthr_vec_get(int code, vpiHandle ref)
 
 	  case vpiSize:
 	    return rfp->wid;
+
+#ifdef CHECK_WITH_VALGRIND
+	  case _vpiFromThr:
+	    return _vpiVThr;
+#endif
 
 	  default:
 	    return 0;
@@ -461,6 +471,21 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag)
       return &obj->base;
 }
 
+#ifdef CHECK_WITH_VALGRIND
+static map<vpiHandle, bool> handle_map;
+
+void thread_vthr_delete(vpiHandle item)
+{
+      handle_map[item] = true;
+}
+
+static void thread_vthr_delete_real(vpiHandle item)
+{
+      struct __vpiVThrVec*obj = (struct __vpiVThrVec*)item;
+      free (obj);
+}
+#endif
+
 struct __vpiVThrWord {
       struct __vpiHandle base;
       const char* name;
@@ -478,6 +503,11 @@ static int vthr_word_get(int code, vpiHandle ref)
 
 	  case vpiConstType:
 	    return rfp->subtype;
+
+#ifdef CHECK_WITH_VALGRIND
+	  case _vpiFromThr:
+	    return _vpiWord;
+#endif
 
 	  default:
 	    return 0;
@@ -581,3 +611,25 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
       return &obj->base;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void thread_word_delete(vpiHandle item)
+{
+      handle_map[item] = false;
+}
+
+static void thread_word_delete_real(vpiHandle item)
+{
+      struct __vpiVThrWord*obj = (struct __vpiVThrWord*)item;
+      free(obj);
+}
+
+void vpi_handle_delete()
+{
+      map<vpiHandle, bool>::iterator iter;
+      for (iter = handle_map.begin(); iter != handle_map.end(); iter++) {
+	    if (iter->second) thread_vthr_delete_real(iter->first);
+	    else thread_word_delete_real(iter->first);
+      }
+}
+#endif

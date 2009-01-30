@@ -22,7 +22,7 @@
 # include  "vpi_user.h"
 # include  "pointers.h"
 # include  "vvp_net.h"
-
+# include  "config.h"
 
 /*
  * Added to use some "vvp_fun_modpath_src"
@@ -210,6 +210,9 @@ extern void vpip_make_root_iterator(struct __vpiHandle**&table,
  */
 struct __vpiSignal {
       struct __vpiHandle base;
+#ifdef CHECK_WITH_VALGRIND
+      struct __vpiSignal *pool;
+#endif
       union { // The scope or parent array that contains me.
 	    vpiHandle parent;
 	    struct __vpiScope* scope;

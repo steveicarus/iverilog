@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,6 +24,9 @@
 # include  "ufunc.h"
 # include  "event.h"
 # include  "vpi_priv.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+#endif
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -354,6 +357,23 @@ static void vthread_free_context(vvp_context_t context, struct __vpiScope*scope)
       scope->free_contexts = context;
 }
 
+#ifdef CHECK_WITH_VALGRIND
+void contexts_delete(struct __vpiScope*scope)
+{
+      vvp_context_t context = scope->free_contexts;
+
+      while (context) {
+	    scope->free_contexts = vvp_get_next_context(context);
+	    for (unsigned idx = 0; idx < scope->nitem; idx += 1) {
+		  scope->item[idx]->free_instance(context);
+	    }
+	    free(context);
+	    context = scope->free_contexts;
+      }
+      free(scope->item);
+}
+#endif
+
 /*
  * Create a new thread with the given start address.
  */
@@ -403,6 +423,51 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
 
       return thr;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+#if 0
+/*
+ * These are not currently correct. If you use them you will get
+ * double delete messages. There is still a leak related to a
+ * waiting event that needs to be investigated.
+ */
+
+static void wait_next_delete(vthread_t base)
+{
+      while (base) {
+	    vthread_t tmp = base->wait_next;
+	    delete base;
+	    base = tmp;
+	    if (base->waiting_for_event == 0) break;
+      }
+}
+
+static void child_delete(vthread_t base)
+{
+      while (base) {
+	    vthread_t tmp = base->child;
+	    delete base;
+	    base = tmp;
+      }
+}
+#endif
+
+void vthreads_delete(vthread_t base)
+{
+      if (base == 0) return;
+
+      vthread_t cur = base->scope_next;
+      while (base != cur) {
+	    vthread_t tmp = cur->scope_next;
+//	    if (cur->waiting_for_event) wait_next_delete(cur->wait_next);
+//	    child_delete(cur->child);
+	    delete cur;
+	    cur = tmp;
+      }
+	/* This is a stub so does not have a wait_next queue. */
+      delete base;
+}
+#endif
 
 /*
  * Reaping pulls the thread out of the stack of threads. If I have a

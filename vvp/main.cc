@@ -420,19 +420,28 @@ int main(int argc, char*argv[])
 			   count_gen_events, count_gen_pool());
       }
 
+/*
+ * We only need to cleanup the memory if we are checking with valgrind.
+ */
+#ifdef CHECK_WITH_VALGRIND
 	/* Clean up the memory. */
       for (vector<const char*>::iterator cur = file_names.begin();
            cur != file_names.end() ; cur++) {
 	    delete[] *cur;
       }
       (void)need_result_buf(0, RBUF_DEL);
-// These are not finished.
-//      codespace_delete();
-//      root_table_delete();
+      codespace_delete();
+      root_table_delete();
       def_table_delete();
       vpi_mcd_delete();
       dec_str_delete();
+      modpath_delete();
+      vpi_handle_delete();
+      udp_defns_delete();
       load_module_delete();
+      signal_pool_delete();
+      vvp_net_pool_delete();
+#endif
 
       return vvp_return_value;
 }

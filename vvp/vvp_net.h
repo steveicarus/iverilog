@@ -1,7 +1,7 @@
 #ifndef __vvp_net_H
 #define __vvp_net_H
 /*
- * Copyright (c) 2004-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -110,6 +110,9 @@ struct automatic_hooks_s {
 
       virtual void alloc_instance(vvp_context_t context) = 0;
       virtual void reset_instance(vvp_context_t context) = 0;
+#ifdef CHECK_WITH_VALGRIND
+      virtual void free_instance(vvp_context_t context) = 0;
+#endif
 };
 
 /*
@@ -552,6 +555,9 @@ class vvp_vector4array_aa : public vvp_vector4array_t, public automatic_hooks_s 
 
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
+#ifdef CHECK_WITH_VALGRIND
+      void free_instance(vvp_context_t context);
+#endif
 
       vvp_vector4_t get_word(unsigned idx) const;
       void set_word(unsigned idx, const vvp_vector4_t&that);
@@ -958,6 +964,9 @@ template <class T> ostream& operator << (ostream&out, vvp_sub_pointer_t<T> val)
  * all the fan-out chain, delivering the specified value.
  */
 struct vvp_net_t {
+#ifdef CHECK_WITH_VALGRIND
+      vvp_net_t *pool;
+#endif
       vvp_net_ptr_t port[4];
       vvp_net_ptr_t out;
       vvp_net_fun_t*fun;
@@ -1194,6 +1203,10 @@ class vvp_vpi_callback {
 
       virtual void run_vpi_callbacks();
       void add_vpi_callback(struct __vpiCallback*);
+#ifdef CHECK_WITH_VALGRIND
+	/* This has only been tested at EOS. */
+      void clear_all_callbacks(void);
+#endif
 
       virtual void get_value(struct t_vpi_value*value) =0;
 
@@ -1315,6 +1328,9 @@ class vvp_fun_signal4_aa : public vvp_fun_signal4, public automatic_hooks_s {
 
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
+#ifdef CHECK_WITH_VALGRIND
+      void free_instance(vvp_context_t context);
+#endif
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context);
@@ -1421,6 +1437,9 @@ class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_hook
 
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
+#ifdef CHECK_WITH_VALGRIND
+      void free_instance(vvp_context_t context);
+#endif
 
       void recv_real(vvp_net_ptr_t port, double bit,
                      vvp_context_t context);

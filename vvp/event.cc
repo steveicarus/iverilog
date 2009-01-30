@@ -22,7 +22,10 @@
 # include  "vthread.h"
 # include  "schedule.h"
 # include  "vpi_priv.h"
-
+# include  "config.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+#endif
 # include  <string.h>
 # include  <assert.h>
 # include  <stdlib.h>
@@ -268,6 +271,14 @@ void vvp_fun_edge_aa::reset_instance(vvp_context_t context)
             state->bits[idx] = BIT4_X;
 }
 
+#ifdef CHECK_WITH_VALGRIND
+void vvp_fun_edge_aa::free_instance(vvp_context_t context)
+{
+      vvp_fun_edge_state_s*state = static_cast<vvp_fun_edge_state_s*>
+            (vvp_get_context_item(context, context_idx_));
+      delete state;
+}
+#endif
 
 vthread_t vvp_fun_edge_aa::add_waiting_thread(vthread_t thread)
 {
@@ -419,6 +430,15 @@ void vvp_fun_anyedge_aa::reset_instance(vvp_context_t context)
       }
 }
 
+#ifdef CHECK_WITH_VALGRIND
+void vvp_fun_anyedge_aa::free_instance(vvp_context_t context)
+{
+      vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
+            (vvp_get_context_item(context, context_idx_));
+      delete state;
+}
+#endif
+
 vthread_t vvp_fun_anyedge_aa::add_waiting_thread(vthread_t thread)
 {
       vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
@@ -526,6 +546,15 @@ void vvp_fun_event_or_aa::reset_instance(vvp_context_t context)
       state->threads = 0;
 }
 
+#ifdef CHECK_WITH_VALGRIND
+void vvp_fun_event_or_aa::free_instance(vvp_context_t context)
+{
+      waitable_state_s*state = static_cast<waitable_state_s*>
+            (vvp_get_context_item(context, context_idx_));
+      delete state;
+}
+#endif
+
 vthread_t vvp_fun_event_or_aa::add_waiting_thread(vthread_t thread)
 {
       waitable_state_s*state = static_cast<waitable_state_s*>
@@ -614,6 +643,15 @@ void vvp_named_event_aa::reset_instance(vvp_context_t context)
 
       state->threads = 0;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void vvp_named_event_aa::free_instance(vvp_context_t context)
+{
+      waitable_state_s*state = static_cast<waitable_state_s*>
+            (vvp_get_context_item(context, context_idx_));
+      delete state;
+}
+#endif
 
 vthread_t vvp_named_event_aa::add_waiting_thread(vthread_t thread)
 {
@@ -741,3 +779,10 @@ void compile_named_event(char*label, char*name)
       free(label);
       delete[] name;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void named_event_delete(struct __vpiHandle*handle)
+{
+      free(handle);
+}
+#endif

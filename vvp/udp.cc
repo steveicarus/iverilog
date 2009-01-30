@@ -24,6 +24,10 @@
 #include "schedule.h"
 #include "symbols.h"
 #include "compile.h"
+#include "config.h"
+#ifdef CHECK_WITH_VALGRIND
+#include "vvp_cleanup.h"
+#endif
 #include <assert.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
@@ -33,7 +37,36 @@
 #include <stdio.h>
 #include <iostream>
 
+// We may need these later when we build the VPI interface to
+// UDP definitions.
+#ifdef CHECK_WITH_VALGRIND
+static vvp_udp_s **udp_defns = 0;
+static unsigned udp_defns_count = 0;
+
+void udp_defns_delete()
+{
+      for (unsigned idx = 0; idx < udp_defns_count; idx += 1) {
+	    if (udp_defns[idx]->is_sequential()) {
+		  vvp_udp_seq_s *obj = (vvp_udp_seq_s *) udp_defns[idx];
+		  delete obj;
+	    } else {
+		  vvp_udp_comb_s *obj = (vvp_udp_comb_s *) udp_defns[idx];
+		  delete obj;
+	    }
+      }
+      free(udp_defns);
+      udp_defns = 0;
+      udp_defns_count = 0;
+}
+#endif
+
 static symbol_table_t udp_table;
+
+void delete_udp_symbols()
+{
+      delete_symbol_table(udp_table);
+      udp_table = 0;
+}
 
 struct vvp_udp_s *udp_find(const char *label)
 {
@@ -49,8 +82,8 @@ ostream& operator <<(ostream&o, const struct udp_levels_table&table)
       return o;
 }
 
-vvp_udp_s::vvp_udp_s(char*label, unsigned ports, vvp_bit4_t init)
-: ports_(ports), init_(init)
+vvp_udp_s::vvp_udp_s(char*label, unsigned ports, vvp_bit4_t init, bool type)
+: ports_(ports), init_(init), seq_(type)
 {
       if (!udp_table)
 	    udp_table = new_symbol_table();
@@ -60,6 +93,13 @@ vvp_udp_s::vvp_udp_s(char*label, unsigned ports, vvp_bit4_t init)
       symbol_value_t v;
       v.ptr = this;
       sym_set_value(udp_table, label, v);
+
+#ifdef CHECK_WITH_VALGRIND
+      udp_defns_count += 1;
+      udp_defns = (vvp_udp_s **) realloc(udp_defns,
+                  udp_defns_count*sizeof(vvp_udp_s **));
+      udp_defns[udp_defns_count-1] = this;
+#endif
 }
 
 vvp_udp_s::~vvp_udp_s()
@@ -77,7 +117,7 @@ vvp_bit4_t vvp_udp_s::get_init() const
 }
 
 vvp_udp_comb_s::vvp_udp_comb_s(char*label, char*name, unsigned ports)
-: vvp_udp_s(label, ports, BIT4_X)
+: vvp_udp_s(label, ports, BIT4_X, false)
 {
       name_ = name;
       levels0_ = 0;
@@ -257,7 +297,7 @@ void vvp_udp_comb_s::compile_table(char**tab)
 
 vvp_udp_seq_s::vvp_udp_seq_s(char*label, char*name,
 			     unsigned ports, vvp_bit4_t init)
-: vvp_udp_s(label, ports, init)
+: vvp_udp_s(label, ports, init, true)
 {
       levels0_ = 0;
       levels1_ = 0;

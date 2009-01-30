@@ -1,7 +1,7 @@
 #ifndef __config_H
 #define __config_H
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -48,6 +48,12 @@
 # undef HAVE_INTTYPES_H
 # undef HAVE_LROUND
 # undef HAVE_NAN
+
+/*
+ * Define this is you want to compile vvp with memory freeing and
+ * special valgrind hooks for the memory pools.
+ */
+# undef CHECK_WITH_VALGRIND
 
 /* Figure if I can use readline. */
 #undef USE_READLINE

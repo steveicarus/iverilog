@@ -1,7 +1,7 @@
 #ifndef __event_H
 #define __event_H
 /*
- * Copyright (c) 2004-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,6 +22,7 @@
 # include  "vvp_net.h"
 # include  "pointers.h"
 # include  "array.h"
+# include  "config.h"
 
 class evctl {
 
@@ -178,6 +179,9 @@ class vvp_fun_edge_aa : public vvp_fun_edge, public automatic_hooks_s {
 
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
+#ifdef CHECK_WITH_VALGRIND
+      void free_instance(vvp_context_t context);
+#endif
 
       vthread_t add_waiting_thread(vthread_t thread);
 
@@ -247,6 +251,9 @@ class vvp_fun_anyedge_aa : public vvp_fun_anyedge, public automatic_hooks_s {
 
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
+#ifdef CHECK_WITH_VALGRIND
+      void free_instance(vvp_context_t context);
+#endif
 
       vthread_t add_waiting_thread(vthread_t thread);
 
@@ -301,6 +308,9 @@ class vvp_fun_event_or_aa : public vvp_fun_event_or, public automatic_hooks_s {
 
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
+#ifdef CHECK_WITH_VALGRIND
+      void free_instance(vvp_context_t context);
+#endif
 
       vthread_t add_waiting_thread(vthread_t thread);
 
@@ -356,6 +366,9 @@ class vvp_named_event_aa : public vvp_named_event, public automatic_hooks_s {
 
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
+#ifdef CHECK_WITH_VALGRIND
+      void free_instance(vvp_context_t context);
+#endif
 
       vthread_t add_waiting_thread(vthread_t thread);
 

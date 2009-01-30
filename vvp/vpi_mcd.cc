@@ -18,7 +18,10 @@
  */
 
 # include  "vpi_priv.h"
+# include  "config.h"
+#ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
+#endif
 # include  <assert.h>
 # include  <stdarg.h>
 # include  <stdio.h>
@@ -68,6 +71,7 @@ void vpi_mcd_init(FILE *log)
 	logfile = log;
 }
 
+#ifdef CHECK_WITH_VALGRIND
 void vpi_mcd_delete(void)
 {
       free(mcd_table[0].filename);
@@ -86,6 +90,7 @@ void vpi_mcd_delete(void)
       fd_table[2].filename = 0;
       fd_table[2].fp = 0;
 }
+#endif
 
 /*
  * close one or more channels.  we silently refuse to close the preopened ones.

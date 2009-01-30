@@ -21,6 +21,10 @@
 # include  "vpi_priv.h"
 # include  "symbols.h"
 # include  "statistics.h"
+# include  "config.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+#endif
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -44,6 +48,70 @@ void vpip_make_root_iterator(struct __vpiHandle**&table, unsigned&ntable)
       table = vpip_root_table_ptr;
       ntable = vpip_root_table_cnt;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+static void delete_sub_scopes(struct __vpiScope *scope)
+{
+      for (unsigned idx = 0; idx < scope->nintern; idx += 1) {
+	    struct __vpiScope*lscope = (__vpiScope*)(scope->intern)[idx];
+	    switch(scope->intern[idx]->vpi_type->type_code) {
+		case vpiFunction:
+		case vpiTask:
+		  contexts_delete(lscope);
+		case vpiModule:
+		case vpiNamedBegin:
+		case vpiNamedFork:
+		  delete_sub_scopes(lscope);
+		  vthreads_delete(lscope->threads);
+		  delete (scope->intern)[idx];
+		  break;
+
+		case vpiIntegerVar:
+		  break;
+		case vpiMemory:
+		  memory_delete((scope->intern)[idx]);
+		  break;
+		case vpiModPath:
+		    /* The destination ModPath is cleaned up later. */
+		  free((scope->intern)[idx]);
+		  break;
+		  break;
+		case vpiNamedEvent:
+		  named_event_delete((scope->intern)[idx]);
+		  break;
+		case vpiNet:
+		case vpiReg:
+		  signal_delete((scope->intern)[idx]);
+		  break;
+		case vpiParameter:
+		  parameter_delete((scope->intern)[idx]);
+		  break;
+		case vpiRealVar:
+		  free((scope->intern)[idx]);
+		  break;
+		default:
+		  fprintf(stderr, "Need support for type: %d\n",
+		          scope->intern[idx]->vpi_type->type_code);
+		  assert(0);
+		  break;
+	    }
+      }
+      free(scope->intern);
+}
+
+void root_table_delete(void)
+{
+      for (unsigned idx = 0; idx < vpip_root_table_cnt; idx += 1) {
+	    struct __vpiScope *scope = (__vpiScope *)vpip_root_table_ptr[idx];
+	    delete_sub_scopes(scope);
+	    vthreads_delete(scope->threads);
+	    delete scope;
+      }
+      free(vpip_root_table_ptr);
+      vpip_root_table_ptr = 0;
+      vpip_root_table_cnt = 0;
+}
+#endif
 
 static bool handle_is_scope(vpiHandle obj)
 {
