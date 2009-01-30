@@ -2455,6 +2455,8 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
       if (gn_specify_blocks_flag == false
 	 && peek_tail_name(path_) == "$sdf_annotate") {
 
+	    cerr << get_fileline() << ": warning: Omitting $sdf_annotate() "
+	         << "since specify blocks are being omitted." << endl;
 	    NetBlock*noop = new NetBlock(NetBlock::SEQU, scope);
 	    noop->set_line(*this);
 	    return noop;
