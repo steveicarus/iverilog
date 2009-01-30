@@ -37,6 +37,18 @@
  * header file elsewhere.
  */
 
+/*
+ * Private VPI properties that are only used in the cleanup code.
+ */
+#ifdef CHECK_WITH_VALGRIND
+#define _vpiFromThr 0x1000001
+#   define _vpiNoThr  0
+#   define _vpiVThr   1
+#   define _vpiWord   2
+#   define _vpi_at_PV 3
+#   define _vpi_at_A  4
+#endif
+
 
 /*
  * The vpi_mode_flag contains the major mode for VPI use. This is used
