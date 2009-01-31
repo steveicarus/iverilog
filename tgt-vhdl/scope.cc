@@ -27,9 +27,6 @@
 #include <cassert>
 #include <cstring>
 
-static string make_safe_name(ivl_signal_t sig);
-
-
 /*
  * This represents the portion of a nexus that is visible within
  * a VHDL scope. If that nexus portion does not contain a signal,
@@ -379,10 +376,8 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
       draw_logic(arch, ivl_scope_log(scope, i)); 
 }
 
-/*
- * Make sure a signal name conforms to VHDL naming rules.
- */
-static string make_safe_name(ivl_signal_t sig)
+// Make sure a signal name conforms to VHDL naming rules.
+string make_safe_name(ivl_signal_t sig)
 {
    string base(ivl_signal_basename(sig));
 

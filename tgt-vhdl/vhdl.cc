@@ -20,7 +20,6 @@
 
 #include "version.h"
 #include "vhdl_target.h"
-#include "vhdl_element.hh"
 #include "state.hh"
 
 #include <iostream>
