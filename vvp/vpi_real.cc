@@ -226,3 +226,15 @@ vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
 
       return &obj->base;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void real_delete(vpiHandle item)
+{
+      struct __vpiRealVar*obj = (struct __vpiRealVar*) item;
+
+      vvp_fun_signal_real*fun = (vvp_fun_signal_real*) obj->net->fun;
+      fun->clear_all_callbacks();
+
+      free(obj);
+}
+#endif

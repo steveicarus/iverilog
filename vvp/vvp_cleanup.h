@@ -45,6 +45,7 @@ extern void memory_delete(struct __vpiHandle *item);
 extern void named_event_delete(struct __vpiHandle *item);
 extern void parameter_delete(struct __vpiHandle *item);
 extern void signal_delete(struct __vpiHandle *item);
+extern void real_delete(struct __vpiHandle *item);
 extern void thread_vthr_delete(struct __vpiHandle *item);
 extern void thread_word_delete(struct __vpiHandle *item);
 extern void vpi_call_delete(struct __vpiHandle *item);

@@ -65,7 +65,6 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		  vthreads_delete(lscope->threads);
 		  delete (scope->intern)[idx];
 		  break;
-
 		case vpiIntegerVar:
 		  break;
 		case vpiMemory:
@@ -74,7 +73,6 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		case vpiModPath:
 		    /* The destination ModPath is cleaned up later. */
 		  free((scope->intern)[idx]);
-		  break;
 		  break;
 		case vpiNamedEvent:
 		  named_event_delete((scope->intern)[idx]);
@@ -87,7 +85,7 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		  parameter_delete((scope->intern)[idx]);
 		  break;
 		case vpiRealVar:
-		  free((scope->intern)[idx]);
+		  real_delete((scope->intern)[idx]);
 		  break;
 		default:
 		  fprintf(stderr, "Need support for type: %d\n",

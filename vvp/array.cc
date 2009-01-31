@@ -1513,25 +1513,43 @@ void memory_delete(vpiHandle item)
       if (arr->vals_words) delete [] (arr->vals_words-1);
 
       if (arr->vals4) {
+// Delete the individual words?
+// constant_delete(handle)?
 	    delete arr->vals4;
-// Delete the individual words.
-// constant_delete(handle)
       }
 
       if (arr->valsr) {
+// Delete the individual words?
+// constant_delete(handle)?
 	    delete arr->valsr;
-// Delete the individual words.
-// constant_delete(handle)
       }
 
       if (arr->nets) {
 	    for (unsigned idx = 0; idx < arr->array_count; idx += 1) {
+		  if (struct __vpiSignal*sig =
+		      vpip_signal_from_handle(arr->nets[idx])) {
+// Delete the individual words?
+			constant_delete(sig->id.index);
+		    /* These should only be the real words. */
+		  } else {
+			assert(arr->nets[idx]->vpi_type->type_code ==
+			       vpiRealVar);
+			struct __vpiRealVar *sig = (struct __vpiRealVar *)
+			                           arr->nets[idx];
+			constant_delete(sig->id.index);
 // Why are only the real words still here?
-// Delete the individual words.
-// constant_delete(handle)
+			free(arr->nets[idx]);
+		  }
 	    }
 	    free(arr->nets);
       }
+
+      while (arr->vpi_callbacks) {
+	    struct __vpiCallback*tmp = arr->vpi_callbacks->next;
+	    delete_vpi_callback(arr->vpi_callbacks);
+	    arr->vpi_callbacks = tmp;
+      }
+
       free(arr);
 }
 

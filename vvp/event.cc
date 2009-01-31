@@ -783,6 +783,14 @@ void compile_named_event(char*label, char*name)
 #ifdef CHECK_WITH_VALGRIND
 void named_event_delete(struct __vpiHandle*handle)
 {
-      free(handle);
+      struct __vpiNamedEvent *obj = (struct __vpiNamedEvent *) handle;
+
+      while (obj->callbacks) {
+	    struct __vpiCallback*tmp = obj->callbacks->next;
+	    delete_vpi_callback(obj->callbacks);
+	    obj->callbacks = tmp;
+      }
+
+      free(obj);
 }
 #endif

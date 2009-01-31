@@ -520,7 +520,7 @@ void vvp_vpi_callback::add_vpi_callback(__vpiCallback*cb)
 void vvp_vpi_callback::clear_all_callbacks()
 {
       while (vpi_callbacks_) {
-	    __vpiCallback*tmp = vpi_callbacks_->next;
+	    struct __vpiCallback*tmp = vpi_callbacks_->next;
 	    delete_vpi_callback(vpi_callbacks_);
 	    vpi_callbacks_ = tmp;
       }
