@@ -806,7 +806,7 @@ private:
  */
 class vhdl_arch : public vhdl_element {
 public:
-   vhdl_arch(const char *entity, const char *name)
+   vhdl_arch(const string& entity, const string& name)
       : name_(name), entity_(entity) {}
    virtual ~vhdl_arch();
 
@@ -828,7 +828,7 @@ private:
  */
 class vhdl_entity : public vhdl_element {
 public:
-   vhdl_entity(const char *name, vhdl_arch *arch, int depth=0);
+   vhdl_entity(const string& name, vhdl_arch *arch, int depth=0);
    virtual ~vhdl_entity();
 
    void emit(std::ostream &of, int level=0) const;

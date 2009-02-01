@@ -170,7 +170,7 @@ vhdl_entity* find_entity(const ivl_scope_t scope)
 {
    assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
 
-   return find_entity(ivl_scope_tname(scope));
+   return find_entity(valid_entity_name(ivl_scope_tname(scope)));
 }
 
 // Add an entity/architecture pair to the list of entities to emit.

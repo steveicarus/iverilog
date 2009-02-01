@@ -376,6 +376,28 @@ static void declare_logic(vhdl_arch *arch, ivl_scope_t scope)
       draw_logic(arch, ivl_scope_log(scope, i)); 
 }
 
+// Replace consecutive underscores with a single underscore
+static void replace_consecutive_underscores(string& str)
+{
+   size_t pos = str.find("__");
+   while (pos != string::npos) {
+      str.replace(pos, 2, "_");
+      pos = str.find("__");
+   }
+}
+
+// Return a valid VHDL name for a Verilog module
+string valid_entity_name(const string& module_name)
+{
+   string name(module_name);
+   replace_consecutive_underscores(name);
+   if (name[0] == '_')
+      name = "Mod" + name;
+   if (*name.rbegin() == '_')
+      name += "Mod";
+   return name;
+}
+
 // Make sure a signal name conforms to VHDL naming rules.
 string make_safe_name(ivl_signal_t sig)
 {
@@ -391,11 +413,7 @@ string make_safe_name(ivl_signal_t sig)
       base += "Sig";
 
    // Can't have two consecutive underscores
-   size_t pos = base.find("__");
-   while (pos != string::npos) {
-      base.replace(pos, 2, "_");
-      pos = base.find("__");
-   }
+   replace_consecutive_underscores(base);
    
    // A signal name may not be the same as a component name
    if (find_entity(base) != NULL)
@@ -446,9 +464,111 @@ static void avoid_name_collision(string& name, vhdl_scope* scope)
    }
 }
 
-/*
- * Declare all signals and ports for a scope.
- */
+// Declare a single signal in a scope
+static void declare_one_signal(vhdl_entity *ent, ivl_signal_t sig)
+{
+   remember_signal(sig, ent->get_arch()->get_scope());
+
+   string name(make_safe_name(sig));
+   avoid_name_collision(name, ent->get_arch()->get_scope());
+   
+   rename_signal(sig, name);
+   
+   vhdl_type *sig_type;
+   unsigned dimensions = ivl_signal_dimensions(sig);
+   if (dimensions > 0) {
+      // Arrays are implemented by generating a separate type
+      // declaration for each array, and then declaring a
+      // signal of that type
+      
+      if (dimensions > 1) {
+         error("> 1 dimension arrays not implemented yet");
+         return;
+      }
+      
+      string type_name = name + "_Type";
+      vhdl_type *base_type =
+         vhdl_type::type_for(ivl_signal_width(sig), ivl_signal_signed(sig) != 0);
+      
+      int lsb = ivl_signal_array_base(sig);
+      int msb = lsb + ivl_signal_array_count(sig) - 1;
+      
+      vhdl_type *array_type =
+         vhdl_type::array_of(base_type, type_name, msb, lsb);
+      vhdl_decl *array_decl = new vhdl_type_decl(type_name.c_str(), array_type);
+      ent->get_arch()->get_scope()->add_decl(array_decl);
+      
+      sig_type = new vhdl_type(*array_type);
+   }
+   else
+      sig_type =
+         vhdl_type::type_for(ivl_signal_width(sig), ivl_signal_signed(sig) != 0);
+   
+   ivl_signal_port_t mode = ivl_signal_port(sig);
+   switch (mode) {
+   case IVL_SIP_NONE:
+      {
+         vhdl_decl *decl = new vhdl_signal_decl(name.c_str(), sig_type);
+         
+         ostringstream ss;
+         if (ivl_signal_local(sig)) {
+               ss << "Temporary created at " << ivl_signal_file(sig) << ":"
+                  << ivl_signal_lineno(sig);
+         } else {
+            ss << "Declared at " << ivl_signal_file(sig) << ":"
+               << ivl_signal_lineno(sig);
+         }
+         decl->set_comment(ss.str().c_str());
+         
+         ent->get_arch()->get_scope()->add_decl(decl);
+      }
+         break;
+   case IVL_SIP_INPUT:
+      ent->get_scope()->add_decl
+         (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_IN));
+      break;
+   case IVL_SIP_OUTPUT:
+      {
+         vhdl_port_decl *decl =
+            new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_OUT);            
+         ent->get_scope()->add_decl(decl);
+      }
+      
+      if (ivl_signal_type(sig) == IVL_SIT_REG) {
+         // A registered output
+         // In Verilog the output and reg can have the
+         // same name: this is not valid in VHDL
+         // Instead a new signal foo_Reg is created
+         // which represents the register
+         std::string newname(name);
+         newname += "_Reg";
+         rename_signal(sig, newname.c_str());
+         
+         vhdl_type *reg_type = new vhdl_type(*sig_type);
+         ent->get_arch()->get_scope()->add_decl
+            (new vhdl_signal_decl(newname.c_str(), reg_type));
+         
+         // Create a concurrent assignment statement to
+         // connect the register to the output
+         ent->get_arch()->add_stmt
+            (new vhdl_cassign_stmt
+             (new vhdl_var_ref(name.c_str(), NULL),
+              new vhdl_var_ref(newname.c_str(), NULL)));
+         }
+      break;
+   case IVL_SIP_INOUT:
+      ent->get_scope()->add_decl
+         (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_INOUT));
+      break;
+   default:
+      assert(false);
+   }
+}
+
+// Declare all signals and ports for a scope.
+// This is done in two phases: first the ports are added then then
+// internal signals. Making two passes like this ensures ports get
+// first pick of names when there is a collision.
 static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
 {
    debug_msg("Declaring signals in scope type %s", ivl_scope_tname(scope));
@@ -456,102 +576,16 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
    int nsigs = ivl_scope_sigs(scope);
    for (int i = 0; i < nsigs; i++) {
       ivl_signal_t sig = ivl_scope_sig(scope, i);      
-      remember_signal(sig, ent->get_arch()->get_scope());
 
-      string name(make_safe_name(sig));
-      avoid_name_collision(name, ent->get_arch()->get_scope());
-      
-      rename_signal(sig, name);
-      
-      vhdl_type *sig_type;
-      unsigned dimensions = ivl_signal_dimensions(sig);
-      if (dimensions > 0) {
-         // Arrays are implemented by generating a separate type
-         // declaration for each array, and then declaring a
-         // signal of that type
+      if (ivl_signal_port(sig) != IVL_SIP_NONE)
+         declare_one_signal(ent, sig);
+   }
+   
+   for (int i = 0; i < nsigs; i++) {
+      ivl_signal_t sig = ivl_scope_sig(scope, i);      
 
-         if (dimensions > 1) {
-            error("> 1 dimension arrays not implemented yet");
-            return;
-         }
-
-         string type_name = name + "_Type";
-         vhdl_type *base_type =
-            vhdl_type::type_for(ivl_signal_width(sig), ivl_signal_signed(sig) != 0);
-
-         int lsb = ivl_signal_array_base(sig);
-         int msb = lsb + ivl_signal_array_count(sig) - 1;
-         
-         vhdl_type *array_type =
-            vhdl_type::array_of(base_type, type_name, msb, lsb);
-         vhdl_decl *array_decl = new vhdl_type_decl(type_name.c_str(), array_type);
-         ent->get_arch()->get_scope()->add_decl(array_decl);
-           
-         sig_type = new vhdl_type(*array_type);
-      }
-      else
-         sig_type =
-            vhdl_type::type_for(ivl_signal_width(sig), ivl_signal_signed(sig) != 0);
-
-      ivl_signal_port_t mode = ivl_signal_port(sig);
-      switch (mode) {
-      case IVL_SIP_NONE:
-         {
-            vhdl_decl *decl = new vhdl_signal_decl(name.c_str(), sig_type);
-
-            ostringstream ss;
-            if (ivl_signal_local(sig)) {
-               ss << "Temporary created at " << ivl_signal_file(sig) << ":"
-                  << ivl_signal_lineno(sig);
-            } else {
-               ss << "Declared at " << ivl_signal_file(sig) << ":"
-                  << ivl_signal_lineno(sig);
-            }
-            decl->set_comment(ss.str().c_str());
-            
-            ent->get_arch()->get_scope()->add_decl(decl);
-         }
-         break;
-      case IVL_SIP_INPUT:
-         ent->get_scope()->add_decl
-            (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_IN));
-         break;
-      case IVL_SIP_OUTPUT:
-         {
-            vhdl_port_decl *decl =
-               new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_OUT);            
-            ent->get_scope()->add_decl(decl);
-         }
-
-         if (ivl_signal_type(sig) == IVL_SIT_REG) {
-            // A registered output
-            // In Verilog the output and reg can have the
-            // same name: this is not valid in VHDL
-            // Instead a new signal foo_Reg is created
-            // which represents the register
-            std::string newname(name);
-            newname += "_Reg";
-            rename_signal(sig, newname.c_str());
-
-            vhdl_type *reg_type = new vhdl_type(*sig_type);
-            ent->get_arch()->get_scope()->add_decl
-               (new vhdl_signal_decl(newname.c_str(), reg_type));
-            
-            // Create a concurrent assignment statement to
-            // connect the register to the output
-            ent->get_arch()->add_stmt
-               (new vhdl_cassign_stmt
-                (new vhdl_var_ref(name.c_str(), NULL),
-                 new vhdl_var_ref(newname.c_str(), NULL)));
-         }
-         break;
-      case IVL_SIP_INOUT:
-         ent->get_scope()->add_decl
-            (new vhdl_port_decl(name.c_str(), sig_type, VHDL_PORT_INOUT));
-         break;
-      default:
-         assert(false);
-      }
+      if (ivl_signal_port(sig) == IVL_SIP_NONE)
+         declare_one_signal(ent, sig);
    }
 }
 
@@ -788,7 +822,7 @@ static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
    assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
 
    // The type name will become the entity name
-   const char *tname = ivl_scope_tname(scope);;
+   const string tname = valid_entity_name(ivl_scope_tname(scope));
    
    // Verilog does not have the entity/architecture distinction
    // so we always create a pair and associate the architecture
@@ -1011,7 +1045,7 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
          // Cannot have instance name the same as type in VHDL
          inst_name += "_Inst";
       }
-
+      
       // Need to replace any [ and ] characters that result
       // from generate statements
       string::size_type loc = inst_name.find('[', 0);
@@ -1021,6 +1055,15 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
       loc = inst_name.find(']', 0);
       if (loc != string::npos)
          inst_name.erase(loc, 1);
+
+      // No leading or trailing underscores
+      if (inst_name[0] == '_')
+         inst_name = "Inst" + inst_name;
+      if (*inst_name.rbegin() == '_')
+         inst_name += "Inst";
+
+      // Can't have two consecutive underscores
+      replace_consecutive_underscores(inst_name);
 
       // Make sure the name doesn't collide with anything we've
       // already declared
