@@ -1556,6 +1556,21 @@ void memory_delete(vpiHandle item)
 void A_delete(vpiHandle item)
 {
       struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*) item;
+      if (obj->address_handle) {
+	    switch (obj->address_handle->vpi_type->type_code) {
+		case vpiMemoryWord:
+		  if (vpi_get(_vpiFromThr, obj->address_handle) == _vpi_at_A) {
+			A_delete(obj->address_handle);
+		  }
+		  break;
+		case vpiPartSelect:
+		  assert(vpi_get(_vpiFromThr, obj->address_handle) ==
+		         _vpi_at_PV);
+		  PV_delete(obj->address_handle);
+		  break;
+	    }
+      }
+
       free(obj);
 }
 #endif

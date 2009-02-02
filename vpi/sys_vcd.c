@@ -245,6 +245,7 @@ static PLI_INT32 dumpvars_cb(p_cb_data cause)
 
 static PLI_INT32 finish_cb(p_cb_data cause)
 {
+      struct vcd_info *cur, *next;
 
       if (finish_status != 0) return 0;
 
@@ -257,6 +258,12 @@ static PLI_INT32 finish_cb(p_cb_data cause)
       }
 
       fclose(dump_file);
+
+      for (cur = vcd_list ;  cur ;  cur = next) {
+	    next = cur->next;
+	    free(cur->ident);
+	    free(cur);
+      }
       vcd_names_delete(&vcd_tab);
       vcd_names_delete(&vcd_var);
       nexus_ident_delete();

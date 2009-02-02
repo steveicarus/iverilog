@@ -1292,6 +1292,19 @@ void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle ref)
 void PV_delete(vpiHandle item)
 {
       struct __vpiPV *obj = (__vpiPV *) item;
+      if (obj->sbase) {
+	    switch (obj->sbase->vpi_type->type_code) {
+		case vpiMemoryWord:
+		  if (vpi_get(_vpiFromThr, obj->sbase) == _vpi_at_A) {
+			A_delete(obj->sbase);
+		  }
+		  break;
+		case vpiPartSelect:
+		  assert(vpi_get(_vpiFromThr, obj->sbase) == _vpi_at_PV);
+		  PV_delete(obj->sbase);
+		  break;
+	    }
+      }
       vvp_fun_signal_base*sig_fun;
       sig_fun = (vvp_fun_signal_base*) obj->net->fun;
       sig_fun->clear_all_callbacks();

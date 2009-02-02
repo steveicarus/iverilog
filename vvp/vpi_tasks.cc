@@ -653,7 +653,7 @@ void vpi_call_delete(vpiHandle item)
 			thread_word_delete(obj->args[arg]);
 			break;
 		      default:
-			assert(0);;
+			assert(0);
 		  }
 		  break;
 		case vpiMemoryWord:
