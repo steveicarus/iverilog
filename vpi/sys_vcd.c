@@ -261,7 +261,7 @@ static PLI_INT32 finish_cb(p_cb_data cause)
 
       for (cur = vcd_list ;  cur ;  cur = next) {
 	    next = cur->next;
-	    free(cur->ident);
+	    free((char *)cur->ident);
 	    free(cur);
       }
       vcd_names_delete(&vcd_tab);
