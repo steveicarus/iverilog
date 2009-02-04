@@ -109,6 +109,9 @@ vpiHandle vpip_make_named_event(const char*name, vvp_net_t*funct)
  * vpi_remove_cb doesn't actually remove any callbacks, it marks them
  * as canceled by clearing the cb_rtn function. This function reaps
  * those marked handles when it scans the list.
+ *
+ * We can not use vpi_free_object() here since it does not really
+ * delete the callback.
  */
 void vpip_run_named_event_callbacks(vpiHandle ref)
 {
@@ -129,13 +132,13 @@ void vpip_run_named_event_callbacks(vpiHandle ref)
 	    } else if (prev == 0) {
 		  obj->callbacks = next;
 		  cur->next = 0;
-		  vpi_free_object(&cur->base);
+		  delete cur;
 
 	    } else {
 		  assert(prev->next == cur);
 		  prev->next = next;
 		  cur->next = 0;
-		  vpi_free_object(&cur->base);
+		  delete cur;
 	    }
       }
 }
