@@ -159,24 +159,24 @@ config.h: $(srcdir)/config.h.in ../config.status
 install: all installdirs $(bindir)/vvp$(suffix)@EXEEXT@ $(libdir)/libvpi$(suffix).a $(INSTALL_DOC)
 
 $(bindir)/vvp$(suffix)@EXEEXT@: ./vvp@EXEEXT@
-	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ $(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@
+	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
 
 $(libdir)/libvpi$(suffix).a : ./libvpi.a
-	$(INSTALL_DATA) libvpi.a $(DESTDIR)$(libdir)/libvpi$(suffix).a
+	$(INSTALL_DATA) libvpi.a "$(DESTDIR)$(libdir)/libvpi$(suffix).a"
 
 $(mandir)/man1/vvp$(suffix).1: $(srcdir)/vvp.man
-	$(INSTALL_DATA) $(srcdir)/vvp.man $(DESTDIR)$(mandir)/man1/vvp$(suffix).1
+	$(INSTALL_DATA) $(srcdir)/vvp.man "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1"
 
 $(prefix)/vvp$(suffix).pdf: vvp.pdf
-	$(INSTALL_DATA) vvp.pdf $(DESTDIR)$(prefix)/vvp$(suffix).pdf
+	$(INSTALL_DATA) vvp.pdf "$(DESTDIR)$(prefix)/vvp$(suffix).pdf"
 
-installdirs: $(srcdir)/mkinstalldirs
-	$(srcdir)/mkinstalldirs $(DESTDIR)$(bindir) $(DESTDIR)$(libdir) $(DESTDIR)$(INSTALL_DOCDIR)
+installdirs: $(srcdir)/../mkinstalldirs
+	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" "$(DESTDIR)$(INSTALL_DOCDIR)"
 
 
 uninstall: $(UNINSTALL32)
-	rm -f $(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@
-	rm -f $(DESTDIR)$(libdir)/libvpi$(suffix).a
-	rm -f $(DESTDIR)$(mandir)/man1/vvp$(suffix).1 $(DESTDIR)$(prefix)/vvp$(suffix).pdf
+	rm -f "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
+	rm -f "$(DESTDIR)$(libdir)/libvpi$(suffix).a"
+	rm -f "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1" "$(DESTDIR)$(prefix)/vvp$(suffix).pdf"
 
 -include $(patsubst %.o, dep/%.d, $O)

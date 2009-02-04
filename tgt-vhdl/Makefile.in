@@ -81,19 +81,19 @@ install: all installdirs $(libdir)/ivl$(suffix)/vhdl.tgt $(libdir)/ivl$(suffix)/
 	$(libdir)/ivl$(suffix)/vhdl-s.conf
 
 $(libdir)/ivl$(suffix)/vhdl.tgt: ./vhdl.tgt
-	$(INSTALL_PROGRAM) ./vhdl.tgt $(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.tgt
+	$(INSTALL_PROGRAM) ./vhdl.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.tgt"
 
 $(libdir)/ivl$(suffix)/vhdl.conf: vhdl.conf
-	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.conf
+	$(INSTALL_DATA) $< "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.conf"
 
 $(libdir)/ivl$(suffix)/vhdl-s.conf: vhdl-s.conf
-	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl$(suffix)/vhdl-s.conf
+	$(INSTALL_DATA) $< "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdl-s.conf"
 
-installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(DESTDIR)$(libdir)/ivl$(suffix)
+installdirs: $(srcdir)/../mkinstalldirs
+	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)/ivl$(suffix)"
 
 uninstall:
-	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.tgt $(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.conf $(DESTDIR)$(libdir)/ivl$(suffix)/vhdl-s.conf
+	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.tgt" "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdl.conf" "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdl-s.conf"
 
 
 -include $(patsubst %.o, dep/%.d, $O)

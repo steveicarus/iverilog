@@ -81,10 +81,10 @@ res.o: res.rc
 install: all installdirs $(bindir)/iverilog-vpi$(suffix)@EXEEXT@
 
 $(bindir)/iverilog-vpi$(suffix)@EXEEXT@: ./iverilog-vpi@EXEEXT@
-	$(INSTALL_PROGRAM) ./iverilog-vpi@EXEEXT@ $(bindir)/iverilog-vpi$(suffix)@EXEEXT@
+	$(INSTALL_PROGRAM) ./iverilog-vpi@EXEEXT@ "$(bindir)/iverilog-vpi$(suffix)@EXEEXT@"
 
-installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(bindir)
+installdirs: $(srcdir)/../mkinstalldirs
+	$(srcdir)/../mkinstalldirs "$(bindir)"
 
 uninstall:
 	rm -f $(bindir)/iverilog-vpi$(suffix)@EXEEXT@

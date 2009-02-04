@@ -91,20 +91,20 @@ check: all
 install: all installdirs $(libdir)/ivl$(suffix)/vvp.tgt $(libdir)/ivl$(suffix)/vvp.conf $(libdir)/ivl$(suffix)/vvp-s.conf
 
 $(libdir)/ivl$(suffix)/vvp.tgt: ./vvp.tgt
-	$(INSTALL_PROGRAM) ./vvp.tgt $(DESTDIR)$(libdir)/ivl$(suffix)/vvp.tgt
+	$(INSTALL_PROGRAM) ./vvp.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/vvp.tgt"
 
 $(libdir)/ivl$(suffix)/vvp.conf: vvp.conf
-	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl$(suffix)/vvp.conf
+	$(INSTALL_DATA) $< "$(DESTDIR)$(libdir)/ivl$(suffix)/vvp.conf"
 
 $(libdir)/ivl$(suffix)/vvp-s.conf: vvp-s.conf
-	$(INSTALL_DATA) $< $(DESTDIR)$(libdir)/ivl$(suffix)/vvp-s.conf
+	$(INSTALL_DATA) $< "$(DESTDIR)$(libdir)/ivl$(suffix)/vvp-s.conf"
 
 
-installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(DESTDIR)$(libdir)/ivl$(suffix)
+installdirs: $(srcdir)/../mkinstalldirs
+	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)/ivl$(suffix)"
 
 uninstall:
-	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/vvp.tgt $(DESTDIR)$(libdir)/ivl$(suffix)/vvp.conf $(DESTDIR)$(libdir)/ivl$(suffix)/vvp-s.conf
+	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/vvp.tgt" "$(DESTDIR)$(libdir)/ivl$(suffix)/vvp.conf" "$(DESTDIR)$(libdir)/ivl$(suffix)/vvp-s.conf"
 
 
 -include $(patsubst %.o, dep/%.d, $O)

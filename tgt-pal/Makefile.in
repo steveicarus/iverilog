@@ -72,14 +72,14 @@ Makefile: $(srcdir)/Makefile.in ../config.status
 install: all installdirs $(libdir)/ivl/pal.tgt
 
 $(libdir)/ivl/pal.tgt: ./pal.tgt
-	$(INSTALL_PROGRAM) ./pal.tgt $(libdir)/ivl/pal.tgt
+	$(INSTALL_PROGRAM) ./pal.tgt "$(DESTDIR)$(libdir)/ivl/pal.tgt"
 
 
-installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(includedir) $(bindir) $(libdir)/ivl
+installdirs: $(srcdir)/../mkinstalldirs
+	$(srcdir)/../mkinstalldirs "$(DESTDIR)/$(libdir)/ivl"
 
 uninstall:
-	rm -f $(libdir)/ivl/pal.tgt
+	rm -f "$DESTDIR)$(libdir)/ivl/pal.tgt"
 
 
 -include $(patsubst %.o, dep/%.d, $O)

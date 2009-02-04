@@ -74,14 +74,14 @@ install: all installdirs $(libdir)/ivl/verilog.tgt \
 	$(includedir)/vpi_user.h
 
 $(libdir)/ivl/verilog.tgt: ./verilog.tgt
-	$(INSTALL_PROGRAM) ./verilog.tgt $(libdir)/ivl/verilog.tgt
+	$(INSTALL_PROGRAM) ./verilog.tgt "$(DESTDIR)$(libdir)/ivl/verilog.tgt"
 
 
-installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(libdir)/ivl
+installdirs: $(srcdir)/../mkinstalldirs
+	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)/ivl"
 
 uninstall:
-	rm -f $(libdir)/ivl/verilog.tgt
+	rm -f "$(DESTDIR)$(libdir)/ivl/verilog.tgt"
 
 
 -include $(patsubst %.o, dep/%.d, $O)

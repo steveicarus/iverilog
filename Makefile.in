@@ -261,55 +261,59 @@ install: all installdirs $(libdir)/ivl$(suffix)/ivl@EXEEXT@  $(libdir)/ivl$(suff
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 
 $(bindir)/iverilog-vpi$(suffix): ./iverilog-vpi
-	$(INSTALL_SCRIPT) ./iverilog-vpi $(DESTDIR)$(bindir)/iverilog-vpi$(suffix)
+	$(INSTALL_SCRIPT) ./iverilog-vpi "$(DESTDIR)$(bindir)/iverilog-vpi$(suffix)"
 
 $(libdir)/ivl$(suffix)/ivl@EXEEXT@: ./ivl@EXEEXT@
-	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ $(DESTDIR)$(libdir)/ivl$(suffix)/ivl@EXEEXT@
+	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ "$(DESTDIR)$(libdir)/ivl$(suffix)/ivl@EXEEXT@"
 
 $(libdir)/ivl$(suffix)/include/constants.vams: $(srcdir)/constants.vams
-	$(INSTALL_DATA) $(srcdir)/constants.vams $(DESTDIR)$(libdir)/ivl$(suffix)/include/constants.vams
+	$(INSTALL_DATA) $(srcdir)/constants.vams "$(DESTDIR)$(libdir)/ivl$(suffix)/include/constants.vams"
 
 $(libdir)/ivl$(suffix)/include/disciplines.vams: $(srcdir)/disciplines.vams
-	$(INSTALL_DATA) $(srcdir)/disciplines.vams $(DESTDIR)$(libdir)/ivl$(suffix)/include/disciplines.vams
+	$(INSTALL_DATA) $(srcdir)/disciplines.vams "$(DESTDIR)$(libdir)/ivl$(suffix)/include/disciplines.vams"
 
 $(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
-	$(INSTALL_DATA) $(srcdir)/ivl_target.h $(DESTDIR)$(includedir)/ivl_target.h
+	$(INSTALL_DATA) $(srcdir)/ivl_target.h "$(DESTDIR)$(includedir)/ivl_target.h"
 
 $(includedir)/_pli_types.h: _pli_types.h
-	$(INSTALL_DATA) $< $(DESTDIR)$(includedir)/_pli_types.h
+	$(INSTALL_DATA) $< "$(DESTDIR)$(includedir)/_pli_types.h"
 
 $(includedir)/vpi_user.h: $(srcdir)/vpi_user.h
-	$(INSTALL_DATA) $(srcdir)/vpi_user.h $(DESTDIR)$(includedir)/vpi_user.h
+	$(INSTALL_DATA) $(srcdir)/vpi_user.h "$(DESTDIR)$(includedir)/vpi_user.h"
 
 $(includedir)/acc_user.h: $(srcdir)/acc_user.h
-	$(INSTALL_DATA) $(srcdir)/acc_user.h $(DESTDIR)$(includedir)/acc_user.h
+	$(INSTALL_DATA) $(srcdir)/acc_user.h "$(DESTDIR)$(includedir)/acc_user.h"
 
 $(includedir)/veriuser.h: $(srcdir)/veriuser.h
-	$(INSTALL_DATA) $(srcdir)/veriuser.h $(DESTDIR)$(includedir)/veriuser.h
+	$(INSTALL_DATA) $(srcdir)/veriuser.h "$(DESTDIR)$(includedir)/veriuser.h"
 
 $(mandir)/man1/iverilog-vpi$(suffix).1: $(srcdir)/iverilog-vpi.man
-	$(INSTALL_DATA) $(srcdir)/iverilog-vpi.man $(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1
+	$(INSTALL_DATA) $(srcdir)/iverilog-vpi.man "$(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1"
 
 $(prefix)/iverilog-vpi$(suffix).pdf: iverilog-vpi.pdf
-	$(INSTALL_DATA) iverilog-vpi.pdf $(DESTDIR)$(prefix)/iverilog-vpi$(suffix).pdf
+	$(INSTALL_DATA) iverilog-vpi.pdf "$(DESTDIR)$(prefix)/iverilog-vpi$(suffix).pdf"
 
 
-installdirs: mkinstalldirs
-	$(srcdir)/mkinstalldirs $(DESTDIR)$(bindir) $(DESTDIR)$(includedir) $(DESTDIR)$(libdir)/ivl$(suffix) \
-	    $(DESTDIR)$(libdir)/ivl$(suffix)/include $(DESTDIR)$(mandir) $(DESTDIR)$(mandir)/man1
+installdirs: $(srcdir)/mkinstalldirs
+	$(srcdir)/mkinstalldirs "$(DESTDIR)$(bindir)" \
+	    "$(DESTDIR)$(includedir)" \
+	    "$(DESTDIR)$(libdir)/ivl$(suffix)" \
+	    "$(DESTDIR)$(libdir)/ivl$(suffix)/include" \
+	    "$(DESTDIR)$(mandir)" \
+	    "$(DESTDIR)$(mandir)/man1"
 
 uninstall:
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for f in ivl@EXEEXT@ include/constants.vams include/disciplines.vams; \
-	    do rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/$$f; done
-	-rmdir $(DESTDIR)$(libdir)/ivl$(suffix)/include
-	-rmdir $(DESTDIR)$(libdir)/ivl$(suffix)
+	    do rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/$$f"; done
+	-rmdir "$(DESTDIR)$(libdir)/ivl$(suffix)/include"
+	-rmdir "$(DESTDIR)$(libdir)/ivl$(suffix)"
 	for f in verilog$(suffix) iverilog-vpi$(suffix) gverilog$(suffix)@EXEEXT@; \
-	    do rm -f $(DESTDIR)$(bindir)/$$f; done
+	    do rm -f "$(DESTDIR)$(bindir)/$$f"; done
 	for f in ivl_target.h vpi_user.h _pli_types.h acc_user.h veriuser.h; \
-	    do rm -f $(DESTDIR)$(includedir)/$$f; done
-	-test X$(suffix) = X || rmdir $(DESTDIR)/$(includedir)
-	rm -f $(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1 $(DESTDIR)$(prefix)/iverilog-vpi$(suffix).pdf
+	    do rm -f "$(DESTDIR)$(includedir)/$$f"; done
+	-test X$(suffix) = X || rmdir "$(DESTDIR)/$(includedir)"
+	rm -f "$(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1" "$(DESTDIR)$(prefix)/iverilog-vpi$(suffix).pdf"
 
 
 -include $(patsubst %.o, dep/%.d, $O)

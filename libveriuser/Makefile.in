@@ -90,12 +90,12 @@ distclean: clean
 install:: all installdirs $(libdir)/libveriuser$(suffix).a $(INSTALL32)
 
 $(libdir)/libveriuser$(suffix).a: ./libveriuser.a
-	$(INSTALL_DATA) ./libveriuser.a $(DESTDIR)$(libdir)/libveriuser$(suffix).a
+	$(INSTALL_DATA) ./libveriuser.a "$(DESTDIR)$(libdir)/libveriuser$(suffix).a"
 
-installdirs: mkinstalldirs
-	$(srcdir)/mkinstalldirs $(DESTDIR)$(includedir) $(DESTDIR)$(libdir)
+installdirs: $(srcdir)/../mkinstalldirs
+	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)"
 
 uninstall::
-	rm -f $(DESTDIR)$(libdir)/libveriuser$(suffix).a
+	rm -f "$(DESTDIR)$(libdir)/libveriuser$(suffix).a"
 
 -include $(patsubst %.o, dep/%.d, $O)
