@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,6 +21,7 @@
 
 # include  "vpi_user.h"
 # include  "sdf_priv.h"
+# include  "sys_priv.h"
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
@@ -34,13 +35,16 @@ int sdf_flag_inform = 0;
 
   /* Scope of the $sdf_annotate call. Annotation starts here. */
 static vpiHandle sdf_scope;
+static vpiHandle sdf_callh = 0;
   /* The cell in process. */
 static vpiHandle sdf_cur_cell;
 
 static vpiHandle find_scope(vpiHandle scope, const char*name)
 {
       vpiHandle idx = vpi_iterate(vpiModule, scope);
-      assert(idx);
+	/* If this scope has no modules then it can't have the one we
+	 * are looking for so just return 0. */
+      if (idx == 0) return 0;
 
       vpiHandle cur;
       while ( (cur = vpi_scan(idx)) ) {
@@ -76,8 +80,11 @@ void sdf_select_instance(const char*celltype, const char*cellinst)
 
 	    vpiHandle tmp_scope = find_scope(scope, buffer);
 	    if (tmp_scope == 0) {
-		  vpi_printf("SDF WARNING: Cannot find %s in %s?\n",
-			     buffer, vpi_get_str(vpiName,scope));
+		  vpi_printf("SDF WARNING: %s:%d: ",
+		             vpi_get_str(vpiFile, sdf_callh),
+		             (int)vpi_get(vpiLineNo, sdf_callh));
+		  vpi_printf("Cannot find %s in scope %s.\n",
+			     buffer, vpi_get_str(vpiFullName, scope));
 		  break;
 	    }
 	    assert(tmp_scope);
@@ -92,23 +99,28 @@ void sdf_select_instance(const char*celltype, const char*cellinst)
       else
 	    sdf_cur_cell = find_scope(scope, src);
       if (sdf_cur_cell == 0) {
-	    vpi_printf("SDF WARNING: Unable to find %s in current scope\n",
-		       cellinst);
+	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
+	               (int)vpi_get(vpiLineNo, sdf_callh));
+	    vpi_printf("Unable to find %s in scope %s.\n",
+		       cellinst, vpi_get_str(vpiFullName, scope));
 	    return;
       }
 
 	/* The scope that matches should be a module. */
       if (vpi_get(vpiType,sdf_cur_cell) != vpiModule) {
-	    vpi_printf("SDF ERROR: Scope %s in %s is not a module.\n",
-		       cellinst, vpi_get_str(vpiName,sdf_scope));
+	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
+	               (int)vpi_get(vpiLineNo, sdf_callh));
+	    vpi_printf("Scope %s in %s is not a module.\n",
+		       cellinst, vpi_get_str(vpiFullName, sdf_scope));
       }
 
 	/* The matching scope (a module) should have the expected type. */
       if (strcmp(celltype,vpi_get_str(vpiDefName,sdf_cur_cell)) != 0) {
-	    vpi_printf("SDF ERROR: Module %s in %s is not a %s; "
-		       "it is an %s\n", cellinst,
-		       vpi_get_str(vpiName,sdf_scope), celltype,
-		       vpi_get_str(vpiDefName,sdf_cur_cell));
+	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
+	               (int)vpi_get(vpiLineNo, sdf_callh));
+	    vpi_printf("Module %s in %s is not a %s; it is an %s\n", cellinst,
+		       vpi_get_str(vpiFullName, sdf_scope), celltype,
+		       vpi_get_str(vpiDefName, sdf_cur_cell));
       }
 
 }
@@ -185,8 +197,11 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
       }
 
       if (match_count == 0) {
-	    vpi_printf("SDF WARNING: Unable to match ModPath %s%s -> %s in %s\n",
-		       edge_str(vpi_edge), src, dst, vpi_get_str(vpiName,sdf_cur_cell));
+	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
+	               (int)vpi_get(vpiLineNo, sdf_callh));
+	    vpi_printf("Unable to match ModPath %s%s -> %s in %s\n",
+		       edge_str(vpi_edge), src, dst,
+		       vpi_get_str(vpiFullName, sdf_cur_cell));
       }
 }
 
@@ -219,31 +234,46 @@ static void check_command_line_args(void)
 
 static PLI_INT32 sys_sdf_annotate_compiletf(PLI_BYTE8*name)
 {
+      vpiHandle callh = vpi_handle(vpiSysTfCall,0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle module;
+
       check_command_line_args();
 
-      vpiHandle sys = vpi_handle(vpiSysTfCall,0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-
-      vpiHandle path = vpi_scan(argv);
-      if (path == 0) {
-	    vpi_printf("SDF ERROR: First argument of %s is required.\n", name);
+	/* Check that we have a file name argument. */
+      if (argv == 0) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires a file name argument.\n", name);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
-
-      assert(path);
-
-      vpiHandle scope = vpi_scan(argv);
-      if (scope == 0)
-	    return 0;
-
-      if (vpi_get(vpiType,scope) != vpiModule) {
-	    vpi_printf("SDF ERROR: The second argument of %s"
-		       " must be a module instance.\n", name);
+      if (! is_string_obj(vpi_scan(argv))) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's file name must be a string.\n", name);
 	    vpi_control(vpiFinish, 1);
       }
 
-      vpi_free_object(argv);
+	/* The module argument is optional. */
+      module = vpi_scan(argv);
+      if (module == 0) return 0;
+      if (vpi_get(vpiType, module) != vpiModule) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's second argument must be a module instance.\n",
+	               name);
+	    vpi_control(vpiFinish, 1);
+      }
+
+	/* Warn the user that we only use the first two arguments. */
+      if (vpi_scan(argv) != 0) {
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s currently only uses the first two argument.\n",
+	               name);
+	    vpi_free_object(argv);
+      }
 
       return 0;
 }
@@ -251,8 +281,8 @@ static PLI_INT32 sys_sdf_annotate_compiletf(PLI_BYTE8*name)
 static PLI_INT32 sys_sdf_annotate_calltf(PLI_BYTE8*name)
 {
       s_vpi_value value;
-      vpiHandle sys = vpi_handle(vpiSysTfCall,0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      vpiHandle callh = vpi_handle(vpiSysTfCall,0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
 
 	/* The first argument is the path to the SDF file. */
       vpiHandle path = vpi_scan(argv);
@@ -261,10 +291,12 @@ static PLI_INT32 sys_sdf_annotate_calltf(PLI_BYTE8*name)
       value.format = vpiStringVal;
       vpi_get_value(path, &value);
 
-      if ((value.format != vpiStringVal) || !value.value.str) {
-	    vpi_printf("ERROR: %s: File name argument (type=%d)"
+      if ((value.format != vpiStringVal) || !*(value.value.str)) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's file name argument (type=%s)"
 		       " does not have a string value.\n",
-		       name, vpi_get(vpiType, path));
+		       name, vpi_get_str(vpiType, path));
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -272,22 +304,22 @@ static PLI_INT32 sys_sdf_annotate_calltf(PLI_BYTE8*name)
       char*path_str = strdup(value.value.str);
       FILE*sdf_fd = fopen(path_str, "r");
       if (sdf_fd == 0) {
-	    vpi_printf("ERROR: %s: Unable to open SDF file `%s'."
-		       " Skipping annotation.\n", name, path_str);
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("Unable to open SDF file \"%s\"."
+		       " Skipping this annotation.\n", path_str);
 	    return 0;
       }
 
 	/* The optional second argument is the scope to annotate. */
       sdf_scope = vpi_scan(argv);
-      if (sdf_scope)
-	    vpi_free_object(argv);
-      if (sdf_scope == 0) {
-	    sdf_scope = vpi_handle(vpiScope,sys);
-      }
+      if (sdf_scope) vpi_free_object(argv);
+      else sdf_scope = vpi_handle(vpiScope, callh);
 
       sdf_cur_cell = 0;
-
+      sdf_callh = callh;
       sdf_process_file(sdf_fd, path_str);
+      sdf_callh = 0;
 
       fclose(sdf_fd);
       free(path_str);
