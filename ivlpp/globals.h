@@ -1,7 +1,7 @@
 #ifndef __globals_H
 #define __globals_H
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,6 +33,8 @@ extern void dump_precompiled_defines(FILE*out);
    an include directive in encountered. */
 extern char**include_dir;
 extern unsigned include_cnt;
+
+extern int relative_include;
 
 /* This flag is true if #line directives are to be generated. */
 extern int line_direct_flag;

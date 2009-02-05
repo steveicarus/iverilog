@@ -1,4 +1,4 @@
-.TH iverilog 1 "April 22nd, 2008" "" "Version 0.9.devel"
+.TH iverilog 1 "February 4th, 2009" "" "Version 0.9.devel"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -80,6 +80,13 @@ Enable (default) or disable the search of a standard installation
 include directory after all other explicit include directories. This
 standard include directory is a convenient place to install standard
 header files that a Verilog program may include.
+.TP 8
+.B -grelative-include\fI|\fP-gno-relative-include
+Enable or disable (default) adding the local files directory to
+the beginning of the include file search path. This allows files
+to be included relative to the current file not the more common
+files are only found in the working directory or in the specified
+include file search path.
 .TP 8
 .B -gxtypes\fI|\fP-gno-xtypes
 Enable (default) or disable support for extended types. Enabling

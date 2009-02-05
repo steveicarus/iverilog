@@ -1422,8 +1422,7 @@ static void output_init()
 
 static void include_filename()
 {
-    if(standby)
-    {
+    if(standby) {
         emit_pathline(istack);
         fprintf
         (
@@ -1443,14 +1442,11 @@ static void include_filename()
 static void do_include()
 {
     /* standby is defined by include_filename() */
-    if (standby->path[0] == '/')
-    {
+    if (standby->path[0] == '/') {
         if ((standby->file = fopen(standby->path, "r")))
             goto code_that_switches_buffers;
-    }
-    else
-    {
-        unsigned idx, start = 0;
+    } else {
+        unsigned idx, start = 1;
         char path[4096];
         char *cp;
 
@@ -1458,20 +1454,18 @@ static void do_include()
         strcpy(path, istack->path);
         cp = strrchr(path, '/');
 
-        if (cp == 0)
-            start = 1;  /* A base file so already in [1] */
-        else
-        {
+        /* I may need the relative path for a planned warning even when
+         * we are not in relative mode, so for now keep it around. */
+        if (cp != 0) {
             *cp = '\0';
             include_dir[0] = strdup(path);
+            if (relative_include) start = 0;
         }
 
-        for (idx = start ;  idx < include_cnt ;  idx += 1)
-        {
+        for (idx = start ;  idx < include_cnt ;  idx += 1) {
             sprintf(path, "%s/%s", include_dir[idx], standby->path);
 
-            if ((standby->file = fopen(path, "r")))
-            {
+            if ((standby->file = fopen(path, "r"))) {
                 /* Free the original path before we overwrite it. */
                 free(standby->path);
                 standby->path = strdup(path);

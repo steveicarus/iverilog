@@ -120,6 +120,10 @@ const char*gen_system_verilog = "no-system-verilog";
 /* Boolean: true means use a default include dir, false means don't */
 int gen_std_include = 1;
 
+/* Boolean: true means add the local file directory to the start
+   of the include list. */
+int gen_relative_include = 0;
+
 char warning_flags[16] = "";
 
 unsigned integer_width = 32;
@@ -594,6 +598,12 @@ int process_generation(const char*name)
 
       else if (strcmp(name,"no-std-include") == 0)
 	     gen_std_include = 0;
+      
+      else if (strcmp(name,"relative-include") == 0)
+	    gen_relative_include = 1;
+      
+      else if (strcmp(name,"no-relative-include") == 0)
+	    gen_relative_include = 0;
 
       else if (strcmp(name,"io-range-error") == 0)
 	    gen_io_range_error = "io-range-error";
@@ -613,7 +623,7 @@ int process_generation(const char*name)
       else if (strcmp(name,"no-verilog-ams") == 0)
 	    gen_verilog_ams = "no-verilog-ams";
       
-	  else if (strcmp(name,"system-verilog") == 0)
+      else if (strcmp(name,"system-verilog") == 0)
 	    gen_system_verilog = "system-verilog";
 
       else {
@@ -627,10 +637,11 @@ int process_generation(const char*name)
 		            "    specify | no-specify\n"
 		            "    verilog-ams | no-verilog-ams\n"
 		            "    std-include | no-std-include\n"
+		            "    relative-include | no-relative-include\n"
 		            "    xtypes | no-xtypes\n"
 		            "    icarus-misc | no-icarus-misc\n"
 		            "    io-range-error | no-io-range-error\n"
-                    "    strict-ca-eval | no-strict-ca-eval\n"
+		            "    strict-ca-eval | no-strict-ca-eval\n"
 					"    system-verilog\n");
 	    return 1;
       }
@@ -941,7 +952,13 @@ int main(int argc, char **argv)
 	   specifically disabled, then write that directory as the
 	   very last include directory to use... always. */
       if (gen_std_include) {
-	    fprintf(defines_file, "I:%s%cinclude", base, sep);
+	    fprintf(defines_file, "I:%s%cinclude\n", base, sep);
+      }
+
+      if (gen_relative_include) {
+	    fprintf(defines_file, "relative include:true\n");
+      } else {
+	    fprintf(defines_file, "relative include:false\n");
       }
 
       fclose(source_file);

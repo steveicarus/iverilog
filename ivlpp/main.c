@@ -83,6 +83,8 @@ void add_source_file(const char*name)
 char**include_dir = 0;
 unsigned include_cnt = 0;
 
+int relative_include = 0;
+
 int line_direct_flag = 0;
 
 unsigned error_count = 0;
@@ -149,6 +151,13 @@ static int flist_read_flags(const char*path)
 			fprintf(stderr, "duplicate -M flag.\n");
 		  } else {
 			dep_path = strdup(arg);
+		  }
+
+	    } else if (strcmp(cp,"relative include") == 0) {
+		  if (strcmp(arg, "true") == 0) {
+			relative_include = 1;
+		  } else {
+			relative_include = 0;
 		  }
 
 	    } else {
