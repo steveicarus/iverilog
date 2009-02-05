@@ -66,6 +66,10 @@ struct signal_defn_t {
 // encountered and hence it will appear first in the output file.
 static entity_list_t g_entities;  
 
+// Store the mapping of ivl scope names to entity names
+typedef map<string, string> scope_name_map_t;
+static scope_name_map_t g_scope_names;
+
 typedef std::map<ivl_signal_t, signal_defn_t> signal_defn_map_t;
 static signal_defn_map_t g_known_signals;
 
@@ -151,7 +155,7 @@ struct cmp_ent_name {
 
 // Find an entity given its name.
 vhdl_entity* find_entity(const string& name)
-{
+{   
    entity_list_t::const_iterator it
       = find_if(g_entities.begin(), g_entities.end(),
                 cmp_ent_name(name));
@@ -170,13 +174,18 @@ vhdl_entity* find_entity(const ivl_scope_t scope)
 {
    assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
 
-   return find_entity(valid_entity_name(ivl_scope_tname(scope)));
+   scope_name_map_t::iterator it = g_scope_names.find(ivl_scope_tname(scope));
+   if (it != g_scope_names.end())
+      return find_entity((*it).second);
+   else
+      return NULL;
 }
 
 // Add an entity/architecture pair to the list of entities to emit.
-void remember_entity(vhdl_entity* ent)
+void remember_entity(vhdl_entity* ent, ivl_scope_t scope)
 {
    g_entities.push_back(ent);
+   g_scope_names[ivl_scope_tname(scope)] = ent->get_name();
 }
 
 // Print all VHDL entities, in order, to the specified output stream.

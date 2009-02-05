@@ -38,7 +38,7 @@ const std::string &get_renamed_signal(ivl_signal_t sig);
 ivl_signal_t find_signal_named(const std::string &name, const vhdl_scope *scope);
 
 // Manage the set of VHDL entities
-void remember_entity(vhdl_entity *ent);
+void remember_entity(vhdl_entity *ent, ivl_scope_t scope);
 vhdl_entity* find_entity(const ivl_scope_t scope);
 vhdl_entity* find_entity(const std::string& name);
 void emit_all_entities(std::ostream& os, int max_depth);

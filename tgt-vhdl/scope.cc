@@ -387,7 +387,7 @@ static void replace_consecutive_underscores(string& str)
 }
 
 // Return a valid VHDL name for a Verilog module
-string valid_entity_name(const string& module_name)
+static string valid_entity_name(const string& module_name)
 {
    string name(module_name);
    replace_consecutive_underscores(name);
@@ -395,7 +395,17 @@ string valid_entity_name(const string& module_name)
       name = "Mod" + name;
    if (*name.rbegin() == '_')
       name += "Mod";
-   return name;
+
+   ostringstream ss;
+   int i = 1;
+   ss << name;
+   while (find_entity(ss.str())) {
+      // Keep adding an extra number until we get a unique name
+      ss.str("");
+      ss << name << i++;
+   }
+   
+   return ss.str();
 }
 
 // Make sure a signal name conforms to VHDL naming rules.
@@ -840,7 +850,7 @@ static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
    arch->set_comment(ss.str());
    ent->set_comment(ss.str());
    
-   remember_entity(ent);
+   remember_entity(ent, scope);
 }
 
 /*
