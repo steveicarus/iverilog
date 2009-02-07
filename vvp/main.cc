@@ -439,6 +439,7 @@ int main(int argc, char*argv[])
       vpi_handle_delete();
       udp_defns_delete();
       load_module_delete();
+      island_delete();
       signal_pool_delete();
       vvp_net_pool_delete();
 #endif

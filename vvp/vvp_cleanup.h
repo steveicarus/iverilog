@@ -26,12 +26,13 @@
 /* Routines used to cleanup the runtime memory when it is all finished. */
 
 extern void codespace_delete(void);
-extern void root_table_delete(void);
-extern void def_table_delete(void);
-extern void vpi_mcd_delete(void);
 extern void dec_str_delete(void);
+extern void def_table_delete(void);
+extern void island_delete(void);
+extern void vpi_mcd_delete(void);
 extern void load_module_delete(void);
 extern void modpath_delete(void);
+extern void root_table_delete(void);
 extern void signal_pool_delete(void);
 extern void udp_defns_delete(void);
 extern void vpi_handle_delete(void);
