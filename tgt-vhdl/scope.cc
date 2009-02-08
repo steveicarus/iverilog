@@ -80,13 +80,11 @@ static void link_scope_to_nexus_signal(nexus_private_t *priv, vhdl_scope *scope,
    scope_nexus_t *sn;
    if ((sn = visible_nexus(priv, scope))) {
       assert(sn->tmpname == "");
-
+      
       // Remember to connect this signal up later
       // If one of the signals is a input, make sure the input is not being driven
-      if (ivl_signal_port(sn->sig) == IVL_SIP_INPUT) {
-         sn->connect.push_back(sn->sig);
+      if (ivl_signal_port(sn->sig) == IVL_SIP_INPUT)
          sn->sig = sig;
-      }
       else
          sn->connect.push_back(sig);
    }
