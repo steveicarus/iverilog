@@ -1,7 +1,7 @@
 #ifndef _sdf_parse_priv_h
 #define _sdf_parse_priv_h
 /*
- * Copyright (c) 2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,5 +34,8 @@ extern const char*sdf_parse_path;
 
 /* Hierarchy separator character to use. */
 extern char sdf_use_hchar;
+
+extern void start_edge_id(void);
+extern void stop_edge_id(void);
 
 #endif

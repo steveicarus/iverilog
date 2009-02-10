@@ -45,6 +45,7 @@ static int yywrap(void)
 %}
 
 %x CCOMMENT
+%x EDGE_ID
 
 %%
 
@@ -61,6 +62,16 @@ static int yywrap(void)
 
   /* Count lines so that the parser can assign line numbers. */
 \n { sdflloc.first_line += 1; }
+
+  /* The other edge identifiers. */
+<EDGE_ID>"01"    {return K_01; }
+<EDGE_ID>"10"    {return K_10; }
+<EDGE_ID>"0"[zZ] {return K_0Z; }
+<EDGE_ID>[zZ]"1" {return K_Z1; }
+<EDGE_ID>"1"[zZ] {return K_1Z; }
+<EDGE_ID>[zZ]"0" {return K_Z0; }
+<EDGE_ID>[pP][oO][sS][eE][dD][gG][eE] {return K_POSEDGE; }
+<EDGE_ID>[nN][eE][gG][eE][dD][gG][eE] {return K_NEGEDGE; }
 
   /* Real values */
 [0-9]+(\.[0-9]+)?([Ee][+-]?[0-9]+)? {
@@ -107,8 +118,6 @@ static struct {
       { "INTERCONNECT",K_INTERCONNECT },
       { "INSTANCE",   K_INSTANCE },
       { "IOPATH",     K_IOPATH },
-      { "NEGEDGE",    K_NEGEDGE },
-      { "POSEDGE",    K_POSEDGE },
       { "PROCESS",    K_PROCESS },
       { "PROGRAM",    K_PROGRAM },
       { "RECOVERY",   K_RECOVERY },
@@ -125,6 +134,16 @@ static struct {
       { "WIDTH",      K_WIDTH },
       { 0, IDENTIFIER }
 };
+
+void start_edge_id(void)
+{
+      BEGIN(EDGE_ID);
+}
+
+void stop_edge_id(void)
+{
+      BEGIN(0);
+}
 
 static int lookup_keyword(const char*text)
 {

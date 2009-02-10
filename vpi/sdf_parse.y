@@ -48,6 +48,7 @@ char sdf_use_hchar = '.';
 %token K_NEGEDGE K_POSEDGE K_PROCESS K_PROGRAM K_RECOVERY K_REMOVAL
 %token K_SDFVERSION K_SETUP K_SETUPHOLD K_TEMPERATURE K_TIMESCALE
 %token K_TIMINGCHECK K_VENDOR K_VERSION K_VOLTAGE K_WIDTH
+%token K_01 K_10 K_0Z K_Z1 K_1Z K_Z0
 
 %token HCHAR
 %token <string_val> QSTRING IDENTIFIER
@@ -301,13 +302,19 @@ port
   ;
 
 port_edge
-  : '(' edge_identifier port_instance ')'
-      { $$.vpi_edge = $2; $$.string_val = $3; }
+  : '(' {start_edge_id();} edge_identifier {stop_edge_id();} port_instance ')'
+      { $$.vpi_edge = $3; $$.string_val = $5; }
   ;
 
 edge_identifier
   : K_POSEDGE { $$ = vpiPosedge; }
   | K_NEGEDGE { $$ = vpiNegedge; }
+  | K_01      { $$ = vpiEdge01; }
+  | K_10      { $$ = vpiEdge10; }
+  | K_0Z      { $$ = vpiEdge0x; }
+  | K_Z1      { $$ = vpiEdgex1; }
+  | K_1Z      { $$ = vpiEdge1x; }
+  | K_Z0      { $$ = vpiEdgex0; }
   ;
 
 delval_list

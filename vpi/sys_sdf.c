@@ -173,6 +173,7 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 	      /* The edge type must match too. But note that if this
 	         IOPATH has no edge, then it matches with all edges of
 	         the modpath object. */
+/* --> Is this correct in the context of the 10, 01, etc. edges? */
 	    if (vpi_edge != vpiNoEdge && vpi_get(vpiEdge,path_t_in) != vpi_edge)
 		  continue;
 
