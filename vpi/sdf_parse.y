@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -38,6 +38,7 @@ char sdf_use_hchar = '.';
       double real_val;
       char*  string_val;
 
+      struct sdf_delay_s delay;
       struct port_with_edge_s port_with_edge;
       struct sdf_delval_list_s delval_list;
 };
@@ -58,8 +59,8 @@ char sdf_use_hchar = '.';
 %type <string_val> hierarchical_identifier
 %type <string_val> port port_instance
 
-%type <real_val> rvalue rtriple signed_real_number
-%type <real_val> delval
+%type <real_val> rtriple signed_real_number
+%type <delay> delval rvalue
 
 %type <int_val> edge_identifier
 %type <port_with_edge> port_edge port_spec
@@ -315,6 +316,7 @@ delval_list
 	$$.count = $1.count;
 	for (idx = 0 ; idx < $$.count ; idx += 1)
 	      $$.val[idx] = $1.val[idx];
+// Is this correct?
 	if ($$.count < 12) {
 	      $$.val[$$.count] = $2;
 	      $$.count += 1;
@@ -343,9 +345,14 @@ delval
 
 rvalue
   : '(' signed_real_number ')'
-      { $$ = $2; }
+      { $$.defined = 1;
+        $$.value = $2; }
   | '(' rtriple ')'
-      { $$ = $2; }
+      { $$.defined = 1;
+        $$.value = $2; }
+  | '(' ')'
+      { $$.defined = 0;
+        $$.value = 0.0; }
   ;
 
 hierarchical_identifier

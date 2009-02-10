@@ -139,33 +139,22 @@ static const char*edge_str(int vpi_edge)
 void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 		       const struct sdf_delval_list_s*delval_list)
 {
-      s_vpi_delay delays;
+      vpiHandle iter, path;
+      int match_count = 0;
+
       if (sdf_cur_cell == 0)
 	    return;
 
-      vpiHandle iter = vpi_iterate(vpiModPath, sdf_cur_cell);
-
-      struct t_vpi_time delay_vals[12];
-      int idx;
-      for (idx = 0 ; idx < delval_list->count ; idx += 1) {
-	    delay_vals[idx].type = vpiScaledRealTime;
-	    delay_vals[idx].real = delval_list->val[idx];
-      }
-
-      delays.da = delay_vals;
-      delays.no_of_delays = delval_list->count;
-      delays.time_type = vpiScaledRealTime;
-      delays.mtm_flag = 0;
-      delays.append_flag = 0;
-      delays.plusere_flag = 0;
-
+      iter = vpi_iterate(vpiModPath, sdf_cur_cell);
 
 	/* Search for the modpath that matches the IOPATH by looking
 	   for the modpath that uses the same ports as the ports that
 	   the parser has found. */
-      vpiHandle path;
-      int match_count = 0;
       if (iter) while ( (path = vpi_scan(iter)) ) {
+	    s_vpi_delay delays;
+	    struct t_vpi_time delay_vals[12];
+	    int idx;
+
 	    vpiHandle path_t_in = vpi_handle(vpiModPathIn,path);
 	    vpiHandle path_t_out = vpi_handle(vpiModPathOut,path);
 
@@ -192,6 +181,22 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 		  continue;
 
 	      /* Ah, this must be a match! */
+	    delays.da = delay_vals;
+	    delays.no_of_delays = delval_list->count;
+	    delays.time_type = vpiScaledRealTime;
+	    delays.mtm_flag = 0;
+	    delays.append_flag = 0;
+	    delays.plusere_flag = 0;
+	    vpi_get_delays(path, &delays);
+
+	    for (idx = 0 ; idx < delval_list->count ; idx += 1) {
+		  delay_vals[idx].type = vpiScaledRealTime;
+		  if (delval_list->val[idx].defined) {
+			delay_vals[idx].real = delval_list->val[idx].value;
+		  }
+ 
+	    }
+
 	    vpi_put_delays(path, &delays);
 	    match_count += 1;
       }

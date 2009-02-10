@@ -1,7 +1,7 @@
 #ifndef _sdf_priv_h
 #define _sdf_priv_h
 /*
- * Copyright (c) 2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,9 +36,14 @@ extern int sdf_flag_inform;
  * it is parsed.
  */
 
+struct sdf_delay_s {
+      int defined;
+      double value;
+};
+
 struct sdf_delval_list_s {
       int count;
-      double val[12];
+      struct sdf_delay_s val[12];
 };
 
 extern void sdf_select_instance(const char*celltype, const char*inst);

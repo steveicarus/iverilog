@@ -768,22 +768,26 @@ static void modpath_src_get_delays ( vpiHandle ref, p_vpi_delay delays )
       fun->get_delay12(tmp);
 
       switch (delays->no_of_delays) {
+	  case 1:
+	  case 2:
+	  case 3:
+	  case 6:
 	  case 12:
-	    if (delays->time_type == vpiSimTime) {
-		  for (idx = 0; idx < 12; idx += 1) {
-			vpip_time_to_timestruct(delays->da+idx, tmp[idx]);
-		  }
-	    } else {
-		  /* int units = src->dest->scope->time_units; */
-		  for (idx = 0; idx < 12; idx += 1) {
-			delays->da[idx].real = vpip_time_to_scaled_real(tmp[idx], src->dest->scope);
-		  }
-	    }
 	    break;
 
 	  default:
 	    assert(0);
 	    break;
+      }
+
+      if (delays->time_type == vpiSimTime) {
+	    for (idx = 0; idx < delays->no_of_delays; idx += 1) {
+		  vpip_time_to_timestruct(delays->da+idx, tmp[idx]);
+	    }
+      } else {
+	    for (idx = 0; idx < delays->no_of_delays; idx += 1) {
+		  delays->da[idx].real = vpip_time_to_scaled_real(tmp[idx], src->dest->scope);
+	    }
       }
 }
 
