@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -233,6 +233,24 @@ NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid)
 
 NetExpr* condition_reduce(NetExpr*expr)
 {
+      if (expr->expr_type() == IVL_VT_REAL) {
+	    if (NetECReal *tmp = dynamic_cast<NetECReal*>(expr)) {
+		  verinum::V res;
+		  if (tmp->value().as_double() == 0.0) res = verinum::V0;
+		  else res = verinum::V1;
+		  verinum vres (res, 1, true);
+		  NetExpr *rtn = new NetEConst(vres);
+		  rtn->set_line(*expr);
+		  delete expr;
+		  return rtn;
+	    }
+
+	    NetExpr *rtn = new NetEBComp('n', expr,
+	                                 new NetECReal(verireal(0.0)));
+	    rtn->set_line(*expr);
+	    return rtn;
+      }
+
       if (expr->expr_width() == 1)
 	    return expr;
 
@@ -388,7 +406,7 @@ std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 /*
  * Human readable version of op. Used in elaboration error messages.
  */
-const char *human_readable_op(const char op)
+const char *human_readable_op(const char op, bool unary)
 {
 	const char *type;
 	switch (op) {
@@ -418,7 +436,10 @@ const char *human_readable_op(const char op)
 	    case 'e': type = "==";  break;
 	    case 'n': type = "!=";  break;
 	    case 'E': type = "==="; break;  // Case equality
-	    case 'N': type = "!=="; break;  // Case inequality
+	    case 'N':
+		if (unary) type = "~|";     // NOR
+		else type = "!==";          // Case inequality
+		break;
 
 	    case 'l': type = "<<(<)"; break;  // Left shifts
 	    case 'r': type = ">>";    break;  // Logical right shift

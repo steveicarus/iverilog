@@ -408,6 +408,14 @@ NetExpr* PEBinary::elaborate_expr_base_bits_(Design*des,
 					     NetExpr*lp, NetExpr*rp,
 					     int expr_wid) const
 {
+      if (lp->expr_type() == IVL_VT_REAL || rp->expr_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: "
+	         << human_readable_op(op_)
+	         << " operator may not have REAL operands." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
 	// If either of the arguments is unsigned, then process both
 	// of them as unsigned. This only impacts the padding that is
 	// done to get the operands to the expr_wid.
@@ -437,8 +445,8 @@ NetExpr* PEBinary::elaborate_expr_base_div_(Design*des,
 	   baseline Verilog. But we allow it in our extended
 	   form of Verilog. */
       if (op_ == '%' && ! gn_icarus_misc_flag) {
-	    if (lp->expr_type()==IVL_VT_REAL ||
-		rp->expr_type()==IVL_VT_REAL) {
+	    if (lp->expr_type() == IVL_VT_REAL ||
+		rp->expr_type() == IVL_VT_REAL) {
 		  cerr << get_fileline() << ": error: Modulus operator "
 			"may not have REAL operands." << endl;
 		  des->errors += 1;
@@ -465,6 +473,14 @@ NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
 					       NetExpr*lp, NetExpr*rp,
 					       int expr_wid) const
 {
+      if (lp->expr_type() == IVL_VT_REAL || rp->expr_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: "
+	         << human_readable_op(op_)
+	         << " operator may not have REAL operands." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       NetExpr*tmp;
 
       long use_wid = lp->expr_width();
@@ -570,6 +586,14 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 					       NetExpr*lp, NetExpr*rp,
 					       int expr_wid) const
 {
+      if (lp->expr_type() == IVL_VT_REAL || rp->expr_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: "
+	         << human_readable_op(op_)
+	         << " operator may not have REAL operands." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       NetExpr*tmp;
 
       long use_wid = lp->expr_width();
@@ -853,7 +877,8 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 		rp->expr_type() == IVL_VT_REAL) {
 		  cerr << get_fileline() << ": error: "
 		       << human_readable_op(op_)
-		       << "may not have real operands." << endl;
+		       << " operator may not have REAL operands." << endl;
+		  des->errors += 1;
 		  return 0;
 	    }
 	    break;
@@ -1534,6 +1559,14 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
       if (repeat_) {
 	    NetExpr*tmp = elab_and_eval(des, scope, repeat_, -1);
 	    assert(tmp);
+
+	    if (tmp->expr_type() == IVL_VT_REAL) {
+		  cerr << tmp->get_fileline() << ": error: concatenation "
+		       << "repeat expression can not be REAL." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
 	    NetEConst*rep = dynamic_cast<NetEConst*>(tmp);
 
 	    if (rep == 0) {
@@ -1543,6 +1576,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ":      : The expression is: "
 		       << *tmp << endl;
 		  des->errors += 1;
+		  return 0;
 	    }
 
 	    if (!rep->value().is_defined()) {
@@ -1597,8 +1631,15 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	    ex->set_line(*parms_[idx]);
 
 	    if (! ex->has_width()) {
-		  cerr << ex->get_fileline() << ": error: operand of "
-		       << "concatenation has indefinite width: "
+		  cerr << ex->get_fileline() << ": error: "
+		       << "concatenation operand has indefinite width: "
+		       << *ex << endl;
+		  des->errors += 1;
+	    }
+
+	    if (ex->expr_type() == IVL_VT_REAL) {
+		  cerr << ex->get_fileline() << ": error: "
+		       << "concatenation operand can not be REAL: "
 		       << *ex << endl;
 		  des->errors += 1;
 	    }
@@ -3219,7 +3260,7 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 		       constant value. */
 		  verireal val = - ipr->value();
 		  tmp = new NetECReal(val);
-		  tmp->set_line( *ip );
+		  tmp->set_line(*this);
 		  delete ip;
 
 	    } else {
@@ -3266,8 +3307,21 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 		  tmp = new NetEConst(vres);
 		  tmp->set_line(*this);
 		  delete ip;
+	    } else if (NetECReal*ipr = dynamic_cast<NetECReal*>(ip)) {
+		  verinum::V res;
+		  if (ipr->value().as_double() == 0.0) res = verinum::V1;
+		  else res = verinum::V0;
+		  verinum vres (res, 1, true);
+		  tmp = new NetEConst(vres);
+		  tmp->set_line(*this);
+		  delete ip;
 	    } else {
-		  tmp = new NetEUReduce(op_, ip);
+		  if (ip->expr_type() == IVL_VT_REAL) {
+			tmp = new NetEBComp('e', ip,
+			                    new NetECReal(verireal(0.0)));
+		  } else {
+			tmp = new NetEUReduce(op_, ip);
+		  }
 		  tmp->set_line(*this);
 	    }
 	    break;
@@ -3278,6 +3332,13 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 	  case 'A': // Reduction NAND (~&)
 	  case 'N': // Reduction NOR (~|)
 	  case 'X': // Reduction NXOR (~^)
+	    if (ip->expr_type() == IVL_VT_REAL) {
+		  cerr << get_fileline() << ": error: "
+		       << human_readable_op(op_, true)
+		       << " operator may not have a REAL operand." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
 	    tmp = new NetEUReduce(op_, ip);
 	    tmp->set_line(*this);
 	    break;

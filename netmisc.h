@@ -1,7 +1,7 @@
 #ifndef __netmisc_H
 #define __netmisc_H
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -210,7 +210,7 @@ extern bool type_is_vectorable(ivl_variable_type_t type);
 /*
  * Return a human readable version of the operator.
  */
-const char *human_readable_op(const char op);
+const char *human_readable_op(const char op, bool unary = false);
 
 /*
  * Is the expression a constant value and if so what is its logical
