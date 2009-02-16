@@ -169,10 +169,10 @@ struct vvp_island_branch {
 };
 
 /*
- * This function collections into the conn list all the branch ends
+ * This function collects into the conn list all the branch ends
  * that are connected together with the reference branch endpoint
  * cur. All these branch ends together form a "node" of the branch
- * network.
+ * network. (In other words, this does *not* follow the branches.)
  */
 extern void island_collect_node(std::list<vvp_branch_ptr_t>&conn, vvp_branch_ptr_t cur);
 
