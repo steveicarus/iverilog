@@ -1523,16 +1523,34 @@ unsigned PEConcat::test_width(Design*des, NetScope*scope,
       }
 
       if (repeat_) {
-	      // The repeat expression is self-determined and its own type.
+	    unsigned repeat_count = 1;
+
+	      // The repeat expression is self-determined and
+	      // its own type.
 	    ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
 	    bool tmp_flag = false;
 	    repeat_->test_width(des, scope, 0, 0, tmp_type, tmp_flag);
 
-	    count_width = 0;
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: "
-		       << "CONCAT MISSING TEST_WIDTH WHEN REPEAT IS PRESENT!"
-		       << endl;
+	      // Try to evaluate the repeat expression now, so
+	      // that we can give the caller an accurate
+	      // expression width.
+	    repeat_expr_ = elab_and_eval(des, scope, repeat_, -1);
+	    if (NetEConst*tmp_c = dynamic_cast<NetEConst*> (repeat_expr_)) {
+		  repeat_count = tmp_c->value().as_ulong();
+
+	    } else {
+		    // Gack! Can't evaluate expression yet!
+		    // Unfortunately, it is possible that this
+		    // expression may turn out to be constant later in
+		    // elaboration, so we can't really get away with
+		    // reporting an error.
+		  repeat_count = 1;
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "CONCAT MISSING TEST_WIDTH WHEN REPEAT IS PRESENT!"
+			     << endl;
+	    }
+	    count_width *= repeat_count;
       }
 
       expr_type__ = expr_type_;
@@ -1557,8 +1575,18 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	/* If there is a repeat expression, then evaluate the constant
 	   value and set the repeat count. */
       if (repeat_) {
-	    NetExpr*tmp = elab_and_eval(des, scope, repeat_, -1);
-	    assert(tmp);
+	    NetExpr*tmp;
+	    if (repeat_expr_ == 0) {
+		    // If the expression has not yet been elaborated,
+		    // then try now.
+		  tmp = elab_and_eval(des, scope, repeat_, -1);
+		  assert(tmp);
+	    } else {
+		    // If it has been elaborated, make sure it is
+		    // fully evaluated.
+		  tmp = repeat_expr_;
+		  eval_expr(tmp);
+	    }
 
 	    if (tmp->expr_type() == IVL_VT_REAL) {
 		  cerr << tmp->get_fileline() << ": error: concatenation "
