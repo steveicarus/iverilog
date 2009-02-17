@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -417,22 +417,25 @@ These instructions are like the %ix/get instructions, except that they
 read directly from a functor label instead of from thread bits. They
 set bit 4 just like %ix/get.
 
-* %ix/load <idx>, <value>
+* %ix/load <idx>, <low> <high>
 
 This instruction loads an immediate value into the addressed index
-register. The index register holds numeric values, so the <value> is a
-number. The idx value selects the index register. This is different
-from %ix/get, which loads the index register from a value in the
-thread bit vector. The value is a signed decimal value >= 0.
+register. The index register holds signed 64 bit numeric values, so
+<low> and <high> are used to separate the value in two 32 bit chunks.
+The idx value selects the index register. This is different from
+%ix/get, which loads the index register from a value in the thread bit
+vector. The values are unsigned decimal values and are combined as
+<high> << 32 | <low> to produce the final value.
 
 
-* %ix/add <idx>, <value>
-* %ix/sub <idx>, <value>
-* %ix/mul <idx>, <value>
+* %ix/add <idx>, <low> <high>
+* %ix/sub <idx>, <low> <high>
+* %ix/mul <idx>, <low> <high>
 
-This instruction adds, subtracts, or multiplies an immediate value to
-the addressed index register. The index register holds numeric values,
-so the <value> is a number. The <idx> value selects the index register.
+These instructions add, subtract, or multiply the selected index
+register by the immediate value. The 64 bit immediate value is built
+from the two 32 bit chunks <low> and <high> (see %ix/load above).
+The <idx> value selects the index register.
 
 
 * %jmp <code-label>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -249,10 +249,10 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
       if (const NetEConst*delay_num = dynamic_cast<const NetEConst*>(delay_exp)) {
 	    verinum val = delay_num->value();
 	    ivl_expr_t de = new struct ivl_expr_s;
-	    de->type_ = IVL_EX_ULONG;
-	    de->width_  = 8 * sizeof(unsigned long);
+	    de->type_ = IVL_EX_DELAY;
+	    de->width_  = 8 * sizeof(uint64_t);
 	    de->signed_ = 0;
-	    de->u_.ulong_.value = val.as_ulong();
+	    de->u_.delay_.value = val.as_ulong64();
 	    stmt_cur_->u_.assign_.delay = de;
 
       } else if (delay_exp != 0) {
@@ -563,7 +563,7 @@ bool dll_target::proc_delay(const NetPDelay*net)
       } else {
 	    stmt_cur_->type_ = IVL_ST_DELAY;
 	    stmt_cur_->u_.delay_.stmt_  = tmp;
-	    stmt_cur_->u_.delay_.delay_ = net->delay();
+	    stmt_cur_->u_.delay_.value = net->delay();
       }
 
       ivl_statement_t save_cur_ = stmt_cur_;

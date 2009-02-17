@@ -862,7 +862,7 @@ bool of_ASSIGN_AVD(vthread_t thr, vvp_code_t cp)
       unsigned wid = thr->words[0].w_int;
       long off = thr->words[1].w_int;
       unsigned adr = thr->words[3].w_int;
-      unsigned long delay = thr->words[cp->bit_idx[0]].w_int;
+      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
 
       long vwidth = get_array_word_size(cp->array);
@@ -956,7 +956,7 @@ bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t cp)
       unsigned wid = thr->words[0].w_int;
       assert(wid > 0);
 
-      unsigned long delay = thr->words[cp->bit_idx[0]].w_int;
+      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
 
       vvp_net_ptr_t ptr (cp->net, 0);
@@ -1044,7 +1044,7 @@ bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
       long off = thr->words[1].w_int;
-      unsigned delay = thr->words[cp->bit_idx[0]].w_int;
+      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
 
       vvp_fun_signal_vec*sig
@@ -1152,7 +1152,7 @@ bool of_ASSIGN_WR(vthread_t thr, vvp_code_t cp)
 
 bool of_ASSIGN_WRD(vthread_t thr, vvp_code_t cp)
 {
-      unsigned delay = thr->words[cp->bit_idx[0]].w_int;
+      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned index = cp->bit_idx[1];
       s_vpi_time del;
 
@@ -2554,30 +2554,44 @@ bool of_INV(vthread_t thr, vvp_code_t cp)
 
 
 /*
-** Index registers, unsigned arithmetic.
-*/
+ * Index registers, arithmetic.
+ */
+
+static inline int64_t get_as_64_bit(uint32_t low_32, uint32_t high_32)
+{
+      int64_t low = low_32;
+      int64_t res = high_32;
+
+      res <<= 32;
+      res |= low;
+      return res;
+}
 
 bool of_IX_ADD(vthread_t thr, vvp_code_t cp)
 {
-  thr->words[cp->bit_idx[0]].w_int += cp->number;
-  return true;
+      thr->words[cp->number].w_int += get_as_64_bit(cp->bit_idx[0],
+                                                    cp->bit_idx[1]);
+      return true;
 }
 
 bool of_IX_SUB(vthread_t thr, vvp_code_t cp)
 {
-  thr->words[cp->bit_idx[0]].w_int -= cp->number;
-  return true;
+      thr->words[cp->number].w_int -= get_as_64_bit(cp->bit_idx[0],
+                                                    cp->bit_idx[1]);
+      return true;
 }
 
 bool of_IX_MUL(vthread_t thr, vvp_code_t cp)
 {
-  thr->words[cp->bit_idx[0]].w_int *= cp->number;
-  return true;
+      thr->words[cp->number].w_int *= get_as_64_bit(cp->bit_idx[0],
+                                                    cp->bit_idx[1]);
+      return true;
 }
 
 bool of_IX_LOAD(vthread_t thr, vvp_code_t cp)
 {
-      thr->words[cp->bit_idx[0]].w_int = cp->number;
+      thr->words[cp->number].w_int = get_as_64_bit(cp->bit_idx[0],
+                                                   cp->bit_idx[1]);
       return true;
 }
 

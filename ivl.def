@@ -39,6 +39,7 @@ ivl_expr_type
 ivl_expr_bits
 ivl_expr_branch
 ivl_expr_def
+ivl_expr_delay_val
 ivl_expr_dvalue
 ivl_expr_event
 ivl_expr_file

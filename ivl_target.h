@@ -1,7 +1,7 @@
 #ifndef __ivl_target_H
 #define __ivl_target_H
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -211,6 +211,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_BACCESS= 19,
       IVL_EX_BINARY = 2,
       IVL_EX_CONCAT = 3,
+      IVL_EX_DELAY = 20,
       IVL_EX_EVENT  = 17,
       IVL_EX_MEMORY = 4,
       IVL_EX_NUMBER = 5,
@@ -749,6 +750,8 @@ extern const char* ivl_expr_bits(ivl_expr_t net);
 extern ivl_branch_t ivl_expr_branch(ivl_expr_t net);
   /* IVL_EX_UFUNC */
 extern ivl_scope_t ivl_expr_def(ivl_expr_t net);
+  /* IVL_EX_DELAY */
+extern uint64_t ivl_expr_delay_val(ivl_expr_t net);
   /* IVL_EX_REALNUM */
 extern double ivl_expr_dvalue(ivl_expr_t net);
   /* IVL_EX_SIGNAL, IVL_EX_SFUNC, IVL_EX_VARIABLE */

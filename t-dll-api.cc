@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -307,6 +307,12 @@ extern "C" ivl_scope_t ivl_expr_def(ivl_expr_t net)
       }
 
       return 0;
+}
+
+extern "C" uint64_t ivl_expr_delay_val(ivl_expr_t net)
+{
+      assert(net->type_ == IVL_EX_DELAY);
+      return net->u_.delay_.value;
 }
 
 extern "C" double ivl_expr_dvalue(ivl_expr_t net)
@@ -2137,7 +2143,7 @@ extern "C" ivl_expr_t ivl_stmt_delay_expr(ivl_statement_t net)
 extern "C" uint64_t ivl_stmt_delay_val(ivl_statement_t net)
 {
       assert(net->type_ == IVL_ST_DELAY);
-      return net->u_.delay_.delay_;
+      return net->u_.delay_.value;
 }
 
 extern "C" unsigned ivl_stmt_nevent(ivl_statement_t net)

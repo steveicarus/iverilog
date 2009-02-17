@@ -291,6 +291,10 @@ struct ivl_expr_s {
 		  ivl_expr_t sub_;
 	    } unary_;
 
+	    struct {
+		  uint64_t value;
+	    } delay_;
+
       } u_;
 };
 
@@ -714,7 +718,7 @@ struct ivl_statement_s {
 	    } contrib_;
 
 	    struct { /* IVL_ST_DELAY */
-		  uint64_t delay_;
+		  uint64_t value;
 		  ivl_statement_t stmt_;
 	    } delay_;
 

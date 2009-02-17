@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -64,7 +64,7 @@ static int draw_number_bool64(ivl_expr_t expr)
       int res;
       const char*bits = ivl_expr_bits(expr);
       uint64_t val = 0;
-      unsigned long idx;
+      unsigned long idx, low, hig;
 
       for (idx = 0 ;  idx < ivl_expr_width(expr) ;  idx += 1) {
 	    if (bits[idx] == '1')
@@ -72,7 +72,9 @@ static int draw_number_bool64(ivl_expr_t expr)
       }
 
       res = allocate_word();
-      fprintf(vvp_out, "   %%ix/load %d, %" PRIu64 ";\n", res, val);
+      low = val % UINT64_C(0x100000000);
+      hig = val / UINT64_C(0x100000000);
+      fprintf(vvp_out, "   %%ix/load %d, %lu, %lu;\n", res, low, hig);
       return res;
 }
 

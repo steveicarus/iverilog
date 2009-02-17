@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -62,7 +62,8 @@ int number_is_immediate(ivl_expr_t ex, unsigned lim_wid, int negative_ok_flag)
       unsigned idx;
 
       if (ivl_expr_type(ex) != IVL_EX_NUMBER
-	  && ivl_expr_type(ex) != IVL_EX_ULONG)
+	  && ivl_expr_type(ex) != IVL_EX_ULONG
+	  && ivl_expr_type(ex) != IVL_EX_DELAY)
 	    return 0;
 
       if (ivl_expr_type(ex) == IVL_EX_ULONG) {
@@ -71,6 +72,12 @@ int number_is_immediate(ivl_expr_t ex, unsigned lim_wid, int negative_ok_flag)
 	      /* At this point we know that lim_wid is smaller than a long. */
 	    imm = labs(ivl_expr_uvalue(ex));
 	    if (imm < (1L<<lim_wid)) return 1;
+	    else return 0;
+      }
+
+      if (ivl_expr_type(ex) == IVL_EX_DELAY) {
+	    if (lim_wid >= 8*sizeof(uint64_t)) return 1;
+	      /* For now we only support this as a 64 bit value. */
 	    else return 0;
       }
 
@@ -134,10 +141,10 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		    assert(number_is_immediate(expr, IMM_WID, 1));
 		    long imm = get_number_immediate(expr);
 		    if (imm >= 0) {
-			  fprintf(vvp_out, "    %%ix/load %u, %ld;\n", ix, imm);
+			  fprintf(vvp_out, "    %%ix/load %u, %ld, 0;\n", ix, imm);
 		    } else {
-			  fprintf(vvp_out, "    %%ix/load %u, 0; loading %ld\n", ix, imm);
-			  fprintf(vvp_out, "    %%ix/sub %u, %ld;\n", ix, -imm);
+			  fprintf(vvp_out, "    %%ix/load %u, 0, 0; loading %ld\n", ix, imm);
+			  fprintf(vvp_out, "    %%ix/sub %u, %ld, 0;\n", ix, -imm);
 		    }
 		      /* This can not have have a X/Z value so clear bit 4. */
 		    fprintf(vvp_out, "    %%mov 4, 0, 1;\n");
@@ -1200,6 +1207,7 @@ static struct vector_info draw_load_add_immediate(ivl_expr_t le,
 {
       struct vector_info lv;
       long imm = get_number_immediate(re);
+      assert(number_is_immediate(re, IMM_WID, 1));
       lv.base = allocate_vector(wid);
       lv.wid = wid;
       if (lv.base == 0) {
@@ -2094,7 +2102,7 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 		  const char*sign_flag = (add_index>0)? "/s" : "";
 
 		    /* Add an immediate value to an array value. */
-		  fprintf(vvp_out, "    %%ix/load 0, %lu;\n", immediate);
+		  fprintf(vvp_out, "    %%ix/load 0, %lu, 0;\n", immediate);
 		  fprintf(vvp_out, "    %%load/avp0%s %u, v%p, %u;\n",
 			  sign_flag, res.base, sig, res.wid);
 	    }
@@ -2117,10 +2125,10 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 
 	      /* If this is a REG (a variable) then I can do a vector read. */
 	    if (immediate >= 0) {
-		  fprintf(vvp_out, "    %%ix/load 0, %lu;\n", immediate);
+		  fprintf(vvp_out, "    %%ix/load 0, %lu, 0;\n", immediate);
 	    } else {
-		  fprintf(vvp_out, "    %%ix/load 0, 0; immediate=%ld\n", immediate);
-		  fprintf(vvp_out, "    %%ix/sub 0, %ld;\n", -immediate);
+		  fprintf(vvp_out, "    %%ix/load 0, 0, 0; immediate=%ld\n", immediate);
+		  fprintf(vvp_out, "    %%ix/sub 0, %ld, 0;\n", -immediate);
 	    }
 	    fprintf(vvp_out, "    %%load/vp0%s %u, v%p_%u, %u;\n", sign_flag,
 		    res.base, sig,word, res.wid);
