@@ -179,6 +179,19 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    return 0;
       }
 
+	/* Get the signal referenced by the identifier, and make sure
+	   it is a register. Wires are not allows in this context,
+	   unless this is the l-value of a force. */
+      if ((reg->type() != NetNet::REG) && !is_force) {
+	    cerr << get_fileline() << ": error: " << path_ <<
+		  " is not a valid l-value in " << scope_path(scope) <<
+		  "." << endl;
+	    cerr << reg->get_fileline() << ":      : " << path_ <<
+		  " is declared here as " << reg->type() << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       if (reg->array_dimensions() > 0)
 	    return elaborate_lval_net_word_(des, scope, reg);
 
@@ -193,19 +206,6 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    NetAssign_*lv = new NetAssign_(reg);
 	    elaborate_lval_net_idx_(des, scope, lv, use_sel);
 	    return lv;
-      }
-
-	/* Get the signal referenced by the identifier, and make sure
-	   it is a register. Wires are not allows in this context,
-	   unless this is the l-value of a force. */
-      if ((reg->type() != NetNet::REG) && !is_force) {
-	    cerr << get_fileline() << ": error: " << path_ <<
-		  " is not a valid l-value in " << scope_path(scope) <<
-		  "." << endl;
-	    cerr << reg->get_fileline() << ":      : " << path_ <<
-		  " is declared here as " << reg->type() << "." << endl;
-	    des->errors += 1;
-	    return 0;
       }
 
 
@@ -274,7 +274,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       if (NetEConst*word_const = dynamic_cast<NetEConst*>(word)) {
 	    verinum word_val = word_const->value();
 	    long index = word_val.as_long();
-	    assert (reg->array_count() <= LONG_MAX);
+
 	    if (index < 0 || index >= (long) reg->array_count()) {
 		  cerr << get_fileline() << ": warning: Constant array index "
 		       << (index + reg->array_first())
