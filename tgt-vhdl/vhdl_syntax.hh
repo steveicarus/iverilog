@@ -208,11 +208,11 @@ enum time_unit_t {
 
 class vhdl_const_time : public vhdl_expr {
 public:
-   vhdl_const_time(int64_t value, time_unit_t units = TIME_UNIT_NS)
+   vhdl_const_time(uint64_t value, time_unit_t units = TIME_UNIT_NS)
       : vhdl_expr(vhdl_type::time(), true), value_(value), units_(units) {}
    void emit(std::ostream &of, int level) const;
 private:
-   int64_t value_;
+   uint64_t value_;
    time_unit_t units_;
 };
 
