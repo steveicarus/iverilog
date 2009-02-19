@@ -504,6 +504,21 @@ NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
 	// constant, then there is the general case.
 
       if (NetEConst*lpc = dynamic_cast<NetEConst*> (lp)) {
+
+	      // Special case: The left expression is zero. No matter
+	      // what the shift, the result is going to be zero.
+	    if (lpc->value().is_defined() && lpc->value().is_zero()) {
+
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Shift of zero always returns zero."
+			     << " Elaborate as constant zero." << endl;
+
+		  tmp = make_const_0(use_wid);
+		  tmp->set_line(*this);
+		  return tmp;
+	    }
+
 	    if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
 		    // Handle the super-special case that both
 		    // operands are constants. Precalculate the
@@ -608,6 +623,23 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 	    tmp = new NetEBShift(op_, lp, rp);
 	    tmp->set_line(*this);
 	    return tmp;
+      }
+
+      if (NetEConst*lpc = dynamic_cast<NetEConst*> (lp)) {
+
+	      // Special case: The left expression is zero. No matter
+	      // what the shift, the result is going to be zero.
+	    if (lpc->value().is_defined() && lpc->value().is_zero()) {
+
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Shift of zero always returns zero."
+			     << " Elaborate as constant zero." << endl;
+
+		  tmp = make_const_0(use_wid);
+		  tmp->set_line(*this);
+		  return tmp;
+	    }
       }
 
       if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
