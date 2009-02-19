@@ -1864,6 +1864,19 @@ bool PEIdent::calculate_param_range_(Design*des, NetScope*scope,
       return true;
 }
 
+static void probe_index_expr_width(Design*des, NetScope*scope,
+				   const name_component_t&name)
+{
+      for (list<index_component_t>::const_iterator cur = name.index.begin()
+		 ; cur != name.index.end() ; cur ++) {
+
+	    if (cur->msb)
+		  probe_expr_width(des, scope, cur->msb);
+	    if (cur->lsb)
+		  probe_expr_width(des, scope, cur->lsb);
+      }
+}
+
 unsigned PEIdent::test_width(Design*des, NetScope*scope,
 			     unsigned min, unsigned lval,
 			     ivl_variable_type_t&expr_type__,
@@ -1884,6 +1897,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
       const name_component_t&name_tail = path_.back();
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
       if (!name_tail.index.empty()) {
+	    probe_index_expr_width(des, scope, name_tail);
 	    const index_component_t&index_tail = name_tail.index.back();
 	    use_sel = index_tail.sel;
       }
@@ -1913,7 +1927,6 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 	      { ivl_assert(*this, !name_tail.index.empty());
 		const index_component_t&index_tail = name_tail.index.back();
 		ivl_assert(*this, index_tail.msb);
-		probe_expr_width(des, scope, index_tail.msb);
 	      }
 	      use_width = 1;
 	      break;
@@ -3182,7 +3195,6 @@ unsigned PEUnary::test_width(Design*des, NetScope*scope,
 			     bool&unsized_flag)
 {
       switch (op_) {
-	  case '!':
 	  case '&': // Reduction AND
 	  case '|': // Reduction OR
 	  case '^': // Reduction XOR
@@ -3197,6 +3209,18 @@ unsigned PEUnary::test_width(Design*des, NetScope*scope,
 	      }
 	      expr_width_ = 1;
 
+	      expr_type__ = expr_type_;
+	      return expr_width_;
+
+	  case '!':
+	      {
+		    ivl_variable_type_t sub_type = IVL_VT_NO_TYPE;
+		    bool flag = false;
+		    expr_->test_width(des, scope, 0, 0, sub_type, flag);
+		    expr_type_ = (sub_type==IVL_VT_BOOL)? IVL_VT_BOOL : IVL_VT_LOGIC;
+	      }
+		// Logical ! always returns a single-bit LOGIC or BOOL value.
+	      expr_width_ = 1;
 	      expr_type__ = expr_type_;
 	      return expr_width_;
       }
