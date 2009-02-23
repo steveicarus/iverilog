@@ -136,7 +136,7 @@ static vhdl_expr *translate_ulong(ivl_expr_t e)
 
 static vhdl_expr *translate_delay(ivl_expr_t e)
 {
-   return new vhdl_const_time(ivl_expr_delay_val(e), TIME_UNIT_NS);
+   return scale_time(get_active_entity(), ivl_expr_delay_val(e));
 }
 
 static vhdl_expr *translate_reduction(support_function_t f, bool neg,
@@ -716,7 +716,7 @@ vhdl_expr *translate_time_expr(ivl_expr_t e)
       vhdl_type integer(VHDL_TYPE_INTEGER);
       time = time->cast(&integer);
       
-      vhdl_expr *ns1 = new vhdl_const_time(1, TIME_UNIT_NS);
+      vhdl_expr *ns1 = scale_time(get_active_entity(), 1);
       return new vhdl_binop_expr(time, VHDL_BINOP_MULT, ns1,
                                  vhdl_type::time());
    }

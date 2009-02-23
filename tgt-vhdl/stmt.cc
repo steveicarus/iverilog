@@ -494,7 +494,7 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
    vhdl_expr *time;
    if (ivl_statement_type(stmt) == IVL_ST_DELAY) {
       uint64_t value = ivl_stmt_delay_val(stmt);
-      time = new vhdl_const_time(value, TIME_UNIT_NS);
+      time = scale_time(get_active_entity(), value);
    }
    else {
       time = translate_time_expr(ivl_stmt_delay_expr(stmt));

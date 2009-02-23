@@ -203,7 +203,10 @@ private:
 };
 
 enum time_unit_t {
+   TIME_UNIT_PS,
    TIME_UNIT_NS,
+   TIME_UNIT_US,
+   TIME_UNIT_MS,
 };
 
 class vhdl_const_time : public vhdl_expr {
@@ -837,6 +840,9 @@ public:
    const std::string &get_name() const { return name_; }
 
    vhdl_scope *get_scope() { return &ports_; }
+
+   void set_time_units(int units, int precision);
+   friend vhdl_const_time* scale_time(const vhdl_entity* ent, uint64_t t);
    
    // Each entity has an associated depth which is how deep in
    // the Verilog module hierarchy it was found
@@ -846,6 +852,10 @@ private:
    std::string name_;
    vhdl_arch *arch_;  // Entity may only have a single architecture
    vhdl_scope ports_;
+   
+   // Entities have an associated VHDL time unit
+   // This is used to implement the Verilog timescale directive
+   time_unit_t time_unit_;
 };
 
 typedef std::list<vhdl_entity*> entity_list_t;

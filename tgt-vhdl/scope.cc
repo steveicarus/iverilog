@@ -839,6 +839,10 @@ static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
    vhdl_arch *arch = new vhdl_arch(tname, "FromVerilog");
    vhdl_entity *ent = new vhdl_entity(tname, arch, depth);
 
+   // Calculate the VHDL units to use for time values
+   ent->set_time_units(ivl_scope_time_units(scope),
+                       ivl_scope_time_precision(scope));
+
    // Build a comment to add to the entity/architecture
    ostringstream ss;
    ss << "Generated from Verilog module " << ivl_scope_tname(scope)

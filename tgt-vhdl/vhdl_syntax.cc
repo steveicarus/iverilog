@@ -101,7 +101,8 @@ vhdl_scope *vhdl_scope::get_parent() const
 }
 
 vhdl_entity::vhdl_entity(const string& name, vhdl_arch *arch, int depth__)
-   :  depth(depth__), name_(name), arch_(arch)
+   :  depth(depth__), name_(name), arch_(arch),
+      time_unit_(TIME_UNIT_NS)
 {
    arch->get_scope()->set_parent(&ports_);
 }
@@ -140,6 +141,28 @@ void vhdl_entity::emit(std::ostream &of, int level) const
    of << "end entity; ";
    blank_line(of, level);  // Extra blank line after entities
    arch_->emit(of, level);
+}
+
+// Return a VHDL time constant scaled to the correct time scale
+// for this entity
+vhdl_const_time* scale_time(const vhdl_entity* ent, uint64_t t)
+{
+   return new vhdl_const_time(t, ent->time_unit_);
+}
+
+// Work out the best VHDL units to use given the Verilog timescale
+void vhdl_entity::set_time_units(int units, int precision)
+{
+   int vhdl_units = std::min(units, precision);
+   
+   if (vhdl_units >= -3)
+      time_unit_ = TIME_UNIT_MS;
+   else if (vhdl_units >= -6)
+      time_unit_ = TIME_UNIT_US;
+   else if (vhdl_units >= -9)
+      time_unit_ = TIME_UNIT_NS;
+   else
+      time_unit_ = TIME_UNIT_PS;
 }
 
 vhdl_arch::~vhdl_arch()
@@ -652,8 +675,10 @@ void vhdl_const_time::emit(std::ostream &of, int level) const
 {
    of << dec << value_;
    switch (units_) {
-   case TIME_UNIT_NS:
-      of << " ns";
+   case TIME_UNIT_PS: of << " ps"; break;
+   case TIME_UNIT_NS: of << " ns"; break;
+   case TIME_UNIT_US: of << " us"; break;
+   case TIME_UNIT_MS: of << " ms"; break;
    }
 }
 
