@@ -679,10 +679,9 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    format_vpiBinStrVal(vsig, 0, wid, vp);
 	    break;
 
-	  case vpiHexStrVal: {
+	  case vpiHexStrVal:
 	    format_vpiHexStrVal(vsig, 0, wid, vp);
 	    break;
-	  }
 
 	  case vpiOctStrVal:
 	    format_vpiOctStrVal(vsig, 0, wid, vp);
@@ -696,14 +695,14 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    format_vpiStringVal(vsig, 0, wid, vp);
 	    break;
 
+	  case vpiObjTypeVal:
 	  case vpiVectorVal:
 	    format_vpiVectorVal(vsig, 0, wid, vp);
 	    break;
 
-	  case vpiRealVal: {
+	  case vpiRealVal:
 	    format_vpiRealVal(vsig, 0, wid, rfp->signed_flag, vp);
 	    break;
-	  }
 
 	  default:
 	    fprintf(stderr, "vvp internal error: get_value: "
