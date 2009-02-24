@@ -266,7 +266,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 
 %type <mport> port port_opt port_reference port_reference_list
 %type <mport> port_declaration
-%type <mports> list_of_ports module_port_list_opt list_of_port_declarations
+%type <mports> list_of_ports module_port_list_opt list_of_port_declarations module_attribute_foreign
 %type <value_range> parameter_value_range parameter_value_ranges
 %type <value_range> parameter_value_ranges_opt
 %type <expr> value_range_expression
@@ -1871,7 +1871,8 @@ cont_assign_list
 module  : attribute_list_opt module_start IDENTIFIER
 		{ pform_startmodule($3, @2.text, @2.first_line, $1); }
           module_parameter_port_list_opt
-	  module_port_list_opt ';'
+	  module_port_list_opt 
+	  module_attribute_foreign ';'
 		{ pform_module_set_ports($6); }
 	  module_item_list_opt
 	  K_endmodule
@@ -1882,6 +1883,11 @@ module  : attribute_list_opt module_start IDENTIFIER
 	;
 
 module_start : K_module | K_macromodule ;
+
+module_attribute_foreign
+	: K_PSTAR IDENTIFIER K_integer IDENTIFIER '=' STRING ';' K_STARP { $$ = 0; }
+	| { $$ = 0; }
+	;
 
 module_port_list_opt
 	: '(' list_of_ports ')' { $$ = $2; }
