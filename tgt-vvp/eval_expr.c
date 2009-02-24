@@ -131,6 +131,41 @@ long get_number_immediate(ivl_expr_t ex)
       return imm;
 }
 
+uint64_t get_number_immediate64(ivl_expr_t ex)
+{
+      uint64_t imm = 0;
+      unsigned idx;
+
+      switch (ivl_expr_type(ex)) {
+	  case IVL_EX_ULONG:
+	    imm = ivl_expr_uvalue(ex);
+	    break;
+
+	  case IVL_EX_NUMBER: {
+		const char*bits = ivl_expr_bits(ex);
+		unsigned nbits = ivl_expr_width(ex);
+		for (idx = 0 ; idx < nbits ; idx += 1) switch (bits[idx]){
+		    case '0':
+		      break;
+		    case '1':
+		      assert(idx < 64);
+		      imm |= UINT64_C(1) << idx;
+		      break;
+		    default:
+		      assert(0);
+		}
+		if (ivl_expr_signed(ex) && bits[nbits-1]=='1' && nbits < 64)
+		      imm |= -UINT64_C(1) << nbits;
+		break;
+	  }
+
+	  default:
+	    assert(0);
+      }
+
+      return imm;
+}
+
 static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 {
       switch (ivl_expr_type(expr)) {

@@ -32,6 +32,15 @@ static char* strdupnew(char const *str)
 {
       return str ? strcpy(new char [strlen(str)+1], str) : 0;
 }
+
+ inline uint64_t strtouint64(const char*str, char**endptr, int base)
+{
+      if (sizeof(unsigned long) >= sizeof(uint64_t))
+	    return strtoul(str, endptr, base);
+      else
+	    return strtoull(str, endptr, base);
+}
+
 %}
 
 %%
@@ -204,11 +213,11 @@ static char* strdupnew(char const *str)
       return T_INSTR; }
 
 [0-9][0-9]* {
-      yylval.numb = strtoul(yytext, 0, 0);
+      yylval.numb = strtouint64(yytext, 0, 0);
       return T_NUMBER; }
 
 "0x"[0-9a-fA-F]+ {
-      yylval.numb = strtoul(yytext, 0, 0);
+      yylval.numb = strtouint64(yytext, 0, 0);
       return T_NUMBER; }
 
   /* Handle some specialized constant/literals as symbols. */

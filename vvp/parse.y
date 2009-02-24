@@ -47,7 +47,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %union {
       char*text;
       char **table;
-      unsigned long numb;
+      uint64_t numb;
       bool flag;
 
       comp_operands_t opa;

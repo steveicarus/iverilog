@@ -89,6 +89,10 @@ There are some special symbols that in certain contexts have special
 meanings. As inputs to functors, the symbols "C<0>", "C<1>", "C<x>"
 and "C<z>" represent a constant driver of the given value.
 
+NUMBERS:
+
+decimal number tokens are limited to 64bits, and are unsigned. Some
+contexts may constrain the number size further.
 
 SCOPE STATEMENTS:
 
@@ -375,10 +379,10 @@ times that are used for delay.
 	.delay ( <rise>, <fall>, <decay> ) <input> ;
 	.delay <input>, <rise>, <fall>, <decay> ;
 
-The first form above takes three constant numbers as the initial
-delay, and takes a single input. The second form takes 4 net inputs,
-with the first being the value to delay, and the remaining to be the
-delay values to use.
+The first form above takes three constant (64bit) numbers as the
+initial delay, and takes a single input. The second form takes 4 net
+inputs, with the first being the value to delay, and the remaining to
+be the delay values to use.
 
 MODULE PATH DELAY STATEMENTS:
 
