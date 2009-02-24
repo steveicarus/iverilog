@@ -716,10 +716,18 @@ unsigned NetNet::array_dimensions() const
 
 long NetNet::array_first() const
 {
-      if (s0_ < e0_)
+      if (s0_ <= e0_)
 	    return s0_;
       else
 	    return e0_;
+}
+
+bool NetNet::array_addr_swapped() const
+{
+      if (s0_ <= e0_)
+	     return false;
+      else
+	     return true;
 }
 
 unsigned NetNet::array_count() const

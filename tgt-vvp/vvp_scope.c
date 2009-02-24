@@ -400,12 +400,13 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	   write out the .array record to declare the array indices. */
       if (ivl_signal_dimensions(sig) > 0) {
 	    unsigned word_count = ivl_signal_array_count(sig);
+	    unsigned swapped = ivl_signal_array_addr_swapped(sig);
 	    int last = ivl_signal_array_base(sig)+word_count-1;
 	    int first = ivl_signal_array_base(sig);
 	    fprintf(vvp_out, "v%p .array%s \"%s\", %d %d, %d %d;\n",
 		    sig, datatype_flag,
 		    vvp_mangle_name(ivl_signal_basename(sig)),
-		    last, first, msb, lsb);
+		    swapped ? first: last, swapped ? last : first, msb, lsb);
 
       } else {
 
@@ -462,11 +463,12 @@ static void draw_net_in_scope(ivl_signal_t sig)
 			vec8 = "8";
 
 		  if (iword == 0 && dimensions > 0) {
+			unsigned swapped = ivl_signal_array_addr_swapped(sig);
 			int last = ivl_signal_array_base(sig) + word_count-1;
 			int first = ivl_signal_array_base(sig);
 			fprintf(vvp_out, "v%p .array \"%s\", %d %d;\n",
 				sig, vvp_mangle_name(ivl_signal_basename(sig)),
-				last, first);
+				swapped ? first : last, swapped ? last : first);
 		  }
 		  if (dimensions > 0) {
 			/* If this is a word of an array, then use an
@@ -511,12 +513,14 @@ static void draw_net_in_scope(ivl_signal_t sig)
 		    /* An alias for an individual word. */
 		  } else {
 			if (iword == 0) {
+			      unsigned swapped = ivl_signal_array_addr_swapped(sig);
 			      int first = ivl_signal_array_base(sig);
 			      int last = first + word_count-1;
 			      fprintf(vvp_out, "v%p .array \"%s\", %d %d;\n",
 				      sig,
 				      vvp_mangle_name(ivl_signal_basename(sig)),
-				      last, first);
+				      swapped ? first : last,
+				      swapped ? last : first);
 			}
 
 			fprintf(vvp_out, "v%p_%u .alias%s v%p %u, %d %d, "

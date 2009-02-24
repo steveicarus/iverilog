@@ -602,6 +602,7 @@ class NetNet  : public NetObj {
 	   indices. (Currently only one array index is supported.) */
       unsigned array_dimensions() const;
       long array_first() const;
+      bool array_addr_swapped() const;
 
 	// This is the number of array elements.
       unsigned array_count() const;

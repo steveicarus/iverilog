@@ -1824,6 +1824,11 @@ extern "C" unsigned ivl_signal_array_count(ivl_signal_t net)
       return net->array_words;
 }
 
+extern "C" unsigned ivl_signal_array_addr_swapped(ivl_signal_t net)
+{
+      return net->array_addr_swapped;
+}
+
 extern "C" unsigned ivl_signal_dimensions(ivl_signal_t net)
 {
       return net->array_dimensions_;

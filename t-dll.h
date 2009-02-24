@@ -639,6 +639,7 @@ struct ivl_signal_s {
 
 	/* For now, support only 0 or 1 array dimensions. */
       unsigned array_dimensions_ : 1;
+      unsigned array_addr_swapped : 1;
 
 	/* These encode the run-time index for the least significant
 	   bit, and the distance to the second bit. */

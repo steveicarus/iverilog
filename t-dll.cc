@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2559,6 +2559,7 @@ void dll_target::signal(const NetNet*net)
 
       obj->array_base = net->array_first();
       obj->array_words = net->array_count();
+      obj->array_addr_swapped = net->array_addr_swapped() ? 1 : 0;
       if (obj->array_words > 1)
 	    obj->pins = new ivl_nexus_t[obj->array_words];
 

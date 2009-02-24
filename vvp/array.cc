@@ -102,6 +102,7 @@ struct __vpiArray {
       class vvp_fun_arrayport*ports_;
       struct __vpiCallback *vpi_callbacks;
       bool signed_flag;
+      bool swap_addr;
 };
 
 struct __vpiArrayIterator {
@@ -384,10 +385,12 @@ static vpiHandle vpi_array_get_handle(int code, vpiHandle ref)
       switch (code) {
 
 	  case vpiLeftRange:
-	    return &(obj->first_addr.base);
+	    if (obj->swap_addr) return &(obj->last_addr.base);
+	    else return &(obj->first_addr.base);
 
 	  case vpiRightRange:
-	    return &(obj->last_addr.base);
+	    if (obj->swap_addr) return &(obj->first_addr.base);
+	    else return &(obj->last_addr.base);
 
 	  case vpiScope:
 	    return &obj->scope->base;
@@ -861,6 +864,14 @@ static vpiHandle vpip_make_array(char*label, const char*name,
       obj->signed_flag = signed_flag;
 
 	// Assume increasing addresses.
+      if (last_addr >= first_addr) {
+	    obj->swap_addr = false;
+      } else {
+	    obj->swap_addr = true;
+	    int tmp = last_addr;
+	    last_addr = first_addr;
+	    first_addr = tmp;
+      }
       assert(last_addr >= first_addr);
       unsigned array_count = last_addr+1-first_addr;
 

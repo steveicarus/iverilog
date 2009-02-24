@@ -1654,10 +1654,12 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  *
  * ivl_signal_array_base
  * ivl_signal_array_count
+ * ivl_signal_array_addr_swapped
  *    The signal may be arrayed. If so, the array_count is >1. Each
  *    word of the array has its own nexus. The array_base is the
- *    address is the Verilog source for the canonical zero word. This
- *    may be negative, positive or zero.
+ *    address in the Verilog source for the canonical zero word. This
+ *    may be negative, positive or zero. The array addresses may be
+ *    reversed/swapped.
  *
  *    Note that arraying of the signal into words is distinct from the
  *    vectors. The width of a signal is the width of a WORD.
@@ -1736,6 +1738,7 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
 extern ivl_nexus_t ivl_signal_nex(ivl_signal_t net, unsigned word);
 extern int         ivl_signal_array_base(ivl_signal_t net);
 extern unsigned    ivl_signal_array_count(ivl_signal_t net);
+extern unsigned    ivl_signal_array_addr_swapped(ivl_signal_t net);
 extern unsigned    ivl_signal_dimensions(ivl_signal_t net);
 extern ivl_discipline_t ivl_signal_discipline(ivl_signal_t net);
 extern int         ivl_signal_msb(ivl_signal_t net);

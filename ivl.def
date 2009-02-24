@@ -181,6 +181,7 @@ ivl_scope_time_units
 ivl_scope_type
 ivl_scope_tname
 
+ivl_signal_array_addr_swapped
 ivl_signal_array_base
 ivl_signal_array_count
 ivl_signal_attr
