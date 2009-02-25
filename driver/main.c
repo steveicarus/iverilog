@@ -967,6 +967,15 @@ int main(int argc, char **argv)
       fclose(defines_file);
       defines_file = 0;
 
+	/* If we are planning on opening a dependencies file, then
+	   open and truncate it here. The other phases of compilation
+	   will append to the file, so this is necessray to make sure
+	   it starts out empty. */
+      if (depfile) {
+	    FILE*fd = fopen(depfile, "w");
+	    fclose(fd);
+      }
+
       if (source_count == 0 && !version_flag) {
 	    fprintf(stderr, "%s: no source files.\n\n%s\n", argv[0], HELP);
 	    return 1;

@@ -363,7 +363,7 @@ int main(int argc, char*argv[])
       }
 
       if(dep_path) {
-	      depend_file = fopen(dep_path, "w");
+	      depend_file = fopen(dep_path, "a");
 	      if (depend_file == 0) {
 		  perror(dep_path);
 		  exit(1);

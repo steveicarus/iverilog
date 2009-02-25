@@ -73,6 +73,7 @@ bool load_module(const char*type)
 
 	    if(depend_file) {
 		  fprintf(depend_file, "%s\n", path);
+		  fflush(depend_file);
 	    }
 
 	    if (ivlpp_string) {
