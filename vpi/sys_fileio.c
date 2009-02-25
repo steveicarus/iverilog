@@ -96,12 +96,12 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
       int fail = 0;
       char *mode_string = 0;
       unsigned idx;
-      vpiHandle item = vpi_scan(argv);
+      vpiHandle fileh = vpi_scan(argv);
+      char *fname;
       vpiHandle mode = vpi_scan(argv);
-      unsigned len;
-
 	/* Get the mode handle if it exists. */
       if (mode) {
+            char *esc_md;
             val.format = vpiStringVal;
             vpi_get_value(mode, &val);
 	      /* Verify that we have a string and that it is not NULL. */
@@ -119,8 +119,10 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
 		  vpi_printf("WARNING: %s:%d: ",
 		             vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
+		  esc_md = as_escaped(val.value.str);
 		  vpi_printf("%s's mode argument (%s) is too long.\n",
-		             name, val.value.str);
+		             name, esc_md);
+		  free(esc_md);
 		  fail = 1;
 	    } else {
 		  unsigned bin = 0, plus = 0;
@@ -150,8 +152,10 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
 			vpi_printf("WARNING: %s:%d: ",
 			           vpi_get_str(vpiFile, callh),
 			           (int)vpi_get(vpiLineNo, callh));
+			esc_md = as_escaped(val.value.str);
 			vpi_printf("%s's mode argument (%s) is invalid.\n",
-			name, val.value.str);
+			name, esc_md);
+			free(esc_md);
 			fail = 1;
 			break;
 		  }
@@ -162,49 +166,18 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
 	    vpi_free_object(argv);
       }
 
-	/* Get the string form of the file name from the file name
-	   argument. */
-      val.format = vpiStringVal;
-      vpi_get_value(item, &val);
-
-	/* Verify that we have a string and that it is not NULL. */
-      if (val.format != vpiStringVal || !*(val.value.str)) {
-	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
-	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s's file name argument is not a valid string.\n",
-	                name);
-	    fail = 1;
-	    if (mode) free(mode_string);
-      }
-
-	/*
-	 * Verify that the file name is composed of only printable
-	 * characters.
-	 */
-      len = strlen(val.value.str);
-      for (idx = 0; idx < len; idx++) {
-	    if (! isprint(val.value.str[idx])) {
-		  char msg [64];
-		  snprintf(msg, 64, "WARNING: %s:%d:",
-		           vpi_get_str(vpiFile, callh),
-		           (int)vpi_get(vpiLineNo, callh));
-		  vpi_printf("%s %s's file name argument contains non-"
-		             "printable characters.\n", msg, name);
-		  vpi_printf("%*s \"%s\"\n", (int) strlen(msg), " ", val.value.str);
-		  fail = 1;
-		  if (mode) free(mode_string);
-	    }
-      }
+      fname = get_filename(callh, name, fileh);
+      if (fname == 0 && mode) free(mode_string);
 
 	/* If either the mode or file name are not valid just return. */
-      if (fail) return 0;
+      if (fail || fname == 0) return 0;
 
       val.format = vpiIntVal;
       if (mode) {
-	    val.value.integer = vpi_fopen(val.value.str, mode_string);
+	    val.value.integer = vpi_fopen(fname, mode_string);
 	    free(mode_string);
       } else
-	    val.value.integer = vpi_mcd_open(val.value.str);
+	    val.value.integer = vpi_mcd_open(fname);
 
       vpi_put_value(callh, &val, 0, vpiNoDelay);
 
@@ -220,51 +193,23 @@ static PLI_INT32 sys_fopenrwa_calltf(PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle file = vpi_scan(argv);
       s_vpi_value val;
-      char *mode;
-      unsigned idx, len;
+      char *mode, *fname;
 
-      vpi_free_object(argv);
 
 	/* Get the mode. */
       mode = name + strlen(name) - 1;
 
-	/* Get the filename. */
-      val.format = vpiStringVal;
-      vpi_get_value(file, &val);
-
-	/* Verify that we have a string and that it is not NULL. */
-      if (val.format != vpiStringVal || !*(val.value.str)) {
-	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
-	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s's file name argument is not a valid string.\n",
-	                name);
-	    return 0;
-      }
-
-	/*
-	 * Verify that the file name is composed of only printable
-	 * characters.
-	 */
-      len = strlen(val.value.str);
-      for (idx = 0; idx < len; idx++) {
-	    if (! isprint(val.value.str[idx])) {
-		  char msg [64];
-		  snprintf(msg, 64, "WARNING: %s:%d:",
-		           vpi_get_str(vpiFile, callh),
-		           (int)vpi_get(vpiLineNo, callh));
-		  vpi_printf("%s %s's file name argument contains non-"
-		             "printable characters.\n", msg, name);
-		  vpi_printf("%*s \"%s\"\n", (int) strlen(msg), " ", val.value.str);
-		  return 0;
-	    }
-      }
+	/* Get the file name. */
+      fname = get_filename(callh, name, vpi_scan(argv));
+      vpi_free_object(argv);
+      if (fname == 0) return 0;
 
 	/* Open the file and return the result. */
       val.format = vpiIntVal;
-      val.value.integer = vpi_fopen(val.value.str, mode);
+      val.value.integer = vpi_fopen(fname, mode);
       vpi_put_value(callh, &val, 0, vpiNoDelay);
+      free(fname);
 
       return 0;
 }

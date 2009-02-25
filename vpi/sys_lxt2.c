@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -142,7 +142,7 @@ static char *create_full_name(const char *name)
 }
 
 
-static char *dump_path;
+static char *dump_path = 0;
 static struct lxt2_wr_trace *dump_file = 0;
 
 struct vcd_info {
@@ -169,7 +169,7 @@ static void show_this_item(struct vcd_info*info)
 {
       s_vpi_value value;
 
-      if (vpi_get(vpiType,info->item) == vpiRealVar) {
+      if (vpi_get(vpiType, info->item) == vpiRealVar) {
 	    value.format = vpiRealVal;
 	    vpi_get_value(info->item, &value);
 	    lxt2_wr_emit_value_double(dump_file, info->sym, 0,
@@ -179,8 +179,8 @@ static void show_this_item(struct vcd_info*info)
 	    value.format = vpiBinStrVal;
 	    vpi_get_value(info->item, &value);
 	    lxt2_wr_emit_value_bit_string(dump_file, info->sym,
-					  0 /* array row */,
-					  value.value.str);
+	                                  0 /* array row */,
+	                                  value.value.str);
       }
 }
 
@@ -360,8 +360,8 @@ static PLI_INT32 sys_dumpoff_calltf(PLI_BYTE8*name)
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time) {
-            lxt2_wr_set_time(dump_file, now64);
-            vcd_cur_time = now.low;
+	    lxt2_wr_set_time(dump_file, now64);
+	    vcd_cur_time = now64;
       }
 
       lxt2_wr_set_dumpoff(dump_file);
@@ -387,8 +387,8 @@ static PLI_INT32 sys_dumpon_calltf(PLI_BYTE8*name)
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time) {
-            lxt2_wr_set_time64(dump_file, now64);
-            vcd_cur_time = now64;
+	    lxt2_wr_set_time64(dump_file, now64);
+	    vcd_cur_time = now64;
       }
 
       lxt2_wr_set_dumpon(dump_file);
@@ -410,9 +410,10 @@ static PLI_INT32 sys_dumpall_calltf(PLI_BYTE8*name)
       vpi_get_time(0, &now);
       now64 = timerec_to_time64(&now);
 
-      if (now64 > vcd_cur_time)
-            lxt2_wr_set_time64(dump_file, now64);
-      vcd_cur_time = now64;
+      if (now64 > vcd_cur_time) {
+	    lxt2_wr_set_time64(dump_file, now64);
+	    vcd_cur_time = now64;
+      }
 
       vcd_checkpoint();
 
@@ -458,33 +459,35 @@ static void open_dumpfile(vpiHandle callh)
 
 static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
 {
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      s_vpi_value value;
-
-      char*path;
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      char *path;
 
         /* $dumpfile must be called before $dumpvars starts! */
       if (dumpvars_status != 0) {
-	    vpi_printf("LXT2 warning: %s called after $dumpvars started,\n"
-	               "              using existing file (%s).\n",
-	               name, dump_path);
+	    char msg [64];
+	    snprintf(msg, 64, "LXT2 warning: %s:%d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s %s called after $dumpvars started,\n", msg, name);
+	    vpi_printf("%*s using existing file (%s).\n",
+	               (int) strlen(msg), " ", dump_path);
+	    vpi_free_object(argv);
 	    return 0;
       }
 
-      assert(argv);
-      value.format = vpiStringVal;
-      vpi_get_value(vpi_scan(argv), &value);
-      path = strdup(value.value.str);
+      path = get_filename(callh, name, vpi_scan(argv));
+      vpi_free_object(argv);
+      if (! path) return 0;
 
       if (dump_path) {
-	    vpi_printf("LXT2 warning: Overriding dump file %s with %s.\n",
-	               dump_path, path);
+	    vpi_printf("LXT2 warning: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("Overriding dump file %s with %s.\n", dump_path, path);
 	    free(dump_path);
       }
       dump_path = path;
 
-      vpi_free_object(argv);
       return 0;
 }
 
@@ -572,12 +575,12 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  info = malloc(sizeof(*info));
 
 		  info->time.type = vpiSimTime;
-		  info->item  = item;
-		  info->sym   = lxt2_wr_symbol_add(dump_file, ident,
-						 0 /* array rows */,
-						 vpi_get(vpiLeftRange, item),
-						 vpi_get(vpiRightRange, item),
-						 LXT2_WR_SYM_F_BITS);
+		  info->item = item;
+		  info->sym  = lxt2_wr_symbol_add(dump_file, ident,
+		                                  0 /* array rows */,
+		                                  vpi_get(vpiLeftRange, item),
+		                                  vpi_get(vpiRightRange, item),
+		                                  LXT2_WR_SYM_F_BITS);
 		  info->scheduled = 0;
 
 		  cb.time      = &info->time;
@@ -613,11 +616,11 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    info = malloc(sizeof(*info));
 
 	    info->time.type = vpiSimTime;
-	    info->item  = item;
-	    info->sym   = lxt2_wr_symbol_add(dump_file, ident,
-					     0 /* array rows */,
-					     vpi_get(vpiSize, item)-1,
-					     0, LXT2_WR_SYM_F_DOUBLE);
+	    info->item = item;
+	    info->sym  = lxt2_wr_symbol_add(dump_file, ident,
+	                                    0 /* array rows */,
+	                                    vpi_get(vpiSize, item)-1,
+	                                    0, LXT2_WR_SYM_F_DOUBLE);
 	    info->scheduled = 0;
 
 	    cb.time      = &info->time;
@@ -708,10 +711,16 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 
       if (dump_file == 0) {
 	    open_dumpfile(callh);
-	    if (dump_file == 0) return 0;
+	    if (dump_file == 0) {
+		  vpi_free_object(argv);
+		  return 0;
+	    }
       }
 
-      if (install_dumpvars_callback()) return 0;
+      if (install_dumpvars_callback()) {
+	    vpi_free_object(argv);
+	    return 0;
+      }
 
         /* Get the depth if it exists. */
       if (argv) {

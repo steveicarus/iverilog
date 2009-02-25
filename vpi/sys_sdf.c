@@ -286,34 +286,19 @@ static PLI_INT32 sys_sdf_annotate_compiletf(PLI_BYTE8*name)
 
 static PLI_INT32 sys_sdf_annotate_calltf(PLI_BYTE8*name)
 {
-      s_vpi_value value;
       vpiHandle callh = vpi_handle(vpiSysTfCall,0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      FILE *sdf_fd;
+      char *fname = get_filename(callh, name, vpi_scan(argv));
 
-	/* The first argument is the path to the SDF file. */
-      vpiHandle path = vpi_scan(argv);
-      assert(path);
+      if (fname == 0) return 0;
 
-      value.format = vpiStringVal;
-      vpi_get_value(path, &value);
-
-      if ((value.format != vpiStringVal) || !*(value.value.str)) {
-	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
-	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s's file name argument (type=%s)"
-		       " does not have a string value.\n",
-		       name, vpi_get_str(vpiType, path));
-	    vpi_control(vpiFinish, 1);
-	    return 0;
-      }
-
-      char*path_str = strdup(value.value.str);
-      FILE*sdf_fd = fopen(path_str, "r");
+      sdf_fd = fopen(fname, "r");
       if (sdf_fd == 0) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("Unable to open SDF file \"%s\"."
-		       " Skipping this annotation.\n", path_str);
+		       " Skipping this annotation.\n", fname);
 	    return 0;
       }
 
@@ -324,11 +309,11 @@ static PLI_INT32 sys_sdf_annotate_calltf(PLI_BYTE8*name)
 
       sdf_cur_cell = 0;
       sdf_callh = callh;
-      sdf_process_file(sdf_fd, path_str);
+      sdf_process_file(sdf_fd, fname);
       sdf_callh = 0;
 
       fclose(sdf_fd);
-      free(path_str);
+      free(fname);
       return 0;
 }
 

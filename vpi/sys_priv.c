@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,6 +18,8 @@
  */
 
 #include <assert.h>
+#include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
 #include "sys_priv.h"
 
@@ -30,6 +32,73 @@ PLI_UINT64 timerec_to_time64(const struct t_vpi_time*time)
       tmp |= (PLI_UINT64) time->low;
 
       return tmp;
+}
+
+char * as_escaped(char *arg)
+{
+      unsigned idx, cur, cnt, len = strlen(arg);
+      char *res = (char *) malloc(sizeof(char *) * len);
+      cur = 0;
+      cnt = len;
+      for (idx = 0; idx < cnt; idx++) {
+	    if (isprint(arg[idx])) {
+		  res[cur] = arg[idx];
+		  cur += 1;
+	    } else {
+		  len += 3;
+		  res = (char *) realloc(res, sizeof(char *) * len);
+		  sprintf(&(res[cur]), "\\%03o", arg[idx]);
+		  cur += 4;
+	    }
+      }
+      res[cur] = 0;
+      return res;
+}
+
+/*
+ * Generic routine to get the filename from the given handle.
+ * The result is duplicated so call free when the name is no
+ * longer needed. Returns 0 (NULL) for an error.
+ */
+char * get_filename(vpiHandle callh, char *name, vpiHandle file)
+{
+      s_vpi_value val;
+      unsigned len, idx;
+      
+	/* Get the filename. */
+      val.format = vpiStringVal;
+      vpi_get_value(file, &val);
+
+	/* Verify that we have a string and that it is not NULL. */
+      if (val.format != vpiStringVal || !*(val.value.str)) {
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's file name argument (%s) is not a valid string.\n",
+	                name, vpi_get_str(vpiType, file));
+	    return 0;
+      }
+
+	/*
+	 * Verify that the file name is composed of only printable
+	 * characters.
+	 */
+      len = strlen(val.value.str);
+      for (idx = 0; idx < len; idx++) {
+	    if (! isprint(val.value.str[idx])) {
+		  char msg [64];
+		  char *esc_fname = as_escaped(val.value.str);
+		  snprintf(msg, 64, "WARNING: %s:%d:",
+		           vpi_get_str(vpiFile, callh),
+		           (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s %s's file name argument contains non-"
+		             "printable characters.\n", msg, name);
+		  vpi_printf("%*s \"%s\"\n", (int) strlen(msg), " ", esc_fname);
+		  free(esc_fname);
+		  return 0;
+	    }
+      }
+
+      return strdup(val.value.str);
 }
 
 /*

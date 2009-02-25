@@ -404,7 +404,8 @@ static void open_dumpfile(vpiHandle callh)
 	    unsigned udx = 0;
 	    time_t walltime;
 
-	    vpi_printf("VCD info: dumpfile %s opened for output.\n", dump_path);
+	    vpi_printf("VCD info: dumpfile %s opened for output.\n",
+	               dump_path);
 
 	    time(&walltime);
 
@@ -434,32 +435,33 @@ static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      s_vpi_value value;
-
-      char*path;
+      char *path;
 
         /* $dumpfile must be called before $dumpvars starts! */
       if (dumpvars_status != 0) {
-	    vpi_printf("VCD warning: %s called after $dumpvars started,\n"
-	               "             using existing file (%s).\n",
-	               name, dump_path);
+	    char msg [64];
+	    snprintf(msg, 64, "VCD warning: %s:%d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s %s called after $dumpvars started,\n", msg, name);
+	    vpi_printf("%*s using existing file (%s).\n",
+	               (int) strlen(msg), " ", dump_path);
 	    vpi_free_object(argv);
 	    return 0;
       }
 
-      assert(argv);
-      value.format = vpiStringVal;
-      vpi_get_value(vpi_scan(argv), &value);
-      path = strdup(value.value.str);
+      path = get_filename(callh, name, vpi_scan(argv));
+      vpi_free_object(argv);
+      if (! path) return 0;
 
       if (dump_path) {
-	    vpi_printf("VCD warning: Overriding dump file %s with %s\n",
-	               dump_path, path);
+	    vpi_printf("VCD warning: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("Overriding dump file %s with %s.\n", dump_path, path);
 	    free(dump_path);
       }
       dump_path = path;
 
-      vpi_free_object(argv);
       return 0;
 }
 

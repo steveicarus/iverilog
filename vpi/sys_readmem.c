@@ -20,105 +20,267 @@
 # include "vpi_config.h"
 
 # include  "vpi_user.h"
+# include  "sys_priv.h"
+# include  <ctype.h>
 # include  <string.h>
 # include  <stdlib.h>
 # include  <stdio.h>
 # include  <assert.h>
 # include  "sys_readmem_lex.h"
 
-static int check_integer_constant(char*name, vpiHandle handle)
+static void get_mem_params(vpiHandle argv, vpiHandle callh, char *name,
+                           char **fname, vpiHandle *mitem,
+                           vpiHandle *start_item, vpiHandle *stop_item)
 {
-    if (vpi_get(vpiType, handle) != vpiConstant){
-	vpi_printf("ERROR: %s parameter must be a constant (vpiType=%d)\n",
-		   name, vpi_get(vpiType, handle));
-	return 0;
-    }
+	/* Get the first parameter (file name). */
+      *fname = get_filename(callh, name, vpi_scan(argv));
 
-    switch(vpi_get(vpiConstType, handle)){
-    case vpiDecConst:
-    case vpiBinaryConst:
-    case vpiOctConst:
-    case vpiHexConst:
-	return 1;
-	break;
+	/* Get the second parameter (memory). */
+      *mitem = vpi_scan(argv);
 
-	/* We rely on vpi_get_value for reals and strings to return a correct */
-	/* integer value when this is requested. So only a warning is generated. */
-    case vpiRealConst:
-	vpi_printf("Warning: real supplied to %s instead of integer.\n", name);
-	return 1;
-	break;
+      /* Get optional third parameter (start address). */
+      *start_item = vpi_scan(argv);
+      if (*start_item) {
+	    /* Warn the user if they gave a real value for the start
+	     * address. */
+	    switch (vpi_get(vpiType, *start_item)) {
+		case vpiConstant:
+		case vpiParameter:
+		  if (vpi_get(vpiConstType, *start_item) != vpiRealConst) break;
+		case vpiRealVar:
+		  vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s's third argument (start address) is a real "
+		             "value.\n", name);
+	    }
 
-    case vpiStringConst:
-	vpi_printf("Warning: string supplied to %s instead of integer.\n", name);
-	return 1;
-	break;
-    }
-
-    /* switch statement covers all possibilities. Code should never come here... */
-    assert(0);
-    return 0;
+	    /* Get optional forth parameter (finish address). */
+	    *stop_item = vpi_scan(argv);
+	    if (*stop_item) {
+		  /* Warn the user if they gave a real value for the finish
+		   * address. */
+		  switch (vpi_get(vpiType, *stop_item)) {
+		      case vpiConstant:
+		      case vpiParameter:
+			if (vpi_get(vpiConstType, *stop_item) != vpiRealConst) {
+			      break;
+			}
+		      case vpiRealVar:
+			vpi_printf("WARNING: %s:%d: ",
+			           vpi_get_str(vpiFile, callh),
+			           (int)vpi_get(vpiLineNo, callh));
+			vpi_printf("%s's fourth argument (finish address) is a "
+			           "real value.\n", name);
+		  }
+		  vpi_free_object(argv);
+	    }
+      } else {
+	   *stop_item = 0; 
+      }
 }
 
-/*
- * This function makes sure the handle is of an object that can get a
- * string value for a file name.
- */
-static int check_file_name(const char*name, vpiHandle item)
+static int process_params(vpiHandle mitem,
+                          vpiHandle start_item, vpiHandle stop_item,
+                          vpiHandle callh, char *name,
+                          int *start_addr, int *stop_addr, int *addr_incr,
+                          int *min_addr, int *max_addr)
 {
-      switch (vpi_get(vpiType, item)) {
+      s_vpi_value val;
+      int left_addr, right_addr;
 
-	  case vpiConstant:
-	    if (vpi_get(vpiConstType, item) != vpiStringConst) {
-		  vpi_printf("ERROR: %s argument 1: file name argument "
-			     "must be a string.\n", name);
-		  return 0;
-	    }
-	    break;
+	/* Get left addr of memory */
+      val.format = vpiIntVal;
+      vpi_get_value(vpi_handle(vpiLeftRange, mitem), &val);
+      left_addr = val.value.integer;
 
-	  case vpiParameter:
-	    if (vpi_get(vpiConstType,item) != vpiStringConst) {
-		  vpi_printf("ERROR: %s argument 1: Parameter %s is "
-			     "not a string in this context.\n",
-			     name, vpi_get_str(vpiName,item));
-		  return 0;
-	    }
-	    break;
+	/* Get right addr of memory */
+      val.format = vpiIntVal;
+      vpi_get_value(vpi_handle(vpiRightRange, mitem), &val);
+      right_addr = val.value.integer;
 
-	  case vpiReg:
-	    break;
+	/* Get start_addr, stop_addr and addr_incr */
+      if (! start_item) {
+	  *start_addr = left_addr<right_addr ? left_addr  : right_addr;
+	  *stop_addr  = left_addr<right_addr ? right_addr : left_addr;
+	  *addr_incr = 1;
+      } else {
+	  val.format = vpiIntVal;
+	  vpi_get_value(start_item, &val);
+	  *start_addr = val.value.integer;
 
-	  default:
-	    vpi_printf("ERROR: %s argument 1: must be a string\n", name);
+	  if (! stop_item) {
+	      *stop_addr = left_addr<right_addr ? right_addr : left_addr;
+	      *addr_incr = 1;
+	  } else {
+	      val.format = vpiIntVal;
+	      vpi_get_value(stop_item, &val);
+	      *stop_addr = val.value.integer;
+
+	      *addr_incr = *start_addr<*stop_addr ? 1 : -1;
+	  }
+      }
+
+	/* Find the minimum and maximum address. */
+      *min_addr = *start_addr<*stop_addr ? *start_addr : *stop_addr ;
+      *max_addr = *start_addr<*stop_addr ? *stop_addr  : *start_addr;
+
+	/* If the range is not fully specified and the left address is
+	 * greater than the right address. Print a warning that this
+	 * code follows 1364-2005.
+	 *
+	 * If we passed a generation flag we could do the correct thing
+	 * for 1364-1995 and 1364-2001 instead of this general warning
+	 * or we could only show the warning when using 2001/1995.
+	 */
+      if (!stop_item && (left_addr > right_addr)) {
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s: Standard inconsistency, following 1364-2005.\n",
+	               name);
+      }
+
+	/* Check that start_addr and stop_addr are within the memory
+	   range */
+      if (left_addr < right_addr) {
+	  if (*start_addr < left_addr || *start_addr > right_addr) {
+	      vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	                 (int)vpi_get(vpiLineNo, callh));
+	      vpi_printf("%s: Start address %d is out of bounds for memory "
+	                 "\'%s[%d:%d]\'!\n", name, *start_addr,
+	                 vpi_get_str(vpiFullName, mitem),
+	                 left_addr, right_addr);
+	      return 1;
+	  }
+
+	  if (*stop_addr < left_addr || *stop_addr > right_addr) {
+	      vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	                 (int)vpi_get(vpiLineNo, callh));
+	      vpi_printf("%s: Finish address %d is out of bounds for memory "
+	                 "\'%s[%d:%d]\'!\n", name, *stop_addr,
+	                 vpi_get_str(vpiFullName, mitem),
+	                 left_addr, right_addr);
+	      return 1;
+	  }
+      } else {
+	  if (*start_addr < right_addr || *start_addr > left_addr) {
+	      vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	                 (int)vpi_get(vpiLineNo, callh));
+	      vpi_printf("%s: Start address %d is out of bounds for memory "
+	                 "\'%s[%d:%d]\'!\n", name, *start_addr,
+	                 vpi_get_str(vpiFullName, mitem),
+	                 left_addr, right_addr);
+	      return 1;
+	  }
+
+	  if (*stop_addr < right_addr || *stop_addr > left_addr) {
+	      vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	                 (int)vpi_get(vpiLineNo, callh));
+	      vpi_printf("%s: Finish address %d is out of bounds for memory "
+	                 "\'%s[%d:%d]\'!\n", name, *stop_addr,
+	                 vpi_get_str(vpiFullName, mitem),
+	                 left_addr, right_addr);
+	      return 1;
+	  }
+      }
+      return 0;
+}
+
+static PLI_INT32 sys_mem_compiletf(PLI_BYTE8*name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle arg;
+
+      /* Check that there is a file name argument. */
+      if (argv == 0) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires two arguments.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+      if (! is_string_obj(vpi_scan(argv))) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's first argument must be a file name (string).\n",
+	               name);
+	    vpi_control(vpiFinish, 1);
+      }
+
+      /* Check that there is a memory argument. */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires a second (memory) argument.\n", name);
+	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
 
-      return 1;
-}
+      if (vpi_get(vpiType, arg) != vpiMemory) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's second argument must be a memory.\n", name);
+	    vpi_control(vpiFinish, 1);
+      }
 
+      /* Check if there is a starting address argument. */
+      arg = vpi_scan(argv);
+      if (! arg) return 0;
+
+      if (! is_numeric_obj(arg)) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's third argument must be a start address "
+	               "(numeric).\n", name);
+	    vpi_control(vpiFinish, 1);
+      }
+
+      /* Check if there is a finish address argument. */
+      arg = vpi_scan(argv);
+      if (! arg) return 0;
+
+      if (! is_numeric_obj(arg)) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's fourth argument must be a finish address "
+	               "(numeric).\n", name);
+	    vpi_control(vpiFinish, 1);
+      }
+
+      /* Make sure there are no extra arguments. */
+      if (vpi_scan(argv) != 0) {
+	    char msg [64];
+	    unsigned argc;
+
+	    snprintf(msg, 64, "ERROR: %s:%d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+
+	    argc = 1;
+	    while (vpi_scan(argv)) argc += 1;
+
+	    vpi_printf("%s %s takes at most four arguments.\n",
+	    msg, name);
+	    vpi_printf("%*s Found %u extra argument%s.\n",
+	               (int) strlen(msg), " ", argc, argc == 1 ? "" : "s");
+	    vpi_control(vpiFinish, 1);
+      }
+
+      return 0;
+}
 
 static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
 {
-      int code;
-      int wwid;
-      char*path;
-      char*mem_name;
+      int code, wwid, addr;
       FILE*file;
-      unsigned addr;
+      char *fname = 0;
       s_vpi_value value;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item = vpi_scan(argv);
-      vpiHandle mitem;
-      vpiHandle start_item;
-      vpiHandle stop_item;
-      vpiHandle left_range;
-      vpiHandle right_range;
-      vpiHandle word_index;
-
-      /* These are left and right hand side parameters in the
-	 declaration of the memory. */
-      int left_addr, right_addr;
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle mitem = 0;
+      vpiHandle start_item = 0;
+      vpiHandle stop_item = 0;
 
       /* start_addr and stop_addr are the parameters given to $readmem in the
 	 Verilog code. When not specified, start_addr is equal to the lower of
@@ -128,159 +290,37 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
 
       /* min_addr and max_addr are equal to start_addr and stop_addr if
 	 start_addr<stop_addr or vice versa if not... */
-      unsigned min_addr, max_addr;
+      int min_addr, max_addr;
 
-	/* This is the number of words that we need from the memory. */
+      /* This is the number of words that we need from the memory. */
       unsigned word_count;
-
 
       /*======================================== Get parameters */
 
-      if (item == 0) {
-	    vpi_printf("%s: file name parameter missing.\n", name);
-	    return 0;
-      }
-
-	/* Check then get the first argument, the file name. It is
-	   possible that Verilog would right-justify a name to fit a
-	   reg value to fit the reg width, so chop off leading white
-	   space in the process. */
-      if (check_file_name(name, item) == 0) {
-	    vpi_free_object(argv);
-	    return 0;
-      }
-
-      value.format = vpiStringVal;
-      vpi_get_value(item, &value);
-      path = strdup(value.value.str + strspn(value.value.str, " "));
-
-	/* Get and check the second parameter. It must be a memory. */
-      mitem = vpi_scan(argv);
-      if (mitem == 0) {
-	    vpi_printf("%s: Missing memory parameter\n", name);
-	    free(path);
-	    return 0;
-      }
-
-      if (vpi_get(vpiType, mitem) != vpiMemory) {
-	    vpi_printf("%s: Second parameter must be a memory.\n", name);
-	    free(path);
-	    vpi_free_object(argv);
-	    return 0;
-      }
-
-      mem_name = vpi_get_str(vpiFullName, mitem);
-
-      /* Get optional third parameter. It must be a constant. */
-      start_item = vpi_scan(argv);
-      if (start_item!=0){
-	  if (check_integer_constant(name, start_item) == 0){
-	      vpi_free_object(argv);
-	      return 0;
-	  }
-
-	  /* Get optional forth parameter. It must be a constant. */
-	  stop_item = vpi_scan(argv);
-	  if (stop_item!=0){
-	      if (check_integer_constant(name, stop_item) == 0){
-		  vpi_free_object(argv);
-		  return 0;
-	      }
-
-	      /* Check that there is no 5th parameter */
-	      if (vpi_scan(argv) != 0){
-		  vpi_printf("ERROR: %s accepts maximum 4 parameters!\n", name );
-		  vpi_free_object(argv);
-		  return 0;
-	      }
-
-	  }
-      }
-      else{
-	  stop_item = 0;
-      }
+      get_mem_params(argv, callh, name,
+                     &fname, &mitem, &start_item, &stop_item);
+      if (fname == 0) return 0;
 
       /*======================================== Process parameters */
 
+      if (process_params(mitem, start_item, stop_item, callh, name,
+                         &start_addr, &stop_addr, &addr_incr,
+                         &min_addr, &max_addr)) return 0;
+
       /* Open the data file. */
-      file = fopen(path, "r");
+      file = fopen(fname, "r");
       if (file == 0) {
-	    vpi_printf("%s: Unable to open %s for reading.\n", name, path);
-	    free(path);
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s: Unable to open %s for reading.\n", name, fname);
+	    free(fname);
 	    return 0;
       }
-
-      /* Get left addr of memory */
-      left_range = vpi_handle(vpiLeftRange, mitem);
-      value.format = vpiIntVal;
-      vpi_get_value(left_range, &value);
-      left_addr = value.value.integer;
-
-      /* Get right addr of memory */
-      right_range = vpi_handle(vpiRightRange, mitem);
-      value.format = vpiIntVal;
-      vpi_get_value(right_range, &value);
-      right_addr = value.value.integer;
-
-      /* Get start_addr, stop_addr and addr_incr */
-      if (start_item==0){
-	  start_addr = left_addr<right_addr ? left_addr  : right_addr;
-	  stop_addr  = left_addr<right_addr ? right_addr : left_addr;
-	  addr_incr = 1;
-      }
-      else{
-	  s_vpi_value value2;
-	  value2.format = vpiIntVal;
-	  vpi_get_value(start_item, &value2);
-	  start_addr = value2.value.integer;
-
-	  if (stop_item==0){
-	      stop_addr = left_addr<right_addr ? right_addr : left_addr;
-	      addr_incr = 1;
-	  }
-	  else{
-	      s_vpi_value value3;
-	      value3.format = vpiIntVal;
-	      vpi_get_value(stop_item, &value3);
-	      stop_addr = value3.value.integer;
-
-	      addr_incr = start_addr<stop_addr ? 1 : -1;
-	  }
-      }
-
-      min_addr = start_addr<stop_addr ? start_addr : stop_addr ;
-      max_addr = start_addr<stop_addr ? stop_addr  : start_addr;
 
 	/* We need this many words from the file. */
       word_count = max_addr-min_addr+1;
 
-      /* Check that start_addr and stop_addr are within the memory
-	 range */
-      if (left_addr<right_addr){
-	  if (start_addr<left_addr || start_addr > right_addr) {
-	      vpi_printf("%s: Start address is out of bounds for memory \'%s\'!\n", name, mem_name);
-	      return 0;
-	  }
-
-	  if (stop_addr<left_addr || stop_addr > right_addr) {
-	      vpi_printf("%s: Stop address is out of bounds for memory \'%s\'!\n", name, mem_name);
-	      return 0;
-	  }
-      }
-      else{
-	  if (start_addr<right_addr || start_addr > left_addr) {
-	      vpi_printf("%s: Start address is out of bounds for memory \'%s\'!\n", name, mem_name);
-	      return 0;
-	  }
-
-	  if (stop_addr<right_addr || stop_addr > left_addr) {
-	      vpi_printf("%s: Stop address is out of bounds for memory \'%s\'!\n", name, mem_name);
-	      return 0;
-	  }
-      }
-
-      item = vpi_handle_by_index(mitem,min_addr);
-      wwid = vpi_get(vpiSize, item);
+      wwid = vpi_get(vpiSize, vpi_handle_by_index(mitem, min_addr));
 
       /* variable that will be uses by the lexer to pass values
 	 back to this code */
@@ -293,7 +333,6 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
       else
 	  sys_readmem_start_file(file, 0, wwid, value.value.vector);
 
-
       /*======================================== Read memory file */
 
       /* Run through the input file and store the new contents in the memory */
@@ -302,44 +341,67 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
 	  switch (code) {
 	  case MEM_ADDRESS:
 	      addr = value.value.vector->aval;
+	      if (addr < min_addr || addr > max_addr) {
+		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s(%s): address (0x%x) is out of range "
+		             "[0x%x:0x%x]\n",
+			     name, fname, addr, start_addr, stop_addr);
+		  goto bailout;
+	      }
 		/* if there is an address in the memory file, then
 		   turn off any possible warnings about not having
 		   enough words to load the memory. This is standard
-		   behavior. */
+		   behavior from 1364-2005. */
 	      word_count = 0;
 	      break;
 
 	  case MEM_WORD:
-	      if (addr >= min_addr && addr <= max_addr){
+	      if (addr >= min_addr && addr <= max_addr) {
+		  vpiHandle word_index;
 		  word_index = vpi_handle_by_index(mitem, addr);
 		  assert(word_index);
 		  vpi_put_value(word_index, &value, 0, vpiNoDelay);
 
-		  if (word_count > 0)
-			word_count -= 1;
-	      }
-	      else{
-		  vpi_printf("%s(%s): address (0x%x) out of range (0x%x:0x%x)\n",
-			     name, path, addr, start_addr, stop_addr);
+		  if (word_count > 0) word_count -= 1;
+	      } else {
+		  vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s(%s): Too many words in the file for the "
+		             "requested range [%d:%d].\n",
+			     name, fname, start_addr, stop_addr);
 		  goto bailout;
 	      }
 
 	      addr += addr_incr;
 	      break;
 
+	  case MEM_ERROR:
+	      vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	                 (int)vpi_get(vpiLineNo, callh));
+	      vpi_printf("%s(%s): Invalid input character: %s\n", name,
+	                 fname, readmem_error_token);
+	      goto bailout;
+	      break;
+
 	  default:
-	      vpi_printf("Huh?! (%d)\n", code);
+	      assert(0);
 	      break;
 	  }
       }
 
-      if (word_count > 0)
-	    vpi_printf("%s(%s): Not enough words in the read file "
-		       "for requested range.\n", name, path);
+	/* Print a warning if there are not enough words in the data file. */
+      if (word_count > 0) {
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s(%s): Not enough words in the file for the "
+		       "requested range [%d:%d].\n", name, fname,
+		       start_addr, stop_addr);
+      }
 
  bailout:
       free(value.value.vector);
-      free(path);
+      free(fname);
       fclose(file);
       destroy_readmem_lexor(file);
       return 0;
@@ -347,197 +409,53 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
 
 static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
 {
-      int wwid;
-      char*path;
-      char*mem_name;
+      int addr;
       FILE*file;
-      unsigned addr = 0;
-      unsigned cnt = 0;
+      char*fname = 0;
+      unsigned cnt;
       s_vpi_value value;
-      vpiHandle words;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item = vpi_scan(argv);
-      vpiHandle mitem;
-      vpiHandle start_item;
-      vpiHandle stop_item;
-      vpiHandle word_index;
-      vpiHandle left_range;
-      vpiHandle right_range;
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle mitem = 0;
+      vpiHandle start_item = 0;
+      vpiHandle stop_item = 0;
 
-      int left_addr, right_addr;
       int start_addr, stop_addr, addr_incr;
-      int min_addr, max_addr;
+      int min_addr, max_addr; // Not used in this routine.
 
       /*======================================== Get parameters */
 
-      if (item == 0) {
-	    vpi_printf("%s: file name parameter missing.\n", name);
-	    return 0;
-      }
+      get_mem_params(argv, callh, name,
+                     &fname, &mitem, &start_item, &stop_item);
 
-      if (vpi_get(vpiType, item) != vpiConstant) {
-	    vpi_printf("ERROR: %s parameter must be a constant\n", name);
-	    vpi_free_object(argv);
-	    return 0;
-      }
-
-      if (vpi_get(vpiConstType, item) != vpiStringConst) {
-	    vpi_printf("ERROR: %s parameter must be a string\n", name);
-	    vpi_free_object(argv);
-	    return 0;
-      }
-
-      value.format = vpiStringVal;
-      vpi_get_value(item, &value);
-      path = strdup(value.value.str);
-
-	/* Get and check the second parameter. It must be a memory. */
-      mitem = vpi_scan(argv);
-      if (mitem == 0) {
-	    vpi_printf("%s: Missing memory parameter\n", name);
-	    free(path);
-	    return 0;
-      }
-
-      if (vpi_get(vpiType, mitem) != vpiMemory) {
-	    vpi_printf("%s: Second parameter must be a memory.\n", name);
-	    free(path);
-	    vpi_free_object(argv);
-	    return 0;
-      }
-
-      mem_name = vpi_get_str(vpiFullName, mitem);
-
-      /* Get optional third parameter. It must be a constant. */
-      start_item = vpi_scan(argv);
-      if (start_item!=0){
-	  if (check_integer_constant(name, start_item) == 0){
-	      free(path);
-	      vpi_free_object(argv);
-	      return 0;
-	  }
-
-	  /* Get optional forth parameter. It must be a constant. */
-	  stop_item = vpi_scan(argv);
-	  if (stop_item!=0){
-	      if (check_integer_constant(name, stop_item) == 0){
-		  free(path);
-		  vpi_free_object(argv);
-		  return 0;
-	      }
-
-	      /* Check that there is no 5th parameter */
-	      if (vpi_scan(argv) != 0){
-		  vpi_printf("ERROR: %s accepts maximum 4 parameters!\n", name );
-		  free(path);
-		  vpi_free_object(argv);
-		  return 0;
-	      }
-
-	  }
-      }
-      else{
-	  stop_item = 0;
-      }
+      if (fname == 0) return 0;
 
       /*======================================== Process parameters */
 
+      if (process_params(mitem, start_item, stop_item, callh, name,
+                         &start_addr, &stop_addr, &addr_incr,
+                         &min_addr, &max_addr)) return 0;
+
       /* Open the data file. */
-      file = fopen(path, "w");
+      file = fopen(fname, "w");
       if (file == 0) {
-	    vpi_printf("%s: Unable to open %s for writing.\n", name, path);
-	    free(path);
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s: Unable to open %s for writing.\n", name, fname);
+	    free(fname);
 	    return 0;
       }
 
-      /* Get left addr of memory */
-      left_range = vpi_handle(vpiLeftRange, mitem);
-      value.format = vpiIntVal;
-      vpi_get_value(left_range, &value);
-      left_addr = value.value.integer;
-
-      /* Get right addr of memory */
-      right_range = vpi_handle(vpiRightRange, mitem);
-      value.format = vpiIntVal;
-      vpi_get_value(right_range, &value);
-      right_addr = value.value.integer;
-
-      /* Get start_addr, stop_addr and addr_incr */
-      if (start_item==0){
-	  start_addr = left_addr<right_addr ? left_addr  : right_addr;
-	  stop_addr  = left_addr<right_addr ? right_addr : left_addr;
-	  addr_incr = 1;
-      }
-      else{
-	  s_vpi_value value2;
-	  value2.format = vpiIntVal;
-	  vpi_get_value(start_item, &value2);
-	  start_addr = value2.value.integer;
-
-	  if (stop_item==0){
-	      stop_addr = left_addr<right_addr ? right_addr : left_addr;
-	      addr_incr = 1;
-	  }
-	  else{
-	      s_vpi_value value3;
-	      value3.format = vpiIntVal;
-	      vpi_get_value(stop_item, &value3);
-	      stop_addr = value3.value.integer;
-
-	      addr_incr = start_addr<stop_addr ? 1 : -1;
-	  }
-      }
-
-      min_addr = start_addr<stop_addr ? start_addr : stop_addr ;
-      max_addr = start_addr<stop_addr ? stop_addr  : start_addr;
-
-      /* Check that start_addr and stop_addr are within the memory
-	 range */
-      if (left_addr<right_addr){
-	  if (start_addr<left_addr || start_addr > right_addr) {
-	      vpi_printf("%s: Start address is out of bounds for memory \'%s\'!\n", name, mem_name);
-	      return 0;
-	  }
-
-	  if (stop_addr<left_addr || stop_addr > right_addr) {
-	      vpi_printf("%s: Stop address is out of bounds for memory \'%s\'!\n", name, mem_name);
-	      return 0;
-	  }
-      }
-      else{
-	  if (start_addr<right_addr || start_addr > left_addr) {
-	      vpi_printf("%s: Start address is out of bounds for memory \'%s\'!\n", name, mem_name);
-	      return 0;
-	  }
-
-	  if (stop_addr<right_addr || stop_addr > left_addr) {
-	      vpi_printf("%s: Stop address is out of bounds for memory \'%s\'!\n", name, mem_name);
-	      return 0;
-	  }
-      }
-
-
-      words = vpi_iterate(vpiMemoryWord, mitem);
-      assert(words);
-
-      item = vpi_scan(words);
-      wwid = vpi_get(vpiSize, item);
-      vpi_free_object(words);
-
-      if (strcmp(name,"$writememb")==0){
-	  value.format = vpiBinStrVal;
-      }
-      else{
-	  value.format = vpiHexStrVal;
-      }
+      if (strcmp(name,"$writememb")==0) value.format = vpiBinStrVal;
+      else value.format = vpiHexStrVal;
 
       /*======================================== Write memory file */
 
-      cnt=0;
-      for(addr=start_addr; addr!=stop_addr+addr_incr; addr+=addr_incr, ++cnt){
-	  if (cnt%16 == 0)
-	      fprintf(file, "// 0x%08x\n", cnt);
+      cnt = 0;
+      for(addr=start_addr; addr!=stop_addr+addr_incr; addr+=addr_incr, ++cnt) {
+	  vpiHandle word_index;
+
+	  if (cnt%16 == 0) fprintf(file, "// 0x%08x\n", cnt);
 
 	  word_index = vpi_handle_by_index(mitem, addr);
 	  assert(word_index);
@@ -546,7 +464,7 @@ static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
       }
 
       fclose(file);
-      free(path);
+      free(fname);
       return 0;
 }
 
@@ -557,7 +475,7 @@ void sys_readmem_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$readmemh";
       tf_data.calltf    = sys_readmem_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_mem_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$readmemh";
       vpi_register_systf(&tf_data);
@@ -565,7 +483,7 @@ void sys_readmem_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$readmemb";
       tf_data.calltf    = sys_readmem_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_mem_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$readmemb";
       vpi_register_systf(&tf_data);
@@ -573,7 +491,7 @@ void sys_readmem_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$writememh";
       tf_data.calltf    = sys_writemem_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_mem_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$writememh";
       vpi_register_systf(&tf_data);
@@ -581,7 +499,7 @@ void sys_readmem_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$writememb";
       tf_data.calltf    = sys_writemem_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_mem_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$writememb";
       vpi_register_systf(&tf_data);

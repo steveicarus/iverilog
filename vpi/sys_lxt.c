@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -168,7 +168,7 @@ static void show_this_item(struct vcd_info*info)
 {
       s_vpi_value value;
 
-      if (vpi_get(vpiType,info->item) == vpiRealVar) {
+      if (vpi_get(vpiType, info->item) == vpiRealVar) {
 	    value.format = vpiRealVal;
 	    vpi_get_value(info->item, &value);
 	    lt_emit_value_double(dump_file, info->sym, 0, value.value.real);
@@ -177,8 +177,8 @@ static void show_this_item(struct vcd_info*info)
 	    value.format = vpiBinStrVal;
 	    vpi_get_value(info->item, &value);
 	    lt_emit_value_bit_string(dump_file, info->sym,
-				     0 /* array row */,
-				     value.value.str);
+	                             0 /* array row */,
+	                             value.value.str);
       }
 }
 
@@ -252,10 +252,10 @@ static PLI_INT32 variable_cb_1(p_cb_data cause)
       struct t_cb_data cb;
       struct vcd_info*info = (struct vcd_info*)cause->user_data;
 
-      if (dump_is_full)          return 0;
-      if (dump_is_off)           return 0;
+      if (dump_is_full) return 0;
+      if (dump_is_off) return 0;
       if (dump_header_pending()) return 0;
-      if (info->scheduled)       return 0;
+      if (info->scheduled) return 0;
 
       if ((dump_limit > 0) && (ftell(dump_file->handle) > dump_limit)) {
             dump_is_full = 1;
@@ -280,8 +280,7 @@ static PLI_INT32 variable_cb_1(p_cb_data cause)
 
 static PLI_INT32 dumpvars_cb(p_cb_data cause)
 {
-      if (dumpvars_status != 1)
-	    return 0;
+      if (dumpvars_status != 1) return 0;
 
       dumpvars_status = 2;
 
@@ -298,13 +297,11 @@ static PLI_INT32 dumpvars_cb(p_cb_data cause)
 
 static PLI_INT32 finish_cb(p_cb_data cause)
 {
-      if (finish_status != 0)
-	    return 0;
+      if (finish_status != 0) return 0;
 
       finish_status = 1;
 
       dumpvars_time = timerec_to_time64(cause->time);
-
       if (!dump_is_off && !dump_is_full && dumpvars_time != vcd_cur_time) {
             lt_set_time64(dump_file, dumpvars_time);
       }
@@ -317,8 +314,7 @@ __inline__ static int install_dumpvars_callback(void)
       struct t_cb_data cb;
       static struct t_vpi_time now;
 
-      if (dumpvars_status == 1)
-	    return 0;
+      if (dumpvars_status == 1) return 0;
 
       if (dumpvars_status == 2) {
 	    vpi_printf("LXT warning: $dumpvars ignored, previously"
@@ -362,8 +358,8 @@ static PLI_INT32 sys_dumpoff_calltf(PLI_BYTE8*name)
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time) {
-            lt_set_time64(dump_file, now64);
-            vcd_cur_time = now64;
+	    lt_set_time64(dump_file, now64);
+	    vcd_cur_time = now64;
       }
 
       lt_set_dumpoff(dump_file);
@@ -389,8 +385,8 @@ static PLI_INT32 sys_dumpon_calltf(PLI_BYTE8*name)
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time) {
-            lt_set_time64(dump_file, now64);
-            vcd_cur_time = now64;
+	    lt_set_time64(dump_file, now64);
+	    vcd_cur_time = now64;
       }
 
       lt_set_dumpon(dump_file);
@@ -412,9 +408,9 @@ static PLI_INT32 sys_dumpall_calltf(PLI_BYTE8*name)
       vpi_get_time(0, &now);
       now64 = timerec_to_time64(&now);
 
-      if (now64> vcd_cur_time) {
-            lt_set_time64(dump_file, now64);
-            vcd_cur_time = now64;
+      if (now64 > vcd_cur_time) {
+	    lt_set_time64(dump_file, now64);
+	    vcd_cur_time = now64;
       }
 
       vcd_checkpoint();
@@ -450,7 +446,7 @@ static void open_dumpfile(vpiHandle callh)
 	    lt_set_timescale(dump_file, prec);
 
 	    lt_set_initial_value(dump_file, 'x');
-            lt_set_clock_compress(dump_file);
+	    lt_set_clock_compress(dump_file);
 
             atexit((void(*)(void))close_dumpfile);
       }
@@ -460,31 +456,33 @@ static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      s_vpi_value value;
-
-      char*path;
+      char *path;
 
         /* $dumpfile must be called before $dumpvars starts! */
       if (dumpvars_status != 0) {
-	    vpi_printf("LXT warning: %s called after $dumpvars started,\n"
-	               "             using existing file (%s).\n",
-	               name, dump_path);
+	    char msg [64];
+	    snprintf(msg, 64, "LXT warning: %s:%d:",
+	             vpi_get_str(vpiFile, callh),
+	             (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s %s called after $dumpvars started,\n", msg, name);
+	    vpi_printf("%*s using existing file (%s).\n",
+	               (int) strlen(msg), " ", dump_path);
+	    vpi_free_object(argv);
 	    return 0;
       }
 
-      assert(argv);
-      value.format = vpiStringVal;
-      vpi_get_value(vpi_scan(argv), &value);
-      path = strdup(value.value.str);
+      path = get_filename(callh, name, vpi_scan(argv));
+      vpi_free_object(argv);
+      if (! path) return 0;
 
       if (dump_path) {
-	    vpi_printf("LXT warning: Overriding dump file %s with %s\n",
-	               dump_path, path);
+	    vpi_printf("LXT warning: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("Overriding dump file %s with %s.\n", dump_path, path);
 	    free(dump_path);
       }
       dump_path = path;
 
-      vpi_free_object(argv);
       return 0;
 }
 
@@ -500,12 +498,11 @@ static PLI_INT32 sys_dumplimit_calltf(PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle limit = vpi_scan(argv);
       s_vpi_value val;
 
       /* Get the value and set the dump limit. */
       val.format = vpiIntVal;
-      vpi_get_value(limit, &val);
+      vpi_get_value(vpi_scan(argv), &val);
       dump_limit = val.value.integer;
 
       vpi_free_object(argv);
@@ -566,8 +563,12 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  info = malloc(sizeof(*info));
 
 		  info->time.type = vpiSimTime;
-		  info->item  = item;
-		  info->sym   = lt_symbol_add(dump_file, ident, 0 /* array rows */, vpi_get(vpiLeftRange, item), vpi_get(vpiRightRange, item), LT_SYM_F_BITS);
+		  info->item = item;
+		  info->sym  = lt_symbol_add(dump_file, ident,
+		                             0 /* array rows */,
+		                             vpi_get(vpiLeftRange, item),
+		                             vpi_get(vpiRightRange, item),
+		                             LT_SYM_F_BITS);
 		  info->scheduled = 0;
 
 		  cb.time      = &info->time;
@@ -603,8 +604,11 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    info = malloc(sizeof(*info));
 
 	    info->time.type = vpiSimTime;
-	    info->item  = item;
-	    info->sym   = lt_symbol_add(dump_file, ident, 0 /* array rows */, vpi_get(vpiSize, item)-1, 0, LT_SYM_F_DOUBLE);
+	    info->item = item;
+	    info->sym  = lt_symbol_add(dump_file, ident,
+	                               0 /* array rows */,
+	                               vpi_get(vpiSize, item)-1,
+	                               0, LT_SYM_F_DOUBLE);
 	    info->scheduled = 0;
 
 	    cb.time      = &info->time;
@@ -675,8 +679,7 @@ static int draw_scope(vpiHandle item)
       const char *name;
 
       vpiHandle scope = vpi_handle(vpiScope, item);
-      if (!scope)
-	    return 0;
+      if (!scope) return 0;
 
       depth = 1 + draw_scope(scope);
       name = vpi_get_str(vpiName, scope);
@@ -696,10 +699,16 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 
       if (dump_file == 0) {
 	    open_dumpfile(callh);
-	    if (dump_file == 0) return 0;
+	    if (dump_file == 0) {
+		  vpi_free_object(argv);
+		  return 0;
+	    }
       }
 
-      if (install_dumpvars_callback()) return 0;
+      if (install_dumpvars_callback()) {
+	    vpi_free_object(argv);
+	    return 0;
+      }
 
         /* Get the depth if it exists. */
       if (argv) {
@@ -727,7 +736,9 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
       }
 
 	/* Most effective compression. */
-      if (lxm_optimum_mode == LXM_SPACE) lt_set_no_interlace(dump_file);
+      if (lxm_optimum_mode == LXM_SPACE) {
+	    lt_set_no_interlace(dump_file);
+      }
 
       return 0;
 }

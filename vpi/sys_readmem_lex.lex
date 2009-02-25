@@ -30,6 +30,8 @@ static void make_bin_value();
 
 static int save_state;
 
+char *readmem_error_token = 0;
+
 %}
 
 %x BIN
@@ -50,6 +52,9 @@ static int save_state;
 <CCOMMENT>[^*]* { ; }
 <CCOMMENT>"*"   { ; }
 <CCOMMENT>"*"+"/" { BEGIN(save_state); }
+
+ /* Catch any invalid tokens and flagged them as an error. */
+<HEX,BIN>. { readmem_error_token = yytext; return MEM_ERROR; }
 
 %%
 static unsigned word_width = 0;
