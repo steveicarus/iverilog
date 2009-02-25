@@ -1,15 +1,20 @@
 #norootforbuild
 #
-%define rev_date 20081118
+%define rev_date 20090225
+# Normally, the suff-ix is %nil, meaning the suffix is to not be used.
+# But if the builder wants to make a suffixed package, he may set this
+# to a value (i.e. -test) to cause suffixes to be put in all the right
+# places.
+%define suff %nil
 #
 #
 Summary: Icarus Verilog
-Name: verilog
+Name: verilog%{suff}
 Version: 0.9.0.%{rev_date}
 Release: 0
 License: GPL
 Group: Productivity/Scientific/Electronics
-Source: verilog-%{rev_date}.tar.gz
+Source: verilog%{suff}-%{rev_date}.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
 
@@ -27,10 +32,15 @@ engineering formats, including simulation. It strives to be true
 to the IEEE-1364 standard.
 
 %prep
-%setup -n verilog-%{rev_date}
+%setup -n verilog%{suff}-%{rev_date}
 
 %build
-%{configure}
+if test X%{suff} != X
+then
+    %{configure} --enable-suffix=%{suff}
+else
+    %{configure}
+fi
 make CXXFLAGS=-O
 
 %install
@@ -44,45 +54,48 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) %doc COPYING README.txt BUGS.txt QUICK_START.txt ieee1364-notes.txt mingw.txt swift.txt netlist.txt t-dll.txt vpi.txt cadpli/cadpli.txt
 %attr(-,root,root) %doc examples/*
 
-%attr(-,root,root) %{_mandir}/man1/iverilog.1.gz
-%attr(-,root,root) %{_mandir}/man1/iverilog-vpi.1.gz
-%attr(-,root,root) %{_mandir}/man1/vvp.1.gz
+%attr(-,root,root) %{_mandir}/man1/iverilog%{suff}.1.gz
+%attr(-,root,root) %{_mandir}/man1/iverilog-vpi%{suff}.1.gz
+%attr(-,root,root) %{_mandir}/man1/vvp%{suff}.1.gz
 
-%attr(-,root,root) %{_bindir}/iverilog
-%attr(-,root,root) %{_bindir}/iverilog-vpi
-%attr(-,root,root) %{_bindir}/vvp
-%attr(-,root,root) %{_libdir}/ivl/ivl
-%attr(-,root,root) %{_libdir}/ivl/ivlpp
-%attr(-,root,root) %{_libdir}/ivl/null.tgt
-%attr(-,root,root) %{_libdir}/ivl/null.conf
-%attr(-,root,root) %{_libdir}/ivl/null-s.conf
-%attr(-,root,root) %{_libdir}/ivl/stub.tgt
-%attr(-,root,root) %{_libdir}/ivl/stub.conf
-%attr(-,root,root) %{_libdir}/ivl/stub-s.conf
-%attr(-,root,root) %{_libdir}/ivl/vvp.tgt
-%attr(-,root,root) %{_libdir}/ivl/vvp.conf
-%attr(-,root,root) %{_libdir}/ivl/vvp-s.conf
-%attr(-,root,root) %{_libdir}/ivl/vhdl.tgt
-%attr(-,root,root) %{_libdir}/ivl/vhdl.conf
-%attr(-,root,root) %{_libdir}/ivl/vhdl-s.conf
-%attr(-,root,root) %{_libdir}/ivl/system.sft
-%attr(-,root,root) %{_libdir}/ivl/system.vpi
-%attr(-,root,root) %{_libdir}/ivl/va_math.sft
-%attr(-,root,root) %{_libdir}/ivl/va_math.vpi
-%attr(-,root,root) %{_libdir}/ivl/v2005_math.sft
-%attr(-,root,root) %{_libdir}/ivl/v2005_math.vpi
-%attr(-,root,root) %{_libdir}/ivl/cadpli.vpl
-%attr(-,root,root) %{_libdir}/libvpi.a
-%attr(-,root,root) %{_libdir}/libveriuser.a
-%attr(-,root,root) %{_libdir}/ivl/include/constants.vams
-%attr(-,root,root) %{_libdir}/ivl/include/disciplines.vams
-%attr(-,root,root) /usr/include/iverilog/ivl_target.h
-%attr(-,root,root) /usr/include/iverilog/vpi_user.h
-%attr(-,root,root) /usr/include/iverilog/acc_user.h
-%attr(-,root,root) /usr/include/iverilog/veriuser.h
-%attr(-,root,root) /usr/include/iverilog/_pli_types.h
+%attr(-,root,root) %{_bindir}/iverilog%{suff}
+%attr(-,root,root) %{_bindir}/iverilog-vpi%{suff}
+%attr(-,root,root) %{_bindir}/vvp%{suff}
+%attr(-,root,root) %{_libdir}/ivl%{suff}/ivl
+%attr(-,root,root) %{_libdir}/ivl%{suff}/ivlpp
+%attr(-,root,root) %{_libdir}/ivl%{suff}/null.tgt
+%attr(-,root,root) %{_libdir}/ivl%{suff}/null.conf
+%attr(-,root,root) %{_libdir}/ivl%{suff}/null-s.conf
+%attr(-,root,root) %{_libdir}/ivl%{suff}/stub.tgt
+%attr(-,root,root) %{_libdir}/ivl%{suff}/stub.conf
+%attr(-,root,root) %{_libdir}/ivl%{suff}/stub-s.conf
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vvp.tgt
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vvp.conf
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vvp-s.conf
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl.tgt
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl.conf
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl-s.conf
+%attr(-,root,root) %{_libdir}/ivl%{suff}/system.sft
+%attr(-,root,root) %{_libdir}/ivl%{suff}/system.vpi
+%attr(-,root,root) %{_libdir}/ivl%{suff}/va_math.sft
+%attr(-,root,root) %{_libdir}/ivl%{suff}/va_math.vpi
+%attr(-,root,root) %{_libdir}/ivl%{suff}/v2005_math.sft
+%attr(-,root,root) %{_libdir}/ivl%{suff}/v2005_math.vpi
+%attr(-,root,root) %{_libdir}/ivl%{suff}/cadpli.vpl
+%attr(-,root,root) %{_libdir}/libvpi%{suff}.a
+%attr(-,root,root) %{_libdir}/libveriuser%{suff}.a
+%attr(-,root,root) %{_libdir}/ivl%{suff}/include/constants.vams
+%attr(-,root,root) %{_libdir}/ivl%{suff}/include/disciplines.vams
+%attr(-,root,root) /usr/include/iverilog%{suff}/ivl_target.h
+%attr(-,root,root) /usr/include/iverilog%{suff}/vpi_user.h
+%attr(-,root,root) /usr/include/iverilog%{suff}/acc_user.h
+%attr(-,root,root) /usr/include/iverilog%{suff}/veriuser.h
+%attr(-,root,root) /usr/include/iverilog%{suff}/_pli_types.h
 
 %changelog -n verilog
+* Wed Feb 25 2009 - steve@icarus.com
+- Handle a package suffix if desired.
+
 * Tue Nov 25 2008 - steve@icarus.com
 - Move header files frim /verilog/ to /iverilog/
 
