@@ -99,59 +99,6 @@ void PGate::eval_delays(Design*des, NetScope*scope,
 			 as_net_flag);
 }
 
-void PGate::eval_delays(Design*des, NetScope*scope,
-			unsigned long&rise_time,
-			unsigned long&fall_time,
-			unsigned long&decay_time) const
-{
-      NetExpr*rise_expr, *fall_expr, *decay_expr;
-      delay_.eval_delays(des, scope, rise_expr, fall_expr, decay_expr);
-
-      if (rise_expr == 0) {
-	    rise_time = 0;
-	    fall_time = 0;
-	    decay_time = 0;
-      }
-
-      if (NetEConst*tmp = dynamic_cast<NetEConst*> (rise_expr)) {
-	    rise_time = tmp->value().as_ulong();
-
-      } else {
-	    cerr << get_fileline() << ": error: Delay expressions must be "
-		 << "constant here." << endl;
-	    cerr << get_fileline() << ":      : Cannot calculate "
-		 << *rise_expr << endl;
-	    des->errors += 1;
-	    rise_time = 0;
-      }
-
-      if (NetEConst*tmp = dynamic_cast<NetEConst*> (fall_expr)) {
-	    fall_time = tmp->value().as_ulong();
-
-      } else {
-	    if (fall_expr != rise_expr) {
-		  cerr << get_fileline() << ": error: Delay expressions must be "
-		       << "constant here." << endl;
-		  cerr << get_fileline() << ":      : Cannot calculate "
-		       << *rise_expr << endl;
-	    }
-	    des->errors += 1;
-	    fall_time = 0;
-      }
-
-      if (NetEConst*tmp = dynamic_cast<NetEConst*> (decay_expr)) {
-	    decay_time = tmp->value().as_ulong();
-
-      } else {
-	    cerr << get_fileline() << ": error: Delay expressions must be "
-		 << "constant here." << endl;
-	    cerr << get_fileline() << ":      : Cannot calculate "
-		 << *rise_expr << endl;
-	    des->errors += 1;
-	    decay_time = 0;
-      }
-}
-
 PGAssign::PGAssign(svector<PExpr*>*pins)
 : PGate(perm_string(), pins)
 {

@@ -74,7 +74,7 @@ static NetExpr*calculate_val(Design*des, NetScope*scope, const PExpr*expr)
 	    verireal fn = tmp->value();
 
 	    int shift = scope->time_unit() - des->get_precision();
-	    long delay = fn.as_long(shift);
+	    int64_t delay = fn.as_long64(shift);
 	    if (delay < 0)
 		  delay = 0;
 
@@ -88,8 +88,7 @@ static NetExpr*calculate_val(Design*des, NetScope*scope, const PExpr*expr)
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(dex)) {
 	    verinum fn = tmp->value();
 
-	    unsigned long delay =
-		  des->scale_to_precision(fn.as_ulong(), scope);
+	    uint64_t delay = des->scale_to_precision(fn.as_ulong64(), scope);
 
 	    delete tmp;
 	    NetEConst*tmp2 = new NetEConst(verinum(delay));

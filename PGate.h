@@ -62,15 +62,6 @@ class PGate : public LineInfo {
 
       perm_string get_name() const { return name_; }
 
-	// This method evaluates the delays all the way to an
-	// integer. If the delay is non-constant, then set the times
-	// to 0, print an error message and mark an error to the
-	// design.
-      void eval_delays(Design*des, NetScope*scope,
-		       unsigned long&rise_time,
-		       unsigned long&fall_time,
-		       unsigned long&decay_time) const;
-
 	// This evaluates the delays as far as possible, but returns
 	// an expression, and do not signal errors.
       void eval_delays(Design*des, NetScope*scope,

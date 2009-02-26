@@ -155,7 +155,7 @@ uint64_t get_number_immediate64(ivl_expr_t ex)
 		      assert(0);
 		}
 		if (ivl_expr_signed(ex) && bits[nbits-1]=='1' && nbits < 64)
-		      imm |= -UINT64_C(1) << nbits;
+		      imm |= (-UINT64_C(1)) << nbits;
 		break;
 	  }
 
