@@ -35,8 +35,11 @@ extern unsigned long genrand(struct context_s *context);
 
 extern PLI_UINT64 timerec_to_time64(const struct t_vpi_time*time);
 
-extern char * as_escaped(char *arg);
-extern char * get_filename(vpiHandle callh, char *name, vpiHandle file);
+extern char *as_escaped(char *arg);
+extern char *get_filename(vpiHandle callh, char *name, vpiHandle file);
+
+extern void check_for_extra_args(vpiHandle argv, vpiHandle callh,
+                                 char *name, char *arg_str, unsigned opt);
 
 struct timeformat_info_s {
       int units;

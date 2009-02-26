@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2009  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ static unsigned is_numeric_obj(vpiHandle obj)
       case vpiRealVar:
       case vpiReg:
       case vpiTimeVar:
-	rtn = 1;;
+	rtn = 1;
 	break;
     }
 

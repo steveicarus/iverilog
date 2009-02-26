@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,6 +18,7 @@
  */
 
 # include "sys_priv.h"
+# include "sys_random.h"
 
 # include  <vpi_user.h>
 # include  <assert.h>
@@ -46,8 +47,7 @@ static struct context_s global_context = {
 
 static long mti_dist_uniform(long*seed, long start, long end)
 {
-      if (start >= end)
-	    return start;
+      if (start >= end) return start;
 
       if ((start > LONG_MIN) || (end < LONG_MAX)) {
 	    long range = end - start;
@@ -57,34 +57,18 @@ static long mti_dist_uniform(long*seed, long start, long end)
       }
 }
 
-
 static PLI_INT32 sys_mti_dist_uniform_calltf(PLI_BYTE8*name)
 {
+      vpiHandle callh, argv, seed, start, end;
       s_vpi_value val;
-      vpiHandle call_handle;
-      vpiHandle argv;
-      vpiHandle seed = 0, start, end;
-
       long i_seed, i_start, i_end;
 
-      call_handle = vpi_handle(vpiSysTfCall, 0);
-      assert(call_handle);
-
-      argv = vpi_iterate(vpiArgument, call_handle);
-      if (argv == 0) {
-	    vpi_printf("ERROR: %s requires parameters "
-		       "(seed, start, end)\n", name);
-	    return 0;
-      }
-
+	/* Get the argument handles and convert them. */
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
       seed = vpi_scan(argv);
-      assert(seed);
       start = vpi_scan(argv);
-      assert(start);
       end = vpi_scan(argv);
-      assert(end);
-
-      vpi_free_object(argv);
 
       val.format = vpiIntVal;
       vpi_get_value(seed, &val);
@@ -96,74 +80,61 @@ static PLI_INT32 sys_mti_dist_uniform_calltf(PLI_BYTE8*name)
       vpi_get_value(end, &val);
       i_end = val.value.integer;
 
-      val.format = vpiIntVal;
+	/* Calculate and return the result. */
       val.value.integer = mti_dist_uniform(&i_seed, i_start, i_end);
-      vpi_put_value(call_handle, &val, 0, vpiNoDelay);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
 
-      val.format = vpiIntVal;
+	/* Return the seed. */
       val.value.integer = i_seed;
       vpi_put_value(seed, &val, 0, vpiNoDelay);
 
+      vpi_free_object(argv);
       return 0;
-}
-
-static PLI_INT32 sys_mti_dist_uniform_sizetf(PLI_BYTE8*x)
-{
-      return 32;
 }
 
 static PLI_INT32 sys_mti_random_calltf(PLI_BYTE8*name)
 {
+      vpiHandle callh, argv, seed = 0;
       s_vpi_value val;
-      vpiHandle call_handle;
-      vpiHandle argv;
-      vpiHandle seed = 0;
-      int i_seed = 0;
+      int i_seed = COOKIE;
       struct context_s *context;
-
-      call_handle = vpi_handle(vpiSysTfCall, 0);
-      assert(call_handle);
 
 	/* Get the argument list and look for a seed. If it is there,
 	   get the value and reseed the random number generator. */
-      argv = vpi_iterate(vpiArgument, call_handle);
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv = vpi_iterate(vpiArgument, callh);
+      val.format = vpiIntVal;
       if (argv) {
 	    seed = vpi_scan(argv);
 	    vpi_free_object(argv);
-
-	    val.format = vpiIntVal;
 	    vpi_get_value(seed, &val);
 	    i_seed = val.value.integer;
 
 	      /* Since there is a seed use the current
 	         context or create a new one */
-	    context = (struct context_s *)vpi_get_userdata(call_handle);
+	    context = (struct context_s *)vpi_get_userdata(callh);
 	    if (!context) {
 		  context = (struct context_s *)calloc(1, sizeof(*context));
 		  context->mti = NP1;
-		  assert(context);
 
 		    /* squirrel away context */
-		  vpi_put_userdata(call_handle, (void *)context);
+		  vpi_put_userdata(callh, (void *)context);
 	    }
 
 	      /* If the argument is not the Icarus cookie, then
 		 reseed context */
-	    if (i_seed != COOKIE)
-	          sgenrand(context, i_seed);
+	    if (i_seed != COOKIE) sgenrand(context, i_seed);
       } else {
 	    /* use global context */
           context = &global_context;
       }
 
-      val.format = vpiIntVal;
+        /* Calculate and return the result */
       val.value.integer = genrand(context);
-
-      vpi_put_value(call_handle, &val, 0, vpiNoDelay);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
 
         /* mark seed with cookie */
       if (seed && i_seed != COOKIE) {
-	    val.format = vpiIntVal;
 	    val.value.integer = COOKIE;
 	    vpi_put_value(seed, &val, 0, vpiNoDelay);
       }
@@ -171,29 +142,24 @@ static PLI_INT32 sys_mti_random_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_mti_random_sizetf(PLI_BYTE8*x)
-{
-      return 32;
-}
-
 void sys_random_mti_register()
 {
       s_vpi_systf_data tf_data;
 
-      tf_data.type   = vpiSysFunc;
-      tf_data.tfname = "$mti_random";
-      tf_data.calltf = sys_mti_random_calltf;
-      tf_data.compiletf = 0;
-      tf_data.sizetf = sys_mti_random_sizetf;
-      tf_data.user_data = "$mti_random";
+      tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.tfname      = "$mti_random";
+      tf_data.calltf      = sys_mti_random_calltf;
+      tf_data.compiletf   = sys_random_compiletf;
+      tf_data.user_data   = "$mti_random";
       vpi_register_systf(&tf_data);
 
-      tf_data.type   = vpiSysFunc;
-      tf_data.tfname = "$mti_dist_uniform";
-      tf_data.calltf = sys_mti_dist_uniform_calltf;
-      tf_data.compiletf = 0;
-      tf_data.sizetf = sys_mti_dist_uniform_sizetf;
-      tf_data.user_data = "$mti_dist_uniform";
+      tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.tfname      = "$mti_dist_uniform";
+      tf_data.calltf      = sys_mti_dist_uniform_calltf;
+      tf_data.compiletf   = sys_rand_three_args_compiletf;
+      tf_data.user_data   = "$mti_dist_uniform";
       vpi_register_systf(&tf_data);
 }
 

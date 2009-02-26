@@ -18,6 +18,7 @@
  */
 
 # include "sys_priv.h"
+# include "sys_random.h"
 
 # include  <vpi_user.h>
 # include  <assert.h>
@@ -364,6 +365,30 @@ static double erlangian(long *seed, long k, long mean)
       return x;
 }
 
+/* A seed can only be an integer/time variable or a register. */
+static unsigned is_seed_obj(vpiHandle obj, vpiHandle callh, char *name)
+{
+      unsigned rtn = 0;
+
+      assert(obj);
+
+      switch (vpi_get(vpiType, obj)) {
+	    case vpiTimeVar:
+	    case vpiIntegerVar:
+	    case vpiReg:
+		  rtn = 1;
+		  break;
+	    default:
+		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s's seed must be an integer/time"
+		             " variable or a register.\n", name);
+		  vpi_control(vpiFinish, 1);
+      }
+
+      return rtn;
+}
+
 static PLI_INT32 sys_rand_two_args_compiletf(PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
@@ -372,46 +397,43 @@ static PLI_INT32 sys_rand_two_args_compiletf(PLI_BYTE8 *name)
 
       /* Check that there are arguments. */
       if (argv == 0) {
-            vpi_printf("ERROR: %s requires two arguments.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires two arguments.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
       }
 
       /* Check that there are at least two arguments. */
       seed = vpi_scan(argv);  /* This should never be zero. */
       arg2 = vpi_scan(argv);
       if (arg2 == 0) {
-            vpi_printf("ERROR: %s requires two arguments.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires two arguments.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
       }
 
       /* The seed must be a time/integer variable or a register. */
-      switch (vpi_get(vpiType, seed)) {
-            case vpiTimeVar:
-            case vpiIntegerVar:
-            case vpiReg:
-                  break;
-            default:
-                  vpi_printf("ERROR: %s's seed must be an integer/time"
-                             " variable or a register.\n", name);
-                  vpi_control(vpiFinish, 1);
-                  return 0;
+      if (! is_seed_obj(seed, callh, name)) return 0;
+
+      /* The second argument must be numeric. */
+      if (! is_numeric_obj(arg2)) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s second argument must be numeric.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
       }
 
-      /* These functions takes at most two argument. */
-      seed = vpi_scan(argv);
-      if (seed != 0) {
-            vpi_printf("ERROR: %s takes at most two argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
-      }
+      /* Check that there is at most two arguments. */
+      check_for_extra_args(argv, callh, name, "two arguments", 0);
 
-      /* vpi_scan returning 0 (NULL) has already freed argv. */
       return 0;
 }
 
-static PLI_INT32 sys_rand_three_args_compiletf(PLI_BYTE8 *name)
+PLI_INT32 sys_rand_three_args_compiletf(PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -419,9 +441,11 @@ static PLI_INT32 sys_rand_three_args_compiletf(PLI_BYTE8 *name)
 
       /* Check that there are arguments. */
       if (argv == 0) {
-            vpi_printf("ERROR: %s requires three arguments.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires three arguments.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
       }
 
       /* Check that there are at least three arguments. */
@@ -433,68 +457,54 @@ static PLI_INT32 sys_rand_three_args_compiletf(PLI_BYTE8 *name)
             arg3 = 0;
       }
       if (arg2 == 0 || arg3 == 0) {
-            vpi_printf("ERROR: %s requires three arguments.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires three arguments.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
       }
 
       /* The seed must be a time/integer variable or a register. */
-      switch (vpi_get(vpiType, seed)) {
-            case vpiTimeVar:
-            case vpiIntegerVar:
-            case vpiReg:
-                  break;
-            default:
-                  vpi_printf("ERROR: %s's seed must be an integer/time"
-                             " variable or a register.\n", name);
-                  vpi_control(vpiFinish, 1);
-                  return 0;
+      if (! is_seed_obj(seed, callh, name)) return 0;
+
+      /* The second argument must be numeric. */
+      if (! is_numeric_obj(arg2)) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s second argument must be numeric.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
       }
 
-      /* These functions takes at most three argument. */
-      seed = vpi_scan(argv);
-      if (seed != 0) {
-            vpi_printf("ERROR: %s takes at most three argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
+      /* The third argument must be numeric. */
+      if (! is_numeric_obj(arg3)) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s third argument must be numeric.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
       }
 
-      /* vpi_scan returning 0 (NULL) has already freed argv. */
+      /* Check that there is at most three arguments. */
+      check_for_extra_args(argv, callh, name, "three arguments", 0);
+
       return 0;
 }
 
-static PLI_INT32 sys_random_compiletf(PLI_BYTE8 *name)
+PLI_INT32 sys_random_compiletf(PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
-      vpiHandle seed;
 
       /* The seed is optional. */
       if (argv == 0) return 0;
-      seed = vpi_scan(argv);
 
       /* The seed must be a time/integer variable or a register. */
-      switch (vpi_get(vpiType, seed)) {
-            case vpiTimeVar:
-            case vpiIntegerVar:
-            case vpiReg:
-                  break;
-            default:
-                  vpi_printf("ERROR: %s's seed must be an integer/time"
-                             " variable or a register.\n", name);
-                  vpi_control(vpiFinish, 1);
-                  return 0;
-      }
+      if (! is_seed_obj(vpi_scan(argv), callh, name)) return 0;
 
-      /* random takes at most one argument (the seed). */
-      seed = vpi_scan(argv);
-      if (seed != 0) {
-            vpi_printf("ERROR: %s takes at most one argument.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
-      }
+      /* Check that there no extra arguments. */
+      check_for_extra_args(argv, callh, name, "one argument", 1);
 
-      /* vpi_scan returning 0 (NULL) has already freed argv. */
       return 0;
 }
 

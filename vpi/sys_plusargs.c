@@ -124,22 +124,7 @@ static PLI_INT32 sys_value_plusargs_compiletf(PLI_BYTE8*name)
       }
 
 	/* Make sure there are no extra arguments. */
-      if (vpi_scan(argv) != 0) {
-	    char msg [64];
-	    unsigned argc;
-
-	    snprintf(msg, 64, "ERROR: %s:%d:",
-	             vpi_get_str(vpiFile, callh),
-	             (int)vpi_get(vpiLineNo, callh));
-
-	    argc = 1;
-	    while (vpi_scan(argv)) argc += 1;
-
-	    vpi_printf("%s %s takes two arguments.\n", msg, name);
-	    vpi_printf("%*s Found %u extra argument%s.\n",
-	               (int)strlen(msg), " ", argc, argc == 1 ? "" : "s");
-	    vpi_control(vpiFinish, 1);
-      }
+      check_for_extra_args(argv, callh, name, "two arguments", 0);
 
       return 0;
 }

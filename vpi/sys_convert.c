@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Michael Ruff (mruff  at chiaro.com)
+ * Copyright (c) 2003-2009 Michael Ruff (mruff  at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,6 +19,7 @@
 
 # include  "vpi_config.h"
 # include  "vpi_user.h"
+# include  "sys_priv.h"
 # include  <stdio.h>
 # include  <string.h>
 # include  <math.h>
@@ -119,13 +120,8 @@ static PLI_INT32 sys_convert_compiletf(PLI_BYTE8*name)
     vpi_put_userdata(callh, (void *) arg);
 
     /* These functions only take one argument. */
-    arg  = vpi_scan(argv);
-    if (arg != 0) {
-	error_message(callh, "%s takes only one argument.\n");
-	return 0;
-    }
+    check_for_extra_args(argv, callh, name, "one argument", 0);
 
-    /* vpi_scan() returning 0 (NULL) had already freed argv. */
     return 0;
 }
 
