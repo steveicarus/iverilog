@@ -235,6 +235,8 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiNamedFork";
 	  case vpiNet:
 	    return "vpiNet";
+	  case vpiNetArray:
+	    return "vpiNetArray";
 	  case vpiParameter:
 	    return "vpiParameter";
 	  case vpiPartSelect:
@@ -271,6 +273,8 @@ PLI_INT32 vpi_get(int property, vpiHandle ref)
 	    struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
 	    if (ref->vpi_type->type_code == vpiReg && rfp->isint_)
 		  return vpiIntegerVar;
+	    else if (ref->vpi_type->type_code == vpiMemory && is_net_array(ref))
+		  return vpiNetArray;
 	    else
 		  return ref->vpi_type->type_code;
       }
@@ -312,6 +316,8 @@ char* vpi_get_str(PLI_INT32 property, vpiHandle ref)
             PLI_INT32 type;
 	    if (ref->vpi_type->type_code == vpiReg && rfp->isint_)
 		  type = vpiIntegerVar;
+	    else if (ref->vpi_type->type_code == vpiMemory && is_net_array(ref))
+		  type = vpiNetArray;
 	    else
 		  type = ref->vpi_type->type_code;
 	    return (char *)vpi_type_values(type);

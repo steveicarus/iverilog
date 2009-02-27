@@ -364,6 +364,8 @@ extern void vpip_real_value_change(struct __vpiCallback*cbh,
  * the memory.
  */
 
+extern bool is_net_array(vpiHandle obj);
+
 /*
  * These are the various variable types.
  */

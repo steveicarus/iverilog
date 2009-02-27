@@ -68,6 +68,7 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		case vpiIntegerVar:
 		  break;
 		case vpiMemory:
+		case vpiNetArray:
 		  memory_delete((scope->intern)[idx]);
 		  break;
 		case vpiModPath:

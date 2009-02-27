@@ -306,7 +306,7 @@ static PLI_INT32 sys_fputc_calltf(PLI_BYTE8*name)
 	/* Put the character and return the result. */
       fp = vpi_get_file(fd_mcd);
       val.format = vpiIntVal;
-      if (!fp || IS_MCD(fd_mcd)) {
+      if (!fp) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
@@ -391,7 +391,7 @@ static PLI_INT32 sys_fgets_calltf(PLI_BYTE8*name)
 
 	/* Return zero if this is not a valid fd. */
       fp = vpi_get_file(fd_mcd);
-      if (!fp || IS_MCD(fd_mcd)) {
+      if (!fp) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
@@ -455,7 +455,7 @@ static PLI_INT32 sys_ungetc_calltf(PLI_BYTE8*name)
 
 	/* Return EOF if this is not a valid fd. */
       fp = vpi_get_file(fd_mcd);
-      if (!fp || IS_MCD(fd_mcd)) {
+      if (!fp) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
@@ -581,7 +581,7 @@ static PLI_INT32 sys_fseek_calltf(PLI_BYTE8*name)
 
 	/* Return EOF if this is not a valid fd. */
       fp = vpi_get_file(fd_mcd);
-      if (!fp || IS_MCD(fd_mcd)) {
+      if (!fp) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
@@ -617,7 +617,7 @@ static PLI_INT32 sys_common_fd_calltf(PLI_BYTE8*name)
 
 	/* Return EOF if this is not a valid fd. */
       fp = vpi_get_file(fd_mcd);
-      if (!fp || IS_MCD(fd_mcd)) {
+      if (!fp) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,

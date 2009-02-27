@@ -1771,6 +1771,7 @@ static PLI_INT32 sys_printtimescale_compiletf(PLI_BYTE8*name)
 		case vpiNamedEvent:
 		case vpiNamedFork:
 		case vpiNet:
+		case vpiNetArray:
 //		case vpiNetBit: // Unused and unavailable in Icarus
 		case vpiParameter:
 		case vpiPartSelect:

@@ -158,6 +158,15 @@ unsigned get_array_word_size(vvp_array_t array)
       return  array->vals_width;
 }
 
+bool is_net_array(vpiHandle obj)
+{
+      assert(obj->vpi_type->type_code == vpiMemory);
+
+      struct __vpiArray*rfp = (struct __vpiArray*) obj;
+      if (rfp->nets != 0) return true;
+      return false;
+}
+
 /*
  * The vpiArrayWord is magic. It is used as the handle to return when
  * vpi code tries to index or scan an array of variable words. The

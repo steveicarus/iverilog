@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,21 +39,18 @@ static int byte_getc(struct byte_source*byte)
 {
       int ch;
       if (byte->str) {
-	    if (byte->str[0] == 0)
-		  return EOF;
+	    if (byte->str[0] == 0) return EOF;
 
 	    return *(byte->str)++;
       }
 
       ch = fgetc(byte->fd);
-/*      fprintf(stderr, "byte_getc --> '%c' (%d)\n", ch, ch); */
       return ch;
 }
 
 static void byte_ungetc(struct byte_source*src, int ch)
 {
-      if (ch == EOF)
-	    return;
+      if (ch == EOF) return;
 
       if (src->str) {
 	    src->str -= 1;
@@ -65,14 +62,11 @@ static void byte_ungetc(struct byte_source*src, int ch)
 }
 
 
-static PLI_INT32 sys_fscanf_compiletf(PLI_BYTE8*name)
-{
-      return 0;
-}
-
 /*
  * This function matches the input characters of a floating point
  * number and generates a floating point (double) from that string.
+ *
+ * Need support for +-Inf and NaN. Look at the $plusargs code.
  */
 static double float_string(struct byte_source*src)
 {
@@ -135,8 +129,7 @@ static double float_string(struct byte_source*src)
       sign_flag *= strtod(str, 0);
       free(str);
 
-      if (ch != EOF)
-	    byte_ungetc(src, ch);
+      if (ch != EOF) byte_ungetc(src, ch);
 
       return sign_flag;
 }
@@ -153,11 +146,11 @@ static int scan_format_float(struct byte_source*src,
       return 1;
 }
 
-static int scan_format_float_time(vpiHandle sys,
+static int scan_format_float_time(vpiHandle callh,
 				  struct byte_source*src,
 				  vpiHandle arg)
 {
-      vpiHandle scope = vpi_handle(vpiScope, sys);
+      vpiHandle scope = vpi_handle(vpiScope, callh);
       int time_units = vpi_get(vpiTimeUnit, scope);
       double scale;
 
@@ -194,8 +187,7 @@ static int scan_format_string(struct byte_source*src, vpiHandle arg)
 
       ch = byte_getc(src);
       while (!isspace(ch)) {
-	    if (ch == EOF)
-		  break;
+	    if (ch == EOF) break;
 
 	    tmp = realloc(tmp, len+2);
 	    tmp[len++] = ch;
@@ -203,11 +195,9 @@ static int scan_format_string(struct byte_source*src, vpiHandle arg)
 	    ch = byte_getc(src);
       }
 
-      if (ch == EOF && len == 0)
-	    return 0;
+      if (ch == EOF && len == 0) return 0;
 
-      if (ch != EOF)
-	    byte_ungetc(src, ch);
+      if (ch != EOF) byte_ungetc(src, ch);
 
       tmp[len] = 0;
       val.format = vpiStringVal;
@@ -226,7 +216,7 @@ static int scan_format_string(struct byte_source*src, vpiHandle arg)
  * the first argument and make a byte_source object that then gets
  * passed to this function, which processes the rest of the function.
  */
-static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
+static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv)
 {
       s_vpi_value val;
       vpiHandle item;
@@ -252,15 +242,12 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 		       the input. The number of spaces is not
 		       relevant, and the match may be 0 or more
 		       spaces. */
-		  while (*fmtp && isspace(*fmtp))
-			fmtp += 1;
+		  while (*fmtp && isspace(*fmtp)) fmtp += 1;
 
 		  ch = byte_getc(src);
-		  while (isspace(ch))
-			ch = byte_getc(src);
+		  while (isspace(ch)) ch = byte_getc(src);
 
-		  if (ch != EOF)
-			byte_ungetc(src, ch);
+		  if (ch != EOF) byte_ungetc(src, ch);
 
 	    } else if (*fmtp != '%') {
 		    /* Characters other than % match themselves. */
@@ -331,8 +318,7 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			ch = byte_getc(src);
 			while (strchr("01xXzZ?_", ch)) {
 			      match_fail = 0;
-			      if (ch == '?')
-				    ch = 'x';
+			      if (ch == '?') ch = 'x';
 			      if (ch != '_') {
 				    ch = tolower(ch);
 				    tmp[value++] = ch;
@@ -427,8 +413,7 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			ch = byte_getc(src);
 			while (strchr("0123456789abcdefABCDEFxXzZ?_", ch)) {
 			      match_fail = 0;
-			      if (ch == '?')
-				    ch = 'x';
+			      if (ch == '?') ch = 'x';
 			      if (ch != '_') {
 				    ch = tolower(ch);
 				    tmp[value++] = ch;
@@ -464,8 +449,7 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 			ch = byte_getc(src);
 			while (strchr("01234567xXzZ?_", ch)) {
 			      match_fail = 0;
-			      if (ch == '?')
-				    ch = 'x';
+			      if (ch == '?') ch = 'x';
 			      if (ch != '_') {
 				    ch = tolower(ch);
 				    tmp[value++] = ch;
@@ -500,10 +484,13 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 		      case 't':
 			item = vpi_scan(argv);
 			assert(item);
-			rc += scan_format_float_time(sys, src, item);
+			rc += scan_format_float_time(callh, src, item);
 			break;
 
 		      default:
+			vpi_printf("ERROR: %s:%d: ",
+			           vpi_get_str(vpiFile, callh),
+			           (int)vpi_get(vpiLineNo, callh));
 			vpi_printf("$scanf: Unknown format code: %c\n", code);
 			break;
 		  }
@@ -516,78 +503,194 @@ static int scan_format(vpiHandle sys, struct byte_source*src, vpiHandle argv)
 
       val.format = vpiIntVal;
       val.value.integer = rc;
-      vpi_put_value(sys, &val, 0, vpiNoDelay);
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
+      return 0;
+}
+
+/*
+ * Is the object a variable/register or a piece of one.
+ */
+static int is_assignable_obj(vpiHandle obj)
+{
+      unsigned rtn = 0;
+
+      assert(obj);
+
+      switch(vpi_get(vpiType, obj)) {
+	/* We can not assign to a vpiNetArray. */
+	case vpiMemoryWord:
+	    if (vpi_get(vpiType, vpi_handle(vpiParent, obj)) == vpiMemory) {
+		  rtn = 1;
+	    } 
+	    break;
+	case vpiPartSelect:
+	    if (! is_assignable_obj(vpi_handle(vpiParent, obj))) break;
+	case vpiIntegerVar:
+	case vpiRealVar:
+	case vpiReg:
+	case vpiTimeVar:
+	    rtn = 1;
+	    break;
+      }
+
+      return rtn;
+}
+
+static int sys_check_args(vpiHandle callh, vpiHandle argv, PLI_BYTE8 *name)
+{
+      vpiHandle arg;
+      int cnt = 3, rtn = 0;
+
+	/* The format (2nd) argument must be a string. */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires at least three argument.\n", name);
+	    return 1;
+      }
+      if(! is_string_obj(arg)) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s format argument must be a string.\n", name);
+	    rtn = 1;
+      }
+
+	/* The rest of the arguments must be assignable. */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires at least three argument.\n", name);
+	    return 1;
+      }
+
+      do {
+	    if (! is_assignable_obj(arg)) {
+		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s argument %d (a %s) is not assignable.\n",
+		             name, cnt, vpi_get_str(vpiType, arg));
+		  rtn = 1;
+	    }
+	    arg = vpi_scan(argv);
+	    cnt += 1;
+      } while (arg);
+
+      return rtn;
+}
+
+static PLI_INT32 sys_fscanf_compiletf(PLI_BYTE8*name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+
+	/* Check that there are arguments. */
+      if (argv == 0) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires at least three argument.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+	/* The first argument must be a file descriptor. */
+      if (! is_numeric_obj(vpi_scan(argv))) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's first argument (fd) must be numeric.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      if (sys_check_args(callh, argv, name)) vpi_control(vpiFinish, 1);
       return 0;
 }
 
 static PLI_INT32 sys_fscanf_calltf(PLI_BYTE8*name)
 {
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
       s_vpi_value val;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item;
-
       struct byte_source src;
-      FILE*fd;
-
-      item = vpi_scan(argv);
-      assert(item);
+      FILE *fd;
 
       val.format = vpiIntVal;
-      vpi_get_value(item, &val);
-      if (val.value.integer == 0) {
-	    vpi_printf("%s:%d: Error: $fscanf called with NULL file "
-	               "descriptor.\n", vpi_get_str(vpiFile, sys),
-	               (int)vpi_get(vpiLineNo, sys));
-	    exit(1);
-      }
-
+      vpi_get_value(vpi_scan(argv), &val);
       fd = vpi_get_file(val.value.integer);
-      assert(fd);
+      if (!fd) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n",
+	               val.value.integer, name);
+	    val.format = vpiIntVal;
+	    val.value.integer = EOF;
+	    vpi_put_value(callh, &val, 0, vpiNoDelay);
+	    return 0;
+      }
 
       src.str = 0;
       src.fd = fd;
-      scan_format(sys, &src, argv);
+      scan_format(callh, &src, argv);
 
       return 0;
 }
 
 static PLI_INT32 sys_sscanf_compiletf(PLI_BYTE8*name)
 {
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle reg;
+
+	/* Check that there are arguments. */
+      if (argv == 0) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires at least three argument.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+	/* The first argument must be a register or constant string. */
+      reg = vpi_scan(argv);  /* This should never be zero. */
+      switch(vpi_get(vpiType, reg)) {
+	  case vpiReg:
+	    break;
+	  case vpiConstant:
+	  case vpiParameter:
+	    if (vpi_get(vpiConstType, reg) == vpiStringConst) break;
+
+	  default:
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's first argument must be a register or constant "
+	               "string.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      if (sys_check_args(callh, argv, name)) vpi_control(vpiFinish, 1);
       return 0;
 }
 
 static PLI_INT32 sys_sscanf_calltf(PLI_BYTE8*name)
 {
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
       s_vpi_value val;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item;
-
       struct byte_source src;
-      char*str;
-
-      item = vpi_scan(argv);
-      assert(item);
+      char *str;
 
       val.format = vpiStringVal;
-      vpi_get_value(item, &val);
-      str = strdup(val.value.str);
+      vpi_get_value(vpi_scan(argv), &val);
 
+      str = strdup(val.value.str);
       src.str = str;
       src.fd = 0;
-      scan_format(sys, &src, argv);
-
+      scan_format(callh, &src, argv);
       free(str);
-      return 0;
-}
 
-/*
- * All the Xscanf functions return a 32bit value.
- */
-static PLI_INT32 sys_fscanf_sizetf(PLI_BYTE8*x)
-{
-      return 32;
+      return 0;
 }
 
 void sys_scanf_register()
@@ -595,20 +698,22 @@ void sys_scanf_register()
       s_vpi_systf_data tf_data;
 
       /*============================== fscanf */
-      tf_data.type      = vpiSysFunc;
-      tf_data.tfname    = "$fscanf";
-      tf_data.calltf    = sys_fscanf_calltf;
-      tf_data.compiletf = sys_fscanf_compiletf;
-      tf_data.sizetf    = sys_fscanf_sizetf;
-      tf_data.user_data = "$fscanf";
+      tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.tfname      = "$fscanf";
+      tf_data.calltf      = sys_fscanf_calltf;
+      tf_data.compiletf   = sys_fscanf_compiletf;
+      tf_data.sizetf      = 0;
+      tf_data.user_data   = "$fscanf";
       vpi_register_systf(&tf_data);
 
       /*============================== sscanf */
-      tf_data.type      = vpiSysFunc;
-      tf_data.tfname    = "$sscanf";
-      tf_data.calltf    = sys_sscanf_calltf;
-      tf_data.compiletf = sys_sscanf_compiletf;
-      tf_data.sizetf    = sys_fscanf_sizetf;
-      tf_data.user_data = "$sscanf";
+      tf_data.type        = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.tfname      = "$sscanf";
+      tf_data.calltf      = sys_sscanf_calltf;
+      tf_data.compiletf   = sys_sscanf_compiletf;
+      tf_data.sizetf      = 0;
+      tf_data.user_data   = "$sscanf";
       vpi_register_systf(&tf_data);
 }

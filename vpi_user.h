@@ -287,6 +287,7 @@ typedef struct t_vpi_delay  {
 #define vpiSysTaskCall 57
 #define vpiTask        59
 #define vpiTimeVar     63
+#define vpiNetArray   114
 #define vpiIndex       78
 #define vpiLeftRange   79
 #define vpiParent      81
