@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,6 +34,14 @@
 # include  "netmisc.h"
 # include  "util.h"
 # include  "ivl_assert.h"
+
+/*
+ * Set the following to true when you need to process an expression
+ * that is being done in a constant context. This allows the
+ * elaboration to explicitly say we do not currently support constant
+ * user functions when the function is not found.
+ */
+bool need_constant_expr = false;
 
 static bool get_const_argument(NetExpr*exp, verinum&res)
 {
@@ -562,12 +570,14 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  probe_expr_width(des, scope, (*return_type_.range)[0]);
 		  probe_expr_width(des, scope, (*return_type_.range)[1]);
 
+		  need_constant_expr = true;
 		  NetExpr*me = elab_and_eval(des, scope,
 					     (*return_type_.range)[0], -1);
 		  assert(me);
 		  NetExpr*le = elab_and_eval(des, scope,
 					     (*return_type_.range)[1], -1);
 		  assert(le);
+		  need_constant_expr = false;
 
 		  long mnum = 0, lnum = 0;
 		  if (NetEConst*tmp = dynamic_cast<NetEConst*>(me)) {
@@ -856,7 +866,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    /* If they exist get the port definition MSB and LSB */
 	    if (port_set_ && port_msb_ != 0) {
 		  probe_expr_width(des, scope, port_msb_);
+		  /* We do not currently support constant user function. */
+		  need_constant_expr = true;
 		  NetExpr*texpr = elab_and_eval(des, scope, port_msb_, -1);
+		  need_constant_expr = false;
 
 		  if (! eval_as_long(pmsb, texpr)) {
 			cerr << port_msb_->get_fileline() << ": error: "
@@ -871,7 +884,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  delete texpr;
 
 		  probe_expr_width(des, scope, port_lsb_);
+		  /* We do not currently support constant user function. */
+		  need_constant_expr = true;
 		  texpr = elab_and_eval(des, scope, port_lsb_, -1);
+		  need_constant_expr = false;
 
 		  if (! eval_as_long(plsb, texpr)) {
 			cerr << port_lsb_->get_fileline() << ": error: "
@@ -894,7 +910,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    /* If they exist get the net/etc. definition MSB and LSB */
 	    if (net_set_ && net_msb_ != 0 && !bad_msb && !bad_lsb) {
 		  probe_expr_width(des, scope, net_msb_);
+		  /* We do not currently support constant user function. */
+		  need_constant_expr = true;
 		  NetExpr*texpr = elab_and_eval(des, scope, net_msb_, -1);
+		  need_constant_expr = false;
 
 		  if (! eval_as_long(nmsb, texpr)) {
 			cerr << net_msb_->get_fileline() << ": error: "
@@ -909,7 +928,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  delete texpr;
 
 		  probe_expr_width(des, scope, net_lsb_);
+		  /* We do not currently support constant user function. */
+		  need_constant_expr = true;
 		  texpr = elab_and_eval(des, scope, net_lsb_, -1);
+		  need_constant_expr = false;
 
 		  if (! eval_as_long(nlsb, texpr)) {
 			cerr << net_lsb_->get_fileline() << ": error: "
@@ -1003,8 +1025,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    probe_expr_width(des, scope, lidx_);
 	    probe_expr_width(des, scope, ridx_);
 
+	    need_constant_expr = true;
 	    NetExpr*lexp = elab_and_eval(des, scope, lidx_, -1);
 	    NetExpr*rexp = elab_and_eval(des, scope, ridx_, -1);
+	    need_constant_expr = false;
 
 	    if ((lexp == 0) || (rexp == 0)) {
 		  cerr << get_fileline() << ": internal error: There is "

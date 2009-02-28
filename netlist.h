@@ -3014,6 +3014,7 @@ class NetEUFunc  : public NetExpr {
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEUFunc*dup_expr() const;
       virtual NexusSet* nex_input(bool rem_out = true);
+      virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual NetNet* synthesize(Design*des, NetScope*scope, NetExpr*root);
 
     private:

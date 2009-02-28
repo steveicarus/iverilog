@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -438,15 +438,15 @@ NetExpr* PECallFunction::elaborate_pexpr(Design*des, NetScope*scope) const
 		  return rtn;
 	    }
 
-	    cerr << get_fileline() << ": error: this is not a constant "
-	            "system function (" << *this << ")." << endl;
+	    cerr << get_fileline() << ": error: " << nm << "() is not a "
+	            "constant system function." << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
 	/* Constant user function code goes here. */
       cerr << get_fileline() << ": sorry: constant user functions are not "
-                                "currently supported." << endl;
+                                "currently supported: " << nm << "()." << endl;
       des->errors += 1;
       return 0;
 }

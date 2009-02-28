@@ -318,7 +318,7 @@ bool eval_as_long(long&value, NetExpr*expr)
 bool eval_as_double(double&value, NetExpr*expr)
 {
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr) ) {
-	    value = tmp->value().as_long();
+	    value = tmp->value().as_double();
 	    return true;
       }
 

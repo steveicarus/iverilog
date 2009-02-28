@@ -1462,8 +1462,16 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	    if (access_nature)
 		  return elaborate_access_func_(des, scope, access_nature);
 
-	    cerr << get_fileline() << ": error: No function " << path_ <<
-		  " in this context (" << scope_path(scope) << ")." << endl;
+	      // We do not currently support constant user function and
+	      // this is where things fail because of that, though we
+	      // don't know for sure so we need to display both messages.
+	    if (need_constant_expr) {
+		  cerr << get_fileline() << ": sorry: constant user "
+		          "functions are not currently supported: "
+		       << path_ << "()." << endl << "    or" << endl;
+	    }
+	    cerr << get_fileline() << ": error: No function " << path_
+	         << " in this context (" << scope_path(scope) << ")." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -1611,13 +1619,17 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	    if (repeat_expr_ == 0) {
 		    // If the expression has not yet been elaborated,
 		    // then try now.
+		  need_constant_expr = true;
 		  tmp = elab_and_eval(des, scope, repeat_, -1);
+		  need_constant_expr = false;
 		  assert(tmp);
 	    } else {
 		    // If it has been elaborated, make sure it is
 		    // fully evaluated.
 		  tmp = repeat_expr_;
+		  need_constant_expr = true;
 		  eval_expr(tmp);
+		  need_constant_expr = false;
 	    }
 
 	    if (tmp->expr_type() == IVL_VT_REAL) {

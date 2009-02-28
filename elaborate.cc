@@ -1787,7 +1787,9 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 {
       ivl_assert(*this, rval_);
 
+      need_constant_expr = is_constant_;
       NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, lv_width, rval());
+      need_constant_expr = false;
 
       if (!is_constant_ || !rv) return rv;
 
@@ -3925,7 +3927,9 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	    for (specparam_it_t cur = specparams.begin()
 		       ; cur != specparams.end() ; cur ++ ) {
 
+		  need_constant_expr = true;
 		  NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1);
+		  need_constant_expr = false;
 		  NetScope::spec_val_t value;
 
 		  if (NetECReal*val_cr = dynamic_cast<NetECReal*> (val)) {

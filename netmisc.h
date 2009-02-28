@@ -135,6 +135,12 @@ extern NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid);
 extern unsigned count_lval_width(const class NetAssign_*first);
 
 /*
+ * This is temporarily used to indicate that a user function elaboration
+ * fail is likely the result of missing constant user function support.
+ */
+extern bool need_constant_expr;
+
+/*
  * This function elaborates an expression, and tries to evaluate it
  * right away. If the expression can be evaluated, this returns a
  * constant expression. If it cannot be evaluated, it returns whatever
@@ -150,6 +156,7 @@ extern unsigned count_lval_width(const class NetAssign_*first);
  * bound to the destination.
  */
 class PExpr;
+
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 			      const PExpr*pe, int expr_wid,
 			      int prune_width =-1);
