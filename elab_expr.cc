@@ -1790,7 +1790,9 @@ bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
 	   two bit select expressions, and both must be
 	   constant. Evaluate them and pass the results back to
 	   the caller. */
+      need_constant_expr = true;
       NetExpr*lsb_ex = elab_and_eval(des, scope, index_tail.lsb, lsb_wid);
+      need_constant_expr = false;
       NetEConst*lsb_c = dynamic_cast<NetEConst*>(lsb_ex);
       if (lsb_c == 0) {
 	    cerr << index_tail.lsb->get_fileline() << ": error: "
@@ -1808,7 +1810,9 @@ bool PEIdent::calculate_parts_(Design*des, NetScope*scope,
             lsb = lsb_c->value().as_long();
       }
 
+      need_constant_expr = true;
       NetExpr*msb_ex = elab_and_eval(des, scope, index_tail.msb, msb_wid);
+      need_constant_expr = false;
       NetEConst*msb_c = dynamic_cast<NetEConst*>(msb_ex);
       if (msb_c == 0) {
 	    cerr << index_tail.msb->get_fileline() << ": error: "
@@ -1845,7 +1849,9 @@ bool PEIdent::calculate_up_do_width_(Design*des, NetScope*scope,
 	/* Calculate the width expression (in the lsb_ position)
 	   first. If the expression is not constant, error but guess 1
 	   so we can keep going and find more errors. */
+      need_constant_expr = true;
       NetExpr*wid_ex = elab_and_eval(des, scope, index_tail.lsb, -1);
+      need_constant_expr = false;
       NetEConst*wid_c = dynamic_cast<NetEConst*>(wid_ex);
 
       if (wid_c == 0) {
@@ -2394,7 +2400,9 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 
 	      /* Get and evaluate the width of the index
 		 select. This must be constant. */
+	    need_constant_expr = true;
 	    NetExpr*wid_ex = elab_and_eval(des, scope, index_tail.lsb, -1);
+	    need_constant_expr = false;
 	    NetEConst*wid_ec = dynamic_cast<NetEConst*> (wid_ex);
 	    if (wid_ec == 0) {
 		  cerr << index_tail.lsb->get_fileline() << ": error: "
