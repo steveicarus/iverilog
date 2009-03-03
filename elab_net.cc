@@ -220,7 +220,9 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 
 	  case index_component_t::SEL_IDX_DO:
 	  case index_component_t::SEL_IDX_UP: {
+		need_constant_expr = true;
 		NetExpr*tmp_ex = elab_and_eval(des, scope, index_tail.msb, -1);
+		need_constant_expr = false;
 		NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
 		if (!tmp) {
 		      cerr << get_fileline() << ": error: indexed part select of "
@@ -437,7 +439,9 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    }
 	    ivl_assert(*this, index_head.sel == index_component_t::SEL_BIT);
 
+	    need_constant_expr = true;
 	    NetExpr*tmp_ex = elab_and_eval(des, scope, index_head.msb, -1);
+	    need_constant_expr = false;
 	    NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
 	    if (!tmp) {
 		  cerr << get_fileline() << ": error: array " << sig->name()

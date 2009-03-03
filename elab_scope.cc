@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -496,7 +496,9 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	// use) the genvar itself, so we can evaluate this expression
 	// the same way any other parameter value is evaluated.
       probe_expr_width(des, container, loop_init);
+      need_constant_expr = true;
       NetExpr*init_ex = elab_and_eval(des, container, loop_init, -1);
+      need_constant_expr = false;
       NetEConst*init = dynamic_cast<NetEConst*> (init_ex);
       if (init == 0) {
 	    cerr << get_fileline() << ": error: Cannot evaluate genvar"
@@ -526,7 +528,9 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
       container->genvar_tmp = loop_index;
       container->genvar_tmp_val = genvar;
       probe_expr_width(des, container, loop_test);
+      need_constant_expr = true;
       NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1);
+      need_constant_expr = false;
       NetEConst*test = dynamic_cast<NetEConst*>(test_ex);
       if (test == 0) {
 	    cerr << get_fileline() << ": error: Cannot evaluate genvar"
@@ -579,7 +583,9 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 
 	      // Calculate the step for the loop variable.
 	    probe_expr_width(des, container, loop_step);
+	    need_constant_expr = true;
 	    NetExpr*step_ex = elab_and_eval(des, container, loop_step, -1);
+	    need_constant_expr = false;
 	    NetEConst*step = dynamic_cast<NetEConst*>(step_ex);
 	    if (step == 0) {
 		  cerr << get_fileline() << ": error: Cannot evaluate genvar"
@@ -611,7 +617,9 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else_flag)
 {
       probe_expr_width(des, container, loop_test);
+      need_constant_expr = true;
       NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1);
+      need_constant_expr = false;
       NetEConst*test = dynamic_cast<NetEConst*> (test_ex);
       if (test == 0) {
 	    cerr << get_fileline() << ": error: Cannot evaluate genvar"
@@ -671,7 +679,9 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 {
       probe_expr_width(des, container, loop_test);
+      need_constant_expr = true;
       NetExpr*case_value_ex = elab_and_eval(des, container, loop_test, -1);
+      need_constant_expr = false;
       NetEConst*case_value_co = dynamic_cast<NetEConst*>(case_value_ex);
       if (case_value_co == 0) {
 	    cerr << get_fileline() << ": error: Cannot evaluate genvar case"
@@ -702,9 +712,17 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 	    bool match_flag = false;
 	    for (unsigned idx = 0 ; idx < item->item_test.size() && !match_flag ; idx +=1 ) {
 		  probe_expr_width(des, container, item->item_test[idx]);
+		  need_constant_expr = true;
 		  NetExpr*item_value_ex = elab_and_eval(des, container, item->item_test[idx], -1);
+		  need_constant_expr = false;
 		  NetEConst*item_value_co = dynamic_cast<NetEConst*>(item_value_ex);
-		  assert(item_value_co);
+		  if (item_value_co == 0) {
+			cerr << get_fileline() << ": error: Cannot evaluate "
+			     << " genvar case item expression: "
+			     << *item->item_test[idx] << endl;
+			des->errors += 1;
+			return false;
+		  }
 
 		  if (debug_scopes)
 			cerr << get_fileline() << ": debug: Generate case "
@@ -952,8 +970,10 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 {
       if (msb_) probe_expr_width(des, sc, msb_);
       if (lsb_) probe_expr_width(des, sc, lsb_);
+      need_constant_expr = true;
       NetExpr*mse = msb_ ? elab_and_eval(des, sc, msb_, -1) : 0;
       NetExpr*lse = lsb_ ? elab_and_eval(des, sc, lsb_, -1) : 0;
+      need_constant_expr = false;
       NetEConst*msb = dynamic_cast<NetEConst*> (mse);
       NetEConst*lsb = dynamic_cast<NetEConst*> (lse);
 

@@ -234,8 +234,10 @@ unsigned PGBuiltin::calculate_array_count_(Design*des, NetScope*scope,
 	   gates, then I am expected to make more than one
 	   gate. Figure out how many are desired. */
       if (msb_) {
+	    need_constant_expr = true;
 	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_, -1);
 	    NetExpr*lsb_exp = elab_and_eval(des, scope, lsb_, -1);
+	    need_constant_expr = false;
 
 	    NetEConst*msb_con = dynamic_cast<NetEConst*>(msb_exp);
 	    NetEConst*lsb_con = dynamic_cast<NetEConst*>(lsb_exp);
