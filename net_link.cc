@@ -173,7 +173,7 @@ void Link::unlink()
 
 bool Link::is_equal(const Link&that) const
 {
-      return (node_ == that.node_) && (pin_ == that.pin_);
+      return (get_obj() == that.get_obj()) && (get_pin() == that.get_pin());
 }
 
 bool Link::is_linked() const
