@@ -2560,12 +2560,16 @@ void dll_target::signal(const NetNet*net)
       obj->array_base = net->array_first();
       obj->array_words = net->array_count();
       obj->array_addr_swapped = net->array_addr_swapped() ? 1 : 0;
+
+      assert(obj->array_words == net->pin_count());
+      if (debug_optimizer && obj->array_words > 1000) cerr << "debug: "
+	    "t-dll creating nexus array " << obj->array_words << " long" << endl;
       if (obj->array_words > 1)
 	    obj->pins = new ivl_nexus_t[obj->array_words];
 
       for (unsigned idx = 0 ;  idx < obj->array_words ;  idx += 1) {
 
-	    const Nexus*nex = net->pin(idx).nexus();
+	    const Nexus*nex = net->pins_are_virtual() ? 0 : net->pin(idx).nexus();
 	    if (nex == 0) {
 		    // Special case: This pin is connected to
 		    // nothing. This can happen, for example, if the
@@ -2597,6 +2601,7 @@ void dll_target::signal(const NetNet*net)
 			obj->pin = tmp;
 	    }
       }
+      if (debug_optimizer && obj->array_words > 1000) cerr << "debug: t-dll done with big nexus array" << endl;
 }
 
 bool dll_target::signal_paths(const NetNet*net)

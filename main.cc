@@ -129,6 +129,11 @@ bool debug_synth2 = false;
 bool debug_optimizer = false;
 
 /*
+ * Miscellaneous flags.
+ */
+bool disable_virtual_pins = false;  // XXX needs a way for user to set
+
+/*
  * Verbose messages enabled.
  */
 bool verbose_flag = false;

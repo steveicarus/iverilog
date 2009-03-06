@@ -208,8 +208,12 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    o << " scope=" << scope_path(scope());
       o << " #(" << rise_time() << "," << fall_time() << ","
 	<<  decay_time() << ") vector_width=" << vector_width()
-	<< " pin_count=" << pin_count()
-	<< " init=";
+	<< " pin_count=" << pin_count();
+      if (pins_are_virtual()) {
+	    o << " pins_are_virtual" << endl;
+	    return;
+      }
+      o << " init=";
       for (unsigned idx = pin_count() ;  idx > 0 ;  idx -= 1)
 	    o << pin(idx-1).get_init();
 

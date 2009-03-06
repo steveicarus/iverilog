@@ -172,26 +172,45 @@ Link* find_next_output(Link*lnk)
       return 0;
 }
 
-NetPins::NetPins(unsigned npins)
-: npins_(npins)
+void NetPins::devirtualize_pins(void)
 {
+      if (pins_) return;
+      if (debug_optimizer && npins_ > 1000) cerr << "debug: devirtualizing " << npins_ << " pins." << endl;
+
       pins_ = new Link[npins_];
       pins_[0].pin_zero_ = true;
       pins_[0].node_ = this;
+      pins_[0].dir_  = default_dir_;
+      pins_[0].init_ = default_init_;
 
       for (unsigned idx = 1 ;  idx < npins_ ;  idx += 1) {
 	    pins_[idx].pin_zero_ = false;
 	    pins_[idx].pin_      = idx;
+	    pins_[idx].dir_      = default_dir_;
+	    pins_[idx].init_     = default_init_;
       }
+}
+
+bool NetPins::pins_are_virtual(void) const
+{
+      return pins_ == NULL;
+}
+
+NetPins::NetPins(unsigned npins)
+: npins_(npins)
+{
+      pins_ = NULL;  // Wait until someone asks.
+      if (disable_virtual_pins) devirtualize_pins();  // Ask.  Bummer.
 }
 
 NetPins::~NetPins()
 {
-      delete[]pins_;
+      if (pins_) delete[]pins_;
 }
 
 Link& NetPins::pin(unsigned idx)
 {
+      if (!pins_) devirtualize_pins();
       if (idx >= npins_) {
 	    cerr << get_fileline() << ": internal error: pin("<<idx<<")"
 		 << " out of bounds("<<npins_<<")" << endl;
@@ -207,9 +226,20 @@ Link& NetPins::pin(unsigned idx)
 
 const Link& NetPins::pin(unsigned idx) const
 {
+      assert(pins_);
       assert(idx < npins_);
       assert(idx == 0? pins_[0].pin_zero_ : pins_[idx].pin_==idx);
       return pins_[idx];
+}
+
+void NetPins::set_default_dir(Link::DIR d)
+{
+       default_dir_ = d;
+}
+
+void NetPins::set_default_init(verinum::V val)
+{
+       default_init_ = val;
 }
 
 bool NetPins::is_linked(void)
@@ -479,7 +509,11 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 
 void NetNet::initialize_value_and_dir(verinum::V init_value, Link::DIR dir)
 {
-      if (1) {
+      if (pins_are_virtual()) {
+	    if (0) cerr << "NetNet setting Link default value and dir" << endl;
+	    set_default_init(init_value);
+	    set_default_dir(dir);
+      } else {
 	    for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 		  pin(idx).set_dir(dir);
 		  pin(idx).set_init(init_value);
