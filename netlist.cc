@@ -524,10 +524,14 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 
 static unsigned calculate_count(long s, long e)
 {
-      if (s >= e)
-	    return s - e + 1;
-      else
-	    return e - s + 1;
+      unsigned long r;
+      if (s >= e) {
+	    r = s - e + 1;
+      } else {
+	    r = e - s + 1;
+      }
+      assert (r <= UINT_MAX);
+      return r;
 }
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
@@ -810,7 +814,6 @@ NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
 : NetNode(sig->scope(), sig->scope()->local_symbol(), 2),
     off_(off), wid_(wid), dir_(dir__)
 {
-      connect(pin(1), sig->pin(0));
       set_line(*sig);
 
       switch (dir_) {
@@ -823,6 +826,8 @@ NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
 	    pin(1).set_dir(Link::OUTPUT);
 	    break;
       }
+
+      connect(pin(1), sig->pin(0));
 }
 
 NetPartSelect::NetPartSelect(NetNet*sig, NetNet*sel,
@@ -830,9 +835,6 @@ NetPartSelect::NetPartSelect(NetNet*sig, NetNet*sel,
 : NetNode(sig->scope(), sig->scope()->local_symbol(), 3),
     off_(0), wid_(wid), dir_(VP)
 {
-      connect(pin(1), sig->pin(0));
-      connect(pin(2), sel->pin(0));
-
       switch (dir_) {
 	  case NetPartSelect::VP:
 	    pin(0).set_dir(Link::OUTPUT);
@@ -844,6 +846,9 @@ NetPartSelect::NetPartSelect(NetNet*sig, NetNet*sel,
 	    break;
       }
       pin(2).set_dir(Link::INPUT);
+
+      connect(pin(1), sig->pin(0));
+      connect(pin(2), sel->pin(0));
 }
 
 NetPartSelect::~NetPartSelect()
