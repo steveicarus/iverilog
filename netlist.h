@@ -193,11 +193,17 @@ class NetPins : public LineInfo {
       const Link&pin(unsigned idx) const;
 
       void dump_node_pins(ostream&, unsigned, const char**pin_names =0) const;
+      void set_default_dir(Link::DIR d);
+      void set_default_init(verinum::V val);
       bool is_linked();
+      bool pins_are_virtual(void) const;
 
     private:
       Link*pins_;
+      void devirtualize_pins(void);
       const unsigned npins_;
+      Link::DIR default_dir_;
+      verinum::V default_init_;
 };
 
 /* =========

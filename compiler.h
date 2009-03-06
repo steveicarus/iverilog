@@ -89,6 +89,9 @@ extern bool debug_elab_pexpr;
 extern bool debug_synth2;
 extern bool debug_optimizer;
 
+/* Possibly temporary flag to control virtualization of pin arrays */
+extern bool disable_virtual_pins;
+
 /* Path to a directory useful for finding subcomponents. */
 extern const char*basedir;
 
