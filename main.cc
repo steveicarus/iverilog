@@ -714,6 +714,9 @@ int main(int argc, char*argv[])
 	    cout << endl << "PARSING INPUT" << endl;
       }
 
+      const char *flag_dvp = flags["DISABLE_VIRTUAL_PINS"];
+      if (flag_dvp) disable_virtual_pins = strcmp(flag_dvp,"true")==0;
+
 	/* Parse the input. Make the pform. */
       int rc = pform_parse(argv[optind]);
 
