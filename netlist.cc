@@ -299,6 +299,9 @@ NetBranch::~NetBranch()
 NetBus::NetBus(NetScope*s, unsigned pin_count__)
 : NetObj(s, perm_string::literal(""), pin_count__)
 {
+      for (unsigned idx = 0 ;  idx <pin_count__ ;  idx += 1) {
+	    pin(idx).set_dir(Link::PASSIVE);
+      }
 }
 
 NetBus::~NetBus()
