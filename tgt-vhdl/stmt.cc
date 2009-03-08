@@ -552,7 +552,7 @@ static void get_nexuses_from_expr(ivl_expr_t expr, set<ivl_nexus_t> &out)
 /*
  * Attempt to identify common forms of wait statements and produce
  * more idiomatic VHDL than would be produced by the generic
- * draw_wait funciton. The main application of this is a input to
+ * draw_wait function. The main application of this is a input to
  * synthesis tools that don't synthesise the full VHDL language.
  * If none of these patterns are matched, the function returns false
  * and the default draw_wait is used.

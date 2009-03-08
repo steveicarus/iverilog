@@ -686,7 +686,7 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 	    }
 
 	      // Special case: shift is negative (so do a left shift)
-	      // and is greater then the output width. Replace the
+	      // and is greater than the output width. Replace the
 	      // expression with a constant-0.
 	    if (shift < 0 && (0-shift) >= use_wid) {
 		  if (debug_elaborate)
@@ -2265,7 +2265,7 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 
       if (! parts_defined_flag) {
 	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: Part select of paramter "
+		  cerr << get_fileline() << ": debug: Part select of parameter "
 		       << "has x/z bits, so resorting to 'bx result." << endl;
 
 	    long wid = 1 + labs(par_msv-par_lsv);

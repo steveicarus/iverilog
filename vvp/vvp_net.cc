@@ -3399,7 +3399,7 @@ ostream& operator <<(ostream&out, vvp_scalar_t a)
 
 /*
  * This function is only called if the actual interface function rules
- * out some of the eazy cases. If we get here, we can assume that
+ * out some of the easy cases. If we get here, we can assume that
  * neither of the values is HiZ, and the values are not exactly equal.
  */
 vvp_scalar_t fully_featured_resolv_(vvp_scalar_t a, vvp_scalar_t b)
