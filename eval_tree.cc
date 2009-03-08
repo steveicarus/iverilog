@@ -133,7 +133,7 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 
 	    if (debug_eval_tree) {
 		  cerr << get_fileline() << ": debug: "
-		       << "Partially evalutate " << *this
+		       << "Partially evaluate " << *this
 		       << " using (a+2)-1 --> (a+1) transform." << endl;
 	    }
 
