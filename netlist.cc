@@ -229,7 +229,7 @@ const Link& NetPins::pin(unsigned idx) const
       if (!pins_ && !disable_virtual_pins) {
 	    cerr << get_fileline() << ": internal error: pin is unexpectedly"
 	      " virtual, try again with -pDISABLE_VIRTUAL_PINS=true" << endl;
-	    assert(NULL);
+	    assert(0);
       }
       assert(pins_);
       assert(idx < npins_);
