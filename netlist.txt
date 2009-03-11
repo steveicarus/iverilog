@@ -16,7 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: netlist.txt,v 1.10 2000/07/23 18:06:15 steve Exp $"
 
 
 Note that the netlist.h header contains detailed descriptions of how
@@ -291,49 +290,3 @@ values. These are filled in during scope elaboration and are used in
 subsequent elaboration phases to arrange for scaling of delays. This
 information can also be used by the code generator to scale times back
 to the units of the scope, if that is desired.
-
- $Log: netlist.txt,v $
- Revision 1.10  2000/07/23 18:06:15  steve
-  Document time scale in netlists.
-
- Revision 1.9  2000/07/14 06:12:57  steve
-  Move inital value handling from NetNet to Nexus
-  objects. This allows better propogation of inital
-  values.
-
-  Clean up constant propagation  a bit to account
-  for regs that are not really values.
-
- Revision 1.8  2000/03/08 04:36:54  steve
-  Redesign the implementation of scopes and parameters.
-  I now generate the scopes and notice the parameters
-  in a separate pass over the pform. Once the scopes
-  are generated, I can process overrides and evalutate
-  paremeters before elaboration begins.
-
- Revision 1.7  1999/11/28 23:42:02  steve
-  NetESignal object no longer need to be NetNode
-  objects. Let them keep a pointer to NetNet objects.
-
- Revision 1.6  1999/11/21 00:13:09  steve
-  Support memories in continuous assignments.
-
- Revision 1.5  1999/11/02 04:55:34  steve
-  Add the synthesize method to NetExpr to handle
-  synthesis of expressions, and use that method
-  to improve r-value handling of LPM_FF synthesis.
-
-  Modify the XNF target to handle LPM_FF objects.
-
- Revision 1.4  1999/09/29 00:03:27  steve
-  Spelling fixes from Larry.
-
- Revision 1.3  1999/07/24 02:11:20  steve
-  Elaborate task input ports.
-
- Revision 1.2  1999/07/21 01:15:29  steve
-  Document netlist semantics.
-
- Revision 1.1  1999/05/27 04:13:08  steve
-  Handle expression bit widths with non-fatal errors.
-

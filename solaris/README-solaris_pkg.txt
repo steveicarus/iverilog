@@ -1,5 +1,3 @@
-# $Id: README-solaris_pkg.txt,v 1.3 2007/02/26 19:49:49 steve Exp $
-
 Notes about the solaris package.
 
 I.  Installing a prebuilt solaris package
