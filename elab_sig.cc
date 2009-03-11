@@ -843,8 +843,8 @@ void PWhile::elaborate_sig(Design*des, NetScope*scope) const
 /*
  * Elaborate a source wire. The "wire" is the declaration of wires,
  * registers, ports and memories. The parser has already merged the
- * multiple properties of a wire (i.e., "input wire") so come the
- * elaboration this creates an object in the design that represent the
+ * multiple properties of a wire (i.e., "input wire"), so come the
+ * elaboration this creates an object in the design that represents the
  * defined item.
  */
 NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
@@ -1107,6 +1107,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       NetNet*sig = array_dimensions > 0
 	    ? new NetNet(scope, name_, wtype, msb, lsb, array_s0, array_e0)
 	    : new NetNet(scope, name_, wtype, msb, lsb);
+
+      if (wtype == NetNet::WIRE) sig->devirtualize_pins();
 
       ivl_variable_type_t use_data_type = data_type_;
       if (use_data_type == IVL_VT_NO_TYPE) {
