@@ -1893,10 +1893,16 @@ extern "C" const char* ivl_signal_name(ivl_signal_t net)
 extern "C" ivl_nexus_t ivl_signal_nex(ivl_signal_t net, unsigned word)
 {
       assert(word < net->array_words);
-      if (net->array_words > 1)
-	    return net->pins[word];
-      else
+      if (net->array_words > 1) {
+	    if (net->pins) {
+		return net->pins[word];
+	    } else {
+		cerr << "AACK! ivl_signal_nex() returning NULL" << endl;
+		return NULL;
+	    }
+      } else {
 	    return net->pin;
+      }
 }
 
 extern "C" int ivl_signal_msb(ivl_signal_t net)

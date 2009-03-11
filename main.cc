@@ -131,7 +131,8 @@ bool debug_optimizer = false;
 /*
  * Miscellaneous flags.
  */
-bool disable_virtual_pins = false;  // XXX needs a way for user to set
+bool disable_virtual_pins = false;
+unsigned long array_size_limit = 16777216;  // Minimum required by IEEE-1364?
 
 /*
  * Verbose messages enabled.
@@ -714,8 +715,10 @@ int main(int argc, char*argv[])
 	    cout << endl << "PARSING INPUT" << endl;
       }
 
-      const char *flag_dvp = flags["DISABLE_VIRTUAL_PINS"];
-      if (flag_dvp) disable_virtual_pins = strcmp(flag_dvp,"true")==0;
+      const char *flag_tmp = flags["DISABLE_VIRTUAL_PINS"];
+      if (flag_tmp) disable_virtual_pins = strcmp(flag_tmp,"true")==0;
+      flag_tmp = flags["ARRAY_SIZE_LIMIT"];
+      if (flag_tmp) array_size_limit = strtoul(flag_tmp,NULL,0);
 
 	/* Parse the input. Make the pform. */
       int rc = pform_parse(argv[optind]);

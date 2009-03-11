@@ -175,6 +175,12 @@ Link* find_next_output(Link*lnk)
 void NetPins::devirtualize_pins(void)
 {
       if (pins_) return;
+      if (npins_ > array_size_limit) {
+	    cerr << get_fileline() << ": error: pin count " << npins_ <<
+		" exceeds " << array_size_limit <<
+		" (set by -pARRAY_SIZE_LIMIT)" << endl;
+	    assert(0);
+      }
       if (debug_optimizer && npins_ > 1000) cerr << "debug: devirtualizing " << npins_ << " pins." << endl;
 
       pins_ = new Link[npins_];
@@ -263,6 +269,11 @@ bool NetPins::is_linked(void)
 NetObj::NetObj(NetScope*s, perm_string n, unsigned np)
 : NetPins(np), scope_(s), name_(n), delay1_(0), delay2_(0), delay3_(0)
 {
+      /* Don't 
+      ivl_assert(*this, np > 0);
+       * because it would happen before we get to print a useful
+       * message in the NetNet constructor
+       */
 }
 
 NetObj::~NetObj()
@@ -568,12 +579,14 @@ static unsigned calculate_count(long s, long e)
 {
       unsigned long r;
       if (s >= e) {
-	    r = s - e + 1;
+	    r = s - e;
       } else {
-	    r = e - s + 1;
+	    r = e - s;
       }
-      assert (r <= UINT_MAX);
-      return r;
+      if (r >= UINT_MAX) {
+	    return 0;
+      }
+      return r + 1;
 }
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
@@ -584,7 +597,11 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
     discipline_(0), msb_(ms), lsb_(ls), dimensions_(1), s0_(array_s), e0_(array_e),
     local_flag_(false), eref_count_(0), lref_count_(0)
 {
-      assert(s);
+      ivl_assert(*this, s);
+      if (pin_count() == 0) {
+	    cerr << "Array too big [" << array_s << ":" << array_e << "]" << endl;
+	    ivl_assert(*this, 0);
+      }
 
       verinum::V init_value = verinum::Vz;
       Link::DIR dir = Link::PASSIVE;
@@ -778,7 +795,9 @@ bool NetNet::array_addr_swapped() const
 
 unsigned NetNet::array_count() const
 {
-      return calculate_count(s0_, e0_);
+      unsigned c = calculate_count(s0_, e0_);
+      ivl_assert(*this, c > 0);
+      return c;
 }
 
 bool NetNet::array_index_is_valid(long sb) const

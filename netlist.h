@@ -197,10 +197,10 @@ class NetPins : public LineInfo {
       void set_default_init(verinum::V val);
       bool is_linked();
       bool pins_are_virtual(void) const;
+      void devirtualize_pins(void);
 
     private:
       Link*pins_;
-      void devirtualize_pins(void);
       const unsigned npins_;
       Link::DIR default_dir_;
       verinum::V default_init_;

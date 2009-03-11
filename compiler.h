@@ -92,6 +92,9 @@ extern bool debug_optimizer;
 /* Possibly temporary flag to control virtualization of pin arrays */
 extern bool disable_virtual_pins;
 
+/* Limit to size of devirtualized arrays */
+extern unsigned long array_size_limit;
+
 /* Path to a directory useful for finding subcomponents. */
 extern const char*basedir;
 
