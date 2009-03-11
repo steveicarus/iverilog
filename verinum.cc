@@ -419,6 +419,7 @@ uint64_t verinum::as_ulong64() const
  */
 signed long verinum::as_long() const
 {
+#define IVLLBITS (8 * sizeof(long) - 1)
       if (nbits_ == 0)
 	    return 0;
 
@@ -426,33 +427,43 @@ signed long verinum::as_long() const
 	    return 0;
 
       signed long val = 0;
+      unsigned diag_top = 0;
+
+      unsigned top = nbits_;
+      if (top > IVLLBITS) {
+	    diag_top = top;
+	    top = IVLLBITS;
+      }
+      int lost_bits=0;
 
       if (has_sign_ && (bits_[nbits_-1] == V1)) {
-	    unsigned top = nbits_;
-	    if (top > (8 * sizeof(long) - 1))
-		  top = 8 * sizeof(long) - 1;
-
 	    val = -1;
 	    signed long mask = ~1L;
 	    for (unsigned idx = 0 ;  idx < top ;  idx += 1) {
-		  if (bits_[idx] == V0)
-			val &= mask;
-
+		  if (bits_[idx] == V0) val &= mask;
 		  mask = (mask << 1) | 1L;
 	    }
-
+	    if (diag_top) {
+		  for (unsigned idx = top; idx < diag_top; idx += 1) {
+			if (bits_[idx] == V0) lost_bits=1;
+		  }
+	    }
       } else {
-	    unsigned top = nbits_;
-	    if (top > (8 * sizeof(long) - 1))
-		  top = 8 * sizeof(long) - 1;
-
 	    signed long mask = 1;
-	    for (unsigned idx = 0 ;  idx < top ;  idx += 1, mask <<= 1)
-		  if (bits_[idx] == V1)
-			val |= mask;
+	    for (unsigned idx = 0 ;  idx < top ;  idx += 1, mask <<= 1) {
+		  if (bits_[idx] == V1) val |= mask;
+	    }
+	    if (diag_top) {
+		  for (unsigned idx = top; idx < diag_top; idx += 1) {
+			if (bits_[idx] == V1) lost_bits=1;
+		  }
+	    }
       }
 
+      if (lost_bits) cerr << "warning: verinum::as_long() truncated " <<
+	  diag_top << " bits to " << IVLLBITS << ", returns " << val << endl;
       return val;
+#undef IVLLBITS
 }
 
 double verinum::as_double() const
