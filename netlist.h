@@ -3262,6 +3262,7 @@ class NetEBAdd : public NetEBinary {
       virtual ivl_variable_type_t expr_type() const;
 
       virtual bool set_width(unsigned w, bool last_chance);
+      virtual void cast_signed(bool sign_flag);
       virtual NetEBAdd* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
@@ -3284,6 +3285,7 @@ class NetEBDiv : public NetEBinary {
       virtual ivl_variable_type_t expr_type() const;
 
       virtual bool set_width(unsigned w, bool last_chance);
+      virtual void cast_signed(bool sign_flag);
       virtual NetEBDiv* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
@@ -3414,6 +3416,7 @@ class NetEBMult : public NetEBinary {
       virtual ivl_variable_type_t expr_type() const;
 
       virtual bool set_width(unsigned w, bool last_chance);
+      virtual void cast_signed(bool sign_flag);
       virtual NetEBMult* dup_expr() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);

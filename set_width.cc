@@ -106,6 +106,18 @@ bool NetEBAdd::set_width(unsigned w, bool)
       return wid == w;
 }
 
+void NetEBAdd::cast_signed(bool sign_flag)
+{
+      if (has_sign() == sign_flag)
+	    return;
+
+      if (sign_flag == false) {
+	    left_->cast_signed(sign_flag);
+	    right_->cast_signed(sign_flag);
+      }
+      cast_signed_base_(sign_flag);
+}
+
 /*
  * The bitwise logical operators have operands the same size as the
  * result. Anything else is a mess. I first try to get the operands to
@@ -168,6 +180,19 @@ bool NetEBDiv::set_width(unsigned w, bool)
       return w == expr_width();
 }
 
+void NetEBDiv::cast_signed(bool sign_flag)
+{
+      if (has_sign() == sign_flag)
+	    return;
+
+      if (sign_flag == false) {
+	    left_->cast_signed(sign_flag);
+	    right_->cast_signed(sign_flag);
+      }
+
+      cast_signed_base_(sign_flag);
+}
+
 bool NetEBLogic::set_width(unsigned w, bool)
 {
       bool flag;
@@ -190,6 +215,19 @@ bool NetEBMult::set_width(unsigned w, bool)
 
       expr_width(w);
       return true;
+}
+
+void NetEBMult::cast_signed(bool sign_flag)
+{
+      if (has_sign() == sign_flag)
+	    return;
+
+      if (sign_flag == false) {
+	    left_->cast_signed(sign_flag);
+	    right_->cast_signed(sign_flag);
+      }
+
+      cast_signed_base_(sign_flag);
 }
 
 bool NetEBPow::set_width(unsigned w, bool last_chance)
