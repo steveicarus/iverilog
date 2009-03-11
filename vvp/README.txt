@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.82 2007/03/22 16:08:19 steve Exp $
  */
 
 VVP SIMULATION ENGINE

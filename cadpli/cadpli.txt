@@ -2,7 +2,6 @@
 CADENCE PLI1 MODULES
 
    Copyright 2003 Stephen Williams
-   $Id: cadpli.txt,v 1.2 2003/02/17 00:01:25 steve Exp $
 
 With the cadpli module, Icarus Verilog is able to load PLI1
 applications that were compiled and linked to be dynamic loaded by
@@ -34,15 +33,3 @@ the +loadpli1= argument to Verilog-XL.
 The integration from this point is seamless. The PLI application
 hardly knows that it is being invoked by Icarus Verilog instead of
 Verilog-XL, so operates as it would otherwise.
-
-$Log: cadpli.txt,v $
-Revision 1.2  2003/02/17 00:01:25  steve
- Use a variant of ivl_dlfcn to do dynamic loading
- from within the cadpli module.
-
- Change the +cadpli flag to -cadpli, to keep the
- plusargs namespace clear.
-
-Revision 1.1  2003/02/16 02:44:47  steve
- Add the cadpli HOWTO.
-

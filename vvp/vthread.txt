@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: vthread.txt,v 1.6 2005/09/19 21:45:37 steve Exp $
  */
 
 
