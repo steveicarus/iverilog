@@ -1974,7 +1974,8 @@ static unsigned long divide2words(unsigned long a, unsigned long b,
 
 static unsigned long* divide_bits(unsigned long*ap, unsigned long*bp, unsigned wid)
 {
-
+	// Do all our work a cpu-word at a time. The "words" variable
+	// is the number of words of the wid.
       unsigned words = (wid+CPU_WORD_BITS-1) / CPU_WORD_BITS;
 
       unsigned btop = words-1;
@@ -1985,6 +1986,8 @@ static unsigned long* divide_bits(unsigned long*ap, unsigned long*bp, unsigned w
       if (btop==0 && bp[0]==0)
 	    return 0;
 
+	// The result array will eventually accumulate the result. The
+	// diff array is a difference that we use in the intermediate.
       unsigned long*diff  = new unsigned long[words];
       unsigned long*result= new unsigned long[words];
       for (unsigned idx = 0 ; idx < words ; idx += 1)
@@ -2012,10 +2015,11 @@ static unsigned long* divide_bits(unsigned long*ap, unsigned long*bp, unsigned w
 
 	      // cur_res is a guestimate of the result this far. It
 	      // may be 1 too big. (But it will also be >0) Try it,
-	      // and if the difference comes out negative, then adjust
-	      // then.
+	      // and if the difference comes out negative, then adjust.
 
+	      // diff = (bp * cur_res)  << cur_ptr;
 	    multiply_array_imm(diff+cur_ptr, bp, words-cur_ptr, cur_res);
+	      // ap -= diff
 	    unsigned long carry = 1;
 	    for (unsigned idx = cur_ptr ; idx < words ; idx += 1)
 		  ap[idx] = add_with_carry(ap[idx], ~diff[idx], carry);
@@ -2027,12 +2031,14 @@ static unsigned long* divide_bits(unsigned long*ap, unsigned long*bp, unsigned w
 	      // case, we know that cur_res was too large by 1. Correct by
 	      // adding 1b back in and reducing cur_res.
 	    if ((carry&1) == 0) {
-		  cur_res -= 1;
-		  carry = 0;
-		  for (unsigned idx = cur_ptr ; idx < words ; idx += 1)
-			ap[idx] = add_with_carry(ap[idx], bp[idx-cur_ptr], carry);
-		    // The sign *must* have changed again.
-		  assert(carry == 1);
+		    // Keep adding b back in until the remainder
+		    // becomes positive again.
+		  do {
+			cur_res -= 1;
+			carry = 0;
+			for (unsigned idx = cur_ptr ; idx < words ; idx += 1)
+			      ap[idx] = add_with_carry(ap[idx], bp[idx-cur_ptr], carry);
+		  } while (carry == 0);
 	    }
 
 	    result[cur_ptr] = cur_res;
