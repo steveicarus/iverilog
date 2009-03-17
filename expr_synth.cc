@@ -719,16 +719,20 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
 {
 	/* First, synthesize the operands. */
+      unsigned nparms = parms_.count();
       NetNet**tmp = new NetNet*[parms_.count()];
       bool flag = true;
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
-	    tmp[idx] = parms_[idx]->synthesize(des, scope, root);
-	    if (tmp[idx] == 0)
-		  flag = false;
+	    if (parms_[idx]->expr_width() == 0) {
+		  tmp[idx] = 0;
+		  nparms -= 1;
+	    } else {
+		  tmp[idx] = parms_[idx]->synthesize(des, scope, root);
+		  if (tmp[idx] == 0) flag = false;
+	    }
       }
 
-      if (flag == false)
-	    return 0;
+      if (flag == false) return 0;
 
       ivl_assert(*this, tmp[0]);
 
@@ -740,7 +744,7 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       NetConcat*concat = new NetConcat(scope, scope->local_symbol(),
 				       osig->vector_width(),
-				       parms_.count() * repeat());
+				       nparms * repeat());
       concat->set_line(*this);
       des->add_node(concat);
       connect(concat->pin(0), osig->pin(0));
@@ -750,7 +754,7 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
       for (unsigned rpt = 0; rpt < repeat(); rpt += 1) {
 	    for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 		  unsigned concat_item = parms_.count()-idx-1;
-		  ivl_assert(*this, tmp[concat_item]);
+		  if (tmp[concat_item] == 0) continue;
 		  connect(concat->pin(cur_pin), tmp[concat_item]->pin(0));
 		  cur_pin += 1;
 		  count_input_width += tmp[concat_item]->vector_width();
@@ -773,6 +777,11 @@ NetNet* NetEConst::synthesize(Design*des, NetScope*scope, NetExpr*)
 {
       perm_string path = scope->local_symbol();
       unsigned width=expr_width();
+      if (width == 0) {
+	    cerr << get_fileline() << ": internal error: "
+	         << "Found a zero width constant!" << endl;
+	    return 0;
+      }
 
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
