@@ -264,6 +264,7 @@ static PLI_INT32 finish_cb(p_cb_data cause)
 	    free((char *)cur->ident);
 	    free(cur);
       }
+      vcd_list = 0;
       vcd_names_delete(&vcd_tab);
       vcd_names_delete(&vcd_var);
       nexus_ident_delete();
