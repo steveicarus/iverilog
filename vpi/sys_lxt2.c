@@ -299,6 +299,8 @@ static PLI_INT32 dumpvars_cb(p_cb_data cause)
 
 static PLI_INT32 finish_cb(p_cb_data cause)
 {
+      struct vcd_info *cur, *next;
+
       if (finish_status != 0) return 0;
 
       finish_status = 1;
@@ -307,6 +309,17 @@ static PLI_INT32 finish_cb(p_cb_data cause)
       if (!dump_is_off && !dump_is_full && dumpvars_time != vcd_cur_time) {
             lxt2_wr_set_time64(dump_file, dumpvars_time);
       }
+
+      for (cur = vcd_list ;  cur ;  cur = next) {
+	    next = cur->next;
+	    free(cur);
+      }
+      vcd_list = 0;
+
+      vcd_names_delete(&lxt_tab);
+      nexus_ident_delete();
+      free(dump_path);
+      dump_path = 0;
 
       return 0;
 }
