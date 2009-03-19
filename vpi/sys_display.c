@@ -328,7 +328,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
 
           if (ld_zero == 1) {
             /* Strip the leading zeros if a width is not given. */
-            if (width == -1) while (*cp == '0') cp++;
+            if (width == -1) while (*cp == '0' && *(cp+1) != '\0') cp++;
             /* Pad with leading zeros. */
             else if (ljust == 0 && (signed)swidth < width) {
               unsigned pad = (unsigned)width - swidth;
@@ -337,7 +337,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
               strcpy(cp+pad, value.value.str);
               free_flag = 1;
             /* For a left aligned value also strip the leading zeros. */
-            } else if (ljust != 0) while (*cp == '0') cp++;
+            } else if (ljust != 0) while (*cp == '0' && *(cp+1) != '\0') cp++;
           }
 
           /* If a width was not given, use a width of zero. */
