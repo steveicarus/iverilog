@@ -181,21 +181,21 @@ AX_C_UNDERSCORES_TRAILING
 #######################
 
 AC_MSG_CHECKING(for sanity of prefix)
-if test X`echo "$prefix" | wc -w` != X1
+if test `echo "$prefix" | wc -w` != 1
 then
 AC_MSG_ERROR(cannot configure white space in prefix: $prefix)
 fi
 AC_MSG_RESULT(ok)
 
 AC_MSG_CHECKING(for sanity of exec_prefix)
-if test X`echo "$exec_prefix" | wc -w` != X1
+if test `echo "$exec_prefix" | wc -w` != 1
 then
 AC_MSG_ERROR(cannot configure white space in exec_prefix: $exec_prefix)
 fi
 AC_MSG_RESULT(ok)
 
 AC_MSG_CHECKING(for sanity of libdir)
-if test X`echo "$libdir" | wc -w` != X1
+if test `echo "$libdir" | wc -w` != 1
 then
 AC_MSG_ERROR(cannot configure white space in libdir: $libdir)
 fi
