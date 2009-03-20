@@ -47,9 +47,11 @@ fi
 echo "Exporting $tag to $destdir/$prefix..."
 git archive --prefix="$prefix/" $tag | ( cd "$destdir" && tar xf - )
 
-versionh="$destdir/$prefix/version.h"
+versionh="$destdir/$prefix/version_tag.h"
 echo "Create $versionh ..."
-echo "#define VERSION_TAG \"$tag\"" > $versionh
+echo "#ifndef VERSION_TAG" > $versionh
+echo "#define VERSION_TAG \"$tag\"" >> $versionh
+echo "#endif" >> $versionh
 
 echo "Running autoconf.sh..."
 ( cd $destdir/$prefix && sh autoconf.sh )
