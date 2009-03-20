@@ -483,7 +483,7 @@ void stop_handler(int rc)
       }
 
       vpi_mcd_printf(1,"** VVP Stop(%d) **\n", rc);
-      vpi_mcd_printf(1,"** Current simulation time is %" TIME_FMT "u ticks.\n",
+      vpi_mcd_printf(1,"** Current simulation time is %" TIME_FMT_U " ticks.\n",
 		     schedule_simtime());
 
       interact_flag = true;
