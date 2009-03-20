@@ -50,7 +50,7 @@
 # undef HAVE_NAN
 
 /*
- * Define this is you want to compile vvp with memory freeing and
+ * Define this if you want to compile vvp with memory freeing and
  * special valgrind hooks for the memory pools.
  */
 # undef CHECK_WITH_VALGRIND
@@ -68,28 +68,54 @@
 #endif
 
 #ifdef HAVE_INTTYPES_H
+/* This is needed in C++ to get the PRI?64 formats. */
+# ifndef __STDC_FORMAT_MACROS
+#  define __STDC_FORMAT_MACROS
+# endif
 # include  <inttypes.h>
-#endif
+
+typedef uint64_t vvp_time64_t;
+
+# define TIME_FMT_O PRIo64
+# define TIME_FMT_U PRIu64
+# define TIME_FMT_X PRIx64
+
+# if SIZEOF_UNSIGNED_LONG == 8
+#  define UL_AND_TIME64_SAME
+# endif
+
+#else /* HAVE_INTTYPES_H */
+
 
 #if SIZEOF_UNSIGNED >= 8
 typedef unsigned vvp_time64_t;
-# define TIME_FMT ""
+# define TIME_FMT_O "o"
+# define TIME_FMT_U "u"
+# define TIME_FMT_X "x"
 #else
 # if SIZEOF_UNSIGNED_LONG >= 8
 typedef unsigned long vvp_time64_t;
 #  define UL_AND_TIME64_SAME
-#  define TIME_FMT "l"
+#  define TIME_FMT_O "lo"
+#  define TIME_FMT_U "lu"
+#  define TIME_FMT_X "lx"
 # else
 #  if SIZEOF_UNSIGNED_LONG_LONG > SIZEOF_UNSIGNED_LONG
 typedef unsigned long long vvp_time64_t;
-#   define TIME_FMT "ll"
+#   define TIME_FMT_O "llo"
+#   define TIME_FMT_U "llu"
+#   define TIME_FMT_X "llx"
 #  else
 typedef unsigned long vvp_time64_t;
 #   define UL_AND_TIME64_SAME
-#   define TIME_FMT "l"
+#   define TIME_FMT_O "lo"
+#   define TIME_FMT_U "lu"
+#   define TIME_FMT_X "lx"
 #  endif
 # endif
 #endif
+
+#endif /* HAVE_INTTYPES_H */
 
 # include  <math.h>
 

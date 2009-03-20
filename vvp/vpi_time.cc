@@ -265,17 +265,17 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func,
 	    break;
 
 	  case vpiDecStrVal:
-	    sprintf(rbuf, "%" TIME_FMT "u", simtime);
+	    sprintf(rbuf, "%" TIME_FMT_U, simtime);
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiOctStrVal:
-	    sprintf(rbuf, "%" TIME_FMT "o", simtime);
+	    sprintf(rbuf, "%" TIME_FMT_O, simtime);
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(rbuf, "%" TIME_FMT "x", simtime);
+	    sprintf(rbuf, "%" TIME_FMT_X, simtime);
 	    vp->value.str = rbuf;
 	    break;
 
