@@ -1272,15 +1272,21 @@ static void show_signal(ivl_signal_t net)
 
 	    ivl_nexus_t nex = ivl_signal_nex(net, idx);
 
-	    fprintf(out, "  %s %s %s%s[%d:%d] %s[word=%u, adr=%d]  <width=%u%s> <discipline=%s> nexus=%p\n",
+	    fprintf(out, "  %s %s %s%s[%d:%d] %s[word=%u, adr=%d]  "
+		               "<width=%u%s> <discipline=%s> ",
 		    type, sign, port, data_type,
 		    ivl_signal_msb(net), ivl_signal_lsb(net),
 		    ivl_signal_basename(net),
 		    idx, ivl_signal_array_base(net)+idx,
 		    ivl_signal_width(net),
 		    ivl_signal_local(net)? ", local":"",
-		    discipline_txt,
-		    nex);
+		    discipline_txt);
+	    if (nex == NULL) {
+		  fprintf(out, "nexus=<virtual>\n");
+		  continue;
+	    } else {
+		  fprintf(out, "nexus=%p\n", nex);
+	    }
 
 	    show_nexus_details(net, nex);
       }
