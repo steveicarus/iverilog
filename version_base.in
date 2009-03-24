@@ -3,5 +3,5 @@
  * Edit this definition in version_base.in to define the base version
  * number for the compiled result.
  */
-#define VERSION "0.9.devel"
+#define VERSION "0.10.0 (devel)"
 #endif
