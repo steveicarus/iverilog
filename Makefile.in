@@ -223,15 +223,16 @@ endif
 version_tag.h version:
 	@if $(GIT_PRESENT) && test -d $(srcdir)/.git; then \
 	    echo "Using git-describe for VERSION_TAG"; \
-	    tmp=`$(GIT) --git-dir $(srcdir)/.git describe \
-		   | sed -e 's;\(.*\);#define VERSION_TAG "\1";'`; \
+	    tag=`$(GIT) --git-dir $(srcdir)/.git describe`; \
+	    tmp=`printf "#ifndef VERSION_TAG\n#define VERSION_TAG \"$$tag\"\n#endif\n"`; \
 	    echo "$$tmp" | diff - version_tag.h > /dev/null 2>&1 || echo "$$tmp" > version_tag.h || exit 1; \
 	elif test -r $(srcdir)/version_tag.h; then \
 	    echo "Using $(srcdir)/version_tag.h for VERSION_TAG"; \
 	    diff $(srcdir)/version_tag.h version_tag.h > /dev/null 2>&1 || cp $(srcdir)/version_tag.h version_tag.h; \
 	else \
 	    echo "Using empty VERSION_TAG"; \
-	    echo '#define VERSION_TAG ""' > version_tag.h; \
+	    tmp=`printf "#ifndef VERSION_TAG\n#define VERSION_TAG \"\"\n#endif\n"`; \
+	    echo "$$tmp" | diff - version_tag.h > /dev/null 2>&1 || echo "$$tmp" > version_tag.h || exit 1; \
 	fi
 
 ifeq (@MINGW32@,yes)
