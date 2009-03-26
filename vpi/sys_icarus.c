@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2009  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -192,9 +192,5 @@ void sys_special_register(void)
 
       tf_data.tfname      = "$ferror";
       tf_data.user_data   = "$ferror";
-      vpi_register_systf(&tf_data);
-
-      tf_data.tfname      = "$fread";
-      tf_data.user_data   = "$fread";
       vpi_register_systf(&tf_data);
 }
