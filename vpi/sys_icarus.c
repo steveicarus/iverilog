@@ -185,6 +185,30 @@ void sys_special_register(void)
       tf_data.user_data   = "$q_exam";
       vpi_register_systf(&tf_data);
 
+      tf_data.tfname      = "$dumpports";
+      tf_data.user_data   = "$dumpports";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$dumpportsoff";
+      tf_data.user_data   = "$dumpportsoff";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$dumpportson";
+      tf_data.user_data   = "$dumpportson";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$dumpportsall";
+      tf_data.user_data   = "$dumpportsall";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$dumpportslimit";
+      tf_data.user_data   = "$dumpportslimit";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$dumpportsflush";
+      tf_data.user_data   = "$dumpportsflush";
+      vpi_register_systf(&tf_data);
+
 	/* These functions are not currently implemented. */
       tf_data.compiletf   = function_not_implemented_compiletf;
       tf_data.type = vpiSysFunc;
