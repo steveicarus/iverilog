@@ -164,6 +164,7 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
 	    val.value.integer = vpi_mcd_open(fname);
 
       vpi_put_value(callh, &val, 0, vpiNoDelay);
+      free(fname);
 
       return 0;
 }
@@ -425,6 +426,261 @@ static PLI_INT32 sys_fgets_calltf(PLI_BYTE8*name)
       val.value.str = text;
       vpi_put_value(regh, &val, 0, vpiNoDelay);
       free(text);
+
+      return 0;
+}
+
+static PLI_INT32 sys_fread_compiletf(PLI_BYTE8*name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle arg;
+      PLI_INT32 type;
+
+	/* We must have at least two arguments. */
+      if (argv == 0) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires two arguments.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+ 	/* Check that the first required argument is a register or memory. */
+      type = vpi_get(vpiType, vpi_scan(argv));
+      if (type != vpiReg && type != vpiMemory) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's first argument must be a reg or memory.\n", name);
+	    vpi_control(vpiFinish, 1);
+      }
+
+	/* Check that the second required argument is numeric (a fd). */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires a second (file descriptor) argument.\n",
+	               name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      if (! is_numeric_obj(arg)) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's second argument must be numeric.\n", name);
+	    vpi_control(vpiFinish, 1);
+      }
+
+	/*
+	 * If given check that the third argument is numeric (start).
+	 *
+	 * Technically you can give the fourth argument (count) with
+	 * out a third argument (start), but Icarus does not currently
+	 * support missing function arguments!
+	 */
+      arg = vpi_scan(argv);
+      if (arg) {
+	    if (! is_numeric_obj(arg)) {
+		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s's third argument must be numeric.\n", name);
+		  vpi_control(vpiFinish, 1);
+	    }
+
+	      /* If given check that the fourth argument is numeric (count). */
+	    arg = vpi_scan(argv);
+	    if (arg) {
+		  if (! is_numeric_obj(arg)) {
+			vpi_printf("ERROR: %s:%d: ",
+			           vpi_get_str(vpiFile, callh),
+			           (int)vpi_get(vpiLineNo, callh));
+			vpi_printf("%s's fourth argument must be numeric.\n",
+			           name);
+			vpi_control(vpiFinish, 1);
+		  }
+
+		    /* Make sure there are no extra arguments. */
+		  check_for_extra_args(argv, callh, name, "four arguments", 1);
+	    }
+      }
+
+      return 0;
+}
+
+/*
+ * The pattern here is get the current vector, load the new bits on
+ * top of the old ones and then put the modified vector. We need the
+ * "get" first so that if we run out of bits in the file we keep the
+ * original ones.
+ */
+static unsigned fread_word(FILE *fp, vpiHandle word,
+                           unsigned words, unsigned bpe, s_vpi_vecval *vector)
+{
+      unsigned rtn, clr_mask, bnum;
+      int bidx, byte;
+      s_vpi_value val;
+      struct t_vpi_vecval *cur = &vector[words-1];
+
+      rtn = 0;
+
+	/* Get the current bits from the register and copy them to
+	 * my local vector. */
+      val.format = vpiVectorVal;
+      vpi_get_value(word, &val);
+      for (bidx = 0; bidx < words; bidx += 1) {
+	    vector[bidx].aval = val.value.vector[bidx].aval;
+	    vector[bidx].bval = val.value.vector[bidx].bval;
+      }
+
+	/* Copy the bytes to the local vector MSByte first. */
+      for (bidx = bpe-1; bidx >= 0; bidx -= 1) {
+	    byte = fgetc(fp);
+	    if (byte == EOF) break;
+	      /* Clear the current byte and load the new value. */
+	    bnum = bidx % 4;
+	    clr_mask = ~(0xff << bnum*8);
+	    cur->aval &= clr_mask;
+	    cur->bval &= clr_mask;
+	    cur->aval |= byte << bnum*8;
+	    rtn += 1;
+	    if (bnum == 0) cur -= 1;
+      }
+
+	/* Put the updated bits into the register. */
+      val.value.vector = vector;
+      vpi_put_value(word, &val, 0, vpiNoDelay);
+
+      return rtn;
+}
+
+static PLI_INT32 sys_fread_calltf(PLI_BYTE8*name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle arg, mem_reg;
+      s_vpi_value val;
+      PLI_UINT32 fd_mcd;
+      PLI_INT32 start, count, width, rtn;
+      unsigned is_mem, idx, bpe, words;
+      FILE *fp;
+      s_vpi_vecval *vector;
+
+	/* Get the register/memory. */
+      mem_reg = vpi_scan(argv);
+
+	/* Get the file descriptor. */
+      arg = vpi_scan(argv);
+      val.format = vpiIntVal;
+      vpi_get_value(arg, &val);
+      fd_mcd = val.value.integer;
+
+	/* Return 0 if this is not a valid fd. */
+      fp = vpi_get_file(fd_mcd);
+      if (!fp) {
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
+	               name);
+	    val.format = vpiIntVal;
+	    val.value.integer = 0;
+	    vpi_put_value(callh, &val, 0, vpiNoDelay);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+	/* Are we reading into a memory? */
+      if (vpi_get(vpiType, mem_reg) == vpiReg) is_mem = 0;
+      else is_mem = 1;
+
+	/* We only need to get these for memories. */
+      if (is_mem) {
+	    PLI_INT32 left, right, max, min;
+
+	      /* Get the left and right memory address. */
+	    val.format = vpiIntVal;
+	    vpi_get_value(vpi_handle(vpiLeftRange, mem_reg), &val);
+	    left = val.value.integer;
+	    val.format = vpiIntVal;
+	    vpi_get_value(vpi_handle(vpiRightRange, mem_reg), &val);
+	    right = val.value.integer;
+	    max = (left > right) ? left : right;
+	    min = (left < right) ? left : right;
+
+	      /* Get the starting address (optional). */
+	    arg = vpi_scan(argv);
+	    if (arg) {
+		  val.format = vpiIntVal;
+		  vpi_get_value(arg, &val);
+		  start = val.value.integer;
+		  if (start < min || start > max) {
+			vpi_printf("WARNING: %s:%d: ",
+			           vpi_get_str(vpiFile, callh),
+			           (int)vpi_get(vpiLineNo, callh));
+			vpi_printf("%s's start argument (%d) is outside "
+			           "memory range [%d:%d].\n", name, start,
+			           left, right);
+			val.format = vpiIntVal;
+			val.value.integer = 0;
+			vpi_put_value(callh, &val, 0, vpiNoDelay);
+			vpi_free_object(argv);
+			return 0;
+		  }
+
+		    /* Get the count (optional). */
+		  arg = vpi_scan(argv);
+		  if (arg) {
+			val.format = vpiIntVal;
+			vpi_get_value(arg, &val);
+			count = val.value.integer;
+			if (count > max-start) {
+			      vpi_printf("WARNING: %s:%d: ",
+			                 vpi_get_str(vpiFile, callh),
+			                 (int)vpi_get(vpiLineNo, callh));
+			      vpi_printf("%s's count argument (%d) is too "
+			                 "large for start (%d) and memory "
+			                 "range [%d:%d].\n", name, count,
+			                 start, left, right);
+			      count = max - start + 1;
+			}
+			vpi_free_object(argv);
+		  } else {
+			count = max - start + 1;
+		  }
+	    } else {
+		  start = min;
+		  count = max - min + 1;
+	    }
+            width = vpi_get(vpiSize, vpi_handle_by_index(mem_reg, start));
+      } else {
+	    start = 0;
+	    count = 1;
+            width = vpi_get(vpiSize, mem_reg);
+	    vpi_free_object(argv);
+      }
+
+      words = (width+31)/32;
+      vector = calloc(words, sizeof(s_vpi_vecval));
+      bpe = (width+7)/8;
+
+      if (is_mem) {
+	    rtn = 0;
+	    for (idx = 0; idx < count; idx += 1) {
+		  vpiHandle word;
+		  word = vpi_handle_by_index(mem_reg, start+(signed)idx);
+		  rtn += fread_word(fp, word, words, bpe, vector);
+		  if (feof(fp)) break;
+	    }
+      } else {
+	    rtn = fread_word(fp, mem_reg, words, bpe, vector);
+      }
+      free(vector);
+
+	/* Return the number of bytes read. */
+      val.format = vpiIntVal;
+      val.value.integer = rtn;
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
 
       return 0;
 }
@@ -733,6 +989,16 @@ void sys_fileio_register()
       tf_data.compiletf = sys_fgets_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fgets";
+      vpi_register_systf(&tf_data);
+
+      /*============================== fread */
+      tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.tfname    = "$fread";
+      tf_data.calltf    = sys_fread_calltf;
+      tf_data.compiletf = sys_fread_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fread";
       vpi_register_systf(&tf_data);
 
       /*============================== ungetc */
