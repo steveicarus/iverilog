@@ -80,7 +80,7 @@ fi
 AC_SUBST(HAVE_LIBBZ2)
 
 # valgrind checks
-AC_ARG_WITH([valgrind], [AS_HELP_STRING([--with-valgrind],
+AC_ARG_WITH([valgrind], [AC_HELP_STRING([--with-valgrind],
                                         [Add valgrind hooks])],
             [], [check_valgrind=yes])
 
