@@ -238,6 +238,12 @@ static PLI_INT32 va_single_argument_compiletf(PLI_BYTE8 *ud)
                    single_funcs_count*sizeof(va_single_t **));
     single_funcs[single_funcs_count-1] = fun_data;
 
+    if (strcmp(name, "$log") == 0) {
+        vpi_printf("%s:%d: deprecation: ", vpi_get_str(vpiFile, callh),
+                   (int)vpi_get(vpiLineNo, callh));
+        vpi_printf("Please use $log10() instead of $log()!\n");
+    }
+
     /* vpi_scan() returning 0 (NULL) has already freed argv. */
     return 0;
 }
