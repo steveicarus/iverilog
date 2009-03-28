@@ -174,6 +174,14 @@ void vvp_fun_bufz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       vvp_send_vec4(ptr.ptr()->out, bit, 0);
 }
 
+void vvp_fun_bufz::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
+{
+      if (ptr.port() != 0)
+	    return;
+
+      vvp_send_vec8(ptr.ptr()->out, bit);
+}
+
 void vvp_fun_bufz::recv_real(vvp_net_ptr_t ptr, double bit,
                              vvp_context_t)
 {
