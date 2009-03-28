@@ -89,6 +89,7 @@ class vvp_fun_bufz: public vvp_net_fun_t {
 
       void recv_vec4(vvp_net_ptr_t p, const vvp_vector4_t&bit,
                      vvp_context_t);
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
       void recv_real(vvp_net_ptr_t p, double bit,
                      vvp_context_t);
 
