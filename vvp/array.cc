@@ -703,6 +703,26 @@ static char*vpi_array_vthr_A_get_str(int code, vpiHandle ref)
       return generic_get_str(code, &parent->scope->base, parent->name, sidx);
 }
 
+// This function return true if the underlying array words are real.
+static unsigned vpi_array_is_real(vvp_array_t arr)
+{
+	// Check to see if this is a variable/register array.
+      if (arr->valsr != 0) return 1U;  // A real variable array.
+      if (arr->vals4 != 0) return 0U;  // A bit based variable/register array.
+
+	// This must be a net array so look at element 0 to find the type.
+      assert(arr->nets != 0);
+      assert(arr->array_count > 0);
+      struct __vpiRealVar*rsig = vpip_realvar_from_handle(arr->nets[0]);
+      if (rsig) {
+    	    struct __vpiSignal*vsig = vpip_signal_from_handle(arr->nets[0]);
+	    assert(vsig == 0);
+	    return 1U;
+      }
+
+      return 0U;
+}
+
 static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value value)
 {
       struct __vpiArrayVthrA*obj = array_vthr_a_from_handle(ref);
@@ -712,8 +732,14 @@ static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value value)
       assert(parent);
 
       unsigned index = obj->get_address();
-      vvp_vector4_t tmp = array_get_word(parent, index);
-      vpip_vec4_get_value(tmp, parent->vals_width, parent->signed_flag, value);
+      if (vpi_array_is_real(parent)) {
+	    double tmp = array_get_word_r(parent, index);
+	    vpip_real_get_value(tmp, value);
+      } else {
+	    vvp_vector4_t tmp = array_get_word(parent, index);
+	    vpip_vec4_get_value(tmp, parent->vals_width, parent->signed_flag,
+	                        value);
+      }
 }
 
 static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int)
@@ -727,8 +753,13 @@ static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int)
       assert(parent);
       assert(index < parent->array_count);
 
-      vvp_vector4_t val = vec4_from_vpi_value(vp, parent->vals_width);
-      array_set_word(parent, index, 0, val);
+      if (vpi_array_is_real(parent)) {
+	    double val = real_from_vpi_value(vp);
+	    array_set_word(parent, index, val);
+      } else {
+	    vvp_vector4_t val = vec4_from_vpi_value(vp, parent->vals_width);
+	    array_set_word(parent, index, 0, val);
+      }
 
       return ref;
 }
@@ -815,10 +846,12 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 {
       if (arr->vals4) {
 	    assert(arr->nets == 0);
+	    assert(arr->valsr == 0);
 	    return arr->vals4->get_word(address);
       }
 
       assert(arr->vals4 == 0);
+      assert(arr->valsr == 0);
       assert(arr->nets != 0);
 
       if (address >= arr->array_count) {

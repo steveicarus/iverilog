@@ -468,16 +468,49 @@ void vpi_set_vlog_info(int argc, char** argv)
     }
 }
 
+static void vec4_get_value_string(const vvp_vector4_t&word_val, unsigned width,
+				  s_vpi_value*vp)
+{
+      unsigned nchar = width / 8;
+      unsigned tail = width % 8;
+
+      char*rbuf = need_result_buf(nchar + 1, RBUF_VAL);
+      char*cp = rbuf;
+
+      if (tail > 0) {
+	    char char_val = 0;
+	    for (unsigned idx = width-tail; idx < width ;  idx += 1) {
+		  vvp_bit4_t val = word_val.value(idx);
+		  if (val == BIT4_1)
+			char_val |= 1 << idx;
+	    }
+
+	    if (char_val != 0)
+		  *cp++ = char_val;
+      }
+
+      for (unsigned idx = 0 ;  idx < nchar ;  idx += 1) {
+	    unsigned bit = (nchar - idx - 1) * 8;
+	    char char_val = 0;
+	    for (unsigned bdx = 0 ;  bdx < 8 ;  bdx += 1) {
+		  vvp_bit4_t val = word_val.value(bit+bdx);
+		  if (val == BIT4_1)
+			char_val |= 1 << bdx;
+	    }
+	    if (char_val != 0)
+		  *cp++ = char_val;
+      }
+
+      *cp = 0;
+      vp->value.str = rbuf;
+}
+
 /*
  * This is a generic function to convert a vvp_vector4_t value into a
  * vpi_value structure. The format is selected by the format of the
  * value pointer. The width is the real width of the word, in case the
  * word_val width is not accurate.
  */
-
-static void vec4_get_value_string(const vvp_vector4_t&word_val, unsigned width,
-				  s_vpi_value*vp);
-
 void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 			 bool signed_flag, s_vpi_value*vp)
 {
@@ -485,13 +518,9 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 
       switch (vp->format) {
 	  default:
-	    fprintf(stderr, "internal error: Format %d not implemented\n",
-		    vp->format);
-	    assert(0 && "format not implemented");
-
-	  case vpiObjTypeVal:
-	    vp->format = vpiVectorVal;
-	    break;
+	    fprintf(stderr, "sorry: Format %d not implemented for "
+	                    "getting vector values.\n", vp->format);
+	    assert(0);
 
 	  case vpiSuppressVal:
 	    break;
@@ -570,6 +599,10 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 		break;
 	  }
 
+	  case vpiObjTypeVal:
+	    // Use the following case to actually set the value!
+	    vp->format = vpiVectorVal;
+
 	  case vpiVectorVal: {
 		unsigned hwid = (width - 1)/32 + 1;
 
@@ -606,51 +639,126 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	  }
 
 	  case vpiStringVal:
-	    vec4_get_value_string(word_val, width, vp);
-	    break;
+		vec4_get_value_string(word_val, width, vp);
+		break;
 
-	  case vpiRealVal: {
+	  case vpiRealVal:
 		vector4_to_value(word_val, vp->value.real, signed_flag);
 		break;
-	  }
       }
 }
 
-static void vec4_get_value_string(const vvp_vector4_t&word_val, unsigned width,
-				  s_vpi_value*vp)
+/*
+ * Convert a real value to the appropriate integer.
+ */
+static PLI_INT32 get_real_as_int(double real)
 {
-      unsigned nchar = width / 8;
-      unsigned tail = width % 8;
+      double rtn;
 
-      char*rbuf = need_result_buf(nchar + 1, RBUF_VAL);
-      char*cp = rbuf;
-
-      if (tail > 0) {
-	    char char_val = 0;
-	    for (unsigned idx = width-tail; idx < width ;  idx += 1) {
-		  vvp_bit4_t val = word_val.value(idx);
-		  if (val == BIT4_1)
-			char_val |= 1 << idx;
-	    }
-
-	    if (char_val != 0)
-		  *cp++ = char_val;
+	/* We would normally want to return 'bx for a NaN or
+	 * +/- infinity, but for an integer the standard says
+	 * to convert 'bx to 0, so we just return 0. */
+      if (real != real || (real && (real == 0.5*real))) {
+	    return 0;
       }
 
-      for (unsigned idx = 0 ;  idx < nchar ;  idx += 1) {
-	    unsigned bit = (nchar - idx - 1) * 8;
-	    char char_val = 0;
-	    for (unsigned bdx = 0 ;  bdx < 8 ;  bdx += 1) {
-		  vvp_bit4_t val = word_val.value(bit+bdx);
-		  if (val == BIT4_1)
-			char_val |= 1 << bdx;
-	    }
-	    if (char_val != 0)
-		  *cp++ = char_val;
+	/* Round away from zero. */
+      if (real >= 0.0) {
+	    rtn = floor(real);
+	    if (real >= (rtn + 0.5)) rtn += 1.0;
+      } else {
+	    rtn = ceil(real);
+	    if (real <= (rtn - 0.5)) rtn -= 1.0;
       }
 
-      *cp = 0;
-      vp->value.str = rbuf;
+      return (PLI_INT32) rtn;
+}
+
+/*
+ * This is a generic function to convert a double value into a
+ * vpi_value structure. The format is selected by the format of the
+ * value pointer.
+ */
+void vpip_real_get_value(double real, s_vpi_value*vp)
+{
+      char *rbuf = 0;
+
+      switch (vp->format) {
+	  default:
+	    fprintf(stderr, "sorry: Format %d not implemented for "
+	                    "getting real values.\n", vp->format);
+	    assert(0);
+
+	  case vpiSuppressVal:
+	    break;
+
+	  case vpiObjTypeVal:
+	    // Use the following case to actually set the value!
+	    vp->format = vpiRealVal;
+
+	  case vpiRealVal:
+	    vp->value.real = real;
+	    break;
+
+	  case vpiIntVal:
+	    vp->value.integer = get_real_as_int(real);
+	    break;
+
+	  case vpiDecStrVal:
+	    rbuf = need_result_buf(1025, RBUF_VAL);
+	    vpip_vec4_to_dec_str(vvp_vector4_t(1024, real), rbuf, 1025, true);
+	    vp->value.str = rbuf;
+	    break;
+      }
+}
+
+double real_from_vpi_value(s_vpi_value*vp)
+{
+      vvp_vector4_t vec4(1024);
+      double result;
+      bool is_signed = false;
+
+      switch (vp->format) {
+	  default:
+	    fprintf(stderr, "sorry: Format %d not implemented for "
+	                    "putting real values.\n", vp->format);
+	    assert(0);
+
+	  case vpiRealVal:
+	    result = vp->value.real;
+	    break;
+
+	  case vpiIntVal:
+	    result = (double) vp->value.integer;
+	    break;
+
+	  case vpiBinStrVal:
+	    vpip_bin_str_to_vec4(vec4, vp->value.str);
+	    if (vp->value.str[0] == '-') is_signed = true;
+	    vector4_to_value(vec4, result, is_signed);
+	    break;
+
+	  case vpiOctStrVal:
+	    vpip_oct_str_to_vec4(vec4, vp->value.str);
+	    if (vp->value.str[0] == '-') is_signed = true;
+	    vector4_to_value(vec4, result, is_signed);
+	    break;
+
+	  case vpiDecStrVal:
+	    vpip_dec_str_to_vec4(vec4, vp->value.str);
+	    if (vp->value.str[0] == '-') is_signed = true;
+	    vector4_to_value(vec4, result, is_signed);
+	    break;
+
+	  case vpiHexStrVal:
+	    vpip_hex_str_to_vec4(vec4, vp->value.str);
+	    if (vp->value.str[0] == '-') is_signed = true;
+	    vector4_to_value(vec4, result, is_signed);
+	    break;
+
+      }
+
+      return result;
 }
 
 void vpi_get_value(vpiHandle expr, s_vpi_value*vp)

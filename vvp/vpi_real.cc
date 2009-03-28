@@ -139,45 +139,9 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
 
 static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp, int)
 {
-      vvp_vector4_t vec4(1024);
-      double result;
-      bool is_signed = false;
       assert(ref->vpi_type->type_code == vpiRealVar);
 
-      switch (vp->format) {
-	  case vpiRealVal:
-	    result = vp->value.real;
-	    break;
-	  case vpiIntVal:
-	    result = (double)vp->value.integer;
-	    break;
-	  case vpiBinStrVal:
-	    vpip_bin_str_to_vec4(vec4, vp->value.str);
-	    if (vp->value.str[0] == '-') is_signed = true;
-	    vector4_to_value(vec4, result, is_signed);
-	    break;
-	  case vpiOctStrVal:
-	    vpip_oct_str_to_vec4(vec4, vp->value.str);
-	    if (vp->value.str[0] == '-') is_signed = true;
-	    vector4_to_value(vec4, result, is_signed);
-	    break;
-	  case vpiDecStrVal:
-	    vpip_dec_str_to_vec4(vec4, vp->value.str);
-	    if (vp->value.str[0] == '-') is_signed = true;
-	    vector4_to_value(vec4, result, is_signed);
-	    break;
-	  case vpiHexStrVal:
-	    vpip_hex_str_to_vec4(vec4, vp->value.str);
-	    if (vp->value.str[0] == '-') is_signed = true;
-	    vector4_to_value(vec4, result, is_signed);
-	    break;
-
-	  default:
-	    fprintf(stderr, "Cannot convert type %d to a real value.",
-	            vp->format);
-	    assert(0);
-	    break;
-      }
+      double result = real_from_vpi_value(vp);
 
       struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
       assert(rfp);

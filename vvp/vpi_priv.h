@@ -593,9 +593,11 @@ extern void vpip_dec_str_to_vec4(vvp_vector4_t&val, const char*str);
 extern void vpip_hex_str_to_vec4(vvp_vector4_t&val, const char*str);
 
 extern vvp_vector4_t vec4_from_vpi_value(s_vpi_value*vp, unsigned wid);
+extern double real_from_vpi_value(s_vpi_value*vp);
 
 extern void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 				bool signed_flag, s_vpi_value*vp);
+extern void vpip_real_get_value(double real, s_vpi_value*vp);
 
 /*
  * Function defined in vpi_signal.cc to manage vpi_get_* persistent
