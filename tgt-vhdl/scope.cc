@@ -952,6 +952,7 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
               j++) {
             // Make sure the nexus code is generated
             ivl_nexus_t nex = ivl_signal_nex(sig, j);
+            if (!nex) continue;  // skip virtual pins
             seen_nexus(nex);
             
             nexus_private_t *priv =
