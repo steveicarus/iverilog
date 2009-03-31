@@ -289,6 +289,9 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       if (name_tail.index.size() > 1)
 	    use_sel = name_tail.index.back().sel;
 
+      if (use_sel == index_component_t::SEL_BIT)
+	    elaborate_lval_net_bit_(des, scope, lv);
+
       if (use_sel == index_component_t::SEL_PART)
 	    elaborate_lval_net_part_(des, scope, lv);
 
