@@ -450,10 +450,10 @@ void dll_target::expr_signal(const NetESignal*net)
 
 	/* Make account for the special case that this is a reference
 	   to an array as a whole. We detect this case by noting that
-	   this is an array (more than 1 word) and there is no word
-	   select expression. In that case, this is an IVL_EX_ARRAY
-	   expression instead of a SIGNAL expression. */
-      if (sig->array_words > 1 && word_expr == 0) {
+	   this is an array (more than 0 array dimensions) and that
+	   there is no word select expression. For this case, we have
+	   an IVL_EX_ARRAY expression instead of a SIGNAL expression. */
+      if (sig->array_dimensions_ > 0 && word_expr == 0) {
 	    expr_->type_ = IVL_EX_ARRAY;
 	    expr_->width_ = 0; // Doesn't make much sense for arrays.
       }

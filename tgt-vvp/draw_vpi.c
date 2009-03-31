@@ -125,11 +125,13 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 		     Create the right code to handle it. */
 		  ivl_signal_t sig = ivl_expr_signal(expr);
 		  unsigned use_word = 0;
+		  unsigned use_word_defined = 0;
 		  ivl_expr_t word_ex = ivl_expr_oper1(expr);
 		  if (word_ex) {
 			  /* Some array select have been evaluated. */
 			if (number_is_immediate(word_ex, IMM_WID, 0)) {
 			      use_word = get_number_immediate(word_ex);
+			      use_word_defined = 1;
 			      word_ex = 0;
 			}
 		  }
@@ -156,6 +158,7 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 			result->vec = av;
 			result->vec_flag = 1;
 		  } else {
+			assert(use_word_defined);
 			snprintf(buffer, sizeof buffer, "&A<v%p, %u>",
 			         sig, use_word);
 		  }
