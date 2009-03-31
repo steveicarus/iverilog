@@ -643,13 +643,13 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
       }
 
       if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
-	    long shift = rpc->value().as_long();
+	    unsigned long shift = rpc->value().as_ulong();
 
 	      // Special case: The shift is the size of the entire
 	      // left operand, and the shift is unsigned. Elaborate as
 	      // a constant-0.
-	    if ((op_=='r' || (lp->has_sign()==false))
-		&& shift >= (long)lp->expr_width()) {
+	    if ((op_=='r' || (lp->has_sign()==false)) &&
+		shift >= lp->expr_width()) {
 
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: "
@@ -666,7 +666,11 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 	      // Special case: the shift is the size of the entire
 	      // left operand, and the shift is signed. Elaborate as a
 	      // replication of the top bit of the left expression.
-	    if (shift >= (long)lp->expr_width()) {
+	      //
+	      // The above test assures us that op_ == 'R' && the left
+	      // argument is signed when the shift is greater than the
+	      // expression width.
+	    if (shift >= lp->expr_width()) {
 
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: "
@@ -685,34 +689,10 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 		  return tmp;
 	    }
 
-	      // Special case: shift is negative (so do a left shift)
-	      // and is greater than the output width. Replace the
-	      // expression with a constant-0.
-	    if (shift < 0 && (0-shift) >= use_wid) {
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug: "
-			     << "Value signed-right-shifted " << shift
-			     << " beyond width of " << use_wid
-			     << "." << endl;
-
-		  tmp = make_const_0(use_wid);
-		  tmp->set_line(*this);
-		  return tmp;
-	    }
-
-	    ivl_assert(*this, shift >= 0);
-
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: "
-		       << "Value signed-right-shifted " << shift
-		       << " beyond width of " << lp->expr_width()
-		       << ". shift=" << shift
-		       << ", expr_wid=" << expr_wid
-		       << ", expr=" << *lp << endl;
-
 	      // If this is lossless, then pad the left expression
 	      // enough to cover the right shift.
-	    if (expr_wid == -2 && use_wid+shift > (long)lp->expr_width()) {
+	    if (expr_wid == -2 && use_wid+shift > lp->expr_width()) {
+	          lp->cast_signed(lp->has_sign() && op_=='R');
 		  lp = pad_to_width(lp, use_wid + shift, *this);
 	    }
 

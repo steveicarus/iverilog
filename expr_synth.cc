@@ -601,8 +601,8 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    return 0;
       }
 
-      const bool right_flag  =  op_ == 'r' || op_ == 'R';
-      const bool signed_flag =  op_ == 'R';
+      const bool right_flag  = op_ == 'r' || op_ == 'R';
+      const bool signed_flag = has_sign();
 
 	/* Detect the special case where the shift amount is
 	   constant. Evaluate the shift amount, and simply reconnect
