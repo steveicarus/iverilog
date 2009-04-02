@@ -150,11 +150,19 @@ NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
 	/* Elaborate all the operands and attach them to the concat
 	   node. Use the elaborate_pexpr method instead of the
 	   elaborate_expr method. */
+      bool fail = false;
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 	    assert(parms_[idx]);
 	    NetExpr*ex = parms_[idx]->elaborate_pexpr(des, scope);
 	    if (ex == 0) continue;
 
+	    if (ex->expr_type() == IVL_VT_REAL) {
+		  cerr << ex->get_fileline() << ": error: concatenation "
+		       << "operand can not be real: " << *ex << endl;
+		  des->errors += 1;
+		  fail = true;
+		  continue;
+	    }
 	    ex->set_line(*parms_[idx]);
 
 	    if (dynamic_cast<NetEParam*>(ex)) {
@@ -167,11 +175,16 @@ NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
 		       << "concatenation has indefinite width: "
 		       << *ex << endl;
 		  des->errors += 1;
-		  delete tmp;
-		  return 0;
+		  fail = true;
+		  continue;
 	    }
 
 	    tmp->set(idx, ex);
+      }
+
+      if (fail) {
+	    delete tmp;
+	    return 0;
       }
 
       return tmp;

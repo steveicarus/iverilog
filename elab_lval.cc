@@ -118,17 +118,20 @@ NetAssign_* PEConcat::elaborate_lval(Design*des,
 
 	    NetAssign_*tmp = parms_[idx]->elaborate_lval(des, scope, is_force);
 
+	    if (tmp->expr_type() == IVL_VT_REAL) {
+		  cerr << parms_[idx]->get_fileline() << ": error: "
+		       << "concatenation operand can not be real: "
+		       << *parms_[idx] << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
 	      /* If the l-value doesn't elaborate, the error was
 		 already detected and printed. We just skip it and let
 		 the compiler catch more errors. */
-	    if (tmp == 0)
-		  continue;
-
-	    assert(tmp);
-
+	    if (tmp == 0) continue;
 
 	      /* Link the new l-value to the previous one. */
-
 	    NetAssign_*last = tmp;
 	    while (last->more)
 		  last = last->more;
