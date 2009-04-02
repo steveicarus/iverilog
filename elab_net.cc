@@ -72,10 +72,16 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    } else {
 		  nets[idx] = parms_[idx]->elaborate_lnet(des, scope);
 	    }
-	    if (nets[idx] == 0)
+
+	    if (nets[idx] == 0) errors += 1;
+	    else if (nets[idx]->data_type() == IVL_VT_REAL) {
+		  cerr << parms_[idx]->get_fileline() << ": error: "
+		       << "concatenation operand can no be real: "
+		       << *parms_[idx] << endl;
 		  errors += 1;
-	    else
-		  width += nets[idx]->vector_width();
+		  continue;
+	    } else width += nets[idx]->vector_width();
+
       }
 
 	/* If any of the sub expressions failed to elaborate, then

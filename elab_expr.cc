@@ -1682,18 +1682,20 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 
 	    ex->set_line(*parms_[idx]);
 
+	    if (ex->expr_type() == IVL_VT_REAL) {
+		  cerr << ex->get_fileline() << ": error: "
+		       << "concatenation operand can not be real: "
+		       << *parms_[idx] << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
 	    if (! ex->has_width()) {
 		  cerr << ex->get_fileline() << ": error: "
 		       << "concatenation operand has indefinite width: "
 		       << *ex << endl;
 		  des->errors += 1;
-	    }
-
-	    if (ex->expr_type() == IVL_VT_REAL) {
-		  cerr << ex->get_fileline() << ": error: "
-		       << "concatenation operand can not be REAL: "
-		       << *ex << endl;
-		  des->errors += 1;
+		  continue;
 	    }
 
 	    wid_sum += ex->expr_width();
@@ -1707,6 +1709,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	         << "have zero width in this context." << endl;
 	    des->errors += 1;
 	    concat_depth -= 1;
+	    delete tmp;
 	    return 0;
       }
 
