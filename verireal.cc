@@ -174,6 +174,6 @@ verireal operator- (const verireal&l)
 
 ostream& operator<< (ostream&out, const verireal&v)
 {
-      out << v.value_;
+      out << showpoint << v.value_;
       return out;
 }
