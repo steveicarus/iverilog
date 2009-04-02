@@ -199,7 +199,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       if (reg->data_type() == IVL_VT_REAL &&
           use_sel != index_component_t::SEL_NONE) {
 	    cerr << get_fileline() << ": error: "
-	         << "Can not select part of a real value." << endl;
+	         << "can not select part of real: " << reg->name() << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -300,8 +300,10 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 
       if (reg->data_type() == IVL_VT_REAL &&
           use_sel != index_component_t::SEL_NONE) {
+	    perm_string name = peek_tail_name(path_);
 	    cerr << get_fileline() << ": error: "
-	         << "Can not select part of a real array word." << endl;
+	         << "can not select part of real array word: "
+	         << reg->name() << "[" << *word << "]" << endl;
 	    des->errors += 1;
 	    return 0;
       }

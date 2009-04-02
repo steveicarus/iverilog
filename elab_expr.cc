@@ -2356,8 +2356,9 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 
       if (par->expr_type() == IVL_VT_REAL && 
           use_sel != index_component_t::SEL_NONE) {
+	    perm_string name = peek_tail_name(path_);
 	    cerr << get_fileline() << ": error: "
-	         << "Can not select part of a real parameter value." << endl;
+	         << "can not select part of real parameter: " << name << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -2637,8 +2638,10 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
       if (res->expr_type() == IVL_VT_REAL && 
           word_sel != index_component_t::SEL_NONE) {
 	    cerr << get_fileline() << ": error: "
-	         << "Can not select part of a real array word." << endl;
+	         << "can not select part of real array word: "
+	         << net->name() <<"[" << *word_index << "]" << endl;
 	    des->errors += 1;
+	    delete res;
 	    return 0;
       }
 
@@ -2939,7 +2942,7 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       if (node->expr_type() == IVL_VT_REAL && 
           use_sel != index_component_t::SEL_NONE) {
 	    cerr << get_fileline() << ": error: "
-	         << "Can not select part of a real value." << endl;
+	         << "can not select part of real: " << net->name() << endl;
 	    des->errors += 1;
 	    return 0;
       }
