@@ -195,6 +195,15 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       if (reg->array_dimensions() > 0)
 	    return elaborate_lval_net_word_(des, scope, reg);
 
+     	// This must be after the array word elaboration above!
+      if (reg->data_type() == IVL_VT_REAL &&
+          use_sel != index_component_t::SEL_NONE) {
+	    cerr << get_fileline() << ": error: "
+	         << "Can not select part of a real value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       if (use_sel == index_component_t::SEL_PART) {
 	    NetAssign_*lv = new NetAssign_(reg);
 	    elaborate_lval_net_part_(des, scope, lv);
@@ -288,6 +297,14 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
       if (name_tail.index.size() > 1)
 	    use_sel = name_tail.index.back().sel;
+
+      if (reg->data_type() == IVL_VT_REAL &&
+          use_sel != index_component_t::SEL_NONE) {
+	    cerr << get_fileline() << ": error: "
+	         << "Can not select part of a real array word." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       if (use_sel == index_component_t::SEL_BIT)
 	    elaborate_lval_net_bit_(des, scope, lv);

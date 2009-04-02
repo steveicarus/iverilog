@@ -625,7 +625,9 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  return;
 	    }
 	    lval_sigs[idx] = pin(idx)->elaborate_lnet(des, scope);
-	    ivl_assert(*this, lval_sigs[idx]);
+	      // The only way this should return zero is if an error
+	      // happened, so for that case just return.
+	    if (lval_sigs[idx] == 0) return;
 
 	      // For now, assume all the outputs are the same width.
 	    ivl_assert(*this, idx == 0 || lval_sigs[idx]->vector_width() == lval_sigs[0]->vector_width());
