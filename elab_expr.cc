@@ -2354,6 +2354,14 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
       if (!name_tail.index.empty())
 	    use_sel = name_tail.index.back().sel;
 
+      if (par->expr_type() == IVL_VT_REAL && 
+          use_sel != index_component_t::SEL_NONE) {
+	    cerr << get_fileline() << ": error: "
+	         << "Can not select part of a real parameter value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
 	// NOTE TO SELF: This is the way I want to see this code
 	// structured. This closely follows the structure of the
 	// elaborate_expr_net_ code, which splits all the various
@@ -2625,6 +2633,14 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
       index_component_t::ctype_t word_sel = index_component_t::SEL_NONE;
       if (name_tail.index.size() > 1)
 	    word_sel = name_tail.index.back().sel;
+
+      if (res->expr_type() == IVL_VT_REAL && 
+          word_sel != index_component_t::SEL_NONE) {
+	    cerr << get_fileline() << ": error: "
+	         << "Can not select part of a real array word." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       if (word_sel == index_component_t::SEL_PART)
 	    return elaborate_expr_net_part_(des, scope, res, found_in);
@@ -2919,6 +2935,14 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
       if (! path_.back().index.empty())
 	    use_sel = path_.back().index.back().sel;
+
+      if (node->expr_type() == IVL_VT_REAL && 
+          use_sel != index_component_t::SEL_NONE) {
+	    cerr << get_fileline() << ": error: "
+	         << "Can not select part of a real value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
 	// If this is a part select of a signal, then make a new
 	// temporary signal that is connected to just the
