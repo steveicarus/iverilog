@@ -76,6 +76,8 @@ static double float_string(struct byte_source*src)
       double sign_flag = 1.0;
 
       ch = byte_getc(src);
+	/* Skip leading space. */
+      while (isspace(ch)) ch = byte_getc(src);
 
       if (ch == '+') {
 	    sign_flag = 1.0;
@@ -186,6 +188,9 @@ static int scan_format_string(struct byte_source*src, vpiHandle arg)
       *tmp = 0;
 
       ch = byte_getc(src);
+	/* Skip leading space. */
+      while (isspace(ch)) ch = byte_getc(src);
+
       while (!isspace(ch)) {
 	    if (ch == EOF) break;
 
@@ -316,6 +321,9 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv)
 			match_fail = 1;
 
 			ch = byte_getc(src);
+			  /* Skip leading space. */
+			while (isspace(ch)) ch = byte_getc(src);
+
 			while (strchr("01xXzZ?_", ch)) {
 			      match_fail = 0;
 			      if (ch == '?') ch = 'x';
@@ -365,6 +373,9 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv)
 			match_fail = 1;
 
 			ch = byte_getc(src);
+			  /* Skip leading space. */
+			while (isspace(ch)) ch = byte_getc(src);
+
 			while (isdigit(ch) || ch == '_' || (value == 0 && ch == '-')) {
 			      match_fail = 0;
 			      if (ch != '_') {
@@ -411,6 +422,9 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv)
 			tmp[0] = 0;
 
 			ch = byte_getc(src);
+			  /* Skip leading space. */
+			while (isspace(ch)) ch = byte_getc(src);
+
 			while (strchr("0123456789abcdefABCDEFxXzZ?_", ch)) {
 			      match_fail = 0;
 			      if (ch == '?') ch = 'x';
@@ -447,6 +461,9 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv)
 			tmp[0] = 0;
 
 			ch = byte_getc(src);
+			  /* Skip leading space. */
+			while (isspace(ch)) ch = byte_getc(src);
+
 			while (strchr("01234567xXzZ?_", ch)) {
 			      match_fail = 0;
 			      if (ch == '?') ch = 'x';
