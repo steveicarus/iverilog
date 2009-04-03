@@ -877,10 +877,13 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
 		  fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
 			  lptr, get_number_immediate(rise_exp),
-			  get_number_immediate(rise_exp),
-			  get_number_immediate(rise_exp), lptr);
+			  get_number_immediate(fall_exp),
+			  get_number_immediate(decay_exp), lptr);
 	    } else {
 		  ivl_signal_t sig;
+		  // We do not currently support calculating the decay from
+		  // the rise and fall variable delays.
+		  assert(decay_exp != 0);
 		  assert(ivl_expr_type(rise_exp) == IVL_EX_SIGNAL);
 		  assert(ivl_expr_type(fall_exp) == IVL_EX_SIGNAL);
 		  assert(ivl_expr_type(decay_exp) == IVL_EX_SIGNAL);
@@ -1080,8 +1083,8 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net)
 	    dly = "/d";
 	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
 	            net, get_number_immediate(d_rise),
-	            get_number_immediate(d_rise),
-	            get_number_immediate(d_rise), net);
+	            get_number_immediate(d_fall),
+	            get_number_immediate(d_decay), net);
       }
 
       return dly;
