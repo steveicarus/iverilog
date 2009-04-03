@@ -462,13 +462,20 @@ static int vpi_array_var_word_get(int code, vpiHandle ref)
 
       assert(obj);
       decode_array_word_pointer(obj, parent);
+      assert(parent->nets == 0);
 
       switch (code) {
 	  case vpiLineNo:
 	    return 0; // Not implemented for now!
 
 	  case vpiSize:
-	    return (int) parent->vals4->width();
+	    if (parent->vals4) {
+		  assert(parent->valsr == 0);
+		  return (int) parent->vals4->width();
+	    } else {
+		  assert(parent->vals4 == 0);
+		  return 1;
+	    }
 
 	  case vpiLeftRange:
 	    return parent->msb.value;
