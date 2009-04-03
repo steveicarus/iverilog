@@ -391,11 +391,14 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 			fprintf(vvp_out, "L_%p .delay "
 				"(%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
 			                 cptr, get_number_immediate64(d_rise),
-			                 get_number_immediate64(d_rise),
-			                 get_number_immediate64(d_rise), cptr);
+			                 get_number_immediate64(d_fall),
+			                 get_number_immediate64(d_decay), cptr);
 
 		  } else {
 			ivl_signal_t sig;
+			// We do not currently support calculating the decay
+			// from the rise and fall variable delays.
+			assert(d_decay != 0);
 			assert(ivl_expr_type(d_rise) == IVL_EX_SIGNAL);
 			assert(ivl_expr_type(d_fall) == IVL_EX_SIGNAL);
 			assert(ivl_expr_type(d_decay) == IVL_EX_SIGNAL);

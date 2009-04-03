@@ -119,6 +119,20 @@ static NetExpr* make_delay_nets(Design*des, NetScope*scope, NetExpr*expr)
       return expr;
 }
 
+static NetExpr* calc_decay_time(NetExpr *rise, NetExpr *fall)
+{
+      NetEConst *c_rise = dynamic_cast<NetEConst*>(rise);
+      NetEConst *c_fall = dynamic_cast<NetEConst*>(fall);
+      if (c_rise && c_fall) {
+	    if (c_rise->value() < c_fall->value()) return rise;
+	    else return fall;
+      }
+
+      cerr << fall->get_fileline() << ": sorry: can not calculate the "
+           << "decay time from " << *rise << " and " << *fall << endl;
+      return 0;
+}
+
 void PDelays::eval_delays(Design*des, NetScope*scope,
 			  NetExpr*&rise_time,
 			  NetExpr*&fall_time,
@@ -140,14 +154,14 @@ void PDelays::eval_delays(Design*des, NetScope*scope,
 
 		  if (delay_[2]) {
 			decay_time = calculate_val(des, scope, delay_[2]);
-		  if (as_nets_flag)
-			decay_time = make_delay_nets(des, scope, decay_time);
+			if (as_nets_flag)
+			      decay_time = make_delay_nets(des, scope,
+			                                   decay_time);
 
 		  } else {
-			if (rise_time < fall_time)
-			      decay_time = rise_time;
-			else
-			      decay_time = fall_time;
+			// If this is zero then we need to do the min()
+			// at run time.
+			decay_time = calc_decay_time(rise_time, fall_time);
 		  }
 	    } else {
 		  assert(delay_[2] == 0);
