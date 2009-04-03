@@ -189,6 +189,14 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    need_driver_flag = false;
       }
 
+	/* When we are given a non-default strength value and if the
+	 * drive source is a bit, part or indexed select we need to
+	 * add a driver (BUFZ) to convey the strength information. */
+      if ((drive0 != Link::STRONG || drive1 != Link::STRONG) &&
+          (dynamic_cast<NetESelect*>(rval_expr))) {
+	    need_driver_flag = true;
+      }
+
       if (need_driver_flag) {
 	    NetBUFZ*driver = new NetBUFZ(scope, scope->local_symbol(),
 					 rval->vector_width());
