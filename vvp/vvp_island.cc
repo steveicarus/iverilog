@@ -40,7 +40,7 @@ void island_send_value(vvp_net_t*net, const vvp_vector8_t&val)
 	    return;
 
       fun->outvalue = val;
-      vvp_send_vec8(net->out, fun->outvalue);
+      net->send_vec8(fun->outvalue);
 }
 
 /*

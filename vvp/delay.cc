@@ -253,7 +253,7 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       if (use_delay == 0) {
 	    cur_vec4_ = bit;
 	    initial_ = false;
-	    vvp_send_vec4(net_->out, cur_vec4_, 0);
+	    net_->send_vec4(cur_vec4_, 0);
       } else {
 	    struct event_*cur = new struct event_(use_simtime);
 	    cur->run_run_ptr = &vvp_fun_delay::run_run_vec4_;
@@ -278,7 +278,7 @@ void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
       if (use_delay == 0) {
 	    cur_vec8_ = bit;
 	    initial_ = false;
-	    vvp_send_vec8(net_->out, cur_vec8_);
+	    net_->send_vec8(cur_vec8_);
       } else {
 	    struct event_*cur = new struct event_(use_simtime);
 	    cur->ptr_vec8 = bit;
@@ -334,7 +334,7 @@ void vvp_fun_delay::recv_real(vvp_net_ptr_t port, double bit,
       if (use_delay == 0) {
 	    cur_real_ = bit;
 	    initial_ = false;
-	    vvp_send_real(net_->out, cur_real_, 0);
+	    net_->send_real(cur_real_, 0);
       } else {
 	    struct event_*cur = new struct event_(use_simtime);
 	    cur->run_run_ptr = &vvp_fun_delay::run_run_real_;
@@ -363,19 +363,19 @@ void vvp_fun_delay::run_run()
 void vvp_fun_delay::run_run_vec4_(struct event_*cur)
 {
       cur_vec4_ = cur->ptr_vec4;
-      vvp_send_vec4(net_->out, cur_vec4_, 0);
+      net_->send_vec4(cur_vec4_, 0);
 }
 
 void vvp_fun_delay::run_run_vec8_(struct vvp_fun_delay::event_*cur)
 {
       cur_vec8_ = cur->ptr_vec8;
-      vvp_send_vec8(net_->out, cur_vec8_);
+      net_->send_vec8(cur_vec8_);
 }
 
 void vvp_fun_delay::run_run_real_(struct vvp_fun_delay::event_*cur)
 {
       cur_real_ = cur->ptr_real;
-      vvp_send_real(net_->out, cur_real_, 0);
+      net_->send_real(cur_real_, 0);
 }
 
 vvp_fun_modpath::vvp_fun_modpath(vvp_net_t*net)
@@ -539,7 +539,7 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 
 void vvp_fun_modpath::run_run()
 {
-      vvp_send_vec4(net_->out, cur_vec4_, 0);
+      net_->send_vec4(cur_vec4_, 0);
 }
 
 vvp_fun_modpath_src::vvp_fun_modpath_src(vvp_time64_t del[12])

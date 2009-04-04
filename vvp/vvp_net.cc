@@ -108,6 +108,52 @@ void vvp_net_t::operator delete(void*)
       assert(0);
 }
 
+vvp_net_t::vvp_net_t()
+{
+      out_ = vvp_net_ptr_t(0,0);
+}
+
+void vvp_net_t::link(vvp_net_ptr_t port)
+{
+      vvp_net_t*net = port.ptr();
+      net->port[port.port()] = out_;
+      out_ = port;
+}
+
+/*
+ * Unlink a ptr object from the driver. The input is the driver in the
+ * form of a vvp_net_t pointer. The .out member of that object is the
+ * driver. The dst_ptr argument is the receiver pin to be located and
+ * removed from the fan-out list.
+ */
+void vvp_net_t::unlink(vvp_net_ptr_t dst_ptr)
+{
+      vvp_net_t*net = dst_ptr.ptr();
+      unsigned net_port = dst_ptr.port();
+
+      if (out_ == dst_ptr) {
+	      /* If the drive fan-out list starts with this pointer,
+		 then the unlink is easy. Pull the list forward. */
+	    out_ = net->port[net_port];
+      } else if (! out_.nil()) {
+	      /* Scan the linked list, looking for the net_ptr_t
+		 pointer *before* the one we wish to remove. */
+	    vvp_net_ptr_t cur = out_;
+	    assert(!cur.nil());
+	    vvp_net_t*cur_net = cur.ptr();
+	    unsigned cur_port = cur.port();
+	    while (cur_net && cur_net->port[cur_port] != dst_ptr) {
+		  cur = cur_net->port[cur_port];
+		  cur_net = cur.ptr();
+		  cur_port = cur.port();
+	    }
+	      /* Unlink. */
+	    if (cur_net) cur_net->port[cur_port] = net->port[net_port];
+      }
+
+      net->port[net_port] = vvp_net_ptr_t(0,0);
+}
+
 void* vvp_net_fun_t::operator new(size_t size)
 {
 	// Link in an initial chunk of space for net_fun_t
@@ -2462,7 +2508,7 @@ void vvp_fun_drive::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                               vvp_context_t)
 {
       assert(port.port() == 0);
-      vvp_send_vec8(port.ptr()->out, vvp_vector8_t(bit, drive0_, drive1_));
+      port.ptr()->send_vec8(vvp_vector8_t(bit, drive0_, drive1_));
 }
 
 
@@ -2715,9 +2761,9 @@ void vvp_fun_signal4_sa::calculate_output_(vvp_net_ptr_t ptr)
 		  if (force_mask_.value(idx))
 			bits.set_bit(idx, force_.value(idx));
 	    }
-	    vvp_send_vec4(ptr.ptr()->out, bits, 0);
+	    ptr.ptr()->send_vec4(bits, 0);
       } else {
-            vvp_send_vec4(ptr.ptr()->out, bits4_, 0);
+            ptr.ptr()->send_vec4(bits4_, 0);
       }
 
       run_vpi_callbacks();
@@ -2727,7 +2773,7 @@ void vvp_fun_signal4_sa::release(vvp_net_ptr_t ptr, bool net)
 {
       force_mask_ = vvp_vector2_t();
       if (net) {
-	    vvp_send_vec4(ptr.ptr()->out, bits4_, 0);
+	    ptr.ptr()->send_vec4(bits4_, 0);
 	    run_vpi_callbacks();
       } else {
 	    bits4_ = force_;
@@ -2833,7 +2879,7 @@ void vvp_fun_signal4_aa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 
       if (!bits4->eeq(bit)) {
             *bits4 = bit;
-            vvp_send_vec4(ptr.ptr()->out, *bits4, context);
+            ptr.ptr()->send_vec4(*bits4, context);
       }
 }
 
@@ -2853,7 +2899,7 @@ void vvp_fun_signal4_aa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit
             if (base+idx >= bits4->size()) break;
             bits4->set_bit(base+idx, bit.value(idx));
       }
-      vvp_send_vec4(ptr.ptr()->out, *bits4, context);
+      ptr.ptr()->send_vec4(*bits4, context);
 }
 
 void vvp_fun_signal4_aa::release(vvp_net_ptr_t ptr, bool net)
@@ -3009,10 +3055,10 @@ void vvp_fun_signal8::calculate_output_(vvp_net_ptr_t ptr)
 		  if (force_mask_.value(idx))
 			bits.set_bit(idx, force_.value(idx));
 	    }
-	    vvp_send_vec8(ptr.ptr()->out, bits);
+	    ptr.ptr()->send_vec8(bits);
 
       } else {
-	    vvp_send_vec8(ptr.ptr()->out, bits8_);
+	    ptr.ptr()->send_vec8(bits8_);
       }
 
       run_vpi_callbacks();
@@ -3022,7 +3068,7 @@ void vvp_fun_signal8::release(vvp_net_ptr_t ptr, bool net)
 {
       force_mask_ = vvp_vector2_t();
       if (net) {
-	    vvp_send_vec8(ptr.ptr()->out, bits8_);
+	    ptr.ptr()->send_vec8(bits8_);
 	    run_vpi_callbacks();
       } else {
 	    bits8_ = force_;
@@ -3112,7 +3158,7 @@ void vvp_fun_signal_real_sa::recv_real(vvp_net_ptr_t ptr, double bit,
                   if (needs_init_ || !bits_equal(bits_, bit)) {
 			bits_ = bit;
 			needs_init_ = false;
-			vvp_send_real(ptr.ptr()->out, bit, 0);
+			ptr.ptr()->send_real(bit, 0);
 			run_vpi_callbacks();
 		  }
 	    }
@@ -3121,14 +3167,14 @@ void vvp_fun_signal_real_sa::recv_real(vvp_net_ptr_t ptr, double bit,
 	  case 1: // Continuous assign value
 	    continuous_assign_active_ = true;
 	    bits_ = bit;
-	    vvp_send_real(ptr.ptr()->out, bit, 0);
+	    ptr.ptr()->send_real(bit, 0);
 	    run_vpi_callbacks();
 	    break;
 
 	  case 2: // Force value
 	    force_mask_ = vvp_vector2_t(1, 1);
 	    force_ = bit;
-	    vvp_send_real(ptr.ptr()->out, bit, 0);
+	    ptr.ptr()->send_real(bit, 0);
 	    run_vpi_callbacks();
 	    break;
 
@@ -3143,7 +3189,7 @@ void vvp_fun_signal_real_sa::release(vvp_net_ptr_t ptr, bool net)
 {
       force_mask_ = vvp_vector2_t();
       if (net) {
-	    vvp_send_real(ptr.ptr()->out, bits_, 0);
+	    ptr.ptr()->send_real(bits_, 0);
 	    run_vpi_callbacks();
       } else {
 	    bits_ = force_;
@@ -3206,7 +3252,7 @@ void vvp_fun_signal_real_aa::recv_real(vvp_net_ptr_t ptr, double bit,
 
       if (!bits_equal(*bits,bit)) {
             *bits = bit;
-            vvp_send_real(ptr.ptr()->out, bit, context);
+            ptr.ptr()->send_real(bit, context);
       }
 }
 
@@ -3243,9 +3289,9 @@ void vvp_wide_fun_core::propagate_vec4(const vvp_vector4_t&bit,
 				       vvp_time64_t delay)
 {
       if (delay)
-	    schedule_assign_plucked_vector(ptr_->out, delay, bit, 0, bit.size());
+	    schedule_assign_plucked_vector(ptr_->peek_out(), delay, bit, 0, bit.size());
       else
-	    vvp_send_vec4(ptr_->out, bit, 0);
+	    ptr_->send_vec4(bit, 0);
 }
 
 void vvp_wide_fun_core::propagate_real(double bit,
@@ -3255,7 +3301,7 @@ void vvp_wide_fun_core::propagate_real(double bit,
 	      // schedule_assign_vector(ptr_->out, bit, delay);
 	    assert(0); // Need a real-value version of assign_vector.
       } else {
-	    vvp_send_real(ptr_->out, bit, 0);
+	    ptr_->send_real(bit, 0);
       }
 }
 

@@ -551,41 +551,6 @@ void vthread_run(vthread_t thr)
 }
 
 /*
- * Unlink a ptr object from the driver. The input is the driver in the
- * form of a vvp_net_t pointer. The .out member of that object is the
- * driver. The dst_ptr argument is the receiver pin to be located and
- * removed from the fan-out list.
- */
-static void unlink_from_driver(vvp_net_t*src, vvp_net_ptr_t dst_ptr)
-{
-      vvp_net_t*net = dst_ptr.ptr();
-      unsigned net_port = dst_ptr.port();
-
-      if (src->out == dst_ptr) {
-	      /* If the drive fan-out list starts with this pointer,
-		 then the unlink is easy. Pull the list forward. */
-	    src->out = net->port[net_port];
-      } else {
-	      /* Scan the linked list, looking for the net_ptr_t
-		 pointer *before* the one we wish to remove. */
-	    vvp_net_ptr_t cur = src->out;
-	    assert(!cur.nil());
-	    vvp_net_t*cur_net = cur.ptr();
-	    unsigned cur_port = cur.port();
-	    while (cur_net->port[cur_port] != dst_ptr) {
-		  cur = cur_net->port[cur_port];
-		  assert(!cur.nil());
-		  cur_net = cur.ptr();
-		  cur_port = cur.port();
-	    }
-	      /* Unlink. */
-	    cur_net->port[cur_port] = net->port[net_port];
-      }
-
-      net->port[net_port] = vvp_net_ptr_t(0,0);
-}
-
-/*
  * The CHUNK_LINK instruction is a special next pointer for linking
  * chunks of code space. It's like a simplified %jmp.
  */
@@ -1265,7 +1230,7 @@ bool of_CASSIGN_LINK(vthread_t thr, vvp_code_t cp)
 	   unlink it. We can have only 1 cassign at a time. */
       if (sig->cassign_link != 0) {
 	    vvp_net_ptr_t tmp (dst, 1);
-	    unlink_from_driver(sig->cassign_link, tmp);
+	    sig->cassign_link->unlink(tmp);
       }
 
       sig->cassign_link = src;
@@ -1273,8 +1238,7 @@ bool of_CASSIGN_LINK(vthread_t thr, vvp_code_t cp)
 	/* Link the output of the src to the port[1] (the cassign
 	   port) of the destination. */
       vvp_net_ptr_t dst_ptr (dst, 1);
-      dst->port[1] = src->out;
-      src->out = dst_ptr;
+      src->link(dst_ptr);
 
       return true;
 }
@@ -1777,7 +1741,7 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
 	    }
 	      // And this is the pointer to be removed.
 	    vvp_net_ptr_t dst_ptr (net, 1);
-	    unlink_from_driver(src, dst_ptr);
+	    src->unlink(dst_ptr);
 	    sig->cassign_link = 0;
       }
 
@@ -1803,7 +1767,7 @@ bool of_DEASSIGN_WR(vthread_t thr, vvp_code_t cp)
       if (vvp_net_t*src = sig->cassign_link) {
 	      // And this is the pointer to be removed.
 	    vvp_net_ptr_t dst_ptr (net, 1);
-	    unlink_from_driver(src, dst_ptr);
+	    src->unlink(dst_ptr);
 	    sig->cassign_link = 0;
       }
 
@@ -2337,26 +2301,7 @@ static void unlink_force(vvp_net_t*net)
 
 	/* We are looking for this pointer. */
       vvp_net_ptr_t net_ptr (net, 2);
-
-	/* If net is first in the fan-out list, then simply pull it
-	   from the front. */
-      if (src->out == net_ptr) {
-	    src->out = net->port[2];
-	    net->port[2] = vvp_net_ptr_t();
-	    return;
-      }
-
-	/* Look for the pointer in the fan-out chain */
-      vvp_net_ptr_t cur_ptr = src->out;
-      assert(!cur_ptr.nil());
-      while (cur_ptr.ptr()->port[cur_ptr.port()] != net_ptr) {
-	    cur_ptr = cur_ptr.ptr()->port[cur_ptr.port()];
-	    assert( !cur_ptr.nil() );
-      }
-
-	/* Remove as if from a singly-linked list. */
-      cur_ptr.ptr()->port[cur_ptr.port()] = net->port[2];
-      net->port[2] = vvp_net_ptr_t();
+      src->unlink(net_ptr);
 }
 
 /*
@@ -2389,8 +2334,7 @@ bool of_FORCE_LINK(vthread_t thr, vvp_code_t cp)
 	/* Link the output of the src to the port[2] (the force
 	   port) of the destination. */
       vvp_net_ptr_t dst_ptr (dst, 2);
-      dst->port[2] = src->out;
-      src->out = dst_ptr;
+      src->link(dst_ptr);
 
       return true;
 }
@@ -4029,7 +3973,7 @@ bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
 	    }
 	      // And this is the pointer to be removed.
 	    vvp_net_ptr_t dst_ptr (net, 2);
-	    unlink_from_driver(src, dst_ptr);
+	    src->unlink(dst_ptr);
 	    sig->force_link = 0;
       }
 
@@ -4058,7 +4002,7 @@ bool of_RELEASE_WR(vthread_t thr, vvp_code_t cp)
       if (vvp_net_t*src = sig->force_link) {
 	      // And this is the pointer to be removed.
 	    vvp_net_ptr_t dst_ptr (net, 2);
-	    unlink_from_driver(src, dst_ptr);
+	    src->unlink(dst_ptr);
 	    sig->force_link = 0;
       }
 

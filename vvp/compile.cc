@@ -367,9 +367,7 @@ bool vvp_net_resolv_list_s::resolve(bool mes)
 
       if (tmp) {
 	      // Link the input port to the located output.
-	    vvp_net_t*net = port.ptr();
-	    net->port[port.port()] = tmp->out;
-	    tmp->out = port;
+	    tmp->link(port);
 	    return true;
       }
 

@@ -963,13 +963,36 @@ template <class T> ostream& operator << (ostream&out, vvp_sub_pointer_t<T> val)
  * The vvp_send_*() functions take as input a vvp_net_ptr_t and follow
  * all the fan-out chain, delivering the specified value.
  */
-struct vvp_net_t {
+class vvp_net_t {
+    public:
+      vvp_net_t();
+
 #ifdef CHECK_WITH_VALGRIND
       vvp_net_t *pool;
 #endif
       vvp_net_ptr_t port[4];
-      vvp_net_ptr_t out;
       vvp_net_fun_t*fun;
+
+      vvp_net_ptr_t peek_out() const { return out_; }
+    public:
+	// Connect the port to the output from this net.
+      void link(vvp_net_ptr_t port);
+	// Disconnect the port from the output of this net.
+      void unlink(vvp_net_ptr_t port);
+
+    public: // Methods to propagate output from this node.
+      void send_vec4(const vvp_vector4_t&val, vvp_context_t context);
+      void send_vec8(const vvp_vector8_t&val);
+      void send_real(double val, vvp_context_t context);
+      void send_long(long val);
+
+      void send_vec4_pv(const vvp_vector4_t&val,
+			unsigned base, unsigned wid, unsigned vwid,
+			vvp_context_t context);
+      void send_vec8_pv(const vvp_vector8_t&val,
+			unsigned base, unsigned wid, unsigned vwid);
+    private:
+      vvp_net_ptr_t out_;
 
     public: // Need a better new for these objects.
       static void* operator new(std::size_t size);
@@ -1536,8 +1559,7 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 };
 
 
-inline void vvp_send_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
-                          vvp_context_t context)
+inline void vvp_send_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val, vvp_context_t context)
 {
       while (struct vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
@@ -1576,8 +1598,8 @@ extern void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
  * mirror of the destination vector.
  */
 inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
-		             unsigned base, unsigned wid, unsigned vwid,
-                             vvp_context_t context)
+			     unsigned base, unsigned wid, unsigned vwid,
+			     vvp_context_t context)
 {
       while (struct vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
@@ -1589,9 +1611,10 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
       }
 }
 
-inline void vvp_send_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&val,
-		             unsigned base, unsigned wid, unsigned vwid)
+inline void vvp_net_t::send_vec8_pv(const vvp_vector8_t&val,
+				    unsigned base, unsigned wid, unsigned vwid)
 {
+      vvp_net_ptr_t ptr = out_;
       while (struct vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
@@ -1600,6 +1623,28 @@ inline void vvp_send_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&val,
 
 	    ptr = next;
       }
+}
+
+inline void vvp_net_t::send_vec4(const vvp_vector4_t&val, vvp_context_t context)
+{
+      vvp_send_vec4(out_, val, context);
+}
+
+inline void vvp_net_t::send_vec4_pv(const vvp_vector4_t&val,
+				    unsigned base, unsigned wid, unsigned vwid,
+				    vvp_context_t context)
+{
+      vvp_send_vec4_pv(out_, val, base, wid, vwid, context);
+}
+
+inline void vvp_net_t::send_vec8(const vvp_vector8_t&val)
+{
+      vvp_send_vec8(out_, val);
+}
+
+inline void vvp_net_t::send_real(double val, vvp_context_t context)
+{
+      vvp_send_real(out_, val, context);
 }
 
 #endif

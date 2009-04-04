@@ -36,7 +36,7 @@ void vvp_fun_extend_signed::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bi
                                       vvp_context_t)
 {
       if (bit.size() >= width_) {
-	    vvp_send_vec4(port.ptr()->out, bit, 0);
+	    port.ptr()->send_vec4(bit, 0);
 	    return;
       }
 
@@ -49,5 +49,5 @@ void vvp_fun_extend_signed::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bi
       for (unsigned idx = bit.size() ;  idx < res.size() ;  idx += 1)
 	    res.set_bit(idx, pad);
 
-      vvp_send_vec4(port.ptr()->out, res, 0);
+      port.ptr()->send_vec4(res, 0);
 }

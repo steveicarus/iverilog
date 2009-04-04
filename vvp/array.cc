@@ -836,8 +836,7 @@ void array_set_word(vvp_array_t arr,
       struct __vpiSignal*vsig = vpip_signal_from_handle(word);
       assert(vsig);
 
-      vvp_net_ptr_t ptr (vsig->node, 0);
-      vvp_send_vec4_pv(ptr, val, part_off, val.size(), vpip_size(vsig), 0);
+      vsig->node->send_vec4_pv(val, part_off, val.size(), vpip_size(vsig), 0);
       array_word_change(arr, address);
 }
 
@@ -1143,7 +1142,7 @@ void vvp_fun_arrayport_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit
 	    addr_valid_flag = vector4_to_value(bit, addr_);
 	    if (! addr_valid_flag)
 		  addr_ = arr_->array_count;
-	    vvp_send_vec4(port.ptr()->out, array_get_word(arr_,addr_), 0);
+	    port.ptr()->send_vec4(array_get_word(arr_,addr_), 0);
 	    break;
 
 	  default:
@@ -1158,7 +1157,7 @@ void vvp_fun_arrayport_sa::check_word_change(unsigned long addr)
 	    return;
 
       vvp_vector4_t bit = array_get_word(arr_, addr_);
-      vvp_send_vec4(net_->out, bit, 0);
+      net_->send_vec4(bit, 0);
 }
 
 class vvp_fun_arrayport_aa  : public vvp_fun_arrayport, public automatic_hooks_s {
@@ -1242,8 +1241,7 @@ void vvp_fun_arrayport_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit
                   addr_valid_flag = vector4_to_value(bit, *addr);
                   if (! addr_valid_flag)
                         *addr = arr_->array_count;
-                  vvp_send_vec4(port.ptr()->out, array_get_word(arr_,*addr),
-                                context);
+                  port.ptr()->send_vec4(array_get_word(arr_,*addr), context);
                   break;
 
                 default:
@@ -1268,7 +1266,7 @@ void vvp_fun_arrayport_aa::check_word_change(unsigned long addr)
 	    return;
 
       vvp_vector4_t bit = array_get_word(arr_, addr);
-      vvp_send_vec4(net_->out, bit, vthread_get_wt_context());
+      net_->send_vec4(bit, vthread_get_wt_context());
 }
 
 static void array_attach_port(vvp_array_t array, vvp_fun_arrayport*fun)

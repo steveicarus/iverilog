@@ -66,7 +66,7 @@ void vvp_reduce_base::recv_vec4(vvp_net_ptr_t prt, const vvp_vector4_t&bit,
       bits_ = bit;
       vvp_bit4_t res =  calculate_result();
       vvp_vector4_t rv (1, res);
-      vvp_send_vec4(prt.ptr()->out, rv, context);
+      prt.ptr()->send_vec4(rv, context);
 }
 
 void vvp_reduce_base::recv_vec4_pv(vvp_net_ptr_t prt, const vvp_vector4_t&bit,
@@ -82,7 +82,7 @@ void vvp_reduce_base::recv_vec4_pv(vvp_net_ptr_t prt, const vvp_vector4_t&bit,
       bits_.set_vec(base, bit);
       vvp_bit4_t res = calculate_result();
       vvp_vector4_t rv (1, res);
-      vvp_send_vec4(prt.ptr()->out, rv, context);
+      prt.ptr()->send_vec4(rv, context);
 }
 
 class vvp_reduce_and  : public vvp_reduce_base {

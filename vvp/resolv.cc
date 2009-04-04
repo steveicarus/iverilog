@@ -96,7 +96,7 @@ void resolv_functor::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 		       << " in=" << val_[0] << ", " << val_[1]
 		       << ", " << val_[2] << ", " << val_[3] << endl;
 
-      vvp_send_vec8(ptr->out, out);
+      ptr->send_vec8(out);
 }
 
 void resolv_functor::recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
@@ -146,7 +146,7 @@ void resolv_wired_logic::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	    out = wired_logic_math_(out, val_[idx]);
       }
 
-      vvp_send_vec4(ptr->out, out, 0);
+      ptr->send_vec4(out, 0);
 }
 
 vvp_vector4_t resolv_triand::wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b)

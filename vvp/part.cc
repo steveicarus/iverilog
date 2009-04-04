@@ -100,7 +100,7 @@ void vvp_fun_part_sa::run_run()
 	    if (idx + base_ < val_.size())
 		  res.set_bit(idx, val_.value(base_+idx));
       }
-      vvp_send_vec4(ptr->out, res, 0);
+      ptr->send_vec4(res, 0);
 }
 
 vvp_fun_part_aa::vvp_fun_part_aa(unsigned base, unsigned wid)
@@ -152,7 +152,7 @@ void vvp_fun_part_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
             }
             if (!val->eeq( tmp )) {
                   *val = tmp;
-                  vvp_send_vec4(port.ptr()->out, tmp, context);
+                  port.ptr()->send_vec4(tmp, context);
             }
       } else {
             context = context_scope_->live_contexts;
@@ -217,7 +217,7 @@ void vvp_fun_part_pv::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       }
       assert(bit.size() == wid_);
 
-      vvp_send_vec4_pv(port.ptr()->out, bit, base_, wid_, vwid_, context);
+      port.ptr()->send_vec4_pv(bit, base_, wid_, vwid_, context);
 }
 
 void vvp_fun_part_pv::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
@@ -232,7 +232,7 @@ void vvp_fun_part_pv::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
       }
       assert(bit.size() == wid_);
 
-      vvp_send_vec8_pv(port.ptr()->out, bit, base_, wid_, vwid_);
+      port.ptr()->send_vec8_pv(bit, base_, wid_, vwid_);
 }
 
 vvp_fun_part_var::vvp_fun_part_var(unsigned w)
@@ -295,7 +295,7 @@ void vvp_fun_part_var_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                                     vvp_context_t)
 {
       if (recv_vec4_(port, bit, base_, source_, ref_)) {
-	    vvp_send_vec4(port.ptr()->out, ref_, 0);
+	    port.ptr()->send_vec4(ref_, 0);
       }
 }
 
@@ -365,7 +365,7 @@ void vvp_fun_part_var_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                   (vvp_get_context_item(context, context_idx_));
 
             if (recv_vec4_(port, bit, state->base, state->source, state->ref)) {
-                  vvp_send_vec4(port.ptr()->out, state->ref, context);
+                  port.ptr()->send_vec4(state->ref, context);
             }
       } else {
             context = context_scope_->live_contexts;
