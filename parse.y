@@ -2137,12 +2137,12 @@ module_item
 	delete[]$3;
       }
 
-  | K_task automatic_opt IDENTIFIER
+  | K_task automatic_opt IDENTIFIER '('
       { assert(current_task == 0);
 	current_task = pform_push_task_scope($3, $2);
 	FILE_NAME(current_task, @1);
       }
-    '(' task_port_decl_list ')' ';'
+    task_port_decl_list ')' ';'
     block_item_decls_opt
     statement_or_null
     K_endtask
@@ -2152,6 +2152,24 @@ module_item
 	current_task = 0;
 	delete[]$3;
       }
+
+  | K_task automatic_opt IDENTIFIER '(' ')' ';'
+      { assert(current_task == 0);
+	current_task = pform_push_task_scope($3, $2);
+	FILE_NAME(current_task, @1);
+      }
+    block_item_decls_opt
+    statement_or_null
+    K_endtask
+      { current_task->set_ports(0);
+	current_task->set_statement($9);
+	pform_pop_scope();
+	current_task = 0;
+	cerr << @3 << ": warning: task definition for \"" << $3
+	     << "\" has an empty port declaration list!" << endl;
+	delete[]$3;
+      }
+
   | K_task automatic_opt IDENTIFIER error K_endtask
       {
 	pform_pop_scope();
