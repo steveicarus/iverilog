@@ -419,10 +419,8 @@ NetExpr* PEBinary::elaborate_expr_base_bits_(Design*des,
 	// If either of the arguments is unsigned, then process both
 	// of them as unsigned. This only impacts the padding that is
 	// done to get the operands to the expr_wid.
-      if (! lp->has_sign())
-	    rp->cast_signed(false);
-      if (! rp->has_sign())
-	    lp->cast_signed(false);
+      if (! lp->has_sign()) rp->cast_signed(false);
+      if (! rp->has_sign()) lp->cast_signed(false);
 
       if (expr_wid > 0) {
 	    if (type_is_vectorable(lp->expr_type()))
@@ -452,6 +450,12 @@ NetExpr* PEBinary::elaborate_expr_base_div_(Design*des,
 		  des->errors += 1;
 	    }
       }
+
+	// If either of the arguments is unsigned, then process both
+	// of them as unsigned. This only impacts the padding that is
+	// done to get the operands to the expr_wid.
+      if (! lp->has_sign()) rp->cast_signed(false);
+      if (! rp->has_sign()) lp->cast_signed(false);
 
 	/* The original elaboration of the left and right expressions
 	   already tried to elaborate to the expr_wid. If the
