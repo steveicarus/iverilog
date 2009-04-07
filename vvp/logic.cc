@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -49,7 +49,7 @@ void vvp_fun_boolean_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       if (input_[port] .eeq( bit ))
 	    return;
 
-      input_[ptr.port()] = bit;
+      input_[port] = bit;
       if (net_ == 0) {
 	    net_ = ptr.ptr();
 	    schedule_generic(this, 0, false);
