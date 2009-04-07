@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,10 +30,10 @@
 # include  "schedule.h"
 # include  <stdio.h>
 # include  <ctype.h>
-#ifdef HAVE_READLINE_READLINE_H
+#ifdef USE_READLINE
 # include  <readline/readline.h>
 #endif
-#ifdef HAVE_READLINE_HISTORY_H
+#ifdef USE_HISTORY
 # include  <readline/history.h>
 #endif
 # include  <string.h>
@@ -499,7 +499,7 @@ void stop_handler(int rc)
 		  first += 1;
 
 	    if (first[0] != 0) {
-#ifdef HAVE_READLINE_HISTORY_H
+#ifdef USE_HISTORY
 		  add_history(first);
 #endif
 		  invoke_command(first);
