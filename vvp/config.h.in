@@ -44,6 +44,7 @@
 # undef HAVE_MALLOC_H
 # undef HAVE_LIBREADLINE
 # undef HAVE_READLINE_READLINE_H
+# undef HAVE_LIBHISTORY
 # undef HAVE_READLINE_HISTORY_H
 # undef HAVE_INTTYPES_H
 # undef HAVE_LROUND
@@ -60,6 +61,14 @@
 #ifdef HAVE_LIBREADLINE
 #ifdef HAVE_READLINE_READLINE_H
 # define USE_READLINE
+#endif
+#endif
+
+/* Figure if I can use history. */
+#undef USE_HISTORY
+#ifdef HAVE_LIBHISTORY
+#ifdef HAVE_READLINE_HISTORY_H
+# define USE_HISTORY
 #endif
 #endif
 
