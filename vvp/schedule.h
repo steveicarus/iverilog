@@ -57,6 +57,15 @@ extern void schedule_assign_array_word(vvp_array_t mem,
 				       unsigned off,
 				       vvp_vector4_t val,
 				       vvp_time64_t delay);
+
+/*
+ * Create an event to propagate the output of a net.
+ */
+extern void schedule_propagate_plucked_vector(vvp_net_t*ptr,
+					      vvp_time64_t  delay,
+					      const vvp_vector4_t&val,
+					      unsigned adr, unsigned wid);
+
 /*
  * This is very similar to schedule_assign_vector, but generates an
  * event in the active queue. It is used at link time to assign a

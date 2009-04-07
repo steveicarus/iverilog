@@ -973,7 +973,6 @@ class vvp_net_t {
       vvp_net_ptr_t port[4];
       vvp_net_fun_t*fun;
 
-      vvp_net_ptr_t peek_out() const { return out_; }
     public:
 	// Connect the port to the output from this net.
       void link(vvp_net_ptr_t port);
