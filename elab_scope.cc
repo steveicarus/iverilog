@@ -919,21 +919,44 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	// check for recursive instantiation by scanning the current
 	// scope and its parents. Look for a module instantiation of
 	// the same module, but farther up in the scope.
-
+      unsigned rl_count = 0;
+      bool in_genblk = false;
       for (NetScope*scn = sc ;  scn ;  scn = scn->parent()) {
-	    if (scn->type() != NetScope::MODULE)
+	      // We need to know if we are inside a generate block to allow
+	      // recursive instances.
+	    if (scn->type() == NetScope::GENBLOCK) {
+		  in_genblk = true;
 		  continue;
+	    }
 
-	    if (strcmp(mod->mod_name(), scn->module_name()) != 0)
+	    if (scn->type() != NetScope::MODULE) continue;
+
+	    if (strcmp(mod->mod_name(), scn->module_name()) != 0) continue;
+
+	      // We allow nested scopes if they are inside a generate block,
+	      // but only to a certain nesting depth.
+	    if (in_genblk) {
+		  rl_count += 1;
+		  if (rl_count > recursive_mod_limit) {
+			cerr << get_fileline() << ": error: instance "
+			     << scope_path(sc) << "." << get_name()
+			     << " of module " << mod->mod_name()
+			     << " is nested too deep." << endl;
+			cerr << get_fileline() << ":      : check for "
+			        "proper recursion termination or increase the "
+			        "limit (" << recursive_mod_limit
+			     << ") with the -pRECURSIVE_MOD_LIMIT flag."
+			     << endl;
+			des->errors += 1;
+			return;
+		  }
 		  continue;
+	    }
 
 	    cerr << get_fileline() << ": error: You cannot instantiate "
 		 << "module " << mod->mod_name() << " within itself." << endl;
-
 	    cerr << get_fileline() << ":      : The offending instance is "
-		 << scope_path(sc) << "." << get_name() << " within "
-		 << scope_path(scn) << "." << endl;
-
+		 << get_name() << " within " << scope_path(scn) << "." << endl;
 	    des->errors += 1;
 	    return;
       }

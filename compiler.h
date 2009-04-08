@@ -1,7 +1,7 @@
 #ifndef __compiler_H
 #define __compiler_H
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,6 +35,12 @@
  * self-determined contexts.
  */
 extern unsigned integer_width;
+
+/*
+ * This is the maximum number of recursive module loops allowed within
+ * a generate block.
+ */
+extern unsigned recursive_mod_limit;
 
 /* The TIME_WIDTH is the width of time variables. */
 #ifndef TIME_WIDTH
