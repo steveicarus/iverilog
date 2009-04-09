@@ -599,7 +599,8 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <MA_ADD>"(" { macro_add_to_arg(0); ma_parenthesis_level++; }
 
-<MA_ADD>"," { macro_finish_arg(); }
+<MA_ADD>"," { if (ma_parenthesis_level > 0) macro_add_to_arg(0);
+              else macro_finish_arg(); }
 
 <MA_ADD>")" {
     if (ma_parenthesis_level > 0) {
