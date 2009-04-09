@@ -1617,7 +1617,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	    }
 
 	    if (tmp->expr_type() == IVL_VT_REAL) {
-		  cerr << tmp->get_fileline() << ": error: concatenation "
+		  cerr << tmp->get_fileline() << ": error: Concatenation "
 		       << "repeat expression can not be REAL." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -1627,7 +1627,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 
 	    if (rep == 0) {
 		  cerr << get_fileline() << ": error: "
-			"concatenation repeat expression cannot be evaluated."
+			"Concatenation repeat expression cannot be evaluated."
 		       << endl;
 		  cerr << get_fileline() << ":      : The expression is: "
 		       << *tmp << endl;
@@ -1688,7 +1688,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 
 	    if (ex->expr_type() == IVL_VT_REAL) {
 		  cerr << ex->get_fileline() << ": error: "
-		       << "concatenation operand can not be real: "
+		       << "Concatenation operand can not be real: "
 		       << *parms_[idx] << endl;
 		  des->errors += 1;
 		  continue;
@@ -1696,8 +1696,8 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 
 	    if (! ex->has_width()) {
 		  cerr << ex->get_fileline() << ": error: "
-		       << "concatenation operand has indefinite width: "
-		       << *ex << endl;
+		       << "Concatenation operand \"" << *parms_[idx]
+		       << "\" has indefinite width." << endl;
 		  des->errors += 1;
 		  continue;
 	    }
