@@ -27,6 +27,10 @@
 # include  <stdio.h>
 # include  <assert.h>
 # include  "sys_readmem_lex.h"
+# include  <sys/stat.h>
+
+char **search_list = NULL;
+unsigned sl_count = 0;
 
 static void get_mem_params(vpiHandle argv, vpiHandle callh, char *name,
                            char **fname, vpiHandle *mitem,
@@ -291,8 +295,18 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
                          &start_addr, &stop_addr, &addr_incr,
                          &min_addr, &max_addr)) return 0;
 
-      /* Open the data file. */
+	/* Open the data file. */
       file = fopen(fname, "r");
+	/* Check to see if we have other directories to look for this file. */
+      if (file == 0 && sl_count > 0 && fname[0] != '/') {
+	    unsigned idx;
+	    char path[4096];
+
+	    for (idx = 0; idx < sl_count; idx += 1) {
+		  snprintf(path, 4096, "%s/%s", search_list[idx], fname);
+		  if ((file = fopen(path, "r"))) break;
+	    }
+      }
       if (file == 0) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
@@ -391,6 +405,102 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
       return 0;
 }
 
+static PLI_INT32 free_readmempath(p_cb_data cb_data)
+{
+      unsigned idx;
+      for(idx = 0; idx < sl_count; idx += 1) {
+	    free(search_list[idx]);
+      }
+      free(search_list);
+      search_list = NULL;
+      sl_count = 0;
+      return 0;
+}
+
+static PLI_INT32 sys_readmempath_calltf(PLI_BYTE8*name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle paths = vpi_scan(argv);
+      s_vpi_value val;
+      unsigned len, idx;
+      char *path;
+
+      vpi_free_object(argv);
+
+	/* Get the search path string. */
+      val.format = vpiStringVal;
+      vpi_get_value(paths, &val);
+
+	/* Verify that we have a string and that it is not NULL. */
+      if (val.format != vpiStringVal || !*(val.value.str)) {
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+	                (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's argument (%s) is not a valid string.\n",
+	               name, vpi_get_str(vpiType, paths));
+	    return 0;
+      }
+
+	/*
+	 * Verify that the search path is composed of only printable
+	 * characters.
+	 */
+      len = strlen(val.value.str);
+      for (idx = 0; idx < len; idx++) {
+	    if (! isprint(val.value.str[idx])) {
+		  char msg [64];
+		  char *esc_path = as_escaped(val.value.str);
+		  snprintf(msg, 64, "WARNING: %s:%d:",
+		           vpi_get_str(vpiFile, callh),
+		           (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s %s's argument contains non-printable "
+		             "characters.\n", msg, name);
+		  vpi_printf("%*s \"%s\"\n", (int) strlen(msg), " ", esc_path);
+		  free(esc_path);
+		  return 0;
+	    }
+      }
+
+	/* Clear the old list before creating the new list. */
+      free_readmempath(NULL);
+
+	/*
+	 * Break the string into individual paths and add them to the list.
+	 * Print a warning if the path is not valid.
+	 */
+      for (path = strtok(val.value.str, ":"); path; path = strtok(NULL, ":")) {
+	    int res;
+	    struct stat sb;
+
+	      /* Warn the user if the path is not valid. */
+	    res = stat(path, &sb);
+	    if (res == 0) {
+		  if (!S_ISDIR(sb.st_mode)) {
+			vpi_printf("WARNING: %s:%d: ",
+			           vpi_get_str(vpiFile, callh),
+			           (int)vpi_get(vpiLineNo, callh));
+			vpi_printf("%s's path element \"%s\" is not a "
+			           "directory!\n", name, path);
+			continue;
+		  }
+	    } else {
+		  vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+		             (int)vpi_get(vpiLineNo, callh));
+		  vpi_printf("%s could not find directory \"%s\"!\n",
+		             name, path);
+		  continue;
+	    }
+
+	      /* Add a valid search path element to the list. */
+	    sl_count += 1;
+	    search_list = (char **) realloc(search_list,
+	                                    sizeof(char **)*sl_count);
+	    search_list[sl_count-1] = strdup(path);
+      }
+
+      return 0;
+}
+
 static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
 {
       int addr;
@@ -455,6 +565,7 @@ static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
 void sys_readmem_register()
 {
       s_vpi_systf_data tf_data;
+      s_cb_data cb_data;
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$readmemh";
@@ -473,6 +584,14 @@ void sys_readmem_register()
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$readmempath";
+      tf_data.calltf    = sys_readmempath_calltf;
+      tf_data.compiletf = sys_one_string_arg_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$readmempath";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$writememh";
       tf_data.calltf    = sys_writemem_calltf;
       tf_data.compiletf = sys_mem_compiletf;
@@ -487,4 +606,10 @@ void sys_readmem_register()
       tf_data.sizetf    = 0;
       tf_data.user_data = "$writememb";
       vpi_register_systf(&tf_data);
+
+      cb_data.reason = cbEndOfSimulation;
+      cb_data.time = 0;
+      cb_data.cb_rtn = free_readmempath;
+      cb_data.user_data = "system";
+      vpi_register_cb(&cb_data);
 }
