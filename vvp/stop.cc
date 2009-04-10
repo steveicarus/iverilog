@@ -457,8 +457,13 @@ static void invoke_command(char*txt)
       if (argc > 0) {
 
 	    if (argv[0][0] == '$') {
-		  cmd_call(argc, argv);
-
+		  if (strcmp(argv[0], "$stop") == 0) {
+			printf("The simulator is already stopped!\n");
+		  } else if (strcmp(argv[0], "$finish") == 0){
+			cmd_finish(argc, argv);
+		  } else {
+			cmd_call(argc, argv);
+		  }
 	    } else {
 		  unsigned idx;
 		  for (idx = 0 ;  cmd_table[idx].name ;  idx += 1)
