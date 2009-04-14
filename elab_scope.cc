@@ -1062,6 +1062,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // Set time units and precision.
 	    my_scope->time_unit(mod->time_unit);
 	    my_scope->time_precision(mod->time_precision);
+	    my_scope->time_from_timescale(mod->time_from_timescale);
 	    des->set_precision(mod->time_precision);
 
 	      // Look for module parameter replacements. The "replace" map

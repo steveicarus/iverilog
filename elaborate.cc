@@ -1827,6 +1827,20 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
       probe_expr_width(des, scope, expr);
       NetExpr*dex = elab_and_eval(des, scope, expr, -1);
 
+	/* Print a warning if we find default and `timescale based
+	 * delays in the design, since this is likely an error. */
+      if (scope->time_from_timescale()) dly_used_timescale = true;
+      else dly_used_no_timescale = true;
+
+      if (display_ts_dly_warning &&
+          dly_used_no_timescale && dly_used_timescale) {
+	    cerr << "warning: Found both default and "
+	            "`timescale based delays. Use" << endl;
+	    cerr << "         -Wtimescale to find the "
+	            "module(s) with no `timescale." << endl;
+	    display_ts_dly_warning = false;
+      }
+
 	/* If the delay expression is a real constant or vector
 	   constant, then evaluate it, scale it to the local time
 	   units, and return an adjusted NetEConst. */
@@ -3737,6 +3751,19 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       if (ndelays > 12)
 	    ndelays = 12;
 
+	/* Print a warning if we find default and `timescale based
+	 * delays in the design, since this is likely an error. */
+      if (scope->time_from_timescale()) dly_used_timescale = true;
+      else dly_used_no_timescale = true;
+
+      if (display_ts_dly_warning &&
+          dly_used_no_timescale && dly_used_timescale) {
+	    cerr << "warning: Found both default and "
+	            "`timescale based delays. Use" << endl;
+	    cerr << "         -Wtimescale to find the "
+	            "module(s) with no `timescale." << endl;
+	    display_ts_dly_warning = false;
+      }
       int shift = scope->time_unit() - des->get_precision();
 
 	/* Elaborate the delay values themselves. Remember to scale
@@ -4301,6 +4328,7 @@ Design* elaborate(list<perm_string>roots)
 	    scope->set_line(rmod);
 	    scope->time_unit(rmod->time_unit);
 	    scope->time_precision(rmod->time_precision);
+	    scope->time_from_timescale(rmod->time_from_timescale);
 	    scope->default_nettype(rmod->default_nettype);
 	    des->set_precision(rmod->time_precision);
 

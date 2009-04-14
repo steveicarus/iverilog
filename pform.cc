@@ -342,6 +342,9 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
       pform_cur_module = new Module(lex_name);
       pform_cur_module->time_unit = pform_time_unit;
       pform_cur_module->time_precision = pform_time_prec;
+	/* If we have a timescale file then the time information is from
+	 * a timescale directive. */
+      pform_cur_module->time_from_timescale = pform_timescale_file != 0;
       pform_cur_module->default_nettype = pform_default_nettype;
 
       FILE_NAME(pform_cur_module, file, lineno);
