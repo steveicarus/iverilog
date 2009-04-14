@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,12 +46,14 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
 	    default_nettype_ = up->default_nettype();
 	    time_unit_ = up->time_unit();
 	    time_prec_ = up->time_precision();
+	    time_from_timescale_ = up->time_from_timescale();
 	    sib_ = up_->sub_;
 	    up_->sub_ = this;
       } else {
 	    default_nettype_ = NetNet::NONE;
 	    time_unit_ = 0;
 	    time_prec_ = 0;
+	    time_from_timescale_ = false;
 	    assert(t == MODULE);
       }
 
@@ -295,6 +297,11 @@ void NetScope::time_precision(int val)
       time_prec_ = val;
 }
 
+void NetScope::time_from_timescale(bool val)
+{
+      time_from_timescale_ = val;
+}
+
 int NetScope::time_unit() const
 {
       return time_unit_;
@@ -303,6 +310,11 @@ int NetScope::time_unit() const
 int NetScope::time_precision() const
 {
       return time_prec_;
+}
+
+bool NetScope::time_from_timescale() const
+{
+      return time_from_timescale_;
 }
 
 void NetScope::default_nettype(NetNet::Type nt)
