@@ -2642,11 +2642,13 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
       if (name_tail.index.size() > 1)
 	    word_sel = name_tail.index.back().sel;
 
-      if (res->expr_type() == IVL_VT_REAL && 
+      if (net->get_scalar() &&
           word_sel != index_component_t::SEL_NONE) {
-	    cerr << get_fileline() << ": error: "
-	         << "can not select part of real array word: "
-	         << net->name() <<"[" << *word_index << "]" << endl;
+	    cerr << get_fileline() << ": error: can not select part of ";
+	    if (res->expr_type() == IVL_VT_REAL) cerr << "real";
+	    else cerr << "scalar";
+	    cerr << " array word: " << net->name()
+	         <<"[" << *word_index << "]" << endl;
 	    des->errors += 1;
 	    delete res;
 	    return 0;
@@ -2946,10 +2948,12 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       if (! path_.back().index.empty())
 	    use_sel = path_.back().index.back().sel;
 
-      if (node->expr_type() == IVL_VT_REAL && 
+      if (net->get_scalar() &&
           use_sel != index_component_t::SEL_NONE) {
-	    cerr << get_fileline() << ": error: "
-	         << "can not select part of real: " << net->name() << endl;
+	    cerr << get_fileline() << ": error: can not select part of ";
+	    if (node->expr_type() == IVL_VT_REAL) cerr << "real: ";
+	    else cerr << "scalar: ";
+	    cerr << net->name() << endl;
 	    des->errors += 1;
 	    return 0;
       }

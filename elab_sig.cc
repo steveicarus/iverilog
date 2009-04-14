@@ -599,9 +599,11 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  }
 
 		  ret_sig = new NetNet(scope, fname, NetNet::REG, mnum, lnum);
+		  ret_sig->set_scalar(false);
 
 	    } else {
 		  ret_sig = new NetNet(scope, fname, NetNet::REG);
+		  ret_sig->set_scalar(true);
 	    }
 	    ret_sig->set_line(*this);
 	    ret_sig->set_signed(return_type_.type == PTF_REG_S);
@@ -614,6 +616,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    ret_sig->set_line(*this);
 	    ret_sig->set_signed(true);
 	    ret_sig->set_isint(true);
+	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
 	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
@@ -623,6 +626,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    ret_sig->set_line(*this);
 	    ret_sig->set_signed(false);
 	    ret_sig->set_isint(false);
+	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
 	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
@@ -633,6 +637,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    ret_sig->set_line(*this);
 	    ret_sig->set_signed(true);
 	    ret_sig->set_isint(false);
+	    ret_sig->set_scalar(true);
 	    ret_sig->port_type(NetNet::POUTPUT);
 	    ret_sig->data_type(IVL_VT_REAL);
 	    break;
@@ -850,10 +855,15 @@ void PWhile::elaborate_sig(Design*des, NetScope*scope) const
 NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 {
       NetNet::Type wtype = type_;
-      if (wtype == NetNet::IMPLICIT)
+      bool is_implicit_scalar = false;
+      if (wtype == NetNet::IMPLICIT) {
 	    wtype = NetNet::WIRE;
-      if (wtype == NetNet::IMPLICIT_REG)
+	    is_implicit_scalar = true;
+      }
+      if (wtype == NetNet::IMPLICIT_REG) {
 	    wtype = NetNet::REG;
+	    is_implicit_scalar = true;
+      }
 
       unsigned wid = 1;
       long lsb = 0, msb = 0;
@@ -902,6 +912,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  delete texpr;
 		  nmsb = pmsb;
 		  nlsb = plsb;
+		    /* An implicit port can have a range so note that here. */
+		  is_implicit_scalar = false;
 	    }
             if (!port_set_) assert(port_msb_ == 0 && port_lsb_ == 0);
             if (port_msb_ == 0) assert(port_lsb_ == 0);
@@ -1095,8 +1107,11 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: Create signal "
-		 << wtype << " ["<<msb<<":"<<lsb<<"] " << name_;
+	    cerr << get_fileline() << ": debug: Create signal " << wtype;
+	    if (!get_scalar()) {
+		  cerr << " ["<<msb<<":"<<lsb<<"]";
+	    }
+	    cerr << " " << name_;
 	    if (array_dimensions > 0) {
 		  cerr << " [" << array_s0 << ":" << array_e0 << "]" << endl;
 	    }
@@ -1126,6 +1141,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       sig->port_type(port_type_);
       sig->set_signed(get_signed());
       sig->set_isint(get_isint());
+      if (is_implicit_scalar) sig->set_scalar(true);
+      else sig->set_scalar(get_scalar());
 
       if (ivl_discipline_t dis = get_discipline()) {
 	    sig->set_discipline(dis);
