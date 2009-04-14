@@ -466,10 +466,13 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
 	      /* The array has a part/bit select at the end. */
 	    if (name_tail.index.size() > sig->array_dimensions()) {
-		  if (sig->data_type() == IVL_VT_REAL) {
+		  if (sig->get_scalar()) {
 		        cerr << get_fileline() << ": error: " 
-		             << "can not select part of real array word: "
-		             << sig->name() << "[" << widx_val << "]" << endl;
+		             << "can not select part of ";
+			if (sig->data_type() == IVL_VT_REAL) cerr << "real";
+			else cerr << "scalar";
+			cerr << " array word: " << sig->name()
+			     << "[" << widx_val << "]" << endl;
 		        des->errors += 1;
 		        return 0;
 		  }
@@ -489,10 +492,12 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  lidx = lidx_tmp;
 	    }
       } else if (!name_tail.index.empty()) {
-	    if (sig->data_type() == IVL_VT_REAL) {
+	    if (sig->get_scalar()) {
 		  cerr << get_fileline() << ": error: " 
-		       << "can not select part of real: "
-		       << sig->name() << endl;
+		       << "can not select part of ";
+		  if (sig->data_type() == IVL_VT_REAL) cerr << "real: ";
+		  else cerr << "scalar: ";
+		  cerr << sig->name() << endl;
 		  des->errors += 1;
 		  return 0;
 	    }

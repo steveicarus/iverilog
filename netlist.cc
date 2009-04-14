@@ -491,8 +491,8 @@ const Link& NetDelaySrc::condit_pin() const
 NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 : NetObj(s, n, 1),
     type_(t), port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE),
-    signed_(false), isint_(false), discipline_(0), msb_(npins-1), lsb_(0),
-    dimensions_(0),
+    signed_(false), isint_(false), is_scalar_(false),
+    discipline_(0), msb_(npins-1), lsb_(0), dimensions_(0),
     s0_(0), e0_(0), local_flag_(false), eref_count_(0), lref_count_(0)
 {
       assert(s);
@@ -544,7 +544,8 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	       long ms, long ls)
 : NetObj(s, n, 1), type_(t),
     port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE), signed_(false),
-    isint_(false), discipline_(0), msb_(ms), lsb_(ls), dimensions_(0), s0_(0), e0_(0),
+    isint_(false), is_scalar_(false), discipline_(0), msb_(ms), lsb_(ls),
+    dimensions_(0), s0_(0), e0_(0),
     local_flag_(false), eref_count_(0), lref_count_(0)
 {
       assert(s);
@@ -594,7 +595,8 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 : NetObj(s, n, calculate_count(array_s, array_e)),
     type_(t), port_type_(NOT_A_PORT),
     data_type_(IVL_VT_NO_TYPE), signed_(false), isint_(false),
-    discipline_(0), msb_(ms), lsb_(ls), dimensions_(1), s0_(array_s), e0_(array_e),
+    is_scalar_(false), discipline_(0), msb_(ms), lsb_(ls),
+    dimensions_(1), s0_(array_s), e0_(array_e),
     local_flag_(false), eref_count_(0), lref_count_(0)
 {
       ivl_assert(*this, s);
@@ -725,6 +727,16 @@ bool NetNet::get_isint() const
 void NetNet::set_isint(bool flag)
 {
       isint_ = flag;
+}
+
+bool NetNet::get_scalar() const
+{
+      return is_scalar_;
+}
+
+void NetNet::set_scalar(bool flag)
+{
+      is_scalar_ = flag;
 }
 
 ivl_discipline_t NetNet::get_discipline() const

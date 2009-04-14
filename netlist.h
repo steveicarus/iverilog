@@ -581,6 +581,9 @@ class NetNet  : public NetObj {
       bool get_isint() const;
       void set_isint(bool);
 
+      bool get_scalar() const;
+      void set_scalar(bool);
+
 	/* Attach a discipline to the net. */
       ivl_discipline_t get_discipline() const;
       void set_discipline(ivl_discipline_t dis);
@@ -650,6 +653,7 @@ class NetNet  : public NetObj {
       ivl_variable_type_t data_type_;
       bool signed_;
       bool isint_;		// original type of integer
+      bool is_scalar_;
       ivl_discipline_t discipline_;
 
       long msb_, lsb_;

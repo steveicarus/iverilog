@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -29,8 +29,8 @@ PWire::PWire(perm_string n,
 : name_(n), type_(t), port_type_(pt), data_type_(dt),
   signed_(false), isint_(false),
   port_msb_(0), port_lsb_(0), port_set_(false),
-  net_msb_(0), net_lsb_(0), net_set_(false), error_cnt_(0),
-    lidx_(0), ridx_(0), discipline_(0)
+  net_msb_(0), net_lsb_(0), net_set_(false), is_scalar_(false),
+  error_cnt_(0), lidx_(0), ridx_(0), discipline_(0)
 {
       if (t == NetNet::INTEGER) {
 	    type_ = NetNet::REG;
@@ -135,7 +135,12 @@ bool PWire::get_isint() const
       return isint_;
 }
 
-void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
+bool PWire::get_scalar() const
+{
+      return is_scalar_;
+}
+
+void PWire::set_range(PExpr*m, PExpr*l, PWSRType type, bool is_scalar)
 {
       switch (type) {
 	  case SR_PORT:
@@ -147,6 +152,7 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
 		  port_msb_ = m;
 		  port_lsb_ = l;
 		  port_set_ = true;
+		  is_scalar_ = is_scalar;
 	    }
 	    return;
 
@@ -159,6 +165,7 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
 		  net_msb_ = m;
 		  net_lsb_ = l;
 		  net_set_ = true;
+		  is_scalar_ = is_scalar;
 	    }
 	    return;
 
@@ -181,6 +188,7 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type)
 		  net_msb_ = m;
 		  net_lsb_ = l;
 		  net_set_ = true;
+		  is_scalar_ = is_scalar;
 	    }
 	    return;
       }
