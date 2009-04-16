@@ -22,6 +22,7 @@
 # include  "symbols.h"
 # include  "codes.h"
 # include  "ufunc.h"
+# include  "vvp_net_sig.h"
 # include  "vthread.h"
 # include  "schedule.h"
 #ifdef HAVE_MALLOC_H

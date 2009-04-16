@@ -21,6 +21,7 @@
 #include  "symbols.h"
 #include  "schedule.h"
 #include  "vpi_priv.h"
+#include  "vvp_net_sig.h"
 #include  "config.h"
 #ifdef CHECK_WITH_VALGRIND
 #include  "vvp_cleanup.h"

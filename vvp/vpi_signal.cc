@@ -24,6 +24,7 @@
 
 # include  "compile.h"
 # include  "vpi_priv.h"
+# include  "vvp_net_sig.h"
 # include  "schedule.h"
 # include  "statistics.h"
 # include  "config.h"

@@ -24,6 +24,7 @@
 # include  "ufunc.h"
 # include  "event.h"
 # include  "vpi_priv.h"
+# include  "vvp_net_sig.h"
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif

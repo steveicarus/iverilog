@@ -29,6 +29,7 @@
 # include  "vvp_net.h"
 # include  "schedule.h"
 # include  "event.h"
+# include  "vvp_net_sig.h"
 # include  "config.h"
 # include  <stdio.h>
 # include  <assert.h>
