@@ -488,6 +488,9 @@ void stop_handler(int rc)
       }
 
       vpi_mcd_printf(1,"** VVP Stop(%d) **\n", rc);
+      vpi_mcd_printf(1,"** Flushing output streams.\n");
+      invoke_command("$fflush");
+      invoke_command("$dumpflush");
       vpi_mcd_printf(1,"** Current simulation time is %" TIME_FMT_U " ticks.\n",
 		     schedule_simtime());
 
