@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -246,6 +246,16 @@ PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name)
       while ((arg=vpi_scan(argv)) != NULL) {
         switch(vpi_get(vpiType, arg)) {
           case vpiMemoryWord:
+/*
+ * We need to allow non-constant selects to support the following:
+ *
+ * for (lp = 0; lp < max ; lp = lp + 1) $dumpvars(0, array[lp]);
+ *
+ * We need to do a direct callback on the selected element vs using
+ * the &A<> structure. The later will not give us what we want.
+ * This is implemented in the calltf routine.
+ */
+#if 0
             if (vpi_get(vpiConstantSelect, arg) == 0) {
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
@@ -253,6 +263,7 @@ PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name)
 		             vpi_get_str(vpiType, arg));
 		  vpi_control(vpiFinish, 1);
             }
+#endif
           /* The module types. */
           case vpiModule:
           case vpiTask:

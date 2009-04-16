@@ -674,6 +674,9 @@ static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 	  case vpiRightRange:
 	    return parent->lsb.value;
 
+	  case vpiIndex:
+	    return (int)obj->get_address() + parent->first_addr.value;
+
 	  case vpiAutomatic:
 	    return (int) parent->scope->is_automatic;
 
