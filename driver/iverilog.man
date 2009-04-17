@@ -1,4 +1,4 @@
-.TH iverilog 1 "February 4th, 2009" "" "Version 0.9.devel"
+.TH iverilog 1 "April 17th, 2009" "" "Version 0.10.devel"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -100,7 +100,7 @@ The standards requires that a vectored port have matching ranges for its
 port declaration as well as any net/register declaration. It was common
 practice in the past to only specify the range for the net/register
 declaration and some tools still allow this. By default any mismatch is
-reported as a error. Using \fI-gno-io-range-error\fP will produce a
+reported as a error. Using \fB-gno-io-range-error\fP will produce a
 warning instead of a fatal error for the case of a vectored net/register
 and a scalar port declaration.
 .TP 8
@@ -250,7 +250,7 @@ after a \fB-Wall\fP argument to suppress isolated warning types.
 
 .TP 8
 .B all
-This enables all supported warning categories.
+This enables the implicit, portbind and timescale warning categories.
 
 .TP 8
 .B implicit
