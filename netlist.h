@@ -581,6 +581,9 @@ class NetNet  : public NetObj {
       bool get_isint() const;
       void set_isint(bool);
 
+      bool get_scalar() const;
+      void set_scalar(bool);
+
 	/* Attach a discipline to the net. */
       ivl_discipline_t get_discipline() const;
       void set_discipline(ivl_discipline_t dis);
@@ -650,6 +653,7 @@ class NetNet  : public NetObj {
       ivl_variable_type_t data_type_;
       bool signed_;
       bool isint_;		// original type of integer
+      bool is_scalar_;
       ivl_discipline_t discipline_;
 
       long msb_, lsb_;
@@ -773,9 +777,11 @@ class NetScope : public Attrib {
 
       void time_unit(int);
       void time_precision(int);
+      void time_from_timescale(bool);
 
       int time_unit() const;
       int time_precision() const;
+      bool time_from_timescale() const;
 
       void default_nettype(NetNet::Type);
       NetNet::Type default_nettype() const;
@@ -883,6 +889,7 @@ class NetScope : public Attrib {
       unsigned def_lineno_;
 
       signed char time_unit_, time_prec_;
+      bool time_from_timescale_;
       NetNet::Type default_nettype_;
 
       NetEvent *events_;

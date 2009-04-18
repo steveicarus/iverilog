@@ -65,6 +65,21 @@ static PLI_INT32 function_not_implemented_compiletf(PLI_BYTE8* name)
 }
 
 /*
+ * This is used to warn the user that the specified optional system
+ * task/function is not available (from Annex C 1364-2005).
+ */
+static PLI_INT32 missing_optional_compiletf(PLI_BYTE8* name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+
+      vpi_printf("%s:%d: SORRY: %s() is not available in Icarus verilog.\n",
+                 vpi_get_str(vpiFile, callh), (int)vpi_get(vpiLineNo, callh),
+                 name);
+      vpi_control(vpiFinish, 1);
+      return 0;
+}
+
+/*
  * Register the function with Verilog.
  */
 void sys_special_register(void)
@@ -216,5 +231,84 @@ void sys_special_register(void)
 
       tf_data.tfname      = "$ferror";
       tf_data.user_data   = "$ferror";
+      vpi_register_systf(&tf_data);
+
+	/* The following optional system tasks/functions are not implemented
+	 * in Icarus Verilog (from Annex C 1364-2005). */
+      tf_data.type        = vpiSysTask;
+      tf_data.calltf      = 0;
+      tf_data.sizetf      = 0;
+      tf_data.compiletf   = missing_optional_compiletf;
+
+      tf_data.tfname      = "$input";
+      tf_data.user_data   = "$input";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$key";
+      tf_data.user_data   = "$key";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$nokey";
+      tf_data.user_data   = "$nokey";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$list";
+      tf_data.user_data   = "$list";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$log";
+      tf_data.user_data   = "$log";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$nolog";
+      tf_data.user_data   = "$nolog";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$save";
+      tf_data.user_data   = "$save";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$restart";
+      tf_data.user_data   = "$restart";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$incsave";
+      tf_data.user_data   = "$incsave";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$scope";
+      tf_data.user_data   = "$scope";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$showscopes";
+      tf_data.user_data   = "$showscopes";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$showvars";
+      tf_data.user_data   = "$showvars";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$sreadmemb";
+      tf_data.user_data   = "$sreadmemb";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$sreadmemh";
+      tf_data.user_data   = "$sreadmemh";
+      vpi_register_systf(&tf_data);
+
+	/* Optional functions. */
+      tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+
+      tf_data.tfname      = "$countdrivers";
+      tf_data.user_data   = "$countdrivers";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$getpattern";
+      tf_data.user_data   = "$getpattern";
+      vpi_register_systf(&tf_data);
+
+      tf_data.tfname      = "$scale";
+      tf_data.user_data   = "$scale";
       vpi_register_systf(&tf_data);
 }

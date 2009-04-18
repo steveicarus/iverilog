@@ -1617,7 +1617,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	    }
 
 	    if (tmp->expr_type() == IVL_VT_REAL) {
-		  cerr << tmp->get_fileline() << ": error: concatenation "
+		  cerr << tmp->get_fileline() << ": error: Concatenation "
 		       << "repeat expression can not be REAL." << endl;
 		  des->errors += 1;
 		  return 0;
@@ -1627,7 +1627,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 
 	    if (rep == 0) {
 		  cerr << get_fileline() << ": error: "
-			"concatenation repeat expression cannot be evaluated."
+			"Concatenation repeat expression cannot be evaluated."
 		       << endl;
 		  cerr << get_fileline() << ":      : The expression is: "
 		       << *tmp << endl;
@@ -1688,7 +1688,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 
 	    if (ex->expr_type() == IVL_VT_REAL) {
 		  cerr << ex->get_fileline() << ": error: "
-		       << "concatenation operand can not be real: "
+		       << "Concatenation operand can not be real: "
 		       << *parms_[idx] << endl;
 		  des->errors += 1;
 		  continue;
@@ -1696,8 +1696,8 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 
 	    if (! ex->has_width()) {
 		  cerr << ex->get_fileline() << ": error: "
-		       << "concatenation operand has indefinite width: "
-		       << *ex << endl;
+		       << "Concatenation operand \"" << *parms_[idx]
+		       << "\" has indefinite width." << endl;
 		  des->errors += 1;
 		  continue;
 	    }
@@ -2642,11 +2642,13 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
       if (name_tail.index.size() > 1)
 	    word_sel = name_tail.index.back().sel;
 
-      if (res->expr_type() == IVL_VT_REAL && 
+      if (net->get_scalar() &&
           word_sel != index_component_t::SEL_NONE) {
-	    cerr << get_fileline() << ": error: "
-	         << "can not select part of real array word: "
-	         << net->name() <<"[" << *word_index << "]" << endl;
+	    cerr << get_fileline() << ": error: can not select part of ";
+	    if (res->expr_type() == IVL_VT_REAL) cerr << "real";
+	    else cerr << "scalar";
+	    cerr << " array word: " << net->name()
+	         <<"[" << *word_index << "]" << endl;
 	    des->errors += 1;
 	    delete res;
 	    return 0;
@@ -2946,10 +2948,12 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       if (! path_.back().index.empty())
 	    use_sel = path_.back().index.back().sel;
 
-      if (node->expr_type() == IVL_VT_REAL && 
+      if (net->get_scalar() &&
           use_sel != index_component_t::SEL_NONE) {
-	    cerr << get_fileline() << ": error: "
-	         << "can not select part of real: " << net->name() << endl;
+	    cerr << get_fileline() << ": error: can not select part of ";
+	    if (node->expr_type() == IVL_VT_REAL) cerr << "real: ";
+	    else cerr << "scalar: ";
+	    cerr << net->name() << endl;
 	    des->errors += 1;
 	    return 0;
       }

@@ -231,4 +231,8 @@ const char *human_readable_op(const char op, bool unary = false);
 enum const_bool { C_NON, C_0, C_1, C_X };
 const_bool const_logical(const NetExpr*expr);
 
+extern bool dly_used_no_timescale;
+extern bool dly_used_timescale;
+extern bool display_ts_dly_warning;
+
 #endif

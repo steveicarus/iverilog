@@ -199,10 +199,12 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    return elaborate_lval_net_word_(des, scope, reg);
 
      	// This must be after the array word elaboration above!
-      if (reg->data_type() == IVL_VT_REAL &&
+      if (reg->get_scalar() &&
           use_sel != index_component_t::SEL_NONE) {
-	    cerr << get_fileline() << ": error: "
-	         << "can not select part of real: " << reg->name() << endl;
+	    cerr << get_fileline() << ": error: can not select part of ";
+	    if (reg->data_type() == IVL_VT_REAL) cerr << "real: ";
+	    else cerr << "scalar: ";
+	    cerr << reg->name() << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -301,12 +303,13 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       if (name_tail.index.size() > 1)
 	    use_sel = name_tail.index.back().sel;
 
-      if (reg->data_type() == IVL_VT_REAL &&
+      if (reg->get_scalar() &&
           use_sel != index_component_t::SEL_NONE) {
-	    perm_string name = peek_tail_name(path_);
-	    cerr << get_fileline() << ": error: "
-	         << "can not select part of real array word: "
-	         << reg->name() << "[" << *word << "]" << endl;
+	    cerr << get_fileline() << ": error: can not select part of ";
+	    if (reg->data_type() == IVL_VT_REAL) cerr << "real";
+	    else cerr << "scalar";
+	    cerr << " array word: " << reg->name()
+	         << "[" << *word << "]" << endl;
 	    des->errors += 1;
 	    return 0;
       }

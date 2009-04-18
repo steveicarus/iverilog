@@ -342,6 +342,9 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
       pform_cur_module = new Module(lex_name);
       pform_cur_module->time_unit = pform_time_unit;
       pform_cur_module->time_precision = pform_time_prec;
+	/* If we have a timescale file then the time information is from
+	 * a timescale directive. */
+      pform_cur_module->time_from_timescale = pform_timescale_file != 0;
       pform_cur_module->default_nettype = pform_default_nettype;
 
       FILE_NAME(pform_cur_module, file, lineno);
@@ -1028,13 +1031,13 @@ static void pform_set_net_range(perm_string name,
       if (range == 0) {
 	      /* This is the special case that we really mean a
 		 scalar. Set a fake range. */
-	    cur->set_range(0, 0, rt);
+	    cur->set_range(0, 0, rt, true);
 
       } else {
 	    assert(range->count() == 2);
 	    assert((*range)[0]);
 	    assert((*range)[1]);
-	    cur->set_range((*range)[0], (*range)[1], rt);
+	    cur->set_range((*range)[0], (*range)[1], rt, false);
       }
       cur->set_signed(signed_flag);
 
@@ -1396,14 +1399,16 @@ void pform_module_define_port(const struct vlltype&li,
 
       if (range == 0) {
 	    cur->set_range(0, 0, (type == NetNet::IMPLICIT) ? SR_PORT :
-	                                                      SR_BOTH);
+	                                                      SR_BOTH,
+	                   true);
 
       } else {
 	    assert(range->count() == 2);
 	    assert((*range)[0]);
 	    assert((*range)[1]);
 	    cur->set_range((*range)[0], (*range)[1],
-	                   (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
+	                   (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH,
+	                   false);
       }
 
       if (attr) {
@@ -1483,7 +1488,7 @@ void pform_makewire(const vlltype&li, perm_string name,
 		       << " to " << dt << "." << endl;
 	    }
 	    ivl_assert(*cur, flag);
-	    cur->set_range(0, 0, SR_NET);
+	    cur->set_range(0, 0, SR_NET, true);
 	    cur->set_signed(true);
 	    break;
 	  default:
@@ -1673,7 +1678,7 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 
 	      /* If there is a range involved, it needs to be set. */
 	    if (range)
-		  curw->set_range((*range)[0], (*range)[1], SR_PORT);
+		  curw->set_range((*range)[0], (*range)[1], SR_PORT, false);
 
 	    svector<PWire*>*tmp = new svector<PWire*>(*res, curw);
 
@@ -1933,7 +1938,7 @@ static void pform_set_reg_integer(perm_string name)
 
       cur->set_range(new PENumber(new verinum(integer_width-1, integer_width)),
 		     new PENumber(new verinum((uint64_t)0, integer_width)),
-		     SR_NET);
+		     SR_NET, false);
       cur->set_signed(true);
 }
 
@@ -1964,7 +1969,7 @@ static void pform_set_reg_time(perm_string name)
 
       cur->set_range(new PENumber(new verinum(TIME_WIDTH-1, integer_width)),
 		     new PENumber(new verinum((uint64_t)0, integer_width)),
-		     SR_NET);
+		     SR_NET, false);
 }
 
 void pform_set_reg_time(list<perm_string>*names)

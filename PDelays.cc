@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,6 +25,11 @@
 # include  "PExpr.h"
 # include  "verinum.h"
 # include  "netmisc.h"
+
+bool dly_used_no_timescale = false;
+bool dly_used_timescale = false;
+bool display_ts_dly_warning = true;
+
 
 PDelays::PDelays()
 {
@@ -62,9 +67,22 @@ void PDelays::set_delays(const svector<PExpr*>*del, bool df)
 
 static NetExpr*calculate_val(Design*des, NetScope*scope, const PExpr*expr)
 {
-
       NetExpr*dex = expr->elaborate_expr(des, scope, -1, false);
       eval_expr(dex);
+
+	/* Print a warning if we find default and `timescale based
+	 * delays in the design, since this is likely an error. */
+      if (scope->time_from_timescale()) dly_used_timescale = true;
+      else dly_used_no_timescale = true;
+
+      if (display_ts_dly_warning &&
+          dly_used_no_timescale && dly_used_timescale) {
+	    cerr << "warning: Found both default and "
+	            "`timescale based delays. Use" << endl;
+	    cerr << "         -Wtimescale to find the "
+	            "module(s) with no `timescale." << endl;
+	    display_ts_dly_warning = false;
+      }
 
 	/* If the delay expression is a real constant or vector
 	   constant, then evaluate it, scale it to the local time

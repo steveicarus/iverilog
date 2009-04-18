@@ -1,7 +1,7 @@
 #ifndef __PWire_H
 #define __PWire_H
 /*
- * Copyright (c) 1998-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -70,11 +70,12 @@ class PWire : public LineInfo {
       void set_signed(bool flag);
       bool get_signed() const;
       bool get_isint() const;
+      bool get_scalar() const;
 
       bool set_data_type(ivl_variable_type_t dt);
       ivl_variable_type_t get_data_type() const;
 
-      void set_range(PExpr*msb, PExpr*lsb, PWSRType type);
+      void set_range(PExpr*msb, PExpr*lsb, PWSRType type, bool is_scalar);
 
       void set_memory_idx(PExpr*ldx, PExpr*rdx);
 
@@ -104,6 +105,7 @@ class PWire : public LineInfo {
       PExpr*net_msb_;
       PExpr*net_lsb_;
       bool net_set_;
+      bool is_scalar_;
       unsigned error_cnt_;
 
 	// If this wire is actually a memory, these indices will give

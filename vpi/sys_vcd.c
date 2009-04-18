@@ -519,8 +519,15 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       switch (vpi_get(vpiType, item)) {
 
 	  case vpiNet:  type = "wire";    if(0){
-	  case vpiIntegerVar:
 	  case vpiMemoryWord:
+            if (vpi_get(vpiConstantSelect, item) == 0) {
+		    /* Turn a non-constant array word select into a
+		     * constant word select. */
+		  vpiHandle array = vpi_handle(vpiParent, item);
+		  PLI_INT32 index = vpi_get(vpiIndex, item);
+		  item = vpi_handle_by_index(array, index);
+            }
+	  case vpiIntegerVar:
 	  case vpiTimeVar:
 	  case vpiReg:  type = "reg";    }
 
