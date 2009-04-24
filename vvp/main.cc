@@ -207,6 +207,7 @@ int main(int argc, char*argv[])
       FILE *logfile = 0x0;
       extern void vpi_set_vlog_info(int, char**);
       extern bool stop_is_finish;
+      extern int  stop_is_finish_exit_code;
 
 #ifdef __MINGW32__
 	/* In the Windows world, we get the first module path
@@ -225,7 +226,7 @@ int main(int argc, char*argv[])
         /* For non-interactive runs we do not want to run the interactive
          * debugger, so make $stop just execute a $finish. */
       stop_is_finish = false;
-      while ((opt = getopt(argc, argv, "+hl:M:m:nsvV")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "+hl:M:m:nNsvV")) != EOF) switch (opt) {
          case 'h':
            fprintf(stderr,
                    "Usage: vvp [options] input-file [+plusargs...]\n"
@@ -236,6 +237,7 @@ int main(int argc, char*argv[])
 		   " -M -           Clear VPI module path\n"
                    " -m module      Load vpi module.\n"
 		   " -n             Non-interactive ($stop = $finish).\n"
+                   " -N             Same as -n, but exit code is 1 instead of 0\n"
 		   " -s             $stop right away.\n"
                    " -v             Verbose progress messages.\n"
                    " -V             Print the version information.\n" );
@@ -257,6 +259,10 @@ int main(int argc, char*argv[])
 	  case 'n':
 	    stop_is_finish = true;
 	    break;
+          case 'N':
+            stop_is_finish = true;
+            stop_is_finish_exit_code = 1;
+            break;
 	  case 's':
 	    schedule_stop(0);
 	    break;
