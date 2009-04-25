@@ -738,6 +738,7 @@ class NetScope : public Attrib {
       const NetScope* child(const hname_t&name) const;
 
       TYPE type() const;
+      void print_type(ostream&) const;
 
       void set_task_def(NetTaskDef*);
       void set_func_def(NetFuncDef*);

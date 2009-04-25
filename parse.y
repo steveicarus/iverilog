@@ -2124,8 +2124,7 @@ module_item
 
   | K_task automatic_opt IDENTIFIER ';'
       { assert(current_task == 0);
-	current_task = pform_push_task_scope($3, $2);
-	FILE_NAME(current_task, @1);
+	current_task = pform_push_task_scope(@1, $3, $2);
       }
     task_item_list_opt
     statement_or_null
@@ -2139,8 +2138,7 @@ module_item
 
   | K_task automatic_opt IDENTIFIER '('
       { assert(current_task == 0);
-	current_task = pform_push_task_scope($3, $2);
-	FILE_NAME(current_task, @1);
+	current_task = pform_push_task_scope(@1, $3, $2);
       }
     task_port_decl_list ')' ';'
     block_item_decls_opt
@@ -2155,8 +2153,7 @@ module_item
 
   | K_task automatic_opt IDENTIFIER '(' ')' ';'
       { assert(current_task == 0);
-	current_task = pform_push_task_scope($3, $2);
-	FILE_NAME(current_task, @1);
+	current_task = pform_push_task_scope(@1, $3, $2);
       }
     block_item_decls_opt
     statement_or_null
@@ -2184,8 +2181,7 @@ module_item
 
   | K_function automatic_opt function_range_or_type_opt IDENTIFIER ';'
       { assert(current_function == 0);
-	current_function = pform_push_function_scope($4, $2);
-	FILE_NAME(current_function, @1);
+	current_function = pform_push_function_scope(@1, $4, $2);
       }
     function_item_list statement
     K_endfunction
@@ -2199,8 +2195,7 @@ module_item
 
   | K_function automatic_opt function_range_or_type_opt IDENTIFIER
       { assert(current_function == 0);
-	current_function = pform_push_function_scope($4, $2);
-	FILE_NAME(current_function, @1);
+	current_function = pform_push_function_scope(@1, $4, $2);
       }
     '(' task_port_decl_list ')' ';'
     block_item_decls_opt
@@ -2262,7 +2257,7 @@ module_item
 	}
       }
   | K_generate K_begin ':' IDENTIFIER {
-	pform_start_generate_nblock(@1, $4);
+	pform_start_generate_nblock(@2, $4);
       } module_item_list_opt K_end K_endgenerate
       { /* Detect and warn about anachronistic named begin/end use */
 	if (generation_flag > GN_VER2001) {
