@@ -41,24 +41,46 @@ template <class T> T coerce_to_width(const T&that, unsigned width)
       return res;
 }
 
-/* **** vvp_fun_signal methods **** */
-
-vvp_fun_signal_base::vvp_fun_signal_base()
+vvp_filter_wire_base::vvp_filter_wire_base()
 {
-      needs_init_ = true;
       continuous_assign_active_ = false;
-      force_link = 0;
-      cassign_link = 0;
-      count_functors_sig += 1;
 }
 
-void vvp_fun_signal_base::deassign()
+vvp_filter_wire_base::~vvp_filter_wire_base()
+{
+}
+
+bool vvp_filter_wire_base::filter_vec4(const vvp_vector4_t&)
+{
+      run_vpi_callbacks();
+      return true;
+}
+
+bool vvp_filter_wire_base::filter_vec8(const vvp_vector8_t&)
+{
+      run_vpi_callbacks();
+      return true;
+}
+
+bool vvp_filter_wire_base::filter_real(double)
+{
+      run_vpi_callbacks();
+      return true;
+}
+
+bool vvp_filter_wire_base::filter_long(long)
+{
+      run_vpi_callbacks();
+      return true;
+}
+
+void vvp_filter_wire_base::deassign()
 {
       continuous_assign_active_ = false;
       assign_mask_ = vvp_vector2_t();
 }
 
-void vvp_fun_signal_base::deassign_pv(unsigned base, unsigned wid)
+void vvp_filter_wire_base::deassign_pv(unsigned base, unsigned wid)
 {
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    assign_mask_.set_bit(base+idx, 0);
@@ -67,6 +89,16 @@ void vvp_fun_signal_base::deassign_pv(unsigned base, unsigned wid)
       if (assign_mask_.is_zero()) {
 	    assign_mask_ = vvp_vector2_t();
       }
+}
+
+/* **** vvp_fun_signal methods **** */
+
+vvp_fun_signal_base::vvp_fun_signal_base()
+{
+      needs_init_ = true;
+      force_link = 0;
+      cassign_link = 0;
+      count_functors_sig += 1;
 }
 
 /*
@@ -294,8 +326,6 @@ void vvp_fun_signal4_sa::calculate_output_(vvp_net_ptr_t ptr)
       } else {
             ptr.ptr()->send_vec4(bits4_, 0);
       }
-
-      run_vpi_callbacks();
 }
 
 void vvp_fun_signal4_sa::release(vvp_net_ptr_t ptr, bool net)
@@ -303,7 +333,6 @@ void vvp_fun_signal4_sa::release(vvp_net_ptr_t ptr, bool net)
       force_mask_ = vvp_vector2_t();
       if (net) {
 	    ptr.ptr()->send_vec4(bits4_, 0);
-	    run_vpi_callbacks();
       } else {
 	    bits4_ = force_;
       }
@@ -589,8 +618,6 @@ void vvp_fun_signal8::calculate_output_(vvp_net_ptr_t ptr)
       } else {
 	    ptr.ptr()->send_vec8(bits8_);
       }
-
-      run_vpi_callbacks();
 }
 
 void vvp_fun_signal8::release(vvp_net_ptr_t ptr, bool net)
@@ -598,7 +625,6 @@ void vvp_fun_signal8::release(vvp_net_ptr_t ptr, bool net)
       force_mask_ = vvp_vector2_t();
       if (net) {
 	    ptr.ptr()->send_vec8(bits8_);
-	    run_vpi_callbacks();
       } else {
 	    bits8_ = force_;
       }
@@ -689,7 +715,6 @@ void vvp_fun_signal_real_sa::recv_real(vvp_net_ptr_t ptr, double bit,
 			bits_ = bit;
 			needs_init_ = false;
 			ptr.ptr()->send_real(bit, 0);
-			run_vpi_callbacks();
 		  }
 	    }
 	    break;
@@ -698,14 +723,12 @@ void vvp_fun_signal_real_sa::recv_real(vvp_net_ptr_t ptr, double bit,
 	    continuous_assign_active_ = true;
 	    bits_ = bit;
 	    ptr.ptr()->send_real(bit, 0);
-	    run_vpi_callbacks();
 	    break;
 
 	  case 2: // Force value
 	    force_mask_ = vvp_vector2_t(1, 1);
 	    force_ = bit;
 	    ptr.ptr()->send_real(bit, 0);
-	    run_vpi_callbacks();
 	    break;
 
 	  default:
@@ -720,7 +743,6 @@ void vvp_fun_signal_real_sa::release(vvp_net_ptr_t ptr, bool net)
       force_mask_ = vvp_vector2_t();
       if (net) {
 	    ptr.ptr()->send_real(bits_, 0);
-	    run_vpi_callbacks();
       } else {
 	    bits_ = force_;
       }

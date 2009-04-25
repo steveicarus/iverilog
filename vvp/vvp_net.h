@@ -1188,42 +1188,6 @@ class vvp_fun_extend_signed  : public vvp_net_fun_t {
 };
 
 /*
-* Things derived from vvp_vpi_callback may also be array'ed, so it
-* includes some members that arrays use.
-*/
-class vvp_vpi_callback {
-
-    public:
-      vvp_vpi_callback();
-      virtual ~vvp_vpi_callback();
-
-      virtual void run_vpi_callbacks();
-      void add_vpi_callback(struct __vpiCallback*);
-#ifdef CHECK_WITH_VALGRIND
-	/* This has only been tested at EOS. */
-      void clear_all_callbacks(void);
-#endif
-
-      virtual void get_value(struct t_vpi_value*value) =0;
-
-    private:
-      struct __vpiCallback*vpi_callbacks_;
-};
-
-class vvp_vpi_callback_wordable : public vvp_vpi_callback {
-    public:
-      vvp_vpi_callback_wordable();
-      ~vvp_vpi_callback_wordable();
-
-      void run_vpi_callbacks();
-      void attach_as_word(class __vpiArray* arr, unsigned long addr);
-
-    private:
-      class __vpiArray* array_;
-      unsigned long array_word_;
-};
-
-/*
  * Wide Functors:
  * Wide functors represent special devices that may have more than 4
  * input ports. These devices need a set of N/4 actual functors to

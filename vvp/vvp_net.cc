@@ -194,6 +194,34 @@ void vvp_net_fun_t::operator delete(void*)
       assert(0);
 }
 
+vvp_net_fil_t::vvp_net_fil_t()
+{
+}
+
+vvp_net_fil_t::~vvp_net_fil_t()
+{
+}
+
+bool vvp_net_fil_t::filter_vec4(const vvp_vector4_t&)
+{
+      return true;
+}
+
+bool vvp_net_fil_t::filter_vec8(const vvp_vector8_t&)
+{
+      return true;
+}
+
+bool vvp_net_fil_t::filter_real(double)
+{
+      return true;
+}
+
+bool vvp_net_fil_t::filter_long(long)
+{
+      return true;
+}
+
 /* *** BIT operations *** */
 vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c)
 {

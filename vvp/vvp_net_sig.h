@@ -36,6 +36,43 @@ class ostream;
 
 using namespace std;
 
+/*
+ * Things derived from vvp_vpi_callback may have callbacks
+ * attached. This is how vpi callbacks are attached to the vvp
+ * structure.
+ *
+ * Things derived from vvp_vpi_callback may also be array'ed, so it
+ * includes some members that arrays use.
+ */
+class vvp_vpi_callback {
+
+    public:
+      vvp_vpi_callback();
+      virtual ~vvp_vpi_callback();
+
+      void attach_as_word(class __vpiArray* arr, unsigned long addr);
+
+      void add_vpi_callback(struct __vpiCallback*);
+#ifdef CHECK_WITH_VALGRIND
+	/* This has only been tested at EOS. */
+      void clear_all_callbacks(void);
+#endif
+
+	// Derived classes implement this method to provide a way for
+	// vpi to get at the vvp value of the object.
+      virtual void get_value(struct t_vpi_value*value) =0;
+
+    protected:
+	// Derived classes call this method to indicate that it is
+	// time to call the callback.
+      void run_vpi_callbacks();
+
+    private:
+      struct __vpiCallback*vpi_callbacks_;
+      class __vpiArray* array_;
+      unsigned long array_word_;
+};
+
 /* vvp_fun_signal
  * This node is the place holder in a vvp network for signals,
  * including nets of various sort. The output from a signal follows
@@ -90,7 +127,33 @@ using namespace std;
  *          propagate starting at the next input change.
  */
 
-class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_vpi_callback_wordable {
+
+class vvp_filter_wire_base : public vvp_net_fil_t, public vvp_vpi_callback {
+
+    public:
+      vvp_filter_wire_base();
+      ~vvp_filter_wire_base();
+
+      bool filter_vec4(const vvp_vector4_t&val);
+      bool filter_vec8(const vvp_vector8_t&val);
+      bool filter_real(double val);
+      bool filter_long(long val);
+
+    public:
+      void deassign();
+      void deassign_pv(unsigned base, unsigned wid);
+      virtual void release(vvp_net_ptr_t ptr, bool net) =0;
+      virtual void release_pv(vvp_net_ptr_t ptr, bool net,
+                              unsigned base, unsigned wid) =0;
+
+    protected:
+      bool continuous_assign_active_;
+      vvp_vector2_t force_mask_;
+      vvp_vector2_t assign_mask_;
+
+};
+
+class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_filter_wire_base {
 
     public:
       vvp_fun_signal_base();
@@ -110,15 +173,6 @@ class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_vpi_callback_wordab
 
 	// This is true until at least one propagation happens.
       bool needs_init_;
-      bool continuous_assign_active_;
-      vvp_vector2_t force_mask_;
-      vvp_vector2_t assign_mask_;
-
-      void deassign();
-      void deassign_pv(unsigned base, unsigned wid);
-      virtual void release(vvp_net_ptr_t ptr, bool net) =0;
-      virtual void release_pv(vvp_net_ptr_t ptr, bool net,
-                              unsigned base, unsigned wid) =0;
 };
 
 /*

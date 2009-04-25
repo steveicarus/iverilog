@@ -504,11 +504,21 @@ void callback_execute(struct __vpiCallback*cur)
 vvp_vpi_callback::vvp_vpi_callback()
 {
       vpi_callbacks_ = 0;
+      array_ = 0;
+      array_word_ = 0;
 }
 
 vvp_vpi_callback::~vvp_vpi_callback()
 {
       assert(vpi_callbacks_ == 0);
+      assert(array_ == 0);
+}
+
+void vvp_vpi_callback::attach_as_word(vvp_array_t arr, unsigned long addr)
+{
+      assert(array_ == 0);
+      array_ = arr;
+      array_word_ = addr;
 }
 
 void vvp_vpi_callback::add_vpi_callback(__vpiCallback*cb)
@@ -536,6 +546,8 @@ void vvp_vpi_callback::clear_all_callbacks()
  */
 void vvp_vpi_callback::run_vpi_callbacks()
 {
+      if (array_) array_word_change(array_, array_word_);
+
       struct __vpiCallback *next = vpi_callbacks_;
       struct __vpiCallback *prev = 0;
 
@@ -563,31 +575,6 @@ void vvp_vpi_callback::run_vpi_callbacks()
 		  delete_vpi_callback(cur);
 	    }
       }
-}
-
-vvp_vpi_callback_wordable::vvp_vpi_callback_wordable()
-{
-      array_ = 0;
-      array_word_ = 0;
-}
-
-vvp_vpi_callback_wordable::~vvp_vpi_callback_wordable()
-{
-      assert(array_ == 0);
-}
-
-void vvp_vpi_callback_wordable::run_vpi_callbacks()
-{
-      if (array_) array_word_change(array_, array_word_);
-
-      vvp_vpi_callback::run_vpi_callbacks();
-}
-
-void vvp_vpi_callback_wordable::attach_as_word(vvp_array_t arr, unsigned long addr)
-{
-      assert(array_ == 0);
-      array_ = arr;
-      array_word_ = addr;
 }
 
 void vvp_fun_signal4::get_value(struct t_vpi_value*vp)

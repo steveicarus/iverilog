@@ -43,6 +43,7 @@ static void __compile_var_real(char*label, char*name,
       }
       vvp_net_t*net = new vvp_net_t;
       net->fun = fun;
+      net->fil = fun;
 
       define_functor_symbol(label, net);
 
@@ -93,6 +94,7 @@ static void __compile_var(char*label, char*name,
       }
       vvp_net_t*node = new vvp_net_t;
       node->fun = vsig;
+      node->fil = vsig;
 
       define_functor_symbol(label, node);
 
@@ -171,6 +173,7 @@ static void __compile_net(char*label, char*name,
 	    ? dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal8(wid))
 	    : dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal4_sa(wid,BIT4_Z));
       node->fun = vsig;
+      node->fil = vsig;
 
 	/* Add the label into the functor symbol table. */
       define_functor_symbol(label, node);
@@ -232,6 +235,7 @@ static void __compile_real(char*label, char*name,
    
       vvp_fun_signal_real*fun = new vvp_fun_signal_real_sa;
       net->fun = fun;
+      net->fil = fun;
 
 	/* Add the label into the functor symbol table. */
       define_functor_symbol(label, net);
