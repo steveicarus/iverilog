@@ -870,6 +870,33 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       des->errors += error_cnt_;
 
+	// A signal can not have the same name as a scope object.
+      const NetScope *child = scope->child(hname_t(name_));
+      if (child) {
+	    cerr << get_fileline() << ": error: signal and ";
+	    child->print_type(cerr);
+	    cerr << " in '" << scope->fullname()
+	         << "' have the same name '" << name_ << "'." << endl;
+	    des->errors += 1;
+      }
+	// A signal can not have the same name as a parameter.
+      const NetExpr *ex_msb, *ex_lsb;
+      const NetExpr *parm = scope->get_parameter(name_, ex_msb, ex_lsb);
+      if (parm) {
+	    cerr << get_fileline() << ": error: signal and parameter in '"
+	         << scope->fullname() << "' have the same name '" << name_
+	         << "'." << endl;
+	    des->errors += 1;
+      }
+	// A signal can not have the same name as a named event.
+      const NetEvent *event = scope->find_event(name_);
+      if (event) {
+	    cerr << get_fileline() << ": error: signal and named event in '"
+	         << scope->fullname() << "' have the same name '" << name_
+	         << "'." << endl;
+	    des->errors += 1;
+      }
+
       if (port_set_ || net_set_) {
 	    long pmsb = 0, plsb = 0, nmsb = 0, nlsb = 0;
             bool bad_lsb = false, bad_msb = false;
