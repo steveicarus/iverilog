@@ -137,6 +137,7 @@ vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, vvp_bit4_t init, const vvp_delay_t&d)
 : net_(n), delay_(d), cur_vec4_(1)
 {
       cur_vec4_.set_bit(0, init);
+      cur_vec8_ = vvp_vector8_t(cur_vec4_, 6, 6);
       cur_real_ = 0.0;
       list_ = 0;
       initial_ = true;
@@ -263,18 +264,49 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       }
 }
 
+/* See the recv_vec4 comment above. */
 void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 {
       assert(port.port() == 0);
 
-      if (cur_vec8_.eeq(bit))
-	    return;
-
-	/* XXXX FIXME: For now, just use the minimum delay. */
       vvp_time64_t use_delay;
-      use_delay = delay_.get_min_delay();
+	/* This is an initial value so it needs to be compared to all the
+	   bits (the order the bits are changed is not deterministic). */
+      if (initial_) {
+	    vvp_bit4_t cur_val = cur_vec8_.value(0).value();
+	    use_delay = delay_.get_delay(cur_val, bit.value(0).value());
+	    for (unsigned idx = 1 ;  idx < bit.size() ;  idx += 1) {
+		  vvp_time64_t tmp;
+		  tmp = delay_.get_delay(cur_val, bit.value(idx).value());
+		  if (tmp > use_delay) use_delay = tmp;
+	    }
+      } else {
+
+	      /* How many bits to compare? */
+	    unsigned use_wid = cur_vec8_.size();
+	    if (bit.size() < use_wid) use_wid = bit.size();
+
+	      /* Scan the vectors looking for delays. Select the maximum
+	         delay encountered. */
+	    use_delay = delay_.get_delay(cur_vec8_.value(0).value(),
+	                                 bit.value(0).value());
+
+	    for (unsigned idx = 1 ;  idx < use_wid ;  idx += 1) {
+		  vvp_time64_t tmp;
+		  tmp = delay_.get_delay(cur_vec8_.value(idx).value(),
+		                         bit.value(idx).value());
+		  if (tmp > use_delay) use_delay = tmp;
+	    }
+      }
+
+      /* what *should* happen here is we check to see if there is a
+         transaction in the queue. This would be a pulse that needs to be
+         eliminated. */
+      clean_pulse_events_(use_delay);
 
       vvp_time64_t use_simtime = schedule_simtime() + use_delay;
+
+	/* And propagate it. */
       if (use_delay == 0) {
 	    cur_vec8_ = bit;
 	    initial_ = false;

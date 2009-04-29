@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1077,28 +1077,9 @@ void NetRepeat::dump(ostream&o, unsigned ind) const
 void NetScope::dump(ostream&o) const
 {
 	/* This is a constructed hierarchical name. */
-      o << scope_path(this);
+      o << scope_path(this) << " ";
 
-      switch (type_) {
-	  case BEGIN_END:
-	    o << " sequential block";
-	    break;
-	  case FORK_JOIN:
-	    o << " parallel block";
-	    break;
-	  case FUNC:
-	    o << " function";
-	    break;
-	  case MODULE:
-	    o << " module <" << (module_name_? module_name_.str() : "") << ">";
-	    break;
-	  case TASK:
-	    o << " task";
-	    break;
-	  case GENBLOCK:
-	    o << " generate block";
-	    break;
-      }
+      print_type(o);
       if (is_auto()) o << " (automatic)";
       o << endl;
 

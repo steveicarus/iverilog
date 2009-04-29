@@ -232,6 +232,31 @@ NetScope::TYPE NetScope::type() const
       return type_;
 }
 
+void NetScope::print_type(ostream&stream) const
+{
+      switch (type_) {
+	case BEGIN_END:
+	    stream << "sequential block";
+	    break;
+	case FORK_JOIN:
+	    stream << "parallel block";
+       	    break;
+	case FUNC:
+	    stream << "function";
+	    break;
+	case MODULE:
+	    stream << "module <" << (module_name_ ? module_name_.str() : "")
+	           << "> instance";
+       	    break;
+	case TASK:
+	    stream << "task";
+	    break;
+	case GENBLOCK:
+	    stream << "generate block";
+	    break;
+      }
+}
+
 void NetScope::set_task_def(NetTaskDef*def)
 {
       assert( type_ == TASK );

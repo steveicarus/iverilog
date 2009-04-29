@@ -1,7 +1,7 @@
 #ifndef __pform_H
 #define __pform_H
 /*
- * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -180,8 +180,10 @@ extern void pform_make_udp(perm_string name,
  */
 extern void pform_pop_scope();
 
-extern PTask*pform_push_task_scope(char*name, bool is_auto);
-extern PFunction*pform_push_function_scope(char*name, bool is_auto);
+extern PTask*pform_push_task_scope(const struct vlltype&loc, char*name,
+                                   bool is_auto);
+extern PFunction*pform_push_function_scope(const struct vlltype&loc, char*name,
+                                           bool is_auto);
 extern PBlock*pform_push_block_scope(char*name, PBlock::BL_TYPE tt);
 
 extern void pform_put_behavior_in_scope(AProcess*proc);

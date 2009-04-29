@@ -1936,7 +1936,10 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
       if (!name_tail.index.empty()) {
 	    probe_index_expr_width(des, scope, name_tail);
 	    const index_component_t&index_tail = name_tail.index.back();
-	    use_sel = index_tail.sel;
+	      // Skip full array word net selects.
+	    if (!net || (name_tail.index.size() > net->array_dimensions())) {
+		  use_sel = index_tail.sel;
+	    }
       }
 
       unsigned use_width = UINT_MAX;

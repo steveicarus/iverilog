@@ -563,6 +563,15 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiTimeVar:
 	  case vpiReg:  type = "reg";    }
 
+	      /* An array word is implicitly escaped so look for an
+	       * escaped identifier that this could conflict with. */
+            if (vpi_get(vpiType, item) == vpiMemoryWord &&
+                vpi_handle_by_name(vpi_get_str(vpiFullName, item), 0)) {
+		  vpi_printf("LXT warning: dumping array word %s will "
+		             "conflict with an escaped identifier.\n",
+		             vpi_get_str(vpiFullName, item));
+            }
+
             if (skip || vpi_get(vpiAutomatic, item)) break;
 
 	    name = vpi_get_str(vpiName, item);

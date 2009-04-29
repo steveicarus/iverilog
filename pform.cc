@@ -103,7 +103,7 @@ void pform_pop_scope()
       }
 }
 
-PTask* pform_push_task_scope(char*name, bool is_auto)
+PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 {
       perm_string task_name = lex_strings.make(name);
 
@@ -111,11 +111,30 @@ PTask* pform_push_task_scope(char*name, bool is_auto)
       if (pform_cur_generate) {
 	    task = new PTask(task_name, pform_cur_generate->lexical_scope,
 	                     is_auto);
+	    FILE_NAME(task, loc);
+	      // Check if the task is already in the dictionary.
+	    if (pform_cur_generate->tasks.find(task->pscope_name()) !=
+	        pform_cur_generate->tasks.end()) {
+		  cerr << task->get_fileline() << ": error: duplicate "
+		          " definition for task '" << name << "' in '"
+		       << pform_cur_module->mod_name() << "' (generate)."
+		       << endl;
+		  error_count += 1;
+	    }
 	    pform_cur_generate->tasks[task->pscope_name()] = task;
 	    pform_cur_generate->lexical_scope = task;
       } else {
 	    task = new PTask(task_name, lexical_scope,
                              is_auto);
+	    FILE_NAME(task, loc);
+	      // Check if the task is already in the dictionary.
+	    if (pform_cur_module->tasks.find(task->pscope_name()) !=
+	        pform_cur_module->tasks.end()) {
+		  cerr << task->get_fileline() << ": error: duplicate "
+		          "definition for task '" << name << "' in '"
+		       << pform_cur_module->mod_name() << "'." << endl;
+		  error_count += 1;
+	    }
 	    pform_cur_module->tasks[task->pscope_name()] = task;
 	    lexical_scope = task;
       }
@@ -123,7 +142,8 @@ PTask* pform_push_task_scope(char*name, bool is_auto)
       return task;
 }
 
-PFunction* pform_push_function_scope(char*name, bool is_auto)
+PFunction* pform_push_function_scope(const struct vlltype&loc, char*name,
+                                      bool is_auto)
 {
       perm_string func_name = lex_strings.make(name);
 
@@ -131,11 +151,30 @@ PFunction* pform_push_function_scope(char*name, bool is_auto)
       if (pform_cur_generate) {
 	    func = new PFunction(func_name, pform_cur_generate->lexical_scope,
                                  is_auto);
+	    FILE_NAME(func, loc);
+	      // Check if the function is already in the dictionary.
+	    if (pform_cur_generate->funcs.find(func->pscope_name()) !=
+	        pform_cur_generate->funcs.end()) {
+		  cerr << func->get_fileline() << ": error: duplicate "
+		          "definition for function '" << name << "' in '"
+		       << pform_cur_module->mod_name() << "' (generate)."
+		       << endl;
+		  error_count += 1;
+	    }
 	    pform_cur_generate->funcs[func->pscope_name()] = func;
 	    pform_cur_generate->lexical_scope = func;
       } else {
 	    func = new PFunction(func_name, lexical_scope,
                                  is_auto);
+	    FILE_NAME(func, loc);
+	      // Check if the function is already in the dictionary.
+	    if (pform_cur_module->funcs.find(func->pscope_name()) !=
+	        pform_cur_module->funcs.end()) {
+		  cerr << func->get_fileline() << ": error: duplicate "
+		          "definition for function '" << name << "' in '"
+		       << pform_cur_module->mod_name() << "'." << endl;
+		  error_count += 1;
+	    }
 	    pform_cur_module->funcs[func->pscope_name()] = func;
 	    lexical_scope = func;
       }
@@ -1071,9 +1110,21 @@ void pform_set_net_range(list<perm_string>*names,
  */
 static void pform_make_event(perm_string name, const char*fn, unsigned ln)
 {
+      LexicalScope*scope = pform_get_cur_scope();
+
+	// Check if the named event is already in the dictionary.
+      if (scope->events.find(name) != scope->events.end()) {
+	    LineInfo tloc;
+	    FILE_NAME(&tloc, fn, ln);
+	    cerr << tloc.get_fileline() << ": error: duplicate definition "
+	            "for named event '" << name << "' in '"
+	         << pform_cur_module->mod_name() << "'." << endl;
+	    error_count += 1;
+      }
+
       PEvent*event = new PEvent(name);
       FILE_NAME(event, fn, ln);
-      pform_get_cur_scope()->events[name] = event;
+      scope->events[name] = event;
 }
 
 void pform_make_events(list<perm_string>*names, const char*fn, unsigned ln)
@@ -1768,13 +1819,32 @@ void pform_set_parameter(const struct vlltype&loc,
 			 bool signed_flag, svector<PExpr*>*range, PExpr*expr,
 			 LexicalScope::range_t*value_range)
 {
-      if (pform_get_cur_scope() == pform_cur_generate) {
+      LexicalScope*scope = pform_get_cur_scope();
+      if (scope == pform_cur_generate) {
             VLerror("parameter declarations are not permitted in generate blocks");
             return;
       }
 
+	// Check if the parameter name is already in the dictionary.
+      if (scope->parameters.find(name) != scope->parameters.end()) {
+	    LineInfo tloc;
+	    FILE_NAME(&tloc, loc);
+	    cerr << tloc.get_fileline() << ": error: duplicate definition "
+	            "for parameter '" << name << "' in '"
+	         << pform_cur_module->mod_name() << "'." << endl;
+	    error_count += 1;
+      }
+      if (scope->localparams.find(name) != scope->localparams.end()) {
+	    LineInfo tloc;
+	    FILE_NAME(&tloc, loc);
+	    cerr << tloc.get_fileline() << ": error: localparam and "
+	            "parameter in '" << pform_cur_module->mod_name()
+	         << "' have the same name '" << name << "'." << endl;
+	    error_count += 1;
+      }
+
       assert(expr);
-      Module::param_expr_t&parm = pform_get_cur_scope()->parameters[name];
+      Module::param_expr_t&parm = scope->parameters[name];
       FILE_NAME(&parm, loc);
 
       parm.expr = expr;
@@ -1793,7 +1863,7 @@ void pform_set_parameter(const struct vlltype&loc,
       parm.signed_flag = signed_flag;
       parm.range = value_range;
 
-      if (pform_get_cur_scope() == pform_cur_module)
+      if (scope == pform_cur_module)
             pform_cur_module->param_names.push_back(name);
 }
 
@@ -1801,6 +1871,26 @@ void pform_set_localparam(const struct vlltype&loc,
 			  perm_string name, ivl_variable_type_t type,
 			  bool signed_flag, svector<PExpr*>*range, PExpr*expr)
 {
+      LexicalScope*scope = pform_get_cur_scope();
+
+	// Check if the localparam name is already in the dictionary.
+      if (scope->localparams.find(name) != scope->localparams.end()) {
+	    LineInfo tloc;
+	    FILE_NAME(&tloc, loc);
+	    cerr << tloc.get_fileline() << ": error: duplicate definition "
+	            "for localparam '" << name << "' in '"
+	         << pform_cur_module->mod_name() << "'." << endl;
+	    error_count += 1;
+      }
+      if (scope->parameters.find(name) != scope->parameters.end()) {
+	    LineInfo tloc;
+	    FILE_NAME(&tloc, loc);
+	    cerr << tloc.get_fileline() << ": error: parameter and "
+	            "localparam in '" << pform_cur_module->mod_name()
+	         << "' have the same name '" << name << "'." << endl;
+	    error_count += 1;
+      }
+
       assert(expr);
       Module::param_expr_t&parm = pform_get_cur_scope()->localparams[name];
       FILE_NAME(&parm, loc);
@@ -1824,6 +1914,15 @@ void pform_set_localparam(const struct vlltype&loc,
 
 void pform_set_specparam(perm_string name, PExpr*expr)
 {
+	// Check if the specparam name is already in the dictionary.
+      if (pform_cur_module->specparams.find(name) !=
+          pform_cur_module->specparams.end()) {
+	    cerr << expr->get_fileline() << ": error: duplicate definition "
+	            "for specparam '" << name << "' in '"
+	         << pform_cur_module->mod_name() << "'." << endl;
+	    error_count += 1;
+      }
+
       assert(expr);
       pform_cur_module->specparams[name] = expr;
 }
