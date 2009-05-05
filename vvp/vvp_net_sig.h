@@ -176,6 +176,9 @@ class vvp_filter_wire_base : public vvp_net_fil_t, public vvp_vpi_callback {
       vvp_vector4_t force4_;
       vvp_vector8_t force8_;
       double force_real_;
+	// True if the next filter must propagate. Need this to allow
+	// the forced value to get through.
+      bool force_propagate_;
 	// This is used as a static return value.
       mutable vvp_vector4_t filter4_;
       mutable vvp_vector8_t filter8_;

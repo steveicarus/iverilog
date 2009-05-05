@@ -43,6 +43,7 @@ template <class T> T coerce_to_width(const T&that, unsigned width)
 
 vvp_filter_wire_base::vvp_filter_wire_base()
 {
+      force_propagate_ = false;
 }
 
 vvp_filter_wire_base::~vvp_filter_wire_base()
@@ -52,7 +53,8 @@ vvp_filter_wire_base::~vvp_filter_wire_base()
 const vvp_vector4_t* vvp_filter_wire_base::filter_vec4(const vvp_vector4_t&val)
 {
       if (force_mask_.size()) {
-	    bool propagate_flag = false;
+	    bool propagate_flag = force_propagate_;
+	    force_propagate_ = false;
 	    assert(val.size() == force_mask_.size());
 	    assert(val.size() == force4_.size());
 
@@ -80,7 +82,8 @@ const vvp_vector4_t* vvp_filter_wire_base::filter_vec4(const vvp_vector4_t&val)
 const vvp_vector8_t* vvp_filter_wire_base::filter_vec8(const vvp_vector8_t&val)
 {
       if (force_mask_.size()) {
-	    bool propagate_flag = false;
+	    bool propagate_flag = force_propagate_;
+	    force_propagate_ = false;
 	    assert(val.size() == force_mask_.size());
 	    assert(val.size() == force8_.size());
 
@@ -130,6 +133,7 @@ void vvp_filter_wire_base::force_vec4(const vvp_vector4_t&val, vvp_vector2_t mas
 
 	    force_mask_.set_bit(idx, 1);
 	    force4_.set_bit(idx, val.value(idx));
+	    force_propagate_ = true;
       }
 }
 
@@ -147,6 +151,7 @@ void vvp_filter_wire_base::force_vec8(const vvp_vector8_t&val, vvp_vector2_t mas
 
 	    force_mask_.set_bit(idx, 1);
 	    force8_.set_bit(idx, val.value(idx));
+	    force_propagate_ = true;
       }
 }
 
@@ -161,6 +166,7 @@ void vvp_filter_wire_base::force_real(double val, vvp_vector2_t mask)
 		  continue;
 
 	    force_mask_.set_bit(idx, 1);
+	    force_propagate_ = true;
       }
 
       force_real_ = val;
@@ -370,8 +376,8 @@ void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 		if (tmp.size() != size())
 		      tmp = coerce_to_width(tmp, size());
 
-		ptr.ptr()->send_vec4(tmp, 0);
 		force_vec4(tmp, vvp_vector2_t(vvp_vector2_t::FILL1,tmp.size()));
+		calculate_output_(ptr);
 	      }
 	      break;
 
@@ -678,13 +684,8 @@ void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 		if (tmp.size() != size())
 		      tmp = coerce_to_width(tmp, size());
 
-		  // Propagate the forced value before setting the
-		  // force mask. This is so that the forced value gets
-		  // out to the network before the force filter is set
-		  // up. If the force filter is set up first, then the
-		  // filter will block the exact match.
-		ptr.ptr()->send_vec8(tmp);
 		force_vec8(tmp, vvp_vector2_t(vvp_vector2_t::FILL1,tmp.size()));
+		calculate_output_(ptr);
 	      }
 	      break;
 
