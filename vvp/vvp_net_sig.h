@@ -134,23 +134,51 @@ class vvp_filter_wire_base : public vvp_net_fil_t, public vvp_vpi_callback {
       vvp_filter_wire_base();
       ~vvp_filter_wire_base();
 
-      bool filter_vec4(const vvp_vector4_t&val);
-      bool filter_vec8(const vvp_vector8_t&val);
-      bool filter_real(double val);
-      bool filter_long(long val);
+	// These are the virtual methods that we implement to perform
+	// the wire-style filtering.
+      const vvp_vector4_t* filter_vec4(const vvp_vector4_t&val);
+      const vvp_vector8_t* filter_vec8(const vvp_vector8_t&val);
+      bool filter_real(double&val);
+      bool filter_long(long&val);
 
     public:
-      void deassign();
-      void deassign_pv(unsigned base, unsigned wid);
+	// Force/release work in the filter by setting the forced
+	// value using one of the force_* methods. This sets the
+	// forced value as a mask of the bits of the vector that are
+	// forced. The filter then automatically runs the filter on
+	// the outputs that pass through. You can also get at the
+	// filtering results using the filtered_* methods. The
+	// release_mask() method releases bits of the vector.
+
+	// Enable filter force.
+      void force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
+      void force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
+      void force_real(double val, vvp_vector2_t mask);
+
+	// Test the value against the filter.
+      vvp_bit4_t filtered_value(const vvp_vector4_t&val, unsigned idx) const;
+      vvp_scalar_t filtered_value(const vvp_vector8_t&val, unsigned idx) const;
+
+      const vvp_vector4_t& filtered_vec4(const vvp_vector4_t&val) const;
+      const vvp_vector8_t& filtered_vec8(const vvp_vector8_t&val) const;
+      double filtered_real(double val) const;
+
+	// Release the force on the bits set in the mask.
+      void release_mask(vvp_vector2_t mask);
+
       virtual void release(vvp_net_ptr_t ptr, bool net) =0;
       virtual void release_pv(vvp_net_ptr_t ptr, bool net,
                               unsigned base, unsigned wid) =0;
 
-    protected:
-      bool continuous_assign_active_;
+    private:
+	// Forced value
       vvp_vector2_t force_mask_;
-      vvp_vector2_t assign_mask_;
-
+      vvp_vector4_t force4_;
+      vvp_vector8_t force8_;
+      double force_real_;
+	// This is used as a static return value.
+      mutable vvp_vector4_t filter4_;
+      mutable vvp_vector8_t filter8_;
 };
 
 class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_filter_wire_base {
@@ -161,6 +189,9 @@ class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_filter_wire_base {
       void recv_long_pv(vvp_net_ptr_t port, long bit,
                         unsigned base, unsigned wid);
 
+      void deassign();
+      void deassign_pv(unsigned base, unsigned wid);
+
     public:
 
 	/* The %force/link instruction needs a place to write the
@@ -168,6 +199,10 @@ class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_filter_wire_base {
 	   %release instructions can undo the link as needed. */
       struct vvp_net_t*force_link;
       struct vvp_net_t*cassign_link;
+
+    protected:
+      bool continuous_assign_active_;
+      vvp_vector2_t assign_mask_;
 
     protected:
 
@@ -232,7 +267,6 @@ class vvp_fun_signal4_sa : public vvp_fun_signal4 {
       void calculate_output_(vvp_net_ptr_t ptr);
 
       vvp_vector4_t bits4_;
-      vvp_vector4_t force_;
 };
 
 /*

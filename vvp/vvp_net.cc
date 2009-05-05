@@ -202,22 +202,22 @@ vvp_net_fil_t::~vvp_net_fil_t()
 {
 }
 
-bool vvp_net_fil_t::filter_vec4(const vvp_vector4_t&)
+const vvp_vector4_t* vvp_net_fil_t::filter_vec4(const vvp_vector4_t&val)
+{
+      return &val;
+}
+
+const vvp_vector8_t* vvp_net_fil_t::filter_vec8(const vvp_vector8_t&val)
+{
+      return &val;
+}
+
+bool vvp_net_fil_t::filter_real(double&)
 {
       return true;
 }
 
-bool vvp_net_fil_t::filter_vec8(const vvp_vector8_t&)
-{
-      return true;
-}
-
-bool vvp_net_fil_t::filter_real(double)
-{
-      return true;
-}
-
-bool vvp_net_fil_t::filter_long(long)
+bool vvp_net_fil_t::filter_long(long&)
 {
       return true;
 }
@@ -386,6 +386,8 @@ void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
 	    ptr = next;
       }
 }
+
+const vvp_vector4_t vvp_vector4_t::nil;
 
 void vvp_vector4_t::copy_bits(const vvp_vector4_t&that)
 {
@@ -2368,6 +2370,8 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that,
 	    tmp[idx] = vvp_scalar_t (that.value(idx), str0, str1);
 
 }
+
+const vvp_vector8_t vvp_vector8_t::nil;
 
 vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 {

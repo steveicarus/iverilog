@@ -197,6 +197,9 @@ class vvp_vector4_t {
       friend class vvp_vector4array_aa;
 
     public:
+      static const vvp_vector4_t nil;
+
+    public:
       explicit vvp_vector4_t(unsigned size =0, vvp_bit4_t bits =BIT4_X);
 
       explicit vvp_vector4_t(unsigned size, double val);
@@ -778,6 +781,10 @@ class vvp_vector8_t {
 
       ~vvp_vector8_t();
 
+      static const vvp_vector8_t nil;
+
+    public:
+
       unsigned size() const { return size_; }
       vvp_scalar_t value(unsigned idx) const;
       vvp_vector8_t subvalue(unsigned adr, unsigned width) const;
@@ -1088,10 +1095,16 @@ class vvp_net_fil_t {
       virtual ~vvp_net_fil_t();
 
     public:
-      virtual bool filter_vec4(const vvp_vector4_t&bit);
-      virtual bool filter_vec8(const vvp_vector8_t&val);
-      virtual bool filter_real(double val);
-      virtual bool filter_long(long val);
+	// Return a non-empty vector if the filter allows an
+	// output. The output result may be different from the
+	// input. If the output is nil, then suppress propagation.
+      virtual const vvp_vector4_t* filter_vec4(const vvp_vector4_t&bit);
+      virtual const vvp_vector8_t* filter_vec8(const vvp_vector8_t&val);
+
+	// Return true if the value is to be propagated, or false if
+	// propagation is suppressed. The value may be edited by the filter.
+      virtual bool filter_real(double&val);
+      virtual bool filter_long(long&val);
 };
 
 /* **** Some core net functions **** */
@@ -1335,10 +1348,11 @@ inline void vvp_net_t::send_vec8_pv(const vvp_vector8_t&val,
 
 inline void vvp_net_t::send_vec4(const vvp_vector4_t&val, vvp_context_t context)
 {
-      if (fil && ! fil->filter_vec4(val))
+      const vvp_vector4_t*val_out = fil? fil->filter_vec4(val) : &val;
+      if (val_out == 0)
 	    return;
 
-      vvp_send_vec4(out_, val, context);
+      vvp_send_vec4(out_, *val_out, context);
 }
 
 inline void vvp_net_t::send_vec4_pv(const vvp_vector4_t&val,
@@ -1350,10 +1364,11 @@ inline void vvp_net_t::send_vec4_pv(const vvp_vector4_t&val,
 
 inline void vvp_net_t::send_vec8(const vvp_vector8_t&val)
 {
-      if (fil && ! fil->filter_vec8(val))
+      const vvp_vector8_t*val_out = fil? fil->filter_vec8(val) : &val;
+      if (val_out == 0)
 	    return;
 
-      vvp_send_vec8(out_, val);
+      vvp_send_vec8(out_, *val_out);
 }
 
 inline void vvp_net_t::send_real(double val, vvp_context_t context)
