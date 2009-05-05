@@ -583,7 +583,8 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
         type = vpi_get(vpiType, info->items[*idx]);
         if (((type == vpiConstant || type == vpiParameter) &&
              vpi_get(vpiConstType, info->items[*idx]) == vpiRealConst) ||
-            type == vpiRealVar ) {
+            type == vpiRealVar || (type == vpiSysFuncCall && 
+             vpi_get(vpiFuncType, info->items[*idx]) == vpiRealFunc)) {
           value.format = vpiRealVal;
         } else {
           value.format = vpiDecStrVal;
