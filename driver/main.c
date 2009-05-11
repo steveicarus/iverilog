@@ -626,6 +626,9 @@ int process_generation(const char*name)
       else if (strcmp(name,"system-verilog") == 0)
 	    gen_system_verilog = "system-verilog";
 
+      else if (strcmp(name,"no-system-verilog") == 0)
+	    gen_verilog_ams = "no-system-verilog";
+
       else {
 	    fprintf(stderr, "Unknown/Unsupported Language generation "
 		    "%s\n\n", name);
@@ -636,6 +639,7 @@ int process_generation(const char*name)
 		            "Other generation flags:\n"
 		            "    specify | no-specify\n"
 		            "    verilog-ams | no-verilog-ams\n"
+		            "    system-verilog | no-system-verilog\n"
 		            "    std-include | no-std-include\n"
 		            "    relative-include | no-relative-include\n"
 		            "    xtypes | no-xtypes\n"
