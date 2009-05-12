@@ -1353,10 +1353,17 @@ static void do_expand(int use_args)
         struct include_stack_t*isp;
         int head = 0;
         int tail = 0;
+        const char *cp;
+        unsigned escapes = 0;
+        char *str_buf = 0;
 
         if (cur_macro->keyword)
         {
             fprintf(yyout, "%s", cur_macro->value);
+	    if (do_expand_stringify_flag) {
+		do_expand_stringify_flag = 0;
+		fputc('"', yyout);
+	    }
             return;
         }
 
@@ -1383,6 +1390,43 @@ static void do_expand(int use_args)
         {
             isp->str = cur_macro->value;
             isp->ebs = 0;
+        }
+
+        /* Escape some characters if we are making a string version. */
+        for (cp = isp->str; (cp = strpbrk(cp, "\"\\")); cp += 1, escapes += 1);
+        if (escapes && isp->stringify_flag) {
+            unsigned idx = 0;
+            str_buf = (char *) malloc(strlen(isp->str)+3*escapes+1);
+            for (cp = isp->str; *cp; cp += 1) {
+                if (*cp == '"') {
+                   str_buf[idx] = '\\';
+                   str_buf[idx+1] = '0';
+                   str_buf[idx+2] = '4';
+                   str_buf[idx+3] = '2';
+                   idx += 4; 
+                   continue; 
+                }
+                if (*cp == '\\') {
+                   str_buf[idx] = '\\';
+                   str_buf[idx+1] = '1';
+                   str_buf[idx+2] = '3';
+                   str_buf[idx+3] = '4';
+                   idx += 4; 
+                   continue; 
+                }
+                str_buf[idx] = *cp;
+                idx += 1; 
+            }
+            str_buf[idx] = 0;
+            idx += 1;
+            if (use_args) exp_buf_free += isp->ebs;
+            exp_buf_grow_to_fit(idx);
+            head = exp_buf_size - exp_buf_free;
+            exp_buf_free -= idx;
+            strcpy(&exp_buf[head], str_buf);
+            isp->str = &exp_buf[head];
+            isp->ebs = idx;
+            free(str_buf);
         }
 
         isp->next = istack;
@@ -1808,4 +1852,5 @@ void destroy_lexor()
 #   endif
 # endif
     free(def_buf);
+    free(exp_buf);
 }
