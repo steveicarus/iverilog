@@ -757,9 +757,13 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 	   value. Instead, issue a release "command" to the signal
 	   node to cause it to release a forced value. */
       if (flags == vpiReleaseFlag) {
-	    vvp_net_ptr_t dest_cmd(rfp->node, 3);
+	    vvp_fun_signal_base*sig
+		  = reinterpret_cast<vvp_fun_signal_base*>(rfp->node->fun);
+	    assert(sig);
+
+	    vvp_net_ptr_t ptr(rfp->node, 0);
 	      /* Assume this is a net. (XXXX Are we sure?) */
-	    vvp_send_long(dest_cmd, 2 /* release/net */);
+	    sig->release(ptr, true);
 	    return ref;
       }
 

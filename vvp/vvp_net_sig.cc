@@ -254,67 +254,6 @@ vvp_fun_signal_base::vvp_fun_signal_base()
       count_functors_sig += 1;
 }
 
-/*
- * The signal functor takes commands as long values to port-3. This
- * method interprets those commands.
- */
-void vvp_fun_signal_base::recv_long(vvp_net_ptr_t ptr, long bit)
-{
-      switch (ptr.port()) {
-	  case 3: // Command port
-	    switch (bit) {
-		case 1: // deassign command
-		  deassign();
-		  break;
-		case 2: // release/net
-		  release(ptr, true);
-		  break;
-		case 3: // release/reg
-		  release(ptr, false);
-		  break;
-		default:
-		  fprintf(stderr, "Unsupported command %ld.\n", bit);
-		  assert(0);
-		  break;
-	    }
-	    break;
-
-	  default: // Other ports are errors.
-	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
-	    assert(0);
-	    break;
-      }
-}
-
-void vvp_fun_signal_base::recv_long_pv(vvp_net_ptr_t ptr, long bit,
-                                       unsigned base, unsigned wid)
-{
-      switch (ptr.port()) {
-	  case 3: // Command port
-	    switch (bit) {
-		case 1: // deassign command
-		  deassign_pv(base, wid);
-		  break;
-		case 2: // release/net
-		  release_pv(ptr, true, base, wid);
-		  break;
-		case 3: // release/reg
-		  release_pv(ptr, false, base, wid);
-		  break;
-		default:
-		  fprintf(stderr, "Unsupported command %ld.\n", bit);
-		  assert(0);
-		  break;
-	    }
-	    break;
-
-	  default: // Other ports are errors.
-	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
-	    assert(0);
-	    break;
-      }
-}
-
 vvp_fun_signal4_sa::vvp_fun_signal4_sa(unsigned wid, vvp_bit4_t init)
 : bits4_(wid, init)
 {

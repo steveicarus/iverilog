@@ -188,9 +188,6 @@ class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_filter_wire_base {
 
     public:
       vvp_fun_signal_base();
-      void recv_long(vvp_net_ptr_t port, long bit);
-      void recv_long_pv(vvp_net_ptr_t port, long bit,
-                        unsigned base, unsigned wid);
 
       void deassign();
       void deassign_pv(unsigned base, unsigned wid);

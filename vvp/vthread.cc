@@ -1747,11 +1747,10 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
       }
 
 	/* Do we release all or part of the net? */
-      vvp_net_ptr_t ptr (net, 3);
       if (full_sig) {
-	    vvp_send_long(ptr, 1);
+	    sig->deassign();
       } else {
-	    vvp_send_long_pv(ptr, 1, base, width);
+	    sig->deassign_pv(base, width);
       }
 
       return true;
@@ -1772,8 +1771,7 @@ bool of_DEASSIGN_WR(vthread_t thr, vvp_code_t cp)
 	    sig->cassign_link = 0;
       }
 
-      vvp_net_ptr_t ptr (net, 3);
-      vvp_send_long(ptr, 1);
+      sig->deassign();
 
       return true;
 }
@@ -3940,11 +3938,11 @@ bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
       assert(sig->force_link == 0);
 
 	/* Do we release all or part of the net? */
-      vvp_net_ptr_t ptr (net, 3);
+      vvp_net_ptr_t ptr (net, 0);
       if (full_sig) {
-	    vvp_send_long(ptr, 2);
+	    sig->release(ptr, true);
       } else {
-	    vvp_send_long_pv(ptr, 2, base, width);
+	    sig->release_pv(ptr, true, base, width);
       }
 
       return true;
@@ -3980,11 +3978,11 @@ bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
 
 	// Send a command to this signal to unforce itself.
 	/* Do we release all or part of the net? */
-      vvp_net_ptr_t ptr (net, 3);
+      vvp_net_ptr_t ptr (net, 0);
       if (full_sig) {
-	    vvp_send_long(ptr, 3);
+	    sig->release(ptr, false);
       } else {
-	    vvp_send_long_pv(ptr, 3, base, width);
+	    sig->release_pv(ptr, false, base, width);
       }
 
       return true;
@@ -4008,9 +4006,8 @@ bool of_RELEASE_WR(vthread_t thr, vvp_code_t cp)
       }
 
 	// Send a command to this signal to unforce itself.
-      vvp_net_ptr_t ptr (net, 3);
-      vvp_send_long(ptr, 2 + type);
-
+      vvp_net_ptr_t ptr (net, 0);
+      sig->release(ptr, type==0);
       return true;
 }
 
