@@ -207,6 +207,14 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
       name_component_t name_tail = path_.back();
       oldpath.pop_back();
 
+      if (path_.size() > 1) {
+	    cerr << get_fileline() << ": error: parameter r-value expression "
+	            "does not support hierarchical references `" << path_
+	         << "`." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       NetScope*pscope = scope;
       if (path_.size() > 0) {
 	    list<hname_t> tmp = eval_scope_path(des, scope, oldpath);
@@ -229,8 +237,9 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
 	    ivl_assert(*this, pscope);
       }
       if (ex == 0) {
-	    cerr << get_fileline() << ": error: identifier ``" << name_tail.name <<
-		  "'' is not a parameter in "<< scope_path(scope)<< "." << endl;
+	    cerr << get_fileline() << ": error: identifier `"
+	         << name_tail.name << "` is not a parameter in "
+	         << scope_path(scope)<< "." << endl;
 	    des->errors += 1;
 	    return 0;
       }
