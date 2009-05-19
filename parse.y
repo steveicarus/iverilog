@@ -80,6 +80,22 @@ static stack<PBlock*> current_block_stack;
 const static struct str_pair_t pull_strength = { PGate::PULL,  PGate::PULL };
 const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 
+static list<pair<perm_string,PExpr*> >* make_port_list(char*id, PExpr*expr)
+{
+      list<pair<perm_string,PExpr*> >*tmp = new list<pair<perm_string,PExpr*> >;
+      tmp->push_back(make_pair(lex_strings.make(id), expr));
+      delete[]id;
+      return tmp;
+}
+static list<pair<perm_string,PExpr*> >* make_port_list(list<pair<perm_string,
+                                                                 PExpr*> >*tmp,
+                                                       char*id, PExpr*expr)
+{
+      tmp->push_back(make_pair(lex_strings.make(id), expr));
+      delete[]id;
+      return tmp;
+}
+
 static list<perm_string>* list_from_identifier(char*id)
 {
       list<perm_string>*tmp = new list<perm_string>;
@@ -146,6 +162,9 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 	   strdup. They can be put into lists with the texts type. */
       char*text;
       list<perm_string>*perm_strings;
+
+      list<pair<perm_string,PExpr*> >*port_list;
+
       pform_name_t*pform_name;
 
       ivl_discipline_t discipline;
@@ -260,7 +279,9 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %type <expr>    udp_initial_expr_opt
 
 %type <text> register_variable net_variable real_variable
-%type <perm_strings> register_variable_list net_variable_list real_variable_list list_of_identifiers
+%type <perm_strings> register_variable_list net_variable_list
+%type <perm_strings> real_variable_list list_of_identifiers
+%type <port_list> list_of_port_identifiers
 
 %type <net_decl_assign> net_decl_assign net_decl_assigns
 
@@ -1647,6 +1668,17 @@ list_of_identifiers
                 { $$ = list_from_identifier($1, $3); }
 	;
 
+list_of_port_identifiers
+	: IDENTIFIER
+                { $$ = make_port_list($1, 0); }
+	| IDENTIFIER '=' expression
+                { $$ = make_port_list($1, $3); }
+	| list_of_port_identifiers ',' IDENTIFIER
+                { $$ = make_port_list($1, $3, 0); }
+	| list_of_port_identifiers ',' IDENTIFIER '=' expression
+                { $$ = make_port_list($1, $3, $5); }
+	;
+
 
   /* The list_of_ports and list_of_port_declarations rules are the
      port list formats for module ports. The list_of_ports_opt rule is
@@ -1991,9 +2023,20 @@ module_item
 		                 SR_BOTH);
 		}
 
-	| K_output var_type signed_opt range_opt list_of_identifiers ';'
-		{ pform_makewire(@1, $4, $3, $5, $2, NetNet::POUTPUT,
-				 IVL_VT_NO_TYPE, 0, SR_BOTH);
+	| K_output var_type signed_opt range_opt list_of_port_identifiers ';'
+		{ list<pair<perm_string,PExpr*> >::const_iterator pp;
+		  list<perm_string>*tmp = new list<perm_string>;
+		  for (pp = $5->begin(); pp != $5->end(); pp++) {
+			tmp->push_back((*pp).first);
+		  }
+		  pform_makewire(@1, $4, $3, tmp, $2, NetNet::POUTPUT,
+		                 IVL_VT_NO_TYPE, 0, SR_BOTH);
+		  for (pp = $5->begin(); pp != $5->end(); pp++) {
+			if ((*pp).second) {
+			      pform_make_reginit(@1, (*pp).first, (*pp).second);
+			}
+		  }
+		  delete $5;
 		}
 
   /* var_type declaration (reg variables) cannot be input or output,

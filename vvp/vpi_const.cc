@@ -696,16 +696,7 @@ static void real_value(vpiHandle ref, p_vpi_value vp)
       assert((ref->vpi_type->type_code == vpiConstant) ||
              (ref->vpi_type->type_code == vpiParameter));
 
-      switch (vp->format) {
-	  case vpiObjTypeVal:
-	    vp->format = vpiRealVal;
-	  case vpiRealVal:
-	    vp->value.real = rfp->value;
-	    break;
-	  default:
-	    fprintf(stderr, "vvp error: unsupported format %d.\n", vp->format);
-	    assert(0);
-      }
+       vpip_real_get_value(rfp->value, vp);
 }
 
 static const struct __vpirt vpip_real_rt = {

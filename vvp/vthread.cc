@@ -984,7 +984,7 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
       if (off >= (long)sig->size()) return true;
       else if (off < 0 ) {
 	      // We fell off the LSB end.
-	    if ((unsigned)-off > wid ) return true;
+	    if ((unsigned)-off >= wid ) return true;
 	      // Trim the bits before the LSB
 	    wid += off;
 	    bit -= off;
@@ -1021,7 +1021,7 @@ bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
       if (off >= (long)sig->size()) return true;
       else if (off < 0 ) {
 	      // We fell off the LSB end.
-	    if ((unsigned)-off > wid ) return true;
+	    if ((unsigned)-off >= wid ) return true;
 	      // Trim the bits before the LSB
 	    wid += off;
 	    bit -= off;
@@ -1060,7 +1060,7 @@ bool of_ASSIGN_V0X1E(vthread_t thr, vvp_code_t cp)
 	    return true;
       } else if (off < 0 ) {
 	      // We fell off the LSB end.
-	    if ((unsigned)-off > wid ) {
+	    if ((unsigned)-off >= wid ) {
 		  thr->event = 0;
 		  thr->ecount = 0;
 		  return true;

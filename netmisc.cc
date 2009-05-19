@@ -416,6 +416,7 @@ const char *human_readable_op(const char op, bool unary)
 	    case '-': type = "-";  break;
 	    case '*': type = "*";  break;
 	    case '/': type = "/";  break;
+	    case '%': type = "%";  break;
 
 	    case '<': type = "<";  break;
 	    case '>': type = ">";  break;

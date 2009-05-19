@@ -66,6 +66,11 @@ other tools.
 .TP 8
 .B -gverilog-ams\fI|-fP-gno-verilog-ams
 Enable or disable (default) support for Verilog-AMS.
+Very little Verilog-AMS specific functionality is currently supported.
+.TP 8
+.B -gsystem-verilog\fI|-fP-gno-system-verilog
+Enable or disable (default) support for SystemVerilog.
+Very little SystemVerilog specific functionality is currently supported.
 .TP 8
 .B -gspecify\fI|\fP-gno-specify
 Enable or disable (default) specify block support. When enabled,
