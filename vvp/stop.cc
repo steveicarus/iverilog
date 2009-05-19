@@ -478,6 +478,13 @@ static void invoke_command(char*txt)
       delete[]argv;
 }
 
+static void invoke_command_const(const char*txt)
+{
+      char *vtxt = strdup(txt);
+      invoke_command(vtxt);
+      free(vtxt);
+}
+
 void stop_handler(int rc)
 {
         /* The user may be running in a non-interactive environment, so
@@ -489,8 +496,8 @@ void stop_handler(int rc)
 
       vpi_mcd_printf(1,"** VVP Stop(%d) **\n", rc);
       vpi_mcd_printf(1,"** Flushing output streams.\n");
-      invoke_command("$fflush");
-      invoke_command("$dumpflush");
+      invoke_command_const("$fflush");
+      invoke_command_const("$dumpflush");
       vpi_mcd_printf(1,"** Current simulation time is %" TIME_FMT_U " ticks.\n",
 		     schedule_simtime());
 
