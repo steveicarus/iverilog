@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 20001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,10 +17,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: cfparse.y,v 1.12 2007/04/19 02:52:53 steve Exp $"
-#endif
-
 
 # include  "globals.h"
 # include  "cfparse_misc.h"

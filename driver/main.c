@@ -941,7 +941,9 @@ int main(int argc, char **argv)
 		  return 1;
 	    }
             free(command_filename);
+            fclose(fp);
       }
+      destroy_lexor();
 
       if (depfile) {
 	    fprintf(defines_file, "M:%s\n", depfile);
