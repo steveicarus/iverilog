@@ -921,6 +921,21 @@ expression
 		  FILE_NAME(tmp, @2);
 		  $$ = tmp;
 		}
+	| '~' '&' expr_primary %prec UNARY_PREC
+		{ yyerror(@1, "error: '~' '&'  is not a valid expression. "
+			  "Please use operator '~&' instead.");
+		  $$ = 0;
+		}
+	| '~' '|' expr_primary %prec UNARY_PREC
+		{ yyerror(@1, "error: '~' '|'  is not a valid expression. "
+			  "Please use operator '~|' instead.");
+		  $$ = 0;
+		}
+	| '~' '^' expr_primary %prec UNARY_PREC
+		{ yyerror(@1, "error: '~' '^'  is not a valid expression. "
+			  "Please use operator '~^' instead.");
+		  $$ = 0;
+		}
 	| K_NAND expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('A', $2);
 		  FILE_NAME(tmp, @2);
