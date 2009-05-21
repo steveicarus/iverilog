@@ -2389,6 +2389,7 @@ void dll_target::scope(const NetScope*net)
 	    scop->nattr = net->attr_cnt();
 	    scop->attr = fill_in_attributes(net);
 	    scop->is_auto = net->is_auto();
+	    scop->is_cell = net->is_cell();
 
 	    switch (net->type()) {
 		case NetScope::MODULE:

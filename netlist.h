@@ -761,6 +761,10 @@ class NetScope : public Attrib {
       void is_auto(bool is_auto__) { is_auto_ = is_auto__; };
       bool is_auto() const { return is_auto_; };
 
+	/* Is the module a cell (is in a `celldefine) */
+      void is_cell(bool is_cell__) { is_cell_ = is_cell__; };
+      bool is_cell() const { return is_cell_; };
+
       const NetTaskDef* task_def() const;
       const NetFuncDef* func_def() const;
 
@@ -908,7 +912,7 @@ class NetScope : public Attrib {
       NetScope*sub_;
 
       unsigned lcounter_;
-      bool is_auto_;
+      bool is_auto_, is_cell_;
 };
 
 /*

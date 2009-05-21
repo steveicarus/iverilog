@@ -74,6 +74,8 @@ class Module : public PScope, public LineInfo {
 	   other effect. */
       bool library_flag;
 
+      bool is_cell;
+
       NetNet::Type default_nettype;
 
 	/* specparams are simpler then other params, in that they have

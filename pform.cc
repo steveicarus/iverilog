@@ -449,11 +449,12 @@ void pform_module_set_ports(vector<Module::port_t*>*ports)
       }
 }
 
-void pform_endmodule(const char*name)
+void pform_endmodule(const char*name, bool in_celldefine)
 {
       assert(pform_cur_module);
       perm_string mod_name = pform_cur_module->mod_name();
       assert(strcmp(name, mod_name) == 0);
+      pform_cur_module->is_cell = in_celldefine;
 
       map<perm_string,Module*>::const_iterator test =
 	    pform_modules.find(mod_name);

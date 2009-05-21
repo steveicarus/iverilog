@@ -606,6 +606,8 @@ struct ivl_scope_s {
       ivl_statement_t def;
       unsigned is_auto;
 
+      unsigned is_cell;
+
       unsigned ports;
       ivl_signal_t*port;
 
