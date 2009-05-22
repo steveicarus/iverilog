@@ -31,6 +31,7 @@ Module::Module(perm_string n)
       library_flag = false;
       is_cell = false;
       default_nettype = NetNet::NONE;
+      timescale_warn_done = false;
 }
 
 Module::~Module()

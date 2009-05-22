@@ -108,6 +108,7 @@ class Module : public PScope, public LineInfo {
 	   set by the `timescale directive. */
       int time_unit, time_precision;
       bool time_from_timescale;
+      bool timescale_warn_done;
 
 	/* Task definitions within this module */
       map<perm_string,PTask*> tasks;

@@ -1,7 +1,7 @@
 #ifndef __parse_api_H
 #define __parse_api_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -45,5 +45,10 @@ extern map<perm_string,PUdp*>   pform_primitives;
 extern int  pform_parse(const char*path, FILE*file =0);
 
 extern string vl_file;
+
+extern void pform_set_timescale(int units, int prec, const char*file,
+                                unsigned lineno);
+extern int def_ts_units;
+extern int def_ts_prec;
 
 #endif

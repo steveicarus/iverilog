@@ -142,6 +142,9 @@ bool verbose_flag = false;
 
 unsigned integer_width = 32;
 
+int def_ts_units = 0;
+int def_ts_prec = 0;
+
 /*
  * Keep a heap of identifier strings that I encounter. This is a more
  * efficient way to allocate those strings.
@@ -726,6 +729,7 @@ int main(int argc, char*argv[])
       if (flag_tmp) recursive_mod_limit = strtoul(flag_tmp,NULL,0);
 
 	/* Parse the input. Make the pform. */
+      pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);
       int rc = pform_parse(argv[optind]);
 
       if (pf_path) {
