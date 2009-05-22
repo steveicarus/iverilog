@@ -67,9 +67,6 @@ static const char* set_file_name(char*text)
       return path;
 }
 
-
-extern void pform_set_timescale(int, int, const char*file, unsigned line);
-
 void reset_lexor();
 static void line_directive();
 static void line_directive2();
@@ -88,6 +85,7 @@ static list<int> keyword_mask_stack;
 
 static int comment_enter;
 static bool in_module = false;
+static bool in_UDP = false;
 bool in_celldefine = false;
 %}
 
@@ -238,6 +236,14 @@ S [afpnumkKMGT]
 	    in_module = false;
 	    break;
 
+	  case K_primitive:
+	    in_UDP = true;
+	    break;
+
+	  case K_endprimitive:
+	    in_UDP = false;
+	    break;
+
 	  default:
 	    yylval.text = 0;
 	    break;
@@ -349,7 +355,7 @@ S [afpnumkKMGT]
       return REALTIME; }
 
 
-  /* Notice and handle the timescale directive. */
+  /* Notice and handle the `timescale directive. */
 
 ^{W}?`timescale { BEGIN(PPTIMESCALE); }
 <PPTIMESCALE>.* { process_timescale(yytext); }
@@ -363,8 +369,31 @@ S [afpnumkKMGT]
       yylloc.first_line += 1;
       BEGIN(0); }
 
-^{W}?`celldefine{W}?.*              { in_celldefine = true; }
-^{W}?`endcelldefine{W}?.*           { in_celldefine = false; }
+  /* Notice and handle the `celldefine and `endcelldefine directives. */
+
+^{W}?`celldefine{W}?    { in_celldefine = true; }
+^{W}?`endcelldefine{W}? { in_celldefine = false; }
+
+  /* Notice and handle the resetall directive. */
+
+^{W}?`resetall{W}? {
+      if (in_module) {
+	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
+		    "`resetall directive can not be inside a module "
+		    "definition." << endl;
+	    error_count += 1;
+      } else if (in_UDP) {
+	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
+		    "`resetall directive can not be inside a UDP "
+		    "definition." << endl;
+	    error_count += 1;
+      } else {
+	    pform_set_default_nettype(NetNet::WIRE, yylloc.text,
+	                              yylloc.first_line);
+	    in_celldefine = false;
+	    pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);
+	    /* Add `nounconnected_drive when implemented. */
+      } }
 
   /* These are directives that I do not yet support. I think that IVL
      should handle these, not an external preprocessor. */
@@ -372,7 +401,6 @@ S [afpnumkKMGT]
 ^{W}?`line{W}?.*                    {  }
 ^{W}?`nounconnected_drive{W}?.*     {  }
 ^{W}?`pragme{W}?.*                  {  }
-^{W}?`resetall{W}?.*                {  }
 ^{W}?`unconnected_drive{W}?.*       {  }
 
   /* From 1364-2005 Annex D. */
