@@ -1923,7 +1923,7 @@ module  : attribute_list_opt module_start IDENTIFIER
 		{ pform_module_set_ports($6); }
 	  module_item_list_opt
 	  K_endmodule
-		{ pform_endmodule($3);
+		{ pform_endmodule($3, in_celldefine);
 		  delete[]$3;
 		}
 

@@ -41,6 +41,7 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
       events_ = 0;
       lcounter_ = 0;
       is_auto_ = false;
+      is_cell_ = false;
 
       if (up) {
 	    default_nettype_ = up->default_nettype();

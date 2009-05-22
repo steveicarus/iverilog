@@ -479,6 +479,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
       elaborate_scope_events_(des, scope, events);
 
+      scope->is_cell(is_cell);
+
       return des->errors == 0;
 }
 

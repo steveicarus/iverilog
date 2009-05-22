@@ -214,26 +214,34 @@ int main(int argc, char*argv[])
       FILE*precomp_out = NULL;
 
 	/* Define preprocessor keywords that I plan to just pass. */
+	/* From 1364-2005 Chapter 19. */
+      define_macro("begin_keywords",          "`begin_keywords", 1, 0);
       define_macro("celldefine",              "`celldefine", 1, 0);
-      define_macro("default_decay_time",      "`default_decay_time", 1, 0);
       define_macro("default_nettype",         "`default_nettype", 1, 0);
-      define_macro("default_trireg_strength", "`default_trireg_strength", 1, 0);
-      define_macro("delay_mode_distributed",  "`delay_mode_distributed", 1, 0);
-      define_macro("delay_mode_unit",         "`delay_mode_unit", 1, 0);
-      define_macro("delay_mode_path",         "`delay_mode_path", 1, 0);
-      define_macro("delay_mode_zero",         "`delay_mode_zero", 1, 0);
-      define_macro("disable_portfaults",      "`disable_portfaults", 1, 0);
-      define_macro("enable_portfaults",       "`enable_portfaults", 1, 0);
+      define_macro("end_keywords",            "`end_keywords", 1, 0);
       define_macro("endcelldefine",           "`endcelldefine", 1, 0);
-      define_macro("endprotect",              "`endprotect", 1, 0);
       define_macro("line",                    "`line", 1, 0);
-      define_macro("nosuppress_faults",       "`nosuppress_faults", 1, 0);
       define_macro("nounconnected_drive",     "`nounconnected_drive", 1, 0);
-      define_macro("protect",                 "`protect", 1, 0);
+      define_macro("pragma",                  "`pragma", 1, 0);
       define_macro("resetall",                "`resetall", 1, 0);
-      define_macro("suppress_faults",         "`suppress_faults", 1, 0);
       define_macro("timescale",               "`timescale", 1, 0);
       define_macro("unconnected_drive",       "`unconnected_drive", 1, 0);
+
+	/* From 1364-2005 Annex D. */
+      define_macro("default_decay_time",      "`default_decay_time", 1, 0);
+      define_macro("default_trireg_strength", "`default_trireg_strength", 1, 0);
+      define_macro("delay_mode_distributed",  "`delay_mode_distributed", 1, 0);
+      define_macro("delay_mode_path",         "`delay_mode_path", 1, 0);
+      define_macro("delay_mode_unit",         "`delay_mode_unit", 1, 0);
+      define_macro("delay_mode_zero",         "`delay_mode_zero", 1, 0);
+
+	/* From other places. */
+      define_macro("disable_portfaults",      "`disable_portfaults", 1, 0);
+      define_macro("enable_portfaults",       "`enable_portfaults", 1, 0);
+      define_macro("endprotect",              "`endprotect", 1, 0);
+      define_macro("nosuppress_faults",       "`nosuppress_faults", 1, 0);
+      define_macro("protect",                 "`protect", 1, 0);
+      define_macro("suppress_faults",         "`suppress_faults", 1, 0);
       define_macro("uselib",                  "`uselib", 1, 0);
 
       include_cnt = 2;

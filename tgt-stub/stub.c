@@ -1533,7 +1533,8 @@ static int show_scope(ivl_scope_t net, void*x)
       is_auto = ivl_scope_is_auto(net) ? "automatic " : "";
       switch (ivl_scope_type(net)) {
 	  case IVL_SCT_MODULE:
-	    fprintf(out, " module %s", ivl_scope_tname(net));
+	    fprintf(out, " module %s%s", ivl_scope_tname(net),
+                    ivl_scope_is_cell(net) ? " (cell)" : "");
 	    break;
 	  case IVL_SCT_FUNCTION:
 	    fprintf(out, " function %s%s", is_auto, ivl_scope_tname(net));
