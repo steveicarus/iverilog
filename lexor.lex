@@ -517,6 +517,12 @@ S [afpnumkKMGT]
 	   << endl;
   }
 
+^{W}?`elsif{W}?.* {
+      cerr << yylloc.text << ":" << yylloc.first_line <<
+	    ": warning: `elsif not supported. Use an external preprocessor."
+	   << endl;
+  }
+
 ^{W}?`endif{W}?.* {
       cerr << yylloc.text << ":" << yylloc.first_line <<
 	    ": warning: `endif not supported. Use an external preprocessor."
@@ -526,6 +532,12 @@ S [afpnumkKMGT]
 ^{W}?`ifdef{W}?.* {
       cerr << yylloc.text << ":" << yylloc.first_line <<
 	    ": warning: `ifdef not supported. Use an external preprocessor."
+	   << endl;
+  }
+
+^{W}?`ifndef{W}?.* {
+      cerr << yylloc.text << ":" << yylloc.first_line <<
+	    ": warning: `ifndef not supported. Use an external preprocessor."
 	   << endl;
   }
 
