@@ -106,8 +106,9 @@ S [afpnumkKMGT]
 
 %%
 
-^"#line"[ ]+\"[^\"]*\"[ ]+[0-9]+.* { line_directive(); }
-^"`line"[ ]+[0-9]+[ ]+\"[^\"]*\".* { line_directive2(); }
+  /* Recognize the various line directives. */
+^"#line"[ \t]+.+ { line_directive(); }
+^[ \t]?"`line"[ \t]+.+ { line_directive2(); }
 
 [ \t\b\f\r] { ; }
 \n { yylloc.first_line += 1; }
@@ -398,7 +399,6 @@ S [afpnumkKMGT]
   /* These are directives that I do not yet support. I think that IVL
      should handle these, not an external preprocessor. */
   /* From 1364-2005 Chapter 19. */
-^{W}?`line{W}?.*                    {  }
 ^{W}?`nounconnected_drive{W}?.*     {  }
 ^{W}?`pragme{W}?.*                  {  }
 ^{W}?`unconnected_drive{W}?.*       {  }
@@ -1087,47 +1087,150 @@ int yywrap()
  */
 static void line_directive()
 {
-      char*qt1 = strchr(yytext, '"');
-      assert(qt1);
-      qt1 += 1;
+      char *cpr;
+	/* Skip any leading space. */
+      char *cp = index(yytext, '#');
+	/* Skip the #line directive. */
+      assert(strncmp(cp, "#line", 5) == 0);
+      cp += 5;
+	/* Skip the space after the #line directive. */
+      cp += strspn(cp, " \t");
 
-      char*qt2 = strchr(qt1, '"');
-      assert(qt2);
+	/* Find the starting " and skip it. */
+      char*fn_start = strchr(cp, '"');
+      if (cp != fn_start) {
+	    VLerror(yylloc, "Invalid #line directive (file name start).");
+	    return;
+      }
+      fn_start += 1;
 
-      char*buf = new char[qt2-qt1+1];
-      strncpy(buf, qt1, qt2-qt1);
-      buf[qt2-qt1] = 0;
+	/* Find the last ". */
+      char*fn_end = strrchr(fn_start, '"');
+      if (!fn_end) {
+	    VLerror(yylloc, "Invalid #line directive (file name end).");
+	    return;
+      }
 
+	/* Copy the file name and assign it to yylloc. */
+      char*buf = new char[fn_end-fn_start+1];
+      strncpy(buf, fn_start, fn_end-fn_start);
+      buf[fn_end-fn_start] = 0;
+
+	/* Skip the space after the file name. */
+      cp = fn_end;
+      cp += 1;
+      cpr = cp;
+      cpr += strspn(cp, " \t");
+      if (cp == cpr) {
+	    VLerror(yylloc, "Invalid #line directive (missing space after "
+	                    "file name).");
+	    return;
+      }
+      cp = cpr;
+
+	/* Get the line number and verify that it is correct. */
+      unsigned long lineno = strtoul(cp, &cpr, 10);
+      if (cp == cpr) {
+	    VLerror(yylloc, "Invalid line number for #line directive.");
+	    return;
+      }
+      cp = cpr;
+
+	/* Verify that only space is left. */
+      cpr += strspn(cp, " \t");
+      if ((size_t)(cpr-yytext) != strlen(yytext)) {
+	    VLerror(yylloc, "Invalid #line directive (extra garbage after "
+	                    "line number).");
+	    return;
+      }
+
+	/* Now we can assign the new values to yyloc. */
       yylloc.text = set_file_name(buf);
-
-      qt2 += 1;
-      yylloc.first_line = strtoul(qt2,0,0);
+      yylloc.first_line = lineno;
 }
 
+/*
+ * The line directive matches lines of the form `line N "foo" M and
+ * calls this function. Here I parse out the file name and line
+ * number, and change the yylloc to suite. M is ignored.
+ */
 static void line_directive2()
 {
-      assert(strncmp(yytext,"`line",5) == 0);
-      char*cp = yytext + strlen("`line");
-      cp += strspn(cp, " ");
-      yylloc.first_line = strtoul(cp,&cp,10);
+      char *cpr;
+	/* Skip any leading space. */
+      char *cp = index(yytext, '`');
+	/* Skip the `line directive. */
+      assert(strncmp(cp, "`line", 5) == 0);
+      cp += 5;
 
-      yylloc.first_line -= 1;
+	/* strtoul skips leading space. */
+      unsigned long lineno = strtoul(cp, &cpr, 10);
+      if (cp == cpr) {
+	    VLerror(yylloc, "Invalid line number for `line directive.");
+	    return;
+      }
+      lineno -= 1;
+      cp = cpr;
 
-      cp += strspn(cp, " ");
-      if (*cp == 0) return;
+	/* Skip the space between the line number and the file name. */
+      cpr += strspn(cp, " \t");
+      if (cp == cpr) {
+	    VLerror(yylloc, "Invalid `line directive (missing space after "
+	                    "line number).");
+	    return;
+      }
+      cp = cpr;
 
-      char*qt1 = strchr(yytext, '"');
-      assert(qt1);
-      qt1 += 1;
+	/* Find the starting " and skip it. */
+      char*fn_start = strchr(cp, '"');
+      if (cp != fn_start) {
+	    VLerror(yylloc, "Invalid `line directive (file name start).");
+	    return;
+      }
+      fn_start += 1;
 
-      char*qt2 = strchr(qt1, '"');
-      assert(qt2);
+	/* Find the last ". */
+      char*fn_end = strrchr(fn_start, '"');
+      if (!fn_end) {
+	    VLerror(yylloc, "Invalid `line directive (file name end).");
+	    return;
+      }
 
-      char*buf = new char[qt2-qt1+1];
-      strncpy(buf, qt1, qt2-qt1);
-      buf[qt2-qt1] = 0;
+	/* Skip the space after the file name. */
+      cp = fn_end;
+      cp += 1;
+      cpr = cp;
+      cpr += strspn(cp, " \t");
+      if (cp == cpr) {
+	    VLerror(yylloc, "Invalid `line directive (missing space after "
+	                    "file name).");
+	    return;
+      }
+      cp = cpr;
+
+	/* Check that the level is correct, we do not need the level. */
+      strtoul(cp, &cpr, 10);
+      if (cp == cpr) {
+	    VLerror(yylloc, "Invalid level for `line directive.");
+	    return;
+      }
+      cp = cpr;
+
+	/* Verify that only space is left. */
+      cpr += strspn(cp, " \t");
+      if ((size_t)(cpr-yytext) != strlen(yytext)) {
+	    VLerror(yylloc, "Invalid `line directive (extra garbage after "
+	                    "level).");
+	    return;
+      }
+
+	/* Copy the file name and assign it and the line number to yylloc. */
+      char*buf = new char[fn_end-fn_start+1];
+      strncpy(buf, fn_start, fn_end-fn_start);
+      buf[fn_end-fn_start] = 0;
 
       yylloc.text = set_file_name(buf);
+      yylloc.first_line = lineno;
 }
 
 extern FILE*vl_input;
