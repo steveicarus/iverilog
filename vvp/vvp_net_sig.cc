@@ -50,25 +50,25 @@ vvp_filter_wire_base::~vvp_filter_wire_base()
 {
 }
 
-const vvp_vector4_t* vvp_filter_wire_base::filter_vec4(const vvp_vector4_t&val)
+template <class T> const T*vvp_filter_wire_base::filter_mask_(const T&val, const T&force, T&filter)
 {
       if (force_mask_.size()) {
 	    bool propagate_flag = force_propagate_;
 	    force_propagate_ = false;
 	    assert(val.size() == force_mask_.size());
-	    assert(val.size() == force4_.size());
+	    assert(val.size() == force.size());
 
-	    filter4_ = val;
+	    filter = val;
 	    for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
 		  if (force_mask_.value(idx))
-			filter4_.set_bit(idx, force4_.value(idx));
+			filter.set_bit(idx, force.value(idx));
 		  else
 			propagate_flag = true;
 	    }
 
 	    if (propagate_flag) {
 		  run_vpi_callbacks();
-		  return &filter4_;
+		  return &filter;
 	    } else {
 		  return 0;
 	    }
@@ -79,83 +79,119 @@ const vvp_vector4_t* vvp_filter_wire_base::filter_vec4(const vvp_vector4_t&val)
       }
 }
 
-const vvp_vector8_t* vvp_filter_wire_base::filter_vec8(const vvp_vector8_t&val)
-{
-      if (force_mask_.size()) {
-	    bool propagate_flag = force_propagate_;
-	    force_propagate_ = false;
-	    assert(val.size() == force_mask_.size());
-	    assert(val.size() == force8_.size());
-
-	    filter8_ = val;
-	    for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
-		  if (force_mask_.value(idx))
-			filter8_.set_bit(idx, force8_.value(idx));
-		  else
-			propagate_flag = true;
-	    }
-
-	    if (propagate_flag) {
-		  run_vpi_callbacks();
-		  return&filter8_;
-	    } else {
-		  return 0;
-	    }
-      } else {
-	    run_vpi_callbacks();
-	    return &val;
-      }
-}
-
-bool vvp_filter_wire_base::filter_real(double&val)
+template <class T> bool vvp_filter_wire_base::filter_mask_(T&val)
 {
       run_vpi_callbacks();
       return true;
 }
 
-bool vvp_filter_wire_base::filter_long(long&)
+const vvp_vector4_t* vvp_fun_signal4::filter_vec4(const vvp_vector4_t&val)
 {
-      run_vpi_callbacks();
-      return true;
+      return filter_mask_(val, force4_, filter4_);
 }
 
-void vvp_filter_wire_base::force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
+const vvp_vector8_t* vvp_fun_signal8::filter_vec8(const vvp_vector8_t&val)
 {
-      if (force_mask_.size() == 0)
-	    force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, mask.size());
+      return filter_mask_(val, force8_, filter8_);
+}
+
+bool vvp_fun_signal_real::filter_real(double&val)
+{
+      return filter_mask_(val);
+}
+
+bool vvp_filter_wire_base::filter_long(long&val)
+{
+      return filter_mask_(val);
+}
+
+void vvp_fun_signal4::force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
+{
+      force_mask(mask);
+
       if (force4_.size() == 0)
 	    force4_ = val;
 
-      assert(force_mask_.size() == mask.size());
       for (unsigned idx = 0; idx < mask.size() ; idx += 1) {
 	    if (mask.value(idx) == 0)
 		  continue;
 
-	    force_mask_.set_bit(idx, 1);
 	    force4_.set_bit(idx, val.value(idx));
-	    force_propagate_ = true;
       }
 }
 
-void vvp_filter_wire_base::force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
+void vvp_fun_signal8::force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
 {
-      if (force_mask_.size() == 0)
-	    force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, mask.size());
+      force_mask(mask);
+
       if (force8_.size() == 0)
 	    force8_ = val;
 
-      assert(force_mask_.size() == mask.size());
       for (unsigned idx = 0; idx < mask.size() ; idx += 1) {
 	    if (mask.value(idx) == 0)
 		  continue;
 
-	    force_mask_.set_bit(idx, 1);
 	    force8_.set_bit(idx, val.value(idx));
-	    force_propagate_ = true;
       }
 }
 
-void vvp_filter_wire_base::force_real(double val, vvp_vector2_t mask)
+void vvp_fun_signal_real::force_real(double val, vvp_vector2_t mask)
+{
+      force_mask(mask);
+      force_real_ = val;
+}
+
+vvp_bit4_t vvp_fun_signal4::filtered_value(const vvp_vector4_t&val, unsigned idx) const
+{
+      if (test_force_mask(idx))
+	    return force4_.value(idx);
+      else
+	    return val.value(idx);
+}
+
+vvp_scalar_t vvp_fun_signal8::filtered_value(const vvp_vector8_t&val, unsigned idx) const
+{
+      if (test_force_mask(idx))
+	    return force8_.value(idx);
+      else
+	    return val.value(idx);
+}
+
+const vvp_vector4_t& vvp_fun_signal4::filtered_vec4(const vvp_vector4_t&val) const
+{
+      if (test_force_mask_is_zero())
+	    return val;
+
+      filter4_ = val;
+      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
+	    if (test_force_mask(idx))
+		  filter4_.set_bit(idx, force4_.value(idx));
+      }
+      return filter4_;
+}
+
+const vvp_vector8_t& vvp_fun_signal8::filtered_vec8(const vvp_vector8_t&val) const
+{
+      if (test_force_mask_is_zero())
+	    return val;
+
+      filter8_ = val;
+      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
+	    if (test_force_mask(idx))
+		  filter8_.set_bit(idx, force8_.value(idx));
+      }
+      return filter8_;
+}
+
+double vvp_fun_signal_real::filtered_real(double val) const
+{
+      if (test_force_mask_is_zero())
+	    return val;
+
+      return force_real_;
+}
+
+void vvp_filter_wire_base::force_mask(vvp_vector2_t mask)
 {
       if (force_mask_.size() == 0)
 	    force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, mask.size());
@@ -168,64 +204,6 @@ void vvp_filter_wire_base::force_real(double val, vvp_vector2_t mask)
 	    force_mask_.set_bit(idx, 1);
 	    force_propagate_ = true;
       }
-
-      force_real_ = val;
-}
-
-vvp_bit4_t vvp_filter_wire_base::filtered_value(const vvp_vector4_t&val, unsigned idx) const
-{
-      if (force_mask_.size() == 0)
-	    return val.value(idx);
-      if (force_mask_.value(idx))
-	    return force4_.value(idx);
-
-      return val.value(idx);
-}
-
-vvp_scalar_t vvp_filter_wire_base::filtered_value(const vvp_vector8_t&val, unsigned idx) const
-{
-      if (force_mask_.size() == 0)
-	    return val.value(idx);
-      if (force_mask_.value(idx))
-	    return force8_.value(idx);
-
-      return val.value(idx);
-}
-
-const vvp_vector4_t& vvp_filter_wire_base::filtered_vec4(const vvp_vector4_t&val) const
-{
-      if (force_mask_.size() == 0)
-	    return val;
-
-      filter4_ = val;
-      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
-	    if (force_mask_.value(idx))
-		  filter4_.set_bit(idx, force4_.value(idx));
-      }
-      return filter4_;
-}
-
-const vvp_vector8_t& vvp_filter_wire_base::filtered_vec8(const vvp_vector8_t&val) const
-{
-      if (force_mask_.size() == 0)
-	    return val;
-
-      filter8_ = val;
-      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
-	    if (force_mask_.value(idx))
-		  filter8_.set_bit(idx, force8_.value(idx));
-      }
-      return filter8_;
-}
-
-double vvp_filter_wire_base::filtered_real(double val) const
-{
-      if (force_mask_.size() == 0)
-	    return val;
-      if (force_mask_.value(0) == 0)
-	    return val;
-
-      return force_real_;
 }
 
 void vvp_filter_wire_base::release_mask(vvp_vector2_t mask)

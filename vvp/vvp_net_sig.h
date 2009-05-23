@@ -134,11 +134,8 @@ class vvp_filter_wire_base : public vvp_net_fil_t, public vvp_vpi_callback {
       vvp_filter_wire_base();
       ~vvp_filter_wire_base();
 
-	// These are the virtual methods that we implement to perform
-	// the wire-style filtering.
-      const vvp_vector4_t* filter_vec4(const vvp_vector4_t&val);
-      const vvp_vector8_t* filter_vec8(const vvp_vector8_t&val);
-      bool filter_real(double&val);
+	// The filter_long is a placeholder here. This should be moved
+	// to a vvp_fun_signal_long when such a thing is implemented.
       bool filter_long(long&val);
 
     public:
@@ -150,39 +147,48 @@ class vvp_filter_wire_base : public vvp_net_fil_t, public vvp_vpi_callback {
 	// filtering results using the filtered_* methods. The
 	// release_mask() method releases bits of the vector.
 
-	// Enable filter force.
-      void force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
-      void force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
-      void force_real(double val, vvp_vector2_t mask);
-
-	// Test the value against the filter.
-      vvp_bit4_t filtered_value(const vvp_vector4_t&val, unsigned idx) const;
-      vvp_scalar_t filtered_value(const vvp_vector8_t&val, unsigned idx) const;
-
-      const vvp_vector4_t& filtered_vec4(const vvp_vector4_t&val) const;
-      const vvp_vector8_t& filtered_vec8(const vvp_vector8_t&val) const;
-      double filtered_real(double val) const;
-
-	// Release the force on the bits set in the mask.
-      void release_mask(vvp_vector2_t mask);
-
       virtual void release(vvp_net_ptr_t ptr, bool net) =0;
       virtual void release_pv(vvp_net_ptr_t ptr, bool net,
                               unsigned base, unsigned wid) =0;
 
+    protected:
+	// Set bits of the filter force mask
+      void force_mask(vvp_vector2_t mask);
+	// Release the force on the bits set in the mask.
+      void release_mask(vvp_vector2_t mask);
+	// Test bits of the filter force mask;
+      bool test_force_mask(unsigned bit) const;
+      bool test_force_mask_is_zero() const;
+
+      template <class T> const T*filter_mask_(const T&val, const T&force, T&buf);
+      template <class T> bool filter_mask_(T&val);
+
     private:
 	// Forced value
       vvp_vector2_t force_mask_;
-      vvp_vector4_t force4_;
-      vvp_vector8_t force8_;
-      double force_real_;
 	// True if the next filter must propagate. Need this to allow
 	// the forced value to get through.
       bool force_propagate_;
-	// This is used as a static return value.
-      mutable vvp_vector4_t filter4_;
-      mutable vvp_vector8_t filter8_;
 };
+
+inline bool vvp_filter_wire_base::test_force_mask(unsigned bit) const
+{
+      if (bit >= force_mask_.size())
+	    return false;
+      if (force_mask_.value(bit))
+	    return true;
+      else
+	    return false;
+}
+
+inline bool vvp_filter_wire_base::test_force_mask_is_zero(void) const
+{
+      if (force_mask_.size() == 0)
+	    return true;
+      if (force_mask_.is_zero())
+	    return true;
+      return false;
+}
 
 class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_filter_wire_base {
 
@@ -231,6 +237,17 @@ class vvp_fun_signal4 : public vvp_fun_signal_vec {
 
       void get_value(struct t_vpi_value*value);
 
+    public:
+	// Enable filter force.
+      void force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
+      const vvp_vector4_t* filter_vec4(const vvp_vector4_t&val);
+	// Test the value against the filter.
+      vvp_bit4_t filtered_value(const vvp_vector4_t&val, unsigned idx) const;
+      const vvp_vector4_t& filtered_vec4(const vvp_vector4_t&val) const;
+
+    private:
+      vvp_vector4_t force4_;
+      mutable vvp_vector4_t filter4_;
 };
 
 /*
@@ -336,11 +353,21 @@ class vvp_fun_signal8  : public vvp_fun_signal_vec {
 
       void get_value(struct t_vpi_value*value);
 
+
+    public:
+	// Enable filter force.
+      void force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
+      const vvp_vector8_t* filter_vec8(const vvp_vector8_t&val);
+	// Test the value against the filter.
+      vvp_scalar_t filtered_value(const vvp_vector8_t&val, unsigned idx) const;
+      const vvp_vector8_t& filtered_vec8(const vvp_vector8_t&val) const;
+
     private:
       void calculate_output_(vvp_net_ptr_t ptr);
 
       vvp_vector8_t bits8_;
-      vvp_vector8_t force_;
+      vvp_vector8_t force8_;
+      mutable vvp_vector8_t filter8_;
 };
 
 class vvp_fun_signal_real : public vvp_fun_signal_base {
@@ -352,6 +379,16 @@ class vvp_fun_signal_real : public vvp_fun_signal_base {
       virtual double real_value() const = 0;
 
       void get_value(struct t_vpi_value*value);
+
+    public:
+	// Enable filter force.
+      void force_real(double val, vvp_vector2_t mask);
+      bool filter_real(double&val);
+	// Test the value against the filter.
+      double filtered_real(double val) const;
+
+    private:
+      double force_real_;
 };
 
 /*
