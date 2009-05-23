@@ -74,6 +74,8 @@ class Module : public PScope, public LineInfo {
 	   other effect. */
       bool library_flag;
 
+      bool is_cell;
+
       NetNet::Type default_nettype;
 
 	/* specparams are simpler then other params, in that they have
@@ -106,6 +108,7 @@ class Module : public PScope, public LineInfo {
 	   set by the `timescale directive. */
       int time_unit, time_precision;
       bool time_from_timescale;
+      bool timescale_warn_done;
 
 	/* Task definitions within this module */
       map<perm_string,PTask*> tasks;

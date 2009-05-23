@@ -128,6 +128,9 @@ static int scope_get(int code, vpiHandle obj)
       assert(handle_is_scope(obj));
 
       switch (code) {
+	  case vpiCellInstance:
+	    return (int) ref->is_cell;
+
 	  case vpiDefLineNo:
 	    return ref->def_lineno;
 
@@ -395,7 +398,7 @@ static void attach_to_scope_(struct __vpiScope*scope, vpiHandle obj)
 void
 compile_scope_decl(char*label, char*type, char*name, char*tname,
                    char*parent, long file_idx, long lineno,
-                   long def_file_idx, long def_lineno)
+                   long def_file_idx, long def_lineno, long is_cell)
 {
       struct __vpiScope*scope = new struct __vpiScope;
       count_vpi_scopes += 1;
@@ -408,6 +411,9 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
 	    scope->is_automatic = false;
             base_type = &type[0];
       }
+
+      if (is_cell) scope->is_cell = true;
+      else scope->is_cell = false;
 
       if (strcmp(base_type,"module") == 0) {
 	    scope->base.vpi_type = &vpip_scope_module_rt;

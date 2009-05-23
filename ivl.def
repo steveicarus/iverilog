@@ -161,6 +161,7 @@ ivl_scope_event
 ivl_scope_events
 ivl_scope_file
 ivl_scope_is_auto
+ivl_scope_is_cell
 ivl_scope_lineno
 ivl_scope_logs
 ivl_scope_log

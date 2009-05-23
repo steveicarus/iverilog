@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,9 +21,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: cflexor.lex,v 1.11 2007/03/22 16:08:18 steve Exp $"
-#endif
 
 # include  "cfparse.h"
 # include  "cfparse_misc.h"
@@ -235,4 +232,18 @@ void cfreset(FILE*fd, const char*path)
       yyrestart(fd);
       current_file = strdup(path);
       cflloc.first_line = 1;
+}
+
+/*
+ * Modern version of flex (>=2.5.9) can clean up the scanner data.
+ */
+void destroy_lexor()
+{
+# ifdef FLEX_SCANNER
+#   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5
+#     if defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
+    yylex_destroy();
+#     endif
+#   endif
+# endif
 }

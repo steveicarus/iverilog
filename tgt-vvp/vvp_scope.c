@@ -1825,9 +1825,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
               ivl_scope_lineno(net));
 
       if (parent) {
-	    fprintf(vvp_out, ", %d %d, S_%p;\n",
+	    fprintf(vvp_out, ", %d %d %u, S_%p;\n",
 	            ivl_file_table_index(ivl_scope_def_file(net)),
-	            ivl_scope_def_lineno(net), parent);
+	            ivl_scope_def_lineno(net), ivl_scope_is_cell(net), parent);
       } else {
 
 	    fprintf(vvp_out, ";\n");

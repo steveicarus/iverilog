@@ -67,9 +67,6 @@ static const char* set_file_name(char*text)
       return path;
 }
 
-
-extern void pform_set_timescale(int, int, const char*file, unsigned line);
-
 void reset_lexor();
 static void line_directive();
 static void line_directive2();
@@ -88,6 +85,8 @@ static list<int> keyword_mask_stack;
 
 static int comment_enter;
 static bool in_module = false;
+static bool in_UDP = false;
+bool in_celldefine = false;
 %}
 
 %x CCOMMENT
@@ -107,8 +106,9 @@ S [afpnumkKMGT]
 
 %%
 
-^"#line"[ ]+\"[^\"]*\"[ ]+[0-9]+.* { line_directive(); }
-^"`line"[ ]+[0-9]+[ ]+\"[^\"]*\".* { line_directive2(); }
+  /* Recognize the various line directives. */
+^"#line"[ \t]+.+ { line_directive(); }
+^[ \t]?"`line"[ \t]+.+ { line_directive2(); }
 
 [ \t\b\f\r] { ; }
 \n { yylloc.first_line += 1; }
@@ -237,6 +237,14 @@ S [afpnumkKMGT]
 	    in_module = false;
 	    break;
 
+	  case K_primitive:
+	    in_UDP = true;
+	    break;
+
+	  case K_endprimitive:
+	    in_UDP = false;
+	    break;
+
 	  default:
 	    yylval.text = 0;
 	    break;
@@ -348,7 +356,7 @@ S [afpnumkKMGT]
       return REALTIME; }
 
 
-  /* Notice and handle the timescale directive. */
+  /* Notice and handle the `timescale directive. */
 
 ^{W}?`timescale { BEGIN(PPTIMESCALE); }
 <PPTIMESCALE>.* { process_timescale(yytext); }
@@ -362,28 +370,54 @@ S [afpnumkKMGT]
       yylloc.first_line += 1;
       BEGIN(0); }
 
+  /* Notice and handle the `celldefine and `endcelldefine directives. */
+
+^{W}?`celldefine{W}?    { in_celldefine = true; }
+^{W}?`endcelldefine{W}? { in_celldefine = false; }
+
+  /* Notice and handle the resetall directive. */
+
+^{W}?`resetall{W}? {
+      if (in_module) {
+	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
+		    "`resetall directive can not be inside a module "
+		    "definition." << endl;
+	    error_count += 1;
+      } else if (in_UDP) {
+	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
+		    "`resetall directive can not be inside a UDP "
+		    "definition." << endl;
+	    error_count += 1;
+      } else {
+	    pform_set_default_nettype(NetNet::WIRE, yylloc.text,
+	                              yylloc.first_line);
+	    in_celldefine = false;
+	    pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);
+	    /* Add `nounconnected_drive when implemented. */
+      } }
 
   /* These are directives that I do not yet support. I think that IVL
      should handle these, not an external preprocessor. */
+  /* From 1364-2005 Chapter 19. */
+^{W}?`nounconnected_drive{W}?.*     {  }
+^{W}?`pragme{W}?.*                  {  }
+^{W}?`unconnected_drive{W}?.*       {  }
 
-^{W}?`celldefine{W}?.*              {  }
+  /* From 1364-2005 Annex D. */
 ^{W}?`default_decay_time{W}?.*      {  }
 ^{W}?`default_trireg_strength{W}?.* {  }
 ^{W}?`delay_mode_distributed{W}?.*  {  }
-^{W}?`delay_mode_unit{W}?.*         {  }
 ^{W}?`delay_mode_path{W}?.*         {  }
+^{W}?`delay_mode_unit{W}?.*         {  }
 ^{W}?`delay_mode_zero{W}?.*         {  }
+
+  /* From other places. */
 ^{W}?`disable_portfaults{W}?.*      {  }
 ^{W}?`enable_portfaults{W}?.*       {  }
-^{W}?`endcelldefine{W}?.*           {  }
 `endprotect                         {  }
-^{W}?`line{W}?.*                    {  }
 ^{W}?`nosuppress_faults{W}?.*       {  }
-^{W}?`nounconnected_drive{W}?.*     {  }
 `protect                            {  }
-^{W}?`resetall{W}?.*                {  }
 ^{W}?`suppress_faults{W}?.*         {  }
-^{W}?`unconnected_drive{W}?.*       {  }
 ^{W}?`uselib{W}?.*                  {  }
 
 ^{W}?`begin_keywords{W}? { BEGIN(PPBEGIN_KEYWORDS); }
@@ -483,6 +517,12 @@ S [afpnumkKMGT]
 	   << endl;
   }
 
+^{W}?`elsif{W}?.* {
+      cerr << yylloc.text << ":" << yylloc.first_line <<
+	    ": warning: `elsif not supported. Use an external preprocessor."
+	   << endl;
+  }
+
 ^{W}?`endif{W}?.* {
       cerr << yylloc.text << ":" << yylloc.first_line <<
 	    ": warning: `endif not supported. Use an external preprocessor."
@@ -492,6 +532,12 @@ S [afpnumkKMGT]
 ^{W}?`ifdef{W}?.* {
       cerr << yylloc.text << ":" << yylloc.first_line <<
 	    ": warning: `ifdef not supported. Use an external preprocessor."
+	   << endl;
+  }
+
+^{W}?`ifndef{W}?.* {
+      cerr << yylloc.text << ":" << yylloc.first_line <<
+	    ": warning: `ifndef not supported. Use an external preprocessor."
 	   << endl;
   }
 
@@ -1053,47 +1099,150 @@ int yywrap()
  */
 static void line_directive()
 {
-      char*qt1 = strchr(yytext, '"');
-      assert(qt1);
-      qt1 += 1;
+      char *cpr;
+	/* Skip any leading space. */
+      char *cp = index(yytext, '#');
+	/* Skip the #line directive. */
+      assert(strncmp(cp, "#line", 5) == 0);
+      cp += 5;
+	/* Skip the space after the #line directive. */
+      cp += strspn(cp, " \t");
 
-      char*qt2 = strchr(qt1, '"');
-      assert(qt2);
+	/* Find the starting " and skip it. */
+      char*fn_start = strchr(cp, '"');
+      if (cp != fn_start) {
+	    VLerror(yylloc, "Invalid #line directive (file name start).");
+	    return;
+      }
+      fn_start += 1;
 
-      char*buf = new char[qt2-qt1+1];
-      strncpy(buf, qt1, qt2-qt1);
-      buf[qt2-qt1] = 0;
+	/* Find the last ". */
+      char*fn_end = strrchr(fn_start, '"');
+      if (!fn_end) {
+	    VLerror(yylloc, "Invalid #line directive (file name end).");
+	    return;
+      }
 
+	/* Copy the file name and assign it to yylloc. */
+      char*buf = new char[fn_end-fn_start+1];
+      strncpy(buf, fn_start, fn_end-fn_start);
+      buf[fn_end-fn_start] = 0;
+
+	/* Skip the space after the file name. */
+      cp = fn_end;
+      cp += 1;
+      cpr = cp;
+      cpr += strspn(cp, " \t");
+      if (cp == cpr) {
+	    VLerror(yylloc, "Invalid #line directive (missing space after "
+	                    "file name).");
+	    return;
+      }
+      cp = cpr;
+
+	/* Get the line number and verify that it is correct. */
+      unsigned long lineno = strtoul(cp, &cpr, 10);
+      if (cp == cpr) {
+	    VLerror(yylloc, "Invalid line number for #line directive.");
+	    return;
+      }
+      cp = cpr;
+
+	/* Verify that only space is left. */
+      cpr += strspn(cp, " \t");
+      if ((size_t)(cpr-yytext) != strlen(yytext)) {
+	    VLerror(yylloc, "Invalid #line directive (extra garbage after "
+	                    "line number).");
+	    return;
+      }
+
+	/* Now we can assign the new values to yyloc. */
       yylloc.text = set_file_name(buf);
-
-      qt2 += 1;
-      yylloc.first_line = strtoul(qt2,0,0);
+      yylloc.first_line = lineno;
 }
 
+/*
+ * The line directive matches lines of the form `line N "foo" M and
+ * calls this function. Here I parse out the file name and line
+ * number, and change the yylloc to suite. M is ignored.
+ */
 static void line_directive2()
 {
-      assert(strncmp(yytext,"`line",5) == 0);
-      char*cp = yytext + strlen("`line");
-      cp += strspn(cp, " ");
-      yylloc.first_line = strtoul(cp,&cp,10);
+      char *cpr;
+	/* Skip any leading space. */
+      char *cp = index(yytext, '`');
+	/* Skip the `line directive. */
+      assert(strncmp(cp, "`line", 5) == 0);
+      cp += 5;
 
-      yylloc.first_line -= 1;
+	/* strtoul skips leading space. */
+      unsigned long lineno = strtoul(cp, &cpr, 10);
+      if (cp == cpr) {
+	    VLerror(yylloc, "Invalid line number for `line directive.");
+	    return;
+      }
+      lineno -= 1;
+      cp = cpr;
 
-      cp += strspn(cp, " ");
-      if (*cp == 0) return;
+	/* Skip the space between the line number and the file name. */
+      cpr += strspn(cp, " \t");
+      if (cp == cpr) {
+	    VLerror(yylloc, "Invalid `line directive (missing space after "
+	                    "line number).");
+	    return;
+      }
+      cp = cpr;
 
-      char*qt1 = strchr(yytext, '"');
-      assert(qt1);
-      qt1 += 1;
+	/* Find the starting " and skip it. */
+      char*fn_start = strchr(cp, '"');
+      if (cp != fn_start) {
+	    VLerror(yylloc, "Invalid `line directive (file name start).");
+	    return;
+      }
+      fn_start += 1;
 
-      char*qt2 = strchr(qt1, '"');
-      assert(qt2);
+	/* Find the last ". */
+      char*fn_end = strrchr(fn_start, '"');
+      if (!fn_end) {
+	    VLerror(yylloc, "Invalid `line directive (file name end).");
+	    return;
+      }
 
-      char*buf = new char[qt2-qt1+1];
-      strncpy(buf, qt1, qt2-qt1);
-      buf[qt2-qt1] = 0;
+	/* Skip the space after the file name. */
+      cp = fn_end;
+      cp += 1;
+      cpr = cp;
+      cpr += strspn(cp, " \t");
+      if (cp == cpr) {
+	    VLerror(yylloc, "Invalid `line directive (missing space after "
+	                    "file name).");
+	    return;
+      }
+      cp = cpr;
+
+	/* Check that the level is correct, we do not need the level. */
+      strtoul(cp, &cpr, 10);
+      if (cp == cpr) {
+	    VLerror(yylloc, "Invalid level for `line directive.");
+	    return;
+      }
+      cp = cpr;
+
+	/* Verify that only space is left. */
+      cpr += strspn(cp, " \t");
+      if ((size_t)(cpr-yytext) != strlen(yytext)) {
+	    VLerror(yylloc, "Invalid `line directive (extra garbage after "
+	                    "level).");
+	    return;
+      }
+
+	/* Copy the file name and assign it and the line number to yylloc. */
+      char*buf = new char[fn_end-fn_start+1];
+      strncpy(buf, fn_start, fn_end-fn_start);
+      buf[fn_end-fn_start] = 0;
 
       yylloc.text = set_file_name(buf);
+      yylloc.first_line = lineno;
 }
 
 extern FILE*vl_input;

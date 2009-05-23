@@ -70,11 +70,11 @@ static NetNet::Type pform_default_nettype = NetNet::WIRE;
  * These variables track the current time scale, as well as where the
  * timescale was set. This supports warnings about tangled timescales.
  */
-static int pform_time_unit = 0;
-static int pform_time_prec = 0;
+static int pform_time_unit;
+static int pform_time_prec;
 
 static char*pform_timescale_file = 0;
-static unsigned pform_timescale_line = 0;
+static unsigned pform_timescale_line;
 
 static inline void FILE_NAME(LineInfo*obj, const char*file, unsigned lineno)
 {
@@ -298,10 +298,25 @@ void pform_set_timescale(int unit, int prec,
 	    first_flag = false;
       }
 
-      pform_timescale_file = strdup(file);
+      if (file) pform_timescale_file = strdup(file);
+      else pform_timescale_file = 0;
       pform_timescale_line = lineno;
 
-      if (warn_timescale && first_flag && (pform_modules.size() > 0)) {
+      if (!warn_timescale || !first_flag || !file) return;
+
+	/* Look to see if we have any modules without a timescale. */
+      bool have_no_ts = false;
+      map<perm_string,Module*>::iterator mod;
+      for (mod = pform_modules.begin(); mod != pform_modules.end(); mod++) {
+	    const Module*mp = (*mod).second;
+	    if (mp->time_from_timescale ||
+	        mp->timescale_warn_done) continue;
+	    have_no_ts = true;
+	    break;
+      }
+
+	/* If we do then print a message for the new ones. */
+      if (have_no_ts) {
 	    cerr << file << ":" << lineno << ": warning: "
 		 << "Some modules have no timescale. This may cause"
 		 << endl;
@@ -312,7 +327,10 @@ void pform_set_timescale(int unit, int prec,
 	    map<perm_string,Module*>::iterator mod;
 	    for (mod = pform_modules.begin()
 		       ; mod != pform_modules.end() ; mod++) {
-		  const Module*mp = (*mod).second;
+		  Module*mp = (*mod).second;
+		  if (mp->time_from_timescale ||
+		      mp->timescale_warn_done) continue;
+		  mp->timescale_warn_done = true;
 
 		  cerr << file << ":" << lineno << ":        : "
 		       << "  -- module " << (*mod).first
@@ -449,11 +467,12 @@ void pform_module_set_ports(vector<Module::port_t*>*ports)
       }
 }
 
-void pform_endmodule(const char*name)
+void pform_endmodule(const char*name, bool in_celldefine)
 {
       assert(pform_cur_module);
       perm_string mod_name = pform_cur_module->mod_name();
       assert(strcmp(name, mod_name) == 0);
+      pform_cur_module->is_cell = in_celldefine;
 
       map<perm_string,Module*>::const_iterator test =
 	    pform_modules.find(mod_name);

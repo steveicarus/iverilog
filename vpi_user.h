@@ -304,33 +304,34 @@ typedef struct t_vpi_delay  {
 #define vpiCallback  1000
 
 /* PROPERTIES */
-#define vpiUndefined  (-1)
-#define vpiType       1
-#define vpiName       2
-#define vpiFullName   3
-#define vpiSize       4
-#define vpiFile       5
-#define vpiLineNo     6
-#define vpiTopModule  7
-#define vpiDefName    9
+#define vpiUndefined   (-1)
+#define vpiType           1
+#define vpiName           2
+#define vpiFullName       3
+#define vpiSize           4
+#define vpiFile           5
+#define vpiLineNo         6
+#define vpiTopModule      7
+#define vpiCellInstance   8
+#define vpiDefName        9
 #define vpiTimeUnit      11
 #define vpiTimePrecision 12
-#define vpiDefFile   15
-#define vpiDefLineNo 16
-#define vpiNetType   22
-#   define vpiWire        1
-#define vpiArray     28
-#define vpiEdge      36
-#   define vpiNoEdge     0x00 /* No edge */
-#   define vpiEdge01     0x01 /* 0 --> 1 */
-#   define vpiEdge10     0x02 /* 1 --> 0 */
-#   define vpiEdge0x     0x04 /* 0 --> x */
-#   define vpiEdgex1     0x08 /* x --> 1 */
-#   define vpiEdge1x     0x10 /* 1 --> x */
-#   define vpiEdgex0     0x20 /* x --> 0 */
-#   define vpiPosedge    (vpiEdgex1|vpiEdge01|vpiEdge0x)
-#   define vpiNegedge    (vpiEdgex0|vpiEdge10|vpiEdge1x)
-#   define vpiAnyEdge    (vpiPosedge|vpiNegedge)
+#define vpiDefFile       15
+#define vpiDefLineNo     16
+#define vpiNetType       22
+#   define vpiWire         1
+#define vpiArray         28
+#define vpiEdge          36
+#   define vpiNoEdge       0x00 /* No edge */
+#   define vpiEdge01       0x01 /* 0 --> 1 */
+#   define vpiEdge10       0x02 /* 1 --> 0 */
+#   define vpiEdge0x       0x04 /* 0 --> x */
+#   define vpiEdgex1       0x08 /* x --> 1 */
+#   define vpiEdge1x       0x10 /* 1 --> x */
+#   define vpiEdgex0       0x20 /* x --> 0 */
+#   define vpiPosedge      (vpiEdgex1|vpiEdge01|vpiEdge0x)
+#   define vpiNegedge      (vpiEdgex0|vpiEdge10|vpiEdge1x)
+#   define vpiAnyEdge      (vpiPosedge|vpiNegedge)
 #define vpiConstType 40
 #   define vpiDecConst    1
 #   define vpiRealConst   2

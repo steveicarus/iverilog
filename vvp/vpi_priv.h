@@ -186,6 +186,7 @@ struct __vpiScope {
       unsigned def_file_idx;
       unsigned def_lineno;
       bool is_automatic;
+      bool is_cell;
 	/* The scope has a system time of its own. */
       struct __vpiSystemTime scoped_time;
       struct __vpiSystemTime scoped_stime;

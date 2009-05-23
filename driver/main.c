@@ -870,6 +870,20 @@ int main(int argc, char **argv)
 		  break;
 		case '?':
 		default:
+		  fclose(source_file);
+		  remove(source_path);
+		  free(source_path);
+		  fclose(defines_file);
+		  remove(defines_path);
+		  free(defines_path);
+		  fclose(iconfig_file);
+		  remove(iconfig_path);
+		  free(iconfig_path);
+		  remove(compiled_defines_path);
+		  free(compiled_defines_path);
+		  while( (command_filename = get_cmd_file()) ) {
+			free(command_filename);
+		  }
 		  return 1;
 	    }
       }
@@ -941,7 +955,9 @@ int main(int argc, char **argv)
 		  return 1;
 	    }
             free(command_filename);
+            fclose(fp);
       }
+      destroy_lexor();
 
       if (depfile) {
 	    fprintf(defines_file, "M:%s\n", depfile);
