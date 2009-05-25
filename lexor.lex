@@ -481,6 +481,7 @@ S [afpnumkKMGT]
       NetNet::Type net_type;
       size_t wordlen = strcspn(yytext, " \t\f\r\n");
       yytext[wordlen] = 0;
+  /* Add support for other wire types and better error detection. */
       if (strcmp(yytext,"wire") == 0) {
 	    net_type = NetNet::WIRE;
 
@@ -994,6 +995,7 @@ static void process_timescale(const char*txt)
       char*tmp;
       const char*ctmp;
 
+// Add beetter error detection. Look at `line
       int unit = 0;
       int prec = 0;
 
@@ -1101,7 +1103,7 @@ static void line_directive()
 {
       char *cpr;
 	/* Skip any leading space. */
-      char *cp = index(yytext, '#');
+      char *cp = strchr(yytext, '#');
 	/* Skip the #line directive. */
       assert(strncmp(cp, "#line", 5) == 0);
       cp += 5;
@@ -1170,7 +1172,7 @@ static void line_directive2()
 {
       char *cpr;
 	/* Skip any leading space. */
-      char *cp = index(yytext, '`');
+      char *cp = strchr(yytext, '`');
 	/* Skip the `line directive. */
       assert(strncmp(cp, "`line", 5) == 0);
       cp += 5;
