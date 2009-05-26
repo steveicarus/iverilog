@@ -485,13 +485,34 @@ S [afpnumkKMGT]
       if (strcmp(yytext,"wire") == 0) {
 	    net_type = NetNet::WIRE;
 
+      } else if (strcmp(yytext,"tri") == 0) {
+	    net_type = NetNet::TRI;
+
+      } else if (strcmp(yytext,"tri0") == 0) {
+	    net_type = NetNet::TRI0;
+
+      } else if (strcmp(yytext,"tri1") == 0) {
+	    net_type = NetNet::TRI1;
+
+      } else if (strcmp(yytext,"wand") == 0) {
+	    net_type = NetNet::WAND;
+
+      } else if (strcmp(yytext,"triand") == 0) {
+	    net_type = NetNet::TRIAND;
+
+      } else if (strcmp(yytext,"wor") == 0) {
+	    net_type = NetNet::WOR;
+
+      } else if (strcmp(yytext,"trior") == 0) {
+	    net_type = NetNet::TRIOR;
+
       } else if (strcmp(yytext,"none") == 0) {
 	    net_type = NetNet::NONE;
 
       } else {
 	    cerr << yylloc.text << ":" << yylloc.first_line
 		 << ": error: Net type " << yytext
-		 << " is not a valid (and supported)"
+		 << " is not a valid (or supported)"
 		 << " default net type." << endl;
 	    net_type = NetNet::WIRE;
 	    error_count += 1;
