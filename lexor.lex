@@ -983,6 +983,83 @@ static verinum*make_unsized_dec(const char*ptr)
       return res;
 }
 
+/*
+ * Convert the string to a time unit or precision.
+ * Returns true on failure.
+ */
+static bool get_timescale_const(const char *&cp, int &res, bool is_unit)
+{
+	/* Check for the 1 digit. */
+      if (*cp != '1') {
+	    if (is_unit) {
+		  VLerror(yylloc, "Invalid `timescale unit constant "
+		                  "(1st digit)");
+	    } else {
+		  VLerror(yylloc, "Invalid `timescale precision constant "
+		                  "(1st digit)");
+	    }
+	    return true;
+      }
+      cp += 1;
+
+	/* Check the number of zeros after the 1. */
+      res = strspn(cp, "0");
+      if (res > 2) {
+	    if (is_unit) {
+		  VLerror(yylloc, "Invalid `timescale unit constant "
+		                  "(number of zeros)");
+	    } else {
+		  VLerror(yylloc, "Invalid `timescale precision constant "
+		                  "(number of zeros)");
+	    }
+	    return true;
+      }
+      cp += res;
+
+	/* Skip any space between the digits and the scaling string. */
+      cp += strspn(cp, " \t");
+
+	/* Now process the scaling string. */
+      if (strncmp("s", cp, 1) == 0) {
+	    res -= 0;
+	    cp += 1;
+	    return false;
+
+      } else if (strncmp("ms", cp, 2) == 0) {
+	    res -= 3;
+	    cp += 2;
+	    return false;
+
+      } else if (strncmp("us", cp, 2) == 0) {
+	    res -= 6;
+	    cp += 2;
+	    return false;
+
+      } else if (strncmp("ns", cp, 2) == 0) {
+	    res -= 9;
+	    cp += 2;
+	    return false;
+
+      } else if (strncmp("ps", cp, 2) == 0) {
+	    res -= 12;
+	    cp += 2;
+	    return false;
+
+      } else if (strncmp("fs", cp, 2) == 0) {
+	    res -= 15;
+	    cp += 2;
+	    return false;
+
+      }
+
+      if (is_unit) {
+	    VLerror(yylloc, "Invalid `timescale unit scale");
+      } else {
+	    VLerror(yylloc, "Invalid `timescale precision scale");
+      }
+      return true;
+}
+
 
 /*
  * The timescale parameter has the form:
@@ -990,99 +1067,39 @@ static verinum*make_unsized_dec(const char*ptr)
  */
 static void process_timescale(const char*txt)
 {
-      unsigned num;
       const char*cp = txt + strspn(txt, " \t");
-      char*tmp;
-      const char*ctmp;
 
-// Add beetter error detection. Look at `line
+	/* Skip the space after the `timescale directive. */
+      if (cp == txt) {
+	    VLerror(yylloc, "Space required after `timescale directive.");
+	    return;
+      }
+
       int unit = 0;
       int prec = 0;
 
-      num = strtoul(cp, &tmp, 10);
-      if (num == 0) {
-	    VLerror(yylloc, "Invalid timescale string.");
-	    return;
-      }
+	/* Get the time units. */
+      if (get_timescale_const(cp, unit, true)) return;
 
-      while (num >= 10) {
-	    unit += 1;
-	    num  /= 10;
-      }
-      if (num != 1) {
-	    VLerror(yylloc, "Invalid timescale unit number.");
-	    return;
-      }
-
-      cp = tmp;
+	/* Skip any space after the time units, the '/' and any
+	 * space after the '/'. */
       cp += strspn(cp, " \t");
-      ctmp = cp + strcspn(cp, " \t/");
-
-      if (strncmp("s", cp, ctmp-cp) == 0) {
-	    unit -= 0;
-
-      } else if (strncmp("ms", cp, ctmp-cp) == 0) {
-	    unit -= 3;
-
-      } else if (strncmp("us", cp, ctmp-cp) == 0) {
-	    unit -= 6;
-
-      } else if (strncmp("ns", cp, ctmp-cp) == 0) {
-	    unit -= 9;
-
-      } else if (strncmp("ps", cp, ctmp-cp) == 0) {
-	    unit -= 12;
-
-      } else if (strncmp("fs", cp, ctmp-cp) == 0) {
-	    unit -= 15;
-
-      } else {
-	    VLerror(yylloc, "Invalid timescale unit of measurement");
+      if (*cp != '/') {
+	    VLerror(yylloc, "`timescale separator '/' appears to be missing.");
 	    return;
       }
-
-      cp = ctmp;
-      cp += strspn(cp, " \t/");
-
-      num = strtoul(cp, &tmp, 10);
-      if (num == 0) {
-	    VLerror(yylloc, "Invalid timescale string.");
-	    return;
-      }
-      assert(num);
-      while (num >= 10) {
-	    prec += 1;
-	    num  /= 10;
-      }
-      if (num != 1) {
-	    VLerror(yylloc, "Invalid timescale precision number.");
-	    return;
-      }
-
-      cp = tmp;
+      cp += 1;
       cp += strspn(cp, " \t");
-      ctmp = cp + strcspn(cp, " \t\r");
 
-      if (strncmp("s", cp, ctmp-cp) == 0) {
-	    prec -= 0;
+	/* Get the time precision. */
+      if (get_timescale_const(cp, prec, false)) return;
 
-      } else if (strncmp("ms", cp, ctmp-cp) == 0) {
-	    prec -= 3;
-
-      } else if (strncmp("us", cp, ctmp-cp) == 0) {
-	    prec -= 6;
-
-      } else if (strncmp("ns", cp, ctmp-cp) == 0) {
-	    prec -= 9;
-
-      } else if (strncmp("ps", cp, ctmp-cp) == 0) {
-	    prec -= 12;
-
-      } else if (strncmp("fs", cp, ctmp-cp) == 0) {
-	    prec -= 15;
-
-      } else {
-	    VLerror(yylloc, "Invalid timescale precision units of measurement");
+	/* Verify that only space and/or a single line comment is left. */
+      cp += strspn(cp, " \t");
+      if (strncmp(cp, "//", 2) != 0 &&
+          (size_t)(cp-yytext) != strlen(yytext)) {
+	    VLerror(yylloc, "Invalid `timescale directive (extra garbage "
+	                    "after precision).");
 	    return;
       }
 
@@ -1211,8 +1228,7 @@ static void line_directive2()
       }
 
 	/* Skip the space after the file name. */
-      cp = fn_end;
-      cp += 1;
+      cp = fn_end + 1;
       cpr = cp;
       cpr += strspn(cp, " \t");
       if (cp == cpr) {
@@ -1223,16 +1239,16 @@ static void line_directive2()
       cp = cpr;
 
 	/* Check that the level is correct, we do not need the level. */
-      strtoul(cp, &cpr, 10);
-      if (cp == cpr) {
+      if (strspn(cp, "012") != 1) {
 	    VLerror(yylloc, "Invalid level for `line directive.");
 	    return;
       }
-      cp = cpr;
+      cp += 1;
 
-	/* Verify that only space is left. */
-      cpr += strspn(cp, " \t");
-      if ((size_t)(cpr-yytext) != strlen(yytext)) {
+	/* Verify that only space and/or a single line comment is left. */
+      cp += strspn(cp, " \t");
+      if (strncmp(cp, "//", 2) != 0 &&
+          (size_t)(cp-yytext) != strlen(yytext)) {
 	    VLerror(yylloc, "Invalid `line directive (extra garbage after "
 	                    "level).");
 	    return;
