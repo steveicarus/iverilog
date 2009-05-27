@@ -66,5 +66,7 @@ extern unsigned error_count, warn_count;
 extern unsigned long based_size;
 
 extern bool in_celldefine;
+enum UCDriveType { UCD_NONE, UCD_PULL0, UCD_PULL1 };
+extern UCDriveType uc_drive;
 
 #endif

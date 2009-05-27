@@ -80,6 +80,7 @@ static verinum*make_unsized_hex(const char*txt);
 static int dec_buf_div2(char *buf);
 
 static void process_timescale(const char*txt);
+static void process_ucdrive(const char*txt);
 
 static list<int> keyword_mask_stack;
 
@@ -87,6 +88,7 @@ static int comment_enter;
 static bool in_module = false;
 static bool in_UDP = false;
 bool in_celldefine = false;
+UCDriveType uc_drive = UCD_NONE;
 %}
 
 %x CCOMMENT
@@ -95,6 +97,7 @@ bool in_celldefine = false;
 %x CSTRING
 %s UDPTABLE
 %x PPTIMESCALE
+%x PPUCDRIVE
 %x PPDEFAULT_NETTYPE
 %x PPBEGIN_KEYWORDS
 %s EDGES
@@ -392,16 +395,36 @@ S [afpnumkKMGT]
 	    pform_set_default_nettype(NetNet::WIRE, yylloc.text,
 	                              yylloc.first_line);
 	    in_celldefine = false;
+	    uc_drive = UCD_NONE;
 	    pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);
-	    /* Add `nounconnected_drive when implemented. */
       } }
+
+  /* Notice and handle the `unconnected_drive directive. */
+^{W}?`unconnected_drive { BEGIN(PPUCDRIVE); }
+<PPUCDRIVE>.* { process_ucdrive(yytext); }
+<PPUCDRIVE>\n {
+      if (in_module) {
+	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
+		    "`unconnected_drive directive can not be inside a "
+		    "module definition." << endl;
+	    error_count += 1;
+      }
+      yylloc.first_line += 1;
+      BEGIN(0); }
+
+^{W}?`nounconnected_drive{W}? {
+      if (in_module) {
+	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
+		    "`nounconnected_drive directive can not be inside a "
+		    "module definition." << endl;
+	    error_count += 1;
+      }
+      uc_drive = UCD_NONE; }
 
   /* These are directives that I do not yet support. I think that IVL
      should handle these, not an external preprocessor. */
   /* From 1364-2005 Chapter 19. */
-^{W}?`nounconnected_drive{W}?.*     {  }
 ^{W}?`pragme{W}?.*                  {  }
-^{W}?`unconnected_drive{W}?.*       {  }
 
   /* From 1364-2005 Annex D. */
 ^{W}?`default_decay_time{W}?.*      {  }
@@ -1081,6 +1104,51 @@ static bool get_timescale_const(const char *&cp, int &res, bool is_unit)
       return true;
 }
 
+
+/*
+ * process either a pull0 or a pull1.
+ */
+static void process_ucdrive(const char*txt)
+{
+      UCDriveType ucd = UCD_NONE;
+      const char*cp = txt + strspn(txt, " \t");
+
+	/* Skip the space after the `unconnected_drive directive. */
+      if (cp == txt) {
+	    VLerror(yylloc, "Space required after `unconnected_drive "
+	                    "directive.");
+	    return;
+      }
+
+	/* Check for the pull keyword. */
+      if (strncmp("pull", cp, 4) != 0) {
+	    VLerror(yylloc, "pull required for `unconnected_drive "
+	                    "directive.");
+	    return;
+      }
+      cp += 4;
+      if (*cp == '0') ucd = UCD_PULL0;
+      else if (*cp == '1') ucd = UCD_PULL1;
+      else {
+	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
+		    "`unconnected_drive does not support 'pull" << *cp
+	         << "'." << endl;
+	    error_count += 1;
+	    return;
+      }
+      cp += 1;
+
+	/* Verify that only space and/or a single line comment is left. */
+      cp += strspn(cp, " \t");
+      if (strncmp(cp, "//", 2) != 0 &&
+          (size_t)(cp-yytext) != strlen(yytext)) {
+	    VLerror(yylloc, "Invalid `unconnected_dirve directive (extra "
+	                    "garbage after precision).");
+	    return;
+      }
+
+      uc_drive = ucd;
+}
 
 /*
  * The timescale parameter has the form:
