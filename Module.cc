@@ -30,6 +30,7 @@ Module::Module(perm_string n)
 {
       library_flag = false;
       is_cell = false;
+      uc_drive = UCD_NONE;
       default_nettype = NetNet::NONE;
       timescale_warn_done = false;
 }

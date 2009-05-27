@@ -76,6 +76,9 @@ class Module : public PScope, public LineInfo {
 
       bool is_cell;
 
+      enum UCDriveType { UCD_NONE, UCD_PULL0, UCD_PULL1 };
+      UCDriveType uc_drive;
+
       NetNet::Type default_nettype;
 
 	/* specparams are simpler then other params, in that they have

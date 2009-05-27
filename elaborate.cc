@@ -979,6 +979,28 @@ static bool need_bufz_for_input_port(const vector<NetNet*>&prts)
 }
 
 /*
+ * Convert a wire or tri to a tri0 or tri1 as needed to make
+ * an unconnected drive pull for floating inputs.
+ */
+static void convert_net(Design*des, const LineInfo *line,
+                        NetNet *net, NetNet::Type type)
+{
+	// If the types already match just return.
+      if (net->type() == type) return;
+
+	// We can only covert a wire or tri to have a default pull.
+      if (net->type() == NetNet::WIRE || net->type() == NetNet::TRI) {
+	    net->type(type);
+	    return;
+      }
+
+	// We may have to support this at some point in time!
+      cerr << line->get_fileline() << ": sorry: Can not pull floating "
+              "input type '" << net->type() << "'." << endl;
+      des->errors += 1;
+}
+
+/*
  * Instantiate a module by recursively elaborating it. Set the path of
  * the recursive elaboration so that signal names get properly
  * set. Connect the ports of the instantiated module to the signals of
@@ -1105,28 +1127,50 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // null parameter is passed in.
 
 	    if (pins[idx] == 0) {
+		    // We need this information to support the
+		    // unconnected_drive directive and for a
+		    // unconnected input warning when asked for.
+		  vector<PEIdent*> mport = rmod->get_port(idx);
+		  if (mport.size() == 0) continue;
 
-		    // While we're here, look to see if this
-		    // unconnected (from the outside) port is an
-		    // input. If so, consider printing a port binding
-		    // warning.
-		  if (warn_portbinding) {
-			vector<PEIdent*> mport = rmod->get_port(idx);
-			if (mport.size() == 0)
-			      continue;
+		  perm_string pname = peek_tail_name(mport[0]->path());
 
-			perm_string pname = peek_tail_name(mport[0]->path());
+		  NetNet*tmp = instance[0]->find_signal(pname);
+		  assert(tmp);
 
-			NetNet*tmp = instance[0]->find_signal(pname);
-			assert(tmp);
+		  if (tmp->port_type() == NetNet::PINPUT) {
+			  // If we have an unconnected input convert it
+			  // as needed if an unconnected_drive directive
+			  // was given. This only works for tri or wire!
+			switch (rmod->uc_drive) {
+			    case Module::UCD_PULL0:
+			      convert_net(des, this, tmp, NetNet::TRI0);
+			      break;
+			    case Module::UCD_PULL1:
+			      convert_net(des, this, tmp, NetNet::TRI1);
+			      break;
+			    case Module::UCD_NONE:
+			      break;
+			}
 
-			if (tmp->port_type() == NetNet::PINPUT) {
+			  // Print a waring for an unconnected input.
+			if (warn_portbinding) {
 			      cerr << get_fileline() << ": warning: "
 				   << "Instantiating module "
 				   << rmod->mod_name()
-				   << " with dangling input port "
-				   << rmod->ports[idx]->name
-				   << "." << endl;
+				   << " with dangling input port '"
+				   << rmod->ports[idx]->name;
+			      switch (rmod->uc_drive) {
+				  case Module::UCD_PULL0:
+				    cerr << "' (pulled low)." << endl;
+				    break;
+				  case Module::UCD_PULL1:
+				    cerr << "' (pulled high)." << endl;
+				    break;
+				  case Module::UCD_NONE:
+				    cerr << "' (floating)." << endl;
+				    break;
+			      }
 			}
 		  }
 

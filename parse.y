@@ -1923,7 +1923,20 @@ module  : attribute_list_opt module_start IDENTIFIER
 		{ pform_module_set_ports($6); }
 	  module_item_list_opt
 	  K_endmodule
-		{ pform_endmodule($3, in_celldefine);
+		{ Module::UCDriveType ucd;
+		  switch (uc_drive) {
+		      case UCD_NONE:
+		      default:
+			ucd = Module::UCD_NONE;
+			break;
+		      case UCD_PULL0:
+			ucd = Module::UCD_PULL0;
+			break;
+		      case UCD_PULL1:
+			ucd = Module::UCD_PULL1;
+			break;
+		  }
+		  pform_endmodule($3, in_celldefine, ucd);
 		  delete[]$3;
 		}
 
