@@ -179,6 +179,19 @@ void vthread_put_real(struct vthread_s*thr, unsigned addr, double val)
       thr->words[addr].w_real = val;
 }
 
+template <class T> T coerce_to_width(const T&that, unsigned width)
+{
+      if (that.size() == width)
+	    return that;
+
+      assert(that.size() > width);
+      T res (width);
+      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
+	    res.set_bit(idx, that.value(idx));
+
+      return res;
+}
+
 static unsigned long* vector_to_array(struct vthread_s*thr,
 				      unsigned addr, unsigned wid)
 {
@@ -2288,8 +2301,8 @@ bool of_EVCTLS(vthread_t thr, vvp_code_t cp)
 
 static void unlink_force(vvp_net_t*net)
 {
-      vvp_fun_signal_base*sig
-	    = reinterpret_cast<vvp_fun_signal_base*>(net->fun);
+      vvp_filter_wire_base*sig
+	    = reinterpret_cast<vvp_filter_wire_base*>(net->fun);
 	/* This node must be a signal... */
       assert(sig);
 	/* This signal is being forced. */
@@ -2315,8 +2328,8 @@ bool of_FORCE_LINK(vthread_t thr, vvp_code_t cp)
       vvp_net_t*dst = cp->net;
       vvp_net_t*src = cp->net2;
 
-      vvp_fun_signal_base*sig
-	    = reinterpret_cast<vvp_fun_signal_base*>(dst->fun);
+      vvp_filter_wire_base*sig
+	    = reinterpret_cast<vvp_filter_wire_base*>(dst->fun);
       assert(sig);
 
 	/* Detect the special case that we are already forced the
@@ -2359,9 +2372,13 @@ bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
 	/* Collect the thread bits into a vector4 item. */
       vvp_vector4_t value = vthread_bits_to_vector(thr, base, wid);
 
-	/* Set the value into port 2 of the destination. */
-      vvp_net_ptr_t ptr (net, 2);
-      vvp_send_vec4(ptr, value, 0);
+	/* Send the force value to the signal on the node. */
+      vvp_fun_signal4*sig = reinterpret_cast<vvp_fun_signal4*> (net->fun);
+      assert(sig);
+
+      if (value.size() != sig->size())
+	    value = coerce_to_width(value, sig->size());
+      sig->force_vec4(value, vvp_vector2_t(vvp_vector2_t::FILL1, sig->size()));
 
       return true;
 }
@@ -2371,9 +2388,10 @@ bool of_FORCE_WR(vthread_t thr, vvp_code_t cp)
       vvp_net_t*net  = cp->net;
       double value = thr->words[cp->bit_idx[0]].w_real;
 
-	/* Set the value into port 2 of the destination. */
-      vvp_net_ptr_t ptr (net, 2);
-      vvp_send_real(ptr, value, 0);
+      vvp_fun_signal_real*sig = reinterpret_cast<vvp_fun_signal_real*>(net->fun);
+      assert(sig);
+
+      sig->force_real(value, vvp_vector2_t(vvp_vector2_t::FILL1, 1));
 
       return true;
 }

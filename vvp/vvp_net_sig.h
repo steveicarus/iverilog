@@ -151,6 +151,11 @@ class vvp_filter_wire_base : public vvp_net_fil_t, public vvp_vpi_callback {
       virtual void release_pv(vvp_net_ptr_t ptr, bool net,
                               unsigned base, unsigned wid) =0;
 
+	/* The %force/link instruction needs a place to write the
+	   source node of the force, so that subsequent %force and
+	   %release instructions can undo the link as needed. */
+      struct vvp_net_t*force_link;
+
     protected:
 	// Set bits of the filter force mask
       void force_mask(vvp_vector2_t mask);
@@ -200,10 +205,9 @@ class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_filter_wire_base {
 
     public:
 
-	/* The %force/link instruction needs a place to write the
-	   source node of the force, so that subsequent %force and
-	   %release instructions can undo the link as needed. */
-      struct vvp_net_t*force_link;
+	/* The %cassign/link instruction needs a place to write the
+	   source node of the force, so that subsequent %cassign and
+	   %deassign instructions can undo the link as needed. */
       struct vvp_net_t*cassign_link;
 
     protected:

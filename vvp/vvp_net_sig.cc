@@ -28,19 +28,6 @@
 # include  <map>
 #endif
 
-template <class T> T coerce_to_width(const T&that, unsigned width)
-{
-      if (that.size() == width)
-	    return that;
-
-      assert(that.size() > width);
-      T res (width);
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-	    res.set_bit(idx, that.value(idx));
-
-      return res;
-}
-
 vvp_filter_wire_base::vvp_filter_wire_base()
 {
       force_propagate_ = false;
@@ -285,19 +272,6 @@ void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 	    calculate_output_(ptr);
 	    break;
 
-	  case 2: // Force value
-	      { vvp_vector4_t tmp (bit);
-
-		  // Force from a node may not have been sized completely
-		  // by the source, so coerce the size here.
-		if (tmp.size() != size())
-		      tmp = coerce_to_width(tmp, size());
-
-		force_vec4(tmp, vvp_vector2_t(vvp_vector2_t::FILL1,tmp.size()));
-		calculate_output_(ptr);
-	      }
-	      break;
-
 	  default:
 	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
 	    assert(0);
@@ -353,18 +327,6 @@ void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit
 	    }
 	    calculate_output_(ptr);
 	    break;
-
-	  case 2: // Force value
-	      { vvp_vector2_t mask (vvp_vector2_t::FILL0, vwid);
-		vvp_vector4_t vec (vwid, BIT4_Z);
-		for (unsigned idx = 0 ; idx < wid ; idx += 1) {
-		      mask.set_bit(base+idx, 1);
-		      vec.set_bit(base+idx, bit.value(idx));
-		}
-		force_vec4(vec, mask);
-		calculate_output_(ptr);
-		break;
-	      }
 
 	  default:
 	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
@@ -593,19 +555,6 @@ void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 	    assert(0);
 	    break;
 
-	  case 2: // Force value
-	      { vvp_vector8_t tmp(bit);
-
-		  // Force from a node may not have been sized completely
-		  // by the source, so coerce the size here.
-		if (tmp.size() != size())
-		      tmp = coerce_to_width(tmp, size());
-
-		force_vec8(tmp, vvp_vector2_t(vvp_vector2_t::FILL1,tmp.size()));
-		calculate_output_(ptr);
-	      }
-	      break;
-
 	  default:
 	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
 	    assert(0);
@@ -759,11 +708,6 @@ void vvp_fun_signal_real_sa::recv_real(vvp_net_ptr_t ptr, double bit,
 	  case 1: // Continuous assign value
 	    continuous_assign_active_ = true;
 	    bits_ = bit;
-	    ptr.ptr()->send_real(bit, 0);
-	    break;
-
-	  case 2: // Force value
-	    force_real(bit, vvp_vector2_t(vvp_vector2_t::FILL1, 1));
 	    ptr.ptr()->send_real(bit, 0);
 	    break;
 
