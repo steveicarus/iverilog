@@ -64,13 +64,8 @@ struct include_stack_t
     /* If we are reparsing a macro expansion, file is 0 and this
      * member points to the string in progress
      */
-    const char* str;
-
-    /* If we are reparsing a macro expansion, this member indicates
-     * the amount of space it occupies in the macro expansion buffer.
-     * This will be zero for macros without arguments.
-     */
-    int ebs;
+    char* str;
+    char* orig_str;
 
     int stringify_flag;
 
@@ -1372,6 +1367,7 @@ static void do_expand(int use_args)
             head = exp_buf_size - exp_buf_free;
             expand_using_args();
             tail = exp_buf_size - exp_buf_free;
+            exp_buf_free += tail - head;
 
             if (tail == head)
                 return;
@@ -1384,12 +1380,10 @@ static void do_expand(int use_args)
         if (use_args)
         {
             isp->str = &exp_buf[head];
-            isp->ebs = tail - head;
         }
         else
         {
             isp->str = cur_macro->value;
-            isp->ebs = 0;
         }
 
         /* Escape some characters if we are making a string version. */
@@ -1419,16 +1413,14 @@ static void do_expand(int use_args)
             }
             str_buf[idx] = 0;
             idx += 1;
-            if (use_args) exp_buf_free += isp->ebs;
-            exp_buf_grow_to_fit(idx);
-            head = exp_buf_size - exp_buf_free;
-            exp_buf_free -= idx;
-            strcpy(&exp_buf[head], str_buf);
-            isp->str = &exp_buf[head];
-            isp->ebs = idx;
-            free(str_buf);
-        }
 
+            exp_buf_free -= idx;
+
+            isp->str = str_buf;
+        } else
+            isp->str = strdup(isp->str);
+
+        isp->orig_str = isp->str;
         isp->next = istack;
         istack->yybs = YY_CURRENT_BUFFER;
         istack = isp;
@@ -1617,7 +1609,7 @@ static int load_next_input()
         else
             line_mask_flag = 1;
 
-        exp_buf_free += isp->ebs;
+        free(isp->orig_str);
     }
 
     if (isp->stringify_flag) {
@@ -1794,7 +1786,6 @@ void reset_lexor(FILE* out, char* paths[])
     isp->path = strdup(paths[0]);
     isp->file = fopen(paths[0], "r");
     isp->str = 0;
-    isp->ebs = 0;
     isp->lineno = 0;
     isp->stringify_flag = 0;
     isp->comment = NULL;
@@ -1824,7 +1815,6 @@ void reset_lexor(FILE* out, char* paths[])
         isp->path = strdup(paths[idx]);
         isp->file = 0;
         isp->str = 0;
-        isp->ebs = 0;
         isp->next = 0;
         isp->lineno = 0;
         isp->stringify_flag = 0;
