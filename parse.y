@@ -229,40 +229,55 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_PO_POS K_PO_NEG K_POW
 %token K_PSTAR K_STARP
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
-%token K_abs K_abstol K_access K_acos K_acosh K_asin K_analog K_asinh
-%token K_atan K_atanh K_atan2 K_automatic
-%token K_always K_and K_assign K_begin K_bool K_buf K_bufif0 K_bufif1 K_case
-%token K_casex K_casez K_ceil K_cmos K_continuous K_cos K_cosh
-%token K_ddt_nature K_deassign K_default K_defparam K_disable K_discrete
-%token K_domain K_edge K_edge_descriptor K_discipline
-%token K_else K_end K_endcase K_enddiscipline K_endfunction K_endgenerate
-%token K_endmodule K_endnature
-%token K_endprimitive K_endspecify K_endtable K_endtask K_event
-%token K_exclude K_exp K_floor K_flow K_from
-%token K_for K_force K_forever K_fork K_function K_generate K_genvar
-%token K_ground K_highz0 K_highz1 K_hypot K_idt_nature K_if K_ifnone K_inf
-%token K_initial K_inout K_input K_integer K_join K_large K_ln K_localparam
-%token K_log K_logic K_macromodule K_max
-%token K_medium K_min K_module K_nand K_nature K_negedge
-%token K_nmos K_nor K_not K_notif0
-%token K_notif1 K_or K_output K_parameter K_pmos K_posedge K_potential
-%token K_pow K_primitive
-%token K_pull0 K_pull1 K_pulldown K_pullup K_rcmos K_real K_realtime
-%token K_reg K_release K_repeat
-%token K_rnmos K_rpmos K_rtran K_rtranif0 K_rtranif1 K_scalared
-%token K_signed K_sin K_sinh K_small K_specify
-%token K_specparam K_sqrt K_string K_strong0 K_strong1 K_supply0 K_supply1
-%token K_table
-%token K_tan K_tanh K_task
-%token K_time K_tran K_tranif0 K_tranif1 K_tri K_tri0 K_tri1 K_triand
-%token K_trior K_trireg K_units K_vectored K_wait K_wand K_weak0 K_weak1
-%token K_while K_wire
-%token K_wone K_wor K_xnor K_xor
-%token K_Shold K_Speriod K_Srecovery K_Srecrem K_Ssetup K_Swidth K_Ssetuphold
+%token K_edge_descriptor
 
+ /* The base tokens from 1364-1995. */
+%token K_always K_and K_assign K_begin K_buf K_bufif0 K_bufif1 K_case
+%token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
+%token K_edge K_else K_end K_endcase K_endfunction K_endmodule
+%token K_endprimitive K_endspecify K_endtable K_endtask K_event K_for
+%token K_force K_forever K_fork K_function K_highz0 K_highz1 K_if
+%token K_ifnone K_initial K_inout K_input K_integer K_join K_large
+%token K_macromodule K_medium K_module K_nand K_negedge K_nmos K_nor
+%token K_not K_notif0 K_notif1 K_or K_output K_parameter K_pmos K_posedge
+%token K_primitive K_pull0 K_pull1 K_pulldown K_pullup K_rcmos K_real
+%token K_realtime K_reg K_release K_repeat K_rnmos K_rpmos K_rtran
+%token K_rtranif0 K_rtranif1 K_scalared K_small K_specify K_specparam
+%token K_strong0 K_strong1 K_supply0 K_supply1 K_table K_task K_time
+%token K_tran K_tranif0 K_tranif1 K_tri K_tri0 K_tri1 K_triand K_trior
+%token K_trireg K_vectored K_wait K_wand K_weak0 K_weak1 K_while K_wire
+%token K_wor K_xnor K_xor
+
+%token K_Shold K_Speriod K_Srecovery K_Ssetup K_Swidth K_Ssetuphold
+
+ /* Icarus specific tokens. */
+%token KK_attribute K_bool K_logic
+
+ /* The new tokens from 1364-2001. */
+%token K_automatic K_endgenerate K_generate K_genvar K_localparam
+%token K_noshowcancelled K_pulsestyle_onevent K_pulsestyle_ondetect
+%token K_showcancelled K_signed K_unsigned
+
+%token K_Srecrem
+
+ /* The 1364-2001 configuration tokens. */
+%token K_cell K_config K_design K_endconfig K_incdir K_include K_instance
+%token K_liblist K_library K_use
+
+ /* The new tokens from 1364-2005. */
+%token K_wone K_uwire
+
+ /* The new tokens from 1800-2005. */
 %token K_always_comb K_always_ff K_always_latch K_assert 
 
-%token KK_attribute
+ /* The new tokens for Verilog-AMS 2.3. */
+%token K_abs K_abstol K_access K_acos K_acosh K_analog K_asin K_asinh
+%token K_atan K_atan2 K_atanh K_ceil K_continuous K_cos K_cosh
+%token K_ddt_nature K_discipline K_discrete K_domain K_enddiscipline
+%token K_endnature K_exclude K_exp K_floor K_flow K_from K_ground
+%token K_hypot K_idt_nature K_inf K_ln K_log K_max K_min K_nature
+%token K_potential K_pow K_sin K_sinh K_sqrt K_string K_tan K_tanh
+%token K_units
 
 %type <flag>    from_exclude
 %type <number>  number
@@ -2494,7 +2509,12 @@ net_type
 	| K_supply1 { $$ = NetNet::SUPPLY1; }
 	| K_wor     { $$ = NetNet::WOR; }
 	| K_trior   { $$ = NetNet::TRIOR; }
-	| K_wone    { $$ = NetNet::WONE; }
+	| K_wone    { $$ = NetNet::UWIRE;
+		      cerr << @1.text << ":" << @1.first_line << ": warning: "
+		              "'wone' is deprecated, please use 'uwire' "
+		              "instead." << endl;
+		    }
+	| K_uwire   { $$ = NetNet::UWIRE; }
 	;
 
 var_type
