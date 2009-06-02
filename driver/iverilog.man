@@ -1,4 +1,4 @@
-.TH iverilog 1 "April 17th, 2009" "" "Version 0.10.devel"
+.TH iverilog 1 "May 28th, 2009" "" "Version 0.10.devel"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -55,20 +55,20 @@ is the Verilog input, but with file inclusions and macro references
 expanded and removed. This is useful, for example, to preprocess
 Verilog source for use by other compilers.
 .TP 8
-.B -g1995\fI|\fP-g2001\fI|\fP-g2005
+.B -g1995\fI|\fP-g2001\fI|\fP-g2001-noconfig\fI|\fP-g2005
 Select the Verilog language \fIgeneration\fP to support in the
 compiler. This selects between \fIIEEE1364-1995\fP,
-\fIIEEE1364-2001\fP(2), or \fIIEEE1364-2005\fP. Normally,
+\fIIEEE1364-2001\fP, or \fIIEEE1364-2005\fP. Normally,
 Icarus Verilog defaults to the latest known generation of the
 language. This flag is most useful to restrict the language to a set
 supported by tools of specific generations, for compatibility with
 other tools.
 .TP 8
-.B -gverilog-ams\fI|-fP-gno-verilog-ams
+.B -gverilog-ams\fI|\fP-gno-verilog-ams
 Enable or disable (default) support for Verilog-AMS.
 Very little Verilog-AMS specific functionality is currently supported.
 .TP 8
-.B -gsystem-verilog\fI|-fP-gno-system-verilog
+.B -gsystem-verilog\fI|\fP-gno-system-verilog
 Enable or disable (default) support for SystemVerilog.
 Very little SystemVerilog specific functionality is currently supported.
 .TP 8
@@ -115,9 +115,9 @@ expression changes value, the entire expression is re-evaluated. By
 default, parts of the expression that do not depend on the changed
 input value(s) are not re-evaluated. If an expression contains a call
 to a function that doesn't depend solely on its input values or that
-has side effects, the resulting behaviour will differ from that
+has side effects, the resulting behavior will differ from that
 required by the standard. Using \fI-gstrict-ca-eval\fP will force
-standard compliant behaviour (with some loss in performance).
+standard compliant behavior (with some loss in performance).
 .TP 8
 .B -I\fIincludedir\fP
 Append directory \fIincludedir\fP to list of directories searched
@@ -203,6 +203,11 @@ all the requested classes.
 Append the directory to the library module search path. When the
 compiler finds an undefined module, it looks in these directories for
 files with the right name.
+.TP 8
+.B -Y\fIsuffix\fP
+Add suffix to the list of accepted file name suffixes used when
+searching a library for cells. The list defaults to the single
+entry \fI.v\fP.
 
 .SH MODULE LIBRARIES
 
@@ -448,7 +453,7 @@ Tips on using, debugging, and developing the compiler can be found at
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002-2008 Stephen Williams
+Copyright \(co  2002-2009 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

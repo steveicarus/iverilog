@@ -224,6 +224,9 @@ static void process_generation_flag(const char*gen)
       } else if (strcmp(gen,"2001") == 0) {
 	    generation_flag = GN_VER2001;
 
+      } else if (strcmp(gen,"2001-noconfig") == 0) {
+	    generation_flag = GN_VER2001_NOCONFIG;
+
       } else if (strcmp(gen,"2005") == 0) {
 	    generation_flag = GN_VER2005;
 
@@ -660,9 +663,10 @@ int main(int argc, char*argv[])
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_1995;
 	  break;
         case GN_VER2001:
+	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001_CONFIG;
+        case GN_VER2001_NOCONFIG:
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_1995;
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001;
-	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001_CONFIG;
 	  break;
         case GN_VER2005:
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_1995;
@@ -689,6 +693,9 @@ int main(int argc, char*argv[])
 	    switch (generation_flag) {
 		case GN_VER1995:
 		  cout << "IEEE1364-1995";
+		  break;
+		case GN_VER2001_NOCONFIG:
+		  cout << "IEEE1364-2001-noconfig";
 		  break;
 		case GN_VER2001:
 		  cout << "IEEE1364-2001";
