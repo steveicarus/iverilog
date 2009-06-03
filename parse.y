@@ -248,7 +248,8 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_trireg K_vectored K_wait K_wand K_weak0 K_weak1 K_while K_wire
 %token K_wor K_xnor K_xor
 
-%token K_Shold K_Speriod K_Srecovery K_Ssetup K_Swidth K_Ssetuphold
+%token K_Shold K_Snochange K_Speriod K_Srecovery K_Ssetup K_Ssetuphold
+%token K_Sskew K_Swidth
 
  /* Icarus specific tokens. */
 %token KK_attribute K_bool K_logic
@@ -258,7 +259,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_noshowcancelled K_pulsestyle_onevent K_pulsestyle_ondetect
 %token K_showcancelled K_signed K_unsigned
 
-%token K_Srecrem
+%token K_Sfullskew K_Srecrem K_Sremoval K_Stimeskew
 
  /* The 1364-2001 configuration tokens. */
 %token K_cell K_config K_design K_endconfig K_incdir K_include K_instance
@@ -3199,15 +3200,34 @@ specify_item
 		  }
 		  pform_module_specify_path(tmp);
 		}
+	| K_Sfullskew '(' spec_reference_event ',' spec_reference_event
+	  ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
+		{ delete $7;
+		  delete $9;
+		}
 	| K_Shold '(' spec_reference_event ',' spec_reference_event
 	  ',' delay_value spec_notifier_opt ')' ';'
 		{ delete $7;
+		}
+	| K_Snochange '(' spec_reference_event ',' spec_reference_event
+	  ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
+		{ delete $7;
+		  delete $9;
 		}
 	| K_Speriod '(' spec_reference_event ',' delay_value
 	  spec_notifier_opt ')' ';'
 		{ delete $5;
 		}
 	| K_Srecovery '(' spec_reference_event ',' spec_reference_event
+	  ',' delay_value spec_notifier_opt ')' ';'
+		{ delete $7;
+		}
+	| K_Srecrem '(' spec_reference_event ',' spec_reference_event
+	  ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
+		{ delete $7;
+		  delete $9;
+		}
+	| K_Sremoval '(' spec_reference_event ',' spec_reference_event
 	  ',' delay_value spec_notifier_opt ')' ';'
 		{ delete $7;
 		}
@@ -3220,10 +3240,13 @@ specify_item
 		{ delete $7;
 		  delete $9;
 		}
-	| K_Srecrem '(' spec_reference_event ',' spec_reference_event
-	  ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
+	| K_Sskew '(' spec_reference_event ',' spec_reference_event
+	  ',' delay_value spec_notifier_opt ')' ';'
 		{ delete $7;
-		  delete $9;
+		}
+	| K_Stimeskew '(' spec_reference_event ',' spec_reference_event
+	  ',' delay_value spec_notifier_opt ')' ';'
+		{ delete $7;
 		}
 	| K_Swidth '(' spec_reference_event ',' delay_value ',' expression
 	  spec_notifier_opt ')' ';'
