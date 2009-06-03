@@ -274,22 +274,35 @@ S [afpnumkKMGT]
       return IDENTIFIER; }
 
 \$([a-zA-Z0-9$_]+)        {
-      if (strcmp(yytext,"$setuphold") == 0)
-	    return K_Ssetuphold;
-      if (strcmp(yytext,"$attribute") == 0)
-	    return KK_attribute;
+	/* The 1364-1995 timing checks. */
       if (strcmp(yytext,"$hold") == 0)
 	    return K_Shold;
+      if (strcmp(yytext,"$nochange") == 0)
+	    return K_Snochange;
       if (strcmp(yytext,"$period") == 0)
 	    return K_Speriod;
       if (strcmp(yytext,"$recovery") == 0)
 	    return K_Srecovery;
-      if (strcmp(yytext,"$recrem") == 0)
-	    return K_Srecrem;
       if (strcmp(yytext,"$setup") == 0)
 	    return K_Ssetup;
+      if (strcmp(yytext,"$setuphold") == 0)
+	    return K_Ssetuphold;
+      if (strcmp(yytext,"$skew") == 0)
+	    return K_Sskew;
       if (strcmp(yytext,"$width") == 0)
 	    return K_Swidth;
+	/* The new 1364-2001 timing checks. */
+      if (strcmp(yytext,"$fullskew") == 0)
+	    return K_Sfullskew;
+      if (strcmp(yytext,"$recrem") == 0)
+	    return K_Srecrem;
+      if (strcmp(yytext,"$removal") == 0)
+	    return K_Sremoval;
+      if (strcmp(yytext,"$timeskew") == 0)
+	    return K_Stimeskew;
+
+      if (strcmp(yytext,"$attribute") == 0)
+	    return KK_attribute;
       yylval.text = strdupnew(yytext);
       return SYSTEM_IDENTIFIER; }
 
