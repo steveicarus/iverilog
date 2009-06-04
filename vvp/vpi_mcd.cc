@@ -42,53 +42,65 @@ extern FILE* vpi_trace;
  */
 #define IS_MCD(mcd)	!((mcd)>>31&1)
 #define FD_IDX(fd)	((fd)&~(1U<<31))
-#define FD_MAX		32
+#define FD_INCR		32
 
-struct mcd_entry {
+typedef struct mcd_entry {
 	FILE *fp;
 	char *filename;
-};
-static struct mcd_entry mcd_table[31];
-static struct mcd_entry fd_table[FD_MAX];
+} mcd_entry_s;
+static mcd_entry_s mcd_table[31];
+static mcd_entry_s *fd_table = NULL;
+static unsigned fd_table_len = 0;
 
 static FILE* logfile;
 
 /* Initialize mcd portion of vpi.  Must be called before
  * any vpi_mcd routines can be used.
  */
-void vpi_mcd_init(FILE *log)
+void vpip_mcd_init(FILE *log)
 {
-	mcd_table[0].fp = stdout;
-	mcd_table[0].filename = strdup("stdout");
+      fd_table_len = FD_INCR;
+      fd_table = (mcd_entry_s *) malloc(fd_table_len*sizeof(mcd_entry_s));
+      for (unsigned idx = 0; idx < fd_table_len; idx += 1) {
+	    fd_table[idx].fp = NULL;
+	    fd_table[idx].filename = NULL;
+      }
+	
+      mcd_table[0].fp = stdout;
+      mcd_table[0].filename = strdup("stdout");
 
-	fd_table[0].fp = stdin;
-	fd_table[0].filename = strdup("stdin");
-	fd_table[1].fp = stdout;
-	fd_table[1].filename = strdup("stdout");
-	fd_table[2].fp = stderr;
-	fd_table[2].filename = strdup("stderr");
+      fd_table[0].fp = stdin;
+      fd_table[0].filename = strdup("stdin");
+      fd_table[1].fp = stdout;
+      fd_table[1].filename = strdup("stdout");
+      fd_table[2].fp = stderr;
+      fd_table[2].filename = strdup("stderr");
 
-	logfile = log;
+      logfile = log;
 }
 
 #ifdef CHECK_WITH_VALGRIND
 void vpi_mcd_delete(void)
 {
       free(mcd_table[0].filename);
-      mcd_table[0].filename = 0;
-      mcd_table[0].fp = 0;
+      mcd_table[0].filename = NULL;
+      mcd_table[0].fp = NULL;
 
       free(fd_table[0].filename);
-      fd_table[0].filename = 0;
-      fd_table[0].fp = 0;
+      fd_table[0].filename = NULL;
+      fd_table[0].fp = NULL;
 
       free(fd_table[1].filename);
-      fd_table[1].filename = 0;
-      fd_table[1].fp = 0;
+      fd_table[1].filename = NULL;
+      fd_table[1].fp = NULL;
 
       free(fd_table[2].filename);
-      fd_table[2].filename = 0;
-      fd_table[2].fp = 0;
+      fd_table[2].filename = NULL;
+      fd_table[2].fp = NULL;
+
+      free(fd_table);
+      fd_table = NULL;
+      fd_table_len = 0;
 }
 #endif
 
@@ -112,7 +124,7 @@ extern "C" PLI_UINT32 vpi_mcd_close(PLI_UINT32 mcd)
 		}
 	} else {
 		unsigned idx = FD_IDX(mcd);
-		if (idx > 2 && idx < FD_MAX && fd_table[idx].fp) {
+		if (idx > 2 && idx < fd_table_len && fd_table[idx].fp) {
 			rc = fclose(fd_table[idx].fp);
 			free(fd_table[idx].filename);
 			fd_table[idx].fp = NULL;
@@ -131,7 +143,7 @@ extern "C" char *vpi_mcd_name(PLI_UINT32 mcd)
 		}
 	} else {
 		unsigned idx = FD_IDX(mcd);
-		if (idx < FD_MAX)
+		if (idx < fd_table_len)
 			return fd_table[idx].filename;
 	}
 	return NULL;
@@ -222,7 +234,7 @@ extern "C" PLI_INT32 vpi_mcd_flush(PLI_UINT32 mcd)
 		}
 	} else {
 		unsigned idx = FD_IDX(mcd);
-		if (idx < FD_MAX) rc = fflush(fd_table[idx].fp);
+		if (idx < fd_table_len) rc = fflush(fd_table[idx].fp);
 	}
 	return rc;
 }
@@ -240,29 +252,35 @@ extern "C" PLI_INT32 vpi_mcd_flush(PLI_UINT32 mcd)
  */
 extern "C" PLI_INT32 vpi_fopen(const char*name, const char*mode)
 {
-	unsigned i;
-	for(i = 0; i < FD_MAX; i++) {
-		if(fd_table[i].filename == NULL)
-			goto got_entry;
-	}
-	return 0;  /* too many open fd's */
+      unsigned i;
+      for (i = 0; i < fd_table_len; i += 1) {
+	    if (fd_table[i].filename == NULL) goto got_entry;
+      }
+	/* We need to allocate more table entries, but to keep things */
+	/* sane we'll hard limit this to 1024 file descriptors total. */
+      if (fd_table_len >= 1024) return 0;
+      fd_table_len += FD_INCR;
+      fd_table = (mcd_entry_s *) realloc(fd_table,
+                                         fd_table_len*sizeof(mcd_entry_s));
+      for (unsigned idx = i; idx < fd_table_len; idx += 1) {
+	    fd_table[idx].fp = NULL;
+	    fd_table[idx].filename = NULL;
+      }
 
 got_entry:
-	fd_table[i].fp = fopen(name, mode);
-	if(fd_table[i].fp == NULL)
-		return 0;
-	fd_table[i].filename = strdup(name);
-	return ((1U<<31)|i);
+      fd_table[i].fp = fopen(name, mode);
+      if (fd_table[i].fp == NULL) return 0;
+      fd_table[i].filename = strdup(name);
+      return ((1U<<31)|i);
 }
 
 extern "C" FILE *vpi_get_file(PLI_INT32 fd)
 {
 	// Only deal with FD's
-	if (IS_MCD(fd)) return NULL;
+      if (IS_MCD(fd)) return NULL;
 
-	// Only know about FD_MAX indices
-	if (FD_IDX(fd) >= FD_MAX) return NULL;
+	// Only know about fd_table_len indices
+      if (FD_IDX(fd) >= fd_table_len) return NULL;
 
-	return fd_table[FD_IDX(fd)].fp;
+      return fd_table[FD_IDX(fd)].fp;
 }
-
