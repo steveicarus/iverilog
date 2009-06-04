@@ -1106,26 +1106,26 @@ void vvp_vector4_t::invert()
 
 vvp_vector4_t& vvp_vector4_t::operator &= (const vvp_vector4_t&that)
 {
-	// Make sure that all Z bits are turned into X bits.
-      change_z2x();
-
-	// This is sneaky. The truth table is:
-	//     00 01 11
-	//  00 00 00 00
-	//  01 00 01 11
-	//  11 00 11 11
+	// The truth table is:
+	//     00 01 11 10
+	//  00 00 00 00 00
+	//  01 00 01 11 11
+	//  11 00 11 11 11
+	//  10 00 11 11 11
       if (size_ <= BITS_PER_WORD) {
-	      // Each tmp bit is true if that is 1, X or Z.
-	    unsigned long tmp = that.abits_val_ | that.bbits_val_;
-	    abits_val_ &= that.abits_val_;
-	    bbits_val_ = (bbits_val_ & tmp) | (abits_val_&that.bbits_val_);
-
+	    unsigned long tmp1 = abits_val_ | bbits_val_;
+	    unsigned long tmp2 = that.abits_val_ | that.bbits_val_;
+	    abits_val_ = tmp1 & tmp2;
+	    bbits_val_ = (tmp1 & that.bbits_val_) | (tmp2 & bbits_val_);
       } else {
 	    unsigned words = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
 	    for (unsigned idx = 0; idx < words ; idx += 1) {
-		  unsigned long tmp = that.abits_ptr_[idx]|that.bbits_ptr_[idx];
-		  abits_ptr_[idx] &= that.abits_ptr_[idx];
-		  bbits_ptr_[idx] = (bbits_ptr_[idx]&tmp) | (abits_ptr_[idx]&that.bbits_ptr_[idx]);
+		  unsigned long tmp1 = abits_ptr_[idx] | bbits_ptr_[idx];
+		  unsigned long tmp2 = that.abits_ptr_[idx] |
+		                       that.bbits_ptr_[idx];
+		  abits_ptr_[idx] = tmp1 & tmp2;
+		  bbits_ptr_[idx] = (tmp1 & that.bbits_ptr_[idx]) |
+		                    (tmp2 & bbits_ptr_[idx]);
 	    }
       }
 
@@ -1134,34 +1134,29 @@ vvp_vector4_t& vvp_vector4_t::operator &= (const vvp_vector4_t&that)
 
 vvp_vector4_t& vvp_vector4_t::operator |= (const vvp_vector4_t&that)
 {
-	// Make sure that all Z bits are turned into X bits.
-      change_z2x();
-
-	// This is sneaky.
-	// The OR is 1 if either operand is 1.
-	// The OR is 0 if both operants are 0.
-	// Otherwise, the AND is X. The truth table is:
-	//
-	//     00 01 11
-	//  00 00 01 11
-	//  01 01 01 01
-	//  11 11 01 11
+	// The truth table is:
+	//     00 01 11 10
+	//  00 00 01 11 11
+	//  01 01 01 01 01
+	//  11 11 01 11 11
+	//  10 11 01 11 11
       if (size_ <= BITS_PER_WORD) {
-	      // Each tmp bit is true if that is 1, X or Z.
-	    unsigned long tmp1 = abits_val_ | bbits_val_;
-	    unsigned long tmp2 = that.abits_val_ | that.bbits_val_;
-	    bbits_val_ =  (bbits_val_& ~(that.abits_val_^that.bbits_val_))
-		        | (that.bbits_val_& ~abits_val_);
-	    abits_val_ = tmp1 | tmp2;
+	    unsigned long tmp = abits_val_ | bbits_val_ |
+	                        that.abits_val_ | that.bbits_val_;
+	    bbits_val_ = (~abits_val_ | bbits_val_) & that.bbits_val_ |
+	                 (~that.abits_val_ | that.bbits_val_) & bbits_val_;
+	    abits_val_ = tmp;
 
       } else {
 	    unsigned words = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
 	    for (unsigned idx = 0; idx < words ; idx += 1) {
-		  unsigned long tmp1 = abits_ptr_[idx] | bbits_ptr_[idx];
-		  unsigned long tmp2 = that.abits_ptr_[idx] | that.bbits_ptr_[idx];
-	    bbits_ptr_[idx] =  (bbits_ptr_[idx]& ~(that.abits_ptr_[idx]^that.bbits_ptr_[idx]))
-		        | (that.bbits_ptr_[idx]& ~abits_ptr_[idx]);
-	    abits_ptr_[idx] = tmp1 | tmp2;
+		  unsigned long tmp = abits_ptr_[idx] | bbits_ptr_[idx] |
+	                        that.abits_ptr_[idx] | that.bbits_ptr_[idx];
+		  bbits_ptr_[idx] = (~abits_ptr_[idx] | bbits_ptr_[idx]) &
+		                    that.bbits_ptr_[idx] |
+		                    (~that.abits_ptr_[idx] |
+		                     that.bbits_ptr_[idx]) & bbits_ptr_[idx];
+		  abits_ptr_[idx] = tmp;
 	    }
       }
 
