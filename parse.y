@@ -3256,6 +3256,18 @@ specify_item
 	| K_Swidth '(' spec_reference_event ',' delay_value ')' ';'
 		{ delete $5;
 		}
+	| K_pulsestyle_onevent specify_path_identifiers ';'
+		{ delete $2;
+		}
+	| K_pulsestyle_ondetect specify_path_identifiers ';'
+		{ delete $2;
+		}
+	| K_showcancelled specify_path_identifiers ';'
+		{ delete $2;
+		}
+	| K_noshowcancelled specify_path_identifiers ';'
+		{ delete $2;
+		}
 	;
 
 specify_item_list
