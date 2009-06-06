@@ -154,7 +154,11 @@ class vvp_filter_wire_base : public vvp_net_fil_t, public vvp_vpi_callback {
 	/* The %force/link instruction needs a place to write the
 	   source node of the force, so that subsequent %force and
 	   %release instructions can undo the link as needed. */
-      struct vvp_net_t*force_link;
+      void force_link(vvp_net_t*dst, vvp_net_t*src);
+      void force_unlink(void);
+
+    private:
+      struct vvp_net_t*force_link_;
 
     protected:
 	// Set bits of the filter force mask
@@ -446,6 +450,21 @@ class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_hook
 
     private:
       unsigned context_idx_;
+};
+
+
+/*
+ * The vvp_fun_force class objects are net functors that use their input
+ * to force the associated filter. They do not actually  have an
+ * output, they instead drive the force_* methods of the net filter.
+ */
+class vvp_fun_force : public vvp_net_fun_t {
+
+    public:
+      vvp_fun_force();
+      ~vvp_fun_force();
+
+      void recv_real(vvp_net_ptr_t port, double bit, vvp_context_t);
 };
 
 

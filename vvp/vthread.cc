@@ -2299,23 +2299,6 @@ bool of_EVCTLS(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-static void unlink_force(vvp_net_t*net)
-{
-      vvp_filter_wire_base*sig
-	    = reinterpret_cast<vvp_filter_wire_base*>(net->fun);
-	/* This node must be a signal... */
-      assert(sig);
-	/* This signal is being forced. */
-      assert(sig->force_link);
-
-      vvp_net_t*src = sig->force_link;
-      sig->force_link = 0;
-
-	/* We are looking for this pointer. */
-      vvp_net_ptr_t net_ptr (net, 2);
-      src->unlink(net_ptr);
-}
-
 /*
  * the %force/link instruction connects a source node to a
  * destination node. The destination node must be a signal, as it is
@@ -2329,24 +2312,10 @@ bool of_FORCE_LINK(vthread_t thr, vvp_code_t cp)
       vvp_net_t*src = cp->net2;
 
       vvp_filter_wire_base*sig
-	    = reinterpret_cast<vvp_filter_wire_base*>(dst->fun);
+	    = dynamic_cast<vvp_filter_wire_base*>(dst->fun);
       assert(sig);
 
-	/* Detect the special case that we are already forced the
-	   source onto the destination. */
-      if (sig->force_link == src)
-	    return true;
-
-	/* If there is a linked force already, then unlink it. */
-      if (sig->force_link)
-	    unlink_force(dst);
-
-      sig->force_link = src;
-
-	/* Link the output of the src to the port[2] (the force
-	   port) of the destination. */
-      vvp_net_ptr_t dst_ptr (dst, 2);
-      src->link(dst_ptr);
+      sig->force_link(dst, src);
 
       return true;
 }
@@ -3945,15 +3914,8 @@ bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
 
       bool full_sig = base == 0 && width == sig->size();
 
-      if (sig->force_link) {
-	    if (!full_sig) {
-		  fprintf(stderr, "Sorry: when a signal is forcing a "
-		          "net, I cannot release part of it.\n");
-		  exit(1);
-	    }
-	    unlink_force(net);
-      }
-      assert(sig->force_link == 0);
+	// XXXX Can't really do this if this is a partial release?
+      sig->force_unlink();
 
 	/* Do we release all or part of the net? */
       vvp_net_ptr_t ptr (net, 0);
@@ -3981,18 +3943,8 @@ bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
 
       bool full_sig = base == 0 && width == sig->size();
 
-	// This is the net that is forcing me...
-      if (vvp_net_t*src = sig->force_link) {
-	    if (!full_sig) {
-		  fprintf(stderr, "Sorry: when a signal is forcing a "
-		          "register, I cannot release part of it.\n");
-		  exit(1);
-	    }
-	      // And this is the pointer to be removed.
-	    vvp_net_ptr_t dst_ptr (net, 2);
-	    src->unlink(dst_ptr);
-	    sig->force_link = 0;
-      }
+	// XXXX Can't really do this if this is a partial release?
+      sig->force_unlink();
 
 	// Send a command to this signal to unforce itself.
 	/* Do we release all or part of the net? */
@@ -4015,13 +3967,7 @@ bool of_RELEASE_WR(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_real*sig = reinterpret_cast<vvp_fun_signal_real*>(net->fun);
       assert(sig);
 
-	// This is the net that is forcing me...
-      if (vvp_net_t*src = sig->force_link) {
-	      // And this is the pointer to be removed.
-	    vvp_net_ptr_t dst_ptr (net, 2);
-	    src->unlink(dst_ptr);
-	    sig->force_link = 0;
-      }
+      sig->force_unlink();
 
 	// Send a command to this signal to unforce itself.
       vvp_net_ptr_t ptr (net, 0);

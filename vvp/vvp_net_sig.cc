@@ -31,10 +31,12 @@
 vvp_filter_wire_base::vvp_filter_wire_base()
 {
       force_propagate_ = false;
+      force_link_ = 0;
 }
 
 vvp_filter_wire_base::~vvp_filter_wire_base()
 {
+      assert(force_link_ == 0);
 }
 
 template <class T> const T*vvp_filter_wire_base::filter_mask_(const T&val, const T&force, T&filter)
@@ -64,6 +66,35 @@ template <class T> const T*vvp_filter_wire_base::filter_mask_(const T&val, const
 	    run_vpi_callbacks();
 	    return &val;
       }
+}
+
+void vvp_filter_wire_base::force_link(vvp_net_t*dst, vvp_net_t*src)
+{
+      assert(dst->fil == this);
+
+      if (force_link_ == 0) {
+	    force_link_ = new vvp_net_t;
+	      // Use port[3] to hold the force destination.
+	    force_link_->port[3] = vvp_net_ptr_t(dst, 0);
+	    force_link_->port[2] = vvp_net_ptr_t(0,0);
+	    force_link_->fun = new vvp_fun_force;
+      }
+
+	// Use port[2] to hold the force source.
+      force_link_->port[2] = vvp_net_ptr_t(src,0);
+
+      vvp_net_ptr_t dst_ptr(force_link_, 0);
+      src->link(dst_ptr);
+}
+
+void vvp_filter_wire_base::force_unlink(void)
+{
+      if (force_link_ == 0) return;
+      vvp_net_t*src = force_link_->port[2].ptr();
+      if (src == 0) return;
+
+      src->unlink(vvp_net_ptr_t(force_link_,0));
+      force_link_->port[2] = vvp_net_ptr_t(0,0);
 }
 
 template <class T> bool vvp_filter_wire_base::filter_mask_(T&val)
@@ -214,7 +245,6 @@ vvp_fun_signal_base::vvp_fun_signal_base()
 {
       continuous_assign_active_ = false;
       needs_init_ = true;
-      force_link = 0;
       cassign_link = 0;
       count_functors_sig += 1;
 }
@@ -802,4 +832,24 @@ void vvp_fun_signal_real_aa::release_pv(vvp_net_ptr_t ptr, bool net,
 {
         /* Automatic variables can't be forced. */
       assert(0);
+}
+
+vvp_fun_force::vvp_fun_force()
+{
+}
+
+vvp_fun_force::~vvp_fun_force()
+{
+}
+
+void vvp_fun_force::recv_real(vvp_net_ptr_t ptr, double bit, vvp_context_t)
+{
+      assert(ptr.port() == 0);
+      vvp_net_t*net = ptr.ptr();
+
+      vvp_net_t*dst = net->port[3].ptr();
+      vvp_fun_signal_real*sig = dynamic_cast<vvp_fun_signal_real*> (dst->fil);
+      assert(sig);
+
+      sig->force_real(bit, vvp_vector2_t(vvp_vector2_t::FILL1, 1));
 }
