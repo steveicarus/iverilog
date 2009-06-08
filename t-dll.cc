@@ -2511,6 +2511,10 @@ void dll_target::signal(const NetNet*net)
 	    assert(0);
 	    break;
 
+	  case NetNet::UWIRE:
+	    cerr << net->get_fileline()
+	         << ": warning: uwire is not currently supported, converting "
+	            "it to a wire!" << endl;
 	  case NetNet::TRI:
 	  case NetNet::WIRE:
 	  case NetNet::IMPLICIT:

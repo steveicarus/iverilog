@@ -113,9 +113,10 @@ extern int build_library_index(const char*path, bool key_case_sensitive);
    specific language features. */
 enum generation_t {
       GN_VER1995  = 1,
-      GN_VER2001  = 2,
-      GN_VER2005  = 3,
-      GN_DEFAULT  = 3
+      GN_VER2001_NOCONFIG  = 2,
+      GN_VER2001  = 3,
+      GN_VER2005  = 4,
+      GN_DEFAULT  = 4
 };
 
 extern generation_t generation_flag;

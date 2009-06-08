@@ -179,7 +179,7 @@ NetNet* PEIdent::make_implicit_net_(Design*des, NetScope*scope) const
       assert(nettype != NetNet::NONE);
 
       NetNet*sig = new NetNet(scope, peek_tail_name(path_),
-			      NetNet::IMPLICIT, 1);
+			      nettype, 1);
       sig->set_line(*this);
 	/* Implicit nets are always scalar logic. */
       sig->data_type(IVL_VT_LOGIC);

@@ -194,7 +194,7 @@ void verify_version(char*ivl_ver, char*commit)
 unsigned module_cnt = 0;
 const char*module_tab[64];
 
-extern void vpi_mcd_init(FILE *log);
+extern void vpip_mcd_init(FILE *log);
 extern void vvp_vpi_init(void);
 
 int main(int argc, char*argv[])
@@ -326,7 +326,7 @@ int main(int argc, char*argv[])
 	    }
       }
 
-      vpi_mcd_init(logfile);
+      vpip_mcd_init(logfile);
 
       if (verbose_flag) {
 	    my_getrusage(cycles+0);

@@ -65,8 +65,11 @@ void PDelays::set_delays(const svector<PExpr*>*del, bool df)
       delete_flag_ = df;
 }
 
-static NetExpr*calculate_val(Design*des, NetScope*scope, const PExpr*expr)
+static NetExpr*calculate_val(Design*des, NetScope*scope, PExpr*expr)
 {
+      ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
+      bool tmp_flag = false;
+      expr->test_width(des, scope, 0, 0, tmp_type, tmp_flag);
       NetExpr*dex = expr->elaborate_expr(des, scope, -1, false);
       eval_expr(dex);
 

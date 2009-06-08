@@ -557,6 +557,9 @@ int process_generation(const char*name)
       else if (strcmp(name,"2001") == 0)
 	    generation = "2001";
 
+      else if (strcmp(name,"2001-noconfig") == 0)
+	    generation = "2001-noconfig";
+
       else if (strcmp(name,"2005") == 0)
 	    generation = "2005";
 

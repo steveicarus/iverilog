@@ -80,6 +80,7 @@ static verinum*make_unsized_hex(const char*txt);
 static int dec_buf_div2(char *buf);
 
 static void process_timescale(const char*txt);
+static void process_ucdrive(const char*txt);
 
 static list<int> keyword_mask_stack;
 
@@ -87,6 +88,7 @@ static int comment_enter;
 static bool in_module = false;
 static bool in_UDP = false;
 bool in_celldefine = false;
+UCDriveType uc_drive = UCD_NONE;
 %}
 
 %x CCOMMENT
@@ -95,6 +97,7 @@ bool in_celldefine = false;
 %x CSTRING
 %s UDPTABLE
 %x PPTIMESCALE
+%x PPUCDRIVE
 %x PPDEFAULT_NETTYPE
 %x PPBEGIN_KEYWORDS
 %s EDGES
@@ -271,22 +274,35 @@ S [afpnumkKMGT]
       return IDENTIFIER; }
 
 \$([a-zA-Z0-9$_]+)        {
-      if (strcmp(yytext,"$setuphold") == 0)
-	    return K_Ssetuphold;
-      if (strcmp(yytext,"$attribute") == 0)
-	    return KK_attribute;
+	/* The 1364-1995 timing checks. */
       if (strcmp(yytext,"$hold") == 0)
 	    return K_Shold;
+      if (strcmp(yytext,"$nochange") == 0)
+	    return K_Snochange;
       if (strcmp(yytext,"$period") == 0)
 	    return K_Speriod;
       if (strcmp(yytext,"$recovery") == 0)
 	    return K_Srecovery;
-      if (strcmp(yytext,"$recrem") == 0)
-	    return K_Srecrem;
       if (strcmp(yytext,"$setup") == 0)
 	    return K_Ssetup;
+      if (strcmp(yytext,"$setuphold") == 0)
+	    return K_Ssetuphold;
+      if (strcmp(yytext,"$skew") == 0)
+	    return K_Sskew;
       if (strcmp(yytext,"$width") == 0)
 	    return K_Swidth;
+	/* The new 1364-2001 timing checks. */
+      if (strcmp(yytext,"$fullskew") == 0)
+	    return K_Sfullskew;
+      if (strcmp(yytext,"$recrem") == 0)
+	    return K_Srecrem;
+      if (strcmp(yytext,"$removal") == 0)
+	    return K_Sremoval;
+      if (strcmp(yytext,"$timeskew") == 0)
+	    return K_Stimeskew;
+
+      if (strcmp(yytext,"$attribute") == 0)
+	    return KK_attribute;
       yylval.text = strdupnew(yytext);
       return SYSTEM_IDENTIFIER; }
 
@@ -392,16 +408,36 @@ S [afpnumkKMGT]
 	    pform_set_default_nettype(NetNet::WIRE, yylloc.text,
 	                              yylloc.first_line);
 	    in_celldefine = false;
+	    uc_drive = UCD_NONE;
 	    pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);
-	    /* Add `nounconnected_drive when implemented. */
       } }
+
+  /* Notice and handle the `unconnected_drive directive. */
+^{W}?`unconnected_drive { BEGIN(PPUCDRIVE); }
+<PPUCDRIVE>.* { process_ucdrive(yytext); }
+<PPUCDRIVE>\n {
+      if (in_module) {
+	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
+		    "`unconnected_drive directive can not be inside a "
+		    "module definition." << endl;
+	    error_count += 1;
+      }
+      yylloc.first_line += 1;
+      BEGIN(0); }
+
+^{W}?`nounconnected_drive{W}? {
+      if (in_module) {
+	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
+		    "`nounconnected_drive directive can not be inside a "
+		    "module definition." << endl;
+	    error_count += 1;
+      }
+      uc_drive = UCD_NONE; }
 
   /* These are directives that I do not yet support. I think that IVL
      should handle these, not an external preprocessor. */
   /* From 1364-2005 Chapter 19. */
-^{W}?`nounconnected_drive{W}?.*     {  }
 ^{W}?`pragme{W}?.*                  {  }
-^{W}?`unconnected_drive{W}?.*       {  }
 
   /* From 1364-2005 Annex D. */
 ^{W}?`default_decay_time{W}?.*      {  }
@@ -481,8 +517,30 @@ S [afpnumkKMGT]
       NetNet::Type net_type;
       size_t wordlen = strcspn(yytext, " \t\f\r\n");
       yytext[wordlen] = 0;
+  /* Add support for other wire types and better error detection. */
       if (strcmp(yytext,"wire") == 0) {
 	    net_type = NetNet::WIRE;
+
+      } else if (strcmp(yytext,"tri") == 0) {
+	    net_type = NetNet::TRI;
+
+      } else if (strcmp(yytext,"tri0") == 0) {
+	    net_type = NetNet::TRI0;
+
+      } else if (strcmp(yytext,"tri1") == 0) {
+	    net_type = NetNet::TRI1;
+
+      } else if (strcmp(yytext,"wand") == 0) {
+	    net_type = NetNet::WAND;
+
+      } else if (strcmp(yytext,"triand") == 0) {
+	    net_type = NetNet::TRIAND;
+
+      } else if (strcmp(yytext,"wor") == 0) {
+	    net_type = NetNet::WOR;
+
+      } else if (strcmp(yytext,"trior") == 0) {
+	    net_type = NetNet::TRIOR;
 
       } else if (strcmp(yytext,"none") == 0) {
 	    net_type = NetNet::NONE;
@@ -490,7 +548,7 @@ S [afpnumkKMGT]
       } else {
 	    cerr << yylloc.text << ":" << yylloc.first_line
 		 << ": error: Net type " << yytext
-		 << " is not a valid (and supported)"
+		 << " is not a valid (or supported)"
 		 << " default net type." << endl;
 	    net_type = NetNet::WIRE;
 	    error_count += 1;
@@ -982,6 +1040,128 @@ static verinum*make_unsized_dec(const char*ptr)
       return res;
 }
 
+/*
+ * Convert the string to a time unit or precision.
+ * Returns true on failure.
+ */
+static bool get_timescale_const(const char *&cp, int &res, bool is_unit)
+{
+	/* Check for the 1 digit. */
+      if (*cp != '1') {
+	    if (is_unit) {
+		  VLerror(yylloc, "Invalid `timescale unit constant "
+		                  "(1st digit)");
+	    } else {
+		  VLerror(yylloc, "Invalid `timescale precision constant "
+		                  "(1st digit)");
+	    }
+	    return true;
+      }
+      cp += 1;
+
+	/* Check the number of zeros after the 1. */
+      res = strspn(cp, "0");
+      if (res > 2) {
+	    if (is_unit) {
+		  VLerror(yylloc, "Invalid `timescale unit constant "
+		                  "(number of zeros)");
+	    } else {
+		  VLerror(yylloc, "Invalid `timescale precision constant "
+		                  "(number of zeros)");
+	    }
+	    return true;
+      }
+      cp += res;
+
+	/* Skip any space between the digits and the scaling string. */
+      cp += strspn(cp, " \t");
+
+	/* Now process the scaling string. */
+      if (strncmp("s", cp, 1) == 0) {
+	    res -= 0;
+	    cp += 1;
+	    return false;
+
+      } else if (strncmp("ms", cp, 2) == 0) {
+	    res -= 3;
+	    cp += 2;
+	    return false;
+
+      } else if (strncmp("us", cp, 2) == 0) {
+	    res -= 6;
+	    cp += 2;
+	    return false;
+
+      } else if (strncmp("ns", cp, 2) == 0) {
+	    res -= 9;
+	    cp += 2;
+	    return false;
+
+      } else if (strncmp("ps", cp, 2) == 0) {
+	    res -= 12;
+	    cp += 2;
+	    return false;
+
+      } else if (strncmp("fs", cp, 2) == 0) {
+	    res -= 15;
+	    cp += 2;
+	    return false;
+
+      }
+
+      if (is_unit) {
+	    VLerror(yylloc, "Invalid `timescale unit scale");
+      } else {
+	    VLerror(yylloc, "Invalid `timescale precision scale");
+      }
+      return true;
+}
+
+
+/*
+ * process either a pull0 or a pull1.
+ */
+static void process_ucdrive(const char*txt)
+{
+      UCDriveType ucd = UCD_NONE;
+      const char*cp = txt + strspn(txt, " \t");
+
+	/* Skip the space after the `unconnected_drive directive. */
+      if (cp == txt) {
+	    VLerror(yylloc, "Space required after `unconnected_drive "
+	                    "directive.");
+	    return;
+      }
+
+	/* Check for the pull keyword. */
+      if (strncmp("pull", cp, 4) != 0) {
+	    VLerror(yylloc, "pull required for `unconnected_drive "
+	                    "directive.");
+	    return;
+      }
+      cp += 4;
+      if (*cp == '0') ucd = UCD_PULL0;
+      else if (*cp == '1') ucd = UCD_PULL1;
+      else {
+	    cerr << yylloc.text << ":" << yylloc.first_line << ": error: "
+		    "`unconnected_drive does not support 'pull" << *cp
+	         << "'." << endl;
+	    error_count += 1;
+	    return;
+      }
+      cp += 1;
+
+	/* Verify that only space and/or a single line comment is left. */
+      cp += strspn(cp, " \t");
+      if (strncmp(cp, "//", 2) != 0 &&
+          (size_t)(cp-yytext) != strlen(yytext)) {
+	    VLerror(yylloc, "Invalid `unconnected_dirve directive (extra "
+	                    "garbage after precision).");
+	    return;
+      }
+
+      uc_drive = ucd;
+}
 
 /*
  * The timescale parameter has the form:
@@ -989,98 +1169,39 @@ static verinum*make_unsized_dec(const char*ptr)
  */
 static void process_timescale(const char*txt)
 {
-      unsigned num;
       const char*cp = txt + strspn(txt, " \t");
-      char*tmp;
-      const char*ctmp;
+
+	/* Skip the space after the `timescale directive. */
+      if (cp == txt) {
+	    VLerror(yylloc, "Space required after `timescale directive.");
+	    return;
+      }
 
       int unit = 0;
       int prec = 0;
 
-      num = strtoul(cp, &tmp, 10);
-      if (num == 0) {
-	    VLerror(yylloc, "Invalid timescale string.");
-	    return;
-      }
+	/* Get the time units. */
+      if (get_timescale_const(cp, unit, true)) return;
 
-      while (num >= 10) {
-	    unit += 1;
-	    num  /= 10;
-      }
-      if (num != 1) {
-	    VLerror(yylloc, "Invalid timescale unit number.");
-	    return;
-      }
-
-      cp = tmp;
+	/* Skip any space after the time units, the '/' and any
+	 * space after the '/'. */
       cp += strspn(cp, " \t");
-      ctmp = cp + strcspn(cp, " \t/");
-
-      if (strncmp("s", cp, ctmp-cp) == 0) {
-	    unit -= 0;
-
-      } else if (strncmp("ms", cp, ctmp-cp) == 0) {
-	    unit -= 3;
-
-      } else if (strncmp("us", cp, ctmp-cp) == 0) {
-	    unit -= 6;
-
-      } else if (strncmp("ns", cp, ctmp-cp) == 0) {
-	    unit -= 9;
-
-      } else if (strncmp("ps", cp, ctmp-cp) == 0) {
-	    unit -= 12;
-
-      } else if (strncmp("fs", cp, ctmp-cp) == 0) {
-	    unit -= 15;
-
-      } else {
-	    VLerror(yylloc, "Invalid timescale unit of measurement");
+      if (*cp != '/') {
+	    VLerror(yylloc, "`timescale separator '/' appears to be missing.");
 	    return;
       }
-
-      cp = ctmp;
-      cp += strspn(cp, " \t/");
-
-      num = strtoul(cp, &tmp, 10);
-      if (num == 0) {
-	    VLerror(yylloc, "Invalid timescale string.");
-	    return;
-      }
-      assert(num);
-      while (num >= 10) {
-	    prec += 1;
-	    num  /= 10;
-      }
-      if (num != 1) {
-	    VLerror(yylloc, "Invalid timescale precision number.");
-	    return;
-      }
-
-      cp = tmp;
+      cp += 1;
       cp += strspn(cp, " \t");
-      ctmp = cp + strcspn(cp, " \t\r");
 
-      if (strncmp("s", cp, ctmp-cp) == 0) {
-	    prec -= 0;
+	/* Get the time precision. */
+      if (get_timescale_const(cp, prec, false)) return;
 
-      } else if (strncmp("ms", cp, ctmp-cp) == 0) {
-	    prec -= 3;
-
-      } else if (strncmp("us", cp, ctmp-cp) == 0) {
-	    prec -= 6;
-
-      } else if (strncmp("ns", cp, ctmp-cp) == 0) {
-	    prec -= 9;
-
-      } else if (strncmp("ps", cp, ctmp-cp) == 0) {
-	    prec -= 12;
-
-      } else if (strncmp("fs", cp, ctmp-cp) == 0) {
-	    prec -= 15;
-
-      } else {
-	    VLerror(yylloc, "Invalid timescale precision units of measurement");
+	/* Verify that only space and/or a single line comment is left. */
+      cp += strspn(cp, " \t");
+      if (strncmp(cp, "//", 2) != 0 &&
+          (size_t)(cp-yytext) != strlen(yytext)) {
+	    VLerror(yylloc, "Invalid `timescale directive (extra garbage "
+	                    "after precision).");
 	    return;
       }
 
@@ -1101,7 +1222,7 @@ static void line_directive()
 {
       char *cpr;
 	/* Skip any leading space. */
-      char *cp = index(yytext, '#');
+      char *cp = strchr(yytext, '#');
 	/* Skip the #line directive. */
       assert(strncmp(cp, "#line", 5) == 0);
       cp += 5;
@@ -1170,7 +1291,7 @@ static void line_directive2()
 {
       char *cpr;
 	/* Skip any leading space. */
-      char *cp = index(yytext, '`');
+      char *cp = strchr(yytext, '`');
 	/* Skip the `line directive. */
       assert(strncmp(cp, "`line", 5) == 0);
       cp += 5;
@@ -1209,8 +1330,7 @@ static void line_directive2()
       }
 
 	/* Skip the space after the file name. */
-      cp = fn_end;
-      cp += 1;
+      cp = fn_end + 1;
       cpr = cp;
       cpr += strspn(cp, " \t");
       if (cp == cpr) {
@@ -1221,16 +1341,16 @@ static void line_directive2()
       cp = cpr;
 
 	/* Check that the level is correct, we do not need the level. */
-      strtoul(cp, &cpr, 10);
-      if (cp == cpr) {
+      if (strspn(cp, "012") != 1) {
 	    VLerror(yylloc, "Invalid level for `line directive.");
 	    return;
       }
-      cp = cpr;
+      cp += 1;
 
-	/* Verify that only space is left. */
-      cpr += strspn(cp, " \t");
-      if ((size_t)(cpr-yytext) != strlen(yytext)) {
+	/* Verify that only space and/or a single line comment is left. */
+      cp += strspn(cp, " \t");
+      if (strncmp(cp, "//", 2) != 0 &&
+          (size_t)(cp-yytext) != strlen(yytext)) {
 	    VLerror(yylloc, "Invalid `line directive (extra garbage after "
 	                    "level).");
 	    return;
