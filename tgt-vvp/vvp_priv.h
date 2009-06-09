@@ -1,7 +1,7 @@
 #ifndef __vvp_priv_H
 #define __vvp_priv_H
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -141,6 +141,7 @@ struct vvp_nexus_data {
  * cache it.
  */
 extern const char* draw_net_input(ivl_nexus_t nex);
+void EOC_cleanup_drivers();
 
 /*
  * See draw_net_input.c for details on draw_net_input_x. (It would be

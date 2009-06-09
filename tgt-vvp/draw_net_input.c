@@ -505,6 +505,16 @@ static char* draw_island_port(ivl_island_t island,
   /* Omit LPMPART_BI device pin-data(0) drivers. */
 # define OMIT_PART_BI_DATA 0x0001
 
+static ivl_nexus_ptr_t *drivers = 0x0;
+static unsigned adrivers = 0;
+
+void EOC_cleanup_drivers()
+{
+      free(drivers);
+      drivers = NULL;
+      adrivers = 0;
+}
+
 char* draw_net_input_x(ivl_nexus_t nex,
 		       ivl_nexus_ptr_t omit_ptr, int omit_flags,
 		       struct vvp_nexus_data*nex_data)
@@ -515,8 +525,6 @@ char* draw_net_input_x(ivl_nexus_t nex,
       unsigned idx;
       int level;
       unsigned ndrivers = 0;
-      static ivl_nexus_ptr_t *drivers = 0x0;
-      static unsigned adrivers = 0;
 
       const char*resolv_type;
 

@@ -77,7 +77,7 @@ extern "C" const char*optarg;
 /* Count errors detected in flag processing. */
 unsigned flag_errors = 0;
 
-const char*basedir = ".";
+const char*basedir = strdup(".");
 
 /*
  * These are the language support control flags. These support which
@@ -280,7 +280,7 @@ static void parm_to_flagmap(const string&flag)
       unsigned off = flag.find('=');
       if (off > flag.size()) {
 	    key = flag;
-	    value = "";
+	    value = strdup("");
 
       } else {
 	    key = flag.substr(0, off);
@@ -399,6 +399,7 @@ static void read_iconfig_file(const char*ipath)
 	    }
 
 	    if (strcmp(buf, "basedir") == 0) {
+		  free((char *)basedir);
 		  basedir = strdup(cp);
 
 	    } else if (strcmp(buf, "debug") == 0) {
@@ -472,6 +473,7 @@ static void read_iconfig_file(const char*ipath)
 		  flags["VPI_MODULE_LIST"] = vpi_module_list;
 
 	    } else if (strcmp(buf, "out") == 0) {
+		  free((char *)flags["-o"]);
 		  flags["-o"] = strdup(cp);
 
 	    } else if (strcmp(buf, "sys_func") == 0) {
@@ -529,6 +531,7 @@ static void read_iconfig_file(const char*ipath)
 
 	    }
       }
+      fclose(ifile);
 }
 
 extern Design* elaborate(list <perm_string> root);
@@ -555,6 +558,30 @@ inline static void times(struct tms *) { }
 inline static double cycles_diff(struct tms *a, struct tms *b) { return 0; }
 #endif // ! defined(HAVE_TIMES)
 
+static void EOC_cleanup(void)
+{
+      cleanup_sys_func_table();
+
+      for (list<const char*>::iterator suf = library_suff.begin() ;
+           suf != library_suff.end() ; suf ++ ) {
+	    free((char *)*suf);
+      }
+      library_suff.clear();
+
+      free((char *) basedir);
+      free(ivlpp_string);
+      free(depfile_name);
+
+      for (map<string, const char*>::iterator flg = flags.begin() ;
+           flg != flags.end() ; flg ++ ) {
+	    free((char *)flg->second);
+      }
+      flags.clear();
+
+      lex_strings.cleanup();
+      filename_strings.cleanup();
+}
+
 int main(int argc, char*argv[])
 {
       bool help_flag = false;
@@ -567,11 +594,11 @@ int main(int argc, char*argv[])
 
       struct tms cycles[5];
 
-      library_suff.push_back(".v");
+      library_suff.push_back(strdup(".v"));
 
       vpi_module_list = strdup("system");
       flags["VPI_MODULE_LIST"] = vpi_module_list;
-      flags["-o"] = "a.out";
+      flags["-o"] = strdup("a.out");
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;
 
@@ -933,6 +960,8 @@ int main(int argc, char*argv[])
 		 << endl;
       }
 
+      delete des;
+      EOC_cleanup();
       return 0;
 
  errors_summary:

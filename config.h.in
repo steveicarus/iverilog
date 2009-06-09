@@ -1,7 +1,7 @@
 #ifndef __config_H                                           /* -*- c++ -*- */
 #define __config_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -49,5 +49,11 @@
 #ifdef HAVE_INTTYPES_H
 # include  <inttypes.h>
 #endif
+
+/*
+ * Define this if you want to compile vvp with memory freeing and
+ * special valgrind hooks for the memory pools.
+ */
+# undef CHECK_WITH_VALGRIND
 
 #endif /* __config_H */

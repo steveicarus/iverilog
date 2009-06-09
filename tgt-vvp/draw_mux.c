@@ -19,9 +19,6 @@
 
 # include  "vvp_priv.h"
 # include  <assert.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
 # include  <stdlib.h>
 # include  <string.h>
 

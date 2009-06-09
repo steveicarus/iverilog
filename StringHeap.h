@@ -1,7 +1,7 @@
 #ifndef __StringHeap_H
 #define __StringHeap_H
 /*
- * Copyright (c) 2002-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -104,6 +104,7 @@ class StringHeapLex  : private StringHeap {
 
       unsigned add_count() const;
       unsigned add_hit_count() const;
+      void cleanup();
 
     private:
       enum { HASH_SIZE = 4096 };
