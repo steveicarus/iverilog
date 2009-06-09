@@ -2376,7 +2376,7 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
 	// X0 register.
       long index = thr->words[0].w_int;
 
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
+      vvp_fun_signal4*sig = dynamic_cast<vvp_fun_signal4*> (net->fun);
 
       if (index < 0 && (wid <= (unsigned)-index))
 	    return true;
@@ -2392,10 +2392,15 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
       if (index+wid > sig->size())
 	    wid = sig->size() - index;
 
-      vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
+      vvp_vector2_t mask(vvp_vector2_t::FILL0, sig->size());
+      for (unsigned idx = 0 ; idx < wid ; idx += 1)
+	    mask.set_bit(index+idx, 1);
 
-      vvp_net_ptr_t ptr (net, 2);
-      vvp_send_vec4_pv(ptr, vector, index, wid, sig->size(), 0);
+      vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
+      vvp_vector4_t value(sig->size(), BIT4_Z);
+      value.set_vec(index, vector);
+
+      sig->force_vec4(value, mask);
 
       return true;
 }
