@@ -140,6 +140,7 @@ int target_design(ivl_design_t des)
       }
 
       fclose(vvp_out);
+      EOC_cleanup_drivers();
 
       return rc + vvp_errors;
 }

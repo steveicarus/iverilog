@@ -665,25 +665,12 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       ivl_drive_t str0, str1;
 
       int level;
-      int ninp = ivl_logic_pins(lptr) - 1;
-      typedef const char*const_charp;
-      const_charp*input_strings = calloc(ninp, sizeof(const_charp));
-
-      for (pdx = 0 ;  pdx < ninp ;  pdx += 1) {
-	    ivl_nexus_t nex = ivl_logic_pin(lptr, pdx+1);
-	    if (nex == 0) {
-		    /* Only UDPs can have unconnected inputs. */
-		  assert(ivl_logic_type(lptr) == IVL_LO_UDP);
-		  input_strings[pdx] = 0;
-	    } else {
-		  input_strings[pdx] = draw_net_input(nex);
-	    }
-      }
+      int ninp;
+      const char **input_strings;
 
       switch (ivl_logic_type(lptr)) {
 
           case IVL_LO_UDP:
-	    free(input_strings);
 	    draw_udp_in_scope(lptr);
 	    return;
 
@@ -706,7 +693,6 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	      /* Skip pullup and pulldown objects. Things that have
 		 pull objects as inputs will instead generate the
 		 appropriate C<?> symbol. */
-	    free(input_strings);
 	    return;
 
 	  case IVL_LO_AND:
@@ -1862,12 +1848,14 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 		  fprintf(vvp_out, ">;\n");
 		  break;
 		case IVL_EX_REALNUM:
-		  fprintf(vvp_out, "P_%p .param/real \"%s\" %d %d, %s; value=%#g\n",
-			  par, ivl_parameter_basename(par),
-			  ivl_file_table_index(ivl_parameter_file(par)),
-			  ivl_parameter_lineno(par),
-			  draw_Cr_to_string(ivl_expr_dvalue(pex)),
-			  ivl_expr_dvalue(pex));
+		  { char *res = draw_Cr_to_string(ivl_expr_dvalue(pex));
+		    fprintf(vvp_out, "P_%p .param/real \"%s\" %d %d, %s; "
+		            "value=%#g\n", par, ivl_parameter_basename(par),
+			    ivl_file_table_index(ivl_parameter_file(par)),
+			    ivl_parameter_lineno(par), res,
+			    ivl_expr_dvalue(pex));
+		    free(res);
+		  }
 		  break;
 		default:
 		  fprintf(vvp_out, "; parameter type %d unsupported\n",

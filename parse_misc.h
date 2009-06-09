@@ -60,6 +60,8 @@ extern void VLerror(const YYLTYPE&loc, const char*msg);
 #define yywarn VLwarn
 extern void VLwarn(const YYLTYPE&loc, const char*msg);
 
+extern void destroy_lexor();
+
 extern ostream& operator << (ostream&, const YYLTYPE&loc);
 
 extern unsigned error_count, warn_count;

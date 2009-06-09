@@ -1374,3 +1374,17 @@ void reset_lexor()
 	/* Announce the first file name. */
       yylloc.text = set_file_name(strdupnew(vl_file.c_str()));
 }
+
+/*
+ * Modern version of flex (>=2.5.9) can clean up the scanner data.
+ */
+void destroy_lexor()
+{
+# ifdef FLEX_SCANNER
+#   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5
+#     if defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
+    yylex_destroy();
+#     endif
+#   endif
+# endif
+}

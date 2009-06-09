@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,6 +25,11 @@
 # include  <string.h>
 # include  <assert.h>
 
+#ifdef CHECK_WITH_VALGRIND
+static char **string_pool = NULL;
+static unsigned string_pool_count = 0;
+#endif
+
 StringHeap::StringHeap()
 {
       cell_base_ = 0;
@@ -46,6 +51,12 @@ const char* StringHeap::add(const char*text)
       unsigned rem = HEAPCELL - cell_ptr_;
       if (rem < (len+1)) {
 	    cell_base_ = (char*)malloc(HEAPCELL);
+#ifdef CHECK_WITH_VALGRIND
+	    string_pool_count += 1;
+	    string_pool = (char **) realloc(string_pool,
+	                                    string_pool_count*sizeof(char **));
+	    string_pool[string_pool_count-1] = cell_base_;
+#endif
 	    cell_ptr_ = 0;
 	    cell_count_ += 1;
 	    assert(cell_base_ != 0);
@@ -78,6 +89,22 @@ StringHeapLex::StringHeapLex()
 
 StringHeapLex::~StringHeapLex()
 {
+}
+
+void StringHeapLex::cleanup()
+{
+#ifdef CHECK_WITH_VALGRIND
+      for (unsigned idx = 0 ;  idx < string_pool_count ;  idx += 1) {
+	    free(string_pool[idx]);
+      }
+      free(string_pool);
+      string_pool = NULL;
+      string_pool_count = 0;
+
+      for (unsigned idx = 0 ;  idx < HASH_SIZE ;  idx += 1) {
+	    hash_table_[idx] = 0;
+      }
+#endif
 }
 
 unsigned StringHeapLex::add_hit_count() const
@@ -175,4 +202,3 @@ bool operator < (perm_string a, perm_string b)
 
       return false;
 }
-

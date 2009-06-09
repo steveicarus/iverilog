@@ -202,5 +202,6 @@ struct sfunc_return_type {
 
 extern const struct sfunc_return_type* lookup_sys_func(const char*name);
 extern int load_sys_func_table(const char*path);
+extern void cleanup_sys_func_table();
 
 #endif
