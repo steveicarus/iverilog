@@ -2376,12 +2376,7 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
 	// X0 register.
       long index = thr->words[0].w_int;
 
-      vvp_fun_signal4*sig = dynamic_cast<vvp_fun_signal4*> (net->fun);
-
       if (index < 0 && (wid <= (unsigned)-index))
-	    return true;
-
-      if (index >= (long)sig->size())
 	    return true;
 
       if (index < 0) {
@@ -2389,19 +2384,49 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
 	    index = 0;
       }
 
-      if (index+wid > sig->size())
-	    wid = sig->size() - index;
+      if (vvp_fun_signal4*sig = dynamic_cast<vvp_fun_signal4*> (net->fun)) {
 
-      vvp_vector2_t mask(vvp_vector2_t::FILL0, sig->size());
-      for (unsigned idx = 0 ; idx < wid ; idx += 1)
-	    mask.set_bit(index+idx, 1);
+	    if (index >= (long)sig->size())
+		  return true;
 
-      vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
-      vvp_vector4_t value(sig->size(), BIT4_Z);
-      value.set_vec(index, vector);
+	    if (index+wid > sig->size())
+		  wid = sig->size() - index;
 
-      sig->force_vec4(value, mask);
+	    vvp_vector2_t mask(vvp_vector2_t::FILL0, sig->size());
+	    for (unsigned idx = 0 ; idx < wid ; idx += 1)
+		  mask.set_bit(index+idx, 1);
 
+	    vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
+	    vvp_vector4_t value(sig->size(), BIT4_Z);
+	    value.set_vec(index, vector);
+
+	    sig->force_vec4(value, mask);
+
+	    return true;
+      }
+
+      if (vvp_fun_signal8*sig = dynamic_cast<vvp_fun_signal8*> (net->fun)) {
+
+	    if (index >= (long)sig->size())
+		  return true;
+
+	    if (index+wid > sig->size())
+		  wid = sig->size() - index;
+
+	    vvp_vector2_t mask(vvp_vector2_t::FILL0, sig->size());
+	    for (unsigned idx = 0 ; idx < wid ; idx += 1)
+		  mask.set_bit(index+idx, 1);
+
+	    vvp_vector4_t vec4 = vthread_bits_to_vector(thr, base, wid);
+	    vvp_vector4_t val4(sig->size(), BIT4_Z);
+	    val4.set_vec(index, vec4);
+
+	    sig->force_vec8(vvp_vector8_t(val4,6,6), mask);
+
+	    return true;
+      }
+
+      assert(0);
       return true;
 }
 
