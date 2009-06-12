@@ -457,6 +457,11 @@ class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_hook
  * The vvp_fun_force class objects are net functors that use their input
  * to force the associated filter. They do not actually  have an
  * output, they instead drive the force_* methods of the net filter.
+ *
+ * This functor is also special in that we know a priori that only
+ * port-0 is used, so we can use ports 1-3 for local storage. See the
+ * implementation of vvp_filter_wire_base::force_link in
+ * vvp_net_sig.cc for details.
  */
 class vvp_fun_force : public vvp_net_fun_t {
 
@@ -464,6 +469,8 @@ class vvp_fun_force : public vvp_net_fun_t {
       vvp_fun_force();
       ~vvp_fun_force();
 
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+		     vvp_context_t context);
       void recv_real(vvp_net_ptr_t port, double bit, vvp_context_t);
 };
 

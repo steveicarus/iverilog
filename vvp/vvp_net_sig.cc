@@ -28,6 +28,8 @@
 # include  <map>
 #endif
 
+# include  <iostream>
+
 vvp_filter_wire_base::vvp_filter_wire_base()
 {
       force_propagate_ = false;
@@ -68,6 +70,19 @@ template <class T> const T*vvp_filter_wire_base::filter_mask_(const T&val, const
       }
 }
 
+/*
+ * Force link/unlink uses a thunk vvp_net_t node with a vvp_fun_force
+ * functor to translate the net values to filter commands. The ports
+ * of this vvp_net_t object are use a little differently:
+ *
+ *     port[3]  - Point to the destination node where the forced
+ *                filter resides.
+ *
+ *     port[2]  - Point to the input node that drives port[0] for use
+ *                by the unlink method.
+ *
+ *     port[0]  - This is the normal input.
+ */
 void vvp_filter_wire_base::force_link(vvp_net_t*dst, vvp_net_t*src)
 {
       assert(dst->fil == this);
@@ -79,6 +94,9 @@ void vvp_filter_wire_base::force_link(vvp_net_t*dst, vvp_net_t*src)
 	    force_link_->port[2] = vvp_net_ptr_t(0,0);
 	    force_link_->fun = new vvp_fun_force;
       }
+
+      force_unlink();
+      assert(force_link_->port[2] == vvp_net_ptr_t(0,0));
 
 	// Use port[2] to hold the force source.
       force_link_->port[2] = vvp_net_ptr_t(src,0);
@@ -840,6 +858,19 @@ vvp_fun_force::vvp_fun_force()
 
 vvp_fun_force::~vvp_fun_force()
 {
+}
+
+void vvp_fun_force::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+			      vvp_context_t)
+{
+      assert(ptr.port() == 0);
+      vvp_net_t*net = ptr.ptr();
+
+      vvp_net_t*dst = net->port[3].ptr();
+      vvp_fun_signal4*sig = dynamic_cast<vvp_fun_signal4*> (dst->fil);
+      assert(sig);
+
+      sig->force_vec4(bit, vvp_vector2_t(vvp_vector2_t::FILL1, sig->size()));
 }
 
 void vvp_fun_force::recv_real(vvp_net_ptr_t ptr, double bit, vvp_context_t)
