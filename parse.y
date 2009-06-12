@@ -719,6 +719,7 @@ delay_value_simple
 description
   : module
   | udp_primitive
+  | config_declaration
   | nature_declaration
   | discipline_declaration
   | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
@@ -782,6 +783,54 @@ nature_item
   | K_ddt_nature '=' IDENTIFIER ';'
       { delete[] $3; }
   ;
+
+config_declaration
+  : K_config IDENTIFIER ';'
+    K_design lib_cell_identifiers ';'
+    list_of_config_rule_statements
+    K_endconfig
+      { cerr << @1 << ": sorry: config declarations are not supported and "
+                "will be skipped." << endl;
+	delete[] $2;
+      }
+  ;
+
+lib_cell_identifiers
+  : /* The BNF implies this can be blank, but I'm not sure exactly what
+     * this means. */
+  | lib_cell_identifiers lib_cell_id
+  ;
+
+list_of_config_rule_statements
+  : /* config rules are optional. */
+  | list_of_config_rule_statements config_rule_statement
+  ;
+
+config_rule_statement
+  : K_default K_liblist list_of_libraries ';'
+  | K_instance hierarchy_identifier K_liblist list_of_libraries ';'
+      { delete $2; }
+  | K_instance hierarchy_identifier K_use lib_cell_id opt_config ';'
+      { delete $2; }
+  | K_cell lib_cell_id K_liblist list_of_libraries ';'
+  | K_cell lib_cell_id K_use lib_cell_id opt_config ';'
+  ;
+
+opt_config
+  : /* The use clause takse an optional :config. */
+  | ':' K_config
+
+lib_cell_id
+  : IDENTIFIER
+      { delete[] $1; }
+  | IDENTIFIER '.' IDENTIFIER
+      { delete[] $1; delete[] $3; }
+  ;
+
+list_of_libraries
+  : /* A NULL library means use the parents cell library. */
+  | list_of_libraries IDENTIFIER
+      { delete[] $2; }
 
 drive_strength
 	: '(' dr_strength0 ',' dr_strength1 ')'
