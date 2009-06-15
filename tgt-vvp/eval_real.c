@@ -22,9 +22,6 @@
  */
 # include  "vvp_priv.h"
 # include  <string.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
 # include  <stdlib.h>
 # include  <math.h>
 # include  <assert.h>
@@ -55,9 +52,6 @@ static int draw_binary_real(ivl_expr_t expr)
 {
       int l, r = -1;
 
-	/* If the opcode is a vector only opcode then the sub expression
-	 * must not be a real expression, so use vector evaluation and
-	 * then convert that result to a real value. */
       switch (ivl_expr_opcode(expr)) {
 	  case 'E':
 	  case 'N':
@@ -70,22 +64,8 @@ static int draw_binary_real(ivl_expr_t expr)
 	  case 'A':
 	  case 'O':
 	  case 'X':
-	    {
-	    struct vector_info vi;
-	    int res;
-	    const char*sign_flag;
-
-	    vi = draw_eval_expr(expr, STUFF_OK_XZ);
-	    res = allocate_word();
-	    sign_flag = ivl_expr_signed(expr)? "/s" : "";
-	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
-		    sign_flag, res, vi.base, vi.wid);
-
-	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
-
-	    clr_vector(vi);
-	    return res;
-	    }
+	    /* These should be caught in draw_eval_real(). */
+	    assert(0);
       }
 
       l = draw_eval_real(ivl_expr_oper1(expr));
@@ -120,16 +100,20 @@ static int draw_binary_real(ivl_expr_t expr)
 		int lab_out = local_count++;
 		int lab_r = local_count++;
 		  /* If r is NaN, the go out and accept l as result. */
-		fprintf(vvp_out, "  %%cmp/wr %d, %d; Is NaN?\n", r, r);
-		fprintf(vvp_out, "  %%jmp/0xz T_%d.%d, 4;\n", thread_count, lab_out);
+		fprintf(vvp_out, "    %%cmp/wr %d, %d; Is NaN?\n", r, r);
+		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 4;\n", thread_count,
+		        lab_out);
 		  /* If l is NaN, the go out and accept r as result. */
-		fprintf(vvp_out, "  %%cmp/wr %d, %d; Is NaN?\n", l, l);
-		fprintf(vvp_out, "  %%jmp/0xz T_%d.%d, 4;\n", thread_count, lab_r);
+		fprintf(vvp_out, "    %%cmp/wr %d, %d; Is NaN?\n", l, l);
+		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 4;\n", thread_count,
+		        lab_r);
 		  /* If l <= r then go out. */
-		fprintf(vvp_out, "   %%cmp/wr %d, %d;\n", r, l);
-		fprintf(vvp_out, "   %%jmp/0xz T_%d.%d, 5;\n", thread_count, lab_out);
+		fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", r, l);
+		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 5;\n", thread_count,
+		        lab_out);
 		  /* At this point we know we want r as the result. */
-		fprintf(vvp_out, "T_%d.%d %%mov/wr %d, %d;\n", thread_count, lab_r, l, r);
+		fprintf(vvp_out, "T_%d.%d %%mov/wr %d, %d;\n", thread_count,
+		        lab_r, l, r);
 		fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
 		break;
 	  }
@@ -138,16 +122,20 @@ static int draw_binary_real(ivl_expr_t expr)
 		int lab_out = local_count++;
 		int lab_r = local_count++;
 		  /* If r is NaN, the go out and accept l as result. */
-		fprintf(vvp_out, "  %%cmp/wr %d, %d; Is NaN?\n", r, r);
-		fprintf(vvp_out, "  %%jmp/0xz T_%d.%d, 4;\n", thread_count, lab_out);
+		fprintf(vvp_out, "    %%cmp/wr %d, %d; Is NaN?\n", r, r);
+		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 4;\n", thread_count,
+		        lab_out);
 		  /* If l is NaN, the go out and accept r as result. */
-		fprintf(vvp_out, "  %%cmp/wr %d, %d; Is NaN?\n", l, l);
-		fprintf(vvp_out, "  %%jmp/0xz T_%d.%d, 4;\n", thread_count, lab_r);
+		fprintf(vvp_out, "    %%cmp/wr %d, %d; Is NaN?\n", l, l);
+		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 4;\n", thread_count,
+		        lab_r);
 		  /* if l >= r then go out. */
-		fprintf(vvp_out, "  %%cmp/wr %d, %d;\n", l, r);
-		fprintf(vvp_out, "  %%jmp/0xz T_%d.%d, 5;\n", thread_count, lab_out);
+		fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", l, r);
+		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 5;\n", thread_count,
+		        lab_out);
 
-		fprintf(vvp_out, "T_%d.%d %%mov/wr %d, %d;\n", thread_count, lab_r, l, r);
+		fprintf(vvp_out, "T_%d.%d %%mov/wr %d, %d;\n", thread_count,
+		        lab_r, l, r);
 		fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
 		break;
 	  }
@@ -508,14 +496,37 @@ static int draw_unary_real(ivl_expr_t expr)
 	    return sub;
       }
 
-      fprintf(vvp_out, "; XXXX unary (%c) on sube in %d\n", ivl_expr_opcode(expr), sub);
-      fprintf(stderr, "XXXX evaluate unary (%c) on sube in %d\n", ivl_expr_opcode(expr), sub);
+      fprintf(vvp_out, "; XXXX unary (%c) on sube in %d\n",
+              ivl_expr_opcode(expr), sub);
+      fprintf(stderr, "XXXX evaluate unary (%c) on sube in %d\n",
+              ivl_expr_opcode(expr), sub);
       return 0;
 }
 
 int draw_eval_real(ivl_expr_t expr)
 {
       int res = 0;
+
+	/* If this expression/sub-expression is not real then we need
+	 * to evaluate it as a bit value and then convert the bit based
+	 * result to a real value. This is required to get integer
+	 * division to work correctly. */
+      if (ivl_expr_value(expr) != IVL_VT_REAL) {
+	    struct vector_info vi;
+	    int res;
+	    const char*sign_flag;
+
+	    vi = draw_eval_expr(expr, STUFF_OK_XZ);
+	    res = allocate_word();
+	    sign_flag = ivl_expr_signed(expr)? "/s" : "";
+	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n", sign_flag, res,
+	            vi.base, vi.wid);
+
+	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
+	    
+	    clr_vector(vi);
+	    return res;
+      }
 
       switch (ivl_expr_type(expr)) {
 
