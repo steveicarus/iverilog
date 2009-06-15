@@ -263,7 +263,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
   s_vpi_value value;
   char *result, *fmtb;
   unsigned int size;
-  unsigned int ini_size = 256;  /* The initial size of the buffer. */
+  unsigned int ini_size = 512;  /* The initial size of the buffer. */
 
   /* Make sure the width fits in the initial buffer. */
   if (width+1 > ini_size) ini_size = width + 1;
@@ -488,12 +488,15 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
 
           /* If the default buffer is too small make it big enough.
            *
-           * This size may not always be correct, but if the default
-           * size is big enough for any practical value then all we
-           * need to worry about is extra padding and this should work
-           * correctly for that case, but since this uses the standard
-           * sprintf() routine we don't know exactly what it will do. */
+           * This should always give enough space. The maximum double
+           * is approximately 1.8*10^308 this means we could need 310
+           * characters plus the precision. We'll use 320 to give some
+           * extra buffer space. The initial buffers size should work
+           * for most cases, but to be safe we add the precision to
+           * the maximum size (think %6.300f when passed 1.2*10^308). */
           size = width + 1;
+          if (size < 320) size = 320;
+          size += prec;
           if (size > ini_size) result = realloc(result, size*sizeof(char));
           sprintf(result, fmtb+1, value.value.real);
           size = strlen(result) + 1;
