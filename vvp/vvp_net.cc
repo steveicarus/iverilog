@@ -1344,6 +1344,10 @@ vvp_realarray_t::vvp_realarray_t(unsigned wor)
 : words_(wor)
 {
       array_ = new double[words_];
+	// Real array words have a default value of zero.
+      for (unsigned idx = 0 ; idx < words_; idx += 1) {
+	    array_[idx] = 0.0;
+      }
 }
 
 vvp_realarray_t::~vvp_realarray_t()
