@@ -18,6 +18,7 @@
  */
 
 # include "sys_priv.h"
+# include "vcd_priv.h"
 
 /*
  * This file contains the implementations of the VCD related
@@ -33,10 +34,29 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
-# include  "vcd_priv.h"
 
-static char*dump_path = 0;
-static FILE*dump_file = 0;
+static char *dump_path = NULL;
+static FILE *dump_file = NULL;
+
+struct vcd_info {
+      vpiHandle item;
+      vpiHandle cb;
+      struct t_vpi_time time;
+      const char *ident;
+      struct vcd_info *next;
+      struct vcd_info *dmp_next;
+      int scheduled;
+};
+
+
+static struct vcd_info *vcd_list = NULL;
+static struct vcd_info *vcd_dmp_list = NULL;
+static PLI_UINT64 vcd_cur_time = 0;
+static int dump_is_off = 0;
+static long dump_limit = 0;
+static int dump_is_full = 0;
+static int finish_status = 0;
+
 
 static const char*units_names[] = {
       "s",
@@ -46,17 +66,6 @@ static const char*units_names[] = {
       "ps",
       "fs"
 };
-
-struct vcd_info {
-      vpiHandle item;
-      vpiHandle cb;
-      struct t_vpi_time time;
-      const char*ident;
-      struct vcd_info* next;
-      struct vcd_info* dmp_next;
-      int scheduled;
-};
-
 
 static char vcdid[8] = "!";
 
@@ -75,14 +84,6 @@ static void gen_new_vcd_id(void)
            }
       }
 }
-
-static struct vcd_info *vcd_list = 0;
-static struct vcd_info *vcd_dmp_list = 0;
-PLI_UINT64 vcd_cur_time = 0;
-static int dump_is_off = 0;
-static long dump_limit = 0;
-static int dump_is_full = 0;
-static int finish_status = 0;
 
 static char *truncate_bitvec(char *s)
 {
@@ -480,7 +481,6 @@ static PLI_INT32 sys_dumplimit_calltf(PLI_BYTE8 *name)
       s_vpi_value val;
 
       /* Get the value and set the dump limit. */
-      assert(argv);
       val.format = vpiIntVal;
       vpi_get_value(vpi_scan(argv), &val);
       dump_limit = val.value.integer;
@@ -520,13 +520,13 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	  case vpiNet:  type = "wire";    if(0){
 	  case vpiMemoryWord:
-            if (vpi_get(vpiConstantSelect, item) == 0) {
+	    if (vpi_get(vpiConstantSelect, item) == 0) {
 		    /* Turn a non-constant array word select into a
 		     * constant word select. */
 		  vpiHandle array = vpi_handle(vpiParent, item);
 		  PLI_INT32 index = vpi_get(vpiIndex, item);
 		  item = vpi_handle_by_index(array, index);
-            }
+	    }
 	  case vpiIntegerVar:
 	  case vpiTimeVar:
 	  case vpiReg:  type = "reg";    }
@@ -581,9 +581,8 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  cb.reason    = cbValueChange;
 		  cb.cb_rtn    = variable_cb_1;
 
-
-		  info->next      = vcd_list;
-		  info->dmp_next  = 0;
+		  info->dmp_next = 0;
+		  info->next  = vcd_list;
 		  vcd_list    = info;
 
 		  info->cb    = vpi_register_cb(&cb);
