@@ -1002,7 +1002,8 @@ static vpiHandle find_name(const char *name, vpiHandle handle)
 	    if (!strcmp(name, nm)) {
 		  rtn = ref->intern[i];
 		  break;
-	    } else if (vpi_get(vpiType, ref->intern[i]) == vpiMemory) {
+	    } else if (vpi_get(vpiType, ref->intern[i]) == vpiMemory ||
+	               vpi_get(vpiType, ref->intern[i]) == vpiNetArray) {
 		  /* We need to iterate on the words */
 		  vpiHandle word_i, word_h;
 		  word_i = vpi_iterate(vpiMemoryWord, ref->intern[i]);
