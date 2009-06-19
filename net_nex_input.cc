@@ -114,6 +114,11 @@ NexusSet* NetESelect::nex_input(bool rem_out)
       }
       result->add(*tmp);
       delete tmp;
+	/* See the comment for NetESignal below. */
+      if (base_) {
+	    cerr << get_fileline() << ": warning: @* is sensitive to all "
+	            "bits in '" << *expr_ << "'." << endl;
+      }
       return result;
 }
 
@@ -133,7 +138,23 @@ NexusSet* NetESFunc::nex_input(bool rem_out)
 
 NexusSet* NetESignal::nex_input(bool rem_out)
 {
+	/*
+	 * This is not what I would expect for the various selects (bit,
+	 * part, index, array). This code adds all the bits/array words
+	 * instead of building the appropriate select and then using it
+	 * as the trigger. Other simulators also add everything.
+	 */
       NexusSet*result = new NexusSet;
+	/* If we have an array index add it to the sensitivity list. */
+      if (word_) {
+	    NexusSet*tmp;
+	    tmp = word_->nex_input(rem_out);
+	    result->add(*tmp);
+	    delete tmp;
+	    cerr << get_fileline() << ": warning: @* is sensitive to all "
+                 << net_->array_count() << " words in array '"
+                 << name() << "'." << endl;
+      }
       for (unsigned idx = 0 ;  idx < net_->pin_count() ;  idx += 1)
 	    result->add(net_->pin(idx).nexus());
 
