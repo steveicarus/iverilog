@@ -2170,6 +2170,7 @@ int pform_parse(const char*path, FILE*file)
 	    error_count += 1;
       }
 
+      destroy_lexor();
       return error_count;
 }
 

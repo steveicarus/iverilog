@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -45,6 +45,16 @@ struct sfunc_return_type_cell : sfunc_return_type {
 };
 
 static struct sfunc_return_type_cell*sfunc_stack = 0;
+
+void cleanup_sys_func_table()
+{
+      struct sfunc_return_type_cell *next, *cur = sfunc_stack;
+      while (cur) {
+	    next = cur->next;
+	    delete cur;
+	    cur = next;
+      }
+}
 
 const struct sfunc_return_type* lookup_sys_func(const char*name)
 {
@@ -186,7 +196,7 @@ int load_sys_func_table(const char*path)
 	    fprintf(stderr, "%s:%s: Unknown type: %s\n",
 		    path, name, stype);
       }
+      fclose(fd);
 
       return 0;
 }
-

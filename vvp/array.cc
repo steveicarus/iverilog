@@ -599,13 +599,11 @@ static vpiHandle array_iterator_scan(vpiHandle ref, int)
       unsigned use_index = obj->next;
       obj->next += 1;
 
-      if (obj->array->nets)
-	    return obj->array->nets[obj->next];
+      if (obj->array->nets) return obj->array->nets[use_index];
 
-      assert(obj->array->vals4);
+      assert(obj->array->vals4 || obj->array->valsr);
 
-      if (obj->array->vals_words == 0)
-	    array_make_vals_words(obj->array);
+      if (obj->array->vals_words == 0) array_make_vals_words(obj->array);
 
       return &(obj->array->vals_words[use_index].as_word);
 }
@@ -850,6 +848,7 @@ void array_set_word(vvp_array_t arr, unsigned address, double val)
       assert(arr->nets == 0);
 
       arr->valsr->set_word(address, val);
+      array_word_change(arr, address);
 }
 
 vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
@@ -1146,7 +1145,11 @@ void vvp_fun_arrayport_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit
 	    addr_valid_flag = vector4_to_value(bit, addr_);
 	    if (! addr_valid_flag)
 		  addr_ = arr_->array_count;
-	    port.ptr()->send_vec4(array_get_word(arr_,addr_), 0);
+	    if (vpi_array_is_real(arr_))
+		  port.ptr()->send_real(array_get_word_r(arr_, addr_), 0);
+	    else
+		  port.ptr()->send_vec4(array_get_word(arr_,addr_), 0);
+
 	    break;
 
 	  default:
@@ -1157,11 +1160,13 @@ void vvp_fun_arrayport_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit
 
 void vvp_fun_arrayport_sa::check_word_change(unsigned long addr)
 {
-      if (addr != addr_)
-	    return;
+      if (addr != addr_) return;
 
-      vvp_vector4_t bit = array_get_word(arr_, addr_);
-      net_->send_vec4(bit, 0);
+      if (vpi_array_is_real(arr_)) {
+	    net_->send_real(net_->out, array_get_word_r(arr_, addr_), 0);
+      } else {
+	    net_->send_vec4(net_->out, array_get_word(arr_, addr_), 0);
+      }
 }
 
 class vvp_fun_arrayport_aa  : public vvp_fun_arrayport, public automatic_hooks_s {
@@ -1243,9 +1248,16 @@ void vvp_fun_arrayport_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit
 
                 case 0: // Address input
                   addr_valid_flag = vector4_to_value(bit, *addr);
-                  if (! addr_valid_flag)
-                        *addr = arr_->array_count;
-                  port.ptr()->send_vec4(array_get_word(arr_,*addr), context);
+                  if (! addr_valid_flag) *addr = arr_->array_count;
+                  if (vpi_array_is_real(arr_)) {
+			port.ptr()->send_real(port.ptr()->out,
+					      array_get_word_r(arr_, *addr),
+					      context);
+                  } else {
+			port.ptr()->send_vec4(port.ptr()->out,
+					      array_get_word(arr_, *addr),
+					      context);
+                  }
                   break;
 
                 default:
@@ -1269,8 +1281,13 @@ void vvp_fun_arrayport_aa::check_word_change(unsigned long addr)
       if (addr != *port_addr)
 	    return;
 
-      vvp_vector4_t bit = array_get_word(arr_, addr);
-      net_->send_vec4(bit, vthread_get_wt_context());
+      if (vpi_array_is_real(arr_)) {
+	    net_->send_real(net_->out, array_get_word_r(arr_, addr),
+			    vthread_get_wt_context());
+      } else {
+	    net_->send_vec4(net_->out, array_get_word(arr_, addr),
+	                  vthread_get_wt_context());
+      }
 }
 
 static void array_attach_port(vvp_array_t array, vvp_fun_arrayport*fun)
@@ -1306,11 +1323,17 @@ void array_word_change(vvp_array_t array, unsigned long addr)
 	    }
 
 	    if (cur->cb_data.cb_rtn != 0) {
-		  if (cur->cb_data.value)
-			vpip_vec4_get_value(array->vals4->get_word(addr),
-					    array->vals_width,
-					    array->signed_flag,
-					    cur->cb_data.value);
+		  if (cur->cb_data.value) {
+			if (vpi_array_is_real(array)) {
+			      vpip_real_get_value(array->valsr->get_word(addr),
+			                          cur->cb_data.value);
+			} else {
+			      vpip_vec4_get_value(array->vals4->get_word(addr),
+			                          array->vals_width,
+			                          array->signed_flag,
+			                          cur->cb_data.value);
+			}
+		  }
 
 		  callback_execute(cur);
 		  prev = cur;

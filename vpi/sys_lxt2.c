@@ -17,10 +17,9 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include "sys_priv.h"
 # include "lxt2_write.h"
-# include "vcd_priv.h"
 # include "sys_priv.h"
+# include "vcd_priv.h"
 
 /*
  * This file contains the implementations of the LXT2 related
@@ -37,6 +36,29 @@
 # include  <malloc.h>
 #endif
 # include  "stringheap.h"
+
+
+static char *dump_path = NULL;
+static struct lxt2_wr_trace *dump_file = NULL;
+
+struct vcd_info {
+      vpiHandle item;
+      vpiHandle cb;
+      struct t_vpi_time time;
+      struct lxt2_wr_symbol *sym;
+      struct vcd_info *next;
+      struct vcd_info *dmp_next;
+      int scheduled;
+};
+
+
+static struct vcd_info *vcd_list = NULL;
+static struct vcd_info *vcd_dmp_list = NULL;
+static PLI_UINT64 vcd_cur_time = 0;
+static int dump_is_off = 0;
+static long dump_limit = 0;
+static int dump_is_full = 0;
+static int finish_status = 0;
 
 
 static enum lxm_optimum_mode_e {
@@ -140,30 +162,6 @@ static char *create_full_name(const char *name)
 
       return n;
 }
-
-
-static char *dump_path = 0;
-static struct lxt2_wr_trace *dump_file = 0;
-
-struct vcd_info {
-      vpiHandle item;
-      vpiHandle cb;
-      struct t_vpi_time time;
-      struct lxt2_wr_symbol *sym;
-      struct vcd_info  *next;
-      struct vcd_info  *dmp_next;
-      int scheduled;
-};
-
-
-static struct vcd_info*vcd_list = 0;
-static struct vcd_info*vcd_dmp_list = 0;
-static PLI_UINT64 vcd_cur_time = 0;
-static int dump_is_off = 0;
-static long dump_limit = 0;
-static int dump_is_full = 0;
-static int finish_status = 0;
-
 
 static void show_this_item(struct vcd_info*info)
 {
@@ -436,8 +434,8 @@ static PLI_INT32 sys_dumpall_calltf(PLI_BYTE8*name)
 static void *close_dumpfile(void)
 {
       lxt2_wr_close(dump_file);
-      dump_file = 0;
-      return 0;
+      dump_file = NULL;
+      return NULL;
 }
 
 static void open_dumpfile(vpiHandle callh)
@@ -604,12 +602,12 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  info = malloc(sizeof(*info));
 
 		  info->time.type = vpiSimTime;
-		  info->item = item;
-		  info->sym  = lxt2_wr_symbol_add(dump_file, ident,
-		                                  0 /* array rows */,
-		                                  vpi_get(vpiLeftRange, item),
-		                                  vpi_get(vpiRightRange, item),
-		                                  LXT2_WR_SYM_F_BITS);
+		  info->item  = item;
+		  info->sym   = lxt2_wr_symbol_add(dump_file, ident,
+		                                   0 /* array rows */,
+		                                   vpi_get(vpiLeftRange, item),
+		                                   vpi_get(vpiRightRange, item),
+		                                   LXT2_WR_SYM_F_BITS);
 		  info->scheduled = 0;
 
 		  cb.time      = &info->time;

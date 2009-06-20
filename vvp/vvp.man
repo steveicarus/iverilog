@@ -4,7 +4,7 @@ vvp - Icarus Verilog vvp runtime engine
 
 .SH SYNOPSIS
 .B vvp
-[-sv] [-Mpath] [-mmodule] [-llogfile] inputfile [extended-args...]
+[-nNsvV] [-Mpath] [-mmodule] [-llogfile] inputfile [extended-args...]
 
 .SH DESCRIPTION
 .PP
@@ -45,6 +45,11 @@ to be a complete file name.
 This flag makes $stop or a <Control-C> a synonym for $finish.
 It can be used to give the program a more meaningful interface when
 running in a non-interactive environment.
+.TP 8
+.B -N
+This flag does the same thing as -n, but results in an exit code
+of 1 if the stimulation calls $stop.  It can be used to indicate a
+simulation failure when running a testbench.
 .TP 8
 .B -s
 Stop. This will cause the simulation to stop in the beginning, before

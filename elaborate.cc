@@ -3786,14 +3786,12 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 
 	/* Do not elaborate specify delay paths if this feature is
 	   turned off. */
-      if (!gn_specify_blocks_flag)
-	    return;
+      if (!gn_specify_blocks_flag) return;
 
       ivl_assert(*this, conditional || (condition==0));
 
       ndelays = delays.size();
-      if (ndelays > 12)
-	    ndelays = 12;
+      if (ndelays > 12) ndelays = 12;
 
 	/* Print a warning if we find default and `timescale based
 	 * delays in the design, since this is likely an error. */
@@ -4453,6 +4451,7 @@ Design* elaborate(list<perm_string>roots)
 	    NetScope *scope = root_elems[i]->scope;
 
 	    rc &= rmod->elaborate(des, scope);
+	    delete root_elems[i];
       }
 
       if (rc == false) {
