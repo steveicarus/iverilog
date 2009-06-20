@@ -247,7 +247,7 @@ class vvp_fun_signal4 : public vvp_fun_signal_vec {
 
     public:
 	// Enable filter force.
-      void force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
+      void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
       const vvp_vector4_t* filter_vec4(const vvp_vector4_t&val);
 	// Test the value against the filter.
       vvp_bit4_t filtered_value(const vvp_vector4_t&val, unsigned idx) const;
@@ -289,8 +289,6 @@ class vvp_fun_signal4_sa : public vvp_fun_signal4 {
                       unsigned base, unsigned wid);
 
     private:
-      void calculate_output_(vvp_net_ptr_t ptr);
-
       vvp_vector4_t bits4_;
 };
 
@@ -364,15 +362,13 @@ class vvp_fun_signal8  : public vvp_fun_signal_vec {
 
     public:
 	// Enable filter force.
-      void force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
+      void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
       const vvp_vector8_t* filter_vec8(const vvp_vector8_t&val);
 	// Test the value against the filter.
       vvp_scalar_t filtered_value(const vvp_vector8_t&val, unsigned idx) const;
       const vvp_vector8_t& filtered_vec8(const vvp_vector8_t&val) const;
 
     private:
-      void calculate_output_(vvp_net_ptr_t ptr);
-
       vvp_vector8_t bits8_;
       vvp_vector8_t force8_;
       mutable vvp_vector8_t filter8_;
@@ -390,7 +386,7 @@ class vvp_fun_signal_real : public vvp_fun_signal_base {
 
     public:
 	// Enable filter force.
-      void force_real(double val, vvp_vector2_t mask);
+      void force_fil_real(double val, vvp_vector2_t mask);
       bool filter_real(double&val);
 	// Test the value against the filter.
       double filtered_real(double val) const;

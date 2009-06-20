@@ -1001,6 +1001,18 @@ class vvp_net_t {
 			vvp_context_t context);
       void send_vec8_pv(const vvp_vector8_t&val,
 			unsigned base, unsigned wid, unsigned vwid);
+
+
+    public: // Methods to arrange for the output of this net to be forced.
+
+	// The intent is that all efforts at force are directed to
+	// operate only on the vvp_net_t whose output is to be
+	// forced. These methods then communicate the force to the
+	// attached filter to set up the actual force.
+      void force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
+      void force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
+      void force_real(double val, vvp_vector2_t mask);
+
     private:
       vvp_net_ptr_t out_;
 

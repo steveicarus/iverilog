@@ -141,22 +141,32 @@ bool vvp_filter_wire_base::filter_long(long&val)
       return filter_mask_(val);
 }
 
-void vvp_fun_signal4::force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
+void vvp_fun_signal4::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
 {
       force_mask(mask);
 
-      if (force4_.size() == 0)
+      if (force4_.size() == 0) {
 	    force4_ = val;
+      } else {
+	    for (unsigned idx = 0; idx < mask.size() ; idx += 1) {
+		  if (mask.value(idx) == 0)
+			continue;
 
-      for (unsigned idx = 0; idx < mask.size() ; idx += 1) {
-	    if (mask.value(idx) == 0)
-		  continue;
-
-	    force4_.set_bit(idx, val.value(idx));
+		  force4_.set_bit(idx, val.value(idx));
+	    }
       }
 }
 
-void vvp_fun_signal8::force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
+void vvp_net_t::force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
+{
+      vvp_fun_signal4*sig = dynamic_cast<vvp_fun_signal4*> (fil);
+      assert(sig);
+
+      sig->force_fil_vec4(val, mask);
+      send_vec4(val, 0);
+}
+
+void vvp_fun_signal8::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
 {
       force_mask(mask);
 
@@ -171,10 +181,28 @@ void vvp_fun_signal8::force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
       }
 }
 
-void vvp_fun_signal_real::force_real(double val, vvp_vector2_t mask)
+void vvp_net_t::force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
+{
+      vvp_fun_signal8*sig = dynamic_cast<vvp_fun_signal8*> (fil);
+      assert(sig);
+
+      sig->force_fil_vec8(val, mask);
+      send_vec8(val);
+}
+
+void vvp_fun_signal_real::force_fil_real(double val, vvp_vector2_t mask)
 {
       force_mask(mask);
       force_real_ = val;
+}
+
+void vvp_net_t::force_real(double val, vvp_vector2_t mask)
+{
+      vvp_fun_signal_real*sig = dynamic_cast<vvp_fun_signal_real*> (fil);
+      assert(sig);
+
+      sig->force_fil_real(val, mask);
+      send_real(val, 0);
 }
 
 vvp_bit4_t vvp_fun_signal4::filtered_value(const vvp_vector4_t&val, unsigned idx) const
@@ -296,7 +324,7 @@ void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
                   if (needs_init_ || !bits4_.eeq(bit)) {
 			bits4_ = bit;
 			needs_init_ = false;
-			calculate_output_(ptr);
+			ptr.ptr()->send_vec4(bits4_, 0);
 		  }
 	    } else {
 		  bool changed = false;
@@ -309,7 +337,7 @@ void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 		  }
 		  if (changed) {
 			needs_init_ = false;
-			calculate_output_(ptr);
+			ptr.ptr()->send_vec4(bits4_, 0);
 		  }
 	    }
 	    break;
@@ -317,7 +345,7 @@ void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 	  case 1: // Continuous assign value
 	    bits4_ = bit;
 	    assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL1, size());
-	    calculate_output_(ptr);
+	    ptr.ptr()->send_vec4(bits4_, 0);
 	    break;
 
 	  default:
@@ -347,7 +375,7 @@ void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit
 			bits4_.set_bit(base+idx, bit.value(idx));
 		  }
 		  needs_init_ = false;
-		  calculate_output_(ptr);
+		  ptr.ptr()->send_vec4(bits4_,0);
 	    } else {
 		  bool changed = false;
 		  assert(bits4_.size() == assign_mask_.size());
@@ -359,7 +387,7 @@ void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit
 		  }
 		  if (changed) {
 			needs_init_ = false;
-			calculate_output_(ptr);
+			ptr.ptr()->send_vec4(bits4_,0);
 		  }
 	    }
 	    break;
@@ -373,7 +401,7 @@ void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit
 		  bits4_.set_bit(base+idx, bit.value(idx));
 		  assign_mask_.set_bit(base+idx, 1);
 	    }
-	    calculate_output_(ptr);
+	    ptr.ptr()->send_vec4(bits4_,0);
 	    break;
 
 	  default:
@@ -388,12 +416,6 @@ void vvp_fun_signal4_sa::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit
 {
       recv_vec4_pv(ptr, reduce4(bit), base, wid, vwid, 0);
 }
-
-void vvp_fun_signal4_sa::calculate_output_(vvp_net_ptr_t ptr)
-{
-      ptr.ptr()->send_vec4(bits4_, 0);
-}
-
 
 void vvp_fun_signal_base::deassign()
 {
@@ -438,7 +460,7 @@ void vvp_fun_signal4_sa::release_pv(vvp_net_ptr_t ptr, bool net,
 
       if (net) {
 	    release_mask(mask);
-	    calculate_output_(ptr);
+	    ptr.ptr()->send_vec4(bits4_,0);
       } else {
 	    bits4_ = filtered_vec4(bits4_);
 	    release_mask(mask);
@@ -592,7 +614,7 @@ void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 	    if (needs_init_ || !bits8_.eeq(bit)) {
 		  bits8_ = bit;
 		  needs_init_ = false;
-		  calculate_output_(ptr);
+		  ptr.ptr()->send_vec8(bits8_);
 	    }
 	    break;
 
@@ -630,7 +652,7 @@ void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
 		  bits8_.set_bit(base+idx, bit.value(idx));
 	    }
 	    needs_init_ = false;
-	    calculate_output_(ptr);
+	    ptr.ptr()->send_vec8(bits8_);
 	    break;
 
 	  case 1: // Continuous assign value
@@ -639,7 +661,7 @@ void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
 	     * strength aware. */
 	    assert(0);
 	    break;
-
+#if 0
 	  case 2: // Force value
 	      { vvp_vector2_t mask (vvp_vector2_t::FILL0, vwid);
 		vvp_vector8_t vec (vvp_vector4_t(vwid, BIT4_Z),6,6);
@@ -651,17 +673,12 @@ void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
 		calculate_output_(ptr);
 		break;
 	      }
-
+#endif
 	  default:
 	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
 	    assert(0);
 	    break;
       }
-}
-
-void vvp_fun_signal8::calculate_output_(vvp_net_ptr_t ptr)
-{
-      ptr.ptr()->send_vec8(bits8_);
 }
 
 void vvp_fun_signal8::release(vvp_net_ptr_t ptr, bool net)
@@ -691,7 +708,7 @@ void vvp_fun_signal8::release_pv(vvp_net_ptr_t ptr, bool net,
 
       if (net) {
 	    release_mask(mask);
-	    calculate_output_(ptr);
+	    ptr.ptr()->send_vec8(bits8_);
       } else {
 	    bits8_ = filtered_vec8(bits8_);
 	    release_mask(mask);
@@ -870,17 +887,13 @@ void vvp_fun_force::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       vvp_fun_signal4*sig = dynamic_cast<vvp_fun_signal4*> (dst->fil);
       assert(sig);
 
-      sig->force_vec4(bit, vvp_vector2_t(vvp_vector2_t::FILL1, sig->size()));
+      dst->force_vec4(coerce_to_width(bit, sig->size()), vvp_vector2_t(vvp_vector2_t::FILL1, sig->size()));
 }
 
 void vvp_fun_force::recv_real(vvp_net_ptr_t ptr, double bit, vvp_context_t)
 {
       assert(ptr.port() == 0);
       vvp_net_t*net = ptr.ptr();
-
       vvp_net_t*dst = net->port[3].ptr();
-      vvp_fun_signal_real*sig = dynamic_cast<vvp_fun_signal_real*> (dst->fil);
-      assert(sig);
-
-      sig->force_real(bit, vvp_vector2_t(vvp_vector2_t::FILL1, 1));
+      dst->force_real(bit, vvp_vector2_t(vvp_vector2_t::FILL1, 1));
 }

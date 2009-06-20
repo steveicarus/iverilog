@@ -2347,7 +2347,8 @@ bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
 
       if (value.size() != sig->size())
 	    value = coerce_to_width(value, sig->size());
-      sig->force_vec4(value, vvp_vector2_t(vvp_vector2_t::FILL1, sig->size()));
+
+      net->force_vec4(value, vvp_vector2_t(vvp_vector2_t::FILL1, sig->size()));
 
       return true;
 }
@@ -2357,10 +2358,7 @@ bool of_FORCE_WR(vthread_t thr, vvp_code_t cp)
       vvp_net_t*net  = cp->net;
       double value = thr->words[cp->bit_idx[0]].w_real;
 
-      vvp_fun_signal_real*sig = reinterpret_cast<vvp_fun_signal_real*>(net->fun);
-      assert(sig);
-
-      sig->force_real(value, vvp_vector2_t(vvp_vector2_t::FILL1, 1));
+      net->force_real(value, vvp_vector2_t(vvp_vector2_t::FILL1, 1));
 
       return true;
 }
@@ -2400,7 +2398,7 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
 	    vvp_vector4_t value(sig->size(), BIT4_Z);
 	    value.set_vec(index, vector);
 
-	    sig->force_vec4(value, mask);
+	    net->force_vec4(value, mask);
 
 	    return true;
       }
@@ -2421,7 +2419,7 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
 	    vvp_vector4_t val4(sig->size(), BIT4_Z);
 	    val4.set_vec(index, vec4);
 
-	    sig->force_vec8(vvp_vector8_t(val4,6,6), mask);
+	    net->force_vec8(vvp_vector8_t(val4,6,6), mask);
 
 	    return true;
       }
