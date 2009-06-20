@@ -218,7 +218,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       list<index_component_t> *dimensions;
 };
 
-%token <text>   IDENTIFIER SYSTEM_IDENTIFIER STRING
+%token <text>   IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
 %token <discipline> DISCIPLINE_IDENTIFIER
 %token <text>   PATHPULSE_IDENTIFIER
 %token <number> BASED_NUMBER DEC_NUMBER
@@ -269,7 +269,8 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_wone K_uwire
 
  /* The new tokens from 1800-2005. */
-%token K_always_comb K_always_ff K_always_latch K_assert 
+%token K_always_comb K_always_ff K_always_latch K_assert
+%token K_timeprecision K_timeunit  
 
  /* The new tokens for Verilog-AMS 2.3. */
 %token K_abs K_abstol K_access K_acos K_acosh K_analog K_asin K_asinh
@@ -728,6 +729,7 @@ description
 	delete[] $3;
 	delete[] $5;
       }
+  | timeunits_declaration
   ;
 
   /* The discipline and nature declarations used to take no ';' after
@@ -736,6 +738,67 @@ description
      choose to make the ';' optional in this context. */
 optional_semicolon : ';' | ;
 
+timeunits_declaration_opt
+              :local_timeunits_declaration
+              |
+              ;
+
+timeunits_declaration 
+	      : K_timeprecision TIME_LITERAL ';'
+                K_timeunit  TIME_LITERAL ';'
+	          {
+                   pform_set_timeprecision($2,false,false);
+                   pform_set_timeunit($5,false,false);
+                  }
+	      | K_timeunit  TIME_LITERAL ';'
+                K_timeprecision TIME_LITERAL ';'
+                  {
+                   pform_set_timeunit($2,false,false);
+                   pform_set_timeprecision($5,false,false);
+                  }
+              | K_timeunit  TIME_LITERAL ';'
+	          {
+                   pform_set_timeunit($2,false,false);
+                  }
+	      | K_timeprecision TIME_LITERAL ';'
+                  {
+                   pform_set_timeprecision($2,false,false);
+                  }
+
+              ;
+
+local_timeunits_declaration 
+	      : K_timeprecision TIME_LITERAL ';'
+                K_timeunit  TIME_LITERAL ';'
+	          {
+                   pform_set_timeprecision($2,true,false);
+                   pform_set_timeunit($5,true,false);
+                  }
+	      | K_timeunit  TIME_LITERAL ';'
+                K_timeprecision TIME_LITERAL ';'
+                  {
+                   pform_set_timeunit($2,true,false);
+                   pform_set_timeprecision($5,true,false);
+                  }
+              | K_timeunit  TIME_LITERAL ';'
+	          {
+                   pform_set_timeunit($2,true,false);
+                  }
+	      | K_timeprecision TIME_LITERAL ';'
+                  {
+                   pform_set_timeprecision($2,true,false);
+                  }
+
+timeunits_declaration_check 
+              : K_timeunit  TIME_LITERAL ';'
+	          {
+                   pform_set_timeunit($2,true,true);
+                  }
+	      | K_timeprecision TIME_LITERAL ';'
+                  {
+                   pform_set_timeprecision($2,true,true);
+                  }
+              ;
 discipline_declaration
   : K_discipline IDENTIFIER optional_semicolon
       { pform_start_discipline($2); }
@@ -1986,6 +2049,7 @@ module  : attribute_list_opt module_start IDENTIFIER
 	  module_port_list_opt 
 	  module_attribute_foreign ';'
 		{ pform_module_set_ports($6); }
+          timeunits_declaration_opt
 	  module_item_list_opt
 	  K_endmodule
 		{ Module::UCDriveType ucd;
@@ -2463,7 +2527,8 @@ module_item
 		}
 	| KK_attribute '(' error ')' ';'
 		{ yyerror(@1, "error: Malformed $attribute parameter list."); }
-	;
+	| timeunits_declaration_check
+        ;
 
 automatic_opt
 	: K_automatic { $$ = true; }

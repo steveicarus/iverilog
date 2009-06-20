@@ -107,6 +107,8 @@ W [ \t\b\f\r]+
 
 S [afpnumkKMGT]
 
+TU [munpf]
+ 
 %%
 
   /* Recognize the various line directives. */
@@ -323,6 +325,25 @@ S [afpnumkKMGT]
       based_size = yylval.number->as_ulong();
       return DEC_NUMBER; }
 
+[0-9]+{TU}?s      {
+                   if(gn_system_verilog_flag)
+                     {
+                      yylval.text = strdupnew(yytext);
+                      return TIME_LITERAL;
+                     }
+                   else
+                   REJECT;
+                  }
+
+[0-9]*\.[0-9]+{TU}?s {
+                      if(gn_system_verilog_flag)
+                      {
+                        yylval.text = strdupnew(yytext);
+                        return TIME_LITERAL;
+                      }
+                   else
+                   REJECT;
+                  }
   /* These rules handle the scaled real literals from Verilog-AMS. The
      value is a number with a single letter scale factor. If
      verilog-ams is not enabled, then reject this rule. If it is

@@ -409,4 +409,10 @@ extern PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
 
 extern PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
 						 char*name, char*branch);
+/*
+ * Timeunit and precision setting function
+ */
+extern void pform_set_timeunit(const char*txt,bool in_module,bool only_check); 
+extern void pform_set_timeprecision(const char*txt,bool in_module,bool only_check); 
+
 #endif

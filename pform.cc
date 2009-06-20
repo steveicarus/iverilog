@@ -73,6 +73,19 @@ static NetNet::Type pform_default_nettype = NetNet::WIRE;
 static int pform_time_unit;
 static int pform_time_prec;
 
+/* These two flags check the initial timeprecison and timeunit 
+ * declaration inside a module
+ */
+static bool tp_decl_flag = false;
+static bool tu_decl_flag = false;
+
+/*
+ * Flags used to set time_from_timescale based on timeunit and 
+ * timeprecision 
+ */
+static bool tu_valid_flag = false;
+static bool tp_valid_flag = false;
+
 static char*pform_timescale_file = 0;
 static unsigned pform_timescale_line;
 
@@ -339,6 +352,156 @@ void pform_set_timescale(int unit, int prec,
       }
 }
 
+void pform_set_timeunit(const char*txt,bool in_module,bool only_check)
+{
+      unsigned num;
+      const char*cp = txt + strspn(txt, " \t");
+      char*tmp;
+      const char*ctmp;
+
+      int val = 0;
+      num = strtoul(cp, &tmp, 10);
+      if (num == 0) {
+	    VLerror(yylloc, "Invalid timeunit string.");
+	    return;
+      }
+
+      while (num >= 10) {
+	    val += 1;
+	    num  /= 10;
+      }
+      if (num != 1) {
+	    VLerror(yylloc, "Invalid  timeunit number.");
+	    return;
+      }
+
+      cp = tmp;
+      cp += strspn(cp, " \t");
+      ctmp = cp + strcspn(cp, " \t/");
+
+      if (strncmp("s", cp, ctmp-cp) == 0) {
+	    val -= 0;
+
+      } else if (strncmp("ms", cp, ctmp-cp) == 0) {
+	    val -= 3;
+
+      } else if (strncmp("us", cp, ctmp-cp) == 0) {
+	    val -= 6;
+
+      } else if (strncmp("ns", cp, ctmp-cp) == 0) {
+	    val -= 9;
+
+      } else if (strncmp("ps", cp, ctmp-cp) == 0) {
+	    val -= 12;
+
+      } else if (strncmp("fs", cp, ctmp-cp) == 0) {
+	    val -= 15;
+
+      } else {
+	    VLerror(yylloc, "Invalid unit of measurement");
+	    return;
+      }
+      if(in_module )
+      {	     
+	  if(!only_check)
+          { 
+      	    pform_cur_module->time_unit = val;
+	    tu_decl_flag=true;
+	    tu_valid_flag=true;
+	  }
+	  else if (!tu_decl_flag)
+          {
+	    VLerror(yylloc, "Timeunit declaration not found after module declaration");
+	    return;
+	  }
+	  else if(pform_cur_module->time_unit!= val)
+          {
+	    VLerror(yylloc, "Timeliteral do not match the initial timeunit declaration");
+	    return;
+	  }
+		  
+      }
+      else
+      {
+        tu_valid_flag=true;
+        pform_time_unit = val;
+      }
+}
+
+void pform_set_timeprecision(const char*txt,bool in_module,bool only_check)
+{
+      unsigned num;
+      const char*cp = txt + strspn(txt, " \t");
+      char*tmp;
+      const char*ctmp;
+
+      int val = 0;
+      num = strtoul(cp, &tmp, 10);
+      if (num == 0) {
+	    VLerror(yylloc, "Invalid timeprecision string.");
+	    return;
+      }
+
+      while (num >= 10) {
+	    val += 1;
+	    num  /= 10;
+      }
+      if (num != 1) {
+	    VLerror(yylloc, "Invalid  timeprecision number.");
+	    return;
+      }
+
+      cp = tmp;
+      cp += strspn(cp, " \t");
+      ctmp = cp + strcspn(cp, " \t/");
+
+      if (strncmp("s", cp, ctmp-cp) == 0) {
+	    val -= 0;
+
+      } else if (strncmp("ms", cp, ctmp-cp) == 0) {
+	    val -= 3;
+
+      } else if (strncmp("us", cp, ctmp-cp) == 0) {
+	    val -= 6;
+
+      } else if (strncmp("ns", cp, ctmp-cp) == 0) {
+	    val -= 9;
+
+      } else if (strncmp("ps", cp, ctmp-cp) == 0) {
+	    val -= 12;
+
+      } else if (strncmp("fs", cp, ctmp-cp) == 0) {
+	    val -= 15;
+
+      } else {
+	    VLerror(yylloc, "Invalid unit of measurement");
+	    return;
+      }
+      if(in_module)
+      {
+	  if(!only_check)
+          { 
+            pform_cur_module->time_precision = val;
+	    tp_decl_flag=true;
+            tp_valid_flag=true;
+	  }
+	  else if (!tp_decl_flag)
+          {
+	    VLerror(yylloc, "Timeprecision declaration not found after module declaration");
+	    return;
+	  }
+	  else if(pform_cur_module->time_precision!= val)
+          {
+	    VLerror(yylloc, "Timeliteral do not match the initial timeprecision declaration");
+	    return;
+	  }
+      }
+      else
+      {
+        pform_time_prec = val;
+        tp_valid_flag=true;
+      }
+}
 
 verinum* pform_verinum_with_size(verinum*siz, verinum*val,
 				 const char*file, unsigned lineno)
@@ -471,6 +634,7 @@ void pform_endmodule(const char*name, bool in_celldefine,
                      Module::UCDriveType uc_drive)
 {
       assert(pform_cur_module);
+      pform_cur_module->time_from_timescale = (tp_valid_flag && tu_valid_flag)|| pform_timescale_file != 0;
       perm_string mod_name = pform_cur_module->mod_name();
       assert(strcmp(name, mod_name) == 0);
       pform_cur_module->is_cell = in_celldefine;
@@ -495,6 +659,10 @@ void pform_endmodule(const char*name, bool in_celldefine,
       ivl_assert(*pform_cur_module, lexical_scope == 0);
 
       pform_cur_module = 0;
+      tp_decl_flag=false;
+      tu_decl_flag=false;
+      tu_valid_flag=false;
+      tp_valid_flag=false;
 }
 
 void pform_genvars(const struct vlltype&li, list<perm_string>*names)
