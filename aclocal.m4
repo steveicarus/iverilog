@@ -8,7 +8,7 @@
 AC_DEFUN([AX_ENABLE_SUFFIX],
 [AC_ARG_ENABLE([suffix],[Set the installation command suffix],[true],[enable_suffix=no])
 if test X$enable_suffix = Xyes; then
-  install_suffix='-0.9'
+  install_suffix='-0.10'
 elif test X$enable_suffix = Xno; then
   install_suffix=''
 else
