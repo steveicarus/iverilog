@@ -1396,9 +1396,9 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
       struct vector_info lv;
       struct vector_info rv;
 
-      const char*sign_string = ivl_expr_signed(le) && ivl_expr_signed(re)? "/s" : "";
+      int signed_flag = ivl_expr_signed(le) && ivl_expr_signed(re) ? 1 : 0;
+      const char*sign_string = signed_flag ? "/s" : "";
 
-      int signed_flag = ivl_expr_signed(exp)? 1 : 0;
 
       if ((ivl_expr_opcode(exp) == '+')
 	  && (ivl_expr_type(le) == IVL_EX_SIGNAL)
