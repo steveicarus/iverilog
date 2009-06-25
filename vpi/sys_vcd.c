@@ -495,7 +495,7 @@ static PLI_INT32 sys_dumplimit_calltf(PLI_BYTE8 *name)
       return 0;
 }
 
-static void scan_item(unsigned depth, vpiHandle item, int skip, int expl)
+static void scan_item(unsigned depth, vpiHandle item, int skip)
 {
       struct t_cb_data cb;
       struct vcd_info* info;
@@ -613,17 +613,9 @@ static void scan_item(unsigned depth, vpiHandle item, int skip, int expl)
 	       * scope then just return. */
             if (skip || vpi_get(vpiAutomatic, item)) return;
 
-	      /* Skip this signal if it has already been included. */
-	    if (vcd_names_search(&vcd_var, fullname)) {
-		    /* Only warn when the variable is given explicitly. */
-		  if (expl)
-			 vpi_printf("VCD warning: skipping signal %s, it was "
-			            "previously included.\n", fullname);
-		  return;
-	    }
-
-	      /* Add implicit signals here. */
-	    if (!expl) vcd_names_add(&vcd_var, fullname);
+	      /* Skip this signal if it has already been included.
+	       * This can only happen for implicitly given signals. */
+	    if (vcd_names_search(&vcd_var, fullname)) return;
 
 	      /* Declare the variable in the VCD file. */
 	    name = vpi_get_str(vpiName, item);
@@ -696,7 +688,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip, int expl)
 		  if (nskip) {
 			vpi_printf("VCD warning: ignoring signals in "
 			           "previously scanned scope %s.\n", fullname);
-		  } else vcd_names_add(&vcd_tab, fullname);
+		  } else {
+			vcd_names_add(&vcd_tab, fullname);
+			vcd_names_sort(&vcd_tab);
+		  }
 
 		  name = vpi_get_str(vpiName, item);
 		  fprintf(dump_file, "$scope %s %s $end\n", type, name);
@@ -705,12 +700,11 @@ static void scan_item(unsigned depth, vpiHandle item, int skip, int expl)
 			vpiHandle hand;
 			vpiHandle argv = vpi_iterate(types[i], item);
 			while (argv && (hand = vpi_scan(argv))) {
-			      scan_item(depth-1, hand, nskip, 0);
+			      scan_item(depth-1, hand, nskip);
 			}
 		  }
 
 		    /* Sort any signals that we added above. */
-		  if (!nskip) vcd_names_sort(&vcd_var);
 		  fprintf(dump_file, "$upscope $end\n");
 	    }
 	    break;
@@ -784,11 +778,10 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
       }
 
       for ( ; item; item = vpi_scan(argv)) {
-	    const char *scname;
+	    char *scname;
+	    const char *fullname;
 	    int add_var = 0;
 	    int dep;
-
-	    vcd_names_sort(&vcd_tab);
 
 	      /* If this is a signal make sure it has not already
 	       * been included. */
@@ -801,20 +794,27 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 	        case vpiRealVar:
 	        case vpiReg:
 	        case vpiTimeVar:
-		  scname = vpi_get_str(vpiFullName, vpi_handle(vpiScope, item));
-		  if (vcd_names_search(&vcd_var, scname)) {
+		    /* Warn if the variables scope (which includes the
+		     * variable) or the variable itself was already
+		     * included. */
+		  scname = strdup(vpi_get_str(vpiFullName,
+		                              vpi_handle(vpiScope, item)));
+		  fullname = vpi_get_str(vpiFullName, item);
+		  if (vcd_names_search(&vcd_tab, scname) ||
+		      vcd_names_search(&vcd_var, fullname)) {
 		        vpi_printf("VCD warning: skipping signal %s, "
 		                   "it was previously included.\n",
-		                   vpi_get_str(vpiFullName, item));
+		                   fullname);
 		        continue;
 		  } else {
 		        add_var = 1;
 		  }
+		  free(scname);
 	    }
 
 	    dep = draw_scope(item, callh);
 
-	    scan_item(depth, item, 0, 1);
+	    scan_item(depth, item, 0);
 
 	    while (dep--) fprintf(dump_file, "$upscope $end\n");
 
