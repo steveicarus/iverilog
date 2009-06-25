@@ -271,12 +271,23 @@ PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name)
           case vpiNamedBegin:
           case vpiNamedFork:
           /* The variable types. */
+#if 0
+          case vpiParameter: /* A constant! */
+#endif
           case vpiNet:
           case vpiReg:
           case vpiIntegerVar:
           case vpiTimeVar:
           case vpiRealVar:
+          case vpiNamedEvent:
             break;
+
+          case vpiParameter: /* A constant! */
+            vpi_printf("SORRY: %s:%d: ", vpi_get_str(vpiFile, callh),
+                       (int)vpi_get(vpiLineNo, callh));
+            vpi_printf("%s cannot currently dump a parameter.\n", name);
+            break;
+
           default:
             vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                        (int)vpi_get(vpiLineNo, callh));
