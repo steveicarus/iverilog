@@ -2311,11 +2311,8 @@ bool of_FORCE_LINK(vthread_t thr, vvp_code_t cp)
       vvp_net_t*dst = cp->net;
       vvp_net_t*src = cp->net2;
 
-      vvp_filter_wire_base*sig
-	    = dynamic_cast<vvp_filter_wire_base*>(dst->fun);
-      assert(sig);
-
-      sig->force_link(dst, src);
+      assert(dst->fil);
+      dst->fil->force_link(dst, src);
 
       return true;
 }
@@ -3936,6 +3933,7 @@ bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
 
       vvp_fun_signal_vec*sig = reinterpret_cast<vvp_fun_signal_vec*>(net->fun);
       assert(sig);
+      assert(net->fil);
 
       if (base >= sig->size()) return true;
       if (base+width > sig->size()) width = sig->size() - base;
@@ -3943,14 +3941,14 @@ bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
       bool full_sig = base == 0 && width == sig->size();
 
 	// XXXX Can't really do this if this is a partial release?
-      sig->force_unlink();
+      net->fil->force_unlink();
 
 	/* Do we release all or part of the net? */
       vvp_net_ptr_t ptr (net, 0);
       if (full_sig) {
-	    sig->release(ptr, true);
+	    net->fil->release(ptr, true);
       } else {
-	    sig->release_pv(ptr, true, base, width);
+	    net->fil->release_pv(ptr, true, base, width);
       }
 
       return true;
@@ -3965,6 +3963,7 @@ bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
 
       vvp_fun_signal_vec*sig = reinterpret_cast<vvp_fun_signal_vec*>(net->fun);
       assert(sig);
+      assert(net->fil);
 
       if (base >= sig->size()) return true;
       if (base+width > sig->size()) width = sig->size() - base;
@@ -3972,15 +3971,15 @@ bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
       bool full_sig = base == 0 && width == sig->size();
 
 	// XXXX Can't really do this if this is a partial release?
-      sig->force_unlink();
+      net->fil->force_unlink();
 
 	// Send a command to this signal to unforce itself.
 	/* Do we release all or part of the net? */
       vvp_net_ptr_t ptr (net, 0);
       if (full_sig) {
-	    sig->release(ptr, false);
+	    net->fil->release(ptr, false);
       } else {
-	    sig->release_pv(ptr, false, base, width);
+	    net->fil->release_pv(ptr, false, base, width);
       }
 
       return true;
@@ -3992,14 +3991,12 @@ bool of_RELEASE_WR(vthread_t thr, vvp_code_t cp)
       vvp_net_t*net = cp->net;
       unsigned type  = cp->bit_idx[0];
 
-      vvp_fun_signal_real*sig = reinterpret_cast<vvp_fun_signal_real*>(net->fun);
-      assert(sig);
-
-      sig->force_unlink();
+      assert(net->fil);
+      net->fil->force_unlink();
 
 	// Send a command to this signal to unforce itself.
       vvp_net_ptr_t ptr (net, 0);
-      sig->release(ptr, type==0);
+      net->fil->release(ptr, type==0);
       return true;
 }
 

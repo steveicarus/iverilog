@@ -21,6 +21,7 @@
 
 # include  "config.h"
 # include  "vpi_user.h"
+# include  "vvp_vpi_callback.h"
 # include  <stddef.h>
 # include  <stdlib.h>
 # include  <string.h>
@@ -1097,10 +1098,10 @@ class vvp_net_fun_t {
  * false. If false, then send_*() continues as usual. If false, output
  * propagation is stopped.
  *
- * The filter object can be used to implement force/release, and also
- * can be used to implement vpi net object.
+ * The filter object also provides an implementation hooks for
+ * force/release.
  */
-class vvp_net_fil_t {
+class vvp_net_fil_t  : public vvp_vpi_callback {
 
     public:
       vvp_net_fil_t();
@@ -1117,6 +1118,37 @@ class vvp_net_fil_t {
 	// propagation is suppressed. The value may be edited by the filter.
       virtual bool filter_real(double&val);
       virtual bool filter_long(long&val);
+
+      virtual void release(vvp_net_ptr_t ptr, bool net) =0;
+      virtual void release_pv(vvp_net_ptr_t ptr, bool net,
+                              unsigned base, unsigned wid) =0;
+
+	// The %force/link instruction needs a place to write the
+	// source node of the force, so that subsequent %force and
+	// %release instructions can undo the link as needed. */
+      void force_link(vvp_net_t*dst, vvp_net_t*src);
+      void force_unlink(void);
+
+    protected:
+	// Set bits of the filter force mask
+      void force_mask(vvp_vector2_t mask);
+	// Release the force on the bits set in the mask.
+      void release_mask(vvp_vector2_t mask);
+	// Test bits of the filter force mask;
+      bool test_force_mask(unsigned bit) const;
+      bool test_force_mask_is_zero() const;
+
+      template <class T> const T*filter_mask_(const T&val, const T&force, T&buf);
+      template <class T> bool filter_mask_(T&val);
+
+    private:
+	// Mask of forced bits
+      vvp_vector2_t force_mask_;
+	// True if the next filter must propagate. Need this to allow
+	// the forced value to get through.
+      bool force_propagate_;
+	// force link back.
+      struct vvp_net_t*force_link_;
 };
 
 /* **** Some core net functions **** */
@@ -1145,6 +1177,27 @@ class vvp_fun_concat  : public vvp_net_fun_t {
     private:
       unsigned wid_[4];
       vvp_vector4_t val_;
+};
+
+/*
+ * The vvp_fun_force class objects are net functors that use their input
+ * to force the associated filter. They do not actually  have an
+ * output, they instead drive the force_* methods of the net filter.
+ *
+ * This functor is also special in that we know a priori that only
+ * port-0 is used, so we can use ports 1-3 for local storage. See the
+ * implementation of vvp_filter_wire_base::force_link in
+ * vvp_net_sig.cc for details.
+ */
+class vvp_fun_force : public vvp_net_fun_t {
+
+    public:
+      vvp_fun_force();
+      ~vvp_fun_force();
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+		     vvp_context_t context);
+      void recv_real(vvp_net_ptr_t port, double bit, vvp_context_t);
 };
 
 /* vvp_fun_repeat
@@ -1389,6 +1442,26 @@ inline void vvp_net_t::send_real(double val, vvp_context_t context)
 	    return;
 
       vvp_send_real(out_, val, context);
+}
+
+
+inline bool vvp_net_fil_t::test_force_mask(unsigned bit) const
+{
+      if (bit >= force_mask_.size())
+	    return false;
+      if (force_mask_.value(bit))
+	    return true;
+      else
+	    return false;
+}
+
+inline bool vvp_net_fil_t::test_force_mask_is_zero(void) const
+{
+      if (force_mask_.size() == 0)
+	    return true;
+      if (force_mask_.is_zero())
+	    return true;
+      return false;
 }
 
 #endif

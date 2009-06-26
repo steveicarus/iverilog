@@ -36,43 +36,6 @@ class ostream;
 
 using namespace std;
 
-/*
- * Things derived from vvp_vpi_callback may have callbacks
- * attached. This is how vpi callbacks are attached to the vvp
- * structure.
- *
- * Things derived from vvp_vpi_callback may also be array'ed, so it
- * includes some members that arrays use.
- */
-class vvp_vpi_callback {
-
-    public:
-      vvp_vpi_callback();
-      virtual ~vvp_vpi_callback();
-
-      void attach_as_word(class __vpiArray* arr, unsigned long addr);
-
-      void add_vpi_callback(struct __vpiCallback*);
-#ifdef CHECK_WITH_VALGRIND
-	/* This has only been tested at EOS. */
-      void clear_all_callbacks(void);
-#endif
-
-	// Derived classes implement this method to provide a way for
-	// vpi to get at the vvp value of the object.
-      virtual void get_value(struct t_vpi_value*value) =0;
-
-    protected:
-	// Derived classes call this method to indicate that it is
-	// time to call the callback.
-      void run_vpi_callbacks();
-
-    private:
-      struct __vpiCallback*vpi_callbacks_;
-      class __vpiArray* array_;
-      unsigned long array_word_;
-};
-
 /* vvp_fun_signal
  * This node is the place holder in a vvp network for signals,
  * including nets of various sort. The output from a signal follows
@@ -128,78 +91,7 @@ class vvp_vpi_callback {
  */
 
 
-class vvp_filter_wire_base : public vvp_net_fil_t, public vvp_vpi_callback {
-
-    public:
-      vvp_filter_wire_base();
-      ~vvp_filter_wire_base();
-
-	// The filter_long is a placeholder here. This should be moved
-	// to a vvp_fun_signal_long when such a thing is implemented.
-      bool filter_long(long&val);
-
-    public:
-	// Force/release work in the filter by setting the forced
-	// value using one of the force_* methods. This sets the
-	// forced value as a mask of the bits of the vector that are
-	// forced. The filter then automatically runs the filter on
-	// the outputs that pass through. You can also get at the
-	// filtering results using the filtered_* methods. The
-	// release_mask() method releases bits of the vector.
-
-      virtual void release(vvp_net_ptr_t ptr, bool net) =0;
-      virtual void release_pv(vvp_net_ptr_t ptr, bool net,
-                              unsigned base, unsigned wid) =0;
-
-	/* The %force/link instruction needs a place to write the
-	   source node of the force, so that subsequent %force and
-	   %release instructions can undo the link as needed. */
-      void force_link(vvp_net_t*dst, vvp_net_t*src);
-      void force_unlink(void);
-
-    private:
-      struct vvp_net_t*force_link_;
-
-    protected:
-	// Set bits of the filter force mask
-      void force_mask(vvp_vector2_t mask);
-	// Release the force on the bits set in the mask.
-      void release_mask(vvp_vector2_t mask);
-	// Test bits of the filter force mask;
-      bool test_force_mask(unsigned bit) const;
-      bool test_force_mask_is_zero() const;
-
-      template <class T> const T*filter_mask_(const T&val, const T&force, T&buf);
-      template <class T> bool filter_mask_(T&val);
-
-    private:
-	// Forced value
-      vvp_vector2_t force_mask_;
-	// True if the next filter must propagate. Need this to allow
-	// the forced value to get through.
-      bool force_propagate_;
-};
-
-inline bool vvp_filter_wire_base::test_force_mask(unsigned bit) const
-{
-      if (bit >= force_mask_.size())
-	    return false;
-      if (force_mask_.value(bit))
-	    return true;
-      else
-	    return false;
-}
-
-inline bool vvp_filter_wire_base::test_force_mask_is_zero(void) const
-{
-      if (force_mask_.size() == 0)
-	    return true;
-      if (force_mask_.is_zero())
-	    return true;
-      return false;
-}
-
-class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_filter_wire_base {
+class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_net_fil_t {
 
     public:
       vvp_fun_signal_base();
@@ -446,28 +338,6 @@ class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_hook
 
     private:
       unsigned context_idx_;
-};
-
-
-/*
- * The vvp_fun_force class objects are net functors that use their input
- * to force the associated filter. They do not actually  have an
- * output, they instead drive the force_* methods of the net filter.
- *
- * This functor is also special in that we know a priori that only
- * port-0 is used, so we can use ports 1-3 for local storage. See the
- * implementation of vvp_filter_wire_base::force_link in
- * vvp_net_sig.cc for details.
- */
-class vvp_fun_force : public vvp_net_fun_t {
-
-    public:
-      vvp_fun_force();
-      ~vvp_fun_force();
-
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-		     vvp_context_t context);
-      void recv_real(vvp_net_ptr_t port, double bit, vvp_context_t);
 };
 
 

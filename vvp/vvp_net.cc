@@ -194,12 +194,16 @@ void vvp_net_fun_t::operator delete(void*)
       assert(0);
 }
 
+
 vvp_net_fil_t::vvp_net_fil_t()
 {
+      force_link_ = 0;
+      force_propagate_ = false;
 }
 
 vvp_net_fil_t::~vvp_net_fil_t()
 {
+      assert(force_link_ == 0);
 }
 
 const vvp_vector4_t* vvp_net_fil_t::filter_vec4(const vvp_vector4_t&val)
@@ -220,6 +224,81 @@ bool vvp_net_fil_t::filter_real(double&)
 bool vvp_net_fil_t::filter_long(long&)
 {
       return true;
+}
+
+void vvp_net_fil_t::force_mask(vvp_vector2_t mask)
+{
+      if (force_mask_.size() == 0)
+	    force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, mask.size());
+
+      assert(force_mask_.size() == mask.size());
+      for (unsigned idx = 0 ; idx < mask.size() ; idx += 1) {
+	    if (mask.value(idx) == 0)
+		  continue;
+
+	    force_mask_.set_bit(idx, 1);
+	    force_propagate_ = true;
+      }
+}
+
+void vvp_net_fil_t::release_mask(vvp_vector2_t mask)
+{
+      if (force_mask_.size() == 0)
+	    return;
+
+      assert(force_mask_.size() == mask.size());
+      for (unsigned idx = 0 ; idx < mask.size() ; idx += 1) {
+	    if (mask.value(idx))
+		  force_mask_.set_bit(idx, 0);
+      }
+
+      if (force_mask_.is_zero())
+	    force_mask_ = vvp_vector2_t();
+}
+
+/*
+ * Force link/unlink uses a thunk vvp_net_t node with a vvp_fun_force
+ * functor to translate the net values to filter commands. The ports
+ * of this vvp_net_t object are use a little differently:
+ *
+ *     port[3]  - Point to the destination node where the forced
+ *                filter resides.
+ *
+ *     port[2]  - Point to the input node that drives port[0] for use
+ *                by the unlink method.
+ *
+ *     port[0]  - This is the normal input.
+ */
+void vvp_net_fil_t::force_link(vvp_net_t*dst, vvp_net_t*src)
+{
+      assert(dst->fil == this);
+
+      if (force_link_ == 0) {
+	    force_link_ = new vvp_net_t;
+	      // Use port[3] to hold the force destination.
+	    force_link_->port[3] = vvp_net_ptr_t(dst, 0);
+	    force_link_->port[2] = vvp_net_ptr_t(0,0);
+	    force_link_->fun = new vvp_fun_force;
+      }
+
+      force_unlink();
+      assert(force_link_->port[2] == vvp_net_ptr_t(0,0));
+
+	// Use port[2] to hold the force source.
+      force_link_->port[2] = vvp_net_ptr_t(src,0);
+
+      vvp_net_ptr_t dst_ptr(force_link_, 0);
+      src->link(dst_ptr);
+}
+
+void vvp_net_fil_t::force_unlink(void)
+{
+      if (force_link_ == 0) return;
+      vvp_net_t*src = force_link_->port[2].ptr();
+      if (src == 0) return;
+
+      src->unlink(vvp_net_ptr_t(force_link_,0));
+      force_link_->port[2] = vvp_net_ptr_t(0,0);
 }
 
 /* *** BIT operations *** */
