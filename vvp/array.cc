@@ -1163,9 +1163,9 @@ void vvp_fun_arrayport_sa::check_word_change(unsigned long addr)
       if (addr != addr_) return;
 
       if (vpi_array_is_real(arr_)) {
-	    net_->send_real(net_->out, array_get_word_r(arr_, addr_), 0);
+	    net_->send_real(array_get_word_r(arr_, addr_), 0);
       } else {
-	    net_->send_vec4(net_->out, array_get_word(arr_, addr_), 0);
+	    net_->send_vec4(array_get_word(arr_, addr_), 0);
       }
 }
 
@@ -1250,12 +1250,10 @@ void vvp_fun_arrayport_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit
                   addr_valid_flag = vector4_to_value(bit, *addr);
                   if (! addr_valid_flag) *addr = arr_->array_count;
                   if (vpi_array_is_real(arr_)) {
-			port.ptr()->send_real(port.ptr()->out,
-					      array_get_word_r(arr_, *addr),
+			port.ptr()->send_real(array_get_word_r(arr_, *addr),
 					      context);
                   } else {
-			port.ptr()->send_vec4(port.ptr()->out,
-					      array_get_word(arr_, *addr),
+			port.ptr()->send_vec4(array_get_word(arr_, *addr),
 					      context);
                   }
                   break;
@@ -1282,10 +1280,10 @@ void vvp_fun_arrayport_aa::check_word_change(unsigned long addr)
 	    return;
 
       if (vpi_array_is_real(arr_)) {
-	    net_->send_real(net_->out, array_get_word_r(arr_, addr),
+	    net_->send_real(array_get_word_r(arr_, addr),
 			    vthread_get_wt_context());
       } else {
-	    net_->send_vec4(net_->out, array_get_word(arr_, addr),
+	    net_->send_vec4(array_get_word(arr_, addr),
 	                  vthread_get_wt_context());
       }
 }
