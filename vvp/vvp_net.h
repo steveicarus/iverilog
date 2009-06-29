@@ -1129,6 +1129,13 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
       void force_link(vvp_net_t*dst, vvp_net_t*src);
       void force_unlink(void);
 
+
+    public:
+	// Suport for force methods
+      virtual void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask) =0;
+      virtual void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask) =0;
+      virtual void force_fil_real(double val, vvp_vector2_t mask) =0;
+
     protected:
 	// Set bits of the filter force mask
       void force_mask(vvp_vector2_t mask);

@@ -96,13 +96,26 @@ void vvp_fun_signal4::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask
       }
 }
 
+void vvp_fun_signal4::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
+{
+      assert(0);
+}
+
+void vvp_fun_signal4::force_fil_real(double val, vvp_vector2_t mask)
+{
+      assert(0);
+}
+
 void vvp_net_t::force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
 {
-      vvp_fun_signal4*sig = dynamic_cast<vvp_fun_signal4*> (fil);
-      assert(sig);
-
-      sig->force_fil_vec4(val, mask);
+      assert(fil);
+      fil->force_fil_vec4(val, mask);
       send_vec4(val, 0);
+}
+
+void vvp_fun_signal8::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
+{
+      force_fil_vec8(vvp_vector8_t(val,6,6), mask);
 }
 
 void vvp_fun_signal8::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
@@ -120,6 +133,11 @@ void vvp_fun_signal8::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask
       }
 }
 
+void vvp_fun_signal8::force_fil_real(double val, vvp_vector2_t mask)
+{
+      assert(0);
+}
+
 void vvp_net_t::force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
 {
       vvp_fun_signal8*sig = dynamic_cast<vvp_fun_signal8*> (fil);
@@ -127,6 +145,16 @@ void vvp_net_t::force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
 
       sig->force_fil_vec8(val, mask);
       send_vec8(val);
+}
+
+void vvp_fun_signal_real::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
+{
+      assert(0);
+}
+
+void vvp_fun_signal_real::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
+{
+      assert(0);
 }
 
 void vvp_fun_signal_real::force_fil_real(double val, vvp_vector2_t mask)
