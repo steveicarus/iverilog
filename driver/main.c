@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -545,27 +545,6 @@ int main(int argc, char **argv)
 
       base = get_root_dir();
 
-#ifdef __MINGW32__
-	/* Under Windows, there is no point checking the root
-	   directory. */
-#else
-	/* On other systems, check that the root directory seems
-	   reasonable. */
-      { size_t tmp_len = strlen(base) + 16;
-        char*  tmp = malloc(tmp_len);
-	snprintf(tmp, tmp_len, "%s%civl", base, sep);
-
-	if (0 != access(tmp, F_OK)) {
-	      fprintf(stderr, "%s: INSTALLATION ERROR: Directory %s"
-		      " does not contain ivl files.\n", argv[0], base);
-	      fprintf(stderr, "%s:                   : Check installation"
-		      " or set " IVL_ROOT_VARIABLE " correctly.\n", argv[0]);
-	      return 1;
-	}
-	free(tmp);
-      }
-#endif
-
 	/* Create a temporary file for communicating input parameters
 	   to the preprocessor. */
       source_path = strdup(my_tempfile("ivrlg", &source_file));
@@ -706,7 +685,7 @@ int main(int argc, char **argv)
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION "\n\n");
-	    printf("Copyright 1998-2003 Stephen Williams\n");
+	    printf("Copyright 1998-2009 Stephen Williams\n");
 	    puts(NOTICE);
 
 	    if (version_flag)
