@@ -2610,6 +2610,9 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 	      // Special case: The index is out of range, so the value
 	      // of this expression is a 'bx vector the width of a word.
 	    if (!net->array_index_is_valid(addr)) {
+		  cerr << get_fileline() << ": warning: returning 'bx for out "
+		          "of bounds array access " << net->name()
+		       << "[" << addr << "]." << endl;
 		  NetEConst*resx = make_const_x(net->vector_width());
 		  resx->set_line(*this);
 		  delete word_index;
@@ -2670,6 +2673,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 	    return elaborate_expr_net_bit_(des, scope, res, found_in);
 
       ivl_assert(*this, word_sel == index_component_t::SEL_NONE);
+
       return res;
 }
 

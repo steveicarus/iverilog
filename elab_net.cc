@@ -423,7 +423,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	// Default part select is the entire word.
       unsigned midx = sig->vector_width()-1, lidx = 0;
 	// The default word select is the first.
-      unsigned widx = 0;
+      long widx = 0;
 
       const name_component_t&name_tail = path_.back();
 
@@ -445,6 +445,12 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    }
 	    ivl_assert(*this, index_head.sel == index_component_t::SEL_BIT);
 
+	      // These are not used, but they need to have a default value.
+	    ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
+	    bool unsized_flag_tmp = false;
+	    index_head.msb->test_width(des, scope,
+	                               integer_width, integer_width,
+	                               expr_type_tmp, unsized_flag_tmp);
 	    need_constant_expr = true;
 	    NetExpr*tmp_ex = elab_and_eval(des, scope, index_head.msb, -1);
 	    need_constant_expr = false;
@@ -520,7 +526,12 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       unsigned subnet_wid = midx-lidx+1;
 
       if (sig->pin_count() > 1) {
-	    assert(widx < sig->pin_count());
+	    if (widx < 0 || widx >= (long) sig->pin_count()) {
+		  cerr << get_fileline() << ": warning: ignoring out of "
+		          "bounds l-value array access "
+		       << sig->name() << "[" << widx << "]." << endl;
+		  return 0;
+	    }
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    sig->type(), sig->vector_width());
