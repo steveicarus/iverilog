@@ -103,12 +103,14 @@ static char *truncate_bitvec(char *s)
 static void show_this_item(struct vcd_info*info)
 {
       s_vpi_value value;
+      PLI_INT32 type = vpi_get(vpiType, info->item);
 
-      if (vpi_get(vpiType, info->item) == vpiRealVar) {
+      if (type == vpiRealVar) {
 	    value.format = vpiRealVal;
 	    vpi_get_value(info->item, &value);
 	    fprintf(dump_file, "r%.16g %s\n", value.value.real, info->ident);
-
+      } else if (type == vpiNamedEvent) {
+	    fprintf(dump_file, "1%s\n", info->ident);
       } else if (vpi_get(vpiSize, info->item) == 1) {
 	    value.format = vpiBinStrVal;
 	    vpi_get_value(info->item, &value);
@@ -121,12 +123,16 @@ static void show_this_item(struct vcd_info*info)
       }
 }
 
-
+/* Dump values for a $dumpoff. */
 static void show_this_item_x(struct vcd_info*info)
 {
-      if (vpi_get(vpiType, info->item) == vpiRealVar) {
+      PLI_INT32 type = vpi_get(vpiType, info->item);
+
+      if (type == vpiRealVar) {
 	      /* Some tools dump nothing here...? */
 	    fprintf(dump_file, "rNaN %s\n", info->ident);
+      } else if (type == vpiNamedEvent) {
+	    /* Do nothing for named events. */
       } else if (vpi_get(vpiSize, info->item) == 1) {
 	    fprintf(dump_file, "x%s\n", info->ident);
       } else {
@@ -496,15 +502,20 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
       const char* type;
       const char* name;
+      const char* fullname;
       const char* prefix;
       const char* ident;
       int nexus_id;
+      unsigned size;
+      PLI_INT32 item_type;
 
       /* list of types to iterate upon */
       int i;
       static int types[] = {
 	    /* Value */
+	    vpiNamedEvent,
 	    vpiNet,
+//	    vpiParameter,
 	    vpiReg,
 	    vpiVariables,
 	    /* Scope */
@@ -516,50 +527,105 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    -1
       };
 
-      switch (vpi_get(vpiType, item)) {
-
-	  case vpiNet:  type = "wire";    if(0){
+	/* Get the displayed type for the various $var and $scope types. */
+	/* Not all of these are supported now, but they should be in a
+	 * future development version. */
+      item_type = vpi_get(vpiType, item);
+      switch (item_type) {
+	  case vpiNamedEvent: type = "event"; break;
+	  case vpiIntegerVar: type = "integer"; break;
+	  case vpiParameter:  type = "parameter"; break;
+	    /* Icarus converts realtime to real. */
+	  case vpiRealVar:    type = "real"; break;
 	  case vpiMemoryWord:
+	  case vpiReg:        type = "reg"; break;
+	    /* Icarus converts a time to a plain register. */
+	  case vpiTimeVar:    type = "time"; break;
+	  case vpiNet:
+	    switch (vpi_get(vpiNetType, item)) {
+		case vpiWand:    type = "wand"; break;
+		case vpiWor:     type = "wor"; break;
+		case vpiTri:     type = "tri"; break;
+		case vpiTri0:    type = "tri0"; break;
+		case vpiTri1:    type = "tri1"; break;
+		case vpiTriReg:  type = "trireg"; break;
+		case vpiTriAnd:  type = "triand"; break;
+		case vpiTriOr:   type = "trior"; break;
+		case vpiSupply1: type = "supply1"; break;
+		case vpiSupply0: type = "supply0"; break;
+		default:         type = "wire"; break;
+	    }
+	    break;
+
+	  case vpiNamedBegin: type = "begin"; break;
+	  case vpiNamedFork:  type = "fork"; break;
+	  case vpiFunction:   type = "function"; break;
+	  case vpiModule:     type = "module"; break;
+	  case vpiTask:       type = "task"; break;
+
+	  default:
+	    vpi_printf("VCD warning: $dumpvars: Unsupported argument "
+	               "type (%s)\n", vpi_get_str(vpiType, item));
+	    return;
+      }
+
+	/* Do some special processing/checking on array words. Dumping
+	 * array words is an Icarus extension. */
+      if (item_type == vpiMemoryWord) {
+	      /* Turn a non-constant array word select into a constant
+	       * word select. */
 	    if (vpi_get(vpiConstantSelect, item) == 0) {
-		    /* Turn a non-constant array word select into a
-		     * constant word select. */
 		  vpiHandle array = vpi_handle(vpiParent, item);
 		  PLI_INT32 index = vpi_get(vpiIndex, item);
 		  item = vpi_handle_by_index(array, index);
 	    }
-	  case vpiIntegerVar:
-	  case vpiTimeVar:
-	  case vpiReg:  type = "reg";    }
-
-	      /* Skip this signal if it has already been included. */
-	    if (vcd_names_search(&vcd_var, vpi_get_str(vpiFullName, item))) {
-		  vpi_printf("VCD warning: skipping signal %s, it was "
-		             "previously included.\n",
-		             vpi_get_str(vpiFullName, item));
-		  break;
-	    }
 
 	      /* An array word is implicitly escaped so look for an
 	       * escaped identifier that this could conflict with. */
+	      /* This does not work as expected since we always find at
+	       * least the array word. We likely need a custom routine. */
             if (vpi_get(vpiType, item) == vpiMemoryWord &&
                 vpi_handle_by_name(vpi_get_str(vpiFullName, item), 0)) {
-		  vpi_printf("VCD warning: dumping array word %s will "
-		             "conflict with an escaped identifier.\n",
+		  vpi_printf("VCD warning: array word %s will conflict "
+		             "with an escaped identifier.\n",
 		             vpi_get_str(vpiFullName, item));
             }
+      }
 
-            if (skip || vpi_get(vpiAutomatic, item)) break;
+      fullname = vpi_get_str(vpiFullName, item);
 
+	/* Generate the $var or $scope commands. */
+      switch (item_type) {
+	  case vpiParameter:
+	    vpi_printf("VCD sorry: $dumpvars: can not dump parameters.\n");
+	    break;
+
+	  case vpiNamedEvent:
+	  case vpiIntegerVar:
+//	  case vpiParameter:
+	  case vpiRealVar:
+	  case vpiMemoryWord:
+	  case vpiReg:
+	  case vpiTimeVar:
+	  case vpiNet:
+
+	      /* If we are skipping all signal or this is in an automatic
+	       * scope then just return. */
+            if (skip || vpi_get(vpiAutomatic, item)) return;
+
+	      /* Skip this signal if it has already been included.
+	       * This can only happen for implicitly given signals. */
+	    if (vcd_names_search(&vcd_var, fullname)) return;
+
+	      /* Declare the variable in the VCD file. */
 	    name = vpi_get_str(vpiName, item);
 	    prefix = is_escaped_id(name) ? "\\" : "";
 
+	      /* Some signals can have an alias so handle that. */
 	    nexus_id = vpi_get(_vpiNexusId, item);
 
-	    if (nexus_id) {
-		  ident = find_nexus_ident(nexus_id);
-	    } else {
-		  ident = 0;
-	    }
+	    ident = 0;
+	    if (nexus_id) ident = find_nexus_ident(nexus_id);
 
 	    if (!ident) {
 		  ident = strdup(vcdid);
@@ -567,6 +633,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 		  if (nexus_id) set_nexus_ident(nexus_id, ident);
 
+		    /* Add a callback for the signal. */
 		  info = malloc(sizeof(*info));
 
 		  info->time.type = vpiSimTime;
@@ -588,107 +655,59 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  info->cb    = vpi_register_cb(&cb);
 	    }
 
+	      /* Named events do not have a size, but other tools use
+	       * a size of 1 and some viewers do not accept a width of
+	       * zero so we will also use a width of one for events. */
+	    if (item_type == vpiNamedEvent) size = 1;
+	    else size = vpi_get(vpiSize, item);
+
 	    fprintf(dump_file, "$var %s %u %s %s%s",
-		    type, vpi_get(vpiSize, item), ident,
-		    prefix, name);
-      /* FIXME
-	    if (vpi_get(vpiVector, item)
-      */
+		    type, size, ident, prefix, name);
+
+	      /* Add a range for vectored values. */
 	    if (vpi_get(vpiSize, item) > 1
 		|| vpi_get(vpiLeftRange, item) != 0) {
 		  fprintf(dump_file, " [%i:%i]", vpi_get(vpiLeftRange, item),
 			  vpi_get(vpiRightRange, item));
 	    }
+
 	    fprintf(dump_file, " $end\n");
 	    break;
 
-	  case vpiRealVar:
-
-	      /* Skip this signal if it has already been included. */
-	    if (vcd_names_search(&vcd_var, vpi_get_str(vpiFullName, item))) {
-		  vpi_printf("VCD warning: skipping signal %s, it was "
-		             "previously included.\n",
-		             vpi_get_str(vpiFullName, item));
-		  break;
-	    }
-
-            if (skip || vpi_get(vpiAutomatic, item)) break;
-
-	      /* Declare the variable in the VCD file. */
-	    name = vpi_get_str(vpiName, item);
-	    prefix = is_escaped_id(name) ? "\\" : "";
-	    ident = strdup(vcdid);
-	    gen_new_vcd_id();
-	    fprintf(dump_file, "$var real 1 %s %s%s $end\n",
-		    ident, prefix, name);
-
-	      /* Add a callback for the variable. */
-	    info = malloc(sizeof(*info));
-
-	    info->time.type = vpiSimTime;
-	    info->item  = item;
-	    info->ident = ident;
-	    info->scheduled = 0;
-
-	    cb.time      = &info->time;
-	    cb.user_data = (char*)info;
-	    cb.value     = NULL;
-	    cb.obj       = item;
-	    cb.reason    = cbValueChange;
-	    cb.cb_rtn    = variable_cb_1;
-
-	    info->next  = vcd_list;
-	    info->dmp_next  = 0;
-	    vcd_list    = info;
-
-	    info->cb    = vpi_register_cb(&cb);
-
-	    break;
-
-	  case vpiModule:      type = "module";      if(0){
-	  case vpiNamedBegin:  type = "begin";      }if(0){
-	  case vpiTask:        type = "task";       }if(0){
-	  case vpiFunction:    type = "function";   }if(0){
-	  case vpiNamedFork:   type = "fork";       }
+	  case vpiModule:
+	  case vpiNamedBegin:
+	  case vpiTask:
+	  case vpiFunction:
+	  case vpiNamedFork:
 
 	    if (depth > 0) {
-		  int nskip;
-		  vpiHandle argv;
+		  int nskip = (vcd_names_search(&vcd_tab, fullname) != 0);
 
-		  const char* fullname =
-			vpi_get_str(vpiFullName, item);
-
-#if 0
-		  vpi_printf("VCD info: scanning scope %s, %u levels\n",
-		             fullname, depth);
-#endif
-		  nskip = 0 != vcd_names_search(&vcd_tab, fullname);
-
-		  if (!nskip)
+		    /* We have to always scan the scope because the
+		     * depth could be different for this call. */
+		  if (nskip) {
+			vpi_printf("VCD warning: ignoring signals in "
+			           "previously scanned scope %s.\n", fullname);
+		  } else {
 			vcd_names_add(&vcd_tab, fullname);
-		  else
-		    vpi_printf("VCD warning: ignoring signals in "
-		               "previously scanned scope %s\n", fullname);
+			vcd_names_sort(&vcd_tab);
+		  }
 
 		  name = vpi_get_str(vpiName, item);
-
 		  fprintf(dump_file, "$scope %s %s $end\n", type, name);
 
 		  for (i=0; types[i]>0; i++) {
 			vpiHandle hand;
-			argv = vpi_iterate(types[i], item);
+			vpiHandle argv = vpi_iterate(types[i], item);
 			while (argv && (hand = vpi_scan(argv))) {
 			      scan_item(depth-1, hand, nskip);
 			}
 		  }
 
+		    /* Sort any signals that we added above. */
 		  fprintf(dump_file, "$upscope $end\n");
 	    }
 	    break;
-
-	  default:
-	    vpi_printf("VCD warning: $dumpvars: Unsupported parameter "
-	               "type (%s)\n", vpi_get_str(vpiType, item));
       }
 }
 
@@ -759,30 +778,38 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
       }
 
       for ( ; item; item = vpi_scan(argv)) {
-	    const char *scname;
+	    char *scname;
+	    const char *fullname;
 	    int add_var = 0;
 	    int dep;
-
-	    vcd_names_sort(&vcd_tab);
 
 	      /* If this is a signal make sure it has not already
 	       * been included. */
 	    switch (vpi_get(vpiType, item)) {
 	        case vpiIntegerVar:
 	        case vpiMemoryWord:
+	        case vpiNamedEvent:
 	        case vpiNet:
+	        case vpiParameter:
 	        case vpiRealVar:
 	        case vpiReg:
 	        case vpiTimeVar:
-		  scname = vpi_get_str(vpiFullName, vpi_handle(vpiScope, item));
-		  if (vcd_names_search(&vcd_tab, scname)) {
+		    /* Warn if the variables scope (which includes the
+		     * variable) or the variable itself was already
+		     * included. */
+		  scname = strdup(vpi_get_str(vpiFullName,
+		                              vpi_handle(vpiScope, item)));
+		  fullname = vpi_get_str(vpiFullName, item);
+		  if (vcd_names_search(&vcd_tab, scname) ||
+		      vcd_names_search(&vcd_var, fullname)) {
 		        vpi_printf("VCD warning: skipping signal %s, "
 		                   "it was previously included.\n",
-		                   vpi_get_str(vpiFullName, item));
+		                   fullname);
 		        continue;
 		  } else {
 		        add_var = 1;
 		  }
+		  free(scname);
 	    }
 
 	    dep = draw_scope(item, callh);

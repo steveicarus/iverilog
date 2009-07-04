@@ -320,6 +320,16 @@ typedef struct t_vpi_delay  {
 #define vpiDefLineNo     16
 #define vpiNetType       22
 #   define vpiWire         1
+#   define vpiWand         2
+#   define vpiWor          3
+#   define vpiTri          4
+#   define vpiTri0         5
+#   define vpiTri1         6
+#   define vpiTriReg       7
+#   define vpiTriAnd       8
+#   define vpiTriOr        9
+#   define vpiSupply1     10
+#   define vpiSupply0     11
 #define vpiArray         28
 #define vpiEdge          36
 #   define vpiNoEdge       0x00 /* No edge */
