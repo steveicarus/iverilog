@@ -80,6 +80,11 @@ bool vvp_fun_signal_real::filter_real(double&val)
       return filter_mask_(val);
 }
 
+unsigned vvp_fun_signal_real::size() const
+{
+      return 1;
+}
+
 void vvp_fun_signal4::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
 {
       force_mask(mask);
@@ -821,10 +826,9 @@ void vvp_fun_force::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       vvp_net_t*net = ptr.ptr();
 
       vvp_net_t*dst = net->port[3].ptr();
-      vvp_fun_signal4*sig = dynamic_cast<vvp_fun_signal4*> (dst->fil);
-      assert(sig);
+      assert(dst->fil);
 
-      dst->force_vec4(coerce_to_width(bit, sig->size()), vvp_vector2_t(vvp_vector2_t::FILL1, sig->size()));
+      dst->force_vec4(coerce_to_width(bit, dst->fil->size()), vvp_vector2_t(vvp_vector2_t::FILL1, dst->fil->size()));
 }
 
 void vvp_fun_force::recv_real(vvp_net_ptr_t ptr, double bit, vvp_context_t)

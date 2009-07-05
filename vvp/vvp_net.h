@@ -1129,6 +1129,7 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
       void force_link(vvp_net_t*dst, vvp_net_t*src);
       void force_unlink(void);
 
+      virtual unsigned size() const =0;
 
     public:
 	// Suport for force methods

@@ -2338,14 +2338,13 @@ bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
 	/* Collect the thread bits into a vector4 item. */
       vvp_vector4_t value = vthread_bits_to_vector(thr, base, wid);
 
-	/* Send the force value to the signal on the node. */
-      vvp_fun_signal4*sig = reinterpret_cast<vvp_fun_signal4*> (net->fun);
-      assert(sig);
+	/* Send the force value to the filter on the node. */
 
-      if (value.size() != sig->size())
-	    value = coerce_to_width(value, sig->size());
+      assert(net->fil);
+      if (value.size() != net->fil->size())
+	    value = coerce_to_width(value, net->fil->size());
 
-      net->force_vec4(value, vvp_vector2_t(vvp_vector2_t::FILL1, sig->size()));
+      net->force_vec4(value, vvp_vector2_t(vvp_vector2_t::FILL1, net->fil->size()));
 
       return true;
 }
@@ -2367,6 +2366,8 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
 
+      assert(net->fil);
+
 	// Implicitly, we get the base into the target vector from the
 	// X0 register.
       long index = thr->words[0].w_int;
@@ -2379,49 +2380,25 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
 	    index = 0;
       }
 
-      if (vvp_fun_signal4*sig = dynamic_cast<vvp_fun_signal4*> (net->fun)) {
+      unsigned use_size = net->fil->size();
 
-	    if (index >= (long)sig->size())
-		  return true;
 
-	    if (index+wid > sig->size())
-		  wid = sig->size() - index;
-
-	    vvp_vector2_t mask(vvp_vector2_t::FILL0, sig->size());
-	    for (unsigned idx = 0 ; idx < wid ; idx += 1)
-		  mask.set_bit(index+idx, 1);
-
-	    vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
-	    vvp_vector4_t value(sig->size(), BIT4_Z);
-	    value.set_vec(index, vector);
-
-	    net->force_vec4(value, mask);
-
+      if (index >= (long)use_size)
 	    return true;
-      }
 
-      if (vvp_fun_signal8*sig = dynamic_cast<vvp_fun_signal8*> (net->fun)) {
+      if (index+wid > use_size)
+	    wid = use_size - index;
 
-	    if (index >= (long)sig->size())
-		  return true;
+      vvp_vector2_t mask(vvp_vector2_t::FILL0, use_size);
+      for (unsigned idx = 0 ; idx < wid ; idx += 1)
+	    mask.set_bit(index+idx, 1);
 
-	    if (index+wid > sig->size())
-		  wid = sig->size() - index;
+      vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
+      vvp_vector4_t value(use_size, BIT4_Z);
+      value.set_vec(index, vector);
 
-	    vvp_vector2_t mask(vvp_vector2_t::FILL0, sig->size());
-	    for (unsigned idx = 0 ; idx < wid ; idx += 1)
-		  mask.set_bit(index+idx, 1);
+      net->force_vec4(value, mask);
 
-	    vvp_vector4_t vec4 = vthread_bits_to_vector(thr, base, wid);
-	    vvp_vector4_t val4(sig->size(), BIT4_Z);
-	    val4.set_vec(index, vec4);
-
-	    net->force_vec8(vvp_vector8_t(val4,6,6), mask);
-
-	    return true;
-      }
-
-      assert(0);
       return true;
 }
 
@@ -3925,20 +3902,18 @@ bool of_POW_WR(vthread_t thr, vvp_code_t cp)
  * the release/reg command instead. These are very similar to the
  * %deassign instruction.
  */
-bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
+static bool do_release_vec(vthread_t thr, vvp_code_t cp, bool net_flag)
 {
       vvp_net_t*net = cp->net;
       unsigned base  = cp->bit_idx[0];
       unsigned width = cp->bit_idx[1];
 
-      vvp_fun_signal_vec*sig = reinterpret_cast<vvp_fun_signal_vec*>(net->fun);
-      assert(sig);
       assert(net->fil);
 
-      if (base >= sig->size()) return true;
-      if (base+width > sig->size()) width = sig->size() - base;
+      if (base >= net->fil->size()) return true;
+      if (base+width > net->fil->size()) width = net->fil->size() - base;
 
-      bool full_sig = base == 0 && width == sig->size();
+      bool full_sig = base == 0 && width == net->fil->size();
 
 	// XXXX Can't really do this if this is a partial release?
       net->fil->force_unlink();
@@ -3946,43 +3921,23 @@ bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
 	/* Do we release all or part of the net? */
       vvp_net_ptr_t ptr (net, 0);
       if (full_sig) {
-	    net->fil->release(ptr, true);
+	    net->fil->release(ptr, net_flag);
       } else {
-	    net->fil->release_pv(ptr, true, base, width);
+	    net->fil->release_pv(ptr, net_flag, base, width);
       }
 
       return true;
 }
 
+bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
+{
+      return do_release_vec(thr, cp, true);
+}
+
 
 bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
 {
-      vvp_net_t*net = cp->net;
-      unsigned base  = cp->bit_idx[0];
-      unsigned width = cp->bit_idx[1];
-
-      vvp_fun_signal_vec*sig = reinterpret_cast<vvp_fun_signal_vec*>(net->fun);
-      assert(sig);
-      assert(net->fil);
-
-      if (base >= sig->size()) return true;
-      if (base+width > sig->size()) width = sig->size() - base;
-
-      bool full_sig = base == 0 && width == sig->size();
-
-	// XXXX Can't really do this if this is a partial release?
-      net->fil->force_unlink();
-
-	// Send a command to this signal to unforce itself.
-	/* Do we release all or part of the net? */
-      vvp_net_ptr_t ptr (net, 0);
-      if (full_sig) {
-	    net->fil->release(ptr, false);
-      } else {
-	    net->fil->release_pv(ptr, false, base, width);
-      }
-
-      return true;
+      return do_release_vec(thr, cp, false);
 }
 
 /* The type is 1 for registers and 0 for everything else. */

@@ -290,6 +290,8 @@ class vvp_fun_signal_real : public vvp_fun_signal_base {
 	// Test the value against the filter.
       double filtered_real(double val) const;
 
+      virtual unsigned size() const;
+
     private:
       double force_real_;
 };
