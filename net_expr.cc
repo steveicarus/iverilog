@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -438,6 +438,7 @@ NetECReal::NetECReal(const verireal&val)
 : value_(val)
 {
       expr_width(1);
+      cast_signed(true);
 }
 
 NetECReal::~NetECReal()
