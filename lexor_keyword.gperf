@@ -162,8 +162,8 @@ tan,			GN_KEYWORDS_VAMS_2_3,		K_tan
 tanh,			GN_KEYWORDS_VAMS_2_3,		K_tanh
 task,			GN_KEYWORDS_1364_1995,		K_task
 time,			GN_KEYWORDS_1364_1995,		K_time
-timeprecision,	        GN_KEYWORDS_1800_2005,	        K_timeprecision
-timeunit,	        GN_KEYWORDS_1800_2005,	        K_timeunit
+timeprecision,		GN_KEYWORDS_1364_1995,		K_timeprecision
+timeunit,		GN_KEYWORDS_1364_1995,		K_timeunit
 tran,			GN_KEYWORDS_1364_1995,		K_tran
 tranif0,		GN_KEYWORDS_1364_1995,		K_tranif0
 tranif1,		GN_KEYWORDS_1364_1995,		K_tranif1

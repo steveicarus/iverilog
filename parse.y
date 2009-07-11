@@ -35,6 +35,9 @@ class PSpecPath;
 extern void lex_start_table();
 extern void lex_end_table();
 
+bool have_timeunit_decl = false;
+bool have_timeprec_decl = false;
+
 static svector<PExpr*>* param_active_range = 0;
 static bool param_active_signed = false;
 static ivl_variable_type_t param_active_type = IVL_VT_LOGIC;
@@ -270,7 +273,9 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 
  /* The new tokens from 1800-2005. */
 %token K_always_comb K_always_ff K_always_latch K_assert
-%token K_timeprecision K_timeunit  
+%token K_timeprecision K_timeunit
+ /* Fake tokens that are passed once we have an initial token. */
+%token K_timeprecision_check K_timeunit_check
 
  /* The new tokens for Verilog-AMS 2.3. */
 %token K_abs K_abstol K_access K_acos K_acosh K_analog K_asin K_asinh
@@ -729,7 +734,10 @@ description
 	delete[] $3;
 	delete[] $5;
       }
-  | timeunits_declaration
+  | K_timeunit  TIME_LITERAL ';'
+      { pform_set_timeunit($2, false, false); }
+  | K_timeprecision TIME_LITERAL ';'
+      { pform_set_timeprecision($2, false, false); }
   ;
 
   /* The discipline and nature declarations used to take no ';' after
@@ -738,67 +746,6 @@ description
      choose to make the ';' optional in this context. */
 optional_semicolon : ';' | ;
 
-timeunits_declaration_opt
-              :local_timeunits_declaration
-              |
-              ;
-
-timeunits_declaration 
-	      : K_timeprecision TIME_LITERAL ';'
-                K_timeunit  TIME_LITERAL ';'
-	          {
-                   pform_set_timeprecision($2,false,false);
-                   pform_set_timeunit($5,false,false);
-                  }
-	      | K_timeunit  TIME_LITERAL ';'
-                K_timeprecision TIME_LITERAL ';'
-                  {
-                   pform_set_timeunit($2,false,false);
-                   pform_set_timeprecision($5,false,false);
-                  }
-              | K_timeunit  TIME_LITERAL ';'
-	          {
-                   pform_set_timeunit($2,false,false);
-                  }
-	      | K_timeprecision TIME_LITERAL ';'
-                  {
-                   pform_set_timeprecision($2,false,false);
-                  }
-
-              ;
-
-local_timeunits_declaration 
-	      : K_timeprecision TIME_LITERAL ';'
-                K_timeunit  TIME_LITERAL ';'
-	          {
-                   pform_set_timeprecision($2,true,false);
-                   pform_set_timeunit($5,true,false);
-                  }
-	      | K_timeunit  TIME_LITERAL ';'
-                K_timeprecision TIME_LITERAL ';'
-                  {
-                   pform_set_timeunit($2,true,false);
-                   pform_set_timeprecision($5,true,false);
-                  }
-              | K_timeunit  TIME_LITERAL ';'
-	          {
-                   pform_set_timeunit($2,true,false);
-                  }
-	      | K_timeprecision TIME_LITERAL ';'
-                  {
-                   pform_set_timeprecision($2,true,false);
-                  }
-
-timeunits_declaration_check 
-              : K_timeunit  TIME_LITERAL ';'
-	          {
-                   pform_set_timeunit($2,true,true);
-                  }
-	      | K_timeprecision TIME_LITERAL ';'
-                  {
-                   pform_set_timeprecision($2,true,true);
-                  }
-              ;
 discipline_declaration
   : K_discipline IDENTIFIER optional_semicolon
       { pform_start_discipline($2); }
@@ -2038,6 +1985,25 @@ cont_assign_list
 		{ $$ = $1; }
 	;
 
+  /* We allow zero, one or two unique declarations. */
+local_timeunit_prec_decl_opt
+	: /* Empty */
+        | local_timeunit_prec_decl
+        | local_timeunit_prec_decl local_timeunit_prec_decl
+	;
+
+  /* By setting the appropriate have_time???_decl we allow only
+     one declaration of each type in this module. */
+local_timeunit_prec_decl
+	: K_timeunit  TIME_LITERAL ';'
+		{ pform_set_timeunit($2, true, false);
+		  have_timeunit_decl = true;
+		}
+	| K_timeprecision TIME_LITERAL ';'
+		{ pform_set_timeprecision($2, true, false);
+		  have_timeprec_decl = true;
+		}
+	;
 
   /* This is the global structure of a module. A module in a start
      section, with optional ports, then an optional list of module
@@ -2049,8 +2015,12 @@ module  : attribute_list_opt module_start IDENTIFIER
 	  module_port_list_opt 
 	  module_attribute_foreign ';'
 		{ pform_module_set_ports($6); }
-          timeunits_declaration_opt
-	  module_item_list_opt
+          local_timeunit_prec_decl_opt
+		{ have_timeunit_decl = true; // Every thing past here is
+		  have_timeprec_decl = true; // a check!
+		  pform_check_timeunit_prec();
+		}
+          module_item_list_opt
 	  K_endmodule
 		{ Module::UCDriveType ucd;
 		  switch (uc_drive) {
@@ -2067,8 +2037,9 @@ module  : attribute_list_opt module_start IDENTIFIER
 		  }
 		  pform_endmodule($3, in_celldefine, ucd);
 		  delete[]$3;
+		  have_timeunit_decl = false; // We will allow decls again.
+		  have_timeprec_decl = false;
 		}
-
 	;
 
 module_start : K_module | K_macromodule ;
@@ -2527,8 +2498,12 @@ module_item
 		}
 	| KK_attribute '(' error ')' ';'
 		{ yyerror(@1, "error: Malformed $attribute parameter list."); }
-	| timeunits_declaration_check
-        ;
+
+	| K_timeunit_check  TIME_LITERAL ';'
+		{ pform_set_timeunit($2, true, true); }
+	| K_timeprecision_check TIME_LITERAL ';'
+		{ pform_set_timeprecision($2, true, true); }
+	;
 
 automatic_opt
 	: K_automatic { $$ = true; }

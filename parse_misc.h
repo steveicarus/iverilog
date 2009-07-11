@@ -70,5 +70,11 @@ extern unsigned long based_size;
 extern bool in_celldefine;
 enum UCDriveType { UCD_NONE, UCD_PULL0, UCD_PULL1 };
 extern UCDriveType uc_drive;
+/*
+ * Flags to control if we are declaring or checking a timeunit or
+ * timeprecision statement.
+ */
+extern bool have_timeunit_decl;
+extern bool have_timeprec_decl;
 
 #endif

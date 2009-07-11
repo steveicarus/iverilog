@@ -108,7 +108,7 @@ W [ \t\b\f\r]+
 S [afpnumkKMGT]
 
 TU [munpf]
- 
+
 %%
 
   /* Recognize the various line directives. */
@@ -250,6 +250,15 @@ TU [munpf]
 	    in_UDP = false;
 	    break;
 
+	    /* Translate these to checks if we already have or are
+	     * outside the declaration region. */
+	  case K_timeunit:
+	    if (have_timeunit_decl) rc = K_timeunit_check;
+	    break;
+	  case K_timeprecision:
+	    if (have_timeprec_decl) rc = K_timeprecision_check;
+	    break;
+
 	  default:
 	    yylval.text = 0;
 	    break;
@@ -325,25 +334,13 @@ TU [munpf]
       based_size = yylval.number->as_ulong();
       return DEC_NUMBER; }
 
-[0-9]+{TU}?s      {
-                   if(gn_system_verilog_flag)
-                     {
-                      yylval.text = strdupnew(yytext);
-                      return TIME_LITERAL;
-                     }
-                   else
-                   REJECT;
-                  }
+  /* This rule handles scaled time values for SystemVerilog. */
+[0-9][0-9_]*(\.[0-9][0-9_]*)?{TU}?s {
+      if(gn_system_verilog_flag) {
+	    yylval.text = strdupnew(yytext);
+	    return TIME_LITERAL;
+      } else REJECT; }
 
-[0-9]*\.[0-9]+{TU}?s {
-                      if(gn_system_verilog_flag)
-                      {
-                        yylval.text = strdupnew(yytext);
-                        return TIME_LITERAL;
-                      }
-                   else
-                   REJECT;
-                  }
   /* These rules handle the scaled real literals from Verilog-AMS. The
      value is a number with a single letter scale factor. If
      verilog-ams is not enabled, then reject this rule. If it is

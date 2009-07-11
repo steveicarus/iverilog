@@ -73,18 +73,20 @@ static NetNet::Type pform_default_nettype = NetNet::WIRE;
 static int pform_time_unit;
 static int pform_time_prec;
 
-/* These two flags check the initial timeprecison and timeunit 
- * declaration inside a module
+/* These two flags check the initial timeprecision and timeunit
+ * declaration inside a module.
  */
 static bool tp_decl_flag = false;
 static bool tu_decl_flag = false;
 
 /*
- * Flags used to set time_from_timescale based on timeunit and 
- * timeprecision 
+ * Flags used to set time_from_timescale based on timeunit and
+ * timeprecision.
  */
-static bool tu_valid_flag = false;
-static bool tp_valid_flag = false;
+static bool tu_global_flag = false;
+static bool tp_global_flag = false;
+static bool tu_local_flag = false;
+static bool tp_local_flag = false;
 
 static char*pform_timescale_file = 0;
 static unsigned pform_timescale_line;
@@ -305,6 +307,9 @@ void pform_set_timescale(int unit, int prec,
       assert(unit >= prec);
       pform_time_unit = unit;
       pform_time_prec = prec;
+	/* A `timescale clears the timeunit/timeprecision state. */
+      tu_global_flag = false;
+      tp_global_flag = false;
 
       if (pform_timescale_file) {
 	    free(pform_timescale_file);
@@ -352,154 +357,137 @@ void pform_set_timescale(int unit, int prec,
       }
 }
 
-void pform_set_timeunit(const char*txt,bool in_module,bool only_check)
+/*
+ * Get a timeunit or timeprecision value from a string.  This is
+ * similar to the code in lexor.lex for the `timescale directive.
+ */
+static bool get_time_unit_prec(const char*cp, int &res, bool is_unit)
 {
-      unsigned num;
-      const char*cp = txt + strspn(txt, " \t");
-      char*tmp;
-      const char*ctmp;
-
-      int val = 0;
-      num = strtoul(cp, &tmp, 10);
-      if (num == 0) {
-	    VLerror(yylloc, "Invalid timeunit string.");
-	    return;
+	/* We do not support a '_' in these time constants. */
+      if (strchr(cp, '_')) {
+	    if (is_unit) {
+		  VLerror(yylloc, "Invalid timeunit constant ('_' is not "
+		                  "supported).");
+	    } else {
+		  VLerror(yylloc, "Invalid timeprecision constant ('_' is not "
+		                  "supported).");
+	    }
+	    return true;
       }
 
-      while (num >= 10) {
-	    val += 1;
-	    num  /= 10;
+	/* Check for the 1 digit. */
+      if (*cp != '1') {
+	    if (is_unit) {
+		  VLerror(yylloc, "Invalid timeunit constant (1st digit).");
+	    } else {
+		  VLerror(yylloc, "Invalid timeprecision constant (1st digit).");
+	    }
+	    return true;
       }
-      if (num != 1) {
-	    VLerror(yylloc, "Invalid  timeunit number.");
-	    return;
+      cp += 1;
+
+	/* Check the number of zeros after the 1. */
+      res = strspn(cp, "0");
+      if (res > 2) {
+	    if (is_unit) {
+		  VLerror(yylloc, "Invalid timeunit constant (number of "
+		                  "zeros).");
+	    } else {
+		  VLerror(yylloc, "Invalid timeprecision constant (number of "
+		                  "zeros).");
+	    }
+	    return true;
+      }
+      cp += res;
+
+	/* Now process the scaling string. */
+      if (strncmp("s", cp, 1) == 0) {
+	    res -= 0;
+	    return false;
+
+      } else if (strncmp("ms", cp, 2) == 0) {
+	    res -= 3;
+	    return false;
+
+      } else if (strncmp("us", cp, 2) == 0) {
+	    res -= 6;
+	    return false;
+
+      } else if (strncmp("ns", cp, 2) == 0) {
+	    res -= 9;
+	    return false;
+
+      } else if (strncmp("ps", cp, 2) == 0) {
+	    res -= 12;
+	    return false;
+
+      } else if (strncmp("fs", cp, 2) == 0) {
+	    res -= 15;
+	    return false;
+
       }
 
-      cp = tmp;
-      cp += strspn(cp, " \t");
-      ctmp = cp + strcspn(cp, " \t/");
+      ostringstream msg;
+      msg << "Invalid ";
+      if (is_unit) msg << "timeunit";
+      else msg << "timeprecision";
+      msg << " scale '" << cp << "'.";
+      VLerror(msg.str().c_str());
+      return true;
+}
 
-      if (strncmp("s", cp, ctmp-cp) == 0) {
-	    val -= 0;
+void pform_set_timeunit(const char*txt, bool in_module, bool only_check)
+{
+      int val;
 
-      } else if (strncmp("ms", cp, ctmp-cp) == 0) {
-	    val -= 3;
+      if (get_time_unit_prec(txt, val, true)) return;
 
-      } else if (strncmp("us", cp, ctmp-cp) == 0) {
-	    val -= 6;
-
-      } else if (strncmp("ns", cp, ctmp-cp) == 0) {
-	    val -= 9;
-
-      } else if (strncmp("ps", cp, ctmp-cp) == 0) {
-	    val -= 12;
-
-      } else if (strncmp("fs", cp, ctmp-cp) == 0) {
-	    val -= 15;
+      if (in_module) {
+	    if (!only_check) {
+		  pform_cur_module->time_unit = val;
+		  tu_decl_flag = true;
+		  tu_local_flag = true;
+	    } else if (!tu_decl_flag) {
+		  VLerror(yylloc, "error: repeat timeunit found and the "
+		                  "initial module timeunit is missing.");
+		  return;
+	    } else if (pform_cur_module->time_unit != val) {
+		  VLerror(yylloc, "error: repeat timeunit does not match "
+		                  "the initial module timeunit "
+		                  "declaration.");
+		  return;
+	    }
 
       } else {
-	    VLerror(yylloc, "Invalid unit of measurement");
-	    return;
-      }
-      if(in_module )
-      {	     
-	  if(!only_check)
-          { 
-      	    pform_cur_module->time_unit = val;
-	    tu_decl_flag=true;
-	    tu_valid_flag=true;
-	  }
-	  else if (!tu_decl_flag)
-          {
-	    VLerror(yylloc, "Timeunit declaration not found after module declaration");
-	    return;
-	  }
-	  else if(pform_cur_module->time_unit!= val)
-          {
-	    VLerror(yylloc, "Timeliteral do not match the initial timeunit declaration");
-	    return;
-	  }
-		  
-      }
-      else
-      {
-        tu_valid_flag=true;
-        pform_time_unit = val;
+	    tu_global_flag = true;
+	    pform_time_unit = val;
       }
 }
 
-void pform_set_timeprecision(const char*txt,bool in_module,bool only_check)
+void pform_set_timeprecision(const char*txt, bool in_module, bool only_check)
 {
-      unsigned num;
-      const char*cp = txt + strspn(txt, " \t");
-      char*tmp;
-      const char*ctmp;
+      int val;
 
-      int val = 0;
-      num = strtoul(cp, &tmp, 10);
-      if (num == 0) {
-	    VLerror(yylloc, "Invalid timeprecision string.");
-	    return;
-      }
+      if (get_time_unit_prec(txt, val, false)) return;
 
-      while (num >= 10) {
-	    val += 1;
-	    num  /= 10;
-      }
-      if (num != 1) {
-	    VLerror(yylloc, "Invalid  timeprecision number.");
-	    return;
-      }
-
-      cp = tmp;
-      cp += strspn(cp, " \t");
-      ctmp = cp + strcspn(cp, " \t/");
-
-      if (strncmp("s", cp, ctmp-cp) == 0) {
-	    val -= 0;
-
-      } else if (strncmp("ms", cp, ctmp-cp) == 0) {
-	    val -= 3;
-
-      } else if (strncmp("us", cp, ctmp-cp) == 0) {
-	    val -= 6;
-
-      } else if (strncmp("ns", cp, ctmp-cp) == 0) {
-	    val -= 9;
-
-      } else if (strncmp("ps", cp, ctmp-cp) == 0) {
-	    val -= 12;
-
-      } else if (strncmp("fs", cp, ctmp-cp) == 0) {
-	    val -= 15;
-
+      if (in_module) {
+	    if (!only_check) {
+		  pform_cur_module->time_precision = val;
+		  tp_decl_flag = true;
+		  tp_local_flag = true;
+	    } else if (!tp_decl_flag) {
+		  VLerror(yylloc, "error: repeat timeprecision found and the "
+		                  "initial module timeprecision is missing.");
+		  return;
+	    } else if (pform_cur_module->time_precision != val) {
+		  VLerror(yylloc, "error: repeat timeprecision does not match "
+		                  "the initial module timeprecision "
+		                  "declaration.");
+		  return;
+	    }
       } else {
-	    VLerror(yylloc, "Invalid unit of measurement");
-	    return;
-      }
-      if(in_module)
-      {
-	  if(!only_check)
-          { 
-            pform_cur_module->time_precision = val;
-	    tp_decl_flag=true;
-            tp_valid_flag=true;
-	  }
-	  else if (!tp_decl_flag)
-          {
-	    VLerror(yylloc, "Timeprecision declaration not found after module declaration");
-	    return;
-	  }
-	  else if(pform_cur_module->time_precision!= val)
-          {
-	    VLerror(yylloc, "Timeliteral do not match the initial timeprecision declaration");
-	    return;
-	  }
-      }
-      else
-      {
-        pform_time_prec = val;
-        tp_valid_flag=true;
+	    pform_time_prec = val;
+	    tp_global_flag=true;
       }
 }
 
@@ -560,8 +548,12 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
 
       perm_string lex_name = lex_strings.make(name);
       pform_cur_module = new Module(lex_name);
+	/* Set the local time unit/precision to the global value. */
       pform_cur_module->time_unit = pform_time_unit;
       pform_cur_module->time_precision = pform_time_prec;
+      tu_local_flag = tu_global_flag;
+      tp_local_flag = tp_global_flag;
+
 	/* If we have a timescale file then the time information is from
 	 * a timescale directive. */
       pform_cur_module->time_from_timescale = pform_timescale_file != 0;
@@ -592,6 +584,22 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
 		      pform_cur_module->attributes[tmp->name] = tmp->parm;
 	      }
       }
+}
+
+/*
+ * In SystemVerilog we can have separate timeunit and timeprecision
+ * declarations. We need to have the values worked out by time this
+ * task is called.
+ */
+void pform_check_timeunit_prec()
+{
+      assert(pform_cur_module);
+      if (gn_system_verilog_flag && (pform_cur_module->time_unit <
+                                     pform_cur_module->time_precision)) {
+	    VLerror("error: a timeprecision is missing or is too "
+	            "large!");
+      } else assert(pform_cur_module->time_unit >=
+                    pform_cur_module->time_precision);
 }
 
 /*
@@ -634,7 +642,9 @@ void pform_endmodule(const char*name, bool in_celldefine,
                      Module::UCDriveType uc_drive)
 {
       assert(pform_cur_module);
-      pform_cur_module->time_from_timescale = (tp_valid_flag && tu_valid_flag)|| pform_timescale_file != 0;
+      pform_cur_module->time_from_timescale = (tu_local_flag &&
+                                               tp_local_flag) ||
+                                              (pform_timescale_file != 0);
       perm_string mod_name = pform_cur_module->mod_name();
       assert(strcmp(name, mod_name) == 0);
       pform_cur_module->is_cell = in_celldefine;
@@ -659,10 +669,10 @@ void pform_endmodule(const char*name, bool in_celldefine,
       ivl_assert(*pform_cur_module, lexical_scope == 0);
 
       pform_cur_module = 0;
-      tp_decl_flag=false;
-      tu_decl_flag=false;
-      tu_valid_flag=false;
-      tp_valid_flag=false;
+      tp_decl_flag = false;
+      tu_decl_flag = false;
+      tu_local_flag = false;
+      tp_local_flag = false;
 }
 
 void pform_genvars(const struct vlltype&li, list<perm_string>*names)

@@ -134,6 +134,7 @@ extern bool gn_specify_blocks_flag;
 /* If this flag is true, then support/elaborate Verilog-AMS. */
 extern bool gn_verilog_ams_flag;
 
+/* If this flag is true, then support/elaborate SystemVerilog. */
 extern bool gn_system_verilog_flag;
 
 /* If this flag is false a warning is printed when the port declaration
