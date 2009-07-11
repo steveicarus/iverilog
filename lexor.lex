@@ -1205,6 +1205,13 @@ static void process_timescale(const char*txt)
 	    return;
       }
 
+	/* The time unit must be greater than or equal to the precision. */
+      if (unit < prec) {
+	    VLerror(yylloc, "error: `timescale unit must not be less than "
+	                    "the precision.");
+	    return;
+      }
+
       pform_set_timescale(unit, prec, yylloc.text, yylloc.first_line);
 }
 
