@@ -457,7 +457,7 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <IFCCOMMENT>\n\r    |
 <IFCCOMMENT>\r\n    |
 <IFCCOMMENT>\n      |
-<IFCCOMMENT>\r      { istack->lineno += 1; }
+<IFCCOMMENT>\r      { istack->lineno += 1; fputc('\n', yyout); }
 <IFCCOMMENT>"*/"    { BEGIN(comment_enter); }
 
 <IFDEF_FALSE,IFDEF_SUPR>[^\r\n] {  }
