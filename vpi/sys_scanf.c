@@ -240,6 +240,14 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv)
       vpi_get_value(item, &val);
       fmtp = fmt = strdup(val.value.str);
 
+	/* See if we are at EOF before we even start. */
+      ch = byte_getc(src);
+      if (ch == EOF) {
+	    rc = EOF;
+	    match_fail = 1;
+      }
+      byte_ungetc(src, ch);
+
       while ( fmtp && *fmtp != 0 && !match_fail) {
 
 	    if (isspace(*fmtp)) {
