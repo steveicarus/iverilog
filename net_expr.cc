@@ -257,15 +257,13 @@ ivl_variable_type_t NetEBMinMax::expr_type() const
 NetEBMult::NetEBMult(char op__, NetExpr*l, NetExpr*r)
 : NetEBinary(op__, l, r)
 {
-      if (expr_type() == IVL_VT_REAL)
+      if (expr_type() == IVL_VT_REAL) {
 	    expr_width(1);
-      else
-	    expr_width(l->expr_width() + r->expr_width());
-
-      if (expr_type() == IVL_VT_REAL)
 	    cast_signed(true);
-      else
+      } else {
+	    expr_width(l->expr_width() + r->expr_width());
 	    cast_signed(l->has_sign() && r->has_sign());
+      }
 }
 
 NetEBMult::~NetEBMult()
@@ -294,8 +292,8 @@ NetEBPow::NetEBPow(char op__, NetExpr*l, NetExpr*r)
 : NetEBinary(op__, l, r)
 {
       assert(op__ == 'p');
-      /* This is incorrect! a * (2^b - 1) is close. */
-      expr_width(l->expr_width()+r->expr_width());
+	/* You could need up to a * (2^b - 1) bits. */
+      expr_width(l->expr_width());
       cast_signed(l->has_sign() || r->has_sign());
 }
 
