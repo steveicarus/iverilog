@@ -199,7 +199,7 @@ void dll_target::expr_concat(const NetEConcat*net)
       cur->type_  = IVL_EX_CONCAT;
       cur->value_ = IVL_VT_VECTOR;
       cur->width_ = net->expr_width();
-      cur->signed_ = 0;
+      cur->signed_ = net->has_sign() ? 1 : 0;
 
       cur->u_.concat_.rept  = net->repeat();
       cur->u_.concat_.parms = net->nparms();
