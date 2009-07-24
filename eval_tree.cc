@@ -1161,16 +1161,6 @@ NetEConst* NetEConcat::eval_tree(int prune_to_width)
 
       if (local_errors > 0) return 0;
 
-	// Handle the special case that the repeat expression is
-	// zero. In this case, just return a 0 value with the expected
-	// width.
-      if (repeat_val == 0) {
-	    verinum val (verinum::V0, expr_width());
-	    NetEConst*res = new NetEConst(val);
-	    res->set_width(val.len());
-	    return res;
-      }
-
 	// At this point, the "gap" is the width of a single repeat of
 	// the concatenation. The total width of the result is the gap
 	// times the repeat count.

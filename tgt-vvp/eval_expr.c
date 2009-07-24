@@ -1619,82 +1619,118 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
 					   int stuff_ok_flag)
 {
-      unsigned off, rep;
+      unsigned off, rep, expr_wid, concat_wid, num_sube, idx;
       struct vector_info res;
 
       int alloc_exclusive = (stuff_ok_flag&STUFF_OK_RO) ? 0 : 1;
 
-	/* Allocate a vector to hold the result. */
-      res.base = allocate_vector(wid);
-      res.wid = wid;
-      if (res.base == 0) {
-	    fprintf(stderr, "%s:%u: vvp.tgt error: "
-		    "Unable to allocate %u thread bits "
-		    "for result of concatenation.\n",
-		    ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
-	    vvp_errors += 1;
+	/* Find out how wide the base concatenation expression is. */
+      num_sube = ivl_expr_parms(exp);
+      expr_wid = 0;
+      for (idx = 0 ; idx < num_sube; idx += 1) {
+	    expr_wid += ivl_expr_width(ivl_expr_parm(exp, idx));
       }
 
 	/* Get the repeat count. This must be a constant that has been
 	   evaluated at compile time. The operands will be repeated to
 	   form the result. */
       rep = ivl_expr_repeat(exp);
-      off = 0;
 
-      while (rep > 0) {
+	/* Allocate a vector to hold the result. */
+      if (rep == 0) {
+	      /* If the replication is zero we need to allocate temporary
+	       * space to build the concatenation. */
+	    res.base = allocate_vector(expr_wid);
+	    res.wid = expr_wid;
+      } else {
+	    res.base = allocate_vector(wid);
+	    res.wid = wid;
+      }
+      if (res.base == 0) {
+	    fprintf(stderr, "%s:%u: vvp.tgt error: "
+		    "Unable to allocate %u thread bits "
+		    "for result of concatenation.\n",
+		    ivl_expr_file(exp), ivl_expr_lineno(exp),
+		    rep ? wid : expr_wid);
+	    vvp_errors += 1;
+      }
 
-	      /* Each repeat, evaluate the sub-expressions, from lsb
-		 to msb, and copy each into the result vector. The
-		 expressions are arranged in the concatenation from
-		 MSB to LSB, to go through them backwards.
-
-		 Abort the loop if the result vector gets filled up. */
-
-	    unsigned idx = ivl_expr_parms(exp);
-	    while ((idx > 0) && (off < wid)) {
+	/* If the result is the right size we can just build this in place. */
+      concat_wid = rep*expr_wid;
+      if (concat_wid <= wid) {
+	    off = 0;
+	      /* Evaluate the base expression. */
+	    for (idx = num_sube; idx > 0; idx -= 1) {
 		  ivl_expr_t arg = ivl_expr_parm(exp, idx-1);
 		  unsigned awid = ivl_expr_width(arg);
-
-		  unsigned trans;
 		  struct vector_info avec;
 
+		  assert(awid+off <= expr_wid);
+
 		    /* Try to locate the subexpression in the
-		       lookaside map. */
+		     * lookaside map and use it when available. */
 		  avec.base = allocate_vector_exp(arg, awid, alloc_exclusive);
 		  avec.wid = awid;
 
-		  trans = awid;
-		  if ((off + awid) > wid)
-			trans = wid - off;
-
 		  if (avec.base != 0) {
 			assert(awid == avec.wid);
-
-			fprintf(vvp_out, "    %%mov %u, %u, %u; Reuse calculated expression\n",
-				res.base+off,
-				avec.base, trans);
-			clr_vector(avec);
-
+			fprintf(vvp_out, "    %%mov %u, %u, %u; Reuse "
+			                 "calculated expression.\n",
+			                 res.base+off, avec.base, awid);
+			clr_vector(avec); 
 		  } else {
 			struct vector_info dest;
 
 			dest.base = res.base+off;
-			dest.wid  = trans;
+			dest.wid  = awid;
 			draw_eval_expr_dest(arg, dest, 0);
 		  }
 
-
-		  idx -= 1;
-		  off += trans;
-		  assert(off <= wid);
+		  off += awid;
 	    }
-	    rep -= 1;
-      }
 
-	/* Pad the result with 0, if necessary. */
-      if (off < wid) {
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-		    res.base+off, wid-off);
+	      /* Now repeat the expression as needed. */
+	    if (rep != 0) {
+		  rep -= 1;
+	    } else {
+		    /* Clear the temporary space and return nothing.
+		     * This will be caught in draw_eval_expr_dest()
+		     * and dropped. */
+		  clr_vector(res); 
+		  res.base = 0;
+		  res.wid = 0;
+	    }
+	    while (rep > 0) {
+		  fprintf(vvp_out, "    %%mov %u, %u, %u; Repetition %u\n",
+		                   res.base+expr_wid*rep, res.base, expr_wid,
+		                   rep+1);
+		  rep -= 1;
+	    }
+
+	      /* Pad the expression when needed. */
+	    if (wid > concat_wid) {
+		    /* We can get a signed concatenation with $signed({...}). */
+		  if (ivl_expr_signed(exp)) {
+			unsigned base = res.base+concat_wid-1;
+			for (idx = 1; idx <= wid-concat_wid; idx += 1) {
+			      fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
+			                       base+idx, base);
+			}
+		  } else {
+			fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+			                 res.base+concat_wid, wid-concat_wid);
+		  }
+	    }
+      } else {
+	      /* The concatenation is too big for the result so draw it
+	       * at full width and then copy the bits that are needed. */
+	    struct vector_info full_res;
+	    full_res = draw_concat_expr(exp, concat_wid, stuff_ok_flag);
+	    assert(full_res.base);
+
+	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", res.base,
+	                     full_res.base, wid);
+	    clr_vector(full_res); 
       }
 
 	/* Save the accumulated result in the lookaside map. */
@@ -2843,8 +2879,9 @@ static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
       tmp = draw_eval_expr_wid(exp, dest.wid, stuff_ok_flag);
       assert(tmp.wid == dest.wid);
 
-      fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
-	      dest.base, tmp.base, dest.wid);
+	/* If the replication is 0 we can have a zero width, so skip it. */
+      if (dest.wid) fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+                                     dest.base, tmp.base, dest.wid);
 
       if (tmp.base >= 8)
 	    save_expression_lookaside(tmp.base, exp, tmp.wid);
