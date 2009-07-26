@@ -141,6 +141,8 @@ class vvp_fun_edge : public vvp_net_fun_t, public waitable_hooks_s {
       bool recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                       vvp_bit4_t&old_bit, vthread_t&threads);
 
+      vvp_bit4_t bits_[4];
+
     private:
       edge_t edge_;
 };
@@ -165,7 +167,6 @@ class vvp_fun_edge_sa : public vvp_fun_edge {
 
     private:
       vthread_t threads_;
-      vvp_bit4_t bits_[4];
 };
 
 /*
@@ -214,6 +215,10 @@ class vvp_fun_anyedge : public vvp_net_fun_t, public waitable_hooks_s {
                       vvp_vector4_t&old_bits, vthread_t&threads);
       bool recv_real_(vvp_net_ptr_t port, double bit,
                       double&old_bits, vthread_t&threads);
+
+      vvp_vector4_t bits_[4];
+	// In case I'm a real-valued event.
+      double bitsr_[4];
 };
 
 /*
@@ -235,9 +240,6 @@ class vvp_fun_anyedge_sa : public vvp_fun_anyedge {
 
     private:
       vthread_t threads_;
-      vvp_vector4_t bits_[4];
-	// In case I'm a real-valued event.
-      double bitsr_[4];
 };
 
 /*
