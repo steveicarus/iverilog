@@ -131,7 +131,7 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 	    if (pform_cur_generate->tasks.find(task->pscope_name()) !=
 	        pform_cur_generate->tasks.end()) {
 		  cerr << task->get_fileline() << ": error: duplicate "
-		          " definition for task '" << name << "' in '"
+		          "definition for task '" << name << "' in '"
 		       << pform_cur_module->mod_name() << "' (generate)."
 		       << endl;
 		  error_count += 1;
@@ -681,7 +681,14 @@ void pform_genvars(const struct vlltype&li, list<perm_string>*names)
       for (cur = names->begin(); cur != names->end() ; *cur++) {
 	    LineInfo*lni = new LineInfo();
 	    FILE_NAME(lni, li);
-	    pform_cur_module->genvars[*cur] = lni;
+	    if (pform_cur_module->genvars.find(*cur) !=
+	        pform_cur_module->genvars.end()) {
+		  cerr << lni->get_fileline() << ": error: duplicate "
+		  "definition for genvar '" << *cur << "' in '"
+		  << pform_cur_module->mod_name() << "'." << endl;
+		  error_count += 1;
+		  delete lni;
+	    } else pform_cur_module->genvars[*cur] = lni;
       }
 
       delete names;
