@@ -65,6 +65,10 @@ template <class T> bool vvp_net_fil_t::filter_mask_(T&val)
       return true;
 }
 
+vvp_signal_value::~vvp_signal_value()
+{
+}
+
 const vvp_vector4_t* vvp_fun_signal4::filter_vec4(const vvp_vector4_t&val)
 {
       return filter_mask_(val, force4_, filter4_);
@@ -80,9 +84,14 @@ bool vvp_fun_signal_real::filter_real(double&val)
       return filter_mask_(val);
 }
 
-unsigned vvp_fun_signal_real::size() const
+unsigned vvp_fun_signal_real::filter_size() const
 {
-      return 1;
+      return size();
+}
+
+unsigned vvp_fun_signal4::filter_size() const
+{
+      return value_size();
 }
 
 void vvp_fun_signal4::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
@@ -378,17 +387,11 @@ void vvp_fun_signal_base::deassign_pv(unsigned base, unsigned wid)
 void vvp_fun_signal4_sa::release(vvp_net_ptr_t ptr, bool net)
 {
       vvp_vector2_t mask (vvp_vector2_t::FILL1, bits4_.size());
+      assert(!net);
 
-      if (net) {
-	      // If releasing a net, then the output should revert to
-	      // the un-forced value.
-	    release_mask(mask);
-	    ptr.ptr()->send_vec4(bits4_, 0);
-      } else {
-	      // Variables keep their forced value after the release.
-	    bits4_ = filtered_vec4(bits4_);
-	    release_mask(mask);
-      }
+	// Variables keep their forced value after the release.
+      bits4_ = filtered_vec4(bits4_);
+      release_mask(mask);
 }
 
 void vvp_fun_signal4_sa::release_pv(vvp_net_ptr_t ptr, bool net,
@@ -400,17 +403,11 @@ void vvp_fun_signal4_sa::release_pv(vvp_net_ptr_t ptr, bool net,
       for (unsigned idx = 0 ; idx < wid ; idx += 1)
 	    mask.set_bit(base+idx, 1);
 
-      if (net) {
-	    release_mask(mask);
-	    ptr.ptr()->send_vec4(bits4_,0);
-      } else {
-	    bits4_ = filtered_vec4(bits4_);
-	    release_mask(mask);
-      }
-
+      bits4_ = filtered_vec4(bits4_);
+      release_mask(mask);
 }
 
-unsigned vvp_fun_signal4_sa::size() const
+unsigned vvp_fun_signal4_sa::value_size() const
 {
       return bits4_.size();
 }
@@ -509,7 +506,7 @@ void vvp_fun_signal4_aa::release_pv(vvp_net_ptr_t ptr, bool net,
       assert(0);
 }
 
-unsigned vvp_fun_signal4_aa::size() const
+unsigned vvp_fun_signal4_aa::value_size() const
 {
       return size_;
 }
@@ -603,19 +600,7 @@ void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
 	     * strength aware. */
 	    assert(0);
 	    break;
-#if 0
-	  case 2: // Force value
-	      { vvp_vector2_t mask (vvp_vector2_t::FILL0, vwid);
-		vvp_vector8_t vec (vvp_vector4_t(vwid, BIT4_Z),6,6);
-		for (unsigned idx = 0 ; idx < wid ; idx += 1) {
-		      mask.set_bit(base+idx, 1);
-		      vec.set_bit(base+idx, bit.value(idx));
-		}
-		force_vec8(vec, mask);
-		calculate_output_(ptr);
-		break;
-	      }
-#endif
+
 	  default:
 	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
 	    assert(0);
@@ -657,7 +642,12 @@ void vvp_fun_signal8::release_pv(vvp_net_ptr_t ptr, bool net,
       }
 }
 
-unsigned vvp_fun_signal8::size() const
+unsigned vvp_fun_signal8::filter_size() const
+{
+      return value_size();
+}
+
+unsigned vvp_fun_signal8::value_size() const
 {
       return bits8_.size();
 }
@@ -828,7 +818,7 @@ void vvp_fun_force::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       vvp_net_t*dst = net->port[3].ptr();
       assert(dst->fil);
 
-      dst->force_vec4(coerce_to_width(bit, dst->fil->size()), vvp_vector2_t(vvp_vector2_t::FILL1, dst->fil->size()));
+      dst->force_vec4(coerce_to_width(bit, dst->fil->filter_size()), vvp_vector2_t(vvp_vector2_t::FILL1, dst->fil->filter_size()));
 }
 
 void vvp_fun_force::recv_real(vvp_net_ptr_t ptr, double bit, vvp_context_t)
@@ -837,4 +827,192 @@ void vvp_fun_force::recv_real(vvp_net_ptr_t ptr, double bit, vvp_context_t)
       vvp_net_t*net = ptr.ptr();
       vvp_net_t*dst = net->port[3].ptr();
       dst->force_real(bit, vvp_vector2_t(vvp_vector2_t::FILL1, 1));
+}
+
+vvp_wire_base::vvp_wire_base()
+{
+}
+
+vvp_wire_base::~vvp_wire_base()
+{
+}
+
+vvp_wire_vec4::vvp_wire_vec4(unsigned wid, vvp_bit4_t init)
+: width_(wid)
+{
+}
+
+const vvp_vector4_t* vvp_wire_vec4::filter_vec4(const vvp_vector4_t&bit)
+{
+      return filter_mask_(bit, force4_, filter4_);
+}
+
+const vvp_vector8_t* vvp_wire_vec4::filter_vec8(const vvp_vector8_t&bit)
+{
+      assert(0);
+      return 0;
+}
+
+unsigned vvp_wire_vec4::filter_size() const
+{
+      return width_;
+}
+
+void vvp_wire_vec4::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
+{
+      force_mask(mask);
+
+      if (force4_.size() == 0) {
+	    force4_ = val;
+      } else {
+	    for (unsigned idx = 0; idx < mask.size() ; idx += 1) {
+		  if (mask.value(idx) == 0)
+			continue;
+
+		  force4_.set_bit(idx, val.value(idx));
+	    }
+      }
+}
+
+void vvp_wire_vec4::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
+{
+      assert(0);
+}
+
+void vvp_wire_vec4::force_fil_real(double val, vvp_vector2_t mask)
+{
+      assert(0);
+}
+
+void vvp_wire_vec4::release(vvp_net_ptr_t ptr, bool net)
+{
+      assert(net);
+
+	// Wires revert to their unforced value after release.
+      vvp_vector2_t mask (vvp_vector2_t::FILL1, width_);
+      release_mask(mask);
+      ptr.ptr()->send_vec4(bits4_, 0);
+}
+
+void vvp_wire_vec4::release_pv(vvp_net_ptr_t ptr, bool net,
+                                    unsigned base, unsigned wid)
+{
+      assert(bits4_.size() >= base + wid);
+      assert(net);
+
+      vvp_vector2_t mask (vvp_vector2_t::FILL0, bits4_.size());
+      for (unsigned idx = 0 ; idx < wid ; idx += 1)
+	    mask.set_bit(base+idx, 1);
+
+      release_mask(mask);
+      ptr.ptr()->send_vec4(bits4_,0);
+}
+
+unsigned vvp_wire_vec4::value_size() const
+{
+      return width_;
+}
+
+vvp_bit4_t vvp_wire_vec4::filtered_value_(const vvp_vector4_t&val, unsigned idx) const
+{
+      if (test_force_mask(idx))
+	    return force4_.value(idx);
+      else
+	    return val.value(idx);
+}
+
+vvp_bit4_t vvp_wire_vec4::value(unsigned idx) const
+{
+      return filtered_value_(bits4_, idx);
+}
+
+vvp_scalar_t vvp_wire_vec4::scalar_value(unsigned idx) const
+{
+      assert(0);
+}
+
+vvp_vector4_t vvp_wire_vec4::vec4_value() const
+{
+      assert(0);
+}
+
+vvp_wire_vec8::vvp_wire_vec8(unsigned wid)
+: width_(wid)
+{
+}
+
+const vvp_vector4_t* vvp_wire_vec8::filter_vec4(const vvp_vector4_t&bit)
+{
+      assert(0);
+      return 0;
+}
+
+const vvp_vector8_t* vvp_wire_vec8::filter_vec8(const vvp_vector8_t&bit)
+{
+      assert(0);
+      return 0;
+}
+
+unsigned vvp_wire_vec8::filter_size() const
+{
+      return width_;
+}
+
+void vvp_wire_vec8::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
+{
+      assert(0);
+}
+
+void vvp_wire_vec8::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
+{
+      assert(0);
+}
+
+void vvp_wire_vec8::force_fil_real(double val, vvp_vector2_t mask)
+{
+      assert(0);
+}
+
+void vvp_wire_vec8::release(vvp_net_ptr_t ptr, bool net)
+{
+      assert(net);
+
+	// Wires revert to their unforced value after release.
+      vvp_vector2_t mask (vvp_vector2_t::FILL1, width_);
+      release_mask(mask);
+      ptr.ptr()->send_vec8(bits8_);
+}
+
+void vvp_wire_vec8::release_pv(vvp_net_ptr_t ptr, bool net,
+			       unsigned base, unsigned wid)
+{
+      assert(width_ >= base + wid);
+      assert(net);
+
+      vvp_vector2_t mask (vvp_vector2_t::FILL0, width_);
+      for (unsigned idx = 0 ; idx < wid ; idx += 1)
+	    mask.set_bit(base+idx, 1);
+
+      release_mask(mask);
+      ptr.ptr()->send_vec8(bits8_);
+}
+
+unsigned vvp_wire_vec8::value_size() const
+{
+      return width_;
+}
+
+vvp_bit4_t vvp_wire_vec8::value(unsigned idx) const
+{
+      assert(0);
+}
+
+vvp_scalar_t vvp_wire_vec8::scalar_value(unsigned idx) const
+{
+      assert(0);
+}
+
+vvp_vector4_t vvp_wire_vec8::vec4_value() const
+{
+      assert(0);
 }

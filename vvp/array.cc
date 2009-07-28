@@ -870,9 +870,9 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 	    vpiHandle word = arr->nets[0];
 	    struct __vpiSignal*vsig = vpip_signal_from_handle(word);
 	    assert(vsig);
-	    vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (vsig->node->fun);
+	    vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (vsig->node->fun);
 	    assert(sig);
-	    return vvp_vector4_t(sig->size(), BIT4_X);
+	    return vvp_vector4_t(sig->value_size(), BIT4_X);
       }
 
       vpiHandle word = arr->nets[address];

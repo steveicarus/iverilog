@@ -62,32 +62,6 @@ using namespace std;
  * off again. Writing into this port can be done in behavioral code
  * using the %cassign/v instruction, or can be done by the network by
  * hooking the output of a vvp_net_t to this port.
- *
- * Force assignments are made through port-2. When a value is written
- * here, force mode is activated. In force mode, port-0 data (or
- * port-1 data if in continuous assign mode) is tracked but not
- * propagated. The force value is propagated and is what is readable
- * through the value method.
- *
- * Port-3 is a command port, intended for use by procedural
- * instructions. The client must write long values to this port to
- * invoke the command of interest. The command values are:
- *
- *  1  -- deassign
- *          The deassign command takes the node out of continuous
- *          assignment mode. The output value is unchanged, and force
- *          mode, if active, remains in effect.
- *
- *  2  -- release/net
- *          The release/net command takes the node out of force mode,
- *          and propagates the tracked port-0 value to the signal
- *          output. This acts like a release of a net signal.
- *
- *  3  -- release/reg
- *          The release/reg command is similar to the release/net
- *          command, but the port-0 value is not propagated. Changes
- *          to port-0 (or port-1 if continuous assign is active) will
- *          propagate starting at the next input change.
  */
 
 
@@ -117,17 +91,27 @@ class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_net_fil_t {
 };
 
 /*
- * This abstract class is a little more specific than the signal_base
- * class, in that it adds vector access methods.
+ * Variables and wires can have their values accessed, so this base
+ * class offers the unified concept of an acessible value.
  */
-class vvp_fun_signal_vec : public vvp_fun_signal_base {
-
+class vvp_signal_value {
     public:
-	// For vector signal types, this returns the vector count.
-      virtual unsigned size() const =0;
+      virtual ~vvp_signal_value() =0;
+      virtual unsigned value_size() const =0;
       virtual vvp_bit4_t value(unsigned idx) const =0;
       virtual vvp_scalar_t scalar_value(unsigned idx) const =0;
       virtual vvp_vector4_t vec4_value() const =0;
+
+      virtual void get_signal_value(struct t_vpi_value*vp);
+};
+
+/*
+ * This abstract class is a little more specific than the signal_base
+ * class, in that it adds vector access methods.
+ */
+class vvp_fun_signal_vec : public vvp_fun_signal_base, public vvp_signal_value  {
+    public:
+      unsigned size() const { return value_size(); }
 };
 
 class vvp_fun_signal4 : public vvp_fun_signal_vec {
@@ -146,6 +130,7 @@ class vvp_fun_signal4 : public vvp_fun_signal_vec {
 	// Test the value against the filter.
       vvp_bit4_t filtered_value(const vvp_vector4_t&val, unsigned idx) const;
       const vvp_vector4_t& filtered_vec4(const vvp_vector4_t&val) const;
+      unsigned filter_size() const;
 
     private:
       vvp_vector4_t force4_;
@@ -172,7 +157,7 @@ class vvp_fun_signal4_sa : public vvp_fun_signal4 {
 			unsigned base, unsigned wid, unsigned vwid);
 
 	// Get information about the vector value.
-      unsigned   size() const;
+      unsigned   value_size() const;
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
       vvp_vector4_t vec4_value() const;
@@ -209,7 +194,7 @@ class vvp_fun_signal4_aa : public vvp_fun_signal4, public automatic_hooks_s {
                         vvp_context_t);
 
 	// Get information about the vector value.
-      unsigned   size() const;
+      unsigned   value_size() const;
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
       vvp_vector4_t vec4_value() const;
@@ -241,7 +226,7 @@ class vvp_fun_signal8  : public vvp_fun_signal_vec {
                         unsigned base, unsigned wid, unsigned vwid);
 
 	// Get information about the vector value.
-      unsigned   size() const;
+      unsigned   value_size() const;
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
       vvp_vector4_t vec4_value() const;
@@ -263,6 +248,7 @@ class vvp_fun_signal8  : public vvp_fun_signal_vec {
 	// Test the value against the filter.
       vvp_scalar_t filtered_value(const vvp_vector8_t&val, unsigned idx) const;
       const vvp_vector8_t& filtered_vec8(const vvp_vector8_t&val) const;
+      unsigned filter_size() const;
 
     private:
       vvp_vector8_t bits8_;
@@ -290,7 +276,8 @@ class vvp_fun_signal_real : public vvp_fun_signal_base {
 	// Test the value against the filter.
       double filtered_real(double val) const;
 
-      virtual unsigned size() const;
+      unsigned size() const { return 1; }
+      virtual unsigned filter_size() const;
 
     private:
       double force_real_;
@@ -349,5 +336,91 @@ class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_hook
       unsigned context_idx_;
 };
 
+
+/* vvp_wire
+ * The vvp_wire is different from vvp_variable objects in that it
+ * exists only as a filter. The vvp_wire class tree is for
+ * implementing verilog wires/nets (as opposed to regs/variables).
+ */
+
+class vvp_wire_base  : public vvp_net_fil_t, public vvp_signal_value {
+
+    public:
+      vvp_wire_base();
+      ~vvp_wire_base();
+
+	// The main filter behavior for this class
+      const vvp_vector4_t* filter_vec4(const vvp_vector4_t&bit) =0;
+      const vvp_vector8_t* filter_vec8(const vvp_vector8_t&val) =0;
+
+};
+
+class vvp_wire_vec4 : public vvp_wire_base {
+
+    public:
+      vvp_wire_vec4(unsigned wid, vvp_bit4_t init=BIT4_X);
+
+	// The main filter behavior for this class. These methods take
+	// the value that the node is driven to, and applies the firce
+	// filters. In wires, this also saves the driven value, so
+	// that when a force is released, we can revert to the driven value.
+      const vvp_vector4_t* filter_vec4(const vvp_vector4_t&bit);
+      const vvp_vector8_t* filter_vec8(const vvp_vector8_t&val);
+
+	// Abstract methods from vvp_vpi_callback
+      void get_value(struct t_vpi_value*value);
+	// Abstract methods from vvp_net_fit_t
+      unsigned filter_size() const;
+      void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
+      void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
+      void force_fil_real(double val, vvp_vector2_t mask);
+      void release(vvp_net_ptr_t ptr, bool net);
+      void release_pv(vvp_net_ptr_t ptr, bool net, unsigned base, unsigned wid);
+
+	// Implementation of vvp_signal_value methods
+      unsigned value_size() const;
+      vvp_bit4_t value(unsigned idx) const;
+      vvp_scalar_t scalar_value(unsigned idx) const;
+      vvp_vector4_t vec4_value() const;
+
+    private:
+      vvp_bit4_t filtered_value_(const vvp_vector4_t&val, unsigned idx) const;
+
+    private:
+      unsigned width_;
+      vvp_vector4_t bits4_; // The tracked driven value
+      vvp_vector4_t force4_; // the value being forced
+      vvp_vector4_t filter4_; // scratch space for filter_mask_ function.
+};
+
+class vvp_wire_vec8 : public vvp_wire_base {
+
+    public:
+      vvp_wire_vec8(unsigned wid);
+
+	// The main filter behavior for this class
+      const vvp_vector4_t* filter_vec4(const vvp_vector4_t&bit);
+      const vvp_vector8_t* filter_vec8(const vvp_vector8_t&val);
+
+	// Abstract methods from vvp_vpi_callback
+      void get_value(struct t_vpi_value*value);
+	// Abstract methods from vvp_net_fit_t
+      unsigned filter_size() const;
+      void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
+      void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
+      void force_fil_real(double val, vvp_vector2_t mask);
+      void release(vvp_net_ptr_t ptr, bool net);
+      void release_pv(vvp_net_ptr_t ptr, bool net, unsigned base, unsigned wid);
+
+	// Implementation of vvp_signal_value methods
+      unsigned value_size() const;
+      vvp_bit4_t value(unsigned idx) const;
+      vvp_scalar_t scalar_value(unsigned idx) const;
+      vvp_vector4_t vec4_value() const;
+
+    private:
+      unsigned width_;
+      vvp_vector8_t bits8_;
+};
 
 #endif

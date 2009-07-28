@@ -157,12 +157,12 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	    struct __vpiSignal*sig;
 	    sig = reinterpret_cast<__vpiSignal*>(data->obj);
 
-	    vvp_fun_signal_base*sig_fun;
-	    sig_fun = dynamic_cast<vvp_fun_signal_base*>(sig->node->fun);
-	    assert(sig_fun);
+	    vvp_net_fil_t*sig_fil;
+	    sig_fil = dynamic_cast<vvp_net_fil_t*>(sig->node->fil);
+	    assert(sig_fil);
 
 	      /* Attach the __vpiCallback object to the signal. */
-	    sig_fun->add_vpi_callback(obj);
+	    sig_fil->add_vpi_callback(obj);
 	    break;
 
 	  case vpiRealVar:
@@ -577,7 +577,7 @@ void vvp_vpi_callback::run_vpi_callbacks()
       }
 }
 
-void vvp_fun_signal4::get_value(struct t_vpi_value*vp)
+void vvp_signal_value::get_signal_value(struct t_vpi_value*vp)
 {
       switch (vp->format) {
 	  case vpiScalarVal:
@@ -595,7 +595,7 @@ void vvp_fun_signal4::get_value(struct t_vpi_value*vp)
 	  case vpiVectorVal:
 	  case vpiStringVal:
 	  case vpiRealVal: {
-	    unsigned wid = size();
+	    unsigned wid = value_size();
 	    vvp_vector4_t vec4(wid);
 	    for (unsigned idx = 0; idx < wid; idx += 1) {
 		  vec4.set_bit(idx, value(idx));
@@ -612,6 +612,11 @@ void vvp_fun_signal4::get_value(struct t_vpi_value*vp)
 		    "format %d not supported (fun_signal)\n",
 		    vp->format);
       }
+}
+
+void vvp_fun_signal4::get_value(struct t_vpi_value*vp)
+{
+      get_signal_value(vp);
 }
 
 void vvp_fun_signal8::get_value(struct t_vpi_value*vp)
@@ -687,4 +692,14 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 		    "format %d not supported (fun_signal_real)\n",
 		    vp->format);
       }
+}
+
+void vvp_wire_vec4::get_value(struct t_vpi_value*value)
+{
+      get_signal_value(value);
+}
+
+void vvp_wire_vec8::get_value(struct t_vpi_value*value)
+{
+      assert(0);
 }

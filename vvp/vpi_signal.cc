@@ -134,13 +134,13 @@ char *generic_get_str(int code, vpiHandle ref, const char *name, const char *ind
  * They work with full or partial signals.
  */
 
-static void format_vpiBinStrVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
+static void format_vpiBinStrVal(vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       char *rbuf = need_result_buf(wid+1, RBUF_VAL);
       long offset = wid - 1 + base;
       long end = base + (signed)wid;
-      long ssize = (signed)sig->size();
+      long ssize = (signed)sig->value_size();
 
       for (long idx = base ;  idx < end ;  idx += 1) {
 	    if (idx < 0 || idx >= ssize) {
@@ -154,13 +154,13 @@ static void format_vpiBinStrVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
       vp->value.str = rbuf;
 }
 
-static void format_vpiOctStrVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
+static void format_vpiOctStrVal(vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       unsigned dwid = (wid + 2) / 3;
       char *rbuf = need_result_buf(dwid+1, RBUF_VAL);
       long end = base + (signed)wid;
-      long ssize = (signed)sig->size();
+      long ssize = (signed)sig->value_size();
       unsigned val = 0;
 
       rbuf[dwid] = 0;
@@ -210,13 +210,13 @@ static void format_vpiOctStrVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
       vp->value.str = rbuf;
 }
 
-static void format_vpiHexStrVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
+static void format_vpiHexStrVal(vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       unsigned dwid = (wid + 3) / 4;
       char *rbuf = need_result_buf(dwid+1, RBUF_VAL);
       long end = base + (signed)wid;
-      long ssize = (signed)sig->size();
+      long ssize = (signed)sig->value_size();
       unsigned val = 0;
 
       rbuf[dwid] = 0;
@@ -270,12 +270,12 @@ static void format_vpiHexStrVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
       vp->value.str = rbuf;
 }
 
-static void format_vpiDecStrVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
+static void format_vpiDecStrVal(vvp_signal_value*sig, int base, unsigned wid,
                                 int signed_flag, s_vpi_value*vp)
 {
-      unsigned hwid = (sig->size()+2) / 3 + 1;
+      unsigned hwid = (sig->value_size()+2) / 3 + 1;
       char *rbuf = need_result_buf(hwid, RBUF_VAL);
-      long ssize = (signed)sig->size();
+      long ssize = (signed)sig->value_size();
       long end = base + (signed)wid;
 
 	/* Do we have an end outside of the real signal vector. */
@@ -313,7 +313,7 @@ static void format_vpiDecStrVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
       vp->value.str = rbuf;
 }
 
-static void format_vpiIntVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
+static void format_vpiIntVal(vvp_signal_value*sig, int base, unsigned wid,
                              int signed_flag, s_vpi_value*vp)
 {
       vvp_vector4_t sub = sig->vec4_value().subvalue(base, wid);
@@ -322,11 +322,11 @@ static void format_vpiIntVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
       vp->value.integer = val;
 }
 
-static void format_vpiRealVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
+static void format_vpiRealVal(vvp_signal_value*sig, int base, unsigned wid,
                               int signed_flag, s_vpi_value*vp)
 {
       vvp_vector4_t vec4(wid);
-      long ssize = (signed)sig->size();
+      long ssize = (signed)sig->value_size();
       long end = base + (signed)wid;
       if (end > ssize) end = ssize;
 
@@ -338,7 +338,7 @@ static void format_vpiRealVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
       vector4_to_value(vec4, vp->value.real, signed_flag);
 }
 
-static void format_vpiStringVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
+static void format_vpiStringVal(vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       /* The result will use a character for each 8 bits of the
@@ -351,7 +351,7 @@ static void format_vpiStringVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
       for (long idx = base+(signed)wid-1; idx >= base; idx -= 1) {
 	    tmp <<= 1;
 
-	    if (idx >=0 && idx < (signed)sig->size() &&
+	    if (idx >=0 && idx < (signed)sig->value_size() &&
 	        sig->value(idx) == BIT4_1) {
 		   tmp |= 1;
 	    }
@@ -371,10 +371,10 @@ static void format_vpiStringVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
       vp->value.str = rbuf;
 }
 
-static void format_vpiScalarVal(vvp_fun_signal_vec*sig, int base,
+static void format_vpiScalarVal(vvp_signal_value*sig, int base,
                                 s_vpi_value*vp)
 {
-      if (base >= 0 && base < (signed)sig->size()) {
+      if (base >= 0 && base < (signed)sig->value_size()) {
 	    switch (sig->value(base)) {
 		case BIT4_0:
 		  vp->value.scalar = vpi0;
@@ -398,7 +398,7 @@ static void format_vpiScalarVal(vvp_fun_signal_vec*sig, int base,
       }
 }
 
-static void format_vpiStrengthVal(vvp_fun_signal_vec*sig, int base,
+static void format_vpiStrengthVal(vvp_signal_value*sig, int base,
                                   unsigned wid, s_vpi_value*vp)
 {
       long end = base + (signed)wid;
@@ -408,7 +408,7 @@ static void format_vpiStrengthVal(vvp_fun_signal_vec*sig, int base,
 	    need_result_buf(wid * sizeof(s_vpi_strengthval), RBUF_VAL);
 
       for (long idx = base ;  idx < end ;  idx += 1) {
-	    if (idx >=0 && idx < (signed)sig->size()) {
+	    if (idx >=0 && idx < (signed)sig->value_size()) {
 		  vvp_scalar_t val = sig->scalar_value(idx);
 
 		  /* vvp_scalar_t strengths are 0-7, but the vpi strength
@@ -452,7 +452,7 @@ static void format_vpiStrengthVal(vvp_fun_signal_vec*sig, int base,
       vp->value.strength = op;
 }
 
-static void format_vpiVectorVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
+static void format_vpiVectorVal(vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       long end = base + (signed)wid;
@@ -465,7 +465,7 @@ static void format_vpiVectorVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
 
       op->aval = op->bval = 0;
       for (long idx = base ;  idx < end ;  idx += 1) {
-	    if (base >= 0 && base < (signed)sig->size()) {
+	    if (base >= 0 && base < (signed)sig->value_size()) {
 		switch (sig->value(idx)) {
 		case BIT4_0:
 		  op->aval &= ~(1 << obit);
@@ -659,7 +659,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 
       unsigned wid = signal_width(rfp);
 
-      vvp_fun_signal_vec*vsig = dynamic_cast<vvp_fun_signal_vec*>(rfp->node->fun);
+      vvp_signal_value*vsig = dynamic_cast<vvp_signal_value*>(rfp->node->fil);
       assert(vsig);
 
       switch (vp->format) {

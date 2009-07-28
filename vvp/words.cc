@@ -148,40 +148,36 @@ void compile_variablew(char*label, vvp_array_t array,
 /*
  * Here we handle .net records from the vvp source:
  *
- *    <label> .net   <name>, <msb>, <lsb>, <input> ;
- *    <label> .net/s <name>, <msb>, <lsb>, <input> ;
- *    <label> .net8   <name>, <msb>, <lsb>, <input> ;
- *    <label> .net8/s <name>, <msb>, <lsb>, <input> ;
+ *    .net   <name>, <msb>, <lsb>, <input> ;
+ *    .net/s <name>, <msb>, <lsb>, <input> ;
+ *    .net8   <name>, <msb>, <lsb>, <input> ;
+ *    .net8/s <name>, <msb>, <lsb>, <input> ;
  *
  * Create a VPI handle to represent it, and fill that handle in with
  * references into the net.
  */
-static void __compile_net(char*label, char*name,
-			  char*array_label, unsigned long array_addr,
+static void __compile_net(char*label,
+			  char*name, char*array_label, unsigned long array_addr,
 			  int msb, int lsb,
 			  bool signed_flag, bool net8_flag, bool local_flag,
 			  unsigned argc, struct symb_s*argv)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
-      vvp_net_t*node = new vvp_net_t;
-
-      vvp_array_t array = array_label ? array_find(array_label) : 0;
-      assert(array_label ? array!=0 : true);
-
-      vvp_fun_signal_base*vsig = net8_flag
-	    ? dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal8(wid))
-	    : dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal4_sa(wid,BIT4_Z));
-      node->fun = vsig;
-      node->fil = vsig;
-
-	/* Add the label into the functor symbol table. */
-      define_functor_symbol(label, node);
+	// XXXX Forgot how to implement net arrays...
+      assert(array_label == 0);
 
       assert(argc == 1);
+      vvp_net_t*node = vvp_net_lookup(argv[0].text);
+      assert(node);
 
-	/* Connect the source to my input. */
-      inputs_connect(node, 1, argv);
+      vvp_wire_base*vsig = net8_flag
+	    ? dynamic_cast<vvp_wire_base*>(new vvp_wire_vec8(wid))
+	    : dynamic_cast<vvp_wire_base*>(new vvp_wire_vec4(wid,BIT4_Z));
+
+	// Assume (for now) that there is only 1 filter per node.
+      assert(node->fil == 0);
+      node->fil = vsig;
 
       vpiHandle obj = 0;
       if (! local_flag) {
@@ -190,11 +186,8 @@ static void __compile_net(char*label, char*name,
 	      /* This attaches the label to the vpiHandle */
 	    compile_vpi_symbol(label, obj);
       }
-        /* If this is an array word, then attach it to the
-	   array. Otherwise, attach it to the current scope. */
-      if (array)
-	    array_attach_word(array, array_addr, obj);
-      else if (obj)
+
+      if (obj)
 	    vpip_attach_to_current_scope(obj);
 
       free(label);
@@ -203,8 +196,7 @@ static void __compile_net(char*label, char*name,
       free(argv);
 }
 
-void compile_net(char*label, char*name,
-		 int msb, int lsb,
+void compile_net(char*label, char*name, int msb, int lsb,
 		 bool signed_flag, bool net8_flag, bool local_flag,
 		 unsigned argc, struct symb_s*argv)
 {

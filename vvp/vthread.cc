@@ -989,12 +989,12 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
       unsigned delay = cp->bit_idx[0];
       unsigned bit = cp->bit_idx[1];
 
-      vvp_fun_signal_vec*sig
-	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
+      vvp_signal_value*sig
+	    = reinterpret_cast<vvp_signal_value*> (cp->net->fun);
       assert(sig);
 
 	// We fell off the MSB end.
-      if (off >= (long)sig->size()) return true;
+      if (off >= (long)sig->value_size()) return true;
       else if (off < 0 ) {
 	      // We fell off the LSB end.
 	    if ((unsigned)-off >= wid ) return true;
@@ -1009,7 +1009,7 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
       vvp_net_ptr_t ptr (cp->net, 0);
-      schedule_assign_vector(ptr, off, sig->size(), value, delay);
+      schedule_assign_vector(ptr, off, sig->value_size(), value, delay);
 
       return true;
 }
@@ -1026,12 +1026,12 @@ bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
       vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
 
-      vvp_fun_signal_vec*sig
-	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
+      vvp_signal_value*sig
+	    = reinterpret_cast<vvp_signal_value*> (cp->net->fun);
       assert(sig);
 
 	// We fell off the MSB end.
-      if (off >= (long)sig->size()) return true;
+      if (off >= (long)sig->value_size()) return true;
       else if (off < 0 ) {
 	      // We fell off the LSB end.
 	    if ((unsigned)-off >= wid ) return true;
@@ -1046,7 +1046,7 @@ bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
       vvp_net_ptr_t ptr (cp->net, 0);
-      schedule_assign_vector(ptr, off, sig->size(), value, delay);
+      schedule_assign_vector(ptr, off, sig->value_size(), value, delay);
 
       return true;
 }
@@ -1062,12 +1062,12 @@ bool of_ASSIGN_V0X1E(vthread_t thr, vvp_code_t cp)
       long off = thr->words[1].w_int;
       unsigned bit = cp->bit_idx[0];
 
-      vvp_fun_signal_vec*sig
-	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
+      vvp_signal_value*sig
+	    = dynamic_cast<vvp_signal_value*> (cp->net->fun);
       assert(sig);
 
 	// We fell off the MSB end.
-      if (off >= (long)sig->size()) {
+      if (off >= (long)sig->value_size()) {
 	    thr->event = 0;
 	    thr->ecount = 0;
 	    return true;
@@ -1091,9 +1091,9 @@ bool of_ASSIGN_V0X1E(vthread_t thr, vvp_code_t cp)
       vvp_net_ptr_t ptr (cp->net, 0);
 	// If the count is zero then just put the value.
       if (thr->ecount == 0) {
-	    schedule_assign_vector(ptr, off, sig->size(), value, 0);
+	    schedule_assign_vector(ptr, off, sig->value_size(), value, 0);
       } else {
-	    schedule_evctl(ptr, value, off, sig->size(), thr->event,
+	    schedule_evctl(ptr, value, off, sig->value_size(), thr->event,
 	                   thr->ecount);
       }
 
@@ -1307,12 +1307,12 @@ bool of_CASSIGN_X0(vthread_t thr, vvp_code_t cp)
 	// X0 register.
       long index = thr->words[0].w_int;
 
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fun);
 
       if (index < 0 && (wid <= (unsigned)-index))
 	    return true;
 
-      if (index >= (long)sig->size())
+      if (index >= (long)sig->value_size())
 	    return true;
 
       if (index < 0) {
@@ -1320,13 +1320,13 @@ bool of_CASSIGN_X0(vthread_t thr, vvp_code_t cp)
 	    index = 0;
       }
 
-      if (index+wid > sig->size())
-	    wid = sig->size() - index;
+      if (index+wid > sig->value_size())
+	    wid = sig->value_size() - index;
 
       vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
 
       vvp_net_ptr_t ptr (net, 1);
-      vvp_send_vec4_pv(ptr, vector, index, wid, sig->size(), 0);
+      vvp_send_vec4_pv(ptr, vector, index, wid, sig->value_size(), 0);
 
       return true;
 }
@@ -1738,7 +1738,7 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
       unsigned base  = cp->bit_idx[0];
       unsigned width = cp->bit_idx[1];
 
-      vvp_fun_signal_vec*sig = reinterpret_cast<vvp_fun_signal_vec*>(net->fun);
+      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(net->fun);
       assert(sig);
 
       if (base >= sig->size()) return true;
@@ -2341,10 +2341,10 @@ bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
 	/* Send the force value to the filter on the node. */
 
       assert(net->fil);
-      if (value.size() != net->fil->size())
-	    value = coerce_to_width(value, net->fil->size());
+      if (value.size() != net->fil->filter_size())
+	    value = coerce_to_width(value, net->fil->filter_size());
 
-      net->force_vec4(value, vvp_vector2_t(vvp_vector2_t::FILL1, net->fil->size()));
+      net->force_vec4(value, vvp_vector2_t(vvp_vector2_t::FILL1, net->fil->filter_size()));
 
       return true;
 }
@@ -2380,7 +2380,7 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
 	    index = 0;
       }
 
-      unsigned use_size = net->fil->size();
+      unsigned use_size = net->fil->filter_size();
 
 
       if (index >= (long)use_size)
@@ -3055,13 +3055,13 @@ bool of_LOAD_X1P(vthread_t thr, vvp_code_t cp)
 
 	// For the %load to work, the functor must actually be a
 	// signal functor. Only signals save their vector value.
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fun);
       assert(sig);
 
       for (long idx = 0 ; idx < wid ; idx += 1) {
 	    long use_index = index + idx;
 	    vvp_bit4_t val;
-	    if (use_index < 0 || use_index >= (signed)sig->size())
+	    if (use_index < 0 || use_index >= (signed)sig->value_size())
 		  val = BIT4_X;
 	    else
 		  val = sig->value(use_index);
@@ -3910,10 +3910,11 @@ static bool do_release_vec(vthread_t thr, vvp_code_t cp, bool net_flag)
 
       assert(net->fil);
 
-      if (base >= net->fil->size()) return true;
-      if (base+width > net->fil->size()) width = net->fil->size() - base;
+      if (base >= net->fil->filter_size()) return true;
+      if (base+width > net->fil->filter_size())
+	    width = net->fil->filter_size() - base;
 
-      bool full_sig = base == 0 && width == net->fil->size();
+      bool full_sig = base == 0 && width == net->fil->filter_size();
 
 	// XXXX Can't really do this if this is a partial release?
       net->fil->force_unlink();
@@ -4049,7 +4050,7 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
 	// X0 register.
       long index = thr->words[0].w_int;
 
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fun);
 
 	// If the entire part is below the beginning of the vector,
 	// then we are done.
@@ -4058,7 +4059,7 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
 
 	// If the entire part is above then end of the vector, then we
 	// are done.
-      if (index >= (long)sig->size())
+      if (index >= (long)sig->value_size())
 	    return true;
 
 	// If the part starts below the vector, then skip the first
@@ -4071,8 +4072,8 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
       }
 
 	// Reduce the width to keep the part inside the vector.
-      if (index+wid > sig->size())
-	    wid = sig->size() - index;
+      if (index+wid > sig->value_size())
+	    wid = sig->value_size() - index;
 
       vvp_vector4_t bit_vec(wid);
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -4083,7 +4084,7 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
       }
 
       vvp_net_ptr_t ptr (net, 0);
-      vvp_send_vec4_pv(ptr, bit_vec, index, wid, sig->size(), thr->wt_context);
+      vvp_send_vec4_pv(ptr, bit_vec, index, wid, sig->value_size(), thr->wt_context);
 
       return true;
 }
