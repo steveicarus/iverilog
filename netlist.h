@@ -720,6 +720,9 @@ class NetScope : public Attrib {
       void rem_event(NetEvent*);
       NetEvent*find_event(perm_string name);
 
+	/* These methods add or find a genvar that lives in this scope. */
+      void add_genvar(perm_string name, LineInfo *li);
+      LineInfo* find_genvar(perm_string name);
 
 	/* These methods manage signals. The add_ and rem_signal
 	   methods are used by the NetNet objects to make themselves
@@ -898,6 +901,8 @@ class NetScope : public Attrib {
       NetNet::Type default_nettype_;
 
       NetEvent *events_;
+
+      map<perm_string,LineInfo*> genvars_;
 
       typedef std::map<perm_string,NetNet*>::const_iterator signals_map_iter_t;
       std::map <perm_string,NetNet*> signals_map_;
