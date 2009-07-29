@@ -107,6 +107,8 @@ W [ \t\b\f\r]+
 
 S [afpnumkKMGT]
 
+TU [munpf]
+
 %%
 
   /* Recognize the various line directives. */
@@ -248,6 +250,15 @@ S [afpnumkKMGT]
 	    in_UDP = false;
 	    break;
 
+	    /* Translate these to checks if we already have or are
+	     * outside the declaration region. */
+	  case K_timeunit:
+	    if (have_timeunit_decl) rc = K_timeunit_check;
+	    break;
+	  case K_timeprecision:
+	    if (have_timeprec_decl) rc = K_timeprecision_check;
+	    break;
+
 	  default:
 	    yylval.text = 0;
 	    break;
@@ -322,6 +333,13 @@ S [afpnumkKMGT]
       yylval.number = make_unsized_dec(yytext);
       based_size = yylval.number->as_ulong();
       return DEC_NUMBER; }
+
+  /* This rule handles scaled time values for SystemVerilog. */
+[0-9][0-9_]*(\.[0-9][0-9_]*)?{TU}?s {
+      if(gn_system_verilog_flag) {
+	    yylval.text = strdupnew(yytext);
+	    return TIME_LITERAL;
+      } else REJECT; }
 
   /* These rules handle the scaled real literals from Verilog-AMS. The
      value is a number with a single letter scale factor. If
@@ -1202,6 +1220,13 @@ static void process_timescale(const char*txt)
           (size_t)(cp-yytext) != strlen(yytext)) {
 	    VLerror(yylloc, "Invalid `timescale directive (extra garbage "
 	                    "after precision).");
+	    return;
+      }
+
+	/* The time unit must be greater than or equal to the precision. */
+      if (unit < prec) {
+	    VLerror(yylloc, "error: `timescale unit must not be less than "
+	                    "the precision.");
 	    return;
       }
 

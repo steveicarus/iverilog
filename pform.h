@@ -143,6 +143,7 @@ extern PWire* pform_get_wire_in_scope(perm_string name);
  */
 extern void pform_startmodule(const char*, const char*file, unsigned lineno,
 			      svector<named_pexpr_t*>*attr);
+extern void pform_check_timeunit_prec();
 extern void pform_module_set_ports(vector<Module::port_t*>*);
 
 /* This function is used to support the port definition in a
@@ -409,4 +410,11 @@ extern PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
 
 extern PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
 						 char*name, char*branch);
+/*
+ * Tasks to set the timeunit or timeprecision for SystemVerilog.
+ */
+extern void pform_set_timeunit(const char*txt, bool in_module, bool only_check);
+extern void pform_set_timeprecision(const char*txt, bool in_module,
+                                    bool only_check);
+
 #endif

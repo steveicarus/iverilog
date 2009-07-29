@@ -152,11 +152,25 @@ struct __vpiArrayVthrA {
       }
 };
 
-/* Get the array word size. This has only been checked for reg arrays. */
+/* Get the array word size. */
 unsigned get_array_word_size(vvp_array_t array)
 {
-      assert(array->vals4);
-      return  array->vals_width;
+      unsigned width;
+
+      assert(array->array_count > 0);
+	/* For a net array we need to get the width from the first element. */
+      if (array->nets) {
+	    assert(array->vals4 == 0 && array->valsr == 0);
+	    struct __vpiSignal*vsig = vpip_signal_from_handle(array->nets[0]);
+	    assert(vsig);
+	    width = vpip_size(vsig);
+	/* For a variable array we can get the width from vals_width. */
+      } else {
+	    assert(array->vals4 || array->valsr);
+	    width = array->vals_width;
+      }
+
+      return width;
 }
 
 bool is_net_array(vpiHandle obj)
@@ -665,7 +679,7 @@ static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 	    return 0; // Not implemented for now!
 
 	  case vpiSize:
-	    return parent->vals_width;
+	    return get_array_word_size(parent);
 
 	  case vpiLeftRange:
 	    return parent->msb.value;
@@ -746,8 +760,8 @@ static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value value)
 	    vpip_real_get_value(tmp, value);
       } else {
 	    vvp_vector4_t tmp = array_get_word(parent, index);
-	    vpip_vec4_get_value(tmp, parent->vals_width, parent->signed_flag,
-	                        value);
+	    unsigned width = get_array_word_size(parent);
+	    vpip_vec4_get_value(tmp, width, parent->signed_flag, value);
       }
 }
 
@@ -766,7 +780,8 @@ static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int)
 	    double val = real_from_vpi_value(vp);
 	    array_set_word(parent, index, val);
       } else {
-	    vvp_vector4_t val = vec4_from_vpi_value(vp, parent->vals_width);
+	    unsigned width = get_array_word_size(parent);
+	    vvp_vector4_t val = vec4_from_vpi_value(vp, width);
 	    array_set_word(parent, index, 0, val);
       }
 

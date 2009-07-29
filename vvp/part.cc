@@ -58,10 +58,15 @@ void vvp_fun_part_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 {
       assert(port.port() == 0);
 
-      if (val_ .eeq( bit ))
+      vvp_vector4_t tmp (wid_, BIT4_X);
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    if (idx + base_ < bit.size())
+		  tmp.set_bit(idx, bit.value(base_+idx));
+      }
+      if (val_ .eeq( tmp ))
 	    return;
 
-      val_ = bit;
+      val_ = tmp;
 
       if (net_ == 0) {
 	    net_ = port.ptr();
@@ -94,13 +99,7 @@ void vvp_fun_part_sa::run_run()
 {
       vvp_net_t*ptr = net_;
       net_ = 0;
-
-      vvp_vector4_t res (wid_, BIT4_X);
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    if (idx + base_ < val_.size())
-		  res.set_bit(idx, val_.value(base_+idx));
-      }
-      ptr->send_vec4(res, 0);
+      ptr->send_vec4(val_, 0);
 }
 
 vvp_fun_part_aa::vvp_fun_part_aa(unsigned base, unsigned wid)

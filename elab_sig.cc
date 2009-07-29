@@ -879,6 +879,14 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	         << "' have the same name '" << name_ << "'." << endl;
 	    des->errors += 1;
       }
+	// A signal can not have the same name as a genvar.
+      const LineInfo *genvar = scope->find_genvar(name_);
+      if (genvar) {
+	    cerr << get_fileline() << ": error: signal and genvar in '"
+	         << scope->fullname() << "' have the same name '" << name_
+	         << "'." << endl;
+	    des->errors += 1;
+      }
 	// A signal can not have the same name as a parameter.
       const NetExpr *ex_msb, *ex_lsb;
       const NetExpr *parm = scope->get_parameter(name_, ex_msb, ex_lsb);

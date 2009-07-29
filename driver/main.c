@@ -281,7 +281,7 @@ static int t_version_only(void)
       }
 
       fflush(0);
-      snprintf(tmp, sizeof tmp, "%s%civl -V -C%s -C%s", pbase, sep,
+      snprintf(tmp, sizeof tmp, "%s%civl -V -C%s -C%s", base, sep,
 	       iconfig_path, iconfig_common_path);
       rc = system(tmp);
       if (rc != 0) {

@@ -722,25 +722,35 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
       unsigned nparms = parms_.count();
       NetNet**tmp = new NetNet*[parms_.count()];
       bool flag = true;
+      ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 	    if (parms_[idx]->expr_width() == 0) {
-		  tmp[idx] = 0;
+		    /* We need to synthesize a replication of zero. */
+		  tmp[idx] = parms_[idx]->synthesize(des, scope, root);
+		  assert(tmp[idx] == 0);
 		  nparms -= 1;
 	    } else {
 		  tmp[idx] = parms_[idx]->synthesize(des, scope, root);
 		  if (tmp[idx] == 0) flag = false;
+		    /* Set the data type to the first one found. */
+		  if (data_type == IVL_VT_NO_TYPE) {
+			 data_type = tmp[idx]->data_type();
+		  }
 	    }
       }
 
       if (flag == false) return 0;
 
-      ivl_assert(*this, tmp[0]);
+      ivl_assert(*this, data_type != IVL_VT_NO_TYPE);
+
+	/* If this is a replication of zero just return 0. */
+      if (expr_width() == 0) return 0;
 
 	/* Make a NetNet object to carry the output vector. */
       perm_string path = scope->local_symbol();
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, expr_width());
       osig->local_flag(true);
-      osig->data_type(tmp[0]->data_type());
+      osig->data_type(data_type);
 
       NetConcat*concat = new NetConcat(scope, scope->local_symbol(),
 				       osig->vector_width(),

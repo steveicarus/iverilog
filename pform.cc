@@ -73,6 +73,21 @@ static NetNet::Type pform_default_nettype = NetNet::WIRE;
 static int pform_time_unit;
 static int pform_time_prec;
 
+/* These two flags check the initial timeprecision and timeunit
+ * declaration inside a module.
+ */
+static bool tp_decl_flag = false;
+static bool tu_decl_flag = false;
+
+/*
+ * Flags used to set time_from_timescale based on timeunit and
+ * timeprecision.
+ */
+static bool tu_global_flag = false;
+static bool tp_global_flag = false;
+static bool tu_local_flag = false;
+static bool tp_local_flag = false;
+
 static char*pform_timescale_file = 0;
 static unsigned pform_timescale_line;
 
@@ -116,7 +131,7 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 	    if (pform_cur_generate->tasks.find(task->pscope_name()) !=
 	        pform_cur_generate->tasks.end()) {
 		  cerr << task->get_fileline() << ": error: duplicate "
-		          " definition for task '" << name << "' in '"
+		          "definition for task '" << name << "' in '"
 		       << pform_cur_module->mod_name() << "' (generate)."
 		       << endl;
 		  error_count += 1;
@@ -292,6 +307,9 @@ void pform_set_timescale(int unit, int prec,
       assert(unit >= prec);
       pform_time_unit = unit;
       pform_time_prec = prec;
+	/* A `timescale clears the timeunit/timeprecision state. */
+      tu_global_flag = false;
+      tp_global_flag = false;
 
       if (pform_timescale_file) {
 	    free(pform_timescale_file);
@@ -339,6 +357,139 @@ void pform_set_timescale(int unit, int prec,
       }
 }
 
+/*
+ * Get a timeunit or timeprecision value from a string.  This is
+ * similar to the code in lexor.lex for the `timescale directive.
+ */
+static bool get_time_unit_prec(const char*cp, int &res, bool is_unit)
+{
+	/* We do not support a '_' in these time constants. */
+      if (strchr(cp, '_')) {
+	    if (is_unit) {
+		  VLerror(yylloc, "Invalid timeunit constant ('_' is not "
+		                  "supported).");
+	    } else {
+		  VLerror(yylloc, "Invalid timeprecision constant ('_' is not "
+		                  "supported).");
+	    }
+	    return true;
+      }
+
+	/* Check for the 1 digit. */
+      if (*cp != '1') {
+	    if (is_unit) {
+		  VLerror(yylloc, "Invalid timeunit constant (1st digit).");
+	    } else {
+		  VLerror(yylloc, "Invalid timeprecision constant (1st digit).");
+	    }
+	    return true;
+      }
+      cp += 1;
+
+	/* Check the number of zeros after the 1. */
+      res = strspn(cp, "0");
+      if (res > 2) {
+	    if (is_unit) {
+		  VLerror(yylloc, "Invalid timeunit constant (number of "
+		                  "zeros).");
+	    } else {
+		  VLerror(yylloc, "Invalid timeprecision constant (number of "
+		                  "zeros).");
+	    }
+	    return true;
+      }
+      cp += res;
+
+	/* Now process the scaling string. */
+      if (strncmp("s", cp, 1) == 0) {
+	    res -= 0;
+	    return false;
+
+      } else if (strncmp("ms", cp, 2) == 0) {
+	    res -= 3;
+	    return false;
+
+      } else if (strncmp("us", cp, 2) == 0) {
+	    res -= 6;
+	    return false;
+
+      } else if (strncmp("ns", cp, 2) == 0) {
+	    res -= 9;
+	    return false;
+
+      } else if (strncmp("ps", cp, 2) == 0) {
+	    res -= 12;
+	    return false;
+
+      } else if (strncmp("fs", cp, 2) == 0) {
+	    res -= 15;
+	    return false;
+
+      }
+
+      ostringstream msg;
+      msg << "Invalid ";
+      if (is_unit) msg << "timeunit";
+      else msg << "timeprecision";
+      msg << " scale '" << cp << "'.";
+      VLerror(msg.str().c_str());
+      return true;
+}
+
+void pform_set_timeunit(const char*txt, bool in_module, bool only_check)
+{
+      int val;
+
+      if (get_time_unit_prec(txt, val, true)) return;
+
+      if (in_module) {
+	    if (!only_check) {
+		  pform_cur_module->time_unit = val;
+		  tu_decl_flag = true;
+		  tu_local_flag = true;
+	    } else if (!tu_decl_flag) {
+		  VLerror(yylloc, "error: repeat timeunit found and the "
+		                  "initial module timeunit is missing.");
+		  return;
+	    } else if (pform_cur_module->time_unit != val) {
+		  VLerror(yylloc, "error: repeat timeunit does not match "
+		                  "the initial module timeunit "
+		                  "declaration.");
+		  return;
+	    }
+
+      } else {
+	    tu_global_flag = true;
+	    pform_time_unit = val;
+      }
+}
+
+void pform_set_timeprecision(const char*txt, bool in_module, bool only_check)
+{
+      int val;
+
+      if (get_time_unit_prec(txt, val, false)) return;
+
+      if (in_module) {
+	    if (!only_check) {
+		  pform_cur_module->time_precision = val;
+		  tp_decl_flag = true;
+		  tp_local_flag = true;
+	    } else if (!tp_decl_flag) {
+		  VLerror(yylloc, "error: repeat timeprecision found and the "
+		                  "initial module timeprecision is missing.");
+		  return;
+	    } else if (pform_cur_module->time_precision != val) {
+		  VLerror(yylloc, "error: repeat timeprecision does not match "
+		                  "the initial module timeprecision "
+		                  "declaration.");
+		  return;
+	    }
+      } else {
+	    pform_time_prec = val;
+	    tp_global_flag=true;
+      }
+}
 
 verinum* pform_verinum_with_size(verinum*siz, verinum*val,
 				 const char*file, unsigned lineno)
@@ -397,8 +548,12 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
 
       perm_string lex_name = lex_strings.make(name);
       pform_cur_module = new Module(lex_name);
+	/* Set the local time unit/precision to the global value. */
       pform_cur_module->time_unit = pform_time_unit;
       pform_cur_module->time_precision = pform_time_prec;
+      tu_local_flag = tu_global_flag;
+      tp_local_flag = tp_global_flag;
+
 	/* If we have a timescale file then the time information is from
 	 * a timescale directive. */
       pform_cur_module->time_from_timescale = pform_timescale_file != 0;
@@ -429,6 +584,22 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
 		      pform_cur_module->attributes[tmp->name] = tmp->parm;
 	      }
       }
+}
+
+/*
+ * In SystemVerilog we can have separate timeunit and timeprecision
+ * declarations. We need to have the values worked out by time this
+ * task is called.
+ */
+void pform_check_timeunit_prec()
+{
+      assert(pform_cur_module);
+      if (gn_system_verilog_flag && (pform_cur_module->time_unit <
+                                     pform_cur_module->time_precision)) {
+	    VLerror("error: a timeprecision is missing or is too "
+	            "large!");
+      } else assert(pform_cur_module->time_unit >=
+                    pform_cur_module->time_precision);
 }
 
 /*
@@ -471,6 +642,9 @@ void pform_endmodule(const char*name, bool in_celldefine,
                      Module::UCDriveType uc_drive)
 {
       assert(pform_cur_module);
+      pform_cur_module->time_from_timescale = (tu_local_flag &&
+                                               tp_local_flag) ||
+                                              (pform_timescale_file != 0);
       perm_string mod_name = pform_cur_module->mod_name();
       assert(strcmp(name, mod_name) == 0);
       pform_cur_module->is_cell = in_celldefine;
@@ -495,6 +669,10 @@ void pform_endmodule(const char*name, bool in_celldefine,
       ivl_assert(*pform_cur_module, lexical_scope == 0);
 
       pform_cur_module = 0;
+      tp_decl_flag = false;
+      tu_decl_flag = false;
+      tu_local_flag = false;
+      tp_local_flag = false;
 }
 
 void pform_genvars(const struct vlltype&li, list<perm_string>*names)
@@ -503,7 +681,14 @@ void pform_genvars(const struct vlltype&li, list<perm_string>*names)
       for (cur = names->begin(); cur != names->end() ; *cur++) {
 	    LineInfo*lni = new LineInfo();
 	    FILE_NAME(lni, li);
-	    pform_cur_module->genvars[*cur] = lni;
+	    if (pform_cur_module->genvars.find(*cur) !=
+	        pform_cur_module->genvars.end()) {
+		  cerr << lni->get_fileline() << ": error: duplicate "
+		  "definition for genvar '" << *cur << "' in '"
+		  << pform_cur_module->mod_name() << "'." << endl;
+		  error_count += 1;
+		  delete lni;
+	    } else pform_cur_module->genvars[*cur] = lni;
       }
 
       delete names;

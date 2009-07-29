@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -257,15 +257,13 @@ ivl_variable_type_t NetEBMinMax::expr_type() const
 NetEBMult::NetEBMult(char op__, NetExpr*l, NetExpr*r)
 : NetEBinary(op__, l, r)
 {
-      if (expr_type() == IVL_VT_REAL)
+      if (expr_type() == IVL_VT_REAL) {
 	    expr_width(1);
-      else
-	    expr_width(l->expr_width() + r->expr_width());
-
-      if (expr_type() == IVL_VT_REAL)
 	    cast_signed(true);
-      else
+      } else {
+	    expr_width(l->expr_width() + r->expr_width());
 	    cast_signed(l->has_sign() && r->has_sign());
+      }
 }
 
 NetEBMult::~NetEBMult()
@@ -294,8 +292,8 @@ NetEBPow::NetEBPow(char op__, NetExpr*l, NetExpr*r)
 : NetEBinary(op__, l, r)
 {
       assert(op__ == 'p');
-      /* This is incorrect! a * (2^b - 1) is close. */
-      expr_width(l->expr_width()+r->expr_width());
+	/* You could need up to a * (2^b - 1) bits. */
+      expr_width(l->expr_width());
       cast_signed(l->has_sign() || r->has_sign());
 }
 
@@ -438,6 +436,7 @@ NetECReal::NetECReal(const verireal&val)
 : value_(val)
 {
       expr_width(1);
+      cast_signed(true);
 }
 
 NetECReal::~NetECReal()

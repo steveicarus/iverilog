@@ -195,6 +195,8 @@ struct vvp_fun_edge_state_s : public waitable_state_s {
 vvp_fun_edge::vvp_fun_edge(edge_t e)
 : edge_(e)
 {
+      for (unsigned idx = 0 ;  idx < 4 ;  idx += 1)
+            bits_[idx] = BIT4_X;
 }
 
 vvp_fun_edge::~vvp_fun_edge()
@@ -220,8 +222,6 @@ bool vvp_fun_edge::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 vvp_fun_edge_sa::vvp_fun_edge_sa(edge_t e)
 : vvp_fun_edge(e), threads_(0)
 {
-      for (unsigned idx = 0 ;  idx < 4 ;  idx += 1)
-            bits_[idx] = BIT4_X;
 }
 
 vvp_fun_edge_sa::~vvp_fun_edge_sa()
@@ -259,6 +259,7 @@ vvp_fun_edge_aa::~vvp_fun_edge_aa()
 void vvp_fun_edge_aa::alloc_instance(vvp_context_t context)
 {
       vvp_set_context_item(context, context_idx_, new vvp_fun_edge_state_s);
+      reset_instance(context);
 }
 
 void vvp_fun_edge_aa::reset_instance(vvp_context_t context)
@@ -268,7 +269,7 @@ void vvp_fun_edge_aa::reset_instance(vvp_context_t context)
 
       state->threads = 0;
       for (unsigned idx = 0 ;  idx < 4 ;  idx += 1)
-            state->bits[idx] = BIT4_X;
+            state->bits[idx] = bits_[idx];
 }
 
 #ifdef CHECK_WITH_VALGRIND
@@ -308,6 +309,7 @@ void vvp_fun_edge_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                   recv_vec4(port, bit, context);
                   context = vvp_get_next_context(context);
             }
+            bits_[port.port()] = bit.value(0);
       }
 }
 
@@ -324,6 +326,8 @@ struct vvp_fun_anyedge_state_s : public waitable_state_s {
 
 vvp_fun_anyedge::vvp_fun_anyedge()
 {
+      for (unsigned idx = 0 ;  idx < 4 ;  idx += 1)
+	    bitsr_[idx] = 0.0;
 }
 
 vvp_fun_anyedge::~vvp_fun_anyedge()
@@ -369,8 +373,6 @@ bool vvp_fun_anyedge::recv_real_(vvp_net_ptr_t port, double bit,
 vvp_fun_anyedge_sa::vvp_fun_anyedge_sa()
 : threads_(0)
 {
-      for (unsigned idx = 0 ;  idx < 4 ;  idx += 1)
-	    bitsr_[idx] = 0.0;
 }
 
 vvp_fun_anyedge_sa::~vvp_fun_anyedge_sa()
@@ -416,6 +418,7 @@ vvp_fun_anyedge_aa::~vvp_fun_anyedge_aa()
 void vvp_fun_anyedge_aa::alloc_instance(vvp_context_t context)
 {
       vvp_set_context_item(context, context_idx_, new vvp_fun_anyedge_state_s);
+      reset_instance(context);
 }
 
 void vvp_fun_anyedge_aa::reset_instance(vvp_context_t context)
@@ -425,8 +428,8 @@ void vvp_fun_anyedge_aa::reset_instance(vvp_context_t context)
 
       state->threads = 0;
       for (unsigned idx = 0 ;  idx < 4 ;  idx += 1) {
-            state->bits[idx].set_to_x();
-	    state->bitsr[idx] = 0.0;
+            state->bits[idx] = bits_[idx];
+	    state->bitsr[idx] = bitsr_[idx];
       }
 }
 
@@ -467,6 +470,7 @@ void vvp_fun_anyedge_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                   recv_vec4(port, bit, context);
                   context = vvp_get_next_context(context);
             }
+            bits_[port.port()] = bit;
       }
 }
 
@@ -487,6 +491,7 @@ void vvp_fun_anyedge_aa::recv_real(vvp_net_ptr_t port, double bit,
                   recv_real(port, bit, context);
                   context = vvp_get_next_context(context);
             }
+            bitsr_[port.port()] = bit;
       }
 }
 
