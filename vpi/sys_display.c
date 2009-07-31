@@ -23,6 +23,7 @@
 # include  "sys_priv.h"
 # include  <assert.h>
 # include  <string.h>
+# include  <errno.h>
 # include  <ctype.h>
 # include  <stdio.h>
 # include  <stdlib.h>
@@ -1120,18 +1121,20 @@ static PLI_INT32 sys_display_calltf(PLI_BYTE8 *name)
 
 	/* Get the file/MC descriptor and verify it is valid. */
       if(name[1] == 'f') {
+	      errno = 0;
 	      vpiHandle arg = vpi_scan(argv);
 	      s_vpi_value val;
 	      val.format = vpiIntVal;
 	      vpi_get_value(arg, &val);
 	      fd_mcd = val.value.integer;
 	      if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-	          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF)) {
-		    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF) ||
+	          (! fd_mcd)) {
+		    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 		               (int)vpi_get(vpiLineNo, callh));
 		    vpi_printf("invalid file descriptor/MCD (0x%x) given "
 		               "to %s.\n", fd_mcd, name);
-		    vpi_control(vpiFinish, 1);
+		    errno = EBADF;
 		    vpi_free_object(argv);
 		    return 0;
 	      }
@@ -1180,23 +1183,29 @@ static PLI_INT32 sys_display_calltf(PLI_BYTE8 *name)
  */
 static PLI_INT32 strobe_cb(p_cb_data cb)
 {
-      char* result;
+      char* result = NULL;
       unsigned int size, location=0;
       struct strobe_cb_info*info = (struct strobe_cb_info*)cb->user_data;
 
-	/* Because %u and %z may put embedded NULL characters into the
-	 * returned string strlen() may not match the real size! */
-      result = get_display(&size, info);
-      while (location < size) {
-	    if (result[location] == '\0') {
-		  my_mcd_printf(info->fd_mcd, "%c", '\0');
-		  location += 1;
-	    } else {
-		  my_mcd_printf(info->fd_mcd, "%s", &result[location]);
-		  location += strlen(&result[location]);
+	/* We really need to cancel any $fstrobe() calls for a file when it
+	 * is closed, but for now we will just skip processing the result.
+	 * Which has the same basic effect. */
+      if ((! IS_MCD(info->fd_mcd) && vpi_get_file(info->fd_mcd) != NULL) ||
+          ( IS_MCD(info->fd_mcd) && my_mcd_printf(info->fd_mcd, "") != EOF)) {
+	      /* Because %u and %z may put embedded NULL characters into the
+	       * returned string strlen() may not match the real size! */
+	    result = get_display(&size, info);
+	    while (location < size) {
+		  if (result[location] == '\0') {
+			my_mcd_printf(info->fd_mcd, "%c", '\0');
+			location += 1;
+		  } else {
+			my_mcd_printf(info->fd_mcd, "%s", &result[location]);
+			location += strlen(&result[location]);
+		  }
 	    }
+	    my_mcd_printf(info->fd_mcd, "\n");
       }
-      my_mcd_printf(info->fd_mcd, "\n");
 
       free(info->filename);
       free(info->items);
@@ -1226,18 +1235,20 @@ static PLI_INT32 sys_strobe_calltf(PLI_BYTE8*name)
 
 	/* Get the file/MC descriptor and verify it is valid. */
       if(name[1] == 'f') {
+	      errno = 0;
 	      vpiHandle arg = vpi_scan(argv);
 	      s_vpi_value val;
 	      val.format = vpiIntVal;
 	      vpi_get_value(arg, &val);
 	      fd_mcd = val.value.integer;
 	      if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-	          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF)) {
-		    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF) ||
+	          (! fd_mcd))  {
+		    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 		               (int)vpi_get(vpiLineNo, callh));
 		    vpi_printf("invalid file descriptor/MCD (0x%x) given "
 		               "to %s.\n", fd_mcd, name);
-		    vpi_control(vpiFinish, 1);
+		    errno = EBADF;
 		    vpi_free_object(argv);
 		    return 0;
 	      }
