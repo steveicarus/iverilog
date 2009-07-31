@@ -258,7 +258,10 @@ extern "C" PLI_INT32 vpi_fopen(const char*name, const char*mode)
       }
 	/* We need to allocate more table entries, but to keep things */
 	/* sane we'll hard limit this to 1024 file descriptors total. */
-      if (fd_table_len >= 1024) return 0;
+      if (fd_table_len >= 1024) {
+	    vpi_printf("WARNING: Icarus only supports 1024 open files!\n");
+	    return 0;
+      }
       fd_table_len += FD_INCR;
       fd_table = (mcd_entry_s *) realloc(fd_table,
                                          fd_table_len*sizeof(mcd_entry_s));
