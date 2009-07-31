@@ -21,12 +21,12 @@
 # include  "sys_priv.h"
 # include  <assert.h>
 # include  <ctype.h>
+# include  <errno.h>
 # include  <string.h>
 # include  <stdio.h>
 # include  <stdlib.h>
 
 #define IS_MCD(mcd)     !((mcd)>>31&1)
-
 
 /*
  * Implement the $fopen system function.
@@ -83,6 +83,8 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
       vpiHandle fileh = vpi_scan(argv);
       char *fname;
       vpiHandle mode = vpi_scan(argv);
+      errno = 0;
+
 	/* Get the mode handle if it exists. */
       if (mode) {
             char *esc_md;
@@ -180,7 +182,7 @@ static PLI_INT32 sys_fopenrwa_calltf(PLI_BYTE8*name)
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       s_vpi_value val;
       char *mode, *fname;
-
+      errno = 0;
 
 	/* Get the mode. */
       mode = name + strlen(name) - 1;
@@ -210,6 +212,7 @@ static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
       s_vpi_value val;
       PLI_UINT32 fd_mcd;
       char *str = "";  /* This prevents the compiler from complaining. */
+      errno = 0;
 
       vpi_free_object(argv);
 
@@ -219,15 +222,19 @@ static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
       fd_mcd = val.value.integer;
 
       if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-          ( IS_MCD(fd_mcd) && vpi_mcd_printf(fd_mcd, str) == EOF)) {
+          ( IS_MCD(fd_mcd) && vpi_mcd_printf(fd_mcd, str) == EOF) ||
+          (! fd_mcd)) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
 	               fd_mcd, name);
+	    errno = EBADF;
 	    return 0;
       }
 
-	/* We need to cancel any active $fstrobe()'s for this FD/MCD. */
+	/* We need to cancel any active $fstrobe()'s for this FD/MCD.
+	 * For now we check in the strobe callback and skip the output
+	 * generation when needed. */
       vpi_mcd_close(fd_mcd);
 
       return 0;
@@ -245,6 +252,7 @@ static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
       PLI_UINT32 fd_mcd;
       FILE *fp;
       char *str = "";  /* This prevents the compiler from complaining. */
+      errno = 0;
 
 	/* If we have no argument then flush all the streams. */
       if (argv == 0) {
@@ -260,11 +268,13 @@ static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
       fd_mcd = val.value.integer;
 
       if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-          ( IS_MCD(fd_mcd) && vpi_mcd_printf(fd_mcd, str) == EOF)) {
+          ( IS_MCD(fd_mcd) && vpi_mcd_printf(fd_mcd, str) == EOF) ||
+          (! fd_mcd)) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
 	               fd_mcd, name);
+	    errno = EBADF;
 	    return 0;
       }
 
@@ -288,7 +298,7 @@ static PLI_INT32 sys_fputc_calltf(PLI_BYTE8*name)
       PLI_UINT32 fd_mcd;
       FILE *fp;
       unsigned char chr;
-      (void) name;  /* Not used! */
+      errno = 0;
 
 	/* Get the character. */
       arg = vpi_scan(argv);
@@ -312,9 +322,12 @@ static PLI_INT32 sys_fputc_calltf(PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
 	               name);
+	    errno = EBADF;
 	    val.value.integer = EOF;
-      } else
+      } else {
 	    val.value.integer = fputc(chr, fp);
+	    if (val.value.integer != EOF) val.value.integer = 0;
+      }
       vpi_put_value(callh, &val, 0, vpiNoDelay);
 
       return 0;
@@ -378,7 +391,7 @@ static PLI_INT32 sys_fgets_calltf(PLI_BYTE8*name)
       FILE *fp;
       PLI_INT32 reg_size;
       char*text;
-      (void) name;  /* Not used! */
+      errno = 0;
 
 	/* Get the register handle. */
       regh = vpi_scan(argv);
@@ -397,6 +410,7 @@ static PLI_INT32 sys_fgets_calltf(PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
 	               name);
+	    errno = EBADF;
 	    val.format = vpiIntVal;
 	    val.value.integer = 0;
 	    vpi_put_value(callh, &val, 0, vpiNoDelay);
@@ -566,6 +580,7 @@ static PLI_INT32 sys_fread_calltf(PLI_BYTE8*name)
       unsigned is_mem, idx, bpe, words;
       FILE *fp;
       s_vpi_vecval *vector;
+      errno = 0;
 
 	/* Get the register/memory. */
       mem_reg = vpi_scan(argv);
@@ -583,6 +598,7 @@ static PLI_INT32 sys_fread_calltf(PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
 	               name);
+	    errno = EBADF;
 	    val.format = vpiIntVal;
 	    val.value.integer = 0;
 	    vpi_put_value(callh, &val, 0, vpiNoDelay);
@@ -693,8 +709,8 @@ static PLI_INT32 sys_ungetc_calltf(PLI_BYTE8*name)
       s_vpi_value val;
       PLI_UINT32 fd_mcd;
       FILE *fp;
-      unsigned char chr;
-      (void) name;  /* Not used! */
+      int chr;
+      errno = 0;
 
 	/* Get the character. */
       arg = vpi_scan(argv);
@@ -716,6 +732,7 @@ static PLI_INT32 sys_ungetc_calltf(PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
 	               name);
+	    errno = EBADF;
 	    val.format = vpiIntVal;
 	    val.value.integer = EOF;
 	    vpi_put_value(callh, &val, 0, vpiNoDelay);
@@ -725,6 +742,7 @@ static PLI_INT32 sys_ungetc_calltf(PLI_BYTE8*name)
 	/* ungetc the character and return the result. */
       val.format = vpiIntVal;
       val.value.integer = ungetc(chr, fp);
+      if (val.value.integer != EOF) val.value.integer = 0;
       vpi_put_value(callh, &val, 0, vpiNoDelay);
 
       return 0;
@@ -763,7 +781,7 @@ static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8*name)
 	    return 0;
       }
 
-      if (!arg || !is_numeric_obj(arg)) {
+      if (! is_numeric_obj(arg)) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's second argument must be numeric.\n", name);
@@ -780,7 +798,7 @@ static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8*name)
 	    return 0;
       }
 
-      if (!arg || !is_numeric_obj(arg)) {
+      if (! is_numeric_obj(arg)) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's third argument must be numeric.\n", name);
@@ -802,7 +820,7 @@ static PLI_INT32 sys_fseek_calltf(PLI_BYTE8*name)
       PLI_UINT32 fd_mcd;
       PLI_INT32 offset, oper;
       FILE *fp;
-
+      errno = 0;
 
 	/* Get the file pointer. */
       arg = vpi_scan(argv);
@@ -824,15 +842,22 @@ static PLI_INT32 sys_fseek_calltf(PLI_BYTE8*name)
       oper = val.value.integer;
 
 	/* Check that the operation is in the valid range. */
-      if ((oper < 0) || (oper > 2)) {
+      switch (oper) {
+	case 0:
+	    oper = SEEK_SET;
+	    break;
+	case 1:
+	    oper = SEEK_CUR;
+	    break;
+	case 2:
+	    oper = SEEK_END;
+	    break;
+	default:
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's operation must be 0, 1 or 2 given %d.\n",
 	               name, oper);
-	    val.format = vpiIntVal;
-	    val.value.integer = EOF;
-	    vpi_put_value(callh, &val, 0, vpiNoDelay);
-	    return 0;
+	    oper = -1; /* An invalid argument value. */
       }
 
 	/* Return EOF if this is not a valid fd. */
@@ -842,6 +867,7 @@ static PLI_INT32 sys_fseek_calltf(PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
 	               name);
+	    errno = EBADF;
 	    val.format = vpiIntVal;
 	    val.value.integer = EOF;
 	    vpi_put_value(callh, &val, 0, vpiNoDelay);
@@ -863,6 +889,7 @@ static PLI_INT32 sys_common_fd_calltf(PLI_BYTE8*name)
       s_vpi_value val;
       PLI_UINT32 fd_mcd;
       FILE *fp;
+      errno = 0;
 
 	/* Get the file pointer. */
       arg = vpi_scan(argv);
@@ -878,6 +905,7 @@ static PLI_INT32 sys_common_fd_calltf(PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
 	               name);
+	    errno = EBADF;
 	    val.format = vpiIntVal;
 	    val.value.integer = EOF;
 	    vpi_put_value(callh, &val, 0, vpiNoDelay);
@@ -906,6 +934,119 @@ static PLI_INT32 sys_common_fd_calltf(PLI_BYTE8*name)
 	    break;
       }
       vpi_put_value(callh, &val, 0 , vpiNoDelay);
+
+      return 0;
+}
+
+/*
+ * Implement the $ferror system function.
+ */
+static PLI_INT32 sys_ferror_compiletf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv;
+      vpiHandle arg;
+
+      argv = vpi_iterate(vpiArgument, callh);
+
+	/*
+	 * Check that there are two arguments and that the first is
+	 * numeric and that the second is a 640 bit or larger register.
+	 *
+	 * The parser requires that a function have at least one argument,
+	 * so argv should always be defined with one argument.
+	 */
+      assert(argv);
+
+      if (! is_numeric_obj(vpi_scan(argv))) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's fd (first) argument must be numeric.\n", name);
+	    vpi_control(vpiFinish, 1);
+      }
+
+	/* Check that the second argument is given and that it is a 640 bit
+	 * or larger register. */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s requires a second (register) argument.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+      if (vpi_get(vpiType, arg) != vpiReg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's second argument must be a reg (>=640 bits).\n",
+	                name);
+	    vpi_control(vpiFinish, 1);
+      } else if (vpi_get(vpiSize, arg) < 640) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s's second argument must have 640 bit or more.\n",
+	               name);
+	    vpi_control(vpiFinish, 1);
+      }
+
+	/* Make sure there are no extra arguments. */
+      check_for_extra_args(argv, callh, name, "two arguments", 0);
+
+      return 0;
+}
+
+static PLI_INT32 sys_ferror_calltf(PLI_BYTE8 *name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle reg;
+      s_vpi_value val;
+      char *msg;
+      PLI_INT32 size;
+      unsigned chars;
+      PLI_UINT32 fd_mcd;
+
+	/* Get the file pointer. */
+      val.format = vpiIntVal;
+      vpi_get_value(vpi_scan(argv), &val);
+      fd_mcd = val.value.integer;
+
+	/* Get the register to put the string result and figure out how many
+	 * characters it will hold. */
+      reg = vpi_scan(argv);
+      size = vpi_get(vpiSize, reg);
+      chars = size / 8;
+      vpi_free_object(argv);
+
+	/* If we do not already have an error check that the fd is valid.
+	 * The assumption is that the other routines have set errno to
+	 * EBADF when they encounter a bad file descriptor, so we do not
+	 * need to check here. We also need to special case this since
+	 * $fopen() will return 0 (a bad file descriptor) when it has a
+	 * problem (sets errno). */
+      if (!errno && !vpi_get_file(fd_mcd) ) {
+	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
+	               name);
+	    errno = EBADF;
+      }
+
+	/* Return the error code. */
+      val.format = vpiIntVal;
+      val.value.integer = errno;
+      vpi_put_value(callh, &val, 0, vpiNoDelay);
+
+	/* Only return the number of characters that will fit in the reg. */
+      msg = (char *) malloc(chars);
+      if (errno != 0) strncpy(msg, strerror(errno), chars-1);
+      else strncpy(msg, "", chars-1);
+      msg[chars-1] = '\0';
+      val.format = vpiStringVal;
+      val.value.str = msg;
+      vpi_put_value(reg, &val, 0, vpiNoDelay);
+      free(msg);
 
       return 0;
 }
@@ -960,15 +1101,6 @@ void sys_fileio_register()
       tf_data.compiletf = sys_one_opt_numeric_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fflush";
-      vpi_register_systf(&tf_data);
-
-      /*============================== fputc */
-      tf_data.type      = vpiSysTask;
-      tf_data.tfname    = "$fputc";
-      tf_data.calltf    = sys_fputc_calltf;
-      tf_data.compiletf = sys_two_numeric_args_compiletf;
-      tf_data.sizetf    = 0;
-      tf_data.user_data = "$fputc";
       vpi_register_systf(&tf_data);
 
       /*============================== fgetc */
@@ -1041,7 +1173,17 @@ void sys_fileio_register()
       tf_data.user_data = "$rewind";
       vpi_register_systf(&tf_data);
 
-/* $feof() is from 1364-2005. */
+      /*============================== ferror */
+      tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.tfname    = "$ferror";
+      tf_data.calltf    = sys_ferror_calltf;
+      tf_data.compiletf = sys_ferror_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$ferror";
+      vpi_register_systf(&tf_data);
+
+      /* $feof() is from 1364-2005. */
       /*============================== feof */
       tf_data.type      = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
@@ -1052,4 +1194,14 @@ void sys_fileio_register()
       tf_data.user_data = "$feof";
       vpi_register_systf(&tf_data);
 
+      /* Icarus specific. */
+      /*============================== fputc */
+      tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.tfname    = "$fputc";
+      tf_data.calltf    = sys_fputc_calltf;
+      tf_data.compiletf = sys_two_numeric_args_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fputc";
+      vpi_register_systf(&tf_data);
 }

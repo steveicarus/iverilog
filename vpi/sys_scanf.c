@@ -24,6 +24,7 @@
 # include  "vpi_user.h"
 # include  "sys_priv.h"
 # include  <ctype.h>
+# include  <errno.h>
 # include  <string.h>
 # include  <stdio.h>
 # include  <stdlib.h>
@@ -639,6 +640,7 @@ static PLI_INT32 sys_fscanf_calltf(PLI_BYTE8*name)
       s_vpi_value val;
       struct byte_source src;
       FILE *fd;
+      errno = 0;
 
       val.format = vpiIntVal;
       vpi_get_value(vpi_scan(argv), &val);
@@ -648,9 +650,11 @@ static PLI_INT32 sys_fscanf_calltf(PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n",
 	               val.value.integer, name);
+	    errno = EBADF;
 	    val.format = vpiIntVal;
 	    val.value.integer = EOF;
 	    vpi_put_value(callh, &val, 0, vpiNoDelay);
+	    vpi_free_object(argv);
 	    return 0;
       }
 
