@@ -153,10 +153,13 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
       }
 
       fname = get_filename(callh, name, fileh);
-      if (fname == 0 && mode) free(mode_string);
 
 	/* If either the mode or file name are not valid just return. */
-      if (fail || fname == 0) return 0;
+      if (fail || fname == 0) {
+	    free(fname);
+	    if (mode) free(mode_string);
+	    return 0;
+      }
 
       val.format = vpiIntVal;
       if (mode) {
