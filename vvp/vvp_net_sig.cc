@@ -124,7 +124,7 @@ void vvp_net_t::force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
 {
       assert(fil);
       fil->force_fil_vec4(val, mask);
-      send_vec4(val, 0);
+      vvp_send_vec4(out_, val, 0);
 }
 
 void vvp_fun_signal8::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
@@ -844,7 +844,11 @@ vvp_wire_vec4::vvp_wire_vec4(unsigned wid, vvp_bit4_t init)
 
 const vvp_vector4_t* vvp_wire_vec4::filter_vec4(const vvp_vector4_t&bit)
 {
-      return filter_mask_(bit, force4_, filter4_);
+	// Keep track of the value being driven from this net, even if
+	// it is not ultimately what survives the force filter.
+      bits4_ = bit;
+      const vvp_vector4_t*tmp = filter_mask_(bit, force4_, filter4_);
+      return tmp;
 }
 
 const vvp_vector8_t* vvp_wire_vec4::filter_vec8(const vvp_vector8_t&bit)
@@ -933,7 +937,10 @@ vvp_scalar_t vvp_wire_vec4::scalar_value(unsigned idx) const
 
 vvp_vector4_t vvp_wire_vec4::vec4_value() const
 {
-      assert(0);
+      vvp_vector4_t tmp = bits4_;
+      for (unsigned idx = 0 ; idx < bits4_.size() ; idx += 1)
+	    tmp.set_bit(idx, filtered_value_(bits4_, idx));
+      return tmp;
 }
 
 vvp_wire_vec8::vvp_wire_vec8(unsigned wid)

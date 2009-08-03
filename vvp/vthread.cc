@@ -2953,10 +2953,10 @@ static vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
 
 	/* For the %load to work, the functor must actually be a
 	   signal functor. Only signals save their vector value. */
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
       if (sig == 0) {
-	    cerr << "%%load/v error: Net arg not a vector signal? "
-		 << typeid(*net->fun).name() << endl;
+	    cerr << "%%load/v error: Net arg not a signal? "
+		 << typeid(*net->fil).name() << endl;
 	    assert(sig);
       }
 

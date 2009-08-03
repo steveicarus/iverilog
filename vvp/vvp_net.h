@@ -1146,7 +1146,15 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
       bool test_force_mask(unsigned bit) const;
       bool test_force_mask_is_zero() const;
 
+	// This template method is used by derived classes to process
+	// the val through the force mask. The force value is the
+	// currently forced value, and the buf is a value that this
+	// method will use to hold a filtered value, if needed. This
+	// method returns a pointer to val or buf.
       template <class T> const T*filter_mask_(const T&val, const T&force, T&buf);
+	// This template method is a scalar value of the above. It
+	// leaves the val, or it replaces it iwth a forced value.
+	// (Not really implemented, yet.)
       template <class T> bool filter_mask_(T&val);
 
     private:
