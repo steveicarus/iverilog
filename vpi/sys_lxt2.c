@@ -440,9 +440,23 @@ static void *close_dumpfile(void)
 
 static void open_dumpfile(vpiHandle callh)
 {
+      off_t use_file_size_limit = lxt2_file_size_limit;
       if (dump_path == 0) dump_path = strdup("dump.lx2");
 
       dump_file = lxt2_wr_init(dump_path);
+
+      if (getenv("LXT_FILE_SIZE_LIMIT")) {
+	    const char*limit_string = getenv("LXT_FILE_SIZE_LIMIT");
+	    char*ep;
+	    use_file_size_limit = strtoul(limit_string,&ep,0);
+	    if (use_file_size_limit == 0 || ep[0] != 0) {
+		  vpi_printf("LXT2 Warning: %s:%d: LXT_FILE_SIZE_LIMIT is invalid: %s\n",
+			     vpi_get_str(vpiFile, callh),
+			     (int)vpi_get(vpiLineNo, callh),
+			     limit_string);
+		  use_file_size_limit = lxt2_file_size_limit;
+	    }
+      }
 
       if (dump_file == 0) {
 	    vpi_printf("LXT2 Error: %s:%d: ", vpi_get_str(vpiFile, callh),
@@ -462,7 +476,7 @@ static void open_dumpfile(vpiHandle callh)
 	    lxt2_wr_set_initial_value(dump_file, 'x');
 	    lxt2_wr_set_compression_depth(dump_file, 4);
 	    lxt2_wr_set_partial_on(dump_file, 1);
-	    lxt2_wr_set_break_size(dump_file, lxt2_file_size_limit);
+	    lxt2_wr_set_break_size(dump_file, use_file_size_limit);
 
             atexit((void(*)(void))close_dumpfile);
       }

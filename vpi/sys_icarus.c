@@ -53,17 +53,6 @@ static PLI_INT32 task_not_implemented_compiletf(PLI_BYTE8* name)
       return 0;
 }
 
-static PLI_INT32 function_not_implemented_compiletf(PLI_BYTE8* name)
-{
-      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
-
-      vpi_printf("%s:%d: SORRY: function %s() is not currently implemented.\n",
-                 vpi_get_str(vpiFile, callh), (int)vpi_get(vpiLineNo, callh),
-                 name);
-      vpi_control(vpiFinish, 1);
-      return 0;
-}
-
 /*
  * This is used to warn the user that the specified optional system
  * task/function is not available (from Annex C 1364-2005).
@@ -222,15 +211,6 @@ void sys_special_register(void)
 
       tf_data.tfname      = "$dumpportsflush";
       tf_data.user_data   = "$dumpportsflush";
-      vpi_register_systf(&tf_data);
-
-	/* These functions are not currently implemented. */
-      tf_data.compiletf   = function_not_implemented_compiletf;
-      tf_data.type = vpiSysFunc;
-      tf_data.sysfunctype = vpiIntFunc;
-
-      tf_data.tfname      = "$ferror";
-      tf_data.user_data   = "$ferror";
       vpi_register_systf(&tf_data);
 
 	/* The following optional system tasks/functions are not implemented
