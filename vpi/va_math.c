@@ -216,6 +216,7 @@ static PLI_INT32 va_single_argument_compiletf(PLI_BYTE8 *ud)
     /* Check that there are arguments. */
     if (argv == 0) {
         va_error_message(callh, "%s requires one argument.\n", name);
+        free(fun_data);
         return 0;
     }
 
@@ -303,6 +304,7 @@ static PLI_INT32 va_double_argument_compiletf(PLI_BYTE8 *ud)
     /* Check that there are arguments. */
     if (argv == 0) {
         va_error_message(callh, "%s requires two arguments.\n", name);
+        free(fun_data);
         return 0;
     }
 
