@@ -410,6 +410,8 @@ void PDelays::dump_delays(ostream&out) const
       if (delay_[0] && delay_[1] && delay_[2])
 	    out << "#(" << *delay_[0] << "," << *delay_[1] << "," <<
 		  *delay_[2] << ")";
+      else if (delay_[0] && delay_[1])
+	    out << "#(" << *delay_[0] << "," << *delay_[1] << ")";
       else if (delay_[0])
 	    out << "#" << *delay_[0];
       else
