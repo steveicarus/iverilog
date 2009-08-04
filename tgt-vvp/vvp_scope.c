@@ -615,6 +615,8 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
   static ivl_udp_t *udps = 0x0;
   static int nudps = 0;
   int i;
+  unsigned ninp;
+  const char **input_strings;
 
   for (i=0; i<nudps; i++)
     if (udps[i] == udp)
@@ -628,25 +630,37 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
       draw_udp_def(udp);
     }
 
-  fprintf(vvp_out, "L_%p .udp", lptr);
-  fprintf(vvp_out, " UDP_%s",
-	  vvp_mangle_id(ivl_udp_name(udp)));
-  draw_delay(lptr);
-
-  for (pdx = 1 ;  pdx < ivl_logic_pins(lptr) ;  pdx += 1) {
-	ivl_nexus_t nex = ivl_logic_pin(lptr, pdx);
+    /*
+     * We need to process the arguments first so any evaluation code
+     * (.resolv, etc.) can be built before we build the .udp call.
+     * This matches what is done for the other primitives.
+     */
+  ninp = ivl_logic_pins(lptr) - 1;
+  input_strings = calloc(ninp, sizeof(char*));
+  for (pdx = 0 ;  pdx < ninp ;  pdx += 1) {
+	ivl_nexus_t nex = ivl_logic_pin(lptr, pdx+1);
 
 	  /* Unlike other logic gates, primitives may have unconnected
 	     inputs. The proper behavior is to attach a HiZ to the
 	     port. */
 	if (nex == 0) {
 	      assert(ivl_logic_width(lptr) == 1);
-	      fprintf(vvp_out, ", C4<z>");
+	      input_strings[pdx] = "C4<z>";
 
 	} else {
-	      fprintf(vvp_out, ", %s", draw_net_input(nex));
+	      input_strings[pdx] = draw_net_input(nex);
 	}
   }
+
+  fprintf(vvp_out, "L_%p .udp", lptr);
+  fprintf(vvp_out, " UDP_%s",
+	  vvp_mangle_id(ivl_udp_name(udp)));
+  draw_delay(lptr);
+
+  for (pdx = 0 ;  pdx < ninp ;  pdx += 1) {
+	fprintf(vvp_out, ", %s", input_strings[pdx]);
+  }
+  free(input_strings);
 
   fprintf(vvp_out, ";\n");
 }
@@ -805,7 +819,6 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    input_strings[pdx] = draw_net_input(ivl_logic_pin(lptr, pdx+1));
 
       level = 0;
-      ninp = ivl_logic_pins(lptr) - 1;
       while (ninp) {
 	    int inst;
 	    for (inst = 0; inst < ninp; inst += 4) {
