@@ -648,6 +648,13 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 	    assert(word_ix);
 	    assert(number_is_immediate(word_ix, IMM_WID, 0));
 	    use_word = get_number_immediate(word_ix);
+	    /* This method no longer works since variable arrays do not
+	     * support <variable_id>_<idx> access any more. We need real
+	     * array specific opcodes (%assign/ar, etc.). */
+	    fprintf(stderr, "%s:%u: vvp-tgt sorry: non-blocking assignment "
+	            "to a real array word is not supported.\n",
+	            ivl_expr_file(rval), ivl_expr_lineno(rval));
+	    exit(1);
       }
 
       if (del && (ivl_expr_type(del) == IVL_EX_DELAY)) {
