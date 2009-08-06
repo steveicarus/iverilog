@@ -452,6 +452,9 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       unsigned midx = sig->vector_width()-1, lidx = 0;
 	// The default word select is the first.
       long widx = 0;
+	// The widx_val is the word select as entered in the source
+	// code. It's used for error messages.
+      long widx_val = 0;
 
       const name_component_t&name_tail = path_.back();
 
@@ -490,8 +493,11 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  return 0;
 	    }
 
-	    long widx_val = tmp->value().as_long();
-	    widx = sig->array_index_to_address(widx_val);
+	    widx_val = tmp->value().as_long();
+	    if (sig->array_index_is_valid(widx_val))
+		  widx = sig->array_index_to_address(widx_val);
+	    else
+		  widx = -1;
 	    delete tmp_ex;
 
 	    if (debug_elaborate)
@@ -557,7 +563,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    if (widx < 0 || widx >= (long) sig->pin_count()) {
 		  cerr << get_fileline() << ": warning: ignoring out of "
 		          "bounds l-value array access "
-		       << sig->name() << "[" << widx << "]." << endl;
+		       << sig->name() << "[" << widx_val << "]." << endl;
 		  return 0;
 	    }
 
