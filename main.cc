@@ -528,8 +528,9 @@ static void read_iconfig_file(const char*ipath)
 			     << endl;
 			flag_errors += 1;
 		  }
-
-	    }
+	    } else if (strcmp(buf,"defparam") == 0) {
+            parm_to_defparam_list(cp);
+        }
       }
       fclose(ifile);
 }

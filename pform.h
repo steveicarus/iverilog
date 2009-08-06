@@ -410,6 +410,14 @@ extern PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
 
 extern PExpr* pform_make_branch_probe_expression(const struct vlltype&loc,
 						 char*name, char*branch);
+
+/* 
+ * Parse configuration file with format <key>=<value>, where key
+ * is the hierarchical name of a valid parameter name and value
+ * is the value user wants to assign to. The value should be constant.
+ */
+extern void parm_to_defparam_list(const string&param);
+
 /*
  * Tasks to set the timeunit or timeprecision for SystemVerilog.
  */

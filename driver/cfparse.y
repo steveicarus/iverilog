@@ -57,7 +57,7 @@ static void translate_file_name(char*text)
 };
 
 %token TOK_Da TOK_Dc TOK_Dv TOK_Dy
-%token TOK_DEFINE TOK_INCDIR TOK_LIBDIR TOK_LIBDIR_NOCASE TOK_LIBEXT
+%token TOK_DEFINE TOK_INCDIR TOK_LIBDIR TOK_LIBDIR_NOCASE TOK_LIBEXT TOK_PARAMETER
 %token TOK_INTEGER_WIDTH
 %token <text> TOK_PLUSARG TOK_PLUSWORD TOK_STRING
 
@@ -131,6 +131,13 @@ item
         | TOK_LIBDIR_NOCASE TOK_PLUSARG
 		{ char*tmp = substitutions($2);
 		  process_library_nocase_switch(tmp);
+		  free($2);
+		  free(tmp);
+		}
+
+        | TOK_PARAMETER TOK_PLUSARG
+                { char*tmp = substitutions($2);
+		  process_parameter(tmp);
 		  free($2);
 		  free(tmp);
 		}

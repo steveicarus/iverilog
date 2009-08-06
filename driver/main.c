@@ -167,6 +167,12 @@ typedef struct t_command_file {
 p_command_file cmd_file_head = NULL;  /* The FIFO head */
 p_command_file cmd_file_tail = NULL;  /* The FIFO tail */
 
+/* Temprarily store parameter definition from command line and
+ * parse it after we have delt with command file
+ */
+static const char** defparm_base = 0;
+static int defparm_size = 0;
+
 /* Function to add a command file name to the FIFO. */
 void add_cmd_file(const char* filename)
 {
@@ -530,6 +536,11 @@ void process_define(const char*name)
       fprintf(defines_file,"D:%s\n", name);
 }
 
+void process_parameter(const char*name)
+{
+      fprintf(iconfig_file,"defparam:%s\n", name);
+}
+
 /*
  * This function is called while processing a file name in a command
  * file, or a file name on the command line. Look to see if there is a
@@ -774,7 +785,7 @@ int main(int argc, char **argv)
 	}
       }
 
-      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hI:M:m:N::o:p:Ss:T:t:vVW:y:Y:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hI:M:m:N::o:P:p:Ss:T:t:vVW:y:Y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -797,6 +808,11 @@ int main(int argc, char **argv)
 		  break;
 		case 'E':
 		  e_flag = 1;
+		  break;
+		case 'P':
+		  defparm_size += 1;
+		  defparm_base = (const char**)realloc(defparm_base, defparm_size*sizeof(char*));
+		  defparm_base[defparm_size-1] = optarg;
 		  break;
 		case 'p':
 		  fprintf(iconfig_file, "flag:%s\n", optarg);
@@ -965,6 +981,15 @@ int main(int argc, char **argv)
       if (depfile) {
 	    fprintf(defines_file, "M:%s\n", depfile);
       }
+
+    /* Process parameter definition from command line. The last
+       defined would override previous ones. */
+      int pitr;
+      for (pitr = 0; pitr < defparm_size; pitr++)
+        process_parameter(defparm_base[pitr]);
+      free(defparm_base);
+      defparm_base = 0;
+      defparm_size = 0;
 
 	/* Finally, process all the remaining words on the command
 	   line as file names. */

@@ -4226,8 +4226,23 @@ class elaborate_root_scope_t : public elaborator_work_item_t {
 
       virtual void elaborate_runrun()
       {
-	    Module::replace_t stub;
-	    if (! rmod_->elaborate_scope(des, scope_, stub))
+	    Module::replace_t root_repl;
+	    for (list<Module::named_expr_t>::iterator cur = Module::user_defparms.begin()
+		       ; cur != Module::user_defparms.end() ; cur++) {
+
+		  pform_name_t tmp_name = cur->first;
+		  if (peek_head_name(tmp_name) != scope_->basename())
+			continue;
+
+		  tmp_name.pop_front();
+		  if (tmp_name.size() != 1)
+			continue;
+
+		  NetExpr*tmp_expr = cur->second->elaborate_pexpr(des, scope_);
+		  root_repl[peek_head_name(tmp_name)] = tmp_expr;
+	    }
+
+	    if (! rmod_->elaborate_scope(des, scope_, root_repl))
 		  des->errors += 1;
       }
 
