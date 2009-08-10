@@ -4,7 +4,7 @@ vvp - Icarus Verilog vvp runtime engine
 
 .SH SYNOPSIS
 .B vvp
-[-sv] [-Mpath] [-mmodule] [-llogfile] inputfile [extended-args...]
+[\-sv] [\-Mpath] [\-mmodule] [\-llogfile] inputfile [extended-args...]
 
 .SH DESCRIPTION
 .PP
@@ -14,7 +14,6 @@ command is not by itself executable on any platform. Instead, the
 \fIvvp\fP program is invoked to execute the generated output file.
 
 .SH OPTIONS
-.l
 \fIvvp\fP accepts the following options:
 .TP 8
 .B -l\fIlogfile\fP
@@ -116,7 +115,7 @@ to print information about the annotation.
 
 .TP 8
 .B -sdf-verbose
-This is shorthand for -sdf-info -sdf-warn.
+This is shorthand for \-sdf\-info \-sdf\-warn.
 
 .SH ENVIRONMENT
 .PP

@@ -4,10 +4,10 @@ iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[-ESVv] [-Bpath] [-ccmdfile|-fcmdfile] [-Dmacro[=defn]] [-pflag=value]
-[-dname] [-g1995|-g2001|-g2005|-g<feature>]
-[-Iincludedir] [-mmodule] [-Mfile] [-Nfile] [-ooutputfilename]
-[-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] [-ypath] sourcefile
+[\-ESVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]] [\-pflag=value]
+[\-dname] [\-g1995|\-g2001|\-g2005|\-g<feature>]
+[\-Iincludedir] [\-mmodule] [\-Mfile] [\-Nfile] [\-ooutputfilename]
+[\-stopmodule] [\-ttype] [\-Tmin/typ/max] [\-Wclass] [\-ypath] sourcefile
 
 .SH DESCRIPTION
 .PP
@@ -18,7 +18,6 @@ simulation, and \fIfpga\fP for synthesis. Other target
 types are added as code generators are implemented.
 
 .SH OPTIONS
-.l
 \fIiverilog\fP accepts the following options:
 .TP 8
 .B -B\fIbase\fP
@@ -364,7 +363,7 @@ on to the next library directory.
 
 .TP 8
 .B +libdir+\fIdir\fP
-This is another way to specify library directories. See the -y flag.
+This is another way to specify library directories. See the \-y flag.
 
 .TP 8
 .B +libdir-nocase+\fIdir\fP
@@ -429,11 +428,11 @@ To compile hello.v to an executable file called a.out:
 
 To compile hello.v to an executable file called hello:
 
-	iverilog -o hello hello.v
+	iverilog \-o hello hello.v
 
 To compile and run explicitly using the vvp runtime:
 
-	iverilog -ohello.vvp -tvvp hello.v
+	iverilog \-ohello.vvp \-tvvp hello.v
 
 .SH "AUTHOR"
 .nf

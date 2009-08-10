@@ -4,7 +4,7 @@ iverilog-vpi - Compile front end for VPI modules
 
 .SH SYNOPSIS
 .B iverilog-vpi
-[--name=\fIname\fP]
+[\-\-name=\fIname\fP]
 \fIsourcefile\fP...
 
 .SH DESCRIPTION
@@ -20,7 +20,6 @@ first source file is named \fIfoo.c\fP, the output becomes
 \fIfoo.vpi\fP.
 
 .SH OPTIONS
-.l
 \fIiverilog-vpi\fP accepts the following options:
 .TP 8
 .B -l\fIlibrary\fP
@@ -104,9 +103,9 @@ requests a 32bit vpi binary instead of the default 64bit binary.
 .P
 Example GNU makefile that takes advantage of these flags:
 .IP "" 4
-CFLAGS = -Wall -O $(CFLAGS_$@)
+CFLAGS = \-Wall \-O $(CFLAGS_$@)
 .br
-VPI_CFLAGS := $(shell iverilog-vpi --cflags)
+VPI_CFLAGS := $(shell iverilog-vpi \-\-cflags)
 .br
 CFLAGS_messagev.o = $(VPI_CFLAGS)
 .br
