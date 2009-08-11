@@ -293,7 +293,10 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
 
       if (process_params(mitem, start_item, stop_item, callh, name,
                          &start_addr, &stop_addr, &addr_incr,
-                         &min_addr, &max_addr)) return 0;
+                         &min_addr, &max_addr)) {
+	    free(fname);
+	    return 0;
+      }
 
 	/* Open the data file. */
       file = fopen(fname, "r");
@@ -528,7 +531,10 @@ static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
 
       if (process_params(mitem, start_item, stop_item, callh, name,
                          &start_addr, &stop_addr, &addr_incr,
-                         &min_addr, &max_addr)) return 0;
+                         &min_addr, &max_addr)) {
+	    free(fname);
+	    return 0;
+      }
 
       /* Open the data file. */
       file = fopen(fname, "w");
