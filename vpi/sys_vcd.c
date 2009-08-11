@@ -805,6 +805,7 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 		        vpi_printf("VCD warning: skipping signal %s, "
 		                   "it was previously included.\n",
 		                   fullname);
+		        free(scname);
 		        continue;
 		  } else {
 		        add_var = 1;
