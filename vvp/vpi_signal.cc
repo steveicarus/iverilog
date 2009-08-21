@@ -757,8 +757,8 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 	   value. Instead, issue a release "command" to the signal
 	   node to cause it to release a forced value. */
       if (flags == vpiReleaseFlag) {
-	    vvp_fun_signal_base*sig
-		  = reinterpret_cast<vvp_fun_signal_base*>(rfp->node->fun);
+	    vvp_net_fil_t*sig
+		  = reinterpret_cast<vvp_net_fil_t*>(rfp->node->fil);
 	    assert(sig);
 
 	    vvp_net_ptr_t ptr(rfp->node, 0);
@@ -1284,12 +1284,12 @@ void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle ref)
       struct __vpiPV*obj = vpip_PV_from_handle(ref);
       assert(obj);
 
-      vvp_fun_signal_base*sig_fun;
-      sig_fun = dynamic_cast<vvp_fun_signal_base*>(obj->net->fun);
-      assert(sig_fun);
+      vvp_vpi_callback*sig_fil;
+      sig_fil = dynamic_cast<vvp_vpi_callback*>(obj->net->fun);
+      assert(sig_fil);
 
 	/* Attach the __vpiCallback object to the signal. */
-      sig_fun->add_vpi_callback(cbh);
+      sig_fil->add_vpi_callback(cbh);
 }
 
 #ifdef CHECK_WITH_VALGRIND

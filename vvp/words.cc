@@ -43,7 +43,7 @@ static void __compile_var_real(char*label, char*name,
       }
       vvp_net_t*net = new vvp_net_t;
       net->fun = fun;
-      net->fil = fun;
+      assert(0 /* XXXX */); // Need to create a net_fil_t! net->fil = fun;
 
       define_functor_symbol(label, net);
 
@@ -87,6 +87,7 @@ static void __compile_var(char*label, char*name,
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
       vvp_fun_signal_vec*vsig;
+      vvp_wire_vec4*vfil = new vvp_wire_vec4(wid);
       if (vpip_peek_current_scope()->is_automatic) {
             vsig = new vvp_fun_signal4_aa(wid);
       } else {
@@ -94,7 +95,7 @@ static void __compile_var(char*label, char*name,
       }
       vvp_net_t*node = new vvp_net_t;
       node->fun = vsig;
-      node->fil = vsig;
+      node->fil = vfil;
 
       define_functor_symbol(label, node);
 
@@ -112,7 +113,7 @@ static void __compile_var(char*label, char*name,
 	    assert(!array);
 	    if (obj) vpip_attach_to_current_scope(obj);
             if (!vpip_peek_current_scope()->is_automatic)
-	          schedule_init_vector(vvp_net_ptr_t(node,0), vsig->vec4_value());
+	          schedule_init_vector(vvp_net_ptr_t(node,0), vsig->vec4_unfiltered_value());
       }
 	// If this is an array word, then it does not have a name, and
 	// it is attached to the addressed array.
@@ -169,15 +170,21 @@ static void __compile_net(char*label,
 
       assert(argc == 1);
       vvp_net_t*node = vvp_net_lookup(argv[0].text);
+      if (node == 0) {
+	    cerr << "Internal error: vvp_net_lookup fails: "
+		 << argv[0].text << endl;
+      }
       assert(node);
 
-      vvp_wire_base*vsig = net8_flag
-	    ? dynamic_cast<vvp_wire_base*>(new vvp_wire_vec8(wid))
-	    : dynamic_cast<vvp_wire_base*>(new vvp_wire_vec4(wid,BIT4_Z));
+      vvp_wire_base*vsig = dynamic_cast<vvp_wire_base*>(node->fil);
 
-	// Assume (for now) that there is only 1 filter per node.
-      assert(node->fil == 0);
-      node->fil = vsig;
+      if (vsig == 0) {
+	    vsig = net8_flag
+		  ? dynamic_cast<vvp_wire_base*>(new vvp_wire_vec8(wid))
+		  : dynamic_cast<vvp_wire_base*>(new vvp_wire_vec4(wid,BIT4_Z));
+
+	    node->fil = vsig;
+      }
 
       vpiHandle obj = 0;
       if (! local_flag) {
@@ -227,7 +234,7 @@ static void __compile_real(char*label, char*name,
    
       vvp_fun_signal_real*fun = new vvp_fun_signal_real_sa;
       net->fun = fun;
-      net->fil = fun;
+      assert(0 /* Need to create a vvp_net_fil_t object: net->fil = fun; */);
 
 	/* Add the label into the functor symbol table. */
       define_functor_symbol(label, net);

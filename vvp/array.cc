@@ -998,7 +998,7 @@ void array_attach_word(vvp_array_t array, unsigned long addr, vpiHandle word)
       if (struct __vpiSignal*sig = vpip_signal_from_handle(word)) {
 	    vvp_net_t*net = sig->node;
 	    assert(net);
-	    vvp_fun_signal_base*fun = dynamic_cast<vvp_fun_signal_base*>(net->fun);
+	    vvp_vpi_callback*fun = dynamic_cast<vvp_vpi_callback*>(net->fun);
 	    assert(fun);
 	    fun->attach_as_word(array, addr);
 	    sig->is_netarray = 1;
@@ -1010,7 +1010,7 @@ void array_attach_word(vvp_array_t array, unsigned long addr, vpiHandle word)
       if (struct __vpiRealVar*sig = (struct __vpiRealVar*)word) {
 	    vvp_net_t*net = sig->net;
 	    assert(net);
-	    vvp_fun_signal_base*fun = dynamic_cast<vvp_fun_signal_base*>(net->fun);
+	    vvp_vpi_callback*fun = dynamic_cast<vvp_vpi_callback*>(net->fun);
 	    assert(fun);
 	    fun->attach_as_word(array, addr);
 	    sig->is_netarray = 1;

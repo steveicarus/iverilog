@@ -171,10 +171,10 @@ void vpip_real_value_change(struct __vpiCallback*cbh,
 {
       struct __vpiRealVar*rfp
 	    = (struct __vpiRealVar*)ref;
-      vvp_fun_signal_real*fun
-	    = dynamic_cast<vvp_fun_signal_real*>(rfp->net->fun);
+      vvp_vpi_callback*obj = dynamic_cast<vvp_vpi_callback*>(rfp->net->fil);
+      assert(obj);
 
-      fun->add_vpi_callback(cbh);
+      obj->add_vpi_callback(cbh);
 }
 
 vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)

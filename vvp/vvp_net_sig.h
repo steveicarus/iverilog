@@ -65,7 +65,7 @@ using namespace std;
  */
 
 
-class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_net_fil_t {
+class vvp_fun_signal_base : public vvp_net_fun_t {
 
     public:
       vvp_fun_signal_base();
@@ -85,7 +85,6 @@ class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_net_fil_t {
       vvp_vector2_t assign_mask_;
 
     protected:
-
 	// This is true until at least one propagation happens.
       bool needs_init_;
 };
@@ -111,6 +110,7 @@ class vvp_signal_value {
  */
 class vvp_fun_signal_vec : public vvp_fun_signal_base, public vvp_signal_value  {
     public:
+      virtual vvp_vector4_t vec4_unfiltered_value() const =0;
       unsigned size() const { return value_size(); }
 };
 
@@ -127,14 +127,13 @@ class vvp_fun_signal4 : public vvp_fun_signal_vec {
       void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
       void force_fil_real(double val, vvp_vector2_t mask);
       const vvp_vector4_t* filter_vec4(const vvp_vector4_t&val);
+
 	// Test the value against the filter.
       vvp_bit4_t filtered_value(const vvp_vector4_t&val, unsigned idx) const;
       const vvp_vector4_t& filtered_vec4(const vvp_vector4_t&val) const;
       unsigned filter_size() const;
 
     private:
-      vvp_vector4_t force4_;
-      mutable vvp_vector4_t filter4_;
 };
 
 /*
@@ -161,6 +160,7 @@ class vvp_fun_signal4_sa : public vvp_fun_signal4 {
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
       vvp_vector4_t vec4_value() const;
+      vvp_vector4_t vec4_unfiltered_value() const;
 
 	// Commands
       void release(vvp_net_ptr_t port, bool net);
@@ -198,6 +198,7 @@ class vvp_fun_signal4_aa : public vvp_fun_signal4, public automatic_hooks_s {
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
       vvp_vector4_t vec4_value() const;
+      vvp_vector4_t vec4_unfiltered_value() const;
 
 	// Commands
       void release(vvp_net_ptr_t port, bool net);
@@ -421,6 +422,8 @@ class vvp_wire_vec8 : public vvp_wire_base {
     private:
       unsigned width_;
       vvp_vector8_t bits8_;
+      vvp_vector8_t force8_; // the value being forced
+      vvp_vector8_t filter8_; // scratch space for filter_mask_ function.
 };
 
 #endif

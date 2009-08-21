@@ -69,21 +69,24 @@ vvp_signal_value::~vvp_signal_value()
 {
 }
 
+#if 0
 const vvp_vector4_t* vvp_fun_signal4::filter_vec4(const vvp_vector4_t&val)
 {
       return filter_mask_(val, force4_, filter4_);
 }
-
+#endif
+#if 0
 const vvp_vector8_t* vvp_fun_signal8::filter_vec8(const vvp_vector8_t&val)
 {
       return filter_mask_(val, force8_, filter8_);
 }
-
+#endif
+#if 0
 bool vvp_fun_signal_real::filter_real(double&val)
 {
       return filter_mask_(val);
 }
-
+#endif
 unsigned vvp_fun_signal_real::filter_size() const
 {
       return size();
@@ -93,7 +96,7 @@ unsigned vvp_fun_signal4::filter_size() const
 {
       return value_size();
 }
-
+#if 0
 void vvp_fun_signal4::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
 {
       force_mask(mask);
@@ -109,7 +112,7 @@ void vvp_fun_signal4::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask
 	    }
       }
 }
-
+#endif
 void vvp_fun_signal4::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
 {
       assert(0);
@@ -129,11 +132,13 @@ void vvp_net_t::force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
 
 void vvp_fun_signal8::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
 {
-      force_fil_vec8(vvp_vector8_t(val,6,6), mask);
+      assert(0 /* XXXX force_fil_vec8(vvp_vector8_t(val,6,6), mask); */);
 }
 
 void vvp_fun_signal8::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
 {
+      assert(0);
+#if 0
       force_mask(mask);
 
       if (force8_.size() == 0)
@@ -145,6 +150,7 @@ void vvp_fun_signal8::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask
 
 	    force8_.set_bit(idx, val.value(idx));
       }
+#endif
 }
 
 void vvp_fun_signal8::force_fil_real(double val, vvp_vector2_t mask)
@@ -173,8 +179,12 @@ void vvp_fun_signal_real::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t 
 
 void vvp_fun_signal_real::force_fil_real(double val, vvp_vector2_t mask)
 {
+#if 0
       force_mask(mask);
       force_real_ = val;
+#else
+      assert(0);
+#endif
 }
 
 void vvp_net_t::force_real(double val, vvp_vector2_t mask)
@@ -185,7 +195,7 @@ void vvp_net_t::force_real(double val, vvp_vector2_t mask)
       sig->force_fil_real(val, mask);
       send_real(val, 0);
 }
-
+#if 0
 vvp_bit4_t vvp_fun_signal4::filtered_value(const vvp_vector4_t&val, unsigned idx) const
 {
       if (test_force_mask(idx))
@@ -193,7 +203,8 @@ vvp_bit4_t vvp_fun_signal4::filtered_value(const vvp_vector4_t&val, unsigned idx
       else
 	    return val.value(idx);
 }
-
+#endif
+#if 0
 vvp_scalar_t vvp_fun_signal8::filtered_value(const vvp_vector8_t&val, unsigned idx) const
 {
       if (test_force_mask(idx))
@@ -201,7 +212,8 @@ vvp_scalar_t vvp_fun_signal8::filtered_value(const vvp_vector8_t&val, unsigned i
       else
 	    return val.value(idx);
 }
-
+#endif
+#if 0
 const vvp_vector4_t& vvp_fun_signal4::filtered_vec4(const vvp_vector4_t&val) const
 {
       if (test_force_mask_is_zero())
@@ -214,7 +226,8 @@ const vvp_vector4_t& vvp_fun_signal4::filtered_vec4(const vvp_vector4_t&val) con
       }
       return filter4_;
 }
-
+#endif
+#if 0
 const vvp_vector8_t& vvp_fun_signal8::filtered_vec8(const vvp_vector8_t&val) const
 {
       if (test_force_mask_is_zero())
@@ -227,7 +240,8 @@ const vvp_vector8_t& vvp_fun_signal8::filtered_vec8(const vvp_vector8_t&val) con
       }
       return filter8_;
 }
-
+#endif
+#if 0
 double vvp_fun_signal_real::filtered_real(double val) const
 {
       if (test_force_mask_is_zero())
@@ -235,7 +249,7 @@ double vvp_fun_signal_real::filtered_real(double val) const
 
       return force_real_;
 }
-
+#endif
 /* **** vvp_fun_signal methods **** */
 
 vvp_fun_signal_base::vvp_fun_signal_base()
@@ -273,6 +287,7 @@ void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 		 any holes in the mask so we can set those bits. */
 	    if (assign_mask_.size() == 0) {
                   if (needs_init_ || !bits4_.eeq(bit)) {
+			assert(bit.size() == bits4_.size());
 			bits4_ = bit;
 			needs_init_ = false;
 			ptr.ptr()->send_vec4(bits4_, 0);
@@ -384,6 +399,7 @@ void vvp_fun_signal_base::deassign_pv(unsigned base, unsigned wid)
 	    assign_mask_ = vvp_vector2_t();
       }
 }
+#if 0
 void vvp_fun_signal4_sa::release(vvp_net_ptr_t ptr, bool net)
 {
       vvp_vector2_t mask (vvp_vector2_t::FILL1, bits4_.size());
@@ -393,7 +409,8 @@ void vvp_fun_signal4_sa::release(vvp_net_ptr_t ptr, bool net)
       bits4_ = filtered_vec4(bits4_);
       release_mask(mask);
 }
-
+#endif
+#if 0
 void vvp_fun_signal4_sa::release_pv(vvp_net_ptr_t ptr, bool net,
                                     unsigned base, unsigned wid)
 {
@@ -406,7 +423,7 @@ void vvp_fun_signal4_sa::release_pv(vvp_net_ptr_t ptr, bool net,
       bits4_ = filtered_vec4(bits4_);
       release_mask(mask);
 }
-
+#endif
 unsigned vvp_fun_signal4_sa::value_size() const
 {
       return bits4_.size();
@@ -414,7 +431,7 @@ unsigned vvp_fun_signal4_sa::value_size() const
 
 vvp_bit4_t vvp_fun_signal4_sa::value(unsigned idx) const
 {
-      return filtered_value(bits4_, idx);
+      assert(0 /* XXXX return filtered_value(bits4_, idx); */);
 }
 
 vvp_scalar_t vvp_fun_signal4_sa::scalar_value(unsigned idx) const
@@ -422,9 +439,14 @@ vvp_scalar_t vvp_fun_signal4_sa::scalar_value(unsigned idx) const
       return vvp_scalar_t(value(idx), 6, 6);
 }
 
+vvp_vector4_t vvp_fun_signal4_sa::vec4_unfiltered_value() const
+{
+      return bits4_;
+}
+
 vvp_vector4_t vvp_fun_signal4_sa::vec4_value() const
 {
-      return filtered_vec4(bits4_);
+      assert(0 /* XXXX return filtered_vec4(bits4_); */);
 }
 
 vvp_fun_signal4_aa::vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init)
@@ -535,6 +557,11 @@ vvp_vector4_t vvp_fun_signal4_aa::vec4_value() const
       return *bits4;
 }
 
+vvp_vector4_t vvp_fun_signal4_aa::vec4_unfiltered_value() const
+{
+      return vec4_value();
+}
+
 vvp_fun_signal8::vvp_fun_signal8(unsigned wid)
 : bits8_(wid)
 {
@@ -607,7 +634,7 @@ void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
 	    break;
       }
 }
-
+#if 0
 void vvp_fun_signal8::release(vvp_net_ptr_t ptr, bool net)
 {
       vvp_vector2_t mask (vvp_vector2_t::FILL1, bits8_.size());
@@ -623,7 +650,8 @@ void vvp_fun_signal8::release(vvp_net_ptr_t ptr, bool net)
 	    release_mask(mask);
       }
 }
-
+#endif
+#if 0
 void vvp_fun_signal8::release_pv(vvp_net_ptr_t ptr, bool net,
                                  unsigned base, unsigned wid)
 {
@@ -641,7 +669,7 @@ void vvp_fun_signal8::release_pv(vvp_net_ptr_t ptr, bool net,
 	    release_mask(mask);
       }
 }
-
+#endif
 unsigned vvp_fun_signal8::filter_size() const
 {
       return value_size();
@@ -654,17 +682,17 @@ unsigned vvp_fun_signal8::value_size() const
 
 vvp_bit4_t vvp_fun_signal8::value(unsigned idx) const
 {
-      return filtered_value(bits8_, idx).value();
+      assert(0 /* XXXX return filtered_value(bits8_, idx).value(); */);
 }
 
 vvp_vector4_t vvp_fun_signal8::vec4_value() const
 {
-      return reduce4(filtered_vec8(bits8_));
+      assert(0 /* XXXX return reduce4(filtered_vec8(bits8_)); */);
 }
 
 vvp_scalar_t vvp_fun_signal8::scalar_value(unsigned idx) const
 {
-      return filtered_value(bits8_, idx);
+      assert(0 /* XXXX return filtered_value(bits8_, idx); */);
 }
 
 
@@ -685,7 +713,7 @@ vvp_fun_signal_real_sa::vvp_fun_signal_real_sa()
 
 double vvp_fun_signal_real_sa::real_value() const
 {
-      return filtered_real(bits_);
+      assert(0 /* XXXX return filtered_real(bits_); */);
 }
 
 void vvp_fun_signal_real_sa::recv_real(vvp_net_ptr_t ptr, double bit,
@@ -714,7 +742,7 @@ void vvp_fun_signal_real_sa::recv_real(vvp_net_ptr_t ptr, double bit,
 	    break;
       }
 }
-
+#if 0
 void vvp_fun_signal_real_sa::release(vvp_net_ptr_t ptr, bool net)
 {
       vvp_vector2_t mask (vvp_vector2_t::FILL1, 1);
@@ -727,7 +755,7 @@ void vvp_fun_signal_real_sa::release(vvp_net_ptr_t ptr, bool net)
 	    release_mask(mask);
       }
 }
-
+#endif
 void vvp_fun_signal_real_sa::release_pv(vvp_net_ptr_t ptr, bool net,
                                         unsigned base, unsigned wid)
 {
@@ -956,8 +984,11 @@ const vvp_vector4_t* vvp_wire_vec8::filter_vec4(const vvp_vector4_t&bit)
 
 const vvp_vector8_t* vvp_wire_vec8::filter_vec8(const vvp_vector8_t&bit)
 {
-      assert(0);
-      return 0;
+	// Keep track of the value being driven from this net, even if
+	// it is not ultimately what survives the force filter.
+      bits8_ = bit;
+      const vvp_vector8_t*tmp = filter_mask_(bit, force8_, filter8_);
+      return tmp;
 }
 
 unsigned vvp_wire_vec8::filter_size() const
