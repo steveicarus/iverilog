@@ -311,12 +311,17 @@ static int t_default(char*cmd, unsigned ncmd)
       }
 
       free( original_cmd );
+#ifdef __MINGW32__
+      strcat( cmd, ">%TMP%\\ivlpp_stdout" );
+#else
       strcat( cmd, ">/tmp/ivlpp_stdout" );
 #endif
+#endif
 
-      if (verbose_flag)
+      if (verbose_flag) {
 	    printf("translate: %s\n", cmd);
-
+	    fflush(stdout);
+      }
 
       rc = system(cmd);
 #ifdef DEBUG
