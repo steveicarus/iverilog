@@ -50,23 +50,24 @@ map<perm_string,PUdp*> pform_primitives;
  */
 void parm_to_defparam_list(const string&param)
 {
-    const char* key;
-    const char* value;
+    char* key;
+    char* value;
     unsigned off = param.find('=');
     if (off > param.size()) {
         key = strdup(param.c_str());
-	    value = "";
+        value = (char*)malloc(1);
+        *value = '\0';
 
     } else {
         key = strdup(param.substr(0, off).c_str());
-	    value = strdup(param.substr(off+1).c_str());
+        value = strdup(param.substr(off+1).c_str());
     }
     
     // Resolve hierarchical name for defparam. Remember
     // to deal with bit select for generate scopes. Bit
     // select expression should be constant interger.
     pform_name_t name;
-    const char *nkey = key;
+    char *nkey = key;
     char *ptr = strchr(key, '.');
     while (ptr != 0) {
         *ptr++ = '\0';
@@ -78,6 +79,8 @@ void parm_to_defparam_list(const string&param)
             char *bit_r = strchr(bit_l, ']');
             if (bit_r == 0) {
                 cerr << "<command line>: error: missing ']' for defparam: " << nkey << endl;
+                free(key);
+                free(value);
                 return;
             }
             *bit_r = '\0';
@@ -85,6 +88,8 @@ void parm_to_defparam_list(const string&param)
             while (*(bit_l+i) != '\0')
                 if (!isdigit(*(bit_l+i++))) {
                     cerr << "<command line>: error: scope index expression is not constant: " << nkey << endl;
+                    free(key);
+                    free(value);
                     return;
                 }
             name_component_t tmp(lex_strings.make(nkey));
@@ -156,6 +161,8 @@ void parm_to_defparam_list(const string&param)
                 val = make_unsized_octal(num);
             else {
                 cerr << "<command line>: error: value specify error for defparam: " << name << endl;
+                free(key);
+                free(value);
                 return;
             }
     
@@ -185,6 +192,8 @@ void parm_to_defparam_list(const string&param)
             }
         }
     }
+    free(key);
+    free(value);
 }
 
 /*
