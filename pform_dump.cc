@@ -1034,6 +1034,12 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 	    (*idx)->dump(out, indent+2);
       }
 
+      typedef map<perm_string,LineInfo*>::const_iterator genvar_iter_t;
+      for (genvar_iter_t cur = genvars.begin()
+		 ; cur != genvars.end() ; cur++) {
+	    out << setw(indent+2) << "" << "genvar " << ((*cur).first) << ";" << endl;
+      }
+
       for (list<PGenerate*>::const_iterator idx = generate_schemes.begin()
 		 ; idx != generate_schemes.end() ;  idx++) {
 	    (*idx)->dump(out, indent+2);

@@ -563,7 +563,10 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 {
 	// Check that the loop_index variable was declared in a
 	// genvar statement.
-      if (container->find_genvar(loop_index) == 0) {
+      NetScope*scope = container;
+      while (scope && !scope->find_genvar(loop_index))
+            scope = scope->parent();
+      if (!scope) {
 	    cerr << get_fileline() << ": error: genvar is missing for "
 	            "generate \"loop\" variable '" << loop_index << "'."
 	         << endl;
@@ -1021,6 +1024,12 @@ void PGenerate::elaborate_subscope_direct_(Design*des, NetScope*scope)
 
 void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 {
+	// Add the genvars to this scope.
+      typedef map<perm_string,LineInfo*>::const_iterator genvar_it_t;
+      for (genvar_it_t cur = genvars.begin(); cur != genvars.end(); cur++ ) {
+	    scope->add_genvar((*cur).first, (*cur).second);
+      }
+
 	// Scan the generated scope for nested generate schemes,
 	// and *generate* new scopes, which is slightly different
 	// from simple elaboration.

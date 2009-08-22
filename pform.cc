@@ -497,20 +497,31 @@ void pform_endmodule(const char*name, bool in_celldefine,
       pform_cur_module = 0;
 }
 
+static void pform_add_genvar(const struct vlltype&li, const perm_string&name, 
+                             map<perm_string,LineInfo*>&genvars)
+{
+      LineInfo*lni = new LineInfo();
+      FILE_NAME(lni, li);
+      if (genvars.find(name) != genvars.end()) {
+            cerr << lni->get_fileline() << ": error: genvar '"
+		 << name << "' has already been declared." << endl;
+            cerr << genvars[name]->get_fileline()
+                << ":        the previous declaration is here." << endl;
+            error_count += 1;
+            delete lni;
+      } else {
+            genvars[name] = lni;
+      }
+}
+
 void pform_genvars(const struct vlltype&li, list<perm_string>*names)
 {
       list<perm_string>::const_iterator cur;
       for (cur = names->begin(); cur != names->end() ; *cur++) {
-	    LineInfo*lni = new LineInfo();
-	    FILE_NAME(lni, li);
-	    if (pform_cur_module->genvars.find(*cur) !=
-	        pform_cur_module->genvars.end()) {
-		  cerr << lni->get_fileline() << ": error: duplicate "
-		  "definition for genvar '" << *cur << "' in '"
-		  << pform_cur_module->mod_name() << "'." << endl;
-		  error_count += 1;
-		  delete lni;
-	    } else pform_cur_module->genvars[*cur] = lni;
+            if (pform_cur_generate)
+                  pform_add_genvar(li, *cur, pform_cur_generate->genvars);
+            else
+                  pform_add_genvar(li, *cur, pform_cur_module->genvars);
       }
 
       delete names;
@@ -525,7 +536,6 @@ void pform_start_generate_for(const struct vlltype&li,
 
       FILE_NAME(gen, li);
 
-	// For now, assume that generates do not nest.
       gen->parent = pform_cur_generate;
       pform_cur_generate = gen;
 
@@ -546,7 +556,6 @@ void pform_start_generate_if(const struct vlltype&li, PExpr*test)
 
       FILE_NAME(gen, li);
 
-	// For now, assume that generates do not nest.
       gen->parent = pform_cur_generate;
       pform_cur_generate = gen;
 
@@ -569,7 +578,6 @@ void pform_start_generate_else(const struct vlltype&li)
 
       FILE_NAME(gen, li);
 
-	// For now, assume that generates do not nest.
       gen->parent = pform_cur_generate;
       pform_cur_generate = gen;
 

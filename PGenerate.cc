@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006,2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -55,6 +55,7 @@ void PGenerate::probe_for_direct_nesting_(void)
       if (localparams.size() > 0) return;
       if (events.size() > 0) return;
       if (wires.size() > 0) return;
+      if (genvars.size() > 0) return;
       if (behaviors.size() > 0) return;
       if (analog_behaviors.size() > 0) return;
 

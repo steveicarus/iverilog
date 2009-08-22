@@ -194,7 +194,7 @@ extern verinum* pform_verinum_with_size(verinum*s, verinum*val,
 
 /*
  * This function takes the list of names as new genvars to declare in
- * the current module scope.
+ * the current module or generate scope.
  */
 extern void pform_genvars(const struct vlltype&li, list<perm_string>*names);
 
