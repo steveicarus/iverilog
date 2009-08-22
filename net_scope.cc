@@ -395,28 +395,18 @@ NetEvent* NetScope::find_event(perm_string name)
       return 0;
 }
 
-// We only add genvars to a module scope, so we do not need to search
-// for the module scope here.
 void NetScope::add_genvar(perm_string name, LineInfo *li)
 {
+      assert((type_ == MODULE) || (type_ == GENBLOCK));
       genvars_[name] = li;
 }
 
 LineInfo* NetScope::find_genvar(perm_string name)
 {
-	// genvars are only added to the module so we need to find it
-	// if we are in a sub scope.
-      NetScope *scope = this;
-      while (scope->type() != NetScope::MODULE) {
-	    scope = scope->parent();
-	    assert(scope != NULL);
-      }
-
-      if (scope->genvars_.find(name) != scope->genvars_.end()) {
-	    return scope->genvars_[name];
-      }
-
-      return 0;
+      if (genvars_.find(name) != genvars_.end())
+	    return genvars_[name];
+      else
+            return 0;
 }
 
 void NetScope::add_signal(NetNet*net)
