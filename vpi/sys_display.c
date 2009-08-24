@@ -1127,9 +1127,15 @@ static PLI_INT32 sys_display_calltf(PLI_BYTE8 *name)
 	      val.format = vpiIntVal;
 	      vpi_get_value(arg, &val);
 	      fd_mcd = val.value.integer;
+
+		/* If the MCD is zero we have nothing to do so just return. */
+	      if (fd_mcd == 0)  {
+		    vpi_free_object(argv);
+		    return 0;
+	      }
+
 	      if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-	          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF) ||
-	          (! fd_mcd)) {
+	          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF)) {
 		    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 		               (int)vpi_get(vpiLineNo, callh));
 		    vpi_printf("invalid file descriptor/MCD (0x%x) given "
@@ -1241,9 +1247,15 @@ static PLI_INT32 sys_strobe_calltf(PLI_BYTE8*name)
 	      val.format = vpiIntVal;
 	      vpi_get_value(arg, &val);
 	      fd_mcd = val.value.integer;
+
+		/* If the MCD is zero we have nothing to do so just return. */
+	      if (fd_mcd == 0)  {
+		    vpi_free_object(argv);
+		    return 0;
+	      }
+
 	      if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-	          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF) ||
-	          (! fd_mcd))  {
+	          ( IS_MCD(fd_mcd) && my_mcd_printf(fd_mcd, "") == EOF))  {
 		    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 		               (int)vpi_get(vpiLineNo, callh));
 		    vpi_printf("invalid file descriptor/MCD (0x%x) given "
