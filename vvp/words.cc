@@ -21,6 +21,7 @@
 # include  "vpi_priv.h"
 # include  "array.h"
 # include  "vvp_net_sig.h"
+# include  "logic.h"
 # include  "schedule.h"
 # include  <stdio.h>
 # include  <stdlib.h>
@@ -146,6 +147,58 @@ void compile_variablew(char*label, vvp_array_t array,
       __compile_var(label, 0, array, array_addr, msb, lsb, signed_flag, false);
 }
 
+vvp_net_t* create_constant_node(const char*label, const char*val_str)
+{
+      if (c4string_test(val_str)) {
+	    vvp_net_t*net = new vvp_net_t;
+	    net->fun = new vvp_fun_bufz;
+	    schedule_init_vector(vvp_net_ptr_t(net,0), c4string_to_vector4(val_str));
+	    return net;
+      }
+
+      if (c8string_test(val_str)) {
+	    vvp_net_t*net = new vvp_net_t;
+	    net->fun = new vvp_fun_bufz;
+	    assert(0); // XXXX Don't know how to init a vvp_vector8_t? */
+	    return net;
+      }
+
+      if (crstring_test(val_str)) {
+	    vvp_net_t*net = new vvp_net_t;
+	    net->fun = new vvp_fun_bufz;
+	    schedule_init_vector(vvp_net_ptr_t(net,0), crstring_to_double(val_str));
+	    return net;
+      }
+
+      return 0;
+}
+
+class __compile_net_resolv : public resolv_list_s {
+
+    public:
+      explicit __compile_net_resolv(char*ref_label, char*my_label, char*name,
+				    int msb, int lsb,
+				    bool signed_flag, bool net8_flag, bool local_flag)
+      : resolv_list_s(ref_label)
+      { my_label_ = my_label;
+	name_ = name;
+	msb_ = msb;
+	lsb_ = lsb;
+	signed_flag_ = signed_flag;
+	local_flag_ = local_flag;
+      }
+
+      ~__compile_net_resolv() { }
+
+      bool resolve(bool message_flag);
+
+    private:
+      char*my_label_;
+      char*name_;
+      int msb_, lsb_;
+      bool signed_flag_, net8_flag_, local_flag_;
+};
+
 /*
  * Here we handle .net records from the vvp source:
  *
@@ -157,23 +210,12 @@ void compile_variablew(char*label, vvp_array_t array,
  * Create a VPI handle to represent it, and fill that handle in with
  * references into the net.
  */
-static void __compile_net(char*label,
-			  char*name, char*array_label, unsigned long array_addr,
-			  int msb, int lsb,
-			  bool signed_flag, bool net8_flag, bool local_flag,
-			  unsigned argc, struct symb_s*argv)
+
+static void __compile_net2(vvp_net_t*node, char*my_label, char*name,
+			   int msb, int lsb,
+			   bool signed_flag, bool net8_flag, bool local_flag)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
-
-	// XXXX Forgot how to implement net arrays...
-      assert(array_label == 0);
-
-      assert(argc == 1);
-      vvp_net_t*node = vvp_net_lookup(argv[0].text);
-      if (node == 0) {
-	    cerr << "Internal error: vvp_net_lookup fails: "
-		 << argv[0].text << endl;
-      }
       assert(node);
 
       vvp_wire_base*vsig = dynamic_cast<vvp_wire_base*>(node->fil);
@@ -191,16 +233,64 @@ static void __compile_net(char*label,
 	      /* Make the vpiHandle for the reg. */
 	    obj = vpip_make_net(name, msb, lsb, signed_flag, node);
 	      /* This attaches the label to the vpiHandle */
-	    compile_vpi_symbol(label, obj);
+	    compile_vpi_symbol(my_label, obj);
       }
 
-      if (obj)
-	    vpip_attach_to_current_scope(obj);
+      if (obj) vpip_attach_to_current_scope(obj);
 
-      free(label);
-      if (name) delete[] name;
-      if (array_label) free(array_label);
+      free(my_label);
+      delete[] name;
+}
+
+static void __compile_net(char*label,
+			  char*name, char*array_label, unsigned long array_addr,
+			  int msb, int lsb,
+			  bool signed_flag, bool net8_flag, bool local_flag,
+			  unsigned argc, struct symb_s*argv)
+{
+	// XXXX Forgot how to implement net arrays...
+      assert(array_label == 0);
+
+      assert(argc == 1);
+      vvp_net_t*node = vvp_net_lookup(argv[0].text);
+      if (node == 0) {
+	      /* No existing net, but the string value may be a
+		 constant. In that case, we will wind up generating a
+		 bufz node that can carry the constant value. */
+	    node = create_constant_node(label, argv[0].text);
+      }
+      if (node == 0) {
+	    __compile_net_resolv*res = new __compile_net_resolv(argv[0].text,
+					    label, name, msb, lsb,
+					    signed_flag, net8_flag, local_flag);
+	    resolv_submit(res);
+	    return;
+	    cerr << __FILE__ << ":" << __LINE__ << ": Internal error: "
+		 << "vvp_net_lookup fails: " << argv[0].text << endl;
+      }
+      assert(node);
+
+      if (name) {
+	    __compile_net2(node, label, name, msb, lsb,
+			   signed_flag, net8_flag, local_flag);
+      } else {
+	    free(label);
+	    if (name) delete[] name;
+	    if (array_label) free(array_label);
+      }
+
       free(argv);
+}
+
+bool __compile_net_resolv::resolve(bool msg_flag)
+{
+      vvp_net_t*node = vvp_net_lookup(label());
+      if (node == 0) {
+	    return false;
+      }
+
+      __compile_net2(node, my_label_, name_, msb_, lsb_, signed_flag_, net8_flag_, local_flag_);
+      return true;
 }
 
 void compile_net(char*label, char*name, int msb, int lsb,

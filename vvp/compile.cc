@@ -727,12 +727,27 @@ void compile_vpi_time_precision(long pre)
  *
  * The real value is sign * (mant ** exp).
  */
-double crstring_to_double(char*label)
+bool crstring_test(const char*str)
 {
-      char*cp = label+3;
+      if (strncmp(str, "Cr<", 3) != 0) return false;
+      const char*tp = strchr(str, '>');
+      if (tp == 0) return false;
+      if (tp[1] != 0) return false;
+
+      if ((strspn(str+3, "0123456789abcdefmg")+3) != (tp - str))
+	  return false;
+
+      return true;
+}
+
+double crstring_to_double(const char*label)
+{
+      const char*cp = label+3;
       assert(*cp == 'm');
       cp += 1;
-      uint64_t mant = strtoull(cp, &cp, 16);
+      char*ep;
+      uint64_t mant = strtoull(cp, &ep, 16);
+      cp = ep;
       assert(*cp == 'g');
       cp += 1;
       int exp = strtoul(cp, 0, 16);
@@ -774,10 +789,7 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
       char*tp;
 
 	/* Is this a vvp_vector4_t constant value? */
-      if ((strncmp(label, "C4<", 3) == 0)
-	  && ((tp = strchr(label,'>')))
-	  && (tp[1] == 0)
-	  && (strspn(label+3, "01xz")+3 == (unsigned)(tp-label))) {
+      if (c4string_test(label)) {
 
 	    vvp_vector4_t tmp = c4string_to_vector4(label);
 
@@ -837,10 +849,7 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 
 	/* Handle the Cr<> constant driver, which is a real-value
 	   driver. */
-      if ((strncmp(label, "Cr<", 3) == 0)
-	  && ((tp = strchr(label,'>')))
-	  && (tp[1] == 0)
-	  && (strspn(label+3, "0123456789abcdefmg")+3 == (unsigned)(tp-label))) {
+      if (crstring_test(label)) {
 
 	    double tmp = crstring_to_double(label);
 

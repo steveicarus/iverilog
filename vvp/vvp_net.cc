@@ -2370,6 +2370,19 @@ vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&that, unsigned wid)
       return res;
 }
 
+bool c4string_test(const char*str)
+{
+      if (strncmp(str, "C4<", 3) != 0)
+	    return false;
+      size_t value_size = strspn(str+3, "01xz");
+      if (str[3+value_size] != '>')
+	    return false;
+      if (str[3+value_size+1] != 0)
+	    return false;
+
+      return true;
+}
+
 vvp_vector4_t c4string_to_vector4(const char*str)
 {
       assert((str[0]=='C') && (str[1]=='4') && (str[2]=='<'));
@@ -2517,6 +2530,24 @@ vvp_vector8_t part_expand(const vvp_vector8_t&that, unsigned wid, unsigned off)
       }
 
       return tmp;
+}
+
+bool c8string_test(const char*str)
+{
+      const char*cp;
+      if (str[0] != 'C') return false;
+      if (str[1] != '8') return false;
+      if (str[2] != '<') return false;
+
+      cp = str+3;
+      for (;; cp += 1) {
+	    if (cp[0] == '>' && cp[1] == 0) return true;
+	    if (cp[0] >= '0' && cp[0] <= '9') continue;
+	    if (cp[0] == 'x') continue;
+	    if (cp[0] == 'z') continue;
+	    return false;
+      }
+      return false;
 }
 
 ostream& operator<<(ostream&out, const vvp_vector8_t&that)

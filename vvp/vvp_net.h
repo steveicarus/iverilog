@@ -639,8 +639,14 @@ extern vvp_vector2_t operator % (const vvp_vector2_t&, const vvp_vector2_t&);
 
 vvp_vector2_t pow(const vvp_vector2_t&, vvp_vector2_t&);
 extern vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&, unsigned wid);
+
 /* A c4string is of the form C4<...> where ... are bits. */
+extern bool c4string_test(const char*str);
 extern vvp_vector4_t c4string_to_vector4(const char*str);
+
+/* A crstring is of the form Cr<...> where ... defines are real. */
+extern bool crstring_test(const char*str);
+extern double crstring_to_double(const char*str);
 
 extern ostream& operator<< (ostream&, const vvp_vector2_t&);
 
@@ -830,6 +836,11 @@ extern vvp_vector8_t resistive_reduction(const vvp_vector8_t&a);
      strength information in the process. */
 extern vvp_vector4_t reduce4(const vvp_vector8_t&that);
 extern vvp_vector8_t part_expand(const vvp_vector8_t&a, unsigned wid, unsigned off);
+
+  /* A c8string is of the form C8<...> where ... are bits. */
+extern bool c8string_test(const char*str);
+extern vvp_vector8_t c8string_to_vector8(const char*str);
+
   /* Print a vector8 value to a stream. */
 extern ostream& operator<< (ostream&, const vvp_vector8_t&);
 
