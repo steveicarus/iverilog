@@ -270,6 +270,9 @@ static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
       vpi_get_value(arg, &val);
       fd_mcd = val.value.integer;
 
+	/* If the MCD is zero we have nothing to do so just return. */
+      if (fd_mcd == 0) return 0;
+
       if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
           ( IS_MCD(fd_mcd) && vpi_mcd_printf(fd_mcd, str) == EOF) ||
           (! fd_mcd)) {
