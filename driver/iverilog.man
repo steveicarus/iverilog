@@ -254,7 +254,8 @@ after a \fB-Wall\fP argument to suppress isolated warning types.
 
 .TP 8
 .B all
-This enables all supported warning categories.
+This enables the implicit, portbind, select-range and timescale warning
+categories.
 
 .TP 8
 .B implicit
@@ -267,6 +268,12 @@ source, this will print a warning at its first use.
 This enables warnings for ports of module instantiations that are not
 connected but probably should be. Dangling input ports, for example,
 will generate a warning.
+
+.TP 8
+.B select-range
+This enables warnings for constant out of bound selects. This includes
+partial or fully out of bound selects as well as a select using 'bx as
+an index.
 
 .TP 8
 .B timescale

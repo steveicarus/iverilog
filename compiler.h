@@ -82,6 +82,9 @@ extern bool warn_timescale;
 /* Warn about legal but questionable module port bindings. */
 extern bool warn_portbinding;
 
+/* Warn about constant out of bound selects. */
+extern bool warn_ob_select;
+
 /* Warn about structures that may have infinite loops. */
 extern bool warn_inf_loop;
 
