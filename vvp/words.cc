@@ -37,6 +37,7 @@ static void __compile_var_real(char*label, char*name,
 			       int msb, int lsb)
 {
       vvp_fun_signal_real*fun;
+      vvp_wire_real*fil = new vvp_wire_real;
       if (vpip_peek_current_scope()->is_automatic) {
             fun = new vvp_fun_signal_real_aa;
       } else {
@@ -44,7 +45,7 @@ static void __compile_var_real(char*label, char*name,
       }
       vvp_net_t*net = new vvp_net_t;
       net->fun = fun;
-      assert(0 /* XXXX */); // Need to create a net_fil_t! net->fil = fun;
+      net->fil = fil;
 
       define_functor_symbol(label, net);
 
@@ -55,7 +56,7 @@ static void __compile_var_real(char*label, char*name,
 	    assert(!array);
 	    vpip_attach_to_current_scope(obj);
             if (!vpip_peek_current_scope()->is_automatic)
-                  schedule_init_vector(vvp_net_ptr_t(net,0), fun->real_value());
+                  schedule_init_vector(vvp_net_ptr_t(net,0), 0.0);
       }
       if (array) {
 	    assert(!name);

@@ -132,10 +132,10 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
 
       struct __vpiRealVar*rfp
 	    = (struct __vpiRealVar*)ref;
-      vvp_fun_signal_real*fun
-	    = dynamic_cast<vvp_fun_signal_real*>(rfp->net->fun);
+      vvp_wire_real*fil
+	    = dynamic_cast<vvp_wire_real*>(rfp->net->fil);
 
-      fun->get_value(vp);
+      fil->get_value(vp);
 }
 
 static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp, int)

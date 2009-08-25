@@ -100,6 +100,7 @@ class vvp_signal_value {
       virtual vvp_bit4_t value(unsigned idx) const =0;
       virtual vvp_scalar_t scalar_value(unsigned idx) const =0;
       virtual vvp_vector4_t vec4_value() const =0;
+      virtual double real_value() const;
 
       virtual void get_signal_value(struct t_vpi_value*vp);
 };
@@ -349,11 +350,6 @@ class vvp_wire_base  : public vvp_net_fil_t, public vvp_signal_value {
     public:
       vvp_wire_base();
       ~vvp_wire_base();
-
-	// The main filter behavior for this class
-      const vvp_vector4_t* filter_vec4(const vvp_vector4_t&bit) =0;
-      const vvp_vector8_t* filter_vec8(const vvp_vector8_t&val) =0;
-
 };
 
 class vvp_wire_vec4 : public vvp_wire_base {
@@ -424,6 +420,38 @@ class vvp_wire_vec8 : public vvp_wire_base {
       vvp_vector8_t bits8_;
       vvp_vector8_t force8_; // the value being forced
       vvp_vector8_t filter8_; // scratch space for filter_mask_ function.
+};
+
+class vvp_wire_real : public vvp_wire_base {
+
+    public:
+      explicit vvp_wire_real();
+
+	// The main filter behavior for this class
+      bool filter_real(double&bit);
+
+	// Abstract methods from vvp_vpi_callback
+      void get_value(struct t_vpi_value*value);
+	// Abstract methods from vvp_net_fit_t
+      unsigned filter_size() const;
+      void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
+      void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
+      void force_fil_real(double val, vvp_vector2_t mask);
+      void release(vvp_net_ptr_t ptr, bool net);
+      void release_pv(vvp_net_ptr_t ptr, bool net, unsigned base, unsigned wid);
+
+	// Implementation of vvp_signal_value methods
+      unsigned value_size() const;
+      vvp_bit4_t value(unsigned idx) const;
+      vvp_scalar_t scalar_value(unsigned idx) const;
+      vvp_vector4_t vec4_value() const;
+      double real_value() const;
+
+      void get_signal_value(struct t_vpi_value*vp);
+
+    private:
+      double bit_;
+      double force_;
 };
 
 #endif

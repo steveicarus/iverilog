@@ -69,6 +69,12 @@ vvp_signal_value::~vvp_signal_value()
 {
 }
 
+double vvp_signal_value::real_value() const
+{
+      assert(0);
+      return 0;
+}
+
 #if 0
 const vvp_vector4_t* vvp_fun_signal4::filter_vec4(const vvp_vector4_t&val)
 {
@@ -1053,4 +1059,91 @@ vvp_scalar_t vvp_wire_vec8::scalar_value(unsigned idx) const
 vvp_vector4_t vvp_wire_vec8::vec4_value() const
 {
       assert(0);
+}
+
+vvp_wire_real::vvp_wire_real()
+{
+}
+
+bool vvp_wire_real::filter_real(double&bit)
+{
+      bit_ = bit;
+      if (test_force_mask(0)) {
+	    bit = force_;
+	    return false;
+      }
+      return true;
+}
+
+unsigned vvp_wire_real::filter_size() const
+{
+      assert(0);
+      return 0;
+}
+
+void vvp_wire_real::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
+{
+      assert(0);
+}
+
+void vvp_wire_real::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
+{
+      assert(0);
+}
+
+void vvp_wire_real::force_fil_real(double val, vvp_vector2_t mask)
+{
+      assert(0);
+}
+
+void vvp_wire_real::release(vvp_net_ptr_t ptr, bool net)
+{
+      assert(net);
+
+	// Wires revert to their unforced value after release.
+      vvp_vector2_t mask (vvp_vector2_t::FILL1, 1);
+      release_mask(mask);
+      assert(0);
+}
+
+void vvp_wire_real::release_pv(vvp_net_ptr_t ptr, bool net,
+			       unsigned base, unsigned wid)
+{
+      assert(net);
+
+      vvp_vector2_t mask (vvp_vector2_t::FILL0, 1);
+      for (unsigned idx = 0 ; idx < wid ; idx += 1)
+	    mask.set_bit(base+idx, 1);
+
+      release_mask(mask);
+      assert(0);
+}
+
+unsigned vvp_wire_real::value_size() const
+{
+      assert(0);
+      return 1;
+}
+
+vvp_bit4_t vvp_wire_real::value(unsigned idx) const
+{
+      assert(0);
+}
+
+vvp_scalar_t vvp_wire_real::scalar_value(unsigned idx) const
+{
+      assert(0);
+}
+
+vvp_vector4_t vvp_wire_real::vec4_value() const
+{
+      assert(0);
+}
+
+double vvp_wire_real::real_value() const
+{
+      if (test_force_mask(0))
+	    return force_;
+      else
+	    return bit_;
 }
