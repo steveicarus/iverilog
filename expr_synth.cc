@@ -122,6 +122,7 @@ NetNet* NetEBAdd::synthesize(Design*des, NetScope*scope, NetExpr*root)
       NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
       osig->data_type(expr_type());
+      osig->set_signed(has_sign());
 
       perm_string oname = osig->scope()->local_symbol();
       NetAddSub *adder = new NetAddSub(lsig->scope(), oname, width);
@@ -390,6 +391,7 @@ NetNet* NetEBPow::synthesize(Design*des, NetScope*scope, NetExpr*root)
 			       NetNet::IMPLICIT, width);
       osig->set_line(*this);
       osig->data_type(expr_type());
+      osig->set_signed(has_sign());
       osig->local_flag(true);
 
       connect(powr->pin_Result(), osig->pin(0));
@@ -426,6 +428,7 @@ NetNet* NetEBMult::synthesize(Design*des, NetScope*scope, NetExpr*root)
 			       NetNet::IMPLICIT, width);
       osig->set_line(*this);
       osig->data_type(expr_type());
+      osig->set_signed(has_sign());
       osig->local_flag(true);
 
       connect(mult->pin_Result(), osig->pin(0));
