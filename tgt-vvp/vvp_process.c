@@ -87,7 +87,8 @@ static void set_to_lvariable(ivl_lval_t lval,
 
       if (part_off_ex == 0) {
 	    part_off = 0;
-      } else if (number_is_immediate(part_off_ex, IMM_WID, 0)) {
+      } else if (number_is_immediate(part_off_ex, IMM_WID, 0) &&
+                 !number_is_unknown(part_off_ex)) {
 	    part_off = get_number_immediate(part_off_ex);
 	    part_off_ex = 0;
       }
@@ -96,6 +97,7 @@ static void set_to_lvariable(ivl_lval_t lval,
 	   it to select the word, and pay no further heed to the
 	   expression itself. */
       if (word_ix && number_is_immediate(word_ix, IMM_WID, 0)) {
+	    assert(! number_is_unknown(word_ix));
 	    use_word = get_number_immediate(word_ix);
 	    word_ix = 0;
       }
@@ -233,12 +235,14 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       if (part_off_ex == 0) {
 	    part_off = 0;
       } else if (number_is_immediate(part_off_ex, IMM_WID, 0)) {
+	    assert(! number_is_unknown(part_off_ex));
 	    part_off = get_number_immediate(part_off_ex);
 	    part_off_ex = 0;
       }
 
 	/* This code is common to all the different types of array delays. */
       if (number_is_immediate(word_ix, IMM_WID, 0)) {
+	    assert(! number_is_unknown(word_ix));
 	    fprintf(vvp_out, "    %%ix/load 3, %lu, 0; address\n",
 	                     get_number_immediate(word_ix));
       } else {
@@ -317,6 +321,7 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
       if (part_off_ex == 0) {
 	    part_off = 0;
       } else if (number_is_immediate(part_off_ex, IMM_WID, 0)) {
+	    assert(! number_is_unknown(part_off_ex));
 	    part_off = get_number_immediate(part_off_ex);
 	    part_off_ex = 0;
       }
@@ -647,6 +652,7 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 	    word_ix = ivl_lval_idx(lval);
 	    assert(word_ix);
 	    assert(number_is_immediate(word_ix, IMM_WID, 0));
+	    assert(! number_is_unknown(word_ix));
 	    use_word = get_number_immediate(word_ix);
 	    /* This method no longer works since variable arrays do not
 	     * support <variable_id>_<idx> access any more. We need real
@@ -1112,11 +1118,13 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 		  part_off = 0;
 	    } else {
 		  assert(number_is_immediate(part_off_ex, IMM_WID, 0));
+		  assert(! number_is_unknown(part_off_ex));
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 
 	    if (word_idx != 0) {
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
+		  assert(! number_is_unknown(word_idx));
 		  use_word = get_number_immediate(word_idx);
 	    }
 
@@ -1181,6 +1189,7 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 	 * part select (this could give us multiple drivers). */
       part_off_ex = ivl_lval_part_off(lval);
       if (ivl_signal_width(lsig) > ivl_signal_width(rsig) ||
+          // Do we need checks for number_is{immediate,unknown} of part_of_ex?
           (part_off_ex && get_number_immediate(part_off_ex) != 0)) {
 	    fprintf(stderr, "%s:%u: vvp-tgt sorry: cannot %s signal to "
 	            "a bit/part select.\n", ivl_expr_file(rval),
@@ -1191,11 +1200,13 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 	/* At least for now, only handle force to fixed words of an array. */
       if ((lword_idx = ivl_lval_idx(lval)) != 0) {
 	    assert(number_is_immediate(lword_idx, IMM_WID, 0));
+	    assert(! number_is_unknown(lword_idx));
 	    use_lword = get_number_immediate(lword_idx);
       }
 
       if ((rword_idx = ivl_expr_oper1(rval)) != 0) {
 	    assert(number_is_immediate(rword_idx, IMM_WID, 0));
+	    assert(! number_is_unknown(rword_idx));
 	    use_rword = get_number_immediate(rword_idx);
       }
 
@@ -1279,11 +1290,13 @@ static int show_stmt_deassign(ivl_statement_t net)
 	    part_off = 0;
 	    if (part_off_ex != 0) {
 		  assert(number_is_immediate(part_off_ex, 64, 0));
+		  assert(! number_is_unknown(part_off_ex));
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 
 	    if (word_idx != 0) {
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
+		  assert(! number_is_unknown(word_idx));
 		  use_word = get_number_immediate(word_idx);
 	    }
 
@@ -1574,6 +1587,7 @@ static int show_stmt_release(ivl_statement_t net)
 	    part_off = 0;
 	    if (part_off_ex != 0) {
 		  assert(number_is_immediate(part_off_ex, 64, 0));
+		  assert(! number_is_unknown(part_off_ex));
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 
@@ -1588,6 +1602,7 @@ static int show_stmt_release(ivl_statement_t net)
 
 	    if (word_idx != 0) {
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
+		  assert(! number_is_unknown(word_idx));
 		  use_word = get_number_immediate(word_idx);
 	    }
 

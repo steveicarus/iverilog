@@ -388,6 +388,10 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		      number_is_immediate(d_fall, 64, 0) &&
 		      number_is_immediate(d_decay, 64, 0)) {
 
+			assert(! number_is_unknown(d_rise));
+			assert(! number_is_unknown(d_fall));
+			assert(! number_is_unknown(d_decay));
+
 			fprintf(vvp_out, "L_%p .delay "
 				"(%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
 			                 cptr, get_number_immediate64(d_rise),

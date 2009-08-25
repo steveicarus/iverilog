@@ -48,6 +48,11 @@ static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
 	    if (number_is_immediate(d_rise, 64, 0) &&
 	        number_is_immediate(d_fall, 64, 0) &&
 	        number_is_immediate(d_decay, 64, 0)) {
+
+		  assert( ! number_is_unknown(d_rise));
+		  assert( ! number_is_unknown(d_fall));
+		  assert( ! number_is_unknown(d_decay));
+
 		  fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
 		                   net, get_number_immediate(d_rise),
 		                   get_number_immediate(d_fall),
