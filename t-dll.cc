@@ -2147,6 +2147,7 @@ bool dll_target::part_select(const NetPartSelect*net)
 	    obj->type = IVL_LPM_PART_PV;
 	    break;
       }
+      FILE_NAME(obj, net);
       obj->name = net->name(); // NetPartSelect names are permallocated.
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());

@@ -351,6 +351,7 @@ void dll_target::expr_select(const NetESelect*net)
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       assert(expr_);
+      FILE_NAME(expr_, net);
 
       expr_->type_ = IVL_EX_SELECT;
       expr_->value_= IVL_VT_VECTOR;
