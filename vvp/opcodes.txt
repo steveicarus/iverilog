@@ -417,7 +417,7 @@ These instructions are like the %ix/get instructions, except that they
 read directly from a functor label instead of from thread bits. They
 set bit 4 just like %ix/get.
 
-* %ix/load <idx>, <low> <high>
+* %ix/load <idx>, <low>, <high>
 
 This instruction loads an immediate value into the addressed index
 register. The index register holds signed 64 bit numeric values, so
@@ -428,9 +428,9 @@ vector. The values are unsigned decimal values and are combined as
 <high> << 32 | <low> to produce the final value.
 
 
-* %ix/add <idx>, <low> <high>
-* %ix/sub <idx>, <low> <high>
-* %ix/mul <idx>, <low> <high>
+* %ix/add <idx>, <low>, <high>
+* %ix/sub <idx>, <low>, <high>
+* %ix/mul <idx>, <low>, <high>
 
 These instructions add, subtract, or multiply the selected index
 register by the immediate value. The 64 bit immediate value is built
@@ -758,6 +758,8 @@ bits) by the amount in index register 0. The <bit> is the address of
 the LSB of the vector, and <wid> the width of the vector. The shift is
 done in place. Zero values are shifted in.
 
+For a negative shift the value is padded with 'bx.
+
 * %shiftr/i0 <bit>, <wid>
 * %shiftr/s/i0 <bit>, <wid>
 
@@ -768,6 +770,8 @@ shift is done in place.
 
 %shiftr/i0 is an unsigned down shift, so zeros are shifted into the
 top bits. %shiftr/s/i0 is a signed shift, so the value is sign-extended.
+
+For a negative shift %shiftr/i0 will pad the value with 'bx.
 
 * %sub <bit-l>, <bit-r>, <wid>
 
