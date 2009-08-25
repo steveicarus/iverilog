@@ -2642,7 +2642,7 @@ bool of_IX_GET_S(vthread_t thr, vvp_code_t cp)
       unsigned base  = cp->bit_idx[1];
       unsigned width = cp->number;
 
-      unsigned long v = 0;
+      uint64_t v = 0;
       bool unknown_flag = false;
 
       vvp_bit4_t vv = BIT4_0;
@@ -2654,7 +2654,7 @@ bool of_IX_GET_S(vthread_t thr, vvp_code_t cp)
 		  break;
 	    }
 
-	    v |= (unsigned long) vv << i;
+	    v |= (uint64_t) vv << i;
 
 	    if (base >= 4)
 		  base += 1;
@@ -2662,7 +2662,7 @@ bool of_IX_GET_S(vthread_t thr, vvp_code_t cp)
 
 	/* Sign-extend to fill the integer value. */
       if (!unknown_flag) {
-	    unsigned long pad = vv;
+	    uint64_t pad = vv;
 	    for (unsigned i = width ; i < 8*sizeof(v) ;  i += 1) {
 		  v |= pad << i;
 	    }
@@ -4244,7 +4244,7 @@ bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
 {
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
-      unsigned long shift = thr->words[0].w_int;
+      long shift = thr->words[0].w_int;
 
       assert(base >= 4);
       thr_check_addr(thr, base+wid-1);
@@ -4253,7 +4253,8 @@ bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
 	    // The result is 'bx if the shift amount is undefined.
 	    vvp_vector4_t tmp (wid, BIT4_X);
 	    thr->bits4.set_vec(base, tmp);
-      } else if (shift >= wid) {
+
+      } else if (shift >= (long)wid) {
 	      // Shift is so far that all value is shifted out. Write
 	      // in a constant 0 result.
 	    vvp_vector4_t tmp (wid, BIT4_0);
@@ -4266,6 +4267,17 @@ bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
 	      // Fill zeros on the bottom
 	    vvp_vector4_t fil (shift, BIT4_0);
 	    thr->bits4.set_vec(base, fil);
+
+      } else if (shift < 0) {
+	      // For a negative shift we pad with 'bx.
+	    unsigned idx;
+	    for (idx = 0 ;  (idx-shift) < wid ;  idx += 1) {
+		  unsigned src = base + idx - shift;
+		  unsigned dst = base + idx;
+		  thr_put_bit(thr, dst, thr_get_bit(thr, src));
+	    }
+	    for ( ;  idx < wid ;  idx += 1)
+		  thr_put_bit(thr, base+idx, BIT4_X);
       }
       return true;
 }
@@ -4282,12 +4294,16 @@ bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
 {
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
-      unsigned long shift = thr->words[0].w_int;
+      long shift = thr->words[0].w_int;
+
+      assert(base >= 4);
+      thr_check_addr(thr, base+wid-1);
 
       if (thr_get_bit(thr, 4) == BIT4_1) {
-	    // The result is 'bx if the shift amount is undefined.
+	      // The result is 'bx if the shift amount is undefined.
 	    vvp_vector4_t tmp (wid, BIT4_X);
 	    thr->bits4.set_vec(base, tmp);
+
       } else if (shift > 0) {
 	    unsigned idx;
 	    for (idx = 0 ;  (idx+shift) < wid ;  idx += 1) {
@@ -4297,6 +4313,21 @@ bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
 	    }
 	    for ( ;  idx < wid ;  idx += 1)
 		  thr_put_bit(thr, base+idx, BIT4_0);
+
+      } else if (shift < -(long)wid) {
+	      // Negative shift is so far that all the value is shifted out.
+	      // Write in a constant 'bx result.
+	    vvp_vector4_t tmp (wid, BIT4_X);
+	    thr->bits4.set_vec(base, tmp);
+
+      } else if (shift < 0) {
+
+	      // For a negative shift we pad with 'bx.
+	    vvp_vector4_t tmp (thr->bits4, base, wid+shift);
+	    thr->bits4.set_vec(base-shift, tmp);
+
+	    vvp_vector4_t fil (-shift, BIT4_X);
+	    thr->bits4.set_vec(base, fil);
       }
       return true;
 }
@@ -4309,7 +4340,7 @@ bool of_SHIFTR_S_I0(vthread_t thr, vvp_code_t cp)
       vvp_bit4_t sign = thr_get_bit(thr, base+wid-1);
 
       if (thr_get_bit(thr, 4) == BIT4_1) {
-	    // The result is 'bx if the shift amount is undefined.
+	      // The result is 'bx if the shift amount is undefined.
 	    vvp_vector4_t tmp (wid, BIT4_X);
 	    thr->bits4.set_vec(base, tmp);
       } else if (shift >= wid) {
