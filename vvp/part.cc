@@ -86,7 +86,7 @@ void vvp_fun_part_sa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 {
       assert(bit.size() == wid);
 
-      vvp_vector4_t tmp (vwid, BIT4_X);
+      vvp_vector4_t tmp (vwid, BIT4_Z);
       tmp.set_vec(base_, val_);
       tmp.set_vec(base, bit);
       recv_vec4(port, tmp, 0);
@@ -176,7 +176,7 @@ void vvp_fun_part_aa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
             vvp_vector4_t*val = static_cast<vvp_vector4_t*>
                   (vvp_get_context_item(context, context_idx_));
 
-            vvp_vector4_t tmp (vwid, BIT4_X);
+            vvp_vector4_t tmp (vwid, BIT4_Z);
             tmp.set_vec(base_, *val);
             tmp.set_vec(base, bit);
             recv_vec4(port, tmp, context);
