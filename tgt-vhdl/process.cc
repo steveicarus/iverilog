@@ -95,8 +95,13 @@ int draw_process(ivl_process_t proc, void *cd)
              ivl_scope_tname(scope), ivl_process_file(proc),
              ivl_process_lineno(proc));
    
-   // A process should occur in a module scope, therefore it
-   // should have already been assigned a VHDL entity
+   // Skip over any generate and begin scopes until we find
+   // the module that contains them - this is where we will
+   // generate the process
+   while (ivl_scope_type(scope) == IVL_SCT_GENERATE
+      || ivl_scope_type(scope) == IVL_SCT_BEGIN)
+      scope = ivl_scope_parent(scope);
+   
    assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
    vhdl_entity *ent = find_entity(scope);
    assert(ent != NULL);
