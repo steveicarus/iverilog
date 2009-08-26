@@ -170,8 +170,12 @@ vhdl_entity* find_entity(const string& name)
 // name should be the same as the Verilog module type name.
 // Note that this will return NULL if no entity has been recorded
 // for this scope type.
-vhdl_entity* find_entity(const ivl_scope_t scope)
+vhdl_entity* find_entity(ivl_scope_t scope)
 {
+   // Skip over generate scopes
+   while (ivl_scope_type(scope) == IVL_SCT_GENERATE)
+      scope = ivl_scope_parent(scope);
+   
    assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
 
    scope_name_map_t::iterator it = g_scope_names.find(ivl_scope_tname(scope));
