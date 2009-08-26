@@ -2640,10 +2640,12 @@ bool of_IX_GETVS(vthread_t thr, vvp_code_t cp)
       unsigned index = cp->bit_idx[0];
       vvp_net_t*net = cp->net;
 
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(net->fil);
       if (sig == 0) {
 	    cerr << "%%ix/getv/s error: Net arg not a vector signal? "
-		 << typeid(*net->fun).name() << endl;
+		 << "fun=" << typeid(*net->fil).name()
+		 << ", fil=" << (net->fil? typeid(*net->fil).name() : "<>")
+		 << endl;
       }
       assert(sig);
 
@@ -3055,7 +3057,7 @@ bool of_LOAD_X1P(vthread_t thr, vvp_code_t cp)
 
 	// For the %load to work, the functor must actually be a
 	// signal functor. Only signals save their vector value.
-      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
       assert(sig);
 
       for (long idx = 0 ; idx < wid ; idx += 1) {
