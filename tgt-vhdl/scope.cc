@@ -873,9 +873,6 @@ static int draw_skeleton_scope(ivl_scope_t scope, void *_unused)
    case IVL_SCT_MODULE:
       create_skeleton_entity_for(scope, depth);
       break;
-   case IVL_SCT_GENERATE:
-      error("No translation for generate statements yet");
-      return 1;
    case IVL_SCT_FORK:
       error("No translation for fork statements yet");
       return 1;
@@ -1032,6 +1029,38 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
    if (ivl_scope_type(scope) == IVL_SCT_MODULE && _parent) {
       ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
 
+      // Skip over any containing generate scopes
+      // Concatenate the expanded genvar values together to
+      // make a unique instance name
+      // This isn't ideal: it would be better to replace the
+      // Verilog generate with an equivalent VHDL generate, but
+      // this isn't possible with the current API
+      ostringstream suffix;
+      while (ivl_scope_type(parent) == IVL_SCT_GENERATE) {
+         for (unsigned i = 0; i < ivl_scope_params(parent); i++) {
+            ivl_parameter_t param = ivl_scope_param(parent, i);
+            ivl_expr_t e = ivl_parameter_expr(param);
+            
+            if (ivl_expr_type(e) == IVL_EX_NUMBER) {
+               vhdl_expr* value = translate_expr(e);
+               assert(value);
+
+               value = value->cast(vhdl_type::integer());
+               
+               suffix << "_" << ivl_parameter_basename(param);
+               value->emit(suffix, 0);
+
+               delete value;
+            }
+            else {
+               error("Only numeric genvars supported at the moment");
+               return 1;
+            }            
+         }
+         
+         parent = ivl_scope_parent(parent);
+      }
+      
       if (!is_default_scope_instance(parent))
          return 0;  // Not generating code for the parent instance so
                     // don't generate for the child
@@ -1053,7 +1082,7 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
       }
          
       // And an instantiation statement
-      string inst_name(ivl_scope_basename(scope));
+      string inst_name(ivl_scope_basename(scope) + suffix.str());
       if (inst_name == ent->get_name() || parent_scope->have_declared(inst_name)) {
          // Cannot have instance name the same as type in VHDL
          inst_name += "_Inst";
