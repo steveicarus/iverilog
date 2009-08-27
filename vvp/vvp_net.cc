@@ -206,14 +206,14 @@ vvp_net_fil_t::~vvp_net_fil_t()
       assert(force_link_ == 0);
 }
 
-const vvp_vector4_t* vvp_net_fil_t::filter_vec4(const vvp_vector4_t&val)
+vvp_net_fil_t::prop_t vvp_net_fil_t::filter_vec4(const vvp_vector4_t&val, vvp_vector4_t&)
 {
-      return &val;
+      return PROP;
 }
 
-const vvp_vector8_t* vvp_net_fil_t::filter_vec8(const vvp_vector8_t&val)
+vvp_net_fil_t::prop_t vvp_net_fil_t::filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&)
 {
-      return &val;
+      return PROP;
 }
 
 bool vvp_net_fil_t::filter_real(double&)

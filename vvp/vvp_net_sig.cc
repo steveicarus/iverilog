@@ -30,7 +30,7 @@
 
 # include  <iostream>
 
-template <class T> const T*vvp_net_fil_t::filter_mask_(const T&val, const T&force, T&filter)
+template <class T> vvp_net_fil_t::prop_t vvp_net_fil_t::filter_mask_(const T&val, const T&force, T&filter)
 {
       if (!test_force_mask_is_zero()) {
 	    bool propagate_flag = force_propagate_;
@@ -48,14 +48,14 @@ template <class T> const T*vvp_net_fil_t::filter_mask_(const T&val, const T&forc
 
 	    if (propagate_flag) {
 		  run_vpi_callbacks();
-		  return &filter;
+		  return REPL;
 	    } else {
-		  return 0;
+		  return STOP;
 	    }
 
       } else {
 	    run_vpi_callbacks();
-	    return &val;
+	    return PROP;
       }
 }
 
@@ -75,24 +75,6 @@ double vvp_signal_value::real_value() const
       return 0;
 }
 
-#if 0
-const vvp_vector4_t* vvp_fun_signal4::filter_vec4(const vvp_vector4_t&val)
-{
-      return filter_mask_(val, force4_, filter4_);
-}
-#endif
-#if 0
-const vvp_vector8_t* vvp_fun_signal8::filter_vec8(const vvp_vector8_t&val)
-{
-      return filter_mask_(val, force8_, filter8_);
-}
-#endif
-#if 0
-bool vvp_fun_signal_real::filter_real(double&val)
-{
-      return filter_mask_(val);
-}
-#endif
 unsigned vvp_fun_signal_real::filter_size() const
 {
       return size();
@@ -876,19 +858,18 @@ vvp_wire_vec4::vvp_wire_vec4(unsigned wid, vvp_bit4_t init)
 {
 }
 
-const vvp_vector4_t* vvp_wire_vec4::filter_vec4(const vvp_vector4_t&bit)
+vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep)
 {
 	// Keep track of the value being driven from this net, even if
 	// it is not ultimately what survives the force filter.
       bits4_ = bit;
-      const vvp_vector4_t*tmp = filter_mask_(bit, force4_, filter4_);
-      return tmp;
+      return filter_mask_(bit, force4_, rep);
 }
 
-const vvp_vector8_t* vvp_wire_vec4::filter_vec8(const vvp_vector8_t&bit)
+vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec8(const vvp_vector8_t&bit, vvp_vector8_t&)
 {
       assert(0);
-      return 0;
+      return PROP;
 }
 
 unsigned vvp_wire_vec4::filter_size() const
@@ -951,17 +932,17 @@ unsigned vvp_wire_vec4::value_size() const
       return width_;
 }
 
-vvp_bit4_t vvp_wire_vec4::filtered_value_(const vvp_vector4_t&val, unsigned idx) const
+vvp_bit4_t vvp_wire_vec4::filtered_value_(unsigned idx) const
 {
       if (test_force_mask(idx))
 	    return force4_.value(idx);
       else
-	    return val.value(idx);
+	    return bits4_.value(idx);
 }
 
 vvp_bit4_t vvp_wire_vec4::value(unsigned idx) const
 {
-      return filtered_value_(bits4_, idx);
+      return filtered_value_(idx);
 }
 
 vvp_scalar_t vvp_wire_vec4::scalar_value(unsigned idx) const
@@ -973,7 +954,7 @@ vvp_vector4_t vvp_wire_vec4::vec4_value() const
 {
       vvp_vector4_t tmp = bits4_;
       for (unsigned idx = 0 ; idx < bits4_.size() ; idx += 1)
-	    tmp.set_bit(idx, filtered_value_(bits4_, idx));
+	    tmp.set_bit(idx, filtered_value_(idx));
       return tmp;
 }
 
@@ -982,19 +963,25 @@ vvp_wire_vec8::vvp_wire_vec8(unsigned wid)
 {
 }
 
-const vvp_vector4_t* vvp_wire_vec8::filter_vec4(const vvp_vector4_t&bit)
+vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep)
 {
-      assert(0);
-      return 0;
+	// QUESTION: Is it really correct to propagate a vec4 if this
+	// is a vec8 node? In fact, it is really possible for a vec4
+	// value to get through to a vec8 filter?
+      vvp_vector8_t rep8;
+      prop_t rc = filter_vec8(vvp_vector8_t(bit,6,6), rep8);
+      if (rc == REPL)
+	    rep = reduce4(rep8);
+
+      return rc;
 }
 
-const vvp_vector8_t* vvp_wire_vec8::filter_vec8(const vvp_vector8_t&bit)
+vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec8(const vvp_vector8_t&bit, vvp_vector8_t&rep)
 {
 	// Keep track of the value being driven from this net, even if
 	// it is not ultimately what survives the force filter.
       bits8_ = bit;
-      const vvp_vector8_t*tmp = filter_mask_(bit, force8_, filter8_);
-      return tmp;
+      return filter_mask_(bit, force8_, rep);
 }
 
 unsigned vvp_wire_vec8::filter_size() const
@@ -1046,19 +1033,35 @@ unsigned vvp_wire_vec8::value_size() const
       return width_;
 }
 
+vvp_scalar_t vvp_wire_vec8::filtered_value_(unsigned idx) const
+{
+      if (test_force_mask(idx))
+	    return force8_.value(idx);
+      else
+	    return bits8_.value(idx);
+}
+
 vvp_bit4_t vvp_wire_vec8::value(unsigned idx) const
 {
-      assert(0);
+      return filtered_value_(idx).value();
 }
 
 vvp_scalar_t vvp_wire_vec8::scalar_value(unsigned idx) const
 {
-      assert(0);
+      return filtered_value_(idx);
+}
+
+vvp_vector8_t vvp_wire_vec8::vec8_value() const
+{
+      vvp_vector8_t tmp = bits8_;
+      for (unsigned idx = 0 ; idx < bits8_.size() ; idx += 1)
+	    tmp.set_bit(idx, filtered_value_(idx));
+      return tmp;
 }
 
 vvp_vector4_t vvp_wire_vec8::vec4_value() const
 {
-      assert(0);
+      return reduce4(vec8_value());
 }
 
 vvp_wire_real::vvp_wire_real()

@@ -127,7 +127,6 @@ class vvp_fun_signal4 : public vvp_fun_signal_vec {
       void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
       void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
       void force_fil_real(double val, vvp_vector2_t mask);
-      const vvp_vector4_t* filter_vec4(const vvp_vector4_t&val);
 
 	// Test the value against the filter.
       vvp_bit4_t filtered_value(const vvp_vector4_t&val, unsigned idx) const;
@@ -246,7 +245,6 @@ class vvp_fun_signal8  : public vvp_fun_signal_vec {
       void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
       void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
       void force_fil_real(double val, vvp_vector2_t mask);
-      const vvp_vector8_t* filter_vec8(const vvp_vector8_t&val);
 	// Test the value against the filter.
       vvp_scalar_t filtered_value(const vvp_vector8_t&val, unsigned idx) const;
       const vvp_vector8_t& filtered_vec8(const vvp_vector8_t&val) const;
@@ -274,7 +272,6 @@ class vvp_fun_signal_real : public vvp_fun_signal_base {
       void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
       void force_fil_real(double val, vvp_vector2_t mask);
 
-      bool filter_real(double&val);
 	// Test the value against the filter.
       double filtered_real(double val) const;
 
@@ -361,8 +358,8 @@ class vvp_wire_vec4 : public vvp_wire_base {
 	// the value that the node is driven to, and applies the firce
 	// filters. In wires, this also saves the driven value, so
 	// that when a force is released, we can revert to the driven value.
-      const vvp_vector4_t* filter_vec4(const vvp_vector4_t&bit);
-      const vvp_vector8_t* filter_vec8(const vvp_vector8_t&val);
+      prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep);
+      prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep);
 
 	// Abstract methods from vvp_vpi_callback
       void get_value(struct t_vpi_value*value);
@@ -381,13 +378,12 @@ class vvp_wire_vec4 : public vvp_wire_base {
       vvp_vector4_t vec4_value() const;
 
     private:
-      vvp_bit4_t filtered_value_(const vvp_vector4_t&val, unsigned idx) const;
+      vvp_bit4_t filtered_value_(unsigned idx) const;
 
     private:
       unsigned width_;
       vvp_vector4_t bits4_; // The tracked driven value
       vvp_vector4_t force4_; // the value being forced
-      vvp_vector4_t filter4_; // scratch space for filter_mask_ function.
 };
 
 class vvp_wire_vec8 : public vvp_wire_base {
@@ -396,8 +392,8 @@ class vvp_wire_vec8 : public vvp_wire_base {
       vvp_wire_vec8(unsigned wid);
 
 	// The main filter behavior for this class
-      const vvp_vector4_t* filter_vec4(const vvp_vector4_t&bit);
-      const vvp_vector8_t* filter_vec8(const vvp_vector8_t&val);
+      prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep);
+      prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep);
 
 	// Abstract methods from vvp_vpi_callback
       void get_value(struct t_vpi_value*value);
@@ -414,12 +410,16 @@ class vvp_wire_vec8 : public vvp_wire_base {
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
       vvp_vector4_t vec4_value() const;
+	// This is new to vvp_wire_vec8
+      vvp_vector8_t vec8_value() const;
+
+    private:
+      vvp_scalar_t filtered_value_(unsigned idx) const;
 
     private:
       unsigned width_;
       vvp_vector8_t bits8_;
       vvp_vector8_t force8_; // the value being forced
-      vvp_vector8_t filter8_; // scratch space for filter_mask_ function.
 };
 
 class vvp_wire_real : public vvp_wire_base {

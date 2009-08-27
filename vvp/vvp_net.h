@@ -1119,14 +1119,17 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
       virtual ~vvp_net_fil_t();
 
     public:
+      enum prop_t { STOP=0, PROP, REPL };
+
 	// Return a non-empty vector if the filter allows an
 	// output. The output result may be different from the
 	// input. If the output is nil, then suppress propagation.
-      virtual const vvp_vector4_t* filter_vec4(const vvp_vector4_t&bit);
-      virtual const vvp_vector8_t* filter_vec8(const vvp_vector8_t&val);
 
 	// Return true if the value is to be propagated, or false if
-	// propagation is suppressed. The value may be edited by the filter.
+	// propagation is suppressed. The value may be edited by the
+	// filter, or overridden by the rep argument if present.
+      virtual prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep);
+      virtual prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep);
       virtual bool filter_real(double&val);
       virtual bool filter_long(long&val);
 
@@ -1162,7 +1165,7 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 	// currently forced value, and the buf is a value that this
 	// method will use to hold a filtered value, if needed. This
 	// method returns a pointer to val or buf.
-      template <class T> const T*filter_mask_(const T&val, const T&force, T&buf);
+      template <class T> prop_t filter_mask_(const T&val, const T&force, T&rep);
 	// This template method is a scalar value of the above. It
 	// leaves the val, or it replaces it iwth a forced value.
 	// (Not really implemented, yet.)
@@ -1440,11 +1443,22 @@ inline void vvp_net_t::send_vec8_pv(const vvp_vector8_t&val,
 
 inline void vvp_net_t::send_vec4(const vvp_vector4_t&val, vvp_context_t context)
 {
-      const vvp_vector4_t*val_out = fil? fil->filter_vec4(val) : &val;
-      if (val_out == 0)
+      if (fil == 0) {
+	    vvp_send_vec4(out_, val, context);
 	    return;
+      }
 
-      vvp_send_vec4(out_, *val_out, context);
+      vvp_vector4_t rep;
+      switch (fil->filter_vec4(val, rep)) {
+	  case vvp_net_fil_t::STOP:
+	    break;
+	  case vvp_net_fil_t::PROP:
+	    vvp_send_vec4(out_, val, context);
+	    break;
+	  case vvp_net_fil_t::REPL:
+	    vvp_send_vec4(out_, rep, context);
+	    break;
+      }
 }
 
 inline void vvp_net_t::send_vec4_pv(const vvp_vector4_t&val,
@@ -1456,11 +1470,22 @@ inline void vvp_net_t::send_vec4_pv(const vvp_vector4_t&val,
 
 inline void vvp_net_t::send_vec8(const vvp_vector8_t&val)
 {
-      const vvp_vector8_t*val_out = fil? fil->filter_vec8(val) : &val;
-      if (val_out == 0)
+      if (fil == 0) {
+	    vvp_send_vec8(out_, val);
 	    return;
+      }
 
-      vvp_send_vec8(out_, *val_out);
+      vvp_vector8_t rep;
+      switch (fil->filter_vec8(val, rep)) {
+	  case vvp_net_fil_t::STOP:
+	    break;
+	  case vvp_net_fil_t::PROP:
+	    vvp_send_vec8(out_, val);
+	    break;
+	  case vvp_net_fil_t::REPL:
+	    vvp_send_vec8(out_, rep);
+	    break;
+      }
 }
 
 inline void vvp_net_t::send_real(double val, vvp_context_t context)

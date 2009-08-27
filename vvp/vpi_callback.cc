@@ -761,7 +761,7 @@ void vvp_wire_vec4::get_value(struct t_vpi_value*value)
 
 void vvp_wire_vec8::get_value(struct t_vpi_value*value)
 {
-      assert(0);
+      get_signal_value(value);
 }
 
 void vvp_wire_real::get_value(struct t_vpi_value*value)
