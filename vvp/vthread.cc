@@ -990,7 +990,7 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
       unsigned bit = cp->bit_idx[1];
 
       vvp_signal_value*sig
-	    = reinterpret_cast<vvp_signal_value*> (cp->net->fun);
+	    = dynamic_cast<vvp_signal_value*> (cp->net->fun);
       assert(sig);
 
 	// We fell off the MSB end.
@@ -1027,7 +1027,7 @@ bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
       unsigned bit = cp->bit_idx[1];
 
       vvp_signal_value*sig
-	    = reinterpret_cast<vvp_signal_value*> (cp->net->fun);
+	    = dynamic_cast<vvp_signal_value*> (cp->net->fun);
       assert(sig);
 
 	// We fell off the MSB end.
@@ -1232,7 +1232,7 @@ bool of_CASSIGN_LINK(vthread_t thr, vvp_code_t cp)
       vvp_net_t*src = cp->net2;
 
       vvp_fun_signal_base*sig
-	    = reinterpret_cast<vvp_fun_signal_base*>(dst->fun);
+	    = dynamic_cast<vvp_fun_signal_base*>(dst->fun);
       assert(sig);
 
 	/* Detect the special case that we are already continuous
@@ -1773,7 +1773,7 @@ bool of_DEASSIGN_WR(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
 
-      vvp_fun_signal_real*sig = reinterpret_cast<vvp_fun_signal_real*>(net->fun);
+      vvp_fun_signal_real*sig = dynamic_cast<vvp_fun_signal_real*>(net->fun);
       assert(sig);
 
 	// This is the net that is forcing me...
