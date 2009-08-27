@@ -75,26 +75,6 @@ double vvp_signal_value::real_value() const
       return 0;
 }
 
-unsigned vvp_fun_signal_real::filter_size() const
-{
-      return size();
-}
-
-unsigned vvp_fun_signal4::filter_size() const
-{
-      return value_size();
-}
-
-void vvp_fun_signal4::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
-{
-      assert(0);
-}
-
-void vvp_fun_signal4::force_fil_real(double val, vvp_vector2_t mask)
-{
-      assert(0);
-}
-
 void vvp_net_t::force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
 {
       assert(fil);
@@ -102,70 +82,18 @@ void vvp_net_t::force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
       vvp_send_vec4(out_, val, 0);
 }
 
-void vvp_fun_signal8::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
-{
-      assert(0 /* XXXX force_fil_vec8(vvp_vector8_t(val,6,6), mask); */);
-}
-
-void vvp_fun_signal8::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
-{
-      assert(0);
-#if 0
-      force_mask(mask);
-
-      if (force8_.size() == 0)
-	    force8_ = val;
-
-      for (unsigned idx = 0; idx < mask.size() ; idx += 1) {
-	    if (mask.value(idx) == 0)
-		  continue;
-
-	    force8_.set_bit(idx, val.value(idx));
-      }
-#endif
-}
-
-void vvp_fun_signal8::force_fil_real(double val, vvp_vector2_t mask)
-{
-      assert(0);
-}
-
 void vvp_net_t::force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
 {
-      vvp_fun_signal8*sig = dynamic_cast<vvp_fun_signal8*> (fil);
-      assert(sig);
-
-      sig->force_fil_vec8(val, mask);
-      send_vec8(val);
-}
-
-void vvp_fun_signal_real::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
-{
-      assert(0);
-}
-
-void vvp_fun_signal_real::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
-{
-      assert(0);
-}
-
-void vvp_fun_signal_real::force_fil_real(double val, vvp_vector2_t mask)
-{
-#if 0
-      force_mask(mask);
-      force_real_ = val;
-#else
-      assert(0);
-#endif
+      assert(fil);
+      fil->force_fil_vec8(val, mask);
+      vvp_send_vec8(out_, val);
 }
 
 void vvp_net_t::force_real(double val, vvp_vector2_t mask)
 {
-      vvp_fun_signal_real*sig = dynamic_cast<vvp_fun_signal_real*> (fil);
-      assert(sig);
-
-      sig->force_fil_real(val, mask);
-      send_real(val, 0);
+      assert(fil);
+      fil->force_fil_real(val, mask);
+      vvp_send_real(out_, val, 0);
 }
 
 /* **** vvp_fun_signal methods **** */
@@ -588,10 +516,6 @@ void vvp_fun_signal8::release_pv(vvp_net_ptr_t ptr, bool net,
       }
 }
 #endif
-unsigned vvp_fun_signal8::filter_size() const
-{
-      return value_size();
-}
 
 unsigned vvp_fun_signal8::value_size() const
 {
