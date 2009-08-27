@@ -84,23 +84,7 @@ unsigned vvp_fun_signal4::filter_size() const
 {
       return value_size();
 }
-#if 0
-void vvp_fun_signal4::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
-{
-      force_mask(mask);
 
-      if (force4_.size() == 0) {
-	    force4_ = val;
-      } else {
-	    for (unsigned idx = 0; idx < mask.size() ; idx += 1) {
-		  if (mask.value(idx) == 0)
-			continue;
-
-		  force4_.set_bit(idx, val.value(idx));
-	    }
-      }
-}
-#endif
 void vvp_fun_signal4::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
 {
       assert(0);
@@ -183,61 +167,7 @@ void vvp_net_t::force_real(double val, vvp_vector2_t mask)
       sig->force_fil_real(val, mask);
       send_real(val, 0);
 }
-#if 0
-vvp_bit4_t vvp_fun_signal4::filtered_value(const vvp_vector4_t&val, unsigned idx) const
-{
-      if (test_force_mask(idx))
-	    return force4_.value(idx);
-      else
-	    return val.value(idx);
-}
-#endif
-#if 0
-vvp_scalar_t vvp_fun_signal8::filtered_value(const vvp_vector8_t&val, unsigned idx) const
-{
-      if (test_force_mask(idx))
-	    return force8_.value(idx);
-      else
-	    return val.value(idx);
-}
-#endif
-#if 0
-const vvp_vector4_t& vvp_fun_signal4::filtered_vec4(const vvp_vector4_t&val) const
-{
-      if (test_force_mask_is_zero())
-	    return val;
 
-      filter4_ = val;
-      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
-	    if (test_force_mask(idx))
-		  filter4_.set_bit(idx, force4_.value(idx));
-      }
-      return filter4_;
-}
-#endif
-#if 0
-const vvp_vector8_t& vvp_fun_signal8::filtered_vec8(const vvp_vector8_t&val) const
-{
-      if (test_force_mask_is_zero())
-	    return val;
-
-      filter8_ = val;
-      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
-	    if (test_force_mask(idx))
-		  filter8_.set_bit(idx, force8_.value(idx));
-      }
-      return filter8_;
-}
-#endif
-#if 0
-double vvp_fun_signal_real::filtered_real(double val) const
-{
-      if (test_force_mask_is_zero())
-	    return val;
-
-      return force_real_;
-}
-#endif
 /* **** vvp_fun_signal methods **** */
 
 vvp_fun_signal_base::vvp_fun_signal_base()
