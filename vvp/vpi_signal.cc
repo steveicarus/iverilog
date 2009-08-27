@@ -37,6 +37,7 @@
 # include  <malloc.h>
 #endif
 # include  <stdlib.h>
+# include  <limits.h>
 # include  <string.h>
 # include  <assert.h>
 #ifdef CHECK_WITH_VALGRIND
