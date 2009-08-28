@@ -109,6 +109,7 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 		  if (word_ex) {
 			  /* Some array select have been evaluated. */
 			if (number_is_immediate(word_ex,IMM_WID, 0)) {
+			      assert(! number_is_unknown(word_ex));
 			      use_word = get_number_immediate(word_ex);
 			      word_ex = 0;
 			}
@@ -130,6 +131,7 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 		  if (word_ex) {
 			  /* Some array select have been evaluated. */
 			if (number_is_immediate(word_ex, IMM_WID, 0)) {
+			      assert(! number_is_unknown(word_ex));
 			      use_word = get_number_immediate(word_ex);
 			      use_word_defined = 1;
 			      word_ex = 0;
@@ -185,6 +187,7 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 
 	      /* This is a constant bit/part select. */
 	    if (number_is_immediate(bexpr, 64, 1)) {
+		  assert(! number_is_unknown(bexpr));
 		  snprintf(buffer, sizeof buffer, "&PV<v%p_0, %ld, %u>",
 		           ivl_expr_signal(vexpr),
 		           get_number_immediate(bexpr),
@@ -206,9 +209,19 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 			return 0;
 		  }
 	    } else {
-		  /* Fallback case: evaluate the expression. */
+		    /* Fallback case: evaluate the expression. */
 		  struct vector_info rv;
 		  rv = draw_eval_expr(bexpr, STUFF_OK_XZ);
+		    /* We need to enhance &PV<> to support a signed index. */
+		  if (ivl_expr_signed(bexpr) &&
+		      (ivl_expr_width(bexpr) < 8*sizeof(int))) {
+			fprintf(stderr, "%s:%u: tgt-vvp warning: V0.9 may give "
+			                "incorrect results for a select with a "
+			                "signed index less than %d bits.\n",
+			                ivl_expr_file(expr),
+			                ivl_expr_lineno(expr),
+			                8*sizeof(int));
+		  }
 		  snprintf(buffer, sizeof buffer, "&PV<v%p_0, %u %u, %u>",
 		           ivl_expr_signal(vexpr),
 		           rv.base, rv.wid,

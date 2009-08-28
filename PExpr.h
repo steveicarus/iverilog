@@ -339,6 +339,12 @@ class PEIdent : public PExpr {
 					   NetScope*found,
 					   const NetExpr*par_msb,
 					   const NetExpr*par_lsb) const;
+      NetExpr*elaborate_expr_param_idx_do_(Design*des,
+					   NetScope*scope,
+					   const NetExpr*par,
+					   NetScope*found,
+					   const NetExpr*par_msb,
+					   const NetExpr*par_lsb) const;
       NetExpr*elaborate_expr_net(Design*des,
 				 NetScope*scope,
 				 NetNet*net,
