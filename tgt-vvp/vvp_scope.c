@@ -558,6 +558,9 @@ static void draw_delay(ivl_net_logic_t lptr)
       assert(number_is_immediate(d0, 64, 0));
       assert(number_is_immediate(d1, 64, 0));
       assert(number_is_immediate(d2, 64, 0));
+      assert(! number_is_unknown(d0));
+      assert(! number_is_unknown(d1));
+      assert(! number_is_unknown(d2));
 
       if (d0 == d1 && d1 == d2)
 	    fprintf(vvp_out, " (%lu)", get_number_immediate(d0));
@@ -874,6 +877,9 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		&& number_is_immediate(fall_exp,64,0)
 		&& number_is_immediate(decay_exp,64,0)) {
 
+		  assert(! number_is_unknown(rise_exp));
+		  assert(! number_is_unknown(fall_exp));
+		  assert(! number_is_unknown(decay_exp));
 		  fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
 			  lptr, get_number_immediate(rise_exp),
 			  get_number_immediate(fall_exp),
@@ -1079,6 +1085,9 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net)
 	    assert(number_is_immediate(d_rise, 64, 0));
 	    assert(number_is_immediate(d_fall, 64, 0));
 	    assert(number_is_immediate(d_decay, 64, 0));
+	    assert(! number_is_unknown(d_rise));
+	    assert(! number_is_unknown(d_fall));
+	    assert(! number_is_unknown(d_decay));
 	    dly = "/d";
 	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
 	            net, get_number_immediate(d_rise),

@@ -476,14 +476,78 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 
       NetExpr*base = elab_and_eval(des, scope, index_tail.msb, -1);
 
-	/* Correct the mux for the range of the vector. */
-      if (reg->msb() < reg->lsb())
-	    base = make_sub_expr(reg->lsb(), base);
-      else if (reg->lsb() != 0)
-	    base = make_add_expr(base, - reg->lsb());
-
-      if (use_sel == index_component_t::SEL_IDX_DO && wid > 1 ) {
-	    base = make_add_expr(base, 1-(long)wid);
+	// Handle the special case that the base is constant. For this
+	// case we can reduce the expression.
+      if (NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
+	      // For the undefined case just let the constant pass and
+	      // we will handle it in the code generator.
+	    if (base_c->value().is_defined()) {
+		  long lsv = base_c->value().as_long();
+		  long offset = 0;
+		  if (((reg->msb() < reg->lsb()) &&
+                       use_sel == index_component_t::SEL_IDX_UP) ||
+		      ((reg->msb() > reg->lsb()) &&
+		       use_sel == index_component_t::SEL_IDX_DO)) {
+			offset = -wid + 1;
+		  }
+		  delete base;
+		  base = new NetEConst(verinum(reg->sb_to_idx(lsv) + offset));
+		  if (warn_ob_select) {
+			long rel_base = reg->sb_to_idx(lsv) + offset;
+			if (rel_base < 0) {
+			      cerr << get_fileline() << ": warning: " << reg->name();
+			      if (reg->array_dimensions() > 0) cerr << "[]";
+			      cerr << "[" << lsv;
+			      if (use_sel == index_component_t::SEL_IDX_UP) {
+				    cerr << "+:";
+			      } else {
+				    cerr << "-:";
+			      }
+			      cerr << wid << "] is selecting before vector." << endl;
+			}
+			if (rel_base + wid > reg->vector_width()) {
+			      cerr << get_fileline() << ": warning: " << reg->name();
+			      if (reg->array_dimensions() > 0) cerr << "[]";
+			      cerr << "[" << lsv;
+			      if (use_sel == index_component_t::SEL_IDX_UP) {
+				    cerr << "+:";
+			      } else {
+				    cerr << "-:";
+			      }
+			      cerr << wid << "] is selecting after vector." << endl;
+			}
+		  }
+	    } else {
+		  if (warn_ob_select) {
+			cerr << get_fileline() << ": warning: " << reg->name();
+			if (reg->array_dimensions() > 0) cerr << "[]";
+			cerr << "['bx";
+			if (use_sel == index_component_t::SEL_IDX_UP) {
+			      cerr << "+:";
+			} else {
+			      cerr << "-:";
+			}
+			cerr << wid << "] is always outside vector." << endl;
+		  }
+	    }
+      } else {
+	      /* Correct the mux for the range of the vector. */
+	    if (use_sel == index_component_t::SEL_IDX_UP) {
+		  if (reg->msb() > reg->lsb()) {
+			if (long offset = reg->lsb())
+			      base = make_add_expr(base, -offset);
+		  } else {
+			base = make_sub_expr(reg->lsb()-wid+1, base);
+		  }
+	    } else {
+		    // This is assumed to be a SEL_IDX_DO.
+		  if (reg->msb() > reg->lsb()) {
+			if (long offset = reg->lsb()+wid-1)
+			      base = make_add_expr(base, -offset);
+		  } else {
+			base = make_sub_expr(reg->lsb(), base);
+		  }
+	    }
       }
 
       if (debug_elaborate)

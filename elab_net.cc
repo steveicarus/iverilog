@@ -238,15 +238,33 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		      return 0;
 		}
 
-		long midx_val = tmp->value().as_long();
-		midx = sig->sb_to_idx(midx_val);
-		delete tmp_ex;
-
 		  /* The width (a constant) is calculated here. */
 		unsigned long wid = 0;
 		bool flag = calculate_up_do_width_(des, scope, wid);
-		if (! flag)
+		if (! flag) return false;
+
+		  /* We have an undefined index and that is out of range. */
+		if (! tmp->value().is_defined()) {
+		      if (warn_ob_select) {
+			    cerr << get_fileline() << ": warning: "
+			         << sig->name();
+			    if (sig->array_dimensions() > 0) cerr << "[]";
+			    cerr << "['bx";
+			    if (index_tail.sel ==
+			        index_component_t::SEL_IDX_UP) {
+				  cerr << "+:";
+			    } else {
+				  cerr << "-:";
+			    }
+			    cerr << wid << "] is always outside vector."
+			         << endl;
+		      }
 		      return false;
+		}
+
+		long midx_val = tmp->value().as_long();
+		midx = sig->sb_to_idx(midx_val);
+		delete tmp_ex;
 
 		if (index_tail.sel == index_component_t::SEL_IDX_UP)
 		      lidx = sig->sb_to_idx(midx_val+wid-1);
@@ -260,9 +278,19 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		}
 
 		  /* Warn about an indexed part select that is out of range. */
-		if (midx >= (long)sig->vector_width() || lidx < 0) {
-		      cerr << get_fileline() << ": warning: Indexed part "
-                              "select " << sig->name();
+		if (warn_ob_select && (lidx < 0)) {
+		      cerr << get_fileline() << ": warning: " << sig->name();
+		      if (sig->array_dimensions() > 0) cerr << "[]";
+		      cerr << "[" << midx_val;
+		      if (index_tail.sel == index_component_t::SEL_IDX_UP) {
+			    cerr << "+:";
+		      } else {
+			    cerr << "-:";
+		      }
+		      cerr << wid << "] is selecting before vector." << endl;
+		}
+		if (warn_ob_select && (midx >= (long)sig->vector_width())) {
+		      cerr << get_fileline() << ": warning: " << sig->name();
 		      if (sig->array_dimensions() > 0) {
 			    cerr << "[]";
 		      }
@@ -272,7 +300,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		      } else {
 			    cerr << "-:";
 		      }
-		      cerr << wid << "] is out of range." << endl;
+		      cerr << wid << "] is selecting after vector." << endl;
 		}
 
 		  /* This is completely out side the signal so just skip it. */

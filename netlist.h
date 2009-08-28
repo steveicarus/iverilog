@@ -3829,8 +3829,8 @@ class NetESignal  : public NetExpr {
       const NetNet* sig() const;
       NetNet* sig();
 	// Declared vector dimensions for the signal.
-      unsigned msi() const;
-      unsigned lsi() const;
+      long msi() const;
+      long lsi() const;
 
       virtual ivl_variable_type_t expr_type() const;
 
