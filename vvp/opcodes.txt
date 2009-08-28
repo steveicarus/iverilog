@@ -491,7 +491,8 @@ vector is sign extended (instead of 0-extended) before the addition.
 
 This instruction is similar to %load/av, but it loads only a single
 bit, and the <index> is the selector for the bit to use. If <index> is
-out of range, then x is loaded.
+out of range, then x is loaded. The index value is incremented by one
+if it is defined (bit 4 is not 1).
 
 * %load/v <bit>, <functor-label>, <wid>
 

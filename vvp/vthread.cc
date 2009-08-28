@@ -2849,8 +2849,15 @@ bool of_LOAD_AR(vthread_t thr, vvp_code_t cp)
       unsigned bit = cp->bit_idx[0];
       unsigned idx = cp->bit_idx[1];
       unsigned adr = thr->words[idx].w_int;
+      double word;
 
-      double word = array_get_word_r(cp->array, adr);
+	/* The result is 0.0 if the address is undefined. */
+      if (thr_get_bit(thr, 4) == BIT4_1) {
+	    word = 0.0;
+      } else {
+	    word = array_get_word_r(cp->array, adr);
+      }
+
       thr->words[bit].w_real = word;
       return true;
 }
@@ -2870,10 +2877,17 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
       unsigned wid = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
 
-      vvp_vector4_t word = array_get_word(cp->array, adr);
-
 	/* Check the address once, before we scan the vector. */
       thr_check_addr(thr, bit+wid-1);
+
+	/* The result is 'bx if the address is undefined. */
+      if (thr_get_bit(thr, 4) == BIT4_1) {
+	    vvp_vector4_t tmp (wid, BIT4_X);
+	    thr->bits4.set_vec(bit, tmp);
+	    return true;
+      }
+
+      vvp_vector4_t word = array_get_word(cp->array, adr);
 
       if (word.size() > wid)
 	    word.resize(wid);
@@ -2945,6 +2959,15 @@ bool of_LOAD_AVP0(vthread_t thr, vvp_code_t cp)
       unsigned wid = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
 
+	/* The result is 'bx if the address is undefined. */
+      if (thr_get_bit(thr, 4) == BIT4_1) {
+	    unsigned bit = cp->bit_idx[0];
+	    thr_check_addr(thr, bit+wid-1);
+	    vvp_vector4_t tmp (wid, BIT4_X);
+	    thr->bits4.set_vec(bit, tmp);
+	    return true;
+      }
+
         /* We need a vector this wide to make the math work correctly.
          * Copy the base bits into the vector, but keep the width. */
       vvp_vector4_t sig_value(wid, BIT4_0);
@@ -2958,6 +2981,15 @@ bool of_LOAD_AVP0_S(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
+
+	/* The result is 'bx if the address is undefined. */
+      if (thr_get_bit(thr, 4) == BIT4_1) {
+	    unsigned bit = cp->bit_idx[0];
+	    thr_check_addr(thr, bit+wid-1);
+	    vvp_vector4_t tmp (wid, BIT4_X);
+	    thr->bits4.set_vec(bit, tmp);
+	    return true;
+      }
 
       vvp_vector4_t tmp (array_get_word(cp->array, adr));
 
@@ -2985,11 +3017,17 @@ bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
       unsigned index = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
 
-      unsigned use_index = thr->words[index].w_int;
+	/* The result is 'bx if the address is undefined. */
+      if (thr_get_bit(thr, 4) == BIT4_1) {
+	    thr_put_bit(thr, bit, BIT4_X);
+	    return true;
+      }
+
+      long use_index = thr->words[index].w_int;
 
       vvp_vector4_t word = array_get_word(cp->array, adr);
 
-      if (use_index >= word.size()) {
+      if ((use_index >= (long)word.size()) || (use_index < 0)) {
 	    thr_put_bit(thr, bit, BIT4_X);
       } else {
 	    thr_put_bit(thr, bit, word.value(use_index));
