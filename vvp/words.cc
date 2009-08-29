@@ -266,8 +266,6 @@ static void __compile_net(char*label,
 					    signed_flag, net8_flag, local_flag);
 	    resolv_submit(res);
 	    return;
-	    cerr << __FILE__ << ":" << __LINE__ << ": Internal error: "
-		 << "vvp_net_lookup fails: " << argv[0].text << endl;
       }
       assert(node);
 
@@ -313,19 +311,84 @@ void compile_netw(char*label, char*array_label, unsigned long array_addr,
 		    argc, argv);
 }
 
+
+class __compile_real_net_resolv : public resolv_list_s {
+
+    public:
+      explicit __compile_real_net_resolv(char*ref_label, char*my_label, char*name,
+					 bool local_flag)
+      : resolv_list_s(ref_label)
+      { my_label_ = my_label;
+	name_ = name;
+	local_flag_ = local_flag;
+      }
+
+      ~__compile_real_net_resolv() { }
+
+      bool resolve(bool message_flag);
+
+    private:
+      char*my_label_;
+      char*name_;
+      bool local_flag_;
+};
+
+static void __compile_real_net2(vvp_net_t*node, char*my_label, char*name,
+				bool local_flag)
+{
+      vvp_wire_base*fil = dynamic_cast<vvp_wire_base*> (node->fil);
+
+      if (fil == 0) {
+	    fil = new vvp_wire_real;
+	    node->fil = fil;
+      }
+
+      vpiHandle obj = 0;
+      if (!local_flag) {
+	    obj = vpip_make_real_var(name, node);
+	    compile_vpi_symbol(my_label, obj);
+      }
+
+      if (obj) vpip_attach_to_current_scope(obj);
+
+      free(my_label);
+      delete[]name;
+}
+
 static void __compile_real(char*label, char*name,
                            char*array_label, unsigned long array_addr,
                            int msb, int lsb, bool local_flag,
                            unsigned argc, struct symb_s*argv)
 {
-      vvp_net_t*net = new vvp_net_t;
-
+#if 0
       vvp_array_t array = array_label ? array_find(array_label) : 0;
       assert(array_label ? array!=0 : true);
-   
+#endif
+	// XXXX Forgot how to implement net arrays...
+      assert(array_label == 0);
+
+      assert(argc == 1);
+      vvp_net_t*node = vvp_net_lookup(argv[0].text);
+      if (node == 0) {
+	      /* No existing net, but the string value may be a
+		 constant. In that case, we will wind up generating a
+		 bufz node that can carry the constant value. */
+	    node = create_constant_node(label, argv[0].text);
+      }
+      if (node == 0) {
+	    __compile_real_net_resolv*res
+		  = new __compile_real_net_resolv(argv[0].text, label,
+						  name, local_flag);
+	    resolv_submit(res);
+	    return;
+      }
+
+      assert(node);
+      assert(name);
+      __compile_real_net2(node, label, name, local_flag);
+#if 0
       vvp_fun_signal_real*fun = new vvp_fun_signal_real_sa;
       net->fun = fun;
-      assert(0 /* Need to create a vvp_net_fil_t object: net->fil = fun; */);
 
 	/* Add the label into the functor symbol table. */
       define_functor_symbol(label, net);
@@ -352,6 +415,20 @@ static void __compile_real(char*label, char*name,
       if (name) delete[] name;
       if (array_label) free(array_label);
       free(argv);
+#endif
+}
+
+bool __compile_real_net_resolv::resolve(bool msg_flag)
+{
+      vvp_net_t*node = vvp_net_lookup(label());
+      if (node == 0) {
+	    if (msg_flag)
+		  cerr << "Unable to resolve label " << label() << endl;
+	    return false;
+      }
+
+      __compile_real_net2(node, my_label_, name_, local_flag_);
+      return true;
 }
 
 void compile_net_real(char*label, char*name, int msb, int lsb, bool local_flag,
