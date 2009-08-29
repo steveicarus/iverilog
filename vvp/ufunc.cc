@@ -88,7 +88,7 @@ void ufunc_core::finish_thread(vthread_t thr)
 	    propagate_real(sig->real_value());
 
       if (vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(result_->fun))
-	    propagate_vec4(sig->vec4_value());
+	    propagate_vec4(sig->vec4_unfiltered_value());
 }
 
 /*

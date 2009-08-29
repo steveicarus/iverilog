@@ -2613,10 +2613,11 @@ bool of_IX_GETV(vthread_t thr, vvp_code_t cp)
       unsigned index = cp->bit_idx[0];
       vvp_net_t*net = cp->net;
 
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(net->fil);
       if (sig == 0) {
+	    assert(net->fil);
 	    cerr << "%%ix/getv error: Net arg not a vector signal? "
-		 << typeid(*net->fun).name() << endl;
+		 << typeid(*net->fil).name() << endl;
       }
       assert(sig);
 

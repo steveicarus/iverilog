@@ -1084,7 +1084,7 @@ static void PV_get_value(vpiHandle ref, p_vpi_value vp)
       assert(ref->vpi_type->type_code == vpiPartSelect);
       struct __vpiPV*rfp = (struct __vpiPV*)ref;
 
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(rfp->net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(rfp->net->fil);
       assert(sig);
 
       switch (vp->format) {
