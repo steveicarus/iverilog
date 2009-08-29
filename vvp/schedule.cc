@@ -676,6 +676,15 @@ void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       schedule_init_list = cur;
 }
 
+void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+{
+      struct assign_vector8_event_s*cur = new struct assign_vector8_event_s;
+      cur->ptr = ptr;
+      cur->val = bit;
+      cur->next = schedule_init_list;
+      schedule_init_list = cur;
+}
+
 void schedule_init_vector(vvp_net_ptr_t ptr, double bit)
 {
       struct assign_real_event_s*cur = new struct assign_real_event_s;

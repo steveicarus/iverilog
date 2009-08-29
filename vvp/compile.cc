@@ -786,7 +786,6 @@ double crstring_to_double(const char*label)
 void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 {
       vvp_net_ptr_t ifdx = vvp_net_ptr_t(fdx, port);
-      char*tp;
 
 	/* Is this a vvp_vector4_t constant value? */
       if (c4string_test(label)) {
@@ -807,40 +806,9 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
       }
 
 	/* Is this a vvp_vector8_t constant value? */
-      if ((strncmp(label, "C8<", 3) == 0)
-	  && ((tp = strchr(label,'>')))
-	  && (tp[1] == 0)
-	  && (strspn(label+3, "01234567xz")+3 == (unsigned)(tp-label))) {
+      if (c8string_test(label)) {
 
-	    size_t vsize = tp-label-3;
-	    assert(vsize%3 == 0);
-	    vsize /= 3;
-
-	    vvp_vector8_t tmp (vsize);
-
-	    for (unsigned idx = 0 ;  idx < vsize ;  idx += 1) {
-		  vvp_bit4_t bit = BIT4_Z;
-		  unsigned dr0 = label[3+idx*3+0] - '0';
-		  unsigned dr1 = label[3+idx*3+1] - '0';
-
-		  switch (label[3+idx*3+2]) {
-		      case '0':
-			bit = BIT4_0;
-			break;
-		      case '1':
-			bit = BIT4_1;
-			break;
-		      case 'x':
-			bit = BIT4_X;
-			break;
-		      case 'z':
-			bit = BIT4_Z;
-			break;
-		  }
-
-		  tmp.set_bit(vsize-idx-1, vvp_scalar_t(bit, dr0, dr1));
-	    }
-
+	    vvp_vector8_t tmp = c8string_to_vector8(label);
 	    schedule_set_vector(ifdx, tmp);
 
 	    free(label);

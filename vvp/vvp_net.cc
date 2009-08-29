@@ -2549,6 +2549,42 @@ bool c8string_test(const char*str)
       }
       return false;
 }
+/*
+ * The format of a C8<> string is:
+ *   C8<aaabbbccc...>
+ * where aaa... is a 3 character bit descriptor.
+ */
+vvp_vector8_t c8string_to_vector8(const char*str)
+{
+      size_t vsize = strlen(str)-4;
+      assert(vsize%3 == 0);
+      vsize /= 3;
+      vvp_vector8_t tmp (vsize);
+
+      for (size_t idx = 0 ; idx < vsize ; idx += 1) {
+	    const char*cp = str+3+3*idx;
+	    vvp_bit4_t bit = BIT4_X;
+	    unsigned dr0 = cp[0]-'0';
+	    unsigned dr1 = cp[1]-'0';
+	    switch (cp[2]) {
+		case '0':
+		  bit = BIT4_0;
+		  break;
+		case '1':
+		  bit = BIT4_1;
+		  break;
+		case 'x':
+		  bit = BIT4_X;
+		  break;
+		case 'z':
+		  bit = BIT4_Z;
+		  break;
+	    }
+	    tmp.set_bit(vsize-idx-1, vvp_scalar_t(bit, dr0, dr1));
+      }
+
+      return tmp;
+}
 
 ostream& operator<<(ostream&out, const vvp_vector8_t&that)
 {

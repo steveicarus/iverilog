@@ -160,7 +160,7 @@ vvp_net_t* create_constant_node(const char*label, const char*val_str)
       if (c8string_test(val_str)) {
 	    vvp_net_t*net = new vvp_net_t;
 	    net->fun = new vvp_fun_bufz;
-	    assert(0); // XXXX Don't know how to init a vvp_vector8_t? */
+	    schedule_init_vector(vvp_net_ptr_t(net,0), c8string_to_vector8(val_str));
 	    return net;
       }
 

@@ -87,6 +87,7 @@ extern void schedule_set_vector(vvp_net_ptr_t ptr, double val);
  * (propagated as events) through the rest of the net.
  */
 extern void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector4_t val);
+extern void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector8_t val);
 extern void schedule_init_vector(vvp_net_ptr_t ptr, double val);
 
 /*
