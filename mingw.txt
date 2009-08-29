@@ -1,3 +1,8 @@
+Please NOTE:
+
+These directions are slightly outdated and need to be updated.
+The plan is to rewrite all this using the latest MinGW at
+some time in the not too distant future (CR Aug. 2009)
 
 
 MINGW PORT OF ICARUS VERILOG
@@ -49,7 +54,7 @@ critical, but these are the versions I use.
      Mingw32-5.x		<http://www.mingw.org>
         ... including the sub-packages binutils, gcc-core and gcc-g++
 	if you are given the option.
-     readline-4.2-20010727.zip  <http://mingwrep.sourceforge.net>
+     readline-5.0-1             <http://gnuwin32.sourceforge.net>
      bzip2-1.0.3		<http://gnuwin32.sourceforge.net>
      zlib-1.2.3			<http://gnuwin32.sourceforge.net>
      gperf-3.0.1		<http://gnuwin32.sourceforge.net>
@@ -79,7 +84,7 @@ Download the msys-1.x.x.exe and msysdtc-1.x.x.exe binaries. These are
 self-installing packages. Install msys first, and then msysDTC. Most
 likely, you want to install them in c:/msys. (The msysDTK is installed
 in the same location, as it is an add-on.)
-
+           
 This install should be easy and reliable.
 
 The installation will leave an "msys" icon on your desktop and in the
@@ -110,29 +115,6 @@ Finally, as part of installing the mingw32 compilers, remember to add
 the mingw/bin directory to your path. You will need that to be able to
 find the compilers later.
 
-* Install Mingw32 Packages
-
-There is a collection of precompiled libraries and add-on packages
-that are intended for use with the Mingw32 compiler. These do not come
-with simplified Windows installers, but they are pretty easy to
-install by hand. Icarus Verilog uses the readline-4.2 package from
-that collection.
-
-Since I installed Mingw32 in c:\mingw, I also created a
-Mingw-packages directory called c:\mingw-packages. The install, then,
-is as easy as this:
-
-  <msys shell>
-    $ cd c:/mingw-packages
-    $ unzip readline-4.2-20010727.zip
-        [lots of inflating...]
-
-There is no need to adjust your execution path for this package as we
-are only using a library out of here. However, do remember the
-directory name, as you will need it later.
-
-Done. On to the next packages.
-
 * Install GnuWin32 Packages
 
 The GnuWin32 project is a collections of open source programs and
@@ -148,6 +130,7 @@ You will need these gnuwin32 packages to compile Icarus Verilog:
     gperf-3.0.1.exe
     bison-2.1.exe
     flex-2.5.4a.exe
+    readline-5.0-1.exe
 
 I suggest creating a common directory for holding all your gnuwin32
 packages. I use C:\gnuwin32. The download page at the gnuwin32 site
@@ -218,8 +201,8 @@ without white space.
 Now, configure the source to make the makefiles and configuration
 details. Run these commands:
 
-	$ CPPFLAGS="-Ic:/gnuwin32/include -Ic:/mingw-packages/include"
-	$ LDFLAGS="-Lc:/gnuwin32/lib -Lc:/mingw-packages/lib"
+	$ CPPFLAGS="-Ic:/gnuwin32/include
+	$ LDFLAGS="-Lc:/gnuwin32/lib
 	$ export CPPFLAGS LDFLAGS
 	$ ./configure --prefix=c:/iverilog
 
@@ -271,7 +254,8 @@ You may find that you need to put some of the prerequisite DLLs into
 the d:\iverilog\bin directory. These include:
 
       c:\mingw\bin\mingw10.dll
-      c:\mingw-packages\bin\libreadline.dll
+      c:\gnuwin32\bin\readline.dll
+      c:\gnuwin32\bin\history.dll
       c:\gnuwin32\bin\bzip2.dll
       c:\gnuwin32\bin\zlib.dll
 
