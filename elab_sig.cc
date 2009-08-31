@@ -126,7 +126,7 @@ static void elaborate_sig_funcs(Design*des, NetScope*scope,
 
 	    hname_t use_name ( (*cur).first );
 	    NetScope*fscope = scope->child(use_name);
-	    if (scope == 0) {
+	    if (fscope == 0) {
 		  cerr << (*cur).second->get_fileline() << ": internal error: "
 		       << "Child scope for function " << (*cur).first
 		       << " missing in " << scope_path(scope) << "." << endl;
