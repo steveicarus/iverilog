@@ -1268,6 +1268,8 @@ extern "C" unsigned ivl_lpm_size(ivl_lpm_t net)
 	    return net->u_.ufunc.ports - 1;
 	  case IVL_LPM_REPEAT:
 	    return net->u_.repeat.count;
+	  case IVL_LPM_CONCAT:
+	    return net->u_.concat.inputs;
 	  default:
 	    assert(0);
 	    return 0;

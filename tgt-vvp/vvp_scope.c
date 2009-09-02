@@ -1344,7 +1344,7 @@ static unsigned lpm_concat_inputs(ivl_lpm_t net, unsigned start,
 static void draw_lpm_concat(ivl_lpm_t net)
 {
       const char*src_table[4];
-      unsigned icnt = ivl_lpm_selects(net);
+      unsigned icnt = ivl_lpm_size(net);
       const char*dly = draw_lpm_output_delay(net);
 
       if (icnt <= 4) {

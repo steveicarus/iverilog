@@ -48,7 +48,7 @@ static vhdl_expr *concat_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    vhdl_binop_expr *expr =
       new vhdl_binop_expr(VHDL_BINOP_CONCAT, result_type);
  
-   for (int i = ivl_lpm_selects(lpm) - 1; i >= 0; i--) {
+   for (int i = ivl_lpm_size(lpm) - 1; i >= 0; i--) {
       vhdl_expr *e = readable_ref(scope, ivl_lpm_data(lpm, i));
       if (NULL == e) {
          delete expr;
