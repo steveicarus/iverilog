@@ -65,6 +65,26 @@ means the following:
 	1 and 1 --> 1
 	otherwise   x
 
+* %assign/ar <array-label>, <delay>, <bit>
+* %assign/ar/d <array-label>, <delayx>, <bit>
+* %assign/ar/e <array-label>, <bit>
+
+The %assign/ar instruction assigns a real value to a word in the
+labeled real array. The <delay> is the delay in simulation time to
+the assignment (0 for non-blocking assignment) and <bit> is the
+index register that contains the value to write.
+
+The memory word address is read from index register 3. The address is
+in canonical form.
+
+The %assign/ar/d variation reads the delay from an integer register that
+is given by the <delayx> value. This should not be 3 or the <bit> index,
+of course, since these registers contain the word address and the value.
+
+The %assign/ar/e variation uses the information in the thread
+event control registers to determine when to perform the assign.
+%evctl is used to set the event control information.
+
 * %assign/av <array-label>, <delay>, <bit>
 * %assign/av/d <array-label>, <delayx>, <bit>
 * %assign/av/e <array-label>, <bit>
@@ -851,7 +871,7 @@ and leaves the result in the <dst> vector. xor is this:
 
 
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU

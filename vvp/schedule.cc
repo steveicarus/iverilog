@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -256,6 +256,37 @@ void assign_array_word_s::operator delete(void*ptr)
 }
 
 unsigned long count_assign_aword_pool(void) { return array_w_heap.pool; }
+
+struct assign_array_r_word_s  : public event_s {
+      vvp_array_t mem;
+      unsigned adr;
+      double val;
+      void run_run(void);
+
+      static void* operator new(size_t);
+      static void operator delete(void*);
+};
+
+void assign_array_r_word_s::run_run(void)
+{
+      count_assign_events += 1;
+      array_set_word(mem, adr, val);
+}
+static const size_t ARRAY_R_W_CHUNK_COUNT = 8192 / sizeof(struct assign_array_r_word_s);
+static slab_t<sizeof(assign_array_r_word_s),ARRAY_R_W_CHUNK_COUNT> array_r_w_heap;
+
+inline void* assign_array_r_word_s::operator new(size_t size)
+{
+      assert(size == sizeof(assign_array_r_word_s));
+      return array_r_w_heap.alloc_slab();
+}
+
+void assign_array_r_word_s::operator delete(void*ptr)
+{
+      array_r_w_heap.free_slab(ptr);
+}
+
+unsigned long count_assign_arword_pool(void) { return array_r_w_heap.pool; }
 
 struct generic_event_s : public event_s {
       vvp_gen_event_t obj;
@@ -605,6 +636,18 @@ void schedule_assign_array_word(vvp_array_t mem,
       cur->mem = mem;
       cur->adr = word_addr;
       cur->off = off;
+      cur->val = val;
+      schedule_event_(cur, delay, SEQ_NBASSIGN);
+}
+
+void schedule_assign_array_word(vvp_array_t mem,
+				unsigned word_addr,
+				double val,
+				vvp_time64_t delay)
+{
+      struct assign_array_r_word_s*cur = new struct assign_array_r_word_s;
+      cur->mem = mem;
+      cur->adr = word_addr;
       cur->val = val;
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }

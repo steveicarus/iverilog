@@ -815,6 +815,68 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/* %assign/ar <array>, <delay>, <bit>
+ * Generate an assignment event to a real array. Index register 3
+ * contains the canonical address of the word in the memory. <delay>
+ * is the delay in simulation time. <bit> is the index register
+ * containing the real value.
+ */
+bool of_ASSIGN_AR(vthread_t thr, vvp_code_t cp)
+{
+      long adr = thr->words[3].w_int;
+      unsigned delay = cp->bit_idx[0];
+      double value = thr->words[cp->bit_idx[1]].w_real;
+
+      if (adr >= 0) {
+	    schedule_assign_array_word(cp->array, adr, value, delay);
+      }
+
+      return true;
+}
+
+/* %assign/ar/d <array>, <delay_idx>, <bit>
+ * Generate an assignment event to a real array. Index register 3
+ * contains the canonical address of the word in the memory.
+ * <delay_idx> is the integer register that contains the delay value.
+ * <bit> is the index register containing the real value.
+ */
+bool of_ASSIGN_ARD(vthread_t thr, vvp_code_t cp)
+{
+      long adr = thr->words[3].w_int;
+      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_int;
+      double value = thr->words[cp->bit_idx[1]].w_real;
+
+      if (adr >= 0) {
+	    schedule_assign_array_word(cp->array, adr, value, delay);
+      }
+
+      return true;
+}
+
+/* %assign/ar/e <array>, <bit>
+ * Generate an assignment event to a real array. Index register 3
+ * contains the canonical address of the word in the memory. <bit>
+ * is the index register containing the real value. The event
+ * information is contained in the thread event control registers
+ * and is set with %evctl.
+ */
+bool of_ASSIGN_ARE(vthread_t thr, vvp_code_t cp)
+{
+      long adr = thr->words[3].w_int;
+      double value = thr->words[cp->bit_idx[0]].w_real;
+
+      if (adr >= 0) {
+	    if (thr->ecount == 0) {
+		  schedule_assign_array_word(cp->array, adr, value, 0);
+	    } else {
+		  schedule_evctl(cp->array, adr, value, thr->event,
+		                 thr->ecount);
+	    }
+      }
+
+      return true;
+}
+
 /* %assign/av <array>, <delay>, <bit>
  * This generates an assignment event to an array. Index register 0
  * contains the width of the vector (and the word) and index register

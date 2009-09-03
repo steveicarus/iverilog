@@ -224,6 +224,63 @@ static void set_to_lvariable(ivl_lval_t lval,
       }
 }
 
+/* Support a non-blocking assignment to a real array word. */
+static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
+                                   unsigned bit, uint64_t delay,
+                                   ivl_expr_t dexp, unsigned nevents)
+{
+      unsigned skip_assign = transient_id++;
+
+	/* This code is common to all the different types of array delays. */
+      if (number_is_immediate(word_ix, IMM_WID, 0)) {
+	    assert(! number_is_unknown(word_ix));
+	    fprintf(vvp_out, "    %%ix/load 3, %lu, 0; address\n",
+	                     get_number_immediate(word_ix));
+      } else {
+	      /* Calculate array word index into index register 3 */
+	    draw_eval_expr_into_integer(word_ix, 3);
+	      /* Skip assignment if word expression is not defined. */
+	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+      }
+
+      if (dexp != 0) {
+	      /* Calculated delay... */
+	    int delay_index = allocate_word();
+	    draw_eval_expr_into_integer(dexp, delay_index);
+	    fprintf(vvp_out, "    %%assign/ar/d v%p, %d, %u;\n", lsig,
+	                     delay_index, bit);
+	    clr_word(delay_index);
+      } else if (nevents != 0) {
+	      /* Event control delay... */
+	    fprintf(vvp_out, "    %%assign/ar/e v%p, %u;\n", lsig, bit);
+      } else {
+	      /* Constant delay... */
+	    unsigned long low_d = delay % UINT64_C(0x100000000);
+	    unsigned long hig_d = delay / UINT64_C(0x100000000);
+
+	      /*
+	       * The %assign can only take a 32 bit delay. For a larger
+	       * delay we need to put it into an index register.
+	       */
+	    if (hig_d != 0) {
+		  int delay_index = allocate_word();
+		  fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
+		          delay_index, low_d, hig_d);
+		  fprintf(vvp_out, "    %%assign/ar/d v%p, %d, %u;\n", lsig,
+		  delay_index, bit);
+		  clr_word(delay_index);
+	    } else {
+		  fprintf(vvp_out, "    %%assign/ar v%p, %lu, %u;\n",
+		          lsig, low_d, bit);
+	    }
+      }
+
+      fprintf(vvp_out, "t_%u ;\n", skip_assign);
+      if (nevents != 0) fprintf(vvp_out, "    %%evctl/c;\n");
+
+      clear_expression_lookaside();
+}
+
 static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 				 unsigned bit, uint64_t delay, ivl_expr_t dexp,
 				 ivl_expr_t part_off_ex, unsigned width,
@@ -648,21 +705,6 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
       sig = ivl_lval_sig(lval);
       assert(sig);
 
-      if (ivl_signal_dimensions(sig) > 0) {
-	    word_ix = ivl_lval_idx(lval);
-	    assert(word_ix);
-	    assert(number_is_immediate(word_ix, IMM_WID, 0));
-	    assert(! number_is_unknown(word_ix));
-	    use_word = get_number_immediate(word_ix);
-	    /* This method no longer works since variable arrays do not
-	     * support <variable_id>_<idx> access any more. We need real
-	     * array specific opcodes (%assign/ar, etc.). */
-	    fprintf(stderr, "%s:%u: vvp-tgt sorry: non-blocking assignment "
-	            "to a real array word is not supported.\n",
-	            ivl_expr_file(rval), ivl_expr_lineno(rval));
-	    exit(1);
-      }
-
       if (del && (ivl_expr_type(del) == IVL_EX_DELAY)) {
 	    assert(number_is_immediate(del, 64, 0));
 	    delay = ivl_expr_delay_val(del);
@@ -671,6 +713,14 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 
 	/* Evaluate the r-value */
       word = draw_eval_real(rval);
+
+      if (ivl_signal_dimensions(sig) > 0) {
+	    word_ix = ivl_lval_idx(lval);
+	    assert(word_ix);
+	    assign_to_array_r_word(sig, word_ix, word, delay, del, nevents);
+	    clr_word(word);
+	    return 0;
+      }
 
 	/* We need to calculate the delay expression. */
       if (del) {

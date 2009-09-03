@@ -81,6 +81,20 @@ class evctl_array : public evctl {
       unsigned off_;
 };
 
+class evctl_array_r : public evctl {
+
+    public:
+      explicit evctl_array_r(vvp_array_t memory, unsigned index,
+                           double value, unsigned long ecount);
+      virtual ~evctl_array_r() {}
+      virtual void run_run();
+
+    private:
+      vvp_array_t mem_;
+      unsigned idx_;
+      double value_;
+};
+
 extern void schedule_evctl(struct __vpiHandle*handle, double value,
                            vvp_net_t*event, unsigned long ecount);
 
@@ -90,6 +104,10 @@ extern void schedule_evctl(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
 
 extern void schedule_evctl(vvp_array_t memory, unsigned index,
                            const vvp_vector4_t&value, unsigned offset,
+                           vvp_net_t*event, unsigned long ecount);
+
+extern void schedule_evctl(vvp_array_t memory, unsigned index,
+                           double value,
                            vvp_net_t*event, unsigned long ecount);
 
 /*
