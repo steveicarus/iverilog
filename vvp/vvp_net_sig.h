@@ -183,11 +183,6 @@ class vvp_fun_signal4_aa : public vvp_fun_signal4, public automatic_hooks_s {
       vvp_vector4_t vec4_value() const;
       vvp_vector4_t vec4_unfiltered_value() const;
 
-	// Commands
-      void release(vvp_net_ptr_t port, bool net);
-      void release_pv(vvp_net_ptr_t port, bool net,
-                      unsigned base, unsigned wid);
-
     private:
       unsigned context_idx_;
       unsigned size_;
@@ -214,11 +209,6 @@ class vvp_fun_signal8  : public vvp_fun_signal_vec {
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
       vvp_vector4_t vec4_value() const;
-
-	// Commands
-      void release(vvp_net_ptr_t port, bool net);
-      void release_pv(vvp_net_ptr_t port, bool net,
-                      unsigned base, unsigned wid);
 
       void get_value(struct t_vpi_value*value);
 
@@ -252,11 +242,6 @@ class vvp_fun_signal_real_sa : public vvp_fun_signal_real {
 	// Get information about the vector value.
       double real_value() const;
 
-	// Commands
-      void release(vvp_net_ptr_t port, bool net);
-      void release_pv(vvp_net_ptr_t port, bool net,
-                      unsigned base, unsigned wid);
-
     private:
       double bits_;
 };
@@ -280,11 +265,6 @@ class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_hook
 
 	// Get information about the vector value.
       double real_value() const;
-
-	// Commands
-      void release(vvp_net_ptr_t port, bool net);
-      void release_pv(vvp_net_ptr_t port, bool net,
-                      unsigned base, unsigned wid);
 
     private:
       unsigned context_idx_;

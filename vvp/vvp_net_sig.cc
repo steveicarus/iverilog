@@ -337,19 +337,6 @@ void vvp_fun_signal4_aa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit
       ptr.ptr()->send_vec4(*bits4, context);
 }
 
-void vvp_fun_signal4_aa::release(vvp_net_ptr_t ptr, bool net)
-{
-        /* Automatic variables can't be forced. */
-      assert(0);
-}
-
-void vvp_fun_signal4_aa::release_pv(vvp_net_ptr_t ptr, bool net,
-                                    unsigned base, unsigned wid)
-{
-        /* Automatic variables can't be forced. */
-      assert(0);
-}
-
 unsigned vvp_fun_signal4_aa::value_size() const
 {
       return size_;
@@ -456,42 +443,6 @@ void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
 	    break;
       }
 }
-#if 0
-void vvp_fun_signal8::release(vvp_net_ptr_t ptr, bool net)
-{
-      vvp_vector2_t mask (vvp_vector2_t::FILL1, bits8_.size());
-
-      if (net) {
-	      // If releasing a net, then the output should revert to
-	      // the un-forced value.
-	    release_mask(mask);
-	    ptr.ptr()->send_vec8(bits8_);
-      } else {
-	      // Variables keep their forced value after the release.
-	    bits8_ = filtered_vec8(bits8_);
-	    release_mask(mask);
-      }
-}
-#endif
-#if 0
-void vvp_fun_signal8::release_pv(vvp_net_ptr_t ptr, bool net,
-                                 unsigned base, unsigned wid)
-{
-      assert(bits8_.size() >= base + wid);
-
-      vvp_vector2_t mask (vvp_vector2_t::FILL0, bits8_.size());
-      for (unsigned idx = 0 ; idx < wid ; idx += 1)
-	    mask.set_bit(base+idx, 1);
-
-      if (net) {
-	    release_mask(mask);
-	    ptr.ptr()->send_vec8(bits8_);
-      } else {
-	    bits8_ = filtered_vec8(bits8_);
-	    release_mask(mask);
-      }
-}
-#endif
 
 unsigned vvp_fun_signal8::value_size() const
 {
@@ -560,26 +511,6 @@ void vvp_fun_signal_real_sa::recv_real(vvp_net_ptr_t ptr, double bit,
 	    break;
       }
 }
-#if 0
-void vvp_fun_signal_real_sa::release(vvp_net_ptr_t ptr, bool net)
-{
-      vvp_vector2_t mask (vvp_vector2_t::FILL1, 1);
-
-      if (net) {
-	    release_mask(mask);
-	    ptr.ptr()->send_real(bits_, 0);
-      } else {
-	    bits_ = filtered_real(bits_);
-	    release_mask(mask);
-      }
-}
-#endif
-void vvp_fun_signal_real_sa::release_pv(vvp_net_ptr_t ptr, bool net,
-                                        unsigned base, unsigned wid)
-{
-      fprintf(stderr, "Error: cannot take bit/part select of a real value!\n");
-      assert(0);
-}
 
 vvp_fun_signal_real_aa::vvp_fun_signal_real_aa()
 {
@@ -632,19 +563,6 @@ void vvp_fun_signal_real_aa::recv_real(vvp_net_ptr_t ptr, double bit,
             *bits = bit;
             ptr.ptr()->send_real(bit, context);
       }
-}
-
-void vvp_fun_signal_real_aa::release(vvp_net_ptr_t ptr, bool net)
-{
-        /* Automatic variables can't be forced. */
-      assert(0);
-}
-
-void vvp_fun_signal_real_aa::release_pv(vvp_net_ptr_t ptr, bool net,
-                                        unsigned base, unsigned wid)
-{
-        /* Automatic variables can't be forced. */
-      assert(0);
 }
 
 vvp_fun_force::vvp_fun_force()
