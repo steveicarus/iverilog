@@ -3925,9 +3925,9 @@ static bool do_release_vec(vthread_t thr, vvp_code_t cp, bool net_flag)
 	/* Do we release all or part of the net? */
       vvp_net_ptr_t ptr (net, 0);
       if (full_sig) {
-	    net->fil->release(ptr, net_flag);
+	    net->fil->release(ptr);
       } else {
-	    net->fil->release_pv(ptr, net_flag, base, width);
+	    net->fil->release_pv(ptr, base, width);
       }
 
       return true;
@@ -3955,7 +3955,7 @@ bool of_RELEASE_WR(vthread_t thr, vvp_code_t cp)
 
 	// Send a command to this signal to unforce itself.
       vvp_net_ptr_t ptr (net, 0);
-      net->fil->release(ptr, type==0);
+      net->fil->release(ptr);
       return true;
 }
 

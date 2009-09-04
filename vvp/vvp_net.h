@@ -1133,9 +1133,8 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
       virtual bool filter_real(double&val);
       virtual bool filter_long(long&val);
 
-      virtual void release(vvp_net_ptr_t ptr, bool net) =0;
-      virtual void release_pv(vvp_net_ptr_t ptr, bool net,
-                              unsigned base, unsigned wid) =0;
+      virtual void release(vvp_net_ptr_t ptr) =0;
+      virtual void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid) =0;
 
 	// The %force/link instruction needs a place to write the
 	// source node of the force, so that subsequent %force and

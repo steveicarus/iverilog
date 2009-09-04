@@ -762,8 +762,7 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 	    assert(sig);
 
 	    vvp_net_ptr_t ptr(rfp->node, 0);
-	      /* Assume this is a net. (XXXX Are we sure?) */
-	    sig->release(ptr, true);
+	    sig->release(ptr);
 	    return ref;
       }
 

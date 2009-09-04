@@ -150,11 +150,6 @@ class vvp_fun_signal4_sa : public vvp_fun_signal4 {
       vvp_vector4_t vec4_value() const;
       vvp_vector4_t vec4_unfiltered_value() const;
 
-	// Commands
-      void release(vvp_net_ptr_t port, bool net);
-      void release_pv(vvp_net_ptr_t port, bool net,
-                      unsigned base, unsigned wid);
-
     private:
       vvp_vector4_t bits4_;
 };
@@ -328,8 +323,8 @@ class vvp_wire_vec4 : public vvp_wire_base {
       void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
       void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
       void force_fil_real(double val, vvp_vector2_t mask);
-      void release(vvp_net_ptr_t ptr, bool net);
-      void release_pv(vvp_net_ptr_t ptr, bool net, unsigned base, unsigned wid);
+      void release(vvp_net_ptr_t ptr);
+      void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid);
 
 	// Implementation of vvp_signal_value methods
       unsigned value_size() const;
@@ -362,8 +357,8 @@ class vvp_wire_vec8 : public vvp_wire_base {
       void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
       void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
       void force_fil_real(double val, vvp_vector2_t mask);
-      void release(vvp_net_ptr_t ptr, bool net);
-      void release_pv(vvp_net_ptr_t ptr, bool net, unsigned base, unsigned wid);
+      void release(vvp_net_ptr_t ptr);
+      void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid);
 
 	// Implementation of vvp_signal_value methods
       unsigned value_size() const;
@@ -397,8 +392,8 @@ class vvp_wire_real : public vvp_wire_base {
       void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
       void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
       void force_fil_real(double val, vvp_vector2_t mask);
-      void release(vvp_net_ptr_t ptr, bool net);
-      void release_pv(vvp_net_ptr_t ptr, bool net, unsigned base, unsigned wid);
+      void release(vvp_net_ptr_t ptr);
+      void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid);
 
 	// Implementation of vvp_signal_value methods
       unsigned value_size() const;
