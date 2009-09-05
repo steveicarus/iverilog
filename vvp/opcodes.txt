@@ -65,6 +65,26 @@ means the following:
 	1 and 1 --> 1
 	otherwise   x
 
+* %assign/ar <array-label>, <delay>, <bit>
+* %assign/ar/d <array-label>, <delayx>, <bit>
+* %assign/ar/e <array-label>, <bit>
+
+The %assign/ar instruction assigns a real value to a word in the
+labeled real array. The <delay> is the delay in simulation time to
+the assignment (0 for non-blocking assignment) and <bit> is the
+index register that contains the value to write.
+
+The memory word address is read from index register 3. The address is
+in canonical form.
+
+The %assign/ar/d variation reads the delay from an integer register that
+is given by the <delayx> value. This should not be 3 or the <bit> index,
+of course, since these registers contain the word address and the value.
+
+The %assign/ar/e variation uses the information in the thread
+event control registers to determine when to perform the assign.
+%evctl is used to set the event control information.
+
 * %assign/av <array-label>, <delay>, <bit>
 * %assign/av/d <array-label>, <delayx>, <bit>
 * %assign/av/e <array-label>, <bit>
@@ -417,7 +437,7 @@ These instructions are like the %ix/get instructions, except that they
 read directly from a functor label instead of from thread bits. They
 set bit 4 just like %ix/get.
 
-* %ix/load <idx>, <low> <high>
+* %ix/load <idx>, <low>, <high>
 
 This instruction loads an immediate value into the addressed index
 register. The index register holds signed 64 bit numeric values, so
@@ -428,9 +448,9 @@ vector. The values are unsigned decimal values and are combined as
 <high> << 32 | <low> to produce the final value.
 
 
-* %ix/add <idx>, <low> <high>
-* %ix/sub <idx>, <low> <high>
-* %ix/mul <idx>, <low> <high>
+* %ix/add <idx>, <low>, <high>
+* %ix/sub <idx>, <low>, <high>
+* %ix/mul <idx>, <low>, <high>
 
 These instructions add, subtract, or multiply the selected index
 register by the immediate value. The 64 bit immediate value is built
@@ -491,7 +511,8 @@ vector is sign extended (instead of 0-extended) before the addition.
 
 This instruction is similar to %load/av, but it loads only a single
 bit, and the <index> is the selector for the bit to use. If <index> is
-out of range, then x is loaded.
+out of range, then x is loaded. The index value is incremented by one
+if it is defined (bit 4 is not 1).
 
 * %load/v <bit>, <functor-label>, <wid>
 
@@ -758,6 +779,8 @@ bits) by the amount in index register 0. The <bit> is the address of
 the LSB of the vector, and <wid> the width of the vector. The shift is
 done in place. Zero values are shifted in.
 
+For a negative shift the value is padded with 'bx.
+
 * %shiftr/i0 <bit>, <wid>
 * %shiftr/s/i0 <bit>, <wid>
 
@@ -768,6 +791,8 @@ shift is done in place.
 
 %shiftr/i0 is an unsigned down shift, so zeros are shifted into the
 top bits. %shiftr/s/i0 is a signed shift, so the value is sign-extended.
+
+For a negative shift %shiftr/i0 will pad the value with 'bx.
 
 * %sub <bit-l>, <bit-r>, <wid>
 
@@ -846,7 +871,7 @@ and leaves the result in the <dst> vector. xor is this:
 
 
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU

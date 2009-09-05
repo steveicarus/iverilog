@@ -153,10 +153,13 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
       }
 
       fname = get_filename(callh, name, fileh);
-      if (fname == 0 && mode) free(mode_string);
 
 	/* If either the mode or file name are not valid just return. */
-      if (fail || fname == 0) return 0;
+      if (fail || fname == 0) {
+	    free(fname);
+	    if (mode) free(mode_string);
+	    return 0;
+      }
 
       val.format = vpiIntVal;
       if (mode) {
@@ -266,6 +269,9 @@ static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
       val.format = vpiIntVal;
       vpi_get_value(arg, &val);
       fd_mcd = val.value.integer;
+
+	/* If the MCD is zero we have nothing to do so just return. */
+      if (fd_mcd == 0) return 0;
 
       if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
           ( IS_MCD(fd_mcd) && vpi_mcd_printf(fd_mcd, str) == EOF) ||

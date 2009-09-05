@@ -794,6 +794,68 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/* %assign/ar <array>, <delay>, <bit>
+ * Generate an assignment event to a real array. Index register 3
+ * contains the canonical address of the word in the memory. <delay>
+ * is the delay in simulation time. <bit> is the index register
+ * containing the real value.
+ */
+bool of_ASSIGN_AR(vthread_t thr, vvp_code_t cp)
+{
+      long adr = thr->words[3].w_int;
+      unsigned delay = cp->bit_idx[0];
+      double value = thr->words[cp->bit_idx[1]].w_real;
+
+      if (adr >= 0) {
+	    schedule_assign_array_word(cp->array, adr, value, delay);
+      }
+
+      return true;
+}
+
+/* %assign/ar/d <array>, <delay_idx>, <bit>
+ * Generate an assignment event to a real array. Index register 3
+ * contains the canonical address of the word in the memory.
+ * <delay_idx> is the integer register that contains the delay value.
+ * <bit> is the index register containing the real value.
+ */
+bool of_ASSIGN_ARD(vthread_t thr, vvp_code_t cp)
+{
+      long adr = thr->words[3].w_int;
+      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_int;
+      double value = thr->words[cp->bit_idx[1]].w_real;
+
+      if (adr >= 0) {
+	    schedule_assign_array_word(cp->array, adr, value, delay);
+      }
+
+      return true;
+}
+
+/* %assign/ar/e <array>, <bit>
+ * Generate an assignment event to a real array. Index register 3
+ * contains the canonical address of the word in the memory. <bit>
+ * is the index register containing the real value. The event
+ * information is contained in the thread event control registers
+ * and is set with %evctl.
+ */
+bool of_ASSIGN_ARE(vthread_t thr, vvp_code_t cp)
+{
+      long adr = thr->words[3].w_int;
+      double value = thr->words[cp->bit_idx[0]].w_real;
+
+      if (adr >= 0) {
+	    if (thr->ecount == 0) {
+		  schedule_assign_array_word(cp->array, adr, value, 0);
+	    } else {
+		  schedule_evctl(cp->array, adr, value, thr->event,
+		                 thr->ecount);
+	    }
+      }
+
+      return true;
+}
+
 /* %assign/av <array>, <delay>, <bit>
  * This generates an assignment event to an array. Index register 0
  * contains the width of the vector (and the word) and index register
@@ -803,9 +865,11 @@ bool of_ASSIGN_AV(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
       long off = thr->words[1].w_int;
-      unsigned adr = thr->words[3].w_int;
+      long adr = thr->words[3].w_int;
       unsigned delay = cp->bit_idx[0];
       unsigned bit = cp->bit_idx[1];
+
+      if (adr < 0) return true;
 
       long vwidth = get_array_word_size(cp->array);
 	// We fell off the MSB end.
@@ -840,9 +904,11 @@ bool of_ASSIGN_AVD(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
       long off = thr->words[1].w_int;
-      unsigned adr = thr->words[3].w_int;
+      long adr = thr->words[3].w_int;
       vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
+
+      if (adr < 0) return true;
 
       long vwidth = get_array_word_size(cp->array);
 	// We fell off the MSB end.
@@ -871,8 +937,10 @@ bool of_ASSIGN_AVE(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
       long off = thr->words[1].w_int;
-      unsigned adr = thr->words[3].w_int;
+      long adr = thr->words[3].w_int;
       unsigned bit = cp->bit_idx[0];
+
+      if (adr < 0) return true;
 
       long vwidth = get_array_word_size(cp->array);
 	// We fell off the MSB end.
@@ -2574,7 +2642,7 @@ bool of_IX_GET_S(vthread_t thr, vvp_code_t cp)
       unsigned base  = cp->bit_idx[1];
       unsigned width = cp->number;
 
-      unsigned long v = 0;
+      uint64_t v = 0;
       bool unknown_flag = false;
 
       vvp_bit4_t vv = BIT4_0;
@@ -2586,7 +2654,7 @@ bool of_IX_GET_S(vthread_t thr, vvp_code_t cp)
 		  break;
 	    }
 
-	    v |= (unsigned long) vv << i;
+	    v |= (uint64_t) vv << i;
 
 	    if (base >= 4)
 		  base += 1;
@@ -2594,7 +2662,7 @@ bool of_IX_GET_S(vthread_t thr, vvp_code_t cp)
 
 	/* Sign-extend to fill the integer value. */
       if (!unknown_flag) {
-	    unsigned long pad = vv;
+	    uint64_t pad = vv;
 	    for (unsigned i = width ; i < 8*sizeof(v) ;  i += 1) {
 		  v |= pad << i;
 	    }
@@ -2784,8 +2852,15 @@ bool of_LOAD_AR(vthread_t thr, vvp_code_t cp)
       unsigned bit = cp->bit_idx[0];
       unsigned idx = cp->bit_idx[1];
       unsigned adr = thr->words[idx].w_int;
+      double word;
 
-      double word = array_get_word_r(cp->array, adr);
+	/* The result is 0.0 if the address is undefined. */
+      if (thr_get_bit(thr, 4) == BIT4_1) {
+	    word = 0.0;
+      } else {
+	    word = array_get_word_r(cp->array, adr);
+      }
+
       thr->words[bit].w_real = word;
       return true;
 }
@@ -2805,10 +2880,17 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
       unsigned wid = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
 
-      vvp_vector4_t word = array_get_word(cp->array, adr);
-
 	/* Check the address once, before we scan the vector. */
       thr_check_addr(thr, bit+wid-1);
+
+	/* The result is 'bx if the address is undefined. */
+      if (thr_get_bit(thr, 4) == BIT4_1) {
+	    vvp_vector4_t tmp (wid, BIT4_X);
+	    thr->bits4.set_vec(bit, tmp);
+	    return true;
+      }
+
+      vvp_vector4_t word = array_get_word(cp->array, adr);
 
       if (word.size() > wid)
 	    word.resize(wid);
@@ -2880,6 +2962,15 @@ bool of_LOAD_AVP0(vthread_t thr, vvp_code_t cp)
       unsigned wid = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
 
+	/* The result is 'bx if the address is undefined. */
+      if (thr_get_bit(thr, 4) == BIT4_1) {
+	    unsigned bit = cp->bit_idx[0];
+	    thr_check_addr(thr, bit+wid-1);
+	    vvp_vector4_t tmp (wid, BIT4_X);
+	    thr->bits4.set_vec(bit, tmp);
+	    return true;
+      }
+
         /* We need a vector this wide to make the math work correctly.
          * Copy the base bits into the vector, but keep the width. */
       vvp_vector4_t sig_value(wid, BIT4_0);
@@ -2893,6 +2984,15 @@ bool of_LOAD_AVP0_S(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
+
+	/* The result is 'bx if the address is undefined. */
+      if (thr_get_bit(thr, 4) == BIT4_1) {
+	    unsigned bit = cp->bit_idx[0];
+	    thr_check_addr(thr, bit+wid-1);
+	    vvp_vector4_t tmp (wid, BIT4_X);
+	    thr->bits4.set_vec(bit, tmp);
+	    return true;
+      }
 
       vvp_vector4_t tmp (array_get_word(cp->array, adr));
 
@@ -2920,11 +3020,17 @@ bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
       unsigned index = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
 
-      unsigned use_index = thr->words[index].w_int;
+	/* The result is 'bx if the address is undefined. */
+      if (thr_get_bit(thr, 4) == BIT4_1) {
+	    thr_put_bit(thr, bit, BIT4_X);
+	    return true;
+      }
+
+      long use_index = thr->words[index].w_int;
 
       vvp_vector4_t word = array_get_word(cp->array, adr);
 
-      if (use_index >= word.size()) {
+      if ((use_index >= (long)word.size()) || (use_index < 0)) {
 	    thr_put_bit(thr, bit, BIT4_X);
       } else {
 	    thr_put_bit(thr, bit, word.value(use_index));
@@ -4096,7 +4202,7 @@ bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
 {
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
-      unsigned long shift = thr->words[0].w_int;
+      long shift = thr->words[0].w_int;
 
       assert(base >= 4);
       thr_check_addr(thr, base+wid-1);
@@ -4105,7 +4211,8 @@ bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
 	    // The result is 'bx if the shift amount is undefined.
 	    vvp_vector4_t tmp (wid, BIT4_X);
 	    thr->bits4.set_vec(base, tmp);
-      } else if (shift >= wid) {
+
+      } else if (shift >= (long)wid) {
 	      // Shift is so far that all value is shifted out. Write
 	      // in a constant 0 result.
 	    vvp_vector4_t tmp (wid, BIT4_0);
@@ -4118,6 +4225,17 @@ bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
 	      // Fill zeros on the bottom
 	    vvp_vector4_t fil (shift, BIT4_0);
 	    thr->bits4.set_vec(base, fil);
+
+      } else if (shift < 0) {
+	      // For a negative shift we pad with 'bx.
+	    unsigned idx;
+	    for (idx = 0 ;  (idx-shift) < wid ;  idx += 1) {
+		  unsigned src = base + idx - shift;
+		  unsigned dst = base + idx;
+		  thr_put_bit(thr, dst, thr_get_bit(thr, src));
+	    }
+	    for ( ;  idx < wid ;  idx += 1)
+		  thr_put_bit(thr, base+idx, BIT4_X);
       }
       return true;
 }
@@ -4134,12 +4252,16 @@ bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
 {
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
-      unsigned long shift = thr->words[0].w_int;
+      long shift = thr->words[0].w_int;
+
+      assert(base >= 4);
+      thr_check_addr(thr, base+wid-1);
 
       if (thr_get_bit(thr, 4) == BIT4_1) {
-	    // The result is 'bx if the shift amount is undefined.
+	      // The result is 'bx if the shift amount is undefined.
 	    vvp_vector4_t tmp (wid, BIT4_X);
 	    thr->bits4.set_vec(base, tmp);
+
       } else if (shift > 0) {
 	    unsigned idx;
 	    for (idx = 0 ;  (idx+shift) < wid ;  idx += 1) {
@@ -4149,6 +4271,21 @@ bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
 	    }
 	    for ( ;  idx < wid ;  idx += 1)
 		  thr_put_bit(thr, base+idx, BIT4_0);
+
+      } else if (shift < -(long)wid) {
+	      // Negative shift is so far that all the value is shifted out.
+	      // Write in a constant 'bx result.
+	    vvp_vector4_t tmp (wid, BIT4_X);
+	    thr->bits4.set_vec(base, tmp);
+
+      } else if (shift < 0) {
+
+	      // For a negative shift we pad with 'bx.
+	    vvp_vector4_t tmp (thr->bits4, base, wid+shift);
+	    thr->bits4.set_vec(base-shift, tmp);
+
+	    vvp_vector4_t fil (-shift, BIT4_X);
+	    thr->bits4.set_vec(base, fil);
       }
       return true;
 }
@@ -4161,7 +4298,7 @@ bool of_SHIFTR_S_I0(vthread_t thr, vvp_code_t cp)
       vvp_bit4_t sign = thr_get_bit(thr, base+wid-1);
 
       if (thr_get_bit(thr, 4) == BIT4_1) {
-	    // The result is 'bx if the shift amount is undefined.
+	      // The result is 'bx if the shift amount is undefined.
 	    vvp_vector4_t tmp (wid, BIT4_X);
 	    thr->bits4.set_vec(base, tmp);
       } else if (shift >= wid) {

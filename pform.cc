@@ -42,6 +42,160 @@
 map<perm_string,Module*> pform_modules;
 map<perm_string,PUdp*> pform_primitives;
 
+
+/*
+ * Parse configuration file with format <key>=<value>, where key
+ * is the hierarchical name of a valid parameter name, and value
+ * is the value user wants to assign to. The value should be constant.
+ */
+void parm_to_defparam_list(const string&param)
+{
+    char* key;
+    char* value;
+    unsigned off = param.find('=');
+    if (off > param.size()) {
+        key = strdup(param.c_str());
+        value = (char*)malloc(1);
+        *value = '\0';
+
+    } else {
+        key = strdup(param.substr(0, off).c_str());
+        value = strdup(param.substr(off+1).c_str());
+    }
+    
+    // Resolve hierarchical name for defparam. Remember
+    // to deal with bit select for generate scopes. Bit
+    // select expression should be constant interger.
+    pform_name_t name;
+    char *nkey = key;
+    char *ptr = strchr(key, '.');
+    while (ptr != 0) {
+        *ptr++ = '\0';
+        // Find if bit select is applied, this would be something
+        // like - scope[2].param = 10
+        char *bit_l = strchr(nkey, '[');
+        if (bit_l !=0) {
+            *bit_l++ = '\0';
+            char *bit_r = strchr(bit_l, ']');
+            if (bit_r == 0) {
+                cerr << "<command line>: error: missing ']' for defparam: " << nkey << endl;
+                free(key);
+                free(value);
+                return;
+            }
+            *bit_r = '\0';
+            int i = 0;
+            while (*(bit_l+i) != '\0')
+                if (!isdigit(*(bit_l+i++))) {
+                    cerr << "<command line>: error: scope index expression is not constant: " << nkey << endl;
+                    free(key);
+                    free(value);
+                    return;
+                }
+            name_component_t tmp(lex_strings.make(nkey));
+            index_component_t index;
+            index.sel = index_component_t::SEL_BIT;
+            verinum *seln = new verinum(atoi(bit_l));
+            PENumber *sel = new PENumber(seln);
+            index.msb = sel;
+            index.lsb = sel;
+            tmp.index.push_back(index);
+            name.push_back(tmp);
+        }
+        else    // no bit select
+            name.push_back(name_component_t(lex_strings.make(nkey)));
+
+        nkey = ptr;
+        ptr = strchr(nkey, '.');
+    }
+    name.push_back(name_component_t(lex_strings.make(nkey)));
+    
+    // Resolve value to PExpr class. Should support all kind of constant
+    // format including based number, dec number, real number and string.
+    if (*value == '"') {    // string type
+        char *buf = strdup (value);
+        char *buf_ptr = buf+1;
+        // Parse untill another '"' or '\0'
+        while (*buf_ptr != '"' && *buf_ptr != '\0') {
+            buf_ptr++;
+            // Check for escape, especially '\"', which does not mean the
+            // end of string.
+            if (*buf_ptr == '\\' && *(buf_ptr+1) != '\0')
+                buf_ptr += 2;
+        }
+        if (*buf_ptr == '\0')   // String end without '"'
+            cerr << "<command line>: error: missing close quote of string for defparam: " << name << endl;
+        else if (*(buf_ptr+1) != 0) { // '"' appears within string with no escape
+            cerr << buf_ptr << endl;
+            cerr << "<command line>: error: \'\"\' appears within string value for defparam: " << name 
+                 << ". Ignore characters after \'\"\'" << endl;
+        }
+        
+        *buf_ptr = '\0';
+        buf_ptr = buf+1;
+        // Remember to use 'new' to allocate string for PEString 
+        // because 'delete' is used by its destructor.
+        char *nchar = strcpy(new char [strlen(buf_ptr)+1], buf_ptr);
+        PEString* ndec = new PEString(nchar);
+	Module::user_defparms.push_back( make_pair(name, ndec) );
+        free(buf);
+    }
+    else {      // number type
+        char *num = strchr(value, '\'');
+        if (num != 0) {
+            verinum *val;
+            // BASED_NUMBER, somthing like - scope.parameter='b11
+            // make sure to check 'h' first because 'b'&'d' may be included
+            // in hex format
+            if (strchr(num, 'h') || strchr(num, 'H'))
+                val = make_unsized_hex(num);
+            else if (strchr(num, 'd') || strchr(num, 'D'))
+                if (strchr(num, 'x') || strchr(num, 'X') || strchr(num, 'z') || strchr(num, 'Z'))
+                    val = make_undef_highz_dec(num);
+                else
+                    val = make_unsized_dec(num);
+            else if (strchr(num, 'b') || strchr(num, 'B')) {
+                val = make_unsized_binary(num);
+            }
+            else if (strchr(num, 'o') || strchr(num, 'O'))
+                val = make_unsized_octal(num);
+            else {
+                cerr << "<command line>: error: value specify error for defparam: " << name << endl;
+                free(key);
+                free(value);
+                return;
+            }
+    
+            // BASED_NUMBER with size, something like - scope.parameter=2'b11
+            if (num != value) {
+                *num = 0;
+                verinum *siz = make_unsized_dec(value);
+                val = pform_verinum_with_size(siz, val, "<command line>", 0);
+            }
+    
+            PENumber* ndec = new PENumber(val);
+	    Module::user_defparms.push_back( make_pair(name, ndec) );
+            
+        }
+        else {
+            // REALTIME, something like - scope.parameter=1.22 or scope.parameter=1e2
+            if (strchr(value, '.') || strchr(value, 'e') || strchr(value, 'E')) {
+                verireal *val = new verireal(value);
+                PEFNumber* nreal = new PEFNumber(val);
+		Module::user_defparms.push_back( make_pair(name, nreal) );
+            }
+            else {
+                // DEC_NUMBER, something like - scope.parameter=3
+                verinum *val = make_unsized_dec(value);
+                PENumber* ndec = new PENumber(val);
+		Module::user_defparms.push_back( make_pair(name, ndec) );
+            }
+        }
+    }
+    free(key);
+    free(value);
+}
+
 /*
  * The lexor accesses the vl_* variables.
  */
@@ -675,20 +829,31 @@ void pform_endmodule(const char*name, bool in_celldefine,
       tp_local_flag = false;
 }
 
+static void pform_add_genvar(const struct vlltype&li, const perm_string&name, 
+                             map<perm_string,LineInfo*>&genvars)
+{
+      LineInfo*lni = new LineInfo();
+      FILE_NAME(lni, li);
+      if (genvars.find(name) != genvars.end()) {
+            cerr << lni->get_fileline() << ": error: genvar '"
+		 << name << "' has already been declared." << endl;
+            cerr << genvars[name]->get_fileline()
+                << ":        the previous declaration is here." << endl;
+            error_count += 1;
+            delete lni;
+      } else {
+            genvars[name] = lni;
+      }
+}
+
 void pform_genvars(const struct vlltype&li, list<perm_string>*names)
 {
       list<perm_string>::const_iterator cur;
       for (cur = names->begin(); cur != names->end() ; *cur++) {
-	    LineInfo*lni = new LineInfo();
-	    FILE_NAME(lni, li);
-	    if (pform_cur_module->genvars.find(*cur) !=
-	        pform_cur_module->genvars.end()) {
-		  cerr << lni->get_fileline() << ": error: duplicate "
-		  "definition for genvar '" << *cur << "' in '"
-		  << pform_cur_module->mod_name() << "'." << endl;
-		  error_count += 1;
-		  delete lni;
-	    } else pform_cur_module->genvars[*cur] = lni;
+            if (pform_cur_generate)
+                  pform_add_genvar(li, *cur, pform_cur_generate->genvars);
+            else
+                  pform_add_genvar(li, *cur, pform_cur_module->genvars);
       }
 
       delete names;
@@ -703,7 +868,6 @@ void pform_start_generate_for(const struct vlltype&li,
 
       FILE_NAME(gen, li);
 
-	// For now, assume that generates do not nest.
       gen->parent = pform_cur_generate;
       pform_cur_generate = gen;
 
@@ -724,7 +888,6 @@ void pform_start_generate_if(const struct vlltype&li, PExpr*test)
 
       FILE_NAME(gen, li);
 
-	// For now, assume that generates do not nest.
       gen->parent = pform_cur_generate;
       pform_cur_generate = gen;
 
@@ -747,7 +910,6 @@ void pform_start_generate_else(const struct vlltype&li)
 
       FILE_NAME(gen, li);
 
-	// For now, assume that generates do not nest.
       gen->parent = pform_cur_generate;
       pform_cur_generate = gen;
 

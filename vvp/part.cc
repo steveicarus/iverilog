@@ -86,11 +86,8 @@ void vvp_fun_part_sa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 {
       assert(bit.size() == wid);
 
-      vvp_vector4_t tmp = val_;
-      if (tmp.size() == 0)
-	    tmp = vvp_vector4_t(vwid);
-
-      assert(tmp.size() == vwid);
+      vvp_vector4_t tmp (vwid, BIT4_Z);
+      tmp.set_vec(base_, val_);
       tmp.set_vec(base, bit);
       recv_vec4(port, tmp, 0);
 }
@@ -178,11 +175,8 @@ void vvp_fun_part_aa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
             vvp_vector4_t*val = static_cast<vvp_vector4_t*>
                   (vvp_get_context_item(context, context_idx_));
 
-            vvp_vector4_t tmp = *val;
-            if (tmp.size() == 0)
-                  tmp = vvp_vector4_t(vwid);
-
-            assert(tmp.size() == vwid);
+            vvp_vector4_t tmp (vwid, BIT4_Z);
+            tmp.set_vec(base_, *val);
             tmp.set_vec(base, bit);
             recv_vec4(port, tmp, context);
       } else {
@@ -244,17 +238,20 @@ vvp_fun_part_var::~vvp_fun_part_var()
 }
 
 bool vvp_fun_part_var::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                                  unsigned&base, vvp_vector4_t&source,
+                                  long&base, vvp_vector4_t&source,
                                   vvp_vector4_t&ref)
 {
-      unsigned long tmp;
+      long tmp;
       switch (port.port()) {
 	  case 0:
 	    source = bit;
 	    break;
 	  case 1:
-	    tmp = ULONG_MAX;
-	    vector4_to_value(bit, tmp);
+	      // LONG_MIN is before the vector and is used to
+	      // represent a 'bx value on the select input.
+	    tmp = LONG_MIN;
+	      // We need a new &PV<> that knows if the index is signed.
+	    vector4_to_value(bit, tmp, false);
 	    if (tmp == base) return false;
 	    base = tmp;
 	    break;
@@ -267,11 +264,11 @@ bool vvp_fun_part_var::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       vvp_vector4_t res (wid_);
 
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    unsigned adr = base+idx;
-	    if (adr >= source.size())
-		  break;
+	    long adr = base+idx;
+	    if (adr < 0) continue;
+	    if ((unsigned)adr >= source.size()) break;
 
-	    res.set_bit(idx, source.value(adr));
+	    res.set_bit(idx, source.value((unsigned)adr));
       }
 
       if (! ref.eeq(res)) {
@@ -316,7 +313,7 @@ void vvp_fun_part_var_sa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&b
 struct vvp_fun_part_var_state_s {
       vvp_fun_part_var_state_s() : base(0) { }
 
-      unsigned base;
+      long base;
       vvp_vector4_t source;
       vvp_vector4_t ref;
 };

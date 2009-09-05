@@ -130,7 +130,7 @@ class vvp_fun_part_var  : public vvp_net_fun_t {
 
     protected:
       bool recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                      unsigned&base, vvp_vector4_t&source,
+                      long&base, vvp_vector4_t&source,
                       vvp_vector4_t&ref);
 
       unsigned wid_;
@@ -154,7 +154,7 @@ class vvp_fun_part_var_sa  : public vvp_fun_part_var {
                         vvp_context_t);
 
     private:
-      unsigned base_;
+      long base_;
       vvp_vector4_t source_;
 	// Save the last output, for detecting change.
       vvp_vector4_t ref_;

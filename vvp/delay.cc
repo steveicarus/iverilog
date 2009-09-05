@@ -140,6 +140,7 @@ vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, vvp_bit4_t init, const vvp_delay_t&d)
       cur_vec8_ = vvp_vector8_t(cur_vec4_, 6, 6);
       cur_real_ = 0.0;
       list_ = 0;
+      type_ = UNKNOWN_DELAY;
       initial_ = true;
 	// Calculate the values used when converting variable delays
 	// to simulation time units.
@@ -160,10 +161,48 @@ vvp_fun_delay::~vvp_fun_delay()
 	    delete cur;
 }
 
+bool vvp_fun_delay::clean_pulse_events_(vvp_time64_t use_delay,
+                                        const vvp_vector4_t&bit)
+{
+      if (list_ == 0) return false;
+
+	/* If the most recent event and the new event have the same
+	 * value then we need to skip the new event. */
+      if (list_->next->ptr_vec4.eeq(bit)) return true;
+
+      clean_pulse_events_(use_delay);
+      return false;
+}
+
+bool vvp_fun_delay::clean_pulse_events_(vvp_time64_t use_delay,
+                                        const vvp_vector8_t&bit)
+{
+      if (list_ == 0) return false;
+
+	/* If the most recent event and the new event have the same
+	 * value then we need to skip the new event. */
+      if (list_->next->ptr_vec8.eeq(bit)) return true;
+
+      clean_pulse_events_(use_delay);
+      return false;
+}
+
+bool vvp_fun_delay::clean_pulse_events_(vvp_time64_t use_delay,
+                                        double bit)
+{
+      if (list_ == 0) return false;
+
+	/* If the most recent event and the new event have the same
+	 * value then we need to skip the new event. */
+      if (list_->next->ptr_real == bit) return true;
+
+      clean_pulse_events_(use_delay);
+      return false;
+}
+
 void vvp_fun_delay::clean_pulse_events_(vvp_time64_t use_delay)
 {
-      if (list_ == 0)
-	    return;
+      assert(list_ != 0);
 
       do {
 	    struct event_*cur = list_->next;
@@ -219,6 +258,7 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	/* This is an initial value so it needs to be compared to all the
 	   bits (the order the bits are changed is not deterministic). */
       if (initial_) {
+	    type_ = VEC4_DELAY;
 	    vvp_bit4_t cur_val = cur_vec4_.value(0);
 	    use_delay = delay_.get_delay(cur_val, bit.value(0));
 	    for (unsigned idx = 1 ;  idx < bit.size() ;  idx += 1) {
@@ -227,6 +267,7 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 		  if (tmp > use_delay) use_delay = tmp;
 	    }
       } else {
+	    assert(type_ == VEC4_DELAY);
 
 	      /* How many bits to compare? */
 	    unsigned use_wid = cur_vec4_.size();
@@ -246,7 +287,7 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       /* what *should* happen here is we check to see if there is a
          transaction in the queue. This would be a pulse that needs to be
          eliminated. */
-      clean_pulse_events_(use_delay);
+      if (clean_pulse_events_(use_delay, bit)) return;
 
       vvp_time64_t use_simtime = schedule_simtime() + use_delay;
 
@@ -273,6 +314,7 @@ void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 	/* This is an initial value so it needs to be compared to all the
 	   bits (the order the bits are changed is not deterministic). */
       if (initial_) {
+	    type_ = VEC8_DELAY;
 	    vvp_bit4_t cur_val = cur_vec8_.value(0).value();
 	    use_delay = delay_.get_delay(cur_val, bit.value(0).value());
 	    for (unsigned idx = 1 ;  idx < bit.size() ;  idx += 1) {
@@ -281,6 +323,7 @@ void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 		  if (tmp > use_delay) use_delay = tmp;
 	    }
       } else {
+	    assert(type_ == VEC8_DELAY);
 
 	      /* How many bits to compare? */
 	    unsigned use_wid = cur_vec8_.size();
@@ -302,7 +345,7 @@ void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
       /* what *should* happen here is we check to see if there is a
          transaction in the queue. This would be a pulse that needs to be
          eliminated. */
-      clean_pulse_events_(use_delay);
+      if (clean_pulse_events_(use_delay, bit)) return;
 
       vvp_time64_t use_simtime = schedule_simtime() + use_delay;
 
@@ -351,11 +394,14 @@ void vvp_fun_delay::recv_real(vvp_net_ptr_t port, double bit,
 	    return;
       }
 
+      if (initial_) type_ = REAL_DELAY;
+      else assert(type_ == REAL_DELAY);
+
       vvp_time64_t use_delay;
       use_delay = delay_.get_min_delay();
 
       /* Eliminate glitches. */
-      clean_pulse_events_(use_delay);
+      if (clean_pulse_events_(use_delay, bit)) return;
 
       /* This must be done after cleaning pulses to avoid propagating
        * an incorrect value. */

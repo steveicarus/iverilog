@@ -313,10 +313,10 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
          if (NULL == test)
             return;
 
-         vhdl_if_stmt *vhdif = new vhdl_if_stmt(test);
-
          if (!check_valid_assignment(decl->assignment_type(), proc, stmt))
             return;
+
+         vhdl_if_stmt *vhdif = new vhdl_if_stmt(test);
 
          // True part
          {
@@ -1342,6 +1342,7 @@ int draw_casezx(vhdl_procedural *proc, stmt_container *container,
                   "expression labels can be translated to VHDL",
                   ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
                   (is_casez ? "z" : "x"));
+            delete all;
             return 1;
          }
 

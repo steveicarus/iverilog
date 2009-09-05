@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for LPM devices.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,10 +48,12 @@ static vhdl_expr *concat_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    vhdl_binop_expr *expr =
       new vhdl_binop_expr(VHDL_BINOP_CONCAT, result_type);
  
-   for (int i = ivl_lpm_selects(lpm) - 1; i >= 0; i--) {
+   for (int i = ivl_lpm_size(lpm) - 1; i >= 0; i--) {
       vhdl_expr *e = readable_ref(scope, ivl_lpm_data(lpm, i));
-      if (NULL == e)
+      if (NULL == e) {
+         delete expr;
          return NULL;
+      }
 
       expr->add_expr(e);
    }
@@ -68,8 +70,10 @@ static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop
  
    for (int i = 0; i < 2; i++) {
       vhdl_expr *e = readable_ref(scope, ivl_lpm_data(lpm, i));
-      if (NULL == e)
+      if (NULL == e) {
+         delete expr;
          return NULL;
+      }
 
       expr->add_expr(e->cast(result_type));
    }
@@ -95,8 +99,10 @@ static vhdl_expr *rel_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t
   
    for (int i = 0; i < 2; i++) {
       vhdl_expr *e = readable_ref(scope, ivl_lpm_data(lpm, i));
-      if (NULL == e)
+      if (NULL == e) {
+         delete expr;
          return NULL;
+      }
 
       expr->add_expr(e);
    }
@@ -135,8 +141,10 @@ static vhdl_expr *ufunc_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
 
    for (unsigned i = 0; i < ivl_lpm_size(lpm); i++) {
       vhdl_var_ref *ref = readable_ref(scope, ivl_lpm_data(lpm, i));
-      if (NULL == ref)
+      if (NULL == ref) {
+         delete fcall;
          return NULL;
+      }
 
       fcall->add_expr(ref);
    }
@@ -195,8 +203,10 @@ static vhdl_expr *array_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    vhdl_type *atype = new vhdl_type(*adecl->get_type());
 
    vhdl_expr *select = readable_ref(scope, ivl_lpm_select(lpm));
-   if (NULL == select)
+   if (NULL == select) {
+      delete atype;
       return NULL;
+   }
    
    vhdl_var_ref *ref = new vhdl_var_ref(renamed, atype);
    vhdl_type integer(VHDL_TYPE_INTEGER);

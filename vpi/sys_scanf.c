@@ -626,6 +626,7 @@ static PLI_INT32 sys_fscanf_compiletf(PLI_BYTE8*name)
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's first argument (fd) must be numeric.\n", name);
 	    vpi_control(vpiFinish, 1);
+	    vpi_free_object(argv);
 	    return 0;
       }
 
@@ -695,6 +696,7 @@ static PLI_INT32 sys_sscanf_compiletf(PLI_BYTE8*name)
 	    vpi_printf("%s's first argument must be a register or constant "
 	               "string.\n", name);
 	    vpi_control(vpiFinish, 1);
+	    vpi_free_object(argv);
 	    return 0;
       }
 

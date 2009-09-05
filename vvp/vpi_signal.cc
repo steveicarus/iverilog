@@ -38,6 +38,7 @@
 # include  <malloc.h>
 #endif
 # include  <stdlib.h>
+# include  <limits.h>
 # include  <string.h>
 # include  <assert.h>
 #ifdef CHECK_WITH_VALGRIND
@@ -1000,12 +1001,24 @@ static int PV_get_base(struct __vpiPV*rfp)
 	/* If the width is zero then tbase is the constant. */
       if (rfp->twid == 0) return rfp->tbase;
 
+	/* Get the value from thread space. */
       int tval = 0;
       for (unsigned idx = 0 ;  idx < rfp->twid ;  idx += 1) {
 	    vvp_bit4_t bit = vthread_get_bit(vpip_current_vthread,
                                              rfp->tbase + idx);
-	    if (bit == BIT4_1) {
+	    switch (bit) {
+		case BIT4_X:
+		case BIT4_Z:
+		    /* We use INT_MIN to indicate an X base. */
+		  return INT_MIN;
+		  break;
+
+		case BIT4_1:
 		  tval |= 1<<idx;
+		  break;
+
+		case BIT4_0:
+		  break; // Do nothing!
 	    }
       }
 

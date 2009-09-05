@@ -1,7 +1,7 @@
 #ifndef __codes_H
 #define __codes_H
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,6 +40,9 @@ extern bool of_ALLOC(vthread_t thr, vvp_code_t code);
 extern bool of_AND(vthread_t thr, vvp_code_t code);
 extern bool of_ANDI(vthread_t thr, vvp_code_t code);
 extern bool of_ANDR(vthread_t thr, vvp_code_t code);
+extern bool of_ASSIGN_AR(vthread_t thr, vvp_code_t code);
+extern bool of_ASSIGN_ARD(vthread_t thr, vvp_code_t code);
+extern bool of_ASSIGN_ARE(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_AV(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_AVD(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_AVE(vthread_t thr, vvp_code_t code);

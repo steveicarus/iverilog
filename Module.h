@@ -92,6 +92,7 @@ class Module : public PScope, public LineInfo {
 	   instantiated modules. */
       typedef pair<pform_name_t,PExpr*> named_expr_t;
       list<named_expr_t>defparms;
+      static list<named_expr_t>user_defparms;
 
         /* Parameters may be overridden at instantiation time;
            the overrides do not contain explicit parameter names,

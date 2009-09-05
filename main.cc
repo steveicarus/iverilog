@@ -115,6 +115,7 @@ bool warn_implicit  = false;
 bool warn_timescale = false;
 bool warn_portbinding = false;
 bool warn_inf_loop = false;
+bool warn_ob_select = false;
 
 bool error_implicit = false;
 
@@ -491,6 +492,9 @@ static void read_iconfig_file(const char*ipath)
 		      case 'l':
 			warn_inf_loop = true;
 			break;
+		      case 's':
+			warn_ob_select = true;
+			break;
 		      case 'p':
 			warn_portbinding = true;
 			break;
@@ -528,8 +532,9 @@ static void read_iconfig_file(const char*ipath)
 			     << endl;
 			flag_errors += 1;
 		  }
-
-	    }
+	    } else if (strcmp(buf,"defparam") == 0) {
+            parm_to_defparam_list(cp);
+        }
       }
       fclose(ifile);
 }

@@ -1196,7 +1196,8 @@ extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
 	  case IVL_LPM_ARRAY:
 	    return net->u_.array.swid;
 	  case IVL_LPM_CONCAT:
-	    return net->u_.concat.inputs;
+	    cerr << "error: ivl_lpm_selects() is no longer supported for "
+	            "IVL_LPM_CONCAT, use ivl_lpm_size() instead." << endl;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1268,6 +1269,8 @@ extern "C" unsigned ivl_lpm_size(ivl_lpm_t net)
 	    return net->u_.ufunc.ports - 1;
 	  case IVL_LPM_REPEAT:
 	    return net->u_.repeat.count;
+	  case IVL_LPM_CONCAT:
+	    return net->u_.concat.inputs;
 	  default:
 	    assert(0);
 	    return 0;

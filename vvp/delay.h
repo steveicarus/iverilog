@@ -71,6 +71,7 @@ class vvp_delay_t {
  */
 class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
 
+      enum delay_type_t {UNKNOWN_DELAY, VEC4_DELAY, VEC8_DELAY, REAL_DELAY};
       struct event_ {
 	    event_(vvp_time64_t s) : sim_time(s) { }
 	    void (vvp_fun_delay::*run_run_ptr)(struct vvp_fun_delay::event_*cur);
@@ -103,6 +104,7 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
     private:
       vvp_net_t*net_;
       vvp_delay_t delay_;
+      delay_type_t type_;
       bool initial_; // Indicates if the value is still the initial value.
 
       vvp_vector4_t cur_vec4_;
@@ -133,6 +135,10 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
 		  list_->next = cur->next;
 	    return cur;
       }
+      bool clean_pulse_events_(vvp_time64_t use_delay, const vvp_vector4_t&bit);
+      bool clean_pulse_events_(vvp_time64_t use_delay, const vvp_vector8_t&bit);
+      bool clean_pulse_events_(vvp_time64_t use_delay, double bit);
+// Delete this when done!
       void clean_pulse_events_(vvp_time64_t use_delay);
 };
 

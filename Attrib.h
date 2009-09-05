@@ -1,7 +1,7 @@
 #ifndef __Attrib_H
 #define __Attrib_H
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,7 +30,7 @@ class Attrib {
 
     public:
       Attrib();
-      ~Attrib();
+      virtual ~Attrib();
 
       const verinum&attribute(perm_string key) const;
       void attribute(perm_string key, const verinum&value);

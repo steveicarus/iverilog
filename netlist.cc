@@ -914,9 +914,8 @@ NetPartSelect::NetPartSelect(NetNet*sig, NetNet*sel,
 	    pin(1).set_dir(Link::INPUT);
 	    break;
 	  case NetPartSelect::PV:
-	    pin(0).set_dir(Link::INPUT);
-	    pin(1).set_dir(Link::OUTPUT);
-	    break;
+	      /* Only a vector to part can be a variable select. */
+	    assert(0);
       }
       pin(2).set_dir(Link::INPUT);
 
@@ -2349,12 +2348,12 @@ NetNet* NetESignal::sig()
       return net_;
 }
 
-unsigned NetESignal::lsi() const
+long NetESignal::lsi() const
 {
       return net_->lsb();
 }
 
-unsigned NetESignal::msi() const
+long NetESignal::msi() const
 {
       return net_->msb();
 }

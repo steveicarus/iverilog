@@ -1,7 +1,7 @@
 #ifndef __PGenerate_H
 #define __PGenerate_H
 /*
- * Copyright (c) 2006-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -87,6 +87,9 @@ class PGenerate : public LineInfo, public LexicalScope {
       map<perm_string,PTask*> tasks;
       map<perm_string,PFunction*>funcs;
 
+	// genvars declared within this scheme.
+      map<perm_string,LineInfo*> genvars;
+
 	// Generate schemes can contain further generate schemes.
       list<PGenerate*> generate_schemes;
       PGenerate*parent;
@@ -109,8 +112,8 @@ class PGenerate : public LineInfo, public LexicalScope {
       bool generate_scope_case_(Design*des, NetScope*container);
       bool generate_scope_nblock_(Design*des, NetScope*container);
 
-	// Call probe during elaborate_scope to calulate the
-	// directed_nested_ flag. It is OK to store the direct_nested_
+	// Call probe during elaborate_scope to calculate the
+	// direct_nested_ flag. It is OK to store the direct_nested_
 	// information here because "direct nested" is a property of
 	// the lexical generate code.
       void probe_for_direct_nesting_(void);

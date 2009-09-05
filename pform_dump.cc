@@ -410,6 +410,8 @@ void PDelays::dump_delays(ostream&out) const
       if (delay_[0] && delay_[1] && delay_[2])
 	    out << "#(" << *delay_[0] << "," << *delay_[1] << "," <<
 		  *delay_[2] << ")";
+      else if (delay_[0] && delay_[1])
+	    out << "#(" << *delay_[0] << "," << *delay_[1] << ")";
       else if (delay_[0])
 	    out << "#" << *delay_[0];
       else
@@ -1030,6 +1032,12 @@ void PGenerate::dump(ostream&out, unsigned indent) const
       for (list<AProcess*>::const_iterator idx = analog_behaviors.begin()
 		 ; idx != analog_behaviors.end() ;  idx++) {
 	    (*idx)->dump(out, indent+2);
+      }
+
+      typedef map<perm_string,LineInfo*>::const_iterator genvar_iter_t;
+      for (genvar_iter_t cur = genvars.begin()
+		 ; cur != genvars.end() ; cur++) {
+	    out << setw(indent+2) << "" << "genvar " << ((*cur).first) << ";" << endl;
       }
 
       for (list<PGenerate*>::const_iterator idx = generate_schemes.begin()

@@ -72,6 +72,8 @@ int cmdfile_stack_ptr = 0;
 \n { cflloc.first_line += 1; }
 
 
+"+parameter+" { BEGIN(PLUS_ARGS); return TOK_PARAMETER; }
+
 "+define+" { BEGIN(PLUS_ARGS); return TOK_DEFINE; }
 
 "+incdir+" { BEGIN(PLUS_ARGS); return TOK_INCDIR; }

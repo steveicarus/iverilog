@@ -430,7 +430,7 @@ static void show_lpm_cmp_ne(ivl_lpm_t net)
 }
 
 /* IVL_LPM_CONCAT
- * The concat device takes N inputs (N=ivl_lpm_selects) and generates
+ * The concat device takes N inputs (N=ivl_lpm_size) and generates
  * a single output. The total output is known from the ivl_lpm_width
  * function. The widths of all the inputs are inferred from the widths
  * of the signals connected to the nexus of the inputs. The compiler
@@ -444,10 +444,10 @@ static void show_lpm_concat(ivl_lpm_t net)
       unsigned width = ivl_lpm_width(net);
 
       fprintf(out, "  LPM_CONCAT %s: <width=%u, inputs=%u>\n",
-	      ivl_lpm_basename(net), width, ivl_lpm_selects(net));
+	      ivl_lpm_basename(net), width, ivl_lpm_size(net));
       fprintf(out, "    O: %p\n", ivl_lpm_q(net,0));
 
-      for (idx = 0 ;  idx < ivl_lpm_selects(net) ;  idx += 1) {
+      for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 1) {
 	    ivl_nexus_t nex = ivl_lpm_data(net, idx);
 	    unsigned signal_width = width_of_nexus(nex);
 

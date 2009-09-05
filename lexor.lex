@@ -71,11 +71,11 @@ void reset_lexor();
 static void line_directive();
 static void line_directive2();
 
-static verinum*make_unsized_binary(const char*txt);
-static verinum*make_undef_highz_dec(const char*txt);
-static verinum*make_unsized_dec(const char*txt);
-static verinum*make_unsized_octal(const char*txt);
-static verinum*make_unsized_hex(const char*txt);
+verinum*make_unsized_binary(const char*txt);
+verinum*make_undef_highz_dec(const char*txt);
+verinum*make_unsized_dec(const char*txt);
+verinum*make_unsized_octal(const char*txt);
+verinum*make_unsized_hex(const char*txt);
 
 static int dec_buf_div2(char *buf);
 
@@ -667,7 +667,7 @@ void lex_end_table()
       BEGIN(INITIAL);
 }
 
-static verinum*make_unsized_binary(const char*txt)
+verinum*make_unsized_binary(const char*txt)
 {
       bool sign_flag = false;
       const char*ptr = txt;
@@ -725,7 +725,7 @@ static verinum*make_unsized_binary(const char*txt)
 }
 
 
-static verinum*make_unsized_octal(const char*txt)
+verinum*make_unsized_octal(const char*txt)
 {
       bool sign_flag = false;
       const char*ptr = txt;
@@ -792,7 +792,7 @@ static verinum*make_unsized_octal(const char*txt)
 }
 
 
-static verinum*make_unsized_hex(const char*txt)
+verinum*make_unsized_hex(const char*txt)
 {
       bool sign_flag = false;
       const char*ptr = txt;
@@ -919,7 +919,7 @@ static int dec_buf_div2(char *buf)
 }
 
 /* Support a single x, z or ? as a decimal constant (from 1364-2005). */
-static verinum* make_undef_highz_dec(const char* ptr)
+verinum* make_undef_highz_dec(const char* ptr)
 {
       bool signed_flag = false;
 
@@ -972,7 +972,7 @@ static verinum* make_undef_highz_dec(const char* ptr)
  * hard to calculate.
  */
 
-static verinum*make_unsized_dec(const char*ptr)
+verinum*make_unsized_dec(const char*ptr)
 {
       char buf[4096];
       bool signed_flag = false;

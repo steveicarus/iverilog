@@ -1571,42 +1571,33 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	   module or primitive, it interprets them as parameter
 	   overrides. Correct that misconception here. */
       if (overrides_) {
-	    PDelays tmp_del;
-	    tmp_del.set_delays(overrides_, false);
-	    tmp_del.eval_delays(des, scope, rise_expr, fall_expr, decay_expr);
-
-	    if (dynamic_cast<NetEConst*> (rise_expr)) {
-
-	    } else {
-		  cerr << get_fileline() << ": error: Delay expressions must be "
-		       << "constant for primitives." << endl;
-		  cerr << get_fileline() << ":      : Cannot calculate "
-		       << *rise_expr << endl;
+	    if (overrides_->count() > 2) {
+		  cerr << get_fileline() << ": error: UDPs take at most two "
+		          "delay arguments." << endl;
 		  des->errors += 1;
-	    }
-
-	    if (dynamic_cast<NetEConst*> (fall_expr)) {
-
 	    } else {
-		  cerr << get_fileline() << ": error: Delay expressions must be "
-		       << "constant for primitives." << endl;
-		  cerr << get_fileline() << ":      : Cannot calculate "
-		       << *rise_expr << endl;
-		  des->errors += 1;
+		  PDelays tmp_del;
+		  tmp_del.set_delays(overrides_, false);
+		  tmp_del.eval_delays(des, scope, rise_expr, fall_expr,
+		                      decay_expr);
+
+		  if (! dynamic_cast<NetEConst*> (rise_expr)) {
+			cerr << get_fileline() << ": error: UDP rising delay "
+			        "expression must be constant." << endl;
+			cerr << get_fileline() << ":      : Cannot calculate "
+			     << *rise_expr << endl;
+			des->errors += 1;
+		  }
+
+		  if (! dynamic_cast<NetEConst*> (fall_expr)) {
+			cerr << get_fileline() << ": error: UDP falling delay "
+			        "expression must be constant." << endl;
+			cerr << get_fileline() << ":      : Cannot calculate "
+			     << *fall_expr << endl;
+			des->errors += 1;
+		  }
 	    }
-
-	    if (dynamic_cast<NetEConst*> (decay_expr)) {
-
-	    } else {
-		  cerr << get_fileline() << ": error: Delay expressions must be "
-		       << "constant for primitives." << endl;
-		  cerr << get_fileline() << ":      : Cannot calculate "
-		       << *rise_expr << endl;
-		  des->errors += 1;
-	    }
-
       }
-
 
       assert(udp);
       NetUDP*net = new NetUDP(scope, my_name, udp->ports.count(), udp);
@@ -4235,8 +4226,23 @@ class elaborate_root_scope_t : public elaborator_work_item_t {
 
       virtual void elaborate_runrun()
       {
-	    Module::replace_t stub;
-	    if (! rmod_->elaborate_scope(des, scope_, stub))
+	    Module::replace_t root_repl;
+	    for (list<Module::named_expr_t>::iterator cur = Module::user_defparms.begin()
+		       ; cur != Module::user_defparms.end() ; cur++) {
+
+		  pform_name_t tmp_name = cur->first;
+		  if (peek_head_name(tmp_name) != scope_->basename())
+			continue;
+
+		  tmp_name.pop_front();
+		  if (tmp_name.size() != 1)
+			continue;
+
+		  NetExpr*tmp_expr = cur->second->elaborate_pexpr(des, scope_);
+		  root_repl[peek_head_name(tmp_name)] = tmp_expr;
+	    }
+
+	    if (! rmod_->elaborate_scope(des, scope_, root_repl))
 		  des->errors += 1;
       }
 

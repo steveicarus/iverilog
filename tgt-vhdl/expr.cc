@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for expressions.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -107,8 +107,10 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
    if (ivl_signal_array_count(sig) > 0 && (off = ivl_expr_oper1(e))) {
       // Select from an array
       vhdl_expr *vhd_off = translate_expr(off);
-      if (NULL == vhd_off)
+      if (NULL == vhd_off) {
+         delete ref;
          return NULL;
+      }
 
       vhdl_type integer(VHDL_TYPE_INTEGER);
       ref->set_slice(vhd_off->cast(&integer));

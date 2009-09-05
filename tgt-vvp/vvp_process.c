@@ -87,7 +87,8 @@ static void set_to_lvariable(ivl_lval_t lval,
 
       if (part_off_ex == 0) {
 	    part_off = 0;
-      } else if (number_is_immediate(part_off_ex, IMM_WID, 0)) {
+      } else if (number_is_immediate(part_off_ex, IMM_WID, 0) &&
+                 !number_is_unknown(part_off_ex)) {
 	    part_off = get_number_immediate(part_off_ex);
 	    part_off_ex = 0;
       }
@@ -96,6 +97,7 @@ static void set_to_lvariable(ivl_lval_t lval,
 	   it to select the word, and pay no further heed to the
 	   expression itself. */
       if (word_ix && number_is_immediate(word_ix, IMM_WID, 0)) {
+	    assert(! number_is_unknown(word_ix));
 	    use_word = get_number_immediate(word_ix);
 	    word_ix = 0;
       }
@@ -222,6 +224,63 @@ static void set_to_lvariable(ivl_lval_t lval,
       }
 }
 
+/* Support a non-blocking assignment to a real array word. */
+static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
+                                   unsigned bit, uint64_t delay,
+                                   ivl_expr_t dexp, unsigned nevents)
+{
+      unsigned skip_assign = transient_id++;
+
+	/* This code is common to all the different types of array delays. */
+      if (number_is_immediate(word_ix, IMM_WID, 0)) {
+	    assert(! number_is_unknown(word_ix));
+	    fprintf(vvp_out, "    %%ix/load 3, %lu, 0; address\n",
+	                     get_number_immediate(word_ix));
+      } else {
+	      /* Calculate array word index into index register 3 */
+	    draw_eval_expr_into_integer(word_ix, 3);
+	      /* Skip assignment if word expression is not defined. */
+	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+      }
+
+      if (dexp != 0) {
+	      /* Calculated delay... */
+	    int delay_index = allocate_word();
+	    draw_eval_expr_into_integer(dexp, delay_index);
+	    fprintf(vvp_out, "    %%assign/ar/d v%p, %d, %u;\n", lsig,
+	                     delay_index, bit);
+	    clr_word(delay_index);
+      } else if (nevents != 0) {
+	      /* Event control delay... */
+	    fprintf(vvp_out, "    %%assign/ar/e v%p, %u;\n", lsig, bit);
+      } else {
+	      /* Constant delay... */
+	    unsigned long low_d = delay % UINT64_C(0x100000000);
+	    unsigned long hig_d = delay / UINT64_C(0x100000000);
+
+	      /*
+	       * The %assign can only take a 32 bit delay. For a larger
+	       * delay we need to put it into an index register.
+	       */
+	    if (hig_d != 0) {
+		  int delay_index = allocate_word();
+		  fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
+		          delay_index, low_d, hig_d);
+		  fprintf(vvp_out, "    %%assign/ar/d v%p, %d, %u;\n", lsig,
+		  delay_index, bit);
+		  clr_word(delay_index);
+	    } else {
+		  fprintf(vvp_out, "    %%assign/ar v%p, %lu, %u;\n",
+		          lsig, low_d, bit);
+	    }
+      }
+
+      fprintf(vvp_out, "t_%u ;\n", skip_assign);
+      if (nevents != 0) fprintf(vvp_out, "    %%evctl/c;\n");
+
+      clear_expression_lookaside();
+}
+
 static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 				 unsigned bit, uint64_t delay, ivl_expr_t dexp,
 				 ivl_expr_t part_off_ex, unsigned width,
@@ -233,12 +292,14 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       if (part_off_ex == 0) {
 	    part_off = 0;
       } else if (number_is_immediate(part_off_ex, IMM_WID, 0)) {
+	    assert(! number_is_unknown(part_off_ex));
 	    part_off = get_number_immediate(part_off_ex);
 	    part_off_ex = 0;
       }
 
 	/* This code is common to all the different types of array delays. */
       if (number_is_immediate(word_ix, IMM_WID, 0)) {
+	    assert(! number_is_unknown(word_ix));
 	    fprintf(vvp_out, "    %%ix/load 3, %lu, 0; address\n",
 	                     get_number_immediate(word_ix));
       } else {
@@ -317,6 +378,7 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
       if (part_off_ex == 0) {
 	    part_off = 0;
       } else if (number_is_immediate(part_off_ex, IMM_WID, 0)) {
+	    assert(! number_is_unknown(part_off_ex));
 	    part_off = get_number_immediate(part_off_ex);
 	    part_off_ex = 0;
       }
@@ -643,13 +705,6 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
       sig = ivl_lval_sig(lval);
       assert(sig);
 
-      if (ivl_signal_dimensions(sig) > 0) {
-	    word_ix = ivl_lval_idx(lval);
-	    assert(word_ix);
-	    assert(number_is_immediate(word_ix, IMM_WID, 0));
-	    use_word = get_number_immediate(word_ix);
-      }
-
       if (del && (ivl_expr_type(del) == IVL_EX_DELAY)) {
 	    assert(number_is_immediate(del, 64, 0));
 	    delay = ivl_expr_delay_val(del);
@@ -658,6 +713,14 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 
 	/* Evaluate the r-value */
       word = draw_eval_real(rval);
+
+      if (ivl_signal_dimensions(sig) > 0) {
+	    word_ix = ivl_lval_idx(lval);
+	    assert(word_ix);
+	    assign_to_array_r_word(sig, word_ix, word, delay, del, nevents);
+	    clr_word(word);
+	    return 0;
+      }
 
 	/* We need to calculate the delay expression. */
       if (del) {
@@ -1105,11 +1168,13 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 		  part_off = 0;
 	    } else {
 		  assert(number_is_immediate(part_off_ex, IMM_WID, 0));
+		  assert(! number_is_unknown(part_off_ex));
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 
 	    if (word_idx != 0) {
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
+		  assert(! number_is_unknown(word_idx));
 		  use_word = get_number_immediate(word_idx);
 	    }
 
@@ -1174,6 +1239,7 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 	 * part select (this could give us multiple drivers). */
       part_off_ex = ivl_lval_part_off(lval);
       if (ivl_signal_width(lsig) > ivl_signal_width(rsig) ||
+          // Do we need checks for number_is{immediate,unknown} of part_of_ex?
           (part_off_ex && get_number_immediate(part_off_ex) != 0)) {
 	    fprintf(stderr, "%s:%u: vvp-tgt sorry: cannot %s signal to "
 	            "a bit/part select.\n", ivl_expr_file(rval),
@@ -1184,11 +1250,13 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 	/* At least for now, only handle force to fixed words of an array. */
       if ((lword_idx = ivl_lval_idx(lval)) != 0) {
 	    assert(number_is_immediate(lword_idx, IMM_WID, 0));
+	    assert(! number_is_unknown(lword_idx));
 	    use_lword = get_number_immediate(lword_idx);
       }
 
       if ((rword_idx = ivl_expr_oper1(rval)) != 0) {
 	    assert(number_is_immediate(rword_idx, IMM_WID, 0));
+	    assert(! number_is_unknown(rword_idx));
 	    use_rword = get_number_immediate(rword_idx);
       }
 
@@ -1272,11 +1340,13 @@ static int show_stmt_deassign(ivl_statement_t net)
 	    part_off = 0;
 	    if (part_off_ex != 0) {
 		  assert(number_is_immediate(part_off_ex, 64, 0));
+		  assert(! number_is_unknown(part_off_ex));
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 
 	    if (word_idx != 0) {
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
+		  assert(! number_is_unknown(word_idx));
 		  use_word = get_number_immediate(word_idx);
 	    }
 
@@ -1567,6 +1637,7 @@ static int show_stmt_release(ivl_statement_t net)
 	    part_off = 0;
 	    if (part_off_ex != 0) {
 		  assert(number_is_immediate(part_off_ex, 64, 0));
+		  assert(! number_is_unknown(part_off_ex));
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 
@@ -1581,6 +1652,7 @@ static int show_stmt_release(ivl_statement_t net)
 
 	    if (word_idx != 0) {
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
+		  assert(! number_is_unknown(word_idx));
 		  use_word = get_number_immediate(word_idx);
 	    }
 

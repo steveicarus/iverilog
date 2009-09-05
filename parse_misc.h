@@ -77,4 +77,14 @@ extern UCDriveType uc_drive;
 extern bool have_timeunit_decl;
 extern bool have_timeprec_decl;
 
+/*
+ * Export there functions because we have to generate PENumber class
+ * in pform.cc for user defparam definition from command file.
+ */
+extern verinum*make_unsized_dec(const char*txt);
+extern verinum*make_undef_highz_dec(const char*txt);
+extern verinum*make_unsized_binary(const char*txt);
+extern verinum*make_unsized_octal(const char*txt);
+extern verinum*make_unsized_hex(const char*txt);
+
 #endif

@@ -167,6 +167,12 @@ typedef struct t_command_file {
 p_command_file cmd_file_head = NULL;  /* The FIFO head */
 p_command_file cmd_file_tail = NULL;  /* The FIFO tail */
 
+/* Temprarily store parameter definition from command line and
+ * parse it after we have delt with command file
+ */
+static const char** defparm_base = 0;
+static int defparm_size = 0;
+
 /* Function to add a command file name to the FIFO. */
 void add_cmd_file(const char* filename)
 {
@@ -469,6 +475,7 @@ static void process_warning_switch(const char*name)
       if (strcmp(name,"all") == 0) {
 	    process_warning_switch("implicit");
 	    process_warning_switch("portbind");
+	    process_warning_switch("select-range");
 	    process_warning_switch("timescale");
       } else if (strcmp(name,"implicit") == 0) {
 	    if (! strchr(warning_flags, 'i'))
@@ -476,6 +483,9 @@ static void process_warning_switch(const char*name)
       } else if (strcmp(name,"portbind") == 0) {
 	    if (! strchr(warning_flags, 'p'))
 		  strcat(warning_flags, "p");
+      } else if (strcmp(name,"select-range") == 0) {
+	    if (! strchr(warning_flags, 's'))
+		  strcat(warning_flags, "s");
       } else if (strcmp(name,"timescale") == 0) {
 	    if (! strchr(warning_flags, 't'))
 		  strcat(warning_flags, "t");
@@ -492,6 +502,12 @@ static void process_warning_switch(const char*name)
 	    }
       } else if (strcmp(name,"no-portbind") == 0) {
 	    char*cp = strchr(warning_flags, 'p');
+	    if (cp) while (*cp) {
+		  cp[0] = cp[1];
+		  cp += 1;
+	    }
+      } else if (strcmp(name,"no-select-range") == 0) {
+	    char*cp = strchr(warning_flags, 's');
 	    if (cp) while (*cp) {
 		  cp[0] = cp[1];
 		  cp += 1;
@@ -528,6 +544,11 @@ void process_include_dir(const char *name)
 void process_define(const char*name)
 {
       fprintf(defines_file,"D:%s\n", name);
+}
+
+void process_parameter(const char*name)
+{
+      fprintf(iconfig_file,"defparam:%s\n", name);
 }
 
 /*
@@ -774,7 +795,7 @@ int main(int argc, char **argv)
 	}
       }
 
-      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hI:M:m:N::o:p:Ss:T:t:vVW:y:Y:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hI:M:m:N::o:P:p:Ss:T:t:vVW:y:Y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -797,6 +818,11 @@ int main(int argc, char **argv)
 		  break;
 		case 'E':
 		  e_flag = 1;
+		  break;
+		case 'P':
+		  defparm_size += 1;
+		  defparm_base = (const char**)realloc(defparm_base, defparm_size*sizeof(char*));
+		  defparm_base[defparm_size-1] = optarg;
 		  break;
 		case 'p':
 		  fprintf(iconfig_file, "flag:%s\n", optarg);
@@ -965,6 +991,15 @@ int main(int argc, char **argv)
       if (depfile) {
 	    fprintf(defines_file, "M:%s\n", depfile);
       }
+
+    /* Process parameter definition from command line. The last
+       defined would override previous ones. */
+      int pitr;
+      for (pitr = 0; pitr < defparm_size; pitr++)
+        process_parameter(defparm_base[pitr]);
+      free(defparm_base);
+      defparm_base = 0;
+      defparm_size = 0;
 
 	/* Finally, process all the remaining words on the command
 	   line as file names. */

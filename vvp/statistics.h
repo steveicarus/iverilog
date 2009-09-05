@@ -1,7 +1,7 @@
 #ifndef __statistics_H
 #define __statistics_H
 /*
- * Copyright (c) 2002-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -47,6 +47,7 @@ extern unsigned long count_assign4_pool(void);
 extern unsigned long count_assign8_pool(void);
 extern unsigned long count_assign_real_pool(void);
 extern unsigned long count_assign_aword_pool(void);
+extern unsigned long count_assign_arword_pool(void);
 
 extern unsigned long count_gen_events;
 extern unsigned long count_gen_pool(void);

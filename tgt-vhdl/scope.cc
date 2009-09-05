@@ -472,12 +472,50 @@ static void avoid_name_collision(string& name, vhdl_scope* scope)
    }
 }
 
+// Concatenate the expanded genvar values together to make a unique
+// instance name
+// This isn't ideal: it would be better to replace the Verilog
+// generate with an equivalent VHDL generate, but this isn't possible
+// with the current API
+static string genvar_unique_suffix(ivl_scope_t scope)
+{
+   ostringstream suffix;
+   while (scope && ivl_scope_type(scope) == IVL_SCT_GENERATE) {
+      for (unsigned i = 0; i < ivl_scope_params(scope); i++) {
+         ivl_parameter_t param = ivl_scope_param(scope, i);
+         ivl_expr_t e = ivl_parameter_expr(param);
+         
+         if (ivl_expr_type(e) == IVL_EX_NUMBER) {
+            vhdl_expr* value = translate_expr(e);
+            assert(value);
+            
+            value = value->cast(vhdl_type::integer());
+            
+            suffix << "_" << ivl_parameter_basename(param);
+            value->emit(suffix, 0);
+            
+            delete value;
+         }
+         else {
+            error("Only numeric genvars supported at the moment");
+            return "_ERROR";  // Never used
+         }            
+      }
+      
+      scope = ivl_scope_parent(scope);
+   }
+
+   return suffix.str();
+}
+
 // Declare a single signal in a scope
-static void declare_one_signal(vhdl_entity *ent, ivl_signal_t sig)
+static void declare_one_signal(vhdl_entity *ent, ivl_signal_t sig,
+   ivl_scope_t scope)
 {
    remember_signal(sig, ent->get_arch()->get_scope());
 
    string name(make_safe_name(sig));
+   name += genvar_unique_suffix(scope);
    avoid_name_collision(name, ent->get_arch()->get_scope());
    
    rename_signal(sig, name);
@@ -586,14 +624,14 @@ static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
       ivl_signal_t sig = ivl_scope_sig(scope, i);      
 
       if (ivl_signal_port(sig) != IVL_SIP_NONE)
-         declare_one_signal(ent, sig);
+         declare_one_signal(ent, sig, scope);
    }
    
    for (int i = 0; i < nsigs; i++) {
       ivl_signal_t sig = ivl_scope_sig(scope, i);      
 
       if (ivl_signal_port(sig) == IVL_SIP_NONE)
-         declare_one_signal(ent, sig);
+         declare_one_signal(ent, sig, scope);
    }
 }
 
@@ -873,9 +911,6 @@ static int draw_skeleton_scope(ivl_scope_t scope, void *_unused)
    case IVL_SCT_MODULE:
       create_skeleton_entity_for(scope, depth);
       break;
-   case IVL_SCT_GENERATE:
-      error("No translation for generate statements yet");
-      return 1;
    case IVL_SCT_FORK:
       error("No translation for fork statements yet");
       return 1;
@@ -897,6 +932,20 @@ static int draw_all_signals(ivl_scope_t scope, void *_parent)
      
    if (ivl_scope_type(scope) == IVL_SCT_MODULE) {
       vhdl_entity *ent = find_entity(scope);
+      assert(ent);
+
+      declare_signals(ent, scope);
+   }
+   else if (ivl_scope_type(scope) == IVL_SCT_GENERATE) {
+      // Because generate scopes don't appear in the
+      // output VHDL all their signals are added to the
+      // containing entity (after being uniqued)
+
+      ivl_scope_t parent = ivl_scope_parent(scope);
+      while (ivl_scope_type(parent) == IVL_SCT_GENERATE)
+         parent = ivl_scope_parent(scope);
+      
+      vhdl_entity* ent = find_entity(parent);
       assert(ent);
 
       declare_signals(ent, scope);
@@ -1032,6 +1081,10 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
    if (ivl_scope_type(scope) == IVL_SCT_MODULE && _parent) {
       ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);
 
+      // Skip over any containing generate scopes
+      while (ivl_scope_type(parent) == IVL_SCT_GENERATE)
+         parent = ivl_scope_parent(parent);
+      
       if (!is_default_scope_instance(parent))
          return 0;  // Not generating code for the parent instance so
                     // don't generate for the child
@@ -1054,6 +1107,7 @@ static int draw_hierarchy(ivl_scope_t scope, void *_parent)
          
       // And an instantiation statement
       string inst_name(ivl_scope_basename(scope));
+      inst_name += genvar_unique_suffix(ivl_scope_parent(scope));
       if (inst_name == ent->get_name() || parent_scope->have_declared(inst_name)) {
          // Cannot have instance name the same as type in VHDL
          inst_name += "_Inst";

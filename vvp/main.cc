@@ -422,6 +422,8 @@ int main(int argc, char*argv[])
 			   count_assign_real_pool());
 	    vpi_mcd_printf(1, "             ...assign(word) pool=%lu\n",
 			   count_assign_aword_pool());
+	    vpi_mcd_printf(1, "             ...assign(word/r) pool=%lu\n",
+			   count_assign_arword_pool());
 	    vpi_mcd_printf(1, "    %8lu other events (pool=%lu)\n",
 			   count_gen_events, count_gen_pool());
       }

@@ -558,6 +558,9 @@ static void draw_delay(ivl_net_logic_t lptr)
       assert(number_is_immediate(d0, 64, 0));
       assert(number_is_immediate(d1, 64, 0));
       assert(number_is_immediate(d2, 64, 0));
+      assert(! number_is_unknown(d0));
+      assert(! number_is_unknown(d1));
+      assert(! number_is_unknown(d2));
 
       if (d0 == d1 && d1 == d2)
 	    fprintf(vvp_out, " (%lu)", get_number_immediate(d0));
@@ -615,6 +618,8 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
   static ivl_udp_t *udps = 0x0;
   static int nudps = 0;
   int i;
+  unsigned ninp;
+  const char **input_strings;
 
   for (i=0; i<nudps; i++)
     if (udps[i] == udp)
@@ -628,25 +633,37 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
       draw_udp_def(udp);
     }
 
-  fprintf(vvp_out, "L_%p .udp", lptr);
-  fprintf(vvp_out, " UDP_%s",
-	  vvp_mangle_id(ivl_udp_name(udp)));
-  draw_delay(lptr);
-
-  for (pdx = 1 ;  pdx < ivl_logic_pins(lptr) ;  pdx += 1) {
-	ivl_nexus_t nex = ivl_logic_pin(lptr, pdx);
+    /*
+     * We need to process the arguments first so any evaluation code
+     * (.resolv, etc.) can be built before we build the .udp call.
+     * This matches what is done for the other primitives.
+     */
+  ninp = ivl_logic_pins(lptr) - 1;
+  input_strings = calloc(ninp, sizeof(char*));
+  for (pdx = 0 ;  pdx < ninp ;  pdx += 1) {
+	ivl_nexus_t nex = ivl_logic_pin(lptr, pdx+1);
 
 	  /* Unlike other logic gates, primitives may have unconnected
 	     inputs. The proper behavior is to attach a HiZ to the
 	     port. */
 	if (nex == 0) {
 	      assert(ivl_logic_width(lptr) == 1);
-	      fprintf(vvp_out, ", C4<z>");
+	      input_strings[pdx] = "C4<z>";
 
 	} else {
-	      fprintf(vvp_out, ", %s", draw_net_input(nex));
+	      input_strings[pdx] = draw_net_input(nex);
 	}
   }
+
+  fprintf(vvp_out, "L_%p .udp", lptr);
+  fprintf(vvp_out, " UDP_%s",
+	  vvp_mangle_id(ivl_udp_name(udp)));
+  draw_delay(lptr);
+
+  for (pdx = 0 ;  pdx < ninp ;  pdx += 1) {
+	fprintf(vvp_out, ", %s", input_strings[pdx]);
+  }
+  free(input_strings);
 
   fprintf(vvp_out, ";\n");
 }
@@ -805,7 +822,6 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    input_strings[pdx] = draw_net_input(ivl_logic_pin(lptr, pdx+1));
 
       level = 0;
-      ninp = ivl_logic_pins(lptr) - 1;
       while (ninp) {
 	    int inst;
 	    for (inst = 0; inst < ninp; inst += 4) {
@@ -861,6 +877,9 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		&& number_is_immediate(fall_exp,64,0)
 		&& number_is_immediate(decay_exp,64,0)) {
 
+		  assert(! number_is_unknown(rise_exp));
+		  assert(! number_is_unknown(fall_exp));
+		  assert(! number_is_unknown(decay_exp));
 		  fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
 			  lptr, get_number_immediate(rise_exp),
 			  get_number_immediate(fall_exp),
@@ -1066,6 +1085,9 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net)
 	    assert(number_is_immediate(d_rise, 64, 0));
 	    assert(number_is_immediate(d_fall, 64, 0));
 	    assert(number_is_immediate(d_decay, 64, 0));
+	    assert(! number_is_unknown(d_rise));
+	    assert(! number_is_unknown(d_fall));
+	    assert(! number_is_unknown(d_decay));
 	    dly = "/d";
 	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
 	            net, get_number_immediate(d_rise),
@@ -1322,7 +1344,7 @@ static unsigned lpm_concat_inputs(ivl_lpm_t net, unsigned start,
 static void draw_lpm_concat(ivl_lpm_t net)
 {
       const char*src_table[4];
-      unsigned icnt = ivl_lpm_selects(net);
+      unsigned icnt = ivl_lpm_size(net);
       const char*dly = draw_lpm_output_delay(net);
 
       if (icnt <= 4) {
