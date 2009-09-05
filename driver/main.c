@@ -471,6 +471,7 @@ static void process_warning_switch(const char*name)
 	    process_warning_switch("portbind");
 	    process_warning_switch("select-range");
 	    process_warning_switch("timescale");
+	    process_warning_switch("sensitivity-entire-array");
       } else if (strcmp(name,"implicit") == 0) {
 	    if (! strchr(warning_flags, 'i'))
 		  strcat(warning_flags, "i");
@@ -488,6 +489,12 @@ static void process_warning_switch(const char*name)
       } else if (strcmp(name,"infloop") == 0) {
 	    if (! strchr(warning_flags, 'l'))
 		  strcat(warning_flags, "l");
+      } else if (strcmp(name,"sensitivity-entire-vector") == 0) {
+	    if (! strchr(warning_flags, 'v'))
+		  strcat(warning_flags, "v");
+      } else if (strcmp(name,"sensitivity-entire-array") == 0) {
+	    if (! strchr(warning_flags, 'a'))
+		  strcat(warning_flags, "a");
       } else if (strcmp(name,"no-implicit") == 0) {
 	    char*cp = strchr(warning_flags, 'i');
 	    if (cp) while (*cp) {
@@ -508,6 +515,18 @@ static void process_warning_switch(const char*name)
 	    }
       } else if (strcmp(name,"no-timescale") == 0) {
 	    char*cp = strchr(warning_flags, 't');
+	    if (cp) while (*cp) {
+		  cp[0] = cp[1];
+		  cp += 1;
+	    }
+      } else if (strcmp(name,"no-sensitivity-entire-vector") == 0) {
+	    char*cp = strchr(warning_flags, 'v');
+	    if (cp) while (*cp) {
+		  cp[0] = cp[1];
+		  cp += 1;
+	    }
+      } else if (strcmp(name,"no-sensitivity-entire-array") == 0) {
+	    char*cp = strchr(warning_flags, 'a');
 	    if (cp) while (*cp) {
 		  cp[0] = cp[1];
 		  cp += 1;

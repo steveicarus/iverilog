@@ -88,6 +88,11 @@ extern bool warn_ob_select;
 /* Warn about structures that may have infinite loops. */
 extern bool warn_inf_loop;
 
+/* Warn about always @* statements where a part or word select causes
+   sensitivity to an entire vector or array. */
+extern bool warn_sens_entire_vec;
+extern bool warn_sens_entire_arr;
+
 /* This is true if verbose output is requested. */
 extern bool verbose_flag;
 
