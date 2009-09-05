@@ -259,8 +259,8 @@ after a \fB-Wall\fP argument to suppress isolated warning types.
 
 .TP 8
 .B all
-This enables the implicit, portbind, select-range and timescale warning
-categories.
+This enables the implicit, portbind, select-range, timescale, and
+sensitivity-entire-array warning categories.
 
 .TP 8
 .B implicit
@@ -302,6 +302,22 @@ use this flag to find the always statements that need to have their logic
 verified. It is expected that many of the warnings will be false
 positives, since the code treats the value of all variables and signals
 as indeterminate.
+
+.TP 8
+.B sensitivity-entire-vector
+This enables warnings for when a part select within an "always @*"
+statement results in the entire vector being added to the implicit
+sensitivity list. Although this behaviour is prescribed by the IEEE
+standard, it is not what might be expected and can have performance
+implications if the vector is large.
+
+.TP 8
+.B sensitivity-entire-array
+This enables warnings for when a word select within an "always @*"
+statement results in the entire array being added to the implicit
+sensitivity list. Although this behaviour is prescribed by the IEEE
+standard, it is not what might be expected and can have performance
+implications if the array is large.
 
 .SH "SYSTEM FUNCTION TABLE FILES"
 If the source file name as a \fB.sft\fP suffix, then it is taken to be
