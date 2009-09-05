@@ -482,7 +482,7 @@ vvp_fun_signal_real_sa::vvp_fun_signal_real_sa()
 
 double vvp_fun_signal_real_sa::real_value() const
 {
-      assert(0 /* XXXX return filtered_real(bits_); */);
+      assert(0);
 }
 
 void vvp_fun_signal_real_sa::recv_real(vvp_net_ptr_t ptr, double bit,
@@ -651,12 +651,15 @@ void vvp_wire_vec4::force_fil_real(double val, vvp_vector2_t mask)
       assert(0);
 }
 
-void vvp_wire_vec4::release(vvp_net_ptr_t ptr)
+void vvp_wire_vec4::release(vvp_net_ptr_t ptr, bool net_flag)
 {
 	// Wires revert to their unforced value after release.
       vvp_vector2_t mask (vvp_vector2_t::FILL1, width_);
       release_mask(mask);
-      ptr.ptr()->send_vec4(bits4_, 0);
+      if (net_flag)
+	    ptr.ptr()->send_vec4(bits4_, 0);
+      else
+	    ptr.ptr()->fun->recv_vec4(ptr, force4_, 0);
 }
 
 void vvp_wire_vec4::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid)
@@ -748,12 +751,15 @@ void vvp_wire_vec8::force_fil_real(double val, vvp_vector2_t mask)
       assert(0);
 }
 
-void vvp_wire_vec8::release(vvp_net_ptr_t ptr)
+void vvp_wire_vec8::release(vvp_net_ptr_t ptr, bool net_flag)
 {
 	// Wires revert to their unforced value after release.
       vvp_vector2_t mask (vvp_vector2_t::FILL1, width_);
       release_mask(mask);
-      ptr.ptr()->send_vec8(bits8_);
+      if (net_flag)
+	    ptr.ptr()->send_vec8(bits8_);
+      else
+	    ptr.ptr()->fun->recv_vec8(ptr, force8_);
 }
 
 void vvp_wire_vec8::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid)
@@ -841,12 +847,15 @@ void vvp_wire_real::force_fil_real(double val, vvp_vector2_t mask)
 	    force_ = val;
 }
 
-void vvp_wire_real::release(vvp_net_ptr_t ptr)
+void vvp_wire_real::release(vvp_net_ptr_t ptr, bool net_flag)
 {
 	// Wires revert to their unforced value after release.
       vvp_vector2_t mask (vvp_vector2_t::FILL1, 1);
       release_mask(mask);
-      ptr.ptr()->send_real(bit_, 0);
+      if (net_flag)
+	    ptr.ptr()->send_real(bit_, 0);
+      else
+	    ptr.ptr()->fun->recv_real(ptr, force_, 0);
 }
 
 void vvp_wire_real::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid)

@@ -303,7 +303,7 @@ class vvp_wire_vec4 : public vvp_wire_base {
       void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
       void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
       void force_fil_real(double val, vvp_vector2_t mask);
-      void release(vvp_net_ptr_t ptr);
+      void release(vvp_net_ptr_t ptr, bool net_flag);
       void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid);
 
 	// Implementation of vvp_signal_value methods
@@ -337,7 +337,7 @@ class vvp_wire_vec8 : public vvp_wire_base {
       void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
       void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
       void force_fil_real(double val, vvp_vector2_t mask);
-      void release(vvp_net_ptr_t ptr);
+      void release(vvp_net_ptr_t ptr, bool net_flag);
       void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid);
 
 	// Implementation of vvp_signal_value methods
@@ -360,7 +360,7 @@ class vvp_wire_vec8 : public vvp_wire_base {
 class vvp_wire_real : public vvp_wire_base {
 
     public:
-      explicit vvp_wire_real();
+      explicit vvp_wire_real(void);
 
 	// The main filter behavior for this class
       bool filter_real(double&bit);
@@ -372,7 +372,7 @@ class vvp_wire_real : public vvp_wire_base {
       void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
       void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
       void force_fil_real(double val, vvp_vector2_t mask);
-      void release(vvp_net_ptr_t ptr);
+      void release(vvp_net_ptr_t ptr, bool net_flag);
       void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid);
 
 	// Implementation of vvp_signal_value methods
