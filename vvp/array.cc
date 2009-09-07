@@ -883,9 +883,10 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 	      // width by looking at a word that we know is present.
 	    assert(arr->array_count > 0);
 	    vpiHandle word = arr->nets[0];
+	    assert(word);
 	    struct __vpiSignal*vsig = vpip_signal_from_handle(word);
 	    assert(vsig);
-	    vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (vsig->node->fun);
+	    vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (vsig->node->fil);
 	    assert(sig);
 	    return vvp_vector4_t(sig->value_size(), BIT4_X);
       }
@@ -893,7 +894,7 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
       vpiHandle word = arr->nets[address];
       struct __vpiSignal*vsig = vpip_signal_from_handle(word);
       assert(vsig);
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (vsig->node->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (vsig->node->fil);
       assert(sig);
 
       vvp_vector4_t val = sig->vec4_value();
@@ -989,7 +990,7 @@ void array_alias_word(vvp_array_t array, unsigned long addr, vpiHandle word)
       array->nets[addr] = word;
 }
 
-void array_attach_word(vvp_array_t array, unsigned long addr, vpiHandle word)
+void array_attach_word(vvp_array_t array, unsigned addr, vpiHandle word)
 {
       assert(addr < array->array_count);
       assert(array->nets);
@@ -998,7 +999,7 @@ void array_attach_word(vvp_array_t array, unsigned long addr, vpiHandle word)
       if (struct __vpiSignal*sig = vpip_signal_from_handle(word)) {
 	    vvp_net_t*net = sig->node;
 	    assert(net);
-	    vvp_vpi_callback*fun = dynamic_cast<vvp_vpi_callback*>(net->fun);
+	    vvp_vpi_callback*fun = dynamic_cast<vvp_vpi_callback*>(net->fil);
 	    assert(fun);
 	    fun->attach_as_word(array, addr);
 	    sig->is_netarray = 1;
@@ -1010,7 +1011,7 @@ void array_attach_word(vvp_array_t array, unsigned long addr, vpiHandle word)
       if (struct __vpiRealVar*sig = (struct __vpiRealVar*)word) {
 	    vvp_net_t*net = sig->net;
 	    assert(net);
-	    vvp_vpi_callback*fun = dynamic_cast<vvp_vpi_callback*>(net->fun);
+	    vvp_vpi_callback*fun = dynamic_cast<vvp_vpi_callback*>(net->fil);
 	    assert(fun);
 	    fun->attach_as_word(array, addr);
 	    sig->is_netarray = 1;
