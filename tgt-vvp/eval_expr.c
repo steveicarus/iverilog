@@ -2983,6 +2983,12 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 	    res.base = 0;
 	    res.wid = 0;
 	    break;
+	  case IVL_EX_EVENT:
+	    fprintf(stderr, "%s:%u: vvp-tgt error: A named event is not "
+	                    "handled in this context (expression).\n",
+	                    ivl_expr_file(exp), ivl_expr_lineno(exp));
+	    exit(1);
+	    break;
 
 	  case IVL_EX_STRING:
 	    res = draw_string_expr(exp, wid);
