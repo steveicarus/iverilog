@@ -49,8 +49,9 @@ AX_WIN32
 #enable_vvp32=no
 AC_SUBST(enable_vvp32)
 
+AC_CHECK_DECL(__SUNPRO_C,AC_SUBST(WARNING_CFLAGS,),AC_SUBST(WARNING_CFLAGS,-Wall))
 
-AC_LANG_CPLUSPLUS
+AC_LANG(C++)
 
 AC_CHECK_HEADERS(getopt.h malloc.h inttypes.h libiberty.h iosfwd sys/wait.h)
 
@@ -92,7 +93,7 @@ AC_SUBST(DLLIB)
 
 AC_PROG_INSTALL
 
-AC_LANG_C
+AC_LANG(C)
 AC_C_BIGENDIAN
 
 # $host
