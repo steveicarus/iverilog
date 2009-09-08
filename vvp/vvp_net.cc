@@ -216,14 +216,14 @@ vvp_net_fil_t::prop_t vvp_net_fil_t::filter_vec8(const vvp_vector8_t&val, vvp_ve
       return PROP;
 }
 
-bool vvp_net_fil_t::filter_real(double&)
+vvp_net_fil_t::prop_t vvp_net_fil_t::filter_real(double&)
 {
-      return true;
+      return PROP;
 }
 
-bool vvp_net_fil_t::filter_long(long&)
+vvp_net_fil_t::prop_t vvp_net_fil_t::filter_long(long&)
 {
-      return true;
+      return PROP;
 }
 
 void vvp_net_fil_t::force_mask(vvp_vector2_t mask)

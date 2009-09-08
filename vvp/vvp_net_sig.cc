@@ -59,10 +59,16 @@ template <class T> vvp_net_fil_t::prop_t vvp_net_fil_t::filter_mask_(const T&val
       }
 }
 
-template <class T> bool vvp_net_fil_t::filter_mask_(T&val)
+template <class T> vvp_net_fil_t::prop_t vvp_net_fil_t::filter_mask_(T&val, T force)
 {
+
+      if (test_force_mask(0)) {
+	    val = force;
+	    run_vpi_callbacks();
+	    return REPL;
+      }
       run_vpi_callbacks();
-      return true;
+      return PROP;
 }
 
 vvp_signal_value::~vvp_signal_value()
@@ -814,14 +820,10 @@ vvp_wire_real::vvp_wire_real()
 {
 }
 
-bool vvp_wire_real::filter_real(double&bit)
+vvp_net_fil_t::prop_t vvp_wire_real::filter_real(double&bit)
 {
       bit_ = bit;
-      if (test_force_mask(0)) {
-	    bit = force_;
-	    return false;
-      }
-      return true;
+      return filter_mask_(bit, force_);
 }
 
 unsigned vvp_wire_real::filter_size() const

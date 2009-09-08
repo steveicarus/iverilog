@@ -363,7 +363,7 @@ class vvp_wire_real : public vvp_wire_base {
       explicit vvp_wire_real(void);
 
 	// The main filter behavior for this class
-      bool filter_real(double&bit);
+      prop_t filter_real(double&bit);
 
 	// Abstract methods from vvp_vpi_callback
       void get_value(struct t_vpi_value*value);

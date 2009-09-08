@@ -1130,8 +1130,8 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 	// filter, or overridden by the rep argument if present.
       virtual prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep);
       virtual prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep);
-      virtual bool filter_real(double&val);
-      virtual bool filter_long(long&val);
+      virtual prop_t filter_real(double&val);
+      virtual prop_t filter_long(long&val);
 
       virtual void release(vvp_net_ptr_t ptr, bool net_flag) =0;
       virtual void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid) =0;
@@ -1165,10 +1165,9 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 	// method will use to hold a filtered value, if needed. This
 	// method returns a pointer to val or buf.
       template <class T> prop_t filter_mask_(const T&val, const T&force, T&rep);
-	// This template method is a scalar value of the above. It
-	// leaves the val, or it replaces it iwth a forced value.
-	// (Not really implemented, yet.)
-      template <class T> bool filter_mask_(T&val);
+	// This template method is similar to the above, but works for
+	// native types that are not so expensive to edit in place.
+      template <class T> prop_t filter_mask_(T&val, T force);
 
     private:
 	// Mask of forced bits
