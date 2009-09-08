@@ -177,14 +177,17 @@ vvp_net_t* create_constant_node(const char*label, const char*val_str)
 class __compile_net_resolv : public resolv_list_s {
 
     public:
-      explicit __compile_net_resolv(char*ref_label, char*my_label, char*name,
-				    int msb, int lsb,
+      explicit __compile_net_resolv(char*ref_label, vvp_array_t array,
+				    char*my_label, char*name,
+				    int msb, int lsb, unsigned array_addr,
 				    bool signed_flag, bool net8_flag, bool local_flag)
       : resolv_list_s(ref_label)
       { my_label_ = my_label;
+	array_ = array;
 	name_ = name;
 	msb_ = msb;
 	lsb_ = lsb;
+	array_addr_ = array_addr;
 	signed_flag_ = signed_flag;
 	local_flag_ = local_flag;
       }
@@ -195,8 +198,10 @@ class __compile_net_resolv : public resolv_list_s {
 
     private:
       char*my_label_;
+      vvp_array_t array_;
       char*name_;
       int msb_, lsb_;
+      unsigned array_addr_;
       bool signed_flag_, net8_flag_, local_flag_;
 };
 
@@ -267,10 +272,11 @@ static void __compile_net(char*label,
 	    node = create_constant_node(label, argv[0].text);
       }
       if (node == 0) {
-	    assert(array==0);
-	    __compile_net_resolv*res = new __compile_net_resolv(argv[0].text,
-					    label, name, msb, lsb,
-					    signed_flag, net8_flag, local_flag);
+	    __compile_net_resolv*res
+		  = new __compile_net_resolv(argv[0].text,
+					     array, label, name,
+					     msb, lsb, array_addr,
+					     signed_flag, net8_flag, local_flag);
 	    resolv_submit(res);
 	    return;
       }
@@ -289,7 +295,7 @@ bool __compile_net_resolv::resolve(bool msg_flag)
 	    return false;
       }
 
-      __compile_net2(node, 0, my_label_, name_, msb_, lsb_, 0, signed_flag_, net8_flag_, local_flag_);
+      __compile_net2(node, array_, my_label_, name_, msb_, lsb_, array_addr_, signed_flag_, net8_flag_, local_flag_);
       return true;
 }
 
