@@ -243,6 +243,12 @@ static void __compile_net2(vvp_net_t*node, vvp_array_t array,
 	    compile_vpi_symbol(my_label, obj);
       }
 
+	// REMOVE ME! Giving the net a label is a legacy of the times
+	// when the .net was a functor of its own. In the long run, we
+	// must fix the code generator to not rely on the label of the
+	// .net, then we will remove that label.
+      define_functor_symbol(my_label, node);
+
       if (array)
 	    array_attach_word(array, array_addr, obj);
       else if (obj)
@@ -435,6 +441,7 @@ void compile_aliasw(char*label, char*array_label, unsigned long array_addr,
       vvp_net_t*node = vvp_net_lookup(argv[0].text);
 
 	/* Add the label into the functor symbol table. */
+      assert(node);
       define_functor_symbol(label, node);
 
       vpiHandle obj = vvp_lookup_handle(argv[0].text);
@@ -447,46 +454,19 @@ void compile_aliasw(char*label, char*array_label, unsigned long array_addr,
       free(argv);
 }
 
+/*
+ * The .alias is practically identical to a .net. We create all the
+ * VPI stuff for the new name (and put it in the local scope) but
+ * reference the node in the net.
+ */
 void compile_alias(char*label, char*name, int msb, int lsb, bool signed_flag,
 		 unsigned argc, struct symb_s*argv)
 {
-      assert(argc == 1);
-
-      vvp_net_t*node = vvp_net_lookup(argv[0].text);
-
-	/* Add the label into the functor symbol table. */
-      define_functor_symbol(label, node);
-
-
-	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = vpip_make_net(name, msb, lsb, signed_flag, node);
-      compile_vpi_symbol(label, obj);
-      vpip_attach_to_current_scope(obj);
-
-      free(label);
-      delete[] name;
-      free(argv[0].text);
-      free(argv);
+      __compile_net(label, name, 0, 0, msb, lsb, signed_flag, false, false, argc, argv);
 }
 
 void compile_alias_real(char*label, char*name, int msb, int lsb,
 		      unsigned argc, struct symb_s*argv)
 {
-      assert(argc == 1);
-
-      vvp_net_t*node = vvp_net_lookup(argv[0].text);
-
-	/* Add the label into the functor symbol table. */
-      define_functor_symbol(label, node);
-
-
-	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = vpip_make_real_var(name, node);
-      compile_vpi_symbol(label, obj);
-      vpip_attach_to_current_scope(obj);
-
-      free(label);
-      delete[] name;
-      free(argv[0].text);
-      free(argv);
+      __compile_real(label, name, 0, 0, msb, lsb, false, argc, argv);
 }
