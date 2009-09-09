@@ -206,12 +206,12 @@ vvp_net_fil_t::~vvp_net_fil_t()
       assert(force_link_ == 0);
 }
 
-vvp_net_fil_t::prop_t vvp_net_fil_t::filter_vec4(const vvp_vector4_t&val, vvp_vector4_t&)
+vvp_net_fil_t::prop_t vvp_net_fil_t::filter_vec4(const vvp_vector4_t&val, vvp_vector4_t&, unsigned, unsigned)
 {
       return PROP;
 }
 
-vvp_net_fil_t::prop_t vvp_net_fil_t::filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&)
+vvp_net_fil_t::prop_t vvp_net_fil_t::filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&, unsigned, unsigned)
 {
       return PROP;
 }
@@ -2512,6 +2512,13 @@ vvp_vector8_t vvp_vector8_t::subvalue(unsigned base, unsigned wid) const
       }
 
       return tmp;
+}
+
+void vvp_vector8_t::set_vec(unsigned base, const vvp_vector8_t&that)
+{
+      assert((base+that.size()) <= size());
+      for (unsigned idx = 0 ; idx < that.size() ; idx += 1)
+	    set_bit(base+idx, that.value(idx));
 }
 
 vvp_vector8_t part_expand(const vvp_vector8_t&that, unsigned wid, unsigned off)

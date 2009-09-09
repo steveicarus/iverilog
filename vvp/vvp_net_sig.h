@@ -293,8 +293,10 @@ class vvp_wire_vec4 : public vvp_wire_base {
 	// the value that the node is driven to, and applies the firce
 	// filters. In wires, this also saves the driven value, so
 	// that when a force is released, we can revert to the driven value.
-      prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep);
-      prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep);
+      prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
+			 unsigned base, unsigned vwid);
+      prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep,
+			 unsigned base, unsigned vwid);
 
 	// Abstract methods from vvp_vpi_callback
       void get_value(struct t_vpi_value*value);
@@ -327,8 +329,10 @@ class vvp_wire_vec8 : public vvp_wire_base {
       vvp_wire_vec8(unsigned wid);
 
 	// The main filter behavior for this class
-      prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep);
-      prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep);
+      prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
+			 unsigned base, unsigned vwid);
+      prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep,
+			 unsigned base, unsigned vwid);
 
 	// Abstract methods from vvp_vpi_callback
       void get_value(struct t_vpi_value*value);

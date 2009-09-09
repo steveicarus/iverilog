@@ -796,6 +796,7 @@ class vvp_vector8_t {
       vvp_scalar_t value(unsigned idx) const;
       vvp_vector8_t subvalue(unsigned adr, unsigned width) const;
       void set_bit(unsigned idx, vvp_scalar_t val);
+      void set_vec(unsigned idx, const vvp_vector8_t&that);
 
 	// Test that the vectors are exactly equal
       bool eeq(const vvp_vector8_t&that) const;
@@ -1128,8 +1129,10 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 	// Return true if the value is to be propagated, or false if
 	// propagation is suppressed. The value may be edited by the
 	// filter, or overridden by the rep argument if present.
-      virtual prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep);
-      virtual prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep);
+      virtual prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
+				 unsigned base, unsigned vwid);
+      virtual prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep,
+				 unsigned base, unsigned vwid);
       virtual prop_t filter_real(double&val);
       virtual prop_t filter_long(long&val);
 
@@ -1164,7 +1167,7 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 	// currently forced value, and the buf is a value that this
 	// method will use to hold a filtered value, if needed. This
 	// method returns a pointer to val or buf.
-      template <class T> prop_t filter_mask_(const T&val, const T&force, T&rep);
+      template <class T> prop_t filter_mask_(const T&val, const T&force, T&rep, unsigned addr);
 	// This template method is similar to the above, but works for
 	// native types that are not so expensive to edit in place.
       template <class T> prop_t filter_mask_(T&val, T force);
@@ -1447,7 +1450,7 @@ inline void vvp_net_t::send_vec4(const vvp_vector4_t&val, vvp_context_t context)
       }
 
       vvp_vector4_t rep;
-      switch (fil->filter_vec4(val, rep)) {
+      switch (fil->filter_vec4(val, rep, 0, val.size())) {
 	  case vvp_net_fil_t::STOP:
 	    break;
 	  case vvp_net_fil_t::PROP:
@@ -1463,7 +1466,23 @@ inline void vvp_net_t::send_vec4_pv(const vvp_vector4_t&val,
 				    unsigned base, unsigned wid, unsigned vwid,
 				    vvp_context_t context)
 {
-      vvp_send_vec4_pv(out_, val, base, wid, vwid, context);
+      if (fil == 0) {
+	    vvp_send_vec4_pv(out_, val, base, wid, vwid, context);
+	    return;
+      }
+
+      assert(val.size() == wid);
+      vvp_vector4_t rep;
+      switch (fil->filter_vec4(val, rep, base, vwid)) {
+	  case vvp_net_fil_t::STOP:
+	    break;
+	  case vvp_net_fil_t::PROP:
+	    vvp_send_vec4_pv(out_, val, base, wid, vwid, context);
+	    break;
+	  case vvp_net_fil_t::REPL:
+	    vvp_send_vec4_pv(out_, rep, base, wid, vwid, context);
+	    break;
+      }
 }
 
 inline void vvp_net_t::send_vec8(const vvp_vector8_t&val)
@@ -1474,7 +1493,7 @@ inline void vvp_net_t::send_vec8(const vvp_vector8_t&val)
       }
 
       vvp_vector8_t rep;
-      switch (fil->filter_vec8(val, rep)) {
+      switch (fil->filter_vec8(val, rep, 0, val.size())) {
 	  case vvp_net_fil_t::STOP:
 	    break;
 	  case vvp_net_fil_t::PROP:

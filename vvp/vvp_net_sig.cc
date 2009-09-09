@@ -30,18 +30,18 @@
 
 # include  <iostream>
 
-template <class T> vvp_net_fil_t::prop_t vvp_net_fil_t::filter_mask_(const T&val, const T&force, T&filter)
+template <class T> vvp_net_fil_t::prop_t vvp_net_fil_t::filter_mask_(const T&val, const T&force, T&filter, unsigned base)
 {
       if (!test_force_mask_is_zero()) {
 	    bool propagate_flag = force_propagate_;
 	    force_propagate_ = false;
-	    assert(val.size() == force_mask_.size());
-	    assert(val.size() == force.size());
+	    assert(force_mask_.size() == force.size());
+	    assert((base+val.size()) <= force_mask_.size());
 
 	    filter = val;
 	    for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
-		  if (force_mask_.value(idx))
-			filter.set_bit(idx, force.value(idx));
+		  if (force_mask_.value(base+idx))
+			filter.set_bit(idx, force.value(base+idx));
 		  else
 			propagate_flag = true;
 	    }
@@ -612,18 +612,26 @@ vvp_wire_vec4::vvp_wire_vec4(unsigned wid, vvp_bit4_t init)
 {
 }
 
-vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep)
+vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
+						 unsigned base, unsigned vwid)
 {
 	// Keep track of the value being driven from this net, even if
 	// it is not ultimately what survives the force filter.
-      bits4_ = bit;
-      return filter_mask_(bit, force4_, rep);
+      if (base==0 && bit.size()==vwid) {
+	    bits4_ = bit;
+      } else {
+	    if (bits4_.size() == 0)
+		  bits4_ = vvp_vector4_t(vwid, BIT4_Z);
+	    assert(bits4_.size() == vwid);
+	    bits4_.set_vec(base, bit);
+      }
+      return filter_mask_(bit, force4_, rep, base);
 }
 
-vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec8(const vvp_vector8_t&bit, vvp_vector8_t&rep)
+vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec8(const vvp_vector8_t&bit, vvp_vector8_t&rep, unsigned base, unsigned vwid)
 {
       bits4_ = reduce4(bit);
-      return filter_mask_(bit, vvp_vector8_t(force4_,6,6), rep);
+      return filter_mask_(bit, vvp_vector8_t(force4_,6,6), rep, 0);
 }
 
 unsigned vvp_wire_vec4::filter_size() const
@@ -716,25 +724,33 @@ vvp_wire_vec8::vvp_wire_vec8(unsigned wid)
 {
 }
 
-vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep)
+vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
+						 unsigned base, unsigned vwid)
 {
 	// QUESTION: Is it really correct to propagate a vec4 if this
 	// is a vec8 node? In fact, it is really possible for a vec4
 	// value to get through to a vec8 filter?
       vvp_vector8_t rep8;
-      prop_t rc = filter_vec8(vvp_vector8_t(bit,6,6), rep8);
+      prop_t rc = filter_vec8(vvp_vector8_t(bit,6,6), rep8, 0, vwid);
       if (rc == REPL)
 	    rep = reduce4(rep8);
 
       return rc;
 }
 
-vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec8(const vvp_vector8_t&bit, vvp_vector8_t&rep)
+vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec8(const vvp_vector8_t&bit, vvp_vector8_t&rep, unsigned base, unsigned vwid)
 {
 	// Keep track of the value being driven from this net, even if
 	// it is not ultimately what survives the force filter.
-      bits8_ = bit;
-      return filter_mask_(bit, force8_, rep);
+      if (base==0 && bit.size()==vwid) {
+	    bits8_ = bit;
+      } else {
+	    if (bits8_.size() == 0)
+		  bits8_ = vvp_vector8_t(vwid);
+	    assert(bits8_.size() == vwid);
+	    bits8_.set_vec(base, bit);
+      }
+      return filter_mask_(bit, force8_, rep, base);
 }
 
 unsigned vvp_wire_vec8::filter_size() const
