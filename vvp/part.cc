@@ -239,7 +239,7 @@ vvp_fun_part_var::~vvp_fun_part_var()
 }
 
 bool vvp_fun_part_var::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                                  long&base, vvp_vector4_t&source,
+                                  int&base, vvp_vector4_t&source,
                                   vvp_vector4_t&ref)
 {
       long tmp;
@@ -251,9 +251,10 @@ bool vvp_fun_part_var::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	      // LONG_MIN is before the vector and is used to
 	      // represent a 'bx value on the select input.
 	    tmp = LONG_MIN;
-	      // We need a new &PV<> that knows if the index is signed.
+	      // We need a new .part/v that knows if the index is signed.
+	      // For now this will work for a normal integer value.
 	    vector4_to_value(bit, tmp, false);
-	    if (tmp == base) return false;
+	    if ((int)tmp == base) return false;
 	    base = tmp;
 	    break;
 	  default:
@@ -265,7 +266,7 @@ bool vvp_fun_part_var::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       vvp_vector4_t res (wid_);
 
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    long adr = base+idx;
+	    int adr = base+idx;
 	    if (adr < 0) continue;
 	    if ((unsigned)adr >= source.size()) break;
 
@@ -314,7 +315,7 @@ void vvp_fun_part_var_sa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&b
 struct vvp_fun_part_var_state_s {
       vvp_fun_part_var_state_s() : base(0) { }
 
-      long base;
+      int base;
       vvp_vector4_t source;
       vvp_vector4_t ref;
 };
