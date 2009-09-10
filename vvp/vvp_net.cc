@@ -1143,8 +1143,8 @@ vvp_vector4_t& vvp_vector4_t::operator |= (const vvp_vector4_t&that)
       if (size_ <= BITS_PER_WORD) {
 	    unsigned long tmp = abits_val_ | bbits_val_ |
 	                        that.abits_val_ | that.bbits_val_;
-	    bbits_val_ = (~abits_val_ | bbits_val_) & that.bbits_val_ |
-	                 (~that.abits_val_ | that.bbits_val_) & bbits_val_;
+	    bbits_val_ = ((~abits_val_ | bbits_val_) & that.bbits_val_) |
+	                 ((~that.abits_val_ | that.bbits_val_) & bbits_val_);
 	    abits_val_ = tmp;
 
       } else {
@@ -1152,10 +1152,10 @@ vvp_vector4_t& vvp_vector4_t::operator |= (const vvp_vector4_t&that)
 	    for (unsigned idx = 0; idx < words ; idx += 1) {
 		  unsigned long tmp = abits_ptr_[idx] | bbits_ptr_[idx] |
 	                        that.abits_ptr_[idx] | that.bbits_ptr_[idx];
-		  bbits_ptr_[idx] = (~abits_ptr_[idx] | bbits_ptr_[idx]) &
-		                    that.bbits_ptr_[idx] |
-		                    (~that.abits_ptr_[idx] |
-		                     that.bbits_ptr_[idx]) & bbits_ptr_[idx];
+		  bbits_ptr_[idx] = ((~abits_ptr_[idx] | bbits_ptr_[idx]) &
+		                     that.bbits_ptr_[idx]) |
+		                    ((~that.abits_ptr_[idx] |
+		                      that.bbits_ptr_[idx]) & bbits_ptr_[idx]);
 		  abits_ptr_[idx] = tmp;
 	    }
       }

@@ -217,7 +217,7 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 		      (ivl_expr_width(bexpr) < 8*sizeof(int))) {
 			fprintf(stderr, "%s:%u: tgt-vvp warning: V0.9 may give "
 			                "incorrect results for a select with a "
-			                "signed index less than %d bits.\n",
+			                "signed index less than %zu bits.\n",
 			                ivl_expr_file(expr),
 			                ivl_expr_lineno(expr),
 			                8*sizeof(int));

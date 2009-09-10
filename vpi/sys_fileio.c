@@ -214,7 +214,6 @@ static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
       vpiHandle fd = vpi_scan(argv);
       s_vpi_value val;
       PLI_UINT32 fd_mcd;
-      char *str = "";  /* This prevents the compiler from complaining. */
       errno = 0;
 
       vpi_free_object(argv);
@@ -225,7 +224,7 @@ static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
       fd_mcd = val.value.integer;
 
       if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-          ( IS_MCD(fd_mcd) && vpi_mcd_printf(fd_mcd, str) == EOF) ||
+          ( IS_MCD(fd_mcd) && vpi_mcd_printf(fd_mcd, "%s", "") == EOF) ||
           (! fd_mcd)) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
@@ -254,7 +253,6 @@ static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
       s_vpi_value val;
       PLI_UINT32 fd_mcd;
       FILE *fp;
-      char *str = "";  /* This prevents the compiler from complaining. */
       errno = 0;
 
 	/* If we have no argument then flush all the streams. */
@@ -274,7 +272,7 @@ static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
       if (fd_mcd == 0) return 0;
 
       if ((! IS_MCD(fd_mcd) && vpi_get_file(fd_mcd) == NULL) ||
-          ( IS_MCD(fd_mcd) && vpi_mcd_printf(fd_mcd, str) == EOF) ||
+          ( IS_MCD(fd_mcd) && vpi_mcd_printf(fd_mcd, "%s", "") == EOF) ||
           (! fd_mcd)) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));

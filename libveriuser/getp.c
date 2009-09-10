@@ -53,6 +53,8 @@ PLI_INT32 tf_igetp(PLI_INT32 n, void *obj)
       {
 	    value.format = vpiStringVal;
 	    vpi_get_value(arg_h, &value);
+	    /* The following may generate a compilation warning, but this
+	     * functionality is required by some versions of the standard. */
 	    rtn = (int) value.value.str;	/* Oh my */
       } else {
 	    value.format = vpiIntVal;
