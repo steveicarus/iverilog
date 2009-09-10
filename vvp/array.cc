@@ -913,7 +913,7 @@ double array_get_word_r(vvp_array_t arr, unsigned address)
       vpiHandle word = arr->nets[address];
       struct __vpiRealVar*vsig = vpip_realvar_from_handle(word);
       assert(vsig);
-      vvp_fun_signal_real*sig = dynamic_cast<vvp_fun_signal_real*> (vsig->net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (vsig->net->fil);
       assert(sig);
 
       double val = sig->real_value();

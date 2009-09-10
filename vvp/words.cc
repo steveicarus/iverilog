@@ -174,22 +174,38 @@ vvp_net_t* create_constant_node(const char*label, const char*val_str)
       return 0;
 }
 
-class __compile_net_resolv : public resolv_list_s {
+class base_net_resolv : public resolv_list_s {
+    public:
+      explicit base_net_resolv(char*ref_label, vvp_array_t array,
+			       char*my_label, char*name,
+			       unsigned array_addr, bool local_flag)
+      : resolv_list_s(ref_label)
+      { my_label_ = my_label;
+	array_ = array;
+	name_ = name;
+	array_addr_ = array_addr;
+	local_flag_ = local_flag;
+      }
+
+    protected:
+      char*my_label_;
+      vvp_array_t array_;
+      char*name_;
+      unsigned array_addr_;
+      bool local_flag_;
+};
+
+class __compile_net_resolv : public base_net_resolv {
 
     public:
       explicit __compile_net_resolv(char*ref_label, vvp_array_t array,
 				    char*my_label, char*name,
 				    int msb, int lsb, unsigned array_addr,
 				    bool signed_flag, bool net8_flag, bool local_flag)
-      : resolv_list_s(ref_label)
-      { my_label_ = my_label;
-	array_ = array;
-	name_ = name;
-	msb_ = msb;
+      : base_net_resolv(ref_label, array, my_label, name, array_addr, local_flag)
+      { msb_ = msb;
 	lsb_ = lsb;
-	array_addr_ = array_addr;
 	signed_flag_ = signed_flag;
-	local_flag_ = local_flag;
       }
 
       ~__compile_net_resolv() { }
@@ -197,12 +213,8 @@ class __compile_net_resolv : public resolv_list_s {
       bool resolve(bool message_flag);
 
     private:
-      char*my_label_;
-      vvp_array_t array_;
-      char*name_;
       int msb_, lsb_;
-      unsigned array_addr_;
-      bool signed_flag_, net8_flag_, local_flag_;
+      bool signed_flag_, net8_flag_;
 };
 
 /*
@@ -325,15 +337,14 @@ void compile_netw(char*label, char*array_label, unsigned long array_addr,
 }
 
 
-class __compile_real_net_resolv : public resolv_list_s {
+class __compile_real_net_resolv : public base_net_resolv {
 
     public:
-      explicit __compile_real_net_resolv(char*ref_label, char*my_label, char*name,
-					 bool local_flag)
-      : resolv_list_s(ref_label)
-      { my_label_ = my_label;
-	name_ = name;
-	local_flag_ = local_flag;
+      explicit __compile_real_net_resolv(char*ref_label, vvp_array_t array,
+					 char*my_label, char*name,
+					 unsigned array_addr, bool local_flag)
+      : base_net_resolv(ref_label, array, my_label, name, array_addr, local_flag)
+      {
       }
 
       ~__compile_real_net_resolv() { }
@@ -341,9 +352,6 @@ class __compile_real_net_resolv : public resolv_list_s {
       bool resolve(bool message_flag);
 
     private:
-      char*my_label_;
-      char*name_;
-      bool local_flag_;
 };
 
 static void __compile_real_net2(vvp_net_t*node, vvp_array_t array,
@@ -362,8 +370,14 @@ static void __compile_real_net2(vvp_net_t*node, vvp_array_t array,
 	    obj = vpip_make_real_var(name, node);
 	    compile_vpi_symbol(my_label, obj);
       }
+ 
+	// REMOVE ME! Giving the net a label is a legacy of the times
+	// when the .net was a functor of its own. In the long run, we
+	// must fix the code generator to not rely on the label of the
+	// .net, then we will remove that label.
+      define_functor_symbol(my_label, node);
 
-      if (array)
+     if (array)
 	    array_attach_word(array, array_addr, obj);
       else if (obj)
 	    vpip_attach_to_current_scope(obj);
@@ -391,10 +405,10 @@ static void __compile_real(char*label, char*name,
 	    node = create_constant_node(label, argv[0].text);
       }
       if (node == 0) {
-	    assert(array==0);
 	    __compile_real_net_resolv*res
-		  = new __compile_real_net_resolv(argv[0].text, label,
-						  name, local_flag);
+		  = new __compile_real_net_resolv(argv[0].text, array,
+						  label, name,
+						  array_addr, local_flag);
 	    resolv_submit(res);
 	    return;
       }
@@ -412,7 +426,7 @@ bool __compile_real_net_resolv::resolve(bool msg_flag)
 	    return false;
       }
 
-      __compile_real_net2(node, 0, my_label_, name_, 0, local_flag_);
+      __compile_real_net2(node, array_, my_label_, name_, array_addr_, local_flag_);
       return true;
 }
 
