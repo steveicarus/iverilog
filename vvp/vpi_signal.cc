@@ -138,8 +138,8 @@ static void format_vpiBinStrVal(vvp_fun_signal_vec*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       char *rbuf = need_result_buf(wid+1, RBUF_VAL);
-      long offset = wid - 1 + base;
       long end = base + (signed)wid;
+      long offset = end - 1;
       long ssize = (signed)sig->size();
 
       for (long idx = base ;  idx < end ;  idx += 1) {
