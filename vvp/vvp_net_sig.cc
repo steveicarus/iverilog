@@ -608,7 +608,7 @@ vvp_wire_base::~vvp_wire_base()
 }
 
 vvp_wire_vec4::vvp_wire_vec4(unsigned wid, vvp_bit4_t init)
-: width_(wid)
+: width_(wid), bits4_(wid, init)
 {
 }
 
