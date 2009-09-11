@@ -248,13 +248,13 @@ bool vvp_fun_part_var::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	    source = bit;
 	    break;
 	  case 1:
-	      // LONG_MIN is before the vector and is used to
+	      // INT_MIN is before the vector and is used to
 	      // represent a 'bx value on the select input.
-	    tmp = LONG_MIN;
+	    tmp = INT_MIN;
 	      // We need a new .part/v that knows if the index is signed.
 	      // For now this will work for a normal integer value.
 	    vector4_to_value(bit, tmp, false);
-	    if ((int)tmp == base) return false;
+	    if (tmp == (long)base) return false;
 	    base = tmp;
 	    break;
 	  default:
