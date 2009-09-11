@@ -254,7 +254,7 @@ bool vvp_fun_part_var::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	      // We need a new .part/v that knows if the index is signed.
 	      // For now this will work for a normal integer value.
 	    vector4_to_value(bit, tmp, false);
-	    if (tmp == (long)base) return false;
+	    if ((int)tmp == base) return false;
 	    base = tmp;
 	    break;
 	  default:
