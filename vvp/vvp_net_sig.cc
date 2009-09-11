@@ -653,6 +653,7 @@ void vvp_wire_vec4::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
 		  force4_.set_bit(idx, val.value(idx));
 	    }
       }
+      run_vpi_callbacks();
 }
 
 void vvp_wire_vec4::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
@@ -670,10 +671,12 @@ void vvp_wire_vec4::release(vvp_net_ptr_t ptr, bool net_flag)
 	// Wires revert to their unforced value after release.
       vvp_vector2_t mask (vvp_vector2_t::FILL1, width_);
       release_mask(mask);
-      if (net_flag)
+      if (net_flag) {
 	    ptr.ptr()->send_vec4(bits4_, 0);
-      else
+	    run_vpi_callbacks();
+      } else {
 	    ptr.ptr()->fun->recv_vec4(ptr, force4_, 0);
+      }
 }
 
 void vvp_wire_vec4::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid)
@@ -686,6 +689,7 @@ void vvp_wire_vec4::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid)
 
       release_mask(mask);
       ptr.ptr()->send_vec4(bits4_,0);
+      run_vpi_callbacks();
 }
 
 unsigned vvp_wire_vec4::value_size() const
@@ -863,6 +867,8 @@ void vvp_wire_real::force_fil_real(double val, vvp_vector2_t mask)
       force_mask(mask);
       if (mask.value(0))
 	    force_ = val;
+
+      run_vpi_callbacks();
 }
 
 void vvp_wire_real::release(vvp_net_ptr_t ptr, bool net_flag)
