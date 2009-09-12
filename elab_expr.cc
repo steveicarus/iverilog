@@ -1488,6 +1488,12 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 						   def->port(idx)->data_type(),
 						   def->port(idx)->vector_width(),
 						   tmp);
+		  if (NetEEvent*evt = dynamic_cast<NetEEvent*> (parms[idx])) {
+			cerr << evt->get_fileline() << ": error: An event '"
+			     << evt->event()->name() << "' can not be a user "
+			        "function argument." << endl;
+			des->errors += 1;
+		  }
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug:"
 			     << " function " << path_

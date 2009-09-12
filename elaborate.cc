@@ -2644,6 +2644,13 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    ivl_variable_type_t lv_type = lv->expr_type();
 
 	    NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, wid, parms_[idx]);
+	    if (NetEEvent*evt = dynamic_cast<NetEEvent*> (rv)) {
+		  cerr << evt->get_fileline() << ": error: An event '"
+		       << evt->event()->name() << "' can not be a user "
+		          "task argument." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
 	    if (wid > rv->expr_width()) {
 		  rv->set_width(wid);
 		  rv = pad_to_width(rv, wid, *this);

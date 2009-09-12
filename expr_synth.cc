@@ -1369,6 +1369,10 @@ NetNet* NetEUFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
         /* Synthesize the arguments. */
       bool errors = false;
       for (unsigned idx = 0; idx < eparms.count(); idx += 1) {
+	    if (dynamic_cast<NetEEvent*> (parms_[idx])) {
+		  errors = true;
+		  continue;
+	    }
 	    NetNet*tmp = parms_[idx]->synthesize(des, scope, root);
 	    if (tmp == 0) {
 		  cerr << get_fileline() << ": error: Unable to synthesize "
