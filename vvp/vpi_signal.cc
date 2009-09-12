@@ -1297,7 +1297,7 @@ void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle ref)
       assert(obj);
 
       vvp_vpi_callback*sig_fil;
-      sig_fil = dynamic_cast<vvp_vpi_callback*>(obj->net->fun);
+      sig_fil = dynamic_cast<vvp_vpi_callback*>(obj->net->fil);
       assert(sig_fil);
 
 	/* Attach the __vpiCallback object to the signal. */
