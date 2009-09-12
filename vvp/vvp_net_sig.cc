@@ -679,7 +679,7 @@ void vvp_wire_vec4::release(vvp_net_ptr_t ptr, bool net_flag)
       }
 }
 
-void vvp_wire_vec4::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid)
+void vvp_wire_vec4::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag)
 {
       assert(bits4_.size() >= base + wid);
 
@@ -688,8 +688,15 @@ void vvp_wire_vec4::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid)
 	    mask.set_bit(base+idx, 1);
 
       release_mask(mask);
-      ptr.ptr()->send_vec4(bits4_,0);
-      run_vpi_callbacks();
+
+      if (net_flag) {
+	    ptr.ptr()->send_vec4_pv(bits4_.subvalue(base,wid),
+				    base, wid, bits4_.size(), 0);
+	    run_vpi_callbacks();
+      } else {
+	    ptr.ptr()->fun->recv_vec4_pv(ptr, force4_.subvalue(base,wid),
+					 base, wid, bits4_.size(), 0);
+      }
 }
 
 unsigned vvp_wire_vec4::value_size() const
@@ -800,7 +807,7 @@ void vvp_wire_vec8::release(vvp_net_ptr_t ptr, bool net_flag)
 	    ptr.ptr()->fun->recv_vec8(ptr, force8_);
 }
 
-void vvp_wire_vec8::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid)
+void vvp_wire_vec8::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag)
 {
       assert(width_ >= base + wid);
 
@@ -809,7 +816,15 @@ void vvp_wire_vec8::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid)
 	    mask.set_bit(base+idx, 1);
 
       release_mask(mask);
-      ptr.ptr()->send_vec8(bits8_);
+
+      if (net_flag) {
+	    ptr.ptr()->send_vec8_pv(bits8_.subvalue(base,wid),
+				    base, wid, bits8_.size());
+	    run_vpi_callbacks();
+      } else {
+	    ptr.ptr()->fun->recv_vec8_pv(ptr, force8_.subvalue(base,wid),
+					 base, wid, force8_.size());
+      }
 }
 
 unsigned vvp_wire_vec8::value_size() const
@@ -894,14 +909,17 @@ void vvp_wire_real::release(vvp_net_ptr_t ptr, bool net_flag)
 	    ptr.ptr()->fun->recv_real(ptr, force_, 0);
 }
 
-void vvp_wire_real::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid)
+void vvp_wire_real::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag)
 {
       vvp_vector2_t mask (vvp_vector2_t::FILL0, 1);
       for (unsigned idx = 0 ; idx < wid ; idx += 1)
 	    mask.set_bit(base+idx, 1);
 
       release_mask(mask);
-      assert(0);
+      if (net_flag)
+	    ptr.ptr()->send_real(bit_, 0);
+      else
+	    ptr.ptr()->fun->recv_real(ptr, force_, 0);
 }
 
 unsigned vvp_wire_real::value_size() const

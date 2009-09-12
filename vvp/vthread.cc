@@ -4033,7 +4033,7 @@ static bool do_release_vec(vthread_t thr, vvp_code_t cp, bool net_flag)
       if (full_sig) {
 	    net->fil->release(ptr, net_flag);
       } else {
-	    net->fil->release_pv(ptr, base, width);
+	    net->fil->release_pv(ptr, base, width, net_flag);
       }
 
       return true;
