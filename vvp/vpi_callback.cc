@@ -694,66 +694,6 @@ void vvp_fun_signal8::get_value(struct t_vpi_value*vp)
       }
 }
 
-void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
-{
-      char*rbuf = need_result_buf(64 + 1, RBUF_VAL);
-
-      switch (vp->format) {
-	  case vpiObjTypeVal:
-	    vp->format = vpiRealVal;
-
-	  case vpiRealVal:
-	    vp->value.real = real_value();
-	    break;
-
-	  case vpiIntVal:
-	    vp->value.integer = (int)(real_value() + 0.5);
-	    break;
-
-	  case vpiDecStrVal:
-	    sprintf(rbuf, "%0.0f", real_value());
-	    vp->value.str = rbuf;
-	    break;
-
-	  case vpiHexStrVal:
-	    sprintf(rbuf, "%lx", (long)real_value());
-	    vp->value.str = rbuf;
-	    break;
-
-	  case vpiBinStrVal: {
-		unsigned long val = (unsigned long)real_value();
-		unsigned len = 0;
-
-		while (val > 0) {
-		      len += 1;
-		      val /= 2;
-		}
-
-		val = (unsigned long)real_value();
-		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
-		      rbuf[len-idx-1] = (val & 1)? '1' : '0';
-		      val /= 2;
-		}
-
-		rbuf[len] = 0;
-		if (len == 0) {
-		      rbuf[0] = '0';
-		      rbuf[1] = 0;
-		}
-		vp->value.str = rbuf;
-		break;
-	  }
-
-	  case vpiSuppressVal:
-	    break;
-
-	  default:
-	    fprintf(stderr, "vpi_callback: value "
-		    "format %d not supported (fun_signal_real)\n",
-		    vp->format);
-      }
-}
-
 void vvp_wire_vec4::get_value(struct t_vpi_value*value)
 {
       get_signal_value(value);

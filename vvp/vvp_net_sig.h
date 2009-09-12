@@ -222,9 +222,8 @@ class vvp_fun_signal_real : public vvp_fun_signal_base {
       explicit vvp_fun_signal_real() {};
 
 	// Get information about the vector value.
-      virtual double real_value() const = 0;
+      virtual double real_unfiltered_value() const = 0;
 
-      void get_value(struct t_vpi_value*value);
       unsigned size() const { return 1; }
 };
 
@@ -240,7 +239,7 @@ class vvp_fun_signal_real_sa : public vvp_fun_signal_real {
                      vvp_context_t);
 
 	// Get information about the vector value.
-      double real_value() const;
+      double real_unfiltered_value() const;
 
     private:
       double bits_;
@@ -264,7 +263,7 @@ class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_hook
                      vvp_context_t context);
 
 	// Get information about the vector value.
-      double real_value() const;
+      double real_unfiltered_value() const;
 
     private:
       unsigned context_idx_;

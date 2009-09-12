@@ -486,9 +486,9 @@ vvp_fun_signal_real_sa::vvp_fun_signal_real_sa()
       bits_ = 0.0;
 }
 
-double vvp_fun_signal_real_sa::real_value() const
+double vvp_fun_signal_real_sa::real_unfiltered_value() const
 {
-      assert(0);
+      return bits_;
 }
 
 void vvp_fun_signal_real_sa::recv_real(vvp_net_ptr_t ptr, double bit,
@@ -548,7 +548,7 @@ void vvp_fun_signal_real_aa::free_instance(vvp_context_t context)
 }
 #endif
 
-double vvp_fun_signal_real_aa::real_value() const
+double vvp_fun_signal_real_aa::real_unfiltered_value() const
 {
       double*bits = static_cast<double*>
             (vthread_get_rd_context_item(context_idx_));
@@ -719,7 +719,7 @@ vvp_bit4_t vvp_wire_vec4::value(unsigned idx) const
 
 vvp_scalar_t vvp_wire_vec4::scalar_value(unsigned idx) const
 {
-      assert(0);
+      return vvp_scalar_t(value(idx),6,6);
 }
 
 vvp_vector4_t vvp_wire_vec4::vec4_value() const
