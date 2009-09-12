@@ -764,12 +764,24 @@ unsigned vvp_wire_vec8::filter_size() const
 
 void vvp_wire_vec8::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
 {
-      assert(0);
+      force_fil_vec8(vvp_vector8_t(val,6,6), mask);
 }
 
 void vvp_wire_vec8::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
 {
-      assert(0);
+      force_mask(mask);
+
+      if (force8_.size() == 0) {
+	    force8_ = val;
+      } else {
+	    for (unsigned idx = 0; idx < mask.size() ; idx += 1) {
+		  if (mask.value(idx) == 0)
+			continue;
+
+		  force8_.set_bit(idx, val.value(idx));
+	    }
+      }
+      run_vpi_callbacks();
 }
 
 void vvp_wire_vec8::force_fil_real(double val, vvp_vector2_t mask)
