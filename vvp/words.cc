@@ -89,7 +89,7 @@ static void __compile_var(char*label, char*name,
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
       vvp_fun_signal_vec*vsig;
-      vvp_wire_vec4*vfil = new vvp_wire_vec4(wid);
+      vvp_wire_vec4*vfil = new vvp_wire_vec4(wid, BIT4_X);
       if (vpip_peek_current_scope()->is_automatic) {
             vsig = new vvp_fun_signal4_aa(wid);
       } else {

@@ -24,6 +24,7 @@
 # include  <stdio.h>
 # include  <assert.h>
 # include  <stdlib.h>
+# include  <iostream>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -67,7 +68,16 @@ void vvp_dff::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	    break;
 
 	  case 3: // Asynch-D
-	    d_ = bit;
+	      // FIXME! The code generator is writing an input C4<z>
+	      // no matter what the intent of this device. This is
+	      // almost certainly NOT correct, nor do we want to
+	      // propagate that. But that needs to be fixed later.
+	    if (bit.size() == 1 && bit.value(0)==BIT4_Z)
+		  break;
+	    if (d_.size() > bit.size())
+		  d_ .copy_bits(bit);
+	    else
+		  d_ = bit;
 	    port.ptr()->send_vec4(d_, 0);
 	    break;
       }

@@ -286,7 +286,7 @@ class vvp_wire_base  : public vvp_net_fil_t, public vvp_signal_value {
 class vvp_wire_vec4 : public vvp_wire_base {
 
     public:
-      vvp_wire_vec4(unsigned wid, vvp_bit4_t init=BIT4_X);
+      vvp_wire_vec4(unsigned wid, vvp_bit4_t init);
 
 	// The main filter behavior for this class. These methods take
 	// the value that the node is driven to, and applies the firce
@@ -317,7 +317,7 @@ class vvp_wire_vec4 : public vvp_wire_base {
       vvp_bit4_t filtered_value_(unsigned idx) const;
 
     private:
-      unsigned width_;
+      bool needs_init_;
       vvp_vector4_t bits4_; // The tracked driven value
       vvp_vector4_t force4_; // the value being forced
 };
@@ -355,7 +355,7 @@ class vvp_wire_vec8 : public vvp_wire_base {
       vvp_scalar_t filtered_value_(unsigned idx) const;
 
     private:
-      unsigned width_;
+      bool needs_init_;
       vvp_vector8_t bits8_;
       vvp_vector8_t force8_; // the value being forced
 };

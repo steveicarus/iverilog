@@ -608,35 +608,57 @@ vvp_wire_base::~vvp_wire_base()
 }
 
 vvp_wire_vec4::vvp_wire_vec4(unsigned wid, vvp_bit4_t init)
-: width_(wid), bits4_(wid, init)
+: bits4_(wid, init)
 {
+      needs_init_ = true;
 }
 
 vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
 						 unsigned base, unsigned vwid)
 {
+	// Special case! the input bit is 0 wid. Interpret this as a
+	// vector of BIT4_X to match the width of the bits4_ vector.
+	// FIXME! This is a hack to work around some buggy gate
+	// implementations! This should be removed!
+      if (base==0 && vwid==0) {
+	    vvp_vector4_t tmp (bits4_.size(), BIT4_X);
+	    if (bits4_ .eeq(tmp) && !needs_init_) return STOP;
+	    bits4_ = tmp;
+	    needs_init_ = false;
+	    return filter_mask_(tmp, force4_, rep, 0);
+      }
+
+      if (vwid != bits4_.size()) {
+	    cerr << "Internal error: Input vector expected width="
+		 << bits4_.size() << ", got "
+		 << "bit=" << bit << ", base=" << base << ", vwid=" << vwid
+		 << endl;
+      }
+      assert(bits4_.size() == vwid);
+
 	// Keep track of the value being driven from this net, even if
 	// it is not ultimately what survives the force filter.
       if (base==0 && bit.size()==vwid) {
+	    if (bits4_ .eeq( bit ) && !needs_init_) return STOP;
 	    bits4_ = bit;
       } else {
-	    if (bits4_.size() == 0)
-		  bits4_ = vvp_vector4_t(vwid, BIT4_Z);
-	    assert(bits4_.size() == vwid);
 	    bits4_.set_vec(base, bit);
       }
+
+      needs_init_ = false;
       return filter_mask_(bit, force4_, rep, base);
 }
 
 vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec8(const vvp_vector8_t&bit, vvp_vector8_t&rep, unsigned base, unsigned vwid)
 {
+      assert(bits4_.size() == bit.size());
       bits4_ = reduce4(bit);
       return filter_mask_(bit, vvp_vector8_t(force4_,6,6), rep, 0);
 }
 
 unsigned vvp_wire_vec4::filter_size() const
 {
-      return width_;
+      return bits4_.size();
 }
 
 void vvp_wire_vec4::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
@@ -669,7 +691,7 @@ void vvp_wire_vec4::force_fil_real(double val, vvp_vector2_t mask)
 void vvp_wire_vec4::release(vvp_net_ptr_t ptr, bool net_flag)
 {
 	// Wires revert to their unforced value after release.
-      vvp_vector2_t mask (vvp_vector2_t::FILL1, width_);
+      vvp_vector2_t mask (vvp_vector2_t::FILL1, bits4_.size());
       release_mask(mask);
       if (net_flag) {
 	    ptr.ptr()->send_vec4(bits4_, 0);
@@ -701,7 +723,7 @@ void vvp_wire_vec4::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, b
 
 unsigned vvp_wire_vec4::value_size() const
 {
-      return width_;
+      return bits4_.size();
 }
 
 vvp_bit4_t vvp_wire_vec4::filtered_value_(unsigned idx) const
@@ -731,8 +753,9 @@ vvp_vector4_t vvp_wire_vec4::vec4_value() const
 }
 
 vvp_wire_vec8::vvp_wire_vec8(unsigned wid)
-: width_(wid)
+: bits8_(wid)
 {
+      needs_init_ = true;
 }
 
 vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
@@ -746,11 +769,13 @@ vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec4(const vvp_vector4_t&bit, vvp_ve
       if (rc == REPL)
 	    rep = reduce4(rep8);
 
+      needs_init_ = false;
       return rc;
 }
 
 vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec8(const vvp_vector8_t&bit, vvp_vector8_t&rep, unsigned base, unsigned vwid)
 {
+      assert(vwid == bits8_.size());
 	// Keep track of the value being driven from this net, even if
 	// it is not ultimately what survives the force filter.
       if (base==0 && bit.size()==vwid) {
@@ -761,12 +786,13 @@ vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec8(const vvp_vector8_t&bit, vvp_ve
 	    assert(bits8_.size() == vwid);
 	    bits8_.set_vec(base, bit);
       }
+      needs_init_ = false;
       return filter_mask_(bit, force8_, rep, base);
 }
 
 unsigned vvp_wire_vec8::filter_size() const
 {
-      return width_;
+      return bits8_.size();
 }
 
 void vvp_wire_vec8::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
@@ -799,7 +825,7 @@ void vvp_wire_vec8::force_fil_real(double val, vvp_vector2_t mask)
 void vvp_wire_vec8::release(vvp_net_ptr_t ptr, bool net_flag)
 {
 	// Wires revert to their unforced value after release.
-      vvp_vector2_t mask (vvp_vector2_t::FILL1, width_);
+      vvp_vector2_t mask (vvp_vector2_t::FILL1, bits8_.size());
       release_mask(mask);
       if (net_flag)
 	    ptr.ptr()->send_vec8(bits8_);
@@ -809,9 +835,9 @@ void vvp_wire_vec8::release(vvp_net_ptr_t ptr, bool net_flag)
 
 void vvp_wire_vec8::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag)
 {
-      assert(width_ >= base + wid);
+      assert(bits8_.size() >= base + wid);
 
-      vvp_vector2_t mask (vvp_vector2_t::FILL0, width_);
+      vvp_vector2_t mask (vvp_vector2_t::FILL0, bits8_.size());
       for (unsigned idx = 0 ; idx < wid ; idx += 1)
 	    mask.set_bit(base+idx, 1);
 
@@ -829,7 +855,7 @@ void vvp_wire_vec8::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, b
 
 unsigned vvp_wire_vec8::value_size() const
 {
-      return width_;
+      return bits8_.size();
 }
 
 vvp_scalar_t vvp_wire_vec8::filtered_value_(unsigned idx) const
