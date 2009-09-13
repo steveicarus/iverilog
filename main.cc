@@ -116,6 +116,8 @@ bool warn_timescale = false;
 bool warn_portbinding = false;
 bool warn_inf_loop = false;
 bool warn_ob_select = false;
+bool warn_sens_entire_vec = false;
+bool warn_sens_entire_arr = false;
 
 bool error_implicit = false;
 
@@ -500,6 +502,12 @@ static void read_iconfig_file(const char*ipath)
 			break;
 		      case 't':
 			warn_timescale = true;
+			break;
+		      case 'v':
+			warn_sens_entire_vec = true;
+			break;
+		      case 'a':
+			warn_sens_entire_arr = true;
 			break;
 		      default:
 			break;

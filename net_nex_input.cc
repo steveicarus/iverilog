@@ -23,6 +23,7 @@
 
 # include  <cassert>
 # include  <typeinfo>
+# include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
 
@@ -115,7 +116,7 @@ NexusSet* NetESelect::nex_input(bool rem_out)
       result->add(*tmp);
       delete tmp;
 	/* See the comment for NetESignal below. */
-      if (base_) {
+      if (base_ && warn_sens_entire_vec) {
 	    cerr << get_fileline() << ": warning: @* is sensitive to all "
 	            "bits in '" << *expr_ << "'." << endl;
       }
@@ -151,9 +152,11 @@ NexusSet* NetESignal::nex_input(bool rem_out)
 	    tmp = word_->nex_input(rem_out);
 	    result->add(*tmp);
 	    delete tmp;
-	    cerr << get_fileline() << ": warning: @* is sensitive to all "
-                 << net_->array_count() << " words in array '"
-                 << name() << "'." << endl;
+            if (warn_sens_entire_arr) {
+                  cerr << get_fileline() << ": warning: @* is sensitive to all "
+                       << net_->array_count() << " words in array '"
+                       << name() << "'." << endl;
+            }
       }
       for (unsigned idx = 0 ;  idx < net_->pin_count() ;  idx += 1)
 	    result->add(net_->pin(idx).nexus());

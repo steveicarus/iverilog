@@ -139,8 +139,8 @@ static void format_vpiBinStrVal(vvp_signal_value*sig, int base, unsigned wid,
                                 s_vpi_value*vp)
 {
       char *rbuf = need_result_buf(wid+1, RBUF_VAL);
-      long offset = wid - 1 + base;
       long end = base + (signed)wid;
+      long offset = end - 1;
       long ssize = (signed)sig->value_size();
 
       for (long idx = base ;  idx < end ;  idx += 1) {
@@ -993,6 +993,15 @@ static int PV_get_base(struct __vpiPV*rfp)
 	/* We return from the symbol base if it is defined. */
       if (rfp->sbase != 0) {
 	    s_vpi_value val;
+	      /* Check to see if the value is defined. */
+	    val.format = vpiVectorVal;
+	    vpi_get_value(rfp->sbase, &val);
+	    int words = (vpi_get(vpiSize, rfp->sbase)-1)/32 + 1;
+	    for(int idx = 0; idx < words; idx += 1) {
+		    /* Return INT_MIN to indicate an X base. */
+		  if (val.value.vector[idx].bval != 0) return INT_MIN;
+	    }
+	      /* The value is defined so get and return it. */
 	    val.format = vpiIntVal;
 	    vpi_get_value(rfp->sbase, &val);
 	    return val.value.integer;

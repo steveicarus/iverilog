@@ -31,6 +31,7 @@
 #endif
 # include  <stdlib.h>
 # include  <string.h>
+# include  <limits.h>
 # include  <iostream>
 # include  "compile.h"
 # include  <assert.h>
@@ -133,6 +134,15 @@ struct __vpiArrayVthrA {
       {
 	    if (address_handle) {
 		  s_vpi_value vp;
+		    /* Check to see if the value is defined. */
+		  vp.format = vpiVectorVal;
+		  vpi_get_value(address_handle, &vp);
+		  int words = (vpi_get(vpiSize, address_handle)-1)/32 + 1;
+		  for(int idx = 0; idx < words; idx += 1) {
+			  /* Return UINT_MAX to indicate an X base. */
+			if (vp.value.vector[idx].bval != 0) return UINT_MAX;
+		  }
+		    /* The value is defined so get and return it. */
 		  vp.format = vpiIntVal;
 		  vpi_get_value(address_handle, &vp);
 		  return vp.value.integer;
@@ -146,7 +156,7 @@ struct __vpiArrayVthrA {
 		  vvp_bit4_t bit = vthread_get_bit(vpip_current_vthread, address+idx);
 		  tmp.set_bit(idx, bit);
 	    }
-	    unsigned long val;
+	    unsigned long val = ULONG_MAX;
 	    vector4_to_value(tmp, val);
 	    return val;
       }
