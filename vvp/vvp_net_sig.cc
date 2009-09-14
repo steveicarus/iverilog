@@ -162,7 +162,7 @@ void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 
 	  case 1: // Continuous assign value
 	    bits4_ = bit;
-	    assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL1, size());
+	    assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL1, bits4_.size());
 	    ptr.ptr()->send_vec4(bits4_, 0);
 	    break;
 
@@ -212,7 +212,7 @@ void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit
 
 	  case 1: // Continuous assign value
 	    if (assign_mask_.size() == 0)
-		  assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, size());
+		  assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, bits4_.size());
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  if (base+idx >= bits4_.size())
 			break;
@@ -252,29 +252,9 @@ void vvp_fun_signal_base::deassign_pv(unsigned base, unsigned wid)
       }
 }
 
-unsigned vvp_fun_signal4_sa::value_size() const
-{
-      return bits4_.size();
-}
-
-vvp_bit4_t vvp_fun_signal4_sa::value(unsigned idx) const
-{
-      assert(0 /* XXXX return filtered_value(bits4_, idx); */);
-}
-
-vvp_scalar_t vvp_fun_signal4_sa::scalar_value(unsigned idx) const
-{
-      return vvp_scalar_t(value(idx), 6, 6);
-}
-
 vvp_vector4_t vvp_fun_signal4_sa::vec4_unfiltered_value() const
 {
       return bits4_;
-}
-
-vvp_vector4_t vvp_fun_signal4_sa::vec4_value() const
-{
-      assert(0 /* XXXX return filtered_vec4(bits4_); */);
 }
 
 vvp_fun_signal4_aa::vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init)
@@ -449,27 +429,6 @@ void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
 	    break;
       }
 }
-
-unsigned vvp_fun_signal8::value_size() const
-{
-      return bits8_.size();
-}
-
-vvp_bit4_t vvp_fun_signal8::value(unsigned idx) const
-{
-      assert(0 /* XXXX return filtered_value(bits8_, idx).value(); */);
-}
-
-vvp_vector4_t vvp_fun_signal8::vec4_value() const
-{
-      assert(0 /* XXXX return reduce4(filtered_vec8(bits8_)); */);
-}
-
-vvp_scalar_t vvp_fun_signal8::scalar_value(unsigned idx) const
-{
-      assert(0 /* XXXX return filtered_value(bits8_, idx); */);
-}
-
 
 /*
  * Testing for equality, we want a bitwise test instead of an

@@ -109,19 +109,15 @@ class vvp_signal_value {
  * This abstract class is a little more specific than the signal_base
  * class, in that it adds vector access methods.
  */
-class vvp_fun_signal_vec : public vvp_fun_signal_base, public vvp_signal_value  {
+class vvp_fun_signal_vec : public vvp_fun_signal_base {
     public:
       virtual vvp_vector4_t vec4_unfiltered_value() const =0;
-      unsigned size() const { return value_size(); }
 };
 
 class vvp_fun_signal4 : public vvp_fun_signal_vec {
 
     public:
       explicit vvp_fun_signal4() {};
-
-      void get_value(struct t_vpi_value*value);
-
 };
 
 /*
@@ -144,10 +140,6 @@ class vvp_fun_signal4_sa : public vvp_fun_signal4 {
 			unsigned base, unsigned wid, unsigned vwid);
 
 	// Get information about the vector value.
-      unsigned   value_size() const;
-      vvp_bit4_t value(unsigned idx) const;
-      vvp_scalar_t scalar_value(unsigned idx) const;
-      vvp_vector4_t vec4_value() const;
       vvp_vector4_t vec4_unfiltered_value() const;
 
     private:
@@ -203,14 +195,6 @@ class vvp_fun_signal8  : public vvp_fun_signal_vec {
                         vvp_context_t context);
       void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
                         unsigned base, unsigned wid, unsigned vwid);
-
-	// Get information about the vector value.
-      unsigned   value_size() const;
-      vvp_bit4_t value(unsigned idx) const;
-      vvp_scalar_t scalar_value(unsigned idx) const;
-      vvp_vector4_t vec4_value() const;
-
-      void get_value(struct t_vpi_value*value);
 
     private:
       vvp_vector8_t bits8_;

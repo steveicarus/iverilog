@@ -1057,8 +1057,7 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
       unsigned delay = cp->bit_idx[0];
       unsigned bit = cp->bit_idx[1];
 
-      vvp_signal_value*sig
-	    = dynamic_cast<vvp_signal_value*> (cp->net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
       assert(sig);
 
 	// We fell off the MSB end.
@@ -1094,8 +1093,7 @@ bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
       vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
 
-      vvp_signal_value*sig
-	    = dynamic_cast<vvp_signal_value*> (cp->net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
       assert(sig);
 
 	// We fell off the MSB end.
@@ -1130,8 +1128,7 @@ bool of_ASSIGN_V0X1E(vthread_t thr, vvp_code_t cp)
       long off = thr->words[1].w_int;
       unsigned bit = cp->bit_idx[0];
 
-      vvp_signal_value*sig
-	    = dynamic_cast<vvp_signal_value*> (cp->net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
       assert(sig);
 
 	// We fell off the MSB end.
@@ -1375,7 +1372,7 @@ bool of_CASSIGN_X0(vthread_t thr, vvp_code_t cp)
 	// X0 register.
       long index = thr->words[0].w_int;
 
-      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
 
       if (index < 0 && (wid <= (unsigned)-index))
 	    return true;
@@ -1806,13 +1803,15 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
       unsigned base  = cp->bit_idx[0];
       unsigned width = cp->bit_idx[1];
 
+      vvp_signal_value*fil = dynamic_cast<vvp_signal_value*> (net->fil);
+      assert(fil);
       vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(net->fun);
       assert(sig);
 
-      if (base >= sig->size()) return true;
-      if (base+width > sig->size()) width = sig->size() - base;
+      if (base >= fil->value_size()) return true;
+      if (base+width > fil->value_size()) width = fil->value_size() - base;
 
-      bool full_sig = base == 0 && width == sig->size();
+      bool full_sig = base == 0 && width == fil->value_size();
 
 	// This is the net that is forcing me...
       if (vvp_net_t*src = sig->cassign_link) {
@@ -4159,7 +4158,8 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
 	// X0 register.
       long index = thr->words[0].w_int;
 
-      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
+      assert(sig);
 
 	// If the entire part is below the beginning of the vector,
 	// then we are done.

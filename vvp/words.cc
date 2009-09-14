@@ -115,7 +115,7 @@ static void __compile_var(char*label, char*name,
 	    assert(!array);
 	    if (obj) vpip_attach_to_current_scope(obj);
             if (!vpip_peek_current_scope()->is_automatic)
-	          schedule_init_vector(vvp_net_ptr_t(node,0), vsig->vec4_unfiltered_value());
+	          schedule_init_vector(vvp_net_ptr_t(node,0), vfil->vec4_value());
       }
 	// If this is an array word, then it does not have a name, and
 	// it is attached to the addressed array.

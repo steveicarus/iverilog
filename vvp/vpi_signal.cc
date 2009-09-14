@@ -1162,10 +1162,10 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
 {
       assert(ref->vpi_type->type_code == vpiPartSelect);
       struct __vpiPV*rfp = (struct __vpiPV*)ref;
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(rfp->net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(rfp->net->fil);
       assert(sig);
 
-      unsigned sig_size = sig->size();
+      unsigned sig_size = sig->value_size();
       unsigned width = rfp->width;
       int base = PV_get_base(rfp);
       if (base >= (signed) sig_size) return 0;

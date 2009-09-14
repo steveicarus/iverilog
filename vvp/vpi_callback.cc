@@ -674,26 +674,6 @@ void vvp_wire_real::get_signal_value(struct t_vpi_value*vp)
       }
 }
 
-void vvp_fun_signal4::get_value(struct t_vpi_value*vp)
-{
-      get_signal_value(vp);
-}
-
-void vvp_fun_signal8::get_value(struct t_vpi_value*vp)
-{
-      switch (vp->format) {
-	  case vpiScalarVal:
-	    vp->value.scalar = value(0);
-	    break;
-	  case vpiSuppressVal:
-	    break;
-	  default:
-	    fprintf(stderr, "vpi_callback: value "
-		    "format %d not supported (fun_signal8)\n",
-		    vp->format);
-      }
-}
-
 void vvp_wire_vec4::get_value(struct t_vpi_value*value)
 {
       get_signal_value(value);
