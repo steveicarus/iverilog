@@ -210,7 +210,7 @@ dep:
 	mkdir dep
 
 %.o: %.cc config.h
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_CPPFLAGS@ -c $< -o $*.o
 	mv $*.d dep/$*.d
 
 # Here are some explicit dependencies needed to get things going.
