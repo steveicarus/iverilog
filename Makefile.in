@@ -170,7 +170,7 @@ dep:
 	mkdir dep
 
 %.o: %.cc
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o $(DEBUGFLAGS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_CPPFLAGS@ -c $< -o $*.o $(DEBUGFLAGS)
 	mv $*.d dep/$*.d
 
 
