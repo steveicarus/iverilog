@@ -252,6 +252,37 @@ void vvp_fun_signal_base::deassign_pv(unsigned base, unsigned wid)
       }
 }
 
+void automatic_signal_base::release(vvp_net_ptr_t,bool)
+{
+      assert(0);
+}
+
+void automatic_signal_base::release_pv(vvp_net_ptr_t,unsigned,unsigned,bool)
+{
+      assert(0);
+}
+
+unsigned automatic_signal_base::filter_size() const
+{
+      assert(0);
+}
+void automatic_signal_base::force_fil_vec4(const vvp_vector4_t&, vvp_vector2_t)
+{
+      assert(0);
+}
+void automatic_signal_base::force_fil_vec8(const vvp_vector8_t&, vvp_vector2_t)
+{
+      assert(0);
+}
+void automatic_signal_base::force_fil_real(double, vvp_vector2_t)
+{
+      assert(0);
+}
+void automatic_signal_base::get_value(struct t_vpi_value*)
+{
+      assert(0);
+}
+
 vvp_vector4_t vvp_fun_signal4_sa::vec4_unfiltered_value() const
 {
       return bits4_;
@@ -355,37 +386,6 @@ vvp_vector4_t vvp_fun_signal4_aa::vec4_value() const
 vvp_vector4_t vvp_fun_signal4_aa::vec4_unfiltered_value() const
 {
       return vec4_value();
-}
-
-void vvp_fun_signal4_aa::release(vvp_net_ptr_t,bool)
-{
-      assert(0);
-}
-
-void vvp_fun_signal4_aa::release_pv(vvp_net_ptr_t,unsigned,unsigned,bool)
-{
-      assert(0);
-}
-
-unsigned vvp_fun_signal4_aa::filter_size() const
-{
-      assert(0);
-}
-void vvp_fun_signal4_aa::force_fil_vec4(const vvp_vector4_t&, vvp_vector2_t)
-{
-      assert(0);
-}
-void vvp_fun_signal4_aa::force_fil_vec8(const vvp_vector8_t&, vvp_vector2_t)
-{
-      assert(0);
-}
-void vvp_fun_signal4_aa::force_fil_real(double, vvp_vector2_t)
-{
-      assert(0);
-}
-void vvp_fun_signal4_aa::get_value(struct t_vpi_value*)
-{
-      assert(0);
 }
 
 vvp_fun_signal8::vvp_fun_signal8(unsigned wid)
@@ -546,6 +546,11 @@ double vvp_fun_signal_real_aa::real_unfiltered_value() const
       return *bits;
 }
 
+double vvp_fun_signal_real_aa::real_value() const
+{
+      return real_unfiltered_value();
+}
+
 void vvp_fun_signal_real_aa::recv_real(vvp_net_ptr_t ptr, double bit,
                                        vvp_context_t context)
 {
@@ -559,6 +564,27 @@ void vvp_fun_signal_real_aa::recv_real(vvp_net_ptr_t ptr, double bit,
             *bits = bit;
             ptr.ptr()->send_real(bit, context);
       }
+}
+
+unsigned vvp_fun_signal_real_aa::value_size() const
+{
+      assert(0);
+      return 1;
+}
+
+vvp_bit4_t vvp_fun_signal_real_aa::value(unsigned idx) const
+{
+      assert(0);
+}
+
+vvp_scalar_t vvp_fun_signal_real_aa::scalar_value(unsigned idx) const
+{
+      assert(0);
+}
+
+vvp_vector4_t vvp_fun_signal_real_aa::vec4_value() const
+{
+      assert(0);
 }
 
 vvp_fun_force::vvp_fun_force()

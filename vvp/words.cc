@@ -36,16 +36,16 @@ static void __compile_var_real(char*label, char*name,
 			       vvp_array_t array, unsigned long array_addr,
 			       int msb, int lsb)
 {
-      vvp_fun_signal_real*fun;
-      vvp_wire_real*fil = new vvp_wire_real;
-      if (vpip_peek_current_scope()->is_automatic) {
-            fun = new vvp_fun_signal_real_aa;
-      } else {
-            fun = new vvp_fun_signal_real_sa;
-      }
       vvp_net_t*net = new vvp_net_t;
-      net->fun = fun;
-      net->fil = fil;
+
+      if (vpip_peek_current_scope()->is_automatic) {
+	    vvp_fun_signal_real_aa*tmp = new vvp_fun_signal_real_aa;
+	    net->fil = tmp;
+	    net->fun = tmp;
+      } else {
+	    net->fil = new vvp_wire_real;
+	    net->fun = new vvp_fun_signal_real_sa;
+      }
 
       define_functor_symbol(label, net);
 
@@ -88,26 +88,26 @@ static void __compile_var(char*label, char*name,
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
-      vvp_net_t*node = new vvp_net_t;
+      vvp_net_t*net = new vvp_net_t;
 
       if (vpip_peek_current_scope()->is_automatic) {
 	    vvp_fun_signal4_aa*tmp = new vvp_fun_signal4_aa(wid);
-	    node->fil = tmp;
-            node->fun = tmp;
+	    net->fil = tmp;
+            net->fun = tmp;
       } else {
-	    node->fil = new vvp_wire_vec4(wid, BIT4_X);
-            node->fun = new vvp_fun_signal4_sa(wid);
+	    net->fil = new vvp_wire_vec4(wid, BIT4_X);
+            net->fun = new vvp_fun_signal4_sa(wid);
       }
-      vvp_signal_value*vfil = dynamic_cast<vvp_signal_value*>(node->fil);
+      vvp_signal_value*vfil = dynamic_cast<vvp_signal_value*>(net->fil);
 
-      define_functor_symbol(label, node);
+      define_functor_symbol(label, net);
 
       vpiHandle obj = 0;
       if (! local_flag && !array) {
 	      /* Make the vpiHandle for the reg. */
 	    obj = (signed_flag > 1) ?
-		  vpip_make_int(name, msb, lsb, node) :
-		  vpip_make_reg(name, msb, lsb, signed_flag!=0, node);
+		  vpip_make_int(name, msb, lsb, net) :
+		  vpip_make_reg(name, msb, lsb, signed_flag!=0, net);
 	    compile_vpi_symbol(label, obj);
       }
 	// If the signal has a name, then it goes into the current
@@ -116,7 +116,7 @@ static void __compile_var(char*label, char*name,
 	    assert(!array);
 	    if (obj) vpip_attach_to_current_scope(obj);
             if (!vpip_peek_current_scope()->is_automatic)
-	          schedule_init_vector(vvp_net_ptr_t(node,0), vfil->vec4_value());
+	          schedule_init_vector(vvp_net_ptr_t(net,0), vfil->vec4_value());
       }
 	// If this is an array word, then it does not have a name, and
 	// it is attached to the addressed array.

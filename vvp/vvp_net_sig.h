@@ -114,6 +114,21 @@ class vvp_fun_signal_vec : public vvp_fun_signal_base {
       virtual vvp_vector4_t vec4_unfiltered_value() const =0;
 };
 
+class automatic_signal_base : public vvp_signal_value, public vvp_net_fil_t {
+
+    public:
+	// Automatic variables cannot be forced or released. Provide
+	// stubs that assert.
+      virtual void release(vvp_net_ptr_t ptr, bool net_flag);
+      virtual void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag);
+
+      virtual unsigned filter_size() const;
+      virtual void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
+      virtual void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
+      virtual void force_fil_real(double val, vvp_vector2_t mask);
+      virtual void get_value(struct t_vpi_value*value);
+};
+
 /*
  * Statically allocated vvp_fun_signal4.
  */
@@ -143,7 +158,7 @@ class vvp_fun_signal4_sa : public vvp_fun_signal_vec {
 /*
  * Automatically allocated vvp_fun_signal4.
  */
-class vvp_fun_signal4_aa : public vvp_fun_signal_vec, public vvp_signal_value, public vvp_net_fil_t, public automatic_hooks_s {
+class vvp_fun_signal4_aa : public vvp_fun_signal_vec, public automatic_signal_base, public automatic_hooks_s {
 
     public:
       explicit vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init=BIT4_X);
@@ -168,17 +183,6 @@ class vvp_fun_signal4_aa : public vvp_fun_signal_vec, public vvp_signal_value, p
       vvp_scalar_t scalar_value(unsigned idx) const;
       vvp_vector4_t vec4_value() const;
       vvp_vector4_t vec4_unfiltered_value() const;
-
-	// Automatic variables cannot be forced or released. Provide
-	// stubs that assert.
-      virtual void release(vvp_net_ptr_t ptr, bool net_flag);
-      virtual void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag);
-
-      virtual unsigned filter_size() const;
-      virtual void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
-      virtual void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
-      virtual void force_fil_real(double val, vvp_vector2_t mask);
-      virtual void get_value(struct t_vpi_value*value);
 
     private:
       unsigned context_idx_;
@@ -237,7 +241,7 @@ class vvp_fun_signal_real_sa : public vvp_fun_signal_real {
 /*
  * Automatically allocated vvp_fun_signal_real.
  */
-class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_hooks_s {
+class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_signal_base, public automatic_hooks_s {
 
     public:
       explicit vvp_fun_signal_real_aa();
@@ -253,6 +257,14 @@ class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_hook
 
 	// Get information about the vector value.
       double real_unfiltered_value() const;
+
+	// Get information about the vector value.
+      unsigned   value_size() const;
+      vvp_bit4_t value(unsigned idx) const;
+      vvp_scalar_t scalar_value(unsigned idx) const;
+      vvp_vector4_t vec4_value() const;
+      double real_value() const;
+      void get_signal_value(struct t_vpi_value*vp);
 
     private:
       unsigned context_idx_;
