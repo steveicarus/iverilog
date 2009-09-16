@@ -1092,7 +1092,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	      // No named bindings, just use the positional list I
 	      // already have.
-	    assert(pin_count() == rmod->port_count());
+	    ivl_assert(*this, pin_count() == rmod->port_count());
 	    pins = get_pins();
       }
 
@@ -1136,7 +1136,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  perm_string pname = peek_tail_name(mport[0]->path());
 
 		  NetNet*tmp = instance[0]->find_signal(pname);
-		  assert(tmp);
+		  ivl_assert(*this, tmp);
 
 		  if (tmp->port_type() == NetNet::PINPUT) {
 			  // If we have an unconnected input convert it
@@ -1202,13 +1202,13 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  for (unsigned ldx = 0 ;  ldx < mport.size() ;  ldx += 1) {
 			unsigned lbase = inst * mport.size();
 			PEIdent*pport = mport[ldx];
-			assert(pport);
+			ivl_assert(*this, pport);
 			prts[lbase + ldx]
 			      = pport->elaborate_port(des, inst_scope);
 			if (prts[lbase + ldx] == 0)
 			      continue;
 
-			assert(prts[lbase + ldx]);
+			ivl_assert(*this, prts[lbase + ldx]);
 			prts_vector_width += prts[lbase + ldx]->vector_width();
 		  }
 	    }
@@ -1223,7 +1223,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // We know by design that each instance has the same
 	      // width port. Therefore, the prts_pin_count must be an
 	      // even multiple of the instance count.
-	    assert(prts_vector_width % instance.size() == 0);
+	    ivl_assert(*this, prts_vector_width % instance.size() == 0);
 
 	    unsigned desired_vector_width = prts_vector_width;
 	    if (instance.size() != 1)
@@ -1340,12 +1340,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	    }
 
-	    assert(sig);
+	    ivl_assert(*this, sig);
 
 #ifndef NDEBUG
 	    if ((prts.size() >= 1)
 		&& (prts[0]->port_type() != NetNet::PINPUT)) {
-		  assert(sig->type() != NetNet::REG);
+		  ivl_assert(*this, sig->type() != NetNet::REG);
 	    }
 #endif
 
