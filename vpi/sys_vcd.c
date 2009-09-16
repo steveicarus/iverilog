@@ -782,10 +782,11 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 	    const char *fullname;
 	    int add_var = 0;
 	    int dep;
+	    PLI_INT32 item_type = vpi_get(vpiType, item);
 
 	      /* If this is a signal make sure it has not already
 	       * been included. */
-	    switch (vpi_get(vpiType, item)) {
+	    switch (item_type) {
 	        case vpiIntegerVar:
 	        case vpiMemoryWord:
 	        case vpiNamedEvent:
@@ -796,11 +797,13 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 	        case vpiTimeVar:
 		    /* Warn if the variables scope (which includes the
 		     * variable) or the variable itself was already
-		     * included. */
+		     * included. A scope does not automatically include
+		     * memory words so do not check the scope for them.  */
 		  scname = strdup(vpi_get_str(vpiFullName,
 		                              vpi_handle(vpiScope, item)));
 		  fullname = vpi_get_str(vpiFullName, item);
-		  if (vcd_names_search(&vcd_tab, scname) ||
+		  if (((item_type != vpiMemoryWord) && 
+		       vcd_names_search(&vcd_tab, scname)) ||
 		      vcd_names_search(&vcd_var, fullname)) {
 		        vpi_printf("VCD warning: skipping signal %s, "
 		                   "it was previously included.\n",
