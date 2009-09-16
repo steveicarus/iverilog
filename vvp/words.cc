@@ -88,16 +88,17 @@ static void __compile_var(char*label, char*name,
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
-      vvp_fun_signal_vec*vsig;
-      vvp_wire_vec4*vfil = new vvp_wire_vec4(wid, BIT4_X);
-      if (vpip_peek_current_scope()->is_automatic) {
-            vsig = new vvp_fun_signal4_aa(wid);
-      } else {
-            vsig = new vvp_fun_signal4_sa(wid);
-      }
       vvp_net_t*node = new vvp_net_t;
-      node->fun = vsig;
-      node->fil = vfil;
+
+      if (vpip_peek_current_scope()->is_automatic) {
+	    vvp_fun_signal4_aa*tmp = new vvp_fun_signal4_aa(wid);
+	    node->fil = tmp;
+            node->fun = tmp;
+      } else {
+	    node->fil = new vvp_wire_vec4(wid, BIT4_X);
+            node->fun = new vvp_fun_signal4_sa(wid);
+      }
+      vvp_signal_value*vfil = dynamic_cast<vvp_signal_value*>(node->fil);
 
       define_functor_symbol(label, node);
 

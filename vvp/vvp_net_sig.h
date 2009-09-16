@@ -114,16 +114,10 @@ class vvp_fun_signal_vec : public vvp_fun_signal_base {
       virtual vvp_vector4_t vec4_unfiltered_value() const =0;
 };
 
-class vvp_fun_signal4 : public vvp_fun_signal_vec {
-
-    public:
-      explicit vvp_fun_signal4() {};
-};
-
 /*
  * Statically allocated vvp_fun_signal4.
  */
-class vvp_fun_signal4_sa : public vvp_fun_signal4 {
+class vvp_fun_signal4_sa : public vvp_fun_signal_vec {
 
     public:
       explicit vvp_fun_signal4_sa(unsigned wid, vvp_bit4_t init=BIT4_X);
@@ -149,7 +143,7 @@ class vvp_fun_signal4_sa : public vvp_fun_signal4 {
 /*
  * Automatically allocated vvp_fun_signal4.
  */
-class vvp_fun_signal4_aa : public vvp_fun_signal4, public automatic_hooks_s {
+class vvp_fun_signal4_aa : public vvp_fun_signal_vec, public vvp_signal_value, public vvp_net_fil_t, public automatic_hooks_s {
 
     public:
       explicit vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init=BIT4_X);
@@ -174,6 +168,17 @@ class vvp_fun_signal4_aa : public vvp_fun_signal4, public automatic_hooks_s {
       vvp_scalar_t scalar_value(unsigned idx) const;
       vvp_vector4_t vec4_value() const;
       vvp_vector4_t vec4_unfiltered_value() const;
+
+	// Automatic variables cannot be forced or released. Provide
+	// stubs that assert.
+      virtual void release(vvp_net_ptr_t ptr, bool net_flag);
+      virtual void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag);
+
+      virtual unsigned filter_size() const;
+      virtual void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
+      virtual void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
+      virtual void force_fil_real(double val, vvp_vector2_t mask);
+      virtual void get_value(struct t_vpi_value*value);
 
     private:
       unsigned context_idx_;

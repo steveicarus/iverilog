@@ -357,6 +357,37 @@ vvp_vector4_t vvp_fun_signal4_aa::vec4_unfiltered_value() const
       return vec4_value();
 }
 
+void vvp_fun_signal4_aa::release(vvp_net_ptr_t,bool)
+{
+      assert(0);
+}
+
+void vvp_fun_signal4_aa::release_pv(vvp_net_ptr_t,unsigned,unsigned,bool)
+{
+      assert(0);
+}
+
+unsigned vvp_fun_signal4_aa::filter_size() const
+{
+      assert(0);
+}
+void vvp_fun_signal4_aa::force_fil_vec4(const vvp_vector4_t&, vvp_vector2_t)
+{
+      assert(0);
+}
+void vvp_fun_signal4_aa::force_fil_vec8(const vvp_vector8_t&, vvp_vector2_t)
+{
+      assert(0);
+}
+void vvp_fun_signal4_aa::force_fil_real(double, vvp_vector2_t)
+{
+      assert(0);
+}
+void vvp_fun_signal4_aa::get_value(struct t_vpi_value*)
+{
+      assert(0);
+}
+
 vvp_fun_signal8::vvp_fun_signal8(unsigned wid)
 : bits8_(wid)
 {
