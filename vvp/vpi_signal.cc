@@ -1008,7 +1008,8 @@ static int PV_get_base(struct __vpiPV*rfp)
 
 	/* Get the value from thread space. */
       int tval = 0;
-      for (unsigned idx = 0 ;  idx < rfp->twid ;  idx += 1) {
+      for (unsigned idx = 0 ;  (idx < rfp->twid) && (idx < 8*sizeof(tval));
+           idx += 1) {
 	    vvp_bit4_t bit = vthread_get_bit(vpip_current_vthread,
                                              rfp->tbase + idx);
 	    switch (bit) {
