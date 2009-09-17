@@ -1027,6 +1027,15 @@ static int PV_get_base(struct __vpiPV*rfp)
 	    }
       }
 
+	/* Check to see if we need to sign extend the result. */
+      if (rfp->is_signed && (rfp->twid < 8*sizeof(tval))) {
+	    vvp_bit4_t msb = vthread_get_bit(vpip_current_vthread,
+	                                     rfp->tbase + rfp->twid - 1);
+	    if (msb == BIT4_1) {
+		  tval |= ~((1 << rfp->twid) - 1);
+	    }
+      }
+
       return tval;
 }
 
@@ -1281,7 +1290,7 @@ vpiHandle vpip_make_PV(char*var, vpiHandle handle, int width)
       return &obj->base;
 }
 
-vpiHandle vpip_make_PV(char*var, int tbase, int twid, int width)
+vpiHandle vpip_make_PV(char*var, int tbase, int twid, char*is_signed, int width)
 {
       struct __vpiPV*obj = (struct __vpiPV*) malloc(sizeof(struct __vpiPV));
       obj->base.vpi_type = &vpip_PV_rt;
@@ -1289,9 +1298,12 @@ vpiHandle vpip_make_PV(char*var, int tbase, int twid, int width)
       obj->sbase = 0;
       obj->tbase = tbase;
       obj->twid = (unsigned) twid;
+      obj->is_signed = strcmp(is_signed, "s") == 0;
       obj->width = (unsigned) width;
       obj->net = 0;
       functor_ref_lookup(&obj->net, var);
+
+      delete [] is_signed;
 
       return &obj->base;
 }

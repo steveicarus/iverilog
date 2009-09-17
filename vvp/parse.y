@@ -887,8 +887,8 @@ symbol_access
       { $$ = vpip_make_PV($3, $5, $7); }
   | K_PV '<' T_SYMBOL ',' symbol_access ',' T_NUMBER '>'
       { $$ = vpip_make_PV($3, $5, $7); }
-  | K_PV '<' T_SYMBOL ',' T_NUMBER T_NUMBER ',' T_NUMBER '>'
-      { $$ = vpip_make_PV($3, $5, $6, $8); }
+  | K_PV '<' T_SYMBOL ',' T_NUMBER T_NUMBER T_STRING ',' T_NUMBER '>'
+      { $$ = vpip_make_PV($3, $5, $6, $7, $9); }
 
   /* functor operands can only be a list of symbols. */
 symbols

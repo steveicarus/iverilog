@@ -824,12 +824,15 @@ retrieves the index from thread space (<width> bits starting at <base>).
 The &PV<> argument is a reference to part of a signal. The syntax is:
 
    &PV '<' <symbol> , <base> , <width> '>'
-   &PV '<' <symbol> , <tbase> <twid> , <width> '>'
+   &PV '<' <symbol> , <base_symbol> , <width> '>'
+   &PV '<' <symbol> , <tbase> <twid> <"s" or "u"> , <width> '>'
 
 The <symbol> is the label for a signal, the <base> is the canonical
 starting bit of the part select and <width> is the number of bits in
-the select. The second form retrieves the <base> from thread space
-using <twid> bits starting at <tbase>.
+the select. The second form retrieves the <base> from the given signal
+or &A<>/&PV<> select. The third form retrieves the <base> from thread
+space using <twid> bits starting at <tbase>. The base value may be
+signed or unsigned.
 
 * The T<> argument
 

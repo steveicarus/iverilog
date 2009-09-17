@@ -212,19 +212,11 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 		    /* Fallback case: evaluate the expression. */
 		  struct vector_info rv;
 		  rv = draw_eval_expr(bexpr, STUFF_OK_XZ);
-		    /* We need to enhance &PV<> to support a signed index. */
-		  if (ivl_expr_signed(bexpr) &&
-		      (ivl_expr_width(bexpr) < 8*sizeof(int))) {
-			fprintf(stderr, "%s:%u: tgt-vvp warning: V0.9 may give "
-			                "incorrect results for a select with a "
-			                "signed index less than %zu bits.\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr),
-			                8*sizeof(int));
-		  }
-		  snprintf(buffer, sizeof buffer, "&PV<v%p_0, %u %u, %u>",
+		  snprintf(buffer, sizeof buffer,
+		           "&PV<v%p_0, %u %u \"%s\", %u>",
 		           ivl_expr_signal(vexpr),
 		           rv.base, rv.wid,
+		           (ivl_expr_signed(bexpr) ? "s" : "u"),
 		           ivl_expr_width(expr));
 		  result->vec = rv;
 		  result->vec_flag = 1;
