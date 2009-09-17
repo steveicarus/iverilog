@@ -873,8 +873,8 @@ argument
 symbol_access
   : K_A '<' T_SYMBOL ',' T_NUMBER '>'
       { $$ = vpip_make_vthr_A($3, $5); }
-  | K_A '<' T_SYMBOL ',' T_NUMBER T_NUMBER '>'
-      { $$ = vpip_make_vthr_A($3, $5, $6); }
+  | K_A '<' T_SYMBOL ',' T_NUMBER T_NUMBER T_STRING '>'
+      { $$ = vpip_make_vthr_A($3, $5, $6, $7); }
   | K_A '<' T_SYMBOL ',' T_SYMBOL '>'
       { $$ = vpip_make_vthr_A($3, $5); }
   | K_A '<' T_SYMBOL ',' symbol_access '>'

@@ -813,11 +813,14 @@ The &A<> argument is a reference to the word of a variable array. The
 syntax is:
 
    &A '<' <symbol> , <number> '>'
-   &A '<' <symbol> , <base> <width> '>'
+   &A '<' <symbol> , <base_symbol> '>'
+   &A '<' <symbol> , <base> <width> <"s" or "u"> '>'
 
 The <symbol> is the label for a variable array, and the <number> is
 the canonical word index as an unsigned integer. The second form
-retrieves the index from thread space (<width> bits starting at <base>).
+retrieves the <base> from the given signal or &A<>/&PV<> select.
+The third form retrieves the index from thread space (<width> bits
+starting at <base>). The base value may be signed or unsigned.
 
 * The &PV<> argument
 
