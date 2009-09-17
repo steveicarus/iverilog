@@ -155,6 +155,17 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 			/* Fallback case: evaluate expression. */
 			struct vector_info av;
 			av = draw_eval_expr(word_ex, STUFF_OK_XZ);
+			/* We need to enhance &A<> to support a signed index. */
+			if (ivl_expr_signed(word_ex) &&
+			    (ivl_expr_width(word_ex) < 8*sizeof(int))) {
+			      fprintf(stderr, "%s:%u: tgt-vvp warning: V0.9 "
+			                      "may give incorrect results for "
+			                      "an array select with a signed "
+			                      "index less than %zu bits.\n",
+			                      ivl_expr_file(expr),
+			                      ivl_expr_lineno(expr),
+			                      8*sizeof(int));
+			}
 			snprintf(buffer, sizeof buffer, "&A<v%p, %u %u>",
 			         sig, av.base, av.wid);
 			result->vec = av;
