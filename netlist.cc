@@ -885,7 +885,7 @@ const NetDelaySrc* NetNet::delay_path(unsigned idx) const
 NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
 			     NetPartSelect::dir_t dir__)
 : NetNode(sig->scope(), sig->scope()->local_symbol(), 2),
-    off_(off), wid_(wid), dir_(dir__)
+    off_(off), wid_(wid), dir_(dir__), signed_flag_(false)
 {
       set_line(*sig);
 
@@ -904,9 +904,9 @@ NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
 }
 
 NetPartSelect::NetPartSelect(NetNet*sig, NetNet*sel,
-			     unsigned wid)
+			     unsigned wid, bool signed_flag)
 : NetNode(sig->scope(), sig->scope()->local_symbol(), 3),
-    off_(0), wid_(wid), dir_(VP)
+    off_(0), wid_(wid), dir_(VP), signed_flag_(signed_flag)
 {
       switch (dir_) {
 	  case NetPartSelect::VP:
