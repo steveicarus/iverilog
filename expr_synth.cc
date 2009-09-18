@@ -1089,7 +1089,8 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
       if (base_ != 0) {
 	    off = base_->synthesize(des, scope, root);
 
-	    NetPartSelect*sel = new NetPartSelect(sub, off, expr_width());
+	    NetPartSelect*sel = new NetPartSelect(sub, off, expr_width(),
+	                                          base_->has_sign());
 	    sel->set_line(*this);
 	    des->add_node(sel);
 

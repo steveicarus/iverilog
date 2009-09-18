@@ -1654,6 +1654,14 @@ static void draw_lpm_part(ivl_lpm_t net)
 	    fprintf(vvp_out, ", %u, %u;\n", base, width);
       } else {
 	    const char*sel_symbol = draw_net_input(sel);
+	      /* We need to enhance .part/v to support a signed index. */
+	    if (ivl_lpm_signed(net) && width_of_nexus(sel) < 8*sizeof(int)) {
+		  fprintf(stderr, "%s:%u: tgt-vvp warning: V0.9 may give "
+		                  "incorrect results for a select with a "
+		                  "signed index less than %zu bits.\n",
+		                  ivl_lpm_file(net), ivl_lpm_lineno(net),
+		                  8*sizeof(int));
+	    }
 	    fprintf(vvp_out, "L_%p%s .part/v %s",
 		    net, dly, draw_net_input(ivl_lpm_data(net,0)));
 	    fprintf(vvp_out, ", %s", sel_symbol);
