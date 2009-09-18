@@ -491,9 +491,11 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 			offset = -wid + 1;
 		  }
 		  delete base;
-		  base = new NetEConst(verinum(reg->sb_to_idx(lsv) + offset));
+		  long rel_base = reg->sb_to_idx(lsv) + offset;
+		    /* If we cover the entire lvalue just skip the select. */
+		  if (rel_base == 0 && wid == reg->vector_width()) return true;
+		  base = new NetEConst(verinum(rel_base));
 		  if (warn_ob_select) {
-			long rel_base = reg->sb_to_idx(lsv) + offset;
 			if (rel_base < 0) {
 			      cerr << get_fileline() << ": warning: " << reg->name();
 			      if (reg->array_dimensions() > 0) cerr << "[]";
