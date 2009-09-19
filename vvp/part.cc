@@ -229,8 +229,8 @@ void vvp_fun_part_pv::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
       vvp_send_vec8_pv(port.ptr()->out, bit, base_, wid_, vwid_);
 }
 
-vvp_fun_part_var::vvp_fun_part_var(unsigned w)
-: wid_(w)
+vvp_fun_part_var::vvp_fun_part_var(unsigned w, bool is_signed)
+: wid_(w), is_signed_(is_signed)
 {
 }
 
@@ -251,9 +251,7 @@ bool vvp_fun_part_var::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	      // INT_MIN is before the vector and is used to
 	      // represent a 'bx value on the select input.
 	    tmp = INT_MIN;
-	      // We need a new .part/v that knows if the index is signed.
-	      // For now this will work for a normal integer value.
-	    vector4_to_value(bit, tmp, false);
+	    vector4_to_value(bit, tmp, is_signed_);
 	    if ((int)tmp == base) return false;
 	    base = tmp;
 	    break;
@@ -280,8 +278,8 @@ bool vvp_fun_part_var::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       return false;
 }
 
-vvp_fun_part_var_sa::vvp_fun_part_var_sa(unsigned w)
-: vvp_fun_part_var(w), base_(0)
+vvp_fun_part_var_sa::vvp_fun_part_var_sa(unsigned w, bool is_signed)
+: vvp_fun_part_var(w, is_signed), base_(0)
 {
 }
 
@@ -320,8 +318,8 @@ struct vvp_fun_part_var_state_s {
       vvp_vector4_t ref;
 };
 
-vvp_fun_part_var_aa::vvp_fun_part_var_aa(unsigned w)
-: vvp_fun_part_var(w)
+vvp_fun_part_var_aa::vvp_fun_part_var_aa(unsigned w, bool is_signed)
+: vvp_fun_part_var(w, is_signed)
 {
       context_scope_ = vpip_peek_context_scope();
       context_idx_ = vpip_add_item_to_context(this, context_scope_);
@@ -436,13 +434,13 @@ void compile_part_select_pv(char*label, char*source,
 }
 
 void compile_part_select_var(char*label, char*source, char*var,
-			     unsigned wid)
+			     unsigned wid, bool is_signed)
 {
       vvp_fun_part_var*fun = 0;
       if (vpip_peek_current_scope()->is_automatic) {
-            fun = new vvp_fun_part_var_aa(wid);
+            fun = new vvp_fun_part_var_aa(wid, is_signed);
       } else {
-            fun = new vvp_fun_part_var_sa(wid);
+            fun = new vvp_fun_part_var_sa(wid, is_signed);
       }
       vvp_net_t*net = new vvp_net_t;
       net->fun = fun;

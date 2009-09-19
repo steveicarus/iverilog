@@ -79,7 +79,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_MODPATH K_NET K_NET_S K_NET_R
 %token K_NET8 K_NET8_S
 %token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
-%token K_PART_V K_PORT K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
+%token K_PART_V K_PART_V_S K_PORT K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
 %token K_RESOLV K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
@@ -250,7 +250,9 @@ statement
 		{ compile_part_select_pv($1, $3, $5, $7, $9); }
 
 	| T_LABEL K_PART_V T_SYMBOL ',' T_SYMBOL ',' T_NUMBER ';'
-		{ compile_part_select_var($1, $3, $5, $7); }
+		{ compile_part_select_var($1, $3, $5, $7, false); }
+	| T_LABEL K_PART_V_S T_SYMBOL ',' T_SYMBOL ',' T_NUMBER ';'
+		{ compile_part_select_var($1, $3, $5, $7, true); }
 
         | T_LABEL K_CONCAT '[' T_NUMBER T_NUMBER T_NUMBER T_NUMBER ']' ','
 	  symbols ';'

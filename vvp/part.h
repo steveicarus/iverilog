@@ -125,7 +125,7 @@ class vvp_fun_part_pv  : public vvp_net_fun_t {
 class vvp_fun_part_var  : public vvp_net_fun_t {
 
     public:
-      explicit vvp_fun_part_var(unsigned wid);
+      explicit vvp_fun_part_var(unsigned wid, bool is_signed);
       ~vvp_fun_part_var();
 
     protected:
@@ -134,6 +134,7 @@ class vvp_fun_part_var  : public vvp_net_fun_t {
                       vvp_vector4_t&ref);
 
       unsigned wid_;
+      bool is_signed_;
 };
 
 /*
@@ -142,7 +143,7 @@ class vvp_fun_part_var  : public vvp_net_fun_t {
 class vvp_fun_part_var_sa  : public vvp_fun_part_var {
 
     public:
-      explicit vvp_fun_part_var_sa(unsigned wid);
+      explicit vvp_fun_part_var_sa(unsigned wid, bool is_signed);
       ~vvp_fun_part_var_sa();
 
     public:
@@ -166,7 +167,7 @@ class vvp_fun_part_var_sa  : public vvp_fun_part_var {
 class vvp_fun_part_var_aa  : public vvp_fun_part_var, public automatic_hooks_s {
 
     public:
-      explicit vvp_fun_part_var_aa(unsigned wid);
+      explicit vvp_fun_part_var_aa(unsigned wid, bool is_signed);
       ~vvp_fun_part_var_aa();
 
     public:

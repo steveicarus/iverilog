@@ -160,6 +160,7 @@ static char* strdupnew(char const *str)
 ".part"     { return K_PART; }
 ".part/pv"  { return K_PART_PV; }
 ".part/v"   { return K_PART_V; }
+".part/v.s" { return K_PART_V_S; }
 ".port"     { return K_PORT; }
 ".reduce/and" { return K_REDUCE_AND; }
 ".reduce/or"  { return K_REDUCE_OR; }
