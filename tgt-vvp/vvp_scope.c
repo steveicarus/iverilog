@@ -479,6 +479,12 @@ static void draw_net_in_scope(ivl_signal_t sig)
 				iword, msb, lsb, driver,
 				nex_data->drivers_count,
 				strength_aware_flag?", strength-aware":"");
+
+		  } else if (ivl_signal_local(sig) && ivl_scope_is_auto(ivl_signal_scope(sig))) {
+			assert(word_count == 1);
+			fprintf(vvp_out, "; Elide net v%p_%u name=%s\n",
+				sig, iword, ivl_signal_basename(sig));
+
 		  } else {
 			/* If this is an isolated word, it uses its
 			   own name. */
@@ -897,15 +903,15 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
 		  sig = ivl_expr_signal(rise_exp);
 		  assert(ivl_signal_dimensions(sig) == 0);
-		  fprintf(vvp_out, ", v%p_0", sig);
+		  fprintf(vvp_out, ", %s", draw_net_input(ivl_signal_nex(sig,0)));
 
 		  sig = ivl_expr_signal(fall_exp);
 		  assert(ivl_signal_dimensions(sig) == 0);
-		  fprintf(vvp_out, ", v%p_0", sig);
+		  fprintf(vvp_out, ", %s", draw_net_input(ivl_signal_nex(sig,0)));
 
 		  sig = ivl_expr_signal(decay_exp);
 		  assert(ivl_signal_dimensions(sig) == 0);
-		  fprintf(vvp_out, ", v%p_0;\n", sig);
+		  fprintf(vvp_out, ", %s;\n", draw_net_input(ivl_signal_nex(sig,0)));
 	    }
       }
 }

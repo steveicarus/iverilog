@@ -1739,6 +1739,7 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  *    Returns the file and line where this signal is defined.
  */
 
+extern ivl_scope_t ivl_signal_scope(ivl_signal_t net);
 extern ivl_nexus_t ivl_signal_nex(ivl_signal_t net, unsigned word);
 extern int         ivl_signal_array_base(ivl_signal_t net);
 extern unsigned    ivl_signal_array_count(ivl_signal_t net);
