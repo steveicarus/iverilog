@@ -129,6 +129,7 @@ struct __vpiArrayVthrA {
 	// If wid >0, then the address is the base and wid the vector
 	// width of the index to pull from the thread.
       unsigned wid;
+      bool is_signed;
 
       unsigned get_address() const
       {
@@ -151,14 +152,37 @@ struct __vpiArrayVthrA {
 	    if (wid == 0)
 		  return address;
 
-	    vvp_vector4_t tmp (wid);
-	    for (unsigned idx = 0 ; idx < wid ; idx += 1) {
-		  vvp_bit4_t bit = vthread_get_bit(vpip_current_vthread, address+idx);
-		  tmp.set_bit(idx, bit);
+	      /* Get the value from thread space. */
+	    int tval = 0;
+	    for (unsigned idx = 0 ; (idx < wid) && (idx < 8*sizeof(tval));
+	         idx += 1) {
+		  vvp_bit4_t bit = vthread_get_bit(vpip_current_vthread,
+		                                   address + idx);
+		  switch (bit) {
+		      case BIT4_X:
+		      case BIT4_Z:
+			  /* Return UINT_MAX to indicate an X base. */
+			return UINT_MAX;
+			break;
+
+		      case BIT4_1:
+			tval |= 1<<idx;
+			break;
+
+		      case BIT4_0:
+			break;  // Do nothing!
+		  }
 	    }
-	    unsigned long val = ULONG_MAX;
-	    vector4_to_value(tmp, val);
-	    return val;
+
+	    if (is_signed && (wid < 8*sizeof(tval))) {
+		  vvp_bit4_t msb = vthread_get_bit(vpip_current_vthread,
+		                                   address + wid - 1);
+		  if (msb == BIT4_1) {
+			tval |= ~((1 << wid) - 1);
+		  }
+	    }
+
+	    return tval;
       }
 };
 
@@ -1547,7 +1571,8 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned addr)
       return &(obj->base);
 }
 
-vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid)
+vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid,
+                           char*is_signed)
 {
       struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*)
 	    malloc(sizeof (struct __vpiArrayVthrA));
@@ -1562,7 +1587,10 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid)
 
       obj->address_handle = 0;
       obj->address = tbase;
-      obj->wid     = twid;
+      obj->wid = twid;
+      obj->is_signed = strcmp(is_signed, "s") == 0;
+
+      delete [] is_signed;
 
       return &(obj->base);
 }

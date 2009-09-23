@@ -141,7 +141,7 @@ extern void compile_part_select_pv(char*label, char*src,
 				   unsigned base, unsigned wid,
 				   unsigned vec_wid);
 extern void compile_part_select_var(char*label, char*src,
-				     char*var, unsigned wid);
+                                    char*var, unsigned wid, bool is_signed);
 
 /*
  * This is called by the parser to make the various arithmetic and

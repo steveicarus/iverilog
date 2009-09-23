@@ -1795,12 +1795,14 @@ class NetPartSelect  : public NetNode {
       explicit NetPartSelect(NetNet*sig,
 			     unsigned off, unsigned wid, dir_t dir);
       explicit NetPartSelect(NetNet*sig, NetNet*sel,
-			     unsigned wid);
+			     unsigned wid, bool signed_flag = false);
       ~NetPartSelect();
 
       unsigned base()  const;
       unsigned width() const;
       dir_t    dir()   const;
+	/* Is the select signal signed? */
+      bool signed_flag() const { return signed_flag_; }
 
       virtual void dump_node(ostream&, unsigned ind) const;
       bool emit_node(struct target_t*tgt) const;
@@ -1809,6 +1811,7 @@ class NetPartSelect  : public NetNode {
       unsigned off_;
       unsigned wid_;
       dir_t    dir_;
+      bool signed_flag_;
 };
 
 /*

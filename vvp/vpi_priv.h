@@ -264,11 +264,13 @@ struct __vpiPV {
       vpiHandle sbase;
       int tbase;
       unsigned twid, width;
+      bool is_signed;
 };
 extern vpiHandle vpip_make_PV(char*name, int base, int width);
 extern vpiHandle vpip_make_PV(char*name, char*symbol, int width);
 extern vpiHandle vpip_make_PV(char*name, vpiHandle handle, int width);
-extern vpiHandle vpip_make_PV(char*name, int tbase, int twid, int width);
+extern vpiHandle vpip_make_PV(char*name, int tbase, int twid, char*is_signed,
+                              int width);
 
 extern struct __vpiPV* vpip_PV_from_handle(vpiHandle obj);
 extern void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle obj);
@@ -494,7 +496,8 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type);
 
 vpiHandle vpip_make_vthr_A(char*label, unsigned index);
 vpiHandle vpip_make_vthr_A(char*label, char*symbol);
-vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid);
+vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid,
+                           char*is_signed);
 vpiHandle vpip_make_vthr_A(char*label, vpiHandle handle);
 
 /*

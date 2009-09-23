@@ -1660,8 +1660,9 @@ static void draw_lpm_part(ivl_lpm_t net)
 	    fprintf(vvp_out, ", %u, %u;\n", base, width);
       } else {
 	    const char*sel_symbol = draw_net_input(sel);
-	    fprintf(vvp_out, "L_%p%s .part/v %s",
-		    net, dly, draw_net_input(ivl_lpm_data(net,0)));
+	    fprintf(vvp_out, "L_%p%s .part/v%s %s", net, dly,
+	                     (ivl_lpm_signed(net) ? ".s" : ""),
+	                     draw_net_input(ivl_lpm_data(net,0)));
 	    fprintf(vvp_out, ", %s", sel_symbol);
 	    fprintf(vvp_out, ", %u;\n", width);
       }

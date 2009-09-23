@@ -2153,8 +2153,12 @@ bool dll_target::part_select(const NetPartSelect*net)
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
-	/* Part selects are always unsigned. */
-      obj->u_.part.signed_flag = 0;
+	/* Part selects are always unsigned, so we use this to indicate
+	 * if the part select base signal is signed or not. */
+      if (net->signed_flag())
+	    obj->u_.part.signed_flag = 1;
+      else
+	    obj->u_.part.signed_flag = 0;
 
 	/* Choose the width of the part select. */
       obj->width = net->width();

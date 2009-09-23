@@ -1189,7 +1189,6 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 	    } else {
 		    /* Do not support bit or part selects of l-values yet. */
 		  assert(ivl_lval_mux(lval) == 0);
-		  assert(ivl_lval_part_off(lval) == 0);
 		  assert(ivl_lval_width(lval) == ivl_signal_width(lsig));
 
 		  assert((roff + use_wid) <= rvec.wid);
@@ -1238,8 +1237,13 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 	/* We do not currently support driving a signal to a bit or
 	 * part select (this could give us multiple drivers). */
       part_off_ex = ivl_lval_part_off(lval);
+	/* This should be verified in force_vector_to_lval() which is called
+	 * before this procedure. */
+      if (part_off_ex) {
+	    assert(number_is_immediate(part_off_ex, IMM_WID, 0));
+	    assert(! number_is_unknown(part_off_ex));
+      }
       if (ivl_signal_width(lsig) > ivl_signal_width(rsig) ||
-          // Do we need checks for number_is{immediate,unknown} of part_of_ex?
           (part_off_ex && get_number_immediate(part_off_ex) != 0)) {
 	    fprintf(stderr, "%s:%u: vvp-tgt sorry: cannot %s signal to "
 	            "a bit/part select.\n", ivl_expr_file(rval),

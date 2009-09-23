@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -473,6 +473,7 @@ bit number, and a width. Normally, those bits are constant values.
 	<label> .part <symbol>, <base>, <wid>;
 	<label> .part/pv <symbol>, <base>, <wid>, <vector_wid>;
 	<label> .part/v <symbol>, <symbol>, <wid>;
+	<label> .part/v.s <symbol>, <symbol>, <wid>;
 
 The input is typically a .reg or .net, but can be any vector node in
 the netlist.
@@ -485,7 +486,8 @@ that part is written to. Destination nodes use this value to check
 further output widths.
 
 The .part/v variation takes a vector (or long) input on port-1 as the
-base of the part select. Thus, the part select can move around.
+base of the part select. Thus, the part select can move around. The
+.part/v.s variation treats the vector as a signed value.
 
 PART CONCATENATION STATEMENTS:
 
@@ -813,23 +815,29 @@ The &A<> argument is a reference to the word of a variable array. The
 syntax is:
 
    &A '<' <symbol> , <number> '>'
-   &A '<' <symbol> , <base> <width> '>'
+   &A '<' <symbol> , <base_symbol> '>'
+   &A '<' <symbol> , <base> <width> <"s" or "u"> '>'
 
 The <symbol> is the label for a variable array, and the <number> is
 the canonical word index as an unsigned integer. The second form
-retrieves the index from thread space (<width> bits starting at <base>).
+retrieves the <base> from the given signal or &A<>/&PV<> select.
+The third form retrieves the index from thread space (<width> bits
+starting at <base>). The base value may be signed or unsigned.
 
 * The &PV<> argument
 
 The &PV<> argument is a reference to part of a signal. The syntax is:
 
    &PV '<' <symbol> , <base> , <width> '>'
-   &PV '<' <symbol> , <tbase> <twid> , <width> '>'
+   &PV '<' <symbol> , <base_symbol> , <width> '>'
+   &PV '<' <symbol> , <tbase> <twid> <"s" or "u"> , <width> '>'
 
 The <symbol> is the label for a signal, the <base> is the canonical
 starting bit of the part select and <width> is the number of bits in
-the select. The second form retrieves the <base> from thread space
-using <twid> bits starting at <tbase>.
+the select. The second form retrieves the <base> from the given signal
+or &A<>/&PV<> select. The third form retrieves the <base> from thread
+space using <twid> bits starting at <tbase>. The base value may be
+signed or unsigned.
 
 * The T<> argument
 
@@ -1105,7 +1113,7 @@ current read or write context of the running thread, using its
 stored context index.
 
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
