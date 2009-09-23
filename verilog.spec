@@ -44,7 +44,11 @@ fi
 make CXXFLAGS=-O
 
 %install
+%if 0%{?suse_version}
 %{makeinstall}
+%else
+make DESTDIR=$RPM_BUILD_ROOT install
+%endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
