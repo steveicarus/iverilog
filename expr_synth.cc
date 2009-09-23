@@ -1006,11 +1006,12 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 	    }
 
 	    long base_val = base_tmp.as_long();
+	    unsigned below_width = 0;
 
 	      // Any below X bits?
 	    NetNet*below = 0;
 	    if (base_val < 0) {
-		  unsigned below_width = abs(base_val);
+		  below_width = abs(base_val);
 		  base_val = 0;
 		  if (below_width > select_width) {
 			below_width = select_width;
@@ -1033,7 +1034,8 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 		  } else {
 			select_width = sub->vector_width() - base_val;
 		  }
-		  unsigned above_width = expr_width() - select_width;
+		  ivl_assert(*this, expr_width() > (select_width+below_width));
+		  unsigned above_width = expr_width() - select_width - below_width;
 
 		  above = make_const_x(des, scope, above_width);
 		  above->set_line(*this);
