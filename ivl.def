@@ -203,6 +203,7 @@ ivl_signal_nex
 ivl_signal_npath
 ivl_signal_path
 ivl_signal_port
+ivl_signal_scope
 ivl_signal_signed
 ivl_signal_type
 ivl_signal_width
