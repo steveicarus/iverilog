@@ -34,8 +34,7 @@ extern vpiHandle array_index_iterate(int code, vpiHandle ref);
 
 extern void array_word_change(vvp_array_t array, unsigned long addr);
 
-extern void array_attach_word(vvp_array_t array, unsigned long addr,
-                              vpiHandle word);
+extern void array_attach_word(vvp_array_t array, unsigned addr, vpiHandle word);
 extern void array_alias_word(vvp_array_t array, unsigned long addr,
                              vpiHandle word);
 

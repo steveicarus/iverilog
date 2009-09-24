@@ -21,6 +21,7 @@
 
 # include  "config.h"
 # include  "vpi_user.h"
+# include  "vvp_vpi_callback.h"
 # include  <stddef.h>
 # include  <stdlib.h>
 # include  <string.h>
@@ -42,6 +43,7 @@ class  vvp_scalar_t;
 /* Basic netlist types. */
 class  vvp_net_t;
 class  vvp_net_fun_t;
+class  vvp_net_fil_t;
 
 /* Core net function types. */
 class  vvp_fun_concat;
@@ -194,6 +196,9 @@ class vvp_vector4_t {
       friend class vvp_vector4array_t;
       friend class vvp_vector4array_sa;
       friend class vvp_vector4array_aa;
+
+    public:
+      static const vvp_vector4_t nil;
 
     public:
       explicit vvp_vector4_t(unsigned size =0, vvp_bit4_t bits =BIT4_X);
@@ -634,8 +639,14 @@ extern vvp_vector2_t operator % (const vvp_vector2_t&, const vvp_vector2_t&);
 
 vvp_vector2_t pow(const vvp_vector2_t&, vvp_vector2_t&);
 extern vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&, unsigned wid);
+
 /* A c4string is of the form C4<...> where ... are bits. */
+extern bool c4string_test(const char*str);
 extern vvp_vector4_t c4string_to_vector4(const char*str);
+
+/* A crstring is of the form Cr<...> where ... defines are real. */
+extern bool crstring_test(const char*str);
+extern double crstring_to_double(const char*str);
 
 extern ostream& operator<< (ostream&, const vvp_vector2_t&);
 
@@ -777,10 +788,15 @@ class vvp_vector8_t {
 
       ~vvp_vector8_t();
 
+      static const vvp_vector8_t nil;
+
+    public:
+
       unsigned size() const { return size_; }
       vvp_scalar_t value(unsigned idx) const;
       vvp_vector8_t subvalue(unsigned adr, unsigned width) const;
       void set_bit(unsigned idx, vvp_scalar_t val);
+      void set_vec(unsigned idx, const vvp_vector8_t&that);
 
 	// Test that the vectors are exactly equal
       bool eeq(const vvp_vector8_t&that) const;
@@ -821,6 +837,11 @@ extern vvp_vector8_t resistive_reduction(const vvp_vector8_t&a);
      strength information in the process. */
 extern vvp_vector4_t reduce4(const vvp_vector8_t&that);
 extern vvp_vector8_t part_expand(const vvp_vector8_t&a, unsigned wid, unsigned off);
+
+  /* A c8string is of the form C8<...> where ... are bits. */
+extern bool c8string_test(const char*str);
+extern vvp_vector8_t c8string_to_vector8(const char*str);
+
   /* Print a vector8 value to a stream. */
 extern ostream& operator<< (ostream&, const vvp_vector8_t&);
 
@@ -961,15 +982,52 @@ template <class T> ostream& operator << (ostream&out, vvp_sub_pointer_t<T> val)
  * the fan-out is unlimited.
  *
  * The vvp_send_*() functions take as input a vvp_net_ptr_t and follow
- * all the fan-out chain, delivering the specified value.
+ * all the fan-out chain, delivering the specified value. The send_*()
+ * methods of the vvp_net_t class are similar, but they follow the
+ * output, possibly filtered, from the vvp_net_t.
  */
-struct vvp_net_t {
+class vvp_net_t {
+    public:
+      vvp_net_t();
+
 #ifdef CHECK_WITH_VALGRIND
       vvp_net_t *pool;
 #endif
       vvp_net_ptr_t port[4];
-      vvp_net_ptr_t out;
       vvp_net_fun_t*fun;
+      vvp_net_fil_t*fil;
+
+    public:
+	// Connect the port to the output from this net.
+      void link(vvp_net_ptr_t port);
+	// Disconnect the port from the output of this net.
+      void unlink(vvp_net_ptr_t port);
+
+    public: // Methods to propagate output from this node.
+      void send_vec4(const vvp_vector4_t&val, vvp_context_t context);
+      void send_vec8(const vvp_vector8_t&val);
+      void send_real(double val, vvp_context_t context);
+      void send_long(long val);
+
+      void send_vec4_pv(const vvp_vector4_t&val,
+			unsigned base, unsigned wid, unsigned vwid,
+			vvp_context_t context);
+      void send_vec8_pv(const vvp_vector8_t&val,
+			unsigned base, unsigned wid, unsigned vwid);
+
+
+    public: // Methods to arrange for the output of this net to be forced.
+
+	// The intent is that all efforts at force are directed to
+	// operate only on the vvp_net_t whose output is to be
+	// forced. These methods then communicate the force to the
+	// attached filter to set up the actual force.
+      void force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
+      void force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
+      void force_real(double val, vvp_vector2_t mask);
+
+    private:
+      vvp_net_ptr_t out_;
 
     public: // Need a better new for these objects.
       static void* operator new(std::size_t size);
@@ -1044,6 +1102,86 @@ class vvp_net_fun_t {
       static void operator delete[](void*);
 };
 
+/*
+ * A vvp_net_fil_t is a filter object that filters an output from a
+ * vvp_net_t. The send_*() methods of the vvp_net_t object call the
+ * filter of the output being transmitted. The filter function will
+ * decide if this value is to be propagated, and return true or
+ * false. If false, then send_*() continues as usual. If false, output
+ * propagation is stopped.
+ *
+ * The filter object also provides an implementation hooks for
+ * force/release.
+ */
+class vvp_net_fil_t  : public vvp_vpi_callback {
+
+    public:
+      vvp_net_fil_t();
+      virtual ~vvp_net_fil_t();
+
+    public:
+      enum prop_t { STOP=0, PROP, REPL };
+
+	// Return a non-empty vector if the filter allows an
+	// output. The output result may be different from the
+	// input. If the output is nil, then suppress propagation.
+
+	// Return true if the value is to be propagated, or false if
+	// propagation is suppressed. The value may be edited by the
+	// filter, or overridden by the rep argument if present.
+      virtual prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
+				 unsigned base, unsigned vwid);
+      virtual prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep,
+				 unsigned base, unsigned vwid);
+      virtual prop_t filter_real(double&val);
+      virtual prop_t filter_long(long&val);
+
+      virtual void release(vvp_net_ptr_t ptr, bool net_flag) =0;
+      virtual void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag) =0;
+
+	// The %force/link instruction needs a place to write the
+	// source node of the force, so that subsequent %force and
+	// %release instructions can undo the link as needed. */
+      void force_link(vvp_net_t*dst, vvp_net_t*src);
+      void force_unlink(void);
+
+      virtual unsigned filter_size() const =0;
+
+    public:
+	// Suport for force methods
+      virtual void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask) =0;
+      virtual void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask) =0;
+      virtual void force_fil_real(double val, vvp_vector2_t mask) =0;
+
+    protected:
+	// Set bits of the filter force mask
+      void force_mask(vvp_vector2_t mask);
+	// Release the force on the bits set in the mask.
+      void release_mask(vvp_vector2_t mask);
+	// Test bits of the filter force mask;
+      bool test_force_mask(unsigned bit) const;
+      bool test_force_mask_is_zero() const;
+
+	// This template method is used by derived classes to process
+	// the val through the force mask. The force value is the
+	// currently forced value, and the buf is a value that this
+	// method will use to hold a filtered value, if needed. This
+	// method returns a pointer to val or buf.
+      template <class T> prop_t filter_mask_(const T&val, const T&force, T&rep, unsigned addr);
+	// This template method is similar to the above, but works for
+	// native types that are not so expensive to edit in place.
+      template <class T> prop_t filter_mask_(T&val, T force);
+
+    private:
+	// Mask of forced bits
+      vvp_vector2_t force_mask_;
+	// True if the next filter must propagate. Need this to allow
+	// the forced value to get through.
+      bool force_propagate_;
+	// force link back.
+      struct vvp_net_t*force_link_;
+};
+
 /* **** Some core net functions **** */
 
 /* vvp_fun_concat
@@ -1070,6 +1208,27 @@ class vvp_fun_concat  : public vvp_net_fun_t {
     private:
       unsigned wid_[4];
       vvp_vector4_t val_;
+};
+
+/*
+ * The vvp_fun_force class objects are net functors that use their input
+ * to force the associated filter. They do not actually  have an
+ * output, they instead drive the force_* methods of the net filter.
+ *
+ * This functor is also special in that we know a priori that only
+ * port-0 is used, so we can use ports 1-3 for local storage. See the
+ * implementation of vvp_filter_wire_base::force_link in
+ * vvp_net_sig.cc for details.
+ */
+class vvp_fun_force : public vvp_net_fun_t {
+
+    public:
+      vvp_fun_force();
+      ~vvp_fun_force();
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+		     vvp_context_t context);
+      void recv_real(vvp_net_ptr_t port, double bit, vvp_context_t);
 };
 
 /* vvp_fun_repeat
@@ -1135,325 +1294,6 @@ class vvp_fun_extend_signed  : public vvp_net_fun_t {
 
     private:
       unsigned width_;
-};
-
-/* vvp_fun_signal
- * This node is the place holder in a vvp network for signals,
- * including nets of various sort. The output from a signal follows
- * the type of its port-0 input. If vvp_vector4_t values come in
- * through port-0, then vvp_vector4_t values are propagated. If
- * vvp_vector8_t values come in through port-0, then vvp_vector8_t
- * values are propagated. Thus, this node is slightly polymorphic.
- *
- * If the signal is a net (i.e. a wire or tri) then this node will
- * have an input that is the data source. The data source will connect
- * through port-0.
- *
- * If the signal is a reg, then there will be no netlist input, the
- * values will be written by behavioral statements. The %set and
- * %assign statements will write through port-0.
- *
- * In any case, behavioral code is able to read the value that this
- * node last propagated, by using the value() method. That is important
- * functionality of this node.
- *
- * Continuous assignments are made through port-1. When a value is
- * written here, continuous assign mode is activated, and input
- * through port-0 is ignored until continuous assign mode is turned
- * off again. Writing into this port can be done in behavioral code
- * using the %cassign/v instruction, or can be done by the network by
- * hooking the output of a vvp_net_t to this port.
- *
- * Force assignments are made through port-2. When a value is written
- * here, force mode is activated. In force mode, port-0 data (or
- * port-1 data if in continuous assign mode) is tracked but not
- * propagated. The force value is propagated and is what is readable
- * through the value method.
- *
- * Port-3 is a command port, intended for use by procedural
- * instructions. The client must write long values to this port to
- * invoke the command of interest. The command values are:
- *
- *  1  -- deassign
- *          The deassign command takes the node out of continuous
- *          assignment mode. The output value is unchanged, and force
- *          mode, if active, remains in effect.
- *
- *  2  -- release/net
- *          The release/net command takes the node out of force mode,
- *          and propagates the tracked port-0 value to the signal
- *          output. This acts like a release of a net signal.
- *
- *  3  -- release/reg
- *          The release/reg command is similar to the release/net
- *          command, but the port-0 value is not propagated. Changes
- *          to port-0 (or port-1 if continuous assign is active) will
- *          propagate starting at the next input change.
- */
-
-/*
-* Things derived from vvp_vpi_callback may also be array'ed, so it
-* includes some members that arrays use.
-*/
-class vvp_vpi_callback {
-
-    public:
-      vvp_vpi_callback();
-      virtual ~vvp_vpi_callback();
-
-      virtual void run_vpi_callbacks();
-      void add_vpi_callback(struct __vpiCallback*);
-#ifdef CHECK_WITH_VALGRIND
-	/* This has only been tested at EOS. */
-      void clear_all_callbacks(void);
-#endif
-
-      virtual void get_value(struct t_vpi_value*value) =0;
-
-    private:
-      struct __vpiCallback*vpi_callbacks_;
-};
-
-class vvp_vpi_callback_wordable : public vvp_vpi_callback {
-    public:
-      vvp_vpi_callback_wordable();
-      ~vvp_vpi_callback_wordable();
-
-      void run_vpi_callbacks();
-      void attach_as_word(class __vpiArray* arr, unsigned long addr);
-
-    private:
-      class __vpiArray* array_;
-      unsigned long array_word_;
-};
-
-class vvp_fun_signal_base : public vvp_net_fun_t, public vvp_vpi_callback_wordable {
-
-    public:
-      vvp_fun_signal_base();
-      void recv_long(vvp_net_ptr_t port, long bit);
-      void recv_long_pv(vvp_net_ptr_t port, long bit,
-                        unsigned base, unsigned wid);
-
-    public:
-
-	/* The %force/link instruction needs a place to write the
-	   source node of the force, so that subsequent %force and
-	   %release instructions can undo the link as needed. */
-      struct vvp_net_t*force_link;
-      struct vvp_net_t*cassign_link;
-
-    protected:
-
-	// This is true until at least one propagation happens.
-      bool needs_init_;
-      bool continuous_assign_active_;
-      vvp_vector2_t force_mask_;
-      vvp_vector2_t assign_mask_;
-
-      void deassign();
-      void deassign_pv(unsigned base, unsigned wid);
-      virtual void release(vvp_net_ptr_t ptr, bool net) =0;
-      virtual void release_pv(vvp_net_ptr_t ptr, bool net,
-                              unsigned base, unsigned wid) =0;
-};
-
-/*
- * This abstract class is a little more specific than the signal_base
- * class, in that it adds vector access methods.
- */
-class vvp_fun_signal_vec : public vvp_fun_signal_base {
-
-    public:
-	// For vector signal types, this returns the vector count.
-      virtual unsigned size() const =0;
-      virtual vvp_bit4_t value(unsigned idx) const =0;
-      virtual vvp_scalar_t scalar_value(unsigned idx) const =0;
-      virtual vvp_vector4_t vec4_value() const =0;
-};
-
-class vvp_fun_signal4 : public vvp_fun_signal_vec {
-
-    public:
-      explicit vvp_fun_signal4() {};
-
-      void get_value(struct t_vpi_value*value);
-
-};
-
-/*
- * Statically allocated vvp_fun_signal4.
- */
-class vvp_fun_signal4_sa : public vvp_fun_signal4 {
-
-    public:
-      explicit vvp_fun_signal4_sa(unsigned wid, vvp_bit4_t init=BIT4_X);
-
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t);
-      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
-
-	// Part select variants of above
-      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t);
-      void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
-			unsigned base, unsigned wid, unsigned vwid);
-
-	// Get information about the vector value.
-      unsigned   size() const;
-      vvp_bit4_t value(unsigned idx) const;
-      vvp_scalar_t scalar_value(unsigned idx) const;
-      vvp_vector4_t vec4_value() const;
-
-	// Commands
-      void release(vvp_net_ptr_t port, bool net);
-      void release_pv(vvp_net_ptr_t port, bool net,
-                      unsigned base, unsigned wid);
-
-    private:
-      void calculate_output_(vvp_net_ptr_t ptr);
-
-      vvp_vector4_t bits4_;
-      vvp_vector4_t force_;
-};
-
-/*
- * Automatically allocated vvp_fun_signal4.
- */
-class vvp_fun_signal4_aa : public vvp_fun_signal4, public automatic_hooks_s {
-
-    public:
-      explicit vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init=BIT4_X);
-
-      void alloc_instance(vvp_context_t context);
-      void reset_instance(vvp_context_t context);
-#ifdef CHECK_WITH_VALGRIND
-      void free_instance(vvp_context_t context);
-#endif
-
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
-
-	// Part select variants of above
-      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-			unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t);
-
-	// Get information about the vector value.
-      unsigned   size() const;
-      vvp_bit4_t value(unsigned idx) const;
-      vvp_scalar_t scalar_value(unsigned idx) const;
-      vvp_vector4_t vec4_value() const;
-
-	// Commands
-      void release(vvp_net_ptr_t port, bool net);
-      void release_pv(vvp_net_ptr_t port, bool net,
-                      unsigned base, unsigned wid);
-
-    private:
-      unsigned context_idx_;
-      unsigned size_;
-};
-
-class vvp_fun_signal8  : public vvp_fun_signal_vec {
-
-    public:
-      explicit vvp_fun_signal8(unsigned wid);
-
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
-      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
-
-	// Part select variants of above
-      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                        unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t context);
-      void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
-                        unsigned base, unsigned wid, unsigned vwid);
-
-	// Get information about the vector value.
-      unsigned   size() const;
-      vvp_bit4_t value(unsigned idx) const;
-      vvp_scalar_t scalar_value(unsigned idx) const;
-      vvp_vector4_t vec4_value() const;
-
-	// Commands
-      void release(vvp_net_ptr_t port, bool net);
-      void release_pv(vvp_net_ptr_t port, bool net,
-                      unsigned base, unsigned wid);
-
-      void get_value(struct t_vpi_value*value);
-
-    private:
-      void calculate_output_(vvp_net_ptr_t ptr);
-
-      vvp_vector8_t bits8_;
-      vvp_vector8_t force_;
-};
-
-class vvp_fun_signal_real : public vvp_fun_signal_base {
-
-    public:
-      explicit vvp_fun_signal_real() {};
-
-	// Get information about the vector value.
-      virtual double real_value() const = 0;
-
-      void get_value(struct t_vpi_value*value);
-};
-
-/*
- * Statically allocated vvp_fun_signal_real.
- */
-class vvp_fun_signal_real_sa : public vvp_fun_signal_real {
-
-    public:
-      explicit vvp_fun_signal_real_sa();
-
-      void recv_real(vvp_net_ptr_t port, double bit,
-                     vvp_context_t);
-
-	// Get information about the vector value.
-      double real_value() const;
-
-	// Commands
-      void release(vvp_net_ptr_t port, bool net);
-      void release_pv(vvp_net_ptr_t port, bool net,
-                      unsigned base, unsigned wid);
-
-    private:
-      double bits_;
-      double force_;
-};
-
-/*
- * Automatically allocated vvp_fun_signal_real.
- */
-class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_hooks_s {
-
-    public:
-      explicit vvp_fun_signal_real_aa();
-
-      void alloc_instance(vvp_context_t context);
-      void reset_instance(vvp_context_t context);
-#ifdef CHECK_WITH_VALGRIND
-      void free_instance(vvp_context_t context);
-#endif
-
-      void recv_real(vvp_net_ptr_t port, double bit,
-                     vvp_context_t context);
-
-	// Get information about the vector value.
-      double real_value() const;
-
-	// Commands
-      void release(vvp_net_ptr_t port, bool net);
-      void release_pv(vvp_net_ptr_t port, bool net,
-                      unsigned base, unsigned wid);
-
-    private:
-      unsigned context_idx_;
 };
 
 /*
@@ -1536,8 +1376,7 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 };
 
 
-inline void vvp_send_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
-                          vvp_context_t context)
+inline void vvp_send_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val, vvp_context_t context)
 {
       while (struct vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
@@ -1576,8 +1415,8 @@ extern void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
  * mirror of the destination vector.
  */
 inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
-		             unsigned base, unsigned wid, unsigned vwid,
-                             vvp_context_t context)
+			     unsigned base, unsigned wid, unsigned vwid,
+			     vvp_context_t context)
 {
       while (struct vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
@@ -1589,9 +1428,10 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
       }
 }
 
-inline void vvp_send_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&val,
-		             unsigned base, unsigned wid, unsigned vwid)
+inline void vvp_net_t::send_vec8_pv(const vvp_vector8_t&val,
+				    unsigned base, unsigned wid, unsigned vwid)
 {
+      vvp_net_ptr_t ptr = out_;
       while (struct vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
@@ -1600,6 +1440,97 @@ inline void vvp_send_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&val,
 
 	    ptr = next;
       }
+}
+
+inline void vvp_net_t::send_vec4(const vvp_vector4_t&val, vvp_context_t context)
+{
+      if (fil == 0) {
+	    vvp_send_vec4(out_, val, context);
+	    return;
+      }
+
+      vvp_vector4_t rep;
+      switch (fil->filter_vec4(val, rep, 0, val.size())) {
+	  case vvp_net_fil_t::STOP:
+	    break;
+	  case vvp_net_fil_t::PROP:
+	    vvp_send_vec4(out_, val, context);
+	    break;
+	  case vvp_net_fil_t::REPL:
+	    vvp_send_vec4(out_, rep, context);
+	    break;
+      }
+}
+
+inline void vvp_net_t::send_vec4_pv(const vvp_vector4_t&val,
+				    unsigned base, unsigned wid, unsigned vwid,
+				    vvp_context_t context)
+{
+      if (fil == 0) {
+	    vvp_send_vec4_pv(out_, val, base, wid, vwid, context);
+	    return;
+      }
+
+      assert(val.size() == wid);
+      vvp_vector4_t rep;
+      switch (fil->filter_vec4(val, rep, base, vwid)) {
+	  case vvp_net_fil_t::STOP:
+	    break;
+	  case vvp_net_fil_t::PROP:
+	    vvp_send_vec4_pv(out_, val, base, wid, vwid, context);
+	    break;
+	  case vvp_net_fil_t::REPL:
+	    vvp_send_vec4_pv(out_, rep, base, wid, vwid, context);
+	    break;
+      }
+}
+
+inline void vvp_net_t::send_vec8(const vvp_vector8_t&val)
+{
+      if (fil == 0) {
+	    vvp_send_vec8(out_, val);
+	    return;
+      }
+
+      vvp_vector8_t rep;
+      switch (fil->filter_vec8(val, rep, 0, val.size())) {
+	  case vvp_net_fil_t::STOP:
+	    break;
+	  case vvp_net_fil_t::PROP:
+	    vvp_send_vec8(out_, val);
+	    break;
+	  case vvp_net_fil_t::REPL:
+	    vvp_send_vec8(out_, rep);
+	    break;
+      }
+}
+
+inline void vvp_net_t::send_real(double val, vvp_context_t context)
+{
+      if (fil && ! fil->filter_real(val))
+	    return;
+
+      vvp_send_real(out_, val, context);
+}
+
+
+inline bool vvp_net_fil_t::test_force_mask(unsigned bit) const
+{
+      if (bit >= force_mask_.size())
+	    return false;
+      if (force_mask_.value(bit))
+	    return true;
+      else
+	    return false;
+}
+
+inline bool vvp_net_fil_t::test_force_mask_is_zero(void) const
+{
+      if (force_mask_.size() == 0)
+	    return true;
+      if (force_mask_.is_zero())
+	    return true;
+      return false;
 }
 
 #endif

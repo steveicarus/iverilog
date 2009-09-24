@@ -24,6 +24,7 @@
 # include  "ufunc.h"
 # include  "event.h"
 # include  "vpi_priv.h"
+# include  "vvp_net_sig.h"
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
@@ -176,6 +177,19 @@ double vthread_get_real(struct vthread_s*thr, unsigned addr)
 void vthread_put_real(struct vthread_s*thr, unsigned addr, double val)
 {
       thr->words[addr].w_real = val;
+}
+
+template <class T> T coerce_to_width(const T&that, unsigned width)
+{
+      if (that.size() == width)
+	    return that;
+
+      assert(that.size() > width);
+      T res (width);
+      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
+	    res.set_bit(idx, that.value(idx));
+
+      return res;
 }
 
 static unsigned long* vector_to_array(struct vthread_s*thr,
@@ -548,41 +562,6 @@ void vthread_run(vthread_t thr)
 	    thr = tmp;
       }
       running_thread = 0;
-}
-
-/*
- * Unlink a ptr object from the driver. The input is the driver in the
- * form of a vvp_net_t pointer. The .out member of that object is the
- * driver. The dst_ptr argument is the receiver pin to be located and
- * removed from the fan-out list.
- */
-static void unlink_from_driver(vvp_net_t*src, vvp_net_ptr_t dst_ptr)
-{
-      vvp_net_t*net = dst_ptr.ptr();
-      unsigned net_port = dst_ptr.port();
-
-      if (src->out == dst_ptr) {
-	      /* If the drive fan-out list starts with this pointer,
-		 then the unlink is easy. Pull the list forward. */
-	    src->out = net->port[net_port];
-      } else {
-	      /* Scan the linked list, looking for the net_ptr_t
-		 pointer *before* the one we wish to remove. */
-	    vvp_net_ptr_t cur = src->out;
-	    assert(!cur.nil());
-	    vvp_net_t*cur_net = cur.ptr();
-	    unsigned cur_port = cur.port();
-	    while (cur_net->port[cur_port] != dst_ptr) {
-		  cur = cur_net->port[cur_port];
-		  assert(!cur.nil());
-		  cur_net = cur.ptr();
-		  cur_port = cur.port();
-	    }
-	      /* Unlink. */
-	    cur_net->port[cur_port] = net->port[net_port];
-      }
-
-      net->port[net_port] = vvp_net_ptr_t(0,0);
 }
 
 /*
@@ -1078,12 +1057,11 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
       unsigned delay = cp->bit_idx[0];
       unsigned bit = cp->bit_idx[1];
 
-      vvp_fun_signal_vec*sig
-	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
       assert(sig);
 
 	// We fell off the MSB end.
-      if (off >= (long)sig->size()) return true;
+      if (off >= (long)sig->value_size()) return true;
       else if (off < 0 ) {
 	      // We fell off the LSB end.
 	    if ((unsigned)-off >= wid ) return true;
@@ -1098,7 +1076,7 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
       vvp_net_ptr_t ptr (cp->net, 0);
-      schedule_assign_vector(ptr, off, sig->size(), value, delay);
+      schedule_assign_vector(ptr, off, sig->value_size(), value, delay);
 
       return true;
 }
@@ -1115,12 +1093,11 @@ bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
       vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_int;
       unsigned bit = cp->bit_idx[1];
 
-      vvp_fun_signal_vec*sig
-	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
       assert(sig);
 
 	// We fell off the MSB end.
-      if (off >= (long)sig->size()) return true;
+      if (off >= (long)sig->value_size()) return true;
       else if (off < 0 ) {
 	      // We fell off the LSB end.
 	    if ((unsigned)-off >= wid ) return true;
@@ -1135,7 +1112,7 @@ bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
       vvp_net_ptr_t ptr (cp->net, 0);
-      schedule_assign_vector(ptr, off, sig->size(), value, delay);
+      schedule_assign_vector(ptr, off, sig->value_size(), value, delay);
 
       return true;
 }
@@ -1151,12 +1128,11 @@ bool of_ASSIGN_V0X1E(vthread_t thr, vvp_code_t cp)
       long off = thr->words[1].w_int;
       unsigned bit = cp->bit_idx[0];
 
-      vvp_fun_signal_vec*sig
-	    = reinterpret_cast<vvp_fun_signal_vec*> (cp->net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
       assert(sig);
 
 	// We fell off the MSB end.
-      if (off >= (long)sig->size()) {
+      if (off >= (long)sig->value_size()) {
 	    thr->event = 0;
 	    thr->ecount = 0;
 	    return true;
@@ -1180,9 +1156,9 @@ bool of_ASSIGN_V0X1E(vthread_t thr, vvp_code_t cp)
       vvp_net_ptr_t ptr (cp->net, 0);
 	// If the count is zero then just put the value.
       if (thr->ecount == 0) {
-	    schedule_assign_vector(ptr, off, sig->size(), value, 0);
+	    schedule_assign_vector(ptr, off, sig->value_size(), value, 0);
       } else {
-	    schedule_evctl(ptr, value, off, sig->size(), thr->event,
+	    schedule_evctl(ptr, value, off, sig->value_size(), thr->event,
 	                   thr->ecount);
       }
 
@@ -1321,7 +1297,7 @@ bool of_CASSIGN_LINK(vthread_t thr, vvp_code_t cp)
       vvp_net_t*src = cp->net2;
 
       vvp_fun_signal_base*sig
-	    = reinterpret_cast<vvp_fun_signal_base*>(dst->fun);
+	    = dynamic_cast<vvp_fun_signal_base*>(dst->fun);
       assert(sig);
 
 	/* Detect the special case that we are already continuous
@@ -1333,7 +1309,7 @@ bool of_CASSIGN_LINK(vthread_t thr, vvp_code_t cp)
 	   unlink it. We can have only 1 cassign at a time. */
       if (sig->cassign_link != 0) {
 	    vvp_net_ptr_t tmp (dst, 1);
-	    unlink_from_driver(sig->cassign_link, tmp);
+	    sig->cassign_link->unlink(tmp);
       }
 
       sig->cassign_link = src;
@@ -1341,8 +1317,7 @@ bool of_CASSIGN_LINK(vthread_t thr, vvp_code_t cp)
 	/* Link the output of the src to the port[1] (the cassign
 	   port) of the destination. */
       vvp_net_ptr_t dst_ptr (dst, 1);
-      dst->port[1] = src->out;
-      src->out = dst_ptr;
+      src->link(dst_ptr);
 
       return true;
 }
@@ -1397,12 +1372,12 @@ bool of_CASSIGN_X0(vthread_t thr, vvp_code_t cp)
 	// X0 register.
       long index = thr->words[0].w_int;
 
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
 
       if (index < 0 && (wid <= (unsigned)-index))
 	    return true;
 
-      if (index >= (long)sig->size())
+      if (index >= (long)sig->value_size())
 	    return true;
 
       if (index < 0) {
@@ -1410,13 +1385,13 @@ bool of_CASSIGN_X0(vthread_t thr, vvp_code_t cp)
 	    index = 0;
       }
 
-      if (index+wid > sig->size())
-	    wid = sig->size() - index;
+      if (index+wid > sig->value_size())
+	    wid = sig->value_size() - index;
 
       vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
 
       vvp_net_ptr_t ptr (net, 1);
-      vvp_send_vec4_pv(ptr, vector, index, wid, sig->size(), 0);
+      vvp_send_vec4_pv(ptr, vector, index, wid, sig->value_size(), 0);
 
       return true;
 }
@@ -1828,13 +1803,15 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
       unsigned base  = cp->bit_idx[0];
       unsigned width = cp->bit_idx[1];
 
-      vvp_fun_signal_vec*sig = reinterpret_cast<vvp_fun_signal_vec*>(net->fun);
+      vvp_signal_value*fil = dynamic_cast<vvp_signal_value*> (net->fil);
+      assert(fil);
+      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(net->fun);
       assert(sig);
 
-      if (base >= sig->size()) return true;
-      if (base+width > sig->size()) width = sig->size() - base;
+      if (base >= fil->value_size()) return true;
+      if (base+width > fil->value_size()) width = fil->value_size() - base;
 
-      bool full_sig = base == 0 && width == sig->size();
+      bool full_sig = base == 0 && width == fil->value_size();
 
 	// This is the net that is forcing me...
       if (vvp_net_t*src = sig->cassign_link) {
@@ -1845,16 +1822,15 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
 	    }
 	      // And this is the pointer to be removed.
 	    vvp_net_ptr_t dst_ptr (net, 1);
-	    unlink_from_driver(src, dst_ptr);
+	    src->unlink(dst_ptr);
 	    sig->cassign_link = 0;
       }
 
 	/* Do we release all or part of the net? */
-      vvp_net_ptr_t ptr (net, 3);
       if (full_sig) {
-	    vvp_send_long(ptr, 1);
+	    sig->deassign();
       } else {
-	    vvp_send_long_pv(ptr, 1, base, width);
+	    sig->deassign_pv(base, width);
       }
 
       return true;
@@ -1864,19 +1840,18 @@ bool of_DEASSIGN_WR(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
 
-      vvp_fun_signal_real*sig = reinterpret_cast<vvp_fun_signal_real*>(net->fun);
+      vvp_fun_signal_real*sig = dynamic_cast<vvp_fun_signal_real*>(net->fun);
       assert(sig);
 
 	// This is the net that is forcing me...
       if (vvp_net_t*src = sig->cassign_link) {
 	      // And this is the pointer to be removed.
 	    vvp_net_ptr_t dst_ptr (net, 1);
-	    unlink_from_driver(src, dst_ptr);
+	    src->unlink(dst_ptr);
 	    sig->cassign_link = 0;
       }
 
-      vvp_net_ptr_t ptr (net, 3);
-      vvp_send_long(ptr, 1);
+      sig->deassign();
 
       return true;
 }
@@ -2391,42 +2366,6 @@ bool of_EVCTLS(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-static void unlink_force(vvp_net_t*net)
-{
-      vvp_fun_signal_base*sig
-	    = reinterpret_cast<vvp_fun_signal_base*>(net->fun);
-	/* This node must be a signal... */
-      assert(sig);
-	/* This signal is being forced. */
-      assert(sig->force_link);
-
-      vvp_net_t*src = sig->force_link;
-      sig->force_link = 0;
-
-	/* We are looking for this pointer. */
-      vvp_net_ptr_t net_ptr (net, 2);
-
-	/* If net is first in the fan-out list, then simply pull it
-	   from the front. */
-      if (src->out == net_ptr) {
-	    src->out = net->port[2];
-	    net->port[2] = vvp_net_ptr_t();
-	    return;
-      }
-
-	/* Look for the pointer in the fan-out chain */
-      vvp_net_ptr_t cur_ptr = src->out;
-      assert(!cur_ptr.nil());
-      while (cur_ptr.ptr()->port[cur_ptr.port()] != net_ptr) {
-	    cur_ptr = cur_ptr.ptr()->port[cur_ptr.port()];
-	    assert( !cur_ptr.nil() );
-      }
-
-	/* Remove as if from a singly-linked list. */
-      cur_ptr.ptr()->port[cur_ptr.port()] = net->port[2];
-      net->port[2] = vvp_net_ptr_t();
-}
-
 /*
  * the %force/link instruction connects a source node to a
  * destination node. The destination node must be a signal, as it is
@@ -2439,26 +2378,8 @@ bool of_FORCE_LINK(vthread_t thr, vvp_code_t cp)
       vvp_net_t*dst = cp->net;
       vvp_net_t*src = cp->net2;
 
-      vvp_fun_signal_base*sig
-	    = reinterpret_cast<vvp_fun_signal_base*>(dst->fun);
-      assert(sig);
-
-	/* Detect the special case that we are already forced the
-	   source onto the destination. */
-      if (sig->force_link == src)
-	    return true;
-
-	/* If there is a linked force already, then unlink it. */
-      if (sig->force_link)
-	    unlink_force(dst);
-
-      sig->force_link = src;
-
-	/* Link the output of the src to the port[2] (the force
-	   port) of the destination. */
-      vvp_net_ptr_t dst_ptr (dst, 2);
-      dst->port[2] = src->out;
-      src->out = dst_ptr;
+      assert(dst->fil);
+      dst->fil->force_link(dst, src);
 
       return true;
 }
@@ -2484,9 +2405,13 @@ bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
 	/* Collect the thread bits into a vector4 item. */
       vvp_vector4_t value = vthread_bits_to_vector(thr, base, wid);
 
-	/* Set the value into port 2 of the destination. */
-      vvp_net_ptr_t ptr (net, 2);
-      vvp_send_vec4(ptr, value, 0);
+	/* Send the force value to the filter on the node. */
+
+      assert(net->fil);
+      if (value.size() != net->fil->filter_size())
+	    value = coerce_to_width(value, net->fil->filter_size());
+
+      net->force_vec4(value, vvp_vector2_t(vvp_vector2_t::FILL1, net->fil->filter_size()));
 
       return true;
 }
@@ -2496,9 +2421,7 @@ bool of_FORCE_WR(vthread_t thr, vvp_code_t cp)
       vvp_net_t*net  = cp->net;
       double value = thr->words[cp->bit_idx[0]].w_real;
 
-	/* Set the value into port 2 of the destination. */
-      vvp_net_ptr_t ptr (net, 2);
-      vvp_send_real(ptr, value, 0);
+      net->force_real(value, vvp_vector2_t(vvp_vector2_t::FILL1, 1));
 
       return true;
 }
@@ -2510,16 +2433,13 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
 
+      assert(net->fil);
+
 	// Implicitly, we get the base into the target vector from the
 	// X0 register.
       long index = thr->words[0].w_int;
 
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
-
       if (index < 0 && (wid <= (unsigned)-index))
-	    return true;
-
-      if (index >= (long)sig->size())
 	    return true;
 
       if (index < 0) {
@@ -2527,13 +2447,24 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
 	    index = 0;
       }
 
-      if (index+wid > sig->size())
-	    wid = sig->size() - index;
+      unsigned use_size = net->fil->filter_size();
+
+
+      if (index >= (long)use_size)
+	    return true;
+
+      if (index+wid > use_size)
+	    wid = use_size - index;
+
+      vvp_vector2_t mask(vvp_vector2_t::FILL0, use_size);
+      for (unsigned idx = 0 ; idx < wid ; idx += 1)
+	    mask.set_bit(index+idx, 1);
 
       vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
+      vvp_vector4_t value(use_size, BIT4_Z);
+      value.set_vec(index, vector);
 
-      vvp_net_ptr_t ptr (net, 2);
-      vvp_send_vec4_pv(ptr, vector, index, wid, sig->size(), 0);
+      net->force_vec4(value, mask);
 
       return true;
 }
@@ -2749,10 +2680,11 @@ bool of_IX_GETV(vthread_t thr, vvp_code_t cp)
       unsigned index = cp->bit_idx[0];
       vvp_net_t*net = cp->net;
 
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(net->fil);
       if (sig == 0) {
+	    assert(net->fil);
 	    cerr << "%%ix/getv error: Net arg not a vector signal? "
-		 << typeid(*net->fun).name() << endl;
+		 << typeid(*net->fil).name() << endl;
       }
       assert(sig);
 
@@ -2776,10 +2708,12 @@ bool of_IX_GETVS(vthread_t thr, vvp_code_t cp)
       unsigned index = cp->bit_idx[0];
       vvp_net_t*net = cp->net;
 
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(net->fil);
       if (sig == 0) {
 	    cerr << "%%ix/getv/s error: Net arg not a vector signal? "
-		 << typeid(*net->fun).name() << endl;
+		 << "fun=" << typeid(*net->fil).name()
+		 << ", fil=" << (net->fil? typeid(*net->fil).name() : "<>")
+		 << endl;
       }
       assert(sig);
 
@@ -3127,10 +3061,10 @@ static vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
 
 	/* For the %load to work, the functor must actually be a
 	   signal functor. Only signals save their vector value. */
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
       if (sig == 0) {
-	    cerr << "%%load/v error: Net arg not a vector signal? "
-		 << typeid(*net->fun).name() << endl;
+	    cerr << "%%load/v error: Net arg not a signal? "
+		 << typeid(*net->fil).name() << endl;
 	    assert(sig);
       }
 
@@ -3229,13 +3163,13 @@ bool of_LOAD_X1P(vthread_t thr, vvp_code_t cp)
 
 	// For the %load to work, the functor must actually be a
 	// signal functor. Only signals save their vector value.
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
       assert(sig);
 
       for (long idx = 0 ; idx < wid ; idx += 1) {
 	    long use_index = index + idx;
 	    vvp_bit4_t val;
-	    if (use_index < 0 || use_index >= (signed)sig->size())
+	    if (use_index < 0 || use_index >= (signed)sig->value_size())
 		  val = BIT4_X;
 	    else
 		  val = sig->value(use_index);
@@ -4076,79 +4010,43 @@ bool of_POW_WR(vthread_t thr, vvp_code_t cp)
  * the release/reg command instead. These are very similar to the
  * %deassign instruction.
  */
-bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
+static bool do_release_vec(vthread_t thr, vvp_code_t cp, bool net_flag)
 {
       vvp_net_t*net = cp->net;
       unsigned base  = cp->bit_idx[0];
       unsigned width = cp->bit_idx[1];
 
-      vvp_fun_signal_vec*sig = reinterpret_cast<vvp_fun_signal_vec*>(net->fun);
-      assert(sig);
+      assert(net->fil);
 
-      if (base >= sig->size()) return true;
-      if (base+width > sig->size()) width = sig->size() - base;
+      if (base >= net->fil->filter_size()) return true;
+      if (base+width > net->fil->filter_size())
+	    width = net->fil->filter_size() - base;
 
-      bool full_sig = base == 0 && width == sig->size();
+      bool full_sig = base == 0 && width == net->fil->filter_size();
 
-      if (sig->force_link) {
-	    if (!full_sig) {
-		  fprintf(stderr, "Sorry: when a signal is forcing a "
-		          "net, I cannot release part of it.\n");
-		  exit(1);
-	    }
-	    unlink_force(net);
-      }
-      assert(sig->force_link == 0);
+	// XXXX Can't really do this if this is a partial release?
+      net->fil->force_unlink();
 
 	/* Do we release all or part of the net? */
-      vvp_net_ptr_t ptr (net, 3);
+      vvp_net_ptr_t ptr (net, 0);
       if (full_sig) {
-	    vvp_send_long(ptr, 2);
+	    net->fil->release(ptr, net_flag);
       } else {
-	    vvp_send_long_pv(ptr, 2, base, width);
+	    net->fil->release_pv(ptr, base, width, net_flag);
       }
 
       return true;
 }
 
+bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
+{
+      return do_release_vec(thr, cp, true);
+}
+
 
 bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
 {
-      vvp_net_t*net = cp->net;
-      unsigned base  = cp->bit_idx[0];
-      unsigned width = cp->bit_idx[1];
-
-      vvp_fun_signal_vec*sig = reinterpret_cast<vvp_fun_signal_vec*>(net->fun);
-      assert(sig);
-
-      if (base >= sig->size()) return true;
-      if (base+width > sig->size()) width = sig->size() - base;
-
-      bool full_sig = base == 0 && width == sig->size();
-
-	// This is the net that is forcing me...
-      if (vvp_net_t*src = sig->force_link) {
-	    if (!full_sig) {
-		  fprintf(stderr, "Sorry: when a signal is forcing a "
-		          "register, I cannot release part of it.\n");
-		  exit(1);
-	    }
-	      // And this is the pointer to be removed.
-	    vvp_net_ptr_t dst_ptr (net, 2);
-	    unlink_from_driver(src, dst_ptr);
-	    sig->force_link = 0;
-      }
-
-	// Send a command to this signal to unforce itself.
-	/* Do we release all or part of the net? */
-      vvp_net_ptr_t ptr (net, 3);
-      if (full_sig) {
-	    vvp_send_long(ptr, 3);
-      } else {
-	    vvp_send_long_pv(ptr, 3, base, width);
-      }
-
-      return true;
+      return do_release_vec(thr, cp, false);
 }
 
 /* The type is 1 for registers and 0 for everything else. */
@@ -4157,21 +4055,12 @@ bool of_RELEASE_WR(vthread_t thr, vvp_code_t cp)
       vvp_net_t*net = cp->net;
       unsigned type  = cp->bit_idx[0];
 
-      vvp_fun_signal_real*sig = reinterpret_cast<vvp_fun_signal_real*>(net->fun);
-      assert(sig);
-
-	// This is the net that is forcing me...
-      if (vvp_net_t*src = sig->force_link) {
-	      // And this is the pointer to be removed.
-	    vvp_net_ptr_t dst_ptr (net, 2);
-	    unlink_from_driver(src, dst_ptr);
-	    sig->force_link = 0;
-      }
+      assert(net->fil);
+      net->fil->force_unlink();
 
 	// Send a command to this signal to unforce itself.
-      vvp_net_ptr_t ptr (net, 3);
-      vvp_send_long(ptr, 2 + type);
-
+      vvp_net_ptr_t ptr (net, 0);
+      net->fil->release(ptr, type==0);
       return true;
 }
 
@@ -4269,7 +4158,8 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
 	// X0 register.
       long index = thr->words[0].w_int;
 
-      vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*> (net->fun);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
+      assert(sig);
 
 	// If the entire part is below the beginning of the vector,
 	// then we are done.
@@ -4278,7 +4168,7 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
 
 	// If the entire part is above then end of the vector, then we
 	// are done.
-      if (index >= (long)sig->size())
+      if (index >= (long)sig->value_size())
 	    return true;
 
 	// If the part starts below the vector, then skip the first
@@ -4291,8 +4181,8 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
       }
 
 	// Reduce the width to keep the part inside the vector.
-      if (index+wid > sig->size())
-	    wid = sig->size() - index;
+      if (index+wid > sig->value_size())
+	    wid = sig->value_size() - index;
 
       vvp_vector4_t bit_vec(wid);
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -4303,7 +4193,7 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
       }
 
       vvp_net_ptr_t ptr (net, 0);
-      vvp_send_vec4_pv(ptr, bit_vec, index, wid, sig->size(), thr->wt_context);
+      vvp_send_vec4_pv(ptr, bit_vec, index, wid, sig->value_size(), thr->wt_context);
 
       return true;
 }

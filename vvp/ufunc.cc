@@ -22,6 +22,7 @@
 # include  "symbols.h"
 # include  "codes.h"
 # include  "ufunc.h"
+# include  "vvp_net_sig.h"
 # include  "vthread.h"
 # include  "schedule.h"
 #ifdef HAVE_MALLOC_H
@@ -83,11 +84,10 @@ void ufunc_core::finish_thread(vthread_t thr)
 {
       thread_ = 0;
       if (vvp_fun_signal_real*sig = dynamic_cast<vvp_fun_signal_real*>(result_->fun))
-
-	    propagate_real(sig->real_value());
+	    propagate_real(sig->real_unfiltered_value());
 
       if (vvp_fun_signal_vec*sig = dynamic_cast<vvp_fun_signal_vec*>(result_->fun))
-	    propagate_vec4(sig->vec4_value());
+	    propagate_vec4(sig->vec4_unfiltered_value());
 }
 
 /*

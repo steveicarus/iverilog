@@ -63,6 +63,14 @@ extern void schedule_assign_array_word(vvp_array_t mem,
 				       double val,
 				       vvp_time64_t delay);
 /*
+ * Create an event to propagate the output of a net.
+ */
+extern void schedule_propagate_plucked_vector(vvp_net_t*ptr,
+ 					      vvp_time64_t  delay,
+					      const vvp_vector4_t&val,
+ 					      unsigned adr, unsigned wid);
+
+/*
  * This is very similar to schedule_assign_vector, but generates an
  * event in the active queue. It is used at link time to assign a
  * constant value (i.e. C4<...>) to the input of a functor. This
@@ -83,6 +91,7 @@ extern void schedule_set_vector(vvp_net_ptr_t ptr, double val);
  * (propagated as events) through the rest of the net.
  */
 extern void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector4_t val);
+extern void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector8_t val);
 extern void schedule_init_vector(vvp_net_ptr_t ptr, double val);
 
 /*

@@ -108,7 +108,7 @@ void vvp_fun_and::run_run()
 	    result.set_bit(idx, bitbit);
       }
 
-      vvp_send_vec4(ptr->out, result, 0);
+      ptr->send_vec4(result, 0);
 }
 
 vvp_fun_buf::vvp_fun_buf()
@@ -149,7 +149,7 @@ void vvp_fun_buf::run_run()
 
       vvp_vector4_t tmp (input_);
       tmp.change_z2x();
-      vvp_send_vec4(ptr->out, tmp, 0);
+      ptr->send_vec4(tmp, 0);
 }
 
 vvp_fun_bufz::vvp_fun_bufz()
@@ -171,7 +171,7 @@ void vvp_fun_bufz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       if (ptr.port() != 0)
 	    return;
 
-      vvp_send_vec4(ptr.ptr()->out, bit, 0);
+      ptr.ptr()->send_vec4(bit, 0);
 }
 
 void vvp_fun_bufz::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
@@ -179,7 +179,7 @@ void vvp_fun_bufz::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
       if (ptr.port() != 0)
 	    return;
 
-      vvp_send_vec8(ptr.ptr()->out, bit);
+      ptr.ptr()->send_vec8(bit);
 }
 
 void vvp_fun_bufz::recv_real(vvp_net_ptr_t ptr, double bit,
@@ -188,7 +188,7 @@ void vvp_fun_bufz::recv_real(vvp_net_ptr_t ptr, double bit,
       if (ptr.port() != 0)
 	    return;
 
-      vvp_send_real(ptr.ptr()->out, bit, 0);
+      ptr.ptr()->send_real(bit, 0);
 }
 
 vvp_fun_muxr::vvp_fun_muxr()
@@ -267,16 +267,16 @@ void vvp_fun_muxr::run_run()
 
       switch (select_) {
 	  case SEL_PORT0:
-	    vvp_send_real(ptr->out, a_, 0);
+	    ptr->send_real(a_, 0);
 	    break;
 	  case SEL_PORT1:
-	    vvp_send_real(ptr->out, b_, 0);
+	    ptr->send_real(b_, 0);
 	    break;
 	  default:
 	    if (a_ == b_) {
-		  vvp_send_real(ptr->out, a_, 0);
+		  ptr->send_real(a_, 0);
 	    } else {
-		  vvp_send_real(ptr->out, 0.0, 0); // Should this be NaN?
+		  ptr->send_real(0.0, 0); // Should this be NaN?
 	    }
 	    break;
       }
@@ -347,10 +347,10 @@ void vvp_fun_muxz::run_run()
 
       switch (select_) {
 	  case SEL_PORT0:
-	    vvp_send_vec4(ptr->out, a_, 0);
+	    ptr->send_vec4(a_, 0);
 	    break;
 	  case SEL_PORT1:
-	    vvp_send_vec4(ptr->out, b_, 0);
+	    ptr->send_vec4(b_, 0);
 	    break;
 	  default:
 	      {
@@ -373,7 +373,7 @@ void vvp_fun_muxz::run_run()
 		    for (unsigned idx = min_size ;  idx < max_size ;  idx += 1)
 			  res.set_bit(idx, BIT4_X);
 
-		    vvp_send_vec4(ptr->out, res, 0);
+		    ptr->send_vec4(res, 0);
 	      }
 	    break;
       }
@@ -421,7 +421,7 @@ void vvp_fun_not::run_run()
 	    result.set_bit(idx, bitbit);
       }
 
-      vvp_send_vec4(ptr->out, result, 0);
+      ptr->send_vec4(result, 0);
 }
 
 vvp_fun_or::vvp_fun_or(unsigned wid, bool invert)
@@ -457,7 +457,7 @@ void vvp_fun_or::run_run()
 	    result.set_bit(idx, bitbit);
       }
 
-      vvp_send_vec4(ptr->out, result, 0);
+      ptr->send_vec4(result, 0);
 }
 
 vvp_fun_xor::vvp_fun_xor(unsigned wid, bool invert)
@@ -493,7 +493,7 @@ void vvp_fun_xor::run_run()
 	    result.set_bit(idx, bitbit);
       }
 
-      vvp_send_vec4(ptr->out, result, 0);
+      ptr->send_vec4(result, 0);
 }
 
 /*
@@ -607,7 +607,7 @@ void compile_functor(char*label, char*type, unsigned width,
       net_drv->fun = obj_drv;
 
 	/* Point the gate to the drive node. */
-      net->out = vvp_net_ptr_t(net_drv, 0);
+      net->link(vvp_net_ptr_t(net_drv, 0));
 
       define_functor_symbol(label, net_drv);
       free(label);

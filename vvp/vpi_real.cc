@@ -19,6 +19,7 @@
 
 # include  "compile.h"
 # include  "vpi_priv.h"
+# include  "vvp_net_sig.h"
 # include  "schedule.h"
 # include  <stdio.h>
 # include  <stdlib.h>
@@ -131,10 +132,10 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
 
       struct __vpiRealVar*rfp
 	    = (struct __vpiRealVar*)ref;
-      vvp_fun_signal_real*fun
-	    = dynamic_cast<vvp_fun_signal_real*>(rfp->net->fun);
+      vvp_signal_value*fil
+	    = dynamic_cast<vvp_signal_value*>(rfp->net->fil);
 
-      fun->get_value(vp);
+      fil->get_signal_value(vp);
 }
 
 static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp, int)
@@ -170,10 +171,10 @@ void vpip_real_value_change(struct __vpiCallback*cbh,
 {
       struct __vpiRealVar*rfp
 	    = (struct __vpiRealVar*)ref;
-      vvp_fun_signal_real*fun
-	    = dynamic_cast<vvp_fun_signal_real*>(rfp->net->fun);
+      vvp_vpi_callback*obj = dynamic_cast<vvp_vpi_callback*>(rfp->net->fil);
+      assert(obj);
 
-      fun->add_vpi_callback(cbh);
+      obj->add_vpi_callback(cbh);
 }
 
 vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)

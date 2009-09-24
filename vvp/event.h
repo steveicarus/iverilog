@@ -182,6 +182,9 @@ class vvp_fun_edge_sa : public vvp_fun_edge {
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context);
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+			vvp_context_t context);
 
     private:
       vthread_t threads_;
@@ -252,6 +255,9 @@ class vvp_fun_anyedge_sa : public vvp_fun_anyedge {
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context);
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+			vvp_context_t context);
 
       void recv_real(vvp_net_ptr_t port, double bit,
                      vvp_context_t context);

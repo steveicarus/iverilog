@@ -257,6 +257,27 @@ void assign_array_word_s::operator delete(void*ptr)
 
 unsigned long count_assign_aword_pool(void) { return array_w_heap.pool; }
 
+/*
+ * This class supports the propagation of vec4 outputs from a
+ * vvp_net_t object.
+ */
+struct propagate_vector4_event_s : public event_s {
+      propagate_vector4_event_s(const vvp_vector4_t&that, unsigned adr, unsigned wid)
+      : val(that,adr,wid) { }
+
+	/* Propagate the output of this net. */
+      vvp_net_t*net;
+	/* value to propagate */
+      vvp_vector4_t val;
+	/* Action */
+      void run_run(void);
+};
+
+void propagate_vector4_event_s::run_run(void)
+{
+      net->send_vec4(val, 0);
+}
+
 struct assign_array_r_word_s  : public event_s {
       vvp_array_t mem;
       unsigned adr;
@@ -626,6 +647,17 @@ void schedule_assign_plucked_vector(vvp_net_ptr_t ptr,
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
 
+void schedule_propagate_plucked_vector(vvp_net_t*net,
+				       vvp_time64_t delay,
+				       const vvp_vector4_t&src,
+				       unsigned adr, unsigned wid)
+{
+      struct propagate_vector4_event_s*cur
+	    = new struct propagate_vector4_event_s(src,adr,wid);
+      cur->net = net;
+      schedule_event_(cur, delay, SEQ_NBASSIGN);
+}
+
 void schedule_assign_array_word(vvp_array_t mem,
 				unsigned word_addr,
 				unsigned off,
@@ -683,6 +715,15 @@ void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       cur->ptr = ptr;
       cur->base = 0;
       cur->vwid = 0;
+      cur->next = schedule_init_list;
+      schedule_init_list = cur;
+}
+
+void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+{
+      struct assign_vector8_event_s*cur = new struct assign_vector8_event_s;
+      cur->ptr = ptr;
+      cur->val = bit;
       cur->next = schedule_init_list;
       schedule_init_list = cur;
 }

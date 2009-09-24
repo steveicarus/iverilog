@@ -989,7 +989,7 @@ void compile_udp_functor(char*label, char*type,
 	    delete delay;
 	    net_drv->fun = obj_drv;
 
-	    ptr->out = vvp_net_ptr_t(net_drv,0);
+	    ptr->link(vvp_net_ptr_t(net_drv,0));
 	    define_functor_symbol(label, net_drv);
 
       } else {

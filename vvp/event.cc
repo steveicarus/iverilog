@@ -267,7 +267,18 @@ void vvp_fun_edge_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 {
       if (recv_vec4_(port, bit, bits_[port.port()], threads_)) {
 	    vvp_net_t*net = port.ptr();
-	    vvp_send_vec4(net->out, bit, 0);
+	    net->send_vec4(bit, 0);
+      }
+}
+
+void vvp_fun_edge_sa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+				   unsigned base, unsigned wid, unsigned vwid,
+				   vvp_context_t)
+{
+      assert(base == 0);
+      if (recv_vec4_(port, bit, bits_[port.port()], threads_)) {
+	    vvp_net_t*net = port.ptr();
+	    net->send_vec4_pv(bit, base, wid, vwid, 0);
       }
 }
 
@@ -327,7 +338,7 @@ void vvp_fun_edge_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 
             if (recv_vec4_(port, bit, state->bits[port.port()], state->threads)) {
                   vvp_net_t*net = port.ptr();
-                  vvp_send_vec4(net->out, bit, context);
+                  net->send_vec4(bit, context);
             }
       } else {
             context = context_scope_->live_contexts;
@@ -418,7 +429,25 @@ void vvp_fun_anyedge_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 {
       if (recv_vec4_(port, bit, bits_[port.port()], threads_)) {
 	    vvp_net_t*net = port.ptr();
-	    vvp_send_vec4(net->out, bit, 0);
+	    net->send_vec4(bit, 0);
+      }
+}
+
+void vvp_fun_anyedge_sa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+				      unsigned base, unsigned wid, unsigned vwid,
+				      vvp_context_t)
+{
+      vvp_vector4_t tmp = bits_[port.port()];
+      if (tmp.size() == 0)
+	    tmp = vvp_vector4_t(vwid, BIT4_Z);
+      assert(wid == bit.size());
+      assert(base+wid <= vwid);
+      assert(tmp.size() == vwid);
+      tmp.set_vec(base, bit);
+
+      if (recv_vec4_(port, tmp, bits_[port.port()], threads_)) {
+	    vvp_net_t*net = port.ptr();
+	    net->send_vec4(bit, 0);
       }
 }
 
@@ -427,7 +456,7 @@ void vvp_fun_anyedge_sa::recv_real(vvp_net_ptr_t port, double bit,
 {
       if (recv_real_(port, bit, bitsr_[port.port()], threads_)) {
 	    vvp_net_t*net = port.ptr();
-	    vvp_send_vec4(net->out, vvp_vector4_t(), 0);
+	    net->send_vec4(vvp_vector4_t(), 0);
       }
 }
 
@@ -488,7 +517,7 @@ void vvp_fun_anyedge_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 
             if (recv_vec4_(port, bit, state->bits[port.port()], state->threads)) {
                   vvp_net_t*net = port.ptr();
-                  vvp_send_vec4(net->out, bit, context);
+                  net->send_vec4(bit, context);
             }
       } else {
             context = context_scope_->live_contexts;
@@ -509,7 +538,7 @@ void vvp_fun_anyedge_aa::recv_real(vvp_net_ptr_t port, double bit,
 
             if (recv_real_(port, bit, state->bitsr[port.port()], state->threads)) {
                   vvp_net_t*net = port.ptr();
-                  vvp_send_vec4(net->out, vvp_vector4_t(), context);
+                  net->send_vec4(vvp_vector4_t(), context);
             }
       } else {
             context = context_scope_->live_contexts;
@@ -551,7 +580,7 @@ void vvp_fun_event_or_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 {
       run_waiting_threads_(threads_);
       vvp_net_t*net = port.ptr();
-      vvp_send_vec4(net->out, bit, 0);
+      net->send_vec4(bit, 0);
 }
 
 vvp_fun_event_or_aa::vvp_fun_event_or_aa()
@@ -606,7 +635,7 @@ void vvp_fun_event_or_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 
             run_waiting_threads_(state->threads);
             vvp_net_t*net = port.ptr();
-            vvp_send_vec4(net->out, bit, context);
+            net->send_vec4(bit, context);
       } else {
             context = context_scope_->live_contexts;
             while (context) {
@@ -647,7 +676,7 @@ void vvp_named_event_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 {
       run_waiting_threads_(threads_);
       vvp_net_t*net = port.ptr();
-      vvp_send_vec4(net->out, bit, 0);
+      net->send_vec4(bit, 0);
 
       vpip_run_named_event_callbacks(handle_);
 }
@@ -705,7 +734,7 @@ void vvp_named_event_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 
       run_waiting_threads_(state->threads);
       vvp_net_t*net = port.ptr();
-      vvp_send_vec4(net->out, bit, context);
+      net->send_vec4(bit, context);
 }
 
 /*

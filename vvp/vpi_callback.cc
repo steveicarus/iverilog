@@ -29,6 +29,7 @@
 # include  "vvp_net.h"
 # include  "schedule.h"
 # include  "event.h"
+# include  "vvp_net_sig.h"
 # include  "config.h"
 # include  <stdio.h>
 # include  <assert.h>
@@ -156,12 +157,12 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	    struct __vpiSignal*sig;
 	    sig = reinterpret_cast<__vpiSignal*>(data->obj);
 
-	    vvp_fun_signal_base*sig_fun;
-	    sig_fun = dynamic_cast<vvp_fun_signal_base*>(sig->node->fun);
-	    assert(sig_fun);
+	    vvp_net_fil_t*sig_fil;
+	    sig_fil = dynamic_cast<vvp_net_fil_t*>(sig->node->fil);
+	    assert(sig_fil);
 
 	      /* Attach the __vpiCallback object to the signal. */
-	    sig_fun->add_vpi_callback(obj);
+	    sig_fil->add_vpi_callback(obj);
 	    break;
 
 	  case vpiRealVar:
@@ -503,11 +504,21 @@ void callback_execute(struct __vpiCallback*cur)
 vvp_vpi_callback::vvp_vpi_callback()
 {
       vpi_callbacks_ = 0;
+      array_ = 0;
+      array_word_ = 0;
 }
 
 vvp_vpi_callback::~vvp_vpi_callback()
 {
       assert(vpi_callbacks_ == 0);
+      assert(array_ == 0);
+}
+
+void vvp_vpi_callback::attach_as_word(vvp_array_t arr, unsigned long addr)
+{
+      assert(array_ == 0);
+      array_ = arr;
+      array_word_ = addr;
 }
 
 void vvp_vpi_callback::add_vpi_callback(__vpiCallback*cb)
@@ -535,6 +546,8 @@ void vvp_vpi_callback::clear_all_callbacks()
  */
 void vvp_vpi_callback::run_vpi_callbacks()
 {
+      if (array_) array_word_change(array_, array_word_);
+
       struct __vpiCallback *next = vpi_callbacks_;
       struct __vpiCallback *prev = 0;
 
@@ -564,32 +577,7 @@ void vvp_vpi_callback::run_vpi_callbacks()
       }
 }
 
-vvp_vpi_callback_wordable::vvp_vpi_callback_wordable()
-{
-      array_ = 0;
-      array_word_ = 0;
-}
-
-vvp_vpi_callback_wordable::~vvp_vpi_callback_wordable()
-{
-      assert(array_ == 0);
-}
-
-void vvp_vpi_callback_wordable::run_vpi_callbacks()
-{
-      if (array_) array_word_change(array_, array_word_);
-
-      vvp_vpi_callback::run_vpi_callbacks();
-}
-
-void vvp_vpi_callback_wordable::attach_as_word(vvp_array_t arr, unsigned long addr)
-{
-      assert(array_ == 0);
-      array_ = arr;
-      array_word_ = addr;
-}
-
-void vvp_fun_signal4::get_value(struct t_vpi_value*vp)
+void vvp_signal_value::get_signal_value(struct t_vpi_value*vp)
 {
       switch (vp->format) {
 	  case vpiScalarVal:
@@ -607,7 +595,7 @@ void vvp_fun_signal4::get_value(struct t_vpi_value*vp)
 	  case vpiVectorVal:
 	  case vpiStringVal:
 	  case vpiRealVal: {
-	    unsigned wid = size();
+	    unsigned wid = value_size();
 	    vvp_vector4_t vec4(wid);
 	    for (unsigned idx = 0; idx < wid; idx += 1) {
 		  vec4.set_bit(idx, value(idx));
@@ -626,22 +614,7 @@ void vvp_fun_signal4::get_value(struct t_vpi_value*vp)
       }
 }
 
-void vvp_fun_signal8::get_value(struct t_vpi_value*vp)
-{
-      switch (vp->format) {
-	  case vpiScalarVal:
-	    vp->value.scalar = value(0);
-	    break;
-	  case vpiSuppressVal:
-	    break;
-	  default:
-	    fprintf(stderr, "vpi_callback: value "
-		    "format %d not supported (fun_signal8)\n",
-		    vp->format);
-      }
-}
-
-void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
+static void real_signal_value(struct t_vpi_value*vp, double rval)
 {
       char*rbuf = need_result_buf(64 + 1, RBUF_VAL);
 
@@ -650,25 +623,25 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 	    vp->format = vpiRealVal;
 
 	  case vpiRealVal:
-	    vp->value.real = real_value();
+	    vp->value.real = rval;
 	    break;
 
 	  case vpiIntVal:
-	    vp->value.integer = (int)(real_value() + 0.5);
+	    vp->value.integer = (int)(rval + 0.5);
 	    break;
 
 	  case vpiDecStrVal:
-	    sprintf(rbuf, "%0.0f", real_value());
+	    sprintf(rbuf, "%0.0f", rval);
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(rbuf, "%lx", (long)real_value());
+	    sprintf(rbuf, "%lx", (long)rval);
 	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiBinStrVal: {
-		unsigned long val = (unsigned long)real_value();
+		unsigned long val = (unsigned long)rval;
 		unsigned len = 0;
 
 		while (val > 0) {
@@ -676,7 +649,7 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 		      val /= 2;
 		}
 
-		val = (unsigned long)real_value();
+		val = (unsigned long)rval;
 		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
 		      rbuf[len-idx-1] = (val & 1)? '1' : '0';
 		      val /= 2;
@@ -699,4 +672,29 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 		    "format %d not supported (fun_signal_real)\n",
 		    vp->format);
       }
+}
+
+void vvp_fun_signal_real_aa::get_signal_value(struct t_vpi_value*vp)
+{
+      real_signal_value(vp, real_value());
+}
+
+void vvp_wire_real::get_signal_value(struct t_vpi_value*vp)
+{
+      real_signal_value(vp, real_value());
+}
+
+void vvp_wire_vec4::get_value(struct t_vpi_value*value)
+{
+      get_signal_value(value);
+}
+
+void vvp_wire_vec8::get_value(struct t_vpi_value*value)
+{
+      get_signal_value(value);
+}
+
+void vvp_wire_real::get_value(struct t_vpi_value*value)
+{
+      get_signal_value(value);
 }

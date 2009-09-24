@@ -75,7 +75,7 @@ void vvp_fun_pmos_::generate_output_(vvp_net_ptr_t ptr)
       }
 
       if (out.size() > 0)
-	    vvp_send_vec8(ptr.ptr()->out, out);
+	    ptr.ptr()->send_vec8(out);
 }
 
 
@@ -178,7 +178,7 @@ void vvp_fun_cmos_::generate_output_(vvp_net_ptr_t ptr)
       }
 
       if (out.size() > 0)
-	    vvp_send_vec8(ptr.ptr()->out, out);
+	    ptr.ptr()->send_vec8(out);
 }
 
 vvp_fun_cmos::vvp_fun_cmos()

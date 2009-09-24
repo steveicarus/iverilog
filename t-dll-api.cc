@@ -1926,6 +1926,12 @@ extern "C" int ivl_signal_lsb(ivl_signal_t net)
       return net->lsb_index;
 }
 
+extern "C" ivl_scope_t ivl_signal_scope(ivl_signal_t net)
+{
+      assert(net);
+      return net->scope_;
+}
+
 extern "C" unsigned ivl_signal_width(ivl_signal_t net)
 {
       return net->width_;

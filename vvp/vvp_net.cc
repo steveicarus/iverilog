@@ -108,6 +108,54 @@ void vvp_net_t::operator delete(void*)
       assert(0);
 }
 
+vvp_net_t::vvp_net_t()
+{
+      out_ = vvp_net_ptr_t(0,0);
+      fun = 0;
+      fil = 0;
+}
+
+void vvp_net_t::link(vvp_net_ptr_t port)
+{
+      vvp_net_t*net = port.ptr();
+      net->port[port.port()] = out_;
+      out_ = port;
+}
+
+/*
+ * Unlink a ptr object from the driver. The input is the driver in the
+ * form of a vvp_net_t pointer. The .out member of that object is the
+ * driver. The dst_ptr argument is the receiver pin to be located and
+ * removed from the fan-out list.
+ */
+void vvp_net_t::unlink(vvp_net_ptr_t dst_ptr)
+{
+      vvp_net_t*net = dst_ptr.ptr();
+      unsigned net_port = dst_ptr.port();
+
+      if (out_ == dst_ptr) {
+	      /* If the drive fan-out list starts with this pointer,
+		 then the unlink is easy. Pull the list forward. */
+	    out_ = net->port[net_port];
+      } else if (! out_.nil()) {
+	      /* Scan the linked list, looking for the net_ptr_t
+		 pointer *before* the one we wish to remove. */
+	    vvp_net_ptr_t cur = out_;
+	    assert(!cur.nil());
+	    vvp_net_t*cur_net = cur.ptr();
+	    unsigned cur_port = cur.port();
+	    while (cur_net && cur_net->port[cur_port] != dst_ptr) {
+		  cur = cur_net->port[cur_port];
+		  cur_net = cur.ptr();
+		  cur_port = cur.port();
+	    }
+	      /* Unlink. */
+	    if (cur_net) cur_net->port[cur_port] = net->port[net_port];
+      }
+
+      net->port[net_port] = vvp_net_ptr_t(0,0);
+}
+
 void* vvp_net_fun_t::operator new(size_t size)
 {
 	// Link in an initial chunk of space for net_fun_t
@@ -144,6 +192,113 @@ void* vvp_net_fun_t::operator new(size_t size)
 void vvp_net_fun_t::operator delete(void*)
 {
       assert(0);
+}
+
+
+vvp_net_fil_t::vvp_net_fil_t()
+{
+      force_link_ = 0;
+      force_propagate_ = false;
+}
+
+vvp_net_fil_t::~vvp_net_fil_t()
+{
+      assert(force_link_ == 0);
+}
+
+vvp_net_fil_t::prop_t vvp_net_fil_t::filter_vec4(const vvp_vector4_t&val, vvp_vector4_t&, unsigned, unsigned)
+{
+      return PROP;
+}
+
+vvp_net_fil_t::prop_t vvp_net_fil_t::filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&, unsigned, unsigned)
+{
+      return PROP;
+}
+
+vvp_net_fil_t::prop_t vvp_net_fil_t::filter_real(double&)
+{
+      return PROP;
+}
+
+vvp_net_fil_t::prop_t vvp_net_fil_t::filter_long(long&)
+{
+      return PROP;
+}
+
+void vvp_net_fil_t::force_mask(vvp_vector2_t mask)
+{
+      if (force_mask_.size() == 0)
+	    force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, mask.size());
+
+      assert(force_mask_.size() == mask.size());
+      for (unsigned idx = 0 ; idx < mask.size() ; idx += 1) {
+	    if (mask.value(idx) == 0)
+		  continue;
+
+	    force_mask_.set_bit(idx, 1);
+	    force_propagate_ = true;
+      }
+}
+
+void vvp_net_fil_t::release_mask(vvp_vector2_t mask)
+{
+      if (force_mask_.size() == 0)
+	    return;
+
+      assert(force_mask_.size() == mask.size());
+      for (unsigned idx = 0 ; idx < mask.size() ; idx += 1) {
+	    if (mask.value(idx))
+		  force_mask_.set_bit(idx, 0);
+      }
+
+      if (force_mask_.is_zero())
+	    force_mask_ = vvp_vector2_t();
+}
+
+/*
+ * Force link/unlink uses a thunk vvp_net_t node with a vvp_fun_force
+ * functor to translate the net values to filter commands. The ports
+ * of this vvp_net_t object are use a little differently:
+ *
+ *     port[3]  - Point to the destination node where the forced
+ *                filter resides.
+ *
+ *     port[2]  - Point to the input node that drives port[0] for use
+ *                by the unlink method.
+ *
+ *     port[0]  - This is the normal input.
+ */
+void vvp_net_fil_t::force_link(vvp_net_t*dst, vvp_net_t*src)
+{
+      assert(dst->fil == this);
+
+      if (force_link_ == 0) {
+	    force_link_ = new vvp_net_t;
+	      // Use port[3] to hold the force destination.
+	    force_link_->port[3] = vvp_net_ptr_t(dst, 0);
+	    force_link_->port[2] = vvp_net_ptr_t(0,0);
+	    force_link_->fun = new vvp_fun_force;
+      }
+
+      force_unlink();
+      assert(force_link_->port[2] == vvp_net_ptr_t(0,0));
+
+	// Use port[2] to hold the force source.
+      force_link_->port[2] = vvp_net_ptr_t(src,0);
+
+      vvp_net_ptr_t dst_ptr(force_link_, 0);
+      src->link(dst_ptr);
+}
+
+void vvp_net_fil_t::force_unlink(void)
+{
+      if (force_link_ == 0) return;
+      vvp_net_t*src = force_link_->port[2].ptr();
+      if (src == 0) return;
+
+      src->unlink(vvp_net_ptr_t(force_link_,0));
+      force_link_->port[2] = vvp_net_ptr_t(0,0);
 }
 
 /* *** BIT operations *** */
@@ -310,6 +465,8 @@ void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
 	    ptr = next;
       }
 }
+
+const vvp_vector4_t vvp_vector4_t::nil;
 
 void vvp_vector4_t::copy_bits(const vvp_vector4_t&that)
 {
@@ -1563,19 +1720,6 @@ vvp_vector4_t vvp_vector4array_aa::get_word(unsigned index) const
       return get_word_(cell);
 }
 
-template <class T> T coerce_to_width(const T&that, unsigned width)
-{
-      if (that.size() == width)
-	    return that;
-
-      assert(that.size() > width);
-      T res (width);
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-	    res.set_bit(idx, that.value(idx));
-
-      return res;
-}
-
 vvp_vector2_t::vvp_vector2_t()
 {
       vec_ = 0;
@@ -2226,6 +2370,19 @@ vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&that, unsigned wid)
       return res;
 }
 
+bool c4string_test(const char*str)
+{
+      if (strncmp(str, "C4<", 3) != 0)
+	    return false;
+      size_t value_size = strspn(str+3, "01xz");
+      if (str[3+value_size] != '>')
+	    return false;
+      if (str[3+value_size+1] != 0)
+	    return false;
+
+      return true;
+}
+
 vvp_vector4_t c4string_to_vector4(const char*str)
 {
       assert((str[0]=='C') && (str[1]=='4') && (str[2]=='<'));
@@ -2305,6 +2462,8 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that,
 
 }
 
+const vvp_vector8_t vvp_vector8_t::nil;
+
 vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 {
 	// Assign to self.
@@ -2355,6 +2514,13 @@ vvp_vector8_t vvp_vector8_t::subvalue(unsigned base, unsigned wid) const
       return tmp;
 }
 
+void vvp_vector8_t::set_vec(unsigned base, const vvp_vector8_t&that)
+{
+      assert((base+that.size()) <= size());
+      for (unsigned idx = 0 ; idx < that.size() ; idx += 1)
+	    set_bit(base+idx, that.value(idx));
+}
+
 vvp_vector8_t part_expand(const vvp_vector8_t&that, unsigned wid, unsigned off)
 {
       assert(off < wid);
@@ -2368,6 +2534,60 @@ vvp_vector8_t part_expand(const vvp_vector8_t&that, unsigned wid, unsigned off)
       while (idx < wid && that.size_ > (idx-off)) {
 	    tmp_ptr[idx] = that_ptr[idx-off];
 	    idx += 1;
+      }
+
+      return tmp;
+}
+
+bool c8string_test(const char*str)
+{
+      const char*cp;
+      if (str[0] != 'C') return false;
+      if (str[1] != '8') return false;
+      if (str[2] != '<') return false;
+
+      cp = str+3;
+      for (;; cp += 1) {
+	    if (cp[0] == '>' && cp[1] == 0) return true;
+	    if (cp[0] >= '0' && cp[0] <= '9') continue;
+	    if (cp[0] == 'x') continue;
+	    if (cp[0] == 'z') continue;
+	    return false;
+      }
+      return false;
+}
+/*
+ * The format of a C8<> string is:
+ *   C8<aaabbbccc...>
+ * where aaa... is a 3 character bit descriptor.
+ */
+vvp_vector8_t c8string_to_vector8(const char*str)
+{
+      size_t vsize = strlen(str)-4;
+      assert(vsize%3 == 0);
+      vsize /= 3;
+      vvp_vector8_t tmp (vsize);
+
+      for (size_t idx = 0 ; idx < vsize ; idx += 1) {
+	    const char*cp = str+3+3*idx;
+	    vvp_bit4_t bit = BIT4_X;
+	    unsigned dr0 = cp[0]-'0';
+	    unsigned dr1 = cp[1]-'0';
+	    switch (cp[2]) {
+		case '0':
+		  bit = BIT4_0;
+		  break;
+		case '1':
+		  bit = BIT4_1;
+		  break;
+		case 'x':
+		  bit = BIT4_X;
+		  break;
+		case 'z':
+		  bit = BIT4_Z;
+		  break;
+	    }
+	    tmp.set_bit(vsize-idx-1, vvp_scalar_t(bit, dr0, dr1));
       }
 
       return tmp;
@@ -2461,766 +2681,9 @@ void vvp_fun_drive::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                               vvp_context_t)
 {
       assert(port.port() == 0);
-      vvp_send_vec8(port.ptr()->out, vvp_vector8_t(bit, drive0_, drive1_));
+      port.ptr()->send_vec8(vvp_vector8_t(bit, drive0_, drive1_));
 }
 
-
-/* **** vvp_fun_signal methods **** */
-
-vvp_fun_signal_base::vvp_fun_signal_base()
-{
-      needs_init_ = true;
-      continuous_assign_active_ = false;
-      force_link = 0;
-      cassign_link = 0;
-      count_functors_sig += 1;
-}
-
-void vvp_fun_signal_base::deassign()
-{
-      continuous_assign_active_ = false;
-      assign_mask_ = vvp_vector2_t();
-}
-
-void vvp_fun_signal_base::deassign_pv(unsigned base, unsigned wid)
-{
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    assign_mask_.set_bit(base+idx, 0);
-      }
-
-      if (assign_mask_.is_zero()) {
-	    assign_mask_ = vvp_vector2_t();
-      }
-}
-
-/*
- * The signal functor takes commands as long values to port-3. This
- * method interprets those commands.
- */
-void vvp_fun_signal_base::recv_long(vvp_net_ptr_t ptr, long bit)
-{
-      switch (ptr.port()) {
-	  case 3: // Command port
-	    switch (bit) {
-		case 1: // deassign command
-		  deassign();
-		  break;
-		case 2: // release/net
-		  release(ptr, true);
-		  break;
-		case 3: // release/reg
-		  release(ptr, false);
-		  break;
-		default:
-		  fprintf(stderr, "Unsupported command %ld.\n", bit);
-		  assert(0);
-		  break;
-	    }
-	    break;
-
-	  default: // Other ports are errors.
-	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
-	    assert(0);
-	    break;
-      }
-}
-
-void vvp_fun_signal_base::recv_long_pv(vvp_net_ptr_t ptr, long bit,
-                                       unsigned base, unsigned wid)
-{
-      switch (ptr.port()) {
-	  case 3: // Command port
-	    switch (bit) {
-		case 1: // deassign command
-		  deassign_pv(base, wid);
-		  break;
-		case 2: // release/net
-		  release_pv(ptr, true, base, wid);
-		  break;
-		case 3: // release/reg
-		  release_pv(ptr, false, base, wid);
-		  break;
-		default:
-		  fprintf(stderr, "Unsupported command %ld.\n", bit);
-		  assert(0);
-		  break;
-	    }
-	    break;
-
-	  default: // Other ports are errors.
-	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
-	    assert(0);
-	    break;
-      }
-}
-
-vvp_fun_signal4_sa::vvp_fun_signal4_sa(unsigned wid, vvp_bit4_t init)
-: bits4_(wid, init)
-{
-}
-
-/*
- * Nets simply reflect their input to their output.
- *
- * NOTE: It is a quirk of vvp_fun_signal that it has an initial value
- * that needs to be propagated, but after that it only needs to
- * propagate if the value changes. Eliminating duplicate propagations
- * should improve performance, but has the quirk that an input that
- * matches the initial value might not be propagated. The hack used
- * herein is to keep a "needs_init_" flag that is turned false after
- * the first propagation, and forces the first propagation to happen
- * even if it matches the initial value.
- */
-void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-                                   vvp_context_t)
-{
-      switch (ptr.port()) {
-	  case 0: // Normal input (feed from net, or set from process)
-	      /* If we don't have a continuous assign mask then just
-		 copy the bits, otherwise we need to see if there are
-		 any holes in the mask so we can set those bits. */
-	    if (assign_mask_.size() == 0) {
-                  if (needs_init_ || !bits4_.eeq(bit)) {
-			bits4_ = bit;
-			needs_init_ = false;
-			calculate_output_(ptr);
-		  }
-	    } else {
-		  bool changed = false;
-		  assert(bits4_.size() == assign_mask_.size());
-		  for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1) {
-			if (idx >= bits4_.size()) break;
-			if (assign_mask_.value(idx)) continue;
-			bits4_.set_bit(idx, bit.value(idx));
-			changed = true;
-		  }
-		  if (changed) {
-			needs_init_ = false;
-			calculate_output_(ptr);
-		  }
-	    }
-	    break;
-
-	  case 1: // Continuous assign value
-	    bits4_ = bit;
-	    assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL1, size());
-	    calculate_output_(ptr);
-	    break;
-
-	  case 2: // Force value
-
-	      // Force from a node may not have been sized completely
-	      // by the source, so coerce the size here.
-	    if (bit.size() != size())
-		  force_ = coerce_to_width(bit, size());
-	    else
-		  force_ = bit;
-
-	    force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL1, size());
-	    calculate_output_(ptr);
-	    break;
-
-	  default:
-	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
-	    assert(0);
-	    break;
-      }
-}
-
-void vvp_fun_signal4_sa::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
-{
-      recv_vec4(ptr, reduce4(bit), 0);
-}
-
-void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-				      unsigned base, unsigned wid, unsigned vwid,
-                                      vvp_context_t)
-{
-      assert(bit.size() == wid);
-      assert(bits4_.size() == vwid);
-
-      switch (ptr.port()) {
-	  case 0: // Normal input
-	    if (assign_mask_.size() == 0) {
-                  for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-			if (base+idx >= bits4_.size()) break;
-			bits4_.set_bit(base+idx, bit.value(idx));
-		  }
-		  needs_init_ = false;
-		  calculate_output_(ptr);
-	    } else {
-		  bool changed = false;
-		  assert(bits4_.size() == assign_mask_.size());
-		  for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-			if (base+idx >= bits4_.size()) break;
-			if (assign_mask_.value(base+idx)) continue;
-			bits4_.set_bit(base+idx, bit.value(idx));
-			changed = true;
-		  }
-		  if (changed) {
-			needs_init_ = false;
-			calculate_output_(ptr);
-		  }
-	    }
-	    break;
-
-	  case 1: // Continuous assign value
-	    if (assign_mask_.size() == 0)
-		  assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, size());
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  if (base+idx >= bits4_.size())
-			break;
-		  bits4_.set_bit(base+idx, bit.value(idx));
-		  assign_mask_.set_bit(base+idx, 1);
-	    }
-	    calculate_output_(ptr);
-	    break;
-
-	  case 2: // Force value
-
-	    if (force_mask_.size() == 0)
-		  force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, size());
-	    if (force_.size() == 0)
-		  force_ = vvp_vector4_t(vwid, BIT4_Z);
-
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  force_mask_.set_bit(base+idx, 1);
-		  force_.set_bit(base+idx, bit.value(idx));
-	    }
-
-	    calculate_output_(ptr);
-	    break;
-
-	  default:
-	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
-	    assert(0);
-	    break;
-      }
-}
-
-void vvp_fun_signal4_sa::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
-				      unsigned base, unsigned wid, unsigned vwid)
-{
-      recv_vec4_pv(ptr, reduce4(bit), base, wid, vwid, 0);
-}
-
-void vvp_fun_signal4_sa::calculate_output_(vvp_net_ptr_t ptr)
-{
-      if (force_mask_.size()) {
-	    assert(bits4_.size() == force_mask_.size());
-	    assert(bits4_.size() == force_.size());
-	    vvp_vector4_t bits (bits4_);
-	    for (unsigned idx = 0 ;  idx < bits.size() ;  idx += 1) {
-		  if (force_mask_.value(idx))
-			bits.set_bit(idx, force_.value(idx));
-	    }
-	    vvp_send_vec4(ptr.ptr()->out, bits, 0);
-      } else {
-            vvp_send_vec4(ptr.ptr()->out, bits4_, 0);
-      }
-
-      run_vpi_callbacks();
-}
-
-void vvp_fun_signal4_sa::release(vvp_net_ptr_t ptr, bool net)
-{
-      force_mask_ = vvp_vector2_t();
-      if (net) {
-	    vvp_send_vec4(ptr.ptr()->out, bits4_, 0);
-	    run_vpi_callbacks();
-      } else {
-	    bits4_ = force_;
-      }
-}
-
-void vvp_fun_signal4_sa::release_pv(vvp_net_ptr_t ptr, bool net,
-                                    unsigned base, unsigned wid)
-{
-      assert(bits4_.size() >= base + wid);
-
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    force_mask_.set_bit(base+idx, 0);
-	    if (!net) bits4_.set_bit(base+idx, force_.value(base+idx));
-      }
-      if (force_mask_.is_zero()) force_mask_ = vvp_vector2_t();
-
-      if (net) calculate_output_(ptr);
-}
-
-unsigned vvp_fun_signal4_sa::size() const
-{
-      if (force_mask_.size())
-	    return force_.size();
-      else
-	    return bits4_.size();
-}
-
-vvp_bit4_t vvp_fun_signal4_sa::value(unsigned idx) const
-{
-      if (force_mask_.size() && force_mask_.value(idx)) {
-	    return force_.value(idx);
-      } else {
-            return bits4_.value(idx);
-      }
-}
-
-vvp_scalar_t vvp_fun_signal4_sa::scalar_value(unsigned idx) const
-{
-      if (force_mask_.size() && force_mask_.value(idx)) {
-	    return vvp_scalar_t(force_.value(idx), 6, 6);
-      } else {
-            return vvp_scalar_t(bits4_.value(idx), 6, 6);
-      }
-}
-
-vvp_vector4_t vvp_fun_signal4_sa::vec4_value() const
-{
-      if (force_mask_.size()) {
-	    assert(bits4_.size() == force_mask_.size());
-	    assert(bits4_.size() == force_.size());
-	    vvp_vector4_t bits (bits4_);
-	    for (unsigned idx = 0 ;  idx < bits.size() ;  idx += 1) {
-		  if (force_mask_.value(idx))
-			bits.set_bit(idx, force_.value(idx));
-	    }
-	    return bits;
-      } else {
-            return bits4_;
-      }
-}
-
-vvp_fun_signal4_aa::vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init)
-{
-      context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
-      size_ = wid;
-}
-
-void vvp_fun_signal4_aa::alloc_instance(vvp_context_t context)
-{
-      vvp_set_context_item(context, context_idx_, new vvp_vector4_t(size_));
-}
-
-void vvp_fun_signal4_aa::reset_instance(vvp_context_t context)
-{
-      vvp_vector4_t*bits = static_cast<vvp_vector4_t*>
-            (vvp_get_context_item(context, context_idx_));
-
-      bits->set_to_x();
-}
-
-#ifdef CHECK_WITH_VALGRIND
-void vvp_fun_signal4_aa::free_instance(vvp_context_t context)
-{
-      vvp_vector4_t*bits = static_cast<vvp_vector4_t*>
-            (vvp_get_context_item(context, context_idx_));
-      delete bits;
-}
-#endif
-
-/*
- * Continuous and forced assignments are not permitted on automatic
- * variables. So we only expect to receive on port 0.
- */
-void vvp_fun_signal4_aa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-                                   vvp_context_t context)
-{
-      assert(ptr.port() == 0);
-      assert(context);
-
-      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
-            (vvp_get_context_item(context, context_idx_));
-
-      if (!bits4->eeq(bit)) {
-            *bits4 = bit;
-            vvp_send_vec4(ptr.ptr()->out, *bits4, context);
-      }
-}
-
-void vvp_fun_signal4_aa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-				      unsigned base, unsigned wid, unsigned vwid,
-                                      vvp_context_t context)
-{
-      assert(ptr.port() == 0);
-      assert(bit.size() == wid);
-      assert(size_ == vwid);
-      assert(context);
-
-      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
-            (vvp_get_context_item(context, context_idx_));
-
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-            if (base+idx >= bits4->size()) break;
-            bits4->set_bit(base+idx, bit.value(idx));
-      }
-      vvp_send_vec4(ptr.ptr()->out, *bits4, context);
-}
-
-void vvp_fun_signal4_aa::release(vvp_net_ptr_t ptr, bool net)
-{
-        /* Automatic variables can't be forced. */
-      assert(0);
-}
-
-void vvp_fun_signal4_aa::release_pv(vvp_net_ptr_t ptr, bool net,
-                                    unsigned base, unsigned wid)
-{
-        /* Automatic variables can't be forced. */
-      assert(0);
-}
-
-unsigned vvp_fun_signal4_aa::size() const
-{
-      return size_;
-}
-
-vvp_bit4_t vvp_fun_signal4_aa::value(unsigned idx) const
-{
-      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
-            (vthread_get_rd_context_item(context_idx_));
-
-      return bits4->value(idx);
-}
-
-vvp_scalar_t vvp_fun_signal4_aa::scalar_value(unsigned idx) const
-{
-      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
-            (vthread_get_rd_context_item(context_idx_));
-
-      return vvp_scalar_t(bits4->value(idx), 6, 6);
-}
-
-vvp_vector4_t vvp_fun_signal4_aa::vec4_value() const
-{
-      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
-            (vthread_get_rd_context_item(context_idx_));
-
-      return *bits4;
-}
-
-vvp_fun_signal8::vvp_fun_signal8(unsigned wid)
-: bits8_(wid)
-{
-}
-
-void vvp_fun_signal8::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-                                vvp_context_t)
-{
-      recv_vec8(ptr, vvp_vector8_t(bit,6,6));
-}
-
-void vvp_fun_signal8::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
-{
-      switch (ptr.port()) {
-	  case 0: // Normal input (feed from net, or set from process)
-	    if (needs_init_ || !bits8_.eeq(bit)) {
-		  bits8_ = bit;
-		  needs_init_ = false;
-		  calculate_output_(ptr);
-	    }
-	    break;
-
-	  case 1: // Continuous assign value
-	    /* This is a procedural continuous assign and it can
-	     * only be used on a register and a register is never
-	     * strength aware. */
-	    assert(0);
-	    break;
-
-	  case 2: // Force value
-
-	      // Force from a node may not have been sized completely
-	      // by the source, so coerce the size here.
-	    if (bit.size() != size())
-		  force_ = coerce_to_width(bit, size());
-	    else
-		  force_ = bit;
-
-	    force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL1, size());
-	    calculate_output_(ptr);
-	    break;
-
-	  default:
-	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
-	    assert(0);
-	    break;
-      }
-}
-
-void vvp_fun_signal8::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
-                                   unsigned base, unsigned wid, unsigned vwid,
-                                   vvp_context_t)
-{
-      recv_vec8_pv(ptr, vvp_vector8_t(bit,6,6), base, wid, vwid);
-}
-
-void vvp_fun_signal8::recv_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&bit,
-				   unsigned base, unsigned wid, unsigned vwid)
-{
-      assert(bit.size() == wid);
-      assert(bits8_.size() == vwid);
-
-      switch (ptr.port()) {
-	  case 0: // Normal input
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  if (base+idx >= bits8_.size()) break;
-		  bits8_.set_bit(base+idx, bit.value(idx));
-	    }
-	    needs_init_ = false;
-	    calculate_output_(ptr);
-	    break;
-
-	  case 1: // Continuous assign value
-	    /* This is a procedural continuous assign and it can
-	     * only be used on a register and a register is never
-	     * strength aware. */
-	    assert(0);
-	    break;
-
-	  case 2: // Force value
-
-	    if (force_mask_.size() == 0)
-		  force_mask_ = vvp_vector2_t(vvp_vector2_t::FILL0, size());
-	    if (force_.size() == 0)
-		  force_ = vvp_vector8_t(vvp_vector4_t(vwid, BIT4_Z),6,6);
-
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  force_mask_.set_bit(base+idx, 1);
-		  force_.set_bit(base+idx, bit.value(idx));
-	    }
-
-	    calculate_output_(ptr);
-	    break;
-
-	  default:
-	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
-	    assert(0);
-	    break;
-      }
-}
-
-void vvp_fun_signal8::calculate_output_(vvp_net_ptr_t ptr)
-{
-      if (force_mask_.size()) {
-	    assert(bits8_.size() == force_mask_.size());
-	    assert(bits8_.size() == force_.size());
-	    vvp_vector8_t bits (bits8_);
-	    for (unsigned idx = 0 ;  idx < bits.size() ;  idx += 1) {
-		  if (force_mask_.value(idx))
-			bits.set_bit(idx, force_.value(idx));
-	    }
-	    vvp_send_vec8(ptr.ptr()->out, bits);
-
-      } else {
-	    vvp_send_vec8(ptr.ptr()->out, bits8_);
-      }
-
-      run_vpi_callbacks();
-}
-
-void vvp_fun_signal8::release(vvp_net_ptr_t ptr, bool net)
-{
-      force_mask_ = vvp_vector2_t();
-      if (net) {
-	    vvp_send_vec8(ptr.ptr()->out, bits8_);
-	    run_vpi_callbacks();
-      } else {
-	    bits8_ = force_;
-      }
-}
-
-void vvp_fun_signal8::release_pv(vvp_net_ptr_t ptr, bool net,
-                                 unsigned base, unsigned wid)
-{
-      assert(bits8_.size() >= base + wid);
-
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    force_mask_.set_bit(base+idx, 0);
-	    if (!net) bits8_.set_bit(base+idx, force_.value(base+idx));
-      }
-      if (force_mask_.is_zero()) force_mask_ = vvp_vector2_t();
-
-      if (net) calculate_output_(ptr);
-}
-
-unsigned vvp_fun_signal8::size() const
-{
-      if (force_mask_.size())
-	    return force_.size();
-      else
-	    return bits8_.size();
-}
-
-vvp_bit4_t vvp_fun_signal8::value(unsigned idx) const
-{
-      if (force_mask_.size() && force_mask_.value(idx))
-	    return force_.value(idx).value();
-      else
-	    return bits8_.value(idx).value();
-}
-
-vvp_vector4_t vvp_fun_signal8::vec4_value() const
-{
-      if (force_mask_.size()) {
-	    vvp_vector8_t bits (bits8_);
-	    for (unsigned idx = 0 ;  idx < bits.size() ;  idx += 1) {
-		  if (force_mask_.value(idx))
-			bits.set_bit(idx, force_.value(idx));
-	    }
-	    return reduce4(bits);
-      } else
-	    return reduce4(bits8_);
-}
-
-vvp_scalar_t vvp_fun_signal8::scalar_value(unsigned idx) const
-{
-      if (force_mask_.size() && force_mask_.value(idx))
-	    return force_.value(idx);
-      else
-	    return bits8_.value(idx);
-}
-
-/*
- * Testing for equality, we want a bitwise test instead of an
- * arithmetic test because we want to treat for example -0 different
- * from +0.
- */
-bool bits_equal(double a, double b)
-{
-      return memcmp(&a, &b, sizeof a) == 0;
-}
-
-vvp_fun_signal_real_sa::vvp_fun_signal_real_sa()
-{
-      bits_ = 0.0;
-}
-
-double vvp_fun_signal_real_sa::real_value() const
-{
-      if (force_mask_.size())
-	    return force_;
-      else
-	    return bits_;
-}
-
-void vvp_fun_signal_real_sa::recv_real(vvp_net_ptr_t ptr, double bit,
-                                       vvp_context_t)
-{
-      switch (ptr.port()) {
-	  case 0:
-	    if (!continuous_assign_active_) {
-                  if (needs_init_ || !bits_equal(bits_, bit)) {
-			bits_ = bit;
-			needs_init_ = false;
-			vvp_send_real(ptr.ptr()->out, bit, 0);
-			run_vpi_callbacks();
-		  }
-	    }
-	    break;
-
-	  case 1: // Continuous assign value
-	    continuous_assign_active_ = true;
-	    bits_ = bit;
-	    vvp_send_real(ptr.ptr()->out, bit, 0);
-	    run_vpi_callbacks();
-	    break;
-
-	  case 2: // Force value
-	    force_mask_ = vvp_vector2_t(1, 1);
-	    force_ = bit;
-	    vvp_send_real(ptr.ptr()->out, bit, 0);
-	    run_vpi_callbacks();
-	    break;
-
-	  default:
-	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
-	    assert(0);
-	    break;
-      }
-}
-
-void vvp_fun_signal_real_sa::release(vvp_net_ptr_t ptr, bool net)
-{
-      force_mask_ = vvp_vector2_t();
-      if (net) {
-	    vvp_send_real(ptr.ptr()->out, bits_, 0);
-	    run_vpi_callbacks();
-      } else {
-	    bits_ = force_;
-      }
-}
-
-void vvp_fun_signal_real_sa::release_pv(vvp_net_ptr_t ptr, bool net,
-                                        unsigned base, unsigned wid)
-{
-      fprintf(stderr, "Error: cannot take bit/part select of a real value!\n");
-      assert(0);
-}
-
-vvp_fun_signal_real_aa::vvp_fun_signal_real_aa()
-{
-      context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
-}
-
-void vvp_fun_signal_real_aa::alloc_instance(vvp_context_t context)
-{
-      double*bits = new double;
-      vvp_set_context_item(context, context_idx_, bits);
-
-      *bits = 0.0;
-}
-
-void vvp_fun_signal_real_aa::reset_instance(vvp_context_t context)
-{
-      double*bits = static_cast<double*>
-            (vvp_get_context_item(context, context_idx_));
-
-      *bits = 0.0;
-}
-
-#ifdef CHECK_WITH_VALGRIND
-void vvp_fun_signal_real_aa::free_instance(vvp_context_t context)
-{
-      double*bits = static_cast<double*>
-            (vvp_get_context_item(context, context_idx_));
-      delete bits;
-}
-#endif
-
-double vvp_fun_signal_real_aa::real_value() const
-{
-      double*bits = static_cast<double*>
-            (vthread_get_rd_context_item(context_idx_));
-
-      return *bits;
-}
-
-void vvp_fun_signal_real_aa::recv_real(vvp_net_ptr_t ptr, double bit,
-                                       vvp_context_t context)
-{
-      assert(ptr.port() == 0);
-      assert(context);
-
-      double*bits = static_cast<double*>
-            (vvp_get_context_item(context, context_idx_));
-
-      if (!bits_equal(*bits,bit)) {
-            *bits = bit;
-            vvp_send_real(ptr.ptr()->out, bit, context);
-      }
-}
-
-void vvp_fun_signal_real_aa::release(vvp_net_ptr_t ptr, bool net)
-{
-        /* Automatic variables can't be forced. */
-      assert(0);
-}
-
-void vvp_fun_signal_real_aa::release_pv(vvp_net_ptr_t ptr, bool net,
-                                        unsigned base, unsigned wid)
-{
-        /* Automatic variables can't be forced. */
-      assert(0);
-}
 
 /* **** vvp_wide_fun_* methods **** */
 
@@ -3242,9 +2705,9 @@ void vvp_wide_fun_core::propagate_vec4(const vvp_vector4_t&bit,
 				       vvp_time64_t delay)
 {
       if (delay)
-	    schedule_assign_plucked_vector(ptr_->out, delay, bit, 0, bit.size());
+	    schedule_propagate_plucked_vector(ptr_, delay, bit, 0, bit.size());
       else
-	    vvp_send_vec4(ptr_->out, bit, 0);
+	    ptr_->send_vec4(bit, 0);
 }
 
 void vvp_wide_fun_core::propagate_real(double bit,
@@ -3254,7 +2717,7 @@ void vvp_wide_fun_core::propagate_real(double bit,
 	      // schedule_assign_vector(ptr_->out, bit, delay);
 	    assert(0); // Need a real-value version of assign_vector.
       } else {
-	    vvp_send_real(ptr_->out, bit, 0);
+	    ptr_->send_real(bit, 0);
       }
 }
 

@@ -20,6 +20,8 @@
 # include  "compile.h"
 # include  "vpi_priv.h"
 # include  "array.h"
+# include  "vvp_net_sig.h"
+# include  "logic.h"
 # include  "schedule.h"
 # include  <stdio.h>
 # include  <stdlib.h>
@@ -34,14 +36,16 @@ static void __compile_var_real(char*label, char*name,
 			       vvp_array_t array, unsigned long array_addr,
 			       int msb, int lsb)
 {
-      vvp_fun_signal_real*fun;
-      if (vpip_peek_current_scope()->is_automatic) {
-            fun = new vvp_fun_signal_real_aa;
-      } else {
-            fun = new vvp_fun_signal_real_sa;
-      }
       vvp_net_t*net = new vvp_net_t;
-      net->fun = fun;
+
+      if (vpip_peek_current_scope()->is_automatic) {
+	    vvp_fun_signal_real_aa*tmp = new vvp_fun_signal_real_aa;
+	    net->fil = tmp;
+	    net->fun = tmp;
+      } else {
+	    net->fil = new vvp_wire_real;
+	    net->fun = new vvp_fun_signal_real_sa;
+      }
 
       define_functor_symbol(label, net);
 
@@ -52,7 +56,7 @@ static void __compile_var_real(char*label, char*name,
 	    assert(!array);
 	    vpip_attach_to_current_scope(obj);
             if (!vpip_peek_current_scope()->is_automatic)
-                  schedule_init_vector(vvp_net_ptr_t(net,0), fun->real_value());
+                  schedule_init_vector(vvp_net_ptr_t(net,0), 0.0);
       }
       if (array) {
 	    assert(!name);
@@ -84,23 +88,26 @@ static void __compile_var(char*label, char*name,
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
-      vvp_fun_signal_vec*vsig;
-      if (vpip_peek_current_scope()->is_automatic) {
-            vsig = new vvp_fun_signal4_aa(wid);
-      } else {
-            vsig = new vvp_fun_signal4_sa(wid);
-      }
-      vvp_net_t*node = new vvp_net_t;
-      node->fun = vsig;
+      vvp_net_t*net = new vvp_net_t;
 
-      define_functor_symbol(label, node);
+      if (vpip_peek_current_scope()->is_automatic) {
+	    vvp_fun_signal4_aa*tmp = new vvp_fun_signal4_aa(wid);
+	    net->fil = tmp;
+            net->fun = tmp;
+      } else {
+	    net->fil = new vvp_wire_vec4(wid, BIT4_X);
+            net->fun = new vvp_fun_signal4_sa(wid);
+      }
+      vvp_signal_value*vfil = dynamic_cast<vvp_signal_value*>(net->fil);
+
+      define_functor_symbol(label, net);
 
       vpiHandle obj = 0;
       if (! local_flag && !array) {
 	      /* Make the vpiHandle for the reg. */
 	    obj = (signed_flag > 1) ?
-		  vpip_make_int(name, msb, lsb, node) :
-		  vpip_make_reg(name, msb, lsb, signed_flag!=0, node);
+		  vpip_make_int(name, msb, lsb, net) :
+		  vpip_make_reg(name, msb, lsb, signed_flag!=0, net);
 	    compile_vpi_symbol(label, obj);
       }
 	// If the signal has a name, then it goes into the current
@@ -109,7 +116,7 @@ static void __compile_var(char*label, char*name,
 	    assert(!array);
 	    if (obj) vpip_attach_to_current_scope(obj);
             if (!vpip_peek_current_scope()->is_automatic)
-	          schedule_init_vector(vvp_net_ptr_t(node,0), vsig->vec4_value());
+	          schedule_init_vector(vvp_net_ptr_t(net,0), vfil->vec4_value());
       }
 	// If this is an array word, then it does not have a name, and
 	// it is attached to the addressed array.
@@ -142,65 +149,176 @@ void compile_variablew(char*label, vvp_array_t array,
       __compile_var(label, 0, array, array_addr, msb, lsb, signed_flag, false);
 }
 
+vvp_net_t* create_constant_node(const char*label, const char*val_str)
+{
+      if (c4string_test(val_str)) {
+	    vvp_net_t*net = new vvp_net_t;
+	    net->fun = new vvp_fun_bufz;
+	    schedule_init_vector(vvp_net_ptr_t(net,0), c4string_to_vector4(val_str));
+	    return net;
+      }
+
+      if (c8string_test(val_str)) {
+	    vvp_net_t*net = new vvp_net_t;
+	    net->fun = new vvp_fun_bufz;
+	    schedule_init_vector(vvp_net_ptr_t(net,0), c8string_to_vector8(val_str));
+	    return net;
+      }
+
+      if (crstring_test(val_str)) {
+	    vvp_net_t*net = new vvp_net_t;
+	    net->fun = new vvp_fun_bufz;
+	    schedule_init_vector(vvp_net_ptr_t(net,0), crstring_to_double(val_str));
+	    return net;
+      }
+
+      return 0;
+}
+
+class base_net_resolv : public resolv_list_s {
+    public:
+      explicit base_net_resolv(char*ref_label, vvp_array_t array,
+			       char*my_label, char*name,
+			       unsigned array_addr, bool local_flag)
+      : resolv_list_s(ref_label)
+      { my_label_ = my_label;
+	array_ = array;
+	name_ = name;
+	array_addr_ = array_addr;
+	local_flag_ = local_flag;
+      }
+
+    protected:
+      char*my_label_;
+      vvp_array_t array_;
+      char*name_;
+      unsigned array_addr_;
+      bool local_flag_;
+};
+
+class __compile_net_resolv : public base_net_resolv {
+
+    public:
+      explicit __compile_net_resolv(char*ref_label, vvp_array_t array,
+				    char*my_label, char*name,
+				    int msb, int lsb, unsigned array_addr,
+				    bool signed_flag, bool net8_flag, bool local_flag)
+      : base_net_resolv(ref_label, array, my_label, name, array_addr, local_flag)
+      { msb_ = msb;
+	lsb_ = lsb;
+	signed_flag_ = signed_flag;
+      }
+
+      ~__compile_net_resolv() { }
+
+      bool resolve(bool message_flag);
+
+    private:
+      int msb_, lsb_;
+      bool signed_flag_, net8_flag_;
+};
+
 /*
  * Here we handle .net records from the vvp source:
  *
- *    <label> .net   <name>, <msb>, <lsb>, <input> ;
- *    <label> .net/s <name>, <msb>, <lsb>, <input> ;
- *    <label> .net8   <name>, <msb>, <lsb>, <input> ;
- *    <label> .net8/s <name>, <msb>, <lsb>, <input> ;
+ *    .net   <name>, <msb>, <lsb>, <input> ;
+ *    .net/s <name>, <msb>, <lsb>, <input> ;
+ *    .net8   <name>, <msb>, <lsb>, <input> ;
+ *    .net8/s <name>, <msb>, <lsb>, <input> ;
  *
  * Create a VPI handle to represent it, and fill that handle in with
  * references into the net.
  */
-static void __compile_net(char*label, char*name,
-			  char*array_label, unsigned long array_addr,
-			  int msb, int lsb,
-			  bool signed_flag, bool net8_flag, bool local_flag,
-			  unsigned argc, struct symb_s*argv)
+
+static void __compile_net2(vvp_net_t*node, vvp_array_t array,
+			   char*my_label, char*name,
+			   int msb, int lsb, unsigned array_addr,
+			   bool signed_flag, bool net8_flag, bool local_flag)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
+      assert(node);
 
-      vvp_net_t*node = new vvp_net_t;
+      vvp_wire_base*vsig = dynamic_cast<vvp_wire_base*>(node->fil);
 
-      vvp_array_t array = array_label ? array_find(array_label) : 0;
-      assert(array_label ? array!=0 : true);
+      if (vsig == 0) {
+	    vsig = net8_flag
+		  ? dynamic_cast<vvp_wire_base*>(new vvp_wire_vec8(wid))
+		  : dynamic_cast<vvp_wire_base*>(new vvp_wire_vec4(wid,BIT4_Z));
 
-      vvp_fun_signal_base*vsig = net8_flag
-	    ? dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal8(wid))
-	    : dynamic_cast<vvp_fun_signal_base*>(new vvp_fun_signal4_sa(wid,BIT4_Z));
-      node->fun = vsig;
-
-	/* Add the label into the functor symbol table. */
-      define_functor_symbol(label, node);
-
-      assert(argc == 1);
-
-	/* Connect the source to my input. */
-      inputs_connect(node, 1, argv);
+	    node->fil = vsig;
+      }
 
       vpiHandle obj = 0;
       if (! local_flag) {
 	      /* Make the vpiHandle for the reg. */
 	    obj = vpip_make_net(name, msb, lsb, signed_flag, node);
 	      /* This attaches the label to the vpiHandle */
-	    compile_vpi_symbol(label, obj);
+	    compile_vpi_symbol(my_label, obj);
       }
-        /* If this is an array word, then attach it to the
-	   array. Otherwise, attach it to the current scope. */
+
+	// REMOVE ME! Giving the net a label is a legacy of the times
+	// when the .net was a functor of its own. In the long run, we
+	// must fix the code generator to not rely on the label of the
+	// .net, then we will remove that label.
+      define_functor_symbol(my_label, node);
+
       if (array)
 	    array_attach_word(array, array_addr, obj);
       else if (obj)
 	    vpip_attach_to_current_scope(obj);
 
-      free(label);
+      free(my_label);
       if (name) delete[] name;
+}
+
+static void __compile_net(char*label,
+			  char*name, char*array_label, unsigned long array_addr,
+			  int msb, int lsb,
+			  bool signed_flag, bool net8_flag, bool local_flag,
+			  unsigned argc, struct symb_s*argv)
+{
+      vvp_array_t array = array_label? array_find(array_label) : 0;
+      assert(array_label ? array!=0 : true);
+
       if (array_label) free(array_label);
+
+      assert(argc == 1);
+      vvp_net_t*node = vvp_net_lookup(argv[0].text);
+      if (node == 0) {
+	      /* No existing net, but the string value may be a
+		 constant. In that case, we will wind up generating a
+		 bufz node that can carry the constant value. */
+	    node = create_constant_node(label, argv[0].text);
+      }
+      if (node == 0) {
+	    __compile_net_resolv*res
+		  = new __compile_net_resolv(argv[0].text,
+					     array, label, name,
+					     msb, lsb, array_addr,
+					     signed_flag, net8_flag, local_flag);
+	    resolv_submit(res);
+	    return;
+      }
+      assert(node);
+
+      __compile_net2(node, array, label, name, msb, lsb, array_addr,
+		     signed_flag, net8_flag, local_flag);
+
       free(argv);
 }
 
-void compile_net(char*label, char*name,
-		 int msb, int lsb,
+bool __compile_net_resolv::resolve(bool msg_flag)
+{
+      vvp_net_t*node = vvp_net_lookup(label());
+      if (node == 0) {
+	    return false;
+      }
+
+      __compile_net2(node, array_, my_label_, name_, msb_, lsb_, array_addr_, signed_flag_, net8_flag_, local_flag_);
+      return true;
+}
+
+void compile_net(char*label, char*name, int msb, int lsb,
 		 bool signed_flag, bool net8_flag, bool local_flag,
 		 unsigned argc, struct symb_s*argv)
 {
@@ -219,44 +337,98 @@ void compile_netw(char*label, char*array_label, unsigned long array_addr,
 		    argc, argv);
 }
 
+
+class __compile_real_net_resolv : public base_net_resolv {
+
+    public:
+      explicit __compile_real_net_resolv(char*ref_label, vvp_array_t array,
+					 char*my_label, char*name,
+					 unsigned array_addr, bool local_flag)
+      : base_net_resolv(ref_label, array, my_label, name, array_addr, local_flag)
+      {
+      }
+
+      ~__compile_real_net_resolv() { }
+
+      bool resolve(bool message_flag);
+
+    private:
+};
+
+static void __compile_real_net2(vvp_net_t*node, vvp_array_t array,
+				char*my_label, char*name,
+				unsigned array_addr, bool local_flag)
+{
+      vvp_wire_base*fil = dynamic_cast<vvp_wire_base*> (node->fil);
+
+      if (fil == 0) {
+	    fil = new vvp_wire_real;
+	    node->fil = fil;
+      }
+
+      vpiHandle obj = 0;
+      if (!local_flag) {
+	    obj = vpip_make_real_var(name, node);
+	    compile_vpi_symbol(my_label, obj);
+      }
+ 
+	// REMOVE ME! Giving the net a label is a legacy of the times
+	// when the .net was a functor of its own. In the long run, we
+	// must fix the code generator to not rely on the label of the
+	// .net, then we will remove that label.
+      define_functor_symbol(my_label, node);
+
+     if (array)
+	    array_attach_word(array, array_addr, obj);
+      else if (obj)
+	    vpip_attach_to_current_scope(obj);
+
+      free(my_label);
+      if (name) delete[]name;
+}
+
 static void __compile_real(char*label, char*name,
                            char*array_label, unsigned long array_addr,
                            int msb, int lsb, bool local_flag,
                            unsigned argc, struct symb_s*argv)
 {
-      vvp_net_t*net = new vvp_net_t;
-
       vvp_array_t array = array_label ? array_find(array_label) : 0;
       assert(array_label ? array!=0 : true);
-   
-      vvp_fun_signal_real*fun = new vvp_fun_signal_real_sa;
-      net->fun = fun;
 
-	/* Add the label into the functor symbol table. */
-      define_functor_symbol(label, net);
+      if (array_label) free(array_label);
 
       assert(argc == 1);
-
-	/* Connect the source to my input. */
-      inputs_connect(net, 1, argv);
-
-      vpiHandle obj = 0;
-      if (! local_flag) {
-	      /* Make the vpiHandle for the reg. */
-	    obj = vpip_make_real_var(name, net);
-	      /* This attaches the label to the vpiHandle */
-	    compile_vpi_symbol(label, obj);
+      vvp_net_t*node = vvp_net_lookup(argv[0].text);
+      if (node == 0) {
+	      /* No existing net, but the string value may be a
+		 constant. In that case, we will wind up generating a
+		 bufz node that can carry the constant value. */
+	    node = create_constant_node(label, argv[0].text);
       }
-        /* If this is an array word, then attach it to the
-	   array. Otherwise, attach it to the current scope. */
-      if (array)
-	    array_attach_word(array, array_addr, obj);
-      else if (obj)
-	    vpip_attach_to_current_scope(obj);
-      free(label);
-      if (name) delete[] name;
-      if (array_label) free(array_label);
-      free(argv);
+      if (node == 0) {
+	    __compile_real_net_resolv*res
+		  = new __compile_real_net_resolv(argv[0].text, array,
+						  label, name,
+						  array_addr, local_flag);
+	    resolv_submit(res);
+	    return;
+      }
+
+      assert(node);
+      __compile_real_net2(node, array, label, name, array_addr, local_flag);
+}
+
+bool __compile_real_net_resolv::resolve(bool msg_flag)
+{
+      vvp_net_t*node = vvp_net_lookup(label());
+      if (node == 0) {
+	    if (msg_flag)
+		  cerr << "Unable to resolve label " << label() << endl;
+	    return false;
+      }
+
+      __compile_real_net2(node, array_, my_label_, name_, array_addr_, local_flag_);
+      return true;
 }
 
 void compile_net_real(char*label, char*name, int msb, int lsb, bool local_flag,
@@ -284,6 +456,7 @@ void compile_aliasw(char*label, char*array_label, unsigned long array_addr,
       vvp_net_t*node = vvp_net_lookup(argv[0].text);
 
 	/* Add the label into the functor symbol table. */
+      assert(node);
       define_functor_symbol(label, node);
 
       vpiHandle obj = vvp_lookup_handle(argv[0].text);
@@ -296,46 +469,19 @@ void compile_aliasw(char*label, char*array_label, unsigned long array_addr,
       free(argv);
 }
 
+/*
+ * The .alias is practically identical to a .net. We create all the
+ * VPI stuff for the new name (and put it in the local scope) but
+ * reference the node in the net.
+ */
 void compile_alias(char*label, char*name, int msb, int lsb, bool signed_flag,
 		 unsigned argc, struct symb_s*argv)
 {
-      assert(argc == 1);
-
-      vvp_net_t*node = vvp_net_lookup(argv[0].text);
-
-	/* Add the label into the functor symbol table. */
-      define_functor_symbol(label, node);
-
-
-	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = vpip_make_net(name, msb, lsb, signed_flag, node);
-      compile_vpi_symbol(label, obj);
-      vpip_attach_to_current_scope(obj);
-
-      free(label);
-      delete[] name;
-      free(argv[0].text);
-      free(argv);
+      __compile_net(label, name, 0, 0, msb, lsb, signed_flag, false, false, argc, argv);
 }
 
 void compile_alias_real(char*label, char*name, int msb, int lsb,
 		      unsigned argc, struct symb_s*argv)
 {
-      assert(argc == 1);
-
-      vvp_net_t*node = vvp_net_lookup(argv[0].text);
-
-	/* Add the label into the functor symbol table. */
-      define_functor_symbol(label, node);
-
-
-	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = vpip_make_real_var(name, node);
-      compile_vpi_symbol(label, obj);
-      vpip_attach_to_current_scope(obj);
-
-      free(label);
-      delete[] name;
-      free(argv[0].text);
-      free(argv);
+      __compile_real(label, name, 0, 0, msb, lsb, false, argc, argv);
 }

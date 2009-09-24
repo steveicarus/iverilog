@@ -64,7 +64,7 @@ void vvp_fun_concat::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	    val_.set_bit(off+idx, bit.value(idx));
       }
 
-      vvp_send_vec4(port.ptr()->out, val_, 0);
+      port.ptr()->send_vec4(val_, 0);
 }
 
 void compile_concat(char*label, unsigned w0, unsigned w1,
@@ -107,7 +107,7 @@ void vvp_fun_repeat::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 
       }
 
-      vvp_send_vec4(port.ptr()->out, val, 0);
+      port.ptr()->send_vec4(val, 0);
 }
 
 void compile_repeat(char*label, long width, long repeat, struct symb_s arg)
