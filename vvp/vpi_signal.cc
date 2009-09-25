@@ -939,9 +939,8 @@ static struct __vpiSignal* allocate_vpiSignal(void)
 void signal_delete(vpiHandle item)
 {
       struct __vpiSignal *obj = (__vpiSignal *) item;
-      vvp_fun_signal_base*sig_fun;
-      sig_fun = (vvp_fun_signal_base*) obj->node->fun;
-      sig_fun->clear_all_callbacks();
+      assert(obj->node->fil);
+      obj->node->fil->clear_all_callbacks();
       vvp_net_delete(obj->node);
       VALGRIND_MEMPOOL_FREE(obj->pool, obj);
 }
@@ -1343,9 +1342,8 @@ void PV_delete(vpiHandle item)
 		  break;
 	    }
       }
-      vvp_fun_signal_base*sig_fun;
-      sig_fun = (vvp_fun_signal_base*) obj->net->fun;
-      sig_fun->clear_all_callbacks();
+      assert(obj->net->fil);
+      obj->net->fil->clear_all_callbacks();
       free(obj);
 }
 #endif

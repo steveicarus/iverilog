@@ -207,6 +207,7 @@ class __compile_net_resolv : public base_net_resolv {
       { msb_ = msb;
 	lsb_ = lsb;
 	signed_flag_ = signed_flag;
+	net8_flag_ = net8_flag;
       }
 
       ~__compile_net_resolv() { }

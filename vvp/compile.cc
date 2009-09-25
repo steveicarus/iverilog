@@ -737,7 +737,7 @@ bool crstring_test(const char*str)
       if (tp == 0) return false;
       if (tp[1] != 0) return false;
 
-      if ((strspn(str+3, "0123456789abcdefmg")+3) != (tp - str))
+      if ((strspn(str+3, "0123456789abcdefmg")+3) != (size_t)(tp - str))
 	  return false;
 
       return true;
