@@ -710,6 +710,7 @@ void vvp_wire_vec4::release(vvp_net_ptr_t ptr, bool net_flag)
       vvp_vector2_t mask (vvp_vector2_t::FILL1, bits4_.size());
       release_mask(mask);
       if (net_flag) {
+	    needs_init_ = ! force4_ .eeq(bits4_);
 	    ptr.ptr()->send_vec4(bits4_, 0);
 	    run_vpi_callbacks();
       } else {
@@ -728,6 +729,7 @@ void vvp_wire_vec4::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, b
       release_mask(mask);
 
       if (net_flag) {
+	    needs_init_ = ! force4_.subvalue(base,wid) .eeq(bits4_.subvalue(base,wid));
 	    ptr.ptr()->send_vec4_pv(bits4_.subvalue(base,wid),
 				    base, wid, bits4_.size(), 0);
 	    run_vpi_callbacks();
@@ -843,10 +845,12 @@ void vvp_wire_vec8::release(vvp_net_ptr_t ptr, bool net_flag)
 	// Wires revert to their unforced value after release.
       vvp_vector2_t mask (vvp_vector2_t::FILL1, bits8_.size());
       release_mask(mask);
-      if (net_flag)
+      if (net_flag) {
+	    needs_init_ = !force8_ .eeq(bits8_);
 	    ptr.ptr()->send_vec8(bits8_);
-      else
+      } else {
 	    ptr.ptr()->fun->recv_vec8(ptr, force8_);
+      }
 }
 
 void vvp_wire_vec8::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag)
@@ -860,6 +864,7 @@ void vvp_wire_vec8::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, b
       release_mask(mask);
 
       if (net_flag) {
+	    needs_init_ = !force8_.subvalue(base,wid) .eeq((bits8_.subvalue(base,wid)));
 	    ptr.ptr()->send_vec8_pv(bits8_.subvalue(base,wid),
 				    base, wid, bits8_.size());
 	    run_vpi_callbacks();
