@@ -424,6 +424,15 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
 		  snprintf(tmp, sizeof tmp, "L_%p", cptr);
 		  result = strdup(tmp);
+
+	    } else {
+		  char tmp[64];
+		  fprintf(vvp_out, "L_%p .functor BUFZ 1, %s, "
+			  "C4<0>, C4<0>, C4<0>;\n", cptr, result);
+		  free(result);
+
+		  snprintf(tmp, sizeof tmp, "L_%p", cptr);
+		  result = strdup(tmp);
 	    }
 
 	    return result;
@@ -682,6 +691,13 @@ char* draw_net_input_x(ivl_nexus_t nex,
       while (ndrivers) {
 	    unsigned int inst;
 	    for (inst = 0; inst < ndrivers; inst += 4) {
+		  char*drive[4];
+		  if (level == 0) {
+			for (idx = inst; idx < ndrivers && idx < inst+4; idx += 1) {
+			      drive[idx-inst] = draw_net_input_drive(nex, drivers[idx]);
+			}
+		  }
+
 		  if (ndrivers > 4)
 			fprintf(vvp_out, "RS_%p/%d/%d .resolv tri",
 				nex, level, inst);
@@ -694,9 +710,8 @@ char* draw_net_input_x(ivl_nexus_t nex,
 			      fprintf(vvp_out, ", RS_%p/%d/%d",
 				      nex, level - 1, idx*4);
 			} else {
-			      char*drive = draw_net_input_drive(nex, drivers[idx]);
-			      fprintf(vvp_out, ", %s", drive);
-			      free(drive);
+			      fprintf(vvp_out, ", %s", drive[idx-inst]);
+			      free(drive[idx-inst]);
 			}
 		  }
 		  for ( ;  idx < inst+4 ;  idx += 1) {
