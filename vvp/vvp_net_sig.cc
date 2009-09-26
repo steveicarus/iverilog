@@ -911,6 +911,7 @@ vvp_vector4_t vvp_wire_vec8::vec4_value() const
 }
 
 vvp_wire_real::vvp_wire_real()
+: bit_(0.0)
 {
 }
 

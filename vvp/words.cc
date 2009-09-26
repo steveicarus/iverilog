@@ -298,6 +298,7 @@ static void __compile_net(char*label,
 					     msb, lsb, array_addr,
 					     signed_flag, net8_flag, local_flag);
 	    resolv_submit(res);
+	    free(argv);
 	    return;
       }
       assert(node);
@@ -305,6 +306,7 @@ static void __compile_net(char*label,
       __compile_net2(node, array, label, name, msb, lsb, array_addr,
 		     signed_flag, net8_flag, local_flag);
 
+      free(argv[0].text);
       free(argv);
 }
 
