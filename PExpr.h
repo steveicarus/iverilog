@@ -183,7 +183,6 @@ class PEConcat : public PExpr {
       std::valarray<unsigned>tested_widths_;
 
       PExpr*repeat_;
-      NetExpr*repeat_expr_;
 };
 
 /*

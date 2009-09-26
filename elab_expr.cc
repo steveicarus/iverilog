@@ -1564,8 +1564,8 @@ unsigned PEConcat::test_width(Design*des, NetScope*scope,
 	      // Try to evaluate the repeat expression now, so
 	      // that we can give the caller an accurate
 	      // expression width.
-	    repeat_expr_ = elab_and_eval(des, scope, repeat_, -1);
-	    if (NetEConst*tmp_c = dynamic_cast<NetEConst*> (repeat_expr_)) {
+	    NetExpr*tmp = elab_and_eval(des, scope, repeat_, -1);
+	    if (NetEConst*tmp_c = dynamic_cast<NetEConst*> (tmp)) {
 		  repeat_count = tmp_c->value().as_ulong();
 
 	    } else {
@@ -1605,22 +1605,10 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	/* If there is a repeat expression, then evaluate the constant
 	   value and set the repeat count. */
       if (repeat_) {
-	    NetExpr*tmp;
-	    if (repeat_expr_ == 0) {
-		    // If the expression has not yet been elaborated,
-		    // then try now.
-		  need_constant_expr = true;
-		  tmp = elab_and_eval(des, scope, repeat_, -1);
-		  need_constant_expr = false;
-		  assert(tmp);
-	    } else {
-		    // If it has been elaborated, make sure it is
-		    // fully evaluated.
-		  tmp = repeat_expr_;
-		  need_constant_expr = true;
-		  eval_expr(tmp);
-		  need_constant_expr = false;
-	    }
+	    need_constant_expr = true;
+	    NetExpr*tmp = elab_and_eval(des, scope, repeat_, -1);
+	    need_constant_expr = false;
+	    assert(tmp);
 
 	    if (tmp->expr_type() == IVL_VT_REAL) {
 		  cerr << tmp->get_fileline() << ": error: Concatenation "
