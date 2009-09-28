@@ -374,7 +374,7 @@ static const struct __vpirt vpip_scope_fork_rt = {
  */
 static struct __vpiScope*current_scope = 0;
 
-static void attach_to_scope_(struct __vpiScope*scope, vpiHandle obj)
+void vpip_attach_to_scope(struct __vpiScope*scope, vpiHandle obj)
 {
       assert(scope);
       unsigned idx = scope->nintern++;
@@ -463,7 +463,7 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
 	    compile_vpi_lookup(&obj, parent);
 	    assert(obj);
 	    struct __vpiScope*sp = (struct __vpiScope*) obj;
-	    attach_to_scope_(sp, &scope->base);
+	    vpip_attach_to_scope(sp, &scope->base);
 	    scope->scope = (struct __vpiScope*)obj;
 
 	      /* Inherit time units and precision from the parent scope. */
@@ -510,7 +510,7 @@ struct __vpiScope* vpip_peek_current_scope(void)
 
 void vpip_attach_to_current_scope(vpiHandle obj)
 {
-      attach_to_scope_(current_scope, obj);
+      vpip_attach_to_scope(current_scope, obj);
 }
 
 struct __vpiScope* vpip_peek_context_scope(void)

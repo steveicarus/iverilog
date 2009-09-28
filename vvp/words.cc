@@ -178,12 +178,14 @@ vvp_net_t* create_constant_node(const char*label, const char*val_str)
 class base_net_resolv : public resolv_list_s {
     public:
       explicit base_net_resolv(char*ref_label, vvp_array_t array,
+			       struct __vpiScope*scope,
 			       char*my_label, char*name,
 			       unsigned array_addr, bool local_flag)
       : resolv_list_s(ref_label)
       { my_label_ = my_label;
 	array_ = array;
 	name_ = name;
+	scope_ = scope;
 	array_addr_ = array_addr;
 	local_flag_ = local_flag;
       }
@@ -192,6 +194,7 @@ class base_net_resolv : public resolv_list_s {
       char*my_label_;
       vvp_array_t array_;
       char*name_;
+      struct __vpiScope*scope_;
       unsigned array_addr_;
       bool local_flag_;
 };
@@ -200,10 +203,11 @@ class __compile_net_resolv : public base_net_resolv {
 
     public:
       explicit __compile_net_resolv(char*ref_label, vvp_array_t array,
+				    struct __vpiScope*scope,
 				    char*my_label, char*name,
 				    int msb, int lsb, unsigned array_addr,
 				    bool signed_flag, bool net8_flag, bool local_flag)
-      : base_net_resolv(ref_label, array, my_label, name, array_addr, local_flag)
+      : base_net_resolv(ref_label, array, scope, my_label, name, array_addr, local_flag)
       { msb_ = msb;
 	lsb_ = lsb;
 	signed_flag_ = signed_flag;
@@ -232,6 +236,7 @@ class __compile_net_resolv : public base_net_resolv {
  */
 
 static void __compile_net2(vvp_net_t*node, vvp_array_t array,
+			   struct __vpiScope*scope,
 			   char*my_label, char*name,
 			   int msb, int lsb, unsigned array_addr,
 			   bool signed_flag, bool net8_flag, bool local_flag)
@@ -266,7 +271,7 @@ static void __compile_net2(vvp_net_t*node, vvp_array_t array,
       if (array)
 	    array_attach_word(array, array_addr, obj);
       else if (obj)
-	    vpip_attach_to_current_scope(obj);
+	    vpip_attach_to_scope(scope,obj);
 
       free(my_label);
       if (name) delete[] name;
@@ -292,9 +297,10 @@ static void __compile_net(char*label,
 	    node = create_constant_node(label, argv[0].text);
       }
       if (node == 0) {
+	    struct __vpiScope*scope = vpip_peek_current_scope();
 	    __compile_net_resolv*res
 		  = new __compile_net_resolv(argv[0].text,
-					     array, label, name,
+					     array, scope, label, name,
 					     msb, lsb, array_addr,
 					     signed_flag, net8_flag, local_flag);
 	    resolv_submit(res);
@@ -303,7 +309,8 @@ static void __compile_net(char*label,
       }
       assert(node);
 
-      __compile_net2(node, array, label, name, msb, lsb, array_addr,
+      struct __vpiScope*scope = vpip_peek_current_scope();
+      __compile_net2(node, array, scope, label, name, msb, lsb, array_addr,
 		     signed_flag, net8_flag, local_flag);
 
       free(argv[0].text);
@@ -317,7 +324,7 @@ bool __compile_net_resolv::resolve(bool msg_flag)
 	    return false;
       }
 
-      __compile_net2(node, array_, my_label_, name_, msb_, lsb_, array_addr_, signed_flag_, net8_flag_, local_flag_);
+      __compile_net2(node, array_, scope_, my_label_, name_, msb_, lsb_, array_addr_, signed_flag_, net8_flag_, local_flag_);
       return true;
 }
 
@@ -345,9 +352,10 @@ class __compile_real_net_resolv : public base_net_resolv {
 
     public:
       explicit __compile_real_net_resolv(char*ref_label, vvp_array_t array,
+					 struct __vpiScope*scope,
 					 char*my_label, char*name,
 					 unsigned array_addr, bool local_flag)
-      : base_net_resolv(ref_label, array, my_label, name, array_addr, local_flag)
+      : base_net_resolv(ref_label, array, scope, my_label, name, array_addr, local_flag)
       {
       }
 
@@ -359,6 +367,7 @@ class __compile_real_net_resolv : public base_net_resolv {
 };
 
 static void __compile_real_net2(vvp_net_t*node, vvp_array_t array,
+				struct __vpiScope*scope,
 				char*my_label, char*name,
 				unsigned array_addr, bool local_flag)
 {
@@ -384,7 +393,7 @@ static void __compile_real_net2(vvp_net_t*node, vvp_array_t array,
      if (array)
 	    array_attach_word(array, array_addr, obj);
       else if (obj)
-	    vpip_attach_to_current_scope(obj);
+	    vpip_attach_to_scope(scope, obj);
 
       free(my_label);
       if (name) delete[]name;
@@ -408,17 +417,18 @@ static void __compile_real(char*label, char*name,
 		 bufz node that can carry the constant value. */
 	    node = create_constant_node(label, argv[0].text);
       }
+      struct __vpiScope*scope = vpip_peek_current_scope();
       if (node == 0) {
 	    __compile_real_net_resolv*res
 		  = new __compile_real_net_resolv(argv[0].text, array,
-						  label, name,
+						  scope, label, name,
 						  array_addr, local_flag);
 	    resolv_submit(res);
 	    return;
       }
 
       assert(node);
-      __compile_real_net2(node, array, label, name, array_addr, local_flag);
+      __compile_real_net2(node, array, scope, label, name, array_addr, local_flag);
 }
 
 bool __compile_real_net_resolv::resolve(bool msg_flag)
@@ -430,7 +440,7 @@ bool __compile_real_net_resolv::resolve(bool msg_flag)
 	    return false;
       }
 
-      __compile_real_net2(node, array_, my_label_, name_, array_addr_, local_flag_);
+      __compile_real_net2(node, array_, scope_, my_label_, name_, array_addr_, local_flag_);
       return true;
 }
 

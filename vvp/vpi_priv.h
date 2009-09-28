@@ -208,6 +208,7 @@ struct __vpiScope {
 };
 
 extern struct __vpiScope* vpip_peek_current_scope(void);
+extern void vpip_attach_to_scope(struct __vpiScope*scope, vpiHandle obj);
 extern void vpip_attach_to_current_scope(vpiHandle obj);
 extern struct __vpiScope* vpip_peek_context_scope(void);
 extern unsigned vpip_add_item_to_context(automatic_hooks_s*item,
