@@ -294,6 +294,11 @@ vvp_fun_signal4_aa::vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init)
       size_ = wid;
 }
 
+vvp_fun_signal4_aa::~vvp_fun_signal4_aa()
+{
+      assert(0);
+}
+
 void vvp_fun_signal4_aa::alloc_instance(vvp_context_t context)
 {
       vvp_set_context_item(context, context_idx_, new vvp_vector4_t(size_));
@@ -386,6 +391,11 @@ vvp_vector4_t vvp_fun_signal4_aa::vec4_value() const
 vvp_vector4_t vvp_fun_signal4_aa::vec4_unfiltered_value() const
 {
       return vec4_value();
+}
+
+void vvp_fun_signal4_aa::operator delete(void*)
+{
+      assert(0);
 }
 
 vvp_fun_signal8::vvp_fun_signal8(unsigned wid)
@@ -513,6 +523,11 @@ vvp_fun_signal_real_aa::vvp_fun_signal_real_aa()
       context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
 }
 
+vvp_fun_signal_real_aa::~vvp_fun_signal_real_aa()
+{
+      assert(0);
+}
+
 void vvp_fun_signal_real_aa::alloc_instance(vvp_context_t context)
 {
       double*bits = new double;
@@ -583,6 +598,16 @@ vvp_scalar_t vvp_fun_signal_real_aa::scalar_value(unsigned idx) const
 }
 
 vvp_vector4_t vvp_fun_signal_real_aa::vec4_value() const
+{
+      assert(0);
+}
+
+void* vvp_fun_signal_real_aa::operator new(std::size_t size)
+{
+      return vvp_net_fun_t::permalloc(size);
+}
+
+void vvp_fun_signal_real_aa::operator delete(void*)
 {
       assert(0);
 }

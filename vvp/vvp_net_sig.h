@@ -162,6 +162,7 @@ class vvp_fun_signal4_aa : public vvp_fun_signal_vec, public automatic_signal_ba
 
     public:
       explicit vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init=BIT4_X);
+      ~vvp_fun_signal4_aa();
 
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
@@ -183,6 +184,10 @@ class vvp_fun_signal4_aa : public vvp_fun_signal_vec, public automatic_signal_ba
       vvp_scalar_t scalar_value(unsigned idx) const;
       vvp_vector4_t vec4_value() const;
       vvp_vector4_t vec4_unfiltered_value() const;
+
+    public: // These objects are only permallocated.
+      static void* operator new(std::size_t size) { return permalloc(size); }
+      static void operator delete(void*obj);
 
     private:
       unsigned context_idx_;
@@ -245,6 +250,7 @@ class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_sign
 
     public:
       explicit vvp_fun_signal_real_aa();
+      ~vvp_fun_signal_real_aa();
 
       void alloc_instance(vvp_context_t context);
       void reset_instance(vvp_context_t context);
@@ -265,6 +271,10 @@ class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_sign
       vvp_vector4_t vec4_value() const;
       double real_value() const;
       void get_signal_value(struct t_vpi_value*vp);
+
+    public: // These objects are only permallocated.
+      static void* operator new(std::size_t size);
+      static void operator delete(void*obj);
 
     private:
       unsigned context_idx_;

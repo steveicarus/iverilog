@@ -156,7 +156,7 @@ void vvp_net_t::unlink(vvp_net_ptr_t dst_ptr)
       net->port[net_port] = vvp_net_ptr_t(0,0);
 }
 
-void* vvp_net_fun_t::operator new(size_t size)
+void* vvp_net_fun_t::permalloc(size_t size)
 {
 	// Link in an initial chunk of space for net_fun_t
 	// objects. This chunk doesn't need to be the same size as the
@@ -289,6 +289,43 @@ void vvp_net_fil_t::force_link(vvp_net_t*dst, vvp_net_t*src)
 
       vvp_net_ptr_t dst_ptr(force_link_, 0);
       src->link(dst_ptr);
+}
+
+void*vvp_net_fil_t::operator new(size_t size)
+{
+	// Link in an initial chunk of space for net_fun_t
+	// objects. This chunk doesn't need to be the same size as the
+	// subsequent chunks, but we do need to make sure it is
+	// aligned with pointer alignment. (Hence the union with "align".)
+      static union { void*align; char bytes[512*1024]; } initial_chunk;
+
+	// Initialize the pointer to the initial chunk.
+      static char*chunk_ptr = initial_chunk.bytes;
+      static size_t chunk_remaining = sizeof(initial_chunk);
+
+	// Once the initial chunk fills up, allocate new chunks in
+	// fairly large blocks to reduce the system allocator
+	// overhead, but not such big chunks that we create our own
+	// waste. (Expect the typical waste to be CHUNK_BYTES/2.)
+      const size_t CHUNK_BYTES = 256*1024;
+
+      if (size > chunk_remaining) {
+	    chunk_ptr = ::new char[CHUNK_BYTES];
+	    chunk_remaining = CHUNK_BYTES;
+      }
+
+      assert( (size%sizeof(void*)) == 0 );
+
+      void*res = chunk_ptr;
+      chunk_ptr += size;
+      chunk_remaining -= size;
+
+      return res;
+}
+
+void vvp_net_fil_t::operator delete(void*)
+{
+      assert(0);
 }
 
 void vvp_net_fil_t::force_unlink(void)

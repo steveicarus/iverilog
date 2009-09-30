@@ -1093,8 +1093,11 @@ class vvp_net_fun_t {
                                 unsigned base, unsigned wid);
 
     public: // These objects are only permallocated.
-      static void* operator new(std::size_t size);
+      static void* operator new(std::size_t size) { return permalloc(size); }
       static void operator delete(void*); // not implemented
+    protected:
+      static void* permalloc(std::size_t size);
+
     private: // not implemented
       vvp_net_fun_t(const vvp_net_fun_t&);
       vvp_net_fun_t& operator= (const vvp_net_fun_t&);
@@ -1152,6 +1155,15 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
       virtual void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask) =0;
       virtual void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask) =0;
       virtual void force_fil_real(double val, vvp_vector2_t mask) =0;
+
+    public: // These objects are only permallocated.
+      static void* operator new(std::size_t size);
+      static void operator delete(void*); // not implemented
+    private: // not implemented
+      vvp_net_fil_t(const vvp_net_fil_t&);
+      vvp_net_fil_t& operator= (const vvp_net_fil_t&);
+      static void* operator new[](std::size_t size);
+      static void operator delete[](void*);
 
     protected:
 	// Set bits of the filter force mask
