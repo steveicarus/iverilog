@@ -186,7 +186,7 @@ class vvp_fun_signal4_aa : public vvp_fun_signal_vec, public automatic_signal_ba
       vvp_vector4_t vec4_unfiltered_value() const;
 
     public: // These objects are only permallocated.
-      static void* operator new(std::size_t size) { return permalloc(size); }
+      static void* operator new(std::size_t size) { return vvp_net_fun_t::heap_.alloc(size); }
       static void operator delete(void*obj);
 
     private:

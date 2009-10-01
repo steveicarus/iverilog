@@ -1,5 +1,7 @@
+#ifndef __permaheap_H
+#define __permaheap_H
 /*
- * Copyright (c) 2002-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,23 +19,29 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "statistics.h"
+# include  <stdlib.h>
 
-/*
- * This is a count of the instruction opcodes that were created.
- */
-unsigned long count_opcodes = 0;
+class permaheap {
 
-unsigned long count_functors = 0;
-unsigned long count_functors_logic = 0;
-unsigned long count_functors_bufif = 0;
-unsigned long count_functors_resolv= 0;
-unsigned long count_functors_sig   = 0;
+    public:
+      explicit permaheap();
+      ~permaheap();
 
-unsigned long count_filters = 0;
-unsigned long count_vpi_nets = 0;
+      void* alloc(size_t size);
 
-unsigned long count_vpi_scopes = 0;
+      size_t heap_total() const { return heap_total_; }
 
-size_t size_opcodes = 0;
+    private:
+      enum { INITIAL_CHUNK_SIZE = 512*1024, CHUNK_SIZE=256*1024 };
 
+      union {
+	    void*align;
+	    char bytes[INITIAL_CHUNK_SIZE];
+      } initial_chunk_;
+
+      char*chunk_ptr_;
+      size_t chunk_remaining_;
+      size_t heap_total_;
+};
+
+#endif

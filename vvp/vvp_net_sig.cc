@@ -604,7 +604,7 @@ vvp_vector4_t vvp_fun_signal_real_aa::vec4_value() const
 
 void* vvp_fun_signal_real_aa::operator new(std::size_t size)
 {
-      return vvp_net_fun_t::permalloc(size);
+      return vvp_net_fun_t::heap_.alloc(size);
 }
 
 void vvp_fun_signal_real_aa::operator delete(void*)

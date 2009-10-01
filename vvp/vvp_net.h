@@ -22,6 +22,7 @@
 # include  "config.h"
 # include  "vpi_user.h"
 # include  "vvp_vpi_callback.h"
+# include  "permaheap.h"
 # include  <stddef.h>
 # include  <stdlib.h>
 # include  <string.h>
@@ -1093,10 +1094,13 @@ class vvp_net_fun_t {
                                 unsigned base, unsigned wid);
 
     public: // These objects are only permallocated.
-      static void* operator new(std::size_t size) { return permalloc(size); }
+      static void* operator new(std::size_t size) { return heap_.alloc(size); }
       static void operator delete(void*); // not implemented
+
+      static std::size_t heap_total() { return heap_.heap_total(); }
+
     protected:
-      static void* permalloc(std::size_t size);
+      static permaheap heap_;
 
     private: // not implemented
       vvp_net_fun_t(const vvp_net_fun_t&);
@@ -1157,8 +1161,14 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
       virtual void force_fil_real(double val, vvp_vector2_t mask) =0;
 
     public: // These objects are only permallocated.
-      static void* operator new(std::size_t size);
+      static void* operator new(std::size_t size) { return heap_.alloc(size); }
       static void operator delete(void*); // not implemented
+
+      static size_t heap_total() { return heap_.heap_total(); }
+
+    private:
+      static permaheap heap_;
+
     private: // not implemented
       vvp_net_fil_t(const vvp_net_fil_t&);
       vvp_net_fil_t& operator= (const vvp_net_fil_t&);

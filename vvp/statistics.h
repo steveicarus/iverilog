@@ -27,6 +27,7 @@ extern unsigned long count_functors_logic;
 extern unsigned long count_functors_bufif;
 extern unsigned long count_functors_resolv;
 extern unsigned long count_functors_sig;
+extern unsigned long count_filters;
 extern unsigned long count_vvp_nets;
 extern unsigned long count_vpi_nets;
 extern unsigned long count_vpi_scopes;

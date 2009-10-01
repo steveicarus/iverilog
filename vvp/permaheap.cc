@@ -1,5 +1,6 @@
+
 /*
- * Copyright (c) 2002-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,23 +18,35 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "statistics.h"
+# include  "permaheap.h"
+# include  <assert.h>
 
-/*
- * This is a count of the instruction opcodes that were created.
- */
-unsigned long count_opcodes = 0;
+permaheap::permaheap()
+{
+      chunk_ptr_ = initial_chunk_.bytes;
+      chunk_remaining_ = sizeof(initial_chunk_);
+      heap_total_ = chunk_remaining_;
+}
 
-unsigned long count_functors = 0;
-unsigned long count_functors_logic = 0;
-unsigned long count_functors_bufif = 0;
-unsigned long count_functors_resolv= 0;
-unsigned long count_functors_sig   = 0;
+permaheap::~permaheap()
+{
+}
 
-unsigned long count_filters = 0;
-unsigned long count_vpi_nets = 0;
+void* permaheap::alloc(size_t size)
+{
+      assert(size <= CHUNK_SIZE);
 
-unsigned long count_vpi_scopes = 0;
+      if (size > chunk_remaining_) {
+	    chunk_ptr_ = ::new char[CHUNK_SIZE];
+	    chunk_remaining_ = CHUNK_SIZE;
+	    heap_total_ += CHUNK_SIZE;
+      }
 
-size_t size_opcodes = 0;
+      assert( (size%sizeof(void*)) == 0 );
 
+      void*res = chunk_ptr_;
+      chunk_ptr_ += size;
+      chunk_remaining_ -= size;
+
+      return res;
+}
