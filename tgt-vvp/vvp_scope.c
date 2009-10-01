@@ -482,7 +482,12 @@ static void draw_net_in_scope(ivl_signal_t sig)
 
 		  } else if (ivl_signal_local(sig) && ivl_scope_is_auto(ivl_signal_scope(sig))) {
 			assert(word_count == 1);
-			fprintf(vvp_out, "; Elide net v%p_%u name=%s\n",
+			fprintf(vvp_out, "; Elide local/automatic net v%p_%u name=%s\n",
+				sig, iword, ivl_signal_basename(sig));
+
+		  } else if (ivl_signal_local(sig) && nex_data->drivers_count==0) {
+			assert(word_count == 1);
+			fprintf(vvp_out, "; Elide local net with no drivers, v%p_%u name=%s\n",
 				sig, iword, ivl_signal_basename(sig));
 
 		  } else {
