@@ -19,7 +19,7 @@
 #
 
 # These are the variables used for compiling files
-CC=@IVCC@
+CC="@IVCC@"
 CXX=@IVCXX@
 CFLAGS="@PIC@ @IVCFLAGS@ -I@INCLUDEDIR@"
 
