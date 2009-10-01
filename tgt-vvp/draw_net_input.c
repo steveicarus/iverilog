@@ -285,9 +285,11 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       }
 
       if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLUP)) {
+	    char*result;
+	    char tmp[32];
 	    if (ivl_nexus_ptr_drive1(nptr) == IVL_DR_STRONG) {
 		  size_t result_len = 5 + ivl_logic_width(lptr);
-		  char*result = malloc(result_len);
+		  result = malloc(result_len);
 		  char*dp = result;
 		  strcpy(dp, "C4<");
 		  dp += strlen(dp);
@@ -296,11 +298,11 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  *dp++ = '>';
 		  *dp = 0;
 		  assert((dp-result) <= result_len);
-		  return result;
+
 	    } else {
 		  char val[4];
 		  size_t result_len = 5 + 3*ivl_logic_width(lptr);
-		  char*result = malloc(result_len);
+		  result = malloc(result_len);
 		  char*dp = result;
 
 		  val[0] = "01234567"[ivl_nexus_ptr_drive0(nptr)];
@@ -315,8 +317,17 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  *dp++ = '>';
 		  *dp = 0;
 		  assert((dp-result) <= result_len);
-		  return result;
+
 	    }
+
+	      /* Make the constant an argument to a BUFZ, which is
+		 what we use to drive the PULLed value. */
+	    fprintf(vvp_out, "L_%p .functor BUFZ 1, %s, C4<0>, C4<0>, C4<0>;\n",
+		    lptr, result);
+	    snprintf(tmp, sizeof tmp, "L_%p", lptr);
+	    result = realloc(result, strlen(tmp)+1);
+	    strcpy(result, tmp);
+	    return result;
       }
 
       if (lptr && (nptr_pin == 0)) {
