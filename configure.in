@@ -11,6 +11,7 @@ AC_CONFIG_HEADER(tgt-vhdl/vhdl_config.h)
 AC_CANONICAL_HOST
 dnl Checks for programs.
 AC_PROG_CC
+AC_PROG_CC_C99
 AC_PROG_CXX
 AC_PROG_RANLIB
 AC_CHECK_TOOL(STRIP, strip, true)
@@ -156,7 +157,15 @@ AC_SUBST(file64_support)
 
 # Check that these functions exist. They are mostly C99
 # functions that older compilers may not yet support.
-AC_CHECK_FUNCS(lround nan fmin fmax fopen64)
+AC_CHECK_FUNCS(fopen64)
+# The following math functions may be defined in the math library so look
+# in the default libraries first and then look in -lm for them. On some
+# systems we may need to use the compiler in C99 mode to get a definition.
+# We requested C99 mode earlier with AC_PROG_CC_C99.
+AC_SEARCH_LIBS([lround], [m], [AC_DEFINE([HAVE_LROUND], [1])])
+AC_SEARCH_LIBS([nan], [m], [AC_DEFINE([HAVE_NAN], [1])])
+AC_SEARCH_LIBS([fmin], [m], [AC_DEFINE([HAVE_FMIN], [1])])
+AC_SEARCH_LIBS([fmax], [m], [AC_DEFINE([HAVE_FMAX], [1])])
 
 # Linker option used when compiling the target
 AX_LD_RDYNAMIC

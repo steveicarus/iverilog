@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -117,7 +117,7 @@ static void draw_oct_table()
       printf("};\n");
 }
 
-main()
+int main()
 {
       draw_hex_table();
       draw_oct_table();
