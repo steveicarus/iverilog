@@ -424,11 +424,15 @@ static void __compile_real(char*label, char*name,
 						  scope, label, name,
 						  array_addr, local_flag);
 	    resolv_submit(res);
+	    free(argv);
 	    return;
       }
 
       assert(node);
-      __compile_real_net2(node, array, scope, label, name, array_addr, local_flag);
+      __compile_real_net2(node, array, scope, label, name, array_addr,
+                          local_flag);
+      free(argv[0].text);
+      free(argv);
 }
 
 bool __compile_real_net_resolv::resolve(bool msg_flag)
