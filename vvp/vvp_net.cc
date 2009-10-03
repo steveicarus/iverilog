@@ -2442,7 +2442,8 @@ const vvp_vector8_t vvp_vector8_t::nil;
 vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 {
 	// Assign to self.
-      if (size_ > PTR_THRESH && that.size_ > PTR_THRESH && ptr_ == that.ptr_)
+      if (this == &that || (size_ > PTR_THRESH && that.size_ > PTR_THRESH &&
+                            ptr_ == that.ptr_))
 	    return *this;
 
       if (size_ != that.size_) {
