@@ -261,6 +261,25 @@ verinum::V Nexus::get_init() const
       return verinum::Vz;
 }
 
+bool Nexus::assign_lval() const
+{
+      assert(list_);
+      for (Link*cur = list_ ; cur ; cur = cur->next_) {
+
+	    const NetPins*obj;
+	    unsigned pin;
+	    cur->cur_link(obj, pin);
+	    const NetNet*net = dynamic_cast<const NetNet*> (obj);
+	    if (net == 0)
+		  continue;
+
+	    if (net->peek_lref())
+		  return true;
+      }
+
+      return false;
+}
+
 bool Nexus::drivers_present() const
 {
       assert(list_);

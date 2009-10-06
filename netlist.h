@@ -347,6 +347,11 @@ class Nexus {
 
       NetNet* pick_any_net();
 
+	/* This method returns true if there are any assignments that
+	   use this nexus as an l-value. This can be true if the nexus
+	   is a variable, but also if this is a net with a force. */
+      bool assign_lval() const;
+
 	/* This method returns true if there are any drivers
 	   (including variables) attached to this nexus. */
       bool drivers_present() const;
