@@ -823,6 +823,10 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 
 	/* If the select input is constant, then replace with a BUFZ */
       bool flag = obj->pin_Sel().nexus()->drivers_constant();
+	/* Note that this cannot be constant if there are assignments
+	   to this nexus. (Assignments include "force" to nets.) */
+      flag &= !obj->pin_Sel().nexus()->assign_lval();
+
       verinum::V sel_val = flag? obj->pin_Sel().nexus()->driven_value() : verinum::Vx;
       if ((sel_val != verinum::Vz) && (sel_val != verinum::Vx)) {
 	    NetBUFZ*tmp = new NetBUFZ(obj->scope(), obj->name(), obj->width());
