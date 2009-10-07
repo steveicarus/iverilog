@@ -114,7 +114,11 @@ bool vvp_island_branch_tran::run_test_enabled()
       }
 
       enabled_flag = false;
-      vvp_bit4_t enable_val = ep->invalue.value(0).value();
+      vvp_bit4_t enable_val;
+      if (ep->invalue.size() == 0)
+	    enable_val = BIT4_Z;
+      else
+	    enable_val = ep->invalue.value(0).value();
 
       if (active_high==true && enable_val != BIT4_1)
 	    return false;
