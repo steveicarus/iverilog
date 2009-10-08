@@ -49,6 +49,7 @@
 # undef HAVE_INTTYPES_H
 # undef HAVE_LROUND
 # undef HAVE_NAN
+# undef UINT64_T_AND_ULONG_SAME
 
 /*
  * Define this if you want to compile vvp with memory freeing and
@@ -89,7 +90,7 @@ typedef uint64_t vvp_time64_t;
 # define TIME_FMT_U PRIu64
 # define TIME_FMT_X PRIx64
 
-# if SIZEOF_UNSIGNED_LONG == 8
+# if UINT64_T_AND_ULONG_SAME
 #  define UL_AND_TIME64_SAME
 # endif
 
