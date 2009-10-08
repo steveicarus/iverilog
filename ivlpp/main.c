@@ -370,7 +370,7 @@ int main(int argc, char*argv[])
 	    }
       }
 
-      if(dep_path) {
+      if (dep_path) {
 	      depend_file = fopen(dep_path, "a");
 	      if (depend_file == 0) {
 		  perror(dep_path);
@@ -389,13 +389,17 @@ int main(int argc, char*argv[])
       if (yylex()) return -1;
       destroy_lexor();
 
-      if(depend_file) {
-	      fclose(depend_file);
+      if (depend_file) {
+	    fclose(depend_file);
       }
 
       if (precomp_out) {
 	    dump_precompiled_defines(precomp_out);
 	    fclose(precomp_out);
+      }
+
+      if (out_path) {
+	    fclose(out);
       }
 
 	/* Free the source and include directory lists. */
