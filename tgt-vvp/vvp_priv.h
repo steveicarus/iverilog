@@ -123,6 +123,10 @@ extern void draw_switch_in_scope(ivl_switch_t sw);
 struct vvp_nexus_data {
 	/* draw_net_input uses this */
       const char*net_input;
+	/* draw_isnald_net_input uses these */
+      const char*island_input;
+      ivl_island_t island;
+	/* */
       unsigned drivers_count;
       int flags;
 	/* draw_net_in_scope uses these to identify the controlling word. */
@@ -144,15 +148,12 @@ extern const char* draw_net_input(ivl_nexus_t nex);
 void EOC_cleanup_drivers();
 
 /*
- * See draw_net_input.c for details on draw_net_input_x. (It would be
- * nice if this can be made private.)
+ * This is different from draw_net_input in that it is intended to be
+ * used within the network of an island. This finds and prepares the
+ * link for a nexus within the scope of the given island, instead of
+ * the net as a whole.
  */
-  /* Omit LPMPART_BI device pin-data(0) drivers. */
-# define OMIT_PART_BI_DATA 0x0001
-struct vvp_nexus_data;
-extern char* draw_net_input_x(ivl_nexus_t nex,
-			      ivl_nexus_ptr_t omit_ptr, int omit_flags,
-			      struct vvp_nexus_data*nex_data);
+extern const char* draw_island_net_input(ivl_island_t island, ivl_nexus_t nex);
 
 /*
  * This function is different from draw_net_input in that it will

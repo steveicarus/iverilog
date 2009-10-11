@@ -499,8 +499,9 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       return strdup("C<z>");
 }
 
-static char* draw_island_port(ivl_island_t island,
-			      ivl_nexus_t nex, const char*src)
+static char* draw_island_port(ivl_island_t island, int island_input_flag,
+			      ivl_nexus_t nex, struct vvp_nexus_data*nex_data,
+			      const char*src)
 {
       char result[64];
       if (ivl_island_flag_test(island,0) == 0) {
@@ -508,10 +509,19 @@ static char* draw_island_port(ivl_island_t island,
 	    ivl_island_flag_set(island,0,1);
       }
 
-      fprintf(vvp_out, "p%p .port I%p, %s;\n", nex, island, src);
       snprintf(result, sizeof result, "p%p", nex);
+      assert(nex_data->island == 0);
+      nex_data->island = island;
+      assert(nex_data->island_input == 0);
+      nex_data->island_input = strdup(result);
 
-      return strdup(result);
+      if (island_input_flag) {
+	    fprintf(vvp_out, "p%p .import I%p, %s;\n", nex, island, src);
+	    return strdup(src);
+      } else {
+	    fprintf(vvp_out, "p%p .port I%p, %s;\n", nex, island, src);
+	    return strdup(nex_data->island_input);
+      }
 }
 
 /*
@@ -526,8 +536,6 @@ static char* draw_island_port(ivl_island_t island,
  * does *not* check for a previously calculated string. Use the
  * draw_net_input for the general case.
  */
-  /* Omit LPMPART_BI device pin-data(0) drivers. */
-# define OMIT_PART_BI_DATA 0x0001
 
 static ivl_nexus_ptr_t *drivers = 0x0;
 static unsigned adrivers = 0;
@@ -539,11 +547,11 @@ void EOC_cleanup_drivers()
       adrivers = 0;
 }
 
-char* draw_net_input_x(ivl_nexus_t nex,
-		       ivl_nexus_ptr_t omit_ptr, int omit_flags,
-		       struct vvp_nexus_data*nex_data)
+static void draw_net_input_x(ivl_nexus_t nex,
+			     struct vvp_nexus_data*nex_data)
 {
       ivl_island_t island = 0;
+      int island_input_flag = -1;
       ivl_signal_type_t res;
       char result[512];
       unsigned idx;
@@ -585,25 +593,25 @@ char* draw_net_input_x(ivl_nexus_t nex,
 
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	    ivl_lpm_t lpm_tmp;
 	    ivl_switch_t sw = 0;
 	    ivl_nexus_ptr_t nptr = ivl_nexus_ptr(nex, idx);
 
 	      /* If this object is part of an island, then we'll be
-	         making a port. Save the island cookie. */
+	         making a port. If this nexus is an output to any
+	         switches in the island, then set island_input_flag to
+	         true. Save the island cookie. */
 	    if ( (sw = ivl_nexus_ptr_switch(nptr)) ) {
-		 island = ivl_switch_island(sw);
+		  assert(island == 0 || island == ivl_switch_island(sw));
+		  island = ivl_switch_island(sw);
+		  if (nex == ivl_switch_a(sw))
+			island_input_flag = 0;
+		  else if (nex == ivl_switch_b(sw))
+			island_input_flag = 0;
+		  else if (island_input_flag == -1) {
+			assert(nex == ivl_switch_enable(sw));
+			island_input_flag = 1;
+		  }
 	    }
-
-	      /* If we are supposed to skip LPM_PART_BI data pins,
-		 check that this driver is that. */
-	    if ((omit_flags&OMIT_PART_BI_DATA)
-		&& (lpm_tmp = ivl_nexus_ptr_lpm(nptr))
-		&& (nex == ivl_lpm_data(lpm_tmp,0)))
-		  continue;
-
-	    if (nptr == omit_ptr)
-		  continue;
 
 	      /* Skip input only pins. */
 	    if ((ivl_nexus_ptr_drive0(nptr) == IVL_DR_HiZ)
@@ -626,12 +634,13 @@ char* draw_net_input_x(ivl_nexus_t nex,
 	    ndrivers += 1;
       }
 
-	/* If the caller is collecting nexus information, then save
-	   the nexus driver count in the nex_data. */
-      if (nex_data) {
-	    nex_data->drivers_count = ndrivers;
-	    nex_data->flags |= nex_flags;
-      }
+      if (island_input_flag < 0)
+	    island_input_flag = 0;
+
+	/* Save the nexus driver count in the nex_data. */
+      assert(nex_data);
+      nex_data->drivers_count = ndrivers;
+      nex_data->flags |= nex_flags;
 
 	/* If the nexus has no drivers, then send a constant HiZ or
 	   0.0 into the net. */
@@ -666,11 +675,13 @@ char* draw_net_input_x(ivl_nexus_t nex,
 	    }
 
 	    if (island) {
-		  char*tmp2 = draw_island_port(island, nex, nex_private);
+		  char*tmp2 = draw_island_port(island, island_input_flag, nex, nex_data, nex_private);
 		  free(nex_private);
 		  nex_private = tmp2;
 	    }
-	    return nex_private;
+	    assert(nex_data->net_input == 0);
+	    nex_data->net_input = nex_private;
+	    return;
       }
 
 
@@ -691,11 +702,13 @@ char* draw_net_input_x(ivl_nexus_t nex,
 		  nex_private = draw_net_input_drive(nex, drivers[0]);
 	    }
 	    if (island) {
-		  char*tmp = draw_island_port(island, nex, nex_private);
+		  char*tmp = draw_island_port(island, island_input_flag, nex, nex_data, nex_private);
 		  free(nex_private);
 		  nex_private = tmp;
 	    }
-	    return nex_private;
+	    assert(nex_data->net_input == 0);
+	    nex_data->net_input = nex_private;
+	    return;
       }
 
       level = 0;
@@ -742,11 +755,12 @@ char* draw_net_input_x(ivl_nexus_t nex,
       snprintf(result, sizeof result, "RS_%p", nex);
 
       if (island)
-	    nex_private = draw_island_port(island, nex, result);
+	    nex_private = draw_island_port(island, island_input_flag, nex, nex_data, result);
       else
 	    nex_private = strdup(result);
 
-      return nex_private;
+      assert(nex_data->net_input == 0);
+      nex_data->net_input = nex_private;
 }
 
 /*
@@ -770,7 +784,33 @@ const char*draw_net_input(ivl_nexus_t nex)
       }
 
       assert(nex_data->net_input == 0);
-      nex_data->net_input = draw_net_input_x(nex, 0, 0, nex_data);
+      draw_net_input_x(nex, nex_data);
 
       return nex_data->net_input;
+}
+
+const char*draw_island_net_input(ivl_island_t island, ivl_nexus_t nex)
+{
+      struct vvp_nexus_data*nex_data = (struct vvp_nexus_data*)
+	    ivl_nexus_get_private(nex);
+
+	/* If this nexus already has a label, then its input is
+	   already figured out. Just return the existing label. */
+      if (nex_data && nex_data->island_input) {
+	    assert(nex_data->island == island);
+	    return nex_data->island_input;
+      }
+
+      if (nex_data == 0) {
+	    nex_data = new_nexus_data();
+	    ivl_nexus_set_private(nex, nex_data);
+      }
+
+      assert(nex_data->net_input == 0);
+      draw_net_input_x(nex, nex_data);
+
+      assert(nex_data->island == island);
+      assert(nex_data->island_input);
+
+      return nex_data->island_input;
 }

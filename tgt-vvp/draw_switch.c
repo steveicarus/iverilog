@@ -43,16 +43,16 @@ void draw_switch_in_scope(ivl_switch_t sw)
 
       nex_a = ivl_switch_a(sw);
       assert(nex_a);
-      str_a = draw_net_input(nex_a);
+      str_a = draw_island_net_input(island, nex_a);
 
       nex_b = ivl_switch_b(sw);
       assert(nex_b);
-      str_b = draw_net_input(nex_b);
+      str_b = draw_island_net_input(island, nex_b);
 
       enable = ivl_switch_enable(sw);
       str_e = 0;
       if (enable)
-	    str_e = draw_net_input(enable);
+	    str_e = draw_island_net_input(island, enable);
 
 
       switch (ivl_switch_type(sw)) {

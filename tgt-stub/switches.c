@@ -114,7 +114,8 @@ void show_switch(ivl_switch_t net)
 
       if (has_enable) {
 	    ivl_nexus_t nexe = ivl_switch_enable(net);
-	    fprintf(out, "    E: %p\n", nexe);
+	    ivl_variable_type_t nexe_type = type_of_nexus(nexe);
+	    fprintf(out, "    E: %p <type=%s>\n", nexe, data_type_string(nexe_type));
 	    if (width_of_nexus(nexe) != 1) {
 		  fprintf(out, "    E: ERROR: Nexus width is %u\n",
 			  width_of_nexus(nexe));
