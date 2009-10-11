@@ -11,6 +11,12 @@ AC_CONFIG_HEADER(tgt-vhdl/vhdl_config.h)
 AC_CANONICAL_HOST
 dnl Checks for programs.
 AC_PROG_CC
+# AC_PROG_CC_C99 is only available in autoconf version 2.60 and later.
+# If you must use an older version then comment out the following two
+# lines, but be warned that there could be issues with finding the
+# nan(), etc. functions. It is really best to upgrade to a supported
+# version of autoconf.
+AC_PREREQ([2.60])
 AC_PROG_CC_C99
 AC_PROG_CXX
 AC_PROG_RANLIB
@@ -166,6 +172,31 @@ AC_SEARCH_LIBS([lround], [m], [AC_DEFINE([HAVE_LROUND], [1])])
 AC_SEARCH_LIBS([nan], [m], [AC_DEFINE([HAVE_NAN], [1])])
 AC_SEARCH_LIBS([fmin], [m], [AC_DEFINE([HAVE_FMIN], [1])])
 AC_SEARCH_LIBS([fmax], [m], [AC_DEFINE([HAVE_FMAX], [1])])
+
+# Check to see if an unsigned long and uint64_t are the same from
+# a compiler perspective. We can not just check that they are the
+# same size since unsigned long and unsigned long long are not the
+# same from an overloading perspective even though they could be
+# the same size on some 64 bit machines. The result from this test
+# is only used if inttypes.h is available, so if the test fails for
+# that reason we don't care.
+AC_LANG(C++)
+AC_MSG_CHECKING(if uint64_t and unsigned long are identical)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include "inttypes.h"
+static bool check(unsigned long val)
+{
+  return val != 0;
+}
+static bool check(uint64_t val)
+{
+  return val != 0;
+}]], [[unsigned long ulval = 1;
+bool result = check(ulval);
+uint64_t uival = 1;
+result &= check(uival);
+return !result;]])],
+   [AC_MSG_RESULT(no)],
+   [AC_DEFINE([UINT64_T_AND_ULONG_SAME], [1]) AC_MSG_RESULT(yes)])
 
 # Linker option used when compiling the target
 AX_LD_RDYNAMIC
