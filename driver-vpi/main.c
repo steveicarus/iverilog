@@ -410,14 +410,21 @@ static int parse(int argc, char *argv[])
 
 static void checkMingwDir(char *root)
 {
-	int irv;
+	int irv, len;
 	struct _stat stat_buf;
 
-	char *path;
+	char *path, *comp, *cp;
 	initDynString(&path);
 	assign(&path,gstr.pMINGW);
 	appendBackSlash(&path);
-	append(&path,"bin\\" IVERILOG_VPI_CC ".exe");
+	append(&path,"bin\\");
+	/* Get just the compiler name (the first word) */
+	comp = strdup(IVERILOG_VPI_CC);
+	cp = strchr(comp, ' ');
+	if (cp != NULL) *cp = '\0';
+        append(&path, comp);
+	append(&path,".exe");
+        free(comp);
 
 	irv = _stat(path,&stat_buf);
 	deInitDynString(path);
