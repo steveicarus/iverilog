@@ -303,7 +303,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  char*result = malloc(result_len);
 		  char*dp = result;
 
-		  val[0] = "01234567"[ivl_nexus_ptr_drive0(nptr)];
+		  val[0] = "01234567"[ivl_nexus_ptr_drive1(nptr)];
 		  val[1] = val[0];
 		  val[2] = '1';
 		  val[3] = 0;
