@@ -1703,6 +1703,7 @@ NetExpr* evaluate_clog2(NetExpr*&arg_)
 		  res = integer_width;
 
 	    verinum tmp (res, integer_width);
+	    tmp.has_sign(true);
 	    NetEConst*rtn = new NetEConst(tmp);
 	    return rtn;
       }
