@@ -216,7 +216,7 @@ static void replace_scope_parameters_(NetScope*scope, const LineInfo&loc,
 	    if (val == 0) {
 		  cerr << loc.get_fileline() << ": internal error: "
 		       << "Missing expression in parameter replacement for "
-		       << (*cur).first;
+		       << (*cur).first << endl;;
 	    }
 	    assert(val);
 	    if (debug_scopes) {
@@ -1358,9 +1358,9 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 		  PExpr*tmp = (*cur).second;
 		    // No expression means that the parameter is not
 		    // replaced at all.
-		  if (tmp == 0)
-			continue;
+		  if (tmp == 0) continue;
 		  NetExpr*val = tmp->elaborate_pexpr(des, sc);
+		  if (val == 0) continue;
 		  replace_net[(*cur).first] = val;
 	    }
 
