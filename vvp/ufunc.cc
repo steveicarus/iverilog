@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,6 +25,9 @@
 # include  "vvp_net_sig.h"
 # include  "vthread.h"
 # include  "schedule.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+#endif
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -56,6 +59,7 @@ ufunc_core::ufunc_core(unsigned owid, vvp_net_t*ptr,
 
 ufunc_core::~ufunc_core()
 {
+      delete [] ports_;
 }
 
 /*
@@ -198,3 +202,10 @@ void compile_ufunc(char*label, char*code, unsigned wid,
       free(argv);
       free(portv);
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void exec_ufunc_delete(vvp_code_t euf_code)
+{
+      delete euf_code->ufunc_core_ptr;
+}
+#endif

@@ -107,6 +107,8 @@ void codespace_delete(void)
 		  count_opcodes -= 1;
 		  if ((cur+idx)->opcode == &of_VPI_CALL) {
 			vpi_call_delete((cur+idx)->handle);
+		  } else if ((cur+idx)->opcode == &of_EXEC_UFUNC) {
+			exec_ufunc_delete((cur+idx));
 		  }
 		  if (count_opcodes == 0) break;
 	    }
