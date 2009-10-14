@@ -50,6 +50,7 @@ extern void real_delete(struct __vpiHandle *item);
 extern void thread_vthr_delete(struct __vpiHandle *item);
 extern void thread_word_delete(struct __vpiHandle *item);
 extern void vpi_call_delete(struct __vpiHandle *item);
+extern void exec_ufunc_delete(vvp_code_t euf_code);
 extern void vthreads_delete(vthread_t base);
 extern void vvp_net_delete(vvp_net_t *item);
 
