@@ -597,9 +597,9 @@ static void draw_net_input_x(ivl_nexus_t nex,
 	    ivl_nexus_ptr_t nptr = ivl_nexus_ptr(nex, idx);
 
 	      /* If this object is part of an island, then we'll be
-	         making a port. If this nexus is an output to any
+	         making a port. If this nexus is an output from any
 	         switches in the island, then set island_input_flag to
-	         true. Save the island cookie. */
+	         false. Save the island cookie. */
 	    if ( (sw = ivl_nexus_ptr_switch(nptr)) ) {
 		  assert(island == 0 || island == ivl_switch_island(sw));
 		  island = ivl_switch_island(sw);
