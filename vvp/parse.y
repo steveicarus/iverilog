@@ -65,7 +65,7 @@ static struct __vpiModPath*modpath_dst = 0;
       vvp_delay_t*cdelay;
 };
 
-%token K_A K_ALIAS K_ALIAS_S K_ALIAS_R
+%token K_A K_ALIAS K_ALIAS_R
 %token K_ARITH_ABS K_ARITH_DIV K_ARITH_DIV_R K_ARITH_DIV_S K_ARITH_MOD
 %token K_ARITH_MOD_R K_ARITH_MOD_S
 %token K_ARITH_MULT K_ARITH_MULT_R K_ARITH_SUB K_ARITH_SUB_R
@@ -660,18 +660,6 @@ statement
   | T_LABEL K_NET_R local_flag T_STRING ',' signed_t_number signed_t_number
     ',' symbols_net ';'
       { compile_net_real($1, $4, $6, $7, $3, $9.cnt, $9.vect); }
-
-  | T_LABEL K_ALIAS T_STRING ',' signed_t_number signed_t_number
-    ',' symbols_net ';'
-      { compile_alias($1, $3, $5, $6, false, $8.cnt, $8.vect); }
-
-  | T_LABEL K_ALIAS_S T_STRING ',' signed_t_number signed_t_number
-    ',' symbols_net ';'
-      { compile_alias($1, $3, $5, $6, true, $8.cnt, $8.vect); }
-
-  | T_LABEL K_ALIAS_R T_STRING ',' signed_t_number signed_t_number
-    ',' symbols_net ';'
-      { compile_alias_real($1, $3, $5, $6, $8.cnt, $8.vect); }
 
   /* Arrayed versions of net directives. */
 

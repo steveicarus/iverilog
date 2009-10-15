@@ -451,12 +451,6 @@ extern void compile_netw_real(char*label, char*array_symbol,
 			      int msb, int lsb,
 			      unsigned argc, struct symb_s*argv);
 
-extern void compile_alias(char*label, char*name,
-			  int msb, int lsb, bool signed_flag,
-			  unsigned argc, struct symb_s*argv);
-extern void compile_alias_real(char*label, char*name,
-			       int msb, int lsb,
-			       unsigned argc, struct symb_s*argv);
 extern void compile_aliasw(char*label, char*array_symbol,
 			   unsigned long array_addr, int msb, int lsb,
 			   unsigned argc, struct symb_s*argv);

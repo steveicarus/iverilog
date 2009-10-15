@@ -485,20 +485,3 @@ void compile_aliasw(char*label, char*array_label, unsigned long array_addr,
       free(argv[0].text);
       free(argv);
 }
-
-/*
- * The .alias is practically identical to a .net. We create all the
- * VPI stuff for the new name (and put it in the local scope) but
- * reference the node in the net.
- */
-void compile_alias(char*label, char*name, int msb, int lsb, bool signed_flag,
-		 unsigned argc, struct symb_s*argv)
-{
-      __compile_net(label, name, 0, 0, msb, lsb, signed_flag, false, false, argc, argv);
-}
-
-void compile_alias_real(char*label, char*name, int msb, int lsb,
-		      unsigned argc, struct symb_s*argv)
-{
-      __compile_real(label, name, 0, 0, msb, lsb, false, argc, argv);
-}

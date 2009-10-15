@@ -544,14 +544,22 @@ static void draw_net_in_scope(ivl_signal_t sig)
 		    /* Finally, we may have an alias that is a word
 		       connected to another word. Again, this is a
 		       case of port collapsing. */
+		  int strength_aware_flag = 0;
+		  const char*vec8 = "";
+		  if (nex_data->flags&VVP_NEXUS_DATA_STR)
+			strength_aware_flag = 1;
+		  if (nex_data->drivers_count > 1)
+			vec8 = "8";
+		  if (strength_aware_flag)
+			vec8 = "8";
 
-		    /* For the alias, create a different kind of node
-		       that refers to the alias source data instead of
-		       holding our own data. */
-		  fprintf(vvp_out, "v%p_%u .alias%s \"%s\", %d %d, v%p_%u;\n",
-			  sig, iword, datatype_flag,
-			  vvp_mangle_name(ivl_signal_basename(sig)),
-			  msb, lsb, nex_data->net, nex_data->net_word);
+		  fprintf(vvp_out, "v%p_%u .net%s%s %s\"%s\", %d %d, %s;"
+				" alias, %u drivers%s\n",
+				sig, iword, vec8, datatype_flag, local_flag,
+				vvp_mangle_name(ivl_signal_basename(sig)),
+				msb, lsb, driver,
+				nex_data->drivers_count,
+				strength_aware_flag?", strength-aware":"");
 	    }
       }
 }

@@ -101,7 +101,6 @@ static char* strdupnew(char const *str)
   /* These are some keywords that are recognized. */
 ".alias"      { return K_ALIAS; }
 ".alias/real" { return K_ALIAS_R; }
-".alias/s"    { return K_ALIAS_S; }
 ".abs"          { return K_ARITH_ABS; }
 ".arith/div"    { return K_ARITH_DIV; }
 ".arith/div.r"  { return K_ARITH_DIV_R; }
