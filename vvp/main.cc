@@ -452,6 +452,7 @@ int main(int argc, char*argv[])
       island_delete();
       signal_pool_delete();
       vvp_net_pool_delete();
+      ufunc_pool_delete();
 #endif
 
       return vvp_return_value;

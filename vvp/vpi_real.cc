@@ -21,6 +21,9 @@
 # include  "vpi_priv.h"
 # include  "vvp_net_sig.h"
 # include  "schedule.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+#endif
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
@@ -198,6 +201,7 @@ void real_delete(vpiHandle item)
       struct __vpiRealVar*obj = (struct __vpiRealVar*) item;
       assert(obj->net->fil);
       obj->net->fil->clear_all_callbacks();
+      vvp_net_delete(obj->net);
 
       free(obj);
 }

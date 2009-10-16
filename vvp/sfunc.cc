@@ -18,6 +18,10 @@
  */
 
 # include  "compile.h"
+# include  "config.h"
+#ifdef CHECK_WITH_VALGRIND
+# include "vvp_cleanup.h"
+#endif
 # include  "sfunc.h"
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -39,6 +43,13 @@ sfunc_core::sfunc_core(vvp_net_t*net, vpiHandle sys,
 
 sfunc_core::~sfunc_core()
 {
+      delete sys_;
+#ifdef CHECK_WITH_VALGRIND
+      for (unsigned i = 0; i < argc_; i += 1) {
+	    constant_delete(argv_[i]);
+      }
+#endif
+      delete [] argv_;
 }
 
 /*

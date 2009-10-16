@@ -37,6 +37,7 @@ extern void signal_pool_delete(void);
 extern void udp_defns_delete(void);
 extern void vpi_handle_delete(void);
 extern void vvp_net_pool_delete(void);
+extern void ufunc_pool_delete(void);
 
 extern void A_delete(struct __vpiHandle *item);
 extern void PV_delete(struct __vpiHandle *item);

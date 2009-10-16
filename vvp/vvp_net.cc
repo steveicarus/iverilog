@@ -33,6 +33,7 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  <valgrind/memcheck.h>
 # include  <map>
+# include "sfunc.h"
 #endif
 
 permaheap vvp_net_fun_t::heap_;
@@ -82,17 +83,35 @@ void* vvp_net_t::operator new (size_t size)
 
 #ifdef CHECK_WITH_VALGRIND
 static map<vvp_net_t*, bool> vvp_net_map;
+static map<sfunc_core*, bool> sfunc_map;
 
 void vvp_net_delete(vvp_net_t *item)
 {
-       vvp_net_map[item] = true;
+      vvp_net_map[item] = true;
+      if (sfunc_core*tmp = dynamic_cast<sfunc_core*> (item->fun)) {
+	    sfunc_map[tmp] = true;
+      }
 }
 
 void vvp_net_pool_delete()
 {
+      unsigned long vvp_nets_del = 0;
+
       map<vvp_net_t*, bool>::iterator iter;
       for (iter = vvp_net_map.begin(); iter != vvp_net_map.end(); iter++) {
+	    vvp_nets_del += 1;
 	    VALGRIND_MEMPOOL_FREE(iter->first->pool, iter->first);
+      }
+
+      map<sfunc_core*, bool>::iterator siter;
+      for (siter = sfunc_map.begin(); siter != sfunc_map.end(); siter++) {
+	    delete siter->first;
+      }
+
+      if (RUNNING_ON_VALGRIND && (vvp_nets_del != count_vvp_nets)) {
+	    fflush(NULL);
+	    VALGRIND_PRINTF("Error: vvp missed deleting %lu net(s).",
+	                    count_vvp_nets - vvp_nets_del);
       }
 
       for (unsigned idx = 0; idx < vvp_net_pool_count; idx += 1) {

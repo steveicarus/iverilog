@@ -903,6 +903,8 @@ vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
 #ifdef CHECK_WITH_VALGRIND
 static struct __vpiSignal **signal_pool = 0;
 static unsigned signal_pool_count = 0;
+static unsigned long signal_count = 0;
+static unsigned long signal_dels = 0;
 #endif
 
 static struct __vpiSignal* allocate_vpiSignal(void)
@@ -930,6 +932,7 @@ static struct __vpiSignal* allocate_vpiSignal(void)
 #ifdef CHECK_WITH_VALGRIND
       VALGRIND_MEMPOOL_ALLOC(alloc_array, cur, sizeof(struct __vpiSignal));
       cur->pool = alloc_array;
+      signal_count += 1;
 #endif
       alloc_index += 1;
       return cur;
@@ -942,15 +945,23 @@ void signal_delete(vpiHandle item)
       assert(obj->node->fil);
       obj->node->fil->clear_all_callbacks();
       vvp_net_delete(obj->node);
+      signal_dels += 1;
       VALGRIND_MEMPOOL_FREE(obj->pool, obj);
 }
 
 void signal_pool_delete()
 {
+      if (RUNNING_ON_VALGRIND && (signal_count != signal_dels)) {
+	    fflush(NULL);
+	    VALGRIND_PRINTF("Error: vvp missed deleting %lu signal(s).",
+	                    signal_count - signal_dels);
+      }
+
       for (unsigned idx = 0; idx < signal_pool_count; idx += 1) {
 	    VALGRIND_DESTROY_MEMPOOL(signal_pool[idx]);
 	    free(signal_pool[idx]);
       }
+
       free(signal_pool);
       signal_pool = 0;
       signal_pool_count = 0;
