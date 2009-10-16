@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2009  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -149,7 +149,7 @@ static PLI_INT32 simparam_calltf(PLI_BYTE8 *name_ext)
       } else if (strcmp(param, "shrink") == 0) {
 	    retval = 0.0; /* Nothing for now. */
       } else if (strcmp(param, "simulatorSubversion") == 0) {
-	    retval = 0.0;
+	    retval = 2.0;
       } else if (strcmp(param, "simulatorVersion") == 0) {
 	    retval = 0.9;
       } else if (strcmp(param, "sourceScaleFactor") == 0) {
