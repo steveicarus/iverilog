@@ -672,6 +672,16 @@ static void draw_net_input_x(ivl_nexus_t nex,
 		  }
 		  *tmp++ = '>';
 		  *tmp = 0;
+
+		    /* Create an "open" driver to hold the HiZ. We
+		       need to do this so that .nets have something to
+		       hang onto. */
+		  char buf[64];
+		  snprintf(buf, sizeof buf, "o%p", nex);
+		  fprintf(vvp_out, "%s .functor BUFZ %u, %s; HiZ drive\n",
+			  buf, wid, nex_private);
+		  nex_private = realloc(nex_private, strlen(buf)+1);
+		  strcpy(nex_private, buf);
 	    }
 
 	    if (island) {

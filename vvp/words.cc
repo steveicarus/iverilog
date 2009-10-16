@@ -290,12 +290,17 @@ static void __compile_net(char*label,
 
       assert(argc == 1);
       vvp_net_t*node = vvp_net_lookup(argv[0].text);
+#if 1
       if (node == 0) {
 	      /* No existing net, but the string value may be a
 		 constant. In that case, we will wind up generating a
-		 bufz node that can carry the constant value. */
+		 bufz node that can carry the constant value.
+
+	         NOTE: This is a hack! The code generator should be
+	         fixed so that this is no longer needed. */
 	    node = create_constant_node(label, argv[0].text);
       }
+#endif
       if (node == 0) {
 	    struct __vpiScope*scope = vpip_peek_current_scope();
 	    __compile_net_resolv*res
