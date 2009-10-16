@@ -20,6 +20,9 @@
 # include  "compile.h"
 # include  "vpi_priv.h"
 # include  "schedule.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+#endif
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
@@ -198,6 +201,7 @@ void real_delete(vpiHandle item)
 
       vvp_fun_signal_real*fun = (vvp_fun_signal_real*) obj->net->fun;
       fun->clear_all_callbacks();
+      vvp_net_delete(obj->net);
 
       free(obj);
 }

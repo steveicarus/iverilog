@@ -34,6 +34,7 @@
 # include  <string.h>
 # include  <iostream>
 # include  <assert.h>
+# include  <map>
 
 #ifdef __MINGW32__
 #include <windows.h>
@@ -204,8 +205,18 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 }
 
 #ifdef CHECK_WITH_VALGRIND
+static map<ufunc_core*, bool> ufunc_map;
+
 void exec_ufunc_delete(vvp_code_t euf_code)
 {
-      delete euf_code->ufunc_core_ptr;
+      ufunc_map[euf_code->ufunc_core_ptr] = true;
+}
+
+void ufunc_pool_delete(void)
+{
+      map<ufunc_core*, bool>::iterator iter;
+      for (iter = ufunc_map.begin(); iter != ufunc_map.end(); iter++) {
+	    delete iter->first;
+      }
 }
 #endif
