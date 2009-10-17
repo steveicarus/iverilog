@@ -72,7 +72,7 @@ PICFLAGS = @PICFLAG@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 
 all: dep config.h _pli_types.h version.h ivl@EXEEXT@
-	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
+	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 
 # In the windows world, the installer will need a dosify program to
 # dosify text files.
@@ -85,13 +85,13 @@ endif
 # This rule rules the compiler in the trivial hello.vl program to make
 # sure the basics were compiled properly.
 check: all
-	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) check); done
+	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 	test -r check.conf || cp $(srcdir)/check.conf .
 	driver/iverilog -B. -BPivlpp -tcheck -ocheck.vvp $(srcdir)/examples/hello.vl
 	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
 
 clean:
-	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
+	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 ifeq (@MINGW32@,no)
 	(cd driver-vpi ; $(MAKE) $@)
 endif
@@ -102,7 +102,7 @@ endif
 	rm -rf dep
 
 distclean: clean
-	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
+	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 ifeq (@MINGW32@,no)
 	(cd driver-vpi ; $(MAKE) $@)
 endif
@@ -140,6 +140,11 @@ config.h: $(srcdir)/config.h.in
 _pli_types.h: $(srcdir)/_pli_types.h.in
 	./config.status --header=$@
 
+$(srcdir)/configure: $(srcdir)/configure.in
+	cd $(srcdir) && autoconf
+
+config.status: $(srcdir)/configure
+	./config.status --recheck
 
 ifeq (@WIN32@,yes)
 # Under Windows (mingw) I need to make the ivl.exe in two steps.
@@ -259,7 +264,7 @@ WIN32_INSTALL = $(bindir)/iverilog-vpi$(suffix)
 endif
 
 install: all installdirs $(libdir)/ivl$(suffix)/ivl@EXEEXT@  $(libdir)/ivl$(suffix)/include/constants.vams $(libdir)/ivl$(suffix)/include/disciplines.vams $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
-	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
+	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 
 $(bindir)/iverilog-vpi$(suffix): ./iverilog-vpi
 	$(INSTALL_SCRIPT) ./iverilog-vpi "$(DESTDIR)$(bindir)/iverilog-vpi$(suffix)"
@@ -304,7 +309,7 @@ installdirs: $(srcdir)/mkinstalldirs
 	    "$(DESTDIR)$(mandir)/man1"
 
 uninstall:
-	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
+	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 	for f in ivl@EXEEXT@ include/constants.vams include/disciplines.vams; \
 	    do rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/$$f"; done
 	-rmdir "$(DESTDIR)$(libdir)/ivl$(suffix)/include"
