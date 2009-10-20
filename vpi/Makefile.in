@@ -112,10 +112,12 @@ distclean: clean
 	rm -f Makefile config.log vpi_config.h
 
 Makefile: $(srcdir)/Makefile.in ../config.status
-	../config.status --file=$@
+	cd ..; ./config.status --file=vpi/$@
 
-vpi_config.h: $(srcdir)/vpi_config.h.in ../config.status
-	../config.status --header=$@
+stamp-vpi_config-h: $(srcdir)/vpi_config.h.in ../config.status
+	@rm -f $@
+	cd ..; ./config.status --header=vpi/vpi_config.h
+vpi_config.h: stamp-vpi_config-h
 
 check: all
 

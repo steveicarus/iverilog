@@ -134,17 +134,22 @@ $(FF) $(TT)
 Makefile: $(srcdir)/Makefile.in config.status
 	./config.status --file=$@
 
-config.h: $(srcdir)/config.h.in
-	./config.status --header=$@
+stamp-config-h: $(srcdir)/config.h.in config.status
+	@rm -f $@
+	./config.status config.h
+config.h: stamp-config-h
 
-_pli_types.h: $(srcdir)/_pli_types.h.in
-	./config.status --header=$@
+stamp-_pli_types-h: $(srcdir)/_pli_types.h.in config.status
+	@rm -f $@
+	./config.status _pli_types.h
+_pli_types.h: stamp-_pli_types-h
 
 $(srcdir)/configure: $(srcdir)/configure.in
 	cd $(srcdir) && autoconf
 
 config.status: $(srcdir)/configure
 	./config.status --recheck
+	./config.status
 
 ifeq (@WIN32@,yes)
 # Under Windows (mingw) I need to make the ivl.exe in two steps.

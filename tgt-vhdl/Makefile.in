@@ -64,10 +64,12 @@ vhdl.tgt: $O $(TGTDEPLIBS)
 	$(CXX) @shared@ -o $@ $O $(TGTLDFLAGS)
 
 Makefile: $(srcdir)/Makefile.in ../config.status
-	../config.status --file=$@
+	cd ..; ./config.status --file=tgt-vhdl/$@
 
-vhdl_config.h: $(srcdir)/vhdl_config.h.in ../config.status
-	../config.status --header=$@
+stamp-vhdl_config-h: $(srcdir)/vhdl_config.h.in ../config.status
+	@rm -f $@
+	cd ..; ./config.status --header=tgt-vhdl/vhdl_config.h
+vhdl_config.h: stamp-vhdl_config-h
 
 clean:
 	rm -rf $(O) dep vhdl.tgt 

@@ -60,7 +60,7 @@ dep:
 O = cadpli.o
 
 Makefile: $(srcdir)/Makefile.in ../config.status
-	../config.status --file=$@
+	cd ..; ./config.status --file=cadpli/$@
 
 SYSTEM_VPI_LDFLAGS = -L../vvp -lvpi
 ifeq (@MINGW32@,yes)

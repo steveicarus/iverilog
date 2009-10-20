@@ -150,11 +150,13 @@ INSTALL_DOC = $(mandir)/man1/vvp$(suffix).1
 INSTALL_DOCDIR = $(mandir)/man1
 endif
 
-Makefile: $(srcdir)/Makefile.in ../config.status
-	../config.status --file=$@
+Makefile: $(srcdir)/Makefile.in
+	cd ..; ./config.status --file=vvp/$@
 
-config.h: $(srcdir)/config.h.in ../config.status
-	../config.status --header=$@
+stamp-config-h: $(srcdir)/config.h.in ../config.status
+	@rm -f $@
+	cd ..; ./config.status --header=vvp/config.h
+config.h: stamp-config-h
 
 install: all installdirs $(bindir)/vvp$(suffix)@EXEEXT@ $(libdir)/libvpi$(suffix).a $(INSTALL_DOC)
 

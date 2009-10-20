@@ -52,7 +52,7 @@ distclean: clean
 	rm -f Makefile config.log
 
 Makefile: $(srcdir)/Makefile.in ../config.status
-	../config.status --file=$@
+	cd ..; ./config.status --file=ivlpp/$@
 
 O = main.o lexor.o
 

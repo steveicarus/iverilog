@@ -59,7 +59,7 @@ distclean: clean
 	rm -f Makefile config.log
 
 Makefile: $(srcdir)/Makefile.in ../config.status
-	../config.status --file=$@
+	cd ..; ./config.status --file=driver/$@
 
 O = main.o substit.o cflexor.o cfparse.o
 
