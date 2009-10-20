@@ -953,8 +953,8 @@ void signal_pool_delete()
 {
       if (RUNNING_ON_VALGRIND && (signal_count != signal_dels)) {
 	    fflush(NULL);
-	    VALGRIND_PRINTF("Error: vvp missed deleting %lu signal(s).",
-	                    signal_count - signal_dels);
+	    VALGRIND_PRINTF("Error: vvp missed deleting %ld of %lu signal(s).",
+	                    (long) signal_count - signal_dels, signal_count);
       }
 
       for (unsigned idx = 0; idx < signal_pool_count; idx += 1) {

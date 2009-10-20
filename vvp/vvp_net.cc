@@ -84,6 +84,16 @@ void* vvp_net_t::operator new (size_t size)
 #ifdef CHECK_WITH_VALGRIND
 static map<vvp_net_t*, bool> vvp_net_map;
 static map<sfunc_core*, bool> sfunc_map;
+static vvp_net_t **local_net_pool = 0;
+static unsigned local_net_pool_count = 0;
+
+void pool_local_net(vvp_net_t*net)
+{
+      local_net_pool_count += 1;
+      local_net_pool = (vvp_net_t **) realloc(local_net_pool,
+                       local_net_pool_count*sizeof(vvp_net_t **));
+      local_net_pool[local_net_pool_count-1] = net;
+}
 
 void vvp_net_delete(vvp_net_t *item)
 {
@@ -97,21 +107,31 @@ void vvp_net_pool_delete()
 {
       unsigned long vvp_nets_del = 0;
 
+      for (unsigned idx = 0; idx < local_net_pool_count; idx += 1) {
+	    vvp_net_delete(local_net_pool[idx]);
+      }
+      free(local_net_pool);
+      local_net_pool = 0;
+      local_net_pool_count = 0;
+
       map<vvp_net_t*, bool>::iterator iter;
       for (iter = vvp_net_map.begin(); iter != vvp_net_map.end(); iter++) {
 	    vvp_nets_del += 1;
 	    VALGRIND_MEMPOOL_FREE(iter->first->pool, iter->first);
       }
+      vvp_net_map.clear();
 
       map<sfunc_core*, bool>::iterator siter;
       for (siter = sfunc_map.begin(); siter != sfunc_map.end(); siter++) {
 	    delete siter->first;
       }
+      sfunc_map.clear();
 
       if (RUNNING_ON_VALGRIND && (vvp_nets_del != count_vvp_nets)) {
 	    fflush(NULL);
-	    VALGRIND_PRINTF("Error: vvp missed deleting %lu net(s).",
-	                    count_vvp_nets - vvp_nets_del);
+	    VALGRIND_PRINTF("Error: vvp missed deleting %ld of %lu net(s).",
+	                    (long) count_vvp_nets - vvp_nets_del,
+	                    count_vvp_nets);
       }
 
       for (unsigned idx = 0; idx < vvp_net_pool_count; idx += 1) {

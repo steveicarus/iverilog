@@ -23,6 +23,9 @@
 # include  "vvp_net_sig.h"
 # include  "logic.h"
 # include  "schedule.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+#endif
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
@@ -261,6 +264,9 @@ static void __compile_net2(vvp_net_t*node, vvp_array_t array,
 	      /* This attaches the label to the vpiHandle */
 	    compile_vpi_symbol(my_label, obj);
       }
+#ifdef CHECK_WITH_VALGRIND
+      else pool_local_net(node);
+#endif
 
 	// REMOVE ME! Giving the net a label is a legacy of the times
 	// when the .net was a functor of its own. In the long run, we

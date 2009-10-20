@@ -55,4 +55,6 @@ extern void exec_ufunc_delete(vvp_code_t euf_code);
 extern void vthreads_delete(vthread_t base);
 extern void vvp_net_delete(vvp_net_t *item);
 
+extern void pool_local_net(vvp_net_t *net);
+
 #endif
