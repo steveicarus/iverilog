@@ -59,11 +59,13 @@ all: dep libveriuser.a $(ALL32)
 
 check: all
 
-Makefile: $(srcdir)/Makefile.in ../config.status
-	../config.status --file=$@
+Makefile: $(srcdir)/Makefile.in
+	cd ..; ./config.status --file=libveriuser/$@
 
-config.h: $(srcdir)/config.h.in ../config.status
-	../config.status --header=$@
+stamp-config-h: $(srcdir)/config.h.in ../config.status
+	@rm -f $@
+	cd ..; ./config.status --header=libveriuser/config.h
+config.h: stamp-config-h
 
 libveriuser.o: $O
 	$(LD) -r -o $@ $O

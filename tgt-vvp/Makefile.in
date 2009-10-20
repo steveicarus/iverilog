@@ -75,10 +75,12 @@ vvp-s.conf: $(srcdir)/vvp-s.conf.in Makefile
 	echo 'flag:VVP_EXECUTABLE=$(bindir)/vvp$(suffix)' | cat $(srcdir)/vvp-s.conf.in - > vvp-s.conf
 
 Makefile: $(srcdir)/Makefile.in ../config.status
-	../config.status --file=$@
+	cd ..; ./config.status --file=tgt-vvp/$@
 
-vvp_config.h: $(srcdir)/vvp_config.h.in ../config.status
-	../config.status --header=$@
+stamp-vvp_config-h: $(srcdir)/vvp_config.h.in ../config.status
+	@rm -f $@
+	cd ..; ./config.status --header=tgt-vvp/vvp_config.h
+vvp_config.h: stamp-vvp_config-h
 
 clean:
 	rm -rf *.o dep vvp.tgt vvp.conf vvp-s.conf
