@@ -109,7 +109,8 @@ clean:
 	rm -f va_math.vpi v2005_math.vpi
 
 distclean: clean
-	rm -f Makefile config.log vpi_config.h
+	rm -f Makefile config.log
+	rm -f vpi_config.h stamp-vpi_config-h
 
 Makefile: $(srcdir)/Makefile.in ../config.status
 	cd ..; ./config.status --file=vpi/$@

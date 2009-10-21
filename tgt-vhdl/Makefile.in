@@ -75,7 +75,8 @@ clean:
 	rm -rf $(O) dep vhdl.tgt 
 
 distclean: clean
-	rm -f Makefile config.log vhdl_config.h
+	rm -f Makefile config.log
+	rm -f stamp-vhdl_config-h vhdl_config.h
 
 check: all
 

@@ -86,7 +86,8 @@ clean:
 	rm -rf *.o dep vvp.tgt vvp.conf vvp-s.conf
 
 distclean: clean
-	rm -f Makefile config.log vvp_config.h
+	rm -f Makefile config.log
+	rm -f stamp-vvp_config-h vvp_config.h
 
 check: all
 
