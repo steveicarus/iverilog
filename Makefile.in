@@ -106,9 +106,10 @@ distclean: clean
 ifeq (@MINGW32@,no)
 	(cd driver-vpi ; $(MAKE) $@)
 endif
-	for dir in $(NOTUSED); do (cd $$dir ; $(MAKE) $@); done
-	rm -f Makefile config.status config.log config.cache config.h
-	rm -f _pli_types.h
+	$(foreach dir,$(NOTUSED),$(MAKE) -C $(dir) $@ && ) true
+	rm -f Makefile config.status config.log config.cache
+	rm -f stamp-config-h config.h
+	rm -f stamp-_pli_types-h _pli_types.h
 
 TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-dll-analog.o
 FF = cprop.o nodangle.o synth.o synth2.o syn-rules.o
@@ -144,7 +145,7 @@ stamp-_pli_types-h: $(srcdir)/_pli_types.h.in config.status
 	./config.status _pli_types.h
 _pli_types.h: stamp-_pli_types-h
 
-$(srcdir)/configure: $(srcdir)/configure.in
+$(srcdir)/configure: $(srcdir)/configure.in $(srcdir)/aclocal.m4
 	cd $(srcdir) && autoconf
 
 config.status: $(srcdir)/configure

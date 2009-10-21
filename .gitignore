@@ -18,6 +18,7 @@ config.h
 /tgt-vvp/vvp_config.h
 /tgt-vhdl/vhdl_config.h
 /vpi/vpi_config.h
+stamp-*-h
 /version.h
 /version_tag.h
 

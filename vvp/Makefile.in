@@ -61,7 +61,8 @@ clean:
 	rm -rf dep vvp@EXEEXT@ libvpi.a bin32 parse.output vvp.pdf vvp.exp
 
 distclean: clean
-	rm -f Makefile config.log config.h
+	rm -f Makefile config.log
+	rm -f stamp-config-h config.h
 
 check: all
 	./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'

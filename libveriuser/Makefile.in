@@ -87,7 +87,8 @@ clean:
 	rm -rf *.o dep libveriuser.a libveriuser.o bin32
 
 distclean: clean
-	rm -f Makefile config.log config.h
+	rm -f Makefile config.log
+	rm -f config.h stamp-config-h
 
 install:: all installdirs $(libdir)/libveriuser$(suffix).a $(INSTALL32)
 
