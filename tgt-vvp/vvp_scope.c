@@ -888,17 +888,29 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	/* If there are delays, then draw the delay functor to carry
 	   that delay. This is the final output. */
       if (need_delay_flag) {
-	    ivl_expr_t rise_exp  = ivl_logic_delay(lptr,0);
-	    ivl_expr_t fall_exp  = ivl_logic_delay(lptr,1);
-	    ivl_expr_t decay_exp = ivl_logic_delay(lptr,2);
+	    ivl_expr_t rise_exp  = ivl_logic_delay(lptr, 0);
+	    ivl_expr_t fall_exp  = ivl_logic_delay(lptr, 1);
+	    ivl_expr_t decay_exp = ivl_logic_delay(lptr, 2);
 
-	    if (number_is_immediate(rise_exp,64,0)
-		&& number_is_immediate(fall_exp,64,0)
-		&& number_is_immediate(decay_exp,64,0)) {
+	    if (number_is_immediate(rise_exp, 64, 0)
+		&& number_is_immediate(fall_exp, 64, 0)
+		&& number_is_immediate(decay_exp, 64, 0)) {
 
 		  assert(! number_is_unknown(rise_exp));
 		  assert(! number_is_unknown(fall_exp));
 		  assert(! number_is_unknown(decay_exp));
+
+		  // For now .delay (x,y,z) only supports a 32 bit delay value.
+		  if ((! number_is_immediate(rise_exp, 32, 0)) ||
+		      (! number_is_immediate(fall_exp, 32, 0)) ||
+		      (! number_is_immediate(decay_exp, 32, 0))) {
+			fprintf(stderr, "%s:%u: vvp-tgt sorry: only 32 bit "
+			        "delays are supported in a continuous "
+			        "assignment.\n", ivl_expr_file(rise_exp),
+			        ivl_expr_lineno(rise_exp));
+			exit(1);
+		  }
+
 		  fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
 			  lptr, get_number_immediate(rise_exp),
 			  get_number_immediate(fall_exp),
@@ -1104,9 +1116,22 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net)
 	    assert(number_is_immediate(d_rise, 64, 0));
 	    assert(number_is_immediate(d_fall, 64, 0));
 	    assert(number_is_immediate(d_decay, 64, 0));
+
 	    assert(! number_is_unknown(d_rise));
 	    assert(! number_is_unknown(d_fall));
 	    assert(! number_is_unknown(d_decay));
+
+	    // For now .delay (x,y,z) only supports a 32 bit delay value.
+	    if ((! number_is_immediate(d_rise, 32, 0)) ||
+	        (! number_is_immediate(d_fall, 32, 0)) ||
+	        (! number_is_immediate(d_decay, 32, 0))) {
+		  fprintf(stderr, "%s:%u: vvp-tgt sorry: only 32 bit "
+		          "delays are supported in a continuous "
+		          "assignment.\n", ivl_expr_file(d_rise),
+		          ivl_expr_lineno(d_rise));
+		  exit(1);
+	    }
+
 	    dly = "/d";
 	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
 	            net, get_number_immediate(d_rise),
