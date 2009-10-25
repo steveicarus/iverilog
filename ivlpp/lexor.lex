@@ -1520,8 +1520,13 @@ static void do_include()
     free(include_dir[0]);
     include_dir[0] = 0;
 
-    if(depend_file)
-        fprintf(depend_file, "%s\n", standby->path);
+    if (depend_file) {
+        if (dep_mode == 'p') {
+            fprintf(depend_file, "I %s\n", standby->path);
+        } else if (dep_mode != 'm') {
+            fprintf(depend_file, "%s\n", standby->path);
+        }
+    }
 
     if (line_direct_flag)
         fprintf(yyout, "\n`line 1 \"%s\" 1\n", standby->path);
@@ -1648,8 +1653,13 @@ static int load_next_input()
         if (line_direct_flag)
             fprintf(yyout, "\n`line 1 \"%s\" 0\n", istack->path);
 
-        if(depend_file)
-            fprintf(depend_file, "%s\n", istack->path);
+        if (depend_file) {
+            if (dep_mode == 'p') {
+                fprintf(depend_file, "M %s\n", istack->path);
+            } else if (dep_mode != 'i') {
+                fprintf(depend_file, "%s\n", istack->path);
+            }
+        }
 
           /* This works around an issue in flex yyrestart() where it
            * uses yyin to create a new buffer when one does not exist.
@@ -1796,8 +1806,13 @@ void reset_lexor(FILE* out, char* paths[])
         exit(1);
     }
 
-    if(depend_file)
-          fprintf(depend_file, "%s\n", paths[0]);
+    if (depend_file) {
+        if (dep_mode == 'p') {
+            fprintf(depend_file, "M %s\n", paths[0]);
+        } else if (dep_mode != 'i') {
+            fprintf(depend_file, "%s\n", paths[0]);
+        }
+    }
 
     yyout = out;
 

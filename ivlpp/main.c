@@ -56,6 +56,8 @@ extern const char*optarg;
 #endif
 /* Path to the dependency file, if there is one. */
 char *dep_path = NULL;
+/* Dependency file output mode */
+char dep_mode = 'a';
 
 
 /*
@@ -146,10 +148,14 @@ static int flist_read_flags(const char*path)
 		  define_macro(optarg, buf, 1, 0);
 		  free(buf);
 
-	    } else if (strcmp(cp,"M") == 0) {
+	    } else if ((strcmp(cp,"Ma") == 0)
+                   ||  (strcmp(cp,"Mi") == 0)
+                   ||  (strcmp(cp,"Mm") == 0)
+                   ||  (strcmp(cp,"Mp") == 0)) {
 		  if (dep_path) {
 			fprintf(stderr, "duplicate -M flag.\n");
-		  } else {
+                  } else {
+                        dep_mode = cp[1];
 			dep_path = strdup(arg);
 		  }
 

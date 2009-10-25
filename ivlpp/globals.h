@@ -42,6 +42,7 @@ extern int line_direct_flag;
 extern unsigned error_count;
 
 extern FILE *depend_file;
+extern char dep_mode;
 
 /* This is the entry to the lexer. */
 extern int yylex();

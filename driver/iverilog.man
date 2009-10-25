@@ -6,7 +6,7 @@ iverilog - Icarus Verilog compiler
 .B iverilog
 [\-ESVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]] [\-pflag=value]
 [\-dname] [\-g1995|\-g2001|\-g2005|\-g<feature>]
-[\-Iincludedir] [\-mmodule] [\-Mfile] [\-Nfile] [\-ooutputfilename]
+[\-Iincludedir] [\-mmodule] [\-M[mode=]file] [\-Nfile] [\-ooutputfilename]
 [\-stopmodule] [\-ttype] [\-Tmin/typ/max] [\-Wclass] [\-ypath] sourcefile
 
 .SH DESCRIPTION
@@ -125,11 +125,21 @@ to specify several directories to search, the directories are searched
 in the order they appear on the command line.
 .TP 8
 .B -M\fIpath\fP
-Write into the file specified by path a list of files that contribute
-to the compilation of the design. This includes files that are
-included by include directives and files that are automatically loaded
-by library support. The output is one file name per line, with no
-leading or trailing space.
+This is equivalent to \fB-Mall=path\fP. Preserved for backwards
+compatibility.
+.TP 8
+.B -M\fImode=path\fP
+Write into the file specified by path a list of files that contribute to
+the compilation of the design. If \fBmode\fP is \fBall\fP or \fBprefix\fP,
+this includes files that are included by include directives and files
+that are automatically loaded by library support as well as the files
+explicitly specified by the user. If \fBmode\fP is \fBinclude\fP, only
+files that are included by include directives are listed. If \fBmode\fP
+is \fBmodule\fP, only files that are specified by the user or that are
+automatically loaded by library support are listed. The output is one
+file name per line, with no leading or trailing space. If \fBmode\fP
+is \fBprefix\fP, files that are included by include directives are
+prefixed by "I " and other files are prefixed by "M ".
 .TP 8
 .B -m\fImodule\fP
 Add this module to the list of VPI modules to be loaded by the

@@ -39,7 +39,8 @@ const char NOTICE[] =
 const char HELP[] =
 "Usage: iverilog [-ESvV] [-B base] [-c cmdfile|-f cmdfile]\n"
 "                [-g1995|-g2001|-g2005] [-g<feature>]\n"
-"                [-D macro[=defn]] [-I includedir] [-M depfile] [-m module]\n"
+"                [-D macro[=defn]] [-I includedir]\n"
+"                [-M [mode=]depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
 "                [-s topmodule] [-t target] [-T min|typ|max]\n"
 "                [-W class] [-y dir] [-Y suf] source_file(s)\n"
@@ -107,6 +108,8 @@ const char*opath = "a.out";
 const char*npath = 0;
 const char*targ  = "vvp";
 const char*depfile = 0;
+
+char depmode = 'a';
 
 const char*generation = "2005";
 const char*gen_specify = "no-specify";
@@ -696,6 +699,37 @@ int process_generation(const char*name)
       return 0;
 }
 
+int process_depfile(const char*name)
+{
+      const char*cp = strchr(name, '=');
+      if (cp) {
+            int match_length = (int)(cp - name) + 1;
+            if (strncmp(name, "all=", match_length) == 0) {
+                  depmode = 'a';
+            } else if (strncmp(name, "include=", match_length) == 0) {
+                  depmode = 'i';
+            } else if (strncmp(name, "module=", match_length) == 0) {
+                  depmode = 'm';
+            } else if (strncmp(name, "prefix=", match_length) == 0) {
+                  depmode = 'p';
+            } else {
+                  fprintf(stderr, "Unknown dependency file mode '%.*s'\n\n",
+                          match_length - 1, name);
+                  fprintf(stderr, "Supported modes are:\n");
+                  fprintf(stderr, "    all\n");
+                  fprintf(stderr, "    include\n");
+                  fprintf(stderr, "    module\n");
+                  fprintf(stderr, "    prefix\n");
+                  return -1;
+	    }
+            depfile = cp + 1;
+      } else {
+            depmode = 'a';
+            depfile = name;
+      }
+      return 0;
+}
+
 /*
  * If it exists add the SFT file for the given module.
  */
@@ -863,7 +897,8 @@ int main(int argc, char **argv)
 		  break;
 
 		case 'M':
-		  depfile = optarg;
+		  if (process_depfile(optarg) != 0)
+                        return -1;
 		  break;
 
 		case 'm':
@@ -984,7 +1019,10 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "generation:%s\n", gen_system_verilog);
       fprintf(iconfig_file, "warnings:%s\n", warning_flags);
       fprintf(iconfig_file, "out:%s\n", opath);
-      if (depfile) fprintf(iconfig_file, "depfile:%s\n", depfile);
+      if (depfile) {
+            fprintf(iconfig_file, "depfile:%s\n", depfile);
+            fprintf(iconfig_file, "depmode:%c\n", depmode);
+      }
 
       while ( (command_filename = get_cmd_file()) ) {
 	    int rc;
@@ -1008,7 +1046,7 @@ int main(int argc, char **argv)
       destroy_lexor();
 
       if (depfile) {
-	    fprintf(defines_file, "M:%s\n", depfile);
+	    fprintf(defines_file, "M%c:%s\n", depmode, depfile);
       }
 
     /* Process parameter definition from command line. The last

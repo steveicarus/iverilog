@@ -105,6 +105,7 @@ list<perm_string> roots;
 
 char*ivlpp_string = 0;
 
+char depfile_mode = 'a';
 char* depfile_name = NULL;
 FILE *depend_file = NULL;
 
@@ -426,6 +427,9 @@ static void read_iconfig_file(const char*ipath)
 			cerr << "debug: Enable optimizer debug" << endl;
 		  } else {
 		  }
+
+	    } else if (strcmp(buf, "depmode") == 0) {
+		  depfile_mode = *cp;
 
 	    } else if (strcmp(buf, "depfile") == 0) {
 		  depfile_name = strdup(cp);

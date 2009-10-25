@@ -46,6 +46,7 @@ static struct module_library*library_list = 0;
 static struct module_library*library_last = 0;
 
 const char dir_character = '/';
+extern char depfile_mode;
 extern FILE *depend_file;
 
 /*
@@ -72,7 +73,11 @@ bool load_module(const char*type)
 	    sprintf(path, "%s%c%s", lcur->dir, dir_character, (*cur).second);
 
 	    if(depend_file) {
-		  fprintf(depend_file, "%s\n", path);
+                  if (depfile_mode == 'p') {
+		        fprintf(depend_file, "M %s\n", path);
+                  } else if (depfile_mode != 'i') {
+		        fprintf(depend_file, "%s\n", path);
+                  }
 		  fflush(depend_file);
 	    }
 
@@ -190,4 +195,3 @@ int build_library_index(const char*path, bool key_case_sensitive)
 
       return 0;
 }
-
