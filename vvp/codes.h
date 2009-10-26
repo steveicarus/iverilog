@@ -1,7 +1,7 @@
 #ifndef __codes_H
 #define __codes_H
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,7 +21,6 @@
 
 # include  "pointers.h"
 # include  "vvp_net.h"
-# include  "memory.h"
 # include  "array.h"
 # include  "vthread.h"
 
