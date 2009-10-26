@@ -21,7 +21,6 @@
 
 # include  "pointers.h"
 # include  "vvp_net.h"
-# include  "memory.h"
 # include  "array.h"
 # include  "vthread.h"
 
