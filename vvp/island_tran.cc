@@ -74,22 +74,17 @@ static inline vvp_island_branch_tran* BRANCH_TRAN(vvp_island_branch*tmp)
 void vvp_island_tran::run_island()
 {
 	// Test to see if any of the branches are enabled. This loop
-	// tests the elabled inputs for all the branches and caches
+	// tests the enabled inputs for all the branches and caches
 	// the results in the enabled_flag for each branch. The
 	// run_test_enabled() method also clears all the processing
 	// flags for the branches so that we are in a good start
 	// state.
-	//
-	// If, after testing all the branches, none are enabled, the
-	// handle that special case by ignoring the island.
       bool runnable = false;
       for (vvp_island_branch*cur = branches_ ; cur ; cur = cur->next_branch) {
 	    vvp_island_branch_tran*tmp = dynamic_cast<vvp_island_branch_tran*>(cur);
 	    assert(tmp);
 	    runnable |= tmp->run_test_enabled();
       }
-      if (runnable == false)
-	    return;
 
 	// Now resolve all the branches in the island.
       for (vvp_island_branch*cur = branches_ ; cur ; cur = cur->next_branch) {
@@ -113,8 +108,29 @@ bool vvp_island_branch_tran::run_test_enabled()
 	    return true;
       }
 
+	// Get the input that is driving this enable.
+	// SPECIAL NOTE: Try to get the input value from the
+	// *outvalue* of the port. If the enable is connected to a
+	// .port (instead of a .import) then there may be feedback
+	// going on, and we need to be looking at the resolved input,
+	// not the event input. For example:
+	//
+	//   tranif1 (pin, X, pin);
+	//
+	// In this case, when we test the value for "pin", we need to
+	// look at the value that is resolved from this
+	// island. Reading the outvalue will do the trick.
+	//
+	// If the outvalue is nil, then we know that this port is a
+	// .import after all, so just read the invalue.
       enabled_flag = false;
-      vvp_bit4_t enable_val = ep->invalue.value(0).value();
+      vvp_bit4_t enable_val;
+      if (ep->outvalue.size() != 0)
+	    enable_val = ep->outvalue.value(0).value();
+      else if (ep->invalue.size() == 0)
+	    enable_val = BIT4_Z;
+      else
+	    enable_val = ep->invalue.value(0).value();
 
       if (active_high==true && enable_val != BIT4_1)
 	    return false;
