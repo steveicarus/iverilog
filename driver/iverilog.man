@@ -1,4 +1,4 @@
-.TH iverilog 1 "February 4th, 2009" "" "Version 0.9.devel"
+.TH iverilog 1 "October 28th, 2009" "" "Version 0.9.devel"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -421,7 +421,8 @@ integer value.
 .SH "VARIABLES IN COMMAND FILES"
 
 In certain cases, iverilog supports variables in command files. These
-are strings of the form "$(\fIvarname\fP)", where \fIvarname\fP is the
+are strings of the form "$(\fIvarname\fP)" or "${\fIvarname\fP}", where
+\fIvarname\fP is the
 name of the environment variable to read. The entire string is
 replaced with the contents of that variable. Variables are only
 substituted in contexts that explicitly support them, including file
