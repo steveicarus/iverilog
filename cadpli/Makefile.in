@@ -71,7 +71,7 @@ cadpli.vpl: $O ../vvp/libvpi.a ../libveriuser/libveriuser.o
 	$(CC) @shared@ -o $@ $O ../libveriuser/libveriuser.o $(SYSTEM_VPI_LDFLAGS)
 
 clean:
-	rm -rf *.o dep cadpli.vpl bin32
+	rm -rf *.o dep cadpli.vpl
 
 distclean: clean
 	rm -f Makefile config.log
