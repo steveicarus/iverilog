@@ -697,13 +697,22 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    format_vpiStringVal(vsig, 0, wid, vp);
 	    break;
 
-	  case vpiObjTypeVal:
 	  case vpiVectorVal:
 	    format_vpiVectorVal(vsig, 0, wid, vp);
 	    break;
 
 	  case vpiRealVal:
 	    format_vpiRealVal(vsig, 0, wid, rfp->signed_flag, vp);
+	    break;
+
+	  case vpiObjTypeVal:
+	    if (wid == 1) {
+		  vp->format = vpiScalarVal;
+		  format_vpiScalarVal(vsig, 0, vp);
+	    } else {
+		  vp->format = vpiVectorVal;
+		  format_vpiVectorVal(vsig, 0, wid, vp);
+	    }
 	    break;
 
 	  default:
