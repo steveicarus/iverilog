@@ -84,7 +84,7 @@ dep:
 
 
 clean:
-	rm -rf *.o dep libveriuser.a libveriuser.o bin32
+	rm -rf *.o dep libveriuser.a libveriuser.o
 
 distclean: clean
 	rm -f Makefile config.log

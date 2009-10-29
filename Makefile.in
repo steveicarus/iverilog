@@ -95,10 +95,10 @@ clean:
 ifeq (@MINGW32@,no)
 	(cd driver-vpi ; $(MAKE) $@)
 endif
-	rm -f *.o parse.cc parse.cc.output parse.h lexor.cc
+	rm -f *.o parse.cc parse.h lexor.cc
 	rm -f ivl.exp iverilog-vpi.pdf iverilog-vpi.ps parse.output
 	rm -f syn-rules.output dosify.exe ivl@EXEEXT@ check.vvp
-	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc*
+	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc
 	rm -rf dep
 
 distclean: clean
@@ -110,6 +110,7 @@ endif
 	rm -f Makefile config.status config.log config.cache
 	rm -f stamp-config-h config.h
 	rm -f stamp-_pli_types-h _pli_types.h
+	rm -rf autom4te.cache
 
 TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-dll-analog.o
 FF = cprop.o nodangle.o synth.o synth2.o syn-rules.o

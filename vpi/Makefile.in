@@ -104,7 +104,7 @@ va_math.vpi: $V ../vvp/libvpi.a
 	$(CC) @shared@ -o $@ $V -L../vvp $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
 
 clean:
-	rm -rf *.o sys_readmem_lex.c dep system.vpi bin32
+	rm -rf *.o sys_readmem_lex.c dep system.vpi
 	rm -f sdf_lexor.c sdf_parse.c sdf_parse.output sdf_parse.h
 	rm -f va_math.vpi v2005_math.vpi
 
