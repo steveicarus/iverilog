@@ -203,6 +203,8 @@ static const char* vpi_property_str(PLI_INT32 code)
 	    return "vpiTimeUnit";
 	  case vpiTimePrecision:
 	    return "vpiTimePrecision";
+          case vpiSize:
+	    return "vpiSize";
 	  default:
 	    sprintf(buf, "%d", code);
       }
@@ -1192,11 +1194,13 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
       switch (operation) {
 	  case vpiFinish:
+	  case __ivl_legacy_vpiFinish:
             diag_msg = va_arg(ap, long);
 	    schedule_finish(diag_msg);
 	    break;
 
 	  case vpiStop:
+	  case __ivl_legacy_vpiStop:
             diag_msg = va_arg(ap, long);
 	    schedule_stop(diag_msg);
 	    break;
