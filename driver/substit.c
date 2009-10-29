@@ -19,6 +19,7 @@
 
 # include  <string.h>
 # include  <stdlib.h>
+# include  <stdio.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -48,9 +49,13 @@ char* substitutions(const char*str)
 		  str = ep + 1;
 
 		  value = getenv(name);
-		  free(name);
 		  if (value == 0)
+			fprintf(stderr, "Warning: environment variable "
+			        "\"%s\" not found during command file "
+			        "processing.\n", name);
+			free(name);
 			continue;
+		  free(name);
 
 		  if (strlen(value) >= (nbuf - (cp-buf))) {
 			size_t old_size = cp - buf;
