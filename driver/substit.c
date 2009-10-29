@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: substit.c,v 1.5 2003/12/19 01:27:10 steve Exp $"
-#endif
 
 # include  <string.h>
 # include  <stdlib.h>
@@ -35,13 +32,13 @@ char* substitutions(const char*str)
 
       while (*str) {
 
-	    if ((str[0] == '$') && (str[1] == '(')) {
-		    /* If I find a $(x) string in the source, replace
+	    if ((str[0] == '$') && ((str[1] == '(') || str[1] == '{')) {
+		    /* If I find a $(x) or ${x} string in the source, replace
 		       it in the destination with the contents of the
 		       environment variable x. */
 		  char*name;
 		  char*value;
-		  const char*ep = strchr(str, ')');
+		  const char*ep = strchr(str, (str[1]=='(') ? ')' : '}');
 		  str += 2;
 
 		  name = malloc(ep-str+1);
@@ -92,24 +89,3 @@ char* substitutions(const char*str)
 
       return buf;
 }
-
-
-/*
- * $Log: substit.c,v $
- * Revision 1.5  2003/12/19 01:27:10  steve
- *  Fix various unsigned compare warnings.
- *
- * Revision 1.4  2002/08/12 01:35:01  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.3  2002/08/11 23:47:04  steve
- *  Add missing Log and Ident strings.
- *
- * Revision 1.2  2002/06/25 01:33:01  steve
- *  include malloc.h only when available.
- *
- * Revision 1.1  2002/06/23 20:10:51  steve
- *  Variable substitution in command files.
- *
- */
-
