@@ -469,10 +469,13 @@ extern PLI_INT32 vpi_remove_cb(vpiHandle ref);
  * vpiSetInteractiveScope -
  */
 extern void vpi_control(PLI_INT32 operation, ...);
-#define vpiStop 1
-#define vpiFinish 2
-#define vpiReset  3
-#define vpiSetInteractiveScope 4
+/************* vpi_control() constants (added with 1364-2000) *************/
+#define vpiStop                66  /* execute simulator's $stop */
+#define vpiFinish              67  /* execute simulator's $finish */
+#define vpiReset               68  /* execute simulator's $reset */
+#define vpiSetInteractiveScope 69  /* set simulator's interactive scope */
+#define __ivl_legacy_vpiStop 1
+#define __ivl_legacy_vpiFinish 2
 
 /* vpi_sim_control is the incorrect name for vpi_control. */
 extern void vpi_sim_control(PLI_INT32 operation, ...);
