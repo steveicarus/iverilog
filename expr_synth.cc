@@ -931,11 +931,6 @@ NetNet* NetEUReduce::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    return 0;
       }
 
-      NetNet*osig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::IMPLICIT, 1);
-      osig->data_type(expr_type());
-      osig->local_flag(true);
-
       NetUReduce::TYPE rtype = NetUReduce::NONE;
 
       switch (op()) {
@@ -966,8 +961,13 @@ NetNet* NetEUReduce::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       NetUReduce*gate = new NetUReduce(scope, scope->local_symbol(),
 				       rtype, isig->vector_width());
-
       des->add_node(gate);
+
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::IMPLICIT, 1);
+      osig->data_type(expr_type());
+      osig->local_flag(true);
+
       connect(gate->pin(0), osig->pin(0));
       for (unsigned idx = 0 ;  idx < isig->pin_count() ;  idx += 1)
 	    connect(gate->pin(1+idx), isig->pin(idx));
