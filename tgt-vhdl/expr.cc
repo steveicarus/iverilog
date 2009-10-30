@@ -536,8 +536,10 @@ static vhdl_expr *translate_ufunc(ivl_expr_t e)
    int func_scope_sig = 0;
    for (int i = 0; i < nparams; i++) {
       vhdl_expr *param = translate_expr(ivl_expr_parm(e, i));
-      if (NULL == param)
+      if (NULL == param) {
+         delete fcall;
          return NULL;
+      }
       
       // Ensure the parameter has the correct VHDL type
       ivl_signal_t param_sig;

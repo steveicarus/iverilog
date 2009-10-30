@@ -365,6 +365,7 @@ int main(int argc, char*argv[])
       if (precomp_out_path) {
 	    precomp_out = fopen(precomp_out_path, "wb");
 	    if (precomp_out == 0) {
+		  if (out_path) fclose(out);
 		  perror(precomp_out_path);
 		  exit(1);
 	    }
@@ -373,6 +374,8 @@ int main(int argc, char*argv[])
       if (dep_path) {
 	      depend_file = fopen(dep_path, "a");
 	      if (depend_file == 0) {
+		  if (out_path) fclose(out);
+		  if (precomp_out) fclose(precomp_out);
 		  perror(dep_path);
 		  exit(1);
 	      }
@@ -380,27 +383,31 @@ int main(int argc, char*argv[])
 
       if (source_cnt == 0) {
 	    fprintf(stderr, "%s: No input files given.\n", argv[0]);
+	    if (out_path) fclose(out);
+	    if (depend_file) fclose(depend_file);
+	    if (precomp_out) fclose(precomp_out);
 	    return 1;
       }
 
 	/* Pass to the lexical analyzer the list of input file, and
 	   start scanning. */
       reset_lexor(out, source_list);
-      if (yylex()) return -1;
+      if (yylex()) {
+	    if (out_path) fclose(out);
+	    if (depend_file) fclose(depend_file);
+	    if (precomp_out) fclose(precomp_out);
+	    return -1;
+}
       destroy_lexor();
 
-      if (depend_file) {
-	    fclose(depend_file);
-      }
+      if (depend_file) fclose(depend_file);
 
       if (precomp_out) {
 	    dump_precompiled_defines(precomp_out);
 	    fclose(precomp_out);
       }
 
-      if (out_path) {
-	    fclose(out);
-      }
+      if (out_path) fclose(out);
 
 	/* Free the source and include directory lists. */
       for (lp = 0; lp < source_cnt; lp += 1) {
