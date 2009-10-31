@@ -58,6 +58,13 @@ static PTask* current_task = 0;
 static PFunction* current_function = 0;
 static stack<PBlock*> current_block_stack;
 
+/* This is used to keep track of the extra arguments after the notifier
+ * in the $setuphold and $recrem timing checks. This allows us to print
+ * a warning message that the delayed signals will not be created. We
+ * need to do this since not driving these signals creates real
+ * simulation issues. */
+static unsigned args_after_notifier;
+
 /* Later version of bison (including 1.35) will not compile in stack
    extension if the output is compiled with C++ and either the YYSTYPE
    or YYLTYPE are provided by the source code. However, I can get the
@@ -3566,15 +3573,22 @@ spec_notifier_opt
 	;
 spec_notifier
 	: ','
-		{  }
+		{ args_after_notifier = 0; }
 	| ','  hierarchy_identifier
-		{ delete $2; }
+		{ args_after_notifier = 0; delete $2; }
 	| spec_notifier ','
-		{  }
+		{  args_after_notifier += 1; }
 	| spec_notifier ',' hierarchy_identifier
-                { delete $3; }
+		{ args_after_notifier += 1;
+		  if (args_after_notifier >= 3)  {
+                    cerr << @3 << ": warning: timing checks are not supported "
+		                  "and delayed signal \"" << *$3
+		         << "\" will not be driven." << endl;
+		  }
+                  delete $3; }
+  /* How do we match this path? */
 	| IDENTIFIER
-		{ delete[]$1; }
+		{ args_after_notifier = 0; delete[]$1; }
 	;
 
 
