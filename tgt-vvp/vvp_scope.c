@@ -1626,9 +1626,18 @@ static void draw_lpm_sfunc(ivl_lpm_t net)
 static void draw_lpm_ufunc(ivl_lpm_t net)
 {
       unsigned idx;
+      unsigned ninp;
+      const char**input_strings;
       ivl_scope_t def = ivl_lpm_define(net);
 
       const char*dly = draw_lpm_output_delay(net);
+
+	/* Get all the input labels that I will use for net signals that
+	   connect to the inputs of the function. */
+      ninp = ivl_lpm_size(net);
+      input_strings = calloc(ninp, sizeof(char*));
+      for (idx = 0 ;  idx < ninp ;  idx += 1)
+	    input_strings[idx] = draw_net_input(ivl_lpm_data(net, idx));
 
       if (ivl_lpm_trigger(net))
             fprintf(vvp_out, "L_%p%s .ufunc/e TD_%s, %u, E_%p", net, dly,
@@ -1641,10 +1650,10 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
 
 	/* Print all the net signals that connect to the input of the
 	   function. */
-      for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 1) {
-	    fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net, idx)));
+      for (idx = 0 ;  idx < ninp ;  idx += 1) {
+	    fprintf(vvp_out, ", %s", input_strings[idx]);
       }
-
+      free(input_strings);
 
       assert((ivl_lpm_size(net)+1) == ivl_scope_ports(def));
 
