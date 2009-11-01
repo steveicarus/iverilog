@@ -266,7 +266,7 @@ static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
       return obj;
 }
 
-static struct __vpiCallback* make_afterdelay(p_cb_data data)
+static struct __vpiCallback* make_afterdelay(p_cb_data data, bool simtime_flag)
 {
       struct __vpiCallback*obj = new_vpi_callback();
       obj->cb_data = *data;
@@ -281,17 +281,32 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data)
       cb->handle = obj;
       obj->cb_sync = cb;
 
+      vvp_time64_t tv;
       switch (obj->cb_time.type) {
-	  case vpiSimTime: {
-		vvp_time64_t tv = vpip_timestruct_to_time(&obj->cb_time);
-		schedule_generic(cb, tv, false);
-		break;
-	  }
+	  case vpiSimTime:
+	    tv = vpip_timestruct_to_time(&obj->cb_time);
+	    break;
 
 	  default:
 	    fprintf(stderr, "Unsupported time type %d.\n", obj->cb_time.type);
 	    assert(0);
+	    tv = 0;
 	    break;
+      }
+
+      if (simtime_flag) {
+	    vvp_time64_t cur = schedule_simtime();
+	    if (cur > tv) {
+		  tv = 0;
+		  assert(0);
+	    } else if (cur == tv) {
+		  tv = 0;
+	    } else {
+		  tv -= cur;
+	    }
+	    schedule_at_start_of_simtime(cb, tv);
+      } else {
+	    schedule_generic(cb, tv, false);
       }
 
       return obj;
@@ -432,8 +447,12 @@ vpiHandle vpi_register_cb(p_cb_data data)
 	    obj = make_sync(data, false);
 	    break;
 
+	  case cbAtStartOfSimTime:
+	    obj = make_afterdelay(data, true);
+	    break;
+
 	  case cbAfterDelay:
-	    obj = make_afterdelay(data);
+	    obj = make_afterdelay(data, false);
 	    break;
 
 	  case cbEndOfCompile:

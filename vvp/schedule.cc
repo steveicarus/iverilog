@@ -56,9 +56,18 @@ struct event_s {
 };
 
 struct event_time_s {
-      event_time_s() { count_time_events += 1; }
+      event_time_s() {
+	    count_time_events += 1;
+	    start = 0;
+	    active = 0;
+	    nbassign = 0;
+	    rwsync = 0;
+	    rosync = 0;
+	    del_thr = 0;
+      }
       vvp_time64_t delay;
 
+      struct event_s*start;
       struct event_s*active;
       struct event_s*nbassign;
       struct event_s*rwsync;
@@ -383,8 +392,8 @@ static void signals_revert(void)
  * itself, and the structure is placed in the right place in the
  * queue.
  */
-typedef enum event_queue_e { SEQ_ACTIVE, SEQ_NBASSIGN, SEQ_RWSYNC, SEQ_ROSYNC,
-                             DEL_THREAD } event_queue_t;
+typedef enum event_queue_e { SEQ_START, SEQ_ACTIVE, SEQ_NBASSIGN,
+			     SEQ_RWSYNC, SEQ_ROSYNC, DEL_THREAD } event_queue_t;
 
 static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 			    event_queue_t select_queue)
@@ -397,11 +406,6 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 	      /* Is the event_time list completely empty? Create the
 		 first event_time object. */
 	    ctim = new struct event_time_s;
-	    ctim->active = 0;
-	    ctim->nbassign = 0;
-	    ctim->rwsync = 0;
-	    ctim->rosync = 0;
-	    ctim->del_thr = 0;
 	    ctim->delay = delay;
 	    ctim->next  = 0;
 	    sched_list = ctim;
@@ -411,11 +415,6 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 	      /* Am I looking for an event before the first event_time?
 		 If so, create a new event_time to go in front. */
 	    struct event_time_s*tmp = new struct event_time_s;
-	    tmp->active = 0;
-	    tmp->nbassign = 0;
-	    tmp->rwsync = 0;
-	    tmp->rosync = 0;
-	    tmp->del_thr = 0;
 	    tmp->delay = delay;
 	    tmp->next = ctim;
 	    ctim->delay -= delay;
@@ -433,11 +432,6 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 
 	    if (ctim->delay > delay) {
 		  struct event_time_s*tmp = new struct event_time_s;
-		  tmp->active = 0;
-		  tmp->nbassign = 0;
-		  tmp->rwsync = 0;
-		  tmp->rosync = 0;
-		  tmp->del_thr = 0;
 		  tmp->delay = delay;
 		  tmp->next  = prev->next;
 		  prev->next = tmp;
@@ -450,11 +444,6 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 	    } else {
 		  assert(ctim->next == 0);
 		  struct event_time_s*tmp = new struct event_time_s;
-		  tmp->active = 0;
-		  tmp->nbassign = 0;
-		  tmp->rwsync = 0;
-		  tmp->rosync = 0;
-		  tmp->del_thr = 0;
 		  tmp->delay = delay - ctim->delay;
 		  tmp->next = 0;
 		  ctim->next = tmp;
@@ -468,6 +457,16 @@ static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
 	   appropriate list for the kind of assign we have at hand. */
 
       switch (select_queue) {
+
+	  case SEQ_START:
+	    if (ctim->start == 0) {
+		  ctim->start = cur;
+	    } else {
+		  cur->next = ctim->active->next;
+		  ctim->active->next = cur;
+		  ctim->active = cur;
+	    }
+	    break;
 
 	  case SEQ_ACTIVE:
 	    if (ctim->active == 0) {
@@ -549,7 +548,6 @@ static void schedule_event_push_(struct event_s*cur)
       cur->next = ctim->active->next;
       ctim->active->next = cur;
 }
-
 
 void schedule_vthread(vthread_t thr, vvp_time64_t delay, bool push_flag)
 {
@@ -673,6 +671,15 @@ void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay,
 		      sync_flag? (ro_flag?SEQ_ROSYNC:SEQ_RWSYNC) : SEQ_ACTIVE);
 }
 
+void schedule_at_start_of_simtime(vvp_gen_event_t obj, vvp_time64_t delay)
+{
+      struct generic_event_s*cur = new generic_event_s;
+
+      cur->obj = obj;
+      cur->delete_obj_when_done = false;
+      schedule_event_(cur, delay, SEQ_START);
+}
+
 static vvp_time64_t schedule_time;
 vvp_time64_t schedule_simtime(void)
 { return schedule_time; }
@@ -767,6 +774,17 @@ void schedule_simulate(void)
 		  ctim->delay = 0;
 
 		  vpiNextSimTime();
+		    // Process the cbAtStartOfSimTime callbacks.
+		  while (ctim->start) {
+			struct event_s*cur = ctim->start->next;
+			if (cur->next == cur) {
+			      ctim->start = 0;
+			} else {
+			      ctim->start->next = cur->next;
+			}
+			cur->run_run();
+			delete (cur);
+		  }
 	    }
 
 
