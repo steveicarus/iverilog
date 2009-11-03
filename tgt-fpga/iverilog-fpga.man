@@ -1,6 +1,6 @@
 .TH iverilog-fpga 1 "$Date: 2004/10/04 01:10:57 $" Version "$Date: 2004/10/04 01:10:57 $"
 .SH NAME
-iverilog-fpga \- FPGA code generator for Icarus Verilog
+iverilog-fpga - FPGA code generator for Icarus Verilog
 
 .SH SYNOPSIS
 .B iverilog -tfpga
@@ -14,20 +14,19 @@ of the device, and the detailed part name. The architecture is used to
 select library primitives, and the detailed part name is written into
 the generated file for the use of downstream tools.
 
-The code generator is invoked with the -tfpga flag to iverilog. It
+The code generator is invoked with the \-tfpga flag to iverilog. It
 understands the part= and the arch= parameters, which can be set with
-the -p flag of iverilog:
+the \-p flag of iverilog:
 
-	iverilog -parch=virtex -ppart=v50-pq240-6 -tfpga foo.vl
+	iverilog \-parch=virtex \-ppart=v50\-pq240\-6 \-tfpga foo.vl
 
 This example selects the Virtex architecture, and give the detailed
-part number as v50-pq240-6. The output is written into a.out unless a
-different output file is specified with the -o flag.
+part number as v50\-pq240\-6. The output is written into a.out unless a
+different output file is specified with the \-o flag.
 
 
 .SH OPTIONS
-.l
-\fIiverilog -tfpga\fP accepts the following options:
+\fIiverilog \-tfpga\fP accepts the following options:
 .TP 8
 .B -parch=\fIfamily\fP
 The \fIfamily\fP setting further specifies the target device
@@ -63,7 +62,7 @@ should work properly for any Virtex part.
 .TP 8
 .B virtex2
 If this is selected, then the output is EDIF 2 0 0 suitable for
-Virtex-II and Virtex-II Pro devices. It uses the VIRTEX2 library, but
+Virtex\-II and Virtex\-II Pro devices. It uses the VIRTEX2 library, but
 is very similar to the Virtex target.
 
 .SH "EDIF ROOT PORTS"
@@ -74,7 +73,7 @@ definition into the design. (This is *not* the same as the PADS of a
 part.) The generated EDIF interface section contains port definitions,
 including the proper direction marks.
 
-With the (rename ...) s-exp in EDIF, it is possible to assign
+With the (rename ...) s\-exp in EDIF, it is possible to assign
 arbitrary text to port names. The EDIF code generator therefore does
 not resort to the mangling that is needed for internal symbols. The
 base name of the signal that is an input or output is used as the name
@@ -123,7 +122,7 @@ example:
 .fi
 
 In this example, port ``out'' is assigned to pin 10, and port ``in''
-is assigned to pins 20-22. If the architecture supports it, a pin
+is assigned to pins 20\-22. If the architecture supports it, a pin
 number of 0 means let the back end tools choose a pin. The format of
 the pin number depends on the architecture family being targeted, so
 for example Xilinx family devices take the name that is associated
@@ -164,11 +163,11 @@ device pins are connected.
 Compile a single-file design with command line tools like so:
 
 .nf
-	% iverilog -parch=virtex -o foo.edf foo.vl
+	% iverilog \-parch=virtex \-o foo.edf foo.vl
 	% edif2ngd foo.edf foo.ngo
-	% ngdbuild -p v50-pq240 foo.ngo foo.ngd
-	% map -o map.ncd foo.ngd
-	% par -w map.ncd foo.ncd
+	% ngdbuild \-p v50\-pq240 foo.ngo foo.ngd
+	% map \-o map.ncd foo.ngd
+	% par \-w map.ncd foo.ncd
 .fi
 
 .SH "AUTHOR"

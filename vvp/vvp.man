@@ -18,7 +18,7 @@ command is not by itself executable on any platform. Instead, the
 .TP 8
 .B -l\fIlogfile\fP
 This flag specifies a logfile where all MCI <stdlog> output goes.
-Specify logfile as '-' to send log output to <stderr>.  $display and
+Specify logfile as '\-' to send log output to <stderr>.  $display and
 friends send their output both to <stdout> and <stdlog>.
 .TP 8
 .B -M\fIpath\fP
@@ -41,12 +41,12 @@ character, then the search path is not scanned and the name is assumed
 to be a complete file name.
 .TP 8
 .B -n
-This flag makes $stop or a <Control-C> a synonym for $finish.
+This flag makes $stop or a <Control\-C> a synonym for $finish.
 It can be used to give the program a more meaningful interface when
 running in a non-interactive environment.
 .TP 8
 .B -N
-This flag does the same thing as -n, but results in an exit code
+This flag does the same thing as \-n, but results in an exit code
 of 1 if the stimulation calls $stop.  It can be used to indicate a
 simulation failure when running a testbench.
 .TP 8
@@ -89,9 +89,9 @@ maximally compatible with third party tools that read waveform dumps.
 .TP 8
 .B -lxt\fR|\fP-lxt-speed\fR|\fP-lxt-space
 These extended arguments set the wave dump format to lxt, possibly with
-format optimizations. The \fB-lxt-space\fP flag sets the output
+format optimizations. The \fB\-lxt\-space\fP flag sets the output
 format to lxt with full compression enabled. The resulting files are
-quite small. The \fB-lxt-speed\fP chooses the lxt compression mode
+quite small. The \fB\-lxt\-speed\fP chooses the lxt compression mode
 that leads to the best execution time and the fastest read time, at
 the expense of some file size.
 
@@ -138,7 +138,7 @@ output, a time-saver for regression tests.
 .SH INTERACTIVE MODE
 .PP
 The simulation engine supports an interactive mode. The user may
-interrupt the simulation (typically by typing Ctrl-C) to get to the
+interrupt the simulation (typically by typing <Control\-C>) to get to the
 interactive prompt. From that prompt, the \fIhelp\fP command prints a
 brief summary of the available commands.
 .PP
@@ -153,12 +153,12 @@ Steve Williams (steve@icarus.com)
 
 .SH SEE ALSO
 iverilog(1),
-iverilog-vpi(1),
+iverilog\-vpi(1),
 .BR "<http://www.icarus.com/eda/verilog/>"
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2001-2008 Stephen Williams
+Copyright \(co  2001\-2009 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0
