@@ -4,7 +4,8 @@ iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[\-ESVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]] [\-pflag=value]
+[\-ESVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
+[\-Pparameter=value] [\-pflag=value]
 [\-dname] [\-g1995|\-g2001|\-g2005|\-g<feature>]
 [\-Iincludedir] [\-mmodule] [\-M[mode=]file] [\-Nfile] [\-ooutputfilename]
 [\-stopmodule] [\-ttype] [\-Tmin/typ/max] [\-Wclass] [\-ypath] sourcefile
@@ -41,6 +42,12 @@ Verilog source.
 .TP 8
 .B -D\fImacro=defn\fP
 Defines macro \fImacro\fP as \fIdefn\fP.
+.TP 8
+.B -P\fIparameter=value\fP
+Override (i.e. defparam) a parameter in a root module. This allows the
+user to override at compile time (defparam) a parameter in a root
+module instance. For example, \fB\-Pmain.foo=2\fP overrides the
+parameter foo in the root instance main with the value 2.
 .TP 8
 .B -d\fIname\fP
 Activate a class of compiler debugging messages. The \fB\-d\fP switch may
@@ -415,6 +422,11 @@ letters are correct. For example, "foo" matches "Foo.v" but not
 .B +define+\fINAME\fP=\fIvalue\fP
 The \fB+define+\fP token is the same as the \fB\-D\fP option on the
 command line. The value part of the token is optional.
+
+.TP 8
+.B +parameter+\fINAME\fP=\fIvalue\fP
+The \fB+default+\fP token is the same as the \fB\-P\fP option on the
+command line.
 
 .TP 8
 .B +toupper-filename\fP
