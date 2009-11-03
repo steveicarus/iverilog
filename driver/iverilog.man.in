@@ -403,14 +403,14 @@ The \fB+define+\fP token is the same as the \fB\-D\fP option on the
 command line. The value part of the token is optional.
 
 .TP 8
-.B +toupper-filename\fP
+.B +toupper-filename
 This token causes file names after this in the command file to be
 translated to uppercase. This helps with situations where a directory
 has passed through a DOS machine, and in the process the file names
 become munged.
 
 .TP 8
-.B +tolower-filename\fP
+.B +tolower-filename
 This is similar to the \fB+toupper\-filename\fP hack described above.
 
 .TP 8
@@ -436,11 +436,11 @@ from preprocessor defines elsewhere in the file or the command line.
 
 The following macros are predefined by the compiler:
 .TP 8
-.B __ICARUS__ = 1\fP
-This is defined always when compiling with Icarus Verilog.
+.B __ICARUS__ = 1
+This is always defined when compiling with Icarus Verilog.
 
 .TP 8
-.B __VAMS_ENABLE__ = 1\fp
+.B __VAMS_ENABLE__ = 1
 This is defined if Verilog\-AMS is enabled.
 
 .SH EXAMPLES
