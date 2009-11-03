@@ -9,7 +9,7 @@ iverilog-vpi - Compile front end for VPI modules
 
 .SH DESCRIPTION
 .PP
-\fIiverilog-vpi\fP is a tool to simplify the compilation of VPI
+\fIiverilog\-vpi\fP is a tool to simplify the compilation of VPI
 modules for use with Icarus Verilog. It takes on the command line a
 list of C or C++ source files, and generates as output a linked VPI
 module. See the \fBvvp\fP(1) man page for a description of how the
@@ -20,7 +20,7 @@ first source file is named \fIfoo.c\fP, the output becomes
 \fIfoo.vpi\fP.
 
 .SH OPTIONS
-\fIiverilog-vpi\fP accepts the following options:
+\fIiverilog\-vpi\fP accepts the following options:
 .TP 8
 .B -l\fIlibrary\fP
 Include the named library in the link of the VPI module. This allows
@@ -53,7 +53,7 @@ These flags provide compile time information.
 
 .SH "PC-ONLY OPTIONS"
 
-The PC port of \fIiverilog-vpi\fP includes two special flags needed to
+The PC port of \fIiverilog\-vpi\fP includes two special flags needed to
 support the more intractable development environment. These flags help
 the program locate parts that it needs.
 
@@ -61,7 +61,7 @@ the program locate parts that it needs.
 .B -mingw=\fIpath\fP
 Tell the program the root of the Mingw compiler tool suite. The
 \fBvvp\fP runtime is compiled with this compiler, and this is the
-compiler that \fIiverilog-vpi\fP expects to use to compile your source
+compiler that \fIiverilog\-vpi\fP expects to use to compile your source
 code. This is normally not needed, and if you do use it, it is only
 needed once. The compiler will save the \fIpath\fP in the registry for
 use later.
@@ -75,7 +75,7 @@ stored in the registry for future use.
 
 .SH "UNIX-ONLY OPTIONS"
 
-The UNIX version of \fIiverilog-vpi\fP includes additional flags to
+The UNIX version of \fIiverilog\-vpi\fP includes additional flags to
 let Makefile gurus peek at the configuration of the \fIiverilog\fP
 installation.  This way, Makefiles can be written that handle complex VPI
 builds natively, and without hard-coding values that depend on the
@@ -128,7 +128,7 @@ iverilog(1), vvp(1),
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002-2008 Stephen Williams
+Copyright \(co  2002\-2009 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

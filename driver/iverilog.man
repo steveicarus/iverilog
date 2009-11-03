@@ -24,7 +24,7 @@ types are added as code generators are implemented.
 The \fIiverilog\fP program uses external programs and configuration
 files to preprocess and compile the Verilog source. Normally, the path
 used to locate these tools is built into the \fIiverilog\fP
-program. However, the \fB-B\fP switch allows the user to select a
+program. However, the \fB\-B\fP switch allows the user to select a
 different set of programs. The path given is used to locate
 \fIivlpp\fP, \fIivl\fP, code generators and the VPI modules.
 .TP 8
@@ -43,7 +43,7 @@ Verilog source.
 Defines macro \fImacro\fP as \fIdefn\fP.
 .TP 8
 .B -d\fIname\fP
-Activate a class of compiler debugging messages. The \fB-d\fP switch may
+Activate a class of compiler debugging messages. The \fB\-d\fP switch may
 be used as often as necessary to activate all the desired messages.
 Supported names are scopes, eval_tree, elaborate, and synth2;
 any other names are ignored.
@@ -56,15 +56,16 @@ Verilog source for use by other compilers.
 .TP 8
 .B -g1995\fI|\fP-g2001\fI|\fP-g2001-noconfig\fI|\fP-g2005
 Select the Verilog language \fIgeneration\fP to support in the
-compiler. This selects between \fIIEEE1364-1995\fP,
-\fIIEEE1364-2001\fP(2), or \fIIEEE1364-2005\fP. Normally,
+compiler. This selects between \fIIEEE1364\-1995\fP,
+\fIIEEE1364\-2001\fP, or \fIIEEE1364\-2005\fP. Normally,
 Icarus Verilog defaults to the latest known generation of the
 language. This flag is most useful to restrict the language to a set
 supported by tools of specific generations, for compatibility with
 other tools.
 .TP 8
-.B -gverilog-ams\fI|-fP-gno-verilog-ams
-Enable or disable (default) support for Verilog-AMS.
+.B -gverilog-ams\fI|\fP-gno-verilog-ams
+Enable or disable (default) support for Verilog\-AMS.
+Very little Verilog\-AMS specific functionality is currently supported.
 .TP 8
 .B -gspecify\fI|\fP-gno-specify
 Enable or disable (default) specify block support. When enabled,
@@ -99,7 +100,7 @@ The standards requires that a vectored port have matching ranges for its
 port declaration as well as any net/register declaration. It was common
 practice in the past to only specify the range for the net/register
 declaration and some tools still allow this. By default any mismatch is
-reported as a error. Using \fI-gno-io-range-error\fP will produce a
+reported as a error. Using \fB\-gno\-io\-range\-error\fP will produce a
 warning instead of a fatal error for the case of a vectored net/register
 and a scalar port declaration.
 .TP 8
@@ -110,12 +111,12 @@ default, parts of the expression that do not depend on the changed
 input value(s) are not re-evaluated. If an expression contains a call
 to a function that doesn't depend solely on its input values or that
 has side effects, the resulting behavior will differ from that
-required by the standard. Using \fI-gstrict-ca-eval\fP will force
+required by the standard. Using \fI\-gstrict\-ca\-eval\fP will force
 standard compliant behavior (with some loss in performance).
 .TP 8
 .B -I\fIincludedir\fP
 Append directory \fIincludedir\fP to list of directories searched
-for Verilog include files. The \fB-I\fP switch may be used many times
+for Verilog include files. The \fB\-I\fP switch may be used many times
 to specify several directories to search, the directories are searched
 in the order they appear on the command line.
 .TP 8
@@ -144,7 +145,7 @@ Place output in the file \fIfilename\fP. If no output file name is
 specified, \fIiverilog\fP uses the default name \fBa.out\fP.
 .TP 8
 .B -p\fIflag=value\fP
-Assign a value to a target specific flag. The \fB-p\fP switch may be
+Assign a value to a target specific flag. The \fB\-p\fP switch may be
 used as often as necessary to specify all the desired flags. The flags
 that are used depend on the target that is selected, and are described
 in target specific documentation. Flags that are not used are ignored.
@@ -152,15 +153,15 @@ in target specific documentation. Flags that are not used are ignored.
 .B -S
 Synthesize. Normally, if the target can accept behavioral
 descriptions the compiler will leave processes in behavioral
-form. The \fB-S\fP switch causes the compiler to perform synthesis
+form. The \fB\-S\fP switch causes the compiler to perform synthesis
 even if it is not necessary for the target. If the target type is a
-netlist format, the \fB-S\fP switch is unnecessary and has no effect.
+netlist format, the \fB\-S\fP switch is unnecessary and has no effect.
 .TP 8
 .B -s \fItopmodule\fP
 Specify the top level module to elaborate. Icarus Verilog will by default
 choose modules that are not instantiated in any other modules, but
 sometimes that is not sufficient, or instantiates too many modules. If
-the user specifies one or more root modules with \fB-s\fP flags, then
+the user specifies one or more root modules with \fB\-s\fP flags, then
 they will be used as root modules instead.
 .TP 8
 .B -T\fImin|typ|max\fP
@@ -190,7 +191,7 @@ Print the version of the compiler, and exit.
 .B -W\fIclass\fP
 Turn on different classes of warnings. See the \fBWARNING TYPES\fP
 section below for descriptions of the different warning groups. If
-multiple \fB-W\fP switches are used, the warning set is the union of
+multiple \fB\-W\fP switches are used, the warning set is the union of
 all the requested classes.
 .TP 8
 .B -y\fIlibdir\fP
@@ -220,7 +221,7 @@ library or in the main design.
 .SH TARGETS
 
 The Icarus Verilog compiler supports a variety of targets, for
-different purposes, and the \fB-t\fP switch is used to select the
+different purposes, and the \fB\-t\fP switch is used to select the
 desired target.
 
 .TP 8
@@ -238,7 +239,7 @@ This is a synthesis target that supports a variety of fpga devices,
 mostly by EDIF format output. The Icarus Verilog fpga code generator
 can generate complete designs or EDIF macros that can in turn be
 imported into larger designs by other tools. The \fBfpga\fP target
-implies the synthesis \fB-S\fP flag.
+implies the synthesis \fB\-S\fP flag.
 .TP 8
 .B vhdl
 This target produces a VHDL translation of the Verilog netlist. The
@@ -247,15 +248,15 @@ the modules in the Verilog source code. Note that only a subset of
 the Verilog language is supported.  See the wiki for more information.
 
 .SH "WARNING TYPES"
-These are the types of warnings that can be selected by the \fB-W\fP
+These are the types of warnings that can be selected by the \fB\-W\fP
 switch. All the warning types (other than \fBall\fP) can also be
-prefixed with \fBno-\fP to turn off that warning. This is most useful
-after a \fB-Wall\fP argument to suppress isolated warning types.
+prefixed with \fBno\-\fP to turn off that warning. This is most useful
+after a \fB\-Wall\fP argument to suppress isolated warning types.
 
 .TP 8
 .B all
-This enables the implicit, portbind, select-range, timescale, and
-sensitivity-entire-array warning categories.
+This enables the implicit, portbind, select\-range, timescale, and
+sensitivity\-entire\-array warning categories.
 
 .TP 8
 .B implicit
@@ -287,7 +288,7 @@ and dependent on compilation order.
 .B infloop
 This enables warnings for \fRalways\fP statements that may have runtime
 infinite loops (has paths with no or zero delay). This class of warnings
-is not included in \fB-Wall\fP and hence does not have a \fBno-\fP variant.
+is not included in \fB\-Wall\fP and hence does not have a \fBno\-\fP variant.
 A fatal error message will always be printed when the compiler can
 determine that there will definitely be an infinite loop (all paths have
 no or zero delay).
@@ -355,14 +356,14 @@ character. Variables are substituted in file names.
 
 .TP 8
 .B -c\ \fIcmdfile\fP -f\ \fIcmdfile\fP
-A \fB-c\fP or \fB-f\fP token prefixes a command file, exactly like it
+A \fB\-c\fP or \fB\-f\fP token prefixes a command file, exactly like it
 does on the command line. The cmdfile may be on the same line or the
 next non-comment line.
 
 .TP 8
 .B -y\ \fIlibdir\fP
-A \fB-y\fP token prefixes a library directory in the command file,
-exactly like it does on the command line. The parameter to the \fB-y\fP
+A \fB\-y\fP token prefixes a library directory in the command file,
+exactly like it does on the command line. The parameter to the \fB\-y\fP
 flag may be on the same line or the next non-comment line.
 
 Variables in the \fIlibdir\fP are substituted.
@@ -370,7 +371,7 @@ Variables in the \fIlibdir\fP are substituted.
 .TP 8
 .B +incdir+\fIincludedir\fP
 The \fB+incdir+\fP token in command files gives directories to search
-for include files in much the same way that \fB-I\fP flags work on the
+for include files in much the same way that \fB\-I\fP flags work on the
 command line. The difference is that multiple \fI+includedir\fP
 directories are valid parameters to a single \fB+incdir+\fP token,
 although you may also have multiple \fB+incdir+\fP lines.
@@ -381,7 +382,7 @@ Variables in the \fIincludedir\fP are substituted.
 .B +libext+\fIext\fP
 The \fB+libext\fP token in command files fives file extensions to try
 when looking for a library file. This is useful in conjunction with
-\fB-y\fP flags to list suffixes to try in each directory before moving
+\fB\-y\fP flags to list suffixes to try in each directory before moving
 on to the next library directory.
 
 .TP 8
@@ -398,7 +399,7 @@ letters are correct. For example, "foo" matches "Foo.v" but not
 
 .TP 8
 .B +define+\fINAME\fP=\fIvalue\fP
-The \fB+define+\fP token is the same as the \fB-D\fP option on the
+The \fB+define+\fP token is the same as the \fB\-D\fP option on the
 command line. The value part of the token is optional.
 
 .TP 8
@@ -410,7 +411,7 @@ become munged.
 
 .TP 8
 .B +tolower-filename\fP
-This is similar to the \fB+toupper-filename\fP hack described above.
+This is similar to the \fB+toupper\-filename\fP hack described above.
 
 .TP 8
 .B +integer-width+\fIvalue\fP
@@ -440,7 +441,7 @@ This is defined always when compiling with Icarus Verilog.
 
 .TP 8
 .B __VAMS_ENABLE__ = 1\fp
-This is defined if Verilog-AMS is enabled.
+This is defined if Verilog\-AMS is enabled.
 
 .SH EXAMPLES
 These examples assume that you have a Verilog source file called hello.v in
@@ -471,7 +472,7 @@ Tips on using, debugging, and developing the compiler can be found at
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002-2009 Stephen Williams
+Copyright \(co  2002\-2009 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0
