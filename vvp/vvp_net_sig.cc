@@ -380,17 +380,19 @@ vvp_scalar_t vvp_fun_signal4_aa::scalar_value(unsigned idx) const
       return vvp_scalar_t(bits4->value(idx), 6, 6);
 }
 
-vvp_vector4_t vvp_fun_signal4_aa::vec4_value() const
+void vvp_fun_signal4_aa::vec4_value(vvp_vector4_t&val) const
 {
       vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
             (vthread_get_rd_context_item(context_idx_));
 
-      return *bits4;
+      val = *bits4;
 }
 
 vvp_vector4_t vvp_fun_signal4_aa::vec4_unfiltered_value() const
 {
-      return vec4_value();
+      vvp_vector4_t tmp;
+      vec4_value(tmp);
+      return tmp;
 }
 
 void vvp_fun_signal4_aa::operator delete(void*)
@@ -597,7 +599,7 @@ vvp_scalar_t vvp_fun_signal_real_aa::scalar_value(unsigned idx) const
       assert(0);
 }
 
-vvp_vector4_t vvp_fun_signal_real_aa::vec4_value() const
+void vvp_fun_signal_real_aa::vec4_value(vvp_vector4_t&) const
 {
       assert(0);
 }
@@ -787,12 +789,14 @@ vvp_scalar_t vvp_wire_vec4::scalar_value(unsigned idx) const
       return vvp_scalar_t(value(idx),6,6);
 }
 
-vvp_vector4_t vvp_wire_vec4::vec4_value() const
+void vvp_wire_vec4::vec4_value(vvp_vector4_t&val) const
 {
-      vvp_vector4_t tmp = bits4_;
+      val = bits4_;
+      if (test_force_mask_is_zero())
+	    return;
+
       for (unsigned idx = 0 ; idx < bits4_.size() ; idx += 1)
-	    tmp.set_bit(idx, filtered_value_(idx));
-      return tmp;
+	    val.set_bit(idx, filtered_value_(idx));
 }
 
 vvp_wire_vec8::vvp_wire_vec8(unsigned wid)
@@ -930,9 +934,9 @@ vvp_vector8_t vvp_wire_vec8::vec8_value() const
       return tmp;
 }
 
-vvp_vector4_t vvp_wire_vec8::vec4_value() const
+void vvp_wire_vec8::vec4_value(vvp_vector4_t&val) const
 {
-      return reduce4(vec8_value());
+      val = reduce4(vec8_value());
 }
 
 vvp_wire_real::vvp_wire_real()
@@ -1011,7 +1015,7 @@ vvp_scalar_t vvp_wire_real::scalar_value(unsigned idx) const
       assert(0);
 }
 
-vvp_vector4_t vvp_wire_real::vec4_value() const
+void vvp_wire_real::vec4_value(vvp_vector4_t&) const
 {
       assert(0);
 }

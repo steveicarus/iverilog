@@ -234,6 +234,9 @@ class vvp_vector4_t {
         // Get the bits from another vector, but keep my size.
       void copy_bits(const vvp_vector4_t&that);
 
+	// Move bits within this vector.
+      void mov(unsigned dst, unsigned src, unsigned cnt);
+
 	// Test that the vectors are exactly equal
       bool eeq(const vvp_vector4_t&that) const;
 

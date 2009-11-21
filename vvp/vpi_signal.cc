@@ -304,9 +304,11 @@ static void format_vpiDecStrVal(vvp_signal_value*sig, int base, unsigned wid,
 
       vvp_vector4_t vec4;
       if (base == 0 && end == ssize) {
-	    vec4 = sig->vec4_value();
+	    sig->vec4_value(vec4);
       } else {
-	    vec4 = sig->vec4_value().subvalue(base, wid);
+	    vvp_vector4_t tmp;
+	    sig->vec4_value(tmp);
+	    vec4 = tmp.subvalue(base, wid);
       }
 
       vpip_vec4_to_dec_str(vec4, rbuf, hwid, signed_flag);
@@ -317,7 +319,9 @@ static void format_vpiDecStrVal(vvp_signal_value*sig, int base, unsigned wid,
 static void format_vpiIntVal(vvp_signal_value*sig, int base, unsigned wid,
                              int signed_flag, s_vpi_value*vp)
 {
-      vvp_vector4_t sub = sig->vec4_value().subvalue(base, wid);
+      vvp_vector4_t tmp;
+      sig->vec4_value(tmp);
+      vvp_vector4_t sub = tmp.subvalue(base, wid);
       long val = 0;
       vector4_to_value(sub, val, signed_flag, false);
       vp->value.integer = val;

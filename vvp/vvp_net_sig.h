@@ -99,7 +99,7 @@ class vvp_signal_value {
       virtual unsigned value_size() const =0;
       virtual vvp_bit4_t value(unsigned idx) const =0;
       virtual vvp_scalar_t scalar_value(unsigned idx) const =0;
-      virtual vvp_vector4_t vec4_value() const =0;
+      virtual void vec4_value(vvp_vector4_t&) const =0;
       virtual double real_value() const;
 
       virtual void get_signal_value(struct t_vpi_value*vp);
@@ -182,7 +182,7 @@ class vvp_fun_signal4_aa : public vvp_fun_signal_vec, public automatic_signal_ba
       unsigned   value_size() const;
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
-      vvp_vector4_t vec4_value() const;
+      void vec4_value(vvp_vector4_t&) const;
       vvp_vector4_t vec4_unfiltered_value() const;
 
     public: // These objects are only permallocated.
@@ -268,7 +268,7 @@ class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_sign
       unsigned   value_size() const;
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
-      vvp_vector4_t vec4_value() const;
+      void vec4_value(vvp_vector4_t&) const;
       double real_value() const;
       void get_signal_value(struct t_vpi_value*vp);
 
@@ -322,7 +322,7 @@ class vvp_wire_vec4 : public vvp_wire_base {
       unsigned value_size() const;
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
-      vvp_vector4_t vec4_value() const;
+      void vec4_value(vvp_vector4_t&) const;
 
     private:
       vvp_bit4_t filtered_value_(unsigned idx) const;
@@ -358,7 +358,7 @@ class vvp_wire_vec8 : public vvp_wire_base {
       unsigned value_size() const;
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
-      vvp_vector4_t vec4_value() const;
+      void vec4_value(vvp_vector4_t&) const;
 	// This is new to vvp_wire_vec8
       vvp_vector8_t vec8_value() const;
 
@@ -393,7 +393,7 @@ class vvp_wire_real : public vvp_wire_base {
       unsigned value_size() const;
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
-      vvp_vector4_t vec4_value() const;
+      void vec4_value(vvp_vector4_t&) const;
       double real_value() const;
 
       void get_signal_value(struct t_vpi_value*vp);

@@ -2688,7 +2688,8 @@ bool of_IX_GETV(vthread_t thr, vvp_code_t cp)
       }
       assert(sig);
 
-      vvp_vector4_t vec = sig->vec4_value();
+      vvp_vector4_t vec;
+      sig->vec4_value(vec);
       unsigned long val;
       bool known_flag = vector4_to_value(vec, val);
 
@@ -2717,7 +2718,8 @@ bool of_IX_GETVS(vthread_t thr, vvp_code_t cp)
       }
       assert(sig);
 
-      vvp_vector4_t vec = sig->vec4_value();
+      vvp_vector4_t vec;
+      sig->vec4_value(vec);
       long val;
       bool known_flag = vector4_to_value(vec, val, true, true);
 
@@ -3055,7 +3057,7 @@ bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
  * The functor to read from is the vvp_net_t object pointed to by the
  * cp->net pointer.
  */
-static vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
+static void load_base(vthread_t thr, vvp_code_t cp, vvp_vector4_t&dst)
 {
       vvp_net_t*net = cp->net;
 
@@ -3068,7 +3070,7 @@ static vvp_vector4_t load_base(vthread_t thr, vvp_code_t cp)
 	    assert(sig);
       }
 
-      return sig->vec4_value();
+      sig->vec4_value(dst);
 }
 
 bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
@@ -3076,7 +3078,8 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
 
-      vvp_vector4_t sig_value = load_base(thr, cp);
+      vvp_vector4_t sig_value;
+      load_base(thr, cp, sig_value);
 
 	/* Check the address once, before we scan the vector. */
       thr_check_addr(thr, bit+wid-1);
@@ -3108,7 +3111,10 @@ bool of_LOAD_VP0(vthread_t thr, vvp_code_t cp)
         /* We need a vector this wide to make the math work correctly.
          * Copy the base bits into the vector, but keep the width. */
       vvp_vector4_t sig_value(wid, BIT4_0);
-      sig_value.copy_bits(load_base(thr, cp));
+
+      vvp_vector4_t tmp;
+      load_base(thr, cp, tmp);
+      sig_value.copy_bits(tmp);
 
       load_vp0_common(thr, cp, sig_value);
       return true;
@@ -3118,7 +3124,8 @@ bool of_LOAD_VP0_S(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = cp->bit_idx[1];
 
-      vvp_vector4_t tmp (load_base(thr, cp));
+      vvp_vector4_t tmp;
+      load_base(thr, cp, tmp);
 
         /* We need a vector this wide to make the math work correctly.
          * Copy the base bits into the vector, but keep the width. */
@@ -3483,10 +3490,8 @@ static bool of_MOV_(vthread_t thr, vvp_code_t cp)
 
       thr_check_addr(thr, cp->bit_idx[0]+cp->number-1);
       thr_check_addr(thr, cp->bit_idx[1]+cp->number-1);
-	// Read the source vector out
-      vvp_vector4_t tmp (thr->bits4, cp->bit_idx[1], cp->number);
-	// Write it in the new place.
-      thr->bits4.set_vec(cp->bit_idx[0], tmp);
+
+      thr->bits4.mov(cp->bit_idx[0], cp->bit_idx[1], cp->number);
 
       return true;
 }
@@ -4262,15 +4267,17 @@ bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
 	    vvp_vector4_t tmp (wid, BIT4_X);
 	    thr->bits4.set_vec(base, tmp);
 
+      } else if (shift > wid) {
+	      // Shift so far that the entire vector is shifted out.
+	    vvp_vector4_t tmp (wid, BIT4_0);
+	    thr->bits4.set_vec(base, tmp);
+
       } else if (shift > 0) {
-	    unsigned idx;
-	    for (idx = 0 ;  (idx+shift) < wid ;  idx += 1) {
-		  unsigned src = base + idx + shift;
-		  unsigned dst = base + idx;
-		  thr_put_bit(thr, dst, thr_get_bit(thr, src));
-	    }
-	    for ( ;  idx < wid ;  idx += 1)
-		  thr_put_bit(thr, base+idx, BIT4_0);
+	      // The mov method should handle overlapped source/dest
+	    thr->bits4.mov(base, base+shift, wid-shift);
+
+	    vvp_vector4_t tmp (shift, BIT4_0);
+	    thr->bits4.set_vec(base+wid-shift, tmp);
 
       } else if (shift < -(long)wid) {
 	      // Negative shift is so far that all the value is shifted out.

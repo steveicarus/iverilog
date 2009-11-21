@@ -118,8 +118,11 @@ static void __compile_var(char*label, char*name,
       if (name) {
 	    assert(!array);
 	    if (obj) vpip_attach_to_current_scope(obj);
-            if (!vpip_peek_current_scope()->is_automatic)
-	          schedule_init_vector(vvp_net_ptr_t(net,0), vfil->vec4_value());
+            if (!vpip_peek_current_scope()->is_automatic) {
+		  vvp_vector4_t tmp;
+		  vfil->vec4_value(tmp);
+	          schedule_init_vector(vvp_net_ptr_t(net,0), tmp);
+	    }
       }
 	// If this is an array word, then it does not have a name, and
 	// it is attached to the addressed array.

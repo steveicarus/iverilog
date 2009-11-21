@@ -931,7 +931,8 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (vsig->node->fil);
       assert(sig);
 
-      vvp_vector4_t val = sig->vec4_value();
+      vvp_vector4_t val;
+      sig->vec4_value(val);
       return val;
 }
 

@@ -1131,6 +1131,63 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 
 }
 
+void vvp_vector4_t::mov(unsigned dst, unsigned src, unsigned cnt)
+{
+      assert(dst+cnt <= size_);
+      assert(src+cnt <= size_);
+
+      if (size_ <= BITS_PER_WORD) {
+	    unsigned long vmask = (1UL << cnt) - 1;
+	    unsigned long tmp;
+
+	    tmp = (abits_val_ >> src) & vmask;
+	    abits_val_ &= ~ (vmask << dst);
+	    abits_val_ |= tmp << dst;
+
+	    tmp = (bbits_val_ >> src) & vmask;
+	    bbits_val_ &= ~ (vmask << dst);
+	    bbits_val_ |= tmp << dst;
+
+      } else {
+	    unsigned sptr = src / BITS_PER_WORD;
+	    unsigned dptr = dst / BITS_PER_WORD;
+	    unsigned soff = src % BITS_PER_WORD;
+	    unsigned doff = dst % BITS_PER_WORD;
+
+	    while (cnt > 0) {
+		  unsigned trans = cnt;
+		  if ((soff+trans) > BITS_PER_WORD)
+			trans = BITS_PER_WORD - soff;
+
+		  if ((doff+trans) > BITS_PER_WORD)
+			trans = BITS_PER_WORD - doff;
+
+		  unsigned long vmask = (1UL << trans) - 1;
+		  unsigned long tmp;
+
+		  tmp = (abits_ptr_[sptr] >> soff) & vmask;
+		  abits_ptr_[dptr] &= ~ (vmask << doff);
+		  abits_ptr_[dptr] |= tmp << doff;
+
+		  tmp = (bbits_ptr_[sptr] >> soff) & vmask;
+		  bbits_ptr_[dptr] &= ~ (vmask << doff);
+		  bbits_ptr_[dptr] |= tmp << doff;
+
+		  cnt -= trans;
+		  soff += trans;
+		  if (soff >= BITS_PER_WORD) {
+			soff = 0;
+			sptr += 1;
+		  }
+		  doff += trans;
+		  if (doff >= BITS_PER_WORD) {
+			doff = 0;
+			dptr += 1;
+		  }
+	    }
+      }
+}
+
 bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
 {
       if (size_ != that.size_)
