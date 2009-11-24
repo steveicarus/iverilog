@@ -269,17 +269,23 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       } else {
 	    assert(type_ == VEC4_DELAY);
 
+	      // Use as a reference for calculating the delay the
+	      // current value of the output. Detect and handle the
+	      // special case that the event list contains the current
+	      // value as a zero-delay-remaining event.
+	    const vvp_vector4_t&use_vec4 = (list_ && list_->next->sim_time == schedule_simtime())? list_->next->ptr_vec4 : cur_vec4_;
+
 	      /* How many bits to compare? */
-	    unsigned use_wid = cur_vec4_.size();
+	    unsigned use_wid = use_vec4.size();
 	    if (bit.size() < use_wid) use_wid = bit.size();
 
 	      /* Scan the vectors looking for delays. Select the maximum
 	         delay encountered. */
-	    use_delay = delay_.get_delay(cur_vec4_.value(0), bit.value(0));
+	    use_delay = delay_.get_delay(use_vec4.value(0), bit.value(0));
 
 	    for (unsigned idx = 1 ;  idx < use_wid ;  idx += 1) {
 		  vvp_time64_t tmp;
-		  tmp = delay_.get_delay(cur_vec4_.value(idx), bit.value(idx));
+		  tmp = delay_.get_delay(use_vec4.value(idx), bit.value(idx));
 		  if (tmp > use_delay) use_delay = tmp;
 	    }
       }
@@ -292,7 +298,7 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       vvp_time64_t use_simtime = schedule_simtime() + use_delay;
 
 	/* And propagate it. */
-      if (use_delay == 0) {
+      if (use_delay == 0 && list_ == 0) {
 	    cur_vec4_ = bit;
 	    initial_ = false;
 	    net_->send_vec4(cur_vec4_, 0);
@@ -325,18 +331,24 @@ void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
       } else {
 	    assert(type_ == VEC8_DELAY);
 
+	      // Use as a reference for calculating the delay the
+	      // current value of the output. Detect and handle the
+	      // special case that the event list contains the current
+	      // value as a zero-delay-remaining event.
+	    const vvp_vector8_t&use_vec8 = (list_ && list_->next->sim_time == schedule_simtime())? list_->next->ptr_vec8 : cur_vec8_;
+
 	      /* How many bits to compare? */
-	    unsigned use_wid = cur_vec8_.size();
+	    unsigned use_wid = use_vec8.size();
 	    if (bit.size() < use_wid) use_wid = bit.size();
 
 	      /* Scan the vectors looking for delays. Select the maximum
 	         delay encountered. */
-	    use_delay = delay_.get_delay(cur_vec8_.value(0).value(),
+	    use_delay = delay_.get_delay(use_vec8.value(0).value(),
 	                                 bit.value(0).value());
 
 	    for (unsigned idx = 1 ;  idx < use_wid ;  idx += 1) {
 		  vvp_time64_t tmp;
-		  tmp = delay_.get_delay(cur_vec8_.value(idx).value(),
+		  tmp = delay_.get_delay(use_vec8.value(idx).value(),
 		                         bit.value(idx).value());
 		  if (tmp > use_delay) use_delay = tmp;
 	    }
@@ -350,7 +362,7 @@ void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
       vvp_time64_t use_simtime = schedule_simtime() + use_delay;
 
 	/* And propagate it. */
-      if (use_delay == 0) {
+      if (use_delay == 0 && list_ == 0) {
 	    cur_vec8_ = bit;
 	    initial_ = false;
 	    net_->send_vec8(cur_vec8_);
@@ -409,7 +421,7 @@ void vvp_fun_delay::recv_real(vvp_net_ptr_t port, double bit,
 
       vvp_time64_t use_simtime = schedule_simtime() + use_delay;
 
-      if (use_delay == 0) {
+      if (use_delay == 0 && list_ == 0) {
 	    cur_real_ = bit;
 	    initial_ = false;
 	    net_->send_real(cur_real_, 0);
