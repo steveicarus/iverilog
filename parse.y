@@ -278,7 +278,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
  /* The new tokens from 1364-2005. */
 %token K_wone K_uwire
 
- /* The new tokens from 1800-2005. */
+ /* The new tokens from 1800-2009. */
 %token K_alias K_always_comb K_always_ff K_always_latch K_assert
 %token K_assume K_before K_bind K_bins K_binsof K_bit K_break K_byte
 %token K_chandle K_class K_clocking K_const K_constraint K_context

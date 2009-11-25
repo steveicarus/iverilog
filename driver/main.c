@@ -39,7 +39,7 @@ const char NOTICE[] =
 
 const char HELP[] =
 "Usage: iverilog [-ESvV] [-B base] [-c cmdfile|-f cmdfile]\n"
-"                [-g1995|-g2001|-g2005] [-g<feature>]\n"
+"                [-g1995|-g2001|-g2005|-g2009] [-g<feature>]\n"
 "                [-D macro[=defn]] [-I includedir]\n"
 "                [-M [mode=]depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
@@ -119,7 +119,6 @@ const char*gen_icarus = "icarus-misc";
 const char*gen_io_range_error = "io-range-error";
 const char*gen_strict_ca_eval = "no-strict-ca-eval";
 const char*gen_verilog_ams = "no-verilog-ams";
-const char*gen_system_verilog = "no-system-verilog";
 
 /* Boolean: true means use a default include dir, false means don't */
 int gen_std_include = 1;
@@ -620,6 +619,9 @@ int process_generation(const char*name)
       else if (strcmp(name,"2005") == 0)
 	    generation = "2005";
 
+      else if (strcmp(name,"2009") == 0)
+	    generation = "2009";
+
       else if (strcmp(name,"1") == 0) { /* Deprecated: use 1995 */
 	    generation = "1995";
 	    gen_xtypes = "no-xtypes";
@@ -683,12 +685,6 @@ int process_generation(const char*name)
       else if (strcmp(name,"no-verilog-ams") == 0)
 	    gen_verilog_ams = "no-verilog-ams";
       
-      else if (strcmp(name,"system-verilog") == 0)
-	    gen_system_verilog = "system-verilog";
-
-      else if (strcmp(name,"no-system-verilog") == 0)
-	    gen_verilog_ams = "no-system-verilog";
-
       else {
 	    fprintf(stderr, "Unknown/Unsupported Language generation "
 		    "%s\n\n", name);
@@ -696,17 +692,17 @@ int process_generation(const char*name)
 	    fprintf(stderr, "    1995 -- IEEE1364-1995\n"
 		            "    2001 -- IEEE1364-2001\n"
 		            "    2005 -- IEEE1364-2005\n"
+		            "    2009 -- IEEE1800-2009\n"
 		            "Other generation flags:\n"
 		            "    specify | no-specify\n"
 		            "    verilog-ams | no-verilog-ams\n"
-		            "    system-verilog | no-system-verilog\n"
 		            "    std-include | no-std-include\n"
 		            "    relative-include | no-relative-include\n"
 		            "    xtypes | no-xtypes\n"
 		            "    icarus-misc | no-icarus-misc\n"
 		            "    io-range-error | no-io-range-error\n"
-		            "    strict-ca-eval | no-strict-ca-eval\n"
-					"    system-verilog\n");
+		            "    strict-ca-eval | no-strict-ca-eval\n");
+
 	    return 1;
       }
 
@@ -1006,9 +1002,10 @@ int main(int argc, char **argv)
 	   how to handle them. */
       fprintf(iconfig_file, "sys_func:%s%csystem.sft\n", base, sep);
 
-	/* If verilog-2005 is enabled or icarus-misc or verilog-ams,
+	/* If verilog-2005/9 is enabled or icarus-misc or verilog-ams,
 	 * then include the v2005_math library. */
       if (strcmp(generation, "2005") == 0 ||
+          strcmp(generation, "2009") == 0 ||
           strcmp(gen_icarus, "icarus-misc") == 0 ||
           strcmp(gen_verilog_ams, "verilog-ams") == 0) {
 	    fprintf(iconfig_file, "sys_func:%s%cv2005_math.sft\n", base, sep);
@@ -1030,7 +1027,6 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "generation:%s\n", gen_strict_ca_eval);
       fprintf(iconfig_file, "generation:%s\n", gen_verilog_ams);
       fprintf(iconfig_file, "generation:%s\n", gen_icarus);
-      fprintf(iconfig_file, "generation:%s\n", gen_system_verilog);
       fprintf(iconfig_file, "warnings:%s\n", warning_flags);
       fprintf(iconfig_file, "out:%s\n", opath);
       if (depfile) {

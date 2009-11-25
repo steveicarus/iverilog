@@ -106,7 +106,6 @@ bool gn_specify_blocks_flag = true;
 bool gn_io_range_error_flag = true;
 bool gn_strict_ca_eval_flag = false;
 bool gn_verilog_ams_flag = false;
-bool gn_system_verilog_flag = false;
 
 map<string,const char*> flags;
 char*vpi_module_list = 0;
@@ -247,6 +246,9 @@ static void process_generation_flag(const char*gen)
       } else if (strcmp(gen,"2005") == 0) {
 	    generation_flag = GN_VER2005;
 
+      } else if (strcmp(gen,"2009") == 0) {
+	    generation_flag = GN_VER2009;
+
       } else if (strcmp(gen,"icarus-misc") == 0) {
 	    gn_icarus_misc_flag = true;
 
@@ -282,9 +284,6 @@ static void process_generation_flag(const char*gen)
 
       } else if (strcmp(gen,"no-strict-ca-eval") == 0) {
 	    gn_strict_ca_eval_flag = false;
-
-      } else if (strcmp(gen,"system-verilog") == 0) {
-        gn_system_verilog_flag = true;
 
 	  } else {
       }
@@ -853,29 +852,21 @@ int main(int argc, char*argv[])
 
       lexor_keyword_mask = 0;
       switch (generation_flag) {
-        case GN_VER1995:
-	  lexor_keyword_mask |= GN_KEYWORDS_1364_1995;
-	  break;
+        case GN_VER2009:
+	  lexor_keyword_mask |= GN_KEYWORDS_1800_2009;
+        case GN_VER2005:
+	  lexor_keyword_mask |= GN_KEYWORDS_1364_2005;
         case GN_VER2001:
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001_CONFIG;
         case GN_VER2001_NOCONFIG:
-	  lexor_keyword_mask |= GN_KEYWORDS_1364_1995;
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001;
-	  break;
-        case GN_VER2005:
+        case GN_VER1995:
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_1995;
-	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001;
-	  lexor_keyword_mask |= GN_KEYWORDS_1364_2001_CONFIG;
-	  lexor_keyword_mask |= GN_KEYWORDS_1364_2005;
-	  break;
       }
 
       if (gn_cadence_types_flag)
 	    lexor_keyword_mask |= GN_KEYWORDS_ICARUS;
       
-	  if (gn_system_verilog_flag)
-	    lexor_keyword_mask |= GN_KEYWORDS_1800_2005;
-
       if (gn_verilog_ams_flag)
 	    lexor_keyword_mask |= GN_KEYWORDS_VAMS_2_3;
 
@@ -896,6 +887,9 @@ int main(int argc, char*argv[])
 		  break;
 		case GN_VER2005:
 		  cout << "IEEE1364-2005";
+		  break;
+		case GN_VER2009:
+		  cout << "IEEE1800-2009";
 		  break;
 	    }
 

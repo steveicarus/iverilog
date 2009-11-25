@@ -6,7 +6,7 @@ iverilog - Icarus Verilog compiler
 .B iverilog
 [\-ESVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
 [\-Pparameter=value] [\-pflag=value]
-[\-dname] [\-g1995|\-g2001|\-g2005|\-g<feature>]
+[\-dname] [\-g1995|\-g2001|\-g2005|-g2009|\-g<feature>]
 [\-Iincludedir] [\-mmodule] [\-M[mode=]file] [\-Nfile] [\-ooutputfilename]
 [\-stopmodule] [\-ttype] [\-Tmin/typ/max] [\-Wclass] [\-ypath] sourcefile
 
@@ -61,11 +61,11 @@ is the Verilog input, but with file inclusions and macro references
 expanded and removed. This is useful, for example, to preprocess
 Verilog source for use by other compilers.
 .TP 8
-.B -g1995\fI|\fP-g2001\fI|\fP-g2001-noconfig\fI|\fP-g2005
+.B -g1995\fI|\fP-g2001\fI|\fP-g2001-noconfig\fI|\fP-g2005\fI|\fP-g2009
 Select the Verilog language \fIgeneration\fP to support in the
 compiler. This selects between \fIIEEE1364\-1995\fP,
-\fIIEEE1364\-2001\fP, or \fIIEEE1364\-2005\fP. Normally,
-Icarus Verilog defaults to the latest known generation of the
+\fIIEEE1364\-2001\fP, \fIIEEE1364\-2005\fP, or \fIIEEE1800-2009\fP. 
+Normally, Icarus Verilog defaults to the latest known generation of the
 language. This flag is most useful to restrict the language to a set
 supported by tools of specific generations, for compatibility with
 other tools.
@@ -73,10 +73,6 @@ other tools.
 .B -gverilog-ams\fI|\fP-gno-verilog-ams
 Enable or disable (default) support for Verilog\-AMS.
 Very little Verilog\-AMS specific functionality is currently supported.
-.TP 8
-.B -gsystem-verilog\fI|\fP-gno-system-verilog
-Enable or disable (default) support for SystemVerilog.
-Very little SystemVerilog specific functionality is currently supported.
 .TP 8
 .B -gspecify\fI|\fP-gno-specify
 Enable or disable (default) specify block support. When enabled,
