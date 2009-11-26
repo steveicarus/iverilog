@@ -1162,6 +1162,22 @@ void vvp_vector4_t::mov(unsigned dst, unsigned src, unsigned cnt)
 		  if ((doff+trans) > BITS_PER_WORD)
 			trans = BITS_PER_WORD - doff;
 
+		  if (trans == BITS_PER_WORD) {
+			  // Special case: the transfer count is
+			  // exactly an entire word. For this to be
+			  // true, it must also be true that the
+			  // pointers are aligned. The work is easy,
+			abits_ptr_[dptr] = abits_ptr_[sptr];
+			bbits_ptr_[dptr] = bbits_ptr_[sptr];
+			dptr += 1;
+			sptr += 1;
+			cnt -= BITS_PER_WORD;
+			continue;
+		  }
+
+		    // Here we know that either the source or
+		    // destination is unaligned, and also we know that
+		    // the count is less then a full word.
 		  unsigned long vmask = (1UL << trans) - 1;
 		  unsigned long tmp;
 
