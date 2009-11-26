@@ -3101,6 +3101,14 @@ port_name
 		  delete[]$2;
 		  $$ = tmp;
 		}
+	| '.' IDENTIFIER
+		{ named_pexpr_t*tmp = new named_pexpr_t;
+		  tmp->name = lex_strings.make($2);
+		  tmp->parm = new PEIdent(lex_strings.make($2), true);
+		  FILE_NAME(tmp->parm, @1);
+		  delete[]$2;
+		  $$ = tmp;
+		}
 	;
 
 port_name_list
