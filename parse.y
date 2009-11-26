@@ -300,7 +300,7 @@ static list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
  /* K_CONTRIBUTE is <+, the contribution assign. */
 %token K_CONTRIBUTE
 %token K_PO_POS K_PO_NEG K_POW
-%token K_PSTAR K_STARP
+%token K_PSTAR K_STARP K_DOTSTAR
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
 %token K_edge_descriptor
 
@@ -3316,6 +3316,12 @@ port_name
 		  tmp->parm = new PEIdent(lex_strings.make($2), true);
 		  FILE_NAME(tmp->parm, @1);
 		  delete[]$2;
+		  $$ = tmp;
+		}
+	| K_DOTSTAR
+		{ named_pexpr_t*tmp = new named_pexpr_t;
+		  tmp->name = lex_strings.make("*");
+		  tmp->parm = 0;
 		  $$ = tmp;
 		}
 	;

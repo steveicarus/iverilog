@@ -136,6 +136,7 @@ TU [munpf]
 
 "(*" { return K_PSTAR; }
 "*)" { return K_STARP; }
+".*" { return K_DOTSTAR; }
 "<<" { return K_LS; }
 "<<<" { return K_LS; /* Note: Functionally, <<< is the same as <<. */}
 ">>"  { return K_RS; }

@@ -1100,6 +1100,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	// bind by order, this is the same as the source list. Otherwise,
 	// the source list is rearranged by name binding into this list.
       vector<PExpr*>pins (rmod->port_count());
+      vector<bool>pins_fromwc (rmod->port_count(), false);
 
 	// If the instance has a pins_ member, then we know we are
 	// binding by name. Therefore, make up a pins array that
@@ -1109,6 +1110,28 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	      // Scan the bindings, matching them with port names.
 	    for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
+
+		    // Handle wildcard named port
+		  if (pins_[idx].name[0] == '*') {
+			for (unsigned j = 0 ; j < nexp ; j += 1) {
+			      if (!pins[j]) {
+				    pins_fromwc[j] = true;
+				    NetNet*       net = 0;
+				    const NetExpr*par = 0;
+				    NetEvent*     eve = 0;
+				    pform_name_t path_;
+				    path_.push_back(name_component_t(rmod->ports[j]->name));
+				    symbol_search(this, des, scope,
+						  path_, net, par, eve);
+				    if (net != 0) {
+					  pins[j] = new PEIdent(rmod->ports[j]->name, true);
+					  pins[j]->set_lineno(get_lineno());
+					  pins[j]->set_file(get_file());
+				    }
+			      }
+			}
+			continue;
+		  }
 
 		    // Given a binding, look at the module port names
 		    // for the position that matches the binding name.
@@ -1125,10 +1148,17 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			continue;
 		  }
 
-		    // If I already bound something to this port, then
-		    // the pins array will already have a pointer
-		    // value where I want to place this expression.
-		  if (pins[pidx]) {
+		    // If I am overriding a wildcard port, delete and
+		    // override it
+		  if (pins_fromwc[pidx]) {
+			delete pins[pidx];
+			pins_fromwc[pidx] = false;
+
+		    // If I already explicitely bound something to
+		    // this port, then the pins array will already
+		    // have a pointer value where I want to place this
+		    // expression.
+		  } else if (pins[pidx]) {
 			cerr << get_fileline() << ": error: port ``" <<
 			      pins_[idx].name << "'' already bound." <<
 			      endl;
@@ -1204,6 +1234,15 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // null parameter is passed in.
 
 	    if (pins[idx] == 0) {
+
+		  if (pins_fromwc[idx]) {
+			cerr << get_fileline() << ": error: Wildcard named port " <<
+			      "connection (.*) did not find a matching identifier " <<
+			      "for port '" << rmod->ports[idx]->name << "'." << endl;
+			des->errors += 1;
+			return;
+		  }
+
 		    // We need this information to support the
 		    // unconnected_drive directive and for a
 		    // unconnected input warning when asked for.
