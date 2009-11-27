@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <vpi_user.h>
 #include "sys_priv.h"
+#include "version_base.h"
 
 /* Once we have real string objects replace this with a dynamic string. */
 #define MAX_STRING_RESULT 1024
@@ -149,9 +150,9 @@ static PLI_INT32 simparam_calltf(PLI_BYTE8 *name_ext)
       } else if (strcmp(param, "shrink") == 0) {
 	    retval = 0.0; /* Nothing for now. */
       } else if (strcmp(param, "simulatorSubversion") == 0) {
-	    retval = 0.0;
+	    retval = VERSION_MINOR;
       } else if (strcmp(param, "simulatorVersion") == 0) {
-	    retval = 0.10;
+	    retval = VERSION_MAJOR;
       } else if (strcmp(param, "sourceScaleFactor") == 0) {
 	    retval = 0.0; /* Nothing for now. */
       } else if (strcmp(param, "tnom") == 0) {

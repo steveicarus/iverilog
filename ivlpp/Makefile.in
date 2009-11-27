@@ -74,4 +74,4 @@ uninstall:
 	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/ivlpp@EXEEXT@"
 
 lexor.o: lexor.c globals.h
-main.o: main.c globals.h ../version.h
+main.o: main.c globals.h ../version_base.h ../version_tag.h

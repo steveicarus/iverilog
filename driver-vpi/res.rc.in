@@ -10,7 +10,7 @@ LANGUAGE 9, 4
 
 1 VERSIONINFO
  FILEVERSION 2002,11,13,0
- PRODUCTVERSION 0,7,0,0
+ PRODUCTVERSION @PRODUCTVERSION@
  FILEFLAGSMASK 0x3fL
  FILEFLAGS 0x2L
  FILEOS 0x40004L
@@ -28,7 +28,7 @@ BEGIN
             VALUE "LegalCopyright", "Copyright 2002 Gus Baldauf\0"
             VALUE "OriginalFilename", "iverilog-vpi.exe\0"
             VALUE "ProductName", "Icarus Verilog\0"
-            VALUE "ProductVersion", "0, 7, 0, 0\0"
+            VALUE "ProductVersion", "@PRODUCTVERSION@\0"
         END
     END
     BLOCK "VarFileInfo"

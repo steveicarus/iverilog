@@ -55,6 +55,7 @@ mandir = @mandir@
 dllib=@DLLIB@
 
 CC = @CC@
+HOSTCC = @CC@
 CXX = @CXX@
 INSTALL = @INSTALL@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -71,7 +72,7 @@ CXXFLAGS = -Wall @CXXFLAGS@
 PICFLAGS = @PICFLAG@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 
-all: dep config.h _pli_types.h version.h ivl@EXEEXT@
+all: dep config.h _pli_types.h version_tag.h ivl@EXEEXT@
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 
 # In the windows world, the installer will need a dosify program to
@@ -96,10 +97,11 @@ ifeq (@MINGW32@,no)
 	(cd driver-vpi ; $(MAKE) $@)
 endif
 	rm -f *.o parse.cc parse.h lexor.cc
-	rm -f ivl.exp iverilog-vpi.pdf iverilog-vpi.ps parse.output
+	rm -f ivl.exp iverilog-vpi.man iverilog-vpi.pdf iverilog-vpi.ps parse.output
 	rm -f syn-rules.output dosify.exe ivl@EXEEXT@ check.vvp
 	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc
 	rm -rf dep
+	rm version.exe
 
 distclean: clean
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
@@ -184,6 +186,9 @@ iverilog-vpi: iverilog-vpi.sh Makefile
 	chmod +x $@
 endif
 
+version.exe: $(srcdir)/version.c $(srcdir)/version_base.h version_tag.h
+	$(HOSTCC) -o version.exe -I. -I$(srcdir) $(srcdir)/version.c
+
 dep:
 	mkdir dep
 
@@ -211,16 +216,15 @@ lexor_keyword.o: lexor_keyword.cc parse.h
 lexor_keyword.cc: lexor_keyword.gperf
 	gperf -o -i 7 -C -k 1-4,$$ -L ANSI-C -H keyword_hash -N check_identifier -t $(srcdir)/lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
 
-iverilog-vpi.ps: $(srcdir)/iverilog-vpi.man
-	$(MAN) -t $(srcdir)/iverilog-vpi.man > iverilog-vpi.ps
+iverilog-vpi.man: $(srcdir)/iverilog-vpi.man.in version.exe
+	./version.exe `head -1 $(srcdir)/iverilog-vpi.man.in`'\n' > $@
+	tail +2 $(srcdir)/iverilog-vpi.man.in >> $@
+
+iverilog-vpi.ps: iverilog-vpi.man
+	$(MAN) -t iverilog-vpi.man > iverilog-vpi.ps
 
 iverilog-vpi.pdf: iverilog-vpi.ps
 	$(PS2PDF) iverilog-vpi.ps iverilog-vpi.pdf
-
-# The version.h header file is the concatenation of a relatively static
-# base version and the detailed version tag.
-version.h: $(srcdir)/version_base.in version_tag.h
-	cat $(srcdir)/version_base.in version_tag.h > version.h
 
 # For VERSION_TAG in driver/main.c, first try git-describe, then look for a
 # version.h file in the source tree (included in snapshots and releases), and
@@ -299,8 +303,8 @@ $(includedir)/acc_user.h: $(srcdir)/acc_user.h
 $(includedir)/veriuser.h: $(srcdir)/veriuser.h
 	$(INSTALL_DATA) $(srcdir)/veriuser.h "$(DESTDIR)$(includedir)/veriuser.h"
 
-$(mandir)/man1/iverilog-vpi$(suffix).1: $(srcdir)/iverilog-vpi.man
-	$(INSTALL_DATA) $(srcdir)/iverilog-vpi.man "$(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1"
+$(mandir)/man1/iverilog-vpi$(suffix).1: iverilog-vpi.man
+	$(INSTALL_DATA) iverilog-vpi.man "$(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1"
 
 $(prefix)/iverilog-vpi$(suffix).pdf: iverilog-vpi.pdf
 	$(INSTALL_DATA) iverilog-vpi.pdf "$(DESTDIR)$(prefix)/iverilog-vpi$(suffix).pdf"

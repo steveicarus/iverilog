@@ -24,7 +24,8 @@
  * understand the behavior of the core as it uses a target module.
  */
 
-# include "version.h"
+# include "version_base.h"
+# include "version_tag.h"
 # include "config.h"
 # include "priv.h"
 # include <stdlib.h>

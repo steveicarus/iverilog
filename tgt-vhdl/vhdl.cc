@@ -18,7 +18,8 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "version.h"
+#include "version_base.h"
+#include "version_tag.h"
 #include "vhdl_target.h"
 #include "state.hh"
 

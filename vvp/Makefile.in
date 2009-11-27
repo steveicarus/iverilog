@@ -54,11 +54,11 @@ dllib=@DLLIB@
 
 MDIR1 = -DMODULE_DIR1=\"$(libdir)/ivl$(suffix)/.\"
 
-all: dep vvp@EXEEXT@ libvpi.a
+all: dep vvp@EXEEXT@ libvpi.a vvp.man
 
 clean:
 	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc
-	rm -rf dep vvp@EXEEXT@ libvpi.a parse.output vvp.pdf vvp.exp
+	rm -rf dep vvp@EXEEXT@ libvpi.a parse.output vvp.man vvp.pdf vvp.exp
 
 distclean: clean
 	rm -f Makefile config.log
@@ -131,7 +131,11 @@ parse.h: parse.cc
 lexor.cc: $(srcdir)/lexor.lex
 	$(LEX) -s -olexor.cc $(srcdir)/lexor.lex
 
-vvp.pdf: $(srcdir)/vvp.man
+vvp.man: $(srcdir)/vvp.man.in ../version.exe
+	../version.exe `head -1 $(srcdir)/vvp.man.in`'\n' > $@
+	tail +2 $(srcdir)/vvp.man.in >> $@
+
+vvp.pdf: vvp.man
 	$(MAN) -t $(srcdir)/vvp.man | $(PS2PDF) - vvp.pdf
 
 ifeq (@MINGW32@,yes)
@@ -167,8 +171,8 @@ $(bindir)/vvp$(suffix)@EXEEXT@: ./vvp@EXEEXT@
 $(libdir)/libvpi$(suffix).a : ./libvpi.a
 	$(INSTALL_DATA) libvpi.a "$(DESTDIR)$(libdir)/libvpi$(suffix).a"
 
-$(mandir)/man1/vvp$(suffix).1: $(srcdir)/vvp.man
-	$(INSTALL_DATA) $(srcdir)/vvp.man "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1"
+$(mandir)/man1/vvp$(suffix).1: vvp.man
+	$(INSTALL_DATA) vvp.man "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1"
 
 $(prefix)/vvp$(suffix).pdf: vvp.pdf
 	$(INSTALL_DATA) vvp.pdf "$(DESTDIR)$(prefix)/vvp$(suffix).pdf"
