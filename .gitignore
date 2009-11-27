@@ -62,6 +62,11 @@ dep
 # Program created files
 /vvp/tables.cc
 
+/iverilog-vpi.man
+/driver-vpi/res.rc
+/driver/iverilog.man
+/vvp/vvp.man
+
 # The executables.
 *.exe
 /driver/iverilog

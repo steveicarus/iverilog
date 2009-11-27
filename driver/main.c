@@ -18,7 +18,8 @@
  */
 
 # include "config.h"
-# include "version.h"
+# include "version_base.h"
+# include "version_tag.h"
 
 const char NOTICE[] =
 "  This program is free software; you can redistribute it and/or modify\n"

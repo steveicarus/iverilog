@@ -50,7 +50,7 @@ all: iverilog-vpi@EXEEXT@
 check: all
 
 clean:
-	rm -f *.o config.h iverilog-vpi@EXEEXT@
+	rm -f *.o config.h iverilog-vpi@EXEEXT@ res.rc
 
 distclean: clean
 	rm -f Makefile config.log
@@ -74,6 +74,10 @@ config.h: $(srcdir)/config.h.in Makefile
 	    -e 's;@SHARED@;@shared@;' $< > $@
 
 # Windows specific...
+res.rc: $(srcdir)/res.rc.in ../version.exe
+	sed -e 's;@PRODUCTVERSION@;'`../version.exe '%M,%m,%n,0'`';' \
+	$(srcdir)/res.rc.in > $@
+
 res.o: res.rc
 	windres -i res.rc -o res.o
 #
