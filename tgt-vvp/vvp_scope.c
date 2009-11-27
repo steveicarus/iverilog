@@ -881,21 +881,21 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		  assert(! number_is_unknown(fall_exp));
 		  assert(! number_is_unknown(decay_exp));
 
-		  // For now .delay (x,y,z) only supports a 32 bit delay value.
-		  if ((! number_is_immediate(rise_exp, 32, 0)) ||
-		      (! number_is_immediate(fall_exp, 32, 0)) ||
-		      (! number_is_immediate(decay_exp, 32, 0))) {
-			fprintf(stderr, "%s:%u: vvp-tgt sorry: only 32 bit "
+		  // .delay (x,y,z) only supports a 64 bit delay value.
+		  if ((! number_is_immediate(rise_exp, 64, 0)) ||
+		      (! number_is_immediate(fall_exp, 64, 0)) ||
+		      (! number_is_immediate(decay_exp, 64, 0))) {
+			fprintf(stderr, "%s:%u: vvp-tgt sorry: only 64 bit "
 			        "delays are supported in a continuous "
 			        "assignment.\n", ivl_expr_file(rise_exp),
 			        ivl_expr_lineno(rise_exp));
-			exit(1);
+			assert(0);
 		  }
 
-		  fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
-			  lptr, get_number_immediate(rise_exp),
-			  get_number_immediate(fall_exp),
-			  get_number_immediate(decay_exp), lptr);
+		  fprintf(vvp_out, "L_%p .delay (%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
+			  lptr, get_number_immediate64(rise_exp),
+			  get_number_immediate64(fall_exp),
+			  get_number_immediate64(decay_exp), lptr);
 	    } else {
 		  ivl_signal_t sig;
 		  // We do not currently support calculating the decay from
@@ -1102,22 +1102,22 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net)
 	    assert(! number_is_unknown(d_fall));
 	    assert(! number_is_unknown(d_decay));
 
-	    // For now .delay (x,y,z) only supports a 32 bit delay value.
-	    if ((! number_is_immediate(d_rise, 32, 0)) ||
-	        (! number_is_immediate(d_fall, 32, 0)) ||
-	        (! number_is_immediate(d_decay, 32, 0))) {
-		  fprintf(stderr, "%s:%u: vvp-tgt sorry: only 32 bit "
+	    // .delay (x,y,z) only supports a 64 bit delay value.
+	    if ((! number_is_immediate(d_rise, 64, 0)) ||
+	        (! number_is_immediate(d_fall, 64, 0)) ||
+	        (! number_is_immediate(d_decay, 64, 0))) {
+		  fprintf(stderr, "%s:%u: vvp-tgt sorry: only 64 bit "
 		          "delays are supported in a continuous "
 		          "assignment.\n", ivl_expr_file(d_rise),
 		          ivl_expr_lineno(d_rise));
-		  exit(1);
+		  assert(0);
 	    }
 
 	    dly = "/d";
-	    fprintf(vvp_out, "L_%p .delay (%lu,%lu,%lu) L_%p/d;\n",
-	            net, get_number_immediate(d_rise),
-	            get_number_immediate(d_fall),
-	            get_number_immediate(d_decay), net);
+	    fprintf(vvp_out, "L_%p .delay (%" PRIu64 ",%" PRIu64 ",%" PRIu64 ")"
+		    "L_%p/d;\n", net, get_number_immediate64(d_rise),
+	            get_number_immediate64(d_fall),
+	            get_number_immediate64(d_decay), net);
       }
 
       return dly;
