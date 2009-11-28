@@ -79,8 +79,8 @@ all: dep config.h _pli_types.h version_tag.h ivl@EXEEXT@ version.exe
 # dosify text files.
 ifeq (@MINGW32@,yes)
 all: dep dosify.exe
-dosify.exe: dosify.c
-	$(CC) -o dosify.exe dosify.c
+dosify.exe: $(srcdir)/dosify.c
+	$(CC) -o dosify.exe $(srcdir)/dosify.c
 endif
 
 # This rule rules the compiler in the trivial hello.vl program to make
