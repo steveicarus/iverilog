@@ -410,7 +410,7 @@ static int parse(int argc, char *argv[])
 
 static void checkMingwDir(char *root)
 {
-	int irv, len;
+	int irv;
 	struct _stat stat_buf;
 
 	char *path, *comp, *cp;
@@ -518,16 +518,16 @@ static void setup_ivl_environment()
 		}
 
 	  /* Build up the CFLAGS option string */
-	assign(&gstr.pCFLAGS,IVERILOG_VPI_CFLAGS " -I");
+	assign(&gstr.pCFLAGS,IVERILOG_VPI_CFLAGS " -I\"");
 	append(&gstr.pCFLAGS,gstr.pIVL);
 	appendBackSlash(&gstr.pCFLAGS);
-	append(&gstr.pCFLAGS,"\\include\\\\iverilog" IVERILOG_SUFFIX);
+	append(&gstr.pCFLAGS,"\\include\\\\iverilog\"" IVERILOG_SUFFIX);
 
 	  /* Build up the LDFLAGS option string */
-	assign(&gstr.pLDLIBS,"-L");
+	assign(&gstr.pLDLIBS,"-L\"");
 	append(&gstr.pLDLIBS,gstr.pIVL);
 	appendBackSlash(&gstr.pLDLIBS);
-	append(&gstr.pLDLIBS,"\\lib " IVERILOG_VPI_LDLIBS);
+	append(&gstr.pLDLIBS,"\\lib\" " IVERILOG_VPI_LDLIBS);
 }
 
 /* compile source modules */

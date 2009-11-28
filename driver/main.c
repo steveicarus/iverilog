@@ -753,8 +753,8 @@ int main(int argc, char **argv)
 
 #ifdef __MINGW32__
       { char * s;
-	char basepath[1024];
-	GetModuleFileName(NULL,basepath,1024);
+	char basepath[1024], tmp[1024];
+	GetModuleFileName(NULL, tmp, sizeof(tmp));
 
 	  /* Calculate the ivl_root from the path to the command. This
 	     is necessary because of the installation process in
@@ -771,7 +771,9 @@ int main(int argc, char **argv)
 	     turning the last two \ characters to null. Then we append
 	     the lib\ivl to finish. */
 
-        strncpy(ivl_root, basepath, MAXSIZE);
+	  /* Convert to a short name to remove any embedded spaces. */
+	GetShortPathName(tmp, basepath, sizeof(basepath));
+	strncpy(ivl_root, basepath, MAXSIZE);
 	s = strrchr(ivl_root, sep);
 	if (s) *s = 0;
 	s = strrchr(ivl_root, sep);
