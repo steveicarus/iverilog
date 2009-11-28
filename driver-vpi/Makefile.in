@@ -56,14 +56,14 @@ distclean: clean
 	rm -f Makefile config.log
 
 Makefile: $(srcdir)/Makefile.in ../config.status
-	../config.status --file=$@
+	cd ..; ./config.status --file=driver-vpi/$@
 
 O = main.o res.o
 
 iverilog-vpi@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o iverilog-vpi@EXEEXT@ @EXTRALIBS@
 
-main.o: main.c config.h
+main.o: $(srcdir)/main.c config.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/main.c
 
 
