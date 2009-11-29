@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "pointers.h"
+# include  "config.h"
 
 /*
  * The .ufunc statement creates functors to represent user defined

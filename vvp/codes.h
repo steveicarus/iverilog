@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "pointers.h"
+# include  "config.h"
 # include  "vvp_net.h"
 # include  "array.h"
 # include  "vthread.h"
@@ -180,7 +180,6 @@ struct vvp_code_s {
 	    vvp_array_t array;
 	    struct __vpiHandle*handle;
 	    struct __vpiScope*scope;
-	    functor_t fun_ptr;
       };
 
       union {

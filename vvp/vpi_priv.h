@@ -20,7 +20,6 @@
  */
 
 # include  "vpi_user.h"
-# include  "pointers.h"
 # include  "vvp_net.h"
 # include  "config.h"
 

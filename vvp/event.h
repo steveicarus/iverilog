@@ -20,8 +20,8 @@
  */
 
 # include  "vvp_net.h"
-# include  "pointers.h"
 # include  "array.h"
+# include  "vthread.h"
 # include  "config.h"
 
 class evctl {

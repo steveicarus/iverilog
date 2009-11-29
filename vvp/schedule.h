@@ -20,7 +20,6 @@
  */
 
 # include  "vthread.h"
-# include  "pointers.h"
 # include  "vvp_net.h"
 # include  "array.h"
 

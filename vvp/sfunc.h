@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "pointers.h"
+# include  "config.h"
 
 class sfunc_core : public vvp_wide_fun_core, protected vvp_gen_event_s {
 
