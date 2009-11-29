@@ -72,7 +72,7 @@ CXXFLAGS = -Wall @CXXFLAGS@
 PICFLAGS = @PICFLAG@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 
-all: dep config.h _pli_types.h version_tag.h ivl@EXEEXT@
+all: dep config.h _pli_types.h version_tag.h ivl@EXEEXT@ version.exe
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 
 # In the windows world, the installer will need a dosify program to
