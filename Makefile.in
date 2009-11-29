@@ -40,10 +40,13 @@ datarootdir = @datarootdir@
 
 SUBDIRS = ivlpp vvp vpi libveriuser cadpli tgt-null tgt-stub tgt-vvp \
           tgt-vhdl driver
-# Only run distclean for these driectories.
+# Only run distclean for these directories.
 NOTUSED = tgt-fpga tgt-pal tgt-verilog
 
-VPATH = $(srcdir)
+# To get the version headers to build correctly we only want to look
+# for C++ files in the source directory. All other files will require
+# an explicit $(srcdir).
+vpath %.cc $(srcdir)
 
 bindir = @bindir@
 libdir = @libdir@
@@ -112,6 +115,10 @@ endif
 	rm -f Makefile config.status config.log config.cache
 	rm -f stamp-config-h config.h
 	rm -f stamp-_pli_types-h _pli_types.h
+ifneq (@srcdir@,.)
+	rm -f version.h version_tag.h check.conf
+	rmdir $(SUBDIRS) $(NOTUSED)
+endif
 	rm -rf autom4te.cache
 
 TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-dll-analog.o
@@ -175,7 +182,7 @@ SUBDIRS += driver-vpi
 else
 all: dep iverilog-vpi
 
-iverilog-vpi: iverilog-vpi.sh Makefile
+iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
 	sed -e 's;@SHARED@;@shared@;' -e 's;@PIC@;@PICFLAG@;' \
 	    -e 's;@SUFFIX@;$(suffix);' \
 	    -e 's;@IVCC@;$(CC);' \
@@ -213,7 +220,7 @@ lexor.cc: $(srcdir)/lexor.lex
 
 lexor_keyword.o: lexor_keyword.cc parse.h
 
-lexor_keyword.cc: lexor_keyword.gperf
+lexor_keyword.cc: $(srcdir)/lexor_keyword.gperf
 	gperf -o -i 7 -C -k 1-4,$$ -L ANSI-C -H keyword_hash -N check_identifier -t $(srcdir)/lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
 
 iverilog-vpi.man: $(srcdir)/iverilog-vpi.man.in version.exe
