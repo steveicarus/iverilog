@@ -111,7 +111,7 @@ class vvp_signal_value {
  */
 class vvp_fun_signal_vec : public vvp_fun_signal_base {
     public:
-      virtual vvp_vector4_t vec4_unfiltered_value() const =0;
+      virtual const vvp_vector4_t& vec4_unfiltered_value() const =0;
 };
 
 class automatic_signal_base : public vvp_signal_value, public vvp_net_fil_t {
@@ -149,7 +149,7 @@ class vvp_fun_signal4_sa : public vvp_fun_signal_vec {
 			unsigned base, unsigned wid, unsigned vwid);
 
 	// Get information about the vector value.
-      vvp_vector4_t vec4_unfiltered_value() const;
+      const vvp_vector4_t& vec4_unfiltered_value() const;
 
     private:
       vvp_vector4_t bits4_;
@@ -183,7 +183,7 @@ class vvp_fun_signal4_aa : public vvp_fun_signal_vec, public automatic_signal_ba
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
       void vec4_value(vvp_vector4_t&) const;
-      vvp_vector4_t vec4_unfiltered_value() const;
+      const vvp_vector4_t& vec4_unfiltered_value() const;
 
     public: // These objects are only permallocated.
       static void* operator new(std::size_t size) { return vvp_net_fun_t::heap_.alloc(size); }

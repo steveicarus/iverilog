@@ -283,7 +283,7 @@ void automatic_signal_base::get_value(struct t_vpi_value*)
       assert(0);
 }
 
-vvp_vector4_t vvp_fun_signal4_sa::vec4_unfiltered_value() const
+const vvp_vector4_t& vvp_fun_signal4_sa::vec4_unfiltered_value() const
 {
       return bits4_;
 }
@@ -388,11 +388,12 @@ void vvp_fun_signal4_aa::vec4_value(vvp_vector4_t&val) const
       val = *bits4;
 }
 
-vvp_vector4_t vvp_fun_signal4_aa::vec4_unfiltered_value() const
+const vvp_vector4_t&vvp_fun_signal4_aa::vec4_unfiltered_value() const
 {
-      vvp_vector4_t tmp;
-      vec4_value(tmp);
-      return tmp;
+      vvp_vector4_t*bits4 = static_cast<vvp_vector4_t*>
+            (vthread_get_rd_context_item(context_idx_));
+
+      return *bits4;
 }
 
 void vvp_fun_signal4_aa::operator delete(void*)

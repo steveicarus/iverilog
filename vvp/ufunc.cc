@@ -73,10 +73,29 @@ void ufunc_core::assign_bits_to_ports(vvp_context_t context)
       for (unsigned idx = 0 ; idx < port_count() ;  idx += 1) {
 	    vvp_net_t*net = ports_[idx];
 	    vvp_net_ptr_t pp (net, 0);
+
+	      // If the port is a real variable, then simply copy the
+	      // propagated input to the port variable.
 	    if (vvp_fun_signal_real*tmp = dynamic_cast<vvp_fun_signal_real*>(net->fun))
 		  tmp->recv_real(pp, value_r(idx), context);
-	    if (vvp_fun_signal_vec*tmp = dynamic_cast<vvp_fun_signal_vec*>(net->fun))
-		  tmp->recv_vec4(pp, value(idx), context);
+
+	      // If the port is a bit4 vector, then copy the
+	      // propagated input to the port variable. Detect the
+	      // special case that the input vector is nil, and
+	      // convert that to an 'bx vector that matches the width
+	      // of the port variable. This is to handle the uncommon
+	      // startup case where the input values have not
+	      // propagated useful values yet.
+	    if (vvp_fun_signal_vec*tmp = dynamic_cast<vvp_fun_signal_vec*>(net->fun)) {
+		  const vvp_vector4_t&tmp_val = value(idx);
+		  if (tmp_val.size() == 0) {
+			const vvp_vector4_t&ref = tmp->vec4_unfiltered_value();
+			vvp_vector4_t xxx (ref.size(), BIT4_X);
+			tmp->recv_vec4(pp, xxx, context);
+		  } else {
+			tmp->recv_vec4(pp, tmp_val, context);
+		  }
+	    }
       }
 }
 
