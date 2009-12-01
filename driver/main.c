@@ -150,8 +150,7 @@ FILE*iconfig_file = 0;
 
 char*compiled_defines_path = 0;
 
-static char iconfig_common_path_buf[4096] = "";
-char*iconfig_common_path = iconfig_common_path_buf;
+static char iconfig_common_path[4096] = "";
 
 int synth_flag = 0;
 int verbose_flag = 0;
@@ -268,7 +267,8 @@ static const char*my_tempfile(const char*str, FILE**fout)
       file = NULL;
       while ((retry > 0) && (file == NULL)) {
 	    unsigned code = rand();
-	    sprintf(pathbuf, "%s%c%s%04x", tmpdir, sep, str, code);
+	    snprintf(pathbuf, sizeof pathbuf, "%s%c%s%04x",
+	             tmpdir, sep, str, code);
 	    file = fopen_safe(pathbuf);
 	    retry -= 1;
       }
@@ -754,7 +754,7 @@ int main(int argc, char **argv)
 #ifdef __MINGW32__
       { char * s;
 	char basepath[1024], tmp[1024];
-	GetModuleFileName(NULL, tmp, sizeof(tmp));
+	GetModuleFileName(NULL, tmp, sizeof tmp);
 
 	  /* Calculate the ivl_root from the path to the command. This
 	     is necessary because of the installation process in
@@ -772,7 +772,7 @@ int main(int argc, char **argv)
 	     the lib\ivl to finish. */
 
 	  /* Convert to a short name to remove any embedded spaces. */
-	GetShortPathName(tmp, basepath, sizeof(basepath));
+	GetShortPathName(tmp, basepath, sizeof basepath);
 	strncpy(ivl_root, basepath, MAXSIZE);
 	s = strrchr(ivl_root, sep);
 	if (s) *s = 0;
@@ -984,7 +984,7 @@ int main(int argc, char **argv)
       }
 
 	/* Make a common conf file path to reflect the target. */
-      sprintf(iconfig_common_path, "%s%c%s%s.conf",
+      snprintf(iconfig_common_path, sizeof iconfig_common_path, "%s%c%s%s.conf",
 	      base,sep, targ, synth_flag? "-s" : "");
 
 	/* Write values to the iconfig file. */
