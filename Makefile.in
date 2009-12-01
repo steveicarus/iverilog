@@ -43,6 +43,12 @@ SUBDIRS = ivlpp vvp vpi libveriuser cadpli tgt-null tgt-stub tgt-vvp \
 # Only run distclean for these directories.
 NOTUSED = tgt-fpga tgt-pal tgt-verilog
 
+ifeq (@MINGW32@,yes)
+SUBDIRS += driver-vpi
+else
+NOTUSED += driver-vpi
+endif
+
 # To get the version headers to build correctly we only want to look
 # for C++ files in the source directory. All other files will require
 # an explicit $(srcdir).
@@ -96,9 +102,6 @@ check: all
 
 clean:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
-ifeq (@MINGW32@,no)
-	(cd driver-vpi ; $(MAKE) $@)
-endif
 	rm -f *.o parse.cc parse.h lexor.cc
 	rm -f ivl.exp iverilog-vpi.man iverilog-vpi.pdf iverilog-vpi.ps parse.output
 	rm -f syn-rules.output dosify.exe ivl@EXEEXT@ check.vvp
@@ -108,9 +111,6 @@ endif
 
 distclean: clean
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
-ifeq (@MINGW32@,no)
-	(cd driver-vpi ; $(MAKE) $@)
-endif
 	$(foreach dir,$(NOTUSED),$(MAKE) -C $(dir) $@ && ) true
 	rm -f Makefile config.status config.log config.cache
 	rm -f stamp-config-h config.h
@@ -177,9 +177,7 @@ ivl@EXEEXT@: $O
 	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ $O $(dllib)
 endif
 
-ifeq (@MINGW32@,yes)
-SUBDIRS += driver-vpi
-else
+ifeq (@MINGW32@,no)
 all: dep iverilog-vpi
 
 iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
