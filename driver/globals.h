@@ -1,7 +1,7 @@
 #ifndef __globals_H
 #define __globals_H
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,31 +20,6 @@
  */
 
 # include  <stddef.h>
-
-  /* This is the base (i.e. -B<value>) of the Icarus Verilog files. */
-extern const char*base;
-
-  /* This is the path to the iconfig file sent to ivl. */
-extern char* iconfig_path;
-extern char* iconfig_common_path;
-
-  /* This is the optional -M<dependfile> value, if one was supplied. */
-extern const char*depfile;
-
-  /* This is the optional -N<path> value, if one was supplied. */
-extern const char*npath;
-
-  /* This is the name of the output file that the user selected. */
-extern const char*opath;
-
-  /* This pointer is set if there were -s<value> parameters. */
-extern char*start;
-
-  /* This flag is true if the -S flag was used on the command line. */
-extern int synth_flag;
-
-  /* This is the name of the selected target. */
-extern const char*targ;
 
   /* This is the integer-width argument that will be passed to ivl. */
 extern unsigned integer_width;
@@ -65,14 +40,5 @@ extern void process_include_dir(const char*name);
 
   /* Add a new -D define. */
 extern void process_define(const char*name);
-
-  /* -v */
-extern int verbose_flag;
-
-extern char warning_flags[];
-
-  /* -y and -Y flags from the command line. */
-extern char* library_flags;
-extern char* library_flags2;
 
 #endif
