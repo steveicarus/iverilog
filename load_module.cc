@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -78,10 +78,11 @@ bool load_module(const char*type)
 
 	    if (ivlpp_string) {
 		  char*cmdline = (char*)malloc(strlen(ivlpp_string) +
-					       strlen(path) + 2);
+					       strlen(path) + 4);
 		  strcpy(cmdline, ivlpp_string);
-		  strcat(cmdline, " ");
+		  strcat(cmdline, " \"");
 		  strcat(cmdline, path);
+		  strcat(cmdline, "\"");
 		  FILE*file = popen(cmdline, "r");
 
 		  if (verbose_flag)

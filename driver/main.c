@@ -282,7 +282,7 @@ static int t_version_only(void)
       }
 
       fflush(0);
-      snprintf(tmp, sizeof tmp, "%s%civl -V -C%s -C%s", base, sep,
+      snprintf(tmp, sizeof tmp, "%s%civl -V -C\"%s\" -C\"%s\"", base, sep,
 	       iconfig_path, iconfig_common_path);
       rc = system(tmp);
       if (rc != 0) {
@@ -303,8 +303,8 @@ static int t_version_only(void)
 
 static void build_preprocess_command(int e_flag)
 {
-      snprintf(tmp, sizeof tmp, "%s%civlpp %s%s -F%s -f%s -p%s ",
-	       pbase,sep, verbose_flag?" -v":"",
+      snprintf(tmp, sizeof tmp, "%s%civlpp %s%s -F\"%s\" -f\"%s\" -p\"%s\" ",
+	       pbase, sep, verbose_flag?" -v":"",
 	       e_flag?"":" -L", defines_path, source_path,
 	       compiled_defines_path);
 }
@@ -322,7 +322,7 @@ static int t_preprocess_only(void)
       strcpy(cmd, tmp);
 
       if (strcmp(opath,"-") != 0) {
-	    snprintf(tmp, sizeof tmp, " > %s", opath);
+	    snprintf(tmp, sizeof tmp, " > \"%s\"", opath);
 	    cmd = realloc(cmd, ncmd+strlen(tmp)+1);
 	    strcpy(cmd+ncmd, tmp);
 	    ncmd += strlen(tmp);
@@ -397,20 +397,20 @@ static int t_compile()
       }
 
       if (npath != 0) {
-	    snprintf(tmp, sizeof tmp, " -N%s", npath);
+	    snprintf(tmp, sizeof tmp, " -N\"%s\"", npath);
 	    rc = strlen(tmp);
 	    cmd = realloc(cmd, ncmd+rc+1);
 	    strcpy(cmd+ncmd, tmp);
 	    ncmd += rc;
       }
 
-      snprintf(tmp, sizeof tmp, " -C%s", iconfig_path);
+      snprintf(tmp, sizeof tmp, " -C\"%s\"", iconfig_path);
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
       strcpy(cmd+ncmd, tmp);
       ncmd += rc;
 
-      snprintf(tmp, sizeof tmp, " -C%s -- -", iconfig_common_path);
+      snprintf(tmp, sizeof tmp, " -C\"%s\" -- -", iconfig_common_path);
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
       strcpy(cmd+ncmd, tmp);
@@ -930,7 +930,7 @@ int main(int argc, char **argv)
 
 	/* Make a common conf file path to reflect the target. */
       snprintf(iconfig_common_path, sizeof iconfig_common_path, "%s%c%s%s.conf",
-	      base,sep, targ, synth_flag? "-s" : "");
+	      base, sep, targ, synth_flag? "-s" : "");
 
 	/* Write values to the iconfig file. */
       fprintf(iconfig_file, "basedir:%s\n", base);
@@ -1037,7 +1037,7 @@ int main(int argc, char **argv)
 	/* Write the preprocessor command needed to preprocess a
 	   single file. This may be used to preprocess library
 	   files. */
-      fprintf(iconfig_file, "ivlpp:%s%civlpp -L -F%s -P%s\n",
+      fprintf(iconfig_file, "ivlpp:%s%civlpp -L -F\"%s\" -P\"%s\"\n",
 	      pbase, sep, defines_path, compiled_defines_path);
 
 	/* Done writing to the iconfig file. Close it now. */
