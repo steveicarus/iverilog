@@ -3,19 +3,19 @@
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * to deal in the Software without restriction, including without limitation 
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * and/or sell copies of the Software, and to permit persons to whom the   
+ * Software is furnished to do so, subject to the following conditions: 
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL   
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING   
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
@@ -32,12 +32,12 @@
 #include <inttypes.h>
 #include <zlib.h>
 
-#if defined _MSC_VER || defined __MINGW32__
+#ifndef HAVE_FSEEKO
 #define fseeko fseek
 #define ftello ftell
 #endif
 
-#define wave_alloca alloca
+#include <wavealloca.h>
 
 #define LXT2_WR_HDRID (0x1380)
 #define LXT2_WR_VERSION (0x0001)
@@ -51,7 +51,7 @@
 #define LXT2_WR_GRAN_SECT_TIME_PARTIAL 2
 
 #define LXT2_WR_GZWRITE_BUFFER 4096
-#define LXT2_WR_SYMPRIME 65519
+#define LXT2_WR_SYMPRIME 500009
 
 typedef uint64_t lxttime_t;
 
@@ -76,12 +76,12 @@ typedef unsigned long long granmsk_t;
 #define LXT2_WR_GRAN_1VAL (LXT2_WR_ULLDESC(1))
 #else
 typedef unsigned int granmsk_t;
-#define LXT2_WR_GRAN_0VAL (0)
+#define LXT2_WR_GRAN_0VAL (0)   
 #define LXT2_WR_GRAN_1VAL (1)
 #endif
 
 
-enum LXT2_WR_Encodings {
+enum LXT2_WR_Encodings { 
 	LXT2_WR_ENC_0,
 	LXT2_WR_ENC_1,
 	LXT2_WR_ENC_INV,
@@ -125,12 +125,12 @@ struct lxt2_wr_ds_tree_node {
  */
 typedef struct lxt2_wr_dslxt_tree_node lxt2_wr_dslxt_Tree;
 struct lxt2_wr_dslxt_tree_node {
-    lxt2_wr_dslxt_Tree * left, * right;
+    lxt2_wr_dslxt_Tree * left, * right;  
     char *item;
     unsigned int val;
     lxt2_wr_dslxt_Tree * next;
 };
-
+                                        
 
 struct lxt2_wr_trace
 {
@@ -301,3 +301,15 @@ int 			lxt2_wr_emit_value_string(struct lxt2_wr_trace *lt, struct lxt2_wr_symbol
 int 			lxt2_wr_emit_value_bit_string(struct lxt2_wr_trace *lt, struct lxt2_wr_symbol *s, unsigned int row, char *value);
 
 #endif
+
+/*
+ * $Id: lxt2_write.h,v 1.1.1.1 2007/05/30 04:28:25 gtkwave Exp $
+ * $Log: lxt2_write.h,v $
+ * Revision 1.1.1.1  2007/05/30 04:28:25  gtkwave
+ * Imported sources
+ *
+ * Revision 1.2  2007/04/20 02:08:18  gtkwave
+ * initial release
+ *
+ */
+

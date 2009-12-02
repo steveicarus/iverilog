@@ -86,6 +86,11 @@ AC_CHECK_LIB(bz2, BZ2_bzdopen, HAVE_LIBBZ2=yes, HAVE_LIBBZ2=no)
 fi
 AC_SUBST(HAVE_LIBBZ2)
 
+# The lxt/lxt2 files from GTKWave use these...
+
+AC_FUNC_ALLOCA
+AC_FUNC_FSEEKO
+
 # valgrind checks
 AC_ARG_WITH([valgrind], [AC_HELP_STRING([--with-valgrind],
                                         [Add valgrind hooks])],

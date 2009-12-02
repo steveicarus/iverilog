@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2007 Tony Bybell.
+ * Copyright (c) 2003-2008 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1385,17 +1385,17 @@ if((lt->timegranule>=lt->maxgranule)||(do_finalize)||(early_flush))
 
 	if(using_partial_zip)
 		{
-		off_t clen;
+		off_t c_len;
 	
 		gzflush_buffered(lt, 1);
 		fseeko(lt->handle, 0L, SEEK_END);
 		lt->position=ftello(lt->handle);
 	
-		clen = lt->position - current_iter_pos - 12;
+		c_len = lt->position - current_iter_pos - 12;
 		fseeko(lt->handle, current_iter_pos, SEEK_SET);
 
 		lt->zpackcount_cumulative+=lt->zpackcount;
-		lxt2_wr_emit_u32(lt, clen);
+		lxt2_wr_emit_u32(lt, c_len);
 		lxt2_wr_emit_u32(lt, lt->zpackcount);
 		}
 		else
@@ -2179,3 +2179,18 @@ if(lt)
 	sprintf(lt->zmode, "wb%d", depth);
 	}
 }
+
+/*
+ * $Id: lxt2_write.c,v 1.2 2008/12/20 05:08:26 gtkwave Exp $
+ * $Log: lxt2_write.c,v $
+ * Revision 1.2  2008/12/20 05:08:26  gtkwave
+ * -Wshadow warning cleanups
+ *
+ * Revision 1.1.1.1  2007/05/30 04:28:21  gtkwave
+ * Imported sources
+ *
+ * Revision 1.2  2007/04/20 02:08:18  gtkwave
+ * initial release
+ *
+ */
+
