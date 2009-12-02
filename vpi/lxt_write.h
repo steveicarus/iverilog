@@ -3,19 +3,19 @@
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * to deal in the Software without restriction, including without limitation 
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * and/or sell copies of the Software, and to permit persons to whom the   
+ * Software is furnished to do so, subject to the following conditions: 
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL   
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING   
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
@@ -32,7 +32,7 @@
 #include <zlib.h>
 #include <bzlib.h>
 
-#if defined _MSC_VER || defined __MINGW32__
+#ifndef HAVE_FSEEKO
 #define fseeko fseek
 #define ftello ftell
 #endif
@@ -40,11 +40,11 @@
 
 typedef struct dslxt_tree_node dslxt_Tree;
 struct dslxt_tree_node {
-    dslxt_Tree * left, * right;
+    dslxt_Tree * left, * right;  
     char *item;
     unsigned int val;
 };
-
+                                        
 
 #define LT_HDRID (0x0138)
 #define LT_VERSION (0x0004)
@@ -73,7 +73,7 @@ unsigned int position;
 };
 
 
-#define LT_SYMPRIME 65519
+#define LT_SYMPRIME 500009
 
 #define LT_SECTION_END				(0)
 #define LT_SECTION_CHG				(1)
@@ -162,7 +162,7 @@ unsigned double_used : 1;
 unsigned do_strip_brackets : 1;
 unsigned clock_compress : 1;
 unsigned dictmode : 1;			/* dictionary compression enabled */
-unsigned zmode : 2;			/* for value changes */
+unsigned zmode : 2;			/* for value changes */ 
 unsigned emitted : 1;			/* gate off change field zmode changes when set */
 };
 
@@ -233,9 +233,9 @@ void			lt_set_dumpoff(struct lt_trace *lt);
 void			lt_set_dumpon(struct lt_trace *lt);
 
 /*
- * value change functions..note that if the value string len for
- * lt_emit_value_bit_string() is shorter than the symbol length
- * it will be left justified with the rightmost character used as
+ * value change functions..note that if the value string len for 
+ * lt_emit_value_bit_string() is shorter than the symbol length 
+ * it will be left justified with the rightmost character used as 
  * a repeat value that will be propagated to pad the value string out:
  *
  * "10x" for 8 bits becomes "10xxxxxx"
@@ -247,3 +247,15 @@ int 			lt_emit_value_string(struct lt_trace *lt, struct lt_symbol *s, unsigned i
 int 			lt_emit_value_bit_string(struct lt_trace *lt, struct lt_symbol *s, unsigned int row, char *value);
 
 #endif
+
+/*
+ * $Id: lxt_write.h,v 1.1.1.1 2007/05/30 04:28:15 gtkwave Exp $
+ * $Log: lxt_write.h,v $
+ * Revision 1.1.1.1  2007/05/30 04:28:15  gtkwave
+ * Imported sources
+ *
+ * Revision 1.2  2007/04/20 02:08:18  gtkwave
+ * initial release
+ *
+ */
+

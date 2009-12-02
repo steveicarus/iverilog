@@ -17,6 +17,8 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+/* The vpi_config.h include must be before the lxt_write.h include! */
+# include "vpi_config.h"
 # include "lxt_write.h"
 # include "sys_priv.h"
 # include "vcd_priv.h"
