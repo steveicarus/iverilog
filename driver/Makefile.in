@@ -86,7 +86,7 @@ cflexor.o: cflexor.c cfparse.h
 
 iverilog.man: $(srcdir)/iverilog.man.in ../version.exe
 	../version.exe `head -1 $(srcdir)/iverilog.man.in`'\n' > $@
-	tail +2 $(srcdir)/iverilog.man.in >> $@
+	tail -n +2 $(srcdir)/iverilog.man.in >> $@
 
 iverilog.ps: iverilog.man
 	$(MAN) -t iverilog.man > iverilog.ps
