@@ -197,10 +197,12 @@ version.exe: $(srcdir)/version.c $(srcdir)/version_base.h version_tag.h
 dep:
 	mkdir dep
 
-%.o: %.cc
+%.o: %.cc config.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep/$*.d
 
+# Here are some explicit dependencies needed to get things going.
+main.o: main.cc version_tag.h
 
 lexor.o: lexor.cc parse.h
 

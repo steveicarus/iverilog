@@ -45,7 +45,7 @@ all: dep vhdl.tgt vhdl.conf vhdl-s.conf
 dep:
 	mkdir dep
 
-%.o: %.cc
+%.o: %.cc vhdl_config.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
