@@ -133,7 +133,7 @@ lexor.cc: $(srcdir)/lexor.lex
 
 vvp.man: $(srcdir)/vvp.man.in ../version.exe
 	../version.exe `head -1 $(srcdir)/vvp.man.in`'\n' > $@
-	tail +2 $(srcdir)/vvp.man.in >> $@
+	tail -n +2 $(srcdir)/vvp.man.in >> $@
 
 vvp.pdf: vvp.man
 	$(MAN) -t $(srcdir)/vvp.man | $(PS2PDF) - vvp.pdf
