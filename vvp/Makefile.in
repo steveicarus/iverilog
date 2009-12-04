@@ -103,11 +103,11 @@ endif
 dep:
 	mkdir dep
 
-%.o: %.cc
+%.o: %.cc config.h
 	$(CXX) $(CPPFLAGS) $(MDIR1) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep/$*.d
 
-%.o: %.c
+%.o: %.c config.h
 	$(CC) $(CPPFLAGS) $(MDIR1) $(MDIR2) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep/$*.d
 

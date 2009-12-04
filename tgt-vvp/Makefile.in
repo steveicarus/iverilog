@@ -47,7 +47,7 @@ all: dep vvp.tgt vvp.conf vvp-s.conf
 dep:
 	mkdir dep
 
-%.o: %.c
+%.o: %.c vvp_config.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 

@@ -50,7 +50,7 @@ check: all
 dep:
 	mkdir dep
 
-%.o: %.c
+%.o: %.c vpi_config.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
