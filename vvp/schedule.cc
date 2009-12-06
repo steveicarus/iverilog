@@ -753,6 +753,9 @@ void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay,
       cur->delete_obj_when_done = delete_when_done;
       schedule_event_(cur, delay,
 		      sync_flag? (ro_flag?SEQ_ROSYNC:SEQ_RWSYNC) : SEQ_ACTIVE);
+
+      if (sync_flag)
+	    vthread_delay_delete();
 }
 
 void schedule_at_start_of_simtime(vvp_gen_event_t obj, vvp_time64_t delay)

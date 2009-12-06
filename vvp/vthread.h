@@ -1,7 +1,7 @@
 #ifndef __vthread_H
 #define __vthread_H
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -47,6 +47,14 @@ extern vthread_t vthread_new(vvp_code_t sa, struct __vpiScope*scope);
  * schedule_vthread function.
  */
 extern void vthread_mark_scheduled(vthread_t thr);
+
+/*
+ * This function causes deletion of the currently running thread to
+ * be delayed until after all sync events have been processed for the
+ * time step in which the thread terminates. It is only used by the
+ * schedule_generic function.
+ */
+extern void vthread_delay_delete();
 
 /*
  * Cause this thread to execute instructions until in is put to sleep
