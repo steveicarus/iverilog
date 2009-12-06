@@ -4405,14 +4405,17 @@ Design* elaborate(list<perm_string>roots)
 	    des->elaboration_work_list.push_back(es);
       }
 
-	// After the work items for the root scope elaboration, push a
-	// work item to process the defparams.
-      des->elaboration_work_list.push_back(new top_defparams(des));
-
 	// Run the work list of scope elaborations until the list is
 	// empty. This list is initially populated above where the
 	// initial root scopes are primed.
       while (! des->elaboration_work_list.empty()) {
+	      // Push a work item to process the defparams of any scopes
+	      // that are elaborated during this pass. For the first pass
+	      // this will be all the root scopes. For subsequent passes
+	      // it will be any scopes created during the previous pass
+	      // by a generate construct or instance array.
+	    des->elaboration_work_list.push_back(new top_defparams(des));
+
 	      // Transfer the queue to a temporary queue.
 	    list<elaborator_work_item_t*> cur_queue;
 	    while (! des->elaboration_work_list.empty()) {
