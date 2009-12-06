@@ -111,6 +111,7 @@ struct vthread_s {
       unsigned i_have_ended      :1;
       unsigned waiting_for_event :1;
       unsigned is_scheduled      :1;
+      unsigned delay_delete      :1;
       unsigned fork_count        :8;
 	/* This points to the sole child of the thread. */
       struct vthread_s*child;
@@ -411,6 +412,7 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       thr->schedule_parent_on_end = 0;
       thr->is_scheduled = 0;
       thr->i_have_ended = 0;
+      thr->delay_delete = 0;
       thr->waiting_for_event = 0;
       thr->fork_count   = 0;
       thr->event  = 0;
@@ -498,7 +500,10 @@ static void vthread_reap(vthread_t thr)
       if ((thr->is_scheduled == 0) && (thr->waiting_for_event == 0)) {
 	    assert(thr->fork_count == 0);
 	    assert(thr->wait_next == 0);
-	    schedule_del_thr(thr);
+	    if (thr->delay_delete)
+		  schedule_del_thr(thr);
+	    else
+		  vthread_delete(thr);
       }
 }
 
@@ -515,6 +520,12 @@ void vthread_mark_scheduled(vthread_t thr)
 	    thr->is_scheduled = 1;
 	    thr = thr->wait_next;
       }
+}
+
+void vthread_delay_delete()
+{
+      if (running_thread)
+	    running_thread->delay_delete = 1;
 }
 
 /*
@@ -4541,9 +4552,12 @@ bool of_XOR(vthread_t thr, vvp_code_t cp)
 bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 {
       thr->pc = codespace_null();
-      if ((thr->parent == 0) && (thr->child == 0))
-	    schedule_del_thr(thr);
-
+      if ((thr->parent == 0) && (thr->child == 0)) {
+	    if (thr->delay_delete)
+		  schedule_del_thr(thr);
+	    else
+		  vthread_delete(thr);
+      }
       return false;
 }
 
