@@ -996,6 +996,11 @@ NetExpr* NetEBPow::eval_tree_real_()
 
       NetECReal*res = new NetECReal( pow(lval,rval) );
       res->set_line(*this);
+
+      if (debug_eval_tree)
+	    cerr << get_fileline() << ": debug: Evaluate (real) "
+		 << lval << " ** " << rval << " --> " << *res << endl;
+
       return res;
 }
 
@@ -1016,7 +1021,14 @@ NetExpr* NetEBPow::eval_tree(int prune_to_width)
       verinum lval = lc->value();
       verinum rval = rc->value();
 
-      return new NetEConst( pow(lval,rval) );
+      NetEConst*res = new NetEConst( pow(lval,rval) );
+      res->set_line(*this);
+
+      if (debug_eval_tree)
+	    cerr << get_fileline() << ": debug: Evaluate "
+		 << lval << " ** " << rval << " --> " << *res << endl;
+
+      return res;
 }
 
 /*
