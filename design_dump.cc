@@ -1222,8 +1222,9 @@ void NetScope::dump(ostream&o) const
       }
 
 	/* Dump any sub-scopes. */
-      for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
-	    cur->dump(o);
+      for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
+		 ; cur != children_.end() ; cur ++)
+	    cur->second->dump(o);
 }
 
 void NetSTask::dump(ostream&o, unsigned ind) const

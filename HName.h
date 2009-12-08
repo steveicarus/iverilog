@@ -63,10 +63,31 @@ class hname_t {
     private: // not implemented
 };
 
+inline hname_t::~hname_t()
+{
+}
+
+inline perm_string hname_t::peek_name(void) const
+{
+      return name_;
+}
+
+inline int hname_t::peek_number() const
+{
+      return number_;
+}
+
+inline bool hname_t::has_number() const
+{
+      return number_ != INT_MIN;
+}
+
 extern bool operator <  (const hname_t&, const hname_t&);
 extern bool operator == (const hname_t&, const hname_t&);
-extern bool operator != (const hname_t&, const hname_t&);
 extern ostream& operator<< (ostream&, const hname_t&);
+
+inline bool operator != (const hname_t&l, const hname_t&r)
+{ return ! (l == r); }
 
 inline ostream& operator<< (ostream&out, const list<hname_t>&ll)
 {

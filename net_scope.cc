@@ -36,7 +36,7 @@
  */
 
 NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
-: type_(t), up_(up), sib_(0), sub_(0)
+: type_(t), name_(n), up_(up)
 {
       events_ = 0;
       lcounter_ = 0;
@@ -48,8 +48,8 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
 	    time_unit_ = up->time_unit();
 	    time_prec_ = up->time_precision();
 	    time_from_timescale_ = up->time_from_timescale();
-	    sib_ = up_->sub_;
-	    up_->sub_ = this;
+	      // Need to check for duplicate names?
+	    up_->children_[name_] = this;
       } else {
 	    default_nettype_ = NetNet::NONE;
 	    time_unit_ = 0;
@@ -71,13 +71,10 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
 	  default:  /* BEGIN_END and FORK_JOIN, do nothing */
 	    break;
       }
-      name_ = n;
 }
 
 NetScope::~NetScope()
 {
-      assert(sib_ == 0);
-      assert(sub_ == 0);
       lcounter_ = 0;
 
 	/* name_ and module_name_ are perm-allocated. */
@@ -132,15 +129,29 @@ NetExpr* NetScope::set_parameter(perm_string key, NetExpr*expr,
 
 bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
 {
+	// Find the current reference to myself in the parent scope.
+      map<hname_t,NetScope*>::iterator self = up_->children_.find(name_);
+      assert(self != up_->children_.end());
+      assert(self->second == this);
+
       char tmp[32];
       int pad_pos = strlen(prefix);
       int max_pos = sizeof(tmp) - strlen(suffix) - 1;
       strncpy(tmp, prefix, sizeof(tmp));
+
+	// Try a variety of potential new names. Make sure the new
+	// name is not in the parent scope. Keep looking until we are
+	// sure we have a unique name, or we run out of names to try.
       while (pad_pos <= max_pos) {
+	      // Try this name...
 	    strcat(tmp + pad_pos, suffix);
 	    hname_t new_name(lex_strings.make(tmp));
 	    if (!up_->child(new_name)) {
+		    // Ah, this name is unique. Rename myself, and
+		    // change my name in the parent scope.
 		  name_ = new_name;
+		  up_->children_.erase(self);
+		  up_->children_[name_] = this;
 		  return true;
 	    }
 	    tmp[pad_pos++] = pad;
@@ -439,38 +450,20 @@ NetNet* NetScope::find_signal(perm_string key)
  */
 NetScope* NetScope::child(const hname_t&name)
 {
-      if (sub_ == 0) return 0;
-
-      NetScope*cur = sub_;
-      while (cur->name_ != name) {
-	    if (cur->sib_ == 0) return 0;
-	    cur = cur->sib_;
-      }
-
-      return cur;
+      map<hname_t,NetScope*>::iterator cur = children_.find(name);
+      if (cur == children_.end())
+	    return 0;
+      else
+	    return cur->second;
 }
 
 const NetScope* NetScope::child(const hname_t&name) const
 {
-      if (sub_ == 0) return 0;
-
-      NetScope*cur = sub_;
-      while (cur->name_ != name) {
-	    if (cur->sib_ == 0) return 0;
-	    cur = cur->sib_;
-      }
-
-      return cur;
-}
-
-NetScope* NetScope::parent()
-{
-      return up_;
-}
-
-const NetScope* NetScope::parent() const
-{
-      return up_;
+      map<hname_t,NetScope*>::const_iterator cur = children_.find(name);
+      if (cur == children_.end())
+	    return 0;
+      else
+	    return cur->second;
 }
 
 perm_string NetScope::local_symbol()
@@ -479,9 +472,3 @@ perm_string NetScope::local_symbol()
       res << "_s" << (lcounter_++);
       return lex_strings.make(res.str());
 }
-#if 0
-string NetScope::local_hsymbol()
-{
-      return string(name()) + "." + string(local_symbol());
-}
-#endif

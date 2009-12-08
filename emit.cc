@@ -380,8 +380,9 @@ void NetScope::emit_scope(struct target_t*tgt) const
       for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_)
 	    tgt->event(cur);
 
-      for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
-	    cur->emit_scope(tgt);
+      for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
+		 ; cur != children_.end() ; cur ++)
+	    cur->second->emit_scope(tgt);
 
       for (signals_map_iter_t cur = signals_map_.begin()
 		 ; cur != signals_map_.end() ; cur ++) {
@@ -407,8 +408,9 @@ bool NetScope::emit_defs(struct target_t*tgt) const
 
       switch (type_) {
 	  case MODULE:
-	    for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
-		  flag &= cur->emit_defs(tgt);
+	    for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
+		       ; cur != children_.end() ; cur ++)
+		  flag &= cur->second->emit_defs(tgt);
 	    break;
 
 	  case FUNC:
@@ -418,8 +420,9 @@ bool NetScope::emit_defs(struct target_t*tgt) const
 	    tgt->task_def(this);
 	    break;
 	  default:  /* BEGIN_END and FORK_JOIN, GENERATE... */
-	    for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
-		  flag &= cur->emit_defs(tgt);
+	    for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
+		       ; cur != children_.end() ; cur ++)
+		  flag &= cur->second->emit_defs(tgt);
 	    break;
       }
 

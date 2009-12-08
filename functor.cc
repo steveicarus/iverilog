@@ -99,9 +99,9 @@ void functor_t::lpm_ureduce(class Design*, class NetUReduce*)
 
 void NetScope::run_functor(Design*des, functor_t*fun)
 {
-      for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_) {
-	    cur->run_functor(des, fun);
-      }
+      for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
+		 ; cur != children_.end() ; cur ++)
+	    cur->second->run_functor(des, fun);
 
       for (NetEvent*cur = events_ ;  cur ;  /* */) {
 	    NetEvent*tmp = cur;

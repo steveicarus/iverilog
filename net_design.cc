@@ -194,12 +194,9 @@ void Design::run_defparams()
 
 void NetScope::run_defparams(Design*des)
 {
-      { NetScope*cur = sub_;
-        while (cur) {
-	      cur->run_defparams(des);
-	      cur = cur->sib_;
-	}
-      }
+      for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
+		 ; cur != children_.end() ; cur ++)
+	    cur->second->run_defparams(des);
 
       while (! defparams.empty()) {
 	    pair<pform_name_t,NetExpr*> pp = defparams.front();
@@ -572,11 +569,9 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
 
 void NetScope::evaluate_parameters(Design*des)
 {
-      NetScope*curs = sub_;
-      while (curs) {
-	    curs->evaluate_parameters(des);
-	    curs = curs->sib_;
-      }
+      for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
+		 ; cur != children_.end() ; cur ++)
+	    cur->second->evaluate_parameters(des);
 
       if (debug_scopes)
 	    cerr << ":0" << ": debug: "
@@ -640,11 +635,9 @@ void NetScope::residual_defparams(Design*des)
 		 << "Scope of " << cur.first << " not found." << endl;
       }
 
-      NetScope*cur = sub_;
-      while (cur) {
-	    cur->residual_defparams(des);
-	    cur = cur->sib_;
-      }
+      for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
+		 ; cur != children_.end() ; cur ++)
+	    cur->second->residual_defparams(des);
 }
 
 const char* Design::get_flag(const string&key) const

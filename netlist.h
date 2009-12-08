@@ -740,9 +740,9 @@ class NetScope : public Attrib {
 
 	/* The parent and child() methods allow users of NetScope
 	   objects to locate nearby scopes. */
-      NetScope* parent();
+      NetScope* parent() { return up_; }
       NetScope* child(const hname_t&name);
-      const NetScope* parent() const;
+      const NetScope* parent() const { return up_; }
       const NetScope* child(const hname_t&name) const;
 
       TYPE type() const;
@@ -918,8 +918,7 @@ class NetScope : public Attrib {
       };
 
       NetScope*up_;
-      NetScope*sib_;
-      NetScope*sub_;
+      map<hname_t,NetScope*> children_;
 
       unsigned lcounter_;
       bool is_auto_, is_cell_;

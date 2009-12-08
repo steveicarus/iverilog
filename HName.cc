@@ -58,25 +58,6 @@ hname_t& hname_t::operator = (const hname_t&that)
       return *this;
 }
 
-hname_t::~hname_t()
-{
-}
-
-perm_string hname_t::peek_name(void) const
-{
-      return name_;
-}
-
-bool hname_t::has_number() const
-{
-      return number_ != INT_MIN;
-}
-
-int hname_t::peek_number() const
-{
-      return number_;
-}
-
 bool operator < (const hname_t&l, const hname_t&r)
 {
       int cmp = strcmp(l.peek_name(), r.peek_name());
@@ -99,9 +80,6 @@ bool operator == (const hname_t&l, const hname_t&r)
 
       return false;
 }
-
-bool operator != (const hname_t&l, const hname_t&r)
-{ return ! (l==r); }
 
 ostream& operator<< (ostream&out, const hname_t&that)
 {
