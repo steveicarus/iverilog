@@ -395,9 +395,7 @@ static int t_compile()
       char*cmd = malloc(ncmd + 1);
       strcpy(cmd, tmp);
 
-#ifdef __MINGW32__
-      unsigned ncmd_start = ncmd;
-#else
+#ifndef __MINGW32__
       int rtn;
 #endif
 
