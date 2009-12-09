@@ -32,7 +32,8 @@
 
 void Nexus::connect(Link&r)
 {
-      if (this == r.nexus_)
+      Nexus*r_nexus = r.next_? r.find_nexus_() : 0;
+      if (this == r_nexus)
 	    return;
 
       if (name_) {
@@ -40,31 +41,54 @@ void Nexus::connect(Link&r)
 	    name_ = 0;
       }
 
-	// Special case: The "r" link is connected to nothing. The
-	// connect becomes trivially easy.
-      if (r.nexus_ == 0) {
+	// Special case: This nexus is empty. Simply copy all the
+	// links of the other nexus to this one, and delete the old
+	// nexus.
+      if (list_ == 0) {
+	    if (r.next_ == 0) {
+		  list_ = &r;
+		  r.next_ = &r;
+		  r.nexus_ = this;
+		  driven_ = NO_GUESS;
+	    } else {
+		  driven_ = r_nexus->driven_;
+		  list_ = r_nexus->list_;
+		  list_->nexus_ = this;
+		  r_nexus->list_ = 0;
+		  delete r_nexus;
+	    }
+	    return;
+      }
+
+	// Special case: The Link is unconnected. Put it at the end of
+	// the current list and move the list_ pointer and nexus_ back
+	// pointer to suit.
+      if (r.next_ == 0) {
 	    if (r.get_dir() != Link::INPUT)
 		  driven_ = NO_GUESS;
 
 	    r.nexus_ = this;
-	    r.next_ = list_;
+	    r.next_ = list_->next_;
+	    list_->next_ = &r;
+	    list_->nexus_ = 0;
 	    list_ = &r;
 	    return;
       }
 
-      Nexus*tmp = r.nexus_;
-      if (tmp->driven_ != Vz)
+      if (r_nexus->driven_ != Vz)
 	    driven_ = NO_GUESS;
 
-      while (Link*cur = tmp->list_) {
-	    tmp->list_ = cur->next_;
-	    cur->nexus_ = this;
-	    cur->next_  = list_;
-	    list_ = cur;
-      }
+	// Splice the list of links from the "tmp" nexus to the end of
+	// this nexus. Adjust the nexus pointers as needed.
+      Link*save_first = list_->next_;
+      list_->next_ = r_nexus->list_->next_;
+      r_nexus->list_->next_ = save_first;
+      list_->nexus_ = 0;
+      list_ = r_nexus->list_;
+      list_->nexus_ = this;
 
-      assert(tmp->list_ == 0);
-      delete tmp;
+      r_nexus->list_ = 0;
+      delete r_nexus;
 }
 
 void connect(Link&l, Link&r)
@@ -75,8 +99,7 @@ void connect(Link&l, Link&r)
       } else if (r.nexus_ != 0) {
 	    connect(r.nexus_, l);
       } else {
-	    Nexus*tmp = new Nexus;
-	    tmp->connect(l);
+	    Nexus*tmp = new Nexus(l);
 	    tmp->connect(r);
       }
 }
@@ -89,25 +112,39 @@ Link::Link()
 
 Link::~Link()
 {
-      if (Nexus*tmp = nexus_) {
-	    nexus_->unlink(this);
+      if (next_) {
+	    Nexus*tmp = nexus();
+	    tmp->unlink(this);
 	    if (tmp->list_ == 0)
 		  delete tmp;
       }
 }
 
+Nexus* Link::find_nexus_() const
+{
+      assert(next_);
+      if (nexus_) return nexus_;
+      for (Link*cur = next_ ; cur != this ; cur = cur->next_) {
+	    if (cur->nexus_) return cur->nexus_;
+      }
+      return 0;
+}
+
 Nexus* Link::nexus()
 {
-      if (nexus_ == 0) {
-	    Nexus*tmp = new Nexus;
-	    tmp->relink_(this);
+      if (next_ == 0) {
+	    assert(nexus_ == 0);
+	    Nexus*tmp = new Nexus(*this);
+	    return tmp;
       }
-      return nexus_;
+
+      return find_nexus_();
 }
 
 const Nexus* Link::nexus() const
 {
-      return nexus_;
+      if (next_ == 0) return 0;
+      return find_nexus_();
 }
 
 void Link::set_dir(DIR d)
@@ -122,12 +159,12 @@ Link::DIR Link::get_dir() const
 
 void Link::drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay)
 {
-      nexus_->drivers_delays(rise, fall, decay);
+      find_nexus_()->drivers_delays(rise, fall, decay);
 }
 
 void Link::drivers_drive(strength_t drive0__, strength_t drive1__)
 {
-      nexus_->drivers_drive(drive0__, drive1__);
+      find_nexus_()->drivers_drive(drive0__, drive1__);
 }
 
 void Link::drive0(Link::strength_t str)
@@ -175,11 +212,10 @@ void Link::cur_link(const NetPins*&net, unsigned &pin) const
 
 void Link::unlink()
 {
-      assert(nexus_);
       if (! is_linked())
 	    return;
 
-      nexus_->unlink(this);
+      find_nexus_()->unlink(this);
 }
 
 bool Link::is_equal(const Link&that) const
@@ -189,31 +225,44 @@ bool Link::is_equal(const Link&that) const
 
 bool Link::is_linked() const
 {
-      if (nexus_ == 0)
+      if (next_ == 0)
 	    return false;
-      if (next_)
-	    return true;
-      if (nexus_->first_nlink() != this)
-	    return true;
+      if (next_ == this)
+	    return false;
 
-      return false;
+      return true;
 }
 
 bool Link::is_linked(const Link&that) const
 {
-      if (nexus_ == 0)
+      if (next_ == 0)
 	    return false;
-      return nexus_ == that.nexus_;
+      if (that.next_ == 0)
+	    return false;
+
+      const Link*cur = next_;
+      while (cur != this) {
+	    if (cur == &that) return true;
+	    cur = cur->next_;
+      }
+
+      return false;
 }
 
+/*
+ * If this link has a nexus_ pointer, then it is the last Link in the
+ * list. next_nlink() returns 0 for the last Link.
+ */
 Link* Link::next_nlink()
 {
-      return next_;
+      if (nexus_) return 0;
+      else return next_;
 }
 
 const Link* Link::next_nlink() const
 {
-      return next_;
+      if (nexus_) return 0;
+      else return next_;
 }
 
 const NetPins*Link::get_obj() const
@@ -242,12 +291,29 @@ unsigned Link::get_pin() const
 	    return pin_;
 }
 
-Nexus::Nexus()
+Nexus::Nexus(Link&that)
 {
       name_ = 0;
-      list_ = 0;
       driven_ = NO_GUESS;
       t_cookie_ = 0;
+
+      if (that.next_ == 0) {
+	    list_ = &that;
+	    that.next_ = &that;
+	    that.nexus_ = this;
+	    driven_ = NO_GUESS;
+
+      } else {
+	    Nexus*tmp = that.find_nexus_();
+	    list_ = tmp->list_;
+	    list_->nexus_ = this;
+	    driven_ = tmp->driven_;
+	    name_ = tmp->name_;
+
+	    tmp->list_ = 0;
+	    tmp->name_ = 0;
+	    delete tmp;
+      }
 }
 
 Nexus::~Nexus()
@@ -259,8 +325,7 @@ Nexus::~Nexus()
 
 verinum::V Nexus::get_init() const
 {
-      assert(list_);
-      for (Link*cur = list_ ;  cur ;  cur = cur->next_) {
+      for (const Link*cur = first_nlink() ;  cur ;  cur = cur->next_nlink()) {
 	    if (cur->get_dir() == Link::OUTPUT)
 		  return verinum::Vx;
 
@@ -274,8 +339,7 @@ verinum::V Nexus::get_init() const
 
 bool Nexus::assign_lval() const
 {
-      assert(list_);
-      for (Link*cur = list_ ; cur ; cur = cur->next_) {
+      for (const Link*cur = first_nlink() ; cur ; cur = cur->next_nlink()) {
 
 	    const NetPins*obj;
 	    unsigned pin;
@@ -293,8 +357,7 @@ bool Nexus::assign_lval() const
 
 bool Nexus::drivers_present() const
 {
-      assert(list_);
-      for (Link*cur = list_ ;  cur ; cur = cur->next_) {
+      for (const Link*cur = first_nlink() ;  cur ; cur = cur->next_nlink()) {
 	    if (cur->get_dir() == Link::OUTPUT)
 		  return true;
 
@@ -328,7 +391,7 @@ bool Nexus::drivers_present() const
 
 void Nexus::drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay)
 {
-      for (Link*cur = list_ ; cur ; cur = cur->next_) {
+      for (Link*cur = first_nlink() ; cur ; cur = cur->next_nlink()) {
 	    if (cur->get_dir() != Link::OUTPUT)
 		  continue;
 
@@ -344,7 +407,7 @@ void Nexus::drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay)
 
 void Nexus::drivers_drive(Link::strength_t drive0, Link::strength_t drive1)
 {
-      for (Link*cur = list_ ; cur ; cur = cur->next_) {
+      for (Link*cur = first_nlink() ; cur ; cur = cur->next_nlink()) {
 	    if (cur->get_dir() != Link::OUTPUT)
 		  continue;
 
@@ -360,52 +423,57 @@ void Nexus::unlink(Link*that)
 	    name_ = 0;
       }
 
-	/* If the link I'm removing was a driver for this nexus, then
-	   cancel my guess of the driven value. */
-      if (that->get_dir() != Link::INPUT)
-	    driven_ = NO_GUESS;
-
       assert(that);
-      if (list_ == that) {
-	    list_ = that->next_;
-	    that->next_ = 0;
+
+	// Special case: the Link is the only link in the nexus. In
+	// this case, the unlink is trivial. Also clear the Nexus
+	// pointers.
+      if (that->next_ == that) {
+	    assert(that->nexus_ == this);
+	    assert(list_ == that);
+	    list_ = 0;
+	    driven_ = NO_GUESS;
 	    that->nexus_ = 0;
+	    that->next_ = 0;
 	    return;
       }
 
-      Link*cur = list_;
-      while (cur->next_ != that) {
-	    assert(cur->next_);
-	    cur = cur->next_;
+	// If the link I'm removing was a driver for this nexus, then
+	// cancel my guess of the driven value. 
+      if (that->get_dir() != Link::INPUT)
+	    driven_ = NO_GUESS;
+
+	// Look for the Link that points to "that". We know that there
+	// will be one because the list is a circle. When we find the
+	// prev pointer, then remove that from the list.
+      Link*prev = list_;
+      while (prev->next_ != that)
+	    prev = prev->next_;
+
+      prev->next_ = that->next_;
+
+	// If "that" was the last item in the list, then change the
+	// list_ pointer to point to the new end of the list.
+      if (list_ == that) {
+	    assert(that->nexus_ == this);
+	    list_ = prev;
+	    list_->nexus_ = this;
       }
 
-      cur->next_ = that->next_;
       that->nexus_ = 0;
       that->next_ = 0;
 }
 
-void Nexus::relink_(Link*that)
-{
-	/* If the link I'm adding is a driver for this nexus, then
-	   cancel my guess of the driven value. */
-      if (that->get_dir() != Link::INPUT)
-	    driven_ = NO_GUESS;
-
-      assert(that->nexus_ == 0);
-      assert(that->next_ == 0);
-      that->next_ = list_;
-      that->nexus_ = this;
-      list_ = that;
-}
-
 Link* Nexus::first_nlink()
 {
-      return list_;
+      if (list_) return list_->next_;
+      else return 0;
 }
 
 const Link* Nexus::first_nlink() const
 {
-      return list_;
+      if (list_) return list_->next_;
+      else return 0;
 }
 
 ivl_nexus_t Nexus::t_cookie() const

@@ -168,9 +168,12 @@ class Link {
       verinum::V init_   : 2;
 
     private:
-	// The Nexus uses these to maintain a single linked list of
-	// Link objects. If this link is not connected to anything,
-	// then these pointers are nil.
+      Nexus* find_nexus_() const;
+
+    private:
+	// The Nexus uses these to maintain its list of Link
+	// objects. If this link is not connected to anything,
+	// then these pointers are both nil.
       Link *next_;
       Nexus*nexus_;
 
@@ -313,9 +316,11 @@ class NetBranch  : public NetPins, public IslandBranch {
  * together. Each link has its own properties, this class holds the
  * properties of the group.
  *
- * The links in a nexus are grouped into a singly linked list, with
- * the nexus pointing to the first Link. Each link in turn points to
- * the next link in the nexus, with the last link pointing to 0.
+ * The links in a nexus are grouped into a circularly linked list,
+ * with the nexus pointing to the last Link. Each link in turn points
+ * to the next link in the nexus, with the last link pointing back to
+ * the first. The last link also has a non-nil nexus_ pointer back to
+ * this nexus.
  *
  * The t_cookie() is a void* that targets can use to store information
  * in a Nexus. ivl guarantees that the t_cookie will be 0 when the
@@ -326,9 +331,12 @@ class Nexus {
       friend void connect(Link&, Link&);
       friend class Link;
 
-    public:
-      explicit Nexus();
+    private:
+	// Only Link objects can create (or delete) Nexus objects
+      explicit Nexus(Link&r);
       ~Nexus();
+
+    public:
 
       void connect(Link&r);
 
@@ -371,7 +379,6 @@ class Nexus {
     private:
       Link*list_;
       void unlink(Link*);
-      void relink_(Link*);
 
       mutable char* name_; /* Cache the calculated name for the Nexus. */
       mutable ivl_nexus_t t_cookie_;

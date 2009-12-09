@@ -34,7 +34,7 @@ bool Nexus::drivers_constant() const
       if (driven_ != NO_GUESS)
 	    return true;
 
-      for (const Link*cur = list_ ; cur  ;  cur = cur->next_) {
+      for (const Link*cur = first_nlink() ; cur  ;  cur = cur->next_nlink()) {
 	    const NetNet*sig;
 	    Link::DIR cur_dir;
 
@@ -121,7 +121,7 @@ verinum::V Nexus::driven_value() const
 
       verinum::V val = verinum::Vz;
 
-      for (cur = list_ ; cur  ;  cur = cur->next_) {
+      for (cur = first_nlink() ; cur  ;  cur = cur->next_nlink()) {
 
 	    const NetConst*obj;
 	    const NetNet*sig;
