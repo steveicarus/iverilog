@@ -81,7 +81,6 @@ extern void join_island(NetPins*obj);
 class Link {
 
       friend void connect(Link&, Link&);
-      friend void connect(Nexus*, Link&);
       friend class NetPins;
       friend class Nexus;
 
@@ -325,12 +324,13 @@ class NetBranch  : public NetPins, public IslandBranch {
 class Nexus {
 
       friend void connect(Link&, Link&);
-      friend void connect(Nexus*, Link&);
       friend class Link;
 
     public:
       explicit Nexus();
       ~Nexus();
+
+      void connect(Link&r);
 
       const char* name() const;
       verinum::V get_init() const;
@@ -371,7 +371,7 @@ class Nexus {
     private:
       Link*list_;
       void unlink(Link*);
-      void relink(Link*);
+      void relink_(Link*);
 
       mutable char* name_; /* Cache the calculated name for the Nexus. */
       mutable ivl_nexus_t t_cookie_;
@@ -383,6 +383,8 @@ class Nexus {
       Nexus(const Nexus&);
       Nexus& operator= (const Nexus&);
 };
+
+inline void connect(Nexus*l, Link&r) { l->connect(r); }
 
 class NexusSet {
 

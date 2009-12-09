@@ -30,29 +30,38 @@
 # include  <malloc.h>
 #endif
 
-void connect(Nexus*l, Link&r)
+void Nexus::connect(Link&r)
 {
-      assert(l);
-
-      if (l == r.nexus_)
+      if (this == r.nexus_)
 	    return;
+
+      if (name_) {
+	    delete[]name_;
+	    name_ = 0;
+      }
 
 	// Special case: The "r" link is connected to nothing. The
 	// connect becomes trivially easy.
       if (r.nexus_ == 0) {
-	    l->relink(&r);
+	    if (r.get_dir() != Link::INPUT)
+		  driven_ = NO_GUESS;
+
+	    r.nexus_ = this;
+	    r.next_ = list_;
+	    list_ = &r;
 	    return;
       }
 
       Nexus*tmp = r.nexus_;
+      if (tmp->driven_ != Vz)
+	    driven_ = NO_GUESS;
+
       while (Link*cur = tmp->list_) {
 	    tmp->list_ = cur->next_;
-	    cur->nexus_ = 0;
-	    cur->next_  = 0;
-	    l->relink(cur);
+	    cur->nexus_ = this;
+	    cur->next_  = list_;
+	    list_ = cur;
       }
-
-      l->driven_ = Nexus::NO_GUESS;
 
       assert(tmp->list_ == 0);
       delete tmp;
@@ -67,8 +76,8 @@ void connect(Link&l, Link&r)
 	    connect(r.nexus_, l);
       } else {
 	    Nexus*tmp = new Nexus;
-	    connect(tmp, l);
-	    connect(tmp, r);
+	    tmp->connect(l);
+	    tmp->connect(r);
       }
 }
 
@@ -89,8 +98,10 @@ Link::~Link()
 
 Nexus* Link::nexus()
 {
-      if (nexus_ == 0)
-	    (new Nexus()) ->relink(this);
+      if (nexus_ == 0) {
+	    Nexus*tmp = new Nexus;
+	    tmp->relink_(this);
+      }
       return nexus_;
 }
 
@@ -373,13 +384,8 @@ void Nexus::unlink(Link*that)
       that->next_ = 0;
 }
 
-void Nexus::relink(Link*that)
+void Nexus::relink_(Link*that)
 {
-      if (name_) {
-	    delete[] name_;
-	    name_ = 0;
-      }
-
 	/* If the link I'm adding is a driver for this nexus, then
 	   cancel my guess of the driven value. */
       if (that->get_dir() != Link::INPUT)
