@@ -1915,6 +1915,7 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 		  shift -= 1;
 	    }
 
+	    ivl_assert(*expr, dex);
 	    NetExpr*scal_val = new NetEConst(verinum(scale));
 	    dex = new NetEBMult('*', dex, scal_val);
       }
@@ -1926,6 +1927,7 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 		  shift += 1;
 	    }
 
+	    ivl_assert(*expr, dex);
 	    NetExpr*scal_val = new NetEConst(verinum(scale));
 	    dex = new NetEBDiv('/', dex, scal_val);
       }

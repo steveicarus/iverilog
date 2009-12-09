@@ -404,7 +404,7 @@ int main(int argc, char*argv[])
 	    if (depend_file) fclose(depend_file);
 	    if (precomp_out) fclose(precomp_out);
 	    return -1;
-}
+      }
       destroy_lexor();
 
       if (depend_file) fclose(depend_file);

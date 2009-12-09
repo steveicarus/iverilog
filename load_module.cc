@@ -88,10 +88,14 @@ bool load_module(const char*type)
 		  strcat(cmdline, " \"");
 		  strcat(cmdline, path);
 		  strcat(cmdline, "\"");
+
+		  if (verbose_flag)
+			cerr << "Executing: " << cmdline << endl<< flush;
+
 		  FILE*file = popen(cmdline, "r");
 
 		  if (verbose_flag)
-			cerr << "Executing: " << cmdline << endl;
+			cerr << "...parsing output from preprocessor..." << endl << flush;
 
 		  pform_parse(path, file);
 		  pclose(file);
@@ -107,6 +111,9 @@ bool load_module(const char*type)
 		  pform_parse(path, file);
 		  fclose(file);
 	    }
+
+	    if (verbose_flag)
+		  cerr << "... Load module complete." << endl << flush;
 
 	    return true;
       }
