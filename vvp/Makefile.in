@@ -46,6 +46,7 @@ MAN = @MAN@
 PS2PDF = @PS2PDF@
 
 CPPFLAGS = -I. -I.. -I $(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@
+CFLAGS = -Wall @CFLAGS@
 CXXFLAGS = -Wall @CXXFLAGS@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@
@@ -112,7 +113,7 @@ dep:
 	mv $*.d dep/$*.d
 
 tables.cc: $(srcdir)/draw_tt.c
-	$(HOSTCC) -o draw_tt $(srcdir)/draw_tt.c
+	$(HOSTCC) -Wall -o draw_tt $(srcdir)/draw_tt.c
 	./draw_tt > tables.cc
 	rm draw_tt@EXEEXT@
 
