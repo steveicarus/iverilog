@@ -265,6 +265,7 @@ void automatic_signal_base::release_pv(vvp_net_ptr_t,unsigned,unsigned,bool)
 unsigned automatic_signal_base::filter_size() const
 {
       assert(0);
+      return(0);
 }
 void automatic_signal_base::force_fil_vec4(const vvp_vector4_t&, vvp_vector2_t)
 {
@@ -593,11 +594,13 @@ unsigned vvp_fun_signal_real_aa::value_size() const
 vvp_bit4_t vvp_fun_signal_real_aa::value(unsigned idx) const
 {
       assert(0);
+      return BIT4_X;
 }
 
 vvp_scalar_t vvp_fun_signal_real_aa::scalar_value(unsigned idx) const
 {
       assert(0);
+      return vvp_scalar_t();
 }
 
 void vvp_fun_signal_real_aa::vec4_value(vvp_vector4_t&) const
@@ -1009,11 +1012,13 @@ unsigned vvp_wire_real::value_size() const
 vvp_bit4_t vvp_wire_real::value(unsigned idx) const
 {
       assert(0);
+      return BIT4_X;
 }
 
 vvp_scalar_t vvp_wire_real::scalar_value(unsigned idx) const
 {
       assert(0);
+      return vvp_scalar_t();
 }
 
 void vvp_wire_real::vec4_value(vvp_vector4_t&) const

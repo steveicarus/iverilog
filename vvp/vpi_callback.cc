@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -260,7 +260,8 @@ static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
 	      }
 
 	  default:
-	    fprintf(stderr, "Unsupported time type %d.\n", obj->cb_time.type);
+	    fprintf(stderr, "Unsupported time type %d.\n",
+	            (int)obj->cb_time.type);
 	    assert(0);
 	    break;
       }
@@ -289,7 +290,8 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data, bool simtime_flag)
 	    break;
 
 	  default:
-	    fprintf(stderr, "Unsupported time type %d.\n", obj->cb_time.type);
+	    fprintf(stderr, "Unsupported time type %d.\n",
+	            (int)obj->cb_time.type);
 	    assert(0);
 	    tv = 0;
 	    break;
@@ -466,7 +468,7 @@ vpiHandle vpi_register_cb(p_cb_data data)
 	  default:
 	    fprintf(stderr, "vpi error: vpi_register_cb invalid or "
 		    "unsupported callback reason: %d\n",
-		    data->reason);
+		    (int)data->reason);
 	    break;
       }
 
@@ -511,7 +513,7 @@ void callback_execute(struct __vpiCallback*cur)
 	    break;
 	  default:
 	    fprintf(stderr, "Unsupported time format %d.\n",
-	            cur->cb_data.time->type);
+	            (int)cur->cb_data.time->type);
 	    assert(0);
 	    break;
       }
@@ -629,7 +631,7 @@ void vvp_signal_value::get_signal_value(struct t_vpi_value*vp)
 	  default:
 	    fprintf(stderr, "vpi_callback: value "
 		    "format %d not supported (fun_signal)\n",
-		    vp->format);
+		    (int)vp->format);
       }
 }
 
@@ -689,7 +691,7 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 	  default:
 	    fprintf(stderr, "vpi_callback: value "
 		    "format %d not supported (fun_signal_real)\n",
-		    vp->format);
+		    (int)vp->format);
       }
 }
 

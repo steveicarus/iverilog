@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -100,7 +100,7 @@ void vpip_format_strength(char*str, s_vpi_value*value, unsigned bit)
 	    break;
 	  default:
 	    fprintf(stderr, "Unsupported type %d.\n",
-	            value->value.strength[bit].logic);
+	            (int)value->value.strength[bit].logic);
 	    assert(0);
       }
 }

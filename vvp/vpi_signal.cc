@@ -721,9 +721,10 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 
 	  default:
 	    fprintf(stderr, "vvp internal error: get_value: "
-		    "value type %u not implemented."
+		    "value type %d not implemented."
 		    " Signal is %s in scope %s\n",
-		    vp->format, vpi_get_str(vpiName, ref), vpip_scope(rfp)->name);
+		    (int)vp->format, vpi_get_str(vpiName, ref),
+		    vpip_scope(rfp)->name);
 	    assert(0);
       }
 }
@@ -857,8 +858,8 @@ vvp_vector4_t vec4_from_vpi_value(s_vpi_value*vp, unsigned wid)
 
 	  default:
 	    fprintf(stderr, "vvp internal error: put_value: "
-		    "value type %u not implemented here.\n",
-		    vp->format);
+		    "value type %d not implemented here.\n",
+		    (int)vp->format);
 	    assert(0);
 
       }
@@ -1121,8 +1122,8 @@ static char* PV_get_str(int code, vpiHandle ref)
 	case vpiFullName: {
 	    const char*nm = vpi_get_str(code, rfp->parent);
 	    char full[1024+strlen(nm)];
-	    sprintf(full, "%s[%d:%d]", nm, vpi_get(vpiLeftRange, ref),
-	                                   vpi_get(vpiRightRange, ref));
+	    sprintf(full, "%s[%d:%d]", nm, (int)vpi_get(vpiLeftRange, ref),
+	                                   (int)vpi_get(vpiRightRange, ref));
 	    return simple_set_rbuf_str(full);
 	}
 
@@ -1185,8 +1186,8 @@ static void PV_get_value(vpiHandle ref, p_vpi_value vp)
 
 	  default:
 	    fprintf(stderr, "vvp internal error: PV_get_value: "
-		    "value type %u not implemented. Signal is %s.\n",
-		    vp->format, vpi_get_str(vpiFullName, rfp->parent));
+		    "value type %d not implemented. Signal is %s.\n",
+		    (int)vp->format, vpi_get_str(vpiFullName, rfp->parent));
 	    assert(0);
       }
 }

@@ -280,7 +280,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func,
 	    break;
 
 	  default:
-	    fprintf(stderr, "vpi_time: unknown format: %d\n", vp->format);
+	    fprintf(stderr, "vpi_time: unknown format: %d\n", (int)vp->format);
 	    assert(0);
       }
 }

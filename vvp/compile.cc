@@ -1348,6 +1348,8 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
 		  break;
 #endif
 		default:
+		  posedge = false;
+		  negedge = false;
 		  fprintf(stderr, "Unknown edge identifier %c(%d).\n", edge,
 		          edge);
 		  assert(0);

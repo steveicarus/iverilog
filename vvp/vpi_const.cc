@@ -167,7 +167,8 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
 
 
 	  default:
-	    fprintf(stderr, "ERROR (vpi_const.cc): vp->format: %d\n", vp->format);
+	    fprintf(stderr, "ERROR (vpi_const.cc): vp->format: %d\n",
+	            (int)vp->format);
 	    assert(0);
 
 	    vp->format = vpiSuppressVal;
@@ -405,7 +406,7 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 
 	  default:
 	    fprintf(stderr, "vvp error: format %d not supported "
-		    "by vpiBinaryConst\n", vp->format);
+		    "by vpiBinaryConst\n", (int)vp->format);
 	    vp->format = vpiSuppressVal;
 	    break;
       }
@@ -624,7 +625,7 @@ static void dec_value(vpiHandle ref, p_vpi_value vp)
 
 	  default:
 	    fprintf(stderr, "vvp error (vpi_const.cc): format %d not supported "
-		    "by vpiDecConst\n", vp->format);
+		    "by vpiDecConst\n", (int)vp->format);
 	    vp->format = vpiSuppressVal;
 	    break;
       }

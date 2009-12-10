@@ -183,7 +183,7 @@ vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
 
       if (vpi_trace) {
 	    fprintf(vpi_trace, "vpi_mcd_vprintf(0x%08x, %s, ...);\n",
-		    mcd, fmt);
+		    (unsigned int)mcd, fmt);
       }
 
 #ifdef __MINGW32__
