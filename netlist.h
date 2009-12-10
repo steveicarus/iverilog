@@ -322,9 +322,12 @@ class NetBranch  : public NetPins, public IslandBranch {
  * the first. The last link also has a non-nil nexus_ pointer back to
  * this nexus.
  *
- * The t_cookie() is a void* that targets can use to store information
- * in a Nexus. ivl guarantees that the t_cookie will be 0 when the
- * target is invoked.
+ * The t_cookie() is an ivl_nexus_t that the code generator uses to
+ * store data in the nexus. When a Nexus is created, this cookie is
+ * set to nil. The code generator may set the cookie once. This locks
+ * the nexus, and rewrites the Link list to be optimal for the code
+ * generator. In the process, *all* of the other methods are no longer
+ * functional.
  */
 class Nexus {
 
@@ -373,8 +376,10 @@ class Nexus {
 	   the value that has been driven. */
       verinum::V driven_value() const;
 
-      ivl_nexus_t t_cookie() const;
-      ivl_nexus_t t_cookie(ivl_nexus_t) const;
+	/* The code generator sets an ivl_nexus_t to attach code
+	   generation details to the nexus. */
+      ivl_nexus_t t_cookie() const { return t_cookie_; }
+      void t_cookie(ivl_nexus_t) const;
 
     private:
       Link*list_;
@@ -662,19 +667,19 @@ class NetNet  : public NetObj {
       void initialize_value_and_dir(verinum::V init_value, Link::DIR dir);
 
     private:
-      Type   type_;
-      PortType port_type_;
-      ivl_variable_type_t data_type_;
-      bool signed_;
-      bool isint_;		// original type of integer
-      bool is_scalar_;
+      Type   type_    : 5;
+      PortType port_type_ : 3;
+      ivl_variable_type_t data_type_ : 3;
+      bool signed_    : 1;
+      bool isint_     : 1;		// original type of integer
+      bool is_scalar_ : 1;
+      bool local_flag_: 1;
       ivl_discipline_t discipline_;
 
       long msb_, lsb_;
       const unsigned dimensions_;
       long s0_, e0_;
 
-      bool local_flag_;
       unsigned eref_count_;
       unsigned lref_count_;
 

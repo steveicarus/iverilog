@@ -491,9 +491,9 @@ const Link& NetDelaySrc::condit_pin() const
 NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 : NetObj(s, n, 1),
     type_(t), port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE),
-    signed_(false), isint_(false), is_scalar_(false),
+    signed_(false), isint_(false), is_scalar_(false), local_flag_(false),
     discipline_(0), msb_(npins-1), lsb_(0), dimensions_(0),
-    s0_(0), e0_(0), local_flag_(false), eref_count_(0), lref_count_(0)
+    s0_(0), e0_(0), eref_count_(0), lref_count_(0)
 {
       assert(s);
       assert(npins>0);
@@ -544,9 +544,10 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	       long ms, long ls)
 : NetObj(s, n, 1), type_(t),
     port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE), signed_(false),
-    isint_(false), is_scalar_(false), discipline_(0), msb_(ms), lsb_(ls),
+    isint_(false), is_scalar_(false), local_flag_(false), discipline_(0),
+    msb_(ms), lsb_(ls),
     dimensions_(0), s0_(0), e0_(0),
-    local_flag_(false), eref_count_(0), lref_count_(0)
+    eref_count_(0), lref_count_(0)
 {
       assert(s);
 
@@ -595,9 +596,10 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 : NetObj(s, n, calculate_count(array_s, array_e)),
     type_(t), port_type_(NOT_A_PORT),
     data_type_(IVL_VT_NO_TYPE), signed_(false), isint_(false),
-    is_scalar_(false), discipline_(0), msb_(ms), lsb_(ls),
+    is_scalar_(false), local_flag_(false), discipline_(0),
+    msb_(ms), lsb_(ls),
     dimensions_(1), s0_(array_s), e0_(array_e),
-    local_flag_(false), eref_count_(0), lref_count_(0)
+    eref_count_(0), lref_count_(0)
 {
       ivl_assert(*this, s);
       if (pin_count() == 0) {

@@ -476,16 +476,20 @@ const Link* Nexus::first_nlink() const
       else return 0;
 }
 
-ivl_nexus_t Nexus::t_cookie() const
+/*
+ * The t_cookie can be set exactly once. This attaches an ivl_nexus_t
+ * object to the Nexus, and causes the Link list to be marked up for
+ * efficient use by the code generator. The change is to give all the
+ * links a valid nexus_ pointer. This breaks most of the other
+ * methods, but they are not used during code generation.
+*/
+void Nexus::t_cookie(ivl_nexus_t val) const
 {
-      return t_cookie_;
-}
-
-ivl_nexus_t Nexus::t_cookie(ivl_nexus_t val)const
-{
-      ivl_nexus_t tmp = t_cookie_;
+      assert(val && !t_cookie_);
       t_cookie_ = val;
-      return tmp;
+
+      for (Link*cur = list_->next_ ; cur->nexus_ == 0 ; cur = cur->next_)
+	    cur->nexus_ = const_cast<Nexus*> (this);
 }
 
 unsigned Nexus::vector_width() const
