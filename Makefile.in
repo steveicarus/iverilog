@@ -192,7 +192,7 @@ iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
 endif
 
 version.exe: $(srcdir)/version.c $(srcdir)/version_base.h version_tag.h
-	$(HOSTCC) -o version.exe -I. -I$(srcdir) $(srcdir)/version.c
+	$(HOSTCC) -Wall -o version.exe -I. -I$(srcdir) $(srcdir)/version.c
 
 dep:
 	mkdir dep
