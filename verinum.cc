@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -746,7 +746,7 @@ verinum::V operator == (const verinum&left, const verinum&right)
 	    right_pad = right.get(right.len()-1);
 
 	    if (left_pad == verinum::V1 && right_pad == verinum::V0)
-		  return verinum::V1;
+		  return verinum::V0;
 	    if (left_pad == verinum::V0 && right_pad == verinum::V1)
 		  return verinum::V0;
       }
@@ -1051,9 +1051,45 @@ verinum operator * (const verinum&left, const verinum&right)
 verinum pow(const verinum&left, const verinum&right)
 {
       verinum result = left;
-      unsigned pow_count = right.as_ulong();
+      long pow_count = right.as_long();
 
-      for (unsigned idx = 1 ;  idx < pow_count ;  idx += 1)
+	// We need positive and negative one in a few places.
+      verinum one (verinum::V0, left.len(), left.has_len());
+      one.has_sign(left.has_sign());
+      one.set(0, verinum::V1);
+      verinum m_one (verinum::V1, left.len(), left.has_len());
+      m_one.has_sign(true);
+
+	// If either the right or left values are undefined we return 'bx.
+      if (!right.is_defined() || !left.is_defined()) {
+	    result = verinum(verinum::Vx, left.len(), left.has_len());
+	    result.has_sign(left.has_sign());
+	// If the right value is zero we need to set the result to 1.
+      } else if (pow_count == 0)  {
+	    result = one;
+      } else if (pow_count < 0) {
+	      // 0 ** <negative> is 'bx.
+	    if (left.is_zero()) {
+		  result = verinum(verinum::Vx, left.len(), left.has_len());
+		  result.has_sign(left.has_sign());
+	      // 1 ** <negative> is 1.
+	    } else if (left == one) {
+		  result = one;
+	      // -1 ** <negative> is 1 or -1.
+	    } else if (left.has_sign() && left == m_one) {
+		  if (pow_count%2 == 0) {
+			result = one;
+		  } else {
+			result = m_one;
+		  }
+	      // Everything else is 0.
+	    } else {
+		  result = verinum(verinum::V0, left.len(), left.has_len());
+		  result.has_sign(left.has_sign());
+	    }
+      }
+
+      for (long idx = 1 ;  idx < pow_count ;  idx += 1)
 	    result = result * left;
 
       return result;

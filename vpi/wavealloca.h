@@ -17,6 +17,8 @@
 #ifndef alloca
 #define alloca __builtin_alloca
 #endif
+#else
+#include <malloc.h>
 #endif
 #elif defined(_MSC_VER)
 #include <malloc.h>
@@ -26,8 +28,11 @@
 #endif 
 
 /*
- * $Id: wavealloca.h,v 1.2 2007/08/26 21:35:50 gtkwave Exp $
+ * $Id: wavealloca.h,v 1.3 2009/12/06 00:10:17 gtkwave Exp $
  * $Log: wavealloca.h,v $
+ * Revision 1.3  2009/12/06 00:10:17  gtkwave
+ * mingw compatibility fix from icarus
+ *
  * Revision 1.2  2007/08/26 21:35:50  gtkwave
  * integrated global context management from SystemOfCode2007 branch
  *

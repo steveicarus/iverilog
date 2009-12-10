@@ -239,6 +239,23 @@ static FILE*fopen_safe(const char*path)
 }
 #endif
 
+#ifdef __MINGW32__
+/*
+ * The MinGW version of getenv() returns the path with a forward
+ * slash. This should be converted to a back slash to keep every
+ * thing in the code using a back slash. This function wraps the
+ * code for this in one place. The conversion can not be done
+ * directly on the getenv() result since it is const char*.
+ */
+static void convert_to_MS_path(char *path)
+{
+      char *t;
+      for (t = path; *t; t++) {
+	    if (*t == '/') *t = '\\';
+      }
+}
+#endif
+
 static const char*my_tempfile(const char*str, FILE**fout)
 {
       FILE*file;
@@ -269,6 +286,9 @@ static const char*my_tempfile(const char*str, FILE**fout)
 	    unsigned code = rand();
 	    snprintf(pathbuf, sizeof pathbuf, "%s%c%s%04x",
 	             tmpdir, sep, str, code);
+#ifdef __MINGW32__
+	    convert_to_MS_path(pathbuf);
+#endif
 	    file = fopen_safe(pathbuf);
 	    retry -= 1;
       }
@@ -391,7 +411,7 @@ static int t_compile()
 #endif
 
 	/* Build the ivl command and pipe it to the preprocessor. */
-      snprintf(tmp, sizeof tmp, " | %s/ivl", base);
+      snprintf(tmp, sizeof tmp, " | %s%civl", base, sep);
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
       strcpy(cmd+ncmd, tmp);
@@ -424,16 +444,6 @@ static int t_compile()
       cmd = realloc(cmd, ncmd+rc+1);
       strcpy(cmd+ncmd, tmp);
       ncmd += rc;
-
-#ifdef __MINGW32__
-      {
-	char *t;
-	for (t = cmd+ncmd_start; *t; t++)
-	  {
-	    if (*t == '/') *t = '\\';
-	  }
-      }
-#endif
 
 
       if (verbose_flag)
