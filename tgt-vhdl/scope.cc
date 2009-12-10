@@ -764,16 +764,18 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
    // (There are actually two VHDL scopes in a function: the local
    // variables and the formal parameters hence the call to get_parent)
    func->get_scope()->get_parent()->set_parent(ent->get_arch()->get_scope());
-   
-   int nsigs = ivl_scope_sigs(scope);
-   for (int i = 0; i < nsigs; i++) {
-      ivl_signal_t sig = ivl_scope_sig(scope, i);            
+
+   // First we add the input/output parameters in order
+   int nports = ivl_scope_ports(scope);
+   for (int i = 0; i < nports; i++) {
+      ivl_signal_t sig = ivl_scope_port(scope, i);
+
       vhdl_type *sigtype =
          vhdl_type::type_for(ivl_signal_width(sig),
                              ivl_signal_signed(sig) != 0);
       
       string signame(make_safe_name(sig));
-
+      
       switch (ivl_signal_port(sig)) {
       case IVL_SIP_INPUT:
          func->add_param(new vhdl_param_decl(signame.c_str(), sigtype));
@@ -783,13 +785,35 @@ static int draw_function(ivl_scope_t scope, ivl_scope_t parent)
          signame = funcname;
          signame += "_Result";
          func->set_type(new vhdl_type(*sigtype));
-      default:
          func->get_scope()->add_decl
-            (new vhdl_var_decl(signame.c_str(), sigtype));
+            (new vhdl_var_decl(signame, sigtype));
+         break;
+      default:
+         // Only expecting inputs and outputs
+         assert(false);
       }
       
       remember_signal(sig, func->get_scope());
       rename_signal(sig, signame);
+   }
+   
+   int nsigs = ivl_scope_sigs(scope);
+   for (int i = 0; i < nsigs; i++) {
+      ivl_signal_t sig = ivl_scope_sig(scope, i);            
+
+      if (ivl_signal_port(sig) == IVL_SIP_NONE) {
+         vhdl_type *sigtype =
+            vhdl_type::type_for(
+               ivl_signal_width(sig),
+               ivl_signal_signed(sig) != 0);
+         
+         string signame(make_safe_name(sig));
+         func->get_scope()->add_decl(
+            new vhdl_var_decl(signame, sigtype));
+         
+         remember_signal(sig, func->get_scope());
+         rename_signal(sig, signame);
+      }
    }
    
    // Non-blocking assignment not allowed in functions
