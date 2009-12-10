@@ -1,7 +1,7 @@
 /*
  *  Generate code to convert between VHDL types.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -60,6 +60,8 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
          assert(false);
       }
    }
+   assert(false);
+   return NULL;
 }
 
 /*
@@ -140,9 +142,8 @@ vhdl_expr *vhdl_expr::to_boolean()
       conv->add_expr(this);
       return conv;
    }
-   else {
-      assert(false);
-   }
+   assert(false);
+   return NULL;
 }
 
 /*
@@ -180,8 +181,8 @@ vhdl_expr *vhdl_expr::to_std_logic()
 
       return ah;
    }
-   else
-      assert(false);
+   assert(false);
+   return NULL;
 }
 
 /*
@@ -274,8 +275,8 @@ vhdl_expr *vhdl_const_bits::to_vector(vhdl_type_name_t name, int w)
       value_.resize(w, sign_bit());  
       return this;
    }
-   else
-      assert(false);
+   assert(false);
+   return NULL;
 }
 
 vhdl_expr *vhdl_const_bits::to_integer()

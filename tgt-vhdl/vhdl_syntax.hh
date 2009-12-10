@@ -571,7 +571,8 @@ public:
    // For some sorts of declarations it doesn't make sense
    // to assign to it so calling assignment_type just raises
    // an assertion failure
-   virtual assign_type_t assignment_type() const { assert(false); }
+   virtual assign_type_t assignment_type() const { assert(false);
+                                                   return ASSIGN_BLOCK; }
 
    // True if this declaration can be read from
    virtual bool is_readable() const { return true; }
