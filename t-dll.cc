@@ -46,7 +46,6 @@ inline ivl_dll_t ivl_dlopen(const char *name)
 
 inline void * ivl_dlsym(ivl_dll_t dll, const char *nm)
 {
-      FARPROC sym;
       return (void*)GetProcAddress((HMODULE)dll, nm);
 }
 
