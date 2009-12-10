@@ -139,6 +139,7 @@ ivl_signal_t find_signal_named(const std::string &name, const vhdl_scope *scope)
          return (*it).first;
    }
    assert(false);
+   return NULL;
 }
 
 // Compare the name of an entity against a string

@@ -239,9 +239,9 @@ assign_for(vhdl_decl::assign_type_t atype, vhdl_var_ref *lhs, vhdl_expr *rhs)
       return new vhdl_assign_stmt(lhs, rhs);
    case vhdl_decl::ASSIGN_NONBLOCK:
       return new vhdl_nbassign_stmt(lhs, rhs);
-   default:
-      assert(false);
    }   
+   assert(false);
+   return NULL;
 }
 
 /*

@@ -1,7 +1,7 @@
 /*
  *  Support functions for VHDL output.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -51,6 +51,7 @@ const char *support_function::function_name(support_function_t type)
    default:
       assert(false);
    }
+   return "Invalid";
 }
 
 vhdl_type *support_function::function_type(support_function_t type)
@@ -74,9 +75,9 @@ vhdl_type *support_function::function_type(support_function_t type)
       return new vhdl_type(VHDL_TYPE_UNSIGNED);
    case SF_LOGIC_TO_INTEGER:
       return vhdl_type::integer();
-   default:
-      assert(false);
    }
+   assert(false);
+   return vhdl_type::boolean();
 }
 
 void support_function::emit_ternary(std::ostream &of, int level) const
