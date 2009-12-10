@@ -25,6 +25,7 @@
 # include  "StringHeap.h"
 # include  "netlist.h"
 # include  <vector>
+# include  <map>
 
 #if defined(__MINGW32__)
 #include <windows.h>
@@ -426,19 +427,21 @@ struct ivl_lval_s {
  * structural context.
  */
 struct ivl_net_const_s {
-      ivl_variable_type_t type;
-      unsigned width_;
-      unsigned signed_ : 1;
+      ivl_variable_type_t type :  3;
+      unsigned width_          : 24;
+      unsigned signed_         :  1;
 
       union {
 	    double real_value;
 	    char bit_[sizeof(char*)];
-	    char *bits_;
+	    const char* bits_;
       } b;
 
       ivl_nexus_t pin_;
-
       ivl_expr_t delay[3];
+
+      void* operator new (size_t s);
+      void  operator delete(void*obj, size_t s); // Not implemented
 };
 
 /*
@@ -577,7 +580,8 @@ struct ivl_process_s {
  * there.
  */
 struct ivl_scope_s {
-      ivl_scope_t child_, sibling_, parent;
+      ivl_scope_t parent;
+      std::map<hname_t,ivl_scope_t> children;
 
       perm_string name_;
       perm_string tname_;

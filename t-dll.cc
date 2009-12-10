@@ -110,29 +110,47 @@ inline const char*dlerror(void)
  * permanently allocated, and allocating them in blocks reduces the
  * allocation overhead.
  */
-static struct ivl_nexus_s * nexus_pool_ptr = 0;
-static int nexus_pool_remaining = 0;
-static const size_t NEXUS_POOL_SIZE = 4096;
+
+template <class TYPE> void* pool_permalloc(size_t s)
+{
+      static TYPE * pool_ptr = 0;
+      static int pool_remaining = 0;
+      static const size_t POOL_SIZE = 4096;
+
+      assert(s == sizeof(TYPE));
+      if (pool_remaining <= 0) {
+	    pool_ptr = new TYPE[POOL_SIZE];
+	    pool_remaining = POOL_SIZE;
+      }
+
+      TYPE*tmp = pool_ptr;
+      pool_ptr += 1;
+      pool_remaining -= 1;
+
+      return tmp;
+}
 
 void* ivl_nexus_s::operator new(size_t s)
 {
-      assert(s == sizeof(struct ivl_nexus_s));
-      if (nexus_pool_remaining <= 0) {
-	    nexus_pool_ptr = new struct ivl_nexus_s[NEXUS_POOL_SIZE];
-	    nexus_pool_remaining = NEXUS_POOL_SIZE;
-      }
-
-      struct ivl_nexus_s*tmp = nexus_pool_ptr;
-      nexus_pool_ptr += 1;
-      nexus_pool_remaining -= 1;
-
-      return tmp;
+      return pool_permalloc<struct ivl_nexus_s>(s);
 }
 
 void ivl_nexus_s::operator delete(void*, size_t)
 {
       assert(0);
 }
+
+void* ivl_net_const_s::operator new(size_t s)
+{
+      return pool_permalloc<struct ivl_net_const_s>(s);
+}
+
+void ivl_net_const_s::operator delete(void*, size_t)
+{
+      assert(0);
+}
+
+static StringHeapLex net_const_strings;
 
 inline static const char *basename(ivl_scope_t scope, const char *inst)
 {
@@ -227,19 +245,19 @@ ivl_attribute_s* dll_target::fill_in_attributes(const Attrib*net)
  */
 static ivl_scope_t find_scope_from_root(ivl_scope_t root, const NetScope*cur)
 {
-      ivl_scope_t parent, tmp;
-      perm_string cur_name = make_scope_name(cur->fullname());
-
       if (const NetScope*par = cur->parent()) {
-	    parent = find_scope_from_root(root, par);
+	    ivl_scope_t parent = find_scope_from_root(root, par);
 	    if (parent == 0)
 		  return 0;
 
-	    for (tmp = parent->child_ ;  tmp ;  tmp = tmp->sibling_)
-		  if (strcmp(tmp->name_, cur_name) == 0)
-			return tmp;
+	    map<hname_t,ivl_scope_t>::iterator idx = parent->children.find(cur->fullname());
+	    if (idx == parent->children.end())
+		  return 0;
+	    else
+		  return idx->second;
 
       } else {
+	    perm_string cur_name = make_scope_name(cur->fullname());
 	    if (strcmp(root->name_, cur_name) == 0)
 		  return root;
       }
@@ -559,8 +577,6 @@ void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
       perm_string name = s->basename();
       root_->name_ = name;
       FILE_NAME(root_, s);
-      root_->child_ = 0;
-      root_->sibling_ = 0;
       root_->parent = 0;
       root_->nsigs_ = 0;
       root_->sigs_ = 0;
@@ -2267,6 +2283,8 @@ bool dll_target::net_const(const NetConst*net)
 {
       unsigned idx;
       char*bits;
+      static char*bits_tmp = 0;
+      static size_t bits_cnt = 0;
 
       struct ivl_net_const_s *obj = new struct ivl_net_const_s;
 
@@ -2281,8 +2299,11 @@ bool dll_target::net_const(const NetConst*net)
 	    bits = obj->b.bit_;
 
       } else {
-	    obj->b.bits_ = (char*)malloc(obj->width_);
-	    bits = obj->b.bits_;
+	    if (obj->width_+1 > bits_cnt) {
+		  bits_tmp = (char*)realloc(bits_tmp, obj->width_+1);
+		  bits_cnt = obj->width_+1;
+	    }
+	    bits = bits_tmp;
       }
 
       for (idx = 0 ;  idx < obj->width_ ;  idx += 1)
@@ -2304,6 +2325,11 @@ bool dll_target::net_const(const NetConst*net)
 		  bits[idx] = 'z';
 		  break;
 	    }
+
+      if (obj->width_ > sizeof(obj->b.bit_)) {
+	    bits[obj->width_] = 0;
+	    obj->b.bits_ = net_const_strings.make(bits);
+      }
 
 	/* Connect to all the nexus objects. Note that the one-bit
 	   case can be handled more efficiently without allocating
@@ -2375,8 +2401,6 @@ void dll_target::scope(const NetScope*net)
 	    scop = new struct ivl_scope_s;
 	    scop->name_ = sname;
 	    FILE_NAME(scop, net);
-	    scop->child_ = 0;
-	    scop->sibling_ = 0;
 	    scop->parent = find_scope(des_, net->parent());
 	    assert(scop->parent);
 	    scop->nsigs_ = 0;
@@ -2433,8 +2457,7 @@ void dll_target::scope(const NetScope*net)
 
 	    assert(scop->parent != 0);
 
-	    scop->sibling_= scop->parent->child_;
-	    scop->parent->child_ = scop;
+	    scop->parent->children[net->fullname()] = scop;
       }
 }
 
