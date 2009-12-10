@@ -545,6 +545,8 @@ extern "C" unsigned long ivl_expr_uvalue(ivl_expr_t net)
 	    assert(0);
       }
 
+      assert(0);
+      return 0;
 }
 
 extern "C" ivl_variable_type_t ivl_expr_value(ivl_expr_t net)

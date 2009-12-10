@@ -200,6 +200,7 @@ NetNet* NetEBBits::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    gate = new NetLogic(scope, oname, 3, NetLogic::XNOR, width);
 	    break;
 	  default:
+	    gate = NULL;
 	    assert(0);
       }
 
@@ -863,6 +864,7 @@ NetNet* NetEUBits::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    gate = new NetLogic(scope, oname, 2, NetLogic::NOT, width);
 	    break;
 	  default:
+	    gate = NULL;
 	    assert(0);
       }
 

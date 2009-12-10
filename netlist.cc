@@ -2668,6 +2668,7 @@ static DelayType get_loop_delay_type(const NetExpr*expr, const NetProc*proc)
 	    /* This should never happen since delay_type_from_expr() only
 	     * returns three different values. */
 	  default:
+	    result = NO_DELAY;
 	    assert(0);
       }
 
