@@ -650,7 +650,7 @@ static PLI_INT32 sys_fscanf_calltf(PLI_BYTE8*name)
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n",
-	               val.value.integer, name);
+	               (int)val.value.integer, name);
 	    errno = EBADF;
 	    val.format = vpiIntVal;
 	    val.value.integer = EOF;
