@@ -43,7 +43,7 @@ int tf_isetdelay(PLI_INT32 delay, void*ss)
       if (pli_trace) {
 	    fprintf(pli_trace, "%s: tf_isetdelay(%d, ...)"
 		    " <unit=%d, prec=%d>;\n",
-		    vpi_get_str(vpiName, sys), delay, unit, prec);
+		    vpi_get_str(vpiName, sys), (int)delay, unit, prec);
       }
 
 

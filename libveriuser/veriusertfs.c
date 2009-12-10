@@ -1,4 +1,4 @@
-/* vi:sw=6
+/*
  * Copyright (c) 2002-2009 Michael Ruff (mruff at chiaro.com)
  *                         Michael Runyan (mrunyan at chiaro.com)
  *
@@ -322,6 +322,7 @@ static PLI_INT32 callback(p_cb_data data)
 	    reason = reason_reactivate;
 	    break;
 	  default:
+	    reason = -1;
 	    assert(0);
       }
 
