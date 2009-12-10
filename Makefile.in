@@ -107,7 +107,7 @@ clean:
 	rm -f syn-rules.output dosify.exe ivl@EXEEXT@ check.vvp
 	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc
 	rm -rf dep
-	rm version.exe
+	rm -f version.exe
 
 distclean: clean
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
