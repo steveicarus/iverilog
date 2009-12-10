@@ -441,11 +441,18 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       }
 
       if (sig->port_type() == NetNet::PINPUT) {
-	    cerr << get_fileline() << ": warning: L-value ``"
-		 << sig->name() << "'' is also an input port." << endl;
-	    cerr << sig->get_fileline() << ": warning: input "
-		 << sig->name() << "; is coerced to inout." << endl;
 	    sig->port_type(NetNet::PINOUT);
+	      // This map mask prevents an error message being
+	      // repeated endlessly.
+	    static map<string,bool> mask_map;
+	    bool&flag = mask_map[sig->get_fileline() + ":" + string(sig->name())];
+	    if (! flag) {
+		  cerr << get_fileline() << ": warning: L-value ``"
+		       << sig->name() << "'' is also an input port." << endl;
+		  cerr << sig->get_fileline() << ": warning: input "
+		       << sig->name() << "; is coerced to inout." << endl;
+		  flag = true;
+	    }
       }
 
 	// Default part select is the entire word.
