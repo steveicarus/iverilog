@@ -667,8 +667,9 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	      /* Add a range for vectored values. */
 	    if (vpi_get(vpiSize, item) > 1
 		|| vpi_get(vpiLeftRange, item) != 0) {
-		  fprintf(dump_file, " [%i:%i]", vpi_get(vpiLeftRange, item),
-			  vpi_get(vpiRightRange, item));
+		  fprintf(dump_file, " [%i:%i]",
+			  (int)vpi_get(vpiLeftRange, item),
+			  (int)vpi_get(vpiRightRange, item));
 	    }
 
 	    fprintf(dump_file, " $end\n");
@@ -730,9 +731,11 @@ static int draw_scope(vpiHandle item, vpiHandle callh)
 	  case vpiNamedFork:   type = "fork";       break;
 	  case vpiModule:      type = "module";     break;
 	  default:
+	    type = "invalid";
 	    vpi_printf("VCD Error: %s:%d: $dumpvars: Unsupported scope "
 	               "type (%d)\n", vpi_get_str(vpiFile, callh),
-	               (int)vpi_get(vpiLineNo, callh), vpi_get(vpiType, item));
+	               (int)vpi_get(vpiLineNo, callh),
+	               (int)vpi_get(vpiType, item));
             assert(0);
       }
 

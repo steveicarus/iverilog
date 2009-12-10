@@ -146,6 +146,7 @@ static int get_default_format(char *name)
     case 'o': default_format = vpiOctStrVal; break;
     case 'b': default_format = vpiBinStrVal; break;
     default:
+	default_format = -1;
 	assert(0);
     }
 
@@ -1139,7 +1140,7 @@ static PLI_INT32 sys_display_calltf(PLI_BYTE8 *name)
 		    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 		               (int)vpi_get(vpiLineNo, callh));
 		    vpi_printf("invalid file descriptor/MCD (0x%x) given "
-		               "to %s.\n", fd_mcd, name);
+		               "to %s.\n", (unsigned int)fd_mcd, name);
 		    errno = EBADF;
 		    vpi_free_object(argv);
 		    return 0;
@@ -1259,7 +1260,7 @@ static PLI_INT32 sys_strobe_calltf(PLI_BYTE8*name)
 		    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 		               (int)vpi_get(vpiLineNo, callh));
 		    vpi_printf("invalid file descriptor/MCD (0x%x) given "
-		               "to %s.\n", fd_mcd, name);
+		               "to %s.\n", (unsigned int)fd_mcd, name);
 		    errno = EBADF;
 		    vpi_free_object(argv);
 		    return 0;
@@ -1776,7 +1777,7 @@ static char *pts_convert(int value)
             case -13: string = "100fs"; break;
             case -14: string = "10fs";  break;
             case -15: string = "1fs";   break;
-            default: assert(0);
+            default: string = "invalid"; assert(0);
       }
       return string;
 }

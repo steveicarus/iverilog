@@ -62,7 +62,7 @@ static struct t_vpi_vecval*vecval = 0;
 
 static void make_addr()
 {
-      sscanf(yytext+1, "%x", &vecval->aval);
+      sscanf(yytext+1, "%x", (unsigned int*)&vecval->aval);
 }
 
 static void make_hex_value()

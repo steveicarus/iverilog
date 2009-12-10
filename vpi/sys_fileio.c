@@ -229,7 +229,7 @@ static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
-	               fd_mcd, name);
+	               (unsigned int)fd_mcd, name);
 	    errno = EBADF;
 	    return 0;
       }
@@ -277,7 +277,7 @@ static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("invalid file descriptor/MCD (0x%x) given to %s.\n",
-	               fd_mcd, name);
+	               (unsigned int)fd_mcd, name);
 	    errno = EBADF;
 	    return 0;
       }
@@ -324,8 +324,8 @@ static PLI_INT32 sys_fputc_calltf(PLI_BYTE8*name)
       if (!fp) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
-	               name);
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n",
+	               (unsigned int)fd_mcd, name);
 	    errno = EBADF;
 	    val.value.integer = EOF;
       } else {
@@ -412,8 +412,8 @@ static PLI_INT32 sys_fgets_calltf(PLI_BYTE8*name)
       if (!fp) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
-	               name);
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n",
+	               (unsigned int)fd_mcd, name);
 	    errno = EBADF;
 	    val.format = vpiIntVal;
 	    val.value.integer = 0;
@@ -600,8 +600,8 @@ static PLI_INT32 sys_fread_calltf(PLI_BYTE8*name)
       if (!fp) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
-	               name);
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n",
+	               (unsigned int)fd_mcd, name);
 	    errno = EBADF;
 	    val.format = vpiIntVal;
 	    val.value.integer = 0;
@@ -639,8 +639,8 @@ static PLI_INT32 sys_fread_calltf(PLI_BYTE8*name)
 			           vpi_get_str(vpiFile, callh),
 			           (int)vpi_get(vpiLineNo, callh));
 			vpi_printf("%s's start argument (%d) is outside "
-			           "memory range [%d:%d].\n", name, start,
-			           left, right);
+			           "memory range [%d:%d].\n", name, (int)start,
+			           (int)left, (int)right);
 			val.format = vpiIntVal;
 			val.value.integer = 0;
 			vpi_put_value(callh, &val, 0, vpiNoDelay);
@@ -660,8 +660,8 @@ static PLI_INT32 sys_fread_calltf(PLI_BYTE8*name)
 			                 (int)vpi_get(vpiLineNo, callh));
 			      vpi_printf("%s's count argument (%d) is too "
 			                 "large for start (%d) and memory "
-			                 "range [%d:%d].\n", name, count,
-			                 start, left, right);
+			                 "range [%d:%d].\n", name, (int)count,
+			                 (int)start, (int)left, (int)right);
 			      count = max - start + 1;
 			}
 			vpi_free_object(argv);
@@ -734,8 +734,8 @@ static PLI_INT32 sys_ungetc_calltf(PLI_BYTE8*name)
       if (!fp) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
-	               name);
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n",
+	               (unsigned int)fd_mcd, name);
 	    errno = EBADF;
 	    val.format = vpiIntVal;
 	    val.value.integer = EOF;
@@ -860,7 +860,7 @@ static PLI_INT32 sys_fseek_calltf(PLI_BYTE8*name)
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("%s's operation must be 0, 1 or 2 given %d.\n",
-	               name, oper);
+	               name, (int)oper);
 	    oper = -1; /* An invalid argument value. */
       }
 
@@ -869,8 +869,8 @@ static PLI_INT32 sys_fseek_calltf(PLI_BYTE8*name)
       if (!fp) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
-	               name);
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n",
+	               (unsigned int)fd_mcd, name);
 	    errno = EBADF;
 	    val.format = vpiIntVal;
 	    val.value.integer = EOF;
@@ -907,8 +907,8 @@ static PLI_INT32 sys_common_fd_calltf(PLI_BYTE8*name)
       if (!fp) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
-	               name);
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n",
+	               (unsigned int)fd_mcd, name);
 	    errno = EBADF;
 	    val.format = vpiIntVal;
 	    val.value.integer = EOF;
@@ -1032,8 +1032,8 @@ static PLI_INT32 sys_ferror_calltf(PLI_BYTE8 *name)
       if (!errno && !vpi_get_file(fd_mcd) ) {
 	    vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n", fd_mcd,
-	               name);
+	    vpi_printf("invalid file descriptor (0x%x) given to %s.\n",
+	               (unsigned int)fd_mcd, name);
 	    errno = EBADF;
       }
 
