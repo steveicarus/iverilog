@@ -381,6 +381,7 @@ NetEConst* NetEBComp::eval_leeq_real_(NetExpr*le, NetExpr*ri, bool eq_flag)
 	    break;
 
 	  default:
+	    lv = 0.0;
 	    cerr << get_fileline() << ": internal error: "
 		 << "Unexpected expression type? " << le->expr_type() << endl;
 	    assert(0);
@@ -401,6 +402,7 @@ NetEConst* NetEBComp::eval_leeq_real_(NetExpr*le, NetExpr*ri, bool eq_flag)
 	    break;
 
 	  default:
+	    rv = 0.0;
 	    cerr << get_fileline() << ": internal error: "
 		 << "Unexpected expression type? " << ri->expr_type() << endl;
 	    assert(0);
@@ -585,6 +587,7 @@ NetEConst* NetEBComp::eval_eqeq_real_(NetExpr*le, NetExpr*ri, bool ne_flag)
 	    break;
 
 	  default:
+	    lv = 0.0;
 	    cerr << get_fileline() << ": internal error: "
 		 << "Unexpected expression type? " << le->expr_type() << endl;
 	    assert(0);
@@ -605,6 +608,7 @@ NetEConst* NetEBComp::eval_eqeq_real_(NetExpr*le, NetExpr*ri, bool ne_flag)
 	    break;
 
 	  default:
+	    rv = 0.0;
 	    cerr << get_fileline() << ": internal error: "
 		 << "Unexpected expression type? " << ri->expr_type() << endl;
 	    assert(0);

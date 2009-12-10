@@ -448,6 +448,7 @@ const char *human_readable_op(const char op, bool unary)
 
 	    case 'p': type = "**"; break; // Power
 	    default:
+	      type = "???";
 	      assert(0);
 	}
 	return type;

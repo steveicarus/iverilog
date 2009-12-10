@@ -3111,6 +3111,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 		  break;
 
 		default:
+		  pr = NULL;
 		  assert(0);
 	    }
 
