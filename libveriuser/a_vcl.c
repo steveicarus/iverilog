@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: a_vcl.c,v 1.7 2004/10/04 01:10:56 steve Exp $"
-#endif
 
 #include  <vpi_user.h>
 #include  <acc_user.h>
@@ -185,13 +182,13 @@ void acc_vcl_add(handle obj, PLI_INT32(*consumer)(p_vc_record),
 
 	    if (pli_trace) {
 		  fprintf(pli_trace, "acc_vcl_add(<%s>, ..., %p, %d)\n",
-			  vpi_get_str(vpiFullName, obj), data, vcl_flag);
+			  vpi_get_str(vpiFullName, obj), data, (int)vcl_flag);
 	    }
 	    break;
 
 	  default:
 	    vpi_printf("XXXX acc_vcl_add(<type=%d>, ..., %d);\n",
-		       vpi_get(vpiType, obj), vcl_flag);
+		       (int)vpi_get(vpiType, obj), (int)vcl_flag);
 	    break;
       }
 
@@ -202,36 +199,3 @@ void acc_vcl_delete(handle obj, PLI_INT32(*consumer)(p_vc_record),
 {
       vpi_printf("XXXX acc_vcl_delete(...)\n");
 }
-
-
-/*
- * $Log: a_vcl.c,v $
- * Revision 1.7  2004/10/04 01:10:56  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.6  2003/06/17 16:55:07  steve
- *  1) setlinebuf() for vpi_trace
- *  2) Addes error checks for trace file opens
- *  3) removes now extraneous flushes
- *  4) fixes acc_next() bug
- *
- * Revision 1.5  2003/05/18 00:16:35  steve
- *  Add PLI_TRACE tracing of PLI1 modules.
- *
- *  Add tf_isetdelay and friends, and add
- *  callback return values for acc_vcl support.
- *
- * Revision 1.4  2003/04/30 01:09:29  steve
- *  Conditionally include malloc.h
- *
- * Revision 1.3  2003/04/24 02:02:37  steve
- *  Clean up some simple warnings.
- *
- * Revision 1.2  2003/04/20 02:48:39  steve
- *  Support value change callbacks.
- *
- * Revision 1.1  2003/04/12 18:57:14  steve
- *  More acc_ function stubs.
- *
- */
-

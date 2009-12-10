@@ -1,5 +1,5 @@
-/* vi:sw=6
- * Copyright (c) 2002,2003 Michael Ruff (mruff at chiaro.com)
+/*
+ * Copyright (c) 2002-2009 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: putp.c,v 1.7 2004/09/10 23:13:05 steve Exp $"
-#endif
 
 # include  <assert.h>
 # include  <veriuser.h>
@@ -48,7 +45,7 @@ PLI_INT32 tf_iputp(PLI_INT32 n, PLI_INT32 value, void *obj)
 
 	    if (pli_trace) {
 		  fprintf(pli_trace, "tf_iputp(<return>, value=%d, func=%s) "
-			  "--> %d\n", value, vpi_get_str(vpiName, obj), 0);
+			  "--> %d\n", (int)value, vpi_get_str(vpiName, obj), 0);
 	    }
 
 	    return 0;
@@ -57,7 +54,7 @@ PLI_INT32 tf_iputp(PLI_INT32 n, PLI_INT32 value, void *obj)
       if ((n == 0) && (type != vpiSysFuncCall)) {
 	    if (pli_trace) {
 		  fprintf(pli_trace, "tf_iputp(<ERROR>, value=%d, func=%s) "
-			  "--> %d\n", value, vpi_get_str(vpiName, obj), 1);
+			  "--> %d\n", (int)value, vpi_get_str(vpiName, obj), 1);
 	    }
 
 	    return 1;
@@ -82,7 +79,7 @@ PLI_INT32 tf_iputp(PLI_INT32 n, PLI_INT32 value, void *obj)
  out:
       if (pli_trace) {
 	    fprintf(pli_trace, "tf_iputp(n=%d, value=%d, obj=%p) --> %d\n",
-		  n, value, obj, rtn);
+		  (int)n, (int)value, obj, rtn);
       }
 
       return rtn;
@@ -131,7 +128,7 @@ free:
 out:
       if (pli_trace) {
 	    fprintf(pli_trace, "tf_iputrealp(n=%d, value=%f, obj=%p) --> %d\n",
-		  n, value, obj, rtn);
+		  (int)n, value, obj, rtn);
       }
 
       return rtn;
@@ -143,33 +140,3 @@ PLI_INT32 tf_putrealp(PLI_INT32 n, double value)
 
       return rtn;
 }
-/*
- * $Log: putp.c,v $
- * Revision 1.7  2004/09/10 23:13:05  steve
- *  Compile cleanup of C code.
- *
- * Revision 1.6  2003/06/26 03:20:24  steve
- *  Correct handle of put to function return value.
- *
- * Revision 1.5  2003/06/17 16:55:08  steve
- *  1) setlinebuf() for vpi_trace
- *  2) Addes error checks for trace file opens
- *  3) removes now extraneous flushes
- *  4) fixes acc_next() bug
- *
- * Revision 1.4  2003/05/29 03:46:21  steve
- *  Add tf_getp/putp support for integers
- *  and real valued arguments.
- *
- *  Add tf_mipname function.
- *
- * Revision 1.3  2003/03/15 05:42:39  steve
- *  free argument iterators.
- *
- * Revision 1.2  2002/08/12 01:35:02  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.1  2002/06/07 16:21:13  steve
- *  Add tf_putlongp and tf_putp.
- *
- */
