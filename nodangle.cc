@@ -204,6 +204,13 @@ void nodangle(Design*des)
       fun.scomplete = false;
       fun.ecomplete = false;
       do {
+	    if (verbose_flag) {
+		  cout << " ... scan for dangling signal and event nodes. "
+		       << "(scomplete=" << (fun.scomplete? "T" : "F")
+		       << ", ecomplete=" << (fun.ecomplete? "T" : "F")
+		       << ")" << endl << flush;
+	    }
+
             fun.scontinue = false;
             fun.econtinue = false;
 	    des->functor(&fun);
@@ -214,9 +221,12 @@ void nodangle(Design*des)
 	    if (verbose_flag) {
 		  cout << " ... " << fun.iteration << " iterations"
 		       << " deleted " << fun.stotal << " dangling signals"
-		       << " and " << fun.etotal << " events." << endl;
+		       << " and " << fun.etotal << " events." << endl << flush;
 	    }
 
       } while (fun.scontinue || fun.econtinue);
 
+      if (verbose_flag) {
+	    cout << " ... done" << endl << flush;
+      }
 }
