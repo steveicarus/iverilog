@@ -75,6 +75,20 @@ extern "C" int optind;
 extern "C" const char*optarg;
 #endif
 
+#if defined(TRAP_SIGINT_FOR_DEBUG)
+/*
+ * This is a debugging aid. Do not compile it in general, but leave it
+ * here for those days when I need the ability to cleanly exit on a
+ * signal interrupt.
+*/
+# include  <signal.h>
+static void signals_handler(int sig)
+{
+      fprintf(stderr, "Exit on signal %d\n", sig);
+      exit(1);
+}
+#endif
+
 /* Count errors detected in flag processing. */
 unsigned flag_errors = 0;
 
@@ -611,6 +625,10 @@ int main(int argc, char*argv[])
       int opt;
 
       struct tms cycles[5];
+
+#if defined(TRAP_SIGINT_FOR_DEBUG)
+      signal(SIGINT, &signals_handler);
+#endif
 
       library_suff.push_back(strdup(".v"));
 
