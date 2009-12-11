@@ -189,7 +189,7 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
       std::vector<nexus_info_s> nexus_info (obj->pin_count());
       for (unsigned idx = 0 ; idx < obj->pin_count() ; idx += 1) {
 	    nexus_info[idx].nex = obj->pin(idx).nexus();
-	    unsigned inputs, outputs;
+	    unsigned inputs = 0, outputs = 0;
 	    nexus_info[idx].nex -> count_io(inputs, outputs);
 	    nexus_info[idx].inp = inputs;
 	    nexus_info[idx].out = outputs;
@@ -277,14 +277,18 @@ void cprop(Design*des)
 	    prop.count = 0;
 	    des->functor(&prop);
 	    if (verbose_flag) {
-		  cout << "   cprop: Iteration detected "
+		  cout << " ... Iteration detected "
 		       << prop.count << " optimizations." << endl << flush;
 	    }
       } while (prop.count > 0);
 
       if (verbose_flag) {
-	    cout << "    cprop: Look for dangling constants" << endl << flush;
+	    cout << " ... Look for dangling constants" << endl << flush;
       }
       cprop_dc_functor dc;
       des->functor(&dc);
+
+      if (verbose_flag) {
+	    cout << " ... done" << endl << flush;
+      }
 }
