@@ -195,27 +195,6 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 	    nexus_info[idx].out = outputs;
       }
 
-	// For each bit, if this is the only driver, then set the
-	// initial value of all the signals to this value.
-      for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1) {
-	    if (nexus_info[idx].out > 1)
-		  continue;
-
-	    for (Link*clnk = nexus_info[idx].nex->first_nlink()
-		       ; clnk ; clnk = clnk->next_nlink()) {
-
-		  NetPins*cur;
-		  unsigned pin;
-		  clnk->cur_link(cur, pin);
-
-		  NetNet*tmp = dynamic_cast<NetNet*>(cur);
-		  if (tmp == 0)
-			continue;
-
-		  tmp->pin(pin).set_init(obj->value(idx));
-	    }
-      }
-
 	// If there are any links that take input, the constant is
 	// used structurally somewhere.
       for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1)

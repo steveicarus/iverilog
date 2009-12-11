@@ -105,7 +105,7 @@ void connect(Link&l, Link&r)
 }
 
 Link::Link()
-: dir_(PASSIVE), drive0_(STRONG), drive1_(STRONG), init_(verinum::Vx),
+: dir_(PASSIVE), drive0_(STRONG), drive1_(STRONG),
   next_(0), nexus_(0)
 {
 }
@@ -185,16 +185,6 @@ Link::strength_t Link::drive0() const
 Link::strength_t Link::drive1() const
 {
       return drive1_;
-}
-
-void Link::set_init(verinum::V val)
-{
-      init_ = val;
-}
-
-verinum::V Link::get_init() const
-{
-      return init_;
 }
 
 
@@ -281,20 +271,6 @@ Nexus::~Nexus()
 	    delete[]name_;
 }
 
-verinum::V Nexus::get_init() const
-{
-      for (const Link*cur = first_nlink() ;  cur ;  cur = cur->next_nlink()) {
-	    if (cur->get_dir() == Link::OUTPUT)
-		  return verinum::Vx;
-
-	    if ((cur->get_dir() == Link::PASSIVE)
-		&& (cur->get_init() != verinum::Vz))
-		  return cur->get_init();
-      }
-
-      return verinum::Vz;
-}
-
 bool Nexus::assign_lval() const
 {
       for (const Link*cur = first_nlink() ; cur ; cur = cur->next_nlink()) {
@@ -322,6 +298,8 @@ void Nexus::count_io(unsigned&inp, unsigned&out) const
 		  break;
 		case Link::OUTPUT:
 		  out += 1;
+		  break;
+		default:
 		  break;
 	    }
       }

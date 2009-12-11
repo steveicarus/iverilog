@@ -55,7 +55,6 @@ static Design*des_;
 
 static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 			NetEvent*eclk, NetExpr*cexp, NetAssignBase*asn);
-static void make_initializer(Design*des, NetProcTop*top, NetAssignBase*asn);
 
 %}
 
@@ -92,10 +91,6 @@ start
 
   /* Unconditional assignments in initial blocks should be made into
      initializers wherever possible. */
-
-	| S_INITIAL S_ASSIGN
-		{ make_initializer(des_, $1->top, $2->assign);
-		}
 
 	;
 %%
@@ -175,33 +170,6 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
       des->delete_process(top);
 }
 
-/*
- * An assignment in an initial statement is the same as giving the
- * nexus an initial value. For synthesized netlists, we can just set
- * the initial value for the link and get rid of the assignment
- * process.
- */
-static void make_initializer(Design*des, NetProcTop*top, NetAssignBase*asn)
-{
-      NetESignal*rsig = dynamic_cast<NetESignal*> (asn->rval());
-      assert(rsig);
-
-      for (unsigned idx = 0 ;  idx < asn->l_val(0)->lwidth() ;  idx += 1) {
-
-	    verinum::V bit = rsig->sig()->pin(idx).nexus()->driven_value();
-
-	    Nexus*nex = asn->l_val(0)->sig()->pin(idx).nexus();
-	    for (Link*cur = nex->first_nlink()
-		       ;  cur ;  cur = cur->next_nlink()) {
-
-		  if (dynamic_cast<NetNet*> (cur->get_obj()))
-			cur->set_init(bit);
-
-	    }
-      }
-
-      des->delete_process(top);
-}
 
 static syn_token_t*first_ = 0;
 static syn_token_t*last_ = 0;

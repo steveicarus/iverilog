@@ -114,13 +114,6 @@ class Link {
       strength_t drive0() const;
       strength_t drive1() const;
 
-	// A link has an initial value that is used by the nexus to
-	// figure out its initial value. Normally, only the object
-	// that contains the link sets the initial value, and only the
-	// attached Nexus gets it. The default link value is Vx.
-      void set_init(verinum::V val);
-      verinum::V get_init() const;
-
       void cur_link(NetPins*&net, unsigned &pin);
       void cur_link(const NetPins*&net, unsigned &pin) const;
 
@@ -165,7 +158,6 @@ class Link {
       DIR dir_           : 2;
       strength_t drive0_ : 3;
       strength_t drive1_ : 3;
-      verinum::V init_   : 2;
 
     private:
       Nexus* find_nexus_() const;
@@ -196,7 +188,7 @@ class NetPins : public LineInfo {
 
       void dump_node_pins(ostream&, unsigned, const char**pin_names =0) const;
       void set_default_dir(Link::DIR d);
-      void set_default_init(verinum::V val);
+
       bool is_linked();
       bool pins_are_virtual(void) const;
       void devirtualize_pins(void);
@@ -205,7 +197,6 @@ class NetPins : public LineInfo {
       Link*pins_;
       const unsigned npins_;
       Link::DIR default_dir_;
-      verinum::V default_init_;
 };
 
 /* =========
@@ -344,7 +335,6 @@ class Nexus {
       void connect(Link&r);
 
       const char* name() const;
-      verinum::V get_init() const;
 
       void drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay);
       void drivers_drive(Link::strength_t d0, Link::strength_t d1);
@@ -668,7 +658,8 @@ class NetNet  : public NetObj {
 
       virtual void dump_net(ostream&, unsigned) const;
 
-      void initialize_value_and_dir(verinum::V init_value, Link::DIR dir);
+    private:
+      void initialize_dir_(Link::DIR dir);
 
     private:
       Type   type_    : 5;

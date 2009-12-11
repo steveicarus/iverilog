@@ -152,13 +152,11 @@ void NetPins::devirtualize_pins(void)
       pins_[0].pin_zero_ = true;
       pins_[0].node_ = this;
       pins_[0].dir_  = default_dir_;
-      pins_[0].init_ = default_init_;
 
       for (unsigned idx = 1 ;  idx < npins_ ;  idx += 1) {
 	    pins_[idx].pin_zero_ = false;
 	    pins_[idx].pin_      = idx;
 	    pins_[idx].dir_      = default_dir_;
-	    pins_[idx].init_     = default_init_;
       }
 }
 
@@ -211,11 +209,6 @@ const Link& NetPins::pin(unsigned idx) const
 void NetPins::set_default_dir(Link::DIR d)
 {
        default_dir_ = d;
-}
-
-void NetPins::set_default_init(verinum::V val)
-{
-       default_init_ = val;
 }
 
 bool NetPins::is_linked(void)
@@ -463,22 +456,18 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
       assert(s);
       assert(npins>0);
 
-      verinum::V init_value = verinum::Vz;
       Link::DIR dir = Link::PASSIVE;
 
       switch (t) {
 	  case REG:
 	  case INTEGER:
 	  case IMPLICIT_REG:
-	    init_value = verinum::Vx;
 	    dir = Link::OUTPUT;
 	    break;
 	  case SUPPLY0:
-	    init_value = verinum::V0;
 	    dir = Link::OUTPUT;
 	    break;
 	  case SUPPLY1:
-	    init_value = verinum::V1;
 	    dir = Link::OUTPUT;
 	    break;
 	  default:
@@ -486,21 +475,18 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
       }
 
       pin(0).set_dir(dir);
-      pin(0).set_init(init_value);
 
       s->add_signal(this);
 }
 
-void NetNet::initialize_value_and_dir(verinum::V init_value, Link::DIR dir)
+void NetNet::initialize_dir_(Link::DIR dir)
 {
       if (pins_are_virtual()) {
-	    if (0) cerr << "NetNet setting Link default value and dir" << endl;
-	    set_default_init(init_value);
+	    if (0) cerr << "NetNet setting Link default dir" << endl;
 	    set_default_dir(dir);
       } else {
 	    for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 		  pin(idx).set_dir(dir);
-		  pin(idx).set_init(init_value);
 	    }
       }
 }
@@ -516,28 +502,24 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 {
       assert(s);
 
-      verinum::V init_value = verinum::Vz;
       Link::DIR dir = Link::PASSIVE;
 
       switch (t) {
 	  case REG:
 	  case IMPLICIT_REG:
-	    init_value = verinum::Vx;
 	    dir = Link::OUTPUT;
 	    break;
 	  case SUPPLY0:
-	    init_value = verinum::V0;
 	    dir = Link::OUTPUT;
 	    break;
 	  case SUPPLY1:
-	    init_value = verinum::V1;
 	    dir = Link::OUTPUT;
 	    break;
 	  default:
 	    break;
       }
 
-      initialize_value_and_dir(init_value, dir);
+      initialize_dir_(dir);
 
       s->add_signal(this);
 }
@@ -572,28 +554,24 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	    ivl_assert(*this, 0);
       }
 
-      verinum::V init_value = verinum::Vz;
       Link::DIR dir = Link::PASSIVE;
 
       switch (t) {
 	  case REG:
 	  case IMPLICIT_REG:
-	    init_value = verinum::Vx;
 	    dir = Link::OUTPUT;
 	    break;
 	  case SUPPLY0:
-	    init_value = verinum::V0;
 	    dir = Link::OUTPUT;
 	    break;
 	  case SUPPLY1:
-	    init_value = verinum::V1;
 	    dir = Link::OUTPUT;
 	    break;
 	  default:
 	    break;
       }
 
-      initialize_value_and_dir(init_value, dir);
+      initialize_dir_(dir);
 
       s->add_signal(this);
 }
