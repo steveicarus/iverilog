@@ -358,6 +358,10 @@ class Nexus {
 
       NetNet* pick_any_net();
 
+      /* This method counts the number of input and output links for
+         this nexus, and assigns the results to the output arguments. */
+      void count_io(unsigned&inp, unsigned&out) const;
+
 	/* This method returns true if there are any assignments that
 	   use this nexus as an l-value. This can be true if the nexus
 	   is a variable, but also if this is a net with a force. */
@@ -653,7 +657,7 @@ class NetNet  : public NetObj {
 	/* Assignment statements count their lrefs here. */
       void incr_lref();
       void decr_lref();
-      unsigned peek_lref() const;
+      unsigned peek_lref() const { return lref_count_; }
 
       unsigned get_refs() const;
 
@@ -4033,10 +4037,7 @@ extern void connect(Link&, Link&);
 inline bool connected(const Link&l, const Link&r)
 { return l.is_linked(r); }
 
-/* Return the number of links in the ring that are of the specified
-   type. */
-extern unsigned count_inputs(const Link&pin);
-extern unsigned count_outputs(const Link&pin);
+/* Return the number of signals in the nexus. */
 extern unsigned count_signals(const Link&pin);
 
 /* Find the next link that is an output into the nexus. */
@@ -4064,5 +4065,47 @@ inline __ScopePathManip scope_path(const NetScope*scope)
 { __ScopePathManip tmp; tmp.scope = scope; return tmp; }
 
 extern ostream& operator << (ostream&o, __ScopePathManip);
+
+/*
+ * If this link has a nexus_ pointer, then it is the last Link in the
+ * list. next_nlink() returns 0 for the last Link.
+ */
+inline Link* Link::next_nlink()
+{
+      if (nexus_) return 0;
+      else return next_;
+}
+
+inline const Link* Link::next_nlink() const
+{
+      if (nexus_) return 0;
+      else return next_;
+}
+
+inline NetPins*Link::get_obj()
+{
+      if (pin_zero_)
+	    return node_;
+      Link*tmp = this - pin_;
+      assert(tmp->pin_zero_);
+      return tmp->node_;
+}
+
+inline const NetPins*Link::get_obj() const
+{
+      if (pin_zero_)
+	    return node_;
+      const Link*tmp = this - pin_;
+      assert(tmp->pin_zero_);
+      return tmp->node_;
+}
+
+inline unsigned Link::get_pin() const
+{
+      if (pin_zero_)
+	    return 0;
+      else
+	    return pin_;
+}
 
 #endif

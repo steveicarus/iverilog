@@ -249,48 +249,6 @@ bool Link::is_linked(const Link&that) const
       return false;
 }
 
-/*
- * If this link has a nexus_ pointer, then it is the last Link in the
- * list. next_nlink() returns 0 for the last Link.
- */
-Link* Link::next_nlink()
-{
-      if (nexus_) return 0;
-      else return next_;
-}
-
-const Link* Link::next_nlink() const
-{
-      if (nexus_) return 0;
-      else return next_;
-}
-
-const NetPins*Link::get_obj() const
-{
-      if (pin_zero_)
-	    return node_;
-      const Link*tmp = this - pin_;
-      assert(tmp->pin_zero_);
-      return tmp->node_;
-}
-
-NetPins*Link::get_obj()
-{
-      if (pin_zero_)
-	    return node_;
-      Link*tmp = this - pin_;
-      assert(tmp->pin_zero_);
-      return tmp->node_;
-}
-
-unsigned Link::get_pin() const
-{
-      if (pin_zero_)
-	    return 0;
-      else
-	    return pin_;
-}
-
 Nexus::Nexus(Link&that)
 {
       name_ = 0;
@@ -353,6 +311,20 @@ bool Nexus::assign_lval() const
       }
 
       return false;
+}
+
+void Nexus::count_io(unsigned&inp, unsigned&out) const
+{
+      for (const Link*cur = first_nlink() ;  cur ; cur = cur->next_nlink()) {
+	    switch (cur->get_dir()) {
+		case Link::INPUT:
+		  inp += 1;
+		  break;
+		case Link::OUTPUT:
+		  out += 1;
+		  break;
+	    }
+      }
 }
 
 bool Nexus::drivers_present() const

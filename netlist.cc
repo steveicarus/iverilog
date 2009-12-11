@@ -84,41 +84,6 @@ ostream& operator<< (ostream&o, NetNet::Type t)
       return o;
 }
 
-
-unsigned count_inputs(const Link&pin)
-{
-      unsigned count = 0;
-
-      const Nexus*nex = pin.nexus();
-      for (const Link*clnk = nex->first_nlink()
-		 ; clnk ; clnk = clnk->next_nlink()) {
-	    const NetPins*cur;
-	    unsigned cpin;
-	    clnk->cur_link(cur, cpin);
-	    if (cur->pin(cpin).get_dir() == Link::INPUT)
-		  count += 1;
-      }
-
-      return count;
-}
-
-unsigned count_outputs(const Link&pin)
-{
-      unsigned count = 0;
-
-      const Nexus*nex = pin.nexus();
-      for (const Link*clnk = nex->first_nlink()
-		 ; clnk ; clnk = clnk->next_nlink()) {
-	    const NetPins*cur;
-	    unsigned cpin;
-	    clnk->cur_link(cur, cpin);
-	    if (cur->pin(cpin).get_dir() == Link::OUTPUT)
-		  count += 1;
-      }
-
-      return count;
-}
-
 unsigned count_signals(const Link&pin)
 {
       unsigned count = 0;
@@ -856,11 +821,6 @@ void NetNet::decr_lref()
 {
       assert(lref_count_ > 0);
       lref_count_ -= 1;
-}
-
-unsigned NetNet::peek_lref() const
-{
-      return lref_count_;
 }
 
 unsigned NetNet::get_refs() const
