@@ -128,7 +128,7 @@ void NetEvent::find_similar_event(list<NetEvent*>&event_list)
       if (probes_ == 0)
 	    return;
 
-      map<NetEvent*,unsigned> event_matches;
+      set<NetEvent*> candidate_events;
 
 	/* First, get a list of all the NetEvProbes that are connected
 	   to my first probe. Then use that to create a set of
@@ -139,34 +139,50 @@ void NetEvent::find_similar_event(list<NetEvent*>&event_list)
 
       for (list<NetEvProbe*>::iterator idx = first_probes.begin()
 		 ; idx != first_probes.end() ;  idx ++) {
-	    event_matches[ (*idx)->event() ] = 1;
+
+	    candidate_events.insert( (*idx)->event() );
       }
 
-	/* Now scan the remaining probes, in each case ticking the
-	   candidate event. The events that really are similar to this
-	   one will turn up in every probe list. */
+      if (candidate_events.empty())
+	    return;
+
+	/* Now scan the remaining probes, in each case checking that
+	   the probe event is a candidate event. After each iteration,
+	   events that don't have a similar probe will be removed from
+	   the candidate_events set. If the candidate_events set
+	   becomes empty, then give up. */
       unsigned probe_count = 1;
-      for (NetEvProbe*cur = probes_->enext_ ; cur ;  cur = cur->enext_) {
+      for (NetEvProbe*cur = probes_->enext_ ; cur;  cur = cur->enext_) {
 	    list<NetEvProbe*>similar_probes;
 	    cur->find_similar_probes(similar_probes);
 
+	    set<NetEvent*> candidate_tmp;
 	    for (list<NetEvProbe*>::iterator idx = similar_probes.begin()
 		       ; idx != similar_probes.end() ;  idx ++) {
-		  event_matches[ (*idx)->event() ] += 1;
+
+		  NetEvent*tmp = (*idx)->event();
+		  if (candidate_events.find(tmp) != candidate_events.end())
+			candidate_tmp .insert(tmp);
 	    }
 
+	      // None of the candidate events match this probe? Give up!
+	    if (candidate_tmp.empty())
+		  return;
+
+	    candidate_events = candidate_tmp;
 	    probe_count += 1;
       }
 
-	/* Now scan the candidate events. Those events that are
-	   connected to all my probes (match_count[x] == probe_count)
-	   are possible. If those events have the same number of
-	   events, then jackpot. */
-      for (map<NetEvent*,unsigned>::iterator idx = event_matches.begin()
-		 ; idx != event_matches.end() ;  idx ++) {
+        /* Scan the surviving candidate events. We know that they all
+	   have probes that match the current event's probes. Check
+	   for remaining compatibility details and save the survivors
+	   in the event_list that the caller passed. */
+      for (set<NetEvent*>::iterator idx = candidate_events.begin()
+		 ; idx != candidate_events.end() ;  idx ++) {
 
-	    NetEvent*tmp = (*idx).first;
+	    NetEvent*tmp = *idx;
 
+	      // This shouldn't be possible?
 	    if (tmp == this)
 		  continue;
 
@@ -175,9 +191,6 @@ void NetEvent::find_similar_event(list<NetEvent*>&event_list)
                  merge similar events in different automatic tasks. */
             if (scope()->is_auto() && (tmp->scope() != scope()))
                   continue;
-
-	    if ((*idx).second != probe_count)
-		  continue;
 
 	    unsigned tcnt = 0;
 	    for (NetEvProbe*cur = tmp->probes_ ; cur ; cur = cur->enext_)
@@ -316,11 +329,9 @@ void NetEvProbe::find_similar_probes(list<NetEvProbe*>&plist)
 		  continue;
 
 	    bool ok_flag = true;
-	    for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1)
-		  if (pin(idx).nexus() != tmp->pin(idx).nexus()) {
+	    for (unsigned idx = 1 ;  ok_flag && idx < pin_count() ;  idx += 1)
+		  if (! pin(idx).is_linked(tmp->pin(idx)))
 			ok_flag = false;
-			break;
-		  }
 
 	    if (ok_flag == true)
 		  plist .push_back(tmp);
