@@ -22,6 +22,7 @@
 # include  <iostream>
 # include  <list>
 # include  "StringHeap.h"
+# include  <climits>
 #ifdef __GNUC__
 #if __GNUC__ > 2
 using namespace std;
