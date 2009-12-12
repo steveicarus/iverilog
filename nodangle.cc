@@ -189,7 +189,6 @@ void nodangle_f::signal(Design*des, NetNet*sig)
 	/* If every pin is connected to another significant signal,
 	   then I can delete this one. */
       if (significant_flags == sig->pin_count()) {
-	    scontinue = true;
 	    delete sig;
 	    stotal += 1;
       }
