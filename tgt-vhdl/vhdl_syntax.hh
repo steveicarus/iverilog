@@ -311,15 +311,17 @@ private:
 class vhdl_with_select_stmt : public vhdl_conc_stmt {
 public:
    vhdl_with_select_stmt(vhdl_expr *test, vhdl_var_ref *out)
-      : test_(test), out_(out) {}
+      : test_(test), out_(out), others_(NULL) {}
    ~vhdl_with_select_stmt();
    
    void emit(std::ostream &of, int level) const;
    void add_condition(vhdl_expr *value, vhdl_expr *cond, vhdl_expr *delay=NULL);
+   void add_default(vhdl_expr* value);
 private:
    vhdl_expr *test_;
    vhdl_var_ref *out_;
    when_list_t whens_;
+   vhdl_expr* others_;
 };
 
 
