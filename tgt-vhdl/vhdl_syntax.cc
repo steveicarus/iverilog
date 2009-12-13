@@ -1005,12 +1005,17 @@ void vhdl_with_select_stmt::emit(std::ostream &of, int level) const
       of << " when ";
       (*it).cond->emit(of, level);
       
-      if (++it != whens_.end()) {
+      if (++it != whens_.end() || others_ != NULL) {
          of << ",";
          newline(of, indent(level));
       }
       else
          of << ";";
+   }
+
+   if (others_) {
+      others_->emit(of, level);
+      of << " when others;";
    }
 }
 
@@ -1018,4 +1023,9 @@ void vhdl_with_select_stmt::add_condition(vhdl_expr *value, vhdl_expr *cond, vhd
 {
    when_part_t when = { value, cond, delay };
    whens_.push_back(when);
+}
+
+void vhdl_with_select_stmt::add_default(vhdl_expr* value)
+{
+   others_ = value;
 }

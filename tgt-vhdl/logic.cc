@@ -145,6 +145,10 @@ static void comb_udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
    vhdl_var_ref *out = nexus_to_var_ref(arch->get_scope(), output_nex);
    vhdl_with_select_stmt *ws =
       new vhdl_with_select_stmt(new vhdl_var_ref(*tmp_ref), out);
+
+   // Ensure the select statement completely covers the input space
+   // or some strict VHDL compilers will complain
+   ws->add_default(new vhdl_const_bit('X'));
    
    int nrows = ivl_udp_rows(udp);
    for (int i = 0; i < nrows; i++) {
