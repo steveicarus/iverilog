@@ -352,18 +352,18 @@ CAST STATEMENTS:
 
 Sometimes nets need to be cast from a real valued net to a bit based
 net or from a bit based net to a real valued net. These statements
-are used to performa that operation:
+are used to perform that operation:
 
-	<label> .case/int <width>, <symbol>;
-	<label> .case/real <symbol>;
-	<label> .case/real.s <symbol>;
+	<label> .cast/int <width>, <symbol>;
+	<label> .cast/real <symbol>;
+	<label> .cast/real.s <symbol>;
 
-For .case/int the output <label> is a bit based net that is <width>
+For .cast/int the output <label> is a bit based net that is <width>
 bits wide. The input <symbol> is expected to put real values to
 this functor.
 
-For .case/real the output <label> is a real valued net. The input
-<symbol> is expected to put bit based values and for .case/real.s
+For .cast/real the output <label> is a real valued net. The input
+<symbol> is expected to put bit based values and for .cast/real.s
 the bits will be interpreted as a signed value.
 
 DELAY STATEMENTS:
