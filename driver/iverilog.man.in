@@ -294,8 +294,8 @@ will generate a warning.
 .TP 8
 .B select-range
 This enables warnings for constant out of bound selects. This includes
-partial or fully out of bound selects as well as a select using 'bx as
-an index.
+partial or fully out of bound selects as well as a select containing
+a 'bx or 'bz in the index.
 
 .TP 8
 .B timescale
