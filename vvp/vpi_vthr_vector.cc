@@ -351,7 +351,7 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 
 	  default:
 	    fprintf(stderr, "internal error: vpi_get_value(<format=%d>)"
-		    " not implemented for vthr_vectors.\n", vp->format);
+		    " not implemented for vthr_vectors.\n", (int)vp->format);
 	      /* XXXX Not implemented yet. */
 	    assert(0);
       }
@@ -398,7 +398,7 @@ static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp, int)
 		  break;
 		default:
 		  fprintf(stderr, "Unsupported scalar value %d.\n",
-		          vp->value.scalar);
+		          (int)vp->value.scalar);
 		  assert(0);
 	    }
 	    break;
@@ -431,7 +431,7 @@ static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp, int)
 	  }
 
 	  default:
-	    fprintf(stderr, "Unsupported format %d.\n", vp->format);
+	    fprintf(stderr, "Unsupported format %d.\n", (int)vp->format);
 	    assert(0);
 
       }
@@ -579,7 +579,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 
 	  default:
 	    fprintf(stderr, "vvp error: get %d not supported "
-		      "by vpiConstant (Real)\n", vp->format);
+		      "by vpiConstant (Real)\n", (int)vp->format);
 
 	    vp->format = vpiSuppressVal;
 	    break;

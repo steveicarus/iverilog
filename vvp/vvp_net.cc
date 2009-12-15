@@ -190,10 +190,10 @@ vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c)
 	  case 3:
 	    c = BIT4_1;
 	    return BIT4_1;
-	  default:
-	    fprintf(stderr, "Incorrect result %d.\n", sum);
-	    assert(0);
       }
+      fprintf(stderr, "Incorrect result %d.\n", sum);
+      assert(0);
+      return BIT4_X;
 }
 
 vvp_bit4_t scalar_to_bit4(PLI_INT32 scalar)
@@ -207,10 +207,10 @@ vvp_bit4_t scalar_to_bit4(PLI_INT32 scalar)
 	    return BIT4_X;
 	  case vpiZ:
 	    return BIT4_Z;
-	  default:
-	    fprintf(stderr, "Unsupported scalar value %d.\n", scalar);
-	    assert(0);
       }
+      fprintf(stderr, "Unsupported scalar value %d.\n", (int)scalar);
+      assert(0);
+      return BIT4_X;
 }
 
 vvp_bit4_t operator ^ (vvp_bit4_t a, vvp_bit4_t b)

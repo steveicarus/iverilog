@@ -206,7 +206,7 @@ static const char* vpi_property_str(PLI_INT32 code)
           case vpiSize:
 	    return "vpiSize";
 	  default:
-	    sprintf(buf, "%d", code);
+	    sprintf(buf, "%d", (int)code);
       }
       return buf;
 }
@@ -256,7 +256,7 @@ static const char* vpi_type_values(PLI_INT32 code)
 	  case vpiTimeVar:
 	    return "vpiTimeVar";
 	  default:
-	    sprintf(buf, "%d", code);
+	    sprintf(buf, "%d", (int)code);
       }
       return buf;
 }
@@ -429,7 +429,7 @@ void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
 	    break;
 
           default:
-            fprintf(stderr, "vpi_get_time: unknown type: %d\n", vp->type);
+            fprintf(stderr, "vpi_get_time: unknown type: %d\n", (int)vp->type);
             assert(0);
 	    break;
       }
@@ -521,7 +521,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
       switch (vp->format) {
 	  default:
 	    fprintf(stderr, "sorry: Format %d not implemented for "
-	                    "getting vector values.\n", vp->format);
+	                    "getting vector values.\n", (int)vp->format);
 	    assert(0);
 
 	  case vpiSuppressVal:
@@ -688,7 +688,7 @@ void vpip_real_get_value(double real, s_vpi_value*vp)
       switch (vp->format) {
 	  default:
 	    fprintf(stderr, "sorry: Format %d not implemented for "
-	                    "getting real values.\n", vp->format);
+	                    "getting real values.\n", (int)vp->format);
 	    assert(0);
 
 	  case vpiSuppressVal:
@@ -723,7 +723,7 @@ double real_from_vpi_value(s_vpi_value*vp)
       switch (vp->format) {
 	  default:
 	    fprintf(stderr, "sorry: Format %d not implemented for "
-	                    "putting real values.\n", vp->format);
+	                    "putting real values.\n", (int)vp->format);
 	    assert(0);
 
 	  case vpiRealVal:
@@ -783,12 +783,12 @@ void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
 
 		case vpiIntVal:
 		  fprintf(vpi_trace, "vpi_get_value(<%d>...) -> int=%d\n",
-			  expr->vpi_type->type_code, vp->value.integer);
+			  expr->vpi_type->type_code, (int)vp->value.integer);
 		  break;
 
 		default:
 		  fprintf(vpi_trace, "vpi_get_value(<%d>...) -> <%d>=?\n",
-			  expr->vpi_type->type_code, vp->format);
+			  expr->vpi_type->type_code, (int)vp->format);
 	    }
 	    return;
       }
@@ -913,7 +913,7 @@ vpiHandle vpi_handle(PLI_INT32 type, vpiHandle ref)
 
       if (ref == 0) {
 	    fprintf(stderr, "internal error: vpi_handle(type=%d, ref=0)\n",
-		    type);
+		    (int)type);
       }
       assert(ref);
 
@@ -921,7 +921,7 @@ vpiHandle vpi_handle(PLI_INT32 type, vpiHandle ref)
 
 	    if (vpi_trace) {
 		  fprintf(vpi_trace, "vpi_handle(%d, %p) -X\n",
-			  type, ref);
+			  (int)type, ref);
 	    }
 
 	    return 0;
@@ -932,7 +932,7 @@ vpiHandle vpi_handle(PLI_INT32 type, vpiHandle ref)
 
       if (vpi_trace) {
 	    fprintf(vpi_trace, "vpi_handle(%d, %p) -> %p\n",
-		    type, ref, res);
+		    (int)type, ref, res);
       }
 
       return res;
@@ -972,7 +972,7 @@ vpiHandle vpi_iterate(PLI_INT32 type, vpiHandle ref)
 
       if (vpi_trace) {
 	    fprintf(vpi_trace, "vpi_iterate(%d, %p) ->%s\n",
-	    type, ref, rtn ? "" : " (null)");
+	    (int)type, ref, rtn ? "" : " (null)");
       }
 
       return rtn;
