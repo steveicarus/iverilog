@@ -211,16 +211,31 @@ int main(int argc, char*argv[])
       extern int  stop_is_finish_exit_code;
 
 #ifdef __MINGW32__
-	/* In the Windows world, we get the first module path
-	   component relative the location where the binary lives. */
-      { char path[4096], *s;
-        GetModuleFileName(NULL,path,1024);
-	  /* Get to the end.  Search back twice for backslashes */
-	s = path + strlen(path);
-	while (*s != '\\') s--; s--;
-	while (*s != '\\') s--;
-	strcpy(s,"\\lib\\ivl");
-	vpip_module_path[0] = strdup(path);
+	/* Calculate the module path from the path to the command.
+	   This is necessary because of the installation process on
+	   Windows. Mostly, it is those darn drive letters, but oh
+	   well. We know the command path is formed like this:
+
+		D:\iverilog\bin\iverilog.exe
+
+	   The IVL_ROOT in a Windows installation is the path:
+
+		D:\iverilog\lib\ivl$(suffix)
+
+	   so we chop the file name and the last directory by
+	   turning the last two \ characters to null. Then we append
+	   the lib\ivl$(suffix) to finish. */
+      { char *s;
+	char basepath[4096], tmp[4096];
+	GetModuleFileName(NULL, tmp, sizeof tmp);
+	  /* Convert to a short na,e to remove any embedded spaces. */
+	GetShortPathName(tmp, basepath, sizeof basepath);
+	s = strrchr(basepath, '\\');
+	if (s) *s = 0;
+	s = strrchr(basepath, '\\');
+	if (s) *s = 0;
+	strcat(s, "\\lib\\ivl" IVL_SUFFIX);
+	vpip_module_path[0] = strdup(basepath);
       }
 #endif
 

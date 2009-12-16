@@ -760,25 +760,23 @@ int main(int argc, char **argv)
       int opt, idx;
 
 #ifdef __MINGW32__
-      { char * s;
-	char basepath[1024], tmp[1024];
+	/* Calculate the ivl_root from the path to the command. This
+	   is necessary because of the installation process on
+	   Windows. Mostly, it is those darn drive letters, but oh
+	   well. We know the command path is formed like this:
+
+		D:\iverilog\bin\iverilog.exe
+
+	   The module path in a Windows installation is the path:
+
+		D:\iverilog\lib\ivl$(suffix)
+
+	   so we chop the file name and the last directory by
+	   turning the last two \ characters to null. Then we append
+	   the lib\ivl$(suffix) to finish. */
+      { char *s;
+	char basepath[4096], tmp[4096];
 	GetModuleFileName(NULL, tmp, sizeof tmp);
-
-	  /* Calculate the ivl_root from the path to the command. This
-	     is necessary because of the installation process in
-	     Windows. Mostly, it is those darn drive letters, but oh
-	     well. We know the command path is formed like this:
-
-	         D:\iverilog\bin\iverilog.exe
-
-	     The IVL_ROOT in a Windows installation is the path:
-
-	         D:\iverilog\lib\ivl
-
-	     so we chop the file name and the last directory by
-	     turning the last two \ characters to null. Then we append
-	     the lib\ivl to finish. */
-
 	  /* Convert to a short name to remove any embedded spaces. */
 	GetShortPathName(tmp, basepath, sizeof basepath);
 	strncpy(ivl_root, basepath, MAXSIZE);
@@ -786,7 +784,7 @@ int main(int argc, char **argv)
 	if (s) *s = 0;
 	s = strrchr(ivl_root, sep);
 	if (s) *s = 0;
-	strcat(ivl_root, "\\lib\\ivl");
+	strcat(ivl_root, "\\lib\\ivl" IVL_SUFFIX);
 
 	base = ivl_root;
       }
