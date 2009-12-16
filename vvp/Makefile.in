@@ -53,7 +53,7 @@ LIBS = @LIBS@ @EXTRALIBS@
 
 dllib=@DLLIB@
 
-MDIR1 = -DMODULE_DIR1=\"$(libdir)/ivl$(suffix)/.\"
+MDIR1 = -DMODULE_DIR1='"$(libdir)/ivl$(suffix)"'
 
 all: dep vvp@EXEEXT@ libvpi.a vvp.man
 
@@ -105,7 +105,7 @@ dep:
 	mkdir dep
 
 %.o: %.cc config.h
-	$(CXX) $(CPPFLAGS) $(MDIR1) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $*.o
+	$(CXX) $(CPPFLAGS) -DIVL_SUFFIX='"$(suffix)"' $(MDIR1) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep/$*.d
 
 %.o: %.c config.h
