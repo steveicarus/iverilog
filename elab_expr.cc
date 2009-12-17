@@ -3417,6 +3417,7 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
       fal = pad_to_width(fal, use_wid, *this);
 
       NetETernary*res = new NetETernary(con, tru, fal);
+      res->cast_signed(tru->has_sign() && fal->has_sign());
       res->set_line(*this);
       return res;
 }
