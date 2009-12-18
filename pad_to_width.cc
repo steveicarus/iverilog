@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -134,7 +134,7 @@ NetNet*crop_to_width(Design*des, NetNet*net, unsigned wid)
 			      NetNet::WIRE, wid);
       tmp->data_type(net->data_type());
       tmp->local_flag(true);
-      tmp->set_line(*tmp);
+      tmp->set_line(*net);
       connect(ps->pin(0), tmp->pin(0));
 
       return tmp;
