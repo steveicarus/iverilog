@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,16 +28,21 @@
 static void function_argument_logic(ivl_signal_t port, ivl_expr_t exp)
 {
       struct vector_info res;
-      unsigned pwidth;
+      unsigned ewidth, pwidth;
 
 	/* ports cannot be arrays. */
       assert(ivl_signal_dimensions(port) == 0);
 
-      res = draw_eval_expr_wid(exp, ivl_signal_width(port), 0);
-        /* We could have extra bits so only select the ones we need. */
+      ewidth = ivl_expr_width(exp);
       pwidth = ivl_signal_width(port);
-      fprintf(vvp_out, "    %%set/v v%p_0, %u, %u;\n", port, res.base,
-              (res.wid > pwidth) ? pwidth : res.wid);
+	/* Just like a normal assignment the function arguments need to
+	 * be evaluated at either their width or the argument width if
+	 * it is larger. */
+      if (ewidth < pwidth) ewidth = pwidth;
+      res = draw_eval_expr_wid(exp, ewidth, 0);
+
+	/* We could have extra bits so only select the ones we need. */
+      fprintf(vvp_out, "    %%set/v v%p_0, %u, %u;\n", port, res.base, pwidth);
 
       clr_vector(res);
 }
