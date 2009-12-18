@@ -1655,11 +1655,11 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
       }
       free(input_strings);
 
-      assert((ivl_lpm_size(net)+1) == ivl_scope_ports(def));
+      assert((ninp+1) == ivl_scope_ports(def));
 
 	/* Now print all the variables in the function scope that
 	   receive the input values given in the previous list. */
-      for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 1) {
+      for (idx = 0 ;  idx < ninp ;  idx += 1) {
 	    ivl_signal_t psig = ivl_scope_port(def, idx+1);
 
 	    if (idx == 0)
