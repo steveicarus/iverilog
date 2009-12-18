@@ -1415,9 +1415,15 @@ NetNet* NetEUFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
         /* Connect the pins to the arguments. */
       NetFuncDef*def = func_->func_def();
       for (unsigned idx = 0; idx < eparms.count(); idx += 1) {
-	    NetNet*tmp = pad_to_width(des, eparms[idx],
-	                              def->port(idx)->vector_width(), *this);
-	    connect(net->pin(idx+1), tmp->pin(0));
+	    unsigned width = def->port(idx)->vector_width();
+	    NetNet*tmp;
+	    if (eparms[idx]->get_signed()) {
+		  tmp = pad_to_width_signed(des, eparms[idx], width, *this);
+	    } else {
+		  tmp = pad_to_width(des, eparms[idx], width, *this);
+	    }
+	    NetNet*tmpc = crop_to_width(des, tmp, width);
+	    connect(net->pin(idx+1), tmpc->pin(0));
       }
 
       return osig;
