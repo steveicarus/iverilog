@@ -274,11 +274,37 @@ static int draw_realnum_real(ivl_expr_t expr)
       return res;
 }
 
+/*
+ * The real value of a logic expression is the integer value of the
+ * expression converted to real.
+ */
+static int draw_real_logic_expr(ivl_expr_t expr, int stuff_ok_flag)
+{
+      int res = allocate_word();
+      struct vector_info sv = draw_eval_expr(expr, stuff_ok_flag);
+      const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
+
+      if (sv.wid > 64) {
+            fprintf(vvp_out, "    %%cvt/rv%s %d, %u, %u;\n",
+                    sign_flag, res, sv.base, sv.wid);
+      } else {
+            fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
+                    sign_flag, res, sv.base, sv.wid);
+
+            if (ivl_expr_signed(expr))
+                  fprintf(vvp_out, "    %%cvt/rs %d, %d;\n", res, res);
+            else
+                  fprintf(vvp_out, "    %%cvt/ru %d, %d;\n", res, res);
+      }
+
+      clr_vector(sv);
+
+      return res;
+}
+
 static int draw_sfunc_real(ivl_expr_t expr)
 {
-      struct vector_info sv;
       int res;
-      const char*sign_flag = "";
 
       switch (ivl_expr_value(expr)) {
 
@@ -298,42 +324,13 @@ static int draw_sfunc_real(ivl_expr_t expr)
 	      /* If the value of the sfunc is a vector, then evaluate
 		 it as a vector, then convert the result to a real
 		 (via an index register) for the result. */
-	    sv = draw_eval_expr(expr, 0);
-	    clr_vector(sv);
-
-	    if (ivl_expr_signed(expr))
-		  sign_flag = "/s";
-
-	    res = allocate_word();
-	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
-		    sign_flag, res, sv.base, sv.wid);
-
-	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
+	    res = draw_real_logic_expr(expr, 0);
 	    break;
 
 	  default:
 	    assert(0);
 	    res = -1;
       }
-
-      return res;
-}
-
-/*
- * The real value of a signal is the integer value of a signal
- * converted to real.
- */
-static int draw_signal_real_logic(ivl_expr_t expr)
-{
-      int res = allocate_word();
-      struct vector_info sv = draw_eval_expr(expr, 0);
-      const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
-
-      fprintf(vvp_out, "    %%ix/get%s %d, %u, %u; logic signal as real\n",
-	      sign_flag, res, sv.base, sv.wid);
-      clr_vector(sv);
-
-      fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
 
       return res;
 }
@@ -361,7 +358,7 @@ static int draw_signal_real(ivl_expr_t expr)
       ivl_signal_t sig = ivl_expr_signal(expr);
       switch (ivl_signal_data_type(sig)) {
 	  case IVL_VT_LOGIC:
-	    return draw_signal_real_logic(expr);
+	    return draw_real_logic_expr(expr, 0);
 	  case IVL_VT_REAL:
 	    return draw_signal_real_real(expr);
 	  default:
@@ -439,41 +436,11 @@ static int draw_unary_real(ivl_expr_t expr)
       ivl_expr_t sube;
       int sub;
 
-	/* If the opcode is a ~ then the sub expression must not be a
-	 * real expression, so use vector evaluation and then convert
+	/* If the opcode is a ~ or a ! then the sub expression must not be
+	 * a real expression, so use vector evaluation and then convert
 	 * that result to a real value. */
-      if (ivl_expr_opcode(expr) == '~') {
-	    struct vector_info vi;
-	    int res;
-	    const char*sign_flag;
-
-	    vi = draw_eval_expr(expr, STUFF_OK_XZ);
-	    res = allocate_word();
-	    sign_flag = ivl_expr_signed(expr)? "/s" : "";
-	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
-		    sign_flag, res, vi.base, vi.wid);
-
-	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
-
-	    clr_vector(vi);
-	    return res;
-      }
-
-      if (ivl_expr_opcode(expr) == '!') {
-	    struct vector_info vi;
-	    int res;
-	    const char*sign_flag;
-
-	    vi = draw_eval_expr(expr, STUFF_OK_XZ);
-	    res = allocate_word();
-	    sign_flag = ivl_expr_signed(expr)? "/s" : "";
-	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
-		    sign_flag, res, vi.base, vi.wid);
-
-	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
-
-	    clr_vector(vi);
-	    return res;
+      if ((ivl_expr_opcode(expr) == '~') || (ivl_expr_opcode(expr) == '!')) {
+	    return draw_real_logic_expr(expr, STUFF_OK_XZ);
       }
 
       sube = ivl_expr_oper1(expr);
@@ -512,20 +479,7 @@ int draw_eval_real(ivl_expr_t expr)
 	 * result to a real value. This is required to get integer
 	 * division to work correctly. */
       if (ivl_expr_value(expr) != IVL_VT_REAL) {
-	    struct vector_info vi;
-	    int res;
-	    const char*sign_flag;
-
-	    vi = draw_eval_expr(expr, STUFF_OK_XZ);
-	    res = allocate_word();
-	    sign_flag = ivl_expr_signed(expr)? "/s" : "";
-	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n", sign_flag, res,
-	            vi.base, vi.wid);
-
-	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
-	    
-	    clr_vector(vi);
-	    return res;
+	    return draw_real_logic_expr(expr, STUFF_OK_XZ);
       }
 
       switch (ivl_expr_type(expr)) {
@@ -573,7 +527,7 @@ int draw_eval_real(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 			  sign_flag, res, sv.base, sv.wid);
 
-		  fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
+		  fprintf(vvp_out, "    %%cvt/rs %d, %d;\n", res, res);
 
 	    } else {
 		  fprintf(stderr, "XXXX Evaluate real expression (%d)\n",

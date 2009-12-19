@@ -275,13 +275,33 @@ instruction will also treat x values in either operand as don't care.
 Only bit 4 is set by these instructions.
 
 
-* %cvt/ir <bit-l>, <bit-r>
-* %cvt/ri <bit-l>, <bit-r>
-* %cvt/vr <bit-l>, <bit-r>, <wid>
+* %cvt/sr <bit-l>, <bit-r>
+* %cvt/rs <bit-l>, <bit-r>
 
-Copy a word from r to l, converting it from real to integer (ir) or
-integer to real (ri) in the process. The source and destination may
-be the same word address, leading to a convert in place.
+Copy a word from r to l, converting it from real to signed integer (sr)
+or signed integer to real (rs) in the process. The source and destination
+may be the same word address, leading to a convert in place. Precision
+may be lost in the conversion.
+
+* %cvt/ur <bit-l>, <bit-r>
+* %cvt/ru <bit-l>, <bit-r>
+
+Copy a word from r to l, converting it from real to unsigned integer (ur)
+or signed integer to real (ru) in the process. The source and destination
+may be the same word address, leading to a convert in place. Precision
+may be lost in the conversion.
+
+* %cvt/rv <bit-l>, <bit-r>, <wid>
+* %cvt/rv/s <bit-l>, <bit-r>, <wid>
+
+The %cvt/rv instruction converts a thread vector starting at <bit-r> and
+with the width <wid> to a real word <bit-l>. Precision may be lost in
+the conversion.
+
+The %cvt/rv/s instruction is the same as %cvt/rv, but treats the thread
+vector as a signed value.
+
+* %cvt/vr <bit-l>, <bit-r>, <wid>
 
 The %cvt/vr opcode converts a real word <bit-r> to a thread vector
 starting at <bit-l> and with the width <wid>. Non-integer precision is

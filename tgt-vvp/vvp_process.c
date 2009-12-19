@@ -1455,7 +1455,7 @@ static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
 
 	  case IVL_VT_REAL: {
 		int word = draw_eval_real(exp);
-		fprintf(vvp_out, "    %%cvt/ir 0, %d;\n", word);
+		fprintf(vvp_out, "    %%cvt/ur 0, %d;\n", word);
 		clr_word(word);
 		break;
 	  }

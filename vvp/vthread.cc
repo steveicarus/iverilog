@@ -1774,7 +1774,43 @@ bool of_CMPZ(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_CVT_IR(vthread_t thr, vvp_code_t cp)
+bool of_CVT_RS(vthread_t thr, vvp_code_t cp)
+{
+      int64_t r = thr->words[cp->bit_idx[1]].w_int;
+      thr->words[cp->bit_idx[0]].w_real = (double)(r);
+
+      return true;
+}
+
+bool of_CVT_RU(vthread_t thr, vvp_code_t cp)
+{
+      uint64_t r = thr->words[cp->bit_idx[1]].w_uint;
+      thr->words[cp->bit_idx[0]].w_real = (double)(r);
+
+      return true;
+}
+
+bool of_CVT_RV(vthread_t thr, vvp_code_t cp)
+{
+      unsigned base = cp->bit_idx[1];
+      unsigned wid = cp->number;
+      vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
+      vector4_to_value(vector, thr->words[cp->bit_idx[0]].w_real, false);
+
+      return true;
+}
+
+bool of_CVT_RV_S(vthread_t thr, vvp_code_t cp)
+{
+      unsigned base = cp->bit_idx[1];
+      unsigned wid = cp->number;
+      vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
+      vector4_to_value(vector, thr->words[cp->bit_idx[0]].w_real, true);
+
+      return true;
+}
+
+bool of_CVT_SR(vthread_t thr, vvp_code_t cp)
 {
       double r = thr->words[cp->bit_idx[1]].w_real;
       thr->words[cp->bit_idx[0]].w_int = i64round(r);
@@ -1782,10 +1818,13 @@ bool of_CVT_IR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_CVT_RI(vthread_t thr, vvp_code_t cp)
+bool of_CVT_UR(vthread_t thr, vvp_code_t cp)
 {
-      int64_t r = thr->words[cp->bit_idx[1]].w_int;
-      thr->words[cp->bit_idx[0]].w_real = (double)(r);
+      double r = thr->words[cp->bit_idx[1]].w_real;
+      if (r >= 0.0)
+	    thr->words[cp->bit_idx[0]].w_uint = (uint64_t)floor(r+0.5);
+      else
+	    thr->words[cp->bit_idx[0]].w_uint = (uint64_t)ceil(r-0.5);
 
       return true;
 }

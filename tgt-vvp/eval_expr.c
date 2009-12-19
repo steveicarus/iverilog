@@ -266,7 +266,7 @@ void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
 	  case IVL_VT_REAL:
 	    word = draw_eval_real(expr);
 	    clr_word(word);
-	    fprintf(vvp_out, "    %%cvt/ir %u, %u;\n", ix, word);
+	    fprintf(vvp_out, "    %%cvt/sr %u, %u;\n", ix, word);
 	    break;
 
 	  default:
