@@ -761,8 +761,9 @@ make vectors of 0, 1, x or z values, so these can be used to
 manufacture complex values elsewhere.
 
 The word memory is a region of tagged words. The value in each word
-may be native long or real. These words have a distinct address space
-from the bits.
+may be either a 64-bit unsigned integer (uint64_t), a 64-bit signed
+integer (int64_t), or a 64-bit floating point number (double). These
+words have a distinct address space from the bits.
 
 * Threads and scopes
 

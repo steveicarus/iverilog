@@ -52,22 +52,6 @@ extern "C" int optind;
 extern "C" const char*optarg;
 #endif
 
-#if !defined(HAVE_LROUND)
-/*
- * If the system doesn't provide the lround function, then we provide
- * it ourselves here. It is simply the nearest integer, rounded away
- * from zero.
- */
-# include  <math.h>
-extern "C" long int lround(double x)
-{
-      if (x >= 0.0)
-	    return (long)floor(x+0.5);
-      else
-	    return (long)ceil(x-0.5);
-}
-#endif
-
 bool verbose_flag = false;
 bool version_flag = false;
 static int vvp_return_value = 0;

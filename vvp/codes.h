@@ -99,7 +99,7 @@ extern bool of_INV(vthread_t thr, vvp_code_t code);
 extern bool of_IX_ADD(vthread_t thr, vvp_code_t code);
 extern bool of_IX_GET(vthread_t thr, vvp_code_t code);
 extern bool of_IX_GETV(vthread_t thr, vvp_code_t code);
-extern bool of_IX_GETVS(vthread_t thr, vvp_code_t code);
+extern bool of_IX_GETV_S(vthread_t thr, vvp_code_t code);
 extern bool of_IX_GET_S(vthread_t thr, vvp_code_t code);
 extern bool of_IX_LOAD(vthread_t thr, vvp_code_t code);
 extern bool of_IX_MUL(vthread_t thr, vvp_code_t code);

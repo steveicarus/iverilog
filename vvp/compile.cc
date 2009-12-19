@@ -144,7 +144,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%ix/get", of_IX_GET, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%ix/get/s",of_IX_GET_S,3,{OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%ix/getv",of_IX_GETV,2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
-      { "%ix/getv/s",of_IX_GETVS,2, {OA_BIT1,   OA_FUNC_PTR, OA_NONE} },
+      { "%ix/getv/s",of_IX_GETV_S,2, {OA_BIT1,   OA_FUNC_PTR, OA_NONE} },
       { "%ix/load",of_IX_LOAD,3,  {OA_NUMBER,   OA_BIT1,     OA_BIT2} },
       { "%ix/mul", of_IX_MUL, 3,  {OA_NUMBER,   OA_BIT1,     OA_BIT2} },
       { "%ix/sub", of_IX_SUB, 3,  {OA_NUMBER,   OA_BIT1,     OA_BIT2} },
