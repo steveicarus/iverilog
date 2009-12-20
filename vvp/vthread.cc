@@ -875,7 +875,7 @@ bool of_ASSIGN_AVD(vthread_t thr, vvp_code_t cp)
       unsigned wid = thr->words[0].w_int;
       long off = thr->words[1].w_int;
       long adr = thr->words[3].w_int;
-      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_int;
+      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_uint;
       unsigned bit = cp->bit_idx[1];
 
       if (adr < 0) return true;
@@ -973,7 +973,7 @@ bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t cp)
       unsigned wid = thr->words[0].w_int;
       assert(wid > 0);
 
-      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_int;
+      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_uint;
       unsigned bit = cp->bit_idx[1];
 
       vvp_net_ptr_t ptr (cp->net, 0);
@@ -1061,7 +1061,7 @@ bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
       long off = thr->words[1].w_int;
-      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_int;
+      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_uint;
       unsigned bit = cp->bit_idx[1];
 
       vvp_fun_signal_vec*sig
@@ -1169,7 +1169,7 @@ bool of_ASSIGN_WR(vthread_t thr, vvp_code_t cp)
 
 bool of_ASSIGN_WRD(vthread_t thr, vvp_code_t cp)
 {
-      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_int;
+      vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_uint;
       unsigned index = cp->bit_idx[1];
       s_vpi_time del;
 
@@ -1740,14 +1740,14 @@ bool of_CMPZ(vthread_t thr, vvp_code_t cp)
 bool of_CVT_IR(vthread_t thr, vvp_code_t cp)
 {
       double r = thr->words[cp->bit_idx[1]].w_real;
-      thr->words[cp->bit_idx[0]].w_int = lround(r);
+      thr->words[cp->bit_idx[0]].w_int = i64round(r);
 
       return true;
 }
 
 bool of_CVT_RI(vthread_t thr, vvp_code_t cp)
 {
-      long r = thr->words[cp->bit_idx[1]].w_int;
+      int64_t r = thr->words[cp->bit_idx[1]].w_int;
       thr->words[cp->bit_idx[0]].w_real = (double)(r);
 
       return true;
@@ -1851,10 +1851,10 @@ bool of_DELAY(vthread_t thr, vvp_code_t cp)
 
 bool of_DELAYX(vthread_t thr, vvp_code_t cp)
 {
-      unsigned long delay;
+      vvp_time64_t delay;
 
       assert(cp->number < 4);
-      delay = thr->words[cp->number].w_int;
+      delay = thr->words[cp->number].w_uint;
       schedule_vthread(thr, delay);
       return false;
 }
@@ -2631,39 +2631,15 @@ bool of_IX_LOAD(vthread_t thr, vvp_code_t cp)
  * bits of the vector are x or z, then set the value to 0,
  * set bit[4] to 1, and give up.
  */
-bool of_IX_GET(vthread_t thr, vvp_code_t cp)
+
+static uint64_t vector_to_index(vthread_t thr, unsigned base,
+                                unsigned width, bool signed_flag)
 {
-      unsigned index = cp->bit_idx[0];
-      unsigned base  = cp->bit_idx[1];
-      unsigned width = cp->number;
-
-      unsigned long*array = vector_to_array(thr, base, width);
-      if (array == 0) {
-	      /* If there are unknowns in the vector bits, then give
-		 up immediately. Set the value to 0, and set thread
-		 bit 4 to 1 to flag the error. */
-	    thr->words[index].w_int = 0;
-	    thr_put_bit(thr, 4, BIT4_1);
-	    return true;
-      }
-
-      thr->words[index].w_int = array[0];
-      thr_put_bit(thr, 4, BIT4_0);
-      delete[]array;
-      return true;
-}
-
-bool of_IX_GET_S(vthread_t thr, vvp_code_t cp)
-{
-      unsigned index = cp->bit_idx[0];
-      unsigned base  = cp->bit_idx[1];
-      unsigned width = cp->number;
-
       uint64_t v = 0;
       bool unknown_flag = false;
 
       vvp_bit4_t vv = BIT4_0;
-      for (unsigned i = 0 ;  i<width ;  i += 1) {
+      for (unsigned i = 0 ;  i < width ;  i += 1) {
 	    vv = thr_get_bit(thr, base);
 	    if (bit4_is_xz(vv)) {
 		  v = 0UL;
@@ -2677,19 +2653,37 @@ bool of_IX_GET_S(vthread_t thr, vvp_code_t cp)
 		  base += 1;
       }
 
-	/* Sign-extend to fill the integer value. */
-      if (!unknown_flag) {
+	/* Extend to fill the integer value. */
+      if (signed_flag && !unknown_flag) {
 	    uint64_t pad = vv;
 	    for (unsigned i = width ; i < 8*sizeof(v) ;  i += 1) {
 		  v |= pad << i;
 	    }
       }
 
-      thr->words[index].w_int = v;
-
 	/* Set bit 4 as a flag if the input is unknown. */
-      thr_put_bit(thr, 4, unknown_flag? BIT4_1 : BIT4_0);
+      thr_put_bit(thr, 4, unknown_flag ? BIT4_1 : BIT4_0);
 
+      return v;
+}
+
+bool of_IX_GET(vthread_t thr, vvp_code_t cp)
+{
+      unsigned index = cp->bit_idx[0];
+      unsigned base  = cp->bit_idx[1];
+      unsigned width = cp->number;
+
+      thr->words[index].w_uint = vector_to_index(thr, base, width, false);
+      return true;
+}
+
+bool of_IX_GET_S(vthread_t thr, vvp_code_t cp)
+{
+      unsigned index = cp->bit_idx[0];
+      unsigned base  = cp->bit_idx[1];
+      unsigned width = cp->number;
+
+      thr->words[index].w_int = vector_to_index(thr, base, width, true);
       return true;
 }
 
@@ -2706,21 +2700,21 @@ bool of_IX_GETV(vthread_t thr, vvp_code_t cp)
       assert(sig);
 
       vvp_vector4_t vec = sig->vec4_value();
-      unsigned long val;
+      uint64_t val;
       bool known_flag = vector4_to_value(vec, val);
 
       if (known_flag)
-	    thr->words[index].w_int = val;
+	    thr->words[index].w_uint = val;
       else
-	    thr->words[index].w_int = 0;
+	    thr->words[index].w_uint = 0;
 
 	/* Set bit 4 as a flag if the input is unknown. */
-      thr_put_bit(thr, 4, known_flag? BIT4_0 : BIT4_1);
+      thr_put_bit(thr, 4, known_flag ? BIT4_0 : BIT4_1);
 
       return true;
 }
 
-bool of_IX_GETVS(vthread_t thr, vvp_code_t cp)
+bool of_IX_GETV_S(vthread_t thr, vvp_code_t cp)
 {
       unsigned index = cp->bit_idx[0];
       vvp_net_t*net = cp->net;
@@ -2733,7 +2727,7 @@ bool of_IX_GETVS(vthread_t thr, vvp_code_t cp)
       assert(sig);
 
       vvp_vector4_t vec = sig->vec4_value();
-      long val;
+      int64_t val;
       bool known_flag = vector4_to_value(vec, val, true, true);
 
       if (known_flag)
@@ -2742,7 +2736,7 @@ bool of_IX_GETVS(vthread_t thr, vvp_code_t cp)
 	    thr->words[index].w_int = 0;
 
 	/* Set bit 4 as a flag if the input is unknown. */
-      thr_put_bit(thr, 4, known_flag? BIT4_0 : BIT4_1);
+      thr_put_bit(thr, 4, known_flag ? BIT4_0 : BIT4_1);
 
       return true;
 }
@@ -2924,6 +2918,11 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 /*
  * %load/vp0, %load/vp0/s, %load/avp0 and %load/avp0/s share this function.
 */
+#if (SIZEOF_UNSIGNED_LONG >= 8)
+# define CPU_WORD_STRIDE CPU_WORD_BITS - 1  // avoid a warning
+#else
+# define CPU_WORD_STRIDE CPU_WORD_BITS
+#endif
 static void load_vp0_common(vthread_t thr, vvp_code_t cp, const vvp_vector4_t&sig_value)
 {
       unsigned bit = cp->bit_idx[0];
@@ -2943,16 +2942,10 @@ static void load_vp0_common(vthread_t thr, vvp_code_t cp, const vvp_vector4_t&si
       unsigned words = (wid + CPU_WORD_BITS - 1) / CPU_WORD_BITS;
       unsigned long carry = 0;
       unsigned long imm = addend;
-      if (addend >= 0) {
-	    for (unsigned idx = 0 ; idx < words ; idx += 1) {
-		  val[idx] = add_with_carry(val[idx], imm, carry);
-		  imm = 0UL;
-	    }
-      } else {
-	    for (unsigned idx = 0 ; idx < words ; idx += 1) {
-		  val[idx] = add_with_carry(val[idx], imm, carry);
-		  imm = -1UL;
-	    }
+      for (unsigned idx = 0 ; idx < words ; idx += 1) {
+            val[idx] = add_with_carry(val[idx], imm, carry);
+            addend >>= CPU_WORD_STRIDE;
+            imm = addend;
       }
 
 	/* Copy the vector bits into the bits4 vector. Do the copy

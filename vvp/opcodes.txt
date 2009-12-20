@@ -420,8 +420,8 @@ set bit 4 just like %ix/get.
 * %ix/load <idx>, <low>, <high>
 
 This instruction loads an immediate value into the addressed index
-register. The index register holds signed 64 bit numeric values, so
-<low> and <high> are used to separate the value in two 32 bit chunks.
+register. The index register holds 64 bit numeric values, so <low>
+and <high> are used to separate the value in two 32 bit chunks.
 The idx value selects the index register. This is different from
 %ix/get, which loads the index register from a value in the thread bit
 vector. The values are unsigned decimal values and are combined as

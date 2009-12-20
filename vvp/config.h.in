@@ -135,12 +135,37 @@ typedef unsigned long vvp_time64_t;
 # undef LINUX
 
 #if !defined(HAVE_LROUND)
-#if defined(__cplusplus)
-extern "C" long lround(double x);
+/*
+ * If the system doesn't provide the lround function, then we provide
+ * it ourselves here. It is simply the nearest integer, rounded away
+ * from zero.
+ */
+inline long int lround(double x)
+{
+      if (x >= 0.0)
+	    return (long)floor(x+0.5);
+      else
+	    return (long)ceil(x-0.5);
+}
+/*
+ * We also need an equivalent function with a 64-bit return value.
+ */
+inline int64_t i64round(double x)
+{
+      if (x >= 0.0)
+	    return (int64_t)floor(x+0.5);
+      else
+	    return (int64_t)ceil(x-0.5);
+}
+#else /* HAVE_LROUND */
+
+#if ((SIZEOF_UNSIGNED_LONG < 8) && (SIZEOF_UNSIGNED_LONG_LONG >= 8))
+# define i64round llround
 #else
-extern long lround(double x);
+# define i64round lround
 #endif
-#endif
+
+#endif /* HAVE_LROUND */
 
 #if !defined(HAVE_NAN)
 # define nan(x) (NAN)
