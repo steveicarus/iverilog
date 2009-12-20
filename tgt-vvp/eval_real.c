@@ -48,6 +48,27 @@ void clr_word(int res)
       word_alloc_mask &= ~ (1U << res);
 }
 
+static void warn_about_large_cast(ivl_expr_t expr, unsigned wid)
+{
+      if (ivl_expr_signed(expr)) {
+            if (wid > 64) {
+                  fprintf(stderr, "%s:%u: tgt-vvp warning: V0.9 may give "
+                                  "incorrect results when casting a signed "
+                                  "value greater than 64 bits to a real "
+                                  "value.\n",
+                                  ivl_expr_file(expr), ivl_expr_lineno(expr));
+            }
+      } else {
+            if (wid > 63) {
+                  fprintf(stderr, "%s:%u: tgt-vvp warning: V0.9 may give "
+                                  "incorrect results when casting an unsigned "
+                                  "value greater than 63 bits to a real "
+                                  "value.\n",
+                                  ivl_expr_file(expr), ivl_expr_lineno(expr));
+            }
+      }
+}
+
 static int draw_binary_real(ivl_expr_t expr)
 {
       int l, r = -1;
@@ -308,6 +329,7 @@ static int draw_sfunc_real(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 		    sign_flag, res, sv.base, sv.wid);
 
+            warn_about_large_cast(expr, sv.wid);
 	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
 	    break;
 
@@ -333,6 +355,7 @@ static int draw_signal_real_logic(ivl_expr_t expr)
 	      sign_flag, res, sv.base, sv.wid);
       clr_vector(sv);
 
+      warn_about_large_cast(expr, sv.wid);
       fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
 
       return res;
@@ -453,6 +476,7 @@ static int draw_unary_real(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 		    sign_flag, res, vi.base, vi.wid);
 
+            warn_about_large_cast(expr, vi.wid);
 	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
 
 	    clr_vector(vi);
@@ -470,6 +494,7 @@ static int draw_unary_real(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 		    sign_flag, res, vi.base, vi.wid);
 
+            warn_about_large_cast(expr, vi.wid);
 	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
 
 	    clr_vector(vi);
@@ -522,6 +547,7 @@ int draw_eval_real(ivl_expr_t expr)
 	    fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n", sign_flag, res,
 	            vi.base, vi.wid);
 
+            warn_about_large_cast(expr, vi.wid);
 	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
 	    
 	    clr_vector(vi);
@@ -573,6 +599,7 @@ int draw_eval_real(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 			  sign_flag, res, sv.base, sv.wid);
 
+                  warn_about_large_cast(expr, sv.wid);
 		  fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
 
 	    } else {
