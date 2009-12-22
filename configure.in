@@ -174,6 +174,7 @@ AC_CHECK_FUNCS(fopen64)
 # systems we may need to use the compiler in C99 mode to get a definition.
 # We requested C99 mode earlier with AC_PROG_CC_C99.
 AC_SEARCH_LIBS([lround], [m], [AC_DEFINE([HAVE_LROUND], [1])])
+AC_SEARCH_LIBS([llround], [m], [AC_DEFINE([HAVE_LLROUND], [1])])
 AC_SEARCH_LIBS([nan], [m], [AC_DEFINE([HAVE_NAN], [1])])
 AC_SEARCH_LIBS([fmin], [m], [AC_DEFINE([HAVE_FMIN], [1])])
 AC_SEARCH_LIBS([fmax], [m], [AC_DEFINE([HAVE_FMAX], [1])])

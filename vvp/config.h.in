@@ -48,6 +48,7 @@
 # undef HAVE_READLINE_HISTORY_H
 # undef HAVE_INTTYPES_H
 # undef HAVE_LROUND
+# undef HAVE_LLROUND
 # undef HAVE_NAN
 # undef UINT64_T_AND_ULONG_SAME
 
@@ -147,8 +148,13 @@ inline long int lround(double x)
       else
 	    return (long)ceil(x-0.5);
 }
+#endif /* HAVE_LROUND */
+
+#if ((SIZEOF_UNSIGNED_LONG < 8) && (SIZEOF_UNSIGNED_LONG_LONG >= 8))
+#if !defined(HAVE_LLROUND)
 /*
- * We also need an equivalent function with a 64-bit return value.
+ * We also need an equivalent function with a 64-bit return value if
+ * it is not available.
  */
 inline int64_t i64round(double x)
 {
@@ -157,15 +163,12 @@ inline int64_t i64round(double x)
       else
 	    return (int64_t)ceil(x-0.5);
 }
-#else /* HAVE_LROUND */
-
-#if ((SIZEOF_UNSIGNED_LONG < 8) && (SIZEOF_UNSIGNED_LONG_LONG >= 8))
+#else /* HAVE_LLROUND */
 # define i64round llround
+#endif /* HAVE_LLROUND */
 #else
 # define i64round lround
 #endif
-
-#endif /* HAVE_LROUND */
 
 #if !defined(HAVE_NAN)
 # define nan(x) (NAN)
