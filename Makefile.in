@@ -98,7 +98,19 @@ check: all
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 	test -r check.conf || cp $(srcdir)/check.conf .
 	driver/iverilog -B. -BPivlpp -tcheck -ocheck.vvp $(srcdir)/examples/hello.vl
+ifeq (@WIN32@,yes)
+ifeq (@install_suffix@,)
 	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
+else
+	# On Windows if we have a suffix we must run the vvp part of
+	# the test with a suffix since it was built/linked that way.
+	ln vvp/vvp.exe vvp/vvp$(suffix).exe
+	vvp/vvp$(suffix) -M- -M./vpi ./check.vvp | grep 'Hello, World'
+	rm vvp/vvp$(suffix).exe
+endif
+else
+	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
+endif
 
 clean:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
