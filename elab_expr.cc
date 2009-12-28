@@ -1729,7 +1729,7 @@ unsigned PEFNumber::test_width(Design*des, NetScope*scope,
 {
       expr_type_  = IVL_VT_REAL;
       expr_width_ = 1;
-      unsized_flag = true;
+      unsized_flag = false;
 
       expr_type__ = expr_type_;
       return 1;
