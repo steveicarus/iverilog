@@ -78,7 +78,7 @@ dep:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
-main.o: main.c globals.h ../version_base.h ../version_tag.h Makefile
+main.o: main.c globals.h $(srcdir)/../version_base.h ../version_tag.h Makefile
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c -DIVL_ROOT='"@libdir@/ivl$(suffix)"'  -DIVL_SUFFIX='"$(suffix)"' -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DDLLIB='"@DLLIB@"' $(srcdir)/main.c
 	mv $*.d dep
 
