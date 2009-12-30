@@ -15,6 +15,8 @@
 #
 # The complete steps to make a release x.y.z generally are:
 #
+#   (Edit version_base.h and verilog.spec to reflect the version)
+#
 #   git tag -a v0_9_1
 #                 (Make the tag in the local git repository.)
 #
