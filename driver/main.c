@@ -582,6 +582,11 @@ void process_parameter(const char*name)
       fprintf(iconfig_file,"defparam:%s\n", name);
 }
 
+void process_timescale(const char*ts_string)
+{
+      fprintf(iconfig_file, "timescale:%s\n", ts_string);
+}
+
 /*
  * This function is called while processing a file name in a command
  * file, or a file name on the command line. Look to see if there is a

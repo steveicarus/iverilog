@@ -72,11 +72,11 @@ int cmdfile_stack_ptr = 0;
 \n { cflloc.first_line += 1; }
 
 
-"+parameter+" { BEGIN(PLUS_ARGS); return TOK_PARAMETER; }
-
 "+define+" { BEGIN(PLUS_ARGS); return TOK_DEFINE; }
 
 "+incdir+" { BEGIN(PLUS_ARGS); return TOK_INCDIR; }
+
+"+integer-width+" { BEGIN(PLUS_ARGS); return TOK_INTEGER_WIDTH; }
 
 "+libdir+" { BEGIN(PLUS_ARGS); return TOK_LIBDIR; }
 
@@ -84,7 +84,9 @@ int cmdfile_stack_ptr = 0;
 
 "+libext+" { BEGIN(PLUS_ARGS); return TOK_LIBEXT; }
 
-"+integer-width+" { BEGIN(PLUS_ARGS); return TOK_INTEGER_WIDTH; }
+"+parameter+" { BEGIN(PLUS_ARGS); return TOK_PARAMETER; }
+
+"+timescale+" { BEGIN(PLUS_ARGS); return TOK_TIMESCALE; }
 
   /* If it is not any known plus-flag, return the generic form. */
 "+"[^\n \t\b\f\r+]* {

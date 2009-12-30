@@ -43,5 +43,8 @@ extern void process_define(const char*name);
  
   /* Add a new parameter definition */
 extern void process_parameter(const char*name);
+ 
+  /* Set the default timescale for the simulator. */
+extern void process_timescale(const char*ts_string);
 
 #endif

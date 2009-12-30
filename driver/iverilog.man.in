@@ -1,4 +1,4 @@
-.TH iverilog 1 "October 28th, 2009" "" "Version %M.%m.%n %E"
+.TH iverilog 1 "December 29th, 2009" "" "Version %M.%m.%n %E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -425,8 +425,15 @@ command line. The value part of the token is optional.
 
 .TP 8
 .B +parameter+\fINAME\fP=\fIvalue\fP
-The \fB+default+\fP token is the same as the \fB\-P\fP option on the
+The \fB+parameter+\fP token is the same as the \fB\-P\fP option on the
 command line.
+
+.TP 8
+.B +timescale+\fIvalue\fP
+The \fB+timescale+\fP token is used to set the default timescale for
+the simulation. This is the time units and precision before any
+`timescale directive or after a `resetall directive. The default is
+1s/1s.
 
 .TP 8
 .B +toupper-filename
