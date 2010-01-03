@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,6 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# include  "version_base.h"
 # include  "vpi_priv.h"
 # include  "schedule.h"
 # include  <stdio.h>
@@ -448,7 +449,7 @@ PLI_INT32 vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p)
 void vpi_set_vlog_info(int argc, char** argv)
 {
     static char icarus_product[] = "Icarus Verilog";
-    static char icarus_version[] = "$Name:  $";
+    static char icarus_version[] = VERSION;
     vpi_vlog_info.product = icarus_product;
     vpi_vlog_info.version = icarus_version;
     vpi_vlog_info.argc    = argc;
