@@ -90,7 +90,7 @@ ifeq (@MINGW32@,yes)
 endif
 
 system.vpi: $O ../vvp/libvpi.a
-	$(CC) @shared@ -o $@ $O -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+	$(CXX) @shared@ -o $@ $O -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
 sys_readmem_lex.c: sys_readmem_lex.lex
 	flex -t -Preadmem $(srcdir)/sys_readmem_lex.lex > sys_readmem_lex.c
