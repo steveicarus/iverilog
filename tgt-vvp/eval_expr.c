@@ -2322,7 +2322,8 @@ static struct vector_info draw_select_array(ivl_expr_t sube,
       return res;
 }
 
-static struct vector_info draw_select_signal(ivl_expr_t sube,
+static struct vector_info draw_select_signal(ivl_expr_t exp,
+					     ivl_expr_t sube,
 					     ivl_expr_t bit_idx,
 					     unsigned bit_wid,
 					     unsigned wid)
@@ -2368,10 +2369,9 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 		    res.base, sig, use_word, bit_wid, bit_wid, ivl_expr_width(sube));
 
 	    save_signal_lookaside(res.base, sig, use_word, bit_wid);
-	      /* Pad the part select to the desired width. Note that
-	         this *should* always turn into an unsigned pad
-	         because part selects are always unsigned. */
-	    pad_expr_in_place(sube, res, bit_wid);
+	      /* Pad the part select to the desired width. Because of
+	         $signed() this may be signed or unsigned (default). */
+	    pad_expr_in_place(exp, res, bit_wid);
 	    return res;
       }
 
@@ -2395,9 +2395,9 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
 
       fprintf(vvp_out, "    %%load/x1p %u, v%p_%u, %u;\n",
 	      res.base, sig, use_word, use_wid);
-      if (use_wid < res.wid)
-	    fprintf(vvp_out, "    %%movi %u, 0, %u;\n",
-		    res.base + use_wid, res.wid - use_wid);
+	/* Pad the part select to the desired width. Because of
+	   $signed() this may be signed or unsigned (default). */
+      pad_expr_in_place(exp, res, use_wid);
 
       fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_end);
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_x);
@@ -2407,7 +2407,8 @@ static struct vector_info draw_select_signal(ivl_expr_t sube,
       return res;
 }
 
-static void draw_select_signal_dest(ivl_expr_t sube,
+static void draw_select_signal_dest(ivl_expr_t exp,
+				    ivl_expr_t sube,
 				    ivl_expr_t bit_idx,
 				    struct vector_info dest,
 				    int stuff_ok_flag)
@@ -2433,7 +2434,7 @@ static void draw_select_signal_dest(ivl_expr_t sube,
 
 	/* Fallback, just draw the expression and copy the result into
 	   the destination. */
-      tmp = draw_select_signal(sube, bit_idx, dest.wid, dest.wid);
+      tmp = draw_select_signal(exp, sube, bit_idx, dest.wid, dest.wid);
       assert(tmp.wid == dest.wid);
 
       fprintf(vvp_out, "    %%mov %u, %u, %u; Move signal select into place\n",
@@ -2468,7 +2469,7 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
       }
 
       if (ivl_expr_type(sube) == IVL_EX_SIGNAL) {
-	    res = draw_select_signal(sube, shift, ivl_expr_width(exp), wid);
+	    res = draw_select_signal(exp, sube, shift, ivl_expr_width(exp), wid);
 	    fprintf(vvp_out, "; Save base=%u wid=%u in lookaside.\n",
 		    res.base, wid);
 	    save_expression_lookaside(res.base, exp, wid);
@@ -2587,7 +2588,7 @@ static void draw_select_expr_dest(ivl_expr_t exp, struct vector_info dest,
       }
 
       if (ivl_expr_type(sube) == IVL_EX_SIGNAL) {
-	    draw_select_signal_dest(sube, shift, dest, stuff_ok_flag);
+	    draw_select_signal_dest(exp, sube, shift, dest, stuff_ok_flag);
 	    return;
       }
 
