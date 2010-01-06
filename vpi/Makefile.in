@@ -42,6 +42,7 @@ YACC = @YACC@
 
 CPPFLAGS = -I. -I$(srcdir)/.. -I$(srcdir) -I.. @file64_support@ @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = -Wall @CFLAGS@
+CXXFLAGS = -Wall @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
 all: dep system.vpi va_math.vpi v2005_math.vpi $(ALL32)
@@ -56,7 +57,7 @@ dep:
 	mv $*.d dep
 
 %.o: %.cc vpi_config.h
-	$(CXX) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 # Object files for system.vpi
