@@ -33,6 +33,7 @@ includedir = $(prefix)/include
 vpidir = $(libdir)/ivl$(suffix)
 
 CC = @CC@
+CXX = @CXX@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
@@ -54,11 +55,15 @@ dep:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
+%.o: %.cc vpi_config.h
+	$(CXX) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	mv $*.d dep
+
 # Object files for system.vpi
 O = sys_table.o sys_convert.o sys_deposit.o sys_display.o sys_fileio.o \
 sys_finish.o sys_icarus.o sys_plusargs.o sys_random.o sys_random_mti.o \
 sys_readmem.o sys_readmem_lex.o sys_scanf.o sys_sdf.o \
-sys_time.o sys_vcd.o sys_vcdoff.o vcd_priv.o \
+sys_time.o sys_vcd.o sys_vcdoff.o vcd_priv.o vcd_priv2.o \
 mt19937int.o sys_priv.o sdf_lexor.o sdf_parse.o stringheap.o \
 vams_simparam.o
 

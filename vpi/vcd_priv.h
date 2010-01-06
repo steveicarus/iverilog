@@ -1,7 +1,7 @@
 #ifndef __vcd_priv_H
 #define __vcd_priv_H
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,10 +21,16 @@
 
 #include "vpi_user.h"
 
-extern int is_escaped_id(const char *name);
+#ifdef __cplusplus
+# define EXTERN extern "C"
+#else
+# define EXTERN extern
+#endif
+
+EXTERN int is_escaped_id(const char *name);
 
 struct vcd_names_s;
-extern struct stringheap_s name_heap;
+EXTERN struct stringheap_s name_heap;
 
 struct vcd_names_list_s {
       struct vcd_names_s *vcd_names_list;
@@ -32,21 +38,23 @@ struct vcd_names_list_s {
       int listed_names, sorted_names;
 };
 
-extern void vcd_names_add(struct vcd_names_list_s*tab, const char *name);
+EXTERN void vcd_names_add(struct vcd_names_list_s*tab, const char *name);
 
-extern const char *vcd_names_search(struct vcd_names_list_s*tab,
+EXTERN const char *vcd_names_search(struct vcd_names_list_s*tab,
 				    const char *key);
 
-extern void vcd_names_sort(struct vcd_names_list_s*tab);
+EXTERN void vcd_names_sort(struct vcd_names_list_s*tab);
 
-extern void vcd_names_delete();
+EXTERN void vcd_names_delete();
 
-extern const char*find_nexus_ident(int nex);
-extern void       set_nexus_ident(int nex, const char *id);
+EXTERN const char*find_nexus_ident(int nex);
+EXTERN void       set_nexus_ident(int nex, const char *id);
 
-extern void nexus_ident_delete();
+EXTERN void nexus_ident_delete();
 
 /* The compiletf routines are common for the VCD, LXT and LXT2 dumpers. */
-extern PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name);
+EXTERN PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name);
+
+#undef EXTERN
 
 #endif

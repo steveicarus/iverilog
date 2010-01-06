@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -133,89 +133,6 @@ void vcd_names_sort(struct vcd_names_list_s*tab)
 	    qsort(tab->vcd_names_sorted, tab->sorted_names,
 		  sizeof(const char **), vcd_names_compare);
       }
-}
-
-
-/*
-   Nexus Id cache
-
-   In structural models, many signals refer to the same nexus.
-   Some structural models also have very many signals.  This cache
-   saves nexus_id - vcd_id pairs, and reuses the vcd_id when a signal
-   refers to a nexus that is already dumped.
-
-   The new signal will be listed as a $var, but no callback
-   will be installed.  This saves considerable CPU time and leads
-   to smaller VCD files.
-
-   The _vpiNexusId is a private (int) property of IVL simulators.
-*/
-
-struct vcd_id_s
-{
-      const char *id;
-      struct vcd_id_s *next;
-      int nex;
-};
-
-static __inline__ unsigned ihash(int nex)
-{
-      unsigned a = nex;
-      a ^= a>>16;
-      a ^= a>>8;
-      return a & 0xff;
-}
-
-static struct vcd_id_s **vcd_ids = 0;
-
-const char *find_nexus_ident(int nex)
-{
-      struct vcd_id_s *bucket;
-
-      if (!vcd_ids) {
-	    vcd_ids = (struct vcd_id_s **)
-		  calloc(256, sizeof(struct vcd_id_s*));
-	    assert(vcd_ids);
-      }
-
-      bucket = vcd_ids[ihash(nex)];
-      while (bucket) {
-	    if (nex == bucket->nex)
-		  return bucket->id;
-	    bucket = bucket->next;
-      }
-
-      return 0;
-}
-
-void set_nexus_ident(int nex, const char *id)
-{
-      struct vcd_id_s *bucket;
-
-      assert(vcd_ids);
-
-      bucket = (struct vcd_id_s *) malloc(sizeof(struct vcd_id_s));
-      bucket->next = vcd_ids[ihash(nex)];
-      bucket->id = id;
-      bucket->nex = nex;
-      vcd_ids[ihash(nex)] = bucket;
-}
-
-void nexus_ident_delete()
-{
-      unsigned idx;
-
-      if (vcd_ids == 0) return;
-
-      for (idx = 0 ; idx < 256; idx++) {
-	    struct vcd_id_s *cur, *tmp;
-	    for (cur = vcd_ids[idx]; cur; cur = tmp) {
-		  tmp = cur->next;
-		  free(cur);
-	    }
-      }
-      free(vcd_ids);
-      vcd_ids = 0;
 }
 
 /*
