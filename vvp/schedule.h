@@ -125,6 +125,7 @@ struct vvp_gen_event_s
 {
       virtual ~vvp_gen_event_s() =0;
       virtual void run_run() =0;
+      virtual void single_step_display(void);
 };
 
 /*
