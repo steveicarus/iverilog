@@ -19,13 +19,15 @@
 
 # include  "schedule.h"
 # include  "vthread.h"
+# include  "vpi_priv.h"
 # include  "slab.h"
+# include  "compile.h"
 # include  <new>
 # include  <signal.h>
 # include  <stdlib.h>
 # include  <assert.h>
 
-# include  <stdio.h>
+# include  <iostream>
 
 unsigned long count_assign_events = 0;
 unsigned long count_gen_events = 0;
@@ -50,10 +52,18 @@ struct event_s {
       virtual ~event_s() { }
       virtual void run_run(void) =0;
 
+	// Write something about the event to stderr
+      virtual void single_step_display(void);
+
 	// Fallback new/delete
       static void*operator new (size_t size) { return ::new char[size]; }
       static void operator delete(void*ptr)  { ::delete[]( (char*)ptr ); }
 };
+
+void event_s::single_step_display(void)
+{
+      cerr << "event_s: Step into event " << typeid(*this).name() << endl;
+}
 
 struct event_time_s {
       event_time_s() {
@@ -90,6 +100,7 @@ vvp_gen_event_s::~vvp_gen_event_s()
 struct vthread_event_s : public event_s {
       vthread_t thr;
       void run_run(void);
+      void single_step_display(void);
 
       static void* operator new(size_t);
       static void operator delete(void*);
@@ -99,6 +110,14 @@ void vthread_event_s::run_run(void)
 {
       count_thread_events += 1;
       vthread_run(thr);
+}
+
+void vthread_event_s::single_step_display(void)
+{
+      struct __vpiScope*scope = vthread_scope(thr);
+      cerr << "vthread_event: Resume thread"
+	   << " scope=" << vpip_get_str(vpiFullName, scope)
+	   << endl;
 }
 
 static const size_t VTHR_CHUNK_COUNT = 8192 / sizeof(struct vthread_event_s);
@@ -118,11 +137,19 @@ void vthread_event_s::operator delete(void*ptr)
 struct del_thr_event_s : public event_s {
       vthread_t thr;
       void run_run(void);
+      void single_step_display(void);
 };
 
 void del_thr_event_s::run_run(void)
 {
       vthread_delete(thr);
+}
+
+void del_thr_event_s::single_step_display(void)
+{
+      struct __vpiScope*scope = vthread_scope(thr);
+      cerr << "del_thr_event: Reap completed thread"
+	   << " scope=" << vpip_get_str(vpiFullName, scope) << endl;
 }
 
 struct assign_vector4_event_s  : public event_s {
@@ -141,6 +168,7 @@ struct assign_vector4_event_s  : public event_s {
 	/* Width of the destination vector. */
       unsigned vwid;
       void run_run(void);
+      void single_step_display(void);
 
       static void* operator new(size_t);
       static void operator delete(void*);
@@ -153,6 +181,12 @@ void assign_vector4_event_s::run_run(void)
 	    vvp_send_vec4_pv(ptr, val, base, val.size(), vwid, 0);
       else
 	    vvp_send_vec4(ptr, val, 0);
+}
+
+void assign_vector4_event_s::single_step_display(void)
+{
+      cerr << "assign_vector4_event: Propagate val=" << val
+	   << ", vwid=" << vwid << ", base=" << base << endl;
 }
 
 static const size_t ASSIGN4_CHUNK_COUNT = 524288 / sizeof(struct assign_vector4_event_s);
@@ -175,6 +209,7 @@ struct assign_vector8_event_s  : public event_s {
       vvp_net_ptr_t ptr;
       vvp_vector8_t val;
       void run_run(void);
+      void single_step_display(void);
 
       static void* operator new(size_t);
       static void operator delete(void*);
@@ -184,6 +219,11 @@ void assign_vector8_event_s::run_run(void)
 {
       count_assign_events += 1;
       vvp_send_vec8(ptr, val);
+}
+
+void assign_vector8_event_s::single_step_display(void)
+{
+      cerr << "assign_vector8_event: Propagate val=" << val << endl;
 }
 
 static const size_t ASSIGN8_CHUNK_COUNT = 8192 / sizeof(struct assign_vector8_event_s);
@@ -206,6 +246,7 @@ struct assign_real_event_s  : public event_s {
       vvp_net_ptr_t ptr;
       double val;
       void run_run(void);
+      void single_step_display(void);
 
       static void* operator new(size_t);
       static void operator delete(void*);
@@ -215,6 +256,11 @@ void assign_real_event_s::run_run(void)
 {
       count_assign_events += 1;
       vvp_send_real(ptr, val, 0);
+}
+
+void assign_real_event_s::single_step_display(void)
+{
+      cerr << "assign_real_event: Propagate val=" << val << endl;
 }
 
 static const size_t ASSIGNR_CHUNK_COUNT = 8192 / sizeof(struct assign_real_event_s);
@@ -397,6 +443,7 @@ static struct event_s* schedule_init_list = 0;
  */
 static bool schedule_runnable = true;
 static bool schedule_stopped_flag  = false;
+static bool schedule_single_step_flag = false;
 
 void schedule_finish(int)
 {
@@ -406,6 +453,11 @@ void schedule_finish(int)
 void schedule_stop(int)
 {
       schedule_stopped_flag = true;
+}
+
+void schedule_single_step(int)
+{
+      schedule_single_step_flag = true;
 }
 
 bool schedule_finished(void)
@@ -813,8 +865,8 @@ static void run_rosync(struct event_time_s*ctim)
       }
 
       if (ctim->active || ctim->nbassign || ctim->rwsync) {
-	    fprintf(stderr, "SCHEDULER ERROR: read-only sync events "
-		    "created RW events!\n");
+	    cerr << "SCHEDULER ERROR: read-only sync events "
+		 << "created RW events!" << endl;
       }
 }
 
@@ -822,8 +874,16 @@ void schedule_simulate(void)
 {
       schedule_time = 0;
 
+      if (verbose_flag) {
+	    vpi_mcd_printf(1, " ...execute EndOfCompile callbacks\n");
+      }
+
       // Execute end of compile callbacks
       vpiEndOfCompile();
+
+      if (verbose_flag) {
+	    vpi_mcd_printf(1, " ...propagate initialization events\n");
+      }
 
 	// Execute initialization events.
       while (schedule_init_list) {
@@ -834,10 +894,18 @@ void schedule_simulate(void)
 	    delete cur;
       }
 
+      if (verbose_flag) {
+	    vpi_mcd_printf(1, " ...execute StartOfSim callbacks\n");
+      }
+
       // Execute start of simulation callbacks
       vpiStartOfSim();
 
       signals_capture();
+
+      if (verbose_flag) {
+	    vpi_mcd_printf(1, " ...run scheduler\n");
+      }
 
       if (schedule_runnable) while (sched_list) {
 
@@ -908,6 +976,12 @@ void schedule_simulate(void)
 		  ctim->active->next = cur->next;
 	    }
 
+	    if (schedule_single_step_flag) {
+		  cur->single_step_display();
+		  schedule_stopped_flag = true;
+		  schedule_single_step_flag = false;
+	    }
+
 	    cur->run_run();
 
 	    delete (cur);
@@ -915,6 +989,10 @@ void schedule_simulate(void)
 
 
       signals_revert();
+
+      if (verbose_flag) {
+	    vpi_mcd_printf(1, " ...execute Postsim callbacks\n");
+      }
 
       // Execute post-simulation callbacks
       vpiPostsim();

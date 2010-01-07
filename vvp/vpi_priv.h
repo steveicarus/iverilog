@@ -116,6 +116,9 @@ struct __vpirt {
 template <class T> vpiHandle vpi_handle(T obj)
 { return &obj->base; }
 
+template <class T> char*vpip_get_str(int code, T obj)
+{ return obj->base.vpi_type->vpi_get_str_(code, vpi_handle(obj)); }
+
 /*
  * The vpiHandle for an iterator has this structure. The definition of
  * the methods lives in vpi_iter.c

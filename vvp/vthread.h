@@ -70,6 +70,8 @@ extern void vthread_run(vthread_t thr);
  */
 extern void vthread_schedule_list(vthread_t thr);
 
+extern struct __vpiScope*vthread_scope(vthread_t thr);
+
 /*
  * This function returns a handle to the writable context of the currently
  * running thread. Normally the writable context is the context allocated

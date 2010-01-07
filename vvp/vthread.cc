@@ -116,8 +116,13 @@ struct vthread_s {
       unsigned fork_count        :8;
 	/* This points to the sole child of the thread. */
       struct vthread_s*child;
-	/* This points to my parent, if I have one. */
-      struct vthread_s*parent;
+      union {
+	      /* This points to my parent, if I have one. */
+	    struct vthread_s*parent;
+	      /* If this is a header cell, then point to the
+		 containing scope. */
+	    struct __vpiScope*parent_scope;
+      };
 	/* This is used for keeping wait queues. */
       struct vthread_s*wait_next;
 	/* These are used to keep the thread in a scope. */
@@ -128,6 +133,15 @@ struct vthread_s {
       vvp_net_t*event;
       uint64_t ecount;
 };
+
+struct __vpiScope* vthread_scope(struct vthread_s*thr)
+{
+      while (thr->bits4.size() > 0) {
+	    thr = thr->scope_next;
+      }
+
+      return thr->parent_scope;
+}
 
 struct vthread_s*running_thread = 0;
 
@@ -412,6 +426,7 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
 	    scope->threads->bits4  = vvp_vector4_t();
 	    scope->threads->child  = 0;
 	    scope->threads->parent = 0;
+	    scope->threads->parent_scope = scope;
 	    scope->threads->scope_prev = scope->threads;
 	    scope->threads->scope_next = scope->threads;
       }

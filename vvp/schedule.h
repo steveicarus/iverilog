@@ -151,6 +151,7 @@ extern vvp_time64_t schedule_simtime(void);
  */
 extern void schedule_finish(int rc);
 extern void schedule_stop(int rc);
+extern void schedule_single_step(int flag);
 extern bool schedule_finished(void);
 extern bool schedule_stopped(void);
 

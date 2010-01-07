@@ -197,6 +197,12 @@ static void cmd_cont(unsigned, char*[])
       interact_flag = false;
 }
 
+static void cmd_step(unsigned, char*[])
+{
+      interact_flag = false;
+      schedule_single_step(0);
+}
+
 static void cmd_finish(unsigned, char*[])
 {
       interact_flag = false;
@@ -403,6 +409,8 @@ static struct {
         "Pop one scope from the scope stack."},
       { "push",   &cmd_push,
         "Descend into the named scope."},
+      { "step",   &cmd_step,
+        "Single-step the scheduler for 1 event."},
       { "time",   &cmd_time,
         "Print the current simulation time."},
       { "where",  &cmd_where,
