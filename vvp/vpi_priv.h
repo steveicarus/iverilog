@@ -23,6 +23,8 @@
 # include  "vvp_net.h"
 # include  "config.h"
 
+# include  <set>
+
 /*
  * Added to use some "vvp_fun_modpath_src"
  * and "vvp_fun_modpath" classes definitions
@@ -204,7 +206,7 @@ struct __vpiScope {
         /* Keep a list of freed contexts. */
       vvp_context_t free_contexts;
 	/* Keep a list of threads in the scope. */
-      vthread_t threads;
+      std::set<vthread_t> threads;
       signed int time_units :8;
       signed int time_precision :8;
 };

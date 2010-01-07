@@ -116,17 +116,12 @@ struct vthread_s {
       unsigned fork_count        :8;
 	/* This points to the sole child of the thread. */
       struct vthread_s*child;
-      union {
-	      /* This points to my parent, if I have one. */
-	    struct vthread_s*parent;
-	      /* If this is a header cell, then point to the
-		 containing scope. */
-	    struct __vpiScope*parent_scope;
-      };
+	/* This points to my parent, if I have one. */
+      struct vthread_s*parent;
+	/* This points to the containing scope. */
+      struct __vpiScope*parent_scope;
 	/* This is used for keeping wait queues. */
       struct vthread_s*wait_next;
-	/* These are used to keep the thread in a scope. */
-      struct vthread_s*scope_next, *scope_prev;
 	/* These are used to access automatically allocated items. */
       vvp_context_t wt_context, rd_context;
 	/* These are used to pass non-blocking event control information. */
@@ -136,10 +131,6 @@ struct vthread_s {
 
 struct __vpiScope* vthread_scope(struct vthread_s*thr)
 {
-      while (thr->bits4.size() > 0) {
-	    thr = thr->scope_next;
-      }
-
       return thr->parent_scope;
 }
 
@@ -413,30 +404,10 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       thr->bits4  = vvp_vector4_t(32);
       thr->child  = 0;
       thr->parent = 0;
+      thr->parent_scope = scope;
       thr->wait_next = 0;
       thr->wt_context = 0;
       thr->rd_context = 0;
-
-	/* If the target scope never held a thread, then create a
-	   header cell for it. This is a stub to make circular lists
-	   easier to work with. */
-      if (scope->threads == 0) {
-	    scope->threads = new struct vthread_s;
-	    scope->threads->pc = codespace_null();
-	    scope->threads->bits4  = vvp_vector4_t();
-	    scope->threads->child  = 0;
-	    scope->threads->parent = 0;
-	    scope->threads->parent_scope = scope;
-	    scope->threads->scope_prev = scope->threads;
-	    scope->threads->scope_next = scope->threads;
-      }
-
-      { vthread_t tmp = scope->threads;
-        thr->scope_next = tmp->scope_next;
-	thr->scope_prev = tmp;
-	thr->scope_next->scope_prev = thr;
-	thr->scope_prev->scope_next = thr;
-      }
 
       thr->schedule_parent_on_end = 0;
       thr->is_scheduled = 0;
@@ -452,6 +423,7 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       thr_put_bit(thr, 2, BIT4_X);
       thr_put_bit(thr, 3, BIT4_Z);
 
+      scope->threads .insert(thr);
       return thr;
 }
 
@@ -518,8 +490,8 @@ static void vthread_reap(vthread_t thr)
       thr->child = 0;
       thr->parent = 0;
 
-      thr->scope_next->scope_prev = thr->scope_prev;
-      thr->scope_prev->scope_next = thr->scope_next;
+	// Remove myself from the containing scope.
+      thr->parent_scope->threads.erase(thr);
 
       thr->pc = codespace_null();
 
@@ -1955,8 +1927,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
       bool flag = false;
 
 	/* Pull the target thread out of its scope. */
-      thr->scope_next->scope_prev = thr->scope_prev;
-      thr->scope_prev->scope_next = thr->scope_next;
+      thr->parent_scope->threads.erase(thr);
 
 	/* Turn the thread off by setting is program counter to
 	   zero and setting an OFF bit. */
@@ -2011,23 +1982,18 @@ static bool do_disable(vthread_t thr, vthread_t match)
 bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 {
       struct __vpiScope*scope = (struct __vpiScope*)cp->handle;
-      if (scope->threads == 0)
-	    return true;
-
-      struct vthread_s*head = scope->threads;
 
       bool disabled_myself_flag = false;
 
-      while (head->scope_next != head) {
-	    vthread_t tmp = head->scope_next;
+      while (scope->threads.size() > 0) {
+	    set<vthread_t>::iterator cur = scope->threads.begin();
 
 	      /* If I am disabling myself, that remember that fact so
 		 that I can finish this statement differently. */
-	    if (tmp == thr)
+	    if (*cur == thr)
 		  disabled_myself_flag = true;
 
-
-	    if (do_disable(tmp, thr))
+	    if (do_disable(*cur, thr))
 		  disabled_myself_flag = true;
       }
 

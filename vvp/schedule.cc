@@ -95,6 +95,11 @@ vvp_gen_event_s::~vvp_gen_event_s()
 {
 }
 
+void vvp_gen_event_s::single_step_display(void)
+{
+      cerr << "vvp_gen_event_s: Step into event " << typeid(*this).name() << endl;
+}
+
 /*
  * Derived event types
  */
@@ -327,11 +332,17 @@ struct propagate_vector4_event_s : public event_s {
       vvp_vector4_t val;
 	/* Action */
       void run_run(void);
+      void single_step_display(void);
 };
 
 void propagate_vector4_event_s::run_run(void)
 {
       net->send_vec4(val, 0);
+}
+
+void propagate_vector4_event_s::single_step_display(void)
+{
+      cerr << "propagate_vector4_event: Propagate val=" << val << endl;
 }
 
 struct assign_array_r_word_s  : public event_s {
@@ -369,6 +380,7 @@ struct generic_event_s : public event_s {
       vvp_gen_event_t obj;
       bool delete_obj_when_done;
       void run_run(void);
+      void single_step_display(void);
 
       static void* operator new(size_t);
       static void operator delete(void*);
@@ -382,6 +394,11 @@ void generic_event_s::run_run(void)
 	    if (delete_obj_when_done)
 		  delete obj;
       }
+}
+
+void generic_event_s::single_step_display(void)
+{
+      obj->single_step_display();
 }
 
 static const size_t GENERIC_CHUNK_COUNT = 131072 / sizeof(struct generic_event_s);
