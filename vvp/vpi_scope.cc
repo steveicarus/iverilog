@@ -447,7 +447,6 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
       scope->nitem = 0;
       scope->live_contexts = 0;
       scope->free_contexts = 0;
-      scope->threads = 0;
 
       current_scope = scope;
 
