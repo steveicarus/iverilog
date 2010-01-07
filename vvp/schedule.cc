@@ -23,6 +23,7 @@
 # include  "slab.h"
 # include  "compile.h"
 # include  <new>
+# include  <typeinfo>
 # include  <signal.h>
 # include  <stdlib.h>
 # include  <assert.h>
