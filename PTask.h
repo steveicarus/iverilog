@@ -1,7 +1,7 @@
 #ifndef __PTask_H
 #define __PTask_H
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008,2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,7 +51,7 @@ struct PTaskFuncArg {
 class PTask  : public PScope, public LineInfo {
 
     public:
-      explicit PTask(perm_string name, PScope*parent, bool is_auto);
+      explicit PTask(perm_string name, LexicalScope*parent, bool is_auto);
       ~PTask();
 
       void set_ports(svector<PWire *>*p);
@@ -93,7 +93,7 @@ class PTask  : public PScope, public LineInfo {
 class PFunction : public PScope, public LineInfo {
 
     public:
-      explicit PFunction(perm_string name, PScope*parent, bool is_auto);
+      explicit PFunction(perm_string name, LexicalScope*parent, bool is_auto);
       ~PFunction();
 
       void set_ports(svector<PWire *>*p);

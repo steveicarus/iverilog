@@ -1,7 +1,7 @@
 #ifndef __PGenerate_H
 #define __PGenerate_H
 /*
- * Copyright (c) 2006-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -53,7 +53,7 @@ class PWire;
 class PGenerate : public LineInfo, public LexicalScope {
 
     public:
-      explicit PGenerate(unsigned id_number);
+      explicit PGenerate(LexicalScope*parent, unsigned id_number);
       ~PGenerate();
 
 	// Generate schemes have an ID number, for when the scope is
@@ -63,7 +63,7 @@ class PGenerate : public LineInfo, public LexicalScope {
 
 	// This is used during parsing to stack lexical scopes within
 	// this generate scheme.
-      PScope*lexical_scope;
+//      LexicalScope*lexical_scope;
 
       enum scheme_t {GS_NONE, GS_LOOP, GS_CONDIT, GS_ELSE,
 		     GS_CASE, GS_CASE_ITEM, GS_NBLOCK};
@@ -92,7 +92,7 @@ class PGenerate : public LineInfo, public LexicalScope {
 
 	// Generate schemes can contain further generate schemes.
       list<PGenerate*> generate_schemes;
-      PGenerate*parent;
+//      PGenerate*parent;
 
 	// This method is called by the elaboration of a module to
 	// generate scopes. the container is the scope that is to

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006,2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006,2009,2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,12 +21,10 @@
 # include  "PWire.h"
 # include  "ivl_assert.h"
 
-PGenerate::PGenerate(unsigned id)
-: id_number(id)
+PGenerate::PGenerate(LexicalScope*parent, unsigned id)
+: LexicalScope(parent), id_number(id)
 {
       direct_nested_ = false;
-      parent = 0;
-      lexical_scope = 0;
 }
 
 PGenerate::~PGenerate()

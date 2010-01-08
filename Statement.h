@@ -159,7 +159,7 @@ class PBlock  : public PScope, public Statement {
       enum BL_TYPE { BL_SEQ, BL_PAR };
 
 	// If the block has a name, it is a scope and also has a parent.
-      explicit PBlock(perm_string n, PScope*parent, BL_TYPE t);
+      explicit PBlock(perm_string n, LexicalScope*parent, BL_TYPE t);
 	// If it doesn't have a name, it's not a scope
       explicit PBlock(BL_TYPE t);
       ~PBlock();

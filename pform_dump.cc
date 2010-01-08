@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -978,6 +978,7 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "generate(" << id_number << ")";
 
+      PGenerate*parent = dynamic_cast<PGenerate*>(parent_scope());
       switch (scheme_type) {
 	  case GS_NONE:
 	    break;
@@ -999,6 +1000,7 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 	    out << " case (" << *loop_test << ")";
 	    break;
 	  case GS_CASE_ITEM:
+            assert(parent);
 	    if (loop_test)
 		  out << " (" << *loop_test << ") == (" << *parent->loop_test << ")";
 	    else

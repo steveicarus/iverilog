@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008,2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,7 +21,7 @@
 
 # include  "PTask.h"
 
-PTask::PTask(perm_string name, PScope*parent, bool is_auto__)
+PTask::PTask(perm_string name, LexicalScope*parent, bool is_auto__)
 : PScope(name, parent), ports_(0), statement_(0)
 {
       is_auto_ = is_auto__;

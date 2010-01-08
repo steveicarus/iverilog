@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008,2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -93,7 +93,7 @@ PAssignNB::~PAssignNB()
 {
 }
 
-PBlock::PBlock(perm_string n, PScope*parent, BL_TYPE t)
+PBlock::PBlock(perm_string n, LexicalScope*parent, BL_TYPE t)
 : PScope(n, parent), bl_type_(t)
 {
 }

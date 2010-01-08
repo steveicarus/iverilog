@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -258,29 +258,20 @@ static inline void FILE_NAME(LineInfo*obj, const char*file, unsigned lineno)
  *
  * Items that have scoped names are put in the lexical_scope object.
  */
-static PScope* lexical_scope = 0;
+static LexicalScope* lexical_scope = 0;
 
 void pform_pop_scope()
 {
-      if (pform_cur_generate) {
-	    assert(pform_cur_generate->lexical_scope);
-	    PScope*cur = pform_cur_generate->lexical_scope;
-	    pform_cur_generate->lexical_scope = cur->pscope_parent();
-      } else {
-	    assert(lexical_scope);
-	    lexical_scope = lexical_scope->pscope_parent();
-      }
+      lexical_scope = lexical_scope->parent_scope();
 }
 
 PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 {
       perm_string task_name = lex_strings.make(name);
 
-      PTask*task;
+      PTask*task = new PTask(task_name, lexical_scope, is_auto);
+      FILE_NAME(task, loc);
       if (pform_cur_generate) {
-	    task = new PTask(task_name, pform_cur_generate->lexical_scope,
-	                     is_auto);
-	    FILE_NAME(task, loc);
 	      // Check if the task is already in the dictionary.
 	    if (pform_cur_generate->tasks.find(task->pscope_name()) !=
 	        pform_cur_generate->tasks.end()) {
@@ -291,11 +282,7 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 		  error_count += 1;
 	    }
 	    pform_cur_generate->tasks[task->pscope_name()] = task;
-	    pform_cur_generate->lexical_scope = task;
       } else {
-	    task = new PTask(task_name, lexical_scope,
-                             is_auto);
-	    FILE_NAME(task, loc);
 	      // Check if the task is already in the dictionary.
 	    if (pform_cur_module->tasks.find(task->pscope_name()) !=
 	        pform_cur_module->tasks.end()) {
@@ -305,8 +292,8 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 		  error_count += 1;
 	    }
 	    pform_cur_module->tasks[task->pscope_name()] = task;
-	    lexical_scope = task;
       }
+      lexical_scope = task;
 
       return task;
 }
@@ -316,11 +303,9 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, char*name,
 {
       perm_string func_name = lex_strings.make(name);
 
-      PFunction*func;
+      PFunction*func = new PFunction(func_name, lexical_scope, is_auto);
+      FILE_NAME(func, loc);
       if (pform_cur_generate) {
-	    func = new PFunction(func_name, pform_cur_generate->lexical_scope,
-                                 is_auto);
-	    FILE_NAME(func, loc);
 	      // Check if the function is already in the dictionary.
 	    if (pform_cur_generate->funcs.find(func->pscope_name()) !=
 	        pform_cur_generate->funcs.end()) {
@@ -331,11 +316,7 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, char*name,
 		  error_count += 1;
 	    }
 	    pform_cur_generate->funcs[func->pscope_name()] = func;
-	    pform_cur_generate->lexical_scope = func;
       } else {
-	    func = new PFunction(func_name, lexical_scope,
-                                 is_auto);
-	    FILE_NAME(func, loc);
 	      // Check if the function is already in the dictionary.
 	    if (pform_cur_module->funcs.find(func->pscope_name()) !=
 	        pform_cur_module->funcs.end()) {
@@ -345,8 +326,8 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, char*name,
 		  error_count += 1;
 	    }
 	    pform_cur_module->funcs[func->pscope_name()] = func;
-	    lexical_scope = func;
       }
+      lexical_scope = func;
 
       return func;
 }
@@ -355,14 +336,8 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
 {
       perm_string block_name = lex_strings.make(name);
 
-      PBlock*block;
-      if (pform_cur_generate) {
-	    block = new PBlock(block_name, pform_cur_generate->lexical_scope, bt);
-	    pform_cur_generate->lexical_scope = block;
-      } else {
-	    block = new PBlock(block_name, lexical_scope, bt);
-	    lexical_scope = block;
-      }
+      PBlock*block = new PBlock(block_name, lexical_scope, bt);
+      lexical_scope = block;
 
       return block;
 }
@@ -380,29 +355,10 @@ void pform_bind_attributes(map<perm_string,PExpr*>&attributes,
       delete attr;
 }
 
-static LexicalScope*pform_get_cur_scope()
-{
-      if (pform_cur_generate)
-	    if (pform_cur_generate->lexical_scope)
-		  return pform_cur_generate->lexical_scope;
-	    else
-		  return pform_cur_generate;
-      else
-	    return lexical_scope;
-}
-
 static bool pform_at_module_level()
 {
-      if (pform_cur_generate)
-	    if (pform_cur_generate->lexical_scope)
-		  return false;
-	    else
-		  return true;
-      else
-	    if (lexical_scope->pscope_parent())
-		  return false;
-	    else
-		  return true;
+      return (lexical_scope == pform_cur_module)
+          || (lexical_scope == pform_cur_generate);
 }
 
 PWire*pform_get_wire_in_scope(perm_string name)
@@ -411,22 +367,22 @@ PWire*pform_get_wire_in_scope(perm_string name)
 	   scope depth will be empty because generate schemes
 	   cannot be within sub-scopes. Only directly in
 	   modules. */
-      return pform_get_cur_scope()->wires_find(name);
+      return lexical_scope->wires_find(name);
 }
 
 static void pform_put_wire_in_scope(perm_string name, PWire*net)
 {
-      pform_get_cur_scope()->wires[name] = net;
+      lexical_scope->wires[name] = net;
 }
 
 static void pform_put_behavior_in_scope(PProcess*pp)
 {
-      pform_get_cur_scope()->behaviors.push_back(pp);
+      lexical_scope->behaviors.push_back(pp);
 }
 
 void pform_put_behavior_in_scope(AProcess*pp)
 {
-      pform_get_cur_scope()->analog_behaviors.push_back(pp);
+      lexical_scope->analog_behaviors.push_back(pp);
 }
 
 void pform_set_default_nettype(NetNet::Type type,
@@ -819,7 +775,7 @@ void pform_endmodule(const char*name, bool in_celldefine,
 	// The current lexical scope should be this module by now, and
 	// this module should not have a parent lexical scope.
       ivl_assert(*pform_cur_module, lexical_scope == pform_cur_module);
-      lexical_scope = pform_cur_module->pscope_parent();
+      pform_pop_scope();
       ivl_assert(*pform_cur_module, lexical_scope == 0);
 
       pform_cur_module = 0;
@@ -864,11 +820,11 @@ void pform_start_generate_for(const struct vlltype&li,
 			      PExpr*test,
 			      char*ident2, PExpr*next)
 {
-      PGenerate*gen = new PGenerate(scope_generate_counter++);
+      PGenerate*gen = new PGenerate(lexical_scope, scope_generate_counter++);
+      lexical_scope = gen;
 
       FILE_NAME(gen, li);
 
-      gen->parent = pform_cur_generate;
       pform_cur_generate = gen;
 
       pform_cur_generate->scheme_type = PGenerate::GS_LOOP;
@@ -884,11 +840,11 @@ void pform_start_generate_for(const struct vlltype&li,
 
 void pform_start_generate_if(const struct vlltype&li, PExpr*test)
 {
-      PGenerate*gen = new PGenerate(scope_generate_counter++);
+      PGenerate*gen = new PGenerate(lexical_scope, scope_generate_counter++);
+      lexical_scope = gen;
 
       FILE_NAME(gen, li);
 
-      gen->parent = pform_cur_generate;
       pform_cur_generate = gen;
 
       pform_cur_generate->scheme_type = PGenerate::GS_CONDIT;
@@ -906,11 +862,11 @@ void pform_start_generate_else(const struct vlltype&li)
       PGenerate*cur = pform_cur_generate;
       pform_endgenerate();
 
-      PGenerate*gen = new PGenerate(scope_generate_counter++);
+      PGenerate*gen = new PGenerate(lexical_scope, scope_generate_counter++);
+      lexical_scope = gen;
 
       FILE_NAME(gen, li);
 
-      gen->parent = pform_cur_generate;
       pform_cur_generate = gen;
 
       pform_cur_generate->scheme_type = PGenerate::GS_ELSE;
@@ -926,11 +882,11 @@ void pform_start_generate_else(const struct vlltype&li)
  */
 void pform_start_generate_case(const struct vlltype&li, PExpr*expr)
 {
-      PGenerate*gen = new PGenerate(scope_generate_counter++);
+      PGenerate*gen = new PGenerate(lexical_scope, scope_generate_counter++);
+      lexical_scope = gen;
 
       FILE_NAME(gen, li);
 
-      gen->parent = pform_cur_generate;
       pform_cur_generate = gen;
 
       pform_cur_generate->scheme_type = PGenerate::GS_CASE;
@@ -945,11 +901,11 @@ void pform_start_generate_case(const struct vlltype&li, PExpr*expr)
  */
 void pform_start_generate_nblock(const struct vlltype&li, char*name)
 {
-      PGenerate*gen = new PGenerate(scope_generate_counter++);
+      PGenerate*gen = new PGenerate(lexical_scope, scope_generate_counter++);
+      lexical_scope = gen;
 
       FILE_NAME(gen, li);
 
-      gen->parent = pform_cur_generate;
       pform_cur_generate = gen;
 
       pform_cur_generate->scheme_type = PGenerate::GS_NBLOCK;
@@ -973,11 +929,11 @@ void pform_generate_case_item(const struct vlltype&li, svector<PExpr*>*expr_list
       assert(pform_cur_generate);
       assert(pform_cur_generate->scheme_type == PGenerate::GS_CASE);
 
-      PGenerate*gen = new PGenerate(pform_cur_generate->id_number);
+      PGenerate*gen = new PGenerate(lexical_scope, pform_cur_generate->id_number);
+      lexical_scope = gen;
 
       FILE_NAME(gen, li);
 
-      gen->parent = pform_cur_generate;
       pform_cur_generate = gen;
 
       pform_cur_generate->scheme_type = PGenerate::GS_CASE_ITEM;
@@ -1017,17 +973,20 @@ void pform_endgenerate()
 	    pform_cur_generate->scope_name = lex_strings.make(tmp);
       }
 
-      PGenerate*cur = pform_cur_generate;
-      pform_cur_generate = cur->parent;
+	// The current lexical scope should be this generate construct by now
+      ivl_assert(*pform_cur_generate, lexical_scope == pform_cur_generate);
+      pform_pop_scope();
 
-      if (pform_cur_generate != 0) {
-	    assert(cur->scheme_type == PGenerate::GS_CASE_ITEM
-		   || pform_cur_generate->scheme_type != PGenerate::GS_CASE);
-	    pform_cur_generate->generate_schemes.push_back(cur);
+      PGenerate*parent_generate = dynamic_cast<PGenerate*>(lexical_scope);
+      if (parent_generate) {
+	    assert(pform_cur_generate->scheme_type == PGenerate::GS_CASE_ITEM
+		   || parent_generate->scheme_type != PGenerate::GS_CASE);
+	    parent_generate->generate_schemes.push_back(pform_cur_generate);
       } else {
-	    assert(cur->scheme_type != PGenerate::GS_CASE_ITEM);
-	    pform_cur_module->generate_schemes.push_back(cur);
+	    assert(pform_cur_generate->scheme_type != PGenerate::GS_CASE_ITEM);
+	    pform_cur_module->generate_schemes.push_back(pform_cur_generate);
       }
+      pform_cur_generate = parent_generate;
 }
 
 MIN_TYP_MAX min_typ_max_flag = TYP;
@@ -1478,10 +1437,8 @@ void pform_set_net_range(list<perm_string>*names,
  */
 static void pform_make_event(perm_string name, const char*fn, unsigned ln)
 {
-      LexicalScope*scope = pform_get_cur_scope();
-
 	// Check if the named event is already in the dictionary.
-      if (scope->events.find(name) != scope->events.end()) {
+      if (lexical_scope->events.find(name) != lexical_scope->events.end()) {
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, fn, ln);
 	    cerr << tloc.get_fileline() << ": error: duplicate definition "
@@ -1492,7 +1449,7 @@ static void pform_make_event(perm_string name, const char*fn, unsigned ln)
 
       PEvent*event = new PEvent(name);
       FILE_NAME(event, fn, ln);
-      scope->events[name] = event;
+      lexical_scope->events[name] = event;
 }
 
 void pform_make_events(list<perm_string>*names, const char*fn, unsigned ln)
@@ -2149,12 +2106,7 @@ void pform_set_type_attrib(perm_string name, const string&key,
  */
 void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r)
 {
-      PWire*cur = 0;
-      if (pform_cur_generate) {
-	    cur = pform_cur_generate->wires_find(name);
-      } else {
-	    cur = lexical_scope->wires_find(name);
-      }
+      PWire*cur = lexical_scope->wires_find(name);
       if (cur == 0) {
 	    VLerror("internal error: name is not a valid memory for index.");
 	    return;
@@ -2187,7 +2139,7 @@ void pform_set_parameter(const struct vlltype&loc,
 			 bool signed_flag, svector<PExpr*>*range, PExpr*expr,
 			 LexicalScope::range_t*value_range)
 {
-      LexicalScope*scope = pform_get_cur_scope();
+      LexicalScope*scope = lexical_scope;
       if (scope == pform_cur_generate) {
             VLerror("parameter declarations are not permitted in generate blocks");
             return;
@@ -2239,7 +2191,7 @@ void pform_set_localparam(const struct vlltype&loc,
 			  perm_string name, ivl_variable_type_t type,
 			  bool signed_flag, svector<PExpr*>*range, PExpr*expr)
 {
-      LexicalScope*scope = pform_get_cur_scope();
+      LexicalScope*scope = lexical_scope;
 
 	// Check if the localparam name is already in the dictionary.
       if (scope->localparams.find(name) != scope->localparams.end()) {
@@ -2260,7 +2212,7 @@ void pform_set_localparam(const struct vlltype&loc,
       }
 
       assert(expr);
-      Module::param_expr_t&parm = pform_get_cur_scope()->localparams[name];
+      Module::param_expr_t&parm = scope->localparams[name];
       FILE_NAME(&parm, loc);
 
       parm.expr = expr;

@@ -1,7 +1,7 @@
 #ifndef __PScope_H
 #define __PScope_H
 /*
- * Copyright (c) 2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008,2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,7 +46,7 @@ class NetScope;
 class LexicalScope {
 
     public:
-      explicit LexicalScope()  { }
+      explicit LexicalScope(LexicalScope*parent) : parent_(parent) { }
 	// A virtual destructor is so that dynamic_cast can work.
       virtual ~LexicalScope() { }
 
@@ -94,6 +94,8 @@ class LexicalScope {
       list<PProcess*> behaviors;
       list<AProcess*> analog_behaviors;
 
+      LexicalScope* parent_scope() const { return parent_; }
+
     protected:
       void dump_parameters_(ostream&out, unsigned indent) const;
 
@@ -104,6 +106,7 @@ class LexicalScope {
       void dump_wires_(ostream&out, unsigned indent) const;
 
     private:
+      LexicalScope*parent_;
 };
 
 class PScope : public LexicalScope {
@@ -117,12 +120,11 @@ class PScope : public LexicalScope {
 	// modules do not nest in Verilog, the parent must be nil for
 	// modules. Scopes for tasks and functions point to their
 	// containing module.
-      PScope(perm_string name, PScope*parent);
+      PScope(perm_string name, LexicalScope*parent);
       PScope(perm_string name);
       virtual ~PScope();
 
       perm_string pscope_name() const { return name_; }
-      PScope* pscope_parent() { return parent_; }
 
     protected:
       bool elaborate_sig_wires_(Design*des, NetScope*scope) const;
@@ -131,7 +133,6 @@ class PScope : public LexicalScope {
 
     private:
       perm_string name_;
-      PScope*parent_;
 };
 
 #endif
