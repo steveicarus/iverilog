@@ -62,7 +62,7 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		case vpiNamedBegin:
 		case vpiNamedFork:
 		  delete_sub_scopes(lscope);
-		  vthreads_delete(lscope->threads);
+		  vthreads_delete(lscope);
 		  delete (scope->intern)[idx];
 		  break;
 		case vpiIntegerVar:
@@ -103,7 +103,7 @@ void root_table_delete(void)
       for (unsigned idx = 0; idx < vpip_root_table_cnt; idx += 1) {
 	    struct __vpiScope *scope = (__vpiScope *)vpip_root_table_ptr[idx];
 	    delete_sub_scopes(scope);
-	    vthreads_delete(scope->threads);
+	    vthreads_delete(scope);
 	    delete scope;
       }
       free(vpip_root_table_ptr);

@@ -455,20 +455,13 @@ static void child_delete(vthread_t base)
 }
 #endif
 
-void vthreads_delete(vthread_t base)
+void vthreads_delete(struct __vpiScope*scope)
 {
-      if (base == 0) return;
-
-      vthread_t cur = base->scope_next;
-      while (base != cur) {
-	    vthread_t tmp = cur->scope_next;
-//	    if (cur->waiting_for_event) wait_next_delete(cur->wait_next);
-//	    child_delete(cur->child);
-	    delete cur;
-	    cur = tmp;
+      for (std::set<vthread_t>::iterator cur = scope->threads.begin()
+		 ; cur != scope->threads.end() ; cur ++) {
+	    delete *cur;
       }
-	/* This is a stub so does not have a wait_next queue. */
-      delete base;
+      scope->threads.clear();
 }
 #endif
 
