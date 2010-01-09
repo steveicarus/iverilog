@@ -74,6 +74,7 @@ AC_CHECK_HEADERS(readline/readline.h readline/history.h sys/resource.h)
 case "${host}" in *linux*) AC_DEFINE([LINUX], [1], [Host operating system is Linux.]) ;; esac
 
 # vpi uses these
+AC_CHECK_LIB(pthread, pthread_create)
 AC_CHECK_LIB(z, gzwrite)
 AC_CHECK_LIB(z, gzwrite, HAVE_LIBZ=yes, HAVE_LIBZ=no)
 AC_SUBST(HAVE_LIBZ)

@@ -32,16 +32,18 @@
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
-# include  <assert.h>
 # include  <time.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
 # include  "stringheap.h"
+# include  <assert.h>
 
 
 static char *dump_path = NULL;
 static struct lxt2_wr_trace *dump_file = NULL;
+
+static void* lxt2_thread(void*arg);
 
 struct vcd_info {
       vpiHandle item;
@@ -172,15 +174,12 @@ static void show_this_item(struct vcd_info*info)
       if (vpi_get(vpiType, info->item) == vpiRealVar) {
 	    value.format = vpiRealVal;
 	    vpi_get_value(info->item, &value);
-	    lxt2_wr_emit_value_double(dump_file, info->sym, 0,
-				      value.value.real);
+	    vcd_work_emit_double(info->sym, value.value.real);
 
       } else {
 	    value.format = vpiBinStrVal;
 	    vpi_get_value(info->item, &value);
-	    lxt2_wr_emit_value_bit_string(dump_file, info->sym,
-	                                  0 /* array row */,
-	                                  value.value.str);
+	    vcd_work_emit_bits(info->sym, value.value.str);
       }
 }
 
@@ -190,16 +189,9 @@ static void show_this_item_x(struct vcd_info*info)
       if (vpi_get(vpiType,info->item) == vpiRealVar) {
 	      /* Should write a NaN here? */
       } else {
-	    lxt2_wr_emit_value_bit_string(dump_file, info->sym, 0, "x");
+	    vcd_work_emit_bits(info->sym, "x");
       }
 }
-
-
-/*
- * managed qsorted list of scope names for duplicates bsearching
- */
-
-struct vcd_names_list_s lxt_tab;
 
 
 static int dumpvars_status = 0; /* 0:fresh 1:cb installed, 2:callback done */
@@ -235,7 +227,7 @@ static PLI_INT32 variable_cb_2(p_cb_data cause)
       PLI_UINT64 now = timerec_to_time64(cause->time);
 
       if (now != vcd_cur_time) {
-            lxt2_wr_set_time64(dump_file, now);
+	    vcd_work_set_time(now);
 	    vcd_cur_time = now;
       }
 
@@ -290,7 +282,7 @@ static PLI_INT32 dumpvars_cb(p_cb_data cause)
       vcd_cur_time = dumpvars_time;
 
       if (!dump_is_off) {
-            lxt2_wr_set_time64(dump_file, dumpvars_time);
+	    vcd_work_set_time(dumpvars_time);
 	    vcd_checkpoint();
       }
 
@@ -307,16 +299,17 @@ static PLI_INT32 finish_cb(p_cb_data cause)
 
       dumpvars_time = timerec_to_time64(cause->time);
       if (!dump_is_off && !dump_is_full && dumpvars_time != vcd_cur_time) {
-            lxt2_wr_set_time64(dump_file, dumpvars_time);
+	    vcd_work_set_time(dumpvars_time);
       }
 
+      vcd_work_terminate();
       for (cur = vcd_list ;  cur ;  cur = next) {
 	    next = cur->next;
 	    free(cur);
       }
       vcd_list = 0;
 
-      vcd_names_delete(&lxt_tab);
+      vcd_scope_names_delete();
       nexus_ident_delete();
       free(dump_path);
       dump_path = 0;
@@ -373,11 +366,11 @@ static PLI_INT32 sys_dumpoff_calltf(PLI_BYTE8*name)
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time) {
-	    lxt2_wr_set_time(dump_file, now64);
+	    vcd_work_set_time(now64);
 	    vcd_cur_time = now64;
       }
 
-      lxt2_wr_set_dumpoff(dump_file);
+      vcd_work_dumpoff();
       vcd_checkpoint_x();
 
       return 0;
@@ -400,11 +393,11 @@ static PLI_INT32 sys_dumpon_calltf(PLI_BYTE8*name)
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time) {
-	    lxt2_wr_set_time64(dump_file, now64);
+	    vcd_work_set_time(now64);
 	    vcd_cur_time = now64;
       }
 
-      lxt2_wr_set_dumpon(dump_file);
+      vcd_work_dumpon();
       vcd_checkpoint();
 
       return 0;
@@ -424,7 +417,7 @@ static PLI_INT32 sys_dumpall_calltf(PLI_BYTE8*name)
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time) {
-	    lxt2_wr_set_time64(dump_file, now64);
+	    vcd_work_set_time(now64);
 	    vcd_cur_time = now64;
       }
 
@@ -435,6 +428,7 @@ static PLI_INT32 sys_dumpall_calltf(PLI_BYTE8*name)
 
 static void *close_dumpfile(void)
 {
+      vcd_work_terminate();
       lxt2_wr_close(dump_file);
       dump_file = NULL;
       return NULL;
@@ -480,6 +474,7 @@ static void open_dumpfile(vpiHandle callh)
 	    lxt2_wr_set_partial_on(dump_file, 1);
 	    lxt2_wr_set_break_size(dump_file, use_file_size_limit);
 
+	    vcd_work_start(lxt2_thread, 0);
             atexit((void(*)(void))close_dumpfile);
       }
 }
@@ -527,7 +522,7 @@ static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
  */
 static PLI_INT32 sys_dumpflush_calltf(PLI_BYTE8*name)
 {
-      if (dump_file) lxt2_wr_flush(dump_file);
+      if (dump_file) vcd_work_flush();
 
       return 0;
 }
@@ -697,10 +692,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  vpi_printf("LXT2 info: scanning scope %s, %u levels\n",
 		             fullname, depth);
 #endif
-		  nskip = 0 != vcd_names_search(&lxt_tab, fullname);
+		  nskip = vcd_scope_names_test(fullname);
 
 		  if (!nskip)
-			vcd_names_add(&lxt_tab, fullname);
+			vcd_scope_names_add(fullname);
 		  else
 		    vpi_printf("LXT2 warning: ignoring signals in "
 		               "previously scanned scope %s\n", fullname);
@@ -784,7 +779,6 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 
 	    int dep = draw_scope(item);
 
-	    vcd_names_sort(&lxt_tab);
 	    scan_item(depth, item, 0);
 
 	    while (dep--) pop_scope();
@@ -796,6 +790,45 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 	    lxt2_wr_set_partial_off(dump_file);
       }
 
+      return 0;
+}
+
+static void* lxt2_thread(void*arg)
+{
+      int run_flag = 1;
+      while (run_flag) {
+	    struct vcd_work_item_s*cell = vcd_work_thread_peek();
+
+	    switch (cell->type) {
+		case WT_NONE:
+		  break;
+		case WT_FLUSH:
+		  lxt2_wr_flush(dump_file);
+		  break;
+		case WT_DUMPON:
+		  lxt2_wr_set_dumpon(dump_file);
+		  break;
+		case WT_DUMPOFF:
+		  lxt2_wr_set_dumpoff(dump_file);
+		  break;
+		case WT_SET_TIME:
+		  lxt2_wr_set_time64(dump_file, cell->op_.val_u64);
+		  break;
+		case WT_EMIT_DOUBLE:
+		  lxt2_wr_emit_value_double(dump_file, cell->sym_.lxt2,
+					    0, cell->op_.val_double);
+		case WT_EMIT_BITS:
+		  lxt2_wr_emit_value_bit_string(dump_file, cell->sym_.lxt2,
+						0, cell->op_.val_char);
+		  free(cell->op_.val_char);
+		  break;
+		case WT_TERMINATE:
+		  run_flag = 0;
+		  break;
+	    }
+
+	    vcd_work_thread_pop();
+      }
       return 0;
 }
 
