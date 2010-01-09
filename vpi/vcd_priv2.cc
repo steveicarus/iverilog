@@ -21,6 +21,8 @@
 # include  <map>
 # include  <set>
 # include  <string>
+# include  <stdlib.h>
+# include  <string.h>
 # include  <assert.h>
 
 /*
