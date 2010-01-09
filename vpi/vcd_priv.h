@@ -69,7 +69,6 @@ EXTERN void vcd_scope_names_delete(void);
 
 typedef enum vcd_work_item_type_e {
       WT_NONE,
-      WT_SET_TIME,
       WT_EMIT_BITS,
       WT_EMIT_DOUBLE,
       WT_DUMPON,
@@ -80,15 +79,21 @@ typedef enum vcd_work_item_type_e {
 
 struct lxt2_wr_symbol;
 
+# define VAL_CHAR_ARRAY_SIZE 64
 struct vcd_work_item_s {
       vcd_work_item_type_t type;
+      uint64_t time;
       union {
 	    struct lxt2_wr_symbol*lxt2;
       } sym_;
+
       union {
 	    double val_double;
+#ifdef VAL_CHAR_ARRAY_SIZE
+	    char val_char[VAL_CHAR_ARRAY_SIZE];
+#else
 	    char*val_char;
-	    uint64_t val_u64;
+#endif
       } op_;
 };
 

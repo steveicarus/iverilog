@@ -795,9 +795,17 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 
 static void* lxt2_thread(void*arg)
 {
+	/* Keep track of the current time, and only call the set_time
+	   function when the time changes. */
+      uint64_t cur_time = 0;
       int run_flag = 1;
       while (run_flag) {
 	    struct vcd_work_item_s*cell = vcd_work_thread_peek();
+
+	    if (cell->time != cur_time) {
+		  cur_time = cell->time;
+		  lxt2_wr_set_time64(dump_file, cur_time);
+	    }
 
 	    switch (cell->type) {
 		case WT_NONE:
@@ -811,16 +819,13 @@ static void* lxt2_thread(void*arg)
 		case WT_DUMPOFF:
 		  lxt2_wr_set_dumpoff(dump_file);
 		  break;
-		case WT_SET_TIME:
-		  lxt2_wr_set_time64(dump_file, cell->op_.val_u64);
-		  break;
 		case WT_EMIT_DOUBLE:
 		  lxt2_wr_emit_value_double(dump_file, cell->sym_.lxt2,
 					    0, cell->op_.val_double);
+		  break;
 		case WT_EMIT_BITS:
 		  lxt2_wr_emit_value_bit_string(dump_file, cell->sym_.lxt2,
 						0, cell->op_.val_char);
-		  free(cell->op_.val_char);
 		  break;
 		case WT_TERMINATE:
 		  run_flag = 0;
@@ -829,6 +834,7 @@ static void* lxt2_thread(void*arg)
 
 	    vcd_work_thread_pop();
       }
+
       return 0;
 }
 

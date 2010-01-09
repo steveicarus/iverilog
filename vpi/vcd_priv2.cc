@@ -21,6 +21,7 @@
 # include  <map>
 # include  <set>
 # include  <string>
+# include  <assert.h>
 
 /*
    Nexus Id cache
@@ -81,7 +82,7 @@ extern "C" void vcd_scope_names_delete(void)
 
 static pthread_t work_thread;
 
-static const unsigned WORK_QUEUE_SIZE = 512*1024;
+static const unsigned WORK_QUEUE_SIZE = 128*1024;
 static struct vcd_work_item_s work_queue[WORK_QUEUE_SIZE];
 static volatile unsigned work_queue_next = 0;
 static volatile unsigned work_queue_fill = 0;
@@ -90,6 +91,8 @@ static pthread_mutex_t work_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  work_queue_is_empty_sig = PTHREAD_COND_INITIALIZER;
 static pthread_cond_t  work_queue_notempty_sig = PTHREAD_COND_INITIALIZER;
 static pthread_cond_t  work_queue_notfull_sig = PTHREAD_COND_INITIALIZER;
+
+static uint64_t work_queue_next_time = 0;
 
 struct vcd_work_item_s* vcd_work_thread_peek(void)
 {
@@ -115,7 +118,14 @@ void vcd_work_thread_pop(void)
       unsigned use_fill = work_queue_fill - 1;
       work_queue_fill = use_fill;
 
-      unsigned use_next = work_queue_next + 1;
+      unsigned use_next = work_queue_next;
+#ifndef VAL_CHAR_ARRAY_SIZE
+      struct vcd_work_item_s*cell = work_queue + use_next;
+      if (cell->type == WT_EMIT_BITS) {
+	    free(cell->op_.val_char);
+      }
+#endif
+      use_next += 1;
       if (use_next >= WORK_QUEUE_SIZE)
 	    use_next = 0;
       work_queue_next = use_next;
@@ -153,13 +163,17 @@ static struct vcd_work_item_s* grab_item(void)
       if (cur >= WORK_QUEUE_SIZE)
 	    cur -= WORK_QUEUE_SIZE;
 
-      return work_queue + cur;
+	// Write the new timestamp into the work item.
+      struct vcd_work_item_s*cell = work_queue + cur;
+      cell->time = work_queue_next_time;
+      return cell;
 }
 
 static void unlock_item(void)
 {
-      work_queue_fill += 1;
-      if (work_queue_fill == 1)
+      unsigned use_fill = work_queue_fill + 1;
+      work_queue_fill = use_fill;
+      if (use_fill == 1)
 	    pthread_cond_signal(&work_queue_notempty_sig);
 
       pthread_mutex_unlock(&work_queue_mutex);
@@ -188,10 +202,7 @@ void vcd_work_dumpoff(void)
 
 void vcd_work_set_time(uint64_t val)
 {
-      struct vcd_work_item_s*cell = grab_item();
-      cell->type = WT_SET_TIME;
-      cell->op_.val_u64 = val;
-      unlock_item();
+      work_queue_next_time = val;
 }
 
 void vcd_work_emit_double(struct lxt2_wr_symbol*sym, double val)
@@ -205,10 +216,17 @@ void vcd_work_emit_double(struct lxt2_wr_symbol*sym, double val)
 
 void vcd_work_emit_bits(struct lxt2_wr_symbol*sym, const char* val)
 {
+
       struct vcd_work_item_s*cell = grab_item();
       cell->type = WT_EMIT_BITS;
       cell->sym_.lxt2 = sym;
+#ifdef VAL_CHAR_ARRAY_SIZE
+      size_t need_len = strlen(val) + 1;
+      assert(need_len <= VAL_CHAR_ARRAY_SIZE);
+      memcpy(cell->op_.val_char, val, need_len);
+#else
       cell->op_.val_char = strdup(val);
+#endif
       unlock_item();
 }
 
