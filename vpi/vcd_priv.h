@@ -79,7 +79,6 @@ typedef enum vcd_work_item_type_e {
 
 struct lxt2_wr_symbol;
 
-# define VAL_CHAR_ARRAY_SIZE 64
 struct vcd_work_item_s {
       vcd_work_item_type_t type;
       uint64_t time;
@@ -89,11 +88,7 @@ struct vcd_work_item_s {
 
       union {
 	    double val_double;
-#ifdef VAL_CHAR_ARRAY_SIZE
-	    char val_char[VAL_CHAR_ARRAY_SIZE];
-#else
 	    char*val_char;
-#endif
       } op_;
 };
 
