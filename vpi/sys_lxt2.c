@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -45,19 +45,73 @@ static struct lxt2_wr_trace *dump_file = NULL;
 
 static void* lxt2_thread(void*arg);
 
+/*
+ * Manage a table of all the dump-enabled vcd item. The cells of this
+ * table are allocated incrementally, but are released all at once, so
+ * we can allocate the items in chunks.
+ */
 struct vcd_info {
       vpiHandle item;
       vpiHandle cb;
-      struct t_vpi_time time;
       struct lxt2_wr_symbol *sym;
-      struct vcd_info *next;
       struct vcd_info *dmp_next;
-      int scheduled;
 };
 
+struct vcd_info_chunk {
+      struct vcd_info_chunk*chunk_next;
+      uint16_t chunk_fill;
+      struct vcd_info data[0x10000];
+};
 
-static struct vcd_info *vcd_list = NULL;
-static struct vcd_info *vcd_dmp_list = NULL;
+struct vcd_info_chunk*info_chunk_list = 0;
+
+struct vcd_info*new_vcd_info(void)
+{
+      struct vcd_info_chunk*cur_chunk = info_chunk_list;
+      if (cur_chunk == 0 || cur_chunk->chunk_fill == 0xffff) {
+	    struct vcd_info_chunk*tmp = calloc(1, sizeof(struct vcd_info_chunk));
+	    tmp->chunk_fill = 0;
+	    tmp->chunk_next = cur_chunk;
+	    info_chunk_list = cur_chunk = tmp;
+	    return info_chunk_list->data + 0;
+      }
+
+      struct vcd_info*ptr = cur_chunk->data + cur_chunk->chunk_fill;
+      cur_chunk->chunk_fill += 1;
+      return ptr;
+}
+
+void functor_all_vcd_info( void (*fun) (struct vcd_info*info) )
+{
+      struct vcd_info_chunk*cur;
+      for (cur = info_chunk_list ; cur ; cur = cur->chunk_next) {
+	    int idx;
+	    struct vcd_info*ptr;
+	    for (idx=0, ptr=cur->data ; idx <= cur->chunk_fill ; idx += 1, ptr += 1)
+		  fun (ptr);
+      }
+}
+
+void delete_all_vcd_info(void)
+{
+      while (info_chunk_list) {
+	    struct vcd_info_chunk*tmp = info_chunk_list->chunk_next;
+	    free(info_chunk_list);
+	    info_chunk_list = tmp;
+      }
+}
+
+/*
+ * Use this pointer to keep a list of vcd_info items that are
+ * scheduled to be dumped. Use the VCD_INFO_ENDP value as a trailer
+ * pointer instead of 0 so that individual vcd_info objects can tell
+ * if they are in the list already, even if they are at the end of the
+ * list.
+ */
+# define VCD_INFO_ENDP ((struct vcd_info*)1)
+static struct vcd_info *vcd_dmp_list = VCD_INFO_ENDP;
+static struct t_vpi_time vcd_dmp_time;
+
 static PLI_UINT64 vcd_cur_time = 0;
 static int dump_is_off = 0;
 static long dump_limit = 0;
@@ -207,23 +261,17 @@ __inline__ static int dump_header_pending(void)
  */
 static void vcd_checkpoint()
 {
-      struct vcd_info*cur;
-
-      for (cur = vcd_list ;  cur ;  cur = cur->next)
-	    show_this_item(cur);
+      functor_all_vcd_info( show_this_item );
 }
 
 static void vcd_checkpoint_x()
 {
-      struct vcd_info*cur;
-
-      for (cur = vcd_list ;  cur ;  cur = cur->next)
-	    show_this_item_x(cur);
+      functor_all_vcd_info( show_this_item_x );
 }
 
 static PLI_INT32 variable_cb_2(p_cb_data cause)
 {
-      struct vcd_info* info = vcd_dmp_list;
+      assert(cause->time->type == vpiSimTime);
       PLI_UINT64 now = timerec_to_time64(cause->time);
 
       if (now != vcd_cur_time) {
@@ -231,12 +279,12 @@ static PLI_INT32 variable_cb_2(p_cb_data cause)
 	    vcd_cur_time = now;
       }
 
-      do {
-           show_this_item(info);
-           info->scheduled = 0;
-      } while ((info = info->dmp_next) != 0);
-
-      vcd_dmp_list = 0;
+      while (vcd_dmp_list != VCD_INFO_ENDP) {
+	    struct vcd_info* info = vcd_dmp_list;
+	    show_this_item(info);
+	    vcd_dmp_list = info->dmp_next;
+	    info->dmp_next = 0;
+      }
 
       return 0;
 }
@@ -249,7 +297,7 @@ static PLI_INT32 variable_cb_1(p_cb_data cause)
       if (dump_is_full) return 0;
       if (dump_is_off) return 0;
       if (dump_header_pending()) return 0;
-      if (info->scheduled) return 0;
+      if (info->dmp_next) return 0;
 
       if ((dump_limit > 0) && (ftell(dump_file->handle) > dump_limit)) {
             dump_is_full = 1;
@@ -258,14 +306,15 @@ static PLI_INT32 variable_cb_1(p_cb_data cause)
             return 0;
       }
 
-      if (!vcd_dmp_list) {
+      if (vcd_dmp_list == VCD_INFO_ENDP) {
+	  vcd_dmp_time.type = vpiSuppressTime;
           cb = *cause;
+	  cb.time   = &vcd_dmp_time;
           cb.reason = cbReadOnlySynch;
           cb.cb_rtn = variable_cb_2;
           vpi_register_cb(&cb);
       }
 
-      info->scheduled = 1;
       info->dmp_next  = vcd_dmp_list;
       vcd_dmp_list    = info;
 
@@ -291,8 +340,6 @@ static PLI_INT32 dumpvars_cb(p_cb_data cause)
 
 static PLI_INT32 finish_cb(p_cb_data cause)
 {
-      struct vcd_info *cur, *next;
-
       if (finish_status != 0) return 0;
 
       finish_status = 1;
@@ -303,11 +350,7 @@ static PLI_INT32 finish_cb(p_cb_data cause)
       }
 
       vcd_work_terminate();
-      for (cur = vcd_list ;  cur ;  cur = next) {
-	    next = cur->next;
-	    free(cur);
-      }
-      vcd_list = 0;
+      delete_all_vcd_info();
 
       vcd_scope_names_delete();
       nexus_ident_delete();
@@ -610,26 +653,22 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 		  if (nexus_id) set_nexus_ident(nexus_id, ident);
 
-		  info = malloc(sizeof(*info));
+		  info = new_vcd_info();
 
-		  info->time.type = vpiSimTime;
 		  info->item  = item;
 		  info->sym   = lxt2_wr_symbol_add(dump_file, ident,
 		                                   0 /* array rows */,
 		                                   vpi_get(vpiLeftRange, item),
 		                                   vpi_get(vpiRightRange, item),
 		                                   LXT2_WR_SYM_F_BITS);
-		  info->scheduled = 0;
+		  info->dmp_next = 0;
 
-		  cb.time      = &info->time;
+		  cb.time      = 0;
 		  cb.user_data = (char*)info;
 		  cb.value     = NULL;
 		  cb.obj       = item;
 		  cb.reason    = cbValueChange;
 		  cb.cb_rtn    = variable_cb_1;
-
-		  info->next  = vcd_list;
-		  vcd_list    = info;
 
 		  info->cb    = vpi_register_cb(&cb);
 
@@ -651,25 +690,21 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	      ident = strdup_sh(&name_heap, tmp);
 	      free(tmp);
 	    }
-	    info = malloc(sizeof(*info));
+	    info = new_vcd_info();
 
-	    info->time.type = vpiSimTime;
 	    info->item = item;
 	    info->sym  = lxt2_wr_symbol_add(dump_file, ident,
 	                                    0 /* array rows */,
 	                                    vpi_get(vpiSize, item)-1,
 	                                    0, LXT2_WR_SYM_F_DOUBLE);
-	    info->scheduled = 0;
+	    info->dmp_next = 0;
 
-	    cb.time      = &info->time;
+	    cb.time      = 0;
 	    cb.user_data = (char*)info;
 	    cb.value     = NULL;
 	    cb.obj       = item;
 	    cb.reason    = cbValueChange;
 	    cb.cb_rtn    = variable_cb_1;
-
-	    info->next  = vcd_list;
-	    vcd_list    = info;
 
 	    info->cb    = vpi_register_cb(&cb);
 
