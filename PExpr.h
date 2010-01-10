@@ -1,7 +1,7 @@
 #ifndef __PExpr_H
 #define __PExpr_H
 /*
- * Copyright (c) 1998-2009 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2010 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -307,7 +307,8 @@ class PEIdent : public PExpr {
       NetExpr* calculate_up_do_base_(Design*, NetScope*) const;
       bool calculate_param_range_(Design*, NetScope*,
 				  const NetExpr*msb_ex, long&msb,
-				  const NetExpr*lsb_ex, long&lsb) const;
+				  const NetExpr*lsb_ex, long&lsb,
+				  long length) const;
 
       bool calculate_up_do_width_(Design*, NetScope*, unsigned long&wid) const;
 
