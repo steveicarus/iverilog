@@ -76,8 +76,8 @@ struct vcd_info*new_vcd_info(void)
 	    return info_chunk_list->data + 0;
       }
 
-      struct vcd_info*ptr = cur_chunk->data + cur_chunk->chunk_fill;
       cur_chunk->chunk_fill += 1;
+      struct vcd_info*ptr = cur_chunk->data + cur_chunk->chunk_fill;
       return ptr;
 }
 
