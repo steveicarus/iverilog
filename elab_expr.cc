@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1869,15 +1869,14 @@ NetExpr* PEIdent::calculate_up_do_base_(Design*des, NetScope*scope) const
 
 bool PEIdent::calculate_param_range_(Design*des, NetScope*scope,
 				     const NetExpr*par_msb, long&par_msv,
-				     const NetExpr*par_lsb, long&par_lsv) const
+				     const NetExpr*par_lsb, long&par_lsv,
+				     long length) const
 {
       if (par_msb == 0) {
 	      // If the parameter doesn't have an explicit range, then
-	      // just return range values of 0:0. The par_msv==0 is
-	      // correct. The par_msv is not necessarily correct, but
-	      // clients of this function don't need a correct value.
+	      // just return range values of [length-1:0].
 	    ivl_assert(*this, par_lsb == 0);
-	    par_msv = 0;
+	    par_msv = length-1;
 	    par_lsv = 0;
 	    return true;
       }
@@ -2211,13 +2210,13 @@ static verinum param_part_select_bits(const verinum&par_val, long wid,
       for (long idx = 0 ; idx < wid ; idx += 1) {
 	    long off = idx + lsv;
 	    if (off < 0)
-		  result.set(idx, verinum::Vx);
+		  continue;
 	    else if (off < (long)par_val.len())
 		  result.set(idx, par_val.get(off));
 	    else if (par_val.is_string()) // Pad strings with nulls.
 		  result.set(idx, verinum::V0);
 	    else if (par_val.has_len()) // Pad sized parameters with X
-		  result.set(idx, verinum::Vx);
+		  continue;
 	    else // Unsized parameters are "infinite" width.
 		  result.set(idx, sign_bit(par_val));
       }
@@ -2242,18 +2241,28 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
       if (!flag)
 	    return 0;
 
+      const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
+      ivl_assert(*this, par_ex);
+
+
       long par_msv, par_lsv;
-      flag = calculate_param_range_(des, scope, par_msb, par_msv, par_lsb, par_lsv);
-      if (!flag)
-	    return 0;
+      if (! calculate_param_range_(des, scope, par_msb, par_msv,
+                                   par_lsb, par_lsv,
+                                   par_ex->value().len())) return 0;
 
       if (! parts_defined_flag) {
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: Part select of parameter "
-		       << "has x/z bits, so resorting to 'bx result." << endl;
+	    if (warn_ob_select) {
+		  const index_component_t&psel = path_.back().index.back();
+		  perm_string name = peek_tail_name(path_);
+		  cerr << get_fileline() << ": warning: "
+		          "Undefined part select [" << *(psel.msb) << ":"
+		       << *(psel.lsb) << "] for parameter '" << name
+		       << "'." << endl;
+		  cerr << get_fileline() << ":        : "
+		          "Replacing select with a constant 'bx." << endl;
+	    }
 
-	    long wid = 1 + labs(par_msv-par_lsv);
-	    NetEConst*tmp = make_const_x(wid);
+	    NetEConst*tmp = new NetEConst(verinum(verinum::Vx, 1, false));
 	    tmp->set_line(*this);
 	    return tmp;
       }
@@ -2264,7 +2273,8 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 	// direction matches the part select direction. After that,
 	// we only need the par_lsv.
       if ((msv>lsv && par_msv<par_lsv) || (msv<lsv && par_msv>=par_lsv)) {
-	    cerr << get_fileline() << ": error: Part select "
+	    perm_string name = peek_tail_name(path_);
+	    cerr << get_fileline() << ": error: Part select " << name
 		 << "[" << msv << ":" << lsv << "] is out of order." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2272,15 +2282,40 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 
       long wid = 1 + labs(msv-lsv);
 
-      if (debug_elaborate)
-	    cerr << get_fileline() << ": debug: Calculate part select "
-		 << "[" << msv << ":" << lsv << "] from range "
-		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
+	// Watch out for reversed bit numbering. We're making
+	// the part select from LSB to MSB.
+      long base;
+      if (par_msv < par_lsv) {
+	    base = par_lsv - lsv;
+      } else {
+	    base = lsv - par_lsv;
+      }
 
-      const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
-      ivl_assert(*this, par_ex);
+      if (warn_ob_select) {
+	    if (base < 0) {
+		  perm_string name = peek_tail_name(path_);
+		  cerr << get_fileline() << ": warning: Part select "
+		       << "[" << msv << ":" << lsv << "] is selecting "
+		          "before the parameter " << name << "[";
+		  if (par_ex->value().has_len()) cerr << par_msv;
+		  else cerr << "<inf>";
+		  cerr << ":" << par_lsv << "]." << endl;
+		  cerr << get_fileline() << ":        : Replacing "
+		          "the out of bound bits with 'bx." << endl;
+	    }
+	    if (par_ex->value().has_len() &&
+                (base+wid > (long)par->expr_width())) {
+		  perm_string name = peek_tail_name(path_);
+		  cerr << get_fileline() << ": warning: Part select "
+		       << name << "[" << msv << ":" << lsv << "] is selecting "
+		          "after the parameter " << name << "[" << par_msv
+		       << ":" << par_lsv << "]." << endl;
+		  cerr << get_fileline() << ":        : Replacing "
+		          "the out of bound bits with 'bx." << endl;
+	    }
+      }
 
-      verinum result = param_part_select_bits(par_ex->value(), wid, lsv-par_lsv);
+      verinum result = param_part_select_bits(par_ex->value(), wid, base);
       NetEConst*result_ex = new NetEConst(result);
       result_ex->set_line(*this);
 
@@ -2324,18 +2359,19 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 					       const NetExpr*par_msb,
 					       const NetExpr*par_lsb) const
 {
+      const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
+      ivl_assert(*this, par_ex);
+
       long par_msv, par_lsv;
       if(! calculate_param_range_(des, scope, par_msb, par_msv,
-                                  par_lsb, par_lsv)) return 0;
+                                  par_lsb, par_lsv,
+                                  par_ex->value().len())) return 0;
 
       NetExpr*base = calculate_up_do_base_(des, scope);
       if (base == 0) return 0;
 
       unsigned long wid = 0;
       calculate_up_do_width_(des, scope, wid);
-
-      const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
-      ivl_assert(*this, par_ex);
 
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: Calculate part select "
@@ -2406,18 +2442,19 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 					       const NetExpr*par_msb,
 					       const NetExpr*par_lsb) const
 {
+      const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
+      ivl_assert(*this, par_ex);
+
       long par_msv, par_lsv;
       if(! calculate_param_range_(des, scope, par_msb, par_msv,
-                                  par_lsb, par_lsv)) return 0;
+                                  par_lsb, par_lsv,
+                                  par_ex->value().len())) return 0;
 
       NetExpr*base = calculate_up_do_base_(des, scope);
       if (base == 0) return 0;
 
       unsigned long wid = 0;
       calculate_up_do_width_(des, scope, wid);
-
-      const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
-      ivl_assert(*this, par_ex);
 
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: Calculate part select "
@@ -2565,11 +2602,16 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 		    // not fully defined, then we know that the result
 		    // must be 1'bx.
 		  if (! re->value().is_defined()) {
-			if (debug_elaborate)
-			      cerr << get_fileline() << ": debug: "
-				   << "Constant bit select of parameter is "
-				   << "not defined. Return constant X value."
-				   << endl;
+			if (warn_ob_select) {
+			      perm_string name = peek_tail_name(path_);
+			      cerr << get_fileline() << ": warning: "
+				      "Constant undefined bit select ["
+				   << re->value() << "] for parameter '"
+				   << name << "'." << endl;
+			      cerr << get_fileline() << ":        : "
+				      "Replacing select with a constant "
+				      "1'bx." << endl;
+			}
 			NetEConst*res = make_const_x(1);
 			res->set_line(*this);
 			return res;
@@ -2592,7 +2634,7 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 		  if (par_mv >= par_lv) {
 			ridx -= par_lv;
 		  } else {
-			ridx = par_mv - ridx + par_lv;
+			ridx = par_lv - ridx;
 		  }
 
 		  if ((ridx >= 0) && ((unsigned long) ridx < lv.len())) {
@@ -2603,7 +2645,24 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 			      rb = lv[lv.len()-1];
 			else
 			      rb = verinum::V0;
+		  } else {
+			if (warn_ob_select) {
+			      perm_string name = peek_tail_name(path_);
+			      cerr << get_fileline() << ": warning: "
+			              "Constant bit select [" << rv.as_long()
+			           << "] is ";
+			      if (ridx < 0) cerr << "before ";
+			      else cerr << "after ";
+			      cerr << name << "[";
+			      if (lv.has_len()) cerr << par_mv;
+			      else cerr << "<inf>";
+			      cerr << ":" << par_lv << "]." << endl;
+			      cerr << get_fileline() << ":        : "
+			              "Replacing select with a constant "
+			              "1'bx." << endl;
+			}
 		  }
+
 
 		  NetEConst*re2 = new NetEConst(verinum(rb, 1));
 		  delete tmp;
@@ -2803,27 +2862,67 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	/* But wait... if the part select expressions are not fully
 	   defined, then fall back on the tested width. */
       if (!parts_defined_flag) {
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: Part select is not fully "
-		       << "defined. Falling back on width of " << expr_width_
-		       << " and generating constant 'bx vector." << endl;
-
-	    NetEConst*tmp = make_const_x(expr_width_);
+	    if (warn_ob_select) {
+		  const index_component_t&psel = path_.back().index.back();
+		  cerr << get_fileline() << ": warning: "
+		          "Undefined part select [" << *(psel.msb) << ":"
+		       << *(psel.lsb) << "] for ";
+		  if (net->word_index()) cerr << "array word";
+		  else cerr << "vector";
+		  cerr << " '" << net->name();
+		  if (net->word_index()) cerr << "[]";
+		  cerr << "'." << endl;
+		  cerr << get_fileline() << ":        : "
+		          "Replacing select with a constant 'bx." << endl;
+	    }
+             
+	    NetEConst*tmp = new NetEConst(verinum(verinum::Vx, 1, false));
 	    tmp->set_line(*this);
 	    return tmp;
       }
 
-      if (net->sig()->sb_to_idx(msv) < net->sig()->sb_to_idx(lsv)) {
-	    cerr << get_fileline() << ": error: part select ["
-		 << msv << ":" << lsv << "] out of order." << endl;
+      long sb_lsb = net->sig()->sb_to_idx(lsv);
+      long sb_msb = net->sig()->sb_to_idx(msv);
+
+      if (sb_msb < sb_lsb) {
+	    cerr << get_fileline() << ": error: part select " << net->name();
+	    if (net->word_index()) cerr << "[]";
+	    cerr << "[" << msv << ":" << lsv << "] is out of order." << endl;
 	    des->errors += 1;
 	      //delete lsn;
 	      //delete msn;
 	    return net;
       }
 
-      long sb_lsb = net->sig()->sb_to_idx(lsv);
-      long sb_msb = net->sig()->sb_to_idx(msv);
+      if (warn_ob_select) {
+	    if ((sb_lsb >= (signed) net->vector_width()) ||
+	        (sb_msb >= (signed) net->vector_width())) {
+		  cerr << get_fileline() << ": warning: "
+		          "Part select " << "[" << msv << ":" << lsv
+		       << "] is selecting after the ";
+		  if (net->word_index()) cerr << "array word ";
+		  else cerr << "vector ";
+		  cerr << net->name();
+		  if (net->word_index()) cerr << "[]";
+		  cerr << "[" << net->msi() << ":" << net->lsi() << "]."
+		       << endl;
+		  cerr << get_fileline() << ":        : "
+		       << "Replacing the out of bound bits with 'bx." << endl;
+	    }
+	    if ((sb_msb < 0) || (sb_lsb < 0)) {
+		  cerr << get_fileline() << ": warning: "
+		          "Part select " << "[" << msv << ":" << lsv
+		       << "] is selecting before the ";
+		  if (net->word_index()) cerr << "array word ";
+		  else cerr << "vector ";
+		  cerr << net->name();
+		  if (net->word_index()) cerr << "[]";
+		  cerr << "[" << net->msi() << ":" << net->lsi() << "]."
+		       << endl;
+		  cerr << get_fileline() << ":        : "
+		          "Replacing the out of bound bits with 'bx." << endl;
+	    }
+      }
 
 	// If the part select covers exactly the entire
 	// vector, then do not bother with it. Return the
@@ -3050,9 +3149,23 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	// making a mux part in the netlist.
       if (NetEConst*msc = dynamic_cast<NetEConst*> (ex)) {
 
-	      // Special case: The bit select expresion is constant
+	      // Special case: The bit select expression is constant
 	      // x/z. The result of the expression is 1'bx.
 	    if (! msc->value().is_defined()) {
+		  if (warn_ob_select) {
+			cerr << get_fileline() << ": warning: "
+			        "Constant bit select [" << msc->value()
+			      << "] is undefined for ";
+			if (net->word_index()) cerr << "array word";
+			else cerr << "vector";
+			cerr << " '" << net->name();
+			if (net->word_index()) cerr << "[]";
+			cerr  << "'." << endl;
+			cerr << get_fileline() << ":        : "
+			     << "Replacing select with a constant 1'bx."
+			     << endl;
+		  }
+
 		  NetEConst*tmp = make_const_x(1);
 		  tmp->set_line(*this);
 		  delete ex;
@@ -3060,21 +3173,32 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	    }
 
 	    long msv = msc->value().as_long();
-	    unsigned idx = net->sig()->sb_to_idx(msv);
+	    long idx = net->sig()->sb_to_idx(msv);
 
-	    if (idx >= net->vector_width()) {
+	    if (idx >= (long)net->vector_width() || idx < 0) {
 		    /* The bit select is out of range of the
 		       vector. This is legal, but returns a
 		       constant 1'bx value. */
+		  if (warn_ob_select) {
+			cerr << get_fileline() << ": warning: "
+			        "Constant bit select [" << msv
+			      << "] is ";
+			if (idx < 0) cerr << "before ";
+			else cerr << "after ";
+			if (net->word_index()) cerr << "array word ";
+			else cerr << "vector ";
+			cerr << net->name();
+			if (net->word_index()) cerr << "[]";
+			cerr  << "[" << net->sig()->msb() << ":"
+			      << net->sig()->lsb() << "]." << endl;
+			cerr << get_fileline() << ":        : "
+			     << "Replacing select with a constant 1'bx."
+			     << endl;
+		  }
+
 		  NetEConst*tmp = make_const_x(1);
 		  tmp->set_line(*this);
 
-		  cerr << get_fileline() << ": warning: Bit select ["
-		       << msv << "] out of range of vector "
-		       << net->name() << "[" << net->sig()->msb()
-		       << ":" << net->sig()->lsb() << "]." << endl;
-		  cerr << get_fileline() << ":        : Replacing "
-		       << "expression with a constant 1'bx." << endl;
 		  delete ex;
 		  return tmp;
 	    }
