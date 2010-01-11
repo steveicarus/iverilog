@@ -583,6 +583,41 @@ void vvp_vector4_t::copy_from_(const vvp_vector4_t&that)
       }
 }
 
+/*
+ * The copy_inverted_from_ method is just like the copy_from_ method,
+ * except that we combine that with an invert. This allows the ~ and
+ * the assignment to be blended in many common cases.
+ */
+void vvp_vector4_t::copy_inverted_from_(const vvp_vector4_t&that)
+{
+      size_ = that.size_;
+      if (size_ > BITS_PER_WORD) {
+	    unsigned words = (size_+BITS_PER_WORD-1) / BITS_PER_WORD;
+	    abits_ptr_ = new unsigned long[2*words];
+	    bbits_ptr_ = abits_ptr_ + words;
+
+	    unsigned remaining = size_;
+	    unsigned idx = 0;
+	    while (remaining >= BITS_PER_WORD) {
+		  abits_ptr_[idx] = that.bbits_ptr_[idx] | ~that.abits_ptr_[idx];
+		  idx += 1;
+		  remaining -= BITS_PER_WORD;
+	    }
+	    if (remaining > 0) {
+		  unsigned long mask = (1UL<<remaining) - 1UL;
+		  abits_ptr_[idx] = mask & (that.bbits_ptr_[idx] | ~that.abits_ptr_[idx]);
+	    }
+
+	    for (unsigned idx = 0 ;  idx < words ;  idx += 1)
+		  bbits_ptr_[idx] = that.bbits_ptr_[idx];
+
+      } else {
+	    unsigned long mask = (size_<BITS_PER_WORD)? (1UL<<size_)-1UL : -1UL;
+	    abits_val_ = mask & (that.bbits_val_ | ~that.abits_val_);
+	    bbits_val_ = that.bbits_val_;
+      }
+}
+
 void vvp_vector4_t::allocate_words_(unsigned wid, unsigned long inita, unsigned long initb)
 {
       if (size_ > BITS_PER_WORD) {
@@ -1232,6 +1267,40 @@ bool vvp_vector4_t::eeq(const vvp_vector4_t&that) const
       if (mask > 0) {
 	    mask = (1UL << mask) - 1;
 	    return (abits_ptr_[words]&mask) == (that.abits_ptr_[words]&mask)
+		  && (bbits_ptr_[words]&mask) == (that.bbits_ptr_[words]&mask);
+      }
+
+      return true;
+}
+
+bool vvp_vector4_t::eq_xz(const vvp_vector4_t&that) const
+{
+      if (size_ != that.size_)
+	    return false;
+
+      if (size_ < BITS_PER_WORD) {
+	    unsigned long mask = (1UL << size_) - 1;
+	    return ((abits_val_|bbits_val_)&mask) == ((that.abits_val_|that.bbits_val_)&mask)
+		  && (bbits_val_&mask) == (that.bbits_val_&mask);
+      }
+
+      if (size_ == BITS_PER_WORD) {
+	    return ((abits_val_|bbits_val_) == (that.abits_val_|that.bbits_val_))
+		  && (bbits_val_ == that.bbits_val_);
+      }
+
+      unsigned words = size_ / BITS_PER_WORD;
+      for (unsigned idx = 0 ;  idx < words ;  idx += 1) {
+	    if ((abits_ptr_[idx]|bbits_ptr_[idx]) != (that.abits_ptr_[idx]|that.bbits_ptr_[idx]))
+		  return false;
+	    if (bbits_ptr_[idx] != that.bbits_ptr_[idx])
+		  return false;
+      }
+
+      unsigned long mask = size_%BITS_PER_WORD;
+      if (mask > 0) {
+	    mask = (1UL << mask) - 1;
+	    return ((abits_ptr_[words]|bbits_ptr_[words])&mask) == ((that.abits_ptr_[words]|that.bbits_ptr_[words])&mask)
 		  && (bbits_ptr_[words]&mask) == (that.bbits_ptr_[words]&mask);
       }
 
@@ -2557,12 +2626,11 @@ ostream& operator<< (ostream&out, const vvp_vector2_t&that)
 vvp_vector8_t::vvp_vector8_t(const vvp_vector8_t&that)
 {
       size_ = that.size_;
-      if (size_ <= PTR_THRESH) {
-	    memcpy(val_, that.val_, sizeof(val_));
+      if (size_ <= sizeof val_) {
+	    ptr_ = that.ptr_;
       } else {
-	    ptr_ = new vvp_scalar_t[size_];
-	    for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-		  ptr_[idx] = that.ptr_[idx];
+	    ptr_ = new unsigned char[size_];
+	    memcpy(ptr_, that.ptr_, size_);
       }
 }
 
@@ -2573,15 +2641,14 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that,
       if (size_ == 0)
 	    return;
 
-      vvp_scalar_t*tmp;
-      if (size_ <= PTR_THRESH)
-	    tmp = new (val_) vvp_scalar_t[PTR_THRESH];
-      else
-	    tmp = ptr_ = new vvp_scalar_t[size_];
-
-      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-	    tmp[idx] = vvp_scalar_t (that.value(idx), str0, str1);
-
+      if (size_ <= sizeof val_) {
+	    for (unsigned idx = 0 ; idx < size_ ; idx += 1)
+		  val_[idx] = vvp_scalar_t(that.value(idx),str0, str1).raw();
+      } else {
+	    ptr_ = new unsigned char[size_];
+	    for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
+		  ptr_[idx] = vvp_scalar_t(that.value(idx), str0, str1).raw();
+      }
 }
 
 const vvp_vector8_t vvp_vector8_t::nil;
@@ -2589,12 +2656,11 @@ const vvp_vector8_t vvp_vector8_t::nil;
 vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 {
 	// Assign to self.
-      if (this == &that || (size_ > PTR_THRESH && that.size_ > PTR_THRESH &&
-                            ptr_ == that.ptr_))
+      if (this == &that)
 	    return *this;
 
       if (size_ != that.size_) {
-	    if (size_ > PTR_THRESH)
+	    if (size_ > sizeof val_)
 		  delete[]ptr_;
 	    size_ = 0;
       }
@@ -2604,7 +2670,7 @@ vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 	    return *this;
       }
 
-      if (that.size_ <= PTR_THRESH) {
+      if (that.size_ <= sizeof val_) {
 	    size_ = that.size_;
 	    memcpy(val_, that.val_, sizeof(val_));
 	    return *this;
@@ -2612,11 +2678,10 @@ vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 
       if (size_ == 0) {
 	    size_ = that.size_;
-	    ptr_ = new vvp_scalar_t[size_];
+	    ptr_ = new unsigned char[size_];
       }
 
-      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-	    ptr_[idx] = that.ptr_[idx];
+      memcpy(ptr_, that.ptr_, size_);
 
       return *this;
 }
@@ -2625,12 +2690,12 @@ vvp_vector8_t vvp_vector8_t::subvalue(unsigned base, unsigned wid) const
 {
       vvp_vector8_t tmp (wid);
 
-      vvp_scalar_t* tmp_ptr = tmp.size_<=PTR_THRESH? reinterpret_cast<vvp_scalar_t*>(tmp.val_) : tmp.ptr_;
-      const vvp_scalar_t* ptr = size_<=PTR_THRESH? reinterpret_cast<const vvp_scalar_t*>(val_) : ptr_;
+      unsigned char*tmp_ptr = tmp.size_ <= sizeof val_? tmp.val_ : tmp.ptr_;
+      const unsigned char*use_ptr = size_ <= sizeof val_? val_ : ptr_;
 
       unsigned idx = 0;
       while ((idx < wid) && (base+idx < size_)) {
-	    tmp_ptr[idx] = ptr[base+idx];
+	    tmp_ptr[idx] = use_ptr[base+idx];
 	    idx += 1;
       }
 
@@ -2649,8 +2714,8 @@ vvp_vector8_t part_expand(const vvp_vector8_t&that, unsigned wid, unsigned off)
       assert(off < wid);
       vvp_vector8_t tmp (wid);
 
-      vvp_scalar_t* tmp_ptr = tmp.size_<=vvp_vector8_t::PTR_THRESH? reinterpret_cast<vvp_scalar_t*>(tmp.val_) : tmp.ptr_;
-      const vvp_scalar_t* that_ptr = that.size_<=vvp_vector8_t::PTR_THRESH? reinterpret_cast<const vvp_scalar_t*>(that.val_) : that.ptr_;
+      unsigned char* tmp_ptr = tmp.size_<= sizeof tmp.val_? tmp.val_ : tmp.ptr_;
+      const unsigned char* that_ptr = that.size_<= sizeof that.val_? that.val_ : that.ptr_;
 
       unsigned idx = off;
 

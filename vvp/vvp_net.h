@@ -211,6 +211,7 @@ class vvp_vector4_t {
 			     unsigned adr, unsigned wid);
 
       vvp_vector4_t(const vvp_vector4_t&that);
+      vvp_vector4_t(const vvp_vector4_t&that, bool invert_flag);
       vvp_vector4_t& operator= (const vvp_vector4_t&that);
 
       ~vvp_vector4_t();
@@ -239,6 +240,9 @@ class vvp_vector4_t {
 
 	// Test that the vectors are exactly equal
       bool eeq(const vvp_vector4_t&that) const;
+
+	// Test that the vectors are equal, with xz comparing as equal.
+      bool eq_xz(const vvp_vector4_t&that) const;
 
 	// Return true if there is an X or Z anywhere in the vector.
       bool has_xz() const;
@@ -283,6 +287,7 @@ class vvp_vector4_t {
 	// Initialize and operator= use this private method to copy
 	// the data from that object into this object.
       void copy_from_(const vvp_vector4_t&that);
+      void copy_inverted_from_(const vvp_vector4_t&that);
 
       void allocate_words_(unsigned size, unsigned long inita, unsigned long initb);
 
@@ -311,6 +316,14 @@ class vvp_vector4_t {
 inline vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that)
 {
       copy_from_(that);
+}
+
+inline vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that, bool invert_flag)
+{
+      if (invert_flag)
+	    copy_inverted_from_(that);
+      else
+	    copy_from_(that);
 }
 
 inline vvp_vector4_t::vvp_vector4_t(unsigned size__, vvp_bit4_t val)
@@ -442,8 +455,7 @@ inline void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
 
 inline vvp_vector4_t operator ~ (const vvp_vector4_t&that)
 {
-      vvp_vector4_t res = that;
-      res.invert();
+      vvp_vector4_t res (that, true);
       return res;
 }
 
@@ -701,6 +713,14 @@ class vvp_scalar_t {
       bool is_hiz() const { return value_ == 0; }
 
     private:
+	// This class and the vvp_vector8_t class are closely related,
+	// so allow vvp_vector8_t access to the raw encoding so that
+	// it can do compact vectoring of vvp_scalar_t objects.
+      friend class vvp_vector8_t;
+      explicit vvp_scalar_t(unsigned char raw) : value_(raw) { }
+      unsigned char raw() const { return value_; }
+
+    private:
       unsigned char value_;
 };
 
@@ -813,11 +833,10 @@ class vvp_vector8_t {
 	// This is the number of vvp_scalar_t objects we can keep in
 	// the val_ buffer. If the vector8 is bigger then this, then
 	// resort to allocations to get a larger buffer.
-      enum { PTR_THRESH = 8 };
       unsigned size_;
       union {
-	    vvp_scalar_t*ptr_;
-	    char val_[PTR_THRESH * sizeof(vvp_scalar_t)];
+	    unsigned char*ptr_;
+	    unsigned char val_[sizeof(void*)];
       };
 };
 
@@ -853,35 +872,36 @@ extern ostream& operator<< (ostream&, const vvp_vector8_t&);
 inline vvp_vector8_t::vvp_vector8_t(unsigned size__)
 : size_(size__)
 {
-      if (size_ <= PTR_THRESH) {
-	    new (val_) vvp_scalar_t[PTR_THRESH];
+      if (size_ <= sizeof val_) {
+	    ptr_ = 0;
       } else {
-	    ptr_ = new vvp_scalar_t[size_];
+	    ptr_ = new unsigned char[size_];
+	    memset(ptr_, 0, size_);
       }
 }
 
 inline vvp_vector8_t::~vvp_vector8_t()
 {
-      if (size_ > PTR_THRESH)
+      if (size_ > sizeof val_)
 	    delete[]ptr_;
 }
 
 inline vvp_scalar_t vvp_vector8_t::value(unsigned idx) const
 {
       assert(idx < size_);
-      if (size_ <= PTR_THRESH)
-	    return reinterpret_cast<const vvp_scalar_t*>(val_) [idx];
+      if (size_ <= sizeof val_)
+	    return vvp_scalar_t(val_[idx]);
       else
-	    return ptr_[idx];
+	    return vvp_scalar_t(ptr_[idx]);
 }
 
 inline void vvp_vector8_t::set_bit(unsigned idx, vvp_scalar_t val)
 {
       assert(idx < size_);
-      if (size_ <= PTR_THRESH)
-	    reinterpret_cast<vvp_scalar_t*>(val_) [idx] = val;
+      if (size_ <= sizeof val_)
+	    val_[idx] = val.raw();
       else
-	    ptr_[idx] = val;
+	    ptr_[idx] = val.raw();
 }
 
   // Exactly-equal for vvp_vector8_t is common and should be as tight
@@ -893,15 +913,10 @@ inline bool vvp_vector8_t::eeq(const vvp_vector8_t&that) const
       if (size_ == 0)
 	    return true;
 
-      if (size_ <= PTR_THRESH)
-	    return 0 == memcmp(val_, that.val_, sizeof(val_));
-
-      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1) {
-	    if (! ptr_[idx] .eeq( that.ptr_[idx] ))
-		return false;
-      }
-
-      return true;
+      if (size_ <= sizeof val_)
+	    return ptr_ == that.ptr_;
+      else
+	    return memcmp(ptr_, that.ptr_, size_) == 0;
 }
 
 /*

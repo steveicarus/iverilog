@@ -399,7 +399,7 @@ void vvp_fun_not::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       if (ptr.port() != 0)
 	    return;
 
-      if (input_ .eeq( bit ))
+      if (input_ .eq_xz( bit ))
 	    return;
 
       input_ = bit;
@@ -414,13 +414,7 @@ void vvp_fun_not::run_run()
       vvp_net_t*ptr = net_;
       net_ = 0;
 
-      vvp_vector4_t result (input_);
-
-      for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
-	    vvp_bit4_t bitbit = ~ result.value(idx);
-	    result.set_bit(idx, bitbit);
-      }
-
+      vvp_vector4_t result (input_, true /* invert */);
       ptr->send_vec4(result, 0);
 }
 

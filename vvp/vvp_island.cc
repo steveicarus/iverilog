@@ -173,7 +173,12 @@ vvp_island_port::~vvp_island_port()
 void vvp_island_port::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                                 vvp_context_t)
 {
-      recv_vec8(port, vvp_vector8_t(bit, 6, 6));
+      vvp_vector8_t tmp (bit, 6, 6);
+      if (invalue .eeq(tmp))
+	    return;
+
+      invalue = tmp;
+      island_->flag_island();
 }
 
 void vvp_island_port::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
