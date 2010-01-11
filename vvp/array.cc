@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1209,9 +1209,11 @@ class vvp_fun_arrayport_aa  : public vvp_fun_arrayport, public automatic_hooks_s
       void check_word_change(unsigned long addr);
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t);
+                     vvp_context_t context);
 
     private:
+      void check_word_change_(unsigned long addr, vvp_context_t context);
+
       struct __vpiScope*context_scope_;
       unsigned context_idx_;
 };
@@ -1297,23 +1299,36 @@ void vvp_fun_arrayport_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit
       }
 }
 
-void vvp_fun_arrayport_aa::check_word_change(unsigned long addr)
+void vvp_fun_arrayport_aa::check_word_change_(unsigned long addr,
+                                              vvp_context_t context)
 {
       unsigned long*port_addr = static_cast<unsigned long*>
-            (vthread_get_wt_context_item(context_idx_));
+            (vvp_get_context_item(context, context_idx_));
 
       if (addr != *port_addr)
 	    return;
 
       if (vpi_array_is_real(arr_)) {
-	    vvp_send_real(net_->out, array_get_word_r(arr_, addr),
-	                  vthread_get_wt_context());
+	    vvp_send_real(net_->out, array_get_word_r(arr_, addr), context);
       } else {
-	    vvp_send_vec4(net_->out, array_get_word(arr_, addr),
-	                  vthread_get_wt_context());
+	    vvp_send_vec4(net_->out, array_get_word(arr_, addr), context);
       }
 }
 
+void vvp_fun_arrayport_aa::check_word_change(unsigned long addr)
+{
+      if (arr_->scope->is_automatic) {
+            assert(vthread_get_wt_context());
+            check_word_change_(addr, vthread_get_wt_context());
+      } else {
+            vvp_context_t context = context_scope_->live_contexts;
+            while (context) {
+                  check_word_change_(addr, context);
+                  context = vvp_get_next_context(context);
+            }
+      }
+}
+  
 static void array_attach_port(vvp_array_t array, vvp_fun_arrayport*fun)
 {
       assert(fun->next_ == 0);
