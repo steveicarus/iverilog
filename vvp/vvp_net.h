@@ -873,6 +873,7 @@ inline vvp_vector8_t::vvp_vector8_t(unsigned size__)
 : size_(size__)
 {
       if (size_ <= sizeof val_) {
+	      // This should set all the bytes of val_ to 0
 	    ptr_ = 0;
       } else {
 	    ptr_ = new unsigned char[size_];
@@ -914,6 +915,7 @@ inline bool vvp_vector8_t::eeq(const vvp_vector8_t&that) const
 	    return true;
 
       if (size_ <= sizeof val_)
+	      // This is equivilent to memcmp(val_, that.val_, sizeof val_)==0
 	    return ptr_ == that.ptr_;
       else
 	    return memcmp(ptr_, that.ptr_, size_) == 0;

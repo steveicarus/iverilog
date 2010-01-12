@@ -2642,6 +2642,7 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that,
 	    return;
 
       if (size_ <= sizeof val_) {
+	    ptr_ = 0; // Prefill all val_ bytes
 	    for (unsigned idx = 0 ; idx < size_ ; idx += 1)
 		  val_[idx] = vvp_scalar_t(that.value(idx),str0, str1).raw();
       } else {
