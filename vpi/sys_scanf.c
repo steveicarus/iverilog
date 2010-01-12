@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -121,7 +121,7 @@ static double float_string(struct byte_source*src)
 	    }
 
 	    while (isdigit(ch)) {
-		  src = realloc(str, len+2);
+		  str = realloc(str, len+2);
 		  str[len++] = ch;
 		  ch = byte_getc(src);
 	    }
