@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -248,68 +248,6 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
       return flag;
 }
 
-bool PExpr::elaborate_sig(Design*des, NetScope*scope) const
-{
-      return true;
-}
-
-bool PEConcat::elaborate_sig(Design*des, NetScope*scope) const
-{
-      bool flag = true;
-      for (unsigned idx = 0 ; idx < parms_.count() ; idx += 1)
-	    flag = parms_[idx]->elaborate_sig(des, scope) && flag;
-
-      return flag;
-}
-
-bool PEIdent::elaborate_sig(Design*des, NetScope*scope) const
-{
-      NetNet*       sig = 0;
-      const NetExpr*par = 0;
-      NetEvent*     eve = 0;
-
-	// If implicit net creation is turned off, then stop now.
-      if (scope->default_nettype() == NetNet::NONE)
-	    return true;
-      if (error_implicit)
-	    return true;
-
-      symbol_search(this, des, scope, path_, sig, par, eve);
-
-      if (eve != 0)
-	    return false;
-
-      if (par != 0)
-	    return true;
-
-      if (sig == 0)
-	    sig = make_implicit_net_(des, scope);
-
-      return sig != 0;
-}
-
-bool PEBinary::elaborate_sig(Design*des, NetScope*scope) const
-{
-      bool flag = true;
-
-      flag = left_->elaborate_sig(des, scope)  && flag;
-      flag = right_->elaborate_sig(des, scope) && flag;
-      return flag;
-}
-
-bool PETernary::elaborate_sig(Design*des, NetScope*scope) const
-{
-      bool flag = true;
-      flag = tru_->elaborate_sig(des, scope)  && flag;
-      flag = fal_->elaborate_sig(des, scope)  && flag;
-      return flag;
-}
-
-bool PEUnary::elaborate_sig(Design*des, NetScope*scope) const
-{
-      return expr_->elaborate_sig(des, scope);
-}
-
 bool PGate::elaborate_sig(Design*des, NetScope*scope) const
 {
       return true;
@@ -317,33 +255,11 @@ bool PGate::elaborate_sig(Design*des, NetScope*scope) const
 
 bool PGBuiltin::elaborate_sig(Design*des, NetScope*scope) const
 {
-      bool flag = true;
-
-      for (unsigned idx = 0 ; idx < pin_count() ; idx += 1) {
-	    const PExpr* pin_expr = pin(idx);
-	    if (pin_expr == 0) {
-		    // If there is no pin expression for this port,
-		    // then skip it. Do not bother generating an error
-		    // message here, that will be done during
-		    // elaboration where these semantic details are tested.
-		  continue;
-	    }
-	    ivl_assert(*this, pin_expr);
-	    flag = pin_expr->elaborate_sig(des, scope) && flag;
-      }
-
-      return flag;
+      return true;
 }
 
 bool PGAssign::elaborate_sig(Design*des, NetScope*scope) const
 {
-      /* Normally, l-values to continuous assignments are NOT allowed
-         to implicitly declare nets. However, so many tools do allow
-         it that Icarus Verilog will allow it, at least if extensions
-         are enabled. */
-      if (gn_icarus_misc_flag)
-	    return pin(0)->elaborate_sig(des, scope);
-
       return true;
 }
 
@@ -351,25 +267,6 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 				  Module*rmod) const
 {
       bool flag = true;
-
-	// First, elaborate the signals that may be created implicitly
-	// by ports to this module instantiation. Handle the case that
-	// the ports are passed by name (pins_ != 0) or position.
-      if (pins_)
-	    for (unsigned idx =  0 ; idx < npins_ ; idx += 1) {
-		  const PExpr*tmp = pins_[idx].parm;
-		  if (tmp == 0)
-			continue;
-		  flag = tmp->elaborate_sig(des, scope) && flag;
-	    }
-      else
-	    for (unsigned idx = 0 ; idx < pin_count() ; idx += 1) {
-		  const PExpr*tmp = pin(idx);
-		  if (tmp == 0)
-			continue;
-		  flag = tmp->elaborate_sig(des, scope) && flag;
-	    }
-
 
       NetScope::scope_vec_t instance = scope->instance_arrays[get_name()];
 
@@ -398,24 +295,7 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 
 bool PGModule::elaborate_sig_udp_(Design*des, NetScope*scope, PUdp*udp) const
 {
-      bool flag = true;
-
-      if (pins_)
-	    for (unsigned idx =  0 ; idx < npins_ ; idx += 1) {
-		  const PExpr*tmp = pins_[idx].parm;
-		  if (tmp == 0)
-			continue;
-		  flag = tmp->elaborate_sig(des, scope) && flag;
-	    }
-      else
-	    for (unsigned idx = 0 ; idx < pin_count() ; idx += 1) {
-		  const PExpr*tmp = pin(idx);
-		  if (tmp == 0)
-			continue;
-		  flag = tmp->elaborate_sig(des, scope) && flag;
-	    }
-
-      return flag;
+      return true;
 }
 
 bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const

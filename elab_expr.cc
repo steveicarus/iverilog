@@ -2114,22 +2114,6 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    }
       }
 
-      if (error_implicit==false
-	  && sys_task_arg==false
-	  && path_.size()==1
-	  && scope->default_nettype() != NetNet::NONE) {
-	    NetNet::Type nettype = scope->default_nettype();
-	    net = new NetNet(scope, peek_tail_name(path_), nettype, 1);
-	    net->data_type(IVL_VT_LOGIC);
-	    net->set_line(*this);
-	    if (warn_implicit) {
-		  cerr << get_fileline() << ": warning: implicit "
-			"definition of wire " << scope_path(scope)
-		       << "." << peek_tail_name(path_) << "." << endl;
-	    }
-	    return elaborate_expr_net(des, scope, net, scope, sys_task_arg);
-      }
-
 	// At this point we've exhausted all the possibilities that
 	// are not scopes. If this is not a system task argument, then
 	// it cannot be a scope name, so give up.

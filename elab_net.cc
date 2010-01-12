@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -168,29 +168,6 @@ NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope) const
 NetNet* PEConcat::elaborate_bi_net(Design*des, NetScope*scope) const
 {
       return elaborate_lnet_common_(des, scope, true);
-}
-
-/*
- * A private method to create an implicit net.
- */
-NetNet* PEIdent::make_implicit_net_(Design*des, NetScope*scope) const
-{
-      NetNet::Type nettype = scope->default_nettype();
-      assert(nettype != NetNet::NONE);
-
-      NetNet*sig = new NetNet(scope, peek_tail_name(path_),
-			      nettype, 1);
-      sig->set_line(*this);
-	/* Implicit nets are always scalar logic. */
-      sig->data_type(IVL_VT_LOGIC);
-
-      if (warn_implicit) {
-	    cerr << get_fileline() << ": warning: implicit "
-		  "definition of wire logic " << scope_path(scope)
-		 << "." << peek_tail_name(path_) << "." << endl;
-      }
-
-      return sig;
 }
 
 /*

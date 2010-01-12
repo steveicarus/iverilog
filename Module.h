@@ -1,7 +1,7 @@
 #ifndef __Module_H
 #define __Module_H
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -79,8 +79,6 @@ class Module : public PScope, public LineInfo {
       enum UCDriveType { UCD_NONE, UCD_PULL0, UCD_PULL1 };
       UCDriveType uc_drive;
 
-      NetNet::Type default_nettype;
-
 	/* specparams are simpler then other params, in that they have
 	   no type information. They are merely constant
 	   expressions. */
@@ -118,11 +116,7 @@ class Module : public PScope, public LineInfo {
       map<perm_string,PTask*> tasks;
       map<perm_string,PFunction*> funcs;
 
-	/* The module has a list of genvars that may be used in
-	   various generate schemes. */
-      map<perm_string,LineInfo*> genvars;
-
-	/* the module has a list of generate schemes that appear in
+	/* The module has a list of generate schemes that appear in
 	   the module definition. These are used at elaboration time. */
       list<PGenerate*> generate_schemes;
 

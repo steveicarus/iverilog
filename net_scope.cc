@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -44,14 +44,12 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
       is_cell_ = false;
 
       if (up) {
-	    default_nettype_ = up->default_nettype();
 	    time_unit_ = up->time_unit();
 	    time_prec_ = up->time_precision();
 	    time_from_timescale_ = up->time_from_timescale();
 	      // Need to check for duplicate names?
 	    up_->children_[name_] = this;
       } else {
-	    default_nettype_ = NetNet::NONE;
 	    time_unit_ = 0;
 	    time_prec_ = 0;
 	    time_from_timescale_ = false;
@@ -352,16 +350,6 @@ int NetScope::time_precision() const
 bool NetScope::time_from_timescale() const
 {
       return time_from_timescale_;
-}
-
-void NetScope::default_nettype(NetNet::Type nt)
-{
-      default_nettype_ = nt;
-}
-
-NetNet::Type NetScope::default_nettype() const
-{
-      return default_nettype_;
 }
 
 perm_string NetScope::basename() const

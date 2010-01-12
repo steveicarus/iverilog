@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,7 +33,6 @@ Module::Module(perm_string n)
       library_flag = false;
       is_cell = false;
       uc_drive = UCD_NONE;
-      default_nettype = NetNet::NONE;
       timescale_warn_done = false;
 }
 
@@ -105,4 +104,3 @@ const list<PGate*>& Module::get_gates() const
 {
       return gates_;
 }
-

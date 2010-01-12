@@ -90,6 +90,11 @@ class LexicalScope {
       map<perm_string,PWire*>wires;
       PWire* wires_find(perm_string name);
 
+        // Genvars in the scope. These will only be present in module
+        // scopes, but are listed here to allow them to be found when
+        // creating implicit nets.
+      map<perm_string,LineInfo*> genvars;
+
 	// Behaviors (processes) in this scope
       list<PProcess*> behaviors;
       list<AProcess*> analog_behaviors;

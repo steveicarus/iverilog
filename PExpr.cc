@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2008 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2008,2010 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,6 +23,7 @@
 
 # include  "compiler.h"
 # include  "PExpr.h"
+# include  "PWire.h"
 # include  "Module.h"
 # include  "netmisc.h"
 # include  <typeinfo>
@@ -33,6 +34,10 @@ PExpr::PExpr()
 }
 
 PExpr::~PExpr()
+{
+}
+
+void PExpr::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
 }
 
@@ -68,6 +73,13 @@ PEBinary::PEBinary(char op, PExpr*l, PExpr*r)
 
 PEBinary::~PEBinary()
 {
+}
+
+void PEBinary::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
+{
+      assert(left_ && right_);
+      left_->declare_implicit_nets(scope, type);
+      right_->declare_implicit_nets(scope, type);
 }
 
 bool PEBinary::has_aa_term(Design*des, NetScope*scope) const
@@ -160,6 +172,13 @@ PECallFunction::~PECallFunction()
 {
 }
 
+void PECallFunction::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
+{
+      for (unsigned idx = 0 ; idx < parms_.size() ; idx += 1) {
+	    parms_[idx]->declare_implicit_nets(scope, type);
+      }
+}
+
 bool PECallFunction::has_aa_term(Design*des, NetScope*scope) const
 {
       bool flag = false;
@@ -177,6 +196,13 @@ PEConcat::PEConcat(const svector<PExpr*>&p, PExpr*r)
 PEConcat::~PEConcat()
 {
       delete repeat_;
+}
+
+void PEConcat::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
+{
+      for (unsigned idx = 0 ; idx < parms_.count() ; idx += 1) {
+	    parms_[idx]->declare_implicit_nets(scope, type);
+      }
 }
 
 bool PEConcat::has_aa_term(Design*des, NetScope*scope) const
@@ -245,6 +271,46 @@ PEIdent::~PEIdent()
 {
 }
 
+void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
+{
+        /* We create an implicit wire if this is a simple identifier and
+           if an identifier of that name has not already been declared in
+           any enclosing scope. */
+     if ((path_.size() == 1) && (path_.front().index.size() == 0)) {
+            perm_string name = path_.front().name;
+            LexicalScope*ss = scope;
+            while (ss) {
+                  if (ss->wires.find(name) != ss->wires.end())
+                        return;
+                  if (ss->localparams.find(name) != ss->localparams.end())
+                        return;
+                  if (ss->parameters.find(name) != ss->parameters.end())
+                        return;
+                  if (ss->genvars.find(name) != ss->genvars.end())
+                        return;
+                  if (ss->events.find(name) != ss->events.end())
+                        return;
+                  /* Strictly speaking, we should also check for name clashes
+                     with tasks, functions, named blocks, module instances,
+                     and generate blocks. However, this information is not
+                     readily available. As these names would not be legal in
+                     this context, we can declare implicit nets here and rely
+                     on later checks for name clashes to report the error. */
+
+                  ss = ss->parent_scope();
+            }
+            PWire*net = new PWire(name, type, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
+            net->set_file(get_file());
+            net->set_lineno(get_lineno());
+            net->set_range(0, 0, SR_NET, true);
+            scope->wires[name] = net;
+            if (warn_implicit) {
+                  cerr << get_fileline() << ": warning: implicit "
+                       "definition of wire '" << name << "'." << endl;
+            }
+      }
+}
+
 bool PEIdent::has_aa_term(Design*des, NetScope*scope) const
 {
       NetNet*       net = 0;
@@ -310,6 +376,14 @@ PETernary::~PETernary()
 {
 }
 
+void PETernary::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
+{
+      assert(expr_ && tru_ && fal_);
+      expr_->declare_implicit_nets(scope, type);
+      tru_->declare_implicit_nets(scope, type);
+      fal_->declare_implicit_nets(scope, type);
+}
+
 bool PETernary::has_aa_term(Design*des, NetScope*scope) const
 {
       assert(expr_ && tru_ && fal_);
@@ -325,6 +399,12 @@ PEUnary::PEUnary(char op, PExpr*ex)
 
 PEUnary::~PEUnary()
 {
+}
+
+void PEUnary::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
+{
+      assert(expr_);
+      expr_->declare_implicit_nets(scope, type);
 }
 
 bool PEUnary::has_aa_term(Design*des, NetScope*scope) const

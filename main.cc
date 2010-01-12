@@ -1,6 +1,6 @@
 
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -134,8 +134,6 @@ bool warn_inf_loop = false;
 bool warn_ob_select = false;
 bool warn_sens_entire_vec = false;
 bool warn_sens_entire_arr = false;
-
-bool error_implicit = false;
 
 /*
  * Debug message class flags.

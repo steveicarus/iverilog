@@ -363,10 +363,6 @@ static bool pform_at_module_level()
 
 PWire*pform_get_wire_in_scope(perm_string name)
 {
-	/* Note that if we are processing a generate, then the
-	   scope depth will be empty because generate schemes
-	   cannot be within sub-scopes. Only directly in
-	   modules. */
       return lexical_scope->wires_find(name);
 }
 
@@ -401,6 +397,16 @@ void pform_set_default_nettype(NetNet::Type type,
 		 << pform_cur_module->get_fileline() << "." << endl;
 	    error_count += 1;
       }
+}
+
+static void pform_declare_implicit_nets(PExpr*expr)
+{
+	/* If implicit net creation is turned off, then stop now. */
+      if (pform_default_nettype == NetNet::NONE)
+	    return;
+
+      if (expr)
+            expr->declare_implicit_nets(lexical_scope, pform_default_nettype);
 }
 
 /*
@@ -667,7 +673,6 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
 	/* If we have a timescale file then the time information is from
 	 * a timescale directive. */
       pform_cur_module->time_from_timescale = pform_timescale_file != 0;
-      pform_cur_module->default_nettype = pform_default_nettype;
 
       FILE_NAME(pform_cur_module, file, lineno);
       pform_cur_module->library_flag = pform_library_flag;
@@ -1481,6 +1486,10 @@ void pform_makegate(PGBuiltin::Type type,
 	    return;
       }
 
+      for (unsigned idx = 0 ;  idx < info.parms->count() ;  idx += 1) {
+            pform_declare_implicit_nets((*info.parms)[idx]);
+      }
+
       perm_string dev_name = lex_strings.make(info.name);
       PGBuiltin*cur = new PGBuiltin(type, dev_name, info.parms, delay);
       if (info.range[0])
@@ -1545,6 +1554,10 @@ static void pform_make_modgate(perm_string type,
 			       PExpr*msb, PExpr*lsb,
 			       const char*fn, unsigned ln)
 {
+      for (unsigned idx = 0 ;  idx < wires->count() ;  idx += 1) {
+            pform_declare_implicit_nets((*wires)[idx]);
+      }
+
       PGModule*cur = new PGModule(type, name, wires);
       FILE_NAME(cur, fn, ln);
       cur->set_range(msb,lsb);
@@ -1584,6 +1597,7 @@ static void pform_make_modgate(perm_string type,
 	    named_pexpr_t*curp = (*bind)[idx];
 	    pins[idx].name = curp->name;
 	    pins[idx].parm = curp->parm;
+            pform_declare_implicit_nets(curp->parm);
       }
 
       PGModule*cur = new PGModule(type, name, pins, npins);
@@ -1659,6 +1673,11 @@ static PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
 			      svector<PExpr*>*del,
 			      struct str_pair_t str)
 {
+        /* Implicit declaration of nets on the LHS of a continuous
+           assignment was introduced in IEEE1364-2001. */
+      if (generation_flag != GN_VER1995)
+            pform_declare_implicit_nets(lval);
+
       svector<PExpr*>*wires = new svector<PExpr*>(2);
       (*wires)[0] = lval;
       (*wires)[1] = rval;

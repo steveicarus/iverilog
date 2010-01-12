@@ -1,7 +1,7 @@
 #ifndef __netlist_H
 #define __netlist_H
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -805,9 +805,6 @@ class NetScope : public Attrib {
       int time_precision() const;
       bool time_from_timescale() const;
 
-      void default_nettype(NetNet::Type);
-      NetNet::Type default_nettype() const;
-
 	/* The fullname of the scope is the hierarchical name
 	   component (which includes the name and array index) whereas
 	   the basename is just my name. */
@@ -912,7 +909,6 @@ class NetScope : public Attrib {
 
       signed char time_unit_, time_prec_;
       bool time_from_timescale_;
-      NetNet::Type default_nettype_;
 
       NetEvent *events_;
 

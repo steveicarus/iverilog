@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3064,15 +3064,12 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
                   }
             }
 
-	    bool save_flag = error_implicit;
-	    error_implicit = true;
 	    probe_expr_width(des, scope, expr_[idx]->expr());
 	    NetExpr*tmp = elab_and_eval(des, scope, expr_[idx]->expr(), 0);
 	    if (tmp == 0) {
 		  expr_[idx]->dump(cerr);
 		  cerr << endl;
 		  des->errors += 1;
-		  error_implicit = save_flag;
 		  continue;
 	    }
 
@@ -3082,14 +3079,12 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 		  expr_[idx]->dump(cerr);
 		  cerr << endl;
 		  des->errors += 1;
-		  error_implicit = save_flag;
 		  continue;
 	    }
 	    assert(expr);
 
 	    delete tmp;
 
-	    error_implicit = save_flag;
 	    unsigned pins = (expr_[idx]->type() == PEEvent::ANYEDGE)
 		  ? expr->pin_count() : 1;
 
@@ -4001,7 +3996,6 @@ static void elaborate_tasks(Design*des, NetScope*scope,
 bool Module::elaborate(Design*des, NetScope*scope) const
 {
       bool result_flag = true;
-      error_implicit = true;
 
       if (gn_specify_blocks_flag) {
 	      // Elaborate specparams
@@ -4068,15 +4062,12 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	// complex.
       const list<PGate*>&gl = get_gates();
 
-      error_implicit = false;
       for (list<PGate*>::const_iterator gt = gl.begin()
 		 ; gt != gl.end()
 		 ; gt ++ ) {
 
 	    (*gt)->elaborate(des, scope);
       }
-
-      error_implicit = true;
 
 	// Elaborate the behaviors, making processes out of them. This
 	// involves scanning the PProcess* list, creating a NetProcTop
@@ -4387,7 +4378,6 @@ Design* elaborate(list<perm_string>roots)
 	    scope->time_unit(rmod->time_unit);
 	    scope->time_precision(rmod->time_precision);
 	    scope->time_from_timescale(rmod->time_from_timescale);
-	    scope->default_nettype(rmod->default_nettype);
 	    des->set_precision(rmod->time_precision);
 
 

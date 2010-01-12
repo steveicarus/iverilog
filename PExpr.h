@@ -29,6 +29,7 @@
 
 class Design;
 class Module;
+class LexicalScope;
 class NetNet;
 class NetExpr;
 class NetScope;
@@ -46,6 +47,16 @@ class PExpr : public LineInfo {
       virtual ~PExpr();
 
       virtual void dump(ostream&) const;
+
+        // This method tests whether the expression contains any identifiers
+        // that have not been previously declared in the specified scope or
+        // in any containing scope. Any such identifiers are added to the
+        // specified scope as scalar nets of the specified type.
+        //
+        // This operation must be performed by the parser, to ensure that
+        // subsequent declarations do not affect the decision to create an
+        // implicit net.
+      virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type);
 
         // This method tests whether the expression contains any
         // references to automatically allocated variables.
@@ -84,10 +95,6 @@ class PExpr : public LineInfo {
 	// return valid results.
       ivl_variable_type_t expr_type() const { return expr_type_; }
       unsigned expr_width() const           { return expr_width_; }
-
-	// During the elaborate_sig phase, we may need to scan
-	// expressions to find implicit net declarations.
-      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
 	// Procedural elaboration of the expression. The expr_width is
 	// the width of the context of the expression (i.e. the
@@ -159,6 +166,8 @@ class PEConcat : public PExpr {
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
       virtual void dump(ostream&) const;
 
+      virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type);
+
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
@@ -166,7 +175,6 @@ class PEConcat : public PExpr {
 				  ivl_variable_type_t&expr_type,
 				  bool&unsized_flag);
 
-      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
       virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
@@ -257,14 +265,14 @@ class PEIdent : public PExpr {
 
       virtual void dump(ostream&) const;
 
+      virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type);
+
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
 				  bool&unsized_flag);
-
-      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
 	// Identifiers are allowed (with restrictions) is assign l-values.
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
@@ -376,8 +384,6 @@ class PEIdent : public PExpr {
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
 				     bool bidirectional_flag) const;
 
-      NetNet*make_implicit_net_(Design*des, NetScope*scope) const;
-
       bool eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 			     long&midx, long&lidx) const;
 };
@@ -449,14 +455,14 @@ class PEUnary : public PExpr {
 
       virtual void dump(ostream&out) const;
 
+      virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type);
+
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
 				  bool&unsized_flag);
-
-      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     int expr_width, bool sys_task_arg) const;
@@ -479,14 +485,14 @@ class PEBinary : public PExpr {
 
       virtual void dump(ostream&out) const;
 
+      virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type);
+
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
 				  bool&unsized_flag);
-
-      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 					int expr_width, bool sys_task_arg) const;
@@ -613,14 +619,14 @@ class PETernary : public PExpr {
 
       virtual void dump(ostream&out) const;
 
+      virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type);
+
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,
 				  ivl_variable_type_t&expr_type,
 				  bool&unsized_flag);
-
-      virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 					 int expr_width, bool sys_task_arg) const;
@@ -656,6 +662,8 @@ class PECallFunction : public PExpr {
       ~PECallFunction();
 
       virtual void dump(ostream &) const;
+
+      virtual void declare_implicit_nets(LexicalScope*scope, NetNet::Type type);
 
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
