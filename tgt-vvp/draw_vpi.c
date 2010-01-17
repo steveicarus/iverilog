@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -194,7 +194,9 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 	    if (ivl_expr_oper1(vexpr)) return 0;
 
 	    bexpr = ivl_expr_oper2(expr);
-	    assert(bexpr);
+
+              /* This is a pad operation. */
+	    if (!bexpr) return 0;
 
 	      /* This is a constant bit/part select. */
 	    if (number_is_immediate(bexpr, 64, 1)) {

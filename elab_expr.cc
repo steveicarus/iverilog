@@ -1087,14 +1087,20 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	    if (expr == 0)
 		  return 0;
 
-	    expr_width_ = expr->test_width(des, scope, min, lval, expr_type__, unsized_flag);
+              // The argument width is self-determined.
+	    expr_width_ = expr->test_width(des, scope, 0, 0, expr_type__, unsized_flag);
 	    expr_type_ = expr_type__;
 
+              // The result width is context dependent.
+            if (expr_width_ > min)
+                   min = expr_width_;
+
 	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: test_width"
-		       << " of $signed/$unsigned returns test_width"
-		       << " of subexpression." << endl;
-	    return expr_width_;
+		  cerr << get_fileline() << ": debug: $signed/$unsigned"
+		       << " argument width = " << expr_width_
+		       << ", result width = " << min << "." << endl;
+
+            return min;
       }
 
 	// Run through the arguments of the system function and make
@@ -1208,6 +1214,34 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
       return 0;
 }
 
+NetExpr*PECallFunction::cast_to_width_(NetExpr*expr, int wid, bool signed_flag) const
+{
+        /* If the expression is a const, then replace it with a new
+           const. This is a more efficient result. */
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
+            tmp->cast_signed(signed_flag);
+            if (wid > (int)(tmp->expr_width())) {
+                  verinum oval = pad_to_width(tmp->value(), wid);
+                  tmp = new NetEConst(oval);
+                  tmp->set_line(*this);
+                  delete expr;
+            }
+            return tmp;
+      }
+
+      if (wid < 0)
+            wid = expr->expr_width();
+      
+      if (debug_elaborate)
+            cerr << get_fileline() << ": debug: cast to " << wid
+                 << " bits" << endl;
+
+      NetESelect*tmp = new NetESelect(expr, 0, wid);
+      tmp->set_line(*this);
+      tmp->cast_signed(signed_flag);
+      return tmp;
+}
+
 /*
  * Given a call to a system function, generate the proper expression
  * nodes to represent the call in the netlist. Since we don't support
@@ -1217,11 +1251,9 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_wid) const
 {
 
-	/* Catch the special case that the system function is the
-	   $signed function. This function is special, in that it does
-	   not lead to executable code but takes the single parameter
-	   and makes it into a signed expression. No bits are changed,
-	   it just changes the interpretation. */
+	/* Catch the special case that the system function is the $signed
+	   function. Its argument will be evaluated as a self-determined
+           expression. */
       if (strcmp(peek_tail_name(path_), "$signed") == 0) {
 	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
 		  cerr << get_fileline() << ": error: The $signed() function "
@@ -1231,11 +1263,11 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	    }
 
 	    PExpr*expr = parms_[0];
-	    NetExpr*sub = expr->elaborate_expr(des, scope, -1, true);
-	    sub->cast_signed(true);
-	    return sub;
+	    NetExpr*sub = expr->elaborate_expr(des, scope, expr_width_, true);
+
+	    return cast_to_width_(sub, expr_wid, true);
       }
-      /* add $unsigned to match $signed */
+        /* As above, for the $unsigned function. */
       if (strcmp(peek_tail_name(path_), "$unsigned") == 0) {
 	    if ((parms_.size() != 1) || (parms_[0] == 0)) {
 		  cerr << get_fileline() << ": error: The $unsigned() function "
@@ -1245,13 +1277,9 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope, int expr_w
 	    }
 
 	    PExpr*expr = parms_[0];
-	    NetExpr*sub = expr->elaborate_expr(des, scope, -1, true);
-	    sub->cast_signed(false);
+	    NetExpr*sub = expr->elaborate_expr(des, scope, expr_width_, true);
 
-	    if (expr_wid > 0 && (unsigned)expr_wid > sub->expr_width())
-		  sub = pad_to_width(sub, expr_wid, *this);
-
-	    return sub;
+	    return cast_to_width_(sub, expr_wid, false);
       }
 
 	/* Interpret the internal $sizeof system function to return
