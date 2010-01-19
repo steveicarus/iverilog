@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -279,8 +279,24 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_wone K_uwire
 
  /* The new tokens from 1800-2005. */
-%token K_always_comb K_always_ff K_always_latch K_assert
-%token K_timeprecision K_timeunit
+%token K_alias K_always_comb K_always_ff K_always_latch K_assert
+%token K_assume K_before K_bind K_bins K_binsof K_bit K_break K_byte
+%token K_chandle K_class K_clocking K_const K_constraint K_context
+%token K_continue K_cover K_covergroup K_coverpoint K_cross K_dist K_do
+%token K_endclass K_endclocking K_endgroup K_endinterface K_endpackage
+%token K_endprogram K_endproperty K_endsequence K_enum K_expect K_export
+%token K_extends K_extern K_final K_first_match K_foreach K_forkjoin
+%token K_iff K_ignore_bins K_illegal_bins K_import K_inside K_int
+ /* Icarus already has defined "logic" above! */
+%token K_interface K_intersect K_join_any K_join_none K_local
+%token K_longint K_matches K_modport K_new K_null K_package K_packed
+%token K_priority K_program K_property K_protected K_pure K_rand K_randc
+%token K_randcase K_randsequence K_ref K_return K_sequence K_shortint
+ /* Verilog-AMS 2.3 has defined "string" below! */
+%token K_shortreal K_solve K_static K_struct K_super
+%token K_tagged K_this K_throughout K_timeprecision K_timeunit K_type
+%token K_typedef K_union K_unique K_var K_virtual K_void K_wait_order
+%token K_wildcard K_with K_within
  /* Fake tokens that are passed once we have an initial token. */
 %token K_timeprecision_check K_timeunit_check
 
