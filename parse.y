@@ -292,8 +292,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_longint K_matches K_modport K_new K_null K_package K_packed
 %token K_priority K_program K_property K_protected K_pure K_rand K_randc
 %token K_randcase K_randsequence K_ref K_return K_sequence K_shortint
- /* Verilog-AMS 2.3 has defined "string" below! */
-%token K_shortreal K_solve K_static K_struct K_super
+%token K_shortreal K_solve K_static K_string K_struct K_super
 %token K_tagged K_this K_throughout K_timeprecision K_timeunit K_type
 %token K_typedef K_union K_unique K_var K_virtual K_void K_wait_order
 %token K_wildcard K_with K_within
@@ -301,13 +300,22 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_timeprecision_check K_timeunit_check
 
  /* The new tokens for Verilog-AMS 2.3. */
-%token K_abs K_abstol K_access K_acos K_acosh K_analog K_asin K_asinh
-%token K_atan K_atan2 K_atanh K_ceil K_continuous K_cos K_cosh
-%token K_ddt_nature K_discipline K_discrete K_domain K_enddiscipline
-%token K_endnature K_exclude K_exp K_floor K_flow K_from K_ground
-%token K_hypot K_idt_nature K_inf K_ln K_log K_max K_min K_nature
-%token K_potential K_pow K_sin K_sinh K_sqrt K_string K_tan K_tanh
-%token K_units
+%token K_above K_abs K_absdelay K_abstol K_access K_acos K_acosh
+ /* 1800-2005 has defined "assert" above! */
+%token K_ac_stim K_aliasparam K_analog K_analysis K_asin K_asinh
+%token K_atan K_atan2 K_atanh K_branch K_ceil K_connect K_connectmodule
+%token K_connectrules K_continuous K_cos K_cosh K_ddt K_ddt_nature K_ddx
+%token K_discipline K_discrete K_domain K_driver_update K_endconnectrules
+%token K_enddiscipline K_endnature K_endparamset K_exclude K_exp
+%token K_final_step K_flicker_noise K_floor K_flow K_from K_ground
+%token K_hypot K_idt K_idtmod K_idt_nature K_inf K_initial_step
+%token K_laplace_nd K_laplace_np K_laplace_zd K_laplace_zp
+%token K_last_crossing K_limexp K_ln K_log K_max K_merged K_min K_nature
+%token K_net_resolution K_noise_table K_paramset K_potential K_pow
+ /* 1800-2005 has defined "string" above! */
+%token K_resolveto K_sin K_sinh K_slew K_split K_sqrt K_tan K_tanh
+%token K_timer K_transition K_units K_white_noise K_wreal
+%token K_zi_nd K_zi_np K_zi_zd K_zi_zp
 
 %type <flag>    from_exclude
 %type <number>  number

@@ -233,7 +233,7 @@ lexor.cc: $(srcdir)/lexor.lex
 lexor_keyword.o: lexor_keyword.cc parse.h
 
 lexor_keyword.cc: $(srcdir)/lexor_keyword.gperf
-	gperf -o -i 7 -C -k 1-4,$$ -L ANSI-C -H keyword_hash -N check_identifier -t $(srcdir)/lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
+	gperf -o -i 7 -C -k 1-4,9,$$ -L ANSI-C -H keyword_hash -N check_identifier -t $(srcdir)/lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
 
 iverilog-vpi.man: $(srcdir)/iverilog-vpi.man.in version.exe
 	./version.exe `head -1 $(srcdir)/iverilog-vpi.man.in`'\n' > $@
