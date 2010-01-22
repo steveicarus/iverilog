@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -76,13 +76,15 @@ int cmdfile_stack_ptr = 0;
 
 "+incdir+" { BEGIN(PLUS_ARGS); return TOK_INCDIR; }
 
+"+integer-width+" { BEGIN(PLUS_ARGS); return TOK_INTEGER_WIDTH; }
+
 "+libdir+" { BEGIN(PLUS_ARGS); return TOK_LIBDIR; }
 
 "+libdir-nocase+" { BEGIN(PLUS_ARGS); return TOK_LIBDIR_NOCASE; }
 
 "+libext+" { BEGIN(PLUS_ARGS); return TOK_LIBEXT; }
 
-"+integer-width+" { BEGIN(PLUS_ARGS); return TOK_INTEGER_WIDTH; }
+"+timescale+" { BEGIN(PLUS_ARGS); return TOK_TIMESCALE; }
 
   /* If it is not any known plus-flag, return the generic form. */
 "+"[^\n \t\b\f\r+]* {

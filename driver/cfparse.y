@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,8 +57,8 @@ static void translate_file_name(char*text)
 };
 
 %token TOK_Da TOK_Dc TOK_Dv TOK_Dy
-%token TOK_DEFINE TOK_INCDIR TOK_LIBDIR TOK_LIBDIR_NOCASE TOK_LIBEXT
-%token TOK_INTEGER_WIDTH
+%token TOK_DEFINE TOK_INCDIR TOK_INTEGER_WIDTH TOK_LIBDIR TOK_LIBDIR_NOCASE
+%token TOK_LIBEXT TOK_TIMESCALE
 %token <text> TOK_PLUSARG TOK_PLUSWORD TOK_STRING
 
 %%
@@ -131,6 +131,13 @@ item
         | TOK_LIBDIR_NOCASE TOK_PLUSARG
 		{ char*tmp = substitutions($2);
 		  process_library_nocase_switch(tmp);
+		  free($2);
+		  free(tmp);
+		}
+
+        | TOK_TIMESCALE TOK_PLUSARG
+		{ char*tmp = substitutions($2);
+		  process_timescale(tmp);
 		  free($2);
 		  free(tmp);
 		}

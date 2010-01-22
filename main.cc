@@ -1,6 +1,6 @@
 
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -298,6 +298,127 @@ static void find_module_mention(map<perm_string,bool>&check_map, Module*m);
 static void find_module_mention(map<perm_string,bool>&check_map, PGenerate*s);
 
 /*
+ * Convert a string to a time unit or precision.
+ *
+ * Returns true on failure.
+ */
+static bool get_ts_const(const char*&cp, int&res, bool is_units)
+{
+	/* Check for the 1 digit. */
+      if (*cp != '1') {
+	    if (is_units) {
+		  cerr << "Error: Invalid +timescale units constant "
+		          "(1st digit)." << endl;
+	    } else {
+		  cerr << "Error: Invalid +timescale precision constant "
+		          "(1st digit)." << endl;
+	    }
+	    return true;
+      }
+      cp += 1;
+
+	/* Check the number of zeros after the 1. */
+      res = strspn(cp, "0");
+      if (res > 2) {
+	    if (is_units) {
+		  cerr << "Error: Invalid +timescale units constant "
+		          "(number of zeros)." << endl;
+	    } else {
+		  cerr << "Error: Invalid +timescale precision constant "
+		          "(number of zeros)." << endl;
+	    }
+	    return true;
+      }
+      cp += res;
+
+	/* Now process the scaling string. */
+      if (strncmp("s", cp, 1) == 0) {
+	    res -= 0;
+	    cp += 1;
+	    return false;
+
+      } else if (strncmp("ms", cp, 2) == 0) {
+	    res -= 3;
+	    cp += 2;
+	    return false;
+
+      } else if (strncmp("us", cp, 2) == 0) {
+	    res -= 6;
+	    cp += 2;
+	    return false;
+
+      } else if (strncmp("ns", cp, 2) == 0) {
+	    res -= 9;
+	    cp += 2;
+	    return false;
+
+      } else if (strncmp("ps", cp, 2) == 0) {
+	    res -= 12;
+	    cp += 2;
+	    return false;
+
+      } else if (strncmp("fs", cp, 2) == 0) {
+	    res -= 15;
+	    cp += 2;
+	    return false;
+
+      }
+
+      if (is_units) {
+	    cerr << "Error: Invalid +timescale units scale." << endl;
+      } else {
+	    cerr << "Error: Invalid +timescale precision scale." << endl;
+      }
+      return true;
+}
+
+/*
+ * Process a string with the following form (no space allowed):
+ *
+ *   num = < '1' | '10' | '100' >
+ *   scale = < 's' | 'ms' | 'us' | 'ns' | 'ps' | 'fs' >
+ *
+ *   "<num> <scale> '/' <num> <scale>
+ *
+ * and set the default time units and precision if successful.
+ *
+ * Return true if we have an error processing the timescale string.
+ */
+static bool set_default_timescale(const char*ts_string)
+{
+	/* Because this came from a command file we can not have embedded
+	 * space in this string. */
+      const char*cp = ts_string;
+      int units = 0;
+      int prec = 0;
+
+	/* Get the time units. */
+      if (get_ts_const(cp, units, true)) return true;
+
+	/* Skip the '/'. */
+      if (*cp != '/') {
+	    cerr << "Error: +timescale separator '/' is missing." << endl;
+	    return true;
+      }
+      cp += 1;
+
+	/* Get the time precision. */
+      if (get_ts_const(cp, prec, false)) return true;
+
+	/* The time unit must be greater than or equal to the precision. */
+      if (units < prec) {
+	    cerr << "Error: +timescale unit must not be less than the "
+	            "precision." << endl;
+	    return true;
+      }
+
+	/* We have valid units and precision so set the global defaults. */
+      def_ts_units = units;
+      def_ts_prec = prec;
+      return false;
+}
+
+/*
  * Read the contents of a config file. This file is a temporary
  * configuration file made by the compiler driver to carry the bulky
  * flags generated from the user. This reduces the size of the command
@@ -369,6 +490,7 @@ static void find_module_mention(map<perm_string,bool>&check_map, PGenerate*s);
  *    warnings:<string>
  *        Warning flag letters.
  */
+bool had_timescale = false;
 static void read_iconfig_file(const char*ipath)
 {
       char buf[8*1024];
@@ -542,6 +664,17 @@ static void read_iconfig_file(const char*ipath)
 			flag_errors += 1;
 		  }
 
+	    } else if (strcmp(buf, "timescale") == 0) {
+		  if (had_timescale) {
+			cerr << "Command File: Warning: default timescale "
+			        "is being set multiple times." << endl;
+			cerr << "                     : using the last valid "
+			        "+timescale found." << endl;
+		  }
+		  if (set_default_timescale(cp)) {
+			cerr << "     : with +timescale+" << cp << "+" << endl;
+			flag_errors += 1;
+		  } else had_timescale = true;
 	    }
       }
       fclose(ifile);

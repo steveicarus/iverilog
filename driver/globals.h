@@ -1,7 +1,7 @@
 #ifndef __globals_H
 #define __globals_H
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,5 +40,8 @@ extern void process_include_dir(const char*name);
 
   /* Add a new -D define. */
 extern void process_define(const char*name);
+
+  /* Set the default timescale for the simulator. */
+extern void process_timescale(const char*ts_string);
 
 #endif

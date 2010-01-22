@@ -1,4 +1,4 @@
-.TH iverilog 1 "October 28th, 2009" "" "Version %M.%m.%n %E"
+.TH iverilog 1 "January 22nd, 2010" "" "Version %M.%m.%n %E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -403,6 +403,13 @@ The \fB+define+\fP token is the same as the \fB\-D\fP option on the
 command line. The value part of the token is optional.
 
 .TP 8
+.B +timescale+\fIvalue\fP
+The \fB+timescale+\fP token is used to set the default timescale for
+the simulation. This is the time units and precision before any
+`timescale directive or after a `resetall directive. The default is
+1s/1s.
+
+.TP 8
 .B +toupper-filename
 This token causes file names after this in the command file to be
 translated to uppercase. This helps with situations where a directory
@@ -472,7 +479,7 @@ Tips on using, debugging, and developing the compiler can be found at
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002\-2009 Stephen Williams
+Copyright \(co  2002\-2010 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -566,6 +566,11 @@ void process_include_dir(const char *name)
 void process_define(const char*name)
 {
       fprintf(defines_file,"D:%s\n", name);
+}
+
+void process_timescale(const char*ts_string)
+{
+      fprintf(iconfig_file, "timescale:%s\n", ts_string);
 }
 
 /*
