@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -95,38 +95,41 @@ char *need_result_buf(unsigned cnt, vpi_rbuf_t type)
 
 char *simple_set_rbuf_str(const char *s1)
 {
-	char *res = need_result_buf(strlen(s1)+1, RBUF_STR);
-	if (res) strcpy(res,s1);
-	return res;
+      char *res = need_result_buf(strlen(s1)+1, RBUF_STR);
+      if (res) strcpy(res,s1);
+      return res;
 }
 
 char *generic_get_str(int code, vpiHandle ref, const char *name, const char *index)
 {
-	size_t len = strlen(name) + 1;  /* include space for null termination */
-	char *bn = NULL;
-	if (code == vpiFullName) {
-		bn = strdup(vpi_get_str(code,ref));
-		len += strlen(bn) + 1;  /* include space for "." separator */
-	}
-	if (index != NULL) len += strlen(index) + 2;  /* include space for brackets */
+      size_t len = strlen(name) + 1;  /* include space for null termination */
+      char *bn = NULL;
+      if (code == vpiFullName) {
+	    bn = strdup(vpi_get_str(code,ref));
+	    len += strlen(bn) + 1;  /* include space for "." separator */
+      }
+      if (index != NULL) len += strlen(index) + 2;  /* include space for brackets */
 
-	char *res = need_result_buf(len, RBUF_STR);
-	if (!res) return NULL;
-	*res=0;  /* start with nothing */
+      char *res = need_result_buf(len, RBUF_STR);
+      if (!res) {
+	    free(bn);
+	    return NULL;
+      }
+      *res=0;  /* start with nothing */
 
 	/* if this works, I can make it more efficient later */
-	if (bn != NULL) {
-		strcat(res, bn);
-		strcat(res, ".");
-		free(bn);
-	}
-	strcat(res, name);
-	if (index != NULL) {
-		strcat(res, "[");
-		strcat(res, index);
-		strcat(res, "]");
-	}
-	return res;
+      if (bn != NULL) {
+	    strcat(res, bn);
+	    strcat(res, ".");
+	    free(bn);
+      }
+      strcat(res, name);
+      if (index != NULL) {
+	    strcat(res, "[");
+	    strcat(res, index);
+	    strcat(res, "]");
+      }
+      return res;
 }
 
 /*
