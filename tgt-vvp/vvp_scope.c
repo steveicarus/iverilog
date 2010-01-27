@@ -1692,7 +1692,11 @@ static void draw_lpm_part(ivl_lpm_t net)
 	    if (ivl_lpm_signed(net) && width_of_nexus(sel) < 8*sizeof(int)) {
 		  fprintf(stderr, "%s:%u: tgt-vvp warning: V0.9 may give "
 		                  "incorrect results for a select with a "
+#ifdef __MINGW32__  /* MinGW does not know about z. */
+		                  "signed index less than %u bits.\n",
+#else
 		                  "signed index less than %zu bits.\n",
+#endif
 		                  ivl_lpm_file(net), ivl_lpm_lineno(net),
 		                  8*sizeof(int));
 	    }

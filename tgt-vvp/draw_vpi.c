@@ -161,7 +161,11 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 			      fprintf(stderr, "%s:%u: tgt-vvp warning: V0.9 "
 			                      "may give incorrect results for "
 			                      "an array select with a signed "
+#ifdef __MINGW32__  /* MinGW does not know about z. */
+			                      "index less than %u bits.\n",
+#else
 			                      "index less than %zu bits.\n",
+#endif
 			                      ivl_expr_file(expr),
 			                      ivl_expr_lineno(expr),
 			                      8*sizeof(int));
@@ -230,7 +234,11 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 		      (ivl_expr_width(bexpr) < 8*sizeof(int))) {
 			fprintf(stderr, "%s:%u: tgt-vvp warning: V0.9 may give "
 			                "incorrect results for a select with a "
+#ifdef __MINGW32__  /* MinGW does not know about z. */
+			                "signed index less than %u bits.\n",
+#else
 			                "signed index less than %zu bits.\n",
+#endif
 			                ivl_expr_file(expr),
 			                ivl_expr_lineno(expr),
 			                8*sizeof(int));
