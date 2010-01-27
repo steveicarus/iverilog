@@ -2283,7 +2283,7 @@ bool dll_target::net_const(const NetConst*net)
       unsigned idx;
       char*bits;
       static char*bits_tmp = 0;
-      static size_t bits_cnt = 0;
+      static unsigned bits_cnt = 0;
 
       struct ivl_net_const_s *obj = new struct ivl_net_const_s;
 
@@ -2298,7 +2298,7 @@ bool dll_target::net_const(const NetConst*net)
 	    bits = obj->b.bit_;
 
       } else {
-	    if (obj->width_+1 > bits_cnt) {
+	    if (obj->width_ >= bits_cnt) {
 		  bits_tmp = (char*)realloc(bits_tmp, obj->width_+1);
 		  bits_cnt = obj->width_+1;
 	    }
