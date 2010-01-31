@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -737,15 +737,20 @@ void vvp_wire_vec4::force_fil_real(double val, vvp_vector2_t mask)
 
 void vvp_wire_vec4::release(vvp_net_ptr_t ptr, bool net_flag)
 {
-	// Wires revert to their unforced value after release.
       vvp_vector2_t mask (vvp_vector2_t::FILL1, bits4_.size());
-      release_mask(mask);
       if (net_flag) {
+	      // Wires revert to their unforced value after release.
+            release_mask(mask);
 	    needs_init_ = ! force4_ .eeq(bits4_);
 	    ptr.ptr()->send_vec4(bits4_, 0);
 	    run_vpi_callbacks();
       } else {
-	    ptr.ptr()->fun->recv_vec4(ptr, force4_, 0);
+	      // Variables keep the current value.
+	    vvp_vector4_t res (bits4_.size());
+	    for (unsigned idx=0; idx<bits4_.size(); idx += 1)
+		  res.set_bit(idx,value(idx));
+            release_mask(mask);
+	    ptr.ptr()->fun->recv_vec4(ptr, res, 0);
       }
 }
 
@@ -757,16 +762,20 @@ void vvp_wire_vec4::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, b
       for (unsigned idx = 0 ; idx < wid ; idx += 1)
 	    mask.set_bit(base+idx, 1);
 
-      release_mask(mask);
-
       if (net_flag) {
+	      // Wires revert to their unforced value after release.
+	    release_mask(mask);
 	    needs_init_ = ! force4_.subvalue(base,wid) .eeq(bits4_.subvalue(base,wid));
 	    ptr.ptr()->send_vec4_pv(bits4_.subvalue(base,wid),
 				    base, wid, bits4_.size(), 0);
 	    run_vpi_callbacks();
       } else {
-	    ptr.ptr()->fun->recv_vec4_pv(ptr, force4_.subvalue(base,wid),
-					 base, wid, bits4_.size(), 0);
+	      // Variables keep the current value.
+	    vvp_vector4_t res (wid);
+	    for (unsigned idx=0; idx<wid; idx += 1)
+		  res.set_bit(idx,value(base+idx));
+	    release_mask(mask);
+	    ptr.ptr()->fun->recv_vec4_pv(ptr, res, base, wid, bits4_.size(), 0);
       }
 }
 
@@ -882,7 +891,11 @@ void vvp_wire_vec8::release(vvp_net_ptr_t ptr, bool net_flag)
 	    needs_init_ = !force8_ .eeq(bits8_);
 	    ptr.ptr()->send_vec8(bits8_);
       } else {
-	    ptr.ptr()->fun->recv_vec8(ptr, force8_);
+	// Variable do not know about strength so this should not be able
+	// to happen. If for some reason it can then it should not be too
+	// hard to fix this code like was done for vvp_wire_vec4 above.
+	    assert(0);
+//	    ptr.ptr()->fun->recv_vec8(ptr, force8_);
       }
 }
 
@@ -902,8 +915,12 @@ void vvp_wire_vec8::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, b
 				    base, wid, bits8_.size());
 	    run_vpi_callbacks();
       } else {
-	    ptr.ptr()->fun->recv_vec8_pv(ptr, force8_.subvalue(base,wid),
-					 base, wid, force8_.size());
+	// Variable do not know about strength so this should not be able
+	// to happen. If for some reason it can then it should not be too
+	// hard to fix this code like was done for vvp_wire_vec4 above.
+	    assert(0);
+//	    ptr.ptr()->fun->recv_vec8_pv(ptr, force8_.subvalue(base,wid),
+//					 base, wid, force8_.size());
       }
 }
 
@@ -981,26 +998,40 @@ void vvp_wire_real::force_fil_real(double val, vvp_vector2_t mask)
 
 void vvp_wire_real::release(vvp_net_ptr_t ptr, bool net_flag)
 {
-	// Wires revert to their unforced value after release.
       vvp_vector2_t mask (vvp_vector2_t::FILL1, 1);
-      release_mask(mask);
-      if (net_flag)
+      if (net_flag) {
+	      // Wires revert to their unforced value after release.
+	    release_mask(mask);
 	    ptr.ptr()->send_real(bit_, 0);
-      else
-	    ptr.ptr()->fun->recv_real(ptr, force_, 0);
+      } else {
+	      // Variables keep the current value.
+	    double res =  real_value();
+	    release_mask(mask);
+	    ptr.ptr()->fun->recv_real(ptr, res, 0);
+      }
 }
 
 void vvp_wire_real::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag)
 {
-      vvp_vector2_t mask (vvp_vector2_t::FILL0, 1);
-      for (unsigned idx = 0 ; idx < wid ; idx += 1)
-	    mask.set_bit(base+idx, 1);
+	// A real is a single value. If for some reason this part release
+	// can happen the following code should work correctly (requires
+	// a base of 0 and a width of 1).
+      assert(0);
+#if 0
+      vvp_vector2_t mask (vvp_vector2_t::FILL1, 1);
+      assert(base == 0 && wid == 1);
 
-      release_mask(mask);
-      if (net_flag)
+      if (net_flag) {
+	      // Wires revert to their unforced value after release.
+	    release_mask(mask);
 	    ptr.ptr()->send_real(bit_, 0);
-      else
-	    ptr.ptr()->fun->recv_real(ptr, force_, 0);
+      } else {
+	      // Variables keep the current value.
+	    double res =  real_value();
+	    release_mask(mask);
+	    ptr.ptr()->fun->recv_real(ptr, res, 0);
+      }
+#endif
 }
 
 unsigned vvp_wire_real::value_size() const
