@@ -236,7 +236,9 @@ static int GetRegistryKey(char *key, char **value)
 	}
 	regKeyBuffer[regKeySize] = 0;		/* makes sure there is a trailing NULL */
 
-	lrv = RegQueryValueEx(hkKey,key,NULL,&regKeyType,regKeyBuffer,&regKeySize);
+	/* This needs an unsigned char *, but for MinGW the char is signed. */
+	lrv = RegQueryValueEx(hkKey, key, NULL, &regKeyType,
+	                      (unsigned char *) regKeyBuffer, &regKeySize);
 	if ((lrv != ERROR_SUCCESS) || (regKeyType != REG_SZ) || (!regKeySize)) {
 		lrv = RegCloseKey(hkKey);
 		free(regKeyBuffer);
@@ -269,7 +271,9 @@ static void SetRegistryKey(char *key, char *value)
 		&res) != ERROR_SUCCESS)
 			return;
 
-	RegSetValueEx(hkKey,key,0,REG_SZ,value,strlen(value)+1);
+	/* This needs an unsigned char *, but for MinGW the char is signed. */
+	RegSetValueEx(hkKey, key, 0, REG_SZ, (unsigned char *) value,
+	              strlen(value)+1);
 	RegCloseKey(hkKey);
 
 	printf("info:  storing %s in Windows' registry entry\n",value);
