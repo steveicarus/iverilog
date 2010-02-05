@@ -49,12 +49,13 @@ char* substitutions(const char*str)
 		  str = ep + 1;
 
 		  value = getenv(name);
-		  if (value == 0)
+		  if (value == 0) {
 			fprintf(stderr, "Warning: environment variable "
 			        "\"%s\" not found during command file "
 			        "processing.\n", name);
 			free(name);
 			continue;
+		  }
 		  free(name);
 
 		  if (strlen(value) >= (nbuf - (cp-buf))) {
