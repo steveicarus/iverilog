@@ -464,12 +464,18 @@ int main(int argc, char*argv[])
       modpath_delete();
       vpi_handle_delete();
       udp_defns_delete();
-      load_module_delete();
       island_delete();
       signal_pool_delete();
       vvp_net_pool_delete();
       ufunc_pool_delete();
 #endif
+/*
+ * Unload the VPI modules. This is essential for MinGW, to ensure
+ * dump files are flushed before the main process terminates, as
+ * the DLL termination code is called after all remaining open
+ * files are automatically closed.
+*/
+      load_module_delete();
 
       return vvp_return_value;
 }
