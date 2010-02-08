@@ -2779,6 +2779,10 @@ void vvp_fun_signal4_sa::calculate_output_(vvp_net_ptr_t ptr)
 
 void vvp_fun_signal4_sa::release(vvp_net_ptr_t ptr, bool net)
 {
+	// If not currently forced, do nothing.
+      if (force_mask_.size() == 0)
+            return;
+
       force_mask_ = vvp_vector2_t();
       if (net) {
 	    vvp_send_vec4(ptr.ptr()->out, bits4_, 0);
@@ -2791,11 +2795,17 @@ void vvp_fun_signal4_sa::release(vvp_net_ptr_t ptr, bool net)
 void vvp_fun_signal4_sa::release_pv(vvp_net_ptr_t ptr, bool net,
                                     unsigned base, unsigned wid)
 {
+	// If not currently forced, do nothing.
+      if (force_mask_.size() == 0)
+            return;
+
       assert(bits4_.size() >= base + wid);
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    force_mask_.set_bit(base+idx, 0);
-	    if (!net) bits4_.set_bit(base+idx, force_.value(base+idx));
+            if (force_mask_.value(base+idx)) {
+                  force_mask_.set_bit(base+idx, 0);
+                  if (!net) bits4_.set_bit(base+idx, force_.value(base+idx));
+            }
       }
       if (force_mask_.is_zero()) force_mask_ = vvp_vector2_t();
 
@@ -3074,6 +3084,10 @@ void vvp_fun_signal8::calculate_output_(vvp_net_ptr_t ptr)
 
 void vvp_fun_signal8::release(vvp_net_ptr_t ptr, bool net)
 {
+	// If not currently forced, do nothing.
+      if (force_mask_.size() == 0)
+            return;
+
       force_mask_ = vvp_vector2_t();
       if (net) {
 	    vvp_send_vec8(ptr.ptr()->out, bits8_);
@@ -3086,11 +3100,17 @@ void vvp_fun_signal8::release(vvp_net_ptr_t ptr, bool net)
 void vvp_fun_signal8::release_pv(vvp_net_ptr_t ptr, bool net,
                                  unsigned base, unsigned wid)
 {
+	// If not currently forced, do nothing.
+      if (force_mask_.size() == 0)
+            return;
+
       assert(bits8_.size() >= base + wid);
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    force_mask_.set_bit(base+idx, 0);
-	    if (!net) bits8_.set_bit(base+idx, force_.value(base+idx));
+            if (force_mask_.value(base+idx)) {
+                  force_mask_.set_bit(base+idx, 0);
+                  if (!net) bits8_.set_bit(base+idx, force_.value(base+idx));
+            }
       }
       if (force_mask_.is_zero()) force_mask_ = vvp_vector2_t();
 
@@ -3195,6 +3215,10 @@ void vvp_fun_signal_real_sa::recv_real(vvp_net_ptr_t ptr, double bit,
 
 void vvp_fun_signal_real_sa::release(vvp_net_ptr_t ptr, bool net)
 {
+	// If not currently forced, do nothing.
+      if (force_mask_.size() == 0)
+            return;
+
       force_mask_ = vvp_vector2_t();
       if (net) {
 	    vvp_send_real(ptr.ptr()->out, bits_, 0);
