@@ -5,7 +5,7 @@
 
 %{
 /*
- * Copyright (c) 2007-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -72,6 +72,12 @@ static int yywrap(void)
 <EDGE_ID>[zZ]"0" {return K_Z0; }
 <EDGE_ID>[pP][oO][sS][eE][dD][gG][eE] {return K_POSEDGE; }
 <EDGE_ID>[nN][eE][gG][eE][dD][gG][eE] {return K_NEGEDGE; }
+
+  /* Integer values */
+[0-9]+ {
+      yylval.int_val = strtoul(yytext, 0);
+      return INTEGER;
+}
 
   /* Real values */
 [0-9]+(\.[0-9]+)?([Ee][+-]?[0-9]+)? {
