@@ -156,8 +156,9 @@ step. There may be dangling references, and it is not yet clear which
 module is the root.
 
 One can see a human readable version of the final pform by using the
-``-P <path>'' flag to the compiler. This will cause iverilog to dump
-the pform into the file named <path>.
+``-P <path>'' flag to the ``ivl'' subcommand. This will cause ivl
+to dump the pform into the file named <path>. (Note that this is not
+normally done, unless debugging the ``ivl'' subcommand.)
 
 3.3 Elaboration
 
