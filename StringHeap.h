@@ -38,7 +38,7 @@ class perm_string {
       operator const char* () const { return str(); }
 
 	// This is an escape for making perm_string objects out of
-	// literals. For example, per_string::literal("Label"); Please
+	// literals. For example, perm_string::literal("Label"); Please
 	// do *not* cheat and pass arbitrary const char* items here.
       static perm_string literal(const char*t) { return perm_string(t); }
 
