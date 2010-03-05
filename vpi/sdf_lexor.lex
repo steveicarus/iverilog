@@ -75,7 +75,7 @@ static int yywrap(void)
 
   /* Integer values */
 [0-9]+ {
-      yylval.int_val = strtoul(yytext, 0);
+      yylval.int_val = strtoul(yytext, 0, 10);
       return INTEGER;
 }
 
