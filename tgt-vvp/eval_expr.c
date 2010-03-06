@@ -2479,26 +2479,93 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
 	/* Evaluate the sub-expression. */
       subv = draw_eval_expr(sube, 0);
 
-	/* Any bit select of a constant zero is another constant zero,
-	   so short circuit and return the value we know. */
-      if (subv.base == 0) {
+	/* Special case: Any bit/part select of an unsized constant
+	   zero by an unsigned base is another constant zero, so short
+	   circuit and return the value we know. */
+      if (subv.base == 0 && !ivl_expr_sized(sube) && !ivl_expr_signed(shift)) {
+	    fprintf(vvp_out, "; Part select of unsized zero with unsized shift is zero.\n");
 	    subv.wid = wid;
 	    return subv;
       }
 
-	/* Evaluate the bit select base expression and store the
-	   result into index register 0. */
+	/* Special case: Any bit/part select of an unsized constant -1
+	   by an unsigned base is another constant -1, so short
+	   circuit and return the value we know. */
+      if (subv.base == 1 && ivl_expr_signed(sube) && !ivl_expr_sized(sube) && !ivl_expr_signed(shift)) {
+	    fprintf(vvp_out, "; Part select of unsized -1 with unsized shift is -1.\n");
+	    subv.wid = wid;
+	    return subv;
+      }
+
+	/* Evaluate the bit select base expression. */
       shiv = draw_eval_expr(shift, STUFF_OK_XZ);
 
-	/* Detect and handle the special case that the shift is a
-	   constant 0. Skip the shift, and return the subexpression
-	   with the width trimmed down to the desired width. */
+	/* Special case: If the shift is a constant 0, skip the shift
+	   and return the subexpression with the width trimmed down to
+	   the part select width. */
       if (shiv.base == 0) {
+	    fprintf(vvp_out, "; Part select with shift==0 skips shift.\n");
 	    assert(subv.wid >= wid);
 	    res.base = subv.base;
 	    return res;
       }
 
+	/* Special case: If the expression is an unsized zero (and we
+	   know that the shift is signed) then the expression value is
+	   0 if the shift is >= 0, and x otherwise. The trickery in
+	   this special case assumes the output width is 1. */
+      if (subv.base==0 && !ivl_expr_sized(sube) && wid==1) {
+	    assert(ivl_expr_signed(shift));
+
+	    if (shiv.base < 4) {
+		  assert(shiv.base != 0);
+		  res.base = 2;
+		  res.wid = wid;
+		  return res;
+	    }
+
+	      /* Test if the shift is <0 by looking at the sign
+	         bit. If the sign bit is 1, then it is negative and
+	         the result is 1'bx. If the sign bit is 0, then the
+	         result is 1'b0. */
+	    clr_vector(shiv);
+	    res.base = allocate_vector(wid);
+	    res.wid = wid;
+	    fprintf(vvp_out, "    %%mov %u, 2, 1;\n", res.base);
+	    fprintf(vvp_out, "    %%and %u, %u, 1; x if shift<0, 0 otherwise\n",
+		    res.base, shiv.base+shiv.wid-1);
+	    return res;
+      }
+
+	/* Special case: If the expression is an unsized -1 (and we
+	   know that the shift is signed) then the expression value is
+	   1 if the shift is >= 0, and x otherwise. The trickery in
+	   this special case assumes the output width is 1. */
+      if (subv.base==1 && ivl_expr_signed(sube) && !ivl_expr_sized(sube) && wid==1) {
+	    assert(ivl_expr_signed(shift));
+
+	    if (shiv.base < 4) {
+		  assert(shiv.base != 0);
+		  res.base = 2;
+		  res.wid = wid;
+		  return res;
+	    }
+
+	      /* Test if the shift is <0 by looking at the sign
+	         bit. If the sign bit is 1, then it is negative and
+	         the result is 1'bx. If the sign bit is 0, then the
+	         result is 1'b1. */
+	    clr_vector(shiv);
+	    res.base = allocate_vector(wid);
+	    res.wid = wid;
+	    fprintf(vvp_out, "    %%mov %u, 2, 1;\n", res.base);
+	    fprintf(vvp_out, "    %%nand %u, %u, 1; x if shift<0, 1 otherwise\n",
+		    res.base, shiv.base+shiv.wid-1);
+	    return res;
+      }
+
+	/* Store the bit select base into index register 0, in
+	   preparation for doing a shift. */
       if (ivl_expr_signed(shift)) {
 	    fprintf(vvp_out, "    %%ix/get/s 0, %u, %u;\n", shiv.base,
 	                                                    shiv.wid);

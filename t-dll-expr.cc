@@ -60,6 +60,7 @@ void dll_target::sub_off_from_expr_(long off)
       tmpc->value_  = IVL_VT_VECTOR;
       tmpc->width_  = expr_->width_;
       tmpc->signed_ = expr_->signed_;
+      tmpc->sized_  = 1;
       tmpc->u_.number_.bits_ = bits = (char*)malloc(tmpc->width_);
       for (unsigned idx = 0 ;  idx < tmpc->width_ ;  idx += 1) {
 	    bits[idx] = (off & 1)? '1' : '0';
@@ -74,6 +75,7 @@ void dll_target::sub_off_from_expr_(long off)
       tmps->value_ = IVL_VT_VECTOR;
       tmps->width_ = tmpc->width_;
       tmps->signed_ = tmpc->signed_;
+      tmps->sized_ = 1;
       tmps->u_.binary_.op_  = '-';
       tmps->u_.binary_.lef_ = expr_;
       tmps->u_.binary_.rig_ = tmpc;
@@ -92,6 +94,7 @@ void dll_target::mul_expr_by_const_(long val)
       tmpc->value_  = IVL_VT_VECTOR;
       tmpc->width_  = expr_->width_;
       tmpc->signed_ = expr_->signed_;
+      tmpc->sized_  = 1;
       tmpc->u_.number_.bits_ = bits = (char*)malloc(tmpc->width_);
       for (unsigned idx = 0 ;  idx < tmpc->width_ ;  idx += 1) {
 	    bits[idx] = (val & 1)? '1' : '0';
@@ -106,6 +109,7 @@ void dll_target::mul_expr_by_const_(long val)
       tmps->value_ = IVL_VT_VECTOR;
       tmps->width_ = tmpc->width_;
       tmps->signed_ = tmpc->signed_;
+      tmps->sized_ = 1;
       tmps->u_.binary_.op_  = '*';
       tmps->u_.binary_.lef_ = expr_;
       tmps->u_.binary_.rig_ = tmpc;
@@ -125,6 +129,7 @@ ivl_expr_t dll_target::expr_from_value_(const verinum&val)
       expr->value_= IVL_VT_VECTOR;
       expr->width_= val.len();
       expr->signed_ = val.has_sign()? 1 : 0;
+      expr->sized_= 1;
       expr->u_.number_.bits_ = bits = (char*)malloc(expr->width_ + 1);
       for (idx = 0 ;  idx < expr->width_ ;  idx += 1)
 	    switch (val.get(idx)) {
@@ -160,6 +165,7 @@ void dll_target::expr_access_func(const NetEAccess*net)
       expr_->lineno = net->get_lineno();
       expr_->width_ = 1;
       expr_->signed_= 1;
+      expr_->sized_ = 1;
 
       expr_->u_.branch_.branch = net->get_branch()->target_obj();
       expr_->u_.branch_.nature = net->get_nature();
@@ -183,6 +189,7 @@ void dll_target::expr_binary(const NetEBinary*net)
       expr_->value_= get_expr_type(net);
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
+      expr_->sized_= 1;
 
       expr_->u_.binary_.op_ = net->op();
       expr_->u_.binary_.lef_ = left;
@@ -200,6 +207,7 @@ void dll_target::expr_concat(const NetEConcat*net)
       cur->value_ = IVL_VT_VECTOR;
       cur->width_ = net->expr_width();
       cur->signed_ = net->has_sign() ? 1 : 0;
+      cur->sized_ = 1;
 
       cur->u_.concat_.rept  = net->repeat();
       cur->u_.concat_.parms = net->nparms();
@@ -236,6 +244,7 @@ void dll_target::expr_const(const NetEConst*net)
 	    expr_->type_ = IVL_EX_NUMBER;
 	    expr_->width_= net->expr_width();
 	    expr_->signed_ = net->has_sign()? 1 : 0;
+	    expr_->sized_= net->has_width()? 1 : 0;
 	    expr_->u_.number_.bits_ = bits = (char*)malloc(expr_->width_);
 	    for (idx = 0 ;  idx < expr_->width_ ;  idx += 1)
 		  switch (val.get(idx)) {
@@ -294,6 +303,7 @@ void dll_target::expr_creal(const NetECReal*net)
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       expr_->width_  = net->expr_width();
       expr_->signed_ = 1;
+      expr_->sized_  = 1;
       expr_->type_ = IVL_EX_REALNUM;
       FILE_NAME(expr_, net);
       expr_->value_= IVL_VT_REAL;
@@ -358,6 +368,7 @@ void dll_target::expr_select(const NetESelect*net)
       expr_->value_= IVL_VT_VECTOR;
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
+      expr_->sized_= 1;
 
       expr_->u_.binary_.lef_ = left;
       expr_->u_.binary_.rig_ = rght;
@@ -375,6 +386,7 @@ void dll_target::expr_sfunc(const NetESFunc*net)
       expr->value_= net->expr_type();
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
+      expr->sized_= 1;
 	/* system function names are lex_strings strings. */
       expr->u_.sfunc_.name_ = net->name();
 
@@ -405,6 +417,7 @@ void dll_target::expr_ternary(const NetETernary*net)
       expr->value_= net->expr_type();
       expr->width_ = net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
+      expr->sized_ = 1;
 
       net->cond_expr()->expr_scan(this);
       assert(expr_);
@@ -447,6 +460,7 @@ void dll_target::expr_signal(const NetESignal*net)
       expr_->lineno= net->get_lineno();
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
+      expr_->sized_= 1;
       expr_->u_.signal_.word = word_expr;
       expr_->u_.signal_.sig = sig;
 
@@ -474,6 +488,7 @@ void dll_target::expr_ufunc(const NetEUFunc*net)
       expr->value_= net->expr_type();
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
+      expr->sized_= 1;
 
       expr->u_.ufunc_.def = lookup_scope_(net->func());
       assert(expr->u_.ufunc_.def->type_ == IVL_SCT_FUNCTION);
@@ -507,6 +522,7 @@ void dll_target::expr_unary(const NetEUnary*net)
       expr_->value_= net->expr_type();
       expr_->width_ = net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
+      expr_->sized_ = 1;
       expr_->u_.unary_.op_ = net->op();
       expr_->u_.unary_.sub_ = sub;
 }

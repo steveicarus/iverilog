@@ -518,6 +518,12 @@ extern "C" int ivl_expr_signed(ivl_expr_t net)
       return net->signed_;
 }
 
+extern "C" int ivl_expr_sized(ivl_expr_t net)
+{
+      assert(net);
+      return net->sized_;
+}
+
 extern "C" const char* ivl_expr_string(ivl_expr_t net)
 {
       assert(net->type_ == IVL_EX_STRING);

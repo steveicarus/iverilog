@@ -257,6 +257,7 @@ void show_expression(ivl_expr_t net, unsigned ind)
       ivl_parameter_t par = ivl_expr_parameter(net);
       unsigned width = ivl_expr_width(net);
       const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
+      const char*sized = ivl_expr_sized(net)? "sized" : "unsized";
       const char*vt = vt_type_string(net);
 
       switch (code) {
@@ -292,7 +293,7 @@ void show_expression(ivl_expr_t net, unsigned ind)
 		for (idx = width ;  idx > 0 ;  idx -= 1)
 		      fprintf(out, "%c", bits[idx-1]);
 
-		fprintf(out, ", %s %s", sign, vt);
+		fprintf(out, ", %s %s %s", sign, sized, vt);
 		if (par != 0)
 		      fprintf(out, ", parameter=%s",
 			      ivl_parameter_basename(par));

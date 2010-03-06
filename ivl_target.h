@@ -662,6 +662,11 @@ extern ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx);
  *    IVL core figures all this out for you. At any rate, this method
  *    can be applied to any expression node.
  *
+ * ivl_expr_sized
+ *    This method returns false (0) if the expression node does not
+ *    have a defined size. This is unusual, but may happen for
+ *    constant expressions.
+ *
  * ivl_expr_type
  *    Get the type of the expression node. Every expression node has a
  *    type, which can affect how some of the other expression methods
@@ -782,6 +787,8 @@ extern ivl_scope_t ivl_expr_scope(ivl_expr_t net);
 extern ivl_signal_t ivl_expr_signal(ivl_expr_t net);
   /* any expression */
 extern int         ivl_expr_signed(ivl_expr_t net);
+  /* any expression */
+extern int         ivl_expr_sized(ivl_expr_t net);
   /* IVL_EX_STRING */
 extern const char* ivl_expr_string(ivl_expr_t net);
   /* IVL_EX_ULONG */

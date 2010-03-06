@@ -213,6 +213,7 @@ struct ivl_expr_s {
 
       unsigned width_;
       unsigned signed_ : 1;
+      unsigned sized_  : 1;
 
       union {
 	    struct {
