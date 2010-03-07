@@ -258,11 +258,12 @@ const verireal& PEFNumber::value() const
 }
 
 PEIdent::PEIdent(const pform_name_t&that)
-: path_(that)
+: path_(that), no_implicit_sig_(false)
 {
 }
 
-PEIdent::PEIdent(perm_string s)
+PEIdent::PEIdent(perm_string s, bool no_implicit_sig)
+: no_implicit_sig_(no_implicit_sig)
 {
       path_.push_back(name_component_t(s));
 }
@@ -273,9 +274,13 @@ PEIdent::~PEIdent()
 
 void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
-        /* We create an implicit wire if this is a simple identifier and
-           if an identifier of that name has not already been declared in
-           any enclosing scope. */
+        /* We create an implicit wire if:
+	   - this is a simple identifier
+           - an identifier of that name has not already been declared in
+             any enclosing scope.
+	   - this is not an implicit named port connection */
+     if (no_implicit_sig_)
+	    return;
      if ((path_.size() == 1) && (path_.front().index.size() == 0)) {
             perm_string name = path_.front().name;
             LexicalScope*ss = scope;

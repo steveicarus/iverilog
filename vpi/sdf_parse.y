@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -58,7 +58,7 @@ char sdf_use_hchar = '.';
 %type <string_val> celltype
 %type <string_val> cell_instance
 %type <string_val> hierarchical_identifier
-%type <string_val> port port_instance
+%type <string_val> port port_instance port_interconnect
 
 %type <real_val> rtriple signed_real_number
 %type <delay> delval rvalue
@@ -173,6 +173,11 @@ time_scale
 					sdf_parse_path, @2.first_line, $3, $4);
 	free($4);
       }
+  | '(' K_TIMESCALE INTEGER IDENTIFIER ')'
+      { if (sdf_flag_inform) vpi_printf("%s:%d:SDF INFO: TIMESCALE : %lu%s\n",
+					sdf_parse_path, @2.first_line, $3, $4);
+	free($4);
+      }
   ;
 
 cell_list
@@ -254,7 +259,8 @@ del_def
   | '(' K_IOPATH error ')'
       { vpi_printf("%s:%d: SDF ERROR: Invalid/malformed IOPATH\n",
 		   sdf_parse_path, @2.first_line); }
-  | '(' K_INTERCONNECT port_instance port_instance delval_list ')'
+  /* | '(' K_INTERCONNECT port_instance port_instance delval_list ')' */
+  | '(' K_INTERCONNECT port_interconnect port_interconnect delval_list ')'
       { if (sdf_flag_warning) vpi_printf("%s:%d: SDF WARNING: "
 					 "INTERCONNECT not supported.\n",
 					 sdf_parse_path, @2.first_line);
@@ -299,6 +305,14 @@ port
   : hierarchical_identifier
       { $$ = $1; }
     /* | hierarchical_identifier '[' INTEGER ']' */
+  ;
+
+  /* Since INTERCONNECT is ignored we can also ignore a vector bit. */
+port_interconnect
+  : hierarchical_identifier
+      { $$ = $1; }
+  | hierarchical_identifier '[' INTEGER ']'
+      { $$ = $1;}
   ;
 
 port_edge
@@ -384,6 +398,9 @@ signed_real_number
   :     REAL_NUMBER { $$ = $1; }
   | '+' REAL_NUMBER { $$ = $2; }
   | '-' REAL_NUMBER { $$ = -$2; }
+  |     INTEGER { $$ = $1; }
+  | '+' INTEGER { $$ = $2; }
+  | '-' INTEGER { $$ = -$2; }
   ;
 
 %%

@@ -255,7 +255,7 @@ class PEFNumber : public PExpr {
 class PEIdent : public PExpr {
 
     public:
-      explicit PEIdent(perm_string);
+      explicit PEIdent(perm_string, bool no_implicit_sig=false);
       explicit PEIdent(const pform_name_t&);
       ~PEIdent();
 
@@ -298,6 +298,7 @@ class PEIdent : public PExpr {
 
     private:
       pform_name_t path_;
+      bool no_implicit_sig_;
 
     private:
 	// Common functions to calculate parts of part/bit

@@ -709,7 +709,7 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
 void pform_check_timeunit_prec()
 {
       assert(pform_cur_module);
-      if (gn_system_verilog_flag && (pform_cur_module->time_unit <
+      if ((generation_flag & GN_VER2009) && (pform_cur_module->time_unit <
                                      pform_cur_module->time_precision)) {
 	    VLerror("error: a timeprecision is missing or is too "
 	            "large!");

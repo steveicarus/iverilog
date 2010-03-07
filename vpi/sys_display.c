@@ -1850,6 +1850,109 @@ static PLI_INT32 sys_printtimescale_calltf(PLI_BYTE8*xx)
       return 0;
 }
 
+static PLI_INT32 sys_fatal_compiletf(PLI_BYTE8*name)
+{
+      vpiHandle callh   = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv  = vpi_iterate(vpiArgument, callh);
+
+      if (argv) {
+            vpiHandle arg;
+            s_vpi_value val;
+
+            /* Check that finish_number is numeric */
+            arg = vpi_scan(argv);
+            if (! is_numeric_obj(arg)) {
+                  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+                             (int)vpi_get(vpiLineNo, callh));
+                  vpi_printf("%s's first argument must be numeric\n", name);
+                  vpi_control(vpiFinish, 1);
+                  return 0;
+            }
+
+            /* Check that it is 0, 1, or 2 */
+            val.format = vpiIntVal;
+            vpi_get_value(arg, &val);
+            if ((val.value.integer < 0) || (val.value.integer > 2)) {
+                  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+                             (int)vpi_get(vpiLineNo, callh));
+                  vpi_printf("%s's finish_number must be 0, 1, or 2\n", name);
+                  vpi_control(vpiFinish, 1);
+            }
+      }
+      if (sys_check_args(callh, argv, name, 0, 0)) vpi_control(vpiFinish, 1);
+      return 0;
+}
+
+static PLI_INT32 sys_severity_calltf(PLI_BYTE8*name)
+{
+      vpiHandle callh, argv, scope;
+      struct strobe_cb_info info;
+      struct t_vpi_time now;
+      PLI_UINT64 now64;
+      char *sstr, *t, *dstr;
+      unsigned int size, location=0;
+      s_vpi_value finish_number;
+
+
+      callh = vpi_handle(vpiSysTfCall, 0);
+      argv  = vpi_iterate(vpiArgument, callh);
+
+      if (strncmp(name,"$fatal",6) == 0) {
+            vpiHandle arg = vpi_scan(argv);
+            finish_number.format = vpiIntVal;
+            vpi_get_value(arg, &finish_number);
+      }
+
+      /* convert name to upper and drop $ to get severity string */
+      sstr = strdup(name) + 1;
+      t = sstr;
+      while (*t) *t++ = toupper(*t);
+
+      scope = vpi_handle(vpiScope, callh);
+      assert(scope);
+      info.name = name;
+      info.filename = strdup(vpi_get_str(vpiFile, callh));
+      info.lineno = (int)vpi_get(vpiLineNo, callh);
+      info.default_format = vpiDecStrVal;
+      info.scope = scope;
+      array_from_iterator(&info, argv);
+
+      vpi_printf("%s: %s:%d: ", sstr, info.filename, info.lineno);
+
+      dstr = get_display(&size, &info);
+      while (location < size) {
+	    if (dstr[location] == '\0') {
+		  my_mcd_printf(1, "%c", '\0');
+		  location += 1;
+	    } else {
+		  my_mcd_printf(1, "%s", &dstr[location]);
+		  location += strlen(&dstr[location]);
+	    }
+      }
+
+      /* Now blank sstr out for equivalent spacing */
+      t = sstr;
+      while (*t) *t++ = ' ';
+
+      now.type = vpiSimTime;
+      vpi_get_time(0, &now);
+      now64 = timerec_to_time64(&now);
+
+      vpi_printf("\n%s  Time: %" PLI_UINT64_FMT " Scope: %s\n",
+                 sstr, now64, vpi_get_str(vpiFullName, scope));
+
+      free(--sstr);
+      free(info.filename);
+      free(info.items);
+      free(dstr);
+
+      if (strncmp(name,"$fatal",6) == 0)
+            vpi_control(vpiFinish, finish_number.value.integer);
+
+      return 0;
+}
+
+
 static PLI_INT32 sys_end_of_simulation(p_cb_data cb_data)
 {
       free(monitor_callbacks);
@@ -2173,6 +2276,39 @@ void sys_display_register()
       tf_data.compiletf = sys_printtimescale_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$printtimescale";
+      vpi_register_systf(&tf_data);
+
+      /*============================ severity tasks */
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fatal";
+      tf_data.calltf    = sys_severity_calltf;
+      tf_data.compiletf = sys_fatal_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fatal";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$error";
+      tf_data.calltf    = sys_severity_calltf;
+      tf_data.compiletf = sys_display_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$error";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$warning";
+      tf_data.calltf    = sys_severity_calltf;
+      tf_data.compiletf = sys_display_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$warning";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$info";
+      tf_data.calltf    = sys_severity_calltf;
+      tf_data.compiletf = sys_display_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$info";
       vpi_register_systf(&tf_data);
 
       cb_data.reason = cbEndOfCompile;
