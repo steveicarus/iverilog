@@ -377,7 +377,20 @@ bool vvp_fun_anyedge::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       bool flag = false;
 
       if (old_bits.size() != bit.size()) {
-	    flag = true;
+	    if (old_bits.size() == 0) {
+		    // Special case: If we've not seen any input yet
+		    // (old_bits.size()==0) then replace it will a reference
+		    // vector that is 'bx. Then compare that with the input
+		    // to see if we are processing a change from 'bx.
+		  old_bits = vvp_vector4_t(bit.size(), BIT4_X);
+		  if (old_bits.eeq(bit))
+			flag = false;
+		  else
+			flag = true;
+
+	    } else {
+		  flag = true;
+	    }
 
       } else {
 	    for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1) {
