@@ -1857,6 +1857,7 @@ list_of_port_declarations
 		  pform_module_define_port(@3, name,
 					port_declaration_context.port_type,
 					port_declaration_context.port_net_type,
+					port_declaration_context.var_type,
 					port_declaration_context.sign_flag,
 					port_declaration_context.range, 0);
 		  delete[]$3;
@@ -1876,91 +1877,96 @@ list_of_port_declarations
 
 port_declaration
   : attribute_list_opt
-    K_input net_type_opt signed_opt range_opt IDENTIFIER
+    K_input net_type_opt primitive_type_opt signed_opt range_opt IDENTIFIER
       { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($6);
+	perm_string name = lex_strings.make($7);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::PINPUT,
-				 $3, $4, $5, $1);
+				 $3, $4, $5, $6, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
 	port_declaration_context.port_net_type = $3;
-	port_declaration_context.sign_flag = $4;
+	port_declaration_context.var_type = $4;
+	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
-	port_declaration_context.range = $5;
+	port_declaration_context.range = $6;
 	delete $1;
-	delete[]$6;
+	delete[]$7;
 	$$ = ptmp;
       }
   | attribute_list_opt
-    K_inout  net_type_opt signed_opt range_opt IDENTIFIER
+    K_inout  net_type_opt primitive_type_opt signed_opt range_opt IDENTIFIER
       { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($6);
+	perm_string name = lex_strings.make($7);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::PINOUT,
-				 $3, $4, $5, $1);
+				 $3, $4, $5, $6, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = $3;
-	port_declaration_context.sign_flag = $4;
+	port_declaration_context.var_type = $4;
+	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
-	port_declaration_context.range = $5;
+	port_declaration_context.range = $6;
 	delete $1;
-	delete[]$6;
+	delete[]$7;
 	$$ = ptmp;
       }
   | attribute_list_opt
-    K_output net_type_opt signed_opt range_opt IDENTIFIER
+    K_output net_type_opt primitive_type_opt signed_opt range_opt IDENTIFIER
       { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($6);
+	perm_string name = lex_strings.make($7);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 $3, $4, $5, $1);
+				 $3, $4, $5, $6, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = $3;
-	port_declaration_context.sign_flag = $4;
+	port_declaration_context.var_type = $4;
+	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
-	port_declaration_context.range = $5;
+	port_declaration_context.range = $6;
 	delete $1;
-	delete[]$6;
+	delete[]$7;
 	$$ = ptmp;
       }
   | attribute_list_opt
-    K_output var_type signed_opt range_opt IDENTIFIER
+    K_output var_type primitive_type_opt signed_opt range_opt IDENTIFIER
       { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($6);
+	perm_string name = lex_strings.make($7);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 $3, $4, $5, $1);
+				 $3, $4, $5, $6, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = $3;
-	port_declaration_context.sign_flag = $4;
+	port_declaration_context.var_type = $4;
+	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
-	port_declaration_context.range = $5;
+	port_declaration_context.range = $6;
 	delete $1;
-	delete[]$6;
+	delete[]$7;
 	$$ = ptmp;
       }
   | attribute_list_opt
-    K_output var_type signed_opt range_opt IDENTIFIER '=' expression
+    K_output var_type primitive_type_opt signed_opt range_opt IDENTIFIER '=' expression
       { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($6);
+	perm_string name = lex_strings.make($7);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 $3, $4, $5, $1);
+				 $3, $4, $5, $6, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = $3;
-	port_declaration_context.sign_flag = $4;
+	port_declaration_context.var_type = $4;
+	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
-	port_declaration_context.range = $5;
+	port_declaration_context.range = $6;
 
-	pform_make_reginit(@6, name, $8);
+	pform_make_reginit(@7, name, $9);
 
 	delete $1;
-	delete[]$6;
+	delete[]$7;
 	$$ = ptmp;
       }
   ;

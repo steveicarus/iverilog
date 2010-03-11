@@ -1772,6 +1772,7 @@ void pform_module_define_port(const struct vlltype&li,
 			      perm_string name,
 			      NetNet::PortType port_type,
 			      NetNet::Type type,
+			      ivl_variable_type_t data_type,
 			      bool signed_flag,
 			      svector<PExpr*>*range,
 			      svector<named_pexpr_t*>*attr)
@@ -1786,8 +1787,11 @@ void pform_module_define_port(const struct vlltype&li,
 	    return;
       }
 
+	// The default type for all flavor of ports is LOGIC.
+      if (data_type == IVL_VT_NO_TYPE)
+	    data_type = IVL_VT_LOGIC;
 
-      cur = new PWire(name, type, port_type, IVL_VT_LOGIC);
+      cur = new PWire(name, type, port_type, data_type);
       FILE_NAME(cur, li);
 
       cur->set_signed(signed_flag);

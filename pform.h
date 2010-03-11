@@ -153,6 +153,7 @@ extern void pform_module_define_port(const struct vlltype&li,
 				     perm_string name,
 				     NetNet::PortType,
 				     NetNet::Type type,
+				     ivl_variable_type_t data_type,
 				     bool signed_flag,
 				     svector<PExpr*>*range,
 				     svector<named_pexpr_t*>*attr);
