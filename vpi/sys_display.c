@@ -1857,26 +1857,13 @@ static PLI_INT32 sys_fatal_compiletf(PLI_BYTE8*name)
 
       if (argv) {
             vpiHandle arg;
-            s_vpi_value val;
 
             /* Check that finish_number is numeric */
             arg = vpi_scan(argv);
             if (! is_numeric_obj(arg)) {
-                  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+                  vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
                              (int)vpi_get(vpiLineNo, callh));
-                  vpi_printf("%s's first argument must be numeric\n", name);
-                  vpi_control(vpiFinish, 1);
-                  return 0;
-            }
-
-            /* Check that it is 0, 1, or 2 */
-            val.format = vpiIntVal;
-            vpi_get_value(arg, &val);
-            if ((val.value.integer < 0) || (val.value.integer > 2)) {
-                  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
-                             (int)vpi_get(vpiLineNo, callh));
-                  vpi_printf("%s's finish_number must be 0, 1, or 2\n", name);
-                  vpi_control(vpiFinish, 1);
+                  vpi_printf("%s's first argument should be numeric\n", name);
             }
       }
       if (sys_check_args(callh, argv, name, 0, 0)) vpi_control(vpiFinish, 1);
@@ -1891,16 +1878,26 @@ static PLI_INT32 sys_severity_calltf(PLI_BYTE8*name)
       PLI_UINT64 now64;
       char *sstr, *t, *dstr;
       unsigned int size, location=0;
-      s_vpi_value finish_number;
+      s_vpi_value finish_number = {vpiIntVal};
 
+      finish_number.value.integer = 1;
 
       callh = vpi_handle(vpiSysTfCall, 0);
       argv  = vpi_iterate(vpiArgument, callh);
 
-      if (strncmp(name,"$fatal",6) == 0) {
+      if (strncmp(name,"$fatal",6) == 0 && argv) {
             vpiHandle arg = vpi_scan(argv);
             finish_number.format = vpiIntVal;
             vpi_get_value(arg, &finish_number);
+            if ((finish_number.value.integer < 0) ||
+		(finish_number.value.integer > 2)) {
+                  vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+                             (int)vpi_get(vpiLineNo, callh));
+                  vpi_printf("$fatal called with finish_number of %d, "
+			     "but it must be 0, 1, or 2\n",
+			     finish_number.value.integer);
+		  finish_number.value.integer = 1;
+            }
       }
 
       /* convert name to upper and drop $ to get severity string */
