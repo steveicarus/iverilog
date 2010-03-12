@@ -2425,9 +2425,19 @@ module_item
 
   /* A generate region can contain further module items. Actually, it
      is supposed to be limited to certain kinds of module items, but
-     the semantic tests will check that for us. */
+     the semantic tests will check that for us. Do check that the
+     generate/endgenerate regions do not nest. Generate schemes nest,
+     but generate regions do not. */
 
   | K_generate module_item_list_opt K_endgenerate
+     { // Test for bad nesting. I understand it, but it is illegal.
+       if (pform_parent_generate()) {
+	     cerr << @1 << ": error: Generate/endgenerate regions cannot nest." << endl;
+	     cerr << @1 << ":      : Try removing optional generate/endgenerate keywords," << endl;
+	     cerr << @1 << ":      : or move them to surround the parent generate scheme." << endl;
+	     error_count += 1;
+	}
+      }
 
   | K_genvar list_of_identifiers ';'
       { pform_genvars(@1, $2); }

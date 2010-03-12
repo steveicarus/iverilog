@@ -342,6 +342,11 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
       return block;
 }
 
+PGenerate* pform_parent_generate(void)
+{
+      return pform_cur_generate;
+}
+
 void pform_bind_attributes(map<perm_string,PExpr*>&attributes,
 			   svector<named_pexpr_t*>*attr)
 {

@@ -214,6 +214,12 @@ extern void pform_generate_case_item(const struct vlltype&lp, svector<PExpr*>*te
 extern void pform_generate_block_name(char*name);
 extern void pform_endgenerate();
 
+/*
+ * This function returns the lexically containing generate scheme, if
+ * there is one. The parser may use this to check if we are within a
+ * generate scheme.
+ */
+extern PGenerate* pform_parent_generate(void);
 
 /*
  * The makewire functions announce to the pform code new wires. These
