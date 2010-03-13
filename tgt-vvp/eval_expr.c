@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1989,6 +1989,7 @@ static struct vector_info draw_realnum_expr(ivl_expr_t exp, unsigned wid)
       struct vector_info res;
       double val = ivl_expr_dvalue(exp);
       long ival = val;
+      assert(wid <= 8*sizeof(long));
 
       unsigned addr, run, idx;
       int bit;
@@ -2003,11 +2004,11 @@ static struct vector_info draw_realnum_expr(ivl_expr_t exp, unsigned wid)
       addr = res.base;
       run = 1;
       bit = ival & 1;
-      ival >>= 1LL;
+      ival >>= 1;
 
       for (idx = 1 ;  idx < wid ;  idx += 1) {
 	    int next_bit = ival & 1;
-	    ival >>= 1LL;
+	    ival >>= 1;
 
 	    if (next_bit == bit) {
 		  run += 1;

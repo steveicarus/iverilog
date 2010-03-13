@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -782,10 +782,39 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       }
 
 
-      { struct vector_info res = draw_eval_expr(rval, 0);
-        unsigned wid = res.wid;
+      { struct vector_info res;
+	unsigned wid;
 	unsigned lidx;
 	unsigned cur_rbit = 0;
+	  /* Handle the special case that the expression is a real
+	     value. Evaluate the real expression, then convert the
+	     result to a vector. */.
+	if (ivl_expr_value(rval) == IVL_VT_REAL) {
+	      int word = draw_eval_real(rval);
+	        /* This is the accumulated with of the l-value of the
+		   assignment. */
+	      wid = ivl_stmt_lwidth(net);
+
+	      res.base = allocate_vector(wid);
+	      res.wid = wid;
+
+	      if (res.base == 0) {
+		    fprintf(stderr, "%s:%u: vvp.tgt error: "
+			    "Unable to allocate %u thread bits for "
+			    "r-value expression.\n", ivl_expr_file(rval),
+			    ivl_expr_lineno(rval), wid);
+		    vvp_errors += 1;
+	      }
+
+	      fprintf(vvp_out, "    %%cvt/vr %u, %d, %u;\n",
+		      res.base, word, res.wid);
+
+	      clr_word(word);
+
+	} else {
+	      res = draw_eval_expr(rval, 0);
+	      wid = res.wid;
+	}
 
 	for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
 	      unsigned bit_limit = wid - cur_rbit;
