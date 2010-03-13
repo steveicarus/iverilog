@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1852,40 +1852,45 @@ static PLI_INT32 sys_printtimescale_calltf(PLI_BYTE8*xx)
 
 static PLI_INT32 sys_fatal_compiletf(PLI_BYTE8*name)
 {
-      vpiHandle callh   = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv  = vpi_iterate(vpiArgument, callh);
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
 
       if (argv) {
-            vpiHandle arg;
+            vpiHandle arg = vpi_scan(argv);
 
-            /* Check that finish_number is numeric */
-            arg = vpi_scan(argv);
+            /* Check that finish_number (1st argument) is numeric */
             if (! is_numeric_obj(arg)) {
-                  vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
+                  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                              (int)vpi_get(vpiLineNo, callh));
-                  vpi_printf("%s's first argument should be numeric\n", name);
+                  vpi_printf("%s's finish number must be numeric.\n", name);
+		  vpi_control(vpiFinish, 1);
             }
+
+	    if (sys_check_args(callh, argv, name, 0, 0)) {
+		  vpi_control(vpiFinish, 1);
+	    }
       }
-      if (sys_check_args(callh, argv, name, 0, 0)) vpi_control(vpiFinish, 1);
+
       return 0;
 }
 
 static PLI_INT32 sys_severity_calltf(PLI_BYTE8*name)
 {
-      vpiHandle callh, argv, scope;
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, callh);
+      vpiHandle scope;
       struct strobe_cb_info info;
       struct t_vpi_time now;
       PLI_UINT64 now64;
       char *sstr, *t, *dstr;
       unsigned int size, location=0;
-      s_vpi_value finish_number = {vpiIntVal};
+      s_vpi_value finish_number;
 
+      /* Set the default finish number for $fatal. */
       finish_number.value.integer = 1;
 
-      callh = vpi_handle(vpiSysTfCall, 0);
-      argv  = vpi_iterate(vpiArgument, callh);
-
-      if (strncmp(name,"$fatal",6) == 0 && argv) {
+      /* Check that the finish number is in range. */
+      if (strncmp(name,"$fatal", 6) == 0 && argv) {
             vpiHandle arg = vpi_scan(argv);
             finish_number.format = vpiIntVal;
             vpi_get_value(arg, &finish_number);
@@ -1894,8 +1899,8 @@ static PLI_INT32 sys_severity_calltf(PLI_BYTE8*name)
                   vpi_printf("WARNING: %s:%d: ", vpi_get_str(vpiFile, callh),
                              (int)vpi_get(vpiLineNo, callh));
                   vpi_printf("$fatal called with finish_number of %d, "
-			     "but it must be 0, 1, or 2\n",
-			     finish_number.value.integer);
+			     "but it must be 0, 1, or 2.\n",
+			     (int)finish_number.value.integer);
 		  finish_number.value.integer = 1;
             }
       }
@@ -1927,24 +1932,22 @@ static PLI_INT32 sys_severity_calltf(PLI_BYTE8*name)
 	    }
       }
 
-      /* Now blank sstr out for equivalent spacing */
-      t = sstr;
-      while (*t) *t++ = ' ';
-
       now.type = vpiSimTime;
       vpi_get_time(0, &now);
       now64 = timerec_to_time64(&now);
 
-      vpi_printf("\n%s  Time: %" PLI_UINT64_FMT " Scope: %s\n",
-                 sstr, now64, vpi_get_str(vpiFullName, scope));
+      vpi_printf("\n%*s  Time: %" PLI_UINT64_FMT " Scope: %s\n",
+                 (int)strlen(sstr), " ", now64,
+                 vpi_get_str(vpiFullName, scope));
 
-      free(--sstr);
+      free(--sstr);  /* Get the $ back. */
       free(info.filename);
       free(info.items);
       free(dstr);
 
-      if (strncmp(name,"$fatal",6) == 0)
+      if (strncmp(name,"$fatal",6) == 0) {
             vpi_control(vpiFinish, finish_number.value.integer);
+      }
 
       return 0;
 }
