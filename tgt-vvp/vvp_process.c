@@ -838,7 +838,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	unsigned cur_rbit = 0;
 	  /* Handle the special case that the expression is a real
 	     value. Evaluate the real expression, then convert the
-	     result to a vector. */.
+	     result to a vector. */
 	if (ivl_expr_value(rval) == IVL_VT_REAL) {
 	      int word = draw_eval_real(rval);
 	        /* This is the accumulated with of the l-value of the
