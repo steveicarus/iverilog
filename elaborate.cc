@@ -3043,6 +3043,25 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
 		  if (found_in && eve) {
 			wa->add_event(eve);
+			  /* You can not look for the posedge or negedge of
+			   * an event. */
+			if (expr_[idx]->type() != PEEvent::ANYEDGE) {
+                              cerr << get_fileline() << ": error: ";
+                              switch (expr_[idx]->type()) {
+				  case PEEvent::POSEDGE:
+				    cerr << "posedge";
+				    break;
+				  case PEEvent::NEGEDGE:
+				    cerr << "negedge";
+				    break;
+				  default:
+				    cerr << "unknown edge type!";
+				    assert(0);
+			      }
+			      cerr << " can not be used with a named event ("
+			           << eve->name() << ")." << endl;
+                              des->errors += 1;
+			}
 			continue;
 		  }
 	    }
