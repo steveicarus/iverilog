@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -86,7 +86,8 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_UFUNC K_UFUNC_E K_UDP K_UDP_C K_UDP_S
 %token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_func K_vpi_func_r
 %token K_disable K_fork
-%token K_ivl_version K_vpi_module K_vpi_time_precision K_file_names
+%token K_ivl_version K_ivl_delay_selection
+%token K_vpi_module K_vpi_time_precision K_file_names
 
 %token <text> T_INSTR
 %token <text> T_LABEL
@@ -125,6 +126,8 @@ header_line
 		{ verify_version($2, NULL); }
 	| K_ivl_version T_STRING T_STRING ';'
 		{ verify_version($2, $3); }
+	| K_ivl_delay_selection T_STRING ';'
+		{ /* Do something with the delay selection. */ }
 	| K_vpi_module T_STRING ';'
 		{ compile_load_vpi_module($2); }
 	| K_vpi_time_precision '+' T_NUMBER ';'

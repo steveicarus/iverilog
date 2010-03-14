@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -111,13 +111,16 @@ int target_design(ivl_design_t des)
 
       draw_execute_header(des);
 
+      fprintf(vvp_out, ":ivl_delay_selection \"%s\";\n",
+                       ivl_design_delay_sel(des));
+
       { int pre = ivl_design_time_precision(des);
-        char sign = '+';
-        if (pre < 0) {
+	char sign = '+';
+	if (pre < 0) {
 	      pre = -pre;
 	      sign = '-';
 	}
-        fprintf(vvp_out, ":vpi_time_precision %c %d;\n", sign, pre);
+	fprintf(vvp_out, ":vpi_time_precision %c %d;\n", sign, pre);
       }
 
       draw_module_declarations(des);

@@ -1,7 +1,7 @@
 #ifndef __ivl_target_H
 #define __ivl_target_H
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -477,6 +477,9 @@ extern int ivl_path_source_negedge(ivl_delaypath_t obj);
  * entire program. Use the design methods to iterate over the elements
  * of the design.
  *
+ * ivl_design_delay_sel
+ *    Returns the tool delay selection: "MINIMUM", "TYPICAL" or "MAXIMUM"?
+ *
  * ivl_design_flag
  *    This function returns the string value of a named flag. Flags
  *    come from the "-fkey=value" options to the iverilog command and
@@ -510,6 +513,7 @@ extern int ivl_path_source_negedge(ivl_delaypath_t obj);
  *    signed power of 10) of a simulation tick.
  */
 
+extern const char* ivl_design_delay_sel(ivl_design_t des);
 extern const char* ivl_design_flag(ivl_design_t des, const char*key);
 extern int         ivl_design_process(ivl_design_t des,
 				      ivl_process_f fun, void*cd);

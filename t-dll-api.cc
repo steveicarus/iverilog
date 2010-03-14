@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -42,6 +42,10 @@ extern "C" ivl_nexus_t ivl_branch_terminal(ivl_branch_t net, int idx)
       assert(idx >= 0);
       assert( idx < 2);
       return net->pins[idx];
+}
+extern "C" const char*ivl_design_delay_sel(ivl_design_t des)
+{
+      return des->self->get_delay_sel();
 }
 
 extern "C" const char*ivl_design_flag(ivl_design_t des, const char*key)

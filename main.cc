@@ -1032,6 +1032,20 @@ int main(int argc, char*argv[])
 
       des->set_flags(flags);
 
+      switch(min_typ_max_flag) {
+	case MIN:
+	    des->set_delay_sel(Design::MIN);
+	    break;
+	case TYP:
+	    des->set_delay_sel(Design::TYP);
+	    break;
+	case MAX:
+	    des->set_delay_sel(Design::MAX);
+	    break;
+	default:
+	    assert(0);
+      }
+
 	/* Done with all the pform data. Delete the modules. */
       for (map<perm_string,Module*>::iterator idx = pform_modules.begin()
 		 ; idx != pform_modules.end() ; idx ++) {

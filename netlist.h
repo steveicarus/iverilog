@@ -3876,6 +3876,10 @@ class Design {
       Design();
       ~Design();
 
+	/* We need to pass the tool delay selection for $sdf_annotate. */
+      enum delay_sel_t { MIN, TYP, MAX };
+      void set_delay_sel(delay_sel_t sel);
+      const char* get_delay_sel() const;
 
 	/* The flags are a generic way of accepting command line
 	   parameters/flags and passing them to the processing steps
@@ -3998,6 +4002,7 @@ class Design {
       map<string,const char*> flags_;
 
       int des_precision_;
+      delay_sel_t des_delay_sel_;
 
     private: // not implemented
       Design(const Design&);

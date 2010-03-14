@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -47,6 +47,7 @@ static char* strdupnew(char const *str)
 
   /* These are some special header/footer keywords. */
 ^":ivl_version" { return K_ivl_version; }
+^":ivl_delay_selection" { return K_ivl_delay_selection; }
 ^":vpi_module" { return K_vpi_module; }
 ^":vpi_time_precision" { return K_vpi_time_precision; }
 ^":file_names" { return K_file_names; }

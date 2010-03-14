@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -59,6 +59,30 @@ int Design::get_precision() const
 {
       return des_precision_;
 }
+
+void Design::set_delay_sel(delay_sel_t sel)
+{
+      des_delay_sel_ = sel;
+}
+
+const char* Design::get_delay_sel() const
+{
+      switch (des_delay_sel_) {
+	case Design::MIN:
+	    return "MINIMUM";
+	    break;
+	case Design::TYP:
+	    return "TYPICAL";
+	    break;
+	case Design::MAX:
+	    return "MAXIMUM";
+	    break;
+	default:
+	    assert(0);
+	    return "TYPICAL";
+      }
+}
+
 
 uint64_t Design::scale_to_precision(uint64_t val,
 				    const NetScope*scope) const
