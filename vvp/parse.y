@@ -127,7 +127,7 @@ header_line
 	| K_ivl_version T_STRING T_STRING ';'
 		{ verify_version($2, $3); }
 	| K_ivl_delay_selection T_STRING ';'
-		{ /* Do something with the delay selection. */ }
+		{ set_delay_selection($2); }
 	| K_vpi_module T_STRING ';'
 		{ compile_load_vpi_module($2); }
 	| K_vpi_time_precision '+' T_NUMBER ';'

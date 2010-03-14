@@ -264,6 +264,9 @@ static const char* vpi_type_values(PLI_INT32 code)
 
 PLI_INT32 vpi_get(int property, vpiHandle ref)
 {
+	/* We don't care what the ref is there is only one delay selection. */
+      if (property == _vpiDelaySelection) return vpip_delay_selection;
+
       if (ref == 0)
 	    return vpip_get_global(property);
 
@@ -303,6 +306,20 @@ PLI_INT32 vpi_get(int property, vpiHandle ref)
 
 char* vpi_get_str(PLI_INT32 property, vpiHandle ref)
 {
+	/* We don't care what the ref is there is only one delay selection. */
+      if (property == _vpiDelaySelection) {
+	    switch (vpip_delay_selection) {
+		case _vpiDelaySelMinimum:
+		  return simple_set_rbuf_str("MINIMUM");
+		case _vpiDelaySelTypical:
+		  return simple_set_rbuf_str("TYPICAL");
+		case _vpiDelaySelMaximum:
+		  return simple_set_rbuf_str("MAXIMUM");
+		default:
+		  assert(0);
+	    }
+      }
+
       if (ref == 0) {
 	    fprintf(stderr, "vpi error: vpi_get_str(%s, 0) called "
 		    "with null vpiHandle.\n", vpi_property_str(property));

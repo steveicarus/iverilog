@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -176,6 +176,21 @@ void verify_version(char*ivl_ver, char*commit)
       free(vvp_ver);
 }
 
+int vpip_delay_selection = _vpiDelaySelTypical;
+void set_delay_selection(const char* sel)
+{
+      if (strcmp("TYPICAL", sel) == 0) {
+	    vpip_delay_selection = _vpiDelaySelTypical;
+      } else if (strcmp("MINIMUM", sel) == 0) {
+	    vpip_delay_selection = _vpiDelaySelMinimum;
+      } else if (strcmp("MAXIMUM", sel) == 0) {
+	    vpip_delay_selection = _vpiDelaySelMaximum;
+      } else {
+	    vpi_mcd_printf(1, "Error: Unknown delay selection \"%s\"!", sel);
+	    exit(1);
+      }
+}
+
 unsigned module_cnt = 0;
 const char*module_tab[64];
 
@@ -282,7 +297,7 @@ int main(int argc, char*argv[])
       if (version_flag) {
 	    fprintf(stderr, "Icarus Verilog runtime version " VERSION " ("
 	                    VERSION_TAG ")\n\n");
-	    fprintf(stderr, "Copyright 1998-2009 Stephen Williams\n\n");
+	    fprintf(stderr, "Copyright 1998-2010 Stephen Williams\n\n");
 	    fprintf(stderr,
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"

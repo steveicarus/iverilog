@@ -1,7 +1,7 @@
 #ifndef __vpi_priv_H
 #define __vpi_priv_H
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -627,5 +627,7 @@ extern char *generic_get_str(int code, vpiHandle ref, const char *name, const ch
 
 /* A routine to find the enclosing module. */
 extern vpiHandle vpip_module(struct __vpiScope*scope);
+
+extern int vpip_delay_selection;
 
 #endif

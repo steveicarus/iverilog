@@ -1,7 +1,7 @@
 #ifndef __parse_misc_H
 #define __parse_misc_H
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -32,6 +32,11 @@ extern int compile_design(const char*path);
  * version.
  */
 extern void verify_version(char *ivl_ver, char* commit);
+
+/*
+ * Set the default delay type for the $sdf_annotate task (min/typ/max).
+ */
+extern void set_delay_selection(const char* sel);
 
 /*
  * various functions shared by the lexor and the parser.
