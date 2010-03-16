@@ -87,8 +87,8 @@ static unsigned args_after_notifier;
  * These are some common strength pairs that are used as defaults when
  * the user is not otherwise specific.
  */
-const static struct str_pair_t pull_strength = { PGate::PULL,  PGate::PULL };
-const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
+const static struct str_pair_t pull_strength = { IVL_DR_PULL,  IVL_DR_PULL };
+const static struct str_pair_t str_strength = { IVL_DR_STRONG, IVL_DR_STRONG };
 
 static list<pair<perm_string,PExpr*> >* make_port_list(char*id, PExpr*expr)
 {
@@ -884,39 +884,39 @@ drive_strength
 		}
 	| '(' dr_strength0 ',' K_highz1 ')'
 		{ $$.str0 = $2.str0;
-		  $$.str1 = PGate::HIGHZ;
+		  $$.str1 = IVL_DR_HiZ;
 		}
 	| '(' dr_strength1 ',' K_highz0 ')'
-		{ $$.str0 = PGate::HIGHZ;
+		{ $$.str0 = IVL_DR_HiZ;
 		  $$.str1 = $2.str1;
 		}
 	| '(' K_highz1 ',' dr_strength0 ')'
 		{ $$.str0 = $4.str0;
-		  $$.str1 = PGate::HIGHZ;
+		  $$.str1 = IVL_DR_HiZ;
 		}
 	| '(' K_highz0 ',' dr_strength1 ')'
-		{ $$.str0 = PGate::HIGHZ;
+		{ $$.str0 = IVL_DR_HiZ;
 		  $$.str1 = $4.str1;
 		}
 	;
 
 drive_strength_opt
 	: drive_strength { $$ = $1; }
-	|                { $$.str0 = PGate::STRONG; $$.str1 = PGate::STRONG; }
+	|                { $$.str0 = IVL_DR_STRONG; $$.str1 = IVL_DR_STRONG; }
 	;
 
 dr_strength0
-	: K_supply0 { $$.str0 = PGate::SUPPLY; }
-	| K_strong0 { $$.str0 = PGate::STRONG; }
-	| K_pull0   { $$.str0 = PGate::PULL; }
-	| K_weak0   { $$.str0 = PGate::WEAK; }
+	: K_supply0 { $$.str0 = IVL_DR_SUPPLY; }
+	| K_strong0 { $$.str0 = IVL_DR_STRONG; }
+	| K_pull0   { $$.str0 = IVL_DR_PULL; }
+	| K_weak0   { $$.str0 = IVL_DR_WEAK; }
 	;
 
 dr_strength1
-	: K_supply1 { $$.str1 = PGate::SUPPLY; }
-	| K_strong1 { $$.str1 = PGate::STRONG; }
-	| K_pull1   { $$.str1 = PGate::PULL; }
-	| K_weak1   { $$.str1 = PGate::WEAK; }
+	: K_supply1 { $$.str1 = IVL_DR_SUPPLY; }
+	| K_strong1 { $$.str1 = IVL_DR_STRONG; }
+	| K_pull1   { $$.str1 = IVL_DR_PULL; }
+	| K_weak1   { $$.str1 = IVL_DR_WEAK; }
 	;
 
 event_control

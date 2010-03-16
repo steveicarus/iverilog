@@ -30,6 +30,7 @@
 # include  "PGenerate.h"
 # include  "PSpec.h"
 # include  "discipline.h"
+# include  "ivl_target_priv.h"
 # include  <iostream>
 # include  <iomanip>
 # include  <typeinfo>
@@ -49,30 +50,6 @@ ostream& operator << (ostream&out, const PEventStatement&obj)
 ostream& operator << (ostream&o, const PDelays&d)
 {
       d.dump_delays(o);
-      return o;
-}
-
-ostream& operator<< (ostream&o, PGate::strength_t str)
-{
-      switch (str) {
-	  case PGate::HIGHZ:
-	    o << "highz";
-	    break;
-	  case PGate::WEAK:
-	    o << "weak";
-	    break;
-	  case PGate::PULL:
-	    o << "pull";
-	    break;
-	  case PGate::STRONG:
-	    o << "strong";
-	    break;
-	  case PGate::SUPPLY:
-	    o << "supply";
-	    break;
-	  default:
-	    assert(0);
-      }
       return o;
 }
 

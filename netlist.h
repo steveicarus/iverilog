@@ -87,8 +87,6 @@ class Link {
     public:
       enum DIR { PASSIVE, INPUT, OUTPUT };
 
-      enum strength_t { HIGHZ, WEAK, PULL, STRONG, SUPPLY };
-
     private: // Only NetPins can create/delete Link objects
       Link();
       ~Link();
@@ -104,18 +102,15 @@ class Link {
 	// A link has a drive strength for 0 and 1 values. The drive0
 	// strength is for when the link has the value 0, and drive1
 	// strength is for when the link has a value 1.
-      void drive0(strength_t);
-      void drive1(strength_t);
+      void drive0(ivl_drive_t);
+      void drive1(ivl_drive_t);
 
 	// This sets the drives for all drivers of this link, and not
 	// just the current link.
-      void drivers_drive(strength_t d0, strength_t d1);
+      void drivers_drive(ivl_drive_t d0, ivl_drive_t d1);
 
-      strength_t drive0() const;
-      strength_t drive1() const;
-
-      ivl_drive_t ivl_drive0() const;
-      ivl_drive_t ivl_drive1() const;
+      ivl_drive_t drive0() const;
+      ivl_drive_t drive1() const;
 
       void cur_link(NetPins*&net, unsigned &pin);
       void cur_link(const NetPins*&net, unsigned &pin) const;
@@ -159,8 +154,8 @@ class Link {
 
       bool pin_zero_     : 1;
       DIR dir_           : 2;
-      strength_t drive0_ : 3;
-      strength_t drive1_ : 3;
+      ivl_drive_t drive0_ : 3;
+      ivl_drive_t drive1_ : 3;
 
     private:
       Nexus* find_nexus_() const;
@@ -340,7 +335,7 @@ class Nexus {
       const char* name() const;
 
       void drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay);
-      void drivers_drive(Link::strength_t d0, Link::strength_t d1);
+      void drivers_drive(ivl_drive_t d0, ivl_drive_t d1);
 
       Link*first_nlink();
       const Link* first_nlink()const;

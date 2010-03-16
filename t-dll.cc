@@ -171,41 +171,8 @@ static perm_string make_scope_name(const hname_t&name)
 
 static void drive_from_link(const Link&lnk, ivl_drive_t&drv0, ivl_drive_t&drv1)
 {
-      switch (lnk.drive0()) {
-	  case Link::HIGHZ:
-	    drv0 = IVL_DR_HiZ;
-	    break;
-	  case Link::WEAK:
-	    drv0 = IVL_DR_WEAK;
-	    break;
-	  case Link::PULL:
-	    drv0 = IVL_DR_PULL;
-	    break;
-	  case Link::STRONG:
-	    drv0 = IVL_DR_STRONG;
-	    break;
-	  case Link::SUPPLY:
-	    drv0 = IVL_DR_SUPPLY;
-	    break;
-      }
-
-      switch (lnk.drive1()) {
-	  case Link::HIGHZ:
-	    drv1 = IVL_DR_HiZ;
-	    break;
-	  case Link::WEAK:
-	    drv1 = IVL_DR_WEAK;
-	    break;
-	  case Link::PULL:
-	    drv1 = IVL_DR_PULL;
-	    break;
-	  case Link::STRONG:
-	    drv1 = IVL_DR_STRONG;
-	    break;
-	  case Link::SUPPLY:
-	    drv1 = IVL_DR_SUPPLY;
-	    break;
-      }
+      drv0 = lnk.drive0();
+      drv1 = lnk.drive1();
 }
 
 ivl_attribute_s* dll_target::fill_in_attributes(const Attrib*net)
@@ -846,42 +813,8 @@ bool dll_target::bufz(const NetBUFZ*net)
       obj->pins_[0] = net->pin(0).nexus()->t_cookie();
       ivl_nexus_ptr_t out_ptr = nexus_log_add(obj->pins_[0], obj, 0);
 
-
-      switch (net->pin(0).drive0()) {
-	  case Link::HIGHZ:
-	    out_ptr->drive0 = IVL_DR_HiZ;
-	    break;
-	  case Link::WEAK:
-	    out_ptr->drive0 = IVL_DR_WEAK;
-	    break;
-	  case Link::PULL:
-	    out_ptr->drive0 = IVL_DR_PULL;
-	    break;
-	  case Link::STRONG:
-	    out_ptr->drive0 = IVL_DR_STRONG;
-	    break;
-	  case Link::SUPPLY:
-	    out_ptr->drive0 = IVL_DR_SUPPLY;
-	    break;
-      }
-
-      switch (net->pin(0).drive1()) {
-	  case Link::HIGHZ:
-	    out_ptr->drive1 = IVL_DR_HiZ;
-	    break;
-	  case Link::WEAK:
-	    out_ptr->drive1 = IVL_DR_WEAK;
-	    break;
-	  case Link::PULL:
-	    out_ptr->drive1 = IVL_DR_PULL;
-	    break;
-	  case Link::STRONG:
-	    out_ptr->drive1 = IVL_DR_STRONG;
-	    break;
-	  case Link::SUPPLY:
-	    out_ptr->drive1 = IVL_DR_SUPPLY;
-	    break;
-      }
+      out_ptr->drive0 = net->pin(0).drive0();
+      out_ptr->drive1 = net->pin(0).drive1();
 
       assert(net->pin(1).nexus()->t_cookie());
       obj->pins_[1] = net->pin(1).nexus()->t_cookie();
@@ -1034,41 +967,8 @@ void dll_target::logic(const NetLogic*net)
 		  out_ptr = tmp;
       }
 
-      switch (net->pin(0).drive0()) {
-	  case Link::HIGHZ:
-	    out_ptr->drive0 = IVL_DR_HiZ;
-	    break;
-	  case Link::WEAK:
-	    out_ptr->drive0 = IVL_DR_WEAK;
-	    break;
-	  case Link::PULL:
-	    out_ptr->drive0 = IVL_DR_PULL;
-	    break;
-	  case Link::STRONG:
-	    out_ptr->drive0 = IVL_DR_STRONG;
-	    break;
-	  case Link::SUPPLY:
-	    out_ptr->drive0 = IVL_DR_SUPPLY;
-	    break;
-      }
-
-      switch (net->pin(0).drive1()) {
-	  case Link::HIGHZ:
-	    out_ptr->drive1 = IVL_DR_HiZ;
-	    break;
-	  case Link::WEAK:
-	    out_ptr->drive1 = IVL_DR_WEAK;
-	    break;
-	  case Link::PULL:
-	    out_ptr->drive1 = IVL_DR_PULL;
-	    break;
-	  case Link::STRONG:
-	    out_ptr->drive1 = IVL_DR_STRONG;
-	    break;
-	  case Link::SUPPLY:
-	    out_ptr->drive1 = IVL_DR_SUPPLY;
-	    break;
-      }
+      out_ptr->drive0 = net->pin(0).drive0();
+      out_ptr->drive1 = net->pin(0).drive1();
 
       assert(net->scope());
       ivl_scope_t scop = find_scope(des_, net->scope());
@@ -2056,8 +1956,8 @@ void dll_target::lpm_mux(const NetMux*net)
       assert(nex->t_cookie());
       obj->u_.mux.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.mux.q, obj, 0,
-		    net->pin_Result().ivl_drive0(),
-		    net->pin_Result().ivl_drive1());
+		    net->pin_Result().drive0(),
+		    net->pin_Result().drive1());
 
 	/* Connect the select bits. */
       nex = net->pin_Sel().nexus();

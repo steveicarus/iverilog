@@ -43,22 +43,31 @@ static ostream& operator<< (ostream&o, NetBlock::Type t)
       return o;
 }
 
-ostream& operator << (ostream&o, Link::strength_t str)
+ostream& operator << (ostream&o, ivl_drive_t str)
 {
       switch (str) {
-	  case Link::HIGHZ:
+	  case IVL_DR_HiZ:
 	    o << "highz";
 	    break;
-	  case Link::WEAK:
+	  case IVL_DR_SMALL:
+	    o << "small";
+	    break;
+	  case IVL_DR_MEDIUM:
+	    o << "medium";
+	    break;
+	  case IVL_DR_WEAK:
 	    o << "weak";
 	    break;
-	  case Link::PULL:
+	  case IVL_DR_LARGE:
+	    o << "large";
+	    break;
+	  case IVL_DR_PULL:
 	    o << "pull";
 	    break;
-	  case Link::STRONG:
+	  case IVL_DR_STRONG:
 	    o << "strong";
 	    break;
-	  case Link::SUPPLY:
+	  case IVL_DR_SUPPLY:
 	    o << "supply";
 	    break;
 	  default:

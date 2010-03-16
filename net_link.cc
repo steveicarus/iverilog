@@ -105,7 +105,7 @@ void connect(Link&l, Link&r)
 }
 
 Link::Link()
-: dir_(PASSIVE), drive0_(STRONG), drive1_(STRONG),
+: dir_(PASSIVE), drive0_(IVL_DR_STRONG), drive1_(IVL_DR_STRONG),
   next_(0), nexus_(0)
 {
 }
@@ -162,59 +162,30 @@ void Link::drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay)
       find_nexus_()->drivers_delays(rise, fall, decay);
 }
 
-void Link::drivers_drive(strength_t drive0__, strength_t drive1__)
+void Link::drivers_drive(ivl_drive_t drive0__, ivl_drive_t drive1__)
 {
       find_nexus_()->drivers_drive(drive0__, drive1__);
 }
 
 
-static ivl_drive_t link_to_drive(Link::strength_t dr)
-{
-      switch (dr) {
-	  case Link::HIGHZ:
-	    return IVL_DR_HiZ;
-	  case Link::WEAK:
-	    return IVL_DR_WEAK;
-	  case Link::PULL:
-	    return IVL_DR_PULL;
-	  case Link::STRONG:
-	    return IVL_DR_STRONG;
-	  case Link::SUPPLY:
-	    return IVL_DR_SUPPLY;
-      }
-
-      assert(0);
-      return IVL_DR_HiZ;
-}
-
-void Link::drive0(Link::strength_t str)
+void Link::drive0(ivl_drive_t str)
 {
       drive0_ = str;
 }
 
-void Link::drive1(Link::strength_t str)
+void Link::drive1(ivl_drive_t str)
 {
       drive1_ = str;
 }
 
-Link::strength_t Link::drive0() const
+ivl_drive_t Link::drive0() const
 {
       return drive0_;
 }
 
-Link::strength_t Link::drive1() const
+ivl_drive_t Link::drive1() const
 {
       return drive1_;
-}
-
-ivl_drive_t Link::ivl_drive0() const
-{
-      return link_to_drive(drive0_);
-}
-
-ivl_drive_t Link::ivl_drive1() const
-{
-      return link_to_drive(drive1_);
 }
 
 void Link::cur_link(NetPins*&net, unsigned &pin)
@@ -384,7 +355,7 @@ void Nexus::drivers_delays(NetExpr*rise, NetExpr*fall, NetExpr*decay)
       }
 }
 
-void Nexus::drivers_drive(Link::strength_t drive0, Link::strength_t drive1)
+void Nexus::drivers_drive(ivl_drive_t drive0, ivl_drive_t drive1)
 {
       for (Link*cur = first_nlink() ; cur ; cur = cur->next_nlink()) {
 	    if (cur->get_dir() != Link::OUTPUT)

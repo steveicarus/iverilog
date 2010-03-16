@@ -38,8 +38,8 @@ NetUserFunc::NetUserFunc(NetScope*s, perm_string n, NetScope*d, NetEvWait*trigge
       for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1) {
 
 	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).drive0(Link::HIGHZ);
-	    pin(idx).drive1(Link::HIGHZ);
+	    pin(idx).drive0(IVL_DR_HiZ);
+	    pin(idx).drive1(IVL_DR_HiZ);
       }
 }
 
@@ -136,8 +136,8 @@ NetSysFunc::NetSysFunc(NetScope*s, perm_string n,
       for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1) {
 
 	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).drive0(Link::HIGHZ);
-	    pin(idx).drive1(Link::HIGHZ);
+	    pin(idx).drive0(IVL_DR_HiZ);
+	    pin(idx).drive1(IVL_DR_HiZ);
       }
 }
 

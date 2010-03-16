@@ -30,8 +30,8 @@ PGate::PGate(perm_string name,
 : name_(name), pins_(pins)
 {
       if (del) delay_.set_delays(del);
-      str0_ = STRONG;
-      str1_ = STRONG;
+      str0_ = IVL_DR_STRONG;
+      str1_ = IVL_DR_STRONG;
 }
 
 PGate::PGate(perm_string name,
@@ -40,37 +40,37 @@ PGate::PGate(perm_string name,
 : name_(name), pins_(pins)
 {
       if (del) delay_.set_delay(del);
-      str0_ = STRONG;
-      str1_ = STRONG;
+      str0_ = IVL_DR_STRONG;
+      str1_ = IVL_DR_STRONG;
 }
 
 PGate::PGate(perm_string name, svector<PExpr*>*pins)
 : name_(name), pins_(pins)
 {
-      str0_ = STRONG;
-      str1_ = STRONG;
+      str0_ = IVL_DR_STRONG;
+      str1_ = IVL_DR_STRONG;
 }
 
 PGate::~PGate()
 {
 }
 
-PGate::strength_t PGate::strength0() const
+ivl_drive_t PGate::strength0() const
 {
       return str0_;
 }
 
-void PGate::strength0(PGate::strength_t s)
+void PGate::strength0(ivl_drive_t s)
 {
       str0_ = s;
 }
 
-PGate::strength_t PGate::strength1() const
+ivl_drive_t PGate::strength1() const
 {
       return str1_;
 }
 
-void PGate::strength1(PGate::strength_t s)
+void PGate::strength1(ivl_drive_t s)
 {
       str1_ = s;
 }

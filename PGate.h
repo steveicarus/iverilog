@@ -48,8 +48,6 @@ class Module;
 class PGate : public LineInfo {
 
     public:
-      enum strength_t { HIGHZ, WEAK, PULL, STRONG, SUPPLY };
-
       explicit PGate(perm_string name, svector<PExpr*>*pins,
 		     const svector<PExpr*>*del);
 
@@ -73,11 +71,11 @@ class PGate : public LineInfo {
       unsigned pin_count() const { return pins_? pins_->count() : 0; }
       PExpr*pin(unsigned idx) const { return (*pins_)[idx]; }
 
-      strength_t strength0() const;
-      strength_t strength1() const;
+      ivl_drive_t strength0() const;
+      ivl_drive_t strength1() const;
 
-      void strength0(strength_t);
-      void strength1(strength_t);
+      void strength0(ivl_drive_t);
+      void strength1(ivl_drive_t);
 
       map<perm_string,PExpr*> attributes;
 
@@ -97,7 +95,7 @@ class PGate : public LineInfo {
       PDelays delay_;
       svector<PExpr*>*pins_;
 
-      strength_t str0_, str1_;
+      ivl_drive_t str0_, str1_;
 
     private: // not implemented
       PGate(const PGate&);

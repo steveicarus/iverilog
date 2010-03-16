@@ -91,7 +91,7 @@ struct parmvalue_t {
       svector<named_pexpr_t*>*by_name;
 };
 
-struct str_pair_t { PGate::strength_t str0, str1; };
+struct str_pair_t { ivl_drive_t str0, str1; };
 
 struct net_decl_assign_t {
       perm_string name;

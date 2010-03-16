@@ -42,26 +42,6 @@
 # include  "ivl_assert.h"
 
 
-static Link::strength_t drive_type(PGate::strength_t drv)
-{
-      switch (drv) {
-	  case PGate::HIGHZ:
-	    return Link::HIGHZ;
-	  case PGate::WEAK:
-	    return Link::WEAK;
-	  case PGate::PULL:
-	    return Link::PULL;
-	  case PGate::STRONG:
-	    return Link::STRONG;
-	  case PGate::SUPPLY:
-	    return Link::SUPPLY;
-	  default:
-	    assert(0);
-      }
-      return Link::STRONG;
-}
-
-
 void PGate::elaborate(Design*des, NetScope*scope) const
 {
       cerr << "internal error: what kind of gate? " <<
@@ -79,8 +59,8 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       NetExpr* rise_time, *fall_time, *decay_time;
       eval_delays(des, scope, rise_time, fall_time, decay_time, true);
 
-      Link::strength_t drive0 = drive_type(strength0());
-      Link::strength_t drive1 = drive_type(strength1());
+      ivl_drive_t drive0 = strength0();
+      ivl_drive_t drive1 = strength1();
 
       assert(pin(0));
       assert(pin(1));
@@ -192,7 +172,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	/* When we are given a non-default strength value and if the
 	 * drive source is a bit, part or indexed select we need to
 	 * add a driver (BUFZ) to convey the strength information. */
-      if ((drive0 != Link::STRONG || drive1 != Link::STRONG) &&
+      if ((drive0 != IVL_DR_STRONG || drive1 != IVL_DR_STRONG) &&
           (dynamic_cast<NetESelect*>(rval_expr))) {
 	    need_driver_flag = true;
       }
@@ -218,7 +198,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 	/* Set the drive and delays for the r-val. */
 
-      if (drive0 != Link::STRONG || drive1 != Link::STRONG)
+      if (drive0 != IVL_DR_STRONG || drive1 != IVL_DR_STRONG)
 	    rval->pin(0).drivers_drive(drive0, drive1);
 
       if (rise_time || fall_time || decay_time)
@@ -709,8 +689,8 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  log->fall_time(fall_time);
 		  log->decay_time(decay_time);
 
-		  log->pin(0).drive0(drive_type(strength0()));
-		  log->pin(0).drive1(drive_type(strength1()));
+		  log->pin(0).drive0(strength0());
+		  log->pin(0).drive1(strength1());
 	    }
 
 	    cur[idx]->set_line(*this);

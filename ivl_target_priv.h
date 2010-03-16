@@ -22,6 +22,7 @@
 # include  "ivl_target.h"
 # include  <inttypes.h>
 # include  <vector>
+# include  <ostream>
 # include  <valarray>
 
 /*
@@ -78,5 +79,7 @@ struct ivl_island_s {
 	// user accessible flags. They are initially false, always.
       std::vector<bool> flags;
 };
+
+extern std::ostream& operator << (std::ostream&o, ivl_drive_t str);
 
 #endif
