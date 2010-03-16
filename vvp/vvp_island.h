@@ -126,6 +126,8 @@ class vvp_island_port  : public vvp_net_fun_t {
 				unsigned base, unsigned wid, unsigned vwid,
                                 vvp_context_t);
       virtual void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
+      virtual void recv_vec8_pv(vvp_net_ptr_t p, const vvp_vector8_t&bit,
+				unsigned base, unsigned wid, unsigned vwid);
 
       vvp_vector8_t invalue;
       vvp_vector8_t outvalue;

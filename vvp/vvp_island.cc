@@ -186,19 +186,7 @@ void vvp_island_port::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                                    vvp_context_t)
 {
       vvp_vector8_t tmp(bit, 6, 6);
-      if (invalue.size()==0) {
-	    assert(tmp.size() == wid);
-	    invalue = part_expand(tmp, vwid, base);
-      } else {
-	    assert(invalue.size() == vwid);
-	    for (unsigned idx = 0 ; idx < wid ; idx += 1) {
-		  if ((base+idx) >= invalue.size())
-			break;
-		  invalue.set_bit(base+idx, tmp.value(idx));
-	    }
-      }
-
-      island_->flag_island();
+      recv_vec8_pv(port, tmp, base, wid, vwid);
 }
 
 
@@ -208,6 +196,24 @@ void vvp_island_port::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 	    return;
 
       invalue = bit;
+      island_->flag_island();
+}
+
+void vvp_island_port::recv_vec8_pv(vvp_net_ptr_t p, const vvp_vector8_t&bit,
+				   unsigned base, unsigned wid, unsigned vwid)
+{
+      if (invalue.size() == 0) {
+	    assert(bit.size() == wid);
+	    invalue = part_expand(bit, vwid, base);
+      } else {
+	    assert(invalue.size() == vwid);
+	    for (unsigned idx = 0; idx < wid ; idx += 1) {
+		  if ((base+idx) >= vwid)
+			break;
+		  invalue.set_bit(base+idx, bit.value(idx));
+	    }
+      }
+
       island_->flag_island();
 }
 
