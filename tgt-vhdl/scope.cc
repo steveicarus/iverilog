@@ -249,7 +249,7 @@ void draw_nexus(ivl_nexus_t nexus)
 
          // If this is connected to the LPM output then this nexus
          // is driven by the LPM
-         if (ivl_lpm_q(lpm, 0) == nexus)
+         if (ivl_lpm_q(lpm) == nexus)
             ndrivers++;
       }
       else if ((con = ivl_nexus_ptr_con(nexus_ptr))) {

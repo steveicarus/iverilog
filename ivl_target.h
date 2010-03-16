@@ -1267,7 +1267,9 @@ extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_PART IVL_LPM_POW
      IVL_LPM_SUB IVL_LPM_UFUNC */
-extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
+extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net);
+extern ivl_drive_t ivl_lpm_drive0(ivl_lpm_t net);
+extern ivl_drive_t ivl_lpm_drive1(ivl_lpm_t net);
   /* IVL_LPM_MUX */
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);
   /* IVL_LPM_MUX */

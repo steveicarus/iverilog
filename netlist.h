@@ -114,6 +114,9 @@ class Link {
       strength_t drive0() const;
       strength_t drive1() const;
 
+      ivl_drive_t ivl_drive0() const;
+      ivl_drive_t ivl_drive1() const;
+
       void cur_link(NetPins*&net, unsigned &pin);
       void cur_link(const NetPins*&net, unsigned &pin) const;
 

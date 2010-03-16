@@ -698,7 +698,8 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
       unsigned vector_width = width_of_nexus(ivl_logic_pin(lptr, 0));
 
-      ivl_drive_t str0, str1;
+      ivl_drive_t str0 = ivl_logic_drive0(lptr);
+      ivl_drive_t str1 = ivl_logic_drive1(lptr);
 
       int level;
       int ninp;
@@ -813,21 +814,6 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		    ivl_logic_type(lptr));
 	    ltype = "?";
 	    break;
-      }
-
-      { ivl_nexus_t nex = ivl_logic_pin(lptr, 0);
-        ivl_nexus_ptr_t nptr = 0;
-        unsigned idx;
-	for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-	      nptr = ivl_nexus_ptr(nex,idx);
-	      if (ivl_nexus_ptr_log(nptr) != lptr)
-		    continue;
-	      if (ivl_nexus_ptr_pin(nptr) != 0)
-		    continue;
-	      break;
-	}
-        str0 = ivl_nexus_ptr_drive0(nptr);
-	str1 = ivl_nexus_ptr_drive1(nptr);
       }
 
       if (!lcasc)
@@ -1609,7 +1595,7 @@ static void draw_lpm_sfunc(ivl_lpm_t net)
 	/* Print the function type descriptor string. */
       fprintf(vvp_out, ", \"");
 
-      draw_type_string_of_nex(ivl_lpm_q(net,0));
+      draw_type_string_of_nex(ivl_lpm_q(net));
 
       for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 1)
 	    draw_type_string_of_nex(ivl_lpm_data(net,idx));
@@ -1723,7 +1709,7 @@ static void draw_lpm_part_pv(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
       unsigned base  = ivl_lpm_base(net);
-      unsigned signal_width = width_of_nexus(ivl_lpm_q(net,0));
+      unsigned signal_width = width_of_nexus(ivl_lpm_q(net));
 
       fprintf(vvp_out, "L_%p .part/pv %s",
 	      net, draw_net_input(ivl_lpm_data(net, 0)));

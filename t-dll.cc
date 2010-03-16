@@ -2056,7 +2056,8 @@ void dll_target::lpm_mux(const NetMux*net)
       assert(nex->t_cookie());
       obj->u_.mux.q = nex->t_cookie();
       nexus_lpm_add(obj->u_.mux.q, obj, 0,
-		    IVL_DR_STRONG, IVL_DR_STRONG);
+		    net->pin_Result().ivl_drive0(),
+		    net->pin_Result().ivl_drive1());
 
 	/* Connect the select bits. */
       nex = net->pin_Sel().nexus();

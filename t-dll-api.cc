@@ -1098,7 +1098,7 @@ extern "C" const char* ivl_lpm_name(ivl_lpm_t net)
 }
 
 
-extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
+extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net)
 {
       assert(net);
 
@@ -1118,15 +1118,12 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_POW:
 	  case IVL_LPM_SUB:
-	    assert(idx == 0);
 	    return net->u_.arith.q;
 
 	  case IVL_LPM_FF:
-	    assert(idx == 0);
 	    return net->u_.ff.q.pin;
 
 	  case IVL_LPM_MUX:
-	    assert(idx == 0);
 	    return net->u_.mux.q;
 
 	  case IVL_LPM_RE_AND:
@@ -1136,20 +1133,16 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_RE_NOR:
 	  case IVL_LPM_RE_XNOR:
 	  case IVL_LPM_SIGN_EXT:
-	    assert(idx == 0);
 	    return net->u_.reduce.q;
 
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
-	    assert(idx == 0);
 	    return net->u_.shift.q;
 
 	  case IVL_LPM_SFUNC:
-	    assert(idx == 0);
 	    return net->u_.sfunc.pins[0];
 
 	  case IVL_LPM_UFUNC:
-	    assert(idx == 0);
 	    return net->u_.ufunc.pins[0];
 
 	  case IVL_LPM_CONCAT:
@@ -1157,21 +1150,52 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
-	    assert(idx == 0);
 	    return net->u_.part.q;
 
 	  case IVL_LPM_REPEAT:
-	    assert(idx == 0);
 	    return net->u_.repeat.q;
 
 	  case IVL_LPM_ARRAY:
-	    assert(idx == 0);
 	    return net->u_.array.q;
 
 	  default:
 	    assert(0);
 	    return 0;
       }
+}
+
+extern "C" ivl_drive_t ivl_lpm_drive0(ivl_lpm_t net)
+{
+      ivl_nexus_t nex = ivl_lpm_q(net);
+
+      for (unsigned idx = 0 ; idx < ivl_nexus_ptrs(nex) ; idx += 1) {
+	    ivl_nexus_ptr_t cur = ivl_nexus_ptr(nex, idx);
+	    if (ivl_nexus_ptr_lpm(cur) != net)
+		  continue;
+	    if (ivl_nexus_ptr_pin(cur) != 0)
+		  continue;
+	    return ivl_nexus_ptr_drive0(cur);
+      }
+
+      assert(0);
+      return IVL_DR_STRONG;
+}
+
+extern "C" ivl_drive_t ivl_lpm_drive1(ivl_lpm_t net)
+{
+      ivl_nexus_t nex = ivl_lpm_q(net);
+
+      for (unsigned idx = 0 ; idx < ivl_nexus_ptrs(nex) ; idx += 1) {
+	    ivl_nexus_ptr_t cur = ivl_nexus_ptr(nex, idx);
+	    if (ivl_nexus_ptr_lpm(cur) != net)
+		  continue;
+	    if (ivl_nexus_ptr_pin(cur) != 0)
+		  continue;
+	    return ivl_nexus_ptr_drive1(cur);
+      }
+
+      assert(0);
+      return IVL_DR_STRONG;
 }
 
 extern "C" ivl_scope_t ivl_lpm_scope(ivl_lpm_t net)
