@@ -189,6 +189,7 @@ void set_delay_selection(const char* sel)
 	    vpi_mcd_printf(1, "Error: Unknown delay selection \"%s\"!", sel);
 	    exit(1);
       }
+      delete[] sel;
 }
 
 unsigned module_cnt = 0;
