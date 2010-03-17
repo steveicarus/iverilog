@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -905,7 +905,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		  assert(ivl_expr_type(fall_exp) == IVL_EX_SIGNAL);
 		  assert(ivl_expr_type(decay_exp) == IVL_EX_SIGNAL);
 
-		  fprintf(vvp_out, "L_%p .delay  L_%p/d", lptr, lptr);
+		  fprintf(vvp_out, "L_%p .delay L_%p/d", lptr, lptr);
 
 		  sig = ivl_expr_signal(rise_exp);
 		  assert(ivl_signal_dimensions(sig) == 0);
@@ -1115,7 +1115,7 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net)
 
 	    dly = "/d";
 	    fprintf(vvp_out, "L_%p .delay (%" PRIu64 ",%" PRIu64 ",%" PRIu64 ")"
-		    "L_%p/d;\n", net, get_number_immediate64(d_rise),
+		    " L_%p/d;\n", net, get_number_immediate64(d_rise),
 	            get_number_immediate64(d_fall),
 	            get_number_immediate64(d_decay), net);
       }
