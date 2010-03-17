@@ -919,6 +919,8 @@ static int show_stmt_block_named(ivl_statement_t net, ivl_scope_t scope)
       fprintf(vvp_out, "    %%fork t_%u, S_%p;\n",
 	      sub_id, subscope);
       fprintf(vvp_out, "    %%jmp t_%u;\n", out_id);
+	/* Change the compiling scope to be the named blocks scope. */
+      fprintf(vvp_out, "    .scope S_%p;\n", subscope);
       fprintf(vvp_out, "t_%u ;\n", sub_id);
 
 	/* The statement within the fork is in a new thread, so no
@@ -927,6 +929,8 @@ static int show_stmt_block_named(ivl_statement_t net, ivl_scope_t scope)
 
       rc = show_stmt_block(net, subscope);
       fprintf(vvp_out, "    %%end;\n");
+	/* Return to the previous scope. */
+      fprintf(vvp_out, "    .scope S_%p;\n", scope);
 
       fprintf(vvp_out, "t_%u %%join;\n", out_id);
       clear_expression_lookaside();
@@ -1561,22 +1565,21 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       unsigned cnt = ivl_stmt_block_count(net);
       ivl_scope_t scope = ivl_stmt_block_scope(net);
+      unsigned is_named = (scope != 0);
 
       unsigned out = transient_id++;
       unsigned id_base = transient_id;
 
 	/* cnt is the number of sub-threads. If the fork-join has no
 	   name, then we can put one of the sub-threads in the current
-	   thread, so decrement the count by one. */
-      if (scope == 0) {
+	   thread, so decrement the count by one and use the current
+	   scope for all the threads. */
+      if (! is_named) {
 	    cnt -= 1;
 	    scope = sscope;
       }
 
       transient_id += cnt;
-
-	/* If no subscope use provided */
-      if (!scope) scope = sscope;
 
 	/* Draw a fork statement for all but one of the threads of the
 	   fork/join. Send the threads off to a bit of code where they
@@ -1588,7 +1591,7 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 
 	/* If we are putting one sub-thread into the current thread,
 	   then draw its code here. */
-      if (ivl_stmt_block_scope(net) == 0)
+      if (! is_named)
 	    rc += show_statement(ivl_stmt_block_stmt(net, cnt), scope);
 
 
@@ -1598,6 +1601,8 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
       }
       fprintf(vvp_out, "    %%jmp t_%u;\n", out);
 
+	/* Change the compiling scope to be the named forks scope. */
+      if (is_named) fprintf(vvp_out, "    .scope S_%p;\n", scope);
 	/* Generate the sub-threads themselves. */
       for (idx = 0 ;  idx < cnt ;  idx += 1) {
 	    fprintf(vvp_out, "t_%u ;\n", id_base+idx);
@@ -1605,6 +1610,8 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 	    rc += show_statement(ivl_stmt_block_stmt(net, idx), scope);
 	    fprintf(vvp_out, "    %%end;\n");
       }
+	/* Return to the previous scope. */
+      if (is_named) fprintf(vvp_out, "    .scope S_%p;\n", sscope);
 
 	/* This is the label for the out. Use this to branch around
 	   the implementations of all the child threads. */
