@@ -126,6 +126,7 @@ static struct {
       { "IOPATH",     K_IOPATH },
       { "PROCESS",    K_PROCESS },
       { "PROGRAM",    K_PROGRAM },
+      { "RECREM",     K_RECREM },
       { "RECOVERY",   K_RECOVERY },
       { "REMOVAL",    K_REMOVAL },
       { "SDFVERSION", K_SDFVERSION },
