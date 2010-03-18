@@ -391,7 +391,18 @@ hierarchical_identifier
 
 rtriple
   : signed_real_number ':' signed_real_number ':' signed_real_number
-      { $$ = $3; /* XXXX Assume typical value. */ }
+      { switch(sdf_min_typ_max) {
+	    case _vpiDelaySelMinimum:
+	       $$ = $1;
+	       break;
+	    case _vpiDelaySelTypical:
+	       $$ = $3;
+	       break;
+	    case _vpiDelaySelMaximum:
+	       $$ = $5;
+	       break;
+	}
+      }
   ;
 
 signed_real_number

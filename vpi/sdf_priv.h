@@ -1,7 +1,7 @@
 #ifndef _sdf_priv_h
 #define _sdf_priv_h
 /*
- * Copyright (c) 2007-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,6 +30,8 @@ extern void sdf_process_file(FILE*fd, const char*path);
 
 extern int sdf_flag_warning;
 extern int sdf_flag_inform;
+
+extern int sdf_min_typ_max;
 
 /* ****
  * These functions are called by the parser to process the SDF file as

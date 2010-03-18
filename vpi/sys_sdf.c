@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -32,6 +32,7 @@
 
 int sdf_flag_warning = 0;
 int sdf_flag_inform = 0;
+int sdf_min_typ_max;
 
   /* Scope of the $sdf_annotate call. Annotation starts here. */
 static vpiHandle sdf_scope;
@@ -286,7 +287,7 @@ static PLI_INT32 sys_sdf_annotate_compiletf(PLI_BYTE8*name)
 
 static PLI_INT32 sys_sdf_annotate_calltf(PLI_BYTE8*name)
 {
-      vpiHandle callh = vpi_handle(vpiSysTfCall,0);
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       FILE *sdf_fd;
       char *fname = get_filename(callh, name, vpi_scan(argv));
@@ -306,6 +307,9 @@ static PLI_INT32 sys_sdf_annotate_calltf(PLI_BYTE8*name)
       sdf_scope = vpi_scan(argv);
       if (sdf_scope) vpi_free_object(argv);
       else sdf_scope = vpi_handle(vpiScope, callh);
+
+	/* Select which delay to use. */
+      sdf_min_typ_max = vpi_get(_vpiDelaySelection, 0);
 
       sdf_cur_cell = 0;
       sdf_callh = callh;
