@@ -1686,11 +1686,9 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	    repeat = rep;
       }
 
-	/* Make the empty concat expression. */
-      NetEConcat*tmp = new NetEConcat(parms_.count(), repeat);
-      tmp->set_line(*this);
-
       unsigned wid_sum = 0;
+      unsigned parm_cnt = 0;
+      svector<NetExpr*> parms(parms_.count());
 
 	/* Elaborate all the parameters and attach them to the concat node. */
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
@@ -1724,8 +1722,25 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 		  continue;
 	    }
 
+	      /* We are going to ignore zero width constants. */
+	    if ((ex->expr_width() == 0) && dynamic_cast<NetEConst*>(ex)) {
+		  parms[idx] = 0;
+	    } else {
+		  parms[idx] = ex;
+		  parm_cnt += 1;
+	    }
 	    wid_sum += ex->expr_width();
-	    tmp->set(idx, ex);
+      }
+
+	/* Make the empty concat expression. */
+      NetEConcat*tmp = new NetEConcat(parm_cnt, repeat);
+      tmp->set_line(*this);
+
+	/* Remove any zero width constants. */
+      unsigned off = 0;
+      for (unsigned idx = 0 ;  idx < parm_cnt ;  idx += 1) {
+	    while (parms[off+idx] == 0) off += 1;
+	    tmp->set(idx, parms[off+idx]);
       }
 
       tmp->set_width(wid_sum * tmp->repeat());

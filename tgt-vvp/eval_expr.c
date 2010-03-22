@@ -2955,7 +2955,7 @@ static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
 	    break;
       }
 
-	/* Fallback, is to draw the expression by width, and mov it to
+	/* Fallback, is to draw the expression by width, and move it to
 	   the required dest. */
       tmp = draw_eval_expr_wid(exp, dest.wid, stuff_ok_flag);
       assert(tmp.wid == dest.wid);
