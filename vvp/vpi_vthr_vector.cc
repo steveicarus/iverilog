@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -109,7 +109,8 @@ static int vthr_vec_get(int code, vpiHandle ref)
 static char* vthr_vec_get_str(int code, vpiHandle ref)
 {
       assert((ref->vpi_type->type_code==vpiNet)
-	     || (ref->vpi_type->type_code==vpiReg));
+	     || (ref->vpi_type->type_code==vpiReg)
+	     || (ref->vpi_type->type_code==vpiConstant));
 
       struct __vpiVThrVec*rfp = (struct __vpiVThrVec*)ref;
 
@@ -319,6 +320,8 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	    }
 	    break;
 
+	  case vpiObjTypeVal:
+	    vp->format = vpiVectorVal; 
 	  case vpiVectorVal:
 	    vp->value.vector = (s_vpi_vecval*)
 		  need_result_buf((wid+31)/32*sizeof(s_vpi_vecval), RBUF_VAL);
