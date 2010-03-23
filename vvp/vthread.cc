@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -167,7 +167,8 @@ static inline void thr_clr_bit_(struct vthread_s*thr, unsigned addr)
 
 vvp_bit4_t vthread_get_bit(struct vthread_s*thr, unsigned addr)
 {
-      return thr_get_bit(thr, addr);
+      if (vpi_mode_flag == VPI_MODE_COMPILETF) return BIT4_X;
+      else return thr_get_bit(thr, addr);
 }
 
 void vthread_put_bit(struct vthread_s*thr, unsigned addr, vvp_bit4_t bit)
