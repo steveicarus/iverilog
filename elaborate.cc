@@ -1286,6 +1286,22 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			sig = tmp2;
 		  }
 
+		    // If we have a real signal driving a bit/vector port
+		    // then we convert the real value using the appropriate
+		    // width cast. Since a real is only one bit the whole
+		    // thing needs to go to each instance when arrayed.
+		  if ((sig->data_type() == IVL_VT_REAL ) &&
+		      prts.size() && (prts[0]->data_type() != IVL_VT_REAL )) {
+			sig = cast_to_int(des, scope, sig,
+			                  prts_vector_width/instance.size());
+		  }
+		    // If we have a bit/vector signal driving a real port
+		    // then we convert the value to a real.
+		  if ((sig->data_type() != IVL_VT_REAL ) &&
+		      prts.size() && (prts[0]->data_type() == IVL_VT_REAL )) {
+			sig = cast_to_real(des, scope, sig);
+		  }
+
 	    } else if (prts[0]->port_type() == NetNet::PINOUT) {
 
 		    /* Inout to/from module. This is a more
