@@ -1,0 +1,96 @@
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    Library General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Library General Public License for more details.
+#
+#    You should have received a copy of the GNU Library General Public
+#    License along with this program; if not, write to the Free
+#    Software Foundation, Inc.,
+#    59 Temple Place - Suite 330
+#    Boston, MA 02111-1307, USA
+#
+SHELL = /bin/sh
+
+suffix = @install_suffix@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+srcdir = @srcdir@
+
+VPATH = $(srcdir)
+
+bindir = @bindir@
+libdir = @libdir@
+
+CC = @CC@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+CPPFLAGS = -I.. -I$(srcdir)/.. -I$(srcdir) @CPPFLAGS@ @DEFS@ @PICFLAG@
+CFLAGS = -Wall @CFLAGS@
+LDFLAGS = @LDFLAGS@
+
+all: dep vlog95.tgt
+
+check: all
+
+dep:
+	mkdir dep
+
+%.o: %.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	mv $*.d dep
+
+O = vlog95.o
+
+ifeq (@CYGWIN@,yes)
+  TGTLDFLAGS=-L.. -livl
+  TGTDEPLIBS=../libivl.a
+else
+  TGTLDFLAGS=
+  TGTDEPLIBS=
+endif
+
+
+vlog95.tgt: $O $(TGTDEPLIBS)
+	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
+
+clean:
+	rm -rf *.o dep vlog95.tgt
+
+distclean: clean
+	rm -f Makefile config.log
+
+Makefile: $(srcdir)/Makefile.in ../config.status
+	cd ..; ./config.status --file=tgt-vlog95/$@
+
+install: all installdirs $(libdir)/ivl$(suffix)/vlog95.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/vlog95.conf $(libdir)/ivl$(suffix)/vlog95-s.conf
+
+$(libdir)/ivl$(suffix)/vlog95.tgt: ./vlog95.tgt
+	$(INSTALL_PROGRAM) ./vlog95.tgt "$(DESTDIR)$(libdir)/ivl$(suffix)/vlog95.tgt"
+
+$(libdir)/ivl$(suffix)/vlog95.conf: $(srcdir)/vlog95.conf
+	$(INSTALL_DATA) $(srcdir)/vlog95.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/vlog95.conf"
+
+$(libdir)/ivl$(suffix)/vlog95-s.conf: $(srcdir)/vlog95-s.conf
+	$(INSTALL_DATA) $(srcdir)/vlog95-s.conf "$(DESTDIR)$(libdir)/ivl$(suffix)/vlog95-s.conf"
+
+
+installdirs: $(srcdir)/../mkinstalldirs
+	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)/ivl$(suffix)"
+
+uninstall:
+	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/vlog95.tgt"
+	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/vlog95.conf"
+	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/vlog95-s.conf"
+
+
+-include $(patsubst %.o, dep/%.d, $O)
