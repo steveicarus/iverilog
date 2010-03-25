@@ -34,7 +34,7 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = -I.. -I$(srcdir)/.. -I$(srcdir) @CPPFLAGS@ @DEFS@ @PICFLAG@
+CPPFLAGS = -I. -I.. -I$(srcdir)/.. -I$(srcdir) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
@@ -51,7 +51,7 @@ dep:
 
 O = vlog95.o
 
-ifeq (@CYGWIN@,yes)
+ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
   TGTDEPLIBS=../libivl.a
 else
