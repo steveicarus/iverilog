@@ -51,7 +51,7 @@ dep:
 
 O = null.o
 
-ifeq (@CYGWIN@,yes)
+ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
   TGTDEPLIBS=../libivl.a
 else
