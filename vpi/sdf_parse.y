@@ -188,7 +188,7 @@ cell_list
 cell
   : '(' K_CELL celltype cell_instance
       { sdf_select_instance($3, $4); /* find the instance in the design */}
-    timing_spec_list
+    timing_spec_list_opt
     ')'
       { free($3);
 	if ($4) free($4);
@@ -216,9 +216,9 @@ cell_instance
 	    $$ = strdup(""); }
   ;
 
-timing_spec_list
-  : timing_spec_list timing_spec
-  | timing_spec
+timing_spec_list_opt
+  : /* Empty */
+  | timing_spec_list_opt timing_spec
   ;
 
 timing_spec
