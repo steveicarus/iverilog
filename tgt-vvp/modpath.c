@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,6 +30,7 @@ static ivl_signal_t find_path_source_port(ivl_delaypath_t path)
 {
       int idx;
       ivl_nexus_t nex = ivl_path_source(path);
+      ivl_scope_t path_scope = ivl_path_scope(path);
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
 	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
@@ -39,7 +40,10 @@ static ivl_signal_t find_path_source_port(ivl_delaypath_t path)
 	    if (ivl_signal_port(sig) == IVL_SIP_NONE)
 		  continue;
 
-	      /* XXXX Should check that the scope is right. */
+	      /* The path source scope must match the modpath scope.*/
+	    if (ivl_signal_scope(sig) != path_scope)
+		  continue;
+
 	    return sig;
       }
 
