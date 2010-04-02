@@ -194,6 +194,10 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 		  delay_vals[idx].type = vpiScaledRealTime;
 		  if (delval_list->val[idx].defined) {
 			delay_vals[idx].real = delval_list->val[idx].value;
+			  /* Simulation cannot support negative delays. */
+			if (delay_vals[idx].real < 0.0)  {
+			      delay_vals[idx].real = 0.0;
+			}
 		  }
  
 	    }
