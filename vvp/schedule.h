@@ -92,6 +92,13 @@ extern void schedule_set_vector(vvp_net_ptr_t ptr, double val);
 extern void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector4_t val);
 extern void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector8_t val);
 extern void schedule_init_vector(vvp_net_ptr_t ptr, double val);
+/*
+ * The schedule_init_propagate function is similar to the above but
+ * propagates an initial value from a net output (i.e. without passing
+ * through the net functor).
+ */
+extern void schedule_init_propagate(vvp_net_t*net, vvp_vector4_t val);
+extern void schedule_init_propagate(vvp_net_t*net, double val);
 
 /*
  * Create a generic event. This supports scheduled events that are not

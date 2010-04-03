@@ -323,6 +323,9 @@ unsigned long count_assign_aword_pool(void) { return array_w_heap.pool; }
  * vvp_net_t object.
  */
 struct propagate_vector4_event_s : public event_s {
+	/* The default constructor. */
+      propagate_vector4_event_s(const vvp_vector4_t&that) : val(that) { }
+	/* A constructor that makes the val directly. */
       propagate_vector4_event_s(const vvp_vector4_t&that, unsigned adr, unsigned wid)
       : val(that,adr,wid) { }
 
@@ -343,6 +346,30 @@ void propagate_vector4_event_s::run_run(void)
 void propagate_vector4_event_s::single_step_display(void)
 {
       cerr << "propagate_vector4_event: Propagate val=" << val << endl;
+}
+
+/*
+ * This class supports the propagation of real outputs from a
+ * vvp_net_t object.
+ */
+struct propagate_real_event_s : public event_s {
+	/* Propagate the output of this net. */
+      vvp_net_t*net;
+	/* value to propagate */
+      double val;
+	/* Action */
+      void run_run(void);
+      void single_step_display(void);
+};
+
+void propagate_real_event_s::run_run(void)
+{
+      net->send_real(val, 0);
+}
+
+void propagate_real_event_s::single_step_display(void)
+{
+      cerr << "propagate_real_event: Propagate val=" << val << endl;
 }
 
 struct assign_array_r_word_s  : public event_s {
@@ -800,6 +827,23 @@ void schedule_init_vector(vvp_net_ptr_t ptr, double bit)
 {
       struct assign_real_event_s*cur = new struct assign_real_event_s;
       cur->ptr = ptr;
+      cur->val = bit;
+      cur->next = schedule_init_list;
+      schedule_init_list = cur;
+}
+
+void schedule_init_propagate(vvp_net_t*net, vvp_vector4_t bit)
+{
+      struct propagate_vector4_event_s*cur = new struct propagate_vector4_event_s(bit);
+      cur->net = net;
+      cur->next = schedule_init_list;
+      schedule_init_list = cur;
+}
+
+void schedule_init_propagate(vvp_net_t*net, double bit)
+{
+      struct propagate_real_event_s*cur = new struct propagate_real_event_s;
+      cur->net = net;
       cur->val = bit;
       cur->next = schedule_init_list;
       schedule_init_list = cur;

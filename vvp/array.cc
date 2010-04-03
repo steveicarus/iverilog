@@ -1359,6 +1359,16 @@ static void array_attach_port(vvp_array_t array, vvp_fun_arrayport*fun)
       assert(fun->next_ == 0);
       fun->next_ = array->ports_;
       array->ports_ = fun;
+      if (!array->scope->is_automatic) {
+              /* propagate initial values for variable arrays */
+            if (array->vals4) {
+                  vvp_vector4_t tmp(array->vals_width, BIT4_X);
+                  schedule_init_propagate(fun->net_, tmp);
+            }
+            if (array->valsr) {
+                  schedule_init_propagate(fun->net_, 0.0);
+            }
+      }
 }
 
 void array_word_change(vvp_array_t array, unsigned long addr)
