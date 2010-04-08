@@ -426,15 +426,15 @@ statement
      node takes two form, one with an array of constants and a single
      input, and another with an array of inputs. */
 
- | T_LABEL K_DELAY delay symbol ';'
-    { compile_delay($1, $3, $4); }
- | T_LABEL K_DELAY  symbols ';'
-    { struct symbv_s obj = $3;
-      compile_delay($1, obj.cnt, obj.vect);
+ | T_LABEL K_DELAY T_NUMBER delay symbol ';'
+    { compile_delay($1, $3, $4, $5); }
+ | T_LABEL K_DELAY T_NUMBER symbols ';'
+    { struct symbv_s obj = $4;
+      compile_delay($1, $3, obj.cnt, obj.vect);
     }
 
- | T_LABEL K_MODPATH symbol symbol ','
-    { modpath_dst = compile_modpath($1, $3, $4); }
+ | T_LABEL K_MODPATH T_NUMBER symbol symbol ','
+    { modpath_dst = compile_modpath($1, $3, $4, $5); }
    modpath_src_list ';'
     { modpath_dst = 0; }
 

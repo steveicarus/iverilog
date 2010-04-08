@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -47,6 +47,10 @@ static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
 
       dly = "";
       if (d_rise != 0) {
+            unsigned dly_width = width;
+            if (data_type_of_nexus(ivl_lpm_q(net)) == IVL_VT_REAL)
+                  dly_width = 0;
+
 	    dly = "/d";
 	    if (number_is_immediate(d_rise, 64, 0) &&
 	        number_is_immediate(d_fall, 64, 0) &&
@@ -67,8 +71,9 @@ static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
 			exit(1);
 		  }
 
-		  fprintf(vvp_out, "L_%p .delay (%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
-		                   net, get_number_immediate64(d_rise),
+		  fprintf(vvp_out, "L_%p .delay %u (%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
+		                   net, dly_width,
+				   get_number_immediate64(d_rise),
 		                   get_number_immediate64(d_fall),
 		                   get_number_immediate64(d_decay), net);
 	    } else {
@@ -80,7 +85,8 @@ static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
 		  assert(ivl_expr_type(d_fall) == IVL_EX_SIGNAL);
 		  assert(ivl_expr_type(d_decay) == IVL_EX_SIGNAL);
 
-		  fprintf(vvp_out, "L_%p .delay L_%p/d", net, net);
+		  fprintf(vvp_out, "L_%p .delay %u L_%p/d",
+                          net, dly_width, net);
 
 		  sig = ivl_expr_signal(d_rise);
 		  assert(ivl_signal_dimensions(sig) == 0);

@@ -66,6 +66,8 @@ static void draw_modpath_record(const char*label, const char*driver,
       ccharp*src_drivers;
       ccharp*con_drivers;
 
+      unsigned width = ivl_signal_width(path_sig);
+
       src_drivers = calloc(ivl_signal_npath(path_sig), sizeof(ccharp));
       con_drivers = calloc(ivl_signal_npath(path_sig), sizeof(ccharp));
       for (idx = 0 ;  idx < ivl_signal_npath(path_sig) ;  idx += 1) {
@@ -81,7 +83,7 @@ static void draw_modpath_record(const char*label, const char*driver,
       }
 
       fprintf(vvp_out, "  .scope S_%p;\n", ivl_path_scope(ivl_signal_path(path_sig,0)));
-      fprintf(vvp_out, "%s .modpath %s v%p_0", label, driver, path_sig);
+      fprintf(vvp_out, "%s .modpath %u %s v%p_0", label, width, driver, path_sig);
 
       for (idx = 0 ;  idx < ivl_signal_npath(path_sig); idx += 1) {
 	    ivl_delaypath_t path = ivl_signal_path(path_sig, idx);

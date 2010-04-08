@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1244,10 +1244,11 @@ void compile_cmp_gt_r(char*label, unsigned argc, struct symb_s*argv)
 }
 
 
-void compile_delay(char*label, vvp_delay_t*delay, struct symb_s arg)
+void compile_delay(char*label, unsigned width,
+                   vvp_delay_t*delay, struct symb_s arg)
 {
       vvp_net_t*net = new vvp_net_t;
-      vvp_fun_delay*obj = new vvp_fun_delay(net, BIT4_X, *delay);
+      vvp_fun_delay*obj = new vvp_fun_delay(net, width, *delay);
       net->fun = obj;
 
       delete delay;
@@ -1258,11 +1259,12 @@ void compile_delay(char*label, vvp_delay_t*delay, struct symb_s arg)
       free(label);
 }
 
-void compile_delay(char*label, unsigned argc, struct symb_s*argv)
+void compile_delay(char*label, unsigned width,
+                   unsigned argc, struct symb_s*argv)
 {
       vvp_delay_t stub (0, 0, 0);
       vvp_net_t*net = new vvp_net_t;
-      vvp_fun_delay*obj = new vvp_fun_delay(net, BIT4_X, stub);
+      vvp_fun_delay*obj = new vvp_fun_delay(net, width, stub);
       net->fun = obj;
 
       inputs_connect(net, argc, argv);
@@ -1289,11 +1291,11 @@ void compile_extend_signed(char*label, long wid, struct symb_s arg)
       input_connect(ptr, 0, arg.text);
 }
 
-struct __vpiModPath* compile_modpath(char*label, struct symb_s drv,
-				     struct symb_s dest)
+struct __vpiModPath* compile_modpath(char*label, unsigned width,
+                                     struct symb_s drv, struct symb_s dest)
 {
       vvp_net_t*net = new vvp_net_t;
-      vvp_fun_modpath*obj = new vvp_fun_modpath(net);
+      vvp_fun_modpath*obj = new vvp_fun_modpath(net, width);
       net->fun = obj;
 
       input_connect(net, 0, drv.text);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -355,6 +355,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       if (cptr) {
 	    char *result = 0;
 	    ivl_expr_t d_rise, d_fall, d_decay;
+            unsigned dly_width = 0;
 
 	      /* Constants should have exactly 1 pin, with a literal value. */
 	    assert(nptr_pin == 0);
@@ -372,10 +373,12 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 						   ivl_nexus_ptr_drive0(nptr),
 						   ivl_nexus_ptr_drive1(nptr));
 		  }
+                  dly_width = ivl_const_width(cptr);
 		  break;
 
 		case IVL_VT_REAL:
 		  result = draw_Cr_to_string(ivl_const_real(cptr));
+                  dly_width = 0;
 		  break;
 
 		default:
@@ -403,9 +406,10 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 			assert(! number_is_unknown(d_fall));
 			assert(! number_is_unknown(d_decay));
 
-			fprintf(vvp_out, "L_%p .delay "
+			fprintf(vvp_out, "L_%p .delay %u "
 				"(%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
-			                 cptr, get_number_immediate64(d_rise),
+			                 cptr, dly_width,
+			                 get_number_immediate64(d_rise),
 			                 get_number_immediate64(d_fall),
 			                 get_number_immediate64(d_decay), cptr);
 
@@ -418,7 +422,8 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 			assert(ivl_expr_type(d_fall) == IVL_EX_SIGNAL);
 			assert(ivl_expr_type(d_decay) == IVL_EX_SIGNAL);
 
-			fprintf(vvp_out, "L_%p .delay L_%p/d", cptr, cptr);
+			fprintf(vvp_out, "L_%p .delay %u L_%p/d",
+                                cptr, dly_width, cptr);
 
 			sig = ivl_expr_signal(d_rise);
 			assert(ivl_signal_dimensions(sig) == 0);

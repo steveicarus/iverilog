@@ -878,6 +878,10 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    ivl_expr_t fall_exp  = ivl_logic_delay(lptr, 1);
 	    ivl_expr_t decay_exp = ivl_logic_delay(lptr, 2);
 
+            unsigned dly_width = vector_width;
+            if (data_type_of_nexus(ivl_logic_pin(lptr,0)) == IVL_VT_REAL)
+                  dly_width = 0;
+
 	    if (number_is_immediate(rise_exp, 64, 0)
 		&& number_is_immediate(fall_exp, 64, 0)
 		&& number_is_immediate(decay_exp, 64, 0)) {
@@ -897,8 +901,9 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 			assert(0);
 		  }
 
-		  fprintf(vvp_out, "L_%p .delay (%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
-			  lptr, get_number_immediate64(rise_exp),
+		  fprintf(vvp_out, "L_%p .delay %u (%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
+			  lptr, dly_width,
+                          get_number_immediate64(rise_exp),
 			  get_number_immediate64(fall_exp),
 			  get_number_immediate64(decay_exp), lptr);
 	    } else {
@@ -910,7 +915,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		  assert(ivl_expr_type(fall_exp) == IVL_EX_SIGNAL);
 		  assert(ivl_expr_type(decay_exp) == IVL_EX_SIGNAL);
 
-		  fprintf(vvp_out, "L_%p .delay L_%p/d", lptr, lptr);
+		  fprintf(vvp_out, "L_%p .delay %u L_%p/d", lptr, dly_width, lptr);
 
 		  sig = ivl_expr_signal(rise_exp);
 		  assert(ivl_signal_dimensions(sig) == 0);
@@ -1091,11 +1096,15 @@ static void draw_lpm_data_inputs(ivl_lpm_t net, unsigned base,
  * "" string if the node was not needed. The caller uses that string
  * to modify labels that are generated.
  */
-static const char* draw_lpm_output_delay(ivl_lpm_t net)
+static const char* draw_lpm_output_delay(ivl_lpm_t net, ivl_variable_type_t dt)
 {
       ivl_expr_t d_rise = ivl_lpm_delay(net, 0);
       ivl_expr_t d_fall = ivl_lpm_delay(net, 1);
       ivl_expr_t d_decay = ivl_lpm_delay(net, 2);
+      unsigned width = ivl_lpm_width(net);
+
+      if (dt == IVL_VT_REAL)
+            width = 0;
 
       const char*dly = "";
       if (d_rise != 0) {
@@ -1119,8 +1128,9 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net)
 	    }
 
 	    dly = "/d";
-	    fprintf(vvp_out, "L_%p .delay (%" PRIu64 ",%" PRIu64 ",%" PRIu64 ")"
-		    " L_%p/d;\n", net, get_number_immediate64(d_rise),
+	    fprintf(vvp_out, "L_%p .delay %u (%" PRIu64 ",%" PRIu64 ",%" PRIu64 ")"
+		    " L_%p/d;\n", net, width,
+                    get_number_immediate64(d_rise),
 	            get_number_immediate64(d_fall),
 	            get_number_immediate64(d_decay), net);
       }
@@ -1131,11 +1141,12 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net)
 static void draw_lpm_abs(ivl_lpm_t net)
 {
       const char*src_table[1];
+      ivl_variable_type_t dt = data_type_of_nexus(ivl_lpm_data(net,0));
       const char*dly;
 
       draw_lpm_data_inputs(net, 0, 1, src_table);
 
-      dly = draw_lpm_output_delay(net);
+      dly = draw_lpm_output_delay(net, dt);
 
       fprintf(vvp_out, "L_%p%s .abs %s;\n",
 	      net, dly, src_table[0]);
@@ -1148,7 +1159,7 @@ static void draw_lpm_cast_int(ivl_lpm_t net)
 
       draw_lpm_data_inputs(net, 0, 1, src_table);
 
-      dly = draw_lpm_output_delay(net);
+      dly = draw_lpm_output_delay(net, IVL_VT_LOGIC);
 
       fprintf(vvp_out, "L_%p%s .cast/int %u, %s;\n",
 	      net, dly, ivl_lpm_width(net), src_table[0]);
@@ -1162,7 +1173,7 @@ static void draw_lpm_cast_real(ivl_lpm_t net)
 
       draw_lpm_data_inputs(net, 0, 1, src_table);
 
-      dly = draw_lpm_output_delay(net);
+      dly = draw_lpm_output_delay(net, IVL_VT_REAL);
 
       if (ivl_lpm_signed(net)) is_signed = ".s";
 
@@ -1234,7 +1245,7 @@ static void draw_lpm_add(ivl_lpm_t net)
 
       draw_lpm_data_inputs(net, 0, 2, src_table);
 
-      dly = draw_lpm_output_delay(net);
+      dly = draw_lpm_output_delay(net, dto);
 
       fprintf(vvp_out, "L_%p%s .arith/%s %u, %s, %s;\n",
 	      net, dly, type, width, src_table[0], src_table[1]);
@@ -1317,7 +1328,7 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 
       draw_lpm_data_inputs(net, 0, 2, src_table);
 
-      dly = draw_lpm_output_delay(net);
+      dly = draw_lpm_output_delay(net, dtc);
 
       fprintf(vvp_out, "L_%p%s .cmp/%s%s %u, %s, %s;\n",
 	      net, dly, type, signed_string, width,
@@ -1375,7 +1386,7 @@ static void draw_lpm_concat(ivl_lpm_t net)
 {
       const char*src_table[4];
       unsigned icnt = ivl_lpm_size(net);
-      const char*dly = draw_lpm_output_delay(net);
+      const char*dly = draw_lpm_output_delay(net, IVL_VT_LOGIC);
 
       if (icnt <= 4) {
 	      /* This is the easiest case. There are 4 or fewer input
@@ -1545,7 +1556,7 @@ static void draw_lpm_shiftl(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
       const char* signed_flag = ivl_lpm_signed(net)? "s" : "";
-      const char*dly = draw_lpm_output_delay(net);
+      const char*dly = draw_lpm_output_delay(net, IVL_VT_LOGIC);
 
       if (ivl_lpm_type(net) == IVL_LPM_SHIFTR)
 	    fprintf(vvp_out, "L_%p%s .shift/r%s %u", net, dly, signed_flag,
@@ -1580,7 +1591,8 @@ static void draw_lpm_sfunc(ivl_lpm_t net)
 {
       unsigned idx;
 
-      const char*dly = draw_lpm_output_delay(net);
+      ivl_variable_type_t dt = data_type_of_nexus(ivl_lpm_q(net));
+      const char*dly = draw_lpm_output_delay(net, dt);
 
       if (ivl_lpm_trigger(net))
             fprintf(vvp_out, "L_%p%s .sfunc/e %u %u \"%s\", E_%p", net, dly,
@@ -1616,7 +1628,8 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
       const char**input_strings;
       ivl_scope_t def = ivl_lpm_define(net);
 
-      const char*dly = draw_lpm_output_delay(net);
+      ivl_variable_type_t dt = data_type_of_nexus(ivl_lpm_q(net));
+      const char*dly = draw_lpm_output_delay(net, dt);
 
 	/* Get all the input labels that I will use for net signals that
 	   connect to the inputs of the function. */
@@ -1681,7 +1694,7 @@ static void draw_lpm_part(ivl_lpm_t net)
       unsigned width, base;
       ivl_nexus_t sel;
 
-      const char*dly = draw_lpm_output_delay(net);
+      const char*dly = draw_lpm_output_delay(net, IVL_VT_LOGIC);
 
       width = ivl_lpm_width(net);
       base = ivl_lpm_base(net);
@@ -1722,7 +1735,7 @@ static void draw_lpm_part_pv(ivl_lpm_t net)
  */
 static void draw_lpm_re(ivl_lpm_t net, const char*type)
 {
-      const char*dly = draw_lpm_output_delay(net);
+      const char*dly = draw_lpm_output_delay(net, IVL_VT_LOGIC);
 
       fprintf(vvp_out, "L_%p%s .reduce/%s %s;\n", net, dly,
 	      type, draw_net_input(ivl_lpm_data(net,0)));
@@ -1730,7 +1743,7 @@ static void draw_lpm_re(ivl_lpm_t net, const char*type)
 
 static void draw_lpm_repeat(ivl_lpm_t net)
 {
-      const char*dly = draw_lpm_output_delay(net);
+      const char*dly = draw_lpm_output_delay(net, IVL_VT_LOGIC);
 
       fprintf(vvp_out, "L_%p%s .repeat %u, %u, %s;\n", net, dly,
 	      ivl_lpm_width(net), ivl_lpm_size(net),
@@ -1739,7 +1752,7 @@ static void draw_lpm_repeat(ivl_lpm_t net)
 
 static void draw_lpm_sign_ext(ivl_lpm_t net)
 {
-      const char*dly = draw_lpm_output_delay(net);
+      const char*dly = draw_lpm_output_delay(net, IVL_VT_LOGIC);
 
       fprintf(vvp_out, "L_%p%s .extend/s %u, %s;\n",
 	      net, dly, ivl_lpm_width(net),

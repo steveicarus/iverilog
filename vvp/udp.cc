@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2010 Stephen Williams (steve@icarus.com)
  *
  * (This is a rewrite of code that was ...
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
@@ -985,7 +985,7 @@ void compile_udp_functor(char*label, char*type,
 
       if (delay != 0) {
 	    vvp_net_t*net_drv = new vvp_net_t;
-	    vvp_fun_delay*obj_drv = new vvp_fun_delay(net_drv, BIT4_X, *delay);
+	    vvp_fun_delay*obj_drv = new vvp_fun_delay(net_drv, 1, *delay);
 	    delete delay;
 	    net_drv->fun = obj_drv;
 

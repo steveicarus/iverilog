@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -375,13 +375,14 @@ delayed. The delay amount is given on the node line. Variable delay
 nodes have three extra inputs to receive the rise, fall and decay
 times that are used for delay.
 
-	.delay ( <rise>, <fall>, <decay> ) <input> ;
-	.delay <input>, <rise>, <fall>, <decay> ;
+	.delay <width> ( <rise>, <fall>, <decay> ) <input> ;
+	.delay <width> <input>, <rise>, <fall>, <decay> ;
 
 The first form above takes three constant (64bit) numbers as the
 initial delay, and takes a single input. The second form takes 4 net
 inputs, with the first being the value to delay, and the remaining to
-be the delay values to use.
+be the delay values to use. <width> specifies the bit width of the
+input net, with a width of 0 used to identify a real valued net.
 
 MODULE PATH DELAY STATEMENTS:
 
@@ -389,7 +390,9 @@ A module path delay takes data from its input, then a list of module
 path delays. The <src> for each possible delay set is a trigger that
 activates the delay.
 
-        .modpath <input> , [ <src> (<delays> [? <condition>]) ] ;
+        .modpath <width> <input> , [ <src> (<delays> [? <condition>]) ] ;
+
+<width> specifies the bit width of the input net.
 
 ARRAY INDEX STATEMENTS:
 

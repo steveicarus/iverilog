@@ -1,7 +1,7 @@
 #ifndef __delay_H
 #define __delay_H
 /*
- * Copyright 2005-2008 Stephen Williams
+ * Copyright 2005-2008,2010 Stephen Williams
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -83,7 +83,7 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
       };
 
     public:
-      vvp_fun_delay(vvp_net_t*net, vvp_bit4_t init, const vvp_delay_t&d);
+      vvp_fun_delay(vvp_net_t*net, unsigned width, const vvp_delay_t&d);
       ~vvp_fun_delay();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
@@ -156,7 +156,7 @@ class vvp_fun_modpath_src;
 class vvp_fun_modpath  : public vvp_net_fun_t, private vvp_gen_event_s {
 
     public:
-      vvp_fun_modpath(vvp_net_t*net);
+      vvp_fun_modpath(vvp_net_t*net, unsigned width);
       ~vvp_fun_modpath();
 
       void add_modpath_src(vvp_fun_modpath_src*that, bool ifnone);

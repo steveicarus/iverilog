@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2009 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2005-2010 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -133,12 +133,17 @@ void vvp_delay_t::set_decay(vvp_time64_t val)
 	    calculate_min_delay_();
 }
 
-vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, vvp_bit4_t init, const vvp_delay_t&d)
-: net_(n), delay_(d), cur_vec4_(1)
+vvp_fun_delay::vvp_fun_delay(vvp_net_t*n, unsigned width, const vvp_delay_t&d)
+: net_(n), delay_(d)
 {
-      cur_vec4_.set_bit(0, init);
-      cur_vec8_ = vvp_vector8_t(cur_vec4_, 6, 6);
       cur_real_ = 0.0;
+      if (width > 0) {
+            cur_vec4_ = vvp_vector4_t(width, BIT4_X);
+            cur_vec8_ = vvp_vector8_t(cur_vec4_, 6, 6);
+            schedule_init_propagate(net_, cur_vec4_);
+      } else {
+            schedule_init_propagate(net_, cur_real_);
+      }
       list_ = 0;
       type_ = UNKNOWN_DELAY;
       initial_ = true;
@@ -468,9 +473,11 @@ void vvp_fun_delay::run_run_real_(struct vvp_fun_delay::event_*cur)
       net_->send_real(cur_real_, 0);
 }
 
-vvp_fun_modpath::vvp_fun_modpath(vvp_net_t*net)
+vvp_fun_modpath::vvp_fun_modpath(vvp_net_t*net, unsigned width)
 : net_(net), src_list_(0), ifnone_list_(0)
 {
+      cur_vec4_ = vvp_vector4_t(width, BIT4_X);
+      schedule_init_propagate(net_, cur_vec4_);
 }
 
 vvp_fun_modpath::~vvp_fun_modpath()

@@ -1,7 +1,7 @@
 #ifndef __compile_H
 #define __compile_H
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -128,8 +128,10 @@ extern void compile_compiletf(struct __vpiSysTaskCall*);
 /*
  * Compile delay nodes of various form.
  */
-extern void compile_delay(char*label, vvp_delay_t*del, struct symb_s input);
-extern void compile_delay(char*label, unsigned argc, struct symb_s*argv);
+extern void compile_delay(char*label, unsigned width,
+                          vvp_delay_t*del, struct symb_s input);
+extern void compile_delay(char*label, unsigned width,
+                          unsigned argc, struct symb_s*argv);
 
 /*
  * This is called by the parser to create a part select node.
@@ -198,6 +200,7 @@ extern void compile_dff(char*label,
 
 class __vpiModPath;
 extern __vpiModPath* compile_modpath(char*label,
+                                     unsigned width,
 				     struct symb_s drv,
 				     struct symb_s dest);
 extern void compile_modpath_src(__vpiModPath*dst,
