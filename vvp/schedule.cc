@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -534,6 +534,19 @@ static void signals_revert(void)
       signal(SIGINT, SIG_DFL);
 }
 
+/*
+ * This function puts an event on the end of the pre-simulation event queue.
+ */
+static void schedule_init_event(struct event_s*cur)
+{
+      if (schedule_init_list == 0) {
+            cur->next = cur;
+      } else {
+            cur->next = schedule_init_list->next;
+            schedule_init_list->next = cur;
+      }
+      schedule_init_list = cur;
+}
 
 /*
  * This function does all the hard work of putting an event into the
@@ -810,8 +823,7 @@ void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       cur->ptr = ptr;
       cur->base = 0;
       cur->vwid = 0;
-      cur->next = schedule_init_list;
-      schedule_init_list = cur;
+      schedule_init_event(cur);
 }
 
 void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector8_t bit)
@@ -819,8 +831,7 @@ void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector8_t bit)
       struct assign_vector8_event_s*cur = new struct assign_vector8_event_s;
       cur->ptr = ptr;
       cur->val = bit;
-      cur->next = schedule_init_list;
-      schedule_init_list = cur;
+      schedule_init_event(cur);
 }
 
 void schedule_init_vector(vvp_net_ptr_t ptr, double bit)
@@ -828,16 +839,14 @@ void schedule_init_vector(vvp_net_ptr_t ptr, double bit)
       struct assign_real_event_s*cur = new struct assign_real_event_s;
       cur->ptr = ptr;
       cur->val = bit;
-      cur->next = schedule_init_list;
-      schedule_init_list = cur;
+      schedule_init_event(cur);
 }
 
 void schedule_init_propagate(vvp_net_t*net, vvp_vector4_t bit)
 {
       struct propagate_vector4_event_s*cur = new struct propagate_vector4_event_s(bit);
       cur->net = net;
-      cur->next = schedule_init_list;
-      schedule_init_list = cur;
+      schedule_init_event(cur);
 }
 
 void schedule_init_propagate(vvp_net_t*net, double bit)
@@ -845,8 +854,7 @@ void schedule_init_propagate(vvp_net_t*net, double bit)
       struct propagate_real_event_s*cur = new struct propagate_real_event_s;
       cur->net = net;
       cur->val = bit;
-      cur->next = schedule_init_list;
-      schedule_init_list = cur;
+      schedule_init_event(cur);
 }
 
 void schedule_del_thr(vthread_t thr)
@@ -870,6 +878,21 @@ void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay,
 
       if (sync_flag)
 	    vthread_delay_delete();
+}
+
+static bool sim_started;
+
+void schedule_functor(vvp_gen_event_t obj)
+{
+      struct generic_event_s*cur = new generic_event_s;
+
+      cur->obj = obj;
+      cur->delete_obj_when_done = false;
+      if (!sim_started) {
+            schedule_init_event(cur);
+      } else {
+            schedule_event_(cur, 0, SEQ_ACTIVE);
+      }
 }
 
 void schedule_at_start_of_simtime(vvp_gen_event_t obj, vvp_time64_t delay)
@@ -934,6 +957,8 @@ static void run_rosync(struct event_time_s*ctim)
 
 void schedule_simulate(void)
 {
+      sim_started = false;
+
       schedule_time = 0;
 
       if (verbose_flag) {
@@ -949,9 +974,12 @@ void schedule_simulate(void)
 
 	// Execute initialization events.
       while (schedule_init_list) {
-	    struct event_s*cur = schedule_init_list;
-	    schedule_init_list = cur->next;
-
+	    struct event_s*cur = schedule_init_list->next;
+	    if (cur->next == cur) {
+		  schedule_init_list = 0;
+	    } else {
+		  schedule_init_list->next = cur->next;
+	    }
 	    cur->run_run();
 	    delete cur;
       }
@@ -962,6 +990,8 @@ void schedule_simulate(void)
 
       // Execute start of simulation callbacks
       vpiStartOfSim();
+
+      sim_started = true;
 
       signals_capture();
 

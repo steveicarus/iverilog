@@ -1,7 +1,7 @@
 #ifndef __schedule_H
 #define __schedule_H
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -122,6 +122,15 @@ typedef struct vvp_gen_event_s *vvp_gen_event_t;
 extern void schedule_generic(vvp_gen_event_t obj, vvp_time64_t delay,
 			     bool sync_flag, bool ro_flag =true,
 			     bool delete_obj_when_done =false);
+
+/* Create a functor output event. This is placed in the pre-simulation
+ * event queue if the scheduler is still processing pre-simulation
+ * events, otherwise it is placed in the stratified event queue as an
+ * ACTIVE event with a delay of 0. It is up to the user to allocate/free
+ * the vvp_get_event_s object. The object is never referenced by the
+ * scheduler after the run method is called.
+*/
+extern void schedule_functor(vvp_gen_event_t obj);
 
 extern void schedule_at_start_of_simtime(vvp_gen_event_t obj, vvp_time64_t delay);
 

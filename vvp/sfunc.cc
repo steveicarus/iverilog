@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -59,7 +59,7 @@ sfunc_core::~sfunc_core()
 void sfunc_core::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                            vvp_context_t)
 {
-      schedule_generic(this, 0, false);
+      schedule_functor(this);
 }
 
 void sfunc_core::recv_vec4_from_inputs(unsigned port)
@@ -73,7 +73,7 @@ void sfunc_core::recv_vec4_from_inputs(unsigned port)
       obj->bits = value(port);
 
         /* Schedule the actual call after this finishes. */
-      schedule_generic(this, 0, false);
+      schedule_functor(this);
 }
 
 void sfunc_core::recv_real_from_inputs(unsigned port)
@@ -87,7 +87,7 @@ void sfunc_core::recv_real_from_inputs(unsigned port)
       obj->value = value_r(port);
 
         /* Schedule the actual call after this finishes. */
-      schedule_generic(this, 0, false);
+      schedule_functor(this);
 }
 
 void sfunc_core::run_run()

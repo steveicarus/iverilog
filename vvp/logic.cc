@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -52,7 +52,7 @@ void vvp_fun_boolean_::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       input_[port] = bit;
       if (net_ == 0) {
 	    net_ = ptr.ptr();
-	    schedule_generic(this, 0, false);
+	    schedule_functor(this);
       }
 }
 
@@ -71,7 +71,7 @@ void vvp_fun_boolean_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       input_[port] .set_vec(base, bit);
       if (net_ == 0) {
 	    net_ = ptr.ptr();
-	    schedule_generic(this, 0, false);
+	    schedule_functor(this);
       }
 }
 
@@ -138,7 +138,7 @@ void vvp_fun_buf::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 
       if (net_ == 0) {
 	    net_ = ptr.ptr();
-	    schedule_generic(this, 0, false);
+	    schedule_functor(this);
       }
 }
 
@@ -229,7 +229,7 @@ void vvp_fun_muxr::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 
       if (net_ == 0) {
 	    net_ = ptr.ptr();
-	    schedule_generic(this, 0, false);
+	    schedule_functor(this);
       }
 }
 
@@ -256,7 +256,7 @@ void vvp_fun_muxr::recv_real(vvp_net_ptr_t ptr, double bit,
 
       if (net_ == 0) {
 	    net_ = ptr.ptr();
-	    schedule_generic(this, 0, false);
+	    schedule_functor(this);
       }
 }
 
@@ -335,7 +335,7 @@ void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 
       if (net_ == 0) {
 	    net_ = ptr.ptr();
-	    schedule_generic(this, 0, false);
+	    schedule_functor(this);
       }
 }
 
@@ -405,7 +405,7 @@ void vvp_fun_not::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       input_ = bit;
       if (net_ == 0) {
 	    net_ = ptr.ptr();
-	    schedule_generic(this, 0, false);
+	    schedule_functor(this);
       }
 }
 

@@ -911,7 +911,7 @@ vvp_udp_fun_core::vvp_udp_fun_core(vvp_net_t*net, vvp_udp_s*def)
       current_.maskx = ~ ((-1UL) << port_count());
 
       if (cur_out_ != BIT4_X)
-	    schedule_generic(this, 0, false);
+	    schedule_functor(this);
 }
 
 vvp_udp_fun_core::~vvp_udp_fun_core()
@@ -962,7 +962,7 @@ void vvp_udp_fun_core::recv_vec4_from_inputs(unsigned port)
 	    return;
 
       cur_out_ = out_bit;
-      schedule_generic(this, 0, false);
+      schedule_functor(this);
 }
 
 
