@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -754,7 +754,7 @@ static void def_add_arg()
     check_for_max_args();
 
     /* Remove trailing white space and, if necessary, opening brace. */
-    while (isspace(yytext[length - 1]))
+    while (isspace((int)yytext[length - 1]))
         length--;
 
     if (yytext[length - 1] == '(')
@@ -884,8 +884,8 @@ static char *find_arg(char*ptr, char*head, char*arg)
          * match is not in the middle of another identifier.
          */
         if (cp != head &&
-            (isalnum(*(cp-1)) || *(cp-1) == '_' || *(cp-1) == '$' ||
-             isalnum(*(cp+len)) || *(cp+len) == '_' || *(cp+len) == '$')) {
+            (isalnum((int)*(cp-1)) || *(cp-1) == '_' || *(cp-1) == '$' ||
+             isalnum((int)*(cp+len)) || *(cp+len) == '_' || *(cp+len) == '$')) {
             cp++;
             continue;
         }
@@ -952,7 +952,7 @@ static void do_define()
     cp = yytext + strlen(yytext);
     while (cp > yytext)
     {
-        if (!isspace(cp[-1]))
+        if (!isspace((int)cp[-1]))
             break;
 
         cp -= 1;
@@ -968,7 +968,7 @@ static void do_define()
         cp -= 1;
         cp[0] = 0;
 
-        while ((cp > yytext) && isspace(cp[-1])) {
+        while ((cp > yytext) && isspace((int)cp[-1])) {
             cp -= 1;
             *cp = 0;
         }

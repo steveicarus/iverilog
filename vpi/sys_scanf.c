@@ -251,12 +251,12 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv)
 
       while ( fmtp && *fmtp != 0 && !match_fail) {
 
-	    if (isspace(*fmtp)) {
+	    if (isspace((int)*fmtp)) {
 		    /* White space matches a string of white space in
 		       the input. The number of spaces is not
 		       relevant, and the match may be 0 or more
 		       spaces. */
-		  while (*fmtp && isspace(*fmtp)) fmtp += 1;
+		  while (*fmtp && isspace((int)*fmtp)) fmtp += 1;
 
 		  ch = byte_getc(src);
 		  while (isspace(ch)) ch = byte_getc(src);
@@ -291,9 +291,9 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv)
 			suppress_flag = 1;
 			fmtp += 1;
 		  }
-		  if (isdigit(*fmtp)) {
+		  if (isdigit((int)*fmtp)) {
 			length_field = 0;
-			while (isdigit(*fmtp)) {
+			while (isdigit((int)*fmtp)) {
 			      length_field *= 10;
 			      length_field += *fmtp - '0';
 			      fmtp += 1;

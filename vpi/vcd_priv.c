@@ -36,11 +36,11 @@ int is_escaped_id(const char *name)
 
       assert(name);
         /* The first digit must be alpha or '_' to be a normal id. */
-      if (isalpha(name[0]) || name[0] == '_') {
+      if (isalpha((int)name[0]) || name[0] == '_') {
 	    for (lp=1; name[lp] != '\0'; lp++) {
 		    /* If this digit is not alpha-numeric or '_' we have
 		     * an escaped identifier. */
-		  if (!(isalnum(name[lp]) || name[lp] == '_')) {
+		  if (!(isalnum((int)name[lp]) || name[lp] == '_')) {
 		        return 1;
 		  }
 	    }

@@ -1907,7 +1907,7 @@ static PLI_INT32 sys_severity_calltf(PLI_BYTE8*name)
 
       /* convert name to upper and drop $ to get severity string */
       sstr = strdup(name) + 1;
-      for (t=sstr; *t; t+=1) *t = toupper(*t);
+      for (t=sstr; *t; t+=1) *t = toupper((int)*t);
 
       scope = vpi_handle(vpiScope, callh);
       assert(scope);
