@@ -287,6 +287,7 @@ typedef struct t_vpi_delay  {
 #define vpiSysTaskCall 57
 #define vpiTask        59
 #define vpiTimeVar     63
+#define vpiUserSystf   67
 #define vpiNetArray   114
 #define vpiIndex       78
 #define vpiLeftRange   79
@@ -360,6 +361,7 @@ typedef struct t_vpi_delay  {
 #   define vpiSysFuncReal  vpiRealFunc
 #   define vpiSysFuncTime  vpiTimeFunc
 #   define vpiSysFuncSized vpiSizedFunc
+#define vpiUserDefn       49
 #define vpiAutomatic      50
 #define vpiConstantSelect 53
 #define vpiSigned         65
@@ -382,7 +384,8 @@ typedef struct t_vpi_delay  {
 #define vpiReturnEvent 0x1000
 
 /* VPI FUNCTIONS */
-extern void vpi_register_systf(const struct t_vpi_systf_data*ss);
+extern vpiHandle vpi_register_systf(const struct t_vpi_systf_data*ss);
+extern void vpi_get_systf_info(vpiHandle obj, p_vpi_systf_data data);
 
 /* I/O routines */
 extern PLI_UINT32 vpi_mcd_open(char *name);
@@ -530,7 +533,10 @@ extern void vpi_get_delays(vpiHandle expr, p_vpi_delay delays);
 extern void vpi_put_delays(vpiHandle expr, p_vpi_delay delays);
 
 
-
+/*
+ * Check to see if two handles point to the same object.
+ */
+extern PLI_INT32 vpi_compare_objects(vpiHandle obj1, vpiHandle obj2);
 
 
 /*

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,18 +37,8 @@
 # include  <string.h>
 # include  <assert.h>
 
-static const struct __vpirt vpip_systask_def_rt = {
-      vpiSysTask,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-};
-
-static const struct __vpirt vpip_sysfunc_def_rt = {
-      vpiSysFunc,
+static const struct __vpirt vpip_systf_def_rt = {
+      vpiUserSystf,
       0,
       0,
       0,
@@ -66,6 +56,11 @@ static vpiHandle systask_handle(int type, vpiHandle ref)
       switch (type) {
 	  case vpiScope:
 	    return &rfp->scope->base;
+
+	  case vpiUserSystf:
+	      /* Assert that vpiUserDefn is true! */
+	    assert(1);
+	    return &rfp->defn->base;
 
 	  default:
 	    return 0;
@@ -91,6 +86,10 @@ static int systask_get(int type, vpiHandle ref)
 	  case vpiLineNo:
 	    return rfp->lineno;
 
+	    /* For now we always have this information. */
+	  case vpiUserDefn:
+	    return 1;
+
 	  default:
 	    return vpiUndefined;
       }
@@ -109,6 +108,10 @@ static int sysfunc_get(int type, vpiHandle ref)
 
 	  case vpiLineNo:
 	    return rfp->lineno;
+
+	    /* For now we always have this information. */
+	  case vpiUserDefn:
+	    return 1;
 
 	  default:
 	    return vpiUndefined;
@@ -723,16 +726,14 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
  * __vpi_userSystf to represent the definition for the calls that come
  * to pass later.
  */
-void vpi_register_systf(const struct t_vpi_systf_data*ss)
+vpiHandle vpi_register_systf(const struct t_vpi_systf_data*ss)
 {
       struct __vpiUserSystf*cur = allocate_def();
       assert(ss);
       switch (ss->type) {
 	  case vpiSysTask:
-	    cur->base.vpi_type = &vpip_systask_def_rt;
-	    break;
 	  case vpiSysFunc:
-	    cur->base.vpi_type = &vpip_sysfunc_def_rt;
+	    cur->base.vpi_type = &vpip_systf_def_rt;
 	    break;
 	  default:
 	    fprintf(stderr, "Unsupported type %d.\n", (int)ss->type);
@@ -741,6 +742,8 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
       cur->info = *ss;
       cur->info.tfname = strdup(ss->tfname);
+
+      return &cur->base;
 }
 
 PLI_INT32 vpi_put_userdata(vpiHandle ref, void*data)

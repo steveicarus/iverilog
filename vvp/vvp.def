@@ -1,6 +1,7 @@
 EXPORTS
 
 vpi_chk_error
+vpi_compare_objects
 vpi_control
 vpi_flush
 vpi_fopen
@@ -9,6 +10,7 @@ vpi_get
 vpi_get_delays
 vpi_get_file
 vpi_get_str
+vpi_get_systf_info
 vpi_get_time
 vpi_get_userdata
 vpi_get_value

@@ -132,6 +132,7 @@ const char* vpip_name_string(const char*text)
 
       return res;
 }
+
 PLI_INT32 vpi_chk_error(p_vpi_error_info info)
 {
       if (vpip_last_error.state == 0)
@@ -146,6 +147,42 @@ PLI_INT32 vpi_chk_error(p_vpi_error_info info)
       info->line = 0;
 
       return info->level;
+}
+
+PLI_INT32 vpi_compare_objects(vpiHandle obj1, vpiHandle obj2)
+{
+      assert(0);
+}
+
+/*
+ * Copy the internal information to the data structure. Do not free or
+ * change the tfname/user_data since they are a pointer to the real
+ * string/data values. We also support passing a task or function handle
+ * instead of just a handle to a vpiUserSystf.
+ */
+void vpi_get_systf_info(vpiHandle ref, p_vpi_systf_data data)
+{
+      assert((ref->vpi_type->type_code == vpiUserSystf) ||
+             (ref->vpi_type->type_code == vpiSysTaskCall) ||
+             (ref->vpi_type->type_code == vpiSysFuncCall));
+
+      struct __vpiUserSystf* rfp;
+      if (ref->vpi_type->type_code == vpiUserSystf) {
+ 	    rfp = (struct __vpiUserSystf*)ref;
+      } else {
+ 	    struct __vpiSysTaskCall*call = (struct __vpiSysTaskCall*)ref;
+ 	    rfp = call->defn;
+      }
+	/* Assert that vpiUserDefn is true! For now this is always true. */
+      assert(1);
+
+      data->type = rfp->info.type;
+      data->sysfunctype = rfp->info.sysfunctype;
+      data->tfname = rfp->info.tfname;
+      data->calltf = rfp->info.calltf;
+      data->compiletf = rfp->info.compiletf;
+      data->sizetf = rfp->info.sizetf;
+      data->user_data = rfp->info.user_data;
 }
 
 /*
@@ -256,6 +293,8 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiTask";
 	  case vpiTimeVar:
 	    return "vpiTimeVar";
+	  case vpiUserSystf:
+	    return "vpiUserSystf";
 	  default:
 	    sprintf(buf, "%d", (int)code);
       }
