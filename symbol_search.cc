@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,6 +33,7 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 		       const NetExpr*&ex1, const NetExpr*&ex2)
 {
       assert(scope);
+      bool hier_path = false;
 
 	/* Get the tail name of the object we are looking for. */
       perm_string key = peek_tail_name(path);
@@ -62,6 +63,8 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
                         "`" << key << "' in path `" << path << "'" << endl;
             	  des->errors += 1;
             }
+
+	    hier_path = true;
       }
 
       while (scope) {
@@ -74,7 +77,9 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	    if ( (par = scope->get_parameter(key, ex1, ex2)) )
 		  return scope;
 
-	    if (scope->type() == NetScope::MODULE)
+	      /* We can't look up if we are at the enclosing module scope
+	       * or if a hierarchical path was given. */
+	    if ((scope->type() == NetScope::MODULE) || hier_path)
 		  scope = 0;
 	    else
 		  scope = scope->parent();
