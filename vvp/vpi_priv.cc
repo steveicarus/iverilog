@@ -173,10 +173,10 @@ void vpi_get_systf_info(vpiHandle ref, p_vpi_systf_data data)
 
       struct __vpiUserSystf* rfp;
       if (ref->vpi_type->type_code == vpiUserSystf) {
- 	    rfp = (struct __vpiUserSystf*)ref;
+	    rfp = (struct __vpiUserSystf*)ref;
       } else {
- 	    struct __vpiSysTaskCall*call = (struct __vpiSysTaskCall*)ref;
- 	    rfp = call->defn;
+	    struct __vpiSysTaskCall*call = (struct __vpiSysTaskCall*)ref;
+	    rfp = call->defn;
       }
 	/* Assert that vpiUserDefn is true! */
       assert(rfp->is_user_defn);
