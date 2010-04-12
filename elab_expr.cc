@@ -3646,7 +3646,7 @@ unsigned PEUnary::test_width(Design*des, NetScope*scope,
 	      // For these operators, the act of padding to the
 	      // minimum width can have an important impact on the
 	      // calculation. So don't let the tested width be less
-	      // then the tested width.
+	      // then the minimum width.
 	  case '-':
 	  case '+':
 	  case '~':
