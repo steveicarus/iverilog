@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2000 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -95,6 +95,7 @@ static PLI_INT32 sys_deposit_calltf(PLI_BYTE8 *name)
 void sys_deposit_register()
 {
       s_vpi_systf_data tf_data;
+      vpiHandle res;
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$deposit";
@@ -102,6 +103,7 @@ void sys_deposit_register()
       tf_data.compiletf = sys_deposit_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$deposit";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 }
 

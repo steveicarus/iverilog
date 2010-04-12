@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -896,6 +896,7 @@ static PLI_INT32 sys_rand_func_sizetf(PLI_BYTE8 *x)
 void sys_random_register()
 {
       s_vpi_systf_data tf_data;
+      vpiHandle res;
 
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncInt;
@@ -904,7 +905,8 @@ void sys_random_register()
       tf_data.compiletf = sys_random_compiletf;
       tf_data.sizetf = sys_rand_func_sizetf;
       tf_data.user_data = "$random";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /* From System Verilog 3.1a. */
       tf_data.type = vpiSysFunc;
@@ -914,7 +916,8 @@ void sys_random_register()
       tf_data.compiletf = sys_random_compiletf;
       tf_data.sizetf = sys_rand_func_sizetf;
       tf_data.user_data = "$urandom";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /* From System Verilog 3.1a. */
       tf_data.type = vpiSysFunc;
@@ -924,7 +927,8 @@ void sys_random_register()
       tf_data.compiletf = sys_urandom_range_compiletf;
       tf_data.sizetf = sys_rand_func_sizetf;
       tf_data.user_data = "$urandom_range";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncInt;
@@ -933,7 +937,8 @@ void sys_random_register()
       tf_data.compiletf = sys_rand_three_args_compiletf;
       tf_data.sizetf = sys_rand_func_sizetf;
       tf_data.user_data = "$dist_uniform";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncInt;
@@ -942,7 +947,8 @@ void sys_random_register()
       tf_data.compiletf = sys_rand_three_args_compiletf;
       tf_data.sizetf = sys_rand_func_sizetf;
       tf_data.user_data = "$dist_normal";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncInt;
@@ -951,7 +957,8 @@ void sys_random_register()
       tf_data.compiletf = sys_rand_two_args_compiletf;
       tf_data.sizetf = sys_rand_func_sizetf;
       tf_data.user_data = "$dist_exponential";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncInt;
@@ -960,7 +967,8 @@ void sys_random_register()
       tf_data.compiletf = sys_rand_two_args_compiletf;
       tf_data.sizetf = sys_rand_func_sizetf;
       tf_data.user_data = "$dist_poisson";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncInt;
@@ -969,7 +977,8 @@ void sys_random_register()
       tf_data.compiletf = sys_rand_two_args_compiletf;
       tf_data.sizetf = sys_rand_func_sizetf;
       tf_data.user_data = "$dist_chi_square";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncInt;
@@ -978,7 +987,8 @@ void sys_random_register()
       tf_data.compiletf = sys_rand_two_args_compiletf;
       tf_data.sizetf = sys_rand_func_sizetf;
       tf_data.user_data = "$dist_t";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncInt;
@@ -987,5 +997,6 @@ void sys_random_register()
       tf_data.compiletf = sys_rand_three_args_compiletf;
       tf_data.sizetf = sys_rand_func_sizetf;
       tf_data.user_data = "$dist_erlang";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 }

@@ -37,6 +37,7 @@ vpi_sim_control
 vpi_sim_vcontrol
 vpi_vprintf
 
-vpip_format_strength
-vpip_set_return_value
 vpip_calc_clog2
+vpip_format_strength
+vpip_make_systf_system_defined
+vpip_set_return_value

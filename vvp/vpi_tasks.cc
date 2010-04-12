@@ -59,7 +59,7 @@ static vpiHandle systask_handle(int type, vpiHandle ref)
 
 	  case vpiUserSystf:
 	      /* Assert that vpiUserDefn is true! */
-	    assert(1);
+	    assert(rfp->defn->is_user_defn);
 	    return &rfp->defn->base;
 
 	  default:
@@ -86,9 +86,8 @@ static int systask_get(int type, vpiHandle ref)
 	  case vpiLineNo:
 	    return rfp->lineno;
 
-	    /* For now we always have this information. */
 	  case vpiUserDefn:
-	    return 1;
+	    return rfp->defn->is_user_defn;
 
 	  default:
 	    return vpiUndefined;
@@ -109,9 +108,8 @@ static int sysfunc_get(int type, vpiHandle ref)
 	  case vpiLineNo:
 	    return rfp->lineno;
 
-	    /* For now we always have this information. */
 	  case vpiUserDefn:
-	    return 1;
+	    return rfp->defn->is_user_defn;
 
 	  default:
 	    return vpiUndefined;
@@ -544,6 +542,74 @@ void def_table_delete(void)
 }
 #endif
 
+struct __vpiSystfIterator {
+      struct __vpiHandle base;
+      unsigned next;
+};
+
+static vpiHandle systf_iterator_scan(vpiHandle ref, int)
+{
+      assert(ref->vpi_type->type_code == vpiIterator);
+      struct __vpiSystfIterator*obj = (struct __vpiSystfIterator*) ref;
+
+      if (obj->next >= def_count) {
+	    vpi_free_object(ref);
+	    return 0;
+      }
+
+      unsigned use_index = obj->next;
+      while (!def_table[use_index]->is_user_defn) {
+	    obj->next += 1;
+	    use_index = obj->next;
+	    if (obj->next >= def_count) {
+		  vpi_free_object(ref);
+		  return 0;
+	    }
+      }
+      obj->next += 1;
+      return &(def_table[use_index])->base;
+}
+
+static int systf_iterator_free_object(vpiHandle ref)
+{
+      assert(ref->vpi_type->type_code == vpiIterator);
+      struct __vpiSystfIterator*obj = (struct __vpiSystfIterator*) ref;
+      free(obj);
+      return 1;
+}
+
+static const struct __vpirt vpip_systf_iterator_rt = {
+      vpiIterator,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      systf_iterator_scan,
+      systf_iterator_free_object
+};
+
+vpiHandle vpip_make_systf_iterator(void)
+{
+	/* Check to see if there are any user defined functions. */
+      bool have_user_defn = false;
+      unsigned idx;
+      for (idx = 0; idx < def_count; idx += 1) {
+	    if (def_table[idx]->is_user_defn) {
+		  have_user_defn = true;
+		  break;
+	    }
+      }
+      if (!have_user_defn) return 0;
+
+      struct __vpiSystfIterator*res;
+      res = (struct __vpiSystfIterator*) calloc(1, sizeof (*res));
+      res->base.vpi_type = &vpip_systf_iterator_rt;
+      res->next = idx;
+      return &res->base;
+}
+
 struct __vpiUserSystf* vpip_find_systf(const char*name)
 {
       for (unsigned idx = 0 ;  idx < def_count ;  idx += 1)
@@ -551,6 +617,14 @@ struct __vpiUserSystf* vpip_find_systf(const char*name)
 		  return def_table[idx];
 
       return 0;
+}
+
+void vpip_make_systf_system_defined(vpiHandle ref)
+{
+      assert(ref);
+      assert(ref->vpi_type->type_code == vpiUserSystf);
+      struct __vpiUserSystf*obj = (__vpiUserSystf*) ref;
+      obj->is_user_defn = false;
 }
 
 /*
@@ -742,6 +816,7 @@ vpiHandle vpi_register_systf(const struct t_vpi_systf_data*ss)
 
       cur->info = *ss;
       cur->info.tfname = strdup(ss->tfname);
+      cur->is_user_defn = true;
 
       return &cur->base;
 }

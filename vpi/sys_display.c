@@ -1971,6 +1971,7 @@ void sys_display_register()
 {
       s_cb_data cb_data;
       s_vpi_systf_data tf_data;
+      vpiHandle res;
 
       /*============================== display */
       tf_data.type      = vpiSysTask;
@@ -1979,7 +1980,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$display";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$displayh";
@@ -1987,7 +1989,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$displayh";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$displayo";
@@ -1995,7 +1998,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$displayo";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$displayb";
@@ -2003,7 +2007,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$displayb";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== write */
       tf_data.type      = vpiSysTask;
@@ -2012,7 +2017,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$write";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$writeh";
@@ -2020,7 +2026,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$writeh";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$writeo";
@@ -2028,7 +2035,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$writeo";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$writeb";
@@ -2036,7 +2044,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$writeb";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== strobe */
       tf_data.type      = vpiSysTask;
@@ -2045,7 +2054,8 @@ void sys_display_register()
       tf_data.compiletf = sys_strobe_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$strobe";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$strobeh";
@@ -2053,7 +2063,8 @@ void sys_display_register()
       tf_data.compiletf = sys_strobe_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$strobeh";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$strobeo";
@@ -2061,7 +2072,8 @@ void sys_display_register()
       tf_data.compiletf = sys_strobe_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$strobeo";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$strobeb";
@@ -2069,7 +2081,8 @@ void sys_display_register()
       tf_data.compiletf = sys_strobe_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$strobeb";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== fstrobe */
       tf_data.type      = vpiSysTask;
@@ -2078,7 +2091,8 @@ void sys_display_register()
       tf_data.compiletf = sys_strobe_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fstrobe";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fstrobeh";
@@ -2086,7 +2100,8 @@ void sys_display_register()
       tf_data.compiletf = sys_strobe_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fstrobeh";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fstrobeo";
@@ -2094,7 +2109,8 @@ void sys_display_register()
       tf_data.compiletf = sys_strobe_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fstrobeo";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fstrobeb";
@@ -2102,7 +2118,8 @@ void sys_display_register()
       tf_data.compiletf = sys_strobe_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fstrobeb";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== monitor */
       tf_data.type      = vpiSysTask;
@@ -2111,7 +2128,8 @@ void sys_display_register()
       tf_data.compiletf = sys_monitor_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$monitor";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$monitorh";
@@ -2119,7 +2137,8 @@ void sys_display_register()
       tf_data.compiletf = sys_monitor_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$monitorh";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$monitoro";
@@ -2127,7 +2146,8 @@ void sys_display_register()
       tf_data.compiletf = sys_monitor_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$monitoro";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$monitorb";
@@ -2135,7 +2155,8 @@ void sys_display_register()
       tf_data.compiletf = sys_monitor_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$monitorb";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$monitoron";
@@ -2143,7 +2164,8 @@ void sys_display_register()
       tf_data.compiletf = sys_no_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$monitoron";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$monitoroff";
@@ -2151,7 +2173,8 @@ void sys_display_register()
       tf_data.compiletf = sys_no_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$monitoroff";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== fdisplay */
       tf_data.type      = vpiSysTask;
@@ -2160,7 +2183,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fdisplay";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fdisplayh";
@@ -2168,7 +2192,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fdisplayh";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fdisplayo";
@@ -2176,7 +2201,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fdisplayo";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fdisplayb";
@@ -2184,7 +2210,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fdisplayb";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== fwrite */
       tf_data.type      = vpiSysTask;
@@ -2193,7 +2220,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fwrite";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fwriteh";
@@ -2201,7 +2229,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fwriteh";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fwriteo";
@@ -2209,7 +2238,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fwriteo";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fwriteb";
@@ -2217,7 +2247,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fwriteb";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== swrite */
       tf_data.type      = vpiSysTask;
@@ -2226,7 +2257,8 @@ void sys_display_register()
       tf_data.compiletf = sys_swrite_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$swrite";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$swriteh";
@@ -2234,7 +2266,8 @@ void sys_display_register()
       tf_data.compiletf = sys_swrite_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$swriteh";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$swriteo";
@@ -2242,7 +2275,8 @@ void sys_display_register()
       tf_data.compiletf = sys_swrite_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$swriteo";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$swriteb";
@@ -2250,7 +2284,8 @@ void sys_display_register()
       tf_data.compiletf = sys_swrite_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$swriteb";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$sformat";
@@ -2258,7 +2293,8 @@ void sys_display_register()
       tf_data.compiletf = sys_sformat_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$sformat";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================ timeformat */
       tf_data.type      = vpiSysTask;
@@ -2267,7 +2303,8 @@ void sys_display_register()
       tf_data.compiletf = sys_timeformat_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$timeformat";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$printtimescale";
@@ -2275,7 +2312,8 @@ void sys_display_register()
       tf_data.compiletf = sys_printtimescale_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$printtimescale";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================ severity tasks */
       tf_data.type      = vpiSysTask;
@@ -2284,7 +2322,8 @@ void sys_display_register()
       tf_data.compiletf = sys_fatal_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fatal";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$error";
@@ -2292,7 +2331,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$error";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$warning";
@@ -2300,7 +2340,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$warning";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$info";
@@ -2308,7 +2349,8 @@ void sys_display_register()
       tf_data.compiletf = sys_display_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$info";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       cb_data.reason = cbEndOfCompile;
       cb_data.time = 0;

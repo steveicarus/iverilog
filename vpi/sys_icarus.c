@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2009  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2010  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -74,6 +74,7 @@ static PLI_INT32 missing_optional_compiletf(PLI_BYTE8* name)
 void sys_special_register(void)
 {
       s_vpi_systf_data tf_data;
+      vpiHandle res;
 
       tf_data.type        = vpiSysTask;
       tf_data.calltf      = finish_and_return_calltf;
@@ -81,7 +82,8 @@ void sys_special_register(void)
       tf_data.sizetf      = 0;
       tf_data.tfname      = "$finish_and_return";
       tf_data.user_data   = "$finish_and_return";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
 	/* These tasks are not currently implemented. */
       tf_data.type        = vpiSysTask;
@@ -91,127 +93,158 @@ void sys_special_register(void)
 
       tf_data.tfname      = "$fmonitor";
       tf_data.user_data   = "$fmonitor";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$fmonitorb";
       tf_data.user_data   = "$fmonitorb";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$fmonitoro";
       tf_data.user_data   = "$fmonitoro";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$fmonitorh";
       tf_data.user_data   = "$fmonitorh";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$async$and$array";
       tf_data.user_data   = "$async$and$array";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$async$nand$array";
       tf_data.user_data   = "$async$nand$array";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$async$or$array";
       tf_data.user_data   = "$async$or$array";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$async$nor$array";
       tf_data.user_data   = "$async$nor$array";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$async$and$plane";
       tf_data.user_data   = "$async$and$plane";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$async$nand$plane";
       tf_data.user_data   = "$async$nand$plane";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$async$or$plane";
       tf_data.user_data   = "$async$or$plane";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$async$nor$plane";
       tf_data.user_data   = "$async$nor$plane";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$sync$and$array";
       tf_data.user_data   = "$sync$and$array";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$sync$nand$array";
       tf_data.user_data   = "$sync$nand$array";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$sync$or$array";
       tf_data.user_data   = "$sync$or$array";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$sync$nor$array";
       tf_data.user_data   = "$sync$nor$array";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$sync$and$plane";
       tf_data.user_data   = "$sync$and$plane";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$sync$nand$plane";
       tf_data.user_data   = "$sync$nand$plane";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$sync$or$plane";
       tf_data.user_data   = "$sync$or$plane";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$sync$nor$plane";
       tf_data.user_data   = "$sync$nor$plane";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$q_initialize";
       tf_data.user_data   = "$q_initialize";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$q_add";
       tf_data.user_data   = "$q_add";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$q_remove";
       tf_data.user_data   = "$q_remove";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$q_full";
       tf_data.user_data   = "$q_full";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$q_exam";
       tf_data.user_data   = "$q_exam";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$dumpports";
       tf_data.user_data   = "$dumpports";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$dumpportsoff";
       tf_data.user_data   = "$dumpportsoff";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$dumpportson";
       tf_data.user_data   = "$dumpportson";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$dumpportsall";
       tf_data.user_data   = "$dumpportsall";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$dumpportslimit";
       tf_data.user_data   = "$dumpportslimit";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$dumpportsflush";
       tf_data.user_data   = "$dumpportsflush";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
 	/* The following optional system tasks/functions are not implemented
 	 * in Icarus Verilog (from Annex C 1364-2005). */
@@ -222,59 +255,73 @@ void sys_special_register(void)
 
       tf_data.tfname      = "$input";
       tf_data.user_data   = "$input";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$key";
       tf_data.user_data   = "$key";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$nokey";
       tf_data.user_data   = "$nokey";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$list";
       tf_data.user_data   = "$list";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$log";
       tf_data.user_data   = "$log";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$nolog";
       tf_data.user_data   = "$nolog";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$save";
       tf_data.user_data   = "$save";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$restart";
       tf_data.user_data   = "$restart";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$incsave";
       tf_data.user_data   = "$incsave";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$scope";
       tf_data.user_data   = "$scope";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$showscopes";
       tf_data.user_data   = "$showscopes";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$showvars";
       tf_data.user_data   = "$showvars";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$sreadmemb";
       tf_data.user_data   = "$sreadmemb";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$sreadmemh";
       tf_data.user_data   = "$sreadmemh";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
 	/* Optional functions. */
       tf_data.type = vpiSysFunc;
@@ -282,13 +329,16 @@ void sys_special_register(void)
 
       tf_data.tfname      = "$countdrivers";
       tf_data.user_data   = "$countdrivers";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$getpattern";
       tf_data.user_data   = "$getpattern";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$scale";
       tf_data.user_data   = "$scale";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 }

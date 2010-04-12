@@ -151,7 +151,12 @@ PLI_INT32 vpi_chk_error(p_vpi_error_info info)
 
 PLI_INT32 vpi_compare_objects(vpiHandle obj1, vpiHandle obj2)
 {
-      assert(0);
+      assert(obj1);
+      assert(obj2);
+
+	// Does this actually work for all cases?
+      if (obj1 != obj2) return 0;
+      else return 1;
 }
 
 /*
@@ -173,8 +178,8 @@ void vpi_get_systf_info(vpiHandle ref, p_vpi_systf_data data)
  	    struct __vpiSysTaskCall*call = (struct __vpiSysTaskCall*)ref;
  	    rfp = call->defn;
       }
-	/* Assert that vpiUserDefn is true! For now this is always true. */
-      assert(1);
+	/* Assert that vpiUserDefn is true! */
+      assert(rfp->is_user_defn);
 
       data->type = rfp->info.type;
       data->sysfunctype = rfp->info.sysfunctype;
@@ -1006,6 +1011,8 @@ static vpiHandle vpi_iterate_global(int type)
 	  case vpiModule:
 	    return vpip_make_root_iterator();
 
+	  case vpiUserSystf:
+	    return vpip_make_systf_iterator();
       }
 
       return 0;

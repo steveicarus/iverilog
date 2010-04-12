@@ -417,7 +417,10 @@ extern struct __vpiRealVar* vpip_realvar_from_handle(vpiHandle obj);
 struct __vpiUserSystf {
       struct __vpiHandle base;
       s_vpi_systf_data info;
+      bool is_user_defn;
 };
+
+extern vpiHandle vpip_make_systf_iterator(void);
 
 extern struct __vpiUserSystf* vpip_find_systf(const char*name);
 

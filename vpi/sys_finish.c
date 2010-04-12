@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,6 +51,7 @@ static PLI_INT32 sys_finish_calltf(PLI_BYTE8 *name)
 void sys_finish_register()
 {
       s_vpi_systf_data tf_data;
+      vpiHandle res;
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$finish";
@@ -58,7 +59,8 @@ void sys_finish_register()
       tf_data.compiletf = sys_one_opt_numeric_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$finish";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$stop";
@@ -66,5 +68,6 @@ void sys_finish_register()
       tf_data.compiletf = sys_one_opt_numeric_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$stop";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 }

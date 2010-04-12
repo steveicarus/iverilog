@@ -571,6 +571,7 @@ static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
 void sys_readmem_register()
 {
       s_vpi_systf_data tf_data;
+      vpiHandle res;
       s_cb_data cb_data;
 
       tf_data.type      = vpiSysTask;
@@ -579,7 +580,8 @@ void sys_readmem_register()
       tf_data.compiletf = sys_mem_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$readmemh";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$readmemb";
@@ -587,7 +589,8 @@ void sys_readmem_register()
       tf_data.compiletf = sys_mem_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$readmemb";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$readmempath";
@@ -595,7 +598,8 @@ void sys_readmem_register()
       tf_data.compiletf = sys_one_string_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$readmempath";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$writememh";
@@ -603,7 +607,8 @@ void sys_readmem_register()
       tf_data.compiletf = sys_mem_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$writememh";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$writememb";
@@ -611,7 +616,8 @@ void sys_readmem_register()
       tf_data.compiletf = sys_mem_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$writememb";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       cb_data.reason = cbEndOfSimulation;
       cb_data.time = 0;

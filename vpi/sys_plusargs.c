@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -371,7 +371,7 @@ static PLI_INT32 sys_value_plusargs_calltf(PLI_BYTE8*name)
 void sys_plusargs_register()
 {
       s_vpi_systf_data tf_data;
-
+      vpiHandle res;
 
       tf_data.type        = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
@@ -380,7 +380,8 @@ void sys_plusargs_register()
       tf_data.compiletf   = sys_one_string_arg_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$test$plusargs";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type        = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
@@ -389,6 +390,7 @@ void sys_plusargs_register()
       tf_data.compiletf   = sys_value_plusargs_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$value$plusargs";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
 }

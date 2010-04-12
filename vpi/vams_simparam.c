@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2009  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2010  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -263,6 +263,7 @@ static PLI_INT32 simparam_str_sizetf(PLI_BYTE8 *name_ext)
 void vams_simparam_register(void)
 {
       s_vpi_systf_data tf_data;
+      vpiHandle res;
 
       tf_data.type        = vpiSysFunc;
       tf_data.sysfunctype = vpiRealFunc;
@@ -271,7 +272,8 @@ void vams_simparam_register(void)
       tf_data.sizetf      = 0;
       tf_data.tfname      = "$simparam";
       tf_data.user_data   = "";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type        = vpiSysFunc;
       tf_data.sysfunctype = vpiSizedFunc;  /* What should this be? */
@@ -280,5 +282,6 @@ void vams_simparam_register(void)
       tf_data.sizetf      = simparam_str_sizetf;  /* Only 128 characters! */
       tf_data.tfname      = "$simparam$str";
       tf_data.user_data   = "$str";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 }

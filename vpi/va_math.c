@@ -2,7 +2,7 @@
  *  Verilog-A math library for Icarus Verilog
  *  http://www.icarus.com/eda/verilog/
  *
- *  Copyright (C) 2007-2009  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2007-2010  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -375,6 +375,7 @@ static void va_math_register(void)
 {
     s_cb_data cb_data;
     s_vpi_systf_data tf_data;
+    vpiHandle res;
     unsigned idx;
 
     /* Register the single argument functions. */
@@ -387,7 +388,8 @@ static void va_math_register(void)
     for (idx=0; va_single_data[idx].name != 0; idx++) {
         tf_data.tfname    = va_single_data[idx].name;
         tf_data.user_data = (PLI_BYTE8 *) &va_single_data[idx];
-        vpi_register_systf(&tf_data);
+        res = vpi_register_systf(&tf_data);
+        vpip_make_systf_system_defined(res);
     }
 
     /* Register the double argument functions. */
@@ -400,7 +402,8 @@ static void va_math_register(void)
     for (idx=0; va_double_data[idx].name != 0; idx++) {
         tf_data.tfname    = va_double_data[idx].name;
         tf_data.user_data = (PLI_BYTE8 *) &va_double_data[idx];
-        vpi_register_systf(&tf_data);
+        res = vpi_register_systf(&tf_data);
+        vpip_make_systf_system_defined(res);
     }
 
     /* We need to clean up the userdata. */

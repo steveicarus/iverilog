@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -145,6 +145,7 @@ static PLI_INT32 sys_mti_random_calltf(PLI_BYTE8*name)
 void sys_random_mti_register()
 {
       s_vpi_systf_data tf_data;
+      vpiHandle res;
 
       tf_data.type        = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncInt;
@@ -152,7 +153,8 @@ void sys_random_mti_register()
       tf_data.calltf      = sys_mti_random_calltf;
       tf_data.compiletf   = sys_random_compiletf;
       tf_data.user_data   = "$mti_random";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type        = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncInt;
@@ -160,6 +162,7 @@ void sys_random_mti_register()
       tf_data.calltf      = sys_mti_dist_uniform_calltf;
       tf_data.compiletf   = sys_rand_three_args_compiletf;
       tf_data.user_data   = "$mti_dist_uniform";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 }
 

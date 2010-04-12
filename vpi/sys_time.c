@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -111,6 +111,7 @@ static PLI_INT32 sys_realtime_calltf(PLI_BYTE8*name)
 void sys_time_register()
 {
       s_vpi_systf_data tf_data;
+      vpiHandle res;
 
       tf_data.type        = vpiSysFunc;
       tf_data.tfname      = "$time";
@@ -119,7 +120,8 @@ void sys_time_register()
       tf_data.compiletf   = sys_no_arg_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$time";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type        = vpiSysFunc;
       tf_data.tfname      = "$realtime";
@@ -128,7 +130,8 @@ void sys_time_register()
       tf_data.compiletf   = sys_no_arg_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$realtime";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type        = vpiSysFunc;
       tf_data.tfname      = "$stime";
@@ -137,7 +140,8 @@ void sys_time_register()
       tf_data.compiletf   = sys_no_arg_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$stime";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type        = vpiSysFunc;
       tf_data.tfname      = "$simtime";
@@ -146,7 +150,8 @@ void sys_time_register()
       tf_data.compiletf   = sys_no_arg_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$simtime";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type        = vpiSysFunc;
       tf_data.tfname      = "$abstime";
@@ -155,5 +160,6 @@ void sys_time_register()
       tf_data.compiletf   = sys_no_arg_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$abstime";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 }

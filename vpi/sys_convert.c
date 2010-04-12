@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2009 Michael Ruff (mruff  at chiaro.com)
+ * Copyright (c) 2003-2010 Michael Ruff (mruff  at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -229,6 +229,7 @@ static PLI_INT32 sys_rtoi_calltf(PLI_BYTE8*user)
 void sys_convert_register()
 {
       s_vpi_systf_data tf_data;
+      vpiHandle res;
 
       tf_data.type      = vpiSysFunc;
       tf_data.user_data = "$bitstoreal";
@@ -236,7 +237,8 @@ void sys_convert_register()
       tf_data.sizetf    = sizetf_64;
       tf_data.compiletf = sys_convert_compiletf;
       tf_data.calltf    = sys_bitstoreal_calltf;
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysFunc;
       tf_data.user_data = "$itor";
@@ -244,7 +246,8 @@ void sys_convert_register()
       tf_data.sizetf    = sizetf_64;
       tf_data.compiletf = sys_convert_compiletf;
       tf_data.calltf    = sys_itor_calltf;
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysFunc;
       tf_data.user_data = "$realtobits";
@@ -252,7 +255,8 @@ void sys_convert_register()
       tf_data.sizetf    = sizetf_64;
       tf_data.compiletf = sys_convert_compiletf;
       tf_data.calltf    = sys_realtobits_calltf;
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       tf_data.type      = vpiSysFunc;
       tf_data.user_data = "$rtoi";
@@ -260,6 +264,7 @@ void sys_convert_register()
       tf_data.sizetf    = sizetf_32;
       tf_data.compiletf = sys_convert_compiletf;
       tf_data.calltf    = sys_rtoi_calltf;
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 }
 

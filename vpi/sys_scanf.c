@@ -727,6 +727,7 @@ static PLI_INT32 sys_sscanf_calltf(PLI_BYTE8*name)
 void sys_scanf_register()
 {
       s_vpi_systf_data tf_data;
+      vpiHandle res;
 
       /*============================== fscanf */
       tf_data.type        = vpiSysFunc;
@@ -736,7 +737,8 @@ void sys_scanf_register()
       tf_data.compiletf   = sys_fscanf_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$fscanf";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== sscanf */
       tf_data.type        = vpiSysFunc;
@@ -746,5 +748,6 @@ void sys_scanf_register()
       tf_data.compiletf   = sys_sscanf_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$sscanf";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 }

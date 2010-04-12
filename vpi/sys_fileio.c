@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1058,6 +1058,7 @@ static PLI_INT32 sys_ferror_calltf(PLI_BYTE8 *name)
 void sys_fileio_register()
 {
       s_vpi_systf_data tf_data;
+      vpiHandle res;
 
       /*============================== fopen */
       tf_data.type        = vpiSysFunc;
@@ -1067,7 +1068,8 @@ void sys_fileio_register()
       tf_data.compiletf   = sys_fopen_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$fopen";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== fopenr */
       tf_data.type        = vpiSysFunc;
@@ -1077,17 +1079,20 @@ void sys_fileio_register()
       tf_data.compiletf   = sys_one_string_arg_compiletf;
       tf_data.sizetf      = 0;
       tf_data.user_data   = "$fopenr";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== fopenw */
       tf_data.tfname      = "$fopenw";
       tf_data.user_data   = "$fopenw";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== fopena */
       tf_data.tfname      = "$fopena";
       tf_data.user_data   = "$fopena";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== fclose */
       tf_data.type      = vpiSysTask;
@@ -1096,7 +1101,8 @@ void sys_fileio_register()
       tf_data.compiletf = sys_one_numeric_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fclose";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== fflush */
       tf_data.type      = vpiSysTask;
@@ -1105,7 +1111,8 @@ void sys_fileio_register()
       tf_data.compiletf = sys_one_opt_numeric_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fflush";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== fgetc */
       tf_data.type      = vpiSysFunc;
@@ -1115,7 +1122,8 @@ void sys_fileio_register()
       tf_data.compiletf = sys_one_numeric_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fgetc";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== fgets */
       tf_data.type      = vpiSysFunc;
@@ -1125,7 +1133,8 @@ void sys_fileio_register()
       tf_data.compiletf = sys_fgets_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fgets";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== fread */
       tf_data.type      = vpiSysFunc;
@@ -1135,7 +1144,8 @@ void sys_fileio_register()
       tf_data.compiletf = sys_fread_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fread";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== ungetc */
       tf_data.type      = vpiSysFunc;
@@ -1145,7 +1155,8 @@ void sys_fileio_register()
       tf_data.compiletf = sys_two_numeric_args_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$ungetc";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== ftell */
       tf_data.type      = vpiSysFunc;
@@ -1155,7 +1166,8 @@ void sys_fileio_register()
       tf_data.compiletf = sys_one_numeric_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$ftell";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== fseek */
       tf_data.type      = vpiSysFunc;
@@ -1165,7 +1177,9 @@ void sys_fileio_register()
       tf_data.compiletf = sys_fseek_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fseek";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+      vpip_make_systf_system_defined(res);
 
       /*============================== rewind */
       tf_data.type      = vpiSysFunc;
@@ -1175,7 +1189,8 @@ void sys_fileio_register()
       tf_data.compiletf = sys_one_numeric_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$rewind";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /*============================== ferror */
       tf_data.type      = vpiSysFunc;
@@ -1185,7 +1200,8 @@ void sys_fileio_register()
       tf_data.compiletf = sys_ferror_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$ferror";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /* $feof() is from 1364-2005. */
       /*============================== feof */
@@ -1196,7 +1212,8 @@ void sys_fileio_register()
       tf_data.compiletf = sys_one_numeric_arg_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$feof";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 
       /* Icarus specific. */
       /*============================== fputc */
@@ -1207,5 +1224,6 @@ void sys_fileio_register()
       tf_data.compiletf = sys_two_numeric_args_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fputc";
-      vpi_register_systf(&tf_data);
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 }
