@@ -3422,11 +3422,13 @@ bool of_MOD_S(vthread_t thr, vvp_code_t cp)
 	    if (rv == 0)
 		  goto x_out;
 
-	      /* Sign extend the signed operands. */
-	    if (lv & (1LL << (cp->number-1)))
-		  lv |= -1LL << cp->number;
-	    if (rv & (1LL << (cp->number-1)))
-		  rv |= -1LL << cp->number;
+	      /* Sign extend the signed operands when needed. */
+	    if (cp->number < 8*sizeof(long long)) {
+		  if (lv & (1LL << (cp->number-1)))
+			lv |= -1LL << cp->number;
+		  if (rv & (1LL << (cp->number-1)))
+			rv |= -1LL << cp->number;
+	    }
 
 	    lv %= rv;
 
