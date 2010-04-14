@@ -580,6 +580,8 @@ void pform_set_timeunit(const char*txt, bool in_module, bool only_check)
 	    }
 
       } else {
+	      /* Skip a global timeunit when `timescale is defined. */
+	    if (pform_timescale_file) return;
 	    tu_global_flag = true;
 	    pform_time_unit = val;
       }
@@ -607,6 +609,8 @@ void pform_set_timeprecision(const char*txt, bool in_module, bool only_check)
 		  return;
 	    }
       } else {
+	      /* Skip a global timeprecision when `timescale is defined. */
+	    if (pform_timescale_file) return;
 	    pform_time_prec = val;
 	    tp_global_flag=true;
       }
