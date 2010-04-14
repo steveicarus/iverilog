@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -108,7 +108,7 @@ static int flist_read_flags(const char*path)
 	    char*arg;
 
 	    while (tail > cp) {
-		  if (! isspace(tail[-1]))
+		  if (! isspace((int)tail[-1]))
 			break;
 		  tail -= 1;
 		  tail[0] = 0;
@@ -189,7 +189,7 @@ static int flist_read_names(const char*path)
 	    char*cp = line_buf + strspn(line_buf, " \t\r\b\f");
 	    char*tail = cp + strlen(cp);
 	    while (tail > cp) {
-		  if (! isspace(tail[-1]))
+		  if (! isspace((int)tail[-1]))
 			break;
 		  tail -= 1;
 		  tail[0] = 0;

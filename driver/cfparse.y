@@ -37,13 +37,13 @@ static void translate_file_name(char*text)
 	    break;
 	  case 1:
 	    while (*text) {
-		  *text = toupper(*text);
+		  *text = toupper((int)*text);
 		  text += 1;
 	    }
 	    break;
 	  case 2:
 	    while (*text) {
-		  *text = tolower(*text);
+		  *text = tolower((int)*text);
 		  text += 1;
 	    }
 	    break;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,7 +41,7 @@ char *as_escaped(char *arg)
       cur = 0;
       cnt = len;
       for (idx = 0; idx < cnt; idx++) {
-	    if (isprint(arg[idx])) {
+	    if (isprint((int)arg[idx])) {
 		  res[cur] = arg[idx];
 		  cur += 1;
 	    } else {
@@ -84,7 +84,7 @@ char *get_filename(vpiHandle callh, char *name, vpiHandle file)
 	 */
       len = strlen(val.value.str);
       for (idx = 0; idx < len; idx++) {
-	    if (! isprint(val.value.str[idx])) {
+	    if (! isprint((int)val.value.str[idx])) {
 		  char msg [64];
 		  char *esc_fname = as_escaped(val.value.str);
 		  snprintf(msg, 64, "WARNING: %s:%d:",
