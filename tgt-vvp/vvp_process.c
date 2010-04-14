@@ -691,7 +691,6 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_expr_t del  = ivl_stmt_delay_expr(net);
 	/* variables for the selection of word from an array. */
-      ivl_expr_t word_ix;
       unsigned long use_word = 0;
 	/* thread address for a word value. */
       int word;
@@ -715,7 +714,7 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
       word = draw_eval_real(rval);
 
       if (ivl_signal_dimensions(sig) > 0) {
-	    word_ix = ivl_lval_idx(lval);
+	    ivl_expr_t word_ix = ivl_lval_idx(lval);
 	    assert(word_ix);
 	    assign_to_array_r_word(sig, word_ix, word, delay, del, nevents);
 	    clr_word(word);
@@ -1127,7 +1126,7 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 	/* The out of the case. */
       fprintf(vvp_out, "T_%d.%d ;\n",  thread_count, local_base+count);
 
-      return 0;
+      return rc;
 }
 
 static void force_real_to_lval(ivl_statement_t net, int res)

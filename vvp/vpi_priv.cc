@@ -1123,9 +1123,6 @@ static vpiHandle find_scope(const char *name, vpiHandle handle, int depth)
 vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
 {
       vpiHandle hand;
-      const char *nm, *cp;
-      int len;
-
 
       if (vpi_trace) {
 	    fprintf(vpi_trace, "vpi_handle_by_name(%s, %p) -->\n",
@@ -1155,9 +1152,9 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
 
       if (hand) {
 	    /* remove hierarchical portion of name */
-	    nm = vpi_get_str(vpiFullName, hand);
-	    len = strlen(nm);
-	    cp = name + len;
+	    const char *nm = vpi_get_str(vpiFullName, hand);
+	    int len = strlen(nm);
+	    const char *cp = name + len;
 	    if (!strncmp(name, nm, len) && *cp == '.') name = cp + 1;
 
 	    /* Ok, time to burn some cycles */

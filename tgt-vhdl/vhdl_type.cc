@@ -1,7 +1,7 @@
 /*
  *  VHDL variable and signal types.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -159,8 +159,7 @@ vhdl_type::vhdl_type(const vhdl_type &other)
 
 vhdl_type::~vhdl_type()
 {
-   if (base_ != NULL)
-      delete base_;
+   delete base_;
 }
 
 vhdl_type *vhdl_type::std_logic_vector(int msb, int lsb)

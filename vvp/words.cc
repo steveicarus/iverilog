@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -66,7 +66,7 @@ static void __compile_var_real(char*label, char*name,
 	    array_attach_word(array, array_addr, obj);
       }
       free(label);
-      if (name) delete[] name;
+      delete[] name;
 }
 
 void compile_var_real(char*label, char*name, int msb, int lsb)
@@ -131,7 +131,7 @@ static void __compile_var(char*label, char*name,
 	    if (obj) array_attach_word(array, array_addr, obj);
       }
       free(label);
-      if (name) delete[] name;
+      delete[] name;
 }
 
 void compile_variable(char*label, char*name,
@@ -283,7 +283,7 @@ static void __compile_net2(vvp_net_t*node, vvp_array_t array,
 	    vpip_attach_to_scope(scope,obj);
 
       free(my_label);
-      if (name) delete[] name;
+      delete[] name;
 }
 
 static void __compile_net(char*label,
@@ -295,7 +295,7 @@ static void __compile_net(char*label,
       vvp_array_t array = array_label? array_find(array_label) : 0;
       assert(array_label ? array!=0 : true);
 
-      if (array_label) free(array_label);
+      free(array_label);
 
       assert(argc == 1);
       vvp_net_t*node = vvp_net_lookup(argv[0].text);
@@ -410,7 +410,7 @@ static void __compile_real_net2(vvp_net_t*node, vvp_array_t array,
 	    vpip_attach_to_scope(scope, obj);
 
       free(my_label);
-      if (name) delete[]name;
+      delete[] name;
 }
 
 static void __compile_real(char*label, char*name,
@@ -421,7 +421,7 @@ static void __compile_real(char*label, char*name,
       vvp_array_t array = array_label ? array_find(array_label) : 0;
       assert(array_label ? array!=0 : true);
 
-      if (array_label) free(array_label);
+      free(array_label);
 
       assert(argc == 1);
       vvp_net_t*node = vvp_net_lookup(argv[0].text);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -107,7 +107,7 @@ void delete_vpi_callback(struct __vpiCallback* ref)
       assert(ref);
       assert(ref->base.vpi_type);
       assert(ref->base.vpi_type->type_code == vpiCallback);
-      if (ref->cb_sync != 0) delete ref->cb_sync;
+      delete ref->cb_sync;
       delete ref;
 }
 

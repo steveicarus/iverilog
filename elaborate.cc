@@ -1111,7 +1111,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // unconnected_drive directive and for a
 		    // unconnected input warning when asked for.
 		  vector<PEIdent*> mport = rmod->get_port(idx);
-		  if (mport.size() == 0) continue;
+		  if (mport.empty()) continue;
 
 		  perm_string pname = peek_tail_name(mport[0]->path());
 
@@ -1214,8 +1214,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // that connects to the port.
 
 	    NetNet*sig;
-	    if ((prts.size() == 0)
-		|| (prts[0]->port_type() == NetNet::PINPUT)) {
+	    if (prts.empty() || (prts[0]->port_type() == NetNet::PINPUT)) {
 
 		    /* Input to module. elaborate the expression to
 		       the desired width. If this in an instance
@@ -1271,14 +1270,14 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // width cast. Since a real is only one bit the whole
 		    // thing needs to go to each instance when arrayed.
 		  if ((sig->data_type() == IVL_VT_REAL ) &&
-		      prts.size() && (prts[0]->data_type() != IVL_VT_REAL )) {
+		      !prts.empty() && (prts[0]->data_type() != IVL_VT_REAL )) {
 			sig = cast_to_int(des, scope, sig,
 			                  prts_vector_width/instance.size());
 		  }
 		    // If we have a bit/vector signal driving a real port
 		    // then we convert the value to a real.
 		  if ((sig->data_type() != IVL_VT_REAL ) &&
-		      prts.size() && (prts[0]->data_type() == IVL_VT_REAL )) {
+		      !prts.empty() && (prts[0]->data_type() == IVL_VT_REAL )) {
 			sig = cast_to_real(des, scope, sig);
 		  }
 

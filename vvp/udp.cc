@@ -47,10 +47,12 @@ void udp_defns_delete()
 {
       for (unsigned idx = 0; idx < udp_defns_count; idx += 1) {
 	    if (udp_defns[idx]->is_sequential()) {
-		  vvp_udp_seq_s *obj = (vvp_udp_seq_s *) udp_defns[idx];
+		  vvp_udp_seq_s *obj = static_cast<vvp_udp_seq_s *>
+		                       (udp_defns[idx]);
 		  delete obj;
 	    } else {
-		  vvp_udp_comb_s *obj = (vvp_udp_comb_s *) udp_defns[idx];
+		  vvp_udp_comb_s *obj = static_cast<vvp_udp_comb_s *>
+		                        (udp_defns[idx]);
 		  delete obj;
 	    }
       }
@@ -128,8 +130,8 @@ vvp_udp_comb_s::vvp_udp_comb_s(char*label, char*name, unsigned ports)
 
 vvp_udp_comb_s::~vvp_udp_comb_s()
 {
-      if (levels0_) delete[] levels0_;
-      if (levels1_) delete[] levels1_;
+      delete[] levels0_;
+      delete[] levels1_;
 }
 
 /*
@@ -320,13 +322,13 @@ vvp_udp_seq_s::vvp_udp_seq_s(char*label, char*name,
 
 vvp_udp_seq_s::~vvp_udp_seq_s()
 {
-      if (levels0_) delete[]levels0_;
-      if (levels1_) delete[]levels1_;
-      if (levelsx_) delete[]levelsx_;
-      if (levelsL_) delete[]levelsL_;
-      if (edges0_)  delete[]edges0_;
-      if (edges1_)  delete[]edges1_;
-      if (edgesL_)  delete[]edgesL_;
+      delete[] levels0_;
+      delete[] levels1_;
+      delete[] levelsx_;
+      delete[] levelsL_;
+      delete[] edges0_;
+      delete[] edges1_;
+      delete[] edgesL_;
 }
 
 void edge_based_on_char(struct udp_edges_table&cur, char chr, unsigned pos)

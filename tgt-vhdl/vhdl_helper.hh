@@ -1,7 +1,7 @@
 /*
  *  Helper functions for VHDL syntax elements.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ void emit_children(std::ostream &of,
                    bool trailing_newline = true) 
 {      
    // Don't indent if there are no children
-   if (children.size() == 0)
+   if (children.empty())
       newline(of, level);
    else {
       typename std::list<T*>::const_iterator it;

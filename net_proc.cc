@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -140,7 +140,7 @@ NetPDelay::NetPDelay(NetExpr*d, NetProc*st)
 
 NetPDelay::~NetPDelay()
 {
-      if (expr_) delete expr_;
+      delete expr_;
 }
 
 uint64_t NetPDelay::delay() const

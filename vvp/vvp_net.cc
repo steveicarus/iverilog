@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2195,7 +2195,7 @@ vvp_vector2_t& vvp_vector2_t::operator -= (const vvp_vector2_t&that)
 
 vvp_vector2_t::~vvp_vector2_t()
 {
-      if (vec_) delete[]vec_;
+      delete[] vec_;
 }
 
 void vvp_vector2_t::trim()
@@ -2886,8 +2886,8 @@ vvp_wide_fun_core::vvp_wide_fun_core(vvp_net_t*net, unsigned nports)
 
 vvp_wide_fun_core::~vvp_wide_fun_core()
 {
-      if (port_values_) delete[]port_values_;
-      if (port_rvalues_) delete[]port_rvalues_;
+      delete[] port_values_;
+      delete[] port_rvalues_;
 }
 
 void vvp_wide_fun_core::propagate_vec4(const vvp_vector4_t&bit,

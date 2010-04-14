@@ -32,11 +32,10 @@
 
 int is_escaped_id(const char *name)
 {
-      int lp;
-
       assert(name);
         /* The first digit must be alpha or '_' to be a normal id. */
       if (isalpha((int)name[0]) || name[0] == '_') {
+	    int lp;
 	    for (lp=1; name[lp] != '\0'; lp++) {
 		    /* If this digit is not alpha-numeric or '_' we have
 		     * an escaped identifier. */

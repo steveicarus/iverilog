@@ -24,7 +24,7 @@
 
 static PLI_INT32 sys_finish_calltf(PLI_BYTE8 *name)
 {
-      vpiHandle callh, argv, arg;
+      vpiHandle callh, argv;
       s_vpi_value val;
       long diag_msg = 1;
 
@@ -32,7 +32,7 @@ static PLI_INT32 sys_finish_calltf(PLI_BYTE8 *name)
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
       if (argv) {
-            arg = vpi_scan(argv);
+            vpiHandle arg = vpi_scan(argv);
             vpi_free_object(argv);
             val.format = vpiIntVal;
             vpi_get_value(arg, &val);

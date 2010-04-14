@@ -174,7 +174,7 @@ NetPins::NetPins(unsigned npins)
 
 NetPins::~NetPins()
 {
-      if (pins_) delete[]pins_;
+      delete[] pins_;
 }
 
 Link& NetPins::pin(unsigned idx)
@@ -1821,8 +1821,8 @@ NetCondit::NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
 NetCondit::~NetCondit()
 {
       delete expr_;
-      if (if_) delete if_;
-      if (else_) delete else_;
+      delete if_;
+      delete else_;
 }
 
 const NetExpr* NetCondit::expr() const

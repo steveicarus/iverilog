@@ -1123,7 +1123,7 @@ void pform_make_udp(perm_string name, list<perm_string>*parms,
 		    const char*file, unsigned lineno)
 {
       unsigned local_errors = 0;
-      assert(parms->size() > 0);
+      assert(!parms->empty());
 
 	/* Put the declarations into a map, so that I can check them
 	   off with the parameters in the list. If the port is already
@@ -1437,8 +1437,7 @@ void pform_set_net_range(list<perm_string>*names,
       }
 
       delete names;
-      if (range)
-	    delete range;
+      delete range;
 }
 
 /*
@@ -1937,8 +1936,7 @@ void pform_makewire(const vlltype&li,
       }
 
       delete names;
-      if (range)
-	    delete range;
+      delete range;
 }
 
 /*
@@ -2090,8 +2088,7 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 	    res = tmp;
       }
 
-      if (range)
-	    delete range;
+      delete range;
       delete names;
       return res;
 }
@@ -2362,8 +2359,7 @@ void pform_set_port_type(const struct vlltype&li,
       }
 
       delete names;
-      if (range)
-	    delete range;
+      delete range;
 }
 
 static void pform_set_reg_integer(perm_string name)

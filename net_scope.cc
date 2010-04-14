@@ -136,6 +136,7 @@ bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
       int pad_pos = strlen(prefix);
       int max_pos = sizeof(tmp) - strlen(suffix) - 1;
       strncpy(tmp, prefix, sizeof(tmp));
+      tmp[31] = 0;
 
 	// Try a variety of potential new names. Make sure the new
 	// name is not in the parent scope. Keep looking until we are

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -781,6 +781,7 @@ int main(int argc, char **argv)
 	  /* Convert to a short name to remove any embedded spaces. */
 	GetShortPathName(tmp, basepath, sizeof basepath);
 	strncpy(ivl_root, basepath, MAXSIZE);
+	ivl_root[MAXSIZE-1] = 0;
 	s = strrchr(ivl_root, sep);
 	if (s) *s = 0;
 	s = strrchr(ivl_root, sep);

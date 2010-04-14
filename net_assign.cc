@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -52,7 +52,7 @@ NetAssign_::~NetAssign_()
       }
 
       assert( more == 0 );
-      if (word_) delete word_;
+      delete word_;
 }
 
 void NetAssign_::set_word(NetExpr*r)
@@ -120,7 +120,7 @@ NetAssignBase::NetAssignBase(NetAssign_*lv, NetExpr*rv)
 
 NetAssignBase::~NetAssignBase()
 {
-      if (rval_) delete rval_;
+      delete rval_;
       while (lval_) {
 	    NetAssign_*tmp = lval_;
 	    lval_ = tmp->more;
@@ -141,7 +141,7 @@ const NetExpr* NetAssignBase::rval() const
 
 void NetAssignBase::set_rval(NetExpr*r)
 {
-      if (rval_) delete rval_;
+      delete rval_;
       rval_ = r;
 }
 

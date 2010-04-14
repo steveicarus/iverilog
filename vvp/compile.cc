@@ -1629,7 +1629,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	    }
       }
 
-      if (opa) free(opa);
+      free(opa);
 
       free(mnem);
 }
@@ -1749,8 +1749,7 @@ void compile_thread(char*start_sym, char*flag)
       schedule_vthread(thr, 0, push_flag);
 
       free(start_sym);
-      if (flag != 0)
-	    free(flag);
+      free(flag);
 }
 
 void compile_param_logic(char*label, char*name, char*value, bool signed_flag,

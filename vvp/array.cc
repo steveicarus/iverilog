@@ -1675,17 +1675,15 @@ void memory_delete(vpiHandle item)
       struct __vpiArray*arr = ARRAY_HANDLE(item);
       if (arr->vals_words) delete [] (arr->vals_words-1);
 
-      if (arr->vals4) {
+//      if (arr->vals4) {}
 // Delete the individual words?
 // constant_delete(handle)?
-	    delete arr->vals4;
-      }
+      delete arr->vals4;
 
-      if (arr->valsr) {
+//      if (arr->valsr) {}
 // Delete the individual words?
 // constant_delete(handle)?
-	    delete arr->valsr;
-      }
+      delete arr->valsr;
 
       if (arr->nets) {
 	    for (unsigned idx = 0; idx < arr->array_count; idx += 1) {
