@@ -1190,8 +1190,6 @@ static PLI_INT32 sys_display_calltf(PLI_BYTE8 *name)
  */
 static PLI_INT32 strobe_cb(p_cb_data cb)
 {
-      char* result = NULL;
-      unsigned int size, location=0;
       struct strobe_cb_info*info = (struct strobe_cb_info*)cb->user_data;
 
 	/* We really need to cancel any $fstrobe() calls for a file when it
@@ -1199,6 +1197,8 @@ static PLI_INT32 strobe_cb(p_cb_data cb)
 	 * Which has the same basic effect. */
       if ((! IS_MCD(info->fd_mcd) && vpi_get_file(info->fd_mcd) != NULL) ||
           ( IS_MCD(info->fd_mcd) && my_mcd_printf(info->fd_mcd, "") != EOF)) {
+	    char* result = NULL;
+	    unsigned int size, location=0;
 	      /* Because %u and %z may put embedded NULL characters into the
 	       * returned string strlen() may not match the real size! */
 	    result = get_display(&size, info);
@@ -1212,12 +1212,12 @@ static PLI_INT32 strobe_cb(p_cb_data cb)
 		  }
 	    }
 	    my_mcd_printf(info->fd_mcd, "\n");
+	    free(result);
       }
 
       free(info->filename);
       free(info->items);
       free(info);
-      free(result);
       return 0;
 }
 

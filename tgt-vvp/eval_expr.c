@@ -1646,7 +1646,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
 					   int stuff_ok_flag)
 {
-      unsigned off, rep, expr_wid, concat_wid, num_sube, idx;
+      unsigned rep, expr_wid, concat_wid, num_sube, idx;
       struct vector_info res;
 
       int alloc_exclusive = (stuff_ok_flag&STUFF_OK_RO) ? 0 : 1;
@@ -1685,7 +1685,7 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
 	/* If the result is the right size we can just build this in place. */
       concat_wid = rep*expr_wid;
       if (concat_wid <= wid) {
-	    off = 0;
+	    unsigned off = 0;
 	      /* Evaluate the base expression. */
 	    for (idx = num_sube; idx > 0; idx -= 1) {
 		  ivl_expr_t arg = ivl_expr_parm(exp, idx-1);

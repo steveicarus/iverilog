@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -282,14 +282,11 @@ static int compare_exp(ivl_expr_t l, ivl_expr_t r)
 
 static unsigned find_expression_lookaside(ivl_expr_t exp, unsigned wid)
 {
-      unsigned top;
       unsigned idx, match;
       ivl_signal_t sig;
 
       if (lookaside_top <= wid)
 	    return 0;
-
-      top = lookaside_top - wid + 1;
 
 	/* Look in the expression lookaside for this expression. */
       assert(exp);
@@ -374,4 +371,3 @@ unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
 
       return la;
 }
-

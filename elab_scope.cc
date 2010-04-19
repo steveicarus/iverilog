@@ -1308,7 +1308,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // passed. It is built up by the ordered overrides or named
 	      // overrides.
 
-	    typedef map<perm_string,PExpr*>::const_iterator mparm_it_t;
+	    typedef map<perm_string,PExpr*>::const_iterator mparm_local_it_t;
 	    map<perm_string,PExpr*> replace;
 
 
@@ -1351,7 +1351,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // the expression in my context, then replace the sub-scope
 	      // parameter value with the new expression.
 
-	    for (mparm_it_t cur = replace.begin()
+	    for (mparm_local_it_t cur = replace.begin()
 		       ; cur != replace.end() ;  cur ++ ) {
 
 		  PExpr*tmp = (*cur).second;

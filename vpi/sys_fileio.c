@@ -79,7 +79,6 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
       s_vpi_value val;
       int fail = 0;
       char *mode_string = 0;
-      unsigned idx;
       vpiHandle fileh = vpi_scan(argv);
       char *fname;
       vpiHandle mode = vpi_scan(argv);
@@ -111,7 +110,7 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
 		  free(esc_md);
 		  fail = 1;
 	    } else {
-		  unsigned bin = 0, plus = 0;
+		  unsigned bin = 0, plus = 0, idx;
 		  switch (val.value.str[0]) {
 		      case 'r':
 		      case 'w':
@@ -581,7 +580,7 @@ static PLI_INT32 sys_fread_calltf(PLI_BYTE8*name)
       s_vpi_value val;
       PLI_UINT32 fd_mcd;
       PLI_INT32 start, count, width, rtn;
-      unsigned is_mem, idx, bpe, words;
+      unsigned is_mem, bpe, words;
       FILE *fp;
       s_vpi_vecval *vector;
       errno = 0;
@@ -685,6 +684,7 @@ static PLI_INT32 sys_fread_calltf(PLI_BYTE8*name)
       bpe = (width+7)/8;
 
       if (is_mem) {
+	    unsigned idx;
 	    rtn = 0;
 	    for (idx = 0; idx < count; idx += 1) {
 		  vpiHandle word;

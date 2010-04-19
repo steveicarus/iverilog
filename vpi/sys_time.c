@@ -33,7 +33,6 @@ static PLI_INT32 sys_time_calltf(PLI_BYTE8*name)
       vpiHandle mod;
       int units, prec;
       long scale;
-      long frac;
 
       call_handle = vpi_handle(vpiSysTfCall, 0);
       assert(call_handle);
@@ -59,7 +58,8 @@ static PLI_INT32 sys_time_calltf(PLI_BYTE8*name)
       }
 
       assert(8*sizeof(long long) >= 64);
-      { long long tmp_now = ((long long)now.high) << 32;
+      { long frac;
+        long long tmp_now = ((long long)now.high) << 32;
         tmp_now += (long long)now.low;
 	frac = tmp_now % (long long)scale;
 	tmp_now /= (long long)scale;

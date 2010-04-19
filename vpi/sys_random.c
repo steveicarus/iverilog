@@ -630,7 +630,7 @@ static PLI_INT32 sys_urandom_range_calltf(PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, maxval, minval;
       s_vpi_value val;
-      unsigned long i_maxval, i_minval, tmp;
+      unsigned long i_maxval, i_minval;
 
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -647,7 +647,7 @@ static PLI_INT32 sys_urandom_range_calltf(PLI_BYTE8 *name)
 
       /* Swap the two arguments if they are out of order. */
       if (i_minval > i_maxval) {
-            tmp = i_minval;
+            unsigned long tmp = i_minval;
             i_minval = i_maxval;
             i_maxval = tmp;
       }

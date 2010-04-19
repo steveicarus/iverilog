@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2009 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2010 Michael Ruff (mruff at chiaro.com)
  *                         Michael Runyan (mrunyan at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
@@ -185,7 +185,6 @@ static PLI_INT32 compiletf(char *data)
       s_cb_data cb_data;
       vpiHandle call_h, arg_i, arg_h;
       p_pli_data dp;
-      int paramvc = 1;
       int rtn = 0;
 
       /* cast back from opaque */
@@ -217,6 +216,7 @@ static PLI_INT32 compiletf(char *data)
 	   functions get value change callbacks, controlled by the
 	   tf_asyncon and tf_asyncoff functions. */
       if (tf->misctf && ((arg_i = vpi_iterate(vpiArgument, call_h)) != NULL)) {
+	    int paramvc = 1;
 
 	    cb_data.reason = cbValueChange;
 	    while ((arg_h = vpi_scan(arg_i)) != NULL) {

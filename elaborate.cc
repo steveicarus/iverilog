@@ -1441,14 +1441,6 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    if (instance.size() == 1 && sig->vector_width() < ccount)
 		  ccount = sig->vector_width();
 
-	      // The spin_modulus is the width of the signal (not the
-	      // port) if this is an instance array. This causes
-	      // signals wide enough for a single instance to be
-	      // connected to all the instances.
-	    unsigned spin_modulus = prts_vector_width;
-	    if (instance.size() != 1)
-		  spin_modulus = sig->vector_width();
-
 	      // Now scan the concatenation that makes up the port,
 	      // connecting pins until we run out of port pins or sig
 	      // pins. The sig object is the NetNet that is connected
