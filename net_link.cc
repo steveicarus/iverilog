@@ -36,10 +36,8 @@ void Nexus::connect(Link&r)
       if (this == r_nexus)
 	    return;
 
-      if (name_) {
-	    delete[]name_;
-	    name_ = 0;
-      }
+      delete[] name_;
+      name_ = 0;
 
 	// Special case: This nexus is empty. Simply copy all the
 	// links of the other nexus to this one, and delete the old
@@ -367,10 +365,8 @@ void Nexus::drivers_drive(ivl_drive_t drive0, ivl_drive_t drive1)
 
 void Nexus::unlink(Link*that)
 {
-      if (name_) {
-	    delete[] name_;
-	    name_ = 0;
-      }
+      delete[] name_;
+      name_ = 0;
 
       assert(that);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -147,18 +147,14 @@ vvp_net_t* vvp_island::find_port(const char*key)
 
 void vvp_island::compile_cleanup()
 {
-      if (ports_) {
-	    delete ports_;
-	    ports_ = 0;
-      }
-      if (anodes_) {
-	    delete anodes_;
-	    anodes_ = 0;
-      }
-      if (bnodes_) {
-	    delete bnodes_;
-	    bnodes_ = 0;
-      }
+      delete ports_;
+      ports_ = 0;
+
+      delete anodes_;
+      anodes_ = 0;
+
+      delete bnodes_;
+      bnodes_ = 0;
 }
 
 vvp_island_port::vvp_island_port(vvp_island*ip)
@@ -371,8 +367,6 @@ void compile_island_cleanup(void)
 #endif
 
 	// Remove the island symbol table itself.
-      if (island_table) {
-	    delete island_table;
-	    island_table = 0;
-      }
+      delete island_table;
+      island_table = 0;
 }

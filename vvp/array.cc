@@ -1663,10 +1663,8 @@ vpiHandle vpip_make_vthr_A(char*label, vpiHandle handle)
 
 void compile_array_cleanup(void)
 {
-      if (array_table) {
-	    delete array_table;
-	    array_table = 0;
-      }
+      delete array_table;
+      array_table = 0;
 }
 
 #ifdef CHECK_WITH_VALGRIND

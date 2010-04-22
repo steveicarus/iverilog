@@ -2020,10 +2020,8 @@ vvp_vector2_t& vvp_vector2_t::operator= (const vvp_vector2_t&that)
       if (this == &that)
 	    return *this;
 
-      if (vec_) {
-	    delete[]vec_;
-	    vec_ = 0;
-      }
+      delete[] vec_;
+      vec_ = 0;
 
       copy_from_that_(that);
       return *this;
