@@ -246,8 +246,18 @@ NetExpr* PEBinary::elaborate_expr(Design*des, NetScope*scope,
       assert(left_);
       assert(right_);
 
-      NetExpr*lp = left_->elaborate_expr(des, scope, expr_wid, false);
-      NetExpr*rp = right_->elaborate_expr(des, scope, expr_wid, false);
+	// The context passes in the width that this expression is
+	// expected to use. But if that width is <0, we are in a
+	// self-determined context and we must use the width that was
+	// calculated by a previous call to test_with.
+      int use_wid = expr_wid;
+      if (use_wid < 0 && expr_type_ != IVL_VT_REAL) {
+	    ivl_assert(*this, expr_width_ > 0);
+	    use_wid = expr_width_;
+      }
+
+      NetExpr*lp = left_->elaborate_expr(des, scope, use_wid, false);
+      NetExpr*rp = right_->elaborate_expr(des, scope, use_wid, false);
       if ((lp == 0) || (rp == 0)) {
 	    delete lp;
 	    delete rp;
@@ -3604,7 +3614,12 @@ unsigned PEUnary::test_width(Design*des, NetScope*scope,
 	      {
 		    ivl_variable_type_t sub_type = IVL_VT_NO_TYPE;
 		    bool flag = false;
-		    expr_->test_width(des, scope, 0, 0, sub_type, flag);
+		    unsigned swid = expr_->test_width(des, scope, 0, 0, sub_type, flag);
+		    if (debug_elaborate)
+			  cerr << get_fileline() << ": debug: "
+			       << "Test width of sub-expression of " << op_
+			       << " returns " << swid << "." << endl;
+
 		    expr_type_ = sub_type;
 	      }
 	      expr_width_ = 1;

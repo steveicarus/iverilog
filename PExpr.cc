@@ -30,6 +30,7 @@
 
 PExpr::PExpr()
 {
+      expr_width_ = 0;
       expr_type_ = IVL_VT_NO_TYPE;
 }
 
