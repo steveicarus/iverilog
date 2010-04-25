@@ -11,7 +11,7 @@ License.
   Verilog-A math library built for Icarus Verilog
   http://www.icarus.com/eda/verilog/
 
-  Copyright (C) 2007-2009  Cary R. (cygcary@yahoo.com)
+  Copyright (C) 2007-2010  Cary R. (cygcary@yahoo.com)
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ like all Verilog-D system functions the name must be prefixed with a '$'.
 For reference the functions are:
 
   $ln(x)       --  Natural logarithm
-  $log10(x)    --  Decimal logarithm  // $log is being deprecated!
+  $log10(x)    --  Decimal logarithm
   $exp(x)      --  Exponential
   $sqrt(x)     --  Square root
   $min(x,y)    --  Minimum

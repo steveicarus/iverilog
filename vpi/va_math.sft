@@ -4,7 +4,6 @@
 #
 
 # Single argument functions.
-$log    vpiSysFuncReal
 $abs    vpiSysFuncReal
 # Double argument functions.
 $min    vpiSysFuncReal

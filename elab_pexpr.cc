@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -414,9 +414,9 @@ NetExpr* PECallFunction::elaborate_pexpr(Design*des, NetScope*scope) const
 		  return rtn;
 	    }
 
-	      /* These are only available with verilog-ams or icarus-misc. */
+	      /* This is only available with verilog-ams or icarus-misc. */
 	    if ((gn_icarus_misc_flag || gn_verilog_ams_flag) &&
-	        (nm == "$log" || nm == "$abs")) {
+	        (nm == "$abs")) {
 		  if (parms_.size() != 1 || parms_[0] == 0) {
 			cerr << get_fileline() << ": error: " << nm
 			     << " takes a single argument." << endl;
@@ -426,15 +426,11 @@ NetExpr* PECallFunction::elaborate_pexpr(Design*des, NetScope*scope) const
 		  NetExpr*arg = parms_[0]->elaborate_pexpr(des, scope);
 		  if (arg == 0) return 0;
 		  NetESFunc*rtn;
-		  if (nm == "$log") {
-			rtn = new NetESFunc(nm, IVL_VT_REAL, 1, 1);
-		  } else {
-			  /* This can return either a real or an arbitrary
-			   * width vector, so set things to fail if this
-			   * does not get replaced with a constant during
-			   * elaboration. */
-			rtn = new NetESFunc(nm, IVL_VT_NO_TYPE, 0, 1);
-		  }
+		    /* This can return either a real or an arbitrary
+		     * width vector, so set things to fail if this
+		     * does not get replaced with a constant during
+		     * elaboration. */
+		  rtn = new NetESFunc(nm, IVL_VT_NO_TYPE, 0, 1);
 		  rtn->set_line(*this);
 		  rtn->cast_signed(true);
 		  rtn->parm(0, arg);
@@ -451,7 +447,7 @@ NetExpr* PECallFunction::elaborate_pexpr(Design*des, NetScope*scope) const
 		  NetExpr*arg0 = parms_[0]->elaborate_pexpr(des, scope);
 		  NetExpr*arg1 = parms_[1]->elaborate_pexpr(des, scope);
 		  if (arg0 == 0 || arg1 == 0) return 0;
-		    /* See $log above for why this has no type or width. */
+		    /* See $abs above for why this has no type or width. */
 		  NetESFunc*rtn = new NetESFunc(nm, IVL_VT_NO_TYPE, 0, 2);
 		  rtn->set_line(*this);
 		  rtn->cast_signed(true);

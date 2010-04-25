@@ -70,11 +70,6 @@ typedef struct s_single_data {
 } t_single_data;
 
 static t_single_data va_single_data[]= {
-    {"$log",   log10}, /* NOTE: The $log function is replaced by the
-			  $log10 function to eliminate confusion with
-			  the natural log. In C, "log" is ln and log10
-			  is log-base-10. The $log is being left in for
-			  compatibility. */
     {"$abs",   fabs},
     {0, 0}  /* Must be NULL terminated! */
 };
@@ -238,12 +233,6 @@ static PLI_INT32 va_single_argument_compiletf(PLI_BYTE8 *ud)
     single_funcs = (va_single_t **)realloc(single_funcs,
                    single_funcs_count*sizeof(va_single_t **));
     single_funcs[single_funcs_count-1] = fun_data;
-
-    if (strcmp(name, "$log") == 0) {
-        vpi_printf("%s:%d: deprecation: ", vpi_get_str(vpiFile, callh),
-                   (int)vpi_get(vpiLineNo, callh));
-        vpi_printf("Please use $log10() instead of $log()!\n");
-    }
 
     /* vpi_scan() returning 0 (NULL) has already freed argv. */
     return 0;
