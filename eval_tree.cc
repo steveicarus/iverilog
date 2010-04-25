@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1742,8 +1742,6 @@ NetExpr* evaluate_math_one_arg(NetExpr*&arg_, const char*name)
 
 	    if (strcmp(name, "$ln") == 0) {
 		  return new NetECReal(verireal(log(arg)));
-	    } else if (strcmp(name, "$log") == 0) {
-		  return new NetECReal(verireal(log10(arg)));
 	    } else if (strcmp(name, "$log10") == 0) {
 		  return new NetECReal(verireal(log10(arg)));
 	    } else if (strcmp(name, "$exp") == 0) {
@@ -1941,18 +1939,14 @@ NetExpr* NetESFunc::eval_tree(int prune_to_width)
       }
 
       if ((gn_icarus_misc_flag || gn_verilog_ams_flag) &&
-          (strcmp(nm, "$log") == 0 || strcmp(nm, "$abs") == 0)) {
+          (strcmp(nm, "$abs") == 0)) {
 	    if (nparms() != 1 || parm(0) == 0) {
 		  cerr << get_fileline() << ": error: " << nm
 		       << " takes a single argument." << endl;
 		  return 0;
 	    }
 	    NetExpr*arg = parm(0)->dup_expr();
-	    if (strcmp(nm, "$log") == 0) {
-		  rtn = evaluate_math_one_arg(arg, nm);
-	    } else {
-		  rtn = evaluate_abs(arg);
-	    }
+	    rtn = evaluate_abs(arg);
 	    delete arg;
       }
 
