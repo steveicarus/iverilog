@@ -92,10 +92,10 @@ bool PScope::elaborate_sig_wires_(Design*des, NetScope*scope) const
 		&& (sig->port_type() == NetNet::PINPUT)
 		&& (sig->type() == NetNet::REG)) {
 
-		  cerr << cur->get_fileline() << ": error: "
-		       << cur->basename() << " in "
+		  cerr << cur->get_fileline() << ": error: Port "
+		       << cur->basename() << " of module "
 		       << scope->module_name()
-		       << " declared as input and as a reg type." << endl;
+		       << " is declared as input and as a reg type." << endl;
 		  des->errors += 1;
 	    }
 
@@ -104,10 +104,22 @@ bool PScope::elaborate_sig_wires_(Design*des, NetScope*scope) const
 		&& (sig->port_type() == NetNet::PINOUT)
 		&& (sig->type() == NetNet::REG)) {
 
-		  cerr << cur->get_fileline() << ": error: "
-		       << cur->basename() << " in "
+		  cerr << cur->get_fileline() << ": error: Port "
+		       << cur->basename() << " of module "
 		       << scope->module_name()
-		       << " declared as inout and as a reg type." << endl;
+		       << " is declared as inout and as a reg type." << endl;
+		  des->errors += 1;
+	    }
+
+	    if (sig && (sig->scope() == scope)
+		&& (scope->type() == NetScope::MODULE)
+		&& (sig->port_type() == NetNet::PINOUT)
+		&& (sig->data_type() == IVL_VT_REAL)) {
+
+		  cerr << cur->get_fileline() << ": error: Port "
+		       << cur->basename() << " of module "
+		       << scope->module_name()
+		       << " is declared as a real inout port." << endl;
 		  des->errors += 1;
 	    }
 

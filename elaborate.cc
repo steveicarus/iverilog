@@ -1332,6 +1332,30 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			continue;
 		  }
 
+		    // We do not support automatic bits to real conversion
+		    // for inout ports.
+		  if ((sig->data_type() == IVL_VT_REAL ) &&
+		      !prts.empty() && (prts[0]->data_type() != IVL_VT_REAL )) {
+			cerr << pins[idx]->get_fileline() << ": error: "
+			     << "Cannot automatically connect bit based "
+			        "inout port " << rmod->ports[idx]->name
+			     << " of module " << rmod->mod_name() << " to real "
+			        "signal " << sig->name() << "." << endl;
+			des->errors += 1;
+			continue;
+		  }
+		  
+		    // We do not support real inout ports at all.
+		  if (!prts.empty() && (prts[0]->data_type() == IVL_VT_REAL )) {
+			cerr << pins[idx]->get_fileline() << ": error: "
+			     << "No support for connecting real inout ports ("
+			        "port "
+			     << rmod->ports[idx]->name << " of module "
+			     << rmod->mod_name() << ")." << endl;
+			des->errors += 1;
+			continue;
+		  }
+
 
 	    } else {
 
@@ -1350,6 +1374,69 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			cerr << pins[idx]->get_fileline() << ":      : "
 			     << "Port of " << rmod->mod_name()
 			     << " is " << rmod->ports[idx]->name << endl;
+			des->errors += 1;
+			continue;
+		  }
+
+		    // If we have a real port driving a bit/vector signal
+		    // then we convert the real value using the appropriate
+		    // width cast. Since a real is only one bit the whole
+		    // thing needs to go to each instance when arrayed.
+		  if ((sig->data_type() != IVL_VT_REAL ) &&
+		      !prts.empty() && (prts[0]->data_type() == IVL_VT_REAL )) {
+			if (sig->vector_width() % instance.size() != 0) {
+			      cerr << pins[idx]->get_fileline() << ": error: "
+			              "When automatically converting a real "
+			              "port of an arrayed instance to a bit "
+			              "signal" << endl;
+			      cerr << pins[idx]->get_fileline() << ":      : "
+			              "the signal width ("
+			           << sig->vector_width() << ") must be an "
+			              "integer multiple of the instance count ("
+			           << instance.size() << ")." << endl;
+			      des->errors += 1;
+			      continue;
+			}
+			prts_vector_width = sig->vector_width();
+			for (unsigned idx = 0; idx < prts.size(); idx += 1) {
+			      prts[idx]->port_type(NetNet::NOT_A_PORT);
+			      prts[idx] = cast_to_int(des, scope, prts[idx],
+			                              prts_vector_width /
+			                              instance.size());
+			      prts[idx]->port_type(NetNet::POUTPUT);
+			}
+		  }
+
+		    // If we have a bit/vector port driving a single real
+		    // signal then we convert the value to a real.
+		  if ((sig->data_type() == IVL_VT_REAL ) &&
+		      !prts.empty() && (prts[0]->data_type() != IVL_VT_REAL )) {
+			prts_vector_width -= prts[0]->vector_width() - 1;
+			prts[0]->port_type(NetNet::NOT_A_PORT);
+			prts[0] = cast_to_real(des, scope, prts[0]);
+			prts[0]->port_type(NetNet::POUTPUT);
+			  // No support for multiple real drivers.
+			if (instance.size() != 1) {
+			      cerr << pins[idx]->get_fileline() << ": error: "
+			           << "Cannot connect an arrayed instance of "
+			              "module " << rmod->mod_name() << " to "
+			              "real signal " << sig->name() << "."
+			           << endl;
+			      des->errors += 1;
+			      continue;
+			}
+		  }
+
+		    // A real to real connection is not allowed for arrayed
+		    // instances. You cannot have multiple real drivers.
+		  if ((sig->data_type() == IVL_VT_REAL ) &&
+		      !prts.empty() && (prts[0]->data_type() == IVL_VT_REAL ) &&
+		      instance.size() != 1) {
+			cerr << pins[idx]->get_fileline() << ": error: "
+			     << "An arrayed instance of " << rmod->mod_name()
+			     << " cannot have a real port ("
+			     << rmod->ports[idx]->name << ") connected to a "
+			        "real signal (" << sig->name() << ")." << endl;
 			des->errors += 1;
 			continue;
 		  }
