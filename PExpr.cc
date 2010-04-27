@@ -79,6 +79,8 @@ bool PEBinary::has_aa_term(Design*des, NetScope*scope) const
 PEBComp::PEBComp(char op, PExpr*l, PExpr*r)
 : PEBinary(op, l, r)
 {
+      left_width_ = 0;
+      right_width_ = 0;
 }
 
 PEBComp::~PEBComp()

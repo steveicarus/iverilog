@@ -819,13 +819,61 @@ NetExpr* PEBinary::elaborate_expr_base_add_(Design*des,
       return tmp;
 }
 
-unsigned PEBComp::test_width(Design*, NetScope*,unsigned, unsigned,
-			     ivl_variable_type_t&expr_type__,
+unsigned PEBComp::test_width(Design*des, NetScope*scope, unsigned, unsigned,
+			     ivl_variable_type_t&my_expr_type,
 			     bool&)
 {
+	// The width and type of a comparison operator is fixed and
+	// well known. Set them now.
       expr_type_ = IVL_VT_LOGIC;
-      expr_type__ = expr_type_;
+      my_expr_type = expr_type_;
       expr_width_ = 1;
+
+	// The widths of operands are self-determined, but need to be
+	// figured out.
+      bool unsized_flag = false;
+      ivl_variable_type_t left_type = IVL_VT_NO_TYPE;
+      unsigned left_width = left_->test_width(des, scope, 0, 0, left_type, unsized_flag);
+      bool left_unsized_flag = unsized_flag;
+      ivl_variable_type_t right_type = IVL_VT_NO_TYPE;
+      unsigned right_width = right_->test_width(des, scope, 0, 0, right_type, unsized_flag);
+
+      if (left_unsized_flag != unsized_flag) {
+	    left_width = left_->test_width(des, scope, 0, 0, left_type, unsized_flag);
+      }
+
+      int try_wid_l = left_width;
+      if (type_is_vectorable(left_type) && (right_width > left_width))
+	    try_wid_l = right_width;
+
+      int try_wid_r = right_width;
+      if (type_is_vectorable(right_type) && (left_width > right_width))
+	    try_wid_r = left_width;
+
+	// If the expression is unsized and smaller then the integer
+	// minimum, then tweak the size up.
+	// NOTE: I really would rather try to figure out what it would
+	// take to get expand the sub-expressions so that they are
+	// exactly the right width to behave just like infinite
+	// width. I suspect that adding 1 more is sufficient in all
+	// cases, but I'm not certain. Ideas?
+      if (type_is_vectorable(left_type) && unsized_flag && try_wid_l<(int)integer_width)
+	    try_wid_l += 1;
+      if (type_is_vectorable(right_type) && unsized_flag && try_wid_r<(int)integer_width)
+	    try_wid_r += 1;
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: "
+		 << "Comparison expression operands are "
+		 << left_width << " bits and "
+		 << right_width << " bits. Resorting to "
+		 << try_wid_l << " bits and "
+		 << try_wid_r << " bits." << endl;
+      }
+
+      left_width_ = try_wid_l;
+      right_width_ = try_wid_r;
+
       return 1;
 }
 
@@ -835,37 +883,8 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
       assert(left_);
       assert(right_);
 
-      bool unsized_flag = false;
-      ivl_variable_type_t left_type = IVL_VT_NO_TYPE;
-      unsigned left_width = left_->test_width(des, scope, 0, 0, left_type, unsized_flag);
-      bool save_flag = unsized_flag;
-      ivl_variable_type_t right_type = IVL_VT_NO_TYPE;
-      unsigned right_width = right_->test_width(des, scope, 0, 0, right_type, unsized_flag);
-
-      if (save_flag != unsized_flag)
-	    left_width = left_->test_width(des, scope, 0, 0, left_type, unsized_flag);
-
-	/* Width of operands is self-determined. */
-
-      int use_wid_l = left_width;
-      if (type_is_vectorable(left_type) && (right_width > left_width))
-	    use_wid_l = right_width;
-
-      int use_wid_r = right_width;
-      if (type_is_vectorable(right_type) && (left_width > right_width))
-	    use_wid_r = left_width;
-
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: "
-		 << "Comparison expression operands are "
-		 << left_width << " bits and "
-		 << right_width << " bits. Resorting to "
-		 << use_wid_l << " bits and "
-		 << use_wid_r << " bits." << endl;
-      }
-
-      NetExpr*lp = left_->elaborate_expr(des, scope, use_wid_l, false);
-      NetExpr*rp = right_->elaborate_expr(des, scope, use_wid_r, false);
+      NetExpr*lp = left_->elaborate_expr(des, scope, left_width_, false);
+      NetExpr*rp = right_->elaborate_expr(des, scope, right_width_, false);
       if ((lp == 0) || (rp == 0)) {
 	    delete lp;
 	    delete rp;
@@ -878,12 +897,12 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 	// pad the width here. This matters because if the arguments
 	// are signed, then this padding will do sign extension.
       if (type_is_vectorable(lp->expr_type()))
-	    lp = pad_to_width(lp, use_wid_l, *this);
+	    lp = pad_to_width(lp, left_width_, *this);
       if (type_is_vectorable(rp->expr_type()))
-	    rp = pad_to_width(rp, use_wid_r, *this);
+	    rp = pad_to_width(rp, right_width_, *this);
 
-      eval_expr(lp, use_wid_l);
-      eval_expr(rp, use_wid_r);
+      eval_expr(lp, left_width_);
+      eval_expr(rp, right_width_);
 
 	// Handle some operand-specific special cases...
       switch (op_) {

@@ -533,6 +533,10 @@ class PEBComp  : public PEBinary {
       NetExpr* elaborate_expr(Design*des, NetScope*scope,
 			      int expr_width, bool sys_task_arg) const;
       NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
+
+    private:
+      int left_width_;
+      int right_width_;
 };
 
 /*
