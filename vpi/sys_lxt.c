@@ -730,13 +730,13 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
       if (dump_file == 0) {
 	    open_dumpfile(callh);
 	    if (dump_file == 0) {
-		  vpi_free_object(argv);
+		  if (argv) vpi_free_object(argv);
 		  return 0;
 	    }
       }
 
       if (install_dumpvars_callback()) {
-	    vpi_free_object(argv);
+	    if (argv) vpi_free_object(argv);
 	    return 0;
       }
 
