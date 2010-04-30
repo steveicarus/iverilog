@@ -42,22 +42,6 @@ static unsigned transient_id = 0;
  * executable code for the processes.
  */
 
-unsigned bitchar_to_idx(char bit)
-{
-      switch (bit) {
-	  case '0':
-	    return 0;
-	  case '1':
-	    return 1;
-	  case 'x':
-	    return 2;
-	  case 'z':
-	    return 3;
-	  default:
-	    assert(0);
-	    return 0;
-      }
-}
 
 /*
  * These functions handle the blocking assignment. Use the %set
