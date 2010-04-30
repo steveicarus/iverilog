@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2004 Tony Bybell.
+ * Copyright (c) 2003-2010 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,13 +23,19 @@
 #ifndef DEFS_LXTW_H
 #define DEFS_LXTW_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <unistd.h>
+#ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
+#endif
 #include <zlib.h>
 
 #ifndef HAVE_FSEEKO
@@ -300,11 +306,21 @@ int 			lxt2_wr_emit_value_double(struct lxt2_wr_trace *lt, struct lxt2_wr_symbol
 int 			lxt2_wr_emit_value_string(struct lxt2_wr_trace *lt, struct lxt2_wr_symbol *s, unsigned int row, char *value);
 int 			lxt2_wr_emit_value_bit_string(struct lxt2_wr_trace *lt, struct lxt2_wr_symbol *s, unsigned int row, char *value);
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 /*
- * $Id: lxt2_write.h,v 1.1.1.1 2007/05/30 04:28:25 gtkwave Exp $
+ * $Id: lxt2_write.h,v 1.3 2010/04/27 23:10:56 gtkwave Exp $
  * $Log: lxt2_write.h,v $
+ * Revision 1.3  2010/04/27 23:10:56  gtkwave
+ * made inttype.h inclusion conditional
+ *
+ * Revision 1.2  2010/02/18 17:27:07  gtkwave
+ * extern "C" headers / version bump
+ *
  * Revision 1.1.1.1  2007/05/30 04:28:25  gtkwave
  * Imported sources
  *
@@ -312,4 +328,3 @@ int 			lxt2_wr_emit_value_bit_string(struct lxt2_wr_trace *lt, struct lxt2_wr_sy
  * initial release
  *
  */
-
