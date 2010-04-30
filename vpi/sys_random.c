@@ -877,7 +877,7 @@ static PLI_INT32 sys_dist_erlang_calltf(PLI_BYTE8 *name)
       i_mean = val.value.integer;
 
       /* Calculate and return the result. */
-      val.value.integer = rtl_dist_normal(&i_seed, i_k, i_mean);
+      val.value.integer = rtl_dist_erlang(&i_seed, i_k, i_mean);
       vpi_put_value(callh, &val, 0, vpiNoDelay);
 
       /* Return the seed. */
