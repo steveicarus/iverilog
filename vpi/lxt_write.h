@@ -23,6 +23,10 @@
 #ifndef DEFS_LXT_H
 #define DEFS_LXT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,6 +35,9 @@
 #include <unistd.h>
 #include <zlib.h>
 #include <bzlib.h>
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 
 #ifndef HAVE_FSEEKO
 #define fseeko fseek
@@ -62,8 +69,14 @@ struct dslxt_tree_node {
 enum 	lt_zmode_types 	{ LT_ZMODE_NONE, LT_ZMODE_GZIP, LT_ZMODE_BZIP2 };
 
 
-typedef unsigned long long lxttime_t;
+#ifndef _MSC_VER
+typedef uint64_t                lxttime_t;
 #define ULLDescriptor(x) x##ULL
+#else
+typedef unsigned __int64        lxttime_t;
+#define ULLDescriptor(x) x##i64
+#endif
+
 
 struct lt_timetrail
 {
@@ -246,11 +259,24 @@ int 			lt_emit_value_double(struct lt_trace *lt, struct lt_symbol *s, unsigned i
 int 			lt_emit_value_string(struct lt_trace *lt, struct lt_symbol *s, unsigned int row, char *value);
 int 			lt_emit_value_bit_string(struct lt_trace *lt, struct lt_symbol *s, unsigned int row, char *value);
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 /*
- * $Id: lxt_write.h,v 1.1.1.1 2007/05/30 04:28:15 gtkwave Exp $
+ * $Id: lxt_write.h,v 1.4 2010/04/27 23:10:56 gtkwave Exp $
  * $Log: lxt_write.h,v $
+ * Revision 1.4  2010/04/27 23:10:56  gtkwave
+ * made inttype.h inclusion conditional
+ *
+ * Revision 1.3  2010/03/18 17:12:37  gtkwave
+ * pedantic warning cleanups
+ *
+ * Revision 1.2  2010/02/18 17:27:07  gtkwave
+ * extern "C" headers / version bump
+ *
  * Revision 1.1.1.1  2007/05/30 04:28:15  gtkwave
  * Imported sources
  *
