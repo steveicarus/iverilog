@@ -3675,6 +3675,7 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
+      probe_expr_width(des, scope, expr_);
       NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
 	    cerr << get_fileline() << ": Unable to elaborate"
