@@ -1103,8 +1103,27 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net, ivl_variable_type_t dt)
       ivl_expr_t d_decay = ivl_lpm_delay(net, 2);
       unsigned width = ivl_lpm_width(net);
 
-      if (dt == IVL_VT_REAL)
-            width = 0;
+	/* The comparison and reduction operators only have a single output
+	 * bit to delay. */
+      switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_CMP_EEQ:
+	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_GE:
+	  case IVL_LPM_CMP_GT:
+	  case IVL_LPM_CMP_NE:
+	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_RE_AND:
+	  case IVL_LPM_RE_OR:
+	  case IVL_LPM_RE_XOR:
+	  case IVL_LPM_RE_NAND:
+	  case IVL_LPM_RE_NOR:
+	  case IVL_LPM_RE_XNOR:
+            width = 1;
+	  default:
+            break;
+      }
+
+      if (dt == IVL_VT_REAL) width = 0;
 
       const char*dly = "";
       if (d_rise != 0) {
@@ -1328,7 +1347,8 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 
       draw_lpm_data_inputs(net, 0, 2, src_table);
 
-      dly = draw_lpm_output_delay(net, dtc);
+	/* The output of a compare is always logical. */
+      dly = draw_lpm_output_delay(net, IVL_VT_LOGIC);
 
       fprintf(vvp_out, "L_%p%s .cmp/%s%s %u, %s, %s;\n",
 	      net, dly, type, signed_string, width,
