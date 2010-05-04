@@ -1102,11 +1102,9 @@ if(lt)
 	lt_emitfacs(lt);
 	if(lt->dict) lt_finalize_dictionary(lt);
 
-	if(lt->timebuff)
-		{
-		free(lt->timebuff);
-		lt->timebuff=NULL;
-		}
+	free(lt->timebuff);
+	lt->timebuff=NULL;
+
 	if(lt->timehead)
 		{
 		struct lt_timetrail *t=lt->timehead;
@@ -1408,10 +1406,7 @@ if(lt)
 			lt->mintime = lt->maxtime = timeval;
 			}
 
-		if(lt->timebuff)
-			{
-			free(lt->timebuff);
-			}
+		free(lt->timebuff);
 		lt->timebuff = trl;
 		lt->timeval = timeval;
 		rc=1;
@@ -2814,8 +2809,11 @@ if((lt)&&(lt->dumpoff_active))
 }
 
 /*
- * $Id: lxt_write.c,v 1.4 2009/03/29 00:50:00 gtkwave Exp $
+ * $Id: lxt_write.c,v 1.5 2010/05/03 20:11:03 gtkwave Exp $
  * $Log: lxt_write.c,v $
+ * Revision 1.5  2010/05/03 20:11:03  gtkwave
+ * cppcheck warning fixes
+ *
  * Revision 1.4  2009/03/29 00:50:00  gtkwave
  * update lt_close() to zero out written section offset/size.
  *
