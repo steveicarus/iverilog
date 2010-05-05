@@ -1114,6 +1114,12 @@ class vvp_net_fun_t {
       virtual void recv_long_pv(vvp_net_ptr_t port, long bit,
                                 unsigned base, unsigned wid);
 
+	// This method is called when the net it forced or
+	// released. This is very rarely needed; island ports use it
+	// to know that the net is being forced and that it needs to
+	// do something about it.
+      virtual void force_flag(void);
+
     public: // These objects are only permallocated.
       static void* operator new(std::size_t size) { return heap_.alloc(size); }
       static void operator delete(void*); // not implemented
@@ -1150,13 +1156,16 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
     public:
       enum prop_t { STOP=0, PROP, REPL };
 
-	// Return a non-empty vector if the filter allows an
-	// output. The output result may be different from the
-	// input. If the output is nil, then suppress propagation.
 
-	// Return true if the value is to be propagated, or false if
-	// propagation is suppressed. The value may be edited by the
-	// filter, or overridden by the rep argument if present.
+	// These filter methods are used by the vvp_net_t::send_*()
+	// methods to test the output (from the functor) bit value
+	// against any force filters. If none of the bits are forced,
+	// then the method returns PROP and the caller propagates the
+	// bit value. If bits were changed by the force mask, then the
+	// method returns REPL and the caller should propagate the rep
+	// value instead. If the function returns STOP, then all the
+	// output bits are filtered by the force mask ans there is
+	// nothing to propagate.
       virtual prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
 				 unsigned base, unsigned vwid);
       virtual prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep,
@@ -1176,7 +1185,9 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
       virtual unsigned filter_size() const =0;
 
     public:
-	// Suport for force methods
+	// Suport for force methods. These are calloed by the
+	// vvp_net_t::force_* methods to set the force value and mask
+	// for the filter.
       virtual void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask) =0;
       virtual void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask) =0;
       virtual void force_fil_real(double val, vvp_vector2_t mask) =0;
@@ -1214,6 +1225,12 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 	// This template method is similar to the above, but works for
 	// native types that are not so expensive to edit in place.
       template <class T> prop_t filter_mask_(T&val, T force);
+
+	// These templates are similar to filter_mask_, but are
+	// idempotent. Then do not trigger callbacks or otherwise
+	// cause any locak changes. These methods are used to test
+	// arbitrary values against the force mask.
+      template <class T> prop_t filter_input_mask_(const T&val, const T&force, T&rep) const;
 
     private:
 	// Mask of forced bits

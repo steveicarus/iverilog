@@ -324,6 +324,11 @@ class vvp_wire_vec8 : public vvp_wire_base {
       prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep,
 			 unsigned base, unsigned vwid);
 
+	// island ports use this method to filter arbitrary values
+	// through the force filter.
+      prop_t filter_input_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep) const;
+
+
 	// Abstract methods from vvp_vpi_callback
       void get_value(struct t_vpi_value*value);
 	// Abstract methods from vvp_net_fit_t

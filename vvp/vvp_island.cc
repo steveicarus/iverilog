@@ -213,6 +213,11 @@ void vvp_island_port::recv_vec8_pv(vvp_net_ptr_t p, const vvp_vector8_t&bit,
       island_->flag_island();
 }
 
+void vvp_island_port::force_flag(void)
+{
+      island_->flag_island();
+}
+
 vvp_island_branch::~vvp_island_branch()
 {
 }

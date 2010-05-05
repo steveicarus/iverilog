@@ -71,6 +71,22 @@ template <class T> vvp_net_fil_t::prop_t vvp_net_fil_t::filter_mask_(T&val, T fo
       return PROP;
 }
 
+template <class T> vvp_net_fil_t::prop_t vvp_net_fil_t::filter_input_mask_(const T&val, const T&force, T&rep) const
+{
+      if (test_force_mask_is_zero())
+	    return PROP;
+
+      assert(force_mask_.size() == force.size());
+
+      rep = val;
+      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
+	    if (force_mask_.value(idx))
+		  rep.set_bit(idx, force.value(idx));
+      }
+
+      return REPL;
+}
+
 vvp_signal_value::~vvp_signal_value()
 {
 }
@@ -85,6 +101,7 @@ void vvp_net_t::force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
 {
       assert(fil);
       fil->force_fil_vec4(val, mask);
+      fun->force_flag();
       vvp_send_vec4(out_, val, 0);
 }
 
@@ -92,6 +109,7 @@ void vvp_net_t::force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
 {
       assert(fil);
       fil->force_fil_vec8(val, mask);
+      fun->force_flag();
       vvp_send_vec8(out_, val);
 }
 
@@ -99,6 +117,7 @@ void vvp_net_t::force_real(double val, vvp_vector2_t mask)
 {
       assert(fil);
       fil->force_fil_real(val, mask);
+      fun->force_flag();
       vvp_send_real(out_, val, 0);
 }
 
@@ -775,6 +794,11 @@ vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec8(const vvp_vector8_t&bit, vvp_ve
       }
       needs_init_ = false;
       return filter_mask_(bit, force8_, rep, base);
+}
+
+vvp_net_fil_t::prop_t vvp_wire_vec8::filter_input_vec8(const vvp_vector8_t&bit, vvp_vector8_t&rep) const
+{
+      return filter_input_mask_(bit, force8_, rep);
 }
 
 unsigned vvp_wire_vec8::filter_size() const

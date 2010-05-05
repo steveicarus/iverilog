@@ -2849,6 +2849,10 @@ void vvp_net_fun_t::recv_long_pv(vvp_net_ptr_t, long, unsigned, unsigned)
       assert(0);
 }
 
+void vvp_net_fun_t::force_flag(void)
+{
+}
+
 /* **** vvp_fun_drive methods **** */
 
 vvp_fun_drive::vvp_fun_drive(vvp_bit4_t init, unsigned str0, unsigned str1)
