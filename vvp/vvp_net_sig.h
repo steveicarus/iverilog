@@ -194,26 +194,6 @@ class vvp_fun_signal4_aa : public vvp_fun_signal_vec, public automatic_signal_ba
       unsigned size_;
 };
 
-class vvp_fun_signal8  : public vvp_fun_signal_vec {
-
-    public:
-      explicit vvp_fun_signal8(unsigned wid);
-
-      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                     vvp_context_t context);
-      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
-
-	// Part select variants of above
-      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-                        unsigned base, unsigned wid, unsigned vwid,
-                        vvp_context_t context);
-      void recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
-                        unsigned base, unsigned wid, unsigned vwid);
-
-    private:
-      vvp_vector8_t bits8_;
-};
-
 class vvp_fun_signal_real : public vvp_fun_signal_base {
 
     public:
