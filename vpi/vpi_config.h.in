@@ -28,10 +28,6 @@
 # undef HAVE_FMAX
 # undef WORDS_BIGENDIAN
 
-/* These two are needed by the lxt and lxt2 files (copied from GTKWave). */
-# undef HAVE_ALLOCA_H
-# undef HAVE_FSEEKO
-
 # undef _LARGEFILE_SOURCE
 #ifdef _LARGEFILE_SOURCE
 # define _FILE_OFFSET_BITS 64
