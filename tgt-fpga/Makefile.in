@@ -39,7 +39,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 CPPFLAGS = -I.. -I$(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
-CFLAGS = -Wall @CFLAGS@
+CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
 all: dep fpga.tgt
@@ -48,7 +48,7 @@ dep:
 	mkdir dep
 
 %.o: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
 D = d-generic.o d-generic-edif.o d-lpm.o d-virtex.o d-virtex2.o

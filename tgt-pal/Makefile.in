@@ -34,7 +34,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 CPPFLAGS = -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
-CFLAGS = -Wall @CFLAGS@
+CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
 all: dep pal.tgt
@@ -43,7 +43,7 @@ dep:
 	mkdir dep
 
 %.o: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
 O = imain.o dump_final.o emit_jed.o enables.o fit_log.o fit_reg.o pads.o

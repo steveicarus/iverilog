@@ -46,8 +46,8 @@ MAN = @MAN@
 PS2PDF = @PS2PDF@
 
 CPPFLAGS = -I. -I.. -I $(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@
-CFLAGS = -Wall @CFLAGS@
-CXXFLAGS = -Wall @CXXFLAGS@
+CFLAGS = @WARNING_FLAGS@ @CFLAGS@
+CXXFLAGS = @WARNING_FLAGS@ @CXXFLAGS@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@
 
@@ -121,15 +121,15 @@ dep:
 	mkdir dep
 
 %.o: %.cc config.h
-	$(CXX) $(CPPFLAGS) -DIVL_SUFFIX='"$(suffix)"' $(MDIR1) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $*.o
+	$(CXX) $(CPPFLAGS) -DIVL_SUFFIX='"$(suffix)"' $(MDIR1) $(MDIR2) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep/$*.d
 
 %.o: %.c config.h
-	$(CC) $(CPPFLAGS) $(MDIR1) $(MDIR2) $(CFLAGS) -MD -c $< -o $*.o
+	$(CC) $(CPPFLAGS) $(MDIR1) $(MDIR2) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep/$*.d
 
 tables.cc: $(srcdir)/draw_tt.c
-	$(HOSTCC) -Wall -o draw_tt $(srcdir)/draw_tt.c
+	$(HOSTCC) @WARNING_FLAGS@ -o draw_tt $(srcdir)/draw_tt.c
 	./draw_tt > tables.cc
 	rm draw_tt@EXEEXT@
 

@@ -42,7 +42,7 @@ MAN = @MAN@
 PS2PDF = @PS2PDF@
 
 CPPFLAGS = -I. -I.. -I$(srcdir)/.. -I$(srcdir) @CPPFLAGS@ @DEFS@
-CFLAGS = -Wall @CFLAGS@
+CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
 all: dep iverilog@EXEEXT@ iverilog.man
@@ -75,11 +75,11 @@ dep:
 	mkdir dep
 
 %.o: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
 main.o: main.c globals.h $(srcdir)/../version_base.h ../version_tag.h Makefile
-	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c -DIVL_ROOT='"@libdir@/ivl$(suffix)"'  -DIVL_SUFFIX='"$(suffix)"' -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DDLLIB='"@DLLIB@"' $(srcdir)/main.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c -DIVL_ROOT='"@libdir@/ivl$(suffix)"' -DIVL_SUFFIX='"$(suffix)"' -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DDLLIB='"@DLLIB@"' $(srcdir)/main.c
 	mv $*.d dep
 
 cflexor.o: cflexor.c cfparse.h

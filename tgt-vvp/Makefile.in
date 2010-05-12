@@ -39,7 +39,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 CPPFLAGS = -I. -I.. -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
-CFLAGS = -Wall @CFLAGS@
+CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
 all: dep vvp.tgt vvp.conf vvp-s.conf
@@ -48,7 +48,7 @@ dep:
 	mkdir dep
 
 %.o: %.c vvp_config.h
-	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
 O = vvp.o draw_mux.o draw_net_input.o draw_switch.o draw_ufunc.o draw_vpi.o \

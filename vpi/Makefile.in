@@ -41,8 +41,8 @@ LEX = @LEX@
 YACC = @YACC@
 
 CPPFLAGS = -I. -I$(srcdir)/.. -I$(srcdir) -I.. @file64_support@ @CPPFLAGS@ @DEFS@ @PICFLAG@
-CFLAGS = -Wall @CFLAGS@
-CXXFLAGS = -Wall @CXXFLAGS@
+CFLAGS = @WARNING_FLAGS@ @CFLAGS@
+CXXFLAGS = @WARNING_FLAGS@ @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
 all: dep system.vpi va_math.vpi v2005_math.vpi $(ALL32)
@@ -53,11 +53,11 @@ dep:
 	mkdir dep
 
 %.o: %.c vpi_config.h
-	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
 %.o: %.cc vpi_config.h
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
 # Object files for system.vpi
