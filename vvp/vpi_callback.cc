@@ -705,17 +705,17 @@ void vvp_wire_real::get_signal_value(struct t_vpi_value*vp)
       real_signal_value(vp, real_value());
 }
 
-void vvp_wire_vec4::get_value(struct t_vpi_value*value)
+void vvp_wire_vec4::get_value(struct t_vpi_value*val)
 {
-      get_signal_value(value);
+      get_signal_value(val);
 }
 
-void vvp_wire_vec8::get_value(struct t_vpi_value*value)
+void vvp_wire_vec8::get_value(struct t_vpi_value*val)
 {
-      get_signal_value(value);
+      get_signal_value(val);
 }
 
-void vvp_wire_real::get_value(struct t_vpi_value*value)
+void vvp_wire_real::get_value(struct t_vpi_value*val)
 {
-      get_signal_value(value);
+      get_signal_value(val);
 }

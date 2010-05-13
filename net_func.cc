@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -29,9 +29,10 @@
  * which accounts for all the inputs, plus one for the phantom output
  * that is the result.
  */
-NetUserFunc::NetUserFunc(NetScope*s, perm_string n, NetScope*d, NetEvWait*trigger)
+NetUserFunc::NetUserFunc(NetScope*s, perm_string n, NetScope*d,
+                         NetEvWait*trigger__)
 : NetNode(s, n, d->func_def()->port_count()+1),
-  def_(d), trigger_(trigger)
+  def_(d), trigger_(trigger__)
 {
       pin(0).set_dir(Link::OUTPUT);
 
@@ -128,8 +129,8 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 
 NetSysFunc::NetSysFunc(NetScope*s, perm_string n,
 		       const struct sfunc_return_type*def,
-		       unsigned ports, NetEvWait*trigger)
-: NetNode(s, n, ports), def_(def), trigger_(trigger)
+		       unsigned ports, NetEvWait*trigger__)
+: NetNode(s, n, ports), def_(def), trigger_(trigger__)
 {
       pin(0).set_dir(Link::OUTPUT); // Q
 

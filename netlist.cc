@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -844,9 +844,9 @@ NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
 }
 
 NetPartSelect::NetPartSelect(NetNet*sig, NetNet*sel,
-			     unsigned wid, bool signed_flag)
+			     unsigned wid, bool signed_flag__)
 : NetNode(sig->scope(), sig->scope()->local_symbol(), 3),
-    off_(0), wid_(wid), dir_(VP), signed_flag_(signed_flag)
+    off_(0), wid_(wid), dir_(VP), signed_flag_(signed_flag__)
 {
       switch (dir_) {
 	  case NetPartSelect::VP:

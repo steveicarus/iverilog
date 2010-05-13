@@ -491,7 +491,7 @@ extern void vpi_sim_control(PLI_INT32 operation, ...);
 extern vpiHandle  vpi_handle(PLI_INT32 type, vpiHandle ref);
 extern vpiHandle  vpi_iterate(PLI_INT32 type, vpiHandle ref);
 extern vpiHandle  vpi_scan(vpiHandle iter);
-extern vpiHandle  vpi_handle_by_index(vpiHandle ref, PLI_INT32 index);
+extern vpiHandle  vpi_handle_by_index(vpiHandle ref, PLI_INT32 idx);
 extern vpiHandle  vpi_handle_by_name(const char*name, vpiHandle scope);
 
 extern void  vpi_get_time(vpiHandle obj, s_vpi_time*t);

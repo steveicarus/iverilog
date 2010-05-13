@@ -156,11 +156,11 @@ vvp_net_t::vvp_net_t()
       fil = 0;
 }
 
-void vvp_net_t::link(vvp_net_ptr_t port)
+void vvp_net_t::link(vvp_net_ptr_t port_to_link)
 {
-      vvp_net_t*net = port.ptr();
-      net->port[port.port()] = out_;
-      out_ = port;
+      vvp_net_t*net = port_to_link.ptr();
+      net->port[port_to_link.port()] = out_;
+      out_ = port_to_link;
 }
 
 /*
@@ -608,7 +608,7 @@ void vvp_vector4_t::copy_inverted_from_(const vvp_vector4_t&that)
 		  abits_ptr_[idx] = mask & (that.bbits_ptr_[idx] | ~that.abits_ptr_[idx]);
 	    }
 
-	    for (unsigned idx = 0 ;  idx < words ;  idx += 1)
+	    for (idx = 0 ;  idx < words ;  idx += 1)
 		  bbits_ptr_[idx] = that.bbits_ptr_[idx];
 
       } else {

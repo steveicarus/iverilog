@@ -1693,9 +1693,9 @@ void memory_delete(vpiHandle item)
 		  } else {
 			assert(arr->nets[idx]->vpi_type->type_code ==
 			       vpiRealVar);
-			struct __vpiRealVar *sig = (struct __vpiRealVar *)
-			                           arr->nets[idx];
-			constant_delete(sig->id.index);
+			struct __vpiRealVar *sigr = (struct __vpiRealVar *)
+			                            arr->nets[idx];
+			constant_delete(sigr->id.index);
 // Why are only the real words still here?
 			free(arr->nets[idx]);
 		  }

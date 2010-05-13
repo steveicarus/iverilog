@@ -1,7 +1,7 @@
 #ifndef __vvp_net_H
 #define __vvp_net_H
 /*
- * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -717,7 +717,7 @@ class vvp_scalar_t {
 	// so allow vvp_vector8_t access to the raw encoding so that
 	// it can do compact vectoring of vvp_scalar_t objects.
       friend class vvp_vector8_t;
-      explicit vvp_scalar_t(unsigned char raw) : value_(raw) { }
+      explicit vvp_scalar_t(unsigned char val) : value_(val) { }
       unsigned char raw() const { return value_; }
 
     private:

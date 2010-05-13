@@ -61,7 +61,7 @@ AX_WIN32
 AC_CHECK_DECL(__SUNPRO_C, AC_SUBST(DEPENDENCY_FLAG, [-xMD]),
                           AC_SUBST(DEPENDENCY_FLAG, [-MD]))
 AC_CHECK_DECL(__SUNPRO_C, AC_SUBST(WARNING_FLAGS, []),
-                          AC_SUBST(WARNING_FLAGS, [-Wall]))
+                          AC_SUBST(WARNING_FLAGS, ["-Wall -Wshadow"]))
 
 AC_LANG(C++)
 

@@ -463,7 +463,6 @@ void pform_set_timescale(int unit, int prec,
 		 << "confusing timing results.  Affected modules are:"
 		 << endl;
 
-	    map<perm_string,Module*>::iterator mod;
 	    for (mod = pform_modules.begin()
 		       ; mod != pform_modules.end() ; mod++) {
 		  Module*mp = (*mod).second;
@@ -762,8 +761,8 @@ void pform_module_set_ports(vector<Module::port_t*>*ports)
       }
 }
 
-void pform_endmodule(const char*name, bool in_celldefine,
-                     Module::UCDriveType uc_drive)
+void pform_endmodule(const char*name, bool inside_celldefine,
+                     Module::UCDriveType uc_drive_def)
 {
       assert(pform_cur_module);
       pform_cur_module->time_from_timescale = (tu_local_flag &&
@@ -771,8 +770,8 @@ void pform_endmodule(const char*name, bool in_celldefine,
                                               (pform_timescale_file != 0);
       perm_string mod_name = pform_cur_module->mod_name();
       assert(strcmp(name, mod_name) == 0);
-      pform_cur_module->is_cell = in_celldefine;
-      pform_cur_module->uc_drive = uc_drive;
+      pform_cur_module->is_cell = inside_celldefine;
+      pform_cur_module->uc_drive = uc_drive_def;
 
       map<perm_string,Module*>::const_iterator test =
 	    pform_modules.find(mod_name);

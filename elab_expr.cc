@@ -3528,7 +3528,7 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 	    verinum cval = tmp->value();
 	    ivl_assert(*this, cval.len()==1);
 
-	      // Condition is constant TRUE, so we only need the true claue.
+	      // Condition is constant TRUE, so we only need the true clause.
 	    if (cval.get(0) == verinum::V1) {
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: Short-circuit "
@@ -3541,8 +3541,9 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			     << " of expression: " << *this << endl;
 		  }
 		  ivl_assert(*this, use_wid > 0);
-		  NetExpr*tmp = elab_and_eval_alternative_(des, scope, tru_, use_wid);
-		  return pad_to_width(tmp, use_wid, *this);
+		  NetExpr*texpr = elab_and_eval_alternative_(des, scope, tru_,
+		                                             use_wid);
+		  return pad_to_width(texpr, use_wid, *this);
 	    }
 
 	      // Condition is constant FALSE, so we only need the
@@ -3559,8 +3560,9 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			     << " of expression: " << *this << endl;
 		  }
 		  ivl_assert(*this, use_wid > 0);
-		  NetExpr*tmp = elab_and_eval_alternative_(des, scope, fal_, use_wid);
-		  return pad_to_width(tmp, use_wid, *this);
+		  NetExpr*texpr = elab_and_eval_alternative_(des, scope, fal_,
+		                                             use_wid);
+		  return pad_to_width(texpr, use_wid, *this);
 	    }
 
 	      // X and Z conditions need to blend both results, so we

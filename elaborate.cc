@@ -1377,12 +1377,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			      continue;
 			}
 			prts_vector_width = sig->vector_width();
-			for (unsigned idx = 0; idx < prts.size(); idx += 1) {
-			      prts[idx]->port_type(NetNet::NOT_A_PORT);
-			      prts[idx] = cast_to_int(des, scope, prts[idx],
+			for (unsigned pidx = 0; pidx < prts.size(); pidx += 1) {
+			      prts[pidx]->port_type(NetNet::NOT_A_PORT);
+			      prts[pidx] = cast_to_int(des, scope, prts[pidx],
 			                              prts_vector_width /
 			                              instance.size());
-			      prts[idx]->port_type(NetNet::POUTPUT);
+			      prts[pidx]->port_type(NetNet::POUTPUT);
 			}
 		  }
 
