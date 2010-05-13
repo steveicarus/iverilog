@@ -1124,14 +1124,19 @@ static char* PV_get_str(int code, vpiHandle ref)
 	case vpiName:
 	case vpiFullName: {
 	    const char*nm = vpi_get_str(code, rfp->parent);
-	    char full[1024+strlen(nm)];
-	    sprintf(full, "%s[%d:%d]", nm, (int)vpi_get(vpiLeftRange, ref),
-	                                   (int)vpi_get(vpiRightRange, ref));
-	    return simple_set_rbuf_str(full);
+	    size_t len = 256+strlen(nm);
+	    char *full = (char *) malloc(len);
+	    snprintf(full, len, "%s[%d:%d]", nm,
+	                                     (int)vpi_get(vpiLeftRange, ref),
+	                                     (int)vpi_get(vpiRightRange, ref));
+	    full[len-1] = 0;
+	    char *res = simple_set_rbuf_str(full);
+	    free(full);
+	    return res;
 	}
 
 	default:
-	    fprintf(stderr, "PV_get_str: property %d is unknown\n", code);
+	    fprintf(stderr, "PV_get_str: property %d is unknown.\n", code);
       }
 
       return 0;
