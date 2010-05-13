@@ -1585,7 +1585,7 @@ if(lt)
 /*
  * emission for trace values..
  */
-static int lt_optimask[]=
+static unsigned int lt_optimask[]=
 {
 0x00000000,
 
@@ -2809,8 +2809,11 @@ if((lt)&&(lt->dumpoff_active))
 }
 
 /*
- * $Id: lxt_write.c,v 1.5 2010/05/03 20:11:03 gtkwave Exp $
+ * $Id: lxt_write.c,v 1.6 2010/05/13 06:03:40 gtkwave Exp $
  * $Log: lxt_write.c,v $
+ * Revision 1.6  2010/05/13 06:03:40  gtkwave
+ * compiler warning fix for lt_optimask on Open Solaris
+ *
  * Revision 1.5  2010/05/03 20:11:03  gtkwave
  * cppcheck warning fixes
  *
