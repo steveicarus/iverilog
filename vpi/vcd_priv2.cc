@@ -155,7 +155,7 @@ static unsigned current_batch_cnt = 0;
 static unsigned current_batch_alloc = 0;
 static unsigned current_batch_base = 0;
 
-void vcd_work_start( void* (*fun) (void*), void*arg )
+extern "C" void vcd_work_start( void* (*fun) (void*), void*arg )
 {
       pthread_create(&work_thread, 0, fun, arg);
 }
