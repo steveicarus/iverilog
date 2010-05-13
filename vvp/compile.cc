@@ -67,7 +67,7 @@ enum operand_e {
 	/* The operand is a second functor pointer */
       OA_FUNC_PTR2,
 	/* The operand is a VPI handle */
-      OA_VPI_PTR,
+      OA_VPI_PTR
 };
 
 struct opcode_table_s {
