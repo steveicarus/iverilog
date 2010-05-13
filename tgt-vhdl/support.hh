@@ -1,7 +1,7 @@
 /*
  *  Support functions for VHDL output.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ enum support_function_t {
    SF_TERNARY_SIGNED,
    SF_LOGIC_TO_INTEGER,
    SF_SIGNED_TO_LOGIC,
-   SF_UNSIGNED_TO_LOGIC,
+   SF_UNSIGNED_TO_LOGIC
 };
 
 class support_function : public vhdl_function {

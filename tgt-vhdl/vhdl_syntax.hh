@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -96,7 +96,7 @@ enum vhdl_binop_t {
    VHDL_BINOP_DIV,
    VHDL_BINOP_MOD,
    VHDL_BINOP_POWER,
-   VHDL_BINOP_SRA,
+   VHDL_BINOP_SRA
 };
 
 /*
@@ -123,7 +123,7 @@ private:
 
 enum vhdl_unaryop_t {
    VHDL_UNARYOP_NOT,
-   VHDL_UNARYOP_NEG,
+   VHDL_UNARYOP_NEG
 };
 
 class vhdl_unaryop_expr : public vhdl_expr {
@@ -206,7 +206,7 @@ enum time_unit_t {
    TIME_UNIT_PS,
    TIME_UNIT_NS,
    TIME_UNIT_US,
-   TIME_UNIT_MS,
+   TIME_UNIT_MS
 };
 
 class vhdl_const_time : public vhdl_expr {
@@ -397,7 +397,7 @@ enum vhdl_wait_type_t {
    VHDL_WAIT_FOR,    // Wait for a constant amount of time
    VHDL_WAIT_FOR0,   // Special wait for zero time
    VHDL_WAIT_UNTIL,  // Wait on an expression
-   VHDL_WAIT_ON,     // Wait on a sensitivity list
+   VHDL_WAIT_ON      // Wait on a sensitivity list
 };
 
 /*
@@ -657,7 +657,7 @@ enum vhdl_port_mode_t {
    VHDL_PORT_IN,
    VHDL_PORT_OUT,
    VHDL_PORT_INOUT,
-   VHDL_PORT_BUFFER,
+   VHDL_PORT_BUFFER
 };
 
 /*
