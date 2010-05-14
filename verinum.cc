@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -514,14 +514,13 @@ string verinum::as_string() const
 
 	    if (char_val == '"' || char_val == '\\') {
 		  char tmp[5];
-		  snprintf(tmp, sizeof tmp, "\\\%03o", char_val);
+		  snprintf(tmp, sizeof tmp, "\\%03o", char_val);
 		  res = res + tmp;
 	    } else if (char_val == ' ' || isgraph(char_val)) {
 		  res = res + char_val;
-
 	    } else {
 		  char tmp[5];
-		  snprintf(tmp, sizeof tmp, "\\\%03o", char_val);
+		  snprintf(tmp, sizeof tmp, "\\%03o", char_val);
 		  res = res + tmp;
 	    }
       }
