@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -73,18 +73,19 @@ char*symbol_table_s::key_strdup_(const char*str)
 const unsigned leaf_width = 254;
 const unsigned node_width = 508;
 
+struct tree_data_ {
+      char*key;
+      symbol_value_t val;
+};
+
 struct tree_node_ {
       bool leaf_flag;
       unsigned count;
       struct tree_node_*parent;
 
       union {
-	    struct {
-		  char*key;
-		  symbol_value_t val;
-	    } leaf[leaf_width];
-
-	    struct tree_node_*child[node_width];
+	    struct tree_data_ leaf[leaf_width];
+	    struct tree_node_ *child[node_width];
       };
 
 };
