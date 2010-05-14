@@ -58,7 +58,7 @@ AC_SUBST(EXEEXT)
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
 
-AC_CHECK_DECL(__SUNPRO_C, AC_SUBST(DEPENDENCY_FLAG, [-xMD]),
+AC_CHECK_DECL(__SUNPRO_C, AC_SUBST(DEPENDENCY_FLAG, [-xMMD]),
                           AC_SUBST(DEPENDENCY_FLAG, [-MD]))
 AC_CHECK_DECL(__SUNPRO_C, AC_SUBST(WARNING_FLAGS, []),
                           AC_SUBST(WARNING_FLAGS, ["-Wall -Wshadow"]))
