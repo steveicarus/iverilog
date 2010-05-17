@@ -136,7 +136,7 @@ void parm_to_defparam_list(const string&param)
         // Remember to use 'new' to allocate string for PEString 
         // because 'delete' is used by its destructor.
         char *nchar = strcpy(new char [strlen(buf_ptr)+1], buf_ptr);
-        PEString* ndec = new PEString(nchar);
+        PExpr* ndec = new PEString(nchar);
 	Module::user_defparms.push_back( make_pair(name, ndec) );
         free(buf);
     }
@@ -173,7 +173,7 @@ void parm_to_defparam_list(const string&param)
                 val = pform_verinum_with_size(siz, val, "<command line>", 0);
             }
     
-            PENumber* ndec = new PENumber(val);
+            PExpr* ndec = new PENumber(val);
 	    Module::user_defparms.push_back( make_pair(name, ndec) );
             
         }
@@ -181,13 +181,13 @@ void parm_to_defparam_list(const string&param)
             // REALTIME, something like - scope.parameter=1.22 or scope.parameter=1e2
             if (strchr(value, '.') || strchr(value, 'e') || strchr(value, 'E')) {
                 verireal *val = new verireal(value);
-                PEFNumber* nreal = new PEFNumber(val);
+                PExpr* nreal = new PEFNumber(val);
 		Module::user_defparms.push_back( make_pair(name, nreal) );
             }
             else {
                 // DEC_NUMBER, something like - scope.parameter=3
                 verinum *val = make_unsized_dec(value);
-                PENumber* ndec = new PENumber(val);
+                PExpr* ndec = new PENumber(val);
 		Module::user_defparms.push_back( make_pair(name, ndec) );
             }
         }
