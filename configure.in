@@ -58,10 +58,19 @@ AC_SUBST(EXEEXT)
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
 
-AC_CHECK_DECL(__SUNPRO_C, AC_SUBST(DEPENDENCY_FLAG, [-xMMD]),
-                          AC_SUBST(DEPENDENCY_FLAG, [-MD]))
-AC_CHECK_DECL(__SUNPRO_C, AC_SUBST(WARNING_FLAGS, []),
-                          AC_SUBST(WARNING_FLAGS, ["-Wall -Wshadow"]))
+# Check to see if we are using the SUN compiler. If so then configure
+# some of the flags to match the SUN compiler syntax. This is also used
+# in the aclocal.m4 file to configure the flags used to build and link
+# dynamic libraries
+AC_CHECK_DECL(__SUNPRO_C, using_sunpro=1, using_sunpro=0)
+if test ${using_sunpro} = 1
+then
+AC_SUBST(DEPENDENCY_FLAG, [-xMMD])
+AC_SUBST(WARNING_FLAGS, [""])
+else
+AC_SUBST(DEPENDENCY_FLAG, [-MD])
+AC_SUBST(WARNING_FLAGS, ["-Wall -Wshadow"])
+fi
 
 AC_LANG(C++)
 
