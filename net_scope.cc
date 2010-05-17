@@ -228,14 +228,14 @@ map<perm_string,NetScope::param_expr_t>::iterator NetScope::find_parameter(perm_
       map<perm_string,param_expr_t>::iterator idx;
 
       idx = parameters.find(key);
-      if (idx != parameters.end())
-	    return idx;
+      if (idx != parameters.end()) return idx;
 
       idx = localparams.find(perm_string::literal(key));
-      if (idx != localparams.end())
-	    return idx;
+      if (idx != localparams.end()) return idx;
 
-      return (map<perm_string,param_expr_t>::iterator) 0;
+	// To get here the parameter must already exist, so we should
+	// never get here.
+      assert(0);
 }
 
 NetScope::TYPE NetScope::type() const
