@@ -23,7 +23,6 @@
  * This file contains do nothing stubs of all the VCD routines.
  */
 
-# include  "vpi_user.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>

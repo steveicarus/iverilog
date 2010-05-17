@@ -20,7 +20,6 @@
 # include "sys_priv.h"
 # include "sys_random.h"
 
-# include  <vpi_user.h>
 # include  <assert.h>
 # include  <stdlib.h>
 # include  <math.h>

@@ -19,7 +19,7 @@
 #include <assert.h>
 #include <math.h>
 #include <string.h>
-#include <vpi_user.h>
+#include "vpi_user.h"
 
 /*
  * This routine returns 1 if the argument supports has a numeric value,

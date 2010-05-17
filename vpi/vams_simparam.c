@@ -16,6 +16,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "sys_priv.h"
 #include <assert.h>
 #ifdef HAVE_MALLOC_H
 # include <malloc.h>
@@ -24,8 +25,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <vpi_user.h>
-#include "sys_priv.h"
 #include "version_base.h"
 
 /* Once we have real string objects replace this with a dynamic string. */

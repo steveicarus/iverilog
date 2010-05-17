@@ -17,13 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-#include "vpi_config.h"
-
-#include "vpi_user.h"
+#include "sys_priv.h"
 #include <string.h>
 #include <math.h>
 #include <assert.h>
-#include <sys_priv.h>
 
 static PLI_INT32 sys_time_calltf(PLI_BYTE8*name)
 {

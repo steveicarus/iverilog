@@ -21,7 +21,6 @@
 # define _ISOC99_SOURCE 1
 # define _SVID_SOURCE 1
 
-# include  "vpi_user.h"
 # include  "sys_priv.h"
 # include  <ctype.h>
 # include  <errno.h>

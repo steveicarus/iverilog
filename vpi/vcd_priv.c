@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-#include  "vpi_config.h"
+#include  "sys_priv.h"
 #include  "vcd_priv.h"
 #include  <stdio.h>
 #include  <stdlib.h>
@@ -28,7 +28,6 @@
 #endif
 #include  <ctype.h>
 #include  "stringheap.h"
-#include  <sys_priv.h>
 
 int is_escaped_id(const char *name)
 {

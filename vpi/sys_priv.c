@@ -17,11 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+#include "sys_priv.h"
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "sys_priv.h"
 
 PLI_UINT64 timerec_to_time64(const struct t_vpi_time*time)
 {

@@ -18,7 +18,6 @@
  */
 
 # include  "sys_priv.h"
-# include  <vpi_user.h>
 # include  <string.h>
 # include  <stdlib.h>
 # include  <assert.h>

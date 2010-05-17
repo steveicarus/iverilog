@@ -24,7 +24,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <vpi_user.h>
+#include "vpi_user.h"
 
 /*
  * Compile time options: (set in the Makefile.)

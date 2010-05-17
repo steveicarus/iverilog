@@ -16,9 +16,8 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <assert.h>
-#include <vpi_user.h>
 #include "sys_priv.h"
+#include <assert.h>
 
 static PLI_INT32 finish_and_return_calltf(PLI_BYTE8* name)
 {
