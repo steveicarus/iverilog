@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -56,14 +56,11 @@ PLI_INT32 acc_fetch_type(handle obj)
 
 	  case vpiModule:
 	    return accModule;
-
-	  default:
-	    vpi_printf("acc_fetch_type: vpiType %d is what accType?\n",
-		       (int)vpi_get(vpiType, obj));
-	    return accUnknown;
       }
 
-      return 0;
+      vpi_printf("acc_fetch_type: vpiType %d is what accType?\n",
+                 (int)vpi_get(vpiType, obj));
+      return accUnknown;
 }
 
 PLI_INT32 acc_fetch_fulltype(handle obj)

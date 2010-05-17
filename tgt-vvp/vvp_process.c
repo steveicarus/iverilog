@@ -643,19 +643,11 @@ static int show_stmt_assign(ivl_statement_t net)
       lval = ivl_stmt_lval(net, 0);
 
       sig = ivl_lval_sig(lval);
-      if (sig) switch (ivl_signal_data_type(sig)) {
-
-	  case IVL_VT_REAL:
+      if (sig && (ivl_signal_data_type(sig) == IVL_VT_REAL)) {
 	    return show_stmt_assign_sig_real(net);
-
-	  default:
-	    return show_stmt_assign_vector(net);
-
-      } else {
-	    return show_stmt_assign_vector(net);
       }
 
-      return 0;
+      return show_stmt_assign_vector(net);
 }
 
 /*
