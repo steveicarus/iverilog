@@ -58,12 +58,12 @@ AC_SUBST(EXEEXT)
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
 
-# Check to see if we are using the SUN compiler. If so then configure
-# some of the flags to match the SUN compiler syntax. This is also used
+# Check to see if we are using the Sun compiler. If so then configure
+# some of the flags to match the Sun compiler syntax. This is also used
 # in the aclocal.m4 file to configure the flags used to build and link
 # dynamic libraries
-AC_CHECK_DECL(__SUNPRO_C, using_sunpro=1, using_sunpro=0)
-if test ${using_sunpro} = 1
+AC_CHECK_DECL(__SUNPRO_C, using_sunpro_c=1, using_sunpro_c=0)
+if test ${using_sunpro_c} = 1
 then
 AC_SUBST(DEPENDENCY_FLAG, [-xMMD])
 AC_SUBST(WARNING_FLAGS, [""])
@@ -73,6 +73,26 @@ AC_SUBST(WARNING_FLAGS, ["-Wall -Wshadow"])
 fi
 
 AC_LANG(C++)
+
+# Check that we are using either the GNU compilers or the Sun compilers
+# but not a mixture of the two (not currently supported).
+AC_CHECK_DECL(__SUNPRO_CC, using_sunpro_cc=1, using_sunpro_cc=0)
+if test ${using_sunpro_c} = 1
+then
+  if test ${using_sunpro_cc} = 0
+  then
+    echo "*** Error: No support for mixing GNU and Sun compilers. ***"
+    echo "           Using Sun C compiler and GNU C++ compiler.."
+    exit 1
+  fi
+else
+  if test ${using_sunpro_cc} = 1
+  then
+    echo "*** Error: No support for mixing GNU and Sun compilers. ***"
+    echo "           Using GNU C compiler and Sun C++ compiler.."
+    exit 1
+  fi
+fi
 
 AC_CHECK_HEADERS(getopt.h malloc.h inttypes.h libiberty.h iosfwd sys/wait.h)
 

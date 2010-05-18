@@ -129,7 +129,7 @@ case "${host}" in
         ;;
 
      *-*-solaris*)
-        if test ${using_sunpro} = 1
+        if test ${using_sunpro_c} = 1
         then
            shared="-G"
         fi
@@ -161,7 +161,7 @@ case "${host}" in
         ;;
 
      *-*-solaris*)
-        if test ${using_sunpro} = 1
+        if test ${using_sunpro_c} = 1
         then
            PICFLAG=-G
         fi
