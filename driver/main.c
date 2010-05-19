@@ -375,6 +375,7 @@ static int t_preprocess_only(void)
       if (rc != 0) {
 	    if (WIFEXITED(rc)) {
 		  fprintf(stderr, "errors preprocessing Verilog program.\n");
+		  free(cmd);
 		  return WEXITSTATUS(rc);
 	    }
 
