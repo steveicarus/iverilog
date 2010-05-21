@@ -879,15 +879,21 @@ void sys_lxt2_register()
       vpiHandle res;
 
 
-	/* Scan the extended arguments, looking for lxt optimization
+	/* Scan the extended arguments, looking for lxt2 optimization
 	   flags. */
       vpi_get_vlog_info(&vlog_info);
 
       for (idx = 0 ;  idx < vlog_info.argc ;  idx += 1) {
-	    if (strcmp(vlog_info.argv[idx],"-lxt-space") == 0) {
+	    if (strcmp(vlog_info.argv[idx],"-lxt2-space") == 0) {
 		  lxm_optimum_mode = LXM_SPACE;
 
-	    } else if (strcmp(vlog_info.argv[idx],"-lxt-speed") == 0) {
+	    } else if (strcmp(vlog_info.argv[idx],"-lxt2-speed") == 0) {
+		  lxm_optimum_mode = LXM_SPEED;
+
+	    } else if (strcmp(vlog_info.argv[idx],"-lx2-space") == 0) {
+		  lxm_optimum_mode = LXM_SPACE;
+
+	    } else if (strcmp(vlog_info.argv[idx],"-lx2-speed") == 0) {
 		  lxm_optimum_mode = LXM_SPEED;
 
 	    }
