@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -47,9 +47,11 @@ extern void sys_lxt_register();
 static void sys_lxt_register() { fputs("LXT support disabled since libbzip2 not available\n",stderr); exit(1); }
 #endif
 extern void sys_lxt2_register();
+extern void sys_fst_register();
 #else
 static void sys_lxt_register() { fputs("LXT support disabled since zlib not available\n",stderr); exit(1); }
 static void sys_lxt2_register() { fputs("LXT2 support disabled since zlib not available\n",stderr); exit(1); }
+static void sys_fst_register() { fputs("FST support disabled since zlib not available\n",stderr); exit(1); }
 #endif
 
 static void sys_lxt_or_vcd_register()
@@ -78,7 +80,13 @@ static void sys_lxt_or_vcd_register()
 
       for (idx = 0 ;  idx < vlog_info.argc ;  idx += 1) {
 
-	    if (strcmp(vlog_info.argv[idx],"-lxt") == 0) {
+            if (strcmp(vlog_info.argv[idx],"-fst") == 0) {
+		  dumper = "fst";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-fst-none") == 0) {
+		  dumper = "none";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-lxt") == 0) {
 		  dumper = "lxt";
 
 	    } else if (strcmp(vlog_info.argv[idx],"-lxt-space") == 0) {
@@ -134,6 +142,12 @@ static void sys_lxt_or_vcd_register()
 
       else if (strcmp(dumper, "VCD") == 0)
 	    sys_vcd_register();
+
+      else if (strcmp(dumper, "fst") == 0)
+	    sys_fst_register();
+
+      else if (strcmp(dumper, "FST") == 0)
+	    sys_fst_register();
 
       else if (strcmp(dumper, "lxt") == 0)
 	    sys_lxt_register();

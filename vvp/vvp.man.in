@@ -1,4 +1,4 @@
-.TH vvp 1 "April 17th, 2009" "" "Version %M.%m.%n %E"
+.TH vvp 1 "May 21st, 2010" "" "Version %M.%m.%n %E"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -103,9 +103,14 @@ while a simulation is still running (or paused) or if your simulation
 crashes or is killed, you still have a useful dump.
 
 .TP 8
+.B -fst
+A modern dumping format this is both faster and more compact than the
+other dumping formats.
+
+.TP 8
 .B -none
 This flag can be used by itself or appended to the end of the above
-dumpers (vcd/lxt/lxt2/lx2) to suppress all waveform output. This can
+dumpers (vcd/lxt/lxt2/lx2/fst) to suppress all waveform output. This can
 make long simulations run faster.
 
 .TP 8
@@ -128,7 +133,7 @@ The vvp command also accepts some environment variables that control
 its behavior. These can be used to make semi-permanent changes.
 
 .TP 8
-.B IVERILOG_DUMPER=\fIlxt|lxt2|lx2|vcd|none\fP
+.B IVERILOG_DUMPER=\fIfst|lxt|lxt2|lx2|vcd|none\fP
 This selects the output format for the waveform output. Normally,
 waveforms are dumped in vcd format, but this variable can be used to
 select lxt format, which is far more compact, though limited to
@@ -158,7 +163,7 @@ iverilog\-vpi(1),
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2001\-2009 Stephen Williams
+Copyright \(co  2001\-2010 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0
