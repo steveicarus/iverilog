@@ -105,7 +105,7 @@ crashes or is killed, you still have a useful dump.
 .TP 8
 .B -fst
 A modern dumping format this is both faster and more compact than the
-other dumping formats.
+other dumping formats. It supports incremental dumping just like -lxt2.
 
 .TP 8
 .B -none
