@@ -757,8 +757,9 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 
 	    int dep = draw_scope(item);
 
-	    vcd_names_sort(&lxt_tab);
 	    scan_item(depth, item, 0);
+	      /* The scope list must be sorted after we scan an item.  */
+	    vcd_names_sort(&lxt_tab);
 
 	    while (dep--) pop_scope();
       }
