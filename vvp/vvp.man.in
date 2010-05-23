@@ -1,4 +1,4 @@
-.TH vvp 1 "May 21st, 2010" "" "Version %M.%m.%n %E"
+.TH vvp 1 "May 23rd, 2010" "" "Version %M.%m.%n %E"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -78,7 +78,7 @@ be assured that they do not interfere with user defined plus-args.
 .PP
 There are a few extended arguments that are interpreted by the
 standard system.vpi module, which implements the standard system tasks
-and so is always included. These arguments are described here.
+and are always included. These arguments are described here.
 .TP 8
 .B -vcd
 This extended argument sets the wave dump format to VCD. This is the
@@ -96,16 +96,33 @@ that leads to the best execution time and the fastest read time, at
 the expense of some file size.
 
 .TP 8
-.B -lxt2\fR|\fP-lx2
-The LXT2 format is slower then LXT (faster then VCD) but takes less
-space, and is written out incrementally. Thus, you can view lxt2 files
-while a simulation is still running (or paused) or if your simulation
-crashes or is killed, you still have a useful dump.
+.B -lxt2\fR|\fP-lxt2-speed\fR|\fP-lxt2-space
+.br
+.ns
+.TP
+.B -lx2\fR|\fP-lx2-speed\fR|\fP-lx2-space
+The LXT2 format is slower then LXT but usually takes less space, and
+is written out incrementally. Thus, you can view lxt2 files while a
+simulation is still running (or paused) or if your simulation crashes
+or is killed, you still have a useful dump. The \fB\-lxt2\-speed\fP
+or \fB\-lx2\-speed\fP arguments are the same as \fB\-lxt2\fP or
+\fB\-lx2\fP. The \fB\-lxt2\-space\fP or \fB\-lx2\-space\fP arguments
+enable better compression and turn off incremental writing.
 
 .TP 8
-.B -fst
-A modern dumping format this is both faster and more compact than the
-other dumping formats. It supports incremental dumping just like -lxt2.
+.B -fst\fR|\fP-fst-speed\fR|\fP-fst-space
+.br
+.ns
+.TP
+.B -fst-space-speed\fR|\fP-fst-speed-space
+This is a modern dumping format that is both faster and more compact
+than the other dumping formats. It supports incremental dumping just
+like \fB\-lxt2\fP. The \fB\-fst\-speed\fP argument uses a faster
+compression methods that creates a noticeably larger output file.
+The \fB\-fst\-space\fP argument performs a repack of the file on
+close to produce the smallest possible dump file. The
+\fB\-fst\-space\-speed\fP or \fB\-fst\-speed\-space\fP arguments
+use the faster compression method and repack the file on close.
 
 .TP 8
 .B -none

@@ -83,6 +83,17 @@ static void sys_lxt_or_vcd_register()
             if (strcmp(vlog_info.argv[idx],"-fst") == 0) {
 		  dumper = "fst";
 
+	    } else if (strcmp(vlog_info.argv[idx],"-fst-space") == 0) {
+		  dumper = "fst";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-fst-speed") == 0) {
+		  dumper = "fst";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-fst-space-speed") == 0) {
+		  dumper = "fst";
+	    } else if (strcmp(vlog_info.argv[idx],"-fst-speed-space") == 0) {
+		  dumper = "fst";
+
 	    } else if (strcmp(vlog_info.argv[idx],"-fst-none") == 0) {
 		  dumper = "none";
 

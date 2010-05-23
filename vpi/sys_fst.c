@@ -58,6 +58,13 @@ static int dump_is_full = 0;
 static int finish_status = 0;
 
 
+static enum lxm_optimum_mode_e {
+      LXM_NONE  = 0,
+      LXM_SPACE = 1,
+      LXM_SPEED = 2,
+      LXM_BOTH = 3
+} lxm_optimum_mode = LXM_NONE;
+
 static const char*units_names[] = {
       "s",
       "ms",
@@ -389,6 +396,16 @@ static void open_dumpfile(vpiHandle callh)
 	    fstWriterSetVersion(dump_file, "Icarus Verilog");
 	    sprintf(scale_buf, "\t%u%s\n", scale, units_names[udx]);
 	    fstWriterSetTimescaleFromString(dump_file, scale_buf);
+	      /* Set the faster dump type when requested. */
+	    if ((lxm_optimum_mode == LXM_SPEED) ||
+	        (lxm_optimum_mode == LXM_BOTH)) {
+		  fstWriterSetPackType(dump_file, 1);
+	    }
+	      /* Set the most effective compression when requested. */
+	    if ((lxm_optimum_mode == LXM_SPACE) ||
+	        (lxm_optimum_mode == LXM_BOTH)) {
+		  fstWriterSetRepackOnClose(dump_file, 1);
+	    }
       }
 }
 
@@ -799,8 +816,28 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 
 void sys_fst_register()
 {
+      int idx;
+      struct t_vpi_vlog_info vlog_info;
       s_vpi_systf_data tf_data;
       vpiHandle res;
+
+	/* Scan the extended arguments, looking for fst optimization flags. */
+      vpi_get_vlog_info(&vlog_info);
+
+	/* The "speed" option is not used in this dumper. */
+      for (idx = 0 ;  idx < vlog_info.argc ;  idx += 1) {
+	    if (strcmp(vlog_info.argv[idx],"-fst-space") == 0) {
+		  lxm_optimum_mode = LXM_SPACE;
+
+	    } else if (strcmp(vlog_info.argv[idx],"-fst-speed") == 0) {
+		  lxm_optimum_mode = LXM_SPEED;
+
+	    } else if (strcmp(vlog_info.argv[idx],"-fst-space-speed") == 0) {
+		  lxm_optimum_mode = LXM_BOTH;
+	    } else if (strcmp(vlog_info.argv[idx],"-fst-speed-space") == 0) {
+		  lxm_optimum_mode = LXM_BOTH;
+	    }
+      }
 
       /* All the compiletf routines are located in vcd_priv.c. */
 

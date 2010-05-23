@@ -878,11 +878,10 @@ void sys_lxt2_register()
       s_vpi_systf_data tf_data;
       vpiHandle res;
 
-
-	/* Scan the extended arguments, looking for lxt2 optimization
-	   flags. */
+	/* Scan the extended arguments, looking for lxt2 optimization flags. */
       vpi_get_vlog_info(&vlog_info);
 
+	/* The "speed" option is not used in this dumper. */
       for (idx = 0 ;  idx < vlog_info.argc ;  idx += 1) {
 	    if (strcmp(vlog_info.argv[idx],"-lxt2-space") == 0) {
 		  lxm_optimum_mode = LXM_SPACE;
