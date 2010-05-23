@@ -93,7 +93,7 @@ static PLI_INT32 sys_realtime_calltf(PLI_BYTE8*name)
       now.type = vpiScaledRealTime;
       vpi_get_time(mod, &now);
 
-	/* For $abstime() we return the time in second. */ 
+	/* For $abstime() we return the time in second. */
       if (strcmp(name, "$abstime") == 0) {
 	    now.real *= pow(10.0, vpi_get(vpiTimeUnit, mod));
       }

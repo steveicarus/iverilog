@@ -64,7 +64,7 @@ char *get_filename(vpiHandle callh, char *name, vpiHandle file)
 {
       s_vpi_value val;
       unsigned len, idx;
-      
+
 	/* Get the filename. */
       val.format = vpiStringVal;
       vpi_get_value(file, &val);

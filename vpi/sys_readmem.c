@@ -76,7 +76,7 @@ static void get_mem_params(vpiHandle argv, vpiHandle callh, char *name,
 		  vpi_free_object(argv);
 	    }
       } else {
-	   *stop_item = 0; 
+	   *stop_item = 0;
       }
 }
 

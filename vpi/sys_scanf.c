@@ -546,7 +546,7 @@ static int is_assignable_obj(vpiHandle obj)
 	case vpiMemoryWord:
 	    if (vpi_get(vpiType, vpi_handle(vpiParent, obj)) == vpiMemory) {
 		  rtn = 1;
-	    } 
+	    }
 	    break;
 	case vpiPartSelect:
 	    if (! is_assignable_obj(vpi_handle(vpiParent, obj))) break;

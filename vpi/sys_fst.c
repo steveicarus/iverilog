@@ -209,7 +209,7 @@ static PLI_INT32 dumpvars_cb(p_cb_data cause)
       /* nothing to do for $enddefinitions $end */
 
       if (!dump_is_off) {
-	    fstWriterEmitTimeChange(dump_file, dumpvars_time); 
+	    fstWriterEmitTimeChange(dump_file, dumpvars_time);
 	    /* nothing to do for  $dumpvars... */
 	    vcd_checkpoint();
 	    /* ...nothing to do for $end */
@@ -617,7 +617,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  new_ident = fstWriterCreateVar(dump_file, type,
 		                                 FST_VD_IMPLICIT, size, buf,
 		                                 (fstHandle)(long)ident);
-	  	 free(buf);
+		  free(buf);
 	    } else {
 		  new_ident = fstWriterCreateVar(dump_file, type,
 		                                 FST_VD_IMPLICIT, size, name,
@@ -781,7 +781,7 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 		  scname = strdup(vpi_get_str(vpiFullName,
 		                              vpi_handle(vpiScope, item)));
 		  fullname = vpi_get_str(vpiFullName, item);
-		  if (((item_type != vpiMemoryWord) && 
+		  if (((item_type != vpiMemoryWord) &&
 		       vcd_names_search(&fst_tab, scname)) ||
 		      vcd_names_search(&fst_var, fullname)) {
 		        vpi_printf("FST warning: skipping signal %s, "
