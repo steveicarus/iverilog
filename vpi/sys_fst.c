@@ -607,25 +607,26 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 
             if (vpi_get(vpiSize, item) > 1
-                || vpi_get(vpiLeftRange, item) != 0)
-		{
-		int slen = strlen(name);
-		char *buf = malloc(slen + 65);
-		sprintf(buf, "%s [%i:%i]", name,
-                          (int)vpi_get(vpiLeftRange, item),
-                          (int)vpi_get(vpiRightRange, item));
+                || vpi_get(vpiLeftRange, item) != 0) {
+		  int slen = strlen(name);
+		  char *buf = malloc(slen + 65);
+		  sprintf(buf, "%s [%i:%i]", name,
+                            (int)vpi_get(vpiLeftRange, item),
+                            (int)vpi_get(vpiRightRange, item));
 
-
-		new_ident = fstWriterCreateVar(dump_file, type, FST_VD_IMPLICIT, size, buf, (fstHandle)ident);
-		free(buf);
-		}
-		else
-		{
-		new_ident = fstWriterCreateVar(dump_file, type, FST_VD_IMPLICIT, size, name, (fstHandle)ident);
-		}
+		  new_ident = fstWriterCreateVar(dump_file, type,
+		                                 FST_VD_IMPLICIT, size, buf,
+		                                 (fstHandle)(long)ident);
+	  	 free(buf);
+	    } else {
+		  new_ident = fstWriterCreateVar(dump_file, type,
+		                                 FST_VD_IMPLICIT, size, name,
+		                                 (fstHandle)(long)ident);
+	    }
 
 	    if (!ident) {
-		  if (nexus_id) set_nexus_ident(nexus_id, (const char *)new_ident);
+		  if (nexus_id) set_nexus_ident(nexus_id,
+		                                (const char *)(long)new_ident);
 
 		    /* Add a callback for the signal. */
 		  info = malloc(sizeof(*info));
