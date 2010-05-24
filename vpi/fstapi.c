@@ -109,8 +109,13 @@ return(pnt);
 }
 #else
 #include <sys/mman.h>
-#define fstMmap(__addr,__len,__prot,__flags,__fd,__off) mmap((__addr),(__len),(__prot),(__flags),(__fd),(__off))
-#define fstMunmap(__addr,__len) 			munmap((__addr),(__len))
+#if defined(__SUNPRO_C)
+#define FST_CADDR_T_CAST (caddr_t)
+#else
+#define FST_CADDR_T_CAST
+#endif
+#define fstMmap(__addr,__len,__prot,__flags,__fd,__off) (void*)mmap(FST_CADDR_T_CAST (__addr),(__len),(__prot),(__flags),(__fd),(__off))
+#define fstMunmap(__addr,__len) 			munmap(FST_CADDR_T_CAST (__addr),(__len))
 #endif
 
 
@@ -2597,15 +2602,19 @@ while(blkpos < endfile)
 			xc->double_endian_match = (dcheck == FST_DOUBLE_ENDTEST);
 			if(!xc->double_endian_match)
 				{
-				unsigned char rvs_buf[8];
+				union	{
+  					unsigned char rvs_buf[8];
+  					double d;
+  					} vu;
+
 				unsigned char *dcheck_alias = (unsigned char *)&dcheck;
 				int rvs_idx;
 
 				for(rvs_idx=0;rvs_idx<8;rvs_idx++)
 					{
-					rvs_buf[rvs_idx] = dcheck_alias[7-rvs_idx];
+					vu.rvs_buf[rvs_idx] = dcheck_alias[7-rvs_idx];
 					}
-				if(*((double *)rvs_buf) != FST_DOUBLE_ENDTEST)
+				if(vu.d != FST_DOUBLE_ENDTEST)
 					{
 					break; /* either corrupt file or wrong architecture (offset +33 also functions as matchword) */
 					}
@@ -2876,7 +2885,7 @@ int fstReaderIterBlocks(void *ctx,
 {
 struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
 
-uint64_t previous_time = ~0;
+uint64_t previous_time = UINT64_MAX;
 uint64_t *time_table = NULL;
 uint64_t tsec_nitems;
 int secnum = 0;
@@ -4182,5 +4191,5 @@ if(xc->signal_lens[facidx] == 1)
         }               
 }
 
-return(NULL);
+/* return(NULL); */
 }
