@@ -49,53 +49,76 @@ int number_is_unknown(ivl_expr_t ex)
 }
 
 /*
- * This function returns TRUE if the number can be represented in a
- * 16bit immediate value. This amounts to looking for non-zero bits
- * above bitX. The maximum size of the immediate may vary, so use
- * lim_wid at the width limit to use.
+ * This function returns TRUE if the number can be represented as a
+ * lim_wid immediate value. This amounts to verifying that any upper
+ * bits are the same. For a negative value we do not support the most
+ * negative twos-complement value since it can not be negated. This
+ * code generator always emits positive values, hence the negation
+ * requirement.
  */
 int number_is_immediate(ivl_expr_t ex, unsigned lim_wid, int negative_ok_flag)
 {
-      const char*bits;
+      const char *bits;
       unsigned nbits = ivl_expr_width(ex);
       char pad_bit = '0';
       unsigned idx;
 
+	/* We can only convert numbers to an immediate value. */
       if (ivl_expr_type(ex) != IVL_EX_NUMBER
 	  && ivl_expr_type(ex) != IVL_EX_ULONG
 	  && ivl_expr_type(ex) != IVL_EX_DELAY)
 	    return 0;
 
+	/* If a negative value is OK, then we really have one less
+	 * significant bit because of the sign bit. */
+      if (negative_ok_flag) lim_wid -= 1;
+
+	/* This is an unsigned value so it can not have the -2**N problem. */
       if (ivl_expr_type(ex) == IVL_EX_ULONG) {
-	    long imm;
-	    if (lim_wid >= 8*sizeof(long)) return 1;
-	      /* At this point we know that lim_wid is smaller than a long. */
-	    imm = labs(ivl_expr_uvalue(ex));
-	    if (imm < (1L<<lim_wid)) return 1;
+	    unsigned long imm;
+	    if (lim_wid >= 8*sizeof(unsigned long)) return 1;
+	      /* At this point we know that lim_wid is smaller than an
+	       * unsigned long variable. */
+	    imm = ivl_expr_uvalue(ex);
+	    if (imm < (1UL << lim_wid)) return 1;
 	    else return 0;
       }
 
+	/* This is an unsigned value so it can not have the -2**N problem. */
       if (ivl_expr_type(ex) == IVL_EX_DELAY) {
+	    uint64_t imm;
 	    if (lim_wid >= 8*sizeof(uint64_t)) return 1;
-	      /* For now we only support this as a 64 bit value. */
+	      /* At this point we know that lim_wid is smaller than a
+	       * uint64_t variable. */
+	    imm = ivl_expr_delay_val(ex);
+	    if (imm < ((uint64_t)1 << lim_wid)) return 1;
 	    else return 0;
       }
 
       bits = ivl_expr_bits(ex);
 
-      if (ivl_expr_signed(ex) && bits[nbits-1]=='1')
-	    pad_bit = '1';
+      if (ivl_expr_signed(ex) && bits[nbits-1]=='1') pad_bit = '1';
 
-      if (pad_bit == '1' && !negative_ok_flag)
-	    return 0;
+      if (pad_bit == '1' && !negative_ok_flag) return 0;
 
       for (idx = lim_wid ;  idx < nbits ;  idx += 1)
-	    if (bits[idx] != pad_bit)
-		  return 0;
+	    if (bits[idx] != pad_bit) return 0;
+
+	/* If we have a negative number make sure it is not too big. */
+      if (pad_bit == '1') {
+	    for (idx = 0; idx < lim_wid; idx += 1)
+		  if (bits[idx] == '1') return 1;
+	    return 0;
+      }
 
       return 1;
 }
 
+/*
+ * We can return positive or negative values. You must verify that the
+ * number is not unknown (number_is_unknown) and is small enough
+ * (number_is_immediate).
+ */
 long get_number_immediate(ivl_expr_t ex)
 {
       long imm = 0;
@@ -109,18 +132,19 @@ long get_number_immediate(ivl_expr_t ex)
 	  case IVL_EX_NUMBER: {
 		const char*bits = ivl_expr_bits(ex);
 		unsigned nbits = ivl_expr_width(ex);
+		  /* We can not copy more bits than fit into a long. */
+		if (nbits > 8*sizeof(long)) nbits = 8*sizeof(long);
 		for (idx = 0 ; idx < nbits ; idx += 1) switch (bits[idx]){
 		    case '0':
 		      break;
 		    case '1':
-		      assert(idx < IMM_WID);
 		      imm |= 1L << idx;
 		      break;
 		    default:
 		      assert(0);
 		}
-		if (ivl_expr_signed(ex) && bits[nbits-1]=='1' && nbits < IMM_WID)
-		      imm |= -1L << nbits;
+		if (ivl_expr_signed(ex) && bits[nbits-1]=='1' &&
+		    nbits < 8*sizeof(long)) imm |= -1L << nbits;
 		break;
 	  }
 
@@ -1311,7 +1335,7 @@ static struct vector_info draw_add_immediate(ivl_expr_t le,
 			  ivl_expr_file(re), ivl_expr_lineno(re), wid);
 		  vvp_errors += 1;
 	    }
-	    fprintf(vvp_out, "   %%movi %u, %lu %u;\n", lv.base, imm, wid);
+	    fprintf(vvp_out, "    %%movi %u, %lu %u;\n", lv.base, imm, wid);
 	    break;
 
 	  case 1: /* Left expression is 1...1 (i.e. -1) */
@@ -1327,7 +1351,7 @@ static struct vector_info draw_add_immediate(ivl_expr_t le,
 				ivl_expr_file(re), ivl_expr_lineno(re), wid);
 			vvp_errors += 1;
 		  }
-		  fprintf(vvp_out, "   %%movi %u, %lu %u;\n", lv.base, imm, wid);
+		  fprintf(vvp_out, "    %%movi %u, %lu %u;\n", lv.base, imm, wid);
 	    }
 	    break;
 
@@ -1337,7 +1361,7 @@ static struct vector_info draw_add_immediate(ivl_expr_t le,
 	    break;
 
 	  default: /* The regular case. */
-	    fprintf(vvp_out, "   %%addi %u, %lu, %u;\n", lv.base, imm, wid);
+	    fprintf(vvp_out, "    %%addi %u, %lu, %u;\n", lv.base, imm, wid);
 	    break;
       }
 
