@@ -115,7 +115,7 @@ return(pnt);
 #define FST_CADDR_T_CAST
 #endif
 #define fstMmap(__addr,__len,__prot,__flags,__fd,__off) (void*)mmap(FST_CADDR_T_CAST (__addr),(__len),(__prot),(__flags),(__fd),(__off))
-#define fstMunmap(__addr,__len) 			munmap(FST_CADDR_T_CAST (__addr),(__len))
+#define fstMunmap(__addr,__len) 			{ if(__addr) munmap(FST_CADDR_T_CAST (__addr),(__len)); }
 #endif
 
 
@@ -557,14 +557,12 @@ if(!xc->curval_mem)
 
 static void fstDestroyMmaps(struct fstWriterContext *xc, int is_closing)
 {
-if(xc->valpos_mem)
-	{
-	fstMunmap(xc->valpos_mem, xc->maxhandle * 4 * sizeof(uint32_t));
-	xc->valpos_mem = NULL;
-	}
+fstMunmap(xc->valpos_mem, xc->maxhandle * 4 * sizeof(uint32_t));
+xc->valpos_mem = NULL;
+
+#if defined __CYGWIN__ || defined __MINGW32__
 if(xc->curval_mem)
 	{
-#if defined __CYGWIN__ || defined __MINGW32__
 	if(!is_closing) /* need to flush out for next emulated mmap() read */
 		{
 		unsigned char *pnt = xc->curval_mem;
@@ -580,11 +578,11 @@ if(xc->curval_mem)
 		        }
 		lseek(__fd, cur_offs, SEEK_SET);
 		}
+	}
 #endif
 
-	fstMunmap(xc->curval_mem, xc->maxvalpos);
-	xc->curval_mem = NULL;
-	}
+fstMunmap(xc->curval_mem, xc->maxvalpos);
+xc->curval_mem = NULL;
 }
 
 
@@ -817,7 +815,6 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 			if(fp)
 				{
 				void *dsth;
-				int rc;
 				char gz_membuf[FST_GZIO_LEN];
 
 				fseeko(xc->handle, 0, SEEK_END);
@@ -834,7 +831,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 				for(offpnt = 0; offpnt < uclen; offpnt += FST_GZIO_LEN)
 					{
 					size_t this_len = ((uclen - offpnt) > FST_GZIO_LEN) ? FST_GZIO_LEN : (uclen - offpnt);
-					rc = fstFread(gz_membuf, this_len, 1, xc->handle);
+					fstFread(gz_membuf, this_len, 1, xc->handle);
 					gzwrite(dsth, gz_membuf, this_len);
 					}
 				gzclose(dsth);
@@ -2340,7 +2337,7 @@ struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
 char str[FST_ID_NAM_SIZ+1];
 char *pnt;
 int ch, scopetype;
-int vartype, vardir;
+int vartype;
 uint32_t len, alias;
 uint32_t maxvalpos=0;
 int num_signal_dyn = 65536;
@@ -2453,7 +2450,7 @@ while(!feof(xc->fh))
 		case FST_VT_VCD_ARRAY:
 		case FST_VT_VCD_REALTIME:
 			vartype = tag;
-			vardir = fgetc(xc->fh); /* unused in VCD reader */
+			/* vardir = */ fgetc(xc->fh); /* unused in VCD reader, but need to advance read pointer */
 			pnt = str;
 			while((ch = fgetc(xc->fh))) 
 				{
@@ -2549,7 +2546,14 @@ if(sectype == FST_BL_ZWRAPPER)
 	char gz_membuf[FST_GZIO_LEN];
 	void *zhandle;
         int flen = strlen(xc->filename);
-        char *hf = calloc(1, flen + 16 + 32 + 1);
+        char *hf;
+
+	seclen = fstReaderUint64(xc->f);
+	uclen = fstReaderUint64(xc->f);
+
+	if(!seclen) return(0); /* not finished compressing, this is a failed read */
+
+        hf = calloc(1, flen + 16 + 32 + 1);
 
 	sprintf(hf, "%s.upk_%d_%p", xc->filename, getpid(), (void *)xc);
 	fcomp = fopen(hf, "w+b");
@@ -2561,11 +2565,6 @@ if(sectype == FST_BL_ZWRAPPER)
 	unlink(hf);
 	free(hf);
 #endif
-
-	seclen = fstReaderUint64(xc->f);
-	uclen = fstReaderUint64(xc->f);
-
-	if(!seclen) return(0); /* not finished compressing, this is a failed read */
 
 	fseeko(xc->f, 1+8+8, SEEK_SET);
 	fflush(xc->f);
