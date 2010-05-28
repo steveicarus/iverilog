@@ -48,15 +48,16 @@ static __inline__ unsigned peek_exp_bit(unsigned addr)
       return allocation_map[addr].exp_bit;
 }
 
-static __inline__ void set_exp(unsigned addr, ivl_expr_t exp, unsigned ebit)
+static __inline__ void set_exp(unsigned addr, ivl_expr_t expr, unsigned ebit)
 {
-      allocation_map[addr].exp = exp;
+      allocation_map[addr].exp = expr;
       allocation_map[addr].exp_bit = ebit;
 }
 
-static __inline__ void set_sig(unsigned addr, ivl_signal_t exp, unsigned sig_word, unsigned ebit)
+static __inline__ void set_sig(unsigned addr, ivl_signal_t expr,
+                               unsigned sig_word, unsigned ebit)
 {
-      allocation_map[addr].sig = exp;
+      allocation_map[addr].sig = expr;
       allocation_map[addr].sig_word = sig_word;
       allocation_map[addr].sig_bit = ebit;
 }
@@ -151,9 +152,9 @@ void clear_expression_lookaside(void)
       lookaside_top = 0;
 }
 
-static int test_expression_savable(ivl_expr_t exp)
+static int test_expression_savable(ivl_expr_t expr)
 {
-      switch (ivl_expr_type(exp)) {
+      switch (ivl_expr_type(expr)) {
 
 	  case IVL_EX_NUMBER:
 	  case IVL_EX_STRING:
@@ -164,7 +165,7 @@ static int test_expression_savable(ivl_expr_t exp)
       }
 }
 
-void save_expression_lookaside(unsigned addr, ivl_expr_t exp, unsigned wid)
+void save_expression_lookaside(unsigned addr, ivl_expr_t expr, unsigned wid)
 {
       unsigned idx;
       assert(addr >= 8);
@@ -178,11 +179,11 @@ void save_expression_lookaside(unsigned addr, ivl_expr_t exp, unsigned wid)
 	    set_sig(addr+idx, 0, 0, 0);
 
 	/* Only certain types of expressions are savable. */
-      if ( ! test_expression_savable(exp))
+      if ( ! test_expression_savable(expr))
 	    return;
 
       for (idx = 0 ;  idx < wid ;  idx += 1) {
-	    set_exp(addr+idx, exp, idx);
+	    set_exp(addr+idx, expr, idx);
       }
 
       if ((addr+wid) > lookaside_top)
@@ -280,7 +281,7 @@ static int compare_exp(ivl_expr_t l, ivl_expr_t r)
       return 0;
 }
 
-static unsigned find_expression_lookaside(ivl_expr_t exp, unsigned wid)
+static unsigned find_expression_lookaside(ivl_expr_t expr, unsigned wid)
 {
       unsigned idx, match;
       ivl_signal_t sig;
@@ -289,10 +290,10 @@ static unsigned find_expression_lookaside(ivl_expr_t exp, unsigned wid)
 	    return 0;
 
 	/* Look in the expression lookaside for this expression. */
-      assert(exp);
+      assert(expr);
       match = 0;
       for (idx = 8 ;  idx < lookaside_top ;  idx += 1) {
-	    if (! compare_exp(allocation_map[idx].exp, exp)) {
+	    if (! compare_exp(allocation_map[idx].exp, expr)) {
 		  match = 0;
 		  continue;
 	    }
@@ -310,10 +311,10 @@ static unsigned find_expression_lookaside(ivl_expr_t exp, unsigned wid)
 	/* The general expression lookup failed. If this is an
 	   IVL_EX_SIGNAL, then look again in the variable lookaside
 	   (which is saved l-values) for the expression. */
-      if (ivl_expr_type(exp) != IVL_EX_SIGNAL)
+      if (ivl_expr_type(expr) != IVL_EX_SIGNAL)
 	    return 0;
 
-      sig = ivl_expr_signal(exp);
+      sig = ivl_expr_signal(expr);
 
 	/* Only reg signals (variables) will be in the signal
 	   lookaside, because only blocking assigned values are in the
@@ -349,11 +350,11 @@ static unsigned find_expression_lookaside(ivl_expr_t exp, unsigned wid)
  * caller will not need to evaluate the expression. If this function
  * returns 0, then the expression is not found and nothing is allocated.
  */
-unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
+unsigned allocate_vector_exp(ivl_expr_t expr, unsigned wid,
 			     int exclusive_flag)
 {
       unsigned idx;
-      unsigned la = find_expression_lookaside(exp, wid);
+      unsigned la = find_expression_lookaside(expr, wid);
       if (la == 0)
 	    return 0;
 

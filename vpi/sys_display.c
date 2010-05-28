@@ -1230,7 +1230,7 @@ static PLI_INT32 sys_strobe_calltf(PLI_BYTE8*name)
 {
       vpiHandle callh, argv, scope;
       struct t_cb_data cb;
-      struct t_vpi_time time;
+      struct t_vpi_time timerec;
       struct strobe_cb_info*info;
       PLI_UINT32 fd_mcd;
 
@@ -1280,13 +1280,13 @@ static PLI_INT32 sys_strobe_calltf(PLI_BYTE8*name)
       info->scope= scope;
       array_from_iterator(info, argv);
 
-      time.type = vpiSimTime;
-      time.low = 0;
-      time.high = 0;
+      timerec.type = vpiSimTime;
+      timerec.low = 0;
+      timerec.high = 0;
 
       cb.reason = cbReadOnlySynch;
       cb.cb_rtn = strobe_cb;
-      cb.time = &time;
+      cb.time = &timerec;
       cb.obj = 0;
       cb.value = 0;
       cb.user_data = (char*)info;
@@ -1339,7 +1339,7 @@ static PLI_INT32 monitor_cb_2(p_cb_data cb)
 static PLI_INT32 monitor_cb_1(p_cb_data cause)
 {
       struct t_cb_data cb;
-      struct t_vpi_time time;
+      struct t_vpi_time timerec;
 
       if (monitor_enabled == 0) return 0;
       if (monitor_scheduled) return 0;
@@ -1348,13 +1348,13 @@ static PLI_INT32 monitor_cb_1(p_cb_data cause)
 	   the monitor to happen at the end of the time slice and mark
 	   it as scheduled. */
       monitor_scheduled += 1;
-      time.type = vpiSimTime;
-      time.low = 0;
-      time.high = 0;
+      timerec.type = vpiSimTime;
+      timerec.low = 0;
+      timerec.high = 0;
 
       cb.reason = cbReadOnlySynch;
       cb.cb_rtn = monitor_cb_2;
-      cb.time = &time;
+      cb.time = &timerec;
       cb.obj = 0;
       cb.value = 0;
       vpi_register_cb(&cb);
@@ -1376,7 +1376,7 @@ static PLI_INT32 sys_monitor_calltf(PLI_BYTE8*name)
       vpiHandle callh, argv, scope;
       unsigned idx;
       struct t_cb_data cb;
-      struct t_vpi_time time;
+      struct t_vpi_time timerec;
 
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
@@ -1412,10 +1412,10 @@ static PLI_INT32 sys_monitor_calltf(PLI_BYTE8*name)
 	/* Attach callbacks to all the parameters that might change. */
       monitor_callbacks = calloc(monitor_info.nitems, sizeof(vpiHandle));
 
-      time.type = vpiSuppressTime;
+      timerec.type = vpiSuppressTime;
       cb.reason = cbValueChange;
       cb.cb_rtn = monitor_cb_1;
-      cb.time = &time;
+      cb.time = &timerec;
       cb.value = NULL;
       for (idx = 0 ;  idx < monitor_info.nitems ;  idx += 1) {
 

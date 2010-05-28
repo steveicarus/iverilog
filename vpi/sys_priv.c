@@ -23,13 +23,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-PLI_UINT64 timerec_to_time64(const struct t_vpi_time*time)
+PLI_UINT64 timerec_to_time64(const struct t_vpi_time*timerec)
 {
       PLI_UINT64 tmp;
 
-      tmp = time->high;
+      tmp = timerec->high;
       tmp <<= 32;
-      tmp |= (PLI_UINT64) time->low;
+      tmp |= (PLI_UINT64) timerec->low;
 
       return tmp;
 }

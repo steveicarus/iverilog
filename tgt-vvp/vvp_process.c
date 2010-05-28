@@ -917,8 +917,8 @@ static int show_stmt_block_named(ivl_statement_t net, ivl_scope_t scope)
 static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
-      ivl_expr_t exp = ivl_stmt_cond_expr(net);
-      struct vector_info cond = draw_eval_expr(exp, 0);
+      ivl_expr_t expr = ivl_stmt_cond_expr(net);
+      struct vector_info cond = draw_eval_expr(expr, 0);
       unsigned count = ivl_stmt_case_count(net);
 
       unsigned local_base = local_count;
@@ -1034,8 +1034,8 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
-      ivl_expr_t exp = ivl_stmt_cond_expr(net);
-      int cond = draw_eval_real(exp);
+      ivl_expr_t expr = ivl_stmt_cond_expr(net);
+      int cond = draw_eval_real(expr);
       unsigned count = ivl_stmt_case_count(net);
 
       unsigned local_base = local_count;
@@ -1374,9 +1374,9 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
       unsigned lab_false, lab_out;
-      ivl_expr_t exp = ivl_stmt_cond_expr(net);
+      ivl_expr_t expr = ivl_stmt_cond_expr(net);
       struct vector_info cond
-	    = draw_eval_expr(exp, STUFF_OK_XZ|STUFF_OK_47|STUFF_OK_RO);
+	    = draw_eval_expr(expr, STUFF_OK_XZ|STUFF_OK_47|STUFF_OK_RO);
 
       assert(cond.wid == 1);
 
@@ -1447,14 +1447,14 @@ static int show_stmt_delay(ivl_statement_t net, ivl_scope_t sscope)
 static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
-      ivl_expr_t exp = ivl_stmt_delay_expr(net);
+      ivl_expr_t expr = ivl_stmt_delay_expr(net);
       ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
 
-      switch (ivl_expr_value(exp)) {
+      switch (ivl_expr_value(expr)) {
 
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC: {
-		struct vector_info del = draw_eval_expr(exp, 0);
+		struct vector_info del = draw_eval_expr(expr, 0);
 		fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n",
 			del.base, del.wid);
 		clr_vector(del);
@@ -1462,7 +1462,7 @@ static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
 	  }
 
 	  case IVL_VT_REAL: {
-		int word = draw_eval_real(exp);
+		int word = draw_eval_real(expr);
 		fprintf(vvp_out, "    %%cvt/ur 0, %d;\n", word);
 		clr_word(word);
 		break;
@@ -1684,9 +1684,9 @@ static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
       unsigned lab_top = local_count++, lab_out = local_count++;
-      ivl_expr_t exp = ivl_stmt_cond_expr(net);
-      struct vector_info cnt = draw_eval_expr(exp, 0);
-      char *sign = ivl_expr_signed(exp) ? "s" : "u";
+      ivl_expr_t expr = ivl_stmt_cond_expr(net);
+      struct vector_info cnt = draw_eval_expr(expr, 0);
+      char *sign = ivl_expr_signed(expr) ? "s" : "u";
 
 	/* Test that 0 < expr */
       fprintf(vvp_out, "T_%u.%u %%cmp/%s 0, %u, %u;\n", thread_count,
