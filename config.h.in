@@ -51,8 +51,8 @@
 #endif
 
 /* These two are needed by the lxt and lxt2 files (copied from GTKWave). */
-# define HAVE_ALLOCA_H 1
-# define HAVE_FSEEKO 1
+# undef HAVE_ALLOCA_H
+# undef HAVE_FSEEKO
 
 /*
  * Define this if you want to compile vvp with memory freeing and
