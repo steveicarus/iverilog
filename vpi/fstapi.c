@@ -1326,7 +1326,7 @@ struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
 if(xc && s)
         {
         int mat = 0;
-	int exp = -9;
+	int seconds_exp = -9;
 	int tv = atoi(s);
 	const char *pnt = s;
 
@@ -1334,14 +1334,14 @@ if(xc && s)
         	{
                 switch(*pnt)
                 	{
-                        case 'm': exp = -3; mat = 1; break;
-                        case 'u': exp = -6; mat = 1; break;
-                        case 'n': exp = -9; mat = 1; break;
-                        case 'p': exp = -12; mat = 1; break;
-                        case 'f': exp = -15; mat = 1; break;
-                        case 'a': exp = -18; mat = 1; break;
-                        case 'z': exp = -21; mat = 1; break;
-                        case 's': exp = -0; mat = 1; break;
+                        case 'm': seconds_exp = -3; mat = 1; break;
+                        case 'u': seconds_exp = -6; mat = 1; break;
+                        case 'n': seconds_exp = -9; mat = 1; break;
+                        case 'p': seconds_exp = -12; mat = 1; break;
+                        case 'f': seconds_exp = -15; mat = 1; break;
+                        case 'a': seconds_exp = -18; mat = 1; break;
+                        case 'z': seconds_exp = -21; mat = 1; break;
+                        case 's': seconds_exp = -0; mat = 1; break;
                         default: break;
                         }
 
@@ -1351,15 +1351,15 @@ if(xc && s)
 
 	if(tv == 10)
         	{
-                exp++;
+                seconds_exp++;
                 } 
         else
         if(tv == 100)
         	{
-                exp+=2;
+                seconds_exp+=2;
                 }
                               
-	fstWriterSetTimescale(ctx, exp);
+	fstWriterSetTimescale(ctx, seconds_exp);
         }
 }
 
