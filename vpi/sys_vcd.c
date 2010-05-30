@@ -691,7 +691,6 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			           "previously scanned scope %s.\n", fullname);
 		  } else {
 			vcd_names_add(&vcd_tab, fullname);
-			vcd_names_sort(&vcd_tab);
 		  }
 
 		  name = vpi_get_str(vpiName, item);
@@ -822,6 +821,8 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 	    dep = draw_scope(item, callh);
 
 	    scan_item(depth, item, 0);
+	      /* The scope list must be sorted after we scan an item.  */
+	    vcd_names_sort(&vcd_tab);
 
 	    while (dep--) fprintf(dump_file, "$upscope $end\n");
 

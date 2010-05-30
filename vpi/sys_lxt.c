@@ -759,8 +759,9 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 
 	    int dep = draw_scope(item);
 
-	    vcd_names_sort(&lxt_tab);
 	    scan_item(depth, item, 0);
+	      /* The scope list must be sorted after we scan an item.  */
+	    vcd_names_sort(&lxt_tab);
 
 	    while (dep--) pop_scope();
       }
@@ -780,10 +781,10 @@ void sys_lxt_register()
       s_vpi_systf_data tf_data;
 
 
-	/* Scan the extended arguments, looking for lxt optimization
-	   flags. */
+	/* Scan the extended arguments, looking for lxt optimization flags. */
       vpi_get_vlog_info(&vlog_info);
 
+	/* The "speed" option is not used in this dumper. */
       for (idx = 0 ;  idx < vlog_info.argc ;  idx += 1) {
 	    if (strcmp(vlog_info.argv[idx],"-lxt-space") == 0) {
 		  lxm_optimum_mode = LXM_SPACE;
