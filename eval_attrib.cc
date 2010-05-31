@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,7 +22,7 @@
 # include  "PExpr.h"
 # include  "netlist.h"
 # include  <iostream>
-# include  <assert.h>
+# include  <cassert>
 
 /*
  * The evaluate_attributes function evaluates the attribute
@@ -72,4 +72,3 @@ attrib_list_t* evaluate_attributes(const map<perm_string,PExpr*>&att,
       assert(idx == natt);
       return table;
 }
-

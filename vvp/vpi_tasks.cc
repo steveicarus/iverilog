@@ -29,13 +29,10 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  <stdio.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <stdlib.h>
-# include  <string.h>
-# include  <assert.h>
+# include  <cstdio>
+# include  <cstdlib>
+# include  <cstring>
+# include  <cassert>
 
 static const struct __vpirt vpip_systf_def_rt = {
       vpiUserSystf,

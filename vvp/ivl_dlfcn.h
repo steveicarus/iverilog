@@ -1,7 +1,7 @@
 #ifndef __ivl_dlfcn_H
 #define __ivl_dlfcn_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,7 +21,7 @@
 
 #if defined(__MINGW32__)
 # include <windows.h>
-# include <stdio.h>
+# include <cstdio>
 typedef void * ivl_dll_t;
 #elif defined(HAVE_DLFCN_H)
 # include  <dlfcn.h>

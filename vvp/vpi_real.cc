@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,13 +24,10 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  <stdio.h>
-# include  <stdlib.h>
-# include  <string.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <assert.h>
+# include  <cstdio>
+# include  <cstdlib>
+# include  <cstring>
+# include  <cassert>
 
 struct __vpiRealVar* vpip_realvar_from_handle(vpiHandle obj)
 {

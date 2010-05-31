@@ -1,7 +1,7 @@
 #ifndef __logic_H
 #define __logic_H
 /*
- * Copyright (c) 2000-2008,2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,7 +21,7 @@
 
 # include  "vvp_net.h"
 # include  "schedule.h"
-# include  <stddef.h>
+# include  <cstddef>
 
 /*
  * vvp_fun_boolean_ is just a common hook for holding operands.

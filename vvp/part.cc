@@ -19,13 +19,10 @@
 
 # include  "compile.h"
 # include  "part.h"
-# include  <stdlib.h>
-# include  <limits.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
+# include  <cstdlib>
+# include  <climits>
 # include  <iostream>
-# include  <assert.h>
+# include  <cassert>
 
 struct vvp_fun_part_state_s {
       vvp_fun_part_state_s() : bitsr(0.0) {}

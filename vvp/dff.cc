@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,14 +20,11 @@
 # include  "compile.h"
 # include  "schedule.h"
 # include  "dff.h"
-# include  <limits.h>
-# include  <stdio.h>
-# include  <assert.h>
-# include  <stdlib.h>
+# include  <climits>
+# include  <cstdio>
+# include  <cassert>
+# include  <cstdlib>
 # include  <iostream>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
 
 vvp_dff::vvp_dff(bool invert_clk, bool invert_ce)
 : iclk_(invert_clk), ice_(invert_ce)

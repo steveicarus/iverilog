@@ -22,7 +22,7 @@
 # include  "vvp_net_sig.h"
 # include  "statistics.h"
 # include  "vpi_priv.h"
-# include  <assert.h>
+# include  <cassert>
 #ifdef CHECK_WITH_VALGRIND
 # include  <valgrind/memcheck.h>
 # include  <map>

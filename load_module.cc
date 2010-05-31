@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,8 +28,8 @@
 # include  <string>
 # include  <sys/types.h>
 # include  <dirent.h>
-# include  <ctype.h>
-# include  <assert.h>
+# include  <cctype>
+# include  <cassert>
 
 /*
  * The module library items are maps of key names to file name within

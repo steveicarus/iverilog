@@ -26,9 +26,9 @@
 # include  "vpi_priv.h"
 # include  "statistics.h"
 # include  "vvp_cleanup.h"
-# include  <stdio.h>
-# include  <stdlib.h>
-# include  <string.h>
+# include  <cstdio>
+# include  <cstdlib>
+# include  <cstring>
 # include  <unistd.h>
 
 #if defined(HAVE_SYS_RESOURCE_H)

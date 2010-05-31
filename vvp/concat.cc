@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,12 +19,9 @@
 
 # include  "compile.h"
 # include  "vvp_net.h"
-# include  <stdlib.h>
+# include  <cstdlib>
 # include  <iostream>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <assert.h>
+# include  <cassert>
 
 
 vvp_fun_concat::vvp_fun_concat(unsigned w0, unsigned w1,

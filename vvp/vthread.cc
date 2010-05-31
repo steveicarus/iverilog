@@ -28,18 +28,15 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
 # include  <typeinfo>
-# include  <stdlib.h>
-# include  <limits.h>
-# include  <string.h>
-# include  <math.h>
-# include  <assert.h>
+# include  <cstdlib>
+# include  <climits>
+# include  <cstring>
+# include  <cmath>
+# include  <cassert>
 
 # include  <iostream>
-#include  <stdio.h>
+# include  <cstdio>
 
 /* This is the size of an unsigned long in bits. This is just a
    convenience macro. */

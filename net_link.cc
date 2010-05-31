@@ -26,9 +26,7 @@
 # include  <cstring>
 # include  <string>
 # include  <typeinfo>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
+# include  <cstdlib>
 
 void Nexus::connect(Link&r)
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,9 +20,9 @@
 # include  "config.h"
 # include  "vpi_priv.h"
 # include  "schedule.h"
-# include  <stdio.h>
-# include  <math.h>
-# include  <assert.h>
+# include  <cstdio>
+# include  <cmath>
+# include  <cassert>
 
 /*
  * The $time system function is supported in VPI contexts (i.e. an

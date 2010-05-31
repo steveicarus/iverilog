@@ -27,9 +27,9 @@
 #endif
 # include  <iostream>
 # include  <list>
-# include  <assert.h>
-# include  <stdlib.h>
-# include  <string.h>
+# include  <cassert>
+# include  <cstdlib>
+# include  <cstring>
 
 static bool at_EOS = false;
 

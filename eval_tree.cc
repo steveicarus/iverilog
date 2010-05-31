@@ -23,7 +23,7 @@
 # include  <iostream>
 # include  <cstdlib>
 # include  <cstring>
-# include  <math.h>
+# include  <cmath>
 
 # include  "netlist.h"
 # include  "ivl_assert.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2005-2010 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,9 +19,9 @@
 
 # include  "vvp_net.h"
 # include  "compile.h"
-# include  <string.h>
+# include  <cstring>
 # include  <iostream>
-# include  <assert.h>
+# include  <cassert>
 
 vvp_fun_extend_signed::vvp_fun_extend_signed(unsigned wid)
 : width_(wid)

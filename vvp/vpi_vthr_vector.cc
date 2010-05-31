@@ -30,12 +30,9 @@
 # include  "vvp_cleanup.h"
 # include <map>
 #endif
-# include  <stdio.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <stdlib.h>
-# include  <assert.h>
+# include  <cstdio>
+# include  <cstdlib>
+# include  <cassert>
 
 struct __vpiVThrVec {
       struct __vpiHandle base;

@@ -23,11 +23,11 @@
 # include  "vpi_user.h"
 # include  "vvp_vpi_callback.h"
 # include  "permaheap.h"
-# include  <stddef.h>
-# include  <stdlib.h>
-# include  <string.h>
+# include  <cstddef>
+# include  <cstdlib>
+# include  <cstring>
 # include  <new>
-# include  <assert.h>
+# include  <cassert>
 
 #ifdef HAVE_IOSFWD
 # include  <iosfwd>

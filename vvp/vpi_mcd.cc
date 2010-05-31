@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen G. Tell <steve@telltronics.org>
+ * Copyright (c) 2000-2010 Stephen G. Tell <steve@telltronics.org>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,11 +22,11 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  <assert.h>
-# include  <stdarg.h>
-# include  <stdio.h>
-# include  <stdlib.h>
-# include  <string.h>
+# include  <cassert>
+# include  <cstdarg>
+# include  <cstdio>
+# include  <cstdlib>
+# include  <cstring>
 
 extern FILE* vpi_trace;
 

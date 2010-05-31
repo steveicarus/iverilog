@@ -1,4 +1,3 @@
-
 const char COPYRIGHT[] =
           "Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)";
 
@@ -39,7 +38,7 @@ const char NOTICE[] =
 "  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.\n"
 ;
 
-# include  <stdio.h>
+# include  <cstdio>
 # include  <iostream>
 # include  <fstream>
 # include  <queue>
@@ -47,7 +46,7 @@ const char NOTICE[] =
 # include  <list>
 # include  <map>
 # include  <unistd.h>
-# include  <stdlib.h>
+# include  <cstdlib>
 #if defined(HAVE_TIMES)
 # include  <sys/times.h>
 #endif
@@ -81,7 +80,7 @@ extern "C" const char*optarg;
  * here for those days when I need the ability to cleanly exit on a
  * signal interrupt.
 */
-# include  <signal.h>
+# include  <csignal>
 static void signals_handler(int sig)
 {
       fprintf(stderr, "Exit on signal %d\n", sig);

@@ -22,14 +22,14 @@
 # include  "vpi_priv.h"
 # include  "schedule.h"
 # include  "statistics.h"
-# include  <stdio.h>
+# include  <cstdio>
 # include  <cstring>
 # include  <cstdlib>
 # include  <iostream>
 # include  <typeinfo>
-# include  <limits.h>
-# include  <math.h>
-# include  <assert.h>
+# include  <climits>
+# include  <cmath>
+# include  <cassert>
 #ifdef CHECK_WITH_VALGRIND
 # include  <valgrind/memcheck.h>
 # include  <map>

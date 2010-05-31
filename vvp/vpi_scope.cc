@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,12 +25,9 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <string.h>
-# include  <stdlib.h>
-# include  <assert.h>
+# include  <cstring>
+# include  <cstdlib>
+# include  <cassert>
 
 static vpiHandle *vpip_root_table_ptr = 0;
 static unsigned   vpip_root_table_cnt = 0;

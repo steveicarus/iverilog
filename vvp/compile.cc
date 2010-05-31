@@ -28,14 +28,11 @@
 # include  "vpi_priv.h"
 # include  "parse_misc.h"
 # include  "statistics.h"
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
 # include  <iostream>
 # include  <list>
-# include  <stdlib.h>
-# include  <string.h>
-# include  <assert.h>
+# include  <cstdlib>
+# include  <cstring>
+# include  <cassert>
 
 #ifdef __MINGW32__
 #include <windows.h>

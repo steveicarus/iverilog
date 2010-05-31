@@ -25,8 +25,8 @@
 # include  "parse_misc.h"
 # include  "compile.h"
 # include  "parse.h"
-# include  <string.h>
-# include  <assert.h>
+# include  <cstring>
+# include  <cassert>
 
 static char* strdupnew(char const *str)
 {
@@ -288,4 +288,3 @@ void destroy_lexor()
 #   endif
 # endif
 }
-

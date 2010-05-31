@@ -1,7 +1,7 @@
 #ifndef __pform_H
 #define __pform_H
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,7 +35,7 @@
 # include  <iostream>
 # include  <string>
 # include  <list>
-# include  <stdio.h>
+# include  <cstdio>
 
 /*
  * These classes implement the parsed form (P-form for short) of the

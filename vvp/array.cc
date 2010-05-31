@@ -26,15 +26,12 @@
 #ifdef CHECK_WITH_VALGRIND
 #include  "vvp_cleanup.h"
 #endif
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <stdlib.h>
-# include  <string.h>
-# include  <limits.h>
+# include  <cstdlib>
+# include  <cstring>
+# include  <climits>
 # include  <iostream>
 # include  "compile.h"
-# include  <assert.h>
+# include  <cassert>
 
 unsigned long count_net_arrays = 0;
 unsigned long count_net_array_words = 0;

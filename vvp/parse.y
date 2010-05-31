@@ -22,9 +22,9 @@
 # include  "parse_misc.h"
 # include  "compile.h"
 # include  "delay.h"
-# include  <stdio.h>
-# include  <stdlib.h>
-# include  <assert.h>
+# include  <cstdio>
+# include  <cstdlib>
+# include  <cassert>
 
 /*
  * These are bits in the lexor.

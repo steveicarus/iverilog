@@ -22,9 +22,9 @@
 # include  <set>
 # include  <string>
 # include  <pthread.h>
-# include  <stdlib.h>
-# include  <string.h>
-# include  <assert.h>
+# include  <cstdlib>
+# include  <cstring>
+# include  <cassert>
 
 /*
    Nexus Id cache

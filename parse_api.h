@@ -1,7 +1,7 @@
 #ifndef __parse_api_H
 #define __parse_api_H
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  <stdio.h>
+# include  <cstdio>
 # include  "StringHeap.h"
 # include  <string>
 # include  <map>

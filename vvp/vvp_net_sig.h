@@ -1,7 +1,7 @@
 #ifndef __vvp_net_sig_H
 #define __vvp_net_sig_H
 /*
- * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,11 +22,11 @@
 # include  "config.h"
 # include  "vpi_user.h"
 # include  "vvp_net.h"
-# include  <stddef.h>
-# include  <stdlib.h>
-# include  <string.h>
+# include  <cstddef>
+# include  <cstdlib>
+# include  <cstring>
 # include  <new>
-# include  <assert.h>
+# include  <cassert>
 
 #ifdef HAVE_IOSFWD
 # include  <iosfwd>

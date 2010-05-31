@@ -22,7 +22,7 @@
 # include  "Module.h"
 # include  "PGate.h"
 # include  "PWire.h"
-# include  <assert.h>
+# include  <cassert>
 
 list<Module::named_expr_t> Module::user_defparms;
 

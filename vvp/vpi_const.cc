@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,13 +23,10 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  <stdio.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <stdlib.h>
-# include  <string.h>
-# include  <assert.h>
+# include  <cstdio>
+# include  <cstdlib>
+# include  <cstring>
+# include  <cassert>
 
 static int string_get(int code, vpiHandle ref)
 {

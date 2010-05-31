@@ -26,14 +26,11 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  <stdio.h>
-# include  <stdlib.h>
-# include  <string.h>
+# include  <cstdio>
+# include  <cstdlib>
+# include  <cstring>
 # include  <iostream>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <assert.h>
+# include  <cassert>
 
 static void __compile_var_real(char*label, char*name,
 			       vvp_array_t array, unsigned long array_addr,

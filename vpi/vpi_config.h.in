@@ -20,7 +20,6 @@
  */
 
 # undef HAVE_LIBIBERTY_H
-# undef HAVE_MALLOC_H
 # undef HAVE_INTTYPES_H
 # undef HAVE_LIBZ
 # undef HAVE_LIBBZ2

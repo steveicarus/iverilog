@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
 
 # include  "config.h"
 # include  "compiler.h"
-# include  <stdio.h>
+# include  <cstdio>
 # include  <cstring>
 # include  <cstdlib>
 

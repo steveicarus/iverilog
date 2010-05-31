@@ -27,8 +27,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <list>
-#include <assert.h>
-#include <math.h>
+#include <cassert>
+#include <cmath>
 
 void vvp_delay_t::calculate_min_delay_()
 {

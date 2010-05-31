@@ -31,16 +31,13 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  <math.h>
+# include  <cmath>
 # include  <iostream>
-# include  <stdio.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <stdlib.h>
-# include  <limits.h>
-# include  <string.h>
-# include  <assert.h>
+# include  <cstdio>
+# include  <cstdlib>
+# include  <climits>
+# include  <cstring>
+# include  <cassert>
 #ifdef CHECK_WITH_VALGRIND
 # include  <valgrind/memcheck.h>
 #endif

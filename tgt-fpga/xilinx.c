@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve at icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve at icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.c,v 1.13 2007/02/26 19:49:50 steve Exp $"
-#endif
 
 # include  "edif.h"
 # include  "generic.h"
@@ -26,9 +23,6 @@
 # include  "fpga_priv.h"
 # include  <stdlib.h>
 # include  <string.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
 # include  <assert.h>
 
 edif_cell_t xilinx_cell_buf(edif_xlibrary_t xlib)
@@ -947,48 +941,3 @@ void xilinx_shiftl(ivl_lpm_t net)
       free(cells);
       free(table);
 }
-
-
-/*
- * $Log: xilinx.c,v $
- * Revision 1.13  2007/02/26 19:49:50  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.12  2004/02/15 18:03:30  steve
- *  Cleanup of warnings.
- *
- * Revision 1.11  2004/02/10 16:39:33  steve
- *  Fix direction of Q/D signals of FD devices.
- *
- * Revision 1.10  2003/08/15 02:23:53  steve
- *  Add synthesis support for synchronous reset.
- *
- * Revision 1.9  2003/07/04 01:08:03  steve
- *  PAD attribute can be used to assign pins.
- *
- * Revision 1.8  2003/07/04 00:10:09  steve
- *  Generate MUXF5 based 4-input N-wide muxes.
- *
- * Revision 1.7  2003/07/03 17:46:33  steve
- *  IOPAD support.
- *
- * Revision 1.6  2003/07/02 03:02:15  steve
- *  More xilinx common code.
- *
- * Revision 1.5  2003/07/02 00:25:40  steve
- *  Add xilinx support for bufif1.
- *
- * Revision 1.4  2003/06/28 04:18:47  steve
- *  Add support for wide OR/NOR gates.
- *
- * Revision 1.3  2003/06/26 03:57:05  steve
- *  Add Xilinx support for A/B MUX devices.
- *
- * Revision 1.2  2003/06/25 02:55:57  steve
- *  Virtex and Virtex2 share much code.
- *
- * Revision 1.1  2003/04/05 05:53:34  steve
- *  Move library cell management to common file.
- *
- */
-

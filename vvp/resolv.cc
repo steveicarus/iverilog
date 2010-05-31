@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,7 +22,7 @@
 # include  "compile.h"
 # include  "statistics.h"
 # include  <iostream>
-# include  <assert.h>
+# include  <cassert>
 
 
 resolv_functor::resolv_functor(vvp_scalar_t hiz_value, const char*debug_l)

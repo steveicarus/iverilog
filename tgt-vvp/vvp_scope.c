@@ -18,9 +18,6 @@
  */
 
 # include  "vvp_priv.h"
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
 # include  <stdlib.h>
 # include  <math.h>
 # include  <string.h>

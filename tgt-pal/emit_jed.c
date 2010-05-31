@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,17 +16,11 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: emit_jed.c,v 1.5 2002/08/12 01:35:03 steve Exp $"
-#endif
 
 # include "config.h"
 
 # include  "priv.h"
 # include  <stdio.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
 # include  <stdlib.h>
 # include  <assert.h>
 
@@ -131,24 +125,3 @@ int emit_jedec(const char*path)
       fclose(jfd);
       return 0;
 }
-
-/*
- * $Log: emit_jed.c,v $
- * Revision 1.5  2002/08/12 01:35:03  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2001/09/15 18:27:04  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.3  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.2  2001/01/09 04:41:32  steve
- *  Clean up the jedec header that is written.
- *
- * Revision 1.1  2001/01/09 03:10:48  steve
- *  Generate the jedec to configure the macrocells.
- *
- */
-
