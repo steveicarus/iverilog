@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -128,7 +128,8 @@ ostream& operator << (ostream&o, ivl_switch_type_t val)
 
 static inline void dump_scope_path(ostream&o, const NetScope*scope)
 {
-      if (const NetScope*parent = scope->parent()) {
+      const NetScope*parent = scope->parent();
+      if (parent) {
 	    dump_scope_path(o, parent);
 	    o << ".";
       }
