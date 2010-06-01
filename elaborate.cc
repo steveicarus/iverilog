@@ -223,6 +223,11 @@ unsigned PGBuiltin::calculate_array_count_(Design*des, NetScope*scope,
 	   gate. Figure out how many are desired. */
       if (msb_) {
 	    need_constant_expr = true;
+	    ivl_variable_type_t use_type;
+	    bool flag = false;
+	    msb_->test_width(des, scope, 0, 0, use_type, flag);
+	    flag = false;
+	    lsb_->test_width(des, scope, 0, 0, use_type, flag);
 	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_, -1);
 	    NetExpr*lsb_exp = elab_and_eval(des, scope, lsb_, -1);
 	    need_constant_expr = false;
