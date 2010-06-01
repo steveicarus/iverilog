@@ -24,8 +24,7 @@
 # include "vcd_priv.h"
 
 /*
- * This file contains the implementations of the LXT related
- * funcitons.
+ * This file contains the implementations of the LXT related functions.
  */
 
 # include  "vpi_user.h"

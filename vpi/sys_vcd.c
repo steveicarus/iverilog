@@ -21,8 +21,7 @@
 # include "vcd_priv.h"
 
 /*
- * This file contains the implementations of the VCD related
- * funcitons.
+ * This file contains the implementations of the VCD related functions.
  */
 
 # include  "vpi_user.h"
@@ -497,11 +496,11 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       struct t_cb_data cb;
       struct vcd_info* info;
 
-      const char* type;
-      const char* name;
-      const char* fullname;
-      const char* prefix;
-      const char* ident;
+      const char *type;
+      const char *name;
+      const char *fullname;
+      const char *prefix;
+      const char *ident;
       int nexus_id;
       unsigned size;
       PLI_INT32 item_type;
@@ -599,7 +598,6 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	  case vpiNamedEvent:
 	  case vpiIntegerVar:
-//	  case vpiParameter:
 	  case vpiRealVar:
 	  case vpiMemoryWord:
 	  case vpiReg:
@@ -662,8 +660,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		    type, size, ident, prefix, name);
 
 	      /* Add a range for vectored values. */
-	    if (vpi_get(vpiSize, item) > 1
-		|| vpi_get(vpiLeftRange, item) != 0) {
+	    if (size > 1 || vpi_get(vpiLeftRange, item) != 0) {
 		  fprintf(dump_file, " [%i:%i]",
 			  (int)vpi_get(vpiLeftRange, item),
 			  (int)vpi_get(vpiRightRange, item));
