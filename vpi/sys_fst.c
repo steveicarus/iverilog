@@ -22,8 +22,7 @@
 # include "fstapi.h"
 
 /*
- * This file contains the implementations of the VCD related
- * funcitons.
+ * This file contains the implementations of the FST related functions.
  */
 
 # include  <stdio.h>
@@ -469,9 +468,9 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       struct vcd_info* info;
 
       PLI_INT32 type;
-      const char* name;
-      const char* fullname;
-      const char* prefix;
+      const char *name;
+      const char *fullname;
+      char *escname;
       const char *ident;
       fstHandle new_ident;
       int nexus_id;
@@ -566,12 +565,11 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	/* Generate the $var or $scope commands. */
       switch (item_type) {
 	  case vpiParameter:
-	    vpi_printf("VCD sorry: $dumpvars: can not dump parameters.\n");
+	    vpi_printf("FST sorry: $dumpvars: can not dump parameters.\n");
 	    break;
 
 	  case vpiNamedEvent:
 	  case vpiIntegerVar:
-//	  case vpiParameter:
 	  case vpiRealVar:
 	  case vpiMemoryWord:
 	  case vpiReg:
@@ -586,9 +584,12 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	       * This can only happen for implicitly given signals. */
 	    if (vcd_names_search(&fst_var, fullname)) return;
 
-	      /* Declare the variable in the VCD file. */
+	      /* Declare the variable in the FST file. */
 	    name = vpi_get_str(vpiName, item);
-	    prefix = is_escaped_id(name) ? "\\" : "";
+	    if (is_escaped_id(name)) {
+		  escname = malloc(strlen(name) + 2);
+		  sprintf(escname, "\\%s", name);
+	    } else escname = strdup(name);
 
 	      /* Some signals can have an alias so handle that. */
 	    nexus_id = vpi_get(_vpiNexusId, item);
@@ -602,12 +603,9 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    if (item_type == vpiNamedEvent) size = 1;
 	    else size = vpi_get(vpiSize, item);
 
-
-            if (vpi_get(vpiSize, item) > 1
-                || vpi_get(vpiLeftRange, item) != 0) {
-		  int slen = strlen(name);
-		  char *buf = malloc(slen + 65);
-		  sprintf(buf, "%s [%i:%i]", name,
+            if (size > 1 || vpi_get(vpiLeftRange, item) != 0) {
+		  char *buf = malloc(strlen(escname) + 65);
+		  sprintf(buf, "%s [%i:%i]", escname,
                             (int)vpi_get(vpiLeftRange, item),
                             (int)vpi_get(vpiRightRange, item));
 
@@ -617,9 +615,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  free(buf);
 	    } else {
 		  new_ident = fstWriterCreateVar(dump_file, type,
-		                                 FST_VD_IMPLICIT, size, name,
+		                                 FST_VD_IMPLICIT, size, escname,
 		                                 (fstHandle)(long)ident);
 	    }
+	    free(escname);
 
 	    if (!ident) {
 		  if (nexus_id) set_nexus_ident(nexus_id,
