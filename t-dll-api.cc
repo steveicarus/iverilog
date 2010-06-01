@@ -21,12 +21,9 @@
 # include  "StringHeap.h"
 # include  "t-dll.h"
 # include  "discipline.h"
-# include  <stdlib.h>
-# include  <stdio.h>
-# include  <string.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
+# include  <cstdlib>
+# include  <cstdio>
+# include  <cstring>
 
 static StringHeap api_strings;
 

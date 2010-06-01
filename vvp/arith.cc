@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,14 +19,11 @@
 
 # include  "arith.h"
 # include  "schedule.h"
-# include  <limits.h>
+# include  <climits>
 # include  <iostream>
-# include  <assert.h>
-# include  <stdlib.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <math.h>
+# include  <cassert>
+# include  <cstdlib>
+# include  <cmath>
 
 vvp_arith_::vvp_arith_(unsigned wid)
 : wid_(wid), x_val_(wid)

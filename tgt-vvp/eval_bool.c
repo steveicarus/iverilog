@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,9 +23,6 @@
 # include  "vvp_config.h"
 # include  "vvp_priv.h"
 # include  <string.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
 # include  <stdlib.h>
 #ifdef HAVE_STDINT_H
 # include  <stdint.h>
@@ -93,4 +90,3 @@ int draw_eval_bool64(ivl_expr_t expr)
 
       return res;
 }
-

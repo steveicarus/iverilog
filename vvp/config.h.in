@@ -1,7 +1,7 @@
 #ifndef __config_H
 #define __config_H
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,7 +41,6 @@
 # undef HAVE_DLFCN_H
 # undef HAVE_DL_H
 # undef HAVE_GETOPT_H
-# undef HAVE_MALLOC_H
 # undef HAVE_LIBREADLINE
 # undef HAVE_READLINE_READLINE_H
 # undef HAVE_LIBHISTORY
@@ -128,7 +127,7 @@ typedef unsigned long vvp_time64_t;
 
 #endif /* HAVE_INTTYPES_H */
 
-# include  <math.h>
+# include  <cmath>
 
 /* getrusage, /proc/self/statm */
 

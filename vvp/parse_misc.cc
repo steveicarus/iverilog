@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010  Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,11 +19,8 @@
 
 # include  "parse_misc.h"
 # include  "compile.h"
-# include  <stdio.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <stdlib.h>
+# include  <cstdio>
+# include  <cstdlib>
 
 const char*yypath;
 unsigned yyline;
@@ -99,4 +96,3 @@ void argv_sym_lookup(struct argv_s*obj)
 		  compile_vpi_lookup(&obj->argv[i], obj->syms[i]);
       free(obj->syms);
 }
-

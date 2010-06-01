@@ -1,5 +1,5 @@
 
-#include <stdarg.h>
+#include <cstdarg>
 #include "vpi_user.h"
 
 

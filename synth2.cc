@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,7 +23,7 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "compiler.h"
-# include  <assert.h>
+# include  <cassert>
 
 
 bool NetProc::synth_async(Design*des, NetScope*scope,

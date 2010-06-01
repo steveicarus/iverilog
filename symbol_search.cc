@@ -19,7 +19,7 @@
 
 # include  "netlist.h"
 # include  "netmisc.h"
-# include  <assert.h>
+# include  <cassert>
 
 
 /*

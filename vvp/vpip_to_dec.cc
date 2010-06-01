@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2008-2010 Stephen Williams <steve@icarus.com>
  * Copyright (c) 2002 Larry Doolittle (larry@doolittle.boa.org)
  *
  *    This source code is free software; you can redistribute it
@@ -23,15 +23,12 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  <stdio.h>
-# include  <string.h>
-# include  <limits.h>     /* for CHAR_BIT */
-# include  <stdlib.h>
-# include  <ctype.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <assert.h>
+# include  <cstdio>
+# include  <cstring>
+# include  <climits>     /* for CHAR_BIT */
+# include  <cstdlib>
+# include  <cctype>
+# include  <cassert>
 
 /* If you are allergic to malloc, you can set a stack memory allocation
  * here.  Otherwise, malloc() is used for the temporary array, so the

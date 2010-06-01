@@ -1,7 +1,7 @@
 #ifndef __svector_H
 #define __svector_H
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,7 +24,7 @@
 # include  "config.h"
 # include  <string>
 # include  <vector>
-# include  <assert.h>
+# include  <cassert>
 
 /*
  * This is a way simplified vector class that cannot grow or shrink,

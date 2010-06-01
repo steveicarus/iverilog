@@ -20,7 +20,7 @@
 # include "config.h"
 
 # include  "netlist.h"
-# include  <assert.h>
+# include  <cassert>
 
 NetBlock::NetBlock(Type t, NetScope*ss)
 : type_(t), subscope_(ss), last_(0)

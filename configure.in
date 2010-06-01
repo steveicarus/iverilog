@@ -65,7 +65,7 @@ AC_LANG(C++)
 AC_CHECK_DECL(__SUNPRO_CC,AC_SUBST(WARNING_CXXFLAGS,),AC_SUBST(WARNING_CXXFLAGS,-Wall))
 AC_CHECK_DECL(__SUNPRO_CC,AC_SUBST(DEPENDENCY_CPPFLAGS,-xMD),AC_SUBST(DEPENDENCY_CPPFLAGS,-MD))
 
-AC_CHECK_HEADERS(getopt.h malloc.h inttypes.h libiberty.h iosfwd sys/wait.h)
+AC_CHECK_HEADERS(getopt.h inttypes.h libiberty.h iosfwd sys/wait.h)
 
 AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(unsigned long)

@@ -28,13 +28,10 @@
 #ifdef CHECK_WITH_VALGRIND
 #include "vvp_cleanup.h"
 #endif
-#include <assert.h>
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
 #include <iostream>
 
 // We may need these later when we build the VPI interface to

@@ -34,7 +34,7 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "functor.h"
-# include  <assert.h>
+# include  <cassert>
 
 struct syn_token_t {
       int token;

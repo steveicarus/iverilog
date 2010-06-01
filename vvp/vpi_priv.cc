@@ -20,15 +20,12 @@
 # include  "version_base.h"
 # include  "vpi_priv.h"
 # include  "schedule.h"
-# include  <stdio.h>
-# include  <stdarg.h>
-# include  <string.h>
-# include  <assert.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <stdlib.h>
-# include  <math.h>
+# include  <cstdio>
+# include  <cstdarg>
+# include  <cstring>
+# include  <cassert>
+# include  <cstdlib>
+# include  <cmath>
 
 vpi_mode_t vpi_mode_flag = VPI_MODE_NONE;
 FILE*vpi_trace = 0;

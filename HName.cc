@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,9 +23,6 @@
 # include  <cstring>
 # include  <cstdlib>
 # include  <climits>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
 
 
 hname_t::hname_t()
@@ -116,4 +113,3 @@ ostream& operator<< (ostream&out, const hname_t&that)
 
       return out;
 }
-

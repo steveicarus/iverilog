@@ -21,8 +21,8 @@
 # include  "vpi_priv.h"
 # include  "ivl_dlfcn.h"
 # include  "vvp_cleanup.h"
-# include  <stdio.h>
-# include  <string.h>
+# include  <cstdio>
+# include  <cstring>
 # include  <sys/types.h>
 # include  <sys/stat.h>
 

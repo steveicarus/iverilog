@@ -34,9 +34,6 @@
 # include  <string.h>
 # include  <assert.h>
 # include  <time.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
 # include  "stringheap.h"
 
 

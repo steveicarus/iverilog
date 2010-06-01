@@ -18,12 +18,9 @@
  */
 
 # include  "symbols.h"
-# include  <string.h>
-# include  <stdlib.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <assert.h>
+# include  <cstring>
+# include  <cstdlib>
+# include  <cassert>
 
 /*
  * The keys of the symbol table are null terminated strings. Keep them
@@ -404,4 +401,3 @@ symbol_table_s::~symbol_table_s()
 	    delete tmp;
       }
 }
-

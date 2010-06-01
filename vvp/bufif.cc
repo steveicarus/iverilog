@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,7 +21,7 @@
 # include  "schedule.h"
 # include  "statistics.h"
 # include  <iostream>
-# include  <assert.h>
+# include  <cassert>
 
 vvp_fun_bufif::vvp_fun_bufif(bool en_invert, bool out_invert,
 			     unsigned str0, unsigned str1)

@@ -21,11 +21,10 @@
 # include  "vthread.h"
 # include  "slab.h"
 # include  <new>
-# include  <signal.h>
-# include  <stdlib.h>
-# include  <assert.h>
-
-# include  <stdio.h>
+# include  <typeinfo>
+# include  <csignal>
+# include  <cstdlib>
+# include  <cassert>
 
 unsigned long count_assign_events = 0;
 unsigned long count_gen_events = 0;

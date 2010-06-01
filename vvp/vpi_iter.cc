@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,8 +22,8 @@
  */
 
 # include  "vpi_priv.h"
-# include  <stdlib.h>
-# include  <assert.h>
+# include  <cstdlib>
+# include  <cassert>
 
 static int iterator_free_object(vpiHandle ref)
 {
@@ -98,4 +98,3 @@ vpiHandle vpi_scan(vpiHandle ref)
 
       return hp->args[hp->next++];
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,19 +28,16 @@
 # include  "vpi_priv.h"
 # include  "vthread.h"
 # include  "schedule.h"
-# include  <stdio.h>
-# include  <ctype.h>
+# include  <cstdio>
+# include  <cctype>
 #ifdef USE_READLINE
 # include  <readline/readline.h>
 #endif
 #ifdef USE_HISTORY
 # include  <readline/history.h>
 #endif
-# include  <string.h>
-# include  <stdlib.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
+# include  <cstring>
+# include  <cstdlib>
 
 struct __vpiScope*stop_current_scope = 0;
 bool stop_is_finish;  /* When set, $stop acts like $finish (set in main.cc). */

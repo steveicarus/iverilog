@@ -1,7 +1,7 @@
 #ifndef __udp_H
 #define __udp_H
 /*
- * Copyright (c) 2005-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2010 Stephen Williams (steve@icarus.com)
  *
  * (This is a rewrite of code that was ...
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
@@ -22,8 +22,8 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  <vvp_net.h>
-# include  <delay.h>
+# include  "vvp_net.h"
+# include  "delay.h"
 # include  "schedule.h"
 
 struct udp_levels_table;

@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,8 +31,8 @@
 # include  "parse_misc.h"
 # include  "parse_api.h"
 # include  "parse.h"
-# include  <ctype.h>
-# include  <string.h>
+# include  <cctype>
+# include  <cstring>
 # include  "lexor_keyword.h"
 # include  "discipline.h"
 # include  <list>

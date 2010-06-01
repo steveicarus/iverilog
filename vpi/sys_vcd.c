@@ -31,9 +31,6 @@
 # include  <string.h>
 # include  <assert.h>
 # include  <time.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
 
 static char *dump_path = NULL;
 static FILE *dump_file = NULL;

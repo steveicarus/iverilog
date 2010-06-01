@@ -4,7 +4,7 @@
 #include "config.h"
 #include "parse_misc.h"
 #include "parse.h"
-#include <string.h>
+#include <cstring>
 #include "lexor_keyword.h"
 #include "compiler.h"
 

@@ -24,12 +24,9 @@
 # include  "schedule.h"
 # include  "delay.h"
 # include  "statistics.h"
-# include  <string.h>
-# include  <assert.h>
-# include  <stdlib.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
+# include  <cstring>
+# include  <cassert>
+# include  <cstdlib>
 
 vvp_fun_boolean_::vvp_fun_boolean_(unsigned wid)
 {

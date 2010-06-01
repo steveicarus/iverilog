@@ -23,9 +23,6 @@
 #include  <stdlib.h>
 #include  <string.h>
 #include  <assert.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
 #include  <ctype.h>
 #include  "stringheap.h"
 #include  <sys_priv.h>

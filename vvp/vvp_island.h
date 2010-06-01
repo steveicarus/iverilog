@@ -24,7 +24,7 @@
 # include  "symbols.h"
 # include  "schedule.h"
 # include  <list>
-# include  <assert.h>
+# include  <cassert>
 
 /*
 * Islands are mutually connected bidirectional meshes that have a

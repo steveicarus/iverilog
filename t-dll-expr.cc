@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,11 +24,8 @@
 # include  <cstring>
 # include  "t-dll.h"
 # include  "netlist.h"
-# include  <assert.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <stdlib.h>
+# include  <cassert>
+# include  <cstdlib>
 
 /*
  * This is a little convenience function for converting a NetExpr

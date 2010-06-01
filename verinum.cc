@@ -22,8 +22,8 @@
 # include  "verinum.h"
 # include  <iostream>
 # include  <cassert>
-# include  <math.h> // Needed to get pow for as_double().
-# include  <stdio.h> // Needed to get snprintf for as_string().
+# include  <cmath> // Needed to get pow for as_double().
+# include  <cstdio> // Needed to get snprintf for as_string().
 
 #if !defined(HAVE_LROUND)
 /*

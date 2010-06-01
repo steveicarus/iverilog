@@ -23,7 +23,7 @@
 # include  <cstring>
 # include  <iostream>
 # include  <cstdlib>
-# include  <stdio.h>
+# include  <cstdio>
 
 /*
  * Elaboration happens in two passes, generally. The first scans the
@@ -44,7 +44,7 @@
 # include  "netlist.h"
 # include  "util.h"
 # include  <typeinfo>
-# include  <assert.h>
+# include  <cassert>
 # include  "ivl_assert.h"
 
 typedef map<perm_string,LexicalScope::param_expr_t>::const_iterator mparm_it_t;

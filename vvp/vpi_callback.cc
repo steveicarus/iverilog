@@ -24,18 +24,15 @@
  * can look when the event in question is tripped.
  */
 
-# include  <vpi_user.h>
+# include  "vpi_user.h"
 # include  "vpi_priv.h"
 # include  "vvp_net.h"
 # include  "schedule.h"
 # include  "event.h"
 # include  "config.h"
-# include  <stdio.h>
-# include  <assert.h>
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <stdlib.h>
+# include  <cstdio>
+# include  <cassert>
+# include  <cstdlib>
 
 /*
 * The vpi_free_object() call to a callback doesn't actually delete

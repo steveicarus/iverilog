@@ -23,13 +23,10 @@
 # include "vvp_cleanup.h"
 #endif
 # include  "sfunc.h"
-#ifdef HAVE_MALLOC_H
-# include  <malloc.h>
-#endif
-# include  <stdlib.h>
-# include  <string.h>
+# include  <cstdlib>
+# include  <cstring>
 # include  <iostream>
-# include  <assert.h>
+# include  <cassert>
 
 
 sfunc_core::sfunc_core(vvp_net_t*net, vpiHandle sys,

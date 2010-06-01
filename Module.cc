@@ -22,7 +22,7 @@
 # include  "Module.h"
 # include  "PGate.h"
 # include  "PWire.h"
-# include  <assert.h>
+# include  <cassert>
 
 /* n is a permallocated string. */
 Module::Module(perm_string n)

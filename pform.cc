@@ -30,7 +30,7 @@
 # include  "discipline.h"
 # include  <list>
 # include  <map>
-# include  <assert.h>
+# include  <cassert>
 # include  <stack>
 # include  <typeinfo>
 # include  <sstream>
