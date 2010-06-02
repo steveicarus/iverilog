@@ -1385,8 +1385,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			for (unsigned pidx = 0; pidx < prts.size(); pidx += 1) {
 			      prts[pidx]->port_type(NetNet::NOT_A_PORT);
 			      prts[pidx] = cast_to_int(des, scope, prts[pidx],
-			                              prts_vector_width /
-			                              instance.size());
+			                               prts_vector_width /
+			                               instance.size());
 			      prts[pidx]->port_type(NetNet::POUTPUT);
 			}
 		  }

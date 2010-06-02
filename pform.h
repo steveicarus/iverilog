@@ -161,8 +161,8 @@ extern void pform_module_define_port(const struct vlltype&li,
 extern Module::port_t* pform_module_port_reference(perm_string name,
 						   const char*file,
 						   unsigned lineno);
-extern void pform_endmodule(const char*, bool in_celldefine,
-                            Module::UCDriveType uc_drive);
+extern void pform_endmodule(const char*, bool inside_celldefine,
+                            Module::UCDriveType uc_drive_def);
 
 extern void pform_make_udp(perm_string name, list<perm_string>*parms,
 			   svector<PWire*>*decl, list<string>*table,
