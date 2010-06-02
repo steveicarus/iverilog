@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1398,12 +1398,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			      continue;
 			}
 			prts_vector_width = sig->vector_width();
-			for (unsigned idx = 0; idx < prts.size(); idx += 1) {
-			      prts[idx]->port_type(NetNet::NOT_A_PORT);
-			      prts[idx] = cast_to_int(des, scope, prts[idx],
-			                              prts_vector_width /
-			                              instance.size());
-			      prts[idx]->port_type(NetNet::POUTPUT);
+			for (unsigned pidx = 0; pidx < prts.size(); pidx += 1) {
+			      prts[pidx]->port_type(NetNet::NOT_A_PORT);
+			      prts[pidx] = cast_to_int(des, scope, prts[idx],
+			                               prts_vector_width /
+			                               instance.size());
+			      prts[pidx]->port_type(NetNet::POUTPUT);
 			}
 		  }
 

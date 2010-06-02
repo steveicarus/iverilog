@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -538,7 +538,6 @@ int draw_eval_real(ivl_expr_t expr)
 	 * division to work correctly. */
       if (ivl_expr_value(expr) != IVL_VT_REAL) {
 	    struct vector_info vi;
-	    int res;
 	    const char*sign_flag;
 
 	    vi = draw_eval_expr(expr, STUFF_OK_XZ);

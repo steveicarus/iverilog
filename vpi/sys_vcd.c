@@ -572,8 +572,8 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	       * word select. */
 	    if (vpi_get(vpiConstantSelect, item) == 0) {
 		  vpiHandle array = vpi_handle(vpiParent, item);
-		  PLI_INT32 index = vpi_get(vpiIndex, item);
-		  item = vpi_handle_by_index(array, index);
+		  PLI_INT32 idx = vpi_get(vpiIndex, item);
+		  item = vpi_handle_by_index(array, idx);
 	    }
 
 	      /* An array word is implicitly escaped so look for an

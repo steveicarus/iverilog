@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -723,7 +723,7 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
 {
 	/* First, synthesize the operands. */
-      unsigned nparms = parms_.count();
+      unsigned num_parms = parms_.count();
       NetNet**tmp = new NetNet*[parms_.count()];
       bool flag = true;
       ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
@@ -732,7 +732,7 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
 		    /* We need to synthesize a replication of zero. */
 		  tmp[idx] = parms_[idx]->synthesize(des, scope, root);
 		  assert(tmp[idx] == 0);
-		  nparms -= 1;
+		  num_parms -= 1;
 	    } else {
 		  tmp[idx] = parms_[idx]->synthesize(des, scope, root);
 		  if (tmp[idx] == 0) flag = false;
@@ -758,7 +758,7 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       NetConcat*concat = new NetConcat(scope, scope->local_symbol(),
 				       osig->vector_width(),
-				       nparms * repeat());
+				       num_parms * repeat());
       concat->set_line(*this);
       des->add_node(concat);
       connect(concat->pin(0), osig->pin(0));

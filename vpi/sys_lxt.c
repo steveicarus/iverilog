@@ -553,8 +553,8 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		    /* Turn a non-constant array word select into a
 		     * constant word select. */
 		  vpiHandle array = vpi_handle(vpiParent, item);
-		  PLI_INT32 index = vpi_get(vpiIndex, item);
-		  item = vpi_handle_by_index(array, index);
+		  PLI_INT32 idx = vpi_get(vpiIndex, item);
+		  item = vpi_handle_by_index(array, idx);
 	    }
 	  case vpiIntegerVar:
 	  case vpiTimeVar:

@@ -1,7 +1,7 @@
 #ifndef __netlist_H
 #define __netlist_H
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1474,7 +1474,7 @@ class NetReplicate  : public NetNode {
 class NetUserFunc  : public NetNode {
 
     public:
-      NetUserFunc(NetScope*s, perm_string n, NetScope*def, NetEvWait*trigger);
+      NetUserFunc(NetScope*s, perm_string n, NetScope*def, NetEvWait*trigger__);
       ~NetUserFunc();
 
       ivl_variable_type_t data_type(unsigned port) const;
@@ -1501,7 +1501,7 @@ class NetSysFunc  : public NetNode {
     public:
       NetSysFunc(NetScope*s, perm_string n,
 		 const struct sfunc_return_type*def,
-		 unsigned ports, NetEvWait*trigger);
+		 unsigned ports, NetEvWait*trigger__);
       ~NetSysFunc();
 
       ivl_variable_type_t data_type() const;
@@ -1800,7 +1800,7 @@ class NetPartSelect  : public NetNode {
       explicit NetPartSelect(NetNet*sig,
 			     unsigned off, unsigned wid, dir_t dir);
       explicit NetPartSelect(NetNet*sig, NetNet*sel,
-			     unsigned wid, bool signed_flag = false);
+			     unsigned wid, bool signed_flag__ = false);
       ~NetPartSelect();
 
       unsigned base()  const;

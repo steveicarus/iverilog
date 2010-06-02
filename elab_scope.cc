@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -563,10 +563,10 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 {
 	// Check that the loop_index variable was declared in a
 	// genvar statement.
-      NetScope*scope = container;
-      while (scope && !scope->find_genvar(loop_index))
-            scope = scope->parent();
-      if (!scope) {
+      NetScope*cscope = container;
+      while (cscope && !cscope->find_genvar(loop_index))
+            cscope = cscope->parent();
+      if (!cscope) {
 	    cerr << get_fileline() << ": error: genvar is missing for "
 	            "generate \"loop\" variable '" << loop_index << "'."
 	         << endl;

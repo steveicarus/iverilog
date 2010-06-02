@@ -1,7 +1,7 @@
 #ifndef __vpi_user_H
 #define __vpi_user_H
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -483,7 +483,7 @@ extern void vpi_sim_control(PLI_INT32 operation, ...);
 extern vpiHandle  vpi_handle(PLI_INT32 type, vpiHandle ref);
 extern vpiHandle  vpi_iterate(PLI_INT32 type, vpiHandle ref);
 extern vpiHandle  vpi_scan(vpiHandle iter);
-extern vpiHandle  vpi_handle_by_index(vpiHandle ref, PLI_INT32 index);
+extern vpiHandle  vpi_handle_by_index(vpiHandle ref, PLI_INT32 idx);
 extern vpiHandle  vpi_handle_by_name(const char*name, vpiHandle scope);
 
 extern void  vpi_get_time(vpiHandle obj, s_vpi_time*t);
