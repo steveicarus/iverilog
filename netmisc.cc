@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -364,6 +364,7 @@ hname_t eval_path_component(Design*des, NetScope*scope,
       assert(index.sel == index_component_t::SEL_BIT);
 
 	// Evaluate the bit select to get a number.
+      probe_expr_width(des, scope, index.msb);
       NetExpr*tmp = elab_and_eval(des, scope, index.msb, -1);
       ivl_assert(*index.msb, tmp);
 
