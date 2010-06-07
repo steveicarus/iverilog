@@ -1483,10 +1483,17 @@ static void do_include()
         unsigned idx, start = 1;
         char path[4096];
         char *cp;
+        struct include_stack_t* isp;
 
         /* Add the current path to the start of the include_dir list. */
-        strcpy(path, istack->path);
-        cp = strrchr(path, '/');
+        isp = istack;
+        while(isp && (isp->path == NULL))
+	    isp = isp->next;
+
+        assert(isp);
+
+	strcpy(path, isp->path);
+	cp = strrchr(path, '/');
 
         /* I may need the relative path for a planned warning even when
          * we are not in relative mode, so for now keep it around. */
@@ -1508,10 +1515,11 @@ static void do_include()
         }
     }
 
-    fprintf(stderr, "%s:%u: Include file %s not found\n", istack->path, istack->lineno, standby->path);
+    emit_pathline(istack);
+    fprintf(stderr, "Include file %s not found\n", standby->path);
     exit(1);
 
-                                    code_that_switches_buffers:
+code_that_switches_buffers:
 
     /* Clear the current files path from the search list. */
     free(include_dir[0]);
