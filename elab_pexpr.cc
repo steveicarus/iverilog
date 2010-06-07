@@ -508,7 +508,7 @@ void NetEParam::resolve_pexpr_type(void)
       if (reference_->second.signed_flag) {
 	    cast_signed_base_(true);
 
-      } else {
+      } else if (reference_->second.expr) {
 	    cast_signed_base_( reference_->second.expr->has_sign() );
       }
 }

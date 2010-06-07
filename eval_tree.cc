@@ -1231,7 +1231,15 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
       assert(scope_);
       perm_string name = (*reference_).first;
       const NetExpr*expr = (*reference_).second.expr;
-      ivl_assert(*this, expr);
+	// Since constant user functions are not supported we can get
+	// parameters/localparams that are not defined. For now generate
+	// an appropriate error message.
+      if (expr == NULL) {
+	    cerr << get_fileline() << ": internal error: parameter/localparam "
+		 << *this << " cannot be evaluated." << endl;
+	    return 0;
+      }
+//      ivl_assert(*this, expr);
 
       NetExpr*nexpr = expr->dup_expr();
       assert(nexpr);
