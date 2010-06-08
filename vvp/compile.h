@@ -406,6 +406,7 @@ extern void compile_vpi_func_call(char*label, char*name,
 				  unsigned vbit, int vwid,
 				  long file_idx, long lineno,
 				  unsigned argc, vpiHandle*argv);
+extern void print_vpi_call_errors();
 
 extern void compile_fork(char*label, struct symb_s targ_s,
 			 struct symb_s scope_s);

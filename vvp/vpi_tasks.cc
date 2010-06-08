@@ -625,6 +625,67 @@ void vpip_make_systf_system_defined(vpiHandle ref)
 }
 
 /*
+ * To get better error message we need to cache the vpi_call fail
+ * information so that we can print the file name.
+ */
+enum vpi_call_error_type {VPI_CALL_NO_DEF, VPI_CALL_TASK_AS_FUNC,
+                          VPI_CALL_FUNC_AS_TASK};
+typedef struct vpi_call_error {
+      vpi_call_error_type type;
+      char *name;
+      long file_idx;
+      long lineno;
+} vpi_call_error_s, *vpi_call_error_p;
+
+static vpi_call_error_p vpi_call_error_lst = NULL;
+static unsigned vpi_call_error_num = 0;
+
+static void add_vpi_call_error(vpi_call_error_type type, const char *name,
+                               long file_idx, long lineno)
+{
+      vpi_call_error_lst = (vpi_call_error_p)
+                            realloc((void *)vpi_call_error_lst,
+                                    (vpi_call_error_num + 1) *
+                                    sizeof(vpi_call_error_s));
+      vpi_call_error_lst[vpi_call_error_num].type = type;
+      vpi_call_error_lst[vpi_call_error_num].name = strdup(name);
+      vpi_call_error_lst[vpi_call_error_num].file_idx = file_idx;
+      vpi_call_error_lst[vpi_call_error_num].lineno = lineno;
+      vpi_call_error_num += 1;
+}
+
+void print_vpi_call_errors()
+{
+      for (unsigned idx = 0; idx < vpi_call_error_num; idx += 1) {
+	    switch (vpi_call_error_lst[idx].type) {
+		case VPI_CALL_NO_DEF:
+		  fprintf(stderr, "%s:%d: Error: System task/function %s() is "
+		                  "not defined by any module.\n",
+		                  file_names[vpi_call_error_lst[idx].file_idx],
+		                  vpi_call_error_lst[idx].lineno,
+		                  vpi_call_error_lst[idx].name);
+		  break;
+		case VPI_CALL_TASK_AS_FUNC:
+		  fprintf(stderr, "%s:%d: Error: %s() is a system task, it "
+			          "cannot be called as a function.\n",
+		                  file_names[vpi_call_error_lst[idx].file_idx],
+		                  vpi_call_error_lst[idx].lineno,
+		                  vpi_call_error_lst[idx].name);
+		  break;
+		case VPI_CALL_FUNC_AS_TASK:
+		  fprintf(stderr, "%s:%d: Error: %s() is a system function, it "
+			          "cannot be called as a task.\n",
+		                  file_names[vpi_call_error_lst[idx].file_idx],
+		                  vpi_call_error_lst[idx].lineno,
+		                  vpi_call_error_lst[idx].name);
+		  break;
+	    }
+	    free(vpi_call_error_lst[idx].name);
+      }
+      free(vpi_call_error_lst);
+}
+
+/*
  * A vpi_call is actually built up into a vpiSysTaskCall VPI object
  * that refers back to the vpiUserSystf VPI object that is the
  * definition. So this function is called by the compiler when a
@@ -643,16 +704,15 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 {
       struct __vpiUserSystf*defn = vpip_find_systf(name);
       if (defn == 0) {
-	    fprintf(stderr, "%s: This task not defined "
-		    "by any modules. I cannot compile it.\n", name);
+	    add_vpi_call_error(VPI_CALL_NO_DEF, name, file_idx, lineno);
 	    return 0;
       }
 
       switch (defn->info.type) {
 	  case vpiSysTask:
 	    if (vwid != 0 || fnet != 0) {
-		  fprintf(stderr, "%s: This is a system Task, "
-			  "you cannot call it as a Function\n", name);
+		  add_vpi_call_error(VPI_CALL_TASK_AS_FUNC, name, file_idx,
+		                     lineno);
 		  return 0;
 	    }
 	    assert(vbit == 0);
@@ -660,14 +720,15 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 
 	  case vpiSysFunc:
 	    if (vwid == 0 && fnet == 0) {
-		  fprintf(stderr, "%s: This is a system Function, "
-			  "you cannot call it as a Task\n", name);
+		  add_vpi_call_error(VPI_CALL_FUNC_AS_TASK, name, file_idx,
+		                     lineno);
 		  return 0;
 	    }
 	    break;
 
 	  default:
-	    fprintf(stderr, "Unsupported type %d.\n", (int)defn->info.type);
+	    fprintf(stderr, "Unsupported call type %d.\n",
+	                    (int)defn->info.type);
 	    assert(0);
       }
 

@@ -367,6 +367,7 @@ int main(int argc, char*argv[])
 
       int ret_cd = compile_design(design_path);
       destroy_lexor();
+      print_vpi_call_errors();
       if (ret_cd) return ret_cd;
 
       if (!have_ivl_version) {
