@@ -585,21 +585,21 @@ void print_vpi_call_errors()
 		  fprintf(stderr, "%s:%d: Error: System task/function %s() is "
 		                  "not defined by any module.\n",
 		                  file_names[vpi_call_error_lst[idx].file_idx],
-		                  vpi_call_error_lst[idx].lineno,
+		                  (int)vpi_call_error_lst[idx].lineno,
 		                  vpi_call_error_lst[idx].name);
 		  break;
 		case VPI_CALL_TASK_AS_FUNC:
 		  fprintf(stderr, "%s:%d: Error: %s() is a system task, it "
 			          "cannot be called as a function.\n",
 		                  file_names[vpi_call_error_lst[idx].file_idx],
-		                  vpi_call_error_lst[idx].lineno,
+		                  (int)vpi_call_error_lst[idx].lineno,
 		                  vpi_call_error_lst[idx].name);
 		  break;
 		case VPI_CALL_FUNC_AS_TASK:
 		  fprintf(stderr, "%s:%d: Error: %s() is a system function, it "
 			          "cannot be called as a task.\n",
 		                  file_names[vpi_call_error_lst[idx].file_idx],
-		                  vpi_call_error_lst[idx].lineno,
+		                  (int)vpi_call_error_lst[idx].lineno,
 		                  vpi_call_error_lst[idx].name);
 		  break;
 	    }
