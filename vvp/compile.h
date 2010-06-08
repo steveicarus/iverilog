@@ -1,7 +1,7 @@
 #ifndef __compile_H
 #define __compile_H
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -403,6 +403,7 @@ extern void compile_vpi_func_call(char*label, char*name,
 				  unsigned vbit, int vwid,
 				  long file_idx, long lineno,
 				  unsigned argc, vpiHandle*argv);
+extern void print_vpi_call_errors();
 
 extern void compile_fork(char*label, struct symb_s targ_s,
 			 struct symb_s scope_s);
