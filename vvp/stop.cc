@@ -170,8 +170,9 @@ static void cmd_call(unsigned argc, char*argv[])
 	   when we finish. */
       if (errors == 0) {
 	    vpiHandle call_handle = vpip_build_vpi_call(argv[0], 0, 0, 0,
-							vpi_argc, vpi_argv,
-							1, 0);
+	                                                true, false,
+	                                                vpi_argc, vpi_argv,
+	                                                1, 0);
 	    if (call_handle == 0)
 		  goto out;
 
@@ -532,4 +533,3 @@ void stop_handler(int rc)
 
       vpi_mcd_printf(1,"** Continue **\n");
 }
-

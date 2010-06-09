@@ -799,6 +799,8 @@ Threads call vpi tasks with the %vpi_call or %vpi_func
 instructions. The formats are:
 
    %vpi_call <file-index> <lineno> <name>, <args>... ;
+   %vpi_call/w <file-index> <lineno> <name>, <args>... ;
+   %vpi_call/i <file-index> <lineno> <name>, <args>... ;
    %vpi_func <file-index> <lineno> <name>, <args>... ;
    %vpi_func/r <file-index> <lineno> <name>, <args>... ;
 
@@ -812,6 +814,12 @@ looked up and compared with the registered system tasks/functions.
 
 The <args>... is a comma (",") separated list of arguments. These are
 made available to the VPI code as vpi handles.
+
+The plain %vpi_call will fail with an error message if a system function
+is called as a task. The /w suffix version will display a warning message
+if a system function is called as a task and will ignore any value that
+the function tries to return. The /i suffix version silently ignores any
+value returned by a system function called as a task.
 
 * The &A<> argument
 

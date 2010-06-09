@@ -395,6 +395,7 @@ extern void compile_code(char*label, char*mnem, comp_operands_t opa);
 extern void compile_disable(char*label, struct symb_s symb);
 
 extern void compile_vpi_call(char*label, char*name,
+			     bool func_as_task_err, bool func_as_task_warn,
 			     long file_idx, long lineno,
 			     unsigned argc, vpiHandle*argv);
 

@@ -541,6 +541,8 @@ extern unsigned vpip_module_path_cnt;
 extern vpiHandle vpip_build_vpi_call(const char*name,
 				     unsigned vbit, int vwid,
 				     class vvp_net_t*fnet,
+				     bool func_as_task_err,
+				     bool func_as_task_warn,
 				     unsigned argc,
 				     vpiHandle*argv,
 				     long file_idx,

@@ -158,7 +158,8 @@ void compile_sfunc(char*label, char*name,  char*format_string,
       vvp_net_t*ptr = new vvp_net_t;
 
       vpiHandle sys = vpip_build_vpi_call(name, 0, width_code, ptr,
-					  argc, vpi_argv, file_idx, lineno);
+                                          true, false, argc, vpi_argv,
+                                          file_idx, lineno);
       assert(sys);
 
 	/* Create and connect the functor to the label. */

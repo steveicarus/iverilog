@@ -84,7 +84,8 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_RESOLV K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC K_UFUNC_E K_UDP K_UDP_C K_UDP_S
-%token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_func K_vpi_func_r
+%token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_call_w K_vpi_call_i
+%token K_vpi_func K_vpi_func_r
 %token K_disable K_fork
 %token K_ivl_version K_ivl_delay_selection
 %token K_vpi_module K_vpi_time_precision K_file_names
@@ -540,8 +541,22 @@ statement
      statement is a variant of %vpi_call that includes a thread vector
      after the name, and is used for function calls. */
 
+  /* This version does not allow a function to be called as a task. */
 	| label_opt K_vpi_call T_NUMBER T_NUMBER T_STRING argument_opt ';'
-		{ compile_vpi_call($1, $5, $3, $4, $6.argc, $6.argv); }
+		{ compile_vpi_call($1, $5, true, false, $3, $4,
+		                   $6.argc, $6.argv); }
+
+  /* This version allows a function to be called as a task, but prints a
+   * warning message. */
+	| label_opt K_vpi_call_w T_NUMBER T_NUMBER T_STRING argument_opt ';'
+		{ compile_vpi_call($1, $5, false, true, $3, $4,
+		                   $6.argc, $6.argv); }
+
+  /* This version allows a function to be called as a task and does not
+   * print a message. */
+	| label_opt K_vpi_call_i T_NUMBER T_NUMBER T_STRING argument_opt ';'
+		{ compile_vpi_call($1, $5, false, false, $3, $4,
+		                   $6.argc, $6.argv); }
 
 	| label_opt K_vpi_func T_NUMBER T_NUMBER T_STRING ','
 	  T_NUMBER ',' T_NUMBER argument_opt ';'

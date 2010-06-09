@@ -1679,6 +1679,7 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
 }
 
 void compile_vpi_call(char*label, char*name,
+                      bool func_as_task_err, bool func_as_task_warn,
                       long file_idx, long lineno,
                       unsigned argc, vpiHandle*argv)
 {
@@ -1691,8 +1692,9 @@ void compile_vpi_call(char*label, char*name,
 
 	/* Create a vpiHandle that bundles the call information, and
 	   store that handle in the instruction. */
-      code->handle = vpip_build_vpi_call(name, 0, 0, 0, argc, argv,
-                                         file_idx, lineno);
+      code->handle = vpip_build_vpi_call(name, 0, 0, 0,
+                                         func_as_task_err, func_as_task_warn,
+                                         argc, argv, file_idx, lineno);
       if (code->handle == 0)
 	    compile_errors += 1;
 
@@ -1714,8 +1716,8 @@ void compile_vpi_func_call(char*label, char*name,
 
 	/* Create a vpiHandle that bundles the call information, and
 	   store that handle in the instruction. */
-      code->handle = vpip_build_vpi_call(name, vbit, vwid, 0, argc, argv,
-                                         file_idx, lineno);
+      code->handle = vpip_build_vpi_call(name, vbit, vwid, 0, true, false,
+                                         argc, argv, file_idx, lineno);
       if (code->handle == 0)
 	    compile_errors += 1;
 

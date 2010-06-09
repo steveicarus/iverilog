@@ -198,6 +198,8 @@ static char* strdupnew(char const *str)
      exceptional parameter requirements) are listed first. */
 
 "%vpi_call" { return K_vpi_call; }
+"%vpi_call/w" { return K_vpi_call_w; }
+"%vpi_call/i" { return K_vpi_call_i; }
 "%vpi_func" { return K_vpi_func; }
 "%vpi_func/r" { return K_vpi_func_r; }
 "%disable"  { return K_disable; }
