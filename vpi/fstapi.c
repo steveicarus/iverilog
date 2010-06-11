@@ -2177,8 +2177,19 @@ if(!xc->fh)
 	fflush(xc->f);
 	zhandle = gzdopen(dup(fileno(xc->f)), "rb");
 	xc->fh = fopen(fnam, "w+b");
+        if(!xc->fh)
+                {
+                xc->fh = tmpfile();  
+                free(fnam); fnam = NULL;
+                if(!xc->fh)
+			{
+			free(mem);
+			return;
+			}
+                }    
+
 #ifndef __MINGW32__
-	unlink(fnam);
+	if(fnam) unlink(fnam);
 #endif
 
         for(hl = 0; hl < uclen; hl += FST_GZIO_LEN)
@@ -2557,13 +2568,22 @@ if(sectype == FST_BL_ZWRAPPER)
 
 	sprintf(hf, "%s.upk_%d_%p", xc->filename, getpid(), (void *)xc);
 	fcomp = fopen(hf, "w+b");
+	if(!fcomp)
+		{
+		fcomp = tmpfile();
+		free(hf); hf = NULL;
+		if(!fcomp) return(0);
+		}
 
 #ifdef __MINGW32__
 	setvbuf(fcomp, (char *)NULL, _IONBF, 0);   /* keeps gzip from acting weird in tandem with fopen */
 	xc->filename_unpacked = hf;
 #else
-	unlink(hf);
-	free(hf);
+	if(hf) 
+		{
+		unlink(hf);
+		free(hf);
+		}
 #endif
 
 	fseeko(xc->f, 1+8+8, SEEK_SET);
