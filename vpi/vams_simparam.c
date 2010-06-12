@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2009  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2010  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,13 +16,12 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "sys_priv.h"
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <vpi_user.h>
-#include "sys_priv.h"
 #include "version_base.h"
 
 /* Once we have real string objects replace this with a dynamic string. */

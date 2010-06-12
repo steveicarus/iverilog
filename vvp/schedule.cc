@@ -369,7 +369,7 @@ bool schedule_stopped(void)
  * These are the signal handling infrastructure. The SIGINT signal
  * leads to an implicit $stop.
  */
-static void signals_handler(int)
+extern "C" void signals_handler(int)
 {
       schedule_stopped_flag = true;
 }

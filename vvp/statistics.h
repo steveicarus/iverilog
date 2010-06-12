@@ -19,7 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+// The SunPro C++ compiler is broken and does not define size_t in cstddef.
+#ifdef __SUNPRO_CC
+# include  <stddef.h>
+#else
 # include  <cstddef>
+#endif
 
 extern unsigned long count_opcodes;
 extern unsigned long count_functors;

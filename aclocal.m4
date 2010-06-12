@@ -127,6 +127,13 @@ case "${host}" in
      *-*-darwin*)
         shared="-bundle -undefined suppress -flat_namespace"
         ;;
+
+     *-*-solaris*)
+        if test ${using_sunpro_c} = 1
+        then
+           shared="-G"
+        fi
+        ;;
 esac
 AC_SUBST(shared)
 AC_MSG_RESULT($shared)
@@ -153,6 +160,12 @@ case "${host}" in
         PICFLAG=+z
         ;;
 
+     *-*-solaris*)
+        if test ${using_sunpro_c} = 1
+        then
+           PICFLAG=-G
+        fi
+        ;;
 esac
 AC_SUBST(PICFLAG)
 AC_MSG_RESULT($PICFLAG)

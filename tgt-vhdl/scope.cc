@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for scopes.
  *
- *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -921,7 +921,7 @@ static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
  * A first pass through the hierarchy: create VHDL entities for
  * each unique Verilog module type.
  */
-static int draw_skeleton_scope(ivl_scope_t scope, void *_unused)
+extern "C" int draw_skeleton_scope(ivl_scope_t scope, void *_unused)
 {
    static int depth = 0;
    
@@ -949,7 +949,7 @@ static int draw_skeleton_scope(ivl_scope_t scope, void *_unused)
    return rc;
 }
 
-static int draw_all_signals(ivl_scope_t scope, void *_parent)
+extern "C" int draw_all_signals(ivl_scope_t scope, void *_parent)
 {
    if (!is_default_scope_instance(scope))
       return 0;  // Not interested in this instance
@@ -981,7 +981,7 @@ static int draw_all_signals(ivl_scope_t scope, void *_parent)
 /*
  * Draw all tasks and functions in the hierarchy.
  */
-static int draw_functions(ivl_scope_t scope, void *_parent)
+extern "C" int draw_functions(ivl_scope_t scope, void *_parent)
 {
    if (!is_default_scope_instance(scope))
       return 0;  // Not interested in this instance
@@ -1005,7 +1005,7 @@ static int draw_functions(ivl_scope_t scope, void *_parent)
  * This also has the side effect of generating all the necessary
  * nexus code.
  */
-static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
+extern "C" int draw_constant_drivers(ivl_scope_t scope, void *_parent)
 {
    if (!is_default_scope_instance(scope))
       return 0;  // Not interested in this instance
@@ -1080,7 +1080,7 @@ static int draw_constant_drivers(ivl_scope_t scope, void *_parent)
    return 0;
 }
 
-static int draw_all_logic_and_lpm(ivl_scope_t scope, void *_parent)
+extern "C" int draw_all_logic_and_lpm(ivl_scope_t scope, void *_parent)
 {
    if (!is_default_scope_instance(scope))
       return 0;  // Not interested in this instance
@@ -1100,7 +1100,7 @@ static int draw_all_logic_and_lpm(ivl_scope_t scope, void *_parent)
    return ivl_scope_children(scope, draw_all_logic_and_lpm, scope);
 }
 
-static int draw_hierarchy(ivl_scope_t scope, void *_parent)
+extern "C" int draw_hierarchy(ivl_scope_t scope, void *_parent)
 {   
    if (ivl_scope_type(scope) == IVL_SCT_MODULE && _parent) {
       ivl_scope_t parent = static_cast<ivl_scope_t>(_parent);

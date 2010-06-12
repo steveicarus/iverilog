@@ -15,7 +15,7 @@ void error(const char *fmt, ...);
 void debug_msg(const char *fmt, ...);
 
 int draw_scope(ivl_scope_t scope, void *_parent);
-int draw_process(ivl_process_t net, void *cd);
+extern "C" int draw_process(ivl_process_t net, void *cd);
 int draw_stmt(vhdl_procedural *proc, stmt_container *container,
               ivl_statement_t stmt, bool is_last = false);
 int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm);

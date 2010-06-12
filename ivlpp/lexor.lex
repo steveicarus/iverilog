@@ -1217,7 +1217,7 @@ static void macro_start_args()
     def_argo[0] = 0;
     def_argl[0] = 0;
     def_argc = 1;
-};
+}
 
 static void macro_add_to_arg(int is_white_space)
 {

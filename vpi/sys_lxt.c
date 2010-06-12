@@ -17,17 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-/* The vpi_config.h include must be before the lxt_write.h include! */
-# include "vpi_config.h"
-# include "lxt_write.h"
+/* The sys_priv.h include must be before the lxt_write.h include! */
 # include "sys_priv.h"
+# include "lxt_write.h"
 # include "vcd_priv.h"
 
 /*
  * This file contains the implementations of the LXT related functions.
  */
 
-# include  "vpi_user.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>

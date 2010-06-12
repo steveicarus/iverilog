@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,13 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-#include "vpi_config.h"
-
-#include "vpi_user.h"
+#include "sys_priv.h"
 #include <string.h>
 #include <math.h>
 #include <assert.h>
-#include <sys_priv.h>
 
 static PLI_INT32 sys_time_calltf(PLI_BYTE8*name)
 {

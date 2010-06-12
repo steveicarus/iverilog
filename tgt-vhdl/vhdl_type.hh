@@ -1,7 +1,7 @@
 /*
  *  VHDL variable and signal types.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ enum vhdl_type_name_t {
    VHDL_TYPE_SIGNED,
    VHDL_TYPE_UNSIGNED,
    VHDL_TYPE_TIME,
-   VHDL_TYPE_ARRAY,
+   VHDL_TYPE_ARRAY
 };
 
 /*

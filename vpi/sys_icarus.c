@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2009  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2010  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,9 +16,8 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <assert.h>
-#include <vpi_user.h>
 #include "sys_priv.h"
+#include <assert.h>
 
 static PLI_INT32 finish_and_return_calltf(PLI_BYTE8* name)
 {

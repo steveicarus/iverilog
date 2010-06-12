@@ -2,7 +2,7 @@
  *  Verilog-2005 math library for Icarus Verilog
  *  http://www.icarus.com/eda/verilog/
  *
- *  Copyright (C) 2007-2009  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2007-2010  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <vpi_user.h>
+#include "vpi_user.h"
 
 /* Single argument functions. */
 typedef struct s_single_data {
