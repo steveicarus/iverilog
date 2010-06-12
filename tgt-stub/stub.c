@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1143,7 +1143,7 @@ static void show_nexus_details(ivl_signal_t net, ivl_nexus_t nex)
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
 	    ivl_net_const_t con;
-	    ivl_net_logic_t log;
+	    ivl_net_logic_t logic;
 	    ivl_lpm_t lpm;
 	    ivl_signal_t sig;
 	    ivl_switch_t swt;
@@ -1170,10 +1170,10 @@ static void show_nexus_details(ivl_signal_t net, ivl_nexus_t nex)
 
 		  fprintf(out, "\n");
 
-	    } else if ((log = ivl_nexus_ptr_log(ptr))) {
+	    } else if ((logic = ivl_nexus_ptr_log(ptr))) {
 		  fprintf(out, "      LOG %s.%s[%u] (%s0, %s1)\n",
-			  ivl_scope_name(ivl_logic_scope(log)),
-			  ivl_logic_basename(log),
+			  ivl_scope_name(ivl_logic_scope(logic)),
+			  ivl_logic_basename(logic),
 			  ivl_nexus_ptr_pin(ptr), dr0, dr1);
 
 	    } else if ((lpm = ivl_nexus_ptr_lpm(ptr))) {
@@ -1341,9 +1341,9 @@ static void show_signal(ivl_signal_t net)
 
 }
 
-static void test_expr_is_delay(ivl_expr_t exp)
+static void test_expr_is_delay(ivl_expr_t expr)
 {
-      switch (ivl_expr_type(exp)) {
+      switch (ivl_expr_type(expr)) {
 	  case IVL_EX_ULONG:
 	    return;
 	  case IVL_EX_NUMBER:

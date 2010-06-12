@@ -1,7 +1,7 @@
 #ifndef __vvp_priv_H
 #define __vvp_priv_H
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -83,10 +83,11 @@ extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 
 extern void draw_lpm_mux(ivl_lpm_t net);
 
-extern struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid);
-extern int draw_ufunc_real(ivl_expr_t exp);
+extern struct vector_info draw_ufunc_expr(ivl_expr_t expr, unsigned wid);
+extern int draw_ufunc_real(ivl_expr_t expr);
 
-extern void pad_expr_in_place(ivl_expr_t exp, struct vector_info res, unsigned swid);
+extern void pad_expr_in_place(ivl_expr_t expr, struct vector_info res,
+                              unsigned swid);
 
 /*
  * modpath.c symbols.
@@ -110,9 +111,9 @@ extern void cleanup_modpath(void);
  */
 extern void draw_vpi_task_call(ivl_statement_t net);
 
-extern struct vector_info draw_vpi_func_call(ivl_expr_t exp,
+extern struct vector_info draw_vpi_func_call(ivl_expr_t expr,
 					     unsigned wid);
-extern int draw_vpi_rfunc_call(ivl_expr_t exp);
+extern int draw_vpi_rfunc_call(ivl_expr_t expr);
 
 /*
  * Switches (tran)
@@ -194,8 +195,8 @@ extern const char*draw_input_from_net(ivl_nexus_t nex);
  *        therefore might be multiply allocated if allowed.
  */
 
-extern struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag);
-extern struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned w,
+extern struct vector_info draw_eval_expr(ivl_expr_t expr, int stuff_ok_flag);
+extern struct vector_info draw_eval_expr_wid(ivl_expr_t expr, unsigned w,
 					     int stuff_ok_flag);
 #define STUFF_OK_XZ 0x0001
 #define STUFF_OK_47 0x0002
@@ -260,13 +261,13 @@ extern void clr_vector(struct vector_info vec);
 
 extern void clear_expression_lookaside(void);
 extern void save_expression_lookaside(unsigned addr,
-				      ivl_expr_t exp,
+				      ivl_expr_t expr,
 				      unsigned wid);
 extern void save_signal_lookaside(unsigned addr,
 				  ivl_signal_t sig, unsigned use_word,
 				  unsigned wid);
 
-extern unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid,
+extern unsigned allocate_vector_exp(ivl_expr_t expr, unsigned wid,
 				    int exclusive_flag);
 
 extern int number_is_unknown(ivl_expr_t ex);

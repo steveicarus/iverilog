@@ -22,23 +22,23 @@
 # include  <stdlib.h>
 # include  <assert.h>
 
-static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
+static void draw_eval_expr_dest(ivl_expr_t expr, struct vector_info dest,
 				int ok_flags);
-static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
+static void draw_signal_dest(ivl_expr_t expr, struct vector_info res,
 			     int add_index, long immediate);
 
-int number_is_unknown(ivl_expr_t ex)
+int number_is_unknown(ivl_expr_t expr)
 {
       const char*bits;
       unsigned idx;
 
-      if (ivl_expr_type(ex) == IVL_EX_ULONG)
+      if (ivl_expr_type(expr) == IVL_EX_ULONG)
 	    return 0;
 
-      assert(ivl_expr_type(ex) == IVL_EX_NUMBER);
+      assert(ivl_expr_type(expr) == IVL_EX_NUMBER);
 
-      bits = ivl_expr_bits(ex);
-      for (idx = 0 ;  idx < ivl_expr_width(ex) ;  idx += 1)
+      bits = ivl_expr_bits(expr);
+      for (idx = 0 ;  idx < ivl_expr_width(expr) ;  idx += 1)
 	    if ((bits[idx] != '0') && (bits[idx] != '1'))
 		  return 1;
 
@@ -53,17 +53,17 @@ int number_is_unknown(ivl_expr_t ex)
  * code generator always emits positive values, hence the negation
  * requirement.
  */
-int number_is_immediate(ivl_expr_t ex, unsigned lim_wid, int negative_ok_flag)
+int number_is_immediate(ivl_expr_t expr, unsigned lim_wid, int negative_ok_flag)
 {
       const char *bits;
-      unsigned nbits = ivl_expr_width(ex);
+      unsigned nbits = ivl_expr_width(expr);
       char pad_bit = '0';
       unsigned idx;
 
 	/* We can only convert numbers to an immediate value. */
-      if (ivl_expr_type(ex) != IVL_EX_NUMBER
-	  && ivl_expr_type(ex) != IVL_EX_ULONG
-	  && ivl_expr_type(ex) != IVL_EX_DELAY)
+      if (ivl_expr_type(expr) != IVL_EX_NUMBER
+	  && ivl_expr_type(expr) != IVL_EX_ULONG
+	  && ivl_expr_type(expr) != IVL_EX_DELAY)
 	    return 0;
 
 	/* If a negative value is OK, then we really have one less
@@ -71,30 +71,30 @@ int number_is_immediate(ivl_expr_t ex, unsigned lim_wid, int negative_ok_flag)
       if (negative_ok_flag) lim_wid -= 1;
 
 	/* This is an unsigned value so it can not have the -2**N problem. */
-      if (ivl_expr_type(ex) == IVL_EX_ULONG) {
+      if (ivl_expr_type(expr) == IVL_EX_ULONG) {
 	    unsigned long imm;
 	    if (lim_wid >= 8*sizeof(unsigned long)) return 1;
 	      /* At this point we know that lim_wid is smaller than an
 	       * unsigned long variable. */
-	    imm = ivl_expr_uvalue(ex);
+	    imm = ivl_expr_uvalue(expr);
 	    if (imm < (1UL << lim_wid)) return 1;
 	    else return 0;
       }
 
 	/* This is an unsigned value so it can not have the -2**N problem. */
-      if (ivl_expr_type(ex) == IVL_EX_DELAY) {
+      if (ivl_expr_type(expr) == IVL_EX_DELAY) {
 	    uint64_t imm;
 	    if (lim_wid >= 8*sizeof(uint64_t)) return 1;
 	      /* At this point we know that lim_wid is smaller than a
 	       * uint64_t variable. */
-	    imm = ivl_expr_delay_val(ex);
+	    imm = ivl_expr_delay_val(expr);
 	    if (imm < ((uint64_t)1 << lim_wid)) return 1;
 	    else return 0;
       }
 
-      bits = ivl_expr_bits(ex);
+      bits = ivl_expr_bits(expr);
 
-      if (ivl_expr_signed(ex) && bits[nbits-1]=='1') pad_bit = '1';
+      if (ivl_expr_signed(expr) && bits[nbits-1]=='1') pad_bit = '1';
 
       if (pad_bit == '1' && !negative_ok_flag) return 0;
 
@@ -116,19 +116,19 @@ int number_is_immediate(ivl_expr_t ex, unsigned lim_wid, int negative_ok_flag)
  * number is not unknown (number_is_unknown) and is small enough
  * (number_is_immediate).
  */
-long get_number_immediate(ivl_expr_t ex)
+long get_number_immediate(ivl_expr_t expr)
 {
       long imm = 0;
       unsigned idx;
 
-      switch (ivl_expr_type(ex)) {
+      switch (ivl_expr_type(expr)) {
 	  case IVL_EX_ULONG:
-	    imm = ivl_expr_uvalue(ex);
+	    imm = ivl_expr_uvalue(expr);
 	    break;
 
 	  case IVL_EX_NUMBER: {
-		const char*bits = ivl_expr_bits(ex);
-		unsigned nbits = ivl_expr_width(ex);
+		const char*bits = ivl_expr_bits(expr);
+		unsigned nbits = ivl_expr_width(expr);
 		  /* We can not copy more bits than fit into a long. */
 		if (nbits > 8*sizeof(long)) nbits = 8*sizeof(long);
 		for (idx = 0 ; idx < nbits ; idx += 1) switch (bits[idx]){
@@ -140,7 +140,7 @@ long get_number_immediate(ivl_expr_t ex)
 		    default:
 		      assert(0);
 		}
-		if (ivl_expr_signed(ex) && bits[nbits-1]=='1' &&
+		if (ivl_expr_signed(expr) && bits[nbits-1]=='1' &&
 		    nbits < 8*sizeof(long)) imm |= -1L << nbits;
 		break;
 	  }
@@ -152,19 +152,19 @@ long get_number_immediate(ivl_expr_t ex)
       return imm;
 }
 
-uint64_t get_number_immediate64(ivl_expr_t ex)
+uint64_t get_number_immediate64(ivl_expr_t expr)
 {
       uint64_t imm = 0;
       unsigned idx;
 
-      switch (ivl_expr_type(ex)) {
+      switch (ivl_expr_type(expr)) {
 	  case IVL_EX_ULONG:
-	    imm = ivl_expr_uvalue(ex);
+	    imm = ivl_expr_uvalue(expr);
 	    break;
 
 	  case IVL_EX_NUMBER: {
-		const char*bits = ivl_expr_bits(ex);
-		unsigned nbits = ivl_expr_width(ex);
+		const char*bits = ivl_expr_bits(expr);
+		unsigned nbits = ivl_expr_width(expr);
 		for (idx = 0 ; idx < nbits ; idx += 1) switch (bits[idx]){
 		    case '0':
 		      break;
@@ -175,7 +175,7 @@ uint64_t get_number_immediate64(ivl_expr_t ex)
 		    default:
 		      assert(0);
 		}
-		if (ivl_expr_signed(ex) && bits[nbits-1]=='1' && nbits < 64)
+		if (ivl_expr_signed(expr) && bits[nbits-1]=='1' && nbits < 64)
 		      imm |= (-UINT64_C(1)) << nbits;
 		break;
 	  }
@@ -302,7 +302,7 @@ void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
  * processed so that x and z values are equivalent. This may allow for
  * new optimizations.
  */
-static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
+static struct vector_info draw_eq_immediate(ivl_expr_t expr, unsigned ewid,
 					    ivl_expr_t le,
 					    ivl_expr_t re,
 					    int stuff_ok_flag)
@@ -317,7 +317,7 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
       wid = ivl_expr_width(le);
       lv = draw_eval_expr_wid(le, wid, stuff_ok_flag);
 
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 	  case 'E': /* === */
 	    fprintf(vvp_out, "    %%cmpi/u %u, %lu, %u;\n",
 		    lv.base, imm, wid);
@@ -386,7 +386,7 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 		  fprintf(stderr, "%s:%u: vvp.tgt error: "
 			  "Unable to allocate %u thread bits "
 			  "for result of equality compare.\n",
-			  ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+			  ivl_expr_file(expr), ivl_expr_lineno(expr), wid);
 		  vvp_errors += 1;
 	    }
 
@@ -402,7 +402,7 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 		  fprintf(stderr, "%s:%u: vvp.tgt error: "
 			  "Unable to allocate %u thread bits "
 			  "for result of equality compare.\n",
-			  ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+			  ivl_expr_file(expr), ivl_expr_lineno(expr), wid);
 		  vvp_errors += 1;
 	    }
 
@@ -423,7 +423,7 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
  * This handles the special case that the operands of the comparison
  * are real valued expressions.
  */
-static struct vector_info draw_binary_expr_eq_real(ivl_expr_t exp)
+static struct vector_info draw_binary_expr_eq_real(ivl_expr_t expr)
 {
       struct vector_info res;
       int lword, rword;
@@ -432,14 +432,14 @@ static struct vector_info draw_binary_expr_eq_real(ivl_expr_t exp)
       res.wid  = 1;
       assert(res.base);
 
-      lword = draw_eval_real(ivl_expr_oper1(exp));
-      rword = draw_eval_real(ivl_expr_oper2(exp));
+      lword = draw_eval_real(ivl_expr_oper1(expr));
+      rword = draw_eval_real(ivl_expr_oper2(expr));
 
       clr_word(lword);
       clr_word(rword);
 
       fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", lword, rword);
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 
 	  case 'e':
 	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
@@ -457,12 +457,12 @@ static struct vector_info draw_binary_expr_eq_real(ivl_expr_t exp)
       return res;
 }
 
-static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
+static struct vector_info draw_binary_expr_eq(ivl_expr_t expr,
 					      unsigned ewid,
 					      int stuff_ok_flag)
 {
-      ivl_expr_t le = ivl_expr_oper1(exp);
-      ivl_expr_t re = ivl_expr_oper2(exp);
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
 
       unsigned wid;
 
@@ -471,11 +471,11 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 
       if ((ivl_expr_value(le) == IVL_VT_REAL)
 	  ||(ivl_expr_value(re) == IVL_VT_REAL))  {
-	    return draw_binary_expr_eq_real(exp);
+	    return draw_binary_expr_eq_real(expr);
       }
 
       if (number_is_immediate(re,16,0) && !number_is_unknown(re))
-	    return draw_eq_immediate(exp, ewid, le, re, stuff_ok_flag);
+	    return draw_eq_immediate(expr, ewid, le, re, stuff_ok_flag);
 
       assert(ivl_expr_value(le) == IVL_VT_LOGIC
 	     || ivl_expr_value(le) == IVL_VT_BOOL);
@@ -489,7 +489,7 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
       lv = draw_eval_expr_wid(le, wid, stuff_ok_flag&~STUFF_OK_47);
       rv = draw_eval_expr_wid(re, wid, stuff_ok_flag&~STUFF_OK_47);
 
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 	  case 'E': /* === */
 	    assert(lv.wid == rv.wid);
 	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", lv.base,
@@ -567,7 +567,7 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 	      fprintf(stderr, "%s:%u: vvp.tgt error: "
 		      "Unable to allocate %u thread bits "
 		      "for result of equality compare.\n",
-		      ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+		      ivl_expr_file(expr), ivl_expr_lineno(expr), wid);
 	    vvp_errors += 1;
 	}
 
@@ -581,10 +581,10 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
       return lv;
 }
 
-static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_binary_expr_land(ivl_expr_t expr, unsigned wid)
 {
-      ivl_expr_t le = ivl_expr_oper1(exp);
-      ivl_expr_t re = ivl_expr_oper2(exp);
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
 
       struct vector_info lv;
       struct vector_info rv;
@@ -650,7 +650,7 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
 	      fprintf(stderr, "%s:%u: vvp.tgt error: "
 		      "Unable to allocate %u thread bits "
 		      "for result of padded logical AND.\n",
-		      ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+		      ivl_expr_file(expr), ivl_expr_lineno(expr), wid);
 	      vvp_errors += 1;
 	}
 
@@ -664,11 +664,11 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
       return lv;
 }
 
-static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid,
+static struct vector_info draw_binary_expr_lor(ivl_expr_t expr, unsigned wid,
 					       int stuff_ok_flag)
 {
-      ivl_expr_t le = ivl_expr_oper1(exp);
-      ivl_expr_t re = ivl_expr_oper2(exp);
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
 
       struct vector_info lv;
       struct vector_info rv;
@@ -761,7 +761,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid,
 	      fprintf(stderr, "%s:%u: vvp.tgt error: "
 		      "Unable to allocate %u thread bits "
 		      "for result of padded logical OR.\n",
-		      ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+		      ivl_expr_file(expr), ivl_expr_lineno(expr), wid);
 	      vvp_errors += 1;
 	}
 
@@ -775,12 +775,12 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid,
       return lv;
 }
 
-static struct vector_info draw_binary_expr_le_real(ivl_expr_t exp)
+static struct vector_info draw_binary_expr_le_real(ivl_expr_t expr)
 {
       struct vector_info res;
 
-      ivl_expr_t le = ivl_expr_oper1(exp);
-      ivl_expr_t re = ivl_expr_oper2(exp);
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
 
       int lword = draw_eval_real(le);
       int rword = draw_eval_real(re);
@@ -793,7 +793,7 @@ static struct vector_info draw_binary_expr_le_real(ivl_expr_t exp)
       clr_word(lword);
       clr_word(rword);
 
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 	  case '<':
 	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", lword, rword);
 	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
@@ -823,11 +823,11 @@ static struct vector_info draw_binary_expr_le_real(ivl_expr_t exp)
       return res;
 }
 
-static struct vector_info draw_binary_expr_le_bool(ivl_expr_t exp,
+static struct vector_info draw_binary_expr_le_bool(ivl_expr_t expr,
 						   unsigned wid)
 {
-      ivl_expr_t le = ivl_expr_oper1(exp);
-      ivl_expr_t re = ivl_expr_oper2(exp);
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
 
       int lw, rw;
       struct vector_info tmp;
@@ -840,7 +840,7 @@ static struct vector_info draw_binary_expr_le_bool(ivl_expr_t exp,
       lw = draw_eval_bool64(le);
       rw = draw_eval_bool64(re);
 
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 	  case 'G':
 	    fprintf(vvp_out, "    %%cmp/w%c %u, %u;\n", s_flag, rw, lw);
 	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
@@ -874,7 +874,7 @@ static struct vector_info draw_binary_expr_le_bool(ivl_expr_t exp,
 	      fprintf(stderr, "%s:%u: vvp.tgt error: "
 		      "Unable to allocate %u thread bits "
 		      "for result of padded inequality compare.\n",
-		      ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+		      ivl_expr_file(expr), ivl_expr_lineno(expr), wid);
 	      vvp_errors += 1;
 	}
 
@@ -888,12 +888,12 @@ static struct vector_info draw_binary_expr_le_bool(ivl_expr_t exp,
       return tmp;
 }
 
-static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
+static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 					      unsigned wid,
 					      int stuff_ok_flag)
 {
-      ivl_expr_t le = ivl_expr_oper1(exp);
-      ivl_expr_t re = ivl_expr_oper2(exp);
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
 
       struct vector_info lv;
       struct vector_info rv;
@@ -905,16 +905,16 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
 	    owid = ivl_expr_width(re);
 
       if (ivl_expr_value(le) == IVL_VT_REAL)
-	    return draw_binary_expr_le_real(exp);
+	    return draw_binary_expr_le_real(expr);
 
       if (ivl_expr_value(re) == IVL_VT_REAL)
-	    return draw_binary_expr_le_real(exp);
+	    return draw_binary_expr_le_real(expr);
 
 	/* Detect the special case that we can do this with integers. */
       if (ivl_expr_value(le) == IVL_VT_BOOL
 	  && ivl_expr_value(re) == IVL_VT_BOOL
 	  && owid < 64) {
-	    return draw_binary_expr_le_bool(exp, wid);
+	    return draw_binary_expr_le_bool(expr, wid);
       }
 
       assert(ivl_expr_value(le) == IVL_VT_LOGIC
@@ -925,7 +925,7 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
       lv.wid = 0;  lv.base=0;
       rv.wid = 0;  rv.base=0;
 
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 	  case 'G':
 	    rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
 	    if (number_is_immediate(le,16,0) && !number_is_unknown(le)) {
@@ -1009,7 +1009,7 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
 	      fprintf(stderr, "%s:%u: vvp.tgt error: "
 		      "Unable to allocate %u thread bits "
 		      "for result of padded inequality compare.\n",
-		      ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+		      ivl_expr_file(expr), ivl_expr_lineno(expr), wid);
 	      vvp_errors += 1;
 	}
 
@@ -1023,7 +1023,7 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
       return lv;
 }
 
-static struct vector_info draw_logic_immediate(ivl_expr_t exp,
+static struct vector_info draw_logic_immediate(ivl_expr_t expr,
 					       ivl_expr_t le,
 					       ivl_expr_t re,
 					       unsigned wid)
@@ -1035,7 +1035,7 @@ static struct vector_info draw_logic_immediate(ivl_expr_t exp,
 
       assert(lv.base >= 4);
 
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 
 	  case '&':
 	    fprintf(vvp_out, "   %%andi %u, %lu, %u;\n", lv.base, imm, lv.wid);
@@ -1049,19 +1049,19 @@ static struct vector_info draw_logic_immediate(ivl_expr_t exp,
       return lv;
 }
 
-static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
+static struct vector_info draw_binary_expr_logic(ivl_expr_t expr,
 						 unsigned wid)
 {
-      ivl_expr_t le = ivl_expr_oper1(exp);
-      ivl_expr_t re = ivl_expr_oper2(exp);
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
       struct vector_info lv;
       struct vector_info rv;
 
-      if (ivl_expr_opcode(exp) == '&') {
+      if (ivl_expr_opcode(expr) == '&') {
 	    if (number_is_immediate(re, IMM_WID, 0) && !number_is_unknown(re))
-		  return draw_logic_immediate(exp, le, re, wid);
+		  return draw_logic_immediate(expr, le, re, wid);
 	    if (number_is_immediate(le, IMM_WID, 0) && !number_is_unknown(le))
-		  return draw_logic_immediate(exp, re, le, wid);
+		  return draw_logic_immediate(expr, re, le, wid);
       }
 
       lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
@@ -1085,7 +1085,8 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
 			fprintf(stderr, "%s:%u: vvp.tgt error: "
 				"Unable to allocate %u thread bits "
 				"for result of binary logic.\n",
-				ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+				ivl_expr_file(expr), ivl_expr_lineno(expr),
+				wid);
 			vvp_errors += 1;
 		  }
 
@@ -1095,7 +1096,7 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
 	    }
       }
 
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 
 	  case '&':
 	    fprintf(vvp_out, "    %%and %u, %u, %u;\n",
@@ -1142,16 +1143,16 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
  * function, with the only difference the opcode I generate at the
  * end.
  */
-static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_binary_expr_lrs(ivl_expr_t expr, unsigned wid)
 {
-      ivl_expr_t le = ivl_expr_oper1(exp);
-      ivl_expr_t re = ivl_expr_oper2(exp);
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
       const char*opcode = "?";
 
       struct vector_info lv;
 
 	/* Evaluate the expression that is to be shifted. */
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 
 	  case 'l': /* << (left shift) */
 	    lv = draw_eval_expr_wid(le, wid, 0);
@@ -1168,7 +1169,8 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 			fprintf(stderr, "%s:%u: vvp.tgt error: "
 				"Unable to allocate %u thread bits "
 				"for result of left shift (<<).\n",
-				ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+				ivl_expr_file(expr), ivl_expr_lineno(expr),
+				wid);
 			vvp_errors += 1;
 		  }
 
@@ -1203,7 +1205,8 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 			fprintf(stderr, "%s:%u: vvp.tgt error: "
 				"Unable to allocate %u thread bits "
 				"for result of right shift (>>).\n",
-				ivl_expr_file(exp), ivl_expr_lineno(exp), lv.wid);
+				ivl_expr_file(expr), ivl_expr_lineno(expr),
+				lv.wid);
 			vvp_errors += 1;
 		  }
 
@@ -1232,7 +1235,7 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 
 	      /* Sign extend any constant begets itself, if this
 		 expression is signed. */
-	    if ((lv.base < 4) && (ivl_expr_signed(exp)))
+	    if ((lv.base < 4) && (ivl_expr_signed(expr)))
 		  return lv;
 
 	    if (lv.base < 4) {
@@ -1243,7 +1246,8 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 			fprintf(stderr, "%s:%u: vvp.tgt error: "
 				"Unable to allocate %u thread bits "
 				"for result of right shift (>>>).\n",
-				ivl_expr_file(exp), ivl_expr_lineno(exp), lv.wid);
+				ivl_expr_file(expr), ivl_expr_lineno(expr),
+				lv.wid);
 			vvp_errors += 1;
 		  }
 
@@ -1252,7 +1256,7 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 		  lv = tmp;
 	    }
 
-	    if (ivl_expr_signed(exp))
+	    if (ivl_expr_signed(expr))
 		  opcode = "%shiftr/s";
 	    else
 		  opcode = "%shiftr";
@@ -1270,7 +1274,7 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
       fprintf(vvp_out, "    %s/i0  %u, %u;\n", opcode, lv.base, lv.wid);
 
       if (lv.base >= 8)
-	    save_expression_lookaside(lv.base, exp, lv.wid);
+	    save_expression_lookaside(lv.base, expr, lv.wid);
 
       return lv;
 }
@@ -1436,10 +1440,10 @@ static struct vector_info draw_mul_immediate(ivl_expr_t le,
       return lv;
 }
 
-static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_binary_expr_arith(ivl_expr_t expr, unsigned wid)
 {
-      ivl_expr_t le = ivl_expr_oper1(exp);
-      ivl_expr_t re = ivl_expr_oper2(exp);
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
 
       struct vector_info lv;
       struct vector_info rv;
@@ -1448,55 +1452,55 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
       const char*sign_string = signed_flag ? "/s" : "";
 
 
-      if ((ivl_expr_opcode(exp) == '+')
+      if ((ivl_expr_opcode(expr) == '+')
 	  && (ivl_expr_type(le) == IVL_EX_SIGNAL)
 	  && (ivl_expr_type(re) == IVL_EX_ULONG)
 	  && number_is_immediate(re, IMM_WID, 1))
 	    return draw_load_add_immediate(le, re, wid, signed_flag);
 
-      if ((ivl_expr_opcode(exp) == '+')
+      if ((ivl_expr_opcode(expr) == '+')
 	  && (ivl_expr_type(le) == IVL_EX_SIGNAL)
 	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
 	  && (! number_is_unknown(re))
 	  && number_is_immediate(re, IMM_WID, 1))
 	    return draw_load_add_immediate(le, re, wid, signed_flag);
 
-      if ((ivl_expr_opcode(exp) == '+')
+      if ((ivl_expr_opcode(expr) == '+')
 	  && (ivl_expr_type(re) == IVL_EX_SIGNAL)
 	  && (ivl_expr_type(le) == IVL_EX_ULONG)
 	  && number_is_immediate(re, IMM_WID, 1))
 	    return draw_load_add_immediate(re, le, wid, signed_flag);
 
-      if ((ivl_expr_opcode(exp) == '+')
+      if ((ivl_expr_opcode(expr) == '+')
 	  && (ivl_expr_type(re) == IVL_EX_SIGNAL)
 	  && (ivl_expr_type(le) == IVL_EX_NUMBER)
 	  && (! number_is_unknown(le))
 	  && number_is_immediate(le, IMM_WID, 1))
 	    return draw_load_add_immediate(re, le, wid, signed_flag);
 
-      if ((ivl_expr_opcode(exp) == '+')
+      if ((ivl_expr_opcode(expr) == '+')
 	  && (ivl_expr_type(re) == IVL_EX_ULONG)
 	  && number_is_immediate(re, IMM_WID, 0))
 	    return draw_add_immediate(le, re, wid);
 
-      if ((ivl_expr_opcode(exp) == '+')
+      if ((ivl_expr_opcode(expr) == '+')
 	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
 	  && (! number_is_unknown(re))
 	  && number_is_immediate(re, IMM_WID, 0))
 	    return draw_add_immediate(le, re, wid);
 
-      if ((ivl_expr_opcode(exp) == '-')
+      if ((ivl_expr_opcode(expr) == '-')
 	  && (ivl_expr_type(re) == IVL_EX_ULONG)
 	  && number_is_immediate(re, IMM_WID, 0))
 	    return draw_sub_immediate(le, re, wid);
 
-      if ((ivl_expr_opcode(exp) == '-')
+      if ((ivl_expr_opcode(expr) == '-')
 	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
 	  && (! number_is_unknown(re))
 	  && number_is_immediate(re, IMM_WID, 0))
 	    return draw_sub_immediate(le, re, wid);
 
-      if ((ivl_expr_opcode(exp) == '*')
+      if ((ivl_expr_opcode(expr) == '*')
 	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
 	  && (! number_is_unknown(re))
 	  && number_is_immediate(re, IMM_WID, 0))
@@ -1506,8 +1510,8 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
       rv = draw_eval_expr_wid(re, wid, STUFF_OK_XZ|STUFF_OK_RO);
 
       if (lv.wid != wid) {
-	    fprintf(stderr, "XXXX ivl_expr_opcode(exp) = %c,"
-		    " lv.wid=%u, wid=%u\n", ivl_expr_opcode(exp),
+	    fprintf(stderr, "XXXX ivl_expr_opcode(expr) = %c,"
+		    " lv.wid=%u, wid=%u\n", ivl_expr_opcode(expr),
 		    lv.wid, wid);
       }
 
@@ -1527,7 +1531,7 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 		  fprintf(stderr, "%s:%u: vvp.tgt error: "
 			  "Unable to allocate %u thread bits "
 			  "for result of arithmetic expression.\n",
-			  ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+			  ivl_expr_file(expr), ivl_expr_lineno(expr), wid);
 		  vvp_errors += 1;
 	    }
 
@@ -1536,7 +1540,7 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 	    lv = tmp;
       }
 
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 	  case '+':
 	    fprintf(vvp_out, "    %%add %u, %u, %u;\n", lv.base, rv.base, wid);
 	    break;
@@ -1578,23 +1582,23 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
       return lv;
 }
 
-static struct vector_info draw_binary_expr(ivl_expr_t exp,
+static struct vector_info draw_binary_expr(ivl_expr_t expr,
 					   unsigned wid,
 					   int stuff_ok_flag)
 {
       struct vector_info rv;
       int stuff_ok_used_flag = 0;
 
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 	  case 'a': /* && (logical and) */
-	    rv = draw_binary_expr_land(exp, wid);
+	    rv = draw_binary_expr_land(expr, wid);
 	    break;
 
 	  case 'E': /* === */
 	  case 'e': /* == */
 	  case 'N': /* !== */
 	  case 'n': /* != */
-	    rv = draw_binary_expr_eq(exp, wid, stuff_ok_flag);
+	    rv = draw_binary_expr_eq(expr, wid, stuff_ok_flag);
 	    stuff_ok_used_flag = 1;
 	    break;
 
@@ -1602,7 +1606,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 	  case '>':
 	  case 'L': /* <= */
 	  case 'G': /* >= */
-	    rv = draw_binary_expr_le(exp, wid, stuff_ok_flag);
+	    rv = draw_binary_expr_le(expr, wid, stuff_ok_flag);
 	    stuff_ok_used_flag = 1;
 	    break;
 
@@ -1612,17 +1616,17 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 	  case '/':
 	  case '%':
 	  case 'p':
-	    rv = draw_binary_expr_arith(exp, wid);
+	    rv = draw_binary_expr_arith(expr, wid);
 	    break;
 
 	  case 'l': /* << */
 	  case 'r': /* >> */
 	  case 'R': /* >>> */
-	    rv = draw_binary_expr_lrs(exp, wid);
+	    rv = draw_binary_expr_lrs(expr, wid);
 	    break;
 
 	  case 'o': /* || (logical or) */
-	    rv = draw_binary_expr_lor(exp, wid, stuff_ok_flag);
+	    rv = draw_binary_expr_lor(expr, wid, stuff_ok_flag);
 	    stuff_ok_used_flag = 1;
 	    break;
 
@@ -1632,12 +1636,12 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 	  case 'A': /* NAND (~&) */
 	  case 'O': /* NOR  (~|) */
 	  case 'X': /* XNOR (~^) */
-	    rv = draw_binary_expr_logic(exp, wid);
+	    rv = draw_binary_expr_logic(expr, wid);
 	    break;
 
 	  default:
 	    fprintf(stderr, "vvp.tgt error: unsupported binary (%c)\n",
-		    ivl_expr_opcode(exp));
+		    ivl_expr_opcode(expr));
 	    assert(0);
       }
 
@@ -1653,7 +1657,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 	    if (stuff_ok_used_flag && (stuff_ok_flag & ~STUFF_OK_47))
 		  save_expression_lookaside(rv.base, 0, wid);
 	    else
-		  save_expression_lookaside(rv.base, exp, wid);
+		  save_expression_lookaside(rv.base, expr, wid);
       }
 
       return rv;
@@ -1664,7 +1668,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
  * expression, then copying it into the contiguous vector of the
  * result. Do this until the result vector is filled.
  */
-static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
+static struct vector_info draw_concat_expr(ivl_expr_t expr, unsigned wid,
 					   int stuff_ok_flag)
 {
       unsigned off, rep, expr_wid, concat_wid, num_sube, idx;
@@ -1673,16 +1677,16 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
       int alloc_exclusive = (stuff_ok_flag&STUFF_OK_RO) ? 0 : 1;
 
 	/* Find out how wide the base concatenation expression is. */
-      num_sube = ivl_expr_parms(exp);
+      num_sube = ivl_expr_parms(expr);
       expr_wid = 0;
       for (idx = 0 ; idx < num_sube; idx += 1) {
-	    expr_wid += ivl_expr_width(ivl_expr_parm(exp, idx));
+	    expr_wid += ivl_expr_width(ivl_expr_parm(expr, idx));
       }
 
 	/* Get the repeat count. This must be a constant that has been
 	   evaluated at compile time. The operands will be repeated to
 	   form the result. */
-      rep = ivl_expr_repeat(exp);
+      rep = ivl_expr_repeat(expr);
 
 	/* Allocate a vector to hold the result. */
       if (rep == 0) {
@@ -1698,7 +1702,7 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
 	    fprintf(stderr, "%s:%u: vvp.tgt error: "
 		    "Unable to allocate %u thread bits "
 		    "for result of concatenation.\n",
-		    ivl_expr_file(exp), ivl_expr_lineno(exp),
+		    ivl_expr_file(expr), ivl_expr_lineno(expr),
 		    rep ? wid : expr_wid);
 	    vvp_errors += 1;
       }
@@ -1709,7 +1713,7 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
 	    off = 0;
 	      /* Evaluate the base expression. */
 	    for (idx = num_sube; idx > 0; idx -= 1) {
-		  ivl_expr_t arg = ivl_expr_parm(exp, idx-1);
+		  ivl_expr_t arg = ivl_expr_parm(expr, idx-1);
 		  unsigned awid = ivl_expr_width(arg);
 		  struct vector_info avec;
 
@@ -1758,7 +1762,7 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
 	      /* Pad the expression when needed. */
 	    if (wid > concat_wid) {
 		    /* We can get a signed concatenation with $signed({...}). */
-		  if (ivl_expr_signed(exp)) {
+		  if (ivl_expr_signed(expr)) {
 			unsigned base = res.base+concat_wid-1;
 			for (idx = 1; idx <= wid-concat_wid; idx += 1) {
 			      fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
@@ -1773,7 +1777,7 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
 	      /* The concatenation is too big for the result so draw it
 	       * at full width and then copy the bits that are needed. */
 	    struct vector_info full_res;
-	    full_res = draw_concat_expr(exp, concat_wid, stuff_ok_flag);
+	    full_res = draw_concat_expr(expr, concat_wid, stuff_ok_flag);
 	    assert(full_res.base);
 
 	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", res.base,
@@ -1783,7 +1787,7 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
 
 	/* Save the accumulated result in the lookaside map. */
       if (res.base >= 8)
-	    save_expression_lookaside(res.base, exp, wid);
+	    save_expression_lookaside(res.base, expr, wid);
 
       return res;
 }
@@ -1792,12 +1796,12 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid,
  * A number in an expression is made up by copying constant bits into
  * the allocated vector.
  */
-static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_number_expr(ivl_expr_t expr, unsigned wid)
 {
       unsigned idx;
       unsigned nwid;
       struct vector_info res;
-      const char*bits = ivl_expr_bits(exp);
+      const char*bits = ivl_expr_bits(expr);
       unsigned long val;
       unsigned val_bits;
       unsigned val_addr;
@@ -1805,8 +1809,8 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
       res.wid  = wid;
 
       nwid = wid;
-      if (ivl_expr_width(exp) < nwid)
-	    nwid = ivl_expr_width(exp);
+      if (ivl_expr_width(expr) < nwid)
+	    nwid = ivl_expr_width(expr);
 
 	/* If all the bits of the number have the same value, then we
 	   can use a constant bit. There is no need to allocate wr
@@ -1846,15 +1850,15 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 	    fprintf(stderr, "%s:%u: vvp.tgt error: "
 		    "Unable to allocate %u thread bits "
 		    "for number value.\n",
-		    ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+		    ivl_expr_file(expr), ivl_expr_lineno(expr), wid);
 	    vvp_errors += 1;
       }
 
 	/* Detect the special case that the entire number fits in an
 	   immediate. In this case we generate a single %movi
 	  instruction. */
-      if ((!number_is_unknown(exp)) && number_is_immediate(exp, IMM_WID,0)) {
-	    unsigned long val2 = get_number_immediate(exp);
+      if ((!number_is_unknown(expr)) && number_is_immediate(expr, IMM_WID,0)) {
+	    unsigned long val2 = get_number_immediate(expr);
 	    fprintf(vvp_out, "    %%movi %u, %lu, %u;\n", res.base, val2, wid);
 	    return res;
       }
@@ -1912,7 +1916,7 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 
 	/* Pad the number up to the expression width. */
       if (idx < wid) {
-	    if (ivl_expr_signed(exp) && bits[nwid-1] == '1')
+	    if (ivl_expr_signed(expr) && bits[nwid-1] == '1')
 		  fprintf(vvp_out, "    %%mov %u, 1, %u;\n",
 			  res.base+idx, wid-idx);
 
@@ -1930,7 +1934,7 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
       }
 
       if (res.base >= 8)
-	    save_expression_lookaside(res.base, exp, wid);
+	    save_expression_lookaside(res.base, expr, wid);
 
       return res;
 }
@@ -1959,12 +1963,12 @@ static void pad_in_place(struct vector_info dest, unsigned sub_width, int signed
  * value. It will zero extend or sign extend depending on the
  * signedness of the expression.
  */
-static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_pad_expr(ivl_expr_t expr, unsigned wid)
 {
       struct vector_info subv;
       struct vector_info res;
 
-      ivl_expr_t subexpr = ivl_expr_oper1(exp);
+      ivl_expr_t subexpr = ivl_expr_oper1(expr);
 
 	/* If the sub-expression is at least as wide as the target
 	   width, then instead of pad, we truncate. Evaluate the
@@ -1976,7 +1980,7 @@ static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
 	    res.base = subv.base;
 	    res.wid = wid;
 	    if (subv.base >= 8)
-		  save_expression_lookaside(subv.base, exp, subv.wid);
+		  save_expression_lookaside(subv.base, expr, subv.wid);
 	    return res;
       }
 
@@ -1989,7 +1993,7 @@ static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
 	    fprintf(stderr, "%s:%u: vvp.tgt error: "
 		    "Unable to allocate %u thread bits "
 		    "to pad expression.\n",
-		    ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+		    ivl_expr_file(expr), ivl_expr_lineno(expr), wid);
 	    vvp_errors += 1;
       }
 
@@ -1999,16 +2003,16 @@ static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
       subv.wid = ivl_expr_width(subexpr);
       draw_eval_expr_dest(subexpr, subv, 0);
 
-      pad_in_place(res, subv.wid, ivl_expr_signed(exp));
+      pad_in_place(res, subv.wid, ivl_expr_signed(expr));
 
-      save_expression_lookaside(res.base, exp, wid);
+      save_expression_lookaside(res.base, expr, wid);
       return res;
 }
 
-static struct vector_info draw_realnum_expr(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_realnum_expr(ivl_expr_t expr, unsigned wid)
 {
       struct vector_info res;
-      double val = ivl_expr_dvalue(exp);
+      double val = ivl_expr_dvalue(expr);
       long ival = val;
       assert(wid <= 8*sizeof(long));
 
@@ -2083,7 +2087,7 @@ static char *process_octal_codes(const char *in, unsigned width)
  * A string in an expression is made up by copying constant bits into
  * the allocated vector.
  */
-static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_string_expr(ivl_expr_t expr, unsigned wid)
 {
       struct vector_info res;
       char *p, *fp;
@@ -2092,13 +2096,13 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
 
       res.wid  = wid;
       nwid = wid;
-      ewid = ivl_expr_width(exp);
+      ewid = ivl_expr_width(expr);
       if (ewid < nwid)
 	    nwid = ewid;
 
         /* Our string may have embedded \xxx sequences so they need
            to be removed before we proceed. Returns a new string. */
-      fp = process_octal_codes(ivl_expr_string(exp), ewid);
+      fp = process_octal_codes(ivl_expr_string(expr), ewid);
       p = fp;
 
       p += (ewid / 8) - 1;
@@ -2111,7 +2115,7 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
 	    fprintf(stderr, "%s:%u: vvp.tgt error: "
 		    "Unable to allocate %u thread bits "
 		    "for string value.\n",
-		    ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+		    ivl_expr_file(expr), ivl_expr_lineno(expr), wid);
 	    vvp_errors += 1;
       }
 
@@ -2150,7 +2154,7 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
 	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n", res.base+idx, wid-idx);
 
       if (res.base >= 8)
-	    save_expression_lookaside(res.base, exp, wid);
+	    save_expression_lookaside(res.base, expr, wid);
 
       free(fp);
       return res;
@@ -2163,12 +2167,12 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
 * the res vector. This function just calculates the pad to fill out
 * the res area.
 */
-void pad_expr_in_place(ivl_expr_t exp, struct vector_info res, unsigned swid)
+void pad_expr_in_place(ivl_expr_t expr, struct vector_info res, unsigned swid)
 {
       if (res.wid <= swid)
 	    return;
 
-      if (ivl_expr_signed(exp)) {
+      if (ivl_expr_signed(expr)) {
 	    unsigned idx;
 	    for (idx = swid ;  idx < res.wid ;  idx += 1)
 		  fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
@@ -2197,11 +2201,11 @@ void pad_expr_in_place(ivl_expr_t exp, struct vector_info res, unsigned swid)
  * destination. If the add_index is 1, then generate a %load/vp0/s to
  * do a signed load.
  */
-static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
+static void draw_signal_dest(ivl_expr_t expr, struct vector_info res,
 			     int add_index, long immediate)
 {
-      unsigned swid = ivl_expr_width(exp);
-      ivl_signal_t sig = ivl_expr_signal(exp);
+      unsigned swid = ivl_expr_width(expr);
+      ivl_signal_t sig = ivl_expr_signal(expr);
 
       unsigned word = 0;
 
@@ -2211,13 +2215,13 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 	/* If this is an access to an array, handle that by emitting a
 	   load/av instruction. */
       if (ivl_signal_dimensions(sig) > 0) {
-	    ivl_expr_t ix = ivl_expr_oper1(exp);
+	    ivl_expr_t ix = ivl_expr_oper1(expr);
 
 	    draw_eval_expr_into_integer(ix, 3);
 	    if (add_index < 0) {
 		  fprintf(vvp_out, "    %%load/av %u, v%p, %u;\n",
 			  res.base, sig, swid);
-		  pad_expr_in_place(exp, res, swid);
+		  pad_expr_in_place(expr, res, swid);
 	    } else {
 		  const char*sign_flag = (add_index>0)? "/s" : "";
 
@@ -2262,10 +2266,10 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res,
 
       }
 
-      pad_expr_in_place(exp, res, swid);
+      pad_expr_in_place(expr, res, swid);
 }
 
-static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid,
+static struct vector_info draw_signal_expr(ivl_expr_t expr, unsigned wid,
 					   int stuff_ok_flag)
 {
       struct vector_info res;
@@ -2273,7 +2277,7 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid,
       int alloc_exclusive = (stuff_ok_flag&STUFF_OK_RO) ? 0 : 1;
 
 	/* Already in the vector lookaside? */
-      res.base = allocate_vector_exp(exp, wid, alloc_exclusive);
+      res.base = allocate_vector_exp(expr, wid, alloc_exclusive);
       res.wid = wid;
       if (res.base != 0) {
 	    fprintf(vvp_out, "; Reuse signal base=%u wid=%u from lookaside.\n",
@@ -2287,13 +2291,13 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid,
 	    fprintf(stderr, "%s:%u: vvp.tgt error: "
 		    "Unable to allocate %u thread bits "
 		    "to load variable/wire.\n",
-		    ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+		    ivl_expr_file(expr), ivl_expr_lineno(expr), wid);
 	    vvp_errors += 1;
       }
 
-      save_expression_lookaside(res.base, exp, wid);
+      save_expression_lookaside(res.base, expr, wid);
 
-      draw_signal_dest(exp, res, -1, 0L);
+      draw_signal_dest(expr, res, -1, 0L);
       return res;
 }
 
@@ -2344,7 +2348,7 @@ static struct vector_info draw_select_array(ivl_expr_t sube,
       return res;
 }
 
-static struct vector_info draw_select_signal(ivl_expr_t exp,
+static struct vector_info draw_select_signal(ivl_expr_t expr,
 					     ivl_expr_t sube,
 					     ivl_expr_t bit_idx,
 					     unsigned bit_wid,
@@ -2393,7 +2397,7 @@ static struct vector_info draw_select_signal(ivl_expr_t exp,
 	    save_signal_lookaside(res.base, sig, use_word, bit_wid);
 	      /* Pad the part select to the desired width. Because of
 	         $signed() this may be signed or unsigned (default). */
-	    pad_expr_in_place(exp, res, bit_wid);
+	    pad_expr_in_place(expr, res, bit_wid);
 	    return res;
       }
 
@@ -2419,7 +2423,7 @@ static struct vector_info draw_select_signal(ivl_expr_t exp,
 	      res.base, sig, use_word, use_wid);
 	/* Pad the part select to the desired width. Because of
 	   $signed() this may be signed or unsigned (default). */
-      pad_expr_in_place(exp, res, use_wid);
+      pad_expr_in_place(expr, res, use_wid);
 
       fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_end);
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_x);
@@ -2429,7 +2433,7 @@ static struct vector_info draw_select_signal(ivl_expr_t exp,
       return res;
 }
 
-static void draw_select_signal_dest(ivl_expr_t exp,
+static void draw_select_signal_dest(ivl_expr_t expr,
 				    ivl_expr_t sube,
 				    ivl_expr_t bit_idx,
 				    struct vector_info dest,
@@ -2456,7 +2460,7 @@ static void draw_select_signal_dest(ivl_expr_t exp,
 
 	/* Fallback, just draw the expression and copy the result into
 	   the destination. */
-      tmp = draw_select_signal(exp, sube, bit_idx, dest.wid, dest.wid);
+      tmp = draw_select_signal(expr, sube, bit_idx, dest.wid, dest.wid);
       assert(tmp.wid == dest.wid);
 
       fprintf(vvp_out, "    %%mov %u, %u, %u; Move signal select into place\n",
@@ -2468,12 +2472,12 @@ static void draw_select_signal_dest(ivl_expr_t exp,
       }
 }
 
-static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
+static struct vector_info draw_select_expr(ivl_expr_t expr, unsigned wid,
 					   int stuff_ok_flag)
 {
       struct vector_info subv, shiv, res;
-      ivl_expr_t sube  = ivl_expr_oper1(exp);
-      ivl_expr_t shift = ivl_expr_oper2(exp);
+      ivl_expr_t sube  = ivl_expr_oper1(expr);
+      ivl_expr_t shift = ivl_expr_oper2(expr);
 
       int alloc_exclusive = (stuff_ok_flag&STUFF_OK_RO)? 0 : 1;
       int cmp;
@@ -2484,17 +2488,18 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
 	/* First look for the self expression in the lookaside, and
 	   allocate that if possible. If I find it, then immediately
 	   return that. */
-      if ( (res.base = allocate_vector_exp(exp, wid, alloc_exclusive)) != 0) {
+      if ( (res.base = allocate_vector_exp(expr, wid, alloc_exclusive)) != 0) {
 	    fprintf(vvp_out, "; Reuse base=%u wid=%u from lookaside.\n",
 		    res.base, wid);
 	    return res;
       }
 
       if (ivl_expr_type(sube) == IVL_EX_SIGNAL) {
-	    res = draw_select_signal(exp, sube, shift, ivl_expr_width(exp), wid);
+	    res = draw_select_signal(expr, sube, shift, ivl_expr_width(expr),
+	                             wid);
 	    fprintf(vvp_out, "; Save base=%u wid=%u in lookaside.\n",
 		    res.base, wid);
-	    save_expression_lookaside(res.base, exp, wid);
+	    save_expression_lookaside(res.base, expr, wid);
 	    return res;
       }
 
@@ -2578,19 +2583,19 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid,
       if (res.base >= 8) {
 	    fprintf(vvp_out, "; Save expression base=%u wid=%u in lookaside\n",
 		    res.base, wid);
-	    save_expression_lookaside(res.base, exp, wid);
+	    save_expression_lookaside(res.base, expr, wid);
       }
 
       return res;
 }
 
-static void draw_select_expr_dest(ivl_expr_t exp, struct vector_info dest,
+static void draw_select_expr_dest(ivl_expr_t expr, struct vector_info dest,
 				  int stuff_ok_flag)
 {
       struct vector_info tmp;
 
-      ivl_expr_t sube = ivl_expr_oper1(exp);
-      ivl_expr_t shift= ivl_expr_oper2(exp);
+      ivl_expr_t sube = ivl_expr_oper1(expr);
+      ivl_expr_t shift= ivl_expr_oper2(expr);
 
 	/* If the shift expression is not present, then this is really
 	   a pad expression, and that can be handled pretty
@@ -2605,37 +2610,37 @@ static void draw_select_expr_dest(ivl_expr_t exp, struct vector_info dest,
 
 	    draw_eval_expr_dest(sube, subv, stuff_ok_flag);
 
-	    pad_in_place(dest, subv.wid, ivl_expr_signed(exp));
+	    pad_in_place(dest, subv.wid, ivl_expr_signed(expr));
 	    return;
       }
 
       if (ivl_expr_type(sube) == IVL_EX_SIGNAL) {
-	    draw_select_signal_dest(exp, sube, shift, dest, stuff_ok_flag);
+	    draw_select_signal_dest(expr, sube, shift, dest, stuff_ok_flag);
 	    return;
       }
 
 	/* Fallback, is to draw the expression by width, and mov it to
 	   the required dest. */
-      tmp = draw_select_expr(exp, dest.wid, stuff_ok_flag);
+      tmp = draw_select_expr(expr, dest.wid, stuff_ok_flag);
       assert(tmp.wid == dest.wid);
 
       fprintf(vvp_out, "    %%mov %u, %u, %u; Move select into place\n",
 	      dest.base, tmp.base, dest.wid);
 
       if (tmp.base >= 8) {
-	    save_expression_lookaside(tmp.base, exp, tmp.wid);
+	    save_expression_lookaside(tmp.base, expr, tmp.wid);
 	    clr_vector(tmp);
       }
 }
 
-static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_ternary_expr(ivl_expr_t expr, unsigned wid)
 {
       struct vector_info res, tru, fal, tst;
 
       unsigned lab_true, lab_false, lab_out;
-      ivl_expr_t cond = ivl_expr_oper1(exp);
-      ivl_expr_t true_ex = ivl_expr_oper2(exp);
-      ivl_expr_t false_ex = ivl_expr_oper3(exp);
+      ivl_expr_t cond = ivl_expr_oper1(expr);
+      ivl_expr_t true_ex = ivl_expr_oper2(expr);
+      ivl_expr_t false_ex = ivl_expr_oper3(expr);
 
       lab_true  = local_count++;
       lab_false = local_count++;
@@ -2709,34 +2714,34 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
       res = tru;
 
       if (res.base >= 8)
-	    save_expression_lookaside(res.base, exp, wid);
+	    save_expression_lookaside(res.base, expr, wid);
 
       return res;
 }
 
-static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
 {
-      unsigned parm_count = ivl_expr_parms(exp);
+      unsigned parm_count = ivl_expr_parms(expr);
       struct vector_info res;
 
 
 	/* If the function has no parameters, then use this short-form
 	   to draw the statement. */
       if (parm_count == 0) {
-	    assert(ivl_expr_value(exp) == IVL_VT_LOGIC
-		   || ivl_expr_value(exp) == IVL_VT_BOOL);
+	    assert(ivl_expr_value(expr) == IVL_VT_LOGIC
+		   || ivl_expr_value(expr) == IVL_VT_BOOL);
 	    res.base = allocate_vector(wid);
 	    res.wid  = wid;
 	    assert(res.base);
 	    fprintf(vvp_out, "    %%vpi_func %u %u \"%s\", %u, %u;\n",
-		    ivl_file_table_index(ivl_expr_file(exp)),
-		    ivl_expr_lineno(exp), ivl_expr_name(exp),
+		    ivl_file_table_index(ivl_expr_file(expr)),
+		    ivl_expr_lineno(expr), ivl_expr_name(expr),
 		    res.base, res.wid);
 	    return res;
 
       }
 
-      res = draw_vpi_func_call(exp, wid);
+      res = draw_vpi_func_call(expr, wid);
 
 	/* New basic block starts after VPI calls. */
       clear_expression_lookaside();
@@ -2744,14 +2749,14 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
-static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 {
       struct vector_info res;
-      ivl_expr_t sub = ivl_expr_oper1(exp);
+      ivl_expr_t sub = ivl_expr_oper1(expr);
       const char *rop = 0;
       int inv = 0;
 
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 	  case '&': rop = "and";  break;
 	  case '|': rop = "or";   break;
 	  case '^': rop = "xor";  break;
@@ -2760,7 +2765,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 	  case 'X': rop = "xnor"; break;
       }
 
-      switch (ivl_expr_opcode(exp)) {
+      switch (ivl_expr_opcode(expr)) {
 	  case '~':
 	    res = draw_eval_expr_wid(sub, wid, STUFF_OK_XZ);
 	    switch (res.base) {
@@ -2845,7 +2850,8 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 			fprintf(stderr, "%s:%u: vvp.tgt error: "
 				"Unable to allocate %u thread bits "
 				"to pad unary expression result.\n",
-				ivl_expr_file(exp), ivl_expr_lineno(exp), wid);
+				ivl_expr_file(expr), ivl_expr_lineno(expr),
+				wid);
 			vvp_errors += 1;
 		  }
 
@@ -2941,12 +2947,12 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 
 	  default:
 	    fprintf(stderr, "vvp error: unhandled unary: %c\n",
-		    ivl_expr_opcode(exp));
+		    ivl_expr_opcode(expr));
 	    assert(0);
       }
 
       if (res.base >= 8)
-	    save_expression_lookaside(res.base, exp, wid);
+	    save_expression_lookaside(res.base, expr, wid);
 
       return res;
 }
@@ -2957,19 +2963,19 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
  * the expression can be preplaced, and if so it will evaluate it in
  * place.
  */
-static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
+static void draw_eval_expr_dest(ivl_expr_t expr, struct vector_info dest,
 				int stuff_ok_flag)
 {
       struct vector_info tmp;
 
-      switch (ivl_expr_type(exp)) {
+      switch (ivl_expr_type(expr)) {
 
 	  case IVL_EX_SIGNAL:
-	    draw_signal_dest(exp, dest, -1, 0L);
+	    draw_signal_dest(expr, dest, -1, 0L);
 	    return;
 
 	  case IVL_EX_SELECT:
-	    draw_select_expr_dest(exp, dest, stuff_ok_flag);
+	    draw_select_expr_dest(expr, dest, stuff_ok_flag);
 	    return;
 
 	  default:
@@ -2978,7 +2984,7 @@ static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
 
 	/* Fallback, is to draw the expression by width, and move it to
 	   the required dest. */
-      tmp = draw_eval_expr_wid(exp, dest.wid, stuff_ok_flag);
+      tmp = draw_eval_expr_wid(expr, dest.wid, stuff_ok_flag);
       assert(tmp.wid == dest.wid);
 
 	/* If the replication is 0 we can have a zero width, so skip it. */
@@ -2986,22 +2992,22 @@ static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
                                      dest.base, tmp.base, dest.wid);
 
       if (tmp.base >= 8)
-	    save_expression_lookaside(tmp.base, exp, tmp.wid);
+	    save_expression_lookaside(tmp.base, expr, tmp.wid);
 
       clr_vector(tmp);
 }
 
-struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
+struct vector_info draw_eval_expr_wid(ivl_expr_t expr, unsigned wid,
 				      int stuff_ok_flag)
 {
       struct vector_info res;
 
-      switch (ivl_expr_type(exp)) {
+      switch (ivl_expr_type(expr)) {
 	  default:
 	  case IVL_EX_NONE:
 	    fprintf(stderr, "%s:%u:  vvp-tgt error: unhandled expr. type: "
-	            "%u at %s:%d\n", ivl_expr_file(exp), ivl_expr_lineno(exp),
-                    ivl_expr_type(exp), __FILE__, __LINE__);
+	            "%u at %s:%d\n", ivl_expr_file(expr), ivl_expr_lineno(expr),
+                    ivl_expr_type(expr), __FILE__, __LINE__);
 	    exit(1);
 	    res.base = 0;
 	    res.wid = 0;
@@ -3009,62 +3015,62 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 	  case IVL_EX_EVENT:
 	    fprintf(stderr, "%s:%u: vvp-tgt error: A named event is not "
 	                    "handled in this context (expression).\n",
-	                    ivl_expr_file(exp), ivl_expr_lineno(exp));
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr));
 	    exit(1);
 	    break;
 
 	  case IVL_EX_STRING:
-	    res = draw_string_expr(exp, wid);
+	    res = draw_string_expr(expr, wid);
 	    break;
 
 	  case IVL_EX_BINARY:
-	    res = draw_binary_expr(exp, wid, stuff_ok_flag);
+	    res = draw_binary_expr(expr, wid, stuff_ok_flag);
 	    break;
 
 	  case IVL_EX_CONCAT:
-	    res = draw_concat_expr(exp, wid, stuff_ok_flag);
+	    res = draw_concat_expr(expr, wid, stuff_ok_flag);
 	    break;
 
 	  case IVL_EX_NUMBER:
-	    res = draw_number_expr(exp, wid);
+	    res = draw_number_expr(expr, wid);
 	    break;
 
 	  case IVL_EX_REALNUM:
-	    res = draw_realnum_expr(exp, wid);
+	    res = draw_realnum_expr(expr, wid);
 	    break;
 
 	  case IVL_EX_SELECT:
-	    if (ivl_expr_oper2(exp) == 0)
-		  res = draw_pad_expr(exp, wid);
+	    if (ivl_expr_oper2(expr) == 0)
+		  res = draw_pad_expr(expr, wid);
 	    else
-		  res = draw_select_expr(exp, wid, stuff_ok_flag);
+		  res = draw_select_expr(expr, wid, stuff_ok_flag);
 	    break;
 
 	  case IVL_EX_SIGNAL:
-	    res = draw_signal_expr(exp, wid, stuff_ok_flag);
+	    res = draw_signal_expr(expr, wid, stuff_ok_flag);
 	    break;
 
 	  case IVL_EX_TERNARY:
-	    res = draw_ternary_expr(exp, wid);
+	    res = draw_ternary_expr(expr, wid);
 	    break;
 
 	  case IVL_EX_SFUNC:
-	    res = draw_sfunc_expr(exp, wid);
+	    res = draw_sfunc_expr(expr, wid);
 	    break;
 
 	  case IVL_EX_UFUNC:
-	    res = draw_ufunc_expr(exp, wid);
+	    res = draw_ufunc_expr(expr, wid);
 	    break;
 
 	  case IVL_EX_UNARY:
-	    res = draw_unary_expr(exp, wid);
+	    res = draw_unary_expr(expr, wid);
 	    break;
       }
 
       return res;
 }
 
-struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
+struct vector_info draw_eval_expr(ivl_expr_t expr, int stuff_ok_flag)
 {
-      return draw_eval_expr_wid(exp, ivl_expr_width(exp), stuff_ok_flag);
+      return draw_eval_expr_wid(expr, ivl_expr_width(expr), stuff_ok_flag);
 }

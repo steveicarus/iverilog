@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2009 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2010 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -45,34 +45,34 @@ scale(int high, int low, void*obj) {
 
 PLI_INT32 tf_gettime(void)
 {
-      s_vpi_time time;
-      time.type = vpiSimTime;
-      vpi_get_time (0, &time);
-      return scale(time.high, time.low, 0) & 0xffffffff;
+      s_vpi_time timerec;
+      timerec.type = vpiSimTime;
+      vpi_get_time (0, &timerec);
+      return scale(timerec.high, timerec.low, 0) & 0xffffffff;
 }
 
 char *tf_strgettime(void)
 {
       static char buf[32];
-      s_vpi_time time;
+      s_vpi_time timerec;
 
-      time.type = vpiSimTime;
-      vpi_get_time (0, &time);
-      if (time.high)
-	    snprintf(buf, sizeof(buf)-1, "%u%08u", (unsigned int)time.high,
-	             (unsigned int)time.low);
+      timerec.type = vpiSimTime;
+      vpi_get_time (0, &timerec);
+      if (timerec.high)
+	    snprintf(buf, sizeof(buf)-1, "%u%08u", (unsigned int)timerec.high,
+	             (unsigned int)timerec.low);
       else
-	    snprintf(buf, sizeof(buf)-1, "%u", (unsigned int)time.low);
+	    snprintf(buf, sizeof(buf)-1, "%u", (unsigned int)timerec.low);
       return buf;
 }
 
 PLI_INT32 tf_igetlongtime(PLI_INT32 *high, void*obj)
 {
-      s_vpi_time time;
+      s_vpi_time timerec;
       ivl_u64_t scaled;
-      time.type = vpiSimTime;
-      vpi_get_time ((vpiHandle)obj, &time);
-      scaled = scale(time.high, time.low, obj);
+      timerec.type = vpiSimTime;
+      vpi_get_time ((vpiHandle)obj, &timerec);
+      scaled = scale(timerec.high, timerec.low, obj);
 
       *high = (scaled >> 32) & 0xffffffff;
       return scaled & 0xffffffff;
