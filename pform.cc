@@ -262,6 +262,7 @@ static LexicalScope* lexical_scope = 0;
 
 void pform_pop_scope()
 {
+      assert(lexical_scope);
       lexical_scope = lexical_scope->parent_scope();
 }
 
