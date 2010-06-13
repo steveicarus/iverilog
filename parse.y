@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2312,8 +2312,7 @@ module_item
 
   | K_task automatic_opt IDENTIFIER error K_endtask
       {
-	pform_pop_scope();
-	current_task = 0;
+	assert(current_task == 0);
 	delete[]$3;
       }
 
@@ -2353,8 +2352,7 @@ module_item
       }
   | K_function automatic_opt function_range_or_type_opt IDENTIFIER error K_endfunction
       {
-	pform_pop_scope();
-	current_task = 0;
+	assert(current_function == 0);
 	delete[]$4;
       }
 
