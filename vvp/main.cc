@@ -176,6 +176,41 @@ void verify_version(char*ivl_ver, char*commit)
       free(vvp_ver);
 }
 
+static void final_cleanup()
+{
+	/*
+	 * We only need to cleanup the memory if we are checking with valgrind.
+	 */
+#ifdef CHECK_WITH_VALGRIND
+	/* Clean up the file name table. */
+      for (vector<const char*>::iterator cur = file_names.begin();
+           cur != file_names.end() ; cur++) {
+	    delete[] *cur;
+      }
+	/* Clear the static result buffer. */
+      (void)need_result_buf(0, RBUF_DEL);
+      codespace_delete();
+      root_table_delete();
+      def_table_delete();
+      vpi_mcd_delete();
+      dec_str_delete();
+      modpath_delete();
+      vpi_handle_delete();
+      udp_defns_delete();
+      island_delete();
+      signal_pool_delete();
+      vvp_net_pool_delete();
+      ufunc_pool_delete();
+#endif
+	/*
+	 * Unload the VPI modules. This is essential for MinGW, to ensure
+	 * dump files are flushed before the main process terminates, as
+	 * the DLL termination code is called after all remaining open
+	 * files are automatically closed.
+	 */
+      load_module_delete();
+}
+
 unsigned module_cnt = 0;
 const char*module_tab[64];
 
@@ -363,6 +398,7 @@ int main(int argc, char*argv[])
       if (compile_errors > 0) {
 	    vpi_mcd_printf(1, "%s: Program not runnable, %u errors.\n",
 		    design_path, compile_errors);
+	    final_cleanup();
 	    return compile_errors;
       }
 
@@ -433,36 +469,7 @@ int main(int argc, char*argv[])
 			   count_gen_events, count_gen_pool());
       }
 
-/*
- * We only need to cleanup the memory if we are checking with valgrind.
- */
-#ifdef CHECK_WITH_VALGRIND
-	/* Clean up the memory. */
-      for (vector<const char*>::iterator cur = file_names.begin();
-           cur != file_names.end() ; cur++) {
-	    delete[] *cur;
-      }
-      (void)need_result_buf(0, RBUF_DEL);
-      codespace_delete();
-      root_table_delete();
-      def_table_delete();
-      vpi_mcd_delete();
-      dec_str_delete();
-      modpath_delete();
-      vpi_handle_delete();
-      udp_defns_delete();
-      island_delete();
-      signal_pool_delete();
-      vvp_net_pool_delete();
-      ufunc_pool_delete();
-#endif
-/*
- * Unload the VPI modules. This is essential for MinGW, to ensure
- * dump files are flushed before the main process terminates, as
- * the DLL termination code is called after all remaining open
- * files are automatically closed.
-*/
-      load_module_delete();
+      final_cleanup();
 
       return vvp_return_value;
 }

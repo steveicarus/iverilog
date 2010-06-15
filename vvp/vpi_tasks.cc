@@ -608,6 +608,18 @@ void print_vpi_call_errors()
       free(vpi_call_error_lst);
 }
 
+static void cleanup_vpi_call_args(unsigned argc, vpiHandle*argv)
+{
+#ifdef CHECK_WITH_VALGRIND
+      if (argc) {
+	    struct __vpiSysTaskCall*obj = new struct __vpiSysTaskCall;
+	    obj->nargs = argc;
+	    obj->args  = argv;
+	    vpi_call_delete(&obj->base);
+      }
+#endif
+}
+
 /*
  * A vpi_call is actually built up into a vpiSysTaskCall VPI object
  * that refers back to the vpiUserSystf VPI object that is the
@@ -628,6 +640,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
       struct __vpiUserSystf*defn = vpip_find_systf(name);
       if (defn == 0) {
 	    add_vpi_call_error(VPI_CALL_NO_DEF, name, file_idx, lineno);
+	    cleanup_vpi_call_args(argc, argv);
 	    return 0;
       }
 
@@ -636,6 +649,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 	    if (vwid != 0 || fnet != 0) {
 		  add_vpi_call_error(VPI_CALL_TASK_AS_FUNC, name, file_idx,
 		                     lineno);
+		  cleanup_vpi_call_args(argc, argv);
 		  return 0;
 	    }
 	    assert(vbit == 0);
@@ -645,6 +659,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 	    if (vwid == 0 && fnet == 0) {
 		  add_vpi_call_error(VPI_CALL_FUNC_AS_TASK, name, file_idx,
 		                     lineno);
+		  cleanup_vpi_call_args(argc, argv);
 		  return 0;
 	    }
 	    break;
@@ -702,6 +717,8 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 void vpi_call_delete(vpiHandle item)
 {
       struct __vpiSysTaskCall*obj = (struct __vpiSysTaskCall *) item;
+	/* The object can be NULL if there was an error. */
+      if (!obj) return;
       for (unsigned arg = 0; arg < obj->nargs; arg += 1) {
 	    switch (obj->args[arg]->vpi_type->type_code) {
 		case vpiConstant:
