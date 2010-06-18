@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -975,6 +975,28 @@ NetNet* NetEUReduce::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    connect(gate->pin(1+idx), isig->pin(idx));
 
       return osig;
+}
+
+NetNet* NetECast::synthesize(Design*des, NetScope*scope, NetExpr*root)
+{
+      NetNet*isig = expr_->synthesize(des, scope, root);
+
+      if (isig == 0) return 0;
+
+      switch (op()) {
+	  case 'i':
+	    isig = cast_to_int(des, scope, isig, isig->vector_width());
+	    break;
+	  case 'r':
+	    isig = cast_to_real(des, scope, isig);
+	    break;
+	  default:
+	    cerr << get_fileline() << ": internal error: "
+		 << "Unable to synthesize " << *this << "." << endl;
+	    return 0;
+      }
+
+      return isig;
 }
 
 /*

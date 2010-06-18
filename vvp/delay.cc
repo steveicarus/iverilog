@@ -781,7 +781,7 @@ static int modpath_src_free_object( vpiHandle ref )
 
 /*
  * This routine will put specific dimension of delay[] values
- * into a vpiHandle. In this case, he will put
+ * into a vpiHandle. In this case, we will put
  * specific delays values in a vpiModPathIn object
  *
  */
@@ -817,6 +817,11 @@ static void modpath_src_put_delays (vpiHandle ref, p_vpi_delay delays)
 		  tmp[idx] = vpip_timestruct_to_time(delays->da+use_map[0][idx]);
 	    }
       } else {
+	      // You cannot create a modpath with a negative delay so set it
+	      // to zero per 1364-2005 section 14.3.1.
+	    for (idx = 0 ; idx < delays->no_of_delays ; idx += 1) {
+		  if (delays->da[idx].real < 0.0) delays->da[idx].real = 0.0;
+	    }
 	    for (idx = 0 ; idx < 12 ; idx += 1) {
 		  tmp[idx] = vpip_scaled_real_to_time64(delays->da[use_map[0][idx]].real,
 							src->dest->scope);

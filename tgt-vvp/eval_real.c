@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -139,6 +139,7 @@ static int draw_binary_real(ivl_expr_t expr)
 		fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
 		break;
 	  }
+
 	  default:
 	    fprintf(stderr, "XXXX draw_binary_real(%c)\n",
 		    ivl_expr_opcode(expr));
@@ -444,6 +445,20 @@ static int draw_unary_real(ivl_expr_t expr)
       }
 
       sube = ivl_expr_oper1(expr);
+
+      if (ivl_expr_opcode(expr) == 'r') { /* Cast an integer value to a real. */
+	    struct vector_info res;
+	    char *suffix = "";
+	    assert(ivl_expr_value(sube) != IVL_VT_REAL);
+	    res = draw_eval_expr(sube, 1);
+	    if (ivl_expr_signed(sube)) suffix = "/s";
+	    sub = allocate_word();
+	    fprintf(vvp_out, "    %%cvt/rv%s %d, %u, %u;\n", suffix, sub,
+	                     res.base, res.wid);
+	    clr_vector(res);
+	    return sub;
+      }
+
       sub = draw_eval_real(sube);
 
       if (ivl_expr_opcode(expr) == '+')
@@ -458,16 +473,20 @@ static int draw_unary_real(ivl_expr_t expr)
 	    return res;
       }
 
-      if (ivl_expr_opcode(expr) == 'm') { /* abs(sube) */
+      if (ivl_expr_opcode(expr) == 'm') { /* abs() */
 	    fprintf(vvp_out, "    %%abs/wr %d, %d;\n", sub, sub);
 	    return sub;
       }
 
-      fprintf(vvp_out, "; XXXX unary (%c) on sube in %d\n",
-              ivl_expr_opcode(expr), sub);
-      fprintf(stderr, "XXXX evaluate unary (%c) on sube in %d\n",
-              ivl_expr_opcode(expr), sub);
-      return 0;
+      if (ivl_expr_opcode(expr) == 'i') { /* Handled in eval_expr.c. */
+            fprintf(stderr, "vvp error: real -> integer cast in real "
+                            "context.\n");
+	    assert(0);
+      }
+
+      fprintf(stderr, "vvp error: unhandled real unary operator: %c.\n",
+              ivl_expr_opcode(expr));
+      assert(0);
 }
 
 int draw_eval_real(ivl_expr_t expr)

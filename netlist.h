@@ -3750,6 +3750,8 @@ class NetETernary  : public NetExpr {
  *   N  -- Reduction NOR (~|)
  *   X  -- Reduction NXOR (~^ or ^~)
  *   m  -- abs(x)  (i.e. "magnitude")
+ *   i  -- Cast from real to integer (vector)
+ *   r  -- Cast from integer (vector) to real
  */
 class NetEUnary  : public NetExpr {
 
@@ -3802,6 +3804,17 @@ class NetEUReduce : public NetEUnary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
       virtual NetEUReduce* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
+      virtual ivl_variable_type_t expr_type() const;
+};
+
+class NetECast : public NetEUnary {
+
+    public:
+      NetECast(char op, NetExpr*ex);
+      ~NetECast();
+
+      virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+      virtual NetECast* dup_expr() const;
       virtual ivl_variable_type_t expr_type() const;
 };
 

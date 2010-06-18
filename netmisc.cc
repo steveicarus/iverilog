@@ -494,3 +494,19 @@ const_bool const_logical(const NetExpr*expr)
 
       return C_NON;
 }
+
+uint64_t get_scaled_time_from_real(Design*des, NetScope*scope, NetECReal*val)
+{
+      verireal fn = val->value();
+
+      int shift = scope->time_unit() - scope->time_precision();
+      assert(shift >= 0);
+      int64_t delay = fn.as_long64(shift);
+
+
+      shift = scope->time_precision() - des->get_precision();
+      assert(shift >= 0);
+      for (int lp = 0; lp < shift; lp += 1) delay *= 10;
+
+      return delay;
+}

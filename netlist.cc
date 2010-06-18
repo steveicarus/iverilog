@@ -2430,6 +2430,32 @@ ivl_variable_type_t NetEUReduce::expr_type() const
       return expr_->expr_type();
 }
 
+NetECast::NetECast(char op__, NetExpr*ex)
+: NetEUnary(op__, ex)
+{
+}
+
+NetECast::~NetECast()
+{
+}
+
+ivl_variable_type_t NetECast::expr_type() const
+{
+      ivl_variable_type_t ret;
+      switch (op_) {
+	  case 'i':
+	    ret = IVL_VT_LOGIC;
+	    break;
+	  case 'r':
+	    ret = IVL_VT_REAL;
+	    break;
+	  default:
+	    assert(0);
+      }
+
+      return ret;
+}
+
 NetLogic::NetLogic(NetScope*s, perm_string n, unsigned pins,
 		   TYPE t, unsigned wid)
 : NetNode(s, n, pins), type_(t), width_(wid)

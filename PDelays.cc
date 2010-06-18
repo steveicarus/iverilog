@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -92,15 +92,10 @@ static NetExpr*calculate_val(Design*des, NetScope*scope, PExpr*expr)
 	   units, and return an adjusted value. */
 
       if (NetECReal*tmp = dynamic_cast<NetECReal*>(dex)) {
-	    verireal fn = tmp->value();
-
-	    int shift = scope->time_unit() - des->get_precision();
-	    int64_t delay = fn.as_long64(shift);
-	    if (delay < 0)
-		  delay = 0;
+	    uint64_t delay = get_scaled_time_from_real(des, scope, tmp);
 
 	    delete tmp;
-	    NetEConst*tmp2 = new NetEConst(verinum(delay));
+	    NetEConst*tmp2 = new NetEConst(verinum(delay, 64));
 	    tmp2->set_line(*expr);
 	    return tmp2;
       }
@@ -108,11 +103,10 @@ static NetExpr*calculate_val(Design*des, NetScope*scope, PExpr*expr)
 
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(dex)) {
 	    verinum fn = tmp->value();
-
 	    uint64_t delay = des->scale_to_precision(fn.as_ulong64(), scope);
 
 	    delete tmp;
-	    NetEConst*tmp2 = new NetEConst(verinum(delay));
+	    NetEConst*tmp2 = new NetEConst(verinum(delay, 64));
 	    tmp2->set_line(*expr);
 	    return tmp2;
       }
@@ -132,7 +126,8 @@ static NetExpr* make_delay_nets(Design*des, NetScope*scope, NetExpr*expr)
       NetNet*sig = expr->synthesize(des, scope, expr);
       if (sig == 0) {
 	    cerr << expr->get_fileline() << ": error: Expression " << *expr
-		 << " is not suitable for delay expression." << endl;
+		 << " is not suitable as a delay expression." << endl;
+	    des->errors += 1;
 	    return 0;
       }
 

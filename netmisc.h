@@ -1,7 +1,7 @@
 #ifndef __netmisc_H
 #define __netmisc_H
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -234,5 +234,13 @@ const_bool const_logical(const NetExpr*expr);
 extern bool dly_used_no_timescale;
 extern bool dly_used_timescale;
 extern bool display_ts_dly_warning;
+
+/*
+ * When scaling a real value to a time we need to do some standard
+ * processing.
+ */
+extern uint64_t get_scaled_time_from_real(Design*des,
+                                          NetScope*scope,
+                                          NetECReal*val);
 
 #endif

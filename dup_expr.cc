@@ -161,3 +161,11 @@ NetEUReduce* NetEUReduce::dup_expr() const
       tmp->set_line(*this);
       return tmp;
 }
+
+NetECast* NetECast::dup_expr() const
+{
+      NetECast*tmp = new NetECast(op_, expr_->dup_expr());
+      assert(tmp);
+      tmp->set_line(*this);
+      return tmp;
+}

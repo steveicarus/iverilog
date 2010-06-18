@@ -67,18 +67,33 @@ double vpip_time_to_scaled_real(vvp_time64_t ti, struct __vpiScope*scope)
       return val;
 }
 
+/*
+ * This routine does not currently support negative real delays and it
+ * does not check for overflow. It is only used for modpath delays and
+ * they are required to be non-negative.
+ */
 vvp_time64_t vpip_scaled_real_to_time64(double val, struct __vpiScope*scope)
 {
-      int units;
-      if (scope)
-	    units = scope->time_units;
-      else
-	    units = vpi_time_precision;
+      int shift = 0;
+      if (scope) shift = scope->time_units - scope->time_precision;
+      assert(shift >= 0);
 
-      double scale = pow(10.0L, units - vpi_time_precision);
+      assert(val >= 0);
+
+	// Scale to the local precision and then round away from zero.
+      double scale = pow(10.0L, shift);
       val *= scale;
 
-      return (vvp_time64_t) val;
+      vvp_time64_t delay = (vvp_time64_t) (val + 0.5);
+
+	// If needed now scale the value to the simulator precision.
+      if (scope) {
+	    shift = scope->time_precision - vpi_time_precision;
+	    assert(shift >= 0);
+	    for (int lp = 0; lp <  shift; lp += 1) delay *= 10;
+      }
+
+      return delay;
 }
 
 static int timevar_time_get(int code, vpiHandle ref)

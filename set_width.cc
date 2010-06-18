@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -474,6 +474,8 @@ bool NetEUnary::set_width(unsigned w, bool)
       switch (op_) {
 	  case '~':
 	  case '-':
+	  case 'r':
+	  case 'i':
 	    flag = expr_->set_width(w);
 	    expr_width(w);
 	    break;

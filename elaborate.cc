@@ -1960,55 +1960,68 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 	   units, and return an adjusted NetEConst. */
 
       if (NetECReal*tmp = dynamic_cast<NetECReal*>(dex)) {
-	    verireal fn = tmp->value();
-
-	    int shift = scope->time_unit() - des->get_precision();
-	    int64_t delay = fn.as_long64(shift);
-	    if (delay < 0)
-		  delay = 0;
+	    uint64_t delay = get_scaled_time_from_real(des, scope, tmp);
 
 	    delete tmp;
-	    return new NetEConst(verinum(delay));
+	    NetEConst*tmp2 = new NetEConst(verinum(delay, 64));
+	    tmp2->set_line(*expr);
+	    return tmp2;
       }
 
 
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(dex)) {
 	    verinum fn = tmp->value();
-
-	    uint64_t delay =
-		  des->scale_to_precision(fn.as_ulong64(), scope);
+	    uint64_t delay = des->scale_to_precision(fn.as_ulong64(), scope);
 
 	    delete tmp;
-	    return new NetEConst(verinum(delay));
+	    NetEConst*tmp2 = new NetEConst(verinum(delay, 64));
+	    tmp2->set_line(*expr);
+	    return tmp2;
       }
 
 
 	/* The expression is not constant, so generate an expanded
 	   expression that includes the necessary scale shifts, and
 	   return that expression. */
-      int shift = scope->time_unit() - des->get_precision();
-      if (shift > 0) {
-	    uint64_t scale = 1;
-	    while (shift > 0) {
-		  scale *= 10;
-		  shift -= 1;
-	    }
+      ivl_assert(*expr, dex);
+      if (dex->expr_type() == IVL_VT_REAL) {
+	      // Scale the real value.
+	    int shift = scope->time_unit() - scope->time_precision();
+	    assert(shift >= 0);
+	    double round = 1;
+	    for (int lp = 0; lp < shift; lp += 1) round *= 10.0;
 
-	    ivl_assert(*expr, dex);
-	    NetExpr*scal_val = new NetEConst(verinum(scale));
+	    NetExpr*scal_val = new NetECReal(verireal(round));
+	    scal_val->set_line(*expr);
 	    dex = new NetEBMult('*', dex, scal_val);
-      }
+	    dex->set_line(*expr);
 
-      if (shift < 0) {
-	    unsigned long scale = 1;
-	    while (shift < 0) {
-		  scale *= 10;
-		  shift += 1;
-	    }
+	      // Cast this part of the expression to an integer.
+	    dex = new NetECast('i', dex);
+	    dex->set_width(64);
+	    dex->set_line(*expr);
 
-	    ivl_assert(*expr, dex);
-	    NetExpr*scal_val = new NetEConst(verinum(scale));
-	    dex = new NetEBDiv('/', dex, scal_val);
+	      // Now scale the integer value.
+	    shift = scope->time_precision() - des->get_precision();
+	    assert(shift >= 0);
+	    uint64_t scale = 1;
+	    for (int lp = 0; lp < shift; lp += 1) scale *= 10;
+
+	    scal_val = new NetEConst(verinum(scale, 64));
+	    scal_val->set_line(*expr);
+	    dex = new NetEBMult('*', dex, scal_val);
+	    dex->set_width(64);
+	    dex->set_line(*expr);
+      } else {
+	    int shift = scope->time_unit() - des->get_precision();
+	    assert(shift >= 0);
+	    uint64_t scale = 1;
+	    for (int lp = 0; lp < shift; lp += 1) scale *= 10;
+
+	    NetExpr*scal_val = new NetEConst(verinum(scale, 64));
+	    scal_val->set_line(*expr);
+	    dex = new NetEBMult('*', dex, scal_val);
+	    dex->set_line(*expr);
       }
 
       return dex;
@@ -3901,7 +3914,6 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	            "module(s) with no `timescale." << endl;
 	    display_ts_dly_warning = false;
       }
-      int shift = scope->time_unit() - des->get_precision();
 
 	/* Elaborate the delay values themselves. Remember to scale
 	   them for the timescale/precision of the scope. */
@@ -3910,17 +3922,18 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	    probe_expr_width(des, scope, exp);
 	    NetExpr*cur = elab_and_eval(des, scope, exp, 0);
 
-	    if (NetEConst*cur_con = dynamic_cast<NetEConst*> (cur)) {
-		  delay_value[idx] = cur_con->value().as_ulong();
-		  for (int tmp = 0 ;  tmp < shift ;  tmp += 1)
-			delay_value[idx] *= 10;
+	    if (NetEConst*con = dynamic_cast<NetEConst*> (cur)) {
+		  verinum fn = con->value();
+		  delay_value[idx] = des->scale_to_precision(fn.as_ulong64(),
+		                                             scope);
 
-	    } else if (NetECReal*cur_rcon = dynamic_cast<NetECReal*>(cur)) {
-		  delay_value[idx] = cur_rcon->value().as_long(shift);
+	    } else if (NetECReal*rcon = dynamic_cast<NetECReal*>(cur)) {
+		  delay_value[idx] = get_scaled_time_from_real(des, scope,
+		                                               rcon);
 
 	    } else {
 		  cerr << get_fileline() << ": error: Path delay value "
-		       << "must be constant." << endl;
+		       << "must be constant (" << *cur << ")." << endl;
 		  delay_value[idx] = 0;
 		  des->errors += 1;
 	    }

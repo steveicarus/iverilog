@@ -286,8 +286,8 @@ void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
 
 	  case IVL_VT_REAL:
 	    word = draw_eval_real(expr);
-	    clr_word(word);
 	    fprintf(vvp_out, "    %%cvt/sr %u, %u;\n", ix, word);
+	    clr_word(word);
 	    break;
 
 	  default:
@@ -2933,7 +2933,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
       struct vector_info res;
       ivl_expr_t sub = ivl_expr_oper1(expr);
       const char *rop = 0;
-      int inv = 0;
+      int word, inv = 0;
 
       switch (ivl_expr_opcode(expr)) {
 	  case '&': rop = "and";  break;
@@ -3117,15 +3117,32 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 	    }
 
 	    fprintf(vvp_out, "    %%cmpi/s %d, 0, %u;\n", res.base, res.wid);
-	    fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 5;\n", thread_count, local_count);
+	    fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 5;\n", thread_count,
+	                     local_count);
 	    fprintf(vvp_out, "    %%inv %d, %u;\n", res.base, res.wid);
 	    fprintf(vvp_out, "    %%addi %d, 1, %u;\n", res.base, res.wid);
 	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_count);
 	    local_count += 1;
 	    break;
 
+	  case 'i': /* Cast a real value to an integer. */
+	    assert(ivl_expr_value(sub) == IVL_VT_REAL);
+	    word = draw_eval_real(sub);
+	    res.base = allocate_vector(wid);
+	    res.wid = wid;
+	    fprintf(vvp_out, "    %%cvt/vr %u, %u, %u;\n", res.base, word,
+	                     res.wid);
+	    clr_word(word);
+	    break;
+
+	  case 'r': /* Handled in eval_real.c. */
+	    fprintf(stderr, "vvp error: integer -> real cast in integer "
+	                    "context.\n");
+	    assert(0);
+	    break;
+
 	  default:
-	    fprintf(stderr, "vvp error: unhandled unary: %c\n",
+	    fprintf(stderr, "vvp error: unhandled unary operator: %c\n",
 		    ivl_expr_opcode(expr));
 	    assert(0);
       }
