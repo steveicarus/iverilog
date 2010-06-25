@@ -741,6 +741,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 		unsigned char *mem = malloc(FST_GZIO_LEN);
 		off_t hl, eos;
 		gzFile zhandle;
+		int zfd;
 #ifndef __MINGW32__
 		char *fnam = malloc(strlen(xc->filename) + 5 + 1);
 #endif
@@ -752,15 +753,23 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 		fstWriterUint64(xc->handle, xc->hier_file_len);	/* uncompressed length */
 		
 		fflush(xc->handle);
-		zhandle = gzdopen(dup(fileno(xc->handle)), "wb4");
-		fseeko(xc->hier_handle, 0, SEEK_SET);
-		for(hl = 0; hl < xc->hier_file_len; hl += FST_GZIO_LEN)
+		zfd = dup(fileno(xc->handle));
+		zhandle = gzdopen(zfd, "wb4");
+		if(zhandle)
 			{
-			unsigned len = ((xc->hier_file_len - hl) > FST_GZIO_LEN) ? FST_GZIO_LEN : (xc->hier_file_len - hl);
-			fstFread(mem, len, 1, xc->hier_handle);
-			gzwrite(zhandle, mem, len);
+			fseeko(xc->hier_handle, 0, SEEK_SET);
+			for(hl = 0; hl < xc->hier_file_len; hl += FST_GZIO_LEN)
+				{
+				unsigned len = ((xc->hier_file_len - hl) > FST_GZIO_LEN) ? FST_GZIO_LEN : (xc->hier_file_len - hl);
+				fstFread(mem, len, 1, xc->hier_handle);
+				gzwrite(zhandle, mem, len);
+				}
+			gzclose(zhandle);
 			}
-		gzclose(zhandle);
+			else
+			{
+			close(zfd);
+			}
 		free(mem);
 
 		fseeko(xc->handle, 0, SEEK_END);
@@ -815,6 +824,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 			if(fp)
 				{
 				void *dsth;
+				int zfd;
 				char gz_membuf[FST_GZIO_LEN];
 
 				fseeko(xc->handle, 0, SEEK_END);
@@ -826,15 +836,22 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 				fflush(fp);
 
 				fseeko(xc->handle, 0, SEEK_SET);
-				dsth = gzdopen(dup(fileno(fp)), "wb4");
-
-				for(offpnt = 0; offpnt < uclen; offpnt += FST_GZIO_LEN)
+				zfd = dup(fileno(fp));
+				dsth = gzdopen(zfd, "wb4");
+				if(dsth)
 					{
-					size_t this_len = ((uclen - offpnt) > FST_GZIO_LEN) ? FST_GZIO_LEN : (uclen - offpnt);
-					fstFread(gz_membuf, this_len, 1, xc->handle);
-					gzwrite(dsth, gz_membuf, this_len);
+					for(offpnt = 0; offpnt < uclen; offpnt += FST_GZIO_LEN)
+						{
+						size_t this_len = ((uclen - offpnt) > FST_GZIO_LEN) ? FST_GZIO_LEN : (uclen - offpnt);
+						fstFread(gz_membuf, this_len, 1, xc->handle);
+						gzwrite(dsth, gz_membuf, this_len);
+						}
+					gzclose(dsth);
 					}
-				gzclose(dsth);
+					else
+					{
+					close(zfd);
+					}
 				fseeko(fp, 0, SEEK_END);
 				offpnt = ftello(fp);
 				fseeko(fp, 1, SEEK_SET);
@@ -2160,8 +2177,10 @@ return(buf);
 }
 
 
-static void fstReaderRecreateHierFile(struct fstReaderContext *xc)
+static int fstReaderRecreateHierFile(struct fstReaderContext *xc)
 {
+int pass_status = 1;
+
 if(!xc->fh)
 	{
 	off_t offs_cache = ftello(xc->f);
@@ -2170,12 +2189,22 @@ if(!xc->fh)
 	off_t hl;
 	uint64_t uclen;
 	gzFile zhandle;
+	int zfd;
 
 	sprintf(fnam, "%s.hier_%d_%p", xc->filename, getpid(), (void *)xc);
 	fseeko(xc->f, xc->hier_pos, SEEK_SET);
 	uclen = fstReaderUint64(xc->f);
 	fflush(xc->f);
-	zhandle = gzdopen(dup(fileno(xc->f)), "rb");
+	zfd = dup(fileno(xc->f));
+	zhandle = gzdopen(zfd, "rb");
+	if(!zhandle)
+		{
+		close(zfd);
+		free(mem);
+		free(fnam);
+		return(0);
+		}
+
 	xc->fh = fopen(fnam, "w+b");
         if(!xc->fh)
                 {
@@ -2184,7 +2213,7 @@ if(!xc->fh)
                 if(!xc->fh)
 			{
 			free(mem);
-			return;
+			return(0);
 			}
                 }    
 
@@ -2195,7 +2224,12 @@ if(!xc->fh)
         for(hl = 0; hl < uclen; hl += FST_GZIO_LEN)
 		{
                 unsigned len = ((uclen - hl) > FST_GZIO_LEN) ? FST_GZIO_LEN : (uclen - hl);
-		gzread(zhandle, mem, len); /* rc should equal len... */
+		int gzreadlen = gzread(zhandle, mem, len); /* rc should equal len... */
+		if(gzreadlen != len)
+			{
+			pass_status = 0;
+			break;
+			}
 		fstFwrite(mem, len, 1, xc->fh);
                 }
         gzclose(zhandle);
@@ -2209,22 +2243,28 @@ if(!xc->fh)
 
 	fseeko(xc->f, offs_cache, SEEK_SET);
 	}
+
+return(pass_status);
 }
 
 
-void fstReaderIterateHierRewind(void *ctx)
+int fstReaderIterateHierRewind(void *ctx)
 {
 struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
+int pass_status = 0;
 
 if(xc)
 	{
+	pass_status = 1;
 	if(!xc->fh)
 		{
-		fstReaderRecreateHierFile(xc);
+		pass_status = fstReaderRecreateHierFile(xc);
 		}
 
 	xc->do_rewind = 1;
 	}
+
+return(pass_status);
 }
 
 
@@ -2240,7 +2280,10 @@ if(!xc) return(NULL);
 
 if(!xc->fh)
 	{
-	fstReaderRecreateHierFile(xc);
+	if(!fstReaderRecreateHierFile(xc))
+		{
+		return(NULL);
+		}
 	}
 
 if(xc->do_rewind)
@@ -2342,7 +2385,7 @@ return(!isfeof ? &xc->hier : NULL);
 }
 
 
-void fstReaderProcessHier(void *ctx, FILE *fv)
+int fstReaderProcessHier(void *ctx, FILE *fv)
 {
 struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
 char str[FST_ID_NAM_SIZ+1];
@@ -2353,13 +2396,16 @@ uint32_t len, alias;
 uint32_t maxvalpos=0;
 int num_signal_dyn = 65536;
 
-if(!xc) return;
+if(!xc) return(0);
 
 xc->longest_signal_value_len = 32; /* arbitrarily set at 32...this is much longer than an expanded double */
 
 if(!xc->fh)
 	{
-	fstReaderRecreateHierFile(xc);
+	if(!fstReaderRecreateHierFile(xc))
+		{
+		return(0);
+		}
 	}
 
 if(fv)
@@ -2533,6 +2579,8 @@ free(xc->temp_signal_value_buf);
 xc->temp_signal_value_buf = malloc(xc->longest_signal_value_len + 1);
 
 xc->var_count = xc->maxhandle + xc->num_alias;
+
+return(1);
 }
 
 
@@ -2548,6 +2596,7 @@ int sectype;
 uint64_t vc_section_count_actual = 0;
 int hdr_incomplete = 0;
 int hdr_seen = 0;
+int gzread_pass_status = 1;
 
 sectype = fgetc(xc->f);
 if(sectype == FST_BL_ZWRAPPER)
@@ -2556,6 +2605,7 @@ if(sectype == FST_BL_ZWRAPPER)
 	off_t offpnt, uclen;
 	char gz_membuf[FST_GZIO_LEN];
 	void *zhandle;
+	int zfd;
         int flen = strlen(xc->filename);
         char *hf;
 
@@ -2589,216 +2639,233 @@ if(sectype == FST_BL_ZWRAPPER)
 	fseeko(xc->f, 1+8+8, SEEK_SET);
 	fflush(xc->f);
 
-	zhandle = gzdopen(dup(fileno(xc->f)), "rb");
-	for(offpnt = 0; offpnt < uclen; offpnt += FST_GZIO_LEN)
+	zfd = dup(fileno(xc->f));
+	zhandle = gzdopen(zfd, "rb");
+	if(zhandle)
 		{
-		size_t this_len = ((uclen - offpnt) > FST_GZIO_LEN) ? FST_GZIO_LEN : (uclen - offpnt);
-		gzread(zhandle, gz_membuf, this_len);
-		fstFwrite(gz_membuf, this_len, 1, fcomp);
+		for(offpnt = 0; offpnt < uclen; offpnt += FST_GZIO_LEN)
+			{
+			size_t this_len = ((uclen - offpnt) > FST_GZIO_LEN) ? FST_GZIO_LEN : (uclen - offpnt);
+			int gzreadlen = gzread(zhandle, gz_membuf, this_len);
+	                if(gzreadlen != this_len)
+	                        {
+	                        gzread_pass_status = 0;
+	                        break;
+	                        }
+			fstFwrite(gz_membuf, this_len, 1, fcomp);
+			}
+		gzclose(zhandle);
+		}
+		else
+		{
+		close(zfd);
 		}
 	fflush(fcomp);
 	fclose(xc->f);
 	xc->f = fcomp;
 	}
 
-fseeko(xc->f, 0, SEEK_END);
-endfile = ftello(xc->f);
-
-while(blkpos < endfile)
+if(gzread_pass_status)
 	{
-	fseeko(xc->f, blkpos, SEEK_SET);
+	fseeko(xc->f, 0, SEEK_END);
+	endfile = ftello(xc->f);
+
+	while(blkpos < endfile)
+		{
+		fseeko(xc->f, blkpos, SEEK_SET);
+		
+		sectype = fgetc(xc->f);
+		seclen = fstReaderUint64(xc->f);
 	
-	sectype = fgetc(xc->f);
-	seclen = fstReaderUint64(xc->f);
-
-	if(sectype == EOF) 
-		{
-		break;
-		}
-
-	if(!hdr_seen && (sectype != FST_BL_HDR)) 
-		{
-		break;
-		}
-
-	blkpos++;
-	if(sectype == FST_BL_HDR)
-		{
-		if(!hdr_seen)
+		if(sectype == EOF) 
 			{
-			int ch;
-			double dcheck;
-
-			xc->start_time = fstReaderUint64(xc->f);
-			xc->end_time = fstReaderUint64(xc->f); 
-
-			hdr_incomplete = (xc->start_time == 0) && (xc->end_time == 0);
-
-			fstFread(&dcheck, 8, 1, xc->f);
-			xc->double_endian_match = (dcheck == FST_DOUBLE_ENDTEST);
-			if(!xc->double_endian_match)
-				{
-				union	{
-  					unsigned char rvs_buf[8];
-  					double d;
-  					} vu;
-
-				unsigned char *dcheck_alias = (unsigned char *)&dcheck;
-				int rvs_idx;
-
-				for(rvs_idx=0;rvs_idx<8;rvs_idx++)
-					{
-					vu.rvs_buf[rvs_idx] = dcheck_alias[7-rvs_idx];
-					}
-				if(vu.d != FST_DOUBLE_ENDTEST)
-					{
-					break; /* either corrupt file or wrong architecture (offset +33 also functions as matchword) */
-					}
-				}
-
-			hdr_seen = 1;
-
-			xc->mem_used_by_writer = fstReaderUint64(xc->f); 
-			xc->scope_count = fstReaderUint64(xc->f); 
-			xc->var_count = fstReaderUint64(xc->f); 
-			xc->maxhandle = fstReaderUint64(xc->f); 
-			xc->num_alias = xc->var_count - xc->maxhandle;
-			xc->vc_section_count = fstReaderUint64(xc->f); 
-			ch = fgetc(xc->f);
-			xc->timescale = (signed char)ch;
-			fstFread(xc->version, FST_HDR_SIM_VERSION_SIZE, 1, xc->f);
-			xc->version[FST_HDR_SIM_VERSION_SIZE] = 0;
-			fstFread(xc->date, FST_HDR_DATE_SIZE, 1, xc->f);
-			xc->date[FST_HDR_DATE_SIZE] = 0;
+			break;
 			}
-		}
-	else if(sectype == FST_BL_VCDATA)
-		{
-		if(hdr_incomplete)
+	
+		if(!hdr_seen && (sectype != FST_BL_HDR)) 
 			{
-			uint64_t bt = fstReaderUint64(xc->f);
-			xc->end_time = fstReaderUint64(xc->f);
-
-			if(!vc_section_count_actual) { xc->start_time = bt; }
+			break;
 			}
-
-		vc_section_count_actual++;
-		}
-	else if(sectype == FST_BL_GEOM)
-		{
-		if(!hdr_incomplete)
+	
+		blkpos++;
+		if(sectype == FST_BL_HDR)
 			{
-			uint64_t clen = seclen - 24;
-			uint64_t uclen = fstReaderUint64(xc->f);
-			unsigned char *ucdata = malloc(uclen);
-			unsigned char *pnt = ucdata;
-			int i;
-
-			xc->contains_geom_section = 1;
-			xc->maxhandle = fstReaderUint64(xc->f);
-			xc->longest_signal_value_len = 32; /* arbitrarily set at 32...this is much longer than an expanded double */
-
-			free(xc->process_mask);
-			xc->process_mask = calloc(1, (xc->maxhandle+7)/8);
-
-			if(clen != uclen)
+			if(!hdr_seen)
 				{
-				unsigned char *cdata = malloc(clen);
-			        unsigned long destlen = uclen;
-			        unsigned long sourcelen = clen;
-				int rc;
+				int ch;
+				double dcheck;
 	
-				fstFread(cdata, clen, 1, xc->f);
-				rc = uncompress(ucdata, &destlen, cdata, sourcelen);
-
-				if(rc != Z_OK)
+				xc->start_time = fstReaderUint64(xc->f);
+				xc->end_time = fstReaderUint64(xc->f); 
+	
+				hdr_incomplete = (xc->start_time == 0) && (xc->end_time == 0);
+	
+				fstFread(&dcheck, 8, 1, xc->f);
+				xc->double_endian_match = (dcheck == FST_DOUBLE_ENDTEST);
+				if(!xc->double_endian_match)
 					{
-					printf("geom uncompress rc = %d\n", rc);
-					exit(255);
+					union	{
+	  					unsigned char rvs_buf[8];
+	  					double d;
+	  					} vu;
+	
+					unsigned char *dcheck_alias = (unsigned char *)&dcheck;
+					int rvs_idx;
+	
+					for(rvs_idx=0;rvs_idx<8;rvs_idx++)
+						{
+						vu.rvs_buf[rvs_idx] = dcheck_alias[7-rvs_idx];
+						}
+					if(vu.d != FST_DOUBLE_ENDTEST)
+						{
+						break; /* either corrupt file or wrong architecture (offset +33 also functions as matchword) */
+						}
 					}
-				
-				free(cdata);
+	
+				hdr_seen = 1;
+	
+				xc->mem_used_by_writer = fstReaderUint64(xc->f); 
+				xc->scope_count = fstReaderUint64(xc->f); 
+				xc->var_count = fstReaderUint64(xc->f); 
+				xc->maxhandle = fstReaderUint64(xc->f); 
+				xc->num_alias = xc->var_count - xc->maxhandle;
+				xc->vc_section_count = fstReaderUint64(xc->f); 
+				ch = fgetc(xc->f);
+				xc->timescale = (signed char)ch;
+				fstFread(xc->version, FST_HDR_SIM_VERSION_SIZE, 1, xc->f);
+				xc->version[FST_HDR_SIM_VERSION_SIZE] = 0;
+				fstFread(xc->date, FST_HDR_DATE_SIZE, 1, xc->f);
+				xc->date[FST_HDR_DATE_SIZE] = 0;
 				}
-				else
+			}
+		else if(sectype == FST_BL_VCDATA)
+			{
+			if(hdr_incomplete)
 				{
-				fstFread(ucdata, uclen, 1, xc->f);
+				uint64_t bt = fstReaderUint64(xc->f);
+				xc->end_time = fstReaderUint64(xc->f);
+		
+				if(!vc_section_count_actual) { xc->start_time = bt; }
 				}
-	
-			free(xc->signal_lens);
-			xc->signal_lens = malloc(sizeof(uint32_t) * xc->maxhandle);
-			free(xc->signal_typs);
-			xc->signal_typs = malloc(sizeof(unsigned char) * xc->maxhandle);
-	
-			for(i=0;i<xc->maxhandle;i++)
+
+			vc_section_count_actual++;
+			}
+		else if(sectype == FST_BL_GEOM)
+			{
+			if(!hdr_incomplete)
 				{
-		                int skiplen;
-	               		uint64_t val = fstGetVarint32(pnt, &skiplen);
+				uint64_t clen = seclen - 24;
+				uint64_t uclen = fstReaderUint64(xc->f);
+				unsigned char *ucdata = malloc(uclen);
+				unsigned char *pnt = ucdata;
+				int i;
 	
-				pnt += skiplen;
-	
-				if(val)
+				xc->contains_geom_section = 1;
+				xc->maxhandle = fstReaderUint64(xc->f);
+				xc->longest_signal_value_len = 32; /* arbitrarily set at 32...this is much longer than an expanded double */
+
+				free(xc->process_mask);
+				xc->process_mask = calloc(1, (xc->maxhandle+7)/8);
+
+				if(clen != uclen)
 					{
-					xc->signal_lens[i] = val;
-					xc->signal_typs[i] = FST_VT_VCD_WIRE;
-					if(val > xc->longest_signal_value_len)
-                                        	{
-                                        	xc->longest_signal_value_len = val;
-                                        	}
+					unsigned char *cdata = malloc(clen);
+				        unsigned long destlen = uclen;
+				        unsigned long sourcelen = clen;
+					int rc;
+	
+					fstFread(cdata, clen, 1, xc->f);
+					rc = uncompress(ucdata, &destlen, cdata, sourcelen);
+
+					if(rc != Z_OK)
+						{
+						printf("geom uncompress rc = %d\n", rc);
+						exit(255);
+						}
+					
+					free(cdata);
 					}
 					else
 					{
-					xc->signal_lens[i] = 8; /* backpatch in real */
-					xc->signal_typs[i] = FST_VT_VCD_REAL;
-					/* xc->longest_signal_value_len handled above by overly large init size */
+					fstFread(ucdata, uclen, 1, xc->f);
 					}
-				}
-
-			free(xc->temp_signal_value_buf);
-			xc->temp_signal_value_buf = malloc(xc->longest_signal_value_len + 1); 
+		
+				free(xc->signal_lens);
+				xc->signal_lens = malloc(sizeof(uint32_t) * xc->maxhandle);
+				free(xc->signal_typs);
+				xc->signal_typs = malloc(sizeof(unsigned char) * xc->maxhandle);
 	
-			free(ucdata);
+				for(i=0;i<xc->maxhandle;i++)
+					{
+			                int skiplen;
+		               		uint64_t val = fstGetVarint32(pnt, &skiplen);
+	
+					pnt += skiplen;
+	
+					if(val)
+						{
+						xc->signal_lens[i] = val;
+						xc->signal_typs[i] = FST_VT_VCD_WIRE;
+						if(val > xc->longest_signal_value_len)
+	                                        	{
+	                                        	xc->longest_signal_value_len = val;
+	                                        	}
+						}
+						else
+						{
+						xc->signal_lens[i] = 8; /* backpatch in real */
+						xc->signal_typs[i] = FST_VT_VCD_REAL;
+						/* xc->longest_signal_value_len handled above by overly large init size */
+						}
+					}
+
+				free(xc->temp_signal_value_buf);
+				xc->temp_signal_value_buf = malloc(xc->longest_signal_value_len + 1); 
+	
+				free(ucdata);
+				}
 			}
-		}
-	else if(sectype == FST_BL_HIER)
-		{
-		xc->contains_hier_section = 1;
-		xc->hier_pos = ftello(xc->f);
-		}
-	else if(sectype == FST_BL_BLACKOUT)
-		{
-		uint32_t i;
-		uint64_t cur_bl = 0;
-		uint64_t delta;
-
-		xc->num_blackouts = fstReaderVarint32(xc->f);
-		free(xc->blackout_times);
-		xc->blackout_times = calloc(xc->num_blackouts, sizeof(uint64_t));
-		free(xc->blackout_activity);
-		xc->blackout_activity = calloc(xc->num_blackouts, sizeof(unsigned char));
-
-		for(i=0;i<xc->num_blackouts;i++)
+		else if(sectype == FST_BL_HIER)
 			{
-			xc->blackout_activity[i] = fgetc(xc->f) != 0;
-			delta = fstReaderVarint64(xc->f);
-			cur_bl += delta;
-			xc->blackout_times[i] = cur_bl;
+			xc->contains_hier_section = 1;
+			xc->hier_pos = ftello(xc->f);
 			}
+		else if(sectype == FST_BL_BLACKOUT)
+			{
+			uint32_t i;
+			uint64_t cur_bl = 0;
+			uint64_t delta;
+
+			xc->num_blackouts = fstReaderVarint32(xc->f);
+			free(xc->blackout_times);
+			xc->blackout_times = calloc(xc->num_blackouts, sizeof(uint64_t));
+			free(xc->blackout_activity);
+			xc->blackout_activity = calloc(xc->num_blackouts, sizeof(unsigned char));
+
+			for(i=0;i<xc->num_blackouts;i++)
+				{
+				xc->blackout_activity[i] = fgetc(xc->f) != 0;
+				delta = fstReaderVarint64(xc->f);
+				cur_bl += delta;
+				xc->blackout_times[i] = cur_bl;
+				}
+			}
+	
+		blkpos += seclen;
+		if(!hdr_seen) break;
 		}
 
-	blkpos += seclen;
-	if(!hdr_seen) break;
-	}
-
-if(hdr_seen)
-	{
-	if(xc->vc_section_count != vc_section_count_actual)
+	if(hdr_seen)
 		{
-		xc->vc_section_count = vc_section_count_actual;
-		}
-
-	if(!xc->contains_geom_section)
-		{
-		fstReaderProcessHier(xc, NULL); /* recreate signal_lens/signal_typs info */
+		if(xc->vc_section_count != vc_section_count_actual)
+			{
+			xc->vc_section_count = vc_section_count_actual;
+			}
+	
+		if(!xc->contains_geom_section)
+			{
+			fstReaderProcessHier(xc, NULL); /* recreate signal_lens/signal_typs info */
+			}
 		}
 	}
 

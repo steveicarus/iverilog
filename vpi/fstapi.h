@@ -168,8 +168,8 @@ void fstWriterFlushContext(void *ctx);
 void *fstReaderOpen(const char *nam);
 void fstReaderClose(void *ctx);
 
-void fstReaderProcessHier(void *ctx, FILE *vcdhandle);
-void fstReaderIterateHierRewind(void *ctx);
+int fstReaderProcessHier(void *ctx, FILE *vcdhandle);
+int fstReaderIterateHierRewind(void *ctx);
 struct fstHier *fstReaderIterateHier(void *ctx);
 
 void fstReaderResetScope(void *ctx);
