@@ -794,7 +794,7 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*des,
       NetEBMult*tmp = new NetEBMult(op_, lp, rp);
       tmp->set_line(*this);
 
-      if (expr_wid > 0)
+      if (expr_wid > 0 && type_is_vectorable(tmp->expr_type()))
 	    tmp->set_width(expr_wid, false);
 
       return tmp;
@@ -816,7 +816,7 @@ NetExpr* PEBinary::elaborate_expr_base_add_(Design*des,
 	    use_lossless_flag = false;
 
 	// If the expression is unsigned, then force the operands to
-	// unsigned so taht the set_width below doesn't cause them to
+	// unsigned so that the set_width below doesn't cause them to
 	// be sign-extended.
       if (! is_pexpr)
 	    suppress_binary_operand_sign_if_needed(lp, rp);
