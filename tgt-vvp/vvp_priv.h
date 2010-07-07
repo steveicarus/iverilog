@@ -45,6 +45,9 @@ struct vector_info {
   /* Width limit for typical immediate arguments. */
 # define IMM_WID 32
 
+  /* The number of words available in a thread. */
+# define WORD_COUNT 16
+
 /*
  * Mangle all non-symbol characters in an identifier, quotes in names
  */

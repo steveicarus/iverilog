@@ -31,19 +31,22 @@ static unsigned long word_alloc_mask = 0x0f;
 int allocate_word()
 {
       int res = 4;
-      int max = IMM_WID;
+      int max = WORD_COUNT;
 
       while (res < max && (1U << res) & word_alloc_mask)
 	    res += 1;
 
-      assert(res < max);
+      if (res >= max) {
+	    fprintf(stderr, "vvp.tgt error: Thread words exhausted.\n");
+	    exit(1);
+      }
       word_alloc_mask |= 1U << res;
       return res;
 }
 
 void clr_word(int res)
 {
-      int max = IMM_WID;
+      int max = WORD_COUNT;
       assert(res < max);
       word_alloc_mask &= ~ (1U << res);
 }
@@ -213,7 +216,7 @@ static int draw_number_real(ivl_expr_t expr)
 	    if (bits[idx] == '0')
 		  continue;
 
-	    fprintf(stderr, "internal error: mantissa doesn't fit!\n");
+	    fprintf(stderr, "vvp.tgt error: mantissa doesn't fit!\n");
 	    assert(0);
       }
 
@@ -388,13 +391,16 @@ static int draw_signal_real(ivl_expr_t expr)
 	  case IVL_VT_REAL:
 	    return draw_signal_real_real(expr);
 	  default:
-	    fprintf(stderr, "internal error: signal_data_type=%d\n",
+	    fprintf(stderr, "vvp.tgt error: signal_data_type=%d\n",
 		    ivl_signal_data_type(sig));
 	    assert(0);
 	    return -1;
       }
 }
 
+/* If we have nested ternary operators they are likely tail recursive.
+ * This code is structured to allow this recursion without overflowing
+ * the available thread words. */
 static int draw_ternary_real(ivl_expr_t expr)
 {
       ivl_expr_t cond = ivl_expr_oper1(expr);
@@ -404,12 +410,12 @@ static int draw_ternary_real(ivl_expr_t expr)
       struct vector_info tst;
 
       unsigned lab_true = local_count++;
-      unsigned lab_false = local_count++;
+      unsigned lab_move = local_count++;
       unsigned lab_out = local_count++;
 
-      int tru, fal;
-      int res = allocate_word();
+      int tru, fal, res;
 
+	/* Evaluate the ternary condition. */
       tst = draw_eval_expr(cond, STUFF_OK_XZ|STUFF_OK_RO);
       if ((tst.base >= 4) && (tst.wid > 1)) {
 	    struct vector_info tmp;
@@ -425,29 +431,34 @@ static int draw_ternary_real(ivl_expr_t expr)
 	    tst.wid = 1;
       }
 
-      fprintf(vvp_out, "    %%jmp/0  T_%d.%d, %u;\n",
+	/* Evaluate the true expression second. */
+      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, %u;\n",
 	      thread_count, lab_true, tst.base);
 
-      tru = draw_eval_real(true_ex);
-      fprintf(vvp_out, "    %%mov/wr %d, %d;\n", res, tru);
-      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, %u; End of true expr.\n",
-              thread_count, lab_out, tst.base);
-      clr_word(tru);
-
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_true);
+	/* Evaluate the false expression and copy it to the result word. */
       fal = draw_eval_real(false_ex);
+      res = allocate_word();
+      fprintf(vvp_out, "    %%mov/wr %d, %d;\n", res, fal);
+      clr_word(fal);
       fprintf(vvp_out, "    %%jmp/0  T_%d.%d, %u; End of false expr.\n",
-              thread_count, lab_false, tst.base);
+              thread_count, lab_out, tst.base);
 
-      fprintf(vvp_out, "    %%blend/wr %d, %d;\n", res, fal);
+	/* Evaluate the true expression. */
+      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_true);
+      tru = draw_eval_real(true_ex);
+      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, %u; End of true expr.\n",
+              thread_count, lab_move, tst.base);
+
+	/* If the conditional is undefined then blend the real words. */
+      fprintf(vvp_out, "    %%blend/wr %d, %d;\n", res, tru);
       fprintf(vvp_out, "    %%jmp  T_%d.%d; End of blend\n",
               thread_count, lab_out);
 
-      fprintf(vvp_out, "T_%d.%d ; Move false result.\n",
-              thread_count, lab_false);
-
-      fprintf(vvp_out, "    %%mov/wr %d, %d;\n", res, fal);
-      clr_word(fal);
+	/* If we only need the true result then copy it to the result word. */
+      fprintf(vvp_out, "T_%d.%d ; Move true result.\n",
+              thread_count, lab_move);
+      fprintf(vvp_out, "    %%mov/wr %d, %d;\n", res, tru);
+      clr_word(tru);
 
 	/* This is the out label. */
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
@@ -521,11 +532,9 @@ static int draw_unary_real(ivl_expr_t expr)
 	    return sub;
       }
 
-      fprintf(vvp_out, "; XXXX unary (%c) on sube in %d\n",
-              ivl_expr_opcode(expr), sub);
-      fprintf(stderr, "XXXX evaluate unary (%c) on sube in %d\n",
-              ivl_expr_opcode(expr), sub);
-      return 0;
+      fprintf(stderr, "vvp.tgt error: unhandled real unary operator: %c.\n",
+              ivl_expr_opcode(expr));
+      assert(0);
 }
 
 int draw_eval_real(ivl_expr_t expr)

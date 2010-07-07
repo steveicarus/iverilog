@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -471,7 +471,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
       }
 
-      fprintf(stderr, "internal error: no input to nexus.\n");
+      fprintf(stderr, "vvp.tgt error: no input to nexus.\n");
       assert(0);
       return strdup("C<z>");
 }

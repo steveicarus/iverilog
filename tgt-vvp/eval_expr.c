@@ -504,7 +504,7 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t expr,
 
 	  case 'e': /* == */
 	    if (lv.wid != rv.wid) {
-		  fprintf(stderr,"internal error: operands of == "
+		  fprintf(stderr,"vvp.tgt error: operands of == "
 			  " have different widths: %u vs %u\n",
 			  lv.wid, rv.wid);
 	    }
@@ -519,7 +519,7 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t expr,
 
 	  case 'N': /* !== */
 	    if (lv.wid != rv.wid) {
-		  fprintf(stderr,"internal error: operands of !== "
+		  fprintf(stderr,"vvp.tgt error: operands of !== "
 			  " have different widths: %u vs %u\n",
 			  lv.wid, rv.wid);
 	    }
@@ -536,7 +536,7 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t expr,
 
 	  case 'n': /* != */
 	    if (lv.wid != rv.wid) {
-		  fprintf(stderr,"internal error: operands of != "
+		  fprintf(stderr,"vvp.tgt error: operands of != "
 			  " have different widths: %u vs %u\n",
 			  lv.wid, rv.wid);
 	    }
@@ -2383,7 +2383,7 @@ static struct vector_info draw_select_signal(ivl_expr_t expr,
 	/* Try the special case that the part is at the beginning of
 	   the signal (or the entire width). Just load the early bits
 	   in one go. */
-      if (number_is_immediate(bit_idx, 32, 0)
+      if (number_is_immediate(bit_idx, IMM_WID, 0)
 	  && !number_is_unknown(bit_idx)
 	  && get_number_immediate(bit_idx) == 0
 	  && (ivl_expr_width(sube) >= bit_wid)) {
@@ -2448,7 +2448,7 @@ static void draw_select_signal_dest(ivl_expr_t expr,
 	   value in place, directly. */
       if ((ivl_signal_dimensions(sig) == 0)
 	  && (ivl_expr_width(sube) >= dest.wid)
-	  && number_is_immediate(bit_idx, 32, 0)
+	  && number_is_immediate(bit_idx, IMM_WID, 0)
 	  && ! number_is_unknown(bit_idx)
 	  && get_number_immediate(bit_idx) == 0) {
 	    unsigned use_word = 0;
@@ -2946,7 +2946,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 	    break;
 
 	  default:
-	    fprintf(stderr, "vvp error: unhandled unary: %c\n",
+	    fprintf(stderr, "vvp.tgt error: unhandled unary operator: %c\n",
 		    ivl_expr_opcode(expr));
 	    assert(0);
       }
@@ -3005,7 +3005,7 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t expr, unsigned wid,
       switch (ivl_expr_type(expr)) {
 	  default:
 	  case IVL_EX_NONE:
-	    fprintf(stderr, "%s:%u:  vvp-tgt error: unhandled expr. type: "
+	    fprintf(stderr, "%s:%u:  vvp.tgt error: unhandled expr. type: "
 	            "%u at %s:%d\n", ivl_expr_file(expr), ivl_expr_lineno(expr),
                     ivl_expr_type(expr), __FILE__, __LINE__);
 	    exit(1);
@@ -3013,7 +3013,7 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t expr, unsigned wid,
 	    res.wid = 0;
 	    break;
 	  case IVL_EX_EVENT:
-	    fprintf(stderr, "%s:%u: vvp-tgt error: A named event is not "
+	    fprintf(stderr, "%s:%u: vvp.tgt error: A named event is not "
 	                    "handled in this context (expression).\n",
 	                    ivl_expr_file(expr), ivl_expr_lineno(expr));
 	    exit(1);
