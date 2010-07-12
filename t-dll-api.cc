@@ -564,7 +564,7 @@ extern "C" ivl_variable_type_t ivl_expr_value(ivl_expr_t net)
 
 extern "C" unsigned ivl_expr_width(ivl_expr_t net)
 {
-      assert(net);
+//      assert(net);
       return net->width_;
 }
 
@@ -2449,6 +2449,12 @@ extern "C" unsigned ivl_switch_part(ivl_switch_t net)
 extern "C" unsigned ivl_switch_offset(ivl_switch_t net)
 {
       return net->offset;
+}
+
+extern "C" ivl_expr_t ivl_switch_delay(ivl_switch_t net, unsigned transition)
+{
+      assert(transition < 3);
+      return net->delay[transition];
 }
 
 extern "C" const char* ivl_switch_file(ivl_switch_t net)

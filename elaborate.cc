@@ -687,16 +687,15 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  cur[idx]->attribute(attrib_list[adx].key,
 				      attrib_list[adx].val);
 
-	      /* The logic devices have some uniform processing. Then
-	         all may have output delays and output drive strength. */
-	    if (NetLogic*log = dynamic_cast<NetLogic*> (cur[idx])) {
-		  log->rise_time(rise_time);
-		  log->fall_time(fall_time);
-		  log->decay_time(decay_time);
+	      /* Set the delays and drive strength for all built in gates.
+	         We still need to add checks to verify that the delays and
+	         strength are consistent with the gates definition. */
+	    cur[idx]->rise_time(rise_time);
+	    cur[idx]->fall_time(fall_time);
+	    cur[idx]->decay_time(decay_time);
 
-		  log->pin(0).drive0(strength0());
-		  log->pin(0).drive1(strength1());
-	    }
+	    cur[idx]->pin(0).drive0(strength0());
+	    cur[idx]->pin(0).drive1(strength1());
 
 	    cur[idx]->set_line(*this);
 	    des->add_node(cur[idx]);

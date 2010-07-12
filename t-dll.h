@@ -1,7 +1,7 @@
 #ifndef __t_dll_H
 #define __t_dll_H
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -165,7 +165,9 @@ struct dll_target  : public target_t, public expr_scan_t {
       void sub_off_from_expr_(long);
       void mul_expr_by_const_(long);
 
+      void make_delays_(ivl_expr_t*delay, const NetObj*net);
       void make_logic_delays_(struct ivl_net_logic_s*obj, const NetObj*net);
+      void make_switch_delays_(struct ivl_switch_s*obj, const NetObj*net);
       void make_lpm_delays_(struct ivl_lpm_s*obj, const NetObj*net);
       void make_const_delays_(struct ivl_net_const_s*obj, const NetObj*net);
       void make_scope_parameters(ivl_scope_t scope, const NetScope*net);
@@ -478,6 +480,8 @@ struct ivl_switch_s {
 
       struct ivl_attribute_s*attr;
       unsigned nattr;
+
+      ivl_expr_t delay[3];
 
       ivl_nexus_t pins[3];
       perm_string file;

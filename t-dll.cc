@@ -650,12 +650,11 @@ void dll_target::logic_attributes(struct ivl_net_logic_s *obj,
       obj->attr  = fill_in_attributes(net);
 }
 
-void dll_target::make_logic_delays_(struct ivl_net_logic_s*obj,
-				    const NetObj*net)
+void dll_target::make_delays_(ivl_expr_t*delay, const NetObj*net)
 {
-      obj->delay[0] = 0;
-      obj->delay[1] = 0;
-      obj->delay[2] = 0;
+      delay[0] = 0;
+      delay[1] = 0;
+      delay[2] = 0;
 
 	/* Translate delay expressions to ivl_target form. Try to
 	   preserve pointer equality, not as a rule but to save on
@@ -663,105 +662,53 @@ void dll_target::make_logic_delays_(struct ivl_net_logic_s*obj,
       if (net->rise_time()) {
 	    expr_ = 0;
 	    net->rise_time()->expr_scan(this);
-	    obj->delay[0] = expr_;
+	    delay[0] = expr_;
 	    expr_ = 0;
       }
       if (net->fall_time()) {
 	    if (net->fall_time() == net->rise_time()) {
-		  obj->delay[1] = obj->delay[0];
+		  delay[1] = delay[0];
 	    } else {
 		  expr_ = 0;
 		  net->fall_time()->expr_scan(this);
-		  obj->delay[1] = expr_;
+		  delay[1] = expr_;
 		  expr_ = 0;
 	    }
       }
       if (net->decay_time()) {
 	    if (net->decay_time() == net->rise_time()) {
-		  obj->delay[2] = obj->delay[0];
+		  delay[2] = delay[0];
 	    } else {
 		  expr_ = 0;
 		  net->decay_time()->expr_scan(this);
-		  obj->delay[2] = expr_;
+		  delay[2] = expr_;
 		  expr_ = 0;
 	    }
       }
+}
+
+void dll_target::make_logic_delays_(struct ivl_net_logic_s*obj,
+                                    const NetObj*net)
+{
+      make_delays_(obj->delay, net);
+}
+
+void dll_target::make_switch_delays_(struct ivl_switch_s*obj,
+                                    const NetObj*net)
+{
+      make_delays_(obj->delay, net);
 }
 
 void dll_target::make_lpm_delays_(struct ivl_lpm_s*obj,
 				  const NetObj*net)
 {
-      obj->delay[0] = 0;
-      obj->delay[1] = 0;
-      obj->delay[2] = 0;
-
-	/* Translate delay expressions to ivl_target form. Try to
-	   preserve pointer equality, not as a rule but to save on
-	   expression trees. */
-      if (net->rise_time()) {
-	    expr_ = 0;
-	    net->rise_time()->expr_scan(this);
-	    obj->delay[0] = expr_;
-	    expr_ = 0;
-      }
-      if (net->fall_time()) {
-	    if (net->fall_time() == net->rise_time()) {
-		  obj->delay[1] = obj->delay[0];
-	    } else {
-		  expr_ = 0;
-		  net->fall_time()->expr_scan(this);
-		  obj->delay[1] = expr_;
-		  expr_ = 0;
-	    }
-      }
-      if (net->decay_time()) {
-	    if (net->decay_time() == net->rise_time()) {
-		  obj->delay[2] = obj->delay[0];
-	    } else {
-		  expr_ = 0;
-		  net->decay_time()->expr_scan(this);
-		  obj->delay[2] = expr_;
-		  expr_ = 0;
-	    }
-      }
+      make_delays_(obj->delay, net);
 }
 
 void dll_target::make_const_delays_(struct ivl_net_const_s*obj,
 				    const NetObj*net)
 {
-      obj->delay[0] = 0;
-      obj->delay[1] = 0;
-      obj->delay[2] = 0;
-
-	/* Translate delay expressions to ivl_target form. Try to
-	   preserve pointer equality, not as a rule but to save on
-	   expression trees. */
-      if (net->rise_time()) {
-	    expr_ = 0;
-	    net->rise_time()->expr_scan(this);
-	    obj->delay[0] = expr_;
-	    expr_ = 0;
-      }
-      if (net->fall_time()) {
-	    if (net->fall_time() == net->rise_time()) {
-		  obj->delay[1] = obj->delay[0];
-	    } else {
-		  expr_ = 0;
-		  net->fall_time()->expr_scan(this);
-		  obj->delay[1] = expr_;
-		  expr_ = 0;
-	    }
-      }
-      if (net->decay_time()) {
-	    if (net->decay_time() == net->rise_time()) {
-		  obj->delay[2] = obj->delay[0];
-	    } else {
-		  expr_ = 0;
-		  net->decay_time()->expr_scan(this);
-		  obj->delay[2] = expr_;
-		  expr_ = 0;
-	    }
-      }
+      make_delays_(obj->delay, net);
 }
 
 bool dll_target::branch(const NetBranch*net)
@@ -1026,6 +973,7 @@ bool dll_target::tran(const NetTran*net)
       obj->lineno = net->get_lineno();
 
       switch_attributes(obj, net);
+      make_switch_delays_(obj, net);
       scope_add_switch(obj->scope, obj);
 
       return true;

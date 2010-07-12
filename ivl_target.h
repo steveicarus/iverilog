@@ -2039,6 +2039,7 @@ extern ivl_island_t ivl_switch_island(ivl_switch_t net);
 extern unsigned ivl_switch_width(ivl_switch_t net);
 extern unsigned ivl_switch_part(ivl_switch_t net);
 extern unsigned ivl_switch_offset(ivl_switch_t net);
+extern ivl_expr_t ivl_switch_delay(ivl_switch_t net, unsigned transition);
 
 /* Not implemented yet
 extern unsigned        ivl_switch_attr_cnt(ivl_switch_t net);

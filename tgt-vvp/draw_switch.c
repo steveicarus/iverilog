@@ -34,6 +34,23 @@ void draw_switch_in_scope(ivl_switch_t sw)
       ivl_nexus_t nex_a, nex_b, enable;
       const char*str_a, *str_b, *str_e;
 
+      ivl_expr_t rise_exp = ivl_switch_delay(sw, 0);
+      ivl_expr_t fall_exp = ivl_switch_delay(sw, 1);
+
+	/* We do not support tran delays. */
+      if ((rise_exp || fall_exp) &&
+          (!number_is_immediate(rise_exp, 64, 0) ||
+           number_is_unknown(rise_exp) ||
+           (get_number_immediate(rise_exp) != 0) ||
+           !number_is_immediate(fall_exp, 64, 0) ||
+           number_is_unknown(fall_exp) ||
+           (get_number_immediate(rise_exp) != 0))) {
+	    fprintf(stderr, "%s:%u: sorry: tranif gates with a delay are not "
+	                    "currently support.\n",
+	                    ivl_switch_file(sw), ivl_switch_lineno(sw));
+	    exit(1);
+      }
+
       island = ivl_switch_island(sw);
       if (ivl_island_flag_test(island, 0) == 0)
 	    draw_tran_island(island);
@@ -68,8 +85,9 @@ void draw_switch_in_scope(ivl_switch_t sw)
 	    break;
 
 	  default:
-	    fprintf(stderr, "%s:%u: sorry: vvp target does not support switch modeling.\n",
-		    ivl_switch_file(sw), ivl_switch_lineno(sw));
+	    fprintf(stderr, "%s:%u: sorry: resistive switch modeling is not "
+	                    "currently supported.\n",
+		            ivl_switch_file(sw), ivl_switch_lineno(sw));
 	    vvp_errors += 1;
 	    return;
       }

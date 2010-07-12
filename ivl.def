@@ -255,6 +255,7 @@ ivl_stmt_sub_stmt
 ivl_switch_a
 ivl_switch_b
 ivl_switch_basename
+ivl_switch_delay
 ivl_switch_enable
 ivl_switch_file
 ivl_switch_island
