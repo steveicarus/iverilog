@@ -179,7 +179,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
       if (need_driver_flag) {
 	    NetBUFZ*driver = new NetBUFZ(scope, scope->local_symbol(),
-					 rval->vector_width());
+					 rval->vector_width(), false);
 	    driver->set_line(*this);
 	    des->add_node(driver);
 
@@ -1257,7 +1257,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 		  if (need_bufz_for_input_port(prts)) {
 			NetBUFZ*tmp = new NetBUFZ(scope, scope->local_symbol(),
-						  sig->vector_width());
+						  sig->vector_width(), true);
 			des->add_node(tmp);
 			connect(tmp->pin(1), sig->pin(0));
 

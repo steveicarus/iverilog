@@ -795,7 +795,7 @@ bool dll_target::bufz(const NetBUFZ*net)
 
       assert(net->pin_count() == 2);
 
-      obj->type_ = IVL_LO_BUFZ;
+      obj->type_ = net->transparent()? IVL_LO_BUFT : IVL_LO_BUFZ;
       obj->width_= net->width();
       obj->npins_= 2;
       obj->pins_ = new ivl_nexus_t[2];

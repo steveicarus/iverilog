@@ -233,7 +233,9 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       ivl_lpm_t lpm;
 
       lptr = ivl_nexus_ptr_log(nptr);
-      if (lptr && (ivl_logic_type(lptr) == IVL_LO_BUFZ) && (nptr_pin == 0))
+      if (lptr
+	  && ((ivl_logic_type(lptr)==IVL_LO_BUFZ)||(ivl_logic_type(lptr)==IVL_LO_BUFT))
+	  && (nptr_pin == 0))
 	    do {
 		  if (! can_elide_bufz(lptr, nptr))
 			break;
@@ -319,7 +321,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
 	      /* Make the constant an argument to a BUFZ, which is
 		 what we use to drive the PULLed value. */
-	    fprintf(vvp_out, "L_%p .functor BUFZ 1, %s, C4<0>, C4<0>, C4<0>;\n",
+	    fprintf(vvp_out, "L_%p .functor BUFT 1, %s, C4<0>, C4<0>, C4<0>;\n",
 		    lptr, result);
 	    snprintf(tmp, sizeof tmp, "L_%p", lptr);
 	    result = realloc(result, strlen(tmp)+1);
@@ -390,7 +392,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	      /* We have a delayed constant, so we need to build some code. */
 	    if (d_rise != 0) {
 		  char tmp[128];
-		  fprintf(vvp_out, "L_%p/d .functor BUFZ 1, %s, "
+		  fprintf(vvp_out, "L_%p/d .functor BUFT 1, %s, "
 		                   "C4<0>, C4<0>, C4<0>;\n", cptr, result);
 		  free(result);
 
@@ -440,7 +442,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
 	    } else {
 		  char tmp[64];
-		  fprintf(vvp_out, "L_%p .functor BUFZ 1, %s, "
+		  fprintf(vvp_out, "L_%p .functor BUFT 1, %s, "
 			  "C4<0>, C4<0>, C4<0>;\n", cptr, result);
 		  free(result);
 

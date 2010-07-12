@@ -427,7 +427,8 @@ void NetBUFZ::dump_node(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "NetBUFZ: " << name()
 	<< " scope=" << scope_path(scope())
 	<< " delay=(" << rise_time() << "," << fall_time() << "," <<
-	    decay_time() << ") width=" << width() << endl;
+	    decay_time() << ") width=" << width()
+	<< (transparent()? " " : " non-") << "transparent" << endl;
       dump_node_pins(o, ind+4);
 }
 

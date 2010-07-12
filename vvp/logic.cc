@@ -202,14 +202,6 @@ void vvp_fun_bufz::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       ptr.ptr()->send_vec4_pv(bit, base, wid, vwid, 0);
 }
 
-void vvp_fun_bufz::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
-{
-      if (ptr.port() != 0)
-	    return;
-
-      ptr.ptr()->send_vec8(bit);
-}
-
 void vvp_fun_bufz::recv_real(vvp_net_ptr_t ptr, double bit,
                              vvp_context_t)
 {
@@ -217,6 +209,14 @@ void vvp_fun_bufz::recv_real(vvp_net_ptr_t ptr, double bit,
 	    return;
 
       ptr.ptr()->send_real(bit, 0);
+}
+
+void vvp_fun_buft::recv_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
+{
+      if (ptr.port() != 0)
+	    return;
+
+      ptr.ptr()->send_vec8(bit);
 }
 
 vvp_fun_muxr::vvp_fun_muxr()
@@ -608,6 +608,9 @@ void compile_functor(char*label, char*type, unsigned width,
       } else if (strcmp(type, "NOTIF1") == 0) {
 	    obj = new vvp_fun_bufif(false,true, ostr0, ostr1);
 	    strength_aware = true;
+
+      } else if (strcmp(type, "BUFT") == 0) {
+	    obj = new vvp_fun_buft();
 
       } else if (strcmp(type, "BUFZ") == 0) {
 	    obj = new vvp_fun_bufz();

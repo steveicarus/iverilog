@@ -1827,20 +1827,26 @@ class NetPartSelect  : public NetNode {
  * the logic that feeds it. The netlist preserves the directional
  * nature of that assignment with the BUFZ. The target may elide it if
  * that makes sense for the technology.
+ *
+ * A NetBUFZ is transparent if strengths are passed through it without
+ * change. A NetBUFZ is non-transparent if values other then HiZ are
+ * converted to the strength of the output.
  */
 class NetBUFZ  : public NetNode {
 
     public:
-      explicit NetBUFZ(NetScope*s, perm_string n, unsigned wid);
+      explicit NetBUFZ(NetScope*s, perm_string n, unsigned wid, bool transp);
       ~NetBUFZ();
 
       unsigned width() const;
+      bool transparent() const { return transparent_; }
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
 
     private:
       unsigned width_;
+      bool transparent_;
 };
 
 /*

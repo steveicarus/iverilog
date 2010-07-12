@@ -1775,8 +1775,8 @@ unsigned NetSignExtend::width() const
       return width_;
 }
 
-NetBUFZ::NetBUFZ(NetScope*s, perm_string n, unsigned w)
-: NetNode(s, n, 2), width_(w)
+NetBUFZ::NetBUFZ(NetScope*s, perm_string n, unsigned w, bool trans)
+: NetNode(s, n, 2), width_(w), transparent_(trans)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(1).set_dir(Link::INPUT);

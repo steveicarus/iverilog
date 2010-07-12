@@ -722,6 +722,20 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		break;
 	  }
 
+	  case IVL_LO_BUFT: {
+		  /* Draw bufz objects, but only if the gate cannot
+		     be elided. If I can elide it, then the
+		     draw_nex_input will take care of it for me. */
+		ivl_nexus_ptr_t nptr = ivl_logic_pin_ptr(lptr,0);
+
+		ltype = "BUFT";
+
+		if (can_elide_bufz(lptr, nptr))
+		      return;
+
+		break;
+	  }
+
 	  case IVL_LO_PULLDOWN:
 	  case IVL_LO_PULLUP:
 	      /* Skip pullup and pulldown objects. Things that have

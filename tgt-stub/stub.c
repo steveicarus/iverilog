@@ -1385,6 +1385,9 @@ static void show_logic(ivl_net_logic_t net)
 	  case IVL_LO_BUFIF1:
 	    fprintf(out, "  bufif1 %s", name);
 	    break;
+	  case IVL_LO_BUFT:
+	    fprintf(out, "  buft %s", name);
+	    break;
 	  case IVL_LO_BUFZ:
 	    fprintf(out, "  bufz %s", name);
 	    break;

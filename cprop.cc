@@ -128,7 +128,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	// The Select input must be a defined constant value, so we
 	// can replace the device with a BUFZ.
 
-      NetBUFZ*tmp = new NetBUFZ(obj->scope(), obj->name(), obj->width());
+      NetBUFZ*tmp = new NetBUFZ(obj->scope(), obj->name(), obj->width(), true);
       tmp->set_line(*obj);
 
       if (debug_optimizer)

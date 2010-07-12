@@ -95,10 +95,21 @@ class vvp_fun_bufz: public vvp_net_fun_t {
       void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
 			unsigned base, unsigned wid, unsigned vwid,
                         vvp_context_t);
-      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
+	//void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
       void recv_real(vvp_net_ptr_t p, double bit,
                      vvp_context_t);
 
+    private:
+};
+
+/*
+ * The vp_fun_buft is like the vvp_fun_bufz, but is completely
+ * transparent to strengths.
+ */
+class vvp_fun_buft: public vvp_fun_bufz {
+
+    public:
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
     private:
 };
 
