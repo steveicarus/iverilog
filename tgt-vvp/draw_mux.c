@@ -60,17 +60,6 @@ static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
 		  assert( ! number_is_unknown(d_fall));
 		  assert( ! number_is_unknown(d_decay));
 
-		  // .delay (x,y,z) only supports a 64 bit delay value.
-		  if ((! number_is_immediate(d_rise, 64, 0)) ||
-		      (! number_is_immediate(d_fall, 64, 0)) ||
-		      (! number_is_immediate(d_decay, 64, 0))) {
-			fprintf(stderr, "%s:%u: vvp-tgt sorry: only 64 bit "
-			        "delays are supported in a continuous "
-			        "assignment.\n", ivl_expr_file(d_rise),
-			        ivl_expr_lineno(d_rise));
-			exit(1);
-		  }
-
 		  fprintf(vvp_out, "L_%p .delay %u (%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
 		                   net, dly_width,
 				   get_number_immediate64(d_rise),
