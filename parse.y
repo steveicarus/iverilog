@@ -343,7 +343,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %type <exprs> range range_opt
 %type <dimensions> dimensions_opt dimensions
 %type <nettype>  net_type var_type net_type_opt
-%type <gatetype> gatetype
+%type <gatetype> gatetype switchtype
 %type <porttype> port_type
 %type <datatype> primitive_type primitive_type_opt
 %type <parmvalue> parameter_value_opt
@@ -1672,7 +1672,10 @@ gatetype
 	| K_not    { $$ = PGBuiltin::NOT; }
 	| K_notif0 { $$ = PGBuiltin::NOTIF0; }
 	| K_notif1 { $$ = PGBuiltin::NOTIF1; }
-	| K_nmos  { $$ = PGBuiltin::NMOS; }
+        ;
+
+switchtype
+	: K_nmos  { $$ = PGBuiltin::NMOS; }
 	| K_rnmos { $$ = PGBuiltin::RNMOS; }
 	| K_pmos  { $$ = PGBuiltin::PMOS; }
 	| K_rpmos { $$ = PGBuiltin::RPMOS; }
@@ -2179,7 +2182,8 @@ module_item
 	| K_defparam defparam_assign_list ';'
 
   /* Most gate types have an optional drive strength and optional
-     three-value delay. These rules handle the different cases. */
+     two/three-value delay. These rules handle the different cases.
+     We check that the actual number of delays is correct later. */
 
 	| attribute_list_opt gatetype gate_instance_list ';'
 		{ pform_makegates($2, str_strength, 0, $3, $1);
@@ -2195,6 +2199,15 @@ module_item
 
 	| attribute_list_opt gatetype drive_strength delay3 gate_instance_list ';'
 		{ pform_makegates($2, $3, $4, $5, $1);
+		}
+
+  /* The switch type gates do not support a strength. */
+	| attribute_list_opt switchtype gate_instance_list ';'
+		{ pform_makegates($2, str_strength, 0, $3, $1);
+		}
+
+	| attribute_list_opt switchtype delay3 gate_instance_list ';'
+		{ pform_makegates($2, str_strength, $3, $4, $1);
 		}
 
   /* Pullup and pulldown devices cannot have delays, and their
