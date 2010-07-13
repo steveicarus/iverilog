@@ -65,6 +65,15 @@ void PDelays::set_delays(const svector<PExpr*>*del, bool df)
       delete_flag_ = df;
 }
 
+unsigned PDelays::delay_count() const
+{
+      unsigned dly_cnt = 0;
+      for (unsigned idx = 0 ;  idx < 3 ;  idx += 1)
+	    if (delay_[idx]) dly_cnt += 1;
+
+      return dly_cnt;
+}
+
 static NetExpr*calculate_val(Design*des, NetScope*scope, PExpr*expr)
 {
       ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
@@ -144,8 +153,6 @@ static NetExpr* calc_decay_time(NetExpr *rise, NetExpr *fall)
 	    else return fall;
       }
 
-      cerr << fall->get_fileline() << ": sorry: can not calculate the "
-           << "decay time from " << *rise << " and " << *fall << endl;
       return 0;
 }
 

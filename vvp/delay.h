@@ -1,7 +1,7 @@
 #ifndef __delay_H
 #define __delay_H
 /*
- * Copyright 2005-2008,2010 Stephen Williams
+ * Copyright 2005-2010 Stephen Williams
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -48,10 +48,12 @@ class vvp_delay_t {
       void set_rise(vvp_time64_t val);
       void set_fall(vvp_time64_t val);
       void set_decay(vvp_time64_t val);
+      void set_ignore_decay();
 
     private:
       vvp_time64_t rise_, fall_, decay_;
       vvp_time64_t min_delay_;
+      bool ignore_decay_;
 
       void calculate_min_delay_();
 };

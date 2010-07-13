@@ -68,6 +68,8 @@ class PGate : public LineInfo {
 		       NetExpr*&decay_time,
 		       bool as_net_flag =false) const;
 
+      unsigned delay_count() const;
+
       unsigned pin_count() const { return pins_? pins_->count() : 0; }
       PExpr*pin(unsigned idx) const { return (*pins_)[idx]; }
 
@@ -149,6 +151,7 @@ class PGBuiltin  : public PGate {
       ~PGBuiltin();
 
       Type type() const { return type_; }
+      const char * gate_name() const;
       void set_range(PExpr*msb, PExpr*lsb);
 
       virtual void dump(ostream&out, unsigned ind =4) const;
@@ -164,6 +167,8 @@ class PGBuiltin  : public PGate {
       NetNode* create_gate_for_output_(Design*, NetScope*,
 				       perm_string gate_name,
 				       unsigned instance_width) const;
+
+      bool check_delay_count(Design*des) const;
 
       Type type_;
       PExpr*msb_;

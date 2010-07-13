@@ -296,7 +296,7 @@ unsigned PGBuiltin::calculate_output_count_(void) const
 }
 
 NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
-					    perm_string gate_name,
+					    perm_string inst_name,
 					    unsigned instance_width) const
 {
       NetNode*gate = 0;
@@ -309,7 +309,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have an input." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 				      NetLogic::AND, instance_width);
 	    }
 	    break;
@@ -320,7 +320,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have an input." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, 2,
+		  gate = new NetLogic(scope, inst_name, 2,
 		                      NetLogic::BUF, instance_width);
 	    }
 	    break;
@@ -331,7 +331,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have three arguments." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 					  NetLogic::BUFIF0, instance_width);
 	    }
 	    break;
@@ -342,7 +342,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have three arguments." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 					  NetLogic::BUFIF1, instance_width);
 	    }
 	    break;
@@ -353,7 +353,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have four arguments." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 				      NetLogic::CMOS, instance_width);
 	    }
 	    break;
@@ -364,7 +364,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have an input." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 				      NetLogic::NAND, instance_width);
 	    }
 	    break;
@@ -375,7 +375,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have three arguments." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 				      NetLogic::NMOS, instance_width);
 	    }
 	    break;
@@ -386,7 +386,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have an input." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 				      NetLogic::NOR, instance_width);
 	    }
 	    break;
@@ -397,7 +397,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have an input." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, 2,
+		  gate = new NetLogic(scope, inst_name, 2,
 		                      NetLogic::NOT, instance_width);
 	    }
 	    break;
@@ -408,7 +408,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have three arguments." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 				      NetLogic::NOTIF0, instance_width);
 	    }
 	    break;
@@ -419,7 +419,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have three arguments." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 				      NetLogic::NOTIF1, instance_width);
 	    }
 	    break;
@@ -430,7 +430,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have an input." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 				      NetLogic::OR, instance_width);
 	    }
 	    break;
@@ -441,7 +441,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have four arguments." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 				      NetLogic::RCMOS, instance_width);
 	    }
 	    break;
@@ -452,7 +452,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have three arguments." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 				      NetLogic::RNMOS, instance_width);
 	    }
 	    break;
@@ -463,7 +463,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have three arguments." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 				      NetLogic::RPMOS, instance_width);
 	    }
 	    break;
@@ -474,18 +474,18 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have three arguments." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 				      NetLogic::PMOS, instance_width);
 	    }
 	    break;
 
 	  case PULLDOWN:
-	    gate = new NetLogic(scope, gate_name, 1,
+	    gate = new NetLogic(scope, inst_name, 1,
 				NetLogic::PULLDOWN, instance_width);
 	    break;
 
 	  case PULLUP:
-	    gate = new NetLogic(scope, gate_name, 1,
+	    gate = new NetLogic(scope, inst_name, 1,
 				NetLogic::PULLUP, instance_width);
 	    break;
 
@@ -495,7 +495,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have an input." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 				      NetLogic::XNOR, instance_width);
 	    }
 	    break;
@@ -506,7 +506,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 			"primitive must have an input." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetLogic(scope, gate_name, pin_count(),
+		  gate = new NetLogic(scope, inst_name, pin_count(),
 				      NetLogic::XOR, instance_width);
 	    }
 	    break;
@@ -517,7 +517,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 		       << "tran device." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetTran(scope, gate_name, IVL_SW_TRAN);
+		  gate = new NetTran(scope, inst_name, IVL_SW_TRAN);
 	    }
 	    break;
 
@@ -527,7 +527,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 		       << "rtran device." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetTran(scope, gate_name, IVL_SW_RTRAN);
+		  gate = new NetTran(scope, inst_name, IVL_SW_RTRAN);
 	    }
 	    break;
 
@@ -537,7 +537,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 		       << "tranif0 device." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetTran(scope, gate_name, IVL_SW_TRANIF0);
+		  gate = new NetTran(scope, inst_name, IVL_SW_TRANIF0);
 	    }
 	    break;
 
@@ -547,7 +547,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 		       << "rtranif0 device." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetTran(scope, gate_name, IVL_SW_RTRANIF0);
+		  gate = new NetTran(scope, inst_name, IVL_SW_RTRANIF0);
 	    }
 	    break;
 
@@ -557,7 +557,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 		       << "tranif1 device." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetTran(scope, gate_name, IVL_SW_TRANIF1);
+		  gate = new NetTran(scope, inst_name, IVL_SW_TRANIF1);
 	    }
 	    break;
 
@@ -567,7 +567,7 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 		       << "rtranif1 device." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetTran(scope, gate_name, IVL_SW_RTRANIF1);
+		  gate = new NetTran(scope, inst_name, IVL_SW_RTRANIF1);
 	    }
 	    break;
 
@@ -579,6 +579,102 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
       }
 
       return gate;
+}
+
+bool PGBuiltin::check_delay_count(Design*des) const
+{
+      switch (type()) {
+	  case AND:
+	  case NAND:
+	  case OR:
+	  case NOR:
+	  case XOR:
+	  case XNOR:
+	  case BUF:
+	  case NOT:
+	    if (delay_count() > 2) {
+		  cerr << get_fileline() << ": error: More than two delays "
+		       << "given to a " << gate_name() << " gate." << endl;
+		  des->errors += 1;
+		  return true;
+	    }
+	    break;
+
+	  case BUFIF0:
+	  case NOTIF0:
+	  case BUFIF1:
+	  case NOTIF1:
+	    if (delay_count() > 3) {
+		  cerr << get_fileline() << ": error: More than three delays "
+		       << "given to a " << gate_name() << " gate." << endl;
+		  des->errors += 1;
+		  return true;
+	    }
+	    break;
+
+	  case NMOS:
+	  case RNMOS:
+	  case PMOS:
+	  case RPMOS:
+	  case CMOS:
+	  case RCMOS:
+	    if (delay_count() > 3) {
+		  cerr << get_fileline() << ": error: More than three delays "
+		       << "given to a " << gate_name() << " switch." << endl;
+		  des->errors += 1;
+		  return true;
+	    }
+	    break;
+
+	  case TRAN:
+	  case RTRAN:
+	    if (delay_count() != 0) {
+		  cerr << get_fileline() << ": error: A " << gate_name()
+		       << " switch does not take any delays." << endl;
+		  des->errors += 1;
+		  return true;
+	    }
+	    break;
+
+	  case TRANIF0:
+	  case TRANIF1:
+	    if (delay_count() > 2) {
+		  cerr << get_fileline() << ": error: More than two delays "
+		       << "given to a " << gate_name() << " switch." << endl;
+		  des->errors += 1;
+		  return true;
+	    }
+	    break;
+
+	  case RTRANIF0:
+	  case RTRANIF1:
+	    if (delay_count() > 2) {
+		  cerr << get_fileline() << ": error: More than two delays "
+		       << "given to an " << gate_name() << " switch." << endl;
+		  des->errors += 1;
+		  return true;
+	    }
+	    break;
+
+	  case PULLUP:
+	  case PULLDOWN:
+	    if (delay_count() != 0) {
+		  cerr << get_fileline() << ": error: A " << gate_name()
+		       << " source does not take any delays." << endl;
+		  des->errors += 1;
+		  return true;
+	    }
+	    break;
+
+	  default:
+	    cerr << get_fileline() << ": internal error: unhandled "
+		  "gate type." << endl;
+	    des->errors += 1;
+	    return true;
+	    break;
+      }
+
+      return false;
 }
 
 /*
@@ -655,6 +751,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	   of the rise and fall times. Finally, if all three
 	   values are given, they are taken as specified. */
 
+      if (check_delay_count(des)) return;
       NetExpr* rise_time, *fall_time, *decay_time;
       eval_delays(des, scope, rise_time, fall_time, decay_time);
 
@@ -687,9 +784,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  cur[idx]->attribute(attrib_list[adx].key,
 				      attrib_list[adx].val);
 
-	      /* Set the delays and drive strength for all built in gates.
-	         We still need to add checks to verify that the delays and
-	         strength are consistent with the gates definition. */
+	      /* Set the delays and drive strength for all built in gates. */
 	    cur[idx]->rise_time(rise_time);
 	    cur[idx]->fall_time(fall_time);
 	    cur[idx]->decay_time(decay_time);

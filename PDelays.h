@@ -1,7 +1,7 @@
 #ifndef __PDelays_H
 #define __PDelays_H
 /*
- * Copyright (c) 1999-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -49,6 +49,8 @@ class PDelays {
 	   delete it in the destructor. */
       void set_delay(PExpr*);
       void set_delays(const svector<PExpr*>*del, bool delete_flag=true);
+
+      unsigned delay_count() const;
 
       void eval_delays(Design*des, NetScope*scope,
 		       NetExpr*&rise_time,

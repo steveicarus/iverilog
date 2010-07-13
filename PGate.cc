@@ -99,6 +99,11 @@ void PGate::eval_delays(Design*des, NetScope*scope,
 			 as_net_flag);
 }
 
+unsigned PGate::delay_count() const
+{
+      return delay_.delay_count();
+}
+
 PGAssign::PGAssign(svector<PExpr*>*pins)
 : PGate(perm_string(), pins)
 {
@@ -141,6 +146,104 @@ void PGBuiltin::set_range(PExpr*msb, PExpr*lsb)
 
       msb_ = msb;
       lsb_ = lsb;
+}
+
+const char* PGBuiltin::gate_name() const
+{
+      switch(type_) {
+	case AND:
+	    return "AND";
+	    break;
+	case NAND:
+	    return "NAND";
+	    break;
+
+	case OR:
+	    return "OR";
+	    break;
+	case NOR:
+	    return "NOR";
+	    break;
+
+	case XOR:
+	    return "XOR";
+	    break;
+	case XNOR:
+	    return "XNOR";
+	    break;
+
+	case BUF:
+	    return "BUF";
+	    break;
+	case NOT:
+	    return "NOT";
+	    break;
+
+	case BUFIF0:
+	    return "BUFIF0";
+	    break;
+	case NOTIF0:
+	    return "NOTIF0";
+	    break;
+
+	case BUFIF1:
+	    return "BUFIF1";
+	    break;
+	case NOTIF1:
+	    return "NOTIF1";
+	    break;
+
+	case NMOS:
+	    return "NMOS";
+	    break;
+	case RNMOS:
+	    return "RNMOS";
+	    break;
+
+	case PMOS:
+	    return "PMOS";
+	    break;
+	case RPMOS:
+	    return "RPMOS";
+	    break;
+
+	case TRAN:
+	    return "TRAN";
+	    break;
+	case RTRAN:
+	    return "RTRAN";
+	    break;
+
+	case TRANIF0:
+	    return "TRANIF0";
+	    break;
+	case RTRANIF0:
+	    return "RTRANIF0";
+	    break;
+
+	case TRANIF1:
+	    return "TRANIF1";
+	    break;
+	case RTRANIF1:
+	    return "RTRANIF1";
+	    break;
+
+	case CMOS:
+	    return "CMOS";
+	    break;
+	case RCMOS:
+	    return "RCMOS";
+	    break;
+
+	case PULLUP:
+	    return "PULLUP";
+	    break;
+	case PULLDOWN:
+	    return "PULLDOWN";
+	    break;
+      }
+
+      return "<unknown>";
 }
 
 PGModule::PGModule(perm_string type, perm_string name, svector<PExpr*>*pins)

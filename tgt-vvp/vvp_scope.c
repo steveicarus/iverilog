@@ -910,24 +910,31 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		  ivl_signal_t sig;
 		  // We do not currently support calculating the decay from
 		  // the rise and fall variable delays.
-		  assert(decay_exp != 0);
 		  assert(ivl_expr_type(rise_exp) == IVL_EX_SIGNAL);
 		  assert(ivl_expr_type(fall_exp) == IVL_EX_SIGNAL);
-		  assert(ivl_expr_type(decay_exp) == IVL_EX_SIGNAL);
+		  assert((decay_exp == 0) ||
+		         (ivl_expr_type(decay_exp) == IVL_EX_SIGNAL));
 
 		  fprintf(vvp_out, "L_%p .delay %u L_%p/d", lptr, dly_width, lptr);
 
 		  sig = ivl_expr_signal(rise_exp);
 		  assert(ivl_signal_dimensions(sig) == 0);
-		  fprintf(vvp_out, ", %s", draw_net_input(ivl_signal_nex(sig,0)));
+		  fprintf(vvp_out, ", %s",
+		                   draw_net_input(ivl_signal_nex(sig,0)));
 
 		  sig = ivl_expr_signal(fall_exp);
 		  assert(ivl_signal_dimensions(sig) == 0);
-		  fprintf(vvp_out, ", %s", draw_net_input(ivl_signal_nex(sig,0)));
+		  fprintf(vvp_out, ", %s",
+		                   draw_net_input(ivl_signal_nex(sig,0)));
 
-		  sig = ivl_expr_signal(decay_exp);
-		  assert(ivl_signal_dimensions(sig) == 0);
-		  fprintf(vvp_out, ", %s;\n", draw_net_input(ivl_signal_nex(sig,0)));
+		  if (decay_exp) {
+			sig = ivl_expr_signal(decay_exp);
+			assert(ivl_signal_dimensions(sig) == 0);
+			fprintf(vvp_out, ", %s;\n",
+			                 draw_net_input(ivl_signal_nex(sig,0)));
+		  } else {
+			fprintf(vvp_out, ", 0;\n");
+		  }
 	    }
       }
 }

@@ -35,7 +35,8 @@ void vvp_delay_t::calculate_min_delay_()
       min_delay_ = rise_;
       if (fall_ < min_delay_)
 	    min_delay_ = fall_;
-      if (decay_ < min_delay_)
+      if (ignore_decay_) decay_ = min_delay_;
+      else if (decay_ < min_delay_)
 	    min_delay_ = decay_;
 }
 
@@ -45,6 +46,7 @@ vvp_delay_t::vvp_delay_t(vvp_time64_t rise, vvp_time64_t fall)
       fall_ = fall;
       decay_= fall < rise? fall : rise;
       min_delay_ = decay_;
+      ignore_decay_ = false;
 }
 
 vvp_delay_t::vvp_delay_t(vvp_time64_t rise, vvp_time64_t fall, vvp_time64_t decay)
@@ -52,6 +54,14 @@ vvp_delay_t::vvp_delay_t(vvp_time64_t rise, vvp_time64_t fall, vvp_time64_t deca
       rise_ = rise;
       fall_ = fall;
       decay_= decay;
+      ignore_decay_ = false;
+
+      calculate_min_delay_();
+}
+
+void vvp_delay_t::set_ignore_decay()
+{
+      ignore_decay_ = true;
 
       calculate_min_delay_();
 }
@@ -126,6 +136,8 @@ void vvp_delay_t::set_fall(vvp_time64_t val)
 
 void vvp_delay_t::set_decay(vvp_time64_t val)
 {
+      assert(!ignore_decay_);
+
       decay_ = val;
       if (val < min_delay_)
 	    min_delay_ = val;

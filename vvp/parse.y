@@ -431,7 +431,12 @@ statement
     { compile_delay($1, $3, $4, $5); }
  | T_LABEL K_DELAY T_NUMBER symbols ';'
     { struct symbv_s obj = $4;
-      compile_delay($1, $3, obj.cnt, obj.vect);
+      compile_delay($1, $3, obj.cnt, obj.vect, false);
+    }
+ | T_LABEL K_DELAY T_NUMBER symbols ',' T_NUMBER ';'
+    { struct symbv_s obj = $4;
+      if ($6 != 0) assert(0);
+      compile_delay($1, $3, obj.cnt, obj.vect, true);
     }
 
  | T_LABEL K_MODPATH T_NUMBER symbol symbol ','

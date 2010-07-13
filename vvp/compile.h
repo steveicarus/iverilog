@@ -131,7 +131,8 @@ extern void compile_compiletf(struct __vpiSysTaskCall*);
 extern void compile_delay(char*label, unsigned width,
                           vvp_delay_t*del, struct symb_s input);
 extern void compile_delay(char*label, unsigned width,
-                          unsigned argc, struct symb_s*argv);
+                          unsigned argc, struct symb_s*argv,
+                          bool ignore_decay);
 
 /*
  * This is called by the parser to create a part select node.

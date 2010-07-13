@@ -1257,9 +1257,10 @@ void compile_delay(char*label, unsigned width,
 }
 
 void compile_delay(char*label, unsigned width,
-                   unsigned argc, struct symb_s*argv)
+                   unsigned argc, struct symb_s*argv, bool ignore_decay)
 {
       vvp_delay_t stub (0, 0, 0);
+      if (ignore_decay) stub.set_ignore_decay();
       vvp_net_t*net = new vvp_net_t;
       vvp_fun_delay*obj = new vvp_fun_delay(net, width, stub);
       net->fun = obj;
