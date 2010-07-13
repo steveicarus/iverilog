@@ -119,18 +119,20 @@ vvp_time64_t vvp_delay_t::get_min_delay() const
 void vvp_delay_t::set_rise(vvp_time64_t val)
 {
       rise_ = val;
-      if (val < min_delay_)
+      if (val < min_delay_) {
 	    min_delay_ = val;
-      else
+	    if (ignore_decay_) decay_ = val;
+      } else
 	    calculate_min_delay_();
 }
 
 void vvp_delay_t::set_fall(vvp_time64_t val)
 {
       fall_ = val;
-      if (val < min_delay_)
+      if (val < min_delay_) {
 	    min_delay_ = val;
-      else
+	    if (ignore_decay_) decay_ = val;
+      } else
 	    calculate_min_delay_();
 }
 
