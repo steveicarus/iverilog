@@ -479,7 +479,10 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
 
 void compile_scope_recall(char*symbol)
 {
-      compile_vpi_lookup((vpiHandle*)&current_scope, symbol);
+	/* A __vpiScope starts with a __vpiHandle structure so this is
+	   a safe cast. We need the (void*) to avoid a dereferenced
+	   type punned pointer warning from some gcc compilers. */
+      compile_vpi_lookup((vpiHandle*)(void*)&current_scope, symbol);
       assert(current_scope);
 }
 

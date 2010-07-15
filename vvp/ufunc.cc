@@ -51,7 +51,10 @@ ufunc_core::ufunc_core(unsigned owid, vvp_net_t*ptr,
 
       functor_ref_lookup(&result_, result_label);
 
-      compile_vpi_lookup((vpiHandle*)(&func_scope_), scope_label);
+	/* A __vpiScope starts with a __vpiHandle structure so this is
+	   a safe cast. We need the (void*) to avoid a dereferenced
+	   type punned pointer warning from some gcc compilers. */
+      compile_vpi_lookup((vpiHandle*)(void*)(&func_scope_), scope_label);
 }
 
 ufunc_core::~ufunc_core()
