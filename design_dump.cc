@@ -703,7 +703,14 @@ void NetTran::dump_node(ostream&o, unsigned ind) const
 	      << " part=" << part_width()
 	      << " offset=" << part_offset();
       }
-      o << endl;
+      o << " delay=(";
+      if (rise_time())
+	    o << *rise_time() << "," << *fall_time() << ","
+	      << *decay_time();
+      else
+	    o << "0,0,0";
+
+      o << ")" << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }

@@ -1343,7 +1343,7 @@ static void show_signal(ivl_signal_t net)
 
 }
 
-static void test_expr_is_delay(ivl_expr_t expr)
+void test_expr_is_delay(ivl_expr_t expr)
 {
       switch (ivl_expr_type(expr)) {
 	  case IVL_EX_ULONG:

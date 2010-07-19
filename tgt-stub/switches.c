@@ -63,6 +63,20 @@ void show_switch(ivl_switch_t net)
 
       fprintf(out, " island=%p\n", ivl_switch_island(net));
 
+      fprintf(out, "    <Delays...>\n");
+      if (ivl_switch_delay(net,0)) {
+	    test_expr_is_delay(ivl_switch_delay(net,0));
+	    show_expression(ivl_switch_delay(net,0), 6);
+      }
+      if (ivl_switch_delay(net,1)) {
+	    test_expr_is_delay(ivl_switch_delay(net,1));
+	    show_expression(ivl_switch_delay(net,1), 6);
+      }
+      if (ivl_switch_delay(net,2)) {
+	    test_expr_is_delay(ivl_switch_delay(net,2));
+	    show_expression(ivl_switch_delay(net,2), 6);
+      }
+
       nexa = ivl_switch_a(net);
       nex_type_a = nexa? type_of_nexus(nexa) : IVL_VT_NO_TYPE;
       fprintf(out, "    A: %p <type=%s>\n", nexa, data_type_string(nex_type_a));

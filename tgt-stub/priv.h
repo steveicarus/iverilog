@@ -44,6 +44,12 @@ extern ivl_variable_type_t type_of_nexus(ivl_nexus_t nex);
 extern ivl_discipline_t discipline_of_nexus(ivl_nexus_t nex);
 
 /*
+ * Test that a given expression is a valid delay expression, and
+ * print an error message if not.
+ */
+extern void test_expr_is_delay(ivl_expr_t expr);
+
+/*
  * Show the details of the expression.
  */
 extern void show_expression(ivl_expr_t net, unsigned ind);
