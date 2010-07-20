@@ -36,19 +36,19 @@ void draw_switch_in_scope(ivl_switch_t sw)
 
       ivl_expr_t rise_exp = ivl_switch_delay(sw, 0);
       ivl_expr_t fall_exp = ivl_switch_delay(sw, 1);
+      ivl_expr_t decay_exp= ivl_switch_delay(sw, 2);
 
 	/* We do not support tran delays. */
-      if ((rise_exp || fall_exp) &&
+      if ((rise_exp || fall_exp || decay_exp) &&
           (!number_is_immediate(rise_exp, 64, 0) ||
            number_is_unknown(rise_exp) ||
-           (get_number_immediate(rise_exp) != 0) ||
            !number_is_immediate(fall_exp, 64, 0) ||
            number_is_unknown(fall_exp) ||
-           (get_number_immediate(rise_exp) != 0))) {
-	    fprintf(stderr, "%s:%u: sorry: tranif gates with a delay are not "
-	                    "currently support.\n",
+	   !number_is_immediate(decay_exp, 64, 0) ||
+	   number_is_unknown(decay_exp))) {
+	    fprintf(stderr, "%s:%u: error: Invalid tranif delay expression.\n",
 	                    ivl_switch_file(sw), ivl_switch_lineno(sw));
-	    exit(1);
+	    vvp_errors += 1;
       }
 
       island = ivl_switch_island(sw);
@@ -65,9 +65,30 @@ void draw_switch_in_scope(ivl_switch_t sw)
 
       enable = ivl_switch_enable(sw);
       str_e = 0;
-      if (enable)
-	    str_e = draw_island_net_input(island, enable);
+      char str_e_buf[4 + 2*sizeof(void*)];
 
+      if (enable && rise_exp) {
+	    assert(fall_exp && decay_exp);
+
+	      /* If the enable has a delay, then generate a .delay
+		 node to delay the input by the specified amount. Do
+		 the delay outside of the island so that the island
+		 processing doesn't have to deal with it. */
+	    const char*raw = draw_net_input(enable);
+
+	    fprintf(vvp_out, "%s/d .delay 1 "
+		    "(%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") %s;\n",
+		    raw, get_number_immediate64(rise_exp),
+		    get_number_immediate64(fall_exp),
+		    get_number_immediate64(decay_exp), raw);
+
+	    fprintf(vvp_out, "p%p .import I%p, %s/d;\n", enable, island, raw);
+	    snprintf(str_e_buf, sizeof str_e_buf, "p%p", enable);
+	    str_e = str_e_buf;
+
+      } else if (enable) {
+	    str_e = draw_island_net_input(island, enable);
+      }
 
       switch (ivl_switch_type(sw)) {
 	  case IVL_SW_TRAN:
@@ -93,8 +114,8 @@ void draw_switch_in_scope(ivl_switch_t sw)
       }
 
       fprintf(vvp_out, " I%p, %s %s", island, str_a, str_b);
-      if (enable)
+      if (enable) {
 	    fprintf(vvp_out, ", %s", str_e);
-
+      }
       fprintf(vvp_out, ";\n");
 }
