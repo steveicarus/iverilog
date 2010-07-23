@@ -102,7 +102,7 @@ struct net_decl_assign_t {
 /* The lgate is gate instantiation information. */
 struct lgate {
       lgate(int =0)
-      : parms(0), parms_by_name(0), lineno(0)
+      : parms(0), parms_by_name(0), file(NULL), lineno(0)
       { range[0] = 0;
         range[1] = 0;
       }

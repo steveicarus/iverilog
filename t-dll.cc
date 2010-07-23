@@ -2120,7 +2120,7 @@ bool dll_target::replicate(const NetReplicate*net)
  * The assignment l-values are captured by the assignment statements
  * themselves in the process handling.
  */
-void dll_target::net_assign(const NetAssign_*)
+void dll_target::net_assign(const NetAssign_*) const
 {
 }
 

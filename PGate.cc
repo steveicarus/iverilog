@@ -288,7 +288,7 @@ void PGModule::set_range(PExpr*msb, PExpr*lsb)
       lsb_ = lsb;
 }
 
-perm_string PGModule::get_type()
+perm_string PGModule::get_type() const
 {
       return type_;
 }

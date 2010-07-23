@@ -34,6 +34,9 @@ Module::Module(perm_string n)
       is_cell = false;
       uc_drive = UCD_NONE;
       timescale_warn_done = false;
+      time_unit = 0;
+      time_precision = 0;
+      time_from_timescale = false;
 }
 
 Module::~Module()

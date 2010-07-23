@@ -43,6 +43,7 @@ Design:: Design()
       des_precision_ = 0;
       nodes_functor_cur_ = 0;
       nodes_functor_nxt_ = 0;
+      des_delay_sel_ = Design::TYP;
 }
 
 Design::~Design()

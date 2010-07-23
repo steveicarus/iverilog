@@ -60,7 +60,7 @@ class vhdl_var_ref : public vhdl_expr {
 public:
    vhdl_var_ref(const string& name, const vhdl_type *type,
                 vhdl_expr *slice = NULL)
-      : vhdl_expr(type), name_(name), slice_(slice) {}
+      : vhdl_expr(type), name_(name), slice_(slice), slice_width_(0) {}
    ~vhdl_var_ref();
    
    void emit(std::ostream &of, int level) const;

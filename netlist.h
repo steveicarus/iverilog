@@ -771,7 +771,7 @@ class NetScope : public Attrib {
       unsigned get_lineno() const { return lineno_; };
       unsigned get_def_lineno() const { return def_lineno_; };
 
-      bool in_func();
+      bool in_func() const;
 	/* Is the task or function automatic. */
       void is_auto(bool is_auto__) { is_auto_ = is_auto__; };
       bool is_auto() const { return is_auto_; };

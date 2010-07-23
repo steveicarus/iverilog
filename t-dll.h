@@ -80,7 +80,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool concat(const NetConcat*);
       bool part_select(const NetPartSelect*);
       bool replicate(const NetReplicate*);
-      void net_assign(const NetAssign_*);
+      void net_assign(const NetAssign_*) const;
       bool net_sysfunction(const NetSysFunc*);
       bool net_function(const NetUserFunc*);
       bool net_const(const NetConst*);

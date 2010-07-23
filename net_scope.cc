@@ -300,7 +300,7 @@ NetFuncDef* NetScope::func_def()
       return func_;
 }
 
-bool NetScope::in_func()
+bool NetScope::in_func() const
 {
       return (type_ == FUNC) ? true : false;
 }
