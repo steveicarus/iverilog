@@ -1753,22 +1753,6 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 		  tmp_del.set_delays(overrides_, false);
 		  tmp_del.eval_delays(des, scope, rise_expr, fall_expr,
 		                      decay_expr);
-
-		  if (! dynamic_cast<NetEConst*> (rise_expr)) {
-			cerr << get_fileline() << ": error: UDP rising delay "
-			        "expression must be constant." << endl;
-			cerr << get_fileline() << ":      : Cannot calculate "
-			     << *rise_expr << endl;
-			des->errors += 1;
-		  }
-
-		  if (! dynamic_cast<NetEConst*> (fall_expr)) {
-			cerr << get_fileline() << ": error: UDP falling delay "
-			        "expression must be constant." << endl;
-			cerr << get_fileline() << ":      : Cannot calculate "
-			     << *fall_expr << endl;
-			des->errors += 1;
-		  }
 	    }
       }
 

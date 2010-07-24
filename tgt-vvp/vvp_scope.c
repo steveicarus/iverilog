@@ -561,30 +561,80 @@ static void draw_net_in_scope(ivl_signal_t sig)
       }
 }
 
+/*
+ * Check to see if we need a delay.
+ */
+static unsigned need_delay(ivl_net_logic_t lptr)
+{
+	/* If we have no rising delay then we do not have any delays. */
+      if (ivl_logic_delay(lptr, 0) == 0) {
+	    assert(ivl_logic_delay(lptr, 1) == 0);
+	    assert(ivl_logic_delay(lptr, 2) == 0);
+	    return 0;
+      }
+
+      return 1;
+}
+
+/*
+ * Draw the appropriate delay statement. Returns zero if there is not a delay.
+ */
 static void draw_delay(ivl_net_logic_t lptr)
 {
-      ivl_expr_t d0 = ivl_logic_delay(lptr, 0);
-      ivl_expr_t d1 = ivl_logic_delay(lptr, 1);
-      ivl_expr_t d2 = ivl_logic_delay(lptr, 2);
+      ivl_expr_t rise_exp = ivl_logic_delay(lptr, 0);
+      ivl_expr_t fall_exp = ivl_logic_delay(lptr, 1);
+      ivl_expr_t decay_exp = ivl_logic_delay(lptr, 2);
 
-      if (d0 == 0 && d1 == 0 && d2 == 0)
-	    return;
+	/* Calculate the width of the delay. We also use a BUFZ for real
+	 * values so we need to resize if the first input is real. */
+      unsigned delay_wid = width_of_nexus(ivl_logic_pin(lptr, 0));
+      if (data_type_of_nexus(ivl_logic_pin(lptr, 0)) == IVL_VT_REAL) {
+	    delay_wid = 0;
+      }
 
-	/* FIXME: Assume that the expression is a constant */
-      assert(number_is_immediate(d0, 64, 0));
-      assert(number_is_immediate(d1, 64, 0));
-      assert(number_is_immediate(d2, 64, 0));
-      assert(! number_is_unknown(d0));
-      assert(! number_is_unknown(d1));
-      assert(! number_is_unknown(d2));
+	/* If the delays are all constants then process them here. */
+      if (number_is_immediate(rise_exp, 64, 0) &&
+          number_is_immediate(fall_exp, 64, 0) &&
+          number_is_immediate(decay_exp, 64, 0)) {
 
-      if (d0 == d1 && d1 == d2)
-	    fprintf(vvp_out, " (%lu)", get_number_immediate(d0));
-      else
-	    fprintf(vvp_out, " (%lu,%lu,%lu)",
-		    get_number_immediate(d0),
-		    get_number_immediate(d1),
-		    get_number_immediate(d2));
+	    assert(! number_is_unknown(rise_exp));
+	    assert(! number_is_unknown(fall_exp));
+	    assert(! number_is_unknown(decay_exp));
+
+	    fprintf(vvp_out, "L_%p .delay %u "
+	                     "(%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
+	                     lptr, delay_wid,
+	                     get_number_immediate64(rise_exp),
+	                     get_number_immediate64(fall_exp),
+	                     get_number_immediate64(decay_exp), lptr);
+	/* For a variable delay we indicate only two delays by setting the
+	 * decay time to zero. */
+      } else {
+	    ivl_signal_t sig;
+	    assert(ivl_expr_type(rise_exp) == IVL_EX_SIGNAL);
+	    assert(ivl_expr_type(fall_exp) == IVL_EX_SIGNAL);
+	    assert((decay_exp == 0) ||
+	           (ivl_expr_type(decay_exp) == IVL_EX_SIGNAL));
+
+	    fprintf(vvp_out, "L_%p .delay %u L_%p/d", lptr, delay_wid, lptr);
+
+	    sig = ivl_expr_signal(rise_exp);
+	    assert(ivl_signal_dimensions(sig) == 0);
+	    fprintf(vvp_out, ", %s", draw_net_input(ivl_signal_nex(sig,0)));
+
+	    sig = ivl_expr_signal(fall_exp);
+	    assert(ivl_signal_dimensions(sig) == 0);
+	    fprintf(vvp_out, ", %s", draw_net_input(ivl_signal_nex(sig,0)));
+
+	    if (decay_exp) {
+		  sig = ivl_expr_signal(decay_exp);
+		  assert(ivl_signal_dimensions(sig) == 0);
+		  fprintf(vvp_out, ", %s;\n",
+		                   draw_net_input(ivl_signal_nex(sig,0)));
+	    } else {
+		  fprintf(vvp_out, ", 0;\n");
+	    }
+      }
 }
 
 static void draw_udp_def(ivl_udp_t udp)
@@ -627,61 +677,64 @@ static void draw_udp_def(ivl_udp_t udp)
 
 static void draw_udp_in_scope(ivl_net_logic_t lptr)
 {
-  unsigned pdx;
+      unsigned pdx;
 
-  ivl_udp_t udp = ivl_logic_udp(lptr);
+      ivl_udp_t udp = ivl_logic_udp(lptr);
 
-  static ivl_udp_t *udps = 0x0;
-  static int nudps = 0;
-  int i;
-  unsigned ninp;
-  const char **input_strings;
+      static ivl_udp_t *udps = 0x0;
+      static int nudps = 0;
+      int i;
+      unsigned ninp;
+      const char **input_strings;
+  
+	/* Do we need a delay? */
+      unsigned need_delay_flag = need_delay(lptr);
 
-  for (i=0; i<nudps; i++)
-    if (udps[i] == udp)
-      break;
+      for (i=0; i<nudps; i++) {
+	    if (udps[i] == udp) break;
+      }
 
-  if (i >= nudps)
-    {
-      udps = realloc(udps, (nudps+1)*sizeof(ivl_udp_t));
-      assert(udps);
-      udps[nudps++] = udp;
-      draw_udp_def(udp);
-    }
+      if (i >= nudps) {
+	    udps = realloc(udps, (nudps+1)*sizeof(ivl_udp_t));
+	    assert(udps);
+	    udps[nudps++] = udp;
+	    draw_udp_def(udp);
+      }
 
-    /*
-     * We need to process the arguments first so any evaluation code
-     * (.resolv, etc.) can be built before we build the .udp call.
-     * This matches what is done for the other primitives.
-     */
-  ninp = ivl_logic_pins(lptr) - 1;
-  input_strings = calloc(ninp, sizeof(char*));
-  for (pdx = 0 ;  pdx < ninp ;  pdx += 1) {
-	ivl_nexus_t nex = ivl_logic_pin(lptr, pdx+1);
+	/*
+	 * We need to process the arguments first so any evaluation code
+	 * (.resolv, etc.) can be built before we build the .udp call.
+	 * This matches what is done for the other primitives.
+	 */
+      ninp = ivl_logic_pins(lptr) - 1;
+      input_strings = calloc(ninp, sizeof(char*));
+      for (pdx = 0 ;  pdx < ninp ;  pdx += 1) {
+	    ivl_nexus_t nex = ivl_logic_pin(lptr, pdx+1);
 
-	  /* Unlike other logic gates, primitives may have unconnected
-	     inputs. The proper behavior is to attach a HiZ to the
-	     port. */
-	if (nex == 0) {
-	      assert(ivl_logic_width(lptr) == 1);
-	      input_strings[pdx] = "C4<z>";
+	      /* Unlike other logic gates, primitives may have unconnected
+	       * inputs. The proper behavior is to attach a HiZ to the
+	       * port. */
+	    if (nex == 0) {
+		  assert(ivl_logic_width(lptr) == 1);
+		  input_strings[pdx] = "C4<z>";
+	    } else {
+		  input_strings[pdx] = draw_net_input(nex);
+	    }
+      }
 
-	} else {
-	      input_strings[pdx] = draw_net_input(nex);
-	}
-  }
+	/* Generate the UDP call. */
+      fprintf(vvp_out, "L_%p%s .udp UDP_%s", lptr, need_delay_flag? "/d" : "",
+                       vvp_mangle_id(ivl_udp_name(udp)));
 
-  fprintf(vvp_out, "L_%p .udp", lptr);
-  fprintf(vvp_out, " UDP_%s",
-	  vvp_mangle_id(ivl_udp_name(udp)));
-  draw_delay(lptr);
+      for (pdx = 0 ;  pdx < ninp ;  pdx += 1) {
+	    fprintf(vvp_out, ", %s", input_strings[pdx]);
+      }
+      free(input_strings);
 
-  for (pdx = 0 ;  pdx < ninp ;  pdx += 1) {
-	fprintf(vvp_out, ", %s", input_strings[pdx]);
-  }
-  free(input_strings);
+      fprintf(vvp_out, ";\n");
 
-  fprintf(vvp_out, ";\n");
+	/* Generate a delay when needed. */
+      if (need_delay_flag) draw_delay(lptr);
 }
 
 static void draw_logic_in_scope(ivl_net_logic_t lptr)
@@ -691,7 +744,8 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       const char*lcasc = 0;
       char identity_val = '0';
 
-      int need_delay_flag = ivl_logic_delay(lptr,0)? 1 : 0;
+	/* Do we need a delay? */
+      unsigned need_delay_flag = need_delay(lptr);
 
       unsigned vector_width = width_of_nexus(ivl_logic_pin(lptr, 0));
 
@@ -882,61 +936,8 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	   persistent, held by the ivl_nexus_t objects. */
       free(input_strings);
 
-	/* If there are delays, then draw the delay functor to carry
-	   that delay. This is the final output. */
-      if (need_delay_flag) {
-	    ivl_expr_t rise_exp  = ivl_logic_delay(lptr, 0);
-	    ivl_expr_t fall_exp  = ivl_logic_delay(lptr, 1);
-	    ivl_expr_t decay_exp = ivl_logic_delay(lptr, 2);
-
-            unsigned dly_width = vector_width;
-            if (data_type_of_nexus(ivl_logic_pin(lptr,0)) == IVL_VT_REAL)
-                  dly_width = 0;
-
-	    if (number_is_immediate(rise_exp, 64, 0)
-		&& number_is_immediate(fall_exp, 64, 0)
-		&& number_is_immediate(decay_exp, 64, 0)) {
-
-		  assert(! number_is_unknown(rise_exp));
-		  assert(! number_is_unknown(fall_exp));
-		  assert(! number_is_unknown(decay_exp));
-
-		  fprintf(vvp_out, "L_%p .delay %u (%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") L_%p/d;\n",
-			  lptr, dly_width,
-                          get_number_immediate64(rise_exp),
-			  get_number_immediate64(fall_exp),
-			  get_number_immediate64(decay_exp), lptr);
-	    } else {
-		  ivl_signal_t sig;
-		  // We do not currently support calculating the decay from
-		  // the rise and fall variable delays.
-		  assert(ivl_expr_type(rise_exp) == IVL_EX_SIGNAL);
-		  assert(ivl_expr_type(fall_exp) == IVL_EX_SIGNAL);
-		  assert((decay_exp == 0) ||
-		         (ivl_expr_type(decay_exp) == IVL_EX_SIGNAL));
-
-		  fprintf(vvp_out, "L_%p .delay %u L_%p/d", lptr, dly_width, lptr);
-
-		  sig = ivl_expr_signal(rise_exp);
-		  assert(ivl_signal_dimensions(sig) == 0);
-		  fprintf(vvp_out, ", %s",
-		                   draw_net_input(ivl_signal_nex(sig,0)));
-
-		  sig = ivl_expr_signal(fall_exp);
-		  assert(ivl_signal_dimensions(sig) == 0);
-		  fprintf(vvp_out, ", %s",
-		                   draw_net_input(ivl_signal_nex(sig,0)));
-
-		  if (decay_exp) {
-			sig = ivl_expr_signal(decay_exp);
-			assert(ivl_signal_dimensions(sig) == 0);
-			fprintf(vvp_out, ", %s;\n",
-			                 draw_net_input(ivl_signal_nex(sig,0)));
-		  } else {
-			fprintf(vvp_out, ", 0;\n");
-		  }
-	    }
-      }
+	/* Generate a delay when needed. */
+      if (need_delay_flag) draw_delay(lptr);
 }
 
 static void draw_event_in_scope(ivl_event_t obj)

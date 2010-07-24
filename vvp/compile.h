@@ -321,7 +321,6 @@ extern void compile_udp_def(int sequ, char*label, char *name,
 			    unsigned nin, unsigned init, char **table);
 
 extern void compile_udp_functor(char*label, char*type,
-				vvp_delay_t*delay,
 				unsigned argc, struct symb_s*argv);
 
 extern char **compile_udp_table(char **table, char *row);

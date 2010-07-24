@@ -108,7 +108,7 @@ static struct __vpiModPath*modpath_dst = 0;
 
 %type <argv> argument_opt argument_list
 %type <vpi>  argument symbol_access
-%type <cdelay> delay delay_opt
+%type <cdelay> delay
 
 %%
 
@@ -188,8 +188,8 @@ statement
 	| T_LABEL K_UDP_C T_STRING ',' T_NUMBER ',' udp_table ';'
 		{ compile_udp_def(0, $1, $3, $5, 0, $7); }
 
-	| T_LABEL K_UDP T_SYMBOL delay_opt ',' symbols ';'
-		{ compile_udp_functor($1, $3, $4, $6.cnt, $6.vect); }
+	| T_LABEL K_UDP T_SYMBOL ',' symbols ';'
+		{ compile_udp_functor($1, $3, $5.cnt, $5.vect); }
 
 
   /* Memory.  Definition, port, initialization */
@@ -1009,8 +1009,6 @@ signed_t_number
 	: T_NUMBER     { $$ = $1; }
 	| '-' T_NUMBER { $$ = -$2; }
 	;
-
-delay_opt : delay { $$=$1; } | /* empty */ { $$=0; } ;
 
 delay
 	: '(' T_NUMBER ')'

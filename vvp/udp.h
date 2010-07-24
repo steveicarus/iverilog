@@ -23,7 +23,6 @@
  */
 
 # include  "vvp_net.h"
-# include  "delay.h"
 # include  "schedule.h"
 
 struct udp_levels_table;

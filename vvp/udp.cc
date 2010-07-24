@@ -971,7 +971,6 @@ void vvp_udp_fun_core::recv_vec4_from_inputs(unsigned port)
  * netlist. The definition should be parsed already.
  */
 void compile_udp_functor(char*label, char*type,
-			 vvp_delay_t*delay,
 			 unsigned argc, struct symb_s*argv)
 {
       struct vvp_udp_s *def = udp_find(type);
@@ -982,18 +981,7 @@ void compile_udp_functor(char*label, char*type,
       vvp_udp_fun_core*core = new vvp_udp_fun_core(ptr, def);
       ptr->fun = core;
 
-      if (delay != 0) {
-	    vvp_net_t*net_drv = new vvp_net_t;
-	    vvp_fun_delay*obj_drv = new vvp_fun_delay(net_drv, 1, *delay);
-	    delete delay;
-	    net_drv->fun = obj_drv;
-
-	    ptr->link(vvp_net_ptr_t(net_drv,0));
-	    define_functor_symbol(label, net_drv);
-
-      } else {
-	    define_functor_symbol(label, ptr);
-      }
+      define_functor_symbol(label, ptr);
       free(label);
 
       wide_inputs_connect(core, argc, argv);
