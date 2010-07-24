@@ -618,7 +618,7 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
 
 	// For now, only support 1-dimensional arrays.
       assert(ivl_signal_dimensions(var) == 1);
- 
+
 	// Calculate the word index into an index register
       ivl_expr_t word_ex = ivl_lval_idx(lval);
       int word_ix = allocate_word();
@@ -777,7 +777,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		  fprintf(vvp_out, "    %%evctl%s %s, %d;\n", type, name,
 		                   count_index);
 		  clr_word(count_index);
-	    } else { 
+	    } else {
 		  fprintf(vvp_out, "    %%evctl/i %s, %lu;\n", name, count);
 	    }
       } else {

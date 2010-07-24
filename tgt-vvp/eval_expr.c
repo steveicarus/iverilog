@@ -1565,10 +1565,10 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t expr, unsigned wid)
 
 	  case 'p':
 	    if (ivl_expr_signed(le) || ivl_expr_signed(re)) {
-		  fprintf(vvp_out, "    %%pow/s %u, %u, %u;\n", 
+		  fprintf(vvp_out, "    %%pow/s %u, %u, %u;\n",
 		          lv.base, rv.base, wid);
 	    } else {
-		  fprintf(vvp_out, "    %%pow %u, %u, %u;\n", 
+		  fprintf(vvp_out, "    %%pow %u, %u, %u;\n",
 		          lv.base, rv.base, wid);
 	    }
 	    break;
@@ -1729,7 +1729,7 @@ static struct vector_info draw_concat_expr(ivl_expr_t expr, unsigned wid,
 			fprintf(vvp_out, "    %%mov %u, %u, %u; Reuse "
 			                 "calculated expression.\n",
 			                 res.base+off, avec.base, awid);
-			clr_vector(avec); 
+			clr_vector(avec);
 		  } else {
 			struct vector_info dest;
 
@@ -1748,7 +1748,7 @@ static struct vector_info draw_concat_expr(ivl_expr_t expr, unsigned wid,
 		    /* Clear the temporary space and return nothing.
 		     * This will be caught in draw_eval_expr_dest()
 		     * and dropped. */
-		  clr_vector(res); 
+		  clr_vector(res);
 		  res.base = 0;
 		  res.wid = 0;
 	    }
@@ -1782,7 +1782,7 @@ static struct vector_info draw_concat_expr(ivl_expr_t expr, unsigned wid,
 
 	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", res.base,
 	                     full_res.base, wid);
-	    clr_vector(full_res); 
+	    clr_vector(full_res);
       }
 
 	/* Save the accumulated result in the lookaside map. */

@@ -686,7 +686,7 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
       int i;
       unsigned ninp;
       const char **input_strings;
-  
+
 	/* Do we need a delay? */
       unsigned need_delay_flag = need_delay(lptr);
 
