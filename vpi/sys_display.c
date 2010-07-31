@@ -1877,6 +1877,30 @@ void sys_display_register()
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$info";
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = sys_display_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$display";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$warning";
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = sys_display_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$display";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$error";
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = sys_display_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$display";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$displayh";
       tf_data.calltf    = sys_display_calltf;
       tf_data.compiletf = sys_display_compiletf;
