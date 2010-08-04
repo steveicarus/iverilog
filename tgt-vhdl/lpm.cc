@@ -96,16 +96,23 @@ static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop
 static vhdl_expr *rel_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t op)
 {
    vhdl_binop_expr *expr = new vhdl_binop_expr(op, vhdl_type::boolean());
-  
-   for (int i = 0; i < 2; i++) {
-      vhdl_expr *e = readable_ref(scope, ivl_lpm_data(lpm, i));
-      if (NULL == e) {
-         delete expr;
-         return NULL;
-      }
 
-      expr->add_expr(e);
+   vhdl_expr *lhs = readable_ref(scope, ivl_lpm_data(lpm, 0));
+   if (NULL == lhs)
+      return NULL;
+
+   vhdl_expr *rhs = readable_ref(scope, ivl_lpm_data(lpm, 1));
+   if (NULL == rhs) {
+      delete lhs;
+      return NULL;
    }
+   
+   // Ensure LHS and RHS are the same type
+   if (lhs->get_type() != rhs->get_type())
+      rhs = rhs->cast(lhs->get_type());
+
+   expr->add_expr(lhs);
+   expr->add_expr(rhs);
 
    // Need to make sure output is std_logic rather than Boolean
    vhdl_type std_logic(VHDL_TYPE_STD_LOGIC);
