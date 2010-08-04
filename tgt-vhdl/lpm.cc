@@ -114,9 +114,7 @@ static vhdl_expr *rel_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t
    expr->add_expr(lhs);
    expr->add_expr(rhs);
 
-   // Need to make sure output is std_logic rather than Boolean
-   vhdl_type std_logic(VHDL_TYPE_STD_LOGIC);
-   return expr->cast(&std_logic);
+   return expr;
 }
 
 static vhdl_expr *part_select_vp_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
@@ -351,8 +349,23 @@ int draw_lpm(vhdl_arch *arch, ivl_lpm_t lpm)
 
       out->set_slice(off, ivl_lpm_width(lpm) - 1);
    }
+
+   // Converting from Boolean to std_logic is a common case so should be
+   // replaced by an idiomatic VHDL construct rather than a call to a
+   // conversion function
+
+   bool bool_to_logic =
+      out->get_type()->get_name() == VHDL_TYPE_STD_LOGIC
+      && f->get_type()->get_name() == VHDL_TYPE_BOOLEAN;
    
-   arch->add_stmt(new vhdl_cassign_stmt(out, f->cast(out->get_type())));
+   if (bool_to_logic) {
+      vhdl_cassign_stmt* s =
+         new vhdl_cassign_stmt(out, new vhdl_const_bit('0'));
+      s->add_condition(new vhdl_const_bit('1'), f);
+      arch->add_stmt(s);
+   }
+   else 
+      arch->add_stmt(new vhdl_cassign_stmt(out, f->cast(out->get_type())));
    
    return 0;
 }
