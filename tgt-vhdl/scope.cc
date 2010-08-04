@@ -406,27 +406,8 @@ static string valid_entity_name(const string& module_name)
    return ss.str();
 }
 
-// Make sure a signal name conforms to VHDL naming rules.
-string make_safe_name(ivl_signal_t sig)
+static bool is_vhdl_reserved_word(const string& word)
 {
-   string base(ivl_signal_basename(sig));
-
-   if (ivl_signal_local(sig))
-      base = "Tmp" + base;
-   
-   if (base[0] == '_')
-      base = "Sig" + base;
-
-   if (*base.rbegin() == '_')
-      base += "Sig";
-
-   // Can't have two consecutive underscores
-   replace_consecutive_underscores(base);
-   
-   // A signal name may not be the same as a component name
-   if (find_entity(base) != NULL)
-      base += "_Sig";
-   
    // This is the complete list of VHDL reserved words
    const char *vhdl_reserved[] = {
       "abs", "access", "after", "alias", "all", "and", "architecture",
@@ -437,21 +418,47 @@ string make_safe_name(ivl_signal_t sig)
       "in", "inertial", "inout", "is", "label", "library", "linkage",
       "literal", "loop", "map", "mod", "nand", "new", "next", "nor", "not",
       "null", "of", "on", "open", "or", "others", "out", "package", "port",
-      "postponed", "procedure", "process", "pure", "range", "record", "register",
-      "reject", "rem", "report", "return", "rol", "ror", "select", "severity",
-      "signal", "shared", "sla", "sll", "sra", "srl", "subtype", "then", "to",
-      "transport", "type", "unaffected", "units", "until", "use", "variable",
-      "wait", "when", "while", "with", "xnor", "xor",
+      "postponed", "procedure", "process", "pure", "range", "record",
+      "register", "reject", "rem", "report", "return", "rol", "ror", "select",
+      "severity", "signal", "shared", "sla", "sll", "sra", "srl", "subtype",
+      "then", "to", "transport", "type", "unaffected", "units", "until", "use",
+      "variable", "wait", "when", "while", "with", "xnor", "xor",
       NULL
    };
 
    for (const char **p = vhdl_reserved; *p != NULL; p++) {
-      if (strcasecmp(*p, base.c_str()) == 0) {
-         return "Sig_" + base;
-         break;
-      }
+      if (strcasecmp(*p, word.c_str()) == 0)
+         return true;
    }
-   return string(base);
+
+   return false;
+}
+
+// Make sure a signal name conforms to VHDL naming rules.
+string make_safe_name(ivl_signal_t sig)
+{
+   string base(ivl_signal_basename(sig));
+
+   if (ivl_signal_local(sig))
+      base = "tmp" + base;
+   
+   if (base[0] == '_')
+      base = "sig" + base;
+
+   if (*base.rbegin() == '_')
+      base += "sig";
+
+   // Can't have two consecutive underscores
+   replace_consecutive_underscores(base);
+   
+   // A signal name may not be the same as a component name
+   if (find_entity(base) != NULL)
+      base += "_sig";
+
+   if (is_vhdl_reserved_word(base))
+      base += "_sig";
+   
+   return base;
 }
 
 // Check if `name' differs from an existing name only in case and
@@ -1132,9 +1139,12 @@ extern "C" int draw_hierarchy(ivl_scope_t scope, void *_parent)
       // And an instantiation statement
       string inst_name(ivl_scope_basename(scope));
       inst_name += genvar_unique_suffix(ivl_scope_parent(scope));
-      if (inst_name == ent->get_name() || parent_scope->have_declared(inst_name)) {
-         // Cannot have instance name the same as type in VHDL
-         inst_name += "_Inst";
+      if (inst_name == ent->get_name()
+          || parent_scope->have_declared(inst_name)
+          || is_vhdl_reserved_word(inst_name)) {
+
+         // Would produce an invalid instance name
+         inst_name += "_inst";
       }
       
       // Need to replace any [ and ] characters that result
@@ -1149,9 +1159,9 @@ extern "C" int draw_hierarchy(ivl_scope_t scope, void *_parent)
 
       // No leading or trailing underscores
       if (inst_name[0] == '_')
-         inst_name = "Inst" + inst_name;
+         inst_name = "inst" + inst_name;
       if (*inst_name.rbegin() == '_')
-         inst_name += "Inst";
+         inst_name += "inst";
 
       // Can't have two consecutive underscores
       replace_consecutive_underscores(inst_name);
