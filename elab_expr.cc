@@ -304,8 +304,8 @@ NetExpr* PEBinary::elaborate_eval_expr_base_(Design*des,
 {
 	/* If either expression can be evaluated ahead of time, then
 	   do so. This can prove helpful later. */
-      eval_expr(lp);
-      eval_expr(rp);
+      eval_expr(lp, expr_wid);
+      eval_expr(rp, expr_wid);
 
       return elaborate_expr_base_(des, lp, rp, expr_wid);
 }
