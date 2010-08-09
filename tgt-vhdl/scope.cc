@@ -384,28 +384,6 @@ static void replace_consecutive_underscores(string& str)
    }
 }
 
-// Return a valid VHDL name for a Verilog module
-static string valid_entity_name(const string& module_name)
-{
-   string name(module_name);
-   replace_consecutive_underscores(name);
-   if (name[0] == '_')
-      name = "Mod" + name;
-   if (*name.rbegin() == '_')
-      name += "Mod";
-
-   ostringstream ss;
-   int i = 1;
-   ss << name;
-   while (find_entity(ss.str())) {
-      // Keep adding an extra number until we get a unique name
-      ss.str("");
-      ss << name << i++;
-   }
-   
-   return ss.str();
-}
-
 static bool is_vhdl_reserved_word(const string& word)
 {
    // This is the complete list of VHDL reserved words
@@ -432,6 +410,31 @@ static bool is_vhdl_reserved_word(const string& word)
    }
 
    return false;
+}
+
+// Return a valid VHDL name for a Verilog module
+static string valid_entity_name(const string& module_name)
+{
+   string name(module_name);
+   replace_consecutive_underscores(name);
+   if (name[0] == '_')
+      name = "module" + name;
+   if (*name.rbegin() == '_')
+      name += "module";
+   
+   if (is_vhdl_reserved_word(name))
+      name += "_module";
+
+   ostringstream ss;
+   int i = 1;
+   ss << name;
+   while (find_entity(ss.str())) {
+      // Keep adding an extra number until we get a unique name
+      ss.str("");
+      ss << name << i++;
+   }
+   
+   return ss.str();
 }
 
 // Make sure a signal name conforms to VHDL naming rules.
@@ -905,7 +908,7 @@ static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
    // so we always create a pair and associate the architecture
    // with the entity for convenience (this also means that we
    // retain a 1-to-1 mapping of scope to VHDL element)
-   vhdl_arch *arch = new vhdl_arch(tname, "FromVerilog");
+   vhdl_arch *arch = new vhdl_arch(tname, "from_verilog");
    vhdl_entity *ent = new vhdl_entity(tname, arch, depth);
 
    // Calculate the VHDL units to use for time values
