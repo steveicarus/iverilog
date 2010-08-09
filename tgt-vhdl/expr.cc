@@ -496,7 +496,7 @@ static vhdl_expr *translate_select(ivl_expr_t e)
       }
    }
    else
-      return from->resize(ivl_expr_width(e));
+      return correct_signedness(from, e)->resize(ivl_expr_width(e));
 }
 
 template <class T>
