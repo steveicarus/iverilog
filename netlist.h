@@ -2317,7 +2317,7 @@ class NetAssign : public NetAssignBase {
       explicit NetAssign(NetAssign_*lv, NetExpr*rv);
       ~NetAssign();
 
-      bool is_asynchronous();
+      bool is_asynchronous() const;
 
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
@@ -2496,7 +2496,7 @@ class NetCondit  : public NetProc {
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual void nex_output(NexusSet&o);
 
-      bool is_asynchronous();
+      bool is_asynchronous() const;
       bool synth_async(Design*des, NetScope*scope,
 		       const NetBus&nex_map, NetBus&nex_out);
 
@@ -3162,7 +3162,7 @@ class NetProcTop  : public LineInfo, public Attrib {
       const NetScope*scope() const;
 
 	/* Return true if this process represents combinational logic. */
-      bool is_asynchronous();
+      bool is_asynchronous() const;
 
 	/* Create asynchronous logic from this thread and return true,
 	   or return false if that cannot be done. */

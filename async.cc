@@ -23,12 +23,12 @@
 # include  "netlist.h"
 # include  <cassert>
 
-bool NetAssign::is_asynchronous()
+bool NetAssign::is_asynchronous() const
 {
       return true;
 }
 
-bool NetCondit::is_asynchronous()
+bool NetCondit::is_asynchronous() const
 {
       return false;
 }
@@ -82,7 +82,7 @@ bool NetProc::is_asynchronous()
       return false;
 }
 
-bool NetProcTop::is_asynchronous()
+bool NetProcTop::is_asynchronous() const
 {
       if (type_ == IVL_PR_INITIAL)
 	    return false;

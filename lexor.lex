@@ -1288,6 +1288,7 @@ static void line_directive()
       if (cp == cpr) {
 	    VLerror(yylloc, "Invalid #line directive (missing space after "
 	                    "file name).");
+	    delete[] buf;
 	    return;
       }
       cp = cpr;
@@ -1296,6 +1297,7 @@ static void line_directive()
       unsigned long lineno = strtoul(cp, &cpr, 10);
       if (cp == cpr) {
 	    VLerror(yylloc, "Invalid line number for #line directive.");
+	    delete[] buf;
 	    return;
       }
       cp = cpr;
@@ -1305,6 +1307,7 @@ static void line_directive()
       if ((size_t)(cpr-yytext) != strlen(yytext)) {
 	    VLerror(yylloc, "Invalid #line directive (extra garbage after "
 	                    "line number).");
+	    delete[] buf;
 	    return;
       }
 
