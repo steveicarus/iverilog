@@ -106,6 +106,13 @@ bool gn_io_range_error_flag = true;
 bool gn_strict_ca_eval_flag = false;
 bool gn_verilog_ams_flag = false;
 
+/*
+ * For some generations we allow a system function to be called
+ * as a task and only print a warning message. The default for
+ * this is that it is a run time error.
+ */
+ivl_sfunc_as_task_t def_sfunc_as_task = IVL_SFUNC_AS_TASK_ERROR;
+
 map<string,const char*> flags;
 char*vpi_module_list = 0;
 
@@ -1009,6 +1016,12 @@ int main(int argc, char*argv[])
 		      <<cycles_diff(cycles+1, cycles+0)<<" seconds."<<endl;
 	    }
 	    cout << "ELABORATING DESIGN" << endl;
+      }
+
+	/* Decide if we are going to allow system functions to be called
+	 * as tasks. */
+      if (generation_flag >= GN_VER2009) {
+	    def_sfunc_as_task = IVL_SFUNC_AS_TASK_WARNING;
       }
 
 	/* On with the process of elaborating the module. */

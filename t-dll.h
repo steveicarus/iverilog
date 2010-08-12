@@ -753,6 +753,7 @@ struct ivl_statement_s {
 
 	    struct { /* IVL_ST_STASK */
 		  const char*name_;
+		  ivl_sfunc_as_task_t sfunc_as_task_;
 		  unsigned   nparm_;
 		  ivl_expr_t*parms_;
 	    } stask_;

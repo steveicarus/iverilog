@@ -388,6 +388,13 @@ typedef enum ivl_statement_type_e {
       IVL_ST_WHILE   = 23
 } ivl_statement_type_t;
 
+/* SystemVerilog allows a system function to be called as a task. */
+typedef enum ivl_sfunc_as_task_e {
+      IVL_SFUNC_AS_TASK_ERROR   = 0,
+      IVL_SFUNC_AS_TASK_WARNING = 1,
+      IVL_SFUNC_AS_TASK_IGNORE  = 2
+} ivl_sfunc_as_task_t;
+
 /* This is the type of a variable, and also used as the type for an
    expression. */
 typedef enum ivl_variable_type_e {
@@ -1995,6 +2002,8 @@ extern unsigned ivl_stmt_parm_count(ivl_statement_t net);
   /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_CONTRIB
      IVL_ST_FORCE */
 extern ivl_expr_t ivl_stmt_rval(ivl_statement_t net);
+  /* IVL_ST_STASK */
+extern ivl_sfunc_as_task_t ivl_stmt_sfunc_as_task(ivl_statement_t net);
   /* IVL_ST_DELAY, IVL_ST_DELAYX, IVL_ST_FOREVER, IVL_ST_REPEAT
      IVL_ST_WAIT, IVL_ST_WHILE */
 extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);

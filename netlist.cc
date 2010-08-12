@@ -1932,8 +1932,9 @@ const NetNet* NetFuncDef::return_sig() const
       return result_sig_;
 }
 
-NetSTask::NetSTask(const char*na, const svector<NetExpr*>&pa)
-: name_(0), parms_(pa)
+NetSTask::NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
+                   const svector<NetExpr*>&pa)
+: name_(0), sfunc_as_task_(sfat), parms_(pa)
 {
       name_ = lex_strings.add(na);
       assert(name_[0] == '$');
@@ -1950,6 +1951,11 @@ NetSTask::~NetSTask()
 const char*NetSTask::name() const
 {
       return name_;
+}
+
+ivl_sfunc_as_task_t NetSTask::sfunc_as_task() const
+{
+      return sfunc_as_task_;
 }
 
 unsigned NetSTask::nparms() const

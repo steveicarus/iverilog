@@ -2697,7 +2697,8 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 	    return noop;
       }
 
-      NetSTask*cur = new NetSTask(peek_tail_name(path_), eparms);
+      NetSTask*cur = new NetSTask(peek_tail_name(path_), def_sfunc_as_task,
+                                  eparms);
       cur->set_line(*this);
       return cur;
 }

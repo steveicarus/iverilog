@@ -212,4 +212,11 @@ extern const struct sfunc_return_type* lookup_sys_func(const char*name);
 extern int load_sys_func_table(const char*path);
 extern void cleanup_sys_func_table();
 
+/*
+ * In system Verilog it is allowed with a warning to call a function
+ * as a task. You can even cast the return value away and have no
+ * warning message.
+ */
+extern ivl_sfunc_as_task_t def_sfunc_as_task;
+
 #endif

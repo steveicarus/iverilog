@@ -2385,6 +2385,18 @@ extern "C" ivl_expr_t ivl_stmt_rval(ivl_statement_t net)
       return 0;
 }
 
+extern "C" ivl_sfunc_as_task_t ivl_stmt_sfunc_as_task(ivl_statement_t net)
+{
+      switch (net->type_) {
+	  case IVL_ST_STASK:
+	    return net->u_.stask_.sfunc_as_task_;
+	  default:
+	    assert(0);
+      }
+
+      return IVL_SFUNC_AS_TASK_ERROR;
+}
+
 extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 {
       switch (net->type_) {

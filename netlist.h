@@ -2969,10 +2969,12 @@ class NetRelease : public NetAssignBase {
 class NetSTask  : public NetProc {
 
     public:
-      NetSTask(const char*na, const svector<NetExpr*>&);
+      NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
+               const svector<NetExpr*>&);
       ~NetSTask();
 
       const char* name() const;
+      ivl_sfunc_as_task_t sfunc_as_task() const;
 
       unsigned nparms() const;
 
@@ -2985,6 +2987,7 @@ class NetSTask  : public NetProc {
 
     private:
       const char* name_;
+      ivl_sfunc_as_task_t sfunc_as_task_;
       svector<NetExpr*>parms_;
 };
 
