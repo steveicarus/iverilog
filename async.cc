@@ -23,12 +23,12 @@
 # include  "netlist.h"
 # include  <cassert>
 
-bool NetAssign::is_asynchronous() const
+bool NetAssign::is_asynchronous()
 {
       return true;
 }
 
-bool NetCondit::is_asynchronous() const
+bool NetCondit::is_asynchronous()
 {
       return false;
 }
