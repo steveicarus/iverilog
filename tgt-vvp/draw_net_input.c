@@ -47,6 +47,7 @@ static ivl_signal_type_t signal_type_of_nexus(ivl_nexus_t nex)
 		  continue;
 	    if (stype == IVL_SIT_NONE)
 		  continue;
+	    if (stype == IVL_SIT_UWIRE) return IVL_SIT_UWIRE;
 	    out = stype;
       }
 
@@ -572,6 +573,7 @@ static void draw_net_input_x(ivl_nexus_t nex,
       res = signal_type_of_nexus(nex);
       switch (res) {
 	  case IVL_SIT_TRI:
+	  case IVL_SIT_UWIRE:
 	    resolv_type = "tri";
 	    break;
 	  case IVL_SIT_TRI0:
@@ -660,6 +662,7 @@ static void draw_net_input_x(ivl_nexus_t nex,
 		  tmp += strlen(tmp);
 		  switch (res) {
 		      case IVL_SIT_TRI:
+		      case IVL_SIT_UWIRE:
 			for (jdx = 0 ;  jdx < wid ;  jdx += 1)
 			      *tmp++ = 'z';
 			break;
@@ -698,6 +701,28 @@ static void draw_net_input_x(ivl_nexus_t nex,
 	    return;
       }
 
+	/* A uwire is a tri with only one driver. */
+      if (res == IVL_SIT_UWIRE) {
+	    if (ndrivers > 1) {
+		  unsigned uidx;
+		  ivl_signal_t usig;
+		    /* Find the uwire signal. */
+		  for (uidx = 0 ;  uidx < ivl_nexus_ptrs(nex) ;  uidx += 1) {
+			ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, uidx);
+			usig = ivl_nexus_ptr_sig(ptr);
+			if (usig != 0) break;
+		  }
+		  assert(usig);
+
+		  fprintf(stderr, "%s:%u: vvp.tgt error: uwire \"%s\" must "
+		                  "have a single driver, found (%u).\n",
+		                  ivl_signal_file(usig),
+		                  ivl_signal_lineno(usig),
+		                  ivl_signal_basename(usig), ndrivers);
+		  vvp_errors += 1;
+	    }
+	    res = IVL_SIT_TRI;
+      }
 
 	/* If the nexus has exactly one driver, then simply draw
 	   it. Note that this will *not* work if the nexus is not a

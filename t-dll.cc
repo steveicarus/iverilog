@@ -2384,10 +2384,12 @@ void dll_target::signal(const NetNet*net)
 	    assert(0);
 	    break;
 
+	      /* We will convert this to a TRI after we check that there
+		 is only one driver. */
 	  case NetNet::UWIRE:
-	    cerr << net->get_fileline()
-	         << ": warning: uwire is not currently supported, converting "
-	            "it to a wire!" << endl;
+	    obj->type_ = IVL_SIT_UWIRE;
+	    break;
+
 	  case NetNet::TRI:
 	  case NetNet::WIRE:
 	  case NetNet::IMPLICIT:

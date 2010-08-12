@@ -353,7 +353,8 @@ typedef enum ivl_signal_type_e {
       IVL_SIT_TRI0 = 5,
       IVL_SIT_TRI1 = 6,
       IVL_SIT_TRIAND = 7,
-      IVL_SIT_TRIOR  = 8
+      IVL_SIT_TRIOR  = 8,
+      IVL_SIT_UWIRE  = 9
 } ivl_signal_type_t;
 
 /* This is the type code for ivl_statement_t objects. */

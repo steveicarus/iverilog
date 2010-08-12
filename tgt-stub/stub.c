@@ -1224,6 +1224,9 @@ static void show_signal(ivl_signal_t net)
 	  case IVL_SIT_TRI1:
 	    type = "tri1";
 	    break;
+	  case IVL_SIT_UWIRE:
+	    type = "uwire";
+	    break;
 	  default:
 	    break;
       }

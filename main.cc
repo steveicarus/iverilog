@@ -1105,7 +1105,7 @@ int main(int argc, char*argv[])
       if (int emit_rc = des->emit(&dll_target_obj)) {
 	    if (emit_rc > 0) {
 		  cerr << "error: Code generation had "
-		       << emit_rc << " errors."
+		       << emit_rc << " error(s)."
 		       << endl;
 		  return 1;
 	    }
