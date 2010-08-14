@@ -1902,6 +1902,7 @@ bool PEIdent::calculate_up_do_width_(Design*des, NetScope*scope,
 	/* Calculate the width expression (in the lsb_ position)
 	   first. If the expression is not constant, error but guess 1
 	   so we can keep going and find more errors. */
+      probe_expr_width(des, scope, index_tail.lsb);
       need_constant_expr = true;
       NetExpr*wid_ex = elab_and_eval(des, scope, index_tail.lsb, -1);
       need_constant_expr = false;
