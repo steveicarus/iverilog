@@ -386,11 +386,32 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 
 void draw_vpi_task_call(ivl_statement_t tnet)
 {
-      char call_string[1024];
-      sprintf(call_string, "    %%vpi_call %u %u \"%s\"",
-              ivl_file_table_index(ivl_stmt_file(tnet)),
-              ivl_stmt_lineno(tnet), ivl_stmt_name(tnet));
-      draw_vpi_taskfunc_args(call_string, tnet, 0);
+      unsigned parm_count = ivl_stmt_parm_count(tnet);
+      const char *command = "error";
+
+      switch (ivl_stmt_sfunc_as_task(tnet)) {
+	  case IVL_SFUNC_AS_TASK_ERROR:
+	    command = "%vpi_call";
+	    break;
+	  case IVL_SFUNC_AS_TASK_WARNING:
+	    command = "%vpi_call/w";
+	    break;
+	  case IVL_SFUNC_AS_TASK_IGNORE:
+	    command = "%vpi_call/i";
+	    break;
+      }
+
+      if (parm_count == 0) {
+            fprintf(vvp_out, "    %s %u %u \"%s\";\n", command,
+                    ivl_file_table_index(ivl_stmt_file(tnet)),
+                    ivl_stmt_lineno(tnet), ivl_stmt_name(tnet));
+      } else {
+	    char call_string[1024];
+	    sprintf(call_string, "    %s %u %u \"%s\"", command,
+	            ivl_file_table_index(ivl_stmt_file(tnet)),
+	            ivl_stmt_lineno(tnet), ivl_stmt_name(tnet));
+	    draw_vpi_taskfunc_args(call_string, tnet, 0);
+      }
 }
 
 struct vector_info draw_vpi_func_call(ivl_expr_t fnet, unsigned wid)

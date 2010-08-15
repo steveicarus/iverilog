@@ -1824,16 +1824,6 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 
 static int show_system_task_call(ivl_statement_t net)
 {
-      unsigned parm_count = ivl_stmt_parm_count(net);
-
-      if (parm_count == 0) {
-	    fprintf(vvp_out, "    %%vpi_call %u %u \"%s\";\n",
-	            ivl_file_table_index(ivl_stmt_file(net)),
-	            ivl_stmt_lineno(net), ivl_stmt_name(net));
-	    clear_expression_lookaside();
-	    return 0;
-      }
-
       draw_vpi_task_call(net);
 
 	/* VPI calls can manipulate anything, so clear the expression

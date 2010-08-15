@@ -2317,7 +2317,7 @@ class NetAssign : public NetAssignBase {
       explicit NetAssign(NetAssign_*lv, NetExpr*rv);
       ~NetAssign();
 
-      bool is_asynchronous() const;
+      bool is_asynchronous();
 
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
@@ -2496,7 +2496,7 @@ class NetCondit  : public NetProc {
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual void nex_output(NexusSet&o);
 
-      bool is_asynchronous() const;
+      bool is_asynchronous();
       bool synth_async(Design*des, NetScope*scope,
 		       const NetBus&nex_map, NetBus&nex_out);
 
@@ -2969,10 +2969,12 @@ class NetRelease : public NetAssignBase {
 class NetSTask  : public NetProc {
 
     public:
-      NetSTask(const char*na, const svector<NetExpr*>&);
+      NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
+               const svector<NetExpr*>&);
       ~NetSTask();
 
       const char* name() const;
+      ivl_sfunc_as_task_t sfunc_as_task() const;
 
       unsigned nparms() const;
 
@@ -2985,6 +2987,7 @@ class NetSTask  : public NetProc {
 
     private:
       const char* name_;
+      ivl_sfunc_as_task_t sfunc_as_task_;
       svector<NetExpr*>parms_;
 };
 
