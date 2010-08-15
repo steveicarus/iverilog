@@ -47,7 +47,12 @@ public:
    virtual vhdl_expr *to_integer();
    virtual vhdl_expr *to_std_logic();
    virtual vhdl_expr *to_vector(vhdl_type_name_t name, int w);
+   
 protected:
+   static void open_parens(ostream& of);
+   static void close_parens(ostream& of);
+   static int paren_levels;
+   
    const vhdl_type *type_;
    bool isconst_;
 };

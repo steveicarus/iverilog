@@ -767,6 +767,22 @@ void vhdl_if_stmt::emit(std::ostream &of, int level) const
    of << "end if;";
 }
 
+int vhdl_expr::paren_levels(0);
+
+void vhdl_expr::open_parens(std::ostream& of)
+{
+   if (paren_levels++ > 0)
+      of << "(";
+}
+
+void vhdl_expr::close_parens(std::ostream& of)
+{
+   assert(paren_levels > 0);
+   
+   if (--paren_levels > 0)
+      of << ")";
+}
+
 vhdl_unaryop_expr::~vhdl_unaryop_expr()
 {
    
@@ -774,7 +790,8 @@ vhdl_unaryop_expr::~vhdl_unaryop_expr()
 
 void vhdl_unaryop_expr::emit(std::ostream &of, int level) const
 {
-   of << "(";
+   open_parens(of);
+   
    switch (op_) {
    case VHDL_UNARYOP_NOT:
       of << "not ";
@@ -784,7 +801,8 @@ void vhdl_unaryop_expr::emit(std::ostream &of, int level) const
       break;
    }
    operand_->emit(of, level);
-   of << ")";
+
+   close_parens(of);
 }
 
 vhdl_binop_expr::vhdl_binop_expr(vhdl_expr *left, vhdl_binop_t op,
@@ -807,10 +825,7 @@ void vhdl_binop_expr::add_expr(vhdl_expr *e)
 
 void vhdl_binop_expr::emit(std::ostream &of, int level) const
 {
-   // Expressions are fully parenthesised to remove any
-   // ambiguity in the output
-
-   of << "(";
+   open_parens(of);
 
    assert(operands_.size() > 0);   
    std::list<vhdl_expr*>::const_iterator it = operands_.begin();
@@ -828,7 +843,7 @@ void vhdl_binop_expr::emit(std::ostream &of, int level) const
       (*it)->emit(of, level);
    }      
 
-   of << ")";
+   close_parens(of);
 }
 
 vhdl_bit_spec_expr::~vhdl_bit_spec_expr()
