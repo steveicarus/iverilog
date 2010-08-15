@@ -255,6 +255,17 @@ void stmt_container::move_stmts_from(stmt_container *other)
    other->stmts_.clear();
 }
 
+void stmt_container::find_vars(vhdl_var_set_t& read,
+                               vhdl_var_set_t& write)
+{
+   // Iterate over each sub-statement and find all its
+   // read/written variables
+
+   for (stmt_list_t::const_iterator it = stmts_.begin();
+        it != stmts_.end(); ++it)
+      (*it)->find_vars(read, write); 
+}
+
 void stmt_container::emit(std::ostream &of, int level, bool newline) const
 {
    emit_children<vhdl_seq_stmt>(of, stmts_, level, "", newline);  
@@ -345,6 +356,13 @@ void vhdl_component_decl::emit(std::ostream &of, int level) const
 vhdl_wait_stmt::~vhdl_wait_stmt()
 {
    
+}
+
+void vhdl_wait_stmt::find_vars(vhdl_var_set_t& read,
+                               vhdl_var_set_t& write)
+{
+   if (expr_)
+      expr_->find_vars(read);
 }
 
 void vhdl_wait_stmt::emit(std::ostream &of, int level) const
@@ -497,6 +515,13 @@ vhdl_expr_list::~vhdl_expr_list()
    
 }
 
+void vhdl_expr_list::find_vars(vhdl_var_set_t& read)
+{
+   for (list<vhdl_expr*>::const_iterator it = exprs_.begin();
+        it != exprs_.end(); ++it)
+      (*it)->find_vars(read);
+}
+
 void vhdl_expr_list::emit(std::ostream &of, int level) const
 {
    of << "(";
@@ -518,6 +543,12 @@ void vhdl_pcall_stmt::emit(std::ostream &of, int level) const
    if (!exprs_.empty())
       exprs_.emit(of, level);
    of << ";";
+}
+
+void vhdl_pcall_stmt::find_vars(vhdl_var_set_t& read,
+                                vhdl_var_set_t& write)
+{
+   exprs_.find_vars(read);
 }
 
 vhdl_var_ref::~vhdl_var_ref()
@@ -545,7 +576,12 @@ void vhdl_var_ref::set_slice(vhdl_expr *s, int w)
          type_ = vhdl_type::std_logic();   
    }
 }
-   
+
+void vhdl_var_ref::find_vars(vhdl_var_set_t& read)
+{
+   read.insert(this);
+}
+
 void vhdl_var_ref::emit(std::ostream &of, int level) const
 {
    of << name_;
@@ -575,6 +611,11 @@ void vhdl_null_stmt::emit(std::ostream &of, int level) const
    emit_comment(of, level, true);
 }
 
+void vhdl_fcall::find_vars(vhdl_var_set_t& read)
+{
+   exprs_.find_vars(read);
+}
+
 void vhdl_fcall::emit(std::ostream &of, int level) const
 {
    of << name_;
@@ -584,6 +625,13 @@ void vhdl_fcall::emit(std::ostream &of, int level) const
 vhdl_abstract_assign_stmt::~vhdl_abstract_assign_stmt()
 {
    
+}
+
+void vhdl_abstract_assign_stmt::find_vars(vhdl_var_set_t& read,
+                                          vhdl_var_set_t& write)
+{
+   write.insert(lhs_);
+   rhs_->find_vars(read);
 }
 
 void vhdl_nbassign_stmt::emit(std::ostream &of, int level) const
@@ -767,6 +815,21 @@ void vhdl_if_stmt::emit(std::ostream &of, int level) const
    of << "end if;";
 }
 
+void vhdl_if_stmt::find_vars(vhdl_var_set_t& read,
+                             vhdl_var_set_t& write)
+{
+   test_->find_vars(read);
+
+   then_part_.find_vars(read, write);
+   else_part_.find_vars(read, write);
+
+   for (list<elsif>::const_iterator it = elsif_parts_.begin();
+        it != elsif_parts_.end(); ++it) {
+      (*it).test->find_vars(read);
+      (*it).container->find_vars(read, write);
+   }      
+}
+
 int vhdl_expr::paren_levels(0);
 
 void vhdl_expr::open_parens(std::ostream& of)
@@ -786,6 +849,11 @@ void vhdl_expr::close_parens(std::ostream& of)
 vhdl_unaryop_expr::~vhdl_unaryop_expr()
 {
    
+}
+
+void vhdl_unaryop_expr::find_vars(vhdl_var_set_t& read)
+{
+   operand_->find_vars(read);
 }
 
 void vhdl_unaryop_expr::emit(std::ostream &of, int level) const
@@ -821,6 +889,13 @@ vhdl_binop_expr::~vhdl_binop_expr()
 void vhdl_binop_expr::add_expr(vhdl_expr *e)
 {
    operands_.push_back(e);
+}
+
+void vhdl_binop_expr::find_vars(vhdl_var_set_t& read)
+{
+   for (list<vhdl_expr*>::const_iterator it = operands_.begin();
+       it != operands_.end(); ++it)
+      (*it)->find_vars(read);      
 }
 
 void vhdl_binop_expr::emit(std::ostream &of, int level) const
@@ -896,6 +971,18 @@ vhdl_case_stmt::~vhdl_case_stmt()
    
 }
 
+void vhdl_case_stmt::find_vars(vhdl_var_set_t& read,
+                               vhdl_var_set_t& write)
+{
+   test_->find_vars(read);
+
+   for (case_branch_list_t::const_iterator it = branches_.begin();
+        it != branches_.end(); ++it) {
+      (*it)->when_->find_vars(read);
+      (*it)->stmts_.find_vars(read, write);
+   }
+}
+
 void vhdl_case_stmt::emit(std::ostream &of, int level) const
 {
    of << "case ";
@@ -921,12 +1008,26 @@ vhdl_while_stmt::~vhdl_while_stmt()
    
 }
 
+void vhdl_while_stmt::find_vars(vhdl_var_set_t& read,
+                                vhdl_var_set_t& write)
+{
+   test_->find_vars(read);
+
+   vhdl_loop_stmt::find_vars(read, write);
+}
+
 void vhdl_while_stmt::emit(std::ostream &of, int level) const
 {
    of << "while ";
    test_->emit(of, level);
    of << " ";
    vhdl_loop_stmt::emit(of, level);
+}
+
+void vhdl_loop_stmt::find_vars(vhdl_var_set_t& read,
+                               vhdl_var_set_t& write)
+{
+   stmts_.find_vars(read, write);
 }
 
 void vhdl_loop_stmt::emit(std::ostream &of, int level) const
@@ -939,6 +1040,16 @@ void vhdl_loop_stmt::emit(std::ostream &of, int level) const
 vhdl_for_stmt::~vhdl_for_stmt()
 {
    
+}
+
+
+void vhdl_for_stmt::find_vars(vhdl_var_set_t& read,
+                              vhdl_var_set_t& write)
+{
+   from_->find_vars(read);
+   to_->find_vars(write);
+
+   vhdl_loop_stmt::find_vars(read, write);
 }
 
 void vhdl_for_stmt::emit(std::ostream &of, int level) const

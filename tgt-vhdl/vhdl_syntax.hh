@@ -22,6 +22,7 @@
 #define INC_VHDL_SYNTAX_HH
 
 #include <inttypes.h>
+#include <set>
 #include <cassert>
 #include "vhdl_element.hh"
 #include "vhdl_type.hh"
@@ -31,6 +32,9 @@ using namespace std;
 class vhdl_scope;
 class vhdl_entity;
 class vhdl_arch;
+class vhdl_var_ref;
+
+typedef set<vhdl_var_ref*> vhdl_var_set_t;
 
 class vhdl_expr : public vhdl_element {
 public:
@@ -47,6 +51,7 @@ public:
    virtual vhdl_expr *to_integer();
    virtual vhdl_expr *to_std_logic();
    virtual vhdl_expr *to_vector(vhdl_type_name_t name, int w);
+   virtual void find_vars(vhdl_var_set_t& read) const {}
    
 protected:
    static void open_parens(ostream& of);
@@ -72,12 +77,12 @@ public:
    const std::string &get_name() const { return name_; }
    void set_name(const std::string &name) { name_ = name; }
    void set_slice(vhdl_expr *s, int w=0);
+   void find_vars(vhdl_var_set_t& read);
 private:
    std::string name_;
    vhdl_expr *slice_;
    unsigned slice_width_;
 };
-
 
 enum vhdl_binop_t {
    VHDL_BINOP_AND = 0,
@@ -120,6 +125,7 @@ public:
 
    void add_expr(vhdl_expr *e);
    void emit(std::ostream &of, int level) const;
+   void find_vars(vhdl_var_set_t& read);
 private:
    std::list<vhdl_expr*> operands_;
    vhdl_binop_t op_;
@@ -139,6 +145,7 @@ public:
    ~vhdl_unaryop_expr();
 
    void emit(std::ostream &of, int level) const;
+   void find_vars(vhdl_var_set_t& read);
 private:
    vhdl_unaryop_t op_;
    vhdl_expr *operand_;
@@ -250,6 +257,7 @@ public:
    void emit(std::ostream &of, int level) const;
    bool empty() const { return exprs_.empty(); }
    void add_expr(vhdl_expr *e);
+   void find_vars(vhdl_var_set_t& read);
 private:
    std::list<vhdl_expr*> exprs_;
 };
@@ -266,6 +274,7 @@ public:
 
    void add_expr(vhdl_expr *e) { exprs_.add_expr(e); }
    void emit(std::ostream &of, int level) const;
+   void find_vars(vhdl_var_set_t& read);
 private:
    std::string name_;
    vhdl_expr_list exprs_;
@@ -336,6 +345,12 @@ private:
 class vhdl_seq_stmt : public vhdl_element {
 public:
    virtual ~vhdl_seq_stmt() {}
+
+   // Find all the variables that are read or written in the
+   // expressions within this statement
+   // This is used to clean up the VHDL output
+   virtual void find_vars(vhdl_var_set_t& read,
+                          vhdl_var_set_t& write) = 0;
 };
 
 
@@ -351,6 +366,7 @@ public:
    void move_stmts_from(stmt_container *other);
    void emit(std::ostream &of, int level, bool newline=true) const;
    bool empty() const { return stmts_.empty(); }
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
 
    typedef std::list<vhdl_seq_stmt*> stmt_list_t;
    stmt_list_t &get_stmts() { return stmts_; }
@@ -369,6 +385,7 @@ public:
    virtual ~vhdl_abstract_assign_stmt();
 
    void set_after(vhdl_expr *after) { after_ = after; }
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
 protected:
    vhdl_var_ref *lhs_;
    vhdl_expr *rhs_, *after_;
@@ -419,6 +436,7 @@ public:
    void emit(std::ostream &of, int level) const;
    void add_sensitivity(const std::string &s) { sensitivity_.push_back(s); }
    vhdl_wait_type_t get_type() const { return type_; }
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
 private:
    vhdl_wait_type_t type_;
    vhdl_expr *expr_;
@@ -429,6 +447,7 @@ private:
 class vhdl_null_stmt : public vhdl_seq_stmt {
 public:
    void emit(std::ostream &of, int level) const;
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write) {}
 };
 
 
@@ -438,6 +457,7 @@ public:
       : reason_(reason) {}
 
    void emit(std::ostream &of, int level) const;
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write) {}
 private:
    std::string reason_;
 };
@@ -452,6 +472,7 @@ public:
    stmt_container *get_else_container() { return &else_part_; }
    stmt_container *add_elsif(vhdl_expr *test);
    void emit(std::ostream &of, int level) const;
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
 private:
    struct elsif {
       vhdl_expr *test;
@@ -469,6 +490,7 @@ private:
  * expression part and a statement container.
  */
 class vhdl_case_branch : public vhdl_element {
+   friend class vhdl_case_stmt;
 public:
    vhdl_case_branch(vhdl_expr *when) : when_(when) {}
    ~vhdl_case_branch();
@@ -489,6 +511,7 @@ public:
 
    void add_branch(vhdl_case_branch *b) { branches_.push_back(b); }
    void emit(std::ostream &of, int level) const;
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
 private:
    vhdl_expr *test_;
    case_branch_list_t branches_;
@@ -501,6 +524,8 @@ public:
    
    stmt_container *get_container() { return &stmts_; }
    void emit(std::ostream &of, int level) const;
+   virtual void find_vars(vhdl_var_set_t& read,
+                          vhdl_var_set_t& write);
 private:
    stmt_container stmts_;
 };
@@ -512,6 +537,7 @@ public:
    ~vhdl_while_stmt();
 
    void emit(std::ostream &of, int level) const;
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
 private:
    vhdl_expr *test_;
 };
@@ -524,6 +550,7 @@ public:
    ~vhdl_for_stmt();
    
    void emit(std::ostream &of, int level) const;
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
 private:
    const char *lname_;
    vhdl_expr *from_, *to_;
@@ -540,6 +567,7 @@ public:
    
    void emit(std::ostream &of, int level) const;
    void add_expr(vhdl_expr *e) { exprs_.add_expr(e); }
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
 private:
    std::string name_;
    vhdl_expr_list exprs_;
