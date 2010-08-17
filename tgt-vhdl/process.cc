@@ -57,15 +57,12 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    // However, if no statements were added to the container
    // by draw_stmt, don't bother adding a wait as `emit'
    // will optimise the process out of the output
-   if (ivl_process_type(proc) == IVL_PR_INITIAL) {
-      // Get rid of any useless `wait for 0 ns's at the end of the process
-      prune_wait_for_0(vhdl_proc->get_container());
-
-      // The above pruning might have removed all logic from the process 
-      if (!vhdl_proc->get_container()->empty()) {
-         vhdl_wait_stmt *wait = new vhdl_wait_stmt();
-         vhdl_proc->get_container()->add_stmt(wait);
-      }
+   bool is_initial = ivl_process_type(proc) == IVL_PR_INITIAL;
+   bool is_empty = vhdl_proc->get_container()->empty();
+   
+   if (is_initial && !is_empty) {
+      vhdl_wait_stmt *wait = new vhdl_wait_stmt();
+      vhdl_proc->get_container()->add_stmt(wait);
    }
    
    // Add a comment indicating where it came from

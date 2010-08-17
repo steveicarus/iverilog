@@ -31,7 +31,6 @@ string make_safe_name(ivl_signal_t sig);
    
 int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
                        ivl_statement_t stmt, bool newline = true);
-void prune_wait_for_0(stmt_container *container);   
 void require_support_function(support_function_t f);
 
 #endif /* #ifndef INC_VHDL_TARGET_H */

@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,7 +31,8 @@
 using namespace std;
 
 vhdl_scope::vhdl_scope()
-   : parent_(NULL), init_(false), sig_assign_(true)
+   : parent_(NULL), init_(false), sig_assign_(true),
+     hoisted_init_(false)
 {
    
 }
@@ -98,6 +99,16 @@ vhdl_scope *vhdl_scope::get_parent() const
 {
    assert(parent_);
    return parent_;
+}
+
+bool vhdl_scope::hoisted_initialiser() const
+{
+   return hoisted_init_;
+}
+
+void vhdl_scope::hoisted_initialiser(bool h)
+{
+   hoisted_init_ = h;
 }
 
 vhdl_entity::vhdl_entity(const string& name, vhdl_arch *arch, int depth__)
@@ -193,6 +204,16 @@ void vhdl_arch::emit(std::ostream &of, int level) const
    blank_line(of, level);  // Extra blank line after architectures;
 }
 
+void vhdl_procedural::add_blocking_target(vhdl_var_ref* ref)
+{
+   blocking_targets_.insert(ref->get_name());
+}
+
+bool vhdl_procedural::is_blocking_target(vhdl_var_ref* ref) const
+{
+   return blocking_targets_.find(ref->get_name()) != blocking_targets_.end();
+}
+   
 void vhdl_process::add_sensitivity(const std::string &name)
 {
    sens_.push_back(name);
@@ -399,6 +420,7 @@ void vhdl_wait_stmt::emit(std::ostream &of, int level) const
    }
    
    of << ";";
+   emit_comment(of, level, true);
 }
 
 vhdl_decl::~vhdl_decl()
@@ -630,7 +652,7 @@ vhdl_abstract_assign_stmt::~vhdl_abstract_assign_stmt()
 void vhdl_abstract_assign_stmt::find_vars(vhdl_var_set_t& read,
                                           vhdl_var_set_t& write)
 {
-   write.insert(lhs_);
+   lhs_->find_vars(write);
    rhs_->find_vars(read);
 }
 
