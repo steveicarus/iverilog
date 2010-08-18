@@ -788,10 +788,42 @@ void vhdl_cassign_stmt::emit(std::ostream &of, int level) const
    of << ";";
 }
 
+vhdl_report_stmt::vhdl_report_stmt(vhdl_expr *text,
+                                   vhdl_severity_t severity)
+   : severity_(severity),
+     text_(text)
+{
+
+}
+
+void vhdl_report_stmt::emit(ostream& of, int level) const
+{
+   of << "report ";
+   text_->emit(of, level);
+
+   if (severity_ != SEVERITY_NOTE) {
+      const char *levels[] = { "note", "warning", "error", "failure" };
+      of << " severity " << levels[severity_];
+   }
+   
+   of << ";";
+}
+
+void vhdl_report_stmt::find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write)
+{
+   text_->find_vars(read);
+}
+
+vhdl_assert_stmt::vhdl_assert_stmt(const char *reason)
+   : vhdl_report_stmt(new vhdl_const_string(reason), SEVERITY_FAILURE)
+{
+   
+}
+
 void vhdl_assert_stmt::emit(std::ostream &of, int level) const
 {
-   of << "assert false";  // TODO: Allow arbitrary expression 
-   of << " report \"" << reason_ << "\" severity failure;";
+   of << "assert false ";  // TODO: Allow arbitrary expression
+   vhdl_report_stmt::emit(of, level);
 }
 
 vhdl_if_stmt::vhdl_if_stmt(vhdl_expr *test)
