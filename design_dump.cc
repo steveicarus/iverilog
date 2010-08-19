@@ -941,7 +941,7 @@ void NetEvProbe::dump_node(ostream&o, unsigned ind) const
 	    o << "negedge ";
 	    break;
       }
-      o << setw(ind) << "" << "-> " << event_->name() << "; " << endl;
+      o << setw(ind) << "" << "-> " << scope_path(event_->scope()) << "." << event_->name() << "; " << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -957,10 +957,10 @@ void NetEvWait::dump(ostream&o, unsigned ind) const
       o << setw(ind) <<"" << "@(";
 
       if (nevents() > 0)
-	    o << event(0)->name();
+	    o << scope_path(event(0)->scope()) << "." << event(0)->name();
 
       for (unsigned idx = 1 ;  idx < nevents() ;  idx += 1)
-	    o << " or " << event(idx)->name();
+	    o << " or " << scope_path(event(idx)->scope()) << "." << event(idx)->name();
 
       o << ")  // " << get_fileline() << endl;
 
@@ -981,10 +981,10 @@ void NetEvWait::dump_inline(ostream&o) const
       o << "@(";
 
       if (nevents() > 0)
-	    o << event(0)->name();
+	    o << scope_path(event(0)->scope()) << "." << event(0)->name();
 
       for (unsigned idx = 1 ;  idx < nevents() ;  idx += 1)
-	    o << " or " << event(idx)->name();
+	    o << " or " << scope_path(event(idx)->scope())<<"."<<event(idx)->name();
 
       o << ") ";
 }

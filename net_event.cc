@@ -20,6 +20,9 @@
 # include  "config.h"
 # include  "compiler.h"
 # include  "netlist.h"
+# include  <set>
+
+using namespace std;
 
 /*
  * NOTE: The name_ is perm-allocated by the caller.
@@ -119,6 +122,49 @@ unsigned NetEvent::nexpr() const
       return exprref_;
 }
 
+static bool probes_are_similar(NetEvProbe*a, NetEvProbe*b)
+{
+      set<const Nexus*> aset;
+      for (unsigned idx = 0 ; idx < a->pin_count() ; idx += 1)
+	    aset .insert( a->pin(idx).nexus() );
+
+      set<const Nexus*> bset;
+      for (unsigned idx = 0 ; idx < b->pin_count() ; idx += 1)
+	    bset .insert( b->pin(idx).nexus() );
+
+      return aset == bset;
+}
+
+static bool events_are_similar(NetEvent*a, NetEvent*b)
+{
+      if (a->nprobe() != b->nprobe())
+	    return false;
+
+      vector<bool> amatched (a->nprobe());
+      vector<bool> bmatched (b->nprobe());
+      for (unsigned adx = 0 ; adx < a->nprobe() ; adx += 1) {
+	    NetEvProbe*ap = a->probe(adx);
+	    for (unsigned bdx = 0 ; bdx < b->nprobe() ; bdx += 1) {
+		  if (bmatched[bdx]) continue;
+
+		  NetEvProbe*bp = b->probe(bdx);
+		  if (! probes_are_similar(ap, bp)) continue;
+
+		  amatched[adx] = true;
+		  bmatched[bdx] = true;
+		  break;
+	    }
+      }
+
+      for (unsigned idx = 0 ; idx < amatched.size() ; idx += 1)
+	    if (amatched[idx] == false) return false;
+
+      for (unsigned idx = 0 ; idx < bmatched.size() ; idx += 1)
+	    if (bmatched[idx] == false) return false;
+
+      return true;
+}
+
 /*
  * A "similar" event is one that has an identical non-nil set of
  * probes.
@@ -128,63 +174,23 @@ void NetEvent::find_similar_event(list<NetEvent*>&event_list)
       if (probes_ == 0)
 	    return;
 
-      map<NetEvent*,unsigned> event_matches;
-
-	/* First, get a list of all the NetEvProbes that are connected
-	   to my first probe. Then use that to create a set of
-	   candidate events. These candidate events are a superset of
-	   the similar events, so I will be culling this list later. */
+      set<NetEvent*> event_candidates;
       list<NetEvProbe*>first_probes;
       probes_->find_similar_probes(first_probes);
 
       for (list<NetEvProbe*>::iterator idx = first_probes.begin()
-		 ; idx != first_probes.end() ;  idx ++) {
-	    event_matches[ (*idx)->event() ] = 1;
+		 ; idx != first_probes.end() ; idx ++) {
+	    event_candidates .insert( (*idx)->event() );
       }
 
-	/* Now scan the remaining probes, in each case ticking the
-	   candidate event. The events that really are similar to this
-	   one will turn up in every probe list. */
-      unsigned probe_count = 1;
-      for (NetEvProbe*cur = probes_->enext_ ; cur ;  cur = cur->enext_) {
-	    list<NetEvProbe*>similar_probes;
-	    cur->find_similar_probes(similar_probes);
-
-	    for (list<NetEvProbe*>::iterator idx = similar_probes.begin()
-		       ; idx != similar_probes.end() ;  idx ++) {
-		  event_matches[ (*idx)->event() ] += 1;
-	    }
-
-	    probe_count += 1;
-      }
-
-	/* Now scan the candidate events. Those events that are
-	   connected to all my probes (match_count[x] == probe_count)
-	   are possible. If those events have the same number of
-	   events, then jackpot. */
-      for (map<NetEvent*,unsigned>::iterator idx = event_matches.begin()
-		 ; idx != event_matches.end() ;  idx ++) {
-
-	    NetEvent*tmp = (*idx).first;
-
-	    if (tmp == this)
+      for (set<NetEvent*>::iterator idx = event_candidates.begin()
+		 ; idx != event_candidates.end() ; idx ++) {
+	    if (this == *idx)
 		  continue;
-
-              /* For automatic tasks, the VVP runtime holds state for events
-                 in the automatically allocated context. This means we can't
-                 merge similar events in different automatic tasks. */
-            if (scope()->is_auto() && (tmp->scope() != scope()))
-                  continue;
-
-	    if ((*idx).second != probe_count)
+	    if (scope()->is_auto() && (scope() != (*idx)->scope()))
 		  continue;
-
-	    unsigned tcnt = 0;
-	    for (NetEvProbe*cur = tmp->probes_ ; cur ; cur = cur->enext_)
-		  tcnt += 1;
-
-	    if (tcnt == probe_count)
-		  event_list .push_back(tmp);
+	    if (events_are_similar(this, *idx))
+		  event_list.push_back(*idx);
       }
 
 }
