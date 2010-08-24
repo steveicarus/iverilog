@@ -54,7 +54,9 @@ static int draw_stask_finish(vhdl_procedural *proc, stmt_container *container,
       container->add_stmt(new vhdl_pcall_stmt("work.Verilog_Support.Finish"));
    }
    else {
-      container->add_stmt(new vhdl_assert_stmt("SIMULATION FINISHED"));
+      container->add_stmt(
+         new vhdl_report_stmt(new vhdl_const_string("SIMULATION FINISHED"),
+                              SEVERITY_FAILURE));
    }
 
    return 0;
