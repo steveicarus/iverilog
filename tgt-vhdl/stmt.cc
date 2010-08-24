@@ -30,6 +30,9 @@
 #include <set>
 #include <algorithm>
 
+static void emit_wait_for_0(vhdl_procedural *proc, stmt_container *container,
+                            ivl_statement_t stmt, vhdl_expr *expr);
+   
 /*
  * VHDL has no real equivalent of Verilog's $finish task. The
  * current solution is to use `assert false ...' to terminate
@@ -57,6 +60,106 @@ static int draw_stask_finish(vhdl_procedural *proc, stmt_container *container,
    return 0;
 }
 
+static char parse_octal(const char *p)
+{
+   assert(*p && *(p+1) && *(p+2));
+   assert(isdigit(*p) && isdigit(*(p+1)) && isdigit(*(p+1)));
+
+   return (*p - '0') * 64
+      + (*(p+1) - '0') * 8
+      + (*(p+2) - '0') * 1;
+}
+
+// Generate VHDL report statements for Verilog $display/$write
+static int draw_stask_display(vhdl_procedural *proc,
+                              stmt_container *container,
+                              ivl_statement_t stmt)
+{
+   vhdl_binop_expr *text = new vhdl_binop_expr(VHDL_BINOP_CONCAT,
+                                               vhdl_type::string());
+   
+   const int count = ivl_stmt_parm_count(stmt);
+   int i = 0;
+   while (i < count) {
+      // $display may have an empty parameter, in which case
+      // the expression will be null
+      // The behaviour here seems to be to output a space
+      ivl_expr_t net = ivl_stmt_parm(stmt, i++);
+      if (net == NULL) {
+         text->add_expr(new vhdl_const_string(" "));
+         continue;
+      }
+      
+      if (ivl_expr_type(net) == IVL_EX_STRING) {
+         ostringstream ss;
+         for (const char *p = ivl_expr_string(net); *p; p++) {
+            if (*p == '\\') {
+               // Octal escape
+               char ch = parse_octal(p+1);
+               if (ch == '\n') {
+                  // Is there a better way of handling newlines?
+                  // Maybe generate another report statement
+               }
+               else
+                  ss << ch;
+               p += 3;
+            }
+            else if (*p == '%' && *(++p) != '%') {
+               // Flush the output string up to this point
+               text->add_expr(new vhdl_const_string(ss.str()));
+               ss.str("");
+               
+               // Skip over width for now
+               while (isdigit(*p)) ++p;
+
+               switch (*p) {
+               case 'm':
+                  // TOOD: we can get the module name via attributes
+                  cerr << "Warning: no VHDL translation for %m format code"
+                       << endl;
+                  break;
+               default:
+                  {
+                     assert(i < count);
+                     ivl_expr_t netp = ivl_stmt_parm(stmt, i++);
+                     assert(netp);
+                     
+                     vhdl_expr *base = translate_expr(netp);
+                     if (NULL == base)
+                        return 1;
+
+                     emit_wait_for_0(proc, container, stmt, base);
+         
+                     text->add_expr(base->cast(text->get_type()));
+                  }
+               }
+            }
+            else
+               ss << *p;
+         }
+
+         // Emit any non-empty string data left in the buffer
+         if (!ss.str().empty())  
+            text->add_expr(new vhdl_const_string(ss.str()));
+      }
+      else {
+         vhdl_expr *base = translate_expr(net);
+         if (NULL == base) 
+            return 1;
+
+         emit_wait_for_0(proc, container, stmt, base);
+         
+         text->add_expr(base->cast(text->get_type()));
+      }
+   }
+
+   if (count == 0)
+      text->add_expr(new vhdl_const_string(""));
+
+   container->add_stmt(new vhdl_report_stmt(text));      
+   return 0;
+}
+
 /*
  * Generate VHDL for system tasks (like $display). Not all of
  * these are supported.
@@ -67,9 +170,9 @@ static int draw_stask(vhdl_procedural *proc, stmt_container *container,
    const char *name = ivl_stmt_name(stmt);
 
    if (strcmp(name, "$display") == 0)
-      return draw_stask_display(proc, container, stmt, true);
+      return draw_stask_display(proc, container, stmt);
    else if (strcmp(name, "$write") == 0)
-      return draw_stask_display(proc, container, stmt, false);
+      return draw_stask_display(proc, container, stmt);
    else if (strcmp(name, "$finish") == 0)
       return draw_stask_finish(proc, container, stmt);
    else {

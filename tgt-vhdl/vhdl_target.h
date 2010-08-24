@@ -1,3 +1,4 @@
+// -*- mode: c++ -*-
 #ifndef INC_VHDL_TARGET_H
 #define INC_VHDL_TARGET_H
 
@@ -29,8 +30,6 @@ vhdl_var_ref *nexus_to_var_ref(vhdl_scope *arch_scope, ivl_nexus_t nexus);
 vhdl_var_ref* readable_ref(vhdl_scope* scope, ivl_nexus_t nex);
 string make_safe_name(ivl_signal_t sig);
    
-int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
-                       ivl_statement_t stmt, bool newline = true);
 void require_support_function(support_function_t f);
 
 #endif /* #ifndef INC_VHDL_TARGET_H */
