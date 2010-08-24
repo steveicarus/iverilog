@@ -50,6 +50,7 @@ public:
    virtual vhdl_expr *to_boolean();
    virtual vhdl_expr *to_integer();
    virtual vhdl_expr *to_std_logic();
+   virtual vhdl_expr *to_std_ulogic();
    virtual vhdl_expr *to_vector(vhdl_type_name_t name, int w);
    virtual vhdl_expr *to_string();
    virtual void find_vars(vhdl_var_set_t& read) {}
@@ -211,6 +212,7 @@ public:
    vhdl_expr *to_boolean();
    vhdl_expr *to_integer();
    vhdl_expr *to_vector(vhdl_type_name_t name, int w);
+   vhdl_expr *to_std_ulogic();
 private:
    char bit_;
 };

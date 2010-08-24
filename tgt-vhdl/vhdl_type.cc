@@ -24,10 +24,14 @@
 #include <sstream>
 #include <iostream>
 
-
 vhdl_type *vhdl_type::std_logic()
 {
    return new vhdl_type(VHDL_TYPE_STD_LOGIC);
+}
+
+vhdl_type *vhdl_type::std_ulogic()
+{
+   return new vhdl_type(VHDL_TYPE_STD_ULOGIC);
 }
 
 vhdl_type *vhdl_type::string()
@@ -79,6 +83,8 @@ std::string vhdl_type::get_string() const
    switch (name_) {
    case VHDL_TYPE_STD_LOGIC:
       return std::string("std_logic");
+   case VHDL_TYPE_STD_ULOGIC:
+      return std::string("std_ulogic");
    case VHDL_TYPE_STD_LOGIC_VECTOR:
       return std::string("std_logic_vector");      
    case VHDL_TYPE_STRING:
@@ -167,10 +173,15 @@ vhdl_type *vhdl_type::std_logic_vector(int msb, int lsb)
    return new vhdl_type(VHDL_TYPE_STD_LOGIC_VECTOR, msb, lsb);
 }
 
-vhdl_type *vhdl_type::type_for(int width, bool issigned, int lsb)
+vhdl_type *vhdl_type::type_for(int width, bool issigned,
+                               int lsb, bool unresolved)
 {
-   if (width == 1)
-      return vhdl_type::std_logic();
+   if (width == 1) {
+      if (unresolved)
+         return vhdl_type::std_ulogic();
+      else
+         return vhdl_type::std_logic();
+   }
    else if (issigned)
       return vhdl_type::nsigned(width, lsb);
    else

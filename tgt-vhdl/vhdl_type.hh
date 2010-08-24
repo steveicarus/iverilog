@@ -25,6 +25,7 @@
 
 enum vhdl_type_name_t {
    VHDL_TYPE_STD_LOGIC,
+   VHDL_TYPE_STD_ULOGIC,
    VHDL_TYPE_STD_LOGIC_VECTOR,
    VHDL_TYPE_STRING,
    VHDL_TYPE_LINE,
@@ -71,6 +72,7 @@ public:
    
    // Common types
    static vhdl_type *std_logic();
+   static vhdl_type *std_ulogic();
    static vhdl_type *string();
    static vhdl_type *line();
    static vhdl_type *std_logic_vector(int msb, int lsb);
@@ -80,7 +82,8 @@ public:
    static vhdl_type *boolean();
    static vhdl_type *time();
 
-   static vhdl_type *type_for(int width, bool issigned, int lsb=0);
+   static vhdl_type *type_for(int width, bool issigned,
+                              int lsb=0, bool unresolved=false);
    static vhdl_type *array_of(vhdl_type *b, std::string &n, int m, int l);
 protected:
    vhdl_type_name_t name_;
