@@ -277,6 +277,7 @@ void draw_nexus(ivl_nexus_t nexus)
       
       switch (signal_type_of_nexus(nexus, width)) {
       case IVL_SIT_TRI:
+      case IVL_SIT_UWIRE:
          def = 'Z';
          break;
       case IVL_SIT_TRI0:
@@ -556,9 +557,13 @@ static void declare_one_signal(vhdl_entity *ent, ivl_signal_t sig,
       
       sig_type = new vhdl_type(*array_type);
    }
-   else
-      sig_type =
-         vhdl_type::type_for(ivl_signal_width(sig), ivl_signal_signed(sig) != 0);
+   else {
+      sig_type = vhdl_type::type_for(ivl_signal_width(sig),
+                                     ivl_signal_signed(sig) != 0,
+                                     0, ivl_signal_type(sig) == IVL_SIT_UWIRE);
+
+      
+   }
    
    ivl_signal_port_t mode = ivl_signal_port(sig);
    switch (mode) {

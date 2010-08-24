@@ -28,10 +28,12 @@
 
 vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
 {
-   //std::cout << "Cast: from=" << type_->get_string()
-   //          << " (" << type_->get_width() << ") "
-   //          << " to=" << to->get_string() << " ("
-   //          << to->get_width() << ")" << std::endl;
+#if 0
+   std::cout << "Cast: from=" << type_->get_string()
+             << " (" << type_->get_width() << ") "
+             << " to=" << to->get_string() << " ("
+             << to->get_width() << ")" << std::endl;
+#endif
 
    // If this expression hasn't been given a type then
    // we can't generate any type conversion code
@@ -56,6 +58,8 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
          return to_vector(to->get_name(), to->get_width());
       case VHDL_TYPE_STD_LOGIC:
          return to_std_logic();
+      case VHDL_TYPE_STD_ULOGIC:
+         return to_std_ulogic();
       default:
          assert(false);
       }
@@ -185,6 +189,17 @@ vhdl_expr *vhdl_expr::to_std_logic()
    return NULL;
 }
 
+vhdl_expr *vhdl_expr::to_std_ulogic()
+{
+   if (type_->get_name() == VHDL_TYPE_STD_LOGIC) {
+      vhdl_fcall *f = new vhdl_fcall("std_logic", vhdl_type::std_logic());
+      f->add_expr(this);
+      return f;
+   }
+   else 
+      assert(false);
+}
+
 /*
  * Change the width of a signed/unsigned type.
  */
@@ -302,6 +317,11 @@ vhdl_expr *vhdl_const_bit::to_integer()
 vhdl_expr *vhdl_const_bit::to_boolean()
 {
    return new vhdl_const_bool(bit_ == '1');
+}
+
+vhdl_expr *vhdl_const_bit::to_std_ulogic()
+{
+   return this;
 }
 
 vhdl_expr *vhdl_const_bit::to_vector(vhdl_type_name_t name, int w)
