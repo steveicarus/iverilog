@@ -81,10 +81,21 @@ void vhdl_element::emit_comment(std::ostream &of, int level,
 {
    if (comment_.size() > 0) {
       if (end_of_line)
-         of << "  ";
-      of << "-- " << comment_;
-      if (!end_of_line)
+         of << "  -- " << comment_;
+      else {
+         // Comment may contain embedded newlines
+         of << "-- ";
+         for (string::const_iterator it = comment_.begin();
+              it != comment_.end(); ++it) {
+            if (*it == '\n') {
+               newline(of, level);
+               of << "-- ";
+            }
+            else
+               of << *it;
+         }
          newline(of, level);
+      }
    }
 }
 
