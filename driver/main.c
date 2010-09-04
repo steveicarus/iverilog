@@ -661,10 +661,10 @@ int process_generation(const char*name)
 
       else if (strcmp(name,"no-std-include") == 0)
 	     gen_std_include = 0;
-      
+
       else if (strcmp(name,"relative-include") == 0)
 	    gen_relative_include = 1;
-      
+
       else if (strcmp(name,"no-relative-include") == 0)
 	    gen_relative_include = 0;
 
@@ -685,7 +685,7 @@ int process_generation(const char*name)
 
       else if (strcmp(name,"no-verilog-ams") == 0)
 	    gen_verilog_ams = "no-verilog-ams";
-      
+
       else {
 	    fprintf(stderr, "Unknown/Unsupported Language generation "
 		    "%s\n\n", name);
@@ -988,8 +988,17 @@ int main(int argc, char **argv)
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
-	    printf("Copyright 1998-2009 Stephen Williams\n\n");
+	    printf("Copyright 1998-2010 Stephen Williams\n\n");
 	    puts(NOTICE);
+      }
+
+      if (synth_flag) {
+	    fprintf(stderr, "Warning: Synthesis is not currently being "
+	                    "maintained and may not\n");
+	    fprintf(stderr, "         function correctly. V0.8 was the "
+	                    "last release branch to\n");
+	    fprintf(stderr, "         have active synthesis development "
+	                    "and support!\n");
       }
 
 	/* Make a common conf file path to reflect the target. */
