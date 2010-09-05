@@ -261,8 +261,42 @@ const char*drive_string(ivl_drive_t drive)
  */
 
 /*
+ * When checking if we can elide a buffer we need to keep the buffer
+ * if both the input and output for the buffer are connected only
+ * to netlist signals. This routine performs this check on the
+ * given nexus.
+ */
+static unsigned is_netlist_signal(ivl_net_logic_t net, ivl_nexus_t nex)
+{
+      unsigned idx, rtn;
+
+	/* Assume that this is a netlist signal. */
+      rtn = 1;
+
+      for (idx = 0; idx < ivl_nexus_ptrs(nex); idx += 1) {
+	    ivl_nexus_ptr_t nptr;
+	    ivl_signal_t sptr;
+
+	    nptr = ivl_nexus_ptr(nex, idx);
+
+	      /* Skip a pointer to the buffer we're checking. */
+            if (ivl_nexus_ptr_log(nptr) == net) continue;
+
+	      /* Check to see if this is a netlist signal. */
+	    sptr = ivl_nexus_ptr_sig(nptr);
+	    if (sptr && !ivl_signal_local(sptr)) continue;
+
+	      /* If we get here then this is not just a netlist signal. */
+	    rtn = 0;
+	    break;
+      }
+
+      return rtn;
+}
+
+/*
  * This tests a bufz device against an output receiver, and determines
- * if the device can be skipped. If this function returns true, then a
+ * if the device can be skipped. If this function returns false, then a
  * gate will be generated for this node. Otherwise, the code generator
  * will connect its input to its output and skip the gate.
  */
@@ -310,6 +344,14 @@ int can_elide_bufz(ivl_net_logic_t net, ivl_nexus_ptr_t nptr)
 	   resolution. */
       if (drive_count != 1)
 	    return 0;
+
+	/* If both the input and output are netlist signal then we cannot
+	   elide a BUFZ since it represents a continuous assignment. */
+      if (is_netlist_signal(net, ivl_logic_pin(net, 0)) &&
+          is_netlist_signal(net, ivl_logic_pin(net, 1)) &&
+          (ivl_logic_type(net) == IVL_LO_BUFZ)) {
+	     return 0;
+      }
 
       return 1;
 }
