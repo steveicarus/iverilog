@@ -920,6 +920,26 @@ static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
    ss << "Generated from Verilog module " << ivl_scope_tname(scope)
       << " (" << ivl_scope_def_file(scope) << ":"
       << ivl_scope_def_lineno(scope) << ")";
+
+   unsigned nparams = ivl_scope_params(scope);
+   for (unsigned i = 0; i < nparams; i++) {
+      ivl_parameter_t param = ivl_scope_param(scope, i);
+      ss << "\n  " << ivl_parameter_basename(param) << " = ";
+
+      ivl_expr_t value = ivl_parameter_expr(param);
+      switch (ivl_expr_type(value)) {
+         case IVL_EX_STRING:
+            ss << "\"" << ivl_expr_string(value) << "\"";
+            break;
+
+         case IVL_EX_NUMBER:
+            ss << ivl_expr_value(value);
+            break;
+
+      default:
+         assert(false);
+      }
+   }
    
    arch->set_comment(ss.str());
    ent->set_comment(ss.str());
