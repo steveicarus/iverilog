@@ -124,6 +124,9 @@ unsigned NetEvent::nexpr() const
 
 static bool probes_are_similar(NetEvProbe*a, NetEvProbe*b)
 {
+      if ( a->edge() != b->edge() )
+            return false;
+
       set<const Nexus*> aset;
       for (unsigned idx = 0 ; idx < a->pin_count() ; idx += 1)
 	    aset .insert( a->pin(idx).nexus() );
@@ -454,4 +457,3 @@ NetProc* NetEvWait::statement()
 {
       return statement_;
 }
-
