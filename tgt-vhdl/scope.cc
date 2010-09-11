@@ -938,7 +938,7 @@ static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
             break;
 
          case IVL_EX_NUMBER:
-            ss << ivl_expr_value(value);
+            ss << ivl_expr_uvalue(value);
             break;
 
       default:
