@@ -933,7 +933,7 @@ static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
             break;
 
          case IVL_EX_NUMBER:
-            ss << ivl_expr_value(value);
+            ss << ivl_expr_uvalue(value);
             break;
 
       default:
@@ -954,7 +954,7 @@ static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
 extern "C" int draw_skeleton_scope(ivl_scope_t scope, void *_unused)
 {
    static int depth = 0;
-   
+
    if (seen_this_scope_type(scope))
       return 0;  // Already generated a skeleton for this scope type
    
@@ -1071,7 +1071,7 @@ extern "C" int draw_constant_drivers(ivl_scope_t scope, void *_parent)
                vhdl_var_ref *ref = nexus_to_var_ref(arch_scope, nex);
                
                ent->get_arch()->add_stmt
-                  (new vhdl_cassign_stmt(ref, priv->const_driver));                  
+                  (new vhdl_cassign_stmt(ref, priv->const_driver));
                priv->const_driver = NULL;
             }
 
