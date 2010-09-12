@@ -829,7 +829,7 @@ inline vvp_vector8_t::vvp_vector8_t(unsigned size__)
 : size_(size__)
 {
       if (size_ <= PTR_THRESH) {
-	    new (val_) vvp_scalar_t[PTR_THRESH];
+	    new (reinterpret_cast<void*>(val_)) vvp_scalar_t[PTR_THRESH];
       } else {
 	    ptr_ = new vvp_scalar_t[size_];
       }
