@@ -289,8 +289,15 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope,
 void eval_expr(NetExpr*&expr, int prune_width)
 {
       assert(expr);
-      if (dynamic_cast<NetEConst*>(expr)) return;
       if (dynamic_cast<NetECReal*>(expr)) return;
+	/* Resize a constant if allowed and needed. */
+      if (NetEConst *tmp = dynamic_cast<NetEConst*>(expr)) {
+	    if (prune_width <= 0) return;
+	    if (tmp->has_width()) return;
+	    if ((unsigned)prune_width <= tmp->expr_width()) return;
+	    expr = pad_to_width(expr, (unsigned)prune_width, *expr);
+	    return;
+      }
 
       NetExpr*tmp = expr->eval_tree(prune_width);
       if (tmp != 0) {
