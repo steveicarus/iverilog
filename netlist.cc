@@ -269,7 +269,7 @@ bool NetPins::is_linked(void)
 NetObj::NetObj(NetScope*s, perm_string n, unsigned np)
 : NetPins(np), scope_(s), name_(n), delay1_(0), delay2_(0), delay3_(0)
 {
-      /* Don't 
+      /* Don't
       ivl_assert(*this, np > 0);
        * because it would happen before we get to print a useful
        * message in the NetNet constructor
@@ -2725,7 +2725,11 @@ DelayType NetCondit::delay_type() const
       } else {
 	      /* Because of the indeterminate conditional value the
 	       * best we can have for this case is a possible delay. */
-	    result = combine_delays(if_->delay_type(), NO_DELAY);
+	    if (if_) {
+		  result = combine_delays(if_->delay_type(), NO_DELAY);
+	    } else {
+		  result = NO_DELAY;
+	    }
       }
 
       return result;
