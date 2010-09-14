@@ -872,7 +872,7 @@ int main(int argc, char*argv[])
 
       if (gn_cadence_types_flag)
 	    lexor_keyword_mask |= GN_KEYWORDS_ICARUS;
-      
+
       if (gn_verilog_ams_flag)
 	    lexor_keyword_mask |= GN_KEYWORDS_VAMS_2_3;
 

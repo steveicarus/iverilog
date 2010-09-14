@@ -1870,8 +1870,8 @@ void vvp_vector4array_aa::reset_instance(vvp_context_t context)
 	    for (unsigned idx = 0 ; idx < words_ ; idx += 1) {
 		  if (cell->abits_ptr_) {
                         for (unsigned n = 0 ; n < cnt ; n += 1) {
-                  	    cell->abits_ptr_[n] = vvp_vector4_t::WORD_X_ABITS;
-                  	    cell->bbits_ptr_[n] = vvp_vector4_t::WORD_X_BBITS;
+			      cell->abits_ptr_[n] = vvp_vector4_t::WORD_X_ABITS;
+			      cell->bbits_ptr_[n] = vvp_vector4_t::WORD_X_BBITS;
                         }
                   }
                   cell++;

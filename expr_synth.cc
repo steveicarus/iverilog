@@ -1328,7 +1328,7 @@ static NetEvWait* make_func_trigger(Design*des, NetScope*scope, NetExpr*root)
       delete nset;
 
       return trigger;
-}  
+}
 
 NetNet* NetESFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
 {

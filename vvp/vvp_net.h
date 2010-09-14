@@ -65,7 +65,6 @@ typedef void*vvp_context_item_t;
 
 inline vvp_context_t vvp_allocate_context(unsigned nitem)
 {
-      
       return (vvp_context_t)malloc((2 + nitem) * sizeof(void*));
 }
 

@@ -69,7 +69,7 @@ void vvp_fun_concat::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                                   vvp_context_t)
 {
       assert(bit.size() == wid);
-            
+
       unsigned pdx = port.port();
 
       if (vwid != wid_[pdx]) {

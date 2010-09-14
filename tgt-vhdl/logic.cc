@@ -36,11 +36,11 @@ static vhdl_expr *inputs_to_expr(vhdl_scope *scope, vhdl_binop_t op,
    // the program has already been type checked
    vhdl_binop_expr *gate =
       new vhdl_binop_expr(op, vhdl_type::std_logic());
-   
+
    int npins = ivl_logic_pins(log);
    for (int i = 1; i < npins; i++) {
       ivl_nexus_t input = ivl_logic_pin(log, i);
-      
+
       gate->add_expr(readable_ref(scope, input));
    }
 
@@ -57,7 +57,7 @@ static vhdl_expr *input_to_expr(vhdl_scope *scope, vhdl_unaryop_t op,
    assert(input);
 
    vhdl_expr *operand = readable_ref(scope, input);
-   return new vhdl_unaryop_expr(op, operand, vhdl_type::std_logic()); 
+   return new vhdl_unaryop_expr(op, operand, vhdl_type::std_logic());
 }
 
 static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
@@ -65,7 +65,7 @@ static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
    ivl_nexus_t output = ivl_logic_pin(log, 0);
    vhdl_var_ref *lhs = nexus_to_var_ref(arch->get_scope(), output);
    assert(lhs);
-   
+
    vhdl_expr *val = readable_ref(arch->get_scope(), ivl_logic_pin(log, 1));
 
    vhdl_expr *sel = readable_ref(arch->get_scope(), ivl_logic_pin(log, 2));
@@ -80,7 +80,7 @@ static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
       vhdl_binop_t op = if0 ? VHDL_BINOP_EQ : VHDL_BINOP_NEQ;
       cmp = new vhdl_binop_expr(sel, op, zero, NULL);
    }
-   
+
    ivl_signal_t sig = find_signal_named(lhs->get_name(), arch->get_scope());
    char zbit;
    switch (ivl_signal_type(sig)) {
@@ -107,12 +107,12 @@ static void bufif_logic(vhdl_arch *arch, ivl_net_logic_t log, bool if0)
 static void comb_udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
 {
    ivl_udp_t udp = ivl_logic_udp(log);
- 
+
    // As with regular case statements, the expression in a
    // `with .. select' statement must be "locally static".
    // This is achieved by first combining the inputs into
    // a temporary
-   
+
    ostringstream ss;
    ss << ivl_logic_basename(log) << "_Tmp";
    int msb = ivl_udp_nin(udp) - 1;
@@ -149,11 +149,11 @@ static void comb_udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
    // Ensure the select statement completely covers the input space
    // or some strict VHDL compilers will complain
    ws->add_default(new vhdl_const_bit('X'));
-   
+
    int nrows = ivl_udp_rows(udp);
    for (int i = 0; i < nrows; i++) {
       const char *row = ivl_udp_row(udp, i);
-      
+
       vhdl_expr *value = new vhdl_const_bit(row[nin]);
       vhdl_expr *cond = new vhdl_const_bits(row, nin, false);
 
@@ -189,11 +189,11 @@ static void seq_udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
    int msb = ivl_udp_nin(udp) - 1;
    vhdl_type *tmp_type = vhdl_type::std_logic_vector(msb, 0);
    proc->get_scope()->add_decl(new vhdl_var_decl("UDP_Inputs", tmp_type));
-   
+
    // Concatenate the inputs into a single expression that can be
    // used as the test in a case statement (this can't be inserted
    // directly into the case statement due to the requirement that
-   // the test expression be "locally static")   
+   // the test expression be "locally static")
    int nin = ivl_udp_nin(udp);
    vhdl_expr *tmp_rhs = NULL;
    if (nin == 1) {
@@ -217,7 +217,7 @@ static void seq_udp_logic(vhdl_arch *arch, ivl_net_logic_t log)
 
    proc->get_container()->add_stmt
       (new vhdl_assign_stmt(new vhdl_var_ref("UDP_Inputs", NULL), tmp_rhs));
-   
+
    arch->add_stmt(proc);
 }
 
@@ -273,18 +273,18 @@ void draw_logic(vhdl_arch *arch, ivl_net_logic_t log)
       udp_logic(arch, log);
       break;
    default:
-      {          
+      {
          // The output is always pin zero
          ivl_nexus_t output = ivl_logic_pin(log, 0);
          vhdl_var_ref *lhs = nexus_to_var_ref(arch->get_scope(), output);
 
          vhdl_expr *rhs = translate_logic_inputs(arch->get_scope(), log);
          vhdl_cassign_stmt *ass = new vhdl_cassign_stmt(lhs, rhs);
-         
+
          ivl_expr_t delay = ivl_logic_delay(log, 1);
          if (delay)
             ass->set_after(translate_time_expr(delay));
-         
+
          arch->add_stmt(ass);
       }
    }

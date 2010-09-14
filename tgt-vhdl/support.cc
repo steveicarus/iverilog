@@ -92,7 +92,7 @@ void support_function::emit_reduction(std::ostream &of, int level,
    // Emit a VHDL function emulating a Verilog reduction operator
    // Where op is the corresponding VHDL operator and unit is the
    // right-unit of the operator
-   
+
    of << "(X : std_logic_vector) return std_logic is"
       << nl_string(indent(level))
       << "variable R : std_logic := '" << unit << "';" << nl_string(level)
@@ -106,7 +106,7 @@ void support_function::emit_reduction(std::ostream &of, int level,
 void support_function::emit(std::ostream &of, int level) const
 {
    of << nl_string(level) << "function " << function_name(type_);
-   
+
    switch (type_) {
    case SF_UNSIGNED_TO_BOOLEAN:
       of << "(X : unsigned) return Boolean is" << nl_string(level)
@@ -169,6 +169,6 @@ void support_function::emit(std::ostream &of, int level) const
    default:
       assert(false);
    }
-   
+
    of << nl_string(level) << "end function;";
 }

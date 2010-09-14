@@ -1422,7 +1422,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			des->errors += 1;
 			continue;
 		  }
-		  
+
 		    // We do not support real inout ports at all.
 		  if (!prts.empty() && (prts[0]->data_type() == IVL_VT_REAL )) {
 			cerr << pins[idx]->get_fileline() << ": error: "

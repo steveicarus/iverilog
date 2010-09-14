@@ -2589,7 +2589,7 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
 	/* If we have an undefined index then just produce a 'bx result. */
       fprintf(vvp_out, "    %%jmp/1  T_%d.%d, 4;\n", thread_count, lab_x);
 
-      	/* If the subv result is a magic constant, then make a copy in
+	/* If the subv result is a magic constant, then make a copy in
 	   writable vector space and work from there instead. */
       if (subv.base < 4) {
 	    res.base = allocate_vector(subv.wid);
