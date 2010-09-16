@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -198,7 +198,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       if (reg->array_dimensions() > 0)
 	    return elaborate_lval_net_word_(des, scope, reg);
 
-     	// This must be after the array word elaboration above!
+	// This must be after the array word elaboration above!
       if (reg->get_scalar() &&
           use_sel != index_component_t::SEL_NONE) {
 	    cerr << get_fileline() << ": error: can not select part of ";
@@ -342,7 +342,6 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
       index_tail.msb->test_width(des, scope, integer_width, integer_width,
 			         expr_type_tmp, unsized_flag_tmp);
 
-    
 	// Bit selects have a single select expression. Evaluate the
 	// constant value and treat it as a part select with a bit
 	// width of 1.
@@ -357,10 +356,7 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
       if (mux) {
 	      // Non-constant bit mux. Correct the mux for the range
 	      // of the vector, then set the l-value part select expression.
-	    if (reg->msb() < reg->lsb())
-		  mux = make_sub_expr(reg->lsb(), mux);
-	    else if (reg->lsb() != 0)
-		  mux = make_add_expr(mux, - reg->lsb());
+	    mux = normalize_variable_base(mux, reg->msb(), reg->lsb(), 1, true);
 
 	    lv->set_part(mux, 1);
 
@@ -535,20 +531,12 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       } else {
 	      /* Correct the mux for the range of the vector. */
 	    if (use_sel == index_component_t::SEL_IDX_UP) {
-		  if (reg->msb() > reg->lsb()) {
-			if (long offset = reg->lsb())
-			      base = make_add_expr(base, -offset);
-		  } else {
-			base = make_sub_expr(reg->lsb()-wid+1, base);
-		  }
+		  base = normalize_variable_base(base, reg->msb(), reg->lsb(),
+		                                 wid, true);
 	    } else {
 		    // This is assumed to be a SEL_IDX_DO.
-		  if (reg->msb() > reg->lsb()) {
-			if (long offset = reg->lsb()+wid-1)
-			      base = make_add_expr(base, -offset);
-		  } else {
-			base = make_sub_expr(reg->lsb(), base);
-		  }
+		  base = normalize_variable_base(base, reg->msb(), reg->lsb(),
+		                                 wid, false);
 	    }
       }
 

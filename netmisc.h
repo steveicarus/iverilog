@@ -92,6 +92,13 @@ extern NetExpr*condition_reduce(NetExpr*expr);
 extern NetNet*crop_to_width(Design*des, NetNet*n, unsigned w);
 
 /*
+ * This function generates an equation to normalize an expression using
+ * the provided array/vector information.
+ */
+extern NetExpr*normalize_variable_base(NetExpr *base, long msb, long lsb,
+                                       unsigned long wid, bool is_up);
+
+/*
  * This function takes as input a NetNet signal and adds a constant
  * value to it. If the val is 0, then simply return sig. Otherwise,
  * return a new NetNet value that is the output of an addition.
@@ -100,21 +107,12 @@ extern NetNet*add_to_net(Design*des, NetNet*sig, long val);
 extern NetNet*sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig);
 
 /*
- * These functions make various sorts of expressions, given operands
- * of certain type. The order of the operands is preserved in cases
- * where order matters.
- *
  * make_add_expr
  *   Make a NetEBAdd expression with <expr> the first argument and
  *   <val> the second. This may get turned into a subtract if <val> is
  *   less than zero. If val is exactly zero, then return <expr> as is.
- *
- * make_sub_expr
- *   Make a NetEBAdd(subtract) node that subtracts the given
- *   expression from the integer value.
  */
 extern NetExpr*make_add_expr(NetExpr*expr, long val);
-extern NetExpr*make_sub_expr(long val, NetExpr*expr);
 
 /*
  * Make a NetEConst object that contains only X bits.
