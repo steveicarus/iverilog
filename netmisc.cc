@@ -157,6 +157,40 @@ NetNet* cast_to_real(Design*des, NetScope*scope, NetNet*src)
 }
 
 /*
+ * Add a signed constant to an existing expression. Generate a new
+ * NetEBAdd node that has the input expression and an expression made
+ * from the constant value.
+ */
+static NetExpr* make_add_expr(NetExpr*expr, long val)
+{
+      if (val == 0)
+	    return expr;
+
+	// If the value to be added is <0, then instead generate a
+	// SUBTRACT node and turn the value positive.
+      char add_op = '+';
+      if (val < 0) {
+	    add_op = '-';
+	    val = -val;
+      }
+
+      verinum val_v (val);
+      val_v.has_sign(true);
+
+      if (expr->has_width()) {
+	    val_v = verinum(val_v, expr->expr_width());
+      }
+
+      NetEConst*val_c = new NetEConst(val_v);
+      val_c->set_line(*expr);
+
+      NetEBAdd*res = new NetEBAdd(add_op, expr, val_c);
+      res->set_line(*expr);
+
+      return res;
+}
+
+/*
  * Subtract an existing expression from a signed constant.
  */
 static NetExpr* make_sub_expr(long val, NetExpr*expr)
@@ -271,37 +305,50 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
 }
 
 /*
- * Add a signed constant to an existing expression. Generate a new
- * NetEBAdd node that has the input expression and an expression made
- * from the constant value.
+ * This routine generates the normalization expression needed for a variable
+ * array word select.
  */
-NetExpr* make_add_expr(NetExpr*expr, long val)
+NetExpr *normalize_variable_array_base(NetExpr *base, long offset,
+                                       unsigned count)
 {
-      if (val == 0)
-	    return expr;
+      assert(offset != 0);
+	/* Calculate the space needed for the offset. */
+      unsigned min_wid = num_bits(-offset);
+	/* We need enough space for the larger of the offset or the base
+	 * expression. */
+      if (min_wid < base->expr_width()) min_wid = base->expr_width();
+	/* Now that we have the minimum needed width increase it by one
+	 * to make room for the normalization calculation. */
+      min_wid += 1;
+	/* Pad the base expression to the correct width. */
+      base = pad_to_width(base, min_wid, *base);
+	/* If the offset is greater than zero then we need to do signed
+	 * math to get the location value correct. */
+      if (offset > 0 && ! base->has_sign()) {
+	      /* We need this extra select to hide the signed property
+	       * from the padding above. It will be removed automatically
+	       * during code generation. */
+	    NetESelect *tmp = new NetESelect(base, 0 , min_wid);
+	    tmp->set_line(*base);
+	    tmp->cast_signed(true);
+	    base = tmp;
+      }
+	/* Normalize the expression. */
+      base = make_add_expr(base, -offset);
 
-	// If the value to be added is <0, then instead generate a
-	// SUBTRACT node and turn the value positive.
-      char add_op = '+';
-      if (val < 0) {
-	    add_op = '-';
-	    val = -val;
+	/* We should not need to do this, but .array/port does not
+	 * handle a small signed index correctly and it is a major
+	 * effort to fix it. For now we will just pad the expression
+	 * enough so that any negative value when converted to
+	 * unsigned is larger than the maximum array word. */
+      if (base->has_sign()) {
+	    unsigned range_wid = num_bits(count-1) + 1;
+	    if (min_wid < range_wid) {
+		  base = pad_to_width(base, range_wid, *base);
+	    }
       }
 
-      verinum val_v (val);
-      val_v.has_sign(true);
-
-      if (expr->has_width()) {
-	    val_v = verinum(val_v, expr->expr_width());
-      }
-
-      NetEConst*val_c = new NetEConst(val_v);
-      val_c->set_line(*expr);
-
-      NetEBAdd*res = new NetEBAdd(add_op, expr, val_c);
-      res->set_line(*expr);
-
-      return res;
+      return base;
 }
 
 NetEConst* make_const_x(unsigned long wid)

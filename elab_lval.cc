@@ -269,7 +269,8 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 	// expression to calculate the canonical address.
       if (long base = reg->array_first()) {
 
-	    word = make_add_expr(word, 0-base);
+	    word = normalize_variable_array_base(word, base,
+	                                         reg->array_count());
 	    eval_expr(word);
       }
 
