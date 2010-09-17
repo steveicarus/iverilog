@@ -2844,7 +2844,8 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
               // expression to calculate the canonical address.
             if (long base = net->array_first()) {
 
-                  word_index = make_add_expr(word_index, 0-base);
+                  word_index = normalize_variable_array_base(
+		                     word_index, base, net->array_count());
                   eval_expr(word_index);
             }
       }
