@@ -814,14 +814,15 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	/* Get all the input label that I will use for parameters to
 	   the functor that I create later. */
       ninp = ivl_logic_pins(lptr) - 1;
+      assert(ninp >= 0);
       input_strings = calloc(ninp, sizeof(char*));
-      for (pdx = 0 ;  pdx < ninp ;  pdx += 1)
+      for (pdx = 0 ;  pdx < (unsigned)ninp ;  pdx += 1)
 	    input_strings[pdx] = draw_net_input(ivl_logic_pin(lptr, pdx+1));
 
       level = 0;
       while (ninp) {
-	    int inst;
-	    for (inst = 0; inst < ninp; inst += 4) {
+	    unsigned inst;
+	    for (inst = 0; inst < (unsigned)ninp; inst += 4) {
 		  if (ninp > 4)
 			fprintf(vvp_out, "L_%p/%d/%d .functor %s %u",
 				lptr, level, inst, lcasc, vector_width);
@@ -834,7 +835,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 			      fprintf(vvp_out, " [%u %u]", str0, str1);
 
 		  }
-		  for (pdx = inst; pdx < ninp && pdx < inst+4 ; pdx += 1) {
+		  for (pdx = inst; pdx < (unsigned)ninp && pdx < inst+4 ; pdx += 1) {
 			if (level) {
 			      fprintf(vvp_out, ", L_%p/%d/%d",
 				      lptr, level - 1, pdx*4);

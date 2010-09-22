@@ -308,7 +308,8 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			for (bit = wid ;  bit > 0 ;  bit -= 1)
 			      *dp++ = bits[bit-1];
 			*dp++ = 0;
-			assert(dp - buffer <= sizeof buffer);
+			assert(dp >= buffer);
+			assert((unsigned)(dp - buffer) <= sizeof buffer);
 		  }
 		  args[idx].text = strdup(buffer);
 		  continue;

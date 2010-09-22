@@ -546,7 +546,7 @@ static unsigned fread_word(FILE *fp, vpiHandle word,
 	 * my local vector. */
       val.format = vpiVectorVal;
       vpi_get_value(word, &val);
-      for (bidx = 0; bidx < words; bidx += 1) {
+      for (bidx = 0; (unsigned)bidx < words; bidx += 1) {
 	    vector[bidx].aval = val.value.vector[bidx].aval;
 	    vector[bidx].bval = val.value.vector[bidx].bval;
       }
@@ -683,9 +683,10 @@ static PLI_INT32 sys_fread_calltf(PLI_BYTE8*name)
       vector = calloc(words, sizeof(s_vpi_vecval));
       bpe = (width+7)/8;
 
+      assert(count >= 0);
       if (is_mem) {
 	    rtn = 0;
-	    for (idx = 0; idx < count; idx += 1) {
+	    for (idx = 0; idx < (unsigned)count; idx += 1) {
 		  vpiHandle word;
 		  word = vpi_handle_by_index(mem_reg, start+(signed)idx);
 		  rtn += fread_word(fp, word, words, bpe, vector);

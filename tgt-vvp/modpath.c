@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,7 +28,7 @@
 
 static ivl_signal_t find_path_source_port(ivl_delaypath_t path)
 {
-      int idx;
+      unsigned idx;
       ivl_nexus_t nex = ivl_path_source(path);
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
