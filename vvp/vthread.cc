@@ -951,7 +951,7 @@ bool of_ASSIGN_V0(vthread_t thr, vvp_code_t cp)
       vvp_net_ptr_t ptr (cp->net, 0);
       if (bit >= 4) {
 	      // If the vector is not a synthetic one, then have the
-	      // scheduler pluck it direcly out of my vector space.
+	      // scheduler pluck it directly out of my vector space.
 	    schedule_assign_plucked_vector(ptr, delay, thr->bits4, bit, wid);
       } else {
 	    vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
@@ -2028,7 +2028,7 @@ static unsigned long* divide_bits(unsigned long*ap, unsigned long*bp, unsigned w
 					 ap[cur_ptr+btop+1]);
 	    }
 
-	      // cur_res is a guestimate of the result this far. It
+	      // cur_res is a guesstimate of the result this far. It
 	      // may be 1 too big. (But it will also be >0) Try it,
 	      // and if the difference comes out negative, then adjust.
 

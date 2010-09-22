@@ -1041,7 +1041,7 @@ int main(int argc, char **argv)
 
 	/* If we are planning on opening a dependencies file, then
 	   open and truncate it here. The other phases of compilation
-	   will append to the file, so this is necessray to make sure
+	   will append to the file, so this is necessary to make sure
 	   it starts out empty. */
       if (depfile) {
 	    FILE*fd = fopen(depfile, "w");

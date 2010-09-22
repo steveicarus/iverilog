@@ -747,7 +747,7 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
    bool is_top_level = container == proc->get_container()
       && container->empty();
 
-   // See if this can be implemented in a more idomatic way before we
+   // See if this can be implemented in a more idiomatic way before we
    // fall back on the generic translation
    if (is_top_level && draw_synthesisable_wait(proc, container, stmt))
       return 0;

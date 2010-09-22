@@ -477,7 +477,7 @@ static vhdl_expr *translate_select(ivl_expr_t e)
                                     new vhdl_type(*from->get_type()));
       }
       else if (from_var_ref->get_type()->get_name() != VHDL_TYPE_STD_LOGIC) {
-         // We can use the more idomatic VHDL slice notation on a
+         // We can use the more idiomatic VHDL slice notation on a
          // single variable reference
          vhdl_type integer(VHDL_TYPE_INTEGER);
          from_var_ref->set_slice(base->cast(&integer), ivl_expr_width(e) - 1);

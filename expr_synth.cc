@@ -907,7 +907,7 @@ NetNet* NetEUnary::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    return sig;
       }
 
-      cerr << get_fileline() << ": iternal error: "
+      cerr << get_fileline() << ": internal error: "
 	   << "NetEUnary::synthesize cannot handle op_=" << op_ << endl;
       des->errors += 1;
       return expr_->synthesize(des, scope, root);

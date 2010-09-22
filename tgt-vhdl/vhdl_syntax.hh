@@ -569,7 +569,7 @@ public:
    enum assign_type_t { ASSIGN_BLOCK, ASSIGN_NONBLOCK, ASSIGN_CONST };
    
    // Get the sort of assignment statement to generate for
-   // assignemnts to this declaration
+   // assignments to this declaration
    // For some sorts of declarations it doesn't make sense
    // to assign to it so calling assignment_type just raises
    // an assertion failure
@@ -766,7 +766,7 @@ protected:
 
    // If this is true then the body contains a `wait' statement
    // embedded in it somewhere
-   // If this is the case then we can't use a sensitvity list for
+   // If this is the case then we can't use a sensitivity list for
    // the process
    bool contains_wait_stmt_;
 };
