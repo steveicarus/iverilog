@@ -929,9 +929,9 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	  case 'G':
 	    rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
 	    if (number_is_immediate(le,16,0) && !number_is_unknown(le)) {
-		  unsigned imm = get_number_immediate(le);
+		  long imm = get_number_immediate(le);
 		  assert(imm >= 0);
-		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
+		  fprintf(vvp_out, "   %%cmpi/%c %u, %ld, %u;\n", s_flag,
 			  rv.base, imm, rv.wid);
 	    } else {
 		  lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
@@ -945,9 +945,9 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	  case 'L':
 	    lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
 	    if (number_is_immediate(re,16,0) && !number_is_unknown(re)) {
-		  unsigned imm = get_number_immediate(re);
+		  long imm = get_number_immediate(re);
 		  assert(imm >= 0);
-		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
+		  fprintf(vvp_out, "   %%cmpi/%c %u, %ld, %u;\n", s_flag,
 			  lv.base, imm, lv.wid);
 	    } else {
 		  rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
@@ -961,9 +961,9 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	  case '<':
 	    lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
 	    if (number_is_immediate(re,16,0) && !number_is_unknown(re)) {
-		  unsigned imm = get_number_immediate(re);
+		  long imm = get_number_immediate(re);
 		  assert(imm >= 0);
-		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
+		  fprintf(vvp_out, "   %%cmpi/%c %u, %ld, %u;\n", s_flag,
 			  lv.base, imm, lv.wid);
 	    } else {
 		  rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
@@ -976,9 +976,9 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	  case '>':
 	    rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
 	    if (number_is_immediate(le,16,0) && !number_is_unknown(le)) {
-		  unsigned imm = get_number_immediate(le);
+		  long imm = get_number_immediate(le);
 		  assert(imm >= 0);
-		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
+		  fprintf(vvp_out, "   %%cmpi/%c %u, %ld, %u;\n", s_flag,
 			  rv.base, imm, rv.wid);
 	    } else {
 		  lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
@@ -2609,7 +2609,7 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
 	    fprintf(vvp_out, "    %%mov %u, %u, %u; Pad sub-expression to match width\n",
 		    res.base, subv.base, subv.wid);
 	    if (ivl_expr_signed(sube)) {
-		  int idx;
+		  unsigned idx;
 		  for (idx = subv.wid ; idx < res.wid ; idx += 1) {
 			fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
 				res.base+idx, subv.base+subv.wid-1);

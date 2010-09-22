@@ -94,7 +94,8 @@ static char* draw_C4_to_string(ivl_net_const_t cptr)
       for (idx = 0 ;  idx < ivl_const_width(cptr) ;  idx += 1) {
 	    char bitchar = bits[ivl_const_width(cptr)-idx-1];
 	    *dp++ = bitchar;
-	    assert((dp - result) < result_len);
+	    assert(dp >= result);
+	    assert((unsigned)(dp - result) < result_len);
       }
 
       strcpy(dp, ">");
@@ -144,7 +145,8 @@ static char* draw_C8_to_string(ivl_net_const_t cptr,
 		  assert(0);
 		  break;
 	    }
-	    assert(dp - result < nresult);
+	    assert(dp >= result);
+	    assert((unsigned)(dp - result) < nresult);
       }
 
       strcpy(dp, ">");
@@ -260,7 +262,8 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  dp += ivl_logic_width(lptr);
 		  *dp++ = '>';
 		  *dp = 0;
-		  assert((dp-result) <= result_len);
+		  assert(dp >= result);
+		  assert((unsigned)(dp - result) <= result_len);
 		  return result;
 	    } else {
 		  char val[4];
@@ -279,7 +282,8 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  dp += 3*ivl_logic_width(lptr);
 		  *dp++ = '>';
 		  *dp = 0;
-		  assert((dp-result) <= result_len);
+		  assert(dp >= result);
+		  assert((unsigned)(dp - result) <= result_len);
 		  return result;
 	    }
       }
@@ -297,7 +301,8 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  dp += ivl_logic_width(lptr);
 		  *dp++ = '>';
 		  *dp = 0;
-		  assert((dp-result) <= result_len);
+		  assert(dp >= result);
+		  assert((unsigned)(dp - result) <= result_len);
 
 	    } else {
 		  char val[4];
@@ -316,7 +321,8 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  dp += 3*ivl_logic_width(lptr);
 		  *dp++ = '>';
 		  *dp = 0;
-		  assert((dp-result) <= result_len);
+		  assert(dp >= result);
+		  assert((unsigned)(dp - result) <= result_len);
 
 	    }
 
