@@ -711,7 +711,7 @@ static void draw_net_input_x(ivl_nexus_t nex,
       if (res == IVL_SIT_UWIRE) {
 	    if (ndrivers > 1) {
 		  unsigned uidx;
-		  ivl_signal_t usig;
+		  ivl_signal_t usig = 0;
 		    /* Find the uwire signal. */
 		  for (uidx = 0 ;  uidx < ivl_nexus_ptrs(nex) ;  uidx += 1) {
 			ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, uidx);
