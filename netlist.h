@@ -1829,7 +1829,7 @@ class NetPartSelect  : public NetNode {
  * that makes sense for the technology.
  *
  * A NetBUFZ is transparent if strengths are passed through it without
- * change. A NetBUFZ is non-transparent if values other then HiZ are
+ * change. A NetBUFZ is non-transparent if values other than HiZ are
  * converted to the strength of the output.
  */
 class NetBUFZ  : public NetNode {

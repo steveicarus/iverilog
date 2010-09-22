@@ -1942,7 +1942,7 @@ static struct vector_info draw_number_expr(ivl_expr_t expr, unsigned wid)
 /*
  * This little helper function generates the instructions to pad a
  * vector in place. It is assumed that the calling function has set up
- * the first sub_sidth bits of the dest vector, and the signed_flag is
+ * the first sub_width bits of the dest vector, and the signed_flag is
  * true if the extension is to be signed.
  */
 static void pad_in_place(struct vector_info dest, unsigned sub_width, int signed_flag)

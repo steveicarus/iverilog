@@ -729,7 +729,7 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 	    return tmp;
       }
 
-	// Falback, handle the general case.
+	// Fallback, handle the general case.
       if (expr_wid > 0)
 	    lp = pad_to_width(lp, expr_wid, *this);
       tmp = new NetEBShift(op_, lp, rp);
@@ -3494,7 +3494,7 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 	// evaluation of ternary expressions, but it doesn't disallow
 	// it. The disadvantage of doing this is that semantic errors
 	// in the unused clause will be missed, but people don't seem
-	// to mind, and do apreciate the optimization available here.
+	// to mind, and do appreciate the optimization available here.
       if (NetEConst*tmp = dynamic_cast<NetEConst*> (con)) {
 	    verinum cval = tmp->value();
 	    ivl_assert(*this, cval.len()==1);

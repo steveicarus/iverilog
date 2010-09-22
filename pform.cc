@@ -65,7 +65,7 @@ void parm_to_defparam_list(const string&param)
 
     // Resolve hierarchical name for defparam. Remember
     // to deal with bit select for generate scopes. Bit
-    // select expression should be constant interger.
+    // select expression should be constant integer.
     pform_name_t name;
     char *nkey = key;
     char *ptr = strchr(key, '.');
@@ -144,7 +144,7 @@ void parm_to_defparam_list(const string&param)
         char *num = strchr(value, '\'');
         if (num != 0) {
             verinum *val;
-            // BASED_NUMBER, somthing like - scope.parameter='b11
+            // BASED_NUMBER, something like - scope.parameter='b11
             // make sure to check 'h' first because 'b'&'d' may be included
             // in hex format
             if (strchr(num, 'h') || strchr(num, 'H'))

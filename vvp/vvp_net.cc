@@ -1212,7 +1212,7 @@ void vvp_vector4_t::mov(unsigned dst, unsigned src, unsigned cnt)
 
 		    // Here we know that either the source or
 		    // destination is unaligned, and also we know that
-		    // the count is less then a full word.
+		    // the count is less than a full word.
 		  unsigned long vmask = (1UL << trans) - 1;
 		  unsigned long tmp;
 

@@ -914,7 +914,7 @@ inline bool vvp_vector8_t::eeq(const vvp_vector8_t&that) const
 	    return true;
 
       if (size_ <= sizeof val_)
-	      // This is equivilent to memcmp(val_, that.val_, sizeof val_)==0
+	      // This is equivalent to memcmp(val_, that.val_, sizeof val_)==0
 	    return ptr_ == that.ptr_;
       else
 	    return memcmp(ptr_, that.ptr_, size_) == 0;
@@ -1163,7 +1163,7 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 	// bit value. If bits were changed by the force mask, then the
 	// method returns REPL and the caller should propagate the rep
 	// value instead. If the function returns STOP, then all the
-	// output bits are filtered by the force mask ans there is
+	// output bits are filtered by the force mask and there is
 	// nothing to propagate.
       virtual prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
 				 unsigned base, unsigned vwid);
@@ -1184,7 +1184,7 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
       virtual unsigned filter_size() const =0;
 
     public:
-	// Suport for force methods. These are calloed by the
+	// Support for force methods. These are called by the
 	// vvp_net_t::force_* methods to set the force value and mask
 	// for the filter.
       virtual void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask) =0;
@@ -1227,7 +1227,7 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 
 	// These templates are similar to filter_mask_, but are
 	// idempotent. Then do not trigger callbacks or otherwise
-	// cause any locak changes. These methods are used to test
+	// cause any local changes. These methods are used to test
 	// arbitrary values against the force mask.
       template <class T> prop_t filter_input_mask_(const T&val, const T&force, T&rep) const;
 

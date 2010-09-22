@@ -91,7 +91,7 @@ class vvp_fun_signal_base : public vvp_net_fun_t {
 
 /*
  * Variables and wires can have their values accessed, so this base
- * class offers the unified concept of an acessible value.
+ * class offers the unified concept of an accessible value.
  */
 class vvp_signal_value {
     public:
@@ -280,7 +280,7 @@ class vvp_wire_vec4 : public vvp_wire_base {
       vvp_wire_vec4(unsigned wid, vvp_bit4_t init);
 
 	// The main filter behavior for this class. These methods take
-	// the value that the node is driven to, and applies the firce
+	// the value that the node is driven to, and applies the force
 	// filters. In wires, this also saves the driven value, so
 	// that when a force is released, we can revert to the driven value.
       prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
