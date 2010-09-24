@@ -777,10 +777,10 @@ int main(int argc, char **argv)
 	   turning the last two \ characters to null. Then we append
 	   the lib\ivl$(suffix) to finish. */
       { char *s;
-	char basepath[4096], tmp[4096];
-	GetModuleFileName(NULL, tmp, sizeof tmp);
+	char basepath[4096], tmppath[4096];
+	GetModuleFileName(NULL, tmppath, sizeof tmppath);
 	  /* Convert to a short name to remove any embedded spaces. */
-	GetShortPathName(tmp, basepath, sizeof basepath);
+	GetShortPathName(tmppath, basepath, sizeof basepath);
 	strncpy(ivl_root, basepath, MAXSIZE);
 	ivl_root[MAXSIZE-1] = 0;
 	s = strrchr(ivl_root, sep);
