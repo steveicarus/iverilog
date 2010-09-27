@@ -772,7 +772,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 
 	    if (cnt) {
 		  int count_index = allocate_word();
-		  char*type = ivl_expr_signed(cnt) ? "/s" : "";
+		  const char*type = ivl_expr_signed(cnt) ? "/s" : "";
 		  draw_eval_expr_into_integer(cnt, count_index);
 		  fprintf(vvp_out, "    %%evctl%s %s, %d;\n", type, name,
 		                   count_index);
@@ -1683,7 +1683,7 @@ static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
       unsigned lab_top = local_count++, lab_out = local_count++;
       ivl_expr_t expr = ivl_stmt_cond_expr(net);
       struct vector_info cnt = draw_eval_expr(expr, 0);
-      char *sign = ivl_expr_signed(expr) ? "s" : "u";
+      const char *sign = ivl_expr_signed(expr) ? "s" : "u";
 
 	/* Test that 0 < expr */
       fprintf(vvp_out, "T_%u.%u %%cmp/%s 0, %u, %u;\n", thread_count,

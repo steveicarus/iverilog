@@ -996,8 +996,8 @@ if(rgh) lt_recurse_dictionary_free(lt, rgh);
 
 static int lt_dictval_compare(const void *v1, const void *v2)
 {
-dslxt_Tree *s1 = *(dslxt_Tree **)v1;
-dslxt_Tree *s2 = *(dslxt_Tree **)v2;
+const dslxt_Tree *s1 = *(const dslxt_Tree * const *)v1;
+const dslxt_Tree *s2 = *(const dslxt_Tree * const *)v2;
 
 if(s1->val > s2->val) return(1); else return(-1);	/* they're *never* equal */
 }

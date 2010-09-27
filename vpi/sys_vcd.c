@@ -708,7 +708,7 @@ static int draw_scope(vpiHandle item, vpiHandle callh)
 {
       int depth;
       const char *name;
-      char *type;
+      const char *type;
 
       vpiHandle scope = vpi_handle(vpiScope, item);
       if (!scope) return 0;

@@ -459,7 +459,7 @@ static int draw_unary_real(ivl_expr_t expr)
 
       if (ivl_expr_opcode(expr) == 'r') { /* Cast an integer value to a real. */
 	    struct vector_info res;
-	    char *suffix = "";
+	    const char *suffix = "";
 	    assert(ivl_expr_value(sube) != IVL_VT_REAL);
 	    res = draw_eval_expr(sube, 1);
 	    if (ivl_expr_signed(sube)) suffix = "/s";

@@ -1533,7 +1533,7 @@ static void show_logic(ivl_net_logic_t net)
 static int show_scope(ivl_scope_t net, void*x)
 {
       unsigned idx;
-      char *is_auto;
+      const char *is_auto;
 
       fprintf(out, "scope: %s (%u parameters, %u signals, %u logic)",
 	      ivl_scope_name(net), ivl_scope_params(net),

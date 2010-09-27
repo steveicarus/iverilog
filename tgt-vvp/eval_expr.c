@@ -219,7 +219,7 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		unsigned word = 0;
 		if (ivl_signal_dimensions(sig) > 0) {
 		      ivl_expr_t ixe;
-		      char*type = ivl_expr_signed(expr) ? "/s" : "";
+		      const char*type = ivl_expr_signed(expr) ? "/s" : "";
 
 			/* Detect the special case that this is a
 			   variable array. In this case, the ix/getv
@@ -246,7 +246,7 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		            break;
 		      }
 		}
-		char*type = ivl_signal_signed(sig) ? "/s" : "";
+		const char*type = ivl_signal_signed(sig) ? "/s" : "";
 		fprintf(vvp_out, "    %%ix/getv%s %u, v%p_%u;\n", type, ix,
 		                 sig, word);
 		break;
