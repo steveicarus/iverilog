@@ -31,7 +31,7 @@ BEST RESULTS, FOLLOW THESE INSTRUCTIONS CAREFULLY.
 NOTE that if you have Cygwin installed, it is best to not use a Cygwin
 window to do the build, as the Cygwin tools will intermix with the
 MinGW tools such that it is hard to be sure you are using the right
-compiler. Thus, it is recommended that these steps be *not* done in a
+compiler. Thus, it is recommended that these steps *not* be done in a
 Cygwin window. Use a MinGW window instead, and be careful that your
 MSYS/MinGW tools are not masked by paths that point to Cygwin binaries.
 
@@ -81,7 +81,7 @@ commands:
   mingw-get install pthreads-w32
   mingw-get install msys-man
 
-If you also want to build Git:
+If you also want to build Git (optional):
 
   mingw-get install libiconv
   mingw-get install msys-perl
@@ -96,7 +96,7 @@ The GnuWin32 project is a collection of open source programs and libraries
 ported to Windows. These also work well with the MinGW compiler, and in
 fact Icarus Verilog uses a few pieces from this collection.
 
->From the GnuWin project (http://gnuwin32.sourceforge.net), download the
+From the GnuWin project (http://gnuwin32.sourceforge.net), download the
 following packages:
 
   gperf-3.0.1-bin
@@ -105,11 +105,11 @@ following packages:
 NOTE: You need the binaries and the developer files, but you do not
       need the source to these packages.
 
->From the downloaded gperf-3.0.1-bin zip archive:
+From the downloaded gperf-3.0.1-bin zip archive:
 
   extract bin\gperf.exe to <mingw>\bin
 
->From the downloaded readline-5.0.1-bin zip archive:
+From the downloaded readline-5.0.1-bin zip archive:
 
   extract bin\*     to <mingw>\bin
   extract lib\*     to <mingw>\lib
@@ -122,9 +122,10 @@ NOTE: readline is only required to enable command line editing when
 
 * Install Git for Windows (optional)
 
-NOTE: You can skip this step if you are building from a snapshot.
+NOTE: You can skip this step if you are building from a snapshot or
+      stable release.
 
->From the msysgit project (http://code.google.com/p/msysgit), download
+From the msysgit project (http://code.google.com/p/msysgit), download
 and install the Git for Windows binary package.
 
 NOTE: When installing, you must select the option of preserving Unix
