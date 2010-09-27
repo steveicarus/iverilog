@@ -5,7 +5,7 @@
  */
 # define VERSION_MAJOR1  0
 # define VERSION_MAJOR2  9
-# define VERSION_MINOR   2
+# define VERSION_MINOR   3
 # define VERSION_EXTRA   ""
 
 /* This is a concatenation of MAJOR1.MAJOR2 that is used by
