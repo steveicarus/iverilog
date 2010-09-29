@@ -1238,6 +1238,19 @@ NetExpr*PECallFunction::cast_to_width_(NetExpr*expr, int wid, bool signed_flag) 
         /* If the expression is a const, then replace it with a new
            const. This is a more efficient result. */
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
+	      /* If this is an unsized signed constant then we may need
+	       * to extend it up to integer_width. */
+	    if (! tmp->has_width() && tmp->has_sign() && (wid > 0)) {
+		  unsigned pwidth = tmp->expr_width();
+		  if ((unsigned)wid > integer_width) {
+			if (integer_width > pwidth) pwidth = integer_width;
+		  } else {
+			if ((unsigned)wid > pwidth) pwidth = wid;
+		  }
+		  tmp = dynamic_cast<NetEConst*>(pad_to_width(tmp, pwidth,
+		                                              *expr));
+		  assert(tmp);
+	    }
             tmp->cast_signed(signed_flag);
             if (wid > (int)(tmp->expr_width())) {
                   verinum oval = pad_to_width(tmp->value(), wid);
