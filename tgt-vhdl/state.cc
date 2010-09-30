@@ -25,8 +25,9 @@
 #include <algorithm>
 #include <string>
 #include <map>
-#include <set>
+#include <vector>
 #include <cstring>
+#include <iostream>
 
 using namespace std;
 
@@ -67,7 +68,7 @@ struct signal_defn_t {
 static entity_list_t g_entities;  
 
 // Store the mapping of ivl scope names to entity names
-typedef map<string, string> scope_name_map_t;
+typedef map<ivl_scope_t, string> scope_name_map_t;
 static scope_name_map_t g_scope_names;
 
 typedef std::map<ivl_signal_t, signal_defn_t> signal_defn_map_t;
@@ -77,9 +78,8 @@ static vhdl_entity *g_active_entity = NULL;
 
 // Set of scopes that are treated as the default examples of
 // that type. Any other scopes of the same type are ignored.
-typedef set<ivl_scope_t> default_scopes_t;
+typedef vector<ivl_scope_t> default_scopes_t;
 static default_scopes_t g_default_scopes;
-
 
 // True if signal `sig' has already been encountered by the code
 // generator. This means we have already assigned it to a VHDL code
@@ -179,18 +179,31 @@ vhdl_entity* find_entity(ivl_scope_t scope)
    
    assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
 
-   scope_name_map_t::iterator it = g_scope_names.find(ivl_scope_tname(scope));
-   if (it != g_scope_names.end())
-      return find_entity((*it).second);
-   else
+   if (is_default_scope_instance(scope)) {
+      scope_name_map_t::iterator it = g_scope_names.find(scope);
+      if (it != g_scope_names.end())
+         return find_entity((*it).second);
+      else
+         return NULL;
+   }
+   else {
+      const char *tname = ivl_scope_tname(scope);         
+      
+      for (scope_name_map_t::iterator it = g_scope_names.begin();
+           it != g_scope_names.end(); ++it) {
+         if (strcmp(tname, ivl_scope_tname((*it).first)) == 0)
+            return find_entity((*it).second);
+      }
+
       return NULL;
+   }
 }
 
 // Add an entity/architecture pair to the list of entities to emit.
 void remember_entity(vhdl_entity* ent, ivl_scope_t scope)
 {
    g_entities.push_back(ent);
-   g_scope_names[ivl_scope_tname(scope)] = ent->get_name();
+   g_scope_names[scope] = ent->get_name();
 }
 
 // Print all VHDL entities, in order, to the specified output stream.
@@ -228,12 +241,52 @@ void set_active_entity(vhdl_entity *ent)
 {
    g_active_entity = ent;
 }
+
 /*
  * True if two scopes have the same type name.
  */
 static bool same_scope_type_name(ivl_scope_t a, ivl_scope_t b)
 {
-   return strcmp(ivl_scope_tname(a), ivl_scope_tname(b)) == 0;
+   if (strcmp(ivl_scope_tname(a), ivl_scope_tname(b)) != 0)
+      return false;   
+   
+   unsigned nparams_a = ivl_scope_params(a);
+   unsigned nparams_b = ivl_scope_params(b);
+
+   if (nparams_a != nparams_b)
+      return false;
+
+   for (unsigned i = 0; i < nparams_a; i++) {
+      ivl_parameter_t param_a = ivl_scope_param(a, i);
+      ivl_parameter_t param_b = ivl_scope_param(b, i);
+
+      if (strcmp(ivl_parameter_basename(param_a),
+                 ivl_parameter_basename(param_b)) != 0)
+         return false;
+
+      ivl_expr_t value_a = ivl_parameter_expr(param_a);
+      ivl_expr_t value_b = ivl_parameter_expr(param_b);
+
+      if (ivl_expr_type(value_a) != ivl_expr_type(value_b))
+         return false;
+
+      switch (ivl_expr_type(value_a)) {
+         case IVL_EX_STRING:
+            if (strcmp(ivl_expr_string(value_a), ivl_expr_string(value_b)) != 0)
+               return false;
+            break;
+
+         case IVL_EX_NUMBER:
+            if (ivl_expr_uvalue(value_a) != ivl_expr_uvalue(value_b))
+               return false;
+            break;
+
+      default:
+         assert(false);
+      }
+   }
+
+   return true;
 }
 
 /*
@@ -246,7 +299,7 @@ bool seen_this_scope_type(ivl_scope_t s)
    if (find_if(g_default_scopes.begin(), g_default_scopes.end(),
                bind1st(ptr_fun(same_scope_type_name), s))
        == g_default_scopes.end()) {
-      g_default_scopes.insert(s);
+      g_default_scopes.push_back(s);
       return false;
    }
    else
