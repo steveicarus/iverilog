@@ -4194,6 +4194,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	    for (specparam_it_t cur = specparams.begin()
 		       ; cur != specparams.end() ; cur ++ ) {
 
+		  probe_expr_width(des, scope, (*cur).second);
 		  need_constant_expr = true;
 		  NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1);
 		  need_constant_expr = false;
