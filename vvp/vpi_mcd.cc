@@ -65,7 +65,7 @@ void vpip_mcd_init(FILE *log)
 	    fd_table[idx].fp = NULL;
 	    fd_table[idx].filename = NULL;
       }
-
+	
       mcd_table[0].fp = stdout;
       mcd_table[0].filename = strdup("stdout");
 

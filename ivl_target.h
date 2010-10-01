@@ -607,7 +607,7 @@ extern double      ivl_const_real(ivl_net_const_t net);
  *
  * The discipline domain will not be IVL_DIS_NONE. The "none" domain
  * is a place-holder internally for incomplete parsing, and is also
- * available for code generators to use.
+ * available for code generaters to use.
  */
 extern const char*ivl_discipline_name(ivl_discipline_t net);
 extern ivl_dis_domain_t ivl_discipline_domain(ivl_discipline_t net);
@@ -1696,7 +1696,7 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  *
  * ivl_signal_discipline
  *    If the signal has been declared with a domain (Verilog-AMS) then
- *    this function will return a non-nil ivl_discipline_t.
+ *    this function wil return a non-nil ivl_discipline_t.
  *
  * ivl_signal_msb
  * ivl_signal_lsb

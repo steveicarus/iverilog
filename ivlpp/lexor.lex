@@ -1394,19 +1394,19 @@ static void do_expand(int use_args)
                    str_buf[idx+1] = '0';
                    str_buf[idx+2] = '4';
                    str_buf[idx+3] = '2';
-                   idx += 4;
-                   continue;
+                   idx += 4; 
+                   continue; 
                 }
                 if (*cp == '\\') {
                    str_buf[idx] = '\\';
                    str_buf[idx+1] = '1';
                    str_buf[idx+2] = '3';
                    str_buf[idx+3] = '4';
-                   idx += 4;
-                   continue;
+                   idx += 4; 
+                   continue; 
                 }
                 str_buf[idx] = *cp;
-                idx += 1;
+                idx += 1; 
             }
             str_buf[idx] = 0;
             idx += 1;

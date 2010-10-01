@@ -907,7 +907,7 @@ NetNet* NetEUnary::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    return sig;
       }
 
-      cerr << get_fileline() << ": internal error: "
+      cerr << get_fileline() << ": iternal error: "
 	   << "NetEUnary::synthesize cannot handle op_=" << op_ << endl;
       des->errors += 1;
       return expr_->synthesize(des, scope, root);
@@ -1328,7 +1328,7 @@ static NetEvWait* make_func_trigger(Design*des, NetScope*scope, NetExpr*root)
       delete nset;
 
       return trigger;
-}
+}  
 
 NetNet* NetESFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
 {

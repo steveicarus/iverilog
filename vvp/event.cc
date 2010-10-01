@@ -51,7 +51,7 @@ void waitable_hooks_s::run_waiting_threads_(vthread_t&threads)
       vthread_t tmp = threads;
       if (tmp == 0) return;
       threads = 0;
-
+      
       vthread_schedule_list(tmp);
 }
 

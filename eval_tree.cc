@@ -858,7 +858,7 @@ NetExpr* NetEBDiv::eval_tree(int prune_to_width)
       eval_expr(right_);
 
       if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
-
+      
       assert(expr_type() == IVL_VT_LOGIC);
 
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
@@ -1228,12 +1228,6 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 		 << *this << endl;
       }
 
-      if (solving()) {
-	    cerr << get_fileline() << ": warning: Recursive parameter "
-	            "reference found involving " << *this << "." << endl;
-	    return 0;
-      }
-
       assert(scope_);
       perm_string name = (*reference_).first;
       const NetExpr*expr = (*reference_).second.expr;
@@ -1245,35 +1239,35 @@ NetExpr* NetEParam::eval_tree(int prune_to_width)
 		 << *this << " cannot be evaluated." << endl;
 	    return 0;
       }
+//      ivl_assert(*this, expr);
+
+      NetExpr*nexpr = expr->dup_expr();
+      assert(nexpr);
 
 	// If the parameter that I refer to is already evaluated, then
 	// return the constant value.
-      if (const NetEConst*tmp = dynamic_cast<const NetEConst*>(expr)) {
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(nexpr)) {
 	    verinum val = tmp->value();
 	    NetEConstParam*ptmp = new NetEConstParam(scope_, name, val);
 	    ptmp->set_line(*this);
+	    delete nexpr;
 	    return ptmp;
       }
 
-      if (const NetECReal*tmp = dynamic_cast<const NetECReal*>(expr)) {
+      if (NetECReal*tmp = dynamic_cast<NetECReal*>(nexpr)) {
 	    verireal val = tmp->value();
 	    NetECRealParam*ptmp = new NetECRealParam(scope_, name, val);
 	    ptmp->set_line(*this);
+	    delete nexpr;
 	    return ptmp;
       }
 
 	// Try to evaluate the expression. If I cannot, then the
 	// expression is not a constant expression and I fail here.
-
-      solving(true);
-      NetExpr*nexpr = expr->dup_expr();
-      assert(nexpr);
       NetExpr*res = nexpr->eval_tree();
-      solving(false);
       if (res == 0) {
-	    cerr << get_fileline() << ": internal error: Unable to evaluate ";
-	    if (expr_type() == IVL_VT_REAL) cerr << "real ";
-	    cerr << "parameter " << name << " expression: "
+	    cerr << get_fileline() << ": internal error: Unable to evaluate "
+		 << "parameter " << name << " expression: "
 		 << *nexpr << endl;
 	    delete nexpr;
 	    return 0;

@@ -71,8 +71,7 @@ void sdf_select_instance(const char*celltype, const char*cellinst)
       const char*src = cellinst;
       const char*dp;
       while ( (dp=strchr(src, '.')) ) {
-	    unsigned len = dp - src;
-	    assert(dp >= src);
+	    int len = dp - src;
 	    assert(len < sizeof buffer);
 	    strncpy(buffer, src, len);
 	    buffer[len] = 0;

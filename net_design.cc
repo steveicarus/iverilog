@@ -341,7 +341,8 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	    eval_expr((*cur).second.msb);
 	    if (! eval_as_long(msb, (*cur).second.msb)) {
 		  cerr << (*cur).second.expr->get_fileline()
-		       << ": error: Unable to evaluate msb expression "
+		       << ": internal error: "
+		       << "unable to evaluate msb expression "
 		       << "for parameter " << (*cur).first << ": "
 		       << *(*cur).second.msb << endl;
 		  des->errors += 1;
@@ -356,7 +357,8 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	    eval_expr((*cur).second.lsb);
 	    if (! eval_as_long(lsb, (*cur).second.lsb)) {
 		  cerr << (*cur).second.expr->get_fileline()
-		       << ": error: Unable to evaluate lsb expression "
+		       << ": internal error: "
+		       << "unable to evaluate lsb expression "
 		       << "for parameter " << (*cur).first << ": "
 		       << *(*cur).second.lsb << endl;
 		  des->errors += 1;
@@ -382,10 +384,10 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	  case IVL_VT_REAL:
 	    if (! dynamic_cast<const NetECReal*>(expr)) {
 		  cerr << expr->get_fileline()
-		       << ": error: Unable to evaluate real parameter "
-		       << (*cur).first << " value: " << *expr << endl;
+		       << ": internal error: "
+		       << "unable to evaluate real parameter value: "
+		       << *expr << endl;
 		  des->errors += 1;
-		  (*cur).second.expr = NULL;
 		  return;
 	    }
 	    break;
@@ -394,10 +396,11 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	  case IVL_VT_BOOL:
 	    if (! dynamic_cast<const NetEConst*>(expr)) {
 		  cerr << expr->get_fileline()
-		       << ": error: Unable to evaluate parameter "
-		       << (*cur).first << " value: " << *expr << endl;
+		       << ": internal error: "
+		       << "unable to evaluate parameter "
+		       << (*cur).first
+		       << " value: " << *expr << endl;
 		  des->errors += 1;
-		  (*cur).second.expr = NULL;
 		  return;
 	    }
 	    break;
@@ -405,9 +408,8 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	  default:
 	    cerr << expr->get_fileline()
 		 << ": internal error: "
-		 << "Unhandled expression type?" << endl;
+		 << "unhandled expression type?" << endl;
 	    des->errors += 1;
-	    (*cur).second.expr = NULL;
 	    return;
       }
 
@@ -520,13 +522,7 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
 	    if (NetECReal*tmp = dynamic_cast<NetECReal*>(expr)) {
 		  res = tmp;
 	    } else {
-		  cerr << expr->get_fileline()
-		       << ": error: "
-		       << "Unable to evaluate real parameter "
-		       << (*cur).first << " value: " << *expr << endl;
-		  des->errors += 1;
-		  (*cur).second.expr = NULL;
-		  return;
+		  ivl_assert(*expr, 0);
 	    }
 	    break;
 
@@ -537,23 +533,12 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
 		  res = new NetECReal(val);
 		  res->set_line(*tmp);
 	    } else {
-		  cerr << expr->get_fileline()
-		       << ": error: "
-		       << "Unable to evaluate parameter "
-		       << (*cur).first << " value: " << *expr << endl;
-		  des->errors += 1;
-		  (*cur).second.expr = NULL;
-		  return;
+		  ivl_assert(*expr, 0);
 	    }
 	    break;
 
 	  default:
-	    cerr << expr->get_fileline()
-		 << ": internal error: "
-		 << "Unhandled expression type?" << endl;
-	    des->errors += 1;
-	    (*cur).second.expr = NULL;
-	    return;
+	    ivl_assert(*expr, 0);
 	    break;
       }
 
@@ -601,7 +586,7 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
       if (! from_flag) {
 	    cerr << res->get_fileline() << ": error: "
 		 << "Parameter value " << value
-		 << " is out of range for real parameter " << (*cur).first
+		 << " is out of range for parameter " << (*cur).first
 		 << "." << endl;
 	    des->errors += 1;
       }
@@ -627,7 +612,7 @@ void NetScope::evaluate_parameters(Design*des)
 
 	      // Resolve the expression type (signed/unsigned) if the
 	      // expression is present. It is possible to not be
-	      // present if there are earlier errors in elaboration.
+	      // present if there are earlier errors en elaboration.
 	    if (cur->second.expr)
 		  cur->second.expr->resolve_pexpr_type();
 

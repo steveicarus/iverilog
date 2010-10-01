@@ -89,7 +89,7 @@ iverilog.man: $(srcdir)/iverilog.man.in ../version.exe
 	tail -n +2 $(srcdir)/iverilog.man.in >> $@
 
 iverilog.ps: iverilog.man
-	$(MAN) -t ./iverilog.man > iverilog.ps
+	$(MAN) -t iverilog.man > iverilog.ps
 
 iverilog.pdf: iverilog.ps
 	$(PS2PDF) iverilog.ps iverilog.pdf

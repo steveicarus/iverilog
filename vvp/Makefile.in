@@ -59,7 +59,7 @@ all: dep vvp@EXEEXT@ libvpi.a vvp.man
 
 clean:
 	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc
-	rm -rf dep vvp@EXEEXT@ libvpi.a parse.output vvp.man vvp.ps vvp.pdf vvp.exp
+	rm -rf dep vvp@EXEEXT@ libvpi.a parse.output vvp.man vvp.pdf vvp.exp
 
 distclean: clean
 	rm -f Makefile config.log
@@ -152,11 +152,8 @@ vvp.man: $(srcdir)/vvp.man.in ../version.exe
 	../version.exe `head -1 $(srcdir)/vvp.man.in`'\n' > $@
 	tail -n +2 $(srcdir)/vvp.man.in >> $@
 
-vvp.ps: vvp.man
-	$(MAN) -t ./vvp.man > vvp.ps
-
-vvp.pdf: vvp.ps
-	$(PS2PDF) vvp.ps vvp.pdf
+vvp.pdf: vvp.man
+	$(MAN) -t $(srcdir)/vvp.man | $(PS2PDF) - vvp.pdf
 
 ifeq (@MINGW32@,yes)
 ifeq ($(MAN),none)

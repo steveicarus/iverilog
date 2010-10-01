@@ -48,7 +48,7 @@ public:
 
    void* operator new(size_t size) throw (std::bad_alloc);
    void operator delete(void* ptr);
-
+   
    virtual void emit(std::ostream &of, int level=0) const = 0;
    void print() const;
 

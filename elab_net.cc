@@ -497,7 +497,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	      /* The array has a part/bit select at the end. */
 	    if (name_tail.index.size() > sig->array_dimensions()) {
 		  if (sig->get_scalar()) {
-		        cerr << get_fileline() << ": error: "
+		        cerr << get_fileline() << ": error: " 
 		             << "can not select part of ";
 			if (sig->data_type() == IVL_VT_REAL) cerr << "real";
 			else cerr << "scalar";
@@ -512,7 +512,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		        return 0;
 
 		  if (lidx_tmp < 0) {
-		        cerr << get_fileline() << ": sorry: part selects "
+		        cerr << get_fileline() << ": sorry: part selects " 
 		                "straddling the start of signal (" << path_
 		             << ") are not currently supported." << endl;
 		        des->errors += 1;
@@ -523,7 +523,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    }
       } else if (!name_tail.index.empty()) {
 	    if (sig->get_scalar()) {
-		  cerr << get_fileline() << ": error: "
+		  cerr << get_fileline() << ": error: " 
 		       << "can not select part of ";
 		  if (sig->data_type() == IVL_VT_REAL) cerr << "real: ";
 		  else cerr << "scalar: ";
@@ -537,7 +537,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  return 0;
 
 	    if (lidx_tmp < 0) {
-		  cerr << get_fileline() << ": sorry: part selects "
+		  cerr << get_fileline() << ": sorry: part selects " 
 		          "straddling the start of signal (" << path_
                        << ") are not currently supported." << endl;
 		  des->errors += 1;

@@ -94,8 +94,7 @@ static char* draw_C4_to_string(ivl_net_const_t cptr)
       for (idx = 0 ;  idx < ivl_const_width(cptr) ;  idx += 1) {
 	    char bitchar = bits[ivl_const_width(cptr)-idx-1];
 	    *dp++ = bitchar;
-	    assert(dp >= result);
-	    assert((unsigned)(dp - result) < result_len);
+	    assert((dp - result) < result_len);
       }
 
       strcpy(dp, ">");
@@ -145,8 +144,7 @@ static char* draw_C8_to_string(ivl_net_const_t cptr,
 		  assert(0);
 		  break;
 	    }
-	    assert(dp >= result);
-	    assert((unsigned)(dp - result) < nresult);
+	    assert(dp - result < nresult);
       }
 
       strcpy(dp, ">");
@@ -262,8 +260,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  dp += ivl_logic_width(lptr);
 		  *dp++ = '>';
 		  *dp = 0;
-		  assert(dp >= result);
-		  assert((unsigned)(dp - result) <= result_len);
+		  assert((dp-result) <= result_len);
 		  return result;
 	    } else {
 		  char val[4];
@@ -282,8 +279,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  dp += 3*ivl_logic_width(lptr);
 		  *dp++ = '>';
 		  *dp = 0;
-		  assert(dp >= result);
-		  assert((unsigned)(dp - result) <= result_len);
+		  assert((dp-result) <= result_len);
 		  return result;
 	    }
       }
@@ -301,8 +297,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  dp += ivl_logic_width(lptr);
 		  *dp++ = '>';
 		  *dp = 0;
-		  assert(dp >= result);
-		  assert((unsigned)(dp - result) <= result_len);
+		  assert((dp-result) <= result_len);
 
 	    } else {
 		  char val[4];
@@ -321,8 +316,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  dp += 3*ivl_logic_width(lptr);
 		  *dp++ = '>';
 		  *dp = 0;
-		  assert(dp >= result);
-		  assert((unsigned)(dp - result) <= result_len);
+		  assert((dp-result) <= result_len);
 
 	    }
 
@@ -711,7 +705,7 @@ static void draw_net_input_x(ivl_nexus_t nex,
       if (res == IVL_SIT_UWIRE) {
 	    if (ndrivers > 1) {
 		  unsigned uidx;
-		  ivl_signal_t usig = 0;
+		  ivl_signal_t usig;
 		    /* Find the uwire signal. */
 		  for (uidx = 0 ;  uidx < ivl_nexus_ptrs(nex) ;  uidx += 1) {
 			ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, uidx);

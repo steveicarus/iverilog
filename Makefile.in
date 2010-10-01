@@ -30,7 +30,7 @@ SHELL = /bin/sh
 # The "suffix" is used as an installation suffix. It modifies certain
 # key install paths/files such that a build and install of Icarus Verilog
 # with the same $(prefix) but a different $(suffix) will not interfere.
-# The normal configuration leaves suffix empty
+# The normal configuratin leaves suffix empty
 suffix = @install_suffix@
 
 prefix = @prefix@
@@ -240,7 +240,7 @@ iverilog-vpi.man: $(srcdir)/iverilog-vpi.man.in version.exe
 	tail -n +2 $(srcdir)/iverilog-vpi.man.in >> $@
 
 iverilog-vpi.ps: iverilog-vpi.man
-	$(MAN) -t ./iverilog-vpi.man > iverilog-vpi.ps
+	$(MAN) -t iverilog-vpi.man > iverilog-vpi.ps
 
 iverilog-vpi.pdf: iverilog-vpi.ps
 	$(PS2PDF) iverilog-vpi.ps iverilog-vpi.pdf

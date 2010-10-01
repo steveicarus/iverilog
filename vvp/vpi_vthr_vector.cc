@@ -318,7 +318,7 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiObjTypeVal:
-	    vp->format = vpiVectorVal;
+	    vp->format = vpiVectorVal; 
 	  case vpiVectorVal:
 	    vp->value.vector = (s_vpi_vecval*)
 		  need_result_buf((wid+31)/32*sizeof(s_vpi_vecval), RBUF_VAL);

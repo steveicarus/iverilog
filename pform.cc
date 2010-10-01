@@ -62,10 +62,10 @@ void parm_to_defparam_list(const string&param)
         key = strdup(param.substr(0, off).c_str());
         value = strdup(param.substr(off+1).c_str());
     }
-
+    
     // Resolve hierarchical name for defparam. Remember
     // to deal with bit select for generate scopes. Bit
-    // select expression should be constant integer.
+    // select expression should be constant interger.
     pform_name_t name;
     char *nkey = key;
     char *ptr = strchr(key, '.');
@@ -109,7 +109,7 @@ void parm_to_defparam_list(const string&param)
         ptr = strchr(nkey, '.');
     }
     name.push_back(name_component_t(lex_strings.make(nkey)));
-
+    
     // Resolve value to PExpr class. Should support all kind of constant
     // format including based number, dec number, real number and string.
     if (*value == '"') {    // string type
@@ -127,13 +127,13 @@ void parm_to_defparam_list(const string&param)
             cerr << "<command line>: error: missing close quote of string for defparam: " << name << endl;
         else if (*(buf_ptr+1) != 0) { // '"' appears within string with no escape
             cerr << buf_ptr << endl;
-            cerr << "<command line>: error: \'\"\' appears within string value for defparam: " << name
+            cerr << "<command line>: error: \'\"\' appears within string value for defparam: " << name 
                  << ". Ignore characters after \'\"\'" << endl;
         }
-
+        
         *buf_ptr = '\0';
         buf_ptr = buf+1;
-        // Remember to use 'new' to allocate string for PEString
+        // Remember to use 'new' to allocate string for PEString 
         // because 'delete' is used by its destructor.
         char *nchar = strcpy(new char [strlen(buf_ptr)+1], buf_ptr);
         PExpr* ndec = new PEString(nchar);
@@ -144,7 +144,7 @@ void parm_to_defparam_list(const string&param)
         char *num = strchr(value, '\'');
         if (num != 0) {
             verinum *val;
-            // BASED_NUMBER, something like - scope.parameter='b11
+            // BASED_NUMBER, somthing like - scope.parameter='b11
             // make sure to check 'h' first because 'b'&'d' may be included
             // in hex format
             if (strchr(num, 'h') || strchr(num, 'H'))
@@ -165,17 +165,17 @@ void parm_to_defparam_list(const string&param)
                 free(value);
                 return;
             }
-
+    
             // BASED_NUMBER with size, something like - scope.parameter=2'b11
             if (num != value) {
                 *num = 0;
                 verinum *siz = make_unsized_dec(value);
                 val = pform_verinum_with_size(siz, val, "<command line>", 0);
             }
-
+    
             PExpr* ndec = new PENumber(val);
 	    Module::user_defparms.push_back( make_pair(name, ndec) );
-
+            
         }
         else {
             // REALTIME, something like - scope.parameter=1.22 or scope.parameter=1e2
@@ -799,7 +799,7 @@ void pform_endmodule(const char*name, bool inside_celldefine,
       tp_local_flag = false;
 }
 
-static void pform_add_genvar(const struct vlltype&li, const perm_string&name,
+static void pform_add_genvar(const struct vlltype&li, const perm_string&name, 
                              map<perm_string,LineInfo*>&genvars)
 {
       LineInfo*lni = new LineInfo();

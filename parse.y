@@ -2052,7 +2052,7 @@ local_timeunit_prec_decl
 module  : attribute_list_opt module_start IDENTIFIER
 		{ pform_startmodule($3, @2.text, @2.first_line, $1); }
           module_parameter_port_list_opt
-	  module_port_list_opt
+	  module_port_list_opt 
 	  module_attribute_foreign ';'
 		{ pform_module_set_ports($6); }
           local_timeunit_prec_decl_opt

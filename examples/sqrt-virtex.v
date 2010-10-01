@@ -252,7 +252,7 @@ endmodule // sqrt32
 module main;
 
    reg [31:0] x;
-   reg	      clk, reset;
+   reg 	      clk, reset;
 
    wire [15:0] y;
    wire        rdy;
@@ -354,7 +354,7 @@ module chip_root(clk, rdy, reset, x, y);
    input [31:0] x;
    output [15:0] y;
 
-   wire	 clk_int;
+   wire 	 clk_int;
 
    (* cellref="BUFG:O,I" *)
    buf gbuf (clk_int, clk);

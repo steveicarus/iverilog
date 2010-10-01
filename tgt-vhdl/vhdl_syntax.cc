@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,14 +31,15 @@
 using namespace std;
 
 vhdl_scope::vhdl_scope()
-   : parent_(NULL), init_(false), sig_assign_(true)
+   : parent_(NULL), init_(false), sig_assign_(true),
+     hoisted_init_(false)
 {
-
+   
 }
 
 vhdl_scope::~vhdl_scope()
 {
-
+   
 }
 
 void vhdl_scope::set_initializing(bool i)
@@ -100,6 +101,16 @@ vhdl_scope *vhdl_scope::get_parent() const
    return parent_;
 }
 
+bool vhdl_scope::hoisted_initialiser() const
+{
+   return hoisted_init_;
+}
+
+void vhdl_scope::hoisted_initialiser(bool h)
+{
+   hoisted_init_ = h;
+}
+
 vhdl_entity::vhdl_entity(const string& name, vhdl_arch *arch, int depth__)
    :  depth(depth__), name_(name), arch_(arch),
       time_unit_(TIME_UNIT_NS)
@@ -109,7 +120,7 @@ vhdl_entity::vhdl_entity(const string& name, vhdl_arch *arch, int depth__)
 
 vhdl_entity::~vhdl_entity()
 {
-
+   
 }
 
 void vhdl_entity::add_port(vhdl_port_decl *decl)
@@ -124,9 +135,8 @@ void vhdl_entity::emit(std::ostream &of, int level) const
    of << "library ieee;" << std::endl;
    of << "use ieee.std_logic_1164.all;" << std::endl;
    of << "use ieee.numeric_std.all;" << std::endl;
-   of << "use std.textio.all;" << std::endl;
    of << std::endl;
-
+   
    emit_comment(of, level);
    of << "entity " << name_ << " is";
 
@@ -136,7 +146,7 @@ void vhdl_entity::emit(std::ostream &of, int level) const
       emit_children<vhdl_decl>(of, ports_.get_decls(), indent(level), ";");
       of << ");";
    }
-
+   
    newline(of, level);
    of << "end entity; ";
    blank_line(of, level);  // Extra blank line after entities
@@ -154,7 +164,7 @@ vhdl_const_time* scale_time(const vhdl_entity* ent, uint64_t t)
 void vhdl_entity::set_time_units(int units, int precision)
 {
    int vhdl_units = std::min(units, precision);
-
+   
    if (vhdl_units >= -3)
       time_unit_ = TIME_UNIT_MS;
    else if (vhdl_units >= -6)
@@ -167,7 +177,7 @@ void vhdl_entity::set_time_units(int units, int precision)
 
 vhdl_arch::~vhdl_arch()
 {
-
+   
 }
 
 void vhdl_arch::add_stmt(vhdl_process *proc)
@@ -193,6 +203,16 @@ void vhdl_arch::emit(std::ostream &of, int level) const
    blank_line(of, level);  // Extra blank line after architectures;
 }
 
+void vhdl_procedural::add_blocking_target(vhdl_var_ref* ref)
+{
+   blocking_targets_.insert(ref->get_name());
+}
+
+bool vhdl_procedural::is_blocking_target(vhdl_var_ref* ref) const
+{
+   return blocking_targets_.find(ref->get_name()) != blocking_targets_.end();
+}
+   
 void vhdl_process::add_sensitivity(const std::string &name)
 {
    sens_.push_back(name);
@@ -213,7 +233,7 @@ void vhdl_process::emit(std::ostream &of, int level) const
    if (name_.size() > 0)
       of << name_ << ": ";
    of << "process ";
-
+   
    int num_sens = sens_.size();
    if (num_sens > 0) {
       of << "(";
@@ -235,7 +255,7 @@ void vhdl_process::emit(std::ostream &of, int level) const
 
 stmt_container::~stmt_container()
 {
-
+   
 }
 
 void stmt_container::add_stmt(vhdl_seq_stmt *stmt)
@@ -268,18 +288,18 @@ void stmt_container::find_vars(vhdl_var_set_t& read,
 
 void stmt_container::emit(std::ostream &of, int level, bool newline) const
 {
-   emit_children<vhdl_seq_stmt>(of, stmts_, level, "", newline);
+   emit_children<vhdl_seq_stmt>(of, stmts_, level, "", newline);  
 }
 
 vhdl_comp_inst::vhdl_comp_inst(const char *inst_name, const char *comp_name)
    : comp_name_(comp_name), inst_name_(inst_name)
 {
-
+   
 }
 
 vhdl_comp_inst::~vhdl_comp_inst()
 {
-
+   
 }
 
 void vhdl_comp_inst::map_port(const string& name, vhdl_expr *expr)
@@ -311,7 +331,7 @@ void vhdl_comp_inst::emit(std::ostream &of, int level) const
       newline(of, indent(level));
       of << ")";
    }
-
+   
    of << ";";
 }
 
@@ -332,7 +352,7 @@ vhdl_component_decl *vhdl_component_decl::component_decl_for(vhdl_entity *ent)
       (ent->get_name().c_str());
 
    decl->ports_ = ent->get_scope()->get_decls();
-
+   
    return decl;
 }
 
@@ -348,14 +368,14 @@ void vhdl_component_decl::emit(std::ostream &of, int level) const
       emit_children<vhdl_decl>(of, ports_, indent(level), ";");
       of << ");";
    }
-
+   
    newline(of, level);
    of << "end component;";
 }
 
 vhdl_wait_stmt::~vhdl_wait_stmt()
 {
-
+   
 }
 
 void vhdl_wait_stmt::find_vars(vhdl_var_set_t& read,
@@ -397,13 +417,14 @@ void vhdl_wait_stmt::emit(std::ostream &of, int level) const
       }
       break;
    }
-
+   
    of << ";";
+   emit_comment(of, level, true);
 }
 
 vhdl_decl::~vhdl_decl()
 {
-
+   
 }
 
 // Make a reference object to this declaration
@@ -419,7 +440,7 @@ const vhdl_type *vhdl_decl::get_type() const
 }
 
 void vhdl_decl::set_initial(vhdl_expr *initial)
-{
+{   
    if (!has_initial_) {
       assert(initial_ == NULL);
       initial_ = initial;
@@ -430,7 +451,7 @@ void vhdl_decl::set_initial(vhdl_expr *initial)
 void vhdl_port_decl::emit(std::ostream &of, int level) const
 {
    of << name_ << " : ";
-
+   
    switch (mode_) {
    case VHDL_PORT_IN:
       of << "in ";
@@ -445,7 +466,7 @@ void vhdl_port_decl::emit(std::ostream &of, int level) const
       of << "buffer ";
       break;
    }
-
+   
    type_->emit(of, level);
 }
 
@@ -469,12 +490,12 @@ void vhdl_var_decl::emit(std::ostream &of, int level) const
 {
    of << "variable " << name_ << " : ";
    type_->emit(of, level);
-
+   
    if (initial_) {
       of << " := ";
       initial_->emit(of, level);
    }
-
+       
    of << ";";
    emit_comment(of, level, true);
 }
@@ -483,12 +504,12 @@ void vhdl_signal_decl::emit(std::ostream &of, int level) const
 {
    of << "signal " << name_ << " : ";
    type_->emit(of, level);
-
+   
    if (initial_) {
       of << " := ";
       initial_->emit(of, level);
    }
-
+       
    of << ";";
    emit_comment(of, level, true);
 }
@@ -502,7 +523,7 @@ void vhdl_type_decl::emit(std::ostream &of, int level) const
 
 vhdl_expr::~vhdl_expr()
 {
-
+   
 }
 
 void vhdl_expr_list::add_expr(vhdl_expr *e)
@@ -512,7 +533,7 @@ void vhdl_expr_list::add_expr(vhdl_expr *e)
 
 vhdl_expr_list::~vhdl_expr_list()
 {
-
+   
 }
 
 void vhdl_expr_list::find_vars(vhdl_var_set_t& read)
@@ -525,7 +546,7 @@ void vhdl_expr_list::find_vars(vhdl_var_set_t& read)
 void vhdl_expr_list::emit(std::ostream &of, int level) const
 {
    of << "(";
-
+   
    int size = exprs_.size();
    std::list<vhdl_expr*>::const_iterator it;
    for (it = exprs_.begin(); it != exprs_.end(); ++it) {
@@ -553,7 +574,7 @@ void vhdl_pcall_stmt::find_vars(vhdl_var_set_t& read,
 
 vhdl_var_ref::~vhdl_var_ref()
 {
-
+   
 }
 
 void vhdl_var_ref::set_slice(vhdl_expr *s, int w)
@@ -562,18 +583,18 @@ void vhdl_var_ref::set_slice(vhdl_expr *s, int w)
 
    slice_ = s;
    slice_width_ = w;
-
+      
    vhdl_type_name_t tname = type_->get_name();
    if (tname == VHDL_TYPE_ARRAY) {
       type_ = type_->get_base();
    }
    else {
       assert(tname == VHDL_TYPE_UNSIGNED || tname == VHDL_TYPE_SIGNED);
-
+      
       if (w > 0)
          type_ = new vhdl_type(tname, w);
       else
-         type_ = vhdl_type::std_logic();
+         type_ = vhdl_type::std_logic();   
    }
 }
 
@@ -598,11 +619,7 @@ void vhdl_var_ref::emit(std::ostream &of, int level) const
 
 void vhdl_const_string::emit(std::ostream &of, int level) const
 {
-   // In some instances a string literal can be ambiguous between
-   // a String type and some other types (e.g. std_logic_vector)
-   // The explicit cast to String removes this ambiguity (although
-   // isn't always strictly necessary)
-   of << "String'(\"" << value_ << "\")";
+   of << "\"" << value_ << "\"";
 }
 
 void vhdl_null_stmt::emit(std::ostream &of, int level) const
@@ -624,13 +641,13 @@ void vhdl_fcall::emit(std::ostream &of, int level) const
 
 vhdl_abstract_assign_stmt::~vhdl_abstract_assign_stmt()
 {
-
+   
 }
 
 void vhdl_abstract_assign_stmt::find_vars(vhdl_var_set_t& read,
                                           vhdl_var_set_t& write)
 {
-   write.insert(lhs_);
+   lhs_->find_vars(write);
    rhs_->find_vars(read);
 }
 
@@ -644,7 +661,7 @@ void vhdl_nbassign_stmt::emit(std::ostream &of, int level) const
       of << " after ";
       after_->emit(of, level);
    }
-
+   
    of << ";";
 }
 
@@ -657,12 +674,12 @@ void vhdl_assign_stmt::emit(std::ostream &of, int level) const
 }
 
 vhdl_const_bits::vhdl_const_bits(const char *value, int width, bool issigned,
-                                 bool qualify)
+                                 bool qualify)   
    : vhdl_expr(issigned ? vhdl_type::nsigned(width)
                : vhdl_type::nunsigned(width), true),
      qualified_(qualify),
      signed_(issigned)
-{
+{   
    // Can't rely on value being NULL-terminated
    while (width--)
       value_.push_back(*value++);
@@ -692,9 +709,9 @@ void vhdl_const_bits::emit(std::ostream &of, int level) const
        && !has_meta_bits() && bits <= 64 && bits % 4 == 0) {
       of << "X\"" << hex << setfill('0') << setw(bits / 4) << ival;
    }
-   else {
+   else { 
       of << "\"";
-
+      
       std::string::const_reverse_iterator it;
       for (it = value_.rbegin(); it != value_.rend(); ++it)
          of << vl_to_vhdl_bit(*it);
@@ -732,7 +749,7 @@ void vhdl_const_time::emit(std::ostream &of, int level) const
 
 vhdl_cassign_stmt::~vhdl_cassign_stmt()
 {
-
+   
 }
 
 void vhdl_cassign_stmt::add_condition(vhdl_expr *value, vhdl_expr *cond)
@@ -757,19 +774,51 @@ void vhdl_cassign_stmt::emit(std::ostream &of, int level) const
       of << "else ";
    }
    rhs_->emit(of, level);
-
+   
    if (after_) {
       of << " after ";
       after_->emit(of, level);
    }
-
+      
    of << ";";
+}
+
+vhdl_report_stmt::vhdl_report_stmt(vhdl_expr *text,
+                                   vhdl_severity_t severity)
+   : severity_(severity),
+     text_(text)
+{
+
+}
+
+void vhdl_report_stmt::emit(ostream& of, int level) const
+{
+   of << "report ";
+   text_->emit(of, level);
+
+   if (severity_ != SEVERITY_NOTE) {
+      const char *levels[] = { "note", "warning", "error", "failure" };
+      of << " severity " << levels[severity_];
+   }
+   
+   of << ";";
+}
+
+void vhdl_report_stmt::find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write)
+{
+   text_->find_vars(read);
+}
+
+vhdl_assert_stmt::vhdl_assert_stmt(const char *reason)
+   : vhdl_report_stmt(new vhdl_const_string(reason), SEVERITY_FAILURE)
+{
+   
 }
 
 void vhdl_assert_stmt::emit(std::ostream &of, int level) const
 {
-   of << "assert false";  // TODO: Allow arbitrary expression
-   of << " report \"" << reason_ << "\" severity failure;";
+   of << "assert false ";  // TODO: Allow arbitrary expression
+   vhdl_report_stmt::emit(of, level);
 }
 
 vhdl_if_stmt::vhdl_if_stmt(vhdl_expr *test)
@@ -781,7 +830,7 @@ vhdl_if_stmt::vhdl_if_stmt(vhdl_expr *test)
 
 vhdl_if_stmt::~vhdl_if_stmt()
 {
-
+   
 }
 
 stmt_container *vhdl_if_stmt::add_elsif(vhdl_expr *test)
@@ -794,7 +843,7 @@ stmt_container *vhdl_if_stmt::add_elsif(vhdl_expr *test)
 void vhdl_if_stmt::emit(std::ostream &of, int level) const
 {
    emit_comment(of, level);
-
+   
    of << "if ";
    test_->emit(of, level);
    of << " then";
@@ -807,7 +856,7 @@ void vhdl_if_stmt::emit(std::ostream &of, int level) const
       of << " then";
       (*it).container->emit(of, level);
    }
-
+   
    if (!else_part_.empty()) {
       of << "else";
       else_part_.emit(of, level);
@@ -848,7 +897,7 @@ void vhdl_expr::close_parens(std::ostream& of)
 
 vhdl_unaryop_expr::~vhdl_unaryop_expr()
 {
-
+   
 }
 
 void vhdl_unaryop_expr::find_vars(vhdl_var_set_t& read)
@@ -883,7 +932,7 @@ vhdl_binop_expr::vhdl_binop_expr(vhdl_expr *left, vhdl_binop_t op,
 
 vhdl_binop_expr::~vhdl_binop_expr()
 {
-
+   
 }
 
 void vhdl_binop_expr::add_expr(vhdl_expr *e)
@@ -902,7 +951,7 @@ void vhdl_binop_expr::emit(std::ostream &of, int level) const
 {
    open_parens(of);
 
-   assert(operands_.size() > 0);
+   assert(operands_.size() > 0);   
    std::list<vhdl_expr*>::const_iterator it = operands_.begin();
 
    (*it)->emit(of, level);
@@ -916,14 +965,14 @@ void vhdl_binop_expr::emit(std::ostream &of, int level) const
       of << " " << ops[op_] << " ";
 
       (*it)->emit(of, level);
-   }
+   }      
 
    close_parens(of);
 }
 
 vhdl_bit_spec_expr::~vhdl_bit_spec_expr()
 {
-
+   
 }
 
 void vhdl_bit_spec_expr::add_bit(int bit, vhdl_expr *e)
@@ -935,7 +984,7 @@ void vhdl_bit_spec_expr::add_bit(int bit, vhdl_expr *e)
 void vhdl_bit_spec_expr::emit(std::ostream &of, int level) const
 {
    of << "(";
-
+   
    std::list<bit_map>::const_iterator it;
    it = bits_.begin();
    while (it != bits_.end()) {
@@ -949,13 +998,13 @@ void vhdl_bit_spec_expr::emit(std::ostream &of, int level) const
       of << (bits_.empty() ? "" : ", ") << "others => ";
       others_->emit(of, level);
    }
-
+   
    of << ")";
 }
 
 vhdl_case_branch::~vhdl_case_branch()
 {
-
+   
 }
 
 void vhdl_case_branch::emit(std::ostream &of, int level) const
@@ -968,7 +1017,7 @@ void vhdl_case_branch::emit(std::ostream &of, int level) const
 
 vhdl_case_stmt::~vhdl_case_stmt()
 {
-
+   
 }
 
 void vhdl_case_stmt::find_vars(vhdl_var_set_t& read,
@@ -999,13 +1048,13 @@ void vhdl_case_stmt::emit(std::ostream &of, int level) const
       else
          newline(of, level);
    }
-
+   
    of << "end case;";
 }
 
 vhdl_while_stmt::~vhdl_while_stmt()
 {
-
+   
 }
 
 void vhdl_while_stmt::find_vars(vhdl_var_set_t& read,
@@ -1039,7 +1088,7 @@ void vhdl_loop_stmt::emit(std::ostream &of, int level) const
 
 vhdl_for_stmt::~vhdl_for_stmt()
 {
-
+   
 }
 
 
@@ -1107,7 +1156,7 @@ void vhdl_param_decl::emit(std::ostream &of, int level) const
 
 vhdl_with_select_stmt::~vhdl_with_select_stmt()
 {
-
+   
 }
 
 void vhdl_with_select_stmt::emit(std::ostream &of, int level) const
@@ -1115,12 +1164,12 @@ void vhdl_with_select_stmt::emit(std::ostream &of, int level) const
    of << "with ";
    test_->emit(of, level);
    of << " select";
-   emit_comment(of, level, true);
+   emit_comment(of, level, true);   
    newline(of, indent(level));
 
    out_->emit(of, level);
-   of << " <= ";
-
+   of << " <= ";      
+   
    when_list_t::const_iterator it = whens_.begin();
    while (it != whens_.end()) {
       (*it).value->emit(of, level);
@@ -1130,7 +1179,7 @@ void vhdl_with_select_stmt::emit(std::ostream &of, int level) const
       }
       of << " when ";
       (*it).cond->emit(of, level);
-
+      
       if (++it != whens_.end() || others_ != NULL) {
          of << ",";
          newline(of, indent(level));

@@ -65,9 +65,9 @@ extern void schedule_assign_array_word(vvp_array_t mem,
  * Create an event to propagate the output of a net.
  */
 extern void schedule_propagate_plucked_vector(vvp_net_t*ptr,
-					      vvp_time64_t  delay,
+ 					      vvp_time64_t  delay,
 					      const vvp_vector4_t&val,
-					      unsigned adr, unsigned wid);
+ 					      unsigned adr, unsigned wid);
 
 /*
  * This is very similar to schedule_assign_vector, but generates an

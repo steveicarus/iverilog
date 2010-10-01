@@ -156,7 +156,7 @@ int draw_ufunc_real(ivl_expr_t expr)
       ivl_scope_t def = ivl_expr_def(expr);
       ivl_signal_t retval = ivl_scope_port(def, 0);
       int res = 0;
-      unsigned idx;
+      int idx;
 
         /* If this is an automatic function, allocate the local storage. */
       if (ivl_scope_is_auto(def)) {

@@ -265,8 +265,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
   unsigned int ini_size = 512;  /* The initial size of the buffer. */
 
   /* Make sure the width fits in the initial buffer. */
-  assert(width >= -1);
-  if ((unsigned int)(width+1) > ini_size) ini_size = width + 1;
+  if (width+1 > ini_size) ini_size = width + 1;
 
   /* The default return value is the full format. */
   result = malloc(ini_size*sizeof(char));

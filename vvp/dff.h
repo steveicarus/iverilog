@@ -30,7 +30,7 @@
  *
  *   port-0:  D input
  *   port-1:  Clock input
- *   port-2:  Clock Enable input
+ *   port-2:  Clock Enagle input
  *   port-3:  Asynchronous D input.
  */
 class vvp_dff  : public vvp_net_fun_t {

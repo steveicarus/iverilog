@@ -162,11 +162,11 @@ end
 endmodule
 
 module des(pt, key, ct, clk);
-input	[1:64] pt;
-input	[1:64] key;
-output	[1:64] ct;
-input	clk;
-wire	[1:48] k1x,k2x,k3x,k4x,k5x,k6x,k7x,k8x,k9x,k10x,k11x,k12x,k13x,k14x,k15x,k16x;
+input 	[1:64] pt;
+input 	[1:64] key;
+output 	[1:64] ct;
+input 	clk;
+wire 	[1:48] k1x,k2x,k3x,k4x,k5x,k6x,k7x,k8x,k9x,k10x,k11x,k12x,k13x,k14x,k15x,k16x;
 wire	[1:32] l0x,l1x,l2x,l3x,l4x,l5x,l6x,l7x,l8x,l9x,l10x,l11x,l12x,l13x,l14x,l15x,l16x;
 wire	[1:32] r0x,r1x,r2x,r3x,r4x,r5x,r6x,r7x,r8x,r9x,r10x,r11x,r12x,r13x,r14x,r15x,r16x;
 
@@ -194,9 +194,9 @@ endmodule
 
 
 module pc1(key, c0x, d0x);
-input	[1:64] key;
-output	[1:28] c0x, d0x;
-wire	[1:56] XX;
+input 	[1:64] key;
+output 	[1:28] c0x, d0x;
+wire 	[1:56] XX;
 
 assign XX[1]=key[57]; assign  XX[2]=key[49]; assign  XX[3]=key[41]; assign  XX[4]=key[33]; assign  XX[5]=key[25]; assign  XX[6]=key[17]; assign  XX[7]=key[9];
 assign XX[8]=key[1]; assign  XX[9]=key[58]; assign  XX[10]=key[50]; assign XX[11]=key[42]; assign XX[12]=key[34]; assign XX[13]=key[26]; assign XX[14]=key[18];
@@ -213,9 +213,9 @@ endmodule
 
 
 module pc2(c,d,k);
-input	[1:28] c,d;
-output	[1:48] k;
-wire	[1:56] YY;
+input 	[1:28] c,d;
+output 	[1:48] k;
+wire 	[1:56] YY;
 
         assign YY[1:28]=c;         assign YY[29:56]=d;
 
@@ -231,7 +231,7 @@ endmodule
 
 
 module rol1(o, i);
-output	[1:28] o;
+output 	[1:28] o;
 input	[1:28] i;
 
 assign o={i[2:28],i[1]};
@@ -240,7 +240,7 @@ endmodule
 
 
 module rol2(o, i);
-output	[1:28] o;
+output 	[1:28] o;
 input	[1:28] i;
 
 assign o={i[3:28],i[1:2]};
@@ -248,10 +248,10 @@ endmodule
 
 
 module keysched(key,k1x,k2x,k3x,k4x,k5x,k6x,k7x,k8x,k9x,k10x,k11x,k12x,k13x,k14x,k15x,k16x);
-input	[1:64] key;
-output	[1:48] k1x,k2x,k3x,k4x,k5x,k6x,k7x,k8x,k9x,k10x,k11x,k12x,k13x,k14x,k15x,k16x;
-wire	[1:28] c0x,c1x,c2x,c3x,c4x,c5x,c6x,c7x,c8x,c9x,c10x,c11x,c12x,c13x,c14x,c15x,c16x;
-wire	[1:28] d0x,d1x,d2x,d3x,d4x,d5x,d6x,d7x,d8x,d9x,d10x,d11x,d12x,d13x,d14x,d15x,d16x;
+input 	[1:64] key;
+output 	[1:48] k1x,k2x,k3x,k4x,k5x,k6x,k7x,k8x,k9x,k10x,k11x,k12x,k13x,k14x,k15x,k16x;
+wire 	[1:28] c0x,c1x,c2x,c3x,c4x,c5x,c6x,c7x,c8x,c9x,c10x,c11x,c12x,c13x,c14x,c15x,c16x;
+wire 	[1:28] d0x,d1x,d2x,d3x,d4x,d5x,d6x,d7x,d8x,d9x,d10x,d11x,d12x,d13x,d14x,d15x,d16x;
 
 pc1 pc1(key, c0x, d0x);
 
@@ -294,10 +294,10 @@ endmodule
 
 
 module s1(clk, b, so);
-input	clk;
-input	[1:6] b;
-output	[1:4] so;
-reg	[1:4] so;
+input 	clk;
+input 	[1:6] b;
+output 	[1:4] so;
+reg 	[1:4] so;
 
 	always @(posedge clk)
 		casex(b)
@@ -370,10 +370,10 @@ endmodule
 
 
 module s2(clk, b, so);
-input	clk;
-input	[1:6] b;
-output	[1:4] so;
-reg	[1:4] so;
+input 	clk;
+input 	[1:6] b;
+output 	[1:4] so;
+reg 	[1:4] so;
 
 	always @(posedge clk)
 		casex(b)
@@ -446,10 +446,10 @@ endmodule
 
 
 module s3(clk, b, so);
-input	clk;
-input	[1:6] b;
-output	[1:4] so;
-reg	[1:4] so;
+input 	clk;
+input 	[1:6] b;
+output 	[1:4] so;
+reg 	[1:4] so;
 
 	always @(posedge clk)
 		casex(b)
@@ -522,10 +522,10 @@ endmodule
 
 
 module s4(clk, b, so);
-input	clk;
-input	[1:6] b;
-output	[1:4] so;
-reg	[1:4] so;
+input 	clk;
+input 	[1:6] b;
+output 	[1:4] so;
+reg 	[1:4] so;
 
 	always @(posedge clk)
 		casex(b)
@@ -598,10 +598,10 @@ endmodule
 
 
 module s5(clk, b, so);
-input	clk;
-input	[1:6] b;
-output	[1:4] so;
-reg	[1:4] so;
+input 	clk;
+input 	[1:6] b;
+output 	[1:4] so;
+reg 	[1:4] so;
 
 	always @(posedge clk)
 		casex(b)
@@ -674,10 +674,10 @@ endmodule
 
 
 module s6(clk, b, so);
-input	clk;
-input	[1:6] b;
-output	[1:4] so;
-reg	[1:4] so;
+input 	clk;
+input 	[1:6] b;
+output 	[1:4] so;
+reg 	[1:4] so;
 
 	always @(posedge clk)
 		casex(b)
@@ -750,10 +750,10 @@ endmodule
 
 
 module s7(clk, b, so);
-input	clk;
-input	[1:6] b;
-output	[1:4] so;
-reg	[1:4] so;
+input 	clk;
+input 	[1:6] b;
+output 	[1:4] so;
+reg 	[1:4] so;
 
 	always @(posedge clk)
 		casex(b)
@@ -826,10 +826,10 @@ endmodule
 
 
 module s8(clk, b, so);
-input	clk;
-input	[1:6] b;
-output	[1:4] so;
-reg	[1:4] so;
+input 	clk;
+input 	[1:6] b;
+output 	[1:4] so;
+reg 	[1:4] so;
 
 	always @(posedge clk)
 		casex(b)
@@ -902,8 +902,8 @@ endmodule
 
 
 module ip(pt, l0x, r0x);
-input	[1:64] pt;
-output	[1:32] l0x, r0x;
+input 	[1:64] pt;
+output 	[1:32] l0x, r0x;
 
 assign l0x[1]=pt[58];         assign l0x[2]=pt[50];         assign l0x[3]=pt[42];         assign l0x[4]=pt[34];
 assign l0x[5]=pt[26];         assign l0x[6]=pt[18];         assign l0x[7]=pt[10];         assign l0x[8]=pt[2];
@@ -941,10 +941,10 @@ endmodule
 
 
 module desxor1(e,b1x,b2x,b3x,b4x,b5x,b6x,b7x,b8x,k);
-input	[1:48] e;
-output	[1:6] b1x,b2x,b3x,b4x,b5x,b6x,b7x,b8x;
-input	[1:48] k;
-wire	[1:48] XX;
+input 	[1:48] e;
+output 	[1:6] b1x,b2x,b3x,b4x,b5x,b6x,b7x,b8x;
+input 	[1:48] k;
+wire 	[1:48] XX;
 
 assign         XX = k ^ e;
 assign        b1x = XX[1:6];
@@ -960,9 +960,9 @@ endmodule
 
 
 module pp(so1x,so2x,so3x,so4x,so5x,so6x,so7x,so8x,ppo);
-input	[1:4] so1x,so2x,so3x,so4x,so5x,so6x,so7x,so8x;
-output	[1:32] ppo;
-wire	[1:32] XX;
+input 	[1:4] so1x,so2x,so3x,so4x,so5x,so6x,so7x,so8x;
+output 	[1:32] ppo;
+wire 	[1:32] XX;
 
         assign XX[1:4]=so1x;       assign XX[5:8]=so2x;       assign XX[9:12]=so3x;      assign XX[13:16]=so4x;
         assign XX[17:20]=so5x;     assign XX[21:24]=so6x;     assign XX[25:28]=so7x;     assign XX[29:32]=so8x;
@@ -980,8 +980,8 @@ endmodule
 
 
 module desxor2(d,l,q);
-input	[1:32] d,l;
-output	[1:32] q;
+input 	[1:32] d,l;
+output 	[1:32] q;
 
 assign q = d ^ l;
 
@@ -994,10 +994,10 @@ input	[1:32] li, ri;
 input	[1:48] k;
 output	[1:32] lo, ro;
 
-wire	[1:48] e;
+wire 	[1:48] e;
 wire	[1:6] b1x,b2x,b3x,b4x,b5x,b6x,b7x,b8x;
 wire	[1:4] so1x,so2x,so3x,so4x,so5x,so6x,so7x,so8x;
-wire	[1:32] ppo;
+wire 	[1:32] ppo;
 
 xp xp(ri, e);
 desxor1 desxor1(e, b1x, b2x, b3x, b4x, b5x, b6x, b7x, b8x, k);
@@ -1018,7 +1018,7 @@ endmodule
 
 
 module fp(l,r,ct);
-input	[1:32] l,r;
+input 	[1:32] l,r;
 output	[1:64] ct;
 
 	assign ct[1]=r[8];	assign ct[2]=l[8];	assign ct[3]=r[16];	assign ct[4]=l[16];	assign ct[5]=r[24];	assign ct[6]=l[24];	assign ct[7]=r[32];	assign ct[8]=l[32];

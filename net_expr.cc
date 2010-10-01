@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2009 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -488,21 +488,18 @@ const NetScope* NetECRealParam::scope() const
 NetEParam::NetEParam()
 : des_(0), scope_(0)
 {
-      solving_ = false;
 }
 
 NetEParam::NetEParam(Design*d, NetScope*s, perm_string n)
     : des_(d), scope_(s), reference_(scope_->find_parameter(n))
 {
       cast_signed_base_(reference_->second.signed_flag);
-      solving_ = false;
 }
 
 NetEParam::NetEParam(Design*d, NetScope*s, ref_t ref)
     : des_(d), scope_(s), reference_(ref)
 {
       cast_signed_base_(reference_->second.signed_flag);
-      solving_ = false;
 }
 
 NetEParam::~NetEParam()
@@ -522,19 +519,8 @@ ivl_variable_type_t NetEParam::expr_type() const
 NetEParam* NetEParam::dup_expr() const
 {
       NetEParam*tmp = new NetEParam(des_, scope_, reference_);
-      tmp->solving(solving_);
       tmp->set_line(*this);
       return tmp;
-}
-
-void NetEParam::solving(bool arg)
-{
-      solving_ = arg;
-}
-
-bool NetEParam::solving() const
-{
-      return solving_;
 }
 
 NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid)

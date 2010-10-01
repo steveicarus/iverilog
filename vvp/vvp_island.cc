@@ -291,7 +291,7 @@ vvp_island* compile_find_island(const char*island)
  *
  * The <src> is a label in the domain outside the island, and the
  * <label> is in the domain inside the island. Since this port is
- * bi-directional, the <label> is also available in the domain outside
+ * bi-directional, the <label> is also avaliable in the domain outside
  * the island. The outside should use the <label> to access the nexus
  * that this port represents, because the island will resolve internal
  * drivers with the external driver and make the output available on
