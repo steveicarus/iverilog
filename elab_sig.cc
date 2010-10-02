@@ -69,6 +69,15 @@ static bool get_const_argument(NetExpr*exp, verinum&res)
       return true;
 }
 
+static bool get_const_argument(NetExpr*exp, long&res)
+{
+      verinum tmp;
+      bool rc = get_const_argument(exp, tmp);
+      if (rc == false) return false;
+      res = tmp.as_long();
+      return true;
+}
+
 void Statement::elaborate_sig(Design*des, NetScope*scope) const
 {
 }
@@ -472,18 +481,14 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  need_constant_expr = false;
 
 		  long mnum = 0, lnum = 0;
-		  if (NetEConst*tmp = dynamic_cast<NetEConst*>(me)) {
-			mnum = tmp->value().as_long();
-		  } else {
+		  if ( ! get_const_argument(me, mnum) ) {
 			cerr << me->get_fileline() << ": error: "
 			      "Unable to evaluate constant expression "
 			     << *me << "." << endl;
 			des->errors += 1;
 		  }
 
-		  if (NetEConst*tmp = dynamic_cast<NetEConst*>(le)) {
-			lnum = tmp->value().as_long();
-		  } else {
+		  if ( ! get_const_argument(le, lnum) ) {
 			cerr << le->get_fileline() << ": error: "
 			      "Unable to evaluate constant expression "
 			     << *le << "." << endl;
@@ -532,6 +537,48 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    ret_sig->set_scalar(true);
 	    ret_sig->port_type(NetNet::POUTPUT);
 	    ret_sig->data_type(IVL_VT_REAL);
+	    break;
+
+	  case PTF_ATOM2:
+	  case PTF_ATOM2_S:
+	    ivl_assert(*this, return_type_.range != 0);
+	    probe_expr_width(des, scope, (*return_type_.range)[0]);
+	    probe_expr_width(des, scope, (*return_type_.range)[1]);
+	    long use_wid;
+	    {
+		  need_constant_expr = true;
+		  NetExpr*me = elab_and_eval(des, scope,
+					     (*return_type_.range)[0], -1);
+		  assert(me);
+		  NetExpr*le = elab_and_eval(des, scope,
+					     (*return_type_.range)[1], -1);
+		  assert(le);
+		  need_constant_expr = false;
+
+		  long mnum = 0, lnum = 0;
+		  if ( ! get_const_argument(me, mnum) ) {
+			cerr << me->get_fileline() << ": error: "
+			      "Unable to evaluate constant expression "
+			     << *me << "." << endl;
+			des->errors += 1;
+		  }
+
+		  if ( ! get_const_argument(le, lnum) ) {
+			cerr << le->get_fileline() << ": error: "
+			      "Unable to evaluate constant expression "
+			     << *le << "." << endl;
+			des->errors += 1;
+		  }
+
+		  use_wid = mnum - lnum + 1;
+	    }
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, use_wid);
+	    ret_sig->set_line(*this);
+	    ret_sig->set_signed(return_type_.type == PTF_ATOM2_S? true : false);
+	    ret_sig->set_isint(true);
+	    ret_sig->set_scalar(false);
+	    ret_sig->port_type(NetNet::POUTPUT);
+	    ret_sig->data_type(IVL_VT_BOOL);
 	    break;
 
 	  default:

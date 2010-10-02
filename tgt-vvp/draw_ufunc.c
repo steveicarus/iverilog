@@ -55,6 +55,12 @@ static void function_argument_real(ivl_signal_t port, ivl_expr_t expr)
       clr_word(res);
 }
 
+static void function_argument_bool(ivl_signal_t port, ivl_expr_t expr)
+{
+	/* For now, treat bit2 variables as bit4 variables. */
+      function_argument_logic(port, expr);
+}
+
 static void draw_function_argument(ivl_signal_t port, ivl_expr_t expr)
 {
       ivl_variable_type_t dtype = ivl_signal_data_type(port);
@@ -64,6 +70,9 @@ static void draw_function_argument(ivl_signal_t port, ivl_expr_t expr)
 	    break;
 	  case IVL_VT_REAL:
 	    function_argument_real(port, expr);
+	    break;
+	  case IVL_VT_BOOL:
+	    function_argument_bool(port, expr);
 	    break;
 	  default:
 	    fprintf(stderr, "XXXX function argument %s type=%d?!\n",
