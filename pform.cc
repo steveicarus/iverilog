@@ -2430,6 +2430,38 @@ void pform_set_reg_time(list<perm_string>*names)
       delete names;
 }
 
+static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_string name)
+{
+      PWire*cur = pform_get_wire_in_scope(name);
+      if (cur == 0) {
+	    cur = new PWire(name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_BOOL);
+	    pform_put_wire_in_scope(name, cur);
+      } else {
+	    bool rc = cur->set_wire_type(NetNet::REG);
+	    assert(rc);
+	    rc = cur->set_data_type(IVL_VT_BOOL);
+	    assert(rc);
+      }
+
+      assert(cur);
+
+      cur->set_signed(signed_flag);
+      cur->set_range(new PENumber(new verinum(width-1, integer_width)),
+		     new PENumber(new verinum((uint64_t)0, integer_width)),
+		     SR_NET, false);
+}
+
+void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names)
+{
+      for (list<perm_string>::iterator cur = names->begin()
+		 ; cur != names->end()
+		 ; cur ++ ) {
+	    perm_string txt = *cur;
+	    pform_set_integer_2atom(width, signed_flag, txt);
+      }
+      delete names;
+}
+
 svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
 {
       svector<PWire*>*out = new svector<PWire*>(names->size());

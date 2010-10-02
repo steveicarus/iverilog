@@ -275,6 +275,8 @@ extern void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<perm_string>*names);
 extern void pform_set_reg_time(list<perm_string>*names);
 
+extern void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names);
+
   /* pform_set_attrib and pform_set_type_attrib exist to support the
      $attribute syntax, which can only set string values to
      attributes. The functions keep the value strings that are

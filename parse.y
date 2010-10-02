@@ -319,7 +319,8 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 
 %type <flag>    from_exclude
 %type <number>  number
-%type <flag>    signed_opt udp_reg_opt edge_operator automatic_opt
+%type <flag>    signed_opt signed_unsigned_opt
+%type <flag>    udp_reg_opt edge_operator automatic_opt
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
 %type <text>    udp_input_list udp_sequ_entry udp_comb_entry
@@ -516,18 +517,39 @@ block_item_decl
 		  if ($1) delete $1;
 		}
 
-  /* Integer declarations are simpler in that they do not have all the
-     trappings of a general variable declaration. All of that is
-     implicit in the "integer" of the declaration. */
+  /* Integer atom declarations are simpler in that they do not have
+     all the trappings of a general variable declaration. All of that
+     is implicit in the "integer" of the declaration. */
 
-	| attribute_list_opt K_integer register_variable_list ';'
-		{ pform_set_reg_integer($3);
-		  if ($1) delete $1;
-		}
+  | attribute_list_opt K_integer register_variable_list ';'
+     { pform_set_reg_integer($3);
+       if ($1) delete $1;
+     }
 
-	| attribute_list_opt K_time register_variable_list ';'
-		{ pform_set_reg_time($3);
-		}
+  | attribute_list_opt K_time register_variable_list ';'
+     { pform_set_reg_time($3);
+       if ($1) delete $1;
+     }
+
+  | attribute_list_opt K_byte signed_unsigned_opt register_variable_list ';'
+     { pform_set_integer_2atom(8, $3, $4);
+       if ($1) delete $1;
+     }
+
+  | attribute_list_opt K_shortint signed_unsigned_opt register_variable_list ';'
+     { pform_set_integer_2atom(16, $3, $4);
+       if ($1) delete $1;
+     }
+
+  | attribute_list_opt K_int signed_unsigned_opt register_variable_list ';'
+     { pform_set_integer_2atom(32, $3, $4);
+       if ($1) delete $1;
+     }
+
+  | attribute_list_opt K_longint signed_unsigned_opt register_variable_list ';'
+     { pform_set_integer_2atom(64, $3, $4);
+       if ($1) delete $1;
+     }
 
   /* real declarations are fairly simple as there is no range of
      signed flag in the declaration. Create the real as a NetNet::REG
@@ -1981,7 +2003,26 @@ net_type_opt
 	| { $$ = NetNet::IMPLICIT; }
 	;
 
-signed_opt : K_signed { $$ = true; } | {$$ = false; } ;
+  /*
+   * The signed_opt rule will return "true" if K_signed is present,
+   * for "false" otherwise. This rule corresponds to the declaration
+   * defaults for reg/bit/logic.
+   *
+   * The signed_unsigned_opt rule with match K_signed or K_unsigned
+   * and return true or false as appropriate. The default is
+   * "true". This corresponds to the declaration defaults for
+   * byte/shortint/int/longint.
+   */
+signed_opt
+  : K_signed { $$ = true; }
+  |          {$$ = false; }
+  ;
+
+signed_unsigned_opt
+  : K_signed   { $$ = true; }
+  | K_unsigned { $$ = false; }
+  |            { $$ = true; }
+  ;
 
   /* An lpvalue is the expression that can go on the left side of a
      procedural assignment. This rule handles only procedural
