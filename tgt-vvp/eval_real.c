@@ -166,7 +166,7 @@ static int draw_number_real(ivl_expr_t expr)
 	/* If this is a negative number, then arrange for the 2's
 	   complement to be calculated as we scan through the
 	   value. Real values are sign-magnitude, and this negation
-	   gets us a magnitide. */
+	   gets us a magnitude. */
 
       int negate = 0;
       int carry = 0;

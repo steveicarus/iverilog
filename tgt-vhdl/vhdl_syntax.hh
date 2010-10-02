@@ -44,7 +44,7 @@ public:
 
    const vhdl_type *get_type() const { return type_; }
    bool constant() const { return isconst_; }
-   
+
    vhdl_expr *cast(const vhdl_type *to);
    virtual vhdl_expr *resize(int newwidth);
    virtual vhdl_expr *to_boolean();
@@ -52,8 +52,7 @@ public:
    virtual vhdl_expr *to_std_logic();
    virtual vhdl_expr *to_std_ulogic();
    virtual vhdl_expr *to_vector(vhdl_type_name_t name, int w);
-   virtual vhdl_expr *to_string();
-   virtual void find_vars(vhdl_var_set_t& read) {}
+   virtual void find_vars(vhdl_var_set_t& read) const {}
    
 protected:
    static void open_parens(ostream& of);
@@ -74,7 +73,7 @@ public:
                 vhdl_expr *slice = NULL)
       : vhdl_expr(type), name_(name), slice_(slice), slice_width_(0) {}
    ~vhdl_var_ref();
-   
+
    void emit(std::ostream &of, int level) const;
    const std::string &get_name() const { return name_; }
    void set_name(const std::string &name) { name_ = name; }
@@ -177,7 +176,7 @@ private:
 
 class vhdl_const_string : public vhdl_expr {
 public:
-   vhdl_const_string(const string& value)
+   vhdl_const_string(const char *value)
       : vhdl_expr(vhdl_type::string(), true), value_(value) {}
 
    void emit(std::ostream &of, int level) const;
@@ -199,7 +198,7 @@ private:
    int64_t bits_to_int() const;
    char sign_bit() const;
    bool has_meta_bits() const;
-   
+
    std::string value_;
    bool qualified_, signed_;
 };
@@ -256,7 +255,7 @@ private:
 class vhdl_expr_list : public vhdl_element {
 public:
    ~vhdl_expr_list();
-   
+
    void emit(std::ostream &of, int level) const;
    bool empty() const { return exprs_.empty(); }
    void add_expr(vhdl_expr *e);
@@ -271,7 +270,7 @@ private:
  */
 class vhdl_fcall : public vhdl_expr {
 public:
-   vhdl_fcall(const string& name, vhdl_type *rtype)
+   vhdl_fcall(const char *name, vhdl_type *rtype)
       : vhdl_expr(rtype), name_(name) {};
    ~vhdl_fcall() {}
 
@@ -330,7 +329,7 @@ public:
    vhdl_with_select_stmt(vhdl_expr *test, vhdl_var_ref *out)
       : test_(test), out_(out), others_(NULL) {}
    ~vhdl_with_select_stmt();
-   
+
    void emit(std::ostream &of, int level) const;
    void add_condition(vhdl_expr *value, vhdl_expr *cond, vhdl_expr *delay=NULL);
    void add_default(vhdl_expr* value);
@@ -364,7 +363,7 @@ public:
 class stmt_container {
 public:
    ~stmt_container();
-   
+
    void add_stmt(vhdl_seq_stmt *stmt);
    void move_stmts_from(stmt_container *other);
    void emit(std::ostream &of, int level, bool newline=true) const;
@@ -392,7 +391,7 @@ public:
 protected:
    vhdl_var_ref *lhs_;
    vhdl_expr *rhs_, *after_;
-};                                                      
+};
 
 
 /*
@@ -403,7 +402,7 @@ class vhdl_nbassign_stmt : public vhdl_abstract_assign_stmt {
 public:
    vhdl_nbassign_stmt(vhdl_var_ref *lhs, vhdl_expr *rhs)
       : vhdl_abstract_assign_stmt(lhs, rhs) {}
-   
+
    void emit(std::ostream &of, int level) const;
 };
 
@@ -435,7 +434,7 @@ public:
                   vhdl_expr *expr = NULL)
       : type_(type), expr_(expr) {}
    ~vhdl_wait_stmt();
-   
+
    void emit(std::ostream &of, int level) const;
    void add_sensitivity(const std::string &s) { sensitivity_.push_back(s); }
    vhdl_wait_type_t get_type() const { return type_; }
@@ -454,32 +453,15 @@ public:
 };
 
 
-enum vhdl_severity_t {
-   SEVERITY_NOTE,
-   SEVERITY_WARNING,
-   SEVERITY_ERROR,
-   SEVERITY_FAILURE
-};
-
-class vhdl_report_stmt : public vhdl_seq_stmt {
+class vhdl_assert_stmt : public vhdl_seq_stmt {
 public:
-   vhdl_report_stmt(vhdl_expr *text,
-                    vhdl_severity_t severity = SEVERITY_NOTE);
-   virtual ~vhdl_report_stmt() {}
+   vhdl_assert_stmt(const char *reason)
+      : reason_(reason) {}
 
-   virtual void emit(ostream& of, int level) const;
-   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
+   void emit(std::ostream &of, int level) const;
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write) {}
 private:
-   vhdl_severity_t severity_;
-   vhdl_expr *text_;
-};
-
-
-class vhdl_assert_stmt : public vhdl_report_stmt {
-public:
-   vhdl_assert_stmt(const char *reason);
-
-   void emit(ostream &of, int level) const;
+   std::string reason_;
 };
 
 
@@ -498,7 +480,7 @@ private:
       vhdl_expr *test;
       stmt_container *container;
    };
-   
+
    vhdl_expr *test_;
    stmt_container then_part_, else_part_;
    std::list<elsif> elsif_parts_;
@@ -541,7 +523,7 @@ private:
 class vhdl_loop_stmt : public vhdl_seq_stmt {
 public:
    virtual ~vhdl_loop_stmt() {}
-   
+
    stmt_container *get_container() { return &stmts_; }
    void emit(std::ostream &of, int level) const;
    virtual void find_vars(vhdl_var_set_t& read,
@@ -568,7 +550,7 @@ public:
    vhdl_for_stmt(const char *lname, vhdl_expr *from, vhdl_expr *to)
       : lname_(lname), from_(from), to_(to) {}
    ~vhdl_for_stmt();
-   
+
    void emit(std::ostream &of, int level) const;
    void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
 private:
@@ -584,7 +566,7 @@ private:
 class vhdl_pcall_stmt : public vhdl_seq_stmt {
 public:
    vhdl_pcall_stmt(const char *name) : name_(name) {}
-   
+
    void emit(std::ostream &of, int level) const;
    void add_expr(vhdl_expr *e) { exprs_.add_expr(e); }
    void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
@@ -615,14 +597,14 @@ public:
 
    // Return a new reference to this declaration
    vhdl_var_ref* make_ref() const;
-   
+
    // The different sorts of assignment statement
    // ASSIGN_CONST is used to generate a variable to shadow a
    // constant that cannot be assigned to (e.g. a function parameter)
    enum assign_type_t { ASSIGN_BLOCK, ASSIGN_NONBLOCK, ASSIGN_CONST };
-   
+
    // Get the sort of assignment statement to generate for
-   // assignemnts to this declaration
+   // assignments to this declaration
    // For some sorts of declarations it doesn't make sense
    // to assign to it so calling assignment_type just raises
    // an assertion failure
@@ -631,7 +613,7 @@ public:
 
    // True if this declaration can be read from
    virtual bool is_readable() const { return true; }
-   
+
    // Modify this declaration so it can be read from
    // This does nothing for most declaration types
    virtual void ensure_readable() {}
@@ -643,7 +625,7 @@ protected:
 };
 
 typedef std::list<vhdl_decl*> decl_list_t;
-   
+
 
 /*
  * A forward declaration of a component. At the moment it is assumed
@@ -773,7 +755,7 @@ class vhdl_scope {
 public:
    vhdl_scope();
    ~vhdl_scope();
-   
+
    void add_decl(vhdl_decl *decl);
    void add_forward_decl(vhdl_decl *decl);
    vhdl_decl *get_decl(const std::string &name) const;
@@ -781,15 +763,13 @@ public:
    bool name_collides(const string& name) const;
    bool contained_within(const vhdl_scope *other) const;
    vhdl_scope *get_parent() const;
-   
+
    bool empty() const { return decls_.empty(); }
    const decl_list_t &get_decls() const { return decls_; }
    void set_parent(vhdl_scope *p) { parent_ = p; }
 
    bool initializing() const { return init_; }
    void set_initializing(bool i);
-   bool hoisted_initialiser() const;
-   void hoisted_initialiser(bool h);
 
    void set_allow_signal_assignment(bool b) { sig_assign_ = b; }
    bool allow_signal_assignment() const { return sig_assign_; }
@@ -797,7 +777,6 @@ private:
    decl_list_t decls_;
    vhdl_scope *parent_;
    bool init_, sig_assign_;
-   bool hoisted_init_;
 };
 
 
@@ -810,30 +789,21 @@ class vhdl_procedural {
 public:
    vhdl_procedural() : contains_wait_stmt_(false) {}
    virtual ~vhdl_procedural() {}
-   
+
    virtual stmt_container *get_container() { return &stmts_; }
    virtual vhdl_scope *get_scope() { return &scope_; }
 
    void added_wait_stmt() { contains_wait_stmt_ = true; }
    bool contains_wait_stmt() const { return contains_wait_stmt_; }
-
-   // Managing set of blocking assignment targets in this block
-   void add_blocking_target(vhdl_var_ref* ref);
-   bool is_blocking_target(vhdl_var_ref* ref) const;
-   
 protected:
    stmt_container stmts_;
    vhdl_scope scope_;
 
    // If this is true then the body contains a `wait' statement
    // embedded in it somewhere
-   // If this is the case then we can't use a sensitvity list for
+   // If this is the case then we can't use a sensitivity list for
    // the process
    bool contains_wait_stmt_;
-
-   // The set of variable we have performed a blocking
-   // assignment to
-   set<string> blocking_targets_;
 };
 
 
@@ -841,7 +811,7 @@ class vhdl_function : public vhdl_decl, public vhdl_procedural {
    friend class vhdl_forward_fdecl;
 public:
    vhdl_function(const char *name, vhdl_type *ret_type);
-   
+
    virtual void emit(std::ostream &of, int level) const;
    vhdl_scope *get_scope() { return &variables_; }
    void add_param(vhdl_param_decl *p) { scope_.add_decl(p); }
@@ -911,7 +881,7 @@ public:
 
    void set_time_units(int units, int precision);
    friend vhdl_const_time* scale_time(const vhdl_entity* ent, uint64_t t);
-   
+
    // Each entity has an associated depth which is how deep in
    // the Verilog module hierarchy it was found
    // This is used to limit the maximum depth of modules emitted
@@ -920,7 +890,7 @@ private:
    std::string name_;
    vhdl_arch *arch_;  // Entity may only have a single architecture
    vhdl_scope ports_;
-   
+
    // Entities have an associated VHDL time unit
    // This is used to implement the Verilog timescale directive
    time_unit_t time_unit_;

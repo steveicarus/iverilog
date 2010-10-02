@@ -84,7 +84,7 @@ Download the msys-1.x.x.exe and msysdtc-1.x.x.exe binaries. These are
 self-installing packages. Install msys first, and then msysDTC. Most
 likely, you want to install them in c:/msys. (The msysDTK is installed
 in the same location, as it is an add-on.)
-           
+
 This install should be easy and reliable.
 
 The installation will leave an "msys" icon on your desktop and in the

@@ -64,7 +64,7 @@ Verilog source for use by other compilers.
 .B -g1995\fI|\fP-g2001\fI|\fP-g2001-noconfig\fI|\fP-g2005\fI|\fP-g2009
 Select the Verilog language \fIgeneration\fP to support in the
 compiler. This selects between \fIIEEE1364\-1995\fP,
-\fIIEEE1364\-2001\fP, \fIIEEE1364\-2005\fP, or \fIIEEE1800-2009\fP. 
+\fIIEEE1364\-2001\fP, \fIIEEE1364\-2005\fP, or \fIIEEE1800-2009\fP.
 Normally, Icarus Verilog defaults to the latest known generation of the
 language. This flag is most useful to restrict the language to a set
 supported by tools of specific generations, for compatibility with

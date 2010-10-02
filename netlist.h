@@ -1829,7 +1829,7 @@ class NetPartSelect  : public NetNode {
  * that makes sense for the technology.
  *
  * A NetBUFZ is transparent if strengths are passed through it without
- * change. A NetBUFZ is non-transparent if values other then HiZ are
+ * change. A NetBUFZ is non-transparent if values other than HiZ are
  * converted to the strength of the output.
  */
 class NetBUFZ  : public NetNode {
@@ -3574,6 +3574,8 @@ class NetEParam  : public NetExpr {
       virtual ivl_variable_type_t expr_type() const;
       virtual NetExpr* eval_tree(int prune_to_width = -1);
       virtual NetEParam* dup_expr() const;
+      void solving(bool arg);
+      bool solving() const;
 
       virtual void dump(ostream&) const;
 
@@ -3582,6 +3584,7 @@ class NetEParam  : public NetExpr {
       NetScope*scope_;
       typedef map<perm_string,NetScope::param_expr_t>::iterator ref_t;
       ref_t reference_;
+      bool solving_;
 
       NetEParam(class Design*des, NetScope*scope, ref_t ref);
 };

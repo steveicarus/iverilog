@@ -227,7 +227,7 @@ bool NetPins::is_linked(void)
 NetObj::NetObj(NetScope*s, perm_string n, unsigned np)
 : NetPins(np), scope_(s), name_(n), delay1_(0), delay2_(0), delay3_(0)
 {
-      /* Don't 
+      /* Don't
       ivl_assert(*this, np > 0);
        * because it would happen before we get to print a useful
        * message in the NetNet constructor

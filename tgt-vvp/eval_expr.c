@@ -929,9 +929,9 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	  case 'G':
 	    rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
 	    if (number_is_immediate(le,16,0) && !number_is_unknown(le)) {
-		  unsigned imm = get_number_immediate(le);
+		  long imm = get_number_immediate(le);
 		  assert(imm >= 0);
-		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
+		  fprintf(vvp_out, "   %%cmpi/%c %u, %ld, %u;\n", s_flag,
 			  rv.base, imm, rv.wid);
 	    } else {
 		  lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
@@ -945,9 +945,9 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	  case 'L':
 	    lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
 	    if (number_is_immediate(re,16,0) && !number_is_unknown(re)) {
-		  unsigned imm = get_number_immediate(re);
+		  long imm = get_number_immediate(re);
 		  assert(imm >= 0);
-		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
+		  fprintf(vvp_out, "   %%cmpi/%c %u, %ld, %u;\n", s_flag,
 			  lv.base, imm, lv.wid);
 	    } else {
 		  rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
@@ -961,9 +961,9 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	  case '<':
 	    lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
 	    if (number_is_immediate(re,16,0) && !number_is_unknown(re)) {
-		  unsigned imm = get_number_immediate(re);
+		  long imm = get_number_immediate(re);
 		  assert(imm >= 0);
-		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
+		  fprintf(vvp_out, "   %%cmpi/%c %u, %ld, %u;\n", s_flag,
 			  lv.base, imm, lv.wid);
 	    } else {
 		  rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
@@ -976,9 +976,9 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	  case '>':
 	    rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
 	    if (number_is_immediate(le,16,0) && !number_is_unknown(le)) {
-		  unsigned imm = get_number_immediate(le);
+		  long imm = get_number_immediate(le);
 		  assert(imm >= 0);
-		  fprintf(vvp_out, "   %%cmpi/%c %u, %u, %u;\n", s_flag,
+		  fprintf(vvp_out, "   %%cmpi/%c %u, %ld, %u;\n", s_flag,
 			  rv.base, imm, rv.wid);
 	    } else {
 		  lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
@@ -1942,7 +1942,7 @@ static struct vector_info draw_number_expr(ivl_expr_t expr, unsigned wid)
 /*
  * This little helper function generates the instructions to pad a
  * vector in place. It is assumed that the calling function has set up
- * the first sub_sidth bits of the dest vector, and the signed_flag is
+ * the first sub_width bits of the dest vector, and the signed_flag is
  * true if the extension is to be signed.
  */
 static void pad_in_place(struct vector_info dest, unsigned sub_width, int signed_flag)
@@ -2589,7 +2589,7 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
 	/* If we have an undefined index then just produce a 'bx result. */
       fprintf(vvp_out, "    %%jmp/1  T_%d.%d, 4;\n", thread_count, lab_x);
 
-      	/* If the subv result is a magic constant, then make a copy in
+	/* If the subv result is a magic constant, then make a copy in
 	   writable vector space and work from there instead. */
       if (subv.base < 4) {
 	    res.base = allocate_vector(subv.wid);
@@ -2609,7 +2609,7 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
 	    fprintf(vvp_out, "    %%mov %u, %u, %u; Pad sub-expression to match width\n",
 		    res.base, subv.base, subv.wid);
 	    if (ivl_expr_signed(sube)) {
-		  int idx;
+		  unsigned idx;
 		  for (idx = subv.wid ; idx < res.wid ; idx += 1) {
 			fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
 				res.base+idx, subv.base+subv.wid-1);

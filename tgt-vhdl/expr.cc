@@ -35,7 +35,7 @@ static vhdl_expr *change_signedness(vhdl_expr *e, bool issigned)
    int msb = e->get_type()->get_msb();
    int lsb = e->get_type()->get_lsb();
    vhdl_type u(issigned ? VHDL_TYPE_SIGNED : VHDL_TYPE_UNSIGNED, msb, lsb);
-   
+
    return e->cast(&u);
 }
 
@@ -44,9 +44,9 @@ static vhdl_expr *change_signedness(vhdl_expr *e, bool issigned)
  * same signedness as the Verilog expression vl_e.
  */
 static vhdl_expr *correct_signedness(vhdl_expr *vhd_e, ivl_expr_t vl_e)
-{ 
+{
    bool should_be_signed = ivl_expr_signed(vl_e) != 0;
-   
+
    if (vhd_e->get_type()->get_name() == VHDL_TYPE_UNSIGNED
        && should_be_signed) {
       //operand->print();
@@ -69,7 +69,7 @@ static vhdl_expr *correct_signedness(vhdl_expr *vhd_e, ivl_expr_t vl_e)
  * Convert a constant Verilog string to a constant VHDL string.
  */
 static vhdl_expr *translate_string(ivl_expr_t e)
-{   
+{
    // TODO: May need to inspect or escape parts of this
    const char *str = ivl_expr_string(e);
    return new vhdl_const_string(str);
@@ -82,12 +82,12 @@ static vhdl_expr *translate_string(ivl_expr_t e)
 static vhdl_var_ref *translate_signal(ivl_expr_t e)
 {
    ivl_signal_t sig = ivl_expr_signal(e);
-   
+
    const vhdl_scope *scope = find_scope_for_signal(sig);
    assert(scope);
 
    const char *renamed = get_renamed_signal(sig).c_str();
-    
+
    vhdl_decl *decl = scope->get_decl(renamed);
    assert(decl);
 
@@ -102,7 +102,7 @@ static vhdl_var_ref *translate_signal(ivl_expr_t e)
 
    vhdl_var_ref *ref =
       new vhdl_var_ref(renamed, new vhdl_type(*decl->get_type()));
-      
+
    ivl_expr_t off;
    if (ivl_signal_array_count(sig) > 0 && (off = ivl_expr_oper1(e))) {
       // Select from an array
@@ -152,7 +152,7 @@ static vhdl_expr *translate_reduction(support_function_t f, bool neg,
       vhdl_fcall *fcall =
          new vhdl_fcall(support_function::function_name(f),
                         vhdl_type::std_logic());
-      
+
       vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR);
       fcall->add_expr(operand->cast(&std_logic_vector));
 
@@ -173,7 +173,7 @@ static vhdl_expr *translate_unary(ivl_expr_t e)
       return NULL;
 
    operand = correct_signedness(operand, e);
-   
+
    char opcode = ivl_expr_opcode(e);
    switch (opcode) {
    case '!':
@@ -234,7 +234,7 @@ static vhdl_expr *translate_relation(vhdl_expr *lhs, vhdl_expr *rhs,
    // Generate any necessary casts
    // Arbitrarily, the RHS is casted to the type of the LHS
    vhdl_expr *r_cast = rhs->cast(lhs->get_type());
-   
+
    return new vhdl_binop_expr(lhs, op, r_cast, vhdl_type::boolean());
 }
 
@@ -311,7 +311,7 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    vhdl_expr *lhs = translate_expr(ivl_expr_oper1(e));
    if (NULL == lhs)
       return NULL;
-   
+
    vhdl_expr *rhs = translate_expr(ivl_expr_oper2(e));
    if (NULL == rhs)
       return NULL;
@@ -319,7 +319,7 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    int lwidth = lhs->get_type()->get_width();
    int rwidth = rhs->get_type()->get_width();
    int result_width = ivl_expr_width(e);
-   
+
    // For === and !== we need to compare std_logic_vectors
    // rather than signeds
    vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR, result_width-1, 0);
@@ -328,7 +328,7 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    bool vectorop =
       (ltype == VHDL_TYPE_SIGNED || ltype == VHDL_TYPE_UNSIGNED) &&
       (rtype == VHDL_TYPE_SIGNED || rtype == VHDL_TYPE_UNSIGNED);
-   
+
    // May need to resize the left or right hand side or change the
    // signedness
    if (vectorop) {
@@ -425,7 +425,7 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
          result = translate_shift(lhs, rhs, VHDL_BINOP_SRA);
       else
          result = translate_shift(lhs, rhs, VHDL_BINOP_SR);
-      break;         
+      break;
    case '^':
       result = translate_numeric(lhs, rhs, VHDL_BINOP_XOR);
       break;
@@ -463,7 +463,7 @@ static vhdl_expr *translate_select(ivl_expr_t e)
       return NULL;
 
    ivl_expr_t o2 = ivl_expr_oper2(e);
-   if (o2) {      
+   if (o2) {
       vhdl_expr *base = translate_expr(ivl_expr_oper2(e));
       if (NULL == base)
          return NULL;
@@ -477,7 +477,7 @@ static vhdl_expr *translate_select(ivl_expr_t e)
                                     new vhdl_type(*from->get_type()));
       }
       else if (from_var_ref->get_type()->get_name() != VHDL_TYPE_STD_LOGIC) {
-         // We can use the more idomatic VHDL slice notation on a
+         // We can use the more idiomatic VHDL slice notation on a
          // single variable reference
          vhdl_type integer(VHDL_TYPE_INTEGER);
          from_var_ref->set_slice(base->cast(&integer), ivl_expr_width(e) - 1);
@@ -528,7 +528,7 @@ static vhdl_expr *translate_ufunc(ivl_expr_t e)
 
    const char *funcname = ivl_scope_tname(defscope);
 
-   vhdl_type *rettype = 
+   vhdl_type *rettype =
       vhdl_type::type_for(ivl_expr_width(e), ivl_expr_signed(e) != 0);
    vhdl_fcall *fcall = new vhdl_fcall(funcname, rettype);
 
@@ -539,18 +539,18 @@ static vhdl_expr *translate_ufunc(ivl_expr_t e)
          delete fcall;
          return NULL;
       }
-      
+
       // Ensure the parameter has the correct VHDL type
       // Parameter number is i + 1 since 0th parameter is return value
       ivl_signal_t param_sig = ivl_scope_port(defscope, i + 1);
       vhdl_type *param_type =
          vhdl_type::type_for(ivl_signal_width(param_sig),
                              ivl_signal_signed(param_sig) != 0);
-      
+
       fcall->add_expr(param->cast(param_type));
       delete param_type;
    }
-   
+
    return fcall;
 }
 
@@ -565,7 +565,7 @@ static vhdl_expr *translate_ternary(ivl_expr_t e)
       sf = SF_TERNARY_SIGNED;
    else
       sf = SF_TERNARY_UNSIGNED;
-   
+
    require_support_function(sf);
 
    vhdl_expr *test = translate_expr(ivl_expr_oper1(e));
@@ -576,20 +576,20 @@ static vhdl_expr *translate_ternary(ivl_expr_t e)
 
    vhdl_type boolean(VHDL_TYPE_BOOLEAN);
    test = test->cast(&boolean);
-   
+
    vhdl_fcall *fcall =
       new vhdl_fcall(support_function::function_name(sf),
                      vhdl_type::type_for(width, issigned));
    fcall->add_expr(test);
    fcall->add_expr(true_part);
    fcall->add_expr(false_part);
-   
+
    return fcall;
 }
 
 static vhdl_expr *translate_concat(ivl_expr_t e)
 {
-   vhdl_type *rtype = 
+   vhdl_type *rtype =
       vhdl_type::type_for(ivl_expr_width(e), ivl_expr_signed(e) != 0);
    vhdl_binop_expr *concat = new vhdl_binop_expr(VHDL_BINOP_CONCAT, rtype);
 
@@ -716,11 +716,11 @@ vhdl_expr *translate_time_expr(ivl_expr_t e)
    if (time->get_type()->get_name() != VHDL_TYPE_TIME) {
       vhdl_type integer(VHDL_TYPE_INTEGER);
       time = time->cast(&integer);
-      
+
       vhdl_expr *ns1 = scale_time(get_active_entity(), 1);
       return new vhdl_binop_expr(time, VHDL_BINOP_MULT, ns1,
                                  vhdl_type::time());
    }
    else // Translating IVL_EX_DELAY will always return a time type
-      return time;      
+      return time;
 }

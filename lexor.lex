@@ -1179,7 +1179,7 @@ static void process_ucdrive(const char*txt)
       cp += strspn(cp, " \t");
       if (strncmp(cp, "//", 2) != 0 &&
           (size_t)(cp-yytext) != strlen(yytext)) {
-	    VLerror(yylloc, "Invalid `unconnected_dirve directive (extra "
+	    VLerror(yylloc, "Invalid `unconnected_drive directive (extra "
 	                    "garbage after precision).");
 	    return;
       }

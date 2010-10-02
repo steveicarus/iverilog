@@ -382,7 +382,7 @@ void Nexus::unlink(Link*that)
       }
 
 	// If the link I'm removing was a driver for this nexus, then
-	// cancel my guess of the driven value. 
+	// cancel my guess of the driven value.
       if (that->get_dir() != Link::INPUT)
 	    driven_ = NO_GUESS;
 

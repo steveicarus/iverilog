@@ -161,7 +161,7 @@ NetNet* cast_to_real(Design*des, NetScope*scope, NetNet*src)
  * NetEBAdd node that has the input expression and an expression made
  * from the constant value.
  */
-NetExpr* make_add_expr(NetExpr*expr, long val)
+static NetExpr* make_add_expr(NetExpr*expr, long val)
 {
       if (val == 0)
 	    return expr;
@@ -190,10 +190,14 @@ NetExpr* make_add_expr(NetExpr*expr, long val)
       return res;
 }
 
-NetExpr* make_sub_expr(long val, NetExpr*expr)
+/*
+ * Subtract an existing expression from a signed constant.
+ */
+static NetExpr* make_sub_expr(long val, NetExpr*expr)
 {
       verinum val_v (val, expr->expr_width());
       val_v.has_sign(true);
+
       NetEConst*val_c = new NetEConst(val_v);
       val_c->set_line(*expr);
 
@@ -201,6 +205,150 @@ NetExpr* make_sub_expr(long val, NetExpr*expr)
       res->set_line(*expr);
 
       return res;
+}
+
+/*
+ * This routine is used to calculate the number of bits needed to
+ * contain the given number.
+ */
+static unsigned num_bits(long arg)
+{
+      unsigned res = 0;
+
+	/* For a negative value we have room for one extra value, but
+	 * we have a signed result so we need an extra bit for this. */
+      if (arg < 0) {
+	    arg = -arg - 1;
+	    res += 1;
+      }
+
+	/* Calculate the number of bits needed here. */
+      while (arg) {
+	    res += 1;
+	    arg >>= 1;
+      }
+
+      return res;
+}
+
+/*
+ * This routine generates the normalization expression needed for a variable
+ * bit select or a variable base expression for an indexed part select.
+ */
+NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
+                                 unsigned long wid, bool is_up)
+{
+      long offset = lsb;
+
+      if (msb < lsb) {
+	      /* Correct the offset if needed. */
+	    if (is_up) offset -= wid - 1;
+	      /* Calculate the space needed for the offset. */
+	    unsigned min_wid = num_bits(offset);
+	      /* We need enough space for the larger of the offset or the
+	       * base expression. */
+	    if (min_wid < base->expr_width()) min_wid = base->expr_width();
+	      /* Now that we have the minimum needed width increase it by
+	       * one to make room for the normalization calculation. */
+	    min_wid += 1;
+	      /* Pad the base expression to the correct width. */
+	    base = pad_to_width(base, min_wid, *base);
+	      /* If the base expression is unsigned and either the lsb
+	       * is negative or it does not fill the width of the base
+	       * expression then we could generate negative normalized
+	       * values so cast the expression to signed to get the
+	       * math correct. */
+	    if ((lsb < 0 || num_bits(lsb+1) <= base->expr_width()) &&
+	        ! base->has_sign()) {
+		    /* We need this extra select to hide the signed
+		     * property from the padding above. It will be
+		     * removed automatically during code generation. */
+		  NetESelect *tmp = new NetESelect(base, 0 , min_wid);
+		  tmp->set_line(*base);
+		  tmp->cast_signed(true);
+                  base = tmp;
+	    }
+	      /* Normalize the expression. */
+	    base = make_sub_expr(offset, base);
+      } else {
+	      /* Correct the offset if needed. */
+	    if (!is_up) offset += wid - 1;
+	      /* If the offset is zero then just return the base (index)
+	       * expression. */
+	    if (offset == 0) return base;
+	      /* Calculate the space needed for the offset. */
+	    unsigned min_wid = num_bits(-offset);
+	      /* We need enough space for the larger of the offset or the
+	       * base expression. */
+	    if (min_wid < base->expr_width()) min_wid = base->expr_width();
+	      /* Now that we have the minimum needed width increase it by
+	       * one to make room for the normalization calculation. */
+	    min_wid += 1;
+	      /* Pad the base expression to the correct width. */
+	    base = pad_to_width(base, min_wid, *base);
+	      /* If the offset is greater than zero then we need to do
+	       * signed math to get the location value correct. */
+	    if (offset > 0 && ! base->has_sign()) {
+		    /* We need this extra select to hide the signed
+		     * property from the padding above. It will be
+		     * removed automatically during code generation. */
+		  NetESelect *tmp = new NetESelect(base, 0 , min_wid);
+		  tmp->set_line(*base);
+		  tmp->cast_signed(true);
+                  base = tmp;
+	    }
+	      /* Normalize the expression. */
+	    base = make_add_expr(base, -offset);
+      }
+
+      return base;
+}
+
+/*
+ * This routine generates the normalization expression needed for a variable
+ * array word select.
+ */
+NetExpr *normalize_variable_array_base(NetExpr *base, long offset,
+                                       unsigned count)
+{
+      assert(offset != 0);
+	/* Calculate the space needed for the offset. */
+      unsigned min_wid = num_bits(-offset);
+	/* We need enough space for the larger of the offset or the base
+	 * expression. */
+      if (min_wid < base->expr_width()) min_wid = base->expr_width();
+	/* Now that we have the minimum needed width increase it by one
+	 * to make room for the normalization calculation. */
+      min_wid += 1;
+	/* Pad the base expression to the correct width. */
+      base = pad_to_width(base, min_wid, *base);
+	/* If the offset is greater than zero then we need to do signed
+	 * math to get the location value correct. */
+      if (offset > 0 && ! base->has_sign()) {
+	      /* We need this extra select to hide the signed property
+	       * from the padding above. It will be removed automatically
+	       * during code generation. */
+	    NetESelect *tmp = new NetESelect(base, 0 , min_wid);
+	    tmp->set_line(*base);
+	    tmp->cast_signed(true);
+	    base = tmp;
+      }
+	/* Normalize the expression. */
+      base = make_add_expr(base, -offset);
+
+	/* We should not need to do this, but .array/port does not
+	 * handle a small signed index correctly and it is a major
+	 * effort to fix it. For now we will just pad the expression
+	 * enough so that any negative value when converted to
+	 * unsigned is larger than the maximum array word. */
+      if (base->has_sign()) {
+	    unsigned range_wid = num_bits(count-1) + 1;
+	    if (min_wid < range_wid) {
+		  base = pad_to_width(base, range_wid, *base);
+	    }
+      }
+
+      return base;
 }
 
 NetEConst* make_const_x(unsigned long wid)
@@ -289,8 +437,15 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope,
 void eval_expr(NetExpr*&expr, int prune_width)
 {
       assert(expr);
-      if (dynamic_cast<NetEConst*>(expr)) return;
       if (dynamic_cast<NetECReal*>(expr)) return;
+	/* Resize a constant if allowed and needed. */
+      if (NetEConst *tmp = dynamic_cast<NetEConst*>(expr)) {
+	    if (prune_width <= 0) return;
+	    if (tmp->has_width()) return;
+	    if ((unsigned)prune_width <= tmp->expr_width()) return;
+	    expr = pad_to_width(expr, (unsigned)prune_width, *expr);
+	    return;
+      }
 
       NetExpr*tmp = expr->eval_tree(prune_width);
       if (tmp != 0) {
@@ -423,7 +578,7 @@ const char *human_readable_op(const char op, bool unary)
 	    case '>': type = ">";  break;
 	    case 'L': type = "<="; break;
 	    case 'G': type = ">="; break;
-	      
+
 	    case '^': type = "^";  break;  // XOR
 	    case 'X': type = "~^"; break;  // XNOR
 	    case '&': type = "&";  break;  // Bitwise AND

@@ -169,8 +169,8 @@ typedef struct t_command_file {
 p_command_file cmd_file_head = NULL;  /* The FIFO head */
 p_command_file cmd_file_tail = NULL;  /* The FIFO tail */
 
-/* Temprarily store parameter definition from command line and
- * parse it after we have delt with command file
+/* Temporarily store parameter definition from command line and
+ * parse it after we have dealt with command file
  */
 static const char** defparm_base = 0;
 static int defparm_size = 0;
@@ -777,10 +777,10 @@ int main(int argc, char **argv)
 	   turning the last two \ characters to null. Then we append
 	   the lib\ivl$(suffix) to finish. */
       { char *s;
-	char basepath[4096], tmp[4096];
-	GetModuleFileName(NULL, tmp, sizeof tmp);
+	char basepath[4096], tmppath[4096];
+	GetModuleFileName(NULL, tmppath, sizeof tmppath);
 	  /* Convert to a short name to remove any embedded spaces. */
-	GetShortPathName(tmp, basepath, sizeof basepath);
+	GetShortPathName(tmppath, basepath, sizeof basepath);
 	strncpy(ivl_root, basepath, MAXSIZE);
 	ivl_root[MAXSIZE-1] = 0;
 	s = strrchr(ivl_root, sep);
@@ -1105,7 +1105,7 @@ int main(int argc, char **argv)
 
 	/* If we are planning on opening a dependencies file, then
 	   open and truncate it here. The other phases of compilation
-	   will append to the file, so this is necessray to make sure
+	   will append to the file, so this is necessary to make sure
 	   it starts out empty. */
       if (depfile) {
 	    FILE*fd = fopen(depfile, "w");

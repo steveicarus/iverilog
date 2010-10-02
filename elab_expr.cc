@@ -729,7 +729,7 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 	    return tmp;
       }
 
-	// Falback, handle the general case.
+	// Fallback, handle the general case.
       if (expr_wid > 0)
 	    lp = pad_to_width(lp, expr_wid, *this);
       tmp = new NetEBShift(op_, lp, rp);
@@ -1011,7 +1011,7 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope,
 	  && wid_left > 0
 	  && wid_left < integer_width) {
 	    wid_left = integer_width;
-		  
+
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: "
 		       << "Test width of unsized " << human_readable_op(op_)
@@ -1273,7 +1273,7 @@ NetExpr*PECallFunction::cast_to_width_(NetExpr*expr, int wid, bool signed_flag) 
 
       if (wid < 0)
             wid = expr->expr_width();
-      
+
       if (debug_elaborate)
             cerr << get_fileline() << ": debug: cast to " << wid
                  << " bits" << endl;
@@ -2494,11 +2494,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 	    return result_ex;
       }
 
-      if (par_msv >= par_lsv) {
-	    if (par_lsv != 0) base = make_add_expr(base, -par_lsv);
-      } else {
-	    base = make_sub_expr(par_lsv-wid+1, base);
-      }
+      base = normalize_variable_base(base, par_msv, par_lsv, wid, true);
 
       NetExpr*tmp = par->dup_expr();
       tmp = new NetESelect(tmp, base, wid);
@@ -2578,13 +2574,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 	    return result_ex;
       }
 
-      if (par_msv >= par_lsv) {
-	    if (long offset = par_lsv+wid-1) {
-		  base = make_add_expr(base, -offset);
-	    }
-      } else {
-	    base = make_sub_expr(par_lsv, base);
-      }
+      base = normalize_variable_base(base, par_msv, par_lsv, wid, false);
 
       NetExpr*tmp = par->dup_expr();
       tmp = new NetESelect(tmp, base, wid);
@@ -2610,7 +2600,7 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
       if (!name_tail.index.empty())
 	    use_sel = name_tail.index.back().sel;
 
-      if (par->expr_type() == IVL_VT_REAL && 
+      if (par->expr_type() == IVL_VT_REAL &&
           use_sel != index_component_t::SEL_NONE) {
 	    perm_string name = peek_tail_name(path_);
 	    cerr << get_fileline() << ": error: "
@@ -2742,17 +2732,10 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	    } else {
 
 		  if (par_me) {
-			long par_mv = par_me->value().as_long();
-			long par_lv = par_le->value().as_long();
-			if (par_mv >= par_lv) {
-			      mtmp = par_lv
-				    ? make_add_expr(mtmp, 0-par_lv)
-				    : mtmp;
-			} else {
-			      if (par_lv != 0)
-				    mtmp = make_add_expr(mtmp, 0-par_mv);
-			      mtmp = make_sub_expr(par_lv-par_mv, mtmp);
-			}
+			mtmp = normalize_variable_base(mtmp,
+			             par_me->value().as_long(),
+			             par_le->value().as_long(),
+			             1, true);
 		  }
 
 		    /* The value is constant, but the bit select
@@ -2869,7 +2852,8 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
               // expression to calculate the canonical address.
             if (long base = net->array_first()) {
 
-                  word_index = make_add_expr(word_index, 0-base);
+                  word_index = normalize_variable_array_base(
+		                     word_index, base, net->array_count());
                   eval_expr(word_index);
             }
       }
@@ -2945,7 +2929,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ":        : "
 		          "Replacing select with a constant 'bx." << endl;
 	    }
-             
+
 	    NetEConst*tmp = new NetEConst(verinum(verinum::Vx, 1, false));
 	    tmp->set_line(*this);
 	    return tmp;
@@ -3053,7 +3037,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 		  }
 		    // Otherwise, make a part select that covers the right
 		    // range.
-		  ex = new NetEConst(verinum(net->sig()->sb_to_idx(lsv) + 
+		  ex = new NetEConst(verinum(net->sig()->sb_to_idx(lsv) +
 		                             offset));
 		  if (warn_ob_select) {
 			long rel_base = net->sig()->sb_to_idx(lsv) + offset;
@@ -3092,12 +3076,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 	    return ss;
       }
 
-      if (net->msi() > net->lsi()) {
-	    if (long offset = net->lsi())
-		  base = make_add_expr(base, -offset);
-      } else {
-	    base = make_sub_expr(net->lsi()-wid+1, base);
-      }
+      base = normalize_variable_base(base, net->msi(), net->lsi(), wid, true);
 
       NetESelect*ss = new NetESelect(net, base, wid);
       ss->set_line(*this);
@@ -3184,12 +3163,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 	    return ss;
       }
 
-      if (net->msi() > net->lsi()) {
-	    if (long offset = net->lsi()+wid-1)
-		  base = make_add_expr(base, -offset);
-      } else {
-	    base = make_sub_expr(net->lsi(), base);
-      }
+      base = normalize_variable_base(base, net->msi(), net->lsi(), wid, false);
 
       NetESelect*ss = new NetESelect(net, base, wid);
       ss->set_line(*this);
@@ -3294,12 +3268,8 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	// complicated task because we need to generate
 	// expressions to convert calculated bit select
 	// values to canonical values that are used internally.
-
-      if (net->sig()->msb() < net->sig()->lsb()) {
-	    ex = make_sub_expr(net->sig()->lsb(), ex);
-      } else {
-	    ex = make_add_expr(ex, - net->sig()->lsb());
-      }
+      ex = normalize_variable_base(ex, net->sig()->msb(), net->sig()->lsb(),
+                                   1, true);
 
       NetESelect*ss = new NetESelect(net, ex, 1);
       ss->set_line(*this);
@@ -3537,7 +3507,7 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 	// evaluation of ternary expressions, but it doesn't disallow
 	// it. The disadvantage of doing this is that semantic errors
 	// in the unused clause will be missed, but people don't seem
-	// to mind, and do apreciate the optimization available here.
+	// to mind, and do appreciate the optimization available here.
       if (NetEConst*tmp = dynamic_cast<NetEConst*> (con)) {
 	    verinum cval = tmp->value();
 	    ivl_assert(*this, cval.len()==1);

@@ -80,7 +80,7 @@ void debug_msg(const char *fmt, ...)
    va_start(args, fmt);
 
    if (std::strcmp(ivl_design_flag(g_design, "debug"), "")) {
-      std::fputs("[DEBUG] ", stdout);  
+      std::fputs("[DEBUG] ", stdout);
       std::vprintf(fmt, args);
       std::putchar('\n');
    }
@@ -127,10 +127,10 @@ extern "C" int target_design(ivl_design_t des)
 
       emit_all_entities(outfile, max_depth);
    }
-   
+
    // Clean up
    free_all_vhdl_objects();
-   
+
    return g_errors;
 }
 

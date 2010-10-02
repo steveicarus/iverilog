@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -131,14 +131,12 @@ void nodangle_f::signal(Design*des, NetNet*sig)
       if (sig->get_refs() > 0)
 	    return;
 
-	/* Cannot delete the ports of tasks or functions. There are
-	   too many places where they are referenced. */
-      if ((sig->port_type() != NetNet::NOT_A_PORT)
-	  && (sig->scope()->type() == NetScope::TASK))
-	    return;
-
-      if ((sig->port_type() != NetNet::NOT_A_PORT)
-	  && (sig->scope()->type() == NetScope::FUNC))
+	/* Cannot delete the ports of tasks, functions or modules. There
+	   are too many places where they are referenced. */
+      if ((sig->port_type() != NetNet::NOT_A_PORT) &&
+	  ((sig->scope()->type() == NetScope::TASK) ||
+	   (sig->scope()->type() == NetScope::FUNC) ||
+	   (sig->scope()->type() == NetScope::MODULE)))
 	    return;
 
 	/* Can't delete ports of cells. */

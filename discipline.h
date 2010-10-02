@@ -1,7 +1,7 @@
 #ifndef __discipline_H
 #define __discipline_H
 /*
- * Copyright (c) 2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -55,8 +55,8 @@ class ivl_discipline_s : public LineInfo {
 
       perm_string name() const         { return name_; }
       ivl_dis_domain_t domain() const  { return domain_; }
-      const ivl_nature_t potential() const { return potential_; }
-      const ivl_nature_t flow() const      { return flow_; }
+      ivl_nature_t potential() const { return potential_; }
+      ivl_nature_t flow() const      { return flow_; }
 
     private:
       perm_string name_;

@@ -28,7 +28,7 @@
 
 static ivl_signal_t find_path_source_port(ivl_delaypath_t path)
 {
-      int idx;
+      unsigned idx;
       ivl_nexus_t nex = ivl_path_source(path);
       ivl_scope_t path_scope = ivl_path_scope(path);
 

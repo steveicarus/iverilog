@@ -78,7 +78,7 @@ extern bool have_timeunit_decl;
 extern bool have_timeprec_decl;
 
 /*
- * Export there functions because we have to generate PENumber class
+ * Export these functions because we have to generate PENumber class
  * in pform.cc for user defparam definition from command file.
  */
 extern verinum*make_unsized_dec(const char*txt);

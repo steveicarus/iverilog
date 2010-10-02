@@ -105,12 +105,13 @@ static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
 
 static void draw_lpm_mux_nest(ivl_lpm_t net, const char*muxz)
 {
-      int idx, level;
+      unsigned idx, level;
       unsigned width = ivl_lpm_width(net);
       unsigned swidth = ivl_lpm_selects(net);
       char*select_input;
 
-      assert(ivl_lpm_size(net) == (1 << swidth));
+      assert(swidth < sizeof(unsigned));
+      assert(ivl_lpm_size(net) == (1U << swidth));
 
       select_input = strdup(draw_net_input(ivl_lpm_select(net)));
 

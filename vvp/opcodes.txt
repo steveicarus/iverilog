@@ -373,7 +373,7 @@ register to read the repetition count from (signed or unsigned).
 %evctl/i sets the repetition to an immediate unsigned value.
 
 %evctl/c clears the event control information. This is needed if a
-%assign/e may be skiped since the %assign/e statements clear the
+%assign/e may be skipped since the %assign/e statements clear the
 event control information and the other %evctl statements assert
 that this information has been cleared. You can get an assert if
 this information is not managed correctly.
