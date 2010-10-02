@@ -2690,17 +2690,9 @@ DelayType NetCase::delay_type() const
 
 DelayType NetCondit::delay_type() const
 {
-      DelayType result;
-
-      if (else_) {
-	    result = combine_delays(if_->delay_type(), else_->delay_type());
-      } else {
-	      /* Because of the indeterminate conditional value the
-	       * best we can have for this case is a possible delay. */
-	    result = combine_delays(if_->delay_type(), NO_DELAY);
-      }
-
-      return result;
+      DelayType if_type = if_  ? if_->delay_type()   : NO_DELAY;
+      DelayType el_type = else_? else_->delay_type() : NO_DELAY;
+      return combine_delays(if_type, el_type);
 }
 
 DelayType NetEvWait::delay_type() const
