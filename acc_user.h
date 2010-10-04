@@ -229,7 +229,7 @@ extern PLI_INT32 acc_fetch_size(handle obj);
 extern PLI_INT32 acc_fetch_type(handle obj);
 extern PLI_INT32 acc_fetch_fulltype(handle obj);
 extern PLI_INT32 acc_fetch_range(handle object, int *msb, int *lsb);
-extern char*     acc_fetch_type_str(PLI_INT32 type);
+extern const char* acc_fetch_type_str(PLI_INT32 type);
 
 extern char* acc_fetch_value(handle obj, const char*fmt, s_acc_value*value);
 

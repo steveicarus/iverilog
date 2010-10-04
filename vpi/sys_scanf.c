@@ -561,7 +561,7 @@ static int is_assignable_obj(vpiHandle obj)
       return rtn;
 }
 
-static int sys_check_args(vpiHandle callh, vpiHandle argv, PLI_BYTE8 *name)
+static int sys_check_args(vpiHandle callh, vpiHandle argv, const PLI_BYTE8 *name)
 {
       vpiHandle arg;
       int cnt = 3, rtn = 0;

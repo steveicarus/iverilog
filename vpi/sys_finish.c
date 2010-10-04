@@ -37,7 +37,7 @@ static PLI_INT32 sys_finish_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
             diag_msg = val.value.integer;
       }
 
-      if (strcmp((char*)name, "$stop") == 0) {
+      if (strcmp((const char*)name, "$stop") == 0) {
 	    vpi_control(vpiStop, diag_msg);
 	    return 0;
       }

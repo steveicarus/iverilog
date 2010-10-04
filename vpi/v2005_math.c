@@ -162,7 +162,7 @@ vpiHandle va_process_argument(vpiHandle callh, const char *name,
 static PLI_INT32 va_single_argument_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
 {
     vpiHandle callh, argv, arg;
-    t_single_data *data;
+    const t_single_data *data;
     const char *name;
     va_single_t* fun_data;
 
@@ -170,7 +170,7 @@ static PLI_INT32 va_single_argument_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
     callh = vpi_handle(vpiSysTfCall, 0);
     assert(callh != 0);
     argv = vpi_iterate(vpiArgument, callh);
-    data = (t_single_data *) ud;
+    data = (const t_single_data *) ud;
     name = data->name;
 
     fun_data = malloc(sizeof(va_single_t));
@@ -244,7 +244,7 @@ static PLI_INT32 va_single_argument_calltf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
 static PLI_INT32 va_double_argument_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
 {
     vpiHandle callh, argv, arg;
-    t_double_data *data;
+    const t_double_data *data;
     const char *name;
     va_double_t* fun_data;
 
@@ -252,7 +252,7 @@ static PLI_INT32 va_double_argument_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
     callh = vpi_handle(vpiSysTfCall, 0);
     assert(callh != 0);
     argv = vpi_iterate(vpiArgument, callh);
-    data = (t_double_data *) ud;
+    data = (const t_double_data *) ud;
     name = data->name;
 
     fun_data = malloc(sizeof(va_double_t));

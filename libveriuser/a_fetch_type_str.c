@@ -22,7 +22,7 @@
 #include  <acc_user.h>
 
 
-char* acc_fetch_type_str(PLI_INT32 type)
+const char* acc_fetch_type_str(PLI_INT32 type)
 {
       switch (type) {
 	  case accNet:

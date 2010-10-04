@@ -50,7 +50,7 @@ static PLI_INT32 my_mcd_printf(PLI_UINT32 mcd, const char *fmt, ...)
 struct timeformat_info_s timeformat_info = { 0, 0, 0, 20 };
 
 struct strobe_cb_info {
-      char*name;
+      const char*name;
       char*filename;
       int lineno;
       int default_format;
@@ -129,7 +129,7 @@ static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
       }
 }
 
-static int get_default_format(char *name)
+static int get_default_format(const char *name)
 {
     int default_format;
 
@@ -256,7 +256,7 @@ static void get_time_real(char *rtn, double value, int prec,
 
 static unsigned int get_format_char(char **rtn, int ljust, int plus,
                                     int ld_zero, int width, int prec,
-                                    char fmt, struct strobe_cb_info *info,
+                                    char fmt, const struct strobe_cb_info *info,
                                     unsigned int *idx)
 {
   s_vpi_value value;
@@ -804,7 +804,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
 /* We can't use the normal str functions on the return value since
  * %u and %z can insert NULL characters into the stream. */
 static unsigned int get_format(char **rtn, char *fmt,
-                               struct strobe_cb_info *info, unsigned int *idx)
+                               const struct strobe_cb_info *info, unsigned int *idx)
 {
   char *cp = fmt;
   unsigned int size;
@@ -851,7 +851,7 @@ static unsigned int get_format(char **rtn, char *fmt,
   return size - 1;
 }
 
-static unsigned int get_numeric(char **rtn, struct strobe_cb_info *info,
+static unsigned int get_numeric(char **rtn, const struct strobe_cb_info *info,
                                 vpiHandle item)
 {
   int size;
@@ -875,7 +875,7 @@ static unsigned int get_numeric(char **rtn, struct strobe_cb_info *info,
 
 /* In many places we can't use the normal str functions since %u and %z
  * can insert NULL characters into the stream. */
-static char *get_display(unsigned int *rtnsz, struct strobe_cb_info *info)
+static char *get_display(unsigned int *rtnsz, const struct strobe_cb_info *info)
 {
   char *result, *fmt, *rtn, *func_name;
   const char *cresult;
@@ -1012,7 +1012,7 @@ static char *get_display(unsigned int *rtnsz, struct strobe_cb_info *info)
   return rtn;
 }
 
-static int sys_check_args(vpiHandle callh, vpiHandle argv, PLI_BYTE8*name,
+static int sys_check_args(vpiHandle callh, vpiHandle argv, const PLI_BYTE8*name,
                           int no_auto, int is_monitor)
 {
       vpiHandle arg;

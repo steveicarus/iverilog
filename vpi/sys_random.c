@@ -365,7 +365,7 @@ static double erlangian(long *seed, long k, long mean)
 }
 
 /* A seed can only be an integer/time variable or a register. */
-static unsigned is_seed_obj(vpiHandle obj, vpiHandle callh, char *name)
+static unsigned is_seed_obj(vpiHandle obj, vpiHandle callh, const char *name)
 {
       unsigned rtn = 0;
 

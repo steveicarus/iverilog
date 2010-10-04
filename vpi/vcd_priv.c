@@ -80,8 +80,8 @@ void vcd_names_delete(struct vcd_names_list_s*tab)
 
 static int vcd_names_compare(const void *s1, const void *s2)
 {
-      const char *v1 = *(const char **) s1;
-      const char *v2 = *(const char **) s2;
+      const char *v1 = *(const char * const *) s1;
+      const char *v2 = *(const char * const *) s2;
 
       return strcmp(v1, v2);
 }

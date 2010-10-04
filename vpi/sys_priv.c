@@ -60,7 +60,7 @@ char *as_escaped(char *arg)
  * The result is duplicated so call free when the name is no
  * longer needed. Returns 0 (NULL) for an error.
  */
-char *get_filename(vpiHandle callh, char *name, vpiHandle file)
+char *get_filename(vpiHandle callh, const char *name, vpiHandle file)
 {
       s_vpi_value val;
       unsigned len, idx;
@@ -101,7 +101,7 @@ char *get_filename(vpiHandle callh, char *name, vpiHandle file)
       return strdup(val.value.str);
 }
 
-void check_for_extra_args(vpiHandle argv, vpiHandle callh, char *name,
+void check_for_extra_args(vpiHandle argv, vpiHandle callh, const char *name,
                           const char *arg_str, unsigned opt)
 {
 	/* Check that there are no extra arguments. */

@@ -29,7 +29,7 @@
 char **search_list = NULL;
 unsigned sl_count = 0;
 
-static void get_mem_params(vpiHandle argv, vpiHandle callh, char *name,
+static void get_mem_params(vpiHandle argv, vpiHandle callh, const char *name,
                            char **fname, vpiHandle *mitem,
                            vpiHandle *start_item, vpiHandle *stop_item)
 {
@@ -82,7 +82,7 @@ static void get_mem_params(vpiHandle argv, vpiHandle callh, char *name,
 
 static int process_params(vpiHandle mitem,
                           vpiHandle start_item, vpiHandle stop_item,
-                          vpiHandle callh, char *name,
+                          vpiHandle callh, const char *name,
                           int *start_addr, int *stop_addr, int *addr_incr,
                           int *min_addr, int *max_addr)
 {

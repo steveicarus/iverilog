@@ -182,7 +182,8 @@ static PLI_INT32 sys_fopenrwa_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       s_vpi_value val;
-      char *mode, *fname;
+      char *fname;
+      const char *mode;
       errno = 0;
 
 	/* Get the mode. */
