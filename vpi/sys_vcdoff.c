@@ -33,12 +33,12 @@
 
 static int dump_flag = 0;
 
-static PLI_INT32 sys_dummy_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_dummy_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       return 0;
 }
 
-static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_dumpvars_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       if (dump_flag == 0) {
 	    vpi_printf("VCD info: dumping is suppressed.\n");

@@ -20,7 +20,7 @@
 #include "sys_priv.h"
 #include <string.h>
 
-static PLI_INT32 sys_finish_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_finish_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv;
       s_vpi_value val;

@@ -137,7 +137,7 @@ void vcd_names_sort(struct vcd_names_list_s*tab)
  */
 
 /* $dumpvars takes a variety of arguments. */
-PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name)
+PLI_INT32 sys_dumpvars_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);

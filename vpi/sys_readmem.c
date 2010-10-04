@@ -186,7 +186,7 @@ static int process_params(vpiHandle mitem,
       return 0;
 }
 
-static PLI_INT32 sys_mem_compiletf(PLI_BYTE8*name)
+static PLI_INT32 sys_mem_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -255,7 +255,7 @@ static PLI_INT32 sys_mem_compiletf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_readmem_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       int code, wwid, addr;
       FILE*file;
@@ -417,7 +417,7 @@ static PLI_INT32 free_readmempath(p_cb_data cb_data)
       return 0;
 }
 
-static PLI_INT32 sys_readmempath_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_readmempath_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -501,7 +501,7 @@ static PLI_INT32 sys_readmempath_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_writemem_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_writemem_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       int addr;
       FILE*file;

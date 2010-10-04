@@ -93,7 +93,7 @@ static void error_message(vpiHandle callh, const char* msg)
 static PLI_INT32 sizetf_32 (PLI_BYTE8*x) { return 32; }
 static PLI_INT32 sizetf_64 (PLI_BYTE8*x) { return 64; }
 
-static PLI_INT32 sys_convert_compiletf(PLI_BYTE8*name)
+static PLI_INT32 sys_convert_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -123,7 +123,7 @@ static PLI_INT32 sys_convert_compiletf(PLI_BYTE8*name)
     return 0;
 }
 
-static PLI_INT32 sys_bitstoreal_calltf(PLI_BYTE8*user)
+static PLI_INT32 sys_bitstoreal_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     vpiHandle arg  = (vpiHandle) vpi_get_userdata(callh);
@@ -147,7 +147,7 @@ static PLI_INT32 sys_bitstoreal_calltf(PLI_BYTE8*user)
     return 0;
 }
 
-static PLI_INT32 sys_itor_calltf(PLI_BYTE8*user)
+static PLI_INT32 sys_itor_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     vpiHandle arg  = (vpiHandle) vpi_get_userdata(callh);
@@ -167,7 +167,7 @@ static PLI_INT32 sys_itor_calltf(PLI_BYTE8*user)
     return 0;
 }
 
-static PLI_INT32 sys_realtobits_calltf(PLI_BYTE8*user)
+static PLI_INT32 sys_realtobits_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     vpiHandle arg  = (vpiHandle) vpi_get_userdata(callh);
@@ -197,7 +197,7 @@ static PLI_INT32 sys_realtobits_calltf(PLI_BYTE8*user)
     return 0;
 }
 
-static PLI_INT32 sys_rtoi_calltf(PLI_BYTE8*user)
+static PLI_INT32 sys_rtoi_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     vpiHandle arg  = (vpiHandle) vpi_get_userdata(callh);

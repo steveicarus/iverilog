@@ -388,7 +388,7 @@ static unsigned is_seed_obj(vpiHandle obj, vpiHandle callh, char *name)
       return rtn;
 }
 
-static PLI_INT32 sys_rand_two_args_compiletf(PLI_BYTE8 *name)
+static PLI_INT32 sys_rand_two_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -432,7 +432,7 @@ static PLI_INT32 sys_rand_two_args_compiletf(PLI_BYTE8 *name)
       return 0;
 }
 
-PLI_INT32 sys_rand_three_args_compiletf(PLI_BYTE8 *name)
+PLI_INT32 sys_rand_three_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -490,7 +490,7 @@ PLI_INT32 sys_rand_three_args_compiletf(PLI_BYTE8 *name)
       return 0;
 }
 
-PLI_INT32 sys_random_compiletf(PLI_BYTE8 *name)
+PLI_INT32 sys_random_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -507,7 +507,7 @@ PLI_INT32 sys_random_compiletf(PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_random_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_random_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed = 0;
       s_vpi_value val;
@@ -539,7 +539,7 @@ static PLI_INT32 sys_random_calltf(PLI_BYTE8 *name)
 }
 
 /* From System Verilog 3.1a. */
-static PLI_INT32 sys_urandom_range_compiletf(PLI_BYTE8 *name)
+static PLI_INT32 sys_urandom_range_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -589,7 +589,7 @@ static unsigned long urandom(long *seed, unsigned long max, unsigned long min)
 }
 
 /* From System Verilog 3.1a. */
-static PLI_INT32 sys_urandom_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_urandom_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed = 0;
       s_vpi_value val;
@@ -625,7 +625,7 @@ static PLI_INT32 sys_urandom_calltf(PLI_BYTE8 *name)
 }
 
 /* From System Verilog 3.1a. */
-static PLI_INT32 sys_urandom_range_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_urandom_range_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, maxval, minval;
       s_vpi_value val;
@@ -658,7 +658,7 @@ static PLI_INT32 sys_urandom_range_calltf(PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_dist_uniform_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_dist_uniform_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, start, end;
       s_vpi_value val;
@@ -693,7 +693,7 @@ static PLI_INT32 sys_dist_uniform_calltf(PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_dist_normal_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_dist_normal_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, mean, sd;
       s_vpi_value val;
@@ -728,7 +728,7 @@ static PLI_INT32 sys_dist_normal_calltf(PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_dist_exponential_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_dist_exponential_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, mean;
       s_vpi_value val;
@@ -759,7 +759,7 @@ static PLI_INT32 sys_dist_exponential_calltf(PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_dist_poisson_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_dist_poisson_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, mean;
       s_vpi_value val;
@@ -790,7 +790,7 @@ static PLI_INT32 sys_dist_poisson_calltf(PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_dist_chi_square_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_dist_chi_square_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, df;
       s_vpi_value val;
@@ -821,7 +821,7 @@ static PLI_INT32 sys_dist_chi_square_calltf(PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_dist_t_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_dist_t_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, df;
       s_vpi_value val;
@@ -852,7 +852,7 @@ static PLI_INT32 sys_dist_t_calltf(PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_dist_erlang_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_dist_erlang_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed, k, mean;
       s_vpi_value val;

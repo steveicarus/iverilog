@@ -1066,7 +1066,7 @@ static int sys_check_args(vpiHandle callh, vpiHandle argv, PLI_BYTE8*name,
 }
 
 /* Common compiletf routine. */
-static PLI_INT32 sys_common_compiletf(PLI_BYTE8*name, int no_auto,
+static PLI_INT32 sys_common_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name, int no_auto,
                                       int is_monitor)
 {
       vpiHandle callh, argv;
@@ -1101,14 +1101,14 @@ static PLI_INT32 sys_common_compiletf(PLI_BYTE8*name, int no_auto,
 }
 
 /* Check the $display, $write, $fdisplay and $fwrite based tasks. */
-static PLI_INT32 sys_display_compiletf(PLI_BYTE8*name)
+static PLI_INT32 sys_display_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
 	/* These tasks can have automatic variables and are not monitor. */
       return sys_common_compiletf(name, 0, 0);
 }
 
 /* This implements the $display/$fdisplay and the $write/$fwrite based tasks. */
-static PLI_INT32 sys_display_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_display_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, scope;
       struct strobe_cb_info info;
@@ -1221,14 +1221,14 @@ static PLI_INT32 strobe_cb(p_cb_data cb)
 }
 
 /* Check both the $strobe and $fstrobe based tasks. */
-static PLI_INT32 sys_strobe_compiletf(PLI_BYTE8 *name)
+static PLI_INT32 sys_strobe_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
 	/* These tasks can not have automatic variables and are not monitor. */
       return sys_common_compiletf(name, 1, 0);
 }
 
 /* This implements both the $strobe and $fstrobe based tasks. */
-static PLI_INT32 sys_strobe_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_strobe_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh, argv, scope;
       struct t_cb_data cb;
@@ -1364,7 +1364,7 @@ static PLI_INT32 monitor_cb_1(p_cb_data cause)
       return 0;
 }
 
-static PLI_INT32 sys_monitor_compiletf(PLI_BYTE8 *name)
+static PLI_INT32 sys_monitor_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -1373,7 +1373,7 @@ static PLI_INT32 sys_monitor_compiletf(PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_monitor_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_monitor_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh, argv, scope;
       unsigned idx;
@@ -1452,20 +1452,20 @@ static PLI_INT32 sys_monitor_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_monitoron_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_monitoron_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       monitor_enabled = 1;
       monitor_cb_1(0);
       return 0;
 }
 
-static PLI_INT32 sys_monitoroff_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_monitoroff_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       monitor_enabled = 0;
       return 0;
 }
 
-static PLI_INT32 sys_swrite_compiletf(PLI_BYTE8 *name)
+static PLI_INT32 sys_swrite_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
   vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
   vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -1494,7 +1494,7 @@ static PLI_INT32 sys_swrite_compiletf(PLI_BYTE8 *name)
   return 0;
 }
 
-static PLI_INT32 sys_swrite_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_swrite_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
   vpiHandle callh, argv, reg, scope;
   struct strobe_cb_info info;
@@ -1532,7 +1532,7 @@ static PLI_INT32 sys_swrite_calltf(PLI_BYTE8 *name)
   return 0;
 }
 
-static PLI_INT32 sys_sformat_compiletf(PLI_BYTE8 *name)
+static PLI_INT32 sys_sformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
   vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
   vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -1581,7 +1581,7 @@ static PLI_INT32 sys_sformat_compiletf(PLI_BYTE8 *name)
   return 0;
 }
 
-static PLI_INT32 sys_sformat_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_sformat_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
   vpiHandle callh, argv, reg, scope;
   struct strobe_cb_info info;
@@ -1642,7 +1642,7 @@ static PLI_INT32 sys_end_of_compile(p_cb_data cb_data)
       return 0;
 }
 
-static PLI_INT32 sys_timeformat_compiletf(PLI_BYTE8*name)
+static PLI_INT32 sys_timeformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh   = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv  = vpi_iterate(vpiArgument, callh);
@@ -1718,7 +1718,7 @@ static PLI_INT32 sys_timeformat_compiletf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_timeformat_calltf(PLI_BYTE8*xx)
+static PLI_INT32 sys_timeformat_calltf(ICARUS_VPI_CONST PLI_BYTE8*xx)
 {
       s_vpi_value value;
       vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
@@ -1781,7 +1781,7 @@ static const char *pts_convert(int value)
       return string;
 }
 
-static PLI_INT32 sys_printtimescale_compiletf(PLI_BYTE8*name)
+static PLI_INT32 sys_printtimescale_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh   = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv  = vpi_iterate(vpiArgument, callh);
@@ -1824,7 +1824,7 @@ static PLI_INT32 sys_printtimescale_compiletf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_printtimescale_calltf(PLI_BYTE8*xx)
+static PLI_INT32 sys_printtimescale_calltf(ICARUS_VPI_CONST PLI_BYTE8*xx)
 {
       vpiHandle callh   = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv  = vpi_iterate(vpiArgument, callh);
@@ -1849,7 +1849,7 @@ static PLI_INT32 sys_printtimescale_calltf(PLI_BYTE8*xx)
       return 0;
 }
 
-static PLI_INT32 sys_fatal_compiletf(PLI_BYTE8*name)
+static PLI_INT32 sys_fatal_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -1873,7 +1873,7 @@ static PLI_INT32 sys_fatal_compiletf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_severity_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_severity_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);

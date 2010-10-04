@@ -45,6 +45,7 @@ EXTERN_C_START
 # include  <stdio.h>
 # include  "_pli_types.h"
 
+#define ICARUS_VPI_CONST
 typedef struct __vpiHandle *vpiHandle;
 
 /*
@@ -55,10 +56,10 @@ typedef struct t_vpi_systf_data {
       PLI_INT32 type;
       PLI_INT32 sysfunctype;
       const char *tfname;
-      PLI_INT32 (*calltf)   (PLI_BYTE8*);
-      PLI_INT32 (*compiletf)(PLI_BYTE8*);
+      PLI_INT32 (*calltf)   (ICARUS_VPI_CONST PLI_BYTE8*);
+      PLI_INT32 (*compiletf)(ICARUS_VPI_CONST PLI_BYTE8*);
       PLI_INT32 (*sizetf)   (PLI_BYTE8*);
-      PLI_BYTE8 *user_data;
+      ICARUS_VPI_CONST PLI_BYTE8 *user_data;
 } s_vpi_systf_data, *p_vpi_systf_data;
 
 /* The type in the above structure can have one of the following

@@ -22,7 +22,7 @@
 # include  <assert.h>
 # include  <string.h>
 
-static PLI_INT32 sys_deposit_compiletf(PLI_BYTE8 *name)
+static PLI_INT32 sys_deposit_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -69,7 +69,7 @@ static PLI_INT32 sys_deposit_compiletf(PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_deposit_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_deposit_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, target, value;
       s_vpi_value val;

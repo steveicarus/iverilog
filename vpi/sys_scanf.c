@@ -605,7 +605,7 @@ static int sys_check_args(vpiHandle callh, vpiHandle argv, PLI_BYTE8 *name)
       return rtn;
 }
 
-static PLI_INT32 sys_fscanf_compiletf(PLI_BYTE8*name)
+static PLI_INT32 sys_fscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -633,7 +633,7 @@ static PLI_INT32 sys_fscanf_compiletf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_fscanf_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_fscanf_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -665,7 +665,7 @@ static PLI_INT32 sys_fscanf_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_sscanf_compiletf(PLI_BYTE8*name)
+static PLI_INT32 sys_sscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -703,7 +703,7 @@ static PLI_INT32 sys_sscanf_compiletf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_sscanf_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_sscanf_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);

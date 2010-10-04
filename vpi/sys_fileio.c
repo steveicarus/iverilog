@@ -30,7 +30,7 @@
 /*
  * Implement the $fopen system function.
  */
-static PLI_INT32 sys_fopen_compiletf(PLI_BYTE8 *name)
+static PLI_INT32 sys_fopen_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv;
@@ -71,7 +71,7 @@ static PLI_INT32 sys_fopen_compiletf(PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_fopen_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -177,7 +177,7 @@ static PLI_INT32 sys_fopen_calltf(PLI_BYTE8*name)
  * from Chris Spear's File I/O for Verilog.
  */
 
-static PLI_INT32 sys_fopenrwa_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_fopenrwa_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -205,7 +205,7 @@ static PLI_INT32 sys_fopenrwa_calltf(PLI_BYTE8*name)
 /*
  * Implement $fclose system function
  */
-static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_fclose_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -243,7 +243,7 @@ static PLI_INT32 sys_fclose_calltf(PLI_BYTE8*name)
 /*
  * Implement $fflush system function
  */
-static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_fflush_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -291,7 +291,7 @@ static PLI_INT32 sys_fflush_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_fputc_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_fputc_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -335,7 +335,7 @@ static PLI_INT32 sys_fputc_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_fgets_compiletf(PLI_BYTE8*name)
+static PLI_INT32 sys_fgets_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -382,7 +382,7 @@ static PLI_INT32 sys_fgets_compiletf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_fgets_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_fgets_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -446,7 +446,7 @@ static PLI_INT32 sys_fgets_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_fread_compiletf(PLI_BYTE8*name)
+static PLI_INT32 sys_fread_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -571,7 +571,7 @@ static unsigned fread_word(FILE *fp, vpiHandle word,
       return rtn;
 }
 
-static PLI_INT32 sys_fread_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_fread_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -705,7 +705,7 @@ static PLI_INT32 sys_fread_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_ungetc_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_ungetc_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -752,7 +752,7 @@ static PLI_INT32 sys_ungetc_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8*name)
+static PLI_INT32 sys_fseek_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -815,7 +815,7 @@ static PLI_INT32 sys_fseek_compiletf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_fseek_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_fseek_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -885,7 +885,7 @@ static PLI_INT32 sys_fseek_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_common_fd_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_common_fd_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -945,7 +945,7 @@ static PLI_INT32 sys_common_fd_calltf(PLI_BYTE8*name)
 /*
  * Implement the $ferror system function.
  */
-static PLI_INT32 sys_ferror_compiletf(PLI_BYTE8 *name)
+static PLI_INT32 sys_ferror_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv;
@@ -1000,7 +1000,7 @@ static PLI_INT32 sys_ferror_compiletf(PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_ferror_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_ferror_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);

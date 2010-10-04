@@ -58,7 +58,7 @@ static unsigned is_numeric_obj(vpiHandle obj)
 /*
  * Check that the function is called with the correct argument.
  */
-static PLI_INT32 sys_clog2_compiletf(PLI_BYTE8 *name)
+static PLI_INT32 sys_clog2_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv, arg;
@@ -106,7 +106,7 @@ static PLI_INT32 sys_clog2_compiletf(PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_clog2_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_clog2_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);

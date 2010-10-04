@@ -127,7 +127,7 @@ EXTERN void vcd_work_emit_double(struct lxt2_wr_symbol*sym, double val);
 EXTERN void vcd_work_emit_bits(struct lxt2_wr_symbol*sym, const char*bits);
 
 /* The compiletf routines are common for the VCD, LXT and LXT2 dumpers. */
-EXTERN PLI_INT32 sys_dumpvars_compiletf(PLI_BYTE8 *name);
+EXTERN PLI_INT32 sys_dumpvars_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name);
 
 #undef EXTERN
 

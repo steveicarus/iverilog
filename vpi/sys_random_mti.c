@@ -56,7 +56,7 @@ static long mti_dist_uniform(long*seed, long start, long end)
       }
 }
 
-static PLI_INT32 sys_mti_dist_uniform_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_mti_dist_uniform_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh, argv, seed, start, end;
       s_vpi_value val;
@@ -91,7 +91,7 @@ static PLI_INT32 sys_mti_dist_uniform_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_mti_random_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_mti_random_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh, argv, seed = 0;
       s_vpi_value val;

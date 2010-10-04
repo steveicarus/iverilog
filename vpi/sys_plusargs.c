@@ -27,7 +27,7 @@
  * passed to the $test$plusargs. If there is a simulator argument that
  * is like this argument, then return true. Otherwise return false.
  */
-static PLI_INT32 sys_test_plusargs_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_test_plusargs_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       s_vpi_value val;
       s_vpi_vlog_info info;
@@ -70,7 +70,7 @@ static PLI_INT32 sys_test_plusargs_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_value_plusargs_compiletf(PLI_BYTE8*name)
+static PLI_INT32 sys_value_plusargs_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -128,7 +128,7 @@ static PLI_INT32 sys_value_plusargs_compiletf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_value_plusargs_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_value_plusargs_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       s_vpi_vlog_info info;
       s_vpi_value fmt;

@@ -308,7 +308,7 @@ __inline__ static int install_dumpvars_callback(void)
       return 0;
 }
 
-static PLI_INT32 sys_dumpoff_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_dumpoff_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
@@ -336,7 +336,7 @@ static PLI_INT32 sys_dumpoff_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_dumpon_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_dumpon_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
@@ -364,7 +364,7 @@ static PLI_INT32 sys_dumpon_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_dumpall_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_dumpall_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
@@ -434,7 +434,7 @@ static void open_dumpfile(vpiHandle callh)
       }
 }
 
-static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_dumpfile_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -468,14 +468,14 @@ static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_dumpflush_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_dumpflush_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       if (dump_file) fflush(dump_file);
 
       return 0;
 }
 
-static PLI_INT32 sys_dumplimit_calltf(PLI_BYTE8 *name)
+static PLI_INT32 sys_dumplimit_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -736,7 +736,7 @@ static int draw_scope(vpiHandle item, vpiHandle callh)
       return depth;
 }
 
-static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_dumpvars_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);

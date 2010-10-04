@@ -19,7 +19,7 @@
 #include "sys_priv.h"
 #include <assert.h>
 
-static PLI_INT32 finish_and_return_calltf(PLI_BYTE8* name)
+static PLI_INT32 finish_and_return_calltf(ICARUS_VPI_CONST PLI_BYTE8* name)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -41,7 +41,7 @@ static PLI_INT32 finish_and_return_calltf(PLI_BYTE8* name)
     return 0;
 }
 
-static PLI_INT32 task_not_implemented_compiletf(PLI_BYTE8* name)
+static PLI_INT32 task_not_implemented_compiletf(ICARUS_VPI_CONST PLI_BYTE8* name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
 
@@ -56,7 +56,7 @@ static PLI_INT32 task_not_implemented_compiletf(PLI_BYTE8* name)
  * This is used to warn the user that the specified optional system
  * task/function is not available (from Annex C 1364-2005).
  */
-static PLI_INT32 missing_optional_compiletf(PLI_BYTE8* name)
+static PLI_INT32 missing_optional_compiletf(ICARUS_VPI_CONST PLI_BYTE8* name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
 

@@ -22,7 +22,7 @@
 #include <math.h>
 #include <assert.h>
 
-static PLI_INT32 sys_time_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_time_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       s_vpi_value val;
       s_vpi_time  now;
@@ -78,7 +78,7 @@ static PLI_INT32 sys_time_calltf(PLI_BYTE8*name)
 }
 
 /* This also supports $abstime() from VAMS-2.3. */
-static PLI_INT32 sys_realtime_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_realtime_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       s_vpi_value val;
       s_vpi_time  now;

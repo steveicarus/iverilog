@@ -236,7 +236,7 @@ static void check_command_line_args(void)
       sdf_command_line_done = 1;
 }
 
-static PLI_INT32 sys_sdf_annotate_compiletf(PLI_BYTE8*name)
+static PLI_INT32 sys_sdf_annotate_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall,0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -282,7 +282,7 @@ static PLI_INT32 sys_sdf_annotate_compiletf(PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_sdf_annotate_calltf(PLI_BYTE8*name)
+static PLI_INT32 sys_sdf_annotate_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);

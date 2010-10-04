@@ -31,7 +31,7 @@
 /*
  * Check that the routines are called with the correct arguments.
  */
-static PLI_INT32 simparam_compiletf(PLI_BYTE8 *name_ext)
+static PLI_INT32 simparam_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name_ext)
 {
       vpiHandle callh, argv, arg;
 
@@ -104,7 +104,7 @@ static PLI_INT32 simparam_compiletf(PLI_BYTE8 *name_ext)
       return 0;
 }
 
-static PLI_INT32 simparam_calltf(PLI_BYTE8 *name_ext)
+static PLI_INT32 simparam_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name_ext)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -179,7 +179,7 @@ static PLI_INT32 simparam_calltf(PLI_BYTE8 *name_ext)
       return 0;
 }
 
-static PLI_INT32 simparam_str_calltf(PLI_BYTE8 *name_ext)
+static PLI_INT32 simparam_str_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name_ext)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);

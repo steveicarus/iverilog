@@ -234,7 +234,7 @@ vpiHandle sys_func_module(vpiHandle obj)
  */
 
 /* For system tasks/functions that do not take an argument. */
-PLI_INT32 sys_no_arg_compiletf(PLI_BYTE8 *name)
+PLI_INT32 sys_no_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -261,7 +261,7 @@ PLI_INT32 sys_no_arg_compiletf(PLI_BYTE8 *name)
 }
 
 /* For system tasks/functions that take a single numeric argument. */
-PLI_INT32 sys_one_numeric_arg_compiletf(PLI_BYTE8 *name)
+PLI_INT32 sys_one_numeric_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -289,7 +289,7 @@ PLI_INT32 sys_one_numeric_arg_compiletf(PLI_BYTE8 *name)
 }
 
 /* For system tasks/functions that take a single optional numeric argument. */
-PLI_INT32 sys_one_opt_numeric_arg_compiletf(PLI_BYTE8 *name)
+PLI_INT32 sys_one_opt_numeric_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -311,7 +311,7 @@ PLI_INT32 sys_one_opt_numeric_arg_compiletf(PLI_BYTE8 *name)
 }
 
 /* For system tasks/functions that take two numeric arguments. */
-PLI_INT32 sys_two_numeric_args_compiletf(PLI_BYTE8 *name)
+PLI_INT32 sys_two_numeric_args_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -356,7 +356,7 @@ PLI_INT32 sys_two_numeric_args_compiletf(PLI_BYTE8 *name)
 }
 
 /* For system tasks/functions that take a single string argument. */
-PLI_INT32 sys_one_string_arg_compiletf(PLI_BYTE8 *name)
+PLI_INT32 sys_one_string_arg_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);

@@ -159,7 +159,7 @@ vpiHandle va_process_argument(vpiHandle callh, const char *name,
 /*
  * Routine to check all the single argument math functions.
  */
-static PLI_INT32 va_single_argument_compiletf(PLI_BYTE8 *ud)
+static PLI_INT32 va_single_argument_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
 {
     vpiHandle callh, argv, arg;
     t_single_data *data;
@@ -215,7 +215,7 @@ static PLI_INT32 va_single_argument_compiletf(PLI_BYTE8 *ud)
 /*
  * Routine to implement the single argument math functions.
  */
-static PLI_INT32 va_single_argument_calltf(PLI_BYTE8 *ud)
+static PLI_INT32 va_single_argument_calltf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     s_vpi_value val;
@@ -241,7 +241,7 @@ static PLI_INT32 va_single_argument_calltf(PLI_BYTE8 *ud)
 /*
  * Routine to check all the double argument math functions.
  */
-static PLI_INT32 va_double_argument_compiletf(PLI_BYTE8 *ud)
+static PLI_INT32 va_double_argument_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
 {
     vpiHandle callh, argv, arg;
     t_double_data *data;
@@ -304,7 +304,7 @@ static PLI_INT32 va_double_argument_compiletf(PLI_BYTE8 *ud)
 /*
  * Routine to implement the double argument math functions.
  */
-static PLI_INT32 va_double_argument_calltf(PLI_BYTE8 *ud)
+static PLI_INT32 va_double_argument_calltf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     s_vpi_value val;
