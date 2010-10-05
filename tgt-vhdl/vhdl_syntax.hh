@@ -52,7 +52,7 @@ public:
    virtual vhdl_expr *to_std_logic();
    virtual vhdl_expr *to_std_ulogic();
    virtual vhdl_expr *to_vector(vhdl_type_name_t name, int w);
-   virtual void find_vars(vhdl_var_set_t& read) const {}
+   virtual void find_vars(vhdl_var_set_t& read) {}
    
 protected:
    static void open_parens(ostream& of);
@@ -770,6 +770,8 @@ public:
 
    bool initializing() const { return init_; }
    void set_initializing(bool i);
+   bool hoisted_initialiser() const;
+   void hoisted_initialiser(bool h);
 
    void set_allow_signal_assignment(bool b) { sig_assign_ = b; }
    bool allow_signal_assignment() const { return sig_assign_; }
@@ -777,6 +779,7 @@ private:
    decl_list_t decls_;
    vhdl_scope *parent_;
    bool init_, sig_assign_;
+   bool hoisted_init_;
 };
 
 
@@ -795,6 +798,11 @@ public:
 
    void added_wait_stmt() { contains_wait_stmt_ = true; }
    bool contains_wait_stmt() const { return contains_wait_stmt_; }
+
+   // Managing set of blocking assignment targets in this block
+   void add_blocking_target(vhdl_var_ref* ref);
+   bool is_blocking_target(vhdl_var_ref* ref) const;
+   
 protected:
    stmt_container stmts_;
    vhdl_scope scope_;
@@ -804,6 +812,10 @@ protected:
    // If this is the case then we can't use a sensitivity list for
    // the process
    bool contains_wait_stmt_;
+
+   // The set of variable we have performed a blocking
+   // assignment to
+   set<string> blocking_targets_;
 };
 
 

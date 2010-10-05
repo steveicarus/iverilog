@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for statements.
  *
- *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -131,27 +131,6 @@ static int draw_noop(vhdl_procedural *proc, stmt_container *container,
    return 0;
 }
 
-/*
- * The VHDL code generator inserts `wait for 0 ns' after each
- * not-last-in-block blocking assignment.
- * If this is immediately followed by another `wait for ...' then
- * we might as well not emit the first zero-time wait.
- */
-void prune_wait_for_0(stmt_container *container)
-{
-   vhdl_wait_stmt *wait0;
-   stmt_container::stmt_list_t &stmts = container->get_stmts();
-   while (stmts.size() > 0
-          && (wait0 = dynamic_cast<vhdl_wait_stmt*>(stmts.back()))) {
-      if (wait0->get_type() == VHDL_WAIT_FOR0) {
-         delete wait0;
-         stmts.pop_back();
-      }
-      else
-         break;
-   }
-}
-
 static vhdl_var_ref *make_assign_lhs(ivl_lval_t lval, vhdl_scope *scope)
 {
    ivl_signal_t sig = ivl_lval_sig(lval);
@@ -263,12 +242,68 @@ bool check_valid_assignment(vhdl_decl::assign_type_t atype, vhdl_procedural *pro
       return true;
 }
 
+// Generate a "wait for 0 ns" statement to emulate the behaviour of
+// Verilog blocking assignment using VHDL signals. This is only generated
+// if we read from the target of a blocking assignment in the same
+// process (i.e. it is only generated when required, not for every
+// blocking assignment). An example:
+//
+//   begin
+//     x = 5;
+//     if (x == 2)
+//       y = 7;
+//   end
+//
+// Becomes:
+//
+//   x <= 5;
+//   wait for 0 ns;    -- Required to implement assignment semantics
+//   if x = 2 then
+//     y <= 7;         -- No need for wait here, not read
+//   end if;
+//
+static void emit_wait_for_0(vhdl_procedural *proc,
+                            stmt_container *container,
+                            ivl_statement_t stmt,
+                            vhdl_expr *expr)
+{
+   vhdl_var_set_t read;
+   expr->find_vars(read);
+
+   bool need_wait_for_0 = false;
+   for (vhdl_var_set_t::const_iterator it = read.begin();
+        it != read.end(); ++it) {
+      if (proc->is_blocking_target(*it))
+         need_wait_for_0 = true;
+   }
+
+   stmt_container::stmt_list_t &stmts = container->get_stmts();
+   bool last_was_wait =
+      !stmts.empty() && dynamic_cast<vhdl_wait_stmt*>(stmts.back());
+
+   if (need_wait_for_0 && !last_was_wait) {
+      debug_msg("Generated wait-for-0 for %s:%d",
+                ivl_stmt_file(stmt), ivl_stmt_lineno(stmt));
+
+      vhdl_seq_stmt *wait = new vhdl_wait_stmt(VHDL_WAIT_FOR0);
+
+      ostringstream ss;
+      ss << "Read target of blocking assignment ("
+         << ivl_stmt_file(stmt)
+         << ":" << ivl_stmt_lineno(stmt) << ")";
+      wait->set_comment(ss.str());
+      
+      container->add_stmt(wait);
+      proc->added_wait_stmt();
+   }
+}
+
 // Generate an assignment of type T for the Verilog statement stmt.
 // If a statement was generated then `assign_type' will contain the
 // type of assignment that was generated; this should be initialised
 // to some sensible default.
 void make_assignment(vhdl_procedural *proc, stmt_container *container,
-                     ivl_statement_t stmt, bool blocking,
+                     ivl_statement_t stmt, bool emul_blocking,
                      vhdl_decl::assign_type_t& assign_type)
 {
    list<vhdl_var_ref*> lvals;
@@ -286,20 +321,32 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
    if (rhs == NULL)
       return;
 
+   emit_wait_for_0(proc, container, stmt, rhs);
+   if (rhs2)
+      emit_wait_for_0(proc, container, stmt, rhs2);
+
    if (lvals.size() == 1) {
       vhdl_var_ref *lhs = lvals.front();
       rhs = rhs->cast(lhs->get_type());
 
       ivl_expr_t i_delay;
       vhdl_expr *after = NULL;
-      if ((i_delay = ivl_stmt_delay_expr(stmt)) != NULL)
+      if ((i_delay = ivl_stmt_delay_expr(stmt)) != NULL) {
          after = translate_time_expr(i_delay);
+         if (after == NULL)
+            return;
+
+         emit_wait_for_0(proc, container, stmt, after);
+      }
 
       // Find the declaration of the LHS so we know what type
       // of assignment statement to generate (is it a signal,
       // a variable, etc?)
       vhdl_decl *decl = proc->get_scope()->get_decl(lhs->get_name());
       assign_type = decl->assignment_type();
+
+      if (assign_type == vhdl_decl::ASSIGN_NONBLOCK && emul_blocking)
+          proc->add_blocking_target(lhs);   
 
       // A small optimisation is to expand ternary RHSs into an
       // if statement (eliminates a function call and produces
@@ -312,6 +359,8 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
          vhdl_expr *test = translate_expr(ivl_expr_oper1(rval));
          if (NULL == test)
             return;
+
+         emit_wait_for_0(proc, container, stmt, test);
 
          if (!check_valid_assignment(decl->assignment_type(), proc, stmt))
             return;
@@ -368,6 +417,7 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
             decl->set_initial(NULL);   // Default initial value
          else {
             decl->set_initial(rhs);
+            proc->get_scope()->hoisted_initialiser(true);
             delete lhs;
             return;
          }
@@ -380,8 +430,7 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
          assign_for(decl->assignment_type(), lhs, rhs);
       container->add_stmt(a);
 
-      if (after != NULL)
-         a->set_after(after);
+      a->set_after(after);
    }
    else {
       // Multiple lvals are implemented by first assigning the complete
@@ -408,8 +457,13 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
 
          ivl_expr_t i_delay;
          vhdl_expr *after = NULL;
-         if ((i_delay = ivl_stmt_delay_expr(stmt)) != NULL)
+         if ((i_delay = ivl_stmt_delay_expr(stmt)) != NULL) {
             after = translate_time_expr(i_delay);
+            if (after == NULL)
+               return;
+
+            emit_wait_for_0(proc, container, stmt, after);
+         }
 
          // Find the declaration of the LHS so we know what type
          // of assignment statement to generate (is it a signal,
@@ -428,10 +482,11 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
          container->add_stmt(a);
 
          width_so_far += lval_width;
+
+         if (assign_type == vhdl_decl::ASSIGN_NONBLOCK && emul_blocking)
+            proc->add_blocking_target(*it);   
       }
    }
-
-   return;
 }
 
 /*
@@ -454,26 +509,10 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
                        ivl_statement_t stmt, bool is_last)
 {
    vhdl_decl::assign_type_t assign_type = vhdl_decl::ASSIGN_NONBLOCK;
-   if (proc->get_scope()->allow_signal_assignment()) {
-      // Blocking assignment is implemented as non-blocking assignment
-      // followed by a zero-time wait
-      // This follows the Verilog semantics fairly closely.
-
-      make_assignment(proc, container, stmt, false, assign_type);
-
-      // Don't generate a zero-wait if either:
-      // a) this is the last statement in the process
-      // c) a blocking assignment was generated
-      if (!is_last && assign_type == vhdl_decl::ASSIGN_NONBLOCK) {
-         prune_wait_for_0(container);
-         container->add_stmt
-            (new vhdl_wait_stmt(VHDL_WAIT_FOR0));
-         proc->added_wait_stmt();
-      }
-   }
-   else
-      make_assignment(proc, container, stmt, true, assign_type);
-
+   bool emulate_blocking = proc->get_scope()->allow_signal_assignment();
+   
+   make_assignment(proc, container, stmt, emulate_blocking, assign_type);
+      
    return 0;
 }
 
@@ -501,9 +540,7 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
       if (NULL == time)
          return 1;
    }
-
-   prune_wait_for_0(container);
-
+   
    ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
    vhdl_wait_stmt *wait =
       new vhdl_wait_stmt(VHDL_WAIT_FOR, time);
@@ -523,8 +560,8 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
    // Any further assignments occur after simulation time 0
    // so they cannot be used to initialise signal declarations
    // (if this scope is an initial process)
-   proc->get_scope()->set_initializing(false);
-
+   proc->get_scope()->set_initializing(false);   
+   
    return 0;
 }
 
@@ -743,9 +780,12 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
 
    // If this container is the top-level statement (i.e. it is the
    // first thing inside a process) then we can extract these
-   // events out into the sensitivity list
-   bool is_top_level = container == proc->get_container()
-      && container->empty();
+   // events out into the sensitivity list as long as we haven't
+   // promoted any preceding assignments to initialisers
+   bool is_top_level =
+      container == proc->get_container()
+      && container->empty()
+      && !proc->get_scope()->hoisted_initialiser();
 
    // See if this can be implemented in a more idiomatic way before we
    // fall back on the generic translation
@@ -876,8 +916,11 @@ static int draw_if(vhdl_procedural *proc, stmt_container *container,
    if (NULL == test)
       return 1;
 
+   emit_wait_for_0(proc, container, stmt, test);
+   
    vhdl_if_stmt *vhdif = new vhdl_if_stmt(test);
-
+   container->add_stmt(vhdif);
+   
    ivl_statement_t cond_true_stmt = ivl_stmt_cond_true(stmt);
    if (cond_true_stmt)
       draw_stmt(proc, vhdif->get_then_container(), cond_true_stmt, is_last);
@@ -885,8 +928,6 @@ static int draw_if(vhdl_procedural *proc, stmt_container *container,
    ivl_statement_t cond_false_stmt = ivl_stmt_cond_false(stmt);
    if (cond_false_stmt)
       draw_stmt(proc, vhdif->get_else_container(), cond_false_stmt, is_last);
-
-   container->add_stmt(vhdif);
 
    return 0;
 }
@@ -1403,9 +1444,13 @@ int draw_while(vhdl_procedural *proc, stmt_container *container,
    vhdl_type boolean(VHDL_TYPE_BOOLEAN);
    test = test->cast(&boolean);
 
+   emit_wait_for_0(proc, container, stmt, test);
+
    vhdl_while_stmt *loop = new vhdl_while_stmt(test);
    draw_stmt(proc, loop->get_container(), ivl_stmt_sub_stmt(stmt));
 
+   emit_wait_for_0(proc, loop->get_container(), stmt, test);
+   
    container->add_stmt(loop);
    return 0;
 }
