@@ -60,6 +60,8 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
          return to_std_logic();
       case VHDL_TYPE_STD_ULOGIC:
          return to_std_ulogic();
+      case VHDL_TYPE_STRING:
+         return to_string();
       default:
          assert(false);
       }
@@ -114,6 +116,25 @@ vhdl_expr *vhdl_expr::to_integer()
    conv->add_expr(this);
 
    return conv;
+}
+
+vhdl_expr *vhdl_expr::to_string()
+{
+   bool numeric = type_->get_name() == VHDL_TYPE_UNSIGNED
+      || type_->get_name() == VHDL_TYPE_SIGNED;
+   
+   if (numeric) {
+      vhdl_fcall *image = new vhdl_fcall("integer'image", vhdl_type::string());
+      image->add_expr(this->cast(vhdl_type::integer()));
+      return image;
+   }
+   else {
+      // Assume type'image exists
+      vhdl_fcall *image = new vhdl_fcall(type_->get_string() + "'image",
+                                         vhdl_type::string());
+      image->add_expr(this);
+      return image;
+   }
 }
 
 /*

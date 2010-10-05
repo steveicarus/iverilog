@@ -135,7 +135,6 @@ void vhdl_entity::emit(std::ostream &of, int level) const
    of << "library ieee;" << std::endl;
    of << "use ieee.std_logic_1164.all;" << std::endl;
    of << "use ieee.numeric_std.all;" << std::endl;
-   of << "use std.textio.all;" << std::endl;
    of << std::endl;
 
    emit_comment(of, level);
@@ -620,11 +619,7 @@ void vhdl_var_ref::emit(std::ostream &of, int level) const
 
 void vhdl_const_string::emit(std::ostream &of, int level) const
 {
-   // In some instances a string literal can be ambiguous between
-   // a String type and some other types (e.g. std_logic_vector)
-   // The explicit cast to String removes this ambiguity (although
-   // isn't always strictly necessary)
-   of << "String'(\"" << value_ << "\")";
+   of << "\"" << value_ << "\"";
 }
 
 void vhdl_null_stmt::emit(std::ostream &of, int level) const

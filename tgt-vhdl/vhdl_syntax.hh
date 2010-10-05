@@ -52,6 +52,7 @@ public:
    virtual vhdl_expr *to_std_logic();
    virtual vhdl_expr *to_std_ulogic();
    virtual vhdl_expr *to_vector(vhdl_type_name_t name, int w);
+   virtual vhdl_expr *to_string();
    virtual void find_vars(vhdl_var_set_t& read) {}
    
 protected:
@@ -176,7 +177,7 @@ private:
 
 class vhdl_const_string : public vhdl_expr {
 public:
-   vhdl_const_string(const char *value)
+   vhdl_const_string(const string& value)
       : vhdl_expr(vhdl_type::string(), true), value_(value) {}
 
    void emit(std::ostream &of, int level) const;
@@ -270,7 +271,7 @@ private:
  */
 class vhdl_fcall : public vhdl_expr {
 public:
-   vhdl_fcall(const char *name, vhdl_type *rtype)
+   vhdl_fcall(const string& name, vhdl_type *rtype)
       : vhdl_expr(rtype), name_(name) {};
    ~vhdl_fcall() {}
 
