@@ -453,15 +453,32 @@ public:
 };
 
 
-class vhdl_assert_stmt : public vhdl_seq_stmt {
-public:
-   vhdl_assert_stmt(const char *reason)
-      : reason_(reason) {}
+enum vhdl_severity_t {
+   SEVERITY_NOTE,
+   SEVERITY_WARNING,
+   SEVERITY_ERROR,
+   SEVERITY_FAILURE
+};
 
-   void emit(std::ostream &of, int level) const;
-   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write) {}
+class vhdl_report_stmt : public vhdl_seq_stmt {
+public:
+   vhdl_report_stmt(vhdl_expr *text,
+                    vhdl_severity_t severity = SEVERITY_NOTE);
+   virtual ~vhdl_report_stmt() {}
+
+   virtual void emit(ostream& of, int level) const;
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
 private:
-   std::string reason_;
+   vhdl_severity_t severity_;
+   vhdl_expr *text_;
+};
+
+
+class vhdl_assert_stmt : public vhdl_report_stmt {
+public:
+   vhdl_assert_stmt(const char *reason);
+
+   void emit(ostream &of, int level) const;
 };
 
 
