@@ -278,9 +278,10 @@ A variable is a bit vector that can be written by behavioral code (so
 has no structural input) and propagates its output to a functor. The
 general syntax of a variable is:
 
-	<label> .var   "name", <msb>, <lsb>;
-	<label> .var/s "name", <msb>, <lsb>;
-	<label> .var/real "name", <msb>, <lsb>;
+	<label> .var   "name", <msb>, <lsb>; Unsigned logic variable
+	<label> .var/s "name", <msb>, <lsb>; Signed logic variable
+	<label> .var/real "name", <msb>, <lsb>; real varibale
+	<label> .var/i "name", <msb>, <lsb>; vpiIntegerVar variable
 
 The "name" is the declared base name of the original variable, for the
 sake of VPI code that might access it. The variable is placed in the

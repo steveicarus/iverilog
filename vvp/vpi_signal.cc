@@ -576,10 +576,8 @@ static int signal_get(int code, vpiHandle ref)
 
 static char* signal_get_str(int code, vpiHandle ref)
 {
-      assert((ref->vpi_type->type_code==vpiNet)
-	     || (ref->vpi_type->type_code==vpiReg));
-
-      struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+      struct __vpiSignal*rfp = vpip_signal_from_handle(ref);
+      assert(rfp);
 
       if (code == vpiFile) {  // Not implemented for now!
 	    return simple_set_rbuf_str(file_names[0]);
@@ -604,10 +602,8 @@ static char* signal_get_str(int code, vpiHandle ref)
 
 static vpiHandle signal_get_handle(int code, vpiHandle ref)
 {
-      assert((ref->vpi_type->type_code==vpiNet)
-	     || (ref->vpi_type->type_code==vpiReg));
-
       struct __vpiSignal*rfp = vpip_signal_from_handle(ref);
+      assert(rfp);
 
       switch (code) {
 
@@ -629,10 +625,8 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
 
 static vpiHandle signal_iterate(int code, vpiHandle ref)
 {
-      assert((ref->vpi_type->type_code==vpiNet)
-	     || (ref->vpi_type->type_code==vpiReg));
-
-      struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+      struct __vpiSignal*rfp = vpip_signal_from_handle(ref);
+      assert(rfp);
 
       if (code == vpiIndex) {
 	    return rfp->is_netarray? array_index_iterate(code, rfp->id.index) : 0;
@@ -657,10 +651,8 @@ static unsigned signal_width(const struct __vpiSignal*rfp)
  */
 static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 {
-      assert((ref->vpi_type->type_code==vpiNet)
-	     || (ref->vpi_type->type_code==vpiReg));
-
-      struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+      struct __vpiSignal*rfp = vpip_signal_from_handle(ref);
+      assert(rfp);
 
       unsigned wid = signal_width(rfp);
 
